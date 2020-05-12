@@ -1,69 +1,63 @@
-/*    */ package javax.swing.plaf.metal;
-/*    */ 
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicSplitPaneDivider;
-/*    */ import javax.swing.plaf.basic.BasicSplitPaneUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MetalSplitPaneUI
-/*    */   extends BasicSplitPaneUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 54 */     return new MetalSplitPaneUI();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public BasicSplitPaneDivider createDefaultDivider() {
-/* 61 */     return new MetalSplitPaneDivider(this);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalSplitPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+
+/**
+ * Metal split pane.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Steve Wilson
+ */
+public class MetalSplitPaneUI extends BasicSplitPaneUI
+{
+
+
+    /**
+      * Creates a new MetalSplitPaneUI instance
+      */
+    public static ComponentUI createUI(JComponent x) {
+        return new MetalSplitPaneUI();
+    }
+
+    /**
+      * Creates the default divider.
+      */
+    public BasicSplitPaneDivider createDefaultDivider() {
+        return new MetalSplitPaneDivider(this);
+    }
+}

@@ -1,155 +1,149 @@
-/*     */ package java.security.cert;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class LDAPCertStoreParameters
-/*     */   implements CertStoreParameters
-/*     */ {
-/*     */   private static final int LDAP_DEFAULT_PORT = 389;
-/*     */   private int port;
-/*     */   private String serverName;
-/*     */   
-/*     */   public LDAPCertStoreParameters(String paramString, int paramInt) {
-/*  71 */     if (paramString == null)
-/*  72 */       throw new NullPointerException(); 
-/*  73 */     this.serverName = paramString;
-/*  74 */     this.port = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LDAPCertStoreParameters(String paramString) {
-/*  86 */     this(paramString, 389);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LDAPCertStoreParameters() {
-/*  94 */     this("localhost", 389);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getServerName() {
-/* 103 */     return this.serverName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getPort() {
-/* 112 */     return this.port;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     try {
-/* 128 */       return super.clone();
-/* 129 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*     */       
-/* 131 */       throw new InternalError(cloneNotSupportedException.toString(), cloneNotSupportedException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 141 */     StringBuffer stringBuffer = new StringBuffer();
-/* 142 */     stringBuffer.append("LDAPCertStoreParameters: [\n");
-/*     */     
-/* 144 */     stringBuffer.append("  serverName: " + this.serverName + "\n");
-/* 145 */     stringBuffer.append("  port: " + this.port + "\n");
-/* 146 */     stringBuffer.append("]");
-/* 147 */     return stringBuffer.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\cert\LDAPCertStoreParameters.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security.cert;
+
+/**
+ * Parameters used as input for the LDAP {@code CertStore} algorithm.
+ * <p>
+ * This class is used to provide necessary configuration parameters (server
+ * name and port number) to implementations of the LDAP {@code CertStore}
+ * algorithm.
+ * <p>
+ * <b>Concurrent Access</b>
+ * <p>
+ * Unless otherwise specified, the methods defined in this class are not
+ * thread-safe. Multiple threads that need to access a single
+ * object concurrently should synchronize amongst themselves and
+ * provide the necessary locking. Multiple threads each manipulating
+ * separate objects need not synchronize.
+ *
+ * @since       1.4
+ * @author      Steve Hanna
+ * @see         CertStore
+ */
+public class LDAPCertStoreParameters implements CertStoreParameters {
+
+    private static final int LDAP_DEFAULT_PORT = 389;
+
+    /**
+     * the port number of the LDAP server
+     */
+    private int port;
+
+    /**
+     * the DNS name of the LDAP server
+     */
+    private String serverName;
+
+    /**
+     * Creates an instance of {@code LDAPCertStoreParameters} with the
+     * specified parameter values.
+     *
+     * @param serverName the DNS name of the LDAP server
+     * @param port the port number of the LDAP server
+     * @exception NullPointerException if {@code serverName} is
+     * {@code null}
+     */
+    public LDAPCertStoreParameters(String serverName, int port) {
+        if (serverName == null)
+            throw new NullPointerException();
+        this.serverName = serverName;
+        this.port = port;
+    }
+
+    /**
+     * Creates an instance of {@code LDAPCertStoreParameters} with the
+     * specified server name and a default port of 389.
+     *
+     * @param serverName the DNS name of the LDAP server
+     * @exception NullPointerException if {@code serverName} is
+     * {@code null}
+     */
+    public LDAPCertStoreParameters(String serverName) {
+        this(serverName, LDAP_DEFAULT_PORT);
+    }
+
+    /**
+     * Creates an instance of {@code LDAPCertStoreParameters} with the
+     * default parameter values (server name "localhost", port 389).
+     */
+    public LDAPCertStoreParameters() {
+        this("localhost", LDAP_DEFAULT_PORT);
+    }
+
+    /**
+     * Returns the DNS name of the LDAP server.
+     *
+     * @return the name (not {@code null})
+     */
+    public String getServerName() {
+        return serverName;
+    }
+
+    /**
+     * Returns the port number of the LDAP server.
+     *
+     * @return the port number
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * Returns a copy of this object. Changes to the copy will not affect
+     * the original and vice versa.
+     * <p>
+     * Note: this method currently performs a shallow copy of the object
+     * (simply calls {@code Object.clone()}). This may be changed in a
+     * future revision to perform a deep copy if new parameters are added
+     * that should not be shared.
+     *
+     * @return the copy
+     */
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            /* Cannot happen */
+            throw new InternalError(e.toString(), e);
+        }
+    }
+
+    /**
+     * Returns a formatted string describing the parameters.
+     *
+     * @return a formatted string describing the parameters
+     */
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("LDAPCertStoreParameters: [\n");
+
+        sb.append("  serverName: " + serverName + "\n");
+        sb.append("  port: " + port + "\n");
+        sb.append("]");
+        return sb.toString();
+    }
+}

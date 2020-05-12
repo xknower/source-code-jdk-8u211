@@ -1,493 +1,488 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.traversers;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.SchemaGrammar;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSAnnotationImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSAttributeDecl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSAttributeUseImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSComplexTypeDecl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XInt;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*     */ import com.sun.org.apache.xerces.internal.util.DOMUtil;
-/*     */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*     */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class XSDAttributeTraverser
-/*     */   extends XSDAbstractTraverser
-/*     */ {
-/*     */   public XSDAttributeTraverser(XSDHandler handler, XSAttributeChecker gAttrCheck) {
-/*  68 */     super(handler, gAttrCheck);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected XSAttributeUseImpl traverseLocal(Element attrDecl, XSDocumentInfo schemaDoc, SchemaGrammar grammar, XSComplexTypeDecl enclosingCT) {
-/*  77 */     Object[] attrValues = this.fAttrChecker.checkAttributes(attrDecl, false, schemaDoc);
-/*     */     
-/*  79 */     String defaultAtt = (String)attrValues[XSAttributeChecker.ATTIDX_DEFAULT];
-/*  80 */     String fixedAtt = (String)attrValues[XSAttributeChecker.ATTIDX_FIXED];
-/*  81 */     String nameAtt = (String)attrValues[XSAttributeChecker.ATTIDX_NAME];
-/*  82 */     QName refAtt = (QName)attrValues[XSAttributeChecker.ATTIDX_REF];
-/*  83 */     XInt useAtt = (XInt)attrValues[XSAttributeChecker.ATTIDX_USE];
-/*     */ 
-/*     */     
-/*  86 */     XSAttributeDecl attribute = null;
-/*  87 */     XSAnnotationImpl annotation = null;
-/*  88 */     if (attrDecl.getAttributeNode(SchemaSymbols.ATT_REF) != null) {
-/*  89 */       if (refAtt != null) {
-/*  90 */         attribute = (XSAttributeDecl)this.fSchemaHandler.getGlobalDecl(schemaDoc, 1, refAtt, attrDecl);
-/*     */         
-/*  92 */         Element child = DOMUtil.getFirstChildElement(attrDecl);
-/*  93 */         if (child != null && DOMUtil.getLocalName(child).equals(SchemaSymbols.ELT_ANNOTATION)) {
-/*  94 */           annotation = traverseAnnotationDecl(child, attrValues, false, schemaDoc);
-/*  95 */           child = DOMUtil.getNextSiblingElement(child);
-/*     */         } else {
-/*     */           
-/*  98 */           String text = DOMUtil.getSyntheticAnnotation(attrDecl);
-/*  99 */           if (text != null) {
-/* 100 */             annotation = traverseSyntheticAnnotation(attrDecl, text, attrValues, false, schemaDoc);
-/*     */           }
-/*     */         } 
-/*     */         
-/* 104 */         if (child != null) {
-/* 105 */           reportSchemaError("src-attribute.3.2", new Object[] { refAtt.rawname }, child);
-/*     */         }
-/*     */         
-/* 108 */         nameAtt = refAtt.localpart;
-/*     */       } else {
-/* 110 */         attribute = null;
-/*     */       } 
-/*     */     } else {
-/* 113 */       attribute = traverseNamedAttr(attrDecl, attrValues, schemaDoc, grammar, false, enclosingCT);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 117 */     short consType = 0;
-/* 118 */     if (defaultAtt != null) {
-/* 119 */       consType = 1;
-/* 120 */     } else if (fixedAtt != null) {
-/* 121 */       consType = 2;
-/* 122 */       defaultAtt = fixedAtt;
-/* 123 */       fixedAtt = null;
-/*     */     } 
-/*     */     
-/* 126 */     XSAttributeUseImpl attrUse = null;
-/* 127 */     if (attribute != null) {
-/* 128 */       if (this.fSchemaHandler.fDeclPool != null) {
-/* 129 */         attrUse = this.fSchemaHandler.fDeclPool.getAttributeUse();
-/*     */       } else {
-/* 131 */         attrUse = new XSAttributeUseImpl();
-/*     */       } 
-/* 133 */       attrUse.fAttrDecl = attribute;
-/* 134 */       attrUse.fUse = useAtt.shortValue();
-/* 135 */       attrUse.fConstraintType = consType;
-/* 136 */       if (defaultAtt != null) {
-/* 137 */         attrUse.fDefault = new ValidatedInfo();
-/* 138 */         attrUse.fDefault.normalizedValue = defaultAtt;
-/*     */       } 
-/*     */       
-/* 141 */       if (attrDecl.getAttributeNode(SchemaSymbols.ATT_REF) == null) {
-/* 142 */         attrUse.fAnnotations = attribute.getAnnotations();
-/*     */       } else {
-/*     */         XSObjectList annotations;
-/* 145 */         if (annotation != null) {
-/* 146 */           annotations = new XSObjectListImpl();
-/* 147 */           ((XSObjectListImpl)annotations).addXSObject(annotation);
-/*     */         } else {
-/* 149 */           annotations = XSObjectListImpl.EMPTY_LIST;
-/*     */         } 
-/* 151 */         attrUse.fAnnotations = annotations;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 158 */     if (defaultAtt != null && fixedAtt != null) {
-/* 159 */       reportSchemaError("src-attribute.1", new Object[] { nameAtt }, attrDecl);
-/*     */     }
-/*     */ 
-/*     */     
-/* 163 */     if (consType == 1 && useAtt != null && useAtt
-/* 164 */       .intValue() != 0) {
-/* 165 */       reportSchemaError("src-attribute.2", new Object[] { nameAtt }, attrDecl);
-/*     */       
-/* 167 */       attrUse.fUse = 0;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 172 */     if (defaultAtt != null && attrUse != null) {
-/*     */       
-/* 174 */       this.fValidationState.setNamespaceSupport(schemaDoc.fNamespaceSupport);
-/*     */       try {
-/* 176 */         checkDefaultValid(attrUse);
-/*     */       }
-/* 178 */       catch (InvalidDatatypeValueException ide) {
-/* 179 */         reportSchemaError(ide.getKey(), ide.getArgs(), attrDecl);
-/* 180 */         reportSchemaError("a-props-correct.2", new Object[] { nameAtt, defaultAtt }, attrDecl);
-/*     */         
-/* 182 */         attrUse.fDefault = null;
-/* 183 */         attrUse.fConstraintType = 0;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 187 */       if (((XSSimpleType)attribute.getTypeDefinition()).isIDType()) {
-/* 188 */         reportSchemaError("a-props-correct.3", new Object[] { nameAtt }, attrDecl);
-/*     */         
-/* 190 */         attrUse.fDefault = null;
-/* 191 */         attrUse.fConstraintType = 0;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 197 */       if (attrUse.fAttrDecl.getConstraintType() == 2 && attrUse.fConstraintType != 0)
-/*     */       {
-/* 199 */         if (attrUse.fConstraintType != 2 || 
-/* 200 */           !(attrUse.fAttrDecl.getValInfo()).actualValue.equals(attrUse.fDefault.actualValue)) {
-/* 201 */           reportSchemaError("au-props-correct.2", new Object[] { nameAtt, attrUse.fAttrDecl.getValInfo().stringValue() }, attrDecl);
-/*     */           
-/* 203 */           attrUse.fDefault = attrUse.fAttrDecl.getValInfo();
-/* 204 */           attrUse.fConstraintType = 2;
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */     
-/* 209 */     this.fAttrChecker.returnAttrArray(attrValues, schemaDoc);
-/* 210 */     return attrUse;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected XSAttributeDecl traverseGlobal(Element attrDecl, XSDocumentInfo schemaDoc, SchemaGrammar grammar) {
-/* 218 */     Object[] attrValues = this.fAttrChecker.checkAttributes(attrDecl, true, schemaDoc);
-/* 219 */     XSAttributeDecl attribute = traverseNamedAttr(attrDecl, attrValues, schemaDoc, grammar, true, (XSComplexTypeDecl)null);
-/* 220 */     this.fAttrChecker.returnAttrArray(attrValues, schemaDoc);
-/* 221 */     return attribute;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   XSAttributeDecl traverseNamedAttr(Element attrDecl, Object[] attrValues, XSDocumentInfo schemaDoc, SchemaGrammar grammar, boolean isGlobal, XSComplexTypeDecl enclosingCT) {
-/*     */     XSObjectList annotations;
-/* 242 */     String defaultAtt = (String)attrValues[XSAttributeChecker.ATTIDX_DEFAULT];
-/* 243 */     String fixedAtt = (String)attrValues[XSAttributeChecker.ATTIDX_FIXED];
-/* 244 */     XInt formAtt = (XInt)attrValues[XSAttributeChecker.ATTIDX_FORM];
-/* 245 */     String nameAtt = (String)attrValues[XSAttributeChecker.ATTIDX_NAME];
-/* 246 */     QName typeAtt = (QName)attrValues[XSAttributeChecker.ATTIDX_TYPE];
-/*     */ 
-/*     */     
-/* 249 */     XSAttributeDecl attribute = null;
-/* 250 */     if (this.fSchemaHandler.fDeclPool != null) {
-/* 251 */       attribute = this.fSchemaHandler.fDeclPool.getAttributeDecl();
-/*     */     } else {
-/* 253 */       attribute = new XSAttributeDecl();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 257 */     if (nameAtt != null) {
-/* 258 */       nameAtt = this.fSymbolTable.addSymbol(nameAtt);
-/*     */     }
-/*     */     
-/* 261 */     String tnsAtt = null;
-/* 262 */     XSComplexTypeDecl enclCT = null;
-/* 263 */     short scope = 0;
-/* 264 */     if (isGlobal) {
-/* 265 */       tnsAtt = schemaDoc.fTargetNamespace;
-/* 266 */       scope = 1;
-/*     */     } else {
-/*     */       
-/* 269 */       if (enclosingCT != null) {
-/* 270 */         enclCT = enclosingCT;
-/* 271 */         scope = 2;
-/*     */       } 
-/* 273 */       if (formAtt != null) {
-/* 274 */         if (formAtt.intValue() == 1)
-/* 275 */           tnsAtt = schemaDoc.fTargetNamespace; 
-/* 276 */       } else if (schemaDoc.fAreLocalAttributesQualified) {
-/* 277 */         tnsAtt = schemaDoc.fTargetNamespace;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 282 */     ValidatedInfo attDefault = null;
-/* 283 */     short constraintType = 0;
-/* 284 */     if (isGlobal) {
-/* 285 */       if (fixedAtt != null) {
-/* 286 */         attDefault = new ValidatedInfo();
-/* 287 */         attDefault.normalizedValue = fixedAtt;
-/* 288 */         constraintType = 2;
-/* 289 */       } else if (defaultAtt != null) {
-/* 290 */         attDefault = new ValidatedInfo();
-/* 291 */         attDefault.normalizedValue = defaultAtt;
-/* 292 */         constraintType = 1;
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 297 */     Element child = DOMUtil.getFirstChildElement(attrDecl);
-/* 298 */     XSAnnotationImpl annotation = null;
-/* 299 */     if (child != null && DOMUtil.getLocalName(child).equals(SchemaSymbols.ELT_ANNOTATION)) {
-/* 300 */       annotation = traverseAnnotationDecl(child, attrValues, false, schemaDoc);
-/* 301 */       child = DOMUtil.getNextSiblingElement(child);
-/*     */     } else {
-/*     */       
-/* 304 */       String text = DOMUtil.getSyntheticAnnotation(attrDecl);
-/* 305 */       if (text != null) {
-/* 306 */         annotation = traverseSyntheticAnnotation(attrDecl, text, attrValues, false, schemaDoc);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 311 */     XSSimpleType attrType = null;
-/* 312 */     boolean haveAnonType = false;
-/*     */ 
-/*     */     
-/* 315 */     if (child != null) {
-/* 316 */       String childName = DOMUtil.getLocalName(child);
-/*     */       
-/* 318 */       if (childName.equals(SchemaSymbols.ELT_SIMPLETYPE)) {
-/* 319 */         attrType = this.fSchemaHandler.fSimpleTypeTraverser.traverseLocal(child, schemaDoc, grammar);
-/* 320 */         haveAnonType = true;
-/* 321 */         child = DOMUtil.getNextSiblingElement(child);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 326 */     if (attrType == null && typeAtt != null) {
-/* 327 */       XSTypeDefinition type = (XSTypeDefinition)this.fSchemaHandler.getGlobalDecl(schemaDoc, 7, typeAtt, attrDecl);
-/* 328 */       if (type != null && type.getTypeCategory() == 16) {
-/* 329 */         attrType = (XSSimpleType)type;
-/*     */       } else {
-/*     */         
-/* 332 */         reportSchemaError("src-resolve", new Object[] { typeAtt.rawname, "simpleType definition" }, attrDecl);
-/* 333 */         if (type == null) {
-/* 334 */           attribute.fUnresolvedTypeName = typeAtt;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 339 */     if (attrType == null) {
-/* 340 */       attrType = SchemaGrammar.fAnySimpleType;
-/*     */     }
-/*     */ 
-/*     */     
-/* 344 */     if (annotation != null) {
-/* 345 */       annotations = new XSObjectListImpl();
-/* 346 */       ((XSObjectListImpl)annotations).addXSObject(annotation);
-/*     */     } else {
-/* 348 */       annotations = XSObjectListImpl.EMPTY_LIST;
-/*     */     } 
-/* 350 */     attribute.setValues(nameAtt, tnsAtt, attrType, constraintType, scope, attDefault, enclCT, annotations);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 356 */     if (nameAtt == null) {
-/* 357 */       if (isGlobal) {
-/* 358 */         reportSchemaError("s4s-att-must-appear", new Object[] { SchemaSymbols.ELT_ATTRIBUTE, SchemaSymbols.ATT_NAME }, attrDecl);
-/*     */       } else {
-/* 360 */         reportSchemaError("src-attribute.3.1", null, attrDecl);
-/* 361 */       }  nameAtt = "(no name)";
-/*     */     } 
-/*     */ 
-/*     */     
-/* 365 */     if (child != null) {
-/* 366 */       reportSchemaError("s4s-elt-must-match.1", new Object[] { nameAtt, "(annotation?, (simpleType?))", DOMUtil.getLocalName(child) }, child);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 374 */     if (defaultAtt != null && fixedAtt != null) {
-/* 375 */       reportSchemaError("src-attribute.1", new Object[] { nameAtt }, attrDecl);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 389 */     if (haveAnonType && typeAtt != null) {
-/* 390 */       reportSchemaError("src-attribute.4", new Object[] { nameAtt }, attrDecl);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 395 */     checkNotationType(nameAtt, attrType, attrDecl);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 400 */     if (attDefault != null) {
-/* 401 */       this.fValidationState.setNamespaceSupport(schemaDoc.fNamespaceSupport);
-/*     */       try {
-/* 403 */         checkDefaultValid(attribute);
-/*     */       }
-/* 405 */       catch (InvalidDatatypeValueException ide) {
-/* 406 */         reportSchemaError(ide.getKey(), ide.getArgs(), attrDecl);
-/* 407 */         reportSchemaError("a-props-correct.2", new Object[] { nameAtt, attDefault.normalizedValue }, attrDecl);
-/*     */         
-/* 409 */         attDefault = null;
-/* 410 */         constraintType = 0;
-/* 411 */         attribute.setValues(nameAtt, tnsAtt, attrType, constraintType, scope, attDefault, enclCT, annotations);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 417 */     if (attDefault != null && 
-/* 418 */       attrType.isIDType()) {
-/* 419 */       reportSchemaError("a-props-correct.3", new Object[] { nameAtt }, attrDecl);
-/*     */       
-/* 421 */       attDefault = null;
-/* 422 */       constraintType = 0;
-/* 423 */       attribute.setValues(nameAtt, tnsAtt, attrType, constraintType, scope, attDefault, enclCT, annotations);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 431 */     if (nameAtt != null && nameAtt.equals(XMLSymbols.PREFIX_XMLNS)) {
-/* 432 */       reportSchemaError("no-xmlns", null, attrDecl);
-/* 433 */       return null;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 439 */     if (tnsAtt != null && tnsAtt.equals(SchemaSymbols.URI_XSI)) {
-/* 440 */       reportSchemaError("no-xsi", new Object[] { SchemaSymbols.URI_XSI }, attrDecl);
-/* 441 */       return null;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 445 */     if (nameAtt.equals("(no name)")) {
-/* 446 */       return null;
-/*     */     }
-/*     */     
-/* 449 */     if (isGlobal) {
-/* 450 */       if (grammar.getGlobalAttributeDecl(nameAtt) == null) {
-/* 451 */         grammar.addGlobalAttributeDecl(attribute);
-/*     */       }
-/*     */ 
-/*     */       
-/* 455 */       String loc = this.fSchemaHandler.schemaDocument2SystemId(schemaDoc);
-/* 456 */       XSAttributeDecl attribute2 = grammar.getGlobalAttributeDecl(nameAtt, loc);
-/* 457 */       if (attribute2 == null) {
-/* 458 */         grammar.addGlobalAttributeDecl(attribute, loc);
-/*     */       }
-/*     */       
-/* 461 */       if (this.fSchemaHandler.fTolerateDuplicates) {
-/* 462 */         if (attribute2 != null) {
-/* 463 */           attribute = attribute2;
-/*     */         }
-/* 465 */         this.fSchemaHandler.addGlobalAttributeDecl(attribute);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 469 */     return attribute;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void checkDefaultValid(XSAttributeDecl attribute) throws InvalidDatatypeValueException {
-/* 475 */     ((XSSimpleType)attribute.getTypeDefinition()).validate((attribute.getValInfo()).normalizedValue, this.fValidationState, attribute.getValInfo());
-/*     */     
-/* 477 */     ((XSSimpleType)attribute.getTypeDefinition()).validate(attribute.getValInfo().stringValue(), this.fValidationState, attribute.getValInfo());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void checkDefaultValid(XSAttributeUseImpl attrUse) throws InvalidDatatypeValueException {
-/* 483 */     ((XSSimpleType)attrUse.fAttrDecl.getTypeDefinition()).validate(attrUse.fDefault.normalizedValue, this.fValidationState, attrUse.fDefault);
-/*     */     
-/* 485 */     ((XSSimpleType)attrUse.fAttrDecl.getTypeDefinition()).validate(attrUse.fDefault.stringValue(), this.fValidationState, attrUse.fDefault);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\traversers\XSDAttributeTraverser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.traversers;
+
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.impl.xs.SchemaGrammar;
+import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
+import com.sun.org.apache.xerces.internal.impl.xs.XSAnnotationImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSAttributeDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSAttributeUseImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSComplexTypeDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XInt;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.util.DOMUtil;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
+import org.w3c.dom.Element;
+
+/**
+ * The attribute declaration schema component traverser.
+ *
+ * <attribute
+ *   default = string
+ *   fixed = string
+ *   form = (qualified | unqualified)
+ *   id = ID
+ *   name = NCName
+ *   ref = QName
+ *   type = QName
+ *   use = (optional | prohibited | required) : optional
+ *   {any attributes with non-schema namespace . . .}>
+ *   Content: (annotation?, (simpleType?))
+ * </attribute>
+ *
+ * @xerces.internal
+ *
+ * @author Sandy Gao, IBM
+ * @author Neeraj Bajaj, Sun Microsystems, inc.
+ * @version $Id: XSDAttributeTraverser.java,v 1.7 2010-11-01 04:40:02 joehw Exp $
+ */
+class XSDAttributeTraverser extends XSDAbstractTraverser {
+
+    public XSDAttributeTraverser (XSDHandler handler,
+            XSAttributeChecker gAttrCheck) {
+        super(handler, gAttrCheck);
+    }
+
+    protected XSAttributeUseImpl traverseLocal(Element attrDecl,
+            XSDocumentInfo schemaDoc,
+            SchemaGrammar grammar,
+            XSComplexTypeDecl enclosingCT) {
+
+        // General Attribute Checking
+        Object[] attrValues = fAttrChecker.checkAttributes(attrDecl, false, schemaDoc);
+
+        String defaultAtt = (String) attrValues[XSAttributeChecker.ATTIDX_DEFAULT];
+        String fixedAtt   = (String) attrValues[XSAttributeChecker.ATTIDX_FIXED];
+        String nameAtt    = (String) attrValues[XSAttributeChecker.ATTIDX_NAME];
+        QName  refAtt     = (QName)  attrValues[XSAttributeChecker.ATTIDX_REF];
+        XInt   useAtt     = (XInt)   attrValues[XSAttributeChecker.ATTIDX_USE];
+
+        // get 'attribute declaration'
+        XSAttributeDecl attribute = null;
+        XSAnnotationImpl annotation = null;
+        if (attrDecl.getAttributeNode(SchemaSymbols.ATT_REF) != null) {
+            if (refAtt != null) {
+                attribute = (XSAttributeDecl)fSchemaHandler.getGlobalDecl(schemaDoc, XSDHandler.ATTRIBUTE_TYPE, refAtt, attrDecl);
+
+                Element child = DOMUtil.getFirstChildElement(attrDecl);
+                if (child != null && DOMUtil.getLocalName(child).equals(SchemaSymbols.ELT_ANNOTATION)) {
+                    annotation = traverseAnnotationDecl(child, attrValues, false, schemaDoc);
+                    child = DOMUtil.getNextSiblingElement(child);
+                }
+                else {
+                    String text = DOMUtil.getSyntheticAnnotation(attrDecl);
+                    if (text != null) {
+                        annotation = traverseSyntheticAnnotation(attrDecl, text, attrValues, false, schemaDoc);
+                    }
+                }
+
+                if (child != null) {
+                    reportSchemaError("src-attribute.3.2", new Object[]{refAtt.rawname}, child);
+                }
+                // for error reporting
+                nameAtt = refAtt.localpart;
+            } else {
+                attribute = null;
+            }
+        } else {
+            attribute = traverseNamedAttr(attrDecl, attrValues, schemaDoc, grammar, false, enclosingCT);
+        }
+
+        // get 'value constraint'
+        short consType = XSConstants.VC_NONE;
+        if (defaultAtt != null) {
+            consType = XSConstants.VC_DEFAULT;
+        } else if (fixedAtt != null) {
+            consType = XSConstants.VC_FIXED;
+            defaultAtt = fixedAtt;
+            fixedAtt = null;
+        }
+
+        XSAttributeUseImpl attrUse = null;
+        if (attribute != null) {
+            if (fSchemaHandler.fDeclPool !=null) {
+                attrUse = fSchemaHandler.fDeclPool.getAttributeUse();
+            } else {
+                attrUse = new XSAttributeUseImpl();
+            }
+            attrUse.fAttrDecl = attribute;
+            attrUse.fUse = useAtt.shortValue();
+            attrUse.fConstraintType = consType;
+            if (defaultAtt != null) {
+                attrUse.fDefault = new ValidatedInfo();
+                attrUse.fDefault.normalizedValue = defaultAtt;
+            }
+            // Get the annotation associated witht the local attr decl
+            if (attrDecl.getAttributeNode(SchemaSymbols.ATT_REF) == null) {
+                attrUse.fAnnotations = attribute.getAnnotations();
+            } else {
+                XSObjectList annotations;
+                if (annotation != null) {
+                    annotations = new XSObjectListImpl();
+                    ((XSObjectListImpl) annotations).addXSObject(annotation);
+                } else {
+                    annotations = XSObjectListImpl.EMPTY_LIST;
+                }
+                attrUse.fAnnotations = annotations;
+            }
+        }
+
+        //src-attribute
+
+        // 1 default and fixed must not both be present.
+        if (defaultAtt != null && fixedAtt != null) {
+            reportSchemaError("src-attribute.1", new Object[]{nameAtt}, attrDecl);
+        }
+
+        // 2 If default and use are both present, use must have the actual value optional.
+        if (consType == XSConstants.VC_DEFAULT &&
+                useAtt != null && useAtt.intValue() != SchemaSymbols.USE_OPTIONAL) {
+            reportSchemaError("src-attribute.2", new Object[]{nameAtt}, attrDecl);
+            // Recover by honouring the default value
+            attrUse.fUse = SchemaSymbols.USE_OPTIONAL;
+        }
+
+        // a-props-correct
+
+        if (defaultAtt != null && attrUse != null) {
+            // 2 if there is a {value constraint}, the canonical lexical representation of its value must be valid with respect to the {type definition} as defined in String Valid (3.14.4).
+            fValidationState.setNamespaceSupport(schemaDoc.fNamespaceSupport);
+            try {
+                checkDefaultValid(attrUse);
+            }
+            catch (InvalidDatatypeValueException ide) {
+                reportSchemaError (ide.getKey(), ide.getArgs(), attrDecl);
+                reportSchemaError ("a-props-correct.2", new Object[]{nameAtt, defaultAtt}, attrDecl);
+                // Recover by removing the default value
+                attrUse.fDefault = null;
+                attrUse.fConstraintType = XSConstants.VC_NONE;
+            }
+
+            // 3 If the {type definition} is or is derived from ID then there must not be a {value constraint}.
+            if (((XSSimpleType)attribute.getTypeDefinition()).isIDType() ) {
+                reportSchemaError ("a-props-correct.3", new Object[]{nameAtt}, attrDecl);
+                // Recover by removing the default value
+                attrUse.fDefault = null;
+                attrUse.fConstraintType = XSConstants.VC_NONE;
+            }
+
+            // check 3.5.6 constraint
+            // Attribute Use Correct
+            // 2 If the {attribute declaration} has a fixed {value constraint}, then if the attribute use itself has a {value constraint}, it must also be fixed and its value must match that of the {attribute declaration}'s {value constraint}.
+            if (attrUse.fAttrDecl.getConstraintType() == XSConstants.VC_FIXED &&
+                    attrUse.fConstraintType != XSConstants.VC_NONE) {
+                if (attrUse.fConstraintType != XSConstants.VC_FIXED ||
+                        !attrUse.fAttrDecl.getValInfo().actualValue.equals(attrUse.fDefault.actualValue)) {
+                    reportSchemaError ("au-props-correct.2", new Object[]{nameAtt, attrUse.fAttrDecl.getValInfo().stringValue()}, attrDecl);
+                    // Recover by using the decl's {value constraint}
+                    attrUse.fDefault = attrUse.fAttrDecl.getValInfo();
+                    attrUse.fConstraintType = XSConstants.VC_FIXED;
+                }
+            }
+        }
+
+        fAttrChecker.returnAttrArray(attrValues, schemaDoc);
+        return attrUse;
+    }
+
+    protected XSAttributeDecl traverseGlobal(Element attrDecl,
+            XSDocumentInfo schemaDoc,
+            SchemaGrammar grammar) {
+
+        // General Attribute Checking
+        Object[] attrValues = fAttrChecker.checkAttributes(attrDecl, true, schemaDoc);
+        XSAttributeDecl attribute = traverseNamedAttr(attrDecl, attrValues, schemaDoc, grammar, true, null);
+        fAttrChecker.returnAttrArray(attrValues, schemaDoc);
+        return attribute;
+
+    }
+
+    /**
+     * Traverse a globally declared attribute.
+     *
+     * @param  attrDecl
+     * @param  attrValues
+     * @param  schemaDoc
+     * @param  grammar
+     * @param  isGlobal
+     * @return the attribute declaration index
+     */
+    XSAttributeDecl traverseNamedAttr(Element attrDecl,
+            Object[] attrValues,
+            XSDocumentInfo schemaDoc,
+            SchemaGrammar grammar,
+            boolean isGlobal,
+            XSComplexTypeDecl enclosingCT) {
+
+        String  defaultAtt = (String) attrValues[XSAttributeChecker.ATTIDX_DEFAULT];
+        String  fixedAtt   = (String) attrValues[XSAttributeChecker.ATTIDX_FIXED];
+        XInt    formAtt    = (XInt)   attrValues[XSAttributeChecker.ATTIDX_FORM];
+        String  nameAtt    = (String) attrValues[XSAttributeChecker.ATTIDX_NAME];
+        QName   typeAtt    = (QName)  attrValues[XSAttributeChecker.ATTIDX_TYPE];
+
+        // Step 1: get declaration information
+        XSAttributeDecl attribute = null;
+        if (fSchemaHandler.fDeclPool !=null) {
+            attribute = fSchemaHandler.fDeclPool.getAttributeDecl();
+        } else {
+            attribute = new XSAttributeDecl();
+        }
+
+        // get 'name'
+        if (nameAtt != null)
+            nameAtt = fSymbolTable.addSymbol(nameAtt);
+
+        // get 'target namespace'
+        String tnsAtt = null;
+        XSComplexTypeDecl enclCT = null;
+        short scope = XSAttributeDecl.SCOPE_ABSENT;
+        if (isGlobal) {
+            tnsAtt = schemaDoc.fTargetNamespace;
+            scope = XSAttributeDecl.SCOPE_GLOBAL;
+        }
+        else {
+            if (enclosingCT != null) {
+                enclCT = enclosingCT;
+                scope = XSAttributeDecl.SCOPE_LOCAL;
+            }
+            if (formAtt != null) {
+                if (formAtt.intValue() == SchemaSymbols.FORM_QUALIFIED)
+                    tnsAtt = schemaDoc.fTargetNamespace;
+            } else if (schemaDoc.fAreLocalAttributesQualified) {
+                tnsAtt = schemaDoc.fTargetNamespace;
+            }
+        }
+        // get 'value constraint'
+        // for local named attribute, value constraint is absent
+        ValidatedInfo attDefault = null;
+        short constraintType = XSConstants.VC_NONE;
+        if (isGlobal) {
+            if (fixedAtt != null) {
+                attDefault = new ValidatedInfo();
+                attDefault.normalizedValue = fixedAtt;
+                constraintType = XSConstants.VC_FIXED;
+            } else if (defaultAtt != null) {
+                attDefault = new ValidatedInfo();
+                attDefault.normalizedValue = defaultAtt;
+                constraintType = XSConstants.VC_DEFAULT;
+            }
+        }
+
+        // get 'annotation'
+        Element child = DOMUtil.getFirstChildElement(attrDecl);
+        XSAnnotationImpl annotation = null;
+        if (child != null && DOMUtil.getLocalName(child).equals(SchemaSymbols.ELT_ANNOTATION)) {
+            annotation = traverseAnnotationDecl(child, attrValues, false, schemaDoc);
+            child = DOMUtil.getNextSiblingElement(child);
+        }
+        else {
+            String text = DOMUtil.getSyntheticAnnotation(attrDecl);
+            if (text != null) {
+                annotation = traverseSyntheticAnnotation(attrDecl, text, attrValues, false, schemaDoc);
+            }
+        }
+
+        // get 'type definition'
+        XSSimpleType attrType = null;
+        boolean haveAnonType = false;
+
+        // Handle Anonymous type if there is one
+        if (child != null) {
+            String childName = DOMUtil.getLocalName(child);
+
+            if (childName.equals(SchemaSymbols.ELT_SIMPLETYPE)) {
+                attrType = fSchemaHandler.fSimpleTypeTraverser.traverseLocal(child, schemaDoc, grammar);
+                haveAnonType = true;
+                child = DOMUtil.getNextSiblingElement(child);
+            }
+        }
+
+        // Handle type attribute
+        if (attrType == null && typeAtt != null) {
+            XSTypeDefinition type = (XSTypeDefinition)fSchemaHandler.getGlobalDecl(schemaDoc, XSDHandler.TYPEDECL_TYPE, typeAtt, attrDecl);
+            if (type != null && type.getTypeCategory() == XSTypeDefinition.SIMPLE_TYPE) {
+                attrType = (XSSimpleType)type;
+            }
+            else {
+                reportSchemaError("src-resolve", new Object[]{typeAtt.rawname, "simpleType definition"}, attrDecl);
+                if (type == null) {
+                        attribute.fUnresolvedTypeName = typeAtt;
+                }
+            }
+        }
+
+        if (attrType == null) {
+            attrType = SchemaGrammar.fAnySimpleType;
+        }
+
+        XSObjectList annotations;
+        if (annotation != null) {
+            annotations = new XSObjectListImpl();
+            ((XSObjectListImpl)annotations).addXSObject(annotation);
+        } else {
+            annotations = XSObjectListImpl.EMPTY_LIST;
+        }
+        attribute.setValues(nameAtt, tnsAtt, attrType, constraintType, scope,
+                attDefault, enclCT, annotations);
+
+        // Step 3: check against schema for schemas
+
+        // required attributes
+        if (nameAtt == null) {
+            if (isGlobal)
+                reportSchemaError("s4s-att-must-appear", new Object[]{SchemaSymbols.ELT_ATTRIBUTE, SchemaSymbols.ATT_NAME}, attrDecl);
+            else
+                reportSchemaError("src-attribute.3.1", null, attrDecl);
+            nameAtt = NO_NAME;
+        }
+
+        // element
+        if (child != null) {
+            reportSchemaError("s4s-elt-must-match.1", new Object[]{nameAtt, "(annotation?, (simpleType?))", DOMUtil.getLocalName(child)}, child);
+        }
+
+        // Step 4: check 3.2.3 constraints
+
+        // src-attribute
+
+        // 1 default and fixed must not both be present.
+        if (defaultAtt != null && fixedAtt != null) {
+            reportSchemaError("src-attribute.1", new Object[]{nameAtt}, attrDecl);
+        }
+
+        // 2 If default and use are both present, use must have the actual value optional.
+        // This is checked in "traverse" method
+
+        // 3 If the item's parent is not <schema>, then all of the following must be true:
+        // 3.1 One of ref or name must be present, but not both.
+        // This is checked in XSAttributeChecker
+
+        // 3.2 If ref is present, then all of <simpleType>, form and type must be absent.
+        // Attributes are checked in XSAttributeChecker, elements are checked in "traverse" method
+
+        // 4 type and <simpleType> must not both be present.
+        if (haveAnonType && (typeAtt != null)) {
+            reportSchemaError( "src-attribute.4", new Object[]{nameAtt}, attrDecl);
+        }
+
+        // Step 5: check 3.2.6 constraints
+        // check for NOTATION type
+        checkNotationType(nameAtt, attrType, attrDecl);
+
+        // a-props-correct
+
+        // 2 if there is a {value constraint}, the canonical lexical representation of its value must be valid with respect to the {type definition} as defined in String Valid (3.14.4).
+        if (attDefault != null) {
+            fValidationState.setNamespaceSupport(schemaDoc.fNamespaceSupport);
+            try {
+                checkDefaultValid(attribute);
+            }
+            catch (InvalidDatatypeValueException ide) {
+                reportSchemaError (ide.getKey(), ide.getArgs(), attrDecl);
+                reportSchemaError ("a-props-correct.2", new Object[]{nameAtt, attDefault.normalizedValue}, attrDecl);
+                // Recover by removing the default value
+                attDefault = null;
+                constraintType = XSConstants.VC_NONE;
+                attribute.setValues(nameAtt, tnsAtt, attrType, constraintType, scope,
+                        attDefault, enclCT, annotations);
+            }
+        }
+
+        // 3 If the {type definition} is or is derived from ID then there must not be a {value constraint}.
+        if (attDefault != null) {
+            if (attrType.isIDType() ) {
+                reportSchemaError ("a-props-correct.3", new Object[]{nameAtt}, attrDecl);
+                // Recover by removing the default value
+                attDefault = null;
+                constraintType = XSConstants.VC_NONE;
+                attribute.setValues(nameAtt, tnsAtt, attrType, constraintType, scope,
+                        attDefault, enclCT, annotations);
+            }
+        }
+
+        // no-xmlns
+
+        // The {name} of an attribute declaration must not match xmlns.
+        if (nameAtt != null && nameAtt.equals(XMLSymbols.PREFIX_XMLNS)) {
+            reportSchemaError("no-xmlns", null, attrDecl);
+            return null;
+        }
+
+        // no-xsi
+
+        // The {target namespace} of an attribute declaration, whether local or top-level, must not match http://www.w3.org/2001/XMLSchema-instance (unless it is one of the four built-in declarations given in the next section).
+        if (tnsAtt != null && tnsAtt.equals(SchemaSymbols.URI_XSI)) {
+            reportSchemaError("no-xsi", new Object[]{SchemaSymbols.URI_XSI}, attrDecl);
+            return null;
+        }
+
+        // Attribute without a name. Return null.
+        if (nameAtt.equals(NO_NAME))
+            return null;
+
+        // Step 2: register attribute decl to the grammar
+        if (isGlobal) {
+            if (grammar.getGlobalAttributeDecl(nameAtt) == null) {
+                grammar.addGlobalAttributeDecl(attribute);
+            }
+
+            // also add it to extended map
+            final String loc = fSchemaHandler.schemaDocument2SystemId(schemaDoc);
+            final XSAttributeDecl attribute2 = grammar.getGlobalAttributeDecl(nameAtt, loc);
+            if (attribute2  == null) {
+                grammar.addGlobalAttributeDecl(attribute, loc);
+            }
+
+            if (fSchemaHandler.fTolerateDuplicates) {
+                if (attribute2  != null) {
+                    attribute = attribute2;
+                }
+                fSchemaHandler.addGlobalAttributeDecl(attribute);
+            }
+        }
+
+        return attribute;
+    }
+
+    // throws an error if the constraint value is invalid for the given type
+    void checkDefaultValid(XSAttributeDecl attribute) throws InvalidDatatypeValueException {
+        // validate the original lexical rep, and set the actual value
+        ((XSSimpleType)attribute.getTypeDefinition()).validate(attribute.getValInfo().normalizedValue, fValidationState, attribute.getValInfo());
+        // validate the canonical lexical rep
+        ((XSSimpleType)attribute.getTypeDefinition()).validate(attribute.getValInfo().stringValue(), fValidationState, attribute.getValInfo());
+    }
+
+    // throws an error if the constraint value is invalid for the given type
+    void checkDefaultValid(XSAttributeUseImpl attrUse) throws InvalidDatatypeValueException {
+        // validate the original lexical rep, and set the actual value
+        ((XSSimpleType)attrUse.fAttrDecl.getTypeDefinition()).validate(attrUse.fDefault.normalizedValue, fValidationState, attrUse.fDefault);
+        // validate the canonical lexical rep
+        ((XSSimpleType)attrUse.fAttrDecl.getTypeDefinition()).validate(attrUse.fDefault.stringValue(), fValidationState, attrUse.fDefault);
+    }
+
+}

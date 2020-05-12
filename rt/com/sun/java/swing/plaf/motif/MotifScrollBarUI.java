@@ -1,112 +1,106 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicScrollBarUI;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifScrollBarUI
-/*     */   extends BasicScrollBarUI
-/*     */ {
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  59 */     return new MotifScrollBarUI();
-/*     */   }
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/*  63 */     Insets insets = paramJComponent.getInsets();
-/*  64 */     int i = insets.left + insets.right;
-/*  65 */     int j = insets.top + insets.bottom;
-/*  66 */     return (this.scrollbar.getOrientation() == 1) ? new Dimension(i + 11, j + 33) : new Dimension(i + 33, j + 11);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected JButton createDecreaseButton(int paramInt) {
-/*  72 */     return new MotifScrollBarButton(paramInt);
-/*     */   }
-/*     */   
-/*     */   protected JButton createIncreaseButton(int paramInt) {
-/*  76 */     return new MotifScrollBarButton(paramInt);
-/*     */   }
-/*     */   
-/*     */   public void paintTrack(Graphics paramGraphics, JComponent paramJComponent, Rectangle paramRectangle) {
-/*  80 */     paramGraphics.setColor(this.trackColor);
-/*  81 */     paramGraphics.fillRect(paramRectangle.x, paramRectangle.y, paramRectangle.width, paramRectangle.height);
-/*     */   }
-/*     */   
-/*     */   public void paintThumb(Graphics paramGraphics, JComponent paramJComponent, Rectangle paramRectangle) {
-/*  85 */     if (paramRectangle.isEmpty() || !this.scrollbar.isEnabled()) {
-/*     */       return;
-/*     */     }
-/*     */     
-/*  89 */     int i = paramRectangle.width;
-/*  90 */     int j = paramRectangle.height;
-/*     */     
-/*  92 */     paramGraphics.translate(paramRectangle.x, paramRectangle.y);
-/*  93 */     paramGraphics.setColor(this.thumbColor);
-/*  94 */     paramGraphics.fillRect(0, 0, i - 1, j - 1);
-/*     */     
-/*  96 */     paramGraphics.setColor(this.thumbHighlightColor);
-/*  97 */     SwingUtilities2.drawVLine(paramGraphics, 0, 0, j - 1);
-/*  98 */     SwingUtilities2.drawHLine(paramGraphics, 1, i - 1, 0);
-/*     */     
-/* 100 */     paramGraphics.setColor(this.thumbLightShadowColor);
-/* 101 */     SwingUtilities2.drawHLine(paramGraphics, 1, i - 1, j - 1);
-/* 102 */     SwingUtilities2.drawVLine(paramGraphics, i - 1, 1, j - 2);
-/*     */     
-/* 104 */     paramGraphics.translate(-paramRectangle.x, -paramRectangle.y);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifScrollBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.java.swing.plaf.motif;
+
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+
+import static sun.swing.SwingUtilities2.drawHLine;
+import static sun.swing.SwingUtilities2.drawVLine;
+
+
+/**
+ * Implementation of ScrollBarUI for the Motif Look and Feel
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Rich Schiavi
+ * @author Hans Muller
+ */
+public class MotifScrollBarUI extends BasicScrollBarUI
+{
+
+    public static ComponentUI createUI(JComponent c) {
+        return new MotifScrollBarUI();
+    }
+
+    public Dimension getPreferredSize(JComponent c) {
+        Insets insets = c.getInsets();
+        int dx = insets.left + insets.right;
+        int dy = insets.top + insets.bottom;
+        return (scrollbar.getOrientation() == JScrollBar.VERTICAL)
+            ? new Dimension(dx + 11, dy + 33)
+            : new Dimension(dx + 33, dy + 11);
+    }
+
+    protected JButton createDecreaseButton(int orientation) {
+        return new MotifScrollBarButton(orientation);
+    }
+
+    protected JButton createIncreaseButton(int orientation) {
+        return new MotifScrollBarButton(orientation);
+    }
+
+    public void paintTrack(Graphics g, JComponent c, Rectangle trackBounds)  {
+        g.setColor(trackColor);
+        g.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+    }
+
+    public void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+        if (thumbBounds.isEmpty() || !scrollbar.isEnabled()) {
+            return;
+        }
+
+        int w = thumbBounds.width;
+        int h = thumbBounds.height;
+
+        g.translate(thumbBounds.x, thumbBounds.y);
+        g.setColor(thumbColor);
+        g.fillRect(0, 0, w - 1, h - 1);
+
+        g.setColor(thumbHighlightColor);
+        drawVLine(g, 0, 0, h - 1);
+        drawHLine(g, 1, w - 1, 0);
+
+        g.setColor(thumbLightShadowColor);
+        drawHLine(g, 1, w - 1, h - 1);
+        drawVLine(g, w - 1, 1, h - 2);
+
+        g.translate(-thumbBounds.x, -thumbBounds.y);
+    }
+}

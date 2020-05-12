@@ -1,11 +1,52 @@
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+
 package javax.management.remote;
 
-public interface JMXAddressable {
-  JMXServiceURL getAddress();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\remote\JMXAddressable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * <p>Implemented by objects that can have a {@code JMXServiceURL} address.
+ * All {@link JMXConnectorServer} objects implement this interface.
+ * Depending on the connector implementation, a {@link JMXConnector}
+ * object may implement this interface too.  {@code JMXConnector}
+ * objects for the RMI Connector are instances of
+ * {@link javax.management.remote.rmi.RMIConnector RMIConnector} which
+ * implements this interface.</p>
+ *
+ * <p>An object implementing this interface might not have an address
+ * at a given moment.  This is indicated by a null return value from
+ * {@link #getAddress()}.</p>
+ *
+ * @since 1.6
  */
+public interface JMXAddressable {
+    /**
+     * <p>The address of this object.</p>
+     *
+     * @return the address of this object, or null if it
+     * does not have one.
+     */
+    public JMXServiceURL getAddress();
+}

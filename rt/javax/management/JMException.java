@@ -1,61 +1,56 @@
-/*    */ package javax.management;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JMException
-/*    */   extends Exception
-/*    */ {
-/*    */   private static final long serialVersionUID = 350520924977331825L;
-/*    */   
-/*    */   public JMException() {}
-/*    */   
-/*    */   public JMException(String paramString) {
-/* 53 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\JMException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+/**
+ * Exceptions thrown by JMX implementations.
+ * It does not include the runtime exceptions.
+ *
+ * @since 1.5
+ */
+public class JMException extends java.lang.Exception   {
+
+    /* Serial version */
+    private static final long serialVersionUID = 350520924977331825L;
+
+    /**
+     * Default constructor.
+     */
+    public JMException() {
+        super();
+    }
+
+    /**
+     * Constructor that allows a specific error message to be specified.
+     *
+     * @param msg the detail message.
+     */
+    public JMException(String msg) {
+        super(msg);
+    }
+
+}

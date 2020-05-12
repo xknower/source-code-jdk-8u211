@@ -1,612 +1,608 @@
-/*     */ package javax.swing.plaf.basic;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.FocusTraversalPolicy;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.KeyboardFocusManager;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.KeyEvent;
-/*     */ import java.awt.event.KeyListener;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.HashSet;
-/*     */ import javax.swing.AbstractAction;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonGroup;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.DefaultButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JRadioButton;
-/*     */ import javax.swing.KeyStroke;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.text.View;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BasicRadioButtonUI
-/*     */   extends BasicToggleButtonUI
-/*     */ {
-/*  46 */   private static final Object BASIC_RADIO_BUTTON_UI_KEY = new Object();
-/*     */ 
-/*     */   
-/*     */   protected Icon icon;
-/*     */ 
-/*     */   
-/*     */   private boolean defaults_initialized = false;
-/*     */ 
-/*     */   
-/*     */   private static final String propertyPrefix = "RadioButton.";
-/*     */   
-/*  57 */   private KeyListener keyListener = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  70 */     AppContext appContext = AppContext.getAppContext();
-/*     */     
-/*  72 */     BasicRadioButtonUI basicRadioButtonUI = (BasicRadioButtonUI)appContext.get(BASIC_RADIO_BUTTON_UI_KEY);
-/*  73 */     if (basicRadioButtonUI == null) {
-/*  74 */       basicRadioButtonUI = new BasicRadioButtonUI();
-/*  75 */       appContext.put(BASIC_RADIO_BUTTON_UI_KEY, basicRadioButtonUI);
-/*     */     } 
-/*  77 */     return basicRadioButtonUI;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected String getPropertyPrefix() {
-/*  82 */     return "RadioButton.";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults(AbstractButton paramAbstractButton) {
-/*  90 */     super.installDefaults(paramAbstractButton);
-/*  91 */     if (!this.defaults_initialized) {
-/*  92 */       this.icon = UIManager.getIcon(getPropertyPrefix() + "icon");
-/*  93 */       this.defaults_initialized = true;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults(AbstractButton paramAbstractButton) {
-/* 102 */     super.uninstallDefaults(paramAbstractButton);
-/* 103 */     this.defaults_initialized = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getDefaultIcon() {
-/* 112 */     return this.icon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners(AbstractButton paramAbstractButton) {
-/* 120 */     super.installListeners(paramAbstractButton);
-/*     */ 
-/*     */     
-/* 123 */     if (!(paramAbstractButton instanceof JRadioButton)) {
-/*     */       return;
-/*     */     }
-/* 126 */     this.keyListener = createKeyListener();
-/* 127 */     paramAbstractButton.addKeyListener(this.keyListener);
-/*     */ 
-/*     */     
-/* 130 */     paramAbstractButton.setFocusTraversalKeysEnabled(false);
-/*     */ 
-/*     */     
-/* 133 */     paramAbstractButton.getActionMap().put("Previous", new SelectPreviousBtn());
-/* 134 */     paramAbstractButton.getActionMap().put("Next", new SelectNextBtn());
-/*     */     
-/* 136 */     paramAbstractButton.getInputMap(1)
-/* 137 */       .put(KeyStroke.getKeyStroke("UP"), "Previous");
-/* 138 */     paramAbstractButton.getInputMap(1)
-/* 139 */       .put(KeyStroke.getKeyStroke("DOWN"), "Next");
-/* 140 */     paramAbstractButton.getInputMap(1)
-/* 141 */       .put(KeyStroke.getKeyStroke("LEFT"), "Previous");
-/* 142 */     paramAbstractButton.getInputMap(1)
-/* 143 */       .put(KeyStroke.getKeyStroke("RIGHT"), "Next");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners(AbstractButton paramAbstractButton) {
-/* 151 */     super.uninstallListeners(paramAbstractButton);
-/*     */ 
-/*     */     
-/* 154 */     if (!(paramAbstractButton instanceof JRadioButton)) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 158 */     paramAbstractButton.getActionMap().remove("Previous");
-/* 159 */     paramAbstractButton.getActionMap().remove("Next");
-/* 160 */     paramAbstractButton.getInputMap(1)
-/* 161 */       .remove(KeyStroke.getKeyStroke("UP"));
-/* 162 */     paramAbstractButton.getInputMap(1)
-/* 163 */       .remove(KeyStroke.getKeyStroke("DOWN"));
-/* 164 */     paramAbstractButton.getInputMap(1)
-/* 165 */       .remove(KeyStroke.getKeyStroke("LEFT"));
-/* 166 */     paramAbstractButton.getInputMap(1)
-/* 167 */       .remove(KeyStroke.getKeyStroke("RIGHT"));
-/*     */     
-/* 169 */     if (this.keyListener != null) {
-/* 170 */       paramAbstractButton.removeKeyListener(this.keyListener);
-/* 171 */       this.keyListener = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 181 */   private static Dimension size = new Dimension();
-/* 182 */   private static Rectangle viewRect = new Rectangle();
-/* 183 */   private static Rectangle iconRect = new Rectangle();
-/* 184 */   private static Rectangle textRect = new Rectangle();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 191 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 192 */     ButtonModel buttonModel = abstractButton.getModel();
-/*     */     
-/* 194 */     Font font = paramJComponent.getFont();
-/* 195 */     paramGraphics.setFont(font);
-/* 196 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(paramJComponent, paramGraphics, font);
-/*     */     
-/* 198 */     Insets insets = paramJComponent.getInsets();
-/* 199 */     size = abstractButton.getSize(size);
-/* 200 */     viewRect.x = insets.left;
-/* 201 */     viewRect.y = insets.top;
-/* 202 */     viewRect.width = size.width - insets.right + viewRect.x;
-/* 203 */     viewRect.height = size.height - insets.bottom + viewRect.y;
-/* 204 */     iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
-/* 205 */     textRect.x = textRect.y = textRect.width = textRect.height = 0;
-/*     */     
-/* 207 */     Icon icon = abstractButton.getIcon();
-/* 208 */     Object object1 = null;
-/* 209 */     Object object2 = null;
-/*     */     
-/* 211 */     String str = SwingUtilities.layoutCompoundLabel(paramJComponent, fontMetrics, abstractButton
-/* 212 */         .getText(), (icon != null) ? icon : getDefaultIcon(), abstractButton
-/* 213 */         .getVerticalAlignment(), abstractButton.getHorizontalAlignment(), abstractButton
-/* 214 */         .getVerticalTextPosition(), abstractButton.getHorizontalTextPosition(), viewRect, iconRect, textRect, 
-/*     */         
-/* 216 */         (abstractButton.getText() == null) ? 0 : abstractButton.getIconTextGap());
-/*     */ 
-/*     */     
-/* 219 */     if (paramJComponent.isOpaque()) {
-/* 220 */       paramGraphics.setColor(abstractButton.getBackground());
-/* 221 */       paramGraphics.fillRect(0, 0, size.width, size.height);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 226 */     if (icon != null) {
-/*     */       
-/* 228 */       if (!buttonModel.isEnabled()) {
-/* 229 */         if (buttonModel.isSelected()) {
-/* 230 */           icon = abstractButton.getDisabledSelectedIcon();
-/*     */         } else {
-/* 232 */           icon = abstractButton.getDisabledIcon();
-/*     */         } 
-/* 234 */       } else if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 235 */         icon = abstractButton.getPressedIcon();
-/* 236 */         if (icon == null)
-/*     */         {
-/* 238 */           icon = abstractButton.getSelectedIcon();
-/*     */         }
-/* 240 */       } else if (buttonModel.isSelected()) {
-/* 241 */         if (abstractButton.isRolloverEnabled() && buttonModel.isRollover()) {
-/* 242 */           icon = abstractButton.getRolloverSelectedIcon();
-/* 243 */           if (icon == null) {
-/* 244 */             icon = abstractButton.getSelectedIcon();
-/*     */           }
-/*     */         } else {
-/* 247 */           icon = abstractButton.getSelectedIcon();
-/*     */         } 
-/* 249 */       } else if (abstractButton.isRolloverEnabled() && buttonModel.isRollover()) {
-/* 250 */         icon = abstractButton.getRolloverIcon();
-/*     */       } 
-/*     */       
-/* 253 */       if (icon == null) {
-/* 254 */         icon = abstractButton.getIcon();
-/*     */       }
-/*     */       
-/* 257 */       icon.paintIcon(paramJComponent, paramGraphics, iconRect.x, iconRect.y);
-/*     */     } else {
-/*     */       
-/* 260 */       getDefaultIcon().paintIcon(paramJComponent, paramGraphics, iconRect.x, iconRect.y);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 265 */     if (str != null) {
-/* 266 */       View view = (View)paramJComponent.getClientProperty("html");
-/* 267 */       if (view != null) {
-/* 268 */         view.paint(paramGraphics, textRect);
-/*     */       } else {
-/* 270 */         paintText(paramGraphics, abstractButton, textRect, str);
-/*     */       } 
-/* 272 */       if (abstractButton.hasFocus() && abstractButton.isFocusPainted() && textRect.width > 0 && textRect.height > 0)
-/*     */       {
-/* 274 */         paintFocus(paramGraphics, textRect, size);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintFocus(Graphics paramGraphics, Rectangle paramRectangle, Dimension paramDimension) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 296 */   private static Rectangle prefViewRect = new Rectangle();
-/* 297 */   private static Rectangle prefIconRect = new Rectangle();
-/* 298 */   private static Rectangle prefTextRect = new Rectangle();
-/* 299 */   private static Insets prefInsets = new Insets(0, 0, 0, 0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 306 */     if (paramJComponent.getComponentCount() > 0) {
-/* 307 */       return null;
-/*     */     }
-/*     */     
-/* 310 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/*     */     
-/* 312 */     String str = abstractButton.getText();
-/*     */     
-/* 314 */     Icon icon = abstractButton.getIcon();
-/* 315 */     if (icon == null) {
-/* 316 */       icon = getDefaultIcon();
-/*     */     }
-/*     */     
-/* 319 */     Font font = abstractButton.getFont();
-/* 320 */     FontMetrics fontMetrics = abstractButton.getFontMetrics(font);
-/*     */     
-/* 322 */     prefViewRect.x = prefViewRect.y = 0;
-/* 323 */     prefViewRect.width = 32767;
-/* 324 */     prefViewRect.height = 32767;
-/* 325 */     prefIconRect.x = prefIconRect.y = prefIconRect.width = prefIconRect.height = 0;
-/* 326 */     prefTextRect.x = prefTextRect.y = prefTextRect.width = prefTextRect.height = 0;
-/*     */     
-/* 328 */     SwingUtilities.layoutCompoundLabel(paramJComponent, fontMetrics, str, icon, abstractButton
-/*     */         
-/* 330 */         .getVerticalAlignment(), abstractButton.getHorizontalAlignment(), abstractButton
-/* 331 */         .getVerticalTextPosition(), abstractButton.getHorizontalTextPosition(), prefViewRect, prefIconRect, prefTextRect, (str == null) ? 0 : abstractButton
-/*     */         
-/* 333 */         .getIconTextGap());
-/*     */ 
-/*     */     
-/* 336 */     int i = Math.min(prefIconRect.x, prefTextRect.x);
-/* 337 */     int j = Math.max(prefIconRect.x + prefIconRect.width, prefTextRect.x + prefTextRect.width);
-/*     */     
-/* 339 */     int k = Math.min(prefIconRect.y, prefTextRect.y);
-/* 340 */     int m = Math.max(prefIconRect.y + prefIconRect.height, prefTextRect.y + prefTextRect.height);
-/*     */     
-/* 342 */     int n = j - i;
-/* 343 */     int i1 = m - k;
-/*     */     
-/* 345 */     prefInsets = abstractButton.getInsets(prefInsets);
-/* 346 */     n += prefInsets.left + prefInsets.right;
-/* 347 */     i1 += prefInsets.top + prefInsets.bottom;
-/* 348 */     return new Dimension(n, i1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private KeyListener createKeyListener() {
-/* 356 */     if (this.keyListener == null) {
-/* 357 */       this.keyListener = new KeyHandler();
-/*     */     }
-/* 359 */     return this.keyListener;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private boolean isValidRadioButtonObj(Object paramObject) {
-/* 364 */     return (paramObject instanceof JRadioButton && ((JRadioButton)paramObject)
-/* 365 */       .isVisible() && ((JRadioButton)paramObject)
-/* 366 */       .isEnabled());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void selectRadioButton(ActionEvent paramActionEvent, boolean paramBoolean) {
-/* 377 */     Object object = paramActionEvent.getSource();
-/*     */ 
-/*     */     
-/* 380 */     if (!isValidRadioButtonObj(object)) {
-/*     */       return;
-/*     */     }
-/* 383 */     ButtonGroupInfo buttonGroupInfo = new ButtonGroupInfo((JRadioButton)object);
-/* 384 */     buttonGroupInfo.selectNewButton(paramBoolean);
-/*     */   }
-/*     */   
-/*     */   private class SelectPreviousBtn
-/*     */     extends AbstractAction
-/*     */   {
-/*     */     public SelectPreviousBtn() {
-/* 391 */       super("Previous");
-/*     */     }
-/*     */     
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 395 */       BasicRadioButtonUI.this.selectRadioButton(param1ActionEvent, false);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private class SelectNextBtn
-/*     */     extends AbstractAction {
-/*     */     public SelectNextBtn() {
-/* 402 */       super("Next");
-/*     */     }
-/*     */     
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 406 */       BasicRadioButtonUI.this.selectRadioButton(param1ActionEvent, true);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private class ButtonGroupInfo
-/*     */   {
-/* 416 */     JRadioButton activeBtn = null;
-/*     */     
-/* 418 */     JRadioButton firstBtn = null;
-/* 419 */     JRadioButton lastBtn = null;
-/*     */     
-/* 421 */     JRadioButton previousBtn = null;
-/* 422 */     JRadioButton nextBtn = null;
-/*     */     
-/* 424 */     HashSet<JRadioButton> btnsInGroup = null;
-/*     */     boolean srcFound = false;
-/*     */     
-/*     */     public ButtonGroupInfo(JRadioButton param1JRadioButton) {
-/* 428 */       this.activeBtn = param1JRadioButton;
-/* 429 */       this.btnsInGroup = new HashSet<>();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     boolean containsInGroup(Object param1Object) {
-/* 434 */       return this.btnsInGroup.contains(param1Object);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Component getFocusTransferBaseComponent(boolean param1Boolean) {
-/* 440 */       JRadioButton jRadioButton = this.activeBtn;
-/* 441 */       Container container = jRadioButton.getFocusCycleRootAncestor();
-/* 442 */       if (container != null) {
-/* 443 */         FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy();
-/*     */         
-/* 445 */         Component component = param1Boolean ? focusTraversalPolicy.getComponentAfter(container, this.activeBtn) : focusTraversalPolicy.getComponentBefore(container, this.activeBtn);
-/*     */ 
-/*     */ 
-/*     */         
-/* 449 */         if (containsInGroup(component)) {
-/* 450 */           jRadioButton = param1Boolean ? this.lastBtn : this.firstBtn;
-/*     */         }
-/*     */       } 
-/*     */       
-/* 454 */       return jRadioButton;
-/*     */     }
-/*     */     
-/*     */     boolean getButtonGroupInfo() {
-/* 458 */       if (this.activeBtn == null) {
-/* 459 */         return false;
-/*     */       }
-/* 461 */       this.btnsInGroup.clear();
-/*     */ 
-/*     */       
-/* 464 */       ButtonModel buttonModel = this.activeBtn.getModel();
-/* 465 */       if (!(buttonModel instanceof DefaultButtonModel)) {
-/* 466 */         return false;
-/*     */       }
-/*     */       
-/* 469 */       DefaultButtonModel defaultButtonModel = (DefaultButtonModel)buttonModel;
-/*     */ 
-/*     */       
-/* 472 */       ButtonGroup buttonGroup = defaultButtonModel.getGroup();
-/* 473 */       if (buttonGroup == null) {
-/* 474 */         return false;
-/*     */       }
-/*     */       
-/* 477 */       Enumeration<AbstractButton> enumeration = buttonGroup.getElements();
-/* 478 */       if (enumeration == null) {
-/* 479 */         return false;
-/*     */       }
-/* 481 */       while (enumeration.hasMoreElements()) {
-/* 482 */         AbstractButton abstractButton = enumeration.nextElement();
-/* 483 */         if (!BasicRadioButtonUI.this.isValidRadioButtonObj(abstractButton)) {
-/*     */           continue;
-/*     */         }
-/* 486 */         this.btnsInGroup.add((JRadioButton)abstractButton);
-/*     */ 
-/*     */         
-/* 489 */         if (null == this.firstBtn) {
-/* 490 */           this.firstBtn = (JRadioButton)abstractButton;
-/*     */         }
-/* 492 */         if (this.activeBtn == abstractButton) {
-/* 493 */           this.srcFound = true;
-/* 494 */         } else if (!this.srcFound) {
-/*     */ 
-/*     */           
-/* 497 */           this.previousBtn = (JRadioButton)abstractButton;
-/* 498 */         } else if (this.nextBtn == null) {
-/*     */ 
-/*     */           
-/* 501 */           this.nextBtn = (JRadioButton)abstractButton;
-/*     */         } 
-/*     */ 
-/*     */         
-/* 505 */         this.lastBtn = (JRadioButton)abstractButton;
-/*     */       } 
-/*     */       
-/* 508 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void selectNewButton(boolean param1Boolean) {
-/* 518 */       if (!getButtonGroupInfo()) {
-/*     */         return;
-/*     */       }
-/* 521 */       if (this.srcFound) {
-/* 522 */         JRadioButton jRadioButton = null;
-/* 523 */         if (param1Boolean) {
-/*     */ 
-/*     */           
-/* 526 */           jRadioButton = (null == this.nextBtn) ? this.firstBtn : this.nextBtn;
-/*     */         }
-/*     */         else {
-/*     */           
-/* 530 */           jRadioButton = (null == this.previousBtn) ? this.lastBtn : this.previousBtn;
-/*     */         } 
-/* 532 */         if (jRadioButton != null && jRadioButton != this.activeBtn) {
-/*     */           
-/* 534 */           jRadioButton.requestFocusInWindow();
-/* 535 */           jRadioButton.setSelected(true);
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void jumpToNextComponent(boolean param1Boolean) {
-/* 548 */       if (!getButtonGroupInfo())
-/*     */       {
-/*     */         
-/* 551 */         if (this.activeBtn != null) {
-/* 552 */           this.lastBtn = this.activeBtn;
-/* 553 */           this.firstBtn = this.activeBtn;
-/*     */         } else {
-/*     */           return;
-/*     */         } 
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 561 */       JRadioButton jRadioButton = this.activeBtn;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 567 */       Component component = getFocusTransferBaseComponent(param1Boolean);
-/* 568 */       if (component != null) {
-/* 569 */         if (param1Boolean) {
-/*     */           
-/* 571 */           KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(component);
-/*     */         } else {
-/*     */           
-/* 574 */           KeyboardFocusManager.getCurrentKeyboardFocusManager().focusPreviousComponent(component);
-/*     */         } 
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private class KeyHandler
-/*     */     implements KeyListener
-/*     */   {
-/*     */     private KeyHandler() {}
-/*     */ 
-/*     */     
-/*     */     public void keyPressed(KeyEvent param1KeyEvent) {
-/* 589 */       if (param1KeyEvent.getKeyCode() == 9) {
-/*     */         
-/* 591 */         Object object = param1KeyEvent.getSource();
-/*     */ 
-/*     */         
-/* 594 */         if (BasicRadioButtonUI.this.isValidRadioButtonObj(object)) {
-/* 595 */           param1KeyEvent.consume();
-/* 596 */           BasicRadioButtonUI.ButtonGroupInfo buttonGroupInfo = new BasicRadioButtonUI.ButtonGroupInfo((JRadioButton)object);
-/* 597 */           buttonGroupInfo.jumpToNextComponent(!param1KeyEvent.isShiftDown());
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void keyReleased(KeyEvent param1KeyEvent) {}
-/*     */     
-/*     */     public void keyTyped(KeyEvent param1KeyEvent) {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicRadioButtonUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.text.View;
+import sun.swing.SwingUtilities2;
+import sun.awt.AppContext;
+import java.util.Enumeration;
+import java.util.HashSet;
+
+/**
+ * RadioButtonUI implementation for BasicRadioButtonUI
+ *
+ * @author Jeff Dinkins
+ */
+public class BasicRadioButtonUI extends BasicToggleButtonUI
+{
+    private static final Object BASIC_RADIO_BUTTON_UI_KEY = new Object();
+
+    /**
+     * The icon.
+     */
+    protected Icon icon;
+
+    private boolean defaults_initialized = false;
+
+    private final static String propertyPrefix = "RadioButton" + ".";
+
+    private KeyListener keyListener = null;
+
+    // ********************************
+    //        Create PLAF
+    // ********************************
+
+    /**
+     * Returns an instance of {@code BasicRadioButtonUI}.
+     *
+     * @param b a component
+     * @return an instance of {@code BasicRadioButtonUI}
+     */
+    public static ComponentUI createUI(JComponent b) {
+        AppContext appContext = AppContext.getAppContext();
+        BasicRadioButtonUI radioButtonUI =
+                (BasicRadioButtonUI) appContext.get(BASIC_RADIO_BUTTON_UI_KEY);
+        if (radioButtonUI == null) {
+            radioButtonUI = new BasicRadioButtonUI();
+            appContext.put(BASIC_RADIO_BUTTON_UI_KEY, radioButtonUI);
+        }
+        return radioButtonUI;
+    }
+
+    @Override
+    protected String getPropertyPrefix() {
+        return propertyPrefix;
+    }
+
+    // ********************************
+    //        Install PLAF
+    // ********************************
+    @Override
+    protected void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            icon = UIManager.getIcon(getPropertyPrefix() + "icon");
+            defaults_initialized = true;
+        }
+    }
+
+    // ********************************
+    //        Uninstall PLAF
+    // ********************************
+    @Override
+    protected void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
+    }
+
+    /**
+     * Returns the default icon.
+     *
+     * @return the default icon
+     */
+    public Icon getDefaultIcon() {
+        return icon;
+    }
+
+    // ********************************
+    //        Install Listeners
+    // ********************************
+    @Override
+    protected void installListeners(AbstractButton button) {
+        super.installListeners(button);
+
+        // Only for JRadioButton
+        if (!(button instanceof JRadioButton))
+            return;
+
+        keyListener = createKeyListener();
+        button.addKeyListener(keyListener);
+
+        // Need to get traversal key event
+        button.setFocusTraversalKeysEnabled(false);
+
+        // Map actions to the arrow keys
+        button.getActionMap().put("Previous", new SelectPreviousBtn());
+        button.getActionMap().put("Next", new SelectNextBtn());
+
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+            put(KeyStroke.getKeyStroke("UP"), "Previous");
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+            put(KeyStroke.getKeyStroke("DOWN"), "Next");
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+            put(KeyStroke.getKeyStroke("LEFT"), "Previous");
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+            put(KeyStroke.getKeyStroke("RIGHT"), "Next");
+    }
+
+    // ********************************
+    //        UnInstall Listeners
+    // ********************************
+    @Override
+    protected void uninstallListeners(AbstractButton button) {
+        super.uninstallListeners(button);
+
+        // Only for JRadioButton
+        if (!(button instanceof JRadioButton))
+            return;
+
+        // Unmap actions from the arrow keys
+        button.getActionMap().remove("Previous");
+        button.getActionMap().remove("Next");
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                    .remove(KeyStroke.getKeyStroke("UP"));
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                    .remove(KeyStroke.getKeyStroke("DOWN"));
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                    .remove(KeyStroke.getKeyStroke("LEFT"));
+        button.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                    .remove(KeyStroke.getKeyStroke("RIGHT"));
+
+        if (keyListener != null) {
+            button.removeKeyListener(keyListener);
+            keyListener = null;
+        }
+    }
+
+    /* These Dimensions/Rectangles are allocated once for all
+     * RadioButtonUI.paint() calls.  Re-using rectangles
+     * rather than allocating them in each paint call substantially
+     * reduced the time it took paint to run.  Obviously, this
+     * method can't be re-entered.
+     */
+    private static Dimension size = new Dimension();
+    private static Rectangle viewRect = new Rectangle();
+    private static Rectangle iconRect = new Rectangle();
+    private static Rectangle textRect = new Rectangle();
+
+    /**
+     * paint the radio button
+     */
+    @Override
+    public synchronized void paint(Graphics g, JComponent c) {
+        AbstractButton b = (AbstractButton) c;
+        ButtonModel model = b.getModel();
+
+        Font f = c.getFont();
+        g.setFont(f);
+        FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+
+        Insets i = c.getInsets();
+        size = b.getSize(size);
+        viewRect.x = i.left;
+        viewRect.y = i.top;
+        viewRect.width = size.width - (i.right + viewRect.x);
+        viewRect.height = size.height - (i.bottom + viewRect.y);
+        iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+        textRect.x = textRect.y = textRect.width = textRect.height = 0;
+
+        Icon altIcon = b.getIcon();
+        Icon selectedIcon = null;
+        Icon disabledIcon = null;
+
+        String text = SwingUtilities.layoutCompoundLabel(
+            c, fm, b.getText(), altIcon != null ? altIcon : getDefaultIcon(),
+            b.getVerticalAlignment(), b.getHorizontalAlignment(),
+            b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
+            viewRect, iconRect, textRect,
+            b.getText() == null ? 0 : b.getIconTextGap());
+
+        // fill background
+        if(c.isOpaque()) {
+            g.setColor(b.getBackground());
+            g.fillRect(0,0, size.width, size.height);
+        }
+
+
+        // Paint the radio button
+        if(altIcon != null) {
+
+            if(!model.isEnabled()) {
+                if(model.isSelected()) {
+                   altIcon = b.getDisabledSelectedIcon();
+                } else {
+                   altIcon = b.getDisabledIcon();
+                }
+            } else if(model.isPressed() && model.isArmed()) {
+                altIcon = b.getPressedIcon();
+                if(altIcon == null) {
+                    // Use selected icon
+                    altIcon = b.getSelectedIcon();
+                }
+            } else if(model.isSelected()) {
+                if(b.isRolloverEnabled() && model.isRollover()) {
+                        altIcon = b.getRolloverSelectedIcon();
+                        if (altIcon == null) {
+                                altIcon = b.getSelectedIcon();
+                        }
+                } else {
+                        altIcon = b.getSelectedIcon();
+                }
+            } else if(b.isRolloverEnabled() && model.isRollover()) {
+                altIcon = b.getRolloverIcon();
+            }
+
+            if(altIcon == null) {
+                altIcon = b.getIcon();
+            }
+
+            altIcon.paintIcon(c, g, iconRect.x, iconRect.y);
+
+        } else {
+            getDefaultIcon().paintIcon(c, g, iconRect.x, iconRect.y);
+        }
+
+
+        // Draw the Text
+        if(text != null) {
+            View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+            if (v != null) {
+                v.paint(g, textRect);
+            } else {
+                paintText(g, b, textRect, text);
+            }
+            if(b.hasFocus() && b.isFocusPainted() &&
+               textRect.width > 0 && textRect.height > 0 ) {
+                paintFocus(g, textRect, size);
+            }
+        }
+    }
+
+    /**
+     * Paints focused radio button.
+     *
+     * @param g an instance of {@code Graphics}
+     * @param textRect bounds
+     * @param size the size of radio button
+     */
+    protected void paintFocus(Graphics g, Rectangle textRect, Dimension size) {
+    }
+
+
+    /* These Insets/Rectangles are allocated once for all
+     * RadioButtonUI.getPreferredSize() calls.  Re-using rectangles
+     * rather than allocating them in each call substantially
+     * reduced the time it took getPreferredSize() to run.  Obviously,
+     * this method can't be re-entered.
+     */
+    private static Rectangle prefViewRect = new Rectangle();
+    private static Rectangle prefIconRect = new Rectangle();
+    private static Rectangle prefTextRect = new Rectangle();
+    private static Insets prefInsets = new Insets(0, 0, 0, 0);
+
+    /**
+     * The preferred size of the radio button
+     */
+    @Override
+    public Dimension getPreferredSize(JComponent c) {
+        if(c.getComponentCount() > 0) {
+            return null;
+        }
+
+        AbstractButton b = (AbstractButton) c;
+
+        String text = b.getText();
+
+        Icon buttonIcon = b.getIcon();
+        if(buttonIcon == null) {
+            buttonIcon = getDefaultIcon();
+        }
+
+        Font font = b.getFont();
+        FontMetrics fm = b.getFontMetrics(font);
+
+        prefViewRect.x = prefViewRect.y = 0;
+        prefViewRect.width = Short.MAX_VALUE;
+        prefViewRect.height = Short.MAX_VALUE;
+        prefIconRect.x = prefIconRect.y = prefIconRect.width = prefIconRect.height = 0;
+        prefTextRect.x = prefTextRect.y = prefTextRect.width = prefTextRect.height = 0;
+
+        SwingUtilities.layoutCompoundLabel(
+            c, fm, text, buttonIcon,
+            b.getVerticalAlignment(), b.getHorizontalAlignment(),
+            b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
+            prefViewRect, prefIconRect, prefTextRect,
+            text == null ? 0 : b.getIconTextGap());
+
+        // find the union of the icon and text rects (from Rectangle.java)
+        int x1 = Math.min(prefIconRect.x, prefTextRect.x);
+        int x2 = Math.max(prefIconRect.x + prefIconRect.width,
+                          prefTextRect.x + prefTextRect.width);
+        int y1 = Math.min(prefIconRect.y, prefTextRect.y);
+        int y2 = Math.max(prefIconRect.y + prefIconRect.height,
+                          prefTextRect.y + prefTextRect.height);
+        int width = x2 - x1;
+        int height = y2 - y1;
+
+        prefInsets = b.getInsets(prefInsets);
+        width += prefInsets.left + prefInsets.right;
+        height += prefInsets.top + prefInsets.bottom;
+        return new Dimension(width, height);
+    }
+
+    /////////////////////////// Private functions ////////////////////////
+    /**
+     * Creates the key listener to handle tab navigation in JRadioButton Group.
+     */
+    private KeyListener createKeyListener() {
+         if (keyListener == null) {
+            keyListener = new KeyHandler();
+        }
+        return keyListener;
+    }
+
+
+    private boolean isValidRadioButtonObj(Object obj) {
+        return ((obj instanceof JRadioButton) &&
+                    ((JRadioButton) obj).isVisible() &&
+                    ((JRadioButton) obj).isEnabled());
+    }
+
+    /**
+     * Select radio button based on "Previous" or "Next" operation
+     *
+     * @param event, the event object.
+     * @param next, indicate if it's next one
+     */
+    private void selectRadioButton(ActionEvent event, boolean next) {
+        // Get the source of the event.
+        Object eventSrc = event.getSource();
+
+        // Check whether the source is JRadioButton, it so, whether it is visible
+        if (!isValidRadioButtonObj(eventSrc))
+            return;
+
+        ButtonGroupInfo btnGroupInfo = new ButtonGroupInfo((JRadioButton)eventSrc);
+        btnGroupInfo.selectNewButton(next);
+    }
+
+    /////////////////////////// Inner Classes ////////////////////////
+    @SuppressWarnings("serial")
+    private class SelectPreviousBtn extends AbstractAction {
+        public SelectPreviousBtn() {
+            super("Previous");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+           BasicRadioButtonUI.this.selectRadioButton(e, false);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    private class SelectNextBtn extends AbstractAction{
+        public SelectNextBtn() {
+            super("Next");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            BasicRadioButtonUI.this.selectRadioButton(e, true);
+        }
+    }
+
+    /**
+     * ButtonGroupInfo, used to get related info in button group
+     * for given radio button
+     */
+    private class ButtonGroupInfo {
+
+        JRadioButton activeBtn = null;
+
+        JRadioButton firstBtn = null;
+        JRadioButton lastBtn = null;
+
+        JRadioButton previousBtn = null;
+        JRadioButton nextBtn = null;
+
+        HashSet<JRadioButton> btnsInGroup = null;
+
+        boolean srcFound = false;
+        public ButtonGroupInfo(JRadioButton btn) {
+            activeBtn = btn;
+            btnsInGroup = new HashSet<JRadioButton>();
+        }
+
+        // Check if given object is in the button group
+        boolean containsInGroup(Object obj){
+           return btnsInGroup.contains(obj);
+        }
+
+        // Check if the next object to gain focus belongs
+        // to the button group or not
+        Component getFocusTransferBaseComponent(boolean next){
+            Component focusBaseComp = activeBtn;
+            Container container = focusBaseComp.getFocusCycleRootAncestor();
+            if (container != null) {
+                FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
+                Component comp = next ? policy.getComponentAfter(container, activeBtn)
+                                      : policy.getComponentBefore(container, activeBtn);
+
+                // If next component in the button group, use last/first button as base focus
+                // otherwise, use the activeBtn as the base focus
+                if (containsInGroup(comp)) {
+                    focusBaseComp = next ? lastBtn : firstBtn;
+                }
+            }
+
+            return focusBaseComp;
+        }
+
+        boolean getButtonGroupInfo() {
+            if (activeBtn == null)
+                return false;
+
+            btnsInGroup.clear();
+
+            // Get the button model from the source.
+            ButtonModel model = activeBtn.getModel();
+            if (!(model instanceof DefaultButtonModel))
+                return false;
+
+            // If the button model is DefaultButtonModel, and use it, otherwise return.
+            DefaultButtonModel bm = (DefaultButtonModel) model;
+
+            // get the ButtonGroup of the button from the button model
+            ButtonGroup group = bm.getGroup();
+            if (group == null)
+                return false;
+
+            // Get all the buttons in the group
+            Enumeration<AbstractButton> e = group.getElements();
+            if (e == null)
+                return false;
+
+            while (e.hasMoreElements()) {
+                AbstractButton curElement = e.nextElement();
+                if (!isValidRadioButtonObj(curElement))
+                    continue;
+
+                btnsInGroup.add((JRadioButton) curElement);
+
+                // If firstBtn is not set yet, curElement is that first button
+                if (null == firstBtn)
+                    firstBtn = (JRadioButton) curElement;
+
+                if (activeBtn == curElement)
+                    srcFound = true;
+                else if (!srcFound) {
+                    // The source has not been yet found and the current element
+                    // is the last previousBtn
+                    previousBtn = (JRadioButton) curElement;
+                } else if (nextBtn == null) {
+                    // The source has been found and the current element
+                    // is the next valid button of the list
+                    nextBtn = (JRadioButton) curElement;
+                }
+
+                // Set new last "valid" JRadioButton of the list
+                lastBtn = (JRadioButton) curElement;
+            }
+
+            return true;
+        }
+
+        /**
+          * Find the new radio button that focus needs to be
+          * moved to in the group, select the button
+          *
+          * @param next, indicate if it's arrow up/left or down/right
+          */
+        void selectNewButton(boolean next) {
+            if (!getButtonGroupInfo())
+                return;
+
+            if (srcFound) {
+                JRadioButton newSelectedBtn = null;
+                if (next) {
+                    // Select Next button. Cycle to the first button if the source
+                    // button is the last of the group.
+                    newSelectedBtn = (null == nextBtn) ? firstBtn : nextBtn;
+                } else {
+                    // Select previous button. Cycle to the last button if the source
+                    // button is the first button of the group.
+                    newSelectedBtn = (null == previousBtn) ? lastBtn : previousBtn;
+                }
+                if (newSelectedBtn != null &&
+                    (newSelectedBtn != activeBtn)) {
+                    newSelectedBtn.requestFocusInWindow();
+                    newSelectedBtn.setSelected(true);
+                }
+            }
+        }
+
+        /**
+          * Find the button group the passed in JRadioButton belongs to, and
+          * move focus to next component of the last button in the group
+          * or previous component of first button
+          *
+          * @param next, indicate if jump to next component or previous
+          */
+        void jumpToNextComponent(boolean next) {
+            if (!getButtonGroupInfo()){
+                // In case the button does not belong to any group, it needs
+                // to be treated as a component
+                if (activeBtn != null){
+                    lastBtn = activeBtn;
+                    firstBtn = activeBtn;
+                }
+                else
+                    return;
+            }
+
+            // Update the component we will use as base to transfer
+            // focus from
+            JComponent compTransferFocusFrom = activeBtn;
+
+            // If next component in the parent window is not in
+            // the button group, current active button will be
+            // base, otherwise, the base will be first or last
+            // button in the button group
+            Component focusBase = getFocusTransferBaseComponent(next);
+            if (focusBase != null){
+                if (next) {
+                    KeyboardFocusManager.
+                        getCurrentKeyboardFocusManager().focusNextComponent(focusBase);
+                } else {
+                    KeyboardFocusManager.
+                        getCurrentKeyboardFocusManager().focusPreviousComponent(focusBase);
+                }
+            }
+        }
+    }
+
+    /**
+     * Radiobutton KeyListener
+     */
+    private class KeyHandler implements KeyListener {
+
+        // This listener checks if the key event is a KeyEvent.VK_TAB
+        // or shift + KeyEvent.VK_TAB event on a radio button, consume the event
+        // if so and move the focus to next/previous component
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_TAB) {
+                 // Get the source of the event.
+                Object eventSrc = e.getSource();
+
+                // Check whether the source is a visible and enabled JRadioButton
+                if (isValidRadioButtonObj(eventSrc)) {
+                    e.consume();
+                    ButtonGroupInfo btnGroupInfo = new ButtonGroupInfo((JRadioButton)eventSrc);
+                    btnGroupInfo.jumpToNextComponent(!e.isShiftDown());
+                }
+            }
+        }
+
+        public void keyReleased(KeyEvent e) {
+        }
+
+        public void keyTyped(KeyEvent e) {
+        }
+    }
+}

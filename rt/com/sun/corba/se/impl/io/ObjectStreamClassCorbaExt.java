@@ -1,117 +1,112 @@
-/*     */ package com.sun.corba.se.impl.io;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.rmi.Remote;
-/*     */ import java.rmi.RemoteException;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ObjectStreamClassCorbaExt
-/*     */ {
-/*     */   static final boolean isAbstractInterface(Class<?> paramClass) {
-/*  65 */     if (!paramClass.isInterface() || Remote.class
-/*  66 */       .isAssignableFrom(paramClass)) {
-/*  67 */       return false;
-/*     */     }
-/*  69 */     Method[] arrayOfMethod = paramClass.getMethods();
-/*  70 */     for (byte b = 0; b < arrayOfMethod.length; b++) {
-/*  71 */       Class[] arrayOfClass = arrayOfMethod[b].getExceptionTypes();
-/*  72 */       boolean bool = false;
-/*  73 */       for (byte b1 = 0; b1 < arrayOfClass.length && !bool; b1++) {
-/*  74 */         if (RemoteException.class == arrayOfClass[b1] || Throwable.class == arrayOfClass[b1] || Exception.class == arrayOfClass[b1] || IOException.class == arrayOfClass[b1])
-/*     */         {
-/*     */ 
-/*     */           
-/*  78 */           bool = true;
-/*     */         }
-/*     */       } 
-/*  81 */       if (!bool) {
-/*  82 */         return false;
-/*     */       }
-/*     */     } 
-/*  85 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final boolean isAny(String paramString) {
-/*  93 */     boolean bool = false;
-/*     */     
-/*  95 */     if (paramString != null && (paramString
-/*  96 */       .equals("Ljava/lang/Object;") || paramString
-/*  97 */       .equals("Ljava/io/Serializable;") || paramString
-/*  98 */       .equals("Ljava/io/Externalizable;"))) {
-/*  99 */       bool = true;
-/*     */     }
-/* 101 */     return (bool == true);
-/*     */   }
-/*     */   
-/*     */   private static final Method[] getDeclaredMethods(final Class clz) {
-/* 105 */     return AccessController.<Method[]>doPrivileged(new PrivilegedAction<Method>() {
-/*     */           public Object run() {
-/* 107 */             return clz.getDeclaredMethods();
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\io\ObjectStreamClassCorbaExt.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.io;
+
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedAction;
+
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+
+
+// This file contains some utility methods that
+// originally were in the OSC in the RMI-IIOP
+// code delivered by IBM.  They don't make
+// sense there, and hence have been put
+// here so that they can be factored out in
+// an attempt to eliminate redundant code from
+// ObjectStreamClass.  Eventually the goal is
+// to move to java.io.ObjectStreamClass, and
+// java.io.ObjectStreamField.
+
+// class is package private for security reasons
+
+class ObjectStreamClassCorbaExt {
+
+    /**
+     * Return true, iff,
+     *
+     * 1. 'cl' is an interface, and
+     * 2. 'cl' and all its ancestors do not implement java.rmi.Remote, and
+     * 3. if 'cl' has no methods (including those of its ancestors), or,
+     *    if all the methods (including those of its ancestors) throw an
+     *    exception that is atleast java.rmi.RemoteException or one of
+     *    java.rmi.RemoteException's super classes.
+     */
+    static final boolean isAbstractInterface(Class cl) {
+        if (!cl.isInterface() || // #1
+                java.rmi.Remote.class.isAssignableFrom(cl)) { // #2
+            return false;
+        }
+        Method[] methods = cl.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            Class exceptions[] = methods[i].getExceptionTypes();
+            boolean exceptionMatch = false;
+            for (int j = 0; (j < exceptions.length) && !exceptionMatch; j++) {
+                if ((java.rmi.RemoteException.class == exceptions[j]) ||
+                    (java.lang.Throwable.class == exceptions[j]) ||
+                    (java.lang.Exception.class == exceptions[j]) ||
+                    (java.io.IOException.class == exceptions[j])) {
+                    exceptionMatch = true;
+                }
+            }
+            if (!exceptionMatch) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
+     *  Returns TRUE if type is 'any'.
+     */
+    static final boolean isAny(String typeString) {
+
+        int isAny = 0;
+
+        if ( (typeString != null) &&
+            (typeString.equals("Ljava/lang/Object;") ||
+             typeString.equals("Ljava/io/Serializable;") ||
+             typeString.equals("Ljava/io/Externalizable;")) )
+                isAny = 1;
+
+        return (isAny==1);
+    }
+
+    private static final Method[] getDeclaredMethods(final Class clz) {
+        return (Method[]) AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                return clz.getDeclaredMethods();
+            }
+        });
+    }
+
+}

@@ -1,16 +1,44 @@
-package com.sun.corba.se.spi.transport;
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 
-import com.sun.corba.se.pept.transport.ContactInfoListIterator;
+package com.sun.corba.se.spi.transport ;
+
+import com.sun.corba.se.pept.transport.ContactInfoListIterator ;
+
 import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.transport.CorbaContactInfo;
 
-public interface CorbaContactInfoListIterator extends ContactInfoListIterator {
-  void reportAddrDispositionRetry(CorbaContactInfo paramCorbaContactInfo, short paramShort);
-  
-  void reportRedirect(CorbaContactInfo paramCorbaContactInfo, IOR paramIOR);
+public interface CorbaContactInfoListIterator extends ContactInfoListIterator
+{
+    // REVISIT: this is GIOP specific.
+    public void reportAddrDispositionRetry(CorbaContactInfo contactInfo,
+                                           short disposition);
+
+    public void reportRedirect(CorbaContactInfo contactInfo,
+                               IOR forwardedIOR);
+
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\transport\CorbaContactInfoListIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

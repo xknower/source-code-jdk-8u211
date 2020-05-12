@@ -1,563 +1,558 @@
-/*     */ package javax.print.attribute;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class SetOfIntegerSyntax
-/*     */   implements Serializable, Cloneable
-/*     */ {
-/*     */   private static final long serialVersionUID = 3666874174847632203L;
-/*     */   private int[][] members;
-/*     */   
-/*     */   protected SetOfIntegerSyntax(String paramString) {
-/* 106 */     this.members = parse(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int[][] parse(String paramString) {
-/* 115 */     Vector vector = new Vector();
-/*     */ 
-/*     */     
-/* 118 */     byte b1 = (paramString == null) ? 0 : paramString.length();
-/* 119 */     byte b2 = 0;
-/* 120 */     byte b3 = 0;
-/* 121 */     int i = 0;
-/* 122 */     int j = 0;
-/*     */ 
-/*     */     
-/* 125 */     while (b2 < b1) {
-/* 126 */       int k; char c = paramString.charAt(b2++);
-/* 127 */       switch (b3) {
-/*     */         
-/*     */         case false:
-/* 130 */           if (Character.isWhitespace(c)) {
-/* 131 */             b3 = 0; continue;
-/*     */           } 
-/* 133 */           if ((k = Character.digit(c, 10)) != -1) {
-/* 134 */             i = k;
-/* 135 */             b3 = 1; continue;
-/*     */           } 
-/* 137 */           throw new IllegalArgumentException();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case true:
-/* 142 */           if (Character.isWhitespace(c)) {
-/* 143 */             b3 = 2; continue;
-/* 144 */           }  if ((k = Character.digit(c, 10)) != -1) {
-/* 145 */             i = 10 * i + k;
-/* 146 */             b3 = 1; continue;
-/* 147 */           }  if (c == '-' || c == ':') {
-/* 148 */             b3 = 3; continue;
-/* 149 */           }  if (c == ',') {
-/* 150 */             accumulate(vector, i, i);
-/* 151 */             b3 = 6; continue;
-/*     */           } 
-/* 153 */           throw new IllegalArgumentException();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case true:
-/* 158 */           if (Character.isWhitespace(c)) {
-/* 159 */             b3 = 2; continue;
-/*     */           } 
-/* 161 */           if (c == '-' || c == ':') {
-/* 162 */             b3 = 3; continue;
-/*     */           } 
-/* 164 */           if (c == ',') {
-/* 165 */             accumulate(vector, i, i);
-/* 166 */             b3 = 6; continue;
-/*     */           } 
-/* 168 */           throw new IllegalArgumentException();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case true:
-/* 173 */           if (Character.isWhitespace(c)) {
-/* 174 */             b3 = 3; continue;
-/* 175 */           }  if ((k = Character.digit(c, 10)) != -1) {
-/* 176 */             j = k;
-/* 177 */             b3 = 4; continue;
-/*     */           } 
-/* 179 */           throw new IllegalArgumentException();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case true:
-/* 184 */           if (Character.isWhitespace(c)) {
-/* 185 */             b3 = 5; continue;
-/* 186 */           }  if ((k = Character.digit(c, 10)) != -1) {
-/* 187 */             j = 10 * j + k;
-/* 188 */             b3 = 4; continue;
-/* 189 */           }  if (c == ',') {
-/* 190 */             accumulate(vector, i, j);
-/* 191 */             b3 = 6; continue;
-/*     */           } 
-/* 193 */           throw new IllegalArgumentException();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case true:
-/* 198 */           if (Character.isWhitespace(c)) {
-/* 199 */             b3 = 5; continue;
-/* 200 */           }  if (c == ',') {
-/* 201 */             accumulate(vector, i, j);
-/* 202 */             b3 = 6; continue;
-/*     */           } 
-/* 204 */           throw new IllegalArgumentException();
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case true:
-/* 209 */           if (Character.isWhitespace(c)) {
-/* 210 */             b3 = 6; continue;
-/* 211 */           }  if ((k = Character.digit(c, 10)) != -1) {
-/* 212 */             i = k;
-/* 213 */             b3 = 1; continue;
-/*     */           } 
-/* 215 */           throw new IllegalArgumentException();
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     } 
-/* 222 */     switch (b3) {
-/*     */ 
-/*     */       
-/*     */       case 1:
-/*     */       case 2:
-/* 227 */         accumulate(vector, i, i);
-/*     */         break;
-/*     */       case 4:
-/*     */       case 5:
-/* 231 */         accumulate(vector, i, j);
-/*     */         break;
-/*     */       case 3:
-/*     */       case 6:
-/* 235 */         throw new IllegalArgumentException();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 239 */     return canonicalArrayForm(vector);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void accumulate(Vector<int[]> paramVector, int paramInt1, int paramInt2) {
-/* 248 */     if (paramInt1 <= paramInt2) {
-/*     */       
-/* 250 */       paramVector.add(new int[] { paramInt1, paramInt2 });
-/*     */ 
-/*     */ 
-/*     */       
-/* 254 */       for (int i = paramVector.size() - 2; i >= 0; i--) {
-/*     */         
-/* 256 */         int[] arrayOfInt1 = paramVector.elementAt(i);
-/* 257 */         int j = arrayOfInt1[0];
-/* 258 */         int k = arrayOfInt1[1];
-/* 259 */         int[] arrayOfInt2 = paramVector.elementAt(i + 1);
-/* 260 */         int m = arrayOfInt2[0];
-/* 261 */         int n = arrayOfInt2[1];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 269 */         if (Math.max(j, m) - Math.min(k, n) <= 1) {
-/*     */ 
-/*     */           
-/* 272 */           paramVector.setElementAt(new int[] {
-/* 273 */                 Math.min(j, m), 
-/* 274 */                 Math.max(k, n) }i);
-/* 275 */           paramVector.remove(i + 1);
-/* 276 */         } else if (j > m) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 281 */           paramVector.setElementAt(arrayOfInt2, i);
-/* 282 */           paramVector.setElementAt(arrayOfInt1, i + 1);
-/*     */         } else {
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int[][] canonicalArrayForm(Vector paramVector) {
-/* 297 */     return (int[][])paramVector.toArray((Object[])new int[paramVector.size()][]);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SetOfIntegerSyntax(int[][] paramArrayOfint) {
-/* 317 */     this.members = parse(paramArrayOfint);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int[][] parse(int[][] paramArrayOfint) {
-/* 326 */     Vector vector = new Vector();
-/*     */ 
-/*     */     
-/* 329 */     byte b1 = (paramArrayOfint == null) ? 0 : paramArrayOfint.length;
-/* 330 */     for (byte b2 = 0; b2 < b1; b2++) {
-/*     */       int i, j;
-/*     */       
-/* 333 */       if ((paramArrayOfint[b2]).length == 1) {
-/* 334 */         i = j = paramArrayOfint[b2][0];
-/* 335 */       } else if ((paramArrayOfint[b2]).length == 2) {
-/* 336 */         i = paramArrayOfint[b2][0];
-/* 337 */         j = paramArrayOfint[b2][1];
-/*     */       } else {
-/* 339 */         throw new IllegalArgumentException();
-/*     */       } 
-/*     */ 
-/*     */       
-/* 343 */       if (i <= j && i < 0) {
-/* 344 */         throw new IllegalArgumentException();
-/*     */       }
-/*     */ 
-/*     */       
-/* 348 */       accumulate(vector, i, j);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 352 */     return canonicalArrayForm(vector);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SetOfIntegerSyntax(int paramInt) {
-/* 365 */     if (paramInt < 0) {
-/* 366 */       throw new IllegalArgumentException();
-/*     */     }
-/* 368 */     this.members = new int[][] { { paramInt, paramInt } };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SetOfIntegerSyntax(int paramInt1, int paramInt2) {
-/* 384 */     if (paramInt1 <= paramInt2 && paramInt1 < 0) {
-/* 385 */       throw new IllegalArgumentException();
-/*     */     }
-/* 387 */     (new int[2])[0] = paramInt1; (new int[2])[1] = paramInt2; (new int[1][])[0] = new int[2]; this.members = (paramInt1 <= paramInt2) ? new int[1][] : new int[0][];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int[][] getMembers() {
-/* 401 */     int i = this.members.length;
-/* 402 */     int[][] arrayOfInt = new int[i][];
-/* 403 */     for (byte b = 0; b < i; b++) {
-/* 404 */       (new int[2])[0] = this.members[b][0]; (new int[2])[1] = this.members[b][1]; arrayOfInt[b] = new int[2];
-/*     */     } 
-/* 406 */     return arrayOfInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(int paramInt) {
-/* 419 */     int i = this.members.length;
-/* 420 */     for (byte b = 0; b < i; b++) {
-/* 421 */       if (paramInt < this.members[b][0])
-/* 422 */         return false; 
-/* 423 */       if (paramInt <= this.members[b][1]) {
-/* 424 */         return true;
-/*     */       }
-/*     */     } 
-/* 427 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(IntegerSyntax paramIntegerSyntax) {
-/* 440 */     return contains(paramIntegerSyntax.getValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int next(int paramInt) {
-/* 468 */     int i = this.members.length;
-/* 469 */     for (byte b = 0; b < i; b++) {
-/* 470 */       if (paramInt < this.members[b][0])
-/* 471 */         return this.members[b][0]; 
-/* 472 */       if (paramInt < this.members[b][1]) {
-/* 473 */         return paramInt + 1;
-/*     */       }
-/*     */     } 
-/* 476 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 499 */     if (paramObject != null && paramObject instanceof SetOfIntegerSyntax) {
-/* 500 */       int[][] arrayOfInt1 = this.members;
-/* 501 */       int[][] arrayOfInt2 = ((SetOfIntegerSyntax)paramObject).members;
-/* 502 */       int i = arrayOfInt1.length;
-/* 503 */       int j = arrayOfInt2.length;
-/* 504 */       if (i == j) {
-/* 505 */         for (byte b = 0; b < i; b++) {
-/* 506 */           if (arrayOfInt1[b][0] != arrayOfInt2[b][0] || arrayOfInt1[b][1] != arrayOfInt2[b][1])
-/*     */           {
-/* 508 */             return false;
-/*     */           }
-/*     */         } 
-/* 511 */         return true;
-/*     */       } 
-/* 513 */       return false;
-/*     */     } 
-/*     */     
-/* 516 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 526 */     int i = 0;
-/* 527 */     int j = this.members.length;
-/* 528 */     for (byte b = 0; b < j; b++) {
-/* 529 */       i += this.members[b][0] + this.members[b][1];
-/*     */     }
-/* 531 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 543 */     StringBuffer stringBuffer = new StringBuffer();
-/* 544 */     int i = this.members.length;
-/* 545 */     for (byte b = 0; b < i; b++) {
-/* 546 */       if (b > 0) {
-/* 547 */         stringBuffer.append(',');
-/*     */       }
-/* 549 */       stringBuffer.append(this.members[b][0]);
-/* 550 */       if (this.members[b][0] != this.members[b][1]) {
-/* 551 */         stringBuffer.append('-');
-/* 552 */         stringBuffer.append(this.members[b][1]);
-/*     */       } 
-/*     */     } 
-/* 555 */     return stringBuffer.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\print\attribute\SetOfIntegerSyntax.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.print.attribute;
+
+import java.io.Serializable;
+import java.util.Vector;
+
+/**
+ * Class SetOfIntegerSyntax is an abstract base class providing the common
+ * implementation of all attributes whose value is a set of nonnegative
+ * integers. This includes attributes whose value is a single range of integers
+ * and attributes whose value is a set of ranges of integers.
+ * <P>
+ * You can construct an instance of SetOfIntegerSyntax by giving it in "string
+ * form." The string consists of zero or more comma-separated integer groups.
+ * Each integer group consists of either one integer, two integers separated by
+ * a hyphen (<CODE>-</CODE>), or two integers separated by a colon
+ * (<CODE>:</CODE>). Each integer consists of one or more decimal digits
+ * (<CODE>0</CODE> through <CODE>9</CODE>). Whitespace characters cannot
+ * appear within an integer but are otherwise ignored. For example:
+ * <CODE>""</CODE>, <CODE>"1"</CODE>, <CODE>"5-10"</CODE>, <CODE>"1:2,
+ * 4"</CODE>.
+ * <P>
+ * You can also construct an instance of SetOfIntegerSyntax by giving it in
+ * "array form." Array form consists of an array of zero or more integer groups
+ * where each integer group is a length-1 or length-2 array of
+ * <CODE>int</CODE>s; for example, <CODE>int[0][]</CODE>,
+ * <CODE>int[][]{{1}}</CODE>, <CODE>int[][]{{5,10}}</CODE>,
+ * <CODE>int[][]{{1,2},{4}}</CODE>.
+ * <P>
+ * In both string form and array form, each successive integer group gives a
+ * range of integers to be included in the set. The first integer in each group
+ * gives the lower bound of the range; the second integer in each group gives
+ * the upper bound of the range; if there is only one integer in the group, the
+ * upper bound is the same as the lower bound. If the upper bound is less than
+ * the lower bound, it denotes a null range (no values). If the upper bound is
+ * equal to the lower bound, it denotes a range consisting of a single value. If
+ * the upper bound is greater than the lower bound, it denotes a range
+ * consisting of more than one value. The ranges may appear in any order and are
+ * allowed to overlap. The union of all the ranges gives the set's contents.
+ * Once a SetOfIntegerSyntax instance is constructed, its value is immutable.
+ * <P>
+ * The SetOfIntegerSyntax object's value is actually stored in "<I>canonical</I>
+ * array form." This is the same as array form, except there are no null ranges;
+ * the members of the set are represented in as few ranges as possible (i.e.,
+ * overlapping ranges are coalesced); the ranges appear in ascending order; and
+ * each range is always represented as a length-two array of <CODE>int</CODE>s
+ * in the form {lower bound, upper bound}. An empty set is represented as a
+ * zero-length array.
+ * <P>
+ * Class SetOfIntegerSyntax has operations to return the set's members in
+ * canonical array form, to test whether a given integer is a member of the
+ * set, and to iterate through the members of the set.
+ * <P>
+ *
+ * @author  David Mendenhall
+ * @author  Alan Kaminsky
+ */
+public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
+
+    private static final long serialVersionUID = 3666874174847632203L;
+
+    /**
+     * This set's members in canonical array form.
+     * @serial
+     */
+    private int[][] members;
+
+
+    /**
+     * Construct a new set-of-integer attribute with the given members in
+     * string form.
+     *
+     * @param  members  Set members in string form. If null, an empty set is
+     *                     constructed.
+     *
+     * @exception  IllegalArgumentException
+     *     (Unchecked exception) Thrown if <CODE>members</CODE> does not
+     *    obey  the proper syntax.
+     */
+    protected SetOfIntegerSyntax(String members) {
+        this.members = parse (members);
+    }
+
+    /**
+     * Parse the given string, returning canonical array form.
+     */
+    private static int[][] parse(String members) {
+        // Create vector to hold int[] elements, each element being one range
+        // parsed out of members.
+        Vector theRanges = new Vector();
+
+        // Run state machine over members.
+        int n = (members == null ? 0 : members.length());
+        int i = 0;
+        int state = 0;
+        int lb = 0;
+        int ub = 0;
+        char c;
+        int digit;
+        while (i < n) {
+            c = members.charAt(i ++);
+            switch (state) {
+
+            case 0: // Before first integer in first group
+                if (Character.isWhitespace(c)) {
+                    state = 0;
+                }
+                else if ((digit = Character.digit(c, 10)) != -1) {
+                    lb = digit;
+                    state = 1;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+
+            case 1: // In first integer in a group
+                if (Character.isWhitespace(c)){
+                        state = 2;
+                } else if ((digit = Character.digit(c, 10)) != -1) {
+                    lb = 10 * lb + digit;
+                    state = 1;
+                } else if (c == '-' || c == ':') {
+                    state = 3;
+                } else if (c == ',') {
+                    accumulate (theRanges, lb, lb);
+                    state = 6;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+
+            case 2: // After first integer in a group
+                if (Character.isWhitespace(c)) {
+                    state = 2;
+                }
+                else if (c == '-' || c == ':') {
+                    state = 3;
+                }
+                else if (c == ',') {
+                    accumulate(theRanges, lb, lb);
+                    state = 6;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+
+            case 3: // Before second integer in a group
+                if (Character.isWhitespace(c)) {
+                    state = 3;
+                } else if ((digit = Character.digit(c, 10)) != -1) {
+                    ub = digit;
+                    state = 4;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+
+            case 4: // In second integer in a group
+                if (Character.isWhitespace(c)) {
+                    state = 5;
+                } else if ((digit = Character.digit(c, 10)) != -1) {
+                    ub = 10 * ub + digit;
+                    state = 4;
+                } else if (c == ',') {
+                    accumulate(theRanges, lb, ub);
+                    state = 6;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+
+            case 5: // After second integer in a group
+                if (Character.isWhitespace(c)) {
+                    state = 5;
+                } else if (c == ',') {
+                    accumulate(theRanges, lb, ub);
+                    state = 6;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+
+            case 6: // Before first integer in second or later group
+                if (Character.isWhitespace(c)) {
+                    state = 6;
+                } else if ((digit = Character.digit(c, 10)) != -1) {
+                    lb = digit;
+                    state = 1;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                break;
+            }
+        }
+
+        // Finish off the state machine.
+        switch (state) {
+        case 0: // Before first integer in first group
+            break;
+        case 1: // In first integer in a group
+        case 2: // After first integer in a group
+            accumulate(theRanges, lb, lb);
+            break;
+        case 4: // In second integer in a group
+        case 5: // After second integer in a group
+            accumulate(theRanges, lb, ub);
+            break;
+        case 3: // Before second integer in a group
+        case 6: // Before first integer in second or later group
+            throw new IllegalArgumentException();
+        }
+
+        // Return canonical array form.
+        return canonicalArrayForm (theRanges);
+    }
+
+    /**
+     * Accumulate the given range (lb .. ub) into the canonical array form
+     * into the given vector of int[] objects.
+     */
+    private static void accumulate(Vector ranges, int lb,int ub) {
+        // Make sure range is non-null.
+        if (lb <= ub) {
+            // Stick range at the back of the vector.
+            ranges.add(new int[] {lb, ub});
+
+            // Work towards the front of the vector to integrate the new range
+            // with the existing ranges.
+            for (int j = ranges.size()-2; j >= 0; -- j) {
+            // Get lower and upper bounds of the two ranges being compared.
+                int[] rangea = (int[]) ranges.elementAt (j);
+                int lba = rangea[0];
+                int uba = rangea[1];
+                int[] rangeb = (int[]) ranges.elementAt (j+1);
+                int lbb = rangeb[0];
+                int ubb = rangeb[1];
+
+                /* If the two ranges overlap or are adjacent, coalesce them.
+                 * The two ranges overlap if the larger lower bound is less
+                 * than or equal to the smaller upper bound. The two ranges
+                 * are adjacent if the larger lower bound is one greater
+                 * than the smaller upper bound.
+                 */
+                if (Math.max(lba, lbb) - Math.min(uba, ubb) <= 1) {
+                    // The coalesced range is from the smaller lower bound to
+                    // the larger upper bound.
+                    ranges.setElementAt(new int[]
+                                           {Math.min(lba, lbb),
+                                                Math.max(uba, ubb)}, j);
+                    ranges.remove (j+1);
+                } else if (lba > lbb) {
+
+                    /* If the two ranges don't overlap and aren't adjacent but
+                     * are out of order, swap them.
+                     */
+                    ranges.setElementAt (rangeb, j);
+                    ranges.setElementAt (rangea, j+1);
+                } else {
+                /* If the two ranges don't overlap and aren't adjacent and
+                 * aren't out of order, we're done early.
+                 */
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Convert the given vector of int[] objects to canonical array form.
+     */
+    private static int[][] canonicalArrayForm(Vector ranges) {
+        return (int[][]) ranges.toArray (new int[ranges.size()][]);
+    }
+
+    /**
+     * Construct a new set-of-integer attribute with the given members in
+     * array form.
+     *
+     * @param  members  Set members in array form. If null, an empty set is
+     *                     constructed.
+     *
+     * @exception  NullPointerException
+     *     (Unchecked exception) Thrown if any element of
+     *     <CODE>members</CODE> is null.
+     * @exception  IllegalArgumentException
+     *     (Unchecked exception) Thrown if any element of
+     *     <CODE>members</CODE> is not a length-one or length-two array or if
+     *     any non-null range in <CODE>members</CODE> has a lower bound less
+     *     than zero.
+     */
+    protected SetOfIntegerSyntax(int[][] members) {
+        this.members = parse (members);
+    }
+
+    /**
+     * Parse the given array form, returning canonical array form.
+     */
+    private static int[][] parse(int[][] members) {
+        // Create vector to hold int[] elements, each element being one range
+        // parsed out of members.
+        Vector ranges = new Vector();
+
+        // Process all integer groups in members.
+        int n = (members == null ? 0 : members.length);
+        for (int i = 0; i < n; ++ i) {
+            // Get lower and upper bounds of the range.
+            int lb, ub;
+            if (members[i].length == 1) {
+                lb = ub = members[i][0];
+            } else if (members[i].length == 2) {
+                lb = members[i][0];
+                ub = members[i][1];
+            } else {
+                throw new IllegalArgumentException();
+            }
+
+            // Verify valid bounds.
+            if (lb <= ub && lb < 0) {
+                throw new IllegalArgumentException();
+            }
+
+            // Accumulate the range.
+            accumulate(ranges, lb, ub);
+        }
+
+                // Return canonical array form.
+                return canonicalArrayForm (ranges);
+                }
+
+    /**
+     * Construct a new set-of-integer attribute containing a single integer.
+     *
+     * @param  member  Set member.
+     *
+     * @exception  IllegalArgumentException
+     *     (Unchecked exception) Thrown if <CODE>member</CODE> is less than
+     *     zero.
+     */
+    protected SetOfIntegerSyntax(int member) {
+        if (member < 0) {
+            throw new IllegalArgumentException();
+        }
+        members = new int[][] {{member, member}};
+    }
+
+    /**
+     * Construct a new set-of-integer attribute containing a single range of
+     * integers. If the lower bound is greater than the upper bound (a null
+     * range), an empty set is constructed.
+     *
+     * @param  lowerBound  Lower bound of the range.
+     * @param  upperBound  Upper bound of the range.
+     *
+     * @exception  IllegalArgumentException
+     *     (Unchecked exception) Thrown if the range is non-null and
+     *     <CODE>lowerBound</CODE> is less than zero.
+     */
+    protected SetOfIntegerSyntax(int lowerBound, int upperBound) {
+        if (lowerBound <= upperBound && lowerBound < 0) {
+            throw new IllegalArgumentException();
+        }
+        members = lowerBound <=upperBound ?
+            new int[][] {{lowerBound, upperBound}} :
+            new int[0][];
+    }
+
+
+    /**
+     * Obtain this set-of-integer attribute's members in canonical array form.
+     * The returned array is "safe;" the client may alter it without affecting
+     * this set-of-integer attribute.
+     *
+     * @return  This set-of-integer attribute's members in canonical array form.
+     */
+    public int[][] getMembers() {
+        int n = members.length;
+        int[][] result = new int[n][];
+        for (int i = 0; i < n; ++ i) {
+            result[i] = new int[] {members[i][0], members[i][1]};
+        }
+        return result;
+    }
+
+    /**
+     * Determine if this set-of-integer attribute contains the given value.
+     *
+     * @param  x  Integer value.
+     *
+     * @return  True if this set-of-integer attribute contains the value
+     *          <CODE>x</CODE>, false otherwise.
+     */
+    public boolean contains(int x) {
+        // Do a linear search to find the range that contains x, if any.
+        int n = members.length;
+        for (int i = 0; i < n; ++ i) {
+            if (x < members[i][0]) {
+                return false;
+            } else if (x <= members[i][1]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determine if this set-of-integer attribute contains the given integer
+     * attribute's value.
+     *
+     * @param  attribute  Integer attribute.
+     *
+     * @return  True if this set-of-integer attribute contains
+     *          <CODE>theAttribute</CODE>'s value, false otherwise.
+     */
+    public boolean contains(IntegerSyntax attribute) {
+        return contains (attribute.getValue());
+    }
+
+    /**
+     * Determine the smallest integer in this set-of-integer attribute that is
+     * greater than the given value. If there are no integers in this
+     * set-of-integer attribute greater than the given value, <CODE>-1</CODE> is
+     * returned. (Since a set-of-integer attribute can only contain nonnegative
+     * values, <CODE>-1</CODE> will never appear in the set.) You can use the
+     * <CODE>next()</CODE> method to iterate through the integer values in a
+     * set-of-integer attribute in ascending order, like this:
+     * <PRE>
+     *     SetOfIntegerSyntax attribute = . . .;
+     *     int i = -1;
+     *     while ((i = attribute.next (i)) != -1)
+     *         {
+     *         foo (i);
+     *         }
+     * </PRE>
+     *
+     * @param  x  Integer value.
+     *
+     * @return  The smallest integer in this set-of-integer attribute that is
+     *          greater than <CODE>x</CODE>, or <CODE>-1</CODE> if no integer in
+     *          this set-of-integer attribute is greater than <CODE>x</CODE>.
+     */
+    public int next(int x) {
+        // Do a linear search to find the range that contains x, if any.
+        int n = members.length;
+        for (int i = 0; i < n; ++ i) {
+            if (x < members[i][0]) {
+                return members[i][0];
+            } else if (x < members[i][1]) {
+                return x + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns whether this set-of-integer attribute is equivalent to the passed
+     * in object. To be equivalent, all of the following conditions must be
+     * true:
+     * <OL TYPE=1>
+     * <LI>
+     * <CODE>object</CODE> is not null.
+     * <LI>
+     * <CODE>object</CODE> is an instance of class SetOfIntegerSyntax.
+     * <LI>
+     * This set-of-integer attribute's members and <CODE>object</CODE>'s
+     * members are the same.
+     * </OL>
+     *
+     * @param  object  Object to compare to.
+     *
+     * @return  True if <CODE>object</CODE> is equivalent to this
+     *          set-of-integer attribute, false otherwise.
+     */
+    public boolean equals(Object object) {
+        if (object != null && object instanceof SetOfIntegerSyntax) {
+            int[][] myMembers = this.members;
+            int[][] otherMembers = ((SetOfIntegerSyntax) object).members;
+            int m = myMembers.length;
+            int n = otherMembers.length;
+            if (m == n) {
+                for (int i = 0; i < m; ++ i) {
+                    if (myMembers[i][0] != otherMembers[i][0] ||
+                        myMembers[i][1] != otherMembers[i][1]) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns a hash code value for this set-of-integer attribute. The hash
+     * code is the sum of the lower and upper bounds of the ranges in the
+     * canonical array form, or 0 for an empty set.
+     */
+    public int hashCode() {
+        int result = 0;
+        int n = members.length;
+        for (int i = 0; i < n; ++ i) {
+            result += members[i][0] + members[i][1];
+        }
+        return result;
+    }
+
+    /**
+     * Returns a string value corresponding to this set-of-integer attribute.
+     * The string value is a zero-length string if this set is empty. Otherwise,
+     * the string value is a comma-separated list of the ranges in the canonical
+     * array form, where each range is represented as <CODE>"<I>i</I>"</CODE> if
+     * the lower bound equals the upper bound or
+     * <CODE>"<I>i</I>-<I>j</I>"</CODE> otherwise.
+     */
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        int n = members.length;
+        for (int i = 0; i < n; i++) {
+            if (i > 0) {
+                result.append (',');
+            }
+            result.append (members[i][0]);
+            if (members[i][0] != members[i][1]) {
+                result.append ('-');
+                result.append (members[i][1]);
+            }
+        }
+        return result.toString();
+    }
+
+}

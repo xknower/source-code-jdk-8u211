@@ -1,121 +1,115 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class CachedNodeListIterator
-/*     */   extends DTMAxisIteratorBase
-/*     */ {
-/*     */   private DTMAxisIterator _source;
-/*  42 */   private IntegerArray _nodes = new IntegerArray();
-/*  43 */   private int _numCachedNodes = 0;
-/*  44 */   private int _index = 0;
-/*     */   private boolean _isEnded = false;
-/*     */   
-/*     */   public CachedNodeListIterator(DTMAxisIterator source) {
-/*  48 */     this._source = source;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRestartable(boolean isRestartable) {}
-/*     */ 
-/*     */   
-/*     */   public DTMAxisIterator setStartNode(int node) {
-/*  57 */     if (this._isRestartable) {
-/*  58 */       this._startNode = node;
-/*  59 */       this._source.setStartNode(node);
-/*  60 */       resetPosition();
-/*     */       
-/*  62 */       this._isRestartable = false;
-/*     */     } 
-/*  64 */     return this;
-/*     */   }
-/*     */   
-/*     */   public int next() {
-/*  68 */     return getNode(this._index++);
-/*     */   }
-/*     */   
-/*     */   public int getPosition() {
-/*  72 */     return (this._index == 0) ? 1 : this._index;
-/*     */   }
-/*     */   
-/*     */   public int getNodeByPosition(int pos) {
-/*  76 */     return getNode(pos);
-/*     */   }
-/*     */   
-/*     */   public int getNode(int index) {
-/*  80 */     if (index < this._numCachedNodes) {
-/*  81 */       return this._nodes.at(index);
-/*     */     }
-/*  83 */     if (!this._isEnded) {
-/*  84 */       int node = this._source.next();
-/*  85 */       if (node != -1) {
-/*  86 */         this._nodes.add(node);
-/*  87 */         this._numCachedNodes++;
-/*     */       } else {
-/*     */         
-/*  90 */         this._isEnded = true;
-/*     */       } 
-/*  92 */       return node;
-/*     */     } 
-/*     */     
-/*  95 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator cloneIterator() {
-/*  99 */     ClonedNodeListIterator clone = new ClonedNodeListIterator(this);
-/* 100 */     return clone;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator reset() {
-/* 104 */     this._index = 0;
-/* 105 */     return this;
-/*     */   }
-/*     */   
-/*     */   public void setMark() {
-/* 109 */     this._source.setMark();
-/*     */   }
-/*     */   
-/*     */   public void gotoMark() {
-/* 113 */     this._source.gotoMark();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\CachedNodeListIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: CachedNodeListIterator.java,v 1.2.4.1 2005/09/06 05:57:47 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
+
+/**
+ * CachedNodeListIterator is used for select expressions in a
+ * variable or parameter. This iterator caches all nodes in an
+ * IntegerArray. Its cloneIterator() method is overridden to
+ * return an object of ClonedNodeListIterator.
+ */
+public final class CachedNodeListIterator extends DTMAxisIteratorBase {
+
+    /**
+     * Source for this iterator.
+     */
+    private DTMAxisIterator _source;
+    private IntegerArray _nodes = new IntegerArray();
+    private int _numCachedNodes = 0;
+    private int _index = 0;
+    private boolean _isEnded = false;
+
+    public CachedNodeListIterator(DTMAxisIterator source) {
+        _source = source;
+    }
+
+    public void setRestartable(boolean isRestartable) {
+        //_isRestartable = isRestartable;
+        //_source.setRestartable(isRestartable);
+    }
+
+    public DTMAxisIterator setStartNode(int node) {
+        if (_isRestartable) {
+            _startNode = node;
+            _source.setStartNode(node);
+            resetPosition();
+
+            _isRestartable = false;
+        }
+        return this;
+    }
+
+    public int next() {
+        return getNode(_index++);
+    }
+
+    public int getPosition() {
+        return _index == 0 ? 1 : _index;
+    }
+
+    public int getNodeByPosition(int pos) {
+        return getNode(pos);
+    }
+
+    public int getNode(int index) {
+        if (index < _numCachedNodes) {
+            return _nodes.at(index);
+        }
+        else if (!_isEnded){
+            int node = _source.next();
+            if (node != END) {
+                _nodes.add(node);
+                _numCachedNodes++;
+            }
+            else {
+                _isEnded = true;
+            }
+            return node;
+        }
+        else
+            return END;
+    }
+
+    public DTMAxisIterator cloneIterator() {
+        ClonedNodeListIterator clone = new ClonedNodeListIterator(this);
+        return clone;
+    }
+
+    public DTMAxisIterator reset() {
+        _index = 0;
+        return this;
+    }
+
+    public void setMark() {
+        _source.setMark();
+    }
+
+    public void gotoMark() {
+        _source.gotoMark();
+    }
+}

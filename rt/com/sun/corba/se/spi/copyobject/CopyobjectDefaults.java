@@ -1,106 +1,100 @@
-/*    */ package com.sun.corba.se.spi.copyobject;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.copyobject.FallbackObjectCopierImpl;
-/*    */ import com.sun.corba.se.impl.copyobject.JavaStreamObjectCopierImpl;
-/*    */ import com.sun.corba.se.impl.copyobject.ORBStreamObjectCopierImpl;
-/*    */ import com.sun.corba.se.impl.copyobject.ReferenceObjectCopierImpl;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class CopyobjectDefaults
-/*    */ {
-/*    */   public static ObjectCopierFactory makeORBStreamObjectCopierFactory(final ORB orb) {
-/* 46 */     return new ObjectCopierFactory()
-/*    */       {
-/*    */         public ObjectCopier make() {
-/* 49 */           return new ORBStreamObjectCopierImpl(orb);
-/*    */         }
-/*    */       };
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static ObjectCopierFactory makeJavaStreamObjectCopierFactory(final ORB orb) {
-/* 56 */     return new ObjectCopierFactory()
-/*    */       {
-/*    */         public ObjectCopier make() {
-/* 59 */           return new JavaStreamObjectCopierImpl(orb);
-/*    */         }
-/*    */       };
-/*    */   }
-/*    */   
-/* 64 */   private static final ObjectCopier referenceObjectCopier = new ReferenceObjectCopierImpl();
-/*    */   
-/* 66 */   private static ObjectCopierFactory referenceObjectCopierFactory = new ObjectCopierFactory()
-/*    */     {
-/*    */       public ObjectCopier make()
-/*    */       {
-/* 70 */         return CopyobjectDefaults.referenceObjectCopier;
-/*    */       }
-/*    */     };
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static ObjectCopierFactory getReferenceObjectCopierFactory() {
-/* 79 */     return referenceObjectCopierFactory;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static ObjectCopierFactory makeFallbackObjectCopierFactory(final ObjectCopierFactory f1, final ObjectCopierFactory f2) {
-/* 91 */     return new ObjectCopierFactory()
-/*    */       {
-/*    */         public ObjectCopier make() {
-/* 94 */           ObjectCopier objectCopier1 = f1.make();
-/* 95 */           ObjectCopier objectCopier2 = f2.make();
-/* 96 */           return new FallbackObjectCopierImpl(objectCopier1, objectCopier2);
-/*    */         }
-/*    */       };
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\copyobject\CopyobjectDefaults.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.copyobject ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.impl.copyobject.ReferenceObjectCopierImpl ;
+import com.sun.corba.se.impl.copyobject.FallbackObjectCopierImpl ;
+import com.sun.corba.se.impl.copyobject.ORBStreamObjectCopierImpl ;
+import com.sun.corba.se.impl.copyobject.JavaStreamObjectCopierImpl ;
+
+public abstract class CopyobjectDefaults
+{
+    private CopyobjectDefaults() { }
+
+    /** Obtain the ORB stream copier factory.  Note that this version behaves differently
+     * than the others: each ObjectCopier produced by the factory only preserves aliasing
+     * within a single call to copy.  The others copiers all preserve aliasing across
+     * all calls to copy (on the same ObjectCopier instance).
+     */
+    public static ObjectCopierFactory makeORBStreamObjectCopierFactory( final ORB orb )
+    {
+        return new ObjectCopierFactory() {
+            public ObjectCopier make( )
+            {
+                return new ORBStreamObjectCopierImpl( orb ) ;
+            }
+        } ;
+    }
+
+    public static ObjectCopierFactory makeJavaStreamObjectCopierFactory( final ORB orb )
+    {
+        return new ObjectCopierFactory() {
+            public ObjectCopier make( )
+            {
+                return new JavaStreamObjectCopierImpl( orb ) ;
+            }
+        } ;
+    }
+
+    private static final ObjectCopier referenceObjectCopier = new ReferenceObjectCopierImpl() ;
+
+    private static ObjectCopierFactory referenceObjectCopierFactory =
+        new ObjectCopierFactory() {
+            public ObjectCopier make()
+            {
+                return referenceObjectCopier ;
+            }
+        } ;
+
+    /** Obtain the reference object "copier".  This does no copies: it just
+     * returns whatever is passed to it.
+     */
+    public static ObjectCopierFactory getReferenceObjectCopierFactory()
+    {
+        return referenceObjectCopierFactory ;
+    }
+
+    /** Create a fallback copier factory from the two ObjectCopierFactory
+     * arguments.  This copier makes an ObjectCopierFactory that creates
+     * instances of a fallback copier that first tries an ObjectCopier
+     * created from f1, then tries one created from f2, if the first
+     * throws a ReflectiveCopyException.
+     */
+    public static ObjectCopierFactory makeFallbackObjectCopierFactory(
+        final ObjectCopierFactory f1, final ObjectCopierFactory f2 )
+    {
+        return new ObjectCopierFactory() {
+            public ObjectCopier make()
+            {
+                ObjectCopier c1 = f1.make() ;
+                ObjectCopier c2 = f2.make() ;
+                return new FallbackObjectCopierImpl( c1, c2 ) ;
+            }
+        } ;
+    }
+}

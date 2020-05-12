@@ -1,100 +1,94 @@
-/*    */ package javax.swing.colorchooser;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class ColorModelCMYK
-/*    */   extends ColorModel
-/*    */ {
-/*    */   ColorModelCMYK() {
-/* 31 */     super("cmyk", new String[] { "Cyan", "Magenta", "Yellow", "Black", "Alpha" });
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void setColor(int paramInt, float[] paramArrayOffloat) {
-/* 36 */     super.setColor(paramInt, paramArrayOffloat);
-/* 37 */     paramArrayOffloat[4] = paramArrayOffloat[3];
-/* 38 */     RGBtoCMYK(paramArrayOffloat, paramArrayOffloat);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   int getColor(float[] paramArrayOffloat) {
-/* 43 */     CMYKtoRGB(paramArrayOffloat, paramArrayOffloat);
-/* 44 */     paramArrayOffloat[3] = paramArrayOffloat[4];
-/* 45 */     return super.getColor(paramArrayOffloat);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private static float[] CMYKtoRGB(float[] paramArrayOffloat1, float[] paramArrayOffloat2) {
-/* 58 */     if (paramArrayOffloat2 == null) {
-/* 59 */       paramArrayOffloat2 = new float[3];
-/*    */     }
-/* 61 */     paramArrayOffloat2[0] = 1.0F + paramArrayOffloat1[0] * paramArrayOffloat1[3] - paramArrayOffloat1[3] - paramArrayOffloat1[0];
-/* 62 */     paramArrayOffloat2[1] = 1.0F + paramArrayOffloat1[1] * paramArrayOffloat1[3] - paramArrayOffloat1[3] - paramArrayOffloat1[1];
-/* 63 */     paramArrayOffloat2[2] = 1.0F + paramArrayOffloat1[2] * paramArrayOffloat1[3] - paramArrayOffloat1[3] - paramArrayOffloat1[2];
-/* 64 */     return paramArrayOffloat2;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private static float[] RGBtoCMYK(float[] paramArrayOffloat1, float[] paramArrayOffloat2) {
-/* 77 */     if (paramArrayOffloat2 == null) {
-/* 78 */       paramArrayOffloat2 = new float[4];
-/*    */     }
-/* 80 */     float f = ColorModelHSL.max(paramArrayOffloat1[0], paramArrayOffloat1[1], paramArrayOffloat1[2]);
-/* 81 */     if (f > 0.0F) {
-/* 82 */       paramArrayOffloat2[0] = 1.0F - paramArrayOffloat1[0] / f;
-/* 83 */       paramArrayOffloat2[1] = 1.0F - paramArrayOffloat1[1] / f;
-/* 84 */       paramArrayOffloat2[2] = 1.0F - paramArrayOffloat1[2] / f;
-/*    */     } else {
-/*    */       
-/* 87 */       paramArrayOffloat2[0] = 0.0F;
-/* 88 */       paramArrayOffloat2[1] = 0.0F;
-/* 89 */       paramArrayOffloat2[2] = 0.0F;
-/*    */     } 
-/* 91 */     paramArrayOffloat2[3] = 1.0F - f;
-/* 92 */     return paramArrayOffloat2;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\colorchooser\ColorModelCMYK.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.colorchooser;
+
+final class ColorModelCMYK extends ColorModel {
+
+    ColorModelCMYK() {
+        super("cmyk", "Cyan", "Magenta", "Yellow", "Black", "Alpha"); // NON-NLS: components
+    }
+
+    @Override
+    void setColor(int color, float[] space) {
+        super.setColor(color, space);
+        space[4] = space[3];
+        RGBtoCMYK(space, space);
+    }
+
+    @Override
+    int getColor(float[] space) {
+        CMYKtoRGB(space, space);
+        space[3] = space[4];
+        return super.getColor(space);
+    }
+
+    /**
+     * Converts CMYK components of a color to a set of RGB components.
+     *
+     * @param cmyk  a float array with length equal to
+     *              the number of CMYK components
+     * @param rgb   a float array with length of at least 3
+     *              that contains RGB components of a color
+     * @return a float array that contains RGB components
+     */
+    private static float[] CMYKtoRGB(float[] cmyk, float[] rgb) {
+        if (rgb == null) {
+            rgb = new float[3];
+        }
+        rgb[0] = 1.0f + cmyk[0] * cmyk[3] - cmyk[3] - cmyk[0];
+        rgb[1] = 1.0f + cmyk[1] * cmyk[3] - cmyk[3] - cmyk[1];
+        rgb[2] = 1.0f + cmyk[2] * cmyk[3] - cmyk[3] - cmyk[2];
+        return rgb;
+    }
+
+    /**
+     * Converts RGB components of a color to a set of CMYK components.
+     *
+     * @param rgb   a float array with length of at least 3
+     *              that contains RGB components of a color
+     * @param cmyk  a float array with length equal to
+     *              the number of CMYK components
+     * @return a float array that contains CMYK components
+     */
+    private static float[] RGBtoCMYK(float[] rgb, float[] cmyk) {
+        if (cmyk == null) {
+            cmyk = new float[4];
+        }
+        float max = ColorModelHSL.max(rgb[0], rgb[1], rgb[2]);
+        if (max > 0.0f) {
+            cmyk[0] = 1.0f - rgb[0] / max;
+            cmyk[1] = 1.0f - rgb[1] / max;
+            cmyk[2] = 1.0f - rgb[2] / max;
+        }
+        else {
+            cmyk[0] = 0.0f;
+            cmyk[1] = 0.0f;
+            cmyk[2] = 0.0f;
+        }
+        cmyk[3] = 1.0f - max;
+        return cmyk;
+    }
+}

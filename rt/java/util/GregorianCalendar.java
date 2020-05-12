@@ -1,3901 +1,3301 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.time.Instant;
-/*      */ import java.time.ZonedDateTime;
-/*      */ import java.time.temporal.ChronoField;
-/*      */ import sun.util.calendar.BaseCalendar;
-/*      */ import sun.util.calendar.CalendarDate;
-/*      */ import sun.util.calendar.CalendarSystem;
-/*      */ import sun.util.calendar.CalendarUtils;
-/*      */ import sun.util.calendar.Era;
-/*      */ import sun.util.calendar.Gregorian;
-/*      */ import sun.util.calendar.JulianCalendar;
-/*      */ import sun.util.calendar.ZoneInfo;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class GregorianCalendar
-/*      */   extends Calendar
-/*      */ {
-/*      */   public static final int BC = 0;
-/*      */   static final int BCE = 0;
-/*      */   public static final int AD = 1;
-/*      */   static final int CE = 1;
-/*      */   private static final int EPOCH_OFFSET = 719163;
-/*      */   private static final int EPOCH_YEAR = 1970;
-/*  400 */   static final int[] MONTH_LENGTH = new int[] { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-/*      */   
-/*  402 */   static final int[] LEAP_MONTH_LENGTH = new int[] { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int ONE_SECOND = 1000;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int ONE_MINUTE = 60000;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int ONE_HOUR = 3600000;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final long ONE_DAY = 86400000L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final long ONE_WEEK = 604800000L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  439 */   static final int[] MIN_VALUES = new int[] { 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, -46800000, 0 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  458 */   static final int[] LEAST_MAX_VALUES = new int[] { 1, 292269054, 11, 52, 4, 28, 365, 7, 4, 1, 11, 23, 59, 59, 999, 50400000, 1200000 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  477 */   static final int[] MAX_VALUES = new int[] { 1, 292278994, 11, 53, 6, 31, 366, 7, 6, 1, 11, 23, 59, 59, 999, 50400000, 7200000 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final long serialVersionUID = -8125100834729963327L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  503 */   private static final Gregorian gcal = CalendarSystem.getGregorianCalendar();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static JulianCalendar jcal;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Era[] jeras;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final long DEFAULT_GREGORIAN_CUTOVER = -12219292800000L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  527 */   private long gregorianCutover = -12219292800000L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  532 */   private transient long gregorianCutoverDate = 577736L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  539 */   private transient int gregorianCutoverYear = 1582;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  545 */   private transient int gregorianCutoverYearJulian = 1582;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient BaseCalendar.Date gdate;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient BaseCalendar.Date cdate;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient BaseCalendar calsys;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient int[] zoneOffsets;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient int[] originalFields;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient long cachedFixedDate;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public GregorianCalendar() {
-/*  591 */     this(TimeZone.getDefaultRef(), Locale.getDefault(Locale.Category.FORMAT));
-/*  592 */     setZoneShared(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public GregorianCalendar(TimeZone paramTimeZone) {
-/*  603 */     this(paramTimeZone, Locale.getDefault(Locale.Category.FORMAT));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public GregorianCalendar(Locale paramLocale) {
-/*  613 */     this(TimeZone.getDefaultRef(), paramLocale);
-/*  614 */     setZoneShared(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public GregorianCalendar(TimeZone paramTimeZone, Locale paramLocale)
-/*      */   {
-/*  625 */     super(paramTimeZone, paramLocale);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2285 */     this.cachedFixedDate = Long.MIN_VALUE; this.gdate = gcal.newCalendarDate(paramTimeZone); setTimeInMillis(System.currentTimeMillis()); } public GregorianCalendar(int paramInt1, int paramInt2, int paramInt3) { this(paramInt1, paramInt2, paramInt3, 0, 0, 0, 0); } public GregorianCalendar(int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) { this(paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, 0, 0); } public GregorianCalendar(int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) { this(paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, 0); } GregorianCalendar(TimeZone paramTimeZone, Locale paramLocale, boolean paramBoolean) { super(paramTimeZone, paramLocale); this.cachedFixedDate = Long.MIN_VALUE; this.gdate = gcal.newCalendarDate(getZone()); } public void setGregorianChange(Date paramDate) { long l = paramDate.getTime(); if (l == this.gregorianCutover) return;  complete(); setGregorianChange(l); } private void setGregorianChange(long paramLong) { this.gregorianCutover = paramLong; this.gregorianCutoverDate = CalendarUtils.floorDivide(paramLong, 86400000L) + 719163L; if (paramLong == Long.MAX_VALUE) this.gregorianCutoverDate++;  BaseCalendar.Date date = getGregorianCutoverDate(); this.gregorianCutoverYear = date.getYear(); BaseCalendar baseCalendar = getJulianCalendarSystem(); date = (BaseCalendar.Date)baseCalendar.newCalendarDate(TimeZone.NO_TIMEZONE); baseCalendar.getCalendarDateFromFixedDate(date, this.gregorianCutoverDate - 1L); this.gregorianCutoverYearJulian = date.getNormalizedYear(); if (this.time < this.gregorianCutover) setUnnormalized();  } public final Date getGregorianChange() { return new Date(this.gregorianCutover); } public boolean isLeapYear(int paramInt) { boolean bool; if ((paramInt & 0x3) != 0) return false;  if (paramInt > this.gregorianCutoverYear) return (paramInt % 100 != 0 || paramInt % 400 == 0);  if (paramInt < this.gregorianCutoverYearJulian) return true;  if (this.gregorianCutoverYear == this.gregorianCutoverYearJulian) { BaseCalendar.Date date = getCalendarDate(this.gregorianCutoverDate); bool = (date.getMonth() < 3) ? true : false; } else { bool = (paramInt == this.gregorianCutoverYear) ? true : false; }  return bool ? ((paramInt % 100 != 0 || paramInt % 400 == 0)) : true; } public String getCalendarType() { return "gregory"; } public boolean equals(Object paramObject) { return (paramObject instanceof GregorianCalendar && super.equals(paramObject) && this.gregorianCutover == ((GregorianCalendar)paramObject).gregorianCutover); } public int hashCode() { return super.hashCode() ^ (int)this.gregorianCutoverDate; } public void add(int paramInt1, int paramInt2) { if (paramInt2 == 0) return;  if (paramInt1 < 0 || paramInt1 >= 15) throw new IllegalArgumentException();  complete(); if (paramInt1 == 1) { int i = internalGet(1); if (internalGetEra() == 1) { i += paramInt2; if (i > 0) { set(1, i); } else { set(1, 1 - i); set(0, 0); }  } else { i -= paramInt2; if (i > 0) { set(1, i); } else { set(1, 1 - i); set(0, 1); }  }  pinDayOfMonth(); } else if (paramInt1 == 2) { int k, i = internalGet(2) + paramInt2; int j = internalGet(1); if (i >= 0) { k = i / 12; } else { k = (i + 1) / 12 - 1; }  if (k != 0) if (internalGetEra() == 1) { j += k; if (j > 0) { set(1, j); } else { set(1, 1 - j); set(0, 0); }  } else { j -= k; if (j > 0) { set(1, j); } else { set(1, 1 - j); set(0, 1); }  }   if (i >= 0) { set(2, i % 12); } else { i %= 12; if (i < 0) i += 12;  set(2, 0 + i); }  pinDayOfMonth(); } else if (paramInt1 == 0) { int i = internalGet(0) + paramInt2; if (i < 0) i = 0;  if (i > 1) i = 1;  set(0, i); } else { long l1 = paramInt2; long l2 = 0L; switch (paramInt1) { case 10: case 11: l1 *= 3600000L; break;case 12: l1 *= 60000L; break;case 13: l1 *= 1000L; break;case 3: case 4: case 8: l1 *= 7L; break;case 9: l1 = (paramInt2 / 2); l2 = (12 * paramInt2 % 2); break; }  if (paramInt1 >= 10) { setTimeInMillis(this.time + l1); return; }  long l3 = getCurrentFixedDate(); l2 += internalGet(11); l2 *= 60L; l2 += internalGet(12); l2 *= 60L; l2 += internalGet(13); l2 *= 1000L; l2 += internalGet(14); if (l2 >= 86400000L) { l3++; l2 -= 86400000L; } else if (l2 < 0L) { l3--; l2 += 86400000L; }  l3 += l1; int i = internalGet(15) + internalGet(16); setTimeInMillis((l3 - 719163L) * 86400000L + l2 - i); i -= internalGet(15) + internalGet(16); if (i != 0) { setTimeInMillis(this.time + i); long l = getCurrentFixedDate(); if (l != l3) setTimeInMillis(this.time - i);  }  }  } public void roll(int paramInt, boolean paramBoolean) { roll(paramInt, paramBoolean ? 1 : -1); } public void roll(int paramInt1, int paramInt2) { int k; boolean bool; long l1; int m, n; long l2; CalendarDate calendarDate; long l3; int i3; long l4; int i2; BaseCalendar.Date date1; int i1, i5; BaseCalendar baseCalendar1; BaseCalendar.Date date2; int i4, i7; long l5; int i6; long l6; int i8; BaseCalendar.Date date3; BaseCalendar baseCalendar2; int i9; BaseCalendar.Date date4; long l7; int i10; if (paramInt2 == 0) return;  if (paramInt1 < 0 || paramInt1 >= 15) throw new IllegalArgumentException();  complete(); int i = getMinimum(paramInt1); int j = getMaximum(paramInt1); switch (paramInt1) { case 10: case 11: k = j + 1; m = internalGet(paramInt1); n = (m + paramInt2) % k; if (n < 0) n += k;  this.time += (3600000 * (n - m)); calendarDate = this.calsys.getCalendarDate(this.time, getZone()); if (internalGet(5) != calendarDate.getDayOfMonth()) { calendarDate.setDate(internalGet(1), internalGet(2) + 1, internalGet(5)); if (paramInt1 == 10) { assert internalGet(9) == 1; calendarDate.addHours(12); }  this.time = this.calsys.getTime(calendarDate); }  i3 = calendarDate.getHours(); internalSet(paramInt1, i3 % k); if (paramInt1 == 10) { internalSet(11, i3); } else { internalSet(9, i3 / 12); internalSet(10, i3 % 12); }  i5 = calendarDate.getZoneOffset(); i7 = calendarDate.getDaylightSaving(); internalSet(15, i5 - i7); internalSet(16, i7); return;case 2: if (!isCutoverYear(this.cdate.getNormalizedYear())) { k = (internalGet(2) + paramInt2) % 12; if (k < 0) k += 12;  set(2, k); m = monthLength(k); if (internalGet(5) > m) set(5, m);  } else { k = getActualMaximum(2) + 1; m = (internalGet(2) + paramInt2) % k; if (m < 0) m += k;  set(2, m); n = getActualMaximum(5); if (internalGet(5) > n) set(5, n);  }  return;case 3: k = this.cdate.getNormalizedYear(); j = getActualMaximum(3); set(7, internalGet(7)); m = internalGet(3); n = m + paramInt2; if (!isCutoverYear(k)) { int i11 = getWeekYear(); if (i11 == k) { if (n > i && n < j) { set(3, n); return; }  l4 = getCurrentFixedDate(); long l = l4 - (7 * (m - i)); if (this.calsys.getYearFromFixedDate(l) != k) i++;  l4 += (7 * (j - internalGet(3))); if (this.calsys.getYearFromFixedDate(l4) != k) j--;  } else if (i11 > k) { if (paramInt2 < 0) paramInt2++;  m = j; } else { if (paramInt2 > 0) paramInt2 -= m - j;  m = i; }  set(paramInt1, getRolledValue(m, paramInt2, i, j)); return; }  l3 = getCurrentFixedDate(); if (this.gregorianCutoverYear == this.gregorianCutoverYearJulian) { baseCalendar1 = getCutoverCalendarSystem(); } else if (k == this.gregorianCutoverYear) { baseCalendar1 = gcal; } else { baseCalendar1 = getJulianCalendarSystem(); }  l5 = l3 - (7 * (m - i)); if (baseCalendar1.getYearFromFixedDate(l5) != k) i++;  l3 += (7 * (j - m)); baseCalendar1 = (l3 >= this.gregorianCutoverDate) ? gcal : getJulianCalendarSystem(); if (baseCalendar1.getYearFromFixedDate(l3) != k) j--;  n = getRolledValue(m, paramInt2, i, j) - 1; date3 = getCalendarDate(l5 + (n * 7)); set(2, date3.getMonth() - 1); set(5, date3.getDayOfMonth()); return;case 4: bool = isCutoverYear(this.cdate.getNormalizedYear()); m = internalGet(7) - getFirstDayOfWeek(); if (m < 0) m += 7;  l2 = getCurrentFixedDate(); if (bool) { l4 = getFixedDateMonth1(this.cdate, l2); i6 = actualMonthLength(); } else { l4 = l2 - internalGet(5) + 1L; i6 = this.calsys.getMonthLength(this.cdate); }  l6 = BaseCalendar.getDayOfWeekDateOnOrBefore(l4 + 6L, getFirstDayOfWeek()); if ((int)(l6 - l4) >= getMinimalDaysInFirstWeek()) l6 -= 7L;  j = getActualMaximum(paramInt1); i9 = getRolledValue(internalGet(paramInt1), paramInt2, 1, j) - 1; l7 = l6 + (i9 * 7) + m; if (l7 < l4) { l7 = l4; } else if (l7 >= l4 + i6) { l7 = l4 + i6 - 1L; }  if (bool) { BaseCalendar.Date date = getCalendarDate(l7); i10 = date.getDayOfMonth(); } else { i10 = (int)(l7 - l4) + 1; }  set(5, i10); return;case 5: if (!isCutoverYear(this.cdate.getNormalizedYear())) { j = this.calsys.getMonthLength(this.cdate); break; }  l1 = getCurrentFixedDate(); l2 = getFixedDateMonth1(this.cdate, l1); i2 = getRolledValue((int)(l1 - l2), paramInt2, 0, actualMonthLength() - 1); date2 = getCalendarDate(l2 + i2); assert date2.getMonth() - 1 == internalGet(2); set(5, date2.getDayOfMonth()); return;case 6: j = getActualMaximum(paramInt1); if (!isCutoverYear(this.cdate.getNormalizedYear())) break;  l1 = getCurrentFixedDate(); l2 = l1 - internalGet(6) + 1L; i2 = getRolledValue((int)(l1 - l2) + 1, paramInt2, i, j); date2 = getCalendarDate(l2 + i2 - 1L); set(2, date2.getMonth() - 1); set(5, date2.getDayOfMonth()); return;case 7: if (!isCutoverYear(this.cdate.getNormalizedYear())) { int i11 = internalGet(3); if (i11 > 1 && i11 < 52) { set(3, i11); j = 7; break; }  }  paramInt2 %= 7; if (paramInt2 == 0) return;  l1 = getCurrentFixedDate(); l2 = BaseCalendar.getDayOfWeekDateOnOrBefore(l1, getFirstDayOfWeek()); l1 += paramInt2; if (l1 < l2) { l1 += 7L; } else if (l1 >= l2 + 7L) { l1 -= 7L; }  date1 = getCalendarDate(l1); set(0, (date1.getNormalizedYear() <= 0) ? 0 : 1); set(date1.getYear(), date1.getMonth() - 1, date1.getDayOfMonth()); return;case 8: i = 1; if (!isCutoverYear(this.cdate.getNormalizedYear())) { int i11 = internalGet(5); m = this.calsys.getMonthLength(this.cdate); int i12 = m % 7; j = m / 7; int i13 = (i11 - 1) % 7; if (i13 < i12) j++;  set(7, internalGet(7)); break; }  l1 = getCurrentFixedDate(); l2 = getFixedDateMonth1(this.cdate, l1); i1 = actualMonthLength(); i4 = i1 % 7; j = i1 / 7; i6 = (int)(l1 - l2) % 7; if (i6 < i4) j++;  i8 = getRolledValue(internalGet(paramInt1), paramInt2, i, j) - 1; l1 = l2 + (i8 * 7) + i6; baseCalendar2 = (l1 >= this.gregorianCutoverDate) ? gcal : getJulianCalendarSystem(); date4 = (BaseCalendar.Date)baseCalendar2.newCalendarDate(TimeZone.NO_TIMEZONE); baseCalendar2.getCalendarDateFromFixedDate(date4, l1); set(5, date4.getDayOfMonth()); return; }  set(paramInt1, getRolledValue(internalGet(paramInt1), paramInt2, i, j)); } public int getMinimum(int paramInt) { return MIN_VALUES[paramInt]; } public int getMaximum(int paramInt) { GregorianCalendar gregorianCalendar; int i; int j; switch (paramInt) { case 1: case 2: case 3: case 4: case 5: case 6: case 8: if (this.gregorianCutoverYear > 200) break;  gregorianCalendar = (GregorianCalendar)clone(); gregorianCalendar.setLenient(true); gregorianCalendar.setTimeInMillis(this.gregorianCutover); i = gregorianCalendar.getActualMaximum(paramInt); gregorianCalendar.setTimeInMillis(this.gregorianCutover - 1L); j = gregorianCalendar.getActualMaximum(paramInt); return Math.max(MAX_VALUES[paramInt], Math.max(i, j)); }  return MAX_VALUES[paramInt]; } GregorianCalendar(int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, int paramInt7) { this.cachedFixedDate = Long.MIN_VALUE; this.gdate = gcal.newCalendarDate(getZone()); set(1, paramInt1); set(2, paramInt2); set(5, paramInt3); if (paramInt4 >= 12 && paramInt4 <= 23) { internalSet(9, 1); internalSet(10, paramInt4 - 12); } else { internalSet(10, paramInt4); }  setFieldsComputed(1536); set(11, paramInt4); set(12, paramInt5); set(13, paramInt6); internalSet(14, paramInt7); }
-/*      */   public int getGreatestMinimum(int paramInt) { if (paramInt == 5) { BaseCalendar.Date date = getGregorianCutoverDate(); long l = getFixedDateMonth1(date, this.gregorianCutoverDate); date = getCalendarDate(l); return Math.max(MIN_VALUES[paramInt], date.getDayOfMonth()); }  return MIN_VALUES[paramInt]; }
-/*      */   public int getLeastMaximum(int paramInt) { GregorianCalendar gregorianCalendar; int i; int j; switch (paramInt) { case 1: case 2: case 3: case 4: case 5: case 6: case 8: gregorianCalendar = (GregorianCalendar)clone(); gregorianCalendar.setLenient(true); gregorianCalendar.setTimeInMillis(this.gregorianCutover); i = gregorianCalendar.getActualMaximum(paramInt); gregorianCalendar.setTimeInMillis(this.gregorianCutover - 1L); j = gregorianCalendar.getActualMaximum(paramInt); return Math.min(LEAST_MAX_VALUES[paramInt], Math.min(i, j)); }  return LEAST_MAX_VALUES[paramInt]; }
-/*      */   public int getActualMinimum(int paramInt) { if (paramInt == 5) { GregorianCalendar gregorianCalendar = getNormalizedCalendar(); int i = gregorianCalendar.cdate.getNormalizedYear(); if (i == this.gregorianCutoverYear || i == this.gregorianCutoverYearJulian) { long l = getFixedDateMonth1(gregorianCalendar.cdate, gregorianCalendar.calsys.getFixedDate(gregorianCalendar.cdate)); BaseCalendar.Date date = getCalendarDate(l); return date.getDayOfMonth(); }  }  return getMinimum(paramInt); }
-/*      */   public int getActualMaximum(int paramInt) { int k; long l; int m, n, i1; if ((0x1FE81 & 1 << paramInt) != 0) return getMaximum(paramInt);  GregorianCalendar gregorianCalendar = getNormalizedCalendar(); BaseCalendar.Date date = gregorianCalendar.cdate; BaseCalendar baseCalendar = gregorianCalendar.calsys; int i = date.getNormalizedYear(); int j = -1; switch (paramInt) { case 2: if (!gregorianCalendar.isCutoverYear(i)) { j = 11; } else { while (true) { long l1 = gcal.getFixedDate(++i, 1, 1, (BaseCalendar.Date)null); if (l1 >= this.gregorianCutoverDate) { BaseCalendar.Date date1 = (BaseCalendar.Date)date.clone(); baseCalendar.getCalendarDateFromFixedDate(date1, l1 - 1L); j = date1.getMonth() - 1; return j; }  }  }  return j;case 5: j = baseCalendar.getMonthLength(date); if (gregorianCalendar.isCutoverYear(i) && date.getDayOfMonth() != j) { long l1 = gregorianCalendar.getCurrentFixedDate(); if (l1 < this.gregorianCutoverDate) { int i2 = gregorianCalendar.actualMonthLength(); long l2 = gregorianCalendar.getFixedDateMonth1(gregorianCalendar.cdate, l1) + i2 - 1L; BaseCalendar.Date date1 = gregorianCalendar.getCalendarDate(l2); j = date1.getDayOfMonth(); }  }  return j;case 6: if (!gregorianCalendar.isCutoverYear(i)) { j = baseCalendar.getYearLength(date); } else { long l1; if (this.gregorianCutoverYear == this.gregorianCutoverYearJulian) { BaseCalendar baseCalendar1 = gregorianCalendar.getCutoverCalendarSystem(); l1 = baseCalendar1.getFixedDate(i, 1, 1, (BaseCalendar.Date)null); } else if (i == this.gregorianCutoverYearJulian) { l1 = baseCalendar.getFixedDate(i, 1, 1, (BaseCalendar.Date)null); } else { l1 = this.gregorianCutoverDate; }  long l2 = gcal.getFixedDate(++i, 1, 1, (BaseCalendar.Date)null); if (l2 < this.gregorianCutoverDate) l2 = this.gregorianCutoverDate;  assert l1 <= baseCalendar.getFixedDate(date.getNormalizedYear(), date.getMonth(), date.getDayOfMonth(), date); assert l2 >= baseCalendar.getFixedDate(date.getNormalizedYear(), date.getMonth(), date.getDayOfMonth(), date); j = (int)(l2 - l1); }  return j;case 3: if (!gregorianCalendar.isCutoverYear(i)) { CalendarDate calendarDate = baseCalendar.newCalendarDate(TimeZone.NO_TIMEZONE); calendarDate.setDate(date.getYear(), 1, 1); m = baseCalendar.getDayOfWeek(calendarDate); m -= getFirstDayOfWeek(); if (m < 0) m += 7;  j = 52; int i2 = m + getMinimalDaysInFirstWeek() - 1; if (i2 == 6 || (date.isLeapYear() && (i2 == 5 || i2 == 12))) j++;  } else { if (gregorianCalendar == this) gregorianCalendar = (GregorianCalendar)gregorianCalendar.clone();  k = getActualMaximum(6); gregorianCalendar.set(6, k); j = gregorianCalendar.get(3); if (internalGet(1) != gregorianCalendar.getWeekYear()) { gregorianCalendar.set(6, k - 7); j = gregorianCalendar.get(3); }  }  return j;case 4: if (!gregorianCalendar.isCutoverYear(i)) { CalendarDate calendarDate = baseCalendar.newCalendarDate(null); calendarDate.setDate(date.getYear(), date.getMonth(), 1); m = baseCalendar.getDayOfWeek(calendarDate); int i2 = baseCalendar.getMonthLength(calendarDate); m -= getFirstDayOfWeek(); if (m < 0) m += 7;  int i3 = 7 - m; j = 3; if (i3 >= getMinimalDaysInFirstWeek()) j++;  i2 -= i3 + 21; if (i2 > 0) { j++; if (i2 > 7) j++;  }  } else { if (gregorianCalendar == this) gregorianCalendar = (GregorianCalendar)gregorianCalendar.clone();  k = gregorianCalendar.internalGet(1); m = gregorianCalendar.internalGet(2); do { j = gregorianCalendar.get(4); gregorianCalendar.add(4, 1); } while (gregorianCalendar.get(1) == k && gregorianCalendar.get(2) == m); }  return j;case 8: n = date.getDayOfWeek(); if (!gregorianCalendar.isCutoverYear(i)) { BaseCalendar.Date date1 = (BaseCalendar.Date)date.clone(); k = baseCalendar.getMonthLength(date1); date1.setDayOfMonth(1); baseCalendar.normalize(date1); m = date1.getDayOfWeek(); } else { if (gregorianCalendar == this) gregorianCalendar = (GregorianCalendar)clone();  k = gregorianCalendar.actualMonthLength(); gregorianCalendar.set(5, gregorianCalendar.getActualMinimum(5)); m = gregorianCalendar.get(7); }  i1 = n - m; if (i1 < 0) i1 += 7;  k -= i1; j = (k + 6) / 7; return j;case 1: if (gregorianCalendar == this) gregorianCalendar = (GregorianCalendar)clone();  l = gregorianCalendar.getYearOffsetInMillis(); if (gregorianCalendar.internalGetEra() == 1) { gregorianCalendar.setTimeInMillis(Long.MAX_VALUE); j = gregorianCalendar.get(1); long l1 = gregorianCalendar.getYearOffsetInMillis(); if (l > l1) j--;  } else { BaseCalendar baseCalendar1 = (gregorianCalendar.getTimeInMillis() >= this.gregorianCutover) ? gcal : getJulianCalendarSystem(); CalendarDate calendarDate = baseCalendar1.getCalendarDate(Long.MIN_VALUE, getZone()); long l1 = (baseCalendar.getDayOfYear(calendarDate) - 1L) * 24L + calendarDate.getHours(); l1 *= 60L; l1 += calendarDate.getMinutes(); l1 *= 60L; l1 += calendarDate.getSeconds(); l1 *= 1000L; l1 += calendarDate.getMillis(); j = calendarDate.getYear(); if (j <= 0) { assert baseCalendar1 == gcal; j = 1 - j; }  if (l < l1) j--;  }  return j; }  throw new ArrayIndexOutOfBoundsException(paramInt); }
-/*      */   private long getYearOffsetInMillis() { long l = ((internalGet(6) - 1) * 24); l += internalGet(11); l *= 60L; l += internalGet(12); l *= 60L; l += internalGet(13); l *= 1000L; return l + internalGet(14) - (internalGet(15) + internalGet(16)); }
-/*      */   public Object clone() { GregorianCalendar gregorianCalendar = (GregorianCalendar)super.clone(); gregorianCalendar.gdate = (BaseCalendar.Date)this.gdate.clone(); if (this.cdate != null) if (this.cdate != this.gdate) { gregorianCalendar.cdate = (BaseCalendar.Date)this.cdate.clone(); } else { gregorianCalendar.cdate = gregorianCalendar.gdate; }   gregorianCalendar.originalFields = null; gregorianCalendar.zoneOffsets = null; return gregorianCalendar; }
-/*      */   public TimeZone getTimeZone() { TimeZone timeZone = super.getTimeZone(); this.gdate.setZone(timeZone); if (this.cdate != null && this.cdate != this.gdate) this.cdate.setZone(timeZone);  return timeZone; }
-/*      */   public void setTimeZone(TimeZone paramTimeZone) { super.setTimeZone(paramTimeZone); this.gdate.setZone(paramTimeZone); if (this.cdate != null && this.cdate != this.gdate) this.cdate.setZone(paramTimeZone);  }
-/*      */   public final boolean isWeekDateSupported() { return true; }
-/*      */   public int getWeekYear() { int i = get(1); if (internalGetEra() == 0) i = 1 - i;  if (i > this.gregorianCutoverYear + 1) { int i2 = internalGet(3); if (internalGet(2) == 0) { if (i2 >= 52) i--;  } else if (i2 == 1) { i++; }  return i; }  int j = internalGet(6); int k = getActualMaximum(6); int m = getMinimalDaysInFirstWeek(); if (j > m && j < k - 6) return i;  GregorianCalendar gregorianCalendar = (GregorianCalendar)clone(); gregorianCalendar.setLenient(true); gregorianCalendar.setTimeZone(TimeZone.getTimeZone("GMT")); gregorianCalendar.set(6, 1); gregorianCalendar.complete(); int n = getFirstDayOfWeek() - gregorianCalendar.get(7); if (n != 0) { if (n < 0) n += 7;  gregorianCalendar.add(6, n); }  int i1 = gregorianCalendar.get(6); if (j < i1) { if (i1 <= m) i--;  } else { gregorianCalendar.set(1, i + 1); gregorianCalendar.set(6, 1); gregorianCalendar.complete(); int i2 = getFirstDayOfWeek() - gregorianCalendar.get(7); if (i2 != 0) { if (i2 < 0) i2 += 7;  gregorianCalendar.add(6, i2); }  i1 = gregorianCalendar.get(6) - 1; if (i1 == 0) i1 = 7;  if (i1 >= m) { int i3 = k - j + 1; if (i3 <= 7 - i1) i++;  }  }  return i; }
-/*      */   public void setWeekDate(int paramInt1, int paramInt2, int paramInt3) { if (paramInt3 < 1 || paramInt3 > 7) throw new IllegalArgumentException("invalid dayOfWeek: " + paramInt3);  GregorianCalendar gregorianCalendar = (GregorianCalendar)clone(); gregorianCalendar.setLenient(true); int i = gregorianCalendar.get(0); gregorianCalendar.clear(); gregorianCalendar.setTimeZone(TimeZone.getTimeZone("GMT")); gregorianCalendar.set(0, i); gregorianCalendar.set(1, paramInt1); gregorianCalendar.set(3, 1); gregorianCalendar.set(7, getFirstDayOfWeek()); int j = paramInt3 - getFirstDayOfWeek(); if (j < 0) j += 7;  j += 7 * (paramInt2 - 1); if (j != 0) { gregorianCalendar.add(6, j); } else { gregorianCalendar.complete(); }  if (!isLenient() && (gregorianCalendar.getWeekYear() != paramInt1 || gregorianCalendar.internalGet(3) != paramInt2 || gregorianCalendar.internalGet(7) != paramInt3)) throw new IllegalArgumentException();  set(0, gregorianCalendar.internalGet(0)); set(1, gregorianCalendar.internalGet(1)); set(2, gregorianCalendar.internalGet(2)); set(5, gregorianCalendar.internalGet(5)); internalSet(3, paramInt2); complete(); }
-/*      */   public int getWeeksInWeekYear() { GregorianCalendar gregorianCalendar = getNormalizedCalendar(); int i = gregorianCalendar.getWeekYear(); if (i == gregorianCalendar.internalGet(1))
-/*      */       return gregorianCalendar.getActualMaximum(3);  if (gregorianCalendar == this)
-/* 2299 */       gregorianCalendar = (GregorianCalendar)gregorianCalendar.clone();  gregorianCalendar.setWeekDate(i, 2, internalGet(7)); return gregorianCalendar.getActualMaximum(3); } protected void computeFields() { int i; if (isPartiallyNormalized()) {
-/*      */       
-/* 2301 */       i = getSetStateFields();
-/* 2302 */       int j = (i ^ 0xFFFFFFFF) & 0x1FFFF;
-/*      */ 
-/*      */       
-/* 2305 */       if (j != 0 || this.calsys == null) {
-/* 2306 */         i |= computeFields(j, i & 0x18000);
-/*      */         
-/* 2308 */         assert i == 131071;
-/*      */       } 
-/*      */     } else {
-/* 2311 */       i = 131071;
-/* 2312 */       computeFields(i, 0);
-/*      */     } 
-/*      */     
-/* 2315 */     setFieldsComputed(i); }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int computeFields(int paramInt1, int paramInt2) {
-/* 2333 */     int k, i = 0;
-/* 2334 */     TimeZone timeZone = getZone();
-/* 2335 */     if (this.zoneOffsets == null) {
-/* 2336 */       this.zoneOffsets = new int[2];
-/*      */     }
-/* 2338 */     if (paramInt2 != 98304) {
-/* 2339 */       if (timeZone instanceof ZoneInfo) {
-/* 2340 */         i = ((ZoneInfo)timeZone).getOffsets(this.time, this.zoneOffsets);
-/*      */       } else {
-/* 2342 */         i = timeZone.getOffset(this.time);
-/* 2343 */         this.zoneOffsets[0] = timeZone.getRawOffset();
-/* 2344 */         this.zoneOffsets[1] = i - this.zoneOffsets[0];
-/*      */       } 
-/*      */     }
-/* 2347 */     if (paramInt2 != 0) {
-/* 2348 */       if (isFieldSet(paramInt2, 15)) {
-/* 2349 */         this.zoneOffsets[0] = internalGet(15);
-/*      */       }
-/* 2351 */       if (isFieldSet(paramInt2, 16)) {
-/* 2352 */         this.zoneOffsets[1] = internalGet(16);
-/*      */       }
-/* 2354 */       i = this.zoneOffsets[0] + this.zoneOffsets[1];
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2360 */     long l = i / 86400000L;
-/* 2361 */     int j = i % 86400000;
-/* 2362 */     l += this.time / 86400000L;
-/* 2363 */     j += (int)(this.time % 86400000L);
-/* 2364 */     if (j >= 86400000L) {
-/* 2365 */       j = (int)(j - 86400000L);
-/* 2366 */       l++;
-/*      */     } else {
-/* 2368 */       while (j < 0) {
-/* 2369 */         j = (int)(j + 86400000L);
-/* 2370 */         l--;
-/*      */       } 
-/*      */     } 
-/* 2373 */     l += 719163L;
-/*      */     
-/* 2375 */     boolean bool = true;
-/*      */     
-/* 2377 */     if (l >= this.gregorianCutoverDate) {
-/*      */       
-/* 2379 */       assert this.cachedFixedDate == Long.MIN_VALUE || this.gdate.isNormalized() : "cache control: not normalized";
-/*      */       
-/* 2381 */       assert this.cachedFixedDate == Long.MIN_VALUE || gcal
-/* 2382 */         .getFixedDate(this.gdate.getNormalizedYear(), this.gdate
-/* 2383 */           .getMonth(), this.gdate
-/* 2384 */           .getDayOfMonth(), this.gdate) == this.cachedFixedDate : "cache control: inconsictency, cachedFixedDate=" + this.cachedFixedDate + ", computed=" + gcal
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2389 */         .getFixedDate(this.gdate.getNormalizedYear(), this.gdate
-/* 2390 */           .getMonth(), this.gdate
-/* 2391 */           .getDayOfMonth(), this.gdate) + ", date=" + this.gdate;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2396 */       if (l != this.cachedFixedDate) {
-/* 2397 */         gcal.getCalendarDateFromFixedDate(this.gdate, l);
-/* 2398 */         this.cachedFixedDate = l;
-/*      */       } 
-/*      */       
-/* 2401 */       k = this.gdate.getYear();
-/* 2402 */       if (k <= 0) {
-/* 2403 */         k = 1 - k;
-/* 2404 */         bool = false;
-/*      */       } 
-/* 2406 */       this.calsys = gcal;
-/* 2407 */       this.cdate = this.gdate;
-/* 2408 */       assert this.cdate.getDayOfWeek() > 0 : "dow=" + this.cdate.getDayOfWeek() + ", date=" + this.cdate;
-/*      */     } else {
-/*      */       
-/* 2411 */       this.calsys = getJulianCalendarSystem();
-/* 2412 */       this.cdate = jcal.newCalendarDate(getZone());
-/* 2413 */       jcal.getCalendarDateFromFixedDate(this.cdate, l);
-/* 2414 */       Era era = this.cdate.getEra();
-/* 2415 */       if (era == jeras[0]) {
-/* 2416 */         bool = false;
-/*      */       }
-/* 2418 */       k = this.cdate.getYear();
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2422 */     internalSet(0, bool);
-/* 2423 */     internalSet(1, k);
-/* 2424 */     int m = paramInt1 | 0x3;
-/*      */     
-/* 2426 */     int n = this.cdate.getMonth() - 1;
-/* 2427 */     int i1 = this.cdate.getDayOfMonth();
-/*      */ 
-/*      */     
-/* 2430 */     if ((paramInt1 & 0xA4) != 0) {
-/*      */       
-/* 2432 */       internalSet(2, n);
-/* 2433 */       internalSet(5, i1);
-/* 2434 */       internalSet(7, this.cdate.getDayOfWeek());
-/* 2435 */       m |= 0xA4;
-/*      */     } 
-/*      */     
-/* 2438 */     if ((paramInt1 & 0x7E00) != 0) {
-/*      */       
-/* 2440 */       if (j != 0) {
-/* 2441 */         int i2 = j / 3600000;
-/* 2442 */         internalSet(11, i2);
-/* 2443 */         internalSet(9, i2 / 12);
-/* 2444 */         internalSet(10, i2 % 12);
-/* 2445 */         int i3 = j % 3600000;
-/* 2446 */         internalSet(12, i3 / 60000);
-/* 2447 */         i3 %= 60000;
-/* 2448 */         internalSet(13, i3 / 1000);
-/* 2449 */         internalSet(14, i3 % 1000);
-/*      */       } else {
-/* 2451 */         internalSet(11, 0);
-/* 2452 */         internalSet(9, 0);
-/* 2453 */         internalSet(10, 0);
-/* 2454 */         internalSet(12, 0);
-/* 2455 */         internalSet(13, 0);
-/* 2456 */         internalSet(14, 0);
-/*      */       } 
-/* 2458 */       m |= 0x7E00;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2462 */     if ((paramInt1 & 0x18000) != 0) {
-/* 2463 */       internalSet(15, this.zoneOffsets[0]);
-/* 2464 */       internalSet(16, this.zoneOffsets[1]);
-/* 2465 */       m |= 0x18000;
-/*      */     } 
-/*      */     
-/* 2468 */     if ((paramInt1 & 0x158) != 0) {
-/* 2469 */       int i2 = this.cdate.getNormalizedYear();
-/* 2470 */       long l1 = this.calsys.getFixedDate(i2, 1, 1, this.cdate);
-/* 2471 */       int i3 = (int)(l - l1) + 1;
-/* 2472 */       long l2 = l - i1 + 1L;
-/* 2473 */       int i4 = 0;
-/* 2474 */       int i5 = (this.calsys == gcal) ? this.gregorianCutoverYear : this.gregorianCutoverYearJulian;
-/* 2475 */       int i6 = i1 - 1;
-/*      */ 
-/*      */       
-/* 2478 */       if (i2 == i5) {
-/*      */         
-/* 2480 */         if (this.gregorianCutoverYearJulian <= this.gregorianCutoverYear) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 2484 */           l1 = getFixedDateJan1(this.cdate, l);
-/* 2485 */           if (l >= this.gregorianCutoverDate) {
-/* 2486 */             l2 = getFixedDateMonth1(this.cdate, l);
-/*      */           }
-/*      */         } 
-/* 2489 */         int i8 = (int)(l - l1) + 1;
-/* 2490 */         i4 = i3 - i8;
-/* 2491 */         i3 = i8;
-/* 2492 */         i6 = (int)(l - l2);
-/*      */       } 
-/* 2494 */       internalSet(6, i3);
-/* 2495 */       internalSet(8, i6 / 7 + 1);
-/*      */       
-/* 2497 */       int i7 = getWeekNumber(l1, l);
-/*      */ 
-/*      */ 
-/*      */       
-/* 2501 */       if (i7 == 0) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2509 */         long l3 = l1 - 1L;
-/* 2510 */         long l4 = l1 - 365L;
-/* 2511 */         if (i2 > i5 + 1) {
-/* 2512 */           if (CalendarUtils.isGregorianLeapYear(i2 - 1)) {
-/* 2513 */             l4--;
-/*      */           }
-/* 2515 */         } else if (i2 <= this.gregorianCutoverYearJulian) {
-/* 2516 */           if (CalendarUtils.isJulianLeapYear(i2 - 1)) {
-/* 2517 */             l4--;
-/*      */           }
-/*      */         } else {
-/* 2520 */           BaseCalendar baseCalendar = this.calsys;
-/*      */           
-/* 2522 */           int i8 = getCalendarDate(l3).getNormalizedYear();
-/* 2523 */           if (i8 == this.gregorianCutoverYear) {
-/* 2524 */             baseCalendar = getCutoverCalendarSystem();
-/* 2525 */             if (baseCalendar == jcal) {
-/* 2526 */               l4 = baseCalendar.getFixedDate(i8, 1, 1, (BaseCalendar.Date)null);
-/*      */             
-/*      */             }
-/*      */             else {
-/*      */               
-/* 2531 */               l4 = this.gregorianCutoverDate;
-/* 2532 */               baseCalendar = gcal;
-/*      */             } 
-/* 2534 */           } else if (i8 <= this.gregorianCutoverYearJulian) {
-/* 2535 */             baseCalendar = getJulianCalendarSystem();
-/* 2536 */             l4 = baseCalendar.getFixedDate(i8, 1, 1, (BaseCalendar.Date)null);
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2542 */         i7 = getWeekNumber(l4, l3);
-/*      */       }
-/* 2544 */       else if (i2 > this.gregorianCutoverYear || i2 < this.gregorianCutoverYearJulian - 1) {
-/*      */ 
-/*      */         
-/* 2547 */         if (i7 >= 52) {
-/* 2548 */           long l3 = l1 + 365L;
-/* 2549 */           if (this.cdate.isLeapYear()) {
-/* 2550 */             l3++;
-/*      */           }
-/* 2552 */           long l4 = BaseCalendar.getDayOfWeekDateOnOrBefore(l3 + 6L, 
-/* 2553 */               getFirstDayOfWeek());
-/* 2554 */           int i8 = (int)(l4 - l3);
-/* 2555 */           if (i8 >= getMinimalDaysInFirstWeek() && l >= l4 - 7L)
-/*      */           {
-/* 2557 */             i7 = 1; } 
-/*      */         } 
-/*      */       } else {
-/*      */         long l3;
-/* 2561 */         BaseCalendar baseCalendar = this.calsys;
-/* 2562 */         int i8 = i2 + 1;
-/* 2563 */         if (i8 == this.gregorianCutoverYearJulian + 1 && i8 < this.gregorianCutoverYear)
-/*      */         {
-/*      */           
-/* 2566 */           i8 = this.gregorianCutoverYear;
-/*      */         }
-/* 2568 */         if (i8 == this.gregorianCutoverYear) {
-/* 2569 */           baseCalendar = getCutoverCalendarSystem();
-/*      */         }
-/*      */ 
-/*      */         
-/* 2573 */         if (i8 > this.gregorianCutoverYear || this.gregorianCutoverYearJulian == this.gregorianCutoverYear || i8 == this.gregorianCutoverYearJulian) {
-/*      */ 
-/*      */           
-/* 2576 */           l3 = baseCalendar.getFixedDate(i8, 1, 1, (BaseCalendar.Date)null);
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2581 */           l3 = this.gregorianCutoverDate;
-/* 2582 */           baseCalendar = gcal;
-/*      */         } 
-/*      */         
-/* 2585 */         long l4 = BaseCalendar.getDayOfWeekDateOnOrBefore(l3 + 6L, 
-/* 2586 */             getFirstDayOfWeek());
-/* 2587 */         int i9 = (int)(l4 - l3);
-/* 2588 */         if (i9 >= getMinimalDaysInFirstWeek() && l >= l4 - 7L)
-/*      */         {
-/* 2590 */           i7 = 1;
-/*      */         }
-/*      */       } 
-/*      */       
-/* 2594 */       internalSet(3, i7);
-/* 2595 */       internalSet(4, getWeekNumber(l2, l));
-/* 2596 */       m |= 0x158;
-/*      */     } 
-/* 2598 */     return m;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int getWeekNumber(long paramLong1, long paramLong2) {
-/* 2613 */     long l = Gregorian.getDayOfWeekDateOnOrBefore(paramLong1 + 6L, 
-/* 2614 */         getFirstDayOfWeek());
-/* 2615 */     int i = (int)(l - paramLong1);
-/* 2616 */     assert i <= 7;
-/* 2617 */     if (i >= getMinimalDaysInFirstWeek()) {
-/* 2618 */       l -= 7L;
-/*      */     }
-/* 2620 */     int j = (int)(paramLong2 - l);
-/* 2621 */     if (j >= 0) {
-/* 2622 */       return j / 7 + 1;
-/*      */     }
-/* 2624 */     return CalendarUtils.floorDivide(j, 7) + 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void computeTime() {
-/*      */     // Byte code:
-/*      */     //   0: aload_0
-/*      */     //   1: invokevirtual isLenient : ()Z
-/*      */     //   4: ifne -> 87
-/*      */     //   7: aload_0
-/*      */     //   8: getfield originalFields : [I
-/*      */     //   11: ifnonnull -> 22
-/*      */     //   14: aload_0
-/*      */     //   15: bipush #17
-/*      */     //   17: newarray int
-/*      */     //   19: putfield originalFields : [I
-/*      */     //   22: iconst_0
-/*      */     //   23: istore_1
-/*      */     //   24: iload_1
-/*      */     //   25: bipush #17
-/*      */     //   27: if_icmpge -> 87
-/*      */     //   30: aload_0
-/*      */     //   31: iload_1
-/*      */     //   32: invokevirtual internalGet : (I)I
-/*      */     //   35: istore_2
-/*      */     //   36: aload_0
-/*      */     //   37: iload_1
-/*      */     //   38: invokevirtual isExternallySet : (I)Z
-/*      */     //   41: ifeq -> 74
-/*      */     //   44: iload_2
-/*      */     //   45: aload_0
-/*      */     //   46: iload_1
-/*      */     //   47: invokevirtual getMinimum : (I)I
-/*      */     //   50: if_icmplt -> 62
-/*      */     //   53: iload_2
-/*      */     //   54: aload_0
-/*      */     //   55: iload_1
-/*      */     //   56: invokevirtual getMaximum : (I)I
-/*      */     //   59: if_icmple -> 74
-/*      */     //   62: new java/lang/IllegalArgumentException
-/*      */     //   65: dup
-/*      */     //   66: iload_1
-/*      */     //   67: invokestatic getFieldName : (I)Ljava/lang/String;
-/*      */     //   70: invokespecial <init> : (Ljava/lang/String;)V
-/*      */     //   73: athrow
-/*      */     //   74: aload_0
-/*      */     //   75: getfield originalFields : [I
-/*      */     //   78: iload_1
-/*      */     //   79: iload_2
-/*      */     //   80: iastore
-/*      */     //   81: iinc #1, 1
-/*      */     //   84: goto -> 24
-/*      */     //   87: aload_0
-/*      */     //   88: invokevirtual selectFields : ()I
-/*      */     //   91: istore_1
-/*      */     //   92: aload_0
-/*      */     //   93: iconst_1
-/*      */     //   94: invokevirtual isSet : (I)Z
-/*      */     //   97: ifeq -> 108
-/*      */     //   100: aload_0
-/*      */     //   101: iconst_1
-/*      */     //   102: invokevirtual internalGet : (I)I
-/*      */     //   105: goto -> 111
-/*      */     //   108: sipush #1970
-/*      */     //   111: istore_2
-/*      */     //   112: aload_0
-/*      */     //   113: invokespecial internalGetEra : ()I
-/*      */     //   116: istore_3
-/*      */     //   117: iload_3
-/*      */     //   118: ifne -> 128
-/*      */     //   121: iconst_1
-/*      */     //   122: iload_2
-/*      */     //   123: isub
-/*      */     //   124: istore_2
-/*      */     //   125: goto -> 143
-/*      */     //   128: iload_3
-/*      */     //   129: iconst_1
-/*      */     //   130: if_icmpeq -> 143
-/*      */     //   133: new java/lang/IllegalArgumentException
-/*      */     //   136: dup
-/*      */     //   137: ldc 'Invalid era'
-/*      */     //   139: invokespecial <init> : (Ljava/lang/String;)V
-/*      */     //   142: athrow
-/*      */     //   143: iload_2
-/*      */     //   144: ifgt -> 164
-/*      */     //   147: aload_0
-/*      */     //   148: iconst_0
-/*      */     //   149: invokevirtual isSet : (I)Z
-/*      */     //   152: ifne -> 164
-/*      */     //   155: iload_1
-/*      */     //   156: iconst_1
-/*      */     //   157: ior
-/*      */     //   158: istore_1
-/*      */     //   159: aload_0
-/*      */     //   160: iconst_1
-/*      */     //   161: invokevirtual setFieldsComputed : (I)V
-/*      */     //   164: lconst_0
-/*      */     //   165: lstore #4
-/*      */     //   167: iload_1
-/*      */     //   168: bipush #11
-/*      */     //   170: invokestatic isFieldSet : (II)Z
-/*      */     //   173: ifeq -> 191
-/*      */     //   176: lload #4
-/*      */     //   178: aload_0
-/*      */     //   179: bipush #11
-/*      */     //   181: invokevirtual internalGet : (I)I
-/*      */     //   184: i2l
-/*      */     //   185: ladd
-/*      */     //   186: lstore #4
-/*      */     //   188: goto -> 227
-/*      */     //   191: lload #4
-/*      */     //   193: aload_0
-/*      */     //   194: bipush #10
-/*      */     //   196: invokevirtual internalGet : (I)I
-/*      */     //   199: i2l
-/*      */     //   200: ladd
-/*      */     //   201: lstore #4
-/*      */     //   203: iload_1
-/*      */     //   204: bipush #9
-/*      */     //   206: invokestatic isFieldSet : (II)Z
-/*      */     //   209: ifeq -> 227
-/*      */     //   212: lload #4
-/*      */     //   214: bipush #12
-/*      */     //   216: aload_0
-/*      */     //   217: bipush #9
-/*      */     //   219: invokevirtual internalGet : (I)I
-/*      */     //   222: imul
-/*      */     //   223: i2l
-/*      */     //   224: ladd
-/*      */     //   225: lstore #4
-/*      */     //   227: lload #4
-/*      */     //   229: ldc2_w 60
-/*      */     //   232: lmul
-/*      */     //   233: lstore #4
-/*      */     //   235: lload #4
-/*      */     //   237: aload_0
-/*      */     //   238: bipush #12
-/*      */     //   240: invokevirtual internalGet : (I)I
-/*      */     //   243: i2l
-/*      */     //   244: ladd
-/*      */     //   245: lstore #4
-/*      */     //   247: lload #4
-/*      */     //   249: ldc2_w 60
-/*      */     //   252: lmul
-/*      */     //   253: lstore #4
-/*      */     //   255: lload #4
-/*      */     //   257: aload_0
-/*      */     //   258: bipush #13
-/*      */     //   260: invokevirtual internalGet : (I)I
-/*      */     //   263: i2l
-/*      */     //   264: ladd
-/*      */     //   265: lstore #4
-/*      */     //   267: lload #4
-/*      */     //   269: ldc2_w 1000
-/*      */     //   272: lmul
-/*      */     //   273: lstore #4
-/*      */     //   275: lload #4
-/*      */     //   277: aload_0
-/*      */     //   278: bipush #14
-/*      */     //   280: invokevirtual internalGet : (I)I
-/*      */     //   283: i2l
-/*      */     //   284: ladd
-/*      */     //   285: lstore #4
-/*      */     //   287: lload #4
-/*      */     //   289: ldc2_w 86400000
-/*      */     //   292: ldiv
-/*      */     //   293: lstore #6
-/*      */     //   295: lload #4
-/*      */     //   297: ldc2_w 86400000
-/*      */     //   300: lrem
-/*      */     //   301: lstore #4
-/*      */     //   303: lload #4
-/*      */     //   305: lconst_0
-/*      */     //   306: lcmp
-/*      */     //   307: ifge -> 327
-/*      */     //   310: lload #4
-/*      */     //   312: ldc2_w 86400000
-/*      */     //   315: ladd
-/*      */     //   316: lstore #4
-/*      */     //   318: lload #6
-/*      */     //   320: lconst_1
-/*      */     //   321: lsub
-/*      */     //   322: lstore #6
-/*      */     //   324: goto -> 303
-/*      */     //   327: iload_2
-/*      */     //   328: aload_0
-/*      */     //   329: getfield gregorianCutoverYear : I
-/*      */     //   332: if_icmple -> 391
-/*      */     //   335: iload_2
-/*      */     //   336: aload_0
-/*      */     //   337: getfield gregorianCutoverYearJulian : I
-/*      */     //   340: if_icmple -> 391
-/*      */     //   343: lload #6
-/*      */     //   345: aload_0
-/*      */     //   346: getstatic java/util/GregorianCalendar.gcal : Lsun/util/calendar/Gregorian;
-/*      */     //   349: iload_2
-/*      */     //   350: iload_1
-/*      */     //   351: invokespecial getFixedDate : (Lsun/util/calendar/BaseCalendar;II)J
-/*      */     //   354: ladd
-/*      */     //   355: lstore #8
-/*      */     //   357: lload #8
-/*      */     //   359: aload_0
-/*      */     //   360: getfield gregorianCutoverDate : J
-/*      */     //   363: lcmp
-/*      */     //   364: iflt -> 374
-/*      */     //   367: lload #8
-/*      */     //   369: lstore #6
-/*      */     //   371: goto -> 619
-/*      */     //   374: lload #6
-/*      */     //   376: aload_0
-/*      */     //   377: invokestatic getJulianCalendarSystem : ()Lsun/util/calendar/BaseCalendar;
-/*      */     //   380: iload_2
-/*      */     //   381: iload_1
-/*      */     //   382: invokespecial getFixedDate : (Lsun/util/calendar/BaseCalendar;II)J
-/*      */     //   385: ladd
-/*      */     //   386: lstore #10
-/*      */     //   388: goto -> 473
-/*      */     //   391: iload_2
-/*      */     //   392: aload_0
-/*      */     //   393: getfield gregorianCutoverYear : I
-/*      */     //   396: if_icmpge -> 445
-/*      */     //   399: iload_2
-/*      */     //   400: aload_0
-/*      */     //   401: getfield gregorianCutoverYearJulian : I
-/*      */     //   404: if_icmpge -> 445
-/*      */     //   407: lload #6
-/*      */     //   409: aload_0
-/*      */     //   410: invokestatic getJulianCalendarSystem : ()Lsun/util/calendar/BaseCalendar;
-/*      */     //   413: iload_2
-/*      */     //   414: iload_1
-/*      */     //   415: invokespecial getFixedDate : (Lsun/util/calendar/BaseCalendar;II)J
-/*      */     //   418: ladd
-/*      */     //   419: lstore #10
-/*      */     //   421: lload #10
-/*      */     //   423: aload_0
-/*      */     //   424: getfield gregorianCutoverDate : J
-/*      */     //   427: lcmp
-/*      */     //   428: ifge -> 438
-/*      */     //   431: lload #10
-/*      */     //   433: lstore #6
-/*      */     //   435: goto -> 619
-/*      */     //   438: lload #10
-/*      */     //   440: lstore #8
-/*      */     //   442: goto -> 473
-/*      */     //   445: lload #6
-/*      */     //   447: aload_0
-/*      */     //   448: invokestatic getJulianCalendarSystem : ()Lsun/util/calendar/BaseCalendar;
-/*      */     //   451: iload_2
-/*      */     //   452: iload_1
-/*      */     //   453: invokespecial getFixedDate : (Lsun/util/calendar/BaseCalendar;II)J
-/*      */     //   456: ladd
-/*      */     //   457: lstore #10
-/*      */     //   459: lload #6
-/*      */     //   461: aload_0
-/*      */     //   462: getstatic java/util/GregorianCalendar.gcal : Lsun/util/calendar/Gregorian;
-/*      */     //   465: iload_2
-/*      */     //   466: iload_1
-/*      */     //   467: invokespecial getFixedDate : (Lsun/util/calendar/BaseCalendar;II)J
-/*      */     //   470: ladd
-/*      */     //   471: lstore #8
-/*      */     //   473: iload_1
-/*      */     //   474: bipush #6
-/*      */     //   476: invokestatic isFieldSet : (II)Z
-/*      */     //   479: ifne -> 490
-/*      */     //   482: iload_1
-/*      */     //   483: iconst_3
-/*      */     //   484: invokestatic isFieldSet : (II)Z
-/*      */     //   487: ifeq -> 523
-/*      */     //   490: aload_0
-/*      */     //   491: getfield gregorianCutoverYear : I
-/*      */     //   494: aload_0
-/*      */     //   495: getfield gregorianCutoverYearJulian : I
-/*      */     //   498: if_icmpne -> 508
-/*      */     //   501: lload #10
-/*      */     //   503: lstore #6
-/*      */     //   505: goto -> 619
-/*      */     //   508: iload_2
-/*      */     //   509: aload_0
-/*      */     //   510: getfield gregorianCutoverYear : I
-/*      */     //   513: if_icmpne -> 523
-/*      */     //   516: lload #8
-/*      */     //   518: lstore #6
-/*      */     //   520: goto -> 619
-/*      */     //   523: lload #8
-/*      */     //   525: aload_0
-/*      */     //   526: getfield gregorianCutoverDate : J
-/*      */     //   529: lcmp
-/*      */     //   530: iflt -> 581
-/*      */     //   533: lload #10
-/*      */     //   535: aload_0
-/*      */     //   536: getfield gregorianCutoverDate : J
-/*      */     //   539: lcmp
-/*      */     //   540: iflt -> 550
-/*      */     //   543: lload #8
-/*      */     //   545: lstore #6
-/*      */     //   547: goto -> 619
-/*      */     //   550: aload_0
-/*      */     //   551: getfield calsys : Lsun/util/calendar/BaseCalendar;
-/*      */     //   554: getstatic java/util/GregorianCalendar.gcal : Lsun/util/calendar/Gregorian;
-/*      */     //   557: if_acmpeq -> 567
-/*      */     //   560: aload_0
-/*      */     //   561: getfield calsys : Lsun/util/calendar/BaseCalendar;
-/*      */     //   564: ifnonnull -> 574
-/*      */     //   567: lload #8
-/*      */     //   569: lstore #6
-/*      */     //   571: goto -> 619
-/*      */     //   574: lload #10
-/*      */     //   576: lstore #6
-/*      */     //   578: goto -> 619
-/*      */     //   581: lload #10
-/*      */     //   583: aload_0
-/*      */     //   584: getfield gregorianCutoverDate : J
-/*      */     //   587: lcmp
-/*      */     //   588: ifge -> 598
-/*      */     //   591: lload #10
-/*      */     //   593: lstore #6
-/*      */     //   595: goto -> 619
-/*      */     //   598: aload_0
-/*      */     //   599: invokevirtual isLenient : ()Z
-/*      */     //   602: ifne -> 615
-/*      */     //   605: new java/lang/IllegalArgumentException
-/*      */     //   608: dup
-/*      */     //   609: ldc 'the specified date doesn't exist'
-/*      */     //   611: invokespecial <init> : (Ljava/lang/String;)V
-/*      */     //   614: athrow
-/*      */     //   615: lload #10
-/*      */     //   617: lstore #6
-/*      */     //   619: lload #6
-/*      */     //   621: ldc2_w 719163
-/*      */     //   624: lsub
-/*      */     //   625: ldc2_w 86400000
-/*      */     //   628: lmul
-/*      */     //   629: lload #4
-/*      */     //   631: ladd
-/*      */     //   632: lstore #8
-/*      */     //   634: aload_0
-/*      */     //   635: invokevirtual getZone : ()Ljava/util/TimeZone;
-/*      */     //   638: astore #10
-/*      */     //   640: aload_0
-/*      */     //   641: getfield zoneOffsets : [I
-/*      */     //   644: ifnonnull -> 654
-/*      */     //   647: aload_0
-/*      */     //   648: iconst_2
-/*      */     //   649: newarray int
-/*      */     //   651: putfield zoneOffsets : [I
-/*      */     //   654: iload_1
-/*      */     //   655: ldc 98304
-/*      */     //   657: iand
-/*      */     //   658: istore #11
-/*      */     //   660: iload #11
-/*      */     //   662: ldc 98304
-/*      */     //   664: if_icmpeq -> 734
-/*      */     //   667: aload #10
-/*      */     //   669: instanceof sun/util/calendar/ZoneInfo
-/*      */     //   672: ifeq -> 693
-/*      */     //   675: aload #10
-/*      */     //   677: checkcast sun/util/calendar/ZoneInfo
-/*      */     //   680: lload #8
-/*      */     //   682: aload_0
-/*      */     //   683: getfield zoneOffsets : [I
-/*      */     //   686: invokevirtual getOffsetsByWall : (J[I)I
-/*      */     //   689: pop
-/*      */     //   690: goto -> 734
-/*      */     //   693: iload_1
-/*      */     //   694: bipush #15
-/*      */     //   696: invokestatic isFieldSet : (II)Z
-/*      */     //   699: ifeq -> 711
-/*      */     //   702: aload_0
-/*      */     //   703: bipush #15
-/*      */     //   705: invokevirtual internalGet : (I)I
-/*      */     //   708: goto -> 716
-/*      */     //   711: aload #10
-/*      */     //   713: invokevirtual getRawOffset : ()I
-/*      */     //   716: istore #12
-/*      */     //   718: aload #10
-/*      */     //   720: lload #8
-/*      */     //   722: iload #12
-/*      */     //   724: i2l
-/*      */     //   725: lsub
-/*      */     //   726: aload_0
-/*      */     //   727: getfield zoneOffsets : [I
-/*      */     //   730: invokevirtual getOffsets : (J[I)I
-/*      */     //   733: pop
-/*      */     //   734: iload #11
-/*      */     //   736: ifeq -> 783
-/*      */     //   739: iload #11
-/*      */     //   741: bipush #15
-/*      */     //   743: invokestatic isFieldSet : (II)Z
-/*      */     //   746: ifeq -> 761
-/*      */     //   749: aload_0
-/*      */     //   750: getfield zoneOffsets : [I
-/*      */     //   753: iconst_0
-/*      */     //   754: aload_0
-/*      */     //   755: bipush #15
-/*      */     //   757: invokevirtual internalGet : (I)I
-/*      */     //   760: iastore
-/*      */     //   761: iload #11
-/*      */     //   763: bipush #16
-/*      */     //   765: invokestatic isFieldSet : (II)Z
-/*      */     //   768: ifeq -> 783
-/*      */     //   771: aload_0
-/*      */     //   772: getfield zoneOffsets : [I
-/*      */     //   775: iconst_1
-/*      */     //   776: aload_0
-/*      */     //   777: bipush #16
-/*      */     //   779: invokevirtual internalGet : (I)I
-/*      */     //   782: iastore
-/*      */     //   783: lload #8
-/*      */     //   785: aload_0
-/*      */     //   786: getfield zoneOffsets : [I
-/*      */     //   789: iconst_0
-/*      */     //   790: iaload
-/*      */     //   791: aload_0
-/*      */     //   792: getfield zoneOffsets : [I
-/*      */     //   795: iconst_1
-/*      */     //   796: iaload
-/*      */     //   797: iadd
-/*      */     //   798: i2l
-/*      */     //   799: lsub
-/*      */     //   800: lstore #8
-/*      */     //   802: aload_0
-/*      */     //   803: lload #8
-/*      */     //   805: putfield time : J
-/*      */     //   808: aload_0
-/*      */     //   809: iload_1
-/*      */     //   810: aload_0
-/*      */     //   811: invokevirtual getSetStateFields : ()I
-/*      */     //   814: ior
-/*      */     //   815: iload #11
-/*      */     //   817: invokespecial computeFields : (II)I
-/*      */     //   820: istore #12
-/*      */     //   822: aload_0
-/*      */     //   823: invokevirtual isLenient : ()Z
-/*      */     //   826: ifne -> 963
-/*      */     //   829: iconst_0
-/*      */     //   830: istore #13
-/*      */     //   832: iload #13
-/*      */     //   834: bipush #17
-/*      */     //   836: if_icmpge -> 963
-/*      */     //   839: aload_0
-/*      */     //   840: iload #13
-/*      */     //   842: invokevirtual isExternallySet : (I)Z
-/*      */     //   845: ifne -> 851
-/*      */     //   848: goto -> 957
-/*      */     //   851: aload_0
-/*      */     //   852: getfield originalFields : [I
-/*      */     //   855: iload #13
-/*      */     //   857: iaload
-/*      */     //   858: aload_0
-/*      */     //   859: iload #13
-/*      */     //   861: invokevirtual internalGet : (I)I
-/*      */     //   864: if_icmpeq -> 957
-/*      */     //   867: new java/lang/StringBuilder
-/*      */     //   870: dup
-/*      */     //   871: invokespecial <init> : ()V
-/*      */     //   874: aload_0
-/*      */     //   875: getfield originalFields : [I
-/*      */     //   878: iload #13
-/*      */     //   880: iaload
-/*      */     //   881: invokevirtual append : (I)Ljava/lang/StringBuilder;
-/*      */     //   884: ldc ' -> '
-/*      */     //   886: invokevirtual append : (Ljava/lang/String;)Ljava/lang/StringBuilder;
-/*      */     //   889: aload_0
-/*      */     //   890: iload #13
-/*      */     //   892: invokevirtual internalGet : (I)I
-/*      */     //   895: invokevirtual append : (I)Ljava/lang/StringBuilder;
-/*      */     //   898: invokevirtual toString : ()Ljava/lang/String;
-/*      */     //   901: astore #14
-/*      */     //   903: aload_0
-/*      */     //   904: getfield originalFields : [I
-/*      */     //   907: iconst_0
-/*      */     //   908: aload_0
-/*      */     //   909: getfield fields : [I
-/*      */     //   912: iconst_0
-/*      */     //   913: aload_0
-/*      */     //   914: getfield fields : [I
-/*      */     //   917: arraylength
-/*      */     //   918: invokestatic arraycopy : (Ljava/lang/Object;ILjava/lang/Object;II)V
-/*      */     //   921: new java/lang/IllegalArgumentException
-/*      */     //   924: dup
-/*      */     //   925: new java/lang/StringBuilder
-/*      */     //   928: dup
-/*      */     //   929: invokespecial <init> : ()V
-/*      */     //   932: iload #13
-/*      */     //   934: invokestatic getFieldName : (I)Ljava/lang/String;
-/*      */     //   937: invokevirtual append : (Ljava/lang/String;)Ljava/lang/StringBuilder;
-/*      */     //   940: ldc ': '
-/*      */     //   942: invokevirtual append : (Ljava/lang/String;)Ljava/lang/StringBuilder;
-/*      */     //   945: aload #14
-/*      */     //   947: invokevirtual append : (Ljava/lang/String;)Ljava/lang/StringBuilder;
-/*      */     //   950: invokevirtual toString : ()Ljava/lang/String;
-/*      */     //   953: invokespecial <init> : (Ljava/lang/String;)V
-/*      */     //   956: athrow
-/*      */     //   957: iinc #13, 1
-/*      */     //   960: goto -> 832
-/*      */     //   963: aload_0
-/*      */     //   964: iload #12
-/*      */     //   966: invokevirtual setFieldsNormalized : (I)V
-/*      */     //   969: return
-/*      */     // Line number table:
-/*      */     //   Java source line number -> byte code offset
-/*      */     //   #2639	-> 0
-/*      */     //   #2640	-> 7
-/*      */     //   #2641	-> 14
-/*      */     //   #2643	-> 22
-/*      */     //   #2644	-> 30
-/*      */     //   #2645	-> 36
-/*      */     //   #2647	-> 44
-/*      */     //   #2648	-> 62
-/*      */     //   #2651	-> 74
-/*      */     //   #2643	-> 81
-/*      */     //   #2657	-> 87
-/*      */     //   #2662	-> 92
-/*      */     //   #2664	-> 112
-/*      */     //   #2665	-> 117
-/*      */     //   #2666	-> 121
-/*      */     //   #2667	-> 128
-/*      */     //   #2672	-> 133
-/*      */     //   #2676	-> 143
-/*      */     //   #2677	-> 155
-/*      */     //   #2678	-> 159
-/*      */     //   #2683	-> 164
-/*      */     //   #2684	-> 167
-/*      */     //   #2685	-> 176
-/*      */     //   #2687	-> 191
-/*      */     //   #2689	-> 203
-/*      */     //   #2690	-> 212
-/*      */     //   #2693	-> 227
-/*      */     //   #2694	-> 235
-/*      */     //   #2695	-> 247
-/*      */     //   #2696	-> 255
-/*      */     //   #2697	-> 267
-/*      */     //   #2698	-> 275
-/*      */     //   #2702	-> 287
-/*      */     //   #2703	-> 295
-/*      */     //   #2704	-> 303
-/*      */     //   #2705	-> 310
-/*      */     //   #2706	-> 318
-/*      */     //   #2712	-> 327
-/*      */     //   #2713	-> 343
-/*      */     //   #2714	-> 357
-/*      */     //   #2715	-> 367
-/*      */     //   #2716	-> 371
-/*      */     //   #2718	-> 374
-/*      */     //   #2719	-> 391
-/*      */     //   #2720	-> 407
-/*      */     //   #2721	-> 421
-/*      */     //   #2722	-> 431
-/*      */     //   #2723	-> 435
-/*      */     //   #2725	-> 438
-/*      */     //   #2727	-> 445
-/*      */     //   #2728	-> 459
-/*      */     //   #2735	-> 473
-/*      */     //   #2736	-> 490
-/*      */     //   #2737	-> 501
-/*      */     //   #2738	-> 505
-/*      */     //   #2739	-> 508
-/*      */     //   #2740	-> 516
-/*      */     //   #2741	-> 520
-/*      */     //   #2745	-> 523
-/*      */     //   #2746	-> 533
-/*      */     //   #2747	-> 543
-/*      */     //   #2752	-> 550
-/*      */     //   #2753	-> 567
-/*      */     //   #2755	-> 574
-/*      */     //   #2759	-> 581
-/*      */     //   #2760	-> 591
-/*      */     //   #2763	-> 598
-/*      */     //   #2764	-> 605
-/*      */     //   #2768	-> 615
-/*      */     //   #2774	-> 619
-/*      */     //   #2789	-> 634
-/*      */     //   #2790	-> 640
-/*      */     //   #2791	-> 647
-/*      */     //   #2793	-> 654
-/*      */     //   #2794	-> 660
-/*      */     //   #2795	-> 667
-/*      */     //   #2796	-> 675
-/*      */     //   #2798	-> 693
-/*      */     //   #2799	-> 705
-/*      */     //   #2800	-> 718
-/*      */     //   #2803	-> 734
-/*      */     //   #2804	-> 739
-/*      */     //   #2805	-> 749
-/*      */     //   #2807	-> 761
-/*      */     //   #2808	-> 771
-/*      */     //   #2813	-> 783
-/*      */     //   #2816	-> 802
-/*      */     //   #2818	-> 808
-/*      */     //   #2820	-> 822
-/*      */     //   #2821	-> 829
-/*      */     //   #2822	-> 839
-/*      */     //   #2823	-> 848
-/*      */     //   #2825	-> 851
-/*      */     //   #2826	-> 867
-/*      */     //   #2828	-> 903
-/*      */     //   #2829	-> 921
-/*      */     //   #2821	-> 957
-/*      */     //   #2833	-> 963
-/*      */     //   #2834	-> 969
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private long getFixedDate(BaseCalendar paramBaseCalendar, int paramInt1, int paramInt2) {
-/* 2848 */     int i = 0;
-/* 2849 */     if (isFieldSet(paramInt2, 2)) {
-/*      */ 
-/*      */       
-/* 2852 */       i = internalGet(2);
-/*      */ 
-/*      */       
-/* 2855 */       if (i > 11) {
-/* 2856 */         paramInt1 += i / 12;
-/* 2857 */         i %= 12;
-/* 2858 */       } else if (i < 0) {
-/* 2859 */         int[] arrayOfInt = new int[1];
-/* 2860 */         paramInt1 += CalendarUtils.floorDivide(i, 12, arrayOfInt);
-/* 2861 */         i = arrayOfInt[0];
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2867 */     long l = paramBaseCalendar.getFixedDate(paramInt1, i + 1, 1, (paramBaseCalendar == gcal) ? this.gdate : null);
-/*      */     
-/* 2869 */     if (isFieldSet(paramInt2, 2)) {
-/*      */       
-/* 2871 */       if (isFieldSet(paramInt2, 5)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2878 */         if (isSet(5))
-/*      */         {
-/*      */           
-/* 2881 */           l += internalGet(5);
-/* 2882 */           l--;
-/*      */         }
-/*      */       
-/* 2885 */       } else if (isFieldSet(paramInt2, 4)) {
-/* 2886 */         long l1 = BaseCalendar.getDayOfWeekDateOnOrBefore(l + 6L, 
-/* 2887 */             getFirstDayOfWeek());
-/*      */ 
-/*      */         
-/* 2890 */         if (l1 - l >= getMinimalDaysInFirstWeek()) {
-/* 2891 */           l1 -= 7L;
-/*      */         }
-/* 2893 */         if (isFieldSet(paramInt2, 7)) {
-/* 2894 */           l1 = BaseCalendar.getDayOfWeekDateOnOrBefore(l1 + 6L, 
-/* 2895 */               internalGet(7));
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/* 2900 */         l = l1 + (7 * (internalGet(4) - 1));
-/*      */       } else {
-/*      */         int j; byte b;
-/* 2903 */         if (isFieldSet(paramInt2, 7)) {
-/* 2904 */           j = internalGet(7);
-/*      */         } else {
-/* 2906 */           j = getFirstDayOfWeek();
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2912 */         if (isFieldSet(paramInt2, 8)) {
-/* 2913 */           b = internalGet(8);
-/*      */         } else {
-/* 2915 */           b = 1;
-/*      */         } 
-/* 2917 */         if (b) {
-/* 2918 */           l = BaseCalendar.getDayOfWeekDateOnOrBefore(l + (7 * b) - 1L, j);
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2923 */           int k = monthLength(i, paramInt1) + 7 * (b + 1);
-/*      */           
-/* 2925 */           l = BaseCalendar.getDayOfWeekDateOnOrBefore(l + k - 1L, j);
-/*      */         }
-/*      */       
-/*      */       } 
-/*      */     } else {
-/*      */       
-/* 2931 */       if (paramInt1 == this.gregorianCutoverYear && paramBaseCalendar == gcal && l < this.gregorianCutoverDate && this.gregorianCutoverYear != this.gregorianCutoverYearJulian)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2937 */         l = this.gregorianCutoverDate;
-/*      */       }
-/*      */       
-/* 2940 */       if (isFieldSet(paramInt2, 6)) {
-/*      */         
-/* 2942 */         l += internalGet(6);
-/* 2943 */         l--;
-/*      */       } else {
-/* 2945 */         long l1 = BaseCalendar.getDayOfWeekDateOnOrBefore(l + 6L, 
-/* 2946 */             getFirstDayOfWeek());
-/*      */ 
-/*      */         
-/* 2949 */         if (l1 - l >= getMinimalDaysInFirstWeek()) {
-/* 2950 */           l1 -= 7L;
-/*      */         }
-/* 2952 */         if (isFieldSet(paramInt2, 7)) {
-/* 2953 */           int j = internalGet(7);
-/* 2954 */           if (j != getFirstDayOfWeek()) {
-/* 2955 */             l1 = BaseCalendar.getDayOfWeekDateOnOrBefore(l1 + 6L, j);
-/*      */           }
-/*      */         } 
-/*      */         
-/* 2959 */         l = l1 + 7L * (internalGet(3) - 1L);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2963 */     return l;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private GregorianCalendar getNormalizedCalendar() {
-/*      */     GregorianCalendar gregorianCalendar;
-/* 2973 */     if (isFullyNormalized()) {
-/* 2974 */       gregorianCalendar = this;
-/*      */     } else {
-/*      */       
-/* 2977 */       gregorianCalendar = (GregorianCalendar)clone();
-/* 2978 */       gregorianCalendar.setLenient(true);
-/* 2979 */       gregorianCalendar.complete();
-/*      */     } 
-/* 2981 */     return gregorianCalendar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static synchronized BaseCalendar getJulianCalendarSystem() {
-/* 2989 */     if (jcal == null) {
-/* 2990 */       jcal = (JulianCalendar)CalendarSystem.forName("julian");
-/* 2991 */       jeras = jcal.getEras();
-/*      */     } 
-/* 2993 */     return jcal;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private BaseCalendar getCutoverCalendarSystem() {
-/* 3002 */     if (this.gregorianCutoverYearJulian < this.gregorianCutoverYear) {
-/* 3003 */       return gcal;
-/*      */     }
-/* 3005 */     return getJulianCalendarSystem();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isCutoverYear(int paramInt) {
-/* 3013 */     int i = (this.calsys == gcal) ? this.gregorianCutoverYear : this.gregorianCutoverYearJulian;
-/* 3014 */     return (paramInt == i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private long getFixedDateJan1(BaseCalendar.Date paramDate, long paramLong) {
-/* 3027 */     assert paramDate.getNormalizedYear() == this.gregorianCutoverYear || paramDate
-/* 3028 */       .getNormalizedYear() == this.gregorianCutoverYearJulian;
-/* 3029 */     if (this.gregorianCutoverYear != this.gregorianCutoverYearJulian && 
-/* 3030 */       paramLong >= this.gregorianCutoverDate)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */       
-/* 3035 */       return this.gregorianCutoverDate;
-/*      */     }
-/*      */ 
-/*      */     
-/* 3039 */     BaseCalendar baseCalendar = getJulianCalendarSystem();
-/* 3040 */     return baseCalendar.getFixedDate(paramDate.getNormalizedYear(), 1, 1, (BaseCalendar.Date)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private long getFixedDateMonth1(BaseCalendar.Date paramDate, long paramLong) {
-/*      */     long l;
-/* 3053 */     assert paramDate.getNormalizedYear() == this.gregorianCutoverYear || paramDate
-/* 3054 */       .getNormalizedYear() == this.gregorianCutoverYearJulian;
-/* 3055 */     BaseCalendar.Date date = getGregorianCutoverDate();
-/* 3056 */     if (date.getMonth() == 1 && date
-/* 3057 */       .getDayOfMonth() == 1)
-/*      */     {
-/* 3059 */       return paramLong - paramDate.getDayOfMonth() + 1L;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 3064 */     if (paramDate.getMonth() == date.getMonth()) {
-/*      */       
-/* 3066 */       BaseCalendar.Date date1 = getLastJulianDate();
-/* 3067 */       if (this.gregorianCutoverYear == this.gregorianCutoverYearJulian && date
-/* 3068 */         .getMonth() == date1.getMonth()) {
-/*      */         
-/* 3070 */         l = jcal.getFixedDate(paramDate.getNormalizedYear(), paramDate
-/* 3071 */             .getMonth(), 1, (BaseCalendar.Date)null);
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 3076 */         l = this.gregorianCutoverDate;
-/*      */       } 
-/*      */     } else {
-/*      */       
-/* 3080 */       l = paramLong - paramDate.getDayOfMonth() + 1L;
-/*      */     } 
-/*      */     
-/* 3083 */     return l;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private BaseCalendar.Date getCalendarDate(long paramLong) {
-/* 3092 */     BaseCalendar baseCalendar = (paramLong >= this.gregorianCutoverDate) ? gcal : getJulianCalendarSystem();
-/* 3093 */     BaseCalendar.Date date = (BaseCalendar.Date)baseCalendar.newCalendarDate(TimeZone.NO_TIMEZONE);
-/* 3094 */     baseCalendar.getCalendarDateFromFixedDate(date, paramLong);
-/* 3095 */     return date;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private BaseCalendar.Date getGregorianCutoverDate() {
-/* 3103 */     return getCalendarDate(this.gregorianCutoverDate);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private BaseCalendar.Date getLastJulianDate() {
-/* 3111 */     return getCalendarDate(this.gregorianCutoverDate - 1L);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int monthLength(int paramInt1, int paramInt2) {
-/* 3121 */     return isLeapYear(paramInt2) ? LEAP_MONTH_LENGTH[paramInt1] : MONTH_LENGTH[paramInt1];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int monthLength(int paramInt) {
-/* 3131 */     int i = internalGet(1);
-/* 3132 */     if (internalGetEra() == 0) {
-/* 3133 */       i = 1 - i;
-/*      */     }
-/* 3135 */     return monthLength(paramInt, i);
-/*      */   }
-/*      */   
-/*      */   private int actualMonthLength() {
-/* 3139 */     int i = this.cdate.getNormalizedYear();
-/* 3140 */     if (i != this.gregorianCutoverYear && i != this.gregorianCutoverYearJulian) {
-/* 3141 */       return this.calsys.getMonthLength(this.cdate);
-/*      */     }
-/* 3143 */     BaseCalendar.Date date = (BaseCalendar.Date)this.cdate.clone();
-/* 3144 */     long l1 = this.calsys.getFixedDate(date);
-/* 3145 */     long l2 = getFixedDateMonth1(date, l1);
-/* 3146 */     long l3 = l2 + this.calsys.getMonthLength(date);
-/* 3147 */     if (l3 < this.gregorianCutoverDate) {
-/* 3148 */       return (int)(l3 - l2);
-/*      */     }
-/* 3150 */     if (this.cdate != this.gdate) {
-/* 3151 */       date = gcal.newCalendarDate(TimeZone.NO_TIMEZONE);
-/*      */     }
-/* 3153 */     gcal.getCalendarDateFromFixedDate(date, l3);
-/* 3154 */     l3 = getFixedDateMonth1(date, l3);
-/* 3155 */     return (int)(l3 - l2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int yearLength(int paramInt) {
-/* 3163 */     return isLeapYear(paramInt) ? 366 : 365;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int yearLength() {
-/* 3171 */     int i = internalGet(1);
-/* 3172 */     if (internalGetEra() == 0) {
-/* 3173 */       i = 1 - i;
-/*      */     }
-/* 3175 */     return yearLength(i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void pinDayOfMonth() {
-/* 3185 */     int j, i = internalGet(1);
-/*      */     
-/* 3187 */     if (i > this.gregorianCutoverYear || i < this.gregorianCutoverYearJulian) {
-/* 3188 */       j = monthLength(internalGet(2));
-/*      */     } else {
-/* 3190 */       GregorianCalendar gregorianCalendar = getNormalizedCalendar();
-/* 3191 */       j = gregorianCalendar.getActualMaximum(5);
-/*      */     } 
-/* 3193 */     int k = internalGet(5);
-/* 3194 */     if (k > j) {
-/* 3195 */       set(5, j);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private long getCurrentFixedDate() {
-/* 3204 */     return (this.calsys == gcal) ? this.cachedFixedDate : this.calsys.getFixedDate(this.cdate);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int getRolledValue(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 3211 */     assert paramInt1 >= paramInt3 && paramInt1 <= paramInt4;
-/* 3212 */     int i = paramInt4 - paramInt3 + 1;
-/* 3213 */     paramInt2 %= i;
-/* 3214 */     int j = paramInt1 + paramInt2;
-/* 3215 */     if (j > paramInt4) {
-/* 3216 */       j -= i;
-/* 3217 */     } else if (j < paramInt3) {
-/* 3218 */       j += i;
-/*      */     } 
-/* 3220 */     assert j >= paramInt3 && j <= paramInt4;
-/* 3221 */     return j;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int internalGetEra() {
-/* 3229 */     return isSet(0) ? internalGet(0) : 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 3237 */     paramObjectInputStream.defaultReadObject();
-/* 3238 */     if (this.gdate == null) {
-/* 3239 */       this.gdate = gcal.newCalendarDate(getZone());
-/* 3240 */       this.cachedFixedDate = Long.MIN_VALUE;
-/*      */     } 
-/* 3242 */     setGregorianChange(this.gregorianCutover);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ZonedDateTime toZonedDateTime() {
-/* 3260 */     return ZonedDateTime.ofInstant(Instant.ofEpochMilli(getTimeInMillis()), 
-/* 3261 */         getTimeZone().toZoneId());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static GregorianCalendar from(ZonedDateTime paramZonedDateTime) {
-/* 3289 */     GregorianCalendar gregorianCalendar = new GregorianCalendar(TimeZone.getTimeZone(paramZonedDateTime.getZone()));
-/* 3290 */     gregorianCalendar.setGregorianChange(new Date(Long.MIN_VALUE));
-/* 3291 */     gregorianCalendar.setFirstDayOfWeek(2);
-/* 3292 */     gregorianCalendar.setMinimalDaysInFirstWeek(4);
-/*      */     try {
-/* 3294 */       gregorianCalendar.setTimeInMillis(Math.addExact(Math.multiplyExact(paramZonedDateTime.toEpochSecond(), 1000L), paramZonedDateTime
-/* 3295 */             .get(ChronoField.MILLI_OF_SECOND)));
-/* 3296 */     } catch (ArithmeticException arithmeticException) {
-/* 3297 */       throw new IllegalArgumentException(arithmeticException);
-/*      */     } 
-/* 3299 */     return gregorianCalendar;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\GregorianCalendar.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996-1998 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1996-1998 - All Rights Reserved
+ *
+ *   The original version of this source code and documentation is copyrighted
+ * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These
+ * materials are provided under terms of a License Agreement between Taligent
+ * and Sun. This technology is protected by multiple US and International
+ * patents. This notice and attribution to Taligent may not be removed.
+ *   Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.util;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
+import sun.util.calendar.BaseCalendar;
+import sun.util.calendar.CalendarDate;
+import sun.util.calendar.CalendarSystem;
+import sun.util.calendar.CalendarUtils;
+import sun.util.calendar.Era;
+import sun.util.calendar.Gregorian;
+import sun.util.calendar.JulianCalendar;
+import sun.util.calendar.ZoneInfo;
+
+/**
+ * <code>GregorianCalendar</code> is a concrete subclass of
+ * <code>Calendar</code> and provides the standard calendar system
+ * used by most of the world.
+ *
+ * <p> <code>GregorianCalendar</code> is a hybrid calendar that
+ * supports both the Julian and Gregorian calendar systems with the
+ * support of a single discontinuity, which corresponds by default to
+ * the Gregorian date when the Gregorian calendar was instituted
+ * (October 15, 1582 in some countries, later in others).  The cutover
+ * date may be changed by the caller by calling {@link
+ * #setGregorianChange(Date) setGregorianChange()}.
+ *
+ * <p>
+ * Historically, in those countries which adopted the Gregorian calendar first,
+ * October 4, 1582 (Julian) was thus followed by October 15, 1582 (Gregorian). This calendar models
+ * this correctly.  Before the Gregorian cutover, <code>GregorianCalendar</code>
+ * implements the Julian calendar.  The only difference between the Gregorian
+ * and the Julian calendar is the leap year rule. The Julian calendar specifies
+ * leap years every four years, whereas the Gregorian calendar omits century
+ * years which are not divisible by 400.
+ *
+ * <p>
+ * <code>GregorianCalendar</code> implements <em>proleptic</em> Gregorian and
+ * Julian calendars. That is, dates are computed by extrapolating the current
+ * rules indefinitely far backward and forward in time. As a result,
+ * <code>GregorianCalendar</code> may be used for all years to generate
+ * meaningful and consistent results. However, dates obtained using
+ * <code>GregorianCalendar</code> are historically accurate only from March 1, 4
+ * AD onward, when modern Julian calendar rules were adopted.  Before this date,
+ * leap year rules were applied irregularly, and before 45 BC the Julian
+ * calendar did not even exist.
+ *
+ * <p>
+ * Prior to the institution of the Gregorian calendar, New Year's Day was
+ * March 25. To avoid confusion, this calendar always uses January 1. A manual
+ * adjustment may be made if desired for dates that are prior to the Gregorian
+ * changeover and which fall between January 1 and March 24.
+ *
+ * <h3><a name="week_and_year">Week Of Year and Week Year</a></h3>
+ *
+ * <p>Values calculated for the {@link Calendar#WEEK_OF_YEAR
+ * WEEK_OF_YEAR} field range from 1 to 53. The first week of a
+ * calendar year is the earliest seven day period starting on {@link
+ * Calendar#getFirstDayOfWeek() getFirstDayOfWeek()} that contains at
+ * least {@link Calendar#getMinimalDaysInFirstWeek()
+ * getMinimalDaysInFirstWeek()} days from that year. It thus depends
+ * on the values of {@code getMinimalDaysInFirstWeek()}, {@code
+ * getFirstDayOfWeek()}, and the day of the week of January 1. Weeks
+ * between week 1 of one year and week 1 of the following year
+ * (exclusive) are numbered sequentially from 2 to 52 or 53 (except
+ * for year(s) involved in the Julian-Gregorian transition).
+ *
+ * <p>The {@code getFirstDayOfWeek()} and {@code
+ * getMinimalDaysInFirstWeek()} values are initialized using
+ * locale-dependent resources when constructing a {@code
+ * GregorianCalendar}. <a name="iso8601_compatible_setting">The week
+ * determination is compatible</a> with the ISO 8601 standard when {@code
+ * getFirstDayOfWeek()} is {@code MONDAY} and {@code
+ * getMinimalDaysInFirstWeek()} is 4, which values are used in locales
+ * where the standard is preferred. These values can explicitly be set by
+ * calling {@link Calendar#setFirstDayOfWeek(int) setFirstDayOfWeek()} and
+ * {@link Calendar#setMinimalDaysInFirstWeek(int)
+ * setMinimalDaysInFirstWeek()}.
+ *
+ * <p>A <a name="week_year"><em>week year</em></a> is in sync with a
+ * {@code WEEK_OF_YEAR} cycle. All weeks between the first and last
+ * weeks (inclusive) have the same <em>week year</em> value.
+ * Therefore, the first and last days of a week year may have
+ * different calendar year values.
+ *
+ * <p>For example, January 1, 1998 is a Thursday. If {@code
+ * getFirstDayOfWeek()} is {@code MONDAY} and {@code
+ * getMinimalDaysInFirstWeek()} is 4 (ISO 8601 standard compatible
+ * setting), then week 1 of 1998 starts on December 29, 1997, and ends
+ * on January 4, 1998. The week year is 1998 for the last three days
+ * of calendar year 1997. If, however, {@code getFirstDayOfWeek()} is
+ * {@code SUNDAY}, then week 1 of 1998 starts on January 4, 1998, and
+ * ends on January 10, 1998; the first three days of 1998 then are
+ * part of week 53 of 1997 and their week year is 1997.
+ *
+ * <h4>Week Of Month</h4>
+ *
+ * <p>Values calculated for the <code>WEEK_OF_MONTH</code> field range from 0
+ * to 6.  Week 1 of a month (the days with <code>WEEK_OF_MONTH =
+ * 1</code>) is the earliest set of at least
+ * <code>getMinimalDaysInFirstWeek()</code> contiguous days in that month,
+ * ending on the day before <code>getFirstDayOfWeek()</code>.  Unlike
+ * week 1 of a year, week 1 of a month may be shorter than 7 days, need
+ * not start on <code>getFirstDayOfWeek()</code>, and will not include days of
+ * the previous month.  Days of a month before week 1 have a
+ * <code>WEEK_OF_MONTH</code> of 0.
+ *
+ * <p>For example, if <code>getFirstDayOfWeek()</code> is <code>SUNDAY</code>
+ * and <code>getMinimalDaysInFirstWeek()</code> is 4, then the first week of
+ * January 1998 is Sunday, January 4 through Saturday, January 10.  These days
+ * have a <code>WEEK_OF_MONTH</code> of 1.  Thursday, January 1 through
+ * Saturday, January 3 have a <code>WEEK_OF_MONTH</code> of 0.  If
+ * <code>getMinimalDaysInFirstWeek()</code> is changed to 3, then January 1
+ * through January 3 have a <code>WEEK_OF_MONTH</code> of 1.
+ *
+ * <h4>Default Fields Values</h4>
+ *
+ * <p>The <code>clear</code> method sets calendar field(s)
+ * undefined. <code>GregorianCalendar</code> uses the following
+ * default value for each calendar field if its value is undefined.
+ *
+ * <table cellpadding="0" cellspacing="3" border="0"
+ *        summary="GregorianCalendar default field values"
+ *        style="text-align: left; width: 66%;">
+ *   <tbody>
+ *     <tr>
+ *       <th style="vertical-align: top; background-color: rgb(204, 204, 255);
+ *           text-align: center;">Field<br>
+ *       </th>
+ *       <th style="vertical-align: top; background-color: rgb(204, 204, 255);
+ *           text-align: center;">Default Value<br>
+ *       </th>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: middle;">
+ *              <code>ERA<br></code>
+ *       </td>
+ *       <td style="vertical-align: middle;">
+ *              <code>AD<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: middle; background-color: rgb(238, 238, 255);">
+ *              <code>YEAR<br></code>
+ *       </td>
+ *       <td style="vertical-align: middle; background-color: rgb(238, 238, 255);">
+ *              <code>1970<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: middle;">
+ *              <code>MONTH<br></code>
+ *       </td>
+ *       <td style="vertical-align: middle;">
+ *              <code>JANUARY<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: top; background-color: rgb(238, 238, 255);">
+ *              <code>DAY_OF_MONTH<br></code>
+ *       </td>
+ *       <td style="vertical-align: top; background-color: rgb(238, 238, 255);">
+ *              <code>1<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: middle;">
+ *              <code>DAY_OF_WEEK<br></code>
+ *       </td>
+ *       <td style="vertical-align: middle;">
+ *              <code>the first day of week<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: top; background-color: rgb(238, 238, 255);">
+ *              <code>WEEK_OF_MONTH<br></code>
+ *       </td>
+ *       <td style="vertical-align: top; background-color: rgb(238, 238, 255);">
+ *              <code>0<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: top;">
+ *              <code>DAY_OF_WEEK_IN_MONTH<br></code>
+ *       </td>
+ *       <td style="vertical-align: top;">
+ *              <code>1<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: middle; background-color: rgb(238, 238, 255);">
+ *              <code>AM_PM<br></code>
+ *       </td>
+ *       <td style="vertical-align: middle; background-color: rgb(238, 238, 255);">
+ *              <code>AM<br></code>
+ *       </td>
+ *     </tr>
+ *     <tr>
+ *       <td style="vertical-align: middle;">
+ *              <code>HOUR, HOUR_OF_DAY, MINUTE, SECOND, MILLISECOND<br></code>
+ *       </td>
+ *       <td style="vertical-align: middle;">
+ *              <code>0<br></code>
+ *       </td>
+ *     </tr>
+ *   </tbody>
+ * </table>
+ * <br>Default values are not applicable for the fields not listed above.
+ *
+ * <p>
+ * <strong>Example:</strong>
+ * <blockquote>
+ * <pre>
+ * // get the supported ids for GMT-08:00 (Pacific Standard Time)
+ * String[] ids = TimeZone.getAvailableIDs(-8 * 60 * 60 * 1000);
+ * // if no ids were returned, something is wrong. get out.
+ * if (ids.length == 0)
+ *     System.exit(0);
+ *
+ *  // begin output
+ * System.out.println("Current Time");
+ *
+ * // create a Pacific Standard Time time zone
+ * SimpleTimeZone pdt = new SimpleTimeZone(-8 * 60 * 60 * 1000, ids[0]);
+ *
+ * // set up rules for Daylight Saving Time
+ * pdt.setStartRule(Calendar.APRIL, 1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
+ * pdt.setEndRule(Calendar.OCTOBER, -1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
+ *
+ * // create a GregorianCalendar with the Pacific Daylight time zone
+ * // and the current date and time
+ * Calendar calendar = new GregorianCalendar(pdt);
+ * Date trialTime = new Date();
+ * calendar.setTime(trialTime);
+ *
+ * // print out a bunch of interesting things
+ * System.out.println("ERA: " + calendar.get(Calendar.ERA));
+ * System.out.println("YEAR: " + calendar.get(Calendar.YEAR));
+ * System.out.println("MONTH: " + calendar.get(Calendar.MONTH));
+ * System.out.println("WEEK_OF_YEAR: " + calendar.get(Calendar.WEEK_OF_YEAR));
+ * System.out.println("WEEK_OF_MONTH: " + calendar.get(Calendar.WEEK_OF_MONTH));
+ * System.out.println("DATE: " + calendar.get(Calendar.DATE));
+ * System.out.println("DAY_OF_MONTH: " + calendar.get(Calendar.DAY_OF_MONTH));
+ * System.out.println("DAY_OF_YEAR: " + calendar.get(Calendar.DAY_OF_YEAR));
+ * System.out.println("DAY_OF_WEEK: " + calendar.get(Calendar.DAY_OF_WEEK));
+ * System.out.println("DAY_OF_WEEK_IN_MONTH: "
+ *                    + calendar.get(Calendar.DAY_OF_WEEK_IN_MONTH));
+ * System.out.println("AM_PM: " + calendar.get(Calendar.AM_PM));
+ * System.out.println("HOUR: " + calendar.get(Calendar.HOUR));
+ * System.out.println("HOUR_OF_DAY: " + calendar.get(Calendar.HOUR_OF_DAY));
+ * System.out.println("MINUTE: " + calendar.get(Calendar.MINUTE));
+ * System.out.println("SECOND: " + calendar.get(Calendar.SECOND));
+ * System.out.println("MILLISECOND: " + calendar.get(Calendar.MILLISECOND));
+ * System.out.println("ZONE_OFFSET: "
+ *                    + (calendar.get(Calendar.ZONE_OFFSET)/(60*60*1000)));
+ * System.out.println("DST_OFFSET: "
+ *                    + (calendar.get(Calendar.DST_OFFSET)/(60*60*1000)));
+
+ * System.out.println("Current Time, with hour reset to 3");
+ * calendar.clear(Calendar.HOUR_OF_DAY); // so doesn't override
+ * calendar.set(Calendar.HOUR, 3);
+ * System.out.println("ERA: " + calendar.get(Calendar.ERA));
+ * System.out.println("YEAR: " + calendar.get(Calendar.YEAR));
+ * System.out.println("MONTH: " + calendar.get(Calendar.MONTH));
+ * System.out.println("WEEK_OF_YEAR: " + calendar.get(Calendar.WEEK_OF_YEAR));
+ * System.out.println("WEEK_OF_MONTH: " + calendar.get(Calendar.WEEK_OF_MONTH));
+ * System.out.println("DATE: " + calendar.get(Calendar.DATE));
+ * System.out.println("DAY_OF_MONTH: " + calendar.get(Calendar.DAY_OF_MONTH));
+ * System.out.println("DAY_OF_YEAR: " + calendar.get(Calendar.DAY_OF_YEAR));
+ * System.out.println("DAY_OF_WEEK: " + calendar.get(Calendar.DAY_OF_WEEK));
+ * System.out.println("DAY_OF_WEEK_IN_MONTH: "
+ *                    + calendar.get(Calendar.DAY_OF_WEEK_IN_MONTH));
+ * System.out.println("AM_PM: " + calendar.get(Calendar.AM_PM));
+ * System.out.println("HOUR: " + calendar.get(Calendar.HOUR));
+ * System.out.println("HOUR_OF_DAY: " + calendar.get(Calendar.HOUR_OF_DAY));
+ * System.out.println("MINUTE: " + calendar.get(Calendar.MINUTE));
+ * System.out.println("SECOND: " + calendar.get(Calendar.SECOND));
+ * System.out.println("MILLISECOND: " + calendar.get(Calendar.MILLISECOND));
+ * System.out.println("ZONE_OFFSET: "
+ *        + (calendar.get(Calendar.ZONE_OFFSET)/(60*60*1000))); // in hours
+ * System.out.println("DST_OFFSET: "
+ *        + (calendar.get(Calendar.DST_OFFSET)/(60*60*1000))); // in hours
+ * </pre>
+ * </blockquote>
+ *
+ * @see          TimeZone
+ * @author David Goldsmith, Mark Davis, Chen-Lieh Huang, Alan Liu
+ * @since JDK1.1
+ */
+public class GregorianCalendar extends Calendar {
+    /*
+     * Implementation Notes
+     *
+     * The epoch is the number of days or milliseconds from some defined
+     * starting point. The epoch for java.util.Date is used here; that is,
+     * milliseconds from January 1, 1970 (Gregorian), midnight UTC.  Other
+     * epochs which are used are January 1, year 1 (Gregorian), which is day 1
+     * of the Gregorian calendar, and December 30, year 0 (Gregorian), which is
+     * day 1 of the Julian calendar.
+     *
+     * We implement the proleptic Julian and Gregorian calendars.  This means we
+     * implement the modern definition of the calendar even though the
+     * historical usage differs.  For example, if the Gregorian change is set
+     * to new Date(Long.MIN_VALUE), we have a pure Gregorian calendar which
+     * labels dates preceding the invention of the Gregorian calendar in 1582 as
+     * if the calendar existed then.
+     *
+     * Likewise, with the Julian calendar, we assume a consistent
+     * 4-year leap year rule, even though the historical pattern of
+     * leap years is irregular, being every 3 years from 45 BCE
+     * through 9 BCE, then every 4 years from 8 CE onwards, with no
+     * leap years in-between.  Thus date computations and functions
+     * such as isLeapYear() are not intended to be historically
+     * accurate.
+     */
+
+//////////////////
+// Class Variables
+//////////////////
+
+    /**
+     * Value of the <code>ERA</code> field indicating
+     * the period before the common era (before Christ), also known as BCE.
+     * The sequence of years at the transition from <code>BC</code> to <code>AD</code> is
+     * ..., 2 BC, 1 BC, 1 AD, 2 AD,...
+     *
+     * @see #ERA
+     */
+    public static final int BC = 0;
+
+    /**
+     * Value of the {@link #ERA} field indicating
+     * the period before the common era, the same value as {@link #BC}.
+     *
+     * @see #CE
+     */
+    static final int BCE = 0;
+
+    /**
+     * Value of the <code>ERA</code> field indicating
+     * the common era (Anno Domini), also known as CE.
+     * The sequence of years at the transition from <code>BC</code> to <code>AD</code> is
+     * ..., 2 BC, 1 BC, 1 AD, 2 AD,...
+     *
+     * @see #ERA
+     */
+    public static final int AD = 1;
+
+    /**
+     * Value of the {@link #ERA} field indicating
+     * the common era, the same value as {@link #AD}.
+     *
+     * @see #BCE
+     */
+    static final int CE = 1;
+
+    private static final int EPOCH_OFFSET   = 719163; // Fixed date of January 1, 1970 (Gregorian)
+    private static final int EPOCH_YEAR     = 1970;
+
+    static final int MONTH_LENGTH[]
+        = {31,28,31,30,31,30,31,31,30,31,30,31}; // 0-based
+    static final int LEAP_MONTH_LENGTH[]
+        = {31,29,31,30,31,30,31,31,30,31,30,31}; // 0-based
+
+    // Useful millisecond constants.  Although ONE_DAY and ONE_WEEK can fit
+    // into ints, they must be longs in order to prevent arithmetic overflow
+    // when performing (bug 4173516).
+    private static final int  ONE_SECOND = 1000;
+    private static final int  ONE_MINUTE = 60*ONE_SECOND;
+    private static final int  ONE_HOUR   = 60*ONE_MINUTE;
+    private static final long ONE_DAY    = 24*ONE_HOUR;
+    private static final long ONE_WEEK   = 7*ONE_DAY;
+
+    /*
+     * <pre>
+     *                            Greatest       Least
+     * Field name        Minimum   Minimum     Maximum     Maximum
+     * ----------        -------   -------     -------     -------
+     * ERA                     0         0           1           1
+     * YEAR                    1         1   292269054   292278994
+     * MONTH                   0         0          11          11
+     * WEEK_OF_YEAR            1         1          52*         53
+     * WEEK_OF_MONTH           0         0           4*          6
+     * DAY_OF_MONTH            1         1          28*         31
+     * DAY_OF_YEAR             1         1         365*        366
+     * DAY_OF_WEEK             1         1           7           7
+     * DAY_OF_WEEK_IN_MONTH   -1        -1           4*          6
+     * AM_PM                   0         0           1           1
+     * HOUR                    0         0          11          11
+     * HOUR_OF_DAY             0         0          23          23
+     * MINUTE                  0         0          59          59
+     * SECOND                  0         0          59          59
+     * MILLISECOND             0         0         999         999
+     * ZONE_OFFSET        -13:00    -13:00       14:00       14:00
+     * DST_OFFSET           0:00      0:00        0:20        2:00
+     * </pre>
+     * *: depends on the Gregorian change date
+     */
+    static final int MIN_VALUES[] = {
+        BCE,            // ERA
+        1,              // YEAR
+        JANUARY,        // MONTH
+        1,              // WEEK_OF_YEAR
+        0,              // WEEK_OF_MONTH
+        1,              // DAY_OF_MONTH
+        1,              // DAY_OF_YEAR
+        SUNDAY,         // DAY_OF_WEEK
+        1,              // DAY_OF_WEEK_IN_MONTH
+        AM,             // AM_PM
+        0,              // HOUR
+        0,              // HOUR_OF_DAY
+        0,              // MINUTE
+        0,              // SECOND
+        0,              // MILLISECOND
+        -13*ONE_HOUR,   // ZONE_OFFSET (UNIX compatibility)
+        0               // DST_OFFSET
+    };
+    static final int LEAST_MAX_VALUES[] = {
+        CE,             // ERA
+        292269054,      // YEAR
+        DECEMBER,       // MONTH
+        52,             // WEEK_OF_YEAR
+        4,              // WEEK_OF_MONTH
+        28,             // DAY_OF_MONTH
+        365,            // DAY_OF_YEAR
+        SATURDAY,       // DAY_OF_WEEK
+        4,              // DAY_OF_WEEK_IN
+        PM,             // AM_PM
+        11,             // HOUR
+        23,             // HOUR_OF_DAY
+        59,             // MINUTE
+        59,             // SECOND
+        999,            // MILLISECOND
+        14*ONE_HOUR,    // ZONE_OFFSET
+        20*ONE_MINUTE   // DST_OFFSET (historical least maximum)
+    };
+    static final int MAX_VALUES[] = {
+        CE,             // ERA
+        292278994,      // YEAR
+        DECEMBER,       // MONTH
+        53,             // WEEK_OF_YEAR
+        6,              // WEEK_OF_MONTH
+        31,             // DAY_OF_MONTH
+        366,            // DAY_OF_YEAR
+        SATURDAY,       // DAY_OF_WEEK
+        6,              // DAY_OF_WEEK_IN
+        PM,             // AM_PM
+        11,             // HOUR
+        23,             // HOUR_OF_DAY
+        59,             // MINUTE
+        59,             // SECOND
+        999,            // MILLISECOND
+        14*ONE_HOUR,    // ZONE_OFFSET
+        2*ONE_HOUR      // DST_OFFSET (double summer time)
+    };
+
+    // Proclaim serialization compatibility with JDK 1.1
+    @SuppressWarnings("FieldNameHidesFieldInSuperclass")
+    static final long serialVersionUID = -8125100834729963327L;
+
+    // Reference to the sun.util.calendar.Gregorian instance (singleton).
+    private static final Gregorian gcal =
+                                CalendarSystem.getGregorianCalendar();
+
+    // Reference to the JulianCalendar instance (singleton), set as needed. See
+    // getJulianCalendarSystem().
+    private static JulianCalendar jcal;
+
+    // JulianCalendar eras. See getJulianCalendarSystem().
+    private static Era[] jeras;
+
+    // The default value of gregorianCutover.
+    static final long DEFAULT_GREGORIAN_CUTOVER = -12219292800000L;
+
+/////////////////////
+// Instance Variables
+/////////////////////
+
+    /**
+     * The point at which the Gregorian calendar rules are used, measured in
+     * milliseconds from the standard epoch.  Default is October 15, 1582
+     * (Gregorian) 00:00:00 UTC or -12219292800000L.  For this value, October 4,
+     * 1582 (Julian) is followed by October 15, 1582 (Gregorian).  This
+     * corresponds to Julian day number 2299161.
+     * @serial
+     */
+    private long gregorianCutover = DEFAULT_GREGORIAN_CUTOVER;
+
+    /**
+     * The fixed date of the gregorianCutover.
+     */
+    private transient long gregorianCutoverDate =
+        (((DEFAULT_GREGORIAN_CUTOVER + 1)/ONE_DAY) - 1) + EPOCH_OFFSET; // == 577736
+
+    /**
+     * The normalized year of the gregorianCutover in Gregorian, with
+     * 0 representing 1 BCE, -1 representing 2 BCE, etc.
+     */
+    private transient int gregorianCutoverYear = 1582;
+
+    /**
+     * The normalized year of the gregorianCutover in Julian, with 0
+     * representing 1 BCE, -1 representing 2 BCE, etc.
+     */
+    private transient int gregorianCutoverYearJulian = 1582;
+
+    /**
+     * gdate always has a sun.util.calendar.Gregorian.Date instance to
+     * avoid overhead of creating it. The assumption is that most
+     * applications will need only Gregorian calendar calculations.
+     */
+    private transient BaseCalendar.Date gdate;
+
+    /**
+     * Reference to either gdate or a JulianCalendar.Date
+     * instance. After calling complete(), this value is guaranteed to
+     * be set.
+     */
+    private transient BaseCalendar.Date cdate;
+
+    /**
+     * The CalendarSystem used to calculate the date in cdate. After
+     * calling complete(), this value is guaranteed to be set and
+     * consistent with the cdate value.
+     */
+    private transient BaseCalendar calsys;
+
+    /**
+     * Temporary int[2] to get time zone offsets. zoneOffsets[0] gets
+     * the GMT offset value and zoneOffsets[1] gets the DST saving
+     * value.
+     */
+    private transient int[] zoneOffsets;
+
+    /**
+     * Temporary storage for saving original fields[] values in
+     * non-lenient mode.
+     */
+    private transient int[] originalFields;
+
+///////////////
+// Constructors
+///////////////
+
+    /**
+     * Constructs a default <code>GregorianCalendar</code> using the current time
+     * in the default time zone with the default
+     * {@link Locale.Category#FORMAT FORMAT} locale.
+     */
+    public GregorianCalendar() {
+        this(TimeZone.getDefaultRef(), Locale.getDefault(Locale.Category.FORMAT));
+        setZoneShared(true);
+    }
+
+    /**
+     * Constructs a <code>GregorianCalendar</code> based on the current time
+     * in the given time zone with the default
+     * {@link Locale.Category#FORMAT FORMAT} locale.
+     *
+     * @param zone the given time zone.
+     */
+    public GregorianCalendar(TimeZone zone) {
+        this(zone, Locale.getDefault(Locale.Category.FORMAT));
+    }
+
+    /**
+     * Constructs a <code>GregorianCalendar</code> based on the current time
+     * in the default time zone with the given locale.
+     *
+     * @param aLocale the given locale.
+     */
+    public GregorianCalendar(Locale aLocale) {
+        this(TimeZone.getDefaultRef(), aLocale);
+        setZoneShared(true);
+    }
+
+    /**
+     * Constructs a <code>GregorianCalendar</code> based on the current time
+     * in the given time zone with the given locale.
+     *
+     * @param zone the given time zone.
+     * @param aLocale the given locale.
+     */
+    public GregorianCalendar(TimeZone zone, Locale aLocale) {
+        super(zone, aLocale);
+        gdate = (BaseCalendar.Date) gcal.newCalendarDate(zone);
+        setTimeInMillis(System.currentTimeMillis());
+    }
+
+    /**
+     * Constructs a <code>GregorianCalendar</code> with the given date set
+     * in the default time zone with the default locale.
+     *
+     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
+     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * Month value is 0-based. e.g., 0 for January.
+     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
+     */
+    public GregorianCalendar(int year, int month, int dayOfMonth) {
+        this(year, month, dayOfMonth, 0, 0, 0, 0);
+    }
+
+    /**
+     * Constructs a <code>GregorianCalendar</code> with the given date
+     * and time set for the default time zone with the default locale.
+     *
+     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
+     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * Month value is 0-based. e.g., 0 for January.
+     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
+     * @param hourOfDay the value used to set the <code>HOUR_OF_DAY</code> calendar field
+     * in the calendar.
+     * @param minute the value used to set the <code>MINUTE</code> calendar field
+     * in the calendar.
+     */
+    public GregorianCalendar(int year, int month, int dayOfMonth, int hourOfDay,
+                             int minute) {
+        this(year, month, dayOfMonth, hourOfDay, minute, 0, 0);
+    }
+
+    /**
+     * Constructs a GregorianCalendar with the given date
+     * and time set for the default time zone with the default locale.
+     *
+     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
+     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * Month value is 0-based. e.g., 0 for January.
+     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
+     * @param hourOfDay the value used to set the <code>HOUR_OF_DAY</code> calendar field
+     * in the calendar.
+     * @param minute the value used to set the <code>MINUTE</code> calendar field
+     * in the calendar.
+     * @param second the value used to set the <code>SECOND</code> calendar field
+     * in the calendar.
+     */
+    public GregorianCalendar(int year, int month, int dayOfMonth, int hourOfDay,
+                             int minute, int second) {
+        this(year, month, dayOfMonth, hourOfDay, minute, second, 0);
+    }
+
+    /**
+     * Constructs a <code>GregorianCalendar</code> with the given date
+     * and time set for the default time zone with the default locale.
+     *
+     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
+     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * Month value is 0-based. e.g., 0 for January.
+     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
+     * @param hourOfDay the value used to set the <code>HOUR_OF_DAY</code> calendar field
+     * in the calendar.
+     * @param minute the value used to set the <code>MINUTE</code> calendar field
+     * in the calendar.
+     * @param second the value used to set the <code>SECOND</code> calendar field
+     * in the calendar.
+     * @param millis the value used to set the <code>MILLISECOND</code> calendar field
+     */
+    GregorianCalendar(int year, int month, int dayOfMonth,
+                      int hourOfDay, int minute, int second, int millis) {
+        super();
+        gdate = (BaseCalendar.Date) gcal.newCalendarDate(getZone());
+        this.set(YEAR, year);
+        this.set(MONTH, month);
+        this.set(DAY_OF_MONTH, dayOfMonth);
+
+        // Set AM_PM and HOUR here to set their stamp values before
+        // setting HOUR_OF_DAY (6178071).
+        if (hourOfDay >= 12 && hourOfDay <= 23) {
+            // If hourOfDay is a valid PM hour, set the correct PM values
+            // so that it won't throw an exception in case it's set to
+            // non-lenient later.
+            this.internalSet(AM_PM, PM);
+            this.internalSet(HOUR, hourOfDay - 12);
+        } else {
+            // The default value for AM_PM is AM.
+            // We don't care any out of range value here for leniency.
+            this.internalSet(HOUR, hourOfDay);
+        }
+        // The stamp values of AM_PM and HOUR must be COMPUTED. (6440854)
+        setFieldsComputed(HOUR_MASK|AM_PM_MASK);
+
+        this.set(HOUR_OF_DAY, hourOfDay);
+        this.set(MINUTE, minute);
+        this.set(SECOND, second);
+        // should be changed to set() when this constructor is made
+        // public.
+        this.internalSet(MILLISECOND, millis);
+    }
+
+    /**
+     * Constructs an empty GregorianCalendar.
+     *
+     * @param zone    the given time zone
+     * @param aLocale the given locale
+     * @param flag    the flag requesting an empty instance
+     */
+    GregorianCalendar(TimeZone zone, Locale locale, boolean flag) {
+        super(zone, locale);
+        gdate = (BaseCalendar.Date) gcal.newCalendarDate(getZone());
+    }
+
+/////////////////
+// Public methods
+/////////////////
+
+    /**
+     * Sets the <code>GregorianCalendar</code> change date. This is the point when the switch
+     * from Julian dates to Gregorian dates occurred. Default is October 15,
+     * 1582 (Gregorian). Previous to this, dates will be in the Julian calendar.
+     * <p>
+     * To obtain a pure Julian calendar, set the change date to
+     * <code>Date(Long.MAX_VALUE)</code>.  To obtain a pure Gregorian calendar,
+     * set the change date to <code>Date(Long.MIN_VALUE)</code>.
+     *
+     * @param date the given Gregorian cutover date.
+     */
+    public void setGregorianChange(Date date) {
+        long cutoverTime = date.getTime();
+        if (cutoverTime == gregorianCutover) {
+            return;
+        }
+        // Before changing the cutover date, make sure to have the
+        // time of this calendar.
+        complete();
+        setGregorianChange(cutoverTime);
+    }
+
+    private void setGregorianChange(long cutoverTime) {
+        gregorianCutover = cutoverTime;
+        gregorianCutoverDate = CalendarUtils.floorDivide(cutoverTime, ONE_DAY)
+                                + EPOCH_OFFSET;
+
+        // To provide the "pure" Julian calendar as advertised.
+        // Strictly speaking, the last millisecond should be a
+        // Gregorian date. However, the API doc specifies that setting
+        // the cutover date to Long.MAX_VALUE will make this calendar
+        // a pure Julian calendar. (See 4167995)
+        if (cutoverTime == Long.MAX_VALUE) {
+            gregorianCutoverDate++;
+        }
+
+        BaseCalendar.Date d = getGregorianCutoverDate();
+
+        // Set the cutover year (in the Gregorian year numbering)
+        gregorianCutoverYear = d.getYear();
+
+        BaseCalendar julianCal = getJulianCalendarSystem();
+        d = (BaseCalendar.Date) julianCal.newCalendarDate(TimeZone.NO_TIMEZONE);
+        julianCal.getCalendarDateFromFixedDate(d, gregorianCutoverDate - 1);
+        gregorianCutoverYearJulian = d.getNormalizedYear();
+
+        if (time < gregorianCutover) {
+            // The field values are no longer valid under the new
+            // cutover date.
+            setUnnormalized();
+        }
+    }
+
+    /**
+     * Gets the Gregorian Calendar change date.  This is the point when the
+     * switch from Julian dates to Gregorian dates occurred. Default is
+     * October 15, 1582 (Gregorian). Previous to this, dates will be in the Julian
+     * calendar.
+     *
+     * @return the Gregorian cutover date for this <code>GregorianCalendar</code> object.
+     */
+    public final Date getGregorianChange() {
+        return new Date(gregorianCutover);
+    }
+
+    /**
+     * Determines if the given year is a leap year. Returns <code>true</code> if
+     * the given year is a leap year. To specify BC year numbers,
+     * <code>1 - year number</code> must be given. For example, year BC 4 is
+     * specified as -3.
+     *
+     * @param year the given year.
+     * @return <code>true</code> if the given year is a leap year; <code>false</code> otherwise.
+     */
+    public boolean isLeapYear(int year) {
+        if ((year & 3) != 0) {
+            return false;
+        }
+
+        if (year > gregorianCutoverYear) {
+            return (year%100 != 0) || (year%400 == 0); // Gregorian
+        }
+        if (year < gregorianCutoverYearJulian) {
+            return true; // Julian
+        }
+        boolean gregorian;
+        // If the given year is the Gregorian cutover year, we need to
+        // determine which calendar system to be applied to February in the year.
+        if (gregorianCutoverYear == gregorianCutoverYearJulian) {
+            BaseCalendar.Date d = getCalendarDate(gregorianCutoverDate); // Gregorian
+            gregorian = d.getMonth() < BaseCalendar.MARCH;
+        } else {
+            gregorian = year == gregorianCutoverYear;
+        }
+        return gregorian ? (year%100 != 0) || (year%400 == 0) : true;
+    }
+
+    /**
+     * Returns {@code "gregory"} as the calendar type.
+     *
+     * @return {@code "gregory"}
+     * @since 1.8
+     */
+    @Override
+    public String getCalendarType() {
+        return "gregory";
+    }
+
+    /**
+     * Compares this <code>GregorianCalendar</code> to the specified
+     * <code>Object</code>. The result is <code>true</code> if and
+     * only if the argument is a <code>GregorianCalendar</code> object
+     * that represents the same time value (millisecond offset from
+     * the <a href="Calendar.html#Epoch">Epoch</a>) under the same
+     * <code>Calendar</code> parameters and Gregorian change date as
+     * this object.
+     *
+     * @param obj the object to compare with.
+     * @return <code>true</code> if this object is equal to <code>obj</code>;
+     * <code>false</code> otherwise.
+     * @see Calendar#compareTo(Calendar)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof GregorianCalendar &&
+            super.equals(obj) &&
+            gregorianCutover == ((GregorianCalendar)obj).gregorianCutover;
+    }
+
+    /**
+     * Generates the hash code for this <code>GregorianCalendar</code> object.
+     */
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (int)gregorianCutoverDate;
+    }
+
+    /**
+     * Adds the specified (signed) amount of time to the given calendar field,
+     * based on the calendar's rules.
+     *
+     * <p><em>Add rule 1</em>. The value of <code>field</code>
+     * after the call minus the value of <code>field</code> before the
+     * call is <code>amount</code>, modulo any overflow that has occurred in
+     * <code>field</code>. Overflow occurs when a field value exceeds its
+     * range and, as a result, the next larger field is incremented or
+     * decremented and the field value is adjusted back into its range.</p>
+     *
+     * <p><em>Add rule 2</em>. If a smaller field is expected to be
+     * invariant, but it is impossible for it to be equal to its
+     * prior value because of changes in its minimum or maximum after
+     * <code>field</code> is changed, then its value is adjusted to be as close
+     * as possible to its expected value. A smaller field represents a
+     * smaller unit of time. <code>HOUR</code> is a smaller field than
+     * <code>DAY_OF_MONTH</code>. No adjustment is made to smaller fields
+     * that are not expected to be invariant. The calendar system
+     * determines what fields are expected to be invariant.</p>
+     *
+     * @param field the calendar field.
+     * @param amount the amount of date or time to be added to the field.
+     * @exception IllegalArgumentException if <code>field</code> is
+     * <code>ZONE_OFFSET</code>, <code>DST_OFFSET</code>, or unknown,
+     * or if any calendar fields have out-of-range values in
+     * non-lenient mode.
+     */
+    @Override
+    public void add(int field, int amount) {
+        // If amount == 0, do nothing even the given field is out of
+        // range. This is tested by JCK.
+        if (amount == 0) {
+            return;   // Do nothing!
+        }
+
+        if (field < 0 || field >= ZONE_OFFSET) {
+            throw new IllegalArgumentException();
+        }
+
+        // Sync the time and calendar fields.
+        complete();
+
+        if (field == YEAR) {
+            int year = internalGet(YEAR);
+            if (internalGetEra() == CE) {
+                year += amount;
+                if (year > 0) {
+                    set(YEAR, year);
+                } else { // year <= 0
+                    set(YEAR, 1 - year);
+                    // if year == 0, you get 1 BCE.
+                    set(ERA, BCE);
+                }
+            }
+            else { // era == BCE
+                year -= amount;
+                if (year > 0) {
+                    set(YEAR, year);
+                } else { // year <= 0
+                    set(YEAR, 1 - year);
+                    // if year == 0, you get 1 CE
+                    set(ERA, CE);
+                }
+            }
+            pinDayOfMonth();
+        } else if (field == MONTH) {
+            int month = internalGet(MONTH) + amount;
+            int year = internalGet(YEAR);
+            int y_amount;
+
+            if (month >= 0) {
+                y_amount = month/12;
+            } else {
+                y_amount = (month+1)/12 - 1;
+            }
+            if (y_amount != 0) {
+                if (internalGetEra() == CE) {
+                    year += y_amount;
+                    if (year > 0) {
+                        set(YEAR, year);
+                    } else { // year <= 0
+                        set(YEAR, 1 - year);
+                        // if year == 0, you get 1 BCE
+                        set(ERA, BCE);
+                    }
+                }
+                else { // era == BCE
+                    year -= y_amount;
+                    if (year > 0) {
+                        set(YEAR, year);
+                    } else { // year <= 0
+                        set(YEAR, 1 - year);
+                        // if year == 0, you get 1 CE
+                        set(ERA, CE);
+                    }
+                }
+            }
+
+            if (month >= 0) {
+                set(MONTH,  month % 12);
+            } else {
+                // month < 0
+                month %= 12;
+                if (month < 0) {
+                    month += 12;
+                }
+                set(MONTH, JANUARY + month);
+            }
+            pinDayOfMonth();
+        } else if (field == ERA) {
+            int era = internalGet(ERA) + amount;
+            if (era < 0) {
+                era = 0;
+            }
+            if (era > 1) {
+                era = 1;
+            }
+            set(ERA, era);
+        } else {
+            long delta = amount;
+            long timeOfDay = 0;
+            switch (field) {
+            // Handle the time fields here. Convert the given
+            // amount to milliseconds and call setTimeInMillis.
+            case HOUR:
+            case HOUR_OF_DAY:
+                delta *= 60 * 60 * 1000;        // hours to minutes
+                break;
+
+            case MINUTE:
+                delta *= 60 * 1000;             // minutes to seconds
+                break;
+
+            case SECOND:
+                delta *= 1000;                  // seconds to milliseconds
+                break;
+
+            case MILLISECOND:
+                break;
+
+            // Handle week, day and AM_PM fields which involves
+            // time zone offset change adjustment. Convert the
+            // given amount to the number of days.
+            case WEEK_OF_YEAR:
+            case WEEK_OF_MONTH:
+            case DAY_OF_WEEK_IN_MONTH:
+                delta *= 7;
+                break;
+
+            case DAY_OF_MONTH: // synonym of DATE
+            case DAY_OF_YEAR:
+            case DAY_OF_WEEK:
+                break;
+
+            case AM_PM:
+                // Convert the amount to the number of days (delta)
+                // and +12 or -12 hours (timeOfDay).
+                delta = amount / 2;
+                timeOfDay = 12 * (amount % 2);
+                break;
+            }
+
+            // The time fields don't require time zone offset change
+            // adjustment.
+            if (field >= HOUR) {
+                setTimeInMillis(time + delta);
+                return;
+            }
+
+            // The rest of the fields (week, day or AM_PM fields)
+            // require time zone offset (both GMT and DST) change
+            // adjustment.
+
+            // Translate the current time to the fixed date and time
+            // of the day.
+            long fd = getCurrentFixedDate();
+            timeOfDay += internalGet(HOUR_OF_DAY);
+            timeOfDay *= 60;
+            timeOfDay += internalGet(MINUTE);
+            timeOfDay *= 60;
+            timeOfDay += internalGet(SECOND);
+            timeOfDay *= 1000;
+            timeOfDay += internalGet(MILLISECOND);
+            if (timeOfDay >= ONE_DAY) {
+                fd++;
+                timeOfDay -= ONE_DAY;
+            } else if (timeOfDay < 0) {
+                fd--;
+                timeOfDay += ONE_DAY;
+            }
+
+            fd += delta; // fd is the expected fixed date after the calculation
+            int zoneOffset = internalGet(ZONE_OFFSET) + internalGet(DST_OFFSET);
+            setTimeInMillis((fd - EPOCH_OFFSET) * ONE_DAY + timeOfDay - zoneOffset);
+            zoneOffset -= internalGet(ZONE_OFFSET) + internalGet(DST_OFFSET);
+            // If the time zone offset has changed, then adjust the difference.
+            if (zoneOffset != 0) {
+                setTimeInMillis(time + zoneOffset);
+                long fd2 = getCurrentFixedDate();
+                // If the adjustment has changed the date, then take
+                // the previous one.
+                if (fd2 != fd) {
+                    setTimeInMillis(time - zoneOffset);
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds or subtracts (up/down) a single unit of time on the given time
+     * field without changing larger fields.
+     * <p>
+     * <em>Example</em>: Consider a <code>GregorianCalendar</code>
+     * originally set to December 31, 1999. Calling {@link #roll(int,boolean) roll(Calendar.MONTH, true)}
+     * sets the calendar to January 31, 1999.  The <code>YEAR</code> field is unchanged
+     * because it is a larger field than <code>MONTH</code>.</p>
+     *
+     * @param up indicates if the value of the specified calendar field is to be
+     * rolled up or rolled down. Use <code>true</code> if rolling up, <code>false</code> otherwise.
+     * @exception IllegalArgumentException if <code>field</code> is
+     * <code>ZONE_OFFSET</code>, <code>DST_OFFSET</code>, or unknown,
+     * or if any calendar fields have out-of-range values in
+     * non-lenient mode.
+     * @see #add(int,int)
+     * @see #set(int,int)
+     */
+    @Override
+    public void roll(int field, boolean up) {
+        roll(field, up ? +1 : -1);
+    }
+
+    /**
+     * Adds a signed amount to the specified calendar field without changing larger fields.
+     * A negative roll amount means to subtract from field without changing
+     * larger fields. If the specified amount is 0, this method performs nothing.
+     *
+     * <p>This method calls {@link #complete()} before adding the
+     * amount so that all the calendar fields are normalized. If there
+     * is any calendar field having an out-of-range value in non-lenient mode, then an
+     * <code>IllegalArgumentException</code> is thrown.
+     *
+     * <p>
+     * <em>Example</em>: Consider a <code>GregorianCalendar</code>
+     * originally set to August 31, 1999. Calling <code>roll(Calendar.MONTH,
+     * 8)</code> sets the calendar to April 30, <strong>1999</strong>. Using a
+     * <code>GregorianCalendar</code>, the <code>DAY_OF_MONTH</code> field cannot
+     * be 31 in the month April. <code>DAY_OF_MONTH</code> is set to the closest possible
+     * value, 30. The <code>YEAR</code> field maintains the value of 1999 because it
+     * is a larger field than <code>MONTH</code>.
+     * <p>
+     * <em>Example</em>: Consider a <code>GregorianCalendar</code>
+     * originally set to Sunday June 6, 1999. Calling
+     * <code>roll(Calendar.WEEK_OF_MONTH, -1)</code> sets the calendar to
+     * Tuesday June 1, 1999, whereas calling
+     * <code>add(Calendar.WEEK_OF_MONTH, -1)</code> sets the calendar to
+     * Sunday May 30, 1999. This is because the roll rule imposes an
+     * additional constraint: The <code>MONTH</code> must not change when the
+     * <code>WEEK_OF_MONTH</code> is rolled. Taken together with add rule 1,
+     * the resultant date must be between Tuesday June 1 and Saturday June
+     * 5. According to add rule 2, the <code>DAY_OF_WEEK</code>, an invariant
+     * when changing the <code>WEEK_OF_MONTH</code>, is set to Tuesday, the
+     * closest possible value to Sunday (where Sunday is the first day of the
+     * week).</p>
+     *
+     * @param field the calendar field.
+     * @param amount the signed amount to add to <code>field</code>.
+     * @exception IllegalArgumentException if <code>field</code> is
+     * <code>ZONE_OFFSET</code>, <code>DST_OFFSET</code>, or unknown,
+     * or if any calendar fields have out-of-range values in
+     * non-lenient mode.
+     * @see #roll(int,boolean)
+     * @see #add(int,int)
+     * @see #set(int,int)
+     * @since 1.2
+     */
+    @Override
+    public void roll(int field, int amount) {
+        // If amount == 0, do nothing even the given field is out of
+        // range. This is tested by JCK.
+        if (amount == 0) {
+            return;
+        }
+
+        if (field < 0 || field >= ZONE_OFFSET) {
+            throw new IllegalArgumentException();
+        }
+
+        // Sync the time and calendar fields.
+        complete();
+
+        int min = getMinimum(field);
+        int max = getMaximum(field);
+
+        switch (field) {
+        case AM_PM:
+        case ERA:
+        case YEAR:
+        case MINUTE:
+        case SECOND:
+        case MILLISECOND:
+            // These fields are handled simply, since they have fixed minima
+            // and maxima.  The field DAY_OF_MONTH is almost as simple.  Other
+            // fields are complicated, since the range within they must roll
+            // varies depending on the date.
+            break;
+
+        case HOUR:
+        case HOUR_OF_DAY:
+            {
+                int unit = max + 1; // 12 or 24 hours
+                int h = internalGet(field);
+                int nh = (h + amount) % unit;
+                if (nh < 0) {
+                    nh += unit;
+                }
+                time += ONE_HOUR * (nh - h);
+
+                // The day might have changed, which could happen if
+                // the daylight saving time transition brings it to
+                // the next day, although it's very unlikely. But we
+                // have to make sure not to change the larger fields.
+                CalendarDate d = calsys.getCalendarDate(time, getZone());
+                if (internalGet(DAY_OF_MONTH) != d.getDayOfMonth()) {
+                    d.setDate(internalGet(YEAR),
+                              internalGet(MONTH) + 1,
+                              internalGet(DAY_OF_MONTH));
+                    if (field == HOUR) {
+                        assert (internalGet(AM_PM) == PM);
+                        d.addHours(+12); // restore PM
+                    }
+                    time = calsys.getTime(d);
+                }
+                int hourOfDay = d.getHours();
+                internalSet(field, hourOfDay % unit);
+                if (field == HOUR) {
+                    internalSet(HOUR_OF_DAY, hourOfDay);
+                } else {
+                    internalSet(AM_PM, hourOfDay / 12);
+                    internalSet(HOUR, hourOfDay % 12);
+                }
+
+                // Time zone offset and/or daylight saving might have changed.
+                int zoneOffset = d.getZoneOffset();
+                int saving = d.getDaylightSaving();
+                internalSet(ZONE_OFFSET, zoneOffset - saving);
+                internalSet(DST_OFFSET, saving);
+                return;
+            }
+
+        case MONTH:
+            // Rolling the month involves both pinning the final value to [0, 11]
+            // and adjusting the DAY_OF_MONTH if necessary.  We only adjust the
+            // DAY_OF_MONTH if, after updating the MONTH field, it is illegal.
+            // E.g., <jan31>.roll(MONTH, 1) -> <feb28> or <feb29>.
+            {
+                if (!isCutoverYear(cdate.getNormalizedYear())) {
+                    int mon = (internalGet(MONTH) + amount) % 12;
+                    if (mon < 0) {
+                        mon += 12;
+                    }
+                    set(MONTH, mon);
+
+                    // Keep the day of month in the range.  We don't want to spill over
+                    // into the next month; e.g., we don't want jan31 + 1 mo -> feb31 ->
+                    // mar3.
+                    int monthLen = monthLength(mon);
+                    if (internalGet(DAY_OF_MONTH) > monthLen) {
+                        set(DAY_OF_MONTH, monthLen);
+                    }
+                } else {
+                    // We need to take care of different lengths in
+                    // year and month due to the cutover.
+                    int yearLength = getActualMaximum(MONTH) + 1;
+                    int mon = (internalGet(MONTH) + amount) % yearLength;
+                    if (mon < 0) {
+                        mon += yearLength;
+                    }
+                    set(MONTH, mon);
+                    int monthLen = getActualMaximum(DAY_OF_MONTH);
+                    if (internalGet(DAY_OF_MONTH) > monthLen) {
+                        set(DAY_OF_MONTH, monthLen);
+                    }
+                }
+                return;
+            }
+
+        case WEEK_OF_YEAR:
+            {
+                int y = cdate.getNormalizedYear();
+                max = getActualMaximum(WEEK_OF_YEAR);
+                set(DAY_OF_WEEK, internalGet(DAY_OF_WEEK));
+                int woy = internalGet(WEEK_OF_YEAR);
+                int value = woy + amount;
+                if (!isCutoverYear(y)) {
+                    int weekYear = getWeekYear();
+                    if (weekYear == y) {
+                        // If the new value is in between min and max
+                        // (exclusive), then we can use the value.
+                        if (value > min && value < max) {
+                            set(WEEK_OF_YEAR, value);
+                            return;
+                        }
+                        long fd = getCurrentFixedDate();
+                        // Make sure that the min week has the current DAY_OF_WEEK
+                        // in the calendar year
+                        long day1 = fd - (7 * (woy - min));
+                        if (calsys.getYearFromFixedDate(day1) != y) {
+                            min++;
+                        }
+
+                        // Make sure the same thing for the max week
+                        fd += 7 * (max - internalGet(WEEK_OF_YEAR));
+                        if (calsys.getYearFromFixedDate(fd) != y) {
+                            max--;
+                        }
+                    } else {
+                        // When WEEK_OF_YEAR and YEAR are out of sync,
+                        // adjust woy and amount to stay in the calendar year.
+                        if (weekYear > y) {
+                            if (amount < 0) {
+                                amount++;
+                            }
+                            woy = max;
+                        } else {
+                            if (amount > 0) {
+                                amount -= woy - max;
+                            }
+                            woy = min;
+                        }
+                    }
+                    set(field, getRolledValue(woy, amount, min, max));
+                    return;
+                }
+
+                // Handle cutover here.
+                long fd = getCurrentFixedDate();
+                BaseCalendar cal;
+                if (gregorianCutoverYear == gregorianCutoverYearJulian) {
+                    cal = getCutoverCalendarSystem();
+                } else if (y == gregorianCutoverYear) {
+                    cal = gcal;
+                } else {
+                    cal = getJulianCalendarSystem();
+                }
+                long day1 = fd - (7 * (woy - min));
+                // Make sure that the min week has the current DAY_OF_WEEK
+                if (cal.getYearFromFixedDate(day1) != y) {
+                    min++;
+                }
+
+                // Make sure the same thing for the max week
+                fd += 7 * (max - woy);
+                cal = (fd >= gregorianCutoverDate) ? gcal : getJulianCalendarSystem();
+                if (cal.getYearFromFixedDate(fd) != y) {
+                    max--;
+                }
+                // value: the new WEEK_OF_YEAR which must be converted
+                // to month and day of month.
+                value = getRolledValue(woy, amount, min, max) - 1;
+                BaseCalendar.Date d = getCalendarDate(day1 + value * 7);
+                set(MONTH, d.getMonth() - 1);
+                set(DAY_OF_MONTH, d.getDayOfMonth());
+                return;
+            }
+
+        case WEEK_OF_MONTH:
+            {
+                boolean isCutoverYear = isCutoverYear(cdate.getNormalizedYear());
+                // dow: relative day of week from first day of week
+                int dow = internalGet(DAY_OF_WEEK) - getFirstDayOfWeek();
+                if (dow < 0) {
+                    dow += 7;
+                }
+
+                long fd = getCurrentFixedDate();
+                long month1;     // fixed date of the first day (usually 1) of the month
+                int monthLength; // actual month length
+                if (isCutoverYear) {
+                    month1 = getFixedDateMonth1(cdate, fd);
+                    monthLength = actualMonthLength();
+                } else {
+                    month1 = fd - internalGet(DAY_OF_MONTH) + 1;
+                    monthLength = calsys.getMonthLength(cdate);
+                }
+
+                // the first day of week of the month.
+                long monthDay1st = BaseCalendar.getDayOfWeekDateOnOrBefore(month1 + 6,
+                                                                           getFirstDayOfWeek());
+                // if the week has enough days to form a week, the
+                // week starts from the previous month.
+                if ((int)(monthDay1st - month1) >= getMinimalDaysInFirstWeek()) {
+                    monthDay1st -= 7;
+                }
+                max = getActualMaximum(field);
+
+                // value: the new WEEK_OF_MONTH value
+                int value = getRolledValue(internalGet(field), amount, 1, max) - 1;
+
+                // nfd: fixed date of the rolled date
+                long nfd = monthDay1st + value * 7 + dow;
+
+                // Unlike WEEK_OF_YEAR, we need to change day of week if the
+                // nfd is out of the month.
+                if (nfd < month1) {
+                    nfd = month1;
+                } else if (nfd >= (month1 + monthLength)) {
+                    nfd = month1 + monthLength - 1;
+                }
+                int dayOfMonth;
+                if (isCutoverYear) {
+                    // If we are in the cutover year, convert nfd to
+                    // its calendar date and use dayOfMonth.
+                    BaseCalendar.Date d = getCalendarDate(nfd);
+                    dayOfMonth = d.getDayOfMonth();
+                } else {
+                    dayOfMonth = (int)(nfd - month1) + 1;
+                }
+                set(DAY_OF_MONTH, dayOfMonth);
+                return;
+            }
+
+        case DAY_OF_MONTH:
+            {
+                if (!isCutoverYear(cdate.getNormalizedYear())) {
+                    max = calsys.getMonthLength(cdate);
+                    break;
+                }
+
+                // Cutover year handling
+                long fd = getCurrentFixedDate();
+                long month1 = getFixedDateMonth1(cdate, fd);
+                // It may not be a regular month. Convert the date and range to
+                // the relative values, perform the roll, and
+                // convert the result back to the rolled date.
+                int value = getRolledValue((int)(fd - month1), amount, 0, actualMonthLength() - 1);
+                BaseCalendar.Date d = getCalendarDate(month1 + value);
+                assert d.getMonth()-1 == internalGet(MONTH);
+                set(DAY_OF_MONTH, d.getDayOfMonth());
+                return;
+            }
+
+        case DAY_OF_YEAR:
+            {
+                max = getActualMaximum(field);
+                if (!isCutoverYear(cdate.getNormalizedYear())) {
+                    break;
+                }
+
+                // Handle cutover here.
+                long fd = getCurrentFixedDate();
+                long jan1 = fd - internalGet(DAY_OF_YEAR) + 1;
+                int value = getRolledValue((int)(fd - jan1) + 1, amount, min, max);
+                BaseCalendar.Date d = getCalendarDate(jan1 + value - 1);
+                set(MONTH, d.getMonth() - 1);
+                set(DAY_OF_MONTH, d.getDayOfMonth());
+                return;
+            }
+
+        case DAY_OF_WEEK:
+            {
+                if (!isCutoverYear(cdate.getNormalizedYear())) {
+                    // If the week of year is in the same year, we can
+                    // just change DAY_OF_WEEK.
+                    int weekOfYear = internalGet(WEEK_OF_YEAR);
+                    if (weekOfYear > 1 && weekOfYear < 52) {
+                        set(WEEK_OF_YEAR, weekOfYear); // update stamp[WEEK_OF_YEAR]
+                        max = SATURDAY;
+                        break;
+                    }
+                }
+
+                // We need to handle it in a different way around year
+                // boundaries and in the cutover year. Note that
+                // changing era and year values violates the roll
+                // rule: not changing larger calendar fields...
+                amount %= 7;
+                if (amount == 0) {
+                    return;
+                }
+                long fd = getCurrentFixedDate();
+                long dowFirst = BaseCalendar.getDayOfWeekDateOnOrBefore(fd, getFirstDayOfWeek());
+                fd += amount;
+                if (fd < dowFirst) {
+                    fd += 7;
+                } else if (fd >= dowFirst + 7) {
+                    fd -= 7;
+                }
+                BaseCalendar.Date d = getCalendarDate(fd);
+                set(ERA, (d.getNormalizedYear() <= 0 ? BCE : CE));
+                set(d.getYear(), d.getMonth() - 1, d.getDayOfMonth());
+                return;
+            }
+
+        case DAY_OF_WEEK_IN_MONTH:
+            {
+                min = 1; // after normalized, min should be 1.
+                if (!isCutoverYear(cdate.getNormalizedYear())) {
+                    int dom = internalGet(DAY_OF_MONTH);
+                    int monthLength = calsys.getMonthLength(cdate);
+                    int lastDays = monthLength % 7;
+                    max = monthLength / 7;
+                    int x = (dom - 1) % 7;
+                    if (x < lastDays) {
+                        max++;
+                    }
+                    set(DAY_OF_WEEK, internalGet(DAY_OF_WEEK));
+                    break;
+                }
+
+                // Cutover year handling
+                long fd = getCurrentFixedDate();
+                long month1 = getFixedDateMonth1(cdate, fd);
+                int monthLength = actualMonthLength();
+                int lastDays = monthLength % 7;
+                max = monthLength / 7;
+                int x = (int)(fd - month1) % 7;
+                if (x < lastDays) {
+                    max++;
+                }
+                int value = getRolledValue(internalGet(field), amount, min, max) - 1;
+                fd = month1 + value * 7 + x;
+                BaseCalendar cal = (fd >= gregorianCutoverDate) ? gcal : getJulianCalendarSystem();
+                BaseCalendar.Date d = (BaseCalendar.Date) cal.newCalendarDate(TimeZone.NO_TIMEZONE);
+                cal.getCalendarDateFromFixedDate(d, fd);
+                set(DAY_OF_MONTH, d.getDayOfMonth());
+                return;
+            }
+        }
+
+        set(field, getRolledValue(internalGet(field), amount, min, max));
+    }
+
+    /**
+     * Returns the minimum value for the given calendar field of this
+     * <code>GregorianCalendar</code> instance. The minimum value is
+     * defined as the smallest value returned by the {@link
+     * Calendar#get(int) get} method for any possible time value,
+     * taking into consideration the current values of the
+     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
+     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
+     * {@link #getGregorianChange() getGregorianChange} and
+     * {@link Calendar#getTimeZone() getTimeZone} methods.
+     *
+     * @param field the calendar field.
+     * @return the minimum value for the given calendar field.
+     * @see #getMaximum(int)
+     * @see #getGreatestMinimum(int)
+     * @see #getLeastMaximum(int)
+     * @see #getActualMinimum(int)
+     * @see #getActualMaximum(int)
+     */
+    @Override
+    public int getMinimum(int field) {
+        return MIN_VALUES[field];
+    }
+
+    /**
+     * Returns the maximum value for the given calendar field of this
+     * <code>GregorianCalendar</code> instance. The maximum value is
+     * defined as the largest value returned by the {@link
+     * Calendar#get(int) get} method for any possible time value,
+     * taking into consideration the current values of the
+     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
+     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
+     * {@link #getGregorianChange() getGregorianChange} and
+     * {@link Calendar#getTimeZone() getTimeZone} methods.
+     *
+     * @param field the calendar field.
+     * @return the maximum value for the given calendar field.
+     * @see #getMinimum(int)
+     * @see #getGreatestMinimum(int)
+     * @see #getLeastMaximum(int)
+     * @see #getActualMinimum(int)
+     * @see #getActualMaximum(int)
+     */
+    @Override
+    public int getMaximum(int field) {
+        switch (field) {
+        case MONTH:
+        case DAY_OF_MONTH:
+        case DAY_OF_YEAR:
+        case WEEK_OF_YEAR:
+        case WEEK_OF_MONTH:
+        case DAY_OF_WEEK_IN_MONTH:
+        case YEAR:
+            {
+                // On or after Gregorian 200-3-1, Julian and Gregorian
+                // calendar dates are the same or Gregorian dates are
+                // larger (i.e., there is a "gap") after 300-3-1.
+                if (gregorianCutoverYear > 200) {
+                    break;
+                }
+                // There might be "overlapping" dates.
+                GregorianCalendar gc = (GregorianCalendar) clone();
+                gc.setLenient(true);
+                gc.setTimeInMillis(gregorianCutover);
+                int v1 = gc.getActualMaximum(field);
+                gc.setTimeInMillis(gregorianCutover-1);
+                int v2 = gc.getActualMaximum(field);
+                return Math.max(MAX_VALUES[field], Math.max(v1, v2));
+            }
+        }
+        return MAX_VALUES[field];
+    }
+
+    /**
+     * Returns the highest minimum value for the given calendar field
+     * of this <code>GregorianCalendar</code> instance. The highest
+     * minimum value is defined as the largest value returned by
+     * {@link #getActualMinimum(int)} for any possible time value,
+     * taking into consideration the current values of the
+     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
+     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
+     * {@link #getGregorianChange() getGregorianChange} and
+     * {@link Calendar#getTimeZone() getTimeZone} methods.
+     *
+     * @param field the calendar field.
+     * @return the highest minimum value for the given calendar field.
+     * @see #getMinimum(int)
+     * @see #getMaximum(int)
+     * @see #getLeastMaximum(int)
+     * @see #getActualMinimum(int)
+     * @see #getActualMaximum(int)
+     */
+    @Override
+    public int getGreatestMinimum(int field) {
+        if (field == DAY_OF_MONTH) {
+            BaseCalendar.Date d = getGregorianCutoverDate();
+            long mon1 = getFixedDateMonth1(d, gregorianCutoverDate);
+            d = getCalendarDate(mon1);
+            return Math.max(MIN_VALUES[field], d.getDayOfMonth());
+        }
+        return MIN_VALUES[field];
+    }
+
+    /**
+     * Returns the lowest maximum value for the given calendar field
+     * of this <code>GregorianCalendar</code> instance. The lowest
+     * maximum value is defined as the smallest value returned by
+     * {@link #getActualMaximum(int)} for any possible time value,
+     * taking into consideration the current values of the
+     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
+     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
+     * {@link #getGregorianChange() getGregorianChange} and
+     * {@link Calendar#getTimeZone() getTimeZone} methods.
+     *
+     * @param field the calendar field
+     * @return the lowest maximum value for the given calendar field.
+     * @see #getMinimum(int)
+     * @see #getMaximum(int)
+     * @see #getGreatestMinimum(int)
+     * @see #getActualMinimum(int)
+     * @see #getActualMaximum(int)
+     */
+    @Override
+    public int getLeastMaximum(int field) {
+        switch (field) {
+        case MONTH:
+        case DAY_OF_MONTH:
+        case DAY_OF_YEAR:
+        case WEEK_OF_YEAR:
+        case WEEK_OF_MONTH:
+        case DAY_OF_WEEK_IN_MONTH:
+        case YEAR:
+            {
+                GregorianCalendar gc = (GregorianCalendar) clone();
+                gc.setLenient(true);
+                gc.setTimeInMillis(gregorianCutover);
+                int v1 = gc.getActualMaximum(field);
+                gc.setTimeInMillis(gregorianCutover-1);
+                int v2 = gc.getActualMaximum(field);
+                return Math.min(LEAST_MAX_VALUES[field], Math.min(v1, v2));
+            }
+        }
+        return LEAST_MAX_VALUES[field];
+    }
+
+    /**
+     * Returns the minimum value that this calendar field could have,
+     * taking into consideration the given time value and the current
+     * values of the
+     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
+     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
+     * {@link #getGregorianChange() getGregorianChange} and
+     * {@link Calendar#getTimeZone() getTimeZone} methods.
+     *
+     * <p>For example, if the Gregorian change date is January 10,
+     * 1970 and the date of this <code>GregorianCalendar</code> is
+     * January 20, 1970, the actual minimum value of the
+     * <code>DAY_OF_MONTH</code> field is 10 because the previous date
+     * of January 10, 1970 is December 27, 1996 (in the Julian
+     * calendar). Therefore, December 28, 1969 to January 9, 1970
+     * don't exist.
+     *
+     * @param field the calendar field
+     * @return the minimum of the given field for the time value of
+     * this <code>GregorianCalendar</code>
+     * @see #getMinimum(int)
+     * @see #getMaximum(int)
+     * @see #getGreatestMinimum(int)
+     * @see #getLeastMaximum(int)
+     * @see #getActualMaximum(int)
+     * @since 1.2
+     */
+    @Override
+    public int getActualMinimum(int field) {
+        if (field == DAY_OF_MONTH) {
+            GregorianCalendar gc = getNormalizedCalendar();
+            int year = gc.cdate.getNormalizedYear();
+            if (year == gregorianCutoverYear || year == gregorianCutoverYearJulian) {
+                long month1 = getFixedDateMonth1(gc.cdate, gc.calsys.getFixedDate(gc.cdate));
+                BaseCalendar.Date d = getCalendarDate(month1);
+                return d.getDayOfMonth();
+            }
+        }
+        return getMinimum(field);
+    }
+
+    /**
+     * Returns the maximum value that this calendar field could have,
+     * taking into consideration the given time value and the current
+     * values of the
+     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
+     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
+     * {@link #getGregorianChange() getGregorianChange} and
+     * {@link Calendar#getTimeZone() getTimeZone} methods.
+     * For example, if the date of this instance is February 1, 2004,
+     * the actual maximum value of the <code>DAY_OF_MONTH</code> field
+     * is 29 because 2004 is a leap year, and if the date of this
+     * instance is February 1, 2005, it's 28.
+     *
+     * <p>This method calculates the maximum value of {@link
+     * Calendar#WEEK_OF_YEAR WEEK_OF_YEAR} based on the {@link
+     * Calendar#YEAR YEAR} (calendar year) value, not the <a
+     * href="#week_year">week year</a>. Call {@link
+     * #getWeeksInWeekYear()} to get the maximum value of {@code
+     * WEEK_OF_YEAR} in the week year of this {@code GregorianCalendar}.
+     *
+     * @param field the calendar field
+     * @return the maximum of the given field for the time value of
+     * this <code>GregorianCalendar</code>
+     * @see #getMinimum(int)
+     * @see #getMaximum(int)
+     * @see #getGreatestMinimum(int)
+     * @see #getLeastMaximum(int)
+     * @see #getActualMinimum(int)
+     * @since 1.2
+     */
+    @Override
+    public int getActualMaximum(int field) {
+        final int fieldsForFixedMax = ERA_MASK|DAY_OF_WEEK_MASK|HOUR_MASK|AM_PM_MASK|
+            HOUR_OF_DAY_MASK|MINUTE_MASK|SECOND_MASK|MILLISECOND_MASK|
+            ZONE_OFFSET_MASK|DST_OFFSET_MASK;
+        if ((fieldsForFixedMax & (1<<field)) != 0) {
+            return getMaximum(field);
+        }
+
+        GregorianCalendar gc = getNormalizedCalendar();
+        BaseCalendar.Date date = gc.cdate;
+        BaseCalendar cal = gc.calsys;
+        int normalizedYear = date.getNormalizedYear();
+
+        int value = -1;
+        switch (field) {
+        case MONTH:
+            {
+                if (!gc.isCutoverYear(normalizedYear)) {
+                    value = DECEMBER;
+                    break;
+                }
+
+                // January 1 of the next year may or may not exist.
+                long nextJan1;
+                do {
+                    nextJan1 = gcal.getFixedDate(++normalizedYear, BaseCalendar.JANUARY, 1, null);
+                } while (nextJan1 < gregorianCutoverDate);
+                BaseCalendar.Date d = (BaseCalendar.Date) date.clone();
+                cal.getCalendarDateFromFixedDate(d, nextJan1 - 1);
+                value = d.getMonth() - 1;
+            }
+            break;
+
+        case DAY_OF_MONTH:
+            {
+                value = cal.getMonthLength(date);
+                if (!gc.isCutoverYear(normalizedYear) || date.getDayOfMonth() == value) {
+                    break;
+                }
+
+                // Handle cutover year.
+                long fd = gc.getCurrentFixedDate();
+                if (fd >= gregorianCutoverDate) {
+                    break;
+                }
+                int monthLength = gc.actualMonthLength();
+                long monthEnd = gc.getFixedDateMonth1(gc.cdate, fd) + monthLength - 1;
+                // Convert the fixed date to its calendar date.
+                BaseCalendar.Date d = gc.getCalendarDate(monthEnd);
+                value = d.getDayOfMonth();
+            }
+            break;
+
+        case DAY_OF_YEAR:
+            {
+                if (!gc.isCutoverYear(normalizedYear)) {
+                    value = cal.getYearLength(date);
+                    break;
+                }
+
+                // Handle cutover year.
+                long jan1;
+                if (gregorianCutoverYear == gregorianCutoverYearJulian) {
+                    BaseCalendar cocal = gc.getCutoverCalendarSystem();
+                    jan1 = cocal.getFixedDate(normalizedYear, 1, 1, null);
+                } else if (normalizedYear == gregorianCutoverYearJulian) {
+                    jan1 = cal.getFixedDate(normalizedYear, 1, 1, null);
+                } else {
+                    jan1 = gregorianCutoverDate;
+                }
+                // January 1 of the next year may or may not exist.
+                long nextJan1 = gcal.getFixedDate(++normalizedYear, 1, 1, null);
+                if (nextJan1 < gregorianCutoverDate) {
+                    nextJan1 = gregorianCutoverDate;
+                }
+                assert jan1 <= cal.getFixedDate(date.getNormalizedYear(), date.getMonth(),
+                                                date.getDayOfMonth(), date);
+                assert nextJan1 >= cal.getFixedDate(date.getNormalizedYear(), date.getMonth(),
+                                                date.getDayOfMonth(), date);
+                value = (int)(nextJan1 - jan1);
+            }
+            break;
+
+        case WEEK_OF_YEAR:
+            {
+                if (!gc.isCutoverYear(normalizedYear)) {
+                    // Get the day of week of January 1 of the year
+                    CalendarDate d = cal.newCalendarDate(TimeZone.NO_TIMEZONE);
+                    d.setDate(date.getYear(), BaseCalendar.JANUARY, 1);
+                    int dayOfWeek = cal.getDayOfWeek(d);
+                    // Normalize the day of week with the firstDayOfWeek value
+                    dayOfWeek -= getFirstDayOfWeek();
+                    if (dayOfWeek < 0) {
+                        dayOfWeek += 7;
+                    }
+                    value = 52;
+                    int magic = dayOfWeek + getMinimalDaysInFirstWeek() - 1;
+                    if ((magic == 6) ||
+                        (date.isLeapYear() && (magic == 5 || magic == 12))) {
+                        value++;
+                    }
+                    break;
+                }
+
+                if (gc == this) {
+                    gc = (GregorianCalendar) gc.clone();
+                }
+                int maxDayOfYear = getActualMaximum(DAY_OF_YEAR);
+                gc.set(DAY_OF_YEAR, maxDayOfYear);
+                value = gc.get(WEEK_OF_YEAR);
+                if (internalGet(YEAR) != gc.getWeekYear()) {
+                    gc.set(DAY_OF_YEAR, maxDayOfYear - 7);
+                    value = gc.get(WEEK_OF_YEAR);
+                }
+            }
+            break;
+
+        case WEEK_OF_MONTH:
+            {
+                if (!gc.isCutoverYear(normalizedYear)) {
+                    CalendarDate d = cal.newCalendarDate(null);
+                    d.setDate(date.getYear(), date.getMonth(), 1);
+                    int dayOfWeek = cal.getDayOfWeek(d);
+                    int monthLength = cal.getMonthLength(d);
+                    dayOfWeek -= getFirstDayOfWeek();
+                    if (dayOfWeek < 0) {
+                        dayOfWeek += 7;
+                    }
+                    int nDaysFirstWeek = 7 - dayOfWeek; // # of days in the first week
+                    value = 3;
+                    if (nDaysFirstWeek >= getMinimalDaysInFirstWeek()) {
+                        value++;
+                    }
+                    monthLength -= nDaysFirstWeek + 7 * 3;
+                    if (monthLength > 0) {
+                        value++;
+                        if (monthLength > 7) {
+                            value++;
+                        }
+                    }
+                    break;
+                }
+
+                // Cutover year handling
+                if (gc == this) {
+                    gc = (GregorianCalendar) gc.clone();
+                }
+                int y = gc.internalGet(YEAR);
+                int m = gc.internalGet(MONTH);
+                do {
+                    value = gc.get(WEEK_OF_MONTH);
+                    gc.add(WEEK_OF_MONTH, +1);
+                } while (gc.get(YEAR) == y && gc.get(MONTH) == m);
+            }
+            break;
+
+        case DAY_OF_WEEK_IN_MONTH:
+            {
+                // may be in the Gregorian cutover month
+                int ndays, dow1;
+                int dow = date.getDayOfWeek();
+                if (!gc.isCutoverYear(normalizedYear)) {
+                    BaseCalendar.Date d = (BaseCalendar.Date) date.clone();
+                    ndays = cal.getMonthLength(d);
+                    d.setDayOfMonth(1);
+                    cal.normalize(d);
+                    dow1 = d.getDayOfWeek();
+                } else {
+                    // Let a cloned GregorianCalendar take care of the cutover cases.
+                    if (gc == this) {
+                        gc = (GregorianCalendar) clone();
+                    }
+                    ndays = gc.actualMonthLength();
+                    gc.set(DAY_OF_MONTH, gc.getActualMinimum(DAY_OF_MONTH));
+                    dow1 = gc.get(DAY_OF_WEEK);
+                }
+                int x = dow - dow1;
+                if (x < 0) {
+                    x += 7;
+                }
+                ndays -= x;
+                value = (ndays + 6) / 7;
+            }
+            break;
+
+        case YEAR:
+            /* The year computation is no different, in principle, from the
+             * others, however, the range of possible maxima is large.  In
+             * addition, the way we know we've exceeded the range is different.
+             * For these reasons, we use the special case code below to handle
+             * this field.
+             *
+             * The actual maxima for YEAR depend on the type of calendar:
+             *
+             *     Gregorian = May 17, 292275056 BCE - Aug 17, 292278994 CE
+             *     Julian    = Dec  2, 292269055 BCE - Jan  3, 292272993 CE
+             *     Hybrid    = Dec  2, 292269055 BCE - Aug 17, 292278994 CE
+             *
+             * We know we've exceeded the maximum when either the month, date,
+             * time, or era changes in response to setting the year.  We don't
+             * check for month, date, and time here because the year and era are
+             * sufficient to detect an invalid year setting.  NOTE: If code is
+             * added to check the month and date in the future for some reason,
+             * Feb 29 must be allowed to shift to Mar 1 when setting the year.
+             */
+            {
+                if (gc == this) {
+                    gc = (GregorianCalendar) clone();
+                }
+
+                // Calculate the millisecond offset from the beginning
+                // of the year of this calendar and adjust the max
+                // year value if we are beyond the limit in the max
+                // year.
+                long current = gc.getYearOffsetInMillis();
+
+                if (gc.internalGetEra() == CE) {
+                    gc.setTimeInMillis(Long.MAX_VALUE);
+                    value = gc.get(YEAR);
+                    long maxEnd = gc.getYearOffsetInMillis();
+                    if (current > maxEnd) {
+                        value--;
+                    }
+                } else {
+                    CalendarSystem mincal = gc.getTimeInMillis() >= gregorianCutover ?
+                        gcal : getJulianCalendarSystem();
+                    CalendarDate d = mincal.getCalendarDate(Long.MIN_VALUE, getZone());
+                    long maxEnd = (cal.getDayOfYear(d) - 1) * 24 + d.getHours();
+                    maxEnd *= 60;
+                    maxEnd += d.getMinutes();
+                    maxEnd *= 60;
+                    maxEnd += d.getSeconds();
+                    maxEnd *= 1000;
+                    maxEnd += d.getMillis();
+                    value = d.getYear();
+                    if (value <= 0) {
+                        assert mincal == gcal;
+                        value = 1 - value;
+                    }
+                    if (current < maxEnd) {
+                        value--;
+                    }
+                }
+            }
+            break;
+
+        default:
+            throw new ArrayIndexOutOfBoundsException(field);
+        }
+        return value;
+    }
+
+    /**
+     * Returns the millisecond offset from the beginning of this
+     * year. This Calendar object must have been normalized.
+     */
+    private long getYearOffsetInMillis() {
+        long t = (internalGet(DAY_OF_YEAR) - 1) * 24;
+        t += internalGet(HOUR_OF_DAY);
+        t *= 60;
+        t += internalGet(MINUTE);
+        t *= 60;
+        t += internalGet(SECOND);
+        t *= 1000;
+        return t + internalGet(MILLISECOND) -
+            (internalGet(ZONE_OFFSET) + internalGet(DST_OFFSET));
+    }
+
+    @Override
+    public Object clone()
+    {
+        GregorianCalendar other = (GregorianCalendar) super.clone();
+
+        other.gdate = (BaseCalendar.Date) gdate.clone();
+        if (cdate != null) {
+            if (cdate != gdate) {
+                other.cdate = (BaseCalendar.Date) cdate.clone();
+            } else {
+                other.cdate = other.gdate;
+            }
+        }
+        other.originalFields = null;
+        other.zoneOffsets = null;
+        return other;
+    }
+
+    @Override
+    public TimeZone getTimeZone() {
+        TimeZone zone = super.getTimeZone();
+        // To share the zone by CalendarDates
+        gdate.setZone(zone);
+        if (cdate != null && cdate != gdate) {
+            cdate.setZone(zone);
+        }
+        return zone;
+    }
+
+    @Override
+    public void setTimeZone(TimeZone zone) {
+        super.setTimeZone(zone);
+        // To share the zone by CalendarDates
+        gdate.setZone(zone);
+        if (cdate != null && cdate != gdate) {
+            cdate.setZone(zone);
+        }
+    }
+
+    /**
+     * Returns {@code true} indicating this {@code GregorianCalendar}
+     * supports week dates.
+     *
+     * @return {@code true} (always)
+     * @see #getWeekYear()
+     * @see #setWeekDate(int,int,int)
+     * @see #getWeeksInWeekYear()
+     * @since 1.7
+     */
+    @Override
+    public final boolean isWeekDateSupported() {
+        return true;
+    }
+
+    /**
+     * Returns the <a href="#week_year">week year</a> represented by this
+     * {@code GregorianCalendar}. The dates in the weeks between 1 and the
+     * maximum week number of the week year have the same week year value
+     * that may be one year before or after the {@link Calendar#YEAR YEAR}
+     * (calendar year) value.
+     *
+     * <p>This method calls {@link Calendar#complete()} before
+     * calculating the week year.
+     *
+     * @return the week year represented by this {@code GregorianCalendar}.
+     *         If the {@link Calendar#ERA ERA} value is {@link #BC}, the year is
+     *         represented by 0 or a negative number: BC 1 is 0, BC 2
+     *         is -1, BC 3 is -2, and so on.
+     * @throws IllegalArgumentException
+     *         if any of the calendar fields is invalid in non-lenient mode.
+     * @see #isWeekDateSupported()
+     * @see #getWeeksInWeekYear()
+     * @see Calendar#getFirstDayOfWeek()
+     * @see Calendar#getMinimalDaysInFirstWeek()
+     * @since 1.7
+     */
+    @Override
+    public int getWeekYear() {
+        int year = get(YEAR); // implicitly calls complete()
+        if (internalGetEra() == BCE) {
+            year = 1 - year;
+        }
+
+        // Fast path for the Gregorian calendar years that are never
+        // affected by the Julian-Gregorian transition
+        if (year > gregorianCutoverYear + 1) {
+            int weekOfYear = internalGet(WEEK_OF_YEAR);
+            if (internalGet(MONTH) == JANUARY) {
+                if (weekOfYear >= 52) {
+                    --year;
+                }
+            } else {
+                if (weekOfYear == 1) {
+                    ++year;
+                }
+            }
+            return year;
+        }
+
+        // General (slow) path
+        int dayOfYear = internalGet(DAY_OF_YEAR);
+        int maxDayOfYear = getActualMaximum(DAY_OF_YEAR);
+        int minimalDays = getMinimalDaysInFirstWeek();
+
+        // Quickly check the possibility of year adjustments before
+        // cloning this GregorianCalendar.
+        if (dayOfYear > minimalDays && dayOfYear < (maxDayOfYear - 6)) {
+            return year;
+        }
+
+        // Create a clone to work on the calculation
+        GregorianCalendar cal = (GregorianCalendar) clone();
+        cal.setLenient(true);
+        // Use GMT so that intermediate date calculations won't
+        // affect the time of day fields.
+        cal.setTimeZone(TimeZone.getTimeZone("GMT"));
+        // Go to the first day of the year, which is usually January 1.
+        cal.set(DAY_OF_YEAR, 1);
+        cal.complete();
+
+        // Get the first day of the first day-of-week in the year.
+        int delta = getFirstDayOfWeek() - cal.get(DAY_OF_WEEK);
+        if (delta != 0) {
+            if (delta < 0) {
+                delta += 7;
+            }
+            cal.add(DAY_OF_YEAR, delta);
+        }
+        int minDayOfYear = cal.get(DAY_OF_YEAR);
+        if (dayOfYear < minDayOfYear) {
+            if (minDayOfYear <= minimalDays) {
+                --year;
+            }
+        } else {
+            cal.set(YEAR, year + 1);
+            cal.set(DAY_OF_YEAR, 1);
+            cal.complete();
+            int del = getFirstDayOfWeek() - cal.get(DAY_OF_WEEK);
+            if (del != 0) {
+                if (del < 0) {
+                    del += 7;
+                }
+                cal.add(DAY_OF_YEAR, del);
+            }
+            minDayOfYear = cal.get(DAY_OF_YEAR) - 1;
+            if (minDayOfYear == 0) {
+                minDayOfYear = 7;
+            }
+            if (minDayOfYear >= minimalDays) {
+                int days = maxDayOfYear - dayOfYear + 1;
+                if (days <= (7 - minDayOfYear)) {
+                    ++year;
+                }
+            }
+        }
+        return year;
+    }
+
+    /**
+     * Sets this {@code GregorianCalendar} to the date given by the
+     * date specifiers - <a href="#week_year">{@code weekYear}</a>,
+     * {@code weekOfYear}, and {@code dayOfWeek}. {@code weekOfYear}
+     * follows the <a href="#week_and_year">{@code WEEK_OF_YEAR}
+     * numbering</a>.  The {@code dayOfWeek} value must be one of the
+     * {@link Calendar#DAY_OF_WEEK DAY_OF_WEEK} values: {@link
+     * Calendar#SUNDAY SUNDAY} to {@link Calendar#SATURDAY SATURDAY}.
+     *
+     * <p>Note that the numeric day-of-week representation differs from
+     * the ISO 8601 standard, and that the {@code weekOfYear}
+     * numbering is compatible with the standard when {@code
+     * getFirstDayOfWeek()} is {@code MONDAY} and {@code
+     * getMinimalDaysInFirstWeek()} is 4.
+     *
+     * <p>Unlike the {@code set} method, all of the calendar fields
+     * and the instant of time value are calculated upon return.
+     *
+     * <p>If {@code weekOfYear} is out of the valid week-of-year
+     * range in {@code weekYear}, the {@code weekYear}
+     * and {@code weekOfYear} values are adjusted in lenient
+     * mode, or an {@code IllegalArgumentException} is thrown in
+     * non-lenient mode.
+     *
+     * @param weekYear    the week year
+     * @param weekOfYear  the week number based on {@code weekYear}
+     * @param dayOfWeek   the day of week value: one of the constants
+     *                    for the {@link #DAY_OF_WEEK DAY_OF_WEEK} field:
+     *                    {@link Calendar#SUNDAY SUNDAY}, ...,
+     *                    {@link Calendar#SATURDAY SATURDAY}.
+     * @exception IllegalArgumentException
+     *            if any of the given date specifiers is invalid,
+     *            or if any of the calendar fields are inconsistent
+     *            with the given date specifiers in non-lenient mode
+     * @see GregorianCalendar#isWeekDateSupported()
+     * @see Calendar#getFirstDayOfWeek()
+     * @see Calendar#getMinimalDaysInFirstWeek()
+     * @since 1.7
+     */
+    @Override
+    public void setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
+        if (dayOfWeek < SUNDAY || dayOfWeek > SATURDAY) {
+            throw new IllegalArgumentException("invalid dayOfWeek: " + dayOfWeek);
+        }
+
+        // To avoid changing the time of day fields by date
+        // calculations, use a clone with the GMT time zone.
+        GregorianCalendar gc = (GregorianCalendar) clone();
+        gc.setLenient(true);
+        int era = gc.get(ERA);
+        gc.clear();
+        gc.setTimeZone(TimeZone.getTimeZone("GMT"));
+        gc.set(ERA, era);
+        gc.set(YEAR, weekYear);
+        gc.set(WEEK_OF_YEAR, 1);
+        gc.set(DAY_OF_WEEK, getFirstDayOfWeek());
+        int days = dayOfWeek - getFirstDayOfWeek();
+        if (days < 0) {
+            days += 7;
+        }
+        days += 7 * (weekOfYear - 1);
+        if (days != 0) {
+            gc.add(DAY_OF_YEAR, days);
+        } else {
+            gc.complete();
+        }
+
+        if (!isLenient() &&
+            (gc.getWeekYear() != weekYear
+             || gc.internalGet(WEEK_OF_YEAR) != weekOfYear
+             || gc.internalGet(DAY_OF_WEEK) != dayOfWeek)) {
+            throw new IllegalArgumentException();
+        }
+
+        set(ERA, gc.internalGet(ERA));
+        set(YEAR, gc.internalGet(YEAR));
+        set(MONTH, gc.internalGet(MONTH));
+        set(DAY_OF_MONTH, gc.internalGet(DAY_OF_MONTH));
+
+        // to avoid throwing an IllegalArgumentException in
+        // non-lenient, set WEEK_OF_YEAR internally
+        internalSet(WEEK_OF_YEAR, weekOfYear);
+        complete();
+    }
+
+    /**
+     * Returns the number of weeks in the <a href="#week_year">week year</a>
+     * represented by this {@code GregorianCalendar}.
+     *
+     * <p>For example, if this {@code GregorianCalendar}'s date is
+     * December 31, 2008 with <a href="#iso8601_compatible_setting">the ISO
+     * 8601 compatible setting</a>, this method will return 53 for the
+     * period: December 29, 2008 to January 3, 2010 while {@link
+     * #getActualMaximum(int) getActualMaximum(WEEK_OF_YEAR)} will return
+     * 52 for the period: December 31, 2007 to December 28, 2008.
+     *
+     * @return the number of weeks in the week year.
+     * @see Calendar#WEEK_OF_YEAR
+     * @see #getWeekYear()
+     * @see #getActualMaximum(int)
+     * @since 1.7
+     */
+    @Override
+    public int getWeeksInWeekYear() {
+        GregorianCalendar gc = getNormalizedCalendar();
+        int weekYear = gc.getWeekYear();
+        if (weekYear == gc.internalGet(YEAR)) {
+            return gc.getActualMaximum(WEEK_OF_YEAR);
+        }
+
+        // Use the 2nd week for calculating the max of WEEK_OF_YEAR
+        if (gc == this) {
+            gc = (GregorianCalendar) gc.clone();
+        }
+        gc.setWeekDate(weekYear, 2, internalGet(DAY_OF_WEEK));
+        return gc.getActualMaximum(WEEK_OF_YEAR);
+    }
+
+/////////////////////////////
+// Time => Fields computation
+/////////////////////////////
+
+    /**
+     * The fixed date corresponding to gdate. If the value is
+     * Long.MIN_VALUE, the fixed date value is unknown. Currently,
+     * Julian calendar dates are not cached.
+     */
+    transient private long cachedFixedDate = Long.MIN_VALUE;
+
+    /**
+     * Converts the time value (millisecond offset from the <a
+     * href="Calendar.html#Epoch">Epoch</a>) to calendar field values.
+     * The time is <em>not</em>
+     * recomputed first; to recompute the time, then the fields, call the
+     * <code>complete</code> method.
+     *
+     * @see Calendar#complete
+     */
+    @Override
+    protected void computeFields() {
+        int mask;
+        if (isPartiallyNormalized()) {
+            // Determine which calendar fields need to be computed.
+            mask = getSetStateFields();
+            int fieldMask = ~mask & ALL_FIELDS;
+            // We have to call computTime in case calsys == null in
+            // order to set calsys and cdate. (6263644)
+            if (fieldMask != 0 || calsys == null) {
+                mask |= computeFields(fieldMask,
+                                      mask & (ZONE_OFFSET_MASK|DST_OFFSET_MASK));
+                assert mask == ALL_FIELDS;
+            }
+        } else {
+            mask = ALL_FIELDS;
+            computeFields(mask, 0);
+        }
+        // After computing all the fields, set the field state to `COMPUTED'.
+        setFieldsComputed(mask);
+    }
+
+    /**
+     * This computeFields implements the conversion from UTC
+     * (millisecond offset from the Epoch) to calendar
+     * field values. fieldMask specifies which fields to change the
+     * setting state to COMPUTED, although all fields are set to
+     * the correct values. This is required to fix 4685354.
+     *
+     * @param fieldMask a bit mask to specify which fields to change
+     * the setting state.
+     * @param tzMask a bit mask to specify which time zone offset
+     * fields to be used for time calculations
+     * @return a new field mask that indicates what field values have
+     * actually been set.
+     */
+    private int computeFields(int fieldMask, int tzMask) {
+        int zoneOffset = 0;
+        TimeZone tz = getZone();
+        if (zoneOffsets == null) {
+            zoneOffsets = new int[2];
+        }
+        if (tzMask != (ZONE_OFFSET_MASK|DST_OFFSET_MASK)) {
+            if (tz instanceof ZoneInfo) {
+                zoneOffset = ((ZoneInfo)tz).getOffsets(time, zoneOffsets);
+            } else {
+                zoneOffset = tz.getOffset(time);
+                zoneOffsets[0] = tz.getRawOffset();
+                zoneOffsets[1] = zoneOffset - zoneOffsets[0];
+            }
+        }
+        if (tzMask != 0) {
+            if (isFieldSet(tzMask, ZONE_OFFSET)) {
+                zoneOffsets[0] = internalGet(ZONE_OFFSET);
+            }
+            if (isFieldSet(tzMask, DST_OFFSET)) {
+                zoneOffsets[1] = internalGet(DST_OFFSET);
+            }
+            zoneOffset = zoneOffsets[0] + zoneOffsets[1];
+        }
+
+        // By computing time and zoneOffset separately, we can take
+        // the wider range of time+zoneOffset than the previous
+        // implementation.
+        long fixedDate = zoneOffset / ONE_DAY;
+        int timeOfDay = zoneOffset % (int)ONE_DAY;
+        fixedDate += time / ONE_DAY;
+        timeOfDay += (int) (time % ONE_DAY);
+        if (timeOfDay >= ONE_DAY) {
+            timeOfDay -= ONE_DAY;
+            ++fixedDate;
+        } else {
+            while (timeOfDay < 0) {
+                timeOfDay += ONE_DAY;
+                --fixedDate;
+            }
+        }
+        fixedDate += EPOCH_OFFSET;
+
+        int era = CE;
+        int year;
+        if (fixedDate >= gregorianCutoverDate) {
+            // Handle Gregorian dates.
+            assert cachedFixedDate == Long.MIN_VALUE || gdate.isNormalized()
+                        : "cache control: not normalized";
+            assert cachedFixedDate == Long.MIN_VALUE ||
+                   gcal.getFixedDate(gdate.getNormalizedYear(),
+                                          gdate.getMonth(),
+                                          gdate.getDayOfMonth(), gdate)
+                                == cachedFixedDate
+                        : "cache control: inconsictency" +
+                          ", cachedFixedDate=" + cachedFixedDate +
+                          ", computed=" +
+                          gcal.getFixedDate(gdate.getNormalizedYear(),
+                                                 gdate.getMonth(),
+                                                 gdate.getDayOfMonth(),
+                                                 gdate) +
+                          ", date=" + gdate;
+
+            // See if we can use gdate to avoid date calculation.
+            if (fixedDate != cachedFixedDate) {
+                gcal.getCalendarDateFromFixedDate(gdate, fixedDate);
+                cachedFixedDate = fixedDate;
+            }
+
+            year = gdate.getYear();
+            if (year <= 0) {
+                year = 1 - year;
+                era = BCE;
+            }
+            calsys = gcal;
+            cdate = gdate;
+            assert cdate.getDayOfWeek() > 0 : "dow="+cdate.getDayOfWeek()+", date="+cdate;
+        } else {
+            // Handle Julian calendar dates.
+            calsys = getJulianCalendarSystem();
+            cdate = (BaseCalendar.Date) jcal.newCalendarDate(getZone());
+            jcal.getCalendarDateFromFixedDate(cdate, fixedDate);
+            Era e = cdate.getEra();
+            if (e == jeras[0]) {
+                era = BCE;
+            }
+            year = cdate.getYear();
+        }
+
+        // Always set the ERA and YEAR values.
+        internalSet(ERA, era);
+        internalSet(YEAR, year);
+        int mask = fieldMask | (ERA_MASK|YEAR_MASK);
+
+        int month =  cdate.getMonth() - 1; // 0-based
+        int dayOfMonth = cdate.getDayOfMonth();
+
+        // Set the basic date fields.
+        if ((fieldMask & (MONTH_MASK|DAY_OF_MONTH_MASK|DAY_OF_WEEK_MASK))
+            != 0) {
+            internalSet(MONTH, month);
+            internalSet(DAY_OF_MONTH, dayOfMonth);
+            internalSet(DAY_OF_WEEK, cdate.getDayOfWeek());
+            mask |= MONTH_MASK|DAY_OF_MONTH_MASK|DAY_OF_WEEK_MASK;
+        }
+
+        if ((fieldMask & (HOUR_OF_DAY_MASK|AM_PM_MASK|HOUR_MASK
+                          |MINUTE_MASK|SECOND_MASK|MILLISECOND_MASK)) != 0) {
+            if (timeOfDay != 0) {
+                int hours = timeOfDay / ONE_HOUR;
+                internalSet(HOUR_OF_DAY, hours);
+                internalSet(AM_PM, hours / 12); // Assume AM == 0
+                internalSet(HOUR, hours % 12);
+                int r = timeOfDay % ONE_HOUR;
+                internalSet(MINUTE, r / ONE_MINUTE);
+                r %= ONE_MINUTE;
+                internalSet(SECOND, r / ONE_SECOND);
+                internalSet(MILLISECOND, r % ONE_SECOND);
+            } else {
+                internalSet(HOUR_OF_DAY, 0);
+                internalSet(AM_PM, AM);
+                internalSet(HOUR, 0);
+                internalSet(MINUTE, 0);
+                internalSet(SECOND, 0);
+                internalSet(MILLISECOND, 0);
+            }
+            mask |= (HOUR_OF_DAY_MASK|AM_PM_MASK|HOUR_MASK
+                     |MINUTE_MASK|SECOND_MASK|MILLISECOND_MASK);
+        }
+
+        if ((fieldMask & (ZONE_OFFSET_MASK|DST_OFFSET_MASK)) != 0) {
+            internalSet(ZONE_OFFSET, zoneOffsets[0]);
+            internalSet(DST_OFFSET, zoneOffsets[1]);
+            mask |= (ZONE_OFFSET_MASK|DST_OFFSET_MASK);
+        }
+
+        if ((fieldMask & (DAY_OF_YEAR_MASK|WEEK_OF_YEAR_MASK|WEEK_OF_MONTH_MASK|DAY_OF_WEEK_IN_MONTH_MASK)) != 0) {
+            int normalizedYear = cdate.getNormalizedYear();
+            long fixedDateJan1 = calsys.getFixedDate(normalizedYear, 1, 1, cdate);
+            int dayOfYear = (int)(fixedDate - fixedDateJan1) + 1;
+            long fixedDateMonth1 = fixedDate - dayOfMonth + 1;
+            int cutoverGap = 0;
+            int cutoverYear = (calsys == gcal) ? gregorianCutoverYear : gregorianCutoverYearJulian;
+            int relativeDayOfMonth = dayOfMonth - 1;
+
+            // If we are in the cutover year, we need some special handling.
+            if (normalizedYear == cutoverYear) {
+                // Need to take care of the "missing" days.
+                if (gregorianCutoverYearJulian <= gregorianCutoverYear) {
+                    // We need to find out where we are. The cutover
+                    // gap could even be more than one year.  (One
+                    // year difference in ~48667 years.)
+                    fixedDateJan1 = getFixedDateJan1(cdate, fixedDate);
+                    if (fixedDate >= gregorianCutoverDate) {
+                        fixedDateMonth1 = getFixedDateMonth1(cdate, fixedDate);
+                    }
+                }
+                int realDayOfYear = (int)(fixedDate - fixedDateJan1) + 1;
+                cutoverGap = dayOfYear - realDayOfYear;
+                dayOfYear = realDayOfYear;
+                relativeDayOfMonth = (int)(fixedDate - fixedDateMonth1);
+            }
+            internalSet(DAY_OF_YEAR, dayOfYear);
+            internalSet(DAY_OF_WEEK_IN_MONTH, relativeDayOfMonth / 7 + 1);
+
+            int weekOfYear = getWeekNumber(fixedDateJan1, fixedDate);
+
+            // The spec is to calculate WEEK_OF_YEAR in the
+            // ISO8601-style. This creates problems, though.
+            if (weekOfYear == 0) {
+                // If the date belongs to the last week of the
+                // previous year, use the week number of "12/31" of
+                // the "previous" year. Again, if the previous year is
+                // the Gregorian cutover year, we need to take care of
+                // it.  Usually the previous day of January 1 is
+                // December 31, which is not always true in
+                // GregorianCalendar.
+                long fixedDec31 = fixedDateJan1 - 1;
+                long prevJan1  = fixedDateJan1 - 365;
+                if (normalizedYear > (cutoverYear + 1)) {
+                    if (CalendarUtils.isGregorianLeapYear(normalizedYear - 1)) {
+                        --prevJan1;
+                    }
+                } else if (normalizedYear <= gregorianCutoverYearJulian) {
+                    if (CalendarUtils.isJulianLeapYear(normalizedYear - 1)) {
+                        --prevJan1;
+                    }
+                } else {
+                    BaseCalendar calForJan1 = calsys;
+                    //int prevYear = normalizedYear - 1;
+                    int prevYear = getCalendarDate(fixedDec31).getNormalizedYear();
+                    if (prevYear == gregorianCutoverYear) {
+                        calForJan1 = getCutoverCalendarSystem();
+                        if (calForJan1 == jcal) {
+                            prevJan1 = calForJan1.getFixedDate(prevYear,
+                                                               BaseCalendar.JANUARY,
+                                                               1,
+                                                               null);
+                        } else {
+                            prevJan1 = gregorianCutoverDate;
+                            calForJan1 = gcal;
+                        }
+                    } else if (prevYear <= gregorianCutoverYearJulian) {
+                        calForJan1 = getJulianCalendarSystem();
+                        prevJan1 = calForJan1.getFixedDate(prevYear,
+                                                           BaseCalendar.JANUARY,
+                                                           1,
+                                                           null);
+                    }
+                }
+                weekOfYear = getWeekNumber(prevJan1, fixedDec31);
+            } else {
+                if (normalizedYear > gregorianCutoverYear ||
+                    normalizedYear < (gregorianCutoverYearJulian - 1)) {
+                    // Regular years
+                    if (weekOfYear >= 52) {
+                        long nextJan1 = fixedDateJan1 + 365;
+                        if (cdate.isLeapYear()) {
+                            nextJan1++;
+                        }
+                        long nextJan1st = BaseCalendar.getDayOfWeekDateOnOrBefore(nextJan1 + 6,
+                                                                                  getFirstDayOfWeek());
+                        int ndays = (int)(nextJan1st - nextJan1);
+                        if (ndays >= getMinimalDaysInFirstWeek() && fixedDate >= (nextJan1st - 7)) {
+                            // The first days forms a week in which the date is included.
+                            weekOfYear = 1;
+                        }
+                    }
+                } else {
+                    BaseCalendar calForJan1 = calsys;
+                    int nextYear = normalizedYear + 1;
+                    if (nextYear == (gregorianCutoverYearJulian + 1) &&
+                        nextYear < gregorianCutoverYear) {
+                        // In case the gap is more than one year.
+                        nextYear = gregorianCutoverYear;
+                    }
+                    if (nextYear == gregorianCutoverYear) {
+                        calForJan1 = getCutoverCalendarSystem();
+                    }
+
+                    long nextJan1;
+                    if (nextYear > gregorianCutoverYear
+                        || gregorianCutoverYearJulian == gregorianCutoverYear
+                        || nextYear == gregorianCutoverYearJulian) {
+                        nextJan1 = calForJan1.getFixedDate(nextYear,
+                                                           BaseCalendar.JANUARY,
+                                                           1,
+                                                           null);
+                    } else {
+                        nextJan1 = gregorianCutoverDate;
+                        calForJan1 = gcal;
+                    }
+
+                    long nextJan1st = BaseCalendar.getDayOfWeekDateOnOrBefore(nextJan1 + 6,
+                                                                              getFirstDayOfWeek());
+                    int ndays = (int)(nextJan1st - nextJan1);
+                    if (ndays >= getMinimalDaysInFirstWeek() && fixedDate >= (nextJan1st - 7)) {
+                        // The first days forms a week in which the date is included.
+                        weekOfYear = 1;
+                    }
+                }
+            }
+            internalSet(WEEK_OF_YEAR, weekOfYear);
+            internalSet(WEEK_OF_MONTH, getWeekNumber(fixedDateMonth1, fixedDate));
+            mask |= (DAY_OF_YEAR_MASK|WEEK_OF_YEAR_MASK|WEEK_OF_MONTH_MASK|DAY_OF_WEEK_IN_MONTH_MASK);
+        }
+        return mask;
+    }
+
+    /**
+     * Returns the number of weeks in a period between fixedDay1 and
+     * fixedDate. The getFirstDayOfWeek-getMinimalDaysInFirstWeek rule
+     * is applied to calculate the number of weeks.
+     *
+     * @param fixedDay1 the fixed date of the first day of the period
+     * @param fixedDate the fixed date of the last day of the period
+     * @return the number of weeks of the given period
+     */
+    private int getWeekNumber(long fixedDay1, long fixedDate) {
+        // We can always use `gcal' since Julian and Gregorian are the
+        // same thing for this calculation.
+        long fixedDay1st = Gregorian.getDayOfWeekDateOnOrBefore(fixedDay1 + 6,
+                                                                getFirstDayOfWeek());
+        int ndays = (int)(fixedDay1st - fixedDay1);
+        assert ndays <= 7;
+        if (ndays >= getMinimalDaysInFirstWeek()) {
+            fixedDay1st -= 7;
+        }
+        int normalizedDayOfPeriod = (int)(fixedDate - fixedDay1st);
+        if (normalizedDayOfPeriod >= 0) {
+            return normalizedDayOfPeriod / 7 + 1;
+        }
+        return CalendarUtils.floorDivide(normalizedDayOfPeriod, 7) + 1;
+    }
+
+    /**
+     * Converts calendar field values to the time value (millisecond
+     * offset from the <a href="Calendar.html#Epoch">Epoch</a>).
+     *
+     * @exception IllegalArgumentException if any calendar fields are invalid.
+     */
+    @Override
+    protected void computeTime() {
+        // In non-lenient mode, perform brief checking of calendar
+        // fields which have been set externally. Through this
+        // checking, the field values are stored in originalFields[]
+        // to see if any of them are normalized later.
+        if (!isLenient()) {
+            if (originalFields == null) {
+                originalFields = new int[FIELD_COUNT];
+            }
+            for (int field = 0; field < FIELD_COUNT; field++) {
+                int value = internalGet(field);
+                if (isExternallySet(field)) {
+                    // Quick validation for any out of range values
+                    if (value < getMinimum(field) || value > getMaximum(field)) {
+                        throw new IllegalArgumentException(getFieldName(field));
+                    }
+                }
+                originalFields[field] = value;
+            }
+        }
+
+        // Let the super class determine which calendar fields to be
+        // used to calculate the time.
+        int fieldMask = selectFields();
+
+        // The year defaults to the epoch start. We don't check
+        // fieldMask for YEAR because YEAR is a mandatory field to
+        // determine the date.
+        int year = isSet(YEAR) ? internalGet(YEAR) : EPOCH_YEAR;
+
+        int era = internalGetEra();
+        if (era == BCE) {
+            year = 1 - year;
+        } else if (era != CE) {
+            // Even in lenient mode we disallow ERA values other than CE & BCE.
+            // (The same normalization rule as add()/roll() could be
+            // applied here in lenient mode. But this checking is kept
+            // unchanged for compatibility as of 1.5.)
+            throw new IllegalArgumentException("Invalid era");
+        }
+
+        // If year is 0 or negative, we need to set the ERA value later.
+        if (year <= 0 && !isSet(ERA)) {
+            fieldMask |= ERA_MASK;
+            setFieldsComputed(ERA_MASK);
+        }
+
+        // Calculate the time of day. We rely on the convention that
+        // an UNSET field has 0.
+        long timeOfDay = 0;
+        if (isFieldSet(fieldMask, HOUR_OF_DAY)) {
+            timeOfDay += (long) internalGet(HOUR_OF_DAY);
+        } else {
+            timeOfDay += internalGet(HOUR);
+            // The default value of AM_PM is 0 which designates AM.
+            if (isFieldSet(fieldMask, AM_PM)) {
+                timeOfDay += 12 * internalGet(AM_PM);
+            }
+        }
+        timeOfDay *= 60;
+        timeOfDay += internalGet(MINUTE);
+        timeOfDay *= 60;
+        timeOfDay += internalGet(SECOND);
+        timeOfDay *= 1000;
+        timeOfDay += internalGet(MILLISECOND);
+
+        // Convert the time of day to the number of days and the
+        // millisecond offset from midnight.
+        long fixedDate = timeOfDay / ONE_DAY;
+        timeOfDay %= ONE_DAY;
+        while (timeOfDay < 0) {
+            timeOfDay += ONE_DAY;
+            --fixedDate;
+        }
+
+        // Calculate the fixed date since January 1, 1 (Gregorian).
+        calculateFixedDate: {
+            long gfd, jfd;
+            if (year > gregorianCutoverYear && year > gregorianCutoverYearJulian) {
+                gfd = fixedDate + getFixedDate(gcal, year, fieldMask);
+                if (gfd >= gregorianCutoverDate) {
+                    fixedDate = gfd;
+                    break calculateFixedDate;
+                }
+                jfd = fixedDate + getFixedDate(getJulianCalendarSystem(), year, fieldMask);
+            } else if (year < gregorianCutoverYear && year < gregorianCutoverYearJulian) {
+                jfd = fixedDate + getFixedDate(getJulianCalendarSystem(), year, fieldMask);
+                if (jfd < gregorianCutoverDate) {
+                    fixedDate = jfd;
+                    break calculateFixedDate;
+                }
+                gfd = jfd;
+            } else {
+                jfd = fixedDate + getFixedDate(getJulianCalendarSystem(), year, fieldMask);
+                gfd = fixedDate + getFixedDate(gcal, year, fieldMask);
+            }
+
+            // Now we have to determine which calendar date it is.
+
+            // If the date is relative from the beginning of the year
+            // in the Julian calendar, then use jfd;
+            if (isFieldSet(fieldMask, DAY_OF_YEAR) || isFieldSet(fieldMask, WEEK_OF_YEAR)) {
+                if (gregorianCutoverYear == gregorianCutoverYearJulian) {
+                    fixedDate = jfd;
+                    break calculateFixedDate;
+                } else if (year == gregorianCutoverYear) {
+                    fixedDate = gfd;
+                    break calculateFixedDate;
+                }
+            }
+
+            if (gfd >= gregorianCutoverDate) {
+                if (jfd >= gregorianCutoverDate) {
+                    fixedDate = gfd;
+                } else {
+                    // The date is in an "overlapping" period. No way
+                    // to disambiguate it. Determine it using the
+                    // previous date calculation.
+                    if (calsys == gcal || calsys == null) {
+                        fixedDate = gfd;
+                    } else {
+                        fixedDate = jfd;
+                    }
+                }
+            } else {
+                if (jfd < gregorianCutoverDate) {
+                    fixedDate = jfd;
+                } else {
+                    // The date is in a "missing" period.
+                    if (!isLenient()) {
+                        throw new IllegalArgumentException("the specified date doesn't exist");
+                    }
+                    // Take the Julian date for compatibility, which
+                    // will produce a Gregorian date.
+                    fixedDate = jfd;
+                }
+            }
+        }
+
+        // millis represents local wall-clock time in milliseconds.
+        long millis = (fixedDate - EPOCH_OFFSET) * ONE_DAY + timeOfDay;
+
+        // Compute the time zone offset and DST offset.  There are two potential
+        // ambiguities here.  We'll assume a 2:00 am (wall time) switchover time
+        // for discussion purposes here.
+        // 1. The transition into DST.  Here, a designated time of 2:00 am - 2:59 am
+        //    can be in standard or in DST depending.  However, 2:00 am is an invalid
+        //    representation (the representation jumps from 1:59:59 am Std to 3:00:00 am DST).
+        //    We assume standard time.
+        // 2. The transition out of DST.  Here, a designated time of 1:00 am - 1:59 am
+        //    can be in standard or DST.  Both are valid representations (the rep
+        //    jumps from 1:59:59 DST to 1:00:00 Std).
+        //    Again, we assume standard time.
+        // We use the TimeZone object, unless the user has explicitly set the ZONE_OFFSET
+        // or DST_OFFSET fields; then we use those fields.
+        TimeZone zone = getZone();
+        if (zoneOffsets == null) {
+            zoneOffsets = new int[2];
+        }
+        int tzMask = fieldMask & (ZONE_OFFSET_MASK|DST_OFFSET_MASK);
+        if (tzMask != (ZONE_OFFSET_MASK|DST_OFFSET_MASK)) {
+            if (zone instanceof ZoneInfo) {
+                ((ZoneInfo)zone).getOffsetsByWall(millis, zoneOffsets);
+            } else {
+                int gmtOffset = isFieldSet(fieldMask, ZONE_OFFSET) ?
+                                    internalGet(ZONE_OFFSET) : zone.getRawOffset();
+                zone.getOffsets(millis - gmtOffset, zoneOffsets);
+            }
+        }
+        if (tzMask != 0) {
+            if (isFieldSet(tzMask, ZONE_OFFSET)) {
+                zoneOffsets[0] = internalGet(ZONE_OFFSET);
+            }
+            if (isFieldSet(tzMask, DST_OFFSET)) {
+                zoneOffsets[1] = internalGet(DST_OFFSET);
+            }
+        }
+
+        // Adjust the time zone offset values to get the UTC time.
+        millis -= zoneOffsets[0] + zoneOffsets[1];
+
+        // Set this calendar's time in milliseconds
+        time = millis;
+
+        int mask = computeFields(fieldMask | getSetStateFields(), tzMask);
+
+        if (!isLenient()) {
+            for (int field = 0; field < FIELD_COUNT; field++) {
+                if (!isExternallySet(field)) {
+                    continue;
+                }
+                if (originalFields[field] != internalGet(field)) {
+                    String s = originalFields[field] + " -> " + internalGet(field);
+                    // Restore the original field values
+                    System.arraycopy(originalFields, 0, fields, 0, fields.length);
+                    throw new IllegalArgumentException(getFieldName(field) + ": " + s);
+                }
+            }
+        }
+        setFieldsNormalized(mask);
+    }
+
+    /**
+     * Computes the fixed date under either the Gregorian or the
+     * Julian calendar, using the given year and the specified calendar fields.
+     *
+     * @param cal the CalendarSystem to be used for the date calculation
+     * @param year the normalized year number, with 0 indicating the
+     * year 1 BCE, -1 indicating 2 BCE, etc.
+     * @param fieldMask the calendar fields to be used for the date calculation
+     * @return the fixed date
+     * @see Calendar#selectFields
+     */
+    private long getFixedDate(BaseCalendar cal, int year, int fieldMask) {
+        int month = JANUARY;
+        if (isFieldSet(fieldMask, MONTH)) {
+            // No need to check if MONTH has been set (no isSet(MONTH)
+            // call) since its unset value happens to be JANUARY (0).
+            month = internalGet(MONTH);
+
+            // If the month is out of range, adjust it into range
+            if (month > DECEMBER) {
+                year += month / 12;
+                month %= 12;
+            } else if (month < JANUARY) {
+                int[] rem = new int[1];
+                year += CalendarUtils.floorDivide(month, 12, rem);
+                month = rem[0];
+            }
+        }
+
+        // Get the fixed date since Jan 1, 1 (Gregorian). We are on
+        // the first day of either `month' or January in 'year'.
+        long fixedDate = cal.getFixedDate(year, month + 1, 1,
+                                          cal == gcal ? gdate : null);
+        if (isFieldSet(fieldMask, MONTH)) {
+            // Month-based calculations
+            if (isFieldSet(fieldMask, DAY_OF_MONTH)) {
+                // We are on the first day of the month. Just add the
+                // offset if DAY_OF_MONTH is set. If the isSet call
+                // returns false, that means DAY_OF_MONTH has been
+                // selected just because of the selected
+                // combination. We don't need to add any since the
+                // default value is the 1st.
+                if (isSet(DAY_OF_MONTH)) {
+                    // To avoid underflow with DAY_OF_MONTH-1, add
+                    // DAY_OF_MONTH, then subtract 1.
+                    fixedDate += internalGet(DAY_OF_MONTH);
+                    fixedDate--;
+                }
+            } else {
+                if (isFieldSet(fieldMask, WEEK_OF_MONTH)) {
+                    long firstDayOfWeek = BaseCalendar.getDayOfWeekDateOnOrBefore(fixedDate + 6,
+                                                                                  getFirstDayOfWeek());
+                    // If we have enough days in the first week, then
+                    // move to the previous week.
+                    if ((firstDayOfWeek - fixedDate) >= getMinimalDaysInFirstWeek()) {
+                        firstDayOfWeek -= 7;
+                    }
+                    if (isFieldSet(fieldMask, DAY_OF_WEEK)) {
+                        firstDayOfWeek = BaseCalendar.getDayOfWeekDateOnOrBefore(firstDayOfWeek + 6,
+                                                                                 internalGet(DAY_OF_WEEK));
+                    }
+                    // In lenient mode, we treat days of the previous
+                    // months as a part of the specified
+                    // WEEK_OF_MONTH. See 4633646.
+                    fixedDate = firstDayOfWeek + 7 * (internalGet(WEEK_OF_MONTH) - 1);
+                } else {
+                    int dayOfWeek;
+                    if (isFieldSet(fieldMask, DAY_OF_WEEK)) {
+                        dayOfWeek = internalGet(DAY_OF_WEEK);
+                    } else {
+                        dayOfWeek = getFirstDayOfWeek();
+                    }
+                    // We are basing this on the day-of-week-in-month.  The only
+                    // trickiness occurs if the day-of-week-in-month is
+                    // negative.
+                    int dowim;
+                    if (isFieldSet(fieldMask, DAY_OF_WEEK_IN_MONTH)) {
+                        dowim = internalGet(DAY_OF_WEEK_IN_MONTH);
+                    } else {
+                        dowim = 1;
+                    }
+                    if (dowim >= 0) {
+                        fixedDate = BaseCalendar.getDayOfWeekDateOnOrBefore(fixedDate + (7 * dowim) - 1,
+                                                                            dayOfWeek);
+                    } else {
+                        // Go to the first day of the next week of
+                        // the specified week boundary.
+                        int lastDate = monthLength(month, year) + (7 * (dowim + 1));
+                        // Then, get the day of week date on or before the last date.
+                        fixedDate = BaseCalendar.getDayOfWeekDateOnOrBefore(fixedDate + lastDate - 1,
+                                                                            dayOfWeek);
+                    }
+                }
+            }
+        } else {
+            if (year == gregorianCutoverYear && cal == gcal
+                && fixedDate < gregorianCutoverDate
+                && gregorianCutoverYear != gregorianCutoverYearJulian) {
+                // January 1 of the year doesn't exist.  Use
+                // gregorianCutoverDate as the first day of the
+                // year.
+                fixedDate = gregorianCutoverDate;
+            }
+            // We are on the first day of the year.
+            if (isFieldSet(fieldMask, DAY_OF_YEAR)) {
+                // Add the offset, then subtract 1. (Make sure to avoid underflow.)
+                fixedDate += internalGet(DAY_OF_YEAR);
+                fixedDate--;
+            } else {
+                long firstDayOfWeek = BaseCalendar.getDayOfWeekDateOnOrBefore(fixedDate + 6,
+                                                                              getFirstDayOfWeek());
+                // If we have enough days in the first week, then move
+                // to the previous week.
+                if ((firstDayOfWeek - fixedDate) >= getMinimalDaysInFirstWeek()) {
+                    firstDayOfWeek -= 7;
+                }
+                if (isFieldSet(fieldMask, DAY_OF_WEEK)) {
+                    int dayOfWeek = internalGet(DAY_OF_WEEK);
+                    if (dayOfWeek != getFirstDayOfWeek()) {
+                        firstDayOfWeek = BaseCalendar.getDayOfWeekDateOnOrBefore(firstDayOfWeek + 6,
+                                                                                 dayOfWeek);
+                    }
+                }
+                fixedDate = firstDayOfWeek + 7 * ((long)internalGet(WEEK_OF_YEAR) - 1);
+            }
+        }
+
+        return fixedDate;
+    }
+
+    /**
+     * Returns this object if it's normalized (all fields and time are
+     * in sync). Otherwise, a cloned object is returned after calling
+     * complete() in lenient mode.
+     */
+    private GregorianCalendar getNormalizedCalendar() {
+        GregorianCalendar gc;
+        if (isFullyNormalized()) {
+            gc = this;
+        } else {
+            // Create a clone and normalize the calendar fields
+            gc = (GregorianCalendar) this.clone();
+            gc.setLenient(true);
+            gc.complete();
+        }
+        return gc;
+    }
+
+    /**
+     * Returns the Julian calendar system instance (singleton). 'jcal'
+     * and 'jeras' are set upon the return.
+     */
+    private static synchronized BaseCalendar getJulianCalendarSystem() {
+        if (jcal == null) {
+            jcal = (JulianCalendar) CalendarSystem.forName("julian");
+            jeras = jcal.getEras();
+        }
+        return jcal;
+    }
+
+    /**
+     * Returns the calendar system for dates before the cutover date
+     * in the cutover year. If the cutover date is January 1, the
+     * method returns Gregorian. Otherwise, Julian.
+     */
+    private BaseCalendar getCutoverCalendarSystem() {
+        if (gregorianCutoverYearJulian < gregorianCutoverYear) {
+            return gcal;
+        }
+        return getJulianCalendarSystem();
+    }
+
+    /**
+     * Determines if the specified year (normalized) is the Gregorian
+     * cutover year. This object must have been normalized.
+     */
+    private boolean isCutoverYear(int normalizedYear) {
+        int cutoverYear = (calsys == gcal) ? gregorianCutoverYear : gregorianCutoverYearJulian;
+        return normalizedYear == cutoverYear;
+    }
+
+    /**
+     * Returns the fixed date of the first day of the year (usually
+     * January 1) before the specified date.
+     *
+     * @param date the date for which the first day of the year is
+     * calculated. The date has to be in the cut-over year (Gregorian
+     * or Julian).
+     * @param fixedDate the fixed date representation of the date
+     */
+    private long getFixedDateJan1(BaseCalendar.Date date, long fixedDate) {
+        assert date.getNormalizedYear() == gregorianCutoverYear ||
+            date.getNormalizedYear() == gregorianCutoverYearJulian;
+        if (gregorianCutoverYear != gregorianCutoverYearJulian) {
+            if (fixedDate >= gregorianCutoverDate) {
+                // Dates before the cutover date don't exist
+                // in the same (Gregorian) year. So, no
+                // January 1 exists in the year. Use the
+                // cutover date as the first day of the year.
+                return gregorianCutoverDate;
+            }
+        }
+        // January 1 of the normalized year should exist.
+        BaseCalendar juliancal = getJulianCalendarSystem();
+        return juliancal.getFixedDate(date.getNormalizedYear(), BaseCalendar.JANUARY, 1, null);
+    }
+
+    /**
+     * Returns the fixed date of the first date of the month (usually
+     * the 1st of the month) before the specified date.
+     *
+     * @param date the date for which the first day of the month is
+     * calculated. The date has to be in the cut-over year (Gregorian
+     * or Julian).
+     * @param fixedDate the fixed date representation of the date
+     */
+    private long getFixedDateMonth1(BaseCalendar.Date date, long fixedDate) {
+        assert date.getNormalizedYear() == gregorianCutoverYear ||
+            date.getNormalizedYear() == gregorianCutoverYearJulian;
+        BaseCalendar.Date gCutover = getGregorianCutoverDate();
+        if (gCutover.getMonth() == BaseCalendar.JANUARY
+            && gCutover.getDayOfMonth() == 1) {
+            // The cutover happened on January 1.
+            return fixedDate - date.getDayOfMonth() + 1;
+        }
+
+        long fixedDateMonth1;
+        // The cutover happened sometime during the year.
+        if (date.getMonth() == gCutover.getMonth()) {
+            // The cutover happened in the month.
+            BaseCalendar.Date jLastDate = getLastJulianDate();
+            if (gregorianCutoverYear == gregorianCutoverYearJulian
+                && gCutover.getMonth() == jLastDate.getMonth()) {
+                // The "gap" fits in the same month.
+                fixedDateMonth1 = jcal.getFixedDate(date.getNormalizedYear(),
+                                                    date.getMonth(),
+                                                    1,
+                                                    null);
+            } else {
+                // Use the cutover date as the first day of the month.
+                fixedDateMonth1 = gregorianCutoverDate;
+            }
+        } else {
+            // The cutover happened before the month.
+            fixedDateMonth1 = fixedDate - date.getDayOfMonth() + 1;
+        }
+
+        return fixedDateMonth1;
+    }
+
+    /**
+     * Returns a CalendarDate produced from the specified fixed date.
+     *
+     * @param fd the fixed date
+     */
+    private BaseCalendar.Date getCalendarDate(long fd) {
+        BaseCalendar cal = (fd >= gregorianCutoverDate) ? gcal : getJulianCalendarSystem();
+        BaseCalendar.Date d = (BaseCalendar.Date) cal.newCalendarDate(TimeZone.NO_TIMEZONE);
+        cal.getCalendarDateFromFixedDate(d, fd);
+        return d;
+    }
+
+    /**
+     * Returns the Gregorian cutover date as a BaseCalendar.Date. The
+     * date is a Gregorian date.
+     */
+    private BaseCalendar.Date getGregorianCutoverDate() {
+        return getCalendarDate(gregorianCutoverDate);
+    }
+
+    /**
+     * Returns the day before the Gregorian cutover date as a
+     * BaseCalendar.Date. The date is a Julian date.
+     */
+    private BaseCalendar.Date getLastJulianDate() {
+        return getCalendarDate(gregorianCutoverDate - 1);
+    }
+
+    /**
+     * Returns the length of the specified month in the specified
+     * year. The year number must be normalized.
+     *
+     * @see #isLeapYear(int)
+     */
+    private int monthLength(int month, int year) {
+        return isLeapYear(year) ? LEAP_MONTH_LENGTH[month] : MONTH_LENGTH[month];
+    }
+
+    /**
+     * Returns the length of the specified month in the year provided
+     * by internalGet(YEAR).
+     *
+     * @see #isLeapYear(int)
+     */
+    private int monthLength(int month) {
+        int year = internalGet(YEAR);
+        if (internalGetEra() == BCE) {
+            year = 1 - year;
+        }
+        return monthLength(month, year);
+    }
+
+    private int actualMonthLength() {
+        int year = cdate.getNormalizedYear();
+        if (year != gregorianCutoverYear && year != gregorianCutoverYearJulian) {
+            return calsys.getMonthLength(cdate);
+        }
+        BaseCalendar.Date date = (BaseCalendar.Date) cdate.clone();
+        long fd = calsys.getFixedDate(date);
+        long month1 = getFixedDateMonth1(date, fd);
+        long next1 = month1 + calsys.getMonthLength(date);
+        if (next1 < gregorianCutoverDate) {
+            return (int)(next1 - month1);
+        }
+        if (cdate != gdate) {
+            date = (BaseCalendar.Date) gcal.newCalendarDate(TimeZone.NO_TIMEZONE);
+        }
+        gcal.getCalendarDateFromFixedDate(date, next1);
+        next1 = getFixedDateMonth1(date, next1);
+        return (int)(next1 - month1);
+    }
+
+    /**
+     * Returns the length (in days) of the specified year. The year
+     * must be normalized.
+     */
+    private int yearLength(int year) {
+        return isLeapYear(year) ? 366 : 365;
+    }
+
+    /**
+     * Returns the length (in days) of the year provided by
+     * internalGet(YEAR).
+     */
+    private int yearLength() {
+        int year = internalGet(YEAR);
+        if (internalGetEra() == BCE) {
+            year = 1 - year;
+        }
+        return yearLength(year);
+    }
+
+    /**
+     * After adjustments such as add(MONTH), add(YEAR), we don't want the
+     * month to jump around.  E.g., we don't want Jan 31 + 1 month to go to Mar
+     * 3, we want it to go to Feb 28.  Adjustments which might run into this
+     * problem call this method to retain the proper month.
+     */
+    private void pinDayOfMonth() {
+        int year = internalGet(YEAR);
+        int monthLen;
+        if (year > gregorianCutoverYear || year < gregorianCutoverYearJulian) {
+            monthLen = monthLength(internalGet(MONTH));
+        } else {
+            GregorianCalendar gc = getNormalizedCalendar();
+            monthLen = gc.getActualMaximum(DAY_OF_MONTH);
+        }
+        int dom = internalGet(DAY_OF_MONTH);
+        if (dom > monthLen) {
+            set(DAY_OF_MONTH, monthLen);
+        }
+    }
+
+    /**
+     * Returns the fixed date value of this object. The time value and
+     * calendar fields must be in synch.
+     */
+    private long getCurrentFixedDate() {
+        return (calsys == gcal) ? cachedFixedDate : calsys.getFixedDate(cdate);
+    }
+
+    /**
+     * Returns the new value after 'roll'ing the specified value and amount.
+     */
+    private static int getRolledValue(int value, int amount, int min, int max) {
+        assert value >= min && value <= max;
+        int range = max - min + 1;
+        amount %= range;
+        int n = value + amount;
+        if (n > max) {
+            n -= range;
+        } else if (n < min) {
+            n += range;
+        }
+        assert n >= min && n <= max;
+        return n;
+    }
+
+    /**
+     * Returns the ERA.  We need a special method for this because the
+     * default ERA is CE, but a zero (unset) ERA is BCE.
+     */
+    private int internalGetEra() {
+        return isSet(ERA) ? internalGet(ERA) : CE;
+    }
+
+    /**
+     * Updates internal state.
+     */
+    private void readObject(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        if (gdate == null) {
+            gdate = (BaseCalendar.Date) gcal.newCalendarDate(getZone());
+            cachedFixedDate = Long.MIN_VALUE;
+        }
+        setGregorianChange(gregorianCutover);
+    }
+
+    /**
+     * Converts this object to a {@code ZonedDateTime} that represents
+     * the same point on the time-line as this {@code GregorianCalendar}.
+     * <p>
+     * Since this object supports a Julian-Gregorian cutover date and
+     * {@code ZonedDateTime} does not, it is possible that the resulting year,
+     * month and day will have different values.  The result will represent the
+     * correct date in the ISO calendar system, which will also be the same value
+     * for Modified Julian Days.
+     *
+     * @return a zoned date-time representing the same point on the time-line
+     *  as this gregorian calendar
+     * @since 1.8
+     */
+    public ZonedDateTime toZonedDateTime() {
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(getTimeInMillis()),
+                                       getTimeZone().toZoneId());
+    }
+
+    /**
+     * Obtains an instance of {@code GregorianCalendar} with the default locale
+     * from a {@code ZonedDateTime} object.
+     * <p>
+     * Since {@code ZonedDateTime} does not support a Julian-Gregorian cutover
+     * date and uses ISO calendar system, the return GregorianCalendar is a pure
+     * Gregorian calendar and uses ISO 8601 standard for week definitions,
+     * which has {@code MONDAY} as the {@link Calendar#getFirstDayOfWeek()
+     * FirstDayOfWeek} and {@code 4} as the value of the
+     * {@link Calendar#getMinimalDaysInFirstWeek() MinimalDaysInFirstWeek}.
+     * <p>
+     * {@code ZoneDateTime} can store points on the time-line further in the
+     * future and further in the past than {@code GregorianCalendar}. In this
+     * scenario, this method will throw an {@code IllegalArgumentException}
+     * exception.
+     *
+     * @param zdt  the zoned date-time object to convert
+     * @return  the gregorian calendar representing the same point on the
+     *  time-line as the zoned date-time provided
+     * @exception NullPointerException if {@code zdt} is null
+     * @exception IllegalArgumentException if the zoned date-time is too
+     * large to represent as a {@code GregorianCalendar}
+     * @since 1.8
+     */
+    public static GregorianCalendar from(ZonedDateTime zdt) {
+        GregorianCalendar cal = new GregorianCalendar(TimeZone.getTimeZone(zdt.getZone()));
+        cal.setGregorianChange(new Date(Long.MIN_VALUE));
+        cal.setFirstDayOfWeek(MONDAY);
+        cal.setMinimalDaysInFirstWeek(4);
+        try {
+            cal.setTimeInMillis(Math.addExact(Math.multiplyExact(zdt.toEpochSecond(), 1000),
+                                              zdt.get(ChronoField.MILLI_OF_SECOND)));
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+        return cal;
+    }
+}

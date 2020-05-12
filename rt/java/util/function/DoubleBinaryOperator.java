@@ -1,12 +1,49 @@
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package java.util.function;
 
+/**
+ * Represents an operation upon two {@code double}-valued operands and producing a
+ * {@code double}-valued result.   This is the primitive type specialization of
+ * {@link BinaryOperator} for {@code double}.
+ *
+ * <p>This is a <a href="package-summary.html">functional interface</a>
+ * whose functional method is {@link #applyAsDouble(double, double)}.
+ *
+ * @see BinaryOperator
+ * @see DoubleUnaryOperator
+ * @since 1.8
+ */
 @FunctionalInterface
 public interface DoubleBinaryOperator {
-  double applyAsDouble(double paramDouble1, double paramDouble2);
+    /**
+     * Applies this operator to the given operands.
+     *
+     * @param left the first operand
+     * @param right the second operand
+     * @return the operator result
+     */
+    double applyAsDouble(double left, double right);
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\function\DoubleBinaryOperator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

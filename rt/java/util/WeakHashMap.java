@@ -1,1344 +1,1339 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.lang.ref.Reference;
-/*      */ import java.lang.ref.ReferenceQueue;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.util.function.BiConsumer;
-/*      */ import java.util.function.BiFunction;
-/*      */ import java.util.function.Consumer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class WeakHashMap<K, V>
-/*      */   extends AbstractMap<K, V>
-/*      */   implements Map<K, V>
-/*      */ {
-/*      */   private static final int DEFAULT_INITIAL_CAPACITY = 16;
-/*      */   private static final int MAXIMUM_CAPACITY = 1073741824;
-/*      */   private static final float DEFAULT_LOAD_FACTOR = 0.75F;
-/*      */   Entry<K, V>[] table;
-/*      */   private int size;
-/*      */   private int threshold;
-/*      */   private final float loadFactor;
-/*  180 */   private final ReferenceQueue<Object> queue = new ReferenceQueue();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int modCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Entry<K, V>[] newTable(int paramInt) {
-/*  195 */     return (Entry<K, V>[])new Entry[paramInt];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public WeakHashMap(int paramInt, float paramFloat) {
-/*  208 */     if (paramInt < 0) {
-/*  209 */       throw new IllegalArgumentException("Illegal Initial Capacity: " + paramInt);
-/*      */     }
-/*  211 */     if (paramInt > 1073741824) {
-/*  212 */       paramInt = 1073741824;
-/*      */     }
-/*  214 */     if (paramFloat <= 0.0F || Float.isNaN(paramFloat)) {
-/*  215 */       throw new IllegalArgumentException("Illegal Load factor: " + paramFloat);
-/*      */     }
-/*  217 */     int i = 1;
-/*  218 */     while (i < paramInt)
-/*  219 */       i <<= 1; 
-/*  220 */     this.table = newTable(i);
-/*  221 */     this.loadFactor = paramFloat;
-/*  222 */     this.threshold = (int)(i * paramFloat);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public WeakHashMap(int paramInt) {
-/*  233 */     this(paramInt, 0.75F);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public WeakHashMap() {
-/*  241 */     this(16, 0.75F);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public WeakHashMap(Map<? extends K, ? extends V> paramMap) {
-/*  255 */     this(Math.max((int)(paramMap.size() / 0.75F) + 1, 16), 0.75F);
-/*      */ 
-/*      */     
-/*  258 */     putAll(paramMap);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  266 */   private static final Object NULL_KEY = new Object();
-/*      */   
-/*      */   private transient Set<Map.Entry<K, V>> entrySet;
-/*      */ 
-/*      */   
-/*      */   private static Object maskNull(Object paramObject) {
-/*  272 */     return (paramObject == null) ? NULL_KEY : paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static Object unmaskNull(Object paramObject) {
-/*  279 */     return (paramObject == NULL_KEY) ? null : paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean eq(Object paramObject1, Object paramObject2) {
-/*  287 */     return (paramObject1 == paramObject2 || paramObject1.equals(paramObject2));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final int hash(Object paramObject) {
-/*  298 */     int i = paramObject.hashCode();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  303 */     i ^= i >>> 20 ^ i >>> 12;
-/*  304 */     return i ^ i >>> 7 ^ i >>> 4;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int indexFor(int paramInt1, int paramInt2) {
-/*  311 */     return paramInt1 & paramInt2 - 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void expungeStaleEntries() {
-/*      */     Reference<?> reference;
-/*  318 */     while ((reference = this.queue.poll()) != null) {
-/*  319 */       synchronized (this.queue) {
-/*      */         
-/*  321 */         Entry<K, V> entry1 = (Entry)reference;
-/*  322 */         int i = indexFor(entry1.hash, this.table.length);
-/*      */         
-/*  324 */         Entry<K, V> entry2 = this.table[i];
-/*  325 */         Entry<K, V> entry3 = entry2;
-/*  326 */         while (entry3 != null) {
-/*  327 */           Entry<K, V> entry = entry3.next;
-/*  328 */           if (entry3 == entry1) {
-/*  329 */             if (entry2 == entry1) {
-/*  330 */               this.table[i] = entry;
-/*      */             } else {
-/*  332 */               entry2.next = entry;
-/*      */             } 
-/*      */             
-/*  335 */             entry1.value = null;
-/*  336 */             this.size--;
-/*      */             break;
-/*      */           } 
-/*  339 */           entry2 = entry3;
-/*  340 */           entry3 = entry;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Entry<K, V>[] getTable() {
-/*  350 */     expungeStaleEntries();
-/*  351 */     return this.table;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/*  361 */     if (this.size == 0)
-/*  362 */       return 0; 
-/*  363 */     expungeStaleEntries();
-/*  364 */     return this.size;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEmpty() {
-/*  374 */     return (size() == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public V get(Object paramObject) {
-/*  395 */     Object object = maskNull(paramObject);
-/*  396 */     int i = hash(object);
-/*  397 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  398 */     int j = indexFor(i, arrayOfEntry.length);
-/*  399 */     Entry entry = arrayOfEntry[j];
-/*  400 */     while (entry != null) {
-/*  401 */       if (entry.hash == i && eq(object, entry.get()))
-/*  402 */         return entry.value; 
-/*  403 */       entry = entry.next;
-/*      */     } 
-/*  405 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsKey(Object paramObject) {
-/*  417 */     return (getEntry(paramObject) != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Entry<K, V> getEntry(Object paramObject) {
-/*  425 */     Object object = maskNull(paramObject);
-/*  426 */     int i = hash(object);
-/*  427 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  428 */     int j = indexFor(i, arrayOfEntry.length);
-/*  429 */     Entry<K, V> entry = arrayOfEntry[j];
-/*  430 */     while (entry != null && (entry.hash != i || !eq(object, entry.get())))
-/*  431 */       entry = entry.next; 
-/*  432 */     return entry;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public V put(K paramK, V paramV) {
-/*  448 */     Object object = maskNull(paramK);
-/*  449 */     int i = hash(object);
-/*  450 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  451 */     int j = indexFor(i, arrayOfEntry.length);
-/*      */     Entry<?, V> entry;
-/*  453 */     for (entry = arrayOfEntry[j]; entry != null; entry = entry.next) {
-/*  454 */       if (i == entry.hash && eq(object, entry.get())) {
-/*  455 */         V v = entry.value;
-/*  456 */         if (paramV != v)
-/*  457 */           entry.value = paramV; 
-/*  458 */         return v;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  462 */     this.modCount++;
-/*  463 */     entry = arrayOfEntry[j];
-/*  464 */     arrayOfEntry[j] = new Entry<>(object, paramV, this.queue, i, entry);
-/*  465 */     if (++this.size >= this.threshold)
-/*  466 */       resize(arrayOfEntry.length * 2); 
-/*  467 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void resize(int paramInt) {
-/*  485 */     Entry[] arrayOfEntry1 = (Entry[])getTable();
-/*  486 */     int i = arrayOfEntry1.length;
-/*  487 */     if (i == 1073741824) {
-/*  488 */       this.threshold = Integer.MAX_VALUE;
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  492 */     Entry[] arrayOfEntry2 = (Entry[])newTable(paramInt);
-/*  493 */     transfer((Entry<K, V>[])arrayOfEntry1, (Entry<K, V>[])arrayOfEntry2);
-/*  494 */     this.table = (Entry<K, V>[])arrayOfEntry2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  501 */     if (this.size >= this.threshold / 2) {
-/*  502 */       this.threshold = (int)(paramInt * this.loadFactor);
-/*      */     } else {
-/*  504 */       expungeStaleEntries();
-/*  505 */       transfer((Entry<K, V>[])arrayOfEntry2, (Entry<K, V>[])arrayOfEntry1);
-/*  506 */       this.table = (Entry<K, V>[])arrayOfEntry1;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void transfer(Entry<K, V>[] paramArrayOfEntry1, Entry<K, V>[] paramArrayOfEntry2) {
-/*  512 */     for (byte b = 0; b < paramArrayOfEntry1.length; b++) {
-/*  513 */       Entry<K, V> entry = paramArrayOfEntry1[b];
-/*  514 */       paramArrayOfEntry1[b] = null;
-/*  515 */       while (entry != null) {
-/*  516 */         Entry<K, V> entry1 = entry.next;
-/*  517 */         Object object = entry.get();
-/*  518 */         if (object == null) {
-/*  519 */           entry.next = null;
-/*  520 */           entry.value = null;
-/*  521 */           this.size--;
-/*      */         } else {
-/*  523 */           int i = indexFor(entry.hash, paramArrayOfEntry2.length);
-/*  524 */           entry.next = paramArrayOfEntry2[i];
-/*  525 */           paramArrayOfEntry2[i] = entry;
-/*      */         } 
-/*  527 */         entry = entry1;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putAll(Map<? extends K, ? extends V> paramMap) {
-/*  541 */     int i = paramMap.size();
-/*  542 */     if (i == 0) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  554 */     if (i > this.threshold) {
-/*  555 */       int j = (int)(i / this.loadFactor + 1.0F);
-/*  556 */       if (j > 1073741824)
-/*  557 */         j = 1073741824; 
-/*  558 */       int k = this.table.length;
-/*  559 */       while (k < j)
-/*  560 */         k <<= 1; 
-/*  561 */       if (k > this.table.length) {
-/*  562 */         resize(k);
-/*      */       }
-/*      */     } 
-/*  565 */     for (Map.Entry<? extends K, ? extends V> entry : paramMap.entrySet()) {
-/*  566 */       put((K)entry.getKey(), (V)entry.getValue());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public V remove(Object paramObject) {
-/*  590 */     Object object = maskNull(paramObject);
-/*  591 */     int i = hash(object);
-/*  592 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  593 */     int j = indexFor(i, arrayOfEntry.length);
-/*  594 */     Entry entry1 = arrayOfEntry[j];
-/*  595 */     Entry entry2 = entry1;
-/*      */     
-/*  597 */     while (entry2 != null) {
-/*  598 */       Entry entry = entry2.next;
-/*  599 */       if (i == entry2.hash && eq(object, entry2.get())) {
-/*  600 */         this.modCount++;
-/*  601 */         this.size--;
-/*  602 */         if (entry1 == entry2) {
-/*  603 */           arrayOfEntry[j] = entry;
-/*      */         } else {
-/*  605 */           entry1.next = entry;
-/*  606 */         }  return entry2.value;
-/*      */       } 
-/*  608 */       entry1 = entry2;
-/*  609 */       entry2 = entry;
-/*      */     } 
-/*      */     
-/*  612 */     return null;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   boolean removeMapping(Object paramObject) {
-/*  617 */     if (!(paramObject instanceof Map.Entry))
-/*  618 */       return false; 
-/*  619 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  620 */     Map.Entry entry = (Map.Entry)paramObject;
-/*  621 */     Object object = maskNull(entry.getKey());
-/*  622 */     int i = hash(object);
-/*  623 */     int j = indexFor(i, arrayOfEntry.length);
-/*  624 */     Entry entry1 = arrayOfEntry[j];
-/*  625 */     Entry entry2 = entry1;
-/*      */     
-/*  627 */     while (entry2 != null) {
-/*  628 */       Entry entry3 = entry2.next;
-/*  629 */       if (i == entry2.hash && entry2.equals(entry)) {
-/*  630 */         this.modCount++;
-/*  631 */         this.size--;
-/*  632 */         if (entry1 == entry2) {
-/*  633 */           arrayOfEntry[j] = entry3;
-/*      */         } else {
-/*  635 */           entry1.next = entry3;
-/*  636 */         }  return true;
-/*      */       } 
-/*  638 */       entry1 = entry2;
-/*  639 */       entry2 = entry3;
-/*      */     } 
-/*      */     
-/*  642 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  652 */     while (this.queue.poll() != null);
-/*      */ 
-/*      */     
-/*  655 */     this.modCount++;
-/*  656 */     Arrays.fill((Object[])this.table, (Object)null);
-/*  657 */     this.size = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  662 */     while (this.queue.poll() != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsValue(Object paramObject) {
-/*  675 */     if (paramObject == null) {
-/*  676 */       return containsNullValue();
-/*      */     }
-/*  678 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  679 */     for (int i = arrayOfEntry.length; i-- > 0;) {
-/*  680 */       for (Entry entry = arrayOfEntry[i]; entry != null; entry = entry.next)
-/*  681 */       { if (paramObject.equals(entry.value))
-/*  682 */           return true;  } 
-/*  683 */     }  return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean containsNullValue() {
-/*  690 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/*  691 */     for (int i = arrayOfEntry.length; i-- > 0;) {
-/*  692 */       for (Entry entry = arrayOfEntry[i]; entry != null; entry = entry.next)
-/*  693 */       { if (entry.value == null)
-/*  694 */           return true;  } 
-/*  695 */     }  return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class Entry<K, V>
-/*      */     extends WeakReference<Object>
-/*      */     implements Map.Entry<K, V>
-/*      */   {
-/*      */     V value;
-/*      */ 
-/*      */     
-/*      */     final int hash;
-/*      */     
-/*      */     Entry<K, V> next;
-/*      */ 
-/*      */     
-/*      */     Entry(Object param1Object, V param1V, ReferenceQueue<Object> param1ReferenceQueue, int param1Int, Entry<K, V> param1Entry) {
-/*  713 */       super(param1Object, param1ReferenceQueue);
-/*  714 */       this.value = param1V;
-/*  715 */       this.hash = param1Int;
-/*  716 */       this.next = param1Entry;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public K getKey() {
-/*  721 */       return (K)WeakHashMap.unmaskNull(get());
-/*      */     }
-/*      */     
-/*      */     public V getValue() {
-/*  725 */       return this.value;
-/*      */     }
-/*      */     
-/*      */     public V setValue(V param1V) {
-/*  729 */       V v = this.value;
-/*  730 */       this.value = param1V;
-/*  731 */       return v;
-/*      */     }
-/*      */     
-/*      */     public boolean equals(Object param1Object) {
-/*  735 */       if (!(param1Object instanceof Map.Entry))
-/*  736 */         return false; 
-/*  737 */       Map.Entry entry = (Map.Entry)param1Object;
-/*  738 */       K k = getKey();
-/*  739 */       Object object = entry.getKey();
-/*  740 */       if (k == object || (k != null && k.equals(object))) {
-/*  741 */         V v = getValue();
-/*  742 */         Object object1 = entry.getValue();
-/*  743 */         if (v == object1 || (v != null && v.equals(object1)))
-/*  744 */           return true; 
-/*      */       } 
-/*  746 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int hashCode() {
-/*  750 */       K k = getKey();
-/*  751 */       V v = getValue();
-/*  752 */       return Objects.hashCode(k) ^ Objects.hashCode(v);
-/*      */     }
-/*      */     
-/*      */     public String toString() {
-/*  756 */       return (new StringBuilder()).append(getKey()).append("=").append(getValue()).toString();
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private abstract class HashIterator<T> implements Iterator<T> {
-/*      */     private int index;
-/*      */     private WeakHashMap.Entry<K, V> entry;
-/*      */     private WeakHashMap.Entry<K, V> lastReturned;
-/*  764 */     private int expectedModCount = WeakHashMap.this.modCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Object nextKey;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Object currentKey;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     HashIterator() {
-/*  779 */       this.index = WeakHashMap.this.isEmpty() ? 0 : WeakHashMap.this.table.length;
-/*      */     }
-/*      */     
-/*      */     public boolean hasNext() {
-/*  783 */       WeakHashMap.Entry[] arrayOfEntry = WeakHashMap.this.table;
-/*      */       
-/*  785 */       while (this.nextKey == null) {
-/*  786 */         WeakHashMap.Entry<K, V> entry = this.entry;
-/*  787 */         int i = this.index;
-/*  788 */         while (entry == null && i > 0)
-/*  789 */           entry = arrayOfEntry[--i]; 
-/*  790 */         this.entry = entry;
-/*  791 */         this.index = i;
-/*  792 */         if (entry == null) {
-/*  793 */           this.currentKey = null;
-/*  794 */           return false;
-/*      */         } 
-/*  796 */         this.nextKey = entry.get();
-/*  797 */         if (this.nextKey == null)
-/*  798 */           this.entry = this.entry.next; 
-/*      */       } 
-/*  800 */       return true;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     protected WeakHashMap.Entry<K, V> nextEntry() {
-/*  805 */       if (WeakHashMap.this.modCount != this.expectedModCount)
-/*  806 */         throw new ConcurrentModificationException(); 
-/*  807 */       if (this.nextKey == null && !hasNext()) {
-/*  808 */         throw new NoSuchElementException();
-/*      */       }
-/*  810 */       this.lastReturned = this.entry;
-/*  811 */       this.entry = this.entry.next;
-/*  812 */       this.currentKey = this.nextKey;
-/*  813 */       this.nextKey = null;
-/*  814 */       return this.lastReturned;
-/*      */     }
-/*      */     
-/*      */     public void remove() {
-/*  818 */       if (this.lastReturned == null)
-/*  819 */         throw new IllegalStateException(); 
-/*  820 */       if (WeakHashMap.this.modCount != this.expectedModCount) {
-/*  821 */         throw new ConcurrentModificationException();
-/*      */       }
-/*  823 */       WeakHashMap.this.remove(this.currentKey);
-/*  824 */       this.expectedModCount = WeakHashMap.this.modCount;
-/*  825 */       this.lastReturned = null;
-/*  826 */       this.currentKey = null;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private class ValueIterator extends HashIterator<V> { private ValueIterator() {}
-/*      */     
-/*      */     public V next() {
-/*  833 */       return (nextEntry()).value;
-/*      */     } }
-/*      */   
-/*      */   private class KeyIterator extends HashIterator<K> { private KeyIterator() {}
-/*      */     
-/*      */     public K next() {
-/*  839 */       return (K)nextEntry().getKey();
-/*      */     } }
-/*      */   
-/*      */   private class EntryIterator extends HashIterator<Map.Entry<K, V>> { private EntryIterator() {}
-/*      */     
-/*      */     public Map.Entry<K, V> next() {
-/*  845 */       return nextEntry();
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Set<K> keySet() {
-/*  867 */     Set<K> set = this.keySet;
-/*  868 */     if (set == null) {
-/*  869 */       set = new KeySet();
-/*  870 */       this.keySet = set;
-/*      */     } 
-/*  872 */     return set;
-/*      */   }
-/*      */   private class KeySet extends AbstractSet<K> { private KeySet() {}
-/*      */     
-/*      */     public Iterator<K> iterator() {
-/*  877 */       return new WeakHashMap.KeyIterator();
-/*      */     }
-/*      */     
-/*      */     public int size() {
-/*  881 */       return WeakHashMap.this.size();
-/*      */     }
-/*      */     
-/*      */     public boolean contains(Object param1Object) {
-/*  885 */       return WeakHashMap.this.containsKey(param1Object);
-/*      */     }
-/*      */     
-/*      */     public boolean remove(Object param1Object) {
-/*  889 */       if (WeakHashMap.this.containsKey(param1Object)) {
-/*  890 */         WeakHashMap.this.remove(param1Object);
-/*  891 */         return true;
-/*      */       } 
-/*      */       
-/*  894 */       return false;
-/*      */     }
-/*      */     
-/*      */     public void clear() {
-/*  898 */       WeakHashMap.this.clear();
-/*      */     }
-/*      */     
-/*      */     public Spliterator<K> spliterator() {
-/*  902 */       return new WeakHashMap.KeySpliterator<>(WeakHashMap.this, 0, -1, 0, 0);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Collection<V> values() {
-/*  920 */     Collection<V> collection = this.values;
-/*  921 */     if (collection == null) {
-/*  922 */       collection = new Values();
-/*  923 */       this.values = collection;
-/*      */     } 
-/*  925 */     return collection;
-/*      */   }
-/*      */   private class Values extends AbstractCollection<V> { private Values() {}
-/*      */     
-/*      */     public Iterator<V> iterator() {
-/*  930 */       return new WeakHashMap.ValueIterator();
-/*      */     }
-/*      */     
-/*      */     public int size() {
-/*  934 */       return WeakHashMap.this.size();
-/*      */     }
-/*      */     
-/*      */     public boolean contains(Object param1Object) {
-/*  938 */       return WeakHashMap.this.containsValue(param1Object);
-/*      */     }
-/*      */     
-/*      */     public void clear() {
-/*  942 */       WeakHashMap.this.clear();
-/*      */     }
-/*      */     
-/*      */     public Spliterator<V> spliterator() {
-/*  946 */       return new WeakHashMap.ValueSpliterator<>(WeakHashMap.this, 0, -1, 0, 0);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Set<Map.Entry<K, V>> entrySet() {
-/*  965 */     Set<Map.Entry<K, V>> set = this.entrySet;
-/*  966 */     return (set != null) ? set : (this.entrySet = new EntrySet());
-/*      */   }
-/*      */   private class EntrySet extends AbstractSet<Map.Entry<K, V>> { private EntrySet() {}
-/*      */     
-/*      */     public Iterator<Map.Entry<K, V>> iterator() {
-/*  971 */       return new WeakHashMap.EntryIterator();
-/*      */     }
-/*      */     
-/*      */     public boolean contains(Object param1Object) {
-/*  975 */       if (!(param1Object instanceof Map.Entry))
-/*  976 */         return false; 
-/*  977 */       Map.Entry entry = (Map.Entry)param1Object;
-/*  978 */       WeakHashMap.Entry entry1 = WeakHashMap.this.getEntry(entry.getKey());
-/*  979 */       return (entry1 != null && entry1.equals(entry));
-/*      */     }
-/*      */     
-/*      */     public boolean remove(Object param1Object) {
-/*  983 */       return WeakHashMap.this.removeMapping(param1Object);
-/*      */     }
-/*      */     
-/*      */     public int size() {
-/*  987 */       return WeakHashMap.this.size();
-/*      */     }
-/*      */     
-/*      */     public void clear() {
-/*  991 */       WeakHashMap.this.clear();
-/*      */     }
-/*      */     
-/*      */     private List<Map.Entry<K, V>> deepCopy() {
-/*  995 */       ArrayList<Map.Entry<K, V>> arrayList = new ArrayList(size());
-/*  996 */       for (Map.Entry<?, ?> entry : (Iterable<Map.Entry<?, ?>>)this)
-/*  997 */         arrayList.add(new AbstractMap.SimpleEntry<>(entry)); 
-/*  998 */       return arrayList;
-/*      */     }
-/*      */     
-/*      */     public Object[] toArray() {
-/* 1002 */       return deepCopy().toArray();
-/*      */     }
-/*      */     
-/*      */     public <T> T[] toArray(T[] param1ArrayOfT) {
-/* 1006 */       return deepCopy().toArray(param1ArrayOfT);
-/*      */     }
-/*      */     
-/*      */     public Spliterator<Map.Entry<K, V>> spliterator() {
-/* 1010 */       return new WeakHashMap.EntrySpliterator<>(WeakHashMap.this, 0, -1, 0, 0);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void forEach(BiConsumer<? super K, ? super V> paramBiConsumer) {
-/* 1017 */     Objects.requireNonNull(paramBiConsumer);
-/* 1018 */     int i = this.modCount;
-/*      */     
-/* 1020 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/* 1021 */     for (Entry entry : arrayOfEntry) {
-/* 1022 */       while (entry != null) {
-/* 1023 */         Object object = entry.get();
-/* 1024 */         if (object != null) {
-/* 1025 */           paramBiConsumer.accept((K)unmaskNull(object), entry.value);
-/*      */         }
-/* 1027 */         entry = entry.next;
-/*      */         
-/* 1029 */         if (i != this.modCount) {
-/* 1030 */           throw new ConcurrentModificationException();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> paramBiFunction) {
-/* 1039 */     Objects.requireNonNull(paramBiFunction);
-/* 1040 */     int i = this.modCount;
-/*      */     
-/* 1042 */     Entry[] arrayOfEntry = (Entry[])getTable();
-/* 1043 */     for (Entry entry : arrayOfEntry) {
-/* 1044 */       while (entry != null) {
-/* 1045 */         Object object = entry.get();
-/* 1046 */         if (object != null) {
-/* 1047 */           entry.value = paramBiFunction.apply((K)unmaskNull(object), entry.value);
-/*      */         }
-/* 1049 */         entry = entry.next;
-/*      */         
-/* 1051 */         if (i != this.modCount) {
-/* 1052 */           throw new ConcurrentModificationException();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static class WeakHashMapSpliterator<K, V>
-/*      */   {
-/*      */     final WeakHashMap<K, V> map;
-/*      */     
-/*      */     WeakHashMap.Entry<K, V> current;
-/*      */     
-/*      */     int index;
-/*      */     
-/*      */     int fence;
-/*      */     
-/*      */     int est;
-/*      */     int expectedModCount;
-/*      */     
-/*      */     WeakHashMapSpliterator(WeakHashMap<K, V> param1WeakHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1073 */       this.map = param1WeakHashMap;
-/* 1074 */       this.index = param1Int1;
-/* 1075 */       this.fence = param1Int2;
-/* 1076 */       this.est = param1Int3;
-/* 1077 */       this.expectedModCount = param1Int4;
-/*      */     }
-/*      */     
-/*      */     final int getFence() {
-/*      */       int i;
-/* 1082 */       if ((i = this.fence) < 0) {
-/* 1083 */         WeakHashMap<K, V> weakHashMap = this.map;
-/* 1084 */         this.est = weakHashMap.size();
-/* 1085 */         this.expectedModCount = weakHashMap.modCount;
-/* 1086 */         i = this.fence = weakHashMap.table.length;
-/*      */       } 
-/* 1088 */       return i;
-/*      */     }
-/*      */     
-/*      */     public final long estimateSize() {
-/* 1092 */       getFence();
-/* 1093 */       return this.est;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class KeySpliterator<K, V>
-/*      */     extends WeakHashMapSpliterator<K, V>
-/*      */     implements Spliterator<K>
-/*      */   {
-/*      */     KeySpliterator(WeakHashMap<K, V> param1WeakHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1102 */       super(param1WeakHashMap, param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */     }
-/*      */     
-/*      */     public KeySpliterator<K, V> trySplit() {
-/* 1106 */       int i = getFence(), j = this.index, k = j + i >>> 1;
-/* 1107 */       return (j >= k) ? null : new KeySpliterator(this.map, j, this.index = k, this.est >>>= 1, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super K> param1Consumer) {
-/*      */       int k;
-/* 1114 */       if (param1Consumer == null)
-/* 1115 */         throw new NullPointerException(); 
-/* 1116 */       WeakHashMap<K, V> weakHashMap = this.map;
-/* 1117 */       WeakHashMap.Entry<K, V>[] arrayOfEntry = weakHashMap.table; int j;
-/* 1118 */       if ((j = this.fence) < 0) {
-/* 1119 */         k = this.expectedModCount = weakHashMap.modCount;
-/* 1120 */         j = this.fence = arrayOfEntry.length;
-/*      */       } else {
-/*      */         
-/* 1123 */         k = this.expectedModCount;
-/* 1124 */       }  int i; if (arrayOfEntry.length >= j && (i = this.index) >= 0 && (i < (this.index = j) || this.current != null)) {
-/*      */         
-/* 1126 */         WeakHashMap.Entry<K, V> entry = this.current;
-/* 1127 */         this.current = null;
-/*      */         do {
-/* 1129 */           if (entry == null) {
-/* 1130 */             entry = arrayOfEntry[i++];
-/*      */           } else {
-/* 1132 */             Object object = entry.get();
-/* 1133 */             entry = entry.next;
-/* 1134 */             if (object != null) {
-/*      */               
-/* 1136 */               Object object1 = WeakHashMap.unmaskNull(object);
-/* 1137 */               param1Consumer.accept((K)object1);
-/*      */             } 
-/*      */           } 
-/* 1140 */         } while (entry != null || i < j);
-/*      */       } 
-/* 1142 */       if (weakHashMap.modCount != k) {
-/* 1143 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super K> param1Consumer) {
-/* 1148 */       if (param1Consumer == null)
-/* 1149 */         throw new NullPointerException(); 
-/* 1150 */       WeakHashMap.Entry<K, V>[] arrayOfEntry = this.map.table; int i;
-/* 1151 */       if (arrayOfEntry.length >= (i = getFence()) && this.index >= 0) {
-/* 1152 */         while (this.current != null || this.index < i) {
-/* 1153 */           if (this.current == null) {
-/* 1154 */             this.current = arrayOfEntry[this.index++]; continue;
-/*      */           } 
-/* 1156 */           Object object = this.current.get();
-/* 1157 */           this.current = this.current.next;
-/* 1158 */           if (object != null) {
-/*      */             
-/* 1160 */             Object object1 = WeakHashMap.unmaskNull(object);
-/* 1161 */             param1Consumer.accept((K)object1);
-/* 1162 */             if (this.map.modCount != this.expectedModCount)
-/* 1163 */               throw new ConcurrentModificationException(); 
-/* 1164 */             return true;
-/*      */           } 
-/*      */         } 
-/*      */       }
-/*      */       
-/* 1169 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1173 */       return 1;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class ValueSpliterator<K, V>
-/*      */     extends WeakHashMapSpliterator<K, V>
-/*      */     implements Spliterator<V>
-/*      */   {
-/*      */     ValueSpliterator(WeakHashMap<K, V> param1WeakHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1182 */       super(param1WeakHashMap, param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */     }
-/*      */     
-/*      */     public ValueSpliterator<K, V> trySplit() {
-/* 1186 */       int i = getFence(), j = this.index, k = j + i >>> 1;
-/* 1187 */       return (j >= k) ? null : new ValueSpliterator(this.map, j, this.index = k, this.est >>>= 1, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super V> param1Consumer) {
-/*      */       int k;
-/* 1194 */       if (param1Consumer == null)
-/* 1195 */         throw new NullPointerException(); 
-/* 1196 */       WeakHashMap<K, V> weakHashMap = this.map;
-/* 1197 */       WeakHashMap.Entry<K, V>[] arrayOfEntry = weakHashMap.table; int j;
-/* 1198 */       if ((j = this.fence) < 0) {
-/* 1199 */         k = this.expectedModCount = weakHashMap.modCount;
-/* 1200 */         j = this.fence = arrayOfEntry.length;
-/*      */       } else {
-/*      */         
-/* 1203 */         k = this.expectedModCount;
-/* 1204 */       }  int i; if (arrayOfEntry.length >= j && (i = this.index) >= 0 && (i < (this.index = j) || this.current != null)) {
-/*      */         
-/* 1206 */         WeakHashMap.Entry<K, V> entry = this.current;
-/* 1207 */         this.current = null;
-/*      */         do {
-/* 1209 */           if (entry == null) {
-/* 1210 */             entry = arrayOfEntry[i++];
-/*      */           } else {
-/* 1212 */             Object object = entry.get();
-/* 1213 */             V v = entry.value;
-/* 1214 */             entry = entry.next;
-/* 1215 */             if (object != null)
-/* 1216 */               param1Consumer.accept(v); 
-/*      */           } 
-/* 1218 */         } while (entry != null || i < j);
-/*      */       } 
-/* 1220 */       if (weakHashMap.modCount != k) {
-/* 1221 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super V> param1Consumer) {
-/* 1226 */       if (param1Consumer == null)
-/* 1227 */         throw new NullPointerException(); 
-/* 1228 */       WeakHashMap.Entry<K, V>[] arrayOfEntry = this.map.table; int i;
-/* 1229 */       if (arrayOfEntry.length >= (i = getFence()) && this.index >= 0) {
-/* 1230 */         while (this.current != null || this.index < i) {
-/* 1231 */           if (this.current == null) {
-/* 1232 */             this.current = arrayOfEntry[this.index++]; continue;
-/*      */           } 
-/* 1234 */           Object object = this.current.get();
-/* 1235 */           V v = this.current.value;
-/* 1236 */           this.current = this.current.next;
-/* 1237 */           if (object != null) {
-/* 1238 */             param1Consumer.accept(v);
-/* 1239 */             if (this.map.modCount != this.expectedModCount)
-/* 1240 */               throw new ConcurrentModificationException(); 
-/* 1241 */             return true;
-/*      */           } 
-/*      */         } 
-/*      */       }
-/*      */       
-/* 1246 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1250 */       return 0;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class EntrySpliterator<K, V>
-/*      */     extends WeakHashMapSpliterator<K, V>
-/*      */     implements Spliterator<Map.Entry<K, V>>
-/*      */   {
-/*      */     EntrySpliterator(WeakHashMap<K, V> param1WeakHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1259 */       super(param1WeakHashMap, param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */     }
-/*      */     
-/*      */     public EntrySpliterator<K, V> trySplit() {
-/* 1263 */       int i = getFence(), j = this.index, k = j + i >>> 1;
-/* 1264 */       return (j >= k) ? null : new EntrySpliterator(this.map, j, this.index = k, this.est >>>= 1, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super Map.Entry<K, V>> param1Consumer) {
-/*      */       int k;
-/* 1272 */       if (param1Consumer == null)
-/* 1273 */         throw new NullPointerException(); 
-/* 1274 */       WeakHashMap<K, V> weakHashMap = this.map;
-/* 1275 */       WeakHashMap.Entry<K, V>[] arrayOfEntry = weakHashMap.table; int j;
-/* 1276 */       if ((j = this.fence) < 0) {
-/* 1277 */         k = this.expectedModCount = weakHashMap.modCount;
-/* 1278 */         j = this.fence = arrayOfEntry.length;
-/*      */       } else {
-/*      */         
-/* 1281 */         k = this.expectedModCount;
-/* 1282 */       }  int i; if (arrayOfEntry.length >= j && (i = this.index) >= 0 && (i < (this.index = j) || this.current != null)) {
-/*      */         
-/* 1284 */         WeakHashMap.Entry<K, V> entry = this.current;
-/* 1285 */         this.current = null;
-/*      */         do {
-/* 1287 */           if (entry == null) {
-/* 1288 */             entry = arrayOfEntry[i++];
-/*      */           } else {
-/* 1290 */             Object object = entry.get();
-/* 1291 */             V v = entry.value;
-/* 1292 */             entry = entry.next;
-/* 1293 */             if (object != null) {
-/*      */               
-/* 1295 */               Object object1 = WeakHashMap.unmaskNull(object);
-/* 1296 */               param1Consumer
-/* 1297 */                 .accept(new AbstractMap.SimpleImmutableEntry<>((K)object1, v));
-/*      */             } 
-/*      */           } 
-/* 1300 */         } while (entry != null || i < j);
-/*      */       } 
-/* 1302 */       if (weakHashMap.modCount != k) {
-/* 1303 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super Map.Entry<K, V>> param1Consumer) {
-/* 1308 */       if (param1Consumer == null)
-/* 1309 */         throw new NullPointerException(); 
-/* 1310 */       WeakHashMap.Entry<K, V>[] arrayOfEntry = this.map.table; int i;
-/* 1311 */       if (arrayOfEntry.length >= (i = getFence()) && this.index >= 0) {
-/* 1312 */         while (this.current != null || this.index < i) {
-/* 1313 */           if (this.current == null) {
-/* 1314 */             this.current = arrayOfEntry[this.index++]; continue;
-/*      */           } 
-/* 1316 */           Object object = this.current.get();
-/* 1317 */           V v = this.current.value;
-/* 1318 */           this.current = this.current.next;
-/* 1319 */           if (object != null) {
-/*      */             
-/* 1321 */             Object object1 = WeakHashMap.unmaskNull(object);
-/* 1322 */             param1Consumer
-/* 1323 */               .accept(new AbstractMap.SimpleImmutableEntry<>((K)object1, v));
-/* 1324 */             if (this.map.modCount != this.expectedModCount)
-/* 1325 */               throw new ConcurrentModificationException(); 
-/* 1326 */             return true;
-/*      */           } 
-/*      */         } 
-/*      */       }
-/*      */       
-/* 1331 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1335 */       return 1;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\WeakHashMap.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.lang.ref.WeakReference;
+import java.lang.ref.ReferenceQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+
+
+/**
+ * Hash table based implementation of the <tt>Map</tt> interface, with
+ * <em>weak keys</em>.
+ * An entry in a <tt>WeakHashMap</tt> will automatically be removed when
+ * its key is no longer in ordinary use.  More precisely, the presence of a
+ * mapping for a given key will not prevent the key from being discarded by the
+ * garbage collector, that is, made finalizable, finalized, and then reclaimed.
+ * When a key has been discarded its entry is effectively removed from the map,
+ * so this class behaves somewhat differently from other <tt>Map</tt>
+ * implementations.
+ *
+ * <p> Both null values and the null key are supported. This class has
+ * performance characteristics similar to those of the <tt>HashMap</tt>
+ * class, and has the same efficiency parameters of <em>initial capacity</em>
+ * and <em>load factor</em>.
+ *
+ * <p> Like most collection classes, this class is not synchronized.
+ * A synchronized <tt>WeakHashMap</tt> may be constructed using the
+ * {@link Collections#synchronizedMap Collections.synchronizedMap}
+ * method.
+ *
+ * <p> This class is intended primarily for use with key objects whose
+ * <tt>equals</tt> methods test for object identity using the
+ * <tt>==</tt> operator.  Once such a key is discarded it can never be
+ * recreated, so it is impossible to do a lookup of that key in a
+ * <tt>WeakHashMap</tt> at some later time and be surprised that its entry
+ * has been removed.  This class will work perfectly well with key objects
+ * whose <tt>equals</tt> methods are not based upon object identity, such
+ * as <tt>String</tt> instances.  With such recreatable key objects,
+ * however, the automatic removal of <tt>WeakHashMap</tt> entries whose
+ * keys have been discarded may prove to be confusing.
+ *
+ * <p> The behavior of the <tt>WeakHashMap</tt> class depends in part upon
+ * the actions of the garbage collector, so several familiar (though not
+ * required) <tt>Map</tt> invariants do not hold for this class.  Because
+ * the garbage collector may discard keys at any time, a
+ * <tt>WeakHashMap</tt> may behave as though an unknown thread is silently
+ * removing entries.  In particular, even if you synchronize on a
+ * <tt>WeakHashMap</tt> instance and invoke none of its mutator methods, it
+ * is possible for the <tt>size</tt> method to return smaller values over
+ * time, for the <tt>isEmpty</tt> method to return <tt>false</tt> and
+ * then <tt>true</tt>, for the <tt>containsKey</tt> method to return
+ * <tt>true</tt> and later <tt>false</tt> for a given key, for the
+ * <tt>get</tt> method to return a value for a given key but later return
+ * <tt>null</tt>, for the <tt>put</tt> method to return
+ * <tt>null</tt> and the <tt>remove</tt> method to return
+ * <tt>false</tt> for a key that previously appeared to be in the map, and
+ * for successive examinations of the key set, the value collection, and
+ * the entry set to yield successively smaller numbers of elements.
+ *
+ * <p> Each key object in a <tt>WeakHashMap</tt> is stored indirectly as
+ * the referent of a weak reference.  Therefore a key will automatically be
+ * removed only after the weak references to it, both inside and outside of the
+ * map, have been cleared by the garbage collector.
+ *
+ * <p> <strong>Implementation note:</strong> The value objects in a
+ * <tt>WeakHashMap</tt> are held by ordinary strong references.  Thus care
+ * should be taken to ensure that value objects do not strongly refer to their
+ * own keys, either directly or indirectly, since that will prevent the keys
+ * from being discarded.  Note that a value object may refer indirectly to its
+ * key via the <tt>WeakHashMap</tt> itself; that is, a value object may
+ * strongly refer to some other key object whose associated value object, in
+ * turn, strongly refers to the key of the first value object.  If the values
+ * in the map do not rely on the map holding strong references to them, one way
+ * to deal with this is to wrap values themselves within
+ * <tt>WeakReferences</tt> before
+ * inserting, as in: <tt>m.put(key, new WeakReference(value))</tt>,
+ * and then unwrapping upon each <tt>get</tt>.
+ *
+ * <p>The iterators returned by the <tt>iterator</tt> method of the collections
+ * returned by all of this class's "collection view methods" are
+ * <i>fail-fast</i>: if the map is structurally modified at any time after the
+ * iterator is created, in any way except through the iterator's own
+ * <tt>remove</tt> method, the iterator will throw a {@link
+ * ConcurrentModificationException}.  Thus, in the face of concurrent
+ * modification, the iterator fails quickly and cleanly, rather than risking
+ * arbitrary, non-deterministic behavior at an undetermined time in the future.
+ *
+ * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
+ * as it is, generally speaking, impossible to make any hard guarantees in the
+ * presence of unsynchronized concurrent modification.  Fail-fast iterators
+ * throw <tt>ConcurrentModificationException</tt> on a best-effort basis.
+ * Therefore, it would be wrong to write a program that depended on this
+ * exception for its correctness:  <i>the fail-fast behavior of iterators
+ * should be used only to detect bugs.</i>
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ *
+ * @author      Doug Lea
+ * @author      Josh Bloch
+ * @author      Mark Reinhold
+ * @since       1.2
+ * @see         java.util.HashMap
+ * @see         java.lang.ref.WeakReference
+ */
+public class WeakHashMap<K,V>
+    extends AbstractMap<K,V>
+    implements Map<K,V> {
+
+    /**
+     * The default initial capacity -- MUST be a power of two.
+     */
+    private static final int DEFAULT_INITIAL_CAPACITY = 16;
+
+    /**
+     * The maximum capacity, used if a higher value is implicitly specified
+     * by either of the constructors with arguments.
+     * MUST be a power of two <= 1<<30.
+     */
+    private static final int MAXIMUM_CAPACITY = 1 << 30;
+
+    /**
+     * The load factor used when none specified in constructor.
+     */
+    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
+
+    /**
+     * The table, resized as necessary. Length MUST Always be a power of two.
+     */
+    Entry<K,V>[] table;
+
+    /**
+     * The number of key-value mappings contained in this weak hash map.
+     */
+    private int size;
+
+    /**
+     * The next size value at which to resize (capacity * load factor).
+     */
+    private int threshold;
+
+    /**
+     * The load factor for the hash table.
+     */
+    private final float loadFactor;
+
+    /**
+     * Reference queue for cleared WeakEntries
+     */
+    private final ReferenceQueue<Object> queue = new ReferenceQueue<>();
+
+    /**
+     * The number of times this WeakHashMap has been structurally modified.
+     * Structural modifications are those that change the number of
+     * mappings in the map or otherwise modify its internal structure
+     * (e.g., rehash).  This field is used to make iterators on
+     * Collection-views of the map fail-fast.
+     *
+     * @see ConcurrentModificationException
+     */
+    int modCount;
+
+    @SuppressWarnings("unchecked")
+    private Entry<K,V>[] newTable(int n) {
+        return (Entry<K,V>[]) new Entry<?,?>[n];
+    }
+
+    /**
+     * Constructs a new, empty <tt>WeakHashMap</tt> with the given initial
+     * capacity and the given load factor.
+     *
+     * @param  initialCapacity The initial capacity of the <tt>WeakHashMap</tt>
+     * @param  loadFactor      The load factor of the <tt>WeakHashMap</tt>
+     * @throws IllegalArgumentException if the initial capacity is negative,
+     *         or if the load factor is nonpositive.
+     */
+    public WeakHashMap(int initialCapacity, float loadFactor) {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Initial Capacity: "+
+                                               initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)
+            initialCapacity = MAXIMUM_CAPACITY;
+
+        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+            throw new IllegalArgumentException("Illegal Load factor: "+
+                                               loadFactor);
+        int capacity = 1;
+        while (capacity < initialCapacity)
+            capacity <<= 1;
+        table = newTable(capacity);
+        this.loadFactor = loadFactor;
+        threshold = (int)(capacity * loadFactor);
+    }
+
+    /**
+     * Constructs a new, empty <tt>WeakHashMap</tt> with the given initial
+     * capacity and the default load factor (0.75).
+     *
+     * @param  initialCapacity The initial capacity of the <tt>WeakHashMap</tt>
+     * @throws IllegalArgumentException if the initial capacity is negative
+     */
+    public WeakHashMap(int initialCapacity) {
+        this(initialCapacity, DEFAULT_LOAD_FACTOR);
+    }
+
+    /**
+     * Constructs a new, empty <tt>WeakHashMap</tt> with the default initial
+     * capacity (16) and load factor (0.75).
+     */
+    public WeakHashMap() {
+        this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
+    }
+
+    /**
+     * Constructs a new <tt>WeakHashMap</tt> with the same mappings as the
+     * specified map.  The <tt>WeakHashMap</tt> is created with the default
+     * load factor (0.75) and an initial capacity sufficient to hold the
+     * mappings in the specified map.
+     *
+     * @param   m the map whose mappings are to be placed in this map
+     * @throws  NullPointerException if the specified map is null
+     * @since   1.3
+     */
+    public WeakHashMap(Map<? extends K, ? extends V> m) {
+        this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
+                DEFAULT_INITIAL_CAPACITY),
+             DEFAULT_LOAD_FACTOR);
+        putAll(m);
+    }
+
+    // internal utilities
+
+    /**
+     * Value representing null keys inside tables.
+     */
+    private static final Object NULL_KEY = new Object();
+
+    /**
+     * Use NULL_KEY for key if it is null.
+     */
+    private static Object maskNull(Object key) {
+        return (key == null) ? NULL_KEY : key;
+    }
+
+    /**
+     * Returns internal representation of null key back to caller as null.
+     */
+    static Object unmaskNull(Object key) {
+        return (key == NULL_KEY) ? null : key;
+    }
+
+    /**
+     * Checks for equality of non-null reference x and possibly-null y.  By
+     * default uses Object.equals.
+     */
+    private static boolean eq(Object x, Object y) {
+        return x == y || x.equals(y);
+    }
+
+    /**
+     * Retrieve object hash code and applies a supplemental hash function to the
+     * result hash, which defends against poor quality hash functions.  This is
+     * critical because HashMap uses power-of-two length hash tables, that
+     * otherwise encounter collisions for hashCodes that do not differ
+     * in lower bits.
+     */
+    final int hash(Object k) {
+        int h = k.hashCode();
+
+        // This function ensures that hashCodes that differ only by
+        // constant multiples at each bit position have a bounded
+        // number of collisions (approximately 8 at default load factor).
+        h ^= (h >>> 20) ^ (h >>> 12);
+        return h ^ (h >>> 7) ^ (h >>> 4);
+    }
+
+    /**
+     * Returns index for hash code h.
+     */
+    private static int indexFor(int h, int length) {
+        return h & (length-1);
+    }
+
+    /**
+     * Expunges stale entries from the table.
+     */
+    private void expungeStaleEntries() {
+        for (Object x; (x = queue.poll()) != null; ) {
+            synchronized (queue) {
+                @SuppressWarnings("unchecked")
+                    Entry<K,V> e = (Entry<K,V>) x;
+                int i = indexFor(e.hash, table.length);
+
+                Entry<K,V> prev = table[i];
+                Entry<K,V> p = prev;
+                while (p != null) {
+                    Entry<K,V> next = p.next;
+                    if (p == e) {
+                        if (prev == e)
+                            table[i] = next;
+                        else
+                            prev.next = next;
+                        // Must not null out e.next;
+                        // stale entries may be in use by a HashIterator
+                        e.value = null; // Help GC
+                        size--;
+                        break;
+                    }
+                    prev = p;
+                    p = next;
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the table after first expunging stale entries.
+     */
+    private Entry<K,V>[] getTable() {
+        expungeStaleEntries();
+        return table;
+    }
+
+    /**
+     * Returns the number of key-value mappings in this map.
+     * This result is a snapshot, and may not reflect unprocessed
+     * entries that will be removed before next attempted access
+     * because they are no longer referenced.
+     */
+    public int size() {
+        if (size == 0)
+            return 0;
+        expungeStaleEntries();
+        return size;
+    }
+
+    /**
+     * Returns <tt>true</tt> if this map contains no key-value mappings.
+     * This result is a snapshot, and may not reflect unprocessed
+     * entries that will be removed before next attempted access
+     * because they are no longer referenced.
+     */
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    /**
+     * Returns the value to which the specified key is mapped,
+     * or {@code null} if this map contains no mapping for the key.
+     *
+     * <p>More formally, if this map contains a mapping from a key
+     * {@code k} to a value {@code v} such that {@code (key==null ? k==null :
+     * key.equals(k))}, then this method returns {@code v}; otherwise
+     * it returns {@code null}.  (There can be at most one such mapping.)
+     *
+     * <p>A return value of {@code null} does not <i>necessarily</i>
+     * indicate that the map contains no mapping for the key; it's also
+     * possible that the map explicitly maps the key to {@code null}.
+     * The {@link #containsKey containsKey} operation may be used to
+     * distinguish these two cases.
+     *
+     * @see #put(Object, Object)
+     */
+    public V get(Object key) {
+        Object k = maskNull(key);
+        int h = hash(k);
+        Entry<K,V>[] tab = getTable();
+        int index = indexFor(h, tab.length);
+        Entry<K,V> e = tab[index];
+        while (e != null) {
+            if (e.hash == h && eq(k, e.get()))
+                return e.value;
+            e = e.next;
+        }
+        return null;
+    }
+
+    /**
+     * Returns <tt>true</tt> if this map contains a mapping for the
+     * specified key.
+     *
+     * @param  key   The key whose presence in this map is to be tested
+     * @return <tt>true</tt> if there is a mapping for <tt>key</tt>;
+     *         <tt>false</tt> otherwise
+     */
+    public boolean containsKey(Object key) {
+        return getEntry(key) != null;
+    }
+
+    /**
+     * Returns the entry associated with the specified key in this map.
+     * Returns null if the map contains no mapping for this key.
+     */
+    Entry<K,V> getEntry(Object key) {
+        Object k = maskNull(key);
+        int h = hash(k);
+        Entry<K,V>[] tab = getTable();
+        int index = indexFor(h, tab.length);
+        Entry<K,V> e = tab[index];
+        while (e != null && !(e.hash == h && eq(k, e.get())))
+            e = e.next;
+        return e;
+    }
+
+    /**
+     * Associates the specified value with the specified key in this map.
+     * If the map previously contained a mapping for this key, the old
+     * value is replaced.
+     *
+     * @param key key with which the specified value is to be associated.
+     * @param value value to be associated with the specified key.
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     *         (A <tt>null</tt> return can also indicate that the map
+     *         previously associated <tt>null</tt> with <tt>key</tt>.)
+     */
+    public V put(K key, V value) {
+        Object k = maskNull(key);
+        int h = hash(k);
+        Entry<K,V>[] tab = getTable();
+        int i = indexFor(h, tab.length);
+
+        for (Entry<K,V> e = tab[i]; e != null; e = e.next) {
+            if (h == e.hash && eq(k, e.get())) {
+                V oldValue = e.value;
+                if (value != oldValue)
+                    e.value = value;
+                return oldValue;
+            }
+        }
+
+        modCount++;
+        Entry<K,V> e = tab[i];
+        tab[i] = new Entry<>(k, value, queue, h, e);
+        if (++size >= threshold)
+            resize(tab.length * 2);
+        return null;
+    }
+
+    /**
+     * Rehashes the contents of this map into a new array with a
+     * larger capacity.  This method is called automatically when the
+     * number of keys in this map reaches its threshold.
+     *
+     * If current capacity is MAXIMUM_CAPACITY, this method does not
+     * resize the map, but sets threshold to Integer.MAX_VALUE.
+     * This has the effect of preventing future calls.
+     *
+     * @param newCapacity the new capacity, MUST be a power of two;
+     *        must be greater than current capacity unless current
+     *        capacity is MAXIMUM_CAPACITY (in which case value
+     *        is irrelevant).
+     */
+    void resize(int newCapacity) {
+        Entry<K,V>[] oldTable = getTable();
+        int oldCapacity = oldTable.length;
+        if (oldCapacity == MAXIMUM_CAPACITY) {
+            threshold = Integer.MAX_VALUE;
+            return;
+        }
+
+        Entry<K,V>[] newTable = newTable(newCapacity);
+        transfer(oldTable, newTable);
+        table = newTable;
+
+        /*
+         * If ignoring null elements and processing ref queue caused massive
+         * shrinkage, then restore old table.  This should be rare, but avoids
+         * unbounded expansion of garbage-filled tables.
+         */
+        if (size >= threshold / 2) {
+            threshold = (int)(newCapacity * loadFactor);
+        } else {
+            expungeStaleEntries();
+            transfer(newTable, oldTable);
+            table = oldTable;
+        }
+    }
+
+    /** Transfers all entries from src to dest tables */
+    private void transfer(Entry<K,V>[] src, Entry<K,V>[] dest) {
+        for (int j = 0; j < src.length; ++j) {
+            Entry<K,V> e = src[j];
+            src[j] = null;
+            while (e != null) {
+                Entry<K,V> next = e.next;
+                Object key = e.get();
+                if (key == null) {
+                    e.next = null;  // Help GC
+                    e.value = null; //  "   "
+                    size--;
+                } else {
+                    int i = indexFor(e.hash, dest.length);
+                    e.next = dest[i];
+                    dest[i] = e;
+                }
+                e = next;
+            }
+        }
+    }
+
+    /**
+     * Copies all of the mappings from the specified map to this map.
+     * These mappings will replace any mappings that this map had for any
+     * of the keys currently in the specified map.
+     *
+     * @param m mappings to be stored in this map.
+     * @throws  NullPointerException if the specified map is null.
+     */
+    public void putAll(Map<? extends K, ? extends V> m) {
+        int numKeysToBeAdded = m.size();
+        if (numKeysToBeAdded == 0)
+            return;
+
+        /*
+         * Expand the map if the map if the number of mappings to be added
+         * is greater than or equal to threshold.  This is conservative; the
+         * obvious condition is (m.size() + size) >= threshold, but this
+         * condition could result in a map with twice the appropriate capacity,
+         * if the keys to be added overlap with the keys already in this map.
+         * By using the conservative calculation, we subject ourself
+         * to at most one extra resize.
+         */
+        if (numKeysToBeAdded > threshold) {
+            int targetCapacity = (int)(numKeysToBeAdded / loadFactor + 1);
+            if (targetCapacity > MAXIMUM_CAPACITY)
+                targetCapacity = MAXIMUM_CAPACITY;
+            int newCapacity = table.length;
+            while (newCapacity < targetCapacity)
+                newCapacity <<= 1;
+            if (newCapacity > table.length)
+                resize(newCapacity);
+        }
+
+        for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
+            put(e.getKey(), e.getValue());
+    }
+
+    /**
+     * Removes the mapping for a key from this weak hash map if it is present.
+     * More formally, if this map contains a mapping from key <tt>k</tt> to
+     * value <tt>v</tt> such that <code>(key==null ?  k==null :
+     * key.equals(k))</code>, that mapping is removed.  (The map can contain
+     * at most one such mapping.)
+     *
+     * <p>Returns the value to which this map previously associated the key,
+     * or <tt>null</tt> if the map contained no mapping for the key.  A
+     * return value of <tt>null</tt> does not <i>necessarily</i> indicate
+     * that the map contained no mapping for the key; it's also possible
+     * that the map explicitly mapped the key to <tt>null</tt>.
+     *
+     * <p>The map will not contain a mapping for the specified key once the
+     * call returns.
+     *
+     * @param key key whose mapping is to be removed from the map
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>
+     */
+    public V remove(Object key) {
+        Object k = maskNull(key);
+        int h = hash(k);
+        Entry<K,V>[] tab = getTable();
+        int i = indexFor(h, tab.length);
+        Entry<K,V> prev = tab[i];
+        Entry<K,V> e = prev;
+
+        while (e != null) {
+            Entry<K,V> next = e.next;
+            if (h == e.hash && eq(k, e.get())) {
+                modCount++;
+                size--;
+                if (prev == e)
+                    tab[i] = next;
+                else
+                    prev.next = next;
+                return e.value;
+            }
+            prev = e;
+            e = next;
+        }
+
+        return null;
+    }
+
+    /** Special version of remove needed by Entry set */
+    boolean removeMapping(Object o) {
+        if (!(o instanceof Map.Entry))
+            return false;
+        Entry<K,V>[] tab = getTable();
+        Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
+        Object k = maskNull(entry.getKey());
+        int h = hash(k);
+        int i = indexFor(h, tab.length);
+        Entry<K,V> prev = tab[i];
+        Entry<K,V> e = prev;
+
+        while (e != null) {
+            Entry<K,V> next = e.next;
+            if (h == e.hash && e.equals(entry)) {
+                modCount++;
+                size--;
+                if (prev == e)
+                    tab[i] = next;
+                else
+                    prev.next = next;
+                return true;
+            }
+            prev = e;
+            e = next;
+        }
+
+        return false;
+    }
+
+    /**
+     * Removes all of the mappings from this map.
+     * The map will be empty after this call returns.
+     */
+    public void clear() {
+        // clear out ref queue. We don't need to expunge entries
+        // since table is getting cleared.
+        while (queue.poll() != null)
+            ;
+
+        modCount++;
+        Arrays.fill(table, null);
+        size = 0;
+
+        // Allocation of array may have caused GC, which may have caused
+        // additional entries to go stale.  Removing these entries from the
+        // reference queue will make them eligible for reclamation.
+        while (queue.poll() != null)
+            ;
+    }
+
+    /**
+     * Returns <tt>true</tt> if this map maps one or more keys to the
+     * specified value.
+     *
+     * @param value value whose presence in this map is to be tested
+     * @return <tt>true</tt> if this map maps one or more keys to the
+     *         specified value
+     */
+    public boolean containsValue(Object value) {
+        if (value==null)
+            return containsNullValue();
+
+        Entry<K,V>[] tab = getTable();
+        for (int i = tab.length; i-- > 0;)
+            for (Entry<K,V> e = tab[i]; e != null; e = e.next)
+                if (value.equals(e.value))
+                    return true;
+        return false;
+    }
+
+    /**
+     * Special-case code for containsValue with null argument
+     */
+    private boolean containsNullValue() {
+        Entry<K,V>[] tab = getTable();
+        for (int i = tab.length; i-- > 0;)
+            for (Entry<K,V> e = tab[i]; e != null; e = e.next)
+                if (e.value==null)
+                    return true;
+        return false;
+    }
+
+    /**
+     * The entries in this hash table extend WeakReference, using its main ref
+     * field as the key.
+     */
+    private static class Entry<K,V> extends WeakReference<Object> implements Map.Entry<K,V> {
+        V value;
+        final int hash;
+        Entry<K,V> next;
+
+        /**
+         * Creates new entry.
+         */
+        Entry(Object key, V value,
+              ReferenceQueue<Object> queue,
+              int hash, Entry<K,V> next) {
+            super(key, queue);
+            this.value = value;
+            this.hash  = hash;
+            this.next  = next;
+        }
+
+        @SuppressWarnings("unchecked")
+        public K getKey() {
+            return (K) WeakHashMap.unmaskNull(get());
+        }
+
+        public V getValue() {
+            return value;
+        }
+
+        public V setValue(V newValue) {
+            V oldValue = value;
+            value = newValue;
+            return oldValue;
+        }
+
+        public boolean equals(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+            K k1 = getKey();
+            Object k2 = e.getKey();
+            if (k1 == k2 || (k1 != null && k1.equals(k2))) {
+                V v1 = getValue();
+                Object v2 = e.getValue();
+                if (v1 == v2 || (v1 != null && v1.equals(v2)))
+                    return true;
+            }
+            return false;
+        }
+
+        public int hashCode() {
+            K k = getKey();
+            V v = getValue();
+            return Objects.hashCode(k) ^ Objects.hashCode(v);
+        }
+
+        public String toString() {
+            return getKey() + "=" + getValue();
+        }
+    }
+
+    private abstract class HashIterator<T> implements Iterator<T> {
+        private int index;
+        private Entry<K,V> entry;
+        private Entry<K,V> lastReturned;
+        private int expectedModCount = modCount;
+
+        /**
+         * Strong reference needed to avoid disappearance of key
+         * between hasNext and next
+         */
+        private Object nextKey;
+
+        /**
+         * Strong reference needed to avoid disappearance of key
+         * between nextEntry() and any use of the entry
+         */
+        private Object currentKey;
+
+        HashIterator() {
+            index = isEmpty() ? 0 : table.length;
+        }
+
+        public boolean hasNext() {
+            Entry<K,V>[] t = table;
+
+            while (nextKey == null) {
+                Entry<K,V> e = entry;
+                int i = index;
+                while (e == null && i > 0)
+                    e = t[--i];
+                entry = e;
+                index = i;
+                if (e == null) {
+                    currentKey = null;
+                    return false;
+                }
+                nextKey = e.get(); // hold on to key in strong ref
+                if (nextKey == null)
+                    entry = entry.next;
+            }
+            return true;
+        }
+
+        /** The common parts of next() across different types of iterators */
+        protected Entry<K,V> nextEntry() {
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+            if (nextKey == null && !hasNext())
+                throw new NoSuchElementException();
+
+            lastReturned = entry;
+            entry = entry.next;
+            currentKey = nextKey;
+            nextKey = null;
+            return lastReturned;
+        }
+
+        public void remove() {
+            if (lastReturned == null)
+                throw new IllegalStateException();
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+
+            WeakHashMap.this.remove(currentKey);
+            expectedModCount = modCount;
+            lastReturned = null;
+            currentKey = null;
+        }
+
+    }
+
+    private class ValueIterator extends HashIterator<V> {
+        public V next() {
+            return nextEntry().value;
+        }
+    }
+
+    private class KeyIterator extends HashIterator<K> {
+        public K next() {
+            return nextEntry().getKey();
+        }
+    }
+
+    private class EntryIterator extends HashIterator<Map.Entry<K,V>> {
+        public Map.Entry<K,V> next() {
+            return nextEntry();
+        }
+    }
+
+    // Views
+
+    private transient Set<Map.Entry<K,V>> entrySet;
+
+    /**
+     * Returns a {@link Set} view of the keys contained in this map.
+     * The set is backed by the map, so changes to the map are
+     * reflected in the set, and vice-versa.  If the map is modified
+     * while an iteration over the set is in progress (except through
+     * the iterator's own <tt>remove</tt> operation), the results of
+     * the iteration are undefined.  The set supports element removal,
+     * which removes the corresponding mapping from the map, via the
+     * <tt>Iterator.remove</tt>, <tt>Set.remove</tt>,
+     * <tt>removeAll</tt>, <tt>retainAll</tt>, and <tt>clear</tt>
+     * operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
+     * operations.
+     */
+    public Set<K> keySet() {
+        Set<K> ks = keySet;
+        if (ks == null) {
+            ks = new KeySet();
+            keySet = ks;
+        }
+        return ks;
+    }
+
+    private class KeySet extends AbstractSet<K> {
+        public Iterator<K> iterator() {
+            return new KeyIterator();
+        }
+
+        public int size() {
+            return WeakHashMap.this.size();
+        }
+
+        public boolean contains(Object o) {
+            return containsKey(o);
+        }
+
+        public boolean remove(Object o) {
+            if (containsKey(o)) {
+                WeakHashMap.this.remove(o);
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public void clear() {
+            WeakHashMap.this.clear();
+        }
+
+        public Spliterator<K> spliterator() {
+            return new KeySpliterator<>(WeakHashMap.this, 0, -1, 0, 0);
+        }
+    }
+
+    /**
+     * Returns a {@link Collection} view of the values contained in this map.
+     * The collection is backed by the map, so changes to the map are
+     * reflected in the collection, and vice-versa.  If the map is
+     * modified while an iteration over the collection is in progress
+     * (except through the iterator's own <tt>remove</tt> operation),
+     * the results of the iteration are undefined.  The collection
+     * supports element removal, which removes the corresponding
+     * mapping from the map, via the <tt>Iterator.remove</tt>,
+     * <tt>Collection.remove</tt>, <tt>removeAll</tt>,
+     * <tt>retainAll</tt> and <tt>clear</tt> operations.  It does not
+     * support the <tt>add</tt> or <tt>addAll</tt> operations.
+     */
+    public Collection<V> values() {
+        Collection<V> vs = values;
+        if (vs == null) {
+            vs = new Values();
+            values = vs;
+        }
+        return vs;
+    }
+
+    private class Values extends AbstractCollection<V> {
+        public Iterator<V> iterator() {
+            return new ValueIterator();
+        }
+
+        public int size() {
+            return WeakHashMap.this.size();
+        }
+
+        public boolean contains(Object o) {
+            return containsValue(o);
+        }
+
+        public void clear() {
+            WeakHashMap.this.clear();
+        }
+
+        public Spliterator<V> spliterator() {
+            return new ValueSpliterator<>(WeakHashMap.this, 0, -1, 0, 0);
+        }
+    }
+
+    /**
+     * Returns a {@link Set} view of the mappings contained in this map.
+     * The set is backed by the map, so changes to the map are
+     * reflected in the set, and vice-versa.  If the map is modified
+     * while an iteration over the set is in progress (except through
+     * the iterator's own <tt>remove</tt> operation, or through the
+     * <tt>setValue</tt> operation on a map entry returned by the
+     * iterator) the results of the iteration are undefined.  The set
+     * supports element removal, which removes the corresponding
+     * mapping from the map, via the <tt>Iterator.remove</tt>,
+     * <tt>Set.remove</tt>, <tt>removeAll</tt>, <tt>retainAll</tt> and
+     * <tt>clear</tt> operations.  It does not support the
+     * <tt>add</tt> or <tt>addAll</tt> operations.
+     */
+    public Set<Map.Entry<K,V>> entrySet() {
+        Set<Map.Entry<K,V>> es = entrySet;
+        return es != null ? es : (entrySet = new EntrySet());
+    }
+
+    private class EntrySet extends AbstractSet<Map.Entry<K,V>> {
+        public Iterator<Map.Entry<K,V>> iterator() {
+            return new EntryIterator();
+        }
+
+        public boolean contains(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+            Entry<K,V> candidate = getEntry(e.getKey());
+            return candidate != null && candidate.equals(e);
+        }
+
+        public boolean remove(Object o) {
+            return removeMapping(o);
+        }
+
+        public int size() {
+            return WeakHashMap.this.size();
+        }
+
+        public void clear() {
+            WeakHashMap.this.clear();
+        }
+
+        private List<Map.Entry<K,V>> deepCopy() {
+            List<Map.Entry<K,V>> list = new ArrayList<>(size());
+            for (Map.Entry<K,V> e : this)
+                list.add(new AbstractMap.SimpleEntry<>(e));
+            return list;
+        }
+
+        public Object[] toArray() {
+            return deepCopy().toArray();
+        }
+
+        public <T> T[] toArray(T[] a) {
+            return deepCopy().toArray(a);
+        }
+
+        public Spliterator<Map.Entry<K,V>> spliterator() {
+            return new EntrySpliterator<>(WeakHashMap.this, 0, -1, 0, 0);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void forEach(BiConsumer<? super K, ? super V> action) {
+        Objects.requireNonNull(action);
+        int expectedModCount = modCount;
+
+        Entry<K, V>[] tab = getTable();
+        for (Entry<K, V> entry : tab) {
+            while (entry != null) {
+                Object key = entry.get();
+                if (key != null) {
+                    action.accept((K)WeakHashMap.unmaskNull(key), entry.value);
+                }
+                entry = entry.next;
+
+                if (expectedModCount != modCount) {
+                    throw new ConcurrentModificationException();
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+        Objects.requireNonNull(function);
+        int expectedModCount = modCount;
+
+        Entry<K, V>[] tab = getTable();;
+        for (Entry<K, V> entry : tab) {
+            while (entry != null) {
+                Object key = entry.get();
+                if (key != null) {
+                    entry.value = function.apply((K)WeakHashMap.unmaskNull(key), entry.value);
+                }
+                entry = entry.next;
+
+                if (expectedModCount != modCount) {
+                    throw new ConcurrentModificationException();
+                }
+            }
+        }
+    }
+
+    /**
+     * Similar form as other hash Spliterators, but skips dead
+     * elements.
+     */
+    static class WeakHashMapSpliterator<K,V> {
+        final WeakHashMap<K,V> map;
+        WeakHashMap.Entry<K,V> current; // current node
+        int index;             // current index, modified on advance/split
+        int fence;             // -1 until first use; then one past last index
+        int est;               // size estimate
+        int expectedModCount;  // for comodification checks
+
+        WeakHashMapSpliterator(WeakHashMap<K,V> m, int origin,
+                               int fence, int est,
+                               int expectedModCount) {
+            this.map = m;
+            this.index = origin;
+            this.fence = fence;
+            this.est = est;
+            this.expectedModCount = expectedModCount;
+        }
+
+        final int getFence() { // initialize fence and size on first use
+            int hi;
+            if ((hi = fence) < 0) {
+                WeakHashMap<K,V> m = map;
+                est = m.size();
+                expectedModCount = m.modCount;
+                hi = fence = m.table.length;
+            }
+            return hi;
+        }
+
+        public final long estimateSize() {
+            getFence(); // force init
+            return (long) est;
+        }
+    }
+
+    static final class KeySpliterator<K,V>
+        extends WeakHashMapSpliterator<K,V>
+        implements Spliterator<K> {
+        KeySpliterator(WeakHashMap<K,V> m, int origin, int fence, int est,
+                       int expectedModCount) {
+            super(m, origin, fence, est, expectedModCount);
+        }
+
+        public KeySpliterator<K,V> trySplit() {
+            int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
+            return (lo >= mid) ? null :
+                new KeySpliterator<K,V>(map, lo, index = mid, est >>>= 1,
+                                        expectedModCount);
+        }
+
+        public void forEachRemaining(Consumer<? super K> action) {
+            int i, hi, mc;
+            if (action == null)
+                throw new NullPointerException();
+            WeakHashMap<K,V> m = map;
+            WeakHashMap.Entry<K,V>[] tab = m.table;
+            if ((hi = fence) < 0) {
+                mc = expectedModCount = m.modCount;
+                hi = fence = tab.length;
+            }
+            else
+                mc = expectedModCount;
+            if (tab.length >= hi && (i = index) >= 0 &&
+                (i < (index = hi) || current != null)) {
+                WeakHashMap.Entry<K,V> p = current;
+                current = null; // exhaust
+                do {
+                    if (p == null)
+                        p = tab[i++];
+                    else {
+                        Object x = p.get();
+                        p = p.next;
+                        if (x != null) {
+                            @SuppressWarnings("unchecked") K k =
+                                (K) WeakHashMap.unmaskNull(x);
+                            action.accept(k);
+                        }
+                    }
+                } while (p != null || i < hi);
+            }
+            if (m.modCount != mc)
+                throw new ConcurrentModificationException();
+        }
+
+        public boolean tryAdvance(Consumer<? super K> action) {
+            int hi;
+            if (action == null)
+                throw new NullPointerException();
+            WeakHashMap.Entry<K,V>[] tab = map.table;
+            if (tab.length >= (hi = getFence()) && index >= 0) {
+                while (current != null || index < hi) {
+                    if (current == null)
+                        current = tab[index++];
+                    else {
+                        Object x = current.get();
+                        current = current.next;
+                        if (x != null) {
+                            @SuppressWarnings("unchecked") K k =
+                                (K) WeakHashMap.unmaskNull(x);
+                            action.accept(k);
+                            if (map.modCount != expectedModCount)
+                                throw new ConcurrentModificationException();
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return Spliterator.DISTINCT;
+        }
+    }
+
+    static final class ValueSpliterator<K,V>
+        extends WeakHashMapSpliterator<K,V>
+        implements Spliterator<V> {
+        ValueSpliterator(WeakHashMap<K,V> m, int origin, int fence, int est,
+                         int expectedModCount) {
+            super(m, origin, fence, est, expectedModCount);
+        }
+
+        public ValueSpliterator<K,V> trySplit() {
+            int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
+            return (lo >= mid) ? null :
+                new ValueSpliterator<K,V>(map, lo, index = mid, est >>>= 1,
+                                          expectedModCount);
+        }
+
+        public void forEachRemaining(Consumer<? super V> action) {
+            int i, hi, mc;
+            if (action == null)
+                throw new NullPointerException();
+            WeakHashMap<K,V> m = map;
+            WeakHashMap.Entry<K,V>[] tab = m.table;
+            if ((hi = fence) < 0) {
+                mc = expectedModCount = m.modCount;
+                hi = fence = tab.length;
+            }
+            else
+                mc = expectedModCount;
+            if (tab.length >= hi && (i = index) >= 0 &&
+                (i < (index = hi) || current != null)) {
+                WeakHashMap.Entry<K,V> p = current;
+                current = null; // exhaust
+                do {
+                    if (p == null)
+                        p = tab[i++];
+                    else {
+                        Object x = p.get();
+                        V v = p.value;
+                        p = p.next;
+                        if (x != null)
+                            action.accept(v);
+                    }
+                } while (p != null || i < hi);
+            }
+            if (m.modCount != mc)
+                throw new ConcurrentModificationException();
+        }
+
+        public boolean tryAdvance(Consumer<? super V> action) {
+            int hi;
+            if (action == null)
+                throw new NullPointerException();
+            WeakHashMap.Entry<K,V>[] tab = map.table;
+            if (tab.length >= (hi = getFence()) && index >= 0) {
+                while (current != null || index < hi) {
+                    if (current == null)
+                        current = tab[index++];
+                    else {
+                        Object x = current.get();
+                        V v = current.value;
+                        current = current.next;
+                        if (x != null) {
+                            action.accept(v);
+                            if (map.modCount != expectedModCount)
+                                throw new ConcurrentModificationException();
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return 0;
+        }
+    }
+
+    static final class EntrySpliterator<K,V>
+        extends WeakHashMapSpliterator<K,V>
+        implements Spliterator<Map.Entry<K,V>> {
+        EntrySpliterator(WeakHashMap<K,V> m, int origin, int fence, int est,
+                       int expectedModCount) {
+            super(m, origin, fence, est, expectedModCount);
+        }
+
+        public EntrySpliterator<K,V> trySplit() {
+            int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
+            return (lo >= mid) ? null :
+                new EntrySpliterator<K,V>(map, lo, index = mid, est >>>= 1,
+                                          expectedModCount);
+        }
+
+
+        public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
+            int i, hi, mc;
+            if (action == null)
+                throw new NullPointerException();
+            WeakHashMap<K,V> m = map;
+            WeakHashMap.Entry<K,V>[] tab = m.table;
+            if ((hi = fence) < 0) {
+                mc = expectedModCount = m.modCount;
+                hi = fence = tab.length;
+            }
+            else
+                mc = expectedModCount;
+            if (tab.length >= hi && (i = index) >= 0 &&
+                (i < (index = hi) || current != null)) {
+                WeakHashMap.Entry<K,V> p = current;
+                current = null; // exhaust
+                do {
+                    if (p == null)
+                        p = tab[i++];
+                    else {
+                        Object x = p.get();
+                        V v = p.value;
+                        p = p.next;
+                        if (x != null) {
+                            @SuppressWarnings("unchecked") K k =
+                                (K) WeakHashMap.unmaskNull(x);
+                            action.accept
+                                (new AbstractMap.SimpleImmutableEntry<K,V>(k, v));
+                        }
+                    }
+                } while (p != null || i < hi);
+            }
+            if (m.modCount != mc)
+                throw new ConcurrentModificationException();
+        }
+
+        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+            int hi;
+            if (action == null)
+                throw new NullPointerException();
+            WeakHashMap.Entry<K,V>[] tab = map.table;
+            if (tab.length >= (hi = getFence()) && index >= 0) {
+                while (current != null || index < hi) {
+                    if (current == null)
+                        current = tab[index++];
+                    else {
+                        Object x = current.get();
+                        V v = current.value;
+                        current = current.next;
+                        if (x != null) {
+                            @SuppressWarnings("unchecked") K k =
+                                (K) WeakHashMap.unmaskNull(x);
+                            action.accept
+                                (new AbstractMap.SimpleImmutableEntry<K,V>(k, v));
+                            if (map.modCount != expectedModCount)
+                                throw new ConcurrentModificationException();
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return Spliterator.DISTINCT;
+        }
+    }
+
+}

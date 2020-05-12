@@ -1,534 +1,425 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.traversers;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.opti.SchemaDOMParser;
-/*     */ import com.sun.org.apache.xerces.internal.util.JAXPNamespaceContextWrapper;
-/*     */ import com.sun.org.apache.xerces.internal.util.StAXLocationWrapper;
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.util.XMLAttributesImpl;
-/*     */ import com.sun.org.apache.xerces.internal.util.XMLStringBuffer;
-/*     */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Iterator;
-/*     */ import javax.xml.namespace.QName;
-/*     */ import javax.xml.stream.XMLEventReader;
-/*     */ import javax.xml.stream.XMLStreamException;
-/*     */ import javax.xml.stream.XMLStreamReader;
-/*     */ import javax.xml.stream.events.Attribute;
-/*     */ import javax.xml.stream.events.EndElement;
-/*     */ import javax.xml.stream.events.Namespace;
-/*     */ import javax.xml.stream.events.ProcessingInstruction;
-/*     */ import javax.xml.stream.events.StartElement;
-/*     */ import javax.xml.stream.events.XMLEvent;
-/*     */ import org.w3c.dom.Document;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class StAXSchemaParser
-/*     */ {
-/*     */   private static final int CHUNK_SIZE = 1024;
-/*     */   private static final int CHUNK_MASK = 1023;
-/*  68 */   private final char[] fCharBuffer = new char[1024];
-/*     */ 
-/*     */   
-/*     */   private SymbolTable fSymbolTable;
-/*     */ 
-/*     */   
-/*     */   private SchemaDOMParser fSchemaDOMParser;
-/*     */ 
-/*     */   
-/*  77 */   private final StAXLocationWrapper fLocationWrapper = new StAXLocationWrapper();
-/*     */ 
-/*     */   
-/*  80 */   private final JAXPNamespaceContextWrapper fNamespaceContext = new JAXPNamespaceContextWrapper(this.fSymbolTable);
-/*     */ 
-/*     */   
-/*  83 */   private final QName fElementQName = new QName();
-/*  84 */   private final QName fAttributeQName = new QName();
-/*  85 */   private final XMLAttributesImpl fAttributes = new XMLAttributesImpl();
-/*  86 */   private final XMLString fTempString = new XMLString();
-/*  87 */   private final ArrayList fDeclaredPrefixes = new ArrayList();
-/*  88 */   private final XMLStringBuffer fStringBuffer = new XMLStringBuffer();
-/*     */   private int fDepth;
-/*     */   
-/*     */   public StAXSchemaParser() {
-/*  92 */     this.fNamespaceContext.setDeclaredPrefixes(this.fDeclaredPrefixes);
-/*     */   }
-/*     */   
-/*     */   public void reset(SchemaDOMParser schemaDOMParser, SymbolTable symbolTable) {
-/*  96 */     this.fSchemaDOMParser = schemaDOMParser;
-/*  97 */     this.fSymbolTable = symbolTable;
-/*  98 */     this.fNamespaceContext.setSymbolTable(this.fSymbolTable);
-/*  99 */     this.fNamespaceContext.reset();
-/*     */   }
-/*     */   
-/*     */   public Document getDocument() {
-/* 103 */     return this.fSchemaDOMParser.getDocument();
-/*     */   }
-/*     */   
-/*     */   public void parse(XMLEventReader input) throws XMLStreamException, XNIException {
-/* 107 */     XMLEvent currentEvent = input.peek();
-/* 108 */     if (currentEvent != null) {
-/* 109 */       int eventType = currentEvent.getEventType();
-/* 110 */       if (eventType != 7 && eventType != 1)
-/*     */       {
-/* 112 */         throw new XMLStreamException();
-/*     */       }
-/* 114 */       this.fLocationWrapper.setLocation(currentEvent.getLocation());
-/* 115 */       this.fSchemaDOMParser.startDocument(this.fLocationWrapper, null, this.fNamespaceContext, null);
-/* 116 */       while (input.hasNext()) {
-/* 117 */         StartElement start; EndElement end; ProcessingInstruction pi; currentEvent = input.nextEvent();
-/* 118 */         eventType = currentEvent.getEventType();
-/* 119 */         switch (eventType) {
-/*     */           case 1:
-/* 121 */             this.fDepth++;
-/* 122 */             start = currentEvent.asStartElement();
-/* 123 */             fillQName(this.fElementQName, start.getName());
-/* 124 */             this.fLocationWrapper.setLocation(start.getLocation());
-/* 125 */             this.fNamespaceContext.setNamespaceContext(start.getNamespaceContext());
-/* 126 */             fillXMLAttributes(start);
-/* 127 */             fillDeclaredPrefixes(start);
-/* 128 */             addNamespaceDeclarations();
-/* 129 */             this.fNamespaceContext.pushContext();
-/* 130 */             this.fSchemaDOMParser.startElement(this.fElementQName, this.fAttributes, null);
-/*     */           
-/*     */           case 2:
-/* 133 */             end = currentEvent.asEndElement();
-/* 134 */             fillQName(this.fElementQName, end.getName());
-/* 135 */             fillDeclaredPrefixes(end);
-/* 136 */             this.fLocationWrapper.setLocation(end.getLocation());
-/* 137 */             this.fSchemaDOMParser.endElement(this.fElementQName, null);
-/* 138 */             this.fNamespaceContext.popContext();
-/* 139 */             this.fDepth--;
-/* 140 */             if (this.fDepth <= 0) {
-/*     */               break;
-/*     */             }
-/*     */           
-/*     */           case 4:
-/* 145 */             sendCharactersToSchemaParser(currentEvent.asCharacters().getData(), false);
-/*     */           
-/*     */           case 6:
-/* 148 */             sendCharactersToSchemaParser(currentEvent.asCharacters().getData(), true);
-/*     */           
-/*     */           case 12:
-/* 151 */             this.fSchemaDOMParser.startCDATA(null);
-/* 152 */             sendCharactersToSchemaParser(currentEvent.asCharacters().getData(), false);
-/* 153 */             this.fSchemaDOMParser.endCDATA(null);
-/*     */           
-/*     */           case 3:
-/* 156 */             pi = (ProcessingInstruction)currentEvent;
-/* 157 */             fillProcessingInstruction(pi.getData());
-/* 158 */             this.fSchemaDOMParser.processingInstruction(pi.getTarget(), this.fTempString, null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           case 7:
-/* 170 */             this.fDepth++;
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       } 
-/* 178 */       this.fLocationWrapper.setLocation(null);
-/* 179 */       this.fNamespaceContext.setNamespaceContext(null);
-/* 180 */       this.fSchemaDOMParser.endDocument(null);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void parse(XMLStreamReader input) throws XMLStreamException, XNIException {
-/* 185 */     if (input.hasNext()) {
-/* 186 */       int eventType = input.getEventType();
-/* 187 */       if (eventType != 7 && eventType != 1)
-/*     */       {
-/* 189 */         throw new XMLStreamException();
-/*     */       }
-/* 191 */       this.fLocationWrapper.setLocation(input.getLocation());
-/* 192 */       this.fSchemaDOMParser.startDocument(this.fLocationWrapper, null, this.fNamespaceContext, null);
-/* 193 */       boolean first = true;
-/* 194 */       while (input.hasNext()) {
-/* 195 */         if (!first) {
-/* 196 */           eventType = input.next();
-/*     */         } else {
-/*     */           
-/* 199 */           first = false;
-/*     */         } 
-/* 201 */         switch (eventType) {
-/*     */           case 1:
-/* 203 */             this.fDepth++;
-/* 204 */             this.fLocationWrapper.setLocation(input.getLocation());
-/* 205 */             this.fNamespaceContext.setNamespaceContext(input.getNamespaceContext());
-/* 206 */             fillQName(this.fElementQName, input.getNamespaceURI(), input
-/* 207 */                 .getLocalName(), input.getPrefix());
-/* 208 */             fillXMLAttributes(input);
-/* 209 */             fillDeclaredPrefixes(input);
-/* 210 */             addNamespaceDeclarations();
-/* 211 */             this.fNamespaceContext.pushContext();
-/* 212 */             this.fSchemaDOMParser.startElement(this.fElementQName, this.fAttributes, null);
-/*     */           
-/*     */           case 2:
-/* 215 */             this.fLocationWrapper.setLocation(input.getLocation());
-/* 216 */             this.fNamespaceContext.setNamespaceContext(input.getNamespaceContext());
-/* 217 */             fillQName(this.fElementQName, input.getNamespaceURI(), input
-/* 218 */                 .getLocalName(), input.getPrefix());
-/* 219 */             fillDeclaredPrefixes(input);
-/* 220 */             this.fSchemaDOMParser.endElement(this.fElementQName, null);
-/* 221 */             this.fNamespaceContext.popContext();
-/* 222 */             this.fDepth--;
-/* 223 */             if (this.fDepth <= 0) {
-/*     */               break;
-/*     */             }
-/*     */           
-/*     */           case 4:
-/* 228 */             this.fTempString.setValues(input.getTextCharacters(), input
-/* 229 */                 .getTextStart(), input.getTextLength());
-/* 230 */             this.fSchemaDOMParser.characters(this.fTempString, null);
-/*     */           
-/*     */           case 6:
-/* 233 */             this.fTempString.setValues(input.getTextCharacters(), input
-/* 234 */                 .getTextStart(), input.getTextLength());
-/* 235 */             this.fSchemaDOMParser.ignorableWhitespace(this.fTempString, null);
-/*     */           
-/*     */           case 12:
-/* 238 */             this.fSchemaDOMParser.startCDATA(null);
-/* 239 */             this.fTempString.setValues(input.getTextCharacters(), input
-/* 240 */                 .getTextStart(), input.getTextLength());
-/* 241 */             this.fSchemaDOMParser.characters(this.fTempString, null);
-/* 242 */             this.fSchemaDOMParser.endCDATA(null);
-/*     */           
-/*     */           case 3:
-/* 245 */             fillProcessingInstruction(input.getPIData());
-/* 246 */             this.fSchemaDOMParser.processingInstruction(input.getPITarget(), this.fTempString, null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           case 7:
-/* 258 */             this.fDepth++;
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       } 
-/* 266 */       this.fLocationWrapper.setLocation(null);
-/* 267 */       this.fNamespaceContext.setNamespaceContext(null);
-/* 268 */       this.fSchemaDOMParser.endDocument(null);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void sendCharactersToSchemaParser(String str, boolean whitespace) {
-/*     */     // Byte code:
-/*     */     //   0: aload_1
-/*     */     //   1: ifnull -> 156
-/*     */     //   4: aload_1
-/*     */     //   5: invokevirtual length : ()I
-/*     */     //   8: istore_3
-/*     */     //   9: iload_3
-/*     */     //   10: sipush #1023
-/*     */     //   13: iand
-/*     */     //   14: istore #4
-/*     */     //   16: iload #4
-/*     */     //   18: ifle -> 78
-/*     */     //   21: aload_1
-/*     */     //   22: iconst_0
-/*     */     //   23: iload #4
-/*     */     //   25: aload_0
-/*     */     //   26: getfield fCharBuffer : [C
-/*     */     //   29: iconst_0
-/*     */     //   30: invokevirtual getChars : (II[CI)V
-/*     */     //   33: aload_0
-/*     */     //   34: getfield fTempString : Lcom/sun/org/apache/xerces/internal/xni/XMLString;
-/*     */     //   37: aload_0
-/*     */     //   38: getfield fCharBuffer : [C
-/*     */     //   41: iconst_0
-/*     */     //   42: iload #4
-/*     */     //   44: invokevirtual setValues : ([CII)V
-/*     */     //   47: iload_2
-/*     */     //   48: ifeq -> 66
-/*     */     //   51: aload_0
-/*     */     //   52: getfield fSchemaDOMParser : Lcom/sun/org/apache/xerces/internal/impl/xs/opti/SchemaDOMParser;
-/*     */     //   55: aload_0
-/*     */     //   56: getfield fTempString : Lcom/sun/org/apache/xerces/internal/xni/XMLString;
-/*     */     //   59: aconst_null
-/*     */     //   60: invokevirtual ignorableWhitespace : (Lcom/sun/org/apache/xerces/internal/xni/XMLString;Lcom/sun/org/apache/xerces/internal/xni/Augmentations;)V
-/*     */     //   63: goto -> 78
-/*     */     //   66: aload_0
-/*     */     //   67: getfield fSchemaDOMParser : Lcom/sun/org/apache/xerces/internal/impl/xs/opti/SchemaDOMParser;
-/*     */     //   70: aload_0
-/*     */     //   71: getfield fTempString : Lcom/sun/org/apache/xerces/internal/xni/XMLString;
-/*     */     //   74: aconst_null
-/*     */     //   75: invokevirtual characters : (Lcom/sun/org/apache/xerces/internal/xni/XMLString;Lcom/sun/org/apache/xerces/internal/xni/Augmentations;)V
-/*     */     //   78: iload #4
-/*     */     //   80: istore #5
-/*     */     //   82: iload #5
-/*     */     //   84: iload_3
-/*     */     //   85: if_icmpge -> 156
-/*     */     //   88: aload_1
-/*     */     //   89: iload #5
-/*     */     //   91: wide iinc #5 1024
-/*     */     //   97: iload #5
-/*     */     //   99: aload_0
-/*     */     //   100: getfield fCharBuffer : [C
-/*     */     //   103: iconst_0
-/*     */     //   104: invokevirtual getChars : (II[CI)V
-/*     */     //   107: aload_0
-/*     */     //   108: getfield fTempString : Lcom/sun/org/apache/xerces/internal/xni/XMLString;
-/*     */     //   111: aload_0
-/*     */     //   112: getfield fCharBuffer : [C
-/*     */     //   115: iconst_0
-/*     */     //   116: sipush #1024
-/*     */     //   119: invokevirtual setValues : ([CII)V
-/*     */     //   122: iload_2
-/*     */     //   123: ifeq -> 141
-/*     */     //   126: aload_0
-/*     */     //   127: getfield fSchemaDOMParser : Lcom/sun/org/apache/xerces/internal/impl/xs/opti/SchemaDOMParser;
-/*     */     //   130: aload_0
-/*     */     //   131: getfield fTempString : Lcom/sun/org/apache/xerces/internal/xni/XMLString;
-/*     */     //   134: aconst_null
-/*     */     //   135: invokevirtual ignorableWhitespace : (Lcom/sun/org/apache/xerces/internal/xni/XMLString;Lcom/sun/org/apache/xerces/internal/xni/Augmentations;)V
-/*     */     //   138: goto -> 82
-/*     */     //   141: aload_0
-/*     */     //   142: getfield fSchemaDOMParser : Lcom/sun/org/apache/xerces/internal/impl/xs/opti/SchemaDOMParser;
-/*     */     //   145: aload_0
-/*     */     //   146: getfield fTempString : Lcom/sun/org/apache/xerces/internal/xni/XMLString;
-/*     */     //   149: aconst_null
-/*     */     //   150: invokevirtual characters : (Lcom/sun/org/apache/xerces/internal/xni/XMLString;Lcom/sun/org/apache/xerces/internal/xni/Augmentations;)V
-/*     */     //   153: goto -> 82
-/*     */     //   156: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #274	-> 0
-/*     */     //   #275	-> 4
-/*     */     //   #276	-> 9
-/*     */     //   #277	-> 16
-/*     */     //   #278	-> 21
-/*     */     //   #279	-> 33
-/*     */     //   #280	-> 47
-/*     */     //   #281	-> 51
-/*     */     //   #284	-> 66
-/*     */     //   #287	-> 78
-/*     */     //   #288	-> 82
-/*     */     //   #289	-> 88
-/*     */     //   #290	-> 107
-/*     */     //   #291	-> 122
-/*     */     //   #292	-> 126
-/*     */     //   #295	-> 141
-/*     */     //   #299	-> 156
-/*     */     // Local variable table:
-/*     */     //   start	length	slot	name	descriptor
-/*     */     //   9	147	3	length	I
-/*     */     //   16	140	4	remainder	I
-/*     */     //   82	74	5	i	I
-/*     */     //   0	157	0	this	Lcom/sun/org/apache/xerces/internal/impl/xs/traversers/StAXSchemaParser;
-/*     */     //   0	157	1	str	Ljava/lang/String;
-/*     */     //   0	157	2	whitespace	Z
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void fillProcessingInstruction(String data) {
-/* 303 */     int dataLength = data.length();
-/* 304 */     char[] charBuffer = this.fCharBuffer;
-/* 305 */     if (charBuffer.length < dataLength) {
-/*     */ 
-/*     */       
-/* 308 */       charBuffer = data.toCharArray();
-/*     */     } else {
-/*     */       
-/* 311 */       data.getChars(0, dataLength, charBuffer, 0);
-/*     */     } 
-/* 313 */     this.fTempString.setValues(charBuffer, 0, dataLength);
-/*     */   }
-/*     */   
-/*     */   private void fillXMLAttributes(StartElement event) {
-/* 317 */     this.fAttributes.removeAllAttributes();
-/* 318 */     Iterator<Attribute> attrs = event.getAttributes();
-/* 319 */     while (attrs.hasNext()) {
-/* 320 */       Attribute attr = attrs.next();
-/* 321 */       fillQName(this.fAttributeQName, attr.getName());
-/* 322 */       String type = attr.getDTDType();
-/* 323 */       int idx = this.fAttributes.getLength();
-/* 324 */       this.fAttributes.addAttributeNS(this.fAttributeQName, (type != null) ? type : XMLSymbols.fCDATASymbol, attr
-/* 325 */           .getValue());
-/* 326 */       this.fAttributes.setSpecified(idx, attr.isSpecified());
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void fillXMLAttributes(XMLStreamReader input) {
-/* 331 */     this.fAttributes.removeAllAttributes();
-/* 332 */     int len = input.getAttributeCount();
-/* 333 */     for (int i = 0; i < len; i++) {
-/* 334 */       fillQName(this.fAttributeQName, input.getAttributeNamespace(i), input
-/* 335 */           .getAttributeLocalName(i), input.getAttributePrefix(i));
-/* 336 */       String type = input.getAttributeType(i);
-/* 337 */       this.fAttributes.addAttributeNS(this.fAttributeQName, (type != null) ? type : XMLSymbols.fCDATASymbol, input
-/* 338 */           .getAttributeValue(i));
-/* 339 */       this.fAttributes.setSpecified(i, input.isAttributeSpecified(i));
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void addNamespaceDeclarations() {
-/* 344 */     String prefix = null;
-/* 345 */     String localpart = null;
-/* 346 */     String rawname = null;
-/* 347 */     String nsPrefix = null;
-/* 348 */     String nsURI = null;
-/*     */     
-/* 350 */     Iterator<String> iter = this.fDeclaredPrefixes.iterator();
-/* 351 */     while (iter.hasNext()) {
-/* 352 */       nsPrefix = iter.next();
-/* 353 */       nsURI = this.fNamespaceContext.getURI(nsPrefix);
-/* 354 */       if (nsPrefix.length() > 0) {
-/* 355 */         prefix = XMLSymbols.PREFIX_XMLNS;
-/* 356 */         localpart = nsPrefix;
-/* 357 */         this.fStringBuffer.clear();
-/* 358 */         this.fStringBuffer.append(prefix);
-/* 359 */         this.fStringBuffer.append(':');
-/* 360 */         this.fStringBuffer.append(localpart);
-/* 361 */         rawname = this.fSymbolTable.addSymbol(this.fStringBuffer.ch, this.fStringBuffer.offset, this.fStringBuffer.length);
-/*     */       } else {
-/*     */         
-/* 364 */         prefix = XMLSymbols.EMPTY_STRING;
-/* 365 */         localpart = XMLSymbols.PREFIX_XMLNS;
-/* 366 */         rawname = XMLSymbols.PREFIX_XMLNS;
-/*     */       } 
-/* 368 */       this.fAttributeQName.setValues(prefix, localpart, rawname, NamespaceContext.XMLNS_URI);
-/* 369 */       this.fAttributes.addAttribute(this.fAttributeQName, XMLSymbols.fCDATASymbol, (nsURI != null) ? nsURI : XMLSymbols.EMPTY_STRING);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void fillDeclaredPrefixes(StartElement event) {
-/* 376 */     fillDeclaredPrefixes(event.getNamespaces());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void fillDeclaredPrefixes(EndElement event) {
-/* 381 */     fillDeclaredPrefixes(event.getNamespaces());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void fillDeclaredPrefixes(Iterator<Namespace> namespaces) {
-/* 386 */     this.fDeclaredPrefixes.clear();
-/* 387 */     while (namespaces.hasNext()) {
-/* 388 */       Namespace ns = namespaces.next();
-/* 389 */       String prefix = ns.getPrefix();
-/* 390 */       this.fDeclaredPrefixes.add((prefix != null) ? prefix : "");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void fillDeclaredPrefixes(XMLStreamReader reader) {
-/* 396 */     this.fDeclaredPrefixes.clear();
-/* 397 */     int len = reader.getNamespaceCount();
-/* 398 */     for (int i = 0; i < len; i++) {
-/* 399 */       String prefix = reader.getNamespacePrefix(i);
-/* 400 */       this.fDeclaredPrefixes.add((prefix != null) ? prefix : "");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void fillQName(QName toFill, QName toCopy) {
-/* 406 */     fillQName(toFill, toCopy.getNamespaceURI(), toCopy.getLocalPart(), toCopy.getPrefix());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final void fillQName(QName toFill, String uri, String localpart, String prefix) {
-/* 411 */     uri = (uri != null && uri.length() > 0) ? this.fSymbolTable.addSymbol(uri) : null;
-/* 412 */     localpart = (localpart != null) ? this.fSymbolTable.addSymbol(localpart) : XMLSymbols.EMPTY_STRING;
-/* 413 */     prefix = (prefix != null && prefix.length() > 0) ? this.fSymbolTable.addSymbol(prefix) : XMLSymbols.EMPTY_STRING;
-/* 414 */     String raw = localpart;
-/* 415 */     if (prefix != XMLSymbols.EMPTY_STRING) {
-/* 416 */       this.fStringBuffer.clear();
-/* 417 */       this.fStringBuffer.append(prefix);
-/* 418 */       this.fStringBuffer.append(':');
-/* 419 */       this.fStringBuffer.append(localpart);
-/* 420 */       raw = this.fSymbolTable.addSymbol(this.fStringBuffer.ch, this.fStringBuffer.offset, this.fStringBuffer.length);
-/*     */     } 
-/* 422 */     toFill.setValues(prefix, localpart, raw, uri);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\traversers\StAXSchemaParser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.traversers;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.Namespace;
+import javax.xml.stream.events.ProcessingInstruction;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+
+import com.sun.org.apache.xerces.internal.impl.xs.opti.SchemaDOMParser;
+import com.sun.org.apache.xerces.internal.util.JAXPNamespaceContextWrapper;
+import com.sun.org.apache.xerces.internal.util.StAXLocationWrapper;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.util.XMLAttributesImpl;
+import com.sun.org.apache.xerces.internal.util.XMLStringBuffer;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import org.w3c.dom.Document;
+
+/**
+ * <p>StAXSchemaParser reads StAX events, converts them into XNI events
+ * and passes them directly to the SchemaDOMParser.</p>
+ *
+ * @xerces.internal
+ *
+ * @version $Id: StAXSchemaParser.java,v 1.2 2010-10-26 23:01:12 joehw Exp $
+ */
+final class StAXSchemaParser {
+
+    /** Chunk size (1024). */
+    private static final int CHUNK_SIZE = (1 << 10);
+
+    /** Chunk mask (CHUNK_SIZE - 1). */
+    private static final int CHUNK_MASK = CHUNK_SIZE - 1;
+
+    /** Array for holding character data. **/
+    private final char [] fCharBuffer = new char[CHUNK_SIZE];
+
+    /** Symbol table **/
+    private SymbolTable fSymbolTable;
+
+    /** SchemaDOMParser, events will be delegated to SchemaDOMParser to pass */
+    private SchemaDOMParser fSchemaDOMParser;
+
+    /** XML Locator wrapper for SAX. **/
+    private final StAXLocationWrapper fLocationWrapper = new StAXLocationWrapper();
+
+    /** The namespace context of this document: stores namespaces in scope */
+    private final JAXPNamespaceContextWrapper fNamespaceContext = new JAXPNamespaceContextWrapper(fSymbolTable);
+
+    /** Fields for start element, end element and characters. */
+    private final QName fElementQName = new QName();
+    private final QName fAttributeQName = new QName();
+    private final XMLAttributesImpl fAttributes = new XMLAttributesImpl();
+    private final XMLString fTempString = new XMLString();
+    private final ArrayList fDeclaredPrefixes = new ArrayList();
+    private final XMLStringBuffer fStringBuffer = new XMLStringBuffer();
+    private int fDepth;
+
+    public StAXSchemaParser() {
+        fNamespaceContext.setDeclaredPrefixes(fDeclaredPrefixes);
+    }
+
+    public void reset(SchemaDOMParser schemaDOMParser, SymbolTable symbolTable) {
+        fSchemaDOMParser = schemaDOMParser;
+        fSymbolTable = symbolTable;
+        fNamespaceContext.setSymbolTable(fSymbolTable);
+        fNamespaceContext.reset();
+    }
+
+    public Document getDocument() {
+        return fSchemaDOMParser.getDocument();
+    }
+
+    public void parse(XMLEventReader input) throws XMLStreamException, XNIException {
+        XMLEvent currentEvent = input.peek();
+        if (currentEvent != null) {
+            int eventType = currentEvent.getEventType();
+            if (eventType != XMLStreamConstants.START_DOCUMENT &&
+                eventType != XMLStreamConstants.START_ELEMENT) {
+                throw new XMLStreamException();
+            }
+            fLocationWrapper.setLocation(currentEvent.getLocation());
+            fSchemaDOMParser.startDocument(fLocationWrapper, null, fNamespaceContext, null);
+            loop: while (input.hasNext()) {
+                currentEvent = input.nextEvent();
+                eventType = currentEvent.getEventType();
+                switch (eventType) {
+                case XMLStreamConstants.START_ELEMENT:
+                    ++fDepth;
+                    StartElement start = currentEvent.asStartElement();
+                    fillQName(fElementQName, start.getName());
+                    fLocationWrapper.setLocation(start.getLocation());
+                    fNamespaceContext.setNamespaceContext(start.getNamespaceContext());
+                    fillXMLAttributes(start);
+                    fillDeclaredPrefixes(start);
+                    addNamespaceDeclarations();
+                    fNamespaceContext.pushContext();
+                    fSchemaDOMParser.startElement(fElementQName, fAttributes, null);
+                    break;
+                case XMLStreamConstants.END_ELEMENT:
+                    EndElement end = currentEvent.asEndElement();
+                    fillQName(fElementQName, end.getName());
+                    fillDeclaredPrefixes(end);
+                    fLocationWrapper.setLocation(end.getLocation());
+                    fSchemaDOMParser.endElement(fElementQName, null);
+                    fNamespaceContext.popContext();
+                    --fDepth;
+                    if (fDepth <= 0) {
+                        break loop;
+                    }
+                    break;
+                case XMLStreamConstants.CHARACTERS:
+                    sendCharactersToSchemaParser(currentEvent.asCharacters().getData(), false);
+                    break;
+                case XMLStreamConstants.SPACE:
+                    sendCharactersToSchemaParser(currentEvent.asCharacters().getData(), true);
+                    break;
+                case XMLStreamConstants.CDATA:
+                    fSchemaDOMParser.startCDATA(null);
+                    sendCharactersToSchemaParser(currentEvent.asCharacters().getData(), false);
+                    fSchemaDOMParser.endCDATA(null);
+                    break;
+                case XMLStreamConstants.PROCESSING_INSTRUCTION:
+                    ProcessingInstruction pi = (ProcessingInstruction)currentEvent;
+                    fillProcessingInstruction(pi.getData());
+                    fSchemaDOMParser.processingInstruction(pi.getTarget(), fTempString, null);
+                    break;
+                case XMLStreamConstants.DTD:
+                    /* There shouldn't be a DTD in the schema */
+                    break;
+                case XMLStreamConstants.ENTITY_REFERENCE:
+                    /* Not needed for schemas */
+                    break;
+                case XMLStreamConstants.COMMENT:
+                    /* No point in sending comments */
+                    break;
+                case XMLStreamConstants.START_DOCUMENT:
+                    fDepth++;
+                    /* We automatically call startDocument before the loop */
+                    break;
+                case XMLStreamConstants.END_DOCUMENT:
+                    /* We automatically call endDocument after the loop */
+                    break;
+                }
+            }
+            fLocationWrapper.setLocation(null);
+            fNamespaceContext.setNamespaceContext(null);
+            fSchemaDOMParser.endDocument(null);
+        }
+    }
+
+    public void parse(XMLStreamReader input) throws XMLStreamException, XNIException {
+        if (input.hasNext()) {
+            int eventType = input.getEventType();
+            if (eventType != XMLStreamConstants.START_DOCUMENT &&
+                eventType != XMLStreamConstants.START_ELEMENT) {
+                throw new XMLStreamException();
+            }
+            fLocationWrapper.setLocation(input.getLocation());
+            fSchemaDOMParser.startDocument(fLocationWrapper, null, fNamespaceContext, null);
+            boolean first = true;
+            loop: while (input.hasNext()) {
+                if (!first) {
+                    eventType = input.next();
+                }
+                else {
+                    first = false;
+                }
+                switch (eventType) {
+                case XMLStreamConstants.START_ELEMENT:
+                    ++fDepth;
+                    fLocationWrapper.setLocation(input.getLocation());
+                    fNamespaceContext.setNamespaceContext(input.getNamespaceContext());
+                    fillQName(fElementQName, input.getNamespaceURI(),
+                        input.getLocalName(), input.getPrefix());
+                    fillXMLAttributes(input);
+                    fillDeclaredPrefixes(input);
+                    addNamespaceDeclarations();
+                    fNamespaceContext.pushContext();
+                    fSchemaDOMParser.startElement(fElementQName, fAttributes, null);
+                    break;
+                case XMLStreamConstants.END_ELEMENT:
+                    fLocationWrapper.setLocation(input.getLocation());
+                    fNamespaceContext.setNamespaceContext(input.getNamespaceContext());
+                    fillQName(fElementQName, input.getNamespaceURI(),
+                        input.getLocalName(), input.getPrefix());
+                    fillDeclaredPrefixes(input);
+                    fSchemaDOMParser.endElement(fElementQName, null);
+                    fNamespaceContext.popContext();
+                    --fDepth;
+                    if (fDepth <= 0) {
+                        break loop;
+                    }
+                    break;
+                case XMLStreamConstants.CHARACTERS:
+                    fTempString.setValues(input.getTextCharacters(),
+                        input.getTextStart(), input.getTextLength());
+                    fSchemaDOMParser.characters(fTempString, null);
+                    break;
+                case XMLStreamConstants.SPACE:
+                    fTempString.setValues(input.getTextCharacters(),
+                        input.getTextStart(), input.getTextLength());
+                    fSchemaDOMParser.ignorableWhitespace(fTempString, null);
+                    break;
+                case XMLStreamConstants.CDATA:
+                    fSchemaDOMParser.startCDATA(null);
+                    fTempString.setValues(input.getTextCharacters(),
+                        input.getTextStart(), input.getTextLength());
+                    fSchemaDOMParser.characters(fTempString, null);
+                    fSchemaDOMParser.endCDATA(null);
+                    break;
+                case XMLStreamConstants.PROCESSING_INSTRUCTION:
+                    fillProcessingInstruction(input.getPIData());
+                    fSchemaDOMParser.processingInstruction(input.getPITarget(), fTempString, null);
+                    break;
+                case XMLStreamConstants.DTD:
+                    /* There shouldn't be a DTD in the schema */
+                    break;
+                case XMLStreamConstants.ENTITY_REFERENCE:
+                    /* Not needed for schemas */
+                    break;
+                case XMLStreamConstants.COMMENT:
+                    /* No point in sending comments */
+                    break;
+                case XMLStreamConstants.START_DOCUMENT:
+                    ++fDepth;
+                    /* We automatically call startDocument before the loop */
+                    break;
+                case XMLStreamConstants.END_DOCUMENT:
+                    /* We automatically call endDocument after the loop */
+                    break;
+                }
+            }
+            fLocationWrapper.setLocation(null);
+            fNamespaceContext.setNamespaceContext(null);
+            fSchemaDOMParser.endDocument(null);
+        }
+    }
+
+    /** Send characters to the validator in CHUNK_SIZE character chunks. */
+    private void sendCharactersToSchemaParser(String str, boolean whitespace) {
+        if (str != null) {
+            final int length = str.length();
+            final int remainder = length & CHUNK_MASK;
+            if (remainder > 0) {
+                str.getChars(0, remainder, fCharBuffer, 0);
+                fTempString.setValues(fCharBuffer, 0, remainder);
+                if (whitespace) {
+                    fSchemaDOMParser.ignorableWhitespace(fTempString, null);
+                }
+                else {
+                    fSchemaDOMParser.characters(fTempString, null);
+                }
+            }
+            int i = remainder;
+            while (i < length) {
+                str.getChars(i, i += CHUNK_SIZE, fCharBuffer, 0);
+                fTempString.setValues(fCharBuffer, 0, CHUNK_SIZE);
+                if (whitespace) {
+                    fSchemaDOMParser.ignorableWhitespace(fTempString, null);
+                }
+                else {
+                    fSchemaDOMParser.characters(fTempString, null);
+                }
+            }
+        }
+    }
+
+    // processing instructions must be sent all in one chunk
+    private void fillProcessingInstruction(String data) {
+        final int dataLength = data.length();
+        char [] charBuffer = fCharBuffer;
+        if (charBuffer.length < dataLength) {
+            // toCharArray() creates a newly allocated array, so it's okay
+            // to keep a reference to it.
+            charBuffer = data.toCharArray();
+        }
+        else {
+            data.getChars(0, dataLength, charBuffer, 0);
+        }
+        fTempString.setValues(charBuffer, 0, dataLength);
+    }
+
+    private void fillXMLAttributes(StartElement event) {
+        fAttributes.removeAllAttributes();
+        final Iterator attrs = event.getAttributes();
+        while (attrs.hasNext()) {
+            Attribute attr = (Attribute) attrs.next();
+            fillQName(fAttributeQName, attr.getName());
+            String type = attr.getDTDType();
+            int idx = fAttributes.getLength();
+            fAttributes.addAttributeNS(fAttributeQName,
+                    (type != null) ? type : XMLSymbols.fCDATASymbol, attr.getValue());
+            fAttributes.setSpecified(idx, attr.isSpecified());
+        }
+    }
+
+    private void fillXMLAttributes(XMLStreamReader input) {
+        fAttributes.removeAllAttributes();
+        final int len = input.getAttributeCount();
+        for (int i = 0; i < len; ++i) {
+            fillQName(fAttributeQName, input.getAttributeNamespace(i),
+                input.getAttributeLocalName(i), input.getAttributePrefix(i));
+            String type = input.getAttributeType(i);
+            fAttributes.addAttributeNS(fAttributeQName,
+                    (type != null) ? type : XMLSymbols.fCDATASymbol, input.getAttributeValue(i));
+            fAttributes.setSpecified(i, input.isAttributeSpecified(i));
+        }
+    }
+
+    private void addNamespaceDeclarations() {
+        String prefix = null;
+        String localpart = null;
+        String rawname = null;
+        String nsPrefix = null;
+        String nsURI = null;
+
+        final Iterator iter = fDeclaredPrefixes.iterator();
+        while (iter.hasNext()) {
+            nsPrefix = (String) iter.next();
+            nsURI = fNamespaceContext.getURI(nsPrefix);
+            if (nsPrefix.length() > 0) {
+                prefix = XMLSymbols.PREFIX_XMLNS;
+                localpart = nsPrefix;
+                fStringBuffer.clear();
+                fStringBuffer.append(prefix);
+                fStringBuffer.append(':');
+                fStringBuffer.append(localpart);
+                rawname = fSymbolTable.addSymbol(fStringBuffer.ch, fStringBuffer.offset, fStringBuffer.length);
+            }
+            else {
+                prefix = XMLSymbols.EMPTY_STRING;
+                localpart = XMLSymbols.PREFIX_XMLNS;
+                rawname = XMLSymbols.PREFIX_XMLNS;
+            }
+            fAttributeQName.setValues(prefix, localpart, rawname, NamespaceContext.XMLNS_URI);
+            fAttributes.addAttribute(fAttributeQName, XMLSymbols.fCDATASymbol,
+                    (nsURI != null) ? nsURI : XMLSymbols.EMPTY_STRING);
+        }
+    }
+
+    /** Fills in the list of declared prefixes. */
+    private void fillDeclaredPrefixes(StartElement event) {
+        fillDeclaredPrefixes(event.getNamespaces());
+    }
+
+    /** Fills in the list of declared prefixes. */
+    private void fillDeclaredPrefixes(EndElement event) {
+        fillDeclaredPrefixes(event.getNamespaces());
+    }
+
+    /** Fills in the list of declared prefixes. */
+    private void fillDeclaredPrefixes(Iterator namespaces) {
+        fDeclaredPrefixes.clear();
+        while (namespaces.hasNext()) {
+            Namespace ns = (Namespace) namespaces.next();
+            String prefix = ns.getPrefix();
+            fDeclaredPrefixes.add(prefix != null ? prefix : "");
+        }
+    }
+
+    /** Fills in the list of declared prefixes. */
+    private void fillDeclaredPrefixes(XMLStreamReader reader) {
+        fDeclaredPrefixes.clear();
+        final int len = reader.getNamespaceCount();
+        for (int i = 0; i < len; ++i) {
+            String prefix = reader.getNamespacePrefix(i);
+            fDeclaredPrefixes.add(prefix != null ? prefix : "");
+        }
+    }
+
+    /** Fills in a QName object. */
+    private void fillQName(QName toFill, javax.xml.namespace.QName toCopy) {
+        fillQName(toFill, toCopy.getNamespaceURI(), toCopy.getLocalPart(), toCopy.getPrefix());
+    }
+
+    /** Fills in a QName object. */
+    final void fillQName(QName toFill, String uri, String localpart, String prefix) {
+        uri = (uri != null && uri.length() > 0) ? fSymbolTable.addSymbol(uri) : null;
+        localpart = (localpart != null) ? fSymbolTable.addSymbol(localpart) : XMLSymbols.EMPTY_STRING;
+        prefix = (prefix != null && prefix.length() > 0) ? fSymbolTable.addSymbol(prefix) : XMLSymbols.EMPTY_STRING;
+        String raw = localpart;
+        if (prefix != XMLSymbols.EMPTY_STRING) {
+            fStringBuffer.clear();
+            fStringBuffer.append(prefix);
+            fStringBuffer.append(':');
+            fStringBuffer.append(localpart);
+            raw = fSymbolTable.addSymbol(fStringBuffer.ch, fStringBuffer.offset, fStringBuffer.length);
+        }
+        toFill.setValues(prefix, localpart, raw, uri);
+    }
+
+} // StAXSchemaParser

@@ -1,49 +1,44 @@
-/*    */ package com.sun.corba.se.impl.legacy.connection;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class USLPort
-/*    */ {
-/*    */   private String type;
-/*    */   private int port;
-/*    */   
-/*    */   public USLPort(String paramString, int paramInt) {
-/* 35 */     this.type = paramString;
-/* 36 */     this.port = paramInt;
-/*    */   }
-/*    */   
-/* 39 */   public String getType() { return this.type; }
-/* 40 */   public int getPort() { return this.port; } public String toString() {
-/* 41 */     return this.type + ":" + this.port;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\legacy\connection\USLPort.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.legacy.connection;
+
+public class USLPort
+{
+    private String type;
+    private int    port;
+
+    public USLPort (String type, int port)
+    {
+        this.type = type;
+        this.port = port;
+    }
+
+    public String getType  () { return type; }
+    public int    getPort  () { return port; }
+    public String toString () { return type + ":" + port; }
+}
+
+// End of file.

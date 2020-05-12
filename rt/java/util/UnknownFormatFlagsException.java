@@ -1,74 +1,68 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UnknownFormatFlagsException
-/*    */   extends IllegalFormatException
-/*    */ {
-/*    */   private static final long serialVersionUID = 19370506L;
-/*    */   private String flags;
-/*    */   
-/*    */   public UnknownFormatFlagsException(String paramString) {
-/* 50 */     if (paramString == null)
-/* 51 */       throw new NullPointerException(); 
-/* 52 */     this.flags = paramString;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getFlags() {
-/* 61 */     return this.flags;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String getMessage() {
-/* 66 */     return "Flags = " + this.flags;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\UnknownFormatFlagsException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * Unchecked exception thrown when an unknown flag is given.
+ *
+ * <p> Unless otherwise specified, passing a <tt>null</tt> argument to any
+ * method or constructor in this class will cause a {@link
+ * NullPointerException} to be thrown.
+ *
+ * @since 1.5
+ */
+public class UnknownFormatFlagsException extends IllegalFormatException {
+
+    private static final long serialVersionUID = 19370506L;
+
+    private String flags;
+
+    /**
+     * Constructs an instance of this class with the specified flags.
+     *
+     * @param  f
+     *         The set of format flags which contain an unknown flag
+     */
+    public UnknownFormatFlagsException(String f) {
+        if (f == null)
+            throw new NullPointerException();
+        this.flags = f;
+    }
+
+    /**
+     * Returns the set of flags which contains an unknown flag.
+     *
+     * @return  The flags
+     */
+    public String getFlags() {
+        return flags;
+    }
+
+    // javadoc inherited from Throwable.java
+    public String getMessage() {
+        return "Flags = " + flags;
+    }
+}

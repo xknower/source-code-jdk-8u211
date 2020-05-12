@@ -1,1474 +1,1468 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.function.Consumer;
-/*      */ import java.util.function.Predicate;
-/*      */ import java.util.function.UnaryOperator;
-/*      */ import sun.misc.SharedSecrets;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class ArrayList<E>
-/*      */   extends AbstractList<E>
-/*      */   implements List<E>, RandomAccess, Cloneable, Serializable
-/*      */ {
-/*      */   private static final long serialVersionUID = 8683452581122892189L;
-/*      */   private static final int DEFAULT_CAPACITY = 10;
-/*  120 */   private static final Object[] EMPTY_ELEMENTDATA = new Object[0];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  127 */   private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = new Object[0];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   transient Object[] elementData;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int size;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int MAX_ARRAY_SIZE = 2147483639;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ArrayList(int paramInt) {
-/*  152 */     if (paramInt > 0) {
-/*  153 */       this.elementData = new Object[paramInt];
-/*  154 */     } else if (paramInt == 0) {
-/*  155 */       this.elementData = EMPTY_ELEMENTDATA;
-/*      */     } else {
-/*  157 */       throw new IllegalArgumentException("Illegal Capacity: " + paramInt);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ArrayList() {
-/*  166 */     this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ArrayList(Collection<? extends E> paramCollection) {
-/*  178 */     this.elementData = paramCollection.toArray();
-/*  179 */     if ((this.size = this.elementData.length) != 0) {
-/*      */       
-/*  181 */       if (this.elementData.getClass() != Object[].class) {
-/*  182 */         this.elementData = Arrays.copyOf(this.elementData, this.size, Object[].class);
-/*      */       }
-/*      */     } else {
-/*  185 */       this.elementData = EMPTY_ELEMENTDATA;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void trimToSize() {
-/*  195 */     this.modCount++;
-/*  196 */     if (this.size < this.elementData.length) {
-/*  197 */       this
-/*      */         
-/*  199 */         .elementData = (this.size == 0) ? EMPTY_ELEMENTDATA : Arrays.<Object>copyOf(this.elementData, this.size);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void ensureCapacity(int paramInt) {
-/*  211 */     byte b = (this.elementData != DEFAULTCAPACITY_EMPTY_ELEMENTDATA) ? 0 : 10;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  218 */     if (paramInt > b) {
-/*  219 */       ensureExplicitCapacity(paramInt);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static int calculateCapacity(Object[] paramArrayOfObject, int paramInt) {
-/*  224 */     if (paramArrayOfObject == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
-/*  225 */       return Math.max(10, paramInt);
-/*      */     }
-/*  227 */     return paramInt;
-/*      */   }
-/*      */   
-/*      */   private void ensureCapacityInternal(int paramInt) {
-/*  231 */     ensureExplicitCapacity(calculateCapacity(this.elementData, paramInt));
-/*      */   }
-/*      */   
-/*      */   private void ensureExplicitCapacity(int paramInt) {
-/*  235 */     this.modCount++;
-/*      */ 
-/*      */     
-/*  238 */     if (paramInt - this.elementData.length > 0) {
-/*  239 */       grow(paramInt);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void grow(int paramInt) {
-/*  258 */     int i = this.elementData.length;
-/*  259 */     int j = i + (i >> 1);
-/*  260 */     if (j - paramInt < 0)
-/*  261 */       j = paramInt; 
-/*  262 */     if (j - 2147483639 > 0) {
-/*  263 */       j = hugeCapacity(paramInt);
-/*      */     }
-/*  265 */     this.elementData = Arrays.copyOf(this.elementData, j);
-/*      */   }
-/*      */   
-/*      */   private static int hugeCapacity(int paramInt) {
-/*  269 */     if (paramInt < 0)
-/*  270 */       throw new OutOfMemoryError(); 
-/*  271 */     return (paramInt > 2147483639) ? Integer.MAX_VALUE : 2147483639;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/*  282 */     return this.size;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEmpty() {
-/*  291 */     return (this.size == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Object paramObject) {
-/*  304 */     return (indexOf(paramObject) >= 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexOf(Object paramObject) {
-/*  315 */     if (paramObject == null)
-/*  316 */     { for (byte b = 0; b < this.size; b++) {
-/*  317 */         if (this.elementData[b] == null)
-/*  318 */           return b; 
-/*      */       }  }
-/*  320 */     else { for (byte b = 0; b < this.size; b++) {
-/*  321 */         if (paramObject.equals(this.elementData[b]))
-/*  322 */           return b; 
-/*      */       }  }
-/*  324 */      return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lastIndexOf(Object paramObject) {
-/*  335 */     if (paramObject == null)
-/*  336 */     { for (int i = this.size - 1; i >= 0; i--) {
-/*  337 */         if (this.elementData[i] == null)
-/*  338 */           return i; 
-/*      */       }  }
-/*  340 */     else { for (int i = this.size - 1; i >= 0; i--) {
-/*  341 */         if (paramObject.equals(this.elementData[i]))
-/*  342 */           return i; 
-/*      */       }  }
-/*  344 */      return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/*      */     try {
-/*  355 */       ArrayList arrayList = (ArrayList)super.clone();
-/*  356 */       arrayList.elementData = Arrays.copyOf(this.elementData, this.size);
-/*  357 */       arrayList.modCount = 0;
-/*  358 */       return arrayList;
-/*  359 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*      */       
-/*  361 */       throw new InternalError(cloneNotSupportedException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] toArray() {
-/*  380 */     return Arrays.copyOf(this.elementData, this.size);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public <T> T[] toArray(T[] paramArrayOfT) {
-/*  409 */     if (paramArrayOfT.length < this.size)
-/*      */     {
-/*  411 */       return (T[])Arrays.<Object, Object>copyOf(this.elementData, this.size, (Class)paramArrayOfT.getClass()); } 
-/*  412 */     System.arraycopy(this.elementData, 0, paramArrayOfT, 0, this.size);
-/*  413 */     if (paramArrayOfT.length > this.size)
-/*  414 */       paramArrayOfT[this.size] = null; 
-/*  415 */     return paramArrayOfT;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   E elementData(int paramInt) {
-/*  422 */     return (E)this.elementData[paramInt];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E get(int paramInt) {
-/*  433 */     rangeCheck(paramInt);
-/*      */     
-/*  435 */     return elementData(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E set(int paramInt, E paramE) {
-/*  448 */     rangeCheck(paramInt);
-/*      */     
-/*  450 */     E e = elementData(paramInt);
-/*  451 */     this.elementData[paramInt] = paramE;
-/*  452 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean add(E paramE) {
-/*  462 */     ensureCapacityInternal(this.size + 1);
-/*  463 */     this.elementData[this.size++] = paramE;
-/*  464 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(int paramInt, E paramE) {
-/*  477 */     rangeCheckForAdd(paramInt);
-/*      */     
-/*  479 */     ensureCapacityInternal(this.size + 1);
-/*  480 */     System.arraycopy(this.elementData, paramInt, this.elementData, paramInt + 1, this.size - paramInt);
-/*      */     
-/*  482 */     this.elementData[paramInt] = paramE;
-/*  483 */     this.size++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E remove(int paramInt) {
-/*  496 */     rangeCheck(paramInt);
-/*      */     
-/*  498 */     this.modCount++;
-/*  499 */     E e = elementData(paramInt);
-/*      */     
-/*  501 */     int i = this.size - paramInt - 1;
-/*  502 */     if (i > 0) {
-/*  503 */       System.arraycopy(this.elementData, paramInt + 1, this.elementData, paramInt, i);
-/*      */     }
-/*  505 */     this.elementData[--this.size] = null;
-/*      */     
-/*  507 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean remove(Object paramObject) {
-/*  524 */     if (paramObject == null)
-/*  525 */     { for (byte b = 0; b < this.size; b++) {
-/*  526 */         if (this.elementData[b] == null) {
-/*  527 */           fastRemove(b);
-/*  528 */           return true;
-/*      */         } 
-/*      */       }  }
-/*  531 */     else { for (byte b = 0; b < this.size; b++) {
-/*  532 */         if (paramObject.equals(this.elementData[b])) {
-/*  533 */           fastRemove(b);
-/*  534 */           return true;
-/*      */         } 
-/*      */       }  }
-/*  537 */      return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void fastRemove(int paramInt) {
-/*  545 */     this.modCount++;
-/*  546 */     int i = this.size - paramInt - 1;
-/*  547 */     if (i > 0) {
-/*  548 */       System.arraycopy(this.elementData, paramInt + 1, this.elementData, paramInt, i);
-/*      */     }
-/*  550 */     this.elementData[--this.size] = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  558 */     this.modCount++;
-/*      */ 
-/*      */     
-/*  561 */     for (byte b = 0; b < this.size; b++) {
-/*  562 */       this.elementData[b] = null;
-/*      */     }
-/*  564 */     this.size = 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean addAll(Collection<? extends E> paramCollection) {
-/*  581 */     Object[] arrayOfObject = paramCollection.toArray();
-/*  582 */     int i = arrayOfObject.length;
-/*  583 */     ensureCapacityInternal(this.size + i);
-/*  584 */     System.arraycopy(arrayOfObject, 0, this.elementData, this.size, i);
-/*  585 */     this.size += i;
-/*  586 */     return (i != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean addAll(int paramInt, Collection<? extends E> paramCollection) {
-/*  605 */     rangeCheckForAdd(paramInt);
-/*      */     
-/*  607 */     Object[] arrayOfObject = paramCollection.toArray();
-/*  608 */     int i = arrayOfObject.length;
-/*  609 */     ensureCapacityInternal(this.size + i);
-/*      */     
-/*  611 */     int j = this.size - paramInt;
-/*  612 */     if (j > 0) {
-/*  613 */       System.arraycopy(this.elementData, paramInt, this.elementData, paramInt + i, j);
-/*      */     }
-/*      */     
-/*  616 */     System.arraycopy(arrayOfObject, 0, this.elementData, paramInt, i);
-/*  617 */     this.size += i;
-/*  618 */     return (i != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void removeRange(int paramInt1, int paramInt2) {
-/*  636 */     this.modCount++;
-/*  637 */     int i = this.size - paramInt2;
-/*  638 */     System.arraycopy(this.elementData, paramInt2, this.elementData, paramInt1, i);
-/*      */ 
-/*      */ 
-/*      */     
-/*  642 */     int j = this.size - paramInt2 - paramInt1;
-/*  643 */     for (int k = j; k < this.size; k++) {
-/*  644 */       this.elementData[k] = null;
-/*      */     }
-/*  646 */     this.size = j;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void rangeCheck(int paramInt) {
-/*  656 */     if (paramInt >= this.size) {
-/*  657 */       throw new IndexOutOfBoundsException(outOfBoundsMsg(paramInt));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void rangeCheckForAdd(int paramInt) {
-/*  664 */     if (paramInt > this.size || paramInt < 0) {
-/*  665 */       throw new IndexOutOfBoundsException(outOfBoundsMsg(paramInt));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String outOfBoundsMsg(int paramInt) {
-/*  674 */     return "Index: " + paramInt + ", Size: " + this.size;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeAll(Collection<?> paramCollection) {
-/*  693 */     Objects.requireNonNull(paramCollection);
-/*  694 */     return batchRemove(paramCollection, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean retainAll(Collection<?> paramCollection) {
-/*  714 */     Objects.requireNonNull(paramCollection);
-/*  715 */     return batchRemove(paramCollection, true);
-/*      */   }
-/*      */   
-/*      */   private boolean batchRemove(Collection<?> paramCollection, boolean paramBoolean) {
-/*  719 */     Object[] arrayOfObject = this.elementData;
-/*  720 */     byte b = 0; int i = 0;
-/*  721 */     boolean bool = false;
-/*      */     try {
-/*  723 */       for (; b < this.size; b++) {
-/*  724 */         if (paramCollection.contains(arrayOfObject[b]) == paramBoolean) {
-/*  725 */           arrayOfObject[i++] = arrayOfObject[b];
-/*      */         }
-/*      */       } 
-/*      */     } finally {
-/*  729 */       if (b != this.size) {
-/*  730 */         System.arraycopy(arrayOfObject, b, arrayOfObject, i, this.size - b);
-/*      */ 
-/*      */         
-/*  733 */         i += this.size - b;
-/*      */       } 
-/*  735 */       if (i != this.size) {
-/*      */         
-/*  737 */         for (int j = i; j < this.size; j++)
-/*  738 */           arrayOfObject[j] = null; 
-/*  739 */         this.modCount += this.size - i;
-/*  740 */         this.size = i;
-/*  741 */         bool = true;
-/*      */       } 
-/*      */     } 
-/*  744 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/*  758 */     int i = this.modCount;
-/*  759 */     paramObjectOutputStream.defaultWriteObject();
-/*      */ 
-/*      */     
-/*  762 */     paramObjectOutputStream.writeInt(this.size);
-/*      */ 
-/*      */     
-/*  765 */     for (byte b = 0; b < this.size; b++) {
-/*  766 */       paramObjectOutputStream.writeObject(this.elementData[b]);
-/*      */     }
-/*      */     
-/*  769 */     if (this.modCount != i) {
-/*  770 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/*  780 */     this.elementData = EMPTY_ELEMENTDATA;
-/*      */ 
-/*      */     
-/*  783 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */     
-/*  786 */     paramObjectInputStream.readInt();
-/*      */     
-/*  788 */     if (this.size > 0) {
-/*      */       
-/*  790 */       int i = calculateCapacity(this.elementData, this.size);
-/*  791 */       SharedSecrets.getJavaOISAccess().checkArray(paramObjectInputStream, Object[].class, i);
-/*  792 */       ensureCapacityInternal(this.size);
-/*      */       
-/*  794 */       Object[] arrayOfObject = this.elementData;
-/*      */       
-/*  796 */       for (byte b = 0; b < this.size; b++) {
-/*  797 */         arrayOfObject[b] = paramObjectInputStream.readObject();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ListIterator<E> listIterator(int paramInt) {
-/*  815 */     if (paramInt < 0 || paramInt > this.size)
-/*  816 */       throw new IndexOutOfBoundsException("Index: " + paramInt); 
-/*  817 */     return new ListItr(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ListIterator<E> listIterator() {
-/*  829 */     return new ListItr(0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Iterator<E> iterator() {
-/*  840 */     return new Itr();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class Itr
-/*      */     implements Iterator<E>
-/*      */   {
-/*      */     int cursor;
-/*  848 */     int lastRet = -1;
-/*  849 */     int expectedModCount = ArrayList.this.modCount;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean hasNext() {
-/*  854 */       return (this.cursor != ArrayList.this.size);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public E next() {
-/*  859 */       checkForComodification();
-/*  860 */       int i = this.cursor;
-/*  861 */       if (i >= ArrayList.this.size)
-/*  862 */         throw new NoSuchElementException(); 
-/*  863 */       Object[] arrayOfObject = ArrayList.this.elementData;
-/*  864 */       if (i >= arrayOfObject.length)
-/*  865 */         throw new ConcurrentModificationException(); 
-/*  866 */       this.cursor = i + 1;
-/*  867 */       return (E)arrayOfObject[this.lastRet = i];
-/*      */     }
-/*      */     
-/*      */     public void remove() {
-/*  871 */       if (this.lastRet < 0)
-/*  872 */         throw new IllegalStateException(); 
-/*  873 */       checkForComodification();
-/*      */       
-/*      */       try {
-/*  876 */         ArrayList.this.remove(this.lastRet);
-/*  877 */         this.cursor = this.lastRet;
-/*  878 */         this.lastRet = -1;
-/*  879 */         this.expectedModCount = ArrayList.this.modCount;
-/*  880 */       } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/*  881 */         throw new ConcurrentModificationException();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/*  888 */       Objects.requireNonNull(param1Consumer);
-/*  889 */       int i = ArrayList.this.size;
-/*  890 */       int j = this.cursor;
-/*  891 */       if (j >= i) {
-/*      */         return;
-/*      */       }
-/*  894 */       Object[] arrayOfObject = ArrayList.this.elementData;
-/*  895 */       if (j >= arrayOfObject.length) {
-/*  896 */         throw new ConcurrentModificationException();
-/*      */       }
-/*  898 */       while (j != i && ArrayList.this.modCount == this.expectedModCount) {
-/*  899 */         param1Consumer.accept((E)arrayOfObject[j++]);
-/*      */       }
-/*      */       
-/*  902 */       this.cursor = j;
-/*  903 */       this.lastRet = j - 1;
-/*  904 */       checkForComodification();
-/*      */     }
-/*      */     
-/*      */     final void checkForComodification() {
-/*  908 */       if (ArrayList.this.modCount != this.expectedModCount) {
-/*  909 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private class ListItr
-/*      */     extends Itr
-/*      */     implements ListIterator<E>
-/*      */   {
-/*      */     ListItr(int param1Int) {
-/*  919 */       this.cursor = param1Int;
-/*      */     }
-/*      */     
-/*      */     public boolean hasPrevious() {
-/*  923 */       return (this.cursor != 0);
-/*      */     }
-/*      */     
-/*      */     public int nextIndex() {
-/*  927 */       return this.cursor;
-/*      */     }
-/*      */     
-/*      */     public int previousIndex() {
-/*  931 */       return this.cursor - 1;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public E previous() {
-/*  936 */       checkForComodification();
-/*  937 */       int i = this.cursor - 1;
-/*  938 */       if (i < 0)
-/*  939 */         throw new NoSuchElementException(); 
-/*  940 */       Object[] arrayOfObject = ArrayList.this.elementData;
-/*  941 */       if (i >= arrayOfObject.length)
-/*  942 */         throw new ConcurrentModificationException(); 
-/*  943 */       this.cursor = i;
-/*  944 */       return (E)arrayOfObject[this.lastRet = i];
-/*      */     }
-/*      */     
-/*      */     public void set(E param1E) {
-/*  948 */       if (this.lastRet < 0)
-/*  949 */         throw new IllegalStateException(); 
-/*  950 */       checkForComodification();
-/*      */       
-/*      */       try {
-/*  953 */         ArrayList.this.set(this.lastRet, param1E);
-/*  954 */       } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/*  955 */         throw new ConcurrentModificationException();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void add(E param1E) {
-/*  960 */       checkForComodification();
-/*      */       
-/*      */       try {
-/*  963 */         int i = this.cursor;
-/*  964 */         ArrayList.this.add(i, param1E);
-/*  965 */         this.cursor = i + 1;
-/*  966 */         this.lastRet = -1;
-/*  967 */         this.expectedModCount = ArrayList.this.modCount;
-/*  968 */       } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/*  969 */         throw new ConcurrentModificationException();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public List<E> subList(int paramInt1, int paramInt2) {
-/* 1004 */     subListRangeCheck(paramInt1, paramInt2, this.size);
-/* 1005 */     return new SubList(this, 0, paramInt1, paramInt2);
-/*      */   }
-/*      */   
-/*      */   static void subListRangeCheck(int paramInt1, int paramInt2, int paramInt3) {
-/* 1009 */     if (paramInt1 < 0)
-/* 1010 */       throw new IndexOutOfBoundsException("fromIndex = " + paramInt1); 
-/* 1011 */     if (paramInt2 > paramInt3)
-/* 1012 */       throw new IndexOutOfBoundsException("toIndex = " + paramInt2); 
-/* 1013 */     if (paramInt1 > paramInt2)
-/* 1014 */       throw new IllegalArgumentException("fromIndex(" + paramInt1 + ") > toIndex(" + paramInt2 + ")"); 
-/*      */   }
-/*      */   
-/*      */   private class SubList
-/*      */     extends AbstractList<E>
-/*      */     implements RandomAccess {
-/*      */     private final AbstractList<E> parent;
-/*      */     private final int parentOffset;
-/*      */     private final int offset;
-/*      */     int size;
-/*      */     
-/*      */     SubList(AbstractList<E> param1AbstractList, int param1Int1, int param1Int2, int param1Int3) {
-/* 1026 */       this.parent = param1AbstractList;
-/* 1027 */       this.parentOffset = param1Int2;
-/* 1028 */       this.offset = param1Int1 + param1Int2;
-/* 1029 */       this.size = param1Int3 - param1Int2;
-/* 1030 */       this.modCount = ArrayList.this.modCount;
-/*      */     }
-/*      */     
-/*      */     public E set(int param1Int, E param1E) {
-/* 1034 */       rangeCheck(param1Int);
-/* 1035 */       checkForComodification();
-/* 1036 */       E e = (E)ArrayList.this.elementData(this.offset + param1Int);
-/* 1037 */       ArrayList.this.elementData[this.offset + param1Int] = param1E;
-/* 1038 */       return e;
-/*      */     }
-/*      */     
-/*      */     public E get(int param1Int) {
-/* 1042 */       rangeCheck(param1Int);
-/* 1043 */       checkForComodification();
-/* 1044 */       return ArrayList.this.elementData(this.offset + param1Int);
-/*      */     }
-/*      */     
-/*      */     public int size() {
-/* 1048 */       checkForComodification();
-/* 1049 */       return this.size;
-/*      */     }
-/*      */     
-/*      */     public void add(int param1Int, E param1E) {
-/* 1053 */       rangeCheckForAdd(param1Int);
-/* 1054 */       checkForComodification();
-/* 1055 */       this.parent.add(this.parentOffset + param1Int, param1E);
-/* 1056 */       this.modCount = this.parent.modCount;
-/* 1057 */       this.size++;
-/*      */     }
-/*      */     
-/*      */     public E remove(int param1Int) {
-/* 1061 */       rangeCheck(param1Int);
-/* 1062 */       checkForComodification();
-/* 1063 */       E e = this.parent.remove(this.parentOffset + param1Int);
-/* 1064 */       this.modCount = this.parent.modCount;
-/* 1065 */       this.size--;
-/* 1066 */       return e;
-/*      */     }
-/*      */     
-/*      */     protected void removeRange(int param1Int1, int param1Int2) {
-/* 1070 */       checkForComodification();
-/* 1071 */       this.parent.removeRange(this.parentOffset + param1Int1, this.parentOffset + param1Int2);
-/*      */       
-/* 1073 */       this.modCount = this.parent.modCount;
-/* 1074 */       this.size -= param1Int2 - param1Int1;
-/*      */     }
-/*      */     
-/*      */     public boolean addAll(Collection<? extends E> param1Collection) {
-/* 1078 */       return addAll(this.size, param1Collection);
-/*      */     }
-/*      */     
-/*      */     public boolean addAll(int param1Int, Collection<? extends E> param1Collection) {
-/* 1082 */       rangeCheckForAdd(param1Int);
-/* 1083 */       int i = param1Collection.size();
-/* 1084 */       if (i == 0) {
-/* 1085 */         return false;
-/*      */       }
-/* 1087 */       checkForComodification();
-/* 1088 */       this.parent.addAll(this.parentOffset + param1Int, param1Collection);
-/* 1089 */       this.modCount = this.parent.modCount;
-/* 1090 */       this.size += i;
-/* 1091 */       return true;
-/*      */     }
-/*      */     
-/*      */     public Iterator<E> iterator() {
-/* 1095 */       return listIterator();
-/*      */     }
-/*      */     
-/*      */     public ListIterator<E> listIterator(final int index) {
-/* 1099 */       checkForComodification();
-/* 1100 */       rangeCheckForAdd(index);
-/* 1101 */       final int offset = this.offset;
-/*      */       
-/* 1103 */       return new ListIterator<E>() {
-/* 1104 */           int cursor = index;
-/* 1105 */           int lastRet = -1;
-/* 1106 */           int expectedModCount = ArrayList.this.modCount;
-/*      */           
-/*      */           public boolean hasNext() {
-/* 1109 */             return (this.cursor != ArrayList.SubList.this.size);
-/*      */           }
-/*      */ 
-/*      */           
-/*      */           public E next() {
-/* 1114 */             checkForComodification();
-/* 1115 */             int i = this.cursor;
-/* 1116 */             if (i >= ArrayList.SubList.this.size)
-/* 1117 */               throw new NoSuchElementException(); 
-/* 1118 */             Object[] arrayOfObject = ArrayList.this.elementData;
-/* 1119 */             if (offset + i >= arrayOfObject.length)
-/* 1120 */               throw new ConcurrentModificationException(); 
-/* 1121 */             this.cursor = i + 1;
-/* 1122 */             return (E)arrayOfObject[offset + (this.lastRet = i)];
-/*      */           }
-/*      */           
-/*      */           public boolean hasPrevious() {
-/* 1126 */             return (this.cursor != 0);
-/*      */           }
-/*      */ 
-/*      */           
-/*      */           public E previous() {
-/* 1131 */             checkForComodification();
-/* 1132 */             int i = this.cursor - 1;
-/* 1133 */             if (i < 0)
-/* 1134 */               throw new NoSuchElementException(); 
-/* 1135 */             Object[] arrayOfObject = ArrayList.this.elementData;
-/* 1136 */             if (offset + i >= arrayOfObject.length)
-/* 1137 */               throw new ConcurrentModificationException(); 
-/* 1138 */             this.cursor = i;
-/* 1139 */             return (E)arrayOfObject[offset + (this.lastRet = i)];
-/*      */           }
-/*      */ 
-/*      */           
-/*      */           public void forEachRemaining(Consumer<? super E> param2Consumer) {
-/* 1144 */             Objects.requireNonNull(param2Consumer);
-/* 1145 */             int i = ArrayList.SubList.this.size;
-/* 1146 */             int j = this.cursor;
-/* 1147 */             if (j >= i) {
-/*      */               return;
-/*      */             }
-/* 1150 */             Object[] arrayOfObject = ArrayList.this.elementData;
-/* 1151 */             if (offset + j >= arrayOfObject.length) {
-/* 1152 */               throw new ConcurrentModificationException();
-/*      */             }
-/* 1154 */             while (j != i && ArrayList.SubList.this.modCount == this.expectedModCount) {
-/* 1155 */               param2Consumer.accept((E)arrayOfObject[offset + j++]);
-/*      */             }
-/*      */             
-/* 1158 */             this.lastRet = this.cursor = j;
-/* 1159 */             checkForComodification();
-/*      */           }
-/*      */           
-/*      */           public int nextIndex() {
-/* 1163 */             return this.cursor;
-/*      */           }
-/*      */           
-/*      */           public int previousIndex() {
-/* 1167 */             return this.cursor - 1;
-/*      */           }
-/*      */           
-/*      */           public void remove() {
-/* 1171 */             if (this.lastRet < 0)
-/* 1172 */               throw new IllegalStateException(); 
-/* 1173 */             checkForComodification();
-/*      */             
-/*      */             try {
-/* 1176 */               ArrayList.SubList.this.remove(this.lastRet);
-/* 1177 */               this.cursor = this.lastRet;
-/* 1178 */               this.lastRet = -1;
-/* 1179 */               this.expectedModCount = ArrayList.this.modCount;
-/* 1180 */             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/* 1181 */               throw new ConcurrentModificationException();
-/*      */             } 
-/*      */           }
-/*      */           
-/*      */           public void set(E param2E) {
-/* 1186 */             if (this.lastRet < 0)
-/* 1187 */               throw new IllegalStateException(); 
-/* 1188 */             checkForComodification();
-/*      */             
-/*      */             try {
-/* 1191 */               ArrayList.this.set(offset + this.lastRet, param2E);
-/* 1192 */             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/* 1193 */               throw new ConcurrentModificationException();
-/*      */             } 
-/*      */           }
-/*      */           
-/*      */           public void add(E param2E) {
-/* 1198 */             checkForComodification();
-/*      */             
-/*      */             try {
-/* 1201 */               int i = this.cursor;
-/* 1202 */               ArrayList.SubList.this.add(i, param2E);
-/* 1203 */               this.cursor = i + 1;
-/* 1204 */               this.lastRet = -1;
-/* 1205 */               this.expectedModCount = ArrayList.this.modCount;
-/* 1206 */             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/* 1207 */               throw new ConcurrentModificationException();
-/*      */             } 
-/*      */           }
-/*      */           
-/*      */           final void checkForComodification() {
-/* 1212 */             if (this.expectedModCount != ArrayList.this.modCount)
-/* 1213 */               throw new ConcurrentModificationException(); 
-/*      */           }
-/*      */         };
-/*      */     }
-/*      */     
-/*      */     public List<E> subList(int param1Int1, int param1Int2) {
-/* 1219 */       ArrayList.subListRangeCheck(param1Int1, param1Int2, this.size);
-/* 1220 */       return new SubList(this, this.offset, param1Int1, param1Int2);
-/*      */     }
-/*      */     
-/*      */     private void rangeCheck(int param1Int) {
-/* 1224 */       if (param1Int < 0 || param1Int >= this.size)
-/* 1225 */         throw new IndexOutOfBoundsException(outOfBoundsMsg(param1Int)); 
-/*      */     }
-/*      */     
-/*      */     private void rangeCheckForAdd(int param1Int) {
-/* 1229 */       if (param1Int < 0 || param1Int > this.size)
-/* 1230 */         throw new IndexOutOfBoundsException(outOfBoundsMsg(param1Int)); 
-/*      */     }
-/*      */     
-/*      */     private String outOfBoundsMsg(int param1Int) {
-/* 1234 */       return "Index: " + param1Int + ", Size: " + this.size;
-/*      */     }
-/*      */     
-/*      */     private void checkForComodification() {
-/* 1238 */       if (ArrayList.this.modCount != this.modCount)
-/* 1239 */         throw new ConcurrentModificationException(); 
-/*      */     }
-/*      */     
-/*      */     public Spliterator<E> spliterator() {
-/* 1243 */       checkForComodification();
-/* 1244 */       return new ArrayList.ArrayListSpliterator<>(ArrayList.this, this.offset, this.offset + this.size, this.modCount);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void forEach(Consumer<? super E> paramConsumer) {
-/* 1251 */     Objects.requireNonNull(paramConsumer);
-/* 1252 */     int i = this.modCount;
-/*      */     
-/* 1254 */     Object[] arrayOfObject = this.elementData;
-/* 1255 */     int j = this.size;
-/* 1256 */     for (byte b = 0; this.modCount == i && b < j; b++) {
-/* 1257 */       paramConsumer.accept((E)arrayOfObject[b]);
-/*      */     }
-/* 1259 */     if (this.modCount != i) {
-/* 1260 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Spliterator<E> spliterator() {
-/* 1279 */     return new ArrayListSpliterator<>(this, 0, -1, 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final class ArrayListSpliterator<E>
-/*      */     implements Spliterator<E>
-/*      */   {
-/*      */     private final ArrayList<E> list;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int index;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int fence;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int expectedModCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     ArrayListSpliterator(ArrayList<E> param1ArrayList, int param1Int1, int param1Int2, int param1Int3) {
-/* 1325 */       this.list = param1ArrayList;
-/* 1326 */       this.index = param1Int1;
-/* 1327 */       this.fence = param1Int2;
-/* 1328 */       this.expectedModCount = param1Int3;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private int getFence() {
-/*      */       int i;
-/* 1334 */       if ((i = this.fence) < 0) {
-/* 1335 */         ArrayList<E> arrayList; if ((arrayList = this.list) == null) {
-/* 1336 */           i = this.fence = 0;
-/*      */         } else {
-/* 1338 */           this.expectedModCount = arrayList.modCount;
-/* 1339 */           i = this.fence = arrayList.size;
-/*      */         } 
-/*      */       } 
-/* 1342 */       return i;
-/*      */     }
-/*      */     
-/*      */     public ArrayListSpliterator<E> trySplit() {
-/* 1346 */       int i = getFence(), j = this.index, k = j + i >>> 1;
-/* 1347 */       return (j >= k) ? null : new ArrayListSpliterator(this.list, j, this.index = k, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super E> param1Consumer) {
-/* 1353 */       if (param1Consumer == null)
-/* 1354 */         throw new NullPointerException(); 
-/* 1355 */       int i = getFence(), j = this.index;
-/* 1356 */       if (j < i) {
-/* 1357 */         this.index = j + 1;
-/* 1358 */         Object object = this.list.elementData[j];
-/* 1359 */         param1Consumer.accept((E)object);
-/* 1360 */         if (this.list.modCount != this.expectedModCount)
-/* 1361 */           throw new ConcurrentModificationException(); 
-/* 1362 */         return true;
-/*      */       } 
-/* 1364 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/* 1370 */       if (param1Consumer == null)
-/* 1371 */         throw new NullPointerException();  ArrayList<E> arrayList; Object[] arrayOfObject;
-/* 1372 */       if ((arrayList = this.list) != null && (arrayOfObject = arrayList.elementData) != null) {
-/* 1373 */         int k; int j; if ((j = this.fence) < 0) {
-/* 1374 */           k = arrayList.modCount;
-/* 1375 */           j = arrayList.size;
-/*      */         } else {
-/*      */           
-/* 1378 */           k = this.expectedModCount;
-/* 1379 */         }  int i; if ((i = this.index) >= 0 && (this.index = j) <= arrayOfObject.length) {
-/* 1380 */           for (; i < j; i++) {
-/* 1381 */             Object object = arrayOfObject[i];
-/* 1382 */             param1Consumer.accept((E)object);
-/*      */           } 
-/* 1384 */           if (arrayList.modCount == k)
-/*      */             return; 
-/*      */         } 
-/*      */       } 
-/* 1388 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */     
-/*      */     public long estimateSize() {
-/* 1392 */       return (getFence() - this.index);
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1396 */       return 16464;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean removeIf(Predicate<? super E> paramPredicate) {
-/* 1402 */     Objects.requireNonNull(paramPredicate);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1406 */     byte b1 = 0;
-/* 1407 */     BitSet bitSet = new BitSet(this.size);
-/* 1408 */     int i = this.modCount;
-/* 1409 */     int j = this.size; byte b2;
-/* 1410 */     for (b2 = 0; this.modCount == i && b2 < j; b2++) {
-/*      */       
-/* 1412 */       Object object = this.elementData[b2];
-/* 1413 */       if (paramPredicate.test((E)object)) {
-/* 1414 */         bitSet.set(b2);
-/* 1415 */         b1++;
-/*      */       } 
-/*      */     } 
-/* 1418 */     if (this.modCount != i) {
-/* 1419 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */ 
-/*      */     
-/* 1423 */     b2 = (b1 > 0) ? 1 : 0;
-/* 1424 */     if (b2 != 0) {
-/* 1425 */       int k = j - b1; int m; byte b;
-/* 1426 */       for (m = 0, b = 0; m < j && b < k; m++, b++) {
-/* 1427 */         m = bitSet.nextClearBit(m);
-/* 1428 */         this.elementData[b] = this.elementData[m];
-/*      */       } 
-/* 1430 */       for (m = k; m < j; m++) {
-/* 1431 */         this.elementData[m] = null;
-/*      */       }
-/* 1433 */       this.size = k;
-/* 1434 */       if (this.modCount != i) {
-/* 1435 */         throw new ConcurrentModificationException();
-/*      */       }
-/* 1437 */       this.modCount++;
-/*      */     } 
-/*      */     
-/* 1440 */     return b2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void replaceAll(UnaryOperator<E> paramUnaryOperator) {
-/* 1446 */     Objects.requireNonNull(paramUnaryOperator);
-/* 1447 */     int i = this.modCount;
-/* 1448 */     int j = this.size;
-/* 1449 */     for (byte b = 0; this.modCount == i && b < j; b++) {
-/* 1450 */       this.elementData[b] = paramUnaryOperator.apply((E)this.elementData[b]);
-/*      */     }
-/* 1452 */     if (this.modCount != i) {
-/* 1453 */       throw new ConcurrentModificationException();
-/*      */     }
-/* 1455 */     this.modCount++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void sort(Comparator<? super E> paramComparator) {
-/* 1461 */     int i = this.modCount;
-/* 1462 */     Arrays.sort(this.elementData, 0, this.size, (Comparator)paramComparator);
-/* 1463 */     if (this.modCount != i) {
-/* 1464 */       throw new ConcurrentModificationException();
-/*      */     }
-/* 1466 */     this.modCount++;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\ArrayList.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
+import sun.misc.SharedSecrets;
+
+/**
+ * Resizable-array implementation of the <tt>List</tt> interface.  Implements
+ * all optional list operations, and permits all elements, including
+ * <tt>null</tt>.  In addition to implementing the <tt>List</tt> interface,
+ * this class provides methods to manipulate the size of the array that is
+ * used internally to store the list.  (This class is roughly equivalent to
+ * <tt>Vector</tt>, except that it is unsynchronized.)
+ *
+ * <p>The <tt>size</tt>, <tt>isEmpty</tt>, <tt>get</tt>, <tt>set</tt>,
+ * <tt>iterator</tt>, and <tt>listIterator</tt> operations run in constant
+ * time.  The <tt>add</tt> operation runs in <i>amortized constant time</i>,
+ * that is, adding n elements requires O(n) time.  All of the other operations
+ * run in linear time (roughly speaking).  The constant factor is low compared
+ * to that for the <tt>LinkedList</tt> implementation.
+ *
+ * <p>Each <tt>ArrayList</tt> instance has a <i>capacity</i>.  The capacity is
+ * the size of the array used to store the elements in the list.  It is always
+ * at least as large as the list size.  As elements are added to an ArrayList,
+ * its capacity grows automatically.  The details of the growth policy are not
+ * specified beyond the fact that adding an element has constant amortized
+ * time cost.
+ *
+ * <p>An application can increase the capacity of an <tt>ArrayList</tt> instance
+ * before adding a large number of elements using the <tt>ensureCapacity</tt>
+ * operation.  This may reduce the amount of incremental reallocation.
+ *
+ * <p><strong>Note that this implementation is not synchronized.</strong>
+ * If multiple threads access an <tt>ArrayList</tt> instance concurrently,
+ * and at least one of the threads modifies the list structurally, it
+ * <i>must</i> be synchronized externally.  (A structural modification is
+ * any operation that adds or deletes one or more elements, or explicitly
+ * resizes the backing array; merely setting the value of an element is not
+ * a structural modification.)  This is typically accomplished by
+ * synchronizing on some object that naturally encapsulates the list.
+ *
+ * If no such object exists, the list should be "wrapped" using the
+ * {@link Collections#synchronizedList Collections.synchronizedList}
+ * method.  This is best done at creation time, to prevent accidental
+ * unsynchronized access to the list:<pre>
+ *   List list = Collections.synchronizedList(new ArrayList(...));</pre>
+ *
+ * <p><a name="fail-fast">
+ * The iterators returned by this class's {@link #iterator() iterator} and
+ * {@link #listIterator(int) listIterator} methods are <em>fail-fast</em>:</a>
+ * if the list is structurally modified at any time after the iterator is
+ * created, in any way except through the iterator's own
+ * {@link ListIterator#remove() remove} or
+ * {@link ListIterator#add(Object) add} methods, the iterator will throw a
+ * {@link ConcurrentModificationException}.  Thus, in the face of
+ * concurrent modification, the iterator fails quickly and cleanly, rather
+ * than risking arbitrary, non-deterministic behavior at an undetermined
+ * time in the future.
+ *
+ * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
+ * as it is, generally speaking, impossible to make any hard guarantees in the
+ * presence of unsynchronized concurrent modification.  Fail-fast iterators
+ * throw {@code ConcurrentModificationException} on a best-effort basis.
+ * Therefore, it would be wrong to write a program that depended on this
+ * exception for its correctness:  <i>the fail-fast behavior of iterators
+ * should be used only to detect bugs.</i>
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @author  Josh Bloch
+ * @author  Neal Gafter
+ * @see     Collection
+ * @see     List
+ * @see     LinkedList
+ * @see     Vector
+ * @since   1.2
+ */
+
+public class ArrayList<E> extends AbstractList<E>
+        implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+{
+    private static final long serialVersionUID = 8683452581122892189L;
+
+    /**
+     * Default initial capacity.
+     */
+    private static final int DEFAULT_CAPACITY = 10;
+
+    /**
+     * Shared empty array instance used for empty instances.
+     */
+    private static final Object[] EMPTY_ELEMENTDATA = {};
+
+    /**
+     * Shared empty array instance used for default sized empty instances. We
+     * distinguish this from EMPTY_ELEMENTDATA to know how much to inflate when
+     * first element is added.
+     */
+    private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
+
+    /**
+     * The array buffer into which the elements of the ArrayList are stored.
+     * The capacity of the ArrayList is the length of this array buffer. Any
+     * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
+     * will be expanded to DEFAULT_CAPACITY when the first element is added.
+     */
+    transient Object[] elementData; // non-private to simplify nested class access
+
+    /**
+     * The size of the ArrayList (the number of elements it contains).
+     *
+     * @serial
+     */
+    private int size;
+
+    /**
+     * Constructs an empty list with the specified initial capacity.
+     *
+     * @param  initialCapacity  the initial capacity of the list
+     * @throws IllegalArgumentException if the specified initial capacity
+     *         is negative
+     */
+    public ArrayList(int initialCapacity) {
+        if (initialCapacity > 0) {
+            this.elementData = new Object[initialCapacity];
+        } else if (initialCapacity == 0) {
+            this.elementData = EMPTY_ELEMENTDATA;
+        } else {
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        }
+    }
+
+    /**
+     * Constructs an empty list with an initial capacity of ten.
+     */
+    public ArrayList() {
+        this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
+    }
+
+    /**
+     * Constructs a list containing the elements of the specified
+     * collection, in the order they are returned by the collection's
+     * iterator.
+     *
+     * @param c the collection whose elements are to be placed into this list
+     * @throws NullPointerException if the specified collection is null
+     */
+    public ArrayList(Collection<? extends E> c) {
+        elementData = c.toArray();
+        if ((size = elementData.length) != 0) {
+            // c.toArray might (incorrectly) not return Object[] (see 6260652)
+            if (elementData.getClass() != Object[].class)
+                elementData = Arrays.copyOf(elementData, size, Object[].class);
+        } else {
+            // replace with empty array.
+            this.elementData = EMPTY_ELEMENTDATA;
+        }
+    }
+
+    /**
+     * Trims the capacity of this <tt>ArrayList</tt> instance to be the
+     * list's current size.  An application can use this operation to minimize
+     * the storage of an <tt>ArrayList</tt> instance.
+     */
+    public void trimToSize() {
+        modCount++;
+        if (size < elementData.length) {
+            elementData = (size == 0)
+              ? EMPTY_ELEMENTDATA
+              : Arrays.copyOf(elementData, size);
+        }
+    }
+
+    /**
+     * Increases the capacity of this <tt>ArrayList</tt> instance, if
+     * necessary, to ensure that it can hold at least the number of elements
+     * specified by the minimum capacity argument.
+     *
+     * @param   minCapacity   the desired minimum capacity
+     */
+    public void ensureCapacity(int minCapacity) {
+        int minExpand = (elementData != DEFAULTCAPACITY_EMPTY_ELEMENTDATA)
+            // any size if not default element table
+            ? 0
+            // larger than default for default empty table. It's already
+            // supposed to be at default size.
+            : DEFAULT_CAPACITY;
+
+        if (minCapacity > minExpand) {
+            ensureExplicitCapacity(minCapacity);
+        }
+    }
+
+    private static int calculateCapacity(Object[] elementData, int minCapacity) {
+        if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
+            return Math.max(DEFAULT_CAPACITY, minCapacity);
+        }
+        return minCapacity;
+    }
+
+    private void ensureCapacityInternal(int minCapacity) {
+        ensureExplicitCapacity(calculateCapacity(elementData, minCapacity));
+    }
+
+    private void ensureExplicitCapacity(int minCapacity) {
+        modCount++;
+
+        // overflow-conscious code
+        if (minCapacity - elementData.length > 0)
+            grow(minCapacity);
+    }
+
+    /**
+     * The maximum size of array to allocate.
+     * Some VMs reserve some header words in an array.
+     * Attempts to allocate larger arrays may result in
+     * OutOfMemoryError: Requested array size exceeds VM limit
+     */
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+    /**
+     * Increases the capacity to ensure that it can hold at least the
+     * number of elements specified by the minimum capacity argument.
+     *
+     * @param minCapacity the desired minimum capacity
+     */
+    private void grow(int minCapacity) {
+        // overflow-conscious code
+        int oldCapacity = elementData.length;
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+        // minCapacity is usually close to size, so this is a win:
+        elementData = Arrays.copyOf(elementData, newCapacity);
+    }
+
+    private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+            Integer.MAX_VALUE :
+            MAX_ARRAY_SIZE;
+    }
+
+    /**
+     * Returns the number of elements in this list.
+     *
+     * @return the number of elements in this list
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Returns <tt>true</tt> if this list contains no elements.
+     *
+     * @return <tt>true</tt> if this list contains no elements
+     */
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    /**
+     * Returns <tt>true</tt> if this list contains the specified element.
+     * More formally, returns <tt>true</tt> if and only if this list contains
+     * at least one element <tt>e</tt> such that
+     * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
+     *
+     * @param o element whose presence in this list is to be tested
+     * @return <tt>true</tt> if this list contains the specified element
+     */
+    public boolean contains(Object o) {
+        return indexOf(o) >= 0;
+    }
+
+    /**
+     * Returns the index of the first occurrence of the specified element
+     * in this list, or -1 if this list does not contain the element.
+     * More formally, returns the lowest index <tt>i</tt> such that
+     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
+     * or -1 if there is no such index.
+     */
+    public int indexOf(Object o) {
+        if (o == null) {
+            for (int i = 0; i < size; i++)
+                if (elementData[i]==null)
+                    return i;
+        } else {
+            for (int i = 0; i < size; i++)
+                if (o.equals(elementData[i]))
+                    return i;
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the index of the last occurrence of the specified element
+     * in this list, or -1 if this list does not contain the element.
+     * More formally, returns the highest index <tt>i</tt> such that
+     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
+     * or -1 if there is no such index.
+     */
+    public int lastIndexOf(Object o) {
+        if (o == null) {
+            for (int i = size-1; i >= 0; i--)
+                if (elementData[i]==null)
+                    return i;
+        } else {
+            for (int i = size-1; i >= 0; i--)
+                if (o.equals(elementData[i]))
+                    return i;
+        }
+        return -1;
+    }
+
+    /**
+     * Returns a shallow copy of this <tt>ArrayList</tt> instance.  (The
+     * elements themselves are not copied.)
+     *
+     * @return a clone of this <tt>ArrayList</tt> instance
+     */
+    public Object clone() {
+        try {
+            ArrayList<?> v = (ArrayList<?>) super.clone();
+            v.elementData = Arrays.copyOf(elementData, size);
+            v.modCount = 0;
+            return v;
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError(e);
+        }
+    }
+
+    /**
+     * Returns an array containing all of the elements in this list
+     * in proper sequence (from first to last element).
+     *
+     * <p>The returned array will be "safe" in that no references to it are
+     * maintained by this list.  (In other words, this method must allocate
+     * a new array).  The caller is thus free to modify the returned array.
+     *
+     * <p>This method acts as bridge between array-based and collection-based
+     * APIs.
+     *
+     * @return an array containing all of the elements in this list in
+     *         proper sequence
+     */
+    public Object[] toArray() {
+        return Arrays.copyOf(elementData, size);
+    }
+
+    /**
+     * Returns an array containing all of the elements in this list in proper
+     * sequence (from first to last element); the runtime type of the returned
+     * array is that of the specified array.  If the list fits in the
+     * specified array, it is returned therein.  Otherwise, a new array is
+     * allocated with the runtime type of the specified array and the size of
+     * this list.
+     *
+     * <p>If the list fits in the specified array with room to spare
+     * (i.e., the array has more elements than the list), the element in
+     * the array immediately following the end of the collection is set to
+     * <tt>null</tt>.  (This is useful in determining the length of the
+     * list <i>only</i> if the caller knows that the list does not contain
+     * any null elements.)
+     *
+     * @param a the array into which the elements of the list are to
+     *          be stored, if it is big enough; otherwise, a new array of the
+     *          same runtime type is allocated for this purpose.
+     * @return an array containing the elements of the list
+     * @throws ArrayStoreException if the runtime type of the specified array
+     *         is not a supertype of the runtime type of every element in
+     *         this list
+     * @throws NullPointerException if the specified array is null
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(T[] a) {
+        if (a.length < size)
+            // Make a new array of a's runtime type, but my contents:
+            return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+        System.arraycopy(elementData, 0, a, 0, size);
+        if (a.length > size)
+            a[size] = null;
+        return a;
+    }
+
+    // Positional Access Operations
+
+    @SuppressWarnings("unchecked")
+    E elementData(int index) {
+        return (E) elementData[index];
+    }
+
+    /**
+     * Returns the element at the specified position in this list.
+     *
+     * @param  index index of the element to return
+     * @return the element at the specified position in this list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E get(int index) {
+        rangeCheck(index);
+
+        return elementData(index);
+    }
+
+    /**
+     * Replaces the element at the specified position in this list with
+     * the specified element.
+     *
+     * @param index index of the element to replace
+     * @param element element to be stored at the specified position
+     * @return the element previously at the specified position
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E set(int index, E element) {
+        rangeCheck(index);
+
+        E oldValue = elementData(index);
+        elementData[index] = element;
+        return oldValue;
+    }
+
+    /**
+     * Appends the specified element to the end of this list.
+     *
+     * @param e element to be appended to this list
+     * @return <tt>true</tt> (as specified by {@link Collection#add})
+     */
+    public boolean add(E e) {
+        ensureCapacityInternal(size + 1);  // Increments modCount!!
+        elementData[size++] = e;
+        return true;
+    }
+
+    /**
+     * Inserts the specified element at the specified position in this
+     * list. Shifts the element currently at that position (if any) and
+     * any subsequent elements to the right (adds one to their indices).
+     *
+     * @param index index at which the specified element is to be inserted
+     * @param element element to be inserted
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public void add(int index, E element) {
+        rangeCheckForAdd(index);
+
+        ensureCapacityInternal(size + 1);  // Increments modCount!!
+        System.arraycopy(elementData, index, elementData, index + 1,
+                         size - index);
+        elementData[index] = element;
+        size++;
+    }
+
+    /**
+     * Removes the element at the specified position in this list.
+     * Shifts any subsequent elements to the left (subtracts one from their
+     * indices).
+     *
+     * @param index the index of the element to be removed
+     * @return the element that was removed from the list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E remove(int index) {
+        rangeCheck(index);
+
+        modCount++;
+        E oldValue = elementData(index);
+
+        int numMoved = size - index - 1;
+        if (numMoved > 0)
+            System.arraycopy(elementData, index+1, elementData, index,
+                             numMoved);
+        elementData[--size] = null; // clear to let GC do its work
+
+        return oldValue;
+    }
+
+    /**
+     * Removes the first occurrence of the specified element from this list,
+     * if it is present.  If the list does not contain the element, it is
+     * unchanged.  More formally, removes the element with the lowest index
+     * <tt>i</tt> such that
+     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>
+     * (if such an element exists).  Returns <tt>true</tt> if this list
+     * contained the specified element (or equivalently, if this list
+     * changed as a result of the call).
+     *
+     * @param o element to be removed from this list, if present
+     * @return <tt>true</tt> if this list contained the specified element
+     */
+    public boolean remove(Object o) {
+        if (o == null) {
+            for (int index = 0; index < size; index++)
+                if (elementData[index] == null) {
+                    fastRemove(index);
+                    return true;
+                }
+        } else {
+            for (int index = 0; index < size; index++)
+                if (o.equals(elementData[index])) {
+                    fastRemove(index);
+                    return true;
+                }
+        }
+        return false;
+    }
+
+    /*
+     * Private remove method that skips bounds checking and does not
+     * return the value removed.
+     */
+    private void fastRemove(int index) {
+        modCount++;
+        int numMoved = size - index - 1;
+        if (numMoved > 0)
+            System.arraycopy(elementData, index+1, elementData, index,
+                             numMoved);
+        elementData[--size] = null; // clear to let GC do its work
+    }
+
+    /**
+     * Removes all of the elements from this list.  The list will
+     * be empty after this call returns.
+     */
+    public void clear() {
+        modCount++;
+
+        // clear to let GC do its work
+        for (int i = 0; i < size; i++)
+            elementData[i] = null;
+
+        size = 0;
+    }
+
+    /**
+     * Appends all of the elements in the specified collection to the end of
+     * this list, in the order that they are returned by the
+     * specified collection's Iterator.  The behavior of this operation is
+     * undefined if the specified collection is modified while the operation
+     * is in progress.  (This implies that the behavior of this call is
+     * undefined if the specified collection is this list, and this
+     * list is nonempty.)
+     *
+     * @param c collection containing elements to be added to this list
+     * @return <tt>true</tt> if this list changed as a result of the call
+     * @throws NullPointerException if the specified collection is null
+     */
+    public boolean addAll(Collection<? extends E> c) {
+        Object[] a = c.toArray();
+        int numNew = a.length;
+        ensureCapacityInternal(size + numNew);  // Increments modCount
+        System.arraycopy(a, 0, elementData, size, numNew);
+        size += numNew;
+        return numNew != 0;
+    }
+
+    /**
+     * Inserts all of the elements in the specified collection into this
+     * list, starting at the specified position.  Shifts the element
+     * currently at that position (if any) and any subsequent elements to
+     * the right (increases their indices).  The new elements will appear
+     * in the list in the order that they are returned by the
+     * specified collection's iterator.
+     *
+     * @param index index at which to insert the first element from the
+     *              specified collection
+     * @param c collection containing elements to be added to this list
+     * @return <tt>true</tt> if this list changed as a result of the call
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws NullPointerException if the specified collection is null
+     */
+    public boolean addAll(int index, Collection<? extends E> c) {
+        rangeCheckForAdd(index);
+
+        Object[] a = c.toArray();
+        int numNew = a.length;
+        ensureCapacityInternal(size + numNew);  // Increments modCount
+
+        int numMoved = size - index;
+        if (numMoved > 0)
+            System.arraycopy(elementData, index, elementData, index + numNew,
+                             numMoved);
+
+        System.arraycopy(a, 0, elementData, index, numNew);
+        size += numNew;
+        return numNew != 0;
+    }
+
+    /**
+     * Removes from this list all of the elements whose index is between
+     * {@code fromIndex}, inclusive, and {@code toIndex}, exclusive.
+     * Shifts any succeeding elements to the left (reduces their index).
+     * This call shortens the list by {@code (toIndex - fromIndex)} elements.
+     * (If {@code toIndex==fromIndex}, this operation has no effect.)
+     *
+     * @throws IndexOutOfBoundsException if {@code fromIndex} or
+     *         {@code toIndex} is out of range
+     *         ({@code fromIndex < 0 ||
+     *          fromIndex >= size() ||
+     *          toIndex > size() ||
+     *          toIndex < fromIndex})
+     */
+    protected void removeRange(int fromIndex, int toIndex) {
+        modCount++;
+        int numMoved = size - toIndex;
+        System.arraycopy(elementData, toIndex, elementData, fromIndex,
+                         numMoved);
+
+        // clear to let GC do its work
+        int newSize = size - (toIndex-fromIndex);
+        for (int i = newSize; i < size; i++) {
+            elementData[i] = null;
+        }
+        size = newSize;
+    }
+
+    /**
+     * Checks if the given index is in range.  If not, throws an appropriate
+     * runtime exception.  This method does *not* check if the index is
+     * negative: It is always used immediately prior to an array access,
+     * which throws an ArrayIndexOutOfBoundsException if index is negative.
+     */
+    private void rangeCheck(int index) {
+        if (index >= size)
+            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+    }
+
+    /**
+     * A version of rangeCheck used by add and addAll.
+     */
+    private void rangeCheckForAdd(int index) {
+        if (index > size || index < 0)
+            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+    }
+
+    /**
+     * Constructs an IndexOutOfBoundsException detail message.
+     * Of the many possible refactorings of the error handling code,
+     * this "outlining" performs best with both server and client VMs.
+     */
+    private String outOfBoundsMsg(int index) {
+        return "Index: "+index+", Size: "+size;
+    }
+
+    /**
+     * Removes from this list all of its elements that are contained in the
+     * specified collection.
+     *
+     * @param c collection containing elements to be removed from this list
+     * @return {@code true} if this list changed as a result of the call
+     * @throws ClassCastException if the class of an element of this list
+     *         is incompatible with the specified collection
+     * (<a href="Collection.html#optional-restrictions">optional</a>)
+     * @throws NullPointerException if this list contains a null element and the
+     *         specified collection does not permit null elements
+     * (<a href="Collection.html#optional-restrictions">optional</a>),
+     *         or if the specified collection is null
+     * @see Collection#contains(Object)
+     */
+    public boolean removeAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        return batchRemove(c, false);
+    }
+
+    /**
+     * Retains only the elements in this list that are contained in the
+     * specified collection.  In other words, removes from this list all
+     * of its elements that are not contained in the specified collection.
+     *
+     * @param c collection containing elements to be retained in this list
+     * @return {@code true} if this list changed as a result of the call
+     * @throws ClassCastException if the class of an element of this list
+     *         is incompatible with the specified collection
+     * (<a href="Collection.html#optional-restrictions">optional</a>)
+     * @throws NullPointerException if this list contains a null element and the
+     *         specified collection does not permit null elements
+     * (<a href="Collection.html#optional-restrictions">optional</a>),
+     *         or if the specified collection is null
+     * @see Collection#contains(Object)
+     */
+    public boolean retainAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        return batchRemove(c, true);
+    }
+
+    private boolean batchRemove(Collection<?> c, boolean complement) {
+        final Object[] elementData = this.elementData;
+        int r = 0, w = 0;
+        boolean modified = false;
+        try {
+            for (; r < size; r++)
+                if (c.contains(elementData[r]) == complement)
+                    elementData[w++] = elementData[r];
+        } finally {
+            // Preserve behavioral compatibility with AbstractCollection,
+            // even if c.contains() throws.
+            if (r != size) {
+                System.arraycopy(elementData, r,
+                                 elementData, w,
+                                 size - r);
+                w += size - r;
+            }
+            if (w != size) {
+                // clear to let GC do its work
+                for (int i = w; i < size; i++)
+                    elementData[i] = null;
+                modCount += size - w;
+                size = w;
+                modified = true;
+            }
+        }
+        return modified;
+    }
+
+    /**
+     * Save the state of the <tt>ArrayList</tt> instance to a stream (that
+     * is, serialize it).
+     *
+     * @serialData The length of the array backing the <tt>ArrayList</tt>
+     *             instance is emitted (int), followed by all of its elements
+     *             (each an <tt>Object</tt>) in the proper order.
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException{
+        // Write out element count, and any hidden stuff
+        int expectedModCount = modCount;
+        s.defaultWriteObject();
+
+        // Write out size as capacity for behavioural compatibility with clone()
+        s.writeInt(size);
+
+        // Write out all elements in the proper order.
+        for (int i=0; i<size; i++) {
+            s.writeObject(elementData[i]);
+        }
+
+        if (modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
+    }
+
+    /**
+     * Reconstitute the <tt>ArrayList</tt> instance from a stream (that is,
+     * deserialize it).
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        elementData = EMPTY_ELEMENTDATA;
+
+        // Read in size, and any hidden stuff
+        s.defaultReadObject();
+
+        // Read in capacity
+        s.readInt(); // ignored
+
+        if (size > 0) {
+            // be like clone(), allocate array based upon size not capacity
+            int capacity = calculateCapacity(elementData, size);
+            SharedSecrets.getJavaOISAccess().checkArray(s, Object[].class, capacity);
+            ensureCapacityInternal(size);
+
+            Object[] a = elementData;
+            // Read in all elements in the proper order.
+            for (int i=0; i<size; i++) {
+                a[i] = s.readObject();
+            }
+        }
+    }
+
+    /**
+     * Returns a list iterator over the elements in this list (in proper
+     * sequence), starting at the specified position in the list.
+     * The specified index indicates the first element that would be
+     * returned by an initial call to {@link ListIterator#next next}.
+     * An initial call to {@link ListIterator#previous previous} would
+     * return the element with the specified index minus one.
+     *
+     * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
+     *
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public ListIterator<E> listIterator(int index) {
+        if (index < 0 || index > size)
+            throw new IndexOutOfBoundsException("Index: "+index);
+        return new ListItr(index);
+    }
+
+    /**
+     * Returns a list iterator over the elements in this list (in proper
+     * sequence).
+     *
+     * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
+     *
+     * @see #listIterator(int)
+     */
+    public ListIterator<E> listIterator() {
+        return new ListItr(0);
+    }
+
+    /**
+     * Returns an iterator over the elements in this list in proper sequence.
+     *
+     * <p>The returned iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
+     *
+     * @return an iterator over the elements in this list in proper sequence
+     */
+    public Iterator<E> iterator() {
+        return new Itr();
+    }
+
+    /**
+     * An optimized version of AbstractList.Itr
+     */
+    private class Itr implements Iterator<E> {
+        int cursor;       // index of next element to return
+        int lastRet = -1; // index of last element returned; -1 if no such
+        int expectedModCount = modCount;
+
+        Itr() {}
+
+        public boolean hasNext() {
+            return cursor != size;
+        }
+
+        @SuppressWarnings("unchecked")
+        public E next() {
+            checkForComodification();
+            int i = cursor;
+            if (i >= size)
+                throw new NoSuchElementException();
+            Object[] elementData = ArrayList.this.elementData;
+            if (i >= elementData.length)
+                throw new ConcurrentModificationException();
+            cursor = i + 1;
+            return (E) elementData[lastRet = i];
+        }
+
+        public void remove() {
+            if (lastRet < 0)
+                throw new IllegalStateException();
+            checkForComodification();
+
+            try {
+                ArrayList.this.remove(lastRet);
+                cursor = lastRet;
+                lastRet = -1;
+                expectedModCount = modCount;
+            } catch (IndexOutOfBoundsException ex) {
+                throw new ConcurrentModificationException();
+            }
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void forEachRemaining(Consumer<? super E> consumer) {
+            Objects.requireNonNull(consumer);
+            final int size = ArrayList.this.size;
+            int i = cursor;
+            if (i >= size) {
+                return;
+            }
+            final Object[] elementData = ArrayList.this.elementData;
+            if (i >= elementData.length) {
+                throw new ConcurrentModificationException();
+            }
+            while (i != size && modCount == expectedModCount) {
+                consumer.accept((E) elementData[i++]);
+            }
+            // update once at end of iteration to reduce heap write traffic
+            cursor = i;
+            lastRet = i - 1;
+            checkForComodification();
+        }
+
+        final void checkForComodification() {
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+        }
+    }
+
+    /**
+     * An optimized version of AbstractList.ListItr
+     */
+    private class ListItr extends Itr implements ListIterator<E> {
+        ListItr(int index) {
+            super();
+            cursor = index;
+        }
+
+        public boolean hasPrevious() {
+            return cursor != 0;
+        }
+
+        public int nextIndex() {
+            return cursor;
+        }
+
+        public int previousIndex() {
+            return cursor - 1;
+        }
+
+        @SuppressWarnings("unchecked")
+        public E previous() {
+            checkForComodification();
+            int i = cursor - 1;
+            if (i < 0)
+                throw new NoSuchElementException();
+            Object[] elementData = ArrayList.this.elementData;
+            if (i >= elementData.length)
+                throw new ConcurrentModificationException();
+            cursor = i;
+            return (E) elementData[lastRet = i];
+        }
+
+        public void set(E e) {
+            if (lastRet < 0)
+                throw new IllegalStateException();
+            checkForComodification();
+
+            try {
+                ArrayList.this.set(lastRet, e);
+            } catch (IndexOutOfBoundsException ex) {
+                throw new ConcurrentModificationException();
+            }
+        }
+
+        public void add(E e) {
+            checkForComodification();
+
+            try {
+                int i = cursor;
+                ArrayList.this.add(i, e);
+                cursor = i + 1;
+                lastRet = -1;
+                expectedModCount = modCount;
+            } catch (IndexOutOfBoundsException ex) {
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+
+    /**
+     * Returns a view of the portion of this list between the specified
+     * {@code fromIndex}, inclusive, and {@code toIndex}, exclusive.  (If
+     * {@code fromIndex} and {@code toIndex} are equal, the returned list is
+     * empty.)  The returned list is backed by this list, so non-structural
+     * changes in the returned list are reflected in this list, and vice-versa.
+     * The returned list supports all of the optional list operations.
+     *
+     * <p>This method eliminates the need for explicit range operations (of
+     * the sort that commonly exist for arrays).  Any operation that expects
+     * a list can be used as a range operation by passing a subList view
+     * instead of a whole list.  For example, the following idiom
+     * removes a range of elements from a list:
+     * <pre>
+     *      list.subList(from, to).clear();
+     * </pre>
+     * Similar idioms may be constructed for {@link #indexOf(Object)} and
+     * {@link #lastIndexOf(Object)}, and all of the algorithms in the
+     * {@link Collections} class can be applied to a subList.
+     *
+     * <p>The semantics of the list returned by this method become undefined if
+     * the backing list (i.e., this list) is <i>structurally modified</i> in
+     * any way other than via the returned list.  (Structural modifications are
+     * those that change the size of this list, or otherwise perturb it in such
+     * a fashion that iterations in progress may yield incorrect results.)
+     *
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     */
+    public List<E> subList(int fromIndex, int toIndex) {
+        subListRangeCheck(fromIndex, toIndex, size);
+        return new SubList(this, 0, fromIndex, toIndex);
+    }
+
+    static void subListRangeCheck(int fromIndex, int toIndex, int size) {
+        if (fromIndex < 0)
+            throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
+        if (toIndex > size)
+            throw new IndexOutOfBoundsException("toIndex = " + toIndex);
+        if (fromIndex > toIndex)
+            throw new IllegalArgumentException("fromIndex(" + fromIndex +
+                                               ") > toIndex(" + toIndex + ")");
+    }
+
+    private class SubList extends AbstractList<E> implements RandomAccess {
+        private final AbstractList<E> parent;
+        private final int parentOffset;
+        private final int offset;
+        int size;
+
+        SubList(AbstractList<E> parent,
+                int offset, int fromIndex, int toIndex) {
+            this.parent = parent;
+            this.parentOffset = fromIndex;
+            this.offset = offset + fromIndex;
+            this.size = toIndex - fromIndex;
+            this.modCount = ArrayList.this.modCount;
+        }
+
+        public E set(int index, E e) {
+            rangeCheck(index);
+            checkForComodification();
+            E oldValue = ArrayList.this.elementData(offset + index);
+            ArrayList.this.elementData[offset + index] = e;
+            return oldValue;
+        }
+
+        public E get(int index) {
+            rangeCheck(index);
+            checkForComodification();
+            return ArrayList.this.elementData(offset + index);
+        }
+
+        public int size() {
+            checkForComodification();
+            return this.size;
+        }
+
+        public void add(int index, E e) {
+            rangeCheckForAdd(index);
+            checkForComodification();
+            parent.add(parentOffset + index, e);
+            this.modCount = parent.modCount;
+            this.size++;
+        }
+
+        public E remove(int index) {
+            rangeCheck(index);
+            checkForComodification();
+            E result = parent.remove(parentOffset + index);
+            this.modCount = parent.modCount;
+            this.size--;
+            return result;
+        }
+
+        protected void removeRange(int fromIndex, int toIndex) {
+            checkForComodification();
+            parent.removeRange(parentOffset + fromIndex,
+                               parentOffset + toIndex);
+            this.modCount = parent.modCount;
+            this.size -= toIndex - fromIndex;
+        }
+
+        public boolean addAll(Collection<? extends E> c) {
+            return addAll(this.size, c);
+        }
+
+        public boolean addAll(int index, Collection<? extends E> c) {
+            rangeCheckForAdd(index);
+            int cSize = c.size();
+            if (cSize==0)
+                return false;
+
+            checkForComodification();
+            parent.addAll(parentOffset + index, c);
+            this.modCount = parent.modCount;
+            this.size += cSize;
+            return true;
+        }
+
+        public Iterator<E> iterator() {
+            return listIterator();
+        }
+
+        public ListIterator<E> listIterator(final int index) {
+            checkForComodification();
+            rangeCheckForAdd(index);
+            final int offset = this.offset;
+
+            return new ListIterator<E>() {
+                int cursor = index;
+                int lastRet = -1;
+                int expectedModCount = ArrayList.this.modCount;
+
+                public boolean hasNext() {
+                    return cursor != SubList.this.size;
+                }
+
+                @SuppressWarnings("unchecked")
+                public E next() {
+                    checkForComodification();
+                    int i = cursor;
+                    if (i >= SubList.this.size)
+                        throw new NoSuchElementException();
+                    Object[] elementData = ArrayList.this.elementData;
+                    if (offset + i >= elementData.length)
+                        throw new ConcurrentModificationException();
+                    cursor = i + 1;
+                    return (E) elementData[offset + (lastRet = i)];
+                }
+
+                public boolean hasPrevious() {
+                    return cursor != 0;
+                }
+
+                @SuppressWarnings("unchecked")
+                public E previous() {
+                    checkForComodification();
+                    int i = cursor - 1;
+                    if (i < 0)
+                        throw new NoSuchElementException();
+                    Object[] elementData = ArrayList.this.elementData;
+                    if (offset + i >= elementData.length)
+                        throw new ConcurrentModificationException();
+                    cursor = i;
+                    return (E) elementData[offset + (lastRet = i)];
+                }
+
+                @SuppressWarnings("unchecked")
+                public void forEachRemaining(Consumer<? super E> consumer) {
+                    Objects.requireNonNull(consumer);
+                    final int size = SubList.this.size;
+                    int i = cursor;
+                    if (i >= size) {
+                        return;
+                    }
+                    final Object[] elementData = ArrayList.this.elementData;
+                    if (offset + i >= elementData.length) {
+                        throw new ConcurrentModificationException();
+                    }
+                    while (i != size && modCount == expectedModCount) {
+                        consumer.accept((E) elementData[offset + (i++)]);
+                    }
+                    // update once at end of iteration to reduce heap write traffic
+                    lastRet = cursor = i;
+                    checkForComodification();
+                }
+
+                public int nextIndex() {
+                    return cursor;
+                }
+
+                public int previousIndex() {
+                    return cursor - 1;
+                }
+
+                public void remove() {
+                    if (lastRet < 0)
+                        throw new IllegalStateException();
+                    checkForComodification();
+
+                    try {
+                        SubList.this.remove(lastRet);
+                        cursor = lastRet;
+                        lastRet = -1;
+                        expectedModCount = ArrayList.this.modCount;
+                    } catch (IndexOutOfBoundsException ex) {
+                        throw new ConcurrentModificationException();
+                    }
+                }
+
+                public void set(E e) {
+                    if (lastRet < 0)
+                        throw new IllegalStateException();
+                    checkForComodification();
+
+                    try {
+                        ArrayList.this.set(offset + lastRet, e);
+                    } catch (IndexOutOfBoundsException ex) {
+                        throw new ConcurrentModificationException();
+                    }
+                }
+
+                public void add(E e) {
+                    checkForComodification();
+
+                    try {
+                        int i = cursor;
+                        SubList.this.add(i, e);
+                        cursor = i + 1;
+                        lastRet = -1;
+                        expectedModCount = ArrayList.this.modCount;
+                    } catch (IndexOutOfBoundsException ex) {
+                        throw new ConcurrentModificationException();
+                    }
+                }
+
+                final void checkForComodification() {
+                    if (expectedModCount != ArrayList.this.modCount)
+                        throw new ConcurrentModificationException();
+                }
+            };
+        }
+
+        public List<E> subList(int fromIndex, int toIndex) {
+            subListRangeCheck(fromIndex, toIndex, size);
+            return new SubList(this, offset, fromIndex, toIndex);
+        }
+
+        private void rangeCheck(int index) {
+            if (index < 0 || index >= this.size)
+                throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+        }
+
+        private void rangeCheckForAdd(int index) {
+            if (index < 0 || index > this.size)
+                throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+        }
+
+        private String outOfBoundsMsg(int index) {
+            return "Index: "+index+", Size: "+this.size;
+        }
+
+        private void checkForComodification() {
+            if (ArrayList.this.modCount != this.modCount)
+                throw new ConcurrentModificationException();
+        }
+
+        public Spliterator<E> spliterator() {
+            checkForComodification();
+            return new ArrayListSpliterator<E>(ArrayList.this, offset,
+                                               offset + this.size, this.modCount);
+        }
+    }
+
+    @Override
+    public void forEach(Consumer<? super E> action) {
+        Objects.requireNonNull(action);
+        final int expectedModCount = modCount;
+        @SuppressWarnings("unchecked")
+        final E[] elementData = (E[]) this.elementData;
+        final int size = this.size;
+        for (int i=0; modCount == expectedModCount && i < size; i++) {
+            action.accept(elementData[i]);
+        }
+        if (modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
+    }
+
+    /**
+     * Creates a <em><a href="Spliterator.html#binding">late-binding</a></em>
+     * and <em>fail-fast</em> {@link Spliterator} over the elements in this
+     * list.
+     *
+     * <p>The {@code Spliterator} reports {@link Spliterator#SIZED},
+     * {@link Spliterator#SUBSIZED}, and {@link Spliterator#ORDERED}.
+     * Overriding implementations should document the reporting of additional
+     * characteristic values.
+     *
+     * @return a {@code Spliterator} over the elements in this list
+     * @since 1.8
+     */
+    @Override
+    public Spliterator<E> spliterator() {
+        return new ArrayListSpliterator<>(this, 0, -1, 0);
+    }
+
+    /** Index-based split-by-two, lazily initialized Spliterator */
+    static final class ArrayListSpliterator<E> implements Spliterator<E> {
+
+        /*
+         * If ArrayLists were immutable, or structurally immutable (no
+         * adds, removes, etc), we could implement their spliterators
+         * with Arrays.spliterator. Instead we detect as much
+         * interference during traversal as practical without
+         * sacrificing much performance. We rely primarily on
+         * modCounts. These are not guaranteed to detect concurrency
+         * violations, and are sometimes overly conservative about
+         * within-thread interference, but detect enough problems to
+         * be worthwhile in practice. To carry this out, we (1) lazily
+         * initialize fence and expectedModCount until the latest
+         * point that we need to commit to the state we are checking
+         * against; thus improving precision.  (This doesn't apply to
+         * SubLists, that create spliterators with current non-lazy
+         * values).  (2) We perform only a single
+         * ConcurrentModificationException check at the end of forEach
+         * (the most performance-sensitive method). When using forEach
+         * (as opposed to iterators), we can normally only detect
+         * interference after actions, not before. Further
+         * CME-triggering checks apply to all other possible
+         * violations of assumptions for example null or too-small
+         * elementData array given its size(), that could only have
+         * occurred due to interference.  This allows the inner loop
+         * of forEach to run without any further checks, and
+         * simplifies lambda-resolution. While this does entail a
+         * number of checks, note that in the common case of
+         * list.stream().forEach(a), no checks or other computation
+         * occur anywhere other than inside forEach itself.  The other
+         * less-often-used methods cannot take advantage of most of
+         * these streamlinings.
+         */
+
+        private final ArrayList<E> list;
+        private int index; // current index, modified on advance/split
+        private int fence; // -1 until used; then one past last index
+        private int expectedModCount; // initialized when fence set
+
+        /** Create new spliterator covering the given  range */
+        ArrayListSpliterator(ArrayList<E> list, int origin, int fence,
+                             int expectedModCount) {
+            this.list = list; // OK if null unless traversed
+            this.index = origin;
+            this.fence = fence;
+            this.expectedModCount = expectedModCount;
+        }
+
+        private int getFence() { // initialize fence to size on first use
+            int hi; // (a specialized variant appears in method forEach)
+            ArrayList<E> lst;
+            if ((hi = fence) < 0) {
+                if ((lst = list) == null)
+                    hi = fence = 0;
+                else {
+                    expectedModCount = lst.modCount;
+                    hi = fence = lst.size;
+                }
+            }
+            return hi;
+        }
+
+        public ArrayListSpliterator<E> trySplit() {
+            int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
+            return (lo >= mid) ? null : // divide range in half unless too small
+                new ArrayListSpliterator<E>(list, lo, index = mid,
+                                            expectedModCount);
+        }
+
+        public boolean tryAdvance(Consumer<? super E> action) {
+            if (action == null)
+                throw new NullPointerException();
+            int hi = getFence(), i = index;
+            if (i < hi) {
+                index = i + 1;
+                @SuppressWarnings("unchecked") E e = (E)list.elementData[i];
+                action.accept(e);
+                if (list.modCount != expectedModCount)
+                    throw new ConcurrentModificationException();
+                return true;
+            }
+            return false;
+        }
+
+        public void forEachRemaining(Consumer<? super E> action) {
+            int i, hi, mc; // hoist accesses and checks from loop
+            ArrayList<E> lst; Object[] a;
+            if (action == null)
+                throw new NullPointerException();
+            if ((lst = list) != null && (a = lst.elementData) != null) {
+                if ((hi = fence) < 0) {
+                    mc = lst.modCount;
+                    hi = lst.size;
+                }
+                else
+                    mc = expectedModCount;
+                if ((i = index) >= 0 && (index = hi) <= a.length) {
+                    for (; i < hi; ++i) {
+                        @SuppressWarnings("unchecked") E e = (E) a[i];
+                        action.accept(e);
+                    }
+                    if (lst.modCount == mc)
+                        return;
+                }
+            }
+            throw new ConcurrentModificationException();
+        }
+
+        public long estimateSize() {
+            return (long) (getFence() - index);
+        }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
+        }
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        Objects.requireNonNull(filter);
+        // figure out which elements are to be removed
+        // any exception thrown from the filter predicate at this stage
+        // will leave the collection unmodified
+        int removeCount = 0;
+        final BitSet removeSet = new BitSet(size);
+        final int expectedModCount = modCount;
+        final int size = this.size;
+        for (int i=0; modCount == expectedModCount && i < size; i++) {
+            @SuppressWarnings("unchecked")
+            final E element = (E) elementData[i];
+            if (filter.test(element)) {
+                removeSet.set(i);
+                removeCount++;
+            }
+        }
+        if (modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
+
+        // shift surviving elements left over the spaces left by removed elements
+        final boolean anyToRemove = removeCount > 0;
+        if (anyToRemove) {
+            final int newSize = size - removeCount;
+            for (int i=0, j=0; (i < size) && (j < newSize); i++, j++) {
+                i = removeSet.nextClearBit(i);
+                elementData[j] = elementData[i];
+            }
+            for (int k=newSize; k < size; k++) {
+                elementData[k] = null;  // Let gc do its work
+            }
+            this.size = newSize;
+            if (modCount != expectedModCount) {
+                throw new ConcurrentModificationException();
+            }
+            modCount++;
+        }
+
+        return anyToRemove;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void replaceAll(UnaryOperator<E> operator) {
+        Objects.requireNonNull(operator);
+        final int expectedModCount = modCount;
+        final int size = this.size;
+        for (int i=0; modCount == expectedModCount && i < size; i++) {
+            elementData[i] = operator.apply((E) elementData[i]);
+        }
+        if (modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
+        modCount++;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void sort(Comparator<? super E> c) {
+        final int expectedModCount = modCount;
+        Arrays.sort((E[]) elementData, 0, size, c);
+        if (modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
+        modCount++;
+    }
+}

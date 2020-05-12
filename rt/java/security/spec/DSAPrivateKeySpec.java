@@ -1,112 +1,106 @@
-/*     */ package java.security.spec;
-/*     */ 
-/*     */ import java.math.BigInteger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DSAPrivateKeySpec
-/*     */   implements KeySpec
-/*     */ {
-/*     */   private BigInteger x;
-/*     */   private BigInteger p;
-/*     */   private BigInteger q;
-/*     */   private BigInteger g;
-/*     */   
-/*     */   public DSAPrivateKeySpec(BigInteger paramBigInteger1, BigInteger paramBigInteger2, BigInteger paramBigInteger3, BigInteger paramBigInteger4) {
-/*  65 */     this.x = paramBigInteger1;
-/*  66 */     this.p = paramBigInteger2;
-/*  67 */     this.q = paramBigInteger3;
-/*  68 */     this.g = paramBigInteger4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getX() {
-/*  77 */     return this.x;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getP() {
-/*  86 */     return this.p;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getQ() {
-/*  95 */     return this.q;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getG() {
-/* 104 */     return this.g;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\spec\DSAPrivateKeySpec.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security.spec;
+
+import java.math.BigInteger;
+
+/**
+ * This class specifies a DSA private key with its associated parameters.
+ *
+ * @author Jan Luehe
+ *
+ *
+ * @see java.security.Key
+ * @see java.security.KeyFactory
+ * @see KeySpec
+ * @see DSAPublicKeySpec
+ * @see PKCS8EncodedKeySpec
+ *
+ * @since 1.2
+ */
+
+public class DSAPrivateKeySpec implements KeySpec {
+
+    private BigInteger x;
+    private BigInteger p;
+    private BigInteger q;
+    private BigInteger g;
+
+    /**
+     * Creates a new DSAPrivateKeySpec with the specified parameter values.
+     *
+     * @param x the private key.
+     *
+     * @param p the prime.
+     *
+     * @param q the sub-prime.
+     *
+     * @param g the base.
+     */
+    public DSAPrivateKeySpec(BigInteger x, BigInteger p, BigInteger q,
+                             BigInteger g) {
+        this.x = x;
+        this.p = p;
+        this.q = q;
+        this.g = g;
+    }
+
+    /**
+     * Returns the private key {@code x}.
+     *
+     * @return the private key {@code x}.
+     */
+    public BigInteger getX() {
+        return this.x;
+    }
+
+    /**
+     * Returns the prime {@code p}.
+     *
+     * @return the prime {@code p}.
+     */
+    public BigInteger getP() {
+        return this.p;
+    }
+
+    /**
+     * Returns the sub-prime {@code q}.
+     *
+     * @return the sub-prime {@code q}.
+     */
+    public BigInteger getQ() {
+        return this.q;
+    }
+
+    /**
+     * Returns the base {@code g}.
+     *
+     * @return the base {@code g}.
+     */
+    public BigInteger getG() {
+        return this.g;
+    }
+}

@@ -1,1372 +1,1373 @@
-/*      */ package com.sun.jmx.snmp.daemon;
-/*      */ 
-/*      */ import com.sun.jmx.defaults.JmxProperties;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.net.InetAddress;
-/*      */ import java.util.NoSuchElementException;
-/*      */ import java.util.Vector;
-/*      */ import java.util.logging.Level;
-/*      */ import javax.management.AttributeChangeNotification;
-/*      */ import javax.management.ListenerNotFoundException;
-/*      */ import javax.management.MBeanNotificationInfo;
-/*      */ import javax.management.MBeanRegistration;
-/*      */ import javax.management.MBeanServer;
-/*      */ import javax.management.NotificationBroadcaster;
-/*      */ import javax.management.NotificationBroadcasterSupport;
-/*      */ import javax.management.NotificationFilter;
-/*      */ import javax.management.NotificationListener;
-/*      */ import javax.management.ObjectName;
-/*      */ import javax.management.remote.MBeanServerForwarder;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class CommunicatorServer
-/*      */   implements Runnable, MBeanRegistration, NotificationBroadcaster, CommunicatorServerMBean
-/*      */ {
-/*      */   public static final int ONLINE = 0;
-/*      */   public static final int OFFLINE = 1;
-/*      */   public static final int STOPPING = 2;
-/*      */   public static final int STARTING = 3;
-/*      */   public static final int SNMP_TYPE = 4;
-/*  176 */   volatile transient int state = 1;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ObjectName objectName;
-/*      */ 
-/*      */   
-/*      */   MBeanServer topMBS;
-/*      */ 
-/*      */   
-/*      */   MBeanServer bottomMBS;
-/*      */ 
-/*      */   
-/*  189 */   transient String dbgTag = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  196 */   int maxActiveClientCount = 1;
-/*      */ 
-/*      */ 
-/*      */   
-/*  200 */   transient int servedClientCount = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  206 */   String host = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  212 */   int port = -1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  222 */   private transient Object stateLock = new Object();
-/*      */   
-/*  224 */   private transient Vector<ClientHandler> clientHandlerVector = new Vector<>();
-/*      */ 
-/*      */   
-/*  227 */   private transient Thread mainThread = null;
-/*      */   
-/*      */   private volatile boolean stopRequested = false;
-/*      */   private boolean interrupted = false;
-/*  231 */   private transient Exception startException = null;
-/*      */ 
-/*      */   
-/*  234 */   private transient long notifCount = 0L;
-/*  235 */   private transient NotificationBroadcasterSupport notifBroadcaster = new NotificationBroadcasterSupport();
-/*      */   
-/*  237 */   private transient MBeanNotificationInfo[] notifInfos = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public CommunicatorServer(int paramInt) throws IllegalArgumentException {
-/*  251 */     switch (paramInt) {
-/*      */       case 4:
-/*      */         break;
-/*      */       
-/*      */       default:
-/*  256 */         throw new IllegalArgumentException("Invalid connector Type");
-/*      */     } 
-/*  258 */     this.dbgTag = makeDebugTag();
-/*      */   }
-/*      */   
-/*      */   protected Thread createMainThread() {
-/*  262 */     return new Thread(this, makeThreadName());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void start(long paramLong) throws CommunicationException, InterruptedException {
-/*      */     boolean bool;
-/*  286 */     synchronized (this.stateLock) {
-/*  287 */       if (this.state == 2)
-/*      */       {
-/*      */         
-/*  290 */         waitState(1, 60000L);
-/*      */       }
-/*  292 */       bool = (this.state == 1) ? true : false;
-/*  293 */       if (bool) {
-/*  294 */         changeState(3);
-/*  295 */         this.stopRequested = false;
-/*  296 */         this.interrupted = false;
-/*  297 */         this.startException = null;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  301 */     if (!bool) {
-/*  302 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  303 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "start", "Connector is not OFFLINE");
-/*      */       }
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/*  309 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  310 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "start", "--> Start connector ");
-/*      */     }
-/*      */ 
-/*      */     
-/*  314 */     this.mainThread = createMainThread();
-/*      */     
-/*  316 */     this.mainThread.start();
-/*      */     
-/*  318 */     if (paramLong > 0L) waitForStart(paramLong);
-/*      */   
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void start() {
-/*      */     try {
-/*  330 */       start(0L);
-/*  331 */     } catch (InterruptedException interruptedException) {
-/*      */       
-/*  333 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  334 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "start", "interrupted", interruptedException);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void stop() {
-/*  348 */     synchronized (this.stateLock) {
-/*  349 */       if (this.state == 1 || this.state == 2) {
-/*  350 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  351 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "stop", "Connector is not ONLINE");
-/*      */         }
-/*      */         
-/*      */         return;
-/*      */       } 
-/*  356 */       changeState(2);
-/*      */ 
-/*      */ 
-/*      */       
-/*  360 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  361 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "stop", "Interrupt main thread");
-/*      */       }
-/*      */       
-/*  364 */       this.stopRequested = true;
-/*  365 */       if (!this.interrupted) {
-/*  366 */         this.interrupted = true;
-/*  367 */         this.mainThread.interrupt();
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  374 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  375 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "stop", "terminateAllClient");
-/*      */     }
-/*      */     
-/*  378 */     terminateAllClient();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  383 */     synchronized (this.stateLock) {
-/*  384 */       if (this.state == 3) {
-/*  385 */         changeState(1);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isActive() {
-/*  396 */     synchronized (this.stateLock) {
-/*  397 */       return (this.state == 0);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean waitState(int paramInt, long paramLong) {
-/*  435 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  436 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitState", paramInt + "(0on,1off,2st) TO=" + paramLong + " ; current state = " + 
-/*      */           
-/*  438 */           getStateString());
-/*      */     }
-/*      */     
-/*  441 */     long l = 0L;
-/*  442 */     if (paramLong > 0L) {
-/*  443 */       l = System.currentTimeMillis() + paramLong;
-/*      */     }
-/*  445 */     synchronized (this.stateLock) {
-/*  446 */       while (this.state != paramInt) {
-/*  447 */         if (paramLong < 0L) {
-/*  448 */           if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  449 */             JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitState", "timeOut < 0, return without wait");
-/*      */           }
-/*      */           
-/*  452 */           return false;
-/*      */         } 
-/*      */         try {
-/*  455 */           if (paramLong > 0L) {
-/*  456 */             long l1 = l - System.currentTimeMillis();
-/*  457 */             if (l1 <= 0L) {
-/*  458 */               if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  459 */                 JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitState", "timed out");
-/*      */               }
-/*      */               
-/*  462 */               return false;
-/*      */             } 
-/*  464 */             this.stateLock.wait(l1); continue;
-/*      */           } 
-/*  466 */           this.stateLock.wait();
-/*      */         }
-/*  468 */         catch (InterruptedException interruptedException) {
-/*  469 */           if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  470 */             JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitState", "wait interrupted");
-/*      */           }
-/*      */           
-/*  473 */           return (this.state == paramInt);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  477 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  478 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitState", "returning in desired state");
-/*      */       }
-/*      */       
-/*  481 */       return true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void waitForStart(long paramLong) throws CommunicationException, InterruptedException {
-/*  504 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  505 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitForStart", "Timeout=" + paramLong + " ; current state = " + 
-/*      */           
-/*  507 */           getStateString());
-/*      */     }
-/*      */     
-/*  510 */     long l = System.currentTimeMillis();
-/*      */     
-/*  512 */     synchronized (this.stateLock) {
-/*  513 */       while (this.state == 3) {
-/*      */ 
-/*      */         
-/*  516 */         long l1 = System.currentTimeMillis() - l;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  523 */         long l2 = paramLong - l1;
-/*      */ 
-/*      */ 
-/*      */         
-/*  527 */         if (l2 < 0L) {
-/*  528 */           if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  529 */             JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitForStart", "timeout < 0, return without wait");
-/*      */           }
-/*      */           
-/*  532 */           throw new InterruptedException("Timeout expired");
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/*  540 */           this.stateLock.wait(l2);
-/*  541 */         } catch (InterruptedException interruptedException) {
-/*  542 */           if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  543 */             JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitForStart", "wait interrupted");
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  551 */           if (this.state != 0) throw interruptedException;
-/*      */         
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/*  557 */       if (this.state == 0) {
-/*      */ 
-/*      */         
-/*  560 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  561 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitForStart", "started");
-/*      */         }
-/*      */         return;
-/*      */       } 
-/*  565 */       if (this.startException instanceof CommunicationException)
-/*      */       {
-/*      */ 
-/*      */         
-/*  569 */         throw (CommunicationException)this.startException; } 
-/*  570 */       if (this.startException instanceof InterruptedException)
-/*      */       {
-/*      */ 
-/*      */         
-/*  574 */         throw (InterruptedException)this.startException; } 
-/*  575 */       if (this.startException != null)
-/*      */       {
-/*      */ 
-/*      */         
-/*  579 */         throw new CommunicationException(this.startException, "Failed to start: " + this.startException);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  586 */       throw new CommunicationException("Failed to start: state is " + 
-/*  587 */           getStringForState(this.state));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getState() {
-/*  600 */     synchronized (this.stateLock) {
-/*  601 */       return this.state;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getStateString() {
-/*  613 */     return getStringForState(this.state);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getHost() {
-/*      */     try {
-/*  624 */       this.host = InetAddress.getLocalHost().getHostName();
-/*  625 */     } catch (Exception exception) {
-/*  626 */       this.host = "Unknown host";
-/*      */     } 
-/*  628 */     return this.host;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getPort() {
-/*  638 */     synchronized (this.stateLock) {
-/*  639 */       return this.port;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPort(int paramInt) throws IllegalStateException {
-/*  654 */     synchronized (this.stateLock) {
-/*  655 */       if (this.state == 0 || this.state == 3) {
-/*  656 */         throw new IllegalStateException("Stop server before carrying out this operation");
-/*      */       }
-/*  658 */       this.port = paramInt;
-/*  659 */       this.dbgTag = makeDebugTag();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract String getProtocol();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getServedClientCount() {
-/*  680 */     return this.servedClientCount;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getActiveClientCount() {
-/*  691 */     return this.clientHandlerVector.size();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getMaxActiveClientCount() {
-/*  704 */     return this.maxActiveClientCount;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setMaxActiveClientCount(int paramInt) throws IllegalStateException {
-/*  718 */     synchronized (this.stateLock) {
-/*  719 */       if (this.state == 0 || this.state == 3) {
-/*  720 */         throw new IllegalStateException("Stop server before carrying out this operation");
-/*      */       }
-/*      */       
-/*  723 */       this.maxActiveClientCount = paramInt;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void notifyClientHandlerCreated(ClientHandler paramClientHandler) {
-/*  731 */     this.clientHandlerVector.addElement(paramClientHandler);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   synchronized void notifyClientHandlerDeleted(ClientHandler paramClientHandler) {
-/*  738 */     this.clientHandlerVector.removeElement(paramClientHandler);
-/*  739 */     notifyAll();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getBindTries() {
-/*  747 */     return 50;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected long getBindSleepTime() {
-/*  755 */     return 100L;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void run() {
-/*  771 */     byte b = 0;
-/*  772 */     boolean bool = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  780 */       int i = getBindTries();
-/*  781 */       long l = getBindSleepTime();
-/*  782 */       while (b < i && !bool) {
-/*      */ 
-/*      */         
-/*      */         try {
-/*  786 */           doBind();
-/*  787 */           bool = true;
-/*  788 */         } catch (CommunicationException communicationException) {
-/*  789 */           b++;
-/*      */           try {
-/*  791 */             Thread.sleep(l);
-/*  792 */           } catch (InterruptedException interruptedException) {
-/*  793 */             throw interruptedException;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/*  799 */       if (!bool)
-/*      */       {
-/*      */         
-/*  802 */         doBind();
-/*      */       }
-/*      */     }
-/*  805 */     catch (Exception exception) {
-/*  806 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  807 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "run", "Got unexpected exception", exception);
-/*      */       }
-/*      */       
-/*  810 */       synchronized (this.stateLock) {
-/*  811 */         this.startException = exception;
-/*  812 */         changeState(1);
-/*      */       } 
-/*  814 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  815 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "run", "State is OFFLINE");
-/*      */       }
-/*      */       
-/*  818 */       doError(exception);
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  826 */       changeState(0);
-/*  827 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  828 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "run", "State is ONLINE");
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  835 */       while (!this.stopRequested) {
-/*  836 */         this.servedClientCount++;
-/*  837 */         doReceive();
-/*  838 */         waitIfTooManyClients();
-/*  839 */         doProcess();
-/*      */       } 
-/*  841 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  842 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "run", "Stop has been requested");
-/*      */       
-/*      */       }
-/*      */     }
-/*  846 */     catch (InterruptedException interruptedException) {
-/*  847 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  848 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "run", "Interrupt caught");
-/*      */       }
-/*      */       
-/*  851 */       changeState(2);
-/*  852 */     } catch (Exception exception) {
-/*  853 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  854 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "run", "Got unexpected exception", exception);
-/*      */       }
-/*      */       
-/*  857 */       changeState(2);
-/*      */     } finally {
-/*  859 */       synchronized (this.stateLock) {
-/*  860 */         this.interrupted = true;
-/*  861 */         Thread.interrupted();
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/*  868 */         doUnbind();
-/*  869 */         waitClientTermination();
-/*  870 */         changeState(1);
-/*  871 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  872 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "run", "State is OFFLINE");
-/*      */         }
-/*      */       }
-/*  875 */       catch (Exception exception) {
-/*  876 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  877 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "run", "Got unexpected exception", exception);
-/*      */         }
-/*      */         
-/*  880 */         changeState(1);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract void doError(Exception paramException) throws CommunicationException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract void doBind() throws CommunicationException, InterruptedException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract void doReceive() throws CommunicationException, InterruptedException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract void doProcess() throws CommunicationException, InterruptedException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract void doUnbind() throws CommunicationException, InterruptedException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized MBeanServer getMBeanServer() {
-/*  948 */     return this.topMBS;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void setMBeanServer(MBeanServer paramMBeanServer) throws IllegalArgumentException, IllegalStateException {
-/*  971 */     synchronized (this.stateLock) {
-/*  972 */       if (this.state == 0 || this.state == 3) {
-/*  973 */         throw new IllegalStateException("Stop server before carrying out this operation");
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  980 */     Vector<MBeanServer> vector = new Vector();
-/*  981 */     MBeanServer mBeanServer = paramMBeanServer;
-/*  982 */     for (; mBeanServer != this.bottomMBS; 
-/*  983 */       mBeanServer = ((MBeanServerForwarder)mBeanServer).getMBeanServer()) {
-/*  984 */       if (!(mBeanServer instanceof MBeanServerForwarder))
-/*  985 */         throw new IllegalArgumentException("MBeanServer argument must be MBean server where this server is registered, or an MBeanServerForwarder leading to that server"); 
-/*  986 */       if (vector.contains(mBeanServer)) {
-/*  987 */         throw new IllegalArgumentException("MBeanServerForwarder loop");
-/*      */       }
-/*  989 */       vector.addElement(mBeanServer);
-/*      */     } 
-/*  991 */     this.topMBS = paramMBeanServer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ObjectName getObjectName() {
-/* 1001 */     return this.objectName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void changeState(int paramInt) {
-/*      */     int i;
-/* 1009 */     synchronized (this.stateLock) {
-/* 1010 */       if (this.state == paramInt)
-/*      */         return; 
-/* 1012 */       i = this.state;
-/* 1013 */       this.state = paramInt;
-/* 1014 */       this.stateLock.notifyAll();
-/*      */     } 
-/* 1016 */     sendStateChangeNotification(i, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   String makeDebugTag() {
-/* 1023 */     return "CommunicatorServer[" + getProtocol() + ":" + getPort() + "]";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   String makeThreadName() {
-/*      */     String str;
-/* 1032 */     if (this.objectName == null) {
-/* 1033 */       str = "CommunicatorServer";
-/*      */     } else {
-/* 1035 */       str = this.objectName.toString();
-/*      */     } 
-/* 1037 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private synchronized void waitIfTooManyClients() throws InterruptedException {
-/* 1047 */     while (getActiveClientCount() >= this.maxActiveClientCount) {
-/* 1048 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1049 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitIfTooManyClients", "Waiting for a client to terminate");
-/*      */       }
-/*      */       
-/* 1052 */       wait();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void waitClientTermination() {
-/* 1060 */     int i = this.clientHandlerVector.size();
-/* 1061 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER) && 
-/* 1062 */       i >= 1) {
-/* 1063 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitClientTermination", "waiting for " + i + " clients to terminate");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1081 */     while (!this.clientHandlerVector.isEmpty()) {
-/*      */       try {
-/* 1083 */         ((ClientHandler)this.clientHandlerVector.firstElement()).join();
-/* 1084 */       } catch (NoSuchElementException noSuchElementException) {
-/* 1085 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1086 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitClientTermination", "No elements left", noSuchElementException);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1092 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER) && 
-/* 1093 */       i >= 1) {
-/* 1094 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "waitClientTermination", "Ok, let's go...");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void terminateAllClient() {
-/* 1104 */     int i = this.clientHandlerVector.size();
-/* 1105 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER) && 
-/* 1106 */       i >= 1) {
-/* 1107 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "terminateAllClient", "Interrupting " + i + " clients");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1130 */     ClientHandler[] arrayOfClientHandler = this.clientHandlerVector.<ClientHandler>toArray(new ClientHandler[0]);
-/* 1131 */     for (ClientHandler clientHandler : arrayOfClientHandler) {
-/*      */       try {
-/* 1133 */         clientHandler.interrupt();
-/* 1134 */       } catch (Exception exception) {
-/* 1135 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1136 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "terminateAllClient", "Failed to interrupt pending request. Ignore the exception.", exception);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1153 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1159 */     this.stateLock = new Object();
-/* 1160 */     this.state = 1;
-/* 1161 */     this.stopRequested = false;
-/* 1162 */     this.servedClientCount = 0;
-/* 1163 */     this.clientHandlerVector = new Vector<>();
-/* 1164 */     this.mainThread = null;
-/* 1165 */     this.notifCount = 0L;
-/* 1166 */     this.notifInfos = null;
-/* 1167 */     this.notifBroadcaster = new NotificationBroadcasterSupport();
-/* 1168 */     this.dbgTag = makeDebugTag();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addNotificationListener(NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws IllegalArgumentException {
-/* 1199 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 1200 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "addNotificationListener", "Adding listener " + paramNotificationListener + " with filter " + paramNotificationFilter + " and handback " + paramObject);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1204 */     this.notifBroadcaster.addNotificationListener(paramNotificationListener, paramNotificationFilter, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNotificationListener(NotificationListener paramNotificationListener) throws ListenerNotFoundException {
-/* 1221 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 1222 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "removeNotificationListener", "Removing listener " + paramNotificationListener);
-/*      */     }
-/*      */     
-/* 1225 */     this.notifBroadcaster.removeNotificationListener(paramNotificationListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MBeanNotificationInfo[] getNotificationInfo() {
-/* 1241 */     if (this.notifInfos == null) {
-/* 1242 */       this.notifInfos = new MBeanNotificationInfo[1];
-/* 1243 */       String[] arrayOfString = { "jmx.attribute.change" };
-/*      */       
-/* 1245 */       this.notifInfos[0] = new MBeanNotificationInfo(arrayOfString, AttributeChangeNotification.class
-/* 1246 */           .getName(), "Sent to notify that the value of the State attribute of this CommunicatorServer instance has changed.");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1251 */     return (MBeanNotificationInfo[])this.notifInfos.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sendStateChangeNotification(int paramInt1, int paramInt2) {
-/* 1259 */     String str1 = getStringForState(paramInt1);
-/* 1260 */     String str2 = getStringForState(paramInt2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1265 */     String str3 = this.dbgTag + " The value of attribute State has changed from " + paramInt1 + " (" + str1 + ") to " + paramInt2 + " (" + str2 + ").";
-/*      */     
-/* 1267 */     this.notifCount++;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1271 */     AttributeChangeNotification attributeChangeNotification = new AttributeChangeNotification(this, this.notifCount, System.currentTimeMillis(), str3, "State", "int", new Integer(paramInt1), new Integer(paramInt2));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1277 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 1278 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendStateChangeNotification", "Sending AttributeChangeNotification #" + this.notifCount + " with message: " + str3);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1282 */     this.notifBroadcaster.sendNotification(attributeChangeNotification);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String getStringForState(int paramInt) {
-/* 1289 */     switch (paramInt) { case 0:
-/* 1290 */         return "ONLINE";
-/* 1291 */       case 3: return "STARTING";
-/* 1292 */       case 1: return "OFFLINE";
-/* 1293 */       case 2: return "STOPPING"; }
-/* 1294 */      return "UNDEFINED";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectName preRegister(MBeanServer paramMBeanServer, ObjectName paramObjectName) throws Exception {
-/* 1319 */     this.objectName = paramObjectName;
-/* 1320 */     synchronized (this) {
-/* 1321 */       if (this.bottomMBS != null) {
-/* 1322 */         throw new IllegalArgumentException("connector already registered in an MBean server");
-/*      */       }
-/*      */ 
-/*      */       
-/* 1326 */       this.topMBS = this.bottomMBS = paramMBeanServer;
-/*      */     } 
-/* 1328 */     this.dbgTag = makeDebugTag();
-/* 1329 */     return paramObjectName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void postRegister(Boolean paramBoolean) {
-/* 1340 */     if (!paramBoolean.booleanValue()) {
-/* 1341 */       synchronized (this) {
-/* 1342 */         this.topMBS = this.bottomMBS = null;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void preDeregister() throws Exception {
-/* 1356 */     synchronized (this) {
-/* 1357 */       this.topMBS = this.bottomMBS = null;
-/*      */     } 
-/* 1359 */     this.objectName = null;
-/* 1360 */     int i = getState();
-/* 1361 */     if (i == 0 || i == 3)
-/* 1362 */       stop(); 
-/*      */   }
-/*      */   
-/*      */   public void postDeregister() {}
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\daemon\CommunicatorServer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp.daemon;
+
+
+
+// java import
+//
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.logging.Level;
+import java.util.Vector;
+import java.util.NoSuchElementException;
+
+// jmx import
+//
+import javax.management.MBeanServer;
+import javax.management.MBeanRegistration;
+import javax.management.ObjectName;
+import javax.management.NotificationListener;
+import javax.management.NotificationFilter;
+import javax.management.NotificationBroadcaster;
+import javax.management.NotificationBroadcasterSupport;
+import javax.management.MBeanNotificationInfo;
+import javax.management.AttributeChangeNotification;
+import javax.management.ListenerNotFoundException;
+
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+
+// JSR 160 import
+//
+// XXX Revisit:
+//   used to import com.sun.jmx.snmp.MBeanServerForwarder
+// Now using JSR 160 instead. => this is an additional
+// dependency to JSR 160.
+//
+import javax.management.remote.MBeanServerForwarder;
+
+/**
+ * Defines generic behavior for the server part of a connector or an adaptor.
+ * Most connectors or adaptors extend <CODE>CommunicatorServer</CODE>
+ * and inherit this behavior. Connectors or adaptors that do not fit into
+ * this model do not extend <CODE>CommunicatorServer</CODE>.
+ * <p>
+ * A <CODE>CommunicatorServer</CODE> is an active object, it listens for
+ * client requests  and processes them in its own thread. When necessary, a
+ * <CODE>CommunicatorServer</CODE> creates other threads to process multiple
+ * requests concurrently.
+ * <p>
+ * A <CODE>CommunicatorServer</CODE> object can be stopped by calling the
+ * <CODE>stop</CODE> method. When it is stopped, the
+ * <CODE>CommunicatorServer</CODE> no longer listens to client requests and
+ * no longer holds any thread or communication resources.
+ * It can be started again by calling the <CODE>start</CODE> method.
+ * <p>
+ * A <CODE>CommunicatorServer</CODE> has a <CODE>State</CODE> attribute
+ * which reflects its  activity.
+ * <p>
+ * <TABLE>
+ * <TR><TH>CommunicatorServer</TH>      <TH>State</TH></TR>
+ * <TR><TD><CODE>stopped</CODE></TD>    <TD><CODE>OFFLINE</CODE></TD></TR>
+ * <TR><TD><CODE>starting</CODE></TD>    <TD><CODE>STARTING</CODE></TD></TR>
+ * <TR><TD><CODE>running</CODE></TD>     <TD><CODE>ONLINE</CODE></TD></TR>
+ * <TR><TD><CODE>stopping</CODE></TD>     <TD><CODE>STOPPING</CODE></TD></TR>
+ * </TABLE>
+ * <p>
+ * The <CODE>STARTING</CODE> state marks the transition
+ * from <CODE>OFFLINE</CODE> to <CODE>ONLINE</CODE>.
+ * <p>
+ * The <CODE>STOPPING</CODE> state marks the transition from
+ * <CODE>ONLINE</CODE> to <CODE>OFFLINE</CODE>. This occurs when the
+ * <CODE>CommunicatorServer</CODE> is finishing or interrupting active
+ * requests.
+ * <p>
+ * When a <CODE>CommunicatorServer</CODE> is unregistered from the MBeanServer,
+ * it is stopped automatically.
+ * <p>
+ * When the value of the <CODE>State</CODE> attribute changes the
+ * <CODE>CommunicatorServer</CODE> sends a
+ * <tt>{@link javax.management.AttributeChangeNotification}</tt> to the
+ * registered listeners, if any.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public abstract class CommunicatorServer
+    implements Runnable, MBeanRegistration, NotificationBroadcaster,
+               CommunicatorServerMBean {
+
+    //
+    // States of a CommunicatorServer
+    //
+
+    /**
+     * Represents an <CODE>ONLINE</CODE> state.
+     */
+    public static final int ONLINE = 0 ;
+
+    /**
+     * Represents an <CODE>OFFLINE</CODE> state.
+     */
+    public static final int OFFLINE = 1 ;
+
+    /**
+     * Represents a <CODE>STOPPING</CODE> state.
+     */
+    public static final int STOPPING = 2 ;
+
+    /**
+     * Represents a <CODE>STARTING</CODE> state.
+     */
+    public static final int STARTING = 3 ;
+
+    //
+    // Types of connectors.
+    //
+
+    /**
+     * Indicates that it is an RMI connector type.
+     */
+    //public static final int RMI_TYPE = 1 ;
+
+    /**
+     * Indicates that it is an HTTP connector type.
+     */
+    //public static final int HTTP_TYPE = 2 ;
+
+    /**
+     * Indicates that it is an HTML connector type.
+     */
+    //public static final int HTML_TYPE = 3 ;
+
+    /**
+     * Indicates that it is an SNMP connector type.
+     */
+    public static final int SNMP_TYPE = 4 ;
+
+    /**
+     * Indicates that it is an HTTPS connector type.
+     */
+    //public static final int HTTPS_TYPE = 5 ;
+
+    //
+    // Package variables
+    //
+
+    /**
+     * The state of the connector server.
+     */
+     transient volatile int state = OFFLINE ;
+
+    /**
+     * The object name of the connector server.
+     * @serial
+     */
+    ObjectName objectName ;
+
+    MBeanServer topMBS;
+    MBeanServer bottomMBS;
+
+    /**
+     */
+    transient String dbgTag = null ;
+
+    /**
+     * The maximum number of clients that the CommunicatorServer can
+     * process concurrently.
+     * @serial
+     */
+    int maxActiveClientCount = 1 ;
+
+    /**
+     */
+    transient int servedClientCount = 0 ;
+
+    /**
+     * The host name used by this CommunicatorServer.
+     * @serial
+     */
+    String host = null ;
+
+    /**
+     * The port number used by this CommunicatorServer.
+     * @serial
+     */
+    int port = -1 ;
+
+
+    //
+    // Private fields
+    //
+
+    /* This object controls access to the "state" and "interrupted" variables.
+       If held at the same time as the lock on "this", the "this" lock must
+       be taken first.  */
+    private transient Object stateLock = new Object();
+
+    private transient Vector<ClientHandler>
+            clientHandlerVector = new Vector<>() ;
+
+    private transient Thread mainThread = null ;
+
+    private volatile boolean stopRequested = false ;
+    private boolean interrupted = false;
+    private transient Exception startException = null;
+
+    // Notifs count, broadcaster and info
+    private transient long notifCount = 0;
+    private transient NotificationBroadcasterSupport notifBroadcaster =
+        new NotificationBroadcasterSupport();
+    private transient MBeanNotificationInfo[] notifInfos = null;
+
+
+    /**
+     * Instantiates a <CODE>CommunicatorServer</CODE>.
+     *
+     * @param connectorType Indicates the connector type. Possible values are:
+     * SNMP_TYPE.
+     *
+     * @exception <CODE>java.lang.IllegalArgumentException</CODE>
+     *            This connector type is not correct.
+     */
+    public CommunicatorServer(int connectorType)
+        throws IllegalArgumentException {
+        switch (connectorType) {
+        case SNMP_TYPE :
+            //No op. int Type deciding debugging removed.
+            break;
+        default:
+            throw new IllegalArgumentException("Invalid connector Type") ;
+        }
+        dbgTag = makeDebugTag() ;
+    }
+
+    protected Thread createMainThread() {
+        return new Thread (this, makeThreadName());
+    }
+
+    /**
+     * Starts this <CODE>CommunicatorServer</CODE>.
+     * <p>
+     * Has no effect if this <CODE>CommunicatorServer</CODE> is
+     * <CODE>ONLINE</CODE> or <CODE>STOPPING</CODE>.
+     * @param timeout Time in ms to wait for the connector to start.
+     *        If <code>timeout</code> is positive, wait for at most
+     *        the specified time. An infinite timeout can be specified
+     *        by passing a <code>timeout</code> value equals
+     *        <code>Long.MAX_VALUE</code>. In that case the method
+     *        will wait until the connector starts or fails to start.
+     *        If timeout is negative or zero, returns as soon as possible
+     *        without waiting.
+     * @exception CommunicationException if the connectors fails to start.
+     * @exception InterruptedException if the thread is interrupted or the
+     *            timeout expires.
+     */
+    public void start(long timeout)
+        throws CommunicationException, InterruptedException {
+        boolean start;
+
+        synchronized (stateLock) {
+            if (state == STOPPING) {
+                // Fix for bug 4352451:
+                //     "java.net.BindException: Address in use".
+                waitState(OFFLINE, 60000);
+            }
+            start = (state == OFFLINE);
+            if (start) {
+                changeState(STARTING);
+                stopRequested = false;
+                interrupted = false;
+                startException = null;
+            }
+        }
+
+        if (!start) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "start","Connector is not OFFLINE");
+            }
+            return;
+        }
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "start","--> Start connector ");
+        }
+
+        mainThread = createMainThread();
+
+        mainThread.start() ;
+
+        if (timeout > 0) waitForStart(timeout);
+    }
+
+    /**
+     * Starts this <CODE>CommunicatorServer</CODE>.
+     * <p>
+     * Has no effect if this <CODE>CommunicatorServer</CODE> is
+     * <CODE>ONLINE</CODE> or <CODE>STOPPING</CODE>.
+     */
+    @Override
+    public void start() {
+        try {
+            start(0);
+        } catch (InterruptedException x) {
+            // cannot happen because of `0'
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "start","interrupted", x);
+            }
+        }
+    }
+
+    /**
+     * Stops this <CODE>CommunicatorServer</CODE>.
+     * <p>
+     * Has no effect if this <CODE>CommunicatorServer</CODE> is
+     * <CODE>OFFLINE</CODE> or  <CODE>STOPPING</CODE>.
+     */
+    @Override
+    public void stop() {
+        synchronized (stateLock) {
+            if (state == OFFLINE || state == STOPPING) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                        "stop","Connector is not ONLINE");
+                }
+                return;
+            }
+            changeState(STOPPING);
+            //
+            // Stop the connector thread
+            //
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "stop","Interrupt main thread");
+            }
+            stopRequested = true ;
+            if (!interrupted) {
+                interrupted = true;
+                mainThread.interrupt();
+            }
+        }
+
+        //
+        // Call terminate on each active client handler
+        //
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "stop","terminateAllClient");
+        }
+        terminateAllClient() ;
+
+        // ----------------------
+        // changeState
+        // ----------------------
+        synchronized (stateLock) {
+            if (state == STARTING)
+                changeState(OFFLINE);
+        }
+    }
+
+    /**
+     * Tests whether the <CODE>CommunicatorServer</CODE> is active.
+     *
+     * @return True if connector is <CODE>ONLINE</CODE>; false otherwise.
+     */
+    @Override
+    public boolean isActive() {
+        synchronized (stateLock) {
+            return (state == ONLINE);
+        }
+    }
+
+    /**
+     * <p>Waits until either the State attribute of this MBean equals the
+     * specified <VAR>wantedState</VAR> parameter,
+     * or the specified  <VAR>timeOut</VAR> has elapsed.
+     * The method <CODE>waitState</CODE> returns with a boolean value
+     * indicating whether the specified <VAR>wantedState</VAR> parameter
+     * equals the value of this MBean's State attribute at the time the method
+     * terminates.</p>
+     *
+     * <p>Two special cases for the <VAR>timeOut</VAR> parameter value are:</p>
+     * <UL><LI> if <VAR>timeOut</VAR> is negative then <CODE>waitState</CODE>
+     *     returns immediately (i.e. does not wait at all),</LI>
+     * <LI> if <VAR>timeOut</VAR> equals zero then <CODE>waitState</CODE>
+     *     waits untill the value of this MBean's State attribute
+     *     is the same as the <VAR>wantedState</VAR> parameter (i.e. will wait
+     *     indefinitely if this condition is never met).</LI></UL>
+     *
+     * @param wantedState The value of this MBean's State attribute to wait
+     *        for. <VAR>wantedState</VAR> can be one of:
+     * <ul>
+     * <li><CODE>CommunicatorServer.OFFLINE</CODE>,</li>
+     * <li><CODE>CommunicatorServer.ONLINE</CODE>,</li>
+     * <li><CODE>CommunicatorServer.STARTING</CODE>,</li>
+     * <li><CODE>CommunicatorServer.STOPPING</CODE>.</li>
+     * </ul>
+     * @param timeOut The maximum time to wait for, in milliseconds,
+     *        if positive.
+     * Infinite time out if 0, or no waiting at all if negative.
+     *
+     * @return true if the value of this MBean's State attribute is the
+     *      same as the <VAR>wantedState</VAR> parameter; false otherwise.
+     */
+    @Override
+    public boolean waitState(int wantedState, long timeOut) {
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "waitState", wantedState + "(0on,1off,2st) TO=" + timeOut +
+                  " ; current state = " + getStateString());
+        }
+
+        long endTime = 0;
+        if (timeOut > 0)
+            endTime = System.currentTimeMillis() + timeOut;
+
+        synchronized (stateLock) {
+            while (state != wantedState) {
+                if (timeOut < 0) {
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                            "waitState", "timeOut < 0, return without wait");
+                    }
+                    return false;
+                } else {
+                    try {
+                        if (timeOut > 0) {
+                            long toWait = endTime - System.currentTimeMillis();
+                            if (toWait <= 0) {
+                                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                                        "waitState", "timed out");
+                                }
+                                return false;
+                            }
+                            stateLock.wait(toWait);
+                        } else {  // timeOut == 0
+                            stateLock.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                                "waitState", "wait interrupted");
+                        }
+                        return (state == wantedState);
+                    }
+                }
+            }
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "waitState","returning in desired state");
+            }
+            return true;
+        }
+    }
+
+    /**
+     * <p>Waits until the communicator is started or timeout expires.
+     *
+     * @param timeout Time in ms to wait for the connector to start.
+     *        If <code>timeout</code> is positive, wait for at most
+     *        the specified time. An infinite timeout can be specified
+     *        by passing a <code>timeout</code> value equals
+     *        <code>Long.MAX_VALUE</code>. In that case the method
+     *        will wait until the connector starts or fails to start.
+     *        If timeout is negative or zero, returns as soon as possible
+     *        without waiting.
+     *
+     * @exception CommunicationException if the connectors fails to start.
+     * @exception InterruptedException if the thread is interrupted or the
+     *            timeout expires.
+     *
+     */
+    private void waitForStart(long timeout)
+        throws CommunicationException, InterruptedException {
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "waitForStart", "Timeout=" + timeout +
+                 " ; current state = " + getStateString());
+        }
+
+        final long startTime = System.currentTimeMillis();
+
+        synchronized (stateLock) {
+            while (state == STARTING) {
+                // Time elapsed since startTime...
+                //
+                final long elapsed = System.currentTimeMillis() - startTime;
+
+                // wait for timeout - elapsed.
+                // A timeout of Long.MAX_VALUE is equivalent to something
+                // like 292271023 years - which is pretty close to
+                // forever as far as we are concerned ;-)
+                //
+                final long remainingTime = timeout-elapsed;
+
+                // If remainingTime is negative, the timeout has elapsed.
+                //
+                if (remainingTime < 0) {
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                            "waitForStart", "timeout < 0, return without wait");
+                    }
+                    throw new InterruptedException("Timeout expired");
+                }
+
+                // We're going to wait until someone notifies on the
+                // the stateLock object, or until the timeout expires,
+                // or until the thread is interrupted.
+                //
+                try {
+                    stateLock.wait(remainingTime);
+                } catch (InterruptedException e) {
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                            "waitForStart", "wait interrupted");
+                    }
+
+                    // If we are now ONLINE, then no need to rethrow the
+                    // exception... we're simply going to exit the while
+                    // loop. Otherwise, throw the InterruptedException.
+                    //
+                    if (state != ONLINE) throw e;
+                }
+            }
+
+            // We're no longer in STARTING state
+            //
+            if (state == ONLINE) {
+                // OK, we're started, everything went fine, just return
+                //
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                        "waitForStart", "started");
+                }
+                return;
+            } else if (startException instanceof CommunicationException) {
+                // There was some exception during the starting phase.
+                // Cast and throw...
+                //
+                throw (CommunicationException)startException;
+            } else if (startException instanceof InterruptedException) {
+                // There was some exception during the starting phase.
+                // Cast and throw...
+                //
+                throw (InterruptedException)startException;
+            } else if (startException != null) {
+                // There was some exception during the starting phase.
+                // Wrap and throw...
+                //
+                throw new CommunicationException(startException,
+                                                 "Failed to start: "+
+                                                 startException);
+            } else {
+                // We're not ONLINE, and there's no exception...
+                // Something went wrong but we don't know what...
+                //
+                throw new CommunicationException("Failed to start: state is "+
+                                                 getStringForState(state));
+            }
+        }
+    }
+
+    /**
+     * Gets the state of this <CODE>CommunicatorServer</CODE> as an integer.
+     *
+     * @return <CODE>ONLINE</CODE>, <CODE>OFFLINE</CODE>,
+     *         <CODE>STARTING</CODE> or <CODE>STOPPING</CODE>.
+     */
+    @Override
+    public int getState() {
+        synchronized (stateLock) {
+            return state ;
+        }
+    }
+
+    /**
+     * Gets the state of this <CODE>CommunicatorServer</CODE> as a string.
+     *
+     * @return One of the strings "ONLINE", "OFFLINE", "STARTING" or
+     *         "STOPPING".
+     */
+    @Override
+    public String getStateString() {
+        return getStringForState(state) ;
+    }
+
+    /**
+     * Gets the host name used by this <CODE>CommunicatorServer</CODE>.
+     *
+     * @return The host name used by this <CODE>CommunicatorServer</CODE>.
+     */
+    @Override
+    public String getHost() {
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+            host = "Unknown host";
+        }
+        return host ;
+    }
+
+    /**
+     * Gets the port number used by this <CODE>CommunicatorServer</CODE>.
+     *
+     * @return The port number used by this <CODE>CommunicatorServer</CODE>.
+     */
+    @Override
+    public int getPort() {
+        synchronized (stateLock) {
+            return port ;
+        }
+    }
+
+    /**
+     * Sets the port number used by this <CODE>CommunicatorServer</CODE>.
+     *
+     * @param port The port number used by this
+     *             <CODE>CommunicatorServer</CODE>.
+     *
+     * @exception java.lang.IllegalStateException This method has been invoked
+     * while the communicator was ONLINE or STARTING.
+     */
+    @Override
+    public void setPort(int port) throws java.lang.IllegalStateException {
+        synchronized (stateLock) {
+            if ((state == ONLINE) || (state == STARTING))
+                throw new IllegalStateException("Stop server before " +
+                                                "carrying out this operation");
+            this.port = port;
+            dbgTag = makeDebugTag();
+        }
+    }
+
+    /**
+     * Gets the protocol being used by this <CODE>CommunicatorServer</CODE>.
+     * @return The protocol as a string.
+     */
+    @Override
+    public abstract String getProtocol();
+
+    /**
+     * Gets the number of clients that have been processed by this
+     * <CODE>CommunicatorServer</CODE>  since its creation.
+     *
+     * @return The number of clients handled by this
+     *         <CODE>CommunicatorServer</CODE>
+     *         since its creation. This counter is not reset by the
+     *         <CODE>stop</CODE> method.
+     */
+    int getServedClientCount() {
+        return servedClientCount ;
+    }
+
+    /**
+     * Gets the number of clients currently being processed by this
+     * <CODE>CommunicatorServer</CODE>.
+     *
+     * @return The number of clients currently being processed by this
+     *         <CODE>CommunicatorServer</CODE>.
+     */
+    int getActiveClientCount() {
+        int result = clientHandlerVector.size() ;
+        return result ;
+    }
+
+    /**
+     * Gets the maximum number of clients that this
+     * <CODE>CommunicatorServer</CODE> can  process concurrently.
+     *
+     * @return The maximum number of clients that this
+     *         <CODE>CommunicatorServer</CODE> can
+     *         process concurrently.
+     */
+    int getMaxActiveClientCount() {
+        return maxActiveClientCount ;
+    }
+
+    /**
+     * Sets the maximum number of clients this
+     * <CODE>CommunicatorServer</CODE> can process concurrently.
+     *
+     * @param c The number of clients.
+     *
+     * @exception java.lang.IllegalStateException This method has been invoked
+     * while the communicator was ONLINE or STARTING.
+     */
+    void setMaxActiveClientCount(int c)
+        throws java.lang.IllegalStateException {
+        synchronized (stateLock) {
+            if ((state == ONLINE) || (state == STARTING)) {
+                throw new IllegalStateException(
+                          "Stop server before carrying out this operation");
+            }
+            maxActiveClientCount = c ;
+        }
+    }
+
+    /**
+     * For SNMP Runtime internal use only.
+     */
+    void notifyClientHandlerCreated(ClientHandler h) {
+        clientHandlerVector.addElement(h) ;
+    }
+
+    /**
+     * For SNMP Runtime internal use only.
+     */
+    synchronized void notifyClientHandlerDeleted(ClientHandler h) {
+        clientHandlerVector.removeElement(h);
+        notifyAll();
+    }
+
+    /**
+     * The number of times the communicator server will attempt
+     * to bind before giving up.
+     **/
+    protected int getBindTries() {
+        return 50;
+    }
+
+    /**
+     * The delay, in ms, during which the communicator server will sleep before
+     * attempting to bind again.
+     **/
+    protected long getBindSleepTime() {
+        return 100;
+    }
+
+    /**
+     * For SNMP Runtime internal use only.
+     * <p>
+     * The <CODE>run</CODE> method executed by this connector's main thread.
+     */
+    @Override
+    public void run() {
+
+        // Fix jaw.00667.B
+        // It seems that the init of "i" and "success"
+        // need to be done outside the "try" clause...
+        // A bug in Java 2 production release ?
+        //
+        int i = 0;
+        boolean success = false;
+
+        // ----------------------
+        // Bind
+        // ----------------------
+        try {
+            // Fix for bug 4352451: "java.net.BindException: Address in use".
+            //
+            final int  bindRetries = getBindTries();
+            final long sleepTime   = getBindSleepTime();
+            while (i < bindRetries && !success) {
+                try {
+                    // Try socket connection.
+                    //
+                    doBind();
+                    success = true;
+                } catch (CommunicationException ce) {
+                    i++;
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException ie) {
+                        throw ie;
+                    }
+                }
+            }
+            // Retry last time to get correct exception.
+            //
+            if (!success) {
+                // Try socket connection.
+                //
+                doBind();
+            }
+
+        } catch(Exception x) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                    "run", "Got unexpected exception", x);
+            }
+            synchronized(stateLock) {
+                startException = x;
+                changeState(OFFLINE);
+            }
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "run","State is OFFLINE");
+            }
+            doError(x);
+            return;
+        }
+
+        try {
+            // ----------------------
+            // State change
+            // ----------------------
+            changeState(ONLINE) ;
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "run","State is ONLINE");
+            }
+
+            // ----------------------
+            // Main loop
+            // ----------------------
+            while (!stopRequested) {
+                servedClientCount++;
+                doReceive() ;
+                waitIfTooManyClients() ;
+                doProcess() ;
+            }
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "run","Stop has been requested");
+            }
+
+        } catch(InterruptedException x) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                    "run","Interrupt caught");
+            }
+            changeState(STOPPING);
+        } catch(Exception x) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                    "run","Got unexpected exception", x);
+            }
+            changeState(STOPPING);
+        } finally {
+            synchronized (stateLock) {
+                interrupted = true;
+                Thread.interrupted();
+            }
+
+            // ----------------------
+            // unBind
+            // ----------------------
+            try {
+                doUnbind() ;
+                waitClientTermination() ;
+                changeState(OFFLINE);
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                        "run","State is OFFLINE");
+                }
+            } catch(Exception x) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "run","Got unexpected exception", x);
+                }
+                changeState(OFFLINE);
+            }
+
+        }
+    }
+
+    /**
+     */
+    protected abstract void doError(Exception e) throws CommunicationException;
+
+    //
+    // To be defined by the subclass.
+    //
+    // Each method below is called by run() and must be subclassed.
+    // If the method sends an exception (Communication or Interrupt), this
+    // will end up the run() method and switch the connector offline.
+    //
+    // If it is a CommunicationException, run() will call
+    //       Debug.printException().
+    //
+    // All these methods should propagate the InterruptedException to inform
+    // run() that the connector must be switch OFFLINE.
+    //
+    //
+    //
+    // doBind() should do all what is needed before calling doReceive().
+    // If doBind() throws an exception, doUnbind() is not to be called
+    // and run() ends up.
+    //
+
+    /**
+     */
+    protected abstract void doBind()
+        throws CommunicationException, InterruptedException ;
+
+    /**
+     * <CODE>doReceive()</CODE> should block until a client is available.
+     * If this method throws an exception, <CODE>doProcess()</CODE> is not
+     * called but <CODE>doUnbind()</CODE> is called then <CODE>run()</CODE>
+     * stops.
+     */
+    protected abstract void doReceive()
+        throws CommunicationException, InterruptedException ;
+
+    /**
+     * <CODE>doProcess()</CODE> is called after <CODE>doReceive()</CODE>:
+     * it should process the requests of the incoming client.
+     * If it throws an exception, <CODE>doUnbind()</CODE> is called and
+     * <CODE>run()</CODE> stops.
+     */
+    protected abstract void doProcess()
+        throws CommunicationException, InterruptedException ;
+
+    /**
+     * <CODE>doUnbind()</CODE> is called whenever the connector goes
+     * <CODE>OFFLINE</CODE>, except if <CODE>doBind()</CODE> has thrown an
+     * exception.
+     */
+    protected abstract void doUnbind()
+        throws CommunicationException, InterruptedException ;
+
+    /**
+     * Get the <code>MBeanServer</code> object to which incoming requests are
+     * sent.  This is either the MBean server in which this connector is
+     * registered, or an <code>MBeanServerForwarder</code> leading to that
+     * server.
+     */
+    public synchronized MBeanServer getMBeanServer() {
+        return topMBS;
+    }
+
+    /**
+     * Set the <code>MBeanServer</code> object to which incoming
+     * requests are sent.  This must be either the MBean server in
+     * which this connector is registered, or an
+     * <code>MBeanServerForwarder</code> leading to that server.  An
+     * <code>MBeanServerForwarder</code> <code>mbsf</code> leads to an
+     * MBean server <code>mbs</code> if
+     * <code>mbsf.getMBeanServer()</code> is either <code>mbs</code>
+     * or an <code>MBeanServerForwarder</code> leading to
+     * <code>mbs</code>.
+     *
+     * @exception IllegalArgumentException if <code>newMBS</code> is neither
+     * the MBean server in which this connector is registered nor an
+     * <code>MBeanServerForwarder</code> leading to that server.
+     *
+     * @exception IllegalStateException This method has been invoked
+     * while the communicator was ONLINE or STARTING.
+     */
+    public synchronized void setMBeanServer(MBeanServer newMBS)
+            throws IllegalArgumentException, IllegalStateException {
+        synchronized (stateLock) {
+            if (state == ONLINE || state == STARTING)
+                throw new IllegalStateException("Stop server before " +
+                                                "carrying out this operation");
+        }
+        final String error =
+            "MBeanServer argument must be MBean server where this " +
+            "server is registered, or an MBeanServerForwarder " +
+            "leading to that server";
+        Vector<MBeanServer> seenMBS = new Vector<>();
+        for (MBeanServer mbs = newMBS;
+             mbs != bottomMBS;
+             mbs = ((MBeanServerForwarder) mbs).getMBeanServer()) {
+            if (!(mbs instanceof MBeanServerForwarder))
+                throw new IllegalArgumentException(error);
+            if (seenMBS.contains(mbs))
+                throw new IllegalArgumentException("MBeanServerForwarder " +
+                                                   "loop");
+            seenMBS.addElement(mbs);
+        }
+        topMBS = newMBS;
+    }
+
+    //
+    // To be called by the subclass if needed
+    //
+    /**
+     * For internal use only.
+     */
+    ObjectName getObjectName() {
+        return objectName ;
+    }
+
+    /**
+     * For internal use only.
+     */
+    void changeState(int newState) {
+        int oldState;
+        synchronized (stateLock) {
+            if (state == newState)
+                return;
+            oldState = state;
+            state = newState;
+            stateLock.notifyAll();
+        }
+        sendStateChangeNotification(oldState, newState);
+    }
+
+    /**
+     * Returns the string used in debug traces.
+     */
+    String makeDebugTag() {
+        return "CommunicatorServer["+ getProtocol() + ":" + getPort() + "]" ;
+    }
+
+    /**
+     * Returns the string used to name the connector thread.
+     */
+    String makeThreadName() {
+        String result ;
+
+        if (objectName == null)
+            result = "CommunicatorServer" ;
+        else
+            result = objectName.toString() ;
+
+        return result ;
+    }
+
+    /**
+     * This method blocks if there are too many active clients.
+     * Call to <CODE>wait()</CODE> is terminated when a client handler
+     * thread calls <CODE>notifyClientHandlerDeleted(this)</CODE> ;
+     */
+    private synchronized void waitIfTooManyClients()
+        throws InterruptedException {
+        while (getActiveClientCount() >= maxActiveClientCount) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "waitIfTooManyClients","Waiting for a client to terminate");
+            }
+            wait();
+        }
+    }
+
+    /**
+     * This method blocks until there is no more active client.
+     */
+    private void waitClientTermination() {
+        int s = clientHandlerVector.size() ;
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            if (s >= 1) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "waitClientTermination","waiting for " +
+                      s + " clients to terminate");
+            }
+        }
+
+        // The ClientHandler will remove themselves from the
+        // clientHandlerVector at the end of their run() method, by
+        // calling notifyClientHandlerDeleted().
+        // Since the clientHandlerVector is modified by the ClientHandler
+        // threads we must avoid using Enumeration or Iterator to loop
+        // over this array. We must also take care of NoSuchElementException
+        // which could be thrown if the last ClientHandler removes itself
+        // between the call to clientHandlerVector.isEmpty() and the call
+        // to clientHandlerVector.firstElement().
+        // What we *MUST NOT DO* is locking the clientHandlerVector, because
+        // this would most probably cause a deadlock.
+        //
+        while (! clientHandlerVector.isEmpty()) {
+            try {
+                clientHandlerVector.firstElement().join();
+            } catch (NoSuchElementException x) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                        "waitClientTermination","No elements left",  x);
+                }
+            }
+        }
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            if (s >= 1) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "waitClientTermination","Ok, let's go...");
+            }
+        }
+    }
+
+    /**
+     * Call <CODE>interrupt()</CODE> on each pending client.
+     */
+    private void terminateAllClient() {
+        final int s = clientHandlerVector.size() ;
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            if (s >= 1) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "terminateAllClient","Interrupting " + s + " clients");
+            }
+        }
+
+        // The ClientHandler will remove themselves from the
+        // clientHandlerVector at the end of their run() method, by
+        // calling notifyClientHandlerDeleted().
+        // Since the clientHandlerVector is modified by the ClientHandler
+        // threads we must avoid using Enumeration or Iterator to loop
+        // over this array.
+        // We cannot use the same logic here than in waitClientTermination()
+        // because there is no guarantee that calling interrupt() on the
+        // ClientHandler will actually terminate the ClientHandler.
+        // Since we do not want to wait for the actual ClientHandler
+        // termination, we cannot simply loop over the array until it is
+        // empty (this might result in calling interrupt() endlessly on
+        // the same client handler. So what we do is simply take a snapshot
+        // copy of the vector and loop over the copy.
+        // What we *MUST NOT DO* is locking the clientHandlerVector, because
+        // this would most probably cause a deadlock.
+        //
+        final  ClientHandler[] handlers =
+                clientHandlerVector.toArray(new ClientHandler[0]);
+         for (ClientHandler h : handlers) {
+             try {
+                 h.interrupt() ;
+             } catch (Exception x) {
+                 if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                     SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                             "terminateAllClient",
+                             "Failed to interrupt pending request. " +
+                             "Ignore the exception.", x);
+                 }
+            }
+        }
+    }
+
+    /**
+     * Controls the way the CommunicatorServer service is deserialized.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+
+        // Call the default deserialization of the object.
+        //
+        stream.defaultReadObject();
+
+        // Call the specific initialization for the CommunicatorServer service.
+        // This is for transient structures to be initialized to specific
+        // default values.
+        //
+        stateLock = new Object();
+        state = OFFLINE;
+        stopRequested = false;
+        servedClientCount = 0;
+        clientHandlerVector = new Vector<>();
+        mainThread = null;
+        notifCount = 0;
+        notifInfos = null;
+        notifBroadcaster = new NotificationBroadcasterSupport();
+        dbgTag = makeDebugTag();
+    }
+
+
+    //
+    // NotificationBroadcaster
+    //
+
+    /**
+     * Adds a listener for the notifications emitted by this
+     * CommunicatorServer.
+     * There is only one type of notifications sent by the CommunicatorServer:
+     * they are <tt>{@link javax.management.AttributeChangeNotification}</tt>,
+     * sent when the <tt>State</tt> attribute of this CommunicatorServer
+     * changes.
+     *
+     * @param listener The listener object which will handle the emitted
+     *        notifications.
+     * @param filter The filter object. If filter is null, no filtering
+     *        will be performed before handling notifications.
+     * @param handback An object which will be sent back unchanged to the
+     *        listener when a notification is emitted.
+     *
+     * @exception IllegalArgumentException Listener parameter is null.
+     */
+    @Override
+    public void addNotificationListener(NotificationListener listener,
+                                        NotificationFilter filter,
+                                        Object handback)
+        throws java.lang.IllegalArgumentException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                "addNotificationListener","Adding listener "+ listener +
+                  " with filter "+ filter + " and handback "+ handback);
+        }
+        notifBroadcaster.addNotificationListener(listener, filter, handback);
+    }
+
+    /**
+     * Removes the specified listener from this CommunicatorServer.
+     * Note that if the listener has been registered with different
+     * handback objects or notification filters, all entries corresponding
+     * to the listener will be removed.
+     *
+     * @param listener The listener object to be removed.
+     *
+     * @exception ListenerNotFoundException The listener is not registered.
+     */
+    @Override
+    public void removeNotificationListener(NotificationListener listener)
+        throws ListenerNotFoundException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                "removeNotificationListener","Removing listener "+ listener);
+        }
+        notifBroadcaster.removeNotificationListener(listener);
+    }
+
+    /**
+     * Returns an array of MBeanNotificationInfo objects describing
+     * the notification types sent by this CommunicatorServer.
+     * There is only one type of notifications sent by the CommunicatorServer:
+     * it is <tt>{@link javax.management.AttributeChangeNotification}</tt>,
+     * sent when the <tt>State</tt> attribute of this CommunicatorServer
+     * changes.
+     */
+    @Override
+    public MBeanNotificationInfo[] getNotificationInfo() {
+
+        // Initialize notifInfos on first call to getNotificationInfo()
+        //
+        if (notifInfos == null) {
+            notifInfos = new MBeanNotificationInfo[1];
+            String[] notifTypes = {
+                AttributeChangeNotification.ATTRIBUTE_CHANGE};
+            notifInfos[0] = new MBeanNotificationInfo( notifTypes,
+                     AttributeChangeNotification.class.getName(),
+                     "Sent to notify that the value of the State attribute "+
+                     "of this CommunicatorServer instance has changed.");
+        }
+
+        return notifInfos.clone();
+    }
+
+    /**
+     *
+     */
+    private void sendStateChangeNotification(int oldState, int newState) {
+
+        String oldStateString = getStringForState(oldState);
+        String newStateString = getStringForState(newState);
+        String message = new StringBuffer().append(dbgTag)
+            .append(" The value of attribute State has changed from ")
+            .append(oldState).append(" (").append(oldStateString)
+            .append(") to ").append(newState).append(" (")
+            .append(newStateString).append(").").toString();
+
+        notifCount++;
+        AttributeChangeNotification notif =
+            new AttributeChangeNotification(this,    // source
+                         notifCount,                 // sequence number
+                         System.currentTimeMillis(), // time stamp
+                         message,                    // message
+                         "State",                    // attribute name
+                         "int",                      // attribute type
+                         new Integer(oldState),      // old value
+                         new Integer(newState) );    // new value
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                "sendStateChangeNotification","Sending AttributeChangeNotification #"
+                    + notifCount + " with message: "+ message);
+        }
+        notifBroadcaster.sendNotification(notif);
+    }
+
+    /**
+     *
+     */
+    private static String getStringForState(int s) {
+        switch (s) {
+        case ONLINE:   return "ONLINE";
+        case STARTING: return "STARTING";
+        case OFFLINE:  return "OFFLINE";
+        case STOPPING: return "STOPPING";
+        default:       return "UNDEFINED";
+        }
+    }
+
+
+    //
+    // MBeanRegistration
+    //
+
+    /**
+     * Preregister method of connector.
+     *
+     *@param server The <CODE>MBeanServer</CODE> in which the MBean will
+     *       be registered.
+     *@param name The object name of the MBean.
+     *
+     *@return  The name of the MBean registered.
+     *
+     *@exception java.langException This exception should be caught by
+     *           the <CODE>MBeanServer</CODE> and re-thrown
+     *           as an <CODE>MBeanRegistrationException</CODE>.
+     */
+    @Override
+    public ObjectName preRegister(MBeanServer server, ObjectName name)
+            throws java.lang.Exception {
+        objectName = name;
+        synchronized (this) {
+            if (bottomMBS != null) {
+                throw new IllegalArgumentException("connector already " +
+                                                   "registered in an MBean " +
+                                                   "server");
+            }
+            topMBS = bottomMBS = server;
+        }
+        dbgTag = makeDebugTag();
+        return name;
+    }
+
+    /**
+     *
+     *@param registrationDone Indicates whether or not the MBean has been
+     *       successfully registered in the <CODE>MBeanServer</CODE>.
+     *       The value false means that the registration phase has failed.
+     */
+    @Override
+    public void postRegister(Boolean registrationDone) {
+        if (!registrationDone.booleanValue()) {
+            synchronized (this) {
+                topMBS = bottomMBS = null;
+            }
+        }
+    }
+
+    /**
+     * Stop the connector.
+     *
+     * @exception java.langException This exception should be caught by
+     *            the <CODE>MBeanServer</CODE> and re-thrown
+     *            as an <CODE>MBeanRegistrationException</CODE>.
+     */
+    @Override
+    public void preDeregister() throws java.lang.Exception {
+        synchronized (this) {
+            topMBS = bottomMBS = null;
+        }
+        objectName = null ;
+        final int cstate = getState();
+        if ((cstate == ONLINE) || ( cstate == STARTING)) {
+            stop() ;
+        }
+    }
+
+    /**
+     * Do nothing.
+     */
+    @Override
+    public void postDeregister(){
+    }
+
+}

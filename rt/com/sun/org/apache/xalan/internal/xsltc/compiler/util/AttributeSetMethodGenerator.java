@@ -1,85 +1,79 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*    */ 
-/*    */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*    */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*    */ import com.sun.org.apache.bcel.internal.generic.Instruction;
-/*    */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*    */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class AttributeSetMethodGenerator
-/*    */   extends MethodGenerator
-/*    */ {
-/*    */   protected static final int CURRENT_INDEX = 4;
-/*    */   private static final int PARAM_START_INDEX = 5;
-/* 41 */   private static final String[] argNames = new String[4];
-/* 42 */   private static final Type[] argTypes = new Type[4];
-/*    */ 
-/*    */   
-/*    */   static {
-/* 46 */     argTypes[0] = Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;");
-/* 47 */     argTypes[1] = Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/* 48 */     argTypes[2] = Util.getJCRefType("Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;");
-/* 49 */     argTypes[3] = Type.INT;
-/* 50 */     argNames[0] = "document";
-/* 51 */     argNames[1] = "iterator";
-/* 52 */     argNames[2] = "handler";
-/* 53 */     argNames[3] = "node";
-/*    */   }
-/*    */   
-/*    */   public AttributeSetMethodGenerator(String methodName, ClassGenerator classGen) {
-/* 57 */     super(2, Type.VOID, argTypes, argNames, methodName, classGen
-/*    */ 
-/*    */         
-/* 60 */         .getClassName(), new InstructionList(), classGen
-/*    */         
-/* 62 */         .getConstantPool());
-/*    */   }
-/*    */   
-/*    */   public int getLocalIndex(String name) {
-/* 66 */     if (name.equals("current")) {
-/* 67 */       return 4;
-/*    */     }
-/* 69 */     return super.getLocalIndex(name);
-/*    */   }
-/*    */   
-/*    */   public Instruction loadParameter(int index) {
-/* 73 */     return new ALOAD(index + 5);
-/*    */   }
-/*    */   
-/*    */   public Instruction storeParameter(int index) {
-/* 77 */     return new ASTORE(index + 5);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\AttributeSetMethodGenerator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: AttributeSetMethodGenerator.java,v 1.5 2005/09/28 13:48:24 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.Instruction;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.Type;
+
+/**
+ * @author Santiago Pericas-Geertsen
+ */
+public final class AttributeSetMethodGenerator extends MethodGenerator {
+
+    protected static final int CURRENT_INDEX  = 4;
+    private static final int PARAM_START_INDEX = 5;
+
+    private static final String[] argNames = new String[4];
+    private static final com.sun.org.apache.bcel.internal.generic.Type[] argTypes =
+        new com.sun.org.apache.bcel.internal.generic.Type[4];
+
+    static {
+        argTypes[0] = Util.getJCRefType(DOM_INTF_SIG);
+        argTypes[1] = Util.getJCRefType(NODE_ITERATOR_SIG);
+        argTypes[2] = Util.getJCRefType(TRANSLET_OUTPUT_SIG);
+        argTypes[3] = com.sun.org.apache.bcel.internal.generic.Type.INT;
+        argNames[0] = DOCUMENT_PNAME;
+        argNames[1] = ITERATOR_PNAME;
+        argNames[2] = TRANSLET_OUTPUT_PNAME;
+        argNames[3] = NODE_PNAME;
+    }
+
+   public AttributeSetMethodGenerator(String methodName, ClassGenerator classGen) {
+        super(com.sun.org.apache.bcel.internal.Constants.ACC_PRIVATE,
+              com.sun.org.apache.bcel.internal.generic.Type.VOID,
+              argTypes, argNames, methodName,
+              classGen.getClassName(),
+              new InstructionList(),
+              classGen.getConstantPool());
+   }
+
+    public int getLocalIndex(String name) {
+        if (name.equals("current")) {
+            return CURRENT_INDEX;
+        }
+        return super.getLocalIndex(name);
+    }
+
+    public Instruction loadParameter(int index) {
+        return new ALOAD(index + PARAM_START_INDEX);
+    }
+
+    public Instruction storeParameter(int index) {
+        return new ASTORE(index + PARAM_START_INDEX);
+    }
+}

@@ -1,614 +1,609 @@
-/*     */ package javax.management.relation;
-/*     */ 
-/*     */ import com.sun.jmx.mbeanserver.GetPropertyAction;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.ObjectStreamField;
-/*     */ import java.io.Serializable;
-/*     */ import java.security.AccessController;
-/*     */ import javax.management.NotCompliantMBeanException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class RoleInfo
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long oldSerialVersionUID = 7227256952085334351L;
-/*     */   private static final long newSerialVersionUID = 2504952983494636987L;
-/*  65 */   private static final ObjectStreamField[] oldSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("myName", String.class), new ObjectStreamField("myIsReadableFlg", boolean.class), new ObjectStreamField("myIsWritableFlg", boolean.class), new ObjectStreamField("myDescription", String.class), new ObjectStreamField("myMinDegree", int.class), new ObjectStreamField("myMaxDegree", int.class), new ObjectStreamField("myRefMBeanClassName", String.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  77 */   private static final ObjectStreamField[] newSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("name", String.class), new ObjectStreamField("isReadable", boolean.class), new ObjectStreamField("isWritable", boolean.class), new ObjectStreamField("description", String.class), new ObjectStreamField("minDegree", int.class), new ObjectStreamField("maxDegree", int.class), new ObjectStreamField("referencedMBeanClassName", String.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final ObjectStreamField[] serialPersistentFields;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean compat = false;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final int ROLE_CARDINALITY_INFINITY = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/* 103 */       GetPropertyAction getPropertyAction = new GetPropertyAction("jmx.serial.form");
-/* 104 */       String str = AccessController.<String>doPrivileged(getPropertyAction);
-/* 105 */       compat = (str != null && str.equals("1.0"));
-/* 106 */     } catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 109 */     if (compat) {
-/* 110 */       serialPersistentFields = oldSerialPersistentFields;
-/* 111 */       serialVersionUID = 7227256952085334351L;
-/*     */     } else {
-/* 113 */       serialPersistentFields = newSerialPersistentFields;
-/* 114 */       serialVersionUID = 2504952983494636987L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 136 */   private String name = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isReadable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isWritable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 151 */   private String description = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int minDegree;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int maxDegree;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 166 */   private String referencedMBeanClassName = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RoleInfo(String paramString1, String paramString2, boolean paramBoolean1, boolean paramBoolean2, int paramInt1, int paramInt2, String paramString3) throws IllegalArgumentException, InvalidRoleInfoException, ClassNotFoundException, NotCompliantMBeanException {
-/* 215 */     init(paramString1, paramString2, paramBoolean1, paramBoolean2, paramInt1, paramInt2, paramString3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RoleInfo(String paramString1, String paramString2, boolean paramBoolean1, boolean paramBoolean2) throws IllegalArgumentException, ClassNotFoundException, NotCompliantMBeanException {
-/*     */     try {
-/* 258 */       init(paramString1, paramString2, paramBoolean1, paramBoolean2, 1, 1, null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/* 265 */     catch (InvalidRoleInfoException invalidRoleInfoException) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RoleInfo(String paramString1, String paramString2) throws IllegalArgumentException, ClassNotFoundException, NotCompliantMBeanException {
-/*     */     try {
-/* 301 */       init(paramString1, paramString2, true, true, 1, 1, null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/* 308 */     catch (InvalidRoleInfoException invalidRoleInfoException) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RoleInfo(RoleInfo paramRoleInfo) throws IllegalArgumentException {
-/* 326 */     if (paramRoleInfo == null) {
-/*     */       
-/* 328 */       String str = "Invalid parameter.";
-/* 329 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 333 */       init(paramRoleInfo.getName(), paramRoleInfo
-/* 334 */           .getRefMBeanClassName(), paramRoleInfo
-/* 335 */           .isReadable(), paramRoleInfo
-/* 336 */           .isWritable(), paramRoleInfo
-/* 337 */           .getMinDegree(), paramRoleInfo
-/* 338 */           .getMaxDegree(), paramRoleInfo
-/* 339 */           .getDescription());
-/* 340 */     } catch (InvalidRoleInfoException invalidRoleInfoException) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 357 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isReadable() {
-/* 366 */     return this.isReadable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isWritable() {
-/* 375 */     return this.isWritable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDescription() {
-/* 384 */     return this.description;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMinDegree() {
-/* 393 */     return this.minDegree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMaxDegree() {
-/* 402 */     return this.maxDegree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getRefMBeanClassName() {
-/* 412 */     return this.referencedMBeanClassName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean checkMinDegree(int paramInt) {
-/* 424 */     if (paramInt >= -1 && (this.minDegree == -1 || paramInt >= this.minDegree))
-/*     */     {
-/*     */       
-/* 427 */       return true;
-/*     */     }
-/* 429 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean checkMaxDegree(int paramInt) {
-/* 442 */     if (paramInt >= -1 && (this.maxDegree == -1 || (paramInt != -1 && paramInt <= this.maxDegree)))
-/*     */     {
-/*     */ 
-/*     */       
-/* 446 */       return true;
-/*     */     }
-/* 448 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 458 */     StringBuilder stringBuilder = new StringBuilder();
-/* 459 */     stringBuilder.append("role info name: " + this.name);
-/* 460 */     stringBuilder.append("; isReadable: " + this.isReadable);
-/* 461 */     stringBuilder.append("; isWritable: " + this.isWritable);
-/* 462 */     stringBuilder.append("; description: " + this.description);
-/* 463 */     stringBuilder.append("; minimum degree: " + this.minDegree);
-/* 464 */     stringBuilder.append("; maximum degree: " + this.maxDegree);
-/* 465 */     stringBuilder.append("; MBean class: " + this.referencedMBeanClassName);
-/* 466 */     return stringBuilder.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void init(String paramString1, String paramString2, boolean paramBoolean1, boolean paramBoolean2, int paramInt1, int paramInt2, String paramString3) throws IllegalArgumentException, InvalidRoleInfoException {
-/* 484 */     if (paramString1 == null || paramString2 == null) {
-/*     */ 
-/*     */       
-/* 487 */       String str = "Invalid parameter.";
-/* 488 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 491 */     this.name = paramString1;
-/* 492 */     this.isReadable = paramBoolean1;
-/* 493 */     this.isWritable = paramBoolean2;
-/* 494 */     if (paramString3 != null) {
-/* 495 */       this.description = paramString3;
-/*     */     }
-/*     */     
-/* 498 */     boolean bool = false;
-/* 499 */     StringBuilder stringBuilder = new StringBuilder();
-/* 500 */     if (paramInt2 != -1 && (paramInt1 == -1 || paramInt1 > paramInt2)) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 504 */       stringBuilder.append("Minimum degree ");
-/* 505 */       stringBuilder.append(paramInt1);
-/* 506 */       stringBuilder.append(" is greater than maximum degree ");
-/* 507 */       stringBuilder.append(paramInt2);
-/* 508 */       bool = true;
-/*     */     }
-/* 510 */     else if (paramInt1 < -1 || paramInt2 < -1) {
-/*     */ 
-/*     */       
-/* 513 */       stringBuilder.append("Minimum or maximum degree has an illegal value, must be [0, ROLE_CARDINALITY_INFINITY].");
-/* 514 */       bool = true;
-/*     */     } 
-/* 516 */     if (bool) {
-/* 517 */       throw new InvalidRoleInfoException(stringBuilder.toString());
-/*     */     }
-/* 519 */     this.minDegree = paramInt1;
-/* 520 */     this.maxDegree = paramInt2;
-/*     */     
-/* 522 */     this.referencedMBeanClassName = paramString2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 532 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 536 */       ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 537 */       this.name = (String)getField.get("myName", (Object)null);
-/* 538 */       if (getField.defaulted("myName"))
-/*     */       {
-/* 540 */         throw new NullPointerException("myName");
-/*     */       }
-/* 542 */       this.isReadable = getField.get("myIsReadableFlg", false);
-/* 543 */       if (getField.defaulted("myIsReadableFlg"))
-/*     */       {
-/* 545 */         throw new NullPointerException("myIsReadableFlg");
-/*     */       }
-/* 547 */       this.isWritable = getField.get("myIsWritableFlg", false);
-/* 548 */       if (getField.defaulted("myIsWritableFlg"))
-/*     */       {
-/* 550 */         throw new NullPointerException("myIsWritableFlg");
-/*     */       }
-/* 552 */       this.description = (String)getField.get("myDescription", (Object)null);
-/* 553 */       if (getField.defaulted("myDescription"))
-/*     */       {
-/* 555 */         throw new NullPointerException("myDescription");
-/*     */       }
-/* 557 */       this.minDegree = getField.get("myMinDegree", 0);
-/* 558 */       if (getField.defaulted("myMinDegree"))
-/*     */       {
-/* 560 */         throw new NullPointerException("myMinDegree");
-/*     */       }
-/* 562 */       this.maxDegree = getField.get("myMaxDegree", 0);
-/* 563 */       if (getField.defaulted("myMaxDegree"))
-/*     */       {
-/* 565 */         throw new NullPointerException("myMaxDegree");
-/*     */       }
-/* 567 */       this.referencedMBeanClassName = (String)getField.get("myRefMBeanClassName", (Object)null);
-/* 568 */       if (getField.defaulted("myRefMBeanClassName"))
-/*     */       {
-/* 570 */         throw new NullPointerException("myRefMBeanClassName");
-/*     */       
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 577 */       paramObjectInputStream.defaultReadObject();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 587 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 591 */       ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 592 */       putField.put("myName", this.name);
-/* 593 */       putField.put("myIsReadableFlg", this.isReadable);
-/* 594 */       putField.put("myIsWritableFlg", this.isWritable);
-/* 595 */       putField.put("myDescription", this.description);
-/* 596 */       putField.put("myMinDegree", this.minDegree);
-/* 597 */       putField.put("myMaxDegree", this.maxDegree);
-/* 598 */       putField.put("myRefMBeanClassName", this.referencedMBeanClassName);
-/* 599 */       paramObjectOutputStream.writeFields();
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 605 */       paramObjectOutputStream.defaultWriteObject();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\relation\RoleInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.relation;
+
+
+import com.sun.jmx.mbeanserver.GetPropertyAction;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+import java.io.Serializable;
+import java.security.AccessController;
+
+import javax.management.MBeanServer;
+
+import javax.management.NotCompliantMBeanException;
+
+/**
+ * A RoleInfo object summarises a role in a relation type.
+ *
+ * <p>The <b>serialVersionUID</b> of this class is <code>2504952983494636987L</code>.
+ *
+ * @since 1.5
+ */
+@SuppressWarnings("serial")  // serialVersionUID not constant
+public class RoleInfo implements Serializable {
+
+    // Serialization compatibility stuff:
+    // Two serial forms are supported in this class. The selected form depends
+    // on system property "jmx.serial.form":
+    //  - "1.0" for JMX 1.0
+    //  - any other value for JMX 1.1 and higher
+    //
+    // Serial version for old serial form
+    private static final long oldSerialVersionUID = 7227256952085334351L;
+    //
+    // Serial version for new serial form
+    private static final long newSerialVersionUID = 2504952983494636987L;
+    //
+    // Serializable fields in old serial form
+    private static final ObjectStreamField[] oldSerialPersistentFields =
+    {
+      new ObjectStreamField("myName", String.class),
+      new ObjectStreamField("myIsReadableFlg", boolean.class),
+      new ObjectStreamField("myIsWritableFlg", boolean.class),
+      new ObjectStreamField("myDescription", String.class),
+      new ObjectStreamField("myMinDegree", int.class),
+      new ObjectStreamField("myMaxDegree", int.class),
+      new ObjectStreamField("myRefMBeanClassName", String.class)
+    };
+    //
+    // Serializable fields in new serial form
+    private static final ObjectStreamField[] newSerialPersistentFields =
+    {
+      new ObjectStreamField("name", String.class),
+      new ObjectStreamField("isReadable", boolean.class),
+      new ObjectStreamField("isWritable", boolean.class),
+      new ObjectStreamField("description", String.class),
+      new ObjectStreamField("minDegree", int.class),
+      new ObjectStreamField("maxDegree", int.class),
+      new ObjectStreamField("referencedMBeanClassName", String.class)
+    };
+    //
+    // Actual serial version and serial form
+    private static final long serialVersionUID;
+    /**
+     * @serialField name String Role name
+     * @serialField isReadable boolean Read access mode: <code>true</code> if role is readable
+     * @serialField isWritable boolean Write access mode: <code>true</code> if role is writable
+     * @serialField description String Role description
+     * @serialField minDegree int Minimum degree (i.e. minimum number of referenced MBeans in corresponding role)
+     * @serialField maxDegree int Maximum degree (i.e. maximum number of referenced MBeans in corresponding role)
+     * @serialField referencedMBeanClassName String Name of class of MBean(s) expected to be referenced in corresponding role
+     */
+    private static final ObjectStreamField[] serialPersistentFields;
+    private static boolean compat = false;
+    static {
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK : Too bad, no compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
+    }
+    //
+    // END Serialization compatibility stuff
+
+    //
+    // Public constants
+    //
+
+    /**
+     * To specify an unlimited cardinality.
+     */
+    public static final int ROLE_CARDINALITY_INFINITY = -1;
+
+    //
+    // Private members
+    //
+
+    /**
+     * @serial Role name
+     */
+    private String name = null;
+
+    /**
+     * @serial Read access mode: <code>true</code> if role is readable
+     */
+    private boolean isReadable;
+
+    /**
+     * @serial Write access mode: <code>true</code> if role is writable
+     */
+    private boolean isWritable;
+
+    /**
+     * @serial Role description
+     */
+    private String description = null;
+
+    /**
+     * @serial Minimum degree (i.e. minimum number of referenced MBeans in corresponding role)
+     */
+    private int minDegree;
+
+    /**
+     * @serial Maximum degree (i.e. maximum number of referenced MBeans in corresponding role)
+     */
+    private int maxDegree;
+
+    /**
+     * @serial Name of class of MBean(s) expected to be referenced in corresponding role
+     */
+    private String referencedMBeanClassName = null;
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructor.
+     *
+     * @param roleName  name of the role.
+     * @param mbeanClassName  name of the class of MBean(s) expected to
+     * be referenced in corresponding role.  If an MBean <em>M</em> is in
+     * this role, then the MBean server must return true for
+     * {@link MBeanServer#isInstanceOf isInstanceOf(M, mbeanClassName)}.
+     * @param read  flag to indicate if the corresponding role
+     * can be read
+     * @param write  flag to indicate if the corresponding role
+     * can be set
+     * @param min  minimum degree for role, i.e. minimum number of
+     * MBeans to provide in corresponding role
+     * Must be less than or equal to <tt>max</tt>.
+     * (ROLE_CARDINALITY_INFINITY for unlimited)
+     * @param max  maximum degree for role, i.e. maximum number of
+     * MBeans to provide in corresponding role
+     * Must be greater than or equal to <tt>min</tt>
+     * (ROLE_CARDINALITY_INFINITY for unlimited)
+     * @param descr  description of the role (can be null)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception InvalidRoleInfoException  if the minimum degree is
+     * greater than the maximum degree.
+     * @exception ClassNotFoundException As of JMX 1.2, this exception
+     * can no longer be thrown.  It is retained in the declaration of
+     * this class for compatibility with existing code.
+     * @exception NotCompliantMBeanException  if the class mbeanClassName
+     * is not a MBean class.
+     */
+    public RoleInfo(String roleName,
+                    String mbeanClassName,
+                    boolean read,
+                    boolean write,
+                    int min,
+                    int max,
+                    String descr)
+    throws IllegalArgumentException,
+           InvalidRoleInfoException,
+           ClassNotFoundException,
+           NotCompliantMBeanException {
+
+        init(roleName,
+             mbeanClassName,
+             read,
+             write,
+             min,
+             max,
+             descr);
+        return;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param roleName  name of the role
+     * @param mbeanClassName  name of the class of MBean(s) expected to
+     * be referenced in corresponding role.  If an MBean <em>M</em> is in
+     * this role, then the MBean server must return true for
+     * {@link MBeanServer#isInstanceOf isInstanceOf(M, mbeanClassName)}.
+     * @param read  flag to indicate if the corresponding role
+     * can be read
+     * @param write  flag to indicate if the corresponding role
+     * can be set
+     *
+     * <P>Minimum and maximum degrees defaulted to 1.
+     * <P>Description of role defaulted to null.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception ClassNotFoundException As of JMX 1.2, this exception
+     * can no longer be thrown.  It is retained in the declaration of
+     * this class for compatibility with existing code.
+     * @exception NotCompliantMBeanException As of JMX 1.2, this
+     * exception can no longer be thrown.  It is retained in the
+     * declaration of this class for compatibility with existing code.
+     */
+    public RoleInfo(String roleName,
+                    String mbeanClassName,
+                    boolean read,
+                    boolean write)
+    throws IllegalArgumentException,
+           ClassNotFoundException,
+           NotCompliantMBeanException {
+
+        try {
+            init(roleName,
+                 mbeanClassName,
+                 read,
+                 write,
+                 1,
+                 1,
+                 null);
+        } catch (InvalidRoleInfoException exc) {
+            // OK : Can never happen as the minimum
+            //      degree equals the maximum degree.
+        }
+
+        return;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param roleName  name of the role
+     * @param mbeanClassName  name of the class of MBean(s) expected to
+     * be referenced in corresponding role.  If an MBean <em>M</em> is in
+     * this role, then the MBean server must return true for
+     * {@link MBeanServer#isInstanceOf isInstanceOf(M, mbeanClassName)}.
+     *
+     * <P>IsReadable and IsWritable defaulted to true.
+     * <P>Minimum and maximum degrees defaulted to 1.
+     * <P>Description of role defaulted to null.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception ClassNotFoundException As of JMX 1.2, this exception
+     * can no longer be thrown.  It is retained in the declaration of
+     * this class for compatibility with existing code.
+     * @exception NotCompliantMBeanException As of JMX 1.2, this
+     * exception can no longer be thrown.  It is retained in the
+     * declaration of this class for compatibility with existing code.
+      */
+    public RoleInfo(String roleName,
+                    String mbeanClassName)
+    throws IllegalArgumentException,
+           ClassNotFoundException,
+           NotCompliantMBeanException {
+
+        try {
+            init(roleName,
+                 mbeanClassName,
+                 true,
+                 true,
+                 1,
+                 1,
+                 null);
+        } catch (InvalidRoleInfoException exc) {
+            // OK : Can never happen as the minimum
+            //      degree equals the maximum degree.
+        }
+
+        return;
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param roleInfo the <tt>RoleInfo</tt> instance to be copied.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     */
+    public RoleInfo(RoleInfo roleInfo)
+        throws IllegalArgumentException {
+
+        if (roleInfo == null) {
+            // Revisit [cebro] Localize message
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        try {
+            init(roleInfo.getName(),
+                 roleInfo.getRefMBeanClassName(),
+                 roleInfo.isReadable(),
+                 roleInfo.isWritable(),
+                 roleInfo.getMinDegree(),
+                 roleInfo.getMaxDegree(),
+                 roleInfo.getDescription());
+        } catch (InvalidRoleInfoException exc3) {
+            // OK : Can never happen as the minimum degree and the maximum
+            //      degree were already checked at the time the roleInfo
+            //      instance was created.
+        }
+    }
+
+    //
+    // Accessors
+    //
+
+    /**
+     * Returns the name of the role.
+     *
+     * @return the name of the role.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Returns read access mode for the role (true if it is readable).
+     *
+     * @return true if the role is readable.
+     */
+    public boolean isReadable() {
+        return isReadable;
+    }
+
+    /**
+     * Returns write access mode for the role (true if it is writable).
+     *
+     * @return true if the role is writable.
+     */
+    public boolean isWritable() {
+        return isWritable;
+    }
+
+    /**
+     * Returns description text for the role.
+     *
+     * @return the description of the role.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Returns minimum degree for corresponding role reference.
+     *
+     * @return the minimum degree.
+     */
+    public int getMinDegree() {
+        return minDegree;
+    }
+
+    /**
+     * Returns maximum degree for corresponding role reference.
+     *
+     * @return the maximum degree.
+     */
+    public int getMaxDegree() {
+        return maxDegree;
+    }
+
+    /**
+     * <p>Returns name of type of MBean expected to be referenced in
+     * corresponding role.</p>
+     *
+     * @return the name of the referenced type.
+     */
+    public String getRefMBeanClassName() {
+        return referencedMBeanClassName;
+    }
+
+    /**
+     * Returns true if the <tt>value</tt> parameter is greater than or equal to
+     * the expected minimum degree, false otherwise.
+     *
+     * @param value  the value to be checked
+     *
+     * @return true if greater than or equal to minimum degree, false otherwise.
+     */
+    public boolean checkMinDegree(int value) {
+        if (value >= ROLE_CARDINALITY_INFINITY &&
+            (minDegree == ROLE_CARDINALITY_INFINITY
+             || value >= minDegree)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns true if the <tt>value</tt> parameter is lower than or equal to
+     * the expected maximum degree, false otherwise.
+     *
+     * @param value  the value to be checked
+     *
+     * @return true if lower than or equal to maximum degree, false otherwise.
+     */
+    public boolean checkMaxDegree(int value) {
+        if (value >= ROLE_CARDINALITY_INFINITY &&
+            (maxDegree == ROLE_CARDINALITY_INFINITY ||
+             (value != ROLE_CARDINALITY_INFINITY &&
+              value <= maxDegree))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns a string describing the role info.
+     *
+     * @return a description of the role info.
+     */
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        result.append("role info name: " + name);
+        result.append("; isReadable: " + isReadable);
+        result.append("; isWritable: " + isWritable);
+        result.append("; description: " + description);
+        result.append("; minimum degree: " + minDegree);
+        result.append("; maximum degree: " + maxDegree);
+        result.append("; MBean class: " + referencedMBeanClassName);
+        return result.toString();
+    }
+
+    //
+    // Misc
+    //
+
+    // Initialization
+    private void init(String roleName,
+                      String mbeanClassName,
+                      boolean read,
+                      boolean write,
+                      int min,
+                      int max,
+                      String descr)
+            throws IllegalArgumentException,
+                   InvalidRoleInfoException {
+
+        if (roleName == null ||
+            mbeanClassName == null) {
+            // Revisit [cebro] Localize message
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        name = roleName;
+        isReadable = read;
+        isWritable = write;
+        if (descr != null) {
+            description = descr;
+        }
+
+        boolean invalidRoleInfoFlg = false;
+        StringBuilder excMsgStrB = new StringBuilder();
+        if (max != ROLE_CARDINALITY_INFINITY &&
+            (min == ROLE_CARDINALITY_INFINITY ||
+             min > max)) {
+            // Revisit [cebro] Localize message
+            excMsgStrB.append("Minimum degree ");
+            excMsgStrB.append(min);
+            excMsgStrB.append(" is greater than maximum degree ");
+            excMsgStrB.append(max);
+            invalidRoleInfoFlg = true;
+
+        } else if (min < ROLE_CARDINALITY_INFINITY ||
+                   max < ROLE_CARDINALITY_INFINITY) {
+            // Revisit [cebro] Localize message
+            excMsgStrB.append("Minimum or maximum degree has an illegal value, must be [0, ROLE_CARDINALITY_INFINITY].");
+            invalidRoleInfoFlg = true;
+        }
+        if (invalidRoleInfoFlg) {
+            throw new InvalidRoleInfoException(excMsgStrB.toString());
+        }
+        minDegree = min;
+        maxDegree = max;
+
+        referencedMBeanClassName = mbeanClassName;
+
+        return;
+    }
+
+    /**
+     * Deserializes a {@link RoleInfo} from an {@link ObjectInputStream}.
+     */
+    private void readObject(ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+      if (compat)
+      {
+        // Read an object serialized in the old serial form
+        //
+        ObjectInputStream.GetField fields = in.readFields();
+        name = (String) fields.get("myName", null);
+        if (fields.defaulted("myName"))
+        {
+          throw new NullPointerException("myName");
+        }
+        isReadable = fields.get("myIsReadableFlg", false);
+        if (fields.defaulted("myIsReadableFlg"))
+        {
+          throw new NullPointerException("myIsReadableFlg");
+        }
+        isWritable = fields.get("myIsWritableFlg", false);
+        if (fields.defaulted("myIsWritableFlg"))
+        {
+          throw new NullPointerException("myIsWritableFlg");
+        }
+        description = (String) fields.get("myDescription", null);
+        if (fields.defaulted("myDescription"))
+        {
+          throw new NullPointerException("myDescription");
+        }
+        minDegree = fields.get("myMinDegree", 0);
+        if (fields.defaulted("myMinDegree"))
+        {
+          throw new NullPointerException("myMinDegree");
+        }
+        maxDegree = fields.get("myMaxDegree", 0);
+        if (fields.defaulted("myMaxDegree"))
+        {
+          throw new NullPointerException("myMaxDegree");
+        }
+        referencedMBeanClassName = (String) fields.get("myRefMBeanClassName", null);
+        if (fields.defaulted("myRefMBeanClassName"))
+        {
+          throw new NullPointerException("myRefMBeanClassName");
+        }
+      }
+      else
+      {
+        // Read an object serialized in the new serial form
+        //
+        in.defaultReadObject();
+      }
+    }
+
+
+    /**
+     * Serializes a {@link RoleInfo} to an {@link ObjectOutputStream}.
+     */
+    private void writeObject(ObjectOutputStream out)
+            throws IOException {
+      if (compat)
+      {
+        // Serializes this instance in the old serial form
+        //
+        ObjectOutputStream.PutField fields = out.putFields();
+        fields.put("myName", name);
+        fields.put("myIsReadableFlg", isReadable);
+        fields.put("myIsWritableFlg", isWritable);
+        fields.put("myDescription", description);
+        fields.put("myMinDegree", minDegree);
+        fields.put("myMaxDegree", maxDegree);
+        fields.put("myRefMBeanClassName", referencedMBeanClassName);
+        out.writeFields();
+      }
+      else
+      {
+        // Serializes this instance in the new serial form
+        //
+        out.defaultWriteObject();
+      }
+    }
+
+}

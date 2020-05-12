@@ -1,31 +1,62 @@
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
 import java.util.Collection;
 
-public interface TransportManager {
-  ByteBufferPool getByteBufferPool(int paramInt);
-  
-  OutboundConnectionCache getOutboundConnectionCache(ContactInfo paramContactInfo);
-  
-  Collection getOutboundConnectionCaches();
-  
-  InboundConnectionCache getInboundConnectionCache(Acceptor paramAcceptor);
-  
-  Collection getInboundConnectionCaches();
-  
-  Selector getSelector(int paramInt);
-  
-  void registerAcceptor(Acceptor paramAcceptor);
-  
-  Collection getAcceptors();
-  
-  void unregisterAcceptor(Acceptor paramAcceptor);
-  
-  void close();
+import com.sun.corba.se.pept.transport.Acceptor;
+import com.sun.corba.se.pept.transport.ByteBufferPool;
+import com.sun.corba.se.pept.transport.ConnectionCache;
+import com.sun.corba.se.pept.transport.Selector;
+
+/**
+ * @author Harold Carr
+ */
+public interface TransportManager
+{
+    public ByteBufferPool getByteBufferPool(int id);
+
+    public OutboundConnectionCache getOutboundConnectionCache(
+        ContactInfo contactInfo);
+
+    public Collection getOutboundConnectionCaches();
+
+    public InboundConnectionCache getInboundConnectionCache(Acceptor acceptor);
+
+    public Collection getInboundConnectionCaches();
+
+    public Selector getSelector(int id);
+
+    public void registerAcceptor(Acceptor acceptor);
+
+    public Collection getAcceptors();
+
+    public void unregisterAcceptor(Acceptor acceptor);
+
+    public void close();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\TransportManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

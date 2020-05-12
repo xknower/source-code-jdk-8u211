@@ -1,15 +1,37 @@
-/*   */ package com.sun.java.swing.plaf.windows.resources;
-/*   */ 
-/*   */ import java.util.ListResourceBundle;
-/*   */ 
-/*   */ public final class windows_ja extends ListResourceBundle {
-/*   */   protected final Object[][] getContents() {
-/* 7 */     return new Object[][] { { "FileChooser.detailsViewActionLabel.textAndMnemonic", "詳細" }, { "FileChooser.detailsViewButtonAccessibleName", "詳細" }, { "FileChooser.detailsViewButtonToolTip.textAndMnemonic", "詳細" }, { "FileChooser.fileAttrHeader.textAndMnemonic", "属性" }, { "FileChooser.fileDateHeader.textAndMnemonic", "修正日" }, { "FileChooser.fileNameHeader.textAndMnemonic", "名前" }, { "FileChooser.fileNameLabel.textAndMnemonic", "ファイル名(&N):" }, { "FileChooser.fileSizeHeader.textAndMnemonic", "サイズ" }, { "FileChooser.fileTypeHeader.textAndMnemonic", "タイプ" }, { "FileChooser.filesOfTypeLabel.textAndMnemonic", "ファイルのタイプ(&T):" }, { "FileChooser.folderNameLabel.textAndMnemonic", "フォルダ名(&N):" }, { "FileChooser.homeFolderAccessibleName", "ホーム" }, { "FileChooser.homeFolderToolTip.textAndMnemonic", "ホーム" }, { "FileChooser.listViewActionLabel.textAndMnemonic", "リスト" }, { "FileChooser.listViewButtonAccessibleName", "リスト" }, { "FileChooser.listViewButtonToolTip.textAndMnemonic", "リスト" }, { "FileChooser.lookInLabel.textAndMnemonic", "ファイルの場所(&I):" }, { "FileChooser.newFolderAccessibleName", "新規フォルダ" }, { "FileChooser.newFolderActionLabel.textAndMnemonic", "新規フォルダ" }, { "FileChooser.newFolderToolTip.textAndMnemonic", "新規フォルダの作成" }, { "FileChooser.refreshActionLabel.textAndMnemonic", "リフレッシュ" }, { "FileChooser.saveInLabel.textAndMnemonic", "保存:" }, { "FileChooser.upFolderAccessibleName", "上へ" }, { "FileChooser.upFolderToolTip.textAndMnemonic", "1レベル上へ" }, { "FileChooser.viewMenuButtonAccessibleName", "表示メニュー" }, { "FileChooser.viewMenuButtonToolTipText", "表示メニュー" }, { "FileChooser.viewMenuLabel.textAndMnemonic", "表示" } };
-/*   */   }
-/*   */ }
+package com.sun.java.swing.plaf.windows.resources;
 
+import java.util.ListResourceBundle;
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\resources\windows_ja.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+public final class windows_ja extends ListResourceBundle {
+    protected final Object[][] getContents() {
+        return new Object[][] {
+            { "FileChooser.detailsViewActionLabel.textAndMnemonic", "\u8A73\u7D30" },
+            { "FileChooser.detailsViewButtonAccessibleName", "\u8A73\u7D30" },
+            { "FileChooser.detailsViewButtonToolTip.textAndMnemonic", "\u8A73\u7D30" },
+            { "FileChooser.fileAttrHeader.textAndMnemonic", "\u5C5E\u6027" },
+            { "FileChooser.fileDateHeader.textAndMnemonic", "\u4FEE\u6B63\u65E5" },
+            { "FileChooser.fileNameHeader.textAndMnemonic", "\u540D\u524D" },
+            { "FileChooser.fileNameLabel.textAndMnemonic", "\u30D5\u30A1\u30A4\u30EB\u540D(&N):" },
+            { "FileChooser.fileSizeHeader.textAndMnemonic", "\u30B5\u30A4\u30BA" },
+            { "FileChooser.fileTypeHeader.textAndMnemonic", "\u30BF\u30A4\u30D7" },
+            { "FileChooser.filesOfTypeLabel.textAndMnemonic", "\u30D5\u30A1\u30A4\u30EB\u306E\u30BF\u30A4\u30D7(&T):" },
+            { "FileChooser.folderNameLabel.textAndMnemonic", "\u30D5\u30A9\u30EB\u30C0\u540D(&N):" },
+            { "FileChooser.homeFolderAccessibleName", "\u30DB\u30FC\u30E0" },
+            { "FileChooser.homeFolderToolTip.textAndMnemonic", "\u30DB\u30FC\u30E0" },
+            { "FileChooser.listViewActionLabel.textAndMnemonic", "\u30EA\u30B9\u30C8" },
+            { "FileChooser.listViewButtonAccessibleName", "\u30EA\u30B9\u30C8" },
+            { "FileChooser.listViewButtonToolTip.textAndMnemonic", "\u30EA\u30B9\u30C8" },
+            { "FileChooser.lookInLabel.textAndMnemonic", "\u30D5\u30A1\u30A4\u30EB\u306E\u5834\u6240(&I):" },
+            { "FileChooser.newFolderAccessibleName", "\u65B0\u898F\u30D5\u30A9\u30EB\u30C0" },
+            { "FileChooser.newFolderActionLabel.textAndMnemonic", "\u65B0\u898F\u30D5\u30A9\u30EB\u30C0" },
+            { "FileChooser.newFolderToolTip.textAndMnemonic", "\u65B0\u898F\u30D5\u30A9\u30EB\u30C0\u306E\u4F5C\u6210" },
+            { "FileChooser.refreshActionLabel.textAndMnemonic", "\u30EA\u30D5\u30EC\u30C3\u30B7\u30E5" },
+            { "FileChooser.saveInLabel.textAndMnemonic", "\u4FDD\u5B58:" },
+            { "FileChooser.upFolderAccessibleName", "\u4E0A\u3078" },
+            { "FileChooser.upFolderToolTip.textAndMnemonic", "1\u30EC\u30D9\u30EB\u4E0A\u3078" },
+            { "FileChooser.viewMenuButtonAccessibleName", "\u8868\u793A\u30E1\u30CB\u30E5\u30FC" },
+            { "FileChooser.viewMenuButtonToolTipText", "\u8868\u793A\u30E1\u30CB\u30E5\u30FC" },
+            { "FileChooser.viewMenuLabel.textAndMnemonic", "\u8868\u793A" },
+        };
+    }
+}

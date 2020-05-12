@@ -1,381 +1,375 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.BorderLayout;
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.LayoutManager;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.ActionListener;
-/*     */ import java.awt.event.MouseAdapter;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.awt.event.MouseListener;
-/*     */ import java.awt.event.MouseMotionListener;
-/*     */ import java.beans.PropertyVetoException;
-/*     */ import java.util.EventListener;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JLayeredPane;
-/*     */ import javax.swing.JPanel;
-/*     */ import javax.swing.JPopupMenu;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicDesktopIconUI;
-/*     */ import sun.awt.AWTAccessor;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifDesktopIconUI
-/*     */   extends BasicDesktopIconUI
-/*     */ {
-/*     */   protected DesktopIconActionListener desktopIconActionListener;
-/*     */   protected DesktopIconMouseListener desktopIconMouseListener;
-/*     */   protected Icon defaultIcon;
-/*     */   protected IconButton iconButton;
-/*     */   protected IconLabel iconLabel;
-/*     */   private MotifInternalFrameTitlePane sysMenuTitlePane;
-/*     */   JPopupMenu systemMenu;
-/*     */   EventListener mml;
-/*     */   static final int LABEL_HEIGHT = 18;
-/*     */   static final int LABEL_DIVIDER = 4;
-/*  67 */   static final Font defaultTitleFont = new Font("SansSerif", 0, 12);
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  71 */     return new MotifDesktopIconUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  78 */     super.installDefaults();
-/*  79 */     setDefaultIcon(UIManager.getIcon("DesktopIcon.icon"));
-/*  80 */     this.iconButton = createIconButton(this.defaultIcon);
-/*     */     
-/*  82 */     this.sysMenuTitlePane = new MotifInternalFrameTitlePane(this.frame);
-/*  83 */     this.systemMenu = this.sysMenuTitlePane.getSystemMenu();
-/*     */     
-/*  85 */     MotifBorders.FrameBorder frameBorder = new MotifBorders.FrameBorder(this.desktopIcon);
-/*  86 */     this.desktopIcon.setLayout(new BorderLayout());
-/*  87 */     this.iconButton.setBorder(frameBorder);
-/*  88 */     this.desktopIcon.add(this.iconButton, "Center");
-/*  89 */     this.iconLabel = createIconLabel(this.frame);
-/*  90 */     this.iconLabel.setBorder(frameBorder);
-/*  91 */     this.desktopIcon.add(this.iconLabel, "South");
-/*  92 */     this.desktopIcon.setSize(this.desktopIcon.getPreferredSize());
-/*  93 */     this.desktopIcon.validate();
-/*  94 */     JLayeredPane.putLayer(this.desktopIcon, JLayeredPane.getLayer(this.frame));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void installComponents() {}
-/*     */ 
-/*     */   
-/*     */   protected void uninstallComponents() {}
-/*     */   
-/*     */   protected void installListeners() {
-/* 104 */     super.installListeners();
-/* 105 */     this.desktopIconActionListener = createDesktopIconActionListener();
-/* 106 */     this.desktopIconMouseListener = createDesktopIconMouseListener();
-/* 107 */     this.iconButton.addActionListener(this.desktopIconActionListener);
-/* 108 */     this.iconButton.addMouseListener(this.desktopIconMouseListener);
-/* 109 */     this.iconLabel.addMouseListener(this.desktopIconMouseListener);
-/*     */   }
-/*     */   
-/*     */   JInternalFrame.JDesktopIcon getDesktopIcon() {
-/* 113 */     return this.desktopIcon;
-/*     */   }
-/*     */   
-/*     */   void setDesktopIcon(JInternalFrame.JDesktopIcon paramJDesktopIcon) {
-/* 117 */     this.desktopIcon = paramJDesktopIcon;
-/*     */   }
-/*     */   
-/*     */   JInternalFrame getFrame() {
-/* 121 */     return this.frame;
-/*     */   }
-/*     */   
-/*     */   void setFrame(JInternalFrame paramJInternalFrame) {
-/* 125 */     this.frame = paramJInternalFrame;
-/*     */   }
-/*     */   
-/*     */   protected void showSystemMenu() {
-/* 129 */     this.systemMenu.show(this.iconButton, 0, getDesktopIcon().getHeight());
-/*     */   }
-/*     */   
-/*     */   protected void hideSystemMenu() {
-/* 133 */     this.systemMenu.setVisible(false);
-/*     */   }
-/*     */   
-/*     */   protected IconLabel createIconLabel(JInternalFrame paramJInternalFrame) {
-/* 137 */     return new IconLabel(paramJInternalFrame);
-/*     */   }
-/*     */   
-/*     */   protected IconButton createIconButton(Icon paramIcon) {
-/* 141 */     return new IconButton(paramIcon);
-/*     */   }
-/*     */   
-/*     */   protected DesktopIconActionListener createDesktopIconActionListener() {
-/* 145 */     return new DesktopIconActionListener();
-/*     */   }
-/*     */   
-/*     */   protected DesktopIconMouseListener createDesktopIconMouseListener() {
-/* 149 */     return new DesktopIconMouseListener();
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 153 */     super.uninstallDefaults();
-/* 154 */     this.desktopIcon.setLayout((LayoutManager)null);
-/* 155 */     this.desktopIcon.remove(this.iconButton);
-/* 156 */     this.desktopIcon.remove(this.iconLabel);
-/*     */   }
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 160 */     super.uninstallListeners();
-/* 161 */     this.iconButton.removeActionListener(this.desktopIconActionListener);
-/* 162 */     this.iconButton.removeMouseListener(this.desktopIconMouseListener);
-/* 163 */     this.sysMenuTitlePane.uninstallListeners();
-/*     */   }
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 167 */     JInternalFrame jInternalFrame = this.desktopIcon.getInternalFrame();
-/*     */     
-/* 169 */     int i = this.defaultIcon.getIconWidth();
-/* 170 */     int j = this.defaultIcon.getIconHeight() + 18 + 4;
-/*     */     
-/* 172 */     Border border = jInternalFrame.getBorder();
-/* 173 */     if (border != null) {
-/* 174 */       i += (border.getBorderInsets(jInternalFrame)).left + 
-/* 175 */         (border.getBorderInsets(jInternalFrame)).right;
-/* 176 */       j += (border.getBorderInsets(jInternalFrame)).bottom + 
-/* 177 */         (border.getBorderInsets(jInternalFrame)).top;
-/*     */     } 
-/*     */     
-/* 180 */     return new Dimension(i, j);
-/*     */   }
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 184 */     return getMinimumSize(paramJComponent);
-/*     */   }
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 188 */     return getMinimumSize(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getDefaultIcon() {
-/* 195 */     return this.defaultIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDefaultIcon(Icon paramIcon) {
-/* 202 */     this.defaultIcon = paramIcon;
-/*     */   }
-/*     */   
-/*     */   protected class IconLabel
-/*     */     extends JPanel {
-/*     */     JInternalFrame frame;
-/*     */     
-/*     */     IconLabel(JInternalFrame param1JInternalFrame) {
-/* 210 */       this.frame = param1JInternalFrame;
-/* 211 */       setFont(MotifDesktopIconUI.defaultTitleFont);
-/*     */ 
-/*     */       
-/* 214 */       addMouseMotionListener(new MouseMotionListener() {
-/*     */             public void mouseDragged(MouseEvent param2MouseEvent) {
-/* 216 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseMoved(MouseEvent param2MouseEvent) {
-/* 219 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */           });
-/* 222 */       addMouseListener(new MouseListener() {
-/*     */             public void mouseClicked(MouseEvent param2MouseEvent) {
-/* 224 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mousePressed(MouseEvent param2MouseEvent) {
-/* 227 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseReleased(MouseEvent param2MouseEvent) {
-/* 230 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseEntered(MouseEvent param2MouseEvent) {
-/* 233 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseExited(MouseEvent param2MouseEvent) {
-/* 236 */               MotifDesktopIconUI.IconLabel.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */           });
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void forwardEventToParent(MouseEvent param1MouseEvent) {
-/* 246 */       MouseEvent mouseEvent = new MouseEvent(getParent(), param1MouseEvent.getID(), param1MouseEvent.getWhen(), param1MouseEvent.getModifiers(), param1MouseEvent.getX(), param1MouseEvent.getY(), param1MouseEvent.getXOnScreen(), param1MouseEvent.getYOnScreen(), param1MouseEvent.getClickCount(), param1MouseEvent.isPopupTrigger(), 0);
-/* 247 */       AWTAccessor.MouseEventAccessor mouseEventAccessor = AWTAccessor.getMouseEventAccessor();
-/* 248 */       mouseEventAccessor.setCausedByTouchEvent(mouseEvent, mouseEventAccessor
-/* 249 */           .isCausedByTouchEvent(param1MouseEvent));
-/* 250 */       getParent().dispatchEvent(mouseEvent);
-/*     */     }
-/*     */     
-/*     */     public boolean isFocusTraversable() {
-/* 254 */       return false;
-/*     */     }
-/*     */     
-/*     */     public Dimension getMinimumSize() {
-/* 258 */       return new Dimension(MotifDesktopIconUI.this.defaultIcon.getIconWidth() + 1, 22);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Dimension getPreferredSize() {
-/* 263 */       String str = this.frame.getTitle();
-/* 264 */       FontMetrics fontMetrics = this.frame.getFontMetrics(MotifDesktopIconUI.defaultTitleFont);
-/* 265 */       int i = 4;
-/* 266 */       if (str != null) {
-/* 267 */         i += SwingUtilities2.stringWidth(this.frame, fontMetrics, str);
-/*     */       }
-/* 269 */       return new Dimension(i, 22);
-/*     */     }
-/*     */     
-/*     */     public void paint(Graphics param1Graphics) {
-/* 273 */       super.paint(param1Graphics);
-/*     */ 
-/*     */       
-/* 276 */       int i = getWidth() - 1;
-/*     */       
-/* 278 */       Color color = UIManager.getColor("inactiveCaptionBorder").darker().darker();
-/* 279 */       param1Graphics.setColor(color);
-/* 280 */       param1Graphics.setClip(0, 0, getWidth(), getHeight());
-/* 281 */       param1Graphics.drawLine(i - 1, 1, i - 1, 1);
-/* 282 */       param1Graphics.drawLine(i, 0, i, 0);
-/*     */ 
-/*     */       
-/* 285 */       param1Graphics.setColor(UIManager.getColor("inactiveCaption"));
-/* 286 */       param1Graphics.fillRect(2, 1, i - 3, 19);
-/*     */ 
-/*     */       
-/* 289 */       param1Graphics.setClip(2, 1, i - 4, 18);
-/*     */       
-/* 291 */       int j = 18 - SwingUtilities2.getFontMetrics(this.frame, param1Graphics).getDescent();
-/* 292 */       param1Graphics.setColor(UIManager.getColor("inactiveCaptionText"));
-/* 293 */       String str = this.frame.getTitle();
-/* 294 */       if (str != null)
-/* 295 */         SwingUtilities2.drawString(this.frame, param1Graphics, str, 4, j); 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected class IconButton
-/*     */     extends JButton {
-/*     */     Icon icon;
-/*     */     
-/*     */     IconButton(Icon param1Icon) {
-/* 304 */       super(param1Icon);
-/* 305 */       this.icon = param1Icon;
-/*     */       
-/* 307 */       addMouseMotionListener(new MouseMotionListener() {
-/*     */             public void mouseDragged(MouseEvent param2MouseEvent) {
-/* 309 */               MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseMoved(MouseEvent param2MouseEvent) {
-/* 312 */               MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */           });
-/* 315 */       addMouseListener(new MouseListener() {
-/*     */             public void mouseClicked(MouseEvent param2MouseEvent) {
-/* 317 */               MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mousePressed(MouseEvent param2MouseEvent) {
-/* 320 */               MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseReleased(MouseEvent param2MouseEvent) {
-/* 323 */               if (!MotifDesktopIconUI.this.systemMenu.isShowing())
-/* 324 */                 MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent); 
-/*     */             }
-/*     */             
-/*     */             public void mouseEntered(MouseEvent param2MouseEvent) {
-/* 328 */               MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */             public void mouseExited(MouseEvent param2MouseEvent) {
-/* 331 */               MotifDesktopIconUI.IconButton.this.forwardEventToParent(param2MouseEvent);
-/*     */             }
-/*     */           });
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void forwardEventToParent(MouseEvent param1MouseEvent) {
-/* 340 */       MouseEvent mouseEvent = new MouseEvent(getParent(), param1MouseEvent.getID(), param1MouseEvent.getWhen(), param1MouseEvent.getModifiers(), param1MouseEvent.getX(), param1MouseEvent.getY(), param1MouseEvent.getXOnScreen(), param1MouseEvent.getYOnScreen(), param1MouseEvent.getClickCount(), param1MouseEvent.isPopupTrigger(), 0);
-/* 341 */       AWTAccessor.MouseEventAccessor mouseEventAccessor = AWTAccessor.getMouseEventAccessor();
-/* 342 */       mouseEventAccessor.setCausedByTouchEvent(mouseEvent, mouseEventAccessor
-/* 343 */           .isCausedByTouchEvent(param1MouseEvent));
-/* 344 */       getParent().dispatchEvent(mouseEvent);
-/*     */     }
-/*     */     
-/*     */     public boolean isFocusTraversable() {
-/* 348 */       return false;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected class DesktopIconActionListener
-/*     */     implements ActionListener {
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 355 */       MotifDesktopIconUI.this.systemMenu.show(MotifDesktopIconUI.this.iconButton, 0, MotifDesktopIconUI.this.getDesktopIcon().getHeight());
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected class DesktopIconMouseListener
-/*     */     extends MouseAdapter {
-/*     */     public void mousePressed(MouseEvent param1MouseEvent) {
-/* 362 */       if (param1MouseEvent.getClickCount() > 1) {
-/*     */         try {
-/* 364 */           MotifDesktopIconUI.this.getFrame().setIcon(false);
-/* 365 */         } catch (PropertyVetoException propertyVetoException) {}
-/* 366 */         MotifDesktopIconUI.this.systemMenu.setVisible(false);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 371 */         MotifDesktopIconUI.this.getFrame().getDesktopPane().getDesktopManager().endDraggingFrame((JComponent)param1MouseEvent.getSource());
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifDesktopIconUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import sun.swing.SwingUtilities2;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+import java.beans.*;
+import java.util.EventListener;
+import java.io.Serializable;
+
+import sun.awt.AWTAccessor;
+import sun.awt.AWTAccessor.MouseEventAccessor;
+
+/**
+ * Motif rendition of the component.
+ *
+ * @author Thomas Ball
+ * @author Rich Schiavi
+ */
+public class MotifDesktopIconUI extends BasicDesktopIconUI
+{
+    protected DesktopIconActionListener desktopIconActionListener;
+    protected DesktopIconMouseListener  desktopIconMouseListener;
+
+    protected Icon       defaultIcon;
+    protected IconButton iconButton;
+    protected IconLabel  iconLabel;
+
+    // This is only used for its system menu, but we need a reference to it so
+    // we can remove its listeners.
+    private MotifInternalFrameTitlePane sysMenuTitlePane;
+
+    JPopupMenu systemMenu;
+    EventListener mml;
+
+    final static int LABEL_HEIGHT = 18;
+    final static int LABEL_DIVIDER = 4;    // padding between icon and label
+
+    final static Font defaultTitleFont =
+        new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+
+    public static ComponentUI createUI(JComponent c)    {
+        return new MotifDesktopIconUI();
+    }
+
+    public MotifDesktopIconUI() {
+    }
+
+    protected void installDefaults(){
+        super.installDefaults();
+        setDefaultIcon(UIManager.getIcon("DesktopIcon.icon"));
+        iconButton = createIconButton(defaultIcon);
+        // An underhanded way of creating a system popup menu.
+        sysMenuTitlePane =  new MotifInternalFrameTitlePane(frame);
+        systemMenu = sysMenuTitlePane.getSystemMenu();
+
+        MotifBorders.FrameBorder border = new MotifBorders.FrameBorder(desktopIcon);
+        desktopIcon.setLayout(new BorderLayout());
+        iconButton.setBorder(border);
+        desktopIcon.add(iconButton, BorderLayout.CENTER);
+        iconLabel = createIconLabel(frame);
+        iconLabel.setBorder(border);
+        desktopIcon.add(iconLabel, BorderLayout.SOUTH);
+        desktopIcon.setSize(desktopIcon.getPreferredSize());
+        desktopIcon.validate();
+        JLayeredPane.putLayer(desktopIcon, JLayeredPane.getLayer(frame));
+    }
+
+    protected void installComponents(){
+    }
+
+    protected void uninstallComponents(){
+    }
+
+    protected void installListeners(){
+        super.installListeners();
+        desktopIconActionListener = createDesktopIconActionListener();
+        desktopIconMouseListener = createDesktopIconMouseListener();
+        iconButton.addActionListener(desktopIconActionListener);
+        iconButton.addMouseListener(desktopIconMouseListener);
+        iconLabel.addMouseListener(desktopIconMouseListener);
+    }
+
+    JInternalFrame.JDesktopIcon getDesktopIcon(){
+      return desktopIcon;
+    }
+
+    void setDesktopIcon(JInternalFrame.JDesktopIcon d){
+      desktopIcon = d;
+    }
+
+    JInternalFrame getFrame(){
+      return frame;
+    }
+
+    void setFrame(JInternalFrame f){
+      frame = f ;
+    }
+
+    protected void showSystemMenu(){
+      systemMenu.show(iconButton, 0, getDesktopIcon().getHeight());
+    }
+
+    protected void hideSystemMenu(){
+      systemMenu.setVisible(false);
+    }
+
+    protected IconLabel createIconLabel(JInternalFrame frame){
+        return new IconLabel(frame);
+    }
+
+    protected IconButton createIconButton(Icon i){
+        return new IconButton(i);
+    }
+
+    protected DesktopIconActionListener createDesktopIconActionListener(){
+        return new DesktopIconActionListener();
+    }
+
+    protected DesktopIconMouseListener createDesktopIconMouseListener(){
+        return new DesktopIconMouseListener();
+    }
+
+    protected void uninstallDefaults(){
+        super.uninstallDefaults();
+        desktopIcon.setLayout(null);
+        desktopIcon.remove(iconButton);
+        desktopIcon.remove(iconLabel);
+    }
+
+    protected void uninstallListeners(){
+        super.uninstallListeners();
+        iconButton.removeActionListener(desktopIconActionListener);
+        iconButton.removeMouseListener(desktopIconMouseListener);
+        sysMenuTitlePane.uninstallListeners();
+    }
+
+    public Dimension getMinimumSize(JComponent c) {
+        JInternalFrame iframe = desktopIcon.getInternalFrame();
+
+        int w = defaultIcon.getIconWidth();
+        int h = defaultIcon.getIconHeight() + LABEL_HEIGHT + LABEL_DIVIDER;
+
+        Border border = iframe.getBorder();
+        if(border != null) {
+            w += border.getBorderInsets(iframe).left +
+                border.getBorderInsets(iframe).right;
+            h += border.getBorderInsets(iframe).bottom +
+                border.getBorderInsets(iframe).top;
+        }
+
+        return new Dimension(w, h);
+    }
+
+    public Dimension getPreferredSize(JComponent c) {
+        return getMinimumSize(c);
+    }
+
+    public Dimension getMaximumSize(JComponent c){
+        return getMinimumSize(c);
+    }
+
+    /**
+      * Returns the default desktop icon.
+      */
+    public Icon getDefaultIcon() {
+        return defaultIcon;
+    }
+
+    /**
+      * Sets the icon used as the default desktop icon.
+      */
+    public void setDefaultIcon(Icon newIcon) {
+        defaultIcon = newIcon;
+    }
+
+    protected class IconLabel extends JPanel {
+        JInternalFrame frame;
+
+        IconLabel(JInternalFrame f) {
+            super();
+            this.frame = f;
+            setFont(defaultTitleFont);
+
+            // Forward mouse events to titlebar for moves.
+            addMouseMotionListener(new MouseMotionListener() {
+                public void mouseDragged(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseMoved(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+            });
+            addMouseListener(new MouseListener() {
+                public void mouseClicked(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mousePressed(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseReleased(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseEntered(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseExited(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+            });
+        }
+
+        void forwardEventToParent(MouseEvent e) {
+            MouseEvent newEvent = new MouseEvent(
+                getParent(), e.getID(), e.getWhen(), e.getModifiers(),
+                e.getX(), e.getY(), e.getXOnScreen(),
+                e.getYOnScreen(), e.getClickCount(),
+                e.isPopupTrigger(), MouseEvent.NOBUTTON);
+            MouseEventAccessor meAccessor = AWTAccessor.getMouseEventAccessor();
+            meAccessor.setCausedByTouchEvent(newEvent,
+                meAccessor.isCausedByTouchEvent(e));
+            getParent().dispatchEvent(newEvent);
+        }
+
+        public boolean isFocusTraversable() {
+            return false;
+        }
+
+        public Dimension getMinimumSize() {
+            return new Dimension(defaultIcon.getIconWidth() + 1,
+                                 LABEL_HEIGHT + LABEL_DIVIDER);
+        }
+
+        public Dimension getPreferredSize() {
+            String title = frame.getTitle();
+            FontMetrics fm = frame.getFontMetrics(defaultTitleFont);
+            int w = 4;
+            if (title != null) {
+                w += SwingUtilities2.stringWidth(frame, fm, title);
+            }
+            return new Dimension(w, LABEL_HEIGHT + LABEL_DIVIDER);
+        }
+
+        public void paint(Graphics g) {
+            super.paint(g);
+
+            // touch-up frame
+            int maxX = getWidth() - 1;
+            Color shadow =
+                UIManager.getColor("inactiveCaptionBorder").darker().darker();
+            g.setColor(shadow);
+            g.setClip(0, 0, getWidth(), getHeight());
+            g.drawLine(maxX - 1, 1, maxX - 1, 1);
+            g.drawLine(maxX, 0, maxX, 0);
+
+            // fill background
+            g.setColor(UIManager.getColor("inactiveCaption"));
+            g.fillRect(2, 1, maxX - 3, LABEL_HEIGHT + 1);
+
+            // draw text -- clipping to truncate text like CDE/Motif
+            g.setClip(2, 1, maxX - 4, LABEL_HEIGHT);
+            int y = LABEL_HEIGHT - SwingUtilities2.getFontMetrics(frame, g).
+                                                   getDescent();
+            g.setColor(UIManager.getColor("inactiveCaptionText"));
+            String title = frame.getTitle();
+            if (title != null) {
+                SwingUtilities2.drawString(frame, g, title, 4, y);
+            }
+        }
+    }
+
+    protected class IconButton extends JButton {
+        Icon icon;
+
+        IconButton(Icon icon) {
+            super(icon);
+            this.icon = icon;
+            // Forward mouse events to titlebar for moves.
+            addMouseMotionListener(new MouseMotionListener() {
+                public void mouseDragged(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseMoved(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+            });
+            addMouseListener(new MouseListener() {
+                public void mouseClicked(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mousePressed(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseReleased(MouseEvent e) {
+                    if (!systemMenu.isShowing()) {
+                        forwardEventToParent(e);
+                    }
+                }
+                public void mouseEntered(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+                public void mouseExited(MouseEvent e) {
+                    forwardEventToParent(e);
+                }
+            });
+        }
+
+        void forwardEventToParent(MouseEvent e) {
+            MouseEvent newEvent = new MouseEvent(
+                getParent(), e.getID(), e.getWhen(), e.getModifiers(),
+                e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(),
+                e.getClickCount(), e.isPopupTrigger(), MouseEvent.NOBUTTON );
+            MouseEventAccessor meAccessor = AWTAccessor.getMouseEventAccessor();
+            meAccessor.setCausedByTouchEvent(newEvent,
+                meAccessor.isCausedByTouchEvent(e));
+            getParent().dispatchEvent(newEvent);
+        }
+
+        public boolean isFocusTraversable() {
+            return false;
+        }
+    }
+
+
+    protected class DesktopIconActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e){
+            systemMenu.show(iconButton, 0, getDesktopIcon().getHeight());
+        }
+    }
+
+    protected class DesktopIconMouseListener extends MouseAdapter {
+        // if we drag or move we should deengage the popup
+        public void mousePressed(MouseEvent e){
+            if (e.getClickCount() > 1) {
+                try {
+                    getFrame().setIcon(false);
+                } catch (PropertyVetoException e2){ }
+                systemMenu.setVisible(false);
+                /* the mouse release will not get reported correctly,
+                   because the icon will no longer be in the hierarchy;
+                   maybe that should be fixed, but until it is, we need
+                   to do the required cleanup here. */
+                getFrame().getDesktopPane().getDesktopManager().endDraggingFrame((JComponent)e.getSource());
+            }
+        }
+    }
+}

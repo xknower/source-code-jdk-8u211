@@ -1,526 +1,521 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import java.math.BigInteger;
-/*     */ import java.util.Map;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.NodeList;
-/*     */ import org.w3c.dom.Text;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class ElementProxy
-/*     */ {
-/*  45 */   protected static final Logger log = Logger.getLogger(ElementProxy.class.getName());
-/*     */ 
-/*     */   
-/*  48 */   protected Element constructionElement = null;
-/*     */ 
-/*     */   
-/*  51 */   protected String baseURI = null;
-/*     */ 
-/*     */   
-/*  54 */   protected Document doc = null;
-/*     */ 
-/*     */   
-/*  57 */   private static Map<String, String> prefixMappings = new ConcurrentHashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ElementProxy() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ElementProxy(Document paramDocument) {
-/*  72 */     if (paramDocument == null) {
-/*  73 */       throw new RuntimeException("Document is null");
-/*     */     }
-/*     */     
-/*  76 */     this.doc = paramDocument;
-/*  77 */     this
-/*  78 */       .constructionElement = createElementForFamilyLocal(this.doc, getBaseNamespace(), getBaseLocalName());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ElementProxy(Element paramElement, String paramString) throws XMLSecurityException {
-/*  89 */     if (paramElement == null) {
-/*  90 */       throw new XMLSecurityException("ElementProxy.nullElement");
-/*     */     }
-/*     */     
-/*  93 */     if (log.isLoggable(Level.FINE)) {
-/*  94 */       log.log(Level.FINE, "setElement(\"" + paramElement.getTagName() + "\", \"" + paramString + "\")");
-/*     */     }
-/*     */     
-/*  97 */     this.doc = paramElement.getOwnerDocument();
-/*  98 */     this.constructionElement = paramElement;
-/*  99 */     this.baseURI = paramString;
-/*     */     
-/* 101 */     guaranteeThatElementInCorrectSpace();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract String getBaseNamespace();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract String getBaseLocalName();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Element createElementForFamilyLocal(Document paramDocument, String paramString1, String paramString2) {
-/* 122 */     Element element = null;
-/* 123 */     if (paramString1 == null) {
-/* 124 */       element = paramDocument.createElementNS(null, paramString2);
-/*     */     } else {
-/* 126 */       String str1 = getBaseNamespace();
-/* 127 */       String str2 = getDefaultPrefix(str1);
-/* 128 */       if (str2 == null || str2.length() == 0) {
-/* 129 */         element = paramDocument.createElementNS(paramString1, paramString2);
-/* 130 */         element.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", paramString1);
-/*     */       } else {
-/* 132 */         element = paramDocument.createElementNS(paramString1, str2 + ":" + paramString2);
-/* 133 */         element.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + str2, paramString1);
-/*     */       } 
-/*     */     } 
-/* 136 */     return element;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element createElementForFamily(Document paramDocument, String paramString1, String paramString2) {
-/* 153 */     Element element = null;
-/* 154 */     String str = getDefaultPrefix(paramString1);
-/*     */     
-/* 156 */     if (paramString1 == null) {
-/* 157 */       element = paramDocument.createElementNS(null, paramString2);
-/*     */     }
-/* 159 */     else if (str == null || str.length() == 0) {
-/* 160 */       element = paramDocument.createElementNS(paramString1, paramString2);
-/* 161 */       element.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", paramString1);
-/*     */     } else {
-/* 163 */       element = paramDocument.createElementNS(paramString1, str + ":" + paramString2);
-/* 164 */       element.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + str, paramString1);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 168 */     return element;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setElement(Element paramElement, String paramString) throws XMLSecurityException {
-/* 179 */     if (paramElement == null) {
-/* 180 */       throw new XMLSecurityException("ElementProxy.nullElement");
-/*     */     }
-/*     */     
-/* 183 */     if (log.isLoggable(Level.FINE)) {
-/* 184 */       log.log(Level.FINE, "setElement(" + paramElement.getTagName() + ", \"" + paramString + "\"");
-/*     */     }
-/*     */     
-/* 187 */     this.doc = paramElement.getOwnerDocument();
-/* 188 */     this.constructionElement = paramElement;
-/* 189 */     this.baseURI = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Element getElement() {
-/* 199 */     return this.constructionElement;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final NodeList getElementPlusReturns() {
-/* 209 */     HelperNodeList helperNodeList = new HelperNodeList();
-/*     */     
-/* 211 */     helperNodeList.appendChild(this.doc.createTextNode("\n"));
-/* 212 */     helperNodeList.appendChild(getElement());
-/* 213 */     helperNodeList.appendChild(this.doc.createTextNode("\n"));
-/*     */     
-/* 215 */     return helperNodeList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Document getDocument() {
-/* 224 */     return this.doc;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getBaseURI() {
-/* 233 */     return this.baseURI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void guaranteeThatElementInCorrectSpace() throws XMLSecurityException {
-/* 243 */     String str1 = getBaseLocalName();
-/* 244 */     String str2 = getBaseNamespace();
-/*     */     
-/* 246 */     String str3 = this.constructionElement.getLocalName();
-/* 247 */     String str4 = this.constructionElement.getNamespaceURI();
-/*     */     
-/* 249 */     if (!str2.equals(str4) && 
-/* 250 */       !str1.equals(str3)) {
-/* 251 */       Object[] arrayOfObject = { str4 + ":" + str3, str2 + ":" + str1 };
-/*     */       
-/* 253 */       throw new XMLSecurityException("xml.WrongElement", arrayOfObject);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addBigIntegerElement(BigInteger paramBigInteger, String paramString) {
-/* 264 */     if (paramBigInteger != null) {
-/* 265 */       Element element = XMLUtils.createElementInSignatureSpace(this.doc, paramString);
-/*     */       
-/* 267 */       Base64.fillElementWithBigInteger(element, paramBigInteger);
-/* 268 */       this.constructionElement.appendChild(element);
-/* 269 */       XMLUtils.addReturnToElement(this.constructionElement);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addBase64Element(byte[] paramArrayOfbyte, String paramString) {
-/* 280 */     if (paramArrayOfbyte != null) {
-/* 281 */       Element element = Base64.encodeToElement(this.doc, paramString, paramArrayOfbyte);
-/*     */       
-/* 283 */       this.constructionElement.appendChild(element);
-/* 284 */       if (!XMLUtils.ignoreLineBreaks()) {
-/* 285 */         this.constructionElement.appendChild(this.doc.createTextNode("\n"));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addTextElement(String paramString1, String paramString2) {
-/* 297 */     Element element = XMLUtils.createElementInSignatureSpace(this.doc, paramString2);
-/* 298 */     Text text = this.doc.createTextNode(paramString1);
-/*     */     
-/* 300 */     element.appendChild(text);
-/* 301 */     this.constructionElement.appendChild(element);
-/* 302 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addBase64Text(byte[] paramArrayOfbyte) {
-/* 311 */     if (paramArrayOfbyte != null) {
-/*     */ 
-/*     */       
-/* 314 */       Text text = XMLUtils.ignoreLineBreaks() ? this.doc.createTextNode(Base64.encode(paramArrayOfbyte)) : this.doc.createTextNode("\n" + Base64.encode(paramArrayOfbyte) + "\n");
-/* 315 */       this.constructionElement.appendChild(text);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addText(String paramString) {
-/* 325 */     if (paramString != null) {
-/* 326 */       Text text = this.doc.createTextNode(paramString);
-/*     */       
-/* 328 */       this.constructionElement.appendChild(text);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getBigIntegerFromChildElement(String paramString1, String paramString2) throws Base64DecodingException {
-/* 343 */     return Base64.decodeBigIntegerFromText(
-/* 344 */         XMLUtils.selectNodeText(this.constructionElement
-/* 345 */           .getFirstChild(), paramString2, paramString1, 0));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public byte[] getBytesFromChildElement(String paramString1, String paramString2) throws XMLSecurityException {
-/* 362 */     Element element = XMLUtils.selectNode(this.constructionElement
-/* 363 */         .getFirstChild(), paramString2, paramString1, 0);
-/*     */ 
-/*     */     
-/* 366 */     return Base64.decode(element);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getTextFromChildElement(String paramString1, String paramString2) {
-/* 377 */     return XMLUtils.selectNode(this.constructionElement
-/* 378 */         .getFirstChild(), paramString2, paramString1, 0)
-/*     */ 
-/*     */       
-/* 381 */       .getTextContent();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] getBytesFromTextChild() throws XMLSecurityException {
-/* 391 */     return Base64.decode(XMLUtils.getFullTextChildrenFromElement(this.constructionElement));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getTextFromTextChild() {
-/* 401 */     return XMLUtils.getFullTextChildrenFromElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int length(String paramString1, String paramString2) {
-/* 412 */     byte b = 0;
-/* 413 */     Node node = this.constructionElement.getFirstChild();
-/* 414 */     while (node != null) {
-/* 415 */       if (paramString2.equals(node.getLocalName()) && paramString1
-/* 416 */         .equals(node.getNamespaceURI())) {
-/* 417 */         b++;
-/*     */       }
-/* 419 */       node = node.getNextSibling();
-/*     */     } 
-/* 421 */     return b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setXPathNamespaceContext(String paramString1, String paramString2) throws XMLSecurityException {
-/*     */     String str;
-/* 441 */     if (paramString1 == null || paramString1.length() == 0)
-/* 442 */       throw new XMLSecurityException("defaultNamespaceCannotBeSetHere"); 
-/* 443 */     if (paramString1.equals("xmlns"))
-/* 444 */       throw new XMLSecurityException("defaultNamespaceCannotBeSetHere"); 
-/* 445 */     if (paramString1.startsWith("xmlns:")) {
-/* 446 */       str = paramString1;
-/*     */     } else {
-/* 448 */       str = "xmlns:" + paramString1;
-/*     */     } 
-/*     */     
-/* 451 */     Attr attr = this.constructionElement.getAttributeNodeNS("http://www.w3.org/2000/xmlns/", str);
-/*     */     
-/* 453 */     if (attr != null) {
-/* 454 */       if (!attr.getNodeValue().equals(paramString2)) {
-/* 455 */         Object[] arrayOfObject = { str, this.constructionElement.getAttributeNS((String)null, str) };
-/*     */         
-/* 457 */         throw new XMLSecurityException("namespacePrefixAlreadyUsedByOtherURI", arrayOfObject);
-/*     */       } 
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 462 */     this.constructionElement.setAttributeNS("http://www.w3.org/2000/xmlns/", str, paramString2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setDefaultPrefix(String paramString1, String paramString2) throws XMLSecurityException {
-/* 476 */     JavaUtils.checkRegisterPermission();
-/* 477 */     if (prefixMappings.containsValue(paramString2)) {
-/* 478 */       String str = prefixMappings.get(paramString1);
-/* 479 */       if (!str.equals(paramString2)) {
-/* 480 */         Object[] arrayOfObject = { paramString2, paramString1, str };
-/*     */         
-/* 482 */         throw new XMLSecurityException("prefix.AlreadyAssigned", arrayOfObject);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 486 */     if ("http://www.w3.org/2000/09/xmldsig#".equals(paramString1)) {
-/* 487 */       XMLUtils.setDsPrefix(paramString2);
-/*     */     }
-/* 489 */     if ("http://www.w3.org/2001/04/xmlenc#".equals(paramString1)) {
-/* 490 */       XMLUtils.setXencPrefix(paramString2);
-/*     */     }
-/* 492 */     prefixMappings.put(paramString1, paramString2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void registerDefaultPrefixes() throws XMLSecurityException {
-/* 499 */     setDefaultPrefix("http://www.w3.org/2000/09/xmldsig#", "ds");
-/* 500 */     setDefaultPrefix("http://www.w3.org/2001/04/xmlenc#", "xenc");
-/* 501 */     setDefaultPrefix("http://www.w3.org/2009/xmlenc11#", "xenc11");
-/* 502 */     setDefaultPrefix("http://www.xmlsecurity.org/experimental#", "experimental");
-/* 503 */     setDefaultPrefix("http://www.w3.org/2002/04/xmldsig-filter2", "dsig-xpath-old");
-/* 504 */     setDefaultPrefix("http://www.w3.org/2002/06/xmldsig-filter2", "dsig-xpath");
-/* 505 */     setDefaultPrefix("http://www.w3.org/2001/10/xml-exc-c14n#", "ec");
-/* 506 */     setDefaultPrefix("http://www.nue.et-inf.uni-siegen.de/~geuer-pollmann/#xpathFilter", "xx");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getDefaultPrefix(String paramString) {
-/* 518 */     return prefixMappings.get(paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\ElementProxy.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils;
+
+import java.math.BigInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+
+/**
+ * This is the base class to all Objects which have a direct 1:1 mapping to an
+ * Element in a particular namespace.
+ */
+public abstract class ElementProxy {
+
+    protected static final java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(ElementProxy.class.getName());
+
+    /** Field constructionElement */
+    protected Element constructionElement = null;
+
+    /** Field baseURI */
+    protected String baseURI = null;
+
+    /** Field doc */
+    protected Document doc = null;
+
+    /** Field prefixMappings */
+    private static Map<String, String> prefixMappings = new ConcurrentHashMap<String, String>();
+
+    /**
+     * Constructor ElementProxy
+     *
+     */
+    public ElementProxy() {
+    }
+
+    /**
+     * Constructor ElementProxy
+     *
+     * @param doc
+     */
+    public ElementProxy(Document doc) {
+        if (doc == null) {
+            throw new RuntimeException("Document is null");
+        }
+
+        this.doc = doc;
+        this.constructionElement =
+            createElementForFamilyLocal(this.doc, this.getBaseNamespace(), this.getBaseLocalName());
+    }
+
+    /**
+     * Constructor ElementProxy
+     *
+     * @param element
+     * @param BaseURI
+     * @throws XMLSecurityException
+     */
+    public ElementProxy(Element element, String BaseURI) throws XMLSecurityException {
+        if (element == null) {
+            throw new XMLSecurityException("ElementProxy.nullElement");
+        }
+
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "setElement(\"" + element.getTagName() + "\", \"" + BaseURI + "\")");
+        }
+
+        this.doc = element.getOwnerDocument();
+        this.constructionElement = element;
+        this.baseURI = BaseURI;
+
+        this.guaranteeThatElementInCorrectSpace();
+    }
+
+    /**
+     * Returns the namespace of the Elements of the sub-class.
+     *
+     * @return the namespace of the Elements of the sub-class.
+     */
+    public abstract String getBaseNamespace();
+
+    /**
+     * Returns the localname of the Elements of the sub-class.
+     *
+     * @return the localname of the Elements of the sub-class.
+     */
+    public abstract String getBaseLocalName();
+
+
+    protected Element createElementForFamilyLocal(
+        Document doc, String namespace, String localName
+    ) {
+        Element result = null;
+        if (namespace == null) {
+            result = doc.createElementNS(null, localName);
+        } else {
+            String baseName = this.getBaseNamespace();
+            String prefix = ElementProxy.getDefaultPrefix(baseName);
+            if ((prefix == null) || (prefix.length() == 0)) {
+                result = doc.createElementNS(namespace, localName);
+                result.setAttributeNS(Constants.NamespaceSpecNS, "xmlns", namespace);
+            } else {
+                result = doc.createElementNS(namespace, prefix + ":" + localName);
+                result.setAttributeNS(Constants.NamespaceSpecNS, "xmlns:" + prefix, namespace);
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * This method creates an Element in a given namespace with a given localname.
+     * It uses the {@link ElementProxy#getDefaultPrefix} method to decide whether
+     * a particular prefix is bound to that namespace.
+     * <BR />
+     * This method was refactored out of the constructor.
+     *
+     * @param doc
+     * @param namespace
+     * @param localName
+     * @return The element created.
+     */
+    public static Element createElementForFamily(Document doc, String namespace, String localName) {
+        Element result = null;
+        String prefix = ElementProxy.getDefaultPrefix(namespace);
+
+        if (namespace == null) {
+            result = doc.createElementNS(null, localName);
+        } else {
+            if ((prefix == null) || (prefix.length() == 0)) {
+                result = doc.createElementNS(namespace, localName);
+                result.setAttributeNS(Constants.NamespaceSpecNS, "xmlns", namespace);
+            } else {
+                result = doc.createElementNS(namespace, prefix + ":" + localName);
+                result.setAttributeNS(Constants.NamespaceSpecNS, "xmlns:" + prefix, namespace);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Method setElement
+     *
+     * @param element
+     * @param BaseURI
+     * @throws XMLSecurityException
+     */
+    public void setElement(Element element, String BaseURI) throws XMLSecurityException {
+        if (element == null) {
+            throw new XMLSecurityException("ElementProxy.nullElement");
+        }
+
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "setElement(" + element.getTagName() + ", \"" + BaseURI + "\"");
+        }
+
+        this.doc = element.getOwnerDocument();
+        this.constructionElement = element;
+        this.baseURI = BaseURI;
+    }
+
+
+    /**
+     * Returns the Element which was constructed by the Object.
+     *
+     * @return the Element which was constructed by the Object.
+     */
+    public final Element getElement() {
+        return this.constructionElement;
+    }
+
+    /**
+     * Returns the Element plus a leading and a trailing CarriageReturn Text node.
+     *
+     * @return the Element which was constructed by the Object.
+     */
+    public final NodeList getElementPlusReturns() {
+
+        HelperNodeList nl = new HelperNodeList();
+
+        nl.appendChild(this.doc.createTextNode("\n"));
+        nl.appendChild(this.getElement());
+        nl.appendChild(this.doc.createTextNode("\n"));
+
+        return nl;
+    }
+
+    /**
+     * Method getDocument
+     *
+     * @return the Document where this element is contained.
+     */
+    public Document getDocument() {
+        return this.doc;
+    }
+
+    /**
+     * Method getBaseURI
+     *
+     * @return the base uri of the namespace of this element
+     */
+    public String getBaseURI() {
+        return this.baseURI;
+    }
+
+    /**
+     * Method guaranteeThatElementInCorrectSpace
+     *
+     * @throws XMLSecurityException
+     */
+    void guaranteeThatElementInCorrectSpace() throws XMLSecurityException {
+
+        String expectedLocalName = this.getBaseLocalName();
+        String expectedNamespaceUri = this.getBaseNamespace();
+
+        String actualLocalName = this.constructionElement.getLocalName();
+        String actualNamespaceUri = this.constructionElement.getNamespaceURI();
+
+        if(!expectedNamespaceUri.equals(actualNamespaceUri)
+            && !expectedLocalName.equals(actualLocalName)) {
+            Object exArgs[] = { actualNamespaceUri + ":" + actualLocalName,
+                                expectedNamespaceUri + ":" + expectedLocalName};
+            throw new XMLSecurityException("xml.WrongElement", exArgs);
+        }
+    }
+
+    /**
+     * Method addBigIntegerElement
+     *
+     * @param bi
+     * @param localname
+     */
+    public void addBigIntegerElement(BigInteger bi, String localname) {
+        if (bi != null) {
+            Element e = XMLUtils.createElementInSignatureSpace(this.doc, localname);
+
+            Base64.fillElementWithBigInteger(e, bi);
+            this.constructionElement.appendChild(e);
+            XMLUtils.addReturnToElement(this.constructionElement);
+        }
+    }
+
+    /**
+     * Method addBase64Element
+     *
+     * @param bytes
+     * @param localname
+     */
+    public void addBase64Element(byte[] bytes, String localname) {
+        if (bytes != null) {
+            Element e = Base64.encodeToElement(this.doc, localname, bytes);
+
+            this.constructionElement.appendChild(e);
+            if (!XMLUtils.ignoreLineBreaks()) {
+                this.constructionElement.appendChild(this.doc.createTextNode("\n"));
+            }
+        }
+    }
+
+    /**
+     * Method addTextElement
+     *
+     * @param text
+     * @param localname
+     */
+    public void addTextElement(String text, String localname) {
+        Element e = XMLUtils.createElementInSignatureSpace(this.doc, localname);
+        Text t = this.doc.createTextNode(text);
+
+        e.appendChild(t);
+        this.constructionElement.appendChild(e);
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addBase64Text
+     *
+     * @param bytes
+     */
+    public void addBase64Text(byte[] bytes) {
+        if (bytes != null) {
+            Text t = XMLUtils.ignoreLineBreaks()
+                ? this.doc.createTextNode(Base64.encode(bytes))
+                : this.doc.createTextNode("\n" + Base64.encode(bytes) + "\n");
+            this.constructionElement.appendChild(t);
+        }
+    }
+
+    /**
+     * Method addText
+     *
+     * @param text
+     */
+    public void addText(String text) {
+        if (text != null) {
+            Text t = this.doc.createTextNode(text);
+
+            this.constructionElement.appendChild(t);
+        }
+    }
+
+    /**
+     * Method getVal
+     *
+     * @param localname
+     * @param namespace
+     * @return The biginteger contained in the given element
+     * @throws Base64DecodingException
+     */
+    public BigInteger getBigIntegerFromChildElement(
+        String localname, String namespace
+    ) throws Base64DecodingException {
+        return Base64.decodeBigIntegerFromText(
+            XMLUtils.selectNodeText(
+                this.constructionElement.getFirstChild(), namespace, localname, 0
+            )
+        );
+    }
+
+    /**
+     * Method getBytesFromChildElement
+     * @deprecated
+     * @param localname
+     * @param namespace
+     * @return the bytes
+     * @throws XMLSecurityException
+     */
+    @Deprecated
+    public byte[] getBytesFromChildElement(String localname, String namespace)
+        throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectNode(
+                this.constructionElement.getFirstChild(), namespace, localname, 0
+            );
+
+        return Base64.decode(e);
+    }
+
+    /**
+     * Method getTextFromChildElement
+     *
+     * @param localname
+     * @param namespace
+     * @return the Text of the textNode
+     */
+    public String getTextFromChildElement(String localname, String namespace) {
+        return XMLUtils.selectNode(
+                this.constructionElement.getFirstChild(),
+                namespace,
+                localname,
+                0).getTextContent();
+    }
+
+    /**
+     * Method getBytesFromTextChild
+     *
+     * @return The base64 bytes from the text children of this element
+     * @throws XMLSecurityException
+     */
+    public byte[] getBytesFromTextChild() throws XMLSecurityException {
+        return Base64.decode(XMLUtils.getFullTextChildrenFromElement(this.constructionElement));
+    }
+
+    /**
+     * Method getTextFromTextChild
+     *
+     * @return the Text obtained by concatenating all the text nodes of this
+     *    element
+     */
+    public String getTextFromTextChild() {
+        return XMLUtils.getFullTextChildrenFromElement(this.constructionElement);
+    }
+
+    /**
+     * Method length
+     *
+     * @param namespace
+     * @param localname
+     * @return the number of elements {namespace}:localname under this element
+     */
+    public int length(String namespace, String localname) {
+        int number = 0;
+        Node sibling = this.constructionElement.getFirstChild();
+        while (sibling != null) {
+            if (localname.equals(sibling.getLocalName())
+                && namespace.equals(sibling.getNamespaceURI())) {
+                number++;
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return number;
+    }
+
+    /**
+     * Adds an xmlns: definition to the Element. This can be called as follows:
+     *
+     * <PRE>
+     * // set namespace with ds prefix
+     * xpathContainer.setXPathNamespaceContext("ds", "http://www.w3.org/2000/09/xmldsig#");
+     * xpathContainer.setXPathNamespaceContext("xmlns:ds", "http://www.w3.org/2000/09/xmldsig#");
+     * </PRE>
+     *
+     * @param prefix
+     * @param uri
+     * @throws XMLSecurityException
+     */
+    public void setXPathNamespaceContext(String prefix, String uri)
+        throws XMLSecurityException {
+        String ns;
+
+        if ((prefix == null) || (prefix.length() == 0)) {
+            throw new XMLSecurityException("defaultNamespaceCannotBeSetHere");
+        } else if (prefix.equals("xmlns")) {
+            throw new XMLSecurityException("defaultNamespaceCannotBeSetHere");
+        } else if (prefix.startsWith("xmlns:")) {
+            ns = prefix;//"xmlns:" + prefix.substring("xmlns:".length());
+        } else {
+            ns = "xmlns:" + prefix;
+        }
+
+        Attr a = this.constructionElement.getAttributeNodeNS(Constants.NamespaceSpecNS, ns);
+
+        if (a != null) {
+            if (!a.getNodeValue().equals(uri)) {
+                Object exArgs[] = { ns, this.constructionElement.getAttributeNS(null, ns) };
+
+                throw new XMLSecurityException("namespacePrefixAlreadyUsedByOtherURI", exArgs);
+            }
+            return;
+        }
+
+        this.constructionElement.setAttributeNS(Constants.NamespaceSpecNS, ns, uri);
+    }
+
+    /**
+     * Method setDefaultPrefix
+     *
+     * @param namespace
+     * @param prefix
+     * @throws XMLSecurityException
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the default prefix
+     */
+    public static void setDefaultPrefix(String namespace, String prefix)
+        throws XMLSecurityException {
+        JavaUtils.checkRegisterPermission();
+        if (prefixMappings.containsValue(prefix)) {
+            String storedPrefix = prefixMappings.get(namespace);
+            if (!storedPrefix.equals(prefix)) {
+                Object exArgs[] = { prefix, namespace, storedPrefix };
+
+                throw new XMLSecurityException("prefix.AlreadyAssigned", exArgs);
+            }
+        }
+
+        if (Constants.SignatureSpecNS.equals(namespace)) {
+            XMLUtils.setDsPrefix(prefix);
+        }
+        if (EncryptionConstants.EncryptionSpecNS.equals(namespace)) {
+            XMLUtils.setXencPrefix(prefix);
+        }
+        prefixMappings.put(namespace, prefix);
+    }
+
+    /**
+     * This method registers the default prefixes.
+     */
+    public static void registerDefaultPrefixes() throws XMLSecurityException {
+        setDefaultPrefix("http://www.w3.org/2000/09/xmldsig#", "ds");
+        setDefaultPrefix("http://www.w3.org/2001/04/xmlenc#", "xenc");
+        setDefaultPrefix("http://www.w3.org/2009/xmlenc11#", "xenc11");
+        setDefaultPrefix("http://www.xmlsecurity.org/experimental#", "experimental");
+        setDefaultPrefix("http://www.w3.org/2002/04/xmldsig-filter2", "dsig-xpath-old");
+        setDefaultPrefix("http://www.w3.org/2002/06/xmldsig-filter2", "dsig-xpath");
+        setDefaultPrefix("http://www.w3.org/2001/10/xml-exc-c14n#", "ec");
+        setDefaultPrefix(
+            "http://www.nue.et-inf.uni-siegen.de/~geuer-pollmann/#xpathFilter", "xx"
+        );
+    }
+
+    /**
+     * Method getDefaultPrefix
+     *
+     * @param namespace
+     * @return the default prefix bind to this element.
+     */
+    public static String getDefaultPrefix(String namespace) {
+        return prefixMappings.get(namespace);
+    }
+
+}

@@ -1,154 +1,150 @@
-/*     */ package java.text;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ParsePosition
-/*     */ {
-/*  65 */   int index = 0;
-/*  66 */   int errorIndex = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex() {
-/*  76 */     return this.index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setIndex(int paramInt) {
-/*  85 */     this.index = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParsePosition(int paramInt) {
-/*  94 */     this.index = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setErrorIndex(int paramInt) {
-/* 106 */     this.errorIndex = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getErrorIndex() {
-/* 118 */     return this.errorIndex;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 126 */     if (paramObject == null) return false; 
-/* 127 */     if (!(paramObject instanceof ParsePosition))
-/* 128 */       return false; 
-/* 129 */     ParsePosition parsePosition = (ParsePosition)paramObject;
-/* 130 */     return (this.index == parsePosition.index && this.errorIndex == parsePosition.errorIndex);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 138 */     return this.errorIndex << 16 | this.index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 146 */     return getClass().getName() + "[index=" + this.index + ",errorIndex=" + this.errorIndex + ']';
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\text\ParsePosition.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1996 - 1998 - All Rights Reserved
+ *
+ *   The original version of this source code and documentation is copyrighted
+ * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These
+ * materials are provided under terms of a License Agreement between Taligent
+ * and Sun. This technology is protected by multiple US and International
+ * patents. This notice and attribution to Taligent may not be removed.
+ *   Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.text;
+
+
+/**
+ * <code>ParsePosition</code> is a simple class used by <code>Format</code>
+ * and its subclasses to keep track of the current position during parsing.
+ * The <code>parseObject</code> method in the various <code>Format</code>
+ * classes requires a <code>ParsePosition</code> object as an argument.
+ *
+ * <p>
+ * By design, as you parse through a string with different formats,
+ * you can use the same <code>ParsePosition</code>, since the index parameter
+ * records the current position.
+ *
+ * @author      Mark Davis
+ * @see         java.text.Format
+ */
+
+public class ParsePosition {
+
+    /**
+     * Input: the place you start parsing.
+     * <br>Output: position where the parse stopped.
+     * This is designed to be used serially,
+     * with each call setting index up for the next one.
+     */
+    int index = 0;
+    int errorIndex = -1;
+
+    /**
+     * Retrieve the current parse position.  On input to a parse method, this
+     * is the index of the character at which parsing will begin; on output, it
+     * is the index of the character following the last character parsed.
+     *
+     * @return the current parse position
+     */
+    public int getIndex() {
+        return index;
+    }
+
+    /**
+     * Set the current parse position.
+     *
+     * @param index the current parse position
+     */
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    /**
+     * Create a new ParsePosition with the given initial index.
+     *
+     * @param index initial index
+     */
+    public ParsePosition(int index) {
+        this.index = index;
+    }
+    /**
+     * Set the index at which a parse error occurred.  Formatters
+     * should set this before returning an error code from their
+     * parseObject method.  The default value is -1 if this is not set.
+     *
+     * @param ei the index at which an error occurred
+     * @since 1.2
+     */
+    public void setErrorIndex(int ei)
+    {
+        errorIndex = ei;
+    }
+
+    /**
+     * Retrieve the index at which an error occurred, or -1 if the
+     * error index has not been set.
+     *
+     * @return the index at which an error occurred
+     * @since 1.2
+     */
+    public int getErrorIndex()
+    {
+        return errorIndex;
+    }
+
+    /**
+     * Overrides equals
+     */
+    public boolean equals(Object obj)
+    {
+        if (obj == null) return false;
+        if (!(obj instanceof ParsePosition))
+            return false;
+        ParsePosition other = (ParsePosition) obj;
+        return (index == other.index && errorIndex == other.errorIndex);
+    }
+
+    /**
+     * Returns a hash code for this ParsePosition.
+     * @return a hash code value for this object
+     */
+    public int hashCode() {
+        return (errorIndex << 16) | index;
+    }
+
+    /**
+     * Return a string representation of this ParsePosition.
+     * @return  a string representation of this object
+     */
+    public String toString() {
+        return getClass().getName() +
+            "[index=" + index +
+            ",errorIndex=" + errorIndex + ']';
+    }
+}

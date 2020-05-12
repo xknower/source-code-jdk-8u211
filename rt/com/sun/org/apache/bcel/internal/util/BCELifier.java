@@ -1,313 +1,307 @@
-/*     */ package com.sun.org.apache.bcel.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.Constants;
-/*     */ import com.sun.org.apache.bcel.internal.Repository;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ClassParser;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantValue;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.EmptyVisitor;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Field;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.JavaClass;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Method;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Utility;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ArrayType;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.MethodGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.PrintWriter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BCELifier
-/*     */   extends EmptyVisitor
-/*     */ {
-/*     */   private JavaClass _clazz;
-/*     */   private PrintWriter _out;
-/*     */   private ConstantPoolGen _cp;
-/*     */   
-/*     */   public BCELifier(JavaClass clazz, OutputStream out) {
-/*  84 */     this._clazz = clazz;
-/*  85 */     this._out = new PrintWriter(out);
-/*  86 */     this._cp = new ConstantPoolGen(this._clazz.getConstantPool());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void start() {
-/*  92 */     visitJavaClass(this._clazz);
-/*  93 */     this._out.flush();
-/*     */   }
-/*     */   
-/*     */   public void visitJavaClass(JavaClass clazz) {
-/*  97 */     String class_name = clazz.getClassName();
-/*  98 */     String super_name = clazz.getSuperclassName();
-/*  99 */     String package_name = clazz.getPackageName();
-/* 100 */     String inter = Utility.printArray((Object[])clazz.getInterfaceNames(), false, true);
-/*     */     
-/* 102 */     if (!"".equals(package_name)) {
-/* 103 */       class_name = class_name.substring(package_name.length() + 1);
-/* 104 */       this._out.println("package " + package_name + ";\n");
-/*     */     } 
-/*     */     
-/* 107 */     this._out.println("import com.sun.org.apache.bcel.internal.generic.*;");
-/* 108 */     this._out.println("import com.sun.org.apache.bcel.internal.classfile.*;");
-/* 109 */     this._out.println("import com.sun.org.apache.bcel.internal.*;");
-/* 110 */     this._out.println("import java.io.*;\n");
-/*     */     
-/* 112 */     this._out.println("public class " + class_name + "Creator implements Constants {");
-/* 113 */     this._out.println("  private InstructionFactory _factory;");
-/* 114 */     this._out.println("  private ConstantPoolGen    _cp;");
-/* 115 */     this._out.println("  private ClassGen           _cg;\n");
-/*     */     
-/* 117 */     this._out.println("  public " + class_name + "Creator() {");
-/* 118 */     this._out.println("    _cg = new ClassGen(\"" + (
-/* 119 */         "".equals(package_name) ? class_name : (package_name + "." + class_name)) + "\", \"" + super_name + "\", \"" + clazz
-/*     */ 
-/*     */         
-/* 122 */         .getSourceFileName() + "\", " + 
-/* 123 */         printFlags(clazz.getAccessFlags(), true) + ", new String[] { " + inter + " });\n");
-/*     */ 
-/*     */     
-/* 126 */     this._out.println("    _cp = _cg.getConstantPool();");
-/* 127 */     this._out.println("    _factory = new InstructionFactory(_cg, _cp);");
-/* 128 */     this._out.println("  }\n");
-/*     */     
-/* 130 */     printCreate();
-/*     */     
-/* 132 */     Field[] fields = clazz.getFields();
-/*     */     
-/* 134 */     if (fields.length > 0) {
-/* 135 */       this._out.println("  private void createFields() {");
-/* 136 */       this._out.println("    FieldGen field;");
-/*     */       
-/* 138 */       for (int j = 0; j < fields.length; j++) {
-/* 139 */         fields[j].accept(this);
-/*     */       }
-/*     */       
-/* 142 */       this._out.println("  }\n");
-/*     */     } 
-/*     */     
-/* 145 */     Method[] methods = clazz.getMethods();
-/*     */     
-/* 147 */     for (int i = 0; i < methods.length; i++) {
-/* 148 */       this._out.println("  private void createMethod_" + i + "() {");
-/*     */       
-/* 150 */       methods[i].accept(this);
-/* 151 */       this._out.println("  }\n");
-/*     */     } 
-/*     */     
-/* 154 */     printMain();
-/* 155 */     this._out.println("}");
-/*     */   }
-/*     */   
-/*     */   private void printCreate() {
-/* 159 */     this._out.println("  public void create(OutputStream out) throws IOException {");
-/*     */     
-/* 161 */     Field[] fields = this._clazz.getFields();
-/* 162 */     if (fields.length > 0) {
-/* 163 */       this._out.println("    createFields();");
-/*     */     }
-/*     */     
-/* 166 */     Method[] methods = this._clazz.getMethods();
-/* 167 */     for (int i = 0; i < methods.length; i++) {
-/* 168 */       this._out.println("    createMethod_" + i + "();");
-/*     */     }
-/*     */     
-/* 171 */     this._out.println("    _cg.getJavaClass().dump(out);");
-/*     */     
-/* 173 */     this._out.println("  }\n");
-/*     */   }
-/*     */   
-/*     */   private void printMain() {
-/* 177 */     String class_name = this._clazz.getClassName();
-/*     */     
-/* 179 */     this._out.println("  public static void _main(String[] args) throws Exception {");
-/* 180 */     this._out.println("    " + class_name + "Creator creator = new " + class_name + "Creator();");
-/*     */     
-/* 182 */     this._out.println("    creator.create(new FileOutputStream(\"" + class_name + ".class\"));");
-/*     */     
-/* 184 */     this._out.println("  }");
-/*     */   }
-/*     */   
-/*     */   public void visitField(Field field) {
-/* 188 */     this._out.println("\n    field = new FieldGen(" + 
-/* 189 */         printFlags(field.getAccessFlags()) + ", " + 
-/* 190 */         printType(field.getSignature()) + ", \"" + field
-/* 191 */         .getName() + "\", _cp);");
-/*     */     
-/* 193 */     ConstantValue cv = field.getConstantValue();
-/*     */     
-/* 195 */     if (cv != null) {
-/* 196 */       String value = cv.toString();
-/* 197 */       this._out.println("    field.setInitValue(" + value + ")");
-/*     */     } 
-/*     */     
-/* 200 */     this._out.println("    _cg.addField(field.getField());");
-/*     */   }
-/*     */   
-/*     */   public void visitMethod(Method method) {
-/* 204 */     MethodGen mg = new MethodGen(method, this._clazz.getClassName(), this._cp);
-/*     */     
-/* 206 */     Type result_type = mg.getReturnType();
-/* 207 */     Type[] arg_types = mg.getArgumentTypes();
-/*     */     
-/* 209 */     this._out.println("    InstructionList il = new InstructionList();");
-/* 210 */     this._out.println("    MethodGen method = new MethodGen(" + 
-/* 211 */         printFlags(method.getAccessFlags()) + ", " + 
-/* 212 */         printType(result_type) + ", " + 
-/* 213 */         printArgumentTypes(arg_types) + ", new String[] { " + 
-/*     */         
-/* 215 */         Utility.printArray((Object[])mg.getArgumentNames(), false, true) + " }, \"" + method
-/* 216 */         .getName() + "\", \"" + this._clazz
-/* 217 */         .getClassName() + "\", il, _cp);\n");
-/*     */     
-/* 219 */     BCELFactory factory = new BCELFactory(mg, this._out);
-/* 220 */     factory.start();
-/*     */     
-/* 222 */     this._out.println("    method.setMaxStack();");
-/* 223 */     this._out.println("    method.setMaxLocals();");
-/* 224 */     this._out.println("    _cg.addMethod(method.getMethod());");
-/* 225 */     this._out.println("    il.dispose();");
-/*     */   }
-/*     */   
-/*     */   static String printFlags(int flags) {
-/* 229 */     return printFlags(flags, false);
-/*     */   }
-/*     */   
-/*     */   static String printFlags(int flags, boolean for_class) {
-/* 233 */     if (flags == 0) {
-/* 234 */       return "0";
-/*     */     }
-/* 236 */     StringBuffer buf = new StringBuffer();
-/* 237 */     for (int i = 0, pow = 1; i <= 2048; i++) {
-/* 238 */       if ((flags & pow) != 0) {
-/* 239 */         if (pow == 32 && for_class) {
-/* 240 */           buf.append("ACC_SUPER | ");
-/*     */         } else {
-/* 242 */           buf.append("ACC_" + Constants.ACCESS_NAMES[i].toUpperCase() + " | ");
-/*     */         } 
-/*     */       }
-/* 245 */       pow <<= 1;
-/*     */     } 
-/*     */     
-/* 248 */     String str = buf.toString();
-/* 249 */     return str.substring(0, str.length() - 3);
-/*     */   }
-/*     */   
-/*     */   static String printArgumentTypes(Type[] arg_types) {
-/* 253 */     if (arg_types.length == 0) {
-/* 254 */       return "Type.NO_ARGS";
-/*     */     }
-/* 256 */     StringBuffer args = new StringBuffer();
-/*     */     
-/* 258 */     for (int i = 0; i < arg_types.length; i++) {
-/* 259 */       args.append(printType(arg_types[i]));
-/*     */       
-/* 261 */       if (i < arg_types.length - 1) {
-/* 262 */         args.append(", ");
-/*     */       }
-/*     */     } 
-/* 265 */     return "new Type[] { " + args.toString() + " }";
-/*     */   }
-/*     */   
-/*     */   static String printType(Type type) {
-/* 269 */     return printType(type.getSignature());
-/*     */   }
-/*     */   
-/*     */   static String printType(String signature) {
-/* 273 */     Type type = Type.getType(signature);
-/* 274 */     byte t = type.getType();
-/*     */     
-/* 276 */     if (t <= 12)
-/* 277 */       return "Type." + Constants.TYPE_NAMES[t].toUpperCase(); 
-/* 278 */     if (type.toString().equals("java.lang.String"))
-/* 279 */       return "Type.STRING"; 
-/* 280 */     if (type.toString().equals("java.lang.Object"))
-/* 281 */       return "Type.OBJECT"; 
-/* 282 */     if (type.toString().equals("java.lang.StringBuffer"))
-/* 283 */       return "Type.STRINGBUFFER"; 
-/* 284 */     if (type instanceof ArrayType) {
-/* 285 */       ArrayType at = (ArrayType)type;
-/*     */       
-/* 287 */       return "new ArrayType(" + printType(at.getBasicType()) + ", " + at
-/* 288 */         .getDimensions() + ")";
-/*     */     } 
-/* 290 */     return "new ObjectType(\"" + Utility.signatureToString(signature, false) + "\")";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void _main(String[] argv) throws Exception {
-/* 299 */     String name = argv[0];
-/*     */     JavaClass java_class;
-/* 301 */     if ((java_class = Repository.lookupClass(name)) == null) {
-/* 302 */       java_class = (new ClassParser(name)).parse();
-/*     */     }
-/* 304 */     BCELifier bcelifier = new BCELifier(java_class, System.out);
-/* 305 */     bcelifier.start();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\interna\\util\BCELifier.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.util;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2002 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+import com.sun.org.apache.bcel.internal.classfile.*;
+import com.sun.org.apache.bcel.internal.generic.*;
+import com.sun.org.apache.bcel.internal.Repository;
+import com.sun.org.apache.bcel.internal.Constants;
+import java.io.*;
+
+/**
+ * This class takes a given JavaClass object and converts it to a
+ * Java program that creates that very class using BCEL. This
+ * gives new users of BCEL a useful example showing how things
+ * are done with BCEL. It does not cover all features of BCEL,
+ * but tries to mimic hand-written code as close as possible.
+ *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ */
+public class BCELifier extends com.sun.org.apache.bcel.internal.classfile.EmptyVisitor {
+  private JavaClass         _clazz;
+  private PrintWriter       _out;
+  private ConstantPoolGen   _cp;
+
+  /** @param clazz Java class to "decompile"
+   * @param out where to output Java program
+   */
+  public BCELifier(JavaClass clazz, OutputStream out) {
+    _clazz = clazz;
+    _out = new PrintWriter(out);
+    _cp = new ConstantPoolGen(_clazz.getConstantPool());
+  }
+
+  /** Start Java code generation
+   */
+  public void start() {
+    visitJavaClass(_clazz);
+    _out.flush();
+  }
+
+  public void visitJavaClass(JavaClass clazz) {
+    String class_name   = clazz.getClassName();
+    String super_name   = clazz.getSuperclassName();
+    String package_name = clazz.getPackageName();
+    String inter        = Utility.printArray(clazz.getInterfaceNames(),
+                                             false, true);
+    if(!"".equals(package_name)) {
+      class_name = class_name.substring(package_name.length() + 1);
+      _out.println("package " + package_name + ";\n");
+     }
+
+    _out.println("import com.sun.org.apache.bcel.internal.generic.*;");
+    _out.println("import com.sun.org.apache.bcel.internal.classfile.*;");
+    _out.println("import com.sun.org.apache.bcel.internal.*;");
+    _out.println("import java.io.*;\n");
+
+    _out.println("public class " + class_name + "Creator implements Constants {");
+    _out.println("  private InstructionFactory _factory;");
+    _out.println("  private ConstantPoolGen    _cp;");
+    _out.println("  private ClassGen           _cg;\n");
+
+    _out.println("  public " + class_name  + "Creator() {");
+    _out.println("    _cg = new ClassGen(\"" +
+                 (("".equals(package_name))? class_name :
+                  package_name + "." + class_name) +
+                 "\", \"" + super_name + "\", " +
+                 "\"" + clazz.getSourceFileName() + "\", " +
+                 printFlags(clazz.getAccessFlags(), true) + ", " +
+                 "new String[] { " + inter + " });\n");
+
+    _out.println("    _cp = _cg.getConstantPool();");
+    _out.println("    _factory = new InstructionFactory(_cg, _cp);");
+    _out.println("  }\n");
+
+    printCreate();
+
+    Field[] fields = clazz.getFields();
+
+    if(fields.length > 0) {
+      _out.println("  private void createFields() {");
+      _out.println("    FieldGen field;");
+
+      for(int i=0; i < fields.length; i++) {
+        fields[i].accept(this);
+      }
+
+      _out.println("  }\n");
+    }
+
+    Method[] methods = clazz.getMethods();
+
+    for(int i=0; i < methods.length; i++) {
+      _out.println("  private void createMethod_" + i + "() {");
+
+      methods[i].accept(this);
+      _out.println("  }\n");
+    }
+
+    printMain();
+    _out.println("}");
+  }
+
+  private void printCreate() {
+    _out.println("  public void create(OutputStream out) throws IOException {");
+
+    Field[] fields = _clazz.getFields();
+    if(fields.length > 0) {
+      _out.println("    createFields();");
+    }
+
+    Method[] methods = _clazz.getMethods();
+    for(int i=0; i < methods.length; i++) {
+      _out.println("    createMethod_" + i + "();");
+    }
+
+    _out.println("    _cg.getJavaClass().dump(out);");
+
+    _out.println("  }\n");
+  }
+
+  private void printMain() {
+    String   class_name   = _clazz.getClassName();
+
+    _out.println("  public static void _main(String[] args) throws Exception {");
+    _out.println("    " + class_name + "Creator creator = new " +
+                 class_name + "Creator();");
+    _out.println("    creator.create(new FileOutputStream(\"" + class_name +
+                 ".class\"));");
+    _out.println("  }");
+  }
+
+  public void visitField(Field field) {
+    _out.println("\n    field = new FieldGen(" +
+                 printFlags(field.getAccessFlags()) +
+                 ", " + printType(field.getSignature()) + ", \"" +
+                 field.getName() + "\", _cp);");
+
+    ConstantValue cv = field.getConstantValue();
+
+    if(cv != null) {
+      String value = cv.toString();
+      _out.println("    field.setInitValue(" + value + ")");
+    }
+
+    _out.println("    _cg.addField(field.getField());");
+  }
+
+  public void visitMethod(Method method) {
+    MethodGen mg = new MethodGen(method, _clazz.getClassName(), _cp);
+
+    Type   result_type = mg.getReturnType();
+    Type[] arg_types   = mg.getArgumentTypes();
+
+    _out.println("    InstructionList il = new InstructionList();");
+    _out.println("    MethodGen method = new MethodGen(" +
+                 printFlags(method.getAccessFlags()) +
+                 ", " + printType(result_type) +
+                 ", " + printArgumentTypes(arg_types) + ", " +
+                 "new String[] { " +
+                 Utility.printArray(mg.getArgumentNames(), false, true) +
+                 " }, \"" + method.getName() + "\", \"" +
+                 _clazz.getClassName() + "\", il, _cp);\n");
+
+    BCELFactory factory = new BCELFactory(mg, _out);
+    factory.start();
+
+    _out.println("    method.setMaxStack();");
+    _out.println("    method.setMaxLocals();");
+    _out.println("    _cg.addMethod(method.getMethod());");
+    _out.println("    il.dispose();");
+  }
+
+  static String printFlags(int flags) {
+    return printFlags(flags, false);
+  }
+
+  static String printFlags(int flags, boolean for_class) {
+    if(flags == 0)
+      return "0";
+
+    StringBuffer buf = new StringBuffer();
+    for(int i=0, pow=1; i <= Constants.MAX_ACC_FLAG; i++) {
+      if((flags & pow) != 0) {
+        if((pow == Constants.ACC_SYNCHRONIZED) && for_class)
+          buf.append("ACC_SUPER | ");
+        else
+          buf.append("ACC_" + Constants.ACCESS_NAMES[i].toUpperCase() + " | ");
+      }
+
+      pow <<= 1;
+    }
+
+    String str = buf.toString();
+    return str.substring(0, str.length() - 3);
+  }
+
+  static String printArgumentTypes(Type[] arg_types) {
+    if(arg_types.length == 0)
+      return "Type.NO_ARGS";
+
+    StringBuffer args = new StringBuffer();
+
+    for(int i=0; i < arg_types.length; i++) {
+      args.append(printType(arg_types[i]));
+
+      if(i < arg_types.length - 1)
+        args.append(", ");
+    }
+
+    return "new Type[] { " + args.toString() + " }";
+  }
+
+  static String printType(Type type) {
+    return printType(type.getSignature());
+  }
+
+  static String printType(String signature) {
+    Type type = Type.getType(signature);
+    byte t    = type.getType();
+
+    if(t <= Constants.T_VOID) {
+      return "Type." + Constants.TYPE_NAMES[t].toUpperCase();
+    } else if(type.toString().equals("java.lang.String")) {
+      return "Type.STRING";
+    } else if(type.toString().equals("java.lang.Object")) {
+      return "Type.OBJECT";
+    } else if(type.toString().equals("java.lang.StringBuffer")) {
+      return "Type.STRINGBUFFER";
+    } else if(type instanceof ArrayType) {
+      ArrayType at = (ArrayType)type;
+
+      return "new ArrayType(" + printType(at.getBasicType()) +
+        ", " + at.getDimensions() + ")";
+    } else {
+      return "new ObjectType(\"" + Utility.signatureToString(signature, false) +
+        "\")";
+    }
+  }
+
+  /** Default _main method
+   */
+  public static void _main(String[] argv) throws Exception {
+    JavaClass java_class;
+    String    name = argv[0];
+
+    if((java_class = Repository.lookupClass(name)) == null)
+      java_class = new ClassParser(name).parse(); // May throw IOException
+
+    BCELifier bcelifier = new BCELifier(java_class, System.out);
+    bcelifier.start();
+  }
+}

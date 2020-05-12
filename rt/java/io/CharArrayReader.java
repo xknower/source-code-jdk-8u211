@@ -1,242 +1,236 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CharArrayReader
-/*     */   extends Reader
-/*     */ {
-/*     */   protected char[] buf;
-/*     */   protected int pos;
-/*  43 */   protected int markedPos = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int count;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharArrayReader(char[] paramArrayOfchar) {
-/*  56 */     this.buf = paramArrayOfchar;
-/*  57 */     this.pos = 0;
-/*  58 */     this.count = paramArrayOfchar.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharArrayReader(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/*  79 */     if (paramInt1 < 0 || paramInt1 > paramArrayOfchar.length || paramInt2 < 0 || paramInt1 + paramInt2 < 0)
-/*     */     {
-/*  81 */       throw new IllegalArgumentException();
-/*     */     }
-/*  83 */     this.buf = paramArrayOfchar;
-/*  84 */     this.pos = paramInt1;
-/*  85 */     this.count = Math.min(paramInt1 + paramInt2, paramArrayOfchar.length);
-/*  86 */     this.markedPos = paramInt1;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void ensureOpen() throws IOException {
-/*  91 */     if (this.buf == null) {
-/*  92 */       throw new IOException("Stream closed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read() throws IOException {
-/* 101 */     synchronized (this.lock) {
-/* 102 */       ensureOpen();
-/* 103 */       if (this.pos >= this.count) {
-/* 104 */         return -1;
-/*     */       }
-/* 106 */       return this.buf[this.pos++];
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 121 */     synchronized (this.lock) {
-/* 122 */       ensureOpen();
-/* 123 */       if (paramInt1 < 0 || paramInt1 > paramArrayOfchar.length || paramInt2 < 0 || paramInt1 + paramInt2 > paramArrayOfchar.length || paramInt1 + paramInt2 < 0)
-/*     */       {
-/* 125 */         throw new IndexOutOfBoundsException(); } 
-/* 126 */       if (paramInt2 == 0) {
-/* 127 */         return 0;
-/*     */       }
-/*     */       
-/* 130 */       if (this.pos >= this.count) {
-/* 131 */         return -1;
-/*     */       }
-/*     */       
-/* 134 */       int i = this.count - this.pos;
-/* 135 */       if (paramInt2 > i) {
-/* 136 */         paramInt2 = i;
-/*     */       }
-/* 138 */       if (paramInt2 <= 0) {
-/* 139 */         return 0;
-/*     */       }
-/* 141 */       System.arraycopy(this.buf, this.pos, paramArrayOfchar, paramInt1, paramInt2);
-/* 142 */       this.pos += paramInt2;
-/* 143 */       return paramInt2;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long skip(long paramLong) throws IOException {
-/* 160 */     synchronized (this.lock) {
-/* 161 */       ensureOpen();
-/*     */       
-/* 163 */       long l = (this.count - this.pos);
-/* 164 */       if (paramLong > l) {
-/* 165 */         paramLong = l;
-/*     */       }
-/* 167 */       if (paramLong < 0L) {
-/* 168 */         return 0L;
-/*     */       }
-/* 170 */       this.pos = (int)(this.pos + paramLong);
-/* 171 */       return paramLong;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean ready() throws IOException {
-/* 182 */     synchronized (this.lock) {
-/* 183 */       ensureOpen();
-/* 184 */       return (this.count - this.pos > 0);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean markSupported() {
-/* 192 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void mark(int paramInt) throws IOException {
-/* 208 */     synchronized (this.lock) {
-/* 209 */       ensureOpen();
-/* 210 */       this.markedPos = this.pos;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() throws IOException {
-/* 221 */     synchronized (this.lock) {
-/* 222 */       ensureOpen();
-/* 223 */       this.pos = this.markedPos;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() {
-/* 234 */     this.buf = null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\CharArrayReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+/**
+ * This class implements a character buffer that can be used as a
+ * character-input stream.
+ *
+ * @author      Herb Jellinek
+ * @since       JDK1.1
+ */
+public class CharArrayReader extends Reader {
+    /** The character buffer. */
+    protected char buf[];
+
+    /** The current buffer position. */
+    protected int pos;
+
+    /** The position of mark in buffer. */
+    protected int markedPos = 0;
+
+    /**
+     *  The index of the end of this buffer.  There is not valid
+     *  data at or beyond this index.
+     */
+    protected int count;
+
+    /**
+     * Creates a CharArrayReader from the specified array of chars.
+     * @param buf       Input buffer (not copied)
+     */
+    public CharArrayReader(char buf[]) {
+        this.buf = buf;
+        this.pos = 0;
+        this.count = buf.length;
+    }
+
+    /**
+     * Creates a CharArrayReader from the specified array of chars.
+     *
+     * <p> The resulting reader will start reading at the given
+     * <tt>offset</tt>.  The total number of <tt>char</tt> values that can be
+     * read from this reader will be either <tt>length</tt> or
+     * <tt>buf.length-offset</tt>, whichever is smaller.
+     *
+     * @throws IllegalArgumentException
+     *         If <tt>offset</tt> is negative or greater than
+     *         <tt>buf.length</tt>, or if <tt>length</tt> is negative, or if
+     *         the sum of these two values is negative.
+     *
+     * @param buf       Input buffer (not copied)
+     * @param offset    Offset of the first char to read
+     * @param length    Number of chars to read
+     */
+    public CharArrayReader(char buf[], int offset, int length) {
+        if ((offset < 0) || (offset > buf.length) || (length < 0) ||
+            ((offset + length) < 0)) {
+            throw new IllegalArgumentException();
+        }
+        this.buf = buf;
+        this.pos = offset;
+        this.count = Math.min(offset + length, buf.length);
+        this.markedPos = offset;
+    }
+
+    /** Checks to make sure that the stream has not been closed */
+    private void ensureOpen() throws IOException {
+        if (buf == null)
+            throw new IOException("Stream closed");
+    }
+
+    /**
+     * Reads a single character.
+     *
+     * @exception   IOException  If an I/O error occurs
+     */
+    public int read() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (pos >= count)
+                return -1;
+            else
+                return buf[pos++];
+        }
+    }
+
+    /**
+     * Reads characters into a portion of an array.
+     * @param b  Destination buffer
+     * @param off  Offset at which to start storing characters
+     * @param len   Maximum number of characters to read
+     * @return  The actual number of characters read, or -1 if
+     *          the end of the stream has been reached
+     *
+     * @exception   IOException  If an I/O error occurs
+     */
+    public int read(char b[], int off, int len) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if ((off < 0) || (off > b.length) || (len < 0) ||
+                ((off + len) > b.length) || ((off + len) < 0)) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
+
+            if (pos >= count) {
+                return -1;
+            }
+
+            int avail = count - pos;
+            if (len > avail) {
+                len = avail;
+            }
+            if (len <= 0) {
+                return 0;
+            }
+            System.arraycopy(buf, pos, b, off, len);
+            pos += len;
+            return len;
+        }
+    }
+
+    /**
+     * Skips characters.  Returns the number of characters that were skipped.
+     *
+     * <p>The <code>n</code> parameter may be negative, even though the
+     * <code>skip</code> method of the {@link Reader} superclass throws
+     * an exception in this case. If <code>n</code> is negative, then
+     * this method does nothing and returns <code>0</code>.
+     *
+     * @param n The number of characters to skip
+     * @return       The number of characters actually skipped
+     * @exception  IOException If the stream is closed, or an I/O error occurs
+     */
+    public long skip(long n) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+
+            long avail = count - pos;
+            if (n > avail) {
+                n = avail;
+            }
+            if (n < 0) {
+                return 0;
+            }
+            pos += n;
+            return n;
+        }
+    }
+
+    /**
+     * Tells whether this stream is ready to be read.  Character-array readers
+     * are always ready to be read.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public boolean ready() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            return (count - pos) > 0;
+        }
+    }
+
+    /**
+     * Tells whether this stream supports the mark() operation, which it does.
+     */
+    public boolean markSupported() {
+        return true;
+    }
+
+    /**
+     * Marks the present position in the stream.  Subsequent calls to reset()
+     * will reposition the stream to this point.
+     *
+     * @param  readAheadLimit  Limit on the number of characters that may be
+     *                         read while still preserving the mark.  Because
+     *                         the stream's input comes from a character array,
+     *                         there is no actual limit; hence this argument is
+     *                         ignored.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void mark(int readAheadLimit) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            markedPos = pos;
+        }
+    }
+
+    /**
+     * Resets the stream to the most recent mark, or to the beginning if it has
+     * never been marked.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void reset() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            pos = markedPos;
+        }
+    }
+
+    /**
+     * Closes the stream and releases any system resources associated with
+     * it.  Once the stream has been closed, further read(), ready(),
+     * mark(), reset(), or skip() invocations will throw an IOException.
+     * Closing a previously closed stream has no effect.
+     */
+    public void close() {
+        buf = null;
+    }
+}

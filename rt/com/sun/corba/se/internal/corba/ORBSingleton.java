@@ -1,11 +1,40 @@
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.internal.corba;
 
-import com.sun.corba.se.impl.orb.ORBSingleton;
-
-public class ORBSingleton extends ORBSingleton {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\internal\corba\ORBSingleton.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ *
+ * Deprecated class for backward compatibility.
  */
+public class ORBSingleton extends com.sun.corba.se.impl.orb.ORBSingleton
+{
+    public ORBSingleton()
+    {
+        super();
+    }
+}
+
+// End of file.

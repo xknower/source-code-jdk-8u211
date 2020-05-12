@@ -1,217 +1,212 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class BinaryRelQueryExp
-/*     */   extends QueryEval
-/*     */   implements QueryExp
-/*     */ {
-/*     */   private static final long serialVersionUID = -5690656271650491000L;
-/*     */   private int relOp;
-/*     */   private ValueExp exp1;
-/*     */   private ValueExp exp2;
-/*     */   
-/*     */   public BinaryRelQueryExp() {}
-/*     */   
-/*     */   public BinaryRelQueryExp(int paramInt, ValueExp paramValueExp1, ValueExp paramValueExp2) {
-/*  68 */     this.relOp = paramInt;
-/*  69 */     this.exp1 = paramValueExp1;
-/*  70 */     this.exp2 = paramValueExp2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getOperator() {
-/*  78 */     return this.relOp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp getLeftValue() {
-/*  85 */     return this.exp1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp getRightValue() {
-/*  92 */     return this.exp2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean apply(ObjectName paramObjectName) throws BadStringOperationException, BadBinaryOpValueExpException, BadAttributeValueExpException, InvalidApplicationException {
-/* 109 */     ValueExp valueExp1 = this.exp1.apply(paramObjectName);
-/* 110 */     ValueExp valueExp2 = this.exp2.apply(paramObjectName);
-/* 111 */     boolean bool1 = valueExp1 instanceof NumericValueExp;
-/* 112 */     boolean bool2 = valueExp1 instanceof BooleanValueExp;
-/* 113 */     if (bool1) {
-/* 114 */       if (((NumericValueExp)valueExp1).isLong()) {
-/* 115 */         long l1 = ((NumericValueExp)valueExp1).longValue();
-/* 116 */         long l2 = ((NumericValueExp)valueExp2).longValue();
-/*     */         
-/* 118 */         switch (this.relOp) {
-/*     */           case 0:
-/* 120 */             return (l1 > l2);
-/*     */           case 1:
-/* 122 */             return (l1 < l2);
-/*     */           case 2:
-/* 124 */             return (l1 >= l2);
-/*     */           case 3:
-/* 126 */             return (l1 <= l2);
-/*     */           case 4:
-/* 128 */             return (l1 == l2);
-/*     */         } 
-/*     */       } else {
-/* 131 */         double d1 = ((NumericValueExp)valueExp1).doubleValue();
-/* 132 */         double d2 = ((NumericValueExp)valueExp2).doubleValue();
-/*     */         
-/* 134 */         switch (this.relOp) {
-/*     */           case 0:
-/* 136 */             return (d1 > d2);
-/*     */           case 1:
-/* 138 */             return (d1 < d2);
-/*     */           case 2:
-/* 140 */             return (d1 >= d2);
-/*     */           case 3:
-/* 142 */             return (d1 <= d2);
-/*     */           case 4:
-/* 144 */             return (d1 == d2);
-/*     */         } 
-/*     */       
-/*     */       } 
-/* 148 */     } else if (bool2) {
-/*     */       
-/* 150 */       boolean bool3 = ((BooleanValueExp)valueExp1).getValue().booleanValue();
-/* 151 */       boolean bool4 = ((BooleanValueExp)valueExp2).getValue().booleanValue();
-/*     */       
-/* 153 */       switch (this.relOp) {
-/*     */         case 0:
-/* 155 */           return (bool3 && !bool4);
-/*     */         case 1:
-/* 157 */           return (!bool3 && bool4);
-/*     */         case 2:
-/* 159 */           return (bool3 || !bool4);
-/*     */         case 3:
-/* 161 */           return (!bool3 || bool4);
-/*     */         case 4:
-/* 163 */           return (bool3 == bool4);
-/*     */       } 
-/*     */     
-/*     */     } else {
-/* 167 */       String str1 = ((StringValueExp)valueExp1).getValue();
-/* 168 */       String str2 = ((StringValueExp)valueExp2).getValue();
-/*     */       
-/* 170 */       switch (this.relOp) {
-/*     */         case 0:
-/* 172 */           return (str1.compareTo(str2) > 0);
-/*     */         case 1:
-/* 174 */           return (str1.compareTo(str2) < 0);
-/*     */         case 2:
-/* 176 */           return (str1.compareTo(str2) >= 0);
-/*     */         case 3:
-/* 178 */           return (str1.compareTo(str2) <= 0);
-/*     */         case 4:
-/* 180 */           return (str1.compareTo(str2) == 0);
-/*     */       } 
-/*     */     
-/*     */     } 
-/* 184 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 192 */     return "(" + this.exp1 + ") " + relOpString() + " (" + this.exp2 + ")";
-/*     */   }
-/*     */   
-/*     */   private String relOpString() {
-/* 196 */     switch (this.relOp) {
-/*     */       case 0:
-/* 198 */         return ">";
-/*     */       case 1:
-/* 200 */         return "<";
-/*     */       case 2:
-/* 202 */         return ">=";
-/*     */       case 3:
-/* 204 */         return "<=";
-/*     */       case 4:
-/* 206 */         return "=";
-/*     */     } 
-/*     */     
-/* 209 */     return "=";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\BinaryRelQueryExp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+/**
+ * This class is used by the query-building mechanism to represent binary
+ * operations.
+ * @serial include
+ *
+ * @since 1.5
+ */
+class BinaryRelQueryExp extends QueryEval implements QueryExp {
+
+    /* Serial version */
+    private static final long serialVersionUID = -5690656271650491000L;
+
+    /**
+     * @serial The operator
+     */
+    private int relOp;
+
+    /**
+     * @serial The first value
+     */
+    private ValueExp exp1;
+
+    /**
+     * @serial The second value
+     */
+    private ValueExp exp2;
+
+
+    /**
+     * Basic Constructor.
+     */
+    public BinaryRelQueryExp() {
+    }
+
+    /**
+     * Creates a new BinaryRelQueryExp with operator op applied on v1 and
+     * v2 values.
+     */
+    public BinaryRelQueryExp(int op, ValueExp v1, ValueExp v2) {
+        relOp = op;
+        exp1  = v1;
+        exp2  = v2;
+    }
+
+
+    /**
+     * Returns the operator of the query.
+     */
+    public int getOperator()  {
+        return relOp;
+    }
+
+    /**
+     * Returns the left value of the query.
+     */
+    public ValueExp getLeftValue()  {
+        return exp1;
+    }
+
+    /**
+     * Returns the right value of the query.
+     */
+    public ValueExp getRightValue()  {
+        return exp2;
+    }
+
+    /**
+     * Applies the BinaryRelQueryExp on an MBean.
+     *
+     * @param name The name of the MBean on which the BinaryRelQueryExp will be applied.
+     *
+     * @return  True if the query was successfully applied to the MBean, false otherwise.
+     *
+     * @exception BadStringOperationException
+     * @exception BadBinaryOpValueExpException
+     * @exception BadAttributeValueExpException
+     * @exception InvalidApplicationException
+     */
+    public boolean apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
+        BadAttributeValueExpException, InvalidApplicationException  {
+        Object val1 = exp1.apply(name);
+        Object val2 = exp2.apply(name);
+        boolean numeric = val1 instanceof NumericValueExp;
+        boolean bool = val1 instanceof BooleanValueExp;
+        if (numeric) {
+            if (((NumericValueExp)val1).isLong()) {
+                long lval1 = ((NumericValueExp)val1).longValue();
+                long lval2 = ((NumericValueExp)val2).longValue();
+
+                switch (relOp) {
+                case Query.GT:
+                    return lval1 > lval2;
+                case Query.LT:
+                    return lval1 < lval2;
+                case Query.GE:
+                    return lval1 >= lval2;
+                case Query.LE:
+                    return lval1 <= lval2;
+                case Query.EQ:
+                    return lval1 == lval2;
+                }
+            } else {
+                double dval1 = ((NumericValueExp)val1).doubleValue();
+                double dval2 = ((NumericValueExp)val2).doubleValue();
+
+                switch (relOp) {
+                case Query.GT:
+                    return dval1 > dval2;
+                case Query.LT:
+                    return dval1 < dval2;
+                case Query.GE:
+                    return dval1 >= dval2;
+                case Query.LE:
+                    return dval1 <= dval2;
+                case Query.EQ:
+                    return dval1 == dval2;
+                }
+            }
+
+        } else if (bool) {
+
+            boolean bval1 = ((BooleanValueExp)val1).getValue().booleanValue();
+            boolean bval2 = ((BooleanValueExp)val2).getValue().booleanValue();
+
+            switch (relOp) {
+            case Query.GT:
+                return bval1 && !bval2;
+            case Query.LT:
+                return !bval1 && bval2;
+            case Query.GE:
+                return bval1 || !bval2;
+            case Query.LE:
+                return !bval1 || bval2;
+            case Query.EQ:
+                return bval1 == bval2;
+            }
+
+        } else {
+            String sval1 = ((StringValueExp)val1).getValue();
+            String sval2 = ((StringValueExp)val2).getValue();
+
+            switch (relOp) {
+            case Query.GT:
+                return sval1.compareTo(sval2) > 0;
+            case Query.LT:
+                return sval1.compareTo(sval2) < 0;
+            case Query.GE:
+                return sval1.compareTo(sval2) >= 0;
+            case Query.LE:
+                return sval1.compareTo(sval2) <= 0;
+            case Query.EQ:
+                return sval1.compareTo(sval2) == 0;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the string representing the object.
+     */
+    @Override
+    public String toString()  {
+        return "(" + exp1 + ") " + relOpString() + " (" + exp2 + ")";
+    }
+
+    private String relOpString() {
+        switch (relOp) {
+        case Query.GT:
+            return ">";
+        case Query.LT:
+            return "<";
+        case Query.GE:
+            return ">=";
+        case Query.LE:
+            return "<=";
+        case Query.EQ:
+            return "=";
+        }
+
+        return "=";
+    }
+
+ }

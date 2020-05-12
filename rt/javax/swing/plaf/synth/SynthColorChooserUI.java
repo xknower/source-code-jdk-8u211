@@ -1,212 +1,207 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.JColorChooser;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.colorchooser.AbstractColorChooserPanel;
-/*     */ import javax.swing.colorchooser.ColorChooserComponentFactory;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicColorChooserUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthColorChooserUI
-/*     */   extends BasicColorChooserUI
-/*     */   implements PropertyChangeListener, SynthUI
-/*     */ {
-/*     */   private SynthStyle style;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  57 */     return new SynthColorChooserUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected AbstractColorChooserPanel[] createDefaultChoosers() {
-/*  65 */     SynthContext synthContext = getContext(this.chooser, 1);
-/*     */     
-/*  67 */     AbstractColorChooserPanel[] arrayOfAbstractColorChooserPanel = (AbstractColorChooserPanel[])synthContext.getStyle().get(synthContext, "ColorChooser.panels");
-/*  68 */     synthContext.dispose();
-/*     */     
-/*  70 */     if (arrayOfAbstractColorChooserPanel == null) {
-/*  71 */       arrayOfAbstractColorChooserPanel = ColorChooserComponentFactory.getDefaultChooserPanels();
-/*     */     }
-/*  73 */     return arrayOfAbstractColorChooserPanel;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  81 */     super.installDefaults();
-/*  82 */     updateStyle(this.chooser);
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JComponent paramJComponent) {
-/*  86 */     SynthContext synthContext = getContext(paramJComponent, 1);
-/*  87 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*  88 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/*  96 */     SynthContext synthContext = getContext(this.chooser, 1);
-/*     */     
-/*  98 */     this.style.uninstallDefaults(synthContext);
-/*  99 */     synthContext.dispose();
-/* 100 */     this.style = null;
-/* 101 */     super.uninstallDefaults();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners() {
-/* 109 */     super.installListeners();
-/* 110 */     this.chooser.addPropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 118 */     this.chooser.removePropertyChangeListener(this);
-/* 119 */     super.uninstallListeners();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 127 */     return getContext(paramJComponent, getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 131 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getComponentState(JComponent paramJComponent) {
-/* 135 */     return SynthLookAndFeel.getComponentState(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 152 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 154 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 155 */     synthContext.getPainter().paintColorChooserBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 156 */         .getWidth(), paramJComponent.getHeight());
-/* 157 */     paint(synthContext, paramGraphics);
-/* 158 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 172 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 174 */     paint(synthContext, paramGraphics);
-/* 175 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 195 */     paramSynthContext.getPainter().paintColorChooserBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 203 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent))
-/* 204 */       updateStyle((JColorChooser)paramPropertyChangeEvent.getSource()); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthColorChooserUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+
+import javax.swing.*;
+import javax.swing.colorchooser.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicColorChooserUI;
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JColorChooser}.
+ *
+ * @author Tom Santos
+ * @author Steve Wilson
+ * @since 1.7
+ */
+public class SynthColorChooserUI extends BasicColorChooserUI implements
+        PropertyChangeListener, SynthUI {
+    private SynthStyle style;
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthColorChooserUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected AbstractColorChooserPanel[] createDefaultChoosers() {
+        SynthContext context = getContext(chooser, ENABLED);
+        AbstractColorChooserPanel[] panels = (AbstractColorChooserPanel[])
+                     context.getStyle().get(context, "ColorChooser.panels");
+        context.dispose();
+
+        if (panels == null) {
+            panels = ColorChooserComponentFactory.getDefaultChooserPanels();
+        }
+        return panels;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        super.installDefaults();
+        updateStyle(chooser);
+    }
+
+    private void updateStyle(JComponent c) {
+        SynthContext context = getContext(c, ENABLED);
+        style = SynthLookAndFeel.updateStyle(context, this);
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(chooser, ENABLED);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+        super.uninstallDefaults();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installListeners() {
+        super.installListeners();
+        chooser.addPropertyChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallListeners() {
+        chooser.removePropertyChangeListener(this);
+        super.uninstallListeners();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    private int getComponentState(JComponent c) {
+        return SynthLookAndFeel.getComponentState(c);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintColorChooserBackground(context, g, 0, 0,
+                                                  c.getWidth(), c.getHeight());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     * This implementation does not perform any actions.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintColorChooserBorder(context, g, x, y,w,h);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent e) {
+        if (SynthLookAndFeel.shouldUpdateStyle(e)) {
+            updateStyle((JColorChooser)e.getSource());
+        }
+    }
+}

@@ -1,2098 +1,2094 @@
-/*      */ package com.sun.corba.se.impl.logging;
-/*      */ 
-/*      */ import com.sun.corba.se.spi.logging.LogWrapperBase;
-/*      */ import com.sun.corba.se.spi.logging.LogWrapperFactory;
-/*      */ import com.sun.corba.se.spi.orb.ORB;
-/*      */ import java.util.logging.Level;
-/*      */ import java.util.logging.Logger;
-/*      */ import org.omg.CORBA.BAD_INV_ORDER;
-/*      */ import org.omg.CORBA.BAD_OPERATION;
-/*      */ import org.omg.CORBA.BAD_PARAM;
-/*      */ import org.omg.CORBA.CompletionStatus;
-/*      */ import org.omg.CORBA.INITIALIZE;
-/*      */ import org.omg.CORBA.INTERNAL;
-/*      */ import org.omg.CORBA.NO_IMPLEMENT;
-/*      */ import org.omg.CORBA.OBJECT_NOT_EXIST;
-/*      */ import org.omg.CORBA.OBJ_ADAPTER;
-/*      */ import org.omg.CORBA.TRANSIENT;
-/*      */ import org.omg.CORBA.UNKNOWN;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class POASystemException
-/*      */   extends LogWrapperBase
-/*      */ {
-/*      */   public POASystemException(Logger paramLogger) {
-/*   37 */     super(paramLogger);
-/*      */   }
-/*      */   
-/*   40 */   private static LogWrapperFactory factory = new LogWrapperFactory()
-/*      */     {
-/*      */       public LogWrapperBase create(Logger param1Logger) {
-/*   43 */         return new POASystemException(param1Logger);
-/*      */       }
-/*      */     };
-/*      */   public static final int SERVANT_MANAGER_ALREADY_SET = 1398080489; public static final int DESTROY_DEADLOCK = 1398080490; public static final int SERVANT_ORB = 1398080489; public static final int BAD_SERVANT = 1398080490; public static final int ILLEGAL_FORWARD_REQUEST = 1398080491; public static final int BAD_TRANSACTION_CONTEXT = 1398080489; public static final int BAD_REPOSITORY_ID = 1398080490; public static final int INVOKESETUP = 1398080489; public static final int BAD_LOCALREPLYSTATUS = 1398080490; public static final int PERSISTENT_SERVERPORT_ERROR = 1398080491; public static final int SERVANT_DISPATCH = 1398080492; public static final int WRONG_CLIENTSC = 1398080493; public static final int CANT_CLONE_TEMPLATE = 1398080494; public static final int POACURRENT_UNBALANCED_STACK = 1398080495; public static final int POACURRENT_NULL_FIELD = 1398080496; public static final int POA_INTERNAL_GET_SERVANT_ERROR = 1398080497; public static final int MAKE_FACTORY_NOT_POA = 1398080498;
-/*      */   
-/*      */   public static POASystemException get(ORB paramORB, String paramString) {
-/*   49 */     return (POASystemException)paramORB
-/*   50 */       .getLogWrapper(paramString, "POA", factory);
-/*      */   }
-/*      */   public static final int DUPLICATE_ORB_VERSION_SC = 1398080499; public static final int PREINVOKE_CLONE_ERROR = 1398080500; public static final int PREINVOKE_POA_DESTROYED = 1398080501; public static final int PMF_CREATE_RETAIN = 1398080502; public static final int PMF_CREATE_NON_RETAIN = 1398080503; public static final int POLICY_MEDIATOR_BAD_POLICY_IN_FACTORY = 1398080504; public static final int SERVANT_TO_ID_OAA = 1398080505; public static final int SERVANT_TO_ID_SAA = 1398080506; public static final int SERVANT_TO_ID_WP = 1398080507; public static final int CANT_RESOLVE_ROOT_POA = 1398080508; public static final int SERVANT_MUST_BE_LOCAL = 1398080509; public static final int NO_PROFILES_IN_IOR = 1398080510; public static final int AOM_ENTRY_DEC_ZERO = 1398080511; public static final int ADD_POA_INACTIVE = 1398080512; public static final int ILLEGAL_POA_STATE_TRANS = 1398080513; public static final int UNEXPECTED_EXCEPTION = 1398080514; public static final int SINGLE_THREAD_NOT_SUPPORTED = 1398080489; public static final int METHOD_NOT_IMPLEMENTED = 1398080490; public static final int POA_LOOKUP_ERROR = 1398080489; public static final int POA_INACTIVE = 1398080490; public static final int POA_NO_SERVANT_MANAGER = 1398080491; public static final int POA_NO_DEFAULT_SERVANT = 1398080492; public static final int POA_SERVANT_NOT_UNIQUE = 1398080493; public static final int POA_WRONG_POLICY = 1398080494; public static final int FINDPOA_ERROR = 1398080495; public static final int POA_SERVANT_ACTIVATOR_LOOKUP_FAILED = 1398080497; public static final int POA_BAD_SERVANT_MANAGER = 1398080498; public static final int POA_SERVANT_LOCATOR_LOOKUP_FAILED = 1398080499; public static final int POA_UNKNOWN_POLICY = 1398080500; public static final int POA_NOT_FOUND = 1398080501; public static final int SERVANT_LOOKUP = 1398080502; public static final int LOCAL_SERVANT_LOOKUP = 1398080503; public static final int SERVANT_MANAGER_BAD_TYPE = 1398080504; public static final int DEFAULT_POA_NOT_POAIMPL = 1398080505; public static final int WRONG_POLICIES_FOR_THIS_OBJECT = 1398080506; public static final int THIS_OBJECT_SERVANT_NOT_ACTIVE = 1398080507; public static final int THIS_OBJECT_WRONG_POLICY = 1398080508; public static final int NO_CONTEXT = 1398080509; public static final int INCARNATE_RETURNED_NULL = 1398080510; public static final int JTS_INIT_ERROR = 1398080489; public static final int PERSISTENT_SERVERID_NOT_SET = 1398080490; public static final int PERSISTENT_SERVERPORT_NOT_SET = 1398080491; public static final int ORBD_ERROR = 1398080492; public static final int BOOTSTRAP_ERROR = 1398080493; public static final int POA_DISCARDING = 1398080489; public static final int OTSHOOKEXCEPTION = 1398080489; public static final int UNKNOWN_SERVER_EXCEPTION = 1398080490; public static final int UNKNOWN_SERVERAPP_EXCEPTION = 1398080491; public static final int UNKNOWN_LOCALINVOCATION_ERROR = 1398080492; public static final int ADAPTER_ACTIVATOR_NONEXISTENT = 1398080489; public static final int ADAPTER_ACTIVATOR_FAILED = 1398080490;
-/*      */   public static final int BAD_SKELETON = 1398080491;
-/*      */   public static final int NULL_SERVANT = 1398080492;
-/*      */   public static final int ADAPTER_DESTROYED = 1398080493;
-/*      */   
-/*      */   public static POASystemException get(String paramString) {
-/*   58 */     return (POASystemException)ORB.staticGetLogWrapper(paramString, "POA", factory);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER servantManagerAlreadySet(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*   70 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1398080489, paramCompletionStatus);
-/*   71 */     if (paramThrowable != null) {
-/*   72 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*   74 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*   75 */       Object[] arrayOfObject = null;
-/*   76 */       doLog(Level.WARNING, "POA.servantManagerAlreadySet", arrayOfObject, POASystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*   80 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER servantManagerAlreadySet(CompletionStatus paramCompletionStatus) {
-/*   84 */     return servantManagerAlreadySet(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER servantManagerAlreadySet(Throwable paramThrowable) {
-/*   88 */     return servantManagerAlreadySet(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER servantManagerAlreadySet() {
-/*   92 */     return servantManagerAlreadySet(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER destroyDeadlock(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*   98 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1398080490, paramCompletionStatus);
-/*   99 */     if (paramThrowable != null) {
-/*  100 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  102 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  103 */       Object[] arrayOfObject = null;
-/*  104 */       doLog(Level.WARNING, "POA.destroyDeadlock", arrayOfObject, POASystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  108 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER destroyDeadlock(CompletionStatus paramCompletionStatus) {
-/*  112 */     return destroyDeadlock(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER destroyDeadlock(Throwable paramThrowable) {
-/*  116 */     return destroyDeadlock(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER destroyDeadlock() {
-/*  120 */     return destroyDeadlock(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_OPERATION servantOrb(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  130 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080489, paramCompletionStatus);
-/*  131 */     if (paramThrowable != null) {
-/*  132 */       bAD_OPERATION.initCause(paramThrowable);
-/*      */     }
-/*  134 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  135 */       Object[] arrayOfObject = null;
-/*  136 */       doLog(Level.WARNING, "POA.servantOrb", arrayOfObject, POASystemException.class, bAD_OPERATION);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  140 */     return bAD_OPERATION;
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION servantOrb(CompletionStatus paramCompletionStatus) {
-/*  144 */     return servantOrb(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION servantOrb(Throwable paramThrowable) {
-/*  148 */     return servantOrb(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION servantOrb() {
-/*  152 */     return servantOrb(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_OPERATION badServant(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  158 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080490, paramCompletionStatus);
-/*  159 */     if (paramThrowable != null) {
-/*  160 */       bAD_OPERATION.initCause(paramThrowable);
-/*      */     }
-/*  162 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  163 */       Object[] arrayOfObject = null;
-/*  164 */       doLog(Level.WARNING, "POA.badServant", arrayOfObject, POASystemException.class, bAD_OPERATION);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  168 */     return bAD_OPERATION;
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION badServant(CompletionStatus paramCompletionStatus) {
-/*  172 */     return badServant(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION badServant(Throwable paramThrowable) {
-/*  176 */     return badServant(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION badServant() {
-/*  180 */     return badServant(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_OPERATION illegalForwardRequest(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  186 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080491, paramCompletionStatus);
-/*  187 */     if (paramThrowable != null) {
-/*  188 */       bAD_OPERATION.initCause(paramThrowable);
-/*      */     }
-/*  190 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  191 */       Object[] arrayOfObject = null;
-/*  192 */       doLog(Level.WARNING, "POA.illegalForwardRequest", arrayOfObject, POASystemException.class, bAD_OPERATION);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  196 */     return bAD_OPERATION;
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION illegalForwardRequest(CompletionStatus paramCompletionStatus) {
-/*  200 */     return illegalForwardRequest(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION illegalForwardRequest(Throwable paramThrowable) {
-/*  204 */     return illegalForwardRequest(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION illegalForwardRequest() {
-/*  208 */     return illegalForwardRequest(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM badTransactionContext(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  218 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1398080489, paramCompletionStatus);
-/*  219 */     if (paramThrowable != null) {
-/*  220 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  222 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  223 */       Object[] arrayOfObject = null;
-/*  224 */       doLog(Level.WARNING, "POA.badTransactionContext", arrayOfObject, POASystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  228 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badTransactionContext(CompletionStatus paramCompletionStatus) {
-/*  232 */     return badTransactionContext(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badTransactionContext(Throwable paramThrowable) {
-/*  236 */     return badTransactionContext(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badTransactionContext() {
-/*  240 */     return badTransactionContext(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM badRepositoryId(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  246 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1398080490, paramCompletionStatus);
-/*  247 */     if (paramThrowable != null) {
-/*  248 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  250 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  251 */       Object[] arrayOfObject = null;
-/*  252 */       doLog(Level.WARNING, "POA.badRepositoryId", arrayOfObject, POASystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  256 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badRepositoryId(CompletionStatus paramCompletionStatus) {
-/*  260 */     return badRepositoryId(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badRepositoryId(Throwable paramThrowable) {
-/*  264 */     return badRepositoryId(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badRepositoryId() {
-/*  268 */     return badRepositoryId(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL invokesetup(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  278 */     INTERNAL iNTERNAL = new INTERNAL(1398080489, paramCompletionStatus);
-/*  279 */     if (paramThrowable != null) {
-/*  280 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  282 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  283 */       Object[] arrayOfObject = null;
-/*  284 */       doLog(Level.WARNING, "POA.invokesetup", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  288 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL invokesetup(CompletionStatus paramCompletionStatus) {
-/*  292 */     return invokesetup(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL invokesetup(Throwable paramThrowable) {
-/*  296 */     return invokesetup(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL invokesetup() {
-/*  300 */     return invokesetup(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL badLocalreplystatus(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  306 */     INTERNAL iNTERNAL = new INTERNAL(1398080490, paramCompletionStatus);
-/*  307 */     if (paramThrowable != null) {
-/*  308 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  310 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  311 */       Object[] arrayOfObject = null;
-/*  312 */       doLog(Level.WARNING, "POA.badLocalreplystatus", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  316 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL badLocalreplystatus(CompletionStatus paramCompletionStatus) {
-/*  320 */     return badLocalreplystatus(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL badLocalreplystatus(Throwable paramThrowable) {
-/*  324 */     return badLocalreplystatus(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL badLocalreplystatus() {
-/*  328 */     return badLocalreplystatus(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL persistentServerportError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  334 */     INTERNAL iNTERNAL = new INTERNAL(1398080491, paramCompletionStatus);
-/*  335 */     if (paramThrowable != null) {
-/*  336 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  338 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  339 */       Object[] arrayOfObject = null;
-/*  340 */       doLog(Level.WARNING, "POA.persistentServerportError", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  344 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL persistentServerportError(CompletionStatus paramCompletionStatus) {
-/*  348 */     return persistentServerportError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL persistentServerportError(Throwable paramThrowable) {
-/*  352 */     return persistentServerportError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL persistentServerportError() {
-/*  356 */     return persistentServerportError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL servantDispatch(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  362 */     INTERNAL iNTERNAL = new INTERNAL(1398080492, paramCompletionStatus);
-/*  363 */     if (paramThrowable != null) {
-/*  364 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  366 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  367 */       Object[] arrayOfObject = null;
-/*  368 */       doLog(Level.WARNING, "POA.servantDispatch", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  372 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantDispatch(CompletionStatus paramCompletionStatus) {
-/*  376 */     return servantDispatch(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantDispatch(Throwable paramThrowable) {
-/*  380 */     return servantDispatch(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantDispatch() {
-/*  384 */     return servantDispatch(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL wrongClientsc(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  390 */     INTERNAL iNTERNAL = new INTERNAL(1398080493, paramCompletionStatus);
-/*  391 */     if (paramThrowable != null) {
-/*  392 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  394 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  395 */       Object[] arrayOfObject = null;
-/*  396 */       doLog(Level.WARNING, "POA.wrongClientsc", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  400 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL wrongClientsc(CompletionStatus paramCompletionStatus) {
-/*  404 */     return wrongClientsc(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL wrongClientsc(Throwable paramThrowable) {
-/*  408 */     return wrongClientsc(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL wrongClientsc() {
-/*  412 */     return wrongClientsc(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL cantCloneTemplate(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  418 */     INTERNAL iNTERNAL = new INTERNAL(1398080494, paramCompletionStatus);
-/*  419 */     if (paramThrowable != null) {
-/*  420 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  422 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  423 */       Object[] arrayOfObject = null;
-/*  424 */       doLog(Level.WARNING, "POA.cantCloneTemplate", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  428 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL cantCloneTemplate(CompletionStatus paramCompletionStatus) {
-/*  432 */     return cantCloneTemplate(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL cantCloneTemplate(Throwable paramThrowable) {
-/*  436 */     return cantCloneTemplate(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL cantCloneTemplate() {
-/*  440 */     return cantCloneTemplate(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL poacurrentUnbalancedStack(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  446 */     INTERNAL iNTERNAL = new INTERNAL(1398080495, paramCompletionStatus);
-/*  447 */     if (paramThrowable != null) {
-/*  448 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  450 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  451 */       Object[] arrayOfObject = null;
-/*  452 */       doLog(Level.WARNING, "POA.poacurrentUnbalancedStack", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  456 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poacurrentUnbalancedStack(CompletionStatus paramCompletionStatus) {
-/*  460 */     return poacurrentUnbalancedStack(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poacurrentUnbalancedStack(Throwable paramThrowable) {
-/*  464 */     return poacurrentUnbalancedStack(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poacurrentUnbalancedStack() {
-/*  468 */     return poacurrentUnbalancedStack(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL poacurrentNullField(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  474 */     INTERNAL iNTERNAL = new INTERNAL(1398080496, paramCompletionStatus);
-/*  475 */     if (paramThrowable != null) {
-/*  476 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  478 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  479 */       Object[] arrayOfObject = null;
-/*  480 */       doLog(Level.WARNING, "POA.poacurrentNullField", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  484 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poacurrentNullField(CompletionStatus paramCompletionStatus) {
-/*  488 */     return poacurrentNullField(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poacurrentNullField(Throwable paramThrowable) {
-/*  492 */     return poacurrentNullField(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poacurrentNullField() {
-/*  496 */     return poacurrentNullField(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL poaInternalGetServantError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  502 */     INTERNAL iNTERNAL = new INTERNAL(1398080497, paramCompletionStatus);
-/*  503 */     if (paramThrowable != null) {
-/*  504 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  506 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  507 */       Object[] arrayOfObject = null;
-/*  508 */       doLog(Level.WARNING, "POA.poaInternalGetServantError", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  512 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poaInternalGetServantError(CompletionStatus paramCompletionStatus) {
-/*  516 */     return poaInternalGetServantError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poaInternalGetServantError(Throwable paramThrowable) {
-/*  520 */     return poaInternalGetServantError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL poaInternalGetServantError() {
-/*  524 */     return poaInternalGetServantError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL makeFactoryNotPoa(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/*  530 */     INTERNAL iNTERNAL = new INTERNAL(1398080498, paramCompletionStatus);
-/*  531 */     if (paramThrowable != null) {
-/*  532 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  534 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  535 */       Object[] arrayOfObject = new Object[1];
-/*  536 */       arrayOfObject[0] = paramObject;
-/*  537 */       doLog(Level.WARNING, "POA.makeFactoryNotPoa", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  541 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL makeFactoryNotPoa(CompletionStatus paramCompletionStatus, Object paramObject) {
-/*  545 */     return makeFactoryNotPoa(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL makeFactoryNotPoa(Throwable paramThrowable, Object paramObject) {
-/*  549 */     return makeFactoryNotPoa(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL makeFactoryNotPoa(Object paramObject) {
-/*  553 */     return makeFactoryNotPoa(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL duplicateOrbVersionSc(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  559 */     INTERNAL iNTERNAL = new INTERNAL(1398080499, paramCompletionStatus);
-/*  560 */     if (paramThrowable != null) {
-/*  561 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  563 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  564 */       Object[] arrayOfObject = null;
-/*  565 */       doLog(Level.WARNING, "POA.duplicateOrbVersionSc", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  569 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL duplicateOrbVersionSc(CompletionStatus paramCompletionStatus) {
-/*  573 */     return duplicateOrbVersionSc(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL duplicateOrbVersionSc(Throwable paramThrowable) {
-/*  577 */     return duplicateOrbVersionSc(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL duplicateOrbVersionSc() {
-/*  581 */     return duplicateOrbVersionSc(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL preinvokeCloneError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  587 */     INTERNAL iNTERNAL = new INTERNAL(1398080500, paramCompletionStatus);
-/*  588 */     if (paramThrowable != null) {
-/*  589 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  591 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  592 */       Object[] arrayOfObject = null;
-/*  593 */       doLog(Level.WARNING, "POA.preinvokeCloneError", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  597 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL preinvokeCloneError(CompletionStatus paramCompletionStatus) {
-/*  601 */     return preinvokeCloneError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL preinvokeCloneError(Throwable paramThrowable) {
-/*  605 */     return preinvokeCloneError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL preinvokeCloneError() {
-/*  609 */     return preinvokeCloneError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL preinvokePoaDestroyed(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  615 */     INTERNAL iNTERNAL = new INTERNAL(1398080501, paramCompletionStatus);
-/*  616 */     if (paramThrowable != null) {
-/*  617 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  619 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  620 */       Object[] arrayOfObject = null;
-/*  621 */       doLog(Level.WARNING, "POA.preinvokePoaDestroyed", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  625 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL preinvokePoaDestroyed(CompletionStatus paramCompletionStatus) {
-/*  629 */     return preinvokePoaDestroyed(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL preinvokePoaDestroyed(Throwable paramThrowable) {
-/*  633 */     return preinvokePoaDestroyed(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL preinvokePoaDestroyed() {
-/*  637 */     return preinvokePoaDestroyed(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL pmfCreateRetain(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  643 */     INTERNAL iNTERNAL = new INTERNAL(1398080502, paramCompletionStatus);
-/*  644 */     if (paramThrowable != null) {
-/*  645 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  647 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  648 */       Object[] arrayOfObject = null;
-/*  649 */       doLog(Level.WARNING, "POA.pmfCreateRetain", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  653 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL pmfCreateRetain(CompletionStatus paramCompletionStatus) {
-/*  657 */     return pmfCreateRetain(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL pmfCreateRetain(Throwable paramThrowable) {
-/*  661 */     return pmfCreateRetain(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL pmfCreateRetain() {
-/*  665 */     return pmfCreateRetain(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL pmfCreateNonRetain(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  671 */     INTERNAL iNTERNAL = new INTERNAL(1398080503, paramCompletionStatus);
-/*  672 */     if (paramThrowable != null) {
-/*  673 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  675 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  676 */       Object[] arrayOfObject = null;
-/*  677 */       doLog(Level.WARNING, "POA.pmfCreateNonRetain", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  681 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL pmfCreateNonRetain(CompletionStatus paramCompletionStatus) {
-/*  685 */     return pmfCreateNonRetain(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL pmfCreateNonRetain(Throwable paramThrowable) {
-/*  689 */     return pmfCreateNonRetain(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL pmfCreateNonRetain() {
-/*  693 */     return pmfCreateNonRetain(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL policyMediatorBadPolicyInFactory(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  699 */     INTERNAL iNTERNAL = new INTERNAL(1398080504, paramCompletionStatus);
-/*  700 */     if (paramThrowable != null) {
-/*  701 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  703 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  704 */       Object[] arrayOfObject = null;
-/*  705 */       doLog(Level.WARNING, "POA.policyMediatorBadPolicyInFactory", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  709 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL policyMediatorBadPolicyInFactory(CompletionStatus paramCompletionStatus) {
-/*  713 */     return policyMediatorBadPolicyInFactory(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL policyMediatorBadPolicyInFactory(Throwable paramThrowable) {
-/*  717 */     return policyMediatorBadPolicyInFactory(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL policyMediatorBadPolicyInFactory() {
-/*  721 */     return policyMediatorBadPolicyInFactory(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL servantToIdOaa(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  727 */     INTERNAL iNTERNAL = new INTERNAL(1398080505, paramCompletionStatus);
-/*  728 */     if (paramThrowable != null) {
-/*  729 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  731 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  732 */       Object[] arrayOfObject = null;
-/*  733 */       doLog(Level.WARNING, "POA.servantToIdOaa", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  737 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdOaa(CompletionStatus paramCompletionStatus) {
-/*  741 */     return servantToIdOaa(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdOaa(Throwable paramThrowable) {
-/*  745 */     return servantToIdOaa(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdOaa() {
-/*  749 */     return servantToIdOaa(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL servantToIdSaa(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  755 */     INTERNAL iNTERNAL = new INTERNAL(1398080506, paramCompletionStatus);
-/*  756 */     if (paramThrowable != null) {
-/*  757 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  759 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  760 */       Object[] arrayOfObject = null;
-/*  761 */       doLog(Level.WARNING, "POA.servantToIdSaa", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  765 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdSaa(CompletionStatus paramCompletionStatus) {
-/*  769 */     return servantToIdSaa(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdSaa(Throwable paramThrowable) {
-/*  773 */     return servantToIdSaa(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdSaa() {
-/*  777 */     return servantToIdSaa(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL servantToIdWp(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  783 */     INTERNAL iNTERNAL = new INTERNAL(1398080507, paramCompletionStatus);
-/*  784 */     if (paramThrowable != null) {
-/*  785 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  787 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  788 */       Object[] arrayOfObject = null;
-/*  789 */       doLog(Level.WARNING, "POA.servantToIdWp", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  793 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdWp(CompletionStatus paramCompletionStatus) {
-/*  797 */     return servantToIdWp(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdWp(Throwable paramThrowable) {
-/*  801 */     return servantToIdWp(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantToIdWp() {
-/*  805 */     return servantToIdWp(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL cantResolveRootPoa(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  811 */     INTERNAL iNTERNAL = new INTERNAL(1398080508, paramCompletionStatus);
-/*  812 */     if (paramThrowable != null) {
-/*  813 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  815 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  816 */       Object[] arrayOfObject = null;
-/*  817 */       doLog(Level.WARNING, "POA.cantResolveRootPoa", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  821 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL cantResolveRootPoa(CompletionStatus paramCompletionStatus) {
-/*  825 */     return cantResolveRootPoa(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL cantResolveRootPoa(Throwable paramThrowable) {
-/*  829 */     return cantResolveRootPoa(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL cantResolveRootPoa() {
-/*  833 */     return cantResolveRootPoa(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL servantMustBeLocal(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  839 */     INTERNAL iNTERNAL = new INTERNAL(1398080509, paramCompletionStatus);
-/*  840 */     if (paramThrowable != null) {
-/*  841 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  843 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  844 */       Object[] arrayOfObject = null;
-/*  845 */       doLog(Level.WARNING, "POA.servantMustBeLocal", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  849 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantMustBeLocal(CompletionStatus paramCompletionStatus) {
-/*  853 */     return servantMustBeLocal(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantMustBeLocal(Throwable paramThrowable) {
-/*  857 */     return servantMustBeLocal(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL servantMustBeLocal() {
-/*  861 */     return servantMustBeLocal(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL noProfilesInIor(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  867 */     INTERNAL iNTERNAL = new INTERNAL(1398080510, paramCompletionStatus);
-/*  868 */     if (paramThrowable != null) {
-/*  869 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  871 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  872 */       Object[] arrayOfObject = null;
-/*  873 */       doLog(Level.WARNING, "POA.noProfilesInIor", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  877 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL noProfilesInIor(CompletionStatus paramCompletionStatus) {
-/*  881 */     return noProfilesInIor(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL noProfilesInIor(Throwable paramThrowable) {
-/*  885 */     return noProfilesInIor(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL noProfilesInIor() {
-/*  889 */     return noProfilesInIor(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL aomEntryDecZero(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  895 */     INTERNAL iNTERNAL = new INTERNAL(1398080511, paramCompletionStatus);
-/*  896 */     if (paramThrowable != null) {
-/*  897 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  899 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  900 */       Object[] arrayOfObject = null;
-/*  901 */       doLog(Level.WARNING, "POA.aomEntryDecZero", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  905 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL aomEntryDecZero(CompletionStatus paramCompletionStatus) {
-/*  909 */     return aomEntryDecZero(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL aomEntryDecZero(Throwable paramThrowable) {
-/*  913 */     return aomEntryDecZero(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL aomEntryDecZero() {
-/*  917 */     return aomEntryDecZero(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL addPoaInactive(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  923 */     INTERNAL iNTERNAL = new INTERNAL(1398080512, paramCompletionStatus);
-/*  924 */     if (paramThrowable != null) {
-/*  925 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  927 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  928 */       Object[] arrayOfObject = null;
-/*  929 */       doLog(Level.WARNING, "POA.addPoaInactive", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  933 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL addPoaInactive(CompletionStatus paramCompletionStatus) {
-/*  937 */     return addPoaInactive(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL addPoaInactive(Throwable paramThrowable) {
-/*  941 */     return addPoaInactive(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL addPoaInactive() {
-/*  945 */     return addPoaInactive(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL illegalPoaStateTrans(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  951 */     INTERNAL iNTERNAL = new INTERNAL(1398080513, paramCompletionStatus);
-/*  952 */     if (paramThrowable != null) {
-/*  953 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  955 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  956 */       Object[] arrayOfObject = null;
-/*  957 */       doLog(Level.WARNING, "POA.illegalPoaStateTrans", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  961 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL illegalPoaStateTrans(CompletionStatus paramCompletionStatus) {
-/*  965 */     return illegalPoaStateTrans(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL illegalPoaStateTrans(Throwable paramThrowable) {
-/*  969 */     return illegalPoaStateTrans(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL illegalPoaStateTrans() {
-/*  973 */     return illegalPoaStateTrans(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL unexpectedException(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/*  979 */     INTERNAL iNTERNAL = new INTERNAL(1398080514, paramCompletionStatus);
-/*  980 */     if (paramThrowable != null) {
-/*  981 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/*  983 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  984 */       Object[] arrayOfObject = new Object[1];
-/*  985 */       arrayOfObject[0] = paramObject;
-/*  986 */       doLog(Level.WARNING, "POA.unexpectedException", arrayOfObject, POASystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  990 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL unexpectedException(CompletionStatus paramCompletionStatus, Object paramObject) {
-/*  994 */     return unexpectedException(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL unexpectedException(Throwable paramThrowable, Object paramObject) {
-/*  998 */     return unexpectedException(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL unexpectedException(Object paramObject) {
-/* 1002 */     return unexpectedException(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT singleThreadNotSupported(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1012 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1398080489, paramCompletionStatus);
-/* 1013 */     if (paramThrowable != null) {
-/* 1014 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 1016 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1017 */       Object[] arrayOfObject = null;
-/* 1018 */       doLog(Level.WARNING, "POA.singleThreadNotSupported", arrayOfObject, POASystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1022 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT singleThreadNotSupported(CompletionStatus paramCompletionStatus) {
-/* 1026 */     return singleThreadNotSupported(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT singleThreadNotSupported(Throwable paramThrowable) {
-/* 1030 */     return singleThreadNotSupported(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT singleThreadNotSupported() {
-/* 1034 */     return singleThreadNotSupported(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT methodNotImplemented(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1040 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1398080490, paramCompletionStatus);
-/* 1041 */     if (paramThrowable != null) {
-/* 1042 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 1044 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1045 */       Object[] arrayOfObject = null;
-/* 1046 */       doLog(Level.WARNING, "POA.methodNotImplemented", arrayOfObject, POASystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1050 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT methodNotImplemented(CompletionStatus paramCompletionStatus) {
-/* 1054 */     return methodNotImplemented(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT methodNotImplemented(Throwable paramThrowable) {
-/* 1058 */     return methodNotImplemented(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT methodNotImplemented() {
-/* 1062 */     return methodNotImplemented(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaLookupError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1072 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080489, paramCompletionStatus);
-/* 1073 */     if (paramThrowable != null) {
-/* 1074 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1076 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1077 */       Object[] arrayOfObject = null;
-/* 1078 */       doLog(Level.WARNING, "POA.poaLookupError", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1082 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaLookupError(CompletionStatus paramCompletionStatus) {
-/* 1086 */     return poaLookupError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaLookupError(Throwable paramThrowable) {
-/* 1090 */     return poaLookupError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaLookupError() {
-/* 1094 */     return poaLookupError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaInactive(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1100 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080490, paramCompletionStatus);
-/* 1101 */     if (paramThrowable != null) {
-/* 1102 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1104 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 1105 */       Object[] arrayOfObject = null;
-/* 1106 */       doLog(Level.FINE, "POA.poaInactive", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1110 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaInactive(CompletionStatus paramCompletionStatus) {
-/* 1114 */     return poaInactive(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaInactive(Throwable paramThrowable) {
-/* 1118 */     return poaInactive(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaInactive() {
-/* 1122 */     return poaInactive(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoServantManager(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1128 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080491, paramCompletionStatus);
-/* 1129 */     if (paramThrowable != null) {
-/* 1130 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1132 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1133 */       Object[] arrayOfObject = null;
-/* 1134 */       doLog(Level.WARNING, "POA.poaNoServantManager", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1138 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoServantManager(CompletionStatus paramCompletionStatus) {
-/* 1142 */     return poaNoServantManager(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoServantManager(Throwable paramThrowable) {
-/* 1146 */     return poaNoServantManager(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoServantManager() {
-/* 1150 */     return poaNoServantManager(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoDefaultServant(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1156 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080492, paramCompletionStatus);
-/* 1157 */     if (paramThrowable != null) {
-/* 1158 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1160 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1161 */       Object[] arrayOfObject = null;
-/* 1162 */       doLog(Level.WARNING, "POA.poaNoDefaultServant", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1166 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoDefaultServant(CompletionStatus paramCompletionStatus) {
-/* 1170 */     return poaNoDefaultServant(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoDefaultServant(Throwable paramThrowable) {
-/* 1174 */     return poaNoDefaultServant(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNoDefaultServant() {
-/* 1178 */     return poaNoDefaultServant(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantNotUnique(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1184 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080493, paramCompletionStatus);
-/* 1185 */     if (paramThrowable != null) {
-/* 1186 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1188 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1189 */       Object[] arrayOfObject = null;
-/* 1190 */       doLog(Level.WARNING, "POA.poaServantNotUnique", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1194 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantNotUnique(CompletionStatus paramCompletionStatus) {
-/* 1198 */     return poaServantNotUnique(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantNotUnique(Throwable paramThrowable) {
-/* 1202 */     return poaServantNotUnique(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantNotUnique() {
-/* 1206 */     return poaServantNotUnique(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaWrongPolicy(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1212 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080494, paramCompletionStatus);
-/* 1213 */     if (paramThrowable != null) {
-/* 1214 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1216 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1217 */       Object[] arrayOfObject = null;
-/* 1218 */       doLog(Level.WARNING, "POA.poaWrongPolicy", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1222 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaWrongPolicy(CompletionStatus paramCompletionStatus) {
-/* 1226 */     return poaWrongPolicy(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaWrongPolicy(Throwable paramThrowable) {
-/* 1230 */     return poaWrongPolicy(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaWrongPolicy() {
-/* 1234 */     return poaWrongPolicy(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER findpoaError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1240 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080495, paramCompletionStatus);
-/* 1241 */     if (paramThrowable != null) {
-/* 1242 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1244 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1245 */       Object[] arrayOfObject = null;
-/* 1246 */       doLog(Level.WARNING, "POA.findpoaError", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1250 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER findpoaError(CompletionStatus paramCompletionStatus) {
-/* 1254 */     return findpoaError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER findpoaError(Throwable paramThrowable) {
-/* 1258 */     return findpoaError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER findpoaError() {
-/* 1262 */     return findpoaError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantActivatorLookupFailed(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1268 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080497, paramCompletionStatus);
-/* 1269 */     if (paramThrowable != null) {
-/* 1270 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1272 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1273 */       Object[] arrayOfObject = null;
-/* 1274 */       doLog(Level.WARNING, "POA.poaServantActivatorLookupFailed", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1278 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantActivatorLookupFailed(CompletionStatus paramCompletionStatus) {
-/* 1282 */     return poaServantActivatorLookupFailed(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantActivatorLookupFailed(Throwable paramThrowable) {
-/* 1286 */     return poaServantActivatorLookupFailed(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantActivatorLookupFailed() {
-/* 1290 */     return poaServantActivatorLookupFailed(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaBadServantManager(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1296 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080498, paramCompletionStatus);
-/* 1297 */     if (paramThrowable != null) {
-/* 1298 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1300 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1301 */       Object[] arrayOfObject = null;
-/* 1302 */       doLog(Level.WARNING, "POA.poaBadServantManager", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1306 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaBadServantManager(CompletionStatus paramCompletionStatus) {
-/* 1310 */     return poaBadServantManager(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaBadServantManager(Throwable paramThrowable) {
-/* 1314 */     return poaBadServantManager(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaBadServantManager() {
-/* 1318 */     return poaBadServantManager(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantLocatorLookupFailed(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1324 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080499, paramCompletionStatus);
-/* 1325 */     if (paramThrowable != null) {
-/* 1326 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1328 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1329 */       Object[] arrayOfObject = null;
-/* 1330 */       doLog(Level.WARNING, "POA.poaServantLocatorLookupFailed", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1334 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantLocatorLookupFailed(CompletionStatus paramCompletionStatus) {
-/* 1338 */     return poaServantLocatorLookupFailed(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantLocatorLookupFailed(Throwable paramThrowable) {
-/* 1342 */     return poaServantLocatorLookupFailed(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaServantLocatorLookupFailed() {
-/* 1346 */     return poaServantLocatorLookupFailed(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaUnknownPolicy(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1352 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080500, paramCompletionStatus);
-/* 1353 */     if (paramThrowable != null) {
-/* 1354 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1356 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1357 */       Object[] arrayOfObject = null;
-/* 1358 */       doLog(Level.WARNING, "POA.poaUnknownPolicy", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1362 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaUnknownPolicy(CompletionStatus paramCompletionStatus) {
-/* 1366 */     return poaUnknownPolicy(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaUnknownPolicy(Throwable paramThrowable) {
-/* 1370 */     return poaUnknownPolicy(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaUnknownPolicy() {
-/* 1374 */     return poaUnknownPolicy(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER poaNotFound(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1380 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080501, paramCompletionStatus);
-/* 1381 */     if (paramThrowable != null) {
-/* 1382 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1384 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1385 */       Object[] arrayOfObject = null;
-/* 1386 */       doLog(Level.WARNING, "POA.poaNotFound", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1390 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNotFound(CompletionStatus paramCompletionStatus) {
-/* 1394 */     return poaNotFound(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNotFound(Throwable paramThrowable) {
-/* 1398 */     return poaNotFound(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER poaNotFound() {
-/* 1402 */     return poaNotFound(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER servantLookup(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1408 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080502, paramCompletionStatus);
-/* 1409 */     if (paramThrowable != null) {
-/* 1410 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1412 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1413 */       Object[] arrayOfObject = null;
-/* 1414 */       doLog(Level.WARNING, "POA.servantLookup", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1418 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER servantLookup(CompletionStatus paramCompletionStatus) {
-/* 1422 */     return servantLookup(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER servantLookup(Throwable paramThrowable) {
-/* 1426 */     return servantLookup(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER servantLookup() {
-/* 1430 */     return servantLookup(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER localServantLookup(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1436 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080503, paramCompletionStatus);
-/* 1437 */     if (paramThrowable != null) {
-/* 1438 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1440 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1441 */       Object[] arrayOfObject = null;
-/* 1442 */       doLog(Level.WARNING, "POA.localServantLookup", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1446 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER localServantLookup(CompletionStatus paramCompletionStatus) {
-/* 1450 */     return localServantLookup(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER localServantLookup(Throwable paramThrowable) {
-/* 1454 */     return localServantLookup(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER localServantLookup() {
-/* 1458 */     return localServantLookup(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER servantManagerBadType(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1464 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080504, paramCompletionStatus);
-/* 1465 */     if (paramThrowable != null) {
-/* 1466 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1468 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1469 */       Object[] arrayOfObject = null;
-/* 1470 */       doLog(Level.WARNING, "POA.servantManagerBadType", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1474 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER servantManagerBadType(CompletionStatus paramCompletionStatus) {
-/* 1478 */     return servantManagerBadType(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER servantManagerBadType(Throwable paramThrowable) {
-/* 1482 */     return servantManagerBadType(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER servantManagerBadType() {
-/* 1486 */     return servantManagerBadType(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER defaultPoaNotPoaimpl(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1492 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080505, paramCompletionStatus);
-/* 1493 */     if (paramThrowable != null) {
-/* 1494 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1496 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1497 */       Object[] arrayOfObject = null;
-/* 1498 */       doLog(Level.WARNING, "POA.defaultPoaNotPoaimpl", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1502 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER defaultPoaNotPoaimpl(CompletionStatus paramCompletionStatus) {
-/* 1506 */     return defaultPoaNotPoaimpl(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER defaultPoaNotPoaimpl(Throwable paramThrowable) {
-/* 1510 */     return defaultPoaNotPoaimpl(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER defaultPoaNotPoaimpl() {
-/* 1514 */     return defaultPoaNotPoaimpl(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER wrongPoliciesForThisObject(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1520 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080506, paramCompletionStatus);
-/* 1521 */     if (paramThrowable != null) {
-/* 1522 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1524 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1525 */       Object[] arrayOfObject = null;
-/* 1526 */       doLog(Level.WARNING, "POA.wrongPoliciesForThisObject", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1530 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER wrongPoliciesForThisObject(CompletionStatus paramCompletionStatus) {
-/* 1534 */     return wrongPoliciesForThisObject(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER wrongPoliciesForThisObject(Throwable paramThrowable) {
-/* 1538 */     return wrongPoliciesForThisObject(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER wrongPoliciesForThisObject() {
-/* 1542 */     return wrongPoliciesForThisObject(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectServantNotActive(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1548 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080507, paramCompletionStatus);
-/* 1549 */     if (paramThrowable != null) {
-/* 1550 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1552 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1553 */       Object[] arrayOfObject = null;
-/* 1554 */       doLog(Level.WARNING, "POA.thisObjectServantNotActive", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1558 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectServantNotActive(CompletionStatus paramCompletionStatus) {
-/* 1562 */     return thisObjectServantNotActive(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectServantNotActive(Throwable paramThrowable) {
-/* 1566 */     return thisObjectServantNotActive(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectServantNotActive() {
-/* 1570 */     return thisObjectServantNotActive(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectWrongPolicy(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1576 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080508, paramCompletionStatus);
-/* 1577 */     if (paramThrowable != null) {
-/* 1578 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1580 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1581 */       Object[] arrayOfObject = null;
-/* 1582 */       doLog(Level.WARNING, "POA.thisObjectWrongPolicy", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1586 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectWrongPolicy(CompletionStatus paramCompletionStatus) {
-/* 1590 */     return thisObjectWrongPolicy(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectWrongPolicy(Throwable paramThrowable) {
-/* 1594 */     return thisObjectWrongPolicy(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER thisObjectWrongPolicy() {
-/* 1598 */     return thisObjectWrongPolicy(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER noContext(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1604 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080509, paramCompletionStatus);
-/* 1605 */     if (paramThrowable != null) {
-/* 1606 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1608 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 1609 */       Object[] arrayOfObject = null;
-/* 1610 */       doLog(Level.FINE, "POA.noContext", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1614 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noContext(CompletionStatus paramCompletionStatus) {
-/* 1618 */     return noContext(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noContext(Throwable paramThrowable) {
-/* 1622 */     return noContext(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noContext() {
-/* 1626 */     return noContext(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER incarnateReturnedNull(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1632 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1398080510, paramCompletionStatus);
-/* 1633 */     if (paramThrowable != null) {
-/* 1634 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 1636 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1637 */       Object[] arrayOfObject = null;
-/* 1638 */       doLog(Level.WARNING, "POA.incarnateReturnedNull", arrayOfObject, POASystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1642 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER incarnateReturnedNull(CompletionStatus paramCompletionStatus) {
-/* 1646 */     return incarnateReturnedNull(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER incarnateReturnedNull(Throwable paramThrowable) {
-/* 1650 */     return incarnateReturnedNull(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER incarnateReturnedNull() {
-/* 1654 */     return incarnateReturnedNull(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INITIALIZE jtsInitError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1664 */     INITIALIZE iNITIALIZE = new INITIALIZE(1398080489, paramCompletionStatus);
-/* 1665 */     if (paramThrowable != null) {
-/* 1666 */       iNITIALIZE.initCause(paramThrowable);
-/*      */     }
-/* 1668 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1669 */       Object[] arrayOfObject = null;
-/* 1670 */       doLog(Level.WARNING, "POA.jtsInitError", arrayOfObject, POASystemException.class, iNITIALIZE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1674 */     return iNITIALIZE;
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE jtsInitError(CompletionStatus paramCompletionStatus) {
-/* 1678 */     return jtsInitError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE jtsInitError(Throwable paramThrowable) {
-/* 1682 */     return jtsInitError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE jtsInitError() {
-/* 1686 */     return jtsInitError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INITIALIZE persistentServeridNotSet(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1692 */     INITIALIZE iNITIALIZE = new INITIALIZE(1398080490, paramCompletionStatus);
-/* 1693 */     if (paramThrowable != null) {
-/* 1694 */       iNITIALIZE.initCause(paramThrowable);
-/*      */     }
-/* 1696 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1697 */       Object[] arrayOfObject = null;
-/* 1698 */       doLog(Level.WARNING, "POA.persistentServeridNotSet", arrayOfObject, POASystemException.class, iNITIALIZE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1702 */     return iNITIALIZE;
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE persistentServeridNotSet(CompletionStatus paramCompletionStatus) {
-/* 1706 */     return persistentServeridNotSet(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE persistentServeridNotSet(Throwable paramThrowable) {
-/* 1710 */     return persistentServeridNotSet(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE persistentServeridNotSet() {
-/* 1714 */     return persistentServeridNotSet(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INITIALIZE persistentServerportNotSet(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1720 */     INITIALIZE iNITIALIZE = new INITIALIZE(1398080491, paramCompletionStatus);
-/* 1721 */     if (paramThrowable != null) {
-/* 1722 */       iNITIALIZE.initCause(paramThrowable);
-/*      */     }
-/* 1724 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1725 */       Object[] arrayOfObject = null;
-/* 1726 */       doLog(Level.WARNING, "POA.persistentServerportNotSet", arrayOfObject, POASystemException.class, iNITIALIZE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1730 */     return iNITIALIZE;
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE persistentServerportNotSet(CompletionStatus paramCompletionStatus) {
-/* 1734 */     return persistentServerportNotSet(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE persistentServerportNotSet(Throwable paramThrowable) {
-/* 1738 */     return persistentServerportNotSet(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE persistentServerportNotSet() {
-/* 1742 */     return persistentServerportNotSet(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INITIALIZE orbdError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1748 */     INITIALIZE iNITIALIZE = new INITIALIZE(1398080492, paramCompletionStatus);
-/* 1749 */     if (paramThrowable != null) {
-/* 1750 */       iNITIALIZE.initCause(paramThrowable);
-/*      */     }
-/* 1752 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1753 */       Object[] arrayOfObject = null;
-/* 1754 */       doLog(Level.WARNING, "POA.orbdError", arrayOfObject, POASystemException.class, iNITIALIZE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1758 */     return iNITIALIZE;
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE orbdError(CompletionStatus paramCompletionStatus) {
-/* 1762 */     return orbdError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE orbdError(Throwable paramThrowable) {
-/* 1766 */     return orbdError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE orbdError() {
-/* 1770 */     return orbdError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INITIALIZE bootstrapError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1776 */     INITIALIZE iNITIALIZE = new INITIALIZE(1398080493, paramCompletionStatus);
-/* 1777 */     if (paramThrowable != null) {
-/* 1778 */       iNITIALIZE.initCause(paramThrowable);
-/*      */     }
-/* 1780 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1781 */       Object[] arrayOfObject = null;
-/* 1782 */       doLog(Level.WARNING, "POA.bootstrapError", arrayOfObject, POASystemException.class, iNITIALIZE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1786 */     return iNITIALIZE;
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE bootstrapError(CompletionStatus paramCompletionStatus) {
-/* 1790 */     return bootstrapError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE bootstrapError(Throwable paramThrowable) {
-/* 1794 */     return bootstrapError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE bootstrapError() {
-/* 1798 */     return bootstrapError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSIENT poaDiscarding(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1808 */     TRANSIENT tRANSIENT = new TRANSIENT(1398080489, paramCompletionStatus);
-/* 1809 */     if (paramThrowable != null) {
-/* 1810 */       tRANSIENT.initCause(paramThrowable);
-/*      */     }
-/* 1812 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 1813 */       Object[] arrayOfObject = null;
-/* 1814 */       doLog(Level.FINE, "POA.poaDiscarding", arrayOfObject, POASystemException.class, tRANSIENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1818 */     return tRANSIENT;
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaDiscarding(CompletionStatus paramCompletionStatus) {
-/* 1822 */     return poaDiscarding(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaDiscarding(Throwable paramThrowable) {
-/* 1826 */     return poaDiscarding(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaDiscarding() {
-/* 1830 */     return poaDiscarding(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN otshookexception(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1840 */     UNKNOWN uNKNOWN = new UNKNOWN(1398080489, paramCompletionStatus);
-/* 1841 */     if (paramThrowable != null) {
-/* 1842 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 1844 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1845 */       Object[] arrayOfObject = null;
-/* 1846 */       doLog(Level.WARNING, "POA.otshookexception", arrayOfObject, POASystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1850 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN otshookexception(CompletionStatus paramCompletionStatus) {
-/* 1854 */     return otshookexception(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN otshookexception(Throwable paramThrowable) {
-/* 1858 */     return otshookexception(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN otshookexception() {
-/* 1862 */     return otshookexception(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN unknownServerException(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1868 */     UNKNOWN uNKNOWN = new UNKNOWN(1398080490, paramCompletionStatus);
-/* 1869 */     if (paramThrowable != null) {
-/* 1870 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 1872 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1873 */       Object[] arrayOfObject = null;
-/* 1874 */       doLog(Level.WARNING, "POA.unknownServerException", arrayOfObject, POASystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1878 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownServerException(CompletionStatus paramCompletionStatus) {
-/* 1882 */     return unknownServerException(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownServerException(Throwable paramThrowable) {
-/* 1886 */     return unknownServerException(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownServerException() {
-/* 1890 */     return unknownServerException(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN unknownServerappException(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1896 */     UNKNOWN uNKNOWN = new UNKNOWN(1398080491, paramCompletionStatus);
-/* 1897 */     if (paramThrowable != null) {
-/* 1898 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 1900 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1901 */       Object[] arrayOfObject = null;
-/* 1902 */       doLog(Level.WARNING, "POA.unknownServerappException", arrayOfObject, POASystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1906 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownServerappException(CompletionStatus paramCompletionStatus) {
-/* 1910 */     return unknownServerappException(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownServerappException(Throwable paramThrowable) {
-/* 1914 */     return unknownServerappException(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownServerappException() {
-/* 1918 */     return unknownServerappException(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN unknownLocalinvocationError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1924 */     UNKNOWN uNKNOWN = new UNKNOWN(1398080492, paramCompletionStatus);
-/* 1925 */     if (paramThrowable != null) {
-/* 1926 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 1928 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1929 */       Object[] arrayOfObject = null;
-/* 1930 */       doLog(Level.WARNING, "POA.unknownLocalinvocationError", arrayOfObject, POASystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1934 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownLocalinvocationError(CompletionStatus paramCompletionStatus) {
-/* 1938 */     return unknownLocalinvocationError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownLocalinvocationError(Throwable paramThrowable) {
-/* 1942 */     return unknownLocalinvocationError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownLocalinvocationError() {
-/* 1946 */     return unknownLocalinvocationError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorNonexistent(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1956 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1398080489, paramCompletionStatus);
-/* 1957 */     if (paramThrowable != null) {
-/* 1958 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 1960 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1961 */       Object[] arrayOfObject = null;
-/* 1962 */       doLog(Level.WARNING, "POA.adapterActivatorNonexistent", arrayOfObject, POASystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1966 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorNonexistent(CompletionStatus paramCompletionStatus) {
-/* 1970 */     return adapterActivatorNonexistent(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorNonexistent(Throwable paramThrowable) {
-/* 1974 */     return adapterActivatorNonexistent(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorNonexistent() {
-/* 1978 */     return adapterActivatorNonexistent(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorFailed(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1984 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1398080490, paramCompletionStatus);
-/* 1985 */     if (paramThrowable != null) {
-/* 1986 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 1988 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1989 */       Object[] arrayOfObject = null;
-/* 1990 */       doLog(Level.WARNING, "POA.adapterActivatorFailed", arrayOfObject, POASystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1994 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorFailed(CompletionStatus paramCompletionStatus) {
-/* 1998 */     return adapterActivatorFailed(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorFailed(Throwable paramThrowable) {
-/* 2002 */     return adapterActivatorFailed(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterActivatorFailed() {
-/* 2006 */     return adapterActivatorFailed(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST badSkeleton(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2012 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1398080491, paramCompletionStatus);
-/* 2013 */     if (paramThrowable != null) {
-/* 2014 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 2016 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2017 */       Object[] arrayOfObject = null;
-/* 2018 */       doLog(Level.WARNING, "POA.badSkeleton", arrayOfObject, POASystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2022 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST badSkeleton(CompletionStatus paramCompletionStatus) {
-/* 2026 */     return badSkeleton(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST badSkeleton(Throwable paramThrowable) {
-/* 2030 */     return badSkeleton(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST badSkeleton() {
-/* 2034 */     return badSkeleton(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST nullServant(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2040 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1398080492, paramCompletionStatus);
-/* 2041 */     if (paramThrowable != null) {
-/* 2042 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 2044 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 2045 */       Object[] arrayOfObject = null;
-/* 2046 */       doLog(Level.FINE, "POA.nullServant", arrayOfObject, POASystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2050 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST nullServant(CompletionStatus paramCompletionStatus) {
-/* 2054 */     return nullServant(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST nullServant(Throwable paramThrowable) {
-/* 2058 */     return nullServant(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST nullServant() {
-/* 2062 */     return nullServant(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterDestroyed(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2068 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1398080493, paramCompletionStatus);
-/* 2069 */     if (paramThrowable != null) {
-/* 2070 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 2072 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2073 */       Object[] arrayOfObject = null;
-/* 2074 */       doLog(Level.WARNING, "POA.adapterDestroyed", arrayOfObject, POASystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2078 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterDestroyed(CompletionStatus paramCompletionStatus) {
-/* 2082 */     return adapterDestroyed(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterDestroyed(Throwable paramThrowable) {
-/* 2086 */     return adapterDestroyed(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST adapterDestroyed() {
-/* 2090 */     return adapterDestroyed(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ }
+// Log wrapper class for Sun private system exceptions in group POA
+//
+// Generated by MC.java version 1.0, DO NOT EDIT BY HAND!
+// Generated from input file c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/com/sun/corba/se/spi/logging/data/POA.mc on Mon Apr 01 20:55:44 PDT 2019
 
+package com.sun.corba.se.impl.logging ;
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\logging\POASystemException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+import java.util.logging.Logger ;
+import java.util.logging.Level ;
+
+import org.omg.CORBA.OMGVMCID ;
+import com.sun.corba.se.impl.util.SUNVMCID ;
+import org.omg.CORBA.CompletionStatus ;
+import org.omg.CORBA.SystemException ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.logging.LogWrapperFactory;
+
+import com.sun.corba.se.spi.logging.LogWrapperBase;
+
+import org.omg.CORBA.BAD_INV_ORDER ;
+import org.omg.CORBA.BAD_OPERATION ;
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.NO_IMPLEMENT ;
+import org.omg.CORBA.OBJ_ADAPTER ;
+import org.omg.CORBA.INITIALIZE ;
+import org.omg.CORBA.TRANSIENT ;
+import org.omg.CORBA.UNKNOWN ;
+import org.omg.CORBA.OBJECT_NOT_EXIST ;
+
+public class POASystemException extends LogWrapperBase {
+    
+    public POASystemException( Logger logger )
+    {
+        super( logger ) ;
+    }
+    
+    private static LogWrapperFactory factory = new LogWrapperFactory() {
+        public LogWrapperBase create( Logger logger )
+        {
+            return new POASystemException( logger ) ;
+        }
+    } ;
+    
+    public static POASystemException get( ORB orb, String logDomain )
+    {
+        POASystemException wrapper = 
+            (POASystemException) orb.getLogWrapper( logDomain, 
+                "POA", factory ) ;
+        return wrapper ;
+    } 
+    
+    public static POASystemException get( String logDomain )
+    {
+        POASystemException wrapper = 
+            (POASystemException) ORB.staticGetLogWrapper( logDomain, 
+                "POA", factory ) ;
+        return wrapper ;
+    } 
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_INV_ORDER
+    ///////////////////////////////////////////////////////////
+    
+    public static final int SERVANT_MANAGER_ALREADY_SET = SUNVMCID.value + 1001 ;
+    
+    public BAD_INV_ORDER servantManagerAlreadySet( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( SERVANT_MANAGER_ALREADY_SET, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantManagerAlreadySet",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER servantManagerAlreadySet( CompletionStatus cs ) {
+        return servantManagerAlreadySet( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER servantManagerAlreadySet( Throwable t ) {
+        return servantManagerAlreadySet( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER servantManagerAlreadySet(  ) {
+        return servantManagerAlreadySet( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int DESTROY_DEADLOCK = SUNVMCID.value + 1002 ;
+    
+    public BAD_INV_ORDER destroyDeadlock( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( DESTROY_DEADLOCK, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.destroyDeadlock",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER destroyDeadlock( CompletionStatus cs ) {
+        return destroyDeadlock( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER destroyDeadlock( Throwable t ) {
+        return destroyDeadlock( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER destroyDeadlock(  ) {
+        return destroyDeadlock( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_OPERATION
+    ///////////////////////////////////////////////////////////
+    
+    public static final int SERVANT_ORB = SUNVMCID.value + 1001 ;
+    
+    public BAD_OPERATION servantOrb( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( SERVANT_ORB, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantOrb",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION servantOrb( CompletionStatus cs ) {
+        return servantOrb( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION servantOrb( Throwable t ) {
+        return servantOrb( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION servantOrb(  ) {
+        return servantOrb( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_SERVANT = SUNVMCID.value + 1002 ;
+    
+    public BAD_OPERATION badServant( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( BAD_SERVANT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.badServant",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION badServant( CompletionStatus cs ) {
+        return badServant( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION badServant( Throwable t ) {
+        return badServant( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION badServant(  ) {
+        return badServant( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ILLEGAL_FORWARD_REQUEST = SUNVMCID.value + 1003 ;
+    
+    public BAD_OPERATION illegalForwardRequest( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( ILLEGAL_FORWARD_REQUEST, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.illegalForwardRequest",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION illegalForwardRequest( CompletionStatus cs ) {
+        return illegalForwardRequest( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION illegalForwardRequest( Throwable t ) {
+        return illegalForwardRequest( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION illegalForwardRequest(  ) {
+        return illegalForwardRequest( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_PARAM
+    ///////////////////////////////////////////////////////////
+    
+    public static final int BAD_TRANSACTION_CONTEXT = SUNVMCID.value + 1001 ;
+    
+    public BAD_PARAM badTransactionContext( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( BAD_TRANSACTION_CONTEXT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.badTransactionContext",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM badTransactionContext( CompletionStatus cs ) {
+        return badTransactionContext( cs, null  ) ;
+    }
+    
+    public BAD_PARAM badTransactionContext( Throwable t ) {
+        return badTransactionContext( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM badTransactionContext(  ) {
+        return badTransactionContext( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_REPOSITORY_ID = SUNVMCID.value + 1002 ;
+    
+    public BAD_PARAM badRepositoryId( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( BAD_REPOSITORY_ID, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.badRepositoryId",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM badRepositoryId( CompletionStatus cs ) {
+        return badRepositoryId( cs, null  ) ;
+    }
+    
+    public BAD_PARAM badRepositoryId( Throwable t ) {
+        return badRepositoryId( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM badRepositoryId(  ) {
+        return badRepositoryId( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INTERNAL
+    ///////////////////////////////////////////////////////////
+    
+    public static final int INVOKESETUP = SUNVMCID.value + 1001 ;
+    
+    public INTERNAL invokesetup( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( INVOKESETUP, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.invokesetup",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL invokesetup( CompletionStatus cs ) {
+        return invokesetup( cs, null  ) ;
+    }
+    
+    public INTERNAL invokesetup( Throwable t ) {
+        return invokesetup( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL invokesetup(  ) {
+        return invokesetup( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_LOCALREPLYSTATUS = SUNVMCID.value + 1002 ;
+    
+    public INTERNAL badLocalreplystatus( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( BAD_LOCALREPLYSTATUS, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.badLocalreplystatus",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL badLocalreplystatus( CompletionStatus cs ) {
+        return badLocalreplystatus( cs, null  ) ;
+    }
+    
+    public INTERNAL badLocalreplystatus( Throwable t ) {
+        return badLocalreplystatus( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL badLocalreplystatus(  ) {
+        return badLocalreplystatus( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PERSISTENT_SERVERPORT_ERROR = SUNVMCID.value + 1003 ;
+    
+    public INTERNAL persistentServerportError( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( PERSISTENT_SERVERPORT_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.persistentServerportError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL persistentServerportError( CompletionStatus cs ) {
+        return persistentServerportError( cs, null  ) ;
+    }
+    
+    public INTERNAL persistentServerportError( Throwable t ) {
+        return persistentServerportError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL persistentServerportError(  ) {
+        return persistentServerportError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_DISPATCH = SUNVMCID.value + 1004 ;
+    
+    public INTERNAL servantDispatch( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( SERVANT_DISPATCH, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantDispatch",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL servantDispatch( CompletionStatus cs ) {
+        return servantDispatch( cs, null  ) ;
+    }
+    
+    public INTERNAL servantDispatch( Throwable t ) {
+        return servantDispatch( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL servantDispatch(  ) {
+        return servantDispatch( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int WRONG_CLIENTSC = SUNVMCID.value + 1005 ;
+    
+    public INTERNAL wrongClientsc( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( WRONG_CLIENTSC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.wrongClientsc",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL wrongClientsc( CompletionStatus cs ) {
+        return wrongClientsc( cs, null  ) ;
+    }
+    
+    public INTERNAL wrongClientsc( Throwable t ) {
+        return wrongClientsc( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL wrongClientsc(  ) {
+        return wrongClientsc( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CANT_CLONE_TEMPLATE = SUNVMCID.value + 1006 ;
+    
+    public INTERNAL cantCloneTemplate( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( CANT_CLONE_TEMPLATE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.cantCloneTemplate",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL cantCloneTemplate( CompletionStatus cs ) {
+        return cantCloneTemplate( cs, null  ) ;
+    }
+    
+    public INTERNAL cantCloneTemplate( Throwable t ) {
+        return cantCloneTemplate( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL cantCloneTemplate(  ) {
+        return cantCloneTemplate( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POACURRENT_UNBALANCED_STACK = SUNVMCID.value + 1007 ;
+    
+    public INTERNAL poacurrentUnbalancedStack( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( POACURRENT_UNBALANCED_STACK, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poacurrentUnbalancedStack",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL poacurrentUnbalancedStack( CompletionStatus cs ) {
+        return poacurrentUnbalancedStack( cs, null  ) ;
+    }
+    
+    public INTERNAL poacurrentUnbalancedStack( Throwable t ) {
+        return poacurrentUnbalancedStack( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL poacurrentUnbalancedStack(  ) {
+        return poacurrentUnbalancedStack( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POACURRENT_NULL_FIELD = SUNVMCID.value + 1008 ;
+    
+    public INTERNAL poacurrentNullField( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( POACURRENT_NULL_FIELD, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poacurrentNullField",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL poacurrentNullField( CompletionStatus cs ) {
+        return poacurrentNullField( cs, null  ) ;
+    }
+    
+    public INTERNAL poacurrentNullField( Throwable t ) {
+        return poacurrentNullField( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL poacurrentNullField(  ) {
+        return poacurrentNullField( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_INTERNAL_GET_SERVANT_ERROR = SUNVMCID.value + 1009 ;
+    
+    public INTERNAL poaInternalGetServantError( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( POA_INTERNAL_GET_SERVANT_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaInternalGetServantError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL poaInternalGetServantError( CompletionStatus cs ) {
+        return poaInternalGetServantError( cs, null  ) ;
+    }
+    
+    public INTERNAL poaInternalGetServantError( Throwable t ) {
+        return poaInternalGetServantError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL poaInternalGetServantError(  ) {
+        return poaInternalGetServantError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int MAKE_FACTORY_NOT_POA = SUNVMCID.value + 1010 ;
+    
+    public INTERNAL makeFactoryNotPoa( CompletionStatus cs, Throwable t, Object arg0) {
+        INTERNAL exc = new INTERNAL( MAKE_FACTORY_NOT_POA, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "POA.makeFactoryNotPoa",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL makeFactoryNotPoa( CompletionStatus cs, Object arg0) {
+        return makeFactoryNotPoa( cs, null, arg0 ) ;
+    }
+    
+    public INTERNAL makeFactoryNotPoa( Throwable t, Object arg0) {
+        return makeFactoryNotPoa( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public INTERNAL makeFactoryNotPoa(  Object arg0) {
+        return makeFactoryNotPoa( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int DUPLICATE_ORB_VERSION_SC = SUNVMCID.value + 1011 ;
+    
+    public INTERNAL duplicateOrbVersionSc( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( DUPLICATE_ORB_VERSION_SC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.duplicateOrbVersionSc",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL duplicateOrbVersionSc( CompletionStatus cs ) {
+        return duplicateOrbVersionSc( cs, null  ) ;
+    }
+    
+    public INTERNAL duplicateOrbVersionSc( Throwable t ) {
+        return duplicateOrbVersionSc( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL duplicateOrbVersionSc(  ) {
+        return duplicateOrbVersionSc( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PREINVOKE_CLONE_ERROR = SUNVMCID.value + 1012 ;
+    
+    public INTERNAL preinvokeCloneError( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( PREINVOKE_CLONE_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.preinvokeCloneError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL preinvokeCloneError( CompletionStatus cs ) {
+        return preinvokeCloneError( cs, null  ) ;
+    }
+    
+    public INTERNAL preinvokeCloneError( Throwable t ) {
+        return preinvokeCloneError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL preinvokeCloneError(  ) {
+        return preinvokeCloneError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PREINVOKE_POA_DESTROYED = SUNVMCID.value + 1013 ;
+    
+    public INTERNAL preinvokePoaDestroyed( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( PREINVOKE_POA_DESTROYED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.preinvokePoaDestroyed",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL preinvokePoaDestroyed( CompletionStatus cs ) {
+        return preinvokePoaDestroyed( cs, null  ) ;
+    }
+    
+    public INTERNAL preinvokePoaDestroyed( Throwable t ) {
+        return preinvokePoaDestroyed( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL preinvokePoaDestroyed(  ) {
+        return preinvokePoaDestroyed( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PMF_CREATE_RETAIN = SUNVMCID.value + 1014 ;
+    
+    public INTERNAL pmfCreateRetain( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( PMF_CREATE_RETAIN, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.pmfCreateRetain",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL pmfCreateRetain( CompletionStatus cs ) {
+        return pmfCreateRetain( cs, null  ) ;
+    }
+    
+    public INTERNAL pmfCreateRetain( Throwable t ) {
+        return pmfCreateRetain( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL pmfCreateRetain(  ) {
+        return pmfCreateRetain( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PMF_CREATE_NON_RETAIN = SUNVMCID.value + 1015 ;
+    
+    public INTERNAL pmfCreateNonRetain( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( PMF_CREATE_NON_RETAIN, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.pmfCreateNonRetain",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL pmfCreateNonRetain( CompletionStatus cs ) {
+        return pmfCreateNonRetain( cs, null  ) ;
+    }
+    
+    public INTERNAL pmfCreateNonRetain( Throwable t ) {
+        return pmfCreateNonRetain( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL pmfCreateNonRetain(  ) {
+        return pmfCreateNonRetain( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POLICY_MEDIATOR_BAD_POLICY_IN_FACTORY = SUNVMCID.value + 1016 ;
+    
+    public INTERNAL policyMediatorBadPolicyInFactory( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( POLICY_MEDIATOR_BAD_POLICY_IN_FACTORY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.policyMediatorBadPolicyInFactory",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL policyMediatorBadPolicyInFactory( CompletionStatus cs ) {
+        return policyMediatorBadPolicyInFactory( cs, null  ) ;
+    }
+    
+    public INTERNAL policyMediatorBadPolicyInFactory( Throwable t ) {
+        return policyMediatorBadPolicyInFactory( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL policyMediatorBadPolicyInFactory(  ) {
+        return policyMediatorBadPolicyInFactory( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_TO_ID_OAA = SUNVMCID.value + 1017 ;
+    
+    public INTERNAL servantToIdOaa( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( SERVANT_TO_ID_OAA, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantToIdOaa",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL servantToIdOaa( CompletionStatus cs ) {
+        return servantToIdOaa( cs, null  ) ;
+    }
+    
+    public INTERNAL servantToIdOaa( Throwable t ) {
+        return servantToIdOaa( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL servantToIdOaa(  ) {
+        return servantToIdOaa( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_TO_ID_SAA = SUNVMCID.value + 1018 ;
+    
+    public INTERNAL servantToIdSaa( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( SERVANT_TO_ID_SAA, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantToIdSaa",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL servantToIdSaa( CompletionStatus cs ) {
+        return servantToIdSaa( cs, null  ) ;
+    }
+    
+    public INTERNAL servantToIdSaa( Throwable t ) {
+        return servantToIdSaa( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL servantToIdSaa(  ) {
+        return servantToIdSaa( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_TO_ID_WP = SUNVMCID.value + 1019 ;
+    
+    public INTERNAL servantToIdWp( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( SERVANT_TO_ID_WP, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantToIdWp",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL servantToIdWp( CompletionStatus cs ) {
+        return servantToIdWp( cs, null  ) ;
+    }
+    
+    public INTERNAL servantToIdWp( Throwable t ) {
+        return servantToIdWp( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL servantToIdWp(  ) {
+        return servantToIdWp( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CANT_RESOLVE_ROOT_POA = SUNVMCID.value + 1020 ;
+    
+    public INTERNAL cantResolveRootPoa( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( CANT_RESOLVE_ROOT_POA, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.cantResolveRootPoa",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL cantResolveRootPoa( CompletionStatus cs ) {
+        return cantResolveRootPoa( cs, null  ) ;
+    }
+    
+    public INTERNAL cantResolveRootPoa( Throwable t ) {
+        return cantResolveRootPoa( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL cantResolveRootPoa(  ) {
+        return cantResolveRootPoa( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_MUST_BE_LOCAL = SUNVMCID.value + 1021 ;
+    
+    public INTERNAL servantMustBeLocal( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( SERVANT_MUST_BE_LOCAL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantMustBeLocal",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL servantMustBeLocal( CompletionStatus cs ) {
+        return servantMustBeLocal( cs, null  ) ;
+    }
+    
+    public INTERNAL servantMustBeLocal( Throwable t ) {
+        return servantMustBeLocal( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL servantMustBeLocal(  ) {
+        return servantMustBeLocal( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_PROFILES_IN_IOR = SUNVMCID.value + 1022 ;
+    
+    public INTERNAL noProfilesInIor( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( NO_PROFILES_IN_IOR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.noProfilesInIor",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL noProfilesInIor( CompletionStatus cs ) {
+        return noProfilesInIor( cs, null  ) ;
+    }
+    
+    public INTERNAL noProfilesInIor( Throwable t ) {
+        return noProfilesInIor( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL noProfilesInIor(  ) {
+        return noProfilesInIor( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int AOM_ENTRY_DEC_ZERO = SUNVMCID.value + 1023 ;
+    
+    public INTERNAL aomEntryDecZero( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( AOM_ENTRY_DEC_ZERO, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.aomEntryDecZero",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL aomEntryDecZero( CompletionStatus cs ) {
+        return aomEntryDecZero( cs, null  ) ;
+    }
+    
+    public INTERNAL aomEntryDecZero( Throwable t ) {
+        return aomEntryDecZero( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL aomEntryDecZero(  ) {
+        return aomEntryDecZero( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ADD_POA_INACTIVE = SUNVMCID.value + 1024 ;
+    
+    public INTERNAL addPoaInactive( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( ADD_POA_INACTIVE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.addPoaInactive",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL addPoaInactive( CompletionStatus cs ) {
+        return addPoaInactive( cs, null  ) ;
+    }
+    
+    public INTERNAL addPoaInactive( Throwable t ) {
+        return addPoaInactive( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL addPoaInactive(  ) {
+        return addPoaInactive( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ILLEGAL_POA_STATE_TRANS = SUNVMCID.value + 1025 ;
+    
+    public INTERNAL illegalPoaStateTrans( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( ILLEGAL_POA_STATE_TRANS, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.illegalPoaStateTrans",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL illegalPoaStateTrans( CompletionStatus cs ) {
+        return illegalPoaStateTrans( cs, null  ) ;
+    }
+    
+    public INTERNAL illegalPoaStateTrans( Throwable t ) {
+        return illegalPoaStateTrans( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL illegalPoaStateTrans(  ) {
+        return illegalPoaStateTrans( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNEXPECTED_EXCEPTION = SUNVMCID.value + 1026 ;
+    
+    public INTERNAL unexpectedException( CompletionStatus cs, Throwable t, Object arg0) {
+        INTERNAL exc = new INTERNAL( UNEXPECTED_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "POA.unexpectedException",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL unexpectedException( CompletionStatus cs, Object arg0) {
+        return unexpectedException( cs, null, arg0 ) ;
+    }
+    
+    public INTERNAL unexpectedException( Throwable t, Object arg0) {
+        return unexpectedException( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public INTERNAL unexpectedException(  Object arg0) {
+        return unexpectedException( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // NO_IMPLEMENT
+    ///////////////////////////////////////////////////////////
+    
+    public static final int SINGLE_THREAD_NOT_SUPPORTED = SUNVMCID.value + 1001 ;
+    
+    public NO_IMPLEMENT singleThreadNotSupported( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( SINGLE_THREAD_NOT_SUPPORTED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.singleThreadNotSupported",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT singleThreadNotSupported( CompletionStatus cs ) {
+        return singleThreadNotSupported( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT singleThreadNotSupported( Throwable t ) {
+        return singleThreadNotSupported( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT singleThreadNotSupported(  ) {
+        return singleThreadNotSupported( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int METHOD_NOT_IMPLEMENTED = SUNVMCID.value + 1002 ;
+    
+    public NO_IMPLEMENT methodNotImplemented( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( METHOD_NOT_IMPLEMENTED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.methodNotImplemented",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT methodNotImplemented( CompletionStatus cs ) {
+        return methodNotImplemented( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT methodNotImplemented( Throwable t ) {
+        return methodNotImplemented( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT methodNotImplemented(  ) {
+        return methodNotImplemented( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // OBJ_ADAPTER
+    ///////////////////////////////////////////////////////////
+    
+    public static final int POA_LOOKUP_ERROR = SUNVMCID.value + 1001 ;
+    
+    public OBJ_ADAPTER poaLookupError( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_LOOKUP_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaLookupError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaLookupError( CompletionStatus cs ) {
+        return poaLookupError( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaLookupError( Throwable t ) {
+        return poaLookupError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaLookupError(  ) {
+        return poaLookupError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_INACTIVE = SUNVMCID.value + 1002 ;
+    
+    public OBJ_ADAPTER poaInactive( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_INACTIVE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "POA.poaInactive",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaInactive( CompletionStatus cs ) {
+        return poaInactive( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaInactive( Throwable t ) {
+        return poaInactive( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaInactive(  ) {
+        return poaInactive( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_NO_SERVANT_MANAGER = SUNVMCID.value + 1003 ;
+    
+    public OBJ_ADAPTER poaNoServantManager( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_NO_SERVANT_MANAGER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaNoServantManager",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaNoServantManager( CompletionStatus cs ) {
+        return poaNoServantManager( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaNoServantManager( Throwable t ) {
+        return poaNoServantManager( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaNoServantManager(  ) {
+        return poaNoServantManager( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_NO_DEFAULT_SERVANT = SUNVMCID.value + 1004 ;
+    
+    public OBJ_ADAPTER poaNoDefaultServant( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_NO_DEFAULT_SERVANT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaNoDefaultServant",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaNoDefaultServant( CompletionStatus cs ) {
+        return poaNoDefaultServant( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaNoDefaultServant( Throwable t ) {
+        return poaNoDefaultServant( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaNoDefaultServant(  ) {
+        return poaNoDefaultServant( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_SERVANT_NOT_UNIQUE = SUNVMCID.value + 1005 ;
+    
+    public OBJ_ADAPTER poaServantNotUnique( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_SERVANT_NOT_UNIQUE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaServantNotUnique",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaServantNotUnique( CompletionStatus cs ) {
+        return poaServantNotUnique( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaServantNotUnique( Throwable t ) {
+        return poaServantNotUnique( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaServantNotUnique(  ) {
+        return poaServantNotUnique( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_WRONG_POLICY = SUNVMCID.value + 1006 ;
+    
+    public OBJ_ADAPTER poaWrongPolicy( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_WRONG_POLICY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaWrongPolicy",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaWrongPolicy( CompletionStatus cs ) {
+        return poaWrongPolicy( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaWrongPolicy( Throwable t ) {
+        return poaWrongPolicy( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaWrongPolicy(  ) {
+        return poaWrongPolicy( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int FINDPOA_ERROR = SUNVMCID.value + 1007 ;
+    
+    public OBJ_ADAPTER findpoaError( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( FINDPOA_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.findpoaError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER findpoaError( CompletionStatus cs ) {
+        return findpoaError( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER findpoaError( Throwable t ) {
+        return findpoaError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER findpoaError(  ) {
+        return findpoaError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_SERVANT_ACTIVATOR_LOOKUP_FAILED = SUNVMCID.value + 1009 ;
+    
+    public OBJ_ADAPTER poaServantActivatorLookupFailed( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_SERVANT_ACTIVATOR_LOOKUP_FAILED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaServantActivatorLookupFailed",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaServantActivatorLookupFailed( CompletionStatus cs ) {
+        return poaServantActivatorLookupFailed( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaServantActivatorLookupFailed( Throwable t ) {
+        return poaServantActivatorLookupFailed( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaServantActivatorLookupFailed(  ) {
+        return poaServantActivatorLookupFailed( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_BAD_SERVANT_MANAGER = SUNVMCID.value + 1010 ;
+    
+    public OBJ_ADAPTER poaBadServantManager( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_BAD_SERVANT_MANAGER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaBadServantManager",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaBadServantManager( CompletionStatus cs ) {
+        return poaBadServantManager( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaBadServantManager( Throwable t ) {
+        return poaBadServantManager( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaBadServantManager(  ) {
+        return poaBadServantManager( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_SERVANT_LOCATOR_LOOKUP_FAILED = SUNVMCID.value + 1011 ;
+    
+    public OBJ_ADAPTER poaServantLocatorLookupFailed( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_SERVANT_LOCATOR_LOOKUP_FAILED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaServantLocatorLookupFailed",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaServantLocatorLookupFailed( CompletionStatus cs ) {
+        return poaServantLocatorLookupFailed( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaServantLocatorLookupFailed( Throwable t ) {
+        return poaServantLocatorLookupFailed( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaServantLocatorLookupFailed(  ) {
+        return poaServantLocatorLookupFailed( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_UNKNOWN_POLICY = SUNVMCID.value + 1012 ;
+    
+    public OBJ_ADAPTER poaUnknownPolicy( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_UNKNOWN_POLICY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaUnknownPolicy",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaUnknownPolicy( CompletionStatus cs ) {
+        return poaUnknownPolicy( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaUnknownPolicy( Throwable t ) {
+        return poaUnknownPolicy( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaUnknownPolicy(  ) {
+        return poaUnknownPolicy( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_NOT_FOUND = SUNVMCID.value + 1013 ;
+    
+    public OBJ_ADAPTER poaNotFound( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( POA_NOT_FOUND, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.poaNotFound",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER poaNotFound( CompletionStatus cs ) {
+        return poaNotFound( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER poaNotFound( Throwable t ) {
+        return poaNotFound( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER poaNotFound(  ) {
+        return poaNotFound( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_LOOKUP = SUNVMCID.value + 1014 ;
+    
+    public OBJ_ADAPTER servantLookup( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( SERVANT_LOOKUP, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantLookup",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER servantLookup( CompletionStatus cs ) {
+        return servantLookup( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER servantLookup( Throwable t ) {
+        return servantLookup( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER servantLookup(  ) {
+        return servantLookup( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int LOCAL_SERVANT_LOOKUP = SUNVMCID.value + 1015 ;
+    
+    public OBJ_ADAPTER localServantLookup( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( LOCAL_SERVANT_LOOKUP, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.localServantLookup",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER localServantLookup( CompletionStatus cs ) {
+        return localServantLookup( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER localServantLookup( Throwable t ) {
+        return localServantLookup( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER localServantLookup(  ) {
+        return localServantLookup( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVANT_MANAGER_BAD_TYPE = SUNVMCID.value + 1016 ;
+    
+    public OBJ_ADAPTER servantManagerBadType( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( SERVANT_MANAGER_BAD_TYPE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.servantManagerBadType",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER servantManagerBadType( CompletionStatus cs ) {
+        return servantManagerBadType( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER servantManagerBadType( Throwable t ) {
+        return servantManagerBadType( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER servantManagerBadType(  ) {
+        return servantManagerBadType( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int DEFAULT_POA_NOT_POAIMPL = SUNVMCID.value + 1017 ;
+    
+    public OBJ_ADAPTER defaultPoaNotPoaimpl( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( DEFAULT_POA_NOT_POAIMPL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.defaultPoaNotPoaimpl",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER defaultPoaNotPoaimpl( CompletionStatus cs ) {
+        return defaultPoaNotPoaimpl( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER defaultPoaNotPoaimpl( Throwable t ) {
+        return defaultPoaNotPoaimpl( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER defaultPoaNotPoaimpl(  ) {
+        return defaultPoaNotPoaimpl( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int WRONG_POLICIES_FOR_THIS_OBJECT = SUNVMCID.value + 1018 ;
+    
+    public OBJ_ADAPTER wrongPoliciesForThisObject( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( WRONG_POLICIES_FOR_THIS_OBJECT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.wrongPoliciesForThisObject",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER wrongPoliciesForThisObject( CompletionStatus cs ) {
+        return wrongPoliciesForThisObject( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER wrongPoliciesForThisObject( Throwable t ) {
+        return wrongPoliciesForThisObject( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER wrongPoliciesForThisObject(  ) {
+        return wrongPoliciesForThisObject( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int THIS_OBJECT_SERVANT_NOT_ACTIVE = SUNVMCID.value + 1019 ;
+    
+    public OBJ_ADAPTER thisObjectServantNotActive( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( THIS_OBJECT_SERVANT_NOT_ACTIVE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.thisObjectServantNotActive",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER thisObjectServantNotActive( CompletionStatus cs ) {
+        return thisObjectServantNotActive( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER thisObjectServantNotActive( Throwable t ) {
+        return thisObjectServantNotActive( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER thisObjectServantNotActive(  ) {
+        return thisObjectServantNotActive( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int THIS_OBJECT_WRONG_POLICY = SUNVMCID.value + 1020 ;
+    
+    public OBJ_ADAPTER thisObjectWrongPolicy( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( THIS_OBJECT_WRONG_POLICY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.thisObjectWrongPolicy",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER thisObjectWrongPolicy( CompletionStatus cs ) {
+        return thisObjectWrongPolicy( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER thisObjectWrongPolicy( Throwable t ) {
+        return thisObjectWrongPolicy( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER thisObjectWrongPolicy(  ) {
+        return thisObjectWrongPolicy( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_CONTEXT = SUNVMCID.value + 1021 ;
+    
+    public OBJ_ADAPTER noContext( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( NO_CONTEXT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "POA.noContext",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER noContext( CompletionStatus cs ) {
+        return noContext( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER noContext( Throwable t ) {
+        return noContext( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER noContext(  ) {
+        return noContext( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INCARNATE_RETURNED_NULL = SUNVMCID.value + 1022 ;
+    
+    public OBJ_ADAPTER incarnateReturnedNull( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( INCARNATE_RETURNED_NULL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.incarnateReturnedNull",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER incarnateReturnedNull( CompletionStatus cs ) {
+        return incarnateReturnedNull( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER incarnateReturnedNull( Throwable t ) {
+        return incarnateReturnedNull( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER incarnateReturnedNull(  ) {
+        return incarnateReturnedNull( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INITIALIZE
+    ///////////////////////////////////////////////////////////
+    
+    public static final int JTS_INIT_ERROR = SUNVMCID.value + 1001 ;
+    
+    public INITIALIZE jtsInitError( CompletionStatus cs, Throwable t ) {
+        INITIALIZE exc = new INITIALIZE( JTS_INIT_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.jtsInitError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INITIALIZE jtsInitError( CompletionStatus cs ) {
+        return jtsInitError( cs, null  ) ;
+    }
+    
+    public INITIALIZE jtsInitError( Throwable t ) {
+        return jtsInitError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INITIALIZE jtsInitError(  ) {
+        return jtsInitError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PERSISTENT_SERVERID_NOT_SET = SUNVMCID.value + 1002 ;
+    
+    public INITIALIZE persistentServeridNotSet( CompletionStatus cs, Throwable t ) {
+        INITIALIZE exc = new INITIALIZE( PERSISTENT_SERVERID_NOT_SET, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.persistentServeridNotSet",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INITIALIZE persistentServeridNotSet( CompletionStatus cs ) {
+        return persistentServeridNotSet( cs, null  ) ;
+    }
+    
+    public INITIALIZE persistentServeridNotSet( Throwable t ) {
+        return persistentServeridNotSet( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INITIALIZE persistentServeridNotSet(  ) {
+        return persistentServeridNotSet( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PERSISTENT_SERVERPORT_NOT_SET = SUNVMCID.value + 1003 ;
+    
+    public INITIALIZE persistentServerportNotSet( CompletionStatus cs, Throwable t ) {
+        INITIALIZE exc = new INITIALIZE( PERSISTENT_SERVERPORT_NOT_SET, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.persistentServerportNotSet",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INITIALIZE persistentServerportNotSet( CompletionStatus cs ) {
+        return persistentServerportNotSet( cs, null  ) ;
+    }
+    
+    public INITIALIZE persistentServerportNotSet( Throwable t ) {
+        return persistentServerportNotSet( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INITIALIZE persistentServerportNotSet(  ) {
+        return persistentServerportNotSet( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ORBD_ERROR = SUNVMCID.value + 1004 ;
+    
+    public INITIALIZE orbdError( CompletionStatus cs, Throwable t ) {
+        INITIALIZE exc = new INITIALIZE( ORBD_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.orbdError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INITIALIZE orbdError( CompletionStatus cs ) {
+        return orbdError( cs, null  ) ;
+    }
+    
+    public INITIALIZE orbdError( Throwable t ) {
+        return orbdError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INITIALIZE orbdError(  ) {
+        return orbdError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BOOTSTRAP_ERROR = SUNVMCID.value + 1005 ;
+    
+    public INITIALIZE bootstrapError( CompletionStatus cs, Throwable t ) {
+        INITIALIZE exc = new INITIALIZE( BOOTSTRAP_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.bootstrapError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INITIALIZE bootstrapError( CompletionStatus cs ) {
+        return bootstrapError( cs, null  ) ;
+    }
+    
+    public INITIALIZE bootstrapError( Throwable t ) {
+        return bootstrapError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INITIALIZE bootstrapError(  ) {
+        return bootstrapError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // TRANSIENT
+    ///////////////////////////////////////////////////////////
+    
+    public static final int POA_DISCARDING = SUNVMCID.value + 1001 ;
+    
+    public TRANSIENT poaDiscarding( CompletionStatus cs, Throwable t ) {
+        TRANSIENT exc = new TRANSIENT( POA_DISCARDING, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "POA.poaDiscarding",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSIENT poaDiscarding( CompletionStatus cs ) {
+        return poaDiscarding( cs, null  ) ;
+    }
+    
+    public TRANSIENT poaDiscarding( Throwable t ) {
+        return poaDiscarding( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSIENT poaDiscarding(  ) {
+        return poaDiscarding( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // UNKNOWN
+    ///////////////////////////////////////////////////////////
+    
+    public static final int OTSHOOKEXCEPTION = SUNVMCID.value + 1001 ;
+    
+    public UNKNOWN otshookexception( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( OTSHOOKEXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.otshookexception",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN otshookexception( CompletionStatus cs ) {
+        return otshookexception( cs, null  ) ;
+    }
+    
+    public UNKNOWN otshookexception( Throwable t ) {
+        return otshookexception( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN otshookexception(  ) {
+        return otshookexception( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNKNOWN_SERVER_EXCEPTION = SUNVMCID.value + 1002 ;
+    
+    public UNKNOWN unknownServerException( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( UNKNOWN_SERVER_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.unknownServerException",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN unknownServerException( CompletionStatus cs ) {
+        return unknownServerException( cs, null  ) ;
+    }
+    
+    public UNKNOWN unknownServerException( Throwable t ) {
+        return unknownServerException( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN unknownServerException(  ) {
+        return unknownServerException( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNKNOWN_SERVERAPP_EXCEPTION = SUNVMCID.value + 1003 ;
+    
+    public UNKNOWN unknownServerappException( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( UNKNOWN_SERVERAPP_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.unknownServerappException",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN unknownServerappException( CompletionStatus cs ) {
+        return unknownServerappException( cs, null  ) ;
+    }
+    
+    public UNKNOWN unknownServerappException( Throwable t ) {
+        return unknownServerappException( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN unknownServerappException(  ) {
+        return unknownServerappException( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNKNOWN_LOCALINVOCATION_ERROR = SUNVMCID.value + 1004 ;
+    
+    public UNKNOWN unknownLocalinvocationError( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( UNKNOWN_LOCALINVOCATION_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.unknownLocalinvocationError",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN unknownLocalinvocationError( CompletionStatus cs ) {
+        return unknownLocalinvocationError( cs, null  ) ;
+    }
+    
+    public UNKNOWN unknownLocalinvocationError( Throwable t ) {
+        return unknownLocalinvocationError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN unknownLocalinvocationError(  ) {
+        return unknownLocalinvocationError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // OBJECT_NOT_EXIST
+    ///////////////////////////////////////////////////////////
+    
+    public static final int ADAPTER_ACTIVATOR_NONEXISTENT = SUNVMCID.value + 1001 ;
+    
+    public OBJECT_NOT_EXIST adapterActivatorNonexistent( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( ADAPTER_ACTIVATOR_NONEXISTENT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.adapterActivatorNonexistent",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterActivatorNonexistent( CompletionStatus cs ) {
+        return adapterActivatorNonexistent( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterActivatorNonexistent( Throwable t ) {
+        return adapterActivatorNonexistent( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterActivatorNonexistent(  ) {
+        return adapterActivatorNonexistent( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ADAPTER_ACTIVATOR_FAILED = SUNVMCID.value + 1002 ;
+    
+    public OBJECT_NOT_EXIST adapterActivatorFailed( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( ADAPTER_ACTIVATOR_FAILED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.adapterActivatorFailed",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterActivatorFailed( CompletionStatus cs ) {
+        return adapterActivatorFailed( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterActivatorFailed( Throwable t ) {
+        return adapterActivatorFailed( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterActivatorFailed(  ) {
+        return adapterActivatorFailed( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_SKELETON = SUNVMCID.value + 1003 ;
+    
+    public OBJECT_NOT_EXIST badSkeleton( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( BAD_SKELETON, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.badSkeleton",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST badSkeleton( CompletionStatus cs ) {
+        return badSkeleton( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST badSkeleton( Throwable t ) {
+        return badSkeleton( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST badSkeleton(  ) {
+        return badSkeleton( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NULL_SERVANT = SUNVMCID.value + 1004 ;
+    
+    public OBJECT_NOT_EXIST nullServant( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( NULL_SERVANT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "POA.nullServant",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST nullServant( CompletionStatus cs ) {
+        return nullServant( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST nullServant( Throwable t ) {
+        return nullServant( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST nullServant(  ) {
+        return nullServant( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ADAPTER_DESTROYED = SUNVMCID.value + 1005 ;
+    
+    public OBJECT_NOT_EXIST adapterDestroyed( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( ADAPTER_DESTROYED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "POA.adapterDestroyed",
+                parameters, POASystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterDestroyed( CompletionStatus cs ) {
+        return adapterDestroyed( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterDestroyed( Throwable t ) {
+        return adapterDestroyed( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST adapterDestroyed(  ) {
+        return adapterDestroyed( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    
+}

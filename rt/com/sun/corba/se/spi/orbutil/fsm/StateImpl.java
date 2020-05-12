@@ -1,104 +1,98 @@
-/*    */ package com.sun.corba.se.spi.orbutil.fsm;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.orbutil.fsm.GuardedAction;
-/*    */ import com.sun.corba.se.impl.orbutil.fsm.NameBase;
-/*    */ import java.util.HashMap;
-/*    */ import java.util.HashSet;
-/*    */ import java.util.Map;
-/*    */ import java.util.Set;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class StateImpl
-/*    */   extends NameBase
-/*    */   implements State
-/*    */ {
-/*    */   private Action defaultAction;
-/*    */   private State defaultNextState;
-/*    */   private Map inputToGuardedActions;
-/*    */   
-/*    */   public StateImpl(String paramString) {
-/* 48 */     super(paramString);
-/* 49 */     this.defaultAction = null;
-/* 50 */     this.inputToGuardedActions = new HashMap<>();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void preAction(FSM paramFSM) {}
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void postAction(FSM paramFSM) {}
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public State getDefaultNextState() {
-/* 65 */     return this.defaultNextState;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void setDefaultNextState(State paramState) {
-/* 70 */     this.defaultNextState = paramState;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Action getDefaultAction() {
-/* 75 */     return this.defaultAction;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void setDefaultAction(Action paramAction) {
-/* 80 */     this.defaultAction = paramAction;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void addGuardedAction(Input paramInput, GuardedAction paramGuardedAction) {
-/* 85 */     Set<GuardedAction> set = (Set)this.inputToGuardedActions.get(paramInput);
-/* 86 */     if (set == null) {
-/* 87 */       set = new HashSet();
-/* 88 */       this.inputToGuardedActions.put(paramInput, set);
-/*    */     } 
-/*    */     
-/* 91 */     set.add(paramGuardedAction);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Set getGuardedActions(Input paramInput) {
-/* 96 */     return (Set)this.inputToGuardedActions.get(paramInput);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\orbutil\fsm\StateImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.orbutil.fsm ;
+
+import com.sun.corba.se.impl.orbutil.fsm.NameBase ;
+
+import java.util.Map ;
+import java.util.HashMap ;
+import java.util.Set ;
+import java.util.HashSet ;
+
+import com.sun.corba.se.impl.orbutil.fsm.GuardedAction ;
+import com.sun.corba.se.impl.orbutil.fsm.NameBase ;
+
+/** Base class for all states in a StateEngine.  This must be used
+* as the base class for all states in transitions added to a StateEngine.
+*/
+public class StateImpl extends NameBase implements State {
+    private Action defaultAction ;
+    private State defaultNextState ;
+    private Map inputToGuardedActions ;
+
+    public StateImpl( String name )
+    {
+        super( name ) ;
+        defaultAction = null ;
+        inputToGuardedActions = new HashMap() ;
+    }
+
+    public void preAction( FSM fsm )
+    {
+    }
+
+    public void postAction( FSM fsm )
+    {
+    }
+
+    // Methods for use only by StateEngineImpl.
+
+    public State getDefaultNextState()
+    {
+        return defaultNextState ;
+    }
+
+    public void setDefaultNextState( State defaultNextState )
+    {
+        this.defaultNextState = defaultNextState ;
+    }
+
+    public Action getDefaultAction()
+    {
+        return defaultAction ;
+    }
+
+    public void setDefaultAction( Action defaultAction )
+    {
+        this.defaultAction = defaultAction ;
+    }
+
+    public void addGuardedAction( Input in, GuardedAction ga )
+    {
+        Set gas = (Set)inputToGuardedActions.get( in ) ;
+        if (gas == null) {
+            gas = new HashSet() ;
+            inputToGuardedActions.put( in, gas ) ;
+        }
+
+        gas.add( ga ) ;
+    }
+
+    public Set getGuardedActions( Input in )
+    {
+        return (Set)inputToGuardedActions.get( in ) ;
+    }
+}

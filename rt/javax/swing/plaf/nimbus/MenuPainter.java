@@ -1,159 +1,157 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.geom.Ellipse2D;
-/*     */ import java.awt.geom.Path2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.geom.RoundRectangle2D;
-/*     */ import javax.swing.JComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class MenuPainter
-/*     */   extends AbstractRegionPainter
-/*     */ {
-/*     */   static final int BACKGROUND_DISABLED = 1;
-/*     */   static final int BACKGROUND_ENABLED = 2;
-/*     */   static final int BACKGROUND_ENABLED_SELECTED = 3;
-/*     */   static final int ARROWICON_DISABLED = 4;
-/*     */   static final int ARROWICON_ENABLED = 5;
-/*     */   static final int ARROWICON_ENABLED_SELECTED = 6;
-/*     */   private int state;
-/*     */   private AbstractRegionPainter.PaintContext ctx;
-/*  51 */   private Path2D path = new Path2D.Float();
-/*  52 */   private Rectangle2D rect = new Rectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*  53 */   private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-/*  54 */   private Ellipse2D ellipse = new Ellipse2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  59 */   private Color color1 = decodeColor("nimbusSelection", 0.0F, 0.0F, 0.0F, 0);
-/*  60 */   private Color color2 = decodeColor("nimbusBlueGrey", 0.0F, -0.08983666F, -0.17647058F, 0);
-/*  61 */   private Color color3 = decodeColor("nimbusBlueGrey", 0.055555582F, -0.09663743F, -0.4627451F, 0);
-/*  62 */   private Color color4 = new Color(255, 255, 255, 255);
-/*     */ 
-/*     */   
-/*     */   private Object[] componentColors;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MenuPainter(AbstractRegionPainter.PaintContext paramPaintContext, int paramInt) {
-/*  70 */     this.state = paramInt;
-/*  71 */     this.ctx = paramPaintContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void doPaint(Graphics2D paramGraphics2D, JComponent paramJComponent, int paramInt1, int paramInt2, Object[] paramArrayOfObject) {
-/*  77 */     this.componentColors = paramArrayOfObject;
-/*     */ 
-/*     */     
-/*  80 */     switch (this.state) { case 3:
-/*  81 */         paintBackgroundEnabledAndSelected(paramGraphics2D); break;
-/*  82 */       case 4: paintarrowIconDisabled(paramGraphics2D); break;
-/*  83 */       case 5: paintarrowIconEnabled(paramGraphics2D); break;
-/*  84 */       case 6: paintarrowIconEnabledAndSelected(paramGraphics2D);
-/*     */         break; }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final AbstractRegionPainter.PaintContext getPaintContext() {
-/*  93 */     return this.ctx;
-/*     */   }
-/*     */   
-/*     */   private void paintBackgroundEnabledAndSelected(Graphics2D paramGraphics2D) {
-/*  97 */     this.rect = decodeRect1();
-/*  98 */     paramGraphics2D.setPaint(this.color1);
-/*  99 */     paramGraphics2D.fill(this.rect);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintarrowIconDisabled(Graphics2D paramGraphics2D) {
-/* 104 */     this.path = decodePath1();
-/* 105 */     paramGraphics2D.setPaint(this.color2);
-/* 106 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintarrowIconEnabled(Graphics2D paramGraphics2D) {
-/* 111 */     this.path = decodePath1();
-/* 112 */     paramGraphics2D.setPaint(this.color3);
-/* 113 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintarrowIconEnabledAndSelected(Graphics2D paramGraphics2D) {
-/* 118 */     this.path = decodePath2();
-/* 119 */     paramGraphics2D.setPaint(this.color4);
-/* 120 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Rectangle2D decodeRect1() {
-/* 127 */     this.rect.setRect(decodeX(1.0F), 
-/* 128 */         decodeY(1.0F), (
-/* 129 */         decodeX(2.0F) - decodeX(1.0F)), (
-/* 130 */         decodeY(2.0F) - decodeY(1.0F)));
-/* 131 */     return this.rect;
-/*     */   }
-/*     */   
-/*     */   private Path2D decodePath1() {
-/* 135 */     this.path.reset();
-/* 136 */     this.path.moveTo(decodeX(0.0F), decodeY(0.2F));
-/* 137 */     this.path.lineTo(decodeX(2.7512195F), decodeY(2.102439F));
-/* 138 */     this.path.lineTo(decodeX(0.0F), decodeY(3.0F));
-/* 139 */     this.path.lineTo(decodeX(0.0F), decodeY(0.2F));
-/* 140 */     this.path.closePath();
-/* 141 */     return this.path;
-/*     */   }
-/*     */   
-/*     */   private Path2D decodePath2() {
-/* 145 */     this.path.reset();
-/* 146 */     this.path.moveTo(decodeX(0.0F), decodeY(1.0F));
-/* 147 */     this.path.lineTo(decodeX(1.9529617F), decodeY(1.5625F));
-/* 148 */     this.path.lineTo(decodeX(0.0F), decodeY(3.0F));
-/* 149 */     this.path.lineTo(decodeX(0.0F), decodeY(1.0F));
-/* 150 */     this.path.closePath();
-/* 151 */     return this.path;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\MenuPainter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.*;
+import java.awt.geom.*;
+import java.awt.image.*;
+import javax.swing.*;
+import javax.swing.Painter;
+
+
+final class MenuPainter extends AbstractRegionPainter {
+    //package private integers representing the available states that
+    //this painter will paint. These are used when creating a new instance
+    //of MenuPainter to determine which region/state is being painted
+    //by that instance.
+    static final int BACKGROUND_DISABLED = 1;
+    static final int BACKGROUND_ENABLED = 2;
+    static final int BACKGROUND_ENABLED_SELECTED = 3;
+    static final int ARROWICON_DISABLED = 4;
+    static final int ARROWICON_ENABLED = 5;
+    static final int ARROWICON_ENABLED_SELECTED = 6;
+
+
+    private int state; //refers to one of the static final ints above
+    private PaintContext ctx;
+
+    //the following 4 variables are reused during the painting code of the layers
+    private Path2D path = new Path2D.Float();
+    private Rectangle2D rect = new Rectangle2D.Float(0, 0, 0, 0);
+    private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0, 0, 0, 0, 0, 0);
+    private Ellipse2D ellipse = new Ellipse2D.Float(0, 0, 0, 0);
+
+    //All Colors used for painting are stored here. Ideally, only those colors being used
+    //by a particular instance of MenuPainter would be created. For the moment at least,
+    //however, all are created for each instance.
+    private Color color1 = decodeColor("nimbusSelection", 0.0f, 0.0f, 0.0f, 0);
+    private Color color2 = decodeColor("nimbusBlueGrey", 0.0f, -0.08983666f, -0.17647058f, 0);
+    private Color color3 = decodeColor("nimbusBlueGrey", 0.055555582f, -0.09663743f, -0.4627451f, 0);
+    private Color color4 = new Color(255, 255, 255, 255);
+
+
+    //Array of current component colors, updated in each paint call
+    private Object[] componentColors;
+
+    public MenuPainter(PaintContext ctx, int state) {
+        super();
+        this.state = state;
+        this.ctx = ctx;
+    }
+
+    @Override
+    protected void doPaint(Graphics2D g, JComponent c, int width, int height, Object[] extendedCacheKeys) {
+        //populate componentColors array with colors calculated in getExtendedCacheKeys call
+        componentColors = extendedCacheKeys;
+        //generate this entire method. Each state/bg/fg/border combo that has
+        //been painted gets its own KEY and paint method.
+        switch(state) {
+            case BACKGROUND_ENABLED_SELECTED: paintBackgroundEnabledAndSelected(g); break;
+            case ARROWICON_DISABLED: paintarrowIconDisabled(g); break;
+            case ARROWICON_ENABLED: paintarrowIconEnabled(g); break;
+            case ARROWICON_ENABLED_SELECTED: paintarrowIconEnabledAndSelected(g); break;
+
+        }
+    }
+        
+
+
+    @Override
+    protected final PaintContext getPaintContext() {
+        return ctx;
+    }
+
+    private void paintBackgroundEnabledAndSelected(Graphics2D g) {
+        rect = decodeRect1();
+        g.setPaint(color1);
+        g.fill(rect);
+
+    }
+
+    private void paintarrowIconDisabled(Graphics2D g) {
+        path = decodePath1();
+        g.setPaint(color2);
+        g.fill(path);
+
+    }
+
+    private void paintarrowIconEnabled(Graphics2D g) {
+        path = decodePath1();
+        g.setPaint(color3);
+        g.fill(path);
+
+    }
+
+    private void paintarrowIconEnabledAndSelected(Graphics2D g) {
+        path = decodePath2();
+        g.setPaint(color4);
+        g.fill(path);
+
+    }
+
+
+
+    private Rectangle2D decodeRect1() {
+            rect.setRect(decodeX(1.0f), //x
+                         decodeY(1.0f), //y
+                         decodeX(2.0f) - decodeX(1.0f), //width
+                         decodeY(2.0f) - decodeY(1.0f)); //height
+        return rect;
+    }
+
+    private Path2D decodePath1() {
+        path.reset();
+        path.moveTo(decodeX(0.0f), decodeY(0.2f));
+        path.lineTo(decodeX(2.7512195f), decodeY(2.102439f));
+        path.lineTo(decodeX(0.0f), decodeY(3.0f));
+        path.lineTo(decodeX(0.0f), decodeY(0.2f));
+        path.closePath();
+        return path;
+    }
+
+    private Path2D decodePath2() {
+        path.reset();
+        path.moveTo(decodeX(0.0f), decodeY(1.0f));
+        path.lineTo(decodeX(1.9529617f), decodeY(1.5625f));
+        path.lineTo(decodeX(0.0f), decodeY(3.0f));
+        path.lineTo(decodeX(0.0f), decodeY(1.0f));
+        path.closePath();
+        return path;
+    }
+
+
+
+
+}

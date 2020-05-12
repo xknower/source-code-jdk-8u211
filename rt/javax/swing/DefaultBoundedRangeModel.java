@@ -1,429 +1,423 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import javax.swing.event.ChangeEvent;
-/*     */ import javax.swing.event.ChangeListener;
-/*     */ import javax.swing.event.EventListenerList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DefaultBoundedRangeModel
-/*     */   implements BoundedRangeModel, Serializable
-/*     */ {
-/*  55 */   protected transient ChangeEvent changeEvent = null;
-/*     */ 
-/*     */   
-/*  58 */   protected EventListenerList listenerList = new EventListenerList();
-/*     */   
-/*  60 */   private int value = 0;
-/*  61 */   private int extent = 0;
-/*  62 */   private int min = 0;
-/*  63 */   private int max = 100;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isAdjusting = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DefaultBoundedRangeModel() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DefaultBoundedRangeModel(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  92 */     if (paramInt4 >= paramInt3 && paramInt1 >= paramInt3 && paramInt1 + paramInt2 >= paramInt1 && paramInt1 + paramInt2 <= paramInt4) {
-/*     */ 
-/*     */ 
-/*     */       
-/*  96 */       this.value = paramInt1;
-/*  97 */       this.extent = paramInt2;
-/*  98 */       this.min = paramInt3;
-/*  99 */       this.max = paramInt4;
-/*     */     } else {
-/*     */       
-/* 102 */       throw new IllegalArgumentException("invalid range properties");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getValue() {
-/* 114 */     return this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getExtent() {
-/* 125 */     return this.extent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMinimum() {
-/* 136 */     return this.min;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMaximum() {
-/* 147 */     return this.max;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValue(int paramInt) {
-/* 162 */     paramInt = Math.min(paramInt, Integer.MAX_VALUE - this.extent);
-/*     */     
-/* 164 */     int i = Math.max(paramInt, this.min);
-/* 165 */     if (i + this.extent > this.max) {
-/* 166 */       i = this.max - this.extent;
-/*     */     }
-/* 168 */     setRangeProperties(i, this.extent, this.min, this.max, this.isAdjusting);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setExtent(int paramInt) {
-/* 182 */     int i = Math.max(0, paramInt);
-/* 183 */     if (this.value + i > this.max) {
-/* 184 */       i = this.max - this.value;
-/*     */     }
-/* 186 */     setRangeProperties(this.value, i, this.min, this.max, this.isAdjusting);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setMinimum(int paramInt) {
-/* 200 */     int i = Math.max(paramInt, this.max);
-/* 201 */     int j = Math.max(paramInt, this.value);
-/* 202 */     int k = Math.min(i - j, this.extent);
-/* 203 */     setRangeProperties(j, k, paramInt, i, this.isAdjusting);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setMaximum(int paramInt) {
-/* 216 */     int i = Math.min(paramInt, this.min);
-/* 217 */     int j = Math.min(paramInt - i, this.extent);
-/* 218 */     int k = Math.min(paramInt - j, this.value);
-/* 219 */     setRangeProperties(k, j, i, paramInt, this.isAdjusting);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValueIsAdjusting(boolean paramBoolean) {
-/* 231 */     setRangeProperties(this.value, this.extent, this.min, this.max, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getValueIsAdjusting() {
-/* 244 */     return this.isAdjusting;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRangeProperties(int paramInt1, int paramInt2, int paramInt3, int paramInt4, boolean paramBoolean) {
-/* 266 */     if (paramInt3 > paramInt4) {
-/* 267 */       paramInt3 = paramInt4;
-/*     */     }
-/* 269 */     if (paramInt1 > paramInt4) {
-/* 270 */       paramInt4 = paramInt1;
-/*     */     }
-/* 272 */     if (paramInt1 < paramInt3) {
-/* 273 */       paramInt3 = paramInt1;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 280 */     if (paramInt2 + paramInt1 > paramInt4) {
-/* 281 */       paramInt2 = paramInt4 - paramInt1;
-/*     */     }
-/*     */     
-/* 284 */     if (paramInt2 < 0) {
-/* 285 */       paramInt2 = 0;
-/*     */     }
-/*     */     
-/* 288 */     boolean bool = (paramInt1 != this.value || paramInt2 != this.extent || paramInt3 != this.min || paramInt4 != this.max || paramBoolean != this.isAdjusting) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 295 */     if (bool) {
-/* 296 */       this.value = paramInt1;
-/* 297 */       this.extent = paramInt2;
-/* 298 */       this.min = paramInt3;
-/* 299 */       this.max = paramInt4;
-/* 300 */       this.isAdjusting = paramBoolean;
-/*     */       
-/* 302 */       fireStateChanged();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addChangeListener(ChangeListener paramChangeListener) {
-/* 316 */     this.listenerList.add(ChangeListener.class, paramChangeListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeChangeListener(ChangeListener paramChangeListener) {
-/* 328 */     this.listenerList.remove(ChangeListener.class, paramChangeListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ChangeListener[] getChangeListeners() {
-/* 346 */     return this.listenerList.<ChangeListener>getListeners(ChangeListener.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fireStateChanged() {
-/* 358 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/* 359 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 360 */       if (arrayOfObject[i] == ChangeListener.class) {
-/* 361 */         if (this.changeEvent == null) {
-/* 362 */           this.changeEvent = new ChangeEvent(this);
-/*     */         }
-/* 364 */         ((ChangeListener)arrayOfObject[i + 1]).stateChanged(this.changeEvent);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 380 */     String str = "value=" + getValue() + ", extent=" + getExtent() + ", min=" + getMinimum() + ", max=" + getMaximum() + ", adj=" + getValueIsAdjusting();
-/*     */     
-/* 382 */     return getClass().getName() + "[" + str + "]";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T extends java.util.EventListener> T[] getListeners(Class<T> paramClass) {
-/* 421 */     return this.listenerList.getListeners(paramClass);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DefaultBoundedRangeModel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import javax.swing.event.*;
+import java.io.Serializable;
+import java.util.EventListener;
+
+/**
+ * A generic implementation of BoundedRangeModel.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author David Kloba
+ * @author Hans Muller
+ * @see BoundedRangeModel
+ */
+public class DefaultBoundedRangeModel implements BoundedRangeModel, Serializable
+{
+    /**
+     * Only one <code>ChangeEvent</code> is needed per model instance since the
+     * event's only (read-only) state is the source property.  The source
+     * of events generated here is always "this".
+     */
+    protected transient ChangeEvent changeEvent = null;
+
+    /** The listeners waiting for model changes. */
+    protected EventListenerList listenerList = new EventListenerList();
+
+    private int value = 0;
+    private int extent = 0;
+    private int min = 0;
+    private int max = 100;
+    private boolean isAdjusting = false;
+
+
+    /**
+     * Initializes all of the properties with default values.
+     * Those values are:
+     * <ul>
+     * <li><code>value</code> = 0
+     * <li><code>extent</code> = 0
+     * <li><code>minimum</code> = 0
+     * <li><code>maximum</code> = 100
+     * <li><code>adjusting</code> = false
+     * </ul>
+     */
+    public DefaultBoundedRangeModel() {
+    }
+
+
+    /**
+     * Initializes value, extent, minimum and maximum. Adjusting is false.
+     * Throws an <code>IllegalArgumentException</code> if the following
+     * constraints aren't satisfied:
+     * <pre>
+     * min &lt;= value &lt;= value+extent &lt;= max
+     * </pre>
+     */
+    public DefaultBoundedRangeModel(int value, int extent, int min, int max)
+    {
+        if ((max >= min) &&
+            (value >= min) &&
+            ((value + extent) >= value) &&
+            ((value + extent) <= max)) {
+            this.value = value;
+            this.extent = extent;
+            this.min = min;
+            this.max = max;
+        }
+        else {
+            throw new IllegalArgumentException("invalid range properties");
+        }
+    }
+
+
+    /**
+     * Returns the model's current value.
+     * @return the model's current value
+     * @see #setValue
+     * @see BoundedRangeModel#getValue
+     */
+    public int getValue() {
+      return value;
+    }
+
+
+    /**
+     * Returns the model's extent.
+     * @return the model's extent
+     * @see #setExtent
+     * @see BoundedRangeModel#getExtent
+     */
+    public int getExtent() {
+      return extent;
+    }
+
+
+    /**
+     * Returns the model's minimum.
+     * @return the model's minimum
+     * @see #setMinimum
+     * @see BoundedRangeModel#getMinimum
+     */
+    public int getMinimum() {
+      return min;
+    }
+
+
+    /**
+     * Returns the model's maximum.
+     * @return  the model's maximum
+     * @see #setMaximum
+     * @see BoundedRangeModel#getMaximum
+     */
+    public int getMaximum() {
+        return max;
+    }
+
+
+    /**
+     * Sets the current value of the model. For a slider, that
+     * determines where the knob appears. Ensures that the new
+     * value, <I>n</I> falls within the model's constraints:
+     * <pre>
+     *     minimum &lt;= value &lt;= value+extent &lt;= maximum
+     * </pre>
+     *
+     * @see BoundedRangeModel#setValue
+     */
+    public void setValue(int n) {
+        n = Math.min(n, Integer.MAX_VALUE - extent);
+
+        int newValue = Math.max(n, min);
+        if (newValue + extent > max) {
+            newValue = max - extent;
+        }
+        setRangeProperties(newValue, extent, min, max, isAdjusting);
+    }
+
+
+    /**
+     * Sets the extent to <I>n</I> after ensuring that <I>n</I>
+     * is greater than or equal to zero and falls within the model's
+     * constraints:
+     * <pre>
+     *     minimum &lt;= value &lt;= value+extent &lt;= maximum
+     * </pre>
+     * @see BoundedRangeModel#setExtent
+     */
+    public void setExtent(int n) {
+        int newExtent = Math.max(0, n);
+        if(value + newExtent > max) {
+            newExtent = max - value;
+        }
+        setRangeProperties(value, newExtent, min, max, isAdjusting);
+    }
+
+
+    /**
+     * Sets the minimum to <I>n</I> after ensuring that <I>n</I>
+     * that the other three properties obey the model's constraints:
+     * <pre>
+     *     minimum &lt;= value &lt;= value+extent &lt;= maximum
+     * </pre>
+     * @see #getMinimum
+     * @see BoundedRangeModel#setMinimum
+     */
+    public void setMinimum(int n) {
+        int newMax = Math.max(n, max);
+        int newValue = Math.max(n, value);
+        int newExtent = Math.min(newMax - newValue, extent);
+        setRangeProperties(newValue, newExtent, n, newMax, isAdjusting);
+    }
+
+
+    /**
+     * Sets the maximum to <I>n</I> after ensuring that <I>n</I>
+     * that the other three properties obey the model's constraints:
+     * <pre>
+     *     minimum &lt;= value &lt;= value+extent &lt;= maximum
+     * </pre>
+     * @see BoundedRangeModel#setMaximum
+     */
+    public void setMaximum(int n) {
+        int newMin = Math.min(n, min);
+        int newExtent = Math.min(n - newMin, extent);
+        int newValue = Math.min(n - newExtent, value);
+        setRangeProperties(newValue, newExtent, newMin, n, isAdjusting);
+    }
+
+
+    /**
+     * Sets the <code>valueIsAdjusting</code> property.
+     *
+     * @see #getValueIsAdjusting
+     * @see #setValue
+     * @see BoundedRangeModel#setValueIsAdjusting
+     */
+    public void setValueIsAdjusting(boolean b) {
+        setRangeProperties(value, extent, min, max, b);
+    }
+
+
+    /**
+     * Returns true if the value is in the process of changing
+     * as a result of actions being taken by the user.
+     *
+     * @return the value of the <code>valueIsAdjusting</code> property
+     * @see #setValue
+     * @see BoundedRangeModel#getValueIsAdjusting
+     */
+    public boolean getValueIsAdjusting() {
+        return isAdjusting;
+    }
+
+
+    /**
+     * Sets all of the <code>BoundedRangeModel</code> properties after forcing
+     * the arguments to obey the usual constraints:
+     * <pre>
+     *     minimum &lt;= value &lt;= value+extent &lt;= maximum
+     * </pre>
+     * <p>
+     * At most, one <code>ChangeEvent</code> is generated.
+     *
+     * @see BoundedRangeModel#setRangeProperties
+     * @see #setValue
+     * @see #setExtent
+     * @see #setMinimum
+     * @see #setMaximum
+     * @see #setValueIsAdjusting
+     */
+    public void setRangeProperties(int newValue, int newExtent, int newMin, int newMax, boolean adjusting)
+    {
+        if (newMin > newMax) {
+            newMin = newMax;
+        }
+        if (newValue > newMax) {
+            newMax = newValue;
+        }
+        if (newValue < newMin) {
+            newMin = newValue;
+        }
+
+        /* Convert the addends to long so that extent can be
+         * Integer.MAX_VALUE without rolling over the sum.
+         * A JCK test covers this, see bug 4097718.
+         */
+        if (((long)newExtent + (long)newValue) > newMax) {
+            newExtent = newMax - newValue;
+        }
+
+        if (newExtent < 0) {
+            newExtent = 0;
+        }
+
+        boolean isChange =
+            (newValue != value) ||
+            (newExtent != extent) ||
+            (newMin != min) ||
+            (newMax != max) ||
+            (adjusting != isAdjusting);
+
+        if (isChange) {
+            value = newValue;
+            extent = newExtent;
+            min = newMin;
+            max = newMax;
+            isAdjusting = adjusting;
+
+            fireStateChanged();
+        }
+    }
+
+
+    /**
+     * Adds a <code>ChangeListener</code>.  The change listeners are run each
+     * time any one of the Bounded Range model properties changes.
+     *
+     * @param l the ChangeListener to add
+     * @see #removeChangeListener
+     * @see BoundedRangeModel#addChangeListener
+     */
+    public void addChangeListener(ChangeListener l) {
+        listenerList.add(ChangeListener.class, l);
+    }
+
+
+    /**
+     * Removes a <code>ChangeListener</code>.
+     *
+     * @param l the <code>ChangeListener</code> to remove
+     * @see #addChangeListener
+     * @see BoundedRangeModel#removeChangeListener
+     */
+    public void removeChangeListener(ChangeListener l) {
+        listenerList.remove(ChangeListener.class, l);
+    }
+
+
+    /**
+     * Returns an array of all the change listeners
+     * registered on this <code>DefaultBoundedRangeModel</code>.
+     *
+     * @return all of this model's <code>ChangeListener</code>s
+     *         or an empty
+     *         array if no change listeners are currently registered
+     *
+     * @see #addChangeListener
+     * @see #removeChangeListener
+     *
+     * @since 1.4
+     */
+    public ChangeListener[] getChangeListeners() {
+        return listenerList.getListeners(ChangeListener.class);
+    }
+
+
+    /**
+     * Runs each <code>ChangeListener</code>'s <code>stateChanged</code> method.
+     *
+     * @see #setRangeProperties
+     * @see EventListenerList
+     */
+    protected void fireStateChanged()
+    {
+        Object[] listeners = listenerList.getListenerList();
+        for (int i = listeners.length - 2; i >= 0; i -=2 ) {
+            if (listeners[i] == ChangeListener.class) {
+                if (changeEvent == null) {
+                    changeEvent = new ChangeEvent(this);
+                }
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
+
+
+    /**
+     * Returns a string that displays all of the
+     * <code>BoundedRangeModel</code> properties.
+     */
+    public String toString()  {
+        String modelString =
+            "value=" + getValue() + ", " +
+            "extent=" + getExtent() + ", " +
+            "min=" + getMinimum() + ", " +
+            "max=" + getMaximum() + ", " +
+            "adj=" + getValueIsAdjusting();
+
+        return getClass().getName() + "[" + modelString + "]";
+    }
+
+    /**
+     * Returns an array of all the objects currently registered as
+     * <code><em>Foo</em>Listener</code>s
+     * upon this model.
+     * <code><em>Foo</em>Listener</code>s
+     * are registered using the <code>add<em>Foo</em>Listener</code> method.
+     * <p>
+     * You can specify the <code>listenerType</code> argument
+     * with a class literal, such as <code><em>Foo</em>Listener.class</code>.
+     * For example, you can query a <code>DefaultBoundedRangeModel</code>
+     * instance <code>m</code>
+     * for its change listeners
+     * with the following code:
+     *
+     * <pre>ChangeListener[] cls = (ChangeListener[])(m.getListeners(ChangeListener.class));</pre>
+     *
+     * If no such listeners exist,
+     * this method returns an empty array.
+     *
+     * @param listenerType  the type of listeners requested;
+     *          this parameter should specify an interface
+     *          that descends from <code>java.util.EventListener</code>
+     * @return an array of all objects registered as
+     *          <code><em>Foo</em>Listener</code>s
+     *          on this model,
+     *          or an empty array if no such
+     *          listeners have been added
+     * @exception ClassCastException if <code>listenerType</code> doesn't
+     *          specify a class or interface that implements
+     *          <code>java.util.EventListener</code>
+     *
+     * @see #getChangeListeners
+     *
+     * @since 1.3
+     */
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+        return listenerList.getListeners(listenerType);
+    }
+}

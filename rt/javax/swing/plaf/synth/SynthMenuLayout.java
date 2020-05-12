@@ -1,59 +1,53 @@
-/*    */ package javax.swing.plaf.synth;
-/*    */ 
-/*    */ import java.awt.Container;
-/*    */ import java.awt.Dimension;
-/*    */ import javax.swing.JPopupMenu;
-/*    */ import javax.swing.plaf.basic.DefaultMenuLayout;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class SynthMenuLayout
-/*    */   extends DefaultMenuLayout
-/*    */ {
-/*    */   public SynthMenuLayout(Container paramContainer, int paramInt) {
-/* 41 */     super(paramContainer, paramInt);
-/*    */   }
-/*    */   
-/*    */   public Dimension preferredLayoutSize(Container paramContainer) {
-/* 45 */     if (paramContainer instanceof JPopupMenu) {
-/* 46 */       JPopupMenu jPopupMenu = (JPopupMenu)paramContainer;
-/* 47 */       jPopupMenu.putClientProperty(SynthMenuItemLayoutHelper.MAX_ACC_OR_ARROW_WIDTH, null);
-/*    */     } 
-/*    */ 
-/*    */     
-/* 51 */     return super.preferredLayoutSize(paramContainer);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthMenuLayout.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.plaf.basic.DefaultMenuLayout;
+import javax.swing.JPopupMenu;
+import java.awt.Container;
+import java.awt.Dimension;
+
+/**
+ * {@inheritDoc}
+ *
+ * @author Georges Saab
+ */
+
+class SynthMenuLayout extends DefaultMenuLayout {
+    public SynthMenuLayout(Container target, int axis) {
+        super(target, axis);
+    }
+
+    public Dimension preferredLayoutSize(Container target) {
+        if (target instanceof JPopupMenu) {
+            JPopupMenu popupMenu = (JPopupMenu) target;
+            popupMenu.putClientProperty(
+                    SynthMenuItemLayoutHelper.MAX_ACC_OR_ARROW_WIDTH, null);
+        }
+
+        return super.preferredLayoutSize(target);
+    }
+}

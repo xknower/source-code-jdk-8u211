@@ -1,291 +1,288 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Paint;
-/*     */ import java.awt.Shape;
-/*     */ import java.awt.geom.Ellipse2D;
-/*     */ import java.awt.geom.Path2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.geom.RoundRectangle2D;
-/*     */ import javax.swing.JComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ToolBarButtonPainter
-/*     */   extends AbstractRegionPainter
-/*     */ {
-/*     */   static final int BACKGROUND_ENABLED = 1;
-/*     */   static final int BACKGROUND_FOCUSED = 2;
-/*     */   static final int BACKGROUND_MOUSEOVER = 3;
-/*     */   static final int BACKGROUND_MOUSEOVER_FOCUSED = 4;
-/*     */   static final int BACKGROUND_PRESSED = 5;
-/*     */   static final int BACKGROUND_PRESSED_FOCUSED = 6;
-/*     */   private int state;
-/*     */   private AbstractRegionPainter.PaintContext ctx;
-/*  51 */   private Path2D path = new Path2D.Float();
-/*  52 */   private Rectangle2D rect = new Rectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*  53 */   private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-/*  54 */   private Ellipse2D ellipse = new Ellipse2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  59 */   private Color color1 = decodeColor("nimbusFocus", 0.0F, 0.0F, 0.0F, 0);
-/*  60 */   private Color color2 = decodeColor("nimbusBlueGrey", -0.027777791F, -0.06885965F, -0.36862746F, -153);
-/*  61 */   private Color color3 = decodeColor("nimbusBlueGrey", 0.0F, -0.020974077F, -0.21960783F, 0);
-/*  62 */   private Color color4 = decodeColor("nimbusBlueGrey", 0.0F, 0.11169591F, -0.53333336F, 0);
-/*  63 */   private Color color5 = decodeColor("nimbusBlueGrey", 0.055555582F, -0.10658931F, 0.25098038F, 0);
-/*  64 */   private Color color6 = decodeColor("nimbusBlueGrey", 0.0F, -0.098526314F, 0.2352941F, 0);
-/*  65 */   private Color color7 = decodeColor("nimbusBlueGrey", 0.0F, -0.07333623F, 0.20392156F, 0);
-/*  66 */   private Color color8 = decodeColor("nimbusBlueGrey", 0.0F, -0.110526316F, 0.25490195F, 0);
-/*  67 */   private Color color9 = decodeColor("nimbusBlueGrey", -0.00505054F, -0.05960039F, 0.10196078F, 0);
-/*  68 */   private Color color10 = decodeColor("nimbusBlueGrey", -0.008547008F, -0.04772438F, 0.06666666F, 0);
-/*  69 */   private Color color11 = decodeColor("nimbusBlueGrey", -0.0027777553F, -0.0018306673F, -0.02352941F, 0);
-/*  70 */   private Color color12 = decodeColor("nimbusBlueGrey", -0.0027777553F, -0.0212406F, 0.13333333F, 0);
-/*  71 */   private Color color13 = decodeColor("nimbusBlueGrey", 0.0055555105F, -0.030845039F, 0.23921567F, 0);
-/*     */ 
-/*     */   
-/*     */   private Object[] componentColors;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ToolBarButtonPainter(AbstractRegionPainter.PaintContext paramPaintContext, int paramInt) {
-/*  79 */     this.state = paramInt;
-/*  80 */     this.ctx = paramPaintContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void doPaint(Graphics2D paramGraphics2D, JComponent paramJComponent, int paramInt1, int paramInt2, Object[] paramArrayOfObject) {
-/*  86 */     this.componentColors = paramArrayOfObject;
-/*     */ 
-/*     */     
-/*  89 */     switch (this.state) { case 2:
-/*  90 */         paintBackgroundFocused(paramGraphics2D); break;
-/*  91 */       case 3: paintBackgroundMouseOver(paramGraphics2D); break;
-/*  92 */       case 4: paintBackgroundMouseOverAndFocused(paramGraphics2D); break;
-/*  93 */       case 5: paintBackgroundPressed(paramGraphics2D); break;
-/*  94 */       case 6: paintBackgroundPressedAndFocused(paramGraphics2D);
-/*     */         break; }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final AbstractRegionPainter.PaintContext getPaintContext() {
-/* 103 */     return this.ctx;
-/*     */   }
-/*     */   
-/*     */   private void paintBackgroundFocused(Graphics2D paramGraphics2D) {
-/* 107 */     this.path = decodePath1();
-/* 108 */     paramGraphics2D.setPaint(this.color1);
-/* 109 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintBackgroundMouseOver(Graphics2D paramGraphics2D) {
-/* 114 */     this.roundRect = decodeRoundRect1();
-/* 115 */     paramGraphics2D.setPaint(this.color2);
-/* 116 */     paramGraphics2D.fill(this.roundRect);
-/* 117 */     this.roundRect = decodeRoundRect2();
-/* 118 */     paramGraphics2D.setPaint(decodeGradient1(this.roundRect));
-/* 119 */     paramGraphics2D.fill(this.roundRect);
-/* 120 */     this.roundRect = decodeRoundRect3();
-/* 121 */     paramGraphics2D.setPaint(decodeGradient2(this.roundRect));
-/* 122 */     paramGraphics2D.fill(this.roundRect);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintBackgroundMouseOverAndFocused(Graphics2D paramGraphics2D) {
-/* 127 */     this.roundRect = decodeRoundRect4();
-/* 128 */     paramGraphics2D.setPaint(this.color1);
-/* 129 */     paramGraphics2D.fill(this.roundRect);
-/* 130 */     this.roundRect = decodeRoundRect2();
-/* 131 */     paramGraphics2D.setPaint(decodeGradient1(this.roundRect));
-/* 132 */     paramGraphics2D.fill(this.roundRect);
-/* 133 */     this.roundRect = decodeRoundRect3();
-/* 134 */     paramGraphics2D.setPaint(decodeGradient2(this.roundRect));
-/* 135 */     paramGraphics2D.fill(this.roundRect);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintBackgroundPressed(Graphics2D paramGraphics2D) {
-/* 140 */     this.roundRect = decodeRoundRect1();
-/* 141 */     paramGraphics2D.setPaint(this.color2);
-/* 142 */     paramGraphics2D.fill(this.roundRect);
-/* 143 */     this.roundRect = decodeRoundRect2();
-/* 144 */     paramGraphics2D.setPaint(decodeGradient1(this.roundRect));
-/* 145 */     paramGraphics2D.fill(this.roundRect);
-/* 146 */     this.roundRect = decodeRoundRect3();
-/* 147 */     paramGraphics2D.setPaint(decodeGradient3(this.roundRect));
-/* 148 */     paramGraphics2D.fill(this.roundRect);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintBackgroundPressedAndFocused(Graphics2D paramGraphics2D) {
-/* 153 */     this.roundRect = decodeRoundRect4();
-/* 154 */     paramGraphics2D.setPaint(this.color1);
-/* 155 */     paramGraphics2D.fill(this.roundRect);
-/* 156 */     this.roundRect = decodeRoundRect2();
-/* 157 */     paramGraphics2D.setPaint(decodeGradient1(this.roundRect));
-/* 158 */     paramGraphics2D.fill(this.roundRect);
-/* 159 */     this.roundRect = decodeRoundRect3();
-/* 160 */     paramGraphics2D.setPaint(decodeGradient3(this.roundRect));
-/* 161 */     paramGraphics2D.fill(this.roundRect);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Path2D decodePath1() {
-/* 168 */     this.path.reset();
-/* 169 */     this.path.moveTo(decodeX(1.4133738F), decodeY(0.120000005F));
-/* 170 */     this.path.lineTo(decodeX(1.9893618F), decodeY(0.120000005F));
-/* 171 */     this.path.curveTo(decodeAnchorX(1.9893618F, 3.0F), decodeAnchorY(0.120000005F, 0.0F), decodeAnchorX(2.8857148F, 0.0F), decodeAnchorY(1.0434783F, -3.0F), decodeX(2.8857148F), decodeY(1.0434783F));
-/* 172 */     this.path.lineTo(decodeX(2.9F), decodeY(1.9565217F));
-/* 173 */     this.path.curveTo(decodeAnchorX(2.9F, 0.0F), decodeAnchorY(1.9565217F, 3.0F), decodeAnchorX(1.9893618F, 3.0F), decodeAnchorY(2.8714287F, 0.0F), decodeX(1.9893618F), decodeY(2.8714287F));
-/* 174 */     this.path.lineTo(decodeX(1.0106384F), decodeY(2.8714287F));
-/* 175 */     this.path.curveTo(decodeAnchorX(1.0106384F, -3.0F), decodeAnchorY(2.8714287F, 0.0F), decodeAnchorX(0.120000005F, 0.0F), decodeAnchorY(1.9565217F, 3.0F), decodeX(0.120000005F), decodeY(1.9565217F));
-/* 176 */     this.path.lineTo(decodeX(0.120000005F), decodeY(1.0465839F));
-/* 177 */     this.path.curveTo(decodeAnchorX(0.120000005F, 0.0F), decodeAnchorY(1.0465839F, -3.0F), decodeAnchorX(1.0106384F, -3.0F), decodeAnchorY(0.120000005F, 0.0F), decodeX(1.0106384F), decodeY(0.120000005F));
-/* 178 */     this.path.lineTo(decodeX(1.4148936F), decodeY(0.120000005F));
-/* 179 */     this.path.lineTo(decodeX(1.4148936F), decodeY(0.4857143F));
-/* 180 */     this.path.lineTo(decodeX(1.0106384F), decodeY(0.4857143F));
-/* 181 */     this.path.curveTo(decodeAnchorX(1.0106384F, -1.9285715F), decodeAnchorY(0.4857143F, 0.0F), decodeAnchorX(0.47142857F, -0.044279482F), decodeAnchorY(1.0403726F, -2.429218F), decodeX(0.47142857F), decodeY(1.0403726F));
-/* 182 */     this.path.lineTo(decodeX(0.47142857F), decodeY(1.9565217F));
-/* 183 */     this.path.curveTo(decodeAnchorX(0.47142857F, 0.0F), decodeAnchorY(1.9565217F, 2.2142856F), decodeAnchorX(1.0106384F, -1.7857143F), decodeAnchorY(2.5142856F, 0.0F), decodeX(1.0106384F), decodeY(2.5142856F));
-/* 184 */     this.path.lineTo(decodeX(1.9893618F), decodeY(2.5142856F));
-/* 185 */     this.path.curveTo(decodeAnchorX(1.9893618F, 2.0714285F), decodeAnchorY(2.5142856F, 0.0F), decodeAnchorX(2.5F, 0.0F), decodeAnchorY(1.9565217F, 2.2142856F), decodeX(2.5F), decodeY(1.9565217F));
-/* 186 */     this.path.lineTo(decodeX(2.5142853F), decodeY(1.0434783F));
-/* 187 */     this.path.curveTo(decodeAnchorX(2.5142853F, 0.0F), decodeAnchorY(1.0434783F, -2.142857F), decodeAnchorX(1.9901216F, 2.142857F), decodeAnchorY(0.47142857F, 0.0F), decodeX(1.9901216F), decodeY(0.47142857F));
-/* 188 */     this.path.lineTo(decodeX(1.4148936F), decodeY(0.4857143F));
-/* 189 */     this.path.lineTo(decodeX(1.4133738F), decodeY(0.120000005F));
-/* 190 */     this.path.closePath();
-/* 191 */     return this.path;
-/*     */   }
-/*     */   
-/*     */   private RoundRectangle2D decodeRoundRect1() {
-/* 195 */     this.roundRect.setRoundRect(decodeX(0.4F), 
-/* 196 */         decodeY(0.6F), (
-/* 197 */         decodeX(2.6F) - decodeX(0.4F)), (
-/* 198 */         decodeY(2.8F) - decodeY(0.6F)), 12.0D, 12.0D);
-/*     */     
-/* 200 */     return this.roundRect;
-/*     */   }
-/*     */   
-/*     */   private RoundRectangle2D decodeRoundRect2() {
-/* 204 */     this.roundRect.setRoundRect(decodeX(0.4F), 
-/* 205 */         decodeY(0.4F), (
-/* 206 */         decodeX(2.6F) - decodeX(0.4F)), (
-/* 207 */         decodeY(2.6F) - decodeY(0.4F)), 12.0D, 12.0D);
-/*     */     
-/* 209 */     return this.roundRect;
-/*     */   }
-/*     */   
-/*     */   private RoundRectangle2D decodeRoundRect3() {
-/* 213 */     this.roundRect.setRoundRect(decodeX(0.6F), 
-/* 214 */         decodeY(0.6F), (
-/* 215 */         decodeX(2.4F) - decodeX(0.6F)), (
-/* 216 */         decodeY(2.4F) - decodeY(0.6F)), 9.0D, 9.0D);
-/*     */     
-/* 218 */     return this.roundRect;
-/*     */   }
-/*     */   
-/*     */   private RoundRectangle2D decodeRoundRect4() {
-/* 222 */     this.roundRect.setRoundRect(decodeX(0.120000005F), 
-/* 223 */         decodeY(0.120000005F), (
-/* 224 */         decodeX(2.8800004F) - decodeX(0.120000005F)), (
-/* 225 */         decodeY(2.8800004F) - decodeY(0.120000005F)), 13.0D, 13.0D);
-/*     */     
-/* 227 */     return this.roundRect;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Paint decodeGradient1(Shape paramShape) {
-/* 233 */     Rectangle2D rectangle2D = paramShape.getBounds2D();
-/* 234 */     float f1 = (float)rectangle2D.getX();
-/* 235 */     float f2 = (float)rectangle2D.getY();
-/* 236 */     float f3 = (float)rectangle2D.getWidth();
-/* 237 */     float f4 = (float)rectangle2D.getHeight();
-/* 238 */     return decodeGradient(0.5F * f3 + f1, 0.0F * f4 + f2, 0.5F * f3 + f1, 1.0F * f4 + f2, new float[] { 0.09F, 0.52F, 0.95F }, new Color[] { this.color3, 
-/*     */ 
-/*     */           
-/* 241 */           decodeColor(this.color3, this.color4, 0.5F), this.color4 });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Paint decodeGradient2(Shape paramShape) {
-/* 246 */     Rectangle2D rectangle2D = paramShape.getBounds2D();
-/* 247 */     float f1 = (float)rectangle2D.getX();
-/* 248 */     float f2 = (float)rectangle2D.getY();
-/* 249 */     float f3 = (float)rectangle2D.getWidth();
-/* 250 */     float f4 = (float)rectangle2D.getHeight();
-/* 251 */     return decodeGradient(0.5F * f3 + f1, 0.0F * f4 + f2, 0.5F * f3 + f1, 1.0F * f4 + f2, new float[] { 0.0F, 0.03F, 0.06F, 0.33F, 0.6F, 0.65F, 0.7F, 0.825F, 0.95F, 0.975F, 1.0F }, new Color[] { this.color5, 
-/*     */ 
-/*     */           
-/* 254 */           decodeColor(this.color5, this.color6, 0.5F), this.color6, 
-/*     */           
-/* 256 */           decodeColor(this.color6, this.color7, 0.5F), this.color7, 
-/*     */           
-/* 258 */           decodeColor(this.color7, this.color7, 0.5F), this.color7, 
-/*     */           
-/* 260 */           decodeColor(this.color7, this.color8, 0.5F), this.color8, 
-/*     */           
-/* 262 */           decodeColor(this.color8, this.color8, 0.5F), this.color8 });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Paint decodeGradient3(Shape paramShape) {
-/* 267 */     Rectangle2D rectangle2D = paramShape.getBounds2D();
-/* 268 */     float f1 = (float)rectangle2D.getX();
-/* 269 */     float f2 = (float)rectangle2D.getY();
-/* 270 */     float f3 = (float)rectangle2D.getWidth();
-/* 271 */     float f4 = (float)rectangle2D.getHeight();
-/* 272 */     return decodeGradient(0.5F * f3 + f1, 0.0F * f4 + f2, 0.5F * f3 + f1, 1.0F * f4 + f2, new float[] { 0.0F, 0.03F, 0.06F, 0.33F, 0.6F, 0.65F, 0.7F, 0.825F, 0.95F, 0.975F, 1.0F }, new Color[] { this.color9, 
-/*     */ 
-/*     */           
-/* 275 */           decodeColor(this.color9, this.color10, 0.5F), this.color10, 
-/*     */           
-/* 277 */           decodeColor(this.color10, this.color11, 0.5F), this.color11, 
-/*     */           
-/* 279 */           decodeColor(this.color11, this.color11, 0.5F), this.color11, 
-/*     */           
-/* 281 */           decodeColor(this.color11, this.color12, 0.5F), this.color12, 
-/*     */           
-/* 283 */           decodeColor(this.color12, this.color13, 0.5F), this.color13 });
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\ToolBarButtonPainter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.*;
+import java.awt.geom.*;
+import java.awt.image.*;
+import javax.swing.*;
+import javax.swing.Painter;
+
+
+final class ToolBarButtonPainter extends AbstractRegionPainter {
+    //package private integers representing the available states that
+    //this painter will paint. These are used when creating a new instance
+    //of ToolBarButtonPainter to determine which region/state is being painted
+    //by that instance.
+    static final int BACKGROUND_ENABLED = 1;
+    static final int BACKGROUND_FOCUSED = 2;
+    static final int BACKGROUND_MOUSEOVER = 3;
+    static final int BACKGROUND_MOUSEOVER_FOCUSED = 4;
+    static final int BACKGROUND_PRESSED = 5;
+    static final int BACKGROUND_PRESSED_FOCUSED = 6;
+
+
+    private int state; //refers to one of the static final ints above
+    private PaintContext ctx;
+
+    //the following 4 variables are reused during the painting code of the layers
+    private Path2D path = new Path2D.Float();
+    private Rectangle2D rect = new Rectangle2D.Float(0, 0, 0, 0);
+    private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0, 0, 0, 0, 0, 0);
+    private Ellipse2D ellipse = new Ellipse2D.Float(0, 0, 0, 0);
+
+    //All Colors used for painting are stored here. Ideally, only those colors being used
+    //by a particular instance of ToolBarButtonPainter would be created. For the moment at least,
+    //however, all are created for each instance.
+    private Color color1 = decodeColor("nimbusFocus", 0.0f, 0.0f, 0.0f, 0);
+    private Color color2 = decodeColor("nimbusBlueGrey", -0.027777791f, -0.06885965f, -0.36862746f, -153);
+    private Color color3 = decodeColor("nimbusBlueGrey", 0.0f, -0.020974077f, -0.21960783f, 0);
+    private Color color4 = decodeColor("nimbusBlueGrey", 0.0f, 0.11169591f, -0.53333336f, 0);
+    private Color color5 = decodeColor("nimbusBlueGrey", 0.055555582f, -0.10658931f, 0.25098038f, 0);
+    private Color color6 = decodeColor("nimbusBlueGrey", 0.0f, -0.098526314f, 0.2352941f, 0);
+    private Color color7 = decodeColor("nimbusBlueGrey", 0.0f, -0.07333623f, 0.20392156f, 0);
+    private Color color8 = decodeColor("nimbusBlueGrey", 0.0f, -0.110526316f, 0.25490195f, 0);
+    private Color color9 = decodeColor("nimbusBlueGrey", -0.00505054f, -0.05960039f, 0.10196078f, 0);
+    private Color color10 = decodeColor("nimbusBlueGrey", -0.008547008f, -0.04772438f, 0.06666666f, 0);
+    private Color color11 = decodeColor("nimbusBlueGrey", -0.0027777553f, -0.0018306673f, -0.02352941f, 0);
+    private Color color12 = decodeColor("nimbusBlueGrey", -0.0027777553f, -0.0212406f, 0.13333333f, 0);
+    private Color color13 = decodeColor("nimbusBlueGrey", 0.0055555105f, -0.030845039f, 0.23921567f, 0);
+
+
+    //Array of current component colors, updated in each paint call
+    private Object[] componentColors;
+
+    public ToolBarButtonPainter(PaintContext ctx, int state) {
+        super();
+        this.state = state;
+        this.ctx = ctx;
+    }
+
+    @Override
+    protected void doPaint(Graphics2D g, JComponent c, int width, int height, Object[] extendedCacheKeys) {
+        //populate componentColors array with colors calculated in getExtendedCacheKeys call
+        componentColors = extendedCacheKeys;
+        //generate this entire method. Each state/bg/fg/border combo that has
+        //been painted gets its own KEY and paint method.
+        switch(state) {
+            case BACKGROUND_FOCUSED: paintBackgroundFocused(g); break;
+            case BACKGROUND_MOUSEOVER: paintBackgroundMouseOver(g); break;
+            case BACKGROUND_MOUSEOVER_FOCUSED: paintBackgroundMouseOverAndFocused(g); break;
+            case BACKGROUND_PRESSED: paintBackgroundPressed(g); break;
+            case BACKGROUND_PRESSED_FOCUSED: paintBackgroundPressedAndFocused(g); break;
+
+        }
+    }
+        
+
+
+    @Override
+    protected final PaintContext getPaintContext() {
+        return ctx;
+    }
+
+    private void paintBackgroundFocused(Graphics2D g) {
+        path = decodePath1();
+        g.setPaint(color1);
+        g.fill(path);
+
+    }
+
+    private void paintBackgroundMouseOver(Graphics2D g) {
+        roundRect = decodeRoundRect1();
+        g.setPaint(color2);
+        g.fill(roundRect);
+        roundRect = decodeRoundRect2();
+        g.setPaint(decodeGradient1(roundRect));
+        g.fill(roundRect);
+        roundRect = decodeRoundRect3();
+        g.setPaint(decodeGradient2(roundRect));
+        g.fill(roundRect);
+
+    }
+
+    private void paintBackgroundMouseOverAndFocused(Graphics2D g) {
+        roundRect = decodeRoundRect4();
+        g.setPaint(color1);
+        g.fill(roundRect);
+        roundRect = decodeRoundRect2();
+        g.setPaint(decodeGradient1(roundRect));
+        g.fill(roundRect);
+        roundRect = decodeRoundRect3();
+        g.setPaint(decodeGradient2(roundRect));
+        g.fill(roundRect);
+
+    }
+
+    private void paintBackgroundPressed(Graphics2D g) {
+        roundRect = decodeRoundRect1();
+        g.setPaint(color2);
+        g.fill(roundRect);
+        roundRect = decodeRoundRect2();
+        g.setPaint(decodeGradient1(roundRect));
+        g.fill(roundRect);
+        roundRect = decodeRoundRect3();
+        g.setPaint(decodeGradient3(roundRect));
+        g.fill(roundRect);
+
+    }
+
+    private void paintBackgroundPressedAndFocused(Graphics2D g) {
+        roundRect = decodeRoundRect4();
+        g.setPaint(color1);
+        g.fill(roundRect);
+        roundRect = decodeRoundRect2();
+        g.setPaint(decodeGradient1(roundRect));
+        g.fill(roundRect);
+        roundRect = decodeRoundRect3();
+        g.setPaint(decodeGradient3(roundRect));
+        g.fill(roundRect);
+
+    }
+
+
+
+    private Path2D decodePath1() {
+        path.reset();
+        path.moveTo(decodeX(1.4133738f), decodeY(0.120000005f));
+        path.lineTo(decodeX(1.9893618f), decodeY(0.120000005f));
+        path.curveTo(decodeAnchorX(1.9893617630004883f, 3.0f), decodeAnchorY(0.12000000476837158f, 0.0f), decodeAnchorX(2.8857147693634033f, 0.0f), decodeAnchorY(1.04347825050354f, -3.0f), decodeX(2.8857148f), decodeY(1.0434783f));
+        path.lineTo(decodeX(2.9f), decodeY(1.9565217f));
+        path.curveTo(decodeAnchorX(2.9000000953674316f, 0.0f), decodeAnchorY(1.95652174949646f, 3.0f), decodeAnchorX(1.9893617630004883f, 3.0f), decodeAnchorY(2.8714287281036377f, 0.0f), decodeX(1.9893618f), decodeY(2.8714287f));
+        path.lineTo(decodeX(1.0106384f), decodeY(2.8714287f));
+        path.curveTo(decodeAnchorX(1.0106383562088013f, -3.0f), decodeAnchorY(2.8714287281036377f, 0.0f), decodeAnchorX(0.12000000476837158f, 0.0f), decodeAnchorY(1.95652174949646f, 3.0f), decodeX(0.120000005f), decodeY(1.9565217f));
+        path.lineTo(decodeX(0.120000005f), decodeY(1.0465839f));
+        path.curveTo(decodeAnchorX(0.12000000476837158f, 0.0f), decodeAnchorY(1.046583890914917f, -3.000000000000001f), decodeAnchorX(1.0106383562088013f, -3.0f), decodeAnchorY(0.12000000476837158f, 0.0f), decodeX(1.0106384f), decodeY(0.120000005f));
+        path.lineTo(decodeX(1.4148936f), decodeY(0.120000005f));
+        path.lineTo(decodeX(1.4148936f), decodeY(0.4857143f));
+        path.lineTo(decodeX(1.0106384f), decodeY(0.4857143f));
+        path.curveTo(decodeAnchorX(1.0106383562088013f, -1.928571428571427f), decodeAnchorY(0.48571428656578064f, 0.0f), decodeAnchorX(0.4714285731315613f, -0.04427948362011014f), decodeAnchorY(1.040372610092163f, -2.429218094741624f), decodeX(0.47142857f), decodeY(1.0403726f));
+        path.lineTo(decodeX(0.47142857f), decodeY(1.9565217f));
+        path.curveTo(decodeAnchorX(0.4714285731315613f, 0.0f), decodeAnchorY(1.95652174949646f, 2.2142857142856975f), decodeAnchorX(1.0106383562088013f, -1.7857142857142847f), decodeAnchorY(2.5142855644226074f, 0.0f), decodeX(1.0106384f), decodeY(2.5142856f));
+        path.lineTo(decodeX(1.9893618f), decodeY(2.5142856f));
+        path.curveTo(decodeAnchorX(1.9893617630004883f, 2.071428571428598f), decodeAnchorY(2.5142855644226074f, 0.0f), decodeAnchorX(2.5f, 0.0f), decodeAnchorY(1.95652174949646f, 2.2142857142857046f), decodeX(2.5f), decodeY(1.9565217f));
+        path.lineTo(decodeX(2.5142853f), decodeY(1.0434783f));
+        path.curveTo(decodeAnchorX(2.5142853260040283f, 0.0f), decodeAnchorY(1.04347825050354f, -2.1428571428571406f), decodeAnchorX(1.990121603012085f, 2.142857142857167f), decodeAnchorY(0.4714285731315613f, 0.0f), decodeX(1.9901216f), decodeY(0.47142857f));
+        path.lineTo(decodeX(1.4148936f), decodeY(0.4857143f));
+        path.lineTo(decodeX(1.4133738f), decodeY(0.120000005f));
+        path.closePath();
+        return path;
+    }
+
+    private RoundRectangle2D decodeRoundRect1() {
+        roundRect.setRoundRect(decodeX(0.4f), //x
+                               decodeY(0.6f), //y
+                               decodeX(2.6f) - decodeX(0.4f), //width
+                               decodeY(2.8f) - decodeY(0.6f), //height
+                               12.0f, 12.0f); //rounding
+        return roundRect;
+    }
+
+    private RoundRectangle2D decodeRoundRect2() {
+        roundRect.setRoundRect(decodeX(0.4f), //x
+                               decodeY(0.4f), //y
+                               decodeX(2.6f) - decodeX(0.4f), //width
+                               decodeY(2.6f) - decodeY(0.4f), //height
+                               12.0f, 12.0f); //rounding
+        return roundRect;
+    }
+
+    private RoundRectangle2D decodeRoundRect3() {
+        roundRect.setRoundRect(decodeX(0.6f), //x
+                               decodeY(0.6f), //y
+                               decodeX(2.4f) - decodeX(0.6f), //width
+                               decodeY(2.4f) - decodeY(0.6f), //height
+                               9.0f, 9.0f); //rounding
+        return roundRect;
+    }
+
+    private RoundRectangle2D decodeRoundRect4() {
+        roundRect.setRoundRect(decodeX(0.120000005f), //x
+                               decodeY(0.120000005f), //y
+                               decodeX(2.8800004f) - decodeX(0.120000005f), //width
+                               decodeY(2.8800004f) - decodeY(0.120000005f), //height
+                               13.0f, 13.0f); //rounding
+        return roundRect;
+    }
+
+
+
+    private Paint decodeGradient1(Shape s) {
+        Rectangle2D bounds = s.getBounds2D();
+        float x = (float)bounds.getX();
+        float y = (float)bounds.getY();
+        float w = (float)bounds.getWidth();
+        float h = (float)bounds.getHeight();
+        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,
+                new float[] { 0.09f,0.52f,0.95f },
+                new Color[] { color3,
+                            decodeColor(color3,color4,0.5f),
+                            color4});
+    }
+
+    private Paint decodeGradient2(Shape s) {
+        Rectangle2D bounds = s.getBounds2D();
+        float x = (float)bounds.getX();
+        float y = (float)bounds.getY();
+        float w = (float)bounds.getWidth();
+        float h = (float)bounds.getHeight();
+        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,
+                new float[] { 0.0f,0.03f,0.06f,0.33f,0.6f,0.65f,0.7f,0.825f,0.95f,0.975f,1.0f },
+                new Color[] { color5,
+                            decodeColor(color5,color6,0.5f),
+                            color6,
+                            decodeColor(color6,color7,0.5f),
+                            color7,
+                            decodeColor(color7,color7,0.5f),
+                            color7,
+                            decodeColor(color7,color8,0.5f),
+                            color8,
+                            decodeColor(color8,color8,0.5f),
+                            color8});
+    }
+
+    private Paint decodeGradient3(Shape s) {
+        Rectangle2D bounds = s.getBounds2D();
+        float x = (float)bounds.getX();
+        float y = (float)bounds.getY();
+        float w = (float)bounds.getWidth();
+        float h = (float)bounds.getHeight();
+        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,
+                new float[] { 0.0f,0.03f,0.06f,0.33f,0.6f,0.65f,0.7f,0.825f,0.95f,0.975f,1.0f },
+                new Color[] { color9,
+                            decodeColor(color9,color10,0.5f),
+                            color10,
+                            decodeColor(color10,color11,0.5f),
+                            color11,
+                            decodeColor(color11,color11,0.5f),
+                            color11,
+                            decodeColor(color11,color12,0.5f),
+                            color12,
+                            decodeColor(color12,color13,0.5f),
+                            color13});
+    }
+
+
+}

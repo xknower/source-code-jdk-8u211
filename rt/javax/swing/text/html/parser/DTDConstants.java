@@ -1,79 +1,82 @@
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.text.html.parser;
 
-public interface DTDConstants {
-  public static final int CDATA = 1;
-  
-  public static final int ENTITY = 2;
-  
-  public static final int ENTITIES = 3;
-  
-  public static final int ID = 4;
-  
-  public static final int IDREF = 5;
-  
-  public static final int IDREFS = 6;
-  
-  public static final int NAME = 7;
-  
-  public static final int NAMES = 8;
-  
-  public static final int NMTOKEN = 9;
-  
-  public static final int NMTOKENS = 10;
-  
-  public static final int NOTATION = 11;
-  
-  public static final int NUMBER = 12;
-  
-  public static final int NUMBERS = 13;
-  
-  public static final int NUTOKEN = 14;
-  
-  public static final int NUTOKENS = 15;
-  
-  public static final int RCDATA = 16;
-  
-  public static final int EMPTY = 17;
-  
-  public static final int MODEL = 18;
-  
-  public static final int ANY = 19;
-  
-  public static final int FIXED = 1;
-  
-  public static final int REQUIRED = 2;
-  
-  public static final int CURRENT = 3;
-  
-  public static final int CONREF = 4;
-  
-  public static final int IMPLIED = 5;
-  
-  public static final int PUBLIC = 10;
-  
-  public static final int SDATA = 11;
-  
-  public static final int PI = 12;
-  
-  public static final int STARTTAG = 13;
-  
-  public static final int ENDTAG = 14;
-  
-  public static final int MS = 15;
-  
-  public static final int MD = 16;
-  
-  public static final int SYSTEM = 17;
-  
-  public static final int GENERAL = 65536;
-  
-  public static final int DEFAULT = 131072;
-  
-  public static final int PARAMETER = 262144;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\parser\DTDConstants.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * SGML constants used in a DTD. The names of the
+ * constants correspond the the equivalent SGML constructs
+ * as described in "The SGML Handbook" by  Charles F. Goldfarb.
+ *
+ * @see DTD
+ * @see Element
+ * @author Arthur van Hoff
  */
+public
+interface DTDConstants {
+    // Attribute value types
+    int CDATA           = 1;
+    int ENTITY          = 2;
+    int ENTITIES        = 3;
+    int ID              = 4;
+    int IDREF           = 5;
+    int IDREFS          = 6;
+    int NAME            = 7;
+    int NAMES           = 8;
+    int NMTOKEN         = 9;
+    int NMTOKENS        = 10;
+    int NOTATION        = 11;
+    int NUMBER          = 12;
+    int NUMBERS         = 13;
+    int NUTOKEN         = 14;
+    int NUTOKENS        = 15;
+
+    // Content model types
+    int RCDATA          = 16;
+    int EMPTY           = 17;
+    int MODEL           = 18;
+    int ANY             = 19;
+
+    // Attribute value modifiers
+    int FIXED           = 1;
+    int REQUIRED        = 2;
+    int CURRENT         = 3;
+    int CONREF          = 4;
+    int IMPLIED         = 5;
+
+    // Entity types
+    int PUBLIC          = 10;
+    int SDATA           = 11;
+    int PI              = 12;
+    int STARTTAG        = 13;
+    int ENDTAG          = 14;
+    int MS              = 15;
+    int MD              = 16;
+    int SYSTEM          = 17;
+
+    int GENERAL         = 1<<16;
+    int DEFAULT         = 1<<17;
+    int PARAMETER       = 1<<18;
+}

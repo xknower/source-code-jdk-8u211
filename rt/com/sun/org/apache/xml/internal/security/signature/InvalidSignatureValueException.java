@@ -1,91 +1,85 @@
-/*    */ package com.sun.org.apache.xml.internal.security.signature;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class InvalidSignatureValueException
-/*    */   extends XMLSignatureException
-/*    */ {
-/*    */   private static final long serialVersionUID = 1L;
-/*    */   
-/*    */   public InvalidSignatureValueException() {}
-/*    */   
-/*    */   public InvalidSignatureValueException(String paramString) {
-/* 52 */     super(paramString);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public InvalidSignatureValueException(String paramString, Object[] paramArrayOfObject) {
-/* 62 */     super(paramString, paramArrayOfObject);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public InvalidSignatureValueException(String paramString, Exception paramException) {
-/* 72 */     super(paramString, paramException);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public InvalidSignatureValueException(String paramString, Object[] paramArrayOfObject, Exception paramException) {
-/* 83 */     super(paramString, paramArrayOfObject, paramException);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\signature\InvalidSignatureValueException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.signature;
+
+/**
+ * Raised if testing the signature value over <i>DigestValue</i> fails because of invalid signature.
+ *
+ * @see InvalidDigestValueException  MissingKeyFailureException  MissingResourceFailureException
+ * @author Christian Geuer-Pollmann
+ */
+public class InvalidSignatureValueException extends XMLSignatureException {
+
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Constructor InvalidSignatureValueException
+     *
+     */
+    public InvalidSignatureValueException() {
+        super();
+    }
+
+    /**
+     * Constructor InvalidSignatureValueException
+     *
+     * @param msgID
+     */
+    public InvalidSignatureValueException(String msgID) {
+        super(msgID);
+    }
+
+    /**
+     * Constructor InvalidSignatureValueException
+     *
+     * @param msgID
+     * @param exArgs
+     */
+    public InvalidSignatureValueException(String msgID, Object exArgs[]) {
+        super(msgID, exArgs);
+    }
+
+    /**
+     * Constructor InvalidSignatureValueException
+     *
+     * @param msgID
+     * @param originalException
+     */
+    public InvalidSignatureValueException(String msgID, Exception originalException) {
+        super(msgID, originalException);
+    }
+
+    /**
+     * Constructor InvalidSignatureValueException
+     *
+     * @param msgID
+     * @param exArgs
+     * @param originalException
+     */
+    public InvalidSignatureValueException(String msgID, Object exArgs[], Exception originalException) {
+        super(msgID, exArgs, originalException);
+    }
+}

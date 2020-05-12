@@ -1,664 +1,661 @@
-/*     */ package java.util.stream;
-/*     */ 
-/*     */ import java.util.Comparator;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Objects;
-/*     */ import java.util.Optional;
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.Spliterators;
-/*     */ import java.util.function.BiConsumer;
-/*     */ import java.util.function.BiFunction;
-/*     */ import java.util.function.BinaryOperator;
-/*     */ import java.util.function.Consumer;
-/*     */ import java.util.function.DoubleConsumer;
-/*     */ import java.util.function.Function;
-/*     */ import java.util.function.IntConsumer;
-/*     */ import java.util.function.IntFunction;
-/*     */ import java.util.function.LongConsumer;
-/*     */ import java.util.function.Predicate;
-/*     */ import java.util.function.Supplier;
-/*     */ import java.util.function.ToDoubleFunction;
-/*     */ import java.util.function.ToIntFunction;
-/*     */ import java.util.function.ToLongFunction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class ReferencePipeline<P_IN, P_OUT>
-/*     */   extends AbstractPipeline<P_IN, P_OUT, Stream<P_OUT>>
-/*     */   implements Stream<P_OUT>
-/*     */ {
-/*     */   ReferencePipeline(Supplier<? extends Spliterator<?>> paramSupplier, int paramInt, boolean paramBoolean) {
-/*  71 */     super(paramSupplier, paramInt, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ReferencePipeline(Spliterator<?> paramSpliterator, int paramInt, boolean paramBoolean) {
-/*  84 */     super(paramSpliterator, paramInt, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ReferencePipeline(AbstractPipeline<?, P_IN, ?> paramAbstractPipeline, int paramInt) {
-/*  94 */     super(paramAbstractPipeline, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final StreamShape getOutputShape() {
-/* 101 */     return StreamShape.REFERENCE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final <P_IN> Node<P_OUT> evaluateToNode(PipelineHelper<P_OUT> paramPipelineHelper, Spliterator<P_IN> paramSpliterator, boolean paramBoolean, IntFunction<P_OUT[]> paramIntFunction) {
-/* 109 */     return Nodes.collect(paramPipelineHelper, paramSpliterator, paramBoolean, paramIntFunction);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final <P_IN> Spliterator<P_OUT> wrap(PipelineHelper<P_OUT> paramPipelineHelper, Supplier<Spliterator<P_IN>> paramSupplier, boolean paramBoolean) {
-/* 116 */     return new StreamSpliterators.WrappingSpliterator<>(paramPipelineHelper, paramSupplier, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final Spliterator<P_OUT> lazySpliterator(Supplier<? extends Spliterator<P_OUT>> paramSupplier) {
-/* 121 */     return new StreamSpliterators.DelegatingSpliterator<>(paramSupplier);
-/*     */   }
-/*     */   final void forEachWithCancel(Spliterator<P_OUT> paramSpliterator, Sink<P_OUT> paramSink) {
-/*     */     do {
-/*     */     
-/* 126 */     } while (!paramSink.cancellationRequested() && paramSpliterator.tryAdvance(paramSink));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final Node.Builder<P_OUT> makeNodeBuilder(long paramLong, IntFunction<P_OUT[]> paramIntFunction) {
-/* 131 */     return Nodes.builder(paramLong, paramIntFunction);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Iterator<P_OUT> iterator() {
-/* 139 */     return Spliterators.iterator(spliterator());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Stream<P_OUT> unordered() {
-/* 149 */     if (!isOrdered())
-/* 150 */       return this; 
-/* 151 */     return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_ORDERED)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<P_OUT> param1Sink) {
-/* 154 */           return param1Sink;
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Stream<P_OUT> filter(final Predicate<? super P_OUT> predicate) {
-/* 161 */     Objects.requireNonNull(predicate);
-/* 162 */     return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<P_OUT> param1Sink)
-/*     */         {
-/* 166 */           return new Sink.ChainedReference<P_OUT, P_OUT>(param1Sink)
-/*     */             {
-/*     */               public void begin(long param2Long) {
-/* 169 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 174 */                 if (predicate.test(param2P_OUT)) {
-/* 175 */                   this.downstream.accept(param2P_OUT);
-/*     */                 }
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final <R> Stream<R> map(final Function<? super P_OUT, ? extends R> mapper) {
-/* 185 */     Objects.requireNonNull(mapper);
-/* 186 */     return new StatelessOp<P_OUT, R>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<R> param1Sink)
-/*     */         {
-/* 190 */           return new Sink.ChainedReference(param1Sink)
-/*     */             {
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 193 */                 this.downstream.accept(mapper.apply(param2P_OUT));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream mapToInt(final ToIntFunction<? super P_OUT> mapper) {
-/* 202 */     Objects.requireNonNull(mapper);
-/* 203 */     return new IntPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 207 */           return new Sink.ChainedReference<P_OUT, Integer>(param1Sink)
-/*     */             {
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 210 */                 this.downstream.accept(mapper.applyAsInt(param2P_OUT));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final LongStream mapToLong(final ToLongFunction<? super P_OUT> mapper) {
-/* 219 */     Objects.requireNonNull(mapper);
-/* 220 */     return new LongPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<Long> param1Sink)
-/*     */         {
-/* 224 */           return new Sink.ChainedReference<P_OUT, Long>(param1Sink)
-/*     */             {
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 227 */                 this.downstream.accept(mapper.applyAsLong(param2P_OUT));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream mapToDouble(final ToDoubleFunction<? super P_OUT> mapper) {
-/* 236 */     Objects.requireNonNull(mapper);
-/* 237 */     return new DoublePipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 241 */           return new Sink.ChainedReference<P_OUT, Double>(param1Sink)
-/*     */             {
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 244 */                 this.downstream.accept(mapper.applyAsDouble(param2P_OUT));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final <R> Stream<R> flatMap(final Function<? super P_OUT, ? extends Stream<? extends R>> mapper) {
-/* 253 */     Objects.requireNonNull(mapper);
-/*     */     
-/* 255 */     return new StatelessOp<P_OUT, R>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<R> param1Sink)
-/*     */         {
-/* 259 */           return new Sink.ChainedReference(param1Sink)
-/*     */             {
-/*     */               public void begin(long param2Long) {
-/* 262 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 267 */                 try (Stream<R> null = (Stream)mapper.apply(param2P_OUT)) {
-/*     */                   
-/* 269 */                   if (stream != null) {
-/* 270 */                     stream.sequential().forEach(this.downstream);
-/*     */                   }
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public final IntStream flatMapToInt(final Function<? super P_OUT, ? extends IntStream> mapper) {
-/* 280 */     Objects.requireNonNull(mapper);
-/*     */     
-/* 282 */     return new IntPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 286 */           return new Sink.ChainedReference<P_OUT, Integer>(param1Sink) {
-/* 287 */               IntConsumer downstreamAsInt = this.downstream::accept;
-/*     */               
-/*     */               public void begin(long param2Long) {
-/* 290 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 295 */                 try (IntStream null = (IntStream)mapper.apply(param2P_OUT)) {
-/*     */                   
-/* 297 */                   if (intStream != null) {
-/* 298 */                     intStream.sequential().forEach(this.downstreamAsInt);
-/*     */                   }
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public final DoubleStream flatMapToDouble(final Function<? super P_OUT, ? extends DoubleStream> mapper) {
-/* 308 */     Objects.requireNonNull(mapper);
-/*     */     
-/* 310 */     return new DoublePipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 314 */           return new Sink.ChainedReference<P_OUT, Double>(param1Sink) {
-/* 315 */               DoubleConsumer downstreamAsDouble = this.downstream::accept;
-/*     */               
-/*     */               public void begin(long param2Long) {
-/* 318 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 323 */                 try (DoubleStream null = (DoubleStream)mapper.apply(param2P_OUT)) {
-/*     */                   
-/* 325 */                   if (doubleStream != null) {
-/* 326 */                     doubleStream.sequential().forEach(this.downstreamAsDouble);
-/*     */                   }
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public final LongStream flatMapToLong(final Function<? super P_OUT, ? extends LongStream> mapper) {
-/* 336 */     Objects.requireNonNull(mapper);
-/*     */     
-/* 338 */     return new LongPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<Long> param1Sink)
-/*     */         {
-/* 342 */           return new Sink.ChainedReference<P_OUT, Long>(param1Sink) {
-/* 343 */               LongConsumer downstreamAsLong = this.downstream::accept;
-/*     */               
-/*     */               public void begin(long param2Long) {
-/* 346 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 351 */                 try (LongStream null = (LongStream)mapper.apply(param2P_OUT)) {
-/*     */                   
-/* 353 */                   if (longStream != null) {
-/* 354 */                     longStream.sequential().forEach(this.downstreamAsLong);
-/*     */                   }
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public final Stream<P_OUT> peek(final Consumer<? super P_OUT> action) {
-/* 364 */     Objects.requireNonNull(action);
-/* 365 */     return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE, 0)
-/*     */       {
-/*     */         Sink<P_OUT> opWrapSink(int param1Int, Sink<P_OUT> param1Sink)
-/*     */         {
-/* 369 */           return new Sink.ChainedReference<P_OUT, P_OUT>(param1Sink)
-/*     */             {
-/*     */               public void accept(P_OUT param2P_OUT) {
-/* 372 */                 action.accept(param2P_OUT);
-/* 373 */                 this.downstream.accept(param2P_OUT);
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Stream<P_OUT> distinct() {
-/* 384 */     return DistinctOps.makeRef(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Stream<P_OUT> sorted() {
-/* 389 */     return SortedOps.makeRef(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Stream<P_OUT> sorted(Comparator<? super P_OUT> paramComparator) {
-/* 394 */     return SortedOps.makeRef(this, paramComparator);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Stream<P_OUT> limit(long paramLong) {
-/* 399 */     if (paramLong < 0L)
-/* 400 */       throw new IllegalArgumentException(Long.toString(paramLong)); 
-/* 401 */     return SliceOps.makeRef(this, 0L, paramLong);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Stream<P_OUT> skip(long paramLong) {
-/* 406 */     if (paramLong < 0L)
-/* 407 */       throw new IllegalArgumentException(Long.toString(paramLong)); 
-/* 408 */     if (paramLong == 0L) {
-/* 409 */       return this;
-/*     */     }
-/* 411 */     return SliceOps.makeRef(this, paramLong, -1L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void forEach(Consumer<? super P_OUT> paramConsumer) {
-/* 418 */     evaluate(ForEachOps.makeRef(paramConsumer, false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void forEachOrdered(Consumer<? super P_OUT> paramConsumer) {
-/* 423 */     evaluate(ForEachOps.makeRef(paramConsumer, true));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final <A> A[] toArray(IntFunction<A[]> paramIntFunction) {
-/* 437 */     IntFunction<A[]> intFunction = paramIntFunction;
-/* 438 */     return (A[])Nodes.<Object>flatten(evaluateToArrayNode(intFunction), (IntFunction)intFunction)
-/* 439 */       .asArray((IntFunction)intFunction);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Object[] toArray() {
-/* 444 */     return toArray(paramInt -> new Object[paramInt]);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean anyMatch(Predicate<? super P_OUT> paramPredicate) {
-/* 449 */     return ((Boolean)evaluate(MatchOps.makeRef(paramPredicate, MatchOps.MatchKind.ANY))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean allMatch(Predicate<? super P_OUT> paramPredicate) {
-/* 454 */     return ((Boolean)evaluate(MatchOps.makeRef(paramPredicate, MatchOps.MatchKind.ALL))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean noneMatch(Predicate<? super P_OUT> paramPredicate) {
-/* 459 */     return ((Boolean)evaluate(MatchOps.makeRef(paramPredicate, MatchOps.MatchKind.NONE))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Optional<P_OUT> findFirst() {
-/* 464 */     return (Optional<P_OUT>)evaluate(FindOps.makeRef(true));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Optional<P_OUT> findAny() {
-/* 469 */     return (Optional<P_OUT>)evaluate(FindOps.makeRef(false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final P_OUT reduce(P_OUT paramP_OUT, BinaryOperator<P_OUT> paramBinaryOperator) {
-/* 474 */     return (P_OUT)evaluate(ReduceOps.makeRef(paramP_OUT, paramBinaryOperator, paramBinaryOperator));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Optional<P_OUT> reduce(BinaryOperator<P_OUT> paramBinaryOperator) {
-/* 479 */     return (Optional<P_OUT>)evaluate(ReduceOps.makeRef(paramBinaryOperator));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final <R> R reduce(R paramR, BiFunction<R, ? super P_OUT, R> paramBiFunction, BinaryOperator<R> paramBinaryOperator) {
-/* 484 */     return (R)evaluate(ReduceOps.makeRef(paramR, paramBiFunction, paramBinaryOperator));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final <R, A> R collect(Collector<? super P_OUT, A, R> paramCollector) {
-/*     */     Object object;
-/* 491 */     if (isParallel() && paramCollector
-/* 492 */       .characteristics().contains(Collector.Characteristics.CONCURRENT) && (
-/* 493 */       !isOrdered() || paramCollector.characteristics().contains(Collector.Characteristics.UNORDERED))) {
-/* 494 */       object = paramCollector.supplier().get();
-/* 495 */       BiConsumer<A, ? super P_OUT> biConsumer = paramCollector.accumulator();
-/* 496 */       forEach(paramObject2 -> paramBiConsumer.accept(paramObject1, paramObject2));
-/*     */     } else {
-/*     */       
-/* 499 */       object = evaluate(ReduceOps.makeRef(paramCollector));
-/*     */     } 
-/* 501 */     return paramCollector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH) ? (R)object : paramCollector
-/*     */       
-/* 503 */       .finisher().apply(object);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final <R> R collect(Supplier<R> paramSupplier, BiConsumer<R, ? super P_OUT> paramBiConsumer, BiConsumer<R, R> paramBiConsumer1) {
-/* 510 */     return (R)evaluate(ReduceOps.makeRef(paramSupplier, paramBiConsumer, paramBiConsumer1));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Optional<P_OUT> max(Comparator<? super P_OUT> paramComparator) {
-/* 515 */     return reduce(BinaryOperator.maxBy(paramComparator));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Optional<P_OUT> min(Comparator<? super P_OUT> paramComparator) {
-/* 520 */     return reduce(BinaryOperator.minBy(paramComparator));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long count() {
-/* 526 */     return mapToLong(paramObject -> 1L).sum();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class Head<E_IN, E_OUT>
-/*     */     extends ReferencePipeline<E_IN, E_OUT>
-/*     */   {
-/*     */     Head(Supplier<? extends Spliterator<?>> param1Supplier, int param1Int, boolean param1Boolean) {
-/* 550 */       super(param1Supplier, param1Int, param1Boolean);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Head(Spliterator<?> param1Spliterator, int param1Int, boolean param1Boolean) {
-/* 562 */       super(param1Spliterator, param1Int, param1Boolean);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 567 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final Sink<E_IN> opWrapSink(int param1Int, Sink<E_OUT> param1Sink) {
-/* 572 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void forEach(Consumer<? super E_OUT> param1Consumer) {
-/* 579 */       if (!isParallel()) {
-/* 580 */         sourceStageSpliterator().forEachRemaining(param1Consumer);
-/*     */       } else {
-/*     */         
-/* 583 */         super.forEach(param1Consumer);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void forEachOrdered(Consumer<? super E_OUT> param1Consumer) {
-/* 589 */       if (!isParallel()) {
-/* 590 */         sourceStageSpliterator().forEachRemaining(param1Consumer);
-/*     */       } else {
-/*     */         
-/* 593 */         super.forEachOrdered(param1Consumer);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StatelessOp<E_IN, E_OUT>
-/*     */     extends ReferencePipeline<E_IN, E_OUT>
-/*     */   {
-/*     */     StatelessOp(AbstractPipeline<?, E_IN, ?> param1AbstractPipeline, StreamShape param1StreamShape, int param1Int) {
-/* 618 */       super(param1AbstractPipeline, param1Int);
-/* 619 */       assert param1AbstractPipeline.getOutputShape() == param1StreamShape;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 624 */       return false;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StatefulOp<E_IN, E_OUT>
-/*     */     extends ReferencePipeline<E_IN, E_OUT>
-/*     */   {
-/*     */     StatefulOp(AbstractPipeline<?, E_IN, ?> param1AbstractPipeline, StreamShape param1StreamShape, int param1Int) {
-/* 647 */       super(param1AbstractPipeline, param1Int);
-/* 648 */       assert param1AbstractPipeline.getOutputShape() == param1StreamShape;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 653 */       return true;
-/*     */     }
-/*     */     
-/*     */     abstract <P_IN> Node<E_OUT> opEvaluateParallel(PipelineHelper<E_OUT> param1PipelineHelper, Spliterator<P_IN> param1Spliterator, IntFunction<E_OUT[]> param1IntFunction);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\stream\ReferencePipeline.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.stream;
+
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.LongConsumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+
+/**
+ * Abstract base class for an intermediate pipeline stage or pipeline source
+ * stage implementing whose elements are of type {@code U}.
+ *
+ * @param <P_IN> type of elements in the upstream source
+ * @param <P_OUT> type of elements in produced by this stage
+ *
+ * @since 1.8
+ */
+abstract class ReferencePipeline<P_IN, P_OUT>
+        extends AbstractPipeline<P_IN, P_OUT, Stream<P_OUT>>
+        implements Stream<P_OUT>  {
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Supplier<Spliterator>} describing the stream source
+     * @param sourceFlags the source flags for the stream source, described in
+     *        {@link StreamOpFlag}
+     * @param parallel {@code true} if the pipeline is parallel
+     */
+    ReferencePipeline(Supplier<? extends Spliterator<?>> source,
+                      int sourceFlags, boolean parallel) {
+        super(source, sourceFlags, parallel);
+    }
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Spliterator} describing the stream source
+     * @param sourceFlags The source flags for the stream source, described in
+     *        {@link StreamOpFlag}
+     * @param parallel {@code true} if the pipeline is parallel
+     */
+    ReferencePipeline(Spliterator<?> source,
+                      int sourceFlags, boolean parallel) {
+        super(source, sourceFlags, parallel);
+    }
+
+    /**
+     * Constructor for appending an intermediate operation onto an existing
+     * pipeline.
+     *
+     * @param upstream the upstream element source.
+     */
+    ReferencePipeline(AbstractPipeline<?, P_IN, ?> upstream, int opFlags) {
+        super(upstream, opFlags);
+    }
+
+    // Shape-specific methods
+
+    @Override
+    final StreamShape getOutputShape() {
+        return StreamShape.REFERENCE;
+    }
+
+    @Override
+    final <P_IN> Node<P_OUT> evaluateToNode(PipelineHelper<P_OUT> helper,
+                                        Spliterator<P_IN> spliterator,
+                                        boolean flattenTree,
+                                        IntFunction<P_OUT[]> generator) {
+        return Nodes.collect(helper, spliterator, flattenTree, generator);
+    }
+
+    @Override
+    final <P_IN> Spliterator<P_OUT> wrap(PipelineHelper<P_OUT> ph,
+                                     Supplier<Spliterator<P_IN>> supplier,
+                                     boolean isParallel) {
+        return new StreamSpliterators.WrappingSpliterator<>(ph, supplier, isParallel);
+    }
+
+    @Override
+    final Spliterator<P_OUT> lazySpliterator(Supplier<? extends Spliterator<P_OUT>> supplier) {
+        return new StreamSpliterators.DelegatingSpliterator<>(supplier);
+    }
+
+    @Override
+    final void forEachWithCancel(Spliterator<P_OUT> spliterator, Sink<P_OUT> sink) {
+        do { } while (!sink.cancellationRequested() && spliterator.tryAdvance(sink));
+    }
+
+    @Override
+    final Node.Builder<P_OUT> makeNodeBuilder(long exactSizeIfKnown, IntFunction<P_OUT[]> generator) {
+        return Nodes.builder(exactSizeIfKnown, generator);
+    }
+
+
+    // BaseStream
+
+    @Override
+    public final Iterator<P_OUT> iterator() {
+        return Spliterators.iterator(spliterator());
+    }
+
+
+    // Stream
+
+    // Stateless intermediate operations from Stream
+
+    @Override
+    public Stream<P_OUT> unordered() {
+        if (!isOrdered())
+            return this;
+        return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE, StreamOpFlag.NOT_ORDERED) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
+                return sink;
+            }
+        };
+    }
+
+    @Override
+    public final Stream<P_OUT> filter(Predicate<? super P_OUT> predicate) {
+        Objects.requireNonNull(predicate);
+        return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE,
+                                     StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
+                return new Sink.ChainedReference<P_OUT, P_OUT>(sink) {
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(P_OUT u) {
+                        if (predicate.test(u))
+                            downstream.accept(u);
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public final <R> Stream<R> map(Function<? super P_OUT, ? extends R> mapper) {
+        Objects.requireNonNull(mapper);
+        return new StatelessOp<P_OUT, R>(this, StreamShape.REFERENCE,
+                                     StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<R> sink) {
+                return new Sink.ChainedReference<P_OUT, R>(sink) {
+                    @Override
+                    public void accept(P_OUT u) {
+                        downstream.accept(mapper.apply(u));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final IntStream mapToInt(ToIntFunction<? super P_OUT> mapper) {
+        Objects.requireNonNull(mapper);
+        return new IntPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE,
+                                              StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedReference<P_OUT, Integer>(sink) {
+                    @Override
+                    public void accept(P_OUT u) {
+                        downstream.accept(mapper.applyAsInt(u));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final LongStream mapToLong(ToLongFunction<? super P_OUT> mapper) {
+        Objects.requireNonNull(mapper);
+        return new LongPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE,
+                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<Long> sink) {
+                return new Sink.ChainedReference<P_OUT, Long>(sink) {
+                    @Override
+                    public void accept(P_OUT u) {
+                        downstream.accept(mapper.applyAsLong(u));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream mapToDouble(ToDoubleFunction<? super P_OUT> mapper) {
+        Objects.requireNonNull(mapper);
+        return new DoublePipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE,
+                                        StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedReference<P_OUT, Double>(sink) {
+                    @Override
+                    public void accept(P_OUT u) {
+                        downstream.accept(mapper.applyAsDouble(u));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final <R> Stream<R> flatMap(Function<? super P_OUT, ? extends Stream<? extends R>> mapper) {
+        Objects.requireNonNull(mapper);
+        // We can do better than this, by polling cancellationRequested when stream is infinite
+        return new StatelessOp<P_OUT, R>(this, StreamShape.REFERENCE,
+                                     StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<R> sink) {
+                return new Sink.ChainedReference<P_OUT, R>(sink) {
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(P_OUT u) {
+                        try (Stream<? extends R> result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstream);
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final IntStream flatMapToInt(Function<? super P_OUT, ? extends IntStream> mapper) {
+        Objects.requireNonNull(mapper);
+        // We can do better than this, by polling cancellationRequested when stream is infinite
+        return new IntPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE,
+                                              StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedReference<P_OUT, Integer>(sink) {
+                    IntConsumer downstreamAsInt = downstream::accept;
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(P_OUT u) {
+                        try (IntStream result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstreamAsInt);
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream flatMapToDouble(Function<? super P_OUT, ? extends DoubleStream> mapper) {
+        Objects.requireNonNull(mapper);
+        // We can do better than this, by polling cancellationRequested when stream is infinite
+        return new DoublePipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE,
+                                                     StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedReference<P_OUT, Double>(sink) {
+                    DoubleConsumer downstreamAsDouble = downstream::accept;
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(P_OUT u) {
+                        try (DoubleStream result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstreamAsDouble);
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final LongStream flatMapToLong(Function<? super P_OUT, ? extends LongStream> mapper) {
+        Objects.requireNonNull(mapper);
+        // We can do better than this, by polling cancellationRequested when stream is infinite
+        return new LongPipeline.StatelessOp<P_OUT>(this, StreamShape.REFERENCE,
+                                                   StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<Long> sink) {
+                return new Sink.ChainedReference<P_OUT, Long>(sink) {
+                    LongConsumer downstreamAsLong = downstream::accept;
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(P_OUT u) {
+                        try (LongStream result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstreamAsLong);
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final Stream<P_OUT> peek(Consumer<? super P_OUT> action) {
+        Objects.requireNonNull(action);
+        return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE,
+                                     0) {
+            @Override
+            Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
+                return new Sink.ChainedReference<P_OUT, P_OUT>(sink) {
+                    @Override
+                    public void accept(P_OUT u) {
+                        action.accept(u);
+                        downstream.accept(u);
+                    }
+                };
+            }
+        };
+    }
+
+    // Stateful intermediate operations from Stream
+
+    @Override
+    public final Stream<P_OUT> distinct() {
+        return DistinctOps.makeRef(this);
+    }
+
+    @Override
+    public final Stream<P_OUT> sorted() {
+        return SortedOps.makeRef(this);
+    }
+
+    @Override
+    public final Stream<P_OUT> sorted(Comparator<? super P_OUT> comparator) {
+        return SortedOps.makeRef(this, comparator);
+    }
+
+    @Override
+    public final Stream<P_OUT> limit(long maxSize) {
+        if (maxSize < 0)
+            throw new IllegalArgumentException(Long.toString(maxSize));
+        return SliceOps.makeRef(this, 0, maxSize);
+    }
+
+    @Override
+    public final Stream<P_OUT> skip(long n) {
+        if (n < 0)
+            throw new IllegalArgumentException(Long.toString(n));
+        if (n == 0)
+            return this;
+        else
+            return SliceOps.makeRef(this, n, -1);
+    }
+
+    // Terminal operations from Stream
+
+    @Override
+    public void forEach(Consumer<? super P_OUT> action) {
+        evaluate(ForEachOps.makeRef(action, false));
+    }
+
+    @Override
+    public void forEachOrdered(Consumer<? super P_OUT> action) {
+        evaluate(ForEachOps.makeRef(action, true));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public final <A> A[] toArray(IntFunction<A[]> generator) {
+        // Since A has no relation to U (not possible to declare that A is an upper bound of U)
+        // there will be no static type checking.
+        // Therefore use a raw type and assume A == U rather than propagating the separation of A and U
+        // throughout the code-base.
+        // The runtime type of U is never checked for equality with the component type of the runtime type of A[].
+        // Runtime checking will be performed when an element is stored in A[], thus if A is not a
+        // super type of U an ArrayStoreException will be thrown.
+        @SuppressWarnings("rawtypes")
+        IntFunction rawGenerator = (IntFunction) generator;
+        return (A[]) Nodes.flatten(evaluateToArrayNode(rawGenerator), rawGenerator)
+                              .asArray(rawGenerator);
+    }
+
+    @Override
+    public final Object[] toArray() {
+        return toArray(Object[]::new);
+    }
+
+    @Override
+    public final boolean anyMatch(Predicate<? super P_OUT> predicate) {
+        return evaluate(MatchOps.makeRef(predicate, MatchOps.MatchKind.ANY));
+    }
+
+    @Override
+    public final boolean allMatch(Predicate<? super P_OUT> predicate) {
+        return evaluate(MatchOps.makeRef(predicate, MatchOps.MatchKind.ALL));
+    }
+
+    @Override
+    public final boolean noneMatch(Predicate<? super P_OUT> predicate) {
+        return evaluate(MatchOps.makeRef(predicate, MatchOps.MatchKind.NONE));
+    }
+
+    @Override
+    public final Optional<P_OUT> findFirst() {
+        return evaluate(FindOps.makeRef(true));
+    }
+
+    @Override
+    public final Optional<P_OUT> findAny() {
+        return evaluate(FindOps.makeRef(false));
+    }
+
+    @Override
+    public final P_OUT reduce(final P_OUT identity, final BinaryOperator<P_OUT> accumulator) {
+        return evaluate(ReduceOps.makeRef(identity, accumulator, accumulator));
+    }
+
+    @Override
+    public final Optional<P_OUT> reduce(BinaryOperator<P_OUT> accumulator) {
+        return evaluate(ReduceOps.makeRef(accumulator));
+    }
+
+    @Override
+    public final <R> R reduce(R identity, BiFunction<R, ? super P_OUT, R> accumulator, BinaryOperator<R> combiner) {
+        return evaluate(ReduceOps.makeRef(identity, accumulator, combiner));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public final <R, A> R collect(Collector<? super P_OUT, A, R> collector) {
+        A container;
+        if (isParallel()
+                && (collector.characteristics().contains(Collector.Characteristics.CONCURRENT))
+                && (!isOrdered() || collector.characteristics().contains(Collector.Characteristics.UNORDERED))) {
+            container = collector.supplier().get();
+            BiConsumer<A, ? super P_OUT> accumulator = collector.accumulator();
+            forEach(u -> accumulator.accept(container, u));
+        }
+        else {
+            container = evaluate(ReduceOps.makeRef(collector));
+        }
+        return collector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)
+               ? (R) container
+               : collector.finisher().apply(container);
+    }
+
+    @Override
+    public final <R> R collect(Supplier<R> supplier,
+                               BiConsumer<R, ? super P_OUT> accumulator,
+                               BiConsumer<R, R> combiner) {
+        return evaluate(ReduceOps.makeRef(supplier, accumulator, combiner));
+    }
+
+    @Override
+    public final Optional<P_OUT> max(Comparator<? super P_OUT> comparator) {
+        return reduce(BinaryOperator.maxBy(comparator));
+    }
+
+    @Override
+    public final Optional<P_OUT> min(Comparator<? super P_OUT> comparator) {
+        return reduce(BinaryOperator.minBy(comparator));
+
+    }
+
+    @Override
+    public final long count() {
+        return mapToLong(e -> 1L).sum();
+    }
+
+
+    //
+
+    /**
+     * Source stage of a ReferencePipeline.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @param <E_OUT> type of elements in produced by this stage
+     * @since 1.8
+     */
+    static class Head<E_IN, E_OUT> extends ReferencePipeline<E_IN, E_OUT> {
+        /**
+         * Constructor for the source stage of a Stream.
+         *
+         * @param source {@code Supplier<Spliterator>} describing the stream
+         *               source
+         * @param sourceFlags the source flags for the stream source, described
+         *                    in {@link StreamOpFlag}
+         */
+        Head(Supplier<? extends Spliterator<?>> source,
+             int sourceFlags, boolean parallel) {
+            super(source, sourceFlags, parallel);
+        }
+
+        /**
+         * Constructor for the source stage of a Stream.
+         *
+         * @param source {@code Spliterator} describing the stream source
+         * @param sourceFlags the source flags for the stream source, described
+         *                    in {@link StreamOpFlag}
+         */
+        Head(Spliterator<?> source,
+             int sourceFlags, boolean parallel) {
+            super(source, sourceFlags, parallel);
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        final Sink<E_IN> opWrapSink(int flags, Sink<E_OUT> sink) {
+            throw new UnsupportedOperationException();
+        }
+
+        // Optimized sequential terminal operations for the head of the pipeline
+
+        @Override
+        public void forEach(Consumer<? super E_OUT> action) {
+            if (!isParallel()) {
+                sourceStageSpliterator().forEachRemaining(action);
+            }
+            else {
+                super.forEach(action);
+            }
+        }
+
+        @Override
+        public void forEachOrdered(Consumer<? super E_OUT> action) {
+            if (!isParallel()) {
+                sourceStageSpliterator().forEachRemaining(action);
+            }
+            else {
+                super.forEachOrdered(action);
+            }
+        }
+    }
+
+    /**
+     * Base class for a stateless intermediate stage of a Stream.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @param <E_OUT> type of elements in produced by this stage
+     * @since 1.8
+     */
+    abstract static class StatelessOp<E_IN, E_OUT>
+            extends ReferencePipeline<E_IN, E_OUT> {
+        /**
+         * Construct a new Stream by appending a stateless intermediate
+         * operation to an existing stream.
+         *
+         * @param upstream The upstream pipeline stage
+         * @param inputShape The stream shape for the upstream pipeline stage
+         * @param opFlags Operation flags for the new stage
+         */
+        StatelessOp(AbstractPipeline<?, E_IN, ?> upstream,
+                    StreamShape inputShape,
+                    int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return false;
+        }
+    }
+
+    /**
+     * Base class for a stateful intermediate stage of a Stream.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @param <E_OUT> type of elements in produced by this stage
+     * @since 1.8
+     */
+    abstract static class StatefulOp<E_IN, E_OUT>
+            extends ReferencePipeline<E_IN, E_OUT> {
+        /**
+         * Construct a new Stream by appending a stateful intermediate operation
+         * to an existing stream.
+         * @param upstream The upstream pipeline stage
+         * @param inputShape The stream shape for the upstream pipeline stage
+         * @param opFlags Operation flags for the new stage
+         */
+        StatefulOp(AbstractPipeline<?, E_IN, ?> upstream,
+                   StreamShape inputShape,
+                   int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return true;
+        }
+
+        @Override
+        abstract <P_IN> Node<E_OUT> opEvaluateParallel(PipelineHelper<E_OUT> helper,
+                                                       Spliterator<P_IN> spliterator,
+                                                       IntFunction<E_OUT[]> generator);
+    }
+}

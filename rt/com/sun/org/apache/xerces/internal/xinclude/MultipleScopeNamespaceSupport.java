@@ -1,202 +1,196 @@
-/*     */ package com.sun.org.apache.xerces.internal.xinclude;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.util.NamespaceSupport;
-/*     */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import java.util.Enumeration;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MultipleScopeNamespaceSupport
-/*     */   extends NamespaceSupport
-/*     */ {
-/*  43 */   protected int[] fScope = new int[8];
-/*     */ 
-/*     */   
-/*     */   protected int fCurrentScope;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MultipleScopeNamespaceSupport() {
-/*  51 */     this.fCurrentScope = 0;
-/*  52 */     this.fScope[0] = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MultipleScopeNamespaceSupport(NamespaceContext context) {
-/*  59 */     super(context);
-/*  60 */     this.fCurrentScope = 0;
-/*  61 */     this.fScope[0] = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Enumeration getAllPrefixes() {
-/*  68 */     int count = 0;
-/*  69 */     if (this.fPrefixes.length < this.fNamespace.length / 2) {
-/*     */       
-/*  71 */       String[] prefixes = new String[this.fNamespaceSize];
-/*  72 */       this.fPrefixes = prefixes;
-/*     */     } 
-/*  74 */     String prefix = null;
-/*  75 */     boolean unique = true;
-/*  76 */     int i = this.fContext[this.fScope[this.fCurrentScope]];
-/*  77 */     for (; i <= this.fNamespaceSize - 2; 
-/*  78 */       i += 2) {
-/*  79 */       prefix = this.fNamespace[i];
-/*  80 */       for (int k = 0; k < count; k++) {
-/*  81 */         if (this.fPrefixes[k] == prefix) {
-/*  82 */           unique = false;
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/*  86 */       if (unique) {
-/*  87 */         this.fPrefixes[count++] = prefix;
-/*     */       }
-/*  89 */       unique = true;
-/*     */     } 
-/*  91 */     return new NamespaceSupport.Prefixes(this, this.fPrefixes, count);
-/*     */   }
-/*     */   
-/*     */   public int getScopeForContext(int context) {
-/*  95 */     int scope = this.fCurrentScope;
-/*  96 */     while (context < this.fScope[scope]) {
-/*  97 */       scope--;
-/*     */     }
-/*  99 */     return scope;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPrefix(String uri) {
-/* 106 */     return getPrefix(uri, this.fNamespaceSize, this.fContext[this.fScope[this.fCurrentScope]]);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getURI(String prefix) {
-/* 113 */     return getURI(prefix, this.fNamespaceSize, this.fContext[this.fScope[this.fCurrentScope]]);
-/*     */   }
-/*     */   
-/*     */   public String getPrefix(String uri, int context) {
-/* 117 */     return getPrefix(uri, this.fContext[context + 1], this.fContext[this.fScope[getScopeForContext(context)]]);
-/*     */   }
-/*     */   
-/*     */   public String getURI(String prefix, int context) {
-/* 121 */     return getURI(prefix, this.fContext[context + 1], this.fContext[this.fScope[getScopeForContext(context)]]);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getPrefix(String uri, int start, int end) {
-/* 126 */     if (uri == NamespaceContext.XML_URI) {
-/* 127 */       return XMLSymbols.PREFIX_XML;
-/*     */     }
-/* 129 */     if (uri == NamespaceContext.XMLNS_URI) {
-/* 130 */       return XMLSymbols.PREFIX_XMLNS;
-/*     */     }
-/*     */ 
-/*     */     
-/* 134 */     for (int i = start; i > end; i -= 2) {
-/* 135 */       if (this.fNamespace[i - 1] == uri && 
-/* 136 */         getURI(this.fNamespace[i - 2]) == uri) {
-/* 137 */         return this.fNamespace[i - 2];
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 142 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getURI(String prefix, int start, int end) {
-/* 147 */     if (prefix == XMLSymbols.PREFIX_XML) {
-/* 148 */       return NamespaceContext.XML_URI;
-/*     */     }
-/* 150 */     if (prefix == XMLSymbols.PREFIX_XMLNS) {
-/* 151 */       return NamespaceContext.XMLNS_URI;
-/*     */     }
-/*     */ 
-/*     */     
-/* 155 */     for (int i = start; i > end; i -= 2) {
-/* 156 */       if (this.fNamespace[i - 2] == prefix) {
-/* 157 */         return this.fNamespace[i - 1];
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 162 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 170 */     this.fCurrentContext = this.fScope[this.fCurrentScope];
-/* 171 */     this.fNamespaceSize = this.fContext[this.fCurrentContext];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void pushScope() {
-/* 179 */     if (this.fCurrentScope + 1 == this.fScope.length) {
-/* 180 */       int[] contextarray = new int[this.fScope.length * 2];
-/* 181 */       System.arraycopy(this.fScope, 0, contextarray, 0, this.fScope.length);
-/* 182 */       this.fScope = contextarray;
-/*     */     } 
-/* 184 */     pushContext();
-/* 185 */     this.fScope[++this.fCurrentScope] = this.fCurrentContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void popScope() {
-/* 193 */     this.fCurrentContext = this.fScope[this.fCurrentScope--];
-/* 194 */     popContext();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\xinclude\MultipleScopeNamespaceSupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2003-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.sun.org.apache.xerces.internal.xinclude;
+
+import java.util.Enumeration;
+
+import com.sun.org.apache.xerces.internal.util.NamespaceSupport;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+
+/**
+ * This implementation of NamespaceContext has the ability to maintain multiple
+ * scopes of namespace/prefix bindings.  This is useful in situations when it is
+ * not always appropriate for elements to inherit the namespace bindings of their
+ * ancestors (such as included elements in XInclude).
+ *
+ * When searching for a URI to match a prefix, or a prefix to match a URI, it is
+ * searched for in the current context, then the ancestors of the current context,
+ * up to the beginning of the current scope.  Other scopes are not searched.
+ *
+ * @author Peter McCracken, IBM
+ *
+ */
+public class MultipleScopeNamespaceSupport extends NamespaceSupport {
+
+    protected int[] fScope = new int[8];
+    protected int fCurrentScope;
+
+    /**
+     *
+     */
+    public MultipleScopeNamespaceSupport() {
+        super();
+        fCurrentScope = 0;
+        fScope[0] = 0;
+    }
+
+    /**
+     * @param context
+     */
+    public MultipleScopeNamespaceSupport(NamespaceContext context) {
+        super(context);
+        fCurrentScope = 0;
+        fScope[0] = 0;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xni.NamespaceContext#getAllPrefixes()
+     */
+    public Enumeration getAllPrefixes() {
+        int count = 0;
+        if (fPrefixes.length < (fNamespace.length / 2)) {
+            // resize prefix array
+            String[] prefixes = new String[fNamespaceSize];
+            fPrefixes = prefixes;
+        }
+        String prefix = null;
+        boolean unique = true;
+        for (int i = fContext[fScope[fCurrentScope]];
+            i <= (fNamespaceSize - 2);
+            i += 2) {
+            prefix = fNamespace[i];
+            for (int k = 0; k < count; k++) {
+                if (fPrefixes[k] == prefix) {
+                    unique = false;
+                    break;
+                }
+            }
+            if (unique) {
+                fPrefixes[count++] = prefix;
+            }
+            unique = true;
+        }
+        return new Prefixes(fPrefixes, count);
+    }
+
+    public int getScopeForContext(int context) {
+        int scope = fCurrentScope;
+        while (context < fScope[scope]) {
+            scope--;
+        }
+        return scope;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xni.NamespaceContext#getPrefix(java.lang.String)
+     */
+    public String getPrefix(String uri) {
+        return getPrefix(uri, fNamespaceSize, fContext[fScope[fCurrentScope]]);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xni.NamespaceContext#getURI(java.lang.String)
+     */
+    public String getURI(String prefix) {
+        return getURI(prefix, fNamespaceSize, fContext[fScope[fCurrentScope]]);
+    }
+
+    public String getPrefix(String uri, int context) {
+        return getPrefix(uri, fContext[context+1], fContext[fScope[getScopeForContext(context)]]);
+    }
+
+    public String getURI(String prefix, int context) {
+        return getURI(prefix, fContext[context+1], fContext[fScope[getScopeForContext(context)]]);
+    }
+
+    public String getPrefix(String uri, int start, int end) {
+        // this saves us from having a copy of each of these in fNamespace for each scope
+        if (uri == NamespaceContext.XML_URI) {
+            return XMLSymbols.PREFIX_XML;
+        }
+        if (uri == NamespaceContext.XMLNS_URI) {
+            return XMLSymbols.PREFIX_XMLNS;
+        }
+
+        // find uri in current context
+        for (int i = start; i > end; i -= 2) {
+            if (fNamespace[i - 1] == uri) {
+                if (getURI(fNamespace[i - 2]) == uri)
+                    return fNamespace[i - 2];
+            }
+        }
+
+        // uri not found
+        return null;
+    }
+
+    public String getURI(String prefix, int start, int end) {
+        // this saves us from having a copy of each of these in fNamespace for each scope
+        if (prefix == XMLSymbols.PREFIX_XML) {
+            return NamespaceContext.XML_URI;
+        }
+        if (prefix == XMLSymbols.PREFIX_XMLNS) {
+            return NamespaceContext.XMLNS_URI;
+        }
+
+        // find prefix in current context
+        for (int i = start; i > end; i -= 2) {
+            if (fNamespace[i - 2] == prefix) {
+                return fNamespace[i - 1];
+            }
+        }
+
+        // prefix not found
+        return null;
+    }
+
+    /**
+     * Only resets the current scope -- all namespaces defined in lower scopes
+     * remain valid after a call to reset.
+     */
+    public void reset() {
+        fCurrentContext = fScope[fCurrentScope];
+        fNamespaceSize = fContext[fCurrentContext];
+    }
+
+    /**
+     * Begins a new scope.  None of the previous namespace bindings will be used,
+     * until the new scope is popped with popScope()
+     */
+    public void pushScope() {
+        if (fCurrentScope + 1 == fScope.length) {
+            int[] contextarray = new int[fScope.length * 2];
+            System.arraycopy(fScope, 0, contextarray, 0, fScope.length);
+            fScope = contextarray;
+        }
+        pushContext();
+        fScope[++fCurrentScope] = fCurrentContext;
+    }
+
+    /**
+     * Pops the current scope.  The namespace bindings from the new current scope
+     * are then used for searching for namespaces and prefixes.
+     */
+    public void popScope() {
+        fCurrentContext = fScope[fCurrentScope--];
+        popContext();
+    }
+}

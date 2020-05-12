@@ -1,187 +1,181 @@
-/*     */ package com.sun.org.apache.xml.internal.security.signature.reference;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.ListIterator;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ReferenceSubTreeData
-/*     */   implements ReferenceNodeSetData
-/*     */ {
-/*     */   private boolean excludeComments;
-/*     */   private Node root;
-/*     */   
-/*     */   public ReferenceSubTreeData(Node paramNode, boolean paramBoolean) {
-/*  53 */     this.root = paramNode;
-/*  54 */     this.excludeComments = paramBoolean;
-/*     */   }
-/*     */   
-/*     */   public Iterator<Node> iterator() {
-/*  58 */     return new DelayedNodeIterator(this.root, this.excludeComments);
-/*     */   }
-/*     */   
-/*     */   public Node getRoot() {
-/*  62 */     return this.root;
-/*     */   }
-/*     */   
-/*     */   public boolean excludeComments() {
-/*  66 */     return this.excludeComments;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class DelayedNodeIterator
-/*     */     implements Iterator<Node>
-/*     */   {
-/*     */     private Node root;
-/*     */     
-/*     */     private List<Node> nodeSet;
-/*     */     private ListIterator<Node> li;
-/*     */     private boolean withComments;
-/*     */     
-/*     */     DelayedNodeIterator(Node param1Node, boolean param1Boolean) {
-/*  80 */       this.root = param1Node;
-/*  81 */       this.withComments = !param1Boolean;
-/*     */     }
-/*     */     
-/*     */     public boolean hasNext() {
-/*  85 */       if (this.nodeSet == null) {
-/*  86 */         this.nodeSet = dereferenceSameDocumentURI(this.root);
-/*  87 */         this.li = this.nodeSet.listIterator();
-/*     */       } 
-/*  89 */       return this.li.hasNext();
-/*     */     }
-/*     */     
-/*     */     public Node next() {
-/*  93 */       if (this.nodeSet == null) {
-/*  94 */         this.nodeSet = dereferenceSameDocumentURI(this.root);
-/*  95 */         this.li = this.nodeSet.listIterator();
-/*     */       } 
-/*  97 */       if (this.li.hasNext()) {
-/*  98 */         return this.li.next();
-/*     */       }
-/* 100 */       throw new NoSuchElementException();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void remove() {
-/* 105 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private List<Node> dereferenceSameDocumentURI(Node param1Node) {
-/* 116 */       ArrayList<Node> arrayList = new ArrayList();
-/* 117 */       if (param1Node != null) {
-/* 118 */         nodeSetMinusCommentNodes(param1Node, arrayList, null);
-/*     */       }
-/* 120 */       return arrayList;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private void nodeSetMinusCommentNodes(Node param1Node1, List<Node> param1List, Node param1Node2) {
-/*     */       NamedNodeMap namedNodeMap;
-/*     */       Node node1;
-/*     */       Node node2;
-/* 136 */       switch (param1Node1.getNodeType()) {
-/*     */         case 1:
-/* 138 */           param1List.add(param1Node1);
-/* 139 */           namedNodeMap = param1Node1.getAttributes();
-/* 140 */           if (namedNodeMap != null) {
-/* 141 */             byte b; int i; for (b = 0, i = namedNodeMap.getLength(); b < i; b++) {
-/* 142 */               param1List.add(namedNodeMap.item(b));
-/*     */             }
-/*     */           } 
-/* 145 */           node1 = null;
-/* 146 */           for (node2 = param1Node1.getFirstChild(); node2 != null; 
-/* 147 */             node2 = node2.getNextSibling()) {
-/* 148 */             nodeSetMinusCommentNodes(node2, param1List, node1);
-/* 149 */             node1 = node2;
-/*     */           } 
-/*     */           break;
-/*     */         case 9:
-/* 153 */           node1 = null;
-/* 154 */           for (node2 = param1Node1.getFirstChild(); node2 != null; 
-/* 155 */             node2 = node2.getNextSibling()) {
-/* 156 */             nodeSetMinusCommentNodes(node2, param1List, node1);
-/* 157 */             node1 = node2;
-/*     */           } 
-/*     */           break;
-/*     */ 
-/*     */         
-/*     */         case 3:
-/*     */         case 4:
-/* 164 */           if (param1Node2 != null && (param1Node2
-/* 165 */             .getNodeType() == 3 || param1Node2
-/* 166 */             .getNodeType() == 4)) {
-/*     */             return;
-/*     */           }
-/* 169 */           param1List.add(param1Node1);
-/*     */           break;
-/*     */         case 7:
-/* 172 */           param1List.add(param1Node1);
-/*     */           break;
-/*     */         case 8:
-/* 175 */           if (this.withComments)
-/* 176 */             param1List.add(param1Node1); 
-/*     */           break;
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\signature\reference\ReferenceSubTreeData.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ */
+/*
+ * $Id$
+ */
+package com.sun.org.apache.xml.internal.security.signature.reference;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+
+/**
+ * A representation of a <code>ReferenceNodeSetData</code> type containing a node-set.
+ * This is a subtype of NodeSetData that represents a dereferenced
+ * same-document URI as the root of a subdocument. The main reason is
+ * for efficiency and performance, as some transforms can operate
+ * directly on the subdocument and there is no need to convert it
+ * first to an XPath node-set.
+ */
+public class ReferenceSubTreeData implements ReferenceNodeSetData {
+
+    private boolean excludeComments;
+    private Node root;
+
+    public ReferenceSubTreeData(Node root, boolean excludeComments) {
+        this.root = root;
+        this.excludeComments = excludeComments;
+    }
+
+    public Iterator<Node> iterator() {
+        return new DelayedNodeIterator(root, excludeComments);
+    }
+
+    public Node getRoot() {
+        return root;
+    }
+
+    public boolean excludeComments() {
+        return excludeComments;
+    }
+
+    /**
+     * This is an Iterator that contains a backing node-set that is
+     * not populated until the caller first attempts to advance the iterator.
+     */
+    static class DelayedNodeIterator implements Iterator<Node> {
+        private Node root;
+        private List<Node> nodeSet;
+        private ListIterator<Node> li;
+        private boolean withComments;
+
+        DelayedNodeIterator(Node root, boolean excludeComments) {
+            this.root = root;
+            this.withComments = !excludeComments;
+        }
+
+        public boolean hasNext() {
+            if (nodeSet == null) {
+                nodeSet = dereferenceSameDocumentURI(root);
+                li = nodeSet.listIterator();
+            }
+            return li.hasNext();
+        }
+
+        public Node next() {
+            if (nodeSet == null) {
+                nodeSet = dereferenceSameDocumentURI(root);
+                li = nodeSet.listIterator();
+            }
+            if (li.hasNext()) {
+                return li.next();
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
+         * Dereferences a same-document URI fragment.
+         *
+         * @param node the node (document or element) referenced by the
+         *        URI fragment. If null, returns an empty set.
+         * @return a set of nodes (minus any comment nodes)
+         */
+        private List<Node> dereferenceSameDocumentURI(Node node) {
+            List<Node> nodeSet = new ArrayList<Node>();
+            if (node != null) {
+                nodeSetMinusCommentNodes(node, nodeSet, null);
+            }
+            return nodeSet;
+        }
+
+        /**
+         * Recursively traverses the subtree, and returns an XPath-equivalent
+         * node-set of all nodes traversed, excluding any comment nodes,
+         * if specified.
+         *
+         * @param node the node to traverse
+         * @param nodeSet the set of nodes traversed so far
+         * @param the previous sibling node
+         */
+        @SuppressWarnings("fallthrough")
+        private void nodeSetMinusCommentNodes(Node node, List<Node> nodeSet,
+                                              Node prevSibling)
+        {
+            switch (node.getNodeType()) {
+                case Node.ELEMENT_NODE :
+                    nodeSet.add(node);
+                    NamedNodeMap attrs = node.getAttributes();
+                    if (attrs != null) {
+                        for (int i = 0, len = attrs.getLength(); i < len; i++) {
+                            nodeSet.add(attrs.item(i));
+                        }
+                    }
+                    Node pSibling = null;
+                    for (Node child = node.getFirstChild(); child != null;
+                        child = child.getNextSibling()) {
+                        nodeSetMinusCommentNodes(child, nodeSet, pSibling);
+                        pSibling = child;
+                    }
+                    break;
+                case Node.DOCUMENT_NODE :
+                    pSibling = null;
+                    for (Node child = node.getFirstChild(); child != null;
+                        child = child.getNextSibling()) {
+                        nodeSetMinusCommentNodes(child, nodeSet, pSibling);
+                        pSibling = child;
+                    }
+                    break;
+                case Node.TEXT_NODE :
+                case Node.CDATA_SECTION_NODE:
+                    // emulate XPath which only returns the first node in
+                    // contiguous text/cdata nodes
+                    if (prevSibling != null &&
+                        (prevSibling.getNodeType() == Node.TEXT_NODE ||
+                         prevSibling.getNodeType() == Node.CDATA_SECTION_NODE)) {
+                        return;
+                    }
+                    nodeSet.add(node);
+                    break;
+                case Node.PROCESSING_INSTRUCTION_NODE :
+                    nodeSet.add(node);
+                    break;
+                case Node.COMMENT_NODE:
+                    if (withComments) {
+                        nodeSet.add(node);
+                    }
+            }
+        }
+    }
+}

@@ -1,211 +1,207 @@
-/*     */ package com.sun.corba.se.impl.transport;
-/*     */ 
-/*     */ import com.sun.corba.se.pept.transport.ByteBufferPool;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.nio.ByteBuffer;
-/*     */ import java.util.ArrayList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ByteBufferPoolImpl
-/*     */   implements ByteBufferPool
-/*     */ {
-/*     */   private ORB itsOrb;
-/*     */   private int itsByteBufferSize;
-/*     */   private ArrayList itsPool;
-/*  44 */   private int itsObjectCounter = 0;
-/*     */ 
-/*     */   
-/*     */   private boolean debug;
-/*     */ 
-/*     */   
-/*     */   public ByteBufferPoolImpl(ORB paramORB) {
-/*  51 */     this.itsByteBufferSize = paramORB.getORBData().getGIOPFragmentSize();
-/*  52 */     this.itsPool = new ArrayList();
-/*  53 */     this.itsOrb = paramORB;
-/*  54 */     this.debug = paramORB.transportDebugFlag;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer getByteBuffer(int paramInt) {
-/*  75 */     ByteBuffer byteBuffer = null;
-/*     */     
-/*  77 */     if (paramInt <= this.itsByteBufferSize && 
-/*  78 */       !this.itsOrb.getORBData().disableDirectByteBufferUse()) {
-/*     */       int i;
-/*     */ 
-/*     */       
-/*  82 */       synchronized (this.itsPool) {
-/*     */         
-/*  84 */         i = this.itsPool.size();
-/*  85 */         if (i > 0) {
-/*     */           
-/*  87 */           byteBuffer = this.itsPool.remove(i - 1);
-/*     */ 
-/*     */           
-/*  90 */           byteBuffer.clear();
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  98 */       if (i <= 0)
-/*     */       {
-/* 100 */         byteBuffer = ByteBuffer.allocateDirect(this.itsByteBufferSize);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 106 */       this.itsObjectCounter++;
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 112 */       byteBuffer = ByteBuffer.allocate(paramInt);
-/*     */     } 
-/*     */     
-/* 115 */     return byteBuffer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void releaseByteBuffer(ByteBuffer paramByteBuffer) {
-/* 140 */     if (paramByteBuffer.isDirect()) {
-/*     */       
-/* 142 */       synchronized (this.itsPool) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 146 */         boolean bool = false;
-/* 147 */         int i = 0;
-/*     */         
-/* 149 */         if (this.debug)
-/*     */         {
-/*     */ 
-/*     */ 
-/*     */           
-/* 154 */           for (byte b = 0; b < this.itsPool.size() && !bool; b++) {
-/*     */             
-/* 156 */             ByteBuffer byteBuffer = this.itsPool.get(b);
-/* 157 */             if (paramByteBuffer == byteBuffer) {
-/*     */               
-/* 159 */               bool = true;
-/* 160 */               i = System.identityHashCode(paramByteBuffer);
-/*     */             } 
-/*     */           } 
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 168 */         if (!bool || !this.debug) {
-/*     */ 
-/*     */           
-/* 171 */           this.itsPool.add(paramByteBuffer);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 175 */           String str = Thread.currentThread().getName();
-/* 176 */           Throwable throwable = new Throwable(str + ": Duplicate ByteBuffer reference (" + i + ")");
-/*     */ 
-/*     */ 
-/*     */           
-/* 180 */           throwable.printStackTrace(System.out);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 187 */       this.itsObjectCounter--;
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 192 */       paramByteBuffer = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int activeCount() {
-/* 203 */     return this.itsObjectCounter;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\transport\ByteBufferPoolImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.transport;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.pept.transport.ByteBufferPool;
+
+/**
+ * @author Charlie Hunt
+ */
+
+public class ByteBufferPoolImpl implements ByteBufferPool
+{
+    private ORB itsOrb;
+    private int itsByteBufferSize;
+    private ArrayList itsPool;
+    private int itsObjectCounter = 0;
+    private boolean debug;
+
+    // Construct a ByteBufferPool for a pool of NIO ByteBuffers
+    // of ORB fragment size.
+    public ByteBufferPoolImpl(ORB theORB)
+    {
+        itsByteBufferSize = theORB.getORBData().getGIOPFragmentSize();
+        itsPool = new ArrayList();
+        itsOrb = theORB;
+        debug = theORB.transportDebugFlag;
+    }
+
+    /*
+     * Locations where ByteBuffers are gotten from the pool:
+     * 1. ContactInfoBase.createMessageMediator()
+     * 2. ByteBufferWithInfo.growBuffer()
+     * 3. ByteBufferWithInfo(ORB, BufferManagerWrite) - constructor
+    */
+
+    // If the requested ByteBuffer size is less than or equal to
+    // the ORB fragment size, and we have not disabled use of
+    // direct byte buffers (normally for debugging purposes)
+    // then get a DirectByteBuffer from the
+    // pool if there is one, if there is not one in the pool,
+    // then allocate a a DirectByteBuffer of ORB fragment size.
+    //
+    // If the request ByteBuffer size is greater than the ORB fragment
+    // size, allocate a new non-direct ByteBuffer.
+    public ByteBuffer getByteBuffer(int theAskSize)
+    {
+        ByteBuffer abb = null;
+
+        if ((theAskSize <= itsByteBufferSize) &&
+            !itsOrb.getORBData().disableDirectByteBufferUse())
+        {
+            // check if there's one in the pool, if not allocate one.
+            int poolSize;
+            synchronized (itsPool)
+            {
+                poolSize = itsPool.size();
+                if (poolSize > 0)
+                {
+                    abb = (ByteBuffer)itsPool.remove(poolSize - 1);
+
+                    // clear ByteBuffer before returning it
+                    abb.clear();
+                }
+            }
+
+            // NOTE: Moved the 'else' part of the above if statement
+            //       outside the synchronized block since it is likely
+            //       less expensive to check poolSize than to allocate a
+            //       DirectByteBuffer in the synchronized block.
+            if (poolSize <= 0)
+            {
+                abb = ByteBuffer.allocateDirect(itsByteBufferSize);
+            }
+
+            // increment the number of ByteBuffers gotten from pool
+            // IMPORTANT: Since this counter is used only for information
+            //            purposes, it does not use synchronized access.
+            itsObjectCounter++;
+        }
+        else
+        {
+            // Requested ByteBuffer size larger than the pool manages.
+            // Just allocate a non-direct ByteBuffer
+            abb = ByteBuffer.allocate(theAskSize);
+        }
+
+        return abb;
+    }
+
+
+    /*
+     * Locations where ByteBuffers are released to the pool:
+     * 1. ByteBufferWithInfo.growBuffer()
+     * 2. BufferManagerWriteCollect.sendMessage()
+     * 3. CDROutputStream_1_0.close()
+     * 4. CDRInputStream_1_0.close()
+     * 5. BufferManagerReadStream.underflow()
+     * 6. BufferManagerWrite.close()
+     * 7. BufferManagerRead.close()
+     * 8. CorbaMessageMediatorImpl.releaseByteBufferToPool()
+    */
+
+    // If the ByteBuffer is a DirectByteBuffer, add it to the pool.
+    // Otherwise, set its reference to null since it's not kept in
+    // the pool and caller is saying he/she is done with it.
+    // NOTE: The size of the ByteBuffer is not checked with the
+    //       this pool's ByteBuffer size since only DirectByteBuffers
+    //       ever allocated. Hence, only DirectByteBuffer are checked
+    //       here. An additional check could be added here for that though.
+    public void releaseByteBuffer(ByteBuffer thebb)
+    {
+        if (thebb.isDirect())
+        {
+            synchronized (itsPool)
+            {
+                // use with debug to determine if byteBuffer is already
+                // in the pool.
+                boolean refInPool = false;
+                int bbAddr = 0;
+
+                if (debug)
+                {
+                    // Check to make sure we don't have 'thebb' reference
+                    // already in the pool before adding it.
+
+                    for (int i = 0; i < itsPool.size() && refInPool == false; i++)
+                    {
+                         ByteBuffer tmpbb = (ByteBuffer)itsPool.get(i);
+                         if (thebb == tmpbb)
+                         {
+                             refInPool = true;
+                             bbAddr = System.identityHashCode(thebb);
+                         }
+                    }
+
+                }
+
+                // NOTE: The else part of this if will only get called
+                //       if debug = true and refInPool = true, see logic above.
+                if (refInPool == false || debug == false)
+                {
+                    // add ByteBuffer back to the pool
+                    itsPool.add(thebb);
+                }
+                else // otherwise, log a stack trace with duplicate message
+                {
+                    String threadName = Thread.currentThread().getName();
+                    Throwable t =
+                            new Throwable(threadName +
+                                         ": Duplicate ByteBuffer reference (" +
+                                         bbAddr + ")");
+                    t.printStackTrace(System.out);
+                }
+            }
+
+            // decrement the count of ByteBuffers released
+            // IMPORTANT: Since this counter is used only for information
+            //            purposes, it does not use synchronized access.
+            itsObjectCounter--;
+        }
+        else
+        {
+            // ByteBuffer not pooled nor needed
+            thebb = null;
+        }
+    }
+
+
+    // Get a count of the outstanding allocated DirectByteBuffers.
+    // (Those allocated and have not been returned to the pool).
+    // IMPORTANT: Since this counter is used only for information
+    //            purposes, it does not use synchronized access.
+    public int activeCount()
+    {
+         return itsObjectCounter;
+    }
+}
+
+// End of file.

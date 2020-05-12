@@ -1,672 +1,666 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ import java.awt.RenderingHints;
-/*     */ import java.awt.geom.Point2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import sun.awt.image.ImagingLib;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class RescaleOp
-/*     */   implements BufferedImageOp, RasterOp
-/*     */ {
-/*     */   float[] scaleFactors;
-/*     */   float[] offsets;
-/*  86 */   int length = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   RenderingHints hints;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int srcNbits;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int dstNbits;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RescaleOp(float[] paramArrayOffloat1, float[] paramArrayOffloat2, RenderingHints paramRenderingHints) {
-/* 105 */     this.length = paramArrayOffloat1.length;
-/* 106 */     if (this.length > paramArrayOffloat2.length) this.length = paramArrayOffloat2.length;
-/*     */     
-/* 108 */     this.scaleFactors = new float[this.length];
-/* 109 */     this.offsets = new float[this.length];
-/* 110 */     for (byte b = 0; b < this.length; b++) {
-/* 111 */       this.scaleFactors[b] = paramArrayOffloat1[b];
-/* 112 */       this.offsets[b] = paramArrayOffloat2[b];
-/*     */     } 
-/* 114 */     this.hints = paramRenderingHints;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RescaleOp(float paramFloat1, float paramFloat2, RenderingHints paramRenderingHints) {
-/* 129 */     this.length = 1;
-/* 130 */     this.scaleFactors = new float[1];
-/* 131 */     this.offsets = new float[1];
-/* 132 */     this.scaleFactors[0] = paramFloat1;
-/* 133 */     this.offsets[0] = paramFloat2;
-/* 134 */     this.hints = paramRenderingHints;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final float[] getScaleFactors(float[] paramArrayOffloat) {
-/* 146 */     if (paramArrayOffloat == null) {
-/* 147 */       return (float[])this.scaleFactors.clone();
-/*     */     }
-/* 149 */     System.arraycopy(this.scaleFactors, 0, paramArrayOffloat, 0, 
-/* 150 */         Math.min(this.scaleFactors.length, paramArrayOffloat.length));
-/*     */     
-/* 152 */     return paramArrayOffloat;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final float[] getOffsets(float[] paramArrayOffloat) {
-/* 164 */     if (paramArrayOffloat == null) {
-/* 165 */       return (float[])this.offsets.clone();
-/*     */     }
-/*     */     
-/* 168 */     System.arraycopy(this.offsets, 0, paramArrayOffloat, 0, 
-/* 169 */         Math.min(this.offsets.length, paramArrayOffloat.length));
-/* 170 */     return paramArrayOffloat;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getNumFactors() {
-/* 180 */     return this.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ByteLookupTable createByteLut(float[] paramArrayOffloat1, float[] paramArrayOffloat2, int paramInt1, int paramInt2) {
-/* 196 */     byte[][] arrayOfByte = new byte[paramArrayOffloat1.length][paramInt2];
-/*     */     
-/* 198 */     for (byte b = 0; b < paramArrayOffloat1.length; b++) {
-/* 199 */       float f1 = paramArrayOffloat1[b];
-/* 200 */       float f2 = paramArrayOffloat2[b];
-/* 201 */       byte[] arrayOfByte1 = arrayOfByte[b];
-/* 202 */       for (byte b1 = 0; b1 < paramInt2; b1++) {
-/* 203 */         int i = (int)(b1 * f1 + f2);
-/* 204 */         if ((i & 0xFFFFFF00) != 0) {
-/* 205 */           if (i < 0) {
-/* 206 */             i = 0;
-/*     */           } else {
-/* 208 */             i = 255;
-/*     */           } 
-/*     */         }
-/* 211 */         arrayOfByte1[b1] = (byte)i;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 216 */     return new ByteLookupTable(0, arrayOfByte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ShortLookupTable createShortLut(float[] paramArrayOffloat1, float[] paramArrayOffloat2, int paramInt1, int paramInt2) {
-/* 231 */     short[][] arrayOfShort = new short[paramArrayOffloat1.length][paramInt2];
-/*     */     
-/* 233 */     for (byte b = 0; b < paramArrayOffloat1.length; b++) {
-/* 234 */       float f1 = paramArrayOffloat1[b];
-/* 235 */       float f2 = paramArrayOffloat2[b];
-/* 236 */       short[] arrayOfShort1 = arrayOfShort[b];
-/* 237 */       for (byte b1 = 0; b1 < paramInt2; b1++) {
-/* 238 */         int i = (int)(b1 * f1 + f2);
-/* 239 */         if ((i & 0xFFFF0000) != 0) {
-/* 240 */           if (i < 0) {
-/* 241 */             i = 0;
-/*     */           } else {
-/* 243 */             i = 65535;
-/*     */           } 
-/*     */         }
-/* 246 */         arrayOfShort1[b1] = (short)i;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 250 */     return new ShortLookupTable(0, arrayOfShort);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean canUseLookup(Raster paramRaster1, Raster paramRaster2) {
-/* 266 */     int i = paramRaster1.getDataBuffer().getDataType();
-/* 267 */     if (i != 0 && i != 1)
-/*     */     {
-/* 269 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 275 */     SampleModel sampleModel1 = paramRaster2.getSampleModel();
-/* 276 */     this.dstNbits = sampleModel1.getSampleSize(0);
-/*     */     
-/* 278 */     if (this.dstNbits != 8 && this.dstNbits != 16) {
-/* 279 */       return false;
-/*     */     }
-/* 281 */     for (byte b1 = 1; b1 < paramRaster1.getNumBands(); b1++) {
-/* 282 */       int j = sampleModel1.getSampleSize(b1);
-/* 283 */       if (j != this.dstNbits) {
-/* 284 */         return false;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 291 */     SampleModel sampleModel2 = paramRaster1.getSampleModel();
-/* 292 */     this.srcNbits = sampleModel2.getSampleSize(0);
-/* 293 */     if (this.srcNbits > 16) {
-/* 294 */       return false;
-/*     */     }
-/* 296 */     for (byte b2 = 1; b2 < paramRaster1.getNumBands(); b2++) {
-/* 297 */       int j = sampleModel2.getSampleSize(b2);
-/* 298 */       if (j != this.srcNbits) {
-/* 299 */         return false;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 303 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final BufferedImage filter(BufferedImage paramBufferedImage1, BufferedImage paramBufferedImage2) {
-/* 327 */     ColorModel colorModel2, colorModel1 = paramBufferedImage1.getColorModel();
-/*     */     
-/* 329 */     int i = colorModel1.getNumColorComponents();
-/*     */ 
-/*     */     
-/* 332 */     if (colorModel1 instanceof IndexColorModel) {
-/* 333 */       throw new IllegalArgumentException("Rescaling cannot be performed on an indexed image");
-/*     */     }
-/*     */ 
-/*     */     
-/* 337 */     if (this.length != 1 && this.length != i && this.length != colorModel1
-/* 338 */       .getNumComponents())
-/*     */     {
-/* 340 */       throw new IllegalArgumentException("Number of scaling constants does not equal the number of of color or color/alpha  components");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 346 */     boolean bool = false;
-/*     */ 
-/*     */     
-/* 349 */     if (this.length > i && colorModel1.hasAlpha()) {
-/* 350 */       this.length = i + 1;
-/*     */     }
-/*     */     
-/* 353 */     int j = paramBufferedImage1.getWidth();
-/* 354 */     int k = paramBufferedImage1.getHeight();
-/*     */     
-/* 356 */     if (paramBufferedImage2 == null) {
-/* 357 */       paramBufferedImage2 = createCompatibleDestImage(paramBufferedImage1, null);
-/* 358 */       colorModel2 = colorModel1;
-/*     */     } else {
-/*     */       
-/* 361 */       if (j != paramBufferedImage2.getWidth()) {
-/* 362 */         throw new IllegalArgumentException("Src width (" + j + ") not equal to dst width (" + paramBufferedImage2
-/*     */ 
-/*     */             
-/* 365 */             .getWidth() + ")");
-/*     */       }
-/* 367 */       if (k != paramBufferedImage2.getHeight()) {
-/* 368 */         throw new IllegalArgumentException("Src height (" + k + ") not equal to dst height (" + paramBufferedImage2
-/*     */ 
-/*     */             
-/* 371 */             .getHeight() + ")");
-/*     */       }
-/*     */       
-/* 374 */       colorModel2 = paramBufferedImage2.getColorModel();
-/* 375 */       if (colorModel1.getColorSpace().getType() != colorModel2
-/* 376 */         .getColorSpace().getType()) {
-/* 377 */         bool = true;
-/* 378 */         paramBufferedImage2 = createCompatibleDestImage(paramBufferedImage1, null);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 383 */     BufferedImage bufferedImage = paramBufferedImage2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 388 */     if (ImagingLib.filter(this, paramBufferedImage1, paramBufferedImage2) == null) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 392 */       WritableRaster writableRaster1 = paramBufferedImage1.getRaster();
-/* 393 */       WritableRaster writableRaster2 = paramBufferedImage2.getRaster();
-/*     */       
-/* 395 */       if (colorModel1.hasAlpha() && (
-/* 396 */         i - 1 == this.length || this.length == 1)) {
-/* 397 */         int m = writableRaster1.getMinX();
-/* 398 */         int n = writableRaster1.getMinY();
-/* 399 */         int[] arrayOfInt = new int[i - 1];
-/* 400 */         for (byte b = 0; b < i - 1; b++) {
-/* 401 */           arrayOfInt[b] = b;
-/*     */         }
-/*     */         
-/* 404 */         writableRaster1 = writableRaster1.createWritableChild(m, n, writableRaster1
-/* 405 */             .getWidth(), writableRaster1
-/* 406 */             .getHeight(), m, n, arrayOfInt);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 411 */       if (colorModel2.hasAlpha()) {
-/* 412 */         int m = writableRaster2.getNumBands();
-/* 413 */         if (m - 1 == this.length || this.length == 1) {
-/* 414 */           int n = writableRaster2.getMinX();
-/* 415 */           int i1 = writableRaster2.getMinY();
-/* 416 */           int[] arrayOfInt = new int[i - 1];
-/* 417 */           for (byte b = 0; b < i - 1; b++) {
-/* 418 */             arrayOfInt[b] = b;
-/*     */           }
-/*     */           
-/* 421 */           writableRaster2 = writableRaster2.createWritableChild(n, i1, writableRaster2
-/* 422 */               .getWidth(), writableRaster2
-/* 423 */               .getHeight(), n, i1, arrayOfInt);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 432 */       filter(writableRaster1, writableRaster2);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 436 */     if (bool) {
-/*     */       
-/* 438 */       ColorConvertOp colorConvertOp = new ColorConvertOp(this.hints);
-/* 439 */       colorConvertOp.filter(paramBufferedImage2, bufferedImage);
-/*     */     } 
-/*     */     
-/* 442 */     return bufferedImage;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final WritableRaster filter(Raster paramRaster, WritableRaster paramWritableRaster) {
-/* 464 */     int i = paramRaster.getNumBands();
-/* 465 */     int j = paramRaster.getWidth();
-/* 466 */     int k = paramRaster.getHeight();
-/* 467 */     int[] arrayOfInt = null;
-/* 468 */     byte b = 0;
-/* 469 */     int m = 0;
-/*     */ 
-/*     */     
-/* 472 */     if (paramWritableRaster == null) {
-/* 473 */       paramWritableRaster = createCompatibleDestRaster(paramRaster);
-/*     */     } else {
-/* 475 */       if (k != paramWritableRaster.getHeight() || j != paramWritableRaster.getWidth()) {
-/* 476 */         throw new IllegalArgumentException("Width or height of Rasters do not match");
-/*     */       }
-/*     */ 
-/*     */       
-/* 480 */       if (i != paramWritableRaster.getNumBands())
-/*     */       {
-/* 482 */         throw new IllegalArgumentException("Number of bands in src " + i + " does not equal number of bands in dest " + paramWritableRaster
-/*     */ 
-/*     */             
-/* 485 */             .getNumBands());
-/*     */       }
-/*     */     } 
-/*     */     
-/* 489 */     if (this.length != 1 && this.length != paramRaster.getNumBands()) {
-/* 490 */       throw new IllegalArgumentException("Number of scaling constants does not equal the number of of bands in the src raster");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 499 */     if (ImagingLib.filter(this, paramRaster, paramWritableRaster) != null) {
-/* 500 */       return paramWritableRaster;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 507 */     if (canUseLookup(paramRaster, paramWritableRaster)) {
-/* 508 */       int n = 1 << this.srcNbits;
-/* 509 */       int i1 = 1 << this.dstNbits;
-/*     */       
-/* 511 */       if (i1 == 256) {
-/* 512 */         ByteLookupTable byteLookupTable = createByteLut(this.scaleFactors, this.offsets, i, n);
-/*     */         
-/* 514 */         LookupOp lookupOp = new LookupOp(byteLookupTable, this.hints);
-/* 515 */         lookupOp.filter(paramRaster, paramWritableRaster);
-/*     */       } else {
-/* 517 */         ShortLookupTable shortLookupTable = createShortLut(this.scaleFactors, this.offsets, i, n);
-/*     */         
-/* 519 */         LookupOp lookupOp = new LookupOp(shortLookupTable, this.hints);
-/* 520 */         lookupOp.filter(paramRaster, paramWritableRaster);
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 526 */       if (this.length > 1) {
-/* 527 */         b = 1;
-/*     */       }
-/*     */       
-/* 530 */       int n = paramRaster.getMinX();
-/* 531 */       int i1 = paramRaster.getMinY();
-/* 532 */       int i2 = paramWritableRaster.getMinX();
-/* 533 */       int i3 = paramWritableRaster.getMinY();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 543 */       int[] arrayOfInt1 = new int[i];
-/* 544 */       int[] arrayOfInt2 = new int[i];
-/* 545 */       SampleModel sampleModel = paramWritableRaster.getSampleModel(); int i4;
-/* 546 */       for (i4 = 0; i4 < i; i4++) {
-/* 547 */         int i5 = sampleModel.getSampleSize(i4);
-/* 548 */         arrayOfInt1[i4] = (1 << i5) - 1;
-/* 549 */         arrayOfInt2[i4] = arrayOfInt1[i4] ^ 0xFFFFFFFF;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 553 */       for (byte b1 = 0; b1 < k; b1++, i1++, i3++) {
-/* 554 */         int i6 = i2;
-/* 555 */         int i5 = n;
-/* 556 */         for (byte b2 = 0; b2 < j; b2++, i5++, i6++) {
-/*     */           
-/* 558 */           arrayOfInt = paramRaster.getPixel(i5, i1, arrayOfInt);
-/* 559 */           m = 0;
-/* 560 */           for (byte b3 = 0; b3 < i; b3++, m += b) {
-/* 561 */             i4 = (int)(arrayOfInt[b3] * this.scaleFactors[m] + this.offsets[m]);
-/*     */ 
-/*     */             
-/* 564 */             if ((i4 & arrayOfInt2[b3]) != 0) {
-/* 565 */               if (i4 < 0) {
-/* 566 */                 i4 = 0;
-/*     */               } else {
-/* 568 */                 i4 = arrayOfInt1[b3];
-/*     */               } 
-/*     */             }
-/* 571 */             arrayOfInt[b3] = i4;
-/*     */           } 
-/*     */ 
-/*     */ 
-/*     */           
-/* 576 */           paramWritableRaster.setPixel(i6, i3, arrayOfInt);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 580 */     return paramWritableRaster;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Rectangle2D getBounds2D(BufferedImage paramBufferedImage) {
-/* 589 */     return getBounds2D(paramBufferedImage.getRaster());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Rectangle2D getBounds2D(Raster paramRaster) {
-/* 600 */     return paramRaster.getBounds();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedImage createCompatibleDestImage(BufferedImage paramBufferedImage, ColorModel paramColorModel) {
-/*     */     BufferedImage bufferedImage;
-/* 614 */     if (paramColorModel == null) {
-/* 615 */       ColorModel colorModel = paramBufferedImage.getColorModel();
-/*     */ 
-/*     */       
-/* 618 */       bufferedImage = new BufferedImage(colorModel, paramBufferedImage.getRaster().createCompatibleWritableRaster(), colorModel.isAlphaPremultiplied(), null);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 622 */       int i = paramBufferedImage.getWidth();
-/* 623 */       int j = paramBufferedImage.getHeight();
-/*     */ 
-/*     */       
-/* 626 */       bufferedImage = new BufferedImage(paramColorModel, paramColorModel.createCompatibleWritableRaster(i, j), paramColorModel.isAlphaPremultiplied(), null);
-/*     */     } 
-/*     */     
-/* 629 */     return bufferedImage;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public WritableRaster createCompatibleDestRaster(Raster paramRaster) {
-/* 639 */     return paramRaster.createCompatibleWritableRaster(paramRaster.getWidth(), paramRaster.getHeight());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Point2D getPoint2D(Point2D paramPoint2D1, Point2D paramPoint2D2) {
-/* 652 */     if (paramPoint2D2 == null) {
-/* 653 */       paramPoint2D2 = new Point2D.Float();
-/*     */     }
-/* 655 */     paramPoint2D2.setLocation(paramPoint2D1.getX(), paramPoint2D1.getY());
-/* 656 */     return paramPoint2D2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final RenderingHints getRenderingHints() {
-/* 664 */     return this.hints;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\RescaleOp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+import java.awt.color.ColorSpace;
+import java.awt.geom.Rectangle2D;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.RenderingHints;
+import sun.awt.image.ImagingLib;
+
+/**
+ * This class performs a pixel-by-pixel rescaling of the data in the
+ * source image by multiplying the sample values for each pixel by a scale
+ * factor and then adding an offset. The scaled sample values are clipped
+ * to the minimum/maximum representable in the destination image.
+ * <p>
+ * The pseudo code for the rescaling operation is as follows:
+ * <pre>
+ *for each pixel from Source object {
+ *    for each band/component of the pixel {
+ *        dstElement = (srcElement*scaleFactor) + offset
+ *    }
+ *}
+ * </pre>
+ * <p>
+ * For Rasters, rescaling operates on bands.  The number of
+ * sets of scaling constants may be one, in which case the same constants
+ * are applied to all bands, or it must equal the number of Source
+ * Raster bands.
+ * <p>
+ * For BufferedImages, rescaling operates on color and alpha components.
+ * The number of sets of scaling constants may be one, in which case the
+ * same constants are applied to all color (but not alpha) components.
+ * Otherwise, the  number of sets of scaling constants may
+ * equal the number of Source color components, in which case no
+ * rescaling of the alpha component (if present) is performed.
+ * If neither of these cases apply, the number of sets of scaling constants
+ * must equal the number of Source color components plus alpha components,
+ * in which case all color and alpha components are rescaled.
+ * <p>
+ * BufferedImage sources with premultiplied alpha data are treated in the same
+ * manner as non-premultiplied images for purposes of rescaling.  That is,
+ * the rescaling is done per band on the raw data of the BufferedImage source
+ * without regard to whether the data is premultiplied.  If a color conversion
+ * is required to the destination ColorModel, the premultiplied state of
+ * both source and destination will be taken into account for this step.
+ * <p>
+ * Images with an IndexColorModel cannot be rescaled.
+ * <p>
+ * If a RenderingHints object is specified in the constructor, the
+ * color rendering hint and the dithering hint may be used when color
+ * conversion is required.
+ * <p>
+ * Note that in-place operation is allowed (i.e. the source and destination can
+ * be the same object).
+ * @see java.awt.RenderingHints#KEY_COLOR_RENDERING
+ * @see java.awt.RenderingHints#KEY_DITHERING
+ */
+public class RescaleOp implements BufferedImageOp, RasterOp {
+    float[] scaleFactors;
+    float[] offsets;
+    int length = 0;
+    RenderingHints hints;
+
+    private int srcNbits;
+    private int dstNbits;
+
+
+    /**
+     * Constructs a new RescaleOp with the desired scale factors
+     * and offsets.  The length of the scaleFactor and offset arrays
+     * must meet the restrictions stated in the class comments above.
+     * The RenderingHints argument may be null.
+     * @param scaleFactors the specified scale factors
+     * @param offsets the specified offsets
+     * @param hints the specified <code>RenderingHints</code>, or
+     *        <code>null</code>
+     */
+    public RescaleOp (float[] scaleFactors, float[] offsets,
+                      RenderingHints hints) {
+        length = scaleFactors.length;
+        if (length > offsets.length) length = offsets.length;
+
+        this.scaleFactors = new float[length];
+        this.offsets      = new float[length];
+        for (int i=0; i < length; i++) {
+            this.scaleFactors[i] = scaleFactors[i];
+            this.offsets[i]      = offsets[i];
+        }
+        this.hints = hints;
+    }
+
+    /**
+     * Constructs a new RescaleOp with the desired scale factor
+     * and offset.  The scaleFactor and offset will be applied to
+     * all bands in a source Raster and to all color (but not alpha)
+     * components in a BufferedImage.
+     * The RenderingHints argument may be null.
+     * @param scaleFactor the specified scale factor
+     * @param offset the specified offset
+     * @param hints the specified <code>RenderingHints</code>, or
+     *        <code>null</code>
+     */
+    public RescaleOp (float scaleFactor, float offset, RenderingHints hints) {
+        length = 1;
+        this.scaleFactors = new float[1];
+        this.offsets      = new float[1];
+        this.scaleFactors[0] = scaleFactor;
+        this.offsets[0]       = offset;
+        this.hints = hints;
+    }
+
+    /**
+     * Returns the scale factors in the given array. The array is also
+     * returned for convenience.  If scaleFactors is null, a new array
+     * will be allocated.
+     * @param scaleFactors the array to contain the scale factors of
+     *        this <code>RescaleOp</code>
+     * @return the scale factors of this <code>RescaleOp</code>.
+     */
+    final public float[] getScaleFactors (float scaleFactors[]) {
+        if (scaleFactors == null) {
+            return (float[]) this.scaleFactors.clone();
+        }
+        System.arraycopy (this.scaleFactors, 0, scaleFactors, 0,
+                          Math.min(this.scaleFactors.length,
+                                   scaleFactors.length));
+        return scaleFactors;
+    }
+
+    /**
+     * Returns the offsets in the given array. The array is also returned
+     * for convenience.  If offsets is null, a new array
+     * will be allocated.
+     * @param offsets the array to contain the offsets of
+     *        this <code>RescaleOp</code>
+     * @return the offsets of this <code>RescaleOp</code>.
+     */
+    final public float[] getOffsets(float offsets[]) {
+        if (offsets == null) {
+            return (float[]) this.offsets.clone();
+        }
+
+        System.arraycopy (this.offsets, 0, offsets, 0,
+                          Math.min(this.offsets.length, offsets.length));
+        return offsets;
+    }
+
+    /**
+     * Returns the number of scaling factors and offsets used in this
+     * RescaleOp.
+     * @return the number of scaling factors and offsets of this
+     *         <code>RescaleOp</code>.
+     */
+    final public int getNumFactors() {
+        return length;
+    }
+
+
+    /**
+     * Creates a ByteLookupTable to implement the rescale.
+     * The table may have either a SHORT or BYTE input.
+     * @param nElems    Number of elements the table is to have.
+     *                  This will generally be 256 for byte and
+     *                  65536 for short.
+     */
+    private ByteLookupTable createByteLut(float scale[],
+                                          float off[],
+                                          int   nBands,
+                                          int   nElems) {
+
+        byte[][]        lutData = new byte[scale.length][nElems];
+
+        for (int band=0; band<scale.length; band++) {
+            float  bandScale   = scale[band];
+            float  bandOff     = off[band];
+            byte[] bandLutData = lutData[band];
+            for (int i=0; i<nElems; i++) {
+                int val = (int)(i*bandScale + bandOff);
+                if ((val & 0xffffff00) != 0) {
+                    if (val < 0) {
+                        val = 0;
+                    } else {
+                        val = 255;
+                    }
+                }
+                bandLutData[i] = (byte)val;
+            }
+
+        }
+
+        return new ByteLookupTable(0, lutData);
+    }
+
+    /**
+     * Creates a ShortLookupTable to implement the rescale.
+     * The table may have either a SHORT or BYTE input.
+     * @param nElems    Number of elements the table is to have.
+     *                  This will generally be 256 for byte and
+     *                  65536 for short.
+     */
+    private ShortLookupTable createShortLut(float scale[],
+                                            float off[],
+                                            int   nBands,
+                                            int   nElems) {
+
+        short[][]        lutData = new short[scale.length][nElems];
+
+        for (int band=0; band<scale.length; band++) {
+            float   bandScale   = scale[band];
+            float   bandOff     = off[band];
+            short[] bandLutData = lutData[band];
+            for (int i=0; i<nElems; i++) {
+                int val = (int)(i*bandScale + bandOff);
+                if ((val & 0xffff0000) != 0) {
+                    if (val < 0) {
+                        val = 0;
+                    } else {
+                        val = 65535;
+                    }
+                }
+                bandLutData[i] = (short)val;
+            }
+        }
+
+        return new ShortLookupTable(0, lutData);
+    }
+
+
+    /**
+     * Determines if the rescale can be performed as a lookup.
+     * The dst must be a byte or short type.
+     * The src must be less than 16 bits.
+     * All source band sizes must be the same and all dst band sizes
+     * must be the same.
+     */
+    private boolean canUseLookup(Raster src, Raster dst) {
+
+        //
+        // Check that the src datatype is either a BYTE or SHORT
+        //
+        int datatype = src.getDataBuffer().getDataType();
+        if(datatype != DataBuffer.TYPE_BYTE &&
+           datatype != DataBuffer.TYPE_USHORT) {
+            return false;
+        }
+
+        //
+        // Check dst sample sizes. All must be 8 or 16 bits.
+        //
+        SampleModel dstSM = dst.getSampleModel();
+        dstNbits = dstSM.getSampleSize(0);
+
+        if (!(dstNbits == 8 || dstNbits == 16)) {
+            return false;
+        }
+        for (int i=1; i<src.getNumBands(); i++) {
+            int bandSize = dstSM.getSampleSize(i);
+            if (bandSize != dstNbits) {
+                return false;
+            }
+        }
+
+        //
+        // Check src sample sizes. All must be the same size
+        //
+        SampleModel srcSM = src.getSampleModel();
+        srcNbits = srcSM.getSampleSize(0);
+        if (srcNbits > 16) {
+            return false;
+        }
+        for (int i=1; i<src.getNumBands(); i++) {
+            int bandSize = srcSM.getSampleSize(i);
+            if (bandSize != srcNbits) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Rescales the source BufferedImage.
+     * If the color model in the source image is not the same as that
+     * in the destination image, the pixels will be converted
+     * in the destination.  If the destination image is null,
+     * a BufferedImage will be created with the source ColorModel.
+     * An IllegalArgumentException may be thrown if the number of
+     * scaling factors/offsets in this object does not meet the
+     * restrictions stated in the class comments above, or if the
+     * source image has an IndexColorModel.
+     * @param src the <code>BufferedImage</code> to be filtered
+     * @param dst the destination for the filtering operation
+     *            or <code>null</code>
+     * @return the filtered <code>BufferedImage</code>.
+     * @throws IllegalArgumentException if the <code>ColorModel</code>
+     *         of <code>src</code> is an <code>IndexColorModel</code>,
+     *         or if the number of scaling factors and offsets in this
+     *         <code>RescaleOp</code> do not meet the requirements
+     *         stated in the class comments.
+     */
+    public final BufferedImage filter (BufferedImage src, BufferedImage dst) {
+        ColorModel srcCM = src.getColorModel();
+        ColorModel dstCM;
+        int numBands = srcCM.getNumColorComponents();
+
+
+        if (srcCM instanceof IndexColorModel) {
+            throw new
+                IllegalArgumentException("Rescaling cannot be "+
+                                         "performed on an indexed image");
+        }
+        if (length != 1 && length != numBands &&
+            length != srcCM.getNumComponents())
+        {
+            throw new IllegalArgumentException("Number of scaling constants "+
+                                               "does not equal the number of"+
+                                               " of color or color/alpha "+
+                                               " components");
+        }
+
+        boolean needToConvert = false;
+
+        // Include alpha
+        if (length > numBands && srcCM.hasAlpha()) {
+            length = numBands+1;
+        }
+
+        int width = src.getWidth();
+        int height = src.getHeight();
+
+        if (dst == null) {
+            dst = createCompatibleDestImage(src, null);
+            dstCM = srcCM;
+        }
+        else {
+            if (width != dst.getWidth()) {
+                throw new
+                    IllegalArgumentException("Src width ("+width+
+                                             ") not equal to dst width ("+
+                                             dst.getWidth()+")");
+            }
+            if (height != dst.getHeight()) {
+                throw new
+                    IllegalArgumentException("Src height ("+height+
+                                             ") not equal to dst height ("+
+                                             dst.getHeight()+")");
+            }
+
+            dstCM = dst.getColorModel();
+            if(srcCM.getColorSpace().getType() !=
+               dstCM.getColorSpace().getType()) {
+                needToConvert = true;
+                dst = createCompatibleDestImage(src, null);
+            }
+
+        }
+
+        BufferedImage origDst = dst;
+
+        //
+        // Try to use a native BI rescale operation first
+        //
+        if (ImagingLib.filter(this, src, dst) == null) {
+            //
+            // Native BI rescale failed - convert to rasters
+            //
+            WritableRaster srcRaster = src.getRaster();
+            WritableRaster dstRaster = dst.getRaster();
+
+            if (srcCM.hasAlpha()) {
+                if (numBands-1 == length || length == 1) {
+                    int minx = srcRaster.getMinX();
+                    int miny = srcRaster.getMinY();
+                    int[] bands = new int[numBands-1];
+                    for (int i=0; i < numBands-1; i++) {
+                        bands[i] = i;
+                    }
+                    srcRaster =
+                        srcRaster.createWritableChild(minx, miny,
+                                                      srcRaster.getWidth(),
+                                                      srcRaster.getHeight(),
+                                                      minx, miny,
+                                                      bands);
+                }
+            }
+            if (dstCM.hasAlpha()) {
+                int dstNumBands = dstRaster.getNumBands();
+                if (dstNumBands-1 == length || length == 1) {
+                    int minx = dstRaster.getMinX();
+                    int miny = dstRaster.getMinY();
+                    int[] bands = new int[numBands-1];
+                    for (int i=0; i < numBands-1; i++) {
+                        bands[i] = i;
+                    }
+                    dstRaster =
+                        dstRaster.createWritableChild(minx, miny,
+                                                      dstRaster.getWidth(),
+                                                      dstRaster.getHeight(),
+                                                      minx, miny,
+                                                      bands);
+                }
+            }
+
+            //
+            // Call the raster filter method
+            //
+            filter(srcRaster, dstRaster);
+
+        }
+
+        if (needToConvert) {
+            // ColorModels are not the same
+            ColorConvertOp ccop = new ColorConvertOp(hints);
+            ccop.filter(dst, origDst);
+        }
+
+        return origDst;
+    }
+
+    /**
+     * Rescales the pixel data in the source Raster.
+     * If the destination Raster is null, a new Raster will be created.
+     * The source and destination must have the same number of bands.
+     * Otherwise, an IllegalArgumentException is thrown.
+     * Note that the number of scaling factors/offsets in this object must
+     * meet the restrictions stated in the class comments above.
+     * Otherwise, an IllegalArgumentException is thrown.
+     * @param src the <code>Raster</code> to be filtered
+     * @param dst the destination for the filtering operation
+     *            or <code>null</code>
+     * @return the filtered <code>WritableRaster</code>.
+     * @throws IllegalArgumentException if <code>src</code> and
+     *         <code>dst</code> do not have the same number of bands,
+     *         or if the number of scaling factors and offsets in this
+     *         <code>RescaleOp</code> do not meet the requirements
+     *         stated in the class comments.
+     */
+    public final WritableRaster filter (Raster src, WritableRaster dst)  {
+        int numBands = src.getNumBands();
+        int width  = src.getWidth();
+        int height = src.getHeight();
+        int[] srcPix = null;
+        int step = 0;
+        int tidx = 0;
+
+        // Create a new destination Raster, if needed
+        if (dst == null) {
+            dst = createCompatibleDestRaster(src);
+        }
+        else if (height != dst.getHeight() || width != dst.getWidth()) {
+            throw new
+               IllegalArgumentException("Width or height of Rasters do not "+
+                                        "match");
+        }
+        else if (numBands != dst.getNumBands()) {
+            // Make sure that the number of bands are equal
+            throw new IllegalArgumentException("Number of bands in src "
+                            + numBands
+                            + " does not equal number of bands in dest "
+                            + dst.getNumBands());
+        }
+        // Make sure that the arrays match
+        // Make sure that the low/high/constant arrays match
+        if (length != 1 && length != src.getNumBands()) {
+            throw new IllegalArgumentException("Number of scaling constants "+
+                                               "does not equal the number of"+
+                                               " of bands in the src raster");
+        }
+
+
+        //
+        // Try for a native raster rescale first
+        //
+        if (ImagingLib.filter(this, src, dst) != null) {
+            return dst;
+        }
+
+        //
+        // Native raster rescale failed.
+        // Try to see if a lookup operation can be used
+        //
+        if (canUseLookup(src, dst)) {
+            int srcNgray = (1 << srcNbits);
+            int dstNgray = (1 << dstNbits);
+
+            if (dstNgray == 256) {
+                ByteLookupTable lut = createByteLut(scaleFactors, offsets,
+                                                    numBands, srcNgray);
+                LookupOp op = new LookupOp(lut, hints);
+                op.filter(src, dst);
+            } else {
+                ShortLookupTable lut = createShortLut(scaleFactors, offsets,
+                                                      numBands, srcNgray);
+                LookupOp op = new LookupOp(lut, hints);
+                op.filter(src, dst);
+            }
+        } else {
+            //
+            // Fall back to the slow code
+            //
+            if (length > 1) {
+                step = 1;
+            }
+
+            int sminX = src.getMinX();
+            int sY = src.getMinY();
+            int dminX = dst.getMinX();
+            int dY = dst.getMinY();
+            int sX;
+            int dX;
+
+            //
+            //  Determine bits per band to determine maxval for clamps.
+            //  The min is assumed to be zero.
+            //  REMIND: This must change if we ever support signed data types.
+            //
+            int nbits;
+            int dstMax[] = new int[numBands];
+            int dstMask[] = new int[numBands];
+            SampleModel dstSM = dst.getSampleModel();
+            for (int z=0; z<numBands; z++) {
+                nbits = dstSM.getSampleSize(z);
+                dstMax[z] = (1 << nbits) - 1;
+                dstMask[z] = ~(dstMax[z]);
+            }
+
+            int val;
+            for (int y=0; y < height; y++, sY++, dY++) {
+                dX = dminX;
+                sX = sminX;
+                for (int x = 0; x < width; x++, sX++, dX++) {
+                    // Get data for all bands at this x,y position
+                    srcPix = src.getPixel(sX, sY, srcPix);
+                    tidx = 0;
+                    for (int z=0; z<numBands; z++, tidx += step) {
+                        val = (int)(srcPix[z]*scaleFactors[tidx]
+                                          + offsets[tidx]);
+                        // Clamp
+                        if ((val & dstMask[z]) != 0) {
+                            if (val < 0) {
+                                val = 0;
+                            } else {
+                                val = dstMax[z];
+                            }
+                        }
+                        srcPix[z] = val;
+
+                    }
+
+                    // Put it back for all bands
+                    dst.setPixel(dX, dY, srcPix);
+                }
+            }
+        }
+        return dst;
+    }
+
+    /**
+     * Returns the bounding box of the rescaled destination image.  Since
+     * this is not a geometric operation, the bounding box does not
+     * change.
+     */
+    public final Rectangle2D getBounds2D (BufferedImage src) {
+         return getBounds2D(src.getRaster());
+    }
+
+    /**
+     * Returns the bounding box of the rescaled destination Raster.  Since
+     * this is not a geometric operation, the bounding box does not
+     * change.
+     * @param src the rescaled destination <code>Raster</code>
+     * @return the bounds of the specified <code>Raster</code>.
+     */
+    public final Rectangle2D getBounds2D (Raster src) {
+        return src.getBounds();
+    }
+
+    /**
+     * Creates a zeroed destination image with the correct size and number of
+     * bands.
+     * @param src       Source image for the filter operation.
+     * @param destCM    ColorModel of the destination.  If null, the
+     *                  ColorModel of the source will be used.
+     * @return the zeroed-destination image.
+     */
+    public BufferedImage createCompatibleDestImage (BufferedImage src,
+                                                    ColorModel destCM) {
+        BufferedImage image;
+        if (destCM == null) {
+            ColorModel cm = src.getColorModel();
+            image = new BufferedImage(cm,
+                                      src.getRaster().createCompatibleWritableRaster(),
+                                      cm.isAlphaPremultiplied(),
+                                      null);
+        }
+        else {
+            int w = src.getWidth();
+            int h = src.getHeight();
+            image = new BufferedImage (destCM,
+                                   destCM.createCompatibleWritableRaster(w, h),
+                                   destCM.isAlphaPremultiplied(), null);
+        }
+
+        return image;
+    }
+
+    /**
+     * Creates a zeroed-destination <code>Raster</code> with the correct
+     * size and number of bands, given this source.
+     * @param src       the source <code>Raster</code>
+     * @return the zeroed-destination <code>Raster</code>.
+     */
+    public WritableRaster createCompatibleDestRaster (Raster src) {
+        return src.createCompatibleWritableRaster(src.getWidth(), src.getHeight());
+    }
+
+    /**
+     * Returns the location of the destination point given a
+     * point in the source.  If dstPt is non-null, it will
+     * be used to hold the return value.  Since this is not a geometric
+     * operation, the srcPt will equal the dstPt.
+     * @param srcPt a point in the source image
+     * @param dstPt the destination point or <code>null</code>
+     * @return the location of the destination point.
+     */
+    public final Point2D getPoint2D (Point2D srcPt, Point2D dstPt) {
+        if (dstPt == null) {
+            dstPt = new Point2D.Float();
+        }
+        dstPt.setLocation(srcPt.getX(), srcPt.getY());
+        return dstPt;
+    }
+
+    /**
+     * Returns the rendering hints for this op.
+     * @return the rendering hints of this <code>RescaleOp</code>.
+     */
+    public final RenderingHints getRenderingHints() {
+        return hints;
+    }
+}

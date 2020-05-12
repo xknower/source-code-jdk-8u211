@@ -1,75 +1,69 @@
-/*    */ package com.sun.corba.se.impl.resolver;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orb.Operation;
-/*    */ import com.sun.corba.se.spi.resolver.Resolver;
-/*    */ import java.util.HashSet;
-/*    */ import java.util.Set;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ORBDefaultInitRefResolverImpl
-/*    */   implements Resolver
-/*    */ {
-/*    */   Operation urlHandler;
-/*    */   String orbDefaultInitRef;
-/*    */   
-/*    */   public ORBDefaultInitRefResolverImpl(Operation paramOperation, String paramString) {
-/* 38 */     this.urlHandler = paramOperation;
-/*    */ 
-/*    */     
-/* 41 */     this.orbDefaultInitRef = paramString;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Object resolve(String paramString) {
-/*    */     String str;
-/* 47 */     if (this.orbDefaultInitRef == null) {
-/* 48 */       return null;
-/*    */     }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */     
-/* 56 */     if (this.orbDefaultInitRef.startsWith("corbaloc:")) {
-/* 57 */       str = this.orbDefaultInitRef + "/" + paramString;
-/*    */     } else {
-/* 59 */       str = this.orbDefaultInitRef + "#" + paramString;
-/*    */     } 
-/*    */     
-/* 62 */     return (Object)this.urlHandler.operate(str);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Set list() {
-/* 67 */     return new HashSet();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\resolver\ORBDefaultInitRefResolverImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.resolver ;
+
+import com.sun.corba.se.spi.resolver.Resolver ;
+
+import com.sun.corba.se.spi.orb.Operation ;
+
+public class ORBDefaultInitRefResolverImpl implements Resolver {
+    Operation urlHandler ;
+    String orbDefaultInitRef ;
+
+    public ORBDefaultInitRefResolverImpl( Operation urlHandler, String orbDefaultInitRef )
+    {
+        this.urlHandler = urlHandler ;
+
+        // XXX Validate the URL?
+        this.orbDefaultInitRef = orbDefaultInitRef ;
+    }
+
+    public org.omg.CORBA.Object resolve( String ident )
+    {
+        // If the ORBDefaultInitRef is not defined simply return null
+        if( orbDefaultInitRef == null ) {
+            return null;
+        }
+
+        String urlString;
+        // If the ORBDefaultInitDef is  defined as corbaloc: then create the
+        // corbaloc String in the format
+        // <ORBInitDefaultInitDef Param>/<Identifier>
+        // and resolve it using resolveCorbaloc method
+        if( orbDefaultInitRef.startsWith( "corbaloc:" ) ) {
+            urlString = orbDefaultInitRef + "/" + ident;
+        } else {
+            urlString = orbDefaultInitRef + "#" + ident;
+        }
+
+        return (org.omg.CORBA.Object)urlHandler.operate( urlString ) ;
+    }
+
+    public java.util.Set list()
+    {
+        return new java.util.HashSet() ;
+    }
+}

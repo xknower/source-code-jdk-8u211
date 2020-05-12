@@ -1,367 +1,361 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFNE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IF_ICMPEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IF_ICMPNE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.Operators;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class EqualityExpr
-/*     */   extends Expression
-/*     */ {
-/*     */   private final int _op;
-/*     */   private Expression _left;
-/*     */   private Expression _right;
-/*     */   
-/*     */   public EqualityExpr(int op, Expression left, Expression right) {
-/*  66 */     this._op = op;
-/*  67 */     (this._left = left).setParent(this);
-/*  68 */     (this._right = right).setParent(this);
-/*     */   }
-/*     */   
-/*     */   public void setParser(Parser parser) {
-/*  72 */     super.setParser(parser);
-/*  73 */     this._left.setParser(parser);
-/*  74 */     this._right.setParser(parser);
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/*  78 */     return Operators.getOpNames(this._op) + '(' + this._left + ", " + this._right + ')';
-/*     */   }
-/*     */   
-/*     */   public Expression getLeft() {
-/*  82 */     return this._left;
-/*     */   }
-/*     */   
-/*     */   public Expression getRight() {
-/*  86 */     return this._right;
-/*     */   }
-/*     */   
-/*     */   public boolean getOp() {
-/*  90 */     return (this._op != 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean hasPositionCall() {
-/*  98 */     if (this._left.hasPositionCall()) return true; 
-/*  99 */     if (this._right.hasPositionCall()) return true; 
-/* 100 */     return false;
-/*     */   }
-/*     */   
-/*     */   public boolean hasLastCall() {
-/* 104 */     if (this._left.hasLastCall()) return true; 
-/* 105 */     if (this._right.hasLastCall()) return true; 
-/* 106 */     return false;
-/*     */   }
-/*     */   
-/*     */   private void swapArguments() {
-/* 110 */     Expression temp = this._left;
-/* 111 */     this._left = this._right;
-/* 112 */     this._right = temp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 119 */     Type tleft = this._left.typeCheck(stable);
-/* 120 */     Type tright = this._right.typeCheck(stable);
-/*     */     
-/* 122 */     if (tleft.isSimple() && tright.isSimple()) {
-/* 123 */       if (tleft != tright) {
-/* 124 */         if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType) {
-/* 125 */           this._right = new CastExpr(this._right, Type.Boolean);
-/*     */         }
-/* 127 */         else if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType) {
-/* 128 */           this._left = new CastExpr(this._left, Type.Boolean);
-/*     */         }
-/* 130 */         else if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NumberType || tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NumberType) {
-/*     */           
-/* 132 */           this._left = new CastExpr(this._left, Type.Real);
-/* 133 */           this._right = new CastExpr(this._right, Type.Real);
-/*     */         } else {
-/*     */           
-/* 136 */           this._left = new CastExpr(this._left, Type.String);
-/* 137 */           this._right = new CastExpr(this._right, Type.String);
-/*     */         }
-/*     */       
-/*     */       }
-/* 141 */     } else if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType) {
-/* 142 */       this._right = new CastExpr(this._right, Type.Reference);
-/*     */     }
-/* 144 */     else if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType) {
-/* 145 */       this._left = new CastExpr(this._left, Type.Reference);
-/*     */     
-/*     */     }
-/* 148 */     else if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType && tright == Type.String) {
-/* 149 */       this._left = new CastExpr(this._left, Type.String);
-/*     */     }
-/* 151 */     else if (tleft == Type.String && tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/* 152 */       this._right = new CastExpr(this._right, Type.String);
-/*     */     
-/*     */     }
-/* 155 */     else if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType && tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/* 156 */       this._left = new CastExpr(this._left, Type.String);
-/* 157 */       this._right = new CastExpr(this._right, Type.String);
-/*     */     }
-/* 159 */     else if (!(tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) || !(tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType)) {
-/*     */ 
-/*     */       
-/* 162 */       if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType && tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/* 163 */         swapArguments();
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */ 
-/*     */         
-/* 169 */         if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/* 170 */           this._left = new CastExpr(this._left, Type.NodeSet);
-/*     */         }
-/* 172 */         if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/* 173 */           this._right = new CastExpr(this._right, Type.NodeSet);
-/*     */         }
-/*     */ 
-/*     */         
-/* 177 */         if (tleft.isSimple() || (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType && tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType))
-/*     */         {
-/*     */           
-/* 180 */           swapArguments();
-/*     */         }
-/*     */ 
-/*     */         
-/* 184 */         if (this._right.getType() instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.IntType)
-/* 185 */           this._right = new CastExpr(this._right, Type.Real); 
-/*     */       } 
-/*     */     } 
-/* 188 */     return this._type = Type.Boolean;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void translateDesynthesized(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 193 */     Type tleft = this._left.getType();
-/* 194 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 196 */     if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType) {
-/* 197 */       this._left.translate(classGen, methodGen);
-/* 198 */       this._right.translate(classGen, methodGen);
-/* 199 */       this._falseList.add(il.append((this._op == 0) ? new IF_ICMPNE(null) : new IF_ICMPEQ(null)));
-/*     */ 
-/*     */     
-/*     */     }
-/* 203 */     else if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NumberType) {
-/* 204 */       this._left.translate(classGen, methodGen);
-/* 205 */       this._right.translate(classGen, methodGen);
-/*     */       
-/* 207 */       if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.RealType) {
-/* 208 */         il.append(DCMPG);
-/* 209 */         this._falseList.add(il.append((this._op == 0) ? new IFNE(null) : new IFEQ(null)));
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 214 */         this._falseList.add(il.append((this._op == 0) ? new IF_ICMPNE(null) : new IF_ICMPEQ(null)));
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 220 */       translate(classGen, methodGen);
-/* 221 */       desynthesize(classGen, methodGen);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 226 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 227 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 229 */     Type tleft = this._left.getType();
-/* 230 */     Type tright = this._right.getType();
-/*     */     
-/* 232 */     if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType || tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NumberType) {
-/* 233 */       translateDesynthesized(classGen, methodGen);
-/* 234 */       synthesize(classGen, methodGen);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 238 */     if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType) {
-/* 239 */       int equals = cpg.addMethodref("java.lang.String", "equals", "(Ljava/lang/Object;)Z");
-/*     */ 
-/*     */       
-/* 242 */       this._left.translate(classGen, methodGen);
-/* 243 */       this._right.translate(classGen, methodGen);
-/* 244 */       il.append(new INVOKEVIRTUAL(equals));
-/*     */       
-/* 246 */       if (this._op == 1) {
-/* 247 */         il.append(ICONST_1);
-/* 248 */         il.append(IXOR);
-/*     */       } 
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 255 */     if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType) {
-/* 256 */       if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType) {
-/* 257 */         this._right.translate(classGen, methodGen);
-/* 258 */         if (this._op == 1) {
-/* 259 */           il.append(ICONST_1);
-/* 260 */           il.append(IXOR);
-/*     */         } 
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 265 */       if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.RealType) {
-/* 266 */         this._left.translate(classGen, methodGen);
-/* 267 */         tleft.translateTo(classGen, methodGen, Type.Real);
-/* 268 */         this._right.translate(classGen, methodGen);
-/*     */         
-/* 270 */         il.append(DCMPG);
-/* 271 */         BranchHandle falsec = il.append((this._op == 0) ? new IFNE(null) : new IFEQ(null));
-/*     */ 
-/*     */         
-/* 274 */         il.append(ICONST_1);
-/* 275 */         BranchHandle truec = il.append(new GOTO(null));
-/* 276 */         falsec.setTarget(il.append(ICONST_0));
-/* 277 */         truec.setTarget(il.append(NOP));
-/*     */ 
-/*     */         
-/*     */         return;
-/*     */       } 
-/*     */       
-/* 283 */       this._left.translate(classGen, methodGen);
-/* 284 */       tleft.translateTo(classGen, methodGen, Type.String);
-/* 285 */       this._right.translate(classGen, methodGen);
-/*     */       
-/* 287 */       if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType) {
-/* 288 */         tright.translateTo(classGen, methodGen, Type.String);
-/*     */       }
-/*     */       
-/* 291 */       int equals = cpg.addMethodref("java.lang.String", "equals", "(Ljava/lang/Object;)Z");
-/*     */ 
-/*     */       
-/* 294 */       il.append(new INVOKEVIRTUAL(equals));
-/*     */       
-/* 296 */       if (this._op == 1) {
-/* 297 */         il.append(ICONST_1);
-/* 298 */         il.append(IXOR);
-/*     */       } 
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 303 */     if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType && tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType) {
-/* 304 */       this._left.translate(classGen, methodGen);
-/* 305 */       this._left.startIterator(classGen, methodGen);
-/* 306 */       Type.NodeSet.translateTo(classGen, methodGen, Type.Boolean);
-/* 307 */       this._right.translate(classGen, methodGen);
-/*     */       
-/* 309 */       il.append(IXOR);
-/* 310 */       if (this._op == 0) {
-/* 311 */         il.append(ICONST_1);
-/* 312 */         il.append(IXOR);
-/*     */       } 
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 317 */     if (tleft instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType && tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType) {
-/* 318 */       this._left.translate(classGen, methodGen);
-/* 319 */       this._left.startIterator(classGen, methodGen);
-/* 320 */       this._right.translate(classGen, methodGen);
-/* 321 */       il.append(new PUSH(cpg, this._op));
-/* 322 */       il.append(methodGen.loadDOM());
-/* 323 */       int cmp = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "compare", "(" + tleft
-/*     */ 
-/*     */           
-/* 326 */           .toSignature() + tright
-/* 327 */           .toSignature() + "I" + "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;" + ")Z");
-/*     */ 
-/*     */ 
-/*     */       
-/* 331 */       il.append(new INVOKESTATIC(cmp));
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 336 */     this._left.translate(classGen, methodGen);
-/* 337 */     this._left.startIterator(classGen, methodGen);
-/* 338 */     this._right.translate(classGen, methodGen);
-/* 339 */     this._right.startIterator(classGen, methodGen);
-/*     */ 
-/*     */     
-/* 342 */     if (tright instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType) {
-/* 343 */       tright.translateTo(classGen, methodGen, Type.String);
-/* 344 */       tright = Type.String;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 348 */     il.append(new PUSH(cpg, this._op));
-/* 349 */     il.append(methodGen.loadDOM());
-/*     */     
-/* 351 */     int compare = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "compare", "(" + tleft
-/*     */ 
-/*     */         
-/* 354 */         .toSignature() + tright
-/* 355 */         .toSignature() + "I" + "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;" + ")Z");
-/*     */ 
-/*     */ 
-/*     */     
-/* 359 */     il.append(new INVOKESTATIC(compare));
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\EqualityExpr.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: EqualityExpr.java,v 1.2.4.1 2005/09/12 10:16:52 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.BranchInstruction;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GOTO;
+import com.sun.org.apache.bcel.internal.generic.IFEQ;
+import com.sun.org.apache.bcel.internal.generic.IFNE;
+import com.sun.org.apache.bcel.internal.generic.IF_ICMPEQ;
+import com.sun.org.apache.bcel.internal.generic.IF_ICMPNE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.IntType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NumberType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.RealType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Operators;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ */
+final class EqualityExpr extends Expression {
+
+    private final int _op;
+    private Expression _left;
+    private Expression _right;
+
+    public EqualityExpr(int op, Expression left, Expression right) {
+        _op = op;
+        (_left = left).setParent(this);
+        (_right = right).setParent(this);
+    }
+
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        _left.setParser(parser);
+        _right.setParser(parser);
+    }
+
+    public String toString() {
+        return Operators.getOpNames(_op) + '(' + _left + ", " + _right + ')';
+    }
+
+    public Expression getLeft() {
+        return _left;
+    }
+
+    public Expression getRight() {
+        return _right;
+    }
+
+    public boolean getOp() {
+        return (_op != Operators.NE);
+    }
+
+    /**
+     * Returns true if this expressions contains a call to position(). This is
+     * needed for context changes in node steps containing multiple predicates.
+     */
+    public boolean hasPositionCall() {
+        if (_left.hasPositionCall()) return true;
+        if (_right.hasPositionCall()) return true;
+        return false;
+    }
+
+    public boolean hasLastCall() {
+        if (_left.hasLastCall()) return true;
+        if (_right.hasLastCall()) return true;
+        return false;
+    }
+
+    private void swapArguments() {
+        final Expression temp = _left;
+        _left = _right;
+        _right = temp;
+    }
+
+    /**
+     * Typing rules: see XSLT Reference by M. Kay page 345.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        final Type tleft = _left.typeCheck(stable);
+        final Type tright = _right.typeCheck(stable);
+
+        if (tleft.isSimple() && tright.isSimple()) {
+            if (tleft != tright) {
+                if (tleft instanceof BooleanType) {
+                    _right = new CastExpr(_right, Type.Boolean);
+                }
+                else if (tright instanceof BooleanType) {
+                    _left = new CastExpr(_left, Type.Boolean);
+                }
+                else if (tleft instanceof NumberType ||
+                         tright instanceof NumberType) {
+                    _left = new CastExpr(_left, Type.Real);
+                    _right = new CastExpr(_right, Type.Real);
+                }
+                else {          // both compared as strings
+                    _left = new CastExpr(_left,   Type.String);
+                    _right = new CastExpr(_right, Type.String);
+                }
+            }
+        }
+        else if (tleft instanceof ReferenceType) {
+            _right = new CastExpr(_right, Type.Reference);
+        }
+        else if (tright instanceof ReferenceType) {
+            _left = new CastExpr(_left, Type.Reference);
+        }
+        // the following 2 cases optimize @attr|.|.. = 'string'
+        else if (tleft instanceof NodeType && tright == Type.String) {
+            _left = new CastExpr(_left, Type.String);
+        }
+        else if (tleft == Type.String && tright instanceof NodeType) {
+            _right = new CastExpr(_right, Type.String);
+        }
+        // optimize node/node
+        else if (tleft instanceof NodeType && tright instanceof NodeType) {
+            _left = new CastExpr(_left, Type.String);
+            _right = new CastExpr(_right, Type.String);
+        }
+        else if (tleft instanceof NodeType && tright instanceof NodeSetType) {
+            // compare(Node, NodeSet) will be invoked
+        }
+        else if (tleft instanceof NodeSetType && tright instanceof NodeType) {
+            swapArguments();    // for compare(Node, NodeSet)
+        }
+        else {
+            // At least one argument is of type node, node-set or result-tree
+
+            // Promote an expression of type node to node-set
+            if (tleft instanceof NodeType) {
+                _left = new CastExpr(_left, Type.NodeSet);
+            }
+            if (tright instanceof NodeType) {
+                _right = new CastExpr(_right, Type.NodeSet);
+            }
+
+            // If one arg is a node-set then make it the left one
+            if (tleft.isSimple() ||
+                tleft instanceof ResultTreeType &&
+                tright instanceof NodeSetType) {
+                swapArguments();
+            }
+
+            // Promote integers to doubles to have fewer compares
+            if (_right.getType() instanceof IntType) {
+                _right = new CastExpr(_right, Type.Real);
+            }
+        }
+        return _type = Type.Boolean;
+    }
+
+    public void translateDesynthesized(ClassGenerator classGen,
+                                       MethodGenerator methodGen) {
+        final Type tleft = _left.getType();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (tleft instanceof BooleanType) {
+            _left.translate(classGen, methodGen);
+            _right.translate(classGen, methodGen);
+        _falseList.add(il.append(_op == Operators.EQ ?
+                                     (BranchInstruction)new IF_ICMPNE(null) :
+                                     (BranchInstruction)new IF_ICMPEQ(null)));
+        }
+        else if (tleft instanceof NumberType) {
+            _left.translate(classGen, methodGen);
+            _right.translate(classGen, methodGen);
+
+            if (tleft instanceof RealType) {
+                il.append(DCMPG);
+        _falseList.add(il.append(_op == Operators.EQ ?
+                                         (BranchInstruction)new IFNE(null) :
+                                         (BranchInstruction)new IFEQ(null)));
+            }
+            else {
+            _falseList.add(il.append(_op == Operators.EQ ?
+                                         (BranchInstruction)new IF_ICMPNE(null) :
+                                         (BranchInstruction)new IF_ICMPEQ(null)));
+            }
+        }
+        else {
+            translate(classGen, methodGen);
+            desynthesize(classGen, methodGen);
+        }
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        final Type tleft = _left.getType();
+        Type tright = _right.getType();
+
+        if (tleft instanceof BooleanType || tleft instanceof NumberType) {
+            translateDesynthesized(classGen, methodGen);
+            synthesize(classGen, methodGen);
+            return;
+        }
+
+        if (tleft instanceof StringType) {
+            final int equals = cpg.addMethodref(STRING_CLASS,
+                                                "equals",
+                                                "(" + OBJECT_SIG +")Z");
+            _left.translate(classGen, methodGen);
+            _right.translate(classGen, methodGen);
+            il.append(new INVOKEVIRTUAL(equals));
+
+        if (_op == Operators.NE) {
+                il.append(ICONST_1);
+                il.append(IXOR);                        // not x <-> x xor 1
+            }
+            return;
+        }
+
+        BranchHandle truec, falsec;
+
+        if (tleft instanceof ResultTreeType) {
+            if (tright instanceof BooleanType) {
+                _right.translate(classGen, methodGen);
+        if (_op == Operators.NE) {
+                    il.append(ICONST_1);
+                    il.append(IXOR); // not x <-> x xor 1
+                }
+                return;
+            }
+
+            if (tright instanceof RealType) {
+                _left.translate(classGen, methodGen);
+                tleft.translateTo(classGen, methodGen, Type.Real);
+                _right.translate(classGen, methodGen);
+
+                il.append(DCMPG);
+        falsec = il.append(_op == Operators.EQ ?
+                                   (BranchInstruction) new IFNE(null) :
+                                   (BranchInstruction) new IFEQ(null));
+                il.append(ICONST_1);
+                truec = il.append(new GOTO(null));
+                falsec.setTarget(il.append(ICONST_0));
+                truec.setTarget(il.append(NOP));
+                return;
+            }
+
+            // Next, result-tree/string and result-tree/result-tree comparisons
+
+            _left.translate(classGen, methodGen);
+            tleft.translateTo(classGen, methodGen, Type.String);
+            _right.translate(classGen, methodGen);
+
+            if (tright instanceof ResultTreeType) {
+                tright.translateTo(classGen, methodGen, Type.String);
+            }
+
+            final int equals = cpg.addMethodref(STRING_CLASS,
+                                                "equals",
+                                                "(" +OBJECT_SIG+ ")Z");
+            il.append(new INVOKEVIRTUAL(equals));
+
+        if (_op == Operators.NE) {
+                il.append(ICONST_1);
+                il.append(IXOR);                        // not x <-> x xor 1
+            }
+            return;
+        }
+
+        if (tleft instanceof NodeSetType && tright instanceof BooleanType) {
+            _left.translate(classGen, methodGen);
+            _left.startIterator(classGen, methodGen);
+            Type.NodeSet.translateTo(classGen, methodGen, Type.Boolean);
+            _right.translate(classGen, methodGen);
+
+            il.append(IXOR); // x != y <-> x xor y
+        if (_op == Operators.EQ) {
+                il.append(ICONST_1);
+                il.append(IXOR); // not x <-> x xor 1
+            }
+            return;
+        }
+
+        if (tleft instanceof NodeSetType && tright instanceof StringType) {
+            _left.translate(classGen, methodGen);
+            _left.startIterator(classGen, methodGen); // needed ?
+            _right.translate(classGen, methodGen);
+            il.append(new PUSH(cpg, _op));
+            il.append(methodGen.loadDOM());
+            final int cmp = cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                             "compare",
+                                             "("
+                                             + tleft.toSignature()
+                                             + tright.toSignature()
+                                             + "I"
+                                             + DOM_INTF_SIG
+                                             + ")Z");
+            il.append(new INVOKESTATIC(cmp));
+            return;
+        }
+
+        // Next, node-set/t for t in {real, string, node-set, result-tree}
+        _left.translate(classGen, methodGen);
+        _left.startIterator(classGen, methodGen);
+        _right.translate(classGen, methodGen);
+        _right.startIterator(classGen, methodGen);
+
+        // Cast a result tree to a string to use an existing compare
+        if (tright instanceof ResultTreeType) {
+            tright.translateTo(classGen, methodGen, Type.String);
+            tright = Type.String;
+        }
+
+        // Call the appropriate compare() from the BasisLibrary
+        il.append(new PUSH(cpg, _op));
+        il.append(methodGen.loadDOM());
+
+        final int compare = cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                             "compare",
+                                             "("
+                                             + tleft.toSignature()
+                                             + tright.toSignature()
+                                             + "I"
+                                             + DOM_INTF_SIG
+                                             + ")Z");
+        il.append(new INVOKESTATIC(compare));
+    }
+}

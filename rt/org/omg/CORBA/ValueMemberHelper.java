@@ -1,154 +1,149 @@
-/*     */ package org.omg.CORBA;
-/*     */ 
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class ValueMemberHelper
-/*     */ {
-/*  40 */   private static String _id = "IDL:omg.org/CORBA/ValueMember:1.0";
-/*     */ 
-/*     */   
-/*     */   public static void insert(Any paramAny, ValueMember paramValueMember) {
-/*  44 */     OutputStream outputStream = paramAny.create_output_stream();
-/*  45 */     paramAny.type(type());
-/*  46 */     write(outputStream, paramValueMember);
-/*  47 */     paramAny.read_value(outputStream.create_input_stream(), type());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static ValueMember extract(Any paramAny) {
-/*  52 */     return read(paramAny.create_input_stream());
-/*     */   }
-/*     */   
-/*  55 */   private static TypeCode __typeCode = null;
-/*     */   private static boolean __active = false;
-/*     */   
-/*     */   public static synchronized TypeCode type() {
-/*  59 */     if (__typeCode == null)
-/*     */     {
-/*  61 */       synchronized (TypeCode.class) {
-/*     */         
-/*  63 */         if (__typeCode == null) {
-/*     */           
-/*  65 */           if (__active)
-/*     */           {
-/*  67 */             return ORB.init().create_recursive_tc(_id);
-/*     */           }
-/*  69 */           __active = true;
-/*  70 */           StructMember[] arrayOfStructMember = new StructMember[7];
-/*  71 */           TypeCode typeCode = null;
-/*  72 */           typeCode = ORB.init().create_string_tc(0);
-/*  73 */           typeCode = ORB.init().create_alias_tc(IdentifierHelper.id(), "Identifier", typeCode);
-/*  74 */           arrayOfStructMember[0] = new StructMember("name", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/*  78 */           typeCode = ORB.init().create_string_tc(0);
-/*  79 */           typeCode = ORB.init().create_alias_tc(RepositoryIdHelper.id(), "RepositoryId", typeCode);
-/*  80 */           arrayOfStructMember[1] = new StructMember("id", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/*  84 */           typeCode = ORB.init().create_string_tc(0);
-/*  85 */           typeCode = ORB.init().create_alias_tc(RepositoryIdHelper.id(), "RepositoryId", typeCode);
-/*  86 */           arrayOfStructMember[2] = new StructMember("defined_in", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/*  90 */           typeCode = ORB.init().create_string_tc(0);
-/*  91 */           typeCode = ORB.init().create_alias_tc(VersionSpecHelper.id(), "VersionSpec", typeCode);
-/*  92 */           arrayOfStructMember[3] = new StructMember("version", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/*  96 */           typeCode = ORB.init().get_primitive_tc(TCKind.tk_TypeCode);
-/*  97 */           arrayOfStructMember[4] = new StructMember("type", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/* 101 */           typeCode = IDLTypeHelper.type();
-/* 102 */           arrayOfStructMember[5] = new StructMember("type_def", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/* 106 */           typeCode = ORB.init().get_primitive_tc(TCKind.tk_short);
-/* 107 */           typeCode = ORB.init().create_alias_tc(VisibilityHelper.id(), "Visibility", typeCode);
-/* 108 */           arrayOfStructMember[6] = new StructMember("access", typeCode, null);
-/*     */ 
-/*     */ 
-/*     */           
-/* 112 */           __typeCode = ORB.init().create_struct_tc(id(), "ValueMember", arrayOfStructMember);
-/* 113 */           __active = false;
-/*     */         } 
-/*     */       } 
-/*     */     }
-/* 117 */     return __typeCode;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String id() {
-/* 122 */     return _id;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static ValueMember read(InputStream paramInputStream) {
-/* 127 */     ValueMember valueMember = new ValueMember();
-/* 128 */     valueMember.name = paramInputStream.read_string();
-/* 129 */     valueMember.id = paramInputStream.read_string();
-/* 130 */     valueMember.defined_in = paramInputStream.read_string();
-/* 131 */     valueMember.version = paramInputStream.read_string();
-/* 132 */     valueMember.type = paramInputStream.read_TypeCode();
-/* 133 */     valueMember.type_def = IDLTypeHelper.read(paramInputStream);
-/* 134 */     valueMember.access = paramInputStream.read_short();
-/* 135 */     return valueMember;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static void write(OutputStream paramOutputStream, ValueMember paramValueMember) {
-/* 140 */     paramOutputStream.write_string(paramValueMember.name);
-/* 141 */     paramOutputStream.write_string(paramValueMember.id);
-/* 142 */     paramOutputStream.write_string(paramValueMember.defined_in);
-/* 143 */     paramOutputStream.write_string(paramValueMember.version);
-/* 144 */     paramOutputStream.write_TypeCode(paramValueMember.type);
-/* 145 */     IDLTypeHelper.write(paramOutputStream, paramValueMember.type_def);
-/* 146 */     paramOutputStream.write_short(paramValueMember.access);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\ValueMemberHelper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package org.omg.CORBA;
+
+
+/**
+* The Helper for <tt>ValueMember</tt>.  For more information on
+* Helper files, see <a href="doc-files/generatedfiles.html#helper">
+* "Generated Files: Helper Files"</a>.<P>
+* org/omg/CORBA/ValueMemberHelper.java
+* Generated by the IDL-to-Java compiler (portable), version "3.0"
+* from ir.idl
+* 03 June 1999 11:33:44 o'clock GMT+00:00
+*/
+
+abstract public class ValueMemberHelper
+{
+  private static String  _id = "IDL:omg.org/CORBA/ValueMember:1.0";
+
+  public static void insert (org.omg.CORBA.Any a, org.omg.CORBA.ValueMember that)
+  {
+    org.omg.CORBA.portable.OutputStream out = a.create_output_stream ();
+    a.type (type ());
+    write (out, that);
+    a.read_value (out.create_input_stream (), type ());
+  }
+
+  public static org.omg.CORBA.ValueMember extract (org.omg.CORBA.Any a)
+  {
+    return read (a.create_input_stream ());
+  }
+
+  private static org.omg.CORBA.TypeCode __typeCode = null;
+  private static boolean __active = false;
+  synchronized public static org.omg.CORBA.TypeCode type ()
+  {
+    if (__typeCode == null)
+    {
+      synchronized (org.omg.CORBA.TypeCode.class)
+      {
+        if (__typeCode == null)
+        {
+          if (__active)
+          {
+            return org.omg.CORBA.ORB.init().create_recursive_tc ( _id );
+          }
+          __active = true;
+          org.omg.CORBA.StructMember[] _members0 = new org.omg.CORBA.StructMember [7];
+          org.omg.CORBA.TypeCode _tcOf_members0 = null;
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_string_tc (0);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_alias_tc (org.omg.CORBA.IdentifierHelper.id (), "Identifier", _tcOf_members0);
+          _members0[0] = new org.omg.CORBA.StructMember (
+            "name",
+            _tcOf_members0,
+            null);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_string_tc (0);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_alias_tc (org.omg.CORBA.RepositoryIdHelper.id (), "RepositoryId", _tcOf_members0);
+          _members0[1] = new org.omg.CORBA.StructMember (
+            "id",
+            _tcOf_members0,
+            null);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_string_tc (0);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_alias_tc (org.omg.CORBA.RepositoryIdHelper.id (), "RepositoryId", _tcOf_members0);
+          _members0[2] = new org.omg.CORBA.StructMember (
+            "defined_in",
+            _tcOf_members0,
+            null);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_string_tc (0);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_alias_tc (org.omg.CORBA.VersionSpecHelper.id (), "VersionSpec", _tcOf_members0);
+          _members0[3] = new org.omg.CORBA.StructMember (
+            "version",
+            _tcOf_members0,
+            null);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().get_primitive_tc (org.omg.CORBA.TCKind.tk_TypeCode);
+          _members0[4] = new org.omg.CORBA.StructMember (
+            "type",
+            _tcOf_members0,
+            null);
+          _tcOf_members0 = org.omg.CORBA.IDLTypeHelper.type ();
+          _members0[5] = new org.omg.CORBA.StructMember (
+            "type_def",
+            _tcOf_members0,
+            null);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().get_primitive_tc (org.omg.CORBA.TCKind.tk_short);
+          _tcOf_members0 = org.omg.CORBA.ORB.init ().create_alias_tc (org.omg.CORBA.VisibilityHelper.id (), "Visibility", _tcOf_members0);
+          _members0[6] = new org.omg.CORBA.StructMember (
+            "access",
+            _tcOf_members0,
+            null);
+          __typeCode = org.omg.CORBA.ORB.init ().create_struct_tc (org.omg.CORBA.ValueMemberHelper.id (), "ValueMember", _members0);
+          __active = false;
+        }
+      }
+    }
+    return __typeCode;
+  }
+
+  public static String id ()
+  {
+    return _id;
+  }
+
+  public static org.omg.CORBA.ValueMember read (org.omg.CORBA.portable.InputStream istream)
+  {
+    org.omg.CORBA.ValueMember value = new org.omg.CORBA.ValueMember ();
+    value.name = istream.read_string ();
+    value.id = istream.read_string ();
+    value.defined_in = istream.read_string ();
+    value.version = istream.read_string ();
+    value.type = istream.read_TypeCode ();
+    value.type_def = org.omg.CORBA.IDLTypeHelper.read (istream);
+    value.access = istream.read_short ();
+    return value;
+  }
+
+  public static void write (org.omg.CORBA.portable.OutputStream ostream, org.omg.CORBA.ValueMember value)
+  {
+    ostream.write_string (value.name);
+    ostream.write_string (value.id);
+    ostream.write_string (value.defined_in);
+    ostream.write_string (value.version);
+    ostream.write_TypeCode (value.type);
+    org.omg.CORBA.IDLTypeHelper.write (ostream, value.type_def);
+    ostream.write_short (value.access);
+  }
+
+}

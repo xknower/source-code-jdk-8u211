@@ -1,210 +1,205 @@
-/*     */ package javax.swing.border;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class EtchedBorder
-/*     */   extends AbstractBorder
-/*     */ {
-/*     */   public static final int RAISED = 0;
-/*     */   public static final int LOWERED = 1;
-/*     */   protected int etchType;
-/*     */   protected Color highlight;
-/*     */   protected Color shadow;
-/*     */   
-/*     */   public EtchedBorder() {
-/*  71 */     this(1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EtchedBorder(int paramInt) {
-/*  82 */     this(paramInt, null, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EtchedBorder(Color paramColor1, Color paramColor2) {
-/*  92 */     this(1, paramColor1, paramColor2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ConstructorProperties({"etchType", "highlightColor", "shadowColor"})
-/*     */   public EtchedBorder(int paramInt, Color paramColor1, Color paramColor2) {
-/* 104 */     this.etchType = paramInt;
-/* 105 */     this.highlight = paramColor1;
-/* 106 */     this.shadow = paramColor2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 120 */     int i = paramInt3;
-/* 121 */     int j = paramInt4;
-/*     */     
-/* 123 */     paramGraphics.translate(paramInt1, paramInt2);
-/*     */     
-/* 125 */     paramGraphics.setColor((this.etchType == 1) ? getShadowColor(paramComponent) : getHighlightColor(paramComponent));
-/* 126 */     paramGraphics.drawRect(0, 0, i - 2, j - 2);
-/*     */     
-/* 128 */     paramGraphics.setColor((this.etchType == 1) ? getHighlightColor(paramComponent) : getShadowColor(paramComponent));
-/* 129 */     paramGraphics.drawLine(1, j - 3, 1, 1);
-/* 130 */     paramGraphics.drawLine(1, 1, i - 3, 1);
-/*     */     
-/* 132 */     paramGraphics.drawLine(0, j - 1, i - 1, j - 1);
-/* 133 */     paramGraphics.drawLine(i - 1, j - 1, i - 1, 0);
-/*     */     
-/* 135 */     paramGraphics.translate(-paramInt1, -paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/* 144 */     paramInsets.set(2, 2, 2, 2);
-/* 145 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isBorderOpaque() {
-/* 151 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getEtchType() {
-/* 157 */     return this.etchType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getHighlightColor(Component paramComponent) {
-/* 169 */     return (this.highlight != null) ? this.highlight : paramComponent
-/* 170 */       .getBackground().brighter();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getHighlightColor() {
-/* 180 */     return this.highlight;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getShadowColor(Component paramComponent) {
-/* 192 */     return (this.shadow != null) ? this.shadow : paramComponent.getBackground().darker();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getShadowColor() {
-/* 202 */     return this.shadow;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\border\EtchedBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.border;
+
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Color;
+import java.awt.Component;
+import java.beans.ConstructorProperties;
+
+/**
+ * A class which implements a simple etched border which can
+ * either be etched-in or etched-out.  If no highlight/shadow
+ * colors are initialized when the border is created, then
+ * these colors will be dynamically derived from the background
+ * color of the component argument passed into the paintBorder()
+ * method.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author David Kloba
+ * @author Amy Fowler
+ */
+public class EtchedBorder extends AbstractBorder
+{
+    /** Raised etched type. */
+    public static final int RAISED  = 0;
+    /** Lowered etched type. */
+    public static final int LOWERED = 1;
+
+    protected int etchType;
+    protected Color highlight;
+    protected Color shadow;
+
+    /**
+     * Creates a lowered etched border whose colors will be derived
+     * from the background color of the component passed into
+     * the paintBorder method.
+     */
+    public EtchedBorder()    {
+        this(LOWERED);
+    }
+
+    /**
+     * Creates an etched border with the specified etch-type
+     * whose colors will be derived
+     * from the background color of the component passed into
+     * the paintBorder method.
+     * @param etchType the type of etch to be drawn by the border
+     */
+    public EtchedBorder(int etchType)    {
+        this(etchType, null, null);
+    }
+
+    /**
+     * Creates a lowered etched border with the specified highlight and
+     * shadow colors.
+     * @param highlight the color to use for the etched highlight
+     * @param shadow the color to use for the etched shadow
+     */
+    public EtchedBorder(Color highlight, Color shadow)    {
+        this(LOWERED, highlight, shadow);
+    }
+
+    /**
+     * Creates an etched border with the specified etch-type,
+     * highlight and shadow colors.
+     * @param etchType the type of etch to be drawn by the border
+     * @param highlight the color to use for the etched highlight
+     * @param shadow the color to use for the etched shadow
+     */
+    @ConstructorProperties({"etchType", "highlightColor", "shadowColor"})
+    public EtchedBorder(int etchType, Color highlight, Color shadow)    {
+        this.etchType = etchType;
+        this.highlight = highlight;
+        this.shadow = shadow;
+    }
+
+    /**
+     * Paints the border for the specified component with the
+     * specified position and size.
+     * @param c the component for which this border is being painted
+     * @param g the paint graphics
+     * @param x the x position of the painted border
+     * @param y the y position of the painted border
+     * @param width the width of the painted border
+     * @param height the height of the painted border
+     */
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        int w = width;
+        int h = height;
+
+        g.translate(x, y);
+
+        g.setColor(etchType == LOWERED? getShadowColor(c) : getHighlightColor(c));
+        g.drawRect(0, 0, w-2, h-2);
+
+        g.setColor(etchType == LOWERED? getHighlightColor(c) : getShadowColor(c));
+        g.drawLine(1, h-3, 1, 1);
+        g.drawLine(1, 1, w-3, 1);
+
+        g.drawLine(0, h-1, w-1, h-1);
+        g.drawLine(w-1, h-1, w-1, 0);
+
+        g.translate(-x, -y);
+    }
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
+     * @param c the component for which this border insets value applies
+     * @param insets the object to be reinitialized
+     */
+    public Insets getBorderInsets(Component c, Insets insets) {
+        insets.set(2, 2, 2, 2);
+        return insets;
+    }
+
+    /**
+     * Returns whether or not the border is opaque.
+     */
+    public boolean isBorderOpaque() { return true; }
+
+    /**
+     * Returns which etch-type is set on the etched border.
+     */
+    public int getEtchType() {
+        return etchType;
+    }
+
+    /**
+     * Returns the highlight color of the etched border
+     * when rendered on the specified component.  If no highlight
+     * color was specified at instantiation, the highlight color
+     * is derived from the specified component's background color.
+     * @param c the component for which the highlight may be derived
+     * @since 1.3
+     */
+    public Color getHighlightColor(Component c)   {
+        return highlight != null? highlight :
+                                       c.getBackground().brighter();
+    }
+
+    /**
+     * Returns the highlight color of the etched border.
+     * Will return null if no highlight color was specified
+     * at instantiation.
+     * @since 1.3
+     */
+    public Color getHighlightColor()   {
+        return highlight;
+    }
+
+    /**
+     * Returns the shadow color of the etched border
+     * when rendered on the specified component.  If no shadow
+     * color was specified at instantiation, the shadow color
+     * is derived from the specified component's background color.
+     * @param c the component for which the shadow may be derived
+     * @since 1.3
+     */
+    public Color getShadowColor(Component c)   {
+        return shadow != null? shadow : c.getBackground().darker();
+    }
+
+    /**
+     * Returns the shadow color of the etched border.
+     * Will return null if no shadow color was specified
+     * at instantiation.
+     * @since 1.3
+     */
+    public Color getShadowColor()   {
+        return shadow;
+    }
+
+}

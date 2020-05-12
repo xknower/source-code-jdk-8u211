@@ -1,91 +1,73 @@
-/*    */ package com.sun.corba.se.spi.servicecontext;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*    */ import org.omg.CORBA.CompletionStatus;
-/*    */ import org.omg.CORBA.SystemException;
-/*    */ import org.omg.CORBA.UNKNOWN;
-/*    */ import org.omg.CORBA_2_3.portable.InputStream;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UEInfoServiceContext
-/*    */   extends ServiceContext
-/*    */ {
-/*    */   public static final int SERVICE_CONTEXT_ID = 9;
-/*    */   private Throwable unknown;
-/*    */   
-/*    */   public UEInfoServiceContext(Throwable paramThrowable) {
-/* 67 */     this.unknown = null; this.unknown = paramThrowable; } public UEInfoServiceContext(InputStream paramInputStream, GIOPVersion paramGIOPVersion) { super(paramInputStream, paramGIOPVersion); this.unknown = null; try { this.unknown = (Throwable)this.in.read_value(); }
-/*    */     catch (ThreadDeath threadDeath) { throw threadDeath; }
-/*    */     catch (Throwable throwable)
-/*    */     { this.unknown = new UNKNOWN(0, CompletionStatus.COMPLETED_MAYBE); }
-/* 71 */      } public String toString() { return "UEInfoServiceContext[ unknown=" + this.unknown.toString() + " ]"; }
-/*    */ 
-/*    */   
-/*    */   public int getId() {
-/*    */     return 9;
-/*    */   }
-/*    */   
-/*    */   public void writeData(OutputStream paramOutputStream) throws SystemException {
-/*    */     paramOutputStream.write_value(this.unknown);
-/*    */   }
-/*    */   
-/*    */   public Throwable getUE() {
-/*    */     return this.unknown;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\servicecontext\UEInfoServiceContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.servicecontext;
+
+import java.io.Serializable ;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.UNKNOWN;
+import org.omg.CORBA_2_3.portable.InputStream;
+import org.omg.CORBA_2_3.portable.OutputStream;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.servicecontext.ServiceContext ;
+
+public class UEInfoServiceContext extends ServiceContext {
+    public UEInfoServiceContext( Throwable ex )
+    {
+        unknown = ex ;
+    }
+
+    public UEInfoServiceContext(InputStream is, GIOPVersion gv)
+    {
+        super(is, gv) ;
+
+        try {
+            unknown = (Throwable) in.read_value() ;
+        } catch (ThreadDeath d) {
+            throw d ;
+        } catch (Throwable e) {
+            unknown = new UNKNOWN( 0, CompletionStatus.COMPLETED_MAYBE ) ;
+        }
+    }
+
+    // Required SERVICE_CONTEXT_ID and getId definitions
+    public static final int SERVICE_CONTEXT_ID = 9 ;
+    public int getId() { return SERVICE_CONTEXT_ID ; }
+
+    public void writeData( OutputStream os ) throws SystemException
+    {
+        os.write_value( (Serializable)unknown ) ;
+    }
+
+    public Throwable getUE() { return unknown ; }
+
+    private Throwable unknown = null ;
+
+    public String toString()
+    {
+        return "UEInfoServiceContext[ unknown=" + unknown.toString() + " ]" ;
+    }
+}

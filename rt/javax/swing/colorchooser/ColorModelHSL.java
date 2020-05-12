@@ -1,194 +1,188 @@
-/*     */ package javax.swing.colorchooser;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ColorModelHSL
-/*     */   extends ColorModel
-/*     */ {
-/*     */   ColorModelHSL() {
-/*  31 */     super("hsl", new String[] { "Hue", "Saturation", "Lightness", "Transparency" });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void setColor(int paramInt, float[] paramArrayOffloat) {
-/*  36 */     super.setColor(paramInt, paramArrayOffloat);
-/*  37 */     RGBtoHSL(paramArrayOffloat, paramArrayOffloat);
-/*  38 */     paramArrayOffloat[3] = 1.0F - paramArrayOffloat[3];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   int getColor(float[] paramArrayOffloat) {
-/*  43 */     paramArrayOffloat[3] = 1.0F - paramArrayOffloat[3];
-/*  44 */     HSLtoRGB(paramArrayOffloat, paramArrayOffloat);
-/*  45 */     return super.getColor(paramArrayOffloat);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   int getMaximum(int paramInt) {
-/*  50 */     return (paramInt == 0) ? 360 : 100;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   float getDefault(int paramInt) {
-/*  55 */     return (paramInt == 0) ? -1.0F : ((paramInt == 2) ? 0.5F : 1.0F);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static float[] HSLtoRGB(float[] paramArrayOffloat1, float[] paramArrayOffloat2) {
-/*  68 */     if (paramArrayOffloat2 == null) {
-/*  69 */       paramArrayOffloat2 = new float[3];
-/*     */     }
-/*  71 */     float f1 = paramArrayOffloat1[0];
-/*  72 */     float f2 = paramArrayOffloat1[1];
-/*  73 */     float f3 = paramArrayOffloat1[2];
-/*     */     
-/*  75 */     if (f2 > 0.0F) {
-/*  76 */       f1 = (f1 < 1.0F) ? (f1 * 6.0F) : 0.0F;
-/*  77 */       float f4 = f3 + f2 * ((f3 > 0.5F) ? (1.0F - f3) : f3);
-/*  78 */       float f5 = 2.0F * f3 - f4;
-/*  79 */       paramArrayOffloat2[0] = normalize(f4, f5, (f1 < 4.0F) ? (f1 + 2.0F) : (f1 - 4.0F));
-/*  80 */       paramArrayOffloat2[1] = normalize(f4, f5, f1);
-/*  81 */       paramArrayOffloat2[2] = normalize(f4, f5, (f1 < 2.0F) ? (f1 + 4.0F) : (f1 - 2.0F));
-/*     */     } else {
-/*     */       
-/*  84 */       paramArrayOffloat2[0] = f3;
-/*  85 */       paramArrayOffloat2[1] = f3;
-/*  86 */       paramArrayOffloat2[2] = f3;
-/*     */     } 
-/*  88 */     return paramArrayOffloat2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static float[] RGBtoHSL(float[] paramArrayOffloat1, float[] paramArrayOffloat2) {
-/* 101 */     if (paramArrayOffloat2 == null) {
-/* 102 */       paramArrayOffloat2 = new float[3];
-/*     */     }
-/* 104 */     float f1 = max(paramArrayOffloat1[0], paramArrayOffloat1[1], paramArrayOffloat1[2]);
-/* 105 */     float f2 = min(paramArrayOffloat1[0], paramArrayOffloat1[1], paramArrayOffloat1[2]);
-/*     */     
-/* 107 */     float f3 = f1 + f2;
-/* 108 */     float f4 = f1 - f2;
-/* 109 */     if (f4 > 0.0F) {
-/* 110 */       f4 /= (f3 > 1.0F) ? (2.0F - f3) : f3;
-/*     */     }
-/*     */ 
-/*     */     
-/* 114 */     paramArrayOffloat2[0] = getHue(paramArrayOffloat1[0], paramArrayOffloat1[1], paramArrayOffloat1[2], f1, f2);
-/* 115 */     paramArrayOffloat2[1] = f4;
-/* 116 */     paramArrayOffloat2[2] = f3 / 2.0F;
-/* 117 */     return paramArrayOffloat2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static float min(float paramFloat1, float paramFloat2, float paramFloat3) {
-/* 129 */     float f = (paramFloat1 < paramFloat2) ? paramFloat1 : paramFloat2;
-/* 130 */     return (f < paramFloat3) ? f : paramFloat3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static float max(float paramFloat1, float paramFloat2, float paramFloat3) {
-/* 142 */     float f = (paramFloat1 > paramFloat2) ? paramFloat1 : paramFloat2;
-/* 143 */     return (f > paramFloat3) ? f : paramFloat3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static float getHue(float paramFloat1, float paramFloat2, float paramFloat3, float paramFloat4, float paramFloat5) {
-/* 157 */     float f = paramFloat4 - paramFloat5;
-/* 158 */     if (f > 0.0F) {
-/* 159 */       if (paramFloat4 == paramFloat1) {
-/* 160 */         f = (paramFloat2 - paramFloat3) / f;
-/* 161 */         if (f < 0.0F) {
-/* 162 */           f += 6.0F;
-/*     */         }
-/*     */       }
-/* 165 */       else if (paramFloat4 == paramFloat2) {
-/* 166 */         f = 2.0F + (paramFloat3 - paramFloat1) / f;
-/*     */       } else {
-/*     */         
-/* 169 */         f = 4.0F + (paramFloat1 - paramFloat2) / f;
-/*     */       } 
-/* 171 */       f /= 6.0F;
-/*     */     } 
-/* 173 */     return f;
-/*     */   }
-/*     */   
-/*     */   private static float normalize(float paramFloat1, float paramFloat2, float paramFloat3) {
-/* 177 */     if (paramFloat3 < 1.0F) {
-/* 178 */       return paramFloat2 + (paramFloat1 - paramFloat2) * paramFloat3;
-/*     */     }
-/* 180 */     if (paramFloat3 < 3.0F) {
-/* 181 */       return paramFloat1;
-/*     */     }
-/* 183 */     if (paramFloat3 < 4.0F) {
-/* 184 */       return paramFloat2 + (paramFloat1 - paramFloat2) * (4.0F - paramFloat3);
-/*     */     }
-/* 186 */     return paramFloat2;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\colorchooser\ColorModelHSL.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.colorchooser;
+
+final class ColorModelHSL extends ColorModel {
+
+    ColorModelHSL() {
+        super("hsl", "Hue", "Saturation", "Lightness", "Transparency"); // NON-NLS: components
+    }
+
+    @Override
+    void setColor(int color, float[] space) {
+        super.setColor(color, space);
+        RGBtoHSL(space, space);
+        space[3] = 1.0f - space[3];
+    }
+
+    @Override
+    int getColor(float[] space) {
+        space[3] = 1.0f - space[3];
+        HSLtoRGB(space, space);
+        return super.getColor(space);
+    }
+
+    @Override
+    int getMaximum(int index) {
+        return (index == 0) ? 360 : 100;
+    }
+
+    @Override
+    float getDefault(int index) {
+        return (index == 0) ? -1.0f : (index == 2) ? 0.5f : 1.0f;
+    }
+
+    /**
+     * Converts HSL components of a color to a set of RGB components.
+     *
+     * @param hsl  a float array with length equal to
+     *             the number of HSL components
+     * @param rgb  a float array with length of at least 3
+     *             that contains RGB components of a color
+     * @return a float array that contains RGB components
+     */
+    private static float[] HSLtoRGB(float[] hsl, float[] rgb) {
+        if (rgb == null) {
+            rgb = new float[3];
+        }
+        float hue = hsl[0];
+        float saturation = hsl[1];
+        float lightness = hsl[2];
+
+        if (saturation > 0.0f) {
+            hue = (hue < 1.0f) ? hue * 6.0f : 0.0f;
+            float q = lightness + saturation * ((lightness > 0.5f) ? 1.0f - lightness : lightness);
+            float p = 2.0f * lightness - q;
+            rgb[0]= normalize(q, p, (hue < 4.0f) ? (hue + 2.0f) : (hue - 4.0f));
+            rgb[1]= normalize(q, p, hue);
+            rgb[2]= normalize(q, p, (hue < 2.0f) ? (hue + 4.0f) : (hue - 2.0f));
+        }
+        else {
+            rgb[0] = lightness;
+            rgb[1] = lightness;
+            rgb[2] = lightness;
+        }
+        return rgb;
+    }
+
+    /**
+     * Converts RGB components of a color to a set of HSL components.
+     *
+     * @param rgb  a float array with length of at least 3
+     *             that contains RGB components of a color
+     * @param hsl  a float array with length equal to
+     *             the number of HSL components
+     * @return a float array that contains HSL components
+     */
+    private static float[] RGBtoHSL(float[] rgb, float[] hsl) {
+        if (hsl == null) {
+            hsl = new float[3];
+        }
+        float max = max(rgb[0], rgb[1], rgb[2]);
+        float min = min(rgb[0], rgb[1], rgb[2]);
+
+        float summa = max + min;
+        float saturation = max - min;
+        if (saturation > 0.0f) {
+            saturation /= (summa > 1.0f)
+                    ? 2.0f - summa
+                    : summa;
+        }
+        hsl[0] = getHue(rgb[0], rgb[1], rgb[2], max, min);
+        hsl[1] = saturation;
+        hsl[2] = summa / 2.0f;
+        return hsl;
+    }
+
+    /**
+     * Returns the smaller of three color components.
+     *
+     * @param red    the red component of the color
+     * @param green  the green component of the color
+     * @param blue   the blue component of the color
+     * @return the smaller of {@code red}, {@code green} and {@code blue}
+     */
+    static float min(float red, float green, float blue) {
+        float min = (red < green) ? red : green;
+        return (min < blue) ? min : blue;
+    }
+
+    /**
+     * Returns the larger of three color components.
+     *
+     * @param red    the red component of the color
+     * @param green  the green component of the color
+     * @param blue   the blue component of the color
+     * @return the larger of {@code red}, {@code green} and {@code blue}
+     */
+    static float max(float red, float green, float blue) {
+        float max = (red > green) ? red : green;
+        return (max > blue) ? max : blue;
+    }
+
+    /**
+     * Calculates the hue component for HSL and HSV color spaces.
+     *
+     * @param red    the red component of the color
+     * @param green  the green component of the color
+     * @param blue   the blue component of the color
+     * @param max    the larger of {@code red}, {@code green} and {@code blue}
+     * @param min    the smaller of {@code red}, {@code green} and {@code blue}
+     * @return the hue component
+     */
+    static float getHue(float red, float green, float blue, float max, float min) {
+        float hue = max - min;
+        if (hue > 0.0f) {
+            if (max == red) {
+                hue = (green - blue) / hue;
+                if (hue < 0.0f) {
+                    hue += 6.0f;
+                }
+            }
+            else if (max == green) {
+                hue = 2.0f + (blue - red) / hue;
+            }
+            else /*max == blue*/ {
+                hue = 4.0f + (red - green) / hue;
+            }
+            hue /= 6.0f;
+        }
+        return hue;
+    }
+
+    private static float normalize(float q, float p, float color) {
+        if (color < 1.0f) {
+            return p + (q - p) * color;
+        }
+        if (color < 3.0f) {
+            return q;
+        }
+        if (color < 4.0f) {
+            return p + (q - p) * (4.0f - color);
+        }
+        return p;
+    }
+}

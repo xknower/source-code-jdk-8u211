@@ -1,316 +1,311 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.awt.Container;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Shape;
-/*     */ import javax.swing.BoundedRangeModel;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JTextField;
-/*     */ import javax.swing.event.DocumentEvent;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FieldView
-/*     */   extends PlainView
-/*     */ {
-/*     */   public FieldView(Element paramElement) {
-/*  51 */     super(paramElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FontMetrics getFontMetrics() {
-/*  61 */     Container container = getContainer();
-/*  62 */     return container.getFontMetrics(container.getFont());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Shape adjustAllocation(Shape paramShape) {
-/*  80 */     if (paramShape != null) {
-/*  81 */       Rectangle rectangle = paramShape.getBounds();
-/*  82 */       int i = (int)getPreferredSpan(1);
-/*  83 */       int j = (int)getPreferredSpan(0);
-/*  84 */       if (rectangle.height != i) {
-/*  85 */         int k = rectangle.height - i;
-/*  86 */         rectangle.y += k / 2;
-/*  87 */         rectangle.height -= k;
-/*     */       } 
-/*     */ 
-/*     */       
-/*  91 */       Container container = getContainer();
-/*  92 */       if (container instanceof JTextField) {
-/*  93 */         JTextField jTextField = (JTextField)container;
-/*  94 */         BoundedRangeModel boundedRangeModel = jTextField.getHorizontalVisibility();
-/*  95 */         int k = Math.max(j, rectangle.width);
-/*  96 */         int m = boundedRangeModel.getValue();
-/*  97 */         int n = Math.min(k, rectangle.width - 1);
-/*  98 */         if (m + n > k) {
-/*  99 */           m = k - n;
-/*     */         }
-/* 101 */         boundedRangeModel.setRangeProperties(m, n, boundedRangeModel.getMinimum(), k, false);
-/*     */         
-/* 103 */         if (j < rectangle.width) {
-/*     */           
-/* 105 */           int i1 = rectangle.width - 1 - j;
-/*     */           
-/* 107 */           int i2 = ((JTextField)container).getHorizontalAlignment();
-/* 108 */           if (Utilities.isLeftToRight(container)) {
-/* 109 */             if (i2 == 10) {
-/* 110 */               i2 = 2;
-/*     */             }
-/* 112 */             else if (i2 == 11) {
-/* 113 */               i2 = 4;
-/*     */             }
-/*     */           
-/*     */           }
-/* 117 */           else if (i2 == 10) {
-/* 118 */             i2 = 4;
-/*     */           }
-/* 120 */           else if (i2 == 11) {
-/* 121 */             i2 = 2;
-/*     */           } 
-/*     */ 
-/*     */           
-/* 125 */           switch (i2) {
-/*     */             case 0:
-/* 127 */               rectangle.x += i1 / 2;
-/* 128 */               rectangle.width -= i1;
-/*     */               break;
-/*     */             case 4:
-/* 131 */               rectangle.x += i1;
-/* 132 */               rectangle.width -= i1;
-/*     */               break;
-/*     */           } 
-/*     */         
-/*     */         } else {
-/* 137 */           rectangle.width = j;
-/* 138 */           rectangle.x -= boundedRangeModel.getValue();
-/*     */         } 
-/*     */       } 
-/* 141 */       return rectangle;
-/*     */     } 
-/* 143 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void updateVisibilityModel() {
-/* 155 */     Container container = getContainer();
-/* 156 */     if (container instanceof JTextField) {
-/* 157 */       JTextField jTextField = (JTextField)container;
-/* 158 */       BoundedRangeModel boundedRangeModel = jTextField.getHorizontalVisibility();
-/* 159 */       int i = (int)getPreferredSpan(0);
-/* 160 */       int j = boundedRangeModel.getExtent();
-/* 161 */       int k = Math.max(i, j);
-/* 162 */       j = (j == 0) ? k : j;
-/* 163 */       int m = k - j;
-/* 164 */       int n = boundedRangeModel.getValue();
-/* 165 */       if (n + j > k) {
-/* 166 */         n = k - j;
-/*     */       }
-/* 168 */       m = Math.max(0, Math.min(m, n));
-/* 169 */       boundedRangeModel.setRangeProperties(m, j, 0, k, false);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/* 186 */     Rectangle rectangle = (Rectangle)paramShape;
-/* 187 */     paramGraphics.clipRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/* 188 */     super.paint(paramGraphics, paramShape);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Shape adjustPaintRegion(Shape paramShape) {
-/* 195 */     return adjustAllocation(paramShape);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getPreferredSpan(int paramInt) {
-/*     */     Segment segment;
-/*     */     Document document;
-/*     */     byte b;
-/* 209 */     switch (paramInt) {
-/*     */       case 0:
-/* 211 */         segment = SegmentCache.getSharedSegment();
-/* 212 */         document = getDocument();
-/*     */         
-/*     */         try {
-/* 215 */           FontMetrics fontMetrics = getFontMetrics();
-/* 216 */           document.getText(0, document.getLength(), segment);
-/* 217 */           b = Utilities.getTabbedTextWidth(segment, fontMetrics, 0, this, 0);
-/* 218 */           if (segment.count > 0) {
-/* 219 */             Container container = getContainer();
-/* 220 */             this
-/* 221 */               .firstLineOffset = SwingUtilities2.getLeftSideBearing((container instanceof JComponent) ? (JComponent)container : null, fontMetrics, segment.array[segment.offset]);
-/*     */ 
-/*     */             
-/* 224 */             this.firstLineOffset = Math.max(0, -this.firstLineOffset);
-/*     */           } else {
-/*     */             
-/* 227 */             this.firstLineOffset = 0;
-/*     */           } 
-/* 229 */         } catch (BadLocationException badLocationException) {
-/* 230 */           b = 0;
-/*     */         } 
-/* 232 */         SegmentCache.releaseSharedSegment(segment);
-/* 233 */         return (b + this.firstLineOffset);
-/*     */     } 
-/* 235 */     return super.getPreferredSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getResizeWeight(int paramInt) {
-/* 247 */     if (paramInt == 0) {
-/* 248 */       return 1;
-/*     */     }
-/* 250 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Shape modelToView(int paramInt, Shape paramShape, Position.Bias paramBias) throws BadLocationException {
-/* 265 */     return super.modelToView(paramInt, adjustAllocation(paramShape), paramBias);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int viewToModel(float paramFloat1, float paramFloat2, Shape paramShape, Position.Bias[] paramArrayOfBias) {
-/* 280 */     return super.viewToModel(paramFloat1, paramFloat2, adjustAllocation(paramShape), paramArrayOfBias);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void insertUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/* 293 */     super.insertUpdate(paramDocumentEvent, adjustAllocation(paramShape), paramViewFactory);
-/* 294 */     updateVisibilityModel();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/* 307 */     super.removeUpdate(paramDocumentEvent, adjustAllocation(paramShape), paramViewFactory);
-/* 308 */     updateVisibilityModel();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\FieldView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.event.*;
+
+/**
+ * Extends the multi-line plain text view to be suitable
+ * for a single-line editor view.  If the view is
+ * allocated extra space, the field must adjust for it.
+ * If the hosting component is a JTextField, this view
+ * will manage the ranges of the associated BoundedRangeModel
+ * and will adjust the horizontal allocation to match the
+ * current visibility settings of the JTextField.
+ *
+ * @author  Timothy Prinzing
+ * @see     View
+ */
+public class FieldView extends PlainView {
+
+    /**
+     * Constructs a new FieldView wrapped on an element.
+     *
+     * @param elem the element
+     */
+    public FieldView(Element elem) {
+        super(elem);
+    }
+
+    /**
+     * Fetches the font metrics associated with the component hosting
+     * this view.
+     *
+     * @return the metrics
+     */
+    protected FontMetrics getFontMetrics() {
+        Component c = getContainer();
+        return c.getFontMetrics(c.getFont());
+    }
+
+    /**
+     * Adjusts the allocation given to the view
+     * to be a suitable allocation for a text field.
+     * If the view has been allocated more than the
+     * preferred span vertically, the allocation is
+     * changed to be centered vertically.  Horizontally
+     * the view is adjusted according to the horizontal
+     * alignment property set on the associated JTextField
+     * (if that is the type of the hosting component).
+     *
+     * @param a the allocation given to the view, which may need
+     *  to be adjusted.
+     * @return the allocation that the superclass should use.
+     */
+    protected Shape adjustAllocation(Shape a) {
+        if (a != null) {
+            Rectangle bounds = a.getBounds();
+            int vspan = (int) getPreferredSpan(Y_AXIS);
+            int hspan = (int) getPreferredSpan(X_AXIS);
+            if (bounds.height != vspan) {
+                int slop = bounds.height - vspan;
+                bounds.y += slop / 2;
+                bounds.height -= slop;
+            }
+
+            // horizontal adjustments
+            Component c = getContainer();
+            if (c instanceof JTextField) {
+                JTextField field = (JTextField) c;
+                BoundedRangeModel vis = field.getHorizontalVisibility();
+                int max = Math.max(hspan, bounds.width);
+                int value = vis.getValue();
+                int extent = Math.min(max, bounds.width - 1);
+                if ((value + extent) > max) {
+                    value = max - extent;
+                }
+                vis.setRangeProperties(value, extent, vis.getMinimum(),
+                                       max, false);
+                if (hspan < bounds.width) {
+                    // horizontally align the interior
+                    int slop = bounds.width - 1 - hspan;
+
+                    int align = ((JTextField)c).getHorizontalAlignment();
+                    if(Utilities.isLeftToRight(c)) {
+                        if(align==LEADING) {
+                            align = LEFT;
+                        }
+                        else if(align==TRAILING) {
+                            align = RIGHT;
+                        }
+                    }
+                    else {
+                        if(align==LEADING) {
+                            align = RIGHT;
+                        }
+                        else if(align==TRAILING) {
+                            align = LEFT;
+                        }
+                    }
+
+                    switch (align) {
+                    case SwingConstants.CENTER:
+                        bounds.x += slop / 2;
+                        bounds.width -= slop;
+                        break;
+                    case SwingConstants.RIGHT:
+                        bounds.x += slop;
+                        bounds.width -= slop;
+                        break;
+                    }
+                } else {
+                    // adjust the allocation to match the bounded range.
+                    bounds.width = hspan;
+                    bounds.x -= vis.getValue();
+                }
+            }
+            return bounds;
+        }
+        return null;
+    }
+
+    /**
+     * Update the visibility model with the associated JTextField
+     * (if there is one) to reflect the current visibility as a
+     * result of changes to the document model.  The bounded
+     * range properties are updated.  If the view hasn't yet been
+     * shown the extent will be zero and we just set it to be full
+     * until determined otherwise.
+     */
+    void updateVisibilityModel() {
+        Component c = getContainer();
+        if (c instanceof JTextField) {
+            JTextField field = (JTextField) c;
+            BoundedRangeModel vis = field.getHorizontalVisibility();
+            int hspan = (int) getPreferredSpan(X_AXIS);
+            int extent = vis.getExtent();
+            int maximum = Math.max(hspan, extent);
+            extent = (extent == 0) ? maximum : extent;
+            int value = maximum - extent;
+            int oldValue = vis.getValue();
+            if ((oldValue + extent) > maximum) {
+                oldValue = maximum - extent;
+            }
+            value = Math.max(0, Math.min(value, oldValue));
+            vis.setRangeProperties(value, extent, 0, maximum, false);
+        }
+    }
+
+    // --- View methods -------------------------------------------
+
+    /**
+     * Renders using the given rendering surface and area on that surface.
+     * The view may need to do layout and create child views to enable
+     * itself to render into the given allocation.
+     *
+     * @param g the rendering surface to use
+     * @param a the allocated region to render into
+     *
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape a) {
+        Rectangle r = (Rectangle) a;
+        g.clipRect(r.x, r.y, r.width, r.height);
+        super.paint(g, a);
+    }
+
+    /**
+     * Adjusts <code>a</code> based on the visible region and returns it.
+     */
+    Shape adjustPaintRegion(Shape a) {
+        return adjustAllocation(a);
+    }
+
+    /**
+     * Determines the preferred span for this view along an
+     * axis.
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return   the span the view would like to be rendered into &gt;= 0.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     */
+    public float getPreferredSpan(int axis) {
+        switch (axis) {
+        case View.X_AXIS:
+            Segment buff = SegmentCache.getSharedSegment();
+            Document doc = getDocument();
+            int width;
+            try {
+                FontMetrics fm = getFontMetrics();
+                doc.getText(0, doc.getLength(), buff);
+                width = Utilities.getTabbedTextWidth(buff, fm, 0, this, 0);
+                if (buff.count > 0) {
+                    Component c = getContainer();
+                    firstLineOffset = sun.swing.SwingUtilities2.
+                        getLeftSideBearing((c instanceof JComponent) ?
+                                           (JComponent)c : null, fm,
+                                           buff.array[buff.offset]);
+                    firstLineOffset = Math.max(0, -firstLineOffset);
+                }
+                else {
+                    firstLineOffset = 0;
+                }
+            } catch (BadLocationException bl) {
+                width = 0;
+            }
+            SegmentCache.releaseSharedSegment(buff);
+            return width + firstLineOffset;
+        default:
+            return super.getPreferredSpan(axis);
+        }
+    }
+
+    /**
+     * Determines the resizability of the view along the
+     * given axis.  A value of 0 or less is not resizable.
+     *
+     * @param axis View.X_AXIS or View.Y_AXIS
+     * @return the weight -&gt; 1 for View.X_AXIS, else 0
+     */
+    public int getResizeWeight(int axis) {
+        if (axis == View.X_AXIS) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Provides a mapping from the document model coordinate space
+     * to the coordinate space of the view mapped to it.
+     *
+     * @param pos the position to convert &gt;= 0
+     * @param a the allocated region to render into
+     * @return the bounding box of the given position
+     * @exception BadLocationException  if the given position does not
+     *   represent a valid location in the associated document
+     * @see View#modelToView
+     */
+    public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+        return super.modelToView(pos, adjustAllocation(a), b);
+    }
+
+    /**
+     * Provides a mapping from the view coordinate space to the logical
+     * coordinate space of the model.
+     *
+     * @param fx the X coordinate &gt;= 0.0f
+     * @param fy the Y coordinate &gt;= 0.0f
+     * @param a the allocated region to render into
+     * @return the location within the model that best represents the
+     *  given point in the view
+     * @see View#viewToModel
+     */
+    public int viewToModel(float fx, float fy, Shape a, Position.Bias[] bias) {
+        return super.viewToModel(fx, fy, adjustAllocation(a), bias);
+    }
+
+    /**
+     * Gives notification that something was inserted into the document
+     * in a location that this view is responsible for.
+     *
+     * @param changes the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#insertUpdate
+     */
+    public void insertUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
+        super.insertUpdate(changes, adjustAllocation(a), f);
+        updateVisibilityModel();
+    }
+
+    /**
+     * Gives notification that something was removed from the document
+     * in a location that this view is responsible for.
+     *
+     * @param changes the change information from the associated document
+     * @param a the current allocation of the view
+     * @param f the factory to use to rebuild if the view has children
+     * @see View#removeUpdate
+     */
+    public void removeUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
+        super.removeUpdate(changes, adjustAllocation(a), f);
+        updateVisibilityModel();
+    }
+
+}

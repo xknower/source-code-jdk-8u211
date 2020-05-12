@@ -1,2409 +1,2403 @@
-/*      */ package com.sun.org.apache.xpath.internal.compiler;
-/*      */ 
-/*      */ import com.sun.org.apache.xalan.internal.res.XSLMessages;
-/*      */ import com.sun.org.apache.xml.internal.utils.PrefixResolver;
-/*      */ import com.sun.org.apache.xpath.internal.XPathProcessorException;
-/*      */ import com.sun.org.apache.xpath.internal.domapi.XPathStylesheetDOM3Exception;
-/*      */ import com.sun.org.apache.xpath.internal.objects.XNumber;
-/*      */ import com.sun.org.apache.xpath.internal.objects.XString;
-/*      */ import javax.xml.transform.ErrorListener;
-/*      */ import javax.xml.transform.SourceLocator;
-/*      */ import javax.xml.transform.TransformerException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XPathParser
-/*      */ {
-/*      */   public static final String CONTINUE_AFTER_FATAL_ERROR = "CONTINUE_AFTER_FATAL_ERROR";
-/*      */   private OpMap m_ops;
-/*      */   transient String m_token;
-/*   63 */   transient char m_tokenChar = Character.MIN_VALUE;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   68 */   int m_queueMark = 0;
-/*      */   
-/*      */   protected static final int FILTER_MATCH_FAILED = 0;
-/*      */   
-/*      */   protected static final int FILTER_MATCH_PRIMARY = 1;
-/*      */   
-/*      */   protected static final int FILTER_MATCH_PREDICATES = 2;
-/*      */   
-/*      */   PrefixResolver m_namespaceContext;
-/*      */   private ErrorListener m_errorListener;
-/*      */   SourceLocator m_sourceLocator;
-/*      */   private FunctionTable m_functionTable;
-/*      */   
-/*      */   public XPathParser(ErrorListener errorListener, SourceLocator sourceLocator) {
-/*   82 */     this.m_errorListener = errorListener;
-/*   83 */     this.m_sourceLocator = sourceLocator;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void initXPath(Compiler compiler, String expression, PrefixResolver namespaceContext) throws TransformerException {
-/*  108 */     this.m_ops = compiler;
-/*  109 */     this.m_namespaceContext = namespaceContext;
-/*  110 */     this.m_functionTable = compiler.getFunctionTable();
-/*      */     
-/*  112 */     Lexer lexer = new Lexer(compiler, namespaceContext, this);
-/*      */     
-/*  114 */     lexer.tokenize(expression);
-/*      */     
-/*  116 */     this.m_ops.setOp(0, 1);
-/*  117 */     this.m_ops.setOp(1, 2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  130 */       nextToken();
-/*  131 */       Expr();
-/*      */       
-/*  133 */       if (null != this.m_token)
-/*      */       {
-/*  135 */         String extraTokens = "";
-/*      */         
-/*  137 */         while (null != this.m_token) {
-/*      */           
-/*  139 */           extraTokens = extraTokens + "'" + this.m_token + "'";
-/*      */           
-/*  141 */           nextToken();
-/*      */           
-/*  143 */           if (null != this.m_token) {
-/*  144 */             extraTokens = extraTokens + ", ";
-/*      */           }
-/*      */         } 
-/*  147 */         error("ER_EXTRA_ILLEGAL_TOKENS", new Object[] { extraTokens });
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/*  152 */     catch (XPathProcessorException e) {
-/*      */       
-/*  154 */       if ("CONTINUE_AFTER_FATAL_ERROR".equals(e.getMessage())) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  159 */         initXPath(compiler, "/..", namespaceContext);
-/*      */       } else {
-/*      */         
-/*  162 */         throw e;
-/*      */       } 
-/*      */     } 
-/*  165 */     compiler.shrink();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void initMatchPattern(Compiler compiler, String expression, PrefixResolver namespaceContext) throws TransformerException {
-/*  184 */     this.m_ops = compiler;
-/*  185 */     this.m_namespaceContext = namespaceContext;
-/*  186 */     this.m_functionTable = compiler.getFunctionTable();
-/*      */     
-/*  188 */     Lexer lexer = new Lexer(compiler, namespaceContext, this);
-/*      */     
-/*  190 */     lexer.tokenize(expression);
-/*      */     
-/*  192 */     this.m_ops.setOp(0, 30);
-/*  193 */     this.m_ops.setOp(1, 2);
-/*      */     
-/*  195 */     nextToken();
-/*  196 */     Pattern();
-/*      */     
-/*  198 */     if (null != this.m_token) {
-/*      */       
-/*  200 */       String extraTokens = "";
-/*      */       
-/*  202 */       while (null != this.m_token) {
-/*      */         
-/*  204 */         extraTokens = extraTokens + "'" + this.m_token + "'";
-/*      */         
-/*  206 */         nextToken();
-/*      */         
-/*  208 */         if (null != this.m_token) {
-/*  209 */           extraTokens = extraTokens + ", ";
-/*      */         }
-/*      */       } 
-/*  212 */       error("ER_EXTRA_ILLEGAL_TOKENS", new Object[] { extraTokens });
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  217 */     this.m_ops.setOp(this.m_ops.getOp(1), -1);
-/*  218 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */     
-/*  220 */     this.m_ops.shrink();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setErrorHandler(ErrorListener handler) {
-/*  243 */     this.m_errorListener = handler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ErrorListener getErrorListener() {
-/*  253 */     return this.m_errorListener;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final boolean tokenIs(String s) {
-/*  266 */     return (this.m_token != null) ? this.m_token.equals(s) : ((s == null));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final boolean tokenIs(char c) {
-/*  279 */     return (this.m_token != null) ? ((this.m_tokenChar == c)) : false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final boolean lookahead(char c, int n) {
-/*      */     boolean b;
-/*  295 */     int pos = this.m_queueMark + n;
-/*      */ 
-/*      */     
-/*  298 */     if (pos <= this.m_ops.getTokenQueueSize() && pos > 0 && this.m_ops
-/*  299 */       .getTokenQueueSize() != 0) {
-/*      */       
-/*  301 */       String tok = (String)this.m_ops.m_tokenQueue.elementAt(pos - 1);
-/*      */       
-/*  303 */       b = (tok.length() == 1) ? ((tok.charAt(0) == c)) : false;
-/*      */     }
-/*      */     else {
-/*      */       
-/*  307 */       b = false;
-/*      */     } 
-/*      */     
-/*  310 */     return b;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean lookbehind(char c, int n) {
-/*      */     boolean isToken;
-/*  331 */     int lookBehindPos = this.m_queueMark - n + 1;
-/*      */     
-/*  333 */     if (lookBehindPos >= 0) {
-/*      */       
-/*  335 */       String lookbehind = (String)this.m_ops.m_tokenQueue.elementAt(lookBehindPos);
-/*      */       
-/*  337 */       if (lookbehind.length() == 1)
-/*      */       {
-/*  339 */         char c0 = (lookbehind == null) ? '|' : lookbehind.charAt(0);
-/*      */         
-/*  341 */         isToken = (c0 == '|') ? false : ((c0 == c));
-/*      */       }
-/*      */       else
-/*      */       {
-/*  345 */         isToken = false;
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/*  350 */       isToken = false;
-/*      */     } 
-/*      */     
-/*  353 */     return isToken;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean lookbehindHasToken(int n) {
-/*      */     boolean hasToken;
-/*  373 */     if (this.m_queueMark - n > 0) {
-/*      */       
-/*  375 */       String lookbehind = (String)this.m_ops.m_tokenQueue.elementAt(this.m_queueMark - n - 1);
-/*  376 */       char c0 = (lookbehind == null) ? '|' : lookbehind.charAt(0);
-/*      */       
-/*  378 */       hasToken = !(c0 == '|');
-/*      */     }
-/*      */     else {
-/*      */       
-/*  382 */       hasToken = false;
-/*      */     } 
-/*      */     
-/*  385 */     return hasToken;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean lookahead(String s, int n) {
-/*      */     boolean isToken;
-/*  404 */     if (this.m_queueMark + n <= this.m_ops.getTokenQueueSize()) {
-/*      */       
-/*  406 */       String lookahead = (String)this.m_ops.m_tokenQueue.elementAt(this.m_queueMark + n - 1);
-/*      */       
-/*  408 */       isToken = (lookahead != null) ? lookahead.equals(s) : ((s == null));
-/*      */     }
-/*      */     else {
-/*      */       
-/*  412 */       isToken = (null == s);
-/*      */     } 
-/*      */     
-/*  415 */     return isToken;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void nextToken() {
-/*  425 */     if (this.m_queueMark < this.m_ops.getTokenQueueSize()) {
-/*      */       
-/*  427 */       this.m_token = (String)this.m_ops.m_tokenQueue.elementAt(this.m_queueMark++);
-/*  428 */       this.m_tokenChar = this.m_token.charAt(0);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  432 */       this.m_token = null;
-/*  433 */       this.m_tokenChar = Character.MIN_VALUE;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final String getTokenRelative(int i) {
-/*      */     String tok;
-/*  449 */     int relative = this.m_queueMark + i;
-/*      */     
-/*  451 */     if (relative > 0 && relative < this.m_ops.getTokenQueueSize()) {
-/*      */       
-/*  453 */       tok = (String)this.m_ops.m_tokenQueue.elementAt(relative);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  457 */       tok = null;
-/*      */     } 
-/*      */     
-/*  460 */     return tok;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void prevToken() {
-/*  470 */     if (this.m_queueMark > 0) {
-/*      */       
-/*  472 */       this.m_queueMark--;
-/*      */       
-/*  474 */       this.m_token = (String)this.m_ops.m_tokenQueue.elementAt(this.m_queueMark);
-/*  475 */       this.m_tokenChar = this.m_token.charAt(0);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  479 */       this.m_token = null;
-/*  480 */       this.m_tokenChar = Character.MIN_VALUE;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void consumeExpected(String expected) throws TransformerException {
-/*  496 */     if (tokenIs(expected)) {
-/*      */       
-/*  498 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/*  502 */       error("ER_EXPECTED_BUT_FOUND", new Object[] { expected, this.m_token });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  508 */       throw new XPathProcessorException("CONTINUE_AFTER_FATAL_ERROR");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void consumeExpected(char expected) throws TransformerException {
-/*  524 */     if (tokenIs(expected)) {
-/*      */       
-/*  526 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/*  530 */       error("ER_EXPECTED_BUT_FOUND", new Object[] {
-/*  531 */             String.valueOf(expected), this.m_token
-/*      */           });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  537 */       throw new XPathProcessorException("CONTINUE_AFTER_FATAL_ERROR");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void warn(String msg, Object[] args) throws TransformerException {
-/*  556 */     String fmsg = XSLMessages.createXPATHWarning(msg, args);
-/*  557 */     ErrorListener ehandler = getErrorListener();
-/*      */     
-/*  559 */     if (null != ehandler) {
-/*      */ 
-/*      */       
-/*  562 */       ehandler.warning(new TransformerException(fmsg, this.m_sourceLocator));
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/*  567 */       System.err.println(fmsg);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void assertion(boolean b, String msg) {
-/*  583 */     if (!b) {
-/*      */       
-/*  585 */       String fMsg = XSLMessages.createXPATHMessage("ER_INCORRECT_PROGRAMMER_ASSERTION", new Object[] { msg });
-/*      */ 
-/*      */ 
-/*      */       
-/*  589 */       throw new RuntimeException(fMsg);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void error(String msg, Object[] args) throws TransformerException {
-/*  609 */     String fmsg = XSLMessages.createXPATHMessage(msg, args);
-/*  610 */     ErrorListener ehandler = getErrorListener();
-/*      */     
-/*  612 */     TransformerException te = new TransformerException(fmsg, this.m_sourceLocator);
-/*  613 */     if (null != ehandler) {
-/*      */ 
-/*      */       
-/*  616 */       ehandler.fatalError(te);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/*  621 */       throw te;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void errorForDOM3(String msg, Object[] args) throws TransformerException {
-/*  654 */     String fmsg = XSLMessages.createXPATHMessage(msg, args);
-/*  655 */     ErrorListener ehandler = getErrorListener();
-/*      */     
-/*  657 */     TransformerException te = new XPathStylesheetDOM3Exception(fmsg, this.m_sourceLocator);
-/*  658 */     if (null != ehandler) {
-/*      */ 
-/*      */       
-/*  661 */       ehandler.fatalError(te);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/*  666 */       throw te;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String dumpRemainingTokenQueue() {
-/*      */     String returnMsg;
-/*  679 */     int q = this.m_queueMark;
-/*      */ 
-/*      */     
-/*  682 */     if (q < this.m_ops.getTokenQueueSize()) {
-/*      */       
-/*  684 */       String msg = "\n Remaining tokens: (";
-/*      */       
-/*  686 */       while (q < this.m_ops.getTokenQueueSize()) {
-/*      */         
-/*  688 */         String t = (String)this.m_ops.m_tokenQueue.elementAt(q++);
-/*      */         
-/*  690 */         msg = msg + " '" + t + "'";
-/*      */       } 
-/*      */       
-/*  693 */       returnMsg = msg + ")";
-/*      */     }
-/*      */     else {
-/*      */       
-/*  697 */       returnMsg = "";
-/*      */     } 
-/*      */     
-/*  700 */     return returnMsg;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final int getFunctionToken(String key) {
-/*      */     int tok;
-/*      */     try {
-/*  723 */       Object id = Keywords.lookupNodeTest(key);
-/*  724 */       if (null == id) id = this.m_functionTable.getFunctionID(key); 
-/*  725 */       tok = ((Integer)id).intValue();
-/*      */     }
-/*  727 */     catch (NullPointerException npe) {
-/*      */       
-/*  729 */       tok = -1;
-/*      */     }
-/*  731 */     catch (ClassCastException cce) {
-/*      */       
-/*  733 */       tok = -1;
-/*      */     } 
-/*      */     
-/*  736 */     return tok;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void insertOp(int pos, int length, int op) {
-/*  751 */     int totalLen = this.m_ops.getOp(1);
-/*      */     
-/*  753 */     for (int i = totalLen - 1; i >= pos; i--)
-/*      */     {
-/*  755 */       this.m_ops.setOp(i + length, this.m_ops.getOp(i));
-/*      */     }
-/*      */     
-/*  758 */     this.m_ops.setOp(pos, op);
-/*  759 */     this.m_ops.setOp(1, totalLen + length);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void appendOp(int length, int op) {
-/*  773 */     int totalLen = this.m_ops.getOp(1);
-/*      */     
-/*  775 */     this.m_ops.setOp(totalLen, op);
-/*  776 */     this.m_ops.setOp(totalLen + 1, length);
-/*  777 */     this.m_ops.setOp(1, totalLen + length);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Expr() throws TransformerException {
-/*  792 */     OrExpr();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void OrExpr() throws TransformerException {
-/*  807 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/*  809 */     AndExpr();
-/*      */     
-/*  811 */     if (null != this.m_token && tokenIs("or")) {
-/*      */       
-/*  813 */       nextToken();
-/*  814 */       insertOp(opPos, 2, 2);
-/*  815 */       OrExpr();
-/*      */       
-/*  817 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/*  818 */           .getOp(1) - opPos);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void AndExpr() throws TransformerException {
-/*  834 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/*  836 */     EqualityExpr(-1);
-/*      */     
-/*  838 */     if (null != this.m_token && tokenIs("and")) {
-/*      */       
-/*  840 */       nextToken();
-/*  841 */       insertOp(opPos, 2, 3);
-/*  842 */       AndExpr();
-/*      */       
-/*  844 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/*  845 */           .getOp(1) - opPos);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int EqualityExpr(int addPos) throws TransformerException {
-/*  867 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/*  869 */     if (-1 == addPos) {
-/*  870 */       addPos = opPos;
-/*      */     }
-/*  872 */     RelationalExpr(-1);
-/*      */     
-/*  874 */     if (null != this.m_token)
-/*      */     {
-/*  876 */       if (tokenIs('!') && lookahead('=', 1)) {
-/*      */         
-/*  878 */         nextToken();
-/*  879 */         nextToken();
-/*  880 */         insertOp(addPos, 2, 4);
-/*      */         
-/*  882 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/*  884 */         addPos = EqualityExpr(addPos);
-/*  885 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/*  886 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/*  887 */         addPos += 2;
-/*      */       }
-/*  889 */       else if (tokenIs('=')) {
-/*      */         
-/*  891 */         nextToken();
-/*  892 */         insertOp(addPos, 2, 5);
-/*      */         
-/*  894 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/*  896 */         addPos = EqualityExpr(addPos);
-/*  897 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/*  898 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/*  899 */         addPos += 2;
-/*      */       } 
-/*      */     }
-/*      */     
-/*  903 */     return addPos;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int RelationalExpr(int addPos) throws TransformerException {
-/*  927 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/*  929 */     if (-1 == addPos) {
-/*  930 */       addPos = opPos;
-/*      */     }
-/*  932 */     AdditiveExpr(-1);
-/*      */     
-/*  934 */     if (null != this.m_token)
-/*      */     {
-/*  936 */       if (tokenIs('<')) {
-/*      */         
-/*  938 */         nextToken();
-/*      */         
-/*  940 */         if (tokenIs('=')) {
-/*      */           
-/*  942 */           nextToken();
-/*  943 */           insertOp(addPos, 2, 6);
-/*      */         }
-/*      */         else {
-/*      */           
-/*  947 */           insertOp(addPos, 2, 7);
-/*      */         } 
-/*      */         
-/*  950 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/*  952 */         addPos = RelationalExpr(addPos);
-/*  953 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/*  954 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/*  955 */         addPos += 2;
-/*      */       }
-/*  957 */       else if (tokenIs('>')) {
-/*      */         
-/*  959 */         nextToken();
-/*      */         
-/*  961 */         if (tokenIs('=')) {
-/*      */           
-/*  963 */           nextToken();
-/*  964 */           insertOp(addPos, 2, 8);
-/*      */         }
-/*      */         else {
-/*      */           
-/*  968 */           insertOp(addPos, 2, 9);
-/*      */         } 
-/*      */         
-/*  971 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/*  973 */         addPos = RelationalExpr(addPos);
-/*  974 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/*  975 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/*  976 */         addPos += 2;
-/*      */       } 
-/*      */     }
-/*      */     
-/*  980 */     return addPos;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int AdditiveExpr(int addPos) throws TransformerException {
-/* 1002 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1004 */     if (-1 == addPos) {
-/* 1005 */       addPos = opPos;
-/*      */     }
-/* 1007 */     MultiplicativeExpr(-1);
-/*      */     
-/* 1009 */     if (null != this.m_token)
-/*      */     {
-/* 1011 */       if (tokenIs('+')) {
-/*      */         
-/* 1013 */         nextToken();
-/* 1014 */         insertOp(addPos, 2, 10);
-/*      */         
-/* 1016 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/* 1018 */         addPos = AdditiveExpr(addPos);
-/* 1019 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/* 1020 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/* 1021 */         addPos += 2;
-/*      */       }
-/* 1023 */       else if (tokenIs('-')) {
-/*      */         
-/* 1025 */         nextToken();
-/* 1026 */         insertOp(addPos, 2, 11);
-/*      */         
-/* 1028 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/* 1030 */         addPos = AdditiveExpr(addPos);
-/* 1031 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/* 1032 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/* 1033 */         addPos += 2;
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1037 */     return addPos;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int MultiplicativeExpr(int addPos) throws TransformerException {
-/* 1060 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1062 */     if (-1 == addPos) {
-/* 1063 */       addPos = opPos;
-/*      */     }
-/* 1065 */     UnaryExpr();
-/*      */     
-/* 1067 */     if (null != this.m_token)
-/*      */     {
-/* 1069 */       if (tokenIs('*')) {
-/*      */         
-/* 1071 */         nextToken();
-/* 1072 */         insertOp(addPos, 2, 12);
-/*      */         
-/* 1074 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/* 1076 */         addPos = MultiplicativeExpr(addPos);
-/* 1077 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/* 1078 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/* 1079 */         addPos += 2;
-/*      */       }
-/* 1081 */       else if (tokenIs("div")) {
-/*      */         
-/* 1083 */         nextToken();
-/* 1084 */         insertOp(addPos, 2, 13);
-/*      */         
-/* 1086 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/* 1088 */         addPos = MultiplicativeExpr(addPos);
-/* 1089 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/* 1090 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/* 1091 */         addPos += 2;
-/*      */       }
-/* 1093 */       else if (tokenIs("mod")) {
-/*      */         
-/* 1095 */         nextToken();
-/* 1096 */         insertOp(addPos, 2, 14);
-/*      */         
-/* 1098 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/* 1100 */         addPos = MultiplicativeExpr(addPos);
-/* 1101 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/* 1102 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/* 1103 */         addPos += 2;
-/*      */       }
-/* 1105 */       else if (tokenIs("quo")) {
-/*      */         
-/* 1107 */         nextToken();
-/* 1108 */         insertOp(addPos, 2, 15);
-/*      */         
-/* 1110 */         int opPlusLeftHandLen = this.m_ops.getOp(1) - addPos;
-/*      */         
-/* 1112 */         addPos = MultiplicativeExpr(addPos);
-/* 1113 */         this.m_ops.setOp(addPos + 1, this.m_ops
-/* 1114 */             .getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
-/* 1115 */         addPos += 2;
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1119 */     return addPos;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void UnaryExpr() throws TransformerException {
-/* 1133 */     int opPos = this.m_ops.getOp(1);
-/* 1134 */     boolean isNeg = false;
-/*      */     
-/* 1136 */     if (this.m_tokenChar == '-') {
-/*      */       
-/* 1138 */       nextToken();
-/* 1139 */       appendOp(2, 16);
-/*      */       
-/* 1141 */       isNeg = true;
-/*      */     } 
-/*      */     
-/* 1144 */     UnionExpr();
-/*      */     
-/* 1146 */     if (isNeg) {
-/* 1147 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1148 */           .getOp(1) - opPos);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void StringExpr() throws TransformerException {
-/* 1161 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1163 */     appendOp(2, 17);
-/* 1164 */     Expr();
-/*      */     
-/* 1166 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1167 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void BooleanExpr() throws TransformerException {
-/* 1181 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1183 */     appendOp(2, 18);
-/* 1184 */     Expr();
-/*      */     
-/* 1186 */     int opLen = this.m_ops.getOp(1) - opPos;
-/*      */     
-/* 1188 */     if (opLen == 2)
-/*      */     {
-/* 1190 */       error("ER_BOOLEAN_ARG_NO_LONGER_OPTIONAL", null);
-/*      */     }
-/*      */     
-/* 1193 */     this.m_ops.setOp(opPos + 1, opLen);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void NumberExpr() throws TransformerException {
-/* 1207 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1209 */     appendOp(2, 19);
-/* 1210 */     Expr();
-/*      */     
-/* 1212 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1213 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void UnionExpr() throws TransformerException {
-/* 1232 */     int opPos = this.m_ops.getOp(1);
-/* 1233 */     boolean continueOrLoop = true;
-/* 1234 */     boolean foundUnion = false;
-/*      */ 
-/*      */     
-/*      */     while (true) {
-/* 1238 */       PathExpr();
-/*      */       
-/* 1240 */       if (tokenIs('|'))
-/*      */       
-/* 1242 */       { if (false == foundUnion) {
-/*      */           
-/* 1244 */           foundUnion = true;
-/*      */           
-/* 1246 */           insertOp(opPos, 2, 20);
-/*      */         } 
-/*      */         
-/* 1249 */         nextToken();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1258 */         if (!continueOrLoop)
-/*      */           break;  continue; }  break;
-/* 1260 */     }  this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1261 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void PathExpr() throws TransformerException {
-/* 1278 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1280 */     int filterExprMatch = FilterExpr();
-/*      */     
-/* 1282 */     if (filterExprMatch != 0) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1286 */       boolean locationPathStarted = (filterExprMatch == 2);
-/*      */       
-/* 1288 */       if (tokenIs('/')) {
-/*      */         
-/* 1290 */         nextToken();
-/*      */         
-/* 1292 */         if (!locationPathStarted) {
-/*      */ 
-/*      */           
-/* 1295 */           insertOp(opPos, 2, 28);
-/*      */           
-/* 1297 */           locationPathStarted = true;
-/*      */         } 
-/*      */         
-/* 1300 */         if (!RelativeLocationPath())
-/*      */         {
-/*      */           
-/* 1303 */           error("ER_EXPECTED_REL_LOC_PATH", null);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1309 */       if (locationPathStarted)
-/*      */       {
-/* 1311 */         this.m_ops.setOp(this.m_ops.getOp(1), -1);
-/* 1312 */         this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/* 1313 */         this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1314 */             .getOp(1) - opPos);
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 1319 */       LocationPath();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int FilterExpr() throws TransformerException {
-/* 1343 */     int filterMatch, opPos = this.m_ops.getOp(1);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1347 */     if (PrimaryExpr()) {
-/*      */       
-/* 1349 */       if (tokenIs('['))
-/*      */       {
-/*      */ 
-/*      */         
-/* 1353 */         insertOp(opPos, 2, 28);
-/*      */         
-/* 1355 */         while (tokenIs('['))
-/*      */         {
-/* 1357 */           Predicate();
-/*      */         }
-/*      */         
-/* 1360 */         filterMatch = 2;
-/*      */       }
-/*      */       else
-/*      */       {
-/* 1364 */         filterMatch = 1;
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 1369 */       filterMatch = 0;
-/*      */     } 
-/*      */     
-/* 1372 */     return filterMatch;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean PrimaryExpr() throws TransformerException {
-/*      */     boolean matchFound;
-/* 1400 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1402 */     if (this.m_tokenChar == '\'' || this.m_tokenChar == '"') {
-/*      */       
-/* 1404 */       appendOp(2, 21);
-/* 1405 */       Literal();
-/*      */       
-/* 1407 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1408 */           .getOp(1) - opPos);
-/*      */       
-/* 1410 */       matchFound = true;
-/*      */     }
-/* 1412 */     else if (this.m_tokenChar == '$') {
-/*      */       
-/* 1414 */       nextToken();
-/* 1415 */       appendOp(2, 22);
-/* 1416 */       QName();
-/*      */       
-/* 1418 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1419 */           .getOp(1) - opPos);
-/*      */       
-/* 1421 */       matchFound = true;
-/*      */     }
-/* 1423 */     else if (this.m_tokenChar == '(') {
-/*      */       
-/* 1425 */       nextToken();
-/* 1426 */       appendOp(2, 23);
-/* 1427 */       Expr();
-/* 1428 */       consumeExpected(')');
-/*      */       
-/* 1430 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1431 */           .getOp(1) - opPos);
-/*      */       
-/* 1433 */       matchFound = true;
-/*      */     }
-/* 1435 */     else if (null != this.m_token && (('.' == this.m_tokenChar && this.m_token.length() > 1 && Character.isDigit(this.m_token
-/* 1436 */         .charAt(1))) || Character.isDigit(this.m_tokenChar))) {
-/*      */       
-/* 1438 */       appendOp(2, 27);
-/* 1439 */       Number();
-/*      */       
-/* 1441 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1442 */           .getOp(1) - opPos);
-/*      */       
-/* 1444 */       matchFound = true;
-/*      */     }
-/* 1446 */     else if (lookahead('(', 1) || (lookahead(':', 1) && lookahead('(', 3))) {
-/*      */       
-/* 1448 */       matchFound = FunctionCall();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1452 */       matchFound = false;
-/*      */     } 
-/*      */     
-/* 1455 */     return matchFound;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Argument() throws TransformerException {
-/* 1468 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1470 */     appendOp(2, 26);
-/* 1471 */     Expr();
-/*      */     
-/* 1473 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1474 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean FunctionCall() throws TransformerException {
-/* 1488 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1490 */     if (lookahead(':', 1)) {
-/*      */       
-/* 1492 */       appendOp(4, 24);
-/*      */       
-/* 1494 */       this.m_ops.setOp(opPos + 1 + 1, this.m_queueMark - 1);
-/*      */       
-/* 1496 */       nextToken();
-/* 1497 */       consumeExpected(':');
-/*      */       
-/* 1499 */       this.m_ops.setOp(opPos + 1 + 2, this.m_queueMark - 1);
-/*      */       
-/* 1501 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1505 */       int funcTok = getFunctionToken(this.m_token);
-/*      */       
-/* 1507 */       if (-1 == funcTok)
-/*      */       {
-/* 1509 */         error("ER_COULDNOT_FIND_FUNCTION", new Object[] { this.m_token });
-/*      */       }
-/*      */ 
-/*      */       
-/* 1513 */       switch (funcTok) {
-/*      */ 
-/*      */         
-/*      */         case 1030:
-/*      */         case 1031:
-/*      */         case 1032:
-/*      */         case 1033:
-/* 1520 */           return false;
-/*      */       } 
-/* 1522 */       appendOp(3, 25);
-/*      */       
-/* 1524 */       this.m_ops.setOp(opPos + 1 + 1, funcTok);
-/*      */ 
-/*      */       
-/* 1527 */       nextToken();
-/*      */     } 
-/*      */     
-/* 1530 */     consumeExpected('(');
-/*      */     
-/* 1532 */     while (!tokenIs(')') && this.m_token != null) {
-/*      */       
-/* 1534 */       if (tokenIs(','))
-/*      */       {
-/* 1536 */         error("ER_FOUND_COMMA_BUT_NO_PRECEDING_ARG", null);
-/*      */       }
-/*      */       
-/* 1539 */       Argument();
-/*      */       
-/* 1541 */       if (!tokenIs(')')) {
-/*      */         
-/* 1543 */         consumeExpected(',');
-/*      */         
-/* 1545 */         if (tokenIs(')'))
-/*      */         {
-/* 1547 */           error("ER_FOUND_COMMA_BUT_NO_FOLLOWING_ARG", null);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1553 */     consumeExpected(')');
-/*      */ 
-/*      */     
-/* 1556 */     this.m_ops.setOp(this.m_ops.getOp(1), -1);
-/* 1557 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/* 1558 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1559 */         .getOp(1) - opPos);
-/*      */     
-/* 1561 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void LocationPath() throws TransformerException {
-/* 1577 */     int opPos = this.m_ops.getOp(1);
-/*      */ 
-/*      */     
-/* 1580 */     appendOp(2, 28);
-/*      */     
-/* 1582 */     boolean seenSlash = tokenIs('/');
-/*      */     
-/* 1584 */     if (seenSlash) {
-/*      */       
-/* 1586 */       appendOp(4, 50);
-/*      */ 
-/*      */       
-/* 1589 */       this.m_ops.setOp(this.m_ops.getOp(1) - 2, 4);
-/* 1590 */       this.m_ops.setOp(this.m_ops.getOp(1) - 1, 35);
-/*      */       
-/* 1592 */       nextToken();
-/* 1593 */     } else if (this.m_token == null) {
-/* 1594 */       error("ER_EXPECTED_LOC_PATH_AT_END_EXPR", null);
-/*      */     } 
-/*      */     
-/* 1597 */     if (this.m_token != null)
-/*      */     {
-/* 1599 */       if (!RelativeLocationPath() && !seenSlash)
-/*      */       {
-/*      */ 
-/*      */         
-/* 1603 */         error("ER_EXPECTED_LOC_PATH", new Object[] { this.m_token });
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1609 */     this.m_ops.setOp(this.m_ops.getOp(1), -1);
-/* 1610 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/* 1611 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1612 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean RelativeLocationPath() throws TransformerException {
-/* 1628 */     if (!Step())
-/*      */     {
-/* 1630 */       return false;
-/*      */     }
-/*      */     
-/* 1633 */     while (tokenIs('/')) {
-/*      */       
-/* 1635 */       nextToken();
-/*      */       
-/* 1637 */       if (!Step())
-/*      */       {
-/*      */ 
-/*      */         
-/* 1641 */         error("ER_EXPECTED_LOC_STEP", null);
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1645 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean Step() throws TransformerException {
-/* 1659 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1661 */     boolean doubleSlash = tokenIs('/');
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1666 */     if (doubleSlash) {
-/*      */       
-/* 1668 */       nextToken();
-/*      */       
-/* 1670 */       appendOp(2, 42);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1678 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/* 1679 */       this.m_ops.setOp(this.m_ops.getOp(1), 1033);
-/* 1680 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */ 
-/*      */       
-/* 1683 */       this.m_ops.setOp(opPos + 1 + 1, this.m_ops
-/* 1684 */           .getOp(1) - opPos);
-/*      */ 
-/*      */       
-/* 1687 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1688 */           .getOp(1) - opPos);
-/*      */       
-/* 1690 */       opPos = this.m_ops.getOp(1);
-/*      */     } 
-/*      */     
-/* 1693 */     if (tokenIs(".")) {
-/*      */       
-/* 1695 */       nextToken();
-/*      */       
-/* 1697 */       if (tokenIs('['))
-/*      */       {
-/* 1699 */         error("ER_PREDICATE_ILLEGAL_SYNTAX", null);
-/*      */       }
-/*      */       
-/* 1702 */       appendOp(4, 48);
-/*      */ 
-/*      */       
-/* 1705 */       this.m_ops.setOp(this.m_ops.getOp(1) - 2, 4);
-/* 1706 */       this.m_ops.setOp(this.m_ops.getOp(1) - 1, 1033);
-/*      */     }
-/* 1708 */     else if (tokenIs("..")) {
-/*      */       
-/* 1710 */       nextToken();
-/* 1711 */       appendOp(4, 45);
-/*      */ 
-/*      */       
-/* 1714 */       this.m_ops.setOp(this.m_ops.getOp(1) - 2, 4);
-/* 1715 */       this.m_ops.setOp(this.m_ops.getOp(1) - 1, 1033);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/* 1721 */     else if (tokenIs('*') || tokenIs('@') || tokenIs('_') || (this.m_token != null && 
-/* 1722 */       Character.isLetter(this.m_token.charAt(0)))) {
-/*      */       
-/* 1724 */       Basis();
-/*      */       
-/* 1726 */       while (tokenIs('['))
-/*      */       {
-/* 1728 */         Predicate();
-/*      */       }
-/*      */ 
-/*      */       
-/* 1732 */       this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1733 */           .getOp(1) - opPos);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1738 */       if (doubleSlash)
-/*      */       {
-/*      */         
-/* 1741 */         error("ER_EXPECTED_LOC_STEP", null);
-/*      */       }
-/*      */       
-/* 1744 */       return false;
-/*      */     } 
-/*      */     
-/* 1747 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Basis() throws TransformerException {
-/* 1760 */     int axesType, opPos = this.m_ops.getOp(1);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1764 */     if (lookahead("::", 1)) {
-/*      */       
-/* 1766 */       axesType = AxisName();
-/*      */       
-/* 1768 */       nextToken();
-/* 1769 */       nextToken();
-/*      */     }
-/* 1771 */     else if (tokenIs('@')) {
-/*      */       
-/* 1773 */       axesType = 39;
-/*      */       
-/* 1775 */       appendOp(2, axesType);
-/* 1776 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1780 */       axesType = 40;
-/*      */       
-/* 1782 */       appendOp(2, axesType);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1786 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */     
-/* 1788 */     NodeTest(axesType);
-/*      */ 
-/*      */     
-/* 1791 */     this.m_ops.setOp(opPos + 1 + 1, this.m_ops
-/* 1792 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int AxisName() throws TransformerException {
-/* 1807 */     Object val = Keywords.getAxisName(this.m_token);
-/*      */     
-/* 1809 */     if (null == val)
-/*      */     {
-/* 1811 */       error("ER_ILLEGAL_AXIS_NAME", new Object[] { this.m_token });
-/*      */     }
-/*      */ 
-/*      */     
-/* 1815 */     int axesType = ((Integer)val).intValue();
-/*      */     
-/* 1817 */     appendOp(2, axesType);
-/*      */     
-/* 1819 */     return axesType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void NodeTest(int axesType) throws TransformerException {
-/* 1835 */     if (lookahead('(', 1)) {
-/*      */       
-/* 1837 */       Object nodeTestOp = Keywords.getNodeType(this.m_token);
-/*      */       
-/* 1839 */       if (null == nodeTestOp)
-/*      */       {
-/* 1841 */         error("ER_UNKNOWN_NODETYPE", new Object[] { this.m_token });
-/*      */       
-/*      */       }
-/*      */       else
-/*      */       {
-/* 1846 */         nextToken();
-/*      */         
-/* 1848 */         int nt = ((Integer)nodeTestOp).intValue();
-/*      */         
-/* 1850 */         this.m_ops.setOp(this.m_ops.getOp(1), nt);
-/* 1851 */         this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */         
-/* 1853 */         consumeExpected('(');
-/*      */         
-/* 1855 */         if (1032 == nt)
-/*      */         {
-/* 1857 */           if (!tokenIs(')'))
-/*      */           {
-/* 1859 */             Literal();
-/*      */           }
-/*      */         }
-/*      */         
-/* 1863 */         consumeExpected(')');
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1870 */       this.m_ops.setOp(this.m_ops.getOp(1), 34);
-/* 1871 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */       
-/* 1873 */       if (lookahead(':', 1)) {
-/*      */         
-/* 1875 */         if (tokenIs('*')) {
-/*      */           
-/* 1877 */           this.m_ops.setOp(this.m_ops.getOp(1), -3);
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1881 */           this.m_ops.setOp(this.m_ops.getOp(1), this.m_queueMark - 1);
-/*      */ 
-/*      */ 
-/*      */           
-/* 1885 */           if (!Character.isLetter(this.m_tokenChar) && !tokenIs('_'))
-/*      */           {
-/*      */             
-/* 1888 */             error("ER_EXPECTED_NODE_TEST", null);
-/*      */           }
-/*      */         } 
-/*      */         
-/* 1892 */         nextToken();
-/* 1893 */         consumeExpected(':');
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1897 */         this.m_ops.setOp(this.m_ops.getOp(1), -2);
-/*      */       } 
-/*      */       
-/* 1900 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */       
-/* 1902 */       if (tokenIs('*')) {
-/*      */         
-/* 1904 */         this.m_ops.setOp(this.m_ops.getOp(1), -3);
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1908 */         this.m_ops.setOp(this.m_ops.getOp(1), this.m_queueMark - 1);
-/*      */ 
-/*      */ 
-/*      */         
-/* 1912 */         if (!Character.isLetter(this.m_tokenChar) && !tokenIs('_'))
-/*      */         {
-/*      */           
-/* 1915 */           error("ER_EXPECTED_NODE_TEST", null);
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1919 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */       
-/* 1921 */       nextToken();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Predicate() throws TransformerException {
-/* 1935 */     if (tokenIs('[')) {
-/*      */       
-/* 1937 */       nextToken();
-/* 1938 */       PredicateExpr();
-/* 1939 */       consumeExpected(']');
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void PredicateExpr() throws TransformerException {
-/* 1953 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 1955 */     appendOp(2, 29);
-/* 1956 */     Expr();
-/*      */ 
-/*      */     
-/* 1959 */     this.m_ops.setOp(this.m_ops.getOp(1), -1);
-/* 1960 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/* 1961 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 1962 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void QName() throws TransformerException {
-/* 1975 */     if (lookahead(':', 1)) {
-/*      */       
-/* 1977 */       this.m_ops.setOp(this.m_ops.getOp(1), this.m_queueMark - 1);
-/* 1978 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */       
-/* 1980 */       nextToken();
-/* 1981 */       consumeExpected(':');
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1985 */       this.m_ops.setOp(this.m_ops.getOp(1), -2);
-/* 1986 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1990 */     this.m_ops.setOp(this.m_ops.getOp(1), this.m_queueMark - 1);
-/* 1991 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */     
-/* 1993 */     nextToken();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void NCName() {
-/* 2003 */     this.m_ops.setOp(this.m_ops.getOp(1), this.m_queueMark - 1);
-/* 2004 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */     
-/* 2006 */     nextToken();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Literal() throws TransformerException {
-/* 2022 */     int last = this.m_token.length() - 1;
-/* 2023 */     char c0 = this.m_tokenChar;
-/* 2024 */     char cX = this.m_token.charAt(last);
-/*      */     
-/* 2026 */     if ((c0 == '"' && cX == '"') || (c0 == '\'' && cX == '\'')) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2031 */       int tokenQueuePos = this.m_queueMark - 1;
-/*      */       
-/* 2033 */       this.m_ops.m_tokenQueue.setElementAt(null, tokenQueuePos);
-/*      */       
-/* 2035 */       Object obj = new XString(this.m_token.substring(1, last));
-/*      */       
-/* 2037 */       this.m_ops.m_tokenQueue.setElementAt(obj, tokenQueuePos);
-/*      */ 
-/*      */       
-/* 2040 */       this.m_ops.setOp(this.m_ops.getOp(1), tokenQueuePos);
-/* 2041 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */       
-/* 2043 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 2047 */       error("ER_PATTERN_LITERAL_NEEDS_BE_QUOTED", new Object[] { this.m_token });
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Number() throws TransformerException {
-/* 2062 */     if (null != this.m_token) {
-/*      */       double num;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 2072 */         if (this.m_token.indexOf('e') > -1 || this.m_token.indexOf('E') > -1)
-/* 2073 */           throw new NumberFormatException(); 
-/* 2074 */         num = Double.valueOf(this.m_token).doubleValue();
-/*      */       }
-/* 2076 */       catch (NumberFormatException nfe) {
-/*      */         
-/* 2078 */         num = 0.0D;
-/*      */         
-/* 2080 */         error("ER_COULDNOT_BE_FORMATTED_TO_NUMBER", new Object[] { this.m_token });
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2084 */       this.m_ops.m_tokenQueue.setElementAt(new XNumber(num), this.m_queueMark - 1);
-/* 2085 */       this.m_ops.setOp(this.m_ops.getOp(1), this.m_queueMark - 1);
-/* 2086 */       this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */       
-/* 2088 */       nextToken();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void Pattern() throws TransformerException {
-/*      */     while (true) {
-/* 2107 */       LocationPathPattern();
-/*      */       
-/* 2109 */       if (tokenIs('|')) {
-/*      */         
-/* 2111 */         nextToken();
-/*      */         continue;
-/*      */       } 
-/*      */       break;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void LocationPathPattern() throws TransformerException {
-/* 2133 */     int opPos = this.m_ops.getOp(1);
-/*      */     
-/* 2135 */     int RELATIVE_PATH_NOT_PERMITTED = 0;
-/* 2136 */     int RELATIVE_PATH_PERMITTED = 1;
-/* 2137 */     int RELATIVE_PATH_REQUIRED = 2;
-/*      */     
-/* 2139 */     int relativePathStatus = 0;
-/*      */     
-/* 2141 */     appendOp(2, 31);
-/*      */     
-/* 2143 */     if (lookahead('(', 1) && (
-/* 2144 */       tokenIs("id") || 
-/* 2145 */       tokenIs("key"))) {
-/*      */       
-/* 2147 */       IdKeyPattern();
-/*      */       
-/* 2149 */       if (tokenIs('/'))
-/*      */       {
-/* 2151 */         nextToken();
-/*      */         
-/* 2153 */         if (tokenIs('/')) {
-/*      */           
-/* 2155 */           appendOp(4, 52);
-/*      */           
-/* 2157 */           nextToken();
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2161 */           appendOp(4, 53);
-/*      */         } 
-/*      */ 
-/*      */         
-/* 2165 */         this.m_ops.setOp(this.m_ops.getOp(1) - 2, 4);
-/* 2166 */         this.m_ops.setOp(this.m_ops.getOp(1) - 1, 1034);
-/*      */         
-/* 2168 */         relativePathStatus = 2;
-/*      */       }
-/*      */     
-/* 2171 */     } else if (tokenIs('/')) {
-/*      */       
-/* 2173 */       if (lookahead('/', 1)) {
-/*      */         
-/* 2175 */         appendOp(4, 52);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2181 */         nextToken();
-/*      */         
-/* 2183 */         relativePathStatus = 2;
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2187 */         appendOp(4, 50);
-/*      */         
-/* 2189 */         relativePathStatus = 1;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2194 */       this.m_ops.setOp(this.m_ops.getOp(1) - 2, 4);
-/* 2195 */       this.m_ops.setOp(this.m_ops.getOp(1) - 1, 35);
-/*      */       
-/* 2197 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 2201 */       relativePathStatus = 2;
-/*      */     } 
-/*      */     
-/* 2204 */     if (relativePathStatus != 0)
-/*      */     {
-/* 2206 */       if (!tokenIs('|') && null != this.m_token) {
-/*      */         
-/* 2208 */         RelativePathPattern();
-/*      */       }
-/* 2210 */       else if (relativePathStatus == 2) {
-/*      */ 
-/*      */         
-/* 2213 */         error("ER_EXPECTED_REL_PATH_PATTERN", null);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 2218 */     this.m_ops.setOp(this.m_ops.getOp(1), -1);
-/* 2219 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/* 2220 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 2221 */         .getOp(1) - opPos);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void IdKeyPattern() throws TransformerException {
-/* 2235 */     FunctionCall();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void RelativePathPattern() throws TransformerException {
-/* 2252 */     boolean trailingSlashConsumed = StepPattern(false);
-/*      */     
-/* 2254 */     while (tokenIs('/')) {
-/*      */       
-/* 2256 */       nextToken();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2261 */       trailingSlashConsumed = StepPattern(!trailingSlashConsumed);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean StepPattern(boolean isLeadingSlashPermitted) throws TransformerException {
-/* 2279 */     return AbbreviatedNodeTestStep(isLeadingSlashPermitted);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean AbbreviatedNodeTestStep(boolean isLeadingSlashPermitted) throws TransformerException {
-/*      */     int axesType;
-/*      */     boolean trailingSlashConsumed;
-/* 2297 */     int opPos = this.m_ops.getOp(1);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2301 */     int matchTypePos = -1;
-/*      */     
-/* 2303 */     if (tokenIs('@')) {
-/*      */       
-/* 2305 */       axesType = 51;
-/*      */       
-/* 2307 */       appendOp(2, axesType);
-/* 2308 */       nextToken();
-/*      */     }
-/* 2310 */     else if (lookahead("::", 1)) {
-/*      */       
-/* 2312 */       if (tokenIs("attribute")) {
-/*      */         
-/* 2314 */         axesType = 51;
-/*      */         
-/* 2316 */         appendOp(2, axesType);
-/*      */       }
-/* 2318 */       else if (tokenIs("child")) {
-/*      */         
-/* 2320 */         matchTypePos = this.m_ops.getOp(1);
-/* 2321 */         axesType = 53;
-/*      */         
-/* 2323 */         appendOp(2, axesType);
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2327 */         axesType = -1;
-/*      */         
-/* 2329 */         error("ER_AXES_NOT_ALLOWED", new Object[] { this.m_token });
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2333 */       nextToken();
-/* 2334 */       nextToken();
-/*      */     }
-/* 2336 */     else if (tokenIs('/')) {
-/*      */       
-/* 2338 */       if (!isLeadingSlashPermitted)
-/*      */       {
-/*      */         
-/* 2341 */         error("ER_EXPECTED_STEP_PATTERN", null);
-/*      */       }
-/* 2343 */       axesType = 52;
-/*      */       
-/* 2345 */       appendOp(2, axesType);
-/* 2346 */       nextToken();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 2350 */       matchTypePos = this.m_ops.getOp(1);
-/* 2351 */       axesType = 53;
-/*      */       
-/* 2353 */       appendOp(2, axesType);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2357 */     this.m_ops.setOp(1, this.m_ops.getOp(1) + 1);
-/*      */     
-/* 2359 */     NodeTest(axesType);
-/*      */ 
-/*      */     
-/* 2362 */     this.m_ops.setOp(opPos + 1 + 1, this.m_ops
-/* 2363 */         .getOp(1) - opPos);
-/*      */     
-/* 2365 */     while (tokenIs('['))
-/*      */     {
-/* 2367 */       Predicate();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2384 */     if (matchTypePos > -1 && tokenIs('/') && lookahead('/', 1)) {
-/*      */       
-/* 2386 */       this.m_ops.setOp(matchTypePos, 52);
-/*      */       
-/* 2388 */       nextToken();
-/*      */       
-/* 2390 */       trailingSlashConsumed = true;
-/*      */     }
-/*      */     else {
-/*      */       
-/* 2394 */       trailingSlashConsumed = false;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2398 */     this.m_ops.setOp(opPos + 1, this.m_ops
-/* 2399 */         .getOp(1) - opPos);
-/*      */     
-/* 2401 */     return trailingSlashConsumed;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\compiler\XPathParser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XPathParser.java,v 1.2.4.1 2005/09/14 19:46:02 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.compiler;
+
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerException;
+
+import com.sun.org.apache.xalan.internal.res.XSLMessages;
+import com.sun.org.apache.xml.internal.utils.PrefixResolver;
+import com.sun.org.apache.xpath.internal.XPathProcessorException;
+import com.sun.org.apache.xpath.internal.domapi.XPathStylesheetDOM3Exception;
+import com.sun.org.apache.xpath.internal.objects.XNumber;
+import com.sun.org.apache.xpath.internal.objects.XString;
+import com.sun.org.apache.xpath.internal.res.XPATHErrorResources;
+
+/**
+ * Tokenizes and parses XPath expressions. This should really be named
+ * XPathParserImpl, and may be renamed in the future.
+ * @xsl.usage general
+ */
+public class XPathParser
+{
+        // %REVIEW% Is there a better way of doing this?
+        // Upside is minimum object churn. Downside is that we don't have a useful
+        // backtrace in the exception itself -- but we don't expect to need one.
+        static public final String CONTINUE_AFTER_FATAL_ERROR="CONTINUE_AFTER_FATAL_ERROR";
+
+  /**
+   * The XPath to be processed.
+   */
+  private OpMap m_ops;
+
+  /**
+   * The next token in the pattern.
+   */
+  transient String m_token;
+
+  /**
+   * The first char in m_token, the theory being that this
+   * is an optimization because we won't have to do charAt(0) as
+   * often.
+   */
+  transient char m_tokenChar = 0;
+
+  /**
+   * The position in the token queue is tracked by m_queueMark.
+   */
+  int m_queueMark = 0;
+
+  /**
+   * Results from checking FilterExpr syntax
+   */
+  protected final static int FILTER_MATCH_FAILED     = 0;
+  protected final static int FILTER_MATCH_PRIMARY    = 1;
+  protected final static int FILTER_MATCH_PREDICATES = 2;
+
+  /**
+   * The parser constructor.
+   */
+  public XPathParser(ErrorListener errorListener, javax.xml.transform.SourceLocator sourceLocator)
+  {
+    m_errorListener = errorListener;
+    m_sourceLocator = sourceLocator;
+  }
+
+  /**
+   * The prefix resolver to map prefixes to namespaces in the OpMap.
+   */
+  PrefixResolver m_namespaceContext;
+
+  /**
+   * Given an string, init an XPath object for selections,
+   * in order that a parse doesn't
+   * have to be done each time the expression is evaluated.
+   *
+   * @param compiler The compiler object.
+   * @param expression A string conforming to the XPath grammar.
+   * @param namespaceContext An object that is able to resolve prefixes in
+   * the XPath to namespaces.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public void initXPath(
+          Compiler compiler, String expression, PrefixResolver namespaceContext)
+            throws javax.xml.transform.TransformerException
+  {
+
+    m_ops = compiler;
+    m_namespaceContext = namespaceContext;
+    m_functionTable = compiler.getFunctionTable();
+
+    Lexer lexer = new Lexer(compiler, namespaceContext, this);
+
+    lexer.tokenize(expression);
+
+    m_ops.setOp(0,OpCodes.OP_XPATH);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH,2);
+
+
+        // Patch for Christine's gripe. She wants her errorHandler to return from
+        // a fatal error and continue trying to parse, rather than throwing an exception.
+        // Without the patch, that put us into an endless loop.
+        //
+        // %REVIEW% Is there a better way of doing this?
+        // %REVIEW% Are there any other cases which need the safety net?
+        //      (and if so do we care right now, or should we rewrite the XPath
+        //      grammar engine and can fix it at that time?)
+        try {
+
+      nextToken();
+      Expr();
+
+      if (null != m_token)
+      {
+        String extraTokens = "";
+
+        while (null != m_token)
+        {
+          extraTokens += "'" + m_token + "'";
+
+          nextToken();
+
+          if (null != m_token)
+            extraTokens += ", ";
+        }
+
+        error(XPATHErrorResources.ER_EXTRA_ILLEGAL_TOKENS,
+              new Object[]{ extraTokens });  //"Extra illegal tokens: "+extraTokens);
+      }
+
+    }
+    catch (com.sun.org.apache.xpath.internal.XPathProcessorException e)
+    {
+          if(CONTINUE_AFTER_FATAL_ERROR.equals(e.getMessage()))
+          {
+                // What I _want_ to do is null out this XPath.
+                // I doubt this has the desired effect, but I'm not sure what else to do.
+                // %REVIEW%!!!
+                initXPath(compiler, "/..",  namespaceContext);
+          }
+          else
+                throw e;
+    }
+
+    compiler.shrink();
+  }
+
+  /**
+   * Given an string, init an XPath object for pattern matches,
+   * in order that a parse doesn't
+   * have to be done each time the expression is evaluated.
+   * @param compiler The XPath object to be initialized.
+   * @param expression A String representing the XPath.
+   * @param namespaceContext An object that is able to resolve prefixes in
+   * the XPath to namespaces.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public void initMatchPattern(
+          Compiler compiler, String expression, PrefixResolver namespaceContext)
+            throws javax.xml.transform.TransformerException
+  {
+
+    m_ops = compiler;
+    m_namespaceContext = namespaceContext;
+    m_functionTable = compiler.getFunctionTable();
+
+    Lexer lexer = new Lexer(compiler, namespaceContext, this);
+
+    lexer.tokenize(expression);
+
+    m_ops.setOp(0, OpCodes.OP_MATCHPATTERN);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, 2);
+
+    nextToken();
+    Pattern();
+
+    if (null != m_token)
+    {
+      String extraTokens = "";
+
+      while (null != m_token)
+      {
+        extraTokens += "'" + m_token + "'";
+
+        nextToken();
+
+        if (null != m_token)
+          extraTokens += ", ";
+      }
+
+      error(XPATHErrorResources.ER_EXTRA_ILLEGAL_TOKENS,
+            new Object[]{ extraTokens });  //"Extra illegal tokens: "+extraTokens);
+    }
+
+    // Terminate for safety.
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ENDOP);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH)+1);
+
+    m_ops.shrink();
+  }
+
+  /** The error listener where syntax errors are to be sent.
+   */
+  private ErrorListener m_errorListener;
+
+  /** The source location of the XPath. */
+  javax.xml.transform.SourceLocator m_sourceLocator;
+
+  /** The table contains build-in functions and customized functions */
+  private FunctionTable m_functionTable;
+
+  /**
+   * Allow an application to register an error event handler, where syntax
+   * errors will be sent.  If the error listener is not set, syntax errors
+   * will be sent to System.err.
+   *
+   * @param handler Reference to error listener where syntax errors will be
+   *                sent.
+   */
+  public void setErrorHandler(ErrorListener handler)
+  {
+    m_errorListener = handler;
+  }
+
+  /**
+   * Return the current error listener.
+   *
+   * @return The error listener, which should not normally be null, but may be.
+   */
+  public ErrorListener getErrorListener()
+  {
+    return m_errorListener;
+  }
+
+  /**
+   * Check whether m_token matches the target string.
+   *
+   * @param s A string reference or null.
+   *
+   * @return If m_token is null, returns false (or true if s is also null), or
+   * return true if the current token matches the string, else false.
+   */
+  final boolean tokenIs(String s)
+  {
+    return (m_token != null) ? (m_token.equals(s)) : (s == null);
+  }
+
+  /**
+   * Check whether m_tokenChar==c.
+   *
+   * @param c A character to be tested.
+   *
+   * @return If m_token is null, returns false, or return true if c matches
+   *         the current token.
+   */
+  final boolean tokenIs(char c)
+  {
+    return (m_token != null) ? (m_tokenChar == c) : false;
+  }
+
+  /**
+   * Look ahead of the current token in order to
+   * make a branching decision.
+   *
+   * @param c the character to be tested for.
+   * @param n number of tokens to look ahead.  Must be
+   * greater than 1.
+   *
+   * @return true if the next token matches the character argument.
+   */
+  final boolean lookahead(char c, int n)
+  {
+
+    int pos = (m_queueMark + n);
+    boolean b;
+
+    if ((pos <= m_ops.getTokenQueueSize()) && (pos > 0)
+            && (m_ops.getTokenQueueSize() != 0))
+    {
+      String tok = ((String) m_ops.m_tokenQueue.elementAt(pos - 1));
+
+      b = (tok.length() == 1) ? (tok.charAt(0) == c) : false;
+    }
+    else
+    {
+      b = false;
+    }
+
+    return b;
+  }
+
+  /**
+   * Look behind the first character of the current token in order to
+   * make a branching decision.
+   *
+   * @param c the character to compare it to.
+   * @param n number of tokens to look behind.  Must be
+   * greater than 1.  Note that the look behind terminates
+   * at either the beginning of the string or on a '|'
+   * character.  Because of this, this method should only
+   * be used for pattern matching.
+   *
+   * @return true if the token behind the current token matches the character
+   *         argument.
+   */
+  private final boolean lookbehind(char c, int n)
+  {
+
+    boolean isToken;
+    int lookBehindPos = m_queueMark - (n + 1);
+
+    if (lookBehindPos >= 0)
+    {
+      String lookbehind = (String) m_ops.m_tokenQueue.elementAt(lookBehindPos);
+
+      if (lookbehind.length() == 1)
+      {
+        char c0 = (lookbehind == null) ? '|' : lookbehind.charAt(0);
+
+        isToken = (c0 == '|') ? false : (c0 == c);
+      }
+      else
+      {
+        isToken = false;
+      }
+    }
+    else
+    {
+      isToken = false;
+    }
+
+    return isToken;
+  }
+
+  /**
+   * look behind the current token in order to
+   * see if there is a useable token.
+   *
+   * @param n number of tokens to look behind.  Must be
+   * greater than 1.  Note that the look behind terminates
+   * at either the beginning of the string or on a '|'
+   * character.  Because of this, this method should only
+   * be used for pattern matching.
+   *
+   * @return true if look behind has a token, false otherwise.
+   */
+  private final boolean lookbehindHasToken(int n)
+  {
+
+    boolean hasToken;
+
+    if ((m_queueMark - n) > 0)
+    {
+      String lookbehind = (String) m_ops.m_tokenQueue.elementAt(m_queueMark - (n - 1));
+      char c0 = (lookbehind == null) ? '|' : lookbehind.charAt(0);
+
+      hasToken = (c0 == '|') ? false : true;
+    }
+    else
+    {
+      hasToken = false;
+    }
+
+    return hasToken;
+  }
+
+  /**
+   * Look ahead of the current token in order to
+   * make a branching decision.
+   *
+   * @param s the string to compare it to.
+   * @param n number of tokens to lookahead.  Must be
+   * greater than 1.
+   *
+   * @return true if the token behind the current token matches the string
+   *         argument.
+   */
+  private final boolean lookahead(String s, int n)
+  {
+
+    boolean isToken;
+
+    if ((m_queueMark + n) <= m_ops.getTokenQueueSize())
+    {
+      String lookahead = (String) m_ops.m_tokenQueue.elementAt(m_queueMark + (n - 1));
+
+      isToken = (lookahead != null) ? lookahead.equals(s) : (s == null);
+    }
+    else
+    {
+      isToken = (null == s);
+    }
+
+    return isToken;
+  }
+
+  /**
+   * Retrieve the next token from the command and
+   * store it in m_token string.
+   */
+  private final void nextToken()
+  {
+
+    if (m_queueMark < m_ops.getTokenQueueSize())
+    {
+      m_token = (String) m_ops.m_tokenQueue.elementAt(m_queueMark++);
+      m_tokenChar = m_token.charAt(0);
+    }
+    else
+    {
+      m_token = null;
+      m_tokenChar = 0;
+    }
+  }
+
+  /**
+   * Retrieve a token relative to the current token.
+   *
+   * @param i Position relative to current token.
+   *
+   * @return The string at the given index, or null if the index is out
+   *         of range.
+   */
+  private final String getTokenRelative(int i)
+  {
+
+    String tok;
+    int relative = m_queueMark + i;
+
+    if ((relative > 0) && (relative < m_ops.getTokenQueueSize()))
+    {
+      tok = (String) m_ops.m_tokenQueue.elementAt(relative);
+    }
+    else
+    {
+      tok = null;
+    }
+
+    return tok;
+  }
+
+  /**
+   * Retrieve the previous token from the command and
+   * store it in m_token string.
+   */
+  private final void prevToken()
+  {
+
+    if (m_queueMark > 0)
+    {
+      m_queueMark--;
+
+      m_token = (String) m_ops.m_tokenQueue.elementAt(m_queueMark);
+      m_tokenChar = m_token.charAt(0);
+    }
+    else
+    {
+      m_token = null;
+      m_tokenChar = 0;
+    }
+  }
+
+  /**
+   * Consume an expected token, throwing an exception if it
+   * isn't there.
+   *
+   * @param expected The string to be expected.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  private final void consumeExpected(String expected)
+          throws javax.xml.transform.TransformerException
+  {
+
+    if (tokenIs(expected))
+    {
+      nextToken();
+    }
+    else
+    {
+      error(XPATHErrorResources.ER_EXPECTED_BUT_FOUND, new Object[]{ expected,
+                                                                     m_token });  //"Expected "+expected+", but found: "+m_token);
+
+          // Patch for Christina's gripe. She wants her errorHandler to return from
+          // this error and continue trying to parse, rather than throwing an exception.
+          // Without the patch, that put us into an endless loop.
+                throw new XPathProcessorException(CONTINUE_AFTER_FATAL_ERROR);
+        }
+  }
+
+  /**
+   * Consume an expected token, throwing an exception if it
+   * isn't there.
+   *
+   * @param expected the character to be expected.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  private final void consumeExpected(char expected)
+          throws javax.xml.transform.TransformerException
+  {
+
+    if (tokenIs(expected))
+    {
+      nextToken();
+    }
+    else
+    {
+      error(XPATHErrorResources.ER_EXPECTED_BUT_FOUND,
+            new Object[]{ String.valueOf(expected),
+                          m_token });  //"Expected "+expected+", but found: "+m_token);
+
+          // Patch for Christina's gripe. She wants her errorHandler to return from
+          // this error and continue trying to parse, rather than throwing an exception.
+          // Without the patch, that put us into an endless loop.
+                throw new XPathProcessorException(CONTINUE_AFTER_FATAL_ERROR);
+    }
+  }
+
+  /**
+   * Warn the user of a problem.
+   *
+   * @param msg An error msgkey that corresponds to one of the constants found
+   *            in {@link com.sun.org.apache.xpath.internal.res.XPATHErrorResources}, which is
+   *            a key for a format string.
+   * @param args An array of arguments represented in the format string, which
+   *             may be null.
+   *
+   * @throws TransformerException if the current ErrorListoner determines to
+   *                              throw an exception.
+   */
+  void warn(String msg, Object[] args) throws TransformerException
+  {
+
+    String fmsg = XSLMessages.createXPATHWarning(msg, args);
+    ErrorListener ehandler = this.getErrorListener();
+
+    if (null != ehandler)
+    {
+      // TO DO: Need to get stylesheet Locator from here.
+      ehandler.warning(new TransformerException(fmsg, m_sourceLocator));
+    }
+    else
+    {
+      // Should never happen.
+      System.err.println(fmsg);
+    }
+  }
+
+  /**
+   * Notify the user of an assertion error, and probably throw an
+   * exception.
+   *
+   * @param b  If false, a runtime exception will be thrown.
+   * @param msg The assertion message, which should be informative.
+   *
+   * @throws RuntimeException if the b argument is false.
+   */
+  private void assertion(boolean b, String msg)
+  {
+
+    if (!b)
+    {
+      String fMsg = XSLMessages.createXPATHMessage(
+        XPATHErrorResources.ER_INCORRECT_PROGRAMMER_ASSERTION,
+        new Object[]{ msg });
+
+      throw new RuntimeException(fMsg);
+    }
+  }
+
+  /**
+   * Notify the user of an error, and probably throw an
+   * exception.
+   *
+   * @param msg An error msgkey that corresponds to one of the constants found
+   *            in {@link com.sun.org.apache.xpath.internal.res.XPATHErrorResources}, which is
+   *            a key for a format string.
+   * @param args An array of arguments represented in the format string, which
+   *             may be null.
+   *
+   * @throws TransformerException if the current ErrorListoner determines to
+   *                              throw an exception.
+   */
+  void error(String msg, Object[] args) throws TransformerException
+  {
+
+    String fmsg = XSLMessages.createXPATHMessage(msg, args);
+    ErrorListener ehandler = this.getErrorListener();
+
+    TransformerException te = new TransformerException(fmsg, m_sourceLocator);
+    if (null != ehandler)
+    {
+      // TO DO: Need to get stylesheet Locator from here.
+      ehandler.fatalError(te);
+    }
+    else
+    {
+      // System.err.println(fmsg);
+      throw te;
+    }
+  }
+
+  /**
+   * This method is added to support DOM 3 XPath API.
+   * <p>
+   * This method is exactly like error(String, Object[]); except that
+   * the underlying TransformerException is
+   * XpathStylesheetDOM3Exception (which extends TransformerException).
+   * <p>
+   * So older XPath code in Xalan is not affected by this. To older XPath code
+   * the behavior of whether error() or errorForDOM3() is called because it is
+   * always catching TransformerException objects and is oblivious to
+   * the new subclass of XPathStylesheetDOM3Exception. Older XPath code
+   * runs as before.
+   * <p>
+   * However, newer DOM3 XPath code upon catching a TransformerException can
+   * can check if the exception is an instance of XPathStylesheetDOM3Exception
+   * and take appropriate action.
+   *
+   * @param msg An error msgkey that corresponds to one of the constants found
+   *            in {@link com.sun.org.apache.xpath.internal.res.XPATHErrorResources}, which is
+   *            a key for a format string.
+   * @param args An array of arguments represented in the format string, which
+   *             may be null.
+   *
+   * @throws TransformerException if the current ErrorListoner determines to
+   *                              throw an exception.
+   */
+  void errorForDOM3(String msg, Object[] args) throws TransformerException
+  {
+
+        String fmsg = XSLMessages.createXPATHMessage(msg, args);
+        ErrorListener ehandler = this.getErrorListener();
+
+        TransformerException te = new XPathStylesheetDOM3Exception(fmsg, m_sourceLocator);
+        if (null != ehandler)
+        {
+          // TO DO: Need to get stylesheet Locator from here.
+          ehandler.fatalError(te);
+        }
+        else
+        {
+          // System.err.println(fmsg);
+          throw te;
+        }
+  }
+  /**
+   * Dump the remaining token queue.
+   * Thanks to Craig for this.
+   *
+   * @return A dump of the remaining token queue, which may be appended to
+   *         an error message.
+   */
+  protected String dumpRemainingTokenQueue()
+  {
+
+    int q = m_queueMark;
+    String returnMsg;
+
+    if (q < m_ops.getTokenQueueSize())
+    {
+      String msg = "\n Remaining tokens: (";
+
+      while (q < m_ops.getTokenQueueSize())
+      {
+        String t = (String) m_ops.m_tokenQueue.elementAt(q++);
+
+        msg += (" '" + t + "'");
+      }
+
+      returnMsg = msg + ")";
+    }
+    else
+    {
+      returnMsg = "";
+    }
+
+    return returnMsg;
+  }
+
+  /**
+   * Given a string, return the corresponding function token.
+   *
+   * @param key A local name of a function.
+   *
+   * @return   The function ID, which may correspond to one of the FUNC_XXX
+   *    values found in {@link com.sun.org.apache.xpath.internal.compiler.FunctionTable}, but may
+   *    be a value installed by an external module.
+   */
+  final int getFunctionToken(String key)
+  {
+
+    int tok;
+
+    Object id;
+
+    try
+    {
+      // These are nodetests, xpathparser treats them as functions when parsing
+      // a FilterExpr.
+      id = Keywords.lookupNodeTest(key);
+      if (null == id) id = m_functionTable.getFunctionID(key);
+      tok = ((Integer) id).intValue();
+    }
+    catch (NullPointerException npe)
+    {
+      tok = -1;
+    }
+    catch (ClassCastException cce)
+    {
+      tok = -1;
+    }
+
+    return tok;
+  }
+
+  /**
+   * Insert room for operation.  This will NOT set
+   * the length value of the operation, but will update
+   * the length value for the total expression.
+   *
+   * @param pos The position where the op is to be inserted.
+   * @param length The length of the operation space in the op map.
+   * @param op The op code to the inserted.
+   */
+  void insertOp(int pos, int length, int op)
+  {
+
+    int totalLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    for (int i = totalLen - 1; i >= pos; i--)
+    {
+      m_ops.setOp(i + length, m_ops.getOp(i));
+    }
+
+    m_ops.setOp(pos,op);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH,totalLen + length);
+  }
+
+  /**
+   * Insert room for operation.  This WILL set
+   * the length value of the operation, and will update
+   * the length value for the total expression.
+   *
+   * @param length The length of the operation.
+   * @param op The op code to the inserted.
+   */
+  void appendOp(int length, int op)
+  {
+
+    int totalLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    m_ops.setOp(totalLen, op);
+    m_ops.setOp(totalLen + OpMap.MAPINDEX_LENGTH, length);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, totalLen + length);
+  }
+
+  // ============= EXPRESSIONS FUNCTIONS =================
+
+  /**
+   *
+   *
+   * Expr  ::=  OrExpr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Expr() throws javax.xml.transform.TransformerException
+  {
+    OrExpr();
+  }
+
+  /**
+   *
+   *
+   * OrExpr  ::=  AndExpr
+   * | OrExpr 'or' AndExpr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void OrExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    AndExpr();
+
+    if ((null != m_token) && tokenIs("or"))
+    {
+      nextToken();
+      insertOp(opPos, 2, OpCodes.OP_OR);
+      OrExpr();
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+    }
+  }
+
+  /**
+   *
+   *
+   * AndExpr  ::=  EqualityExpr
+   * | AndExpr 'and' EqualityExpr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void AndExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    EqualityExpr(-1);
+
+    if ((null != m_token) && tokenIs("and"))
+    {
+      nextToken();
+      insertOp(opPos, 2, OpCodes.OP_AND);
+      AndExpr();
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+    }
+  }
+
+  /**
+   *
+   * @returns an Object which is either a String, a Number, a Boolean, or a vector
+   * of nodes.
+   *
+   * EqualityExpr  ::=  RelationalExpr
+   * | EqualityExpr '=' RelationalExpr
+   *
+   *
+   * @param addPos Position where expression is to be added, or -1 for append.
+   *
+   * @return the position at the end of the equality expression.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected int EqualityExpr(int addPos) throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    if (-1 == addPos)
+      addPos = opPos;
+
+    RelationalExpr(-1);
+
+    if (null != m_token)
+    {
+      if (tokenIs('!') && lookahead('=', 1))
+      {
+        nextToken();
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_NOTEQUALS);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = EqualityExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+      else if (tokenIs('='))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_EQUALS);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = EqualityExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+    }
+
+    return addPos;
+  }
+
+  /**
+   * .
+   * @returns an Object which is either a String, a Number, a Boolean, or a vector
+   * of nodes.
+   *
+   * RelationalExpr  ::=  AdditiveExpr
+   * | RelationalExpr '<' AdditiveExpr
+   * | RelationalExpr '>' AdditiveExpr
+   * | RelationalExpr '<=' AdditiveExpr
+   * | RelationalExpr '>=' AdditiveExpr
+   *
+   *
+   * @param addPos Position where expression is to be added, or -1 for append.
+   *
+   * @return the position at the end of the relational expression.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected int RelationalExpr(int addPos) throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    if (-1 == addPos)
+      addPos = opPos;
+
+    AdditiveExpr(-1);
+
+    if (null != m_token)
+    {
+      if (tokenIs('<'))
+      {
+        nextToken();
+
+        if (tokenIs('='))
+        {
+          nextToken();
+          insertOp(addPos, 2, OpCodes.OP_LTE);
+        }
+        else
+        {
+          insertOp(addPos, 2, OpCodes.OP_LT);
+        }
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = RelationalExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+      else if (tokenIs('>'))
+      {
+        nextToken();
+
+        if (tokenIs('='))
+        {
+          nextToken();
+          insertOp(addPos, 2, OpCodes.OP_GTE);
+        }
+        else
+        {
+          insertOp(addPos, 2, OpCodes.OP_GT);
+        }
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = RelationalExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+    }
+
+    return addPos;
+  }
+
+  /**
+   * This has to handle construction of the operations so that they are evaluated
+   * in pre-fix order.  So, for 9+7-6, instead of |+|9|-|7|6|, this needs to be
+   * evaluated as |-|+|9|7|6|.
+   *
+   * AdditiveExpr  ::=  MultiplicativeExpr
+   * | AdditiveExpr '+' MultiplicativeExpr
+   * | AdditiveExpr '-' MultiplicativeExpr
+   *
+   *
+   * @param addPos Position where expression is to be added, or -1 for append.
+   *
+   * @return the position at the end of the equality expression.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected int AdditiveExpr(int addPos) throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    if (-1 == addPos)
+      addPos = opPos;
+
+    MultiplicativeExpr(-1);
+
+    if (null != m_token)
+    {
+      if (tokenIs('+'))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_PLUS);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = AdditiveExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+      else if (tokenIs('-'))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_MINUS);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = AdditiveExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+    }
+
+    return addPos;
+  }
+
+  /**
+   * This has to handle construction of the operations so that they are evaluated
+   * in pre-fix order.  So, for 9+7-6, instead of |+|9|-|7|6|, this needs to be
+   * evaluated as |-|+|9|7|6|.
+   *
+   * MultiplicativeExpr  ::=  UnaryExpr
+   * | MultiplicativeExpr MultiplyOperator UnaryExpr
+   * | MultiplicativeExpr 'div' UnaryExpr
+   * | MultiplicativeExpr 'mod' UnaryExpr
+   * | MultiplicativeExpr 'quo' UnaryExpr
+   *
+   * @param addPos Position where expression is to be added, or -1 for append.
+   *
+   * @return the position at the end of the equality expression.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected int MultiplicativeExpr(int addPos) throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    if (-1 == addPos)
+      addPos = opPos;
+
+    UnaryExpr();
+
+    if (null != m_token)
+    {
+      if (tokenIs('*'))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_MULT);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = MultiplicativeExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+      else if (tokenIs("div"))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_DIV);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = MultiplicativeExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+      else if (tokenIs("mod"))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_MOD);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = MultiplicativeExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+      else if (tokenIs("quo"))
+      {
+        nextToken();
+        insertOp(addPos, 2, OpCodes.OP_QUO);
+
+        int opPlusLeftHandLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - addPos;
+
+        addPos = MultiplicativeExpr(addPos);
+        m_ops.setOp(addPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(addPos + opPlusLeftHandLen + 1) + opPlusLeftHandLen);
+        addPos += 2;
+      }
+    }
+
+    return addPos;
+  }
+
+  /**
+   *
+   * UnaryExpr  ::=  UnionExpr
+   * | '-' UnaryExpr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void UnaryExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+    boolean isNeg = false;
+
+    if (m_tokenChar == '-')
+    {
+      nextToken();
+      appendOp(2, OpCodes.OP_NEG);
+
+      isNeg = true;
+    }
+
+    UnionExpr();
+
+    if (isNeg)
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   *
+   * StringExpr  ::=  Expr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void StringExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    appendOp(2, OpCodes.OP_STRING);
+    Expr();
+
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   *
+   *
+   * StringExpr  ::=  Expr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void BooleanExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    appendOp(2, OpCodes.OP_BOOL);
+    Expr();
+
+    int opLen = m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos;
+
+    if (opLen == 2)
+    {
+      error(XPATHErrorResources.ER_BOOLEAN_ARG_NO_LONGER_OPTIONAL, null);  //"boolean(...) argument is no longer optional with 19990709 XPath draft.");
+    }
+
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH, opLen);
+  }
+
+  /**
+   *
+   *
+   * NumberExpr  ::=  Expr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void NumberExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    appendOp(2, OpCodes.OP_NUMBER);
+    Expr();
+
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   * The context of the right hand side expressions is the context of the
+   * left hand side expression. The results of the right hand side expressions
+   * are node sets. The result of the left hand side UnionExpr is the union
+   * of the results of the right hand side expressions.
+   *
+   *
+   * UnionExpr    ::=    PathExpr
+   * | UnionExpr '|' PathExpr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void UnionExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+    boolean continueOrLoop = true;
+    boolean foundUnion = false;
+
+    do
+    {
+      PathExpr();
+
+      if (tokenIs('|'))
+      {
+        if (false == foundUnion)
+        {
+          foundUnion = true;
+
+          insertOp(opPos, 2, OpCodes.OP_UNION);
+        }
+
+        nextToken();
+      }
+      else
+      {
+        break;
+      }
+
+      // this.m_testForDocOrder = true;
+    }
+    while (continueOrLoop);
+
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   * PathExpr  ::=  LocationPath
+   * | FilterExpr
+   * | FilterExpr '/' RelativeLocationPath
+   * | FilterExpr '//' RelativeLocationPath
+   *
+   * @throws XSLProcessorException thrown if the active ProblemListener and XPathContext decide
+   * the error condition is severe enough to halt processing.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void PathExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    int filterExprMatch = FilterExpr();
+
+    if (filterExprMatch != FILTER_MATCH_FAILED)
+    {
+      // If FilterExpr had Predicates, a OP_LOCATIONPATH opcode would already
+      // have been inserted.
+      boolean locationPathStarted = (filterExprMatch==FILTER_MATCH_PREDICATES);
+
+      if (tokenIs('/'))
+      {
+        nextToken();
+
+        if (!locationPathStarted)
+        {
+          // int locationPathOpPos = opPos;
+          insertOp(opPos, 2, OpCodes.OP_LOCATIONPATH);
+
+          locationPathStarted = true;
+        }
+
+        if (!RelativeLocationPath())
+        {
+          // "Relative location path expected following '/' or '//'"
+          error(XPATHErrorResources.ER_EXPECTED_REL_LOC_PATH, null);
+        }
+
+      }
+
+      // Terminate for safety.
+      if (locationPathStarted)
+      {
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ENDOP);
+        m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+        m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+      }
+    }
+    else
+    {
+      LocationPath();
+    }
+  }
+
+  /**
+   *
+   *
+   * FilterExpr  ::=  PrimaryExpr
+   * | FilterExpr Predicate
+   *
+   * @throws XSLProcessorException thrown if the active ProblemListener and XPathContext decide
+   * the error condition is severe enough to halt processing.
+   *
+   * @return  FILTER_MATCH_PREDICATES, if this method successfully matched a
+   *          FilterExpr with one or more Predicates;
+   *          FILTER_MATCH_PRIMARY, if this method successfully matched a
+   *          FilterExpr that was just a PrimaryExpr; or
+   *          FILTER_MATCH_FAILED, if this method did not match a FilterExpr
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected int FilterExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    int filterMatch;
+
+    if (PrimaryExpr())
+    {
+      if (tokenIs('['))
+      {
+
+        // int locationPathOpPos = opPos;
+        insertOp(opPos, 2, OpCodes.OP_LOCATIONPATH);
+
+        while (tokenIs('['))
+        {
+          Predicate();
+        }
+
+        filterMatch = FILTER_MATCH_PREDICATES;
+      }
+      else
+      {
+        filterMatch = FILTER_MATCH_PRIMARY;
+      }
+    }
+    else
+    {
+      filterMatch = FILTER_MATCH_FAILED;
+    }
+
+    return filterMatch;
+
+    /*
+     * if(tokenIs('['))
+     * {
+     *   Predicate();
+     *   m_ops.m_opMap[opPos + OpMap.MAPINDEX_LENGTH] = m_ops.m_opMap[OpMap.MAPINDEX_LENGTH] - opPos;
+     * }
+     */
+  }
+
+  /**
+   *
+   * PrimaryExpr  ::=  VariableReference
+   * | '(' Expr ')'
+   * | Literal
+   * | Number
+   * | FunctionCall
+   *
+   * @return true if this method successfully matched a PrimaryExpr
+   *
+   * @throws javax.xml.transform.TransformerException
+   *
+   */
+  protected boolean PrimaryExpr() throws javax.xml.transform.TransformerException
+  {
+
+    boolean matchFound;
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    if ((m_tokenChar == '\'') || (m_tokenChar == '"'))
+    {
+      appendOp(2, OpCodes.OP_LITERAL);
+      Literal();
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+      matchFound = true;
+    }
+    else if (m_tokenChar == '$')
+    {
+      nextToken();  // consume '$'
+      appendOp(2, OpCodes.OP_VARIABLE);
+      QName();
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+      matchFound = true;
+    }
+    else if (m_tokenChar == '(')
+    {
+      nextToken();
+      appendOp(2, OpCodes.OP_GROUP);
+      Expr();
+      consumeExpected(')');
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+      matchFound = true;
+    }
+    else if ((null != m_token) && ((('.' == m_tokenChar) && (m_token.length() > 1) && Character.isDigit(
+            m_token.charAt(1))) || Character.isDigit(m_tokenChar)))
+    {
+      appendOp(2, OpCodes.OP_NUMBERLIT);
+      Number();
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+      matchFound = true;
+    }
+    else if (lookahead('(', 1) || (lookahead(':', 1) && lookahead('(', 3)))
+    {
+      matchFound = FunctionCall();
+    }
+    else
+    {
+      matchFound = false;
+    }
+
+    return matchFound;
+  }
+
+  /**
+   *
+   * Argument    ::=    Expr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Argument() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    appendOp(2, OpCodes.OP_ARGUMENT);
+    Expr();
+
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   *
+   * FunctionCall    ::=    FunctionName '(' ( Argument ( ',' Argument)*)? ')'
+   *
+   * @return true if, and only if, a FunctionCall was matched
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected boolean FunctionCall() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    if (lookahead(':', 1))
+    {
+      appendOp(4, OpCodes.OP_EXTFUNCTION);
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH + 1, m_queueMark - 1);
+
+      nextToken();
+      consumeExpected(':');
+
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH + 2, m_queueMark - 1);
+
+      nextToken();
+    }
+    else
+    {
+      int funcTok = getFunctionToken(m_token);
+
+      if (-1 == funcTok)
+      {
+        error(XPATHErrorResources.ER_COULDNOT_FIND_FUNCTION,
+              new Object[]{ m_token });  //"Could not find function: "+m_token+"()");
+      }
+
+      switch (funcTok)
+      {
+      case OpCodes.NODETYPE_PI :
+      case OpCodes.NODETYPE_COMMENT :
+      case OpCodes.NODETYPE_TEXT :
+      case OpCodes.NODETYPE_NODE :
+        // Node type tests look like function calls, but they're not
+        return false;
+      default :
+        appendOp(3, OpCodes.OP_FUNCTION);
+
+        m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH + 1, funcTok);
+      }
+
+      nextToken();
+    }
+
+    consumeExpected('(');
+
+    while (!tokenIs(')') && m_token != null)
+    {
+      if (tokenIs(','))
+      {
+        error(XPATHErrorResources.ER_FOUND_COMMA_BUT_NO_PRECEDING_ARG, null);  //"Found ',' but no preceding argument!");
+      }
+
+      Argument();
+
+      if (!tokenIs(')'))
+      {
+        consumeExpected(',');
+
+        if (tokenIs(')'))
+        {
+          error(XPATHErrorResources.ER_FOUND_COMMA_BUT_NO_FOLLOWING_ARG,
+                null);  //"Found ',' but no following argument!");
+        }
+      }
+    }
+
+    consumeExpected(')');
+
+    // Terminate for safety.
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ENDOP);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH,m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+    return true;
+  }
+
+  // ============= GRAMMAR FUNCTIONS =================
+
+  /**
+   *
+   * LocationPath ::= RelativeLocationPath
+   * | AbsoluteLocationPath
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void LocationPath() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    // int locationPathOpPos = opPos;
+    appendOp(2, OpCodes.OP_LOCATIONPATH);
+
+    boolean seenSlash = tokenIs('/');
+
+    if (seenSlash)
+    {
+      appendOp(4, OpCodes.FROM_ROOT);
+
+      // Tell how long the step is without the predicate
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 2, 4);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 1, OpCodes.NODETYPE_ROOT);
+
+      nextToken();
+    } else if (m_token == null) {
+      error(XPATHErrorResources.ER_EXPECTED_LOC_PATH_AT_END_EXPR, null);
+    }
+
+    if (m_token != null)
+    {
+      if (!RelativeLocationPath() && !seenSlash)
+      {
+        // Neither a '/' nor a RelativeLocationPath - i.e., matched nothing
+        // "Location path expected, but found "+m_token+" was encountered."
+        error(XPATHErrorResources.ER_EXPECTED_LOC_PATH,
+              new Object [] {m_token});
+      }
+    }
+
+    // Terminate for safety.
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ENDOP);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH,m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   *
+   * RelativeLocationPath ::= Step
+   * | RelativeLocationPath '/' Step
+   * | AbbreviatedRelativeLocationPath
+   *
+   * @returns true if, and only if, a RelativeLocationPath was matched
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected boolean RelativeLocationPath()
+               throws javax.xml.transform.TransformerException
+  {
+    if (!Step())
+    {
+      return false;
+    }
+
+    while (tokenIs('/'))
+    {
+      nextToken();
+
+      if (!Step())
+      {
+        // RelativeLocationPath can't end with a trailing '/'
+        // "Location step expected following '/' or '//'"
+        error(XPATHErrorResources.ER_EXPECTED_LOC_STEP, null);
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   *
+   * Step    ::=    Basis Predicate
+   * | AbbreviatedStep
+   *
+   * @returns false if step was empty (or only a '/'); true, otherwise
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected boolean Step() throws javax.xml.transform.TransformerException
+  {
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    boolean doubleSlash = tokenIs('/');
+
+    // At most a single '/' before each Step is consumed by caller; if the
+    // first thing is a '/', that means we had '//' and the Step must not
+    // be empty.
+    if (doubleSlash)
+    {
+      nextToken();
+
+      appendOp(2, OpCodes.FROM_DESCENDANTS_OR_SELF);
+
+      // Have to fix up for patterns such as '//@foo' or '//attribute::foo',
+      // which translate to 'descendant-or-self::node()/attribute::foo'.
+      // notice I leave the '/' on the queue, so the next will be processed
+      // by a regular step pattern.
+
+      // Make room for telling how long the step is without the predicate
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH,m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.NODETYPE_NODE);
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH,m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      // Tell how long the step is without the predicate
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH + 1,
+          m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+      // Tell how long the step is with the predicate
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+          m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+      opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+    }
+
+    if (tokenIs("."))
+    {
+      nextToken();
+
+      if (tokenIs('['))
+      {
+        error(XPATHErrorResources.ER_PREDICATE_ILLEGAL_SYNTAX, null);  //"'..[predicate]' or '.[predicate]' is illegal syntax.  Use 'self::node()[predicate]' instead.");
+      }
+
+      appendOp(4, OpCodes.FROM_SELF);
+
+      // Tell how long the step is without the predicate
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 2,4);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 1, OpCodes.NODETYPE_NODE);
+    }
+    else if (tokenIs(".."))
+    {
+      nextToken();
+      appendOp(4, OpCodes.FROM_PARENT);
+
+      // Tell how long the step is without the predicate
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 2,4);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 1, OpCodes.NODETYPE_NODE);
+    }
+
+    // There is probably a better way to test for this
+    // transition... but it gets real hairy if you try
+    // to do it in basis().
+    else if (tokenIs('*') || tokenIs('@') || tokenIs('_')
+             || (m_token!= null && Character.isLetter(m_token.charAt(0))))
+    {
+      Basis();
+
+      while (tokenIs('['))
+      {
+        Predicate();
+      }
+
+      // Tell how long the entire step is.
+      m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+        m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+    }
+    else
+    {
+      // No Step matched - that's an error if previous thing was a '//'
+      if (doubleSlash)
+      {
+        // "Location step expected following '/' or '//'"
+        error(XPATHErrorResources.ER_EXPECTED_LOC_STEP, null);
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   *
+   * Basis    ::=    AxisName '::' NodeTest
+   * | AbbreviatedBasis
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Basis() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+    int axesType;
+
+    // The next blocks guarantee that a FROM_XXX will be added.
+    if (lookahead("::", 1))
+    {
+      axesType = AxisName();
+
+      nextToken();
+      nextToken();
+    }
+    else if (tokenIs('@'))
+    {
+      axesType = OpCodes.FROM_ATTRIBUTES;
+
+      appendOp(2, axesType);
+      nextToken();
+    }
+    else
+    {
+      axesType = OpCodes.FROM_CHILDREN;
+
+      appendOp(2, axesType);
+    }
+
+    // Make room for telling how long the step is without the predicate
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+    NodeTest(axesType);
+
+    // Tell how long the step is without the predicate
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH + 1,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+   }
+
+  /**
+   *
+   * Basis    ::=    AxisName '::' NodeTest
+   * | AbbreviatedBasis
+   *
+   * @return FROM_XXX axes type, found in {@link com.sun.org.apache.xpath.internal.compiler.Keywords}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected int AxisName() throws javax.xml.transform.TransformerException
+  {
+
+    Object val = Keywords.getAxisName(m_token);
+
+    if (null == val)
+    {
+      error(XPATHErrorResources.ER_ILLEGAL_AXIS_NAME,
+            new Object[]{ m_token });  //"illegal axis name: "+m_token);
+    }
+
+    int axesType = ((Integer) val).intValue();
+
+    appendOp(2, axesType);
+
+    return axesType;
+  }
+
+  /**
+   *
+   * NodeTest    ::=    WildcardName
+   * | NodeType '(' ')'
+   * | 'processing-instruction' '(' Literal ')'
+   *
+   * @param axesType FROM_XXX axes type, found in {@link com.sun.org.apache.xpath.internal.compiler.Keywords}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void NodeTest(int axesType) throws javax.xml.transform.TransformerException
+  {
+
+    if (lookahead('(', 1))
+    {
+      Object nodeTestOp = Keywords.getNodeType(m_token);
+
+      if (null == nodeTestOp)
+      {
+        error(XPATHErrorResources.ER_UNKNOWN_NODETYPE,
+              new Object[]{ m_token });  //"Unknown nodetype: "+m_token);
+      }
+      else
+      {
+        nextToken();
+
+        int nt = ((Integer) nodeTestOp).intValue();
+
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), nt);
+        m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+        consumeExpected('(');
+
+        if (OpCodes.NODETYPE_PI == nt)
+        {
+          if (!tokenIs(')'))
+          {
+            Literal();
+          }
+        }
+
+        consumeExpected(')');
+      }
+    }
+    else
+    {
+
+      // Assume name of attribute or element.
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.NODENAME);
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      if (lookahead(':', 1))
+      {
+        if (tokenIs('*'))
+        {
+          m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ELEMWILDCARD);
+        }
+        else
+        {
+          m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), m_queueMark - 1);
+
+          // Minimalist check for an NCName - just check first character
+          // to distinguish from other possible tokens
+          if (!Character.isLetter(m_tokenChar) && !tokenIs('_'))
+          {
+            // "Node test that matches either NCName:* or QName was expected."
+            error(XPATHErrorResources.ER_EXPECTED_NODE_TEST, null);
+          }
+        }
+
+        nextToken();
+        consumeExpected(':');
+      }
+      else
+      {
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.EMPTY);
+      }
+
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      if (tokenIs('*'))
+      {
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ELEMWILDCARD);
+      }
+      else
+      {
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), m_queueMark - 1);
+
+        // Minimalist check for an NCName - just check first character
+        // to distinguish from other possible tokens
+        if (!Character.isLetter(m_tokenChar) && !tokenIs('_'))
+        {
+          // "Node test that matches either NCName:* or QName was expected."
+          error(XPATHErrorResources.ER_EXPECTED_NODE_TEST, null);
+        }
+      }
+
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      nextToken();
+    }
+  }
+
+  /**
+   *
+   * Predicate ::= '[' PredicateExpr ']'
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Predicate() throws javax.xml.transform.TransformerException
+  {
+
+    if (tokenIs('['))
+    {
+      nextToken();
+      PredicateExpr();
+      consumeExpected(']');
+    }
+  }
+
+  /**
+   *
+   * PredicateExpr ::= Expr
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void PredicateExpr() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    appendOp(2, OpCodes.OP_PREDICATE);
+    Expr();
+
+    // Terminate for safety.
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ENDOP);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   * QName ::=  (Prefix ':')? LocalPart
+   * Prefix ::=  NCName
+   * LocalPart ::=  NCName
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void QName() throws javax.xml.transform.TransformerException
+  {
+    // Namespace
+    if(lookahead(':', 1))
+    {
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), m_queueMark - 1);
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      nextToken();
+      consumeExpected(':');
+    }
+    else
+    {
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.EMPTY);
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+    }
+
+    // Local name
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), m_queueMark - 1);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+    nextToken();
+  }
+
+  /**
+   * NCName ::=  (Letter | '_') (NCNameChar)
+   * NCNameChar ::=  Letter | Digit | '.' | '-' | '_' | CombiningChar | Extender
+   */
+  protected void NCName()
+  {
+
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), m_queueMark - 1);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+    nextToken();
+  }
+
+  /**
+   * The value of the Literal is the sequence of characters inside
+   * the " or ' characters>.
+   *
+   * Literal  ::=  '"' [^"]* '"'
+   * | "'" [^']* "'"
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Literal() throws javax.xml.transform.TransformerException
+  {
+
+    int last = m_token.length() - 1;
+    char c0 = m_tokenChar;
+    char cX = m_token.charAt(last);
+
+    if (((c0 == '\"') && (cX == '\"')) || ((c0 == '\'') && (cX == '\'')))
+    {
+
+      // Mutate the token to remove the quotes and have the XString object
+      // already made.
+      int tokenQueuePos = m_queueMark - 1;
+
+      m_ops.m_tokenQueue.setElementAt(null,tokenQueuePos);
+
+      Object obj = new XString(m_token.substring(1, last));
+
+      m_ops.m_tokenQueue.setElementAt(obj,tokenQueuePos);
+
+      // lit = m_token.substring(1, last);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), tokenQueuePos);
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      nextToken();
+    }
+    else
+    {
+      error(XPATHErrorResources.ER_PATTERN_LITERAL_NEEDS_BE_QUOTED,
+            new Object[]{ m_token });  //"Pattern literal ("+m_token+") needs to be quoted!");
+    }
+  }
+
+  /**
+   *
+   * Number ::= [0-9]+('.'[0-9]+)? | '.'[0-9]+
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Number() throws javax.xml.transform.TransformerException
+  {
+
+    if (null != m_token)
+    {
+
+      // Mutate the token to remove the quotes and have the XNumber object
+      // already made.
+      double num;
+
+      try
+      {
+        // XPath 1.0 does not support number in exp notation
+        if ((m_token.indexOf('e') > -1)||(m_token.indexOf('E') > -1))
+                throw new NumberFormatException();
+        num = Double.valueOf(m_token).doubleValue();
+      }
+      catch (NumberFormatException nfe)
+      {
+        num = 0.0;  // to shut up compiler.
+
+        error(XPATHErrorResources.ER_COULDNOT_BE_FORMATTED_TO_NUMBER,
+              new Object[]{ m_token });  //m_token+" could not be formatted to a number!");
+      }
+
+      m_ops.m_tokenQueue.setElementAt(new XNumber(num),m_queueMark - 1);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), m_queueMark - 1);
+      m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+      nextToken();
+    }
+  }
+
+  // ============= PATTERN FUNCTIONS =================
+
+  /**
+   *
+   * Pattern  ::=  LocationPathPattern
+   * | Pattern '|' LocationPathPattern
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void Pattern() throws javax.xml.transform.TransformerException
+  {
+
+    while (true)
+    {
+      LocationPathPattern();
+
+      if (tokenIs('|'))
+      {
+        nextToken();
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
+
+  /**
+   *
+   *
+   * LocationPathPattern  ::=  '/' RelativePathPattern?
+   * | IdKeyPattern (('/' | '//') RelativePathPattern)?
+   * | '//'? RelativePathPattern
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void LocationPathPattern() throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+
+    final int RELATIVE_PATH_NOT_PERMITTED = 0;
+    final int RELATIVE_PATH_PERMITTED     = 1;
+    final int RELATIVE_PATH_REQUIRED      = 2;
+
+    int relativePathStatus = RELATIVE_PATH_NOT_PERMITTED;
+
+    appendOp(2, OpCodes.OP_LOCATIONPATHPATTERN);
+
+    if (lookahead('(', 1)
+            && (tokenIs(Keywords.FUNC_ID_STRING)
+                || tokenIs(Keywords.FUNC_KEY_STRING)))
+    {
+      IdKeyPattern();
+
+      if (tokenIs('/'))
+      {
+        nextToken();
+
+        if (tokenIs('/'))
+        {
+          appendOp(4, OpCodes.MATCH_ANY_ANCESTOR);
+
+          nextToken();
+        }
+        else
+        {
+          appendOp(4, OpCodes.MATCH_IMMEDIATE_ANCESTOR);
+        }
+
+        // Tell how long the step is without the predicate
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 2, 4);
+        m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 1, OpCodes.NODETYPE_FUNCTEST);
+
+        relativePathStatus = RELATIVE_PATH_REQUIRED;
+      }
+    }
+    else if (tokenIs('/'))
+    {
+      if (lookahead('/', 1))
+      {
+        appendOp(4, OpCodes.MATCH_ANY_ANCESTOR);
+
+        // Added this to fix bug reported by Myriam for match="//x/a"
+        // patterns.  If you don't do this, the 'x' step will think it's part
+        // of a '//' pattern, and so will cause 'a' to be matched when it has
+        // any ancestor that is 'x'.
+        nextToken();
+
+        relativePathStatus = RELATIVE_PATH_REQUIRED;
+      }
+      else
+      {
+        appendOp(4, OpCodes.FROM_ROOT);
+
+        relativePathStatus = RELATIVE_PATH_PERMITTED;
+      }
+
+
+      // Tell how long the step is without the predicate
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 2, 4);
+      m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH) - 1, OpCodes.NODETYPE_ROOT);
+
+      nextToken();
+    }
+    else
+    {
+      relativePathStatus = RELATIVE_PATH_REQUIRED;
+    }
+
+    if (relativePathStatus != RELATIVE_PATH_NOT_PERMITTED)
+    {
+      if (!tokenIs('|') && (null != m_token))
+      {
+        RelativePathPattern();
+      }
+      else if (relativePathStatus == RELATIVE_PATH_REQUIRED)
+      {
+        // "A relative path pattern was expected."
+        error(XPATHErrorResources.ER_EXPECTED_REL_PATH_PATTERN, null);
+      }
+    }
+
+    // Terminate for safety.
+    m_ops.setOp(m_ops.getOp(OpMap.MAPINDEX_LENGTH), OpCodes.ENDOP);
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+  }
+
+  /**
+   *
+   * IdKeyPattern  ::=  'id' '(' Literal ')'
+   * | 'key' '(' Literal ',' Literal ')'
+   * (Also handle doc())
+   *
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void IdKeyPattern() throws javax.xml.transform.TransformerException
+  {
+    FunctionCall();
+  }
+
+  /**
+   *
+   * RelativePathPattern  ::=  StepPattern
+   * | RelativePathPattern '/' StepPattern
+   * | RelativePathPattern '//' StepPattern
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected void RelativePathPattern()
+              throws javax.xml.transform.TransformerException
+  {
+
+    // Caller will have consumed any '/' or '//' preceding the
+    // RelativePathPattern, so let StepPattern know it can't begin with a '/'
+    boolean trailingSlashConsumed = StepPattern(false);
+
+    while (tokenIs('/'))
+    {
+      nextToken();
+
+      // StepPattern() may consume first slash of pair in "a//b" while
+      // processing StepPattern "a".  On next iteration, let StepPattern know
+      // that happened, so it doesn't match ill-formed patterns like "a///b".
+      trailingSlashConsumed = StepPattern(!trailingSlashConsumed);
+    }
+  }
+
+  /**
+   *
+   * StepPattern  ::=  AbbreviatedNodeTestStep
+   *
+   * @param isLeadingSlashPermitted a boolean indicating whether a slash can
+   *        appear at the start of this step
+   *
+   * @return boolean indicating whether a slash following the step was consumed
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected boolean StepPattern(boolean isLeadingSlashPermitted)
+            throws javax.xml.transform.TransformerException
+  {
+    return AbbreviatedNodeTestStep(isLeadingSlashPermitted);
+  }
+
+  /**
+   *
+   * AbbreviatedNodeTestStep    ::=    '@'? NodeTest Predicate
+   *
+   * @param isLeadingSlashPermitted a boolean indicating whether a slash can
+   *        appear at the start of this step
+   *
+   * @return boolean indicating whether a slash following the step was consumed
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  protected boolean AbbreviatedNodeTestStep(boolean isLeadingSlashPermitted)
+            throws javax.xml.transform.TransformerException
+  {
+
+    int opPos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+    int axesType;
+
+    // The next blocks guarantee that a MATCH_XXX will be added.
+    int matchTypePos = -1;
+
+    if (tokenIs('@'))
+    {
+      axesType = OpCodes.MATCH_ATTRIBUTE;
+
+      appendOp(2, axesType);
+      nextToken();
+    }
+    else if (this.lookahead("::", 1))
+    {
+      if (tokenIs("attribute"))
+      {
+        axesType = OpCodes.MATCH_ATTRIBUTE;
+
+        appendOp(2, axesType);
+      }
+      else if (tokenIs("child"))
+      {
+        matchTypePos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+        axesType = OpCodes.MATCH_IMMEDIATE_ANCESTOR;
+
+        appendOp(2, axesType);
+      }
+      else
+      {
+        axesType = -1;
+
+        this.error(XPATHErrorResources.ER_AXES_NOT_ALLOWED,
+                   new Object[]{ this.m_token });
+      }
+
+      nextToken();
+      nextToken();
+    }
+    else if (tokenIs('/'))
+    {
+      if (!isLeadingSlashPermitted)
+      {
+        // "A step was expected in the pattern, but '/' was encountered."
+        error(XPATHErrorResources.ER_EXPECTED_STEP_PATTERN, null);
+      }
+      axesType = OpCodes.MATCH_ANY_ANCESTOR;
+
+      appendOp(2, axesType);
+      nextToken();
+    }
+    else
+    {
+      matchTypePos = m_ops.getOp(OpMap.MAPINDEX_LENGTH);
+      axesType = OpCodes.MATCH_IMMEDIATE_ANCESTOR;
+
+      appendOp(2, axesType);
+    }
+
+    // Make room for telling how long the step is without the predicate
+    m_ops.setOp(OpMap.MAPINDEX_LENGTH, m_ops.getOp(OpMap.MAPINDEX_LENGTH) + 1);
+
+    NodeTest(axesType);
+
+    // Tell how long the step is without the predicate
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH + 1,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+    while (tokenIs('['))
+    {
+      Predicate();
+    }
+
+    boolean trailingSlashConsumed;
+
+    // For "a//b", where "a" is current step, we need to mark operation of
+    // current step as "MATCH_ANY_ANCESTOR".  Then we'll consume the first
+    // slash and subsequent step will be treated as a MATCH_IMMEDIATE_ANCESTOR
+    // (unless it too is followed by '//'.)
+    //
+    // %REVIEW%  Following is what happens today, but I'm not sure that's
+    // %REVIEW%  correct behaviour.  Perhaps no valid case could be constructed
+    // %REVIEW%  where it would matter?
+    //
+    // If current step is on the attribute axis (e.g., "@x//b"), we won't
+    // change the current step, and let following step be marked as
+    // MATCH_ANY_ANCESTOR on next call instead.
+    if ((matchTypePos > -1) && tokenIs('/') && lookahead('/', 1))
+    {
+      m_ops.setOp(matchTypePos, OpCodes.MATCH_ANY_ANCESTOR);
+
+      nextToken();
+
+      trailingSlashConsumed = true;
+    }
+    else
+    {
+      trailingSlashConsumed = false;
+    }
+
+    // Tell how long the entire step is.
+    m_ops.setOp(opPos + OpMap.MAPINDEX_LENGTH,
+      m_ops.getOp(OpMap.MAPINDEX_LENGTH) - opPos);
+
+    return trailingSlashConsumed;
+  }
+}

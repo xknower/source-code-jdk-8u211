@@ -1,101 +1,95 @@
-/*    */ package com.sun.jmx.snmp;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SnmpScopedPduRequest
-/*    */   extends SnmpScopedPduPacket
-/*    */   implements SnmpPduRequestType
-/*    */ {
-/*    */   private static final long serialVersionUID = 6463060973056773680L;
-/* 37 */   int errorStatus = 0;
-/*    */   
-/* 39 */   int errorIndex = 0;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void setErrorIndex(int paramInt) {
-/* 48 */     this.errorIndex = paramInt;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void setErrorStatus(int paramInt) {
-/* 56 */     this.errorStatus = paramInt;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getErrorIndex() {
-/* 65 */     return this.errorIndex;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getErrorStatus() {
-/* 71 */     return this.errorStatus;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public SnmpPdu getResponsePdu() {
-/* 78 */     SnmpScopedPduRequest snmpScopedPduRequest = new SnmpScopedPduRequest();
-/* 79 */     snmpScopedPduRequest.address = this.address;
-/* 80 */     snmpScopedPduRequest.port = this.port;
-/* 81 */     snmpScopedPduRequest.version = this.version;
-/* 82 */     snmpScopedPduRequest.requestId = this.requestId;
-/* 83 */     snmpScopedPduRequest.msgId = this.msgId;
-/* 84 */     snmpScopedPduRequest.msgMaxSize = this.msgMaxSize;
-/* 85 */     snmpScopedPduRequest.msgFlags = this.msgFlags;
-/* 86 */     snmpScopedPduRequest.msgSecurityModel = this.msgSecurityModel;
-/* 87 */     snmpScopedPduRequest.contextEngineId = this.contextEngineId;
-/* 88 */     snmpScopedPduRequest.contextName = this.contextName;
-/* 89 */     snmpScopedPduRequest.securityParameters = this.securityParameters;
-/* 90 */     snmpScopedPduRequest.type = 162;
-/* 91 */     snmpScopedPduRequest.errorStatus = 0;
-/* 92 */     snmpScopedPduRequest.errorIndex = 0;
-/* 93 */     return snmpScopedPduRequest;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpScopedPduRequest.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp;
+/**
+ * Is used to represent <CODE>get</CODE>, <CODE>get-next</CODE>, <CODE>set</CODE>, <CODE>response</CODE> SNMP V3 scoped PDUs.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+public class SnmpScopedPduRequest extends SnmpScopedPduPacket
+    implements SnmpPduRequestType {
+    private static final long serialVersionUID = 6463060973056773680L;
+
+    int errorStatus=0 ;
+
+    int errorIndex=0 ;
+
+    /**
+     * Error index setter. Remember that SNMP indices start from 1.
+     * Thus the corresponding <CODE>SnmpVarBind</CODE> is
+     * <CODE>varBindList[errorIndex-1]</CODE>.
+     * @param i Error index.
+     */
+    public void setErrorIndex(int i) {
+        errorIndex = i;
+    }
+    /**
+     * Error status setter. Statuses are defined in
+     * {@link com.sun.jmx.snmp.SnmpDefinitions SnmpDefinitions}.
+     * @param s Error status.
+     */
+    public void setErrorStatus(int s) {
+        errorStatus = s;
+    }
+
+    /**
+     * Error index getter. Remember that SNMP indices start from 1.
+     * Thus the corresponding <CODE>SnmpVarBind</CODE> is
+     * <CODE>varBindList[errorIndex-1]</CODE>.
+     * @return Error index.
+     */
+    public int getErrorIndex() { return errorIndex; }
+    /**
+     * Error status getter. Statuses are defined in
+     * {@link com.sun.jmx.snmp.SnmpDefinitions SnmpDefinitions}.
+     * @return Error status.
+     */
+    public int getErrorStatus() { return errorStatus; }
+
+    /**
+     * Generates the pdu to use for response.
+     * @return Response pdu.
+     */
+    public SnmpPdu getResponsePdu() {
+        SnmpScopedPduRequest result = new SnmpScopedPduRequest();
+        result.address = address ;
+        result.port = port ;
+        result.version = version ;
+        result.requestId = requestId;
+        result.msgId = msgId;
+        result.msgMaxSize = msgMaxSize;
+        result.msgFlags = msgFlags;
+        result.msgSecurityModel = msgSecurityModel;
+        result.contextEngineId = contextEngineId;
+        result.contextName = contextName;
+        result.securityParameters = securityParameters;
+        result.type = pduGetResponsePdu ;
+        result.errorStatus = SnmpDefinitions.snmpRspNoError ;
+        result.errorIndex = 0 ;
+        return result;
+    }
+}

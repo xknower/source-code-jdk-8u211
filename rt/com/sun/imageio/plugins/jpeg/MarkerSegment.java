@@ -1,235 +1,229 @@
-/*     */ package com.sun.imageio.plugins.jpeg;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import javax.imageio.IIOException;
-/*     */ import javax.imageio.metadata.IIOInvalidTreeException;
-/*     */ import javax.imageio.metadata.IIOMetadataNode;
-/*     */ import javax.imageio.stream.ImageOutputStream;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class MarkerSegment
-/*     */   implements Cloneable
-/*     */ {
-/*     */   protected static final int LENGTH_SIZE = 2;
-/*     */   int tag;
-/*     */   int length;
-/*  50 */   byte[] data = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean unknown = false;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MarkerSegment(JPEGBuffer paramJPEGBuffer) throws IOException {
-/*  59 */     paramJPEGBuffer.loadBuf(3);
-/*  60 */     this.tag = paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/*  61 */     this.length = (paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF) << 8;
-/*  62 */     this.length |= paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/*  63 */     this.length -= 2;
-/*     */     
-/*  65 */     if (this.length < 0) {
-/*  66 */       throw new IIOException("Invalid segment length: " + this.length);
-/*     */     }
-/*  68 */     paramJPEGBuffer.bufAvail -= 3;
-/*     */ 
-/*     */     
-/*  71 */     paramJPEGBuffer.loadBuf(this.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MarkerSegment(int paramInt) {
-/*  79 */     this.tag = paramInt;
-/*  80 */     this.length = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MarkerSegment(Node paramNode) throws IIOInvalidTreeException {
-/*  89 */     this.tag = getAttributeValue(paramNode, null, "MarkerTag", 0, 255, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  94 */     this.length = 0;
-/*     */     
-/*  96 */     if (paramNode instanceof IIOMetadataNode) {
-/*  97 */       IIOMetadataNode iIOMetadataNode = (IIOMetadataNode)paramNode;
-/*     */       try {
-/*  99 */         this.data = (byte[])iIOMetadataNode.getUserObject();
-/* 100 */       } catch (Exception exception) {
-/* 101 */         IIOInvalidTreeException iIOInvalidTreeException = new IIOInvalidTreeException("Can't get User Object", paramNode);
-/*     */ 
-/*     */         
-/* 104 */         iIOInvalidTreeException.initCause(exception);
-/* 105 */         throw iIOInvalidTreeException;
-/*     */       } 
-/*     */     } else {
-/* 108 */       throw new IIOInvalidTreeException("Node must have User Object", paramNode);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Object clone() {
-/* 117 */     MarkerSegment markerSegment = null;
-/*     */     try {
-/* 119 */       markerSegment = (MarkerSegment)super.clone();
-/* 120 */     } catch (CloneNotSupportedException cloneNotSupportedException) {}
-/* 121 */     if (this.data != null) {
-/* 122 */       markerSegment.data = (byte[])this.data.clone();
-/*     */     }
-/* 124 */     return markerSegment;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void loadData(JPEGBuffer paramJPEGBuffer) throws IOException {
-/* 132 */     this.data = new byte[this.length];
-/* 133 */     paramJPEGBuffer.readData(this.data);
-/*     */   }
-/*     */   
-/*     */   IIOMetadataNode getNativeNode() {
-/* 137 */     IIOMetadataNode iIOMetadataNode = new IIOMetadataNode("unknown");
-/* 138 */     iIOMetadataNode.setAttribute("MarkerTag", Integer.toString(this.tag));
-/* 139 */     iIOMetadataNode.setUserObject(this.data);
-/*     */     
-/* 141 */     return iIOMetadataNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static int getAttributeValue(Node paramNode, NamedNodeMap paramNamedNodeMap, String paramString, int paramInt1, int paramInt2, boolean paramBoolean) throws IIOInvalidTreeException {
-/* 151 */     if (paramNamedNodeMap == null) {
-/* 152 */       paramNamedNodeMap = paramNode.getAttributes();
-/*     */     }
-/* 154 */     String str = paramNamedNodeMap.getNamedItem(paramString).getNodeValue();
-/* 155 */     int i = -1;
-/* 156 */     if (str == null) {
-/* 157 */       if (paramBoolean) {
-/* 158 */         throw new IIOInvalidTreeException(paramString + " attribute not found", paramNode);
-/*     */       }
-/*     */     } else {
-/*     */       
-/* 162 */       i = Integer.parseInt(str);
-/* 163 */       if (i < paramInt1 || i > paramInt2) {
-/* 164 */         throw new IIOInvalidTreeException(paramString + " attribute out of range", paramNode);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 168 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void writeTag(ImageOutputStream paramImageOutputStream) throws IOException {
-/* 177 */     paramImageOutputStream.write(255);
-/* 178 */     paramImageOutputStream.write(this.tag);
-/* 179 */     write2bytes(paramImageOutputStream, this.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void write(ImageOutputStream paramImageOutputStream) throws IOException {
-/* 187 */     this.length = 2 + ((this.data != null) ? this.data.length : 0);
-/* 188 */     writeTag(paramImageOutputStream);
-/* 189 */     if (this.data != null) {
-/* 190 */       paramImageOutputStream.write(this.data);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void write2bytes(ImageOutputStream paramImageOutputStream, int paramInt) throws IOException {
-/* 196 */     paramImageOutputStream.write(paramInt >> 8 & 0xFF);
-/* 197 */     paramImageOutputStream.write(paramInt & 0xFF);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void printTag(String paramString) {
-/* 202 */     System.out.println(paramString + " marker segment - marker = 0x" + 
-/* 203 */         Integer.toHexString(this.tag));
-/* 204 */     System.out.println("length: " + this.length);
-/*     */   }
-/*     */   
-/*     */   void print() {
-/* 208 */     printTag("Unknown");
-/* 209 */     if (this.length > 10) {
-/* 210 */       System.out.print("First 5 bytes:"); int i;
-/* 211 */       for (i = 0; i < 5; i++) {
-/* 212 */         System.out.print(" Ox" + 
-/* 213 */             Integer.toHexString(this.data[i]));
-/*     */       }
-/* 215 */       System.out.print("\nLast 5 bytes:");
-/* 216 */       for (i = this.data.length - 5; i < this.data.length; i++) {
-/* 217 */         System.out.print(" Ox" + 
-/* 218 */             Integer.toHexString(this.data[i]));
-/*     */       }
-/*     */     } else {
-/* 221 */       System.out.print("Data:");
-/* 222 */       for (byte b = 0; b < this.data.length; b++) {
-/* 223 */         System.out.print(" Ox" + 
-/* 224 */             Integer.toHexString(this.data[b]));
-/*     */       }
-/*     */     } 
-/* 227 */     System.out.println();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\MarkerSegment.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.IIOException;
+
+import java.io.IOException;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NamedNodeMap;
+
+/**
+ * All metadata is stored in MarkerSegments.  Marker segments
+ * that we know about are stored in subclasses of this
+ * basic class, which used for unrecognized APPn marker
+ * segments.  XXX break out UnknownMarkerSegment as a subclass
+ * and make this abstract, avoiding unused data field.
+ */
+class MarkerSegment implements Cloneable {
+    protected static final int LENGTH_SIZE = 2; // length is 2 bytes
+    int tag;      // See JPEG.java
+    int length;    /* Sometimes needed by subclasses; doesn't include
+                      itself.  Meaningful only if constructed from a stream */
+    byte [] data = null;  // Raw segment data, used for unrecognized segments
+    boolean unknown = false; // Set to true if the tag is not recognized
+
+    /**
+     * Constructor for creating <code>MarkerSegment</code>s by reading
+     * from an <code>ImageInputStream</code>.
+     */
+    MarkerSegment(JPEGBuffer buffer) throws IOException {
+
+        buffer.loadBuf(3);  // tag plus length
+        tag = buffer.buf[buffer.bufPtr++] & 0xff;
+        length = (buffer.buf[buffer.bufPtr++] & 0xff) << 8;
+        length |= buffer.buf[buffer.bufPtr++] & 0xff;
+        length -= 2;  // JPEG length includes itself, we don't
+
+        if (length < 0) {
+            throw new IIOException("Invalid segment length: " + length);
+        }
+        buffer.bufAvail -= 3;
+        // Now that we know the true length, ensure that we've got it,
+        // or at least a bufferful if length is too big.
+        buffer.loadBuf(length);
+    }
+
+    /**
+     * Constructor used when creating segments other than by
+     * reading them from a stream.
+     */
+    MarkerSegment(int tag) {
+        this.tag = tag;
+        length = 0;
+    }
+
+    /**
+     * Construct a MarkerSegment from an "unknown" DOM Node.
+     */
+    MarkerSegment(Node node) throws IIOInvalidTreeException {
+        // The type of node should have been verified already.
+        // get the attribute and assign it to the tag
+        tag = getAttributeValue(node,
+                                null,
+                                "MarkerTag",
+                                0, 255,
+                                true);
+        length = 0;
+        // get the user object and clone it to the data
+        if (node instanceof IIOMetadataNode) {
+            IIOMetadataNode iioNode = (IIOMetadataNode) node;
+            try {
+                data = (byte []) iioNode.getUserObject();
+            } catch (Exception e) {
+                IIOInvalidTreeException newGuy =
+                    new IIOInvalidTreeException
+                    ("Can't get User Object", node);
+                newGuy.initCause(e);
+                throw newGuy;
+            }
+        } else {
+            throw new IIOInvalidTreeException
+                ("Node must have User Object", node);
+        }
+    }
+
+    /**
+     * Deep copy of data array.
+     */
+    protected Object clone() {
+        MarkerSegment newGuy = null;
+        try {
+            newGuy = (MarkerSegment) super.clone();
+        } catch (CloneNotSupportedException e) {} // won't happen
+        if (this.data != null) {
+            newGuy.data = (byte[]) data.clone();
+        }
+        return newGuy;
+    }
+
+    /**
+     * We have determined that we don't know the type, so load
+     * the data using the length parameter.
+     */
+    void loadData(JPEGBuffer buffer) throws IOException {
+        data = new byte[length];
+        buffer.readData(data);
+    }
+
+    IIOMetadataNode getNativeNode() {
+        IIOMetadataNode node = new IIOMetadataNode("unknown");
+        node.setAttribute("MarkerTag", Integer.toString(tag));
+        node.setUserObject(data);
+
+        return node;
+    }
+
+    static int getAttributeValue(Node node,
+                                 NamedNodeMap attrs,
+                                 String name,
+                                 int min,
+                                 int max,
+                                 boolean required)
+        throws IIOInvalidTreeException {
+        if (attrs == null) {
+            attrs = node.getAttributes();
+        }
+        String valueString = attrs.getNamedItem(name).getNodeValue();
+        int value = -1;
+        if (valueString == null) {
+            if (required) {
+                throw new IIOInvalidTreeException
+                    (name + " attribute not found", node);
+            }
+        } else {
+              value = Integer.parseInt(valueString);
+              if ((value < min) || (value > max)) {
+                  throw new IIOInvalidTreeException
+                      (name + " attribute out of range", node);
+              }
+        }
+        return value;
+    }
+
+    /**
+     * Writes the marker, tag, and length.  Note that length
+     * should be verified by the caller as a correct JPEG
+     * length, i.e it includes itself.
+     */
+    void writeTag(ImageOutputStream ios) throws IOException {
+        ios.write(0xff);
+        ios.write(tag);
+        write2bytes(ios, length);
+    }
+
+    /**
+     * Writes the data for this segment to the stream in
+     * valid JPEG format.
+     */
+    void write(ImageOutputStream ios) throws IOException {
+        length = 2 + ((data != null) ? data.length : 0);
+        writeTag(ios);
+        if (data != null) {
+            ios.write(data);
+        }
+    }
+
+    static void write2bytes(ImageOutputStream ios,
+                            int value) throws IOException {
+        ios.write((value >> 8) & 0xff);
+        ios.write(value & 0xff);
+
+    }
+
+    void printTag(String prefix) {
+        System.out.println(prefix + " marker segment - marker = 0x"
+                           + Integer.toHexString(tag));
+        System.out.println("length: " + length);
+    }
+
+    void print() {
+        printTag("Unknown");
+        if (length > 10) {
+            System.out.print("First 5 bytes:");
+            for (int i=0;i<5;i++) {
+                System.out.print(" Ox"
+                                 + Integer.toHexString((int)data[i]));
+            }
+            System.out.print("\nLast 5 bytes:");
+            for (int i=data.length-5;i<data.length;i++) {
+                System.out.print(" Ox"
+                                 + Integer.toHexString((int)data[i]));
+            }
+        } else {
+            System.out.print("Data:");
+            for (int i=0;i<data.length;i++) {
+                System.out.print(" Ox"
+                                 + Integer.toHexString((int)data[i]));
+            }
+        }
+        System.out.println();
+    }
+}

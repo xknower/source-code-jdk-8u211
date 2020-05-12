@@ -1,396 +1,392 @@
-/*     */ package java.lang;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class CharacterData0E
-/*     */   extends CharacterData
-/*     */ {
-/*     */   int getProperties(int paramInt) {
-/*  70 */     char c = (char)paramInt;
-/*  71 */     return A[Y[X[c >> 5] | c >> 1 & 0xF] | c & 0x1];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   int getPropertiesEx(int paramInt) {
-/*  76 */     char c = (char)paramInt;
-/*  77 */     return B[Y[X[c >> 5] | c >> 1 & 0xF] | c & 0x1];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   boolean isOtherLowercase(int paramInt) {
-/*  82 */     int i = getPropertiesEx(paramInt);
-/*  83 */     return ((i & 0x1) != 0);
-/*     */   }
-/*     */   
-/*     */   boolean isOtherUppercase(int paramInt) {
-/*  87 */     int i = getPropertiesEx(paramInt);
-/*  88 */     return ((i & 0x2) != 0);
-/*     */   }
-/*     */   
-/*     */   boolean isOtherAlphabetic(int paramInt) {
-/*  92 */     int i = getPropertiesEx(paramInt);
-/*  93 */     return ((i & 0x4) != 0);
-/*     */   }
-/*     */   
-/*     */   boolean isIdeographic(int paramInt) {
-/*  97 */     int i = getPropertiesEx(paramInt);
-/*  98 */     return ((i & 0x10) != 0);
-/*     */   }
-/*     */   
-/*     */   int getType(int paramInt) {
-/* 102 */     int i = getProperties(paramInt);
-/* 103 */     return i & 0x1F;
-/*     */   }
-/*     */   
-/*     */   boolean isJavaIdentifierStart(int paramInt) {
-/* 107 */     int i = getProperties(paramInt);
-/* 108 */     return ((i & 0x7000) >= 20480);
-/*     */   }
-/*     */   
-/*     */   boolean isJavaIdentifierPart(int paramInt) {
-/* 112 */     int i = getProperties(paramInt);
-/* 113 */     return ((i & 0x3000) != 0);
-/*     */   }
-/*     */   
-/*     */   boolean isUnicodeIdentifierStart(int paramInt) {
-/* 117 */     int i = getProperties(paramInt);
-/* 118 */     return ((i & 0x7000) == 28672);
-/*     */   }
-/*     */   
-/*     */   boolean isUnicodeIdentifierPart(int paramInt) {
-/* 122 */     int i = getProperties(paramInt);
-/* 123 */     return ((i & 0x1000) != 0);
-/*     */   }
-/*     */   
-/*     */   boolean isIdentifierIgnorable(int paramInt) {
-/* 127 */     int i = getProperties(paramInt);
-/* 128 */     return ((i & 0x7000) == 4096);
-/*     */   }
-/*     */   
-/*     */   int toLowerCase(int paramInt) {
-/* 132 */     int i = paramInt;
-/* 133 */     int j = getProperties(paramInt);
-/*     */     
-/* 135 */     if ((j & 0x20000) != 0) {
-/* 136 */       int k = j << 5 >> 23;
-/* 137 */       i = paramInt + k;
-/*     */     } 
-/* 139 */     return i;
-/*     */   }
-/*     */   
-/*     */   int toUpperCase(int paramInt) {
-/* 143 */     int i = paramInt;
-/* 144 */     int j = getProperties(paramInt);
-/*     */     
-/* 146 */     if ((j & 0x10000) != 0) {
-/* 147 */       int k = j << 5 >> 23;
-/* 148 */       i = paramInt - k;
-/*     */     } 
-/* 150 */     return i;
-/*     */   }
-/*     */   
-/*     */   int toTitleCase(int paramInt) {
-/* 154 */     int i = paramInt;
-/* 155 */     int j = getProperties(paramInt);
-/*     */     
-/* 157 */     if ((j & 0x8000) != 0) {
-/*     */       
-/* 159 */       if ((j & 0x10000) == 0)
-/*     */       {
-/*     */         
-/* 162 */         i = paramInt + 1;
-/*     */       }
-/* 164 */       else if ((j & 0x20000) == 0)
-/*     */       {
-/*     */         
-/* 167 */         i = paramInt - 1;
-/*     */ 
-/*     */       
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/* 175 */     else if ((j & 0x10000) != 0) {
-/*     */ 
-/*     */       
-/* 178 */       i = toUpperCase(paramInt);
-/*     */     } 
-/* 180 */     return i;
-/*     */   }
-/*     */   
-/*     */   int digit(int paramInt1, int paramInt2) {
-/* 184 */     int i = -1;
-/* 185 */     if (paramInt2 >= 2 && paramInt2 <= 36) {
-/* 186 */       int j = getProperties(paramInt1);
-/* 187 */       int k = j & 0x1F;
-/* 188 */       if (k == 9) {
-/* 189 */         i = paramInt1 + ((j & 0x3E0) >> 5) & 0x1F;
-/*     */       }
-/* 191 */       else if ((j & 0xC00) == 3072) {
-/*     */         
-/* 193 */         i = (paramInt1 + ((j & 0x3E0) >> 5) & 0x1F) + 10;
-/*     */       } 
-/*     */     } 
-/* 196 */     return (i < paramInt2) ? i : -1;
-/*     */   }
-/*     */   
-/*     */   int getNumericValue(int paramInt) {
-/* 200 */     int i = getProperties(paramInt);
-/* 201 */     int j = -1;
-/*     */     
-/* 203 */     switch (i & 0xC00)
-/*     */     
-/*     */     { default:
-/* 206 */         j = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 218 */         return j;case 1024: j = paramInt + ((i & 0x3E0) >> 5) & 0x1F; return j;case 2048: j = -2; return j;case 3072: break; }  j = (paramInt + ((i & 0x3E0) >> 5) & 0x1F) + 10; return j;
-/*     */   }
-/*     */   
-/*     */   boolean isWhitespace(int paramInt) {
-/* 222 */     int i = getProperties(paramInt);
-/* 223 */     return ((i & 0x7000) == 16384);
-/*     */   }
-/*     */   
-/*     */   byte getDirectionality(int paramInt) {
-/* 227 */     int i = getProperties(paramInt);
-/* 228 */     byte b = (byte)((i & 0x78000000) >> 27);
-/* 229 */     if (b == 15) {
-/* 230 */       b = -1;
-/*     */     }
-/* 232 */     return b;
-/*     */   }
-/*     */   
-/*     */   boolean isMirrored(int paramInt) {
-/* 236 */     int i = getProperties(paramInt);
-/* 237 */     return ((i & Integer.MIN_VALUE) != 0);
-/*     */   }
-/*     */   
-/* 240 */   static final CharacterData instance = new CharacterData0E();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 247 */   static final char[] X = "\000\020\020\020    0000000@                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                "
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 355 */     .toCharArray();
-/*     */ 
-/*     */ 
-/*     */   
-/* 359 */   static final char[] Y = "\000\002\002\002\002\002\002\002\002\002\002\002\002\002\002\002\004\004\004\004\004\004\004\004\004\004\004\004\004\004\004\004\002\002\002\002\002\002\002\002\002\002\002\002\002\002\002\002\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\002\002\002\002\002\002\002\002"
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 364 */     .toCharArray();
-/*     */ 
-/*     */ 
-/*     */   
-/* 368 */   static final int[] A = new int[8];
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final String A_DATA = "砀\000䠀တ砀\000砀\000䠀တ䠀တ䀀〆䀀〆";
-/*     */ 
-/*     */   
-/* 375 */   static final char[] B = "\000\000\000\000\000\000\000\000"
-/* 376 */     .toCharArray();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/* 382 */     char[] arrayOfChar = "砀\000䠀တ砀\000砀\000䠀တ䠀တ䀀〆䀀〆".toCharArray();
-/* 383 */     assert arrayOfChar.length == 16;
-/* 384 */     byte b1 = 0, b2 = 0;
-/* 385 */     while (b1 < 16) {
-/* 386 */       int i = arrayOfChar[b1++] << 16;
-/* 387 */       A[b2++] = i | arrayOfChar[b1++];
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\CharacterData0E.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+// This file was generated AUTOMATICALLY from a template file Mon Apr 01 21:01:39 PDT 2019
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+/** The CharacterData class encapsulates the large tables found in
+    Java.lang.Character. */
+
+class CharacterData0E extends CharacterData {
+    /* The character properties are currently encoded into 32 bits in the following manner:
+        1 bit   mirrored property
+        4 bits  directionality property
+        9 bits  signed offset used for converting case
+        1 bit   if 1, adding the signed offset converts the character to lowercase
+        1 bit   if 1, subtracting the signed offset converts the character to uppercase
+        1 bit   if 1, this character has a titlecase equivalent (possibly itself)
+        3 bits  0  may not be part of an identifier
+                1  ignorable control; may continue a Unicode identifier or Java identifier
+                2  may continue a Java identifier but not a Unicode identifier (unused)
+                3  may continue a Unicode identifier or Java identifier
+                4  is a Java whitespace character
+                5  may start or continue a Java identifier;
+                   may continue but not start a Unicode identifier (underscores)
+                6  may start or continue a Java identifier but not a Unicode identifier ($)
+                7  may start or continue a Unicode identifier or Java identifier
+                Thus:
+                   5, 6, 7 may start a Java identifier
+                   1, 2, 3, 5, 6, 7 may continue a Java identifier
+                   7 may start a Unicode identifier
+                   1, 3, 5, 7 may continue a Unicode identifier
+                   1 is ignorable within an identifier
+                   4 is Java whitespace
+        2 bits  0  this character has no numeric property
+                1  adding the digit offset to the character code and then
+                   masking with 0x1F will produce the desired numeric value
+                2  this character has a "strange" numeric value
+                3  a Java supradecimal digit: adding the digit offset to the
+                   character code, then masking with 0x1F, then adding 10
+                   will produce the desired numeric value
+        5 bits  digit offset
+        5 bits  character type
+
+        The encoding of character properties is subject to change at any time.
+     */
+
+    int getProperties(int ch) {
+        char offset = (char)ch;
+        int props = A[Y[X[offset>>5]|((offset>>1)&0xF)]|(offset&0x1)];
+        return props;
+    }
+
+    int getPropertiesEx(int ch) {
+        char offset = (char)ch;
+        int props = B[Y[X[offset>>5]|((offset>>1)&0xF)]|(offset&0x1)];
+        return props;
+    }
+
+    boolean isOtherLowercase(int ch) {
+        int props = getPropertiesEx(ch);
+        return (props & 0x0001) != 0;
+    }
+
+    boolean isOtherUppercase(int ch) {
+        int props = getPropertiesEx(ch);
+        return (props & 0x0002) != 0;
+    }
+
+    boolean isOtherAlphabetic(int ch) {
+        int props = getPropertiesEx(ch);
+        return (props & 0x0004) != 0;
+    }
+
+    boolean isIdeographic(int ch) {
+        int props = getPropertiesEx(ch);
+        return (props & 0x0010) != 0;
+    }
+
+    int getType(int ch) {
+        int props = getProperties(ch);
+        return (props & 0x1F);
+    }
+
+    boolean isJavaIdentifierStart(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x00007000) >= 0x00005000);
+    }
+
+    boolean isJavaIdentifierPart(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x00003000) != 0);
+    }
+
+    boolean isUnicodeIdentifierStart(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x00007000) == 0x00007000);
+    }
+
+    boolean isUnicodeIdentifierPart(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x00001000) != 0);
+    }
+
+    boolean isIdentifierIgnorable(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x00007000) == 0x00001000);
+    }
+
+    int toLowerCase(int ch) {
+        int mapChar = ch;
+        int val = getProperties(ch);
+
+        if ((val & 0x00020000) != 0) {
+            int offset = val << 5 >> (5+18);
+            mapChar = ch + offset;
+        }
+        return mapChar;
+    }
+
+    int toUpperCase(int ch) {
+        int mapChar = ch;
+        int val = getProperties(ch);
+
+        if ((val & 0x00010000) != 0) {
+            int offset = val  << 5 >> (5+18);
+            mapChar =  ch - offset;
+        }
+        return mapChar;
+    }
+
+    int toTitleCase(int ch) {
+        int mapChar = ch;
+        int val = getProperties(ch);
+
+        if ((val & 0x00008000) != 0) {
+            // There is a titlecase equivalent.  Perform further checks:
+            if ((val & 0x00010000) == 0) {
+                // The character does not have an uppercase equivalent, so it must
+                // already be uppercase; so add 1 to get the titlecase form.
+                mapChar = ch + 1;
+            }
+            else if ((val & 0x00020000) == 0) {
+                // The character does not have a lowercase equivalent, so it must
+                // already be lowercase; so subtract 1 to get the titlecase form.
+                mapChar = ch - 1;
+            }
+            // else {
+            // The character has both an uppercase equivalent and a lowercase
+            // equivalent, so it must itself be a titlecase form; return it.
+            // return ch;
+            //}
+        }
+        else if ((val & 0x00010000) != 0) {
+            // This character has no titlecase equivalent but it does have an
+            // uppercase equivalent, so use that (subtract the signed case offset).
+            mapChar = toUpperCase(ch);
+        }
+        return mapChar;
+    }
+
+    int digit(int ch, int radix) {
+        int value = -1;
+        if (radix >= Character.MIN_RADIX && radix <= Character.MAX_RADIX) {
+            int val = getProperties(ch);
+            int kind = val & 0x1F;
+            if (kind == Character.DECIMAL_DIGIT_NUMBER) {
+                value = ch + ((val & 0x3E0) >> 5) & 0x1F;
+            }
+            else if ((val & 0xC00) == 0x00000C00) {
+                // Java supradecimal digit
+                value = (ch + ((val & 0x3E0) >> 5) & 0x1F) + 10;
+            }
+        }
+        return (value < radix) ? value : -1;
+    }
+
+    int getNumericValue(int ch) {
+        int val = getProperties(ch);
+        int retval = -1;
+
+        switch (val & 0xC00) {
+        default: // cannot occur
+        case (0x00000000):         // not numeric
+            retval = -1;
+            break;
+        case (0x00000400):              // simple numeric
+            retval = ch + ((val & 0x3E0) >> 5) & 0x1F;
+            break;
+        case (0x00000800)      :       // "strange" numeric
+            retval = -2;
+            break;
+        case (0x00000C00):           // Java supradecimal
+            retval = (ch + ((val & 0x3E0) >> 5) & 0x1F) + 10;
+            break;
+        }
+        return retval;
+    }
+
+    boolean isWhitespace(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x00007000) == 0x00004000);
+    }
+
+    byte getDirectionality(int ch) {
+        int val = getProperties(ch);
+        byte directionality = (byte)((val & 0x78000000) >> 27);
+        if (directionality == 0xF ) {
+	        directionality = Character.DIRECTIONALITY_UNDEFINED;
+        }
+        return directionality;
+    }
+
+    boolean isMirrored(int ch) {
+        int props = getProperties(ch);
+        return ((props & 0x80000000) != 0);
+    }
+
+    static final CharacterData instance = new CharacterData0E();
+    private CharacterData0E() {};
+
+    // The following tables and code generated using:
+  // java GenerateCharacter -plane 14 -template c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/jdk/make/data/characterdata/CharacterData0E.java.template -spec c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/jdk/make/data/unicodedata/UnicodeData.txt -specialcasing c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/jdk/make/data/unicodedata/SpecialCasing.txt -proplist c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/jdk/make/data/unicodedata/PropList.txt -o c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/build/windows-amd64/jdk/gensrc/java/lang/CharacterData0E.java -string -usecharforbyte 11 4 1
+  // The X table has 2048 entries for a total of 4096 bytes.
+
+  static final char X[] = (
+    "\000\020\020\020\040\040\040\040\060\060\060\060\060\060\060\100\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040"+
+    "\040\040\040\040\040\040\040\040\040\040\040\040\040\040\040").toCharArray();
+
+  // The Y table has 80 entries for a total of 160 bytes.
+
+  static final char Y[] = (
+    "\000\002\002\002\002\002\002\002\002\002\002\002\002\002\002\002\004\004\004"+
+    "\004\004\004\004\004\004\004\004\004\004\004\004\004\002\002\002\002\002\002"+
+    "\002\002\002\002\002\002\002\002\002\002\006\006\006\006\006\006\006\006\006"+
+    "\006\006\006\006\006\006\006\006\006\006\006\006\006\006\006\002\002\002\002"+
+    "\002\002\002\002").toCharArray();
+
+  // The A table has 8 entries for a total of 32 bytes.
+
+  static final int A[] = new int[8];
+  static final String A_DATA =
+    "\u7800\000\u4800\u1010\u7800\000\u7800\000\u4800\u1010\u4800\u1010\u4000\u3006"+
+    "\u4000\u3006";
+
+  // The B table has 8 entries for a total of 16 bytes.
+
+  static final char B[] = (
+    "\000\000\000\000\000\000\000\000").toCharArray();
+
+  // In all, the character property tables require 4288 bytes.
+
+    static {
+                { // THIS CODE WAS AUTOMATICALLY CREATED BY GenerateCharacter:
+            char[] data = A_DATA.toCharArray();
+            assert (data.length == (8 * 2));
+            int i = 0, j = 0;
+            while (i < (8 * 2)) {
+                int entry = data[i++] << 16;
+                A[j++] = entry | data[i++];
+            }
+        }
+
+    }        
+}

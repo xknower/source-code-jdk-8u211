@@ -1,11 +1,43 @@
+/*
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.nio.file;
 
-public class ClosedFileSystemException extends IllegalStateException {
-  static final long serialVersionUID = -8158336077256193488L;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\ClosedFileSystemException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Unchecked exception thrown when an attempt is made to invoke an operation on
+ * a file and the file system is closed.
  */
+
+public class ClosedFileSystemException
+    extends IllegalStateException
+{
+    static final long serialVersionUID = -8158336077256193488L;
+
+    /**
+     * Constructs an instance of this class.
+     */
+    public ClosedFileSystemException() {
+    }
+}

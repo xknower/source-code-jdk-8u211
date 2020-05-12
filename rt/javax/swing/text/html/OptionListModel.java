@@ -1,575 +1,569 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.BitSet;
-/*     */ import javax.swing.DefaultListModel;
-/*     */ import javax.swing.ListSelectionModel;
-/*     */ import javax.swing.event.EventListenerList;
-/*     */ import javax.swing.event.ListSelectionEvent;
-/*     */ import javax.swing.event.ListSelectionListener;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class OptionListModel<E>
-/*     */   extends DefaultListModel<E>
-/*     */   implements ListSelectionModel, Serializable
-/*     */ {
-/*     */   private static final int MIN = -1;
-/*     */   private static final int MAX = 2147483647;
-/*  51 */   private int selectionMode = 0;
-/*  52 */   private int minIndex = Integer.MAX_VALUE;
-/*  53 */   private int maxIndex = -1;
-/*  54 */   private int anchorIndex = -1;
-/*  55 */   private int leadIndex = -1;
-/*  56 */   private int firstChangedIndex = Integer.MAX_VALUE;
-/*  57 */   private int lastChangedIndex = -1;
-/*     */   private boolean isAdjusting = false;
-/*  59 */   private BitSet value = new BitSet(32);
-/*  60 */   private BitSet initialValue = new BitSet(32);
-/*  61 */   protected EventListenerList listenerList = new EventListenerList();
-/*     */   protected boolean leadAnchorNotificationEnabled = true;
-/*     */   
-/*     */   public int getMinSelectionIndex() {
-/*  65 */     return isSelectionEmpty() ? -1 : this.minIndex;
-/*     */   } public int getMaxSelectionIndex() {
-/*  67 */     return this.maxIndex;
-/*     */   } public boolean getValueIsAdjusting() {
-/*  69 */     return this.isAdjusting;
-/*     */   } public int getSelectionMode() {
-/*  71 */     return this.selectionMode;
-/*     */   }
-/*     */   public void setSelectionMode(int paramInt) {
-/*  74 */     switch (paramInt) {
-/*     */       case 0:
-/*     */       case 1:
-/*     */       case 2:
-/*  78 */         this.selectionMode = paramInt;
-/*     */         return;
-/*     */     } 
-/*  81 */     throw new IllegalArgumentException("invalid selectionMode");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isSelectedIndex(int paramInt) {
-/*  86 */     return (paramInt < this.minIndex || paramInt > this.maxIndex) ? false : this.value.get(paramInt);
-/*     */   }
-/*     */   
-/*     */   public boolean isSelectionEmpty() {
-/*  90 */     return (this.minIndex > this.maxIndex);
-/*     */   }
-/*     */   
-/*     */   public void addListSelectionListener(ListSelectionListener paramListSelectionListener) {
-/*  94 */     this.listenerList.add(ListSelectionListener.class, paramListSelectionListener);
-/*     */   }
-/*     */   
-/*     */   public void removeListSelectionListener(ListSelectionListener paramListSelectionListener) {
-/*  98 */     this.listenerList.remove(ListSelectionListener.class, paramListSelectionListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ListSelectionListener[] getListSelectionListeners() {
-/* 110 */     return this.listenerList.<ListSelectionListener>getListeners(ListSelectionListener.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fireValueChanged(boolean paramBoolean) {
-/* 118 */     fireValueChanged(getMinSelectionIndex(), getMaxSelectionIndex(), paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fireValueChanged(int paramInt1, int paramInt2) {
-/* 127 */     fireValueChanged(paramInt1, paramInt2, getValueIsAdjusting());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fireValueChanged(int paramInt1, int paramInt2, boolean paramBoolean) {
-/* 138 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/* 139 */     ListSelectionEvent listSelectionEvent = null;
-/*     */     
-/* 141 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 142 */       if (arrayOfObject[i] == ListSelectionListener.class) {
-/* 143 */         if (listSelectionEvent == null) {
-/* 144 */           listSelectionEvent = new ListSelectionEvent(this, paramInt1, paramInt2, paramBoolean);
-/*     */         }
-/* 146 */         ((ListSelectionListener)arrayOfObject[i + 1]).valueChanged(listSelectionEvent);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void fireValueChanged() {
-/* 152 */     if (this.lastChangedIndex == -1) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 159 */     int i = this.firstChangedIndex;
-/* 160 */     int j = this.lastChangedIndex;
-/* 161 */     this.firstChangedIndex = Integer.MAX_VALUE;
-/* 162 */     this.lastChangedIndex = -1;
-/* 163 */     fireValueChanged(i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void markAsDirty(int paramInt) {
-/* 169 */     this.firstChangedIndex = Math.min(this.firstChangedIndex, paramInt);
-/* 170 */     this.lastChangedIndex = Math.max(this.lastChangedIndex, paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void set(int paramInt) {
-/* 175 */     if (this.value.get(paramInt)) {
-/*     */       return;
-/*     */     }
-/* 178 */     this.value.set(paramInt);
-/* 179 */     Option option = (Option)get(paramInt);
-/* 180 */     option.setSelection(true);
-/* 181 */     markAsDirty(paramInt);
-/*     */ 
-/*     */     
-/* 184 */     this.minIndex = Math.min(this.minIndex, paramInt);
-/* 185 */     this.maxIndex = Math.max(this.maxIndex, paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void clear(int paramInt) {
-/* 190 */     if (!this.value.get(paramInt)) {
-/*     */       return;
-/*     */     }
-/* 193 */     this.value.clear(paramInt);
-/* 194 */     Option option = (Option)get(paramInt);
-/* 195 */     option.setSelection(false);
-/* 196 */     markAsDirty(paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 205 */     if (paramInt == this.minIndex) {
-/* 206 */       this.minIndex++; for (; this.minIndex <= this.maxIndex && 
-/* 207 */         !this.value.get(this.minIndex); this.minIndex++);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 218 */     if (paramInt == this.maxIndex) {
-/* 219 */       this.maxIndex--; for (; this.minIndex <= this.maxIndex && 
-/* 220 */         !this.value.get(this.maxIndex); this.maxIndex--);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 240 */     if (isSelectionEmpty()) {
-/* 241 */       this.minIndex = Integer.MAX_VALUE;
-/* 242 */       this.maxIndex = -1;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLeadAnchorNotificationEnabled(boolean paramBoolean) {
-/* 251 */     this.leadAnchorNotificationEnabled = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isLeadAnchorNotificationEnabled() {
-/* 267 */     return this.leadAnchorNotificationEnabled;
-/*     */   }
-/*     */   
-/*     */   private void updateLeadAnchorIndices(int paramInt1, int paramInt2) {
-/* 271 */     if (this.leadAnchorNotificationEnabled) {
-/* 272 */       if (this.anchorIndex != paramInt1) {
-/* 273 */         if (this.anchorIndex != -1) {
-/* 274 */           markAsDirty(this.anchorIndex);
-/*     */         }
-/* 276 */         markAsDirty(paramInt1);
-/*     */       } 
-/*     */       
-/* 279 */       if (this.leadIndex != paramInt2) {
-/* 280 */         if (this.leadIndex != -1) {
-/* 281 */           markAsDirty(this.leadIndex);
-/*     */         }
-/* 283 */         markAsDirty(paramInt2);
-/*     */       } 
-/*     */     } 
-/* 286 */     this.anchorIndex = paramInt1;
-/* 287 */     this.leadIndex = paramInt2;
-/*     */   }
-/*     */   
-/*     */   private boolean contains(int paramInt1, int paramInt2, int paramInt3) {
-/* 291 */     return (paramInt3 >= paramInt1 && paramInt3 <= paramInt2);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void changeSelection(int paramInt1, int paramInt2, int paramInt3, int paramInt4, boolean paramBoolean) {
-/* 296 */     for (int i = Math.min(paramInt3, paramInt1); i <= Math.max(paramInt4, paramInt2); i++) {
-/*     */       
-/* 298 */       boolean bool1 = contains(paramInt1, paramInt2, i);
-/* 299 */       boolean bool2 = contains(paramInt3, paramInt4, i);
-/*     */       
-/* 301 */       if (bool2 && bool1) {
-/* 302 */         if (paramBoolean) {
-/* 303 */           bool1 = false;
-/*     */         } else {
-/*     */           
-/* 306 */           bool2 = false;
-/*     */         } 
-/*     */       }
-/*     */       
-/* 310 */       if (bool2) {
-/* 311 */         set(i);
-/*     */       }
-/* 313 */       if (bool1) {
-/* 314 */         clear(i);
-/*     */       }
-/*     */     } 
-/* 317 */     fireValueChanged();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void changeSelection(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 326 */     changeSelection(paramInt1, paramInt2, paramInt3, paramInt4, true);
-/*     */   }
-/*     */   
-/*     */   public void clearSelection() {
-/* 330 */     removeSelectionInterval(this.minIndex, this.maxIndex);
-/*     */   }
-/*     */   
-/*     */   public void setSelectionInterval(int paramInt1, int paramInt2) {
-/* 334 */     if (paramInt1 == -1 || paramInt2 == -1) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 338 */     if (getSelectionMode() == 0) {
-/* 339 */       paramInt1 = paramInt2;
-/*     */     }
-/*     */     
-/* 342 */     updateLeadAnchorIndices(paramInt1, paramInt2);
-/*     */     
-/* 344 */     int i = this.minIndex;
-/* 345 */     int j = this.maxIndex;
-/* 346 */     int k = Math.min(paramInt1, paramInt2);
-/* 347 */     int m = Math.max(paramInt1, paramInt2);
-/* 348 */     changeSelection(i, j, k, m);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void addSelectionInterval(int paramInt1, int paramInt2) {
-/* 353 */     if (paramInt1 == -1 || paramInt2 == -1) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 357 */     if (getSelectionMode() != 2) {
-/* 358 */       setSelectionInterval(paramInt1, paramInt2);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 362 */     updateLeadAnchorIndices(paramInt1, paramInt2);
-/*     */     
-/* 364 */     int i = Integer.MAX_VALUE;
-/* 365 */     byte b = -1;
-/* 366 */     int j = Math.min(paramInt1, paramInt2);
-/* 367 */     int k = Math.max(paramInt1, paramInt2);
-/* 368 */     changeSelection(i, b, j, k);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeSelectionInterval(int paramInt1, int paramInt2) {
-/* 374 */     if (paramInt1 == -1 || paramInt2 == -1) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 378 */     updateLeadAnchorIndices(paramInt1, paramInt2);
-/*     */     
-/* 380 */     int i = Math.min(paramInt1, paramInt2);
-/* 381 */     int j = Math.max(paramInt1, paramInt2);
-/* 382 */     int k = Integer.MAX_VALUE;
-/* 383 */     byte b = -1;
-/* 384 */     changeSelection(i, j, k, b);
-/*     */   }
-/*     */   
-/*     */   private void setState(int paramInt, boolean paramBoolean) {
-/* 388 */     if (paramBoolean) {
-/* 389 */       set(paramInt);
-/*     */     } else {
-/*     */       
-/* 392 */       clear(paramInt);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void insertIndexInterval(int paramInt1, int paramInt2, boolean paramBoolean) {
-/* 408 */     int i = paramBoolean ? paramInt1 : (paramInt1 + 1);
-/* 409 */     int j = i + paramInt2 - 1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 415 */     for (int k = this.maxIndex; k >= i; k--) {
-/* 416 */       setState(k + paramInt2, this.value.get(k));
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 421 */     boolean bool = this.value.get(paramInt1);
-/* 422 */     for (int m = i; m <= j; m++) {
-/* 423 */       setState(m, bool);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeIndexInterval(int paramInt1, int paramInt2) {
-/* 436 */     int i = Math.min(paramInt1, paramInt2);
-/* 437 */     int j = Math.max(paramInt1, paramInt2);
-/* 438 */     int k = j - i + 1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 443 */     for (int m = i; m <= this.maxIndex; m++) {
-/* 444 */       setState(m, this.value.get(m + k));
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setValueIsAdjusting(boolean paramBoolean) {
-/* 450 */     if (paramBoolean != this.isAdjusting) {
-/* 451 */       this.isAdjusting = paramBoolean;
-/* 452 */       fireValueChanged(paramBoolean);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 458 */     String str = (getValueIsAdjusting() ? "~" : "=") + this.value.toString();
-/* 459 */     return getClass().getName() + " " + Integer.toString(hashCode()) + " " + str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() throws CloneNotSupportedException {
-/* 472 */     OptionListModel optionListModel = (OptionListModel)super.clone();
-/* 473 */     optionListModel.value = (BitSet)this.value.clone();
-/* 474 */     optionListModel.listenerList = new EventListenerList();
-/* 475 */     return optionListModel;
-/*     */   }
-/*     */   
-/*     */   public int getAnchorSelectionIndex() {
-/* 479 */     return this.anchorIndex;
-/*     */   }
-/*     */   
-/*     */   public int getLeadSelectionIndex() {
-/* 483 */     return this.leadIndex;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAnchorSelectionIndex(int paramInt) {
-/* 493 */     this.anchorIndex = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLeadSelectionIndex(int paramInt) {
-/* 524 */     int i = this.anchorIndex;
-/* 525 */     if (getSelectionMode() == 0) {
-/* 526 */       i = paramInt;
-/*     */     }
-/*     */     
-/* 529 */     int j = Math.min(this.anchorIndex, this.leadIndex);
-/* 530 */     int k = Math.max(this.anchorIndex, this.leadIndex);
-/* 531 */     int m = Math.min(i, paramInt);
-/* 532 */     int n = Math.max(i, paramInt);
-/* 533 */     if (this.value.get(this.anchorIndex)) {
-/* 534 */       changeSelection(j, k, m, n);
-/*     */     } else {
-/*     */       
-/* 537 */       changeSelection(m, n, j, k, false);
-/*     */     } 
-/* 539 */     this.anchorIndex = i;
-/* 540 */     this.leadIndex = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInitialSelection(int paramInt) {
-/* 552 */     if (this.initialValue.get(paramInt)) {
-/*     */       return;
-/*     */     }
-/* 555 */     if (this.selectionMode == 0)
-/*     */     {
-/* 557 */       this.initialValue.and(new BitSet());
-/*     */     }
-/* 559 */     this.initialValue.set(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BitSet getInitialSelection() {
-/* 567 */     return this.initialValue;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\OptionListModel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import java.util.BitSet;
+import java.io.Serializable;
+
+
+/**
+ * This class extends DefaultListModel, and also implements
+ * the ListSelectionModel interface, allowing for it to store state
+ * relevant to a SELECT form element which is implemented as a List.
+ * If SELECT has a size attribute whose value is greater than 1,
+ * or if allows multiple selection then a JList is used to
+ * represent it and the OptionListModel is used as its model.
+ * It also stores the initial state of the JList, to ensure an
+ * accurate reset, if the user requests a reset of the form.
+ *
+  @author Sunita Mani
+ */
+
+class OptionListModel<E> extends DefaultListModel<E> implements ListSelectionModel, Serializable {
+
+
+    private static final int MIN = -1;
+    private static final int MAX = Integer.MAX_VALUE;
+    private int selectionMode = SINGLE_SELECTION;
+    private int minIndex = MAX;
+    private int maxIndex = MIN;
+    private int anchorIndex = -1;
+    private int leadIndex = -1;
+    private int firstChangedIndex = MAX;
+    private int lastChangedIndex = MIN;
+    private boolean isAdjusting = false;
+    private BitSet value = new BitSet(32);
+    private BitSet initialValue = new BitSet(32);
+    protected EventListenerList listenerList = new EventListenerList();
+
+    protected boolean leadAnchorNotificationEnabled = true;
+
+    public int getMinSelectionIndex() { return isSelectionEmpty() ? -1 : minIndex; }
+
+    public int getMaxSelectionIndex() { return maxIndex; }
+
+    public boolean getValueIsAdjusting() { return isAdjusting; }
+
+    public int getSelectionMode() { return selectionMode; }
+
+    public void setSelectionMode(int selectionMode) {
+        switch (selectionMode) {
+        case SINGLE_SELECTION:
+        case SINGLE_INTERVAL_SELECTION:
+        case MULTIPLE_INTERVAL_SELECTION:
+            this.selectionMode = selectionMode;
+            break;
+        default:
+            throw new IllegalArgumentException("invalid selectionMode");
+        }
+    }
+
+    public boolean isSelectedIndex(int index) {
+        return ((index < minIndex) || (index > maxIndex)) ? false : value.get(index);
+    }
+
+    public boolean isSelectionEmpty() {
+        return (minIndex > maxIndex);
+    }
+
+    public void addListSelectionListener(ListSelectionListener l) {
+        listenerList.add(ListSelectionListener.class, l);
+    }
+
+    public void removeListSelectionListener(ListSelectionListener l) {
+        listenerList.remove(ListSelectionListener.class, l);
+    }
+
+    /**
+     * Returns an array of all the <code>ListSelectionListener</code>s added
+     * to this OptionListModel with addListSelectionListener().
+     *
+     * @return all of the <code>ListSelectionListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ListSelectionListener[] getListSelectionListeners() {
+        return listenerList.getListeners(ListSelectionListener.class);
+    }
+
+    /**
+     * Notify listeners that we are beginning or ending a
+     * series of value changes
+     */
+    protected void fireValueChanged(boolean isAdjusting) {
+        fireValueChanged(getMinSelectionIndex(), getMaxSelectionIndex(), isAdjusting);
+    }
+
+
+    /**
+     * Notify ListSelectionListeners that the value of the selection,
+     * in the closed interval firstIndex,lastIndex, has changed.
+     */
+    protected void fireValueChanged(int firstIndex, int lastIndex) {
+        fireValueChanged(firstIndex, lastIndex, getValueIsAdjusting());
+    }
+
+    /**
+     * @param firstIndex The first index in the interval.
+     * @param lastIndex The last index in the interval.
+     * @param isAdjusting True if this is the final change in a series of them.
+     * @see EventListenerList
+     */
+    protected void fireValueChanged(int firstIndex, int lastIndex, boolean isAdjusting)
+    {
+        Object[] listeners = listenerList.getListenerList();
+        ListSelectionEvent e = null;
+
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i] == ListSelectionListener.class) {
+                if (e == null) {
+                    e = new ListSelectionEvent(this, firstIndex, lastIndex, isAdjusting);
+                }
+                ((ListSelectionListener)listeners[i+1]).valueChanged(e);
+            }
+        }
+    }
+
+    private void fireValueChanged() {
+        if (lastChangedIndex == MIN) {
+            return;
+        }
+        /* Change the values before sending the event to the
+         * listeners in case the event causes a listener to make
+         * another change to the selection.
+         */
+        int oldFirstChangedIndex = firstChangedIndex;
+        int oldLastChangedIndex = lastChangedIndex;
+        firstChangedIndex = MAX;
+        lastChangedIndex = MIN;
+        fireValueChanged(oldFirstChangedIndex, oldLastChangedIndex);
+    }
+
+
+    // Update first and last change indices
+    private void markAsDirty(int r) {
+        firstChangedIndex = Math.min(firstChangedIndex, r);
+        lastChangedIndex =  Math.max(lastChangedIndex, r);
+    }
+
+    // Set the state at this index and update all relevant state.
+    private void set(int r) {
+        if (value.get(r)) {
+            return;
+        }
+        value.set(r);
+        Option option = (Option)get(r);
+        option.setSelection(true);
+        markAsDirty(r);
+
+        // Update minimum and maximum indices
+        minIndex = Math.min(minIndex, r);
+        maxIndex = Math.max(maxIndex, r);
+    }
+
+    // Clear the state at this index and update all relevant state.
+    private void clear(int r) {
+        if (!value.get(r)) {
+            return;
+        }
+        value.clear(r);
+        Option option = (Option)get(r);
+        option.setSelection(false);
+        markAsDirty(r);
+
+        // Update minimum and maximum indices
+        /*
+           If (r > minIndex) the minimum has not changed.
+           The case (r < minIndex) is not possible because r'th value was set.
+           We only need to check for the case when lowest entry has been cleared,
+           and in this case we need to search for the first value set above it.
+        */
+        if (r == minIndex) {
+            for(minIndex = minIndex + 1; minIndex <= maxIndex; minIndex++) {
+                if (value.get(minIndex)) {
+                    break;
+                }
+            }
+        }
+        /*
+           If (r < maxIndex) the maximum has not changed.
+           The case (r > maxIndex) is not possible because r'th value was set.
+           We only need to check for the case when highest entry has been cleared,
+           and in this case we need to search for the first value set below it.
+        */
+        if (r == maxIndex) {
+            for(maxIndex = maxIndex - 1; minIndex <= maxIndex; maxIndex--) {
+                if (value.get(maxIndex)) {
+                    break;
+                }
+            }
+        }
+        /* Performance note: This method is called from inside a loop in
+           changeSelection() but we will only iterate in the loops
+           above on the basis of one iteration per deselected cell - in total.
+           Ie. the next time this method is called the work of the previous
+           deselection will not be repeated.
+
+           We also don't need to worry about the case when the min and max
+           values are in their unassigned states. This cannot happen because
+           this method's initial check ensures that the selection was not empty
+           and therefore that the minIndex and maxIndex had 'real' values.
+
+           If we have cleared the whole selection, set the minIndex and maxIndex
+           to their cannonical values so that the next set command always works
+           just by using Math.min and Math.max.
+        */
+        if (isSelectionEmpty()) {
+            minIndex = MAX;
+            maxIndex = MIN;
+        }
+    }
+
+    /**
+     * Sets the value of the leadAnchorNotificationEnabled flag.
+     * @see             #isLeadAnchorNotificationEnabled()
+     */
+    public void setLeadAnchorNotificationEnabled(boolean flag) {
+        leadAnchorNotificationEnabled = flag;
+    }
+
+    /**
+     * Returns the value of the leadAnchorNotificationEnabled flag.
+     * When leadAnchorNotificationEnabled is true the model
+     * generates notification events with bounds that cover all the changes to
+     * the selection plus the changes to the lead and anchor indices.
+     * Setting the flag to false causes a norrowing of the event's bounds to
+     * include only the elements that have been selected or deselected since
+     * the last change. Either way, the model continues to maintain the lead
+     * and anchor variables internally. The default is true.
+     * @return          the value of the leadAnchorNotificationEnabled flag
+     * @see             #setLeadAnchorNotificationEnabled(boolean)
+     */
+    public boolean isLeadAnchorNotificationEnabled() {
+        return leadAnchorNotificationEnabled;
+    }
+
+    private void updateLeadAnchorIndices(int anchorIndex, int leadIndex) {
+        if (leadAnchorNotificationEnabled) {
+            if (this.anchorIndex != anchorIndex) {
+                if (this.anchorIndex != -1) { // The unassigned state.
+                    markAsDirty(this.anchorIndex);
+                }
+                markAsDirty(anchorIndex);
+            }
+
+            if (this.leadIndex != leadIndex) {
+                if (this.leadIndex != -1) { // The unassigned state.
+                    markAsDirty(this.leadIndex);
+                }
+                markAsDirty(leadIndex);
+            }
+        }
+        this.anchorIndex = anchorIndex;
+        this.leadIndex = leadIndex;
+    }
+
+    private boolean contains(int a, int b, int i) {
+        return (i >= a) && (i <= b);
+    }
+
+    private void changeSelection(int clearMin, int clearMax,
+                                 int setMin, int setMax, boolean clearFirst) {
+        for(int i = Math.min(setMin, clearMin); i <= Math.max(setMax, clearMax); i++) {
+
+            boolean shouldClear = contains(clearMin, clearMax, i);
+            boolean shouldSet = contains(setMin, setMax, i);
+
+            if (shouldSet && shouldClear) {
+                if (clearFirst) {
+                    shouldClear = false;
+                }
+                else {
+                    shouldSet = false;
+                }
+            }
+
+            if (shouldSet) {
+                set(i);
+            }
+            if (shouldClear) {
+                clear(i);
+            }
+        }
+        fireValueChanged();
+    }
+
+   /*   Change the selection with the effect of first clearing the values
+    *   in the inclusive range [clearMin, clearMax] then setting the values
+    *   in the inclusive range [setMin, setMax]. Do this in one pass so
+    *   that no values are cleared if they would later be set.
+    */
+    private void changeSelection(int clearMin, int clearMax, int setMin, int setMax) {
+        changeSelection(clearMin, clearMax, setMin, setMax, true);
+    }
+
+    public void clearSelection() {
+        removeSelectionInterval(minIndex, maxIndex);
+    }
+
+    public void setSelectionInterval(int index0, int index1) {
+        if (index0 == -1 || index1 == -1) {
+            return;
+        }
+
+        if (getSelectionMode() == SINGLE_SELECTION) {
+            index0 = index1;
+        }
+
+        updateLeadAnchorIndices(index0, index1);
+
+        int clearMin = minIndex;
+        int clearMax = maxIndex;
+        int setMin = Math.min(index0, index1);
+        int setMax = Math.max(index0, index1);
+        changeSelection(clearMin, clearMax, setMin, setMax);
+    }
+
+    public void addSelectionInterval(int index0, int index1)
+    {
+        if (index0 == -1 || index1 == -1) {
+            return;
+        }
+
+        if (getSelectionMode() != MULTIPLE_INTERVAL_SELECTION) {
+            setSelectionInterval(index0, index1);
+            return;
+        }
+
+        updateLeadAnchorIndices(index0, index1);
+
+        int clearMin = MAX;
+        int clearMax = MIN;
+        int setMin = Math.min(index0, index1);
+        int setMax = Math.max(index0, index1);
+        changeSelection(clearMin, clearMax, setMin, setMax);
+    }
+
+
+    public void removeSelectionInterval(int index0, int index1)
+    {
+        if (index0 == -1 || index1 == -1) {
+            return;
+        }
+
+        updateLeadAnchorIndices(index0, index1);
+
+        int clearMin = Math.min(index0, index1);
+        int clearMax = Math.max(index0, index1);
+        int setMin = MAX;
+        int setMax = MIN;
+        changeSelection(clearMin, clearMax, setMin, setMax);
+    }
+
+    private void setState(int index, boolean state) {
+        if (state) {
+            set(index);
+        }
+        else {
+            clear(index);
+        }
+    }
+
+    /**
+     * Insert length indices beginning before/after index. If the value
+     * at index is itself selected, set all of the newly inserted
+     * items, otherwise leave them unselected. This method is typically
+     * called to sync the selection model with a corresponding change
+     * in the data model.
+     */
+    public void insertIndexInterval(int index, int length, boolean before)
+    {
+        /* The first new index will appear at insMinIndex and the last
+         * one will appear at insMaxIndex
+         */
+        int insMinIndex = (before) ? index : index + 1;
+        int insMaxIndex = (insMinIndex + length) - 1;
+
+        /* Right shift the entire bitset by length, beginning with
+         * index-1 if before is true, index+1 if it's false (i.e. with
+         * insMinIndex).
+         */
+        for(int i = maxIndex; i >= insMinIndex; i--) {
+            setState(i + length, value.get(i));
+        }
+
+        /* Initialize the newly inserted indices.
+         */
+        boolean setInsertedValues = value.get(index);
+        for(int i = insMinIndex; i <= insMaxIndex; i++) {
+            setState(i, setInsertedValues);
+        }
+    }
+
+
+    /**
+     * Remove the indices in the interval index0,index1 (inclusive) from
+     * the selection model.  This is typically called to sync the selection
+     * model width a corresponding change in the data model.  Note
+     * that (as always) index0 can be greater than index1.
+     */
+    public void removeIndexInterval(int index0, int index1)
+    {
+        int rmMinIndex = Math.min(index0, index1);
+        int rmMaxIndex = Math.max(index0, index1);
+        int gapLength = (rmMaxIndex - rmMinIndex) + 1;
+
+        /* Shift the entire bitset to the left to close the index0, index1
+         * gap.
+         */
+        for(int i = rmMinIndex; i <= maxIndex; i++) {
+            setState(i, value.get(i + gapLength));
+        }
+    }
+
+
+    public void setValueIsAdjusting(boolean isAdjusting) {
+        if (isAdjusting != this.isAdjusting) {
+            this.isAdjusting = isAdjusting;
+            this.fireValueChanged(isAdjusting);
+        }
+    }
+
+
+    public String toString() {
+        String s =  ((getValueIsAdjusting()) ? "~" : "=") + value.toString();
+        return getClass().getName() + " " + Integer.toString(hashCode()) + " " + s;
+    }
+
+    /**
+     * Returns a clone of the receiver with the same selection.
+     * <code>listenerLists</code> are not duplicated.
+     *
+     * @return a clone of the receiver
+     * @exception CloneNotSupportedException if the receiver does not
+     *    both (a) implement the <code>Cloneable</code> interface
+     *    and (b) define a <code>clone</code> method
+     */
+    public Object clone() throws CloneNotSupportedException {
+        OptionListModel clone = (OptionListModel)super.clone();
+        clone.value = (BitSet)value.clone();
+        clone.listenerList = new EventListenerList();
+        return clone;
+    }
+
+    public int getAnchorSelectionIndex() {
+        return anchorIndex;
+    }
+
+    public int getLeadSelectionIndex() {
+        return leadIndex;
+    }
+
+    /**
+     * Set the anchor selection index, leaving all selection values unchanged.
+     *
+     * @see #getAnchorSelectionIndex
+     * @see #setLeadSelectionIndex
+     */
+    public void setAnchorSelectionIndex(int anchorIndex) {
+        this.anchorIndex = anchorIndex;
+    }
+
+    /**
+     * Set the lead selection index, ensuring that values between the
+     * anchor and the new lead are either all selected or all deselected.
+     * If the value at the anchor index is selected, first clear all the
+     * values in the range [anchor, oldLeadIndex], then select all the values
+     * values in the range [anchor, newLeadIndex], where oldLeadIndex is the old
+     * leadIndex and newLeadIndex is the new one.
+     * <p>
+     * If the value at the anchor index is not selected, do the same thing in reverse,
+     * selecting values in the old range and deselecting values in the new one.
+     * <p>
+     * Generate a single event for this change and notify all listeners.
+     * For the purposes of generating minimal bounds in this event, do the
+     * operation in a single pass; that way the first and last index inside the
+     * ListSelectionEvent that is broadcast will refer to cells that actually
+     * changed value because of this method. If, instead, this operation were
+     * done in two steps the effect on the selection state would be the same
+     * but two events would be generated and the bounds around the changed values
+     * would be wider, including cells that had been first cleared and only
+     * to later be set.
+     * <p>
+     * This method can be used in the mouseDragged() method of a UI class
+     * to extend a selection.
+     *
+     * @see #getLeadSelectionIndex
+     * @see #setAnchorSelectionIndex
+     */
+    public void setLeadSelectionIndex(int leadIndex) {
+        int anchorIndex = this.anchorIndex;
+        if (getSelectionMode() == SINGLE_SELECTION) {
+            anchorIndex = leadIndex;
+        }
+
+        int oldMin = Math.min(this.anchorIndex, this.leadIndex);
+        int oldMax = Math.max(this.anchorIndex, this.leadIndex);
+        int newMin = Math.min(anchorIndex, leadIndex);
+        int newMax = Math.max(anchorIndex, leadIndex);
+        if (value.get(this.anchorIndex)) {
+            changeSelection(oldMin, oldMax, newMin, newMax);
+        }
+        else {
+            changeSelection(newMin, newMax, oldMin, oldMax, false);
+        }
+        this.anchorIndex = anchorIndex;
+        this.leadIndex = leadIndex;
+    }
+
+
+    /**
+     * This method is responsible for storing the state
+     * of the initial selection.  If the selectionMode
+     * is the default, i.e allowing only for SINGLE_SELECTION,
+     * then the very last OPTION that has the selected
+     * attribute set wins.
+     */
+    public void setInitialSelection(int i) {
+        if (initialValue.get(i)) {
+            return;
+        }
+        if (selectionMode == SINGLE_SELECTION) {
+            // reset to empty
+            initialValue.and(new BitSet());
+        }
+        initialValue.set(i);
+    }
+
+    /**
+     * Fetches the BitSet that represents the initial
+     * set of selected items in the list.
+     */
+    public BitSet getInitialSelection() {
+        return initialValue;
+    }
+}

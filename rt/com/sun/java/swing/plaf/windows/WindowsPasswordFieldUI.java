@@ -1,75 +1,69 @@
-/*    */ package com.sun.java.swing.plaf.windows;
-/*    */ 
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicPasswordFieldUI;
-/*    */ import javax.swing.text.Caret;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class WindowsPasswordFieldUI
-/*    */   extends BasicPasswordFieldUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 54 */     return new WindowsPasswordFieldUI();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected Caret createCaret() {
-/* 67 */     return new WindowsTextUI.WindowsCaret();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsPasswordFieldUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.*;
+import javax.swing.text.Caret;
+
+
+
+/**
+ * Windows rendition of the component.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsPasswordFieldUI extends BasicPasswordFieldUI {
+
+    /**
+     * Creates a UI for a JPasswordField
+     *
+     * @param c the password field
+     * @return the UI
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsPasswordFieldUI();
+    }
+
+
+    /**
+     * Creates the object to use for a caret.  By default an
+     * instance of WindowsCaret is created.  This method
+     * can be redefined to provide something else that implements
+     * the InputPosition interface or a subclass of DefaultCaret.
+     *
+     * @return the caret object
+     */
+    protected Caret createCaret() {
+        return new WindowsTextUI.WindowsCaret();
+    }
+}

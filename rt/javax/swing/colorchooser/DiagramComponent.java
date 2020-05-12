@@ -1,166 +1,160 @@
-/*     */ package javax.swing.colorchooser;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.awt.event.MouseListener;
-/*     */ import java.awt.event.MouseMotionListener;
-/*     */ import java.awt.image.BufferedImage;
-/*     */ import javax.swing.JComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class DiagramComponent
-/*     */   extends JComponent
-/*     */   implements MouseListener, MouseMotionListener
-/*     */ {
-/*     */   private final ColorPanel panel;
-/*     */   private final boolean diagram;
-/*  42 */   private final Insets insets = new Insets(0, 0, 0, 0);
-/*     */   
-/*     */   private int width;
-/*     */   
-/*     */   private int height;
-/*     */   private int[] array;
-/*     */   private BufferedImage image;
-/*     */   
-/*     */   DiagramComponent(ColorPanel paramColorPanel, boolean paramBoolean) {
-/*  51 */     this.panel = paramColorPanel;
-/*  52 */     this.diagram = paramBoolean;
-/*  53 */     addMouseListener(this);
-/*  54 */     addMouseMotionListener(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintComponent(Graphics paramGraphics) {
-/*  59 */     getInsets(this.insets);
-/*  60 */     this.width = getWidth() - this.insets.left - this.insets.right;
-/*  61 */     this.height = getHeight() - this.insets.top - this.insets.bottom;
-/*     */ 
-/*     */ 
-/*     */     
-/*  65 */     boolean bool = (this.image == null || this.width != this.image.getWidth() || this.height != this.image.getHeight()) ? true : false;
-/*  66 */     if (bool) {
-/*  67 */       int i = this.width * this.height;
-/*  68 */       if (this.array == null || this.array.length < i) {
-/*  69 */         this.array = new int[i];
-/*     */       }
-/*  71 */       this.image = new BufferedImage(this.width, this.height, 1);
-/*     */     } 
-/*     */     
-/*  74 */     float f1 = 1.0F / (this.width - 1);
-/*  75 */     float f2 = 1.0F / (this.height - 1);
-/*     */     
-/*  77 */     byte b1 = 0;
-/*  78 */     float f3 = 0.0F;
-/*  79 */     for (byte b2 = 0; b2 < this.height; b2++, f3 += f2) {
-/*  80 */       if (this.diagram) {
-/*  81 */         float f = 0.0F;
-/*  82 */         for (byte b = 0; b < this.width; b++, f += f1, b1++) {
-/*  83 */           this.array[b1] = this.panel.getColor(f, f3);
-/*     */         }
-/*     */       } else {
-/*     */         
-/*  87 */         int i = this.panel.getColor(f3);
-/*  88 */         for (byte b = 0; b < this.width; b++, b1++) {
-/*  89 */           this.array[b1] = i;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/*  94 */     this.image.setRGB(0, 0, this.width, this.height, this.array, 0, this.width);
-/*  95 */     paramGraphics.drawImage(this.image, this.insets.left, this.insets.top, this.width, this.height, this);
-/*  96 */     if (isEnabled()) {
-/*  97 */       this.width--;
-/*  98 */       this.height--;
-/*  99 */       paramGraphics.setXORMode(Color.WHITE);
-/* 100 */       paramGraphics.setColor(Color.BLACK);
-/* 101 */       if (this.diagram) {
-/* 102 */         int i = getValue(this.panel.getValueX(), this.insets.left, this.width);
-/* 103 */         int j = getValue(this.panel.getValueY(), this.insets.top, this.height);
-/* 104 */         paramGraphics.drawLine(i - 8, j, i + 8, j);
-/* 105 */         paramGraphics.drawLine(i, j - 8, i, j + 8);
-/*     */       } else {
-/*     */         
-/* 108 */         int i = getValue(this.panel.getValueZ(), this.insets.top, this.height);
-/* 109 */         paramGraphics.drawLine(this.insets.left, i, this.insets.left + this.width, i);
-/*     */       } 
-/* 111 */       paramGraphics.setPaintMode();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void mousePressed(MouseEvent paramMouseEvent) {
-/* 116 */     mouseDragged(paramMouseEvent);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void mouseReleased(MouseEvent paramMouseEvent) {}
-/*     */ 
-/*     */   
-/*     */   public void mouseClicked(MouseEvent paramMouseEvent) {}
-/*     */ 
-/*     */   
-/*     */   public void mouseEntered(MouseEvent paramMouseEvent) {}
-/*     */ 
-/*     */   
-/*     */   public void mouseExited(MouseEvent paramMouseEvent) {}
-/*     */ 
-/*     */   
-/*     */   public void mouseMoved(MouseEvent paramMouseEvent) {}
-/*     */   
-/*     */   public void mouseDragged(MouseEvent paramMouseEvent) {
-/* 135 */     if (isEnabled()) {
-/* 136 */       float f = getValue(paramMouseEvent.getY(), this.insets.top, this.height);
-/* 137 */       if (this.diagram) {
-/* 138 */         float f1 = getValue(paramMouseEvent.getX(), this.insets.left, this.width);
-/* 139 */         this.panel.setValue(f1, f);
-/*     */       } else {
-/*     */         
-/* 142 */         this.panel.setValue(f);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static int getValue(float paramFloat, int paramInt1, int paramInt2) {
-/* 148 */     return paramInt1 + (int)(paramFloat * paramInt2);
-/*     */   }
-/*     */   
-/*     */   private static float getValue(int paramInt1, int paramInt2, int paramInt3) {
-/* 152 */     if (paramInt2 < paramInt1) {
-/* 153 */       paramInt1 -= paramInt2;
-/* 154 */       return (paramInt1 < paramInt3) ? (paramInt1 / paramInt3) : 1.0F;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 158 */     return 0.0F;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\colorchooser\DiagramComponent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.colorchooser;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import javax.swing.JComponent;
+
+final class DiagramComponent extends JComponent implements MouseListener, MouseMotionListener {
+
+    private final ColorPanel panel;
+    private final boolean diagram;
+
+    private final Insets insets = new Insets(0, 0, 0, 0);
+
+    private int width;
+    private int height;
+
+    private int[] array;
+    private BufferedImage image;
+
+    DiagramComponent(ColorPanel panel, boolean diagram) {
+        this.panel = panel;
+        this.diagram = diagram;
+        addMouseListener(this);
+        addMouseMotionListener(this);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        getInsets(this.insets);
+        this.width = getWidth() - this.insets.left - this.insets.right;
+        this.height = getHeight() - this.insets.top - this.insets.bottom;
+
+        boolean update = (this.image == null)
+                || (this.width != this.image.getWidth())
+                || (this.height != this.image.getHeight());
+        if (update) {
+            int size = this.width * this.height;
+            if ((this.array == null) || (this.array.length < size)) {
+                this.array = new int[size];
+            }
+            this.image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_RGB);
+        }
+        {
+            float dx = 1.0f / (float) (this.width - 1);
+            float dy = 1.0f / (float) (this.height - 1);
+
+            int offset = 0;
+            float y = 0.0f;
+            for (int h = 0; h < this.height; h++, y += dy) {
+                if (this.diagram) {
+                    float x = 0.0f;
+                    for (int w = 0; w < this.width; w++, x += dx, offset++) {
+                        this.array[offset] = this.panel.getColor(x, y);
+                    }
+                }
+                else {
+                    int color = this.panel.getColor(y);
+                    for (int w = 0; w < this.width; w++, offset++) {
+                        this.array[offset] = color;
+                    }
+                }
+            }
+        }
+        this.image.setRGB(0, 0, this.width, this.height, this.array, 0, this.width);
+        g.drawImage(this.image, this.insets.left, this.insets.top, this.width, this.height, this);
+        if (isEnabled()) {
+            this.width--;
+            this.height--;
+            g.setXORMode(Color.WHITE);
+            g.setColor(Color.BLACK);
+            if (this.diagram) {
+                int x = getValue(this.panel.getValueX(), this.insets.left, this.width);
+                int y = getValue(this.panel.getValueY(), this.insets.top, this.height);
+                g.drawLine(x - 8, y, x + 8, y);
+                g.drawLine(x, y - 8, x, y + 8);
+            }
+            else {
+                int z = getValue(this.panel.getValueZ(), this.insets.top, this.height);
+                g.drawLine(this.insets.left, z, this.insets.left + this.width, z);
+            }
+            g.setPaintMode();
+        }
+    }
+
+    public void mousePressed(MouseEvent event) {
+        mouseDragged(event);
+    }
+
+    public void mouseReleased(MouseEvent event) {
+    }
+
+    public void mouseClicked(MouseEvent event) {
+    }
+
+    public void mouseEntered(MouseEvent event) {
+    }
+
+    public void mouseExited(MouseEvent event) {
+    }
+
+    public void mouseMoved(MouseEvent event) {
+    }
+
+    public void mouseDragged(MouseEvent event) {
+        if (isEnabled()) {
+            float y = getValue(event.getY(), this.insets.top, this.height);
+            if (this.diagram) {
+                float x = getValue(event.getX(), this.insets.left, this.width);
+                this.panel.setValue(x, y);
+            }
+            else {
+                this.panel.setValue(y);
+            }
+        }
+    }
+
+    private static int getValue(float value, int min, int max) {
+        return min + (int) (value * (float) (max));
+    }
+
+    private static float getValue(int value, int min, int max) {
+        if (min < value) {
+            value -= min;
+            return (value < max)
+                    ? (float) value / (float) max
+                    : 1.0f;
+        }
+        return 0.0f;
+    }
+}

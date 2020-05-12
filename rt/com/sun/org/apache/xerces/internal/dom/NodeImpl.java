@@ -1,2027 +1,2023 @@
-/*      */ package com.sun.org.apache.xerces.internal.dom;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.Map;
-/*      */ import org.w3c.dom.DOMException;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.DocumentType;
-/*      */ import org.w3c.dom.NamedNodeMap;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ import org.w3c.dom.UserDataHandler;
-/*      */ import org.w3c.dom.events.Event;
-/*      */ import org.w3c.dom.events.EventListener;
-/*      */ import org.w3c.dom.events.EventTarget;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class NodeImpl
-/*      */   implements Node, NodeList, EventTarget, Cloneable, Serializable
-/*      */ {
-/*      */   public static final short TREE_POSITION_PRECEDING = 1;
-/*      */   public static final short TREE_POSITION_FOLLOWING = 2;
-/*      */   public static final short TREE_POSITION_ANCESTOR = 4;
-/*      */   public static final short TREE_POSITION_DESCENDANT = 8;
-/*      */   public static final short TREE_POSITION_EQUIVALENT = 16;
-/*      */   public static final short TREE_POSITION_SAME_NODE = 32;
-/*      */   public static final short TREE_POSITION_DISCONNECTED = 0;
-/*      */   public static final short DOCUMENT_POSITION_DISCONNECTED = 1;
-/*      */   public static final short DOCUMENT_POSITION_PRECEDING = 2;
-/*      */   public static final short DOCUMENT_POSITION_FOLLOWING = 4;
-/*      */   public static final short DOCUMENT_POSITION_CONTAINS = 8;
-/*      */   public static final short DOCUMENT_POSITION_IS_CONTAINED = 16;
-/*      */   public static final short DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 32;
-/*      */   static final long serialVersionUID = -6316591992167219696L;
-/*      */   public static final short ELEMENT_DEFINITION_NODE = 21;
-/*      */   protected NodeImpl ownerNode;
-/*      */   protected short flags;
-/*      */   protected static final short READONLY = 1;
-/*      */   protected static final short SYNCDATA = 2;
-/*      */   protected static final short SYNCCHILDREN = 4;
-/*      */   protected static final short OWNED = 8;
-/*      */   protected static final short FIRSTCHILD = 16;
-/*      */   protected static final short SPECIFIED = 32;
-/*      */   protected static final short IGNORABLEWS = 64;
-/*      */   protected static final short HASSTRING = 128;
-/*      */   protected static final short NORMALIZED = 256;
-/*      */   protected static final short ID = 512;
-/*      */   
-/*      */   protected NodeImpl(CoreDocumentImpl ownerDocument) {
-/*  177 */     this.ownerNode = ownerDocument;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NodeImpl() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract short getNodeType();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract String getNodeName();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNodeValue() throws DOMException {
-/*  204 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setNodeValue(String x) throws DOMException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node appendChild(Node newChild) throws DOMException {
-/*  237 */     return insertBefore(newChild, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node cloneNode(boolean deep) {
-/*      */     NodeImpl newnode;
-/*  265 */     if (needsSyncData()) {
-/*  266 */       synchronizeData();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     try {
-/*  271 */       newnode = (NodeImpl)clone();
-/*      */     }
-/*  273 */     catch (CloneNotSupportedException e) {
-/*      */ 
-/*      */       
-/*  276 */       throw new RuntimeException("**Internal Error**" + e);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  280 */     newnode.ownerNode = ownerDocument();
-/*  281 */     newnode.isOwned(false);
-/*      */ 
-/*      */ 
-/*      */     
-/*  285 */     newnode.isReadOnly(false);
-/*      */     
-/*  287 */     ownerDocument().callUserDataHandlers(this, newnode, (short)1);
-/*      */ 
-/*      */     
-/*  290 */     return newnode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document getOwnerDocument() {
-/*  302 */     if (isOwned()) {
-/*  303 */       return this.ownerNode.ownerDocument();
-/*      */     }
-/*  305 */     return (Document)this.ownerNode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   CoreDocumentImpl ownerDocument() {
-/*  316 */     if (isOwned()) {
-/*  317 */       return this.ownerNode.ownerDocument();
-/*      */     }
-/*  319 */     return (CoreDocumentImpl)this.ownerNode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setOwnerDocument(CoreDocumentImpl doc) {
-/*  328 */     if (needsSyncData()) {
-/*  329 */       synchronizeData();
-/*      */     }
-/*      */ 
-/*      */     
-/*  333 */     if (!isOwned()) {
-/*  334 */       this.ownerNode = doc;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getNodeNumber() {
-/*  343 */     CoreDocumentImpl cd = (CoreDocumentImpl)getOwnerDocument();
-/*  344 */     int nodeNumber = cd.getNodeNumber(this);
-/*  345 */     return nodeNumber;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getParentNode() {
-/*  355 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   NodeImpl parentNode() {
-/*  362 */     return null;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Node getNextSibling() {
-/*  367 */     return null;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Node getPreviousSibling() {
-/*  372 */     return null;
-/*      */   }
-/*      */   
-/*      */   ChildNode previousSibling() {
-/*  376 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NamedNodeMap getAttributes() {
-/*  387 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasAttributes() {
-/*  398 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasChildNodes() {
-/*  409 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NodeList getChildNodes() {
-/*  426 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getFirstChild() {
-/*  435 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getLastChild() {
-/*  444 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node insertBefore(Node newChild, Node refChild) throws DOMException {
-/*  480 */     throw new DOMException((short)3, 
-/*  481 */         DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "HIERARCHY_REQUEST_ERR", null));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node removeChild(Node oldChild) throws DOMException {
-/*  502 */     throw new DOMException((short)8, 
-/*  503 */         DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node replaceChild(Node newChild, Node oldChild) throws DOMException {
-/*  533 */     throw new DOMException((short)3, 
-/*  534 */         DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "HIERARCHY_REQUEST_ERR", null));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLength() {
-/*  551 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node item(int index) {
-/*  565 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void normalize() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSupported(String feature, String version) {
-/*  612 */     return ownerDocument().getImplementation().hasFeature(feature, version);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNamespaceURI() {
-/*  635 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getPrefix() {
-/*  654 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPrefix(String prefix) throws DOMException {
-/*  681 */     throw new DOMException((short)14, 
-/*  682 */         DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NAMESPACE_ERR", null));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getLocalName() {
-/*  700 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addEventListener(String type, EventListener listener, boolean useCapture) {
-/*  710 */     ownerDocument().addEventListener(this, type, listener, useCapture);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeEventListener(String type, EventListener listener, boolean useCapture) {
-/*  716 */     ownerDocument().removeEventListener(this, type, listener, useCapture);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean dispatchEvent(Event event) {
-/*  721 */     return ownerDocument().dispatchEvent(this, event);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getBaseURI() {
-/*  753 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short compareTreePosition(Node other) {
-/*  804 */     if (this == other) {
-/*  805 */       return 48;
-/*      */     }
-/*      */     
-/*  808 */     short thisType = getNodeType();
-/*  809 */     short otherType = other.getNodeType();
-/*      */ 
-/*      */     
-/*  812 */     if (thisType == 6 || thisType == 12 || otherType == 6 || otherType == 12)
-/*      */     {
-/*      */ 
-/*      */       
-/*  816 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  827 */     Node thisAncestor = this;
-/*  828 */     Node otherAncestor = other;
-/*  829 */     int thisDepth = 0;
-/*  830 */     int otherDepth = 0; Node node;
-/*  831 */     for (node = this; node != null; node = node.getParentNode()) {
-/*  832 */       thisDepth++;
-/*  833 */       if (node == other)
-/*      */       {
-/*  835 */         return 5; } 
-/*  836 */       thisAncestor = node;
-/*      */     } 
-/*      */     
-/*  839 */     for (node = other; node != null; node = node.getParentNode()) {
-/*  840 */       otherDepth++;
-/*  841 */       if (node == this)
-/*      */       {
-/*  843 */         return 10; } 
-/*  844 */       otherAncestor = node;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  848 */     Node thisNode = this;
-/*  849 */     Node otherNode = other;
-/*      */     
-/*  851 */     int thisAncestorType = thisAncestor.getNodeType();
-/*  852 */     int otherAncestorType = otherAncestor.getNodeType();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  857 */     if (thisAncestorType == 2) {
-/*  858 */       thisNode = ((AttrImpl)thisAncestor).getOwnerElement();
-/*      */     }
-/*  860 */     if (otherAncestorType == 2) {
-/*  861 */       otherNode = ((AttrImpl)otherAncestor).getOwnerElement();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  866 */     if (thisAncestorType == 2 && otherAncestorType == 2 && thisNode == otherNode)
-/*      */     {
-/*      */       
-/*  869 */       return 16;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  876 */     if (thisAncestorType == 2) {
-/*  877 */       thisDepth = 0;
-/*  878 */       for (node = thisNode; node != null; node = node.getParentNode()) {
-/*  879 */         thisDepth++;
-/*  880 */         if (node == otherNode)
-/*      */         {
-/*      */           
-/*  883 */           return 1;
-/*      */         }
-/*  885 */         thisAncestor = node;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  891 */     if (otherAncestorType == 2) {
-/*  892 */       otherDepth = 0;
-/*  893 */       for (node = otherNode; node != null; node = node.getParentNode()) {
-/*  894 */         otherDepth++;
-/*  895 */         if (node == thisNode)
-/*      */         {
-/*      */           
-/*  898 */           return 2; } 
-/*  899 */         otherAncestor = node;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  905 */     if (thisAncestor != otherAncestor) {
-/*  906 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  912 */     if (thisDepth > otherDepth) {
-/*  913 */       for (int i = 0; i < thisDepth - otherDepth; i++) {
-/*  914 */         thisNode = thisNode.getParentNode();
-/*      */       }
-/*      */ 
-/*      */       
-/*  918 */       if (thisNode == otherNode) {
-/*  919 */         return 1;
-/*      */       }
-/*      */     } else {
-/*      */       
-/*  923 */       for (int i = 0; i < otherDepth - thisDepth; i++) {
-/*  924 */         otherNode = otherNode.getParentNode();
-/*      */       }
-/*      */ 
-/*      */       
-/*  928 */       if (otherNode == thisNode) {
-/*  929 */         return 2;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  935 */     Node thisNodeP = thisNode.getParentNode();
-/*  936 */     Node otherNodeP = otherNode.getParentNode();
-/*  937 */     while (thisNodeP != otherNodeP) {
-/*  938 */       thisNode = thisNodeP;
-/*  939 */       otherNode = otherNodeP;
-/*  940 */       thisNodeP = thisNodeP.getParentNode();
-/*  941 */       otherNodeP = otherNodeP.getParentNode();
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  948 */     Node current = thisNodeP.getFirstChild();
-/*  949 */     for (; current != null; 
-/*  950 */       current = current.getNextSibling()) {
-/*  951 */       if (current == otherNode) {
-/*  952 */         return 1;
-/*      */       }
-/*  954 */       if (current == thisNode) {
-/*  955 */         return 2;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  960 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short compareDocumentPosition(Node other) throws DOMException {
-/*      */     Document thisOwnerDoc, otherOwnerDoc;
-/*      */     DocumentType container;
-/*  974 */     if (this == other) {
-/*  975 */       return 0;
-/*      */     }
-/*      */     
-/*      */     try {
-/*  979 */       NodeImpl nodeImpl = (NodeImpl)other;
-/*  980 */     } catch (ClassCastException e) {
-/*      */       
-/*  982 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_SUPPORTED_ERR", null);
-/*      */       
-/*  984 */       throw new DOMException((short)9, msg);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  989 */     if (getNodeType() == 9) {
-/*  990 */       thisOwnerDoc = (Document)this;
-/*      */     } else {
-/*  992 */       thisOwnerDoc = getOwnerDocument();
-/*  993 */     }  if (other.getNodeType() == 9) {
-/*  994 */       otherOwnerDoc = (Document)other;
-/*      */     } else {
-/*  996 */       otherOwnerDoc = other.getOwnerDocument();
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1000 */     if (thisOwnerDoc != otherOwnerDoc && thisOwnerDoc != null && otherOwnerDoc != null) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1004 */       int otherDocNum = ((CoreDocumentImpl)otherOwnerDoc).getNodeNumber();
-/* 1005 */       int thisDocNum = ((CoreDocumentImpl)thisOwnerDoc).getNodeNumber();
-/* 1006 */       if (otherDocNum > thisDocNum) {
-/* 1007 */         return 37;
-/*      */       }
-/*      */ 
-/*      */       
-/* 1011 */       return 35;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1025 */     Node thisAncestor = this;
-/* 1026 */     Node otherAncestor = other;
-/*      */     
-/* 1028 */     int thisDepth = 0;
-/* 1029 */     int otherDepth = 0; Node node;
-/* 1030 */     for (node = this; node != null; node = node.getParentNode()) {
-/* 1031 */       thisDepth++;
-/* 1032 */       if (node == other)
-/*      */       {
-/* 1034 */         return 10;
-/*      */       }
-/* 1036 */       thisAncestor = node;
-/*      */     } 
-/*      */     
-/* 1039 */     for (node = other; node != null; node = node.getParentNode()) {
-/* 1040 */       otherDepth++;
-/* 1041 */       if (node == this)
-/*      */       {
-/* 1043 */         return 20;
-/*      */       }
-/* 1045 */       otherAncestor = node;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1050 */     int thisAncestorType = thisAncestor.getNodeType();
-/* 1051 */     int otherAncestorType = otherAncestor.getNodeType();
-/* 1052 */     Node thisNode = this;
-/* 1053 */     Node otherNode = other;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1057 */     switch (thisAncestorType) {
-/*      */       case 6:
-/*      */       case 12:
-/* 1060 */         container = thisOwnerDoc.getDoctype();
-/* 1061 */         if (container == otherAncestor) return 10;
-/*      */         
-/* 1063 */         switch (otherAncestorType) {
-/*      */           case 6:
-/*      */           case 12:
-/* 1066 */             if (thisAncestorType != otherAncestorType)
-/*      */             {
-/* 1068 */               return (thisAncestorType > otherAncestorType) ? 2 : 4;
-/*      */             }
-/*      */ 
-/*      */             
-/* 1072 */             if (thisAncestorType == 12) {
-/*      */               
-/* 1074 */               if (((NamedNodeMapImpl)container.getNotations()).precedes(otherAncestor, thisAncestor)) {
-/* 1075 */                 return 34;
-/*      */               }
-/*      */               
-/* 1078 */               return 36;
-/*      */             } 
-/*      */             
-/* 1081 */             if (((NamedNodeMapImpl)container.getEntities()).precedes(otherAncestor, thisAncestor)) {
-/* 1082 */               return 34;
-/*      */             }
-/*      */             
-/* 1085 */             return 36;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1090 */         thisNode = thisAncestor = thisOwnerDoc;
-/*      */         break;
-/*      */       
-/*      */       case 10:
-/* 1094 */         if (otherNode == thisOwnerDoc) {
-/* 1095 */           return 10;
-/*      */         }
-/* 1097 */         if (thisOwnerDoc != null && thisOwnerDoc == otherOwnerDoc) {
-/* 1098 */           return 4;
-/*      */         }
-/*      */         break;
-/*      */       case 2:
-/* 1102 */         thisNode = ((AttrImpl)thisAncestor).getOwnerElement();
-/* 1103 */         if (otherAncestorType == 2) {
-/* 1104 */           otherNode = ((AttrImpl)otherAncestor).getOwnerElement();
-/* 1105 */           if (otherNode == thisNode) {
-/* 1106 */             if (((NamedNodeMapImpl)thisNode.getAttributes()).precedes(other, this)) {
-/* 1107 */               return 34;
-/*      */             }
-/*      */             
-/* 1110 */             return 36;
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1116 */         thisDepth = 0;
-/* 1117 */         for (node = thisNode; node != null; node = node.getParentNode()) {
-/* 1118 */           thisDepth++;
-/* 1119 */           if (node == otherNode)
-/*      */           {
-/*      */             
-/* 1122 */             return 10;
-/*      */           }
-/*      */           
-/* 1125 */           thisAncestor = node;
-/*      */         } 
-/*      */         break;
-/*      */     } 
-/* 1129 */     switch (otherAncestorType) {
-/*      */       case 6:
-/*      */       case 12:
-/* 1132 */         container = thisOwnerDoc.getDoctype();
-/* 1133 */         if (container == this) return 20;
-/*      */         
-/* 1135 */         otherNode = otherAncestor = thisOwnerDoc;
-/*      */         break;
-/*      */       
-/*      */       case 10:
-/* 1139 */         if (thisNode == otherOwnerDoc) {
-/* 1140 */           return 20;
-/*      */         }
-/* 1142 */         if (otherOwnerDoc != null && thisOwnerDoc == otherOwnerDoc) {
-/* 1143 */           return 2;
-/*      */         }
-/*      */         break;
-/*      */       case 2:
-/* 1147 */         otherDepth = 0;
-/* 1148 */         otherNode = ((AttrImpl)otherAncestor).getOwnerElement();
-/* 1149 */         for (node = otherNode; node != null; node = node.getParentNode()) {
-/* 1150 */           otherDepth++;
-/* 1151 */           if (node == thisNode)
-/*      */           {
-/*      */             
-/* 1154 */             return 20;
-/*      */           }
-/* 1156 */           otherAncestor = node;
-/*      */         } 
-/*      */         break;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1164 */     if (thisAncestor != otherAncestor) {
-/*      */       
-/* 1166 */       int thisAncestorNum = ((NodeImpl)thisAncestor).getNodeNumber();
-/* 1167 */       int otherAncestorNum = ((NodeImpl)otherAncestor).getNodeNumber();
-/*      */       
-/* 1169 */       if (thisAncestorNum > otherAncestorNum) {
-/* 1170 */         return 37;
-/*      */       }
-/*      */ 
-/*      */       
-/* 1174 */       return 35;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1183 */     if (thisDepth > otherDepth) {
-/* 1184 */       for (int i = 0; i < thisDepth - otherDepth; i++) {
-/* 1185 */         thisNode = thisNode.getParentNode();
-/*      */       }
-/*      */ 
-/*      */       
-/* 1189 */       if (thisNode == otherNode)
-/*      */       {
-/* 1191 */         return 2;
-/*      */       }
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1196 */       for (int i = 0; i < otherDepth - thisDepth; i++) {
-/* 1197 */         otherNode = otherNode.getParentNode();
-/*      */       }
-/*      */ 
-/*      */       
-/* 1201 */       if (otherNode == thisNode) {
-/* 1202 */         return 4;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1208 */     Node thisNodeP = thisNode.getParentNode();
-/* 1209 */     Node otherNodeP = otherNode.getParentNode();
-/* 1210 */     while (thisNodeP != otherNodeP) {
-/* 1211 */       thisNode = thisNodeP;
-/* 1212 */       otherNode = otherNodeP;
-/* 1213 */       thisNodeP = thisNodeP.getParentNode();
-/* 1214 */       otherNodeP = otherNodeP.getParentNode();
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1221 */     Node current = thisNodeP.getFirstChild();
-/* 1222 */     for (; current != null; 
-/* 1223 */       current = current.getNextSibling()) {
-/* 1224 */       if (current == otherNode) {
-/* 1225 */         return 2;
-/*      */       }
-/* 1227 */       if (current == thisNode) {
-/* 1228 */         return 4;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1233 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTextContent() throws DOMException {
-/* 1301 */     return getNodeValue();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void getTextContent(StringBuffer buf) throws DOMException {
-/* 1306 */     String content = getNodeValue();
-/* 1307 */     if (content != null) {
-/* 1308 */       buf.append(content);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTextContent(String textContent) throws DOMException {
-/* 1359 */     setNodeValue(textContent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSameNode(Node other) {
-/* 1378 */     return (this == other);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isDefaultNamespace(String namespaceURI) {
-/*      */     String namespace, prefix;
-/*      */     NodeImpl nodeImpl1;
-/* 1395 */     short type = getNodeType();
-/* 1396 */     switch (type) {
-/*      */       case 1:
-/* 1398 */         namespace = getNamespaceURI();
-/* 1399 */         prefix = getPrefix();
-/*      */ 
-/*      */         
-/* 1402 */         if (prefix == null || prefix.length() == 0) {
-/* 1403 */           if (namespaceURI == null) {
-/* 1404 */             return (namespace == namespaceURI);
-/*      */           }
-/* 1406 */           return namespaceURI.equals(namespace);
-/*      */         } 
-/* 1408 */         if (hasAttributes()) {
-/* 1409 */           ElementImpl elem = (ElementImpl)this;
-/* 1410 */           NodeImpl attr = (NodeImpl)elem.getAttributeNodeNS("http://www.w3.org/2000/xmlns/", "xmlns");
-/* 1411 */           if (attr != null) {
-/* 1412 */             String value = attr.getNodeValue();
-/* 1413 */             if (namespaceURI == null) {
-/* 1414 */               return (namespace == value);
-/*      */             }
-/* 1416 */             return namespaceURI.equals(value);
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 1420 */         nodeImpl1 = (NodeImpl)getElementAncestor(this);
-/* 1421 */         if (nodeImpl1 != null) {
-/* 1422 */           return nodeImpl1.isDefaultNamespace(namespaceURI);
-/*      */         }
-/* 1424 */         return false;
-/*      */       
-/*      */       case 9:
-/* 1427 */         return ((NodeImpl)((Document)this).getDocumentElement()).isDefaultNamespace(namespaceURI);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 6:
-/*      */       case 10:
-/*      */       case 11:
-/*      */       case 12:
-/* 1435 */         return false;
-/*      */       case 2:
-/* 1437 */         if (this.ownerNode.getNodeType() == 1) {
-/* 1438 */           return this.ownerNode.isDefaultNamespace(namespaceURI);
-/*      */         }
-/*      */         
-/* 1441 */         return false;
-/*      */     } 
-/*      */     
-/* 1444 */     NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
-/* 1445 */     if (ancestor != null) {
-/* 1446 */       return ancestor.isDefaultNamespace(namespaceURI);
-/*      */     }
-/* 1448 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String lookupPrefix(String namespaceURI) {
-/*      */     String namespace;
-/* 1469 */     if (namespaceURI == null) {
-/* 1470 */       return null;
-/*      */     }
-/*      */     
-/* 1473 */     short type = getNodeType();
-/*      */     
-/* 1475 */     switch (type) {
-/*      */       
-/*      */       case 1:
-/* 1478 */         namespace = getNamespaceURI();
-/* 1479 */         return lookupNamespacePrefix(namespaceURI, (ElementImpl)this);
-/*      */       
-/*      */       case 9:
-/* 1482 */         return ((NodeImpl)((Document)this).getDocumentElement()).lookupPrefix(namespaceURI);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 6:
-/*      */       case 10:
-/*      */       case 11:
-/*      */       case 12:
-/* 1490 */         return null;
-/*      */       case 2:
-/* 1492 */         if (this.ownerNode.getNodeType() == 1) {
-/* 1493 */           return this.ownerNode.lookupPrefix(namespaceURI);
-/*      */         }
-/*      */         
-/* 1496 */         return null;
-/*      */     } 
-/*      */     
-/* 1499 */     NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
-/* 1500 */     if (ancestor != null) {
-/* 1501 */       return ancestor.lookupPrefix(namespaceURI);
-/*      */     }
-/* 1503 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String lookupNamespaceURI(String specifiedPrefix) {
-/*      */     String namespace, prefix;
-/*      */     NodeImpl nodeImpl1;
-/* 1518 */     short type = getNodeType();
-/* 1519 */     switch (type) {
-/*      */       
-/*      */       case 1:
-/* 1522 */         namespace = getNamespaceURI();
-/* 1523 */         prefix = getPrefix();
-/* 1524 */         if (namespace != null) {
-/*      */           
-/* 1526 */           if (specifiedPrefix == null && prefix == specifiedPrefix)
-/*      */           {
-/* 1528 */             return namespace; } 
-/* 1529 */           if (prefix != null && prefix.equals(specifiedPrefix))
-/*      */           {
-/* 1531 */             return namespace;
-/*      */           }
-/*      */         } 
-/* 1534 */         if (hasAttributes()) {
-/* 1535 */           NamedNodeMap map = getAttributes();
-/* 1536 */           int length = map.getLength();
-/* 1537 */           for (int i = 0; i < length; i++) {
-/* 1538 */             Node attr = map.item(i);
-/* 1539 */             String attrPrefix = attr.getPrefix();
-/* 1540 */             String value = attr.getNodeValue();
-/* 1541 */             namespace = attr.getNamespaceURI();
-/* 1542 */             if (namespace != null && namespace.equals("http://www.w3.org/2000/xmlns/")) {
-/*      */               
-/* 1544 */               if (specifiedPrefix == null && attr
-/* 1545 */                 .getNodeName().equals("xmlns"))
-/*      */               {
-/* 1547 */                 return value; } 
-/* 1548 */               if (attrPrefix != null && attrPrefix
-/* 1549 */                 .equals("xmlns") && attr
-/* 1550 */                 .getLocalName().equals(specifiedPrefix))
-/*      */               {
-/* 1552 */                 return value;
-/*      */               }
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/* 1557 */         nodeImpl1 = (NodeImpl)getElementAncestor(this);
-/* 1558 */         if (nodeImpl1 != null) {
-/* 1559 */           return nodeImpl1.lookupNamespaceURI(specifiedPrefix);
-/*      */         }
-/*      */         
-/* 1562 */         return null;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 9:
-/* 1567 */         return ((NodeImpl)((Document)this).getDocumentElement()).lookupNamespaceURI(specifiedPrefix);
-/*      */ 
-/*      */       
-/*      */       case 6:
-/*      */       case 10:
-/*      */       case 11:
-/*      */       case 12:
-/* 1574 */         return null;
-/*      */       case 2:
-/* 1576 */         if (this.ownerNode.getNodeType() == 1) {
-/* 1577 */           return this.ownerNode.lookupNamespaceURI(specifiedPrefix);
-/*      */         }
-/*      */         
-/* 1580 */         return null;
-/*      */     } 
-/*      */     
-/* 1583 */     NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
-/* 1584 */     if (ancestor != null) {
-/* 1585 */       return ancestor.lookupNamespaceURI(specifiedPrefix);
-/*      */     }
-/* 1587 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Node getElementAncestor(Node currentNode) {
-/* 1595 */     Node parent = currentNode.getParentNode();
-/* 1596 */     if (parent != null) {
-/* 1597 */       short type = parent.getNodeType();
-/* 1598 */       if (type == 1) {
-/* 1599 */         return parent;
-/*      */       }
-/* 1601 */       return getElementAncestor(parent);
-/*      */     } 
-/* 1603 */     return null;
-/*      */   }
-/*      */   
-/*      */   String lookupNamespacePrefix(String namespaceURI, ElementImpl el) {
-/* 1607 */     String namespace = getNamespaceURI();
-/*      */ 
-/*      */     
-/* 1610 */     String prefix = getPrefix();
-/*      */     
-/* 1612 */     if (namespace != null && namespace.equals(namespaceURI) && 
-/* 1613 */       prefix != null) {
-/* 1614 */       String foundNamespace = el.lookupNamespaceURI(prefix);
-/* 1615 */       if (foundNamespace != null && foundNamespace.equals(namespaceURI)) {
-/* 1616 */         return prefix;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1621 */     if (hasAttributes()) {
-/* 1622 */       NamedNodeMap map = getAttributes();
-/* 1623 */       int length = map.getLength();
-/* 1624 */       for (int i = 0; i < length; i++) {
-/* 1625 */         Node attr = map.item(i);
-/* 1626 */         String attrPrefix = attr.getPrefix();
-/* 1627 */         String value = attr.getNodeValue();
-/* 1628 */         namespace = attr.getNamespaceURI();
-/* 1629 */         if (namespace != null && namespace.equals("http://www.w3.org/2000/xmlns/"))
-/*      */         {
-/* 1631 */           if (attr.getNodeName().equals("xmlns") || (attrPrefix != null && attrPrefix
-/* 1632 */             .equals("xmlns") && value
-/* 1633 */             .equals(namespaceURI))) {
-/*      */             
-/* 1635 */             String localname = attr.getLocalName();
-/* 1636 */             String foundNamespace = el.lookupNamespaceURI(localname);
-/* 1637 */             if (foundNamespace != null && foundNamespace.equals(namespaceURI)) {
-/* 1638 */               return localname;
-/*      */             }
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1646 */     NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
-/*      */     
-/* 1648 */     if (ancestor != null) {
-/* 1649 */       return ancestor.lookupNamespacePrefix(namespaceURI, el);
-/*      */     }
-/* 1651 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEqualNode(Node arg) {
-/* 1697 */     if (arg == this) {
-/* 1698 */       return true;
-/*      */     }
-/* 1700 */     if (arg.getNodeType() != getNodeType()) {
-/* 1701 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1705 */     if (getNodeName() == null) {
-/* 1706 */       if (arg.getNodeName() != null) {
-/* 1707 */         return false;
-/*      */       }
-/*      */     }
-/* 1710 */     else if (!getNodeName().equals(arg.getNodeName())) {
-/* 1711 */       return false;
-/*      */     } 
-/*      */     
-/* 1714 */     if (getLocalName() == null) {
-/* 1715 */       if (arg.getLocalName() != null) {
-/* 1716 */         return false;
-/*      */       }
-/*      */     }
-/* 1719 */     else if (!getLocalName().equals(arg.getLocalName())) {
-/* 1720 */       return false;
-/*      */     } 
-/*      */     
-/* 1723 */     if (getNamespaceURI() == null) {
-/* 1724 */       if (arg.getNamespaceURI() != null) {
-/* 1725 */         return false;
-/*      */       }
-/*      */     }
-/* 1728 */     else if (!getNamespaceURI().equals(arg.getNamespaceURI())) {
-/* 1729 */       return false;
-/*      */     } 
-/*      */     
-/* 1732 */     if (getPrefix() == null) {
-/* 1733 */       if (arg.getPrefix() != null) {
-/* 1734 */         return false;
-/*      */       }
-/*      */     }
-/* 1737 */     else if (!getPrefix().equals(arg.getPrefix())) {
-/* 1738 */       return false;
-/*      */     } 
-/*      */     
-/* 1741 */     if (getNodeValue() == null) {
-/* 1742 */       if (arg.getNodeValue() != null) {
-/* 1743 */         return false;
-/*      */       }
-/*      */     }
-/* 1746 */     else if (!getNodeValue().equals(arg.getNodeValue())) {
-/* 1747 */       return false;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1751 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getFeature(String feature, String version) {
-/* 1760 */     return isSupported(feature, version) ? this : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object setUserData(String key, Object data, UserDataHandler handler) {
-/* 1779 */     return ownerDocument().setUserData(this, key, data, handler);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getUserData(String key) {
-/* 1792 */     return ownerDocument().getUserData(this, key);
-/*      */   }
-/*      */   
-/*      */   protected Map<String, ParentNode.UserDataRecord> getUserDataRecord() {
-/* 1796 */     return ownerDocument().getUserDataRecord(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setReadOnly(boolean readOnly, boolean deep) {
-/* 1823 */     if (needsSyncData()) {
-/* 1824 */       synchronizeData();
-/*      */     }
-/* 1826 */     isReadOnly(readOnly);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getReadOnly() {
-/* 1836 */     if (needsSyncData()) {
-/* 1837 */       synchronizeData();
-/*      */     }
-/* 1839 */     return isReadOnly();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUserData(Object data) {
-/* 1856 */     ownerDocument().setUserData(this, data);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getUserData() {
-/* 1864 */     return ownerDocument().getUserData(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void changed() {
-/* 1878 */     ownerDocument().changed();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int changes() {
-/* 1888 */     return ownerDocument().changes();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void synchronizeData() {
-/* 1897 */     needsSyncData(false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Node getContainer() {
-/* 1905 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final boolean isReadOnly() {
-/* 1914 */     return ((this.flags & 0x1) != 0);
-/*      */   }
-/*      */   
-/*      */   final void isReadOnly(boolean value) {
-/* 1918 */     this.flags = (short)(value ? (this.flags | 0x1) : (this.flags & 0xFFFFFFFE));
-/*      */   }
-/*      */   
-/*      */   final boolean needsSyncData() {
-/* 1922 */     return ((this.flags & 0x2) != 0);
-/*      */   }
-/*      */   
-/*      */   final void needsSyncData(boolean value) {
-/* 1926 */     this.flags = (short)(value ? (this.flags | 0x2) : (this.flags & 0xFFFFFFFD));
-/*      */   }
-/*      */   
-/*      */   final boolean needsSyncChildren() {
-/* 1930 */     return ((this.flags & 0x4) != 0);
-/*      */   }
-/*      */   
-/*      */   public final void needsSyncChildren(boolean value) {
-/* 1934 */     this.flags = (short)(value ? (this.flags | 0x4) : (this.flags & 0xFFFFFFFB));
-/*      */   }
-/*      */   
-/*      */   final boolean isOwned() {
-/* 1938 */     return ((this.flags & 0x8) != 0);
-/*      */   }
-/*      */   
-/*      */   final void isOwned(boolean value) {
-/* 1942 */     this.flags = (short)(value ? (this.flags | 0x8) : (this.flags & 0xFFFFFFF7));
-/*      */   }
-/*      */   
-/*      */   final boolean isFirstChild() {
-/* 1946 */     return ((this.flags & 0x10) != 0);
-/*      */   }
-/*      */   
-/*      */   final void isFirstChild(boolean value) {
-/* 1950 */     this.flags = (short)(value ? (this.flags | 0x10) : (this.flags & 0xFFFFFFEF));
-/*      */   }
-/*      */   
-/*      */   final boolean isSpecified() {
-/* 1954 */     return ((this.flags & 0x20) != 0);
-/*      */   }
-/*      */   
-/*      */   final void isSpecified(boolean value) {
-/* 1958 */     this.flags = (short)(value ? (this.flags | 0x20) : (this.flags & 0xFFFFFFDF));
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   final boolean internalIsIgnorableWhitespace() {
-/* 1963 */     return ((this.flags & 0x40) != 0);
-/*      */   }
-/*      */   
-/*      */   final void isIgnorableWhitespace(boolean value) {
-/* 1967 */     this.flags = (short)(value ? (this.flags | 0x40) : (this.flags & 0xFFFFFFBF));
-/*      */   }
-/*      */   
-/*      */   final boolean hasStringValue() {
-/* 1971 */     return ((this.flags & 0x80) != 0);
-/*      */   }
-/*      */   
-/*      */   final void hasStringValue(boolean value) {
-/* 1975 */     this.flags = (short)(value ? (this.flags | 0x80) : (this.flags & 0xFFFFFF7F));
-/*      */   }
-/*      */   
-/*      */   final boolean isNormalized() {
-/* 1979 */     return ((this.flags & 0x100) != 0);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   final void isNormalized(boolean value) {
-/* 1984 */     if (!value && isNormalized() && this.ownerNode != null) {
-/* 1985 */       this.ownerNode.isNormalized(false);
-/*      */     }
-/* 1987 */     this.flags = (short)(value ? (this.flags | 0x100) : (this.flags & 0xFFFFFEFF));
-/*      */   }
-/*      */   
-/*      */   final boolean isIdAttribute() {
-/* 1991 */     return ((this.flags & 0x200) != 0);
-/*      */   }
-/*      */   
-/*      */   final void isIdAttribute(boolean value) {
-/* 1995 */     this.flags = (short)(value ? (this.flags | 0x200) : (this.flags & 0xFFFFFDFF));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 2004 */     return "[" + getNodeName() + ": " + getNodeValue() + "]";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream out) throws IOException {
-/* 2015 */     if (needsSyncData()) {
-/* 2016 */       synchronizeData();
-/*      */     }
-/*      */     
-/* 2019 */     out.defaultWriteObject();
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\NodeImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+ /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Map;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.UserDataHandler;
+import org.w3c.dom.events.Event;
+import org.w3c.dom.events.EventListener;
+import org.w3c.dom.events.EventTarget;
+
+/**
+ * NodeImpl provides the basic structure of a DOM tree. It is never used
+ * directly, but instead is subclassed to add type and data
+ * information, and additional methods, appropriate to each node of
+ * the tree. Only its subclasses should be instantiated -- and those,
+ * with the exception of Document itself, only through a specific
+ * Document's factory methods.
+ * <P>
+ * The Node interface provides shared behaviors such as siblings and
+ * children, both for consistancy and so that the most common tree
+ * operations may be performed without constantly having to downcast
+ * to specific node types. When there is no obvious mapping for one of
+ * these queries, it will respond with null.
+ * Note that the default behavior is that children are forbidden. To
+ * permit them, the subclass ParentNode overrides several methods.
+ * <P>
+ * NodeImpl also implements NodeList, so it can return itself in
+ * response to the getChildNodes() query. This eliminiates the need
+ * for a separate ChildNodeList object. Note that this is an
+ * IMPLEMENTATION DETAIL; applications should _never_ assume that
+ * this identity exists.
+ * <P>
+ * All nodes in a single document must originate
+ * in that document. (Note that this is much tighter than "must be
+ * same implementation") Nodes are all aware of their ownerDocument,
+ * and attempts to mismatch will throw WRONG_DOCUMENT_ERR.
+ * <P>
+ * However, to save memory not all nodes always have a direct reference
+ * to their ownerDocument. When a node is owned by another node it relies
+ * on its owner to store its ownerDocument. Parent nodes always store it
+ * though, so there is never more than one level of indirection.
+ * And when a node doesn't have an owner, ownerNode refers to its
+ * ownerDocument.
+ * <p>
+ * This class doesn't directly support mutation events, however, it still
+ * implements the EventTarget interface and forward all related calls to the
+ * document so that the document class do so.
+ *
+ * @xerces.internal
+ *
+ * @author Arnaud  Le Hors, IBM
+ * @author Joe Kesselman, IBM
+ * @since  PR-DOM-Level-1-19980818.
+ */
+public abstract class NodeImpl
+    implements Node, NodeList, EventTarget, Cloneable, Serializable{
+
+    //
+    // Constants
+    //
+
+
+    // TreePosition Constants.
+    // Taken from DOM L3 Node interface.
+    /**
+     * The node precedes the reference node.
+     */
+    public static final short TREE_POSITION_PRECEDING   = 0x01;
+    /**
+     * The node follows the reference node.
+     */
+    public static final short TREE_POSITION_FOLLOWING   = 0x02;
+    /**
+     * The node is an ancestor of the reference node.
+     */
+    public static final short TREE_POSITION_ANCESTOR    = 0x04;
+    /**
+     * The node is a descendant of the reference node.
+     */
+    public static final short TREE_POSITION_DESCENDANT  = 0x08;
+    /**
+     * The two nodes have an equivalent position. This is the case of two
+     * attributes that have the same <code>ownerElement</code>, and two
+     * nodes that are the same.
+     */
+    public static final short TREE_POSITION_EQUIVALENT  = 0x10;
+    /**
+     * The two nodes are the same. Two nodes that are the same have an
+     * equivalent position, though the reverse may not be true.
+     */
+    public static final short TREE_POSITION_SAME_NODE   = 0x20;
+    /**
+     * The two nodes are disconnected, they do not have any common ancestor.
+     * This is the case of two nodes that are not in the same document.
+     */
+    public static final short TREE_POSITION_DISCONNECTED = 0x00;
+
+
+    // DocumentPosition
+    public static final short DOCUMENT_POSITION_DISCONNECTED = 0x01;
+    public static final short DOCUMENT_POSITION_PRECEDING = 0x02;
+    public static final short DOCUMENT_POSITION_FOLLOWING = 0x04;
+    public static final short DOCUMENT_POSITION_CONTAINS = 0x08;
+    public static final short DOCUMENT_POSITION_IS_CONTAINED = 0x10;
+    public static final short DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20;
+
+    /** Serialization version. */
+    static final long serialVersionUID = -6316591992167219696L;
+
+    // public
+
+    /** Element definition node type. */
+    public static final short ELEMENT_DEFINITION_NODE = 21;
+
+    //
+    // Data
+    //
+
+    // links
+
+    protected NodeImpl ownerNode; // typically the parent but not always!
+
+    // data
+
+    protected short flags;
+
+    protected final static short READONLY     = 0x1<<0;
+    protected final static short SYNCDATA     = 0x1<<1;
+    protected final static short SYNCCHILDREN = 0x1<<2;
+    protected final static short OWNED        = 0x1<<3;
+    protected final static short FIRSTCHILD   = 0x1<<4;
+    protected final static short SPECIFIED    = 0x1<<5;
+    protected final static short IGNORABLEWS  = 0x1<<6;
+    protected final static short HASSTRING    = 0x1<<7;
+    protected final static short NORMALIZED = 0x1<<8;
+    protected final static short ID           = 0x1<<9;
+
+    //
+    // Constructors
+    //
+
+    /**
+     * No public constructor; only subclasses of Node should be
+     * instantiated, and those normally via a Document's factory methods
+     * <p>
+     * Every Node knows what Document it belongs to.
+     */
+    protected NodeImpl(CoreDocumentImpl ownerDocument) {
+        // as long as we do not have any owner, ownerNode is our ownerDocument
+        ownerNode = ownerDocument;
+    } // <init>(CoreDocumentImpl)
+
+    /** Constructor for serialization. */
+    public NodeImpl() {}
+
+    //
+    // Node methods
+    //
+
+    /**
+     * A short integer indicating what type of node this is. The named
+     * constants for this value are defined in the org.w3c.dom.Node interface.
+     */
+    public abstract short getNodeType();
+
+    /**
+     * the name of this node.
+     */
+    public abstract String getNodeName();
+
+    /**
+     * Returns the node value.
+     * @throws DOMException(DOMSTRING_SIZE_ERR)
+     */
+    public String getNodeValue()
+        throws DOMException {
+        return null;            // overridden in some subclasses
+    }
+
+    /**
+     * Sets the node value.
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR)
+     */
+    public void setNodeValue(String x)
+        throws DOMException {
+        // Default behavior is to do nothing, overridden in some subclasses
+    }
+
+    /**
+     * Adds a child node to the end of the list of children for this node.
+     * Convenience shorthand for insertBefore(newChild,null).
+     * @see #insertBefore(Node, Node)
+     * <P>
+     * By default we do not accept any children, ParentNode overrides this.
+     * @see ParentNode
+     *
+     * @return newChild, in its new state (relocated, or emptied in the case of
+     * DocumentNode.)
+     *
+     * @throws DOMException(HIERARCHY_REQUEST_ERR) if newChild is of a
+     * type that shouldn't be a child of this node.
+     *
+     * @throws DOMException(WRONG_DOCUMENT_ERR) if newChild has a
+     * different owner document than we do.
+     *
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if this node is
+     * read-only.
+     */
+    public Node appendChild(Node newChild) throws DOMException {
+        return insertBefore(newChild, null);
+    }
+
+    /**
+     * Returns a duplicate of a given node. You can consider this a
+     * generic "copy constructor" for nodes. The newly returned object should
+     * be completely independent of the source object's subtree, so changes
+     * in one after the clone has been made will not affect the other.
+     * <P>
+     * Note: since we never have any children deep is meaningless here,
+     * ParentNode overrides this behavior.
+     * @see ParentNode
+     *
+     * <p>
+     * Example: Cloning a Text node will copy both the node and the text it
+     * contains.
+     * <p>
+     * Example: Cloning something that has children -- Element or Attr, for
+     * example -- will _not_ clone those children unless a "deep clone"
+     * has been requested. A shallow clone of an Attr node will yield an
+     * empty Attr of the same name.
+     * <p>
+     * NOTE: Clones will always be read/write, even if the node being cloned
+     * is read-only, to permit applications using only the DOM API to obtain
+     * editable copies of locked portions of the tree.
+     */
+    public Node cloneNode(boolean deep) {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        NodeImpl newnode;
+        try {
+            newnode = (NodeImpl)clone();
+        }
+        catch (CloneNotSupportedException e) {
+            // if we get here we have an error in our program we may as well
+            // be vocal about it, so that people can take appropriate action.
+            throw new RuntimeException("**Internal Error**" + e);
+        }
+
+        // Need to break the association w/ original kids
+        newnode.ownerNode      = ownerDocument();
+        newnode.isOwned(false);
+
+        // By default we make all clones readwrite,
+        // this is overriden in readonly subclasses
+        newnode.isReadOnly(false);
+
+        ownerDocument().callUserDataHandlers(this, newnode,
+                                             UserDataHandler.NODE_CLONED);
+
+        return newnode;
+
+    } // cloneNode(boolean):Node
+
+    /**
+     * Find the Document that this Node belongs to (the document in
+     * whose context the Node was created). The Node may or may not
+     * currently be part of that Document's actual contents.
+     */
+    public Document getOwnerDocument() {
+        // if we have an owner simply forward the request
+        // otherwise ownerNode is our ownerDocument
+        if (isOwned()) {
+            return ownerNode.ownerDocument();
+        } else {
+            return (Document) ownerNode;
+        }
+    }
+
+    /**
+     * same as above but returns internal type and this one is not overridden
+     * by CoreDocumentImpl to return null
+     */
+    CoreDocumentImpl ownerDocument() {
+        // if we have an owner simply forward the request
+        // otherwise ownerNode is our ownerDocument
+        if (isOwned()) {
+            return ownerNode.ownerDocument();
+        } else {
+            return (CoreDocumentImpl) ownerNode;
+        }
+    }
+
+    /**
+     * NON-DOM
+     * set the ownerDocument of this node
+     */
+    void setOwnerDocument(CoreDocumentImpl doc) {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        // if we have an owner we rely on it to have it right
+        // otherwise ownerNode is our ownerDocument
+        if (!isOwned()) {
+            ownerNode = doc;
+        }
+    }
+
+    /**
+     * Returns the node number
+     */
+    protected int getNodeNumber() {
+        int nodeNumber;
+        CoreDocumentImpl cd = (CoreDocumentImpl)(this.getOwnerDocument());
+        nodeNumber = cd.getNodeNumber(this);
+        return nodeNumber;
+    }
+
+    /**
+     * Obtain the DOM-tree parent of this node, or null if it is not
+     * currently active in the DOM tree (perhaps because it has just been
+     * created or removed). Note that Document, DocumentFragment, and
+     * Attribute will never have parents.
+     */
+    public Node getParentNode() {
+        return null;            // overriden by ChildNode
+    }
+
+    /*
+     * same as above but returns internal type
+     */
+    NodeImpl parentNode() {
+        return null;
+    }
+
+    /** The next child of this node's parent, or null if none */
+    public Node getNextSibling() {
+        return null;            // default behavior, overriden in ChildNode
+    }
+
+    /** The previous child of this node's parent, or null if none */
+    public Node getPreviousSibling() {
+        return null;            // default behavior, overriden in ChildNode
+    }
+
+    ChildNode previousSibling() {
+        return null;            // default behavior, overriden in ChildNode
+    }
+
+    /**
+     * Return the collection of attributes associated with this node,
+     * or null if none. At this writing, Element is the only type of node
+     * which will ever have attributes.
+     *
+     * @see ElementImpl
+     */
+    public NamedNodeMap getAttributes() {
+        return null; // overridden in ElementImpl
+    }
+
+    /**
+     *  Returns whether this node (if it is an element) has any attributes.
+     * @return <code>true</code> if this node has any attributes,
+     *   <code>false</code> otherwise.
+     * @since DOM Level 2
+     * @see ElementImpl
+     */
+    public boolean hasAttributes() {
+        return false;           // overridden in ElementImpl
+    }
+
+    /**
+     * Test whether this node has any children. Convenience shorthand
+     * for (Node.getFirstChild()!=null)
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     */
+    public boolean hasChildNodes() {
+        return false;
+    }
+
+    /**
+     * Obtain a NodeList enumerating all children of this node. If there
+     * are none, an (initially) empty NodeList is returned.
+     * <p>
+     * NodeLists are "live"; as children are added/removed the NodeList
+     * will immediately reflect those changes. Also, the NodeList refers
+     * to the actual nodes, so changes to those nodes made via the DOM tree
+     * will be reflected in the NodeList and vice versa.
+     * <p>
+     * In this implementation, Nodes implement the NodeList interface and
+     * provide their own getChildNodes() support. Other DOMs may solve this
+     * differently.
+     */
+    public NodeList getChildNodes() {
+        return this;
+    }
+
+    /** The first child of this Node, or null if none.
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     */
+    public Node getFirstChild() {
+        return null;
+    }
+
+    /** The first child of this Node, or null if none.
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     */
+    public Node getLastChild() {
+        return null;
+    }
+
+    /**
+     * Move one or more node(s) to our list of children. Note that this
+     * implicitly removes them from their previous parent.
+     * <P>
+     * By default we do not accept any children, ParentNode overrides this.
+     * @see ParentNode
+     *
+     * @param newChild The Node to be moved to our subtree. As a
+     * convenience feature, inserting a DocumentNode will instead insert
+     * all its children.
+     *
+     * @param refChild Current child which newChild should be placed
+     * immediately before. If refChild is null, the insertion occurs
+     * after all existing Nodes, like appendChild().
+     *
+     * @return newChild, in its new state (relocated, or emptied in the case of
+     * DocumentNode.)
+     *
+     * @throws DOMException(HIERARCHY_REQUEST_ERR) if newChild is of a
+     * type that shouldn't be a child of this node, or if newChild is an
+     * ancestor of this node.
+     *
+     * @throws DOMException(WRONG_DOCUMENT_ERR) if newChild has a
+     * different owner document than we do.
+     *
+     * @throws DOMException(NOT_FOUND_ERR) if refChild is not a child of
+     * this node.
+     *
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if this node is
+     * read-only.
+     */
+    public Node insertBefore(Node newChild, Node refChild)
+        throws DOMException {
+        throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR,
+              DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN,
+                 "HIERARCHY_REQUEST_ERR", null));
+    }
+
+    /**
+     * Remove a child from this Node. The removed child's subtree
+     * remains intact so it may be re-inserted elsewhere.
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     *
+     * @return oldChild, in its new state (removed).
+     *
+     * @throws DOMException(NOT_FOUND_ERR) if oldChild is not a child of
+     * this node.
+     *
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if this node is
+     * read-only.
+     */
+    public Node removeChild(Node oldChild)
+                throws DOMException {
+        throw new DOMException(DOMException.NOT_FOUND_ERR,
+              DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN,
+                 "NOT_FOUND_ERR", null));
+    }
+
+    /**
+     * Make newChild occupy the location that oldChild used to
+     * have. Note that newChild will first be removed from its previous
+     * parent, if any. Equivalent to inserting newChild before oldChild,
+     * then removing oldChild.
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     *
+     * @return oldChild, in its new state (removed).
+     *
+     * @throws DOMException(HIERARCHY_REQUEST_ERR) if newChild is of a
+     * type that shouldn't be a child of this node, or if newChild is
+     * one of our ancestors.
+     *
+     * @throws DOMException(WRONG_DOCUMENT_ERR) if newChild has a
+     * different owner document than we do.
+     *
+     * @throws DOMException(NOT_FOUND_ERR) if oldChild is not a child of
+     * this node.
+     *
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if this node is
+     * read-only.
+     */
+    public Node replaceChild(Node newChild, Node oldChild)
+        throws DOMException {
+        throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR,
+              DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN,
+                 "HIERARCHY_REQUEST_ERR", null));
+    }
+
+    //
+    // NodeList methods
+    //
+
+    /**
+     * NodeList method: Count the immediate children of this node
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     *
+     * @return int
+     */
+    public int getLength() {
+        return 0;
+    }
+
+    /**
+     * NodeList method: Return the Nth immediate child of this node, or
+     * null if the index is out of bounds.
+     * <P>
+     * By default we do not have any children, ParentNode overrides this.
+     * @see ParentNode
+     *
+     * @return org.w3c.dom.Node
+     * @param Index int
+     */
+    public Node item(int index) {
+        return null;
+    }
+
+    //
+    // DOM2: methods, getters, setters
+    //
+
+    /**
+     * Puts all <code>Text</code> nodes in the full depth of the sub-tree
+     * underneath this <code>Node</code>, including attribute nodes, into a
+     * "normal" form where only markup (e.g., tags, comments, processing
+     * instructions, CDATA sections, and entity references) separates
+     * <code>Text</code> nodes, i.e., there are no adjacent <code>Text</code>
+     * nodes.  This can be used to ensure that the DOM view of a document is
+     * the same as if it were saved and re-loaded, and is useful when
+     * operations (such as XPointer lookups) that depend on a particular
+     * document tree structure are to be used.In cases where the document
+     * contains <code>CDATASections</code>, the normalize operation alone may
+     * not be sufficient, since XPointers do not differentiate between
+     * <code>Text</code> nodes and <code>CDATASection</code> nodes.
+     * <p>
+     * Note that this implementation simply calls normalize() on this Node's
+     * children. It is up to implementors or Node to override normalize()
+     * to take action.
+     */
+    public void normalize() {
+        /* by default we do not have any children,
+           ParentNode overrides this behavior */
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     * Tests whether the DOM implementation implements a specific feature and
+     * that feature is supported by this node.
+     * @param feature The package name of the feature to test. This is the same
+     * name as what can be passed to the method hasFeature on
+     * DOMImplementation.
+     * @param version This is the version number of the package name to
+     * test. In Level 2, version 1, this is the string "2.0". If the version is
+     * not specified, supporting any version of the feature will cause the
+     * method to return true.
+     * @return boolean Returns true if this node defines a subtree within which
+     * the specified feature is supported, false otherwise.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public boolean isSupported(String feature, String version)
+    {
+        return ownerDocument().getImplementation().hasFeature(feature,
+                                                              version);
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * The namespace URI of this node, or null if it is unspecified. When this
+     * node is of any type other than ELEMENT_NODE and ATTRIBUTE_NODE, this is
+     * always null and setting it has no effect. <p>
+     *
+     * This is not a computed value that is the result of a namespace lookup
+     * based on an examination of the namespace declarations in scope. It is
+     * merely the namespace URI given at creation time.<p>
+     *
+     * For nodes created with a DOM Level 1 method, such as createElement
+     * from the Document interface, this is null.
+     * @since WD-DOM-Level-2-19990923
+     * @see AttrNSImpl
+     * @see ElementNSImpl
+     */
+    public String getNamespaceURI()
+    {
+        return null;
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * The namespace prefix of this node, or null if it is unspecified. When
+     * this node is of any type other than ELEMENT_NODE and ATTRIBUTE_NODE this
+     * is always null and setting it has no effect.<p>
+     *
+     * For nodes created with a DOM Level 1 method, such as createElement
+     * from the Document interface, this is null. <p>
+     *
+     * @since WD-DOM-Level-2-19990923
+     * @see AttrNSImpl
+     * @see ElementNSImpl
+     */
+    public String getPrefix()
+    {
+        return null;
+    }
+
+    /**
+     *  Introduced in DOM Level 2. <p>
+     *
+     *  The namespace prefix of this node, or null if it is unspecified. When
+     *  this node is of any type other than ELEMENT_NODE and ATTRIBUTE_NODE
+     *  this is always null and setting it has no effect.<p>
+     *
+     *  For nodes created with a DOM Level 1 method, such as createElement from
+     *  the Document interface, this is null.<p>
+     *
+     *  Note that setting this attribute changes the nodeName attribute, which
+     *  holds the qualified name, as well as the tagName and name attributes of
+     *  the Element and Attr interfaces, when applicable.<p>
+     *
+     * @throws INVALID_CHARACTER_ERR Raised if the specified
+     *  prefix contains an invalid character.
+     *
+     * @since WD-DOM-Level-2-19990923
+     * @see AttrNSImpl
+     * @see ElementNSImpl
+     */
+    public void setPrefix(String prefix)
+        throws DOMException
+    {
+        throw new DOMException(DOMException.NAMESPACE_ERR,
+              DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN,
+                 "NAMESPACE_ERR", null));
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Returns the local part of the qualified name of this node.
+     * For nodes created with a DOM Level 1 method, such as createElement
+     * from the Document interface, and for nodes of any type other than
+     * ELEMENT_NODE and ATTRIBUTE_NODE this is the same as the nodeName
+     * attribute.
+     * @since WD-DOM-Level-2-19990923
+     * @see AttrNSImpl
+     * @see ElementNSImpl
+     */
+    public String             getLocalName()
+    {
+        return null;
+    }
+
+    //
+    // EventTarget support
+    //
+
+    public void addEventListener(String type, EventListener listener,
+                                 boolean useCapture) {
+        // simply forward to Document
+        ownerDocument().addEventListener(this, type, listener, useCapture);
+    }
+
+    public void removeEventListener(String type, EventListener listener,
+                                    boolean useCapture) {
+        // simply forward to Document
+        ownerDocument().removeEventListener(this, type, listener, useCapture);
+    }
+
+    public boolean dispatchEvent(Event event) {
+        // simply forward to Document
+        return ownerDocument().dispatchEvent(this, event);
+    }
+
+    //
+    // Public DOM Level 3 methods
+    //
+
+    /**
+     * The absolute base URI of this node or <code>null</code> if undefined.
+     * This value is computed according to . However, when the
+     * <code>Document</code> supports the feature "HTML" , the base URI is
+     * computed using first the value of the href attribute of the HTML BASE
+     * element if any, and the value of the <code>documentURI</code>
+     * attribute from the <code>Document</code> interface otherwise.
+     * <br> When the node is an <code>Element</code>, a <code>Document</code>
+     * or a a <code>ProcessingInstruction</code>, this attribute represents
+     * the properties [base URI] defined in . When the node is a
+     * <code>Notation</code>, an <code>Entity</code>, or an
+     * <code>EntityReference</code>, this attribute represents the
+     * properties [declaration base URI] in the . How will this be affected
+     * by resolution of relative namespace URIs issue?It's not.Should this
+     * only be on Document, Element, ProcessingInstruction, Entity, and
+     * Notation nodes, according to the infoset? If not, what is it equal to
+     * on other nodes? Null? An empty string? I think it should be the
+     * parent's.No.Should this be read-only and computed or and actual
+     * read-write attribute?Read-only and computed (F2F 19 Jun 2000 and
+     * teleconference 30 May 2001).If the base HTML element is not yet
+     * attached to a document, does the insert change the Document.baseURI?
+     * Yes. (F2F 26 Sep 2001)
+     * @since DOM Level 3
+     */
+    public String getBaseURI() {
+        return null;
+    }
+
+    /**
+     * Compares a node with this node with regard to their position in the
+     * tree and according to the document order. This order can be extended
+     * by module that define additional types of nodes.
+     * @param other The node to compare against this node.
+     * @return Returns how the given node is positioned relatively to this
+     *   node.
+     * @since DOM Level 3
+     * @deprecated
+     */
+    public short compareTreePosition(Node other) {
+        // Questions of clarification for this method - to be answered by the
+        // DOM WG.   Current assumptions listed - LM
+        //
+        // 1. How do ENTITY nodes compare?
+        //    Current assumption: TREE_POSITION_DISCONNECTED, as ENTITY nodes
+        //    aren't really 'in the tree'
+        //
+        // 2. How do NOTATION nodes compare?
+        //    Current assumption: TREE_POSITION_DISCONNECTED, as NOTATION nodes
+        //    aren't really 'in the tree'
+        //
+        // 3. Are TREE_POSITION_ANCESTOR and TREE_POSITION_DESCENDANT
+        //    only relevant for nodes that are "part of the document tree"?
+        //     <outer>
+        //         <inner  myattr="true"/>
+        //     </outer>
+        //    Is the element node "outer" considered an ancestor of "myattr"?
+        //    Current assumption: No.
+        //
+        // 4. How do children of ATTRIBUTE nodes compare (with eachother, or
+        //    with children of other attribute nodes with the same element)
+        //    Current assumption: Children of ATTRIBUTE nodes are treated as if
+        //    they they are the attribute node itself, unless the 2 nodes
+        //    are both children of the same attribute.
+        //
+        // 5. How does an ENTITY_REFERENCE node compare with it's children?
+        //    Given the DOM, it should precede its children as an ancestor.
+        //    Given "document order",  does it represent the same position?
+        //    Current assumption: An ENTITY_REFERENCE node is an ancestor of its
+        //    children.
+        //
+        // 6. How do children of a DocumentFragment compare?
+        //    Current assumption: If both nodes are part of the same document
+        //    fragment, there are compared as if they were part of a document.
+
+
+        // If the nodes are the same...
+        if (this==other)
+          return (TREE_POSITION_SAME_NODE | TREE_POSITION_EQUIVALENT);
+
+        // If either node is of type ENTITY or NOTATION, compare as disconnected
+        short thisType = this.getNodeType();
+        short otherType = other.getNodeType();
+
+        // If either node is of type ENTITY or NOTATION, compare as disconnected
+        if (thisType == Node.ENTITY_NODE ||
+            thisType == Node.NOTATION_NODE ||
+            otherType == Node.ENTITY_NODE ||
+            otherType == Node.NOTATION_NODE ) {
+          return TREE_POSITION_DISCONNECTED;
+        }
+
+        // Find the ancestor of each node, and the distance each node is from
+        // its ancestor.
+        // During this traversal, look for ancestor/descendent relationships
+        // between the 2 nodes in question.
+        // We do this now, so that we get this info correct for attribute nodes
+        // and their children.
+
+        Node node;
+        Node thisAncestor = this;
+        Node otherAncestor = other;
+        int thisDepth=0;
+        int otherDepth=0;
+        for (node=this; node != null; node = node.getParentNode()) {
+            thisDepth +=1;
+            if (node == other)
+              // The other node is an ancestor of this one.
+              return (TREE_POSITION_ANCESTOR | TREE_POSITION_PRECEDING);
+            thisAncestor = node;
+        }
+
+        for (node=other; node!=null; node=node.getParentNode()) {
+            otherDepth +=1;
+            if (node == this)
+              // The other node is a descendent of the reference node.
+              return (TREE_POSITION_DESCENDANT | TREE_POSITION_FOLLOWING);
+            otherAncestor = node;
+        }
+
+
+        Node thisNode = this;
+        Node otherNode = other;
+
+        int thisAncestorType = thisAncestor.getNodeType();
+        int otherAncestorType = otherAncestor.getNodeType();
+
+        // if the ancestor is an attribute, get owning element.
+        // we are now interested in the owner to determine position.
+
+        if (thisAncestorType == Node.ATTRIBUTE_NODE)  {
+           thisNode = ((AttrImpl)thisAncestor).getOwnerElement();
+        }
+        if (otherAncestorType == Node.ATTRIBUTE_NODE) {
+           otherNode = ((AttrImpl)otherAncestor).getOwnerElement();
+        }
+
+        // Before proceeding, we should check if both ancestor nodes turned
+        // out to be attributes for the same element
+        if (thisAncestorType == Node.ATTRIBUTE_NODE &&
+            otherAncestorType == Node.ATTRIBUTE_NODE &&
+            thisNode==otherNode)
+            return TREE_POSITION_EQUIVALENT;
+
+        // Now, find the ancestor of the owning element, if the original
+        // ancestor was an attribute
+
+        // Note:  the following 2 loops are quite close to the ones above.
+        // May want to common them up.  LM.
+        if (thisAncestorType == Node.ATTRIBUTE_NODE) {
+            thisDepth=0;
+            for (node=thisNode; node != null; node=node.getParentNode()) {
+                thisDepth +=1;
+                if (node == otherNode)
+                  // The other node is an ancestor of the owning element
+                  {
+                  return TREE_POSITION_PRECEDING;
+                  }
+                thisAncestor = node;
+            }
+        }
+
+        // Now, find the ancestor of the owning element, if the original
+        // ancestor was an attribute
+        if (otherAncestorType == Node.ATTRIBUTE_NODE) {
+            otherDepth=0;
+            for (node=otherNode; node != null; node=node.getParentNode()) {
+                otherDepth +=1;
+                if (node == thisNode)
+                  // The other node is a descendent of the reference
+                  // node's element
+                  return TREE_POSITION_FOLLOWING;
+                otherAncestor = node;
+            }
+        }
+
+        // thisAncestor and otherAncestor must be the same at this point,
+        // otherwise, we are not in the same tree or document fragment
+        if (thisAncestor != otherAncestor)
+          return TREE_POSITION_DISCONNECTED;
+
+
+        // Go up the parent chain of the deeper node, until we find a node
+        // with the same depth as the shallower node
+
+        if (thisDepth > otherDepth) {
+          for (int i=0; i<thisDepth - otherDepth; i++)
+            thisNode = thisNode.getParentNode();
+          // Check if the node we have reached is in fact "otherNode". This can
+          // happen in the case of attributes.  In this case, otherNode
+          // "precedes" this.
+          if (thisNode == otherNode)
+            return TREE_POSITION_PRECEDING;
+        }
+
+        else {
+          for (int i=0; i<otherDepth - thisDepth; i++)
+            otherNode = otherNode.getParentNode();
+          // Check if the node we have reached is in fact "thisNode".  This can
+          // happen in the case of attributes.  In this case, otherNode
+          // "follows" this.
+          if (otherNode == thisNode)
+            return TREE_POSITION_FOLLOWING;
+        }
+
+        // We now have nodes at the same depth in the tree.  Find a common
+        // ancestor.
+        Node thisNodeP, otherNodeP;
+        for (thisNodeP=thisNode.getParentNode(),
+                  otherNodeP=otherNode.getParentNode();
+             thisNodeP!=otherNodeP;) {
+             thisNode = thisNodeP;
+             otherNode = otherNodeP;
+             thisNodeP = thisNodeP.getParentNode();
+             otherNodeP = otherNodeP.getParentNode();
+        }
+
+        // At this point, thisNode and otherNode are direct children of
+        // the common ancestor.
+        // See whether thisNode or otherNode is the leftmost
+
+        for (Node current=thisNodeP.getFirstChild();
+                  current!=null;
+                  current=current.getNextSibling()) {
+               if (current==otherNode) {
+                 return TREE_POSITION_PRECEDING;
+               }
+               else if (current==thisNode) {
+                 return TREE_POSITION_FOLLOWING;
+               }
+        }
+        // REVISIT:  shouldn't get here.   Should probably throw an
+        // exception
+        return 0;
+
+    }
+    /**
+     * Compares a node with this node with regard to their position in the
+     * document.
+     * @param other The node to compare against this node.
+     * @return Returns how the given node is positioned relatively to this
+     *   node.
+     * @since DOM Level 3
+     */
+    public short compareDocumentPosition(Node other) throws DOMException {
+
+        // If the nodes are the same, no flags should be set
+        if (this==other)
+          return 0;
+
+        // check if other is from a different implementation
+        try {
+            NodeImpl node = (NodeImpl) other;
+        } catch (ClassCastException e) {
+            // other comes from a different implementation
+            String msg = DOMMessageFormatter.formatMessage(
+               DOMMessageFormatter.DOM_DOMAIN, "NOT_SUPPORTED_ERR", null);
+            throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+        }
+
+        Document thisOwnerDoc, otherOwnerDoc;
+        // get the respective Document owners.
+        if (this.getNodeType() == Node.DOCUMENT_NODE)
+          thisOwnerDoc = (Document)this;
+        else
+          thisOwnerDoc = this.getOwnerDocument();
+        if (other.getNodeType() == Node.DOCUMENT_NODE)
+          otherOwnerDoc = (Document)other;
+        else
+          otherOwnerDoc = other.getOwnerDocument();
+
+        // If from different documents, we know they are disconnected.
+        // and have an implementation dependent order
+        if (thisOwnerDoc != otherOwnerDoc &&
+            thisOwnerDoc !=null &&
+            otherOwnerDoc !=null)
+ {
+          int otherDocNum = ((CoreDocumentImpl)otherOwnerDoc).getNodeNumber();
+          int thisDocNum = ((CoreDocumentImpl)thisOwnerDoc).getNodeNumber();
+          if (otherDocNum > thisDocNum)
+            return DOCUMENT_POSITION_DISCONNECTED |
+                   DOCUMENT_POSITION_FOLLOWING |
+                   DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
+          else
+            return DOCUMENT_POSITION_DISCONNECTED |
+                   DOCUMENT_POSITION_PRECEDING |
+                   DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
+
+        }
+
+        // Find the ancestor of each node, and the distance each node is from
+        // its ancestor.
+        // During this traversal, look for ancestor/descendent relationships
+        // between the 2 nodes in question.
+        // We do this now, so that we get this info correct for attribute nodes
+        // and their children.
+
+        Node node;
+        Node thisAncestor = this;
+        Node otherAncestor = other;
+
+        int thisDepth=0;
+        int otherDepth=0;
+        for (node=this; node != null; node = node.getParentNode()) {
+            thisDepth +=1;
+            if (node == other)
+              // The other node is an ancestor of this one.
+              return (DOCUMENT_POSITION_CONTAINS |
+                      DOCUMENT_POSITION_PRECEDING);
+            thisAncestor = node;
+        }
+
+        for (node=other; node!=null; node=node.getParentNode()) {
+            otherDepth +=1;
+            if (node == this)
+              // The other node is a descendent of the reference node.
+              return (DOCUMENT_POSITION_IS_CONTAINED |
+                      DOCUMENT_POSITION_FOLLOWING);
+            otherAncestor = node;
+        }
+
+
+
+        int thisAncestorType = thisAncestor.getNodeType();
+        int otherAncestorType = otherAncestor.getNodeType();
+        Node thisNode = this;
+        Node otherNode = other;
+
+        // Special casing for ENTITY, NOTATION, DOCTYPE and ATTRIBUTES
+        // LM:  should rewrite this.
+        switch (thisAncestorType) {
+          case Node.NOTATION_NODE:
+          case Node.ENTITY_NODE: {
+            DocumentType container = thisOwnerDoc.getDoctype();
+            if (container == otherAncestor) return
+                   (DOCUMENT_POSITION_CONTAINS | DOCUMENT_POSITION_PRECEDING);
+            switch (otherAncestorType) {
+              case Node.NOTATION_NODE:
+              case Node.ENTITY_NODE:  {
+                if (thisAncestorType != otherAncestorType)
+                 // the nodes are of different types
+                 return ((thisAncestorType>otherAncestorType) ?
+                    DOCUMENT_POSITION_PRECEDING:DOCUMENT_POSITION_FOLLOWING);
+                else {
+                 // the nodes are of the same type.  Find order.
+                 if (thisAncestorType == Node.NOTATION_NODE)
+
+                     if (((NamedNodeMapImpl)container.getNotations()).precedes(otherAncestor,thisAncestor))
+                       return (DOCUMENT_POSITION_PRECEDING |
+                               DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC);
+                     else
+                       return (DOCUMENT_POSITION_FOLLOWING |
+                               DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC);
+                 else
+                     if (((NamedNodeMapImpl)container.getEntities()).precedes(otherAncestor,thisAncestor))
+                       return (DOCUMENT_POSITION_PRECEDING |
+                               DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC);
+                     else
+                       return (DOCUMENT_POSITION_FOLLOWING |
+                               DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC);
+                }
+              }
+            }
+            thisNode = thisAncestor = thisOwnerDoc;
+            break;
+          }
+          case Node.DOCUMENT_TYPE_NODE: {
+            if (otherNode == thisOwnerDoc)
+              return (DOCUMENT_POSITION_PRECEDING |
+                      DOCUMENT_POSITION_CONTAINS);
+            else if (thisOwnerDoc!=null && thisOwnerDoc==otherOwnerDoc)
+              return (DOCUMENT_POSITION_FOLLOWING);
+            break;
+          }
+          case Node.ATTRIBUTE_NODE: {
+            thisNode = ((AttrImpl)thisAncestor).getOwnerElement();
+            if (otherAncestorType==Node.ATTRIBUTE_NODE) {
+              otherNode = ((AttrImpl)otherAncestor).getOwnerElement();
+              if (otherNode == thisNode) {
+                if (((NamedNodeMapImpl)thisNode.getAttributes()).precedes(other,this))
+                  return (DOCUMENT_POSITION_PRECEDING |
+                          DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC);
+                else
+                  return (DOCUMENT_POSITION_FOLLOWING |
+                          DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC);
+              }
+            }
+
+            // Now, find the ancestor of the element
+            thisDepth=0;
+            for (node=thisNode; node != null; node=node.getParentNode()) {
+                thisDepth +=1;
+                if (node == otherNode)
+                  {
+                  // The other node is an ancestor of the owning element
+                  return (DOCUMENT_POSITION_CONTAINS |
+                          DOCUMENT_POSITION_PRECEDING);
+                  }
+                thisAncestor = node;
+            }
+          }
+        }
+        switch (otherAncestorType) {
+          case Node.NOTATION_NODE:
+          case Node.ENTITY_NODE: {
+          DocumentType container = thisOwnerDoc.getDoctype();
+            if (container == this) return (DOCUMENT_POSITION_IS_CONTAINED |
+                                          DOCUMENT_POSITION_FOLLOWING);
+            otherNode = otherAncestor = thisOwnerDoc;
+            break;
+          }
+          case Node.DOCUMENT_TYPE_NODE: {
+            if (thisNode == otherOwnerDoc)
+              return (DOCUMENT_POSITION_FOLLOWING |
+                      DOCUMENT_POSITION_IS_CONTAINED);
+            else if (otherOwnerDoc!=null && thisOwnerDoc==otherOwnerDoc)
+              return (DOCUMENT_POSITION_PRECEDING);
+            break;
+          }
+          case Node.ATTRIBUTE_NODE: {
+            otherDepth=0;
+            otherNode = ((AttrImpl)otherAncestor).getOwnerElement();
+            for (node=otherNode; node != null; node=node.getParentNode()) {
+                otherDepth +=1;
+                if (node == thisNode)
+                  // The other node is a descendent of the reference
+                  // node's element
+                  return DOCUMENT_POSITION_FOLLOWING |
+                         DOCUMENT_POSITION_IS_CONTAINED;
+                otherAncestor = node;
+            }
+
+          }
+        }
+
+        // thisAncestor and otherAncestor must be the same at this point,
+        // otherwise, the original nodes are disconnected
+        if (thisAncestor != otherAncestor) {
+          int thisAncestorNum, otherAncestorNum;
+          thisAncestorNum = ((NodeImpl)thisAncestor).getNodeNumber();
+          otherAncestorNum = ((NodeImpl)otherAncestor).getNodeNumber();
+
+          if (thisAncestorNum > otherAncestorNum)
+            return DOCUMENT_POSITION_DISCONNECTED |
+                   DOCUMENT_POSITION_FOLLOWING |
+                   DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
+          else
+            return DOCUMENT_POSITION_DISCONNECTED |
+                   DOCUMENT_POSITION_PRECEDING |
+                   DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC;
+        }
+
+
+        // Go up the parent chain of the deeper node, until we find a node
+        // with the same depth as the shallower node
+
+        if (thisDepth > otherDepth) {
+          for (int i=0; i<thisDepth - otherDepth; i++)
+            thisNode = thisNode.getParentNode();
+          // Check if the node we have reached is in fact "otherNode". This can
+          // happen in the case of attributes.  In this case, otherNode
+          // "precedes" this.
+          if (thisNode == otherNode)
+{
+            return DOCUMENT_POSITION_PRECEDING;
+          }
+        }
+
+        else {
+          for (int i=0; i<otherDepth - thisDepth; i++)
+            otherNode = otherNode.getParentNode();
+          // Check if the node we have reached is in fact "thisNode".  This can
+          // happen in the case of attributes.  In this case, otherNode
+          // "follows" this.
+          if (otherNode == thisNode)
+            return DOCUMENT_POSITION_FOLLOWING;
+        }
+
+        // We now have nodes at the same depth in the tree.  Find a common
+        // ancestor.
+        Node thisNodeP, otherNodeP;
+        for (thisNodeP=thisNode.getParentNode(),
+                  otherNodeP=otherNode.getParentNode();
+             thisNodeP!=otherNodeP;) {
+             thisNode = thisNodeP;
+             otherNode = otherNodeP;
+             thisNodeP = thisNodeP.getParentNode();
+             otherNodeP = otherNodeP.getParentNode();
+        }
+
+        // At this point, thisNode and otherNode are direct children of
+        // the common ancestor.
+        // See whether thisNode or otherNode is the leftmost
+
+        for (Node current=thisNodeP.getFirstChild();
+                  current!=null;
+                  current=current.getNextSibling()) {
+               if (current==otherNode) {
+                 return DOCUMENT_POSITION_PRECEDING;
+               }
+               else if (current==thisNode) {
+                 return DOCUMENT_POSITION_FOLLOWING;
+               }
+        }
+        // REVISIT:  shouldn't get here.   Should probably throw an
+        // exception
+        return 0;
+
+    }
+
+    /**
+     * This attribute returns the text content of this node and its
+     * descendants. When it is defined to be null, setting it has no effect.
+     * When set, any possible children this node may have are removed and
+     * replaced by a single <code>Text</code> node containing the string
+     * this attribute is set to. On getting, no serialization is performed,
+     * the returned string does not contain any markup. No whitespace
+     * normalization is performed, the returned string does not contain the
+     * element content whitespaces . Similarly, on setting, no parsing is
+     * performed either, the input string is taken as pure textual content.
+     * <br>The string returned is made of the text content of this node
+     * depending on its type, as defined below:
+     * <table border='1'>
+     * <tr>
+     * <th>Node type</th>
+     * <th>Content</th>
+     * </tr>
+
+    /**
+     * This attribute returns the text content of this node and its
+     * descendants. When it is defined to be null, setting it has no effect.
+     * When set, any possible children this node may have are removed and
+     * replaced by a single <code>Text</code> node containing the string
+     * this attribute is set to. On getting, no serialization is performed,
+     * the returned string does not contain any markup. No whitespace
+     * normalization is performed, the returned string does not contain the
+     * element content whitespaces . Similarly, on setting, no parsing is
+     * performed either, the input string is taken as pure textual content.
+     * <br>The string returned is made of the text content of this node
+     * depending on its type, as defined below:
+     * <table border='1'>
+     * <tr>
+     * <th>Node type</th>
+     * <th>Content</th>
+     * </tr>
+     * <tr>
+     * <td valign='top' rowspan='1' colspan='1'>
+     * ELEMENT_NODE, ENTITY_NODE, ENTITY_REFERENCE_NODE,
+     * DOCUMENT_FRAGMENT_NODE</td>
+     * <td valign='top' rowspan='1' colspan='1'>concatenation of the <code>textContent</code>
+     * attribute value of every child node, excluding COMMENT_NODE and
+     * PROCESSING_INSTRUCTION_NODE nodes</td>
+     * </tr>
+     * <tr>
+     * <td valign='top' rowspan='1' colspan='1'>ATTRIBUTE_NODE, TEXT_NODE,
+     * CDATA_SECTION_NODE, COMMENT_NODE, PROCESSING_INSTRUCTION_NODE</td>
+     * <td valign='top' rowspan='1' colspan='1'>
+     * <code>nodeValue</code></td>
+     * </tr>
+     * <tr>
+     * <td valign='top' rowspan='1' colspan='1'>DOCUMENT_NODE, DOCUMENT_TYPE_NODE, NOTATION_NODE</td>
+     * <td valign='top' rowspan='1' colspan='1'>
+     * null</td>
+     * </tr>
+     * </table>
+     * @exception DOMException
+     *   NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly.
+     * @exception DOMException
+     *   DOMSTRING_SIZE_ERR: Raised when it would return more characters than
+     *   fit in a <code>DOMString</code> variable on the implementation
+     *   platform.
+     * @since DOM Level 3
+     */
+    public String getTextContent() throws DOMException {
+        return getNodeValue();  // overriden in some subclasses
+    }
+
+    // internal method taking a StringBuffer in parameter
+    void getTextContent(StringBuffer buf) throws DOMException {
+        String content = getNodeValue();
+        if (content != null) {
+            buf.append(content);
+        }
+    }
+
+    /**
+     * This attribute returns the text content of this node and its
+     * descendants. When it is defined to be null, setting it has no effect.
+     * When set, any possible children this node may have are removed and
+     * replaced by a single <code>Text</code> node containing the string
+     * this attribute is set to. On getting, no serialization is performed,
+     * the returned string does not contain any markup. No whitespace
+     * normalization is performed, the returned string does not contain the
+     * element content whitespaces . Similarly, on setting, no parsing is
+     * performed either, the input string is taken as pure textual content.
+     * <br>The string returned is made of the text content of this node
+     * depending on its type, as defined below:
+     * <table border='1'>
+     * <tr>
+     * <th>Node type</th>
+     * <th>Content</th>
+     * </tr>
+     * <tr>
+     * <td valign='top' rowspan='1' colspan='1'>
+     * ELEMENT_NODE, ENTITY_NODE, ENTITY_REFERENCE_NODE,
+     * DOCUMENT_FRAGMENT_NODE</td>
+     * <td valign='top' rowspan='1' colspan='1'>concatenation of the <code>textContent</code>
+     * attribute value of every child node, excluding COMMENT_NODE and
+     * PROCESSING_INSTRUCTION_NODE nodes</td>
+     * </tr>
+     * <tr>
+     * <td valign='top' rowspan='1' colspan='1'>ATTRIBUTE_NODE, TEXT_NODE,
+     * CDATA_SECTION_NODE, COMMENT_NODE, PROCESSING_INSTRUCTION_NODE</td>
+     * <td valign='top' rowspan='1' colspan='1'>
+     * <code>nodeValue</code></td>
+     * </tr>
+     * <tr>
+     * <td valign='top' rowspan='1' colspan='1'>DOCUMENT_NODE, DOCUMENT_TYPE_NODE, NOTATION_NODE</td>
+     * <td valign='top' rowspan='1' colspan='1'>
+     * null</td>
+     * </tr>
+     * </table>
+     * @exception DOMException
+     *   NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly.
+     * @exception DOMException
+     *   DOMSTRING_SIZE_ERR: Raised when it would return more characters than
+     *   fit in a <code>DOMString</code> variable on the implementation
+     *   platform.
+     * @since DOM Level 3
+     */
+    public void setTextContent(String textContent)
+        throws DOMException {
+        setNodeValue(textContent);
+    }
+
+    /**
+     * Returns whether this node is the same node as the given one.
+     * <br>This method provides a way to determine whether two
+     * <code>Node</code> references returned by the implementation reference
+     * the same object. When two <code>Node</code> references are references
+     * to the same object, even if through a proxy, the references may be
+     * used completely interchangably, such that all attributes have the
+     * same values and calling the same DOM method on either reference
+     * always has exactly the same effect.
+     * @param other The node to test against.
+     * @return Returns <code>true</code> if the nodes are the same,
+     *   <code>false</code> otherwise.
+     * @since DOM Level 3
+     */
+    public boolean isSameNode(Node other) {
+        // we do not use any wrapper so the answer is obvious
+        return this == other;
+    }
+
+
+
+
+    /**
+     *  DOM Level 3: Experimental
+     *  This method checks if the specified <code>namespaceURI</code> is the
+     *  default namespace or not.
+     *  @param namespaceURI The namespace URI to look for.
+     *  @return  <code>true</code> if the specified <code>namespaceURI</code>
+     *   is the default namespace, <code>false</code> otherwise.
+     * @since DOM Level 3
+     */
+    public boolean isDefaultNamespace(String namespaceURI){
+        // REVISIT: remove casts when DOM L3 becomes REC.
+        short type = this.getNodeType();
+        switch (type) {
+        case Node.ELEMENT_NODE: {
+            String namespace = this.getNamespaceURI();
+            String prefix = this.getPrefix();
+
+            // REVISIT: is it possible that prefix is empty string?
+            if (prefix == null || prefix.length() == 0) {
+                if (namespaceURI == null) {
+                    return (namespace == namespaceURI);
+                }
+                return namespaceURI.equals(namespace);
+            }
+            if (this.hasAttributes()) {
+                ElementImpl elem = (ElementImpl)this;
+                NodeImpl attr = (NodeImpl)elem.getAttributeNodeNS("http://www.w3.org/2000/xmlns/", "xmlns");
+                if (attr != null) {
+                    String value = attr.getNodeValue();
+                    if (namespaceURI == null) {
+                        return (namespace == value);
+                    }
+                    return namespaceURI.equals(value);
+                }
+            }
+
+            NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
+            if (ancestor != null) {
+                return ancestor.isDefaultNamespace(namespaceURI);
+            }
+            return false;
+        }
+        case Node.DOCUMENT_NODE:{
+                return((NodeImpl)((Document)this).getDocumentElement()).isDefaultNamespace(namespaceURI);
+            }
+
+        case Node.ENTITY_NODE :
+        case Node.NOTATION_NODE:
+        case Node.DOCUMENT_FRAGMENT_NODE:
+        case Node.DOCUMENT_TYPE_NODE:
+            // type is unknown
+            return false;
+        case Node.ATTRIBUTE_NODE:{
+                if (this.ownerNode.getNodeType() == Node.ELEMENT_NODE) {
+                    return ownerNode.isDefaultNamespace(namespaceURI);
+
+                }
+                return false;
+            }
+        default:{
+                NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
+                if (ancestor != null) {
+                    return ancestor.isDefaultNamespace(namespaceURI);
+                }
+                return false;
+            }
+
+        }
+
+
+    }
+
+
+    /**
+     *
+     * DOM Level 3 - Experimental:
+     * Look up the prefix associated to the given namespace URI, starting from this node.
+     *
+     * @param namespaceURI
+     * @return the prefix for the namespace
+     */
+    public String lookupPrefix(String namespaceURI){
+
+        // REVISIT: When Namespaces 1.1 comes out this may not be true
+        // Prefix can't be bound to null namespace
+        if (namespaceURI == null) {
+            return null;
+        }
+
+        short type = this.getNodeType();
+
+        switch (type) {
+        case Node.ELEMENT_NODE: {
+
+                String namespace = this.getNamespaceURI(); // to flip out children
+                return lookupNamespacePrefix(namespaceURI, (ElementImpl)this);
+            }
+        case Node.DOCUMENT_NODE:{
+                return((NodeImpl)((Document)this).getDocumentElement()).lookupPrefix(namespaceURI);
+            }
+
+        case Node.ENTITY_NODE :
+        case Node.NOTATION_NODE:
+        case Node.DOCUMENT_FRAGMENT_NODE:
+        case Node.DOCUMENT_TYPE_NODE:
+            // type is unknown
+            return null;
+        case Node.ATTRIBUTE_NODE:{
+                if (this.ownerNode.getNodeType() == Node.ELEMENT_NODE) {
+                    return ownerNode.lookupPrefix(namespaceURI);
+
+                }
+                return null;
+            }
+        default:{
+                NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
+                if (ancestor != null) {
+                    return ancestor.lookupPrefix(namespaceURI);
+                }
+                return null;
+            }
+
+        }
+    }
+    /**
+     * DOM Level 3 - Experimental:
+     * Look up the namespace URI associated to the given prefix, starting from this node.
+     * Use lookupNamespaceURI(null) to lookup the default namespace
+     *
+     * @param namespaceURI
+     * @return th URI for the namespace
+     * @since DOM Level 3
+     */
+    public String lookupNamespaceURI(String specifiedPrefix) {
+        short type = this.getNodeType();
+        switch (type) {
+        case Node.ELEMENT_NODE : {
+
+                String namespace = this.getNamespaceURI();
+                String prefix = this.getPrefix();
+                if (namespace !=null) {
+                    // REVISIT: is it possible that prefix is empty string?
+                    if (specifiedPrefix== null && prefix==specifiedPrefix) {
+                        // looking for default namespace
+                        return namespace;
+                    } else if (prefix != null && prefix.equals(specifiedPrefix)) {
+                        // non default namespace
+                        return namespace;
+                    }
+                }
+                if (this.hasAttributes()) {
+                    NamedNodeMap map = this.getAttributes();
+                    int length = map.getLength();
+                    for (int i=0;i<length;i++) {
+                        Node attr = map.item(i);
+                        String attrPrefix = attr.getPrefix();
+                        String value = attr.getNodeValue();
+                        namespace = attr.getNamespaceURI();
+                        if (namespace !=null && namespace.equals("http://www.w3.org/2000/xmlns/")) {
+                            // at this point we are dealing with DOM Level 2 nodes only
+                            if (specifiedPrefix == null &&
+                                attr.getNodeName().equals("xmlns")) {
+                                // default namespace
+                                return value;
+                            } else if (attrPrefix !=null &&
+                                       attrPrefix.equals("xmlns") &&
+                                       attr.getLocalName().equals(specifiedPrefix)) {
+                                // non default namespace
+                                return value;
+                            }
+                        }
+                    }
+                }
+                NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
+                if (ancestor != null) {
+                    return ancestor.lookupNamespaceURI(specifiedPrefix);
+                }
+
+                return null;
+
+
+            }
+        case Node.DOCUMENT_NODE : {
+                return((NodeImpl)((Document)this).getDocumentElement()).lookupNamespaceURI(specifiedPrefix);
+            }
+        case Node.ENTITY_NODE :
+        case Node.NOTATION_NODE:
+        case Node.DOCUMENT_FRAGMENT_NODE:
+        case Node.DOCUMENT_TYPE_NODE:
+            // type is unknown
+            return null;
+        case Node.ATTRIBUTE_NODE:{
+                if (this.ownerNode.getNodeType() == Node.ELEMENT_NODE) {
+                    return ownerNode.lookupNamespaceURI(specifiedPrefix);
+
+                }
+                return null;
+            }
+        default:{
+                NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
+                if (ancestor != null) {
+                    return ancestor.lookupNamespaceURI(specifiedPrefix);
+                }
+                return null;
+            }
+
+        }
+    }
+
+
+    Node getElementAncestor (Node currentNode){
+        Node parent = currentNode.getParentNode();
+        if (parent != null) {
+            short type = parent.getNodeType();
+            if (type == Node.ELEMENT_NODE) {
+                return parent;
+            }
+            return getElementAncestor(parent);
+        }
+        return null;
+    }
+
+    String lookupNamespacePrefix(String namespaceURI, ElementImpl el){
+        String namespace = this.getNamespaceURI();
+        // REVISIT: if no prefix is available is it null or empty string, or
+        //          could be both?
+        String prefix = this.getPrefix();
+
+        if (namespace!=null && namespace.equals(namespaceURI)) {
+            if (prefix != null) {
+                String foundNamespace =  el.lookupNamespaceURI(prefix);
+                if (foundNamespace !=null && foundNamespace.equals(namespaceURI)) {
+                    return prefix;
+                }
+
+            }
+        }
+        if (this.hasAttributes()) {
+            NamedNodeMap map = this.getAttributes();
+            int length = map.getLength();
+            for (int i=0;i<length;i++) {
+                Node attr = map.item(i);
+                String attrPrefix = attr.getPrefix();
+                String value = attr.getNodeValue();
+                namespace = attr.getNamespaceURI();
+                if (namespace !=null && namespace.equals("http://www.w3.org/2000/xmlns/")) {
+                    // DOM Level 2 nodes
+                    if (((attr.getNodeName().equals("xmlns")) ||
+                         (attrPrefix !=null && attrPrefix.equals("xmlns")) &&
+                         value.equals(namespaceURI))) {
+
+                        String localname= attr.getLocalName();
+                        String foundNamespace = el.lookupNamespaceURI(localname);
+                        if (foundNamespace !=null && foundNamespace.equals(namespaceURI)) {
+                            return localname;
+                        }
+                    }
+
+
+                }
+            }
+        }
+        NodeImpl ancestor = (NodeImpl)getElementAncestor(this);
+
+        if (ancestor != null) {
+            return ancestor.lookupNamespacePrefix(namespaceURI, el);
+        }
+        return null;
+    }
+
+    /**
+     * Tests whether two nodes are equal.
+     * <br>This method tests for equality of nodes, not sameness (i.e.,
+     * whether the two nodes are references to the same object) which can be
+     * tested with <code>Node.isSameNode</code>. All nodes that are the same
+     * will also be equal, though the reverse may not be true.
+     * <br>Two nodes are equal if and only if the following conditions are
+     * satisfied: The two nodes are of the same type.The following string
+     * attributes are equal: <code>nodeName</code>, <code>localName</code>,
+     * <code>namespaceURI</code>, <code>prefix</code>, <code>nodeValue</code>
+     * , <code>baseURI</code>. This is: they are both <code>null</code>, or
+     * they have the same length and are character for character identical.
+     * The <code>attributes</code> <code>NamedNodeMaps</code> are equal.
+     * This is: they are both <code>null</code>, or they have the same
+     * length and for each node that exists in one map there is a node that
+     * exists in the other map and is equal, although not necessarily at the
+     * same index.The <code>childNodes</code> <code>NodeLists</code> are
+     * equal. This is: they are both <code>null</code>, or they have the
+     * same length and contain equal nodes at the same index. This is true
+     * for <code>Attr</code> nodes as for any other type of node. Note that
+     * normalization can affect equality; to avoid this, nodes should be
+     * normalized before being compared.
+     * <br>For two <code>DocumentType</code> nodes to be equal, the following
+     * conditions must also be satisfied: The following string attributes
+     * are equal: <code>publicId</code>, <code>systemId</code>,
+     * <code>internalSubset</code>.The <code>entities</code>
+     * <code>NamedNodeMaps</code> are equal.The <code>notations</code>
+     * <code>NamedNodeMaps</code> are equal.
+     * <br>On the other hand, the following do not affect equality: the
+     * <code>ownerDocument</code> attribute, the <code>specified</code>
+     * attribute for <code>Attr</code> nodes, the
+     * <code>isWhitespaceInElementContent</code> attribute for
+     * <code>Text</code> nodes, as well as any user data or event listeners
+     * registered on the nodes.
+     * @param arg The node to compare equality with.
+     * @param deep If <code>true</code>, recursively compare the subtrees; if
+     *   <code>false</code>, compare only the nodes themselves (and its
+     *   attributes, if it is an <code>Element</code>).
+     * @return If the nodes, and possibly subtrees are equal,
+     *   <code>true</code> otherwise <code>false</code>.
+     * @since DOM Level 3
+     */
+    public boolean isEqualNode(Node arg) {
+        if (arg == this) {
+            return true;
+        }
+        if (arg.getNodeType() != getNodeType()) {
+            return false;
+        }
+        // in theory nodeName can't be null but better be careful
+        // who knows what other implementations may be doing?...
+        if (getNodeName() == null) {
+            if (arg.getNodeName() != null) {
+                return false;
+            }
+        }
+        else if (!getNodeName().equals(arg.getNodeName())) {
+            return false;
+        }
+
+        if (getLocalName() == null) {
+            if (arg.getLocalName() != null) {
+                return false;
+            }
+        }
+        else if (!getLocalName().equals(arg.getLocalName())) {
+            return false;
+        }
+
+        if (getNamespaceURI() == null) {
+            if (arg.getNamespaceURI() != null) {
+                return false;
+            }
+        }
+        else if (!getNamespaceURI().equals(arg.getNamespaceURI())) {
+            return false;
+        }
+
+        if (getPrefix() == null) {
+            if (arg.getPrefix() != null) {
+                return false;
+            }
+        }
+        else if (!getPrefix().equals(arg.getPrefix())) {
+            return false;
+        }
+
+        if (getNodeValue() == null) {
+            if (arg.getNodeValue() != null) {
+                return false;
+            }
+        }
+        else if (!getNodeValue().equals(arg.getNodeValue())) {
+            return false;
+        }
+
+
+        return true;
+    }
+
+    /**
+     * @since DOM Level 3
+     */
+    public Object getFeature(String feature, String version) {
+        // we don't have any alternate node, either this node does the job
+        // or we don't have anything that does
+        return isSupported(feature, version) ? this : null;
+    }
+
+    /**
+     * Associate an object to a key on this node. The object can later be
+     * retrieved from this node by calling <code>getUserData</code> with the
+     * same key.
+     * @param key The key to associate the object to.
+     * @param data The object to associate to the given key, or
+     *   <code>null</code> to remove any existing association to that key.
+     * @param handler The handler to associate to that key, or
+     *   <code>null</code>.
+     * @return Returns the <code>DOMObject</code> previously associated to
+     *   the given key on this node, or <code>null</code> if there was none.
+     * @since DOM Level 3
+     */
+    public Object setUserData(String key,
+                              Object data,
+                              UserDataHandler handler) {
+        return ownerDocument().setUserData(this, key, data, handler);
+    }
+
+    /**
+     * Retrieves the object associated to a key on a this node. The object
+     * must first have been set to this node by calling
+     * <code>setUserData</code> with the same key.
+     * @param key The key the object is associated to.
+     * @return Returns the <code>DOMObject</code> associated to the given key
+     *   on this node, or <code>null</code> if there was none.
+     * @since DOM Level 3
+     */
+    public Object getUserData(String key) {
+        return ownerDocument().getUserData(this, key);
+    }
+
+    protected Map<String, ParentNode.UserDataRecord> getUserDataRecord(){
+        return ownerDocument().getUserDataRecord(this);
+        }
+
+    //
+    // Public methods
+    //
+
+    /**
+     * NON-DOM: PR-DOM-Level-1-19980818 mentions readonly nodes in conjunction
+     * with Entities, but provides no API to support this.
+     * <P>
+     * Most DOM users should not touch this method. Its anticpated use
+     * is during construction of EntityRefernces, where it will be used to
+     * lock the contents replicated from Entity so they can't be casually
+     * altered. It _could_ be published as a DOM extension, if desired.
+     * <P>
+     * Note: since we never have any children deep is meaningless here,
+     * ParentNode overrides this behavior.
+     * @see ParentNode
+     *
+     * @param readOnly True or false as desired.
+     * @param deep If true, children are also toggled. Note that this will
+     *  not change the state of an EntityReference or its children,
+     *  which are always read-only.
+     */
+    public void setReadOnly(boolean readOnly, boolean deep) {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        isReadOnly(readOnly);
+
+    } // setReadOnly(boolean,boolean)
+
+    /**
+     * NON-DOM: Returns true if this node is read-only. This is a
+     * shallow check.
+     */
+    public boolean getReadOnly() {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return isReadOnly();
+
+    } // getReadOnly():boolean
+
+    /**
+     * NON-DOM: As an alternative to subclassing the DOM, this implementation
+     * has been extended with the ability to attach an object to each node.
+     * (If you need multiple objects, you can attach a collection such as a
+     * List or Map, then attach your application information to that.)
+     * <p><b>Important Note:</b> You are responsible for removing references
+     * to your data on nodes that are no longer used. Failure to do so will
+     * prevent the nodes, your data is attached to, to be garbage collected
+     * until the whole document is.
+     *
+     * @param data the object to store or null to remove any existing reference
+     */
+    public void setUserData(Object data) {
+        ownerDocument().setUserData(this, data);
+    }
+
+    /**
+     * NON-DOM:
+     * Returns the user data associated to this node.
+     */
+    public Object getUserData() {
+        return ownerDocument().getUserData(this);
+    }
+
+    //
+    // Protected methods
+    //
+
+    /**
+     * Denotes that this node has changed.
+     */
+    protected void changed() {
+        // we do not actually store this information on every node, we only
+        // have a global indicator on the Document. Doing otherwise cost us too
+        // much for little gain.
+        ownerDocument().changed();
+    }
+
+    /**
+     * Returns the number of changes to this node.
+     */
+    protected int changes() {
+        // we do not actually store this information on every node, we only
+        // have a global indicator on the Document. Doing otherwise cost us too
+        // much for little gain.
+        return ownerDocument().changes();
+    }
+
+    /**
+     * Override this method in subclass to hook in efficient
+     * internal data structure.
+     */
+    protected void synchronizeData() {
+        // By default just change the flag to avoid calling this method again
+        needsSyncData(false);
+    }
+
+    /**
+     * For non-child nodes, the node which "points" to this node.
+     * For example, the owning element for an attribute
+     */
+    protected Node getContainer() {
+       return null;
+    }
+
+
+    /*
+     * Flags setters and getters
+     */
+
+    final boolean isReadOnly() {
+        return (flags & READONLY) != 0;
+    }
+
+    final void isReadOnly(boolean value) {
+        flags = (short) (value ? flags | READONLY : flags & ~READONLY);
+    }
+
+    final boolean needsSyncData() {
+        return (flags & SYNCDATA) != 0;
+    }
+
+    final void needsSyncData(boolean value) {
+        flags = (short) (value ? flags | SYNCDATA : flags & ~SYNCDATA);
+    }
+
+    final boolean needsSyncChildren() {
+        return (flags & SYNCCHILDREN) != 0;
+    }
+
+    public final void needsSyncChildren(boolean value) {
+        flags = (short) (value ? flags | SYNCCHILDREN : flags & ~SYNCCHILDREN);
+    }
+
+    final boolean isOwned() {
+        return (flags & OWNED) != 0;
+    }
+
+    final void isOwned(boolean value) {
+        flags = (short) (value ? flags | OWNED : flags & ~OWNED);
+    }
+
+    final boolean isFirstChild() {
+        return (flags & FIRSTCHILD) != 0;
+    }
+
+    final void isFirstChild(boolean value) {
+        flags = (short) (value ? flags | FIRSTCHILD : flags & ~FIRSTCHILD);
+    }
+
+    final boolean isSpecified() {
+        return (flags & SPECIFIED) != 0;
+    }
+
+    final void isSpecified(boolean value) {
+        flags = (short) (value ? flags | SPECIFIED : flags & ~SPECIFIED);
+    }
+
+    // inconsistent name to avoid clash with public method on TextImpl
+    final boolean internalIsIgnorableWhitespace() {
+        return (flags & IGNORABLEWS) != 0;
+    }
+
+    final void isIgnorableWhitespace(boolean value) {
+        flags = (short) (value ? flags | IGNORABLEWS : flags & ~IGNORABLEWS);
+    }
+
+    final boolean hasStringValue() {
+        return (flags & HASSTRING) != 0;
+    }
+
+    final void hasStringValue(boolean value) {
+        flags = (short) (value ? flags | HASSTRING : flags & ~HASSTRING);
+    }
+
+    final boolean isNormalized() {
+        return (flags & NORMALIZED) != 0;
+    }
+
+    final void isNormalized(boolean value) {
+        // See if flag should propagate to parent.
+        if (!value && isNormalized() && ownerNode != null) {
+            ownerNode.isNormalized(false);
+        }
+        flags = (short) (value ?  flags | NORMALIZED : flags & ~NORMALIZED);
+    }
+
+    final boolean isIdAttribute() {
+        return (flags & ID) != 0;
+    }
+
+    final void isIdAttribute(boolean value) {
+        flags = (short) (value ? flags | ID : flags & ~ID);
+    }
+
+    //
+    // Object methods
+    //
+
+    /** NON-DOM method for debugging convenience. */
+    public String toString() {
+        return "["+getNodeName()+": "+getNodeValue()+"]";
+    }
+
+    //
+    // Serialization methods
+    //
+
+    /** Serialize object. */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+
+        // synchronize data
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        // write object
+        out.defaultWriteObject();
+
+    } // writeObject(ObjectOutputStream)
+
+} // class NodeImpl

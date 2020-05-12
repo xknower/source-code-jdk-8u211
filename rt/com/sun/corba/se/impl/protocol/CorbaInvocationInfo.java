@@ -1,122 +1,118 @@
-/*     */ package com.sun.corba.se.impl.protocol;
-/*     */ 
-/*     */ import com.sun.corba.se.pept.protocol.ClientInvocationInfo;
-/*     */ import com.sun.corba.se.pept.protocol.ClientRequestDispatcher;
-/*     */ import com.sun.corba.se.pept.protocol.MessageMediator;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.Iterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CorbaInvocationInfo
-/*     */   implements ClientInvocationInfo
-/*     */ {
-/*     */   private boolean isRetryInvocation;
-/*     */   private int entryCount;
-/*     */   private ORB orb;
-/*     */   private Iterator contactInfoListIterator;
-/*     */   private ClientRequestDispatcher clientRequestDispatcher;
-/*     */   private MessageMediator messageMediator;
-/*     */   
-/*     */   private CorbaInvocationInfo() {}
-/*     */   
-/*     */   public CorbaInvocationInfo(ORB paramORB) {
-/*  57 */     this.orb = paramORB;
-/*  58 */     this.isRetryInvocation = false;
-/*  59 */     this.entryCount = 0;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Iterator getContactInfoListIterator() {
-/*  64 */     return this.contactInfoListIterator;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setContactInfoListIterator(Iterator paramIterator) {
-/*  69 */     this.contactInfoListIterator = paramIterator;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isRetryInvocation() {
-/*  74 */     return this.isRetryInvocation;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setIsRetryInvocation(boolean paramBoolean) {
-/*  79 */     this.isRetryInvocation = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getEntryCount() {
-/*  84 */     return this.entryCount;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void incrementEntryCount() {
-/*  89 */     this.entryCount++;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void decrementEntryCount() {
-/*  94 */     this.entryCount--;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setClientRequestDispatcher(ClientRequestDispatcher paramClientRequestDispatcher) {
-/*  99 */     this.clientRequestDispatcher = paramClientRequestDispatcher;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ClientRequestDispatcher getClientRequestDispatcher() {
-/* 104 */     return this.clientRequestDispatcher;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setMessageMediator(MessageMediator paramMessageMediator) {
-/* 109 */     this.messageMediator = paramMessageMediator;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public MessageMediator getMessageMediator() {
-/* 114 */     return this.messageMediator;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\CorbaInvocationInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol;
+
+import java.util.Iterator;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.pept.protocol.ClientInvocationInfo;
+import com.sun.corba.se.pept.protocol.MessageMediator;
+
+import com.sun.corba.se.pept.protocol.ClientRequestDispatcher;
+
+/**
+ * @author Harold Carr
+ */
+public class CorbaInvocationInfo implements ClientInvocationInfo
+{
+    // REVISIT - these needs to be an interface-based impl.
+
+    private boolean isRetryInvocation;
+    private int entryCount;
+    private ORB orb;
+    private Iterator contactInfoListIterator;
+    private ClientRequestDispatcher clientRequestDispatcher;
+    private MessageMediator messageMediator;
+
+    private CorbaInvocationInfo()
+    {
+    }
+
+    public CorbaInvocationInfo(ORB orb)
+    {
+        this.orb = orb;
+        isRetryInvocation = false;
+        entryCount = 0;
+    }
+
+    public Iterator getContactInfoListIterator()
+    {
+        return contactInfoListIterator;
+    }
+
+    public void setContactInfoListIterator(Iterator contactInfoListIterator)
+    {
+        this.contactInfoListIterator = contactInfoListIterator;
+    }
+
+    public boolean isRetryInvocation()
+    {
+        return isRetryInvocation;
+    }
+
+    public void setIsRetryInvocation(boolean isRetryInvocation)
+    {
+        this.isRetryInvocation = isRetryInvocation;
+    }
+
+    public int getEntryCount()
+    {
+        return entryCount;
+    }
+
+    public void incrementEntryCount()
+    {
+        entryCount++;
+    }
+
+    public void decrementEntryCount()
+    {
+        entryCount--;
+    }
+
+    public void setClientRequestDispatcher(ClientRequestDispatcher clientRequestDispatcher)
+    {
+        this.clientRequestDispatcher = clientRequestDispatcher;
+    }
+
+    public ClientRequestDispatcher getClientRequestDispatcher()
+    {
+        return clientRequestDispatcher;
+    }
+
+    public void setMessageMediator(MessageMediator messageMediator)
+    {
+        this.messageMediator = messageMediator;
+    }
+
+    public MessageMediator getMessageMediator()
+    {
+        return messageMediator;
+    }
+}
+
+// End of file.

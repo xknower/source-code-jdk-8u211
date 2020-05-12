@@ -1,153 +1,147 @@
-/*     */ package java.util.zip;
-/*     */ 
-/*     */ import java.nio.file.attribute.FileTime;
-/*     */ import java.util.Date;
-/*     */ import java.util.concurrent.TimeUnit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ZipUtils
-/*     */ {
-/*     */   private static final long WINDOWS_EPOCH_IN_MICROSECONDS = -11644473600000000L;
-/*     */   
-/*     */   public static final FileTime winTimeToFileTime(long paramLong) {
-/*  41 */     return FileTime.from(paramLong / 10L + -11644473600000000L, TimeUnit.MICROSECONDS);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final long fileTimeToWinTime(FileTime paramFileTime) {
-/*  49 */     return (paramFileTime.to(TimeUnit.MICROSECONDS) - -11644473600000000L) * 10L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final FileTime unixTimeToFileTime(long paramLong) {
-/*  56 */     return FileTime.from(paramLong, TimeUnit.SECONDS);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final long fileTimeToUnixTime(FileTime paramFileTime) {
-/*  63 */     return paramFileTime.to(TimeUnit.SECONDS);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static long dosToJavaTime(long paramLong) {
-/*  71 */     Date date = new Date((int)((paramLong >> 25L & 0x7FL) + 80L), (int)((paramLong >> 21L & 0xFL) - 1L), (int)(paramLong >> 16L & 0x1FL), (int)(paramLong >> 11L & 0x1FL), (int)(paramLong >> 5L & 0x3FL), (int)(paramLong << 1L & 0x3EL));
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  77 */     return date.getTime();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static long extendedDosToJavaTime(long paramLong) {
-/*  88 */     long l = dosToJavaTime(paramLong);
-/*  89 */     return l + (paramLong >> 32L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static long javaToDosTime(long paramLong) {
-/*  97 */     Date date = new Date(paramLong);
-/*  98 */     int i = date.getYear() + 1900;
-/*  99 */     if (i < 1980) {
-/* 100 */       return 2162688L;
-/*     */     }
-/* 102 */     return (i - 1980 << 25 | date.getMonth() + 1 << 21 | date
-/* 103 */       .getDate() << 16 | date.getHours() << 11 | date.getMinutes() << 5 | date
-/* 104 */       .getSeconds() >> 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static long javaToExtendedDosTime(long paramLong) {
-/* 115 */     if (paramLong < 0L) {
-/* 116 */       return 2162688L;
-/*     */     }
-/* 118 */     long l = javaToDosTime(paramLong);
-/* 119 */     return (l != 2162688L) ? (l + (paramLong % 2000L << 32L)) : 2162688L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final int get16(byte[] paramArrayOfbyte, int paramInt) {
-/* 129 */     return Byte.toUnsignedInt(paramArrayOfbyte[paramInt]) | Byte.toUnsignedInt(paramArrayOfbyte[paramInt + 1]) << 8;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final long get32(byte[] paramArrayOfbyte, int paramInt) {
-/* 137 */     return (get16(paramArrayOfbyte, paramInt) | get16(paramArrayOfbyte, paramInt + 2) << 16L) & 0xFFFFFFFFL;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final long get64(byte[] paramArrayOfbyte, int paramInt) {
-/* 145 */     return get32(paramArrayOfbyte, paramInt) | get32(paramArrayOfbyte, paramInt + 4) << 32L;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\zip\ZipUtils.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.zip;
+
+import java.nio.file.attribute.FileTime;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+class ZipUtils {
+
+    // used to adjust values between Windows and java epoch
+    private static final long WINDOWS_EPOCH_IN_MICROSECONDS = -11644473600000000L;
+
+    /**
+     * Converts Windows time (in microseconds, UTC/GMT) time to FileTime.
+     */
+    public static final FileTime winTimeToFileTime(long wtime) {
+        return FileTime.from(wtime / 10 + WINDOWS_EPOCH_IN_MICROSECONDS,
+                             TimeUnit.MICROSECONDS);
+    }
+
+    /**
+     * Converts FileTime to Windows time.
+     */
+    public static final long fileTimeToWinTime(FileTime ftime) {
+        return (ftime.to(TimeUnit.MICROSECONDS) - WINDOWS_EPOCH_IN_MICROSECONDS) * 10;
+    }
+
+    /**
+     * Converts "standard Unix time"(in seconds, UTC/GMT) to FileTime
+     */
+    public static final FileTime unixTimeToFileTime(long utime) {
+        return FileTime.from(utime, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Converts FileTime to "standard Unix time".
+     */
+    public static final long fileTimeToUnixTime(FileTime ftime) {
+        return ftime.to(TimeUnit.SECONDS);
+    }
+
+    /**
+     * Converts DOS time to Java time (number of milliseconds since epoch).
+     */
+    private static long dosToJavaTime(long dtime) {
+        @SuppressWarnings("deprecation") // Use of date constructor.
+        Date d = new Date((int)(((dtime >> 25) & 0x7f) + 80),
+                          (int)(((dtime >> 21) & 0x0f) - 1),
+                          (int)((dtime >> 16) & 0x1f),
+                          (int)((dtime >> 11) & 0x1f),
+                          (int)((dtime >> 5) & 0x3f),
+                          (int)((dtime << 1) & 0x3e));
+        return d.getTime();
+    }
+
+    /**
+     * Converts extended DOS time to Java time, where up to 1999 milliseconds
+     * might be encoded into the upper half of the returned long.
+     *
+     * @param xdostime the extended DOS time value
+     * @return milliseconds since epoch
+     */
+    public static long extendedDosToJavaTime(long xdostime) {
+        long time = dosToJavaTime(xdostime);
+        return time + (xdostime >> 32);
+    }
+
+    /**
+     * Converts Java time to DOS time.
+     */
+    @SuppressWarnings("deprecation") // Use of date methods
+    private static long javaToDosTime(long time) {
+        Date d = new Date(time);
+        int year = d.getYear() + 1900;
+        if (year < 1980) {
+            return ZipEntry.DOSTIME_BEFORE_1980;
+        }
+        return (year - 1980) << 25 | (d.getMonth() + 1) << 21 |
+               d.getDate() << 16 | d.getHours() << 11 | d.getMinutes() << 5 |
+               d.getSeconds() >> 1;
+    }
+
+    /**
+     * Converts Java time to DOS time, encoding any milliseconds lost
+     * in the conversion into the upper half of the returned long.
+     *
+     * @param time milliseconds since epoch
+     * @return DOS time with 2s remainder encoded into upper half
+     */
+    public static long javaToExtendedDosTime(long time) {
+        if (time < 0) {
+            return ZipEntry.DOSTIME_BEFORE_1980;
+        }
+        long dostime = javaToDosTime(time);
+        return (dostime != ZipEntry.DOSTIME_BEFORE_1980)
+                ? dostime + ((time % 2000) << 32)
+                : ZipEntry.DOSTIME_BEFORE_1980;
+    }
+
+    /**
+     * Fetches unsigned 16-bit value from byte array at specified offset.
+     * The bytes are assumed to be in Intel (little-endian) byte order.
+     */
+    public static final int get16(byte b[], int off) {
+        return Byte.toUnsignedInt(b[off]) | (Byte.toUnsignedInt(b[off+1]) << 8);
+    }
+
+    /**
+     * Fetches unsigned 32-bit value from byte array at specified offset.
+     * The bytes are assumed to be in Intel (little-endian) byte order.
+     */
+    public static final long get32(byte b[], int off) {
+        return (get16(b, off) | ((long)get16(b, off+2) << 16)) & 0xffffffffL;
+    }
+
+    /**
+     * Fetches signed 64-bit value from byte array at specified offset.
+     * The bytes are assumed to be in Intel (little-endian) byte order.
+     */
+    public static final long get64(byte b[], int off) {
+        return get32(b, off) | (get32(b, off+4) << 32);
+    }
+}

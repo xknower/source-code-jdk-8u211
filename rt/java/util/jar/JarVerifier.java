@@ -1,908 +1,902 @@
-/*     */ package java.util.jar;
-/*     */ 
-/*     */ import java.io.ByteArrayOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.net.URL;
-/*     */ import java.security.CodeSigner;
-/*     */ import java.security.CodeSource;
-/*     */ import java.security.NoSuchAlgorithmException;
-/*     */ import java.security.SignatureException;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.security.cert.CertificateException;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.zip.ZipEntry;
-/*     */ import sun.security.util.Debug;
-/*     */ import sun.security.util.ManifestDigester;
-/*     */ import sun.security.util.ManifestEntryVerifier;
-/*     */ import sun.security.util.SignatureFileVerifier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class JarVerifier
-/*     */ {
-/*  48 */   static final Debug debug = Debug.getInstance("jar");
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Hashtable<String, CodeSigner[]> verifiedSigners;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Hashtable<String, CodeSigner[]> sigFileSigners;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Hashtable<String, byte[]> sigFileData;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ArrayList<SignatureFileVerifier> pendingBlocks;
-/*     */ 
-/*     */   
-/*     */   private ArrayList<CodeSigner[]> signerCache;
-/*     */ 
-/*     */   
-/*     */   private boolean parsingBlockOrSF = false;
-/*     */ 
-/*     */   
-/*     */   private boolean parsingMeta = true;
-/*     */ 
-/*     */   
-/*     */   private boolean anyToVerify = true;
-/*     */ 
-/*     */   
-/*     */   private ByteArrayOutputStream baos;
-/*     */ 
-/*     */   
-/*     */   private volatile ManifestDigester manDig;
-/*     */ 
-/*     */   
-/*  85 */   byte[] manifestRawBytes = null;
-/*     */ 
-/*     */   
-/*     */   boolean eagerValidation;
-/*     */ 
-/*     */   
-/*  91 */   private Object csdomain = new Object();
-/*     */ 
-/*     */   
-/*     */   private List<Object> manifestDigests;
-/*     */   
-/*     */   private Map<URL, Map<CodeSigner[], CodeSource>> urlToCodeSourceMap;
-/*     */   
-/*     */   private Map<CodeSigner[], CodeSource> signerToCodeSource;
-/*     */   
-/*     */   private URL lastURL;
-/*     */   
-/*     */   private Map<CodeSigner[], CodeSource> lastURLMap;
-/*     */   
-/*     */   private CodeSigner[] emptySigner;
-/*     */   
-/*     */   private Map<String, CodeSigner[]> signerMap;
-/*     */   
-/*     */   private Enumeration<String> emptyEnumeration;
-/*     */   
-/*     */   private List<CodeSigner[]> jarCodeSigners;
-/*     */ 
-/*     */   
-/*     */   public void beginEntry(JarEntry paramJarEntry, ManifestEntryVerifier paramManifestEntryVerifier) throws IOException {
-/* 114 */     if (paramJarEntry == null) {
-/*     */       return;
-/*     */     }
-/* 117 */     if (debug != null) {
-/* 118 */       debug.println("beginEntry " + paramJarEntry.getName());
-/*     */     }
-/*     */     
-/* 121 */     String str = paramJarEntry.getName();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 133 */     if (this.parsingMeta) {
-/* 134 */       String str1 = str.toUpperCase(Locale.ENGLISH);
-/* 135 */       if (str1.startsWith("META-INF/") || str1
-/* 136 */         .startsWith("/META-INF/")) {
-/*     */         
-/* 138 */         if (paramJarEntry.isDirectory()) {
-/* 139 */           paramManifestEntryVerifier.setEntry(null, paramJarEntry);
-/*     */           
-/*     */           return;
-/*     */         } 
-/* 143 */         if (str1.equals("META-INF/MANIFEST.MF") || str1
-/* 144 */           .equals("META-INF/INDEX.LIST")) {
-/*     */           return;
-/*     */         }
-/*     */         
-/* 148 */         if (SignatureFileVerifier.isBlockOrSF(str1)) {
-/*     */           
-/* 150 */           this.parsingBlockOrSF = true;
-/* 151 */           this.baos.reset();
-/* 152 */           paramManifestEntryVerifier.setEntry(null, paramJarEntry);
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           return;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 162 */     if (this.parsingMeta) {
-/* 163 */       doneWithMeta();
-/*     */     }
-/*     */     
-/* 166 */     if (paramJarEntry.isDirectory()) {
-/* 167 */       paramManifestEntryVerifier.setEntry(null, paramJarEntry);
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 173 */     if (str.startsWith("./")) {
-/* 174 */       str = str.substring(2);
-/*     */     }
-/*     */ 
-/*     */     
-/* 178 */     if (str.startsWith("/")) {
-/* 179 */       str = str.substring(1);
-/*     */     }
-/*     */ 
-/*     */     
-/* 183 */     if (!str.equals("META-INF/MANIFEST.MF") && (
-/* 184 */       this.sigFileSigners.get(str) != null || this.verifiedSigners
-/* 185 */       .get(str) != null)) {
-/* 186 */       paramManifestEntryVerifier.setEntry(str, paramJarEntry);
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 192 */     paramManifestEntryVerifier.setEntry(null, paramJarEntry);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(int paramInt, ManifestEntryVerifier paramManifestEntryVerifier) throws IOException {
-/* 204 */     if (paramInt != -1) {
-/* 205 */       if (this.parsingBlockOrSF) {
-/* 206 */         this.baos.write(paramInt);
-/*     */       } else {
-/* 208 */         paramManifestEntryVerifier.update((byte)paramInt);
-/*     */       } 
-/*     */     } else {
-/* 211 */       processEntry(paramManifestEntryVerifier);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(int paramInt1, byte[] paramArrayOfbyte, int paramInt2, int paramInt3, ManifestEntryVerifier paramManifestEntryVerifier) throws IOException {
-/* 223 */     if (paramInt1 != -1) {
-/* 224 */       if (this.parsingBlockOrSF) {
-/* 225 */         this.baos.write(paramArrayOfbyte, paramInt2, paramInt1);
-/*     */       } else {
-/* 227 */         paramManifestEntryVerifier.update(paramArrayOfbyte, paramInt2, paramInt1);
-/*     */       } 
-/*     */     } else {
-/* 230 */       processEntry(paramManifestEntryVerifier);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void processEntry(ManifestEntryVerifier paramManifestEntryVerifier) throws IOException {
-/* 240 */     if (!this.parsingBlockOrSF) {
-/* 241 */       JarEntry jarEntry = paramManifestEntryVerifier.getEntry();
-/* 242 */       if (jarEntry != null && jarEntry.signers == null) {
-/* 243 */         jarEntry.signers = paramManifestEntryVerifier.verify(this.verifiedSigners, this.sigFileSigners);
-/* 244 */         jarEntry.certs = mapSignersToCertArray(jarEntry.signers);
-/*     */       } 
-/*     */     } else {
-/*     */       
-/*     */       try {
-/* 249 */         this.parsingBlockOrSF = false;
-/*     */         
-/* 251 */         if (debug != null) {
-/* 252 */           debug.println("processEntry: processing block");
-/*     */         }
-/*     */ 
-/*     */         
-/* 256 */         String str1 = paramManifestEntryVerifier.getEntry().getName().toUpperCase(Locale.ENGLISH);
-/*     */         
-/* 258 */         if (str1.endsWith(".SF")) {
-/* 259 */           String str = str1.substring(0, str1.length() - 3);
-/* 260 */           byte[] arrayOfByte = this.baos.toByteArray();
-/*     */           
-/* 262 */           this.sigFileData.put(str, arrayOfByte);
-/*     */ 
-/*     */           
-/* 265 */           Iterator<SignatureFileVerifier> iterator = this.pendingBlocks.iterator();
-/* 266 */           while (iterator.hasNext()) {
-/* 267 */             SignatureFileVerifier signatureFileVerifier1 = iterator.next();
-/* 268 */             if (signatureFileVerifier1.needSignatureFile(str)) {
-/* 269 */               if (debug != null) {
-/* 270 */                 debug.println("processEntry: processing pending block");
-/*     */               }
-/*     */ 
-/*     */               
-/* 274 */               signatureFileVerifier1.setSignatureFile(arrayOfByte);
-/* 275 */               signatureFileVerifier1.process(this.sigFileSigners, this.manifestDigests);
-/*     */             } 
-/*     */           } 
-/*     */ 
-/*     */           
-/*     */           return;
-/*     */         } 
-/*     */         
-/* 283 */         String str2 = str1.substring(0, str1.lastIndexOf("."));
-/*     */         
-/* 285 */         if (this.signerCache == null) {
-/* 286 */           this.signerCache = (ArrayList)new ArrayList<>();
-/*     */         }
-/* 288 */         if (this.manDig == null) {
-/* 289 */           synchronized (this.manifestRawBytes) {
-/* 290 */             if (this.manDig == null) {
-/* 291 */               this.manDig = new ManifestDigester(this.manifestRawBytes);
-/* 292 */               this.manifestRawBytes = null;
-/*     */             } 
-/*     */           } 
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 299 */         SignatureFileVerifier signatureFileVerifier = new SignatureFileVerifier(this.signerCache, this.manDig, str1, this.baos.toByteArray());
-/*     */         
-/* 301 */         if (signatureFileVerifier.needSignatureFileBytes()) {
-/*     */           
-/* 303 */           byte[] arrayOfByte = this.sigFileData.get(str2);
-/*     */           
-/* 305 */           if (arrayOfByte == null) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 309 */             if (debug != null) {
-/* 310 */               debug.println("adding pending block");
-/*     */             }
-/* 312 */             this.pendingBlocks.add(signatureFileVerifier);
-/*     */             return;
-/*     */           } 
-/* 315 */           signatureFileVerifier.setSignatureFile(arrayOfByte);
-/*     */         } 
-/*     */         
-/* 318 */         signatureFileVerifier.process(this.sigFileSigners, this.manifestDigests);
-/*     */       }
-/* 320 */       catch (IOException iOException) {
-/*     */         
-/* 322 */         if (debug != null) debug.println("processEntry caught: " + iOException);
-/*     */       
-/* 324 */       } catch (SignatureException signatureException) {
-/* 325 */         if (debug != null) debug.println("processEntry caught: " + signatureException);
-/*     */       
-/* 327 */       } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 328 */         if (debug != null) debug.println("processEntry caught: " + noSuchAlgorithmException);
-/*     */       
-/* 330 */       } catch (CertificateException certificateException) {
-/* 331 */         if (debug != null) debug.println("processEntry caught: " + certificateException);
-/*     */       
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public Certificate[] getCerts(String paramString) {
-/* 345 */     return mapSignersToCertArray(getCodeSigners(paramString));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Certificate[] getCerts(JarFile paramJarFile, JarEntry paramJarEntry) {
-/* 350 */     return mapSignersToCertArray(getCodeSigners(paramJarFile, paramJarEntry));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CodeSigner[] getCodeSigners(String paramString) {
-/* 360 */     return this.verifiedSigners.get(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public CodeSigner[] getCodeSigners(JarFile paramJarFile, JarEntry paramJarEntry) {
-/* 365 */     String str = paramJarEntry.getName();
-/* 366 */     if (this.eagerValidation && this.sigFileSigners.get(str) != null) {
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */ 
-/*     */         
-/* 372 */         InputStream inputStream = paramJarFile.getInputStream(paramJarEntry);
-/* 373 */         byte[] arrayOfByte = new byte[1024];
-/* 374 */         int i = arrayOfByte.length;
-/* 375 */         while (i != -1) {
-/* 376 */           i = inputStream.read(arrayOfByte, 0, arrayOfByte.length);
-/*     */         }
-/* 378 */         inputStream.close();
-/* 379 */       } catch (IOException iOException) {}
-/*     */     }
-/*     */     
-/* 382 */     return getCodeSigners(str);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Certificate[] mapSignersToCertArray(CodeSigner[] paramArrayOfCodeSigner) {
-/* 392 */     if (paramArrayOfCodeSigner != null) {
-/* 393 */       ArrayList<Certificate> arrayList = new ArrayList();
-/* 394 */       for (byte b = 0; b < paramArrayOfCodeSigner.length; b++) {
-/* 395 */         arrayList.addAll(paramArrayOfCodeSigner[b]
-/* 396 */             .getSignerCertPath().getCertificates());
-/*     */       }
-/*     */ 
-/*     */       
-/* 400 */       return arrayList.<Certificate>toArray(
-/* 401 */           new Certificate[arrayList.size()]);
-/*     */     } 
-/* 403 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean nothingToVerify() {
-/* 413 */     return !this.anyToVerify;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void doneWithMeta() {
-/* 424 */     this.parsingMeta = false;
-/* 425 */     this.anyToVerify = !this.sigFileSigners.isEmpty();
-/* 426 */     this.baos = null;
-/* 427 */     this.sigFileData = null;
-/* 428 */     this.pendingBlocks = null;
-/* 429 */     this.signerCache = null;
-/* 430 */     this.manDig = null;
-/*     */ 
-/*     */     
-/* 433 */     if (this.sigFileSigners.containsKey("META-INF/MANIFEST.MF")) {
-/* 434 */       CodeSigner[] arrayOfCodeSigner = this.sigFileSigners.remove("META-INF/MANIFEST.MF");
-/* 435 */       this.verifiedSigners.put("META-INF/MANIFEST.MF", arrayOfCodeSigner);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class VerifierStream
-/*     */     extends InputStream
-/*     */   {
-/*     */     private InputStream is;
-/*     */     
-/*     */     private JarVerifier jv;
-/*     */     
-/*     */     private ManifestEntryVerifier mev;
-/*     */     private long numLeft;
-/*     */     
-/*     */     VerifierStream(Manifest param1Manifest, JarEntry param1JarEntry, InputStream param1InputStream, JarVerifier param1JarVerifier) throws IOException {
-/* 451 */       this.is = param1InputStream;
-/* 452 */       this.jv = param1JarVerifier;
-/* 453 */       this.mev = new ManifestEntryVerifier(param1Manifest);
-/* 454 */       this.jv.beginEntry(param1JarEntry, this.mev);
-/* 455 */       this.numLeft = param1JarEntry.getSize();
-/* 456 */       if (this.numLeft == 0L) {
-/* 457 */         this.jv.update(-1, this.mev);
-/*     */       }
-/*     */     }
-/*     */     
-/*     */     public int read() throws IOException {
-/* 462 */       if (this.numLeft > 0L) {
-/* 463 */         int i = this.is.read();
-/* 464 */         this.jv.update(i, this.mev);
-/* 465 */         this.numLeft--;
-/* 466 */         if (this.numLeft == 0L)
-/* 467 */           this.jv.update(-1, this.mev); 
-/* 468 */         return i;
-/*     */       } 
-/* 470 */       return -1;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public int read(byte[] param1ArrayOfbyte, int param1Int1, int param1Int2) throws IOException {
-/* 475 */       if (this.numLeft > 0L && this.numLeft < param1Int2) {
-/* 476 */         param1Int2 = (int)this.numLeft;
-/*     */       }
-/*     */       
-/* 479 */       if (this.numLeft > 0L) {
-/* 480 */         int i = this.is.read(param1ArrayOfbyte, param1Int1, param1Int2);
-/* 481 */         this.jv.update(i, param1ArrayOfbyte, param1Int1, param1Int2, this.mev);
-/* 482 */         this.numLeft -= i;
-/* 483 */         if (this.numLeft == 0L)
-/* 484 */           this.jv.update(-1, param1ArrayOfbyte, param1Int1, param1Int2, this.mev); 
-/* 485 */         return i;
-/*     */       } 
-/* 487 */       return -1;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void close() throws IOException {
-/* 494 */       if (this.is != null)
-/* 495 */         this.is.close(); 
-/* 496 */       this.is = null;
-/* 497 */       this.mev = null;
-/* 498 */       this.jv = null;
-/*     */     }
-/*     */     
-/*     */     public int available() throws IOException {
-/* 502 */       return this.is.available();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JarVerifier(byte[] paramArrayOfbyte) {
-/* 509 */     this.urlToCodeSourceMap = new HashMap<>();
-/* 510 */     this.signerToCodeSource = (Map)new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 551 */     this.emptySigner = new CodeSigner[0];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 783 */     this.emptyEnumeration = new Enumeration<String>()
-/*     */       {
-/*     */         public boolean hasMoreElements() {
-/* 786 */           return false;
-/*     */         }
-/*     */         
-/*     */         public String nextElement() {
-/* 790 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       }; this.manifestRawBytes = paramArrayOfbyte; this.sigFileSigners = (Hashtable)new Hashtable<>(); this.verifiedSigners = (Hashtable)new Hashtable<>(); this.sigFileData = (Hashtable)new Hashtable<>(11); this.pendingBlocks = new ArrayList<>(); this.baos = new ByteArrayOutputStream(); this.manifestDigests = new ArrayList();
-/*     */   } private synchronized CodeSource mapSignersToCodeSource(URL paramURL, CodeSigner[] paramArrayOfCodeSigner) { Map<Object, Object> map; if (paramURL == this.lastURL) { Map<CodeSigner[], CodeSource> map1 = this.lastURLMap; } else { map = (Map)this.urlToCodeSourceMap.get(paramURL); if (map == null) { map = new HashMap<>(); this.urlToCodeSourceMap.put(paramURL, map); }  this.lastURLMap = (Map)map; this.lastURL = paramURL; }  CodeSource codeSource = (CodeSource)map.get(paramArrayOfCodeSigner); if (codeSource == null) { codeSource = new VerifierCodeSource(this.csdomain, paramURL, paramArrayOfCodeSigner); this.signerToCodeSource.put(paramArrayOfCodeSigner, codeSource); }  return codeSource; } private CodeSource[] mapSignersToCodeSources(URL paramURL, List<CodeSigner[]> paramList, boolean paramBoolean) { ArrayList<CodeSource> arrayList = new ArrayList(); for (byte b = 0; b < paramList.size(); b++) arrayList.add(mapSignersToCodeSource(paramURL, paramList.get(b)));  if (paramBoolean) arrayList.add(mapSignersToCodeSource(paramURL, null));  return arrayList.<CodeSource>toArray(new CodeSource[arrayList.size()]); } private CodeSigner[] findMatchingSigners(CodeSource paramCodeSource) { if (paramCodeSource instanceof VerifierCodeSource) { VerifierCodeSource verifierCodeSource = (VerifierCodeSource)paramCodeSource; if (verifierCodeSource.isSameDomain(this.csdomain))
-/*     */         return ((VerifierCodeSource)paramCodeSource).getPrivateSigners();  }  CodeSource[] arrayOfCodeSource = mapSignersToCodeSources(paramCodeSource.getLocation(), getJarCodeSigners(), true); ArrayList<CodeSource> arrayList = new ArrayList(); int i; for (i = 0; i < arrayOfCodeSource.length; i++)
-/*     */       arrayList.add(arrayOfCodeSource[i]);  i = arrayList.indexOf(paramCodeSource); if (i != -1) { CodeSigner[] arrayOfCodeSigner = ((VerifierCodeSource)arrayList.get(i)).getPrivateSigners(); if (arrayOfCodeSigner == null)
-/* 796 */         arrayOfCodeSigner = this.emptySigner;  return arrayOfCodeSigner; }  return null; } static boolean isSigningRelated(String paramString) { return SignatureFileVerifier.isSigningRelated(paramString); } private static class VerifierCodeSource extends CodeSource {
-/*     */     private static final long serialVersionUID = -9047366145967768825L; URL vlocation; CodeSigner[] vsigners; Certificate[] vcerts; Object csdomain; VerifierCodeSource(Object param1Object, URL param1URL, CodeSigner[] param1ArrayOfCodeSigner) { super(param1URL, param1ArrayOfCodeSigner); this.csdomain = param1Object; this.vlocation = param1URL; this.vsigners = param1ArrayOfCodeSigner; } VerifierCodeSource(Object param1Object, URL param1URL, Certificate[] param1ArrayOfCertificate) { super(param1URL, param1ArrayOfCertificate); this.csdomain = param1Object; this.vlocation = param1URL; this.vcerts = param1ArrayOfCertificate; } public boolean equals(Object param1Object) { if (param1Object == this) return true;  if (param1Object instanceof VerifierCodeSource) { VerifierCodeSource verifierCodeSource = (VerifierCodeSource)param1Object; if (isSameDomain(verifierCodeSource.csdomain)) { if (verifierCodeSource.vsigners != this.vsigners || verifierCodeSource.vcerts != this.vcerts) return false;  if (verifierCodeSource.vlocation != null) return verifierCodeSource.vlocation.equals(this.vlocation);  if (this.vlocation != null) return this.vlocation.equals(verifierCodeSource.vlocation);  return true; }  }  return super.equals(param1Object); } boolean isSameDomain(Object param1Object) { return (this.csdomain == param1Object); } private CodeSigner[] getPrivateSigners() { return this.vsigners; } private Certificate[] getPrivateCertificates() { return this.vcerts; } } private synchronized Map<String, CodeSigner[]> signerMap() { if (this.signerMap == null) { this.signerMap = (Map)new HashMap<>(this.verifiedSigners.size() + this.sigFileSigners.size()); this.signerMap.putAll(this.verifiedSigners); this.signerMap.putAll(this.sigFileSigners); }  return this.signerMap; } public synchronized Enumeration<String> entryNames(JarFile paramJarFile, CodeSource[] paramArrayOfCodeSource) { Map<String, CodeSigner[]> map = signerMap(); final Iterator itor = map.entrySet().iterator(); boolean bool = false; ArrayList<CodeSigner[]> arrayList1 = new ArrayList(paramArrayOfCodeSource.length); for (byte b = 0; b < paramArrayOfCodeSource.length; b++) { CodeSigner[] arrayOfCodeSigner = findMatchingSigners(paramArrayOfCodeSource[b]); if (arrayOfCodeSigner != null) { if (arrayOfCodeSigner.length > 0) { arrayList1.add(arrayOfCodeSigner); } else { bool = true; }  } else { bool = true; }  }  final ArrayList<CodeSigner[]> signersReq = arrayList1; final Enumeration<String> enum2 = bool ? unsignedEntryNames(paramJarFile) : this.emptyEnumeration; return new Enumeration<String>() { String name; public boolean hasMoreElements() { if (this.name != null) return true;  while (itor.hasNext()) { Map.Entry entry = itor.next(); if (signersReq.contains(entry.getValue())) { this.name = (String)entry.getKey(); return true; }  }  if (enum2.hasMoreElements()) { this.name = enum2.nextElement(); return true; }  return false; } public String nextElement() { if (hasMoreElements()) { String str = this.name; this.name = null; return str; }  throw new NoSuchElementException(); } }
-/*     */       ; } public Enumeration<JarEntry> entries2(final JarFile jar, Enumeration<? extends ZipEntry> paramEnumeration) { final HashMap<Object, Object> map = new HashMap<>(); hashMap.putAll(signerMap()); final Enumeration<? extends ZipEntry> enum_ = paramEnumeration; return new Enumeration<JarEntry>() {
-/*     */         Enumeration<String> signers = null; JarEntry entry; public boolean hasMoreElements() { if (this.entry != null) return true;  while (enum_.hasMoreElements()) { ZipEntry zipEntry = enum_.nextElement(); if (JarVerifier.isSigningRelated(zipEntry.getName())) continue;  this.entry = jar.newEntry(zipEntry); return true; }  if (this.signers == null) this.signers = Collections.enumeration(map.keySet());  if (this.signers.hasMoreElements()) { String str = this.signers.nextElement(); this.entry = jar.newEntry(new ZipEntry(str)); return true; }  return false; } public JarEntry nextElement() { if (hasMoreElements()) { JarEntry jarEntry = this.entry; map.remove(jarEntry.getName()); this.entry = null; return jarEntry; }  throw new NoSuchElementException(); }
-/* 800 */       }; } private Enumeration<String> unsignedEntryNames(JarFile paramJarFile) { final Map<String, CodeSigner[]> map = signerMap();
-/* 801 */     final Enumeration<JarEntry> entries = paramJarFile.entries();
-/* 802 */     return new Enumeration<String>()
-/*     */       {
-/*     */         String name;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         public boolean hasMoreElements() {
-/* 811 */           if (this.name != null) {
-/* 812 */             return true;
-/*     */           }
-/* 814 */           while (entries.hasMoreElements()) {
-/*     */             
-/* 816 */             ZipEntry zipEntry = entries.nextElement();
-/* 817 */             String str = zipEntry.getName();
-/* 818 */             if (zipEntry.isDirectory() || JarVerifier.isSigningRelated(str)) {
-/*     */               continue;
-/*     */             }
-/* 821 */             if (map.get(str) == null) {
-/* 822 */               this.name = str;
-/* 823 */               return true;
-/*     */             } 
-/*     */           } 
-/* 826 */           return false;
-/*     */         }
-/*     */         
-/*     */         public String nextElement() {
-/* 830 */           if (hasMoreElements()) {
-/* 831 */             String str = this.name;
-/* 832 */             this.name = null;
-/* 833 */             return str;
-/*     */           } 
-/* 835 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       }; }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized List<CodeSigner[]> getJarCodeSigners() {
-/* 843 */     if (this.jarCodeSigners == null) {
-/* 844 */       HashSet<? extends CodeSigner> hashSet = new HashSet();
-/* 845 */       hashSet.addAll(signerMap().values());
-/* 846 */       this.jarCodeSigners = (List)new ArrayList<>();
-/* 847 */       this.jarCodeSigners.addAll(hashSet);
-/*     */     } 
-/* 849 */     return this.jarCodeSigners;
-/*     */   }
-/*     */   
-/*     */   public synchronized CodeSource[] getCodeSources(JarFile paramJarFile, URL paramURL) {
-/* 853 */     boolean bool = unsignedEntryNames(paramJarFile).hasMoreElements();
-/*     */     
-/* 855 */     return mapSignersToCodeSources(paramURL, getJarCodeSigners(), bool);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CodeSource getCodeSource(URL paramURL, String paramString) {
-/* 861 */     CodeSigner[] arrayOfCodeSigner = signerMap().get(paramString);
-/* 862 */     return mapSignersToCodeSource(paramURL, arrayOfCodeSigner);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CodeSource getCodeSource(URL paramURL, JarFile paramJarFile, JarEntry paramJarEntry) {
-/* 868 */     return mapSignersToCodeSource(paramURL, getCodeSigners(paramJarFile, paramJarEntry));
-/*     */   }
-/*     */   
-/*     */   public void setEagerValidation(boolean paramBoolean) {
-/* 872 */     this.eagerValidation = paramBoolean;
-/*     */   }
-/*     */   
-/*     */   public synchronized List<Object> getManifestDigests() {
-/* 876 */     return Collections.unmodifiableList(this.manifestDigests);
-/*     */   }
-/*     */   
-/*     */   static CodeSource getUnsignedCS(URL paramURL) {
-/* 880 */     return new VerifierCodeSource(null, paramURL, (Certificate[])null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isTrustedManifestEntry(String paramString) {
-/* 889 */     CodeSigner[] arrayOfCodeSigner1 = this.verifiedSigners.get("META-INF/MANIFEST.MF");
-/* 890 */     if (arrayOfCodeSigner1 == null) {
-/* 891 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/* 895 */     CodeSigner[] arrayOfCodeSigner2 = this.sigFileSigners.get(paramString);
-/* 896 */     if (arrayOfCodeSigner2 == null) {
-/* 897 */       arrayOfCodeSigner2 = this.verifiedSigners.get(paramString);
-/*     */     }
-/*     */     
-/* 900 */     return (arrayOfCodeSigner2 != null && arrayOfCodeSigner2.length == arrayOfCodeSigner1.length);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\jar\JarVerifier.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.jar;
+
+import java.io.*;
+import java.net.URL;
+import java.util.*;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.util.zip.ZipEntry;
+
+import sun.misc.JarIndex;
+import sun.security.util.ManifestDigester;
+import sun.security.util.ManifestEntryVerifier;
+import sun.security.util.SignatureFileVerifier;
+import sun.security.util.Debug;
+
+/**
+ *
+ * @author      Roland Schemers
+ */
+class JarVerifier {
+
+    /* Are we debugging ? */
+    static final Debug debug = Debug.getInstance("jar");
+
+    /* a table mapping names to code signers, for jar entries that have
+       had their actual hashes verified */
+    private Hashtable<String, CodeSigner[]> verifiedSigners;
+
+    /* a table mapping names to code signers, for jar entries that have
+       passed the .SF/.DSA/.EC -> MANIFEST check */
+    private Hashtable<String, CodeSigner[]> sigFileSigners;
+
+    /* a hash table to hold .SF bytes */
+    private Hashtable<String, byte[]> sigFileData;
+
+    /** "queue" of pending PKCS7 blocks that we couldn't parse
+     *  until we parsed the .SF file */
+    private ArrayList<SignatureFileVerifier> pendingBlocks;
+
+    /* cache of CodeSigner objects */
+    private ArrayList<CodeSigner[]> signerCache;
+
+    /* Are we parsing a block? */
+    private boolean parsingBlockOrSF = false;
+
+    /* Are we done parsing META-INF entries? */
+    private boolean parsingMeta = true;
+
+    /* Are there are files to verify? */
+    private boolean anyToVerify = true;
+
+    /* The output stream to use when keeping track of files we are interested
+       in */
+    private ByteArrayOutputStream baos;
+
+    /** The ManifestDigester object */
+    private volatile ManifestDigester manDig;
+
+    /** the bytes for the manDig object */
+    byte manifestRawBytes[] = null;
+
+    /** controls eager signature validation */
+    boolean eagerValidation;
+
+    /** makes code source singleton instances unique to us */
+    private Object csdomain = new Object();
+
+    /** collect -DIGEST-MANIFEST values for blacklist */
+    private List<Object> manifestDigests;
+
+    public JarVerifier(byte rawBytes[]) {
+        manifestRawBytes = rawBytes;
+        sigFileSigners = new Hashtable<>();
+        verifiedSigners = new Hashtable<>();
+        sigFileData = new Hashtable<>(11);
+        pendingBlocks = new ArrayList<>();
+        baos = new ByteArrayOutputStream();
+        manifestDigests = new ArrayList<>();
+    }
+
+    /**
+     * This method scans to see which entry we're parsing and
+     * keeps various state information depending on what type of
+     * file is being parsed.
+     */
+    public void beginEntry(JarEntry je, ManifestEntryVerifier mev)
+        throws IOException
+    {
+        if (je == null)
+            return;
+
+        if (debug != null) {
+            debug.println("beginEntry "+je.getName());
+        }
+
+        String name = je.getName();
+
+        /*
+         * Assumptions:
+         * 1. The manifest should be the first entry in the META-INF directory.
+         * 2. The .SF/.DSA/.EC files follow the manifest, before any normal entries
+         * 3. Any of the following will throw a SecurityException:
+         *    a. digest mismatch between a manifest section and
+         *       the SF section.
+         *    b. digest mismatch between the actual jar entry and the manifest
+         */
+
+        if (parsingMeta) {
+            String uname = name.toUpperCase(Locale.ENGLISH);
+            if ((uname.startsWith("META-INF/") ||
+                 uname.startsWith("/META-INF/"))) {
+
+                if (je.isDirectory()) {
+                    mev.setEntry(null, je);
+                    return;
+                }
+
+                if (uname.equals(JarFile.MANIFEST_NAME) ||
+                        uname.equals(JarIndex.INDEX_NAME)) {
+                    return;
+                }
+
+                if (SignatureFileVerifier.isBlockOrSF(uname)) {
+                    /* We parse only DSA, RSA or EC PKCS7 blocks. */
+                    parsingBlockOrSF = true;
+                    baos.reset();
+                    mev.setEntry(null, je);
+                    return;
+                }
+
+                // If a META-INF entry is not MF or block or SF, they should
+                // be normal entries. According to 2 above, no more block or
+                // SF will appear. Let's doneWithMeta.
+            }
+        }
+
+        if (parsingMeta) {
+            doneWithMeta();
+        }
+
+        if (je.isDirectory()) {
+            mev.setEntry(null, je);
+            return;
+        }
+
+        // be liberal in what you accept. If the name starts with ./, remove
+        // it as we internally canonicalize it with out the ./.
+        if (name.startsWith("./"))
+            name = name.substring(2);
+
+        // be liberal in what you accept. If the name starts with /, remove
+        // it as we internally canonicalize it with out the /.
+        if (name.startsWith("/"))
+            name = name.substring(1);
+
+        // only set the jev object for entries that have a signature
+        // (either verified or not)
+        if (!name.equals(JarFile.MANIFEST_NAME)) {
+            if (sigFileSigners.get(name) != null ||
+                    verifiedSigners.get(name) != null) {
+                mev.setEntry(name, je);
+                return;
+            }
+        }
+
+        // don't compute the digest for this entry
+        mev.setEntry(null, je);
+
+        return;
+    }
+
+    /**
+     * update a single byte.
+     */
+
+    public void update(int b, ManifestEntryVerifier mev)
+        throws IOException
+    {
+        if (b != -1) {
+            if (parsingBlockOrSF) {
+                baos.write(b);
+            } else {
+                mev.update((byte)b);
+            }
+        } else {
+            processEntry(mev);
+        }
+    }
+
+    /**
+     * update an array of bytes.
+     */
+
+    public void update(int n, byte[] b, int off, int len,
+                       ManifestEntryVerifier mev)
+        throws IOException
+    {
+        if (n != -1) {
+            if (parsingBlockOrSF) {
+                baos.write(b, off, n);
+            } else {
+                mev.update(b, off, n);
+            }
+        } else {
+            processEntry(mev);
+        }
+    }
+
+    /**
+     * called when we reach the end of entry in one of the read() methods.
+     */
+    private void processEntry(ManifestEntryVerifier mev)
+        throws IOException
+    {
+        if (!parsingBlockOrSF) {
+            JarEntry je = mev.getEntry();
+            if ((je != null) && (je.signers == null)) {
+                je.signers = mev.verify(verifiedSigners, sigFileSigners);
+                je.certs = mapSignersToCertArray(je.signers);
+            }
+        } else {
+
+            try {
+                parsingBlockOrSF = false;
+
+                if (debug != null) {
+                    debug.println("processEntry: processing block");
+                }
+
+                String uname = mev.getEntry().getName()
+                                             .toUpperCase(Locale.ENGLISH);
+
+                if (uname.endsWith(".SF")) {
+                    String key = uname.substring(0, uname.length()-3);
+                    byte bytes[] = baos.toByteArray();
+                    // add to sigFileData in case future blocks need it
+                    sigFileData.put(key, bytes);
+                    // check pending blocks, we can now process
+                    // anyone waiting for this .SF file
+                    Iterator<SignatureFileVerifier> it = pendingBlocks.iterator();
+                    while (it.hasNext()) {
+                        SignatureFileVerifier sfv = it.next();
+                        if (sfv.needSignatureFile(key)) {
+                            if (debug != null) {
+                                debug.println(
+                                 "processEntry: processing pending block");
+                            }
+
+                            sfv.setSignatureFile(bytes);
+                            sfv.process(sigFileSigners, manifestDigests);
+                        }
+                    }
+                    return;
+                }
+
+                // now we are parsing a signature block file
+
+                String key = uname.substring(0, uname.lastIndexOf("."));
+
+                if (signerCache == null)
+                    signerCache = new ArrayList<>();
+
+                if (manDig == null) {
+                    synchronized(manifestRawBytes) {
+                        if (manDig == null) {
+                            manDig = new ManifestDigester(manifestRawBytes);
+                            manifestRawBytes = null;
+                        }
+                    }
+                }
+
+                SignatureFileVerifier sfv =
+                  new SignatureFileVerifier(signerCache,
+                                            manDig, uname, baos.toByteArray());
+
+                if (sfv.needSignatureFileBytes()) {
+                    // see if we have already parsed an external .SF file
+                    byte[] bytes = sigFileData.get(key);
+
+                    if (bytes == null) {
+                        // put this block on queue for later processing
+                        // since we don't have the .SF bytes yet
+                        // (uname, block);
+                        if (debug != null) {
+                            debug.println("adding pending block");
+                        }
+                        pendingBlocks.add(sfv);
+                        return;
+                    } else {
+                        sfv.setSignatureFile(bytes);
+                    }
+                }
+                sfv.process(sigFileSigners, manifestDigests);
+
+            } catch (IOException ioe) {
+                // e.g. sun.security.pkcs.ParsingException
+                if (debug != null) debug.println("processEntry caught: "+ioe);
+                // ignore and treat as unsigned
+            } catch (SignatureException se) {
+                if (debug != null) debug.println("processEntry caught: "+se);
+                // ignore and treat as unsigned
+            } catch (NoSuchAlgorithmException nsae) {
+                if (debug != null) debug.println("processEntry caught: "+nsae);
+                // ignore and treat as unsigned
+            } catch (CertificateException ce) {
+                if (debug != null) debug.println("processEntry caught: "+ce);
+                // ignore and treat as unsigned
+            }
+        }
+    }
+
+    /**
+     * Return an array of java.security.cert.Certificate objects for
+     * the given file in the jar.
+     * @deprecated
+     */
+    @Deprecated
+    public java.security.cert.Certificate[] getCerts(String name)
+    {
+        return mapSignersToCertArray(getCodeSigners(name));
+    }
+
+    public java.security.cert.Certificate[] getCerts(JarFile jar, JarEntry entry)
+    {
+        return mapSignersToCertArray(getCodeSigners(jar, entry));
+    }
+
+    /**
+     * return an array of CodeSigner objects for
+     * the given file in the jar. this array is not cloned.
+     *
+     */
+    public CodeSigner[] getCodeSigners(String name)
+    {
+        return verifiedSigners.get(name);
+    }
+
+    public CodeSigner[] getCodeSigners(JarFile jar, JarEntry entry)
+    {
+        String name = entry.getName();
+        if (eagerValidation && sigFileSigners.get(name) != null) {
+            /*
+             * Force a read of the entry data to generate the
+             * verification hash.
+             */
+            try {
+                InputStream s = jar.getInputStream(entry);
+                byte[] buffer = new byte[1024];
+                int n = buffer.length;
+                while (n != -1) {
+                    n = s.read(buffer, 0, buffer.length);
+                }
+                s.close();
+            } catch (IOException e) {
+            }
+        }
+        return getCodeSigners(name);
+    }
+
+    /*
+     * Convert an array of signers into an array of concatenated certificate
+     * arrays.
+     */
+    private static java.security.cert.Certificate[] mapSignersToCertArray(
+        CodeSigner[] signers) {
+
+        if (signers != null) {
+            ArrayList<java.security.cert.Certificate> certChains = new ArrayList<>();
+            for (int i = 0; i < signers.length; i++) {
+                certChains.addAll(
+                    signers[i].getSignerCertPath().getCertificates());
+            }
+
+            // Convert into a Certificate[]
+            return certChains.toArray(
+                    new java.security.cert.Certificate[certChains.size()]);
+        }
+        return null;
+    }
+
+    /**
+     * returns true if there no files to verify.
+     * should only be called after all the META-INF entries
+     * have been processed.
+     */
+    boolean nothingToVerify()
+    {
+        return (anyToVerify == false);
+    }
+
+    /**
+     * called to let us know we have processed all the
+     * META-INF entries, and if we re-read one of them, don't
+     * re-process it. Also gets rid of any data structures
+     * we needed when parsing META-INF entries.
+     */
+    void doneWithMeta()
+    {
+        parsingMeta = false;
+        anyToVerify = !sigFileSigners.isEmpty();
+        baos = null;
+        sigFileData = null;
+        pendingBlocks = null;
+        signerCache = null;
+        manDig = null;
+        // MANIFEST.MF is always treated as signed and verified,
+        // move its signers from sigFileSigners to verifiedSigners.
+        if (sigFileSigners.containsKey(JarFile.MANIFEST_NAME)) {
+            CodeSigner[] codeSigners = sigFileSigners.remove(JarFile.MANIFEST_NAME);
+            verifiedSigners.put(JarFile.MANIFEST_NAME, codeSigners);
+        }
+    }
+
+    static class VerifierStream extends java.io.InputStream {
+
+        private InputStream is;
+        private JarVerifier jv;
+        private ManifestEntryVerifier mev;
+        private long numLeft;
+
+        VerifierStream(Manifest man,
+                       JarEntry je,
+                       InputStream is,
+                       JarVerifier jv) throws IOException
+        {
+            this.is = is;
+            this.jv = jv;
+            this.mev = new ManifestEntryVerifier(man);
+            this.jv.beginEntry(je, mev);
+            this.numLeft = je.getSize();
+            if (this.numLeft == 0)
+                this.jv.update(-1, this.mev);
+        }
+
+        public int read() throws IOException
+        {
+            if (numLeft > 0) {
+                int b = is.read();
+                jv.update(b, mev);
+                numLeft--;
+                if (numLeft == 0)
+                    jv.update(-1, mev);
+                return b;
+            } else {
+                return -1;
+            }
+        }
+
+        public int read(byte b[], int off, int len) throws IOException {
+            if ((numLeft > 0) && (numLeft < len)) {
+                len = (int)numLeft;
+            }
+
+            if (numLeft > 0) {
+                int n = is.read(b, off, len);
+                jv.update(n, b, off, len, mev);
+                numLeft -= n;
+                if (numLeft == 0)
+                    jv.update(-1, b, off, len, mev);
+                return n;
+            } else {
+                return -1;
+            }
+        }
+
+        public void close()
+            throws IOException
+        {
+            if (is != null)
+                is.close();
+            is = null;
+            mev = null;
+            jv = null;
+        }
+
+        public int available() throws IOException {
+            return is.available();
+        }
+
+    }
+
+    // Extended JavaUtilJarAccess CodeSource API Support
+
+    private Map<URL, Map<CodeSigner[], CodeSource>> urlToCodeSourceMap = new HashMap<>();
+    private Map<CodeSigner[], CodeSource> signerToCodeSource = new HashMap<>();
+    private URL lastURL;
+    private Map<CodeSigner[], CodeSource> lastURLMap;
+
+    /*
+     * Create a unique mapping from codeSigner cache entries to CodeSource.
+     * In theory, multiple URLs origins could map to a single locally cached
+     * and shared JAR file although in practice there will be a single URL in use.
+     */
+    private synchronized CodeSource mapSignersToCodeSource(URL url, CodeSigner[] signers) {
+        Map<CodeSigner[], CodeSource> map;
+        if (url == lastURL) {
+            map = lastURLMap;
+        } else {
+            map = urlToCodeSourceMap.get(url);
+            if (map == null) {
+                map = new HashMap<>();
+                urlToCodeSourceMap.put(url, map);
+            }
+            lastURLMap = map;
+            lastURL = url;
+        }
+        CodeSource cs = map.get(signers);
+        if (cs == null) {
+            cs = new VerifierCodeSource(csdomain, url, signers);
+            signerToCodeSource.put(signers, cs);
+        }
+        return cs;
+    }
+
+    private CodeSource[] mapSignersToCodeSources(URL url, List<CodeSigner[]> signers, boolean unsigned) {
+        List<CodeSource> sources = new ArrayList<>();
+
+        for (int i = 0; i < signers.size(); i++) {
+            sources.add(mapSignersToCodeSource(url, signers.get(i)));
+        }
+        if (unsigned) {
+            sources.add(mapSignersToCodeSource(url, null));
+        }
+        return sources.toArray(new CodeSource[sources.size()]);
+    }
+    private CodeSigner[] emptySigner = new CodeSigner[0];
+
+    /*
+     * Match CodeSource to a CodeSigner[] in the signer cache.
+     */
+    private CodeSigner[] findMatchingSigners(CodeSource cs) {
+        if (cs instanceof VerifierCodeSource) {
+            VerifierCodeSource vcs = (VerifierCodeSource) cs;
+            if (vcs.isSameDomain(csdomain)) {
+                return ((VerifierCodeSource) cs).getPrivateSigners();
+            }
+        }
+
+        /*
+         * In practice signers should always be optimized above
+         * but this handles a CodeSource of any type, just in case.
+         */
+        CodeSource[] sources = mapSignersToCodeSources(cs.getLocation(), getJarCodeSigners(), true);
+        List<CodeSource> sourceList = new ArrayList<>();
+        for (int i = 0; i < sources.length; i++) {
+            sourceList.add(sources[i]);
+        }
+        int j = sourceList.indexOf(cs);
+        if (j != -1) {
+            CodeSigner[] match;
+            match = ((VerifierCodeSource) sourceList.get(j)).getPrivateSigners();
+            if (match == null) {
+                match = emptySigner;
+            }
+            return match;
+        }
+        return null;
+    }
+
+    /*
+     * Instances of this class hold uncopied references to internal
+     * signing data that can be compared by object reference identity.
+     */
+    private static class VerifierCodeSource extends CodeSource {
+        private static final long serialVersionUID = -9047366145967768825L;
+
+        URL vlocation;
+        CodeSigner[] vsigners;
+        java.security.cert.Certificate[] vcerts;
+        Object csdomain;
+
+        VerifierCodeSource(Object csdomain, URL location, CodeSigner[] signers) {
+            super(location, signers);
+            this.csdomain = csdomain;
+            vlocation = location;
+            vsigners = signers; // from signerCache
+        }
+
+        VerifierCodeSource(Object csdomain, URL location, java.security.cert.Certificate[] certs) {
+            super(location, certs);
+            this.csdomain = csdomain;
+            vlocation = location;
+            vcerts = certs; // from signerCache
+        }
+
+        /*
+         * All VerifierCodeSource instances are constructed based on
+         * singleton signerCache or signerCacheCert entries for each unique signer.
+         * No CodeSigner<->Certificate[] conversion is required.
+         * We use these assumptions to optimize equality comparisons.
+         */
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof VerifierCodeSource) {
+                VerifierCodeSource that = (VerifierCodeSource) obj;
+
+                /*
+                 * Only compare against other per-signer singletons constructed
+                 * on behalf of the same JarFile instance. Otherwise, compare
+                 * things the slower way.
+                 */
+                if (isSameDomain(that.csdomain)) {
+                    if (that.vsigners != this.vsigners
+                            || that.vcerts != this.vcerts) {
+                        return false;
+                    }
+                    if (that.vlocation != null) {
+                        return that.vlocation.equals(this.vlocation);
+                    } else if (this.vlocation != null) {
+                        return this.vlocation.equals(that.vlocation);
+                    } else { // both null
+                        return true;
+                    }
+                }
+            }
+            return super.equals(obj);
+        }
+
+        boolean isSameDomain(Object csdomain) {
+            return this.csdomain == csdomain;
+        }
+
+        private CodeSigner[] getPrivateSigners() {
+            return vsigners;
+        }
+
+        private java.security.cert.Certificate[] getPrivateCertificates() {
+            return vcerts;
+        }
+    }
+    private Map<String, CodeSigner[]> signerMap;
+
+    private synchronized Map<String, CodeSigner[]> signerMap() {
+        if (signerMap == null) {
+            /*
+             * Snapshot signer state so it doesn't change on us. We care
+             * only about the asserted signatures. Verification of
+             * signature validity happens via the JarEntry apis.
+             */
+            signerMap = new HashMap<>(verifiedSigners.size() + sigFileSigners.size());
+            signerMap.putAll(verifiedSigners);
+            signerMap.putAll(sigFileSigners);
+        }
+        return signerMap;
+    }
+
+    public synchronized Enumeration<String> entryNames(JarFile jar, final CodeSource[] cs) {
+        final Map<String, CodeSigner[]> map = signerMap();
+        final Iterator<Map.Entry<String, CodeSigner[]>> itor = map.entrySet().iterator();
+        boolean matchUnsigned = false;
+
+        /*
+         * Grab a single copy of the CodeSigner arrays. Check
+         * to see if we can optimize CodeSigner equality test.
+         */
+        List<CodeSigner[]> req = new ArrayList<>(cs.length);
+        for (int i = 0; i < cs.length; i++) {
+            CodeSigner[] match = findMatchingSigners(cs[i]);
+            if (match != null) {
+                if (match.length > 0) {
+                    req.add(match);
+                } else {
+                    matchUnsigned = true;
+                }
+            } else {
+                matchUnsigned = true;
+            }
+        }
+
+        final List<CodeSigner[]> signersReq = req;
+        final Enumeration<String> enum2 = (matchUnsigned) ? unsignedEntryNames(jar) : emptyEnumeration;
+
+        return new Enumeration<String>() {
+
+            String name;
+
+            public boolean hasMoreElements() {
+                if (name != null) {
+                    return true;
+                }
+
+                while (itor.hasNext()) {
+                    Map.Entry<String, CodeSigner[]> e = itor.next();
+                    if (signersReq.contains(e.getValue())) {
+                        name = e.getKey();
+                        return true;
+                    }
+                }
+                while (enum2.hasMoreElements()) {
+                    name = enum2.nextElement();
+                    return true;
+                }
+                return false;
+            }
+
+            public String nextElement() {
+                if (hasMoreElements()) {
+                    String value = name;
+                    name = null;
+                    return value;
+                }
+                throw new NoSuchElementException();
+            }
+        };
+    }
+
+    /*
+     * Like entries() but screens out internal JAR mechanism entries
+     * and includes signed entries with no ZIP data.
+     */
+    public Enumeration<JarEntry> entries2(final JarFile jar, Enumeration<? extends ZipEntry> e) {
+        final Map<String, CodeSigner[]> map = new HashMap<>();
+        map.putAll(signerMap());
+        final Enumeration<? extends ZipEntry> enum_ = e;
+        return new Enumeration<JarEntry>() {
+
+            Enumeration<String> signers = null;
+            JarEntry entry;
+
+            public boolean hasMoreElements() {
+                if (entry != null) {
+                    return true;
+                }
+                while (enum_.hasMoreElements()) {
+                    ZipEntry ze = enum_.nextElement();
+                    if (JarVerifier.isSigningRelated(ze.getName())) {
+                        continue;
+                    }
+                    entry = jar.newEntry(ze);
+                    return true;
+                }
+                if (signers == null) {
+                    signers = Collections.enumeration(map.keySet());
+                }
+                while (signers.hasMoreElements()) {
+                    String name = signers.nextElement();
+                    entry = jar.newEntry(new ZipEntry(name));
+                    return true;
+                }
+
+                // Any map entries left?
+                return false;
+            }
+
+            public JarEntry nextElement() {
+                if (hasMoreElements()) {
+                    JarEntry je = entry;
+                    map.remove(je.getName());
+                    entry = null;
+                    return je;
+                }
+                throw new NoSuchElementException();
+            }
+        };
+    }
+    private Enumeration<String> emptyEnumeration = new Enumeration<String>() {
+
+        public boolean hasMoreElements() {
+            return false;
+        }
+
+        public String nextElement() {
+            throw new NoSuchElementException();
+        }
+    };
+
+    // true if file is part of the signature mechanism itself
+    static boolean isSigningRelated(String name) {
+        return SignatureFileVerifier.isSigningRelated(name);
+    }
+
+    private Enumeration<String> unsignedEntryNames(JarFile jar) {
+        final Map<String, CodeSigner[]> map = signerMap();
+        final Enumeration<JarEntry> entries = jar.entries();
+        return new Enumeration<String>() {
+
+            String name;
+
+            /*
+             * Grab entries from ZIP directory but screen out
+             * metadata.
+             */
+            public boolean hasMoreElements() {
+                if (name != null) {
+                    return true;
+                }
+                while (entries.hasMoreElements()) {
+                    String value;
+                    ZipEntry e = entries.nextElement();
+                    value = e.getName();
+                    if (e.isDirectory() || isSigningRelated(value)) {
+                        continue;
+                    }
+                    if (map.get(value) == null) {
+                        name = value;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            public String nextElement() {
+                if (hasMoreElements()) {
+                    String value = name;
+                    name = null;
+                    return value;
+                }
+                throw new NoSuchElementException();
+            }
+        };
+    }
+    private List<CodeSigner[]> jarCodeSigners;
+
+    private synchronized List<CodeSigner[]> getJarCodeSigners() {
+        CodeSigner[] signers;
+        if (jarCodeSigners == null) {
+            HashSet<CodeSigner[]> set = new HashSet<>();
+            set.addAll(signerMap().values());
+            jarCodeSigners = new ArrayList<>();
+            jarCodeSigners.addAll(set);
+        }
+        return jarCodeSigners;
+    }
+
+    public synchronized CodeSource[] getCodeSources(JarFile jar, URL url) {
+        boolean hasUnsigned = unsignedEntryNames(jar).hasMoreElements();
+
+        return mapSignersToCodeSources(url, getJarCodeSigners(), hasUnsigned);
+    }
+
+    public CodeSource getCodeSource(URL url, String name) {
+        CodeSigner[] signers;
+
+        signers = signerMap().get(name);
+        return mapSignersToCodeSource(url, signers);
+    }
+
+    public CodeSource getCodeSource(URL url, JarFile jar, JarEntry je) {
+        CodeSigner[] signers;
+
+        return mapSignersToCodeSource(url, getCodeSigners(jar, je));
+    }
+
+    public void setEagerValidation(boolean eager) {
+        eagerValidation = eager;
+    }
+
+    public synchronized List<Object> getManifestDigests() {
+        return Collections.unmodifiableList(manifestDigests);
+    }
+
+    static CodeSource getUnsignedCS(URL url) {
+        return new VerifierCodeSource(null, url, (java.security.cert.Certificate[]) null);
+    }
+
+    /**
+     * Returns whether the name is trusted. Used by
+     * {@link Manifest#getTrustedAttributes(String)}.
+     */
+    boolean isTrustedManifestEntry(String name) {
+        // How many signers? MANIFEST.MF is always verified
+        CodeSigner[] forMan = verifiedSigners.get(JarFile.MANIFEST_NAME);
+        if (forMan == null) {
+            return true;
+        }
+        // Check sigFileSigners first, because we are mainly dealing with
+        // non-file entries which will stay in sigFileSigners forever.
+        CodeSigner[] forName = sigFileSigners.get(name);
+        if (forName == null) {
+            forName = verifiedSigners.get(name);
+        }
+        // Returns trusted if all signers sign the entry
+        return forName != null && forName.length == forMan.length;
+    }
+}

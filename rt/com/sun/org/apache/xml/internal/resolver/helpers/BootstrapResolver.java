@@ -1,206 +1,200 @@
-/*     */ package com.sun.org.apache.xml.internal.resolver.helpers;
-/*     */ 
-/*     */ import java.io.InputStream;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.URL;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import javax.xml.transform.Source;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ import javax.xml.transform.URIResolver;
-/*     */ import javax.xml.transform.sax.SAXSource;
-/*     */ import org.xml.sax.EntityResolver;
-/*     */ import org.xml.sax.InputSource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BootstrapResolver
-/*     */   implements EntityResolver, URIResolver
-/*     */ {
-/*     */   public static final String xmlCatalogXSD = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.xsd";
-/*     */   public static final String xmlCatalogRNG = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.rng";
-/*     */   public static final String xmlCatalogPubId = "-//OASIS//DTD XML Catalogs V1.0//EN";
-/*     */   public static final String xmlCatalogSysId = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd";
-/*  66 */   private final Map<String, String> publicMap = new HashMap<>();
-/*     */ 
-/*     */   
-/*  69 */   private final Map<String, String> systemMap = new HashMap<>();
-/*     */ 
-/*     */   
-/*  72 */   private final Map<String, String> uriMap = new HashMap<>();
-/*     */ 
-/*     */   
-/*     */   public BootstrapResolver() {
-/*  76 */     URL url = getClass().getResource("/com/sun/org/apache/xml/internal/resolver/etc/catalog.dtd");
-/*  77 */     if (url != null) {
-/*  78 */       this.publicMap.put("-//OASIS//DTD XML Catalogs V1.0//EN", url.toString());
-/*  79 */       this.systemMap.put("http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd", url.toString());
-/*     */     } 
-/*     */     
-/*  82 */     url = getClass().getResource("/com/sun/org/apache/xml/internal/resolver/etc/catalog.rng");
-/*  83 */     if (url != null) {
-/*  84 */       this.uriMap.put("http://www.oasis-open.org/committees/entity/release/1.0/catalog.rng", url.toString());
-/*     */     }
-/*     */     
-/*  87 */     url = getClass().getResource("/com/sun/org/apache/xml/internal/resolver/etc/catalog.xsd");
-/*  88 */     if (url != null) {
-/*  89 */       this.uriMap.put("http://www.oasis-open.org/committees/entity/release/1.0/catalog.xsd", url.toString());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public InputSource resolveEntity(String publicId, String systemId) {
-/*  95 */     String resolved = null;
-/*     */     
-/*  97 */     if (systemId != null && this.systemMap.containsKey(systemId)) {
-/*  98 */       resolved = this.systemMap.get(systemId);
-/*  99 */     } else if (publicId != null && this.publicMap.containsKey(publicId)) {
-/* 100 */       resolved = this.publicMap.get(publicId);
-/*     */     } 
-/*     */     
-/* 103 */     if (resolved != null) {
-/*     */       try {
-/* 105 */         InputSource iSource = new InputSource(resolved);
-/* 106 */         iSource.setPublicId(publicId);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 119 */         URL url = new URL(resolved);
-/* 120 */         InputStream iStream = url.openStream();
-/* 121 */         iSource.setByteStream(iStream);
-/*     */         
-/* 123 */         return iSource;
-/* 124 */       } catch (Exception e) {
-/*     */         
-/* 126 */         return null;
-/*     */       } 
-/*     */     }
-/*     */     
-/* 130 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Source resolve(String href, String base) throws TransformerException {
-/* 137 */     String uri = href;
-/* 138 */     String fragment = null;
-/* 139 */     int hashPos = href.indexOf("#");
-/* 140 */     if (hashPos >= 0) {
-/* 141 */       uri = href.substring(0, hashPos);
-/* 142 */       fragment = href.substring(hashPos + 1);
-/*     */     } 
-/*     */     
-/* 145 */     String result = null;
-/* 146 */     if (href != null && this.uriMap.containsKey(href)) {
-/* 147 */       result = this.uriMap.get(href);
-/*     */     }
-/*     */     
-/* 150 */     if (result == null) {
-/*     */       try {
-/* 152 */         URL url = null;
-/*     */         
-/* 154 */         if (base == null) {
-/* 155 */           url = new URL(uri);
-/* 156 */           result = url.toString();
-/*     */         } else {
-/* 158 */           URL baseURL = new URL(base);
-/* 159 */           url = (href.length() == 0) ? baseURL : new URL(baseURL, uri);
-/* 160 */           result = url.toString();
-/*     */         } 
-/* 162 */       } catch (MalformedURLException mue) {
-/*     */         
-/* 164 */         String absBase = makeAbsolute(base);
-/* 165 */         if (!absBase.equals(base))
-/*     */         {
-/* 167 */           return resolve(href, absBase);
-/*     */         }
-/* 169 */         throw new TransformerException("Malformed URL " + href + "(base " + base + ")", mue);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 176 */     SAXSource source = new SAXSource();
-/* 177 */     source.setInputSource(new InputSource(result));
-/* 178 */     return source;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String makeAbsolute(String uri) {
-/* 183 */     if (uri == null) {
-/* 184 */       uri = "";
-/*     */     }
-/*     */     
-/*     */     try {
-/* 188 */       URL url = new URL(uri);
-/* 189 */       return url.toString();
-/* 190 */     } catch (MalformedURLException mue) {
-/*     */       try {
-/* 192 */         URL fileURL = FileURL.makeURL(uri);
-/* 193 */         return fileURL.toString();
-/* 194 */       } catch (MalformedURLException mue2) {
-/*     */         
-/* 196 */         return uri;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\resolver\helpers\BootstrapResolver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// BootstrapResolver.java - Resolve entities and URIs internally
+
+package com.sun.org.apache.xml.internal.resolver.helpers;
+
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import javax.xml.transform.Source;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.URIResolver;
+import javax.xml.transform.sax.SAXSource;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+
+/**
+ * A simple bootstrapping resolver.
+ *
+ * <p>This class is used as the entity resolver when reading XML Catalogs.
+ * It searches for the OASIS XML Catalog DTD, Relax NG Grammar and W3C XML Schema
+ * as resources (e.g., in the resolver jar file).</p>
+ *
+ * <p>If you have your own DTDs or schemas, you can extend this class and
+ * set the BootstrapResolver in your CatalogManager.</p>
+ *
+ * @see com.sun.org.apache.xml.internal.resolver.CatalogManager
+ *
+ * @author Norman Walsh
+ * <a href="mailto:Norman.Walsh@Sun.COM">Norman.Walsh@Sun.COM</a>
+ *
+ */
+public class BootstrapResolver implements EntityResolver, URIResolver {
+  /** URI of the W3C XML Schema for OASIS XML Catalog files. */
+  public static final String xmlCatalogXSD = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.xsd";
+
+  /** URI of the RELAX NG Grammar for OASIS XML Catalog files. */
+  public static final String xmlCatalogRNG = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.rng";
+
+  /** Public identifier for OASIS XML Catalog files. */
+  public static final String xmlCatalogPubId = "-//OASIS//DTD XML Catalogs V1.0//EN";
+
+  /** System identifier for OASIS XML Catalog files. */
+  public static final String xmlCatalogSysId = "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd";
+
+  /** Private hash used for public identifiers. */
+  private final Map<String, String> publicMap = new HashMap<>();
+
+  /** Private hash used for system identifiers. */
+  private final Map<String, String> systemMap = new HashMap<>();
+
+  /** Private hash used for URIs. */
+  private final Map<String, String> uriMap = new HashMap<>();
+
+  /** Constructor. */
+  public BootstrapResolver() {
+    URL url = this.getClass().getResource("/com/sun/org/apache/xml/internal/resolver/etc/catalog.dtd");
+    if (url != null) {
+      publicMap.put(xmlCatalogPubId, url.toString());
+      systemMap.put(xmlCatalogSysId, url.toString());
+    }
+
+    url = this.getClass().getResource("/com/sun/org/apache/xml/internal/resolver/etc/catalog.rng");
+    if (url != null) {
+      uriMap.put(xmlCatalogRNG, url.toString());
+    }
+
+    url = this.getClass().getResource("/com/sun/org/apache/xml/internal/resolver/etc/catalog.xsd");
+    if (url != null) {
+      uriMap.put(xmlCatalogXSD, url.toString());
+    }
+  }
+
+  /** SAX resolveEntity API. */
+  public InputSource resolveEntity (String publicId, String systemId) {
+    String resolved = null;
+
+    if (systemId != null && systemMap.containsKey(systemId)) {
+      resolved = systemMap.get(systemId);
+    } else if (publicId != null && publicMap.containsKey(publicId)) {
+      resolved = publicMap.get(publicId);
+    }
+
+    if (resolved != null) {
+      try {
+        InputSource iSource = new InputSource(resolved);
+        iSource.setPublicId(publicId);
+
+        // Ideally this method would not attempt to open the
+        // InputStream, but there is a bug (in Xerces, at least)
+        // that causes the parser to mistakenly open the wrong
+        // system identifier if the returned InputSource does
+        // not have a byteStream.
+        //
+        // It could be argued that we still shouldn't do this here,
+        // but since the purpose of calling the entityResolver is
+        // almost certainly to open the input stream, it seems to
+        // do little harm.
+        //
+        URL url = new URL(resolved);
+        InputStream iStream = url.openStream();
+        iSource.setByteStream(iStream);
+
+        return iSource;
+      } catch (Exception e) {
+        // FIXME: silently fail?
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /** Transformer resolve API. */
+  public Source resolve(String href, String base)
+    throws TransformerException {
+
+    String uri = href;
+    String fragment = null;
+    int hashPos = href.indexOf("#");
+    if (hashPos >= 0) {
+      uri = href.substring(0, hashPos);
+      fragment = href.substring(hashPos+1);
+    }
+
+    String result = null;
+    if (href != null && uriMap.containsKey(href)) {
+      result = uriMap.get(href);
+    }
+
+    if (result == null) {
+      try {
+        URL url = null;
+
+        if (base==null) {
+          url = new URL(uri);
+          result = url.toString();
+        } else {
+          URL baseURL = new URL(base);
+          url = (href.length()==0 ? baseURL : new URL(baseURL, uri));
+          result = url.toString();
+        }
+      } catch (java.net.MalformedURLException mue) {
+        // try to make an absolute URI from the current base
+        String absBase = makeAbsolute(base);
+        if (!absBase.equals(base)) {
+          // don't bother if the absBase isn't different!
+          return resolve(href, absBase);
+        } else {
+          throw new TransformerException("Malformed URL "
+                                         + href + "(base " + base + ")",
+                                         mue);
+        }
+      }
+    }
+
+    SAXSource source = new SAXSource();
+    source.setInputSource(new InputSource(result));
+    return source;
+  }
+
+  /** Attempt to construct an absolute URI */
+  private String makeAbsolute(String uri) {
+    if (uri == null) {
+      uri = "";
+    }
+
+    try {
+      URL url = new URL(uri);
+      return url.toString();
+    } catch (MalformedURLException mue) {
+      try {
+        URL fileURL = FileURL.makeURL(uri);
+        return fileURL.toString();
+      } catch (MalformedURLException mue2) {
+        // bail
+        return uri;
+      }
+    }
+  }
+}

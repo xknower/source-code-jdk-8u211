@@ -1,109 +1,104 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicRadioButtonUI;
-/*     */ import sun.awt.AppContext;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifRadioButtonUI
-/*     */   extends BasicRadioButtonUI
-/*     */ {
-/*  52 */   private static final Object MOTIF_RADIO_BUTTON_UI_KEY = new Object();
-/*     */ 
-/*     */   
-/*     */   protected Color focusColor;
-/*     */ 
-/*     */   
-/*     */   private boolean defaults_initialized = false;
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  62 */     AppContext appContext = AppContext.getAppContext();
-/*     */     
-/*  64 */     MotifRadioButtonUI motifRadioButtonUI = (MotifRadioButtonUI)appContext.get(MOTIF_RADIO_BUTTON_UI_KEY);
-/*  65 */     if (motifRadioButtonUI == null) {
-/*  66 */       motifRadioButtonUI = new MotifRadioButtonUI();
-/*  67 */       appContext.put(MOTIF_RADIO_BUTTON_UI_KEY, motifRadioButtonUI);
-/*     */     } 
-/*  69 */     return motifRadioButtonUI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installDefaults(AbstractButton paramAbstractButton) {
-/*  76 */     super.installDefaults(paramAbstractButton);
-/*  77 */     if (!this.defaults_initialized) {
-/*  78 */       this.focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
-/*  79 */       this.defaults_initialized = true;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults(AbstractButton paramAbstractButton) {
-/*  84 */     super.uninstallDefaults(paramAbstractButton);
-/*  85 */     this.defaults_initialized = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Color getFocusColor() {
-/*  93 */     return this.focusColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintFocus(Graphics paramGraphics, Rectangle paramRectangle, Dimension paramDimension) {
-/* 100 */     paramGraphics.setColor(getFocusColor());
-/* 101 */     paramGraphics.drawRect(0, 0, paramDimension.width - 1, paramDimension.height - 1);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifRadioButtonUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import sun.awt.AppContext;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.basic.BasicRadioButtonUI;
+
+import javax.swing.plaf.*;
+
+import java.awt.*;
+
+/**
+ * RadioButtonUI implementation for MotifRadioButtonUI
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Rich Schiavi
+ */
+public class MotifRadioButtonUI extends BasicRadioButtonUI {
+
+    private static final Object MOTIF_RADIO_BUTTON_UI_KEY = new Object();
+
+    protected Color focusColor;
+
+    private boolean defaults_initialized = false;
+
+    // ********************************
+    //         Create PLAF
+    // ********************************
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        MotifRadioButtonUI motifRadioButtonUI =
+                (MotifRadioButtonUI) appContext.get(MOTIF_RADIO_BUTTON_UI_KEY);
+        if (motifRadioButtonUI == null) {
+            motifRadioButtonUI = new MotifRadioButtonUI();
+            appContext.put(MOTIF_RADIO_BUTTON_UI_KEY, motifRadioButtonUI);
+        }
+        return motifRadioButtonUI;
+    }
+
+    // ********************************
+    //          Install Defaults
+    // ********************************
+    public void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
+            defaults_initialized = true;
+        }
+    }
+
+    protected void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
+    }
+
+    // ********************************
+    //          Default Accessors
+    // ********************************
+
+    protected Color getFocusColor() {
+        return focusColor;
+    }
+
+    // ********************************
+    //         Paint Methods
+    // ********************************
+    protected void paintFocus(Graphics g, Rectangle t, Dimension d){
+        g.setColor(getFocusColor());
+        g.drawRect(0,0,d.width-1,d.height-1);
+    }
+
+}

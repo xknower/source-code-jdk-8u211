@@ -1,152 +1,146 @@
-/*     */ package com.sun.corba.se.impl.monitoring;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.monitoring.MonitoredAttribute;
-/*     */ import com.sun.corba.se.spi.monitoring.MonitoredObject;
-/*     */ import java.util.Collection;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MonitoredObjectImpl
-/*     */   implements MonitoredObject
-/*     */ {
-/*     */   private final String name;
-/*     */   private final String description;
-/*  41 */   private Map children = new HashMap<>();
-/*     */ 
-/*     */   
-/*  44 */   private Map monitoredAttributes = new HashMap<>();
-/*     */   
-/*  46 */   private MonitoredObject parent = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MonitoredObjectImpl(String paramString1, String paramString2) {
-/*  51 */     this.name = paramString1;
-/*  52 */     this.description = paramString2;
-/*     */   }
-/*     */   
-/*     */   public MonitoredObject getChild(String paramString) {
-/*  56 */     synchronized (this) {
-/*  57 */       return (MonitoredObject)this.children.get(paramString);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public Collection getChildren() {
-/*  62 */     synchronized (this) {
-/*  63 */       return this.children.values();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void addChild(MonitoredObject paramMonitoredObject) {
-/*  68 */     if (paramMonitoredObject != null) {
-/*  69 */       synchronized (this) {
-/*  70 */         this.children.put(paramMonitoredObject.getName(), paramMonitoredObject);
-/*  71 */         paramMonitoredObject.setParent(this);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void removeChild(String paramString) {
-/*  77 */     if (paramString != null) {
-/*  78 */       synchronized (this) {
-/*  79 */         this.children.remove(paramString);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public synchronized MonitoredObject getParent() {
-/*  85 */     return this.parent;
-/*     */   }
-/*     */   
-/*     */   public synchronized void setParent(MonitoredObject paramMonitoredObject) {
-/*  89 */     this.parent = paramMonitoredObject;
-/*     */   }
-/*     */   
-/*     */   public MonitoredAttribute getAttribute(String paramString) {
-/*  93 */     synchronized (this) {
-/*  94 */       return (MonitoredAttribute)this.monitoredAttributes.get(paramString);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public Collection getAttributes() {
-/*  99 */     synchronized (this) {
-/* 100 */       return this.monitoredAttributes.values();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void addAttribute(MonitoredAttribute paramMonitoredAttribute) {
-/* 105 */     if (paramMonitoredAttribute != null) {
-/* 106 */       synchronized (this) {
-/* 107 */         this.monitoredAttributes.put(paramMonitoredAttribute.getName(), paramMonitoredAttribute);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void removeAttribute(String paramString) {
-/* 113 */     if (paramString != null) {
-/* 114 */       synchronized (this) {
-/* 115 */         this.monitoredAttributes.remove(paramString);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clearState() {
-/* 125 */     synchronized (this) {
-/* 126 */       Iterator<MonitoredAttribute> iterator = this.monitoredAttributes.values().iterator();
-/*     */       
-/* 128 */       while (iterator.hasNext()) {
-/* 129 */         ((MonitoredAttribute)iterator.next()).clearState();
-/*     */       }
-/* 131 */       iterator = this.children.values().iterator();
-/*     */       
-/* 133 */       while (iterator.hasNext()) {
-/* 134 */         ((MonitoredObject)iterator.next()).clearState();
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public String getName() {
-/* 140 */     return this.name;
-/*     */   }
-/*     */   
-/*     */   public String getDescription() {
-/* 144 */     return this.description;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\monitoring\MonitoredObjectImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.monitoring;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collection;
+import java.util.Iterator;
+
+import com.sun.corba.se.spi.monitoring.MonitoredObject;
+import com.sun.corba.se.spi.monitoring.MonitoredAttribute;
+
+public class MonitoredObjectImpl implements MonitoredObject {
+    private final String name;
+    private final String description;
+
+    // List of all child Monitored Objects
+    private Map children = new HashMap();
+
+    // All the Attributes of this Monitored Object instance
+    private Map monitoredAttributes = new HashMap();
+
+    private MonitoredObject parent = null;
+
+
+    // Constructor
+    MonitoredObjectImpl( String name, String description ) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public MonitoredObject getChild( String name ) {
+        synchronized( this ) {
+            return (MonitoredObject) children.get( name );
+        }
+    }
+
+    public Collection getChildren( ) {
+        synchronized( this ) {
+            return children.values();
+        }
+    }
+
+    public void addChild( MonitoredObject m ) {
+        if (m != null){
+            synchronized( this ) {
+                children.put( m.getName(), m);
+                m.setParent( this );
+            }
+        }
+    }
+
+    public void removeChild( String name ) {
+        if (name != null){
+            synchronized( this ) {
+                children.remove( name );
+            }
+        }
+    }
+
+    public synchronized MonitoredObject getParent( ) {
+       return parent;
+    }
+
+    public synchronized void setParent( MonitoredObject p ) {
+        parent = p;
+    }
+
+    public MonitoredAttribute getAttribute( String name ) {
+        synchronized( this ) {
+            return (MonitoredAttribute) monitoredAttributes.get( name );
+        }
+    }
+
+    public Collection getAttributes( ) {
+        synchronized( this ) {
+            return monitoredAttributes.values();
+        }
+    }
+
+    public void addAttribute( MonitoredAttribute value ) {
+        if (value != null) {
+            synchronized( this ) {
+                monitoredAttributes.put( value.getName(), value );
+            }
+        }
+    }
+
+    public void removeAttribute( String name ) {
+        if (name != null) {
+            synchronized( this ) {
+                monitoredAttributes.remove( name );
+            }
+        }
+    }
+
+    /**
+     * calls clearState() on all the registered children MonitoredObjects and
+     * MonitoredAttributes.
+     */
+    public void clearState( ) {
+        synchronized( this ) {
+            Iterator i = monitoredAttributes.values().iterator();
+            // First call clearState on all the local attributes
+            while( i.hasNext( ) ) {
+                ((MonitoredAttribute)i.next()).clearState();
+            }
+            i = children.values().iterator();
+            // next call clearState on all the children MonitoredObjects
+            while( i.hasNext() ) {
+                ((MonitoredObject)i.next()).clearState();
+           }
+        }
+    }
+
+    public String getName( ) {
+        return name;
+    }
+
+    public String getDescription( ) {
+        return description;
+    }
+}

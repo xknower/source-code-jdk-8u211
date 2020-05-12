@@ -1,170 +1,166 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.Translet;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.TransletException;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-/*     */ import com.sun.org.apache.xml.internal.utils.LocaleUtility;
-/*     */ import java.text.Collator;
-/*     */ import java.util.Locale;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class NodeSortRecordFactory
-/*     */ {
-/*  37 */   private static int DESCENDING = "descending".length();
-/*  38 */   private static int NUMBER = "number".length();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final DOM _dom;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final String _className;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Class _class;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private SortSettings _sortSettings;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Collator _collator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeSortRecordFactory(DOM dom, String className, Translet translet, String[] order, String[] type) throws TransletException {
-/*  64 */     this(dom, className, translet, order, type, null, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeSortRecordFactory(DOM dom, String className, Translet translet, String[] order, String[] type, String[] lang, String[] caseOrder) throws TransletException {
-/*     */     try {
-/*  80 */       this._dom = dom;
-/*  81 */       this._className = className;
-/*     */       
-/*  83 */       this._class = translet.getAuxiliaryClass(className);
-/*     */       
-/*  85 */       if (this._class == null) {
-/*  86 */         this._class = ObjectFactory.findProviderClass(className, true);
-/*     */       }
-/*     */       
-/*  89 */       int levels = order.length;
-/*  90 */       int[] iOrder = new int[levels];
-/*  91 */       int[] iType = new int[levels];
-/*  92 */       for (int i = 0; i < levels; i++) {
-/*  93 */         if (order[i].length() == DESCENDING) {
-/*  94 */           iOrder[i] = 1;
-/*     */         }
-/*  96 */         if (type[i].length() == NUMBER) {
-/*  97 */           iType[i] = 1;
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 104 */       String[] emptyStringArray = null;
-/* 105 */       if (lang == null || caseOrder == null) {
-/* 106 */         int numSortKeys = order.length;
-/* 107 */         emptyStringArray = new String[numSortKeys];
-/*     */ 
-/*     */ 
-/*     */         
-/* 111 */         for (int k = 0; k < numSortKeys; k++) {
-/* 112 */           emptyStringArray[k] = "";
-/*     */         }
-/*     */       } 
-/*     */       
-/* 116 */       if (lang == null) {
-/* 117 */         lang = emptyStringArray;
-/*     */       }
-/* 119 */       if (caseOrder == null) {
-/* 120 */         caseOrder = emptyStringArray;
-/*     */       }
-/*     */       
-/* 123 */       int length = lang.length;
-/* 124 */       Locale[] locales = new Locale[length];
-/* 125 */       Collator[] collators = new Collator[length];
-/* 126 */       for (int j = 0; j < length; j++) {
-/* 127 */         locales[j] = LocaleUtility.langToLocale(lang[j]);
-/* 128 */         collators[j] = Collator.getInstance(locales[j]);
-/*     */       } 
-/*     */       
-/* 131 */       this._sortSettings = new SortSettings((AbstractTranslet)translet, iOrder, iType, locales, collators, caseOrder);
-/*     */     
-/*     */     }
-/* 134 */     catch (ClassNotFoundException e) {
-/* 135 */       throw new TransletException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeSortRecord makeNodeSortRecord(int node, int last) throws ExceptionInInitializerError, LinkageError, IllegalAccessException, InstantiationException, SecurityException, TransletException {
-/* 154 */     NodeSortRecord sortRecord = this._class.newInstance();
-/* 155 */     sortRecord.initialize(node, last, this._dom, this._sortSettings);
-/* 156 */     return sortRecord;
-/*     */   }
-/*     */   
-/*     */   public String getClassName() {
-/* 160 */     return this._className;
-/*     */   }
-/*     */   
-/*     */   private final void setLang(String[] lang) {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\NodeSortRecordFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: NodeSortRecordFactory.java,v 1.2.4.1 2005/09/06 09:53:40 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.Translet;
+import com.sun.org.apache.xalan.internal.xsltc.TransletException;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xml.internal.utils.LocaleUtility;
+import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
+import java.util.Locale;
+import java.text.Collator;
+
+public class NodeSortRecordFactory {
+
+    private static int DESCENDING = "descending".length();
+    private static int NUMBER     = "number".length();
+
+    private final DOM      _dom;
+    private final String   _className;
+    private Class _class;
+    private SortSettings _sortSettings;
+
+    /**
+     *
+     */
+    protected Collator _collator;
+
+    /**
+     * Creates a NodeSortRecord producing object. The DOM specifies which tree
+     * to get the nodes to sort from, the class name specifies what auxillary
+     * class to use to sort the nodes (this class is generated by the Sort
+     * class), and the translet parameter is needed for methods called by
+     * this object.
+     *
+     * @deprecated This constructor is no longer used in generated code.  It
+     *             exists only for backwards compatibility.
+     */
+     public NodeSortRecordFactory(DOM dom, String className, Translet translet,
+                 String order[], String type[])
+         throws TransletException
+     {
+         this(dom, className, translet, order, type, null, null);
+     }
+
+    /**
+     * Creates a NodeSortRecord producing object. The DOM specifies which tree
+     * to get the nodes to sort from, the class name specifies what auxillary
+     * class to use to sort the nodes (this class is generated by the Sort
+     * class), and the translet parameter is needed for methods called by
+     * this object.
+     */
+     public NodeSortRecordFactory(DOM dom, String className, Translet translet,
+                 String order[], String type[], String lang[],
+                 String caseOrder[])
+         throws TransletException
+     {
+         try {
+             _dom = dom;
+             _className = className;
+             // This should return a Class definition if using TrAX
+             _class = translet.getAuxiliaryClass(className);
+             // This code is only run when the native API is used
+             if (_class == null) {
+                 _class = ObjectFactory.findProviderClass(className, true);
+             }
+
+             int levels = order.length;
+             int[] iOrder = new int[levels];
+             int[] iType = new int[levels];
+             for (int i = 0; i < levels; i++) {
+                  if (order[i].length() == DESCENDING) {
+                      iOrder[i] = NodeSortRecord.COMPARE_DESCENDING;
+                  }
+                  if (type[i].length() == NUMBER) {
+                      iType[i] = NodeSortRecord.COMPARE_NUMERIC;
+                  }
+             }
+
+             // Old NodeSortRecordFactory constructor had no lang or case_order
+             // arguments.  Provide default values in that case for binary
+             // compatibility.
+             String[] emptyStringArray = null;
+             if (lang == null || caseOrder == null) {
+                 int numSortKeys = order.length;
+                 emptyStringArray = new String[numSortKeys];
+
+                 // Set up array of zero-length strings as default values
+                 // of lang and case_order
+                 for (int i = 0; i < numSortKeys; i++) {
+                     emptyStringArray[i] = "";
+                 }
+             }
+
+             if (lang == null) {
+                 lang = emptyStringArray;
+             }
+             if (caseOrder == null) {
+                 caseOrder = emptyStringArray;
+             }
+
+             final int length = lang.length;
+             Locale[] locales = new Locale[length];
+             Collator[] collators = new Collator[length];
+             for (int i = 0; i< length; i++){
+                 locales[i] = LocaleUtility.langToLocale(lang[i]);
+                 collators[i] = Collator.getInstance(locales[i]);
+             }
+
+             _sortSettings = new SortSettings((AbstractTranslet) translet,
+                                              iOrder, iType, locales, collators,
+                                              caseOrder);
+        } catch (ClassNotFoundException e) {
+            throw new TransletException(e);
+        }
+    }
+
+
+
+    /**
+     * Create an instance of a sub-class of NodeSortRecord. The name of this
+     * sub-class is passed to us in the constructor.
+     */
+    public NodeSortRecord makeNodeSortRecord(int node, int last)
+        throws ExceptionInInitializerError,
+               LinkageError,
+               IllegalAccessException,
+               InstantiationException,
+               SecurityException,
+               TransletException {
+
+        final NodeSortRecord sortRecord =
+            (NodeSortRecord)_class.newInstance();
+        sortRecord.initialize(node, last, _dom, _sortSettings);
+        return sortRecord;
+    }
+
+    public String getClassName() {
+        return _className;
+    }
+
+   private final void setLang(final String lang[]){
+
+    }
+}

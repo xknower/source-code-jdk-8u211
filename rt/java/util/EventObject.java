@@ -1,84 +1,78 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ import java.io.Serializable;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class EventObject
-/*    */   implements Serializable
-/*    */ {
-/*    */   private static final long serialVersionUID = 5516075349620653480L;
-/*    */   protected transient Object source;
-/*    */   
-/*    */   public EventObject(Object paramObject) {
-/* 55 */     if (paramObject == null) {
-/* 56 */       throw new IllegalArgumentException("null source");
-/*    */     }
-/* 58 */     this.source = paramObject;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Object getSource() {
-/* 67 */     return this.source;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 76 */     return getClass().getName() + "[source=" + this.source + "]";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\EventObject.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * <p>
+ * The root class from which all event state objects shall be derived.
+ * <p>
+ * All Events are constructed with a reference to the object, the "source",
+ * that is logically deemed to be the object upon which the Event in question
+ * initially occurred upon.
+ *
+ * @since JDK1.1
+ */
+
+public class EventObject implements java.io.Serializable {
+
+    private static final long serialVersionUID = 5516075349620653480L;
+
+    /**
+     * The object on which the Event initially occurred.
+     */
+    protected transient Object  source;
+
+    /**
+     * Constructs a prototypical Event.
+     *
+     * @param    source    The object on which the Event initially occurred.
+     * @exception  IllegalArgumentException  if source is null.
+     */
+    public EventObject(Object source) {
+        if (source == null)
+            throw new IllegalArgumentException("null source");
+
+        this.source = source;
+    }
+
+    /**
+     * The object on which the Event initially occurred.
+     *
+     * @return   The object on which the Event initially occurred.
+     */
+    public Object getSource() {
+        return source;
+    }
+
+    /**
+     * Returns a String representation of this EventObject.
+     *
+     * @return  A a String representation of this EventObject.
+     */
+    public String toString() {
+        return getClass().getName() + "[source=" + source + "]";
+    }
+}

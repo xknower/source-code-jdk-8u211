@@ -1,159 +1,154 @@
-/*     */ package javax.xml.crypto;
-/*     */ 
-/*     */ import java.io.PrintStream;
-/*     */ import java.io.PrintWriter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MarshalException
-/*     */   extends Exception
-/*     */ {
-/*     */   private static final long serialVersionUID = -863185580332643547L;
-/*     */   private Throwable cause;
-/*     */   
-/*     */   public MarshalException() {}
-/*     */   
-/*     */   public MarshalException(String paramString) {
-/*  79 */     super(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MarshalException(String paramString, Throwable paramThrowable) {
-/*  94 */     super(paramString);
-/*  95 */     this.cause = paramThrowable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MarshalException(Throwable paramThrowable) {
-/* 107 */     super((paramThrowable == null) ? null : paramThrowable.toString());
-/* 108 */     this.cause = paramThrowable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getCause() {
-/* 121 */     return this.cause;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace() {
-/* 129 */     super.printStackTrace();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintStream paramPrintStream) {
-/* 140 */     super.printStackTrace(paramPrintStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintWriter paramPrintWriter) {
-/* 151 */     super.printStackTrace(paramPrintWriter);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\crypto\MarshalException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * $Id: MarshalException.java,v 1.5 2005/05/10 15:47:42 mullan Exp $
+ */
+package javax.xml.crypto;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import javax.xml.crypto.dsig.Manifest;
+import javax.xml.crypto.dsig.XMLSignature;
+import javax.xml.crypto.dsig.XMLSignatureFactory;
+import javax.xml.crypto.dsig.keyinfo.KeyInfo;
+import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
+
+/**
+ * Indicates an exceptional condition that occurred during the XML
+ * marshalling or unmarshalling process.
+ *
+ * <p>A {@code MarshalException} can contain a cause: another
+ * throwable that caused this {@code MarshalException} to get thrown.
+ *
+ * @author Sean Mullan
+ * @author JSR 105 Expert Group
+ * @since 1.6
+ * @see XMLSignature#sign(XMLSignContext)
+ * @see XMLSignatureFactory#unmarshalXMLSignature(XMLValidateContext)
+ */
+public class MarshalException extends Exception {
+
+    private static final long serialVersionUID = -863185580332643547L;
+
+    /**
+     * The throwable that caused this exception to get thrown, or null if this
+     * exception was not caused by another throwable or if the causative
+     * throwable is unknown.
+     *
+     * @serial
+     */
+    private Throwable cause;
+
+    /**
+     * Constructs a new {@code MarshalException} with
+     * {@code null} as its detail message.
+     */
+    public MarshalException() {
+        super();
+    }
+
+    /**
+     * Constructs a new {@code MarshalException} with the specified
+     * detail message.
+     *
+     * @param message the detail message
+     */
+    public MarshalException(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs a new {@code MarshalException} with the
+     * specified detail message and cause.
+     * <p>Note that the detail message associated with
+     * {@code cause} is <i>not</i> automatically incorporated in
+     * this exception's detail message.
+     *
+     * @param message the detail message
+     * @param cause the cause (A {@code null} value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
+     */
+    public MarshalException(String message, Throwable cause) {
+        super(message);
+        this.cause = cause;
+    }
+
+    /**
+     * Constructs a new {@code MarshalException} with the specified cause
+     * and a detail message of {@code (cause==null ? null : cause.toString())}
+     * (which typically contains the class and detail message of {@code cause}).
+     *
+     * @param cause the cause (A {@code null} value is permitted, and
+     *        indicates that the cause is nonexistent or unknown.)
+     */
+    public MarshalException(Throwable cause) {
+        super(cause==null ? null : cause.toString());
+        this.cause = cause;
+    }
+
+    /**
+     * Returns the cause of this {@code MarshalException} or
+     * {@code null} if the cause is nonexistent or unknown.  (The
+     * cause is the throwable that caused this
+     * {@code MarshalException} to get thrown.)
+     *
+     * @return the cause of this {@code MarshalException} or
+     *         {@code null} if the cause is nonexistent or unknown.
+     */
+    public Throwable getCause() {
+        return cause;
+    }
+
+    /**
+     * Prints this {@code MarshalException}, its backtrace and
+     * the cause's backtrace to the standard error stream.
+     */
+    public void printStackTrace() {
+        super.printStackTrace();
+        //XXX print backtrace of cause
+    }
+
+    /**
+     * Prints this {@code MarshalException}, its backtrace and
+     * the cause's backtrace to the specified print stream.
+     *
+     * @param s {@code PrintStream} to use for output
+     */
+    public void printStackTrace(PrintStream s) {
+        super.printStackTrace(s);
+        //XXX print backtrace of cause
+    }
+
+    /**
+     * Prints this {@code MarshalException}, its backtrace and
+     * the cause's backtrace to the specified print writer.
+     *
+     * @param s {@code PrintWriter} to use for output
+     */
+    public void printStackTrace(PrintWriter s) {
+        super.printStackTrace(s);
+        //XXX print backtrace of cause
+    }
+}

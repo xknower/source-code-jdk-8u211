@@ -1,262 +1,256 @@
-/*     */ package com.sun.jmx.snmp.agent;
-/*     */ 
-/*     */ import com.sun.jmx.snmp.SnmpStatusException;
-/*     */ import com.sun.jmx.snmp.SnmpVarBind;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Enumeration;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpStandardObjectServer
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -4641068116505308488L;
-/*     */   
-/*     */   public void get(SnmpStandardMetaServer paramSnmpStandardMetaServer, SnmpMibSubRequest paramSnmpMibSubRequest, int paramInt) throws SnmpStatusException {
-/* 115 */     Object object = paramSnmpMibSubRequest.getUserData();
-/*     */     
-/* 117 */     for (Enumeration<SnmpVarBind> enumeration = paramSnmpMibSubRequest.getElements(); enumeration.hasMoreElements(); ) {
-/* 118 */       SnmpVarBind snmpVarBind = enumeration.nextElement();
-/*     */       try {
-/* 120 */         long l = snmpVarBind.oid.getOidArc(paramInt);
-/* 121 */         snmpVarBind.value = paramSnmpStandardMetaServer.get(l, object);
-/* 122 */       } catch (SnmpStatusException snmpStatusException) {
-/* 123 */         paramSnmpMibSubRequest.registerGetException(snmpVarBind, snmpStatusException);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set(SnmpStandardMetaServer paramSnmpStandardMetaServer, SnmpMibSubRequest paramSnmpMibSubRequest, int paramInt) throws SnmpStatusException {
-/* 176 */     Object object = paramSnmpMibSubRequest.getUserData();
-/*     */     
-/* 178 */     for (Enumeration<SnmpVarBind> enumeration = paramSnmpMibSubRequest.getElements(); enumeration.hasMoreElements(); ) {
-/* 179 */       SnmpVarBind snmpVarBind = enumeration.nextElement();
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 184 */         long l = snmpVarBind.oid.getOidArc(paramInt);
-/* 185 */         snmpVarBind.value = paramSnmpStandardMetaServer.set(snmpVarBind.value, l, object);
-/* 186 */       } catch (SnmpStatusException snmpStatusException) {
-/* 187 */         paramSnmpMibSubRequest.registerSetException(snmpVarBind, snmpStatusException);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void check(SnmpStandardMetaServer paramSnmpStandardMetaServer, SnmpMibSubRequest paramSnmpMibSubRequest, int paramInt) throws SnmpStatusException {
-/* 241 */     Object object = paramSnmpMibSubRequest.getUserData();
-/*     */     
-/* 243 */     for (Enumeration<SnmpVarBind> enumeration = paramSnmpMibSubRequest.getElements(); enumeration.hasMoreElements(); ) {
-/* 244 */       SnmpVarBind snmpVarBind = enumeration.nextElement();
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 249 */         long l = snmpVarBind.oid.getOidArc(paramInt);
-/* 250 */         paramSnmpStandardMetaServer.check(snmpVarBind.value, l, object);
-/* 251 */       } catch (SnmpStatusException snmpStatusException) {
-/* 252 */         paramSnmpMibSubRequest.registerCheckException(snmpVarBind, snmpStatusException);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\agent\SnmpStandardObjectServer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp.agent;
+
+// java imports
+//
+import java.io.Serializable;
+import java.util.Enumeration;
+import com.sun.jmx.snmp.SnmpVarBind;
+import com.sun.jmx.snmp.SnmpStatusException;
+
+// SNMP Runtime imports
+//
+
+/**
+ * <p>
+ * This class is a utility class that transform SNMP GET / SET requests
+ * into series of get<i>AttributeName</i>() set<i>AttributeName</i>()
+ * invoked on the MBean.
+ * </p>
+ *
+ * <p>
+ * The transformation relies on the metadata information provided by the
+ * {@link com.sun.jmx.snmp.agent.SnmpStandardMetaServer} object which is
+ * passed as first parameter to every method. This SnmpStandardMetaServer
+ * object is usually a Metadata object generated by <code>mibgen</code>.
+ * </p>
+ *
+ * <p>
+ * The MBean is not invoked directly by this class but through the
+ * metadata object which holds a reference on it.
+ * </p>
+ *
+ * <p><b><i>
+ * This class is used internally by mibgen generated metadata objects and
+ * you should never need to use it directly.
+ * </b></i></p>
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ **/
+
+public class SnmpStandardObjectServer implements Serializable {
+    private static final long serialVersionUID = -4641068116505308488L;
+
+    /**
+     * Generic handling of the <CODE>get</CODE> operation.
+     * <p> The default implementation of this method is to loop over the
+     * varbind list associated with the sub-request and to call
+     * <CODE>get(var.oid.getOidArc(depth), data);</CODE>
+     * <pre>
+     * public void get(SnmpStandardMetaServer meta, SnmpMibSubRequest req,
+     *                 int depth)
+     *    throws SnmpStatusException {
+     *
+     *    final Object data = req.getUserData();
+     *
+     *    for (Enumeration e= req.getElements(); e.hasMoreElements();) {
+     *
+     *        final SnmpVarBind var= (SnmpVarBind) e.nextElement();
+     *
+     *        try {
+     *            // This method will generate a SnmpStatusException
+     *            // if `depth' is out of bounds.
+     *            //
+     *            final long id = var.oid.getOidArc(depth);
+     *            var.value = meta.get(id, data);
+     *        } catch(SnmpStatusException x) {
+     *            req.registerGetException(var,x);
+     *        }
+     *    }
+     * }
+     * </pre>
+     * <p> You can override this method if you need to implement some
+     * specific policies for minimizing the accesses made to some remote
+     * underlying resources.
+     * <p>
+     *
+     * @param meta  A pointer to the generated meta-data object which
+     *              implements the <code>SnmpStandardMetaServer</code>
+     *              interface.
+     *
+     * @param req   The sub-request that must be handled by this node.
+     *
+     * @param depth The depth reached in the OID tree.
+     *
+     * @exception SnmpStatusException An error occurred while accessing
+     *  the MIB node.
+     */
+    public void get(SnmpStandardMetaServer meta, SnmpMibSubRequest req,
+                    int depth)
+        throws SnmpStatusException {
+
+        final Object data = req.getUserData();
+
+        for (Enumeration<SnmpVarBind> e= req.getElements(); e.hasMoreElements();) {
+            final SnmpVarBind var= e.nextElement();
+            try {
+                final long id = var.oid.getOidArc(depth);
+                var.value = meta.get(id, data);
+            } catch(SnmpStatusException x) {
+                req.registerGetException(var,x);
+            }
+        }
+    }
+
+    /**
+     * Generic handling of the <CODE>set</CODE> operation.
+     * <p> The default implementation of this method is to loop over the
+     * varbind list associated with the sub-request and to call
+     * <CODE>set(var.value, var.oid.getOidArc(depth), data);</CODE>
+     * <pre>
+     * public void set(SnmpStandardMetaServer meta, SnmpMibSubRequest req,
+     *                 int depth)
+     *    throws SnmpStatusException {
+     *
+     *    final Object data = req.getUserData();
+     *
+     *    for (Enumeration e= req.getElements(); e.hasMoreElements();) {
+     *
+     *        final SnmpVarBind var= (SnmpVarBind) e.nextElement();
+     *
+     *        try {
+     *            // This method will generate a SnmpStatusException
+     *            // if `depth' is out of bounds.
+     *            //
+     *            final long id = var.oid.getOidArc(depth);
+     *            var.value = meta.set(var.value, id, data);
+     *        } catch(SnmpStatusException x) {
+     *            req.registerSetException(var,x);
+     *        }
+     *    }
+     * }
+     * </pre>
+     * <p> You can override this method if you need to implement some
+     * specific policies for minimizing the accesses made to some remote
+     * underlying resources.
+     * <p>
+     *
+     * @param meta  A pointer to the generated meta-data object which
+     *              implements the <code>SnmpStandardMetaServer</code>
+     *              interface.
+     *
+     * @param req   The sub-request that must be handled by this node.
+     *
+     * @param depth The depth reached in the OID tree.
+     *
+     * @exception SnmpStatusException An error occurred while accessing
+     *  the MIB node.
+     */
+    public void set(SnmpStandardMetaServer meta, SnmpMibSubRequest req,
+                    int depth)
+        throws SnmpStatusException {
+
+        final Object data = req.getUserData();
+
+        for (Enumeration<SnmpVarBind> e= req.getElements(); e.hasMoreElements();) {
+            SnmpVarBind var = e.nextElement();
+            try {
+                // This method will generate a SnmpStatusException
+                // if `depth' is out of bounds.
+                //
+                final long id = var.oid.getOidArc(depth);
+                var.value = meta.set(var.value, id, data);
+            } catch(SnmpStatusException x) {
+                req.registerSetException(var,x);
+            }
+        }
+    }
+
+    /**
+     * Generic handling of the <CODE>check</CODE> operation.
+     * <p> The default implementation of this method is to loop over the
+     * varbind list associated with the sub-request and to call
+     * <CODE>check(var.value, var.oid.getOidArc(depth), data);</CODE>
+     * <pre>
+     * public void check(SnmpStandardMetaServer meta, SnmpMibSubRequest req,
+     *                   int depth)
+     *    throws SnmpStatusException {
+     *
+     *    final Object data = req.getUserData();
+     *
+     *    for (Enumeration e= req.getElements(); e.hasMoreElements();) {
+     *
+     *        final SnmpVarBind var= (SnmpVarBind) e.nextElement();
+     *
+     *        try {
+     *            // This method will generate a SnmpStatusException
+     *            // if `depth' is out of bounds.
+     *            //
+     *            final long id = var.oid.getOidArc(depth);
+     *            meta.check(var.value, id, data);
+     *        } catch(SnmpStatusException x) {
+     *            req.registerCheckException(var,x);
+     *        }
+     *    }
+     * }
+     * </pre>
+     * <p> You can override this method if you need to implement some
+     * specific policies for minimizing the accesses made to some remote
+     * underlying resources, or if you need to implement some consistency
+     * checks between the different values provided in the varbind list.
+     * <p>
+     *
+     * @param meta  A pointer to the generated meta-data object which
+     *              implements the <code>SnmpStandardMetaServer</code>
+     *              interface.
+     *
+     * @param req   The sub-request that must be handled by this node.
+     *
+     * @param depth The depth reached in the OID tree.
+     *
+     * @exception SnmpStatusException An error occurred while accessing
+     *  the MIB node.
+     */
+    public void check(SnmpStandardMetaServer meta, SnmpMibSubRequest req,
+                      int depth)
+        throws SnmpStatusException {
+
+        final Object data = req.getUserData();
+
+        for (Enumeration<SnmpVarBind> e= req.getElements(); e.hasMoreElements();) {
+            final SnmpVarBind var = e.nextElement();
+            try {
+                // This method will generate a SnmpStatusException
+                // if `depth' is out of bounds.
+                //
+                final long id = var.oid.getOidArc(depth);
+                meta.check(var.value,id,data);
+            } catch(SnmpStatusException x) {
+                req.registerCheckException(var,x);
+            }
+        }
+    }
+}

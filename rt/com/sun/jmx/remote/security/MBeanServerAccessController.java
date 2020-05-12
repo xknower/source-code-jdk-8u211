@@ -1,659 +1,665 @@
-/*     */ package com.sun.jmx.remote.security;
-/*     */ 
-/*     */ import com.sun.jmx.mbeanserver.GetPropertyAction;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.security.AccessController;
-/*     */ import java.util.Set;
-/*     */ import javax.management.Attribute;
-/*     */ import javax.management.AttributeList;
-/*     */ import javax.management.AttributeNotFoundException;
-/*     */ import javax.management.InstanceAlreadyExistsException;
-/*     */ import javax.management.InstanceNotFoundException;
-/*     */ import javax.management.IntrospectionException;
-/*     */ import javax.management.InvalidAttributeValueException;
-/*     */ import javax.management.ListenerNotFoundException;
-/*     */ import javax.management.MBeanException;
-/*     */ import javax.management.MBeanInfo;
-/*     */ import javax.management.MBeanRegistrationException;
-/*     */ import javax.management.MBeanServer;
-/*     */ import javax.management.NotCompliantMBeanException;
-/*     */ import javax.management.NotificationFilter;
-/*     */ import javax.management.NotificationListener;
-/*     */ import javax.management.ObjectInstance;
-/*     */ import javax.management.ObjectName;
-/*     */ import javax.management.OperationsException;
-/*     */ import javax.management.QueryExp;
-/*     */ import javax.management.ReflectionException;
-/*     */ import javax.management.loading.ClassLoaderRepository;
-/*     */ import javax.management.remote.MBeanServerForwarder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class MBeanServerAccessController
-/*     */   implements MBeanServerForwarder
-/*     */ {
-/*     */   private MBeanServer mbs;
-/*     */   
-/*     */   public MBeanServer getMBeanServer() {
-/*  90 */     return this.mbs;
-/*     */   }
-/*     */   
-/*     */   public void setMBeanServer(MBeanServer paramMBeanServer) {
-/*  94 */     if (paramMBeanServer == null)
-/*  95 */       throw new IllegalArgumentException("Null MBeanServer"); 
-/*  96 */     if (this.mbs != null) {
-/*  97 */       throw new IllegalArgumentException("MBeanServer object already initialized");
-/*     */     }
-/*  99 */     this.mbs = paramMBeanServer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract void checkRead();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract void checkWrite();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void checkCreate(String paramString) {
-/* 119 */     checkWrite();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void checkUnregister(ObjectName paramObjectName) {
-/* 127 */     checkWrite();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException {
-/* 147 */     checkRead();
-/* 148 */     getMBeanServer().addNotificationListener(paramObjectName, paramNotificationListener, paramNotificationFilter, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addNotificationListener(ObjectName paramObjectName1, ObjectName paramObjectName2, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException {
-/* 161 */     checkRead();
-/* 162 */     getMBeanServer().addNotificationListener(paramObjectName1, paramObjectName2, paramNotificationFilter, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException {
-/* 177 */     checkCreate(paramString);
-/* 178 */     SecurityManager securityManager = System.getSecurityManager();
-/* 179 */     if (securityManager == null) {
-/* 180 */       Object object = getMBeanServer().instantiate(paramString);
-/* 181 */       checkClassLoader(object);
-/* 182 */       return getMBeanServer().registerMBean(object, paramObjectName);
-/*     */     } 
-/* 184 */     return getMBeanServer().createMBean(paramString, paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException {
-/* 200 */     checkCreate(paramString);
-/* 201 */     SecurityManager securityManager = System.getSecurityManager();
-/* 202 */     if (securityManager == null) {
-/* 203 */       Object object = getMBeanServer().instantiate(paramString, paramArrayOfObject, paramArrayOfString);
-/*     */ 
-/*     */       
-/* 206 */       checkClassLoader(object);
-/* 207 */       return getMBeanServer().registerMBean(object, paramObjectName);
-/*     */     } 
-/* 209 */     return getMBeanServer().createMBean(paramString, paramObjectName, paramArrayOfObject, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName1, ObjectName paramObjectName2) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException, InstanceNotFoundException {
-/* 228 */     checkCreate(paramString);
-/* 229 */     SecurityManager securityManager = System.getSecurityManager();
-/* 230 */     if (securityManager == null) {
-/* 231 */       Object object = getMBeanServer().instantiate(paramString, paramObjectName2);
-/*     */       
-/* 233 */       checkClassLoader(object);
-/* 234 */       return getMBeanServer().registerMBean(object, paramObjectName1);
-/*     */     } 
-/* 236 */     return getMBeanServer().createMBean(paramString, paramObjectName1, paramObjectName2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName1, ObjectName paramObjectName2, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException, InstanceNotFoundException {
-/* 256 */     checkCreate(paramString);
-/* 257 */     SecurityManager securityManager = System.getSecurityManager();
-/* 258 */     if (securityManager == null) {
-/* 259 */       Object object = getMBeanServer().instantiate(paramString, paramObjectName2, paramArrayOfObject, paramArrayOfString);
-/*     */ 
-/*     */ 
-/*     */       
-/* 263 */       checkClassLoader(object);
-/* 264 */       return getMBeanServer().registerMBean(object, paramObjectName1);
-/*     */     } 
-/* 266 */     return getMBeanServer().createMBean(paramString, paramObjectName1, paramObjectName2, paramArrayOfObject, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public ObjectInputStream deserialize(ObjectName paramObjectName, byte[] paramArrayOfbyte) throws InstanceNotFoundException, OperationsException {
-/* 278 */     checkRead();
-/* 279 */     return getMBeanServer().deserialize(paramObjectName, paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public ObjectInputStream deserialize(String paramString, byte[] paramArrayOfbyte) throws OperationsException, ReflectionException {
-/* 289 */     checkRead();
-/* 290 */     return getMBeanServer().deserialize(paramString, paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public ObjectInputStream deserialize(String paramString, ObjectName paramObjectName, byte[] paramArrayOfbyte) throws InstanceNotFoundException, OperationsException, ReflectionException {
-/* 305 */     checkRead();
-/* 306 */     return getMBeanServer().deserialize(paramString, paramObjectName, paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getAttribute(ObjectName paramObjectName, String paramString) throws MBeanException, AttributeNotFoundException, InstanceNotFoundException, ReflectionException {
-/* 319 */     checkRead();
-/* 320 */     return getMBeanServer().getAttribute(paramObjectName, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AttributeList getAttributes(ObjectName paramObjectName, String[] paramArrayOfString) throws InstanceNotFoundException, ReflectionException {
-/* 329 */     checkRead();
-/* 330 */     return getMBeanServer().getAttributes(paramObjectName, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ClassLoader getClassLoader(ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 339 */     checkRead();
-/* 340 */     return getMBeanServer().getClassLoader(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ClassLoader getClassLoaderFor(ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 349 */     checkRead();
-/* 350 */     return getMBeanServer().getClassLoaderFor(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ClassLoaderRepository getClassLoaderRepository() {
-/* 358 */     checkRead();
-/* 359 */     return getMBeanServer().getClassLoaderRepository();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDefaultDomain() {
-/* 367 */     checkRead();
-/* 368 */     return getMBeanServer().getDefaultDomain();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] getDomains() {
-/* 376 */     checkRead();
-/* 377 */     return getMBeanServer().getDomains();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Integer getMBeanCount() {
-/* 385 */     checkRead();
-/* 386 */     return getMBeanServer().getMBeanCount();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanInfo getMBeanInfo(ObjectName paramObjectName) throws InstanceNotFoundException, IntrospectionException, ReflectionException {
-/* 398 */     checkRead();
-/* 399 */     return getMBeanServer().getMBeanInfo(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInstance getObjectInstance(ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 408 */     checkRead();
-/* 409 */     return getMBeanServer().getObjectInstance(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString) throws ReflectionException, MBeanException {
-/* 418 */     checkCreate(paramString);
-/* 419 */     return getMBeanServer().instantiate(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, MBeanException {
-/* 430 */     checkCreate(paramString);
-/* 431 */     return getMBeanServer().instantiate(paramString, paramArrayOfObject, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString, ObjectName paramObjectName) throws ReflectionException, MBeanException, InstanceNotFoundException {
-/* 440 */     checkCreate(paramString);
-/* 441 */     return getMBeanServer().instantiate(paramString, paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString, ObjectName paramObjectName, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, MBeanException, InstanceNotFoundException {
-/* 451 */     checkCreate(paramString);
-/* 452 */     return getMBeanServer().instantiate(paramString, paramObjectName, paramArrayOfObject, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object invoke(ObjectName paramObjectName, String paramString, Object[] paramArrayOfObject, String[] paramArrayOfString) throws InstanceNotFoundException, MBeanException, ReflectionException {
-/* 466 */     checkWrite();
-/* 467 */     checkMLetMethods(paramObjectName, paramString);
-/* 468 */     return getMBeanServer().invoke(paramObjectName, paramString, paramArrayOfObject, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isInstanceOf(ObjectName paramObjectName, String paramString) throws InstanceNotFoundException {
-/* 477 */     checkRead();
-/* 478 */     return getMBeanServer().isInstanceOf(paramObjectName, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isRegistered(ObjectName paramObjectName) {
-/* 486 */     checkRead();
-/* 487 */     return getMBeanServer().isRegistered(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Set<ObjectInstance> queryMBeans(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/* 495 */     checkRead();
-/* 496 */     return getMBeanServer().queryMBeans(paramObjectName, paramQueryExp);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Set<ObjectName> queryNames(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/* 504 */     checkRead();
-/* 505 */     return getMBeanServer().queryNames(paramObjectName, paramQueryExp);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInstance registerMBean(Object paramObject, ObjectName paramObjectName) throws InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
-/* 517 */     checkWrite();
-/* 518 */     return getMBeanServer().registerMBean(paramObject, paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 528 */     checkRead();
-/* 529 */     getMBeanServer().removeNotificationListener(paramObjectName, paramNotificationListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 541 */     checkRead();
-/* 542 */     getMBeanServer().removeNotificationListener(paramObjectName, paramNotificationListener, paramNotificationFilter, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeNotificationListener(ObjectName paramObjectName1, ObjectName paramObjectName2) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 553 */     checkRead();
-/* 554 */     getMBeanServer().removeNotificationListener(paramObjectName1, paramObjectName2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeNotificationListener(ObjectName paramObjectName1, ObjectName paramObjectName2, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 566 */     checkRead();
-/* 567 */     getMBeanServer().removeNotificationListener(paramObjectName1, paramObjectName2, paramNotificationFilter, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAttribute(ObjectName paramObjectName, Attribute paramAttribute) throws InstanceNotFoundException, AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
-/* 582 */     checkWrite();
-/* 583 */     getMBeanServer().setAttribute(paramObjectName, paramAttribute);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AttributeList setAttributes(ObjectName paramObjectName, AttributeList paramAttributeList) throws InstanceNotFoundException, ReflectionException {
-/* 593 */     checkWrite();
-/* 594 */     return getMBeanServer().setAttributes(paramObjectName, paramAttributeList);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unregisterMBean(ObjectName paramObjectName) throws InstanceNotFoundException, MBeanRegistrationException {
-/* 603 */     checkUnregister(paramObjectName);
-/* 604 */     getMBeanServer().unregisterMBean(paramObjectName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void checkClassLoader(Object paramObject) {
-/* 612 */     if (paramObject instanceof ClassLoader) {
-/* 613 */       throw new SecurityException("Access denied! Creating an MBean that is a ClassLoader is forbidden unless a security manager is installed.");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void checkMLetMethods(ObjectName paramObjectName, String paramString) throws InstanceNotFoundException {
-/* 622 */     SecurityManager securityManager = System.getSecurityManager();
-/* 623 */     if (securityManager != null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 627 */     if (!paramString.equals("addURL") && 
-/* 628 */       !paramString.equals("getMBeansFromURL")) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 632 */     if (!getMBeanServer().isInstanceOf(paramObjectName, "javax.management.loading.MLet")) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 637 */     if (paramString.equals("addURL")) {
-/* 638 */       throw new SecurityException("Access denied! MLet method addURL cannot be invoked unless a security manager is installed.");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 647 */     GetPropertyAction getPropertyAction = new GetPropertyAction("jmx.remote.x.mlet.allow.getMBeansFromURL");
-/* 648 */     String str = AccessController.<String>doPrivileged(getPropertyAction);
-/* 649 */     boolean bool = "true".equalsIgnoreCase(str);
-/* 650 */     if (!bool)
-/* 651 */       throw new SecurityException("Access denied! MLet method getMBeansFromURL cannot be invoked unless a security manager is installed or the system property -Djmx.remote.x.mlet.allow.getMBeansFromURL=true is specified."); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remote\security\MBeanServerAccessController.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.security;
+
+import com.sun.jmx.mbeanserver.GetPropertyAction;
+import java.io.ObjectInputStream;
+import java.security.AccessController;
+import java.util.Set;
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.IntrospectionException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.ListenerNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.NotCompliantMBeanException;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.OperationsException;
+import javax.management.QueryExp;
+import javax.management.ReflectionException;
+import javax.management.loading.ClassLoaderRepository;
+import javax.management.remote.MBeanServerForwarder;
+
+/**
+ * <p>An object of this class implements the MBeanServer interface
+ * and, for each of its methods, calls an appropriate checking method
+ * and then forwards the request to a wrapped MBeanServer object.  The
+ * checking method may throw a RuntimeException if the operation is
+ * not allowed; in this case the request is not forwarded to the
+ * wrapped object.</p>
+ *
+ * <p>A typical use of this class is to insert it between a connector server
+ * such as the RMI connector and the MBeanServer with which the connector
+ * is associated.  Requests from the connector client can then be filtered
+ * and those operations that are not allowed, or not allowed in a particular
+ * context, can be rejected by throwing a <code>SecurityException</code>
+ * in the corresponding <code>check*</code> method.</p>
+ *
+ * <p>This is an abstract class, because in its implementation none of
+ * the checking methods does anything.  To be useful, it must be
+ * subclassed and at least one of the checking methods overridden to
+ * do some checking.  Some or all of the MBeanServer methods may also
+ * be overridden, for instance if the default checking behavior is
+ * inappropriate.</p>
+ *
+ * <p>If there is no SecurityManager, then the access controller will refuse
+ * to create an MBean that is a ClassLoader, which includes MLets, or to
+ * execute the method addURL on an MBean that is an MLet. This prevents
+ * people from opening security holes unintentionally. Otherwise, it
+ * would not be obvious that granting write access grants the ability to
+ * download and execute arbitrary code in the target MBean server. Advanced
+ * users who do want the ability to use MLets are presumably advanced enough
+ * to handle policy files and security managers.</p>
+ */
+public abstract class MBeanServerAccessController
+        implements MBeanServerForwarder {
+
+    public MBeanServer getMBeanServer() {
+        return mbs;
+    }
+
+    public void setMBeanServer(MBeanServer mbs) {
+        if (mbs == null)
+            throw new IllegalArgumentException("Null MBeanServer");
+        if (this.mbs != null)
+            throw new IllegalArgumentException("MBeanServer object already " +
+                                               "initialized");
+        this.mbs = mbs;
+    }
+
+    /**
+     * Check if the caller can do read operations. This method does
+     * nothing if so, otherwise throws SecurityException.
+     */
+    protected abstract void checkRead();
+
+    /**
+     * Check if the caller can do write operations.  This method does
+     * nothing if so, otherwise throws SecurityException.
+     */
+    protected abstract void checkWrite();
+
+    /**
+     * Check if the caller can create the named class.  The default
+     * implementation of this method calls {@link #checkWrite()}.
+     */
+    protected void checkCreate(String className) {
+        checkWrite();
+    }
+
+    /**
+     * Check if the caller can unregister the named MBean.  The default
+     * implementation of this method calls {@link #checkWrite()}.
+     */
+    protected void checkUnregister(ObjectName name) {
+        checkWrite();
+    }
+
+    //--------------------------------------------
+    //--------------------------------------------
+    //
+    // Implementation of the MBeanServer interface
+    //
+    //--------------------------------------------
+    //--------------------------------------------
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void addNotificationListener(ObjectName name,
+                                        NotificationListener listener,
+                                        NotificationFilter filter,
+                                        Object handback)
+        throws InstanceNotFoundException {
+        checkRead();
+        getMBeanServer().addNotificationListener(name, listener,
+                                                 filter, handback);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void addNotificationListener(ObjectName name,
+                                        ObjectName listener,
+                                        NotificationFilter filter,
+                                        Object handback)
+        throws InstanceNotFoundException {
+        checkRead();
+        getMBeanServer().addNotificationListener(name, listener,
+                                                 filter, handback);
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ObjectInstance createMBean(String className, ObjectName name)
+        throws
+        ReflectionException,
+        InstanceAlreadyExistsException,
+        MBeanRegistrationException,
+        MBeanException,
+        NotCompliantMBeanException {
+        checkCreate(className);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            Object object = getMBeanServer().instantiate(className);
+            checkClassLoader(object);
+            return getMBeanServer().registerMBean(object, name);
+        } else {
+            return getMBeanServer().createMBean(className, name);
+        }
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ObjectInstance createMBean(String className, ObjectName name,
+                                      Object params[], String signature[])
+        throws
+        ReflectionException,
+        InstanceAlreadyExistsException,
+        MBeanRegistrationException,
+        MBeanException,
+        NotCompliantMBeanException {
+        checkCreate(className);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            Object object = getMBeanServer().instantiate(className,
+                                                         params,
+                                                         signature);
+            checkClassLoader(object);
+            return getMBeanServer().registerMBean(object, name);
+        } else {
+            return getMBeanServer().createMBean(className, name,
+                                                params, signature);
+        }
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ObjectInstance createMBean(String className,
+                                      ObjectName name,
+                                      ObjectName loaderName)
+        throws
+        ReflectionException,
+        InstanceAlreadyExistsException,
+        MBeanRegistrationException,
+        MBeanException,
+        NotCompliantMBeanException,
+        InstanceNotFoundException {
+        checkCreate(className);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            Object object = getMBeanServer().instantiate(className,
+                                                         loaderName);
+            checkClassLoader(object);
+            return getMBeanServer().registerMBean(object, name);
+        } else {
+            return getMBeanServer().createMBean(className, name, loaderName);
+        }
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ObjectInstance createMBean(String className,
+                                      ObjectName name,
+                                      ObjectName loaderName,
+                                      Object params[],
+                                      String signature[])
+        throws
+        ReflectionException,
+        InstanceAlreadyExistsException,
+        MBeanRegistrationException,
+        MBeanException,
+        NotCompliantMBeanException,
+        InstanceNotFoundException {
+        checkCreate(className);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            Object object = getMBeanServer().instantiate(className,
+                                                         loaderName,
+                                                         params,
+                                                         signature);
+            checkClassLoader(object);
+            return getMBeanServer().registerMBean(object, name);
+        } else {
+            return getMBeanServer().createMBean(className, name, loaderName,
+                                                params, signature);
+        }
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    @Deprecated
+    public ObjectInputStream deserialize(ObjectName name, byte[] data)
+        throws InstanceNotFoundException, OperationsException {
+        checkRead();
+        return getMBeanServer().deserialize(name, data);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    @Deprecated
+    public ObjectInputStream deserialize(String className, byte[] data)
+        throws OperationsException, ReflectionException {
+        checkRead();
+        return getMBeanServer().deserialize(className, data);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    @Deprecated
+    public ObjectInputStream deserialize(String className,
+                                         ObjectName loaderName,
+                                         byte[] data)
+        throws
+        InstanceNotFoundException,
+        OperationsException,
+        ReflectionException {
+        checkRead();
+        return getMBeanServer().deserialize(className, loaderName, data);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Object getAttribute(ObjectName name, String attribute)
+        throws
+        MBeanException,
+        AttributeNotFoundException,
+        InstanceNotFoundException,
+        ReflectionException {
+        checkRead();
+        return getMBeanServer().getAttribute(name, attribute);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public AttributeList getAttributes(ObjectName name, String[] attributes)
+        throws InstanceNotFoundException, ReflectionException {
+        checkRead();
+        return getMBeanServer().getAttributes(name, attributes);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ClassLoader getClassLoader(ObjectName loaderName)
+        throws InstanceNotFoundException {
+        checkRead();
+        return getMBeanServer().getClassLoader(loaderName);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ClassLoader getClassLoaderFor(ObjectName mbeanName)
+        throws InstanceNotFoundException {
+        checkRead();
+        return getMBeanServer().getClassLoaderFor(mbeanName);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ClassLoaderRepository getClassLoaderRepository() {
+        checkRead();
+        return getMBeanServer().getClassLoaderRepository();
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public String getDefaultDomain() {
+        checkRead();
+        return getMBeanServer().getDefaultDomain();
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public String[] getDomains() {
+        checkRead();
+        return getMBeanServer().getDomains();
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Integer getMBeanCount() {
+        checkRead();
+        return getMBeanServer().getMBeanCount();
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public MBeanInfo getMBeanInfo(ObjectName name)
+        throws
+        InstanceNotFoundException,
+        IntrospectionException,
+        ReflectionException {
+        checkRead();
+        return getMBeanServer().getMBeanInfo(name);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ObjectInstance getObjectInstance(ObjectName name)
+        throws InstanceNotFoundException {
+        checkRead();
+        return getMBeanServer().getObjectInstance(name);
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Object instantiate(String className)
+        throws ReflectionException, MBeanException {
+        checkCreate(className);
+        return getMBeanServer().instantiate(className);
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Object instantiate(String className,
+                              Object params[],
+                              String signature[])
+        throws ReflectionException, MBeanException {
+        checkCreate(className);
+        return getMBeanServer().instantiate(className, params, signature);
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Object instantiate(String className, ObjectName loaderName)
+        throws ReflectionException, MBeanException, InstanceNotFoundException {
+        checkCreate(className);
+        return getMBeanServer().instantiate(className, loaderName);
+    }
+
+    /**
+     * Call <code>checkCreate(className)</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Object instantiate(String className, ObjectName loaderName,
+                              Object params[], String signature[])
+        throws ReflectionException, MBeanException, InstanceNotFoundException {
+        checkCreate(className);
+        return getMBeanServer().instantiate(className, loaderName,
+                                            params, signature);
+    }
+
+    /**
+     * Call <code>checkWrite()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Object invoke(ObjectName name, String operationName,
+                         Object params[], String signature[])
+        throws
+        InstanceNotFoundException,
+        MBeanException,
+        ReflectionException {
+        checkWrite();
+        checkMLetMethods(name, operationName);
+        return getMBeanServer().invoke(name, operationName, params, signature);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public boolean isInstanceOf(ObjectName name, String className)
+        throws InstanceNotFoundException {
+        checkRead();
+        return getMBeanServer().isInstanceOf(name, className);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public boolean isRegistered(ObjectName name) {
+        checkRead();
+        return getMBeanServer().isRegistered(name);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Set<ObjectInstance> queryMBeans(ObjectName name, QueryExp query) {
+        checkRead();
+        return getMBeanServer().queryMBeans(name, query);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public Set<ObjectName> queryNames(ObjectName name, QueryExp query) {
+        checkRead();
+        return getMBeanServer().queryNames(name, query);
+    }
+
+    /**
+     * Call <code>checkWrite()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public ObjectInstance registerMBean(Object object, ObjectName name)
+        throws
+        InstanceAlreadyExistsException,
+        MBeanRegistrationException,
+        NotCompliantMBeanException {
+        checkWrite();
+        return getMBeanServer().registerMBean(object, name);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void removeNotificationListener(ObjectName name,
+                                           NotificationListener listener)
+        throws InstanceNotFoundException, ListenerNotFoundException {
+        checkRead();
+        getMBeanServer().removeNotificationListener(name, listener);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void removeNotificationListener(ObjectName name,
+                                           NotificationListener listener,
+                                           NotificationFilter filter,
+                                           Object handback)
+        throws InstanceNotFoundException, ListenerNotFoundException {
+        checkRead();
+        getMBeanServer().removeNotificationListener(name, listener,
+                                                    filter, handback);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void removeNotificationListener(ObjectName name,
+                                           ObjectName listener)
+        throws InstanceNotFoundException, ListenerNotFoundException {
+        checkRead();
+        getMBeanServer().removeNotificationListener(name, listener);
+    }
+
+    /**
+     * Call <code>checkRead()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void removeNotificationListener(ObjectName name,
+                                           ObjectName listener,
+                                           NotificationFilter filter,
+                                           Object handback)
+        throws InstanceNotFoundException, ListenerNotFoundException {
+        checkRead();
+        getMBeanServer().removeNotificationListener(name, listener,
+                                                    filter, handback);
+    }
+
+    /**
+     * Call <code>checkWrite()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void setAttribute(ObjectName name, Attribute attribute)
+        throws
+        InstanceNotFoundException,
+        AttributeNotFoundException,
+        InvalidAttributeValueException,
+        MBeanException,
+        ReflectionException {
+        checkWrite();
+        getMBeanServer().setAttribute(name, attribute);
+    }
+
+    /**
+     * Call <code>checkWrite()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public AttributeList setAttributes(ObjectName name,
+                                       AttributeList attributes)
+        throws InstanceNotFoundException, ReflectionException {
+        checkWrite();
+        return getMBeanServer().setAttributes(name, attributes);
+    }
+
+    /**
+     * Call <code>checkUnregister()</code>, then forward this method to the
+     * wrapped object.
+     */
+    public void unregisterMBean(ObjectName name)
+        throws InstanceNotFoundException, MBeanRegistrationException {
+        checkUnregister(name);
+        getMBeanServer().unregisterMBean(name);
+    }
+
+    //----------------
+    // PRIVATE METHODS
+    //----------------
+
+    private void checkClassLoader(Object object) {
+        if (object instanceof ClassLoader)
+            throw new SecurityException("Access denied! Creating an " +
+                                        "MBean that is a ClassLoader " +
+                                        "is forbidden unless a security " +
+                                        "manager is installed.");
+    }
+
+    private void checkMLetMethods(ObjectName name, String operation)
+    throws InstanceNotFoundException {
+        // Check if security manager installed
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return;
+        }
+        // Check for addURL and getMBeansFromURL methods
+        if (!operation.equals("addURL") &&
+                !operation.equals("getMBeansFromURL")) {
+            return;
+        }
+        // Check if MBean is instance of MLet
+        if (!getMBeanServer().isInstanceOf(name,
+                "javax.management.loading.MLet")) {
+            return;
+        }
+        // Throw security exception
+        if (operation.equals("addURL")) { // addURL
+            throw new SecurityException("Access denied! MLet method addURL " +
+                    "cannot be invoked unless a security manager is installed.");
+        } else { // getMBeansFromURL
+            // Whether or not calling getMBeansFromURL is allowed is controlled
+            // by the value of the "jmx.remote.x.mlet.allow.getMBeansFromURL"
+            // system property. If the value of this property is true, calling
+            // the MLet's getMBeansFromURL method is allowed. The default value
+            // for this property is false.
+            final String propName = "jmx.remote.x.mlet.allow.getMBeansFromURL";
+            GetPropertyAction propAction = new GetPropertyAction(propName);
+            String propValue = AccessController.doPrivileged(propAction);
+            boolean allowGetMBeansFromURL = "true".equalsIgnoreCase(propValue);
+            if (!allowGetMBeansFromURL) {
+                throw new SecurityException("Access denied! MLet method " +
+                        "getMBeansFromURL cannot be invoked unless a " +
+                        "security manager is installed or the system property " +
+                        "-Djmx.remote.x.mlet.allow.getMBeansFromURL=true " +
+                        "is specified.");
+            }
+        }
+    }
+
+    //------------------
+    // PRIVATE VARIABLES
+    //------------------
+
+    private MBeanServer mbs;
+}

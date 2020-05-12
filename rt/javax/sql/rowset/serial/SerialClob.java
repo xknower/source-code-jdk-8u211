@@ -1,950 +1,694 @@
-/*     */ package javax.sql.rowset.serial;
-/*     */ 
-/*     */ import java.io.CharArrayReader;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.Reader;
-/*     */ import java.io.Serializable;
-/*     */ import java.io.Writer;
-/*     */ import java.sql.Clob;
-/*     */ import java.sql.SQLException;
-/*     */ import java.util.Arrays;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SerialClob
-/*     */   implements Clob, Serializable, Cloneable
-/*     */ {
-/*     */   private char[] buf;
-/*     */   private Clob clob;
-/*     */   private long len;
-/*     */   private long origLen;
-/*     */   static final long serialVersionUID = -1662519690087375313L;
-/*     */   
-/*     */   public SerialClob(char[] paramArrayOfchar) throws SerialException, SQLException {
-/* 107 */     this.len = paramArrayOfchar.length;
-/* 108 */     this.buf = new char[(int)this.len];
-/* 109 */     for (byte b = 0; b < this.len; b++) {
-/* 110 */       this.buf[b] = paramArrayOfchar[b];
-/*     */     }
-/* 112 */     this.origLen = this.len;
-/* 113 */     this.clob = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SerialClob(Clob paramClob) throws SerialException, SQLException {
-/*     */     // Byte code:
-/*     */     //   0: aload_0
-/*     */     //   1: invokespecial <init> : ()V
-/*     */     //   4: aload_1
-/*     */     //   5: ifnonnull -> 18
-/*     */     //   8: new java/sql/SQLException
-/*     */     //   11: dup
-/*     */     //   12: ldc 'Cannot instantiate a SerialClob object with a null Clob object'
-/*     */     //   14: invokespecial <init> : (Ljava/lang/String;)V
-/*     */     //   17: athrow
-/*     */     //   18: aload_0
-/*     */     //   19: aload_1
-/*     */     //   20: invokeinterface length : ()J
-/*     */     //   25: putfield len : J
-/*     */     //   28: aload_0
-/*     */     //   29: aload_1
-/*     */     //   30: putfield clob : Ljava/sql/Clob;
-/*     */     //   33: aload_0
-/*     */     //   34: aload_0
-/*     */     //   35: getfield len : J
-/*     */     //   38: l2i
-/*     */     //   39: newarray char
-/*     */     //   41: putfield buf : [C
-/*     */     //   44: iconst_0
-/*     */     //   45: istore_2
-/*     */     //   46: iconst_0
-/*     */     //   47: istore_3
-/*     */     //   48: aload_1
-/*     */     //   49: invokeinterface getCharacterStream : ()Ljava/io/Reader;
-/*     */     //   54: astore #4
-/*     */     //   56: aconst_null
-/*     */     //   57: astore #5
-/*     */     //   59: aload #4
-/*     */     //   61: ifnonnull -> 74
-/*     */     //   64: new java/sql/SQLException
-/*     */     //   67: dup
-/*     */     //   68: ldc 'Invalid Clob object. The call to getCharacterStream returned null which cannot be serialized.'
-/*     */     //   70: invokespecial <init> : (Ljava/lang/String;)V
-/*     */     //   73: athrow
-/*     */     //   74: aload_1
-/*     */     //   75: invokeinterface getAsciiStream : ()Ljava/io/InputStream;
-/*     */     //   80: astore #6
-/*     */     //   82: aconst_null
-/*     */     //   83: astore #7
-/*     */     //   85: aload #6
-/*     */     //   87: ifnonnull -> 100
-/*     */     //   90: new java/sql/SQLException
-/*     */     //   93: dup
-/*     */     //   94: ldc 'Invalid Clob object. The call to getAsciiStream returned null which cannot be serialized.'
-/*     */     //   96: invokespecial <init> : (Ljava/lang/String;)V
-/*     */     //   99: athrow
-/*     */     //   100: aload #6
-/*     */     //   102: ifnull -> 187
-/*     */     //   105: aload #7
-/*     */     //   107: ifnull -> 130
-/*     */     //   110: aload #6
-/*     */     //   112: invokevirtual close : ()V
-/*     */     //   115: goto -> 187
-/*     */     //   118: astore #8
-/*     */     //   120: aload #7
-/*     */     //   122: aload #8
-/*     */     //   124: invokevirtual addSuppressed : (Ljava/lang/Throwable;)V
-/*     */     //   127: goto -> 187
-/*     */     //   130: aload #6
-/*     */     //   132: invokevirtual close : ()V
-/*     */     //   135: goto -> 187
-/*     */     //   138: astore #8
-/*     */     //   140: aload #8
-/*     */     //   142: astore #7
-/*     */     //   144: aload #8
-/*     */     //   146: athrow
-/*     */     //   147: astore #9
-/*     */     //   149: aload #6
-/*     */     //   151: ifnull -> 184
-/*     */     //   154: aload #7
-/*     */     //   156: ifnull -> 179
-/*     */     //   159: aload #6
-/*     */     //   161: invokevirtual close : ()V
-/*     */     //   164: goto -> 184
-/*     */     //   167: astore #10
-/*     */     //   169: aload #7
-/*     */     //   171: aload #10
-/*     */     //   173: invokevirtual addSuppressed : (Ljava/lang/Throwable;)V
-/*     */     //   176: goto -> 184
-/*     */     //   179: aload #6
-/*     */     //   181: invokevirtual close : ()V
-/*     */     //   184: aload #9
-/*     */     //   186: athrow
-/*     */     //   187: new java/io/BufferedReader
-/*     */     //   190: dup
-/*     */     //   191: aload #4
-/*     */     //   193: invokespecial <init> : (Ljava/io/Reader;)V
-/*     */     //   196: astore #6
-/*     */     //   198: aconst_null
-/*     */     //   199: astore #7
-/*     */     //   201: aload #6
-/*     */     //   203: aload_0
-/*     */     //   204: getfield buf : [C
-/*     */     //   207: iload_3
-/*     */     //   208: aload_0
-/*     */     //   209: getfield len : J
-/*     */     //   212: iload_3
-/*     */     //   213: i2l
-/*     */     //   214: lsub
-/*     */     //   215: l2i
-/*     */     //   216: invokevirtual read : ([CII)I
-/*     */     //   219: istore_2
-/*     */     //   220: iload_3
-/*     */     //   221: iload_2
-/*     */     //   222: iadd
-/*     */     //   223: istore_3
-/*     */     //   224: iload_2
-/*     */     //   225: ifgt -> 201
-/*     */     //   228: aload #6
-/*     */     //   230: ifnull -> 315
-/*     */     //   233: aload #7
-/*     */     //   235: ifnull -> 258
-/*     */     //   238: aload #6
-/*     */     //   240: invokevirtual close : ()V
-/*     */     //   243: goto -> 315
-/*     */     //   246: astore #8
-/*     */     //   248: aload #7
-/*     */     //   250: aload #8
-/*     */     //   252: invokevirtual addSuppressed : (Ljava/lang/Throwable;)V
-/*     */     //   255: goto -> 315
-/*     */     //   258: aload #6
-/*     */     //   260: invokevirtual close : ()V
-/*     */     //   263: goto -> 315
-/*     */     //   266: astore #8
-/*     */     //   268: aload #8
-/*     */     //   270: astore #7
-/*     */     //   272: aload #8
-/*     */     //   274: athrow
-/*     */     //   275: astore #11
-/*     */     //   277: aload #6
-/*     */     //   279: ifnull -> 312
-/*     */     //   282: aload #7
-/*     */     //   284: ifnull -> 307
-/*     */     //   287: aload #6
-/*     */     //   289: invokevirtual close : ()V
-/*     */     //   292: goto -> 312
-/*     */     //   295: astore #12
-/*     */     //   297: aload #7
-/*     */     //   299: aload #12
-/*     */     //   301: invokevirtual addSuppressed : (Ljava/lang/Throwable;)V
-/*     */     //   304: goto -> 312
-/*     */     //   307: aload #6
-/*     */     //   309: invokevirtual close : ()V
-/*     */     //   312: aload #11
-/*     */     //   314: athrow
-/*     */     //   315: aload #4
-/*     */     //   317: ifnull -> 402
-/*     */     //   320: aload #5
-/*     */     //   322: ifnull -> 345
-/*     */     //   325: aload #4
-/*     */     //   327: invokevirtual close : ()V
-/*     */     //   330: goto -> 402
-/*     */     //   333: astore #6
-/*     */     //   335: aload #5
-/*     */     //   337: aload #6
-/*     */     //   339: invokevirtual addSuppressed : (Ljava/lang/Throwable;)V
-/*     */     //   342: goto -> 402
-/*     */     //   345: aload #4
-/*     */     //   347: invokevirtual close : ()V
-/*     */     //   350: goto -> 402
-/*     */     //   353: astore #6
-/*     */     //   355: aload #6
-/*     */     //   357: astore #5
-/*     */     //   359: aload #6
-/*     */     //   361: athrow
-/*     */     //   362: astore #13
-/*     */     //   364: aload #4
-/*     */     //   366: ifnull -> 399
-/*     */     //   369: aload #5
-/*     */     //   371: ifnull -> 394
-/*     */     //   374: aload #4
-/*     */     //   376: invokevirtual close : ()V
-/*     */     //   379: goto -> 399
-/*     */     //   382: astore #14
-/*     */     //   384: aload #5
-/*     */     //   386: aload #14
-/*     */     //   388: invokevirtual addSuppressed : (Ljava/lang/Throwable;)V
-/*     */     //   391: goto -> 399
-/*     */     //   394: aload #4
-/*     */     //   396: invokevirtual close : ()V
-/*     */     //   399: aload #13
-/*     */     //   401: athrow
-/*     */     //   402: goto -> 438
-/*     */     //   405: astore #4
-/*     */     //   407: new javax/sql/rowset/serial/SerialException
-/*     */     //   410: dup
-/*     */     //   411: new java/lang/StringBuilder
-/*     */     //   414: dup
-/*     */     //   415: invokespecial <init> : ()V
-/*     */     //   418: ldc 'SerialClob: '
-/*     */     //   420: invokevirtual append : (Ljava/lang/String;)Ljava/lang/StringBuilder;
-/*     */     //   423: aload #4
-/*     */     //   425: invokevirtual getMessage : ()Ljava/lang/String;
-/*     */     //   428: invokevirtual append : (Ljava/lang/String;)Ljava/lang/StringBuilder;
-/*     */     //   431: invokevirtual toString : ()Ljava/lang/String;
-/*     */     //   434: invokespecial <init> : (Ljava/lang/String;)V
-/*     */     //   437: athrow
-/*     */     //   438: aload_0
-/*     */     //   439: aload_0
-/*     */     //   440: getfield len : J
-/*     */     //   443: putfield origLen : J
-/*     */     //   446: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #142	-> 0
-/*     */     //   #144	-> 4
-/*     */     //   #145	-> 8
-/*     */     //   #148	-> 18
-/*     */     //   #149	-> 28
-/*     */     //   #150	-> 33
-/*     */     //   #151	-> 44
-/*     */     //   #152	-> 46
-/*     */     //   #154	-> 48
-/*     */     //   #155	-> 59
-/*     */     //   #156	-> 64
-/*     */     //   #162	-> 74
-/*     */     //   #163	-> 85
-/*     */     //   #164	-> 90
-/*     */     //   #167	-> 100
-/*     */     //   #162	-> 138
-/*     */     //   #167	-> 147
-/*     */     //   #169	-> 187
-/*     */     //   #171	-> 201
-/*     */     //   #172	-> 220
-/*     */     //   #173	-> 224
-/*     */     //   #174	-> 228
-/*     */     //   #169	-> 266
-/*     */     //   #174	-> 275
-/*     */     //   #175	-> 315
-/*     */     //   #154	-> 353
-/*     */     //   #175	-> 362
-/*     */     //   #177	-> 402
-/*     */     //   #175	-> 405
-/*     */     //   #176	-> 407
-/*     */     //   #179	-> 438
-/*     */     //   #180	-> 446
-/*     */     // Exception table:
-/*     */     //   from	to	target	type
-/*     */     //   48	402	405	java/io/IOException
-/*     */     //   59	315	353	java/lang/Throwable
-/*     */     //   59	315	362	finally
-/*     */     //   85	100	138	java/lang/Throwable
-/*     */     //   85	100	147	finally
-/*     */     //   110	115	118	java/lang/Throwable
-/*     */     //   138	149	147	finally
-/*     */     //   159	164	167	java/lang/Throwable
-/*     */     //   201	228	266	java/lang/Throwable
-/*     */     //   201	228	275	finally
-/*     */     //   238	243	246	java/lang/Throwable
-/*     */     //   266	277	275	finally
-/*     */     //   287	292	295	java/lang/Throwable
-/*     */     //   325	330	333	java/lang/Throwable
-/*     */     //   353	364	362	finally
-/*     */     //   374	379	382	java/lang/Throwable
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long length() throws SerialException {
-/* 192 */     isValid();
-/* 193 */     return this.len;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Reader getCharacterStream() throws SerialException {
-/* 208 */     isValid();
-/* 209 */     return new CharArrayReader(this.buf);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputStream getAsciiStream() throws SerialException, SQLException {
-/* 230 */     isValid();
-/* 231 */     if (this.clob != null) {
-/* 232 */       return this.clob.getAsciiStream();
-/*     */     }
-/* 234 */     throw new SerialException("Unsupported operation. SerialClob cannot return a the CLOB value as an ascii stream, unless instantiated with a fully implemented Clob object.");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSubString(long paramLong, int paramInt) throws SerialException {
-/* 267 */     isValid();
-/* 268 */     if (paramLong < 1L || paramLong > length()) {
-/* 269 */       throw new SerialException("Invalid position in SerialClob object set");
-/*     */     }
-/*     */     
-/* 272 */     if (paramLong - 1L + paramInt > length()) {
-/* 273 */       throw new SerialException("Invalid position and substring length");
-/*     */     }
-/*     */     
-/*     */     try {
-/* 277 */       return new String(this.buf, (int)paramLong - 1, paramInt);
-/*     */     }
-/* 279 */     catch (StringIndexOutOfBoundsException stringIndexOutOfBoundsException) {
-/* 280 */       throw new SerialException("StringIndexOutOfBoundsException: " + stringIndexOutOfBoundsException
-/* 281 */           .getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long position(String paramString, long paramLong) throws SerialException, SQLException {
-/* 310 */     isValid();
-/* 311 */     if (paramLong < 1L || paramLong > this.len) {
-/* 312 */       return -1L;
-/*     */     }
-/*     */     
-/* 315 */     char[] arrayOfChar = paramString.toCharArray();
-/*     */     
-/* 317 */     int i = (int)paramLong - 1;
-/* 318 */     byte b = 0;
-/* 319 */     long l = arrayOfChar.length;
-/*     */     
-/* 321 */     while (i < this.len) {
-/* 322 */       if (arrayOfChar[b] == this.buf[i]) {
-/* 323 */         if ((b + 1) == l) {
-/* 324 */           return (i + 1) - l - 1L;
-/*     */         }
-/* 326 */         b++; i++; continue;
-/*     */       } 
-/* 328 */       if (arrayOfChar[b] != this.buf[i]) {
-/* 329 */         i++;
-/*     */       }
-/*     */     } 
-/* 332 */     return -1L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long position(Clob paramClob, long paramLong) throws SerialException, SQLException {
-/* 356 */     isValid();
-/* 357 */     return position(paramClob.getSubString(1L, (int)paramClob.length()), paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int setString(long paramLong, String paramString) throws SerialException {
-/* 380 */     return setString(paramLong, paramString, 0, paramString.length());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int setString(long paramLong, String paramString, int paramInt1, int paramInt2) throws SerialException {
-/* 407 */     isValid();
-/* 408 */     String str = paramString.substring(paramInt1);
-/* 409 */     char[] arrayOfChar = str.toCharArray();
-/*     */     
-/* 411 */     if (paramInt1 < 0 || paramInt1 > paramString.length()) {
-/* 412 */       throw new SerialException("Invalid offset in byte array set");
-/*     */     }
-/*     */     
-/* 415 */     if (paramLong < 1L || paramLong > length()) {
-/* 416 */       throw new SerialException("Invalid position in Clob object set");
-/*     */     }
-/*     */     
-/* 419 */     if (paramInt2 > this.origLen) {
-/* 420 */       throw new SerialException("Buffer is not sufficient to hold the value");
-/*     */     }
-/*     */     
-/* 423 */     if (paramInt2 + paramInt1 > paramString.length())
-/*     */     {
-/* 425 */       throw new SerialException("Invalid OffSet. Cannot have combined offset  and length that is greater that the Blob buffer");
-/*     */     }
-/*     */ 
-/*     */     
-/* 429 */     byte b = 0;
-/* 430 */     paramLong--;
-/* 431 */     while (b < paramInt2 || paramInt1 + b + 1 < paramString.length() - paramInt1) {
-/* 432 */       this.buf[(int)paramLong + b] = arrayOfChar[paramInt1 + b];
-/* 433 */       b++;
-/*     */     } 
-/* 435 */     return b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutputStream setAsciiStream(long paramLong) throws SerialException, SQLException {
-/* 459 */     isValid();
-/* 460 */     if (this.clob != null) {
-/* 461 */       return this.clob.setAsciiStream(paramLong);
-/*     */     }
-/* 463 */     throw new SerialException("Unsupported operation. SerialClob cannot return a writable ascii stream\n unless instantiated with a Clob object that has a setAsciiStream() implementation");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer setCharacterStream(long paramLong) throws SerialException, SQLException {
-/* 491 */     isValid();
-/* 492 */     if (this.clob != null) {
-/* 493 */       return this.clob.setCharacterStream(paramLong);
-/*     */     }
-/* 495 */     throw new SerialException("Unsupported operation. SerialClob cannot return a writable character stream\n unless instantiated with a Clob object that has a setCharacterStream implementation");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void truncate(long paramLong) throws SerialException {
-/* 516 */     isValid();
-/* 517 */     if (paramLong > this.len) {
-/* 518 */       throw new SerialException("Length more than what can be truncated");
-/*     */     }
-/*     */     
-/* 521 */     this.len = paramLong;
-/*     */ 
-/*     */     
-/* 524 */     if (this.len == 0L) {
-/* 525 */       this.buf = new char[0];
-/*     */     } else {
-/* 527 */       this.buf = getSubString(1L, (int)this.len).toCharArray();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Reader getCharacterStream(long paramLong1, long paramLong2) throws SQLException {
-/* 551 */     isValid();
-/* 552 */     if (paramLong1 < 1L || paramLong1 > this.len) {
-/* 553 */       throw new SerialException("Invalid position in Clob object set");
-/*     */     }
-/*     */     
-/* 556 */     if (paramLong1 - 1L + paramLong2 > this.len) {
-/* 557 */       throw new SerialException("Invalid position and substring length");
-/*     */     }
-/* 559 */     if (paramLong2 <= 0L) {
-/* 560 */       throw new SerialException("Invalid length specified");
-/*     */     }
-/* 562 */     return new CharArrayReader(this.buf, (int)paramLong1, (int)paramLong2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void free() throws SQLException {
-/* 578 */     if (this.buf != null) {
-/* 579 */       this.buf = null;
-/* 580 */       if (this.clob != null) {
-/* 581 */         this.clob.free();
-/*     */       }
-/* 583 */       this.clob = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 600 */     if (this == paramObject) {
-/* 601 */       return true;
-/*     */     }
-/* 603 */     if (paramObject instanceof SerialClob) {
-/* 604 */       SerialClob serialClob = (SerialClob)paramObject;
-/* 605 */       if (this.len == serialClob.len) {
-/* 606 */         return Arrays.equals(this.buf, serialClob.buf);
-/*     */       }
-/*     */     } 
-/* 609 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 617 */     return ((31 + Arrays.hashCode(this.buf)) * 31 + (int)this.len) * 31 + (int)this.origLen;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     try {
-/* 630 */       SerialClob serialClob = (SerialClob)super.clone();
-/* 631 */       serialClob.buf = (this.buf != null) ? Arrays.copyOf(this.buf, (int)this.len) : null;
-/* 632 */       serialClob.clob = null;
-/* 633 */       return serialClob;
-/* 634 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*     */       
-/* 636 */       throw new InternalError();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 647 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 648 */     char[] arrayOfChar = (char[])getField.get("buf", (Object)null);
-/* 649 */     if (arrayOfChar == null)
-/* 650 */       throw new InvalidObjectException("buf is null and should not be!"); 
-/* 651 */     this.buf = (char[])arrayOfChar.clone();
-/* 652 */     this.len = getField.get("len", 0L);
-/* 653 */     if (this.buf.length != this.len)
-/* 654 */       throw new InvalidObjectException("buf is not the expected size"); 
-/* 655 */     this.origLen = getField.get("origLen", 0L);
-/* 656 */     this.clob = (Clob)getField.get("clob", (Object)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException, ClassNotFoundException {
-/* 666 */     ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 667 */     putField.put("buf", this.buf);
-/* 668 */     putField.put("len", this.len);
-/* 669 */     putField.put("origLen", this.origLen);
-/*     */ 
-/*     */     
-/* 672 */     putField.put("clob", (this.clob instanceof Serializable) ? this.clob : null);
-/* 673 */     paramObjectOutputStream.writeFields();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void isValid() throws SerialException {
-/* 683 */     if (this.buf == null)
-/* 684 */       throw new SerialException("Error: You cannot call a method on a SerialClob instance once free() has been called."); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\sql\rowset\serial\SerialClob.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.sql.rowset.serial;
+
+import java.sql.*;
+import java.io.*;
+import java.util.Arrays;
+
+/**
+ * A serialized mapping in the Java programming language of an SQL
+ * <code>CLOB</code> value.
+ * <P>
+ * The <code>SerialClob</code> class provides a constructor for creating
+ * an instance from a <code>Clob</code> object.  Note that the <code>Clob</code>
+ * object should have brought the SQL <code>CLOB</code> value's data over
+ * to the client before a <code>SerialClob</code> object
+ * is constructed from it.  The data of an SQL <code>CLOB</code> value can
+ * be materialized on the client as a stream of Unicode characters.
+ * <P>
+ * <code>SerialClob</code> methods make it possible to get a substring
+ * from a <code>SerialClob</code> object or to locate the start of
+ * a pattern of characters.
+ *
+ * <h3> Thread safety </h3>
+ *
+ * <p> A SerialClob is not safe for use by multiple concurrent threads.  If a
+ * SerialClob is to be used by more than one thread then access to the SerialClob
+ * should be controlled by appropriate synchronization.
+ * @author Jonathan Bruce
+ */
+public class SerialClob implements Clob, Serializable, Cloneable {
+
+    /**
+     * A serialized array of characters containing the data of the SQL
+     * <code>CLOB</code> value that this <code>SerialClob</code> object
+     * represents.
+     *
+     * @serial
+     */
+    private char buf[];
+
+    /**
+     * Internal Clob representation if SerialClob is initialized with a
+     * Clob. Null if SerialClob is initialized with a char[].
+     */
+    private Clob clob;
+
+    /**
+     * The length in characters of this <code>SerialClob</code> object's
+     * internal array of characters.
+     *
+     * @serial
+     */
+    private long len;
+
+    /**
+     * The original length in characters of this <code>SerialClob</code>
+     * object's internal array of characters.
+     *
+     * @serial
+     */
+    private long origLen;
+
+    /**
+     * Constructs a <code>SerialClob</code> object that is a serialized version of
+     * the given <code>char</code> array.
+     * <p>
+     * The new <code>SerialClob</code> object is initialized with the data from the
+     * <code>char</code> array, thus allowing disconnected <code>RowSet</code>
+     * objects to establish a serialized <code>Clob</code> object without touching
+     * the data source.
+     *
+     * @param ch the char array representing the <code>Clob</code> object to be
+     *         serialized
+     * @throws SerialException if an error occurs during serialization
+     * @throws SQLException if a SQL error occurs
+     */
+    public SerialClob(char ch[]) throws SerialException, SQLException {
+
+        // %%% JMB. Agreed. Add code here to throw a SQLException if no
+        // support is available for locatorsUpdateCopy=false
+        // Serializing locators is not supported.
+
+        len = ch.length;
+        buf = new char[(int)len];
+        for (int i = 0; i < len ; i++){
+           buf[i] = ch[i];
+        }
+        origLen = len;
+        clob = null;
+    }
+
+    /**
+     * Constructs a <code>SerialClob</code> object that is a serialized
+     * version of the given <code>Clob</code> object.
+     * <P>
+     * The new <code>SerialClob</code> object is initialized with the
+     * data from the <code>Clob</code> object; therefore, the
+     * <code>Clob</code> object should have previously brought the
+     * SQL <code>CLOB</code> value's data over to the client from
+     * the database. Otherwise, the new <code>SerialClob</code> object
+     * object will contain no data.
+     * <p>
+     * Note: The <code>Clob</code> object supplied to this constructor must
+     * return non-null for both the <code>Clob.getCharacterStream()</code>
+     * and <code>Clob.getAsciiStream</code> methods. This <code>SerialClob</code>
+     * constructor cannot serialize a <code>Clob</code> object in this instance
+     * and will throw an <code>SQLException</code> object.
+     *
+     * @param  clob the <code>Clob</code> object from which this
+     *     <code>SerialClob</code> object is to be constructed; cannot be null
+     * @throws SerialException if an error occurs during serialization
+     * @throws SQLException if a SQL error occurs in capturing the CLOB;
+     *     if the <code>Clob</code> object is a null; or if either of the
+     *     <code>Clob.getCharacterStream()</code> and <code>Clob.getAsciiStream()</code>
+     *     methods on the <code>Clob</code> returns a null
+     * @see java.sql.Clob
+     */
+    public SerialClob(Clob clob) throws SerialException, SQLException {
+
+        if (clob == null) {
+            throw new SQLException("Cannot instantiate a SerialClob " +
+                "object with a null Clob object");
+        }
+        len = clob.length();
+        this.clob = clob;
+        buf = new char[(int)len];
+        int read = 0;
+        int offset = 0;
+
+        try (Reader charStream = clob.getCharacterStream()) {
+            if (charStream == null) {
+                throw new SQLException("Invalid Clob object. The call to getCharacterStream " +
+                    "returned null which cannot be serialized.");
+            }
+
+            // Note: get an ASCII stream in order to null-check it,
+            // even though we don't do anything with it.
+            try (InputStream asciiStream = clob.getAsciiStream()) {
+                if (asciiStream == null) {
+                    throw new SQLException("Invalid Clob object. The call to getAsciiStream " +
+                        "returned null which cannot be serialized.");
+                }
+            }
+
+            try (Reader reader = new BufferedReader(charStream)) {
+                do {
+                    read = reader.read(buf, offset, (int)(len - offset));
+                    offset += read;
+                } while (read > 0);
+            }
+        } catch (java.io.IOException ex) {
+            throw new SerialException("SerialClob: " + ex.getMessage());
+        }
+
+        origLen = len;
+    }
+
+    /**
+     * Retrieves the number of characters in this <code>SerialClob</code>
+     * object's array of characters.
+     *
+     * @return a <code>long</code> indicating the length in characters of this
+     *         <code>SerialClob</code> object's array of character
+     * @throws SerialException if an error occurs;
+     * if {@code free} had previously been called on this object
+     */
+    public long length() throws SerialException {
+        isValid();
+        return len;
+    }
+
+    /**
+     * Returns this <code>SerialClob</code> object's data as a stream
+     * of Unicode characters. Unlike the related method, <code>getAsciiStream</code>,
+     * a stream is produced regardless of whether the <code>SerialClob</code> object
+     * was created with a <code>Clob</code> object or a <code>char</code> array.
+     *
+     * @return a <code>java.io.Reader</code> object containing this
+     *         <code>SerialClob</code> object's data
+     * @throws SerialException if an error occurs;
+     * if {@code free} had previously been called on this object
+     */
+    public java.io.Reader getCharacterStream() throws SerialException {
+        isValid();
+        return (java.io.Reader) new CharArrayReader(buf);
+    }
+
+    /**
+     * Retrieves the <code>CLOB</code> value designated by this <code>SerialClob</code>
+     * object as an ascii stream. This method forwards the <code>getAsciiStream</code>
+     * call to the underlying <code>Clob</code> object in the event that this
+     * <code>SerialClob</code> object is instantiated with a <code>Clob</code>
+     * object. If this <code>SerialClob</code> object is instantiated with
+     * a <code>char</code> array, a <code>SerialException</code> object is thrown.
+     *
+     * @return a <code>java.io.InputStream</code> object containing
+     *     this <code>SerialClob</code> object's data
+     * @throws SerialException if this {@code SerialClob} object was not
+     * instantiated with a <code>Clob</code> object;
+     * if {@code free} had previously been called on this object
+     * @throws SQLException if there is an error accessing the
+     *     <code>CLOB</code> value represented by the <code>Clob</code> object
+     * that was used to create this <code>SerialClob</code> object
+     */
+    public java.io.InputStream getAsciiStream() throws SerialException, SQLException {
+        isValid();
+        if (this.clob != null) {
+            return this.clob.getAsciiStream();
+        } else {
+            throw new SerialException("Unsupported operation. SerialClob cannot " +
+                "return a the CLOB value as an ascii stream, unless instantiated " +
+                "with a fully implemented Clob object.");
+        }
+    }
+
+    /**
+     * Returns a copy of the substring contained in this
+     * <code>SerialClob</code> object, starting at the given position
+     * and continuing for the specified number or characters.
+     *
+     * @param pos the position of the first character in the substring
+     *            to be copied; the first character of the
+     *            <code>SerialClob</code> object is at position
+     *            <code>1</code>; must not be less than <code>1</code>,
+     *            and the sum of the starting position and the length
+     *            of the substring must be less than the length of this
+     *            <code>SerialClob</code> object
+     * @param length the number of characters in the substring to be
+     *               returned; must not be greater than the length of
+     *               this <code>SerialClob</code> object, and the
+     *               sum of the starting position and the length
+     *               of the substring must be less than the length of this
+     *               <code>SerialClob</code> object
+     * @return a <code>String</code> object containing a substring of
+     *         this <code>SerialClob</code> object beginning at the
+     *         given position and containing the specified number of
+     *         consecutive characters
+     * @throws SerialException if either of the arguments is out of bounds;
+     * if {@code free} had previously been called on this object
+     */
+    public String getSubString(long pos, int length) throws SerialException {
+
+        isValid();
+        if (pos < 1 || pos > this.length()) {
+            throw new SerialException("Invalid position in SerialClob object set");
+        }
+
+        if ((pos-1) + length > this.length()) {
+            throw new SerialException("Invalid position and substring length");
+        }
+
+        try {
+            return new String(buf, (int)pos - 1, length);
+
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new SerialException("StringIndexOutOfBoundsException: " +
+                e.getMessage());
+        }
+
+    }
+
+    /**
+     * Returns the position in this <code>SerialClob</code> object
+     * where the given <code>String</code> object begins, starting
+     * the search at the specified position. This method returns
+     * <code>-1</code> if the pattern is not found.
+     *
+     * @param searchStr the <code>String</code> object for which to
+     *                  search
+     * @param start the position in this <code>SerialClob</code> object
+     *         at which to start the search; the first position is
+     *         <code>1</code>; must not be less than <code>1</code> nor
+     *         greater than the length of this <code>SerialClob</code> object
+     * @return the position at which the given <code>String</code> object
+     *         begins, starting the search at the specified position;
+     *         <code>-1</code> if the given <code>String</code> object is
+     *         not found or the starting position is out of bounds; position
+     *         numbering for the return value starts at <code>1</code>
+     * @throws SerialException  if the {@code free} method had been
+     * previously called on this object
+     * @throws SQLException if there is an error accessing the Clob value
+     *         from the database.
+     */
+    public long position(String searchStr, long start)
+        throws SerialException, SQLException {
+        isValid();
+        if (start < 1 || start > len) {
+            return -1;
+        }
+
+        char pattern[] = searchStr.toCharArray();
+
+        int pos = (int)start-1;
+        int i = 0;
+        long patlen = pattern.length;
+
+        while (pos < len) {
+            if (pattern[i] == buf[pos]) {
+                if (i + 1 == patlen) {
+                    return (pos + 1) - (patlen - 1);
+                }
+                i++; pos++; // increment pos, and i
+
+            } else if (pattern[i] != buf[pos]) {
+                pos++; // increment pos only
+            }
+        }
+        return -1; // not found
+    }
+
+    /**
+     * Returns the position in this <code>SerialClob</code> object
+     * where the given <code>Clob</code> signature begins, starting
+     * the search at the specified position. This method returns
+     * <code>-1</code> if the pattern is not found.
+     *
+     * @param searchStr the <code>Clob</code> object for which to search
+     * @param start the position in this <code>SerialClob</code> object
+     *        at which to begin the search; the first position is
+     *         <code>1</code>; must not be less than <code>1</code> nor
+     *         greater than the length of this <code>SerialClob</code> object
+     * @return the position at which the given <code>Clob</code>
+     *         object begins in this <code>SerialClob</code> object,
+     *         at or after the specified starting position
+     * @throws SerialException if an error occurs locating the Clob signature;
+     * if the {@code free} method had been previously called on this object
+     * @throws SQLException if there is an error accessing the Clob value
+     *         from the database
+     */
+    public long position(Clob searchStr, long start)
+        throws SerialException, SQLException {
+        isValid();
+        return position(searchStr.getSubString(1,(int)searchStr.length()), start);
+    }
+
+    /**
+     * Writes the given Java <code>String</code> to the <code>CLOB</code>
+     * value that this <code>SerialClob</code> object represents, at the position
+     * <code>pos</code>.
+     *
+     * @param pos the position at which to start writing to the <code>CLOB</code>
+     *         value that this <code>SerialClob</code> object represents; the first
+     *         position is <code>1</code>; must not be less than <code>1</code> nor
+     *         greater than the length of this <code>SerialClob</code> object
+     * @param str the string to be written to the <code>CLOB</code>
+     *        value that this <code>SerialClob</code> object represents
+     * @return the number of characters written
+     * @throws SerialException if there is an error accessing the
+     *     <code>CLOB</code> value; if an invalid position is set; if an
+     *     invalid offset value is set; if number of bytes to be written
+     *     is greater than the <code>SerialClob</code> length; or the combined
+     *     values of the length and offset is greater than the Clob buffer;
+     * if the {@code free} method had been previously called on this object
+     */
+    public int setString(long pos, String str) throws SerialException {
+        return (setString(pos, str, 0, str.length()));
+    }
+
+    /**
+     * Writes <code>len</code> characters of <code>str</code>, starting
+     * at character <code>offset</code>, to the <code>CLOB</code> value
+     * that this <code>Clob</code> represents.
+     *
+     * @param pos the position at which to start writing to the <code>CLOB</code>
+     *         value that this <code>SerialClob</code> object represents; the first
+     *         position is <code>1</code>; must not be less than <code>1</code> nor
+     *         greater than the length of this <code>SerialClob</code> object
+     * @param str the string to be written to the <code>CLOB</code>
+     *        value that this <code>Clob</code> object represents
+     * @param offset the offset into <code>str</code> to start reading
+     *        the characters to be written
+     * @param length the number of characters to be written
+     * @return the number of characters written
+     * @throws SerialException if there is an error accessing the
+     *     <code>CLOB</code> value; if an invalid position is set; if an
+     *     invalid offset value is set; if number of bytes to be written
+     *     is greater than the <code>SerialClob</code> length; or the combined
+     *     values of the length and offset is greater than the Clob buffer;
+     * if the {@code free} method had been previously called on this object
+     */
+    public int setString(long pos, String str, int offset, int length)
+        throws SerialException {
+        isValid();
+        String temp = str.substring(offset);
+        char cPattern[] = temp.toCharArray();
+
+        if (offset < 0 || offset > str.length()) {
+            throw new SerialException("Invalid offset in byte array set");
+        }
+
+        if (pos < 1 || pos > this.length()) {
+            throw new SerialException("Invalid position in Clob object set");
+        }
+
+        if ((long)(length) > origLen) {
+            throw new SerialException("Buffer is not sufficient to hold the value");
+        }
+
+        if ((length + offset) > str.length()) {
+            // need check to ensure length + offset !> bytes.length
+            throw new SerialException("Invalid OffSet. Cannot have combined offset " +
+                " and length that is greater that the Blob buffer");
+        }
+
+        int i = 0;
+        pos--;  //values in the array are at position one less
+        while ( i < length || (offset + i +1) < (str.length() - offset ) ) {
+            this.buf[(int)pos + i ] = cPattern[offset + i ];
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * Retrieves a stream to be used to write Ascii characters to the
+     * <code>CLOB</code> value that this <code>SerialClob</code> object represents,
+     * starting at position <code>pos</code>. This method forwards the
+     * <code>setAsciiStream()</code> call to the underlying <code>Clob</code> object in
+     * the event that this <code>SerialClob</code> object is instantiated with a
+     * <code>Clob</code> object. If this <code>SerialClob</code> object is instantiated
+     *  with a <code>char</code> array, a <code>SerialException</code> object is thrown.
+     *
+     * @param pos the position at which to start writing to the
+     *        <code>CLOB</code> object
+     * @return the stream to which ASCII encoded characters can be written
+     * @throws SerialException if SerialClob is not instantiated with a
+     *     Clob object;
+     * if the {@code free} method had been previously called on this object
+     * @throws SQLException if there is an error accessing the
+     *     <code>CLOB</code> value
+     * @see #getAsciiStream
+     */
+    public java.io.OutputStream setAsciiStream(long pos)
+        throws SerialException, SQLException {
+        isValid();
+         if (this.clob != null) {
+             return this.clob.setAsciiStream(pos);
+         } else {
+             throw new SerialException("Unsupported operation. SerialClob cannot " +
+                "return a writable ascii stream\n unless instantiated with a Clob object " +
+                "that has a setAsciiStream() implementation");
+         }
+    }
+
+    /**
+     * Retrieves a stream to be used to write a stream of Unicode characters
+     * to the <code>CLOB</code> value that this <code>SerialClob</code> object
+     * represents, at position <code>pos</code>. This method forwards the
+     * <code>setCharacterStream()</code> call to the underlying <code>Clob</code>
+     * object in the event that this <code>SerialClob</code> object is instantiated with a
+     * <code>Clob</code> object. If this <code>SerialClob</code> object is instantiated with
+     * a <code>char</code> array, a <code>SerialException</code> is thrown.
+     *
+     * @param  pos the position at which to start writing to the
+     *        <code>CLOB</code> value
+     *
+     * @return a stream to which Unicode encoded characters can be written
+     * @throws SerialException if the SerialClob is not instantiated with
+     *     a Clob object;
+     * if the {@code free} method had been previously called on this object
+     * @throws SQLException if there is an error accessing the
+     *            <code>CLOB</code> value
+     * @see #getCharacterStream
+     */
+    public java.io.Writer setCharacterStream(long pos)
+        throws SerialException, SQLException {
+        isValid();
+        if (this.clob != null) {
+            return this.clob.setCharacterStream(pos);
+        } else {
+            throw new SerialException("Unsupported operation. SerialClob cannot " +
+                "return a writable character stream\n unless instantiated with a Clob object " +
+                "that has a setCharacterStream implementation");
+        }
+    }
+
+    /**
+     * Truncates the <code>CLOB</code> value that this <code>SerialClob</code>
+     * object represents so that it has a length of <code>len</code>
+     * characters.
+     * <p>
+     * Truncating a <code>SerialClob</code> object to length 0 has the effect of
+     * clearing its contents.
+     *
+     * @param length the length, in bytes, to which the <code>CLOB</code>
+     *        value should be truncated
+     * @throws SerialException if there is an error accessing the
+     *        <code>CLOB</code> value;
+     * if the {@code free} method had been previously called on this object
+     */
+    public void truncate(long length) throws SerialException {
+        isValid();
+        if (length > len) {
+           throw new SerialException
+              ("Length more than what can be truncated");
+        } else {
+             len = length;
+             // re-size the buffer
+
+             if (len == 0) {
+                buf = new char[] {};
+             } else {
+                buf = (this.getSubString(1, (int)len)).toCharArray();
+             }
+        }
+    }
+
+
+    /**
+     * Returns a {@code Reader} object that contains a partial
+     * {@code SerialClob} value, starting
+     * with the character specified by pos, which is length characters in length.
+     *
+     * @param pos the offset to the first character of the partial value to
+     * be retrieved.  The first character in the {@code SerialClob} is at position 1.
+     * @param length the length in characters of the partial value to be retrieved.
+     * @return {@code Reader} through which the partial {@code SerialClob}
+     * value can be read.
+     * @throws SQLException if pos is less than 1 or if pos is greater than the
+     * number of characters in the {@code SerialClob} or if pos + length
+     * is greater than the number of characters in the {@code SerialClob};
+     * @throws SerialException if the {@code free} method had been previously
+     * called on this object
+     * @since 1.6
+     */
+    public Reader getCharacterStream(long pos, long length) throws SQLException {
+        isValid();
+        if (pos < 1 || pos > len) {
+            throw new SerialException("Invalid position in Clob object set");
+        }
+
+        if ((pos-1) + length > len) {
+            throw new SerialException("Invalid position and substring length");
+        }
+        if (length <= 0) {
+            throw new SerialException("Invalid length specified");
+        }
+        return new CharArrayReader(buf, (int)pos, (int)length);
+    }
+
+    /**
+     * This method frees the {@code SeriableClob} object and releases the
+     * resources that it holds.
+     * The object is invalid once the {@code free} method is called.
+     * <p>
+     * If {@code free} is called multiple times, the subsequent
+     * calls to {@code free} are treated as a no-op.
+     * </P>
+     * @throws SQLException if an error occurs releasing
+     * the Clob's resources
+     * @since 1.6
+     */
+    public void free() throws SQLException {
+        if (buf != null) {
+            buf = null;
+            if (clob != null) {
+                clob.free();
+            }
+            clob = null;
+        }
+    }
+
+    /**
+     * Compares this SerialClob to the specified object.  The result is {@code
+     * true} if and only if the argument is not {@code null} and is a {@code
+     * SerialClob} object that represents the same sequence of characters as this
+     * object.
+     *
+     * @param  obj The object to compare this {@code SerialClob} against
+     *
+     * @return  {@code true} if the given object represents a {@code SerialClob}
+     *          equivalent to this SerialClob, {@code false} otherwise
+     *
+     */
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof SerialClob) {
+            SerialClob sc = (SerialClob)obj;
+            if (this.len == sc.len) {
+                return Arrays.equals(buf, sc.buf);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code for this {@code SerialClob}.
+     * @return  a hash code value for this object.
+     */
+    public int hashCode() {
+       return ((31 + Arrays.hashCode(buf)) * 31 + (int)len) * 31 + (int)origLen;
+    }
+
+    /**
+     * Returns a clone of this {@code SerialClob}. The copy will contain a
+     * reference to a clone of the internal character array, not a reference
+     * to the original internal character array of this {@code SerialClob} object.
+     * The underlying {@code Clob} object will be set to null.
+     *
+     * @return  a clone of this SerialClob
+     */
+    public Object clone() {
+        try {
+            SerialClob sc = (SerialClob) super.clone();
+            sc.buf = (buf != null) ? Arrays.copyOf(buf, (int)len) : null;
+            sc.clob = null;
+            return sc;
+        } catch (CloneNotSupportedException ex) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
+    }
+
+    /**
+     * readObject is called to restore the state of the SerialClob from
+     * a stream.
+     */
+    private void readObject(ObjectInputStream s)
+            throws IOException, ClassNotFoundException {
+
+        ObjectInputStream.GetField fields = s.readFields();
+       char[] tmp = (char[])fields.get("buf", null);
+       if (tmp == null)
+           throw new InvalidObjectException("buf is null and should not be!");
+       buf = tmp.clone();
+       len = fields.get("len", 0L);
+       if (buf.length != len)
+           throw new InvalidObjectException("buf is not the expected size");
+       origLen = fields.get("origLen", 0L);
+       clob = (Clob) fields.get("clob", null);
+    }
+
+    /**
+     * writeObject is called to save the state of the SerialClob
+     * to a stream.
+     */
+    private void writeObject(ObjectOutputStream s)
+            throws IOException, ClassNotFoundException {
+
+        ObjectOutputStream.PutField fields = s.putFields();
+        fields.put("buf", buf);
+        fields.put("len", len);
+        fields.put("origLen", origLen);
+        // Note: this check to see if it is an instance of Serializable
+        // is for backwards compatibiity
+        fields.put("clob", clob instanceof Serializable ? clob : null);
+        s.writeFields();
+    }
+
+    /**
+     * Check to see if this object had previously had its {@code free} method
+     * called
+     *
+     * @throws SerialException
+     */
+    private void isValid() throws SerialException {
+        if (buf == null) {
+            throw new SerialException("Error: You cannot call a method on a "
+                    + "SerialClob instance once free() has been called.");
+        }
+    }
+
+    /**
+     * The identifier that assists in the serialization of this {@code SerialClob}
+     * object.
+     */
+    static final long serialVersionUID = -1662519690087375313L;
+}

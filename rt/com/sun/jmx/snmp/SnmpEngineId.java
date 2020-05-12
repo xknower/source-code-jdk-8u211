@@ -1,495 +1,489 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ import com.sun.jmx.snmp.internal.SnmpTools;
-/*     */ import java.io.Serializable;
-/*     */ import java.net.InetAddress;
-/*     */ import java.net.UnknownHostException;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.StringTokenizer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpEngineId
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 5434729655830763317L;
-/*  45 */   byte[] engineId = null;
-/*  46 */   String hexString = null;
-/*  47 */   String humanString = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   SnmpEngineId(String paramString) {
-/*  53 */     this.engineId = SnmpTools.ascii2binary(paramString);
-/*  54 */     this.hexString = paramString.toLowerCase();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   SnmpEngineId(byte[] paramArrayOfbyte) {
-/*  61 */     this.engineId = paramArrayOfbyte;
-/*  62 */     this.hexString = SnmpTools.binary2ascii(paramArrayOfbyte).toLowerCase();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getReadableId() {
-/*  70 */     return this.humanString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*  78 */     return this.hexString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] getBytes() {
-/*  85 */     return this.engineId;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setStringValue(String paramString) {
-/*  92 */     this.humanString = paramString;
-/*     */   }
-/*     */   
-/*     */   static void validateId(String paramString) throws IllegalArgumentException {
-/*  96 */     byte[] arrayOfByte = SnmpTools.ascii2binary(paramString);
-/*  97 */     validateId(arrayOfByte);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void validateId(byte[] paramArrayOfbyte) throws IllegalArgumentException {
-/* 102 */     if (paramArrayOfbyte.length < 5) throw new IllegalArgumentException("Id size lower than 5 bytes."); 
-/* 103 */     if (paramArrayOfbyte.length > 32) throw new IllegalArgumentException("Id size greater than 32 bytes.");
-/*     */ 
-/*     */     
-/* 106 */     if ((paramArrayOfbyte[0] & 0x80) == 0 && paramArrayOfbyte.length != 12) {
-/* 107 */       throw new IllegalArgumentException("Very first bit = 0 and length != 12 octets");
-/*     */     }
-/* 109 */     byte[] arrayOfByte1 = new byte[paramArrayOfbyte.length];
-/* 110 */     if (Arrays.equals(arrayOfByte1, paramArrayOfbyte)) throw new IllegalArgumentException("Zeroed Id."); 
-/* 111 */     byte[] arrayOfByte2 = new byte[paramArrayOfbyte.length];
-/* 112 */     Arrays.fill(arrayOfByte2, (byte)-1);
-/* 113 */     if (Arrays.equals(arrayOfByte2, paramArrayOfbyte)) throw new IllegalArgumentException("0xFF Id.");
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(byte[] paramArrayOfbyte) throws IllegalArgumentException {
-/* 130 */     if (paramArrayOfbyte == null || paramArrayOfbyte.length == 0) return null; 
-/* 131 */     validateId(paramArrayOfbyte);
-/* 132 */     return new SnmpEngineId(paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId() {
-/* 140 */     Object object = null;
-/* 141 */     byte[] arrayOfByte = new byte[13];
-/* 142 */     byte b = 42;
-/* 143 */     long l1 = 255L;
-/* 144 */     long l2 = System.currentTimeMillis();
-/*     */     
-/* 146 */     arrayOfByte[0] = (byte)((b & 0xFF000000) >> 24);
-/* 147 */     arrayOfByte[0] = (byte)(arrayOfByte[0] | 0x80);
-/* 148 */     arrayOfByte[1] = (byte)((b & 0xFF0000) >> 16);
-/* 149 */     arrayOfByte[2] = (byte)((b & 0xFF00) >> 8);
-/* 150 */     arrayOfByte[3] = (byte)(b & 0xFF);
-/* 151 */     arrayOfByte[4] = 5;
-/*     */     
-/* 153 */     arrayOfByte[5] = (byte)(int)((l2 & l1 << 56L) >>> 56L);
-/* 154 */     arrayOfByte[6] = (byte)(int)((l2 & l1 << 48L) >>> 48L);
-/* 155 */     arrayOfByte[7] = (byte)(int)((l2 & l1 << 40L) >>> 40L);
-/* 156 */     arrayOfByte[8] = (byte)(int)((l2 & l1 << 32L) >>> 32L);
-/* 157 */     arrayOfByte[9] = (byte)(int)((l2 & l1 << 24L) >>> 24L);
-/* 158 */     arrayOfByte[10] = (byte)(int)((l2 & l1 << 16L) >>> 16L);
-/* 159 */     arrayOfByte[11] = (byte)(int)((l2 & l1 << 8L) >>> 8L);
-/* 160 */     arrayOfByte[12] = (byte)(int)(l2 & l1);
-/*     */     
-/* 162 */     return new SnmpEngineId(arrayOfByte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpOid toOid() {
-/* 173 */     long[] arrayOfLong = new long[this.engineId.length + 1];
-/* 174 */     arrayOfLong[0] = this.engineId.length;
-/* 175 */     for (byte b = 1; b <= this.engineId.length; b++)
-/* 176 */       arrayOfLong[b] = (this.engineId[b - 1] & 0xFF); 
-/* 177 */     return new SnmpOid(arrayOfLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(String paramString) throws IllegalArgumentException, UnknownHostException {
-/* 218 */     return createEngineId(paramString, (String)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(String paramString1, String paramString2) throws IllegalArgumentException, UnknownHostException {
-/* 246 */     if (paramString1 == null) return null;
-/*     */     
-/* 248 */     if (paramString1.startsWith("0x") || paramString1.startsWith("0X")) {
-/* 249 */       validateId(paramString1);
-/* 250 */       return new SnmpEngineId(paramString1);
-/*     */     } 
-/* 252 */     paramString2 = (paramString2 == null) ? ":" : paramString2;
-/* 253 */     StringTokenizer stringTokenizer = new StringTokenizer(paramString1, paramString2, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 257 */     String str1 = null;
-/* 258 */     String str2 = null;
-/* 259 */     String str3 = null;
-/* 260 */     int i = 161;
-/* 261 */     int j = 42;
-/* 262 */     InetAddress inetAddress = null;
-/* 263 */     SnmpEngineId snmpEngineId = null;
-/*     */     
-/*     */     try {
-/*     */       try {
-/* 267 */         str1 = stringTokenizer.nextToken();
-/* 268 */       } catch (NoSuchElementException noSuchElementException) {
-/* 269 */         throw new IllegalArgumentException("Passed string is invalid : [" + paramString1 + "]");
-/*     */       } 
-/* 271 */       if (!str1.equals(paramString2)) {
-/* 272 */         inetAddress = InetAddress.getByName(str1);
-/*     */         try {
-/* 274 */           stringTokenizer.nextToken();
-/* 275 */         } catch (NoSuchElementException noSuchElementException) {
-/*     */           
-/* 277 */           snmpEngineId = createEngineId(inetAddress, i, j);
-/*     */ 
-/*     */           
-/* 280 */           snmpEngineId.setStringValue(paramString1);
-/* 281 */           return snmpEngineId;
-/*     */         } 
-/*     */       } else {
-/*     */         
-/* 285 */         inetAddress = InetAddress.getLocalHost();
-/*     */       } 
-/*     */       
-/*     */       try {
-/* 289 */         str2 = stringTokenizer.nextToken();
-/* 290 */       } catch (NoSuchElementException noSuchElementException) {
-/*     */         
-/* 292 */         snmpEngineId = createEngineId(inetAddress, i, j);
-/*     */ 
-/*     */         
-/* 295 */         snmpEngineId.setStringValue(paramString1);
-/* 296 */         return snmpEngineId;
-/*     */       } 
-/*     */       
-/* 299 */       if (!str2.equals(paramString2)) {
-/* 300 */         i = Integer.parseInt(str2);
-/*     */         try {
-/* 302 */           stringTokenizer.nextToken();
-/* 303 */         } catch (NoSuchElementException noSuchElementException) {
-/*     */           
-/* 305 */           snmpEngineId = createEngineId(inetAddress, i, j);
-/*     */ 
-/*     */           
-/* 308 */           snmpEngineId.setStringValue(paramString1);
-/* 309 */           return snmpEngineId;
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 315 */         str3 = stringTokenizer.nextToken();
-/* 316 */       } catch (NoSuchElementException noSuchElementException) {
-/*     */         
-/* 318 */         snmpEngineId = createEngineId(inetAddress, i, j);
-/*     */ 
-/*     */         
-/* 321 */         snmpEngineId.setStringValue(paramString1);
-/* 322 */         return snmpEngineId;
-/*     */       } 
-/*     */       
-/* 325 */       if (!str3.equals(paramString2)) {
-/* 326 */         j = Integer.parseInt(str3);
-/*     */       }
-/* 328 */       snmpEngineId = createEngineId(inetAddress, i, j);
-/*     */ 
-/*     */       
-/* 331 */       snmpEngineId.setStringValue(paramString1);
-/*     */       
-/* 333 */       return snmpEngineId;
-/*     */     }
-/* 335 */     catch (Exception exception) {
-/* 336 */       throw new IllegalArgumentException("Passed string is invalid : [" + paramString1 + "]. Check that the used separator [" + paramString2 + "] is compatible with IPv6 address format.");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(int paramInt) throws UnknownHostException {
-/* 353 */     byte b = 42;
-/* 354 */     InetAddress inetAddress = null;
-/* 355 */     inetAddress = InetAddress.getLocalHost();
-/* 356 */     return createEngineId(inetAddress, paramInt, b);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(InetAddress paramInetAddress, int paramInt) throws IllegalArgumentException {
-/* 370 */     byte b = 42;
-/* 371 */     if (paramInetAddress == null)
-/* 372 */       throw new IllegalArgumentException("InetAddress is null."); 
-/* 373 */     return createEngineId(paramInetAddress, paramInt, b);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(int paramInt1, int paramInt2) throws UnknownHostException {
-/* 386 */     InetAddress inetAddress = null;
-/* 387 */     inetAddress = InetAddress.getLocalHost();
-/* 388 */     return createEngineId(inetAddress, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(InetAddress paramInetAddress, int paramInt1, int paramInt2) {
-/* 402 */     if (paramInetAddress == null) throw new IllegalArgumentException("InetAddress is null."); 
-/* 403 */     byte[] arrayOfByte1 = paramInetAddress.getAddress();
-/* 404 */     byte[] arrayOfByte2 = new byte[9 + arrayOfByte1.length];
-/* 405 */     arrayOfByte2[0] = (byte)((paramInt2 & 0xFF000000) >> 24);
-/* 406 */     arrayOfByte2[0] = (byte)(arrayOfByte2[0] | 0x80);
-/* 407 */     arrayOfByte2[1] = (byte)((paramInt2 & 0xFF0000) >> 16);
-/* 408 */     arrayOfByte2[2] = (byte)((paramInt2 & 0xFF00) >> 8);
-/*     */     
-/* 410 */     arrayOfByte2[3] = (byte)(paramInt2 & 0xFF);
-/* 411 */     arrayOfByte2[4] = 5;
-/*     */     
-/* 413 */     if (arrayOfByte1.length == 4) {
-/* 414 */       arrayOfByte2[4] = 1;
-/*     */     }
-/* 416 */     if (arrayOfByte1.length == 16) {
-/* 417 */       arrayOfByte2[4] = 2;
-/*     */     }
-/* 419 */     for (byte b = 0; b < arrayOfByte1.length; b++) {
-/* 420 */       arrayOfByte2[b + 5] = arrayOfByte1[b];
-/*     */     }
-/*     */     
-/* 423 */     arrayOfByte2[5 + arrayOfByte1.length] = (byte)((paramInt1 & 0xFF000000) >> 24);
-/* 424 */     arrayOfByte2[6 + arrayOfByte1.length] = (byte)((paramInt1 & 0xFF0000) >> 16);
-/* 425 */     arrayOfByte2[7 + arrayOfByte1.length] = (byte)((paramInt1 & 0xFF00) >> 8);
-/* 426 */     arrayOfByte2[8 + arrayOfByte1.length] = (byte)(paramInt1 & 0xFF);
-/*     */     
-/* 428 */     return new SnmpEngineId(arrayOfByte2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(int paramInt, InetAddress paramInetAddress) {
-/* 441 */     if (paramInetAddress == null) throw new IllegalArgumentException("InetAddress is null."); 
-/* 442 */     byte[] arrayOfByte1 = paramInetAddress.getAddress();
-/* 443 */     byte[] arrayOfByte2 = new byte[5 + arrayOfByte1.length];
-/* 444 */     arrayOfByte2[0] = (byte)((paramInt & 0xFF000000) >> 24);
-/* 445 */     arrayOfByte2[0] = (byte)(arrayOfByte2[0] | 0x80);
-/* 446 */     arrayOfByte2[1] = (byte)((paramInt & 0xFF0000) >> 16);
-/* 447 */     arrayOfByte2[2] = (byte)((paramInt & 0xFF00) >> 8);
-/*     */     
-/* 449 */     arrayOfByte2[3] = (byte)(paramInt & 0xFF);
-/* 450 */     if (arrayOfByte1.length == 4) {
-/* 451 */       arrayOfByte2[4] = 1;
-/*     */     }
-/* 453 */     if (arrayOfByte1.length == 16) {
-/* 454 */       arrayOfByte2[4] = 2;
-/*     */     }
-/* 456 */     for (byte b = 0; b < arrayOfByte1.length; b++) {
-/* 457 */       arrayOfByte2[b + 5] = arrayOfByte1[b];
-/*     */     }
-/*     */     
-/* 460 */     return new SnmpEngineId(arrayOfByte2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpEngineId createEngineId(InetAddress paramInetAddress) {
-/* 473 */     return createEngineId(42, paramInetAddress);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 482 */     if (!(paramObject instanceof SnmpEngineId)) return false; 
-/* 483 */     return this.hexString.equals(((SnmpEngineId)paramObject).toString());
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/* 487 */     return this.hexString.hashCode();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpEngineId.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp;
+
+import java.net.InetAddress;
+import java.io.Serializable;
+import java.net.UnknownHostException;
+import java.util.StringTokenizer;
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+
+import com.sun.jmx.snmp.internal.SnmpTools;
+
+/**
+ * This class is handling an <CODE>SnmpEngineId</CODE> data. It copes with binary as well as <CODE>String</CODE> representation of an engine Id. A string format engine is an hex string starting with 0x.
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+public class SnmpEngineId implements Serializable {
+    private static final long serialVersionUID = 5434729655830763317L;
+
+    byte[] engineId = null;
+    String hexString = null;
+    String humanString = null;
+    /**
+     * New <CODE>SnmpEngineId</CODE> with an hex string value. Can handle engine Id format &lt;host&gt:&lt;port&gt.
+     * @param hexString Hexa string.
+     */
+    SnmpEngineId(String hexString) {
+        engineId = SnmpTools.ascii2binary(hexString);
+        this.hexString = hexString.toLowerCase();
+    }
+    /**
+     * New <CODE>SnmpEngineId</CODE> with a binary value. You can use <CODE> SnmpTools </CODE> to convert from hex string to binary format.
+     * @param bin Binary value
+     */
+    SnmpEngineId(byte[] bin) {
+        engineId = bin;
+        hexString = SnmpTools.binary2ascii(bin).toLowerCase();
+    }
+
+    /**
+     * If a string of the format &lt;address&gt;:&lt;port&gt;:&lt;IANA number&gt; has been provided at creation time, this string is returned.
+     * @return The Id as a readable string or null if not provided.
+     */
+    public String getReadableId() {
+        return humanString;
+    }
+
+    /**
+     * Returns a string format engine Id.
+     * @return String format value.
+     */
+    public String toString() {
+        return hexString;
+    }
+    /**
+     * Returns a binary engine Id.
+     * @return Binary value.
+     */
+    public byte[] getBytes() {
+        return engineId;
+    }
+
+    /**
+     * In order to store the string used to create the engineId.
+     */
+    void setStringValue(String val) {
+        humanString = val;
+    }
+
+    static void validateId(String str) throws IllegalArgumentException {
+        byte[] arr = SnmpTools.ascii2binary(str);
+        validateId(arr);
+    }
+
+    static void validateId(byte[] arr) throws IllegalArgumentException {
+
+        if(arr.length < 5) throw new IllegalArgumentException("Id size lower than 5 bytes.");
+        if(arr.length > 32) throw new IllegalArgumentException("Id size greater than 32 bytes.");
+
+        //octet strings with very first bit = 0 and length != 12 octets
+        if( ((arr[0] & 0x80) == 0) && arr.length != 12)
+            throw new IllegalArgumentException("Very first bit = 0 and length != 12 octets");
+
+        byte[] zeroedArrays = new byte[arr.length];
+        if(Arrays.equals(zeroedArrays, arr)) throw new IllegalArgumentException("Zeroed Id.");
+        byte[] FFArrays = new byte[arr.length];
+        Arrays.fill(FFArrays, (byte)0xFF);
+        if(Arrays.equals(FFArrays, arr)) throw new IllegalArgumentException("0xFF Id.");
+
+    }
+
+    /**
+     * Generates an engine Id based on the passed array.
+     * @return The created engine Id or null if given arr is null or its length == 0;
+     * @exception IllegalArgumentException when:
+     * <ul>
+     *  <li>octet string lower than 5 bytes.</li>
+     *  <li>octet string greater than 32 bytes.</li>
+     *  <li>octet string = all zeros.</li>
+     *  <li>octet string = all 'ff'H.</li>
+     *  <li>octet strings with very first bit = 0 and length != 12 octets</li>
+     * </ul>
+     */
+    public static SnmpEngineId createEngineId(byte[] arr) throws IllegalArgumentException {
+        if( (arr == null) || arr.length == 0) return null;
+        validateId(arr);
+        return new SnmpEngineId(arr);
+    }
+
+    /**
+     * Generates an engine Id that is unique to the host the agent is running on. The engine Id unicity is system time based. The creation algorithm uses the SUN Microsystems IANA number (42).
+     * @return The generated engine Id.
+     */
+    public static SnmpEngineId createEngineId() {
+        byte[] address = null;
+        byte[] engineid = new byte[13];
+        int iana = 42;
+        long mask = 0xFF;
+        long time = System.currentTimeMillis();
+
+        engineid[0] = (byte) ( (iana & 0xFF000000) >> 24 );
+        engineid[0] |= 0x80;
+        engineid[1] = (byte) ( (iana & 0x00FF0000) >> 16 );
+        engineid[2] = (byte) ( (iana & 0x0000FF00) >> 8 );
+        engineid[3] = (byte) (iana & 0x000000FF);
+        engineid[4] = 0x05;
+
+        engineid[5] =  (byte) ( (time & (mask << 56)) >>> 56 );
+        engineid[6] =  (byte) ( (time & (mask << 48) ) >>> 48 );
+        engineid[7] =  (byte) ( (time & (mask << 40) ) >>> 40 );
+        engineid[8] =  (byte) ( (time & (mask << 32) ) >>> 32 );
+        engineid[9] =  (byte) ( (time & (mask << 24) ) >>> 24 );
+        engineid[10] = (byte) ( (time & (mask << 16) ) >>> 16 );
+        engineid[11] = (byte) ( (time & (mask << 8) ) >>> 8 );
+        engineid[12] = (byte) (time & mask);
+
+        return new SnmpEngineId(engineid);
+    }
+
+    /**
+     * Translates an engine Id in an SnmpOid format. This is useful when dealing with USM MIB indexes.
+     * The oid format is : <engine Id length>.<engine Id binary octet1>....<engine Id binary octetn - 1>.<engine Id binary octetn>
+     * Eg: "0x8000002a05819dcb6e00001f96" ==> 13.128.0.0.42.5.129.157.203.110.0.0.31.150
+     *
+     * @return SnmpOid The oid.
+     */
+    public SnmpOid toOid() {
+        long[] oid = new long[engineId.length + 1];
+        oid[0] = engineId.length;
+        for(int i = 1; i <= engineId.length; i++)
+            oid[i] = (long) (engineId[i-1] & 0xFF);
+        return new SnmpOid(oid);
+    }
+
+   /**
+    * <P>Generates a unique engine Id. Hexadecimal strings as well as a textual description are supported. The textual format is as follow:
+    * <BR>  &lt;address&gt;:&lt;port&gt;:&lt;IANA number&gt;</P>
+    * <P>The allowed formats :</P>
+    * <ul>
+    * <li> &lt;address&gt;:&lt;port&gt;:&lt;IANA number&gt
+    * <BR>   All these parameters are used to generate the Id. WARNING, this method is not compliant with IPv6 address format. Use { @link com.sun.jmx.snmp.SnmpEngineId#createEngineId(java.lang.String,java.lang.String) } instead.</li>
+    * <li> &lt;address&gt;:&lt;port&gt;
+    * <BR>   The IANA number will be the SUN Microsystems one (42). </li>
+    * <li> address
+    * <BR>   The port 161 will be used to generate the Id. IANA number will be the SUN Microsystems one (42). </li>
+    * <li> :port
+    * <BR>   The host to use is localhost. IANA number will be the SUN Microsystems one (42). </li>
+    * <li> ::&lt;IANA number&gt &nbsp;&nbsp;&nbsp;
+    * <BR>   The port 161 and localhost will be used to generate the Id. </li>
+    * <li> :&lt;port&gt;:&lt;IANA number&gt;
+    * <BR>   The host to use is localhost. </li>
+    * <li> &lt;address&gt;::&lt;IANA number&gt
+    * <BR>   The port 161 will be used to generate the Id. </li>
+    * <li> :: &nbsp;&nbsp;&nbsp;
+    * <BR>   The port 161, localhost and the SUN Microsystems IANA number will be used to generate the Id. </li>
+    * </ul>
+    * @exception UnknownHostException if the host name contained in the textual format is unknown.
+    * @exception IllegalArgumentException when :
+    * <ul>
+    *  <li>octet string lower than 5 bytes.</li>
+    *  <li>octet string greater than 32 bytes.</li>
+    *  <li>octet string = all zeros.</li>
+    *  <li>octet string = all 'ff'H.</li>
+    *  <li>octet strings with very first bit = 0 and length != 12 octets</li>
+    *  <li>An IPv6 address format is used in conjonction with the ":" separator</li>
+    * </ul>
+    * @param str The string to parse.
+    * @return The generated engine Id or null if the passed string is null.
+    *
+    */
+    public static SnmpEngineId createEngineId(String str)
+        throws IllegalArgumentException, UnknownHostException {
+        return createEngineId(str, null);
+    }
+
+    /**
+     * Idem { @link
+     * com.sun.jmx.snmp.SnmpEngineId#createEngineId(java.lang.String) }
+     * with the ability to provide your own separator. This allows IPv6
+     * address format handling (eg: providing @ as separator).
+     * @param str The string to parse.
+     * @param separator the separator to use. If null is provided, the default
+     * separator ":" is used.
+     * @return The generated engine Id or null if the passed string is null.
+     * @exception UnknownHostException if the host name contained in the
+     * textual format is unknown.
+     * @exception IllegalArgumentException when :
+     * <ul>
+     *  <li>octet string lower than 5 bytes.</li>
+     *  <li>octet string greater than 32 bytes.</li>
+     *  <li>octet string = all zeros.</li>
+     *  <li>octet string = all 'ff'H.</li>
+     *  <li>octet strings with very first bit = 0 and length != 12 octets</li>
+     *  <li>An IPv6 address format is used in conjonction with the ":"
+     *      separator</li>
+     * </ul>
+     * @since 1.5
+     */
+    public static SnmpEngineId createEngineId(String str, String separator)
+        throws IllegalArgumentException, UnknownHostException {
+        if(str == null) return null;
+
+        if(str.startsWith("0x") || str.startsWith("0X")) {
+            validateId(str);
+            return new SnmpEngineId(str);
+        }
+        separator = separator == null ? ":" : separator;
+        StringTokenizer token = new StringTokenizer(str,
+                                                    separator,
+                                                    true);
+
+        String address = null;
+        String port = null;
+        String iana = null;
+        int objPort = 161;
+        int objIana = 42;
+        InetAddress objAddress = null;
+        SnmpEngineId eng = null;
+        try {
+            //Deal with address
+            try {
+                address = token.nextToken();
+            }catch(NoSuchElementException e) {
+                throw new IllegalArgumentException("Passed string is invalid : ["+str+"]");
+            }
+            if(!address.equals(separator)) {
+                objAddress = InetAddress.getByName(address);
+                try {
+                    token.nextToken();
+                }catch(NoSuchElementException e) {
+                    //No need to go further, no port.
+                    eng = SnmpEngineId.createEngineId(objAddress,
+                                                      objPort,
+                                                      objIana);
+                    eng.setStringValue(str);
+                    return eng;
+                }
+            }
+            else
+                objAddress = InetAddress.getLocalHost();
+
+            //Deal with port
+            try {
+                port = token.nextToken();
+            }catch(NoSuchElementException e) {
+                //No need to go further, no port.
+                eng = SnmpEngineId.createEngineId(objAddress,
+                                                  objPort,
+                                                  objIana);
+                eng.setStringValue(str);
+                return eng;
+            }
+
+            if(!port.equals(separator)) {
+                objPort = Integer.parseInt(port);
+                try {
+                    token.nextToken();
+                }catch(NoSuchElementException e) {
+                    //No need to go further, no iana.
+                    eng = SnmpEngineId.createEngineId(objAddress,
+                                                      objPort,
+                                                      objIana);
+                    eng.setStringValue(str);
+                    return eng;
+                }
+            }
+
+            //Deal with iana
+            try {
+                iana = token.nextToken();
+            }catch(NoSuchElementException e) {
+                //No need to go further, no port.
+                eng = SnmpEngineId.createEngineId(objAddress,
+                                                  objPort,
+                                                  objIana);
+                eng.setStringValue(str);
+                return eng;
+            }
+
+            if(!iana.equals(separator))
+                objIana = Integer.parseInt(iana);
+
+            eng = SnmpEngineId.createEngineId(objAddress,
+                                              objPort,
+                                              objIana);
+            eng.setStringValue(str);
+
+            return eng;
+
+        } catch(Exception e) {
+            throw new IllegalArgumentException("Passed string is invalid : ["+str+"]. Check that the used separator ["+ separator + "] is compatible with IPv6 address format.");
+        }
+
+    }
+
+    /**
+     * Generates a unique engine Id. The engine Id unicity is based on
+     * the host IP address and port. The IP address used is the
+     * localhost one. The creation algorithm uses the SUN Microsystems IANA
+     * number (42).
+     * @param port The TCP/IP port the SNMPv3 Adaptor Server is listening to.
+     * @return The generated engine Id.
+     * @exception UnknownHostException if the local host name
+     *            used to calculate the id is unknown.
+     */
+    public static SnmpEngineId createEngineId(int port)
+        throws UnknownHostException {
+        int suniana = 42;
+        InetAddress address = null;
+        address = InetAddress.getLocalHost();
+        return createEngineId(address, port, suniana);
+    }
+    /**
+     * Generates a unique engine Id. The engine Id unicity is based on
+     * the host IP address and port. The IP address used is the passed
+     * one. The creation algorithm uses the SUN Microsystems IANA
+     * number (42).
+     * @param address The IP address the SNMPv3 Adaptor Server is listening to.
+     * @param port The TCP/IP port the SNMPv3 Adaptor Server is listening to.
+     * @return The generated engine Id.
+     * @exception UnknownHostException. if the provided address is null.
+     */
+    public static SnmpEngineId createEngineId(InetAddress address, int port)
+        throws IllegalArgumentException {
+        int suniana = 42;
+        if(address == null)
+            throw new IllegalArgumentException("InetAddress is null.");
+        return createEngineId(address, port, suniana);
+    }
+
+    /**
+     * Generates a unique engine Id. The engine Id unicity is based on
+     * the host IP address and port. The IP address is the localhost one.
+     * The creation algorithm uses the passed IANA number.
+     * @param port The TCP/IP port the SNMPv3 Adaptor Server is listening to.
+     * @param iana Your enterprise IANA number.
+     * @exception UnknownHostException if the local host name used to calculate the id is unknown.
+     * @return The generated engine Id.
+     */
+    public static SnmpEngineId createEngineId(int port, int iana) throws UnknownHostException {
+        InetAddress address = null;
+        address = InetAddress.getLocalHost();
+        return createEngineId(address, port, iana);
+    }
+
+    /**
+     * Generates a unique engine Id. The engine Id unicity is based on the host IP address and port. The IP address is the passed one, it handles IPv4 and IPv6 hosts. The creation algorithm uses the passed IANA number.
+     * @param addr The IP address the SNMPv3 Adaptor Server is listening to.
+     * @param port The TCP/IP port the SNMPv3 Adaptor Server is listening to.
+     * @param iana Your enterprise IANA number.
+     * @return The generated engine Id.
+     * @exception UnknownHostException if the provided <CODE>InetAddress </CODE> is null.
+     */
+    public static SnmpEngineId createEngineId(InetAddress addr,
+                                              int port,
+                                              int iana) {
+        if(addr == null) throw new IllegalArgumentException("InetAddress is null.");
+        byte[] address = addr.getAddress();
+        byte[] engineid = new byte[9 + address.length];
+        engineid[0] = (byte) ( (iana & 0xFF000000) >> 24 );
+        engineid[0] |= 0x80;
+        engineid[1] = (byte) ( (iana & 0x00FF0000) >> 16 );
+        engineid[2] = (byte) ( (iana & 0x0000FF00) >> 8 );
+
+engineid[3] = (byte) (iana & 0x000000FF);
+        engineid[4] = 0x05;
+
+        if(address.length == 4)
+            engineid[4] = 0x01;
+
+        if(address.length == 16)
+            engineid[4] = 0x02;
+
+        for(int i = 0; i < address.length; i++) {
+            engineid[i + 5] = address[i];
+        }
+
+        engineid[5 + address.length] = (byte)  ( (port & 0xFF000000) >> 24 );
+        engineid[6 + address.length] = (byte) ( (port & 0x00FF0000) >> 16 );
+        engineid[7 + address.length] = (byte) ( (port & 0x0000FF00) >> 8 );
+        engineid[8 + address.length] = (byte) (  port & 0x000000FF );
+
+        return new SnmpEngineId(engineid);
+    }
+
+     /**
+     * Generates an engine Id based on an InetAddress. Handles IPv4 and IPv6 addresses. The creation algorithm uses the passed IANA number.
+     * @param iana Your enterprise IANA number.
+     * @param addr The IP address the SNMPv3 Adaptor Server is listening to.
+     * @return The generated engine Id.
+     * @since 1.5
+     * @exception UnknownHostException if the provided <CODE>InetAddress </CODE> is null.
+     */
+    public static SnmpEngineId createEngineId(int iana, InetAddress addr)
+    {
+        if(addr == null) throw new IllegalArgumentException("InetAddress is null.");
+        byte[] address = addr.getAddress();
+        byte[] engineid = new byte[5 + address.length];
+        engineid[0] = (byte) ( (iana & 0xFF000000) >> 24 );
+        engineid[0] |= 0x80;
+        engineid[1] = (byte) ( (iana & 0x00FF0000) >> 16 );
+        engineid[2] = (byte) ( (iana & 0x0000FF00) >> 8 );
+
+        engineid[3] = (byte) (iana & 0x000000FF);
+        if(address.length == 4)
+            engineid[4] = 0x01;
+
+        if(address.length == 16)
+            engineid[4] = 0x02;
+
+        for(int i = 0; i < address.length; i++) {
+            engineid[i + 5] = address[i];
+        }
+
+        return new SnmpEngineId(engineid);
+    }
+
+    /**
+     * Generates an engine Id based on an InetAddress. Handles IPv4 and IPv6
+     * addresses. The creation algorithm uses the sun IANA number (42).
+     * @param addr The IP address the SNMPv3 Adaptor Server is listening to.
+     * @return The generated engine Id.
+     * @since 1.5
+     * @exception UnknownHostException if the provided
+     *            <CODE>InetAddress</CODE> is null.
+     */
+    public static SnmpEngineId createEngineId(InetAddress addr) {
+        return createEngineId(42, addr);
+    }
+
+
+    /**
+     * Tests <CODE>SnmpEngineId</CODE> instance equality. Two <CODE>SnmpEngineId</CODE> are equal if they have the same value.
+     * @return <CODE>true</CODE> if the two <CODE>SnmpEngineId</CODE> are equals, <CODE>false</CODE> otherwise.
+     */
+    public boolean equals(Object a) {
+        if(!(a instanceof SnmpEngineId) ) return false;
+        return hexString.equals(((SnmpEngineId) a).toString());
+    }
+
+    public int hashCode() {
+        return hexString.hashCode();
+    }
+}

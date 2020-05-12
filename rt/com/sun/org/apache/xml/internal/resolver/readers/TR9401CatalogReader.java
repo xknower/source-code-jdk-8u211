@@ -1,148 +1,143 @@
-/*     */ package com.sun.org.apache.xml.internal.resolver.readers;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.resolver.Catalog;
-/*     */ import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
-/*     */ import com.sun.org.apache.xml.internal.resolver.CatalogException;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TR9401CatalogReader
-/*     */   extends TextCatalogReader
-/*     */ {
-/*     */   public void readCatalog(Catalog catalog, InputStream is) throws MalformedURLException, IOException {
-/*  74 */     this.catfile = is;
-/*     */     
-/*  76 */     if (this.catfile == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/*  80 */     Vector<String> unknownEntry = null;
-/*     */     
-/*     */     try {
-/*     */       while (true) {
-/*  84 */         String token = nextToken();
-/*     */         
-/*  86 */         if (token == null) {
-/*  87 */           if (unknownEntry != null) {
-/*  88 */             catalog.unknownEntry(unknownEntry);
-/*  89 */             unknownEntry = null;
-/*     */           } 
-/*  91 */           this.catfile.close();
-/*  92 */           this.catfile = null;
-/*     */           
-/*     */           return;
-/*     */         } 
-/*  96 */         String entryToken = null;
-/*  97 */         if (this.caseSensitive) {
-/*  98 */           entryToken = token;
-/*     */         } else {
-/* 100 */           entryToken = token.toUpperCase();
-/*     */         } 
-/*     */         
-/* 103 */         if (entryToken.equals("DELEGATE")) {
-/* 104 */           entryToken = "DELEGATE_PUBLIC";
-/*     */         }
-/*     */         
-/*     */         try {
-/* 108 */           int type = CatalogEntry.getEntryType(entryToken);
-/* 109 */           int numArgs = CatalogEntry.getEntryArgCount(type);
-/* 110 */           Vector<String> args = new Vector();
-/*     */           
-/* 112 */           if (unknownEntry != null) {
-/* 113 */             catalog.unknownEntry(unknownEntry);
-/* 114 */             unknownEntry = null;
-/*     */           } 
-/*     */           
-/* 117 */           for (int count = 0; count < numArgs; count++) {
-/* 118 */             args.addElement(nextToken());
-/*     */           }
-/*     */           
-/* 121 */           catalog.addEntry(new CatalogEntry(entryToken, args));
-/* 122 */         } catch (CatalogException cex) {
-/* 123 */           if (cex.getExceptionType() == 3) {
-/* 124 */             if (unknownEntry == null) {
-/* 125 */               unknownEntry = new Vector();
-/*     */             }
-/* 127 */             unknownEntry.addElement(token); continue;
-/* 128 */           }  if (cex.getExceptionType() == 2) {
-/* 129 */             (catalog.getCatalogManager()).debug.message(1, "Invalid catalog entry", token);
-/* 130 */             unknownEntry = null; continue;
-/* 131 */           }  if (cex.getExceptionType() == 8) {
-/* 132 */             (catalog.getCatalogManager()).debug.message(1, cex.getMessage());
-/*     */           }
-/*     */         } 
-/*     */       } 
-/* 136 */     } catch (CatalogException cex2) {
-/* 137 */       if (cex2.getExceptionType() == 8)
-/* 138 */         (catalog.getCatalogManager()).debug.message(1, cex2.getMessage()); 
-/*     */       return;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\resolver\readers\TR9401CatalogReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+// TR9401CatalogReader.java - Read OASIS Catalog files
+
+/*
+ * Copyright 2001-2004 The Apache Software Foundation or its licensors,
+ * as applicable.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xml.internal.resolver.readers;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Vector;
+import com.sun.org.apache.xml.internal.resolver.Catalog;
+import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
+import com.sun.org.apache.xml.internal.resolver.CatalogException;
+
+/**
+ * Parses OASIS Open Catalog files.
+ *
+ * <p>This class reads OASIS Open Catalog files, returning a stream
+ * of tokens.</p>
+ *
+ * <p>This code interrogates the following non-standard system properties:</p>
+ *
+ * <dl>
+ * <dt><b>xml.catalog.debug</b></dt>
+ * <dd><p>Sets the debug level. A value of 0 is assumed if the
+ * property is not set or is not a number.</p></dd>
+ * </dl>
+ *
+ * @see Catalog
+ *
+ * @author Norman Walsh
+ * <a href="mailto:Norman.Walsh@Sun.COM">Norman.Walsh@Sun.COM</a>
+ *
+ */
+public class TR9401CatalogReader extends TextCatalogReader {
+
+  /**
+   * Start parsing an OASIS TR9401 Open Catalog file. The file is
+   * actually read and parsed
+   * as needed by <code>nextEntry</code>.
+   *
+   * <p>In a TR9401 Catalog the 'DELEGATE' entry delegates public
+   * identifiers. There is no delegate entry for system identifiers
+   * or URIs.</p>
+   *
+   * @param catalog The Catalog to populate
+   * @param is The input stream from which to read the TR9401 Catalog
+   *
+   * @throws MalformedURLException Improper fileUrl
+   * @throws IOException Error reading catalog file
+   */
+  public void readCatalog(Catalog catalog, InputStream is)
+    throws MalformedURLException, IOException {
+
+    catfile = is;
+
+    if (catfile == null) {
+      return;
+    }
+
+    Vector unknownEntry = null;
+
+    try {
+      while (true) {
+        String token = nextToken();
+
+        if (token == null) {
+          if (unknownEntry != null) {
+            catalog.unknownEntry(unknownEntry);
+            unknownEntry = null;
+          }
+          catfile.close();
+          catfile = null;
+          return;
+        }
+
+        String entryToken = null;
+        if (caseSensitive) {
+          entryToken = token;
+        } else {
+          entryToken = token.toUpperCase();
+        }
+
+        if (entryToken.equals("DELEGATE")) {
+          entryToken = "DELEGATE_PUBLIC";
+        }
+
+        try {
+          int type = CatalogEntry.getEntryType(entryToken);
+          int numArgs = CatalogEntry.getEntryArgCount(type);
+          Vector args = new Vector();
+
+          if (unknownEntry != null) {
+            catalog.unknownEntry(unknownEntry);
+            unknownEntry = null;
+          }
+
+          for (int count = 0; count < numArgs; count++) {
+            args.addElement(nextToken());
+          }
+
+          catalog.addEntry(new CatalogEntry(entryToken, args));
+        } catch (CatalogException cex) {
+          if (cex.getExceptionType() == CatalogException.INVALID_ENTRY_TYPE) {
+            if (unknownEntry == null) {
+              unknownEntry = new Vector();
+            }
+            unknownEntry.addElement(token);
+          } else if (cex.getExceptionType() == CatalogException.INVALID_ENTRY) {
+            catalog.getCatalogManager().debug.message(1, "Invalid catalog entry", token);
+            unknownEntry = null;
+          } else if (cex.getExceptionType() == CatalogException.UNENDED_COMMENT) {
+            catalog.getCatalogManager().debug.message(1, cex.getMessage());
+          }
+        }
+      }
+    } catch (CatalogException cex2) {
+      if (cex2.getExceptionType() == CatalogException.UNENDED_COMMENT) {
+        catalog.getCatalogManager().debug.message(1, cex2.getMessage());
+      }
+    }
+
+  }
+}

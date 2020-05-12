@@ -1,174 +1,164 @@
-/*     */ package java.lang.invoke;
-/*     */ 
-/*     */ import java.lang.invoke.BoundMethodHandle;
-/*     */ import java.lang.invoke.DelegatingMethodHandle;
-/*     */ import java.lang.invoke.LambdaForm;
-/*     */ import java.lang.invoke.MemberName;
-/*     */ import java.lang.invoke.MethodHandle;
-/*     */ import java.lang.invoke.MethodHandleStatics;
-/*     */ import java.lang.invoke.MethodType;
-/*     */ import java.util.Arrays;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class DelegatingMethodHandle
-/*     */   extends MethodHandle
-/*     */ {
-/*     */   static final LambdaForm.NamedFunction NF_getTarget;
-/*     */   
-/*     */   protected DelegatingMethodHandle(MethodHandle paramMethodHandle) {
-/*  40 */     this(paramMethodHandle.type(), paramMethodHandle);
-/*     */   }
-/*     */   
-/*     */   protected DelegatingMethodHandle(MethodType paramMethodType, MethodHandle paramMethodHandle) {
-/*  44 */     super(paramMethodType, chooseDelegatingForm(paramMethodHandle));
-/*     */   }
-/*     */   
-/*     */   protected DelegatingMethodHandle(MethodType paramMethodType, LambdaForm paramLambdaForm) {
-/*  48 */     super(paramMethodType, paramLambdaForm);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MemberName internalMemberName() {
-/*  59 */     return getTarget().internalMemberName();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   boolean isInvokeSpecial() {
-/*  64 */     return getTarget().isInvokeSpecial();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   Class<?> internalCallerClass() {
-/*  69 */     return getTarget().internalCallerClass();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MethodHandle copyWith(MethodType paramMethodType, LambdaForm paramLambdaForm) {
-/*  75 */     throw MethodHandleStatics.newIllegalArgumentException("do not use this");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   String internalProperties() {
-/*  80 */     return "\n& Class=" + getClass().getSimpleName() + "\n& Target=" + 
-/*  81 */       getTarget().debugString();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   BoundMethodHandle rebind() {
-/*  86 */     return getTarget().rebind();
-/*     */   }
-/*     */   
-/*     */   private static LambdaForm chooseDelegatingForm(MethodHandle paramMethodHandle) {
-/*  90 */     if (paramMethodHandle instanceof SimpleMethodHandle)
-/*  91 */       return paramMethodHandle.internalForm(); 
-/*  92 */     return makeReinvokerForm(paramMethodHandle, 8, DelegatingMethodHandle.class, NF_getTarget);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static LambdaForm makeReinvokerForm(MethodHandle paramMethodHandle, int paramInt, Object paramObject, LambdaForm.NamedFunction paramNamedFunction) {
-/* 100 */     switch (paramInt) { case 7:
-/* 101 */         str = "BMH.reinvoke";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 106 */         return makeReinvokerForm(paramMethodHandle, paramInt, paramObject, str, true, paramNamedFunction, null);case 8: str = "MH.delegate"; return makeReinvokerForm(paramMethodHandle, paramInt, paramObject, str, true, paramNamedFunction, null); }  String str = "MH.reinvoke"; return makeReinvokerForm(paramMethodHandle, paramInt, paramObject, str, true, paramNamedFunction, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static LambdaForm makeReinvokerForm(MethodHandle paramMethodHandle, int paramInt, Object paramObject, String paramString, boolean paramBoolean, LambdaForm.NamedFunction paramNamedFunction1, LambdaForm.NamedFunction paramNamedFunction2) {
-/* 116 */     MethodType methodType = paramMethodHandle.type().basicType();
-/*     */     
-/* 118 */     boolean bool1 = (paramInt < 0 || methodType.parameterSlotCount() > 253) ? true : false;
-/* 119 */     boolean bool2 = (paramNamedFunction2 != null) ? true : false;
-/*     */     
-/* 121 */     if (!bool1) {
-/* 122 */       LambdaForm lambdaForm1 = methodType.form().cachedLambdaForm(paramInt);
-/* 123 */       if (lambdaForm1 != null) return lambdaForm1;
-/*     */     
-/*     */     } 
-/*     */     
-/* 127 */     int i = 1 + methodType.parameterCount();
-/* 128 */     int j = i;
-/* 129 */     boolean bool3 = bool2 ? j++ : true;
-/* 130 */     boolean bool4 = bool1 ? true : j++;
-/* 131 */     int k = j++;
-/* 132 */     LambdaForm.Name[] arrayOfName = LambdaForm.arguments(j - i, methodType.invokerType());
-/* 133 */     assert arrayOfName.length == j;
-/* 134 */     arrayOfName[0] = arrayOfName[0].withConstraint(paramObject);
-/*     */     
-/* 136 */     if (bool2) {
-/* 137 */       arrayOfName[bool3] = new LambdaForm.Name(paramNamedFunction2, new Object[] { arrayOfName[0] });
-/*     */     }
-/* 139 */     if (bool1) {
-/* 140 */       Object[] arrayOfObject = Arrays.copyOfRange(arrayOfName, 1, i, Object[].class);
-/* 141 */       arrayOfName[k] = new LambdaForm.Name(paramMethodHandle, arrayOfObject);
-/*     */     } else {
-/* 143 */       arrayOfName[bool4] = new LambdaForm.Name(paramNamedFunction1, new Object[] { arrayOfName[0] });
-/* 144 */       Object[] arrayOfObject = Arrays.copyOfRange(arrayOfName, 0, i, Object[].class);
-/* 145 */       arrayOfObject[0] = arrayOfName[bool4];
-/* 146 */       arrayOfName[k] = new LambdaForm.Name(methodType, arrayOfObject);
-/*     */     } 
-/* 148 */     LambdaForm lambdaForm = new LambdaForm(paramString, i, arrayOfName, paramBoolean);
-/* 149 */     if (!bool1) {
-/* 150 */       lambdaForm = methodType.form().setCachedLambdaForm(paramInt, lambdaForm);
-/*     */     }
-/* 152 */     return lambdaForm;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/* 159 */       NF_getTarget = new LambdaForm.NamedFunction(DelegatingMethodHandle.class.getDeclaredMethod("getTarget", new Class[0]));
-/* 160 */     } catch (ReflectiveOperationException reflectiveOperationException) {
-/* 161 */       throw MethodHandleStatics.newInternalError(reflectiveOperationException);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected abstract MethodHandle getTarget();
-/*     */   
-/*     */   abstract MethodHandle asTypeUncached(MethodType paramMethodType);
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\invoke\DelegatingMethodHandle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.invoke;
+
+import java.util.Arrays;
+import static java.lang.invoke.LambdaForm.*;
+import static java.lang.invoke.MethodHandleStatics.*;
+
+/**
+ * A method handle whose invocation behavior is determined by a target.
+ * The delegating MH itself can hold extra "intentions" beyond the simple behavior.
+ * @author jrose
+ */
+/*non-public*/
+abstract class DelegatingMethodHandle extends MethodHandle {
+    protected DelegatingMethodHandle(MethodHandle target) {
+        this(target.type(), target);
+    }
+
+    protected DelegatingMethodHandle(MethodType type, MethodHandle target) {
+        super(type, chooseDelegatingForm(target));
+    }
+
+    protected DelegatingMethodHandle(MethodType type, LambdaForm form) {
+        super(type, form);
+    }
+
+    /** Define this to extract the delegated target which supplies the invocation behavior. */
+    abstract protected MethodHandle getTarget();
+
+    @Override
+    abstract MethodHandle asTypeUncached(MethodType newType);
+
+    @Override
+    MemberName internalMemberName() {
+        return getTarget().internalMemberName();
+    }
+
+    @Override
+    boolean isInvokeSpecial() {
+        return getTarget().isInvokeSpecial();
+    }
+
+    @Override
+    Class<?> internalCallerClass() {
+        return getTarget().internalCallerClass();
+    }
+
+    @Override
+    MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+        // FIXME: rethink 'copyWith' protocol; it is too low-level for use on all MHs
+        throw newIllegalArgumentException("do not use this");
+    }
+
+    @Override
+    String internalProperties() {
+        return "\n& Class="+getClass().getSimpleName()+
+               "\n& Target="+getTarget().debugString();
+    }
+
+    @Override
+    BoundMethodHandle rebind() {
+        return getTarget().rebind();
+    }
+
+    private static LambdaForm chooseDelegatingForm(MethodHandle target) {
+        if (target instanceof SimpleMethodHandle)
+            return target.internalForm();  // no need for an indirection
+        return makeReinvokerForm(target, MethodTypeForm.LF_DELEGATE, DelegatingMethodHandle.class, NF_getTarget);
+    }
+
+    static LambdaForm makeReinvokerForm(MethodHandle target,
+                                        int whichCache,
+                                        Object constraint,
+                                        NamedFunction getTargetFn) {
+        String debugString;
+        switch(whichCache) {
+            case MethodTypeForm.LF_REBIND:            debugString = "BMH.reinvoke";      break;
+            case MethodTypeForm.LF_DELEGATE:          debugString = "MH.delegate";       break;
+            default:                                  debugString = "MH.reinvoke";       break;
+        }
+        // No pre-action needed.
+        return makeReinvokerForm(target, whichCache, constraint, debugString, true, getTargetFn, null);
+    }
+    /** Create a LF which simply reinvokes a target of the given basic type. */
+    static LambdaForm makeReinvokerForm(MethodHandle target,
+                                        int whichCache,
+                                        Object constraint,
+                                        String debugString,
+                                        boolean forceInline,
+                                        NamedFunction getTargetFn,
+                                        NamedFunction preActionFn) {
+        MethodType mtype = target.type().basicType();
+        boolean customized = (whichCache < 0 ||
+                mtype.parameterSlotCount() > MethodType.MAX_MH_INVOKER_ARITY);
+        boolean hasPreAction = (preActionFn != null);
+        LambdaForm form;
+        if (!customized) {
+            form = mtype.form().cachedLambdaForm(whichCache);
+            if (form != null)  return form;
+        }
+        final int THIS_DMH    = 0;
+        final int ARG_BASE    = 1;
+        final int ARG_LIMIT   = ARG_BASE + mtype.parameterCount();
+        int nameCursor = ARG_LIMIT;
+        final int PRE_ACTION   = hasPreAction ? nameCursor++ : -1;
+        final int NEXT_MH     = customized ? -1 : nameCursor++;
+        final int REINVOKE    = nameCursor++;
+        LambdaForm.Name[] names = LambdaForm.arguments(nameCursor - ARG_LIMIT, mtype.invokerType());
+        assert(names.length == nameCursor);
+        names[THIS_DMH] = names[THIS_DMH].withConstraint(constraint);
+        Object[] targetArgs;
+        if (hasPreAction) {
+            names[PRE_ACTION] = new LambdaForm.Name(preActionFn, names[THIS_DMH]);
+        }
+        if (customized) {
+            targetArgs = Arrays.copyOfRange(names, ARG_BASE, ARG_LIMIT, Object[].class);
+            names[REINVOKE] = new LambdaForm.Name(target, targetArgs);  // the invoker is the target itself
+        } else {
+            names[NEXT_MH] = new LambdaForm.Name(getTargetFn, names[THIS_DMH]);
+            targetArgs = Arrays.copyOfRange(names, THIS_DMH, ARG_LIMIT, Object[].class);
+            targetArgs[0] = names[NEXT_MH];  // overwrite this MH with next MH
+            names[REINVOKE] = new LambdaForm.Name(mtype, targetArgs);
+        }
+        form = new LambdaForm(debugString, ARG_LIMIT, names, forceInline);
+        if (!customized) {
+            form = mtype.form().setCachedLambdaForm(whichCache, form);
+        }
+        return form;
+    }
+
+    static final NamedFunction NF_getTarget;
+    static {
+        try {
+            NF_getTarget = new NamedFunction(DelegatingMethodHandle.class
+                                             .getDeclaredMethod("getTarget"));
+        } catch (ReflectiveOperationException ex) {
+            throw newInternalError(ex);
+        }
+    }
+}

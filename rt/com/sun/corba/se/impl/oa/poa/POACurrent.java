@@ -1,187 +1,182 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.POASystemException;
-/*     */ import com.sun.corba.se.spi.oa.OAInvocationInfo;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapter;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.EmptyStackException;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ import org.omg.PortableServer.Current;
-/*     */ import org.omg.PortableServer.CurrentPackage.NoContext;
-/*     */ import org.omg.PortableServer.POA;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ import org.omg.PortableServer.ServantLocatorPackage.CookieHolder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class POACurrent
-/*     */   extends ObjectImpl
-/*     */   implements Current
-/*     */ {
-/*     */   private ORB orb;
-/*     */   private POASystemException wrapper;
-/*     */   
-/*     */   public POACurrent(ORB paramORB) {
-/*  54 */     this.orb = paramORB;
-/*  55 */     this.wrapper = POASystemException.get(paramORB, "oa.invocation");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] _ids() {
-/*  61 */     String[] arrayOfString = new String[1];
-/*  62 */     arrayOfString[0] = "IDL:omg.org/PortableServer/Current:1.0";
-/*  63 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public POA get_POA() throws NoContext {
-/*  74 */     POA pOA = (POA)peekThrowNoContext().oa();
-/*  75 */     throwNoContextIfNull(pOA);
-/*  76 */     return pOA;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] get_object_id() throws NoContext {
-/*  83 */     byte[] arrayOfByte = peekThrowNoContext().id();
-/*  84 */     throwNoContextIfNull(arrayOfByte);
-/*  85 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectAdapter getOA() {
-/*  94 */     ObjectAdapter objectAdapter = peekThrowInternal().oa();
-/*  95 */     throwInternalIfNull(objectAdapter);
-/*  96 */     return objectAdapter;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public byte[] getObjectId() {
-/* 101 */     byte[] arrayOfByte = peekThrowInternal().id();
-/* 102 */     throwInternalIfNull(arrayOfByte);
-/* 103 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   Servant getServant() {
-/* 108 */     return (Servant)peekThrowInternal().getServantContainer();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   CookieHolder getCookieHolder() {
-/* 117 */     CookieHolder cookieHolder = peekThrowInternal().getCookieHolder();
-/* 118 */     throwInternalIfNull(cookieHolder);
-/* 119 */     return cookieHolder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getOperation() {
-/* 127 */     String str = peekThrowInternal().getOperation();
-/* 128 */     throwInternalIfNull(str);
-/* 129 */     return str;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void setServant(Servant paramServant) {
-/* 134 */     peekThrowInternal().setServant(paramServant);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private OAInvocationInfo peekThrowNoContext() throws NoContext {
-/* 145 */     OAInvocationInfo oAInvocationInfo = null;
-/*     */     try {
-/* 147 */       oAInvocationInfo = this.orb.peekInvocationInfo();
-/* 148 */     } catch (EmptyStackException emptyStackException) {
-/* 149 */       throw new NoContext();
-/*     */     } 
-/* 151 */     return oAInvocationInfo;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private OAInvocationInfo peekThrowInternal() {
-/* 156 */     OAInvocationInfo oAInvocationInfo = null;
-/*     */     try {
-/* 158 */       oAInvocationInfo = this.orb.peekInvocationInfo();
-/* 159 */     } catch (EmptyStackException emptyStackException) {
-/*     */ 
-/*     */       
-/* 162 */       throw this.wrapper.poacurrentUnbalancedStack(emptyStackException);
-/*     */     } 
-/* 164 */     return oAInvocationInfo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void throwNoContextIfNull(Object paramObject) throws NoContext {
-/* 171 */     if (paramObject == null) {
-/* 172 */       throw new NoContext();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void throwInternalIfNull(Object paramObject) {
-/* 178 */     if (paramObject == null)
-/* 179 */       throw this.wrapper.poacurrentNullField(CompletionStatus.COMPLETED_MAYBE); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\POACurrent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa;
+
+import java.util.*;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.PortableServer.CurrentPackage.NoContext;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.Servant;
+import org.omg.PortableServer.ServantLocatorPackage.CookieHolder;
+
+import com.sun.corba.se.spi.oa.OAInvocationInfo ;
+import com.sun.corba.se.spi.oa.ObjectAdapter ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.POASystemException ;
+
+// XXX Needs to be turned into LocalObjectImpl.
+
+public class POACurrent extends org.omg.CORBA.portable.ObjectImpl
+    implements org.omg.PortableServer.Current
+{
+    private ORB orb;
+    private POASystemException wrapper ;
+
+    public POACurrent(ORB orb)
+    {
+        this.orb = orb;
+        wrapper = POASystemException.get( orb,
+            CORBALogDomains.OA_INVOCATION ) ;
+    }
+
+    public String[] _ids()
+    {
+        String[] ids = new String[1];
+        ids[0] = "IDL:omg.org/PortableServer/Current:1.0";
+        return ids;
+    }
+
+    //
+    // Standard OMG operations.
+    //
+
+    public POA get_POA()
+        throws
+            NoContext
+    {
+        POA poa = (POA)(peekThrowNoContext().oa());
+        throwNoContextIfNull(poa);
+        return poa;
+    }
+
+    public byte[] get_object_id()
+        throws
+            NoContext
+    {
+        byte[] objectid = peekThrowNoContext().id();
+        throwNoContextIfNull(objectid);
+        return objectid;
+    }
+
+    //
+    // Implementation operations used by POA package.
+    //
+
+    public ObjectAdapter getOA()
+    {
+        ObjectAdapter oa = peekThrowInternal().oa();
+        throwInternalIfNull(oa);
+        return oa;
+    }
+
+    public byte[] getObjectId()
+    {
+        byte[] objectid = peekThrowInternal().id();
+        throwInternalIfNull(objectid);
+        return objectid;
+    }
+
+    Servant getServant()
+    {
+        Servant servant = (Servant)(peekThrowInternal().getServantContainer());
+        // If is OK for the servant to be null.
+        // This could happen if POAImpl.getServant is called but
+        // POAImpl.internalGetServant throws an exception.
+        return servant;
+    }
+
+    CookieHolder getCookieHolder()
+    {
+        CookieHolder cookieHolder = peekThrowInternal().getCookieHolder();
+        throwInternalIfNull(cookieHolder);
+        return cookieHolder;
+    }
+
+    // This is public so we can test the stack balance.
+    // It is not a security hole since this same info can be obtained from
+    // PortableInterceptors.
+    public String getOperation()
+    {
+        String operation = peekThrowInternal().getOperation();
+        throwInternalIfNull(operation);
+        return operation;
+    }
+
+    void setServant(Servant servant)
+    {
+        peekThrowInternal().setServant( servant );
+    }
+
+    //
+    // Class utilities.
+    //
+
+    private OAInvocationInfo peekThrowNoContext()
+        throws
+            NoContext
+    {
+        OAInvocationInfo invocationInfo = null;
+        try {
+            invocationInfo = orb.peekInvocationInfo() ;
+        } catch (EmptyStackException e) {
+            throw new NoContext();
+        }
+        return invocationInfo;
+    }
+
+    private OAInvocationInfo peekThrowInternal()
+    {
+        OAInvocationInfo invocationInfo = null;
+        try {
+            invocationInfo = orb.peekInvocationInfo() ;
+        } catch (EmptyStackException e) {
+            // The completion status is maybe because this could happen
+            // after the servant has been invoked.
+            throw wrapper.poacurrentUnbalancedStack( e ) ;
+        }
+        return invocationInfo;
+    }
+
+    private void throwNoContextIfNull(Object o)
+        throws
+            NoContext
+    {
+        if ( o == null ) {
+            throw new NoContext();
+        }
+    }
+
+    private void throwInternalIfNull(Object o)
+    {
+        if ( o == null ) {
+            throw wrapper.poacurrentNullField( CompletionStatus.COMPLETED_MAYBE ) ;
+        }
+    }
+}

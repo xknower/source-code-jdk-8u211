@@ -1,70 +1,64 @@
-/*    */ package com.sun.jmx.mbeanserver;
-/*    */ 
-/*    */ import javax.management.loading.ClassLoaderRepository;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class SecureClassLoaderRepository
-/*    */   implements ClassLoaderRepository
-/*    */ {
-/*    */   private final ClassLoaderRepository clr;
-/*    */   
-/*    */   public SecureClassLoaderRepository(ClassLoaderRepository paramClassLoaderRepository) {
-/* 48 */     this.clr = paramClassLoaderRepository;
-/*    */   }
-/*    */   
-/*    */   public final Class<?> loadClass(String paramString) throws ClassNotFoundException {
-/* 52 */     return this.clr.loadClass(paramString);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public final Class<?> loadClassWithout(ClassLoader paramClassLoader, String paramString) throws ClassNotFoundException {
-/* 57 */     return this.clr.loadClassWithout(paramClassLoader, paramString);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public final Class<?> loadClassBefore(ClassLoader paramClassLoader, String paramString) throws ClassNotFoundException {
-/* 62 */     return this.clr.loadClassBefore(paramClassLoader, paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\SecureClassLoaderRepository.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.mbeanserver;
+
+import javax.management.loading.ClassLoaderRepository;
+
+/**
+ * Fix security hole in ClassLoaderRepository. This class wraps
+ * the actual ClassLoaderRepository implementation so that
+ * only the methods from {@link javax.management.loading.ClassLoaderRepository}
+ * can be accessed (read-only).
+ *
+ * @since 1.5
+ */
+final class SecureClassLoaderRepository
+    implements ClassLoaderRepository {
+
+    private final ClassLoaderRepository clr;
+    /**
+     * Creates a new secure ClassLoaderRepository wrapping an
+     * unsecure implementation.
+     * @param clr Unsecure {@link ClassLoaderRepository} implementation
+     *            to wrap.
+     **/
+    public SecureClassLoaderRepository(ClassLoaderRepository clr) {
+        this.clr=clr;
+    }
+    public final Class<?> loadClass(String className)
+        throws ClassNotFoundException {
+        return clr.loadClass(className);
+    }
+    public final Class<?> loadClassWithout(ClassLoader loader,
+                                  String className)
+        throws ClassNotFoundException {
+        return clr.loadClassWithout(loader,className);
+    }
+    public final Class<?> loadClassBefore(ClassLoader loader,
+                                 String className)
+        throws ClassNotFoundException {
+        return clr.loadClassBefore(loader,className);
+    }
+}

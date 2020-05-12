@@ -1,259 +1,254 @@
-/*     */ package javax.swing.text.html.parser;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ContentModel
-/*     */   implements Serializable
-/*     */ {
-/*     */   public int type;
-/*     */   public Object content;
-/*     */   public ContentModel next;
-/*     */   private boolean[] valSet;
-/*     */   private boolean[] val;
-/*     */   
-/*     */   public ContentModel() {}
-/*     */   
-/*     */   public ContentModel(Element paramElement) {
-/*  66 */     this(0, paramElement, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ContentModel(int paramInt, ContentModel paramContentModel) {
-/*  73 */     this(paramInt, paramContentModel, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ContentModel(int paramInt, Object paramObject, ContentModel paramContentModel) {
-/*  80 */     this.type = paramInt;
-/*  81 */     this.content = paramObject;
-/*  82 */     this.next = paramContentModel;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean empty() {
-/*     */     ContentModel contentModel;
-/*  90 */     switch (this.type) {
-/*     */       case 42:
-/*     */       case 63:
-/*  93 */         return true;
-/*     */       
-/*     */       case 43:
-/*     */       case 124:
-/*  97 */         for (contentModel = (ContentModel)this.content; contentModel != null; contentModel = contentModel.next) {
-/*  98 */           if (contentModel.empty()) {
-/*  99 */             return true;
-/*     */           }
-/*     */         } 
-/* 102 */         return false;
-/*     */       
-/*     */       case 38:
-/*     */       case 44:
-/* 106 */         for (contentModel = (ContentModel)this.content; contentModel != null; contentModel = contentModel.next) {
-/* 107 */           if (!contentModel.empty()) {
-/* 108 */             return false;
-/*     */           }
-/*     */         } 
-/* 111 */         return true;
-/*     */     } 
-/*     */     
-/* 114 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void getElements(Vector<Element> paramVector) {
-/*     */     ContentModel contentModel;
-/* 123 */     switch (this.type) {
-/*     */       case 42:
-/*     */       case 43:
-/*     */       case 63:
-/* 127 */         ((ContentModel)this.content).getElements(paramVector);
-/*     */         return;
-/*     */       case 38:
-/*     */       case 44:
-/*     */       case 124:
-/* 132 */         for (contentModel = (ContentModel)this.content; contentModel != null; contentModel = contentModel.next) {
-/* 133 */           contentModel.getElements(paramVector);
-/*     */         }
-/*     */         return;
-/*     */     } 
-/* 137 */     paramVector.addElement((Element)this.content);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean first(Object paramObject) {
-/*     */     ContentModel contentModel1;
-/*     */     Element element;
-/*     */     ContentModel contentModel2;
-/* 152 */     switch (this.type) {
-/*     */       case 42:
-/*     */       case 43:
-/*     */       case 63:
-/* 156 */         return ((ContentModel)this.content).first(paramObject);
-/*     */       
-/*     */       case 44:
-/* 159 */         for (contentModel1 = (ContentModel)this.content; contentModel1 != null; contentModel1 = contentModel1.next) {
-/* 160 */           if (contentModel1.first(paramObject)) {
-/* 161 */             return true;
-/*     */           }
-/* 163 */           if (!contentModel1.empty()) {
-/* 164 */             return false;
-/*     */           }
-/*     */         } 
-/* 167 */         return false;
-/*     */       
-/*     */       case 38:
-/*     */       case 124:
-/* 171 */         element = (Element)paramObject;
-/* 172 */         if (this.valSet == null || this.valSet.length <= Element.getMaxIndex()) {
-/* 173 */           this.valSet = new boolean[Element.getMaxIndex() + 1];
-/* 174 */           this.val = new boolean[this.valSet.length];
-/*     */         } 
-/* 176 */         if (this.valSet[element.index]) {
-/* 177 */           return this.val[element.index];
-/*     */         }
-/* 179 */         for (contentModel2 = (ContentModel)this.content; contentModel2 != null; contentModel2 = contentModel2.next) {
-/* 180 */           if (contentModel2.first(paramObject)) {
-/* 181 */             this.val[element.index] = true;
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 185 */         this.valSet[element.index] = true;
-/* 186 */         return this.val[element.index];
-/*     */     } 
-/*     */ 
-/*     */     
-/* 190 */     return (this.content == paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Element first() {
-/* 209 */     switch (this.type) {
-/*     */       case 38:
-/*     */       case 42:
-/*     */       case 63:
-/*     */       case 124:
-/* 214 */         return null;
-/*     */       
-/*     */       case 43:
-/*     */       case 44:
-/* 218 */         return ((ContentModel)this.content).first();
-/*     */     } 
-/*     */     
-/* 221 */     return (Element)this.content;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*     */     char[] arrayOfChar;
-/*     */     String str;
-/*     */     ContentModel contentModel;
-/* 229 */     switch (this.type) {
-/*     */       case 42:
-/* 231 */         return this.content + "*";
-/*     */       case 63:
-/* 233 */         return this.content + "?";
-/*     */       case 43:
-/* 235 */         return this.content + "+";
-/*     */       
-/*     */       case 38:
-/*     */       case 44:
-/*     */       case 124:
-/* 240 */         arrayOfChar = new char[] { ' ', (char)this.type, ' ' };
-/* 241 */         str = "";
-/* 242 */         for (contentModel = (ContentModel)this.content; contentModel != null; contentModel = contentModel.next) {
-/* 243 */           str = str + contentModel;
-/* 244 */           if (contentModel.next != null) {
-/* 245 */             str = str + new String(arrayOfChar);
-/*     */           }
-/*     */         } 
-/* 248 */         return "(" + str + ")";
-/*     */     } 
-/*     */     
-/* 251 */     return this.content.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\parser\ContentModel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text.html.parser;
+
+import java.util.Vector;
+import java.util.Enumeration;
+import java.io.*;
+
+
+/**
+ * A representation of a content model. A content model is
+ * basically a restricted BNF expression. It is restricted in
+ * the sense that it must be deterministic. This means that you
+ * don't have to represent it as a finite state automaton.<p>
+ * See Annex H on page 556 of the SGML handbook for more information.
+ *
+ * @author   Arthur van Hoff
+ *
+ */
+public final class ContentModel implements Serializable {
+    /**
+     * Type. Either '*', '?', '+', ',', '|', '&amp;'.
+     */
+    public int type;
+
+    /**
+     * The content. Either an Element or a ContentModel.
+     */
+    public Object content;
+
+    /**
+     * The next content model (in a ',', '|' or '&amp;' expression).
+     */
+    public ContentModel next;
+
+    public ContentModel() {
+    }
+
+    /**
+     * Create a content model for an element.
+     */
+    public ContentModel(Element content) {
+        this(0, content, null);
+    }
+
+    /**
+     * Create a content model of a particular type.
+     */
+    public ContentModel(int type, ContentModel content) {
+        this(type, content, null);
+    }
+
+    /**
+     * Create a content model of a particular type.
+     */
+    public ContentModel(int type, Object content, ContentModel next) {
+        this.type = type;
+        this.content = content;
+        this.next = next;
+    }
+
+    /**
+     * Return true if the content model could
+     * match an empty input stream.
+     */
+    public boolean empty() {
+        switch (type) {
+          case '*':
+          case '?':
+            return true;
+
+          case '+':
+          case '|':
+            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+                if (m.empty()) {
+                    return true;
+                }
+            }
+            return false;
+
+          case ',':
+          case '&':
+            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+                if (!m.empty()) {
+                    return false;
+                }
+            }
+            return true;
+
+          default:
+            return false;
+        }
+    }
+
+    /**
+     * Update elemVec with the list of elements that are
+     * part of the this contentModel.
+     */
+     public void getElements(Vector<Element> elemVec) {
+         switch (type) {
+         case '*':
+         case '?':
+         case '+':
+             ((ContentModel)content).getElements(elemVec);
+             break;
+         case ',':
+         case '|':
+         case '&':
+             for (ContentModel m=(ContentModel)content; m != null; m=m.next){
+                 m.getElements(elemVec);
+             }
+             break;
+         default:
+             elemVec.addElement((Element)content);
+         }
+     }
+
+     private boolean valSet[];
+     private boolean val[];
+     // A cache used by first().  This cache was found to speed parsing
+     // by about 10% (based on measurements of the 4-12 code base after
+     // buffering was fixed).
+
+    /**
+     * Return true if the token could potentially be the
+     * first token in the input stream.
+     */
+    public boolean first(Object token) {
+        switch (type) {
+          case '*':
+          case '?':
+          case '+':
+            return ((ContentModel)content).first(token);
+
+          case ',':
+            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+                if (m.first(token)) {
+                    return true;
+                }
+                if (!m.empty()) {
+                    return false;
+                }
+            }
+            return false;
+
+          case '|':
+          case '&': {
+            Element e = (Element) token;
+            if (valSet == null || valSet.length <= Element.getMaxIndex()) {
+                valSet = new boolean[Element.getMaxIndex() + 1];
+                val = new boolean[valSet.length];
+            }
+            if (valSet[e.index]) {
+                return val[e.index];
+            }
+            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+                if (m.first(token)) {
+                    val[e.index] = true;
+                    break;
+                }
+            }
+            valSet[e.index] = true;
+            return val[e.index];
+          }
+
+          default:
+            return (content == token);
+            // PENDING: refer to comment in ContentModelState
+/*
+              if (content == token) {
+                  return true;
+              }
+              Element e = (Element)content;
+              if (e.omitStart() && e.content != null) {
+                  return e.content.first(token);
+              }
+              return false;
+*/
+        }
+    }
+
+    /**
+     * Return the element that must be next.
+     */
+    public Element first() {
+        switch (type) {
+          case '&':
+          case '|':
+          case '*':
+          case '?':
+            return null;
+
+          case '+':
+          case ',':
+            return ((ContentModel)content).first();
+
+          default:
+            return (Element)content;
+        }
+    }
+
+    /**
+     * Convert to a string.
+     */
+    public String toString() {
+        switch (type) {
+          case '*':
+            return content + "*";
+          case '?':
+            return content + "?";
+          case '+':
+            return content + "+";
+
+          case ',':
+          case '|':
+          case '&':
+            char data[] = {' ', (char)type, ' '};
+            String str = "";
+            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+                str = str + m;
+                if (m.next != null) {
+                    str += new String(data);
+                }
+            }
+            return "(" + str + ")";
+
+          default:
+            return content.toString();
+        }
+    }
+}

@@ -1,61 +1,55 @@
-/*    */ package com.sun.corba.se.impl.orb;
-/*    */ 
-/*    */ import java.util.Properties;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class PropertyOnlyDataCollector
-/*    */   extends DataCollectorBase
-/*    */ {
-/*    */   public PropertyOnlyDataCollector(Properties paramProperties, String paramString1, String paramString2) {
-/* 41 */     super(paramProperties, paramString1, paramString2);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public boolean isApplet() {
-/* 46 */     return false;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   protected void collect() {
-/* 51 */     checkPropertyDefaults();
-/*    */     
-/* 53 */     findPropertiesFromProperties();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\PropertyOnlyDataCollector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.corba.se.impl.orb ;
+
+import java.net.InetAddress ;
+
+import java.util.Properties ;
+
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.CompletionStatus ;
+
+public class PropertyOnlyDataCollector extends DataCollectorBase
+{
+    public PropertyOnlyDataCollector( Properties props,
+        String localHostName, String configurationHostName )
+    {
+        super( props, localHostName, configurationHostName ) ;
+    }
+
+    public boolean isApplet()
+    {
+        return false ;
+    }
+
+    protected void collect()
+    {
+        checkPropertyDefaults() ;
+
+        findPropertiesFromProperties() ;
+    }
+}

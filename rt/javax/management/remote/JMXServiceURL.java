@@ -1,738 +1,733 @@
-/*     */ package javax.management.remote;
-/*     */ 
-/*     */ import com.sun.jmx.remote.util.ClassLogger;
-/*     */ import com.sun.jmx.remote.util.EnvHelp;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.net.InetAddress;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.UnknownHostException;
-/*     */ import java.util.BitSet;
-/*     */ import java.util.StringTokenizer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class JMXServiceURL
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 8173364409860779292L;
-/*     */   private static final String INVALID_INSTANCE_MSG = "Trying to deserialize an invalid instance of JMXServiceURL";
-/*     */   
-/*     */   public JMXServiceURL(String paramString) throws MalformedURLException {
-/* 142 */     int i1, i2, i = paramString.length();
-/*     */ 
-/*     */ 
-/*     */     
-/* 146 */     for (byte b = 0; b < i; b++) {
-/* 147 */       char c = paramString.charAt(b);
-/* 148 */       if (c < ' ' || c >= '') {
-/* 149 */         throw new MalformedURLException("Service URL contains non-ASCII character 0x" + 
-/*     */             
-/* 151 */             Integer.toHexString(c));
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 157 */     int j = "service:jmx:".length();
-/* 158 */     if (!paramString.regionMatches(true, 0, "service:jmx:", 0, j))
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */       
-/* 163 */       throw new MalformedURLException("Service URL must start with service:jmx:");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 168 */     int k = j;
-/* 169 */     int m = indexOf(paramString, ':', k);
-/* 170 */     this
-/* 171 */       .protocol = paramString.substring(k, m).toLowerCase();
-/*     */     
-/* 173 */     if (!paramString.regionMatches(m, "://", 0, 3)) {
-/* 174 */       throw new MalformedURLException("Missing \"://\" after protocol name");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 179 */     int n = m + 3;
-/*     */     
-/* 181 */     if (n < i && paramString
-/* 182 */       .charAt(n) == '[') {
-/* 183 */       i1 = paramString.indexOf(']', n) + 1;
-/* 184 */       if (i1 == 0)
-/* 185 */         throw new MalformedURLException("Bad host name: [ without ]"); 
-/* 186 */       this.host = paramString.substring(n + 1, i1 - 1);
-/* 187 */       if (!isNumericIPv6Address(this.host)) {
-/* 188 */         throw new MalformedURLException("Address inside [...] must be numeric IPv6 address");
-/*     */       }
-/*     */     }
-/*     */     else {
-/*     */       
-/* 193 */       i1 = indexOfFirstNotInSet(paramString, hostNameBitSet, n);
-/* 194 */       this.host = paramString.substring(n, i1);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 199 */     if (i1 < i && paramString.charAt(i1) == ':') {
-/* 200 */       if (this.host.length() == 0) {
-/* 201 */         throw new MalformedURLException("Cannot give port number without host name");
-/*     */       }
-/*     */       
-/* 204 */       int i4 = i1 + 1;
-/*     */       
-/* 206 */       i2 = indexOfFirstNotInSet(paramString, numericBitSet, i4);
-/* 207 */       String str = paramString.substring(i4, i2);
-/*     */       try {
-/* 209 */         this.port = Integer.parseInt(str);
-/* 210 */       } catch (NumberFormatException numberFormatException) {
-/* 211 */         throw new MalformedURLException("Bad port number: \"" + str + "\": " + numberFormatException);
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 215 */       i2 = i1;
-/* 216 */       this.port = 0;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 220 */     int i3 = i2;
-/* 221 */     if (i3 < i) {
-/* 222 */       this.urlPath = paramString.substring(i3);
-/*     */     } else {
-/* 224 */       this.urlPath = "";
-/*     */     } 
-/* 226 */     validate();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JMXServiceURL(String paramString1, String paramString2, int paramInt) throws MalformedURLException {
-/* 253 */     this(paramString1, paramString2, paramInt, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JMXServiceURL(String paramString1, String paramString2, int paramInt, String paramString3) throws MalformedURLException {
-/* 281 */     if (paramString1 == null) {
-/* 282 */       paramString1 = "jmxmp";
-/*     */     }
-/* 284 */     if (paramString2 == null) {
-/*     */       InetAddress inetAddress;
-/*     */       try {
-/* 287 */         inetAddress = InetAddress.getLocalHost();
-/* 288 */       } catch (UnknownHostException unknownHostException) {
-/* 289 */         throw new MalformedURLException("Local host name unknown: " + unknownHostException);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 293 */       paramString2 = inetAddress.getHostName();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 303 */         validateHost(paramString2, paramInt);
-/* 304 */       } catch (MalformedURLException malformedURLException) {
-/* 305 */         if (logger.fineOn()) {
-/* 306 */           logger.fine("JMXServiceURL", "Replacing illegal local host name " + paramString2 + " with numeric IP address (see RFC 1034)", malformedURLException);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 311 */         paramString2 = inetAddress.getHostAddress();
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 317 */     if (paramString2.startsWith("[")) {
-/* 318 */       if (!paramString2.endsWith("]")) {
-/* 319 */         throw new MalformedURLException("Host starts with [ but does not end with ]");
-/*     */       }
-/*     */       
-/* 322 */       paramString2 = paramString2.substring(1, paramString2.length() - 1);
-/* 323 */       if (!isNumericIPv6Address(paramString2)) {
-/* 324 */         throw new MalformedURLException("Address inside [...] must be numeric IPv6 address");
-/*     */       }
-/*     */       
-/* 327 */       if (paramString2.startsWith("[")) {
-/* 328 */         throw new MalformedURLException("More than one [[...]]");
-/*     */       }
-/*     */     } 
-/* 331 */     this.protocol = paramString1.toLowerCase();
-/* 332 */     this.host = paramString2;
-/* 333 */     this.port = paramInt;
-/*     */     
-/* 335 */     if (paramString3 == null)
-/* 336 */       paramString3 = ""; 
-/* 337 */     this.urlPath = paramString3;
-/*     */     
-/* 339 */     validate();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 345 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 346 */     String str1 = (String)getField.get("host", (Object)null);
-/* 347 */     int i = getField.get("port", -1);
-/* 348 */     String str2 = (String)getField.get("protocol", (Object)null);
-/* 349 */     String str3 = (String)getField.get("urlPath", (Object)null);
-/*     */     
-/* 351 */     if (str2 == null || str3 == null || str1 == null) {
-/* 352 */       StringBuilder stringBuilder = (new StringBuilder("Trying to deserialize an invalid instance of JMXServiceURL")).append('[');
-/* 353 */       boolean bool = true;
-/* 354 */       if (str2 == null) {
-/* 355 */         stringBuilder.append("protocol=null");
-/* 356 */         bool = false;
-/*     */       } 
-/* 358 */       if (str1 == null) {
-/* 359 */         stringBuilder.append(bool ? "" : ",").append("host=null");
-/* 360 */         bool = false;
-/*     */       } 
-/* 362 */       if (str3 == null) {
-/* 363 */         stringBuilder.append(bool ? "" : ",").append("urlPath=null");
-/*     */       }
-/* 365 */       stringBuilder.append(']');
-/* 366 */       throw new InvalidObjectException(stringBuilder.toString());
-/*     */     } 
-/*     */     
-/* 369 */     if (str1.contains("[") || str1.contains("]")) {
-/* 370 */       throw new InvalidObjectException("Invalid host name: " + str1);
-/*     */     }
-/*     */     
-/*     */     try {
-/* 374 */       validate(str2, str1, i, str3);
-/* 375 */       this.protocol = str2;
-/* 376 */       this.host = str1;
-/* 377 */       this.port = i;
-/* 378 */       this.urlPath = str3;
-/* 379 */     } catch (MalformedURLException malformedURLException) {
-/* 380 */       throw new InvalidObjectException("Trying to deserialize an invalid instance of JMXServiceURL: " + malformedURLException
-/* 381 */           .getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void validate(String paramString1, String paramString2, int paramInt, String paramString3) throws MalformedURLException {
-/* 389 */     int i = indexOfFirstNotInSet(paramString1, protocolBitSet, 0);
-/* 390 */     if (i == 0 || i < paramString1.length() || 
-/* 391 */       !alphaBitSet.get(paramString1.charAt(0))) {
-/* 392 */       throw new MalformedURLException("Missing or invalid protocol name: \"" + paramString1 + "\"");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 397 */     validateHost(paramString2, paramInt);
-/*     */ 
-/*     */     
-/* 400 */     if (paramInt < 0) {
-/* 401 */       throw new MalformedURLException("Bad port: " + paramInt);
-/*     */     }
-/*     */     
-/* 404 */     if (paramString3.length() > 0 && 
-/* 405 */       !paramString3.startsWith("/") && !paramString3.startsWith(";")) {
-/* 406 */       throw new MalformedURLException("Bad URL path: " + paramString3);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void validate() throws MalformedURLException {
-/* 411 */     validate(this.protocol, this.host, this.port, this.urlPath);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void validateHost(String paramString, int paramInt) throws MalformedURLException {
-/* 417 */     if (paramString.length() == 0) {
-/* 418 */       if (paramInt != 0) {
-/* 419 */         throw new MalformedURLException("Cannot give port number without host name");
-/*     */       }
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 425 */     if (isNumericIPv6Address(paramString)) {
-/*     */ 
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 433 */         InetAddress.getByName(paramString);
-/* 434 */       } catch (Exception exception) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 439 */         MalformedURLException malformedURLException = new MalformedURLException("Bad IPv6 address: " + paramString);
-/*     */         
-/* 441 */         EnvHelp.initCause(malformedURLException, exception);
-/* 442 */         throw malformedURLException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 465 */       int i = paramString.length();
-/* 466 */       byte b1 = 46;
-/* 467 */       boolean bool = false;
-/* 468 */       char c = Character.MIN_VALUE;
-/*     */ 
-/*     */       
-/* 471 */       for (byte b2 = 0; b2 < i; b2++) {
-/* 472 */         char c1 = paramString.charAt(b2);
-/* 473 */         boolean bool1 = alphaNumericBitSet.get(c1);
-/* 474 */         if (b1 == 46)
-/* 475 */           c = c1; 
-/* 476 */         if (bool1) {
-/* 477 */           b1 = 97;
-/* 478 */         } else if (c1 == '-') {
-/* 479 */           if (b1 == 46)
-/*     */             break; 
-/* 481 */           b1 = 45;
-/* 482 */         } else if (c1 == '.') {
-/* 483 */           bool = true;
-/* 484 */           if (b1 != 97)
-/*     */             break; 
-/* 486 */           b1 = 46;
-/*     */         } else {
-/* 488 */           b1 = 46;
-/*     */           
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/*     */       try {
-/* 494 */         if (b1 != 97)
-/* 495 */           throw randomException; 
-/* 496 */         if (bool && !alphaBitSet.get(c)) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 504 */           StringTokenizer stringTokenizer = new StringTokenizer(paramString, ".", true);
-/* 505 */           for (byte b = 0; b < 4; b++) {
-/* 506 */             String str = stringTokenizer.nextToken();
-/* 507 */             int j = Integer.parseInt(str);
-/* 508 */             if (j < 0 || j > 255)
-/* 509 */               throw randomException; 
-/* 510 */             if (b < 3 && !stringTokenizer.nextToken().equals("."))
-/* 511 */               throw randomException; 
-/*     */           } 
-/* 513 */           if (stringTokenizer.hasMoreTokens())
-/* 514 */             throw randomException; 
-/*     */         } 
-/* 516 */       } catch (Exception exception) {
-/* 517 */         throw new MalformedURLException("Bad host: \"" + paramString + "\"");
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/* 522 */   private static final Exception randomException = new Exception();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getProtocol() {
-/* 531 */     return this.protocol;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getHost() {
-/* 551 */     return this.host;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getPort() {
-/* 561 */     return this.port;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getURLPath() {
-/* 573 */     return this.urlPath;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 596 */     if (this.toString != null)
-/* 597 */       return this.toString; 
-/* 598 */     StringBuilder stringBuilder = new StringBuilder("service:jmx:");
-/* 599 */     stringBuilder.append(getProtocol()).append("://");
-/* 600 */     String str = getHost();
-/* 601 */     if (isNumericIPv6Address(str)) {
-/* 602 */       stringBuilder.append('[').append(str).append(']');
-/*     */     } else {
-/* 604 */       stringBuilder.append(str);
-/* 605 */     }  int i = getPort();
-/* 606 */     if (i != 0)
-/* 607 */       stringBuilder.append(':').append(i); 
-/* 608 */     stringBuilder.append(getURLPath());
-/* 609 */     this.toString = stringBuilder.toString();
-/* 610 */     return this.toString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 628 */     if (!(paramObject instanceof JMXServiceURL))
-/* 629 */       return false; 
-/* 630 */     JMXServiceURL jMXServiceURL = (JMXServiceURL)paramObject;
-/* 631 */     return (jMXServiceURL
-/* 632 */       .getProtocol().equalsIgnoreCase(getProtocol()) && jMXServiceURL
-/* 633 */       .getHost().equalsIgnoreCase(getHost()) && jMXServiceURL
-/* 634 */       .getPort() == getPort() && jMXServiceURL
-/* 635 */       .getURLPath().equals(getURLPath()));
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/* 639 */     return toString().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isNumericIPv6Address(String paramString) {
-/* 647 */     return (paramString.indexOf(':') >= 0);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static int indexOf(String paramString, char paramChar, int paramInt) {
-/* 652 */     int i = paramString.indexOf(paramChar, paramInt);
-/* 653 */     if (i < 0) {
-/* 654 */       return paramString.length();
-/*     */     }
-/* 656 */     return i;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static int indexOfFirstNotInSet(String paramString, BitSet paramBitSet, int paramInt) {
-/* 661 */     int i = paramString.length();
-/* 662 */     int j = paramInt;
-/*     */     
-/* 664 */     while (j < i) {
-/*     */       
-/* 666 */       char c = paramString.charAt(j);
-/* 667 */       if (c >= '')
-/*     */         break; 
-/* 669 */       if (!paramBitSet.get(c))
-/*     */         break; 
-/* 671 */       j++;
-/*     */     } 
-/* 673 */     return j;
-/*     */   }
-/*     */   
-/* 676 */   private static final BitSet alphaBitSet = new BitSet(128);
-/* 677 */   private static final BitSet numericBitSet = new BitSet(128);
-/* 678 */   private static final BitSet alphaNumericBitSet = new BitSet(128);
-/* 679 */   private static final BitSet protocolBitSet = new BitSet(128);
-/* 680 */   private static final BitSet hostNameBitSet = new BitSet(128);
-/*     */   private String protocol;
-/*     */   private String host;
-/*     */   
-/*     */   static {
-/*     */     char c;
-/* 686 */     for (c = '0'; c <= '9'; c = (char)(c + 1)) {
-/* 687 */       numericBitSet.set(c);
-/*     */     }
-/* 689 */     for (c = 'A'; c <= 'Z'; c = (char)(c + 1))
-/* 690 */       alphaBitSet.set(c); 
-/* 691 */     for (c = 'a'; c <= 'z'; c = (char)(c + 1)) {
-/* 692 */       alphaBitSet.set(c);
-/*     */     }
-/* 694 */     alphaNumericBitSet.or(alphaBitSet);
-/* 695 */     alphaNumericBitSet.or(numericBitSet);
-/*     */     
-/* 697 */     protocolBitSet.or(alphaNumericBitSet);
-/* 698 */     protocolBitSet.set(43);
-/* 699 */     protocolBitSet.set(45);
-/*     */     
-/* 701 */     hostNameBitSet.or(alphaNumericBitSet);
-/* 702 */     hostNameBitSet.set(45);
-/* 703 */     hostNameBitSet.set(46);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int port;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String urlPath;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private transient String toString;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 731 */   private static final ClassLogger logger = new ClassLogger("javax.management.remote.misc", "JMXServiceURL");
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\remote\JMXServiceURL.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.management.remote;
+
+
+import com.sun.jmx.remote.util.ClassLogger;
+import com.sun.jmx.remote.util.EnvHelp;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.BitSet;
+import java.util.StringTokenizer;
+
+/**
+ * <p>The address of a JMX API connector server.  Instances of this class
+ * are immutable.</p>
+ *
+ * <p>The address is an <em>Abstract Service URL</em> for SLP, as
+ * defined in RFC 2609 and amended by RFC 3111.  It must look like
+ * this:</p>
+ *
+ * <blockquote>
+ *
+ * <code>service:jmx:<em>protocol</em>:<em>sap</em></code>
+ *
+ * </blockquote>
+ *
+ * <p>Here, <code><em>protocol</em></code> is the transport
+ * protocol to be used to connect to the connector server.  It is
+ * a string of one or more ASCII characters, each of which is a
+ * letter, a digit, or one of the characters <code>+</code> or
+ * <code>-</code>.  The first character must be a letter.
+ * Uppercase letters are converted into lowercase ones.</p>
+ *
+ * <p><code><em>sap</em></code> is the address at which the connector
+ * server is found.  This address uses a subset of the syntax defined
+ * by RFC 2609 for IP-based protocols.  It is a subset because the
+ * <code>user@host</code> syntax is not supported.</p>
+ *
+ * <p>The other syntaxes defined by RFC 2609 are not currently
+ * supported by this class.</p>
+ *
+ * <p>The supported syntax is:</p>
+ *
+ * <blockquote>
+ *
+ * <code>//<em>[host[</em>:<em>port]][url-path]</em></code>
+ *
+ * </blockquote>
+ *
+ * <p>Square brackets <code>[]</code> indicate optional parts of
+ * the address.  Not all protocols will recognize all optional
+ * parts.</p>
+ *
+ * <p>The <code><em>host</em></code> is a host name, an IPv4 numeric
+ * host address, or an IPv6 numeric address enclosed in square
+ * brackets.</p>
+ *
+ * <p>The <code><em>port</em></code> is a decimal port number.  0
+ * means a default or anonymous port, depending on the protocol.</p>
+ *
+ * <p>The <code><em>host</em></code> and <code><em>port</em></code>
+ * can be omitted.  The <code><em>port</em></code> cannot be supplied
+ * without a <code><em>host</em></code>.</p>
+ *
+ * <p>The <code><em>url-path</em></code>, if any, begins with a slash
+ * (<code>/</code>) or a semicolon (<code>;</code>) and continues to
+ * the end of the address.  It can contain attributes using the
+ * semicolon syntax specified in RFC 2609.  Those attributes are not
+ * parsed by this class and incorrect attribute syntax is not
+ * detected.</p>
+ *
+ * <p>Although it is legal according to RFC 2609 to have a
+ * <code><em>url-path</em></code> that begins with a semicolon, not
+ * all implementations of SLP allow it, so it is recommended to avoid
+ * that syntax.</p>
+ *
+ * <p>Case is not significant in the initial
+ * <code>service:jmx:<em>protocol</em></code> string or in the host
+ * part of the address.  Depending on the protocol, case can be
+ * significant in the <code><em>url-path</em></code>.</p>
+ *
+ * @see <a
+ * href="http://www.ietf.org/rfc/rfc2609.txt">RFC 2609,
+ * "Service Templates and <code>Service:</code> Schemes"</a>
+ * @see <a
+ * href="http://www.ietf.org/rfc/rfc3111.txt">RFC 3111,
+ * "Service Location Protocol Modifications for IPv6"</a>
+ *
+ * @since 1.5
+ */
+public class JMXServiceURL implements Serializable {
+
+    private static final long serialVersionUID = 8173364409860779292L;
+
+    /**
+     * <p>Constructs a <code>JMXServiceURL</code> by parsing a Service URL
+     * string.</p>
+     *
+     * @param serviceURL the URL string to be parsed.
+     *
+     * @exception NullPointerException if <code>serviceURL</code> is
+     * null.
+     *
+     * @exception MalformedURLException if <code>serviceURL</code>
+     * does not conform to the syntax for an Abstract Service URL or
+     * if it is not a valid name for a JMX Remote API service.  A
+     * <code>JMXServiceURL</code> must begin with the string
+     * <code>"service:jmx:"</code> (case-insensitive).  It must not
+     * contain any characters that are not printable ASCII characters.
+     */
+    public JMXServiceURL(String serviceURL) throws MalformedURLException {
+        final int serviceURLLength = serviceURL.length();
+
+        /* Check that there are no non-ASCII characters in the URL,
+           following RFC 2609.  */
+        for (int i = 0; i < serviceURLLength; i++) {
+            char c = serviceURL.charAt(i);
+            if (c < 32 || c >= 127) {
+                throw new MalformedURLException("Service URL contains " +
+                                                "non-ASCII character 0x" +
+                                                Integer.toHexString(c));
+            }
+        }
+
+        // Parse the required prefix
+        final String requiredPrefix = "service:jmx:";
+        final int requiredPrefixLength = requiredPrefix.length();
+        if (!serviceURL.regionMatches(true, // ignore case
+                                      0,    // serviceURL offset
+                                      requiredPrefix,
+                                      0,    // requiredPrefix offset
+                                      requiredPrefixLength)) {
+            throw new MalformedURLException("Service URL must start with " +
+                                            requiredPrefix);
+        }
+
+        // Parse the protocol name
+        final int protoStart = requiredPrefixLength;
+        final int protoEnd = indexOf(serviceURL, ':', protoStart);
+        this.protocol =
+            serviceURL.substring(protoStart, protoEnd).toLowerCase();
+
+        if (!serviceURL.regionMatches(protoEnd, "://", 0, 3)) {
+            throw new MalformedURLException("Missing \"://\" after " +
+                                            "protocol name");
+        }
+
+        // Parse the host name
+        final int hostStart = protoEnd + 3;
+        final int hostEnd;
+        if (hostStart < serviceURLLength
+            && serviceURL.charAt(hostStart) == '[') {
+            hostEnd = serviceURL.indexOf(']', hostStart) + 1;
+            if (hostEnd == 0)
+                throw new MalformedURLException("Bad host name: [ without ]");
+            this.host = serviceURL.substring(hostStart + 1, hostEnd - 1);
+            if (!isNumericIPv6Address(this.host)) {
+                throw new MalformedURLException("Address inside [...] must " +
+                                                "be numeric IPv6 address");
+            }
+        } else {
+            hostEnd =
+                indexOfFirstNotInSet(serviceURL, hostNameBitSet, hostStart);
+            this.host = serviceURL.substring(hostStart, hostEnd);
+        }
+
+        // Parse the port number
+        final int portEnd;
+        if (hostEnd < serviceURLLength && serviceURL.charAt(hostEnd) == ':') {
+            if (this.host.length() == 0) {
+                throw new MalformedURLException("Cannot give port number " +
+                                                "without host name");
+            }
+            final int portStart = hostEnd + 1;
+            portEnd =
+                indexOfFirstNotInSet(serviceURL, numericBitSet, portStart);
+            final String portString = serviceURL.substring(portStart, portEnd);
+            try {
+                this.port = Integer.parseInt(portString);
+            } catch (NumberFormatException e) {
+                throw new MalformedURLException("Bad port number: \"" +
+                                                portString + "\": " + e);
+            }
+        } else {
+            portEnd = hostEnd;
+            this.port = 0;
+        }
+
+        // Parse the URL path
+        final int urlPathStart = portEnd;
+        if (urlPathStart < serviceURLLength)
+            this.urlPath = serviceURL.substring(urlPathStart);
+        else
+            this.urlPath = "";
+
+        validate();
+    }
+
+    /**
+     * <p>Constructs a <code>JMXServiceURL</code> with the given protocol,
+     * host, and port.  This constructor is equivalent to
+     * {@link #JMXServiceURL(String, String, int, String)
+     * JMXServiceURL(protocol, host, port, null)}.</p>
+     *
+     * @param protocol the protocol part of the URL.  If null, defaults
+     * to <code>jmxmp</code>.
+     *
+     * @param host the host part of the URL.  If null, defaults to the
+     * local host name, as determined by
+     * <code>InetAddress.getLocalHost().getHostName()</code>.  If it
+     * is a numeric IPv6 address, it can optionally be enclosed in
+     * square brackets <code>[]</code>.
+     *
+     * @param port the port part of the URL.
+     *
+     * @exception MalformedURLException if one of the parts is
+     * syntactically incorrect, or if <code>host</code> is null and it
+     * is not possible to find the local host name, or if
+     * <code>port</code> is negative.
+     */
+    public JMXServiceURL(String protocol, String host, int port)
+            throws MalformedURLException {
+        this(protocol, host, port, null);
+    }
+
+    /**
+     * <p>Constructs a <code>JMXServiceURL</code> with the given parts.
+     *
+     * @param protocol the protocol part of the URL.  If null, defaults
+     * to <code>jmxmp</code>.
+     *
+     * @param host the host part of the URL.  If null, defaults to the
+     * local host name, as determined by
+     * <code>InetAddress.getLocalHost().getHostName()</code>.  If it
+     * is a numeric IPv6 address, it can optionally be enclosed in
+     * square brackets <code>[]</code>.
+     *
+     * @param port the port part of the URL.
+     *
+     * @param urlPath the URL path part of the URL.  If null, defaults to
+     * the empty string.
+     *
+     * @exception MalformedURLException if one of the parts is
+     * syntactically incorrect, or if <code>host</code> is null and it
+     * is not possible to find the local host name, or if
+     * <code>port</code> is negative.
+     */
+    public JMXServiceURL(String protocol, String host, int port,
+                         String urlPath)
+            throws MalformedURLException {
+        if (protocol == null)
+            protocol = "jmxmp";
+
+        if (host == null) {
+            InetAddress local;
+            try {
+                local = InetAddress.getLocalHost();
+            } catch (UnknownHostException e) {
+                throw new MalformedURLException("Local host name unknown: " +
+                                                e);
+            }
+
+            host = local.getHostName();
+
+            /* We might have a hostname that violates DNS naming
+               rules, for example that contains an `_'.  While we
+               could be strict and throw an exception, this is rather
+               user-hostile.  Instead we use its numerical IP address.
+               We can only reasonably do this for the host==null case.
+               If we're given an explicit host name that is illegal we
+               have to reject it.  (Bug 5057532.)  */
+            try {
+                validateHost(host, port);
+            } catch (MalformedURLException e) {
+                if (logger.fineOn()) {
+                    logger.fine("JMXServiceURL",
+                                "Replacing illegal local host name " +
+                                host + " with numeric IP address " +
+                                "(see RFC 1034)", e);
+                }
+                host = local.getHostAddress();
+                /* Use the numeric address, which could be either IPv4
+                   or IPv6.  validateHost will accept either.  */
+            }
+        }
+
+        if (host.startsWith("[")) {
+            if (!host.endsWith("]")) {
+                throw new MalformedURLException("Host starts with [ but " +
+                                                "does not end with ]");
+            }
+            host = host.substring(1, host.length() - 1);
+            if (!isNumericIPv6Address(host)) {
+                throw new MalformedURLException("Address inside [...] must " +
+                                                "be numeric IPv6 address");
+            }
+            if (host.startsWith("["))
+                throw new MalformedURLException("More than one [[...]]");
+        }
+
+        this.protocol = protocol.toLowerCase();
+        this.host = host;
+        this.port = port;
+
+        if (urlPath == null)
+            urlPath = "";
+        this.urlPath = urlPath;
+
+        validate();
+    }
+
+    private static final String INVALID_INSTANCE_MSG =
+            "Trying to deserialize an invalid instance of JMXServiceURL";
+    private void readObject(ObjectInputStream  inputStream) throws IOException, ClassNotFoundException {
+        ObjectInputStream.GetField gf = inputStream.readFields();
+        String h = (String)gf.get("host", null);
+        int p = (int)gf.get("port", -1);
+        String proto = (String)gf.get("protocol", null);
+        String url = (String)gf.get("urlPath", null);
+
+        if (proto == null || url == null || h == null) {
+            StringBuilder sb = new StringBuilder(INVALID_INSTANCE_MSG).append('[');
+            boolean empty = true;
+            if (proto == null) {
+                sb.append("protocol=null");
+                empty = false;
+            }
+            if (h == null) {
+                sb.append(empty ? "" : ",").append("host=null");
+                empty = false;
+            }
+            if (url == null) {
+                sb.append(empty ? "" : ",").append("urlPath=null");
+            }
+            sb.append(']');
+            throw new InvalidObjectException(sb.toString());
+        }
+
+        if (h.contains("[") || h.contains("]")) {
+            throw new InvalidObjectException("Invalid host name: " + h);
+        }
+
+        try {
+            validate(proto, h, p, url);
+            this.protocol = proto;
+            this.host = h;
+            this.port = p;
+            this.urlPath = url;
+        } catch (MalformedURLException e) {
+            throw new InvalidObjectException(INVALID_INSTANCE_MSG + ": " +
+                                             e.getMessage());
+        }
+
+    }
+
+    private void validate(String proto, String h, int p, String url)
+        throws MalformedURLException {
+        // Check protocol
+        final int protoEnd = indexOfFirstNotInSet(proto, protocolBitSet, 0);
+        if (protoEnd == 0 || protoEnd < proto.length()
+            || !alphaBitSet.get(proto.charAt(0))) {
+            throw new MalformedURLException("Missing or invalid protocol " +
+                                            "name: \"" + proto + "\"");
+        }
+
+        // Check host
+        validateHost(h, p);
+
+        // Check port
+        if (p < 0)
+            throw new MalformedURLException("Bad port: " + p);
+
+        // Check URL path
+        if (url.length() > 0) {
+            if (!url.startsWith("/") && !url.startsWith(";"))
+                throw new MalformedURLException("Bad URL path: " + url);
+        }
+    }
+
+    private void validate() throws MalformedURLException {
+        validate(this.protocol, this.host, this.port, this.urlPath);
+    }
+
+    private static void validateHost(String h, int port)
+            throws MalformedURLException {
+
+        if (h.length() == 0) {
+            if (port != 0) {
+                throw new MalformedURLException("Cannot give port number " +
+                                                "without host name");
+            }
+            return;
+        }
+
+        if (isNumericIPv6Address(h)) {
+            /* We assume J2SE >= 1.4 here.  Otherwise you can't
+               use the address anyway.  We can't call
+               InetAddress.getByName without checking for a
+               numeric IPv6 address, because we mustn't try to do
+               a DNS lookup in case the address is not actually
+               numeric.  */
+            try {
+                InetAddress.getByName(h);
+            } catch (Exception e) {
+                /* We should really catch UnknownHostException
+                   here, but a bug in JDK 1.4 causes it to throw
+                   ArrayIndexOutOfBoundsException, e.g. if the
+                   string is ":".  */
+                MalformedURLException bad =
+                    new MalformedURLException("Bad IPv6 address: " + h);
+                EnvHelp.initCause(bad, e);
+                throw bad;
+            }
+        } else {
+            /* Tiny state machine to check valid host name.  This
+               checks the hostname grammar from RFC 1034 (DNS),
+               page 11.  A hostname is a dot-separated list of one
+               or more labels, where each label consists of
+               letters, numbers, or hyphens.  A label cannot begin
+               or end with a hyphen.  Empty hostnames are not
+               allowed.  Note that numeric IPv4 addresses are a
+               special case of this grammar.
+
+               The state is entirely captured by the last
+               character seen, with a virtual `.' preceding the
+               name.  We represent any alphanumeric character by
+               `a'.
+
+               We need a special hack to check, as required by the
+               RFC 2609 (SLP) grammar, that the last component of
+               the hostname begins with a letter.  Respecting the
+               intent of the RFC, we only do this if there is more
+               than one component.  If your local hostname begins
+               with a digit, we don't reject it.  */
+            final int hostLen = h.length();
+            char lastc = '.';
+            boolean sawDot = false;
+            char componentStart = 0;
+
+            loop:
+            for (int i = 0; i < hostLen; i++) {
+                char c = h.charAt(i);
+                boolean isAlphaNumeric = alphaNumericBitSet.get(c);
+                if (lastc == '.')
+                    componentStart = c;
+                if (isAlphaNumeric)
+                    lastc = 'a';
+                else if (c == '-') {
+                    if (lastc == '.')
+                        break; // will throw exception
+                    lastc = '-';
+                } else if (c == '.') {
+                    sawDot = true;
+                    if (lastc != 'a')
+                        break; // will throw exception
+                    lastc = '.';
+                } else {
+                    lastc = '.'; // will throw exception
+                    break;
+                }
+            }
+
+            try {
+                if (lastc != 'a')
+                    throw randomException;
+                if (sawDot && !alphaBitSet.get(componentStart)) {
+                    /* Must be a numeric IPv4 address.  In addition to
+                       the explicitly-thrown exceptions, we can get
+                       NoSuchElementException from the calls to
+                       tok.nextToken and NumberFormatException from
+                       the call to Integer.parseInt.  Using exceptions
+                       for control flow this way is a bit evil but it
+                       does simplify things enormously.  */
+                    StringTokenizer tok = new StringTokenizer(h, ".", true);
+                    for (int i = 0; i < 4; i++) {
+                        String ns = tok.nextToken();
+                        int n = Integer.parseInt(ns);
+                        if (n < 0 || n > 255)
+                            throw randomException;
+                        if (i < 3 && !tok.nextToken().equals("."))
+                            throw randomException;
+                    }
+                    if (tok.hasMoreTokens())
+                        throw randomException;
+                }
+            } catch (Exception e) {
+                throw new MalformedURLException("Bad host: \"" + h + "\"");
+            }
+        }
+    }
+
+    private static final Exception randomException = new Exception();
+
+
+    /**
+     * <p>The protocol part of the Service URL.
+     *
+     * @return the protocol part of the Service URL.  This is never null.
+     */
+    public String getProtocol() {
+        return protocol;
+    }
+
+    /**
+     * <p>The host part of the Service URL.  If the Service URL was
+     * constructed with the constructor that takes a URL string
+     * parameter, the result is the substring specifying the host in
+     * that URL.  If the Service URL was constructed with a
+     * constructor that takes a separate host parameter, the result is
+     * the string that was specified.  If that string was null, the
+     * result is
+     * <code>InetAddress.getLocalHost().getHostName()</code>.</p>
+     *
+     * <p>In either case, if the host was specified using the
+     * <code>[...]</code> syntax for numeric IPv6 addresses, the
+     * square brackets are not included in the return value here.</p>
+     *
+     * @return the host part of the Service URL.  This is never null.
+     */
+    public String getHost() {
+        return host;
+    }
+
+    /**
+     * <p>The port of the Service URL.  If no port was
+     * specified, the returned value is 0.</p>
+     *
+     * @return the port of the Service URL, or 0 if none.
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * <p>The URL Path part of the Service URL.  This is an empty
+     * string, or a string beginning with a slash (<code>/</code>), or
+     * a string beginning with a semicolon (<code>;</code>).
+     *
+     * @return the URL Path part of the Service URL.  This is never
+     * null.
+     */
+    public String getURLPath() {
+        return urlPath;
+    }
+
+    /**
+     * <p>The string representation of this Service URL.  If the value
+     * returned by this method is supplied to the
+     * <code>JMXServiceURL</code> constructor, the resultant object is
+     * equal to this one.</p>
+     *
+     * <p>The <code><em>host</em></code> part of the returned string
+     * is the value returned by {@link #getHost()}.  If that value
+     * specifies a numeric IPv6 address, it is surrounded by square
+     * brackets <code>[]</code>.</p>
+     *
+     * <p>The <code><em>port</em></code> part of the returned string
+     * is the value returned by {@link #getPort()} in its shortest
+     * decimal form.  If the value is zero, it is omitted.</p>
+     *
+     * @return the string representation of this Service URL.
+     */
+    public String toString() {
+        /* We don't bother synchronizing the access to toString.  At worst,
+           n threads will independently compute and store the same value.  */
+        if (toString != null)
+            return toString;
+        StringBuilder buf = new StringBuilder("service:jmx:");
+        buf.append(getProtocol()).append("://");
+        final String getHost = getHost();
+        if (isNumericIPv6Address(getHost))
+            buf.append('[').append(getHost).append(']');
+        else
+            buf.append(getHost);
+        final int getPort = getPort();
+        if (getPort != 0)
+            buf.append(':').append(getPort);
+        buf.append(getURLPath());
+        toString = buf.toString();
+        return toString;
+    }
+
+    /**
+     * <p>Indicates whether some other object is equal to this one.
+     * This method returns true if and only if <code>obj</code> is an
+     * instance of <code>JMXServiceURL</code> whose {@link
+     * #getProtocol()}, {@link #getHost()}, {@link #getPort()}, and
+     * {@link #getURLPath()} methods return the same values as for
+     * this object.  The values for {@link #getProtocol()} and {@link
+     * #getHost()} can differ in case without affecting equality.
+     *
+     * @param obj the reference object with which to compare.
+     *
+     * @return <code>true</code> if this object is the same as the
+     * <code>obj</code> argument; <code>false</code> otherwise.
+     */
+    public boolean equals(Object obj) {
+        if (!(obj instanceof JMXServiceURL))
+            return false;
+        JMXServiceURL u = (JMXServiceURL) obj;
+        return
+            (u.getProtocol().equalsIgnoreCase(getProtocol()) &&
+             u.getHost().equalsIgnoreCase(getHost()) &&
+             u.getPort() == getPort() &&
+             u.getURLPath().equals(getURLPath()));
+    }
+
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    /* True if this string, assumed to be a valid argument to
+     * InetAddress.getByName, is a numeric IPv6 address.
+     */
+    private static boolean isNumericIPv6Address(String s) {
+        // address contains colon if and only if it's a numeric IPv6 address
+        return (s.indexOf(':') >= 0);
+    }
+
+    // like String.indexOf but returns string length not -1 if not present
+    private static int indexOf(String s, char c, int fromIndex) {
+        int index = s.indexOf(c, fromIndex);
+        if (index < 0)
+            return s.length();
+        else
+            return index;
+    }
+
+    private static int indexOfFirstNotInSet(String s, BitSet set,
+                                            int fromIndex) {
+        final int slen = s.length();
+        int i = fromIndex;
+        while (true) {
+            if (i >= slen)
+                break;
+            char c = s.charAt(i);
+            if (c >= 128)
+                break; // not ASCII
+            if (!set.get(c))
+                break;
+            i++;
+        }
+        return i;
+    }
+
+    private final static BitSet alphaBitSet = new BitSet(128);
+    private final static BitSet numericBitSet = new BitSet(128);
+    private final static BitSet alphaNumericBitSet = new BitSet(128);
+    private final static BitSet protocolBitSet = new BitSet(128);
+    private final static BitSet hostNameBitSet = new BitSet(128);
+    static {
+        /* J2SE 1.4 adds lots of handy methods to BitSet that would
+           allow us to simplify here, e.g. by not writing loops, but
+           we want to work on J2SE 1.3 too.  */
+
+        for (char c = '0'; c <= '9'; c++)
+            numericBitSet.set(c);
+
+        for (char c = 'A'; c <= 'Z'; c++)
+            alphaBitSet.set(c);
+        for (char c = 'a'; c <= 'z'; c++)
+            alphaBitSet.set(c);
+
+        alphaNumericBitSet.or(alphaBitSet);
+        alphaNumericBitSet.or(numericBitSet);
+
+        protocolBitSet.or(alphaNumericBitSet);
+        protocolBitSet.set('+');
+        protocolBitSet.set('-');
+
+        hostNameBitSet.or(alphaNumericBitSet);
+        hostNameBitSet.set('-');
+        hostNameBitSet.set('.');
+    }
+
+    /**
+     * The value returned by {@link #getProtocol()}.
+     */
+    private String protocol;
+
+    /**
+     * The value returned by {@link #getHost()}.
+     */
+    private String host;
+
+    /**
+     * The value returned by {@link #getPort()}.
+     */
+    private int port;
+
+    /**
+     * The value returned by {@link #getURLPath()}.
+     */
+    private String urlPath;
+
+    /**
+     * Cached result of {@link #toString()}.
+     */
+    private transient String toString;
+
+    private static final ClassLogger logger =
+        new ClassLogger("javax.management.remote.misc", "JMXServiceURL");
+}

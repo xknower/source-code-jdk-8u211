@@ -1,220 +1,215 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ import java.text.CollationElementIterator;
-/*     */ import java.text.Collator;
-/*     */ import java.text.RuleBasedCollator;
-/*     */ import java.util.Locale;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StringComparable
-/*     */   implements Comparable
-/*     */ {
-/*     */   public static final int UNKNOWN_CASE = -1;
-/*     */   public static final int UPPER_CASE = 1;
-/*     */   public static final int LOWER_CASE = 2;
-/*     */   private String m_text;
-/*     */   private Locale m_locale;
-/*     */   private RuleBasedCollator m_collator;
-/*     */   private String m_caseOrder;
-/*  48 */   private int m_mask = -1;
-/*     */   
-/*     */   public StringComparable(String text, Locale locale, Collator collator, String caseOrder) {
-/*  51 */     this.m_text = text;
-/*  52 */     this.m_locale = locale;
-/*  53 */     this.m_collator = (RuleBasedCollator)collator;
-/*  54 */     this.m_caseOrder = caseOrder;
-/*  55 */     this.m_mask = getMask(this.m_collator.getStrength());
-/*     */   }
-/*     */   
-/*     */   public static final Comparable getComparator(String text, Locale locale, Collator collator, String caseOrder) {
-/*  59 */     if (caseOrder == null || caseOrder.length() == 0) {
-/*  60 */       return ((RuleBasedCollator)collator).getCollationKey(text);
-/*     */     }
-/*  62 */     return new StringComparable(text, locale, collator, caseOrder);
-/*     */   }
-/*     */   
-/*     */   public final String toString() {
-/*  66 */     return this.m_text;
-/*     */   }
-/*     */   public int compareTo(Object o) {
-/*  69 */     String pattern = ((StringComparable)o).toString();
-/*  70 */     if (this.m_text.equals(pattern)) {
-/*  71 */       return 0;
-/*     */     }
-/*  73 */     int savedStrength = this.m_collator.getStrength();
-/*  74 */     int comp = 0;
-/*     */     
-/*  76 */     if (savedStrength == 0 || savedStrength == 1) {
-/*  77 */       comp = this.m_collator.compare(this.m_text, pattern);
-/*     */     } else {
-/*  79 */       this.m_collator.setStrength(1);
-/*  80 */       comp = this.m_collator.compare(this.m_text, pattern);
-/*  81 */       this.m_collator.setStrength(savedStrength);
-/*     */     } 
-/*  83 */     if (comp != 0) {
-/*  84 */       return comp;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  89 */     comp = getCaseDiff(this.m_text, pattern);
-/*  90 */     if (comp != 0) {
-/*  91 */       return comp;
-/*     */     }
-/*  93 */     return this.m_collator.compare(this.m_text, pattern);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int getCaseDiff(String text, String pattern) {
-/*  99 */     int savedStrength = this.m_collator.getStrength();
-/* 100 */     int savedDecomposition = this.m_collator.getDecomposition();
-/* 101 */     this.m_collator.setStrength(2);
-/* 102 */     this.m_collator.setDecomposition(1);
-/*     */     
-/* 104 */     int[] diff = getFirstCaseDiff(text, pattern, this.m_locale);
-/* 105 */     this.m_collator.setStrength(savedStrength);
-/* 106 */     this.m_collator.setDecomposition(savedDecomposition);
-/* 107 */     if (diff != null) {
-/* 108 */       if (this.m_caseOrder.equals("upper-first")) {
-/* 109 */         if (diff[0] == 1) {
-/* 110 */           return -1;
-/*     */         }
-/* 112 */         return 1;
-/*     */       } 
-/*     */       
-/* 115 */       if (diff[0] == 2) {
-/* 116 */         return -1;
-/*     */       }
-/* 118 */       return 1;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 122 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int[] getFirstCaseDiff(String text, String pattern, Locale locale) {
-/*     */     int[] diff;
-/* 131 */     CollationElementIterator targIter = this.m_collator.getCollationElementIterator(text);
-/* 132 */     CollationElementIterator patIter = this.m_collator.getCollationElementIterator(pattern);
-/* 133 */     int startTarg = -1;
-/* 134 */     int endTarg = -1;
-/* 135 */     int startPatt = -1;
-/* 136 */     int endPatt = -1;
-/* 137 */     int done = getElement(-1);
-/* 138 */     int patternElement = 0, targetElement = 0;
-/* 139 */     boolean getPattern = true, getTarget = true;
-/*     */     
-/*     */     while (true) {
-/* 142 */       if (getPattern) {
-/* 143 */         startPatt = patIter.getOffset();
-/* 144 */         patternElement = getElement(patIter.next());
-/* 145 */         endPatt = patIter.getOffset();
-/*     */       } 
-/* 147 */       if (getTarget) {
-/* 148 */         startTarg = targIter.getOffset();
-/* 149 */         targetElement = getElement(targIter.next());
-/* 150 */         endTarg = targIter.getOffset();
-/*     */       } 
-/* 152 */       getTarget = getPattern = true;
-/* 153 */       if (patternElement == done || targetElement == done)
-/* 154 */         return null; 
-/* 155 */       if (targetElement == 0) {
-/* 156 */         getPattern = false; continue;
-/* 157 */       }  if (patternElement == 0) {
-/* 158 */         getTarget = false; continue;
-/* 159 */       }  if (targetElement != patternElement && 
-/* 160 */         startPatt < endPatt && startTarg < endTarg)
-/* 161 */       { String subText = text.substring(startTarg, endTarg);
-/* 162 */         String subPatt = pattern.substring(startPatt, endPatt);
-/* 163 */         String subTextUp = subText.toUpperCase(locale);
-/* 164 */         String subPattUp = subPatt.toUpperCase(locale);
-/* 165 */         if (this.m_collator.compare(subTextUp, subPattUp) != 0) {
-/*     */           continue;
-/*     */         }
-/*     */         
-/* 169 */         diff = new int[] { -1, -1 };
-/* 170 */         if (this.m_collator.compare(subText, subTextUp) == 0) {
-/* 171 */           diff[0] = 1;
-/* 172 */         } else if (this.m_collator.compare(subText, subText.toLowerCase(locale)) == 0) {
-/* 173 */           diff[0] = 2;
-/*     */         } 
-/* 175 */         if (this.m_collator.compare(subPatt, subPattUp) == 0) {
-/* 176 */           diff[1] = 1;
-/* 177 */         } else if (this.m_collator.compare(subPatt, subPatt.toLowerCase(locale)) == 0) {
-/* 178 */           diff[1] = 2;
-/*     */         } 
-/*     */         
-/* 181 */         if ((diff[0] == 1 && diff[1] == 2) || (diff[0] == 2 && diff[1] == 1))
-/*     */           break;  } 
-/* 183 */     }  return diff;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int getMask(int strength) {
-/* 199 */     switch (strength) {
-/*     */       case 0:
-/* 201 */         return -65536;
-/*     */       case 1:
-/* 203 */         return -256;
-/*     */     } 
-/* 205 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int getElement(int maxStrengthElement) {
-/* 212 */     return maxStrengthElement & this.m_mask;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\StringComparable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringComparable.java,v 1.2.4.1 2005/09/15 08:15:55 suresh_emailid Exp $
+ */
+
+package com.sun.org.apache.xml.internal.utils;
+
+import java.util.Vector;
+import java.text.Collator;
+import java.text.RuleBasedCollator;
+import java.text.CollationElementIterator;
+import java.util.Locale;
+import java.text.CollationKey;
+
+
+/**
+* International friendly string comparison with case-order
+ * @author Igor Hersht, igorh@ca.ibm.com
+*/
+public class StringComparable implements Comparable  {
+
+     public final static int UNKNOWN_CASE = -1;
+     public final static int UPPER_CASE = 1;
+     public final static int LOWER_CASE = 2;
+
+     private  String m_text;
+     private  Locale m_locale;
+     private RuleBasedCollator m_collator;
+     private String m_caseOrder;
+     private int m_mask = 0xFFFFFFFF;
+
+    public StringComparable(final String text, final Locale locale, final Collator collator, final String caseOrder){
+         m_text =  text;
+         m_locale = locale;
+         m_collator = (RuleBasedCollator)collator;
+         m_caseOrder = caseOrder;
+         m_mask = getMask(m_collator.getStrength());
+    }
+
+   public final static Comparable getComparator( final String text, final Locale locale, final Collator collator, final String caseOrder){
+       if((caseOrder == null) ||(caseOrder.length() == 0)){// no case-order specified
+            return  ((RuleBasedCollator)collator).getCollationKey(text);
+       }else{
+            return new StringComparable(text, locale, collator, caseOrder);
+       }
+   }
+
+   public final String toString(){return m_text;}
+
+   public int compareTo(Object o) {
+   final String pattern = ((StringComparable)o).toString();
+   if(m_text.equals(pattern)){//Code-point equals
+      return 0;
+   }
+   final int savedStrength = m_collator.getStrength();
+   int comp = 0;
+      // Is there difference more significant than case-order?
+     if(((savedStrength == Collator.PRIMARY) || (savedStrength == Collator.SECONDARY))){
+         comp = m_collator.compare(m_text, pattern );
+     }else{// more than SECONDARY
+         m_collator.setStrength(Collator.SECONDARY);
+         comp = m_collator.compare(m_text, pattern );
+         m_collator.setStrength(savedStrength);
+     }
+     if(comp != 0){//Difference more significant than case-order
+        return comp ;
+     }
+
+      // No difference more significant than case-order.
+      // Find case difference
+       comp = getCaseDiff(m_text, pattern);
+       if(comp != 0){
+           return comp;
+       }else{// No case differences. Less significant difference could exist
+            return m_collator.compare(m_text, pattern );
+       }
+  }
+
+
+  private final int getCaseDiff (final String text, final String pattern){
+     final int savedStrength = m_collator.getStrength();
+     final int savedDecomposition = m_collator.getDecomposition();
+     m_collator.setStrength(Collator.TERTIARY);// not to ignore case
+     m_collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION );// corresponds NDF
+
+    final int diff[] =getFirstCaseDiff (text, pattern, m_locale);
+    m_collator.setStrength(savedStrength);// restore
+    m_collator.setDecomposition(savedDecomposition); //restore
+    if(diff != null){
+       if((m_caseOrder).equals("upper-first")){
+            if(diff[0] == UPPER_CASE){
+                return -1;
+            }else{
+                return 1;
+            }
+       }else{// lower-first
+            if(diff[0] == LOWER_CASE){
+                return -1;
+            }else{
+                return 1;
+            }
+       }
+   }else{// No case differences
+        return 0;
+   }
+
+  }
+
+
+
+  private final int[] getFirstCaseDiff(final String text, final String pattern, final Locale locale){
+
+        final CollationElementIterator targIter = m_collator.getCollationElementIterator(text);
+        final CollationElementIterator patIter = m_collator.getCollationElementIterator(pattern);
+        int startTarg = -1;
+        int endTarg = -1;
+        int startPatt = -1;
+        int endPatt = -1;
+        final int done = getElement(CollationElementIterator.NULLORDER);
+        int patternElement = 0, targetElement = 0;
+        boolean getPattern = true, getTarget = true;
+
+        while (true) {
+            if (getPattern){
+                 startPatt = patIter.getOffset();
+                 patternElement = getElement(patIter.next());
+                 endPatt = patIter.getOffset();
+            }
+            if ((getTarget)){
+                 startTarg  = targIter.getOffset();
+                 targetElement   = getElement(targIter.next());
+                 endTarg  = targIter.getOffset();
+            }
+            getTarget = getPattern = true;
+            if ((patternElement == done) ||( targetElement == done)) {
+                return null;
+            } else if (targetElement == 0) {
+              getPattern = false;
+            } else if (patternElement == 0) {
+              getTarget = false;
+            } else if (targetElement != patternElement) {// mismatch
+                if((startPatt < endPatt) && (startTarg < endTarg)){
+                    final String  subText = text.substring(startTarg, endTarg);
+                    final String  subPatt = pattern.substring(startPatt, endPatt);
+                    final String  subTextUp = subText.toUpperCase(locale);
+                    final String  subPattUp = subPatt.toUpperCase(locale);
+                    if(m_collator.compare(subTextUp, subPattUp) != 0){ // not case diffference
+                        continue;
+                    }
+
+                    int diff[] = {UNKNOWN_CASE, UNKNOWN_CASE};
+                    if(m_collator.compare(subText, subTextUp) == 0){
+                        diff[0] = UPPER_CASE;
+                    }else if(m_collator.compare(subText, subText.toLowerCase(locale)) == 0){
+                       diff[0] = LOWER_CASE;
+                    }
+                    if(m_collator.compare(subPatt, subPattUp) == 0){
+                        diff[1] = UPPER_CASE;
+                    }else if(m_collator.compare(subPatt, subPatt.toLowerCase(locale)) == 0){
+                       diff[1] = LOWER_CASE;
+                    }
+
+                    if(((diff[0] == UPPER_CASE) && ( diff[1] == LOWER_CASE)) ||
+                       ((diff[0] == LOWER_CASE) && ( diff[1] == UPPER_CASE))){
+                        return diff;
+                    }else{// not case diff
+                      continue;
+                    }
+                }else{
+                    continue;
+                }
+
+           }
+        }
+
+  }
+
+
+ // Return a mask for the part of the order we're interested in
+    private static final int getMask(final int strength) {
+        switch (strength) {
+            case Collator.PRIMARY:
+                return 0xFFFF0000;
+            case Collator.SECONDARY:
+                return 0xFFFFFF00;
+            default:
+                return 0xFFFFFFFF;
+        }
+    }
+    //get collation element with given strength
+    // from the element with max strength
+  private final int getElement(int maxStrengthElement){
+
+    return (maxStrengthElement & m_mask);
+  }
+
+}//StringComparable

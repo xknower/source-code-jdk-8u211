@@ -1,364 +1,358 @@
-/*     */ package javax.management.relation;
-/*     */ 
-/*     */ import com.sun.jmx.mbeanserver.GetPropertyAction;
-/*     */ import com.sun.jmx.mbeanserver.Util;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.ObjectStreamField;
-/*     */ import java.io.Serializable;
-/*     */ import java.security.AccessController;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class RoleUnresolved
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long oldSerialVersionUID = -9026457686611660144L;
-/*     */   private static final long newSerialVersionUID = -48350262537070138L;
-/*  71 */   private static final ObjectStreamField[] oldSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("myRoleName", String.class), new ObjectStreamField("myRoleValue", ArrayList.class), new ObjectStreamField("myPbType", int.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  79 */   private static final ObjectStreamField[] newSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("roleName", String.class), new ObjectStreamField("roleValue", List.class), new ObjectStreamField("problemType", int.class) };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final ObjectStreamField[] serialPersistentFields;
-/*     */ 
-/*     */   
-/*     */   private static boolean compat = false;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/*  96 */       GetPropertyAction getPropertyAction = new GetPropertyAction("jmx.serial.form");
-/*  97 */       String str = AccessController.<String>doPrivileged(getPropertyAction);
-/*  98 */       compat = (str != null && str.equals("1.0"));
-/*  99 */     } catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 102 */     if (compat) {
-/* 103 */       serialPersistentFields = oldSerialPersistentFields;
-/* 104 */       serialVersionUID = -9026457686611660144L;
-/*     */     } else {
-/* 106 */       serialPersistentFields = newSerialPersistentFields;
-/* 107 */       serialVersionUID = -48350262537070138L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 120 */   private String roleName = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 125 */   private List<ObjectName> roleValue = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int problemType;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RoleUnresolved(String paramString, List<ObjectName> paramList, int paramInt) throws IllegalArgumentException {
-/* 153 */     if (paramString == null) {
-/* 154 */       String str = "Invalid parameter.";
-/* 155 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 158 */     setRoleName(paramString);
-/* 159 */     setRoleValue(paramList);
-/*     */     
-/* 161 */     setProblemType(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getRoleName() {
-/* 177 */     return this.roleName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<ObjectName> getRoleValue() {
-/* 190 */     return this.roleValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getProblemType() {
-/* 202 */     return this.problemType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRoleName(String paramString) throws IllegalArgumentException {
-/* 217 */     if (paramString == null) {
-/* 218 */       String str = "Invalid parameter.";
-/* 219 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 222 */     this.roleName = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRoleValue(List<ObjectName> paramList) {
-/* 236 */     if (paramList != null) {
-/* 237 */       this.roleValue = new ArrayList<>(paramList);
-/*     */     } else {
-/* 239 */       this.roleValue = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setProblemType(int paramInt) throws IllegalArgumentException {
-/* 257 */     if (!RoleStatus.isRoleStatus(paramInt)) {
-/* 258 */       String str = "Incorrect problem type.";
-/* 259 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/* 261 */     this.problemType = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     try {
-/* 272 */       return new RoleUnresolved(this.roleName, this.roleValue, this.problemType);
-/* 273 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 274 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 284 */     StringBuilder stringBuilder = new StringBuilder();
-/* 285 */     stringBuilder.append("role name: " + this.roleName);
-/* 286 */     if (this.roleValue != null) {
-/* 287 */       stringBuilder.append("; value: ");
-/* 288 */       Iterator<ObjectName> iterator = this.roleValue.iterator();
-/* 289 */       while (iterator.hasNext()) {
-/* 290 */         ObjectName objectName = iterator.next();
-/* 291 */         stringBuilder.append(objectName.toString());
-/* 292 */         if (iterator.hasNext()) {
-/* 293 */           stringBuilder.append(", ");
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 297 */     stringBuilder.append("; problem type: " + this.problemType);
-/* 298 */     return stringBuilder.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 306 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 310 */       ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 311 */       this.roleName = (String)getField.get("myRoleName", (Object)null);
-/* 312 */       if (getField.defaulted("myRoleName"))
-/*     */       {
-/* 314 */         throw new NullPointerException("myRoleName");
-/*     */       }
-/* 316 */       this.roleValue = Util.<List<ObjectName>>cast(getField.get("myRoleValue", (Object)null));
-/* 317 */       if (getField.defaulted("myRoleValue"))
-/*     */       {
-/* 319 */         throw new NullPointerException("myRoleValue");
-/*     */       }
-/* 321 */       this.problemType = getField.get("myPbType", 0);
-/* 322 */       if (getField.defaulted("myPbType"))
-/*     */       {
-/* 324 */         throw new NullPointerException("myPbType");
-/*     */       
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 331 */       paramObjectInputStream.defaultReadObject();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 341 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 345 */       ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 346 */       putField.put("myRoleName", this.roleName);
-/* 347 */       putField.put("myRoleValue", this.roleValue);
-/* 348 */       putField.put("myPbType", this.problemType);
-/* 349 */       paramObjectOutputStream.writeFields();
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 355 */       paramObjectOutputStream.defaultWriteObject();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\relation\RoleUnresolved.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.relation;
+
+import static com.sun.jmx.mbeanserver.Util.cast;
+import com.sun.jmx.mbeanserver.GetPropertyAction;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+import java.io.Serializable;
+
+import java.security.AccessController;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.management.ObjectName;
+
+/**
+ * Represents an unresolved role: a role not retrieved from a relation due
+ * to a problem. It provides the role name, value (if problem when trying to
+ * set the role) and an integer defining the problem (constants defined in
+ * RoleStatus).
+ *
+ * <p>The <b>serialVersionUID</b> of this class is <code>-48350262537070138L</code>.
+ *
+ * @since 1.5
+ */
+@SuppressWarnings("serial")  // serialVersionUID not constant
+public class RoleUnresolved implements Serializable {
+
+    // Serialization compatibility stuff:
+    // Two serial forms are supported in this class. The selected form depends
+    // on system property "jmx.serial.form":
+    //  - "1.0" for JMX 1.0
+    //  - any other value for JMX 1.1 and higher
+    //
+    // Serial version for old serial form
+    private static final long oldSerialVersionUID = -9026457686611660144L;
+    //
+    // Serial version for new serial form
+    private static final long newSerialVersionUID = -48350262537070138L;
+    //
+    // Serializable fields in old serial form
+    private static final ObjectStreamField[] oldSerialPersistentFields =
+    {
+      new ObjectStreamField("myRoleName", String.class),
+      new ObjectStreamField("myRoleValue", ArrayList.class),
+      new ObjectStreamField("myPbType", int.class)
+    };
+    //
+    // Serializable fields in new serial form
+    private static final ObjectStreamField[] newSerialPersistentFields =
+    {
+      new ObjectStreamField("roleName", String.class),
+      new ObjectStreamField("roleValue", List.class),
+      new ObjectStreamField("problemType", int.class)
+    };
+    //
+    // Actual serial version and serial form
+    private static final long serialVersionUID;
+    /** @serialField roleName String Role name
+     *  @serialField roleValue List Role value ({@link List} of {@link ObjectName} objects)
+     *  @serialField problemType int Problem type
+     */
+    private static final ObjectStreamField[] serialPersistentFields;
+    private static boolean compat = false;
+    static {
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK : Too bad, no compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
+    }
+    //
+    // END Serialization compatibility stuff
+
+    //
+    // Private members
+    //
+
+    /**
+     * @serial Role name
+     */
+    private String roleName = null;
+
+    /**
+     * @serial Role value ({@link List} of {@link ObjectName} objects)
+     */
+    private List<ObjectName> roleValue = null;
+
+    /**
+     * @serial Problem type
+     */
+    private int problemType;
+
+    //
+    // Constructor
+    //
+
+    /**
+     * Constructor.
+     *
+     * @param name  name of the role
+     * @param value  value of the role (if problem when setting the
+     * role)
+     * @param pbType  type of problem (according to known problem types,
+     * listed as static final members).
+     *
+     * @exception IllegalArgumentException  if null parameter or incorrect
+     * problem type
+     */
+    public RoleUnresolved(String name,
+                          List<ObjectName> value,
+                          int pbType)
+        throws IllegalArgumentException {
+
+        if (name == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        setRoleName(name);
+        setRoleValue(value);
+        // Can throw IllegalArgumentException
+        setProblemType(pbType);
+        return;
+    }
+
+    //
+    // Accessors
+    //
+
+    /**
+     * Retrieves role name.
+     *
+     * @return the role name.
+     *
+     * @see #setRoleName
+     */
+    public String getRoleName() {
+        return roleName;
+    }
+
+    /**
+     * Retrieves role value.
+     *
+     * @return an ArrayList of ObjectName objects, the one provided to be set
+     * in given role. Null if the unresolved role is returned for a read
+     * access.
+     *
+     * @see #setRoleValue
+     */
+    public List<ObjectName> getRoleValue() {
+        return roleValue;
+    }
+
+    /**
+     * Retrieves problem type.
+     *
+     * @return an integer corresponding to a problem, those being described as
+     * static final members of current class.
+     *
+     * @see #setProblemType
+     */
+    public int getProblemType() {
+        return problemType;
+    }
+
+    /**
+     * Sets role name.
+     *
+     * @param name the new role name.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     *
+     * @see #getRoleName
+     */
+    public void setRoleName(String name)
+        throws IllegalArgumentException {
+
+        if (name == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        roleName = name;
+        return;
+    }
+
+    /**
+     * Sets role value.
+     *
+     * @param value  List of ObjectName objects for referenced
+     * MBeans not set in role.
+     *
+     * @see #getRoleValue
+     */
+    public void setRoleValue(List<ObjectName> value) {
+
+        if (value != null) {
+            roleValue = new ArrayList<ObjectName>(value);
+        } else {
+            roleValue = null;
+        }
+        return;
+    }
+
+    /**
+     * Sets problem type.
+     *
+     * @param pbType  integer corresponding to a problem. Must be one of
+     * those described as static final members of current class.
+     *
+     * @exception IllegalArgumentException  if incorrect problem type
+     *
+     * @see #getProblemType
+     */
+    public void setProblemType(int pbType)
+        throws IllegalArgumentException {
+
+        if (!(RoleStatus.isRoleStatus(pbType))) {
+            String excMsg = "Incorrect problem type.";
+            throw new IllegalArgumentException(excMsg);
+        }
+        problemType = pbType;
+        return;
+    }
+
+    /**
+     * Clone this object.
+     *
+     * @return an independent clone.
+     */
+    public Object clone() {
+        try {
+            return new RoleUnresolved(roleName, roleValue, problemType);
+        } catch (IllegalArgumentException exc) {
+            return null; // :)
+        }
+    }
+
+    /**
+     * Return a string describing this object.
+     *
+     * @return a description of this RoleUnresolved object.
+     */
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        result.append("role name: " + roleName);
+        if (roleValue != null) {
+            result.append("; value: ");
+            for (Iterator<ObjectName> objNameIter = roleValue.iterator();
+                 objNameIter.hasNext();) {
+                ObjectName currObjName = objNameIter.next();
+                result.append(currObjName.toString());
+                if (objNameIter.hasNext()) {
+                    result.append(", ");
+                }
+            }
+        }
+        result.append("; problem type: " + problemType);
+        return result.toString();
+    }
+
+    /**
+     * Deserializes a {@link RoleUnresolved} from an {@link ObjectInputStream}.
+     */
+    private void readObject(ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+      if (compat)
+      {
+        // Read an object serialized in the old serial form
+        //
+        ObjectInputStream.GetField fields = in.readFields();
+        roleName = (String) fields.get("myRoleName", null);
+        if (fields.defaulted("myRoleName"))
+        {
+          throw new NullPointerException("myRoleName");
+        }
+        roleValue = cast(fields.get("myRoleValue", null));
+        if (fields.defaulted("myRoleValue"))
+        {
+          throw new NullPointerException("myRoleValue");
+        }
+        problemType = fields.get("myPbType", 0);
+        if (fields.defaulted("myPbType"))
+        {
+          throw new NullPointerException("myPbType");
+        }
+      }
+      else
+      {
+        // Read an object serialized in the new serial form
+        //
+        in.defaultReadObject();
+      }
+    }
+
+
+    /**
+     * Serializes a {@link RoleUnresolved} to an {@link ObjectOutputStream}.
+     */
+    private void writeObject(ObjectOutputStream out)
+            throws IOException {
+      if (compat)
+      {
+        // Serializes this instance in the old serial form
+        //
+        ObjectOutputStream.PutField fields = out.putFields();
+        fields.put("myRoleName", roleName);
+        fields.put("myRoleValue", roleValue);
+        fields.put("myPbType", problemType);
+        out.writeFields();
+      }
+      else
+      {
+        // Serializes this instance in the new serial form
+        //
+        out.defaultWriteObject();
+      }
+    }
+}

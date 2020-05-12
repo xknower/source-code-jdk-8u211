@@ -1,204 +1,261 @@
-/*     */ package com.sun.corba.se.impl.naming.pcosnaming;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.util.Hashtable;
-/*     */ import org.omg.CORBA.LocalObject;
-/*     */ import org.omg.PortableServer.ForwardRequest;
-/*     */ import org.omg.PortableServer.POA;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ import org.omg.PortableServer.ServantLocator;
-/*     */ import org.omg.PortableServer.ServantLocatorPackage.CookieHolder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServantManagerImpl
-/*     */   extends LocalObject
-/*     */   implements ServantLocator
-/*     */ {
-/*     */   private static final long serialVersionUID = 4028710359865748280L;
-/*     */   private ORB orb;
-/*     */   private NameService theNameService;
-/*     */   private File logDir;
-/*     */   private Hashtable contexts;
-/*     */   private CounterDB counterDb;
-/*     */   private int counter;
-/*     */   private static final String objKeyPrefix = "NC";
-/*     */   
-/*     */   ServantManagerImpl(ORB paramORB, File paramFile, NameService paramNameService) {
-/*  78 */     this.logDir = paramFile;
-/*  79 */     this.orb = paramORB;
-/*     */     
-/*  81 */     this.counterDb = new CounterDB(paramFile);
-/*  82 */     this.contexts = new Hashtable<>();
-/*  83 */     this.theNameService = paramNameService;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Servant preinvoke(byte[] paramArrayOfbyte, POA paramPOA, String paramString, CookieHolder paramCookieHolder) throws ForwardRequest {
-/*  91 */     String str = new String(paramArrayOfbyte);
-/*     */     
-/*  93 */     Servant servant = (Servant)this.contexts.get(str);
-/*     */     
-/*  95 */     if (servant == null)
-/*     */     {
-/*  97 */       servant = readInContext(str);
-/*     */     }
-/*     */     
-/* 100 */     return servant;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void postinvoke(byte[] paramArrayOfbyte, POA paramPOA, String paramString, Object paramObject, Servant paramServant) {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingContextImpl readInContext(String paramString) {
-/* 111 */     NamingContextImpl namingContextImpl = (NamingContextImpl)this.contexts.get(paramString);
-/* 112 */     if (namingContextImpl != null)
-/*     */     {
-/*     */       
-/* 115 */       return namingContextImpl;
-/*     */     }
-/*     */     
-/* 118 */     File file = new File(this.logDir, paramString);
-/* 119 */     if (file.exists()) {
-/*     */       try {
-/* 121 */         FileInputStream fileInputStream = new FileInputStream(file);
-/* 122 */         ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-/* 123 */         namingContextImpl = (NamingContextImpl)objectInputStream.readObject();
-/* 124 */         namingContextImpl.setORB(this.orb);
-/* 125 */         namingContextImpl.setServantManagerImpl(this);
-/* 126 */         namingContextImpl.setRootNameService(this.theNameService);
-/* 127 */         objectInputStream.close();
-/* 128 */       } catch (Exception exception) {}
-/*     */     }
-/*     */ 
-/*     */     
-/* 132 */     if (namingContextImpl != null)
-/*     */     {
-/* 134 */       this.contexts.put(paramString, namingContextImpl);
-/*     */     }
-/* 136 */     return namingContextImpl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingContextImpl addContext(String paramString, NamingContextImpl paramNamingContextImpl) {
-/* 142 */     File file = new File(this.logDir, paramString);
-/*     */     
-/* 144 */     if (file.exists()) {
-/*     */       
-/* 146 */       paramNamingContextImpl = readInContext(paramString);
-/*     */     } else {
-/*     */       
-/*     */       try {
-/* 150 */         FileOutputStream fileOutputStream = new FileOutputStream(file);
-/* 151 */         ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-/* 152 */         objectOutputStream.writeObject(paramNamingContextImpl);
-/* 153 */         objectOutputStream.close();
-/* 154 */       } catch (Exception exception) {}
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 159 */       this.contexts.remove(paramString);
-/*     */     }
-/* 161 */     catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 164 */     this.contexts.put(paramString, paramNamingContextImpl);
-/*     */     
-/* 166 */     return paramNamingContextImpl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void updateContext(String paramString, NamingContextImpl paramNamingContextImpl) {
-/* 172 */     File file = new File(this.logDir, paramString);
-/* 173 */     if (file.exists()) {
-/*     */       
-/* 175 */       file.delete();
-/* 176 */       file = new File(this.logDir, paramString);
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 180 */       FileOutputStream fileOutputStream = new FileOutputStream(file);
-/* 181 */       ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-/* 182 */       objectOutputStream.writeObject(paramNamingContextImpl);
-/* 183 */       objectOutputStream.close();
-/* 184 */     } catch (Exception exception) {
-/* 185 */       exception.printStackTrace();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String getRootObjectKey() {
-/* 191 */     return "NC0";
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getNewObjectKey() {
-/* 196 */     return "NC" + this.counterDb.getNextCounter();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\pcosnaming\ServantManagerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.naming.pcosnaming;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Hashtable;
+
+import org.omg.CORBA.Policy;
+import org.omg.CORBA.LocalObject;
+
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.Servant;
+import org.omg.PortableServer.ForwardRequest;
+import org.omg.PortableServer.ServantLocator;
+import org.omg.PortableServer.LifespanPolicyValue;
+import org.omg.PortableServer.RequestProcessingPolicyValue;
+import org.omg.PortableServer.IdAssignmentPolicyValue;
+import org.omg.PortableServer.ServantRetentionPolicyValue;
+import org.omg.PortableServer.ServantLocatorPackage.CookieHolder;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+/**
+ * @author      Rohit Garg
+ * @since       JDK1.2
+ */
+
+public class ServantManagerImpl extends org.omg.CORBA.LocalObject implements ServantLocator
+{
+
+    // computed using serialver tool
+
+    private static final long serialVersionUID = 4028710359865748280L;
+    private ORB orb;
+
+    private NameService theNameService;
+
+    private File logDir;
+
+    private Hashtable contexts;
+
+    private CounterDB counterDb;
+
+    private int counter;
+
+    private final static String objKeyPrefix = "NC";
+
+    ServantManagerImpl(ORB orb, File logDir, NameService aNameService)
+    {
+        this.logDir = logDir;
+        this.orb    = orb;
+        // initialize the counter database
+        counterDb   = new CounterDB(logDir);
+        contexts    = new Hashtable();
+        theNameService = aNameService;
+    }
+
+
+    public Servant preinvoke(byte[] oid, POA adapter, String operation,
+                             CookieHolder cookie) throws ForwardRequest
+    {
+
+        String objKey = new String(oid);
+
+        Servant servant = (Servant) contexts.get(objKey);
+
+        if (servant == null)
+        {
+                 servant =  readInContext(objKey);
+        }
+
+        return servant;
+    }
+
+    public void postinvoke(byte[] oid, POA adapter, String operation,
+                           java.lang.Object cookie, Servant servant)
+    {
+        // nada
+    }
+
+    public NamingContextImpl readInContext(String objKey)
+    {
+        NamingContextImpl context = (NamingContextImpl) contexts.get(objKey);
+        if( context != null )
+        {
+                // Returning Context from Cache
+                return context;
+        }
+
+        File contextFile = new File(logDir, objKey);
+        if (contextFile.exists()) {
+            try {
+                FileInputStream fis = new FileInputStream(contextFile);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                context = (NamingContextImpl) ois.readObject();
+                context.setORB( orb );
+                context.setServantManagerImpl( this );
+                context.setRootNameService( theNameService );
+                ois.close();
+            } catch (Exception ex) {
+            }
+        }
+
+        if (context != null)
+        {
+                contexts.put(objKey, context);
+        }
+        return context;
+    }
+
+    public NamingContextImpl addContext(String objKey,
+                                        NamingContextImpl context)
+    {
+        File contextFile =  new File(logDir, objKey);
+
+        if (contextFile.exists())
+        {
+            context = readInContext(objKey);
+        }
+        else {
+            try {
+                FileOutputStream fos = new FileOutputStream(contextFile);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(context);
+                oos.close();
+            } catch (Exception ex) {
+            }
+        }
+        try
+        {
+                contexts.remove( objKey );
+        }
+        catch( Exception e)
+        {
+        }
+        contexts.put(objKey, context);
+
+        return context;
+    }
+
+    public void updateContext( String objKey,
+                                   NamingContextImpl context )
+    {
+        File contextFile =  new File(logDir, objKey);
+        if (contextFile.exists())
+        {
+                contextFile.delete( );
+                contextFile =  new File(logDir, objKey);
+        }
+
+        try {
+                FileOutputStream fos = new FileOutputStream(contextFile);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(context);
+                oos.close();
+            } catch (Exception ex) {
+                ex.printStackTrace( );
+            }
+    }
+
+    public static String getRootObjectKey()
+    {
+        return objKeyPrefix + CounterDB.rootCounter;
+    }
+
+    public String getNewObjectKey()
+    {
+        return objKeyPrefix + counterDb.getNextCounter();
+    }
+
+
+
+}
+
+class CounterDB implements Serializable
+{
+
+    CounterDB (File logDir)
+    {
+        counterFileName = "counter";
+        counterFile = new File(logDir, counterFileName);
+        if (!counterFile.exists()) {
+            counter = new Integer(rootCounter);
+            writeCounter();
+        } else {
+            readCounter();
+        }
+    }
+
+    private void readCounter()
+    {
+        try {
+            FileInputStream fis = new FileInputStream(counterFile);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            counter = (Integer) ois.readObject();
+            ois.close();
+        } catch (Exception ex) {
+                                }
+    }
+
+    private void writeCounter()
+    {
+        try {
+            counterFile.delete();
+            FileOutputStream fos = new FileOutputStream(counterFile);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(counter);
+            oos.flush();
+            oos.close();
+
+        } catch (Exception ex) {
+        }
+    }
+
+    public synchronized int getNextCounter()
+    {
+        int counterVal = counter.intValue();
+        counter = new Integer(++counterVal);
+        writeCounter();
+
+        return counterVal;
+    }
+
+
+
+    private Integer counter;
+
+    private static String counterFileName = "counter";
+
+    private transient File counterFile;
+
+    public  final static int rootCounter = 0;
+}

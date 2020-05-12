@@ -1,653 +1,647 @@
-/*     */ package javax.print;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.AbstractMap;
-/*     */ import java.util.AbstractSet;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.Set;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class MimeType
-/*     */   implements Serializable, Cloneable
-/*     */ {
-/*     */   private static final long serialVersionUID = -2785720609362367683L;
-/*     */   private String[] myPieces;
-/* 105 */   private transient String myStringValue = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 110 */   private transient ParameterMapEntrySet myEntrySet = null;
-/*     */   
-/*     */   private static final int TOKEN_LEXEME = 0;
-/*     */   private static final int QUOTED_STRING_LEXEME = 1;
-/*     */   private static final int TSPECIAL_LEXEME = 2;
-/* 115 */   private transient ParameterMap myParameterMap = null;
-/*     */   private static final int EOF_LEXEME = 3;
-/*     */   private static final int ILLEGAL_LEXEME = 4;
-/*     */   
-/*     */   private class ParameterMapEntry implements Map.Entry {
-/*     */     private int myIndex;
-/*     */     
-/*     */     public ParameterMapEntry(int param1Int) {
-/* 123 */       this.myIndex = param1Int;
-/*     */     }
-/*     */     public Object getKey() {
-/* 126 */       return MimeType.this.myPieces[this.myIndex];
-/*     */     }
-/*     */     public Object getValue() {
-/* 129 */       return MimeType.this.myPieces[this.myIndex + 1];
-/*     */     }
-/*     */     public Object setValue(Object param1Object) {
-/* 132 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */     public boolean equals(Object param1Object) {
-/* 135 */       return (param1Object != null && param1Object instanceof Map.Entry && 
-/*     */         
-/* 137 */         getKey().equals(((Map.Entry)param1Object).getKey()) && 
-/* 138 */         getValue().equals(((Map.Entry)param1Object).getValue()));
-/*     */     }
-/*     */     public int hashCode() {
-/* 141 */       return getKey().hashCode() ^ getValue().hashCode();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private class ParameterMapEntrySetIterator
-/*     */     implements Iterator
-/*     */   {
-/* 149 */     private int myIndex = 2;
-/*     */     public boolean hasNext() {
-/* 151 */       return (this.myIndex < MimeType.this.myPieces.length);
-/*     */     }
-/*     */     public Object next() {
-/* 154 */       if (hasNext()) {
-/* 155 */         MimeType.ParameterMapEntry parameterMapEntry = new MimeType.ParameterMapEntry(this.myIndex);
-/* 156 */         this.myIndex += 2;
-/* 157 */         return parameterMapEntry;
-/*     */       } 
-/* 159 */       throw new NoSuchElementException();
-/*     */     }
-/*     */     
-/*     */     public void remove() {
-/* 163 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */     
-/*     */     private ParameterMapEntrySetIterator() {} }
-/*     */   
-/*     */   private class ParameterMapEntrySet extends AbstractSet {
-/*     */     private ParameterMapEntrySet() {}
-/*     */     
-/*     */     public Iterator iterator() {
-/* 172 */       return new MimeType.ParameterMapEntrySetIterator();
-/*     */     }
-/*     */     public int size() {
-/* 175 */       return (MimeType.this.myPieces.length - 2) / 2;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private class ParameterMap
-/*     */     extends AbstractMap {
-/*     */     private ParameterMap() {}
-/*     */     
-/*     */     public Set entrySet() {
-/* 184 */       if (MimeType.this.myEntrySet == null) {
-/* 185 */         MimeType.this.myEntrySet = new MimeType.ParameterMapEntrySet();
-/*     */       }
-/* 187 */       return MimeType.this.myEntrySet;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MimeType(String paramString) {
-/* 204 */     parse(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMimeType() {
-/* 212 */     return getStringValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMediaType() {
-/* 219 */     return this.myPieces[0];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMediaSubtype() {
-/* 226 */     return this.myPieces[1];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Map getParameterMap() {
-/* 238 */     if (this.myParameterMap == null) {
-/* 239 */       this.myParameterMap = new ParameterMap();
-/*     */     }
-/* 241 */     return this.myParameterMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 251 */     return getStringValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 258 */     return getStringValue().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 278 */     return (paramObject != null && paramObject instanceof MimeType && 
-/*     */       
-/* 280 */       getStringValue().equals(((MimeType)paramObject).getStringValue()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getStringValue() {
-/* 287 */     if (this.myStringValue == null) {
-/* 288 */       StringBuffer stringBuffer = new StringBuffer();
-/* 289 */       stringBuffer.append(this.myPieces[0]);
-/* 290 */       stringBuffer.append('/');
-/* 291 */       stringBuffer.append(this.myPieces[1]);
-/* 292 */       int i = this.myPieces.length;
-/* 293 */       for (byte b = 2; b < i; b += 2) {
-/* 294 */         stringBuffer.append(';');
-/* 295 */         stringBuffer.append(' ');
-/* 296 */         stringBuffer.append(this.myPieces[b]);
-/* 297 */         stringBuffer.append('=');
-/* 298 */         stringBuffer.append(addQuotes(this.myPieces[b + 1]));
-/*     */       } 
-/* 300 */       this.myStringValue = stringBuffer.toString();
-/*     */     } 
-/* 302 */     return this.myStringValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class LexicalAnalyzer
-/*     */   {
-/*     */     protected String mySource;
-/*     */ 
-/*     */     
-/*     */     protected int mySourceLength;
-/*     */ 
-/*     */     
-/*     */     protected int myCurrentIndex;
-/*     */     
-/*     */     protected int myLexemeType;
-/*     */     
-/*     */     protected int myLexemeBeginIndex;
-/*     */     
-/*     */     protected int myLexemeEndIndex;
-/*     */ 
-/*     */     
-/*     */     public LexicalAnalyzer(String param1String) {
-/* 325 */       this.mySource = param1String;
-/* 326 */       this.mySourceLength = param1String.length();
-/* 327 */       this.myCurrentIndex = 0;
-/* 328 */       nextLexeme();
-/*     */     }
-/*     */     
-/*     */     public int getLexemeType() {
-/* 332 */       return this.myLexemeType;
-/*     */     }
-/*     */     
-/*     */     public String getLexeme() {
-/* 336 */       return (this.myLexemeBeginIndex >= this.mySourceLength) ? null : this.mySource
-/*     */         
-/* 338 */         .substring(this.myLexemeBeginIndex, this.myLexemeEndIndex);
-/*     */     }
-/*     */     
-/*     */     public char getLexemeFirstCharacter() {
-/* 342 */       return (this.myLexemeBeginIndex >= this.mySourceLength) ? Character.MIN_VALUE : this.mySource
-/*     */         
-/* 344 */         .charAt(this.myLexemeBeginIndex);
-/*     */     }
-/*     */     
-/*     */     public void nextLexeme() {
-/* 348 */       byte b = 0;
-/* 349 */       byte b1 = 0;
-/*     */       
-/* 351 */       while (b) {
-/* 352 */         char c; switch (b) {
-/*     */           
-/*     */           case false:
-/* 355 */             if (this.myCurrentIndex >= this.mySourceLength) {
-/* 356 */               this.myLexemeType = 3;
-/* 357 */               this.myLexemeBeginIndex = this.mySourceLength;
-/* 358 */               this.myLexemeEndIndex = this.mySourceLength;
-/* 359 */               b = -1; continue;
-/*     */             } 
-/* 361 */             if (Character.isWhitespace(c = this.mySource.charAt(this.myCurrentIndex++))) {
-/* 362 */               b = 0; continue;
-/* 363 */             }  if (c == '"') {
-/* 364 */               this.myLexemeType = 1;
-/* 365 */               this.myLexemeBeginIndex = this.myCurrentIndex;
-/* 366 */               b = 1; continue;
-/* 367 */             }  if (c == '(') {
-/* 368 */               b1++;
-/* 369 */               b = 3; continue;
-/* 370 */             }  if (c == '/' || c == ';' || c == '=' || c == ')' || c == '<' || c == '>' || c == '@' || c == ',' || c == ':' || c == '\\' || c == '[' || c == ']' || c == '?') {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */               
-/* 375 */               this.myLexemeType = 2;
-/* 376 */               this.myLexemeBeginIndex = this.myCurrentIndex - 1;
-/* 377 */               this.myLexemeEndIndex = this.myCurrentIndex;
-/* 378 */               b = -1; continue;
-/*     */             } 
-/* 380 */             this.myLexemeType = 0;
-/* 381 */             this.myLexemeBeginIndex = this.myCurrentIndex - 1;
-/* 382 */             b = 5;
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           case true:
-/* 387 */             if (this.myCurrentIndex >= this.mySourceLength) {
-/* 388 */               this.myLexemeType = 4;
-/* 389 */               this.myLexemeBeginIndex = this.mySourceLength;
-/* 390 */               this.myLexemeEndIndex = this.mySourceLength;
-/* 391 */               b = -1; continue;
-/* 392 */             }  if ((c = this.mySource.charAt(this.myCurrentIndex++)) == '"') {
-/* 393 */               this.myLexemeEndIndex = this.myCurrentIndex - 1;
-/* 394 */               b = -1; continue;
-/* 395 */             }  if (c == '\\') {
-/* 396 */               b = 2; continue;
-/*     */             } 
-/* 398 */             b = 1;
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           case true:
-/* 403 */             if (this.myCurrentIndex >= this.mySourceLength) {
-/* 404 */               this.myLexemeType = 4;
-/* 405 */               this.myLexemeBeginIndex = this.mySourceLength;
-/* 406 */               this.myLexemeEndIndex = this.mySourceLength;
-/* 407 */               b = -1; continue;
-/*     */             } 
-/* 409 */             this.myCurrentIndex++;
-/* 410 */             b = 1;
-/*     */           
-/*     */           case true:
-/* 413 */             if (this.myCurrentIndex >= this.mySourceLength) {
-/* 414 */               this.myLexemeType = 4;
-/* 415 */               this.myLexemeBeginIndex = this.mySourceLength;
-/* 416 */               this.myLexemeEndIndex = this.mySourceLength;
-/* 417 */               b = -1; continue;
-/* 418 */             }  if ((c = this.mySource.charAt(this.myCurrentIndex++)) == '(') {
-/* 419 */               b1++;
-/* 420 */               b = 3; continue;
-/* 421 */             }  if (c == ')') {
-/* 422 */               b1--;
-/* 423 */               b = (b1 == 0) ? 0 : 3; continue;
-/* 424 */             }  if (c == '\\') {
-/* 425 */               b = 4; continue;
-/* 426 */             }  b = 3;
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           case true:
-/* 431 */             if (this.myCurrentIndex >= this.mySourceLength) {
-/* 432 */               this.myLexemeType = 4;
-/* 433 */               this.myLexemeBeginIndex = this.mySourceLength;
-/* 434 */               this.myLexemeEndIndex = this.mySourceLength;
-/* 435 */               b = -1; continue;
-/*     */             } 
-/* 437 */             this.myCurrentIndex++;
-/* 438 */             b = 3;
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           case true:
-/* 443 */             if (this.myCurrentIndex >= this.mySourceLength) {
-/* 444 */               this.myLexemeEndIndex = this.myCurrentIndex;
-/* 445 */               b = -1; continue;
-/*     */             } 
-/* 447 */             if (Character.isWhitespace(c = this.mySource.charAt(this.myCurrentIndex++))) {
-/* 448 */               this.myLexemeEndIndex = this.myCurrentIndex - 1;
-/* 449 */               b = -1; continue;
-/* 450 */             }  if (c == '"' || c == '(' || c == '/' || c == ';' || c == '=' || c == ')' || c == '<' || c == '>' || c == '@' || c == ',' || c == ':' || c == '\\' || c == '[' || c == ']' || c == '?') {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */               
-/* 456 */               this.myLexemeEndIndex = --this.myCurrentIndex;
-/* 457 */               b = -1; continue;
-/*     */             } 
-/* 459 */             b = 5;
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String toUnicodeLowerCase(String paramString) {
-/* 478 */     int i = paramString.length();
-/* 479 */     char[] arrayOfChar = new char[i];
-/* 480 */     for (byte b = 0; b < i; b++) {
-/* 481 */       arrayOfChar[b] = Character.toLowerCase(paramString.charAt(b));
-/*     */     }
-/* 483 */     return new String(arrayOfChar);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String removeBackslashes(String paramString) {
-/* 490 */     int i = paramString.length();
-/* 491 */     char[] arrayOfChar = new char[i];
-/*     */     
-/* 493 */     byte b2 = 0;
-/*     */     
-/* 495 */     for (byte b1 = 0; b1 < i; b1++) {
-/* 496 */       char c = paramString.charAt(b1);
-/* 497 */       if (c == '\\') {
-/* 498 */         c = paramString.charAt(++b1);
-/*     */       }
-/* 500 */       arrayOfChar[b2++] = c;
-/*     */     } 
-/* 502 */     return new String(arrayOfChar, 0, b2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String addQuotes(String paramString) {
-/* 510 */     int i = paramString.length();
-/*     */ 
-/*     */     
-/* 513 */     StringBuffer stringBuffer = new StringBuffer(i + 2);
-/* 514 */     stringBuffer.append('"');
-/* 515 */     for (byte b = 0; b < i; b++) {
-/* 516 */       char c = paramString.charAt(b);
-/* 517 */       if (c == '"') {
-/* 518 */         stringBuffer.append('\\');
-/*     */       }
-/* 520 */       stringBuffer.append(c);
-/*     */     } 
-/* 522 */     stringBuffer.append('"');
-/* 523 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parse(String paramString) {
-/* 546 */     if (paramString == null) {
-/* 547 */       throw new NullPointerException();
-/*     */     }
-/* 549 */     LexicalAnalyzer lexicalAnalyzer = new LexicalAnalyzer(paramString);
-/*     */     
-/* 551 */     Vector<String> vector = new Vector();
-/* 552 */     boolean bool1 = false;
-/* 553 */     boolean bool2 = false;
-/*     */ 
-/*     */     
-/* 556 */     if (lexicalAnalyzer.getLexemeType() == 0) {
-/* 557 */       String str = toUnicodeLowerCase(lexicalAnalyzer.getLexeme());
-/* 558 */       vector.add(str);
-/* 559 */       lexicalAnalyzer.nextLexeme();
-/* 560 */       bool1 = str.equals("text");
-/*     */     } else {
-/* 562 */       throw new IllegalArgumentException();
-/*     */     } 
-/*     */     
-/* 565 */     if (lexicalAnalyzer.getLexemeType() == 2 && lexicalAnalyzer
-/* 566 */       .getLexemeFirstCharacter() == '/') {
-/* 567 */       lexicalAnalyzer.nextLexeme();
-/*     */     } else {
-/* 569 */       throw new IllegalArgumentException();
-/*     */     } 
-/* 571 */     if (lexicalAnalyzer.getLexemeType() == 0) {
-/* 572 */       vector.add(toUnicodeLowerCase(lexicalAnalyzer.getLexeme()));
-/* 573 */       lexicalAnalyzer.nextLexeme();
-/*     */     } else {
-/* 575 */       throw new IllegalArgumentException();
-/*     */     } 
-/*     */     
-/* 578 */     while (lexicalAnalyzer.getLexemeType() == 2 && lexicalAnalyzer
-/* 579 */       .getLexemeFirstCharacter() == ';') {
-/*     */       
-/* 581 */       lexicalAnalyzer.nextLexeme();
-/*     */ 
-/*     */       
-/* 584 */       if (lexicalAnalyzer.getLexemeType() == 0) {
-/* 585 */         String str = toUnicodeLowerCase(lexicalAnalyzer.getLexeme());
-/* 586 */         vector.add(str);
-/* 587 */         lexicalAnalyzer.nextLexeme();
-/* 588 */         bool2 = str.equals("charset");
-/*     */       } else {
-/* 590 */         throw new IllegalArgumentException();
-/*     */       } 
-/*     */ 
-/*     */       
-/* 594 */       if (lexicalAnalyzer.getLexemeType() == 2 && lexicalAnalyzer
-/* 595 */         .getLexemeFirstCharacter() == '=') {
-/* 596 */         lexicalAnalyzer.nextLexeme();
-/*     */       } else {
-/* 598 */         throw new IllegalArgumentException();
-/*     */       } 
-/*     */ 
-/*     */       
-/* 602 */       if (lexicalAnalyzer.getLexemeType() == 0) {
-/* 603 */         String str = lexicalAnalyzer.getLexeme();
-/* 604 */         vector.add((bool1 && bool2) ? 
-/* 605 */             toUnicodeLowerCase(str) : str);
-/*     */         
-/* 607 */         lexicalAnalyzer.nextLexeme(); continue;
-/* 608 */       }  if (lexicalAnalyzer.getLexemeType() == 1) {
-/* 609 */         String str = removeBackslashes(lexicalAnalyzer.getLexeme());
-/* 610 */         vector.add((bool1 && bool2) ? 
-/* 611 */             toUnicodeLowerCase(str) : str);
-/*     */         
-/* 613 */         lexicalAnalyzer.nextLexeme(); continue;
-/*     */       } 
-/* 615 */       throw new IllegalArgumentException();
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 620 */     if (lexicalAnalyzer.getLexemeType() != 3) {
-/* 621 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */ 
-/*     */     
-/* 625 */     int i = vector.size();
-/* 626 */     this.myPieces = vector.<String>toArray(new String[i]);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 631 */     for (byte b = 4; b < i; b += 2) {
-/* 632 */       byte b1 = 2;
-/* 633 */       while (b1 < b && this.myPieces[b1].compareTo(this.myPieces[b]) <= 0) {
-/* 634 */         b1 += 2;
-/*     */       }
-/* 636 */       while (b1 < b) {
-/* 637 */         String str = this.myPieces[b1];
-/* 638 */         this.myPieces[b1] = this.myPieces[b];
-/* 639 */         this.myPieces[b] = str;
-/* 640 */         str = this.myPieces[b1 + 1];
-/* 641 */         this.myPieces[b1 + 1] = this.myPieces[b + 1];
-/* 642 */         this.myPieces[b + 1] = str;
-/* 643 */         b1 += 2;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\print\MimeType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.print;
+
+import java.io.Serializable;
+
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Vector;
+
+/**
+ * Class MimeType encapsulates a Multipurpose Internet Mail Extensions (MIME)
+ * media type as defined in <A HREF="http://www.ietf.org/rfc/rfc2045.txt">RFC
+ * 2045</A> and <A HREF="http://www.ietf.org/rfc/rfc2046.txt">RFC 2046</A>. A
+ * MIME type object is part of a {@link DocFlavor DocFlavor} object and
+ * specifies the format of the print data.
+ * <P>
+ * Class MimeType is similar to the like-named
+ * class in package {@link java.awt.datatransfer java.awt.datatransfer}. Class
+ * java.awt.datatransfer.MimeType is not used in the Jini Print Service API
+ * for two reasons:
+ * <OL TYPE=1>
+ * <LI>
+ * Since not all Java profiles include the AWT, the Jini Print Service should
+ * not depend on an AWT class.
+ * <P>
+ * <LI>
+ * The implementation of class java.awt.datatransfer.MimeType does not
+ * guarantee
+ * that equivalent MIME types will have the same serialized representation.
+ * Thus, since the Jini Lookup Service (JLUS) matches service attributes based
+ * on equality of serialized representations, JLUS searches involving MIME
+ * types encapsulated in class java.awt.datatransfer.MimeType may incorrectly
+ * fail to match.
+ * </OL>
+ * <P>
+ * Class MimeType's serialized representation is based on the following
+ * canonical form of a MIME type string. Thus, two MIME types that are not
+ * identical but that are equivalent (that have the same canonical form) will
+ * be considered equal by the JLUS's matching algorithm.
+ * <UL>
+ * <LI> The media type, media subtype, and parameters are retained, but all
+ *      comments and whitespace characters are discarded.
+ * <LI> The media type, media subtype, and parameter names are converted to
+ *      lowercase.
+ * <LI> The parameter values retain their original case, except a charset
+ *      parameter value for a text media type is converted to lowercase.
+ * <LI> Quote characters surrounding parameter values are removed.
+ * <LI> Quoting backslash characters inside parameter values are removed.
+ * <LI> The parameters are arranged in ascending order of parameter name.
+ * </UL>
+ * <P>
+ *
+ * @author  Alan Kaminsky
+ */
+class MimeType implements Serializable, Cloneable {
+
+    private static final long serialVersionUID = -2785720609362367683L;
+
+    /**
+     * Array of strings that hold pieces of this MIME type's canonical form.
+     * If the MIME type has <I>n</I> parameters, <I>n</I> &gt;= 0, then the
+     * strings in the array are:
+     * <BR>Index 0 -- Media type.
+     * <BR>Index 1 -- Media subtype.
+     * <BR>Index 2<I>i</I>+2 -- Name of parameter <I>i</I>,
+     * <I>i</I>=0,1,...,<I>n</I>-1.
+     * <BR>Index 2<I>i</I>+3 -- Value of parameter <I>i</I>,
+     * <I>i</I>=0,1,...,<I>n</I>-1.
+     * <BR>Parameters are arranged in ascending order of parameter name.
+     * @serial
+     */
+    private String[] myPieces;
+
+    /**
+     * String value for this MIME type. Computed when needed and cached.
+     */
+    private transient String myStringValue = null;
+
+    /**
+     * Parameter map entry set. Computed when needed and cached.
+     */
+    private transient ParameterMapEntrySet myEntrySet = null;
+
+    /**
+     * Parameter map. Computed when needed and cached.
+     */
+    private transient ParameterMap myParameterMap = null;
+
+    /**
+     * Parameter map entry.
+     */
+    private class ParameterMapEntry implements Map.Entry {
+        private int myIndex;
+        public ParameterMapEntry(int theIndex) {
+            myIndex = theIndex;
+        }
+        public Object getKey(){
+            return myPieces[myIndex];
+        }
+        public Object getValue(){
+            return myPieces[myIndex+1];
+        }
+        public Object setValue (Object value) {
+            throw new UnsupportedOperationException();
+        }
+        public boolean equals(Object o) {
+            return (o != null &&
+                    o instanceof Map.Entry &&
+                    getKey().equals (((Map.Entry) o).getKey()) &&
+                    getValue().equals(((Map.Entry) o).getValue()));
+        }
+        public int hashCode() {
+            return getKey().hashCode() ^ getValue().hashCode();
+        }
+    }
+
+    /**
+     * Parameter map entry set iterator.
+     */
+    private class ParameterMapEntrySetIterator implements Iterator {
+        private int myIndex = 2;
+        public boolean hasNext() {
+            return myIndex < myPieces.length;
+        }
+        public Object next() {
+            if (hasNext()) {
+                ParameterMapEntry result = new ParameterMapEntry (myIndex);
+                myIndex += 2;
+                return result;
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Parameter map entry set.
+     */
+    private class ParameterMapEntrySet extends AbstractSet {
+        public Iterator iterator() {
+            return new ParameterMapEntrySetIterator();
+        }
+        public int size() {
+            return (myPieces.length - 2) / 2;
+        }
+    }
+
+    /**
+     * Parameter map.
+     */
+    private class ParameterMap extends AbstractMap {
+        public Set entrySet() {
+            if (myEntrySet == null) {
+                myEntrySet = new ParameterMapEntrySet();
+            }
+            return myEntrySet;
+        }
+    }
+
+    /**
+     * Construct a new MIME type object from the given string. The given
+     * string is converted into canonical form and stored internally.
+     *
+     * @param  s  MIME media type string.
+     *
+     * @exception  NullPointerException
+     *     (unchecked exception) Thrown if <CODE>s</CODE> is null.
+     * @exception  IllegalArgumentException
+     *     (unchecked exception) Thrown if <CODE>s</CODE> does not obey the
+     *     syntax for a MIME media type string.
+     */
+    public MimeType(String s) {
+        parse (s);
+    }
+
+    /**
+     * Returns this MIME type object's MIME type string based on the canonical
+     * form. Each parameter value is enclosed in quotes.
+     */
+    public String getMimeType() {
+        return getStringValue();
+    }
+
+    /**
+     * Returns this MIME type object's media type.
+     */
+    public String getMediaType() {
+        return myPieces[0];
+    }
+
+    /**
+     * Returns this MIME type object's media subtype.
+     */
+    public String getMediaSubtype() {
+        return myPieces[1];
+    }
+
+    /**
+     * Returns an unmodifiable map view of the parameters in this MIME type
+     * object. Each entry in the parameter map view consists of a parameter
+     * name String (key) mapping to a parameter value String. If this MIME
+     * type object has no parameters, an empty map is returned.
+     *
+     * @return  Parameter map for this MIME type object.
+     */
+    public Map getParameterMap() {
+        if (myParameterMap == null) {
+            myParameterMap = new ParameterMap();
+        }
+        return myParameterMap;
+    }
+
+    /**
+     * Converts this MIME type object to a string.
+     *
+     * @return  MIME type string based on the canonical form. Each parameter
+     *          value is enclosed in quotes.
+     */
+    public String toString() {
+        return getStringValue();
+    }
+
+    /**
+     * Returns a hash code for this MIME type object.
+     */
+    public int hashCode() {
+        return getStringValue().hashCode();
+    }
+
+    /**
+     * Determine if this MIME type object is equal to the given object. The two
+     * are equal if the given object is not null, is an instance of class
+     * net.jini.print.data.MimeType, and has the same canonical form as this
+     * MIME type object (that is, has the same type, subtype, and parameters).
+     * Thus, if two MIME type objects are the same except for comments, they are
+     * considered equal. However, "text/plain" and "text/plain;
+     * charset=us-ascii" are not considered equal, even though they represent
+     * the same media type (because the default character set for plain text is
+     * US-ASCII).
+     *
+     * @param  obj  Object to test.
+     *
+     * @return  True if this MIME type object equals <CODE>obj</CODE>, false
+     *          otherwise.
+     */
+    public boolean equals (Object obj) {
+        return(obj != null &&
+               obj instanceof MimeType &&
+               getStringValue().equals(((MimeType) obj).getStringValue()));
+    }
+
+    /**
+     * Returns this MIME type's string value in canonical form.
+     */
+    private String getStringValue() {
+        if (myStringValue == null) {
+            StringBuffer result = new StringBuffer();
+            result.append (myPieces[0]);
+            result.append ('/');
+            result.append (myPieces[1]);
+            int n = myPieces.length;
+            for (int i = 2; i < n; i += 2) {
+                result.append(';');
+                result.append(' ');
+                result.append(myPieces[i]);
+                result.append('=');
+                result.append(addQuotes (myPieces[i+1]));
+            }
+            myStringValue = result.toString();
+        }
+        return myStringValue;
+    }
+
+// Hidden classes, constants, and operations for parsing a MIME media type
+// string.
+
+    // Lexeme types.
+    private static final int TOKEN_LEXEME         = 0;
+    private static final int QUOTED_STRING_LEXEME = 1;
+    private static final int TSPECIAL_LEXEME      = 2;
+    private static final int EOF_LEXEME           = 3;
+    private static final int ILLEGAL_LEXEME       = 4;
+
+    // Class for a lexical analyzer.
+    private static class LexicalAnalyzer {
+        protected String mySource;
+        protected int mySourceLength;
+        protected int myCurrentIndex;
+        protected int myLexemeType;
+        protected int myLexemeBeginIndex;
+        protected int myLexemeEndIndex;
+
+        public LexicalAnalyzer(String theSource) {
+            mySource = theSource;
+            mySourceLength = theSource.length();
+            myCurrentIndex = 0;
+            nextLexeme();
+        }
+
+        public int getLexemeType() {
+            return myLexemeType;
+        }
+
+        public String getLexeme() {
+            return(myLexemeBeginIndex >= mySourceLength ?
+                   null :
+                   mySource.substring(myLexemeBeginIndex, myLexemeEndIndex));
+        }
+
+        public char getLexemeFirstCharacter() {
+            return(myLexemeBeginIndex >= mySourceLength ?
+                   '\u0000' :
+                   mySource.charAt(myLexemeBeginIndex));
+        }
+
+        public void nextLexeme() {
+            int state = 0;
+            int commentLevel = 0;
+            char c;
+            while (state >= 0) {
+                switch (state) {
+                    // Looking for a token, quoted string, or tspecial
+                case 0:
+                    if (myCurrentIndex >= mySourceLength) {
+                        myLexemeType = EOF_LEXEME;
+                        myLexemeBeginIndex = mySourceLength;
+                        myLexemeEndIndex = mySourceLength;
+                        state = -1;
+                    } else if (Character.isWhitespace
+                               (c = mySource.charAt (myCurrentIndex ++))) {
+                        state = 0;
+                    } else if (c == '\"') {
+                        myLexemeType = QUOTED_STRING_LEXEME;
+                        myLexemeBeginIndex = myCurrentIndex;
+                        state = 1;
+                    } else if (c == '(') {
+                        ++ commentLevel;
+                        state = 3;
+                    } else if (c == '/'  || c == ';' || c == '=' ||
+                               c == ')'  || c == '<' || c == '>' ||
+                               c == '@'  || c == ',' || c == ':' ||
+                               c == '\\' || c == '[' || c == ']' ||
+                               c == '?') {
+                        myLexemeType = TSPECIAL_LEXEME;
+                        myLexemeBeginIndex = myCurrentIndex - 1;
+                        myLexemeEndIndex = myCurrentIndex;
+                        state = -1;
+                    } else {
+                        myLexemeType = TOKEN_LEXEME;
+                        myLexemeBeginIndex = myCurrentIndex - 1;
+                        state = 5;
+                    }
+                    break;
+                    // In a quoted string
+                case 1:
+                    if (myCurrentIndex >= mySourceLength) {
+                        myLexemeType = ILLEGAL_LEXEME;
+                        myLexemeBeginIndex = mySourceLength;
+                        myLexemeEndIndex = mySourceLength;
+                        state = -1;
+                    } else if ((c = mySource.charAt (myCurrentIndex ++)) == '\"') {
+                        myLexemeEndIndex = myCurrentIndex - 1;
+                        state = -1;
+                    } else if (c == '\\') {
+                        state = 2;
+                    } else {
+                        state = 1;
+                    }
+                    break;
+                    // In a quoted string, backslash seen
+                case 2:
+                    if (myCurrentIndex >= mySourceLength) {
+                        myLexemeType = ILLEGAL_LEXEME;
+                        myLexemeBeginIndex = mySourceLength;
+                        myLexemeEndIndex = mySourceLength;
+                        state = -1;
+                    } else {
+                        ++ myCurrentIndex;
+                        state = 1;
+                    } break;
+                    // In a comment
+                case 3: if (myCurrentIndex >= mySourceLength) {
+                    myLexemeType = ILLEGAL_LEXEME;
+                    myLexemeBeginIndex = mySourceLength;
+                    myLexemeEndIndex = mySourceLength;
+                    state = -1;
+                } else if ((c = mySource.charAt (myCurrentIndex ++)) == '(') {
+                    ++ commentLevel;
+                    state = 3;
+                } else if (c == ')') {
+                    -- commentLevel;
+                    state = commentLevel == 0 ? 0 : 3;
+                } else if (c == '\\') {
+                    state = 4;
+                } else { state = 3;
+                }
+                break;
+                // In a comment, backslash seen
+                case 4:
+                    if (myCurrentIndex >= mySourceLength) {
+                        myLexemeType = ILLEGAL_LEXEME;
+                        myLexemeBeginIndex = mySourceLength;
+                        myLexemeEndIndex = mySourceLength;
+                        state = -1;
+                    } else {
+                        ++ myCurrentIndex;
+                        state = 3;
+                    }
+                    break;
+                    // In a token
+                case 5:
+                    if (myCurrentIndex >= mySourceLength) {
+                        myLexemeEndIndex = myCurrentIndex;
+                        state = -1;
+                    } else if (Character.isWhitespace
+                               (c = mySource.charAt (myCurrentIndex ++))) {
+                        myLexemeEndIndex = myCurrentIndex - 1;
+                        state = -1;
+                    } else if (c == '\"' || c == '(' || c == '/' ||
+                               c == ';'  || c == '=' || c == ')' ||
+                               c == '<' || c == '>'  || c == '@' ||
+                               c == ',' || c == ':' || c == '\\' ||
+                               c == '[' || c == ']' || c == '?') {
+                        -- myCurrentIndex;
+                        myLexemeEndIndex = myCurrentIndex;
+                        state = -1;
+                    } else {
+                        state = 5;
+                    }
+                    break;
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * Returns a lowercase version of the given string. The lowercase version
+     * is constructed by applying Character.toLowerCase() to each character of
+     * the given string, which maps characters to lowercase using the rules of
+     * Unicode. This mapping is the same regardless of locale, whereas the
+     * mapping of String.toLowerCase() may be different depending on the
+     * default locale.
+     */
+    private static String toUnicodeLowerCase(String s) {
+        int n = s.length();
+        char[] result = new char [n];
+        for (int i = 0; i < n; ++ i) {
+            result[i] = Character.toLowerCase (s.charAt (i));
+        }
+        return new String (result);
+    }
+
+    /**
+     * Returns a version of the given string with backslashes removed.
+     */
+    private static String removeBackslashes(String s) {
+        int n = s.length();
+        char[] result = new char [n];
+        int i;
+        int j = 0;
+        char c;
+        for (i = 0; i < n; ++ i) {
+            c = s.charAt (i);
+            if (c == '\\') {
+                c = s.charAt (++ i);
+            }
+            result[j++] = c;
+        }
+        return new String (result, 0, j);
+    }
+
+    /**
+     * Returns a version of the string surrounded by quotes and with interior
+     * quotes preceded by a backslash.
+     */
+    private static String addQuotes(String s) {
+        int n = s.length();
+        int i;
+        char c;
+        StringBuffer result = new StringBuffer (n+2);
+        result.append ('\"');
+        for (i = 0; i < n; ++ i) {
+            c = s.charAt (i);
+            if (c == '\"') {
+                result.append ('\\');
+            }
+            result.append (c);
+        }
+        result.append ('\"');
+        return result.toString();
+    }
+
+    /**
+     * Parses the given string into canonical pieces and stores the pieces in
+     * {@link #myPieces <CODE>myPieces</CODE>}.
+     * <P>
+     * Special rules applied:
+     * <UL>
+     * <LI> If the media type is text, the value of a charset parameter is
+     *      converted to lowercase.
+     * </UL>
+     *
+     * @param  s  MIME media type string.
+     *
+     * @exception  NullPointerException
+     *     (unchecked exception) Thrown if <CODE>s</CODE> is null.
+     * @exception  IllegalArgumentException
+     *     (unchecked exception) Thrown if <CODE>s</CODE> does not obey the
+     *     syntax for a MIME media type string.
+     */
+    private void parse(String s) {
+        // Initialize.
+        if (s == null) {
+            throw new NullPointerException();
+        }
+        LexicalAnalyzer theLexer = new LexicalAnalyzer (s);
+        int theLexemeType;
+        Vector thePieces = new Vector();
+        boolean mediaTypeIsText = false;
+        boolean parameterNameIsCharset = false;
+
+        // Parse media type.
+        if (theLexer.getLexemeType() == TOKEN_LEXEME) {
+            String mt = toUnicodeLowerCase (theLexer.getLexeme());
+            thePieces.add (mt);
+            theLexer.nextLexeme();
+            mediaTypeIsText = mt.equals ("text");
+        } else {
+            throw new IllegalArgumentException();
+        }
+        // Parse slash.
+        if (theLexer.getLexemeType() == TSPECIAL_LEXEME &&
+              theLexer.getLexemeFirstCharacter() == '/') {
+            theLexer.nextLexeme();
+        } else {
+            throw new IllegalArgumentException();
+        }
+        if (theLexer.getLexemeType() == TOKEN_LEXEME) {
+            thePieces.add (toUnicodeLowerCase (theLexer.getLexeme()));
+            theLexer.nextLexeme();
+        } else {
+            throw new IllegalArgumentException();
+        }
+        // Parse zero or more parameters.
+        while (theLexer.getLexemeType() == TSPECIAL_LEXEME &&
+               theLexer.getLexemeFirstCharacter() == ';') {
+            // Parse semicolon.
+            theLexer.nextLexeme();
+
+            // Parse parameter name.
+            if (theLexer.getLexemeType() == TOKEN_LEXEME) {
+                String pn = toUnicodeLowerCase (theLexer.getLexeme());
+                thePieces.add (pn);
+                theLexer.nextLexeme();
+                parameterNameIsCharset = pn.equals ("charset");
+            } else {
+                throw new IllegalArgumentException();
+            }
+
+            // Parse equals.
+            if (theLexer.getLexemeType() == TSPECIAL_LEXEME &&
+                theLexer.getLexemeFirstCharacter() == '=') {
+                theLexer.nextLexeme();
+            } else {
+                throw new IllegalArgumentException();
+            }
+
+            // Parse parameter value.
+            if (theLexer.getLexemeType() == TOKEN_LEXEME) {
+                String pv = theLexer.getLexeme();
+                thePieces.add(mediaTypeIsText && parameterNameIsCharset ?
+                              toUnicodeLowerCase (pv) :
+                              pv);
+                theLexer.nextLexeme();
+            } else if (theLexer.getLexemeType() == QUOTED_STRING_LEXEME) {
+                String pv = removeBackslashes (theLexer.getLexeme());
+                thePieces.add(mediaTypeIsText && parameterNameIsCharset ?
+                              toUnicodeLowerCase (pv) :
+                              pv);
+                theLexer.nextLexeme();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+
+        // Make sure we've consumed everything.
+        if (theLexer.getLexemeType() != EOF_LEXEME) {
+            throw new IllegalArgumentException();
+        }
+
+        // Save the pieces. Parameters are not in ascending order yet.
+        int n = thePieces.size();
+        myPieces = (String[]) thePieces.toArray (new String [n]);
+
+        // Sort the parameters into ascending order using an insertion sort.
+        int i, j;
+        String temp;
+        for (i = 4; i < n; i += 2) {
+            j = 2;
+            while (j < i && myPieces[j].compareTo (myPieces[i]) <= 0) {
+                j += 2;
+            }
+            while (j < i) {
+                temp = myPieces[j];
+                myPieces[j] = myPieces[i];
+                myPieces[i] = temp;
+                temp = myPieces[j+1];
+                myPieces[j+1] = myPieces[i+1];
+                myPieces[i+1] = temp;
+                j += 2;
+            }
+        }
+    }
+}

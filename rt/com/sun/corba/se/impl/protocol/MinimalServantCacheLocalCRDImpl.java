@@ -1,64 +1,61 @@
-/*    */ package com.sun.corba.se.impl.protocol;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.IOR;
-/*    */ import com.sun.corba.se.spi.oa.OAInvocationInfo;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import org.omg.CORBA.Object;
-/*    */ import org.omg.CORBA.portable.ServantObject;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MinimalServantCacheLocalCRDImpl
-/*    */   extends ServantCacheLocalCRDBase
-/*    */ {
-/*    */   public MinimalServantCacheLocalCRDImpl(ORB paramORB, int paramInt, IOR paramIOR) {
-/* 44 */     super(paramORB, paramInt, paramIOR);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public ServantObject servant_preinvoke(Object paramObject, String paramString, Class paramClass) {
-/* 50 */     OAInvocationInfo oAInvocationInfo = getCachedInfo();
-/* 51 */     if (checkForCompatibleServant(oAInvocationInfo, paramClass)) {
-/* 52 */       return oAInvocationInfo;
-/*    */     }
-/* 54 */     return null;
-/*    */   }
-/*    */   
-/*    */   public void servant_postinvoke(Object paramObject, ServantObject paramServantObject) {}
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\MinimalServantCacheLocalCRDImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.corba.se.impl.protocol ;
+
+import org.omg.CORBA.portable.ServantObject ;
+
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcherFactory ;
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher ;
+
+import com.sun.corba.se.spi.ior.IOR ;
+
+import com.sun.corba.se.spi.oa.OAInvocationInfo ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+public class MinimalServantCacheLocalCRDImpl extends ServantCacheLocalCRDBase
+{
+    public MinimalServantCacheLocalCRDImpl( ORB orb, int scid, IOR ior )
+    {
+        super( (com.sun.corba.se.spi.orb.ORB)orb, scid, ior ) ;
+    }
+
+    public ServantObject servant_preinvoke( org.omg.CORBA.Object self,
+        String operation, Class expectedType )
+    {
+        OAInvocationInfo cachedInfo = getCachedInfo() ;
+        if (checkForCompatibleServant( cachedInfo, expectedType ))
+            return cachedInfo ;
+        else
+            return null ;
+    }
+
+    public void servant_postinvoke(org.omg.CORBA.Object self,
+                                   ServantObject servantobj)
+    {
+    }
+}

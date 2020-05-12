@@ -1,100 +1,94 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*    */ 
-/*    */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*    */ import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SingletonIterator
-/*    */   extends DTMAxisIteratorBase
-/*    */ {
-/*    */   private int _node;
-/*    */   private final boolean _isConstant;
-/*    */   
-/*    */   public SingletonIterator() {
-/* 38 */     this(-2147483648, false);
-/*    */   }
-/*    */   
-/*    */   public SingletonIterator(int node) {
-/* 42 */     this(node, false);
-/*    */   }
-/*    */   
-/*    */   public SingletonIterator(int node, boolean constant) {
-/* 46 */     this._node = this._startNode = node;
-/* 47 */     this._isConstant = constant;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public DTMAxisIterator setStartNode(int node) {
-/* 55 */     if (this._isConstant) {
-/* 56 */       this._node = this._startNode;
-/* 57 */       return resetPosition();
-/*    */     } 
-/* 59 */     if (this._isRestartable) {
-/* 60 */       if (this._node <= 0)
-/* 61 */         this._node = this._startNode = node; 
-/* 62 */       return resetPosition();
-/*    */     } 
-/* 64 */     return this;
-/*    */   }
-/*    */   
-/*    */   public DTMAxisIterator reset() {
-/* 68 */     if (this._isConstant) {
-/* 69 */       this._node = this._startNode;
-/* 70 */       return resetPosition();
-/*    */     } 
-/*    */     
-/* 73 */     boolean temp = this._isRestartable;
-/* 74 */     this._isRestartable = true;
-/* 75 */     setStartNode(this._startNode);
-/* 76 */     this._isRestartable = temp;
-/*    */     
-/* 78 */     return this;
-/*    */   }
-/*    */   
-/*    */   public int next() {
-/* 82 */     int result = this._node;
-/* 83 */     this._node = -1;
-/* 84 */     return returnNode(result);
-/*    */   }
-/*    */   
-/*    */   public void setMark() {
-/* 88 */     this._markedNode = this._node;
-/*    */   }
-/*    */   
-/*    */   public void gotoMark() {
-/* 92 */     this._node = this._markedNode;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\SingletonIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: SingletonIterator.java,v 1.2.4.1 2005/09/06 10:15:18 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public class SingletonIterator extends DTMAxisIteratorBase {
+    private int _node;
+    private final boolean _isConstant;
+
+    public SingletonIterator() {
+        this(Integer.MIN_VALUE, false);
+    }
+
+    public SingletonIterator(int node) {
+        this(node, false);
+    }
+
+    public SingletonIterator(int node, boolean constant) {
+        _node = _startNode = node;
+        _isConstant = constant;
+    }
+
+    /**
+     * Override the value of <tt>_node</tt> only when this
+     * object was constructed using the empty constructor.
+     */
+    public DTMAxisIterator setStartNode(int node) {
+        if (_isConstant) {
+            _node = _startNode;
+            return resetPosition();
+        }
+        else if (_isRestartable) {
+            if (_node <= 0)
+                _node = _startNode = node;
+            return resetPosition();
+        }
+        return this;
+    }
+
+    public DTMAxisIterator reset() {
+        if (_isConstant) {
+            _node = _startNode;
+            return resetPosition();
+        }
+        else {
+            final boolean temp = _isRestartable;
+            _isRestartable = true;
+            setStartNode(_startNode);
+            _isRestartable = temp;
+        }
+        return this;
+    }
+
+    public int next() {
+        final int result = _node;
+        _node = DTMAxisIterator.END;
+        return returnNode(result);
+    }
+
+    public void setMark() {
+        _markedNode = _node;
+    }
+
+    public void gotoMark() {
+        _node = _markedNode;
+    }
+}

@@ -1,199 +1,193 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Type;
-/*     */ import java.util.WeakHashMap;
-/*     */ import javax.management.Descriptor;
-/*     */ import javax.management.ImmutableDescriptor;
-/*     */ import javax.management.IntrospectionException;
-/*     */ import javax.management.MBeanAttributeInfo;
-/*     */ import javax.management.MBeanException;
-/*     */ import javax.management.MBeanOperationInfo;
-/*     */ import javax.management.NotCompliantMBeanException;
-/*     */ import javax.management.NotificationBroadcaster;
-/*     */ import javax.management.NotificationBroadcasterSupport;
-/*     */ import sun.reflect.misc.MethodUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class StandardMBeanIntrospector
-/*     */   extends MBeanIntrospector<Method>
-/*     */ {
-/*  47 */   private static final StandardMBeanIntrospector instance = new StandardMBeanIntrospector();
-/*     */ 
-/*     */   
-/*     */   static StandardMBeanIntrospector getInstance() {
-/*  51 */     return instance;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   MBeanIntrospector.PerInterfaceMap<Method> getPerInterfaceMap() {
-/*  56 */     return perInterfaceMap;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   MBeanIntrospector.MBeanInfoMap getMBeanInfoMap() {
-/*  61 */     return mbeanInfoMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MBeanAnalyzer<Method> getAnalyzer(Class<?> paramClass) throws NotCompliantMBeanException {
-/*  67 */     return MBeanAnalyzer.analyzer(paramClass, this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   boolean isMXBean() {
-/*  72 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   Method mFrom(Method paramMethod) {
-/*  77 */     return paramMethod;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   String getName(Method paramMethod) {
-/*  82 */     return paramMethod.getName();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   Type getGenericReturnType(Method paramMethod) {
-/*  87 */     return paramMethod.getGenericReturnType();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   Type[] getGenericParameterTypes(Method paramMethod) {
-/*  92 */     return paramMethod.getGenericParameterTypes();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   String[] getSignature(Method paramMethod) {
-/*  97 */     Class[] arrayOfClass = paramMethod.getParameterTypes();
-/*  98 */     String[] arrayOfString = new String[arrayOfClass.length];
-/*  99 */     for (byte b = 0; b < arrayOfClass.length; b++)
-/* 100 */       arrayOfString[b] = arrayOfClass[b].getName(); 
-/* 101 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void checkMethod(Method paramMethod) {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Object invokeM2(Method paramMethod, Object paramObject1, Object[] paramArrayOfObject, Object paramObject2) throws InvocationTargetException, IllegalAccessException, MBeanException {
-/* 112 */     return MethodUtil.invoke(paramMethod, paramObject1, paramArrayOfObject);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   boolean validParameter(Method paramMethod, Object paramObject1, int paramInt, Object paramObject2) {
-/* 117 */     return isValidParameter(paramMethod, paramObject1, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MBeanAttributeInfo getMBeanAttributeInfo(String paramString, Method paramMethod1, Method paramMethod2) {
-/*     */     try {
-/* 126 */       return new MBeanAttributeInfo(paramString, "Attribute exposed for management", paramMethod1, paramMethod2);
-/*     */     }
-/* 128 */     catch (IntrospectionException introspectionException) {
-/* 129 */       throw new RuntimeException(introspectionException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MBeanOperationInfo getMBeanOperationInfo(String paramString, Method paramMethod) {
-/* 137 */     return new MBeanOperationInfo("Operation exposed for management", paramMethod);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Descriptor getBasicMBeanDescriptor() {
-/* 145 */     return ImmutableDescriptor.EMPTY_DESCRIPTOR;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   Descriptor getMBeanDescriptor(Class<?> paramClass) {
-/* 150 */     boolean bool = isDefinitelyImmutableInfo(paramClass);
-/* 151 */     return new ImmutableDescriptor(new String[] { "mxbean=false", "immutableInfo=" + bool });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean isDefinitelyImmutableInfo(Class<?> paramClass) {
-/* 164 */     if (!NotificationBroadcaster.class.isAssignableFrom(paramClass))
-/* 165 */       return true; 
-/* 166 */     synchronized (definitelyImmutable) {
-/* 167 */       Boolean bool = definitelyImmutable.get(paramClass);
-/* 168 */       if (bool == null) {
-/* 169 */         Class<NotificationBroadcasterSupport> clazz = NotificationBroadcasterSupport.class;
-/*     */         
-/* 171 */         if (clazz.isAssignableFrom(paramClass)) {
-/*     */           try {
-/* 173 */             Method method = paramClass.getMethod("getNotificationInfo", new Class[0]);
-/* 174 */             bool = Boolean.valueOf((method.getDeclaringClass() == clazz));
-/* 175 */           } catch (Exception exception) {
-/*     */             
-/* 177 */             return false;
-/*     */           } 
-/*     */         } else {
-/* 180 */           bool = Boolean.valueOf(false);
-/* 181 */         }  definitelyImmutable.put(paramClass, bool);
-/*     */       } 
-/* 183 */       return bool.booleanValue();
-/*     */     } 
-/*     */   }
-/* 186 */   private static final WeakHashMap<Class<?>, Boolean> definitelyImmutable = new WeakHashMap<>();
-/*     */ 
-/*     */ 
-/*     */   
-/* 190 */   private static final MBeanIntrospector.PerInterfaceMap<Method> perInterfaceMap = new MBeanIntrospector.PerInterfaceMap<>();
-/*     */   
-/* 192 */   private static final MBeanIntrospector.MBeanInfoMap mbeanInfoMap = new MBeanIntrospector.MBeanInfoMap();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\StandardMBeanIntrospector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.WeakHashMap;
+import javax.management.Descriptor;
+import javax.management.ImmutableDescriptor;
+import javax.management.IntrospectionException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
+import javax.management.MBeanOperationInfo;
+import javax.management.NotCompliantMBeanException;
+import javax.management.NotificationBroadcaster;
+import javax.management.NotificationBroadcasterSupport;
+import sun.reflect.misc.MethodUtil;
+
+/**
+ * @since 1.6
+ */
+class StandardMBeanIntrospector extends MBeanIntrospector<Method> {
+    private static final StandardMBeanIntrospector instance =
+        new StandardMBeanIntrospector();
+
+    static StandardMBeanIntrospector getInstance() {
+        return instance;
+    }
+
+    @Override
+    PerInterfaceMap<Method> getPerInterfaceMap() {
+        return perInterfaceMap;
+    }
+
+    @Override
+    MBeanInfoMap getMBeanInfoMap() {
+        return mbeanInfoMap;
+    }
+
+    @Override
+    MBeanAnalyzer<Method> getAnalyzer(Class<?> mbeanInterface)
+            throws NotCompliantMBeanException {
+        return MBeanAnalyzer.analyzer(mbeanInterface, this);
+    }
+
+    @Override
+    boolean isMXBean() {
+        return false;
+    }
+
+    @Override
+    Method mFrom(Method m) {
+        return m;
+    }
+
+    @Override
+    String getName(Method m) {
+        return m.getName();
+    }
+
+    @Override
+    Type getGenericReturnType(Method m) {
+        return m.getGenericReturnType();
+    }
+
+    @Override
+    Type[] getGenericParameterTypes(Method m) {
+        return m.getGenericParameterTypes();
+    }
+
+    @Override
+    String[] getSignature(Method m) {
+        Class<?>[] params = m.getParameterTypes();
+        String[] sig = new String[params.length];
+        for (int i = 0; i < params.length; i++)
+            sig[i] = params[i].getName();
+        return sig;
+    }
+
+    @Override
+    void checkMethod(Method m) {
+    }
+
+    @Override
+    Object invokeM2(Method m, Object target, Object[] args, Object cookie)
+            throws InvocationTargetException, IllegalAccessException,
+                   MBeanException {
+        return MethodUtil.invoke(m, target, args);
+    }
+
+    @Override
+    boolean validParameter(Method m, Object value, int paramNo, Object cookie) {
+        return isValidParameter(m, value, paramNo);
+    }
+
+    @Override
+    MBeanAttributeInfo getMBeanAttributeInfo(String attributeName,
+            Method getter, Method setter) {
+
+        final String description = "Attribute exposed for management";
+        try {
+            return new MBeanAttributeInfo(attributeName, description,
+                                          getter, setter);
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e); // should not happen
+        }
+    }
+
+    @Override
+    MBeanOperationInfo getMBeanOperationInfo(String operationName,
+            Method operation) {
+        final String description = "Operation exposed for management";
+        return new MBeanOperationInfo(description, operation);
+    }
+
+    @Override
+    Descriptor getBasicMBeanDescriptor() {
+        /* We don't bother saying mxbean=false, and we can't know whether
+           the info is immutable until we know whether the MBean class
+           (not interface) is a NotificationBroadcaster. */
+        return ImmutableDescriptor.EMPTY_DESCRIPTOR;
+    }
+
+    @Override
+    Descriptor getMBeanDescriptor(Class<?> resourceClass) {
+        boolean immutable = isDefinitelyImmutableInfo(resourceClass);
+        return new ImmutableDescriptor("mxbean=false",
+                                       "immutableInfo=" + immutable);
+    }
+
+    /* Return true if and only if we can be sure that the given MBean implementation
+     * class has immutable MBeanInfo.  A Standard MBean that is a
+     * NotificationBroadcaster is allowed to return different values at
+     * different times from its getNotificationInfo() method, which is when
+     * we might not know if it is immutable.  But if it is a subclass of
+     * NotificationBroadcasterSupport and does not override
+     * getNotificationInfo(), then we know it won't change.
+     */
+    static boolean isDefinitelyImmutableInfo(Class<?> implClass) {
+        if (!NotificationBroadcaster.class.isAssignableFrom(implClass))
+            return true;
+        synchronized (definitelyImmutable) {
+            Boolean immutable = definitelyImmutable.get(implClass);
+            if (immutable == null) {
+                final Class<NotificationBroadcasterSupport> nbs =
+                        NotificationBroadcasterSupport.class;
+                if (nbs.isAssignableFrom(implClass)) {
+                    try {
+                        Method m = implClass.getMethod("getNotificationInfo");
+                        immutable = (m.getDeclaringClass() == nbs);
+                    } catch (Exception e) {
+                        // Too bad, we'll say no for now.
+                        return false;
+                    }
+                } else
+                    immutable = false;
+                definitelyImmutable.put(implClass, immutable);
+            }
+            return immutable;
+        }
+    }
+    private static final WeakHashMap<Class<?>, Boolean> definitelyImmutable =
+            new WeakHashMap<Class<?>, Boolean>();
+
+    private static final PerInterfaceMap<Method>
+        perInterfaceMap = new PerInterfaceMap<Method>();
+
+    private static final MBeanInfoMap mbeanInfoMap = new MBeanInfoMap();
+}

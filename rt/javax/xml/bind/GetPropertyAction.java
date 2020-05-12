@@ -1,50 +1,44 @@
-/*    */ package javax.xml.bind;
-/*    */ 
-/*    */ import java.security.PrivilegedAction;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class GetPropertyAction
-/*    */   implements PrivilegedAction<String>
-/*    */ {
-/*    */   private final String propertyName;
-/*    */   
-/*    */   public GetPropertyAction(String propertyName) {
-/* 38 */     this.propertyName = propertyName;
-/*    */   }
-/*    */   
-/*    */   public String run() {
-/* 42 */     return System.getProperty(this.propertyName);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\bind\GetPropertyAction.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.bind;
+
+import java.security.PrivilegedAction;
+
+/**
+ * {@link PrivilegedAction} that gets the system property value.
+ * @author Kohsuke Kawaguchi
+ */
+final class GetPropertyAction implements PrivilegedAction<String> {
+    private final String propertyName;
+
+    public GetPropertyAction(String propertyName) {
+        this.propertyName = propertyName;
+    }
+
+    public String run() {
+        return System.getProperty(propertyName);
+    }
+}

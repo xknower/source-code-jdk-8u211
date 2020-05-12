@@ -1,545 +1,540 @@
-/*     */ package java.beans;
-/*     */ 
-/*     */ import java.lang.ref.Reference;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class EventSetDescriptor
-/*     */   extends FeatureDescriptor
-/*     */ {
-/*     */   private MethodDescriptor[] listenerMethodDescriptors;
-/*     */   private MethodDescriptor addMethodDescriptor;
-/*     */   private MethodDescriptor removeMethodDescriptor;
-/*     */   private MethodDescriptor getMethodDescriptor;
-/*     */   private Reference<Method[]> listenerMethodsRef;
-/*     */   private Reference<? extends Class<?>> listenerTypeRef;
-/*     */   private boolean unicast;
-/*     */   private boolean inDefaultEventSet = true;
-/*     */   
-/*     */   public EventSetDescriptor(Class<?> paramClass1, String paramString1, Class<?> paramClass2, String paramString2) throws IntrospectionException {
-/*  75 */     this(paramClass1, paramString1, paramClass2, new String[] { paramString2 }, "add" + 
-/*     */         
-/*  77 */         getListenerClassName(paramClass2), "remove" + 
-/*  78 */         getListenerClassName(paramClass2), "get" + 
-/*  79 */         getListenerClassName(paramClass2) + "s");
-/*     */     
-/*  81 */     String str = NameGenerator.capitalize(paramString1) + "Event";
-/*  82 */     Method[] arrayOfMethod = getListenerMethods();
-/*  83 */     if (arrayOfMethod.length > 0) {
-/*  84 */       Class[] arrayOfClass = getParameterTypes(getClass0(), arrayOfMethod[0]);
-/*     */       
-/*  86 */       if (!"vetoableChange".equals(paramString1) && !arrayOfClass[0].getName().endsWith(str)) {
-/*  87 */         throw new IntrospectionException("Method \"" + paramString2 + "\" should have argument \"" + str + "\"");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String getListenerClassName(Class<?> paramClass) {
-/*  95 */     String str = paramClass.getName();
-/*  96 */     return str.substring(str.lastIndexOf('.') + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EventSetDescriptor(Class<?> paramClass1, String paramString1, Class<?> paramClass2, String[] paramArrayOfString, String paramString2, String paramString3) throws IntrospectionException {
-/* 124 */     this(paramClass1, paramString1, paramClass2, paramArrayOfString, paramString2, paramString3, (String)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EventSetDescriptor(Class<?> paramClass1, String paramString1, Class<?> paramClass2, String[] paramArrayOfString, String paramString2, String paramString3, String paramString4) throws IntrospectionException {
-/* 158 */     if (paramClass1 == null || paramString1 == null || paramClass2 == null) {
-/* 159 */       throw new NullPointerException();
-/*     */     }
-/* 161 */     setName(paramString1);
-/* 162 */     setClass0(paramClass1);
-/* 163 */     setListenerType(paramClass2);
-/*     */     
-/* 165 */     Method[] arrayOfMethod = new Method[paramArrayOfString.length];
-/* 166 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/*     */       
-/* 168 */       if (paramArrayOfString[b] == null) {
-/* 169 */         throw new NullPointerException();
-/*     */       }
-/* 171 */       arrayOfMethod[b] = getMethod(paramClass2, paramArrayOfString[b], 1);
-/*     */     } 
-/* 173 */     setListenerMethods(arrayOfMethod);
-/*     */     
-/* 175 */     setAddListenerMethod(getMethod(paramClass1, paramString2, 1));
-/* 176 */     setRemoveListenerMethod(getMethod(paramClass1, paramString3, 1));
-/*     */ 
-/*     */     
-/* 179 */     Method method = Introspector.findMethod(paramClass1, paramString4, 0);
-/* 180 */     if (method != null) {
-/* 181 */       setGetListenerMethod(method);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static Method getMethod(Class<?> paramClass, String paramString, int paramInt) throws IntrospectionException {
-/* 187 */     if (paramString == null) {
-/* 188 */       return null;
-/*     */     }
-/* 190 */     Method method = Introspector.findMethod(paramClass, paramString, paramInt);
-/* 191 */     if (method == null || Modifier.isStatic(method.getModifiers())) {
-/* 192 */       throw new IntrospectionException("Method not found: " + paramString + " on class " + paramClass
-/* 193 */           .getName());
-/*     */     }
-/* 195 */     return method;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EventSetDescriptor(String paramString, Class<?> paramClass, Method[] paramArrayOfMethod, Method paramMethod1, Method paramMethod2) throws IntrospectionException {
-/* 219 */     this(paramString, paramClass, paramArrayOfMethod, paramMethod1, paramMethod2, (Method)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EventSetDescriptor(String paramString, Class<?> paramClass, Method[] paramArrayOfMethod, Method paramMethod1, Method paramMethod2, Method paramMethod3) throws IntrospectionException {
-/* 248 */     setName(paramString);
-/* 249 */     setListenerMethods(paramArrayOfMethod);
-/* 250 */     setAddListenerMethod(paramMethod1);
-/* 251 */     setRemoveListenerMethod(paramMethod2);
-/* 252 */     setGetListenerMethod(paramMethod3);
-/* 253 */     setListenerType(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public EventSetDescriptor(String paramString, Class<?> paramClass, MethodDescriptor[] paramArrayOfMethodDescriptor, Method paramMethod1, Method paramMethod2) throws IntrospectionException {
-/* 279 */     setName(paramString);
-/* 280 */     this
-/* 281 */       .listenerMethodDescriptors = (paramArrayOfMethodDescriptor != null) ? (MethodDescriptor[])paramArrayOfMethodDescriptor.clone() : null;
-/*     */     
-/* 283 */     setAddListenerMethod(paramMethod1);
-/* 284 */     setRemoveListenerMethod(paramMethod2);
-/* 285 */     setListenerType(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> getListenerType() {
-/* 295 */     return (this.listenerTypeRef != null) ? this.listenerTypeRef
-/* 296 */       .get() : null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void setListenerType(Class<?> paramClass) {
-/* 301 */     this.listenerTypeRef = getWeakReference(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Method[] getListenerMethods() {
-/* 312 */     Method[] arrayOfMethod = getListenerMethods0();
-/* 313 */     if (arrayOfMethod == null) {
-/* 314 */       if (this.listenerMethodDescriptors != null) {
-/* 315 */         arrayOfMethod = new Method[this.listenerMethodDescriptors.length];
-/* 316 */         for (byte b = 0; b < arrayOfMethod.length; b++) {
-/* 317 */           arrayOfMethod[b] = this.listenerMethodDescriptors[b].getMethod();
-/*     */         }
-/*     */       } 
-/* 320 */       setListenerMethods(arrayOfMethod);
-/*     */     } 
-/* 322 */     return arrayOfMethod;
-/*     */   }
-/*     */   
-/*     */   private void setListenerMethods(Method[] paramArrayOfMethod) {
-/* 326 */     if (paramArrayOfMethod == null) {
-/*     */       return;
-/*     */     }
-/* 329 */     if (this.listenerMethodDescriptors == null) {
-/* 330 */       this.listenerMethodDescriptors = new MethodDescriptor[paramArrayOfMethod.length];
-/* 331 */       for (byte b = 0; b < paramArrayOfMethod.length; b++) {
-/* 332 */         this.listenerMethodDescriptors[b] = new MethodDescriptor(paramArrayOfMethod[b]);
-/*     */       }
-/*     */     } 
-/* 335 */     this.listenerMethodsRef = getSoftReference(paramArrayOfMethod);
-/*     */   }
-/*     */   
-/*     */   private Method[] getListenerMethods0() {
-/* 339 */     return (this.listenerMethodsRef != null) ? this.listenerMethodsRef
-/* 340 */       .get() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized MethodDescriptor[] getListenerMethodDescriptors() {
-/* 352 */     return (this.listenerMethodDescriptors != null) ? (MethodDescriptor[])this.listenerMethodDescriptors
-/* 353 */       .clone() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Method getAddListenerMethod() {
-/* 363 */     return getMethod(this.addMethodDescriptor);
-/*     */   }
-/*     */   
-/*     */   private synchronized void setAddListenerMethod(Method paramMethod) {
-/* 367 */     if (paramMethod == null) {
-/*     */       return;
-/*     */     }
-/* 370 */     if (getClass0() == null) {
-/* 371 */       setClass0(paramMethod.getDeclaringClass());
-/*     */     }
-/* 373 */     this.addMethodDescriptor = new MethodDescriptor(paramMethod);
-/* 374 */     setTransient(paramMethod.<Transient>getAnnotation(Transient.class));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Method getRemoveListenerMethod() {
-/* 383 */     return getMethod(this.removeMethodDescriptor);
-/*     */   }
-/*     */   
-/*     */   private synchronized void setRemoveListenerMethod(Method paramMethod) {
-/* 387 */     if (paramMethod == null) {
-/*     */       return;
-/*     */     }
-/* 390 */     if (getClass0() == null) {
-/* 391 */       setClass0(paramMethod.getDeclaringClass());
-/*     */     }
-/* 393 */     this.removeMethodDescriptor = new MethodDescriptor(paramMethod);
-/* 394 */     setTransient(paramMethod.<Transient>getAnnotation(Transient.class));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Method getGetListenerMethod() {
-/* 405 */     return getMethod(this.getMethodDescriptor);
-/*     */   }
-/*     */   
-/*     */   private synchronized void setGetListenerMethod(Method paramMethod) {
-/* 409 */     if (paramMethod == null) {
-/*     */       return;
-/*     */     }
-/* 412 */     if (getClass0() == null) {
-/* 413 */       setClass0(paramMethod.getDeclaringClass());
-/*     */     }
-/* 415 */     this.getMethodDescriptor = new MethodDescriptor(paramMethod);
-/* 416 */     setTransient(paramMethod.<Transient>getAnnotation(Transient.class));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setUnicast(boolean paramBoolean) {
-/* 425 */     this.unicast = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isUnicast() {
-/* 436 */     return this.unicast;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInDefaultEventSet(boolean paramBoolean) {
-/* 448 */     this.inDefaultEventSet = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isInDefaultEventSet() {
-/* 458 */     return this.inDefaultEventSet;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   EventSetDescriptor(EventSetDescriptor paramEventSetDescriptor1, EventSetDescriptor paramEventSetDescriptor2) {
-/* 470 */     super(paramEventSetDescriptor1, paramEventSetDescriptor2);
-/* 471 */     this.listenerMethodDescriptors = paramEventSetDescriptor1.listenerMethodDescriptors;
-/* 472 */     if (paramEventSetDescriptor2.listenerMethodDescriptors != null) {
-/* 473 */       this.listenerMethodDescriptors = paramEventSetDescriptor2.listenerMethodDescriptors;
-/*     */     }
-/*     */     
-/* 476 */     this.listenerTypeRef = paramEventSetDescriptor1.listenerTypeRef;
-/* 477 */     if (paramEventSetDescriptor2.listenerTypeRef != null) {
-/* 478 */       this.listenerTypeRef = paramEventSetDescriptor2.listenerTypeRef;
-/*     */     }
-/*     */     
-/* 481 */     this.addMethodDescriptor = paramEventSetDescriptor1.addMethodDescriptor;
-/* 482 */     if (paramEventSetDescriptor2.addMethodDescriptor != null) {
-/* 483 */       this.addMethodDescriptor = paramEventSetDescriptor2.addMethodDescriptor;
-/*     */     }
-/*     */     
-/* 486 */     this.removeMethodDescriptor = paramEventSetDescriptor1.removeMethodDescriptor;
-/* 487 */     if (paramEventSetDescriptor2.removeMethodDescriptor != null) {
-/* 488 */       this.removeMethodDescriptor = paramEventSetDescriptor2.removeMethodDescriptor;
-/*     */     }
-/*     */     
-/* 491 */     this.getMethodDescriptor = paramEventSetDescriptor1.getMethodDescriptor;
-/* 492 */     if (paramEventSetDescriptor2.getMethodDescriptor != null) {
-/* 493 */       this.getMethodDescriptor = paramEventSetDescriptor2.getMethodDescriptor;
-/*     */     }
-/*     */     
-/* 496 */     this.unicast = paramEventSetDescriptor2.unicast;
-/* 497 */     if (!paramEventSetDescriptor1.inDefaultEventSet || !paramEventSetDescriptor2.inDefaultEventSet) {
-/* 498 */       this.inDefaultEventSet = false;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   EventSetDescriptor(EventSetDescriptor paramEventSetDescriptor) {
-/* 507 */     super(paramEventSetDescriptor);
-/* 508 */     if (paramEventSetDescriptor.listenerMethodDescriptors != null) {
-/* 509 */       int i = paramEventSetDescriptor.listenerMethodDescriptors.length;
-/* 510 */       this.listenerMethodDescriptors = new MethodDescriptor[i];
-/* 511 */       for (byte b = 0; b < i; b++) {
-/* 512 */         this.listenerMethodDescriptors[b] = new MethodDescriptor(paramEventSetDescriptor.listenerMethodDescriptors[b]);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 516 */     this.listenerTypeRef = paramEventSetDescriptor.listenerTypeRef;
-/*     */     
-/* 518 */     this.addMethodDescriptor = paramEventSetDescriptor.addMethodDescriptor;
-/* 519 */     this.removeMethodDescriptor = paramEventSetDescriptor.removeMethodDescriptor;
-/* 520 */     this.getMethodDescriptor = paramEventSetDescriptor.getMethodDescriptor;
-/*     */     
-/* 522 */     this.unicast = paramEventSetDescriptor.unicast;
-/* 523 */     this.inDefaultEventSet = paramEventSetDescriptor.inDefaultEventSet;
-/*     */   }
-/*     */   
-/*     */   void appendTo(StringBuilder paramStringBuilder) {
-/* 527 */     appendTo(paramStringBuilder, "unicast", this.unicast);
-/* 528 */     appendTo(paramStringBuilder, "inDefaultEventSet", this.inDefaultEventSet);
-/* 529 */     appendTo(paramStringBuilder, "listenerType", this.listenerTypeRef);
-/* 530 */     appendTo(paramStringBuilder, "getListenerMethod", getMethod(this.getMethodDescriptor));
-/* 531 */     appendTo(paramStringBuilder, "addListenerMethod", getMethod(this.addMethodDescriptor));
-/* 532 */     appendTo(paramStringBuilder, "removeListenerMethod", getMethod(this.removeMethodDescriptor));
-/*     */   }
-/*     */   
-/*     */   private static Method getMethod(MethodDescriptor paramMethodDescriptor) {
-/* 536 */     return (paramMethodDescriptor != null) ? paramMethodDescriptor
-/* 537 */       .getMethod() : null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\beans\EventSetDescriptor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.beans;
+
+import java.lang.ref.Reference;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
+/**
+ * An EventSetDescriptor describes a group of events that a given Java
+ * bean fires.
+ * <P>
+ * The given group of events are all delivered as method calls on a single
+ * event listener interface, and an event listener object can be registered
+ * via a call on a registration method supplied by the event source.
+ */
+public class EventSetDescriptor extends FeatureDescriptor {
+
+    private MethodDescriptor[] listenerMethodDescriptors;
+    private MethodDescriptor addMethodDescriptor;
+    private MethodDescriptor removeMethodDescriptor;
+    private MethodDescriptor getMethodDescriptor;
+
+    private Reference<Method[]> listenerMethodsRef;
+    private Reference<? extends Class<?>> listenerTypeRef;
+
+    private boolean unicast;
+    private boolean inDefaultEventSet = true;
+
+    /**
+     * Creates an <TT>EventSetDescriptor</TT> assuming that you are
+     * following the most simple standard design pattern where a named
+     * event &quot;fred&quot; is (1) delivered as a call on the single method of
+     * interface FredListener, (2) has a single argument of type FredEvent,
+     * and (3) where the FredListener may be registered with a call on an
+     * addFredListener method of the source component and removed with a
+     * call on a removeFredListener method.
+     *
+     * @param sourceClass  The class firing the event.
+     * @param eventSetName  The programmatic name of the event.  E.g. &quot;fred&quot;.
+     *          Note that this should normally start with a lower-case character.
+     * @param listenerType  The target interface that events
+     *          will get delivered to.
+     * @param listenerMethodName  The method that will get called when the event gets
+     *          delivered to its target listener interface.
+     * @exception IntrospectionException if an exception occurs during
+     *              introspection.
+     */
+    public EventSetDescriptor(Class<?> sourceClass, String eventSetName,
+                Class<?> listenerType, String listenerMethodName)
+                throws IntrospectionException {
+        this(sourceClass, eventSetName, listenerType,
+             new String[] { listenerMethodName },
+             Introspector.ADD_PREFIX + getListenerClassName(listenerType),
+             Introspector.REMOVE_PREFIX + getListenerClassName(listenerType),
+             Introspector.GET_PREFIX + getListenerClassName(listenerType) + "s");
+
+        String eventName = NameGenerator.capitalize(eventSetName) + "Event";
+        Method[] listenerMethods = getListenerMethods();
+        if (listenerMethods.length > 0) {
+            Class[] args = getParameterTypes(getClass0(), listenerMethods[0]);
+            // Check for EventSet compliance. Special case for vetoableChange. See 4529996
+            if (!"vetoableChange".equals(eventSetName) && !args[0].getName().endsWith(eventName)) {
+                throw new IntrospectionException("Method \"" + listenerMethodName +
+                                                 "\" should have argument \"" +
+                                                 eventName + "\"");
+            }
+        }
+    }
+
+    private static String getListenerClassName(Class<?> cls) {
+        String className = cls.getName();
+        return className.substring(className.lastIndexOf('.') + 1);
+    }
+
+    /**
+     * Creates an <TT>EventSetDescriptor</TT> from scratch using
+     * string names.
+     *
+     * @param sourceClass  The class firing the event.
+     * @param eventSetName The programmatic name of the event set.
+     *          Note that this should normally start with a lower-case character.
+     * @param listenerType  The Class of the target interface that events
+     *          will get delivered to.
+     * @param listenerMethodNames The names of the methods that will get called
+     *          when the event gets delivered to its target listener interface.
+     * @param addListenerMethodName  The name of the method on the event source
+     *          that can be used to register an event listener object.
+     * @param removeListenerMethodName  The name of the method on the event source
+     *          that can be used to de-register an event listener object.
+     * @exception IntrospectionException if an exception occurs during
+     *              introspection.
+     */
+    public EventSetDescriptor(Class<?> sourceClass,
+                String eventSetName,
+                Class<?> listenerType,
+                String listenerMethodNames[],
+                String addListenerMethodName,
+                String removeListenerMethodName)
+                throws IntrospectionException {
+        this(sourceClass, eventSetName, listenerType,
+             listenerMethodNames, addListenerMethodName,
+             removeListenerMethodName, null);
+    }
+
+    /**
+     * This constructor creates an EventSetDescriptor from scratch using
+     * string names.
+     *
+     * @param sourceClass  The class firing the event.
+     * @param eventSetName The programmatic name of the event set.
+     *          Note that this should normally start with a lower-case character.
+     * @param listenerType  The Class of the target interface that events
+     *          will get delivered to.
+     * @param listenerMethodNames The names of the methods that will get called
+     *          when the event gets delivered to its target listener interface.
+     * @param addListenerMethodName  The name of the method on the event source
+     *          that can be used to register an event listener object.
+     * @param removeListenerMethodName  The name of the method on the event source
+     *          that can be used to de-register an event listener object.
+     * @param getListenerMethodName The method on the event source that
+     *          can be used to access the array of event listener objects.
+     * @exception IntrospectionException if an exception occurs during
+     *              introspection.
+     * @since 1.4
+     */
+    public EventSetDescriptor(Class<?> sourceClass,
+                String eventSetName,
+                Class<?> listenerType,
+                String listenerMethodNames[],
+                String addListenerMethodName,
+                String removeListenerMethodName,
+                String getListenerMethodName)
+                throws IntrospectionException {
+        if (sourceClass == null || eventSetName == null || listenerType == null) {
+            throw new NullPointerException();
+        }
+        setName(eventSetName);
+        setClass0(sourceClass);
+        setListenerType(listenerType);
+
+        Method[] listenerMethods = new Method[listenerMethodNames.length];
+        for (int i = 0; i < listenerMethodNames.length; i++) {
+            // Check for null names
+            if (listenerMethodNames[i] == null) {
+                throw new NullPointerException();
+            }
+            listenerMethods[i] = getMethod(listenerType, listenerMethodNames[i], 1);
+        }
+        setListenerMethods(listenerMethods);
+
+        setAddListenerMethod(getMethod(sourceClass, addListenerMethodName, 1));
+        setRemoveListenerMethod(getMethod(sourceClass, removeListenerMethodName, 1));
+
+        // Be more forgiving of not finding the getListener method.
+        Method method = Introspector.findMethod(sourceClass, getListenerMethodName, 0);
+        if (method != null) {
+            setGetListenerMethod(method);
+        }
+    }
+
+    private static Method getMethod(Class<?> cls, String name, int args)
+        throws IntrospectionException {
+        if (name == null) {
+            return null;
+        }
+        Method method = Introspector.findMethod(cls, name, args);
+        if ((method == null) || Modifier.isStatic(method.getModifiers())) {
+            throw new IntrospectionException("Method not found: " + name +
+                                             " on class " + cls.getName());
+        }
+        return method;
+    }
+
+    /**
+     * Creates an <TT>EventSetDescriptor</TT> from scratch using
+     * <TT>java.lang.reflect.Method</TT> and <TT>java.lang.Class</TT> objects.
+     *
+     * @param eventSetName The programmatic name of the event set.
+     * @param listenerType The Class for the listener interface.
+     * @param listenerMethods  An array of Method objects describing each
+     *          of the event handling methods in the target listener.
+     * @param addListenerMethod  The method on the event source
+     *          that can be used to register an event listener object.
+     * @param removeListenerMethod  The method on the event source
+     *          that can be used to de-register an event listener object.
+     * @exception IntrospectionException if an exception occurs during
+     *              introspection.
+     */
+    public EventSetDescriptor(String eventSetName,
+                Class<?> listenerType,
+                Method listenerMethods[],
+                Method addListenerMethod,
+                Method removeListenerMethod)
+                throws IntrospectionException {
+        this(eventSetName, listenerType, listenerMethods,
+             addListenerMethod, removeListenerMethod, null);
+    }
+
+    /**
+     * This constructor creates an EventSetDescriptor from scratch using
+     * java.lang.reflect.Method and java.lang.Class objects.
+     *
+     * @param eventSetName The programmatic name of the event set.
+     * @param listenerType The Class for the listener interface.
+     * @param listenerMethods  An array of Method objects describing each
+     *          of the event handling methods in the target listener.
+     * @param addListenerMethod  The method on the event source
+     *          that can be used to register an event listener object.
+     * @param removeListenerMethod  The method on the event source
+     *          that can be used to de-register an event listener object.
+     * @param getListenerMethod The method on the event source
+     *          that can be used to access the array of event listener objects.
+     * @exception IntrospectionException if an exception occurs during
+     *              introspection.
+     * @since 1.4
+     */
+    public EventSetDescriptor(String eventSetName,
+                Class<?> listenerType,
+                Method listenerMethods[],
+                Method addListenerMethod,
+                Method removeListenerMethod,
+                Method getListenerMethod)
+                throws IntrospectionException {
+        setName(eventSetName);
+        setListenerMethods(listenerMethods);
+        setAddListenerMethod(addListenerMethod);
+        setRemoveListenerMethod( removeListenerMethod);
+        setGetListenerMethod(getListenerMethod);
+        setListenerType(listenerType);
+    }
+
+    /**
+     * Creates an <TT>EventSetDescriptor</TT> from scratch using
+     * <TT>java.lang.reflect.MethodDescriptor</TT> and <TT>java.lang.Class</TT>
+     *  objects.
+     *
+     * @param eventSetName The programmatic name of the event set.
+     * @param listenerType The Class for the listener interface.
+     * @param listenerMethodDescriptors  An array of MethodDescriptor objects
+     *           describing each of the event handling methods in the
+     *           target listener.
+     * @param addListenerMethod  The method on the event source
+     *          that can be used to register an event listener object.
+     * @param removeListenerMethod  The method on the event source
+     *          that can be used to de-register an event listener object.
+     * @exception IntrospectionException if an exception occurs during
+     *              introspection.
+     */
+    public EventSetDescriptor(String eventSetName,
+                Class<?> listenerType,
+                MethodDescriptor listenerMethodDescriptors[],
+                Method addListenerMethod,
+                Method removeListenerMethod)
+                throws IntrospectionException {
+        setName(eventSetName);
+        this.listenerMethodDescriptors = (listenerMethodDescriptors != null)
+                ? listenerMethodDescriptors.clone()
+                : null;
+        setAddListenerMethod(addListenerMethod);
+        setRemoveListenerMethod(removeListenerMethod);
+        setListenerType(listenerType);
+    }
+
+    /**
+     * Gets the <TT>Class</TT> object for the target interface.
+     *
+     * @return The Class object for the target interface that will
+     * get invoked when the event is fired.
+     */
+    public Class<?> getListenerType() {
+        return (this.listenerTypeRef != null)
+                ? this.listenerTypeRef.get()
+                : null;
+    }
+
+    private void setListenerType(Class<?> cls) {
+        this.listenerTypeRef = getWeakReference(cls);
+    }
+
+    /**
+     * Gets the methods of the target listener interface.
+     *
+     * @return An array of <TT>Method</TT> objects for the target methods
+     * within the target listener interface that will get called when
+     * events are fired.
+     */
+    public synchronized Method[] getListenerMethods() {
+        Method[] methods = getListenerMethods0();
+        if (methods == null) {
+            if (listenerMethodDescriptors != null) {
+                methods = new Method[listenerMethodDescriptors.length];
+                for (int i = 0; i < methods.length; i++) {
+                    methods[i] = listenerMethodDescriptors[i].getMethod();
+                }
+            }
+            setListenerMethods(methods);
+        }
+        return methods;
+    }
+
+    private void setListenerMethods(Method[] methods) {
+        if (methods == null) {
+            return;
+        }
+        if (listenerMethodDescriptors == null) {
+            listenerMethodDescriptors = new MethodDescriptor[methods.length];
+            for (int i = 0; i < methods.length; i++) {
+                listenerMethodDescriptors[i] = new MethodDescriptor(methods[i]);
+            }
+        }
+        this.listenerMethodsRef = getSoftReference(methods);
+    }
+
+    private Method[] getListenerMethods0() {
+        return (this.listenerMethodsRef != null)
+                ? this.listenerMethodsRef.get()
+                : null;
+    }
+
+    /**
+     * Gets the <code>MethodDescriptor</code>s of the target listener interface.
+     *
+     * @return An array of <code>MethodDescriptor</code> objects for the target methods
+     * within the target listener interface that will get called when
+     * events are fired.
+     */
+    public synchronized MethodDescriptor[] getListenerMethodDescriptors() {
+        return (this.listenerMethodDescriptors != null)
+                ? this.listenerMethodDescriptors.clone()
+                : null;
+    }
+
+    /**
+     * Gets the method used to add event listeners.
+     *
+     * @return The method used to register a listener at the event source.
+     */
+    public synchronized Method getAddListenerMethod() {
+        return getMethod(this.addMethodDescriptor);
+    }
+
+    private synchronized void setAddListenerMethod(Method method) {
+        if (method == null) {
+            return;
+        }
+        if (getClass0() == null) {
+            setClass0(method.getDeclaringClass());
+        }
+        addMethodDescriptor = new MethodDescriptor(method);
+        setTransient(method.getAnnotation(Transient.class));
+    }
+
+    /**
+     * Gets the method used to remove event listeners.
+     *
+     * @return The method used to remove a listener at the event source.
+     */
+    public synchronized Method getRemoveListenerMethod() {
+        return getMethod(this.removeMethodDescriptor);
+    }
+
+    private synchronized void setRemoveListenerMethod(Method method) {
+        if (method == null) {
+            return;
+        }
+        if (getClass0() == null) {
+            setClass0(method.getDeclaringClass());
+        }
+        removeMethodDescriptor = new MethodDescriptor(method);
+        setTransient(method.getAnnotation(Transient.class));
+    }
+
+    /**
+     * Gets the method used to access the registered event listeners.
+     *
+     * @return The method used to access the array of listeners at the event
+     *         source or null if it doesn't exist.
+     * @since 1.4
+     */
+    public synchronized Method getGetListenerMethod() {
+        return getMethod(this.getMethodDescriptor);
+    }
+
+    private synchronized void setGetListenerMethod(Method method) {
+        if (method == null) {
+            return;
+        }
+        if (getClass0() == null) {
+            setClass0(method.getDeclaringClass());
+        }
+        getMethodDescriptor = new MethodDescriptor(method);
+        setTransient(method.getAnnotation(Transient.class));
+    }
+
+    /**
+     * Mark an event set as unicast (or not).
+     *
+     * @param unicast  True if the event set is unicast.
+     */
+    public void setUnicast(boolean unicast) {
+        this.unicast = unicast;
+    }
+
+    /**
+     * Normally event sources are multicast.  However there are some
+     * exceptions that are strictly unicast.
+     *
+     * @return  <TT>true</TT> if the event set is unicast.
+     *          Defaults to <TT>false</TT>.
+     */
+    public boolean isUnicast() {
+        return unicast;
+    }
+
+    /**
+     * Marks an event set as being in the &quot;default&quot; set (or not).
+     * By default this is <TT>true</TT>.
+     *
+     * @param inDefaultEventSet <code>true</code> if the event set is in
+     *                          the &quot;default&quot; set,
+     *                          <code>false</code> if not
+     */
+    public void setInDefaultEventSet(boolean inDefaultEventSet) {
+        this.inDefaultEventSet = inDefaultEventSet;
+    }
+
+    /**
+     * Reports if an event set is in the &quot;default&quot; set.
+     *
+     * @return  <TT>true</TT> if the event set is in
+     *          the &quot;default&quot; set.  Defaults to <TT>true</TT>.
+     */
+    public boolean isInDefaultEventSet() {
+        return inDefaultEventSet;
+    }
+
+    /*
+     * Package-private constructor
+     * Merge two event set descriptors.  Where they conflict, give the
+     * second argument (y) priority over the first argument (x).
+     *
+     * @param x  The first (lower priority) EventSetDescriptor
+     * @param y  The second (higher priority) EventSetDescriptor
+     */
+    EventSetDescriptor(EventSetDescriptor x, EventSetDescriptor y) {
+        super(x,y);
+        listenerMethodDescriptors = x.listenerMethodDescriptors;
+        if (y.listenerMethodDescriptors != null) {
+            listenerMethodDescriptors = y.listenerMethodDescriptors;
+        }
+
+        listenerTypeRef = x.listenerTypeRef;
+        if (y.listenerTypeRef != null) {
+            listenerTypeRef = y.listenerTypeRef;
+        }
+
+        addMethodDescriptor = x.addMethodDescriptor;
+        if (y.addMethodDescriptor != null) {
+            addMethodDescriptor = y.addMethodDescriptor;
+        }
+
+        removeMethodDescriptor = x.removeMethodDescriptor;
+        if (y.removeMethodDescriptor != null) {
+            removeMethodDescriptor = y.removeMethodDescriptor;
+        }
+
+        getMethodDescriptor = x.getMethodDescriptor;
+        if (y.getMethodDescriptor != null) {
+            getMethodDescriptor = y.getMethodDescriptor;
+        }
+
+        unicast = y.unicast;
+        if (!x.inDefaultEventSet || !y.inDefaultEventSet) {
+            inDefaultEventSet = false;
+        }
+    }
+
+    /*
+     * Package-private dup constructor
+     * This must isolate the new object from any changes to the old object.
+     */
+    EventSetDescriptor(EventSetDescriptor old) {
+        super(old);
+        if (old.listenerMethodDescriptors != null) {
+            int len = old.listenerMethodDescriptors.length;
+            listenerMethodDescriptors = new MethodDescriptor[len];
+            for (int i = 0; i < len; i++) {
+                listenerMethodDescriptors[i] = new MethodDescriptor(
+                                        old.listenerMethodDescriptors[i]);
+            }
+        }
+        listenerTypeRef = old.listenerTypeRef;
+
+        addMethodDescriptor = old.addMethodDescriptor;
+        removeMethodDescriptor = old.removeMethodDescriptor;
+        getMethodDescriptor = old.getMethodDescriptor;
+
+        unicast = old.unicast;
+        inDefaultEventSet = old.inDefaultEventSet;
+    }
+
+    void appendTo(StringBuilder sb) {
+        appendTo(sb, "unicast", this.unicast);
+        appendTo(sb, "inDefaultEventSet", this.inDefaultEventSet);
+        appendTo(sb, "listenerType", this.listenerTypeRef);
+        appendTo(sb, "getListenerMethod", getMethod(this.getMethodDescriptor));
+        appendTo(sb, "addListenerMethod", getMethod(this.addMethodDescriptor));
+        appendTo(sb, "removeListenerMethod", getMethod(this.removeMethodDescriptor));
+    }
+
+    private static Method getMethod(MethodDescriptor descriptor) {
+        return (descriptor != null)
+                ? descriptor.getMethod()
+                : null;
+    }
+}

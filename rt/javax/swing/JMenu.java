@@ -1,1620 +1,1622 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Component;
-/*      */ import java.awt.ComponentOrientation;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.GraphicsConfiguration;
-/*      */ import java.awt.GraphicsDevice;
-/*      */ import java.awt.GraphicsEnvironment;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Toolkit;
-/*      */ import java.awt.event.KeyEvent;
-/*      */ import java.awt.event.WindowAdapter;
-/*      */ import java.awt.event.WindowEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.Vector;
-/*      */ import javax.accessibility.Accessible;
-/*      */ import javax.accessibility.AccessibleContext;
-/*      */ import javax.accessibility.AccessibleRole;
-/*      */ import javax.accessibility.AccessibleSelection;
-/*      */ import javax.swing.event.ChangeEvent;
-/*      */ import javax.swing.event.ChangeListener;
-/*      */ import javax.swing.event.MenuEvent;
-/*      */ import javax.swing.event.MenuListener;
-/*      */ import javax.swing.plaf.MenuItemUI;
-/*      */ import javax.swing.plaf.PopupMenuUI;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class JMenu
-/*      */   extends JMenuItem
-/*      */   implements Accessible, MenuElement
-/*      */ {
-/*      */   private static final String uiClassID = "MenuUI";
-/*      */   private JPopupMenu popupMenu;
-/*  129 */   private ChangeListener menuChangeListener = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  136 */   private MenuEvent menuEvent = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int delay;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  148 */   private Point customMenuLocation = null;
-/*      */   
-/*      */   private static final boolean TRACE = false;
-/*      */   
-/*      */   private static final boolean VERBOSE = false;
-/*      */   
-/*      */   private static final boolean DEBUG = false;
-/*      */   
-/*      */   protected WinListener popupListener;
-/*      */   
-/*      */   public JMenu() {
-/*  159 */     this("");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenu(String paramString) {
-/*  169 */     super(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenu(Action paramAction) {
-/*  180 */     this();
-/*  181 */     setAction(paramAction);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenu(String paramString, boolean paramBoolean) {
-/*  192 */     this(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void initFocusability() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateUI() {
-/*  217 */     setUI((MenuItemUI)UIManager.getUI(this));
-/*      */     
-/*  219 */     if (this.popupMenu != null)
-/*      */     {
-/*  221 */       this.popupMenu.setUI((PopupMenuUI)UIManager.getUI(this.popupMenu));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getUIClassID() {
-/*  235 */     return "MenuUI";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setModel(ButtonModel paramButtonModel) {
-/*  256 */     ButtonModel buttonModel = getModel();
-/*      */     
-/*  258 */     super.setModel(paramButtonModel);
-/*      */     
-/*  260 */     if (buttonModel != null && this.menuChangeListener != null) {
-/*  261 */       buttonModel.removeChangeListener(this.menuChangeListener);
-/*  262 */       this.menuChangeListener = null;
-/*      */     } 
-/*      */     
-/*  265 */     this.model = paramButtonModel;
-/*      */     
-/*  267 */     if (paramButtonModel != null) {
-/*  268 */       this.menuChangeListener = createMenuChangeListener();
-/*  269 */       paramButtonModel.addChangeListener(this.menuChangeListener);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSelected() {
-/*  279 */     return getModel().isSelected();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelected(boolean paramBoolean) {
-/*  293 */     ButtonModel buttonModel = getModel();
-/*  294 */     boolean bool = buttonModel.isSelected();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  304 */     if (paramBoolean != buttonModel.isSelected()) {
-/*  305 */       getModel().setSelected(paramBoolean);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isPopupMenuVisible() {
-/*  315 */     ensurePopupMenuCreated();
-/*  316 */     return this.popupMenu.isVisible();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPopupMenuVisible(boolean paramBoolean) {
-/*  336 */     boolean bool = isPopupMenuVisible();
-/*  337 */     if (paramBoolean != bool && (isEnabled() || !paramBoolean)) {
-/*  338 */       ensurePopupMenuCreated();
-/*  339 */       if (paramBoolean == true && isShowing()) {
-/*      */         
-/*  341 */         Point point = getCustomMenuLocation();
-/*  342 */         if (point == null) {
-/*  343 */           point = getPopupMenuOrigin();
-/*      */         }
-/*  345 */         getPopupMenu().show(this, point.x, point.y);
-/*      */       } else {
-/*  347 */         getPopupMenu().setVisible(false);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Point getPopupMenuOrigin() {
-/*      */     int i, j;
-/*  370 */     JPopupMenu jPopupMenu = getPopupMenu();
-/*      */     
-/*  372 */     Dimension dimension1 = getSize();
-/*  373 */     Dimension dimension2 = jPopupMenu.getSize();
-/*      */ 
-/*      */     
-/*  376 */     if (dimension2.width == 0) {
-/*  377 */       dimension2 = jPopupMenu.getPreferredSize();
-/*      */     }
-/*  379 */     Point point = getLocationOnScreen();
-/*  380 */     Toolkit toolkit = Toolkit.getDefaultToolkit();
-/*  381 */     GraphicsConfiguration graphicsConfiguration = getGraphicsConfiguration();
-/*  382 */     Rectangle rectangle = new Rectangle(toolkit.getScreenSize());
-/*      */     
-/*  384 */     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-/*  385 */     GraphicsDevice[] arrayOfGraphicsDevice = graphicsEnvironment.getScreenDevices();
-/*  386 */     for (byte b = 0; b < arrayOfGraphicsDevice.length; b++) {
-/*  387 */       if (arrayOfGraphicsDevice[b].getType() == 0) {
-/*      */         
-/*  389 */         GraphicsConfiguration graphicsConfiguration1 = arrayOfGraphicsDevice[b].getDefaultConfiguration();
-/*  390 */         if (graphicsConfiguration1.getBounds().contains(point)) {
-/*  391 */           graphicsConfiguration = graphicsConfiguration1;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  398 */     if (graphicsConfiguration != null) {
-/*  399 */       rectangle = graphicsConfiguration.getBounds();
-/*      */       
-/*  401 */       Insets insets = toolkit.getScreenInsets(graphicsConfiguration);
-/*      */       
-/*  403 */       rectangle.width -= 
-/*  404 */         Math.abs(insets.left + insets.right);
-/*  405 */       rectangle.height -= 
-/*  406 */         Math.abs(insets.top + insets.bottom);
-/*  407 */       point.x -= Math.abs(insets.left);
-/*  408 */       point.y -= Math.abs(insets.top);
-/*      */     } 
-/*      */     
-/*  411 */     Container container = getParent();
-/*  412 */     if (container instanceof JPopupMenu) {
-/*      */       
-/*  414 */       int k = UIManager.getInt("Menu.submenuPopupOffsetX");
-/*  415 */       int m = UIManager.getInt("Menu.submenuPopupOffsetY");
-/*      */       
-/*  417 */       if (SwingUtilities.isLeftToRight(this)) {
-/*      */         
-/*  419 */         i = dimension1.width + k;
-/*  420 */         if (point.x + i + dimension2.width >= rectangle.width + rectangle.x && rectangle.width - dimension1.width < 2 * (point.x - rectangle.x))
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  426 */           i = 0 - k - dimension2.width;
-/*      */         }
-/*      */       } else {
-/*      */         
-/*  430 */         i = 0 - k - dimension2.width;
-/*  431 */         if (point.x + i < rectangle.x && rectangle.width - dimension1.width > 2 * (point.x - rectangle.x))
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */           
-/*  436 */           i = dimension1.width + k;
-/*      */         }
-/*      */       } 
-/*      */       
-/*  440 */       j = m;
-/*  441 */       if (point.y + j + dimension2.height >= rectangle.height + rectangle.y && rectangle.height - dimension1.height < 2 * (point.y - rectangle.y))
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  447 */         j = dimension1.height - m - dimension2.height;
-/*      */       }
-/*      */     } else {
-/*      */       
-/*  451 */       int k = UIManager.getInt("Menu.menuPopupOffsetX");
-/*  452 */       int m = UIManager.getInt("Menu.menuPopupOffsetY");
-/*      */       
-/*  454 */       if (SwingUtilities.isLeftToRight(this)) {
-/*      */         
-/*  456 */         i = k;
-/*  457 */         if (point.x + i + dimension2.width >= rectangle.width + rectangle.x && rectangle.width - dimension1.width < 2 * (point.x - rectangle.x))
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  463 */           i = dimension1.width - k - dimension2.width;
-/*      */         }
-/*      */       } else {
-/*      */         
-/*  467 */         i = dimension1.width - k - dimension2.width;
-/*  468 */         if (point.x + i < rectangle.x && rectangle.width - dimension1.width > 2 * (point.x - rectangle.x))
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */           
-/*  473 */           i = k;
-/*      */         }
-/*      */       } 
-/*      */       
-/*  477 */       j = dimension1.height + m;
-/*  478 */       if (point.y + j + dimension2.height >= rectangle.height + rectangle.y && rectangle.height - dimension1.height < 2 * (point.y - rectangle.y))
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  484 */         j = 0 - m - dimension2.height;
-/*      */       }
-/*      */     } 
-/*  487 */     return new Point(i, j);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getDelay() {
-/*  505 */     return this.delay;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDelay(int paramInt) {
-/*  524 */     if (paramInt < 0) {
-/*  525 */       throw new IllegalArgumentException("Delay must be a positive integer");
-/*      */     }
-/*  527 */     this.delay = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void ensurePopupMenuCreated() {
-/*  538 */     if (this.popupMenu == null) {
-/*  539 */       JMenu jMenu = this;
-/*  540 */       this.popupMenu = new JPopupMenu();
-/*  541 */       this.popupMenu.setInvoker(this);
-/*  542 */       this.popupListener = createWinListener(this.popupMenu);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Point getCustomMenuLocation() {
-/*  550 */     return this.customMenuLocation;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMenuLocation(int paramInt1, int paramInt2) {
-/*  560 */     this.customMenuLocation = new Point(paramInt1, paramInt2);
-/*  561 */     if (this.popupMenu != null) {
-/*  562 */       this.popupMenu.setLocation(paramInt1, paramInt2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenuItem add(JMenuItem paramJMenuItem) {
-/*  573 */     ensurePopupMenuCreated();
-/*  574 */     return this.popupMenu.add(paramJMenuItem);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component add(Component paramComponent) {
-/*  585 */     ensurePopupMenuCreated();
-/*  586 */     this.popupMenu.add(paramComponent);
-/*  587 */     return paramComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component add(Component paramComponent, int paramInt) {
-/*  601 */     ensurePopupMenuCreated();
-/*  602 */     this.popupMenu.add(paramComponent, paramInt);
-/*  603 */     return paramComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenuItem add(String paramString) {
-/*  613 */     return add(new JMenuItem(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenuItem add(Action paramAction) {
-/*  624 */     JMenuItem jMenuItem = createActionComponent(paramAction);
-/*  625 */     jMenuItem.setAction(paramAction);
-/*  626 */     add(jMenuItem);
-/*  627 */     return jMenuItem;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JMenuItem createActionComponent(Action paramAction) {
-/*  641 */     JMenuItem jMenuItem = new JMenuItem() {
-/*      */         protected PropertyChangeListener createActionPropertyChangeListener(Action param1Action) {
-/*  643 */           PropertyChangeListener propertyChangeListener = JMenu.this.createActionChangeListener(this);
-/*  644 */           if (propertyChangeListener == null) {
-/*  645 */             propertyChangeListener = super.createActionPropertyChangeListener(param1Action);
-/*      */           }
-/*  647 */           return propertyChangeListener;
-/*      */         }
-/*      */       };
-/*  650 */     jMenuItem.setHorizontalTextPosition(11);
-/*  651 */     jMenuItem.setVerticalTextPosition(0);
-/*  652 */     return jMenuItem;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected PropertyChangeListener createActionChangeListener(JMenuItem paramJMenuItem) {
-/*  660 */     return paramJMenuItem.createActionPropertyChangeListener0(paramJMenuItem.getAction());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addSeparator() {
-/*  668 */     ensurePopupMenuCreated();
-/*  669 */     this.popupMenu.addSeparator();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void insert(String paramString, int paramInt) {
-/*  683 */     if (paramInt < 0) {
-/*  684 */       throw new IllegalArgumentException("index less than zero.");
-/*      */     }
-/*      */     
-/*  687 */     ensurePopupMenuCreated();
-/*  688 */     this.popupMenu.insert(new JMenuItem(paramString), paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenuItem insert(JMenuItem paramJMenuItem, int paramInt) {
-/*  702 */     if (paramInt < 0) {
-/*  703 */       throw new IllegalArgumentException("index less than zero.");
-/*      */     }
-/*  705 */     ensurePopupMenuCreated();
-/*  706 */     this.popupMenu.insert(paramJMenuItem, paramInt);
-/*  707 */     return paramJMenuItem;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenuItem insert(Action paramAction, int paramInt) {
-/*  721 */     if (paramInt < 0) {
-/*  722 */       throw new IllegalArgumentException("index less than zero.");
-/*      */     }
-/*      */     
-/*  725 */     ensurePopupMenuCreated();
-/*  726 */     JMenuItem jMenuItem = new JMenuItem(paramAction);
-/*  727 */     jMenuItem.setHorizontalTextPosition(11);
-/*  728 */     jMenuItem.setVerticalTextPosition(0);
-/*  729 */     this.popupMenu.insert(jMenuItem, paramInt);
-/*  730 */     return jMenuItem;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void insertSeparator(int paramInt) {
-/*  742 */     if (paramInt < 0) {
-/*  743 */       throw new IllegalArgumentException("index less than zero.");
-/*      */     }
-/*      */     
-/*  746 */     ensurePopupMenuCreated();
-/*  747 */     this.popupMenu.insert(new JPopupMenu.Separator(), paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JMenuItem getItem(int paramInt) {
-/*  763 */     if (paramInt < 0) {
-/*  764 */       throw new IllegalArgumentException("index less than zero.");
-/*      */     }
-/*      */     
-/*  767 */     Component component = getMenuComponent(paramInt);
-/*  768 */     if (component instanceof JMenuItem) {
-/*  769 */       return (JMenuItem)component;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  774 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getItemCount() {
-/*  785 */     return getMenuComponentCount();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isTearOff() {
-/*  796 */     throw new Error("boolean isTearOff() {} not yet implemented");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(JMenuItem paramJMenuItem) {
-/*  806 */     if (this.popupMenu != null) {
-/*  807 */       this.popupMenu.remove(paramJMenuItem);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(int paramInt) {
-/*  819 */     if (paramInt < 0) {
-/*  820 */       throw new IllegalArgumentException("index less than zero.");
-/*      */     }
-/*  822 */     if (paramInt > getItemCount()) {
-/*  823 */       throw new IllegalArgumentException("index greater than the number of items.");
-/*      */     }
-/*  825 */     if (this.popupMenu != null) {
-/*  826 */       this.popupMenu.remove(paramInt);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(Component paramComponent) {
-/*  835 */     if (this.popupMenu != null) {
-/*  836 */       this.popupMenu.remove(paramComponent);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeAll() {
-/*  843 */     if (this.popupMenu != null) {
-/*  844 */       this.popupMenu.removeAll();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMenuComponentCount() {
-/*  853 */     int i = 0;
-/*  854 */     if (this.popupMenu != null)
-/*  855 */       i = this.popupMenu.getComponentCount(); 
-/*  856 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getMenuComponent(int paramInt) {
-/*  868 */     if (this.popupMenu != null) {
-/*  869 */       return this.popupMenu.getComponent(paramInt);
-/*      */     }
-/*  871 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component[] getMenuComponents() {
-/*  883 */     if (this.popupMenu != null) {
-/*  884 */       return this.popupMenu.getComponents();
-/*      */     }
-/*  886 */     return new Component[0];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isTopLevelMenu() {
-/*  898 */     return getParent() instanceof JMenuBar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isMenuComponent(Component paramComponent) {
-/*  911 */     if (paramComponent == this) {
-/*  912 */       return true;
-/*      */     }
-/*  914 */     if (paramComponent instanceof JPopupMenu) {
-/*  915 */       JPopupMenu jPopupMenu = (JPopupMenu)paramComponent;
-/*  916 */       if (jPopupMenu == getPopupMenu()) {
-/*  917 */         return true;
-/*      */       }
-/*      */     } 
-/*  920 */     int i = getMenuComponentCount();
-/*  921 */     Component[] arrayOfComponent = getMenuComponents();
-/*  922 */     for (byte b = 0; b < i; b++) {
-/*  923 */       Component component = arrayOfComponent[b];
-/*      */       
-/*  925 */       if (component == paramComponent) {
-/*  926 */         return true;
-/*      */       }
-/*      */ 
-/*      */       
-/*  930 */       if (component instanceof JMenu) {
-/*  931 */         JMenu jMenu = (JMenu)component;
-/*  932 */         if (jMenu.isMenuComponent(paramComponent))
-/*  933 */           return true; 
-/*      */       } 
-/*      */     } 
-/*  936 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Point translateToPopupMenu(Point paramPoint) {
-/*  949 */     return translateToPopupMenu(paramPoint.x, paramPoint.y);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Point translateToPopupMenu(int paramInt1, int paramInt2) {
-/*      */     int i;
-/*      */     int j;
-/*  964 */     if (getParent() instanceof JPopupMenu) {
-/*  965 */       i = paramInt1 - (getSize()).width;
-/*  966 */       j = paramInt2;
-/*      */     } else {
-/*  968 */       i = paramInt1;
-/*  969 */       j = paramInt2 - (getSize()).height;
-/*      */     } 
-/*      */     
-/*  972 */     return new Point(i, j);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JPopupMenu getPopupMenu() {
-/*  980 */     ensurePopupMenuCreated();
-/*  981 */     return this.popupMenu;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addMenuListener(MenuListener paramMenuListener) {
-/*  990 */     this.listenerList.add(MenuListener.class, paramMenuListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeMenuListener(MenuListener paramMenuListener) {
-/*  999 */     this.listenerList.remove(MenuListener.class, paramMenuListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MenuListener[] getMenuListeners() {
-/* 1011 */     return this.listenerList.<MenuListener>getListeners(MenuListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireMenuSelected() {
-/* 1027 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */ 
-/*      */     
-/* 1030 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 1031 */       if (arrayOfObject[i] == MenuListener.class) {
-/* 1032 */         if (arrayOfObject[i + 1] == null) {
-/* 1033 */           throw new Error(getText() + " has a NULL Listener!! " + i);
-/*      */         }
-/*      */         
-/* 1036 */         if (this.menuEvent == null)
-/* 1037 */           this.menuEvent = new MenuEvent(this); 
-/* 1038 */         ((MenuListener)arrayOfObject[i + 1]).menuSelected(this.menuEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireMenuDeselected() {
-/* 1057 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */ 
-/*      */     
-/* 1060 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 1061 */       if (arrayOfObject[i] == MenuListener.class) {
-/* 1062 */         if (arrayOfObject[i + 1] == null) {
-/* 1063 */           throw new Error(getText() + " has a NULL Listener!! " + i);
-/*      */         }
-/*      */         
-/* 1066 */         if (this.menuEvent == null)
-/* 1067 */           this.menuEvent = new MenuEvent(this); 
-/* 1068 */         ((MenuListener)arrayOfObject[i + 1]).menuDeselected(this.menuEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireMenuCanceled() {
-/* 1087 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */ 
-/*      */     
-/* 1090 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 1091 */       if (arrayOfObject[i] == MenuListener.class) {
-/* 1092 */         if (arrayOfObject[i + 1] == null) {
-/* 1093 */           throw new Error(getText() + " has a NULL Listener!! " + i);
-/*      */         }
-/*      */ 
-/*      */         
-/* 1097 */         if (this.menuEvent == null)
-/* 1098 */           this.menuEvent = new MenuEvent(this); 
-/* 1099 */         ((MenuListener)arrayOfObject[i + 1]).menuCanceled(this.menuEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void configureAcceleratorFromAction(Action paramAction) {}
-/*      */   
-/*      */   class MenuChangeListener
-/*      */     implements ChangeListener, Serializable
-/*      */   {
-/*      */     boolean isSelected = false;
-/*      */     
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/* 1113 */       ButtonModel buttonModel = (ButtonModel)param1ChangeEvent.getSource();
-/* 1114 */       boolean bool = buttonModel.isSelected();
-/*      */       
-/* 1116 */       if (bool != this.isSelected) {
-/* 1117 */         if (bool == true) {
-/* 1118 */           JMenu.this.fireMenuSelected();
-/*      */         } else {
-/* 1120 */           JMenu.this.fireMenuDeselected();
-/*      */         } 
-/* 1122 */         this.isSelected = bool;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private ChangeListener createMenuChangeListener() {
-/* 1128 */     return new MenuChangeListener();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected WinListener createWinListener(JPopupMenu paramJPopupMenu) {
-/* 1141 */     return new WinListener(paramJPopupMenu);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class WinListener
-/*      */     extends WindowAdapter
-/*      */     implements Serializable
-/*      */   {
-/*      */     JPopupMenu popupMenu;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public WinListener(JPopupMenu param1JPopupMenu) {
-/* 1165 */       this.popupMenu = param1JPopupMenu;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void windowClosing(WindowEvent param1WindowEvent) {
-/* 1171 */       JMenu.this.setSelected(false);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void menuSelectionChanged(boolean paramBoolean) {
-/* 1187 */     setSelected(paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MenuElement[] getSubElements() {
-/* 1201 */     if (this.popupMenu == null) {
-/* 1202 */       return new MenuElement[0];
-/*      */     }
-/* 1204 */     MenuElement[] arrayOfMenuElement = new MenuElement[1];
-/* 1205 */     arrayOfMenuElement[0] = this.popupMenu;
-/* 1206 */     return arrayOfMenuElement;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getComponent() {
-/* 1219 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void applyComponentOrientation(ComponentOrientation paramComponentOrientation) {
-/* 1236 */     super.applyComponentOrientation(paramComponentOrientation);
-/*      */     
-/* 1238 */     if (this.popupMenu != null) {
-/* 1239 */       int i = getMenuComponentCount();
-/* 1240 */       for (byte b = 0; b < i; b++) {
-/* 1241 */         getMenuComponent(b).applyComponentOrientation(paramComponentOrientation);
-/*      */       }
-/* 1243 */       this.popupMenu.setComponentOrientation(paramComponentOrientation);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public void setComponentOrientation(ComponentOrientation paramComponentOrientation) {
-/* 1248 */     super.setComponentOrientation(paramComponentOrientation);
-/* 1249 */     if (this.popupMenu != null) {
-/* 1250 */       this.popupMenu.setComponentOrientation(paramComponentOrientation);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAccelerator(KeyStroke paramKeyStroke) {
-/* 1269 */     throw new Error("setAccelerator() is not defined for JMenu.  Use setMnemonic() instead.");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void processKeyEvent(KeyEvent paramKeyEvent) {
-/* 1278 */     MenuSelectionManager.defaultManager().processKeyEvent(paramKeyEvent);
-/* 1279 */     if (paramKeyEvent.isConsumed()) {
-/*      */       return;
-/*      */     }
-/* 1282 */     super.processKeyEvent(paramKeyEvent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void doClick(int paramInt) {
-/* 1292 */     MenuElement[] arrayOfMenuElement = buildMenuElementArray(this);
-/* 1293 */     MenuSelectionManager.defaultManager().setSelectedPath(arrayOfMenuElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private MenuElement[] buildMenuElementArray(JMenu paramJMenu) {
-/* 1303 */     Vector<JPopupMenu> vector = new Vector();
-/* 1304 */     JPopupMenu jPopupMenu = paramJMenu.getPopupMenu();
-/*      */ 
-/*      */     
-/*      */     while (true) {
-/*      */       Component component;
-/*      */       
-/* 1310 */       while (jPopupMenu instanceof JPopupMenu) {
-/* 1311 */         JPopupMenu jPopupMenu1 = jPopupMenu;
-/* 1312 */         vector.insertElementAt(jPopupMenu1, 0);
-/* 1313 */         component = jPopupMenu1.getInvoker();
-/* 1314 */       }  if (component instanceof JMenu) {
-/* 1315 */         JMenu jMenu = (JMenu)component;
-/* 1316 */         vector.insertElementAt(jMenu, 0);
-/* 1317 */         component = jMenu.getParent(); continue;
-/* 1318 */       }  if (component instanceof JMenuBar) {
-/* 1319 */         JMenuBar jMenuBar = (JMenuBar)component;
-/* 1320 */         vector.insertElementAt(jMenuBar, 0);
-/* 1321 */         MenuElement[] arrayOfMenuElement = new MenuElement[vector.size()];
-/* 1322 */         vector.copyInto((Object[])arrayOfMenuElement);
-/* 1323 */         return arrayOfMenuElement;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1335 */     paramObjectOutputStream.defaultWriteObject();
-/* 1336 */     if (getUIClassID().equals("MenuUI")) {
-/* 1337 */       byte b = JComponent.getWriteObjCounter(this);
-/* 1338 */       b = (byte)(b - 1); JComponent.setWriteObjCounter(this, b);
-/* 1339 */       if (b == 0 && this.ui != null) {
-/* 1340 */         this.ui.installUI(this);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String paramString() {
-/* 1356 */     return super.paramString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AccessibleContext getAccessibleContext() {
-/* 1374 */     if (this.accessibleContext == null) {
-/* 1375 */       this.accessibleContext = new AccessibleJMenu();
-/*      */     }
-/* 1377 */     return this.accessibleContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class AccessibleJMenu
-/*      */     extends JMenuItem.AccessibleJMenuItem
-/*      */     implements AccessibleSelection
-/*      */   {
-/*      */     public int getAccessibleChildrenCount() {
-/* 1406 */       Component[] arrayOfComponent = JMenu.this.getMenuComponents();
-/* 1407 */       byte b = 0;
-/* 1408 */       for (Component component : arrayOfComponent) {
-/* 1409 */         if (component instanceof Accessible) {
-/* 1410 */           b++;
-/*      */         }
-/*      */       } 
-/* 1413 */       return b;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Accessible getAccessibleChild(int param1Int) {
-/* 1423 */       Component[] arrayOfComponent = JMenu.this.getMenuComponents();
-/* 1424 */       int i = 0;
-/* 1425 */       for (Component component : arrayOfComponent) {
-/* 1426 */         if (component instanceof Accessible) {
-/* 1427 */           if (i == param1Int) {
-/* 1428 */             if (component instanceof JComponent) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/* 1433 */               AccessibleContext accessibleContext = component.getAccessibleContext();
-/* 1434 */               accessibleContext.setAccessibleParent(JMenu.this);
-/*      */             } 
-/* 1436 */             return (Accessible)component;
-/*      */           } 
-/* 1438 */           i++;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1442 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleRole getAccessibleRole() {
-/* 1453 */       return AccessibleRole.MENU;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleSelection getAccessibleSelection() {
-/* 1465 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getAccessibleSelectionCount() {
-/* 1475 */       MenuElement[] arrayOfMenuElement = MenuSelectionManager.defaultManager().getSelectedPath();
-/* 1476 */       if (arrayOfMenuElement != null) {
-/* 1477 */         for (byte b = 0; b < arrayOfMenuElement.length; b++) {
-/* 1478 */           if (arrayOfMenuElement[b] == JMenu.this && 
-/* 1479 */             b + 1 < arrayOfMenuElement.length) {
-/* 1480 */             return 1;
-/*      */           }
-/*      */         } 
-/*      */       }
-/*      */       
-/* 1485 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Accessible getAccessibleSelection(int param1Int) {
-/* 1496 */       if (param1Int < 0 || param1Int >= JMenu.this.getItemCount()) {
-/* 1497 */         return null;
-/*      */       }
-/*      */       
-/* 1500 */       MenuElement[] arrayOfMenuElement = MenuSelectionManager.defaultManager().getSelectedPath();
-/* 1501 */       if (arrayOfMenuElement != null) {
-/* 1502 */         for (byte b = 0; b < arrayOfMenuElement.length; b++) {
-/* 1503 */           if (arrayOfMenuElement[b] == JMenu.this)
-/*      */           {
-/*      */             
-/* 1506 */             while (++b < arrayOfMenuElement.length) {
-/* 1507 */               if (arrayOfMenuElement[b] instanceof JMenuItem) {
-/* 1508 */                 return (Accessible)arrayOfMenuElement[b];
-/*      */               }
-/*      */             } 
-/*      */           }
-/*      */         } 
-/*      */       }
-/* 1514 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isAccessibleChildSelected(int param1Int) {
-/* 1528 */       MenuElement[] arrayOfMenuElement = MenuSelectionManager.defaultManager().getSelectedPath();
-/* 1529 */       if (arrayOfMenuElement != null) {
-/* 1530 */         JMenuItem jMenuItem = JMenu.this.getItem(param1Int);
-/* 1531 */         for (byte b = 0; b < arrayOfMenuElement.length; b++) {
-/* 1532 */           if (arrayOfMenuElement[b] == jMenuItem) {
-/* 1533 */             return true;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/* 1537 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addAccessibleSelection(int param1Int) {
-/* 1553 */       if (param1Int < 0 || param1Int >= JMenu.this.getItemCount()) {
-/*      */         return;
-/*      */       }
-/* 1556 */       JMenuItem jMenuItem = JMenu.this.getItem(param1Int);
-/* 1557 */       if (jMenuItem != null) {
-/* 1558 */         if (jMenuItem instanceof JMenu) {
-/* 1559 */           MenuElement[] arrayOfMenuElement = JMenu.this.buildMenuElementArray((JMenu)jMenuItem);
-/* 1560 */           MenuSelectionManager.defaultManager().setSelectedPath(arrayOfMenuElement);
-/*      */         } else {
-/* 1562 */           MenuSelectionManager.defaultManager().setSelectedPath(null);
-/*      */         } 
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeAccessibleSelection(int param1Int) {
-/* 1575 */       if (param1Int < 0 || param1Int >= JMenu.this.getItemCount()) {
-/*      */         return;
-/*      */       }
-/* 1578 */       JMenuItem jMenuItem = JMenu.this.getItem(param1Int);
-/* 1579 */       if (jMenuItem != null && jMenuItem instanceof JMenu && 
-/* 1580 */         jMenuItem.isSelected()) {
-/*      */         
-/* 1582 */         MenuElement[] arrayOfMenuElement1 = MenuSelectionManager.defaultManager().getSelectedPath();
-/* 1583 */         MenuElement[] arrayOfMenuElement2 = new MenuElement[arrayOfMenuElement1.length - 2];
-/* 1584 */         for (byte b = 0; b < arrayOfMenuElement1.length - 2; b++) {
-/* 1585 */           arrayOfMenuElement2[b] = arrayOfMenuElement1[b];
-/*      */         }
-/* 1587 */         MenuSelectionManager.defaultManager().setSelectedPath(arrayOfMenuElement2);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void clearAccessibleSelection() {
-/* 1600 */       MenuElement[] arrayOfMenuElement = MenuSelectionManager.defaultManager().getSelectedPath();
-/* 1601 */       if (arrayOfMenuElement != null)
-/* 1602 */         for (byte b = 0; b < arrayOfMenuElement.length; b++) {
-/* 1603 */           if (arrayOfMenuElement[b] == JMenu.this) {
-/* 1604 */             MenuElement[] arrayOfMenuElement1 = new MenuElement[b + 1];
-/* 1605 */             System.arraycopy(arrayOfMenuElement, 0, arrayOfMenuElement1, 0, b);
-/* 1606 */             arrayOfMenuElement1[b] = JMenu.this.getPopupMenu();
-/* 1607 */             MenuSelectionManager.defaultManager().setSelectedPath(arrayOfMenuElement1);
-/*      */           } 
-/*      */         }  
-/*      */     }
-/*      */     
-/*      */     public void selectAllAccessibleSelection() {}
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\JMenu.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.*;
+import java.beans.*;
+
+import java.util.*;
+
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+import javax.accessibility.*;
+
+import java.lang.ref.WeakReference;
+
+/**
+ * An implementation of a menu -- a popup window containing
+ * <code>JMenuItem</code>s that
+ * is displayed when the user selects an item on the <code>JMenuBar</code>.
+ * In addition to <code>JMenuItem</code>s, a <code>JMenu</code> can
+ * also contain <code>JSeparator</code>s.
+ * <p>
+ * In essence, a menu is a button with an associated <code>JPopupMenu</code>.
+ * When the "button" is pressed, the <code>JPopupMenu</code> appears. If the
+ * "button" is on the <code>JMenuBar</code>, the menu is a top-level window.
+ * If the "button" is another menu item, then the <code>JPopupMenu</code> is
+ * "pull-right" menu.
+ * <p>
+ * Menus can be configured, and to some degree controlled, by
+ * <code><a href="Action.html">Action</a></code>s.  Using an
+ * <code>Action</code> with a menu has many benefits beyond directly
+ * configuring a menu.  Refer to <a href="Action.html#buttonActions">
+ * Swing Components Supporting <code>Action</code></a> for more
+ * details, and you can find more information in <a
+ * href="https://docs.oracle.com/javase/tutorial/uiswing/misc/action.html">How
+ * to Use Actions</a>, a section in <em>The Java Tutorial</em>.
+ * <p>
+ * For information and examples of using menus see
+ * <a href="https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html">How to Use Menus</a>,
+ * a section in <em>The Java Tutorial.</em>
+ * <p>
+ * <strong>Warning:</strong> Swing is not thread safe. For more
+ * information see <a
+ * href="package-summary.html#threading">Swing's Threading
+ * Policy</a>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @beaninfo
+ *   attribute: isContainer true
+ * description: A popup window containing menu items displayed in a menu bar.
+ *
+ * @author Georges Saab
+ * @author David Karlton
+ * @author Arnaud Weber
+ * @see JMenuItem
+ * @see JSeparator
+ * @see JMenuBar
+ * @see JPopupMenu
+ */
+@SuppressWarnings("serial")
+public class JMenu extends JMenuItem implements Accessible,MenuElement
+{
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    private static final String uiClassID = "MenuUI";
+
+    /*
+     * The popup menu portion of the menu.
+     */
+    private JPopupMenu popupMenu;
+
+    /*
+     * The button's model listeners.  Default is <code>null</code>.
+     */
+    private ChangeListener menuChangeListener = null;
+
+    /*
+     * Only one <code>MenuEvent</code> is needed for each menu since the
+     * event's only state is the source property.  The source of events
+     * generated is always "this".  Default is <code>null</code>.
+     */
+    private MenuEvent menuEvent = null;
+
+    /*
+     * Used by the look and feel (L&F) code to handle
+     * implementation specific menu behaviors.
+     */
+    private int delay;
+
+     /*
+      * Location of the popup component. Location is <code>null</code>
+      * if it was not customized by <code>setMenuLocation</code>
+      */
+     private Point customMenuLocation = null;
+
+    /* Diagnostic aids -- should be false for production builds. */
+    private static final boolean TRACE =   false; // trace creates and disposes
+    private static final boolean VERBOSE = false; // show reuse hits/misses
+    private static final boolean DEBUG =   false;  // show bad params, misc.
+
+    /**
+     * Constructs a new <code>JMenu</code> with no text.
+     */
+    public JMenu() {
+        this("");
+    }
+
+    /**
+     * Constructs a new <code>JMenu</code> with the supplied string
+     * as its text.
+     *
+     * @param s  the text for the menu label
+     */
+    public JMenu(String s) {
+        super(s);
+    }
+
+    /**
+     * Constructs a menu whose properties are taken from the
+     * <code>Action</code> supplied.
+     * @param a an <code>Action</code>
+     *
+     * @since 1.3
+     */
+    public JMenu(Action a) {
+        this();
+        setAction(a);
+    }
+
+    /**
+     * Constructs a new <code>JMenu</code> with the supplied string as
+     * its text and specified as a tear-off menu or not.
+     *
+     * @param s the text for the menu label
+     * @param b can the menu be torn off (not yet implemented)
+     */
+    public JMenu(String s, boolean b) {
+        this(s);
+    }
+
+
+    /**
+     * Overriden to do nothing. We want JMenu to be focusable, but
+     * <code>JMenuItem</code> doesn't want to be, thus we override this
+     * do nothing. We don't invoke <code>setFocusable(true)</code> after
+     * super's constructor has completed as this has the side effect that
+     * <code>JMenu</code> will be considered traversable via the
+     * keyboard, which we don't want. Making a Component traversable by
+     * the keyboard after invoking <code>setFocusable(true)</code> is OK,
+     * as <code>setFocusable</code> is new API
+     * and is speced as such, but internally we don't want to use it like
+     * this else we change the keyboard traversability.
+     */
+    void initFocusability() {
+    }
+
+    /**
+     * Resets the UI property with a value from the current look and feel.
+     *
+     * @see JComponent#updateUI
+     */
+    public void updateUI() {
+        setUI((MenuItemUI)UIManager.getUI(this));
+
+        if ( popupMenu != null )
+          {
+            popupMenu.setUI((PopupMenuUI)UIManager.getUI(popupMenu));
+          }
+
+    }
+
+
+    /**
+     * Returns the name of the L&amp;F class that renders this component.
+     *
+     * @return the string "MenuUI"
+     * @see JComponent#getUIClassID
+     * @see UIDefaults#getUI
+     */
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
+    //    public void repaint(long tm, int x, int y, int width, int height) {
+    //        Thread.currentThread().dumpStack();
+    //        super.repaint(tm,x,y,width,height);
+    //    }
+
+    /**
+     * Sets the data model for the "menu button" -- the label
+     * that the user clicks to open or close the menu.
+     *
+     * @param newModel the <code>ButtonModel</code>
+     * @see #getModel
+     * @beaninfo
+     * description: The menu's model
+     *       bound: true
+     *      expert: true
+     *      hidden: true
+     */
+    public void setModel(ButtonModel newModel) {
+        ButtonModel oldModel = getModel();
+
+        super.setModel(newModel);
+
+        if (oldModel != null && menuChangeListener != null) {
+            oldModel.removeChangeListener(menuChangeListener);
+            menuChangeListener = null;
+        }
+
+        model = newModel;
+
+        if (newModel != null) {
+            menuChangeListener = createMenuChangeListener();
+            newModel.addChangeListener(menuChangeListener);
+        }
+    }
+
+    /**
+     * Returns true if the menu is currently selected (highlighted).
+     *
+     * @return true if the menu is selected, else false
+     */
+    public boolean isSelected() {
+        return getModel().isSelected();
+    }
+
+    /**
+     * Sets the selection status of the menu.
+     *
+     * @param b  true to select (highlight) the menu; false to de-select
+     *          the menu
+     * @beaninfo
+     *      description: When the menu is selected, its popup child is shown.
+     *           expert: true
+     *           hidden: true
+     */
+    public void setSelected(boolean b) {
+        ButtonModel model = getModel();
+        boolean oldValue = model.isSelected();
+
+        // TIGER - 4840653
+        // Removed code which fired an AccessibleState.SELECTED
+        // PropertyChangeEvent since this resulted in two
+        // identical events being fired since
+        // AbstractButton.fireItemStateChanged also fires the
+        // same event. This caused screen readers to speak the
+        // name of the item twice.
+
+        if (b != model.isSelected()) {
+            getModel().setSelected(b);
+        }
+    }
+
+    /**
+     * Returns true if the menu's popup window is visible.
+     *
+     * @return true if the menu is visible, else false
+     */
+    public boolean isPopupMenuVisible() {
+        ensurePopupMenuCreated();
+        return popupMenu.isVisible();
+    }
+
+    /**
+     * Sets the visibility of the menu's popup.  If the menu is
+     * not enabled, this method will have no effect.
+     *
+     * @param b  a boolean value -- true to make the menu visible,
+     *           false to hide it
+     * @beaninfo
+     *      description: The popup menu's visibility
+     *           expert: true
+     *           hidden: true
+     */
+    public void setPopupMenuVisible(boolean b) {
+        if (DEBUG) {
+            System.out.println("in JMenu.setPopupMenuVisible " + b);
+            // Thread.dumpStack();
+        }
+
+        boolean isVisible = isPopupMenuVisible();
+        if (b != isVisible && (isEnabled() || !b)) {
+            ensurePopupMenuCreated();
+            if ((b==true) && isShowing()) {
+                // Set location of popupMenu (pulldown or pullright)
+                Point p = getCustomMenuLocation();
+                if (p == null) {
+                    p = getPopupMenuOrigin();
+                }
+                getPopupMenu().show(this, p.x, p.y);
+            } else {
+                getPopupMenu().setVisible(false);
+            }
+        }
+    }
+
+    /**
+     * Computes the origin for the <code>JMenu</code>'s popup menu.
+     * This method uses Look and Feel properties named
+     * <code>Menu.menuPopupOffsetX</code>,
+     * <code>Menu.menuPopupOffsetY</code>,
+     * <code>Menu.submenuPopupOffsetX</code>, and
+     * <code>Menu.submenuPopupOffsetY</code>
+     * to adjust the exact location of popup.
+     *
+     * @return a <code>Point</code> in the coordinate space of the
+     *          menu which should be used as the origin
+     *          of the <code>JMenu</code>'s popup menu
+     *
+     * @since 1.3
+     */
+    protected Point getPopupMenuOrigin() {
+        int x;
+        int y;
+        JPopupMenu pm = getPopupMenu();
+        // Figure out the sizes needed to caclulate the menu position
+        Dimension s = getSize();
+        Dimension pmSize = pm.getSize();
+        // For the first time the menu is popped up,
+        // the size has not yet been initiated
+        if (pmSize.width==0) {
+            pmSize = pm.getPreferredSize();
+        }
+        Point position = getLocationOnScreen();
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screenBounds = new Rectangle(toolkit.getScreenSize());
+        GraphicsEnvironment ge =
+            GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gd = ge.getScreenDevices();
+        for(int i = 0; i < gd.length; i++) {
+            if(gd[i].getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+                GraphicsConfiguration dgc =
+                    gd[i].getDefaultConfiguration();
+                if(dgc.getBounds().contains(position)) {
+                    gc = dgc;
+                    break;
+                }
+            }
+        }
+
+
+        if (gc != null) {
+            screenBounds = gc.getBounds();
+            // take screen insets (e.g. taskbar) into account
+            Insets screenInsets = toolkit.getScreenInsets(gc);
+
+            screenBounds.width -=
+                        Math.abs(screenInsets.left + screenInsets.right);
+            screenBounds.height -=
+                        Math.abs(screenInsets.top + screenInsets.bottom);
+            position.x -= Math.abs(screenInsets.left);
+            position.y -= Math.abs(screenInsets.top);
+        }
+
+        Container parent = getParent();
+        if (parent instanceof JPopupMenu) {
+            // We are a submenu (pull-right)
+            int xOffset = UIManager.getInt("Menu.submenuPopupOffsetX");
+            int yOffset = UIManager.getInt("Menu.submenuPopupOffsetY");
+
+            if( SwingUtilities.isLeftToRight(this) ) {
+                // First determine x:
+                x = s.width + xOffset;   // Prefer placement to the right
+                if (position.x + x + pmSize.width >= screenBounds.width
+                                                     + screenBounds.x &&
+                    // popup doesn't fit - place it wherever there's more room
+                    screenBounds.width - s.width < 2*(position.x
+                                                    - screenBounds.x)) {
+
+                    x = 0 - xOffset - pmSize.width;
+                }
+            } else {
+                // First determine x:
+                x = 0 - xOffset - pmSize.width; // Prefer placement to the left
+                if (position.x + x < screenBounds.x &&
+                    // popup doesn't fit - place it wherever there's more room
+                    screenBounds.width - s.width > 2*(position.x -
+                                                    screenBounds.x)) {
+
+                    x = s.width + xOffset;
+                }
+            }
+            // Then the y:
+            y = yOffset;                     // Prefer dropping down
+            if (position.y + y + pmSize.height >= screenBounds.height
+                                                  + screenBounds.y &&
+                // popup doesn't fit - place it wherever there's more room
+                screenBounds.height - s.height < 2*(position.y
+                                                  - screenBounds.y)) {
+
+                y = s.height - yOffset - pmSize.height;
+            }
+        } else {
+            // We are a toplevel menu (pull-down)
+            int xOffset = UIManager.getInt("Menu.menuPopupOffsetX");
+            int yOffset = UIManager.getInt("Menu.menuPopupOffsetY");
+
+            if( SwingUtilities.isLeftToRight(this) ) {
+                // First determine the x:
+                x = xOffset;                   // Extend to the right
+                if (position.x + x + pmSize.width >= screenBounds.width
+                                                     + screenBounds.x &&
+                    // popup doesn't fit - place it wherever there's more room
+                    screenBounds.width - s.width < 2*(position.x
+                                                    - screenBounds.x)) {
+
+                    x = s.width - xOffset - pmSize.width;
+                }
+            } else {
+                // First determine the x:
+                x = s.width - xOffset - pmSize.width; // Extend to the left
+                if (position.x + x < screenBounds.x &&
+                    // popup doesn't fit - place it wherever there's more room
+                    screenBounds.width - s.width > 2*(position.x
+                                                    - screenBounds.x)) {
+
+                    x = xOffset;
+                }
+            }
+            // Then the y:
+            y = s.height + yOffset;    // Prefer dropping down
+            if (position.y + y + pmSize.height >= screenBounds.height
+                                                  + screenBounds.y &&
+                // popup doesn't fit - place it wherever there's more room
+                screenBounds.height - s.height < 2*(position.y
+                                                  - screenBounds.y)) {
+
+                y = 0 - yOffset - pmSize.height;   // Otherwise drop 'up'
+            }
+        }
+        return new Point(x,y);
+    }
+
+
+    /**
+     * Returns the suggested delay, in milliseconds, before submenus
+     * are popped up or down.
+     * Each look and feel (L&amp;F) may determine its own policy for
+     * observing the <code>delay</code> property.
+     * In most cases, the delay is not observed for top level menus
+     * or while dragging.  The default for <code>delay</code> is 0.
+     * This method is a property of the look and feel code and is used
+     * to manage the idiosyncrasies of the various UI implementations.
+     *
+     *
+     * @return the <code>delay</code> property
+     */
+    public int getDelay() {
+        return delay;
+    }
+
+    /**
+     * Sets the suggested delay before the menu's <code>PopupMenu</code>
+     * is popped up or down.  Each look and feel (L&amp;F) may determine
+     * it's own policy for observing the delay property.  In most cases,
+     * the delay is not observed for top level menus or while dragging.
+     * This method is a property of the look and feel code and is used
+     * to manage the idiosyncrasies of the various UI implementations.
+     *
+     * @param       d the number of milliseconds to delay
+     * @exception   IllegalArgumentException if <code>d</code>
+     *                       is less than 0
+     * @beaninfo
+     *      description: The delay between menu selection and making the popup menu visible
+     *           expert: true
+     */
+    public void setDelay(int d) {
+        if (d < 0)
+            throw new IllegalArgumentException("Delay must be a positive integer");
+
+        delay = d;
+    }
+
+    /**
+     * The window-closing listener for the popup.
+     *
+     * @see WinListener
+     */
+    protected WinListener popupListener;
+
+    private void ensurePopupMenuCreated() {
+        if (popupMenu == null) {
+            final JMenu thisMenu = this;
+            this.popupMenu = new JPopupMenu();
+            popupMenu.setInvoker(this);
+            popupListener = createWinListener(popupMenu);
+        }
+    }
+
+    /*
+     * Return the customized location of the popup component.
+     */
+    private Point getCustomMenuLocation() {
+        return customMenuLocation;
+    }
+
+    /**
+     * Sets the location of the popup component.
+     *
+     * @param x the x coordinate of the popup's new position
+     * @param y the y coordinate of the popup's new position
+     */
+    public void setMenuLocation(int x, int y) {
+        customMenuLocation = new Point(x, y);
+        if (popupMenu != null)
+            popupMenu.setLocation(x, y);
+    }
+
+    /**
+     * Appends a menu item to the end of this menu.
+     * Returns the menu item added.
+     *
+     * @param menuItem the <code>JMenuitem</code> to be added
+     * @return the <code>JMenuItem</code> added
+     */
+    public JMenuItem add(JMenuItem menuItem) {
+        ensurePopupMenuCreated();
+        return popupMenu.add(menuItem);
+    }
+
+    /**
+     * Appends a component to the end of this menu.
+     * Returns the component added.
+     *
+     * @param c the <code>Component</code> to add
+     * @return the <code>Component</code> added
+     */
+    public Component add(Component c) {
+        ensurePopupMenuCreated();
+        popupMenu.add(c);
+        return c;
+    }
+
+    /**
+     * Adds the specified component to this container at the given
+     * position. If <code>index</code> equals -1, the component will
+     * be appended to the end.
+     * @param     c   the <code>Component</code> to add
+     * @param     index    the position at which to insert the component
+     * @return    the <code>Component</code> added
+     * @see       #remove
+     * @see java.awt.Container#add(Component, int)
+     */
+    public Component add(Component c, int index) {
+        ensurePopupMenuCreated();
+        popupMenu.add(c, index);
+        return c;
+    }
+
+    /**
+     * Creates a new menu item with the specified text and appends
+     * it to the end of this menu.
+     *
+     * @param s the string for the menu item to be added
+     */
+    public JMenuItem add(String s) {
+        return add(new JMenuItem(s));
+    }
+
+    /**
+     * Creates a new menu item attached to the specified
+     * <code>Action</code> object and appends it to the end of this menu.
+     *
+     * @param a the <code>Action</code> for the menu item to be added
+     * @see Action
+     */
+    public JMenuItem add(Action a) {
+        JMenuItem mi = createActionComponent(a);
+        mi.setAction(a);
+        add(mi);
+        return mi;
+    }
+
+    /**
+     * Factory method which creates the <code>JMenuItem</code> for
+     * <code>Action</code>s added to the <code>JMenu</code>.
+     *
+     * @param a the <code>Action</code> for the menu item to be added
+     * @return the new menu item
+     * @see Action
+     *
+     * @since 1.3
+     */
+    protected JMenuItem createActionComponent(Action a) {
+        JMenuItem mi = new JMenuItem() {
+            protected PropertyChangeListener createActionPropertyChangeListener(Action a) {
+                PropertyChangeListener pcl = createActionChangeListener(this);
+                if (pcl == null) {
+                    pcl = super.createActionPropertyChangeListener(a);
+                }
+                return pcl;
+            }
+        };
+        mi.setHorizontalTextPosition(JButton.TRAILING);
+        mi.setVerticalTextPosition(JButton.CENTER);
+        return mi;
+    }
+
+    /**
+     * Returns a properly configured <code>PropertyChangeListener</code>
+     * which updates the control as changes to the <code>Action</code> occur.
+     */
+    protected PropertyChangeListener createActionChangeListener(JMenuItem b) {
+        return b.createActionPropertyChangeListener0(b.getAction());
+    }
+
+    /**
+     * Appends a new separator to the end of the menu.
+     */
+    public void addSeparator()
+    {
+        ensurePopupMenuCreated();
+        popupMenu.addSeparator();
+    }
+
+    /**
+     * Inserts a new menu item with the specified text at a
+     * given position.
+     *
+     * @param s the text for the menu item to add
+     * @param pos an integer specifying the position at which to add the
+     *               new menu item
+     * @exception IllegalArgumentException when the value of
+     *                  <code>pos</code> &lt; 0
+     */
+    public void insert(String s, int pos) {
+        if (pos < 0) {
+            throw new IllegalArgumentException("index less than zero.");
+        }
+
+        ensurePopupMenuCreated();
+        popupMenu.insert(new JMenuItem(s), pos);
+    }
+
+    /**
+     * Inserts the specified <code>JMenuitem</code> at a given position.
+     *
+     * @param mi the <code>JMenuitem</code> to add
+     * @param pos an integer specifying the position at which to add the
+     *               new <code>JMenuitem</code>
+     * @return the new menu item
+     * @exception IllegalArgumentException if the value of
+     *                  <code>pos</code> &lt; 0
+     */
+    public JMenuItem insert(JMenuItem mi, int pos) {
+        if (pos < 0) {
+            throw new IllegalArgumentException("index less than zero.");
+        }
+        ensurePopupMenuCreated();
+        popupMenu.insert(mi, pos);
+        return mi;
+    }
+
+    /**
+     * Inserts a new menu item attached to the specified <code>Action</code>
+     * object at a given position.
+     *
+     * @param a the <code>Action</code> object for the menu item to add
+     * @param pos an integer specifying the position at which to add the
+     *               new menu item
+     * @exception IllegalArgumentException if the value of
+     *                  <code>pos</code> &lt; 0
+     */
+    public JMenuItem insert(Action a, int pos) {
+        if (pos < 0) {
+            throw new IllegalArgumentException("index less than zero.");
+        }
+
+        ensurePopupMenuCreated();
+        JMenuItem mi = new JMenuItem(a);
+        mi.setHorizontalTextPosition(JButton.TRAILING);
+        mi.setVerticalTextPosition(JButton.CENTER);
+        popupMenu.insert(mi, pos);
+        return mi;
+    }
+
+    /**
+     * Inserts a separator at the specified position.
+     *
+     * @param       index an integer specifying the position at which to
+     *                    insert the menu separator
+     * @exception   IllegalArgumentException if the value of
+     *                       <code>index</code> &lt; 0
+     */
+    public void insertSeparator(int index) {
+        if (index < 0) {
+            throw new IllegalArgumentException("index less than zero.");
+        }
+
+        ensurePopupMenuCreated();
+        popupMenu.insert( new JPopupMenu.Separator(), index );
+    }
+
+    /**
+     * Returns the <code>JMenuItem</code> at the specified position.
+     * If the component at <code>pos</code> is not a menu item,
+     * <code>null</code> is returned.
+     * This method is included for AWT compatibility.
+     *
+     * @param pos    an integer specifying the position
+     * @exception   IllegalArgumentException if the value of
+     *                       <code>pos</code> &lt; 0
+     * @return  the menu item at the specified position; or <code>null</code>
+     *          if the item as the specified position is not a menu item
+     */
+    public JMenuItem getItem(int pos) {
+        if (pos < 0) {
+            throw new IllegalArgumentException("index less than zero.");
+        }
+
+        Component c = getMenuComponent(pos);
+        if (c instanceof JMenuItem) {
+            JMenuItem mi = (JMenuItem) c;
+            return mi;
+        }
+
+        // 4173633
+        return null;
+    }
+
+    /**
+     * Returns the number of items on the menu, including separators.
+     * This method is included for AWT compatibility.
+     *
+     * @return an integer equal to the number of items on the menu
+     * @see #getMenuComponentCount
+     */
+    public int getItemCount() {
+        return getMenuComponentCount();
+    }
+
+    /**
+     * Returns true if the menu can be torn off.  This method is not
+     * yet implemented.
+     *
+     * @return true if the menu can be torn off, else false
+     * @exception  Error  if invoked -- this method is not yet implemented
+     */
+    public boolean isTearOff() {
+        throw new Error("boolean isTearOff() {} not yet implemented");
+    }
+
+    /**
+     * Removes the specified menu item from this menu.  If there is no
+     * popup menu, this method will have no effect.
+     *
+     * @param    item the <code>JMenuItem</code> to be removed from the menu
+     */
+    public void remove(JMenuItem item) {
+        if (popupMenu != null)
+            popupMenu.remove(item);
+    }
+
+    /**
+     * Removes the menu item at the specified index from this menu.
+     *
+     * @param       pos the position of the item to be removed
+     * @exception   IllegalArgumentException if the value of
+     *                       <code>pos</code> &lt; 0, or if <code>pos</code>
+     *                       is greater than the number of menu items
+     */
+    public void remove(int pos) {
+        if (pos < 0) {
+            throw new IllegalArgumentException("index less than zero.");
+        }
+        if (pos > getItemCount()) {
+            throw new IllegalArgumentException("index greater than the number of items.");
+        }
+        if (popupMenu != null)
+            popupMenu.remove(pos);
+    }
+
+    /**
+     * Removes the component <code>c</code> from this menu.
+     *
+     * @param       c the component to be removed
+     */
+    public void remove(Component c) {
+        if (popupMenu != null)
+            popupMenu.remove(c);
+    }
+
+    /**
+     * Removes all menu items from this menu.
+     */
+    public void removeAll() {
+        if (popupMenu != null)
+            popupMenu.removeAll();
+    }
+
+    /**
+     * Returns the number of components on the menu.
+     *
+     * @return an integer containing the number of components on the menu
+     */
+    public int getMenuComponentCount() {
+        int componentCount = 0;
+        if (popupMenu != null)
+            componentCount = popupMenu.getComponentCount();
+        return componentCount;
+    }
+
+    /**
+     * Returns the component at position <code>n</code>.
+     *
+     * @param n the position of the component to be returned
+     * @return the component requested, or <code>null</code>
+     *                  if there is no popup menu
+     *
+     */
+    public Component getMenuComponent(int n) {
+        if (popupMenu != null)
+            return popupMenu.getComponent(n);
+
+        return null;
+    }
+
+    /**
+     * Returns an array of <code>Component</code>s of the menu's
+     * subcomponents.  Note that this returns all <code>Component</code>s
+     * in the popup menu, including separators.
+     *
+     * @return an array of <code>Component</code>s or an empty array
+     *          if there is no popup menu
+     */
+    public Component[] getMenuComponents() {
+        if (popupMenu != null)
+            return popupMenu.getComponents();
+
+        return new Component[0];
+    }
+
+    /**
+     * Returns true if the menu is a 'top-level menu', that is, if it is
+     * the direct child of a menubar.
+     *
+     * @return true if the menu is activated from the menu bar;
+     *         false if the menu is activated from a menu item
+     *         on another menu
+     */
+    public boolean isTopLevelMenu() {
+        return getParent() instanceof JMenuBar;
+
+    }
+
+    /**
+     * Returns true if the specified component exists in the
+     * submenu hierarchy.
+     *
+     * @param c the <code>Component</code> to be tested
+     * @return true if the <code>Component</code> exists, false otherwise
+     */
+    public boolean isMenuComponent(Component c) {
+        // Are we in the MenuItem part of the menu
+        if (c == this)
+            return true;
+        // Are we in the PopupMenu?
+        if (c instanceof JPopupMenu) {
+            JPopupMenu comp = (JPopupMenu) c;
+            if (comp == this.getPopupMenu())
+                return true;
+        }
+        // Are we in a Component on the PopupMenu
+        int ncomponents = this.getMenuComponentCount();
+        Component[] component = this.getMenuComponents();
+        for (int i = 0 ; i < ncomponents ; i++) {
+            Component comp = component[i];
+            // Are we in the current component?
+            if (comp == c)
+                return true;
+            // Hmmm, what about Non-menu containers?
+
+            // Recursive call for the Menu case
+            if (comp instanceof JMenu) {
+                JMenu subMenu = (JMenu) comp;
+                if (subMenu.isMenuComponent(c))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+
+    /*
+     * Returns a point in the coordinate space of this menu's popupmenu
+     * which corresponds to the point <code>p</code> in the menu's
+     * coordinate space.
+     *
+     * @param p the point to be translated
+     * @return the point in the coordinate space of this menu's popupmenu
+     */
+    private Point translateToPopupMenu(Point p) {
+        return translateToPopupMenu(p.x, p.y);
+    }
+
+    /*
+     * Returns a point in the coordinate space of this menu's popupmenu
+     * which corresponds to the point (x,y) in the menu's coordinate space.
+     *
+     * @param x the x coordinate of the point to be translated
+     * @param y the y coordinate of the point to be translated
+     * @return the point in the coordinate space of this menu's popupmenu
+     */
+    private Point translateToPopupMenu(int x, int y) {
+            int newX;
+            int newY;
+
+            if (getParent() instanceof JPopupMenu) {
+                newX = x - getSize().width;
+                newY = y;
+            } else {
+                newX = x;
+                newY = y - getSize().height;
+            }
+
+            return new Point(newX, newY);
+        }
+
+    /**
+     * Returns the popupmenu associated with this menu.  If there is
+     * no popupmenu, it will create one.
+     */
+    public JPopupMenu getPopupMenu() {
+        ensurePopupMenuCreated();
+        return popupMenu;
+    }
+
+    /**
+     * Adds a listener for menu events.
+     *
+     * @param l the listener to be added
+     */
+    public void addMenuListener(MenuListener l) {
+        listenerList.add(MenuListener.class, l);
+    }
+
+    /**
+     * Removes a listener for menu events.
+     *
+     * @param l the listener to be removed
+     */
+    public void removeMenuListener(MenuListener l) {
+        listenerList.remove(MenuListener.class, l);
+    }
+
+    /**
+     * Returns an array of all the <code>MenuListener</code>s added
+     * to this JMenu with addMenuListener().
+     *
+     * @return all of the <code>MenuListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public MenuListener[] getMenuListeners() {
+        return listenerList.getListeners(MenuListener.class);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is created lazily.
+     *
+     * @exception Error  if there is a <code>null</code> listener
+     * @see EventListenerList
+     */
+    protected void fireMenuSelected() {
+        if (DEBUG) {
+            System.out.println("In JMenu.fireMenuSelected");
+        }
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==MenuListener.class) {
+                if (listeners[i+1]== null) {
+                    throw new Error(getText() +" has a NULL Listener!! " + i);
+                } else {
+                    // Lazily create the event:
+                    if (menuEvent == null)
+                        menuEvent = new MenuEvent(this);
+                    ((MenuListener)listeners[i+1]).menuSelected(menuEvent);
+                }
+            }
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is created lazily.
+     *
+     * @exception Error if there is a <code>null</code> listener
+     * @see EventListenerList
+     */
+    protected void fireMenuDeselected() {
+        if (DEBUG) {
+            System.out.println("In JMenu.fireMenuDeselected");
+        }
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==MenuListener.class) {
+                if (listeners[i+1]== null) {
+                    throw new Error(getText() +" has a NULL Listener!! " + i);
+                } else {
+                    // Lazily create the event:
+                    if (menuEvent == null)
+                        menuEvent = new MenuEvent(this);
+                    ((MenuListener)listeners[i+1]).menuDeselected(menuEvent);
+                }
+            }
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is created lazily.
+     *
+     * @exception Error if there is a <code>null</code> listener
+     * @see EventListenerList
+     */
+    protected void fireMenuCanceled() {
+        if (DEBUG) {
+            System.out.println("In JMenu.fireMenuCanceled");
+        }
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==MenuListener.class) {
+                if (listeners[i+1]== null) {
+                    throw new Error(getText() +" has a NULL Listener!! "
+                                       + i);
+                } else {
+                    // Lazily create the event:
+                    if (menuEvent == null)
+                        menuEvent = new MenuEvent(this);
+                    ((MenuListener)listeners[i+1]).menuCanceled(menuEvent);
+                }
+            }
+        }
+    }
+
+    // Overriden to do nothing, JMenu doesn't support an accelerator
+    void configureAcceleratorFromAction(Action a) {
+    }
+
+    @SuppressWarnings("serial")
+    class MenuChangeListener implements ChangeListener, Serializable {
+        boolean isSelected = false;
+        public void stateChanged(ChangeEvent e) {
+            ButtonModel model = (ButtonModel) e.getSource();
+            boolean modelSelected = model.isSelected();
+
+            if (modelSelected != isSelected) {
+                if (modelSelected == true) {
+                    fireMenuSelected();
+                } else {
+                    fireMenuDeselected();
+                }
+                isSelected = modelSelected;
+            }
+        }
+    }
+
+    private ChangeListener createMenuChangeListener() {
+        return new MenuChangeListener();
+    }
+
+
+    /**
+     * Creates a window-closing listener for the popup.
+     *
+     * @param p the <code>JPopupMenu</code>
+     * @return the new window-closing listener
+     *
+     * @see WinListener
+     */
+    protected WinListener createWinListener(JPopupMenu p) {
+        return new WinListener(p);
+    }
+
+    /**
+     * A listener class that watches for a popup window closing.
+     * When the popup is closing, the listener deselects the menu.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    @SuppressWarnings("serial")
+    protected class WinListener extends WindowAdapter implements Serializable {
+        JPopupMenu popupMenu;
+        /**
+         *  Create the window listener for the specified popup.
+         * @since 1.4
+         */
+        public WinListener(JPopupMenu p) {
+            this.popupMenu = p;
+        }
+        /**
+         * Deselect the menu when the popup is closed from outside.
+         */
+        public void windowClosing(WindowEvent e) {
+            setSelected(false);
+        }
+    }
+
+    /**
+     * Messaged when the menubar selection changes to activate or
+     * deactivate this menu.
+     * Overrides <code>JMenuItem.menuSelectionChanged</code>.
+     *
+     * @param isIncluded  true if this menu is active, false if
+     *        it is not
+     */
+    public void menuSelectionChanged(boolean isIncluded) {
+        if (DEBUG) {
+            System.out.println("In JMenu.menuSelectionChanged to " + isIncluded);
+        }
+        setSelected(isIncluded);
+    }
+
+    /**
+     * Returns an array of <code>MenuElement</code>s containing the submenu
+     * for this menu component.  If popup menu is <code>null</code> returns
+     * an empty array.  This method is required to conform to the
+     * <code>MenuElement</code> interface.  Note that since
+     * <code>JSeparator</code>s do not conform to the <code>MenuElement</code>
+     * interface, this array will only contain <code>JMenuItem</code>s.
+     *
+     * @return an array of <code>MenuElement</code> objects
+     */
+    public MenuElement[] getSubElements() {
+        if(popupMenu == null)
+            return new MenuElement[0];
+        else {
+            MenuElement result[] = new MenuElement[1];
+            result[0] = popupMenu;
+            return result;
+        }
+    }
+
+
+    // implements javax.swing.MenuElement
+    /**
+     * Returns the <code>java.awt.Component</code> used to
+     * paint this <code>MenuElement</code>.
+     * The returned component is used to convert events and detect if
+     * an event is inside a menu component.
+     */
+    public Component getComponent() {
+        return this;
+    }
+
+
+    /**
+     * Sets the <code>ComponentOrientation</code> property of this menu
+     * and all components contained within it. This includes all
+     * components returned by {@link #getMenuComponents getMenuComponents}.
+     *
+     * @param o the new component orientation of this menu and
+     *        the components contained within it.
+     * @exception NullPointerException if <code>orientation</code> is null.
+     * @see java.awt.Component#setComponentOrientation
+     * @see java.awt.Component#getComponentOrientation
+     * @since 1.4
+     */
+    public void applyComponentOrientation(ComponentOrientation o) {
+        super.applyComponentOrientation(o);
+
+        if ( popupMenu != null ) {
+            int ncomponents = getMenuComponentCount();
+            for (int i = 0 ; i < ncomponents ; ++i) {
+                getMenuComponent(i).applyComponentOrientation(o);
+            }
+            popupMenu.setComponentOrientation(o);
+        }
+    }
+
+    public void setComponentOrientation(ComponentOrientation o) {
+        super.setComponentOrientation(o);
+        if ( popupMenu != null ) {
+            popupMenu.setComponentOrientation(o);
+        }
+    }
+
+    /**
+     * <code>setAccelerator</code> is not defined for <code>JMenu</code>.
+     * Use <code>setMnemonic</code> instead.
+     * @param keyStroke  the keystroke combination which will invoke
+     *                  the <code>JMenuItem</code>'s actionlisteners
+     *                  without navigating the menu hierarchy
+     * @exception Error  if invoked -- this method is not defined for JMenu.
+     *                  Use <code>setMnemonic</code> instead
+     *
+     * @beaninfo
+     *     description: The keystroke combination which will invoke the JMenuItem's
+     *                  actionlisteners without navigating the menu hierarchy
+     *          hidden: true
+     */
+    public void setAccelerator(KeyStroke keyStroke) {
+        throw new Error("setAccelerator() is not defined for JMenu.  Use setMnemonic() instead.");
+    }
+
+    /**
+     * Processes key stroke events such as mnemonics and accelerators.
+     *
+     * @param evt  the key event to be processed
+     */
+    protected void processKeyEvent(KeyEvent evt) {
+        MenuSelectionManager.defaultManager().processKeyEvent(evt);
+        if (evt.isConsumed())
+            return;
+
+        super.processKeyEvent(evt);
+    }
+
+    /**
+     * Programmatically performs a "click".  This overrides the method
+     * <code>AbstractButton.doClick</code> in order to make the menu pop up.
+     * @param pressTime  indicates the number of milliseconds the
+     *          button was pressed for
+     */
+    public void doClick(int pressTime) {
+        MenuElement me[] = buildMenuElementArray(this);
+        MenuSelectionManager.defaultManager().setSelectedPath(me);
+    }
+
+    /*
+     * Build an array of menu elements - from <code>PopupMenu</code> to
+     * the root <code>JMenuBar</code>.
+     * @param  leaf  the leaf node from which to start building up the array
+     * @return the array of menu items
+     */
+    private MenuElement[] buildMenuElementArray(JMenu leaf) {
+        Vector<MenuElement> elements = new Vector<MenuElement>();
+        Component current = leaf.getPopupMenu();
+        JPopupMenu pop;
+        JMenu menu;
+        JMenuBar bar;
+
+        while (true) {
+            if (current instanceof JPopupMenu) {
+                pop = (JPopupMenu) current;
+                elements.insertElementAt(pop, 0);
+                current = pop.getInvoker();
+            } else if (current instanceof JMenu) {
+                menu = (JMenu) current;
+                elements.insertElementAt(menu, 0);
+                current = menu.getParent();
+            } else if (current instanceof JMenuBar) {
+                bar = (JMenuBar) current;
+                elements.insertElementAt(bar, 0);
+                MenuElement me[] = new MenuElement[elements.size()];
+                elements.copyInto(me);
+                return me;
+            }
+        }
+    }
+
+
+    /**
+     * See <code>readObject</code> and <code>writeObject</code> in
+     * <code>JComponent</code> for more
+     * information about serialization in Swing.
+     */
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        if (getUIClassID().equals(uiClassID)) {
+            byte count = JComponent.getWriteObjCounter(this);
+            JComponent.setWriteObjCounter(this, --count);
+            if (count == 0 && ui != null) {
+                ui.installUI(this);
+            }
+        }
+    }
+
+
+    /**
+     * Returns a string representation of this <code>JMenu</code>. This
+     * method is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this JMenu.
+     */
+    protected String paramString() {
+        return super.paramString();
+    }
+
+
+/////////////////
+// Accessibility support
+////////////////
+
+    /**
+     * Gets the AccessibleContext associated with this JMenu.
+     * For JMenus, the AccessibleContext takes the form of an
+     * AccessibleJMenu.
+     * A new AccessibleJMenu instance is created if necessary.
+     *
+     * @return an AccessibleJMenu that serves as the
+     *         AccessibleContext of this JMenu
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJMenu();
+        }
+        return accessibleContext;
+    }
+
+    /**
+     * This class implements accessibility support for the
+     * <code>JMenu</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to menu user-interface elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    @SuppressWarnings("serial")
+    protected class AccessibleJMenu extends AccessibleJMenuItem
+        implements AccessibleSelection {
+
+        /**
+         * Returns the number of accessible children in the object.  If all
+         * of the children of this object implement Accessible, than this
+         * method should return the number of children of this object.
+         *
+         * @return the number of accessible children in the object.
+         */
+        public int getAccessibleChildrenCount() {
+            Component[] children = getMenuComponents();
+            int count = 0;
+            for (Component child : children) {
+                if (child instanceof Accessible) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        /**
+         * Returns the nth Accessible child of the object.
+         *
+         * @param i zero-based index of child
+         * @return the nth Accessible child of the object
+         */
+        public Accessible getAccessibleChild(int i) {
+            Component[] children = getMenuComponents();
+            int count = 0;
+            for (Component child : children) {
+                if (child instanceof Accessible) {
+                    if (count == i) {
+                        if (child instanceof JComponent) {
+                            // FIXME:  [[[WDW - probably should set this when
+                            // the component is added to the menu.  I tried
+                            // to do this in most cases, but the separators
+                            // added by addSeparator are hard to get to.]]]
+                            AccessibleContext ac = child.getAccessibleContext();
+                            ac.setAccessibleParent(JMenu.this);
+                        }
+                        return (Accessible) child;
+                    } else {
+                        count++;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Get the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of the
+         * object
+         * @see AccessibleRole
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.MENU;
+        }
+
+        /**
+         * Get the AccessibleSelection associated with this object.  In the
+         * implementation of the Java Accessibility API for this class,
+         * return this object, which is responsible for implementing the
+         * AccessibleSelection interface on behalf of itself.
+         *
+         * @return this object
+         */
+        public AccessibleSelection getAccessibleSelection() {
+            return this;
+        }
+
+        /**
+         * Returns 1 if a sub-menu is currently selected in this menu.
+         *
+         * @return 1 if a menu is currently selected, else 0
+         */
+        public int getAccessibleSelectionCount() {
+            MenuElement me[] =
+                MenuSelectionManager.defaultManager().getSelectedPath();
+            if (me != null) {
+                for (int i = 0; i < me.length; i++) {
+                    if (me[i] == JMenu.this) {   // this menu is selected
+                        if (i+1 < me.length) {
+                            return 1;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Returns the currently selected sub-menu if one is selected,
+         * otherwise null (there can only be one selection, and it can
+         * only be a sub-menu, as otherwise menu items don't remain
+         * selected).
+         */
+        public Accessible getAccessibleSelection(int i) {
+            // if i is a sub-menu & popped, return it
+            if (i < 0 || i >= getItemCount()) {
+                return null;
+            }
+            MenuElement me[] =
+                MenuSelectionManager.defaultManager().getSelectedPath();
+            if (me != null) {
+                for (int j = 0; j < me.length; j++) {
+                    if (me[j] == JMenu.this) {   // this menu is selected
+                        // so find the next JMenuItem in the MenuElement
+                        // array, and return it!
+                        while (++j < me.length) {
+                            if (me[j] instanceof JMenuItem) {
+                                return (Accessible) me[j];
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Returns true if the current child of this object is selected
+         * (that is, if this child is a popped-up submenu).
+         *
+         * @param i the zero-based index of the child in this Accessible
+         * object.
+         * @see AccessibleContext#getAccessibleChild
+         */
+        public boolean isAccessibleChildSelected(int i) {
+            // if i is a sub-menu and is pop-ed up, return true, else false
+            MenuElement me[] =
+                MenuSelectionManager.defaultManager().getSelectedPath();
+            if (me != null) {
+                JMenuItem mi = JMenu.this.getItem(i);
+                for (int j = 0; j < me.length; j++) {
+                    if (me[j] == mi) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+
+        /**
+         * Selects the <code>i</code>th menu in the menu.
+         * If that item is a submenu,
+         * it will pop up in response.  If a different item is already
+         * popped up, this will force it to close.  If this is a sub-menu
+         * that is already popped up (selected), this method has no
+         * effect.
+         *
+         * @param i the index of the item to be selected
+         * @see #getAccessibleStateSet
+         */
+        public void addAccessibleSelection(int i) {
+            if (i < 0 || i >= getItemCount()) {
+                return;
+            }
+            JMenuItem mi = getItem(i);
+            if (mi != null) {
+                if (mi instanceof JMenu) {
+                    MenuElement me[] = buildMenuElementArray((JMenu) mi);
+                    MenuSelectionManager.defaultManager().setSelectedPath(me);
+                } else {
+                    MenuSelectionManager.defaultManager().setSelectedPath(null);
+                }
+            }
+        }
+
+        /**
+         * Removes the nth item from the selection.  In general, menus
+         * can only have one item within them selected at a time
+         * (e.g. one sub-menu popped open).
+         *
+         * @param i the zero-based index of the selected item
+         */
+        public void removeAccessibleSelection(int i) {
+            if (i < 0 || i >= getItemCount()) {
+                return;
+            }
+            JMenuItem mi = getItem(i);
+            if (mi != null && mi instanceof JMenu) {
+                if (mi.isSelected()) {
+                    MenuElement old[] =
+                        MenuSelectionManager.defaultManager().getSelectedPath();
+                    MenuElement me[] = new MenuElement[old.length-2];
+                    for (int j = 0; j < old.length -2; j++) {
+                        me[j] = old[j];
+                    }
+                    MenuSelectionManager.defaultManager().setSelectedPath(me);
+                }
+            }
+        }
+
+        /**
+         * Clears the selection in the object, so that nothing in the
+         * object is selected.  This will close any open sub-menu.
+         */
+        public void clearAccessibleSelection() {
+            // if this menu is selected, reset selection to only go
+            // to this menu; else do nothing
+            MenuElement old[] =
+                MenuSelectionManager.defaultManager().getSelectedPath();
+            if (old != null) {
+                for (int j = 0; j < old.length; j++) {
+                    if (old[j] == JMenu.this) {  // menu is in the selection!
+                        MenuElement me[] = new MenuElement[j+1];
+                        System.arraycopy(old, 0, me, 0, j);
+                        me[j] = JMenu.this.getPopupMenu();
+                        MenuSelectionManager.defaultManager().setSelectedPath(me);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Normally causes every selected item in the object to be selected
+         * if the object supports multiple selections.  This method
+         * makes no sense in a menu bar, and so does nothing.
+         */
+        public void selectAllAccessibleSelection() {
+        }
+    } // inner class AccessibleJMenu
+
+}

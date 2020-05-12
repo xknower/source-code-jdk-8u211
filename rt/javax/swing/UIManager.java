@@ -1,1499 +1,1493 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.KeyEventPostProcessor;
-/*      */ import java.awt.KeyboardFocusManager;
-/*      */ import java.awt.Toolkit;
-/*      */ import java.awt.event.KeyEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.io.File;
-/*      */ import java.io.FileInputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Properties;
-/*      */ import java.util.StringTokenizer;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.border.Border;
-/*      */ import javax.swing.event.SwingPropertyChangeSupport;
-/*      */ import javax.swing.plaf.ComponentUI;
-/*      */ import javax.swing.plaf.metal.MetalLookAndFeel;
-/*      */ import sun.awt.AWTAccessor;
-/*      */ import sun.awt.AppContext;
-/*      */ import sun.awt.OSInfo;
-/*      */ import sun.awt.PaintEventDispatcher;
-/*      */ import sun.awt.SunToolkit;
-/*      */ import sun.security.action.GetPropertyAction;
-/*      */ import sun.swing.DefaultLookup;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class UIManager
-/*      */   implements Serializable
-/*      */ {
-/*      */   private static class LAFState
-/*      */   {
-/*      */     Properties swingProps;
-/*  192 */     private UIDefaults[] tables = new UIDefaults[2];
-/*      */     
-/*      */     boolean initialized = false;
-/*      */     boolean focusPolicyInitialized = false;
-/*  196 */     MultiUIDefaults multiUIDefaults = new MultiUIDefaults(this.tables);
-/*      */     LookAndFeel lookAndFeel;
-/*  198 */     LookAndFeel multiLookAndFeel = null;
-/*  199 */     Vector<LookAndFeel> auxLookAndFeels = null;
-/*      */     SwingPropertyChangeSupport changeSupport;
-/*      */     UIManager.LookAndFeelInfo[] installedLAFs;
-/*      */     
-/*      */     UIDefaults getLookAndFeelDefaults() {
-/*  204 */       return this.tables[0]; } void setLookAndFeelDefaults(UIDefaults param1UIDefaults) {
-/*  205 */       this.tables[0] = param1UIDefaults;
-/*      */     }
-/*  207 */     UIDefaults getSystemDefaults() { return this.tables[1]; } void setSystemDefaults(UIDefaults param1UIDefaults) {
-/*  208 */       this.tables[1] = param1UIDefaults;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public synchronized SwingPropertyChangeSupport getPropertyChangeSupport(boolean param1Boolean) {
-/*  219 */       if (param1Boolean && this.changeSupport == null) {
-/*  220 */         this.changeSupport = new SwingPropertyChangeSupport(UIManager.class);
-/*      */       }
-/*      */       
-/*  223 */       return this.changeSupport;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private LAFState() {}
-/*      */   }
-/*      */ 
-/*      */   
-/*  232 */   private static final Object classLock = new Object();
-/*      */   
-/*      */   private static final String defaultLAFKey = "swing.defaultlaf";
-/*      */   
-/*      */   private static final String auxiliaryLAFsKey = "swing.auxiliarylaf";
-/*      */   private static final String multiplexingLAFKey = "swing.plaf.multiplexinglaf";
-/*      */   private static final String installedLAFsKey = "swing.installedlafs";
-/*      */   private static final String disableMnemonicKey = "swing.disablenavaids";
-/*      */   private static LookAndFeelInfo[] installedLAFs;
-/*      */   
-/*      */   private static LAFState getLAFState() {
-/*  243 */     LAFState lAFState = (LAFState)SwingUtilities.appContextGet(SwingUtilities2.LAF_STATE_KEY);
-/*      */     
-/*  245 */     if (lAFState == null) {
-/*  246 */       synchronized (classLock) {
-/*  247 */         lAFState = (LAFState)SwingUtilities.appContextGet(SwingUtilities2.LAF_STATE_KEY);
-/*      */         
-/*  249 */         if (lAFState == null) {
-/*  250 */           SwingUtilities.appContextPut(SwingUtilities2.LAF_STATE_KEY, lAFState = new LAFState());
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*  256 */     return lAFState;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String makeInstalledLAFKey(String paramString1, String paramString2) {
-/*  276 */     return "swing.installedlaf." + paramString1 + "." + paramString2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String makeSwingPropertiesFilename() {
-/*  287 */     String str1 = File.separator;
-/*      */ 
-/*      */     
-/*  290 */     String str2 = System.getProperty("java.home");
-/*  291 */     if (str2 == null) {
-/*  292 */       str2 = "<java.home undefined>";
-/*      */     }
-/*  294 */     return str2 + str1 + "lib" + str1 + "swing.properties";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class LookAndFeelInfo
-/*      */   {
-/*      */     private String name;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private String className;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public LookAndFeelInfo(String param1String1, String param1String2) {
-/*  320 */       this.name = param1String1;
-/*  321 */       this.className = param1String2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/*  331 */       return this.name;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getClassName() {
-/*  341 */       return this.className;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/*  351 */       return getClass().getName() + "[" + getName() + " " + getClassName() + "]";
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*  367 */     ArrayList<LookAndFeelInfo> arrayList = new ArrayList(4);
-/*  368 */     arrayList.add(new LookAndFeelInfo("Metal", "javax.swing.plaf.metal.MetalLookAndFeel"));
-/*      */     
-/*  370 */     arrayList.add(new LookAndFeelInfo("Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel"));
-/*      */     
-/*  372 */     arrayList.add(new LookAndFeelInfo("CDE/Motif", "com.sun.java.swing.plaf.motif.MotifLookAndFeel"));
-/*      */ 
-/*      */ 
-/*      */     
-/*  376 */     OSInfo.OSType oSType = AccessController.<OSInfo.OSType>doPrivileged(OSInfo.getOSTypeAction());
-/*  377 */     if (oSType == OSInfo.OSType.WINDOWS) {
-/*  378 */       arrayList.add(new LookAndFeelInfo("Windows", "com.sun.java.swing.plaf.windows.WindowsLookAndFeel"));
-/*      */       
-/*  380 */       if (Toolkit.getDefaultToolkit().getDesktopProperty("win.xpstyle.themeActive") != null)
-/*      */       {
-/*  382 */         arrayList.add(new LookAndFeelInfo("Windows Classic", "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel"));
-/*      */       
-/*      */       }
-/*      */     }
-/*  386 */     else if (oSType == OSInfo.OSType.MACOSX) {
-/*  387 */       arrayList.add(new LookAndFeelInfo("Mac OS X", "com.apple.laf.AquaLookAndFeel"));
-/*      */     }
-/*      */     else {
-/*      */       
-/*  391 */       arrayList.add(new LookAndFeelInfo("GTK+", "com.sun.java.swing.plaf.gtk.GTKLookAndFeel"));
-/*      */     } 
-/*      */     
-/*  394 */     installedLAFs = arrayList.<LookAndFeelInfo>toArray(new LookAndFeelInfo[arrayList.size()]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static LookAndFeelInfo[] getInstalledLookAndFeels() {
-/*  419 */     maybeInitialize();
-/*  420 */     LookAndFeelInfo[] arrayOfLookAndFeelInfo1 = (getLAFState()).installedLAFs;
-/*  421 */     if (arrayOfLookAndFeelInfo1 == null) {
-/*  422 */       arrayOfLookAndFeelInfo1 = installedLAFs;
-/*      */     }
-/*  424 */     LookAndFeelInfo[] arrayOfLookAndFeelInfo2 = new LookAndFeelInfo[arrayOfLookAndFeelInfo1.length];
-/*  425 */     System.arraycopy(arrayOfLookAndFeelInfo1, 0, arrayOfLookAndFeelInfo2, 0, arrayOfLookAndFeelInfo1.length);
-/*  426 */     return arrayOfLookAndFeelInfo2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setInstalledLookAndFeels(LookAndFeelInfo[] paramArrayOfLookAndFeelInfo) throws SecurityException {
-/*  445 */     maybeInitialize();
-/*  446 */     LookAndFeelInfo[] arrayOfLookAndFeelInfo = new LookAndFeelInfo[paramArrayOfLookAndFeelInfo.length];
-/*  447 */     System.arraycopy(paramArrayOfLookAndFeelInfo, 0, arrayOfLookAndFeelInfo, 0, paramArrayOfLookAndFeelInfo.length);
-/*  448 */     (getLAFState()).installedLAFs = arrayOfLookAndFeelInfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void installLookAndFeel(LookAndFeelInfo paramLookAndFeelInfo) {
-/*  462 */     LookAndFeelInfo[] arrayOfLookAndFeelInfo1 = getInstalledLookAndFeels();
-/*  463 */     LookAndFeelInfo[] arrayOfLookAndFeelInfo2 = new LookAndFeelInfo[arrayOfLookAndFeelInfo1.length + 1];
-/*  464 */     System.arraycopy(arrayOfLookAndFeelInfo1, 0, arrayOfLookAndFeelInfo2, 0, arrayOfLookAndFeelInfo1.length);
-/*  465 */     arrayOfLookAndFeelInfo2[arrayOfLookAndFeelInfo1.length] = paramLookAndFeelInfo;
-/*  466 */     setInstalledLookAndFeels(arrayOfLookAndFeelInfo2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void installLookAndFeel(String paramString1, String paramString2) {
-/*  481 */     installLookAndFeel(new LookAndFeelInfo(paramString1, paramString2));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static LookAndFeel getLookAndFeel() {
-/*  492 */     maybeInitialize();
-/*  493 */     return (getLAFState()).lookAndFeel;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setLookAndFeel(LookAndFeel paramLookAndFeel) throws UnsupportedLookAndFeelException {
-/*  524 */     if (paramLookAndFeel != null && !paramLookAndFeel.isSupportedLookAndFeel()) {
-/*  525 */       String str = paramLookAndFeel.toString() + " not supported on this platform";
-/*  526 */       throw new UnsupportedLookAndFeelException(str);
-/*      */     } 
-/*      */     
-/*  529 */     LAFState lAFState = getLAFState();
-/*  530 */     LookAndFeel lookAndFeel = lAFState.lookAndFeel;
-/*  531 */     if (lookAndFeel != null) {
-/*  532 */       lookAndFeel.uninitialize();
-/*      */     }
-/*      */     
-/*  535 */     lAFState.lookAndFeel = paramLookAndFeel;
-/*  536 */     if (paramLookAndFeel != null) {
-/*  537 */       DefaultLookup.setDefaultLookup(null);
-/*  538 */       paramLookAndFeel.initialize();
-/*  539 */       lAFState.setLookAndFeelDefaults(paramLookAndFeel.getDefaults());
-/*      */     } else {
-/*      */       
-/*  542 */       lAFState.setLookAndFeelDefaults(null);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  546 */     SwingPropertyChangeSupport swingPropertyChangeSupport = lAFState.getPropertyChangeSupport(false);
-/*  547 */     if (swingPropertyChangeSupport != null) {
-/*  548 */       swingPropertyChangeSupport.firePropertyChange("lookAndFeel", lookAndFeel, paramLookAndFeel);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setLookAndFeel(String paramString) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-/*  577 */     if ("javax.swing.plaf.metal.MetalLookAndFeel".equals(paramString)) {
-/*      */       
-/*  579 */       setLookAndFeel(new MetalLookAndFeel());
-/*      */     } else {
-/*      */       
-/*  582 */       Class<?> clazz = SwingUtilities.loadSystemClass(paramString);
-/*  583 */       setLookAndFeel((LookAndFeel)clazz.newInstance());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getSystemLookAndFeelClassName() {
-/*  601 */     String str1 = AccessController.<String>doPrivileged(new GetPropertyAction("swing.systemlaf"));
-/*      */     
-/*  603 */     if (str1 != null) {
-/*  604 */       return str1;
-/*      */     }
-/*  606 */     OSInfo.OSType oSType = AccessController.<OSInfo.OSType>doPrivileged(OSInfo.getOSTypeAction());
-/*  607 */     if (oSType == OSInfo.OSType.WINDOWS) {
-/*  608 */       return "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
-/*      */     }
-/*  610 */     String str2 = AccessController.<String>doPrivileged(new GetPropertyAction("sun.desktop"));
-/*  611 */     Toolkit toolkit = Toolkit.getDefaultToolkit();
-/*  612 */     if ("gnome".equals(str2) && toolkit instanceof SunToolkit && ((SunToolkit)toolkit)
-/*      */       
-/*  614 */       .isNativeGTKAvailable())
-/*      */     {
-/*  616 */       return "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-/*      */     }
-/*  618 */     if (oSType == OSInfo.OSType.MACOSX && 
-/*  619 */       toolkit.getClass().getName()
-/*  620 */       .equals("sun.lwawt.macosx.LWCToolkit")) {
-/*  621 */       return "com.apple.laf.AquaLookAndFeel";
-/*      */     }
-/*      */     
-/*  624 */     if (oSType == OSInfo.OSType.SOLARIS) {
-/*  625 */       return "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
-/*      */     }
-/*      */     
-/*  628 */     return getCrossPlatformLookAndFeelClassName();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getCrossPlatformLookAndFeelClassName() {
-/*  643 */     String str = AccessController.<String>doPrivileged(new GetPropertyAction("swing.crossplatformlaf"));
-/*      */     
-/*  645 */     if (str != null) {
-/*  646 */       return str;
-/*      */     }
-/*  648 */     return "javax.swing.plaf.metal.MetalLookAndFeel";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static UIDefaults getDefaults() {
-/*  659 */     maybeInitialize();
-/*  660 */     return (getLAFState()).multiUIDefaults;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Font getFont(Object paramObject) {
-/*  672 */     return getDefaults().getFont(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Font getFont(Object paramObject, Locale paramLocale) {
-/*  689 */     return getDefaults().getFont(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color getColor(Object paramObject) {
-/*  701 */     return getDefaults().getColor(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Color getColor(Object paramObject, Locale paramLocale) {
-/*  718 */     return getDefaults().getColor(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Icon getIcon(Object paramObject) {
-/*  730 */     return getDefaults().getIcon(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Icon getIcon(Object paramObject, Locale paramLocale) {
-/*  747 */     return getDefaults().getIcon(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Border getBorder(Object paramObject) {
-/*  759 */     return getDefaults().getBorder(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Border getBorder(Object paramObject, Locale paramLocale) {
-/*  776 */     return getDefaults().getBorder(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getString(Object paramObject) {
-/*  788 */     return getDefaults().getString(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getString(Object paramObject, Locale paramLocale) {
-/*  805 */     return getDefaults().getString(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static String getString(Object paramObject, Component paramComponent) {
-/*  821 */     Locale locale = (paramComponent == null) ? Locale.getDefault() : paramComponent.getLocale();
-/*  822 */     return getString(paramObject, locale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int getInt(Object paramObject) {
-/*  835 */     return getDefaults().getInt(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int getInt(Object paramObject, Locale paramLocale) {
-/*  853 */     return getDefaults().getInt(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean getBoolean(Object paramObject) {
-/*  867 */     return getDefaults().getBoolean(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean getBoolean(Object paramObject, Locale paramLocale) {
-/*  886 */     return getDefaults().getBoolean(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Insets getInsets(Object paramObject) {
-/*  898 */     return getDefaults().getInsets(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Insets getInsets(Object paramObject, Locale paramLocale) {
-/*  915 */     return getDefaults().getInsets(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Dimension getDimension(Object paramObject) {
-/*  927 */     return getDefaults().getDimension(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Dimension getDimension(Object paramObject, Locale paramLocale) {
-/*  944 */     return getDefaults().getDimension(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Object get(Object paramObject) {
-/*  955 */     return getDefaults().get(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Object get(Object paramObject, Locale paramLocale) {
-/*  971 */     return getDefaults().get(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Object put(Object paramObject1, Object paramObject2) {
-/*  988 */     return getDefaults().put(paramObject1, paramObject2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ComponentUI getUI(JComponent paramJComponent) {
-/* 1006 */     maybeInitialize();
-/* 1007 */     maybeInitializeFocusPolicy(paramJComponent);
-/* 1008 */     ComponentUI componentUI = null;
-/* 1009 */     LookAndFeel lookAndFeel = (getLAFState()).multiLookAndFeel;
-/* 1010 */     if (lookAndFeel != null)
-/*      */     {
-/*      */       
-/* 1013 */       componentUI = lookAndFeel.getDefaults().getUI(paramJComponent);
-/*      */     }
-/* 1015 */     if (componentUI == null) {
-/* 1016 */       componentUI = getDefaults().getUI(paramJComponent);
-/*      */     }
-/* 1018 */     return componentUI;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static UIDefaults getLookAndFeelDefaults() {
-/* 1037 */     maybeInitialize();
-/* 1038 */     return getLAFState().getLookAndFeelDefaults();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static LookAndFeel getMultiLookAndFeel() {
-/* 1045 */     LookAndFeel lookAndFeel = (getLAFState()).multiLookAndFeel;
-/* 1046 */     if (lookAndFeel == null) {
-/* 1047 */       String str1 = "javax.swing.plaf.multi.MultiLookAndFeel";
-/* 1048 */       String str2 = (getLAFState()).swingProps.getProperty("swing.plaf.multiplexinglaf", str1);
-/*      */       try {
-/* 1050 */         Class<?> clazz = SwingUtilities.loadSystemClass(str2);
-/* 1051 */         lookAndFeel = (LookAndFeel)clazz.newInstance();
-/* 1052 */       } catch (Exception exception) {
-/* 1053 */         System.err.println("UIManager: failed loading " + str2);
-/*      */       } 
-/*      */     } 
-/* 1056 */     return lookAndFeel;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void addAuxiliaryLookAndFeel(LookAndFeel paramLookAndFeel) {
-/* 1076 */     maybeInitialize();
-/*      */     
-/* 1078 */     if (!paramLookAndFeel.isSupportedLookAndFeel()) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1083 */     Vector<LookAndFeel> vector = (getLAFState()).auxLookAndFeels;
-/* 1084 */     if (vector == null) {
-/* 1085 */       vector = new Vector<>();
-/*      */     }
-/*      */     
-/* 1088 */     if (!vector.contains(paramLookAndFeel)) {
-/* 1089 */       vector.addElement(paramLookAndFeel);
-/* 1090 */       paramLookAndFeel.initialize();
-/* 1091 */       (getLAFState()).auxLookAndFeels = vector;
-/*      */       
-/* 1093 */       if ((getLAFState()).multiLookAndFeel == null) {
-/* 1094 */         (getLAFState()).multiLookAndFeel = getMultiLookAndFeel();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean removeAuxiliaryLookAndFeel(LookAndFeel paramLookAndFeel) {
-/* 1115 */     maybeInitialize();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1119 */     Vector<LookAndFeel> vector = (getLAFState()).auxLookAndFeels;
-/* 1120 */     if (vector == null || vector.size() == 0) {
-/* 1121 */       return false;
-/*      */     }
-/*      */     
-/* 1124 */     boolean bool = vector.removeElement(paramLookAndFeel);
-/* 1125 */     if (bool) {
-/* 1126 */       if (vector.size() == 0) {
-/* 1127 */         (getLAFState()).auxLookAndFeels = null;
-/* 1128 */         (getLAFState()).multiLookAndFeel = null;
-/*      */       } else {
-/* 1130 */         (getLAFState()).auxLookAndFeels = vector;
-/*      */       } 
-/*      */     }
-/* 1133 */     paramLookAndFeel.uninitialize();
-/*      */     
-/* 1135 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static LookAndFeel[] getAuxiliaryLookAndFeels() {
-/* 1153 */     maybeInitialize();
-/*      */     
-/* 1155 */     Vector<LookAndFeel> vector = (getLAFState()).auxLookAndFeels;
-/* 1156 */     if (vector == null || vector.size() == 0) {
-/* 1157 */       return null;
-/*      */     }
-/*      */     
-/* 1160 */     LookAndFeel[] arrayOfLookAndFeel = new LookAndFeel[vector.size()];
-/* 1161 */     for (byte b = 0; b < arrayOfLookAndFeel.length; b++) {
-/* 1162 */       arrayOfLookAndFeel[b] = vector.elementAt(b);
-/*      */     }
-/* 1164 */     return arrayOfLookAndFeel;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void addPropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/* 1178 */     synchronized (classLock) {
-/* 1179 */       getLAFState().getPropertyChangeSupport(true)
-/* 1180 */         .addPropertyChangeListener(paramPropertyChangeListener);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void removePropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/* 1195 */     synchronized (classLock) {
-/* 1196 */       getLAFState().getPropertyChangeSupport(true)
-/* 1197 */         .removePropertyChangeListener(paramPropertyChangeListener);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static PropertyChangeListener[] getPropertyChangeListeners() {
-/* 1211 */     synchronized (classLock) {
-/* 1212 */       return getLAFState().getPropertyChangeSupport(true)
-/* 1213 */         .getPropertyChangeListeners();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Properties loadSwingProperties() {
-/* 1222 */     if (UIManager.class.getClassLoader() != null) {
-/* 1223 */       return new Properties();
-/*      */     }
-/*      */     
-/* 1226 */     final Properties props = new Properties();
-/*      */     
-/* 1228 */     AccessController.doPrivileged(new PrivilegedAction()
-/*      */         {
-/*      */           public Object run() {
-/* 1231 */             OSInfo.OSType oSType = AccessController.<OSInfo.OSType>doPrivileged(OSInfo.getOSTypeAction());
-/* 1232 */             if (oSType == OSInfo.OSType.MACOSX) {
-/* 1233 */               props.put("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-/*      */             }
-/*      */             
-/*      */             try {
-/* 1237 */               File file = new File(UIManager.makeSwingPropertiesFilename());
-/*      */               
-/* 1239 */               if (file.exists())
-/*      */               {
-/*      */                 
-/* 1242 */                 FileInputStream fileInputStream = new FileInputStream(file);
-/* 1243 */                 props.load(fileInputStream);
-/* 1244 */                 fileInputStream.close();
-/*      */               }
-/*      */             
-/* 1247 */             } catch (Exception exception) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1253 */             UIManager.checkProperty(props, "swing.defaultlaf");
-/* 1254 */             UIManager.checkProperty(props, "swing.auxiliarylaf");
-/* 1255 */             UIManager.checkProperty(props, "swing.plaf.multiplexinglaf");
-/* 1256 */             UIManager.checkProperty(props, "swing.installedlafs");
-/* 1257 */             UIManager.checkProperty(props, "swing.disablenavaids");
-/*      */             
-/* 1259 */             return null;
-/*      */           }
-/*      */         });
-/* 1262 */     return properties;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void checkProperty(Properties paramProperties, String paramString) {
-/* 1269 */     String str = System.getProperty(paramString);
-/* 1270 */     if (str != null) {
-/* 1271 */       paramProperties.put(paramString, str);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void initializeInstalledLAFs(Properties paramProperties) {
-/* 1285 */     String str = paramProperties.getProperty("swing.installedlafs");
-/* 1286 */     if (str == null) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1294 */     Vector<String> vector = new Vector();
-/* 1295 */     StringTokenizer stringTokenizer = new StringTokenizer(str, ",", false);
-/* 1296 */     while (stringTokenizer.hasMoreTokens()) {
-/* 1297 */       vector.addElement(stringTokenizer.nextToken());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1304 */     Vector<LookAndFeelInfo> vector1 = new Vector(vector.size());
-/* 1305 */     for (String str1 : vector) {
-/* 1306 */       String str2 = paramProperties.getProperty(makeInstalledLAFKey(str1, "name"), str1);
-/* 1307 */       String str3 = paramProperties.getProperty(makeInstalledLAFKey(str1, "class"));
-/* 1308 */       if (str3 != null) {
-/* 1309 */         vector1.addElement(new LookAndFeelInfo(str2, str3));
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1313 */     LookAndFeelInfo[] arrayOfLookAndFeelInfo = new LookAndFeelInfo[vector1.size()];
-/* 1314 */     for (byte b = 0; b < vector1.size(); b++) {
-/* 1315 */       arrayOfLookAndFeelInfo[b] = vector1.elementAt(b);
-/*      */     }
-/* 1317 */     (getLAFState()).installedLAFs = arrayOfLookAndFeelInfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void initializeDefaultLAF(Properties paramProperties) {
-/* 1331 */     if ((getLAFState()).lookAndFeel != null) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1337 */     String str = null;
-/*      */     
-/* 1339 */     HashMap hashMap = (HashMap)AppContext.getAppContext().remove("swing.lafdata");
-/* 1340 */     if (hashMap != null) {
-/* 1341 */       str = (String)hashMap.remove("defaultlaf");
-/*      */     }
-/* 1343 */     if (str == null) {
-/* 1344 */       str = getCrossPlatformLookAndFeelClassName();
-/*      */     }
-/* 1346 */     str = paramProperties.getProperty("swing.defaultlaf", str);
-/*      */     
-/*      */     try {
-/* 1349 */       setLookAndFeel(str);
-/* 1350 */     } catch (Exception exception) {
-/* 1351 */       throw new Error("Cannot load " + str);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1355 */     if (hashMap != null) {
-/* 1356 */       for (Object object : hashMap.keySet()) {
-/* 1357 */         put(object, hashMap.get(object));
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void initializeAuxiliaryLAFs(Properties paramProperties) {
-/* 1365 */     String str = paramProperties.getProperty("swing.auxiliarylaf");
-/* 1366 */     if (str == null) {
-/*      */       return;
-/*      */     }
-/*      */     
-/* 1370 */     Vector<LookAndFeel> vector = new Vector();
-/*      */     
-/* 1372 */     StringTokenizer stringTokenizer = new StringTokenizer(str, ",");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1378 */     while (stringTokenizer.hasMoreTokens()) {
-/* 1379 */       String str1 = stringTokenizer.nextToken();
-/*      */       try {
-/* 1381 */         Class<?> clazz = SwingUtilities.loadSystemClass(str1);
-/* 1382 */         LookAndFeel lookAndFeel = (LookAndFeel)clazz.newInstance();
-/* 1383 */         lookAndFeel.initialize();
-/* 1384 */         vector.addElement(lookAndFeel);
-/*      */       }
-/* 1386 */       catch (Exception exception) {
-/* 1387 */         System.err.println("UIManager: failed loading auxiliary look and feel " + str1);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1396 */     if (vector.size() == 0) {
-/* 1397 */       vector = null;
-/*      */     } else {
-/*      */       
-/* 1400 */       (getLAFState()).multiLookAndFeel = getMultiLookAndFeel();
-/* 1401 */       if ((getLAFState()).multiLookAndFeel == null) {
-/* 1402 */         vector = null;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1406 */     (getLAFState()).auxLookAndFeels = vector;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static void initializeSystemDefaults(Properties paramProperties) {
-/* 1411 */     (getLAFState()).swingProps = paramProperties;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void maybeInitialize() {
-/* 1423 */     synchronized (classLock) {
-/* 1424 */       if (!(getLAFState()).initialized) {
-/* 1425 */         (getLAFState()).initialized = true;
-/* 1426 */         initialize();
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void maybeInitializeFocusPolicy(JComponent paramJComponent) {
-/* 1438 */     if (paramJComponent instanceof JRootPane) {
-/* 1439 */       synchronized (classLock) {
-/* 1440 */         if (!(getLAFState()).focusPolicyInitialized) {
-/* 1441 */           (getLAFState()).focusPolicyInitialized = true;
-/*      */           
-/* 1443 */           if (FocusManager.isFocusManagerEnabled()) {
-/* 1444 */             KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/* 1445 */               .setDefaultFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void initialize() {
-/* 1457 */     Properties properties = loadSwingProperties();
-/* 1458 */     initializeSystemDefaults(properties);
-/* 1459 */     initializeDefaultLAF(properties);
-/* 1460 */     initializeAuxiliaryLAFs(properties);
-/* 1461 */     initializeInstalledLAFs(properties);
-/*      */ 
-/*      */     
-/* 1464 */     if (RepaintManager.HANDLE_TOP_LEVEL_PAINT) {
-/* 1465 */       PaintEventDispatcher.setPaintEventDispatcher(new SwingPaintEventDispatcher());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1475 */     KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/* 1476 */       .addKeyEventPostProcessor(new KeyEventPostProcessor() {
-/*      */           public boolean postProcessKeyEvent(KeyEvent param1KeyEvent) {
-/* 1478 */             Component component = param1KeyEvent.getComponent();
-/*      */             
-/* 1480 */             if ((!(component instanceof JComponent) || (component != null && 
-/* 1481 */               !component.isEnabled())) && 
-/* 1482 */               JComponent.KeyboardState.shouldProcess(param1KeyEvent) && 
-/* 1483 */               SwingUtilities.processKeyBindings(param1KeyEvent)) {
-/* 1484 */               param1KeyEvent.consume();
-/* 1485 */               return true;
-/*      */             } 
-/* 1487 */             return false;
-/*      */           }
-/*      */         });
-/* 1490 */     AWTAccessor.getComponentAccessor()
-/* 1491 */       .setRequestFocusController(JComponent.focusController);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\UIManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Color;
+import java.awt.Insets;
+import java.awt.Dimension;
+import java.awt.KeyboardFocusManager;
+import java.awt.KeyEventPostProcessor;
+import java.awt.Toolkit;
+
+import java.awt.event.KeyEvent;
+
+import java.security.AccessController;
+
+import javax.swing.plaf.ComponentUI;
+import javax.swing.border.Border;
+
+import javax.swing.event.SwingPropertyChangeSupport;
+import java.beans.PropertyChangeListener;
+
+import java.io.Serializable;
+import java.io.File;
+import java.io.FileInputStream;
+
+import java.util.ArrayList;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import java.util.Locale;
+
+import sun.awt.SunToolkit;
+import sun.awt.OSInfo;
+import sun.security.action.GetPropertyAction;
+import sun.swing.SwingUtilities2;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import sun.awt.AppContext;
+import sun.awt.AWTAccessor;
+
+
+/**
+ * {@code UIManager} manages the current look and feel, the set of
+ * available look and feels, {@code PropertyChangeListeners} that
+ * are notified when the look and feel changes, look and feel defaults, and
+ * convenience methods for obtaining various default values.
+ *
+ * <h3>Specifying the look and feel</h3>
+ *
+ * The look and feel can be specified in two distinct ways: by
+ * specifying the fully qualified name of the class for the look and
+ * feel, or by creating an instance of {@code LookAndFeel} and passing
+ * it to {@code setLookAndFeel}. The following example illustrates
+ * setting the look and feel to the system look and feel:
+ * <pre>
+ *   UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+ * </pre>
+ * The following example illustrates setting the look and feel based on
+ * class name:
+ * <pre>
+ *   UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+ * </pre>
+ * Once the look and feel has been changed it is imperative to invoke
+ * {@code updateUI} on all {@code JComponents}. The method {@link
+ * SwingUtilities#updateComponentTreeUI} makes it easy to apply {@code
+ * updateUI} to a containment hierarchy. Refer to it for
+ * details. The exact behavior of not invoking {@code
+ * updateUI} after changing the look and feel is
+ * unspecified. It is very possible to receive unexpected exceptions,
+ * painting problems, or worse.
+ *
+ * <h3>Default look and feel</h3>
+ *
+ * The class used for the default look and feel is chosen in the following
+ * manner:
+ * <ol>
+ *   <li>If the system property <code>swing.defaultlaf</code> is
+ *       {@code non-null}, use its value as the default look and feel class
+ *       name.
+ *   <li>If the {@link java.util.Properties} file <code>swing.properties</code>
+ *       exists and contains the key <code>swing.defaultlaf</code>,
+ *       use its value as the default look and feel class name. The location
+ *       that is checked for <code>swing.properties</code> may vary depending
+ *       upon the implementation of the Java platform. Typically the
+ *       <code>swing.properties</code> file is located in the <code>lib</code>
+ *       subdirectory of the Java installation directory.
+ *       Refer to the release notes of the implementation being used for
+ *       further details.
+ *   <li>Otherwise use the cross platform look and feel.
+ * </ol>
+ *
+ * <h3>Defaults</h3>
+ *
+ * {@code UIManager} manages three sets of {@code UIDefaults}. In order, they
+ * are:
+ * <ol>
+ *   <li>Developer defaults. With few exceptions Swing does not
+ *       alter the developer defaults; these are intended to be modified
+ *       and used by the developer.
+ *   <li>Look and feel defaults. The look and feel defaults are
+ *       supplied by the look and feel at the time it is installed as the
+ *       current look and feel ({@code setLookAndFeel()} is invoked). The
+ *       look and feel defaults can be obtained using the {@code
+ *       getLookAndFeelDefaults()} method.
+ *   <li>System defaults. The system defaults are provided by Swing.
+ * </ol>
+ * Invoking any of the various {@code get} methods
+ * results in checking each of the defaults, in order, returning
+ * the first {@code non-null} value. For example, invoking
+ * {@code UIManager.getString("Table.foreground")} results in first
+ * checking developer defaults. If the developer defaults contain
+ * a value for {@code "Table.foreground"} it is returned, otherwise
+ * the look and feel defaults are checked, followed by the system defaults.
+ * <p>
+ * It's important to note that {@code getDefaults} returns a custom
+ * instance of {@code UIDefaults} with this resolution logic built into it.
+ * For example, {@code UIManager.getDefaults().getString("Table.foreground")}
+ * is equivalent to {@code UIManager.getString("Table.foreground")}. Both
+ * resolve using the algorithm just described. In many places the
+ * documentation uses the word defaults to refer to the custom instance
+ * of {@code UIDefaults} with the resolution logic as previously described.
+ * <p>
+ * When the look and feel is changed, {@code UIManager} alters only the
+ * look and feel defaults; the developer and system defaults are not
+ * altered by the {@code UIManager} in any way.
+ * <p>
+ * The set of defaults a particular look and feel supports is defined
+ * and documented by that look and feel. In addition, each look and
+ * feel, or {@code ComponentUI} provided by a look and feel, may
+ * access the defaults at different times in their life cycle. Some
+ * look and feels may aggressively look up defaults, so that changing a
+ * default may not have an effect after installing the look and feel.
+ * Other look and feels may lazily access defaults so that a change to
+ * the defaults may effect an existing look and feel. Finally, other look
+ * and feels might not configure themselves from the defaults table in
+ * any way. None-the-less it is usually the case that a look and feel
+ * expects certain defaults, so that in general
+ * a {@code ComponentUI} provided by one look and feel will not
+ * work with another look and feel.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Thomas Ball
+ * @author Hans Muller
+ */
+public class UIManager implements Serializable
+{
+    /**
+     * This class defines the state managed by the <code>UIManager</code>.  For
+     * Swing applications the fields in this class could just as well
+     * be static members of <code>UIManager</code> however we give them
+     * "AppContext"
+     * scope instead so that applets (and potentially multiple lightweight
+     * applications running in a single VM) have their own state. For example,
+     * an applet can alter its look and feel, see <code>setLookAndFeel</code>.
+     * Doing so has no affect on other applets (or the browser).
+     */
+    private static class LAFState
+    {
+        Properties swingProps;
+        private UIDefaults[] tables = new UIDefaults[2];
+
+        boolean initialized = false;
+        boolean focusPolicyInitialized = false;
+        MultiUIDefaults multiUIDefaults = new MultiUIDefaults(tables);
+        LookAndFeel lookAndFeel;
+        LookAndFeel multiLookAndFeel = null;
+        Vector<LookAndFeel> auxLookAndFeels = null;
+        SwingPropertyChangeSupport changeSupport;
+
+        LookAndFeelInfo[] installedLAFs;
+
+        UIDefaults getLookAndFeelDefaults() { return tables[0]; }
+        void setLookAndFeelDefaults(UIDefaults x) { tables[0] = x; }
+
+        UIDefaults getSystemDefaults() { return tables[1]; }
+        void setSystemDefaults(UIDefaults x) { tables[1] = x; }
+
+        /**
+         * Returns the SwingPropertyChangeSupport for the current
+         * AppContext.  If <code>create</code> is a true, a non-null
+         * <code>SwingPropertyChangeSupport</code> will be returned, if
+         * <code>create</code> is false and this has not been invoked
+         * with true, null will be returned.
+         */
+        public synchronized SwingPropertyChangeSupport
+                                 getPropertyChangeSupport(boolean create) {
+            if (create && changeSupport == null) {
+                changeSupport = new SwingPropertyChangeSupport(
+                                         UIManager.class);
+            }
+            return changeSupport;
+        }
+    }
+
+
+
+
+    /* Lock object used in place of class object for synchronization. (4187686)
+     */
+    private static final Object classLock = new Object();
+
+    /**
+     * Return the <code>LAFState</code> object, lazily create one if necessary.
+     * All access to the <code>LAFState</code> fields is done via this method,
+     * for example:
+     * <pre>
+     *     getLAFState().initialized = true;
+     * </pre>
+     */
+    private static LAFState getLAFState() {
+        LAFState rv = (LAFState)SwingUtilities.appContextGet(
+                SwingUtilities2.LAF_STATE_KEY);
+        if (rv == null) {
+            synchronized (classLock) {
+                rv = (LAFState)SwingUtilities.appContextGet(
+                        SwingUtilities2.LAF_STATE_KEY);
+                if (rv == null) {
+                    SwingUtilities.appContextPut(
+                            SwingUtilities2.LAF_STATE_KEY,
+                            (rv = new LAFState()));
+                }
+            }
+        }
+        return rv;
+    }
+
+
+    /* Keys used in the <code>swing.properties</code> properties file.
+     * See loadUserProperties(), initialize().
+     */
+
+    private static final String defaultLAFKey = "swing.defaultlaf";
+    private static final String auxiliaryLAFsKey = "swing.auxiliarylaf";
+    private static final String multiplexingLAFKey = "swing.plaf.multiplexinglaf";
+    private static final String installedLAFsKey = "swing.installedlafs";
+    private static final String disableMnemonicKey = "swing.disablenavaids";
+
+    /**
+     * Return a <code>swing.properties</code> file key for the attribute of specified
+     * look and feel.  The attr is either "name" or "class", a typical
+     * key would be: "swing.installedlaf.windows.name"
+     */
+    private static String makeInstalledLAFKey(String laf, String attr) {
+        return "swing.installedlaf." + laf + "." + attr;
+    }
+
+    /**
+     * The location of the <code>swing.properties</code> property file is
+     * implementation-specific.
+     * It is typically located in the <code>lib</code> subdirectory of the Java
+     * installation directory. This method returns a bogus filename
+     * if <code>java.home</code> isn't defined.
+     */
+    private static String makeSwingPropertiesFilename() {
+        String sep = File.separator;
+        // No need to wrap this in a doPrivileged as it's called from
+        // a doPrivileged.
+        String javaHome = System.getProperty("java.home");
+        if (javaHome == null) {
+            javaHome = "<java.home undefined>";
+        }
+        return javaHome + sep + "lib" + sep + "swing.properties";
+    }
+
+
+    /**
+     * Provides a little information about an installed
+     * <code>LookAndFeel</code> for the sake of configuring a menu or
+     * for initial application set up.
+     *
+     * @see UIManager#getInstalledLookAndFeels
+     * @see LookAndFeel
+     */
+    public static class LookAndFeelInfo {
+        private String name;
+        private String className;
+
+        /**
+         * Constructs a <code>UIManager</code>s
+         * <code>LookAndFeelInfo</code> object.
+         *
+         * @param name      a <code>String</code> specifying the name of
+         *                      the look and feel
+         * @param className a <code>String</code> specifying the name of
+         *                      the class that implements the look and feel
+         */
+        public LookAndFeelInfo(String name, String className) {
+            this.name = name;
+            this.className = className;
+        }
+
+        /**
+         * Returns the name of the look and feel in a form suitable
+         * for a menu or other presentation
+         * @return a <code>String</code> containing the name
+         * @see LookAndFeel#getName
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns the name of the class that implements this look and feel.
+         * @return the name of the class that implements this
+         *              <code>LookAndFeel</code>
+         * @see LookAndFeel
+         */
+        public String getClassName() {
+            return className;
+        }
+
+        /**
+         * Returns a string that displays and identifies this
+         * object's properties.
+         *
+         * @return a <code>String</code> representation of this object
+         */
+        public String toString() {
+            return getClass().getName() + "[" + getName() + " " + getClassName() + "]";
+        }
+    }
+
+
+    /**
+     * The default value of <code>installedLAFS</code> is used when no
+     * <code>swing.properties</code>
+     * file is available or if the file doesn't contain a "swing.installedlafs"
+     * property.
+     *
+     * @see #initializeInstalledLAFs
+     */
+    private static LookAndFeelInfo[] installedLAFs;
+
+    static {
+        ArrayList<LookAndFeelInfo> iLAFs = new ArrayList<LookAndFeelInfo>(4);
+        iLAFs.add(new LookAndFeelInfo(
+                      "Metal", "javax.swing.plaf.metal.MetalLookAndFeel"));
+        iLAFs.add(new LookAndFeelInfo(
+                      "Nimbus", "javax.swing.plaf.nimbus.NimbusLookAndFeel"));
+        iLAFs.add(new LookAndFeelInfo("CDE/Motif",
+                  "com.sun.java.swing.plaf.motif.MotifLookAndFeel"));
+
+        // Only include windows on Windows boxs.
+        OSInfo.OSType osType = AccessController.doPrivileged(OSInfo.getOSTypeAction());
+        if (osType == OSInfo.OSType.WINDOWS) {
+            iLAFs.add(new LookAndFeelInfo("Windows",
+                        "com.sun.java.swing.plaf.windows.WindowsLookAndFeel"));
+            if (Toolkit.getDefaultToolkit().getDesktopProperty(
+                    "win.xpstyle.themeActive") != null) {
+                iLAFs.add(new LookAndFeelInfo("Windows Classic",
+                 "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel"));
+            }
+        }
+        else if (osType == OSInfo.OSType.MACOSX) {
+            iLAFs.add(new LookAndFeelInfo("Mac OS X", "com.apple.laf.AquaLookAndFeel"));
+        }
+        else {
+            // GTK is not shipped on Windows.
+            iLAFs.add(new LookAndFeelInfo("GTK+",
+                  "com.sun.java.swing.plaf.gtk.GTKLookAndFeel"));
+        }
+        installedLAFs = iLAFs.toArray(new LookAndFeelInfo[iLAFs.size()]);
+    }
+
+
+    /**
+     * Returns an array of {@code LookAndFeelInfo}s representing the
+     * {@code LookAndFeel} implementations currently available. The
+     * <code>LookAndFeelInfo</code> objects can be used by an
+     * application to construct a menu of look and feel options for
+     * the user, or to determine which look and feel to set at startup
+     * time. To avoid the penalty of creating numerous {@code
+     * LookAndFeel} objects, {@code LookAndFeelInfo} maintains the
+     * class name of the {@code LookAndFeel} class, not the actual
+     * {@code LookAndFeel} instance.
+     * <p>
+     * The following example illustrates setting the current look and feel
+     * from an instance of {@code LookAndFeelInfo}:
+     * <pre>
+     *   UIManager.setLookAndFeel(info.getClassName());
+     * </pre>
+     *
+     * @return an array of <code>LookAndFeelInfo</code> objects
+     * @see #setLookAndFeel
+     */
+    public static LookAndFeelInfo[] getInstalledLookAndFeels() {
+        maybeInitialize();
+        LookAndFeelInfo[] ilafs = getLAFState().installedLAFs;
+        if (ilafs == null) {
+            ilafs = installedLAFs;
+        }
+        LookAndFeelInfo[] rv = new LookAndFeelInfo[ilafs.length];
+        System.arraycopy(ilafs, 0, rv, 0, ilafs.length);
+        return rv;
+    }
+
+
+    /**
+     * Sets the set of available look and feels. While this method does
+     * not check to ensure all of the {@code LookAndFeelInfos} are
+     * {@code non-null}, it is strongly recommended that only {@code non-null}
+     * values are supplied in the {@code infos} array.
+     *
+     * @param infos set of <code>LookAndFeelInfo</code> objects specifying
+     *        the available look and feels
+     *
+     * @see #getInstalledLookAndFeels
+     * @throws NullPointerException if {@code infos} is {@code null}
+     */
+    public static void setInstalledLookAndFeels(LookAndFeelInfo[] infos)
+        throws SecurityException
+    {
+        maybeInitialize();
+        LookAndFeelInfo[] newInfos = new LookAndFeelInfo[infos.length];
+        System.arraycopy(infos, 0, newInfos, 0, infos.length);
+        getLAFState().installedLAFs = newInfos;
+    }
+
+
+    /**
+     * Adds the specified look and feel to the set of available look
+     * and feels. While this method allows a {@code null} {@code info},
+     * it is strongly recommended that a {@code non-null} value be used.
+     *
+     * @param info a <code>LookAndFeelInfo</code> object that names the
+     *          look and feel and identifies the class that implements it
+     * @see #setInstalledLookAndFeels
+     */
+    public static void installLookAndFeel(LookAndFeelInfo info) {
+        LookAndFeelInfo[] infos = getInstalledLookAndFeels();
+        LookAndFeelInfo[] newInfos = new LookAndFeelInfo[infos.length + 1];
+        System.arraycopy(infos, 0, newInfos, 0, infos.length);
+        newInfos[infos.length] = info;
+        setInstalledLookAndFeels(newInfos);
+    }
+
+
+    /**
+     * Adds the specified look and feel to the set of available look
+     * and feels. While this method does not check the
+     * arguments in any way, it is strongly recommended that {@code
+     * non-null} values be supplied.
+     *
+     * @param name descriptive name of the look and feel
+     * @param className name of the class that implements the look and feel
+     * @see #setInstalledLookAndFeels
+     */
+    public static void installLookAndFeel(String name, String className) {
+        installLookAndFeel(new LookAndFeelInfo(name, className));
+    }
+
+
+    /**
+     * Returns the current look and feel or <code>null</code>.
+     *
+     * @return current look and feel, or <code>null</code>
+     * @see #setLookAndFeel
+     */
+    public static LookAndFeel getLookAndFeel() {
+        maybeInitialize();
+        return getLAFState().lookAndFeel;
+    }
+
+
+    /**
+     * Sets the current look and feel to {@code newLookAndFeel}.
+     * If the current look and feel is {@code non-null} {@code
+     * uninitialize} is invoked on it. If {@code newLookAndFeel} is
+     * {@code non-null}, {@code initialize} is invoked on it followed
+     * by {@code getDefaults}. The defaults returned from {@code
+     * newLookAndFeel.getDefaults()} replace those of the defaults
+     * from the previous look and feel. If the {@code newLookAndFeel} is
+     * {@code null}, the look and feel defaults are set to {@code null}.
+     * <p>
+     * A value of {@code null} can be used to set the look and feel
+     * to {@code null}. As the {@code LookAndFeel} is required for
+     * most of Swing to function, setting the {@code LookAndFeel} to
+     * {@code null} is strongly discouraged.
+     * <p>
+     * This is a JavaBeans bound property.
+     *
+     * @param newLookAndFeel {@code LookAndFeel} to install
+     * @throws UnsupportedLookAndFeelException if
+     *          {@code newLookAndFeel} is {@code non-null} and
+     *          {@code newLookAndFeel.isSupportedLookAndFeel()} returns
+     *          {@code false}
+     * @see #getLookAndFeel
+     */
+    public static void setLookAndFeel(LookAndFeel newLookAndFeel)
+        throws UnsupportedLookAndFeelException
+    {
+        if ((newLookAndFeel != null) && !newLookAndFeel.isSupportedLookAndFeel()) {
+            String s = newLookAndFeel.toString() + " not supported on this platform";
+            throw new UnsupportedLookAndFeelException(s);
+        }
+
+        LAFState lafState = getLAFState();
+        LookAndFeel oldLookAndFeel = lafState.lookAndFeel;
+        if (oldLookAndFeel != null) {
+            oldLookAndFeel.uninitialize();
+        }
+
+        lafState.lookAndFeel = newLookAndFeel;
+        if (newLookAndFeel != null) {
+            sun.swing.DefaultLookup.setDefaultLookup(null);
+            newLookAndFeel.initialize();
+            lafState.setLookAndFeelDefaults(newLookAndFeel.getDefaults());
+        }
+        else {
+            lafState.setLookAndFeelDefaults(null);
+        }
+
+        SwingPropertyChangeSupport changeSupport = lafState.
+                                         getPropertyChangeSupport(false);
+        if (changeSupport != null) {
+            changeSupport.firePropertyChange("lookAndFeel", oldLookAndFeel,
+                                             newLookAndFeel);
+        }
+    }
+
+
+    /**
+     * Loads the {@code LookAndFeel} specified by the given class
+     * name, using the current thread's context class loader, and
+     * passes it to {@code setLookAndFeel(LookAndFeel)}.
+     *
+     * @param className  a string specifying the name of the class that implements
+     *        the look and feel
+     * @exception ClassNotFoundException if the <code>LookAndFeel</code>
+     *           class could not be found
+     * @exception InstantiationException if a new instance of the class
+     *          couldn't be created
+     * @exception IllegalAccessException if the class or initializer isn't accessible
+     * @exception UnsupportedLookAndFeelException if
+     *          <code>lnf.isSupportedLookAndFeel()</code> is false
+     * @throws ClassCastException if {@code className} does not identify
+     *         a class that extends {@code LookAndFeel}
+     */
+    public static void setLookAndFeel(String className)
+        throws ClassNotFoundException,
+               InstantiationException,
+               IllegalAccessException,
+               UnsupportedLookAndFeelException
+    {
+        if ("javax.swing.plaf.metal.MetalLookAndFeel".equals(className)) {
+            // Avoid reflection for the common case of metal.
+            setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
+        }
+        else {
+            Class lnfClass = SwingUtilities.loadSystemClass(className);
+            setLookAndFeel((LookAndFeel)(lnfClass.newInstance()));
+        }
+    }
+
+    /**
+     * Returns the name of the <code>LookAndFeel</code> class that implements
+     * the native system look and feel if there is one, otherwise
+     * the name of the default cross platform <code>LookAndFeel</code>
+     * class. This value can be overriden by setting the
+     * <code>swing.systemlaf</code> system property.
+     *
+     * @return the <code>String</code> of the <code>LookAndFeel</code>
+     *          class
+     *
+     * @see #setLookAndFeel
+     * @see #getCrossPlatformLookAndFeelClassName
+     */
+    public static String getSystemLookAndFeelClassName() {
+        String systemLAF = AccessController.doPrivileged(
+                             new GetPropertyAction("swing.systemlaf"));
+        if (systemLAF != null) {
+            return systemLAF;
+        }
+        OSInfo.OSType osType = AccessController.doPrivileged(OSInfo.getOSTypeAction());
+        if (osType == OSInfo.OSType.WINDOWS) {
+            return "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
+        } else {
+            String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            if ("gnome".equals(desktop) &&
+                    toolkit instanceof SunToolkit &&
+                    ((SunToolkit) toolkit).isNativeGTKAvailable()) {
+                // May be set on Linux and Solaris boxs.
+                return "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+            }
+            if (osType == OSInfo.OSType.MACOSX) {
+                if (toolkit.getClass() .getName()
+                                       .equals("sun.lwawt.macosx.LWCToolkit")) {
+                    return "com.apple.laf.AquaLookAndFeel";
+                }
+            }
+            if (osType == OSInfo.OSType.SOLARIS) {
+                return "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
+            }
+        }
+        return getCrossPlatformLookAndFeelClassName();
+    }
+
+
+    /**
+     * Returns the name of the <code>LookAndFeel</code> class that implements
+     * the default cross platform look and feel -- the Java
+     * Look and Feel (JLF).  This value can be overriden by setting the
+     * <code>swing.crossplatformlaf</code> system property.
+     *
+     * @return  a string with the JLF implementation-class
+     * @see #setLookAndFeel
+     * @see #getSystemLookAndFeelClassName
+     */
+    public static String getCrossPlatformLookAndFeelClassName() {
+        String laf = AccessController.doPrivileged(
+                             new GetPropertyAction("swing.crossplatformlaf"));
+        if (laf != null) {
+            return laf;
+        }
+        return "javax.swing.plaf.metal.MetalLookAndFeel";
+    }
+
+
+    /**
+     * Returns the defaults. The returned defaults resolve using the
+     * logic specified in the class documentation.
+     *
+     * @return a <code>UIDefaults</code> object containing the default values
+     */
+    public static UIDefaults getDefaults() {
+        maybeInitialize();
+        return getLAFState().multiUIDefaults;
+    }
+
+    /**
+     * Returns a font from the defaults. If the value for {@code key} is
+     * not a {@code Font}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the font
+     * @return the <code>Font</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Font getFont(Object key) {
+        return getDefaults().getFont(key);
+    }
+
+    /**
+     * Returns a font from the defaults that is appropriate
+     * for the given locale. If the value for {@code key} is
+     * not a {@code Font}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the font
+     * @param l the <code>Locale</code> for which the font is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Font</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Font getFont(Object key, Locale l) {
+        return getDefaults().getFont(key,l);
+    }
+
+    /**
+     * Returns a color from the defaults. If the value for {@code key} is
+     * not a {@code Color}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the color
+     * @return the <code>Color</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Color getColor(Object key) {
+        return getDefaults().getColor(key);
+    }
+
+    /**
+     * Returns a color from the defaults that is appropriate
+     * for the given locale. If the value for {@code key} is
+     * not a {@code Color}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the color
+     * @param l the <code>Locale</code> for which the color is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Color</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Color getColor(Object key, Locale l) {
+        return getDefaults().getColor(key,l);
+    }
+
+    /**
+     * Returns an <code>Icon</code> from the defaults. If the value for
+     * {@code key} is not an {@code Icon}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the icon
+     * @return the <code>Icon</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Icon getIcon(Object key) {
+        return getDefaults().getIcon(key);
+    }
+
+    /**
+     * Returns an <code>Icon</code> from the defaults that is appropriate
+     * for the given locale. If the value for
+     * {@code key} is not an {@code Icon}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the icon
+     * @param l the <code>Locale</code> for which the icon is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Icon</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Icon getIcon(Object key, Locale l) {
+        return getDefaults().getIcon(key,l);
+    }
+
+    /**
+     * Returns a border from the defaults. If the value for
+     * {@code key} is not a {@code Border}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the border
+     * @return the <code>Border</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Border getBorder(Object key) {
+        return getDefaults().getBorder(key);
+    }
+
+    /**
+     * Returns a border from the defaults that is appropriate
+     * for the given locale.  If the value for
+     * {@code key} is not a {@code Border}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the border
+     * @param l the <code>Locale</code> for which the border is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Border</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Border getBorder(Object key, Locale l) {
+        return getDefaults().getBorder(key,l);
+    }
+
+    /**
+     * Returns a string from the defaults. If the value for
+     * {@code key} is not a {@code String}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the string
+     * @return the <code>String</code>
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static String getString(Object key) {
+        return getDefaults().getString(key);
+    }
+
+    /**
+     * Returns a string from the defaults that is appropriate for the
+     * given locale.  If the value for
+     * {@code key} is not a {@code String}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the string
+     * @param l the <code>Locale</code> for which the string is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>String</code>
+     * @since 1.4
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static String getString(Object key, Locale l) {
+        return getDefaults().getString(key,l);
+    }
+
+    /**
+     * Returns a string from the defaults that is appropriate for the
+     * given locale.  If the value for
+     * {@code key} is not a {@code String}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the string
+     * @param c {@code Component} used to determine the locale;
+     *          {@code null} implies the default locale as
+     *          returned by {@code Locale.getDefault()}
+     * @return the <code>String</code>
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    static String getString(Object key, Component c) {
+        Locale l = (c == null) ? Locale.getDefault() : c.getLocale();
+        return getString(key, l);
+    }
+
+    /**
+     * Returns an integer from the defaults. If the value for
+     * {@code key} is not an {@code Integer}, or does not exist,
+     * {@code 0} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the int
+     * @return the int
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static int getInt(Object key) {
+        return getDefaults().getInt(key);
+    }
+
+    /**
+     * Returns an integer from the defaults that is appropriate
+     * for the given locale. If the value for
+     * {@code key} is not an {@code Integer}, or does not exist,
+     * {@code 0} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the int
+     * @param l the <code>Locale</code> for which the int is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the int
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static int getInt(Object key, Locale l) {
+        return getDefaults().getInt(key,l);
+    }
+
+    /**
+     * Returns a boolean from the defaults which is associated with
+     * the key value. If the key is not found or the key doesn't represent
+     * a boolean value then {@code false} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the key for the desired boolean value
+     * @return the boolean value corresponding to the key
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static boolean getBoolean(Object key) {
+        return getDefaults().getBoolean(key);
+    }
+
+    /**
+     * Returns a boolean from the defaults which is associated with
+     * the key value and the given <code>Locale</code>. If the key is not
+     * found or the key doesn't represent
+     * a boolean value then {@code false} will be returned.
+     *
+     * @param key  an <code>Object</code> specifying the key for the desired
+     *             boolean value
+     * @param l the <code>Locale</code> for which the boolean is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the boolean value corresponding to the key
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static boolean getBoolean(Object key, Locale l) {
+        return getDefaults().getBoolean(key,l);
+    }
+
+    /**
+     * Returns an <code>Insets</code> object from the defaults. If the value
+     * for {@code key} is not an {@code Insets}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the <code>Insets</code> object
+     * @return the <code>Insets</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Insets getInsets(Object key) {
+        return getDefaults().getInsets(key);
+    }
+
+    /**
+     * Returns an <code>Insets</code> object from the defaults that is
+     * appropriate for the given locale. If the value
+     * for {@code key} is not an {@code Insets}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the <code>Insets</code> object
+     * @param l the <code>Locale</code> for which the object is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Insets</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Insets getInsets(Object key, Locale l) {
+        return getDefaults().getInsets(key,l);
+    }
+
+    /**
+     * Returns a dimension from the defaults. If the value
+     * for {@code key} is not a {@code Dimension}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the dimension object
+     * @return the <code>Dimension</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Dimension getDimension(Object key) {
+        return getDefaults().getDimension(key);
+    }
+
+    /**
+     * Returns a dimension from the defaults that is appropriate
+     * for the given locale. If the value
+     * for {@code key} is not a {@code Dimension}, {@code null} is returned.
+     *
+     * @param key  an <code>Object</code> specifying the dimension object
+     * @param l the <code>Locale</code> for which the object is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Dimension</code> object
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Dimension getDimension(Object key, Locale l) {
+        return getDefaults().getDimension(key,l);
+    }
+
+    /**
+     * Returns an object from the defaults.
+     *
+     * @param key  an <code>Object</code> specifying the desired object
+     * @return the <code>Object</code>
+     * @throws NullPointerException if {@code key} is {@code null}
+     */
+    public static Object get(Object key) {
+        return getDefaults().get(key);
+    }
+
+    /**
+     * Returns an object from the defaults that is appropriate for
+     * the given locale.
+     *
+     * @param key  an <code>Object</code> specifying the desired object
+     * @param l the <code>Locale</code> for which the object is desired; refer
+     *        to {@code UIDefaults} for details on how a {@code null}
+     *        {@code Locale} is handled
+     * @return the <code>Object</code>
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @since 1.4
+     */
+    public static Object get(Object key, Locale l) {
+        return getDefaults().get(key,l);
+    }
+
+    /**
+     * Stores an object in the developer defaults. This is a cover method
+     * for {@code getDefaults().put(key, value)}. This only effects the
+     * developer defaults, not the system or look and feel defaults.
+     *
+     * @param key    an <code>Object</code> specifying the retrieval key
+     * @param value  the <code>Object</code> to store; refer to
+     *               {@code UIDefaults} for details on how {@code null} is
+     *               handled
+     * @return the <code>Object</code> returned by {@link UIDefaults#put}
+     * @throws NullPointerException if {@code key} is {@code null}
+     * @see UIDefaults#put
+     */
+    public static Object put(Object key, Object value) {
+        return getDefaults().put(key, value);
+    }
+
+    /**
+     * Returns the appropriate {@code ComponentUI} implementation for
+     * {@code target}. Typically, this is a cover for
+     * {@code getDefaults().getUI(target)}. However, if an auxiliary
+     * look and feel has been installed, this first invokes
+     * {@code getUI(target)} on the multiplexing look and feel's
+     * defaults, and returns that value if it is {@code non-null}.
+     *
+     * @param target the <code>JComponent</code> to return the
+     *        {@code ComponentUI} for
+     * @return the <code>ComponentUI</code> object for {@code target}
+     * @throws NullPointerException if {@code target} is {@code null}
+     * @see UIDefaults#getUI
+     */
+    public static ComponentUI getUI(JComponent target) {
+        maybeInitialize();
+        maybeInitializeFocusPolicy(target);
+        ComponentUI ui = null;
+        LookAndFeel multiLAF = getLAFState().multiLookAndFeel;
+        if (multiLAF != null) {
+            // This can return null if the multiplexing look and feel
+            // doesn't support a particular UI.
+            ui = multiLAF.getDefaults().getUI(target);
+        }
+        if (ui == null) {
+            ui = getDefaults().getUI(target);
+        }
+        return ui;
+    }
+
+
+    /**
+     * Returns the {@code UIDefaults} from the current look and feel,
+     * that were obtained at the time the look and feel was installed.
+     * <p>
+     * In general, developers should use the {@code UIDefaults} returned from
+     * {@code getDefaults()}. As the current look and feel may expect
+     * certain values to exist, altering the {@code UIDefaults} returned
+     * from this method could have unexpected results.
+     *
+     * @return <code>UIDefaults</code> from the current look and feel
+     * @see #getDefaults
+     * @see #setLookAndFeel(LookAndFeel)
+     * @see LookAndFeel#getDefaults
+     */
+    public static UIDefaults getLookAndFeelDefaults() {
+        maybeInitialize();
+        return getLAFState().getLookAndFeelDefaults();
+    }
+
+    /**
+     * Finds the Multiplexing <code>LookAndFeel</code>.
+     */
+    private static LookAndFeel getMultiLookAndFeel() {
+        LookAndFeel multiLookAndFeel = getLAFState().multiLookAndFeel;
+        if (multiLookAndFeel == null) {
+            String defaultName = "javax.swing.plaf.multi.MultiLookAndFeel";
+            String className = getLAFState().swingProps.getProperty(multiplexingLAFKey, defaultName);
+            try {
+                Class lnfClass = SwingUtilities.loadSystemClass(className);
+                multiLookAndFeel = (LookAndFeel)lnfClass.newInstance();
+            } catch (Exception exc) {
+                System.err.println("UIManager: failed loading " + className);
+            }
+        }
+        return multiLookAndFeel;
+    }
+
+    /**
+     * Adds a <code>LookAndFeel</code> to the list of auxiliary look and feels.
+     * The auxiliary look and feels tell the multiplexing look and feel what
+     * other <code>LookAndFeel</code> classes for a component instance are to be used
+     * in addition to the default <code>LookAndFeel</code> class when creating a
+     * multiplexing UI.  The change will only take effect when a new
+     * UI class is created or when the default look and feel is changed
+     * on a component instance.
+     * <p>Note these are not the same as the installed look and feels.
+     *
+     * @param laf the <code>LookAndFeel</code> object
+     * @see #removeAuxiliaryLookAndFeel
+     * @see #setLookAndFeel
+     * @see #getAuxiliaryLookAndFeels
+     * @see #getInstalledLookAndFeels
+     */
+    static public void addAuxiliaryLookAndFeel(LookAndFeel laf) {
+        maybeInitialize();
+
+        if (!laf.isSupportedLookAndFeel()) {
+            // Ideally we would throw an exception here, but it's too late
+            // for that.
+            return;
+        }
+        Vector<LookAndFeel> v = getLAFState().auxLookAndFeels;
+        if (v == null) {
+            v = new Vector<LookAndFeel>();
+        }
+
+        if (!v.contains(laf)) {
+            v.addElement(laf);
+            laf.initialize();
+            getLAFState().auxLookAndFeels = v;
+
+            if (getLAFState().multiLookAndFeel == null) {
+                getLAFState().multiLookAndFeel = getMultiLookAndFeel();
+            }
+        }
+    }
+
+    /**
+     * Removes a <code>LookAndFeel</code> from the list of auxiliary look and feels.
+     * The auxiliary look and feels tell the multiplexing look and feel what
+     * other <code>LookAndFeel</code> classes for a component instance are to be used
+     * in addition to the default <code>LookAndFeel</code> class when creating a
+     * multiplexing UI.  The change will only take effect when a new
+     * UI class is created or when the default look and feel is changed
+     * on a component instance.
+     * <p>Note these are not the same as the installed look and feels.
+     * @return true if the <code>LookAndFeel</code> was removed from the list
+     * @see #removeAuxiliaryLookAndFeel
+     * @see #getAuxiliaryLookAndFeels
+     * @see #setLookAndFeel
+     * @see #getInstalledLookAndFeels
+     */
+    static public boolean removeAuxiliaryLookAndFeel(LookAndFeel laf) {
+        maybeInitialize();
+
+        boolean result;
+
+        Vector<LookAndFeel> v = getLAFState().auxLookAndFeels;
+        if ((v == null) || (v.size() == 0)) {
+            return false;
+        }
+
+        result = v.removeElement(laf);
+        if (result) {
+            if (v.size() == 0) {
+                getLAFState().auxLookAndFeels = null;
+                getLAFState().multiLookAndFeel = null;
+            } else {
+                getLAFState().auxLookAndFeels = v;
+            }
+        }
+        laf.uninitialize();
+
+        return result;
+    }
+
+    /**
+     * Returns the list of auxiliary look and feels (can be <code>null</code>).
+     * The auxiliary look and feels tell the multiplexing look and feel what
+     * other <code>LookAndFeel</code> classes for a component instance are
+     * to be used in addition to the default LookAndFeel class when creating a
+     * multiplexing UI.
+     * <p>Note these are not the same as the installed look and feels.
+     *
+     * @return list of auxiliary <code>LookAndFeel</code>s or <code>null</code>
+     * @see #addAuxiliaryLookAndFeel
+     * @see #removeAuxiliaryLookAndFeel
+     * @see #setLookAndFeel
+     * @see #getInstalledLookAndFeels
+     */
+    static public LookAndFeel[] getAuxiliaryLookAndFeels() {
+        maybeInitialize();
+
+        Vector<LookAndFeel> v = getLAFState().auxLookAndFeels;
+        if ((v == null) || (v.size() == 0)) {
+            return null;
+        }
+        else {
+            LookAndFeel[] rv = new LookAndFeel[v.size()];
+            for (int i = 0; i < rv.length; i++) {
+                rv[i] = v.elementAt(i);
+            }
+            return rv;
+        }
+    }
+
+
+    /**
+     * Adds a <code>PropertyChangeListener</code> to the listener list.
+     * The listener is registered for all properties.
+     *
+     * @param listener  the <code>PropertyChangeListener</code> to be added
+     * @see java.beans.PropertyChangeSupport
+     */
+    public static void addPropertyChangeListener(PropertyChangeListener listener)
+    {
+        synchronized (classLock) {
+            getLAFState().getPropertyChangeSupport(true).
+                             addPropertyChangeListener(listener);
+        }
+    }
+
+
+    /**
+     * Removes a <code>PropertyChangeListener</code> from the listener list.
+     * This removes a <code>PropertyChangeListener</code> that was registered
+     * for all properties.
+     *
+     * @param listener  the <code>PropertyChangeListener</code> to be removed
+     * @see java.beans.PropertyChangeSupport
+     */
+    public static void removePropertyChangeListener(PropertyChangeListener listener)
+    {
+        synchronized (classLock) {
+            getLAFState().getPropertyChangeSupport(true).
+                          removePropertyChangeListener(listener);
+        }
+    }
+
+
+    /**
+     * Returns an array of all the <code>PropertyChangeListener</code>s added
+     * to this UIManager with addPropertyChangeListener().
+     *
+     * @return all of the <code>PropertyChangeListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public static PropertyChangeListener[] getPropertyChangeListeners() {
+        synchronized(classLock) {
+            return getLAFState().getPropertyChangeSupport(true).
+                      getPropertyChangeListeners();
+        }
+    }
+
+    private static Properties loadSwingProperties()
+    {
+        /* Don't bother checking for Swing properties if untrusted, as
+         * there's no way to look them up without triggering SecurityExceptions.
+         */
+        if (UIManager.class.getClassLoader() != null) {
+            return new Properties();
+        }
+        else {
+            final Properties props = new Properties();
+
+            java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<Object>() {
+                public Object run() {
+                    OSInfo.OSType osType = AccessController.doPrivileged(OSInfo.getOSTypeAction());
+                    if (osType == OSInfo.OSType.MACOSX) {
+                        props.put(defaultLAFKey, getSystemLookAndFeelClassName());
+                    }
+
+                    try {
+                        File file = new File(makeSwingPropertiesFilename());
+
+                        if (file.exists()) {
+                            // InputStream has been buffered in Properties
+                            // class
+                            FileInputStream ins = new FileInputStream(file);
+                            props.load(ins);
+                            ins.close();
+                        }
+                    }
+                    catch (Exception e) {
+                        // No such file, or file is otherwise non-readable.
+                    }
+
+                    // Check whether any properties were overridden at the
+                    // command line.
+                    checkProperty(props, defaultLAFKey);
+                    checkProperty(props, auxiliaryLAFsKey);
+                    checkProperty(props, multiplexingLAFKey);
+                    checkProperty(props, installedLAFsKey);
+                    checkProperty(props, disableMnemonicKey);
+                    // Don't care about return value.
+                    return null;
+                }
+            });
+            return props;
+        }
+    }
+
+    private static void checkProperty(Properties props, String key) {
+        // No need to do catch the SecurityException here, this runs
+        // in a doPrivileged.
+        String value = System.getProperty(key);
+        if (value != null) {
+            props.put(key, value);
+        }
+    }
+
+
+    /**
+     * If a <code>swing.properties</code> file exist and it has a
+     * <code>swing.installedlafs</code> property
+     * then initialize the <code>installedLAFs</code> field.
+     *
+     * @see #getInstalledLookAndFeels
+     */
+    private static void initializeInstalledLAFs(Properties swingProps)
+    {
+        String ilafsString = swingProps.getProperty(installedLAFsKey);
+        if (ilafsString == null) {
+            return;
+        }
+
+        /* Create a vector that contains the value of the swing.installedlafs
+         * property.  For example given "swing.installedlafs=motif,windows"
+         * lafs = {"motif", "windows"}.
+         */
+        Vector<String> lafs = new Vector<String>();
+        StringTokenizer st = new StringTokenizer(ilafsString, ",", false);
+        while (st.hasMoreTokens()) {
+            lafs.addElement(st.nextToken());
+        }
+
+        /* Look up the name and class for each name in the "swing.installedlafs"
+         * list.  If they both exist then add a LookAndFeelInfo to
+         * the installedLafs array.
+         */
+        Vector<LookAndFeelInfo> ilafs = new Vector<LookAndFeelInfo>(lafs.size());
+        for (String laf : lafs) {
+            String name = swingProps.getProperty(makeInstalledLAFKey(laf, "name"), laf);
+            String cls = swingProps.getProperty(makeInstalledLAFKey(laf, "class"));
+            if (cls != null) {
+                ilafs.addElement(new LookAndFeelInfo(name, cls));
+            }
+        }
+
+        LookAndFeelInfo[] installedLAFs = new LookAndFeelInfo[ilafs.size()];
+        for(int i = 0; i < ilafs.size(); i++) {
+            installedLAFs[i] = ilafs.elementAt(i);
+        }
+        getLAFState().installedLAFs = installedLAFs;
+    }
+
+
+    /**
+     * If the user has specified a default look and feel, use that.
+     * Otherwise use the look and feel that's native to this platform.
+     * If this code is called after the application has explicitly
+     * set it's look and feel, do nothing.
+     *
+     * @see #maybeInitialize
+     */
+    private static void initializeDefaultLAF(Properties swingProps)
+    {
+        if (getLAFState().lookAndFeel != null) {
+            return;
+        }
+
+        // Try to get default LAF from system property, then from AppContext
+        // (6653395), then use cross-platform one by default.
+        String lafName = null;
+        HashMap lafData =
+                (HashMap) AppContext.getAppContext().remove("swing.lafdata");
+        if (lafData != null) {
+            lafName = (String) lafData.remove("defaultlaf");
+        }
+        if (lafName == null) {
+            lafName = getCrossPlatformLookAndFeelClassName();
+        }
+        lafName = swingProps.getProperty(defaultLAFKey, lafName);
+
+        try {
+            setLookAndFeel(lafName);
+        } catch (Exception e) {
+            throw new Error("Cannot load " + lafName);
+        }
+
+        // Set any properties passed through AppContext (6653395).
+        if (lafData != null) {
+            for (Object key: lafData.keySet()) {
+                UIManager.put(key, lafData.get(key));
+            }
+        }
+    }
+
+
+    private static void initializeAuxiliaryLAFs(Properties swingProps)
+    {
+        String auxLookAndFeelNames = swingProps.getProperty(auxiliaryLAFsKey);
+        if (auxLookAndFeelNames == null) {
+            return;
+        }
+
+        Vector<LookAndFeel> auxLookAndFeels = new Vector<LookAndFeel>();
+
+        StringTokenizer p = new StringTokenizer(auxLookAndFeelNames,",");
+        String factoryName;
+
+        /* Try to load each LookAndFeel subclass in the list.
+         */
+
+        while (p.hasMoreTokens()) {
+            String className = p.nextToken();
+            try {
+                Class lnfClass = SwingUtilities.loadSystemClass(className);
+                LookAndFeel newLAF = (LookAndFeel)lnfClass.newInstance();
+                newLAF.initialize();
+                auxLookAndFeels.addElement(newLAF);
+            }
+            catch (Exception e) {
+                System.err.println("UIManager: failed loading auxiliary look and feel " + className);
+            }
+        }
+
+        /* If there were problems and no auxiliary look and feels were
+         * loaded, make sure we reset auxLookAndFeels to null.
+         * Otherwise, we are going to use the MultiLookAndFeel to get
+         * all component UI's, so we need to load it now.
+         */
+        if (auxLookAndFeels.size() == 0) {
+            auxLookAndFeels = null;
+        }
+        else {
+            getLAFState().multiLookAndFeel = getMultiLookAndFeel();
+            if (getLAFState().multiLookAndFeel == null) {
+                auxLookAndFeels = null;
+            }
+        }
+
+        getLAFState().auxLookAndFeels = auxLookAndFeels;
+    }
+
+
+    private static void initializeSystemDefaults(Properties swingProps) {
+        getLAFState().swingProps = swingProps;
+    }
+
+
+    /*
+     * This method is called before any code that depends on the
+     * <code>AppContext</code> specific LAFState object runs.  When the AppContext
+     * corresponds to a set of applets it's possible for this method
+     * to be re-entered, which is why we grab a lock before calling
+     * initialize().
+     */
+    private static void maybeInitialize() {
+        synchronized (classLock) {
+            if (!getLAFState().initialized) {
+                getLAFState().initialized = true;
+                initialize();
+            }
+        }
+    }
+
+    /*
+     * Sets default swing focus traversal policy.
+     */
+    private static void maybeInitializeFocusPolicy(JComponent comp) {
+        // Check for JRootPane which indicates that a swing toplevel
+        // is coming, in which case a swing default focus policy
+        // should be instatiated. See 7125044.
+        if (comp instanceof JRootPane) {
+            synchronized (classLock) {
+                if (!getLAFState().focusPolicyInitialized) {
+                    getLAFState().focusPolicyInitialized = true;
+
+                    if (FocusManager.isFocusManagerEnabled()) {
+                        KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                            setDefaultFocusTraversalPolicy(
+                                new LayoutFocusTraversalPolicy());
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     * Only called by maybeInitialize().
+     */
+    private static void initialize() {
+        Properties swingProps = loadSwingProperties();
+        initializeSystemDefaults(swingProps);
+        initializeDefaultLAF(swingProps);
+        initializeAuxiliaryLAFs(swingProps);
+        initializeInstalledLAFs(swingProps);
+
+        // Install Swing's PaintEventDispatcher
+        if (RepaintManager.HANDLE_TOP_LEVEL_PAINT) {
+            sun.awt.PaintEventDispatcher.setPaintEventDispatcher(
+                                        new SwingPaintEventDispatcher());
+        }
+        // Install a hook that will be invoked if no one consumes the
+        // KeyEvent.  If the source isn't a JComponent this will process
+        // key bindings, if the source is a JComponent it implies that
+        // processKeyEvent was already invoked and thus no need to process
+        // the bindings again, unless the Component is disabled, in which
+        // case KeyEvents will no longer be dispatched to it so that we
+        // handle it here.
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                addKeyEventPostProcessor(new KeyEventPostProcessor() {
+                    public boolean postProcessKeyEvent(KeyEvent e) {
+                        Component c = e.getComponent();
+
+                        if ((!(c instanceof JComponent) ||
+                             (c != null && !c.isEnabled())) &&
+                                JComponent.KeyboardState.shouldProcess(e) &&
+                                SwingUtilities.processKeyBindings(e)) {
+                            e.consume();
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+        AWTAccessor.getComponentAccessor().
+            setRequestFocusController(JComponent.focusController);
+    }
+}

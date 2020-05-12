@@ -1,1182 +1,1178 @@
-/*      */ package com.sun.org.apache.xerces.internal.dom;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.util.URI;
-/*      */ import org.w3c.dom.Attr;
-/*      */ import org.w3c.dom.DOMException;
-/*      */ import org.w3c.dom.Element;
-/*      */ import org.w3c.dom.NamedNodeMap;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ import org.w3c.dom.Text;
-/*      */ import org.w3c.dom.TypeInfo;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class ElementImpl
-/*      */   extends ParentNode
-/*      */   implements Element, TypeInfo
-/*      */ {
-/*      */   static final long serialVersionUID = 3717253516652722278L;
-/*      */   protected String name;
-/*      */   protected AttributeMap attributes;
-/*      */   
-/*      */   public ElementImpl(CoreDocumentImpl ownerDoc, String name) {
-/*   85 */     super(ownerDoc);
-/*   86 */     this.name = name;
-/*   87 */     needsSyncData(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ElementImpl() {}
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void rename(String name) {
-/*   97 */     if (needsSyncData()) {
-/*   98 */       synchronizeData();
-/*      */     }
-/*  100 */     this.name = name;
-/*  101 */     reconcileDefaultAttributes();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short getNodeType() {
-/*  114 */     return 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNodeName() {
-/*  121 */     if (needsSyncData()) {
-/*  122 */       synchronizeData();
-/*      */     }
-/*  124 */     return this.name;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NamedNodeMap getAttributes() {
-/*  135 */     if (needsSyncData()) {
-/*  136 */       synchronizeData();
-/*      */     }
-/*  138 */     if (this.attributes == null) {
-/*  139 */       this.attributes = new AttributeMap(this, null);
-/*      */     }
-/*  141 */     return this.attributes;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node cloneNode(boolean deep) {
-/*  154 */     ElementImpl newnode = (ElementImpl)super.cloneNode(deep);
-/*      */     
-/*  156 */     if (this.attributes != null) {
-/*  157 */       newnode.attributes = (AttributeMap)this.attributes.cloneMap(newnode);
-/*      */     }
-/*  159 */     return newnode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getBaseURI() {
-/*  169 */     if (needsSyncData()) {
-/*  170 */       synchronizeData();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  176 */     if (this.attributes != null) {
-/*  177 */       Attr attrNode = (Attr)this.attributes.getNamedItem("xml:base");
-/*  178 */       if (attrNode != null) {
-/*  179 */         String uri = attrNode.getNodeValue();
-/*  180 */         if (uri.length() != 0) {
-/*      */           try {
-/*  182 */             uri = (new URI(uri)).toString();
-/*      */           }
-/*  184 */           catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*      */ 
-/*      */ 
-/*      */             
-/*  188 */             String parentBaseURI = (this.ownerNode != null) ? this.ownerNode.getBaseURI() : null;
-/*  189 */             if (parentBaseURI != null) {
-/*      */               try {
-/*  191 */                 uri = (new URI(new URI(parentBaseURI), uri)).toString();
-/*      */               }
-/*  193 */               catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException ex) {
-/*      */                 
-/*  195 */                 return null;
-/*      */               } 
-/*  197 */               return uri;
-/*      */             } 
-/*  199 */             return null;
-/*      */           } 
-/*  201 */           return uri;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  212 */     String baseURI = (this.ownerNode != null) ? this.ownerNode.getBaseURI() : null;
-/*      */     
-/*  214 */     if (baseURI != null) {
-/*      */       
-/*      */       try {
-/*  217 */         return (new URI(baseURI)).toString();
-/*      */       }
-/*  219 */       catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*  220 */         return null;
-/*      */       } 
-/*      */     }
-/*  223 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setOwnerDocument(CoreDocumentImpl doc) {
-/*  233 */     super.setOwnerDocument(doc);
-/*  234 */     if (this.attributes != null) {
-/*  235 */       this.attributes.setOwnerDocument(doc);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getAttribute(String name) {
-/*  254 */     if (needsSyncData()) {
-/*  255 */       synchronizeData();
-/*      */     }
-/*  257 */     if (this.attributes == null) {
-/*  258 */       return "";
-/*      */     }
-/*  260 */     Attr attr = (Attr)this.attributes.getNamedItem(name);
-/*  261 */     return (attr == null) ? "" : attr.getValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr getAttributeNode(String name) {
-/*  275 */     if (needsSyncData()) {
-/*  276 */       synchronizeData();
-/*      */     }
-/*  278 */     if (this.attributes == null) {
-/*  279 */       return null;
-/*      */     }
-/*  281 */     return (Attr)this.attributes.getNamedItem(name);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NodeList getElementsByTagName(String tagname) {
-/*  302 */     return new DeepNodeListImpl(this, tagname);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTagName() {
-/*  313 */     if (needsSyncData()) {
-/*  314 */       synchronizeData();
-/*      */     }
-/*  316 */     return this.name;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void normalize() {
-/*  335 */     if (isNormalized()) {
-/*      */       return;
-/*      */     }
-/*  338 */     if (needsSyncChildren()) {
-/*  339 */       synchronizeChildren();
-/*      */     }
-/*      */     
-/*  342 */     for (ChildNode kid = this.firstChild; kid != null; kid = next) {
-/*  343 */       ChildNode next = kid.nextSibling;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  350 */       if (kid.getNodeType() == 3) {
-/*      */ 
-/*      */         
-/*  353 */         if (next != null && next.getNodeType() == 3) {
-/*      */           
-/*  355 */           ((Text)kid).appendData(next.getNodeValue());
-/*  356 */           removeChild(next);
-/*  357 */           next = kid;
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         }
-/*  362 */         else if (kid.getNodeValue() == null || kid.getNodeValue().length() == 0) {
-/*  363 */           removeChild(kid);
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/*  369 */       else if (kid.getNodeType() == 1) {
-/*  370 */         kid.normalize();
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  375 */     if (this.attributes != null)
-/*      */     {
-/*  377 */       for (int i = 0; i < this.attributes.getLength(); i++) {
-/*      */         
-/*  379 */         Node attr = this.attributes.item(i);
-/*  380 */         attr.normalize();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  387 */     isNormalized(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeAttribute(String name) {
-/*  407 */     if (this.ownerDocument.errorChecking && isReadOnly()) {
-/*  408 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  409 */       throw new DOMException((short)7, msg);
-/*      */     } 
-/*      */     
-/*  412 */     if (needsSyncData()) {
-/*  413 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  416 */     if (this.attributes == null) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*  420 */     this.attributes.safeRemoveNamedItem(name);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr removeAttributeNode(Attr oldAttr) throws DOMException {
-/*  444 */     if (this.ownerDocument.errorChecking && isReadOnly()) {
-/*  445 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  446 */       throw new DOMException((short)7, msg);
-/*      */     } 
-/*      */     
-/*  449 */     if (needsSyncData()) {
-/*  450 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  453 */     if (this.attributes == null) {
-/*  454 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/*  455 */       throw new DOMException((short)8, msg);
-/*      */     } 
-/*  457 */     return (Attr)this.attributes.removeItem(oldAttr, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAttribute(String name, String value) {
-/*  483 */     if (this.ownerDocument.errorChecking && isReadOnly()) {
-/*      */       
-/*  485 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*      */ 
-/*      */ 
-/*      */       
-/*  489 */       throw new DOMException((short)7, msg);
-/*      */     } 
-/*      */     
-/*  492 */     if (needsSyncData()) {
-/*  493 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  496 */     Attr newAttr = getAttributeNode(name);
-/*  497 */     if (newAttr == null) {
-/*  498 */       newAttr = getOwnerDocument().createAttribute(name);
-/*      */       
-/*  500 */       if (this.attributes == null) {
-/*  501 */         this.attributes = new AttributeMap(this, null);
-/*      */       }
-/*      */       
-/*  504 */       newAttr.setNodeValue(value);
-/*  505 */       this.attributes.setNamedItem(newAttr);
-/*      */     } else {
-/*      */       
-/*  508 */       newAttr.setNodeValue(value);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr setAttributeNode(Attr newAttr) throws DOMException {
-/*  530 */     if (needsSyncData()) {
-/*  531 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  534 */     if (this.ownerDocument.errorChecking) {
-/*  535 */       if (isReadOnly()) {
-/*  536 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  537 */         throw new DOMException((short)7, msg);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  542 */       if (newAttr.getOwnerDocument() != this.ownerDocument) {
-/*  543 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null);
-/*  544 */         throw new DOMException((short)4, msg);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  548 */     if (this.attributes == null) {
-/*  549 */       this.attributes = new AttributeMap(this, null);
-/*      */     }
-/*      */     
-/*  552 */     return (Attr)this.attributes.setNamedItem(newAttr);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getAttributeNS(String namespaceURI, String localName) {
-/*  576 */     if (needsSyncData()) {
-/*  577 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  580 */     if (this.attributes == null) {
-/*  581 */       return "";
-/*      */     }
-/*      */     
-/*  584 */     Attr attr = (Attr)this.attributes.getNamedItemNS(namespaceURI, localName);
-/*  585 */     return (attr == null) ? "" : attr.getValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAttributeNS(String namespaceURI, String qualifiedName, String value) {
-/*      */     String prefix, localName;
-/*  632 */     if (this.ownerDocument.errorChecking && isReadOnly()) {
-/*      */       
-/*  634 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*      */ 
-/*      */ 
-/*      */       
-/*  638 */       throw new DOMException((short)7, msg);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  642 */     if (needsSyncData()) {
-/*  643 */       synchronizeData();
-/*      */     }
-/*  645 */     int index = qualifiedName.indexOf(':');
-/*      */     
-/*  647 */     if (index < 0) {
-/*  648 */       prefix = null;
-/*  649 */       localName = qualifiedName;
-/*      */     } else {
-/*      */       
-/*  652 */       prefix = qualifiedName.substring(0, index);
-/*  653 */       localName = qualifiedName.substring(index + 1);
-/*      */     } 
-/*  655 */     Attr newAttr = getAttributeNodeNS(namespaceURI, localName);
-/*  656 */     if (newAttr == null) {
-/*      */ 
-/*      */       
-/*  659 */       newAttr = getOwnerDocument().createAttributeNS(namespaceURI, qualifiedName);
-/*      */ 
-/*      */       
-/*  662 */       if (this.attributes == null) {
-/*  663 */         this.attributes = new AttributeMap(this, null);
-/*      */       }
-/*  665 */       newAttr.setNodeValue(value);
-/*  666 */       this.attributes.setNamedItemNS(newAttr);
-/*      */     } else {
-/*      */       
-/*  669 */       if (newAttr instanceof AttrNSImpl) {
-/*  670 */         String origNodeName = ((AttrNSImpl)newAttr).name;
-/*  671 */         String newName = (prefix != null) ? (prefix + ":" + localName) : localName;
-/*      */         
-/*  673 */         ((AttrNSImpl)newAttr).name = newName;
-/*      */         
-/*  675 */         if (!newName.equals(origNodeName))
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  682 */           newAttr = (Attr)this.attributes.removeItem(newAttr, false);
-/*  683 */           this.attributes.addItem(newAttr);
-/*      */ 
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */ 
-/*      */         
-/*  693 */         newAttr = new AttrNSImpl((CoreDocumentImpl)getOwnerDocument(), namespaceURI, qualifiedName, localName);
-/*  694 */         this.attributes.setNamedItemNS(newAttr);
-/*      */       } 
-/*      */       
-/*  697 */       newAttr.setNodeValue(value);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeAttributeNS(String namespaceURI, String localName) {
-/*  720 */     if (this.ownerDocument.errorChecking && isReadOnly()) {
-/*  721 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  722 */       throw new DOMException((short)7, msg);
-/*      */     } 
-/*      */     
-/*  725 */     if (needsSyncData()) {
-/*  726 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  729 */     if (this.attributes == null) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*  733 */     this.attributes.safeRemoveNamedItemNS(namespaceURI, localName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr getAttributeNodeNS(String namespaceURI, String localName) {
-/*  750 */     if (needsSyncData()) {
-/*  751 */       synchronizeData();
-/*      */     }
-/*  753 */     if (this.attributes == null) {
-/*  754 */       return null;
-/*      */     }
-/*  756 */     return (Attr)this.attributes.getNamedItemNS(namespaceURI, localName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr setAttributeNodeNS(Attr newAttr) throws DOMException {
-/*  791 */     if (needsSyncData()) {
-/*  792 */       synchronizeData();
-/*      */     }
-/*  794 */     if (this.ownerDocument.errorChecking) {
-/*  795 */       if (isReadOnly()) {
-/*  796 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  797 */         throw new DOMException((short)7, msg);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  801 */       if (newAttr.getOwnerDocument() != this.ownerDocument) {
-/*  802 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null);
-/*  803 */         throw new DOMException((short)4, msg);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  807 */     if (this.attributes == null) {
-/*  808 */       this.attributes = new AttributeMap(this, null);
-/*      */     }
-/*      */     
-/*  811 */     return (Attr)this.attributes.setNamedItemNS(newAttr);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int setXercesAttributeNode(Attr attr) {
-/*  820 */     if (needsSyncData()) {
-/*  821 */       synchronizeData();
-/*      */     }
-/*      */     
-/*  824 */     if (this.attributes == null) {
-/*  825 */       this.attributes = new AttributeMap(this, null);
-/*      */     }
-/*  827 */     return this.attributes.addItem(attr);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getXercesAttribute(String namespaceURI, String localName) {
-/*  836 */     if (needsSyncData()) {
-/*  837 */       synchronizeData();
-/*      */     }
-/*  839 */     if (this.attributes == null) {
-/*  840 */       return -1;
-/*      */     }
-/*  842 */     return this.attributes.getNamedItemIndex(namespaceURI, localName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasAttributes() {
-/*  850 */     if (needsSyncData()) {
-/*  851 */       synchronizeData();
-/*      */     }
-/*  853 */     return (this.attributes != null && this.attributes.getLength() != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasAttribute(String name) {
-/*  860 */     return (getAttributeNode(name) != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasAttributeNS(String namespaceURI, String localName) {
-/*  867 */     return (getAttributeNodeNS(namespaceURI, localName) != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NodeList getElementsByTagNameNS(String namespaceURI, String localName) {
-/*  890 */     return new DeepNodeListImpl(this, namespaceURI, localName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEqualNode(Node arg) {
-/*  899 */     if (!super.isEqualNode(arg)) {
-/*  900 */       return false;
-/*      */     }
-/*  902 */     boolean hasAttrs = hasAttributes();
-/*  903 */     if (hasAttrs != ((Element)arg).hasAttributes()) {
-/*  904 */       return false;
-/*      */     }
-/*  906 */     if (hasAttrs) {
-/*  907 */       NamedNodeMap map1 = getAttributes();
-/*  908 */       NamedNodeMap map2 = ((Element)arg).getAttributes();
-/*  909 */       int len = map1.getLength();
-/*  910 */       if (len != map2.getLength()) {
-/*  911 */         return false;
-/*      */       }
-/*  913 */       for (int i = 0; i < len; i++) {
-/*  914 */         Node n1 = map1.item(i);
-/*  915 */         if (n1.getLocalName() == null) {
-/*  916 */           Node n2 = map2.getNamedItem(n1.getNodeName());
-/*  917 */           if (n2 == null || !((NodeImpl)n1).isEqualNode(n2)) {
-/*  918 */             return false;
-/*      */           }
-/*      */         } else {
-/*      */           
-/*  922 */           Node n2 = map2.getNamedItemNS(n1.getNamespaceURI(), n1
-/*  923 */               .getLocalName());
-/*  924 */           if (n2 == null || !((NodeImpl)n1).isEqualNode(n2)) {
-/*  925 */             return false;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*  930 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIdAttributeNode(Attr at, boolean makeId) {
-/*  937 */     if (needsSyncData()) {
-/*  938 */       synchronizeData();
-/*      */     }
-/*  940 */     if (this.ownerDocument.errorChecking) {
-/*  941 */       if (isReadOnly()) {
-/*  942 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  943 */         throw new DOMException((short)7, msg);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  948 */       if (at.getOwnerElement() != this) {
-/*  949 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/*  950 */         throw new DOMException((short)8, msg);
-/*      */       } 
-/*      */     } 
-/*  953 */     ((AttrImpl)at).isIdAttribute(makeId);
-/*  954 */     if (!makeId) {
-/*  955 */       this.ownerDocument.removeIdentifier(at.getValue());
-/*      */     } else {
-/*      */       
-/*  958 */       this.ownerDocument.putIdentifier(at.getValue(), this);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIdAttribute(String name, boolean makeId) {
-/*  966 */     if (needsSyncData()) {
-/*  967 */       synchronizeData();
-/*      */     }
-/*  969 */     Attr at = getAttributeNode(name);
-/*      */     
-/*  971 */     if (at == null) {
-/*  972 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/*      */ 
-/*      */       
-/*  975 */       throw new DOMException((short)8, msg);
-/*      */     } 
-/*      */     
-/*  978 */     if (this.ownerDocument.errorChecking) {
-/*  979 */       if (isReadOnly()) {
-/*  980 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/*  981 */         throw new DOMException((short)7, msg);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  986 */       if (at.getOwnerElement() != this) {
-/*  987 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/*  988 */         throw new DOMException((short)8, msg);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  992 */     ((AttrImpl)at).isIdAttribute(makeId);
-/*  993 */     if (!makeId) {
-/*  994 */       this.ownerDocument.removeIdentifier(at.getValue());
-/*      */     } else {
-/*      */       
-/*  997 */       this.ownerDocument.putIdentifier(at.getValue(), this);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIdAttributeNS(String namespaceURI, String localName, boolean makeId) {
-/* 1006 */     if (needsSyncData()) {
-/* 1007 */       synchronizeData();
-/*      */     }
-/*      */     
-/* 1010 */     if (namespaceURI != null) {
-/* 1011 */       namespaceURI = (namespaceURI.length() == 0) ? null : namespaceURI;
-/*      */     }
-/* 1013 */     Attr at = getAttributeNodeNS(namespaceURI, localName);
-/*      */     
-/* 1015 */     if (at == null) {
-/* 1016 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/*      */ 
-/*      */       
-/* 1019 */       throw new DOMException((short)8, msg);
-/*      */     } 
-/*      */     
-/* 1022 */     if (this.ownerDocument.errorChecking) {
-/* 1023 */       if (isReadOnly()) {
-/* 1024 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 1025 */         throw new DOMException((short)7, msg);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1030 */       if (at.getOwnerElement() != this) {
-/* 1031 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/* 1032 */         throw new DOMException((short)8, msg);
-/*      */       } 
-/*      */     } 
-/* 1035 */     ((AttrImpl)at).isIdAttribute(makeId);
-/* 1036 */     if (!makeId) {
-/* 1037 */       this.ownerDocument.removeIdentifier(at.getValue());
-/*      */     } else {
-/*      */       
-/* 1040 */       this.ownerDocument.putIdentifier(at.getValue(), this);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTypeName() {
-/* 1048 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTypeNamespace() {
-/* 1055 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg, int derivationMethod) {
-/* 1077 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeInfo getSchemaTypeInfo() {
-/* 1085 */     if (needsSyncData()) {
-/* 1086 */       synchronizeData();
-/*      */     }
-/* 1088 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setReadOnly(boolean readOnly, boolean deep) {
-/* 1100 */     super.setReadOnly(readOnly, deep);
-/* 1101 */     if (this.attributes != null) {
-/* 1102 */       this.attributes.setReadOnly(readOnly, true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void synchronizeData() {
-/* 1116 */     needsSyncData(false);
-/*      */ 
-/*      */     
-/* 1119 */     boolean orig = this.ownerDocument.getMutationEvents();
-/* 1120 */     this.ownerDocument.setMutationEvents(false);
-/*      */ 
-/*      */     
-/* 1123 */     setupDefaultAttributes();
-/*      */ 
-/*      */     
-/* 1126 */     this.ownerDocument.setMutationEvents(orig);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void moveSpecifiedAttributes(ElementImpl el) {
-/* 1133 */     if (needsSyncData()) {
-/* 1134 */       synchronizeData();
-/*      */     }
-/* 1136 */     if (el.hasAttributes()) {
-/* 1137 */       if (this.attributes == null) {
-/* 1138 */         this.attributes = new AttributeMap(this, null);
-/*      */       }
-/* 1140 */       this.attributes.moveSpecifiedAttributes(el.attributes);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected void setupDefaultAttributes() {
-/* 1146 */     NamedNodeMapImpl defaults = getDefaultAttributes();
-/* 1147 */     if (defaults != null) {
-/* 1148 */       this.attributes = new AttributeMap(this, defaults);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected void reconcileDefaultAttributes() {
-/* 1154 */     if (this.attributes != null) {
-/* 1155 */       NamedNodeMapImpl defaults = getDefaultAttributes();
-/* 1156 */       this.attributes.reconcileDefaults(defaults);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected NamedNodeMapImpl getDefaultAttributes() {
-/* 1164 */     DocumentTypeImpl doctype = (DocumentTypeImpl)this.ownerDocument.getDoctype();
-/* 1165 */     if (doctype == null) {
-/* 1166 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1170 */     ElementDefinitionImpl eldef = (ElementDefinitionImpl)doctype.getElements().getNamedItem(getNodeName());
-/* 1171 */     if (eldef == null) {
-/* 1172 */       return null;
-/*      */     }
-/* 1174 */     return (NamedNodeMapImpl)eldef.getAttributes();
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\ElementImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+
+import org.w3c.dom.TypeInfo;
+import com.sun.org.apache.xerces.internal.util.URI;
+
+/**
+ * Elements represent most of the "markup" and structure of the
+ * document.  They contain both the data for the element itself
+ * (element name and attributes), and any contained nodes, including
+ * document text (as children).
+ * <P>
+ * Elements may have Attributes associated with them; the API for this is
+ * defined in Node, but the function is implemented here. In general, XML
+ * applications should retrive Attributes as Nodes, since they may contain
+ * entity references and hence be a fairly complex sub-tree. HTML users will
+ * be dealing with simple string values, and convenience methods are provided
+ * to work in terms of Strings.
+ * <P>
+ * ElementImpl does not support Namespaces. ElementNSImpl, which inherits from
+ * it, does.
+ * @see ElementNSImpl
+ *
+ * @xerces.internal
+ *
+ * @author Arnaud  Le Hors, IBM
+ * @author Joe Kesselman, IBM
+ * @author Andy Clark, IBM
+ * @author Ralf Pfeiffer, IBM
+ * @since  PR-DOM-Level-1-19980818.
+ */
+public class ElementImpl
+    extends ParentNode
+    implements Element, TypeInfo {
+
+    //
+    // Constants
+    //
+
+    /** Serialization version. */
+    static final long serialVersionUID = 3717253516652722278L;
+    //
+    // Data
+    //
+
+    /** Element name. */
+    protected String name;
+
+    /** Attributes. */
+    protected AttributeMap attributes;
+
+    //
+    // Constructors
+    //
+
+    /** Factory constructor. */
+    public ElementImpl(CoreDocumentImpl ownerDoc, String name) {
+        super(ownerDoc);
+        this.name = name;
+        needsSyncData(true);    // synchronizeData will initialize attributes
+    }
+
+    // for ElementNSImpl
+    protected ElementImpl() {}
+
+    // Support for DOM Level 3 renameNode method.
+    // Note: This only deals with part of the pb. CoreDocumentImpl
+    // does all the work.
+    void rename(String name) {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+            this.name = name;
+        reconcileDefaultAttributes();
+    }
+
+    //
+    // Node methods
+    //
+
+
+    /**
+     * A short integer indicating what type of node this is. The named
+     * constants for this value are defined in the org.w3c.dom.Node interface.
+     */
+    public short getNodeType() {
+        return Node.ELEMENT_NODE;
+    }
+
+    /**
+     * Returns the element name
+     */
+    public String getNodeName() {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return name;
+    }
+
+    /**
+     * Retrieve all the Attributes as a set. Note that this API is inherited
+     * from Node rather than specified on Element; in fact only Elements will
+     * ever have Attributes, but they want to allow folks to "blindly" operate
+     * on the tree as a set of Nodes.
+     */
+    public NamedNodeMap getAttributes() {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (attributes == null) {
+            attributes = new AttributeMap(this, null);
+        }
+        return attributes;
+
+    } // getAttributes():NamedNodeMap
+
+    /**
+     * Return a duplicate copy of this Element. Note that its children
+     * will not be copied unless the "deep" flag is true, but Attributes
+     * are <i>always</i> replicated.
+     *
+     * @see org.w3c.dom.Node#cloneNode(boolean)
+     */
+    public Node cloneNode(boolean deep) {
+
+        ElementImpl newnode = (ElementImpl) super.cloneNode(deep);
+        // Replicate NamedNodeMap rather than sharing it.
+        if (attributes != null) {
+            newnode.attributes = (AttributeMap) attributes.cloneMap(newnode);
+        }
+        return newnode;
+
+    } // cloneNode(boolean):Node
+
+   /**
+     * DOM Level 3 WD - Experimental.
+     * Retrieve baseURI
+     */
+    public String getBaseURI() {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        // Absolute base URI is computed according to
+        // XML Base (http://www.w3.org/TR/xmlbase/#granularity)
+        // 1. The base URI specified by an xml:base attribute on the element,
+        // if one exists
+        if (attributes != null) {
+            Attr attrNode = (Attr)attributes.getNamedItem("xml:base");
+            if (attrNode != null) {
+                String uri =  attrNode.getNodeValue();
+                if (uri.length() != 0 ) {// attribute value is always empty string
+                    try {
+                       uri = new URI(uri).toString();
+                    }
+                    catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
+                        // This may be a relative URI.
+
+                        // Make any parentURI into a URI object to use with the URI(URI, String) constructor
+                        String parentBaseURI = (this.ownerNode != null) ? this.ownerNode.getBaseURI() : null;
+                        if (parentBaseURI != null){
+                            try{
+                                uri = new URI(new URI(parentBaseURI), uri).toString();
+                            }
+                            catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException ex){
+                                // This should never happen: parent should have checked the URI and returned null if invalid.
+                                return null;
+                            }
+                            return uri;
+                        }
+                        return null;
+                    }
+                    return uri;
+                }
+            }
+        }
+
+        // 2.the base URI of the element's parent element within the
+        // document or external entity, if one exists
+                // 3. the base URI of the document entity or external entity
+                // containing the element
+
+                // ownerNode serves as a parent or as document
+                String baseURI = (this.ownerNode != null) ? this.ownerNode.getBaseURI() : null ;
+        //base URI of parent element is not null
+        if(baseURI != null){
+            try {
+                //return valid absolute base URI
+               return new URI(baseURI).toString();
+            }
+            catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e){
+                return null;
+            }
+        }
+        return null;
+    } //getBaseURI
+
+
+
+    /**
+     * NON-DOM
+     * set the ownerDocument of this node, its children, and its attributes
+     */
+    void setOwnerDocument(CoreDocumentImpl doc) {
+        super.setOwnerDocument(doc);
+        if (attributes != null) {
+            attributes.setOwnerDocument(doc);
+        }
+    }
+
+    //
+    // Element methods
+    //
+
+    /**
+     * Look up a single Attribute by name. Returns the Attribute's
+     * string value, or an empty string (NOT null!) to indicate that the
+     * name did not map to a currently defined attribute.
+     * <p>
+     * Note: Attributes may contain complex node trees. This method
+     * returns the "flattened" string obtained from Attribute.getValue().
+     * If you need the structure information, see getAttributeNode().
+     */
+    public String getAttribute(String name) {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (attributes == null) {
+            return "";
+        }
+        Attr attr = (Attr)(attributes.getNamedItem(name));
+        return (attr == null) ? "" : attr.getValue();
+
+    } // getAttribute(String):String
+
+
+    /**
+     * Look up a single Attribute by name. Returns the Attribute Node,
+     * so its complete child tree is available. This could be important in
+     * XML, where the string rendering may not be sufficient information.
+     * <p>
+     * If no matching attribute is available, returns null.
+     */
+    public Attr getAttributeNode(String name) {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (attributes == null) {
+            return null;
+        }
+        return (Attr)attributes.getNamedItem(name);
+
+    } // getAttributeNode(String):Attr
+
+
+    /**
+     * Returns a NodeList of all descendent nodes (children,
+     * grandchildren, and so on) which are Elements and which have the
+     * specified tag name.
+     * <p>
+     * Note: NodeList is a "live" view of the DOM. Its contents will
+     * change as the DOM changes, and alterations made to the NodeList
+     * will be reflected in the DOM.
+     *
+     * @param tagname The type of element to gather. To obtain a list of
+     * all elements no matter what their names, use the wild-card tag
+     * name "*".
+     *
+     * @see DeepNodeListImpl
+     */
+    public NodeList getElementsByTagName(String tagname) {
+        return new DeepNodeListImpl(this,tagname);
+    }
+
+    /**
+     * Returns the name of the Element. Note that Element.nodeName() is
+     * defined to also return the tag name.
+     * <p>
+     * This is case-preserving in XML. HTML should uppercasify it on the
+     * way in.
+     */
+    public String getTagName() {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return name;
+    }
+
+    /**
+     * In "normal form" (as read from a source file), there will never be two
+     * Text children in succession. But DOM users may create successive Text
+     * nodes in the course of manipulating the document. Normalize walks the
+     * sub-tree and merges adjacent Texts, as if the DOM had been written out
+     * and read back in again. This simplifies implementation of higher-level
+     * functions that may want to assume that the document is in standard form.
+     * <p>
+     * To normalize a Document, normalize its top-level Element child.
+     * <p>
+     * As of PR-DOM-Level-1-19980818, CDATA -- despite being a subclass of
+     * Text -- is considered "markup" and will _not_ be merged either with
+     * normal Text or with other CDATASections.
+     */
+    public void normalize() {
+        // No need to normalize if already normalized.
+        if (isNormalized()) {
+            return;
+        }
+        if (needsSyncChildren()) {
+            synchronizeChildren();
+        }
+        ChildNode kid, next;
+        for (kid = firstChild; kid != null; kid = next) {
+            next = kid.nextSibling;
+
+            // If kid is a text node, we need to check for one of two
+            // conditions:
+            //   1) There is an adjacent text node
+            //   2) There is no adjacent text node, but kid is
+            //      an empty text node.
+            if ( kid.getNodeType() == Node.TEXT_NODE )
+            {
+                // If an adjacent text node, merge it with kid
+                if ( next!=null && next.getNodeType() == Node.TEXT_NODE )
+                {
+                    ((Text)kid).appendData(next.getNodeValue());
+                    removeChild( next );
+                    next = kid; // Don't advance; there might be another.
+                }
+                else
+                {
+                    // If kid is empty, remove it
+                    if ( kid.getNodeValue() == null || kid.getNodeValue().length() == 0 ) {
+                        removeChild( kid );
+                    }
+                }
+            }
+
+            // Otherwise it might be an Element, which is handled recursively
+            else if (kid.getNodeType() == Node.ELEMENT_NODE) {
+                kid.normalize();
+            }
+        }
+
+        // We must also normalize all of the attributes
+        if ( attributes!=null )
+        {
+            for( int i=0; i<attributes.getLength(); ++i )
+            {
+                Node attr = attributes.item(i);
+                attr.normalize();
+            }
+        }
+
+        // changed() will have occurred when the removeChild() was done,
+        // so does not have to be reissued.
+
+        isNormalized(true);
+    } // normalize()
+
+    /**
+     * Remove the named attribute from this Element. If the removed
+     * Attribute has a default value, it is immediately replaced thereby.
+     * <P>
+     * The default logic is actually implemented in NamedNodeMapImpl.
+     * PR-DOM-Level-1-19980818 doesn't fully address the DTD, so some
+     * of this behavior is likely to change in future versions. ?????
+     * <P>
+     * Note that this call "succeeds" even if no attribute by this name
+     * existed -- unlike removeAttributeNode, which will throw a not-found
+     * exception in that case.
+     *
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if the node is
+     * readonly.
+     */
+    public void removeAttribute(String name) {
+
+        if (ownerDocument.errorChecking && isReadOnly()) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+            throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+        }
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        if (attributes == null) {
+            return;
+        }
+
+        attributes.safeRemoveNamedItem(name);
+
+    } // removeAttribute(String)
+
+
+    /**
+     * Remove the specified attribute/value pair. If the removed
+     * Attribute has a default value, it is immediately replaced.
+     * <p>
+     * NOTE: Specifically removes THIS NODE -- not the node with this
+     * name, nor the node with these contents. If the specific Attribute
+     * object passed in is not stored in this Element, we throw a
+     * DOMException.  If you really want to remove an attribute by name,
+     * use removeAttribute().
+     *
+     * @return the Attribute object that was removed.
+     * @throws DOMException(NOT_FOUND_ERR) if oldattr is not an attribute of
+     * this Element.
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if the node is
+     * readonly.
+     */
+    public Attr removeAttributeNode(Attr oldAttr)
+        throws DOMException {
+
+        if (ownerDocument.errorChecking && isReadOnly()) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+            throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+        }
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        if (attributes == null) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+            throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+        }
+        return (Attr) attributes.removeItem(oldAttr, true);
+
+    } // removeAttributeNode(Attr):Attr
+
+
+    /**
+     * Add a new name/value pair, or replace the value of the existing
+     * attribute having that name.
+     *
+     * Note: this method supports only the simplest kind of Attribute,
+     * one whose value is a string contained in a single Text node.
+     * If you want to assert a more complex value (which XML permits,
+     * though HTML doesn't), see setAttributeNode().
+     *
+     * The attribute is created with specified=true, meaning it's an
+     * explicit value rather than inherited from the DTD as a default.
+     * Again, setAttributeNode can be used to achieve other results.
+     *
+     * @throws DOMException(INVALID_NAME_ERR) if the name is not acceptable.
+     * (Attribute factory will do that test for us.)
+     *
+     * @throws DOMException(NO_MODIFICATION_ALLOWED_ERR) if the node is
+     * readonly.
+     */
+        public void setAttribute(String name, String value) {
+
+                if (ownerDocument.errorChecking && isReadOnly()) {
+                        String msg =
+                                DOMMessageFormatter.formatMessage(
+                                        DOMMessageFormatter.DOM_DOMAIN,
+                                        "NO_MODIFICATION_ALLOWED_ERR",
+                                        null);
+                        throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+                }
+
+                if (needsSyncData()) {
+                        synchronizeData();
+                }
+
+                Attr newAttr = getAttributeNode(name);
+                if (newAttr == null) {
+                        newAttr = getOwnerDocument().createAttribute(name);
+
+                        if (attributes == null) {
+                                attributes = new AttributeMap(this, null);
+                        }
+
+                        newAttr.setNodeValue(value);
+                        attributes.setNamedItem(newAttr);
+                }
+                else {
+                        newAttr.setNodeValue(value);
+                }
+
+        } // setAttribute(String,String)
+
+    /**
+     * Add a new attribute/value pair, or replace the value of the
+     * existing attribute with that name.
+     * <P>
+     * This method allows you to add an Attribute that has already been
+     * constructed, and hence avoids the limitations of the simple
+     * setAttribute() call. It can handle attribute values that have
+     * arbitrarily complex tree structure -- in particular, those which
+     * had entity references mixed into their text.
+     *
+     * @throws DOMException(INUSE_ATTRIBUTE_ERR) if the Attribute object
+     * has already been assigned to another Element.
+     */
+    public Attr setAttributeNode(Attr newAttr)
+        throws DOMException
+        {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(
+                                     DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                     msg);
+            }
+
+            if (newAttr.getOwnerDocument() != ownerDocument) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null);
+                    throw new DOMException(DOMException.WRONG_DOCUMENT_ERR, msg);
+            }
+        }
+
+        if (attributes == null) {
+            attributes = new AttributeMap(this, null);
+        }
+        // This will throw INUSE if necessary
+        return (Attr) attributes.setNamedItem(newAttr);
+
+    } // setAttributeNode(Attr):Attr
+
+    //
+    // DOM2: Namespace methods
+    //
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Retrieves an attribute value by local name and namespace URI.
+     *
+     * @param namespaceURI
+     *                      The namespace URI of the attribute to
+     *                      retrieve.
+     * @param localName     The local name of the attribute to retrieve.
+     * @return String       The Attr value as a string, or empty string
+     *                      if that attribute
+     *                      does not have a specified or default value.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public String getAttributeNS(String namespaceURI, String localName) {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        if (attributes == null) {
+            return "";
+        }
+
+        Attr attr = (Attr)(attributes.getNamedItemNS(namespaceURI, localName));
+        return (attr == null) ? "" : attr.getValue();
+
+    } // getAttributeNS(String,String):String
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     *  Adds a new attribute.
+     *  If the given namespaceURI is null or an empty string and the
+     *  qualifiedName has a prefix that is "xml", the new attribute is bound to
+     *  the predefined namespace "http://www.w3.org/XML/1998/namespace"
+     *  [Namespaces].  If an attribute with the same local name and namespace
+     *  URI is already present on the element, its prefix is changed to be the
+     *  prefix part of the qualifiedName, and its value is changed to be the
+     *  value parameter. This value is a simple string, it is not parsed as it
+     *  is being set. So any markup (such as syntax to be recognized as an
+     *  entity reference) is treated as literal text, and needs to be
+     *  appropriately escaped by the implementation when it is written out. In
+     *  order to assign an attribute value that contains entity references, the
+     *  user must create an Attr node plus any Text and EntityReference nodes,
+     *  build the appropriate subtree, and use setAttributeNodeNS or
+     *  setAttributeNode to assign it as the value of an attribute.
+     *
+     * @param namespaceURI      The namespace URI of the attribute to create
+     *                          or alter.
+     * @param qualifiedName     The qualified name of the attribute to create or
+     *                          alter.
+     * @param value             The value to set in string form.
+     * @throws                  INVALID_CHARACTER_ERR: Raised if the specified
+     *                          name contains an invalid character.
+     *
+     * @throws                  NO_MODIFICATION_ALLOWED_ERR: Raised if this
+     *                          node is readonly.
+     *
+     * @throws                  NAMESPACE_ERR: Raised if the qualifiedName
+     *                          has a prefix that is "xml" and the namespaceURI
+     *                          is neither null nor an empty string nor
+     *                          "http://www.w3.org/XML/1998/namespace", or if
+     *                          the qualifiedName has a prefix that is "xmlns"
+     *                          but the namespaceURI is neither null nor an
+     *                          empty string, or if if the qualifiedName has a
+     *                          prefix different from "xml" and "xmlns" and the
+     *                          namespaceURI is null or an empty string.
+     * @since WD-DOM-Level-2-19990923
+     */
+     public void setAttributeNS(String namespaceURI,String qualifiedName,
+                                          String value) {
+                if (ownerDocument.errorChecking && isReadOnly()) {
+                        String msg =
+                                DOMMessageFormatter.formatMessage(
+                                        DOMMessageFormatter.DOM_DOMAIN,
+                                        "NO_MODIFICATION_ALLOWED_ERR",
+                                        null);
+                        throw new DOMException(
+                                DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                msg);
+                }
+                if (needsSyncData()) {
+                        synchronizeData();
+                }
+                int index = qualifiedName.indexOf(':');
+                String prefix, localName;
+                if (index < 0) {
+                        prefix = null;
+                        localName = qualifiedName;
+                }
+                else {
+                        prefix = qualifiedName.substring(0, index);
+                        localName = qualifiedName.substring(index + 1);
+                }
+                Attr newAttr = getAttributeNodeNS(namespaceURI, localName);
+                if (newAttr == null) {
+            // REVISIT: this is not efficient, we are creating twice the same
+            //          strings for prefix and localName.
+                        newAttr = getOwnerDocument().createAttributeNS(
+                                        namespaceURI,
+                                        qualifiedName);
+                        if (attributes == null) {
+                                attributes = new AttributeMap(this, null);
+                        }
+                        newAttr.setNodeValue(value);
+                        attributes.setNamedItemNS(newAttr);
+                }
+                else {
+            if (newAttr instanceof AttrNSImpl){
+                String origNodeName = ((AttrNSImpl) newAttr).name;
+                String newName = (prefix!=null) ? (prefix+":"+localName) : localName;
+
+                ((AttrNSImpl) newAttr).name = newName;
+
+                if (!newName.equals(origNodeName)) {
+                    // Note: we can't just change the name of the attribute. Names have to be in sorted
+                    // order in the attributes vector because a binary search is used to locate them.
+                    // If the new name has a different prefix, the list may become unsorted.
+                    // Maybe it would be better to resort the list, but the simplest
+                    // fix seems to be to remove the old attribute and re-insert it.
+                    // -- Norman.Walsh@Sun.COM, 2 Feb 2007
+                    newAttr = (Attr) attributes.removeItem(newAttr, false);
+                    attributes.addItem(newAttr);
+                }
+            }
+            else {
+                // This case may happen if user calls:
+                //      elem.setAttribute("name", "value");
+                //      elem.setAttributeNS(null, "name", "value");
+                // This case is not defined by the DOM spec, we choose
+                // to create a new attribute in this case and remove an old one from the tree
+                // note this might cause events to be propagated or user data to be lost
+                newAttr = new AttrNSImpl((CoreDocumentImpl)getOwnerDocument(), namespaceURI, qualifiedName, localName);
+                attributes.setNamedItemNS(newAttr);
+            }
+
+                        newAttr.setNodeValue(value);
+                }
+
+    } // setAttributeNS(String,String,String)
+
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Removes an attribute by local name and namespace URI. If the removed
+     * attribute has a default value it is immediately replaced.
+     * The replacing attribute has the same namespace URI and local name,
+     * as well as the original prefix.<p>
+     *
+     * @param namespaceURI  The namespace URI of the attribute to remove.
+     *
+     * @param localName     The local name of the attribute to remove.
+     * @throws                  NO_MODIFICATION_ALLOWED_ERR: Raised if this
+     *                          node is readonly.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public void removeAttributeNS(String namespaceURI, String localName) {
+
+        if (ownerDocument.errorChecking && isReadOnly()) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+            throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+        }
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        if (attributes == null) {
+            return;
+        }
+
+        attributes.safeRemoveNamedItemNS(namespaceURI, localName);
+
+    } // removeAttributeNS(String,String)
+
+    /**
+     * Retrieves an Attr node by local name and namespace URI.
+     *
+     * @param namespaceURI  The namespace URI of the attribute to
+     *                      retrieve.
+     * @param localName     The local name of the attribute to retrieve.
+     * @return Attr         The Attr node with the specified attribute
+     *                      local name and namespace
+     *                      URI or null if there is no such attribute.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public Attr getAttributeNodeNS(String namespaceURI, String localName){
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (attributes == null) {
+            return null;
+        }
+        return (Attr)attributes.getNamedItemNS(namespaceURI, localName);
+
+    } // getAttributeNodeNS(String,String):Attr
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Adds a new attribute. If an attribute with that local name and
+     * namespace URI is already present in the element, it is replaced
+     * by the new one.
+     *
+     * @param Attr      The Attr node to add to the attribute list. When
+     *                  the Node has no namespaceURI, this method behaves
+     *                  like setAttributeNode.
+     * @return Attr     If the newAttr attribute replaces an existing attribute
+     *                  with the same local name and namespace URI, the *
+     *                  previously existing Attr node is returned, otherwise
+     *                  null is returned.
+     * @throws          WRONG_DOCUMENT_ERR: Raised if newAttr
+     *                  was created from a different document than the one that
+     *                  created the element.
+     *
+     * @throws          NO_MODIFICATION_ALLOWED_ERR: Raised if
+     *                  this node is readonly.
+     *
+     * @throws          INUSE_ATTRIBUTE_ERR: Raised if newAttr is
+     *                  already an attribute of another Element object. The
+     *                  DOM user must explicitly clone Attr nodes to re-use
+     *                  them in other elements.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public Attr setAttributeNodeNS(Attr newAttr)
+        throws DOMException
+        {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                    throw new DOMException(
+                                     DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                     msg);
+            }
+            if (newAttr.getOwnerDocument() != ownerDocument) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null);
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR, msg);
+            }
+        }
+
+        if (attributes == null) {
+            attributes = new AttributeMap(this, null);
+        }
+        // This will throw INUSE if necessary
+        return (Attr) attributes.setNamedItemNS(newAttr);
+
+    } // setAttributeNodeNS(Attr):Attr
+
+    /**
+      * NON-DOM: sets attribute node for this element
+      */
+    protected int setXercesAttributeNode (Attr attr){
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+
+        if (attributes == null) {
+            attributes = new AttributeMap(this, null);
+        }
+        return attributes.addItem(attr);
+
+    }
+
+    /**
+      * NON-DOM: get inded of an attribute
+      */
+    protected int getXercesAttribute(String namespaceURI, String localName){
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (attributes == null) {
+            return -1;
+        }
+        return attributes.getNamedItemIndex(namespaceURI, localName);
+
+    }
+
+    /**
+     * Introduced in DOM Level 2.
+     */
+    public boolean hasAttributes() {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return (attributes != null && attributes.getLength() != 0);
+    }
+
+    /**
+     * Introduced in DOM Level 2.
+     */
+    public boolean hasAttribute(String name) {
+        return getAttributeNode(name) != null;
+    }
+
+    /**
+     * Introduced in DOM Level 2.
+     */
+    public boolean hasAttributeNS(String namespaceURI, String localName) {
+        return getAttributeNodeNS(namespaceURI, localName) != null;
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Returns a NodeList of all the Elements with a given local name and
+     * namespace URI in the order in which they would be encountered in a
+     * preorder traversal of the Document tree, starting from this node.
+     *
+     * @param namespaceURI The namespace URI of the elements to match
+     *                     on. The special value "*" matches all
+     *                     namespaces. When it is null or an empty
+     *                     string, this method behaves like
+     *                     getElementsByTagName.
+     * @param localName    The local name of the elements to match on.
+     *                     The special value "*" matches all local names.
+     * @return NodeList    A new NodeList object containing all the matched
+     *                     Elements.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public NodeList getElementsByTagNameNS(String namespaceURI,
+                                           String localName) {
+        return new DeepNodeListImpl(this, namespaceURI, localName);
+    }
+
+    /**
+     * DOM Level 3 WD- Experimental.
+     * Override inherited behavior from NodeImpl and ParentNode to check on
+     * attributes
+     */
+    public boolean isEqualNode(Node arg) {
+        if (!super.isEqualNode(arg)) {
+            return false;
+        }
+        boolean hasAttrs = hasAttributes();
+        if (hasAttrs != ((Element) arg).hasAttributes()) {
+            return false;
+        }
+        if (hasAttrs) {
+            NamedNodeMap map1 = getAttributes();
+            NamedNodeMap map2 = ((Element) arg).getAttributes();
+            int len = map1.getLength();
+            if (len != map2.getLength()) {
+                return false;
+            }
+            for (int i = 0; i < len; i++) {
+                Node n1 = map1.item(i);
+                if (n1.getLocalName() == null) { // DOM Level 1 Node
+                    Node n2 = map2.getNamedItem(n1.getNodeName());
+                    if (n2 == null || !((NodeImpl) n1).isEqualNode(n2)) {
+                        return false;
+                    }
+                }
+                else {
+                    Node n2 = map2.getNamedItemNS(n1.getNamespaceURI(),
+                                                  n1.getLocalName());
+                    if (n2 == null || !((NodeImpl) n1).isEqualNode(n2)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * DOM Level 3: register the given attribute node as an ID attribute
+     */
+    public void setIdAttributeNode(Attr at, boolean makeId) {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(
+                                     DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                     msg);
+            }
+
+            if (at.getOwnerElement() != this) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+                throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+            }
+        }
+        ((AttrImpl) at).isIdAttribute(makeId);
+        if (!makeId) {
+            ownerDocument.removeIdentifier(at.getValue());
+        }
+        else {
+            ownerDocument.putIdentifier(at.getValue(), this);
+        }
+    }
+
+    /**
+     * DOM Level 3: register the given attribute node as an ID attribute
+     */
+    public void setIdAttribute(String name, boolean makeId) {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        Attr at = getAttributeNode(name);
+
+                if( at == null){
+                String msg = DOMMessageFormatter.formatMessage(
+                                                                        DOMMessageFormatter.DOM_DOMAIN,
+                                                                        "NOT_FOUND_ERR", null);
+            throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+                }
+
+                if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(
+                                     DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                     msg);
+            }
+
+            if (at.getOwnerElement() != this) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+                throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+            }
+        }
+
+        ((AttrImpl) at).isIdAttribute(makeId);
+        if (!makeId) {
+            ownerDocument.removeIdentifier(at.getValue());
+        }
+        else {
+            ownerDocument.putIdentifier(at.getValue(), this);
+        }
+    }
+
+    /**
+     * DOM Level 3: register the given attribute node as an ID attribute
+     */
+    public void setIdAttributeNS(String namespaceURI, String localName,
+                                    boolean makeId) {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        //if namespace uri is empty string, set it to 'null'
+        if (namespaceURI != null) {
+            namespaceURI = (namespaceURI.length() == 0)? null : namespaceURI;
+        }
+        Attr at = getAttributeNodeNS(namespaceURI, localName);
+
+                if( at == null){
+                String msg = DOMMessageFormatter.formatMessage(
+                                                                        DOMMessageFormatter.DOM_DOMAIN,
+                                                                        "NOT_FOUND_ERR", null);
+            throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+                }
+
+                if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(
+                                     DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                     msg);
+            }
+
+            if (at.getOwnerElement() != this) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+                throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+            }
+        }
+        ((AttrImpl) at).isIdAttribute(makeId);
+        if (!makeId) {
+            ownerDocument.removeIdentifier(at.getValue());
+        }
+        else {
+            ownerDocument.putIdentifier(at.getValue(), this);
+        }
+   }
+
+    /**
+     * @see org.w3c.dom.TypeInfo#getTypeName()
+     */
+     public String getTypeName() {
+        return null;
+     }
+
+    /**
+     * @see org.w3c.dom.TypeInfo#getTypeNamespace()
+     */
+    public String getTypeNamespace() {
+        return null;
+    }
+
+    /**
+     * Introduced in DOM Level 3. <p>
+     * Checks if a type is derived from another by restriction. See:
+     * http://www.w3.org/TR/DOM-Level-3-Core/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *        The namspace of the ancestor type declaration
+     * @param ancestorName
+     *        The name of the ancestor type declaration
+     * @param type
+     *        The reference type definition
+     *
+     * @return boolean True if the type is derived by restriciton for the
+     *         reference type
+     */
+    public boolean isDerivedFrom(String typeNamespaceArg,
+                                 String typeNameArg,
+                                 int derivationMethod) {
+
+        return false;
+    }
+
+        /**
+         * Method getSchemaTypeInfo.
+         * @return TypeInfo
+         */
+    public TypeInfo getSchemaTypeInfo(){
+        if(needsSyncData()) {
+            synchronizeData();
+        }
+        return this;
+    }
+
+    //
+    // Public methods
+    //
+
+    /**
+     * NON-DOM: Subclassed to flip the attributes' readonly switch as well.
+     * @see NodeImpl#setReadOnly
+     */
+    public void setReadOnly(boolean readOnly, boolean deep) {
+        super.setReadOnly(readOnly,deep);
+        if (attributes != null) {
+            attributes.setReadOnly(readOnly,true);
+        }
+    }
+
+
+
+    //
+    // Protected methods
+    //
+
+    /** Synchronizes the data (name and value) for fast nodes. */
+    protected void synchronizeData() {
+
+        // no need to sync in the future
+        needsSyncData(false);
+
+        // we don't want to generate any event for this so turn them off
+        boolean orig = ownerDocument.getMutationEvents();
+        ownerDocument.setMutationEvents(false);
+
+        // attributes
+        setupDefaultAttributes();
+
+        // set mutation events flag back to its original value
+        ownerDocument.setMutationEvents(orig);
+
+    } // synchronizeData()
+
+    // support for DOM Level 3 renameNode method
+    // @param el The element from which to take the attributes
+    void moveSpecifiedAttributes(ElementImpl el) {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (el.hasAttributes()) {
+            if (attributes == null) {
+                attributes = new AttributeMap(this, null);
+            }
+            attributes.moveSpecifiedAttributes(el.attributes);
+        }
+    }
+
+    /** Setup the default attributes. */
+    protected void setupDefaultAttributes() {
+        NamedNodeMapImpl defaults = getDefaultAttributes();
+        if (defaults != null) {
+            attributes = new AttributeMap(this, defaults);
+        }
+    }
+
+    /** Reconcile default attributes. */
+    protected void reconcileDefaultAttributes() {
+        if (attributes != null) {
+            NamedNodeMapImpl defaults = getDefaultAttributes();
+            attributes.reconcileDefaults(defaults);
+        }
+    }
+
+    /** Get the default attributes. */
+    protected NamedNodeMapImpl getDefaultAttributes() {
+
+        DocumentTypeImpl doctype =
+            (DocumentTypeImpl) ownerDocument.getDoctype();
+        if (doctype == null) {
+            return null;
+        }
+        ElementDefinitionImpl eldef =
+            (ElementDefinitionImpl)doctype.getElements()
+                                               .getNamedItem(getNodeName());
+        if (eldef == null) {
+            return null;
+        }
+        return (NamedNodeMapImpl) eldef.getAttributes();
+
+    } // getDefaultAttributes()
+
+} // class ElementImpl

@@ -1,215 +1,210 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ByteLookupTable
-/*     */   extends LookupTable
-/*     */ {
-/*     */   byte[][] data;
-/*     */   
-/*     */   public ByteLookupTable(int paramInt, byte[][] paramArrayOfbyte) {
-/*  67 */     super(paramInt, paramArrayOfbyte.length);
-/*  68 */     this.numComponents = paramArrayOfbyte.length;
-/*  69 */     this.numEntries = (paramArrayOfbyte[0]).length;
-/*  70 */     this.data = new byte[this.numComponents][];
-/*     */     
-/*  72 */     for (byte b = 0; b < this.numComponents; b++) {
-/*  73 */       this.data[b] = paramArrayOfbyte[b];
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteLookupTable(int paramInt, byte[] paramArrayOfbyte) {
-/*  91 */     super(paramInt, paramArrayOfbyte.length);
-/*  92 */     this.numComponents = 1;
-/*  93 */     this.numEntries = paramArrayOfbyte.length;
-/*  94 */     this.data = new byte[1][];
-/*  95 */     this.data[0] = paramArrayOfbyte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final byte[][] getTable() {
-/* 105 */     return this.data;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int[] lookupPixel(int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/* 128 */     if (paramArrayOfint2 == null)
-/*     */     {
-/* 130 */       paramArrayOfint2 = new int[paramArrayOfint1.length];
-/*     */     }
-/*     */     
-/* 133 */     if (this.numComponents == 1) {
-/*     */       
-/* 135 */       for (byte b = 0; b < paramArrayOfint1.length; b++) {
-/* 136 */         int i = paramArrayOfint1[b] - this.offset;
-/* 137 */         if (i < 0) {
-/* 138 */           throw new ArrayIndexOutOfBoundsException("src[" + b + "]-offset is less than zero");
-/*     */         }
-/*     */ 
-/*     */         
-/* 142 */         paramArrayOfint2[b] = this.data[0][i];
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 146 */       for (byte b = 0; b < paramArrayOfint1.length; b++) {
-/* 147 */         int i = paramArrayOfint1[b] - this.offset;
-/* 148 */         if (i < 0) {
-/* 149 */           throw new ArrayIndexOutOfBoundsException("src[" + b + "]-offset is less than zero");
-/*     */         }
-/*     */ 
-/*     */         
-/* 153 */         paramArrayOfint2[b] = this.data[b][i];
-/*     */       } 
-/*     */     } 
-/* 156 */     return paramArrayOfint2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] lookupPixel(byte[] paramArrayOfbyte1, byte[] paramArrayOfbyte2) {
-/* 179 */     if (paramArrayOfbyte2 == null)
-/*     */     {
-/* 181 */       paramArrayOfbyte2 = new byte[paramArrayOfbyte1.length];
-/*     */     }
-/*     */     
-/* 184 */     if (this.numComponents == 1) {
-/*     */       
-/* 186 */       for (byte b = 0; b < paramArrayOfbyte1.length; b++) {
-/* 187 */         int i = (paramArrayOfbyte1[b] & 0xFF) - this.offset;
-/* 188 */         if (i < 0) {
-/* 189 */           throw new ArrayIndexOutOfBoundsException("src[" + b + "]-offset is less than zero");
-/*     */         }
-/*     */ 
-/*     */         
-/* 193 */         paramArrayOfbyte2[b] = this.data[0][i];
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 197 */       for (byte b = 0; b < paramArrayOfbyte1.length; b++) {
-/* 198 */         int i = (paramArrayOfbyte1[b] & 0xFF) - this.offset;
-/* 199 */         if (i < 0) {
-/* 200 */           throw new ArrayIndexOutOfBoundsException("src[" + b + "]-offset is less than zero");
-/*     */         }
-/*     */ 
-/*     */         
-/* 204 */         paramArrayOfbyte2[b] = this.data[b][i];
-/*     */       } 
-/*     */     } 
-/* 207 */     return paramArrayOfbyte2;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\ByteLookupTable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+
+/**
+ * This class defines a lookup table object.  The output of a
+ * lookup operation using an object of this class is interpreted
+ * as an unsigned byte quantity.  The lookup table contains byte
+ * data arrays for one or more bands (or components) of an image,
+ * and it contains an offset which will be subtracted from the
+ * input values before indexing the arrays.  This allows an array
+ * smaller than the native data size to be provided for a
+ * constrained input.  If there is only one array in the lookup
+ * table, it will be applied to all bands.
+ *
+ * @see ShortLookupTable
+ * @see LookupOp
+ */
+public class ByteLookupTable extends LookupTable {
+
+    /**
+     * Constants
+     */
+
+    byte data[][];
+
+    /**
+     * Constructs a ByteLookupTable object from an array of byte
+     * arrays representing a lookup table for each
+     * band.  The offset will be subtracted from input
+     * values before indexing into the arrays.  The number of
+     * bands is the length of the data argument.  The
+     * data array for each band is stored as a reference.
+     * @param offset the value subtracted from the input values
+     *        before indexing into the arrays
+     * @param data an array of byte arrays representing a lookup
+     *        table for each band
+     * @throws IllegalArgumentException if <code>offset</code> is
+     *         is less than 0 or if the length of <code>data</code>
+     *         is less than 1
+     */
+    public ByteLookupTable(int offset, byte data[][]) {
+        super(offset,data.length);
+        numComponents = data.length;
+        numEntries    = data[0].length;
+        this.data = new byte[numComponents][];
+        // Allocate the array and copy the data reference
+        for (int i=0; i < numComponents; i++) {
+            this.data[i] = data[i];
+        }
+    }
+
+    /**
+     * Constructs a ByteLookupTable object from an array
+     * of bytes representing a lookup table to be applied to all
+     * bands.  The offset will be subtracted from input
+     * values before indexing into the array.
+     * The data array is stored as a reference.
+     * @param offset the value subtracted from the input values
+     *        before indexing into the array
+     * @param data an array of bytes
+     * @throws IllegalArgumentException if <code>offset</code> is
+     *         is less than 0 or if the length of <code>data</code>
+     *         is less than 1
+     */
+    public ByteLookupTable(int offset, byte data[]) {
+        super(offset,data.length);
+        numComponents = 1;
+        numEntries    = data.length;
+        this.data = new byte[1][];
+        this.data[0] = data;
+    }
+
+    /**
+     * Returns the lookup table data by reference.  If this ByteLookupTable
+     * was constructed using a single byte array, the length of the returned
+     * array is one.
+     * @return the data array of this <code>ByteLookupTable</code>.
+     */
+    public final byte[][] getTable(){
+        return data;
+    }
+
+    /**
+     * Returns an array of samples of a pixel, translated with the lookup
+     * table. The source and destination array can be the same array.
+     * Array <code>dst</code> is returned.
+     *
+     * @param src the source array.
+     * @param dst the destination array. This array must be at least as
+     *         long as <code>src</code>.  If <code>dst</code> is
+     *         <code>null</code>, a new array will be allocated having the
+     *         same length as <code>src</code>.
+     * @return the array <code>dst</code>, an <code>int</code> array of
+     *         samples.
+     * @exception ArrayIndexOutOfBoundsException if <code>src</code> is
+     *            longer than <code>dst</code> or if for any element
+     *            <code>i</code> of <code>src</code>,
+     *            <code>src[i]-offset</code> is either less than zero or
+     *            greater than or equal to the length of the lookup table
+     *            for any band.
+     */
+    public int[] lookupPixel(int[] src, int[] dst){
+        if (dst == null) {
+            // Need to alloc a new destination array
+            dst = new int[src.length];
+        }
+
+        if (numComponents == 1) {
+            // Apply one LUT to all bands
+            for (int i=0; i < src.length; i++) {
+                int s = src[i] - offset;
+                if (s < 0) {
+                    throw new ArrayIndexOutOfBoundsException("src["+i+
+                                                             "]-offset is "+
+                                                             "less than zero");
+                }
+                dst[i] = (int) data[0][s];
+            }
+        }
+        else {
+            for (int i=0; i < src.length; i++) {
+                int s = src[i] - offset;
+                if (s < 0) {
+                    throw new ArrayIndexOutOfBoundsException("src["+i+
+                                                             "]-offset is "+
+                                                             "less than zero");
+                }
+                dst[i] = (int) data[i][s];
+            }
+        }
+        return dst;
+    }
+
+    /**
+     * Returns an array of samples of a pixel, translated with the lookup
+     * table. The source and destination array can be the same array.
+     * Array <code>dst</code> is returned.
+     *
+     * @param src the source array.
+     * @param dst the destination array. This array must be at least as
+     *         long as <code>src</code>.  If <code>dst</code> is
+     *         <code>null</code>, a new array will be allocated having the
+     *         same length as <code>src</code>.
+     * @return the array <code>dst</code>, an <code>int</code> array of
+     *         samples.
+     * @exception ArrayIndexOutOfBoundsException if <code>src</code> is
+     *            longer than <code>dst</code> or if for any element
+     *            <code>i</code> of <code>src</code>,
+     *            {@code (src[i]&0xff)-offset} is either less than
+     *            zero or greater than or equal to the length of the
+     *            lookup table for any band.
+     */
+    public byte[] lookupPixel(byte[] src, byte[] dst){
+        if (dst == null) {
+            // Need to alloc a new destination array
+            dst = new byte[src.length];
+        }
+
+        if (numComponents == 1) {
+            // Apply one LUT to all bands
+            for (int i=0; i < src.length; i++) {
+                int s = (src[i]&0xff) - offset;
+                if (s < 0) {
+                    throw new ArrayIndexOutOfBoundsException("src["+i+
+                                                             "]-offset is "+
+                                                             "less than zero");
+                }
+                dst[i] = data[0][s];
+            }
+        }
+        else {
+            for (int i=0; i < src.length; i++) {
+                int s = (src[i]&0xff) - offset;
+                if (s < 0) {
+                    throw new ArrayIndexOutOfBoundsException("src["+i+
+                                                             "]-offset is "+
+                                                             "less than zero");
+                }
+                dst[i] = data[i][s];
+            }
+        }
+        return dst;
+    }
+
+}

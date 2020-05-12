@@ -1,404 +1,398 @@
-/*     */ package java.lang.invoke;
-/*     */ 
-/*     */ import java.lang.invoke.LambdaForm;
-/*     */ import java.lang.invoke.LambdaFormBuffer;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Arrays;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class LambdaFormBuffer
-/*     */ {
-/*     */   private int arity;
-/*     */   private int length;
-/*     */   private LambdaForm.Name[] names;
-/*     */   private LambdaForm.Name[] originalNames;
-/*     */   private byte flags;
-/*     */   private int firstChange;
-/*     */   private LambdaForm.Name resultName;
-/*     */   private String debugName;
-/*     */   private ArrayList<LambdaForm.Name> dups;
-/*     */   private static final int F_TRANS = 16;
-/*     */   private static final int F_OWNED = 3;
-/*     */   
-/*     */   LambdaFormBuffer(LambdaForm paramLambdaForm) {
-/*  49 */     this.arity = paramLambdaForm.arity;
-/*  50 */     setNames(paramLambdaForm.names);
-/*  51 */     int i = paramLambdaForm.result;
-/*  52 */     if (i == -2) i = this.length - 1; 
-/*  53 */     if (i >= 0 && (paramLambdaForm.names[i]).type != LambdaForm.BasicType.V_TYPE)
-/*  54 */       this.resultName = paramLambdaForm.names[i]; 
-/*  55 */     this.debugName = paramLambdaForm.debugName;
-/*  56 */     assert paramLambdaForm.nameRefsAreLegal();
-/*     */   }
-/*     */   
-/*     */   private LambdaForm lambdaForm() {
-/*  60 */     assert !inTrans();
-/*  61 */     return new LambdaForm(this.debugName, this.arity, nameArray(), resultIndex());
-/*     */   }
-/*     */   
-/*     */   LambdaForm.Name name(int paramInt) {
-/*  65 */     assert paramInt < this.length;
-/*  66 */     return this.names[paramInt];
-/*     */   }
-/*     */   
-/*     */   LambdaForm.Name[] nameArray() {
-/*  70 */     return Arrays.<LambdaForm.Name>copyOf(this.names, this.length);
-/*     */   }
-/*     */   
-/*     */   int resultIndex() {
-/*  74 */     if (this.resultName == null) return -1; 
-/*  75 */     int i = indexOf(this.resultName, this.names);
-/*  76 */     assert i >= 0;
-/*  77 */     return i;
-/*     */   }
-/*     */   
-/*     */   void setNames(LambdaForm.Name[] paramArrayOfName) {
-/*  81 */     this.names = this.originalNames = paramArrayOfName;
-/*  82 */     this.length = paramArrayOfName.length;
-/*  83 */     this.flags = 0;
-/*     */   }
-/*     */   private boolean verifyArity() {
-/*     */     int i;
-/*  87 */     for (i = 0; i < this.arity && i < this.firstChange; i++) {
-/*  88 */       assert this.names[i].isParam() : "#" + i + "=" + this.names[i];
-/*     */     }
-/*  90 */     for (i = this.arity; i < this.length; i++) {
-/*  91 */       assert !this.names[i].isParam() : "#" + i + "=" + this.names[i];
-/*     */     }
-/*  93 */     for (i = this.length; i < this.names.length; i++) {
-/*  94 */       assert this.names[i] == null : "#" + i + "=" + this.names[i];
-/*     */     }
-/*     */     
-/*  97 */     if (this.resultName != null) {
-/*  98 */       i = indexOf(this.resultName, this.names);
-/*  99 */       assert i >= 0 : "not found: " + this.resultName.exprString() + Arrays.asList((T[])this.names);
-/* 100 */       assert this.names[i] == this.resultName;
-/*     */     } 
-/* 102 */     return true;
-/*     */   }
-/*     */   
-/*     */   private boolean verifyFirstChange() {
-/* 106 */     assert inTrans();
-/* 107 */     for (byte b = 0; b < this.length; b++) {
-/* 108 */       if (this.names[b] != this.originalNames[b]) {
-/* 109 */         assert this.firstChange == b : Arrays.asList((T[])new Object[] { Integer.valueOf(this.firstChange), Integer.valueOf(b), this.originalNames[b].exprString(), Arrays.asList(this.names) });
-/* 110 */         return true;
-/*     */       } 
-/*     */     } 
-/* 113 */     assert this.firstChange == this.length : Arrays.asList((T[])new Object[] { Integer.valueOf(this.firstChange), Arrays.asList(this.names) });
-/* 114 */     return true;
-/*     */   }
-/*     */   
-/*     */   private static int indexOf(LambdaForm.NamedFunction paramNamedFunction, LambdaForm.NamedFunction[] paramArrayOfNamedFunction) {
-/* 118 */     for (byte b = 0; b < paramArrayOfNamedFunction.length; b++) {
-/* 119 */       if (paramArrayOfNamedFunction[b] == paramNamedFunction) return b; 
-/*     */     } 
-/* 121 */     return -1;
-/*     */   }
-/*     */   
-/*     */   private static int indexOf(LambdaForm.Name paramName, LambdaForm.Name[] paramArrayOfName) {
-/* 125 */     for (byte b = 0; b < paramArrayOfName.length; b++) {
-/* 126 */       if (paramArrayOfName[b] == paramName) return b; 
-/*     */     } 
-/* 128 */     return -1;
-/*     */   }
-/*     */   
-/*     */   boolean inTrans() {
-/* 132 */     return ((this.flags & 0x10) != 0);
-/*     */   }
-/*     */   
-/*     */   int ownedCount() {
-/* 136 */     return this.flags & 0x3;
-/*     */   }
-/*     */   
-/*     */   void growNames(int paramInt1, int paramInt2) {
-/* 140 */     int i = this.length;
-/* 141 */     int j = i + paramInt2;
-/* 142 */     int k = ownedCount();
-/* 143 */     if (k == 0 || j > this.names.length) {
-/* 144 */       this.names = Arrays.<LambdaForm.Name>copyOf(this.names, (this.names.length + paramInt2) * 5 / 4);
-/* 145 */       if (k == 0) {
-/* 146 */         this.flags = (byte)(this.flags + 1);
-/* 147 */         k++;
-/* 148 */         assert ownedCount() == k;
-/*     */       } 
-/*     */     } 
-/* 151 */     if (this.originalNames != null && this.originalNames.length < this.names.length) {
-/* 152 */       this.originalNames = Arrays.<LambdaForm.Name>copyOf(this.originalNames, this.names.length);
-/* 153 */       if (k == 1) {
-/* 154 */         this.flags = (byte)(this.flags + 1);
-/* 155 */         k++;
-/* 156 */         assert ownedCount() == k;
-/*     */       } 
-/*     */     } 
-/* 159 */     if (paramInt2 == 0)
-/* 160 */       return;  int m = paramInt1 + paramInt2;
-/* 161 */     int n = i - paramInt1;
-/* 162 */     System.arraycopy(this.names, paramInt1, this.names, m, n);
-/* 163 */     Arrays.fill((Object[])this.names, paramInt1, m, (Object)null);
-/* 164 */     if (this.originalNames != null) {
-/* 165 */       System.arraycopy(this.originalNames, paramInt1, this.originalNames, m, n);
-/* 166 */       Arrays.fill((Object[])this.originalNames, paramInt1, m, (Object)null);
-/*     */     } 
-/* 168 */     this.length = j;
-/* 169 */     if (this.firstChange >= paramInt1) {
-/* 170 */       this.firstChange += paramInt2;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   int lastIndexOf(LambdaForm.Name paramName) {
-/* 175 */     byte b = -1;
-/* 176 */     for (byte b1 = 0; b1 < this.length; b1++) {
-/* 177 */       if (this.names[b1] == paramName) b = b1; 
-/*     */     } 
-/* 179 */     return b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void noteDuplicate(int paramInt1, int paramInt2) {
-/* 186 */     LambdaForm.Name name = this.names[paramInt1];
-/* 187 */     assert name == this.names[paramInt2];
-/* 188 */     assert this.originalNames[paramInt1] != null;
-/* 189 */     assert this.originalNames[paramInt2] == null || this.originalNames[paramInt2] == name;
-/* 190 */     if (this.dups == null) {
-/* 191 */       this.dups = new ArrayList<>();
-/*     */     }
-/* 193 */     this.dups.add(name);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void clearDuplicatesAndNulls() {
-/* 198 */     if (this.dups != null) {
-/*     */       
-/* 200 */       assert ownedCount() >= 1;
-/* 201 */       for (LambdaForm.Name name : this.dups) {
-/* 202 */         for (int k = this.firstChange; k < this.length; k++) {
-/* 203 */           if (this.names[k] == name && this.originalNames[k] != name) {
-/* 204 */             this.names[k] = null;
-/* 205 */             assert Arrays.<LambdaForm.Name>asList(this.names).contains(name);
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 210 */       this.dups.clear();
-/*     */     } 
-/*     */     
-/* 213 */     int i = this.length;
-/* 214 */     for (int j = this.firstChange; j < this.length; j++) {
-/* 215 */       if (this.names[j] == null) {
-/* 216 */         System.arraycopy(this.names, j + 1, this.names, j, --this.length - j);
-/* 217 */         j--;
-/*     */       } 
-/*     */     } 
-/* 220 */     if (this.length < i) {
-/* 221 */       Arrays.fill((Object[])this.names, this.length, i, (Object)null);
-/*     */     }
-/* 223 */     assert !Arrays.<LambdaForm.Name>asList(this.names).subList(0, this.length).contains(null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void startEdit() {
-/* 230 */     assert verifyArity();
-/* 231 */     int i = ownedCount();
-/* 232 */     assert !inTrans();
-/* 233 */     this.flags = (byte)(this.flags | 0x10);
-/* 234 */     LambdaForm.Name[] arrayOfName1 = this.names;
-/* 235 */     LambdaForm.Name[] arrayOfName2 = (i == 2) ? this.originalNames : null;
-/* 236 */     assert arrayOfName2 != arrayOfName1;
-/* 237 */     if (arrayOfName2 != null && arrayOfName2.length >= this.length) {
-/* 238 */       this.names = copyNamesInto(arrayOfName2);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 242 */       this.names = Arrays.<LambdaForm.Name>copyOf(arrayOfName1, Math.max(this.length + 2, arrayOfName1.length));
-/* 243 */       if (i < 2) this.flags = (byte)(this.flags + 1); 
-/* 244 */       assert ownedCount() == i + 1;
-/*     */     } 
-/* 246 */     this.originalNames = arrayOfName1;
-/* 247 */     assert this.originalNames != this.names;
-/* 248 */     this.firstChange = this.length;
-/* 249 */     assert inTrans();
-/*     */   }
-/*     */   
-/*     */   private void changeName(int paramInt, LambdaForm.Name paramName) {
-/* 253 */     assert inTrans();
-/* 254 */     assert paramInt < this.length;
-/* 255 */     LambdaForm.Name name = this.names[paramInt];
-/* 256 */     assert name == this.originalNames[paramInt];
-/* 257 */     assert verifyFirstChange();
-/* 258 */     if (ownedCount() == 0)
-/* 259 */       growNames(0, 0); 
-/* 260 */     this.names[paramInt] = paramName;
-/* 261 */     if (this.firstChange > paramInt) {
-/* 262 */       this.firstChange = paramInt;
-/*     */     }
-/* 264 */     if (this.resultName != null && this.resultName == name) {
-/* 265 */       this.resultName = paramName;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void setResult(LambdaForm.Name paramName) {
-/* 271 */     assert paramName == null || lastIndexOf(paramName) >= 0;
-/* 272 */     this.resultName = paramName;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   LambdaForm endEdit() {
-/* 277 */     assert verifyFirstChange();
-/*     */ 
-/*     */     
-/* 280 */     for (int i = Math.max(this.firstChange, this.arity); i < this.length; i++) {
-/* 281 */       LambdaForm.Name name = this.names[i];
-/* 282 */       if (name != null) {
-/* 283 */         LambdaForm.Name name1 = name.replaceNames(this.originalNames, this.names, this.firstChange, i);
-/* 284 */         if (name1 != name) {
-/* 285 */           this.names[i] = name1;
-/* 286 */           if (this.resultName == name)
-/* 287 */             this.resultName = name1; 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 291 */     assert inTrans();
-/* 292 */     this.flags = (byte)(this.flags & 0xFFFFFFEF);
-/* 293 */     clearDuplicatesAndNulls();
-/* 294 */     this.originalNames = null;
-/*     */ 
-/*     */ 
-/*     */     
-/* 298 */     if (this.firstChange < this.arity) {
-/* 299 */       LambdaForm.Name[] arrayOfName = new LambdaForm.Name[this.arity - this.firstChange];
-/* 300 */       int j = this.firstChange; byte b = 0;
-/* 301 */       for (int k = this.firstChange; k < this.arity; k++) {
-/* 302 */         LambdaForm.Name name = this.names[k];
-/* 303 */         if (name.isParam()) {
-/* 304 */           this.names[j++] = name;
-/*     */         } else {
-/* 306 */           arrayOfName[b++] = name;
-/*     */         } 
-/*     */       } 
-/* 309 */       assert b == this.arity - j;
-/*     */       
-/* 311 */       System.arraycopy(arrayOfName, 0, this.names, j, b);
-/*     */       
-/* 313 */       this.arity -= b;
-/*     */     } 
-/* 315 */     assert verifyArity();
-/* 316 */     return lambdaForm();
-/*     */   }
-/*     */   
-/*     */   private LambdaForm.Name[] copyNamesInto(LambdaForm.Name[] paramArrayOfName) {
-/* 320 */     System.arraycopy(this.names, 0, paramArrayOfName, 0, this.length);
-/* 321 */     Arrays.fill((Object[])paramArrayOfName, this.length, paramArrayOfName.length, (Object)null);
-/* 322 */     return paramArrayOfName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LambdaFormBuffer replaceFunctions(LambdaForm.NamedFunction[] paramArrayOfNamedFunction1, LambdaForm.NamedFunction[] paramArrayOfNamedFunction2, Object... paramVarArgs) {
-/* 331 */     assert inTrans();
-/* 332 */     if (paramArrayOfNamedFunction1.length == 0) return this; 
-/* 333 */     for (int i = this.arity; i < this.length; i++) {
-/* 334 */       LambdaForm.Name name = this.names[i];
-/* 335 */       int j = indexOf(name.function, paramArrayOfNamedFunction1);
-/* 336 */       if (j >= 0 && Arrays.equals(name.arguments, paramVarArgs)) {
-/* 337 */         changeName(i, new LambdaForm.Name(paramArrayOfNamedFunction2[j], name.arguments));
-/*     */       }
-/*     */     } 
-/* 340 */     return this;
-/*     */   }
-/*     */   
-/*     */   private void replaceName(int paramInt, LambdaForm.Name paramName) {
-/* 344 */     assert inTrans();
-/* 345 */     assert verifyArity();
-/* 346 */     assert paramInt < this.arity;
-/* 347 */     LambdaForm.Name name = this.names[paramInt];
-/* 348 */     assert name.isParam();
-/* 349 */     assert name.type == paramName.type;
-/* 350 */     changeName(paramInt, paramName);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   LambdaFormBuffer renameParameter(int paramInt, LambdaForm.Name paramName) {
-/* 355 */     assert paramName.isParam();
-/* 356 */     replaceName(paramInt, paramName);
-/* 357 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   LambdaFormBuffer replaceParameterByNewExpression(int paramInt, LambdaForm.Name paramName) {
-/* 362 */     assert !paramName.isParam();
-/* 363 */     assert lastIndexOf(paramName) < 0;
-/* 364 */     replaceName(paramInt, paramName);
-/* 365 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   LambdaFormBuffer replaceParameterByCopy(int paramInt1, int paramInt2) {
-/* 370 */     assert paramInt1 != paramInt2;
-/* 371 */     replaceName(paramInt1, this.names[paramInt2]);
-/* 372 */     noteDuplicate(paramInt1, paramInt2);
-/* 373 */     return this;
-/*     */   }
-/*     */   
-/*     */   private void insertName(int paramInt, LambdaForm.Name paramName, boolean paramBoolean) {
-/* 377 */     assert inTrans();
-/* 378 */     assert verifyArity(); assert false;
-/* 379 */     throw new AssertionError();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LambdaFormBuffer insertExpression(int paramInt, LambdaForm.Name paramName) {
-/* 387 */     assert !paramName.isParam();
-/* 388 */     insertName(paramInt, paramName, false);
-/* 389 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   LambdaFormBuffer insertParameter(int paramInt, LambdaForm.Name paramName) {
-/* 394 */     assert paramName.isParam();
-/* 395 */     insertName(paramInt, paramName, true);
-/* 396 */     return this;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\invoke\LambdaFormBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.invoke;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import static java.lang.invoke.LambdaForm.*;
+import static java.lang.invoke.LambdaForm.BasicType.*;
+
+/** Working storage for an LF that is being transformed.
+ *  Similarly to a StringBuffer, the editing can take place in multiple steps.
+ */
+final class LambdaFormBuffer {
+    private int arity, length;
+    private Name[] names;
+    private Name[] originalNames;  // snapshot of pre-transaction names
+    private byte flags;
+    private int firstChange;
+    private Name resultName;
+    private String debugName;
+    private ArrayList<Name> dups;
+
+    private static final int F_TRANS = 0x10, F_OWNED = 0x03;
+
+    LambdaFormBuffer(LambdaForm lf) {
+        this.arity = lf.arity;
+        setNames(lf.names);
+        int result = lf.result;
+        if (result == LAST_RESULT)  result = length - 1;
+        if (result >= 0 && lf.names[result].type != V_TYPE)
+            resultName = lf.names[result];
+        debugName = lf.debugName;
+        assert(lf.nameRefsAreLegal());
+    }
+
+    private LambdaForm lambdaForm() {
+        assert(!inTrans());  // need endEdit call to tidy things up
+        return new LambdaForm(debugName, arity, nameArray(), resultIndex());
+    }
+
+    Name name(int i) {
+        assert(i < length);
+        return names[i];
+    }
+
+    Name[] nameArray() {
+        return Arrays.copyOf(names, length);
+    }
+
+    int resultIndex() {
+        if (resultName == null)  return VOID_RESULT;
+        int index = indexOf(resultName, names);
+        assert(index >= 0);
+        return index;
+    }
+
+    void setNames(Name[] names2) {
+        names = originalNames = names2;  // keep a record of where everything was to start with
+        length = names2.length;
+        flags = 0;
+    }
+
+    private boolean verifyArity() {
+        for (int i = 0; i < arity && i < firstChange; i++) {
+            assert(names[i].isParam()) : "#" + i + "=" + names[i];
+        }
+        for (int i = arity; i < length; i++) {
+            assert(!names[i].isParam()) : "#" + i + "=" + names[i];
+        }
+        for (int i = length; i < names.length; i++) {
+            assert(names[i] == null) : "#" + i + "=" + names[i];
+        }
+        // check resultName also
+        if (resultName != null) {
+            int resultIndex = indexOf(resultName, names);
+            assert(resultIndex >= 0) : "not found: " + resultName.exprString() + Arrays.asList(names);
+            assert(names[resultIndex] == resultName);
+        }
+        return true;
+    }
+
+    private boolean verifyFirstChange() {
+        assert(inTrans());
+        for (int i = 0; i < length; i++) {
+            if (names[i] != originalNames[i]) {
+                assert(firstChange == i) : Arrays.asList(firstChange, i, originalNames[i].exprString(), Arrays.asList(names));
+                return true;
+            }
+        }
+        assert(firstChange == length) : Arrays.asList(firstChange, Arrays.asList(names));
+        return true;
+    }
+
+    private static int indexOf(NamedFunction fn, NamedFunction[] fns) {
+        for (int i = 0; i < fns.length; i++) {
+            if (fns[i] == fn)  return i;
+        }
+        return -1;
+    }
+
+    private static int indexOf(Name n, Name[] ns) {
+        for (int i = 0; i < ns.length; i++) {
+            if (ns[i] == n)  return i;
+        }
+        return -1;
+    }
+
+    boolean inTrans() {
+        return (flags & F_TRANS) != 0;
+    }
+
+    int ownedCount() {
+        return flags & F_OWNED;
+    }
+
+    void growNames(int insertPos, int growLength) {
+        int oldLength = length;
+        int newLength = oldLength + growLength;
+        int oc = ownedCount();
+        if (oc == 0 || newLength > names.length) {
+            names = Arrays.copyOf(names, (names.length + growLength) * 5 / 4);
+            if (oc == 0) {
+                flags++;
+                oc++;
+                assert(ownedCount() == oc);
+            }
+        }
+        if (originalNames != null && originalNames.length < names.length) {
+            originalNames = Arrays.copyOf(originalNames, names.length);
+            if (oc == 1) {
+                flags++;
+                oc++;
+                assert(ownedCount() == oc);
+            }
+        }
+        if (growLength == 0)  return;
+        int insertEnd = insertPos + growLength;
+        int tailLength = oldLength - insertPos;
+        System.arraycopy(names, insertPos, names, insertEnd, tailLength);
+        Arrays.fill(names, insertPos, insertEnd, null);
+        if (originalNames != null) {
+            System.arraycopy(originalNames, insertPos, originalNames, insertEnd, tailLength);
+            Arrays.fill(originalNames, insertPos, insertEnd, null);
+        }
+        length = newLength;
+        if (firstChange >= insertPos) {
+            firstChange += growLength;
+        }
+    }
+
+    int lastIndexOf(Name n) {
+        int result = -1;
+        for (int i = 0; i < length; i++) {
+            if (names[i] == n)  result = i;
+        }
+        return result;
+    }
+
+    /** We have just overwritten the name at pos1 with the name at pos2.
+     *  This means that there are two copies of the name, which we will have to fix later.
+     */
+    private void noteDuplicate(int pos1, int pos2) {
+        Name n = names[pos1];
+        assert(n == names[pos2]);
+        assert(originalNames[pos1] != null);  // something was replaced at pos1
+        assert(originalNames[pos2] == null || originalNames[pos2] == n);
+        if (dups == null) {
+            dups = new ArrayList<>();
+        }
+        dups.add(n);
+    }
+
+    /** Replace duplicate names by nulls, and remove all nulls. */
+    private void clearDuplicatesAndNulls() {
+        if (dups != null) {
+            // Remove duplicates.
+            assert(ownedCount() >= 1);
+            for (Name dup : dups) {
+                for (int i = firstChange; i < length; i++) {
+                    if (names[i] == dup && originalNames[i] != dup) {
+                        names[i] = null;
+                        assert(Arrays.asList(names).contains(dup));
+                        break;  // kill only one dup
+                    }
+                }
+            }
+            dups.clear();
+        }
+        // Now that we are done with originalNames, remove "killed" names.
+        int oldLength = length;
+        for (int i = firstChange; i < length; i++) {
+            if (names[i] == null) {
+                System.arraycopy(names, i + 1, names, i, (--length - i));
+                --i;  // restart loop at this position
+            }
+        }
+        if (length < oldLength) {
+            Arrays.fill(names, length, oldLength, null);
+        }
+        assert(!Arrays.asList(names).subList(0, length).contains(null));
+    }
+
+    /** Create a private, writable copy of names.
+     *  Preserve the original copy, for reference.
+     */
+    void startEdit() {
+        assert(verifyArity());
+        int oc = ownedCount();
+        assert(!inTrans());  // no nested transactions
+        flags |= F_TRANS;
+        Name[] oldNames = names;
+        Name[] ownBuffer = (oc == 2 ? originalNames : null);
+        assert(ownBuffer != oldNames);
+        if (ownBuffer != null && ownBuffer.length >= length) {
+            names = copyNamesInto(ownBuffer);
+        } else {
+            // make a new buffer to hold the names
+            final int SLOP = 2;
+            names = Arrays.copyOf(oldNames, Math.max(length + SLOP, oldNames.length));
+            if (oc < 2)  ++flags;
+            assert(ownedCount() == oc + 1);
+        }
+        originalNames = oldNames;
+        assert(originalNames != names);
+        firstChange = length;
+        assert(inTrans());
+    }
+
+    private void changeName(int i, Name name) {
+        assert(inTrans());
+        assert(i < length);
+        Name oldName = names[i];
+        assert(oldName == originalNames[i]);  // no multiple changes
+        assert(verifyFirstChange());
+        if (ownedCount() == 0)
+            growNames(0, 0);
+        names[i] = name;
+        if (firstChange > i) {
+            firstChange = i;
+        }
+        if (resultName != null && resultName == oldName) {
+            resultName = name;
+        }
+    }
+
+    /** Change the result name.  Null means a void result. */
+    void setResult(Name name) {
+        assert(name == null || lastIndexOf(name) >= 0);
+        resultName = name;
+    }
+
+    /** Finish a transaction. */
+    LambdaForm endEdit() {
+        assert(verifyFirstChange());
+        // Assuming names have been changed pairwise from originalNames[i] to names[i],
+        // update arguments to ensure referential integrity.
+        for (int i = Math.max(firstChange, arity); i < length; i++) {
+            Name name = names[i];
+            if (name == null)  continue;  // space for removed duplicate
+            Name newName = name.replaceNames(originalNames, names, firstChange, i);
+            if (newName != name) {
+                names[i] = newName;
+                if (resultName == name) {
+                    resultName = newName;
+                }
+            }
+        }
+        assert(inTrans());
+        flags &= ~F_TRANS;
+        clearDuplicatesAndNulls();
+        originalNames = null;
+        // If any parameters have been changed, then reorder them as needed.
+        // This is a "sheep-and-goats" stable sort, pushing all non-parameters
+        // to the right of all parameters.
+        if (firstChange < arity) {
+            Name[] exprs = new Name[arity - firstChange];
+            int argp = firstChange, exprp = 0;
+            for (int i = firstChange; i < arity; i++) {
+                Name name = names[i];
+                if (name.isParam()) {
+                    names[argp++] = name;
+                } else {
+                    exprs[exprp++] = name;
+                }
+            }
+            assert(exprp == (arity - argp));
+            // copy the exprs just after the last remaining param
+            System.arraycopy(exprs, 0, names, argp, exprp);
+            // adjust arity
+            arity -= exprp;
+        }
+        assert(verifyArity());
+        return lambdaForm();
+    }
+
+    private Name[] copyNamesInto(Name[] buffer) {
+        System.arraycopy(names, 0, buffer, 0, length);
+        Arrays.fill(buffer, length, buffer.length, null);
+        return buffer;
+    }
+
+    /** Replace any Name whose function is in oldFns with a copy
+     *  whose function is in the corresponding position in newFns.
+     *  Only do this if the arguments are exactly equal to the given.
+     */
+    LambdaFormBuffer replaceFunctions(NamedFunction[] oldFns, NamedFunction[] newFns,
+                                      Object... forArguments) {
+        assert(inTrans());
+        if (oldFns.length == 0)  return this;
+        for (int i = arity; i < length; i++) {
+            Name n = names[i];
+            int nfi = indexOf(n.function, oldFns);
+            if (nfi >= 0 && Arrays.equals(n.arguments, forArguments)) {
+                changeName(i, new Name(newFns[nfi], n.arguments));
+            }
+        }
+        return this;
+    }
+
+    private void replaceName(int pos, Name binding) {
+        assert(inTrans());
+        assert(verifyArity());
+        assert(pos < arity);
+        Name param = names[pos];
+        assert(param.isParam());
+        assert(param.type == binding.type);
+        changeName(pos, binding);
+    }
+
+    /** Replace a parameter by a fresh parameter. */
+    LambdaFormBuffer renameParameter(int pos, Name newParam) {
+        assert(newParam.isParam());
+        replaceName(pos, newParam);
+        return this;
+    }
+
+    /** Replace a parameter by a fresh expression. */
+    LambdaFormBuffer replaceParameterByNewExpression(int pos, Name binding) {
+        assert(!binding.isParam());
+        assert(lastIndexOf(binding) < 0);  // else use replaceParameterByCopy
+        replaceName(pos, binding);
+        return this;
+    }
+
+    /** Replace a parameter by another parameter or expression already in the form. */
+    LambdaFormBuffer replaceParameterByCopy(int pos, int valuePos) {
+        assert(pos != valuePos);
+        replaceName(pos, names[valuePos]);
+        noteDuplicate(pos, valuePos);  // temporarily, will occur twice in the names array
+        return this;
+    }
+
+    private void insertName(int pos, Name expr, boolean isParameter) {
+        assert(inTrans());
+        assert(verifyArity());
+        assert(isParameter ? pos <= arity : pos >= arity);
+        growNames(pos, 1);
+        if (isParameter)  arity += 1;
+        changeName(pos, expr);
+    }
+
+    /** Insert a fresh expression. */
+    LambdaFormBuffer insertExpression(int pos, Name expr) {
+        assert(!expr.isParam());
+        insertName(pos, expr, false);
+        return this;
+    }
+
+    /** Insert a fresh parameter. */
+    LambdaFormBuffer insertParameter(int pos, Name param) {
+        assert(param.isParam());
+        insertName(pos, param, true);
+        return this;
+    }
+}

@@ -1,334 +1,329 @@
-/*     */ package com.sun.corba.se.impl.corba;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.encoding.CDRInputStream;
-/*     */ import com.sun.corba.se.impl.encoding.CDROutputStream;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.Serializable;
-/*     */ import java.math.BigDecimal;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.Principal;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.TypeCodePackage.BadKind;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.Streamable;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class TCUtility
-/*     */ {
-/*     */   static void marshalIn(OutputStream paramOutputStream, TypeCode paramTypeCode, long paramLong, Object paramObject) {
-/*  65 */     switch (paramTypeCode.kind().value()) {
-/*     */       case 0:
-/*     */       case 1:
-/*     */       case 31:
-/*     */         return;
-/*     */ 
-/*     */       
-/*     */       case 2:
-/*  73 */         paramOutputStream.write_short((short)(int)(paramLong & 0xFFFFL));
-/*     */ 
-/*     */       
-/*     */       case 4:
-/*  77 */         paramOutputStream.write_ushort((short)(int)(paramLong & 0xFFFFL));
-/*     */ 
-/*     */       
-/*     */       case 3:
-/*     */       case 17:
-/*  82 */         paramOutputStream.write_long((int)(paramLong & 0xFFFFFFFFL));
-/*     */ 
-/*     */       
-/*     */       case 5:
-/*  86 */         paramOutputStream.write_ulong((int)(paramLong & 0xFFFFFFFFL));
-/*     */ 
-/*     */       
-/*     */       case 6:
-/*  90 */         paramOutputStream.write_float(Float.intBitsToFloat((int)(paramLong & 0xFFFFFFFFL)));
-/*     */ 
-/*     */       
-/*     */       case 7:
-/*  94 */         paramOutputStream.write_double(Double.longBitsToDouble(paramLong));
-/*     */ 
-/*     */       
-/*     */       case 8:
-/*  98 */         if (paramLong == 0L) {
-/*  99 */           paramOutputStream.write_boolean(false);
-/*     */         } else {
-/* 101 */           paramOutputStream.write_boolean(true);
-/*     */         } 
-/*     */       
-/*     */       case 9:
-/* 105 */         paramOutputStream.write_char((char)(int)(paramLong & 0xFFFFL));
-/*     */ 
-/*     */       
-/*     */       case 10:
-/* 109 */         paramOutputStream.write_octet((byte)(int)(paramLong & 0xFFL));
-/*     */ 
-/*     */       
-/*     */       case 11:
-/* 113 */         paramOutputStream.write_any((Any)paramObject);
-/*     */ 
-/*     */       
-/*     */       case 12:
-/* 117 */         paramOutputStream.write_TypeCode((TypeCode)paramObject);
-/*     */ 
-/*     */       
-/*     */       case 13:
-/* 121 */         paramOutputStream.write_Principal((Principal)paramObject);
-/*     */ 
-/*     */       
-/*     */       case 14:
-/* 125 */         paramOutputStream.write_Object((Object)paramObject);
-/*     */ 
-/*     */       
-/*     */       case 23:
-/* 129 */         paramOutputStream.write_longlong(paramLong);
-/*     */ 
-/*     */       
-/*     */       case 24:
-/* 133 */         paramOutputStream.write_ulonglong(paramLong);
-/*     */ 
-/*     */       
-/*     */       case 26:
-/* 137 */         paramOutputStream.write_wchar((char)(int)(paramLong & 0xFFFFL));
-/*     */ 
-/*     */       
-/*     */       case 18:
-/* 141 */         paramOutputStream.write_string((String)paramObject);
-/*     */ 
-/*     */       
-/*     */       case 27:
-/* 145 */         paramOutputStream.write_wstring((String)paramObject);
-/*     */ 
-/*     */       
-/*     */       case 29:
-/*     */       case 30:
-/* 150 */         ((OutputStream)paramOutputStream).write_value((Serializable)paramObject);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 28:
-/* 156 */         if (paramOutputStream instanceof CDROutputStream) {
-/*     */           try {
-/* 158 */             ((CDROutputStream)paramOutputStream).write_fixed((BigDecimal)paramObject, paramTypeCode
-/* 159 */                 .fixed_digits(), paramTypeCode
-/* 160 */                 .fixed_scale());
-/* 161 */           } catch (BadKind badKind) {}
-/*     */         } else {
-/*     */           
-/* 164 */           paramOutputStream.write_fixed((BigDecimal)paramObject);
-/*     */         } 
-/*     */ 
-/*     */       
-/*     */       case 15:
-/*     */       case 16:
-/*     */       case 19:
-/*     */       case 20:
-/*     */       case 21:
-/*     */       case 22:
-/* 174 */         ((Streamable)paramObject)._write(paramOutputStream);
-/*     */ 
-/*     */       
-/*     */       case 32:
-/* 178 */         ((OutputStream)paramOutputStream).write_abstract_interface(paramObject);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 184 */     ORBUtilSystemException oRBUtilSystemException = ORBUtilSystemException.get((ORB)paramOutputStream
-/* 185 */         .orb(), "rpc.presentation");
-/*     */     
-/* 187 */     throw oRBUtilSystemException.typecodeNotSupported();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static void unmarshalIn(InputStream paramInputStream, TypeCode paramTypeCode, long[] paramArrayOflong, Object[] paramArrayOfObject) {
-/*     */     ORBUtilSystemException oRBUtilSystemException;
-/* 193 */     int i = paramTypeCode.kind().value();
-/* 194 */     long l = 0L;
-/* 195 */     Object object = paramArrayOfObject[0];
-/*     */     
-/* 197 */     switch (i) {
-/*     */       case 0:
-/*     */       case 1:
-/*     */       case 31:
-/*     */         break;
-/*     */ 
-/*     */       
-/*     */       case 2:
-/* 205 */         l = paramInputStream.read_short() & 0xFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 4:
-/* 209 */         l = paramInputStream.read_ushort() & 0xFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 3:
-/*     */       case 17:
-/* 214 */         l = paramInputStream.read_long() & 0xFFFFFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 5:
-/* 218 */         l = paramInputStream.read_ulong() & 0xFFFFFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 6:
-/* 222 */         l = Float.floatToIntBits(paramInputStream.read_float()) & 0xFFFFFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 7:
-/* 226 */         l = Double.doubleToLongBits(paramInputStream.read_double());
-/*     */         break;
-/*     */       
-/*     */       case 9:
-/* 230 */         l = paramInputStream.read_char() & 0xFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 10:
-/* 234 */         l = paramInputStream.read_octet() & 0xFFL;
-/*     */         break;
-/*     */       
-/*     */       case 8:
-/* 238 */         if (paramInputStream.read_boolean()) {
-/* 239 */           l = 1L; break;
-/*     */         } 
-/* 241 */         l = 0L;
-/*     */         break;
-/*     */       
-/*     */       case 11:
-/* 245 */         object = paramInputStream.read_any();
-/*     */         break;
-/*     */       
-/*     */       case 12:
-/* 249 */         object = paramInputStream.read_TypeCode();
-/*     */         break;
-/*     */       
-/*     */       case 13:
-/* 253 */         object = paramInputStream.read_Principal();
-/*     */         break;
-/*     */       
-/*     */       case 14:
-/* 257 */         if (object instanceof Streamable) {
-/* 258 */           ((Streamable)object)._read(paramInputStream); break;
-/*     */         } 
-/* 260 */         object = paramInputStream.read_Object();
-/*     */         break;
-/*     */       
-/*     */       case 23:
-/* 264 */         l = paramInputStream.read_longlong();
-/*     */         break;
-/*     */       
-/*     */       case 24:
-/* 268 */         l = paramInputStream.read_ulonglong();
-/*     */         break;
-/*     */       
-/*     */       case 26:
-/* 272 */         l = paramInputStream.read_wchar() & 0xFFFFL;
-/*     */         break;
-/*     */       
-/*     */       case 18:
-/* 276 */         object = paramInputStream.read_string();
-/*     */         break;
-/*     */       
-/*     */       case 27:
-/* 280 */         object = paramInputStream.read_wstring();
-/*     */         break;
-/*     */       
-/*     */       case 29:
-/*     */       case 30:
-/* 285 */         object = ((InputStream)paramInputStream).read_value();
-/*     */         break;
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 28:
-/*     */         try {
-/* 292 */           if (paramInputStream instanceof CDRInputStream) {
-/* 293 */             object = ((CDRInputStream)paramInputStream).read_fixed(paramTypeCode.fixed_digits(), paramTypeCode
-/* 294 */                 .fixed_scale()); break;
-/*     */           } 
-/* 296 */           BigDecimal bigDecimal = paramInputStream.read_fixed();
-/* 297 */           object = bigDecimal.movePointLeft(paramTypeCode.fixed_scale());
-/*     */         }
-/* 299 */         catch (BadKind badKind) {}
-/*     */         break;
-/*     */ 
-/*     */       
-/*     */       case 15:
-/*     */       case 16:
-/*     */       case 19:
-/*     */       case 20:
-/*     */       case 21:
-/*     */       case 22:
-/* 309 */         ((Streamable)object)._read(paramInputStream);
-/*     */         break;
-/*     */       
-/*     */       case 32:
-/* 313 */         object = ((InputStream)paramInputStream).read_abstract_interface();
-/*     */         break;
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       default:
-/* 319 */         oRBUtilSystemException = ORBUtilSystemException.get((ORB)paramInputStream
-/* 320 */             .orb(), "rpc.presentation");
-/*     */         
-/* 322 */         throw oRBUtilSystemException.typecodeNotSupported();
-/*     */     } 
-/*     */     
-/* 325 */     paramArrayOfObject[0] = object;
-/* 326 */     paramArrayOflong[0] = l;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\corba\TCUtility.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.corba;
+
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.UserException;
+import org.omg.CORBA.TCKind;
+import org.omg.CORBA.UNKNOWN;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.NO_IMPLEMENT;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.Principal;
+import org.omg.CORBA_2_3.portable.InputStream;
+import org.omg.CORBA_2_3.portable.OutputStream;
+import org.omg.CORBA.portable.Streamable;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import java.util.Hashtable;
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
+
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+import com.sun.corba.se.impl.encoding.CDROutputStream;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+/**
+ *  Static functions for TypeCode interpretation.
+ */
+public final class TCUtility {
+
+    static void marshalIn(org.omg.CORBA.portable.OutputStream s, TypeCode typeCode, long l, Object o) {
+        switch (typeCode.kind().value()) {
+        case TCKind._tk_null:
+        case TCKind._tk_void:
+        case TCKind._tk_native:
+            // nothing to write
+            break;
+
+        case TCKind._tk_short:
+            s.write_short((short)(l & 0xFFFFL));
+            break;
+
+        case TCKind._tk_ushort:
+            s.write_ushort((short)(l & 0xFFFFL));
+            break;
+
+        case TCKind._tk_enum:
+        case TCKind._tk_long:
+            s.write_long((int)(l & 0xFFFFFFFFL));
+            break;
+
+        case TCKind._tk_ulong:
+            s.write_ulong((int)(l & 0xFFFFFFFFL));
+            break;
+
+        case TCKind._tk_float:
+            s.write_float(Float.intBitsToFloat((int)(l & 0xFFFFFFFFL)));
+            break;
+
+        case TCKind._tk_double:
+            s.write_double(Double.longBitsToDouble(l));
+            break;
+
+        case TCKind._tk_boolean:
+            if ( l == 0 )
+                s.write_boolean(false);
+            else
+                s.write_boolean(true);
+            break;
+
+        case TCKind._tk_char:
+            s.write_char((char)(l & 0xFFFFL));
+            break;
+
+        case TCKind._tk_octet:
+            s.write_octet((byte)(l & 0xFFL));
+            break;
+
+        case TCKind._tk_any:
+            s.write_any((Any)o);
+            break;
+
+        case TCKind._tk_TypeCode:
+            s.write_TypeCode((TypeCode)o);
+            break;
+
+        case TCKind._tk_Principal:
+            s.write_Principal((Principal)o);
+            break;
+
+        case TCKind._tk_objref:
+            s.write_Object((org.omg.CORBA.Object)o);
+            break;
+
+        case TCKind._tk_longlong:
+            s.write_longlong(l);
+            break;
+
+        case TCKind._tk_ulonglong:
+            s.write_ulonglong(l);
+            break;
+
+        case TCKind._tk_wchar:
+            s.write_wchar((char)(l & 0xFFFFL));
+            break;
+
+        case TCKind._tk_string:
+            s.write_string((String)o);
+            break;
+
+        case TCKind._tk_wstring:
+            s.write_wstring((String)o);
+            break;
+
+        case TCKind._tk_value:
+        case TCKind._tk_value_box:
+            ((org.omg.CORBA_2_3.portable.OutputStream)s).write_value((Serializable)o);
+            break;
+
+        case TCKind._tk_fixed:
+            // _REVISIT_ As soon as the java-rtf adds digits and scale parameters to
+            // OutputStream, this check will be unnecessary
+            if (s instanceof CDROutputStream) {
+                try {
+                    ((CDROutputStream)s).write_fixed((BigDecimal)o,
+                                                    typeCode.fixed_digits(),
+                                                    typeCode.fixed_scale());
+                } catch (BadKind badKind) { // impossible
+                }
+            } else {
+                s.write_fixed((BigDecimal)o);
+            }
+            break;
+
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_sequence:
+        case TCKind._tk_array:
+        case TCKind._tk_alias:
+        case TCKind._tk_except:
+            ((Streamable)o)._write(s);
+            break;
+
+        case TCKind._tk_abstract_interface:
+            ((org.omg.CORBA_2_3.portable.OutputStream)s).write_abstract_interface(o);
+            break;
+
+        case TCKind._tk_longdouble:
+            // Unspecified for Java
+        default:
+            ORBUtilSystemException wrapper = ORBUtilSystemException.get(
+                (com.sun.corba.se.spi.orb.ORB)s.orb(),
+                CORBALogDomains.RPC_PRESENTATION ) ;
+            throw wrapper.typecodeNotSupported() ;
+        }
+    }
+
+    static void unmarshalIn(org.omg.CORBA.portable.InputStream s, TypeCode typeCode, long[] la, Object[] oa)
+    {
+        int type = typeCode.kind().value();
+        long l=0;
+        Object o=oa[0];
+
+        switch (type) {
+        case TCKind._tk_null:
+        case TCKind._tk_void:
+        case TCKind._tk_native:
+            // Nothing to read
+            break;
+
+        case TCKind._tk_short:
+            l = s.read_short() & 0xFFFFL;
+            break;
+
+        case TCKind._tk_ushort:
+            l = s.read_ushort() & 0xFFFFL;
+            break;
+
+        case TCKind._tk_enum:
+        case TCKind._tk_long:
+            l = s.read_long() & 0xFFFFFFFFL;
+            break;
+
+        case TCKind._tk_ulong:
+            l = s.read_ulong() & 0xFFFFFFFFL;
+            break;
+
+        case TCKind._tk_float:
+            l = Float.floatToIntBits(s.read_float()) & 0xFFFFFFFFL;
+            break;
+
+        case TCKind._tk_double:
+            l = Double.doubleToLongBits(s.read_double());
+            break;
+
+        case TCKind._tk_char:
+            l = s.read_char() & 0xFFFFL;
+            break;
+
+        case TCKind._tk_octet:
+            l = s.read_octet() & 0xFFL;
+            break;
+
+        case TCKind._tk_boolean:
+            if ( s.read_boolean() )
+                l = 1;
+            else
+                l = 0;
+            break;
+
+        case TCKind._tk_any:
+            o = s.read_any();
+            break;
+
+        case TCKind._tk_TypeCode:
+            o = s.read_TypeCode();
+            break;
+
+        case TCKind._tk_Principal:
+            o = s.read_Principal();
+            break;
+
+        case TCKind._tk_objref:
+            if (o instanceof Streamable)
+                ((Streamable)o)._read(s);
+            else
+                o = s.read_Object();
+            break;
+
+        case TCKind._tk_longlong:
+            l = s.read_longlong();
+            break;
+
+        case TCKind._tk_ulonglong:
+            l = s.read_ulonglong();
+            break;
+
+        case TCKind._tk_wchar:
+            l = s.read_wchar() & 0xFFFFL;
+            break;
+
+        case TCKind._tk_string:
+            o = s.read_string();
+            break;
+
+        case TCKind._tk_wstring:
+            o = s.read_wstring();
+            break;
+
+        case TCKind._tk_value:
+        case TCKind._tk_value_box:
+            o = ((org.omg.CORBA_2_3.portable.InputStream)s).read_value ();
+            break;
+
+        case TCKind._tk_fixed:
+            try {
+                // _REVISIT_ As soon as the java-rtf adds digits and scale parameters to
+                // InputStream, this check will be unnecessary
+                if (s instanceof CDRInputStream) {
+                    o = ((CDRInputStream)s).read_fixed(typeCode.fixed_digits(),
+                                                                typeCode.fixed_scale());
+                } else {
+                    BigDecimal bigDecimal = s.read_fixed();
+                    o = bigDecimal.movePointLeft((int)typeCode.fixed_scale());
+                }
+            } catch (BadKind badKind) { // impossible
+            }
+            break;
+
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_sequence:
+        case TCKind._tk_array:
+        case TCKind._tk_alias:
+        case TCKind._tk_except:
+            ((Streamable)o)._read(s);
+            break;
+
+        case TCKind._tk_abstract_interface:
+            o = ((org.omg.CORBA_2_3.portable.InputStream)s).read_abstract_interface();
+            break;
+
+        case TCKind._tk_longdouble:
+            // Unspecified for Java
+        default:
+            ORBUtilSystemException wrapper = ORBUtilSystemException.get(
+                (com.sun.corba.se.spi.orb.ORB)s.orb(),
+                CORBALogDomains.RPC_PRESENTATION ) ;
+            throw wrapper.typecodeNotSupported() ;
+        }
+
+        oa[0] = o;
+        la[0] = l;
+    }
+
+}

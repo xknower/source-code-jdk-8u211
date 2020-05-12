@@ -1,19 +1,48 @@
+/*
+ * Copyright (c) 2000, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.impl.orbutil;
 
+import org.omg.CORBA.ORB;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 
-public interface RepositoryIdInterface {
-  Class getClassFromType() throws ClassNotFoundException;
-  
-  Class getClassFromType(String paramString) throws ClassNotFoundException, MalformedURLException;
-  
-  Class getClassFromType(Class paramClass, String paramString) throws ClassNotFoundException, MalformedURLException;
-  
-  String getClassName();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\RepositoryIdInterface.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Methods on specific instances of RepositoryId.  Hides
+ * versioning of our RepositoryId class.
  */
+public interface RepositoryIdInterface
+{
+    Class getClassFromType() throws ClassNotFoundException;
+
+    Class getClassFromType(String codebaseURL)
+        throws ClassNotFoundException, MalformedURLException;
+
+    Class getClassFromType(Class expectedType,
+                           String codebaseURL)
+        throws ClassNotFoundException, MalformedURLException;
+
+    String getClassName();
+}

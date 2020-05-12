@@ -1,1173 +1,1167 @@
-/*      */ package com.sun.imageio.plugins.common;
-/*      */ 
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.color.ColorSpace;
-/*      */ import java.awt.image.BufferedImage;
-/*      */ import java.awt.image.ColorModel;
-/*      */ import java.awt.image.ComponentColorModel;
-/*      */ import java.awt.image.ComponentSampleModel;
-/*      */ import java.awt.image.DataBuffer;
-/*      */ import java.awt.image.DataBufferByte;
-/*      */ import java.awt.image.DataBufferInt;
-/*      */ import java.awt.image.DataBufferShort;
-/*      */ import java.awt.image.DataBufferUShort;
-/*      */ import java.awt.image.DirectColorModel;
-/*      */ import java.awt.image.IndexColorModel;
-/*      */ import java.awt.image.MultiPixelPackedSampleModel;
-/*      */ import java.awt.image.Raster;
-/*      */ import java.awt.image.RenderedImage;
-/*      */ import java.awt.image.SampleModel;
-/*      */ import java.awt.image.SinglePixelPackedSampleModel;
-/*      */ import java.awt.image.WritableRaster;
-/*      */ import javax.imageio.IIOException;
-/*      */ import javax.imageio.ImageTypeSpecifier;
-/*      */ import javax.imageio.ImageWriter;
-/*      */ import javax.imageio.spi.ImageWriterSpi;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class ImageUtil
-/*      */ {
-/*      */   public static final ColorModel createColorModel(SampleModel paramSampleModel) {
-/*      */     IndexColorModel indexColorModel;
-/*  141 */     if (paramSampleModel == null) {
-/*  142 */       throw new IllegalArgumentException("sampleModel == null!");
-/*      */     }
-/*      */ 
-/*      */     
-/*  146 */     int i = paramSampleModel.getDataType();
-/*      */ 
-/*      */     
-/*  149 */     switch (i) {
-/*      */       case 0:
-/*      */       case 1:
-/*      */       case 2:
-/*      */       case 3:
-/*      */       case 4:
-/*      */       case 5:
-/*      */         break;
-/*      */       
-/*      */       default:
-/*  159 */         return null;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  163 */     ComponentColorModel componentColorModel = null;
-/*      */ 
-/*      */     
-/*  166 */     int[] arrayOfInt = paramSampleModel.getSampleSize();
-/*      */ 
-/*      */     
-/*  169 */     if (paramSampleModel instanceof ComponentSampleModel) {
-/*      */       
-/*  171 */       int j = paramSampleModel.getNumBands();
-/*      */ 
-/*      */       
-/*  174 */       ColorSpace colorSpace = null;
-/*  175 */       if (j <= 2) {
-/*  176 */         colorSpace = ColorSpace.getInstance(1003);
-/*  177 */       } else if (j <= 4) {
-/*  178 */         colorSpace = ColorSpace.getInstance(1000);
-/*      */       } else {
-/*  180 */         colorSpace = new BogusColorSpace(j);
-/*      */       } 
-/*      */       
-/*  183 */       boolean bool1 = (j == 2 || j == 4) ? true : false;
-/*  184 */       boolean bool2 = false;
-/*  185 */       boolean bool3 = bool1 ? true : true;
-/*      */ 
-/*      */       
-/*  188 */       componentColorModel = new ComponentColorModel(colorSpace, arrayOfInt, bool1, bool2, bool3, i);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/*  194 */       if (paramSampleModel.getNumBands() <= 4 && paramSampleModel instanceof SinglePixelPackedSampleModel) {
-/*      */         
-/*  196 */         SinglePixelPackedSampleModel singlePixelPackedSampleModel = (SinglePixelPackedSampleModel)paramSampleModel;
-/*      */ 
-/*      */         
-/*  199 */         int[] arrayOfInt1 = singlePixelPackedSampleModel.getBitMasks();
-/*  200 */         int j = 0;
-/*  201 */         int k = 0;
-/*  202 */         int m = 0;
-/*  203 */         int n = 0;
-/*      */         
-/*  205 */         int i1 = arrayOfInt1.length;
-/*  206 */         if (i1 <= 2) {
-/*  207 */           j = k = m = arrayOfInt1[0];
-/*  208 */           if (i1 == 2) {
-/*  209 */             n = arrayOfInt1[1];
-/*      */           }
-/*      */         } else {
-/*  212 */           j = arrayOfInt1[0];
-/*  213 */           k = arrayOfInt1[1];
-/*  214 */           m = arrayOfInt1[2];
-/*  215 */           if (i1 == 4) {
-/*  216 */             n = arrayOfInt1[3];
-/*      */           }
-/*      */         } 
-/*      */         
-/*  220 */         int i2 = 0;
-/*  221 */         for (byte b = 0; b < arrayOfInt.length; b++) {
-/*  222 */           i2 += arrayOfInt[b];
-/*      */         }
-/*      */         
-/*  225 */         return new DirectColorModel(i2, j, k, m, n);
-/*      */       } 
-/*  227 */       if (paramSampleModel instanceof MultiPixelPackedSampleModel) {
-/*      */         
-/*  229 */         int j = arrayOfInt[0];
-/*  230 */         int k = 1 << j;
-/*  231 */         byte[] arrayOfByte = new byte[k];
-/*  232 */         for (byte b = 0; b < k; b++) {
-/*  233 */           arrayOfByte[b] = (byte)(b * 255 / (k - 1));
-/*      */         }
-/*      */         
-/*  236 */         indexColorModel = new IndexColorModel(j, k, arrayOfByte, arrayOfByte, arrayOfByte);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  241 */     return indexColorModel;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static byte[] getPackedBinaryData(Raster paramRaster, Rectangle paramRectangle) {
-/*  261 */     SampleModel sampleModel = paramRaster.getSampleModel();
-/*  262 */     if (!isBinary(sampleModel)) {
-/*  263 */       throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
-/*      */     }
-/*      */     
-/*  266 */     int i = paramRectangle.x;
-/*  267 */     int j = paramRectangle.y;
-/*  268 */     int k = paramRectangle.width;
-/*  269 */     int m = paramRectangle.height;
-/*      */     
-/*  271 */     DataBuffer dataBuffer = paramRaster.getDataBuffer();
-/*      */     
-/*  273 */     int n = i - paramRaster.getSampleModelTranslateX();
-/*  274 */     int i1 = j - paramRaster.getSampleModelTranslateY();
-/*      */     
-/*  276 */     MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)sampleModel;
-/*  277 */     int i2 = multiPixelPackedSampleModel.getScanlineStride();
-/*  278 */     int i3 = dataBuffer.getOffset() + multiPixelPackedSampleModel.getOffset(n, i1);
-/*  279 */     int i4 = multiPixelPackedSampleModel.getBitOffset(n);
-/*      */     
-/*  281 */     int i5 = (k + 7) / 8;
-/*  282 */     if (dataBuffer instanceof DataBufferByte && i3 == 0 && i4 == 0 && i5 == i2 && (((DataBufferByte)dataBuffer)
-/*      */ 
-/*      */       
-/*  285 */       .getData()).length == i5 * m)
-/*      */     {
-/*  287 */       return ((DataBufferByte)dataBuffer).getData();
-/*      */     }
-/*      */     
-/*  290 */     byte[] arrayOfByte = new byte[i5 * m];
-/*      */     
-/*  292 */     byte b = 0;
-/*      */     
-/*  294 */     if (i4 == 0) {
-/*  295 */       if (dataBuffer instanceof DataBufferByte) {
-/*  296 */         byte[] arrayOfByte1 = ((DataBufferByte)dataBuffer).getData();
-/*  297 */         int i6 = i5;
-/*  298 */         int i7 = 0;
-/*  299 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  300 */           System.arraycopy(arrayOfByte1, i3, arrayOfByte, i7, i6);
-/*      */ 
-/*      */           
-/*  303 */           i7 += i6;
-/*  304 */           i3 += i2;
-/*      */         } 
-/*  306 */       } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  310 */         short[] arrayOfShort = (dataBuffer instanceof DataBufferShort) ? ((DataBufferShort)dataBuffer).getData() : ((DataBufferUShort)dataBuffer).getData();
-/*      */         
-/*  312 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  313 */           int i6 = k;
-/*  314 */           int i7 = i3;
-/*  315 */           while (i6 > 8) {
-/*  316 */             short s = arrayOfShort[i7++];
-/*  317 */             arrayOfByte[b++] = (byte)(s >>> 8 & 0xFF);
-/*  318 */             arrayOfByte[b++] = (byte)(s & 0xFF);
-/*  319 */             i6 -= 16;
-/*      */           } 
-/*  321 */           if (i6 > 0) {
-/*  322 */             arrayOfByte[b++] = (byte)(arrayOfShort[i7] >>> 8 & 0xFF);
-/*      */           }
-/*  324 */           i3 += i2;
-/*      */         } 
-/*  326 */       } else if (dataBuffer instanceof DataBufferInt) {
-/*  327 */         int[] arrayOfInt = ((DataBufferInt)dataBuffer).getData();
-/*      */         
-/*  329 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  330 */           int i6 = k;
-/*  331 */           int i7 = i3;
-/*  332 */           while (i6 > 24) {
-/*  333 */             int i8 = arrayOfInt[i7++];
-/*  334 */             arrayOfByte[b++] = (byte)(i8 >>> 24 & 0xFF);
-/*  335 */             arrayOfByte[b++] = (byte)(i8 >>> 16 & 0xFF);
-/*  336 */             arrayOfByte[b++] = (byte)(i8 >>> 8 & 0xFF);
-/*  337 */             arrayOfByte[b++] = (byte)(i8 & 0xFF);
-/*  338 */             i6 -= 32;
-/*      */           } 
-/*  340 */           byte b2 = 24;
-/*  341 */           while (i6 > 0) {
-/*  342 */             arrayOfByte[b++] = (byte)(arrayOfInt[i7] >>> b2 & 0xFF);
-/*      */             
-/*  344 */             b2 -= 8;
-/*  345 */             i6 -= 8;
-/*      */           } 
-/*  347 */           i3 += i2;
-/*      */         }
-/*      */       
-/*      */       } 
-/*  351 */     } else if (dataBuffer instanceof DataBufferByte) {
-/*  352 */       byte[] arrayOfByte1 = ((DataBufferByte)dataBuffer).getData();
-/*      */       
-/*  354 */       if ((i4 & 0x7) == 0) {
-/*  355 */         int i6 = i5;
-/*  356 */         int i7 = 0;
-/*  357 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  358 */           System.arraycopy(arrayOfByte1, i3, arrayOfByte, i7, i6);
-/*      */ 
-/*      */           
-/*  361 */           i7 += i6;
-/*  362 */           i3 += i2;
-/*      */         } 
-/*      */       } else {
-/*  365 */         int i6 = i4 & 0x7;
-/*  366 */         int i7 = 8 - i6;
-/*  367 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  368 */           int i8 = i3;
-/*  369 */           int i9 = k;
-/*  370 */           while (i9 > 0) {
-/*  371 */             if (i9 > i7) {
-/*  372 */               arrayOfByte[b++] = (byte)((arrayOfByte1[i8++] & 0xFF) << i6 | (arrayOfByte1[i8] & 0xFF) >>> i7);
-/*      */             }
-/*      */             else {
-/*      */               
-/*  376 */               arrayOfByte[b++] = (byte)((arrayOfByte1[i8] & 0xFF) << i6);
-/*      */             } 
-/*      */             
-/*  379 */             i9 -= 8;
-/*      */           } 
-/*  381 */           i3 += i2;
-/*      */         } 
-/*      */       } 
-/*  384 */     } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  388 */       short[] arrayOfShort = (dataBuffer instanceof DataBufferShort) ? ((DataBufferShort)dataBuffer).getData() : ((DataBufferUShort)dataBuffer).getData();
-/*      */       
-/*  390 */       for (byte b1 = 0; b1 < m; b1++) {
-/*  391 */         int i6 = i4;
-/*  392 */         for (byte b2 = 0; b2 < k; b2 += 8, i6 += 8) {
-/*  393 */           int i7 = i3 + i6 / 16;
-/*  394 */           int i8 = i6 % 16;
-/*  395 */           int i9 = arrayOfShort[i7] & 0xFFFF;
-/*  396 */           if (i8 <= 8) {
-/*  397 */             arrayOfByte[b++] = (byte)(i9 >>> 8 - i8);
-/*      */           } else {
-/*  399 */             int i10 = i8 - 8;
-/*  400 */             int i11 = arrayOfShort[i7 + 1] & 0xFFFF;
-/*  401 */             arrayOfByte[b++] = (byte)(i9 << i10 | i11 >>> 16 - i10);
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */         
-/*  406 */         i3 += i2;
-/*      */       } 
-/*  408 */     } else if (dataBuffer instanceof DataBufferInt) {
-/*  409 */       int[] arrayOfInt = ((DataBufferInt)dataBuffer).getData();
-/*      */       
-/*  411 */       for (byte b1 = 0; b1 < m; b1++) {
-/*  412 */         int i6 = i4;
-/*  413 */         for (byte b2 = 0; b2 < k; b2 += 8, i6 += 8) {
-/*  414 */           int i7 = i3 + i6 / 32;
-/*  415 */           int i8 = i6 % 32;
-/*  416 */           int i9 = arrayOfInt[i7];
-/*  417 */           if (i8 <= 24) {
-/*  418 */             arrayOfByte[b++] = (byte)(i9 >>> 24 - i8);
-/*      */           } else {
-/*      */             
-/*  421 */             int i10 = i8 - 24;
-/*  422 */             int i11 = arrayOfInt[i7 + 1];
-/*  423 */             arrayOfByte[b++] = (byte)(i9 << i10 | i11 >>> 32 - i10);
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */         
-/*  428 */         i3 += i2;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  433 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static byte[] getUnpackedBinaryData(Raster paramRaster, Rectangle paramRectangle) {
-/*  446 */     SampleModel sampleModel = paramRaster.getSampleModel();
-/*  447 */     if (!isBinary(sampleModel)) {
-/*  448 */       throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
-/*      */     }
-/*      */     
-/*  451 */     int i = paramRectangle.x;
-/*  452 */     int j = paramRectangle.y;
-/*  453 */     int k = paramRectangle.width;
-/*  454 */     int m = paramRectangle.height;
-/*      */     
-/*  456 */     DataBuffer dataBuffer = paramRaster.getDataBuffer();
-/*      */     
-/*  458 */     int n = i - paramRaster.getSampleModelTranslateX();
-/*  459 */     int i1 = j - paramRaster.getSampleModelTranslateY();
-/*      */     
-/*  461 */     MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)sampleModel;
-/*  462 */     int i2 = multiPixelPackedSampleModel.getScanlineStride();
-/*  463 */     int i3 = dataBuffer.getOffset() + multiPixelPackedSampleModel.getOffset(n, i1);
-/*  464 */     int i4 = multiPixelPackedSampleModel.getBitOffset(n);
-/*      */     
-/*  466 */     byte[] arrayOfByte = new byte[k * m];
-/*  467 */     int i5 = j + m;
-/*  468 */     int i6 = i + k;
-/*  469 */     byte b = 0;
-/*      */     
-/*  471 */     if (dataBuffer instanceof DataBufferByte) {
-/*  472 */       byte[] arrayOfByte1 = ((DataBufferByte)dataBuffer).getData();
-/*  473 */       for (int i7 = j; i7 < i5; i7++) {
-/*  474 */         int i8 = i3 * 8 + i4;
-/*  475 */         for (int i9 = i; i9 < i6; i9++) {
-/*  476 */           byte b1 = arrayOfByte1[i8 / 8];
-/*  477 */           arrayOfByte[b++] = (byte)(b1 >>> (7 - i8 & 0x7) & 0x1);
-/*      */           
-/*  479 */           i8++;
-/*      */         } 
-/*  481 */         i3 += i2;
-/*      */       } 
-/*  483 */     } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  487 */       short[] arrayOfShort = (dataBuffer instanceof DataBufferShort) ? ((DataBufferShort)dataBuffer).getData() : ((DataBufferUShort)dataBuffer).getData();
-/*  488 */       for (int i7 = j; i7 < i5; i7++) {
-/*  489 */         int i8 = i3 * 16 + i4;
-/*  490 */         for (int i9 = i; i9 < i6; i9++) {
-/*  491 */           short s = arrayOfShort[i8 / 16];
-/*  492 */           arrayOfByte[b++] = (byte)(s >>> 15 - i8 % 16 & 0x1);
-/*      */ 
-/*      */           
-/*  495 */           i8++;
-/*      */         } 
-/*  497 */         i3 += i2;
-/*      */       } 
-/*  499 */     } else if (dataBuffer instanceof DataBufferInt) {
-/*  500 */       int[] arrayOfInt = ((DataBufferInt)dataBuffer).getData();
-/*  501 */       for (int i7 = j; i7 < i5; i7++) {
-/*  502 */         int i8 = i3 * 32 + i4;
-/*  503 */         for (int i9 = i; i9 < i6; i9++) {
-/*  504 */           int i10 = arrayOfInt[i8 / 32];
-/*  505 */           arrayOfByte[b++] = (byte)(i10 >>> 31 - i8 % 32 & 0x1);
-/*      */ 
-/*      */           
-/*  508 */           i8++;
-/*      */         } 
-/*  510 */         i3 += i2;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  514 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setPackedBinaryData(byte[] paramArrayOfbyte, WritableRaster paramWritableRaster, Rectangle paramRectangle) {
-/*  529 */     SampleModel sampleModel = paramWritableRaster.getSampleModel();
-/*  530 */     if (!isBinary(sampleModel)) {
-/*  531 */       throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
-/*      */     }
-/*      */     
-/*  534 */     int i = paramRectangle.x;
-/*  535 */     int j = paramRectangle.y;
-/*  536 */     int k = paramRectangle.width;
-/*  537 */     int m = paramRectangle.height;
-/*      */     
-/*  539 */     DataBuffer dataBuffer = paramWritableRaster.getDataBuffer();
-/*      */     
-/*  541 */     int n = i - paramWritableRaster.getSampleModelTranslateX();
-/*  542 */     int i1 = j - paramWritableRaster.getSampleModelTranslateY();
-/*      */     
-/*  544 */     MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)sampleModel;
-/*  545 */     int i2 = multiPixelPackedSampleModel.getScanlineStride();
-/*  546 */     int i3 = dataBuffer.getOffset() + multiPixelPackedSampleModel.getOffset(n, i1);
-/*  547 */     int i4 = multiPixelPackedSampleModel.getBitOffset(n);
-/*      */     
-/*  549 */     byte b = 0;
-/*      */     
-/*  551 */     if (i4 == 0) {
-/*  552 */       if (dataBuffer instanceof DataBufferByte) {
-/*  553 */         byte[] arrayOfByte = ((DataBufferByte)dataBuffer).getData();
-/*  554 */         if (arrayOfByte == paramArrayOfbyte) {
-/*      */           return;
-/*      */         }
-/*      */         
-/*  558 */         int i5 = (k + 7) / 8;
-/*  559 */         int i6 = 0;
-/*  560 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  561 */           System.arraycopy(paramArrayOfbyte, i6, arrayOfByte, i3, i5);
-/*      */ 
-/*      */           
-/*  564 */           i6 += i5;
-/*  565 */           i3 += i2;
-/*      */         } 
-/*  567 */       } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  571 */         short[] arrayOfShort = (dataBuffer instanceof DataBufferShort) ? ((DataBufferShort)dataBuffer).getData() : ((DataBufferUShort)dataBuffer).getData();
-/*      */         
-/*  573 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  574 */           int i5 = k;
-/*  575 */           int i6 = i3;
-/*  576 */           while (i5 > 8) {
-/*  577 */             arrayOfShort[i6++] = (short)((paramArrayOfbyte[b++] & 0xFF) << 8 | paramArrayOfbyte[b++] & 0xFF);
-/*      */ 
-/*      */             
-/*  580 */             i5 -= 16;
-/*      */           } 
-/*  582 */           if (i5 > 0) {
-/*  583 */             arrayOfShort[i6++] = (short)((paramArrayOfbyte[b++] & 0xFF) << 8);
-/*      */           }
-/*      */           
-/*  586 */           i3 += i2;
-/*      */         } 
-/*  588 */       } else if (dataBuffer instanceof DataBufferInt) {
-/*  589 */         int[] arrayOfInt = ((DataBufferInt)dataBuffer).getData();
-/*      */         
-/*  591 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  592 */           int i5 = k;
-/*  593 */           int i6 = i3;
-/*  594 */           while (i5 > 24) {
-/*  595 */             arrayOfInt[i6++] = (paramArrayOfbyte[b++] & 0xFF) << 24 | (paramArrayOfbyte[b++] & 0xFF) << 16 | (paramArrayOfbyte[b++] & 0xFF) << 8 | paramArrayOfbyte[b++] & 0xFF;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  600 */             i5 -= 32;
-/*      */           } 
-/*  602 */           byte b2 = 24;
-/*  603 */           while (i5 > 0) {
-/*  604 */             arrayOfInt[i6] = arrayOfInt[i6] | (paramArrayOfbyte[b++] & 0xFF) << b2;
-/*      */             
-/*  606 */             b2 -= 8;
-/*  607 */             i5 -= 8;
-/*      */           } 
-/*  609 */           i3 += i2;
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/*  613 */       int i5 = (k + 7) / 8;
-/*  614 */       int i6 = 0;
-/*  615 */       if (dataBuffer instanceof DataBufferByte) {
-/*  616 */         byte[] arrayOfByte = ((DataBufferByte)dataBuffer).getData();
-/*      */         
-/*  618 */         if ((i4 & 0x7) == 0) {
-/*  619 */           for (byte b1 = 0; b1 < m; b1++) {
-/*  620 */             System.arraycopy(paramArrayOfbyte, i6, arrayOfByte, i3, i5);
-/*      */ 
-/*      */             
-/*  623 */             i6 += i5;
-/*  624 */             i3 += i2;
-/*      */           } 
-/*      */         } else {
-/*  627 */           int i7 = i4 & 0x7;
-/*  628 */           int i8 = 8 - i7;
-/*  629 */           int i9 = 8 + i8;
-/*  630 */           byte b1 = (byte)(255 << i8);
-/*  631 */           byte b2 = (byte)(b1 ^ 0xFFFFFFFF);
-/*      */           
-/*  633 */           for (byte b3 = 0; b3 < m; b3++) {
-/*  634 */             int i10 = i3;
-/*  635 */             int i11 = k;
-/*  636 */             while (i11 > 0) {
-/*  637 */               byte b4 = paramArrayOfbyte[b++];
-/*      */               
-/*  639 */               if (i11 > i9) {
-/*      */ 
-/*      */                 
-/*  642 */                 arrayOfByte[i10] = (byte)(arrayOfByte[i10] & b1 | (b4 & 0xFF) >>> i7);
-/*      */                 
-/*  644 */                 arrayOfByte[++i10] = (byte)((b4 & 0xFF) << i8);
-/*  645 */               } else if (i11 > i8) {
-/*      */ 
-/*      */ 
-/*      */                 
-/*  649 */                 arrayOfByte[i10] = (byte)(arrayOfByte[i10] & b1 | (b4 & 0xFF) >>> i7);
-/*      */                 
-/*  651 */                 i10++;
-/*  652 */                 arrayOfByte[i10] = (byte)(arrayOfByte[i10] & b2 | (b4 & 0xFF) << i8);
-/*      */               
-/*      */               }
-/*      */               else {
-/*      */                 
-/*  657 */                 int i12 = (1 << i8 - i11) - 1;
-/*  658 */                 arrayOfByte[i10] = (byte)(arrayOfByte[i10] & (b1 | i12) | (b4 & 0xFF) >>> i7 & (i12 ^ 0xFFFFFFFF));
-/*      */               } 
-/*      */ 
-/*      */               
-/*  662 */               i11 -= 8;
-/*      */             } 
-/*  664 */             i3 += i2;
-/*      */           } 
-/*      */         } 
-/*  667 */       } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  671 */         short[] arrayOfShort = (dataBuffer instanceof DataBufferShort) ? ((DataBufferShort)dataBuffer).getData() : ((DataBufferUShort)dataBuffer).getData();
-/*      */         
-/*  673 */         int i7 = i4 & 0x7;
-/*  674 */         int i8 = 8 - i7;
-/*  675 */         int i9 = 16 + i8;
-/*  676 */         short s1 = (short)(255 << i8 ^ 0xFFFFFFFF);
-/*  677 */         short s2 = (short)(65535 << i8);
-/*  678 */         short s3 = (short)(s2 ^ 0xFFFFFFFF);
-/*      */         
-/*  680 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  681 */           int i10 = i4;
-/*  682 */           int i11 = k;
-/*  683 */           for (byte b2 = 0; b2 < k; 
-/*  684 */             b2 += 8, i10 += 8, i11 -= 8) {
-/*  685 */             int i12 = i3 + (i10 >> 4);
-/*  686 */             int i13 = i10 & 0xF;
-/*  687 */             int i14 = paramArrayOfbyte[b++] & 0xFF;
-/*  688 */             if (i13 <= 8) {
-/*      */               
-/*  690 */               if (i11 < 8)
-/*      */               {
-/*  692 */                 i14 &= 255 << 8 - i11;
-/*      */               }
-/*  694 */               arrayOfShort[i12] = (short)(arrayOfShort[i12] & s1 | i14 << i8);
-/*  695 */             } else if (i11 > i9) {
-/*      */               
-/*  697 */               arrayOfShort[i12] = (short)(arrayOfShort[i12] & s2 | i14 >>> i7 & 0xFFFF);
-/*  698 */               arrayOfShort[++i12] = (short)(i14 << i8 & 0xFFFF);
-/*      */             }
-/*  700 */             else if (i11 > i8) {
-/*      */ 
-/*      */               
-/*  703 */               arrayOfShort[i12] = (short)(arrayOfShort[i12] & s2 | i14 >>> i7 & 0xFFFF);
-/*  704 */               i12++;
-/*  705 */               arrayOfShort[i12] = (short)(arrayOfShort[i12] & s3 | i14 << i8 & 0xFFFF);
-/*      */             
-/*      */             }
-/*      */             else {
-/*      */               
-/*  710 */               int i15 = (1 << i8 - i11) - 1;
-/*  711 */               arrayOfShort[i12] = (short)(arrayOfShort[i12] & (s2 | i15) | i14 >>> i7 & 0xFFFF & (i15 ^ 0xFFFFFFFF));
-/*      */             } 
-/*      */           } 
-/*      */           
-/*  715 */           i3 += i2;
-/*      */         } 
-/*  717 */       } else if (dataBuffer instanceof DataBufferInt) {
-/*  718 */         int[] arrayOfInt = ((DataBufferInt)dataBuffer).getData();
-/*  719 */         int i7 = i4 & 0x7;
-/*  720 */         int i8 = 8 - i7;
-/*  721 */         int i9 = 32 + i8;
-/*  722 */         int i10 = -1 << i8;
-/*  723 */         int i11 = i10 ^ 0xFFFFFFFF;
-/*      */         
-/*  725 */         for (byte b1 = 0; b1 < m; b1++) {
-/*  726 */           int i12 = i4;
-/*  727 */           int i13 = k;
-/*  728 */           for (byte b2 = 0; b2 < k; 
-/*  729 */             b2 += 8, i12 += 8, i13 -= 8) {
-/*  730 */             int i14 = i3 + (i12 >> 5);
-/*  731 */             int i15 = i12 & 0x1F;
-/*  732 */             int i16 = paramArrayOfbyte[b++] & 0xFF;
-/*  733 */             if (i15 <= 24) {
-/*      */               
-/*  735 */               int i17 = 24 - i15;
-/*  736 */               if (i13 < 8)
-/*      */               {
-/*  738 */                 i16 &= 255 << 8 - i13;
-/*      */               }
-/*  740 */               arrayOfInt[i14] = arrayOfInt[i14] & (255 << i17 ^ 0xFFFFFFFF) | i16 << i17;
-/*  741 */             } else if (i13 > i9) {
-/*      */               
-/*  743 */               arrayOfInt[i14] = arrayOfInt[i14] & i10 | i16 >>> i7;
-/*  744 */               arrayOfInt[++i14] = i16 << i8;
-/*  745 */             } else if (i13 > i8) {
-/*      */ 
-/*      */               
-/*  748 */               arrayOfInt[i14] = arrayOfInt[i14] & i10 | i16 >>> i7;
-/*  749 */               i14++;
-/*  750 */               arrayOfInt[i14] = arrayOfInt[i14] & i11 | i16 << i8;
-/*      */             } else {
-/*      */               
-/*  753 */               int i17 = (1 << i8 - i13) - 1;
-/*  754 */               arrayOfInt[i14] = arrayOfInt[i14] & (i10 | i17) | i16 >>> i7 & (i17 ^ 0xFFFFFFFF);
-/*      */             } 
-/*      */           } 
-/*      */           
-/*  758 */           i3 += i2;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setUnpackedBinaryData(byte[] paramArrayOfbyte, WritableRaster paramWritableRaster, Rectangle paramRectangle) {
-/*  779 */     SampleModel sampleModel = paramWritableRaster.getSampleModel();
-/*  780 */     if (!isBinary(sampleModel)) {
-/*  781 */       throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
-/*      */     }
-/*      */     
-/*  784 */     int i = paramRectangle.x;
-/*  785 */     int j = paramRectangle.y;
-/*  786 */     int k = paramRectangle.width;
-/*  787 */     int m = paramRectangle.height;
-/*      */     
-/*  789 */     DataBuffer dataBuffer = paramWritableRaster.getDataBuffer();
-/*      */     
-/*  791 */     int n = i - paramWritableRaster.getSampleModelTranslateX();
-/*  792 */     int i1 = j - paramWritableRaster.getSampleModelTranslateY();
-/*      */     
-/*  794 */     MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)sampleModel;
-/*  795 */     int i2 = multiPixelPackedSampleModel.getScanlineStride();
-/*  796 */     int i3 = dataBuffer.getOffset() + multiPixelPackedSampleModel.getOffset(n, i1);
-/*  797 */     int i4 = multiPixelPackedSampleModel.getBitOffset(n);
-/*      */     
-/*  799 */     byte b = 0;
-/*      */     
-/*  801 */     if (dataBuffer instanceof DataBufferByte) {
-/*  802 */       byte[] arrayOfByte = ((DataBufferByte)dataBuffer).getData();
-/*  803 */       for (byte b1 = 0; b1 < m; b1++) {
-/*  804 */         int i5 = i3 * 8 + i4;
-/*  805 */         for (byte b2 = 0; b2 < k; b2++) {
-/*  806 */           if (paramArrayOfbyte[b++] != 0) {
-/*  807 */             arrayOfByte[i5 / 8] = (byte)(arrayOfByte[i5 / 8] | (byte)(1 << (7 - i5 & 0x7)));
-/*      */           }
-/*      */           
-/*  810 */           i5++;
-/*      */         } 
-/*  812 */         i3 += i2;
-/*      */       } 
-/*  814 */     } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  818 */       short[] arrayOfShort = (dataBuffer instanceof DataBufferShort) ? ((DataBufferShort)dataBuffer).getData() : ((DataBufferUShort)dataBuffer).getData();
-/*  819 */       for (byte b1 = 0; b1 < m; b1++) {
-/*  820 */         int i5 = i3 * 16 + i4;
-/*  821 */         for (byte b2 = 0; b2 < k; b2++) {
-/*  822 */           if (paramArrayOfbyte[b++] != 0) {
-/*  823 */             arrayOfShort[i5 / 16] = (short)(arrayOfShort[i5 / 16] | (short)(1 << 15 - i5 % 16));
-/*      */           }
-/*      */ 
-/*      */           
-/*  827 */           i5++;
-/*      */         } 
-/*  829 */         i3 += i2;
-/*      */       } 
-/*  831 */     } else if (dataBuffer instanceof DataBufferInt) {
-/*  832 */       int[] arrayOfInt = ((DataBufferInt)dataBuffer).getData();
-/*  833 */       for (byte b1 = 0; b1 < m; b1++) {
-/*  834 */         int i5 = i3 * 32 + i4;
-/*  835 */         for (byte b2 = 0; b2 < k; b2++) {
-/*  836 */           if (paramArrayOfbyte[b++] != 0) {
-/*  837 */             arrayOfInt[i5 / 32] = arrayOfInt[i5 / 32] | 1 << 31 - i5 % 32;
-/*      */           }
-/*      */ 
-/*      */           
-/*  841 */           i5++;
-/*      */         } 
-/*  843 */         i3 += i2;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public static boolean isBinary(SampleModel paramSampleModel) {
-/*  849 */     return (paramSampleModel instanceof MultiPixelPackedSampleModel && ((MultiPixelPackedSampleModel)paramSampleModel)
-/*  850 */       .getPixelBitStride() == 1 && paramSampleModel
-/*  851 */       .getNumBands() == 1);
-/*      */   }
-/*      */   
-/*      */   public static ColorModel createColorModel(ColorSpace paramColorSpace, SampleModel paramSampleModel) {
-/*      */     IndexColorModel indexColorModel;
-/*  856 */     ComponentColorModel componentColorModel = null;
-/*      */     
-/*  858 */     if (paramSampleModel == null) {
-/*  859 */       throw new IllegalArgumentException(I18N.getString("ImageUtil1"));
-/*      */     }
-/*      */     
-/*  862 */     int i = paramSampleModel.getNumBands();
-/*  863 */     if (i < 1 || i > 4) {
-/*  864 */       return null;
-/*      */     }
-/*      */     
-/*  867 */     int j = paramSampleModel.getDataType();
-/*  868 */     if (paramSampleModel instanceof ComponentSampleModel) {
-/*  869 */       if (j < 0 || j > 5)
-/*      */       {
-/*      */         
-/*  872 */         return null;
-/*      */       }
-/*      */       
-/*  875 */       if (paramColorSpace == null)
-/*      */       {
-/*      */ 
-/*      */         
-/*  879 */         paramColorSpace = (i <= 2) ? ColorSpace.getInstance(1003) : ColorSpace.getInstance(1000);
-/*      */       }
-/*  881 */       boolean bool1 = (i == 2 || i == 4) ? true : false;
-/*  882 */       boolean bool2 = bool1 ? true : true;
-/*      */ 
-/*      */       
-/*  885 */       boolean bool3 = false;
-/*      */       
-/*  887 */       int k = DataBuffer.getDataTypeSize(j);
-/*  888 */       int[] arrayOfInt = new int[i];
-/*  889 */       for (byte b = 0; b < i; b++) {
-/*  890 */         arrayOfInt[b] = k;
-/*      */       }
-/*      */       
-/*  893 */       componentColorModel = new ComponentColorModel(paramColorSpace, arrayOfInt, bool1, bool3, bool2, j);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*  899 */     else if (paramSampleModel instanceof SinglePixelPackedSampleModel) {
-/*  900 */       SinglePixelPackedSampleModel singlePixelPackedSampleModel = (SinglePixelPackedSampleModel)paramSampleModel;
-/*      */ 
-/*      */       
-/*  903 */       int[] arrayOfInt1 = singlePixelPackedSampleModel.getBitMasks();
-/*  904 */       int k = 0;
-/*  905 */       int m = 0;
-/*  906 */       int n = 0;
-/*  907 */       int i1 = 0;
-/*      */       
-/*  909 */       i = arrayOfInt1.length;
-/*  910 */       if (i <= 2) {
-/*  911 */         k = m = n = arrayOfInt1[0];
-/*  912 */         if (i == 2) {
-/*  913 */           i1 = arrayOfInt1[1];
-/*      */         }
-/*      */       } else {
-/*  916 */         k = arrayOfInt1[0];
-/*  917 */         m = arrayOfInt1[1];
-/*  918 */         n = arrayOfInt1[2];
-/*  919 */         if (i == 4) {
-/*  920 */           i1 = arrayOfInt1[3];
-/*      */         }
-/*      */       } 
-/*      */       
-/*  924 */       int[] arrayOfInt2 = singlePixelPackedSampleModel.getSampleSize();
-/*  925 */       int i2 = 0;
-/*  926 */       for (byte b = 0; b < arrayOfInt2.length; b++) {
-/*  927 */         i2 += arrayOfInt2[b];
-/*      */       }
-/*      */       
-/*  930 */       if (paramColorSpace == null) {
-/*  931 */         paramColorSpace = ColorSpace.getInstance(1000);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  937 */       DirectColorModel directColorModel = new DirectColorModel(paramColorSpace, i2, k, m, n, i1, false, paramSampleModel.getDataType());
-/*  938 */     } else if (paramSampleModel instanceof MultiPixelPackedSampleModel) {
-/*      */       
-/*  940 */       int k = ((MultiPixelPackedSampleModel)paramSampleModel).getPixelBitStride();
-/*  941 */       int m = 1 << k;
-/*  942 */       byte[] arrayOfByte = new byte[m];
-/*      */       
-/*  944 */       for (byte b = 0; b < m; b++) {
-/*  945 */         arrayOfByte[b] = (byte)(255 * b / (m - 1));
-/*      */       }
-/*  947 */       indexColorModel = new IndexColorModel(k, m, arrayOfByte, arrayOfByte, arrayOfByte);
-/*      */     } 
-/*      */     
-/*  950 */     return indexColorModel;
-/*      */   }
-/*      */   
-/*      */   public static int getElementSize(SampleModel paramSampleModel) {
-/*  954 */     int i = DataBuffer.getDataTypeSize(paramSampleModel.getDataType());
-/*      */     
-/*  956 */     if (paramSampleModel instanceof MultiPixelPackedSampleModel) {
-/*  957 */       MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)paramSampleModel;
-/*      */       
-/*  959 */       return multiPixelPackedSampleModel.getSampleSize(0) * multiPixelPackedSampleModel.getNumBands();
-/*  960 */     }  if (paramSampleModel instanceof ComponentSampleModel)
-/*  961 */       return paramSampleModel.getNumBands() * i; 
-/*  962 */     if (paramSampleModel instanceof SinglePixelPackedSampleModel) {
-/*  963 */       return i;
-/*      */     }
-/*      */     
-/*  966 */     return i * paramSampleModel.getNumBands();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static long getTileSize(SampleModel paramSampleModel) {
-/*  971 */     int i = DataBuffer.getDataTypeSize(paramSampleModel.getDataType());
-/*      */     
-/*  973 */     if (paramSampleModel instanceof MultiPixelPackedSampleModel) {
-/*  974 */       MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)paramSampleModel;
-/*      */       
-/*  976 */       return ((multiPixelPackedSampleModel.getScanlineStride() * multiPixelPackedSampleModel.getHeight() + (multiPixelPackedSampleModel
-/*  977 */         .getDataBitOffset() + i - 1) / i) * (i + 7) / 8);
-/*      */     } 
-/*  979 */     if (paramSampleModel instanceof ComponentSampleModel) {
-/*  980 */       ComponentSampleModel componentSampleModel = (ComponentSampleModel)paramSampleModel;
-/*  981 */       int[] arrayOfInt1 = componentSampleModel.getBandOffsets();
-/*  982 */       int j = arrayOfInt1[0];
-/*  983 */       for (byte b1 = 1; b1 < arrayOfInt1.length; b1++) {
-/*  984 */         j = Math.max(j, arrayOfInt1[b1]);
-/*      */       }
-/*  986 */       long l = 0L;
-/*  987 */       int k = componentSampleModel.getPixelStride();
-/*  988 */       int m = componentSampleModel.getScanlineStride();
-/*  989 */       if (j >= 0)
-/*  990 */         l += (j + 1); 
-/*  991 */       if (k > 0)
-/*  992 */         l += (k * (paramSampleModel.getWidth() - 1)); 
-/*  993 */       if (m > 0) {
-/*  994 */         l += (m * (paramSampleModel.getHeight() - 1));
-/*      */       }
-/*  996 */       int[] arrayOfInt2 = componentSampleModel.getBankIndices();
-/*  997 */       j = arrayOfInt2[0];
-/*  998 */       for (byte b2 = 1; b2 < arrayOfInt2.length; b2++)
-/*  999 */         j = Math.max(j, arrayOfInt2[b2]); 
-/* 1000 */       return l * (j + 1) * ((i + 7) / 8);
-/* 1001 */     }  if (paramSampleModel instanceof SinglePixelPackedSampleModel) {
-/* 1002 */       SinglePixelPackedSampleModel singlePixelPackedSampleModel = (SinglePixelPackedSampleModel)paramSampleModel;
-/*      */ 
-/*      */       
-/* 1005 */       long l = (singlePixelPackedSampleModel.getScanlineStride() * (singlePixelPackedSampleModel.getHeight() - 1) + singlePixelPackedSampleModel.getWidth());
-/* 1006 */       return l * ((i + 7) / 8);
-/*      */     } 
-/*      */     
-/* 1009 */     return 0L;
-/*      */   }
-/*      */   
-/*      */   public static long getBandSize(SampleModel paramSampleModel) {
-/* 1013 */     int i = DataBuffer.getDataTypeSize(paramSampleModel.getDataType());
-/*      */     
-/* 1015 */     if (paramSampleModel instanceof ComponentSampleModel) {
-/* 1016 */       ComponentSampleModel componentSampleModel = (ComponentSampleModel)paramSampleModel;
-/* 1017 */       int j = componentSampleModel.getPixelStride();
-/* 1018 */       int k = componentSampleModel.getScanlineStride();
-/* 1019 */       long l = Math.min(j, k);
-/*      */       
-/* 1021 */       if (j > 0)
-/* 1022 */         l += (j * (paramSampleModel.getWidth() - 1)); 
-/* 1023 */       if (k > 0)
-/* 1024 */         l += (k * (paramSampleModel.getHeight() - 1)); 
-/* 1025 */       return l * ((i + 7) / 8);
-/*      */     } 
-/* 1027 */     return getTileSize(paramSampleModel);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean isIndicesForGrayscale(byte[] paramArrayOfbyte1, byte[] paramArrayOfbyte2, byte[] paramArrayOfbyte3) {
-/* 1039 */     if (paramArrayOfbyte1.length != paramArrayOfbyte2.length || paramArrayOfbyte1.length != paramArrayOfbyte3.length) {
-/* 1040 */       return false;
-/*      */     }
-/* 1042 */     int i = paramArrayOfbyte1.length;
-/*      */     
-/* 1044 */     if (i != 256) {
-/* 1045 */       return false;
-/*      */     }
-/* 1047 */     for (byte b = 0; b < i; b++) {
-/* 1048 */       byte b1 = (byte)b;
-/*      */       
-/* 1050 */       if (paramArrayOfbyte1[b] != b1 || paramArrayOfbyte2[b] != b1 || paramArrayOfbyte3[b] != b1) {
-/* 1051 */         return false;
-/*      */       }
-/*      */     } 
-/* 1054 */     return true;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static String convertObjectToString(Object paramObject) {
-/* 1059 */     if (paramObject == null) {
-/* 1060 */       return "";
-/*      */     }
-/* 1062 */     String str = "";
-/* 1063 */     if (paramObject instanceof byte[]) {
-/* 1064 */       byte[] arrayOfByte = (byte[])paramObject;
-/* 1065 */       for (byte b = 0; b < arrayOfByte.length; b++)
-/* 1066 */         str = str + arrayOfByte[b] + " "; 
-/* 1067 */       return str;
-/*      */     } 
-/*      */     
-/* 1070 */     if (paramObject instanceof int[]) {
-/* 1071 */       int[] arrayOfInt = (int[])paramObject;
-/* 1072 */       for (byte b = 0; b < arrayOfInt.length; b++)
-/* 1073 */         str = str + arrayOfInt[b] + " "; 
-/* 1074 */       return str;
-/*      */     } 
-/*      */     
-/* 1077 */     if (paramObject instanceof short[]) {
-/* 1078 */       short[] arrayOfShort = (short[])paramObject;
-/* 1079 */       for (byte b = 0; b < arrayOfShort.length; b++)
-/* 1080 */         str = str + arrayOfShort[b] + " "; 
-/* 1081 */       return str;
-/*      */     } 
-/*      */     
-/* 1084 */     return paramObject.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final void canEncodeImage(ImageWriter paramImageWriter, ImageTypeSpecifier paramImageTypeSpecifier) throws IIOException {
-/* 1098 */     ImageWriterSpi imageWriterSpi = paramImageWriter.getOriginatingProvider();
-/*      */     
-/* 1100 */     if (paramImageTypeSpecifier != null && imageWriterSpi != null && !imageWriterSpi.canEncodeImage(paramImageTypeSpecifier)) {
-/* 1101 */       throw new IIOException(I18N.getString("ImageUtil2") + " " + paramImageWriter
-/* 1102 */           .getClass().getName());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final void canEncodeImage(ImageWriter paramImageWriter, ColorModel paramColorModel, SampleModel paramSampleModel) throws IIOException {
-/* 1118 */     ImageTypeSpecifier imageTypeSpecifier = null;
-/* 1119 */     if (paramColorModel != null && paramSampleModel != null)
-/* 1120 */       imageTypeSpecifier = new ImageTypeSpecifier(paramColorModel, paramSampleModel); 
-/* 1121 */     canEncodeImage(paramImageWriter, imageTypeSpecifier);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final boolean imageIsContiguous(RenderedImage paramRenderedImage) {
-/*      */     SampleModel sampleModel;
-/* 1129 */     if (paramRenderedImage instanceof BufferedImage) {
-/* 1130 */       WritableRaster writableRaster = ((BufferedImage)paramRenderedImage).getRaster();
-/* 1131 */       sampleModel = writableRaster.getSampleModel();
-/*      */     } else {
-/* 1133 */       sampleModel = paramRenderedImage.getSampleModel();
-/*      */     } 
-/*      */     
-/* 1136 */     if (sampleModel instanceof ComponentSampleModel) {
-/*      */ 
-/*      */       
-/* 1139 */       ComponentSampleModel componentSampleModel = (ComponentSampleModel)sampleModel;
-/*      */       
-/* 1141 */       if (componentSampleModel.getPixelStride() != componentSampleModel.getNumBands()) {
-/* 1142 */         return false;
-/*      */       }
-/*      */       
-/* 1145 */       int[] arrayOfInt1 = componentSampleModel.getBandOffsets();
-/* 1146 */       for (byte b1 = 0; b1 < arrayOfInt1.length; b1++) {
-/* 1147 */         if (arrayOfInt1[b1] != b1) {
-/* 1148 */           return false;
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1152 */       int[] arrayOfInt2 = componentSampleModel.getBankIndices();
-/* 1153 */       for (byte b2 = 0; b2 < arrayOfInt1.length; b2++) {
-/* 1154 */         if (arrayOfInt2[b2] != 0) {
-/* 1155 */           return false;
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1159 */       return true;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1165 */     return isBinary(sampleModel);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\common\ImageUtil.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.common;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
+import java.awt.image.DirectColorModel;
+import java.awt.image.IndexColorModel;
+import java.awt.image.MultiPixelPackedSampleModel;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
+import java.awt.image.SinglePixelPackedSampleModel;
+import java.awt.image.WritableRaster;
+import java.util.Arrays;
+
+//import javax.imageio.ImageTypeSpecifier;
+
+import javax.imageio.IIOException;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriter;
+import javax.imageio.spi.ImageWriterSpi;
+
+public class ImageUtil {
+    /* XXX testing only
+    public static void main(String[] args) {
+        ImageTypeSpecifier bilevel =
+            ImageTypeSpecifier.createIndexed(new byte[] {(byte)0, (byte)255},
+                                             new byte[] {(byte)0, (byte)255},
+                                             new byte[] {(byte)0, (byte)255},
+                                             null, 1,
+                                             DataBuffer.TYPE_BYTE);
+        ImageTypeSpecifier gray =
+            ImageTypeSpecifier.createGrayscale(8, DataBuffer.TYPE_BYTE, false);
+        ImageTypeSpecifier grayAlpha =
+            ImageTypeSpecifier.createGrayscale(8, DataBuffer.TYPE_BYTE, false,
+                                               false);
+        ImageTypeSpecifier rgb =
+            ImageTypeSpecifier.createInterleaved(ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                                                 new int[] {0, 1, 2},
+                                                 DataBuffer.TYPE_BYTE,
+                                                 false,
+                                                 false);
+        ImageTypeSpecifier rgba =
+            ImageTypeSpecifier.createInterleaved(ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                                                 new int[] {0, 1, 2, 3},
+                                                 DataBuffer.TYPE_BYTE,
+                                                 true,
+                                                 false);
+        ImageTypeSpecifier packed =
+            ImageTypeSpecifier.createPacked(ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                                            0xff000000,
+                                            0x00ff0000,
+                                            0x0000ff00,
+                                            0x000000ff,
+                                            DataBuffer.TYPE_BYTE,
+                                            false);
+
+        SampleModel bandedSM =
+            new java.awt.image.BandedSampleModel(DataBuffer.TYPE_BYTE,
+                                                 1, 1, 15);
+
+        System.out.println(createColorModel(bilevel.getSampleModel()));
+        System.out.println(createColorModel(gray.getSampleModel()));
+        System.out.println(createColorModel(grayAlpha.getSampleModel()));
+        System.out.println(createColorModel(rgb.getSampleModel()));
+        System.out.println(createColorModel(rgba.getSampleModel()));
+        System.out.println(createColorModel(packed.getSampleModel()));
+        System.out.println(createColorModel(bandedSM));
+    }
+    */
+
+    /**
+     * Creates a <code>ColorModel</code> that may be used with the
+     * specified <code>SampleModel</code>.  If a suitable
+     * <code>ColorModel</code> cannot be found, this method returns
+     * <code>null</code>.
+     *
+     * <p> Suitable <code>ColorModel</code>s are guaranteed to exist
+     * for all instances of <code>ComponentSampleModel</code>.
+     * For 1- and 3- banded <code>SampleModel</code>s, the returned
+     * <code>ColorModel</code> will be opaque.  For 2- and 4-banded
+     * <code>SampleModel</code>s, the output will use alpha transparency
+     * which is not premultiplied.  1- and 2-banded data will use a
+     * grayscale <code>ColorSpace</code>, and 3- and 4-banded data a sRGB
+     * <code>ColorSpace</code>. Data with 5 or more bands will have a
+     * <code>BogusColorSpace</code>.</p>
+     *
+     * <p>An instance of <code>DirectColorModel</code> will be created for
+     * instances of <code>SinglePixelPackedSampleModel</code> with no more
+     * than 4 bands.</p>
+     *
+     * <p>An instance of <code>IndexColorModel</code> will be created for
+     * instances of <code>MultiPixelPackedSampleModel</code>. The colormap
+     * will be a grayscale ramp with <code>1&nbsp;<<&nbsp;numberOfBits</code>
+     * entries ranging from zero to at most 255.</p>
+     *
+     * @return An instance of <code>ColorModel</code> that is suitable for
+     *         the supplied <code>SampleModel</code>, or <code>null</code>.
+     *
+     * @throws IllegalArgumentException  If <code>sampleModel</code> is
+     *         <code>null</code>.
+     */
+    public static final ColorModel createColorModel(SampleModel sampleModel) {
+        // Check the parameter.
+        if(sampleModel == null) {
+            throw new IllegalArgumentException("sampleModel == null!");
+        }
+
+        // Get the data type.
+        int dataType = sampleModel.getDataType();
+
+        // Check the data type
+        switch(dataType) {
+        case DataBuffer.TYPE_BYTE:
+        case DataBuffer.TYPE_USHORT:
+        case DataBuffer.TYPE_SHORT:
+        case DataBuffer.TYPE_INT:
+        case DataBuffer.TYPE_FLOAT:
+        case DataBuffer.TYPE_DOUBLE:
+            break;
+        default:
+            // Return null for other types.
+            return null;
+        }
+
+        // The return variable.
+        ColorModel colorModel = null;
+
+        // Get the sample size.
+        int[] sampleSize = sampleModel.getSampleSize();
+
+        // Create a Component ColorModel.
+        if(sampleModel instanceof ComponentSampleModel) {
+            // Get the number of bands.
+            int numBands = sampleModel.getNumBands();
+
+            // Determine the color space.
+            ColorSpace colorSpace = null;
+            if(numBands <= 2) {
+                colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+            } else if(numBands <= 4) {
+                colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+            } else {
+                colorSpace = new BogusColorSpace(numBands);
+            }
+
+            boolean hasAlpha = (numBands == 2) || (numBands == 4);
+            boolean isAlphaPremultiplied = false;
+            int transparency = hasAlpha ?
+                Transparency.TRANSLUCENT : Transparency.OPAQUE;
+
+            colorModel = new ComponentColorModel(colorSpace,
+                                                 sampleSize,
+                                                 hasAlpha,
+                                                 isAlphaPremultiplied,
+                                                 transparency,
+                                                 dataType);
+        } else if (sampleModel.getNumBands() <= 4 &&
+                   sampleModel instanceof SinglePixelPackedSampleModel) {
+            SinglePixelPackedSampleModel sppsm =
+                (SinglePixelPackedSampleModel)sampleModel;
+
+            int[] bitMasks = sppsm.getBitMasks();
+            int rmask = 0;
+            int gmask = 0;
+            int bmask = 0;
+            int amask = 0;
+
+            int numBands = bitMasks.length;
+            if (numBands <= 2) {
+                rmask = gmask = bmask = bitMasks[0];
+                if (numBands == 2) {
+                    amask = bitMasks[1];
+                }
+            } else {
+                rmask = bitMasks[0];
+                gmask = bitMasks[1];
+                bmask = bitMasks[2];
+                if (numBands == 4) {
+                    amask = bitMasks[3];
+                }
+            }
+
+            int bits = 0;
+            for (int i = 0; i < sampleSize.length; i++) {
+                bits += sampleSize[i];
+            }
+
+            return new DirectColorModel(bits, rmask, gmask, bmask, amask);
+
+        } else if(sampleModel instanceof MultiPixelPackedSampleModel) {
+            // Load the colormap with a ramp.
+            int bitsPerSample = sampleSize[0];
+            int numEntries = 1 << bitsPerSample;
+            byte[] map = new byte[numEntries];
+            for (int i = 0; i < numEntries; i++) {
+                map[i] = (byte)(i*255/(numEntries - 1));
+            }
+
+            colorModel = new IndexColorModel(bitsPerSample, numEntries,
+                                             map, map, map);
+
+        }
+
+        return colorModel;
+    }
+
+    /**
+     * For the case of binary data (<code>isBinary()</code> returns
+     * <code>true</code>), return the binary data as a packed byte array.
+     * The data will be packed as eight bits per byte with no bit offset,
+     * i.e., the first bit in each image line will be the left-most of the
+     * first byte of the line.  The line stride in bytes will be
+     * <code>(int)((getWidth()+7)/8)</code>.  The length of the returned
+     * array will be the line stride multiplied by <code>getHeight()</code>
+     *
+     * @return the binary data as a packed array of bytes with zero offset
+     * of <code>null</code> if the data are not binary.
+     * @throws IllegalArgumentException if <code>isBinary()</code> returns
+     * <code>false</code> with the <code>SampleModel</code> of the
+     * supplied <code>Raster</code> as argument.
+     */
+    public static byte[] getPackedBinaryData(Raster raster,
+                                             Rectangle rect) {
+        SampleModel sm = raster.getSampleModel();
+        if(!isBinary(sm)) {
+            throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
+        }
+
+        int rectX = rect.x;
+        int rectY = rect.y;
+        int rectWidth = rect.width;
+        int rectHeight = rect.height;
+
+        DataBuffer dataBuffer = raster.getDataBuffer();
+
+        int dx = rectX - raster.getSampleModelTranslateX();
+        int dy = rectY - raster.getSampleModelTranslateY();
+
+        MultiPixelPackedSampleModel mpp = (MultiPixelPackedSampleModel)sm;
+        int lineStride = mpp.getScanlineStride();
+        int eltOffset = dataBuffer.getOffset() + mpp.getOffset(dx, dy);
+        int bitOffset = mpp.getBitOffset(dx);
+
+        int numBytesPerRow = (rectWidth + 7)/8;
+        if(dataBuffer instanceof DataBufferByte &&
+           eltOffset == 0 && bitOffset == 0 &&
+           numBytesPerRow == lineStride &&
+           ((DataBufferByte)dataBuffer).getData().length ==
+           numBytesPerRow*rectHeight) {
+            return ((DataBufferByte)dataBuffer).getData();
+        }
+
+        byte[] binaryDataArray = new byte[numBytesPerRow*rectHeight];
+
+        int b = 0;
+
+        if(bitOffset == 0) {
+            if(dataBuffer instanceof DataBufferByte) {
+                byte[] data = ((DataBufferByte)dataBuffer).getData();
+                int stride = numBytesPerRow;
+                int offset = 0;
+                for(int y = 0; y < rectHeight; y++) {
+                    System.arraycopy(data, eltOffset,
+                                     binaryDataArray, offset,
+                                     stride);
+                    offset += stride;
+                    eltOffset += lineStride;
+                }
+            } else if(dataBuffer instanceof DataBufferShort ||
+                      dataBuffer instanceof DataBufferUShort) {
+                short[] data = dataBuffer instanceof DataBufferShort ?
+                    ((DataBufferShort)dataBuffer).getData() :
+                    ((DataBufferUShort)dataBuffer).getData();
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int xRemaining = rectWidth;
+                    int i = eltOffset;
+                    while(xRemaining > 8) {
+                        short datum = data[i++];
+                        binaryDataArray[b++] = (byte)((datum >>> 8) & 0xFF);
+                        binaryDataArray[b++] = (byte)(datum & 0xFF);
+                        xRemaining -= 16;
+                    }
+                    if(xRemaining > 0) {
+                        binaryDataArray[b++] = (byte)((data[i] >>> 8) & 0XFF);
+                    }
+                    eltOffset += lineStride;
+                }
+            } else if(dataBuffer instanceof DataBufferInt) {
+                int[] data = ((DataBufferInt)dataBuffer).getData();
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int xRemaining = rectWidth;
+                    int i = eltOffset;
+                    while(xRemaining > 24) {
+                        int datum = data[i++];
+                        binaryDataArray[b++] = (byte)((datum >>> 24) & 0xFF);
+                        binaryDataArray[b++] = (byte)((datum >>> 16) & 0xFF);
+                        binaryDataArray[b++] = (byte)((datum >>> 8) & 0xFF);
+                        binaryDataArray[b++] = (byte)(datum & 0xFF);
+                        xRemaining -= 32;
+                    }
+                    int shift = 24;
+                    while(xRemaining > 0) {
+                        binaryDataArray[b++] =
+                            (byte)((data[i] >>> shift) & 0xFF);
+                        shift -= 8;
+                        xRemaining -= 8;
+                    }
+                    eltOffset += lineStride;
+                }
+            }
+        } else { // bitOffset != 0
+            if(dataBuffer instanceof DataBufferByte) {
+                byte[] data = ((DataBufferByte)dataBuffer).getData();
+
+                if((bitOffset & 7) == 0) {
+                    int stride = numBytesPerRow;
+                    int offset = 0;
+                    for(int y = 0; y < rectHeight; y++) {
+                        System.arraycopy(data, eltOffset,
+                                         binaryDataArray, offset,
+                                         stride);
+                        offset += stride;
+                        eltOffset += lineStride;
+                    }
+                } else { // bitOffset % 8 != 0
+                    int leftShift = bitOffset & 7;
+                    int rightShift = 8 - leftShift;
+                    for(int y = 0; y < rectHeight; y++) {
+                        int i = eltOffset;
+                        int xRemaining = rectWidth;
+                        while(xRemaining > 0) {
+                            if(xRemaining > rightShift) {
+                                binaryDataArray[b++] =
+                                    (byte)(((data[i++]&0xFF) << leftShift) |
+                                           ((data[i]&0xFF) >>> rightShift));
+                            } else {
+                                binaryDataArray[b++] =
+                                    (byte)((data[i]&0xFF) << leftShift);
+                            }
+                            xRemaining -= 8;
+                        }
+                        eltOffset += lineStride;
+                    }
+                }
+            } else if(dataBuffer instanceof DataBufferShort ||
+                      dataBuffer instanceof DataBufferUShort) {
+                short[] data = dataBuffer instanceof DataBufferShort ?
+                    ((DataBufferShort)dataBuffer).getData() :
+                    ((DataBufferUShort)dataBuffer).getData();
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int bOffset = bitOffset;
+                    for(int x = 0; x < rectWidth; x += 8, bOffset += 8) {
+                        int i = eltOffset + bOffset/16;
+                        int mod = bOffset % 16;
+                        int left = data[i] & 0xFFFF;
+                        if(mod <= 8) {
+                            binaryDataArray[b++] = (byte)(left >>> (8 - mod));
+                        } else {
+                            int delta = mod - 8;
+                            int right = data[i+1] & 0xFFFF;
+                            binaryDataArray[b++] =
+                                (byte)((left << delta) |
+                                       (right >>> (16 - delta)));
+                        }
+                    }
+                    eltOffset += lineStride;
+                }
+            } else if(dataBuffer instanceof DataBufferInt) {
+                int[] data = ((DataBufferInt)dataBuffer).getData();
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int bOffset = bitOffset;
+                    for(int x = 0; x < rectWidth; x += 8, bOffset += 8) {
+                        int i = eltOffset + bOffset/32;
+                        int mod = bOffset % 32;
+                        int left = data[i];
+                        if(mod <= 24) {
+                            binaryDataArray[b++] =
+                                (byte)(left >>> (24 - mod));
+                        } else {
+                            int delta = mod - 24;
+                            int right = data[i+1];
+                            binaryDataArray[b++] =
+                                (byte)((left << delta) |
+                                       (right >>> (32 - delta)));
+                        }
+                    }
+                    eltOffset += lineStride;
+                }
+            }
+        }
+
+        return binaryDataArray;
+    }
+
+    /**
+     * Returns the binary data unpacked into an array of bytes.
+     * The line stride will be the width of the <code>Raster</code>.
+     *
+     * @throws IllegalArgumentException if <code>isBinary()</code> returns
+     * <code>false</code> with the <code>SampleModel</code> of the
+     * supplied <code>Raster</code> as argument.
+     */
+    public static byte[] getUnpackedBinaryData(Raster raster,
+                                               Rectangle rect) {
+        SampleModel sm = raster.getSampleModel();
+        if(!isBinary(sm)) {
+            throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
+        }
+
+        int rectX = rect.x;
+        int rectY = rect.y;
+        int rectWidth = rect.width;
+        int rectHeight = rect.height;
+
+        DataBuffer dataBuffer = raster.getDataBuffer();
+
+        int dx = rectX - raster.getSampleModelTranslateX();
+        int dy = rectY - raster.getSampleModelTranslateY();
+
+        MultiPixelPackedSampleModel mpp = (MultiPixelPackedSampleModel)sm;
+        int lineStride = mpp.getScanlineStride();
+        int eltOffset = dataBuffer.getOffset() + mpp.getOffset(dx, dy);
+        int bitOffset = mpp.getBitOffset(dx);
+
+        byte[] bdata = new byte[rectWidth*rectHeight];
+        int maxY = rectY + rectHeight;
+        int maxX = rectX + rectWidth;
+        int k = 0;
+
+        if(dataBuffer instanceof DataBufferByte) {
+            byte[] data = ((DataBufferByte)dataBuffer).getData();
+            for(int y = rectY; y < maxY; y++) {
+                int bOffset = eltOffset*8 + bitOffset;
+                for(int x = rectX; x < maxX; x++) {
+                    byte b = data[bOffset/8];
+                    bdata[k++] =
+                        (byte)((b >>> (7 - bOffset & 7)) & 0x0000001);
+                    bOffset++;
+                }
+                eltOffset += lineStride;
+            }
+        } else if(dataBuffer instanceof DataBufferShort ||
+                  dataBuffer instanceof DataBufferUShort) {
+            short[] data = dataBuffer instanceof DataBufferShort ?
+                ((DataBufferShort)dataBuffer).getData() :
+                ((DataBufferUShort)dataBuffer).getData();
+            for(int y = rectY; y < maxY; y++) {
+                int bOffset = eltOffset*16 + bitOffset;
+                for(int x = rectX; x < maxX; x++) {
+                    short s = data[bOffset/16];
+                    bdata[k++] =
+                        (byte)((s >>> (15 - bOffset % 16)) &
+                               0x0000001);
+                    bOffset++;
+                }
+                eltOffset += lineStride;
+            }
+        } else if(dataBuffer instanceof DataBufferInt) {
+            int[] data = ((DataBufferInt)dataBuffer).getData();
+            for(int y = rectY; y < maxY; y++) {
+                int bOffset = eltOffset*32 + bitOffset;
+                for(int x = rectX; x < maxX; x++) {
+                    int i = data[bOffset/32];
+                    bdata[k++] =
+                        (byte)((i >>> (31 - bOffset % 32)) &
+                               0x0000001);
+                    bOffset++;
+                }
+                eltOffset += lineStride;
+            }
+        }
+
+        return bdata;
+    }
+
+    /**
+     * Sets the supplied <code>Raster</code>'s data from an array
+     * of packed binary data of the form returned by
+     * <code>getPackedBinaryData()</code>.
+     *
+     * @throws IllegalArgumentException if <code>isBinary()</code> returns
+     * <code>false</code> with the <code>SampleModel</code> of the
+     * supplied <code>Raster</code> as argument.
+     */
+    public static void setPackedBinaryData(byte[] binaryDataArray,
+                                           WritableRaster raster,
+                                           Rectangle rect) {
+        SampleModel sm = raster.getSampleModel();
+        if(!isBinary(sm)) {
+            throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
+        }
+
+        int rectX = rect.x;
+        int rectY = rect.y;
+        int rectWidth = rect.width;
+        int rectHeight = rect.height;
+
+        DataBuffer dataBuffer = raster.getDataBuffer();
+
+        int dx = rectX - raster.getSampleModelTranslateX();
+        int dy = rectY - raster.getSampleModelTranslateY();
+
+        MultiPixelPackedSampleModel mpp = (MultiPixelPackedSampleModel)sm;
+        int lineStride = mpp.getScanlineStride();
+        int eltOffset = dataBuffer.getOffset() + mpp.getOffset(dx, dy);
+        int bitOffset = mpp.getBitOffset(dx);
+
+        int b = 0;
+
+        if(bitOffset == 0) {
+            if(dataBuffer instanceof DataBufferByte) {
+                byte[] data = ((DataBufferByte)dataBuffer).getData();
+                if(data == binaryDataArray) {
+                    // Optimal case: simply return.
+                    return;
+                }
+                int stride = (rectWidth + 7)/8;
+                int offset = 0;
+                for(int y = 0; y < rectHeight; y++) {
+                    System.arraycopy(binaryDataArray, offset,
+                                     data, eltOffset,
+                                     stride);
+                    offset += stride;
+                    eltOffset += lineStride;
+                }
+            } else if(dataBuffer instanceof DataBufferShort ||
+                      dataBuffer instanceof DataBufferUShort) {
+                short[] data = dataBuffer instanceof DataBufferShort ?
+                    ((DataBufferShort)dataBuffer).getData() :
+                    ((DataBufferUShort)dataBuffer).getData();
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int xRemaining = rectWidth;
+                    int i = eltOffset;
+                    while(xRemaining > 8) {
+                        data[i++] =
+                            (short)(((binaryDataArray[b++] & 0xFF) << 8) |
+                                    (binaryDataArray[b++] & 0xFF));
+                        xRemaining -= 16;
+                    }
+                    if(xRemaining > 0) {
+                        data[i++] =
+                            (short)((binaryDataArray[b++] & 0xFF) << 8);
+                    }
+                    eltOffset += lineStride;
+                }
+            } else if(dataBuffer instanceof DataBufferInt) {
+                int[] data = ((DataBufferInt)dataBuffer).getData();
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int xRemaining = rectWidth;
+                    int i = eltOffset;
+                    while(xRemaining > 24) {
+                        data[i++] =
+                            (int)(((binaryDataArray[b++] & 0xFF) << 24) |
+                                  ((binaryDataArray[b++] & 0xFF) << 16) |
+                                  ((binaryDataArray[b++] & 0xFF) << 8) |
+                                  (binaryDataArray[b++] & 0xFF));
+                        xRemaining -= 32;
+                    }
+                    int shift = 24;
+                    while(xRemaining > 0) {
+                        data[i] |=
+                            (int)((binaryDataArray[b++] & 0xFF) << shift);
+                        shift -= 8;
+                        xRemaining -= 8;
+                    }
+                    eltOffset += lineStride;
+                }
+            }
+        } else { // bitOffset != 0
+            int stride = (rectWidth + 7)/8;
+            int offset = 0;
+            if(dataBuffer instanceof DataBufferByte) {
+                byte[] data = ((DataBufferByte)dataBuffer).getData();
+
+                if((bitOffset & 7) == 0) {
+                    for(int y = 0; y < rectHeight; y++) {
+                        System.arraycopy(binaryDataArray, offset,
+                                         data, eltOffset,
+                                         stride);
+                        offset += stride;
+                        eltOffset += lineStride;
+                    }
+                } else { // bitOffset % 8 != 0
+                    int rightShift = bitOffset & 7;
+                    int leftShift = 8 - rightShift;
+                    int leftShift8 = 8 + leftShift;
+                    int mask = (byte)(255<<leftShift);
+                    int mask1 = (byte)~mask;
+
+                    for(int y = 0; y < rectHeight; y++) {
+                        int i = eltOffset;
+                        int xRemaining = rectWidth;
+                        while(xRemaining > 0) {
+                            byte datum = binaryDataArray[b++];
+
+                            if (xRemaining > leftShift8) {
+                                // when all the bits in this BYTE will be set
+                                // into the data buffer.
+                                data[i] = (byte)((data[i] & mask ) |
+                                    ((datum&0xFF) >>> rightShift));
+                                data[++i] = (byte)((datum & 0xFF) << leftShift);
+                            } else if (xRemaining > leftShift) {
+                                // All the "leftShift" high bits will be set
+                                // into the data buffer.  But not all the
+                                // "rightShift" low bits will be set.
+                                data[i] = (byte)((data[i] & mask ) |
+                                    ((datum&0xFF) >>> rightShift));
+                                i++;
+                                data[i] =
+                                    (byte)((data[i] & mask1) | ((datum & 0xFF) << leftShift));
+                            }
+                            else {
+                                // Less than "leftShift" high bits will be set.
+                                int remainMask = (1 << leftShift - xRemaining) - 1;
+                                data[i] =
+                                    (byte)((data[i] & (mask | remainMask)) |
+                                    (datum&0xFF) >>> rightShift & ~remainMask);
+                            }
+                            xRemaining -= 8;
+                        }
+                        eltOffset += lineStride;
+                    }
+                }
+            } else if(dataBuffer instanceof DataBufferShort ||
+                      dataBuffer instanceof DataBufferUShort) {
+                short[] data = dataBuffer instanceof DataBufferShort ?
+                    ((DataBufferShort)dataBuffer).getData() :
+                    ((DataBufferUShort)dataBuffer).getData();
+
+                int rightShift = bitOffset & 7;
+                int leftShift = 8 - rightShift;
+                int leftShift16 = 16 + leftShift;
+                int mask = (short)(~(255 << leftShift));
+                int mask1 = (short)(65535 << leftShift);
+                int mask2 = (short)~mask1;
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int bOffset = bitOffset;
+                    int xRemaining = rectWidth;
+                    for(int x = 0; x < rectWidth;
+                        x += 8, bOffset += 8, xRemaining -= 8) {
+                        int i = eltOffset + (bOffset >> 4);
+                        int mod = bOffset & 15;
+                        int datum = binaryDataArray[b++] & 0xFF;
+                        if(mod <= 8) {
+                            // This BYTE is set into one SHORT
+                            if (xRemaining < 8) {
+                                // Mask the bits to be set.
+                                datum &= 255 << 8 - xRemaining;
+                            }
+                            data[i] = (short)((data[i] & mask) | (datum << leftShift));
+                        } else if (xRemaining > leftShift16) {
+                            // This BYTE will be set into two SHORTs
+                            data[i] = (short)((data[i] & mask1) | ((datum >>> rightShift)&0xFFFF));
+                            data[++i] =
+                                (short)((datum << leftShift)&0xFFFF);
+                        } else if (xRemaining > leftShift) {
+                            // This BYTE will be set into two SHORTs;
+                            // But not all the low bits will be set into SHORT
+                            data[i] = (short)((data[i] & mask1) | ((datum >>> rightShift)&0xFFFF));
+                            i++;
+                            data[i] =
+                                (short)((data[i] & mask2) | ((datum << leftShift)&0xFFFF));
+                        } else {
+                            // Only some of the high bits will be set into
+                            // SHORTs
+                            int remainMask = (1 << leftShift - xRemaining) - 1;
+                            data[i] = (short)((data[i] & (mask1 | remainMask)) |
+                                      ((datum >>> rightShift)&0xFFFF & ~remainMask));
+                        }
+                    }
+                    eltOffset += lineStride;
+                }
+            } else if(dataBuffer instanceof DataBufferInt) {
+                int[] data = ((DataBufferInt)dataBuffer).getData();
+                int rightShift = bitOffset & 7;
+                int leftShift = 8 - rightShift;
+                int leftShift32 = 32 + leftShift;
+                int mask = 0xFFFFFFFF << leftShift;
+                int mask1 = ~mask;
+
+                for(int y = 0; y < rectHeight; y++) {
+                    int bOffset = bitOffset;
+                    int xRemaining = rectWidth;
+                    for(int x = 0; x < rectWidth;
+                        x += 8, bOffset += 8, xRemaining -= 8) {
+                        int i = eltOffset + (bOffset >> 5);
+                        int mod = bOffset & 31;
+                        int datum = binaryDataArray[b++] & 0xFF;
+                        if(mod <= 24) {
+                            // This BYTE is set into one INT
+                            int shift = 24 - mod;
+                            if (xRemaining < 8) {
+                                // Mask the bits to be set.
+                                datum &= 255 << 8 - xRemaining;
+                            }
+                            data[i] = (data[i] & (~(255 << shift))) | (datum << shift);
+                        } else if (xRemaining > leftShift32) {
+                            // All the bits of this BYTE will be set into two INTs
+                            data[i] = (data[i] & mask) | (datum >>> rightShift);
+                            data[++i] = datum << leftShift;
+                        } else if (xRemaining > leftShift) {
+                            // This BYTE will be set into two INTs;
+                            // But not all the low bits will be set into INT
+                            data[i] = (data[i] & mask) | (datum >>> rightShift);
+                            i++;
+                            data[i] = (data[i] & mask1) | (datum << leftShift);
+                        } else {
+                            // Only some of the high bits will be set into INT
+                            int remainMask = (1 << leftShift - xRemaining) - 1;
+                            data[i] = (data[i] & (mask | remainMask)) |
+                                      (datum >>> rightShift & ~remainMask);
+                        }
+                    }
+                    eltOffset += lineStride;
+                }
+            }
+        }
+    }
+
+    /**
+     * Copies data into the packed array of the <code>Raster</code>
+     * from an array of unpacked data of the form returned by
+     * <code>getUnpackedBinaryData()</code>.
+     *
+     * <p> If the data are binary, then the target bit will be set if
+     * and only if the corresponding byte is non-zero.
+     *
+     * @throws IllegalArgumentException if <code>isBinary()</code> returns
+     * <code>false</code> with the <code>SampleModel</code> of the
+     * supplied <code>Raster</code> as argument.
+     */
+    public static void setUnpackedBinaryData(byte[] bdata,
+                                             WritableRaster raster,
+                                             Rectangle rect) {
+        SampleModel sm = raster.getSampleModel();
+        if(!isBinary(sm)) {
+            throw new IllegalArgumentException(I18N.getString("ImageUtil0"));
+        }
+
+        int rectX = rect.x;
+        int rectY = rect.y;
+        int rectWidth = rect.width;
+        int rectHeight = rect.height;
+
+        DataBuffer dataBuffer = raster.getDataBuffer();
+
+        int dx = rectX - raster.getSampleModelTranslateX();
+        int dy = rectY - raster.getSampleModelTranslateY();
+
+        MultiPixelPackedSampleModel mpp = (MultiPixelPackedSampleModel)sm;
+        int lineStride = mpp.getScanlineStride();
+        int eltOffset = dataBuffer.getOffset() + mpp.getOffset(dx, dy);
+        int bitOffset = mpp.getBitOffset(dx);
+
+        int k = 0;
+
+        if(dataBuffer instanceof DataBufferByte) {
+            byte[] data = ((DataBufferByte)dataBuffer).getData();
+            for(int y = 0; y < rectHeight; y++) {
+                int bOffset = eltOffset*8 + bitOffset;
+                for(int x = 0; x < rectWidth; x++) {
+                    if(bdata[k++] != (byte)0) {
+                        data[bOffset/8] |=
+                            (byte)(0x00000001 << (7 - bOffset & 7));
+                    }
+                    bOffset++;
+                }
+                eltOffset += lineStride;
+            }
+        } else if(dataBuffer instanceof DataBufferShort ||
+                  dataBuffer instanceof DataBufferUShort) {
+            short[] data = dataBuffer instanceof DataBufferShort ?
+                ((DataBufferShort)dataBuffer).getData() :
+                ((DataBufferUShort)dataBuffer).getData();
+            for(int y = 0; y < rectHeight; y++) {
+                int bOffset = eltOffset*16 + bitOffset;
+                for(int x = 0; x < rectWidth; x++) {
+                    if(bdata[k++] != (byte)0) {
+                        data[bOffset/16] |=
+                            (short)(0x00000001 <<
+                                    (15 - bOffset % 16));
+                    }
+                    bOffset++;
+                }
+                eltOffset += lineStride;
+            }
+        } else if(dataBuffer instanceof DataBufferInt) {
+            int[] data = ((DataBufferInt)dataBuffer).getData();
+            for(int y = 0; y < rectHeight; y++) {
+                int bOffset = eltOffset*32 + bitOffset;
+                for(int x = 0; x < rectWidth; x++) {
+                    if(bdata[k++] != (byte)0) {
+                        data[bOffset/32] |=
+                            (int)(0x00000001 <<
+                                  (31 - bOffset % 32));
+                    }
+                    bOffset++;
+                }
+                eltOffset += lineStride;
+            }
+        }
+    }
+
+    public static boolean isBinary(SampleModel sm) {
+        return sm instanceof MultiPixelPackedSampleModel &&
+            ((MultiPixelPackedSampleModel)sm).getPixelBitStride() == 1 &&
+            sm.getNumBands() == 1;
+    }
+
+    public static ColorModel createColorModel(ColorSpace colorSpace,
+                                              SampleModel sampleModel) {
+        ColorModel colorModel = null;
+
+        if(sampleModel == null) {
+            throw new IllegalArgumentException(I18N.getString("ImageUtil1"));
+        }
+
+        int numBands = sampleModel.getNumBands();
+        if (numBands < 1 || numBands > 4) {
+            return null;
+        }
+
+        int dataType = sampleModel.getDataType();
+        if (sampleModel instanceof ComponentSampleModel) {
+            if (dataType < DataBuffer.TYPE_BYTE ||
+                //dataType == DataBuffer.TYPE_SHORT ||
+                dataType > DataBuffer.TYPE_DOUBLE) {
+                return null;
+            }
+
+            if (colorSpace == null)
+                colorSpace =
+                    numBands <= 2 ?
+                    ColorSpace.getInstance(ColorSpace.CS_GRAY) :
+                    ColorSpace.getInstance(ColorSpace.CS_sRGB);
+
+            boolean useAlpha = (numBands == 2) || (numBands == 4);
+            int transparency = useAlpha ?
+                               Transparency.TRANSLUCENT : Transparency.OPAQUE;
+
+            boolean premultiplied = false;
+
+            int dataTypeSize = DataBuffer.getDataTypeSize(dataType);
+            int[] bits = new int[numBands];
+            for (int i = 0; i < numBands; i++) {
+                bits[i] = dataTypeSize;
+            }
+
+            colorModel = new ComponentColorModel(colorSpace,
+                                                 bits,
+                                                 useAlpha,
+                                                 premultiplied,
+                                                 transparency,
+                                                 dataType);
+        } else if (sampleModel instanceof SinglePixelPackedSampleModel) {
+            SinglePixelPackedSampleModel sppsm =
+                (SinglePixelPackedSampleModel)sampleModel;
+
+            int[] bitMasks = sppsm.getBitMasks();
+            int rmask = 0;
+            int gmask = 0;
+            int bmask = 0;
+            int amask = 0;
+
+            numBands = bitMasks.length;
+            if (numBands <= 2) {
+                rmask = gmask = bmask = bitMasks[0];
+                if (numBands == 2) {
+                    amask = bitMasks[1];
+                }
+            } else {
+                rmask = bitMasks[0];
+                gmask = bitMasks[1];
+                bmask = bitMasks[2];
+                if (numBands == 4) {
+                    amask = bitMasks[3];
+                }
+            }
+
+            int[] sampleSize = sppsm.getSampleSize();
+            int bits = 0;
+            for (int i = 0; i < sampleSize.length; i++) {
+                bits += sampleSize[i];
+            }
+
+            if (colorSpace == null)
+                colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+
+            colorModel =
+                new DirectColorModel(colorSpace,
+                                     bits, rmask, gmask, bmask, amask,
+                                     false,
+                                     sampleModel.getDataType());
+        } else if (sampleModel instanceof MultiPixelPackedSampleModel) {
+            int bits =
+                ((MultiPixelPackedSampleModel)sampleModel).getPixelBitStride();
+            int size = 1 << bits;
+            byte[] comp = new byte[size];
+
+            for (int i = 0; i < size; i++)
+                comp[i] = (byte)(255 * i / (size - 1));
+
+            colorModel = new IndexColorModel(bits, size, comp, comp, comp);
+        }
+
+        return colorModel;
+    }
+
+    public static int getElementSize(SampleModel sm) {
+        int elementSize = DataBuffer.getDataTypeSize(sm.getDataType());
+
+        if (sm instanceof MultiPixelPackedSampleModel) {
+            MultiPixelPackedSampleModel mppsm =
+                (MultiPixelPackedSampleModel)sm;
+            return mppsm.getSampleSize(0) * mppsm.getNumBands();
+        } else if (sm instanceof ComponentSampleModel) {
+            return sm.getNumBands() * elementSize;
+        } else if (sm instanceof SinglePixelPackedSampleModel) {
+            return elementSize;
+        }
+
+        return elementSize * sm.getNumBands();
+
+    }
+
+    public static long getTileSize(SampleModel sm) {
+        int elementSize = DataBuffer.getDataTypeSize(sm.getDataType());
+
+        if (sm instanceof MultiPixelPackedSampleModel) {
+            MultiPixelPackedSampleModel mppsm =
+                (MultiPixelPackedSampleModel)sm;
+            return (mppsm.getScanlineStride() * mppsm.getHeight() +
+                   (mppsm.getDataBitOffset() + elementSize -1) / elementSize) *
+                   ((elementSize + 7) / 8);
+        } else if (sm instanceof ComponentSampleModel) {
+            ComponentSampleModel csm = (ComponentSampleModel)sm;
+            int[] bandOffsets = csm.getBandOffsets();
+            int maxBandOff = bandOffsets[0];
+            for (int i=1; i<bandOffsets.length; i++)
+                maxBandOff = Math.max(maxBandOff, bandOffsets[i]);
+
+            long size = 0;
+            int pixelStride = csm.getPixelStride();
+            int scanlineStride = csm.getScanlineStride();
+            if (maxBandOff >= 0)
+                size += maxBandOff + 1;
+            if (pixelStride > 0)
+                size += pixelStride * (sm.getWidth() - 1);
+            if (scanlineStride > 0)
+                size += scanlineStride * (sm.getHeight() - 1);
+
+            int[] bankIndices = csm.getBankIndices();
+            maxBandOff = bankIndices[0];
+            for (int i=1; i<bankIndices.length; i++)
+                maxBandOff = Math.max(maxBandOff, bankIndices[i]);
+            return size * (maxBandOff + 1) * ((elementSize + 7) / 8);
+        } else if (sm instanceof SinglePixelPackedSampleModel) {
+            SinglePixelPackedSampleModel sppsm =
+                (SinglePixelPackedSampleModel)sm;
+            long size = sppsm.getScanlineStride() * (sppsm.getHeight() - 1) +
+                        sppsm.getWidth();
+            return size * ((elementSize + 7) / 8);
+        }
+
+        return 0;
+    }
+
+    public static long getBandSize(SampleModel sm) {
+        int elementSize = DataBuffer.getDataTypeSize(sm.getDataType());
+
+        if (sm instanceof ComponentSampleModel) {
+            ComponentSampleModel csm = (ComponentSampleModel)sm;
+            int pixelStride = csm.getPixelStride();
+            int scanlineStride = csm.getScanlineStride();
+            long size = Math.min(pixelStride, scanlineStride);
+
+            if (pixelStride > 0)
+                size += pixelStride * (sm.getWidth() - 1);
+            if (scanlineStride > 0)
+                size += scanlineStride * (sm.getHeight() - 1);
+            return size * ((elementSize + 7) / 8);
+        } else
+            return getTileSize(sm);
+    }
+    /**
+     * Tests whether the color indices represent a gray-scale image.
+     *
+     * @param r The red channel color indices.
+     * @param g The green channel color indices.
+     * @param b The blue channel color indices.
+     * @return If all the indices have 256 entries, and are identical mappings,
+     *         return <code>true</code>; otherwise, return <code>false</code>.
+     */
+    public static boolean isIndicesForGrayscale(byte[] r, byte[] g, byte[] b) {
+        if (r.length != g.length || r.length != b.length)
+            return false;
+
+        int size = r.length;
+
+        if (size != 256)
+            return false;
+
+        for (int i = 0; i < size; i++) {
+            byte temp = (byte) i;
+
+            if (r[i] != temp || g[i] != temp || b[i] != temp)
+                return false;
+        }
+
+        return true;
+    }
+
+    /** Converts the provided object to <code>String</code> */
+    public static String convertObjectToString(Object obj) {
+        if (obj == null)
+            return "";
+
+        String s = "";
+        if (obj instanceof byte[]) {
+            byte[] bArray = (byte[])obj;
+            for (int i = 0; i < bArray.length; i++)
+                s += bArray[i] + " ";
+            return s;
+        }
+
+        if (obj instanceof int[]) {
+            int[] iArray = (int[])obj;
+            for (int i = 0; i < iArray.length; i++)
+                s += iArray[i] + " " ;
+            return s;
+        }
+
+        if (obj instanceof short[]) {
+            short[] sArray = (short[])obj;
+            for (int i = 0; i < sArray.length; i++)
+                s += sArray[i] + " " ;
+            return s;
+        }
+
+        return obj.toString();
+
+    }
+
+    /** Checks that the provided <code>ImageWriter</code> can encode
+     * the provided <code>ImageTypeSpecifier</code> or not.  If not, an
+     * <code>IIOException</code> will be thrown.
+     * @param writer The provided <code>ImageWriter</code>.
+     * @param type The image to be tested.
+     * @throws IIOException If the writer cannot encoded the provided image.
+     */
+    public static final void canEncodeImage(ImageWriter writer,
+                                            ImageTypeSpecifier type)
+        throws IIOException {
+        ImageWriterSpi spi = writer.getOriginatingProvider();
+
+        if(type != null && spi != null && !spi.canEncodeImage(type))  {
+            throw new IIOException(I18N.getString("ImageUtil2")+" "+
+                                   writer.getClass().getName());
+        }
+    }
+
+    /** Checks that the provided <code>ImageWriter</code> can encode
+     * the provided <code>ColorModel</code> and <code>SampleModel</code>.
+     * If not, an <code>IIOException</code> will be thrown.
+     * @param writer The provided <code>ImageWriter</code>.
+     * @param colorModel The provided <code>ColorModel</code>.
+     * @param sampleModel The provided <code>SampleModel</code>.
+     * @throws IIOException If the writer cannot encoded the provided image.
+     */
+    public static final void canEncodeImage(ImageWriter writer,
+                                            ColorModel colorModel,
+                                            SampleModel sampleModel)
+        throws IIOException {
+        ImageTypeSpecifier type = null;
+        if (colorModel != null && sampleModel != null)
+            type = new ImageTypeSpecifier(colorModel, sampleModel);
+        canEncodeImage(writer, type);
+    }
+
+    /**
+     * Returns whether the image has contiguous data across rows.
+     */
+    public static final boolean imageIsContiguous(RenderedImage image) {
+        SampleModel sm;
+        if(image instanceof BufferedImage) {
+            WritableRaster ras = ((BufferedImage)image).getRaster();
+            sm = ras.getSampleModel();
+        } else {
+            sm = image.getSampleModel();
+        }
+
+        if (sm instanceof ComponentSampleModel) {
+            // Ensure image rows samples are stored contiguously
+            // in a single bank.
+            ComponentSampleModel csm = (ComponentSampleModel)sm;
+
+            if (csm.getPixelStride() != csm.getNumBands()) {
+                return false;
+            }
+
+            int[] bandOffsets = csm.getBandOffsets();
+            for (int i = 0; i < bandOffsets.length; i++) {
+                if (bandOffsets[i] != i) {
+                    return false;
+                }
+            }
+
+            int[] bankIndices = csm.getBankIndices();
+            for (int i = 0; i < bandOffsets.length; i++) {
+                if (bankIndices[i] != 0) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Otherwise true if and only if it's a bilevel image with
+        // a MultiPixelPackedSampleModel, 1 bit per pixel, and 1 bit
+        // pixel stride.
+        return ImageUtil.isBinary(sm);
+    }
+}

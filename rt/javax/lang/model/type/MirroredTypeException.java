@@ -1,86 +1,80 @@
-/*    */ package javax.lang.model.type;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import java.io.ObjectInputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MirroredTypeException
-/*    */   extends MirroredTypesException
-/*    */ {
-/*    */   private static final long serialVersionUID = 269L;
-/*    */   private transient TypeMirror type;
-/*    */   
-/*    */   public MirroredTypeException(TypeMirror paramTypeMirror) {
-/* 56 */     super("Attempt to access Class object for TypeMirror " + paramTypeMirror.toString(), paramTypeMirror);
-/* 57 */     this.type = paramTypeMirror;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public TypeMirror getTypeMirror() {
-/* 68 */     return this.type;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 76 */     paramObjectInputStream.defaultReadObject();
-/* 77 */     this.type = null;
-/* 78 */     this.types = null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\lang\model\type\MirroredTypeException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.lang.model.type;
+
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import javax.lang.model.element.Element;
+
+
+/**
+ * Thrown when an application attempts to access the {@link Class} object
+ * corresponding to a {@link TypeMirror}.
+ *
+ * @author Joseph D. Darcy
+ * @author Scott Seligman
+ * @author Peter von der Ah&eacute;
+ * @see MirroredTypesException
+ * @see Element#getAnnotation(Class)
+ * @since 1.6
+ */
+public class MirroredTypeException extends MirroredTypesException {
+
+    private static final long serialVersionUID = 269;
+
+    private transient TypeMirror type;          // cannot be serialized
+
+    /**
+     * Constructs a new MirroredTypeException for the specified type.
+     *
+     * @param type  the type being accessed
+     */
+    public MirroredTypeException(TypeMirror type) {
+        super("Attempt to access Class object for TypeMirror " + type.toString(), type);
+        this.type = type;
+    }
+
+    /**
+     * Returns the type mirror corresponding to the type being accessed.
+     * The type mirror may be unavailable if this exception has been
+     * serialized and then read back in.
+     *
+     * @return the type mirror, or {@code null} if unavailable
+     */
+    public TypeMirror getTypeMirror() {
+        return type;
+    }
+
+    /**
+     * Explicitly set all transient fields.
+     */
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        type = null;
+        types = null;
+    }
+}

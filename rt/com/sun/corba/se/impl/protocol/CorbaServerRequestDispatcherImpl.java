@@ -1,889 +1,885 @@
-/*     */ package com.sun.corba.se.impl.protocol;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.corba.ServerRequestImpl;
-/*     */ import com.sun.corba.se.impl.encoding.CodeSetComponentInfo;
-/*     */ import com.sun.corba.se.impl.encoding.MarshalInputStream;
-/*     */ import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.logging.POASystemException;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.pept.encoding.OutputObject;
-/*     */ import com.sun.corba.se.pept.protocol.MessageMediator;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.ior.ObjectAdapterId;
-/*     */ import com.sun.corba.se.spi.ior.ObjectKey;
-/*     */ import com.sun.corba.se.spi.ior.ObjectKeyTemplate;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.oa.NullServant;
-/*     */ import com.sun.corba.se.spi.oa.OADestroyed;
-/*     */ import com.sun.corba.se.spi.oa.OAInvocationInfo;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapter;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapterFactory;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.orb.ORBVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORBVersionFactory;
-/*     */ import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
-/*     */ import com.sun.corba.se.spi.protocol.CorbaServerRequestDispatcher;
-/*     */ import com.sun.corba.se.spi.protocol.ForwardException;
-/*     */ import com.sun.corba.se.spi.protocol.RequestDispatcherRegistry;
-/*     */ import com.sun.corba.se.spi.servicecontext.CodeSetServiceContext;
-/*     */ import com.sun.corba.se.spi.servicecontext.ORBVersionServiceContext;
-/*     */ import com.sun.corba.se.spi.servicecontext.SendingContextServiceContext;
-/*     */ import com.sun.corba.se.spi.servicecontext.ServiceContext;
-/*     */ import com.sun.corba.se.spi.servicecontext.ServiceContexts;
-/*     */ import com.sun.corba.se.spi.servicecontext.UEInfoServiceContext;
-/*     */ import com.sun.corba.se.spi.transport.CorbaConnection;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.DynamicImplementation;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.CORBA.TypeCodePackage.BadKind;
-/*     */ import org.omg.CORBA.UNKNOWN;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.InvokeHandler;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.UnknownException;
-/*     */ import org.omg.PortableServer.DynamicImplementation;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CorbaServerRequestDispatcherImpl
-/*     */   implements CorbaServerRequestDispatcher
-/*     */ {
-/*     */   protected ORB orb;
-/*     */   private ORBUtilSystemException wrapper;
-/*     */   private POASystemException poaWrapper;
-/*     */   
-/*     */   public CorbaServerRequestDispatcherImpl(ORB paramORB) {
-/* 106 */     this.orb = paramORB;
-/* 107 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */     
-/* 109 */     this.poaWrapper = POASystemException.get(paramORB, "rpc.protocol");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IOR locate(ObjectKey paramObjectKey) {
-/*     */     try {
-/* 139 */       if (this.orb.subcontractDebugFlag) {
-/* 140 */         dprint(".locate->");
-/*     */       }
-/* 142 */       ObjectKeyTemplate objectKeyTemplate = paramObjectKey.getTemplate();
-/*     */       
-/*     */       try {
-/* 145 */         checkServerId(paramObjectKey);
-/* 146 */       } catch (ForwardException forwardException) {
-/* 147 */         return forwardException.getIOR();
-/*     */       } 
-/*     */ 
-/*     */       
-/* 151 */       findObjectAdapter(objectKeyTemplate);
-/*     */       
-/* 153 */       return null;
-/*     */     } finally {
-/* 155 */       if (this.orb.subcontractDebugFlag) {
-/* 156 */         dprint(".locate<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void dispatch(MessageMediator paramMessageMediator) {
-/* 162 */     CorbaMessageMediator corbaMessageMediator = (CorbaMessageMediator)paramMessageMediator;
-/*     */     try {
-/* 164 */       if (this.orb.subcontractDebugFlag) {
-/* 165 */         dprint(".dispatch->: " + opAndId(corbaMessageMediator));
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 170 */       consumeServiceContexts(corbaMessageMediator);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 175 */       ((MarshalInputStream)corbaMessageMediator.getInputObject())
-/* 176 */         .performORBVersionSpecificInit();
-/*     */       
-/* 178 */       ObjectKey objectKey = corbaMessageMediator.getObjectKey();
-/*     */ 
-/*     */       
-/*     */       try {
-/* 182 */         checkServerId(objectKey);
-/* 183 */       } catch (ForwardException forwardException) {
-/* 184 */         if (this.orb.subcontractDebugFlag) {
-/* 185 */           dprint(".dispatch: " + opAndId(corbaMessageMediator) + ": bad server id");
-/*     */         }
-/*     */ 
-/*     */         
-/* 189 */         corbaMessageMediator.getProtocolHandler()
-/* 190 */           .createLocationForward(corbaMessageMediator, forwardException.getIOR(), null);
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 194 */       String str = corbaMessageMediator.getOperationName();
-/* 195 */       ObjectAdapter objectAdapter = null;
-/*     */       
-/*     */       try {
-/* 198 */         byte[] arrayOfByte = objectKey.getId().getId();
-/* 199 */         ObjectKeyTemplate objectKeyTemplate = objectKey.getTemplate();
-/* 200 */         objectAdapter = findObjectAdapter(objectKeyTemplate);
-/*     */         
-/* 202 */         Object object = getServantWithPI(corbaMessageMediator, objectAdapter, arrayOfByte, objectKeyTemplate, str);
-/*     */ 
-/*     */         
-/* 205 */         dispatchToServant(object, corbaMessageMediator, arrayOfByte, objectAdapter);
-/* 206 */       } catch (ForwardException forwardException) {
-/* 207 */         if (this.orb.subcontractDebugFlag) {
-/* 208 */           dprint(".dispatch: " + opAndId(corbaMessageMediator) + ": ForwardException caught");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 214 */         corbaMessageMediator.getProtocolHandler()
-/* 215 */           .createLocationForward(corbaMessageMediator, forwardException.getIOR(), null);
-/* 216 */       } catch (OADestroyed oADestroyed) {
-/* 217 */         if (this.orb.subcontractDebugFlag) {
-/* 218 */           dprint(".dispatch: " + opAndId(corbaMessageMediator) + ": OADestroyed exception caught");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 230 */         dispatch(corbaMessageMediator);
-/* 231 */       } catch (RequestCanceledException requestCanceledException) {
-/* 232 */         if (this.orb.subcontractDebugFlag) {
-/* 233 */           dprint(".dispatch: " + opAndId(corbaMessageMediator) + ": RequestCanceledException caught");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 241 */         throw requestCanceledException;
-/* 242 */       } catch (UnknownException unknownException) {
-/* 243 */         if (this.orb.subcontractDebugFlag) {
-/* 244 */           dprint(".dispatch: " + opAndId(corbaMessageMediator) + ": UnknownException caught " + unknownException);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 254 */         if (unknownException.originalEx instanceof RequestCanceledException) {
-/* 255 */           throw (RequestCanceledException)unknownException.originalEx;
-/*     */         }
-/*     */         
-/* 258 */         ServiceContexts serviceContexts = new ServiceContexts(this.orb);
-/* 259 */         UEInfoServiceContext uEInfoServiceContext = new UEInfoServiceContext(unknownException.originalEx);
-/*     */ 
-/*     */         
-/* 262 */         serviceContexts.put(uEInfoServiceContext);
-/*     */         
-/* 264 */         UNKNOWN uNKNOWN = this.wrapper.unknownExceptionInDispatch(CompletionStatus.COMPLETED_MAYBE, unknownException);
-/*     */         
-/* 266 */         corbaMessageMediator.getProtocolHandler()
-/* 267 */           .createSystemExceptionResponse(corbaMessageMediator, uNKNOWN, serviceContexts);
-/*     */       }
-/* 269 */       catch (Throwable throwable) {
-/* 270 */         if (this.orb.subcontractDebugFlag) {
-/* 271 */           dprint(".dispatch: " + opAndId(corbaMessageMediator) + ": other exception " + throwable);
-/*     */         }
-/*     */         
-/* 274 */         corbaMessageMediator.getProtocolHandler()
-/* 275 */           .handleThrowableDuringServerDispatch(corbaMessageMediator, throwable, CompletionStatus.COMPLETED_MAYBE);
-/*     */       } 
-/*     */       
-/*     */       return;
-/*     */     } finally {
-/* 280 */       if (this.orb.subcontractDebugFlag) {
-/* 281 */         dprint(".dispatch<-: " + opAndId(corbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void releaseServant(ObjectAdapter paramObjectAdapter) {
-/*     */     try {
-/* 289 */       if (this.orb.subcontractDebugFlag) {
-/* 290 */         dprint(".releaseServant->");
-/*     */       }
-/*     */       
-/* 293 */       if (paramObjectAdapter == null) {
-/* 294 */         if (this.orb.subcontractDebugFlag) {
-/* 295 */           dprint(".releaseServant: null object adapter");
-/*     */         }
-/*     */         
-/*     */         return;
-/*     */       } 
-/*     */       try {
-/* 301 */         paramObjectAdapter.returnServant();
-/*     */       } finally {
-/* 303 */         paramObjectAdapter.exit();
-/* 304 */         this.orb.popInvocationInfo();
-/*     */       } 
-/*     */     } finally {
-/* 307 */       if (this.orb.subcontractDebugFlag) {
-/* 308 */         dprint(".releaseServant<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object getServant(ObjectAdapter paramObjectAdapter, byte[] paramArrayOfbyte, String paramString) throws OADestroyed {
-/*     */     try {
-/* 319 */       if (this.orb.subcontractDebugFlag) {
-/* 320 */         dprint(".getServant->");
-/*     */       }
-/*     */       
-/* 323 */       OAInvocationInfo oAInvocationInfo = paramObjectAdapter.makeInvocationInfo(paramArrayOfbyte);
-/* 324 */       oAInvocationInfo.setOperation(paramString);
-/* 325 */       this.orb.pushInvocationInfo(oAInvocationInfo);
-/* 326 */       paramObjectAdapter.getInvocationServant(oAInvocationInfo);
-/* 327 */       return oAInvocationInfo.getServantContainer();
-/*     */     } finally {
-/* 329 */       if (this.orb.subcontractDebugFlag) {
-/* 330 */         dprint(".getServant<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Object getServantWithPI(CorbaMessageMediator paramCorbaMessageMediator, ObjectAdapter paramObjectAdapter, byte[] paramArrayOfbyte, ObjectKeyTemplate paramObjectKeyTemplate, String paramString) throws OADestroyed {
-/*     */     try {
-/* 341 */       if (this.orb.subcontractDebugFlag) {
-/* 342 */         dprint(".getServantWithPI->");
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 348 */       this.orb.getPIHandler().initializeServerPIInfo(paramCorbaMessageMediator, paramObjectAdapter, paramArrayOfbyte, paramObjectKeyTemplate);
-/*     */       
-/* 350 */       this.orb.getPIHandler().invokeServerPIStartingPoint();
-/*     */       
-/* 352 */       paramObjectAdapter.enter();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 357 */       if (paramCorbaMessageMediator != null) {
-/* 358 */         paramCorbaMessageMediator.setExecuteReturnServantInResponseConstructor(true);
-/*     */       }
-/* 360 */       Object object = getServant(paramObjectAdapter, paramArrayOfbyte, paramString);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 367 */       String str = "unknown";
-/*     */       
-/* 369 */       if (object instanceof NullServant) {
-/* 370 */         handleNullServant(paramString, (NullServant)object);
-/*     */       } else {
-/* 372 */         str = paramObjectAdapter.getInterfaces(object, paramArrayOfbyte)[0];
-/*     */       } 
-/* 374 */       this.orb.getPIHandler().setServerPIInfo(object, str);
-/*     */       
-/* 376 */       if ((object != null && !(object instanceof DynamicImplementation) && !(object instanceof DynamicImplementation)) || 
-/*     */ 
-/*     */         
-/* 379 */         SpecialMethod.getSpecialMethod(paramString) != null) {
-/* 380 */         this.orb.getPIHandler().invokeServerPIIntermediatePoint();
-/*     */       }
-/*     */       
-/* 383 */       return object;
-/*     */     } finally {
-/* 385 */       if (this.orb.subcontractDebugFlag) {
-/* 386 */         dprint(".getServantWithPI<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void checkServerId(ObjectKey paramObjectKey) {
-/*     */     try {
-/* 394 */       if (this.orb.subcontractDebugFlag) {
-/* 395 */         dprint(".checkServerId->");
-/*     */       }
-/*     */       
-/* 398 */       ObjectKeyTemplate objectKeyTemplate = paramObjectKey.getTemplate();
-/* 399 */       int i = objectKeyTemplate.getServerId();
-/* 400 */       int j = objectKeyTemplate.getSubcontractId();
-/*     */       
-/* 402 */       if (!this.orb.isLocalServerId(j, i)) {
-/* 403 */         if (this.orb.subcontractDebugFlag) {
-/* 404 */           dprint(".checkServerId: bad server id");
-/*     */         }
-/*     */         
-/* 407 */         this.orb.handleBadServerId(paramObjectKey);
-/*     */       } 
-/*     */     } finally {
-/* 410 */       if (this.orb.subcontractDebugFlag) {
-/* 411 */         dprint(".checkServerId<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private ObjectAdapter findObjectAdapter(ObjectKeyTemplate paramObjectKeyTemplate) {
-/*     */     try {
-/* 419 */       if (this.orb.subcontractDebugFlag) {
-/* 420 */         dprint(".findObjectAdapter->");
-/*     */       }
-/*     */       
-/* 423 */       RequestDispatcherRegistry requestDispatcherRegistry = this.orb.getRequestDispatcherRegistry();
-/* 424 */       int i = paramObjectKeyTemplate.getSubcontractId();
-/* 425 */       ObjectAdapterFactory objectAdapterFactory = requestDispatcherRegistry.getObjectAdapterFactory(i);
-/* 426 */       if (objectAdapterFactory == null) {
-/* 427 */         if (this.orb.subcontractDebugFlag) {
-/* 428 */           dprint(".findObjectAdapter: failed to find ObjectAdapterFactory");
-/*     */         }
-/*     */         
-/* 431 */         throw this.wrapper.noObjectAdapterFactory();
-/*     */       } 
-/*     */       
-/* 434 */       ObjectAdapterId objectAdapterId = paramObjectKeyTemplate.getObjectAdapterId();
-/* 435 */       ObjectAdapter objectAdapter = objectAdapterFactory.find(objectAdapterId);
-/*     */       
-/* 437 */       if (objectAdapter == null) {
-/* 438 */         if (this.orb.subcontractDebugFlag) {
-/* 439 */           dprint(".findObjectAdapter: failed to find ObjectAdaptor");
-/*     */         }
-/*     */         
-/* 442 */         throw this.wrapper.badAdapterId();
-/*     */       } 
-/*     */       
-/* 445 */       return objectAdapter;
-/*     */     } finally {
-/* 447 */       if (this.orb.subcontractDebugFlag) {
-/* 448 */         dprint(".findObjectAdapter<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void handleNullServant(String paramString, NullServant paramNullServant) {
-/*     */     try {
-/* 462 */       if (this.orb.subcontractDebugFlag) {
-/* 463 */         dprint(".handleNullServant->: " + paramString);
-/*     */       }
-/*     */ 
-/*     */       
-/* 467 */       SpecialMethod specialMethod = SpecialMethod.getSpecialMethod(paramString);
-/*     */       
-/* 469 */       if (specialMethod == null || 
-/* 470 */         !specialMethod.isNonExistentMethod()) {
-/* 471 */         if (this.orb.subcontractDebugFlag) {
-/* 472 */           dprint(".handleNullServant: " + paramString + ": throwing OBJECT_NOT_EXIST");
-/*     */         }
-/*     */ 
-/*     */         
-/* 476 */         throw paramNullServant.getException();
-/*     */       } 
-/*     */     } finally {
-/* 479 */       if (this.orb.subcontractDebugFlag) {
-/* 480 */         dprint(".handleNullServant<-: " + paramString);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void consumeServiceContexts(CorbaMessageMediator paramCorbaMessageMediator) {
-/*     */     try {
-/* 488 */       if (this.orb.subcontractDebugFlag) {
-/* 489 */         dprint(".consumeServiceContexts->: " + 
-/* 490 */             opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */       
-/* 493 */       ServiceContexts serviceContexts = paramCorbaMessageMediator.getRequestServiceContexts();
-/*     */ 
-/*     */       
-/* 496 */       GIOPVersion gIOPVersion = paramCorbaMessageMediator.getGIOPVersion();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 502 */       boolean bool = processCodeSetContext(paramCorbaMessageMediator, serviceContexts);
-/*     */       
-/* 504 */       if (this.orb.subcontractDebugFlag) {
-/* 505 */         dprint(".consumeServiceContexts: " + opAndId(paramCorbaMessageMediator) + ": GIOP version: " + gIOPVersion);
-/*     */         
-/* 507 */         dprint(".consumeServiceContexts: " + opAndId(paramCorbaMessageMediator) + ": as code set context? " + bool);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 511 */       ServiceContext serviceContext = serviceContexts.get(6);
-/*     */ 
-/*     */       
-/* 514 */       if (serviceContext != null) {
-/* 515 */         SendingContextServiceContext sendingContextServiceContext = (SendingContextServiceContext)serviceContext;
-/*     */         
-/* 517 */         IOR iOR = sendingContextServiceContext.getIOR();
-/*     */         
-/*     */         try {
-/* 520 */           ((CorbaConnection)paramCorbaMessageMediator.getConnection())
-/* 521 */             .setCodeBaseIOR(iOR);
-/* 522 */         } catch (ThreadDeath threadDeath) {
-/* 523 */           throw threadDeath;
-/* 524 */         } catch (Throwable throwable) {
-/* 525 */           throw this.wrapper.badStringifiedIor(throwable);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 545 */       boolean bool1 = false;
-/*     */       
-/* 547 */       if (gIOPVersion.equals(GIOPVersion.V1_0) && bool) {
-/* 548 */         if (this.orb.subcontractDebugFlag) {
-/* 549 */           dprint(".consumeServiceCOntexts: " + opAndId(paramCorbaMessageMediator) + ": Determined to be an old Sun ORB");
-/*     */         }
-/*     */ 
-/*     */         
-/* 553 */         this.orb.setORBVersion(ORBVersionFactory.getOLD());
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 558 */         bool1 = true;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 563 */       serviceContext = serviceContexts.get(1313165056);
-/* 564 */       if (serviceContext != null) {
-/* 565 */         ORBVersionServiceContext oRBVersionServiceContext = (ORBVersionServiceContext)serviceContext;
-/*     */ 
-/*     */         
-/* 568 */         ORBVersion oRBVersion = oRBVersionServiceContext.getVersion();
-/* 569 */         this.orb.setORBVersion(oRBVersion);
-/*     */         
-/* 571 */         bool1 = false;
-/*     */       } 
-/*     */       
-/* 574 */       if (bool1) {
-/* 575 */         if (this.orb.subcontractDebugFlag) {
-/* 576 */           dprint(".consumeServiceContexts: " + opAndId(paramCorbaMessageMediator) + ": Determined to be a foreign ORB");
-/*     */         }
-/*     */ 
-/*     */         
-/* 580 */         this.orb.setORBVersion(ORBVersionFactory.getFOREIGN());
-/*     */       } 
-/*     */     } finally {
-/* 583 */       if (this.orb.subcontractDebugFlag) {
-/* 584 */         dprint(".consumeServiceContexts<-: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected CorbaMessageMediator dispatchToServant(Object paramObject, CorbaMessageMediator paramCorbaMessageMediator, byte[] paramArrayOfbyte, ObjectAdapter paramObjectAdapter) {
-/*     */     try {
-/* 595 */       if (this.orb.subcontractDebugFlag) {
-/* 596 */         dprint(".dispatchToServant->: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */       
-/* 599 */       CorbaMessageMediator corbaMessageMediator = null;
-/*     */       
-/* 601 */       String str = paramCorbaMessageMediator.getOperationName();
-/*     */       
-/* 603 */       SpecialMethod specialMethod = SpecialMethod.getSpecialMethod(str);
-/* 604 */       if (specialMethod != null) {
-/* 605 */         if (this.orb.subcontractDebugFlag) {
-/* 606 */           dprint(".dispatchToServant: " + opAndId(paramCorbaMessageMediator) + ": Handling special method");
-/*     */         }
-/*     */ 
-/*     */         
-/* 610 */         corbaMessageMediator = specialMethod.invoke(paramObject, paramCorbaMessageMediator, paramArrayOfbyte, paramObjectAdapter);
-/* 611 */         return corbaMessageMediator;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 615 */       if (paramObject instanceof DynamicImplementation) {
-/* 616 */         if (this.orb.subcontractDebugFlag) {
-/* 617 */           dprint(".dispatchToServant: " + opAndId(paramCorbaMessageMediator) + ": Handling old style DSI type servant");
-/*     */         }
-/*     */ 
-/*     */         
-/* 621 */         DynamicImplementation dynamicImplementation = (DynamicImplementation)paramObject;
-/*     */         
-/* 623 */         ServerRequestImpl serverRequestImpl = new ServerRequestImpl(paramCorbaMessageMediator, this.orb);
-/*     */ 
-/*     */ 
-/*     */         
-/* 627 */         dynamicImplementation.invoke(serverRequestImpl);
-/*     */         
-/* 629 */         corbaMessageMediator = handleDynamicResult(serverRequestImpl, paramCorbaMessageMediator);
-/* 630 */       } else if (paramObject instanceof DynamicImplementation) {
-/* 631 */         if (this.orb.subcontractDebugFlag) {
-/* 632 */           dprint(".dispatchToServant: " + opAndId(paramCorbaMessageMediator) + ": Handling POA DSI type servant");
-/*     */         }
-/*     */ 
-/*     */         
-/* 636 */         DynamicImplementation dynamicImplementation = (DynamicImplementation)paramObject;
-/*     */         
-/* 638 */         ServerRequestImpl serverRequestImpl = new ServerRequestImpl(paramCorbaMessageMediator, this.orb);
-/*     */ 
-/*     */ 
-/*     */         
-/* 642 */         dynamicImplementation.invoke(serverRequestImpl);
-/*     */         
-/* 644 */         corbaMessageMediator = handleDynamicResult(serverRequestImpl, paramCorbaMessageMediator);
-/*     */       } else {
-/* 646 */         if (this.orb.subcontractDebugFlag) {
-/* 647 */           dprint(".dispatchToServant: " + opAndId(paramCorbaMessageMediator) + ": Handling invoke handler type servant");
-/*     */         }
-/*     */ 
-/*     */         
-/* 651 */         InvokeHandler invokeHandler = (InvokeHandler)paramObject;
-/*     */ 
-/*     */         
-/* 654 */         OutputStream outputStream = invokeHandler._invoke(str, (InputStream)paramCorbaMessageMediator
-/*     */             
-/* 656 */             .getInputObject(), paramCorbaMessageMediator);
-/*     */ 
-/*     */         
-/* 659 */         corbaMessageMediator = (CorbaMessageMediator)((OutputObject)outputStream).getMessageMediator();
-/*     */       } 
-/*     */       
-/* 662 */       return corbaMessageMediator;
-/*     */     } finally {
-/* 664 */       if (this.orb.subcontractDebugFlag) {
-/* 665 */         dprint(".dispatchToServant<-: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected CorbaMessageMediator handleDynamicResult(ServerRequestImpl paramServerRequestImpl, CorbaMessageMediator paramCorbaMessageMediator) {
-/*     */     try {
-/* 675 */       if (this.orb.subcontractDebugFlag) {
-/* 676 */         dprint(".handleDynamicResult->: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */       
-/* 679 */       CorbaMessageMediator corbaMessageMediator = null;
-/*     */ 
-/*     */       
-/* 682 */       Any any = paramServerRequestImpl.checkResultCalled();
-/*     */       
-/* 684 */       if (any == null) {
-/* 685 */         if (this.orb.subcontractDebugFlag) {
-/* 686 */           dprint(".handleDynamicResult: " + opAndId(paramCorbaMessageMediator) + ": handling normal result");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 691 */         corbaMessageMediator = sendingReply(paramCorbaMessageMediator);
-/* 692 */         OutputStream outputStream = (OutputStream)corbaMessageMediator.getOutputObject();
-/* 693 */         paramServerRequestImpl.marshalReplyParams(outputStream);
-/*     */       } else {
-/* 695 */         if (this.orb.subcontractDebugFlag) {
-/* 696 */           dprint(".handleDynamicResult: " + opAndId(paramCorbaMessageMediator) + ": handling error");
-/*     */         }
-/*     */ 
-/*     */         
-/* 700 */         corbaMessageMediator = sendingReply(paramCorbaMessageMediator, any);
-/*     */       } 
-/*     */       
-/* 703 */       return corbaMessageMediator;
-/*     */     } finally {
-/* 705 */       if (this.orb.subcontractDebugFlag) {
-/* 706 */         dprint(".handleDynamicResult<-: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected CorbaMessageMediator sendingReply(CorbaMessageMediator paramCorbaMessageMediator) {
-/*     */     try {
-/* 714 */       if (this.orb.subcontractDebugFlag) {
-/* 715 */         dprint(".sendingReply->: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */       
-/* 718 */       ServiceContexts serviceContexts = new ServiceContexts(this.orb);
-/* 719 */       return paramCorbaMessageMediator.getProtocolHandler().createResponse(paramCorbaMessageMediator, serviceContexts);
-/*     */     } finally {
-/* 721 */       if (this.orb.subcontractDebugFlag) {
-/* 722 */         dprint(".sendingReply<-: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected CorbaMessageMediator sendingReply(CorbaMessageMediator paramCorbaMessageMediator, Any paramAny) {
-/*     */     try {
-/*     */       CorbaMessageMediator corbaMessageMediator;
-/* 734 */       if (this.orb.subcontractDebugFlag) {
-/* 735 */         dprint(".sendingReply/Any->: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */       
-/* 738 */       ServiceContexts serviceContexts = new ServiceContexts(this.orb);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 743 */       String str = null;
-/*     */       try {
-/* 745 */         str = paramAny.type().id();
-/* 746 */       } catch (BadKind badKind) {
-/* 747 */         throw this.wrapper.problemWithExceptionTypecode(badKind);
-/*     */       } 
-/*     */       
-/* 750 */       if (ORBUtility.isSystemException(str)) {
-/* 751 */         if (this.orb.subcontractDebugFlag) {
-/* 752 */           dprint(".sendingReply/Any: " + opAndId(paramCorbaMessageMediator) + ": handling system exception");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 757 */         InputStream inputStream = paramAny.create_input_stream();
-/* 758 */         SystemException systemException = ORBUtility.readSystemException(inputStream);
-/*     */ 
-/*     */         
-/* 761 */         corbaMessageMediator = paramCorbaMessageMediator.getProtocolHandler().createSystemExceptionResponse(paramCorbaMessageMediator, systemException, serviceContexts);
-/*     */       } else {
-/* 763 */         if (this.orb.subcontractDebugFlag) {
-/* 764 */           dprint(".sendingReply/Any: " + opAndId(paramCorbaMessageMediator) + ": handling user exception");
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 769 */         corbaMessageMediator = paramCorbaMessageMediator.getProtocolHandler().createUserExceptionResponse(paramCorbaMessageMediator, serviceContexts);
-/* 770 */         OutputStream outputStream = (OutputStream)corbaMessageMediator.getOutputObject();
-/* 771 */         paramAny.write_value(outputStream);
-/*     */       } 
-/*     */       
-/* 774 */       return corbaMessageMediator;
-/*     */     } finally {
-/* 776 */       if (this.orb.subcontractDebugFlag) {
-/* 777 */         dprint(".sendingReply/Any<-: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean processCodeSetContext(CorbaMessageMediator paramCorbaMessageMediator, ServiceContexts paramServiceContexts) {
-/*     */     try {
-/* 791 */       if (this.orb.subcontractDebugFlag) {
-/* 792 */         dprint(".processCodeSetContext->: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */       
-/* 795 */       ServiceContext serviceContext = paramServiceContexts.get(1);
-/*     */       
-/* 797 */       if (serviceContext != null) {
-/*     */         
-/* 799 */         if (paramCorbaMessageMediator.getConnection() == null) {
-/* 800 */           return true;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 806 */         if (paramCorbaMessageMediator.getGIOPVersion().equals(GIOPVersion.V1_0)) {
-/* 807 */           return true;
-/*     */         }
-/*     */         
-/* 810 */         CodeSetServiceContext codeSetServiceContext = (CodeSetServiceContext)serviceContext;
-/* 811 */         CodeSetComponentInfo.CodeSetContext codeSetContext = codeSetServiceContext.getCodeSetContext();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 826 */         if (((CorbaConnection)paramCorbaMessageMediator.getConnection())
-/* 827 */           .getCodeSetContext() == null) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 831 */           if (this.orb.subcontractDebugFlag) {
-/* 832 */             dprint(".processCodeSetContext: " + opAndId(paramCorbaMessageMediator) + ": Setting code sets to: " + codeSetContext);
-/*     */           }
-/*     */ 
-/*     */           
-/* 836 */           ((CorbaConnection)paramCorbaMessageMediator.getConnection())
-/* 837 */             .setCodeSetContext(codeSetContext);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 851 */           if (codeSetContext.getCharCodeSet() != OSFCodeSetRegistry.ISO_8859_1
-/* 852 */             .getNumber()) {
-/* 853 */             ((MarshalInputStream)paramCorbaMessageMediator.getInputObject())
-/* 854 */               .resetCodeSetConverters();
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 866 */       return (serviceContext != null);
-/*     */     } finally {
-/* 868 */       if (this.orb.subcontractDebugFlag) {
-/* 869 */         dprint(".processCodeSetContext<-: " + opAndId(paramCorbaMessageMediator));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void dprint(String paramString) {
-/* 876 */     ORBUtility.dprint("CorbaServerRequestDispatcherImpl", paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected String opAndId(CorbaMessageMediator paramCorbaMessageMediator) {
-/* 881 */     return ORBUtility.operationNameAndRequestId(paramCorbaMessageMediator);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\CorbaServerRequestDispatcherImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+
+package com.sun.corba.se.impl.protocol;
+
+import org.omg.PortableServer.Servant ;
+
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.UNKNOWN;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.Any;
+
+import org.omg.CORBA.portable.InvokeHandler;
+import org.omg.CORBA.portable.InputStream;
+import org.omg.CORBA.portable.OutputStream;
+import org.omg.CORBA.portable.UnknownException;
+import org.omg.CORBA.portable.ResponseHandler;
+
+import com.sun.org.omg.SendingContext.CodeBase;
+
+import com.sun.corba.se.pept.encoding.OutputObject;
+import com.sun.corba.se.pept.protocol.MessageMediator;
+
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.orb.ORBVersion;
+import com.sun.corba.se.spi.orb.ORBVersionFactory;
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.ior.ObjectKey;
+import com.sun.corba.se.spi.ior.ObjectKeyTemplate;
+import com.sun.corba.se.spi.ior.ObjectAdapterId;
+import com.sun.corba.se.spi.oa.ObjectAdapterFactory;
+import com.sun.corba.se.spi.oa.ObjectAdapter;
+import com.sun.corba.se.spi.oa.OAInvocationInfo;
+import com.sun.corba.se.spi.oa.OADestroyed;
+import com.sun.corba.se.spi.oa.NullServant;
+import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
+import com.sun.corba.se.spi.protocol.CorbaServerRequestDispatcher;
+import com.sun.corba.se.spi.protocol.ForwardException ;
+import com.sun.corba.se.spi.protocol.RequestDispatcherRegistry;
+import com.sun.corba.se.spi.transport.CorbaConnection;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+
+import com.sun.corba.se.impl.protocol.SpecialMethod ;
+import com.sun.corba.se.spi.servicecontext.ServiceContext;
+import com.sun.corba.se.spi.servicecontext.ServiceContexts;
+import com.sun.corba.se.spi.servicecontext.UEInfoServiceContext;
+import com.sun.corba.se.spi.servicecontext.CodeSetServiceContext;
+import com.sun.corba.se.spi.servicecontext.SendingContextServiceContext;
+import com.sun.corba.se.spi.servicecontext.ORBVersionServiceContext;
+
+import com.sun.corba.se.impl.corba.ServerRequestImpl ;
+import com.sun.corba.se.impl.encoding.MarshalInputStream;
+import com.sun.corba.se.impl.encoding.MarshalOutputStream;
+import com.sun.corba.se.impl.encoding.CodeSetComponentInfo;
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.protocol.RequestCanceledException;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.logging.POASystemException;
+
+public class CorbaServerRequestDispatcherImpl
+    implements CorbaServerRequestDispatcher
+{
+    protected ORB orb; // my ORB instance
+    private ORBUtilSystemException wrapper ;
+    private POASystemException poaWrapper ;
+
+    // Added from last version because it broke the build - RTW
+    // XXX remove me and rebuild: probably no longer needed
+    // public static final int UNKNOWN_EXCEPTION_INFO_ID = 9;
+
+    public CorbaServerRequestDispatcherImpl(ORB orb)
+    {
+        this.orb = orb;
+        wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+        poaWrapper = POASystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+    }
+
+    /** XXX/REVISIT:
+     * We do not want to look for a servant in the POA/ServantManager case,
+     * but we could in most other cases.  The OA could have a method that
+     * returns true if the servant MAY exist, and false only if the servant
+     * definitely DOES NOT exist.
+     *
+     * XXX/REVISIT:
+     * We may wish to indicate OBJECT_HERE by some mechanism other than
+     * returning a null result.
+     *
+     * Called from ORB.locate when a LocateRequest arrives.
+     * Result is not always absolutely correct: may indicate OBJECT_HERE
+     * for non-existent objects, which is resolved on invocation.  This
+     * "bug" is unavoidable, since in general the object may be destroyed
+     * between a locate and a request.  Note that this only checks that
+     * the appropriate ObjectAdapter is available, not that the servant
+     * actually exists.
+     * Need to signal one of OBJECT_HERE, OBJECT_FORWARD, OBJECT_NOT_EXIST.
+     * @return Result is null if object is (possibly) implemented here, otherwise
+     * an IOR indicating objref to forward the request to.
+     * @exception OBJECT_NOT_EXIST is thrown if we know the object does not
+     * exist here, and we are not forwarding.
+     */
+    public IOR locate(ObjectKey okey)
+    {
+        try {
+            if (orb.subcontractDebugFlag)
+                dprint(".locate->");
+
+            ObjectKeyTemplate oktemp = okey.getTemplate() ;
+
+            try {
+                checkServerId(okey);
+            } catch (ForwardException fex) {
+                return fex.getIOR() ;
+            }
+
+            // Called only for its side-effect of throwing appropriate exceptions
+            findObjectAdapter(oktemp);
+
+            return null ;
+        } finally {
+            if (orb.subcontractDebugFlag)
+                dprint(".locate<-");
+        }
+    }
+
+    public void dispatch(MessageMediator messageMediator)
+    {
+        CorbaMessageMediator request = (CorbaMessageMediator) messageMediator;
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".dispatch->: " + opAndId(request));
+            }
+
+            // to set the codebase information, if any transmitted; and also
+            // appropriate ORB Version.
+            consumeServiceContexts(request);
+
+            // Now that we have the service contexts processed and the
+            // correct ORBVersion set, we must finish initializing the
+            // stream.
+            ((MarshalInputStream)request.getInputObject())
+                .performORBVersionSpecificInit();
+
+            ObjectKey okey = request.getObjectKey();
+
+            // Check that this server is the right server
+            try {
+                checkServerId(okey);
+            } catch (ForwardException fex) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatch: " + opAndId(request)
+                           + ": bad server id");
+                }
+
+                request.getProtocolHandler()
+                    .createLocationForward(request, fex.getIOR(), null);
+                return;
+            }
+
+            String operation = request.getOperationName();
+            ObjectAdapter objectAdapter = null ;
+
+            try {
+                byte[] objectId = okey.getId().getId() ;
+                ObjectKeyTemplate oktemp = okey.getTemplate() ;
+                objectAdapter = findObjectAdapter(oktemp);
+
+                java.lang.Object servant = getServantWithPI(request, objectAdapter,
+                    objectId, oktemp, operation);
+
+                dispatchToServant(servant, request, objectId, objectAdapter);
+            } catch (ForwardException ex) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatch: " + opAndId(request)
+                           + ": ForwardException caught");
+                }
+
+                // Thrown by Portable Interceptors from InterceptorInvoker,
+                // through Response constructor.
+                request.getProtocolHandler()
+                    .createLocationForward(request, ex.getIOR(), null);
+            } catch (OADestroyed ex) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatch: " + opAndId(request)
+                           + ": OADestroyed exception caught");
+                }
+
+                // DO NOT CALL THIS HERE:
+                // releaseServant(objectAdapter);
+                // The problem is that OADestroyed is only thrown by oa.enter, in
+                // which case oa.exit should NOT be called, and neither should
+                // the invocationInfo stack be popped.
+
+                // Destroyed POAs can be recreated by normal adapter activation.
+                // So just restart the dispatch.
+                dispatch(request);
+            } catch (RequestCanceledException ex) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatch: " + opAndId(request)
+                           + ": RequestCanceledException caught");
+                }
+
+                // IDLJ generated non-tie based skeletons do not catch the
+                // RequestCanceledException. Rethrow the exception, which will
+                // cause the worker thread to unwind the dispatch and wait for
+                // other requests.
+                throw ex;
+            } catch (UnknownException ex) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatch: " + opAndId(request)
+                           + ": UnknownException caught " + ex);
+                }
+
+                // RMIC generated tie skeletons convert all Throwable exception
+                // types (including RequestCanceledException, ThreadDeath)
+                // thrown during reading fragments into UnknownException.
+                // If RequestCanceledException was indeed raised,
+                // then rethrow it, which will eventually cause the worker
+                // thread to unstack the dispatch and wait for other requests.
+                if (ex.originalEx instanceof RequestCanceledException) {
+                    throw (RequestCanceledException) ex.originalEx;
+                }
+
+                ServiceContexts contexts = new ServiceContexts(orb);
+                UEInfoServiceContext usc = new UEInfoServiceContext(
+                    ex.originalEx);
+
+                contexts.put( usc ) ;
+
+                SystemException sysex = wrapper.unknownExceptionInDispatch(
+                        CompletionStatus.COMPLETED_MAYBE, ex ) ;
+                request.getProtocolHandler()
+                    .createSystemExceptionResponse(request, sysex,
+                        contexts);
+            } catch (Throwable ex) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatch: " + opAndId(request)
+                           + ": other exception " + ex);
+                }
+                request.getProtocolHandler()
+                    .handleThrowableDuringServerDispatch(
+                        request, ex, CompletionStatus.COMPLETED_MAYBE);
+            }
+            return;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".dispatch<-: " + opAndId(request));
+            }
+        }
+    }
+
+    private void releaseServant(ObjectAdapter objectAdapter)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".releaseServant->");
+            }
+
+            if (objectAdapter == null) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".releaseServant: null object adapter");
+                }
+                return ;
+            }
+
+            try {
+                objectAdapter.returnServant();
+            } finally {
+                objectAdapter.exit();
+                orb.popInvocationInfo() ;
+            }
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".releaseServant<-");
+            }
+        }
+    }
+
+    // Note that objectAdapter.enter() must be called before getServant.
+    private java.lang.Object getServant(ObjectAdapter objectAdapter, byte[] objectId,
+        String operation)
+        throws OADestroyed
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".getServant->");
+            }
+
+            OAInvocationInfo info = objectAdapter.makeInvocationInfo(objectId);
+            info.setOperation(operation);
+            orb.pushInvocationInfo(info);
+            objectAdapter.getInvocationServant(info);
+            return info.getServantContainer() ;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".getServant<-");
+            }
+        }
+    }
+
+    protected java.lang.Object getServantWithPI(CorbaMessageMediator request,
+                                                 ObjectAdapter objectAdapter,
+        byte[] objectId, ObjectKeyTemplate oktemp, String operation)
+        throws OADestroyed
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".getServantWithPI->");
+            }
+
+            // Prepare Portable Interceptors for a new server request
+            // and invoke receive_request_service_contexts.  The starting
+            // point may throw a SystemException or ForwardException.
+            orb.getPIHandler().initializeServerPIInfo(request, objectAdapter,
+                objectId, oktemp);
+            orb.getPIHandler().invokeServerPIStartingPoint();
+
+            objectAdapter.enter() ;
+
+            // This must be set just after the enter so that exceptions thrown by
+            // enter do not cause
+            // the exception reply to pop the thread stack and do an extra oa.exit.
+            if (request != null)
+                request.setExecuteReturnServantInResponseConstructor(true);
+
+            java.lang.Object servant = getServant(objectAdapter, objectId,
+                operation);
+
+            // Note: we do not know the MDI on a null servant.
+            // We only end up in that situation if _non_existent called,
+            // so that the following handleNullServant call does not throw an
+            // exception.
+            String mdi = "unknown" ;
+
+            if (servant instanceof NullServant)
+                handleNullServant(operation, (NullServant)servant);
+            else
+                mdi = objectAdapter.getInterfaces(servant, objectId)[0] ;
+
+            orb.getPIHandler().setServerPIInfo(servant, mdi);
+
+            if (((servant != null) &&
+                !(servant instanceof org.omg.CORBA.DynamicImplementation) &&
+                !(servant instanceof org.omg.PortableServer.DynamicImplementation)) ||
+                (SpecialMethod.getSpecialMethod(operation) != null)) {
+                orb.getPIHandler().invokeServerPIIntermediatePoint();
+            }
+
+            return servant ;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".getServantWithPI<-");
+            }
+        }
+    }
+
+    protected void checkServerId(ObjectKey okey)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".checkServerId->");
+            }
+
+            ObjectKeyTemplate oktemp = okey.getTemplate() ;
+            int sId = oktemp.getServerId() ;
+            int scid = oktemp.getSubcontractId() ;
+
+            if (!orb.isLocalServerId(scid, sId)) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".checkServerId: bad server id");
+                }
+
+                orb.handleBadServerId(okey);
+            }
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".checkServerId<-");
+            }
+        }
+    }
+
+    private ObjectAdapter findObjectAdapter(ObjectKeyTemplate oktemp)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".findObjectAdapter->");
+            }
+
+            RequestDispatcherRegistry scr = orb.getRequestDispatcherRegistry() ;
+            int scid = oktemp.getSubcontractId() ;
+            ObjectAdapterFactory oaf = scr.getObjectAdapterFactory(scid);
+            if (oaf == null) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".findObjectAdapter: failed to find ObjectAdapterFactory");
+                }
+
+                throw wrapper.noObjectAdapterFactory() ;
+            }
+
+            ObjectAdapterId oaid = oktemp.getObjectAdapterId() ;
+            ObjectAdapter oa = oaf.find(oaid);
+
+            if (oa == null) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".findObjectAdapter: failed to find ObjectAdaptor");
+                }
+
+                throw wrapper.badAdapterId() ;
+            }
+
+            return oa ;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".findObjectAdapter<-");
+            }
+        }
+    }
+
+    /** Always throws OBJECT_NOT_EXIST if operation is not a special method.
+    * If operation is _non_existent or _not_existent, this will just
+    * return without performing any action, so that _non_existent can return
+    * false.  Always throws OBJECT_NOT_EXIST for any other special method.
+    * Update for issue 4385.
+    */
+    protected void handleNullServant(String operation, NullServant nserv )
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".handleNullServant->: " + operation);
+            }
+
+            SpecialMethod specialMethod =
+                SpecialMethod.getSpecialMethod(operation);
+
+            if ((specialMethod == null) ||
+                !specialMethod.isNonExistentMethod()) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".handleNullServant: " + operation
+                           + ": throwing OBJECT_NOT_EXIST");
+                }
+
+                throw nserv.getException() ;
+            }
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".handleNullServant<-: " + operation);
+            }
+        }
+    }
+
+    protected void consumeServiceContexts(CorbaMessageMediator request)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".consumeServiceContexts->: "
+                       + opAndId(request));
+            }
+
+            ServiceContexts ctxts = request.getRequestServiceContexts();
+            ServiceContext sc ;
+
+            GIOPVersion giopVersion = request.getGIOPVersion();
+
+            // we cannot depend on this since for our local case, we do not send
+            // in this service context.  Can we rely on just the CodeSetServiceContext?
+            // boolean rtSC = false; // Runtime ServiceContext
+
+            boolean hasCodeSetContext = processCodeSetContext(request, ctxts);
+
+            if (orb.subcontractDebugFlag) {
+                dprint(".consumeServiceContexts: " + opAndId(request)
+                       + ": GIOP version: " + giopVersion);
+                dprint(".consumeServiceContexts: " + opAndId(request)
+                       + ": as code set context? " + hasCodeSetContext);
+            }
+
+            sc = ctxts.get(
+                SendingContextServiceContext.SERVICE_CONTEXT_ID ) ;
+
+            if (sc != null) {
+                SendingContextServiceContext scsc =
+                    (SendingContextServiceContext)sc ;
+                IOR ior = scsc.getIOR() ;
+
+                try {
+                    ((CorbaConnection)request.getConnection())
+                        .setCodeBaseIOR(ior);
+                } catch (ThreadDeath td) {
+                    throw td ;
+                } catch (Throwable t) {
+                    throw wrapper.badStringifiedIor( t ) ;
+                }
+            }
+
+            // the RTSC is sent only once during session establishment.  We
+            // need to find out if the CodeBaseRef is already set.  If yes,
+            // then also the rtSC flag needs to be set to true
+            // this is not possible for the LocalCase since there is no
+            // IIOPConnection for the LocalCase
+
+            // used for a case where we have JDK 1.3 supporting 1.0 protocol,
+            // but sending 2 service contexts, that is not normal as per
+            // GIOP rules, based on above information, we figure out that we
+            // are talking to the legacy ORB and set the ORB Version Accordingly.
+
+            // this special case tell us that it is legacy SUN orb
+            // and not a foreign one
+            // rtSC is not available for localcase due to which this generic
+            // path would fail if relying on rtSC
+            //if (giopVersion.equals(GIOPVersion.V1_0) && hasCodeSetContext && rtSC)
+            boolean isForeignORB = false;
+
+            if (giopVersion.equals(GIOPVersion.V1_0) && hasCodeSetContext) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".consumeServiceCOntexts: " + opAndId(request)
+                           + ": Determined to be an old Sun ORB");
+                }
+
+                orb.setORBVersion(ORBVersionFactory.getOLD()) ;
+                // System.out.println("setting legacy ORB version");
+            } else {
+                // If it didn't include our ORB version service context (below),
+                // then it must be a foreign ORB.
+                isForeignORB = true;
+            }
+
+            // try to get the ORBVersion sent as part of the ServiceContext
+            // if any
+            sc = ctxts.get( ORBVersionServiceContext.SERVICE_CONTEXT_ID ) ;
+            if (sc != null) {
+                ORBVersionServiceContext ovsc =
+                   (ORBVersionServiceContext) sc;
+
+                ORBVersion version = ovsc.getVersion();
+                orb.setORBVersion(version);
+
+                isForeignORB = false;
+            }
+
+            if (isForeignORB) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".consumeServiceContexts: " + opAndId(request)
+                           + ": Determined to be a foreign ORB");
+                }
+
+                orb.setORBVersion(ORBVersionFactory.getFOREIGN());
+            }
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".consumeServiceContexts<-: " + opAndId(request));
+            }
+        }
+    }
+
+    protected CorbaMessageMediator dispatchToServant(
+        java.lang.Object servant,
+        CorbaMessageMediator req,
+        byte[] objectId, ObjectAdapter objectAdapter)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".dispatchToServant->: " + opAndId(req));
+            }
+
+            CorbaMessageMediator response = null ;
+
+            String operation = req.getOperationName() ;
+
+            SpecialMethod method = SpecialMethod.getSpecialMethod(operation) ;
+            if (method != null) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatchToServant: " + opAndId(req)
+                           + ": Handling special method");
+                }
+
+                response = method.invoke(servant, req, objectId, objectAdapter);
+                return response ;
+            }
+
+            // Invoke on the servant using the portable DSI skeleton
+            if (servant instanceof org.omg.CORBA.DynamicImplementation) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatchToServant: " + opAndId(req)
+                           + ": Handling old style DSI type servant");
+                }
+
+                org.omg.CORBA.DynamicImplementation dynimpl =
+                    (org.omg.CORBA.DynamicImplementation)servant;
+                ServerRequestImpl sreq = new ServerRequestImpl(req, orb);
+
+                // Note: When/if dynimpl.invoke calls arguments() or
+                // set_exception() then intermediate points are run.
+                dynimpl.invoke(sreq);
+
+                response = handleDynamicResult(sreq, req);
+            } else if (servant instanceof org.omg.PortableServer.DynamicImplementation) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatchToServant: " + opAndId(req)
+                           + ": Handling POA DSI type servant");
+                }
+
+                org.omg.PortableServer.DynamicImplementation dynimpl =
+                    (org.omg.PortableServer.DynamicImplementation)servant;
+                ServerRequestImpl sreq = new ServerRequestImpl(req, orb);
+
+                // Note: When/if dynimpl.invoke calls arguments() or
+                // set_exception() then intermediate points are run.
+                dynimpl.invoke(sreq);
+
+                response = handleDynamicResult(sreq, req);
+            } else {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".dispatchToServant: " + opAndId(req)
+                           + ": Handling invoke handler type servant");
+                }
+
+                InvokeHandler invhandle = (InvokeHandler)servant ;
+
+                OutputStream stream =
+                    (OutputStream)invhandle._invoke(
+                      operation,
+                      (org.omg.CORBA.portable.InputStream)req.getInputObject(),
+                      req);
+                response = (CorbaMessageMediator)
+                    ((OutputObject)stream).getMessageMediator();
+            }
+
+            return response ;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".dispatchToServant<-: " + opAndId(req));
+            }
+        }
+    }
+
+    protected CorbaMessageMediator handleDynamicResult(
+        ServerRequestImpl sreq,
+        CorbaMessageMediator req)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".handleDynamicResult->: " + opAndId(req));
+            }
+
+            CorbaMessageMediator response = null ;
+
+            // Check if ServerRequestImpl.result() has been called
+            Any excany = sreq.checkResultCalled();
+
+            if (excany == null) { // normal return
+                if (orb.subcontractDebugFlag) {
+                    dprint(".handleDynamicResult: " + opAndId(req)
+                           + ": handling normal result");
+                }
+
+                // Marshal out/inout/return parameters into the ReplyMessage
+                response = sendingReply(req);
+                OutputStream os = (OutputStream) response.getOutputObject();
+                sreq.marshalReplyParams(os);
+            }  else {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".handleDynamicResult: " + opAndId(req)
+                           + ": handling error");
+                }
+
+                response = sendingReply(req, excany);
+            }
+
+            return response ;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".handleDynamicResult<-: " + opAndId(req));
+            }
+        }
+    }
+
+    protected CorbaMessageMediator sendingReply(CorbaMessageMediator req)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".sendingReply->: " + opAndId(req));
+            }
+
+            ServiceContexts scs = new ServiceContexts(orb);
+            return req.getProtocolHandler().createResponse(req, scs);
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".sendingReply<-: " + opAndId(req));
+            }
+        }
+    }
+
+    /** Must always be called, just after the servant's method returns.
+     *  Creates the ReplyMessage header and puts in the transaction context
+     *  if necessary.
+     */
+    protected CorbaMessageMediator sendingReply(CorbaMessageMediator req, Any excany)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".sendingReply/Any->: " + opAndId(req));
+            }
+
+            ServiceContexts scs = new ServiceContexts(orb);
+
+            // Check if the servant set a SystemException or
+            // UserException
+            CorbaMessageMediator resp;
+            String repId=null;
+            try {
+                repId = excany.type().id();
+            } catch (org.omg.CORBA.TypeCodePackage.BadKind e) {
+                throw wrapper.problemWithExceptionTypecode( e ) ;
+            }
+
+            if (ORBUtility.isSystemException(repId)) {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".sendingReply/Any: " + opAndId(req)
+                           + ": handling system exception");
+                }
+
+                // Get the exception object from the Any
+                InputStream in = excany.create_input_stream();
+                SystemException ex = ORBUtility.readSystemException(in);
+                // Marshal the exception back
+                resp = req.getProtocolHandler()
+                    .createSystemExceptionResponse(req, ex, scs);
+            } else {
+                if (orb.subcontractDebugFlag) {
+                    dprint(".sendingReply/Any: " + opAndId(req)
+                           + ": handling user exception");
+                }
+
+                resp = req.getProtocolHandler()
+                    .createUserExceptionResponse(req, scs);
+                OutputStream os = (OutputStream)resp.getOutputObject();
+                excany.write_value(os);
+            }
+
+            return resp;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".sendingReply/Any<-: " + opAndId(req));
+            }
+        }
+    }
+
+    /**
+     * Handles setting the connection's code sets if required.
+     * Returns true if the CodeSetContext was in the request, false
+     * otherwise.
+     */
+    protected boolean processCodeSetContext(
+        CorbaMessageMediator request, ServiceContexts contexts)
+    {
+        try {
+            if (orb.subcontractDebugFlag) {
+                dprint(".processCodeSetContext->: " + opAndId(request));
+            }
+
+            ServiceContext sc = contexts.get(
+                CodeSetServiceContext.SERVICE_CONTEXT_ID);
+            if (sc != null) {
+                // Somehow a code set service context showed up in the local case.
+                if (request.getConnection() == null) {
+                    return true;
+                }
+
+                // If it's GIOP 1.0, it shouldn't have this context at all.  Our legacy
+                // ORBs sent it and we need to know if it's here to make ORB versioning
+                // decisions, but we don't use the contents.
+                if (request.getGIOPVersion().equals(GIOPVersion.V1_0)) {
+                    return true;
+                }
+
+                CodeSetServiceContext cssc = (CodeSetServiceContext)sc ;
+                CodeSetComponentInfo.CodeSetContext csctx = cssc.getCodeSetContext();
+
+                // Note on threading:
+                //
+                // getCodeSetContext and setCodeSetContext are synchronized
+                // on the Connection.  At worst, this will result in
+                // multiple threads entering this block and calling
+                // setCodeSetContext but not actually changing the
+                // values on the Connection.
+                //
+                // Alternative would be to lock the connection for the
+                // whole block, but it's fine either way.
+
+                // The connection's codeSetContext is null until we've received a
+                // request with a code set context with the negotiated code sets.
+                if (((CorbaConnection)request.getConnection())
+                    .getCodeSetContext() == null)
+                {
+
+                    // Use these code sets on this connection
+                    if (orb.subcontractDebugFlag) {
+                        dprint(".processCodeSetContext: " + opAndId(request)
+                               + ": Setting code sets to: " + csctx);
+                    }
+
+                    ((CorbaConnection)request.getConnection())
+                        .setCodeSetContext(csctx);
+
+                    // We had to read the method name using ISO 8859-1
+                    // (which is the default in the CDRInputStream for
+                    // char data), but now we may have a new char
+                    // code set.  If it isn't ISO8859-1, we must tell
+                    // the CDR stream to null any converter references
+                    // it has created so that it will reacquire
+                    // the code sets again using the new info.
+                    //
+                    // This should probably compare with the stream's
+                    // char code set rather than assuming it's ISO8859-1.
+                    // (However, the operation name is almost certainly
+                    // ISO8859-1 or ASCII.)
+                    if (csctx.getCharCodeSet() !=
+                        OSFCodeSetRegistry.ISO_8859_1.getNumber()) {
+                        ((MarshalInputStream)request.getInputObject())
+                            .resetCodeSetConverters();
+                    }
+                }
+            }
+
+            // If no code set information is ever sent from the client,
+            // the server will use ISO8859-1 for char and throw an
+            // exception for any wchar transmissions.
+            //
+            // In the local case, we use ORB provided streams for
+            // marshaling and unmarshaling.  Currently, they use
+            // ISO8859-1 for char/string and UTF16 for wchar/wstring.
+            return sc != null ;
+        } finally {
+            if (orb.subcontractDebugFlag) {
+                dprint(".processCodeSetContext<-: " + opAndId(request));
+            }
+        }
+    }
+
+    protected void dprint(String msg)
+    {
+        ORBUtility.dprint("CorbaServerRequestDispatcherImpl", msg);
+    }
+
+    protected String opAndId(CorbaMessageMediator mediator)
+    {
+        return ORBUtility.operationNameAndRequestId(mediator);
+    }
+}
+
+// End of file.

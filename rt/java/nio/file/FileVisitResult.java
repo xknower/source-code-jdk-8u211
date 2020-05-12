@@ -1,68 +1,62 @@
-/*    */ package java.nio.file;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum FileVisitResult
-/*    */ {
-/* 42 */   CONTINUE,
-/*    */ 
-/*    */ 
-/*    */   
-/* 46 */   TERMINATE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 53 */   SKIP_SUBTREE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 61 */   SKIP_SIBLINGS;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\FileVisitResult.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file;
+
+/**
+ * The result type of a {@link FileVisitor FileVisitor}.
+ *
+ * @since 1.7
+ *
+ * @see Files#walkFileTree
+ */
+
+public enum FileVisitResult {
+    /**
+     * Continue. When returned from a {@link FileVisitor#preVisitDirectory
+     * preVisitDirectory} method then the entries in the directory should also
+     * be visited.
+     */
+    CONTINUE,
+    /**
+     * Terminate.
+     */
+    TERMINATE,
+    /**
+     * Continue without visiting the entries in this directory. This result
+     * is only meaningful when returned from the {@link
+     * FileVisitor#preVisitDirectory preVisitDirectory} method; otherwise
+     * this result type is the same as returning {@link #CONTINUE}.
+     */
+    SKIP_SUBTREE,
+    /**
+     * Continue without visiting the <em>siblings</em> of this file or directory.
+     * If returned from the {@link FileVisitor#preVisitDirectory
+     * preVisitDirectory} method then the entries in the directory are also
+     * skipped and the {@link FileVisitor#postVisitDirectory postVisitDirectory}
+     * method is not invoked.
+     */
+    SKIP_SIBLINGS;
+}

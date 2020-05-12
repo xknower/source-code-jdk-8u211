@@ -1,109 +1,103 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class ShadowEffect
-/*     */   extends Effect
-/*     */ {
-/*  35 */   protected Color color = Color.BLACK;
-/*     */   
-/*  37 */   protected float opacity = 0.75F;
-/*     */   
-/*  39 */   protected int angle = 135;
-/*     */   
-/*  41 */   protected int distance = 5;
-/*     */   
-/*  43 */   protected int spread = 0;
-/*     */   
-/*  45 */   protected int size = 5;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Color getColor() {
-/*  51 */     return this.color;
-/*     */   }
-/*     */   
-/*     */   void setColor(Color paramColor) {
-/*  55 */     Color color = getColor();
-/*  56 */     this.color = paramColor;
-/*     */   }
-/*     */   
-/*     */   float getOpacity() {
-/*  60 */     return this.opacity;
-/*     */   }
-/*     */   
-/*     */   void setOpacity(float paramFloat) {
-/*  64 */     float f = getOpacity();
-/*  65 */     this.opacity = paramFloat;
-/*     */   }
-/*     */   
-/*     */   int getAngle() {
-/*  69 */     return this.angle;
-/*     */   }
-/*     */   
-/*     */   void setAngle(int paramInt) {
-/*  73 */     int i = getAngle();
-/*  74 */     this.angle = paramInt;
-/*     */   }
-/*     */   
-/*     */   int getDistance() {
-/*  78 */     return this.distance;
-/*     */   }
-/*     */   
-/*     */   void setDistance(int paramInt) {
-/*  82 */     int i = getDistance();
-/*  83 */     this.distance = paramInt;
-/*     */   }
-/*     */   
-/*     */   int getSpread() {
-/*  87 */     return this.spread;
-/*     */   }
-/*     */   
-/*     */   void setSpread(int paramInt) {
-/*  91 */     int i = getSpread();
-/*  92 */     this.spread = paramInt;
-/*     */   }
-/*     */   
-/*     */   int getSize() {
-/*  96 */     return this.size;
-/*     */   }
-/*     */   
-/*     */   void setSize(int paramInt) {
-/* 100 */     int i = getSize();
-/* 101 */     this.size = paramInt;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\ShadowEffect.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.Color;
+
+/**
+ * ShadowEffect - base class with all the standard properties for shadow effects
+ *
+ * @author Created by Jasper Potts (Jun 18, 2007)
+ */
+abstract class ShadowEffect extends Effect {
+    protected Color color = Color.BLACK;
+    /** Opacity a float 0-1 for percentage */
+    protected float opacity = 0.75f;
+    /** Angle in degrees between 0-360 */
+    protected int angle = 135;
+    /** Distance in pixels */
+    protected int distance = 5;
+    /** The shadow spread between 0-100 % */
+    protected int spread = 0;
+    /** Size in pixels */
+    protected int size = 5;
+
+    // =================================================================================================================
+    // Bean methods
+
+    Color getColor() {
+        return color;
+    }
+
+    void setColor(Color color) {
+        Color old = getColor();
+        this.color = color;
+    }
+
+    float getOpacity() {
+        return opacity;
+    }
+
+    void setOpacity(float opacity) {
+        float old = getOpacity();
+        this.opacity = opacity;
+    }
+
+    int getAngle() {
+        return angle;
+    }
+
+    void setAngle(int angle) {
+        int old = getAngle();
+        this.angle = angle;
+    }
+
+    int getDistance() {
+        return distance;
+    }
+
+    void setDistance(int distance) {
+        int old = getDistance();
+        this.distance = distance;
+    }
+
+    int getSpread() {
+        return spread;
+    }
+
+    void setSpread(int spread) {
+        int old = getSpread();
+        this.spread = spread;
+    }
+
+    int getSize() {
+        return size;
+    }
+
+    void setSize(int size) {
+        int old = getSize();
+        this.size = size;
+    }
+}

@@ -1,367 +1,362 @@
-/*     */ package java.util.concurrent.atomic;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.function.LongBinaryOperator;
-/*     */ import java.util.function.LongUnaryOperator;
-/*     */ import sun.misc.Unsafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AtomicLongArray
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -2308431214976778248L;
-/*  51 */   private static final Unsafe unsafe = Unsafe.getUnsafe();
-/*  52 */   private static final int base = unsafe.arrayBaseOffset(long[].class);
-/*     */   private static final int shift;
-/*     */   private final long[] array;
-/*     */   
-/*     */   static {
-/*  57 */     int i = unsafe.arrayIndexScale(long[].class);
-/*  58 */     if ((i & i - 1) != 0)
-/*  59 */       throw new Error("data type scale not a power of two"); 
-/*  60 */     shift = 31 - Integer.numberOfLeadingZeros(i);
-/*     */   }
-/*     */   
-/*     */   private long checkedByteOffset(int paramInt) {
-/*  64 */     if (paramInt < 0 || paramInt >= this.array.length) {
-/*  65 */       throw new IndexOutOfBoundsException("index " + paramInt);
-/*     */     }
-/*  67 */     return byteOffset(paramInt);
-/*     */   }
-/*     */   
-/*     */   private static long byteOffset(int paramInt) {
-/*  71 */     return (paramInt << shift) + base;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AtomicLongArray(int paramInt) {
-/*  81 */     this.array = new long[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AtomicLongArray(long[] paramArrayOflong) {
-/*  93 */     this.array = (long[])paramArrayOflong.clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int length() {
-/* 102 */     return this.array.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long get(int paramInt) {
-/* 112 */     return getRaw(checkedByteOffset(paramInt));
-/*     */   }
-/*     */   
-/*     */   private long getRaw(long paramLong) {
-/* 116 */     return unsafe.getLongVolatile(this.array, paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void set(int paramInt, long paramLong) {
-/* 126 */     unsafe.putLongVolatile(this.array, checkedByteOffset(paramInt), paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void lazySet(int paramInt, long paramLong) {
-/* 137 */     unsafe.putOrderedLong(this.array, checkedByteOffset(paramInt), paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndSet(int paramInt, long paramLong) {
-/* 149 */     return unsafe.getAndSetLong(this.array, checkedByteOffset(paramInt), paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean compareAndSet(int paramInt, long paramLong1, long paramLong2) {
-/* 163 */     return compareAndSetRaw(checkedByteOffset(paramInt), paramLong1, paramLong2);
-/*     */   }
-/*     */   
-/*     */   private boolean compareAndSetRaw(long paramLong1, long paramLong2, long paramLong3) {
-/* 167 */     return unsafe.compareAndSwapLong(this.array, paramLong1, paramLong2, paramLong3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean weakCompareAndSet(int paramInt, long paramLong1, long paramLong2) {
-/* 184 */     return compareAndSet(paramInt, paramLong1, paramLong2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndIncrement(int paramInt) {
-/* 194 */     return getAndAdd(paramInt, 1L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndDecrement(int paramInt) {
-/* 204 */     return getAndAdd(paramInt, -1L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndAdd(int paramInt, long paramLong) {
-/* 215 */     return unsafe.getAndAddLong(this.array, checkedByteOffset(paramInt), paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long incrementAndGet(int paramInt) {
-/* 225 */     return getAndAdd(paramInt, 1L) + 1L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long decrementAndGet(int paramInt) {
-/* 235 */     return getAndAdd(paramInt, -1L) - 1L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long addAndGet(int paramInt, long paramLong) {
-/* 246 */     return getAndAdd(paramInt, paramLong) + paramLong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndUpdate(int paramInt, LongUnaryOperator paramLongUnaryOperator) {
-/* 261 */     long l = checkedByteOffset(paramInt);
-/*     */     
-/*     */     while (true) {
-/* 264 */       long l1 = getRaw(l);
-/* 265 */       long l2 = paramLongUnaryOperator.applyAsLong(l1);
-/* 266 */       if (compareAndSetRaw(l, l1, l2)) {
-/* 267 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long updateAndGet(int paramInt, LongUnaryOperator paramLongUnaryOperator) {
-/* 282 */     long l = checkedByteOffset(paramInt);
-/*     */     
-/*     */     while (true) {
-/* 285 */       long l1 = getRaw(l);
-/* 286 */       long l2 = paramLongUnaryOperator.applyAsLong(l1);
-/* 287 */       if (compareAndSetRaw(l, l1, l2)) {
-/* 288 */         return l2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndAccumulate(int paramInt, long paramLong, LongBinaryOperator paramLongBinaryOperator) {
-/* 308 */     long l = checkedByteOffset(paramInt);
-/*     */     
-/*     */     while (true) {
-/* 311 */       long l1 = getRaw(l);
-/* 312 */       long l2 = paramLongBinaryOperator.applyAsLong(l1, paramLong);
-/* 313 */       if (compareAndSetRaw(l, l1, l2)) {
-/* 314 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long accumulateAndGet(int paramInt, long paramLong, LongBinaryOperator paramLongBinaryOperator) {
-/* 334 */     long l = checkedByteOffset(paramInt);
-/*     */     
-/*     */     while (true) {
-/* 337 */       long l1 = getRaw(l);
-/* 338 */       long l2 = paramLongBinaryOperator.applyAsLong(l1, paramLong);
-/* 339 */       if (compareAndSetRaw(l, l1, l2)) {
-/* 340 */         return l2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 348 */     int i = this.array.length - 1;
-/* 349 */     if (i == -1) {
-/* 350 */       return "[]";
-/*     */     }
-/* 352 */     StringBuilder stringBuilder = new StringBuilder();
-/* 353 */     stringBuilder.append('[');
-/* 354 */     for (int j = 0;; j++) {
-/* 355 */       stringBuilder.append(getRaw(byteOffset(j)));
-/* 356 */       if (j == i)
-/* 357 */         return stringBuilder.append(']').toString(); 
-/* 358 */       stringBuilder.append(',').append(' ');
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\atomic\AtomicLongArray.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent.atomic;
+import java.util.function.LongUnaryOperator;
+import java.util.function.LongBinaryOperator;
+import sun.misc.Unsafe;
+
+/**
+ * A {@code long} array in which elements may be updated atomically.
+ * See the {@link java.util.concurrent.atomic} package specification
+ * for description of the properties of atomic variables.
+ * @since 1.5
+ * @author Doug Lea
+ */
+public class AtomicLongArray implements java.io.Serializable {
+    private static final long serialVersionUID = -2308431214976778248L;
+
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final int base = unsafe.arrayBaseOffset(long[].class);
+    private static final int shift;
+    private final long[] array;
+
+    static {
+        int scale = unsafe.arrayIndexScale(long[].class);
+        if ((scale & (scale - 1)) != 0)
+            throw new Error("data type scale not a power of two");
+        shift = 31 - Integer.numberOfLeadingZeros(scale);
+    }
+
+    private long checkedByteOffset(int i) {
+        if (i < 0 || i >= array.length)
+            throw new IndexOutOfBoundsException("index " + i);
+
+        return byteOffset(i);
+    }
+
+    private static long byteOffset(int i) {
+        return ((long) i << shift) + base;
+    }
+
+    /**
+     * Creates a new AtomicLongArray of the given length, with all
+     * elements initially zero.
+     *
+     * @param length the length of the array
+     */
+    public AtomicLongArray(int length) {
+        array = new long[length];
+    }
+
+    /**
+     * Creates a new AtomicLongArray with the same length as, and
+     * all elements copied from, the given array.
+     *
+     * @param array the array to copy elements from
+     * @throws NullPointerException if array is null
+     */
+    public AtomicLongArray(long[] array) {
+        // Visibility guaranteed by final field guarantees
+        this.array = array.clone();
+    }
+
+    /**
+     * Returns the length of the array.
+     *
+     * @return the length of the array
+     */
+    public final int length() {
+        return array.length;
+    }
+
+    /**
+     * Gets the current value at position {@code i}.
+     *
+     * @param i the index
+     * @return the current value
+     */
+    public final long get(int i) {
+        return getRaw(checkedByteOffset(i));
+    }
+
+    private long getRaw(long offset) {
+        return unsafe.getLongVolatile(array, offset);
+    }
+
+    /**
+     * Sets the element at position {@code i} to the given value.
+     *
+     * @param i the index
+     * @param newValue the new value
+     */
+    public final void set(int i, long newValue) {
+        unsafe.putLongVolatile(array, checkedByteOffset(i), newValue);
+    }
+
+    /**
+     * Eventually sets the element at position {@code i} to the given value.
+     *
+     * @param i the index
+     * @param newValue the new value
+     * @since 1.6
+     */
+    public final void lazySet(int i, long newValue) {
+        unsafe.putOrderedLong(array, checkedByteOffset(i), newValue);
+    }
+
+    /**
+     * Atomically sets the element at position {@code i} to the given value
+     * and returns the old value.
+     *
+     * @param i the index
+     * @param newValue the new value
+     * @return the previous value
+     */
+    public final long getAndSet(int i, long newValue) {
+        return unsafe.getAndSetLong(array, checkedByteOffset(i), newValue);
+    }
+
+    /**
+     * Atomically sets the element at position {@code i} to the given
+     * updated value if the current value {@code ==} the expected value.
+     *
+     * @param i the index
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful. False return indicates that
+     * the actual value was not equal to the expected value.
+     */
+    public final boolean compareAndSet(int i, long expect, long update) {
+        return compareAndSetRaw(checkedByteOffset(i), expect, update);
+    }
+
+    private boolean compareAndSetRaw(long offset, long expect, long update) {
+        return unsafe.compareAndSwapLong(array, offset, expect, update);
+    }
+
+    /**
+     * Atomically sets the element at position {@code i} to the given
+     * updated value if the current value {@code ==} the expected value.
+     *
+     * <p><a href="package-summary.html#weakCompareAndSet">May fail
+     * spuriously and does not provide ordering guarantees</a>, so is
+     * only rarely an appropriate alternative to {@code compareAndSet}.
+     *
+     * @param i the index
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful
+     */
+    public final boolean weakCompareAndSet(int i, long expect, long update) {
+        return compareAndSet(i, expect, update);
+    }
+
+    /**
+     * Atomically increments by one the element at index {@code i}.
+     *
+     * @param i the index
+     * @return the previous value
+     */
+    public final long getAndIncrement(int i) {
+        return getAndAdd(i, 1);
+    }
+
+    /**
+     * Atomically decrements by one the element at index {@code i}.
+     *
+     * @param i the index
+     * @return the previous value
+     */
+    public final long getAndDecrement(int i) {
+        return getAndAdd(i, -1);
+    }
+
+    /**
+     * Atomically adds the given value to the element at index {@code i}.
+     *
+     * @param i the index
+     * @param delta the value to add
+     * @return the previous value
+     */
+    public final long getAndAdd(int i, long delta) {
+        return unsafe.getAndAddLong(array, checkedByteOffset(i), delta);
+    }
+
+    /**
+     * Atomically increments by one the element at index {@code i}.
+     *
+     * @param i the index
+     * @return the updated value
+     */
+    public final long incrementAndGet(int i) {
+        return getAndAdd(i, 1) + 1;
+    }
+
+    /**
+     * Atomically decrements by one the element at index {@code i}.
+     *
+     * @param i the index
+     * @return the updated value
+     */
+    public final long decrementAndGet(int i) {
+        return getAndAdd(i, -1) - 1;
+    }
+
+    /**
+     * Atomically adds the given value to the element at index {@code i}.
+     *
+     * @param i the index
+     * @param delta the value to add
+     * @return the updated value
+     */
+    public long addAndGet(int i, long delta) {
+        return getAndAdd(i, delta) + delta;
+    }
+
+    /**
+     * Atomically updates the element at index {@code i} with the results
+     * of applying the given function, returning the previous value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.
+     *
+     * @param i the index
+     * @param updateFunction a side-effect-free function
+     * @return the previous value
+     * @since 1.8
+     */
+    public final long getAndUpdate(int i, LongUnaryOperator updateFunction) {
+        long offset = checkedByteOffset(i);
+        long prev, next;
+        do {
+            prev = getRaw(offset);
+            next = updateFunction.applyAsLong(prev);
+        } while (!compareAndSetRaw(offset, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the element at index {@code i} with the results
+     * of applying the given function, returning the updated value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.
+     *
+     * @param i the index
+     * @param updateFunction a side-effect-free function
+     * @return the updated value
+     * @since 1.8
+     */
+    public final long updateAndGet(int i, LongUnaryOperator updateFunction) {
+        long offset = checkedByteOffset(i);
+        long prev, next;
+        do {
+            prev = getRaw(offset);
+            next = updateFunction.applyAsLong(prev);
+        } while (!compareAndSetRaw(offset, prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically updates the element at index {@code i} with the
+     * results of applying the given function to the current and
+     * given values, returning the previous value. The function should
+     * be side-effect-free, since it may be re-applied when attempted
+     * updates fail due to contention among threads.  The function is
+     * applied with the current value at index {@code i} as its first
+     * argument, and the given update as the second argument.
+     *
+     * @param i the index
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the previous value
+     * @since 1.8
+     */
+    public final long getAndAccumulate(int i, long x,
+                                      LongBinaryOperator accumulatorFunction) {
+        long offset = checkedByteOffset(i);
+        long prev, next;
+        do {
+            prev = getRaw(offset);
+            next = accumulatorFunction.applyAsLong(prev, x);
+        } while (!compareAndSetRaw(offset, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the element at index {@code i} with the
+     * results of applying the given function to the current and
+     * given values, returning the updated value. The function should
+     * be side-effect-free, since it may be re-applied when attempted
+     * updates fail due to contention among threads.  The function is
+     * applied with the current value at index {@code i} as its first
+     * argument, and the given update as the second argument.
+     *
+     * @param i the index
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the updated value
+     * @since 1.8
+     */
+    public final long accumulateAndGet(int i, long x,
+                                      LongBinaryOperator accumulatorFunction) {
+        long offset = checkedByteOffset(i);
+        long prev, next;
+        do {
+            prev = getRaw(offset);
+            next = accumulatorFunction.applyAsLong(prev, x);
+        } while (!compareAndSetRaw(offset, prev, next));
+        return next;
+    }
+
+    /**
+     * Returns the String representation of the current values of array.
+     * @return the String representation of the current values of array
+     */
+    public String toString() {
+        int iMax = array.length - 1;
+        if (iMax == -1)
+            return "[]";
+
+        StringBuilder b = new StringBuilder();
+        b.append('[');
+        for (int i = 0; ; i++) {
+            b.append(getRaw(byteOffset(i)));
+            if (i == iMax)
+                return b.append(']').toString();
+            b.append(',').append(' ');
+        }
+    }
+
+}

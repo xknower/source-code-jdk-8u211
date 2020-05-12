@@ -1,52 +1,46 @@
-/*    */ package java.util.zip;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class ZStreamRef
-/*    */ {
-/*    */   private volatile long address;
-/*    */   
-/*    */   ZStreamRef(long paramLong) {
-/* 36 */     this.address = paramLong;
-/*    */   }
-/*    */   
-/*    */   long address() {
-/* 40 */     return this.address;
-/*    */   }
-/*    */   
-/*    */   void clear() {
-/* 44 */     this.address = 0L;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\zip\ZStreamRef.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.zip;
+
+/**
+ * A reference to the native zlib's z_stream structure.
+ */
+
+class ZStreamRef {
+
+    private volatile long address;
+    ZStreamRef (long address) {
+        this.address = address;
+    }
+
+    long address() {
+        return address;
+    }
+
+    void clear() {
+        address = 0;
+    }
+}

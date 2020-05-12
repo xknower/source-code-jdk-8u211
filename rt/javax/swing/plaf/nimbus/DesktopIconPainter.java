@@ -1,162 +1,159 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Paint;
-/*     */ import java.awt.Shape;
-/*     */ import java.awt.geom.Ellipse2D;
-/*     */ import java.awt.geom.Path2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.geom.RoundRectangle2D;
-/*     */ import javax.swing.JComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class DesktopIconPainter
-/*     */   extends AbstractRegionPainter
-/*     */ {
-/*     */   static final int BACKGROUND_ENABLED = 1;
-/*     */   private int state;
-/*     */   private AbstractRegionPainter.PaintContext ctx;
-/*  46 */   private Path2D path = new Path2D.Float();
-/*  47 */   private Rectangle2D rect = new Rectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*  48 */   private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-/*  49 */   private Ellipse2D ellipse = new Ellipse2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  54 */   private Color color1 = decodeColor("nimbusBase", 0.02551502F, -0.47885156F, -0.34901965F, 0);
-/*  55 */   private Color color2 = decodeColor("nimbusBlueGrey", -0.027777791F, -0.102261856F, 0.20392156F, 0);
-/*  56 */   private Color color3 = decodeColor("nimbusBlueGrey", 0.0F, -0.0682728F, 0.09019607F, 0);
-/*  57 */   private Color color4 = decodeColor("nimbusBlueGrey", -0.01111114F, -0.088974595F, 0.16470587F, 0);
-/*  58 */   private Color color5 = decodeColor("nimbusBlueGrey", 0.0F, -0.029445238F, -0.019607842F, 0);
-/*     */ 
-/*     */   
-/*     */   private Object[] componentColors;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DesktopIconPainter(AbstractRegionPainter.PaintContext paramPaintContext, int paramInt) {
-/*  66 */     this.state = paramInt;
-/*  67 */     this.ctx = paramPaintContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void doPaint(Graphics2D paramGraphics2D, JComponent paramJComponent, int paramInt1, int paramInt2, Object[] paramArrayOfObject) {
-/*  73 */     this.componentColors = paramArrayOfObject;
-/*     */ 
-/*     */     
-/*  76 */     switch (this.state) { case 1:
-/*  77 */         paintBackgroundEnabled(paramGraphics2D);
-/*     */         break; }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final AbstractRegionPainter.PaintContext getPaintContext() {
-/*  86 */     return this.ctx;
-/*     */   }
-/*     */   
-/*     */   private void paintBackgroundEnabled(Graphics2D paramGraphics2D) {
-/*  90 */     this.roundRect = decodeRoundRect1();
-/*  91 */     paramGraphics2D.setPaint(this.color1);
-/*  92 */     paramGraphics2D.fill(this.roundRect);
-/*  93 */     this.roundRect = decodeRoundRect2();
-/*  94 */     paramGraphics2D.setPaint(decodeGradient1(this.roundRect));
-/*  95 */     paramGraphics2D.fill(this.roundRect);
-/*  96 */     this.rect = decodeRect1();
-/*  97 */     paramGraphics2D.setPaint(decodeGradient2(this.rect));
-/*  98 */     paramGraphics2D.fill(this.rect);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private RoundRectangle2D decodeRoundRect1() {
-/* 105 */     this.roundRect.setRoundRect(decodeX(0.4F), 
-/* 106 */         decodeY(0.0F), (
-/* 107 */         decodeX(2.8F) - decodeX(0.4F)), (
-/* 108 */         decodeY(2.6F) - decodeY(0.0F)), 4.833333492279053D, 4.833333492279053D);
-/*     */     
-/* 110 */     return this.roundRect;
-/*     */   }
-/*     */   
-/*     */   private RoundRectangle2D decodeRoundRect2() {
-/* 114 */     this.roundRect.setRoundRect(decodeX(0.6F), 
-/* 115 */         decodeY(0.2F), (
-/* 116 */         decodeX(2.8F) - decodeX(0.6F)), (
-/* 117 */         decodeY(2.4F) - decodeY(0.2F)), 3.0999999046325684D, 3.0999999046325684D);
-/*     */     
-/* 119 */     return this.roundRect;
-/*     */   }
-/*     */   
-/*     */   private Rectangle2D decodeRect1() {
-/* 123 */     this.rect.setRect(decodeX(0.8F), 
-/* 124 */         decodeY(0.4F), (
-/* 125 */         decodeX(2.4F) - decodeX(0.8F)), (
-/* 126 */         decodeY(2.2F) - decodeY(0.4F)));
-/* 127 */     return this.rect;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Paint decodeGradient1(Shape paramShape) {
-/* 133 */     Rectangle2D rectangle2D = paramShape.getBounds2D();
-/* 134 */     float f1 = (float)rectangle2D.getX();
-/* 135 */     float f2 = (float)rectangle2D.getY();
-/* 136 */     float f3 = (float)rectangle2D.getWidth();
-/* 137 */     float f4 = (float)rectangle2D.getHeight();
-/* 138 */     return decodeGradient(0.5F * f3 + f1, 0.0F * f4 + f2, 0.5F * f3 + f1, 1.0F * f4 + f2, new float[] { 0.0F, 0.5F, 1.0F }, new Color[] { this.color2, 
-/*     */ 
-/*     */           
-/* 141 */           decodeColor(this.color2, this.color3, 0.5F), this.color3 });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Paint decodeGradient2(Shape paramShape) {
-/* 146 */     Rectangle2D rectangle2D = paramShape.getBounds2D();
-/* 147 */     float f1 = (float)rectangle2D.getX();
-/* 148 */     float f2 = (float)rectangle2D.getY();
-/* 149 */     float f3 = (float)rectangle2D.getWidth();
-/* 150 */     float f4 = (float)rectangle2D.getHeight();
-/* 151 */     return decodeGradient(0.5F * f3 + f1, 0.0F * f4 + f2, 0.5F * f3 + f1, 1.0F * f4 + f2, new float[] { 0.0F, 0.24F, 1.0F }, new Color[] { this.color4, 
-/*     */ 
-/*     */           
-/* 154 */           decodeColor(this.color4, this.color5, 0.5F), this.color5 });
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\DesktopIconPainter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.*;
+import java.awt.geom.*;
+import java.awt.image.*;
+import javax.swing.*;
+import javax.swing.Painter;
+
+
+final class DesktopIconPainter extends AbstractRegionPainter {
+    //package private integers representing the available states that
+    //this painter will paint. These are used when creating a new instance
+    //of DesktopIconPainter to determine which region/state is being painted
+    //by that instance.
+    static final int BACKGROUND_ENABLED = 1;
+
+
+    private int state; //refers to one of the static final ints above
+    private PaintContext ctx;
+
+    //the following 4 variables are reused during the painting code of the layers
+    private Path2D path = new Path2D.Float();
+    private Rectangle2D rect = new Rectangle2D.Float(0, 0, 0, 0);
+    private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0, 0, 0, 0, 0, 0);
+    private Ellipse2D ellipse = new Ellipse2D.Float(0, 0, 0, 0);
+
+    //All Colors used for painting are stored here. Ideally, only those colors being used
+    //by a particular instance of DesktopIconPainter would be created. For the moment at least,
+    //however, all are created for each instance.
+    private Color color1 = decodeColor("nimbusBase", 0.02551502f, -0.47885156f, -0.34901965f, 0);
+    private Color color2 = decodeColor("nimbusBlueGrey", -0.027777791f, -0.102261856f, 0.20392156f, 0);
+    private Color color3 = decodeColor("nimbusBlueGrey", 0.0f, -0.0682728f, 0.09019607f, 0);
+    private Color color4 = decodeColor("nimbusBlueGrey", -0.01111114f, -0.088974595f, 0.16470587f, 0);
+    private Color color5 = decodeColor("nimbusBlueGrey", 0.0f, -0.029445238f, -0.019607842f, 0);
+
+
+    //Array of current component colors, updated in each paint call
+    private Object[] componentColors;
+
+    public DesktopIconPainter(PaintContext ctx, int state) {
+        super();
+        this.state = state;
+        this.ctx = ctx;
+    }
+
+    @Override
+    protected void doPaint(Graphics2D g, JComponent c, int width, int height, Object[] extendedCacheKeys) {
+        //populate componentColors array with colors calculated in getExtendedCacheKeys call
+        componentColors = extendedCacheKeys;
+        //generate this entire method. Each state/bg/fg/border combo that has
+        //been painted gets its own KEY and paint method.
+        switch(state) {
+            case BACKGROUND_ENABLED: paintBackgroundEnabled(g); break;
+
+        }
+    }
+        
+
+
+    @Override
+    protected final PaintContext getPaintContext() {
+        return ctx;
+    }
+
+    private void paintBackgroundEnabled(Graphics2D g) {
+        roundRect = decodeRoundRect1();
+        g.setPaint(color1);
+        g.fill(roundRect);
+        roundRect = decodeRoundRect2();
+        g.setPaint(decodeGradient1(roundRect));
+        g.fill(roundRect);
+        rect = decodeRect1();
+        g.setPaint(decodeGradient2(rect));
+        g.fill(rect);
+
+    }
+
+
+
+    private RoundRectangle2D decodeRoundRect1() {
+        roundRect.setRoundRect(decodeX(0.4f), //x
+                               decodeY(0.0f), //y
+                               decodeX(2.8f) - decodeX(0.4f), //width
+                               decodeY(2.6f) - decodeY(0.0f), //height
+                               4.8333335f, 4.8333335f); //rounding
+        return roundRect;
+    }
+
+    private RoundRectangle2D decodeRoundRect2() {
+        roundRect.setRoundRect(decodeX(0.6f), //x
+                               decodeY(0.2f), //y
+                               decodeX(2.8f) - decodeX(0.6f), //width
+                               decodeY(2.4f) - decodeY(0.2f), //height
+                               3.1f, 3.1f); //rounding
+        return roundRect;
+    }
+
+    private Rectangle2D decodeRect1() {
+            rect.setRect(decodeX(0.8f), //x
+                         decodeY(0.4f), //y
+                         decodeX(2.4f) - decodeX(0.8f), //width
+                         decodeY(2.2f) - decodeY(0.4f)); //height
+        return rect;
+    }
+
+
+
+    private Paint decodeGradient1(Shape s) {
+        Rectangle2D bounds = s.getBounds2D();
+        float x = (float)bounds.getX();
+        float y = (float)bounds.getY();
+        float w = (float)bounds.getWidth();
+        float h = (float)bounds.getHeight();
+        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,
+                new float[] { 0.0f,0.5f,1.0f },
+                new Color[] { color2,
+                            decodeColor(color2,color3,0.5f),
+                            color3});
+    }
+
+    private Paint decodeGradient2(Shape s) {
+        Rectangle2D bounds = s.getBounds2D();
+        float x = (float)bounds.getX();
+        float y = (float)bounds.getY();
+        float w = (float)bounds.getWidth();
+        float h = (float)bounds.getHeight();
+        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,
+                new float[] { 0.0f,0.24f,1.0f },
+                new Color[] { color4,
+                            decodeColor(color4,color5,0.5f),
+                            color5});
+    }
+
+
+}

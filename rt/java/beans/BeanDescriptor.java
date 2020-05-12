@@ -1,115 +1,109 @@
-/*     */ package java.beans;
-/*     */ 
-/*     */ import java.lang.ref.Reference;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BeanDescriptor
-/*     */   extends FeatureDescriptor
-/*     */ {
-/*     */   private Reference<? extends Class<?>> beanClassRef;
-/*     */   private Reference<? extends Class<?>> customizerClassRef;
-/*     */   
-/*     */   public BeanDescriptor(Class<?> paramClass) {
-/*  50 */     this(paramClass, (Class<?>)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BeanDescriptor(Class<?> paramClass1, Class<?> paramClass2) {
-/*  62 */     this.beanClassRef = getWeakReference(paramClass1);
-/*  63 */     this.customizerClassRef = getWeakReference(paramClass2);
-/*     */     
-/*  65 */     String str = paramClass1.getName();
-/*  66 */     while (str.indexOf('.') >= 0) {
-/*  67 */       str = str.substring(str.indexOf('.') + 1);
-/*     */     }
-/*  69 */     setName(str);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> getBeanClass() {
-/*  78 */     return (this.beanClassRef != null) ? this.beanClassRef
-/*  79 */       .get() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> getCustomizerClass() {
-/*  90 */     return (this.customizerClassRef != null) ? this.customizerClassRef
-/*  91 */       .get() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   BeanDescriptor(BeanDescriptor paramBeanDescriptor) {
-/* 100 */     super(paramBeanDescriptor);
-/* 101 */     this.beanClassRef = paramBeanDescriptor.beanClassRef;
-/* 102 */     this.customizerClassRef = paramBeanDescriptor.customizerClassRef;
-/*     */   }
-/*     */   
-/*     */   void appendTo(StringBuilder paramStringBuilder) {
-/* 106 */     appendTo(paramStringBuilder, "beanClass", this.beanClassRef);
-/* 107 */     appendTo(paramStringBuilder, "customizerClass", this.customizerClassRef);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\beans\BeanDescriptor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.beans;
+
+import java.lang.ref.Reference;
+
+/**
+ * A BeanDescriptor provides global information about a "bean",
+ * including its Java class, its displayName, etc.
+ * <p>
+ * This is one of the kinds of descriptor returned by a BeanInfo object,
+ * which also returns descriptors for properties, method, and events.
+ */
+
+public class BeanDescriptor extends FeatureDescriptor {
+
+    private Reference<? extends Class<?>> beanClassRef;
+    private Reference<? extends Class<?>> customizerClassRef;
+
+    /**
+     * Create a BeanDescriptor for a bean that doesn't have a customizer.
+     *
+     * @param beanClass  The Class object of the Java class that implements
+     *          the bean.  For example sun.beans.OurButton.class.
+     */
+    public BeanDescriptor(Class<?> beanClass) {
+        this(beanClass, null);
+    }
+
+    /**
+     * Create a BeanDescriptor for a bean that has a customizer.
+     *
+     * @param beanClass  The Class object of the Java class that implements
+     *          the bean.  For example sun.beans.OurButton.class.
+     * @param customizerClass  The Class object of the Java class that implements
+     *          the bean's Customizer.  For example sun.beans.OurButtonCustomizer.class.
+     */
+    public BeanDescriptor(Class<?> beanClass, Class<?> customizerClass) {
+        this.beanClassRef = getWeakReference(beanClass);
+        this.customizerClassRef = getWeakReference(customizerClass);
+
+        String name = beanClass.getName();
+        while (name.indexOf('.') >= 0) {
+            name = name.substring(name.indexOf('.')+1);
+        }
+        setName(name);
+    }
+
+    /**
+     * Gets the bean's Class object.
+     *
+     * @return The Class object for the bean.
+     */
+    public Class<?> getBeanClass() {
+        return (this.beanClassRef != null)
+                ? this.beanClassRef.get()
+                : null;
+    }
+
+    /**
+     * Gets the Class object for the bean's customizer.
+     *
+     * @return The Class object for the bean's customizer.  This may
+     * be null if the bean doesn't have a customizer.
+     */
+    public Class<?> getCustomizerClass() {
+        return (this.customizerClassRef != null)
+                ? this.customizerClassRef.get()
+                : null;
+    }
+
+    /*
+     * Package-private dup constructor
+     * This must isolate the new object from any changes to the old object.
+     */
+    BeanDescriptor(BeanDescriptor old) {
+        super(old);
+        beanClassRef = old.beanClassRef;
+        customizerClassRef = old.customizerClassRef;
+    }
+
+    void appendTo(StringBuilder sb) {
+        appendTo(sb, "beanClass", this.beanClassRef);
+        appendTo(sb, "customizerClass", this.customizerClassRef);
+    }
+}

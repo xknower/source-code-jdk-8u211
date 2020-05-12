@@ -1,305 +1,300 @@
-/*     */ package javax.naming.directory;
-/*     */ 
-/*     */ import java.util.Hashtable;
-/*     */ import javax.naming.Context;
-/*     */ import javax.naming.InitialContext;
-/*     */ import javax.naming.Name;
-/*     */ import javax.naming.NamingEnumeration;
-/*     */ import javax.naming.NamingException;
-/*     */ import javax.naming.NoInitialContextException;
-/*     */ import javax.naming.NotContextException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class InitialDirContext
-/*     */   extends InitialContext
-/*     */   implements DirContext
-/*     */ {
-/*     */   protected InitialDirContext(boolean paramBoolean) throws NamingException {
-/*  66 */     super(paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InitialDirContext() throws NamingException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InitialDirContext(Hashtable<?, ?> paramHashtable) throws NamingException {
-/* 101 */     super(paramHashtable);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private DirContext getURLOrDefaultInitDirCtx(String paramString) throws NamingException {
-/* 106 */     Context context = getURLOrDefaultInitCtx(paramString);
-/* 107 */     if (!(context instanceof DirContext)) {
-/* 108 */       if (context == null) {
-/* 109 */         throw new NoInitialContextException();
-/*     */       }
-/* 111 */       throw new NotContextException("Not an instance of DirContext");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 115 */     return (DirContext)context;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private DirContext getURLOrDefaultInitDirCtx(Name paramName) throws NamingException {
-/* 120 */     Context context = getURLOrDefaultInitCtx(paramName);
-/* 121 */     if (!(context instanceof DirContext)) {
-/* 122 */       if (context == null) {
-/* 123 */         throw new NoInitialContextException();
-/*     */       }
-/* 125 */       throw new NotContextException("Not an instance of DirContext");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 129 */     return (DirContext)context;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(String paramString) throws NamingException {
-/* 137 */     return getAttributes(paramString, (String[])null);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(String paramString, String[] paramArrayOfString) throws NamingException {
-/* 142 */     return getURLOrDefaultInitDirCtx(paramString).getAttributes(paramString, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(Name paramName) throws NamingException {
-/* 147 */     return getAttributes(paramName, (String[])null);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(Name paramName, String[] paramArrayOfString) throws NamingException {
-/* 152 */     return getURLOrDefaultInitDirCtx(paramName).getAttributes(paramName, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void modifyAttributes(String paramString, int paramInt, Attributes paramAttributes) throws NamingException {
-/* 157 */     getURLOrDefaultInitDirCtx(paramString).modifyAttributes(paramString, paramInt, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void modifyAttributes(Name paramName, int paramInt, Attributes paramAttributes) throws NamingException {
-/* 162 */     getURLOrDefaultInitDirCtx(paramName).modifyAttributes(paramName, paramInt, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void modifyAttributes(String paramString, ModificationItem[] paramArrayOfModificationItem) throws NamingException {
-/* 167 */     getURLOrDefaultInitDirCtx(paramString).modifyAttributes(paramString, paramArrayOfModificationItem);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void modifyAttributes(Name paramName, ModificationItem[] paramArrayOfModificationItem) throws NamingException {
-/* 172 */     getURLOrDefaultInitDirCtx(paramName).modifyAttributes(paramName, paramArrayOfModificationItem);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void bind(String paramString, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 177 */     getURLOrDefaultInitDirCtx(paramString).bind(paramString, paramObject, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void bind(Name paramName, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 182 */     getURLOrDefaultInitDirCtx(paramName).bind(paramName, paramObject, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void rebind(String paramString, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 187 */     getURLOrDefaultInitDirCtx(paramString).rebind(paramString, paramObject, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void rebind(Name paramName, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 192 */     getURLOrDefaultInitDirCtx(paramName).rebind(paramName, paramObject, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext createSubcontext(String paramString, Attributes paramAttributes) throws NamingException {
-/* 197 */     return getURLOrDefaultInitDirCtx(paramString).createSubcontext(paramString, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext createSubcontext(Name paramName, Attributes paramAttributes) throws NamingException {
-/* 202 */     return getURLOrDefaultInitDirCtx(paramName).createSubcontext(paramName, paramAttributes);
-/*     */   }
-/*     */   
-/*     */   public DirContext getSchema(String paramString) throws NamingException {
-/* 206 */     return getURLOrDefaultInitDirCtx(paramString).getSchema(paramString);
-/*     */   }
-/*     */   
-/*     */   public DirContext getSchema(Name paramName) throws NamingException {
-/* 210 */     return getURLOrDefaultInitDirCtx(paramName).getSchema(paramName);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext getSchemaClassDefinition(String paramString) throws NamingException {
-/* 215 */     return getURLOrDefaultInitDirCtx(paramString).getSchemaClassDefinition(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext getSchemaClassDefinition(Name paramName) throws NamingException {
-/* 220 */     return getURLOrDefaultInitDirCtx(paramName).getSchemaClassDefinition(paramName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString, Attributes paramAttributes) throws NamingException {
-/* 229 */     return getURLOrDefaultInitDirCtx(paramString).search(paramString, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, Attributes paramAttributes) throws NamingException {
-/* 236 */     return getURLOrDefaultInitDirCtx(paramName).search(paramName, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString, Attributes paramAttributes, String[] paramArrayOfString) throws NamingException {
-/* 245 */     return getURLOrDefaultInitDirCtx(paramString).search(paramString, paramAttributes, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, Attributes paramAttributes, String[] paramArrayOfString) throws NamingException {
-/* 256 */     return getURLOrDefaultInitDirCtx(paramName).search(paramName, paramAttributes, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString1, String paramString2, SearchControls paramSearchControls) throws NamingException {
-/* 267 */     return getURLOrDefaultInitDirCtx(paramString1).search(paramString1, paramString2, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, String paramString, SearchControls paramSearchControls) throws NamingException {
-/* 276 */     return getURLOrDefaultInitDirCtx(paramName).search(paramName, paramString, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString1, String paramString2, Object[] paramArrayOfObject, SearchControls paramSearchControls) throws NamingException {
-/* 286 */     return getURLOrDefaultInitDirCtx(paramString1).search(paramString1, paramString2, paramArrayOfObject, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, String paramString, Object[] paramArrayOfObject, SearchControls paramSearchControls) throws NamingException {
-/* 297 */     return getURLOrDefaultInitDirCtx(paramName).search(paramName, paramString, paramArrayOfObject, paramSearchControls);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\naming\directory\InitialDirContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.naming.directory;
+
+import java.util.Hashtable;
+import javax.naming.spi.NamingManager;
+import javax.naming.*;
+
+/**
+ * This class is the starting context for performing
+ * directory operations. The documentation in the class description
+ * of InitialContext (including those for synchronization) apply here.
+ *
+ *
+ * @author Rosanna Lee
+ * @author Scott Seligman
+ *
+ * @see javax.naming.InitialContext
+ * @since 1.3
+ */
+
+public class InitialDirContext extends InitialContext implements DirContext {
+
+    /**
+     * Constructs an initial DirContext with the option of not
+     * initializing it.  This may be used by a constructor in
+     * a subclass when the value of the environment parameter
+     * is not yet known at the time the <tt>InitialDirContext</tt>
+     * constructor is called.  The subclass's constructor will
+     * call this constructor, compute the value of the environment,
+     * and then call <tt>init()</tt> before returning.
+     *
+     * @param lazy
+     *          true means do not initialize the initial DirContext; false
+     *          is equivalent to calling <tt>new InitialDirContext()</tt>
+     * @throws  NamingException if a naming exception is encountered
+     *
+     * @see InitialContext#init(Hashtable)
+     * @since 1.3
+     */
+    protected InitialDirContext(boolean lazy) throws NamingException {
+        super(lazy);
+    }
+
+    /**
+     * Constructs an initial DirContext.
+     * No environment properties are supplied.
+     * Equivalent to <tt>new InitialDirContext(null)</tt>.
+     *
+     * @throws  NamingException if a naming exception is encountered
+     *
+     * @see #InitialDirContext(Hashtable)
+     */
+    public InitialDirContext() throws NamingException {
+        super();
+    }
+
+    /**
+     * Constructs an initial DirContext using the supplied environment.
+     * Environment properties are discussed in the
+     * <tt>javax.naming.InitialContext</tt> class description.
+     *
+     * <p> This constructor will not modify <tt>environment</tt>
+     * or save a reference to it, but may save a clone.
+     * Caller should not modify mutable keys and values in
+     * <tt>environment</tt> after it has been passed to the constructor.
+     *
+     * @param environment
+     *          environment used to create the initial DirContext.
+     *          Null indicates an empty environment.
+     *
+     * @throws  NamingException if a naming exception is encountered
+     */
+    public InitialDirContext(Hashtable<?,?> environment)
+        throws NamingException
+    {
+        super(environment);
+    }
+
+    private DirContext getURLOrDefaultInitDirCtx(String name)
+            throws NamingException {
+        Context answer = getURLOrDefaultInitCtx(name);
+        if (!(answer instanceof DirContext)) {
+            if (answer == null) {
+                throw new NoInitialContextException();
+            } else {
+                throw new NotContextException(
+                    "Not an instance of DirContext");
+            }
+        }
+        return (DirContext)answer;
+    }
+
+    private DirContext getURLOrDefaultInitDirCtx(Name name)
+            throws NamingException {
+        Context answer = getURLOrDefaultInitCtx(name);
+        if (!(answer instanceof DirContext)) {
+            if (answer == null) {
+                throw new NoInitialContextException();
+            } else {
+                throw new NotContextException(
+                    "Not an instance of DirContext");
+            }
+        }
+        return (DirContext)answer;
+    }
+
+// DirContext methods
+// Most Javadoc is deferred to the DirContext interface.
+
+    public Attributes getAttributes(String name)
+            throws NamingException {
+        return getAttributes(name, null);
+    }
+
+    public Attributes getAttributes(String name, String[] attrIds)
+            throws NamingException {
+        return getURLOrDefaultInitDirCtx(name).getAttributes(name, attrIds);
+    }
+
+    public Attributes getAttributes(Name name)
+            throws NamingException {
+        return getAttributes(name, null);
+    }
+
+    public Attributes getAttributes(Name name, String[] attrIds)
+            throws NamingException {
+        return getURLOrDefaultInitDirCtx(name).getAttributes(name, attrIds);
+    }
+
+    public void modifyAttributes(String name, int mod_op, Attributes attrs)
+            throws NamingException {
+        getURLOrDefaultInitDirCtx(name).modifyAttributes(name, mod_op, attrs);
+    }
+
+    public void modifyAttributes(Name name, int mod_op, Attributes attrs)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).modifyAttributes(name, mod_op, attrs);
+    }
+
+    public void modifyAttributes(String name, ModificationItem[] mods)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).modifyAttributes(name, mods);
+    }
+
+    public void modifyAttributes(Name name, ModificationItem[] mods)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).modifyAttributes(name, mods);
+    }
+
+    public void bind(String name, Object obj, Attributes attrs)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).bind(name, obj, attrs);
+    }
+
+    public void bind(Name name, Object obj, Attributes attrs)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).bind(name, obj, attrs);
+    }
+
+    public void rebind(String name, Object obj, Attributes attrs)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).rebind(name, obj, attrs);
+    }
+
+    public void rebind(Name name, Object obj, Attributes attrs)
+            throws NamingException  {
+        getURLOrDefaultInitDirCtx(name).rebind(name, obj, attrs);
+    }
+
+    public DirContext createSubcontext(String name, Attributes attrs)
+            throws NamingException  {
+        return getURLOrDefaultInitDirCtx(name).createSubcontext(name, attrs);
+    }
+
+    public DirContext createSubcontext(Name name, Attributes attrs)
+            throws NamingException  {
+        return getURLOrDefaultInitDirCtx(name).createSubcontext(name, attrs);
+    }
+
+    public DirContext getSchema(String name) throws NamingException {
+        return getURLOrDefaultInitDirCtx(name).getSchema(name);
+    }
+
+    public DirContext getSchema(Name name) throws NamingException {
+        return getURLOrDefaultInitDirCtx(name).getSchema(name);
+    }
+
+    public DirContext getSchemaClassDefinition(String name)
+            throws NamingException {
+        return getURLOrDefaultInitDirCtx(name).getSchemaClassDefinition(name);
+    }
+
+    public DirContext getSchemaClassDefinition(Name name)
+            throws NamingException {
+        return getURLOrDefaultInitDirCtx(name).getSchemaClassDefinition(name);
+    }
+
+// -------------------- search operations
+
+    public NamingEnumeration<SearchResult>
+        search(String name, Attributes matchingAttributes)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name, matchingAttributes);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(Name name, Attributes matchingAttributes)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name, matchingAttributes);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(String name,
+               Attributes matchingAttributes,
+               String[] attributesToReturn)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name,
+                                                      matchingAttributes,
+                                                      attributesToReturn);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(Name name,
+               Attributes matchingAttributes,
+               String[] attributesToReturn)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name,
+                                            matchingAttributes,
+                                            attributesToReturn);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(String name,
+               String filter,
+               SearchControls cons)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name, filter, cons);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(Name name,
+               String filter,
+               SearchControls cons)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name, filter, cons);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(String name,
+               String filterExpr,
+               Object[] filterArgs,
+               SearchControls cons)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name, filterExpr,
+                                                      filterArgs, cons);
+    }
+
+    public NamingEnumeration<SearchResult>
+        search(Name name,
+               String filterExpr,
+               Object[] filterArgs,
+               SearchControls cons)
+        throws NamingException
+    {
+        return getURLOrDefaultInitDirCtx(name).search(name, filterExpr,
+                                                      filterArgs, cons);
+    }
+}

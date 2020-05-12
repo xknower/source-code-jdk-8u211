@@ -1,146 +1,140 @@
-/*     */ package com.sun.corba.se.impl.protocol.giopmsgheaders;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.encoding.CDRInputStream;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.ior.IORFactories;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.IOException;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class LocateReplyMessage_1_1
-/*     */   extends Message_1_1
-/*     */   implements LocateReplyMessage
-/*     */ {
-/*  54 */   private ORB orb = null;
-/*  55 */   private int request_id = 0;
-/*  56 */   private int reply_status = 0;
-/*  57 */   private IOR ior = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LocateReplyMessage_1_1(ORB paramORB) {
-/*  62 */     this.orb = paramORB;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   LocateReplyMessage_1_1(ORB paramORB, int paramInt1, int paramInt2, IOR paramIOR) {
-/*  67 */     super(1195986768, GIOPVersion.V1_1, (byte)0, (byte)4, 0);
-/*     */     
-/*  69 */     this.orb = paramORB;
-/*  70 */     this.request_id = paramInt1;
-/*  71 */     this.reply_status = paramInt2;
-/*  72 */     this.ior = paramIOR;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getRequestId() {
-/*  78 */     return this.request_id;
-/*     */   }
-/*     */   
-/*     */   public int getReplyStatus() {
-/*  82 */     return this.reply_status;
-/*     */   }
-/*     */   
-/*     */   public short getAddrDisposition() {
-/*  86 */     return 0;
-/*     */   }
-/*     */   
-/*     */   public SystemException getSystemException(String paramString) {
-/*  90 */     return null;
-/*     */   }
-/*     */   
-/*     */   public IOR getIOR() {
-/*  94 */     return this.ior;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void read(InputStream paramInputStream) {
-/* 100 */     super.read(paramInputStream);
-/* 101 */     this.request_id = paramInputStream.read_ulong();
-/* 102 */     this.reply_status = paramInputStream.read_long();
-/* 103 */     isValidReplyStatus(this.reply_status);
-/*     */ 
-/*     */     
-/* 106 */     if (this.reply_status == 2) {
-/* 107 */       CDRInputStream cDRInputStream = (CDRInputStream)paramInputStream;
-/* 108 */       this.ior = IORFactories.makeIOR(cDRInputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream) {
-/* 115 */     super.write(paramOutputStream);
-/* 116 */     paramOutputStream.write_ulong(this.request_id);
-/* 117 */     paramOutputStream.write_long(this.reply_status);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void isValidReplyStatus(int paramInt) {
-/* 123 */     switch (paramInt) {
-/*     */       case 0:
-/*     */       case 1:
-/*     */       case 2:
-/*     */         return;
-/*     */     } 
-/* 129 */     ORBUtilSystemException oRBUtilSystemException = ORBUtilSystemException.get("rpc.protocol");
-/*     */     
-/* 131 */     throw oRBUtilSystemException.illegalReplyStatus(CompletionStatus.COMPLETED_MAYBE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void callback(MessageHandler paramMessageHandler) throws IOException {
-/* 138 */     paramMessageHandler.handleInput(this);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\giopmsgheaders\LocateReplyMessage_1_1.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol.giopmsgheaders;
+
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.SystemException;
+
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.ior.IORFactories;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+/**
+ * This implements the GIOP 1.1 LocateReply header.
+ *
+ * @author Ram Jeyaraman 05/14/2000
+ */
+
+public final class LocateReplyMessage_1_1 extends Message_1_1
+        implements LocateReplyMessage {
+
+    // Instance variables
+
+    private ORB orb = null;
+    private int request_id = (int) 0;
+    private int reply_status = (int) 0;
+    private IOR ior = null;
+
+    // Constructors
+
+    LocateReplyMessage_1_1(ORB orb) {
+        this.orb = orb;
+    }
+
+    LocateReplyMessage_1_1(ORB orb, int _request_id,
+            int _reply_status, IOR _ior) {
+        super(Message.GIOPBigMagic, GIOPVersion.V1_1, FLAG_NO_FRAG_BIG_ENDIAN,
+            Message.GIOPLocateReply, 0);
+        this.orb = orb;
+        request_id = _request_id;
+        reply_status = _reply_status;
+        ior = _ior;
+    }
+
+    // Accessor methods
+
+    public int getRequestId() {
+        return this.request_id;
+    }
+
+    public int getReplyStatus() {
+        return this.reply_status;
+    }
+
+    public short getAddrDisposition() {
+        return KeyAddr.value;
+    }
+
+    public SystemException getSystemException(String message) {
+        return null; // 1.0 LocateReply body does not contain SystemException
+    }
+
+    public IOR getIOR() {
+        return this.ior;
+    }
+
+    // IO methods
+
+    public void read(org.omg.CORBA.portable.InputStream istream) {
+        super.read(istream);
+        this.request_id = istream.read_ulong();
+        this.reply_status = istream.read_long();
+        isValidReplyStatus(this.reply_status); // raises exception on error
+
+        // The code below reads the reply body if status is OBJECT_FORWARD
+        if (this.reply_status == OBJECT_FORWARD) {
+            CDRInputStream cdr = (CDRInputStream) istream;
+            this.ior = IORFactories.makeIOR( cdr ) ;
+        }
+    }
+
+    // Note, this writes only the header information. SystemException or
+    // IOR may be written afterwards into the reply mesg body.
+    public void write(org.omg.CORBA.portable.OutputStream ostream) {
+        super.write(ostream);
+        ostream.write_ulong(this.request_id);
+        ostream.write_long(this.reply_status);
+    }
+
+    // Static methods
+
+    public static void isValidReplyStatus(int replyStatus) {
+        switch (replyStatus) {
+        case UNKNOWN_OBJECT :
+        case OBJECT_HERE :
+        case OBJECT_FORWARD :
+            break;
+        default :
+            ORBUtilSystemException localWrapper = ORBUtilSystemException.get(
+                CORBALogDomains.RPC_PROTOCOL ) ;
+            throw localWrapper.illegalReplyStatus( CompletionStatus.COMPLETED_MAYBE);
+        }
+    }
+
+    public void callback(MessageHandler handler)
+        throws java.io.IOException
+    {
+        handler.handleInput(this);
+    }
+} // class LocateReplyMessage_1_1

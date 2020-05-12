@@ -1,310 +1,304 @@
-/*     */ package java.util.logging;
-/*     */ 
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.OutputStreamWriter;
-/*     */ import java.io.UnsupportedEncodingException;
-/*     */ import java.io.Writer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StreamHandler
-/*     */   extends Handler
-/*     */ {
-/*     */   private OutputStream output;
-/*     */   private boolean doneHeader;
-/*     */   private volatile Writer writer;
-/*     */   
-/*     */   private void configure() {
-/*  84 */     LogManager logManager = LogManager.getLogManager();
-/*  85 */     String str = getClass().getName();
-/*     */     
-/*  87 */     setLevel(logManager.getLevelProperty(str + ".level", Level.INFO));
-/*  88 */     setFilter(logManager.getFilterProperty(str + ".filter", null));
-/*  89 */     setFormatter(logManager.getFormatterProperty(str + ".formatter", new SimpleFormatter()));
-/*     */     try {
-/*  91 */       setEncoding(logManager.getStringProperty(str + ".encoding", null));
-/*  92 */     } catch (Exception exception) {
-/*     */       try {
-/*  94 */         setEncoding((String)null);
-/*  95 */       } catch (Exception exception1) {}
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StreamHandler() {
-/* 106 */     this.sealed = false;
-/* 107 */     configure();
-/* 108 */     this.sealed = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StreamHandler(OutputStream paramOutputStream, Formatter paramFormatter) {
-/* 119 */     this.sealed = false;
-/* 120 */     configure();
-/* 121 */     setFormatter(paramFormatter);
-/* 122 */     setOutputStream(paramOutputStream);
-/* 123 */     this.sealed = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void setOutputStream(OutputStream paramOutputStream) throws SecurityException {
-/* 138 */     if (paramOutputStream == null) {
-/* 139 */       throw new NullPointerException();
-/*     */     }
-/* 141 */     flushAndClose();
-/* 142 */     this.output = paramOutputStream;
-/* 143 */     this.doneHeader = false;
-/* 144 */     String str = getEncoding();
-/* 145 */     if (str == null) {
-/* 146 */       this.writer = new OutputStreamWriter(this.output);
-/*     */     } else {
-/*     */       try {
-/* 149 */         this.writer = new OutputStreamWriter(this.output, str);
-/* 150 */       } catch (UnsupportedEncodingException unsupportedEncodingException) {
-/*     */ 
-/*     */         
-/* 153 */         throw new Error("Unexpected exception " + unsupportedEncodingException);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setEncoding(String paramString) throws SecurityException, UnsupportedEncodingException {
-/* 174 */     super.setEncoding(paramString);
-/* 175 */     if (this.output == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 179 */     flush();
-/* 180 */     if (paramString == null) {
-/* 181 */       this.writer = new OutputStreamWriter(this.output);
-/*     */     } else {
-/* 183 */       this.writer = new OutputStreamWriter(this.output, paramString);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void publish(LogRecord paramLogRecord) {
-/*     */     String str;
-/* 206 */     if (!isLoggable(paramLogRecord)) {
-/*     */       return;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 211 */       str = getFormatter().format(paramLogRecord);
-/* 212 */     } catch (Exception exception) {
-/*     */ 
-/*     */       
-/* 215 */       reportError(null, exception, 5);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     try {
-/* 220 */       if (!this.doneHeader) {
-/* 221 */         this.writer.write(getFormatter().getHead(this));
-/* 222 */         this.doneHeader = true;
-/*     */       } 
-/* 224 */       this.writer.write(str);
-/* 225 */     } catch (Exception exception) {
-/*     */ 
-/*     */       
-/* 228 */       reportError(null, exception, 1);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isLoggable(LogRecord paramLogRecord) {
-/* 246 */     if (this.writer == null || paramLogRecord == null) {
-/* 247 */       return false;
-/*     */     }
-/* 249 */     return super.isLoggable(paramLogRecord);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void flush() {
-/* 257 */     if (this.writer != null) {
-/*     */       try {
-/* 259 */         this.writer.flush();
-/* 260 */       } catch (Exception exception) {
-/*     */ 
-/*     */         
-/* 263 */         reportError(null, exception, 2);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private synchronized void flushAndClose() throws SecurityException {
-/* 269 */     checkPermission();
-/* 270 */     if (this.writer != null) {
-/*     */       try {
-/* 272 */         if (!this.doneHeader) {
-/* 273 */           this.writer.write(getFormatter().getHead(this));
-/* 274 */           this.doneHeader = true;
-/*     */         } 
-/* 276 */         this.writer.write(getFormatter().getTail(this));
-/* 277 */         this.writer.flush();
-/* 278 */         this.writer.close();
-/* 279 */       } catch (Exception exception) {
-/*     */ 
-/*     */         
-/* 282 */         reportError(null, exception, 3);
-/*     */       } 
-/* 284 */       this.writer = null;
-/* 285 */       this.output = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void close() throws SecurityException {
-/* 302 */     flushAndClose();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\logging\StreamHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package java.util.logging;
+
+import java.io.*;
+
+/**
+ * Stream based logging <tt>Handler</tt>.
+ * <p>
+ * This is primarily intended as a base class or support class to
+ * be used in implementing other logging <tt>Handlers</tt>.
+ * <p>
+ * <tt>LogRecords</tt> are published to a given <tt>java.io.OutputStream</tt>.
+ * <p>
+ * <b>Configuration:</b>
+ * By default each <tt>StreamHandler</tt> is initialized using the following
+ * <tt>LogManager</tt> configuration properties where <tt>&lt;handler-name&gt;</tt>
+ * refers to the fully-qualified class name of the handler.
+ * If properties are not defined
+ * (or have invalid values) then the specified default values are used.
+ * <ul>
+ * <li>   &lt;handler-name&gt;.level
+ *        specifies the default level for the <tt>Handler</tt>
+ *        (defaults to <tt>Level.INFO</tt>). </li>
+ * <li>   &lt;handler-name&gt;.filter
+ *        specifies the name of a <tt>Filter</tt> class to use
+ *         (defaults to no <tt>Filter</tt>). </li>
+ * <li>   &lt;handler-name&gt;.formatter
+ *        specifies the name of a <tt>Formatter</tt> class to use
+ *        (defaults to <tt>java.util.logging.SimpleFormatter</tt>). </li>
+ * <li>   &lt;handler-name&gt;.encoding
+ *        the name of the character set encoding to use (defaults to
+ *        the default platform encoding). </li>
+ * </ul>
+ * <p>
+ * For example, the properties for {@code StreamHandler} would be:
+ * <ul>
+ * <li>   java.util.logging.StreamHandler.level=INFO </li>
+ * <li>   java.util.logging.StreamHandler.formatter=java.util.logging.SimpleFormatter </li>
+ * </ul>
+ * <p>
+ * For a custom handler, e.g. com.foo.MyHandler, the properties would be:
+ * <ul>
+ * <li>   com.foo.MyHandler.level=INFO </li>
+ * <li>   com.foo.MyHandler.formatter=java.util.logging.SimpleFormatter </li>
+ * </ul>
+ * <p>
+ * @since 1.4
+ */
+
+public class StreamHandler extends Handler {
+    private OutputStream output;
+    private boolean doneHeader;
+    private volatile Writer writer;
+
+    // Private method to configure a StreamHandler from LogManager
+    // properties and/or default values as specified in the class
+    // javadoc.
+    private void configure() {
+        LogManager manager = LogManager.getLogManager();
+        String cname = getClass().getName();
+
+        setLevel(manager.getLevelProperty(cname +".level", Level.INFO));
+        setFilter(manager.getFilterProperty(cname +".filter", null));
+        setFormatter(manager.getFormatterProperty(cname +".formatter", new SimpleFormatter()));
+        try {
+            setEncoding(manager.getStringProperty(cname +".encoding", null));
+        } catch (Exception ex) {
+            try {
+                setEncoding(null);
+            } catch (Exception ex2) {
+                // doing a setEncoding with null should always work.
+                // assert false;
+            }
+        }
+    }
+
+    /**
+     * Create a <tt>StreamHandler</tt>, with no current output stream.
+     */
+    public StreamHandler() {
+        sealed = false;
+        configure();
+        sealed = true;
+    }
+
+    /**
+     * Create a <tt>StreamHandler</tt> with a given <tt>Formatter</tt>
+     * and output stream.
+     * <p>
+     * @param out         the target output stream
+     * @param formatter   Formatter to be used to format output
+     */
+    public StreamHandler(OutputStream out, Formatter formatter) {
+        sealed = false;
+        configure();
+        setFormatter(formatter);
+        setOutputStream(out);
+        sealed = true;
+    }
+
+    /**
+     * Change the output stream.
+     * <P>
+     * If there is a current output stream then the <tt>Formatter</tt>'s
+     * tail string is written and the stream is flushed and closed.
+     * Then the output stream is replaced with the new output stream.
+     *
+     * @param out   New output stream.  May not be null.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     */
+    protected synchronized void setOutputStream(OutputStream out) throws SecurityException {
+        if (out == null) {
+            throw new NullPointerException();
+        }
+        flushAndClose();
+        output = out;
+        doneHeader = false;
+        String encoding = getEncoding();
+        if (encoding == null) {
+            writer = new OutputStreamWriter(output);
+        } else {
+            try {
+                writer = new OutputStreamWriter(output, encoding);
+            } catch (UnsupportedEncodingException ex) {
+                // This shouldn't happen.  The setEncoding method
+                // should have validated that the encoding is OK.
+                throw new Error("Unexpected exception " + ex);
+            }
+        }
+    }
+
+    /**
+     * Set (or change) the character encoding used by this <tt>Handler</tt>.
+     * <p>
+     * The encoding should be set before any <tt>LogRecords</tt> are written
+     * to the <tt>Handler</tt>.
+     *
+     * @param encoding  The name of a supported character encoding.
+     *        May be null, to indicate the default platform encoding.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     * @exception  UnsupportedEncodingException if the named encoding is
+     *          not supported.
+     */
+    @Override
+    public synchronized void setEncoding(String encoding)
+                        throws SecurityException, java.io.UnsupportedEncodingException {
+        super.setEncoding(encoding);
+        if (output == null) {
+            return;
+        }
+        // Replace the current writer with a writer for the new encoding.
+        flush();
+        if (encoding == null) {
+            writer = new OutputStreamWriter(output);
+        } else {
+            writer = new OutputStreamWriter(output, encoding);
+        }
+    }
+
+    /**
+     * Format and publish a <tt>LogRecord</tt>.
+     * <p>
+     * The <tt>StreamHandler</tt> first checks if there is an <tt>OutputStream</tt>
+     * and if the given <tt>LogRecord</tt> has at least the required log level.
+     * If not it silently returns.  If so, it calls any associated
+     * <tt>Filter</tt> to check if the record should be published.  If so,
+     * it calls its <tt>Formatter</tt> to format the record and then writes
+     * the result to the current output stream.
+     * <p>
+     * If this is the first <tt>LogRecord</tt> to be written to a given
+     * <tt>OutputStream</tt>, the <tt>Formatter</tt>'s "head" string is
+     * written to the stream before the <tt>LogRecord</tt> is written.
+     *
+     * @param  record  description of the log event. A null record is
+     *                 silently ignored and is not published
+     */
+    @Override
+    public synchronized void publish(LogRecord record) {
+        if (!isLoggable(record)) {
+            return;
+        }
+        String msg;
+        try {
+            msg = getFormatter().format(record);
+        } catch (Exception ex) {
+            // We don't want to throw an exception here, but we
+            // report the exception to any registered ErrorManager.
+            reportError(null, ex, ErrorManager.FORMAT_FAILURE);
+            return;
+        }
+
+        try {
+            if (!doneHeader) {
+                writer.write(getFormatter().getHead(this));
+                doneHeader = true;
+            }
+            writer.write(msg);
+        } catch (Exception ex) {
+            // We don't want to throw an exception here, but we
+            // report the exception to any registered ErrorManager.
+            reportError(null, ex, ErrorManager.WRITE_FAILURE);
+        }
+    }
+
+
+    /**
+     * Check if this <tt>Handler</tt> would actually log a given <tt>LogRecord</tt>.
+     * <p>
+     * This method checks if the <tt>LogRecord</tt> has an appropriate level and
+     * whether it satisfies any <tt>Filter</tt>.  It will also return false if
+     * no output stream has been assigned yet or the LogRecord is null.
+     * <p>
+     * @param record  a <tt>LogRecord</tt>
+     * @return true if the <tt>LogRecord</tt> would be logged.
+     *
+     */
+    @Override
+    public boolean isLoggable(LogRecord record) {
+        if (writer == null || record == null) {
+            return false;
+        }
+        return super.isLoggable(record);
+    }
+
+    /**
+     * Flush any buffered messages.
+     */
+    @Override
+    public synchronized void flush() {
+        if (writer != null) {
+            try {
+                writer.flush();
+            } catch (Exception ex) {
+                // We don't want to throw an exception here, but we
+                // report the exception to any registered ErrorManager.
+                reportError(null, ex, ErrorManager.FLUSH_FAILURE);
+            }
+        }
+    }
+
+    private synchronized void flushAndClose() throws SecurityException {
+        checkPermission();
+        if (writer != null) {
+            try {
+                if (!doneHeader) {
+                    writer.write(getFormatter().getHead(this));
+                    doneHeader = true;
+                }
+                writer.write(getFormatter().getTail(this));
+                writer.flush();
+                writer.close();
+            } catch (Exception ex) {
+                // We don't want to throw an exception here, but we
+                // report the exception to any registered ErrorManager.
+                reportError(null, ex, ErrorManager.CLOSE_FAILURE);
+            }
+            writer = null;
+            output = null;
+        }
+    }
+
+    /**
+     * Close the current output stream.
+     * <p>
+     * The <tt>Formatter</tt>'s "tail" string is written to the stream before it
+     * is closed.  In addition, if the <tt>Formatter</tt>'s "head" string has not
+     * yet been written to the stream, it will be written before the
+     * "tail" string.
+     *
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have LoggingPermission("control").
+     */
+    @Override
+    public synchronized void close() throws SecurityException {
+        flushAndClose();
+    }
+}

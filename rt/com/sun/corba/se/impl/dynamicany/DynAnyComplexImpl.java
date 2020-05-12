@@ -1,427 +1,421 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.TCKind;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.TypeCodePackage.BadKind;
-/*     */ import org.omg.CORBA.TypeCodePackage.Bounds;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ import org.omg.DynamicAny.NameDynAnyPair;
-/*     */ import org.omg.DynamicAny.NameValuePair;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class DynAnyComplexImpl
-/*     */   extends DynAnyConstructedImpl
-/*     */ {
-/*  49 */   String[] names = null;
-/*     */ 
-/*     */   
-/*  52 */   NameValuePair[] nameValuePairs = null;
-/*  53 */   NameDynAnyPair[] nameDynAnyPairs = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private DynAnyComplexImpl() {
-/*  60 */     this((ORB)null, (Any)null, false);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected DynAnyComplexImpl(ORB paramORB, Any paramAny, boolean paramBoolean) {
-/*  65 */     super(paramORB, paramAny, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected DynAnyComplexImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  72 */     super(paramORB, paramTypeCode);
-/*     */ 
-/*     */ 
-/*     */     
-/*  76 */     this.index = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String current_member_name() throws TypeMismatch, InvalidValue {
-/* 109 */     if (this.status == 2) {
-/* 110 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 112 */     if (!checkInitComponents() || this.index < 0 || this.index >= this.names.length) {
-/* 113 */       throw new InvalidValue();
-/*     */     }
-/* 115 */     return this.names[this.index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TCKind current_member_kind() throws TypeMismatch, InvalidValue {
-/* 122 */     if (this.status == 2) {
-/* 123 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 125 */     if (!checkInitComponents() || this.index < 0 || this.index >= this.components.length) {
-/* 126 */       throw new InvalidValue();
-/*     */     }
-/* 128 */     return this.components[this.index].type().kind();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_members(NameValuePair[] paramArrayOfNameValuePair) throws TypeMismatch, InvalidValue {
-/* 136 */     if (this.status == 2) {
-/* 137 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 139 */     if (paramArrayOfNameValuePair == null || paramArrayOfNameValuePair.length == 0) {
-/* 140 */       clearData();
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 145 */     DynAny dynAny = null;
-/*     */ 
-/*     */     
-/* 148 */     TypeCode typeCode = this.any.type();
-/*     */     
-/* 150 */     int i = 0;
-/*     */     try {
-/* 152 */       i = typeCode.member_count();
-/* 153 */     } catch (BadKind badKind) {}
-/*     */     
-/* 155 */     if (i != paramArrayOfNameValuePair.length) {
-/* 156 */       clearData();
-/* 157 */       throw new InvalidValue();
-/*     */     } 
-/*     */     
-/* 160 */     allocComponents(paramArrayOfNameValuePair);
-/*     */     
-/* 162 */     for (byte b = 0; b < paramArrayOfNameValuePair.length; b++) {
-/* 163 */       if (paramArrayOfNameValuePair[b] != null) {
-/* 164 */         String str1 = (paramArrayOfNameValuePair[b]).id;
-/* 165 */         String str2 = null;
-/*     */         
-/* 167 */         try { str2 = typeCode.member_name(b); }
-/* 168 */         catch (BadKind badKind) {  }
-/* 169 */         catch (Bounds bounds) {}
-/*     */         
-/* 171 */         if (!str2.equals(str1) && !str1.equals("")) {
-/* 172 */           clearData();
-/*     */           
-/* 174 */           throw new TypeMismatch();
-/*     */         } 
-/* 176 */         Any any = (paramArrayOfNameValuePair[b]).value;
-/* 177 */         TypeCode typeCode1 = null;
-/*     */         
-/* 179 */         try { typeCode1 = typeCode.member_type(b); }
-/* 180 */         catch (BadKind badKind) {  }
-/* 181 */         catch (Bounds bounds) {}
-/*     */         
-/* 183 */         if (!typeCode1.equal(any.type())) {
-/* 184 */           clearData();
-/*     */           
-/* 186 */           throw new TypeMismatch();
-/*     */         } 
-/*     */         
-/*     */         try {
-/* 190 */           dynAny = DynAnyUtil.createMostDerivedDynAny(any, this.orb, false);
-/* 191 */         } catch (InconsistentTypeCode inconsistentTypeCode) {
-/* 192 */           throw new InvalidValue();
-/*     */         } 
-/* 194 */         addComponent(b, str1, any, dynAny);
-/*     */       } else {
-/* 196 */         clearData();
-/*     */         
-/* 198 */         throw new InvalidValue();
-/*     */       } 
-/*     */     } 
-/* 201 */     this.index = (paramArrayOfNameValuePair.length == 0) ? -1 : 0;
-/* 202 */     this.representations = 4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_members_as_dyn_any(NameDynAnyPair[] paramArrayOfNameDynAnyPair) throws TypeMismatch, InvalidValue {
-/* 210 */     if (this.status == 2) {
-/* 211 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 213 */     if (paramArrayOfNameDynAnyPair == null || paramArrayOfNameDynAnyPair.length == 0) {
-/* 214 */       clearData();
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 222 */     TypeCode typeCode = this.any.type();
-/*     */     
-/* 224 */     int i = 0;
-/*     */     try {
-/* 226 */       i = typeCode.member_count();
-/* 227 */     } catch (BadKind badKind) {}
-/*     */     
-/* 229 */     if (i != paramArrayOfNameDynAnyPair.length) {
-/* 230 */       clearData();
-/* 231 */       throw new InvalidValue();
-/*     */     } 
-/*     */     
-/* 234 */     allocComponents(paramArrayOfNameDynAnyPair);
-/*     */     
-/* 236 */     for (byte b = 0; b < paramArrayOfNameDynAnyPair.length; b++) {
-/* 237 */       if (paramArrayOfNameDynAnyPair[b] != null) {
-/* 238 */         String str1 = (paramArrayOfNameDynAnyPair[b]).id;
-/* 239 */         String str2 = null;
-/*     */         
-/* 241 */         try { str2 = typeCode.member_name(b); }
-/* 242 */         catch (BadKind badKind) {  }
-/* 243 */         catch (Bounds bounds) {}
-/*     */         
-/* 245 */         if (!str2.equals(str1) && !str1.equals("")) {
-/* 246 */           clearData();
-/*     */           
-/* 248 */           throw new TypeMismatch();
-/*     */         } 
-/* 250 */         DynAny dynAny = (paramArrayOfNameDynAnyPair[b]).value;
-/* 251 */         Any any = getAny(dynAny);
-/* 252 */         TypeCode typeCode1 = null;
-/*     */         
-/* 254 */         try { typeCode1 = typeCode.member_type(b); }
-/* 255 */         catch (BadKind badKind) {  }
-/* 256 */         catch (Bounds bounds) {}
-/*     */         
-/* 258 */         if (!typeCode1.equal(any.type())) {
-/* 259 */           clearData();
-/*     */           
-/* 261 */           throw new TypeMismatch();
-/*     */         } 
-/*     */         
-/* 264 */         addComponent(b, str1, any, dynAny);
-/*     */       } else {
-/* 266 */         clearData();
-/*     */         
-/* 268 */         throw new InvalidValue();
-/*     */       } 
-/*     */     } 
-/* 271 */     this.index = (paramArrayOfNameDynAnyPair.length == 0) ? -1 : 0;
-/* 272 */     this.representations = 4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void allocComponents(int paramInt) {
-/* 280 */     this.components = new DynAny[paramInt];
-/* 281 */     this.names = new String[paramInt];
-/* 282 */     this.nameValuePairs = new NameValuePair[paramInt];
-/* 283 */     this.nameDynAnyPairs = new NameDynAnyPair[paramInt];
-/* 284 */     for (byte b = 0; b < paramInt; b++) {
-/* 285 */       this.nameValuePairs[b] = new NameValuePair();
-/* 286 */       this.nameDynAnyPairs[b] = new NameDynAnyPair();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void allocComponents(NameValuePair[] paramArrayOfNameValuePair) {
-/* 291 */     this.components = new DynAny[paramArrayOfNameValuePair.length];
-/* 292 */     this.names = new String[paramArrayOfNameValuePair.length];
-/* 293 */     this.nameValuePairs = paramArrayOfNameValuePair;
-/* 294 */     this.nameDynAnyPairs = new NameDynAnyPair[paramArrayOfNameValuePair.length];
-/* 295 */     for (byte b = 0; b < paramArrayOfNameValuePair.length; b++) {
-/* 296 */       this.nameDynAnyPairs[b] = new NameDynAnyPair();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void allocComponents(NameDynAnyPair[] paramArrayOfNameDynAnyPair) {
-/* 301 */     this.components = new DynAny[paramArrayOfNameDynAnyPair.length];
-/* 302 */     this.names = new String[paramArrayOfNameDynAnyPair.length];
-/* 303 */     this.nameValuePairs = new NameValuePair[paramArrayOfNameDynAnyPair.length];
-/* 304 */     for (byte b = 0; b < paramArrayOfNameDynAnyPair.length; b++) {
-/* 305 */       this.nameValuePairs[b] = new NameValuePair();
-/*     */     }
-/* 307 */     this.nameDynAnyPairs = paramArrayOfNameDynAnyPair;
-/*     */   }
-/*     */   
-/*     */   private void addComponent(int paramInt, String paramString, Any paramAny, DynAny paramDynAny) {
-/* 311 */     this.components[paramInt] = paramDynAny;
-/* 312 */     this.names[paramInt] = (paramString != null) ? paramString : "";
-/* 313 */     (this.nameValuePairs[paramInt]).id = paramString;
-/* 314 */     (this.nameValuePairs[paramInt]).value = paramAny;
-/* 315 */     (this.nameDynAnyPairs[paramInt]).id = paramString;
-/* 316 */     (this.nameDynAnyPairs[paramInt]).value = paramDynAny;
-/* 317 */     if (paramDynAny instanceof DynAnyImpl) {
-/* 318 */       ((DynAnyImpl)paramDynAny).setStatus((byte)1);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeComponentsFromAny() {
-/* 325 */     TypeCode typeCode1 = this.any.type();
-/* 326 */     TypeCode typeCode2 = null;
-/*     */     
-/* 328 */     DynAny dynAny = null;
-/* 329 */     String str = null;
-/* 330 */     int i = 0;
-/*     */     
-/*     */     try {
-/* 333 */       i = typeCode1.member_count();
-/* 334 */     } catch (BadKind badKind) {}
-/*     */ 
-/*     */     
-/* 337 */     InputStream inputStream = this.any.create_input_stream();
-/*     */     
-/* 339 */     allocComponents(i);
-/*     */     
-/* 341 */     for (byte b = 0; b < i; b++) {
-/*     */       
-/* 343 */       try { str = typeCode1.member_name(b);
-/* 344 */         typeCode2 = typeCode1.member_type(b); }
-/* 345 */       catch (BadKind badKind) {  }
-/* 346 */       catch (Bounds bounds) {}
-/*     */       
-/* 348 */       Any any = DynAnyUtil.extractAnyFromStream(typeCode2, inputStream, this.orb);
-/*     */       
-/*     */       try {
-/* 351 */         dynAny = DynAnyUtil.createMostDerivedDynAny(any, this.orb, false);
-/*     */ 
-/*     */       
-/*     */       }
-/* 355 */       catch (InconsistentTypeCode inconsistentTypeCode) {}
-/*     */       
-/* 357 */       addComponent(b, str, any, dynAny);
-/*     */     } 
-/* 359 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeComponentsFromTypeCode() {
-/* 368 */     TypeCode typeCode1 = this.any.type();
-/* 369 */     TypeCode typeCode2 = null;
-/*     */     
-/* 371 */     DynAny dynAny = null;
-/*     */     
-/* 373 */     int i = 0;
-/*     */     
-/*     */     try {
-/* 376 */       i = typeCode1.member_count();
-/* 377 */     } catch (BadKind badKind) {}
-/*     */ 
-/*     */     
-/* 380 */     allocComponents(i);
-/*     */     
-/* 382 */     for (byte b = 0; b < i; b++) {
-/* 383 */       String str = null;
-/*     */       
-/* 385 */       try { str = typeCode1.member_name(b);
-/* 386 */         typeCode2 = typeCode1.member_type(b); }
-/* 387 */       catch (BadKind badKind) {  }
-/* 388 */       catch (Bounds bounds) {}
-/*     */       
-/*     */       try {
-/* 391 */         dynAny = DynAnyUtil.createMostDerivedDynAny(typeCode2, this.orb);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       }
-/* 403 */       catch (InconsistentTypeCode inconsistentTypeCode) {}
-/*     */ 
-/*     */       
-/* 406 */       Any any = getAny(dynAny);
-/* 407 */       addComponent(b, str, any, dynAny);
-/*     */     } 
-/* 409 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void clearData() {
-/* 416 */     super.clearData();
-/* 417 */     this.names = null;
-/* 418 */     this.nameValuePairs = null;
-/* 419 */     this.nameDynAnyPairs = null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynAnyComplexImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.TCKind;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import org.omg.CORBA.TypeCodePackage.Bounds;
+import org.omg.CORBA.portable.InputStream;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
+import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
+import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+abstract class DynAnyComplexImpl extends DynAnyConstructedImpl
+{
+    //
+    // Instance variables
+    //
+
+    String[] names = null;
+    // Instance variables components and names above are kept in sync
+    // with these two arrays at all times.
+    NameValuePair[] nameValuePairs = null;
+    NameDynAnyPair[] nameDynAnyPairs = null;
+
+    //
+    // Constructors
+    //
+
+    private DynAnyComplexImpl() {
+        this(null, (Any)null, false);
+    }
+
+    protected DynAnyComplexImpl(ORB orb, Any any, boolean copyValue) {
+        // We can be sure that typeCode is of kind tk_struct
+        super(orb, any, copyValue);
+        // Initialize components lazily, on demand.
+        // This is an optimization in case the user is only interested in storing Anys.
+    }
+
+    protected DynAnyComplexImpl(ORB orb, TypeCode typeCode) {
+        // We can be sure that typeCode is of kind tk_struct
+        super(orb, typeCode);
+        // For DynAnyComplex, the operation sets the current position to -1
+        // for empty exceptions and to zero for all other TypeCodes.
+        // The members (if any) are (recursively) initialized to their default values.
+        index = 0;
+    }
+
+    //
+    // DynAny interface methods
+    //
+
+    // _REVISIT_ Overridden to provide more efficient copying.
+    // Copies all the internal representations which is faster than reconstructing them.
+/*
+    public org.omg.DynamicAny.DynAny copy() {
+        if (status == STATUS_DESTROYED) {
+            throw new OBJECT_NOT_EXIST();
+        }
+        DynAnyComplexImpl returnValue = null;
+        if ((representations & REPRESENTATION_ANY) != 0) {
+            // The flag "true" indicates copying the Any value
+            returnValue = (DynAnyComplexImpl)DynAnyUtil.createMostDerivedDynAny(any, orb, true);
+        }
+        if ((representations & REPRESENTATION_COMPONENTS) != 0) {
+        }
+        return returnValue;
+    }
+*/
+
+    //
+    // Complex methods
+    //
+
+    public String current_member_name ()
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        if( ! checkInitComponents() || index < 0 || index >= names.length) {
+            throw new InvalidValue();
+        }
+        return names[index];
+    }
+
+    public TCKind current_member_kind ()
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        if( ! checkInitComponents() || index < 0 || index >= components.length) {
+            throw new InvalidValue();
+        }
+        return components[index].type().kind();
+    }
+
+    // Creates references to the parameter instead of copying it.
+    public void set_members (org.omg.DynamicAny.NameValuePair[] value)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        if (value == null || value.length == 0) {
+            clearData();
+            return;
+        }
+
+        Any memberAny;
+        DynAny memberDynAny = null;
+        String memberName;
+        // We know that this is of kind tk_struct
+        TypeCode expectedTypeCode = any.type();
+
+        int expectedMemberCount = 0;
+        try {
+            expectedMemberCount = expectedTypeCode.member_count();
+        } catch (BadKind badKind) { // impossible
+        }
+        if (expectedMemberCount != value.length) {
+            clearData();
+            throw new InvalidValue();
+        }
+
+        allocComponents(value);
+
+        for (int i=0; i<value.length; i++) {
+            if (value[i] != null) {
+                memberName = value[i].id;
+                String expectedMemberName = null;
+                try {
+                    expectedMemberName = expectedTypeCode.member_name(i);
+                } catch (BadKind badKind) { // impossible
+                } catch (Bounds bounds) { // impossible
+                }
+                if ( ! (expectedMemberName.equals(memberName) || memberName.equals(""))) {
+                    clearData();
+                    // _REVISIT_ More info
+                    throw new TypeMismatch();
+                }
+                memberAny = value[i].value;
+                TypeCode expectedMemberType = null;
+                try {
+                    expectedMemberType = expectedTypeCode.member_type(i);
+                } catch (BadKind badKind) { // impossible
+                } catch (Bounds bounds) { // impossible
+                }
+                if (! expectedMemberType.equal(memberAny.type())) {
+                    clearData();
+                    // _REVISIT_ More info
+                    throw new TypeMismatch();
+                }
+                try {
+                    // Creates the appropriate subtype without copying the Any
+                    memberDynAny = DynAnyUtil.createMostDerivedDynAny(memberAny, orb, false);
+                } catch (InconsistentTypeCode itc) {
+                    throw new InvalidValue();
+                }
+                addComponent(i, memberName, memberAny, memberDynAny);
+            } else {
+                clearData();
+                // _REVISIT_ More info
+                throw new InvalidValue();
+            }
+        }
+        index = (value.length == 0 ? NO_INDEX : 0);
+        representations = REPRESENTATION_COMPONENTS;
+    }
+
+    // Creates references to the parameter instead of copying it.
+    public void set_members_as_dyn_any (org.omg.DynamicAny.NameDynAnyPair[] value)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        if (value == null || value.length == 0) {
+            clearData();
+            return;
+        }
+
+        Any memberAny;
+        DynAny memberDynAny;
+        String memberName;
+        // We know that this is of kind tk_struct
+        TypeCode expectedTypeCode = any.type();
+
+        int expectedMemberCount = 0;
+        try {
+            expectedMemberCount = expectedTypeCode.member_count();
+        } catch (BadKind badKind) { // impossible
+        }
+        if (expectedMemberCount != value.length) {
+            clearData();
+            throw new InvalidValue();
+        }
+
+        allocComponents(value);
+
+        for (int i=0; i<value.length; i++) {
+            if (value[i] != null) {
+                memberName = value[i].id;
+                String expectedMemberName = null;
+                try {
+                    expectedMemberName = expectedTypeCode.member_name(i);
+                } catch (BadKind badKind) { // impossible
+                } catch (Bounds bounds) { // impossible
+                }
+                if ( ! (expectedMemberName.equals(memberName) || memberName.equals(""))) {
+                    clearData();
+                    // _REVISIT_ More info
+                    throw new TypeMismatch();
+                }
+                memberDynAny = value[i].value;
+                memberAny = getAny(memberDynAny);
+                TypeCode expectedMemberType = null;
+                try {
+                    expectedMemberType = expectedTypeCode.member_type(i);
+                } catch (BadKind badKind) { // impossible
+                } catch (Bounds bounds) { // impossible
+                }
+                if (! expectedMemberType.equal(memberAny.type())) {
+                    clearData();
+                    // _REVISIT_ More info
+                    throw new TypeMismatch();
+                }
+
+                addComponent(i, memberName, memberAny, memberDynAny);
+            } else {
+                clearData();
+                // _REVISIT_ More info
+                throw new InvalidValue();
+            }
+        }
+        index = (value.length == 0 ? NO_INDEX : 0);
+        representations = REPRESENTATION_COMPONENTS;
+    }
+
+    //
+    // Utility methods
+    //
+
+    private void allocComponents(int length) {
+        components = new DynAny[length];
+        names = new String[length];
+        nameValuePairs = new NameValuePair[length];
+        nameDynAnyPairs = new NameDynAnyPair[length];
+        for (int i=0; i<length; i++) {
+            nameValuePairs[i] = new NameValuePair();
+            nameDynAnyPairs[i] = new NameDynAnyPair();
+        }
+    }
+
+    private void allocComponents(org.omg.DynamicAny.NameValuePair[] value) {
+        components = new DynAny[value.length];
+        names = new String[value.length];
+        nameValuePairs = value;
+        nameDynAnyPairs = new NameDynAnyPair[value.length];
+        for (int i=0; i<value.length; i++) {
+            nameDynAnyPairs[i] = new NameDynAnyPair();
+        }
+    }
+
+    private void allocComponents(org.omg.DynamicAny.NameDynAnyPair[] value) {
+        components = new DynAny[value.length];
+        names = new String[value.length];
+        nameValuePairs = new NameValuePair[value.length];
+        for (int i=0; i<value.length; i++) {
+            nameValuePairs[i] = new NameValuePair();
+        }
+        nameDynAnyPairs = value;
+    }
+
+    private void addComponent(int i, String memberName, Any memberAny, DynAny memberDynAny) {
+        components[i] = memberDynAny;
+        names[i] = (memberName != null ? memberName : "");
+        nameValuePairs[i].id = memberName;
+        nameValuePairs[i].value = memberAny;
+        nameDynAnyPairs[i].id = memberName;
+        nameDynAnyPairs[i].value = memberDynAny;
+        if (memberDynAny instanceof DynAnyImpl)
+            ((DynAnyImpl)memberDynAny).setStatus(STATUS_UNDESTROYABLE);
+    }
+
+    // Initializes components, names, nameValuePairs and nameDynAnyPairs representation
+    // from the Any representation
+    protected boolean initializeComponentsFromAny() {
+        // This typeCode is of kind tk_struct.
+        TypeCode typeCode = any.type();
+        TypeCode memberType = null;
+        Any memberAny;
+        DynAny memberDynAny = null;
+        String memberName = null;
+        int length = 0;
+
+        try {
+            length = typeCode.member_count();
+        } catch (BadKind badKind) { // impossible
+        }
+
+        InputStream input = any.create_input_stream();
+
+        allocComponents(length);
+
+        for (int i=0; i<length; i++) {
+            try {
+                memberName = typeCode.member_name(i);
+                memberType = typeCode.member_type(i);
+            } catch (BadKind badKind) { // impossible
+            } catch (Bounds bounds) { // impossible
+            }
+            memberAny = DynAnyUtil.extractAnyFromStream(memberType, input, orb);
+            try {
+                // Creates the appropriate subtype without copying the Any
+                memberDynAny = DynAnyUtil.createMostDerivedDynAny(memberAny, orb, false);
+                // _DEBUG_
+                //System.out.println("Created DynAny for " + memberName +
+                //                   ", type " + memberType.kind().value());
+            } catch (InconsistentTypeCode itc) { // impossible
+            }
+            addComponent(i, memberName, memberAny, memberDynAny);
+        }
+        return true;
+    }
+
+    // Initializes components, names, nameValuePairs and nameDynAnyPairs representation
+    // from the internal TypeCode information with default values
+    // This is not done recursively, only one level.
+    // More levels are initialized lazily, on demand.
+    protected boolean initializeComponentsFromTypeCode() {
+        // This typeCode is of kind tk_struct.
+        TypeCode typeCode = any.type();
+        TypeCode memberType = null;
+        Any memberAny;
+        DynAny memberDynAny = null;
+        String memberName;
+        int length = 0;
+
+        try {
+            length = typeCode.member_count();
+        } catch (BadKind badKind) { // impossible
+        }
+
+        allocComponents(length);
+
+        for (int i=0; i<length; i++) {
+            memberName = null;
+            try {
+                memberName = typeCode.member_name(i);
+                memberType = typeCode.member_type(i);
+            } catch (BadKind badKind) { // impossible
+            } catch (Bounds bounds) { // impossible
+            }
+            try {
+                memberDynAny = DynAnyUtil.createMostDerivedDynAny(memberType, orb);
+                // _DEBUG_
+                //System.out.println("Created DynAny for " + memberName +
+                //                   ", type " + memberType.kind().value());
+/*
+                if (memberDynAny instanceof DynAnyConstructedImpl) {
+                    if ( ! ((DynAnyConstructedImpl)memberDynAny).isRecursive()) {
+                        // This is the recursive part
+                        ((DynAnyConstructedImpl)memberDynAny).initializeComponentsFromTypeCode();
+                    }
+                } // Other implementations have their own way of dealing with implementing the spec.
+*/
+            } catch (InconsistentTypeCode itc) { // impossible
+            }
+            // get a hold of the default initialized Any without copying
+            memberAny = getAny(memberDynAny);
+            addComponent(i, memberName, memberAny, memberDynAny);
+        }
+        return true;
+    }
+
+    // It is probably right not to destroy the released component DynAnys.
+    // Some other DynAny or a user variable might still hold onto them
+    // and if not then the garbage collector will take care of it.
+    protected void clearData() {
+        super.clearData();
+        names = null;
+        nameValuePairs = null;
+        nameDynAnyPairs = null;
+    }
+}

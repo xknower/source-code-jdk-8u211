@@ -1,545 +1,539 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.security.Permission;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.List;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class URLPermission
-/*     */   extends Permission
-/*     */ {
-/*     */   private static final long serialVersionUID = -2702463814894478682L;
-/*     */   private transient String scheme;
-/*     */   private transient String ssp;
-/*     */   private transient String path;
-/*     */   private transient List<String> methods;
-/*     */   private transient List<String> requestHeaders;
-/*     */   private transient Authority authority;
-/*     */   private String actions;
-/*     */   
-/*     */   public URLPermission(String paramString1, String paramString2) {
-/* 165 */     super(paramString1);
-/* 166 */     init(paramString2);
-/*     */   }
-/*     */   private void init(String paramString) {
-/*     */     String str1, str2;
-/* 170 */     parseURI(getName());
-/* 171 */     int i = paramString.indexOf(':');
-/* 172 */     if (paramString.lastIndexOf(':') != i) {
-/* 173 */       throw new IllegalArgumentException("Invalid actions string: \"" + paramString + "\"");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 178 */     if (i == -1) {
-/* 179 */       str1 = paramString;
-/* 180 */       str2 = "";
-/*     */     } else {
-/* 182 */       str1 = paramString.substring(0, i);
-/* 183 */       str2 = paramString.substring(i + 1);
-/*     */     } 
-/*     */     
-/* 186 */     List<String> list = normalizeMethods(str1);
-/* 187 */     Collections.sort(list);
-/* 188 */     this.methods = Collections.unmodifiableList(list);
-/*     */     
-/* 190 */     list = normalizeHeaders(str2);
-/* 191 */     Collections.sort(list);
-/* 192 */     this.requestHeaders = Collections.unmodifiableList(list);
-/*     */     
-/* 194 */     this.actions = actions();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public URLPermission(String paramString) {
-/* 207 */     this(paramString, "*:*");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getActions() {
-/* 223 */     return this.actions;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean implies(Permission paramPermission) {
-/* 262 */     if (!(paramPermission instanceof URLPermission)) {
-/* 263 */       return false;
-/*     */     }
-/*     */     
-/* 266 */     URLPermission uRLPermission = (URLPermission)paramPermission;
-/*     */     
-/* 268 */     if (!((String)this.methods.get(0)).equals("*") && 
-/* 269 */       Collections.indexOfSubList(this.methods, uRLPermission.methods) == -1) {
-/* 270 */       return false;
-/*     */     }
-/*     */     
-/* 273 */     if (this.requestHeaders.isEmpty() && !uRLPermission.requestHeaders.isEmpty()) {
-/* 274 */       return false;
-/*     */     }
-/*     */     
-/* 277 */     if (!this.requestHeaders.isEmpty() && 
-/* 278 */       !((String)this.requestHeaders.get(0)).equals("*") && 
-/* 279 */       Collections.indexOfSubList(this.requestHeaders, uRLPermission.requestHeaders) == -1)
-/*     */     {
-/* 281 */       return false;
-/*     */     }
-/*     */     
-/* 284 */     if (!this.scheme.equals(uRLPermission.scheme)) {
-/* 285 */       return false;
-/*     */     }
-/*     */     
-/* 288 */     if (this.ssp.equals("*")) {
-/* 289 */       return true;
-/*     */     }
-/*     */     
-/* 292 */     if (!this.authority.implies(uRLPermission.authority)) {
-/* 293 */       return false;
-/*     */     }
-/*     */     
-/* 296 */     if (this.path == null) {
-/* 297 */       return (uRLPermission.path == null);
-/*     */     }
-/* 299 */     if (uRLPermission.path == null) {
-/* 300 */       return false;
-/*     */     }
-/*     */     
-/* 303 */     if (this.path.endsWith("/-")) {
-/* 304 */       String str = this.path.substring(0, this.path.length() - 1);
-/* 305 */       return uRLPermission.path.startsWith(str);
-/*     */     } 
-/*     */     
-/* 308 */     if (this.path.endsWith("/*")) {
-/* 309 */       String str1 = this.path.substring(0, this.path.length() - 1);
-/* 310 */       if (!uRLPermission.path.startsWith(str1)) {
-/* 311 */         return false;
-/*     */       }
-/* 313 */       String str2 = uRLPermission.path.substring(str1.length());
-/*     */       
-/* 315 */       if (str2.indexOf('/') != -1) {
-/* 316 */         return false;
-/*     */       }
-/* 318 */       if (str2.equals("-")) {
-/* 319 */         return false;
-/*     */       }
-/* 321 */       return true;
-/*     */     } 
-/* 323 */     return this.path.equals(uRLPermission.path);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 332 */     if (!(paramObject instanceof URLPermission)) {
-/* 333 */       return false;
-/*     */     }
-/* 335 */     URLPermission uRLPermission = (URLPermission)paramObject;
-/* 336 */     if (!this.scheme.equals(uRLPermission.scheme)) {
-/* 337 */       return false;
-/*     */     }
-/* 339 */     if (!getActions().equals(uRLPermission.getActions())) {
-/* 340 */       return false;
-/*     */     }
-/* 342 */     if (!this.authority.equals(uRLPermission.authority)) {
-/* 343 */       return false;
-/*     */     }
-/* 345 */     if (this.path != null) {
-/* 346 */       return this.path.equals(uRLPermission.path);
-/*     */     }
-/* 348 */     return (uRLPermission.path == null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 357 */     return getActions().hashCode() + this.scheme
-/* 358 */       .hashCode() + this.authority
-/* 359 */       .hashCode() + ((this.path == null) ? 0 : this.path
-/* 360 */       .hashCode());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private List<String> normalizeMethods(String paramString) {
-/* 365 */     ArrayList<String> arrayList = new ArrayList();
-/* 366 */     StringBuilder stringBuilder = new StringBuilder();
-/* 367 */     for (byte b = 0; b < paramString.length(); b++) {
-/* 368 */       char c = paramString.charAt(b);
-/* 369 */       if (c == ',')
-/* 370 */       { String str1 = stringBuilder.toString();
-/* 371 */         if (str1.length() > 0)
-/* 372 */           arrayList.add(str1); 
-/* 373 */         stringBuilder = new StringBuilder(); }
-/* 374 */       else { if (c == ' ' || c == '\t') {
-/* 375 */           throw new IllegalArgumentException("White space not allowed in methods: \"" + paramString + "\"");
-/*     */         }
-/*     */         
-/* 378 */         if (c >= 'a' && c <= 'z') {
-/* 379 */           c = (char)(c - 32);
-/*     */         }
-/* 381 */         stringBuilder.append(c); }
-/*     */     
-/*     */     } 
-/* 384 */     String str = stringBuilder.toString();
-/* 385 */     if (str.length() > 0)
-/* 386 */       arrayList.add(str); 
-/* 387 */     return arrayList;
-/*     */   }
-/*     */   
-/*     */   private List<String> normalizeHeaders(String paramString) {
-/* 391 */     ArrayList<String> arrayList = new ArrayList();
-/* 392 */     StringBuilder stringBuilder = new StringBuilder();
-/* 393 */     boolean bool = true;
-/* 394 */     for (byte b = 0; b < paramString.length(); b++) {
-/* 395 */       char c = paramString.charAt(b);
-/* 396 */       if (c >= 'a' && c <= 'z')
-/* 397 */       { if (bool) {
-/* 398 */           c = (char)(c - 32);
-/* 399 */           bool = false;
-/*     */         } 
-/* 401 */         stringBuilder.append(c); }
-/* 402 */       else { if (c == ' ' || c == '\t') {
-/* 403 */           throw new IllegalArgumentException("White space not allowed in headers: \"" + paramString + "\"");
-/*     */         }
-/* 405 */         if (c == '-') {
-/* 406 */           bool = true;
-/* 407 */           stringBuilder.append(c);
-/* 408 */         } else if (c == ',') {
-/* 409 */           String str1 = stringBuilder.toString();
-/* 410 */           if (str1.length() > 0)
-/* 411 */             arrayList.add(str1); 
-/* 412 */           stringBuilder = new StringBuilder();
-/* 413 */           bool = true;
-/*     */         } else {
-/* 415 */           bool = false;
-/* 416 */           stringBuilder.append(c);
-/*     */         }  }
-/*     */     
-/* 419 */     }  String str = stringBuilder.toString();
-/* 420 */     if (str.length() > 0)
-/* 421 */       arrayList.add(str); 
-/* 422 */     return arrayList;
-/*     */   }
-/*     */   private void parseURI(String paramString) {
-/*     */     String str2;
-/* 426 */     int i = paramString.length();
-/* 427 */     int j = paramString.indexOf(':');
-/* 428 */     if (j == -1 || j + 1 == i) {
-/* 429 */       throw new IllegalArgumentException("Invalid URL string: \"" + paramString + "\"");
-/*     */     }
-/*     */     
-/* 432 */     this.scheme = paramString.substring(0, j).toLowerCase();
-/* 433 */     this.ssp = paramString.substring(j + 1);
-/*     */     
-/* 435 */     if (!this.ssp.startsWith("//")) {
-/* 436 */       if (!this.ssp.equals("*")) {
-/* 437 */         throw new IllegalArgumentException("Invalid URL string: \"" + paramString + "\"");
-/*     */       }
-/*     */       
-/* 440 */       this.authority = new Authority(this.scheme, "*");
-/*     */       return;
-/*     */     } 
-/* 443 */     String str1 = this.ssp.substring(2);
-/*     */     
-/* 445 */     j = str1.indexOf('/');
-/*     */     
-/* 447 */     if (j == -1) {
-/* 448 */       this.path = "";
-/* 449 */       str2 = str1;
-/*     */     } else {
-/* 451 */       str2 = str1.substring(0, j);
-/* 452 */       this.path = str1.substring(j);
-/*     */     } 
-/* 454 */     this.authority = new Authority(this.scheme, str2.toLowerCase());
-/*     */   }
-/*     */   
-/*     */   private String actions() {
-/* 458 */     StringBuilder stringBuilder = new StringBuilder();
-/* 459 */     for (String str : this.methods) {
-/* 460 */       stringBuilder.append(str);
-/*     */     }
-/* 462 */     stringBuilder.append(":");
-/* 463 */     for (String str : this.requestHeaders) {
-/* 464 */       stringBuilder.append(str);
-/*     */     }
-/* 466 */     return stringBuilder.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 474 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 475 */     String str = (String)getField.get("actions", (Object)null);
-/*     */     
-/* 477 */     init(str);
-/*     */   }
-/*     */   
-/*     */   static class Authority {
-/*     */     HostPortrange p;
-/*     */     
-/*     */     Authority(String param1String1, String param1String2) {
-/* 484 */       int i = param1String2.indexOf('@');
-/* 485 */       if (i == -1) {
-/* 486 */         this.p = new HostPortrange(param1String1, param1String2);
-/*     */       } else {
-/* 488 */         this.p = new HostPortrange(param1String1, param1String2.substring(i + 1));
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     boolean implies(Authority param1Authority) {
-/* 493 */       return (impliesHostrange(param1Authority) && impliesPortrange(param1Authority));
-/*     */     }
-/*     */     
-/*     */     private boolean impliesHostrange(Authority param1Authority) {
-/* 497 */       String str1 = this.p.hostname();
-/* 498 */       String str2 = param1Authority.p.hostname();
-/*     */       
-/* 500 */       if (this.p.wildcard() && str1.equals(""))
-/*     */       {
-/* 502 */         return true;
-/*     */       }
-/* 504 */       if (param1Authority.p.wildcard() && str2.equals(""))
-/*     */       {
-/* 506 */         return false;
-/*     */       }
-/* 508 */       if (str1.equals(str2))
-/*     */       {
-/*     */         
-/* 511 */         return true;
-/*     */       }
-/* 513 */       if (this.p.wildcard())
-/*     */       {
-/* 515 */         return str2.endsWith(str1);
-/*     */       }
-/* 517 */       return false;
-/*     */     }
-/*     */     
-/*     */     private boolean impliesPortrange(Authority param1Authority) {
-/* 521 */       int[] arrayOfInt1 = this.p.portrange();
-/* 522 */       int[] arrayOfInt2 = param1Authority.p.portrange();
-/* 523 */       if (arrayOfInt1[0] == -1)
-/*     */       {
-/* 525 */         return true;
-/*     */       }
-/* 527 */       return (arrayOfInt1[0] <= arrayOfInt2[0] && arrayOfInt1[1] >= arrayOfInt2[1]);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     boolean equals(Authority param1Authority) {
-/* 532 */       return this.p.equals(param1Authority.p);
-/*     */     }
-/*     */     
-/*     */     public int hashCode() {
-/* 536 */       return this.p.hashCode();
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\URLPermission.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.security.Permission;
+
+/**
+ * Represents permission to access a resource or set of resources defined by a
+ * given url, and for a given set of user-settable request methods
+ * and request headers. The <i>name</i> of the permission is the url string.
+ * The <i>actions</i> string is a concatenation of the request methods and headers.
+ * The range of method and header names is not restricted by this class.
+ * <p><b>The url</b><p>
+ * The url string has the following expected structure.
+ * <pre>
+ *     scheme : // authority [ / path ]
+ * </pre>
+ * <i>scheme</i> will typically be http or https, but is not restricted by this
+ * class.
+ * <i>authority</i> is specified as:
+ * <pre>
+ *     authority = [ userinfo @ ] hostrange [ : portrange ]
+ *     portrange = portnumber | -portnumber | portnumber-[portnumber] | *
+ *     hostrange = ([*.] dnsname) | IPv4address | IPv6address
+ * </pre>
+ * <i>dnsname</i> is a standard DNS host or domain name, ie. one or more labels
+ * separated by ".". <i>IPv4address</i> is a standard literal IPv4 address and
+ * <i>IPv6address</i> is as defined in <a href="http://www.ietf.org/rfc/rfc2732.txt">
+ * RFC 2732</a>. Literal IPv6 addresses must however, be enclosed in '[]' characters.
+ * The <i>dnsname</i> specification can be preceded by "*." which means
+ * the name will match any hostname whose right-most domain labels are the same as
+ * this name. For example, "*.oracle.com" matches "foo.bar.oracle.com"
+ * <p>
+ * <i>portrange</i> is used to specify a port number, or a bounded or unbounded range of ports
+ * that this permission applies to. If portrange is absent or invalid, then a default
+ * port number is assumed if the scheme is {@code http} (default 80) or {@code https}
+ * (default 443). No default is assumed for other schemes. A wildcard may be specified
+ * which means all ports.
+ * <p>
+ * <i>userinfo</i> is optional. A userinfo component if present, is ignored when
+ * creating a URLPermission, and has no effect on any other methods defined by this class.
+ * <p>
+ * The <i>path</i> component comprises a sequence of path segments,
+ * separated by '/' characters. <i>path</i> may also be empty. The path is specified
+ * in a similar way to the path in {@link java.io.FilePermission}. There are
+ * three different ways as the following examples show:
+ * <table border>
+ * <caption>URL Examples</caption>
+ * <tr><th>Example url</th><th>Description</th></tr>
+ * <tr><td style="white-space:nowrap;">http://www.oracle.com/a/b/c.html</td>
+ *   <td>A url which identifies a specific (single) resource</td>
+ * </tr>
+ * <tr><td>http://www.oracle.com/a/b/*</td>
+ *   <td>The '*' character refers to all resources in the same "directory" - in
+ *       other words all resources with the same number of path components, and
+ *       which only differ in the final path component, represented by the '*'.
+ *   </td>
+ * </tr>
+ * <tr><td>http://www.oracle.com/a/b/-</td>
+ *   <td>The '-' character refers to all resources recursively below the
+ *       preceding path (eg. http://www.oracle.com/a/b/c/d/e.html matches this
+ *       example).
+ *   </td>
+ * </tr>
+ * </table>
+ * <p>
+ * The '*' and '-' may only be specified in the final segment of a path and must be
+ * the only character in that segment. Any query or fragment components of the
+ * url are ignored when constructing URLPermissions.
+ * <p>
+ * As a special case, urls of the form, "scheme:*" are accepted to
+ * mean any url of the given scheme.
+ * <p>
+ * The <i>scheme</i> and <i>authority</i> components of the url string are handled
+ * without regard to case. This means {@link #equals(Object)},
+ * {@link #hashCode()} and {@link #implies(Permission)} are case insensitive with respect
+ * to these components. If the <i>authority</i> contains a literal IP address,
+ * then the address is normalized for comparison. The path component is case sensitive.
+ * <p><b>The actions string</b><p>
+ * The actions string of a URLPermission is a concatenation of the <i>method list</i>
+ * and the <i>request headers list</i>. These are lists of the permitted request
+ * methods and permitted request headers of the permission (respectively). The two lists
+ * are separated by a colon ':' character and elements of each list are comma separated.
+ * Some examples are:
+ * <pre>
+ *         "POST,GET,DELETE"
+ *         "GET:X-Foo-Request,X-Bar-Request"
+ *         "POST,GET:Header1,Header2"
+ * </pre>
+ * The first example specifies the methods: POST, GET and DELETE, but no request headers.
+ * The second example specifies one request method and two headers. The third
+ * example specifies two request methods, and two headers.
+ * <p>
+ * The colon separator need not be present if the request headers list is empty.
+ * No white-space is permitted in the actions string. The action strings supplied to
+ * the URLPermission constructors are case-insensitive and are normalized by converting
+ * method names to upper-case and header names to the form defines in RFC2616 (lower case
+ * with initial letter of each word capitalized). Either list can contain a wild-card '*'
+ * character which signifies all request methods or headers respectively.
+ * <p>
+ * Note. Depending on the context of use, some request methods and headers may be permitted
+ * at all times, and others may not be permitted at any time. For example, the
+ * HTTP protocol handler might disallow certain headers such as Content-Length
+ * from being set by application code, regardless of whether the security policy
+ * in force, permits it.
+ *
+ * @since 1.8
+ */
+public final class URLPermission extends Permission {
+
+    private static final long serialVersionUID = -2702463814894478682L;
+
+    private transient String scheme;
+    private transient String ssp;                 // scheme specific part
+    private transient String path;
+    private transient List<String> methods;
+    private transient List<String> requestHeaders;
+    private transient Authority authority;
+
+    // serialized field
+    private String actions;
+
+    /**
+     * Creates a new URLPermission from a url string and which permits the given
+     * request methods and user-settable request headers.
+     * The name of the permission is the url string it was created with. Only the scheme,
+     * authority and path components of the url are used internally. Any fragment or query
+     * components are ignored. The permissions action string is as specified above.
+     *
+     * @param url the url string
+     *
+     * @param actions the actions string
+     *
+     * @exception IllegalArgumentException if url is invalid or if actions contains white-space.
+     */
+    public URLPermission(String url, String actions) {
+        super(url);
+        init(actions);
+    }
+
+    private void init(String actions) {
+        parseURI(getName());
+        int colon = actions.indexOf(':');
+        if (actions.lastIndexOf(':') != colon) {
+            throw new IllegalArgumentException(
+                "Invalid actions string: \"" + actions + "\"");
+        }
+
+        String methods, headers;
+        if (colon == -1) {
+            methods = actions;
+            headers = "";
+        } else {
+            methods = actions.substring(0, colon);
+            headers = actions.substring(colon+1);
+        }
+
+        List<String> l = normalizeMethods(methods);
+        Collections.sort(l);
+        this.methods = Collections.unmodifiableList(l);
+
+        l = normalizeHeaders(headers);
+        Collections.sort(l);
+        this.requestHeaders = Collections.unmodifiableList(l);
+
+        this.actions = actions();
+    }
+
+    /**
+     * Creates a URLPermission with the given url string and unrestricted
+     * methods and request headers by invoking the two argument
+     * constructor as follows: URLPermission(url, "*:*")
+     *
+     * @param url the url string
+     *
+     * @throws    IllegalArgumentException if url does not result in a valid {@link URI}
+     */
+    public URLPermission(String url) {
+        this(url, "*:*");
+    }
+
+    /**
+     * Returns the normalized method list and request
+     * header list, in the form:
+     * <pre>
+     *      "method-names : header-names"
+     * </pre>
+     * <p>
+     * where method-names is the list of methods separated by commas
+     * and header-names is the list of permitted headers separated by commas.
+     * There is no white space in the returned String. If header-names is empty
+     * then the colon separator will not be present.
+     */
+    public String getActions() {
+        return actions;
+    }
+
+    /**
+     * Checks if this URLPermission implies the given permission.
+     * Specifically, the following checks are done as if in the
+     * following sequence:
+     * <ul>
+     * <li>if 'p' is not an instance of URLPermission return false</li>
+     * <li>if any of p's methods are not in this's method list, and if
+     *     this's method list is not equal to "*", then return false.</li>
+     * <li>if any of p's headers are not in this's request header list, and if
+     *     this's request header list is not equal to "*", then return false.</li>
+     * <li>if this's url scheme is not equal to p's url scheme return false</li>
+     * <li>if the scheme specific part of this's url is '*' return true</li>
+     * <li>if the set of hosts defined by p's url hostrange is not a subset of
+     *     this's url hostrange then return false. For example, "*.foo.oracle.com"
+     *     is a subset of "*.oracle.com". "foo.bar.oracle.com" is not
+     *     a subset of "*.foo.oracle.com"</li>
+     * <li>if the portrange defined by p's url is not a subset of the
+     *     portrange defined by this's url then return false.
+     * <li>if the path or paths specified by p's url are contained in the
+     *     set of paths specified by this's url, then return true
+     * <li>otherwise, return false</li>
+     * </ul>
+     * <p>Some examples of how paths are matched are shown below:
+     * <table border>
+     * <caption>Examples of Path Matching</caption>
+     * <tr><th>this's path</th><th>p's path</th><th>match</th></tr>
+     * <tr><td>/a/b</td><td>/a/b</td><td>yes</td></tr>
+     * <tr><td>/a/b/*</td><td>/a/b/c</td><td>yes</td></tr>
+     * <tr><td>/a/b/*</td><td>/a/b/c/d</td><td>no</td></tr>
+     * <tr><td>/a/b/-</td><td>/a/b/c/d</td><td>yes</td></tr>
+     * <tr><td>/a/b/-</td><td>/a/b/c/d/e</td><td>yes</td></tr>
+     * <tr><td>/a/b/-</td><td>/a/b/c/*</td><td>yes</td></tr>
+     * <tr><td>/a/b/*</td><td>/a/b/c/-</td><td>no</td></tr>
+     * </table>
+     */
+    public boolean implies(Permission p) {
+        if (! (p instanceof URLPermission)) {
+            return false;
+        }
+
+        URLPermission that = (URLPermission)p;
+
+        if (!this.methods.get(0).equals("*") &&
+                Collections.indexOfSubList(this.methods, that.methods) == -1) {
+            return false;
+        }
+
+        if (this.requestHeaders.isEmpty() && !that.requestHeaders.isEmpty()) {
+            return false;
+        }
+
+        if (!this.requestHeaders.isEmpty() &&
+            !this.requestHeaders.get(0).equals("*") &&
+             Collections.indexOfSubList(this.requestHeaders,
+                                        that.requestHeaders) == -1) {
+            return false;
+        }
+
+        if (!this.scheme.equals(that.scheme)) {
+            return false;
+        }
+
+        if (this.ssp.equals("*")) {
+            return true;
+        }
+
+        if (!this.authority.implies(that.authority)) {
+            return false;
+        }
+
+        if (this.path == null) {
+            return that.path == null;
+        }
+        if (that.path == null) {
+            return false;
+        }
+
+        if (this.path.endsWith("/-")) {
+            String thisprefix = this.path.substring(0, this.path.length() - 1);
+            return that.path.startsWith(thisprefix);
+            }
+
+        if (this.path.endsWith("/*")) {
+            String thisprefix = this.path.substring(0, this.path.length() - 1);
+            if (!that.path.startsWith(thisprefix)) {
+                return false;
+            }
+            String thatsuffix = that.path.substring(thisprefix.length());
+            // suffix must not contain '/' chars
+            if (thatsuffix.indexOf('/') != -1) {
+                return false;
+            }
+            if (thatsuffix.equals("-")) {
+                return false;
+            }
+            return true;
+        }
+        return this.path.equals(that.path);
+    }
+
+
+    /**
+     * Returns true if, this.getActions().equals(p.getActions())
+     * and p's url equals this's url.  Returns false otherwise.
+     */
+    public boolean equals(Object p) {
+        if (!(p instanceof URLPermission)) {
+            return false;
+        }
+        URLPermission that = (URLPermission)p;
+        if (!this.scheme.equals(that.scheme)) {
+            return false;
+        }
+        if (!this.getActions().equals(that.getActions())) {
+            return false;
+        }
+        if (!this.authority.equals(that.authority)) {
+            return false;
+        }
+        if (this.path != null) {
+            return this.path.equals(that.path);
+        } else {
+            return that.path == null;
+        }
+    }
+
+    /**
+     * Returns a hashcode calculated from the hashcode of the
+     * actions String and the url string.
+     */
+    public int hashCode() {
+        return getActions().hashCode()
+            + scheme.hashCode()
+            + authority.hashCode()
+            + (path == null ? 0 : path.hashCode());
+    }
+
+
+    private List<String> normalizeMethods(String methods) {
+        List<String> l = new ArrayList<>();
+        StringBuilder b = new StringBuilder();
+        for (int i=0; i<methods.length(); i++) {
+            char c = methods.charAt(i);
+            if (c == ',') {
+                String s = b.toString();
+                if (s.length() > 0)
+                    l.add(s);
+                b = new StringBuilder();
+            } else if (c == ' ' || c == '\t') {
+                throw new IllegalArgumentException(
+                    "White space not allowed in methods: \"" + methods + "\"");
+            } else {
+                if (c >= 'a' && c <= 'z') {
+                    c += 'A' - 'a';
+                }
+                b.append(c);
+            }
+        }
+        String s = b.toString();
+        if (s.length() > 0)
+            l.add(s);
+        return l;
+    }
+
+    private List<String> normalizeHeaders(String headers) {
+        List<String> l = new ArrayList<>();
+        StringBuilder b = new StringBuilder();
+        boolean capitalizeNext = true;
+        for (int i=0; i<headers.length(); i++) {
+            char c = headers.charAt(i);
+            if (c >= 'a' && c <= 'z') {
+                if (capitalizeNext) {
+                    c += 'A' - 'a';
+                    capitalizeNext = false;
+                }
+                b.append(c);
+            } else if (c == ' ' || c == '\t') {
+                throw new IllegalArgumentException(
+                    "White space not allowed in headers: \"" + headers + "\"");
+            } else if (c == '-') {
+                    capitalizeNext = true;
+                b.append(c);
+            } else if (c == ',') {
+                String s = b.toString();
+                if (s.length() > 0)
+                    l.add(s);
+                b = new StringBuilder();
+                capitalizeNext = true;
+            } else {
+                capitalizeNext = false;
+                b.append(c);
+            }
+        }
+        String s = b.toString();
+        if (s.length() > 0)
+            l.add(s);
+        return l;
+    }
+
+    private void parseURI(String url) {
+        int len = url.length();
+        int delim = url.indexOf(':');
+        if (delim == -1 || delim + 1 == len) {
+            throw new IllegalArgumentException(
+                "Invalid URL string: \"" + url + "\"");
+        }
+        scheme = url.substring(0, delim).toLowerCase();
+        this.ssp = url.substring(delim + 1);
+
+        if (!ssp.startsWith("//")) {
+            if (!ssp.equals("*")) {
+                throw new IllegalArgumentException(
+                    "Invalid URL string: \"" + url + "\"");
+            }
+            this.authority = new Authority(scheme, "*");
+            return;
+        }
+        String authpath = ssp.substring(2);
+
+        delim = authpath.indexOf('/');
+        String auth;
+        if (delim == -1) {
+            this.path = "";
+            auth = authpath;
+        } else {
+            auth = authpath.substring(0, delim);
+            this.path = authpath.substring(delim);
+        }
+        this.authority = new Authority(scheme, auth.toLowerCase());
+    }
+
+    private String actions() {
+        StringBuilder b = new StringBuilder();
+        for (String s : methods) {
+            b.append(s);
+        }
+        b.append(":");
+        for (String s : requestHeaders) {
+            b.append(s);
+        }
+        return b.toString();
+    }
+
+    /**
+     * restore the state of this object from stream
+     */
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException {
+        ObjectInputStream.GetField fields = s.readFields();
+        String actions = (String)fields.get("actions", null);
+
+        init(actions);
+    }
+
+    static class Authority {
+        HostPortrange p;
+
+        Authority(String scheme, String authority) {
+            int at = authority.indexOf('@');
+            if (at == -1) {
+                    p = new HostPortrange(scheme, authority);
+            } else {
+                    p = new HostPortrange(scheme, authority.substring(at+1));
+            }
+        }
+
+        boolean implies(Authority other) {
+            return impliesHostrange(other) && impliesPortrange(other);
+        }
+
+        private boolean impliesHostrange(Authority that) {
+            String thishost = this.p.hostname();
+            String thathost = that.p.hostname();
+
+            if (p.wildcard() && thishost.equals("")) {
+                // this "*" implies all others
+                return true;
+            }
+            if (that.p.wildcard() && thathost.equals("")) {
+                // that "*" can only be implied by this "*"
+                return false;
+            }
+            if (thishost.equals(thathost)) {
+                // covers all cases of literal IP addresses and fixed
+                // domain names.
+                return true;
+            }
+            if (this.p.wildcard()) {
+                // this "*.foo.com" implies "bub.bar.foo.com"
+                return thathost.endsWith(thishost);
+            }
+            return false;
+        }
+
+        private boolean impliesPortrange(Authority that) {
+            int[] thisrange = this.p.portrange();
+            int[] thatrange = that.p.portrange();
+            if (thisrange[0] == -1) {
+                /* port not specified non http/s URL */
+                return true;
+            }
+            return thisrange[0] <= thatrange[0] &&
+                        thisrange[1] >= thatrange[1];
+        }
+
+        boolean equals(Authority that) {
+            return this.p.equals(that.p);
+        }
+
+        public int hashCode() {
+            return p.hashCode();
+        }
+    }
+}

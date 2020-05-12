@@ -1,69 +1,78 @@
-/*    */ package javax.sound.midi.spi;
-/*    */ 
-/*    */ import javax.sound.midi.MidiDevice;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class MidiDeviceProvider
-/*    */ {
-/*    */   public boolean isDeviceSupported(MidiDevice.Info paramInfo) {
-/* 50 */     MidiDevice.Info[] arrayOfInfo = getDeviceInfo();
-/*    */     
-/* 52 */     for (byte b = 0; b < arrayOfInfo.length; b++) {
-/* 53 */       if (paramInfo.equals(arrayOfInfo[b])) {
-/* 54 */         return true;
-/*    */       }
-/*    */     } 
-/* 57 */     return false;
-/*    */   }
-/*    */   
-/*    */   public abstract MidiDevice.Info[] getDeviceInfo();
-/*    */   
-/*    */   public abstract MidiDevice getDevice(MidiDevice.Info paramInfo);
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\sound\midi\spi\MidiDeviceProvider.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.sound.midi.spi;
+
+import javax.sound.midi.MidiDevice;
+
+/**
+ * A {@code MidiDeviceProvider} is a factory or provider for a particular type
+ * of MIDI device. This mechanism allows the implementation to determine how
+ * resources are managed in the creation and management of a device.
+ *
+ * @author Kara Kytle
+ */
+public abstract class MidiDeviceProvider {
+
+    /**
+     * Indicates whether the device provider supports the device represented by
+     * the specified device info object.
+     *
+     * @param  info an info object that describes the device for which support
+     *         is queried
+     * @return {@code true} if the specified device is supported, otherwise
+     *         {@code false}
+     */
+    public boolean isDeviceSupported(MidiDevice.Info info) {
+
+        MidiDevice.Info infos[] = getDeviceInfo();
+
+        for(int i=0; i<infos.length; i++) {
+            if( info.equals( infos[i] ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Obtains the set of info objects representing the device or devices
+     * provided by this {@code MidiDeviceProvider}.
+     *
+     * @return set of device info objects
+     */
+    public abstract MidiDevice.Info[] getDeviceInfo();
+
+    /**
+     * Obtains an instance of the device represented by the info object.
+     *
+     * @param  info an info object that describes the desired device
+     * @return device instance
+     * @throws IllegalArgumentException if the info object specified does not
+     *         match the info object for a device supported by this
+     *         {@code MidiDeviceProvider}
+     */
+    public abstract MidiDevice getDevice(MidiDevice.Info info);
+}

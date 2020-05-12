@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.sun.org.apache.xalan.internal.xsltc;
 
 import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
@@ -6,116 +26,78 @@ import java.util.Map;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public interface DOM {
-  public static final int FIRST_TYPE = 0;
-  
-  public static final int NO_TYPE = -1;
-  
-  public static final int NULL = 0;
-  
-  public static final int RETURN_CURRENT = 0;
-  
-  public static final int RETURN_PARENT = 1;
-  
-  public static final int SIMPLE_RTF = 0;
-  
-  public static final int ADAPTIVE_RTF = 1;
-  
-  public static final int TREE_RTF = 2;
-  
-  DTMAxisIterator getIterator();
-  
-  String getStringValue();
-  
-  DTMAxisIterator getChildren(int paramInt);
-  
-  DTMAxisIterator getTypedChildren(int paramInt);
-  
-  DTMAxisIterator getAxisIterator(int paramInt);
-  
-  DTMAxisIterator getTypedAxisIterator(int paramInt1, int paramInt2);
-  
-  DTMAxisIterator getNthDescendant(int paramInt1, int paramInt2, boolean paramBoolean);
-  
-  DTMAxisIterator getNamespaceAxisIterator(int paramInt1, int paramInt2);
-  
-  DTMAxisIterator getNodeValueIterator(DTMAxisIterator paramDTMAxisIterator, int paramInt, String paramString, boolean paramBoolean);
-  
-  DTMAxisIterator orderNodes(DTMAxisIterator paramDTMAxisIterator, int paramInt);
-  
-  String getNodeName(int paramInt);
-  
-  String getNodeNameX(int paramInt);
-  
-  String getNamespaceName(int paramInt);
-  
-  int getExpandedTypeID(int paramInt);
-  
-  int getNamespaceType(int paramInt);
-  
-  int getParent(int paramInt);
-  
-  int getAttributeNode(int paramInt1, int paramInt2);
-  
-  String getStringValueX(int paramInt);
-  
-  void copy(int paramInt, SerializationHandler paramSerializationHandler) throws TransletException;
-  
-  void copy(DTMAxisIterator paramDTMAxisIterator, SerializationHandler paramSerializationHandler) throws TransletException;
-  
-  String shallowCopy(int paramInt, SerializationHandler paramSerializationHandler) throws TransletException;
-  
-  boolean lessThan(int paramInt1, int paramInt2);
-  
-  void characters(int paramInt, SerializationHandler paramSerializationHandler) throws TransletException;
-  
-  Node makeNode(int paramInt);
-  
-  Node makeNode(DTMAxisIterator paramDTMAxisIterator);
-  
-  NodeList makeNodeList(int paramInt);
-  
-  NodeList makeNodeList(DTMAxisIterator paramDTMAxisIterator);
-  
-  String getLanguage(int paramInt);
-  
-  int getSize();
-  
-  String getDocumentURI(int paramInt);
-  
-  void setFilter(StripFilter paramStripFilter);
-  
-  void setupMapping(String[] paramArrayOfString1, String[] paramArrayOfString2, int[] paramArrayOfint, String[] paramArrayOfString3);
-  
-  boolean isElement(int paramInt);
-  
-  boolean isAttribute(int paramInt);
-  
-  String lookupNamespace(int paramInt, String paramString) throws TransletException;
-  
-  int getNodeIdent(int paramInt);
-  
-  int getNodeHandle(int paramInt);
-  
-  DOM getResultTreeFrag(int paramInt1, int paramInt2);
-  
-  DOM getResultTreeFrag(int paramInt1, int paramInt2, boolean paramBoolean);
-  
-  SerializationHandler getOutputDomBuilder();
-  
-  int getNSType(int paramInt);
-  
-  int getDocument();
-  
-  String getUnparsedEntityURI(String paramString);
-  
-  Map<String, Integer> getElementsWithIDs();
-  
-  void release();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\DOM.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
  */
+public interface DOM {
+    public final static int  FIRST_TYPE             = 0;
+
+    public final static int  NO_TYPE                = -1;
+
+    // 0 is reserved for NodeIterator.END
+    public final static int NULL     = 0;
+
+    // used by some node iterators to know which node to return
+    public final static int RETURN_CURRENT = 0;
+    public final static int RETURN_PARENT  = 1;
+
+    // Constants used by getResultTreeFrag to indicate the types of the RTFs.
+    public final static int SIMPLE_RTF   = 0;
+    public final static int ADAPTIVE_RTF = 1;
+    public final static int TREE_RTF     = 2;
+
+    /** returns singleton iterator containg the document root */
+    public DTMAxisIterator getIterator();
+    public String getStringValue();
+
+    public DTMAxisIterator getChildren(final int node);
+    public DTMAxisIterator getTypedChildren(final int type);
+    public DTMAxisIterator getAxisIterator(final int axis);
+    public DTMAxisIterator getTypedAxisIterator(final int axis, final int type);
+    public DTMAxisIterator getNthDescendant(int node, int n, boolean includeself);
+    public DTMAxisIterator getNamespaceAxisIterator(final int axis, final int ns);
+    public DTMAxisIterator getNodeValueIterator(DTMAxisIterator iter, int returnType,
+                                             String value, boolean op);
+    public DTMAxisIterator orderNodes(DTMAxisIterator source, int node);
+    public String getNodeName(final int node);
+    public String getNodeNameX(final int node);
+    public String getNamespaceName(final int node);
+    public int getExpandedTypeID(final int node);
+    public int getNamespaceType(final int node);
+    public int getParent(final int node);
+    public int getAttributeNode(final int gType, final int element);
+    public String getStringValueX(final int node);
+    public void copy(final int node, SerializationHandler handler)
+        throws TransletException;
+    public void copy(DTMAxisIterator nodes, SerializationHandler handler)
+        throws TransletException;
+    public String shallowCopy(final int node, SerializationHandler handler)
+        throws TransletException;
+    public boolean lessThan(final int node1, final int node2);
+    public void characters(final int textNode, SerializationHandler handler)
+        throws TransletException;
+    public Node makeNode(int index);
+    public Node makeNode(DTMAxisIterator iter);
+    public NodeList makeNodeList(int index);
+    public NodeList makeNodeList(DTMAxisIterator iter);
+    public String getLanguage(int node);
+    public int getSize();
+    public String getDocumentURI(int node);
+    public void setFilter(StripFilter filter);
+    public void setupMapping(String[] names, String[] urisArray, int[] typesArray, String[] namespaces);
+    public boolean isElement(final int node);
+    public boolean isAttribute(final int node);
+    public String lookupNamespace(int node, String prefix)
+        throws TransletException;
+    public int getNodeIdent(final int nodehandle);
+    public int getNodeHandle(final int nodeId);
+    public DOM getResultTreeFrag(int initialSize, int rtfType);
+    public DOM getResultTreeFrag(int initialSize, int rtfType, boolean addToDTMManager);
+    public SerializationHandler getOutputDomBuilder();
+    public int getNSType(int node);
+    public int getDocument();
+    public String getUnparsedEntityURI(String name);
+    public Map<String, Integer> getElementsWithIDs();
+    public void release();
+}

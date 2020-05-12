@@ -1,492 +1,486 @@
-/*     */ package javax.management.openmbean;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Collection;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ import java.util.SortedMap;
-/*     */ import java.util.TreeMap;
-/*     */ import java.util.TreeSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CompositeDataSupport
-/*     */   implements CompositeData, Serializable
-/*     */ {
-/*     */   static final long serialVersionUID = 8003518976613702244L;
-/*     */   private final SortedMap<String, Object> contents;
-/*     */   private final CompositeType compositeType;
-/*     */   
-/*     */   public CompositeDataSupport(CompositeType paramCompositeType, String[] paramArrayOfString, Object[] paramArrayOfObject) throws OpenDataException {
-/* 118 */     this(makeMap(paramArrayOfString, paramArrayOfObject), paramCompositeType);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static SortedMap<String, Object> makeMap(String[] paramArrayOfString, Object[] paramArrayOfObject) throws OpenDataException {
-/* 125 */     if (paramArrayOfString == null || paramArrayOfObject == null)
-/* 126 */       throw new IllegalArgumentException("Null itemNames or itemValues"); 
-/* 127 */     if (paramArrayOfString.length == 0 || paramArrayOfObject.length == 0)
-/* 128 */       throw new IllegalArgumentException("Empty itemNames or itemValues"); 
-/* 129 */     if (paramArrayOfString.length != paramArrayOfObject.length) {
-/* 130 */       throw new IllegalArgumentException("Different lengths: itemNames[" + paramArrayOfString.length + "], itemValues[" + paramArrayOfObject.length + "]");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 135 */     TreeMap<Object, Object> treeMap = new TreeMap<>();
-/* 136 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/* 137 */       String str = paramArrayOfString[b];
-/* 138 */       if (str == null || str.equals(""))
-/* 139 */         throw new IllegalArgumentException("Null or empty item name"); 
-/* 140 */       if (treeMap.containsKey(str))
-/* 141 */         throw new OpenDataException("Duplicate item name " + str); 
-/* 142 */       treeMap.put(paramArrayOfString[b], paramArrayOfObject[b]);
-/*     */     } 
-/*     */     
-/* 145 */     return (SortedMap)treeMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CompositeDataSupport(CompositeType paramCompositeType, Map<String, ?> paramMap) throws OpenDataException {
-/* 176 */     this(makeMap(paramMap), paramCompositeType);
-/*     */   }
-/*     */   
-/*     */   private static SortedMap<String, Object> makeMap(Map<String, ?> paramMap) {
-/* 180 */     if (paramMap == null || paramMap.isEmpty()) {
-/* 181 */       throw new IllegalArgumentException("Null or empty items map");
-/*     */     }
-/* 183 */     TreeMap<Object, Object> treeMap = new TreeMap<>();
-/* 184 */     for (String str : paramMap.keySet()) {
-/* 185 */       if (str == null || str.equals(""))
-/* 186 */         throw new IllegalArgumentException("Null or empty item name"); 
-/* 187 */       if (!(str instanceof String)) {
-/* 188 */         throw new ArrayStoreException("Item name is not string: " + str);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 193 */       treeMap.put(str, paramMap.get(str));
-/*     */     } 
-/* 195 */     return (SortedMap)treeMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private CompositeDataSupport(SortedMap<String, Object> paramSortedMap, CompositeType paramCompositeType) throws OpenDataException {
-/* 204 */     if (paramCompositeType == null) {
-/* 205 */       throw new IllegalArgumentException("Argument compositeType cannot be null.");
-/*     */     }
-/*     */ 
-/*     */     
-/* 209 */     Set<String> set1 = paramCompositeType.keySet();
-/* 210 */     Set<String> set2 = paramSortedMap.keySet();
-/*     */ 
-/*     */ 
-/*     */     
-/* 214 */     if (!set1.equals(set2)) {
-/* 215 */       TreeSet<String> treeSet1 = new TreeSet<>(set1);
-/* 216 */       treeSet1.removeAll(set2);
-/* 217 */       TreeSet<String> treeSet2 = new TreeSet<>(set2);
-/* 218 */       treeSet2.removeAll(set1);
-/* 219 */       if (!treeSet1.isEmpty() || !treeSet2.isEmpty()) {
-/* 220 */         throw new OpenDataException("Item names do not match CompositeType: names in items but not in CompositeType: " + treeSet2 + "; names in CompositeType but not in items: " + treeSet1);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 229 */     for (String str : set1) {
-/* 230 */       Object object = paramSortedMap.get(str);
-/* 231 */       if (object != null) {
-/* 232 */         OpenType<?> openType = paramCompositeType.getType(str);
-/* 233 */         if (!openType.isValue(object)) {
-/* 234 */           throw new OpenDataException("Argument value of wrong type for item " + str + ": value " + object + ", type " + openType);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 243 */     this.compositeType = paramCompositeType;
-/* 244 */     this.contents = paramSortedMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CompositeType getCompositeType() {
-/* 252 */     return this.compositeType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get(String paramString) {
-/* 265 */     if (paramString == null || paramString.trim().equals("")) {
-/* 266 */       throw new IllegalArgumentException("Argument key cannot be a null or empty String.");
-/*     */     }
-/* 268 */     if (!this.contents.containsKey(paramString.trim())) {
-/* 269 */       throw new InvalidKeyException("Argument key=\"" + paramString.trim() + "\" is not an existing item name for this CompositeData instance.");
-/*     */     }
-/* 271 */     return this.contents.get(paramString.trim());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object[] getAll(String[] paramArrayOfString) {
-/* 286 */     if (paramArrayOfString == null || paramArrayOfString.length == 0) {
-/* 287 */       return new Object[0];
-/*     */     }
-/* 289 */     Object[] arrayOfObject = new Object[paramArrayOfString.length];
-/* 290 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/* 291 */       arrayOfObject[b] = get(paramArrayOfString[b]);
-/*     */     }
-/* 293 */     return arrayOfObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsKey(String paramString) {
-/* 303 */     if (paramString == null || paramString.trim().equals("")) {
-/* 304 */       return false;
-/*     */     }
-/* 306 */     return this.contents.containsKey(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsValue(Object paramObject) {
-/* 316 */     return this.contents.containsValue(paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Collection<?> values() {
-/* 328 */     return Collections.unmodifiableCollection(this.contents.values());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 360 */     if (this == paramObject) {
-/* 361 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/* 365 */     if (!(paramObject instanceof CompositeData)) {
-/* 366 */       return false;
-/*     */     }
-/*     */     
-/* 369 */     CompositeData compositeData = (CompositeData)paramObject;
-/*     */ 
-/*     */     
-/* 372 */     if (!getCompositeType().equals(compositeData.getCompositeType())) {
-/* 373 */       return false;
-/*     */     }
-/*     */     
-/* 376 */     if (this.contents.size() != compositeData.values().size()) {
-/* 377 */       return false;
-/*     */     }
-/*     */     
-/* 380 */     for (Map.Entry<String, Object> entry : this.contents.entrySet()) {
-/* 381 */       Object object1 = entry.getValue();
-/* 382 */       Object object2 = compositeData.get((String)entry.getKey());
-/*     */       
-/* 384 */       if (object1 == object2)
-/*     */         continue; 
-/* 386 */       if (object1 == null) {
-/* 387 */         return false;
-/*     */       }
-/*     */ 
-/*     */       
-/* 391 */       boolean bool = object1.getClass().isArray() ? Arrays.deepEquals(new Object[] { object1 }, new Object[] { object2 }) : object1.equals(object2);
-/*     */       
-/* 393 */       if (!bool) {
-/* 394 */         return false;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 399 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 425 */     int i = this.compositeType.hashCode();
-/*     */     
-/* 427 */     for (Object[] arrayOfObject : this.contents.values()) {
-/* 428 */       if (arrayOfObject instanceof Object[]) {
-/* 429 */         i += Arrays.deepHashCode(arrayOfObject); continue;
-/* 430 */       }  if (arrayOfObject instanceof byte[]) {
-/* 431 */         i += Arrays.hashCode((byte[])arrayOfObject); continue;
-/* 432 */       }  if (arrayOfObject instanceof short[]) {
-/* 433 */         i += Arrays.hashCode((short[])arrayOfObject); continue;
-/* 434 */       }  if (arrayOfObject instanceof int[]) {
-/* 435 */         i += Arrays.hashCode((int[])arrayOfObject); continue;
-/* 436 */       }  if (arrayOfObject instanceof long[]) {
-/* 437 */         i += Arrays.hashCode((long[])arrayOfObject); continue;
-/* 438 */       }  if (arrayOfObject instanceof char[]) {
-/* 439 */         i += Arrays.hashCode((char[])arrayOfObject); continue;
-/* 440 */       }  if (arrayOfObject instanceof float[]) {
-/* 441 */         i += Arrays.hashCode((float[])arrayOfObject); continue;
-/* 442 */       }  if (arrayOfObject instanceof double[]) {
-/* 443 */         i += Arrays.hashCode((double[])arrayOfObject); continue;
-/* 444 */       }  if (arrayOfObject instanceof boolean[]) {
-/* 445 */         i += Arrays.hashCode((boolean[])arrayOfObject); continue;
-/* 446 */       }  if (arrayOfObject != null) {
-/* 447 */         i += arrayOfObject.hashCode();
-/*     */       }
-/*     */     } 
-/* 450 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 464 */     return 
-/* 465 */       getClass().getName() + "(compositeType=" + 
-/* 466 */       this.compositeType
-/* 467 */       .toString() + ",contents=" + 
-/*     */       
-/* 469 */       contentString() + ")";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String contentString() {
-/* 475 */     StringBuilder stringBuilder = new StringBuilder("{");
-/* 476 */     String str = "";
-/* 477 */     for (Map.Entry<String, Object> entry : this.contents.entrySet()) {
-/* 478 */       stringBuilder.append(str).append((String)entry.getKey()).append("=");
-/* 479 */       String str1 = Arrays.deepToString(new Object[] { entry.getValue() });
-/* 480 */       stringBuilder.append(str1.substring(1, str1.length() - 1));
-/* 481 */       str = ", ";
-/*     */     } 
-/* 483 */     stringBuilder.append("}");
-/* 484 */     return stringBuilder.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\openmbean\CompositeDataSupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.management.openmbean;
+
+
+// java import
+//
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+// jmx import
+import java.util.TreeSet;
+//
+
+
+/**
+ * The <tt>CompositeDataSupport</tt> class is the <i>open data</i> class which
+ * implements the <tt>CompositeData</tt> interface.
+ *
+ *
+ * @since 1.5
+ */
+public class CompositeDataSupport
+    implements CompositeData, Serializable {
+
+    /* Serial version */
+    static final long serialVersionUID = 8003518976613702244L;
+
+    /**
+     * @serial Internal representation of the mapping of item names to their
+     * respective values.
+     *         A {@link SortedMap} is used for faster retrieval of elements.
+     */
+    private final SortedMap<String, Object> contents;
+
+    /**
+     * @serial The <i>composite type </i> of this <i>composite data</i> instance.
+     */
+    private final CompositeType compositeType;
+
+    /**
+     * <p>Constructs a <tt>CompositeDataSupport</tt> instance with the specified
+     * <tt>compositeType</tt>, whose item values
+     * are specified by <tt>itemValues[]</tt>, in the same order as in
+     * <tt>itemNames[]</tt>.
+     * As a <tt>CompositeType</tt> does not specify any order on its items,
+     * the <tt>itemNames[]</tt> parameter is used
+     * to specify the order in which the values are given in <tt>itemValues[]</tt>.
+     * The items contained in this <tt>CompositeDataSupport</tt> instance are
+     * internally stored in a <tt>TreeMap</tt>,
+     * thus sorted in ascending lexicographic order of their names, for faster
+     * retrieval of individual item values.</p>
+     *
+     * <p>The constructor checks that all the constraints listed below for each
+     * parameter are satisfied,
+     * and throws the appropriate exception if they are not.</p>
+     *
+     * @param compositeType the <i>composite type </i> of this <i>composite
+     * data</i> instance; must not be null.
+     *
+     * @param itemNames <tt>itemNames</tt> must list, in any order, all the
+     * item names defined in <tt>compositeType</tt>; the order in which the
+     * names are listed, is used to match values in <tt>itemValues[]</tt>; must
+     * not be null or empty.
+     *
+     * @param itemValues the values of the items, listed in the same order as
+     * their respective names in <tt>itemNames</tt>; each item value can be
+     * null, but if it is non-null it must be a valid value for the open type
+     * defined in <tt>compositeType</tt> for the corresponding item; must be of
+     * the same size as <tt>itemNames</tt>; must not be null or empty.
+     *
+     * @throws IllegalArgumentException <tt>compositeType</tt> is null, or
+     * <tt>itemNames[]</tt> or <tt>itemValues[]</tt> is null or empty, or one
+     * of the elements in <tt>itemNames[]</tt> is a null or empty string, or
+     * <tt>itemNames[]</tt> and <tt>itemValues[]</tt> are not of the same size.
+     *
+     * @throws OpenDataException <tt>itemNames[]</tt> or
+     * <tt>itemValues[]</tt>'s size differs from the number of items defined in
+     * <tt>compositeType</tt>, or one of the elements in <tt>itemNames[]</tt>
+     * does not exist as an item name defined in <tt>compositeType</tt>, or one
+     * of the elements in <tt>itemValues[]</tt> is not a valid value for the
+     * corresponding item as defined in <tt>compositeType</tt>.
+     */
+    public CompositeDataSupport(
+            CompositeType compositeType, String[] itemNames, Object[] itemValues)
+            throws OpenDataException {
+        this(makeMap(itemNames, itemValues), compositeType);
+    }
+
+    private static SortedMap<String, Object> makeMap(
+            String[] itemNames, Object[] itemValues)
+            throws OpenDataException {
+
+        if (itemNames == null || itemValues == null)
+            throw new IllegalArgumentException("Null itemNames or itemValues");
+        if (itemNames.length == 0 || itemValues.length == 0)
+            throw new IllegalArgumentException("Empty itemNames or itemValues");
+        if (itemNames.length != itemValues.length) {
+            throw new IllegalArgumentException(
+                    "Different lengths: itemNames[" + itemNames.length +
+                    "], itemValues[" + itemValues.length + "]");
+        }
+
+        SortedMap<String, Object> map = new TreeMap<String, Object>();
+        for (int i = 0; i < itemNames.length; i++) {
+            String name = itemNames[i];
+            if (name == null || name.equals(""))
+                throw new IllegalArgumentException("Null or empty item name");
+            if (map.containsKey(name))
+                throw new OpenDataException("Duplicate item name " + name);
+            map.put(itemNames[i], itemValues[i]);
+        }
+
+        return map;
+    }
+
+    /**
+     * <p>
+     * Constructs a <tt>CompositeDataSupport</tt> instance with the specified <tt>compositeType</tt>, whose item names and corresponding values
+     * are given by the mappings in the map <tt>items</tt>.
+     * This constructor converts the keys to a string array and the values to an object array and calls
+     * <tt>CompositeDataSupport(javax.management.openmbean.CompositeType, java.lang.String[], java.lang.Object[])</tt>.
+     *
+     * @param  compositeType  the <i>composite type </i> of this <i>composite data</i> instance;
+     *                        must not be null.
+     * @param  items  the mappings of all the item names to their values;
+     *                <tt>items</tt> must contain all the item names defined in <tt>compositeType</tt>;
+     *                must not be null or empty.
+     *
+     * @throws IllegalArgumentException <tt>compositeType</tt> is null, or
+     * <tt>items</tt> is null or empty, or one of the keys in <tt>items</tt> is a null
+     * or empty string.
+     * @throws OpenDataException <tt>items</tt>' size differs from the
+     * number of items defined in <tt>compositeType</tt>, or one of the
+     * keys in <tt>items</tt> does not exist as an item name defined in
+     * <tt>compositeType</tt>, or one of the values in <tt>items</tt>
+     * is not a valid value for the corresponding item as defined in
+     * <tt>compositeType</tt>.
+     * @throws ArrayStoreException one or more keys in <tt>items</tt> is not of
+     * the class <tt>java.lang.String</tt>.
+     */
+    public CompositeDataSupport(CompositeType compositeType,
+                                Map<String,?> items)
+            throws OpenDataException {
+        this(makeMap(items), compositeType);
+    }
+
+    private static SortedMap<String, Object> makeMap(Map<String, ?> items) {
+        if (items == null || items.isEmpty())
+            throw new IllegalArgumentException("Null or empty items map");
+
+        SortedMap<String, Object> map = new TreeMap<String, Object>();
+        for (Object key : items.keySet()) {
+            if (key == null || key.equals(""))
+                throw new IllegalArgumentException("Null or empty item name");
+            if (!(key instanceof String)) {
+                throw new ArrayStoreException("Item name is not string: " + key);
+                // This can happen because of erasure.  The particular
+                // exception is a historical artifact - an implementation
+                // detail that leaked into the API.
+            }
+            map.put((String) key, items.get(key));
+        }
+        return map;
+    }
+
+    private CompositeDataSupport(
+            SortedMap<String, Object> items, CompositeType compositeType)
+            throws OpenDataException {
+
+        // Check compositeType is not null
+        //
+        if (compositeType == null) {
+            throw new IllegalArgumentException("Argument compositeType cannot be null.");
+        }
+
+        // item names defined in compositeType:
+        Set<String> namesFromType = compositeType.keySet();
+        Set<String> namesFromItems = items.keySet();
+
+        // This is just a comparison, but we do it this way for a better
+        // exception message.
+        if (!namesFromType.equals(namesFromItems)) {
+            Set<String> extraFromType = new TreeSet<String>(namesFromType);
+            extraFromType.removeAll(namesFromItems);
+            Set<String> extraFromItems = new TreeSet<String>(namesFromItems);
+            extraFromItems.removeAll(namesFromType);
+            if (!extraFromType.isEmpty() || !extraFromItems.isEmpty()) {
+                throw new OpenDataException(
+                        "Item names do not match CompositeType: " +
+                        "names in items but not in CompositeType: " + extraFromItems +
+                        "; names in CompositeType but not in items: " + extraFromType);
+            }
+        }
+
+        // Check each value, if not null, is of the open type defined for the
+        // corresponding item
+        for (String name : namesFromType) {
+            Object value = items.get(name);
+            if (value != null) {
+                OpenType<?> itemType = compositeType.getType(name);
+                if (!itemType.isValue(value)) {
+                    throw new OpenDataException(
+                            "Argument value of wrong type for item " + name +
+                            ": value " + value + ", type " + itemType);
+                }
+            }
+        }
+
+        // Initialize internal fields: compositeType and contents
+        //
+        this.compositeType = compositeType;
+        this.contents = items;
+    }
+
+    /**
+     * Returns the <i>composite type </i> of this <i>composite data</i> instance.
+     */
+    public CompositeType getCompositeType() {
+
+        return compositeType;
+    }
+
+    /**
+     * Returns the value of the item whose name is <tt>key</tt>.
+     *
+     * @throws IllegalArgumentException  if <tt>key</tt> is a null or empty String.
+     *
+     * @throws InvalidKeyException  if <tt>key</tt> is not an existing item name for
+     * this <tt>CompositeData</tt> instance.
+     */
+    public Object get(String key) {
+
+        if ( (key == null) || (key.trim().equals("")) ) {
+            throw new IllegalArgumentException("Argument key cannot be a null or empty String.");
+        }
+        if ( ! contents.containsKey(key.trim())) {
+            throw new InvalidKeyException("Argument key=\""+ key.trim() +"\" is not an existing item name for this CompositeData instance.");
+        }
+        return contents.get(key.trim());
+    }
+
+    /**
+     * Returns an array of the values of the items whose names are specified by
+     * <tt>keys</tt>, in the same order as <tt>keys</tt>.
+     *
+     * @throws IllegalArgumentException  if an element in <tt>keys</tt> is a null
+     * or empty String.
+     *
+     * @throws InvalidKeyException  if an element in <tt>keys</tt> is not an existing
+     * item name for this <tt>CompositeData</tt> instance.
+     */
+    public Object[] getAll(String[] keys) {
+
+        if ( (keys == null) || (keys.length == 0) ) {
+            return new Object[0];
+        }
+        Object[] results = new Object[keys.length];
+        for (int i=0; i<keys.length; i++) {
+            results[i] = this.get(keys[i]);
+        }
+        return results;
+    }
+
+    /**
+     * Returns <tt>true</tt> if and only if this <tt>CompositeData</tt> instance contains
+     * an item whose name is <tt>key</tt>.
+     * If <tt>key</tt> is a null or empty String, this method simply returns false.
+     */
+    public boolean containsKey(String key) {
+
+        if ( (key == null) || (key.trim().equals("")) ) {
+            return false;
+        }
+        return contents.containsKey(key);
+    }
+
+    /**
+     * Returns <tt>true</tt> if and only if this <tt>CompositeData</tt> instance
+     * contains an item
+     * whose value is <tt>value</tt>.
+     */
+    public boolean containsValue(Object value) {
+
+        return contents.containsValue(value);
+    }
+
+    /**
+     * Returns an unmodifiable Collection view of the item values contained in this
+     * <tt>CompositeData</tt> instance.
+     * The returned collection's iterator will return the values in the ascending
+     * lexicographic order of the corresponding
+     * item names.
+     */
+    public Collection<?> values() {
+
+        return Collections.unmodifiableCollection(contents.values());
+    }
+
+    /**
+     * Compares the specified <var>obj</var> parameter with this
+     * <code>CompositeDataSupport</code> instance for equality.
+     * <p>
+     * Returns <tt>true</tt> if and only if all of the following statements are true:
+     * <ul>
+     * <li><var>obj</var> is non null,</li>
+     * <li><var>obj</var> also implements the <code>CompositeData</code> interface,</li>
+     * <li>their composite types are equal</li>
+     * <li>their contents, i.e. (name, value) pairs are equal. If a value contained in
+     * the content is an array, the value comparison is done as if by calling
+     * the {@link java.util.Arrays#deepEquals(Object[], Object[]) deepEquals} method
+     * for arrays of object reference types or the appropriate overloading of
+     * {@code Arrays.equals(e1,e2)} for arrays of primitive types</li>
+     * </ul>
+     * <p>
+     * This ensures that this <tt>equals</tt> method works properly for
+     * <var>obj</var> parameters which are different implementations of the
+     * <code>CompositeData</code> interface, with the restrictions mentioned in the
+     * {@link java.util.Collection#equals(Object) equals}
+     * method of the <tt>java.util.Collection</tt> interface.
+     *
+     * @param  obj  the object to be compared for equality with this
+     * <code>CompositeDataSupport</code> instance.
+     * @return  <code>true</code> if the specified object is equal to this
+     * <code>CompositeDataSupport</code> instance.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        // if obj is not a CompositeData, return false
+        if (!(obj instanceof CompositeData)) {
+            return false;
+        }
+
+        CompositeData other = (CompositeData) obj;
+
+        // their compositeType should be equal
+        if (!this.getCompositeType().equals(other.getCompositeType()) ) {
+            return false;
+        }
+
+        if (contents.size() != other.values().size()) {
+            return false;
+        }
+
+        for (Map.Entry<String,Object> entry : contents.entrySet()) {
+            Object e1 = entry.getValue();
+            Object e2 = other.get(entry.getKey());
+
+            if (e1 == e2)
+                continue;
+            if (e1 == null)
+                return false;
+
+            boolean eq = e1.getClass().isArray() ?
+                Arrays.deepEquals(new Object[] {e1}, new Object[] {e2}) :
+                e1.equals(e2);
+
+            if (!eq)
+                return false;
+        }
+
+        // All tests for equality were successful
+        //
+        return true;
+    }
+
+    /**
+     * Returns the hash code value for this <code>CompositeDataSupport</code> instance.
+     * <p>
+     * The hash code of a <code>CompositeDataSupport</code> instance is the sum of the hash codes
+     * of all elements of information used in <code>equals</code> comparisons
+     * (ie: its <i>composite type</i> and all the item values).
+     * <p>
+     * This ensures that <code> t1.equals(t2) </code> implies that <code> t1.hashCode()==t2.hashCode() </code>
+     * for any two <code>CompositeDataSupport</code> instances <code>t1</code> and <code>t2</code>,
+     * as required by the general contract of the method
+     * {@link Object#hashCode() Object.hashCode()}.
+     * <p>
+     * Each item value's hash code is added to the returned hash code.
+     * If an item value is an array,
+     * its hash code is obtained as if by calling the
+     * {@link java.util.Arrays#deepHashCode(Object[]) deepHashCode} method
+     * for arrays of object reference types or the appropriate overloading
+     * of {@code Arrays.hashCode(e)} for arrays of primitive types.
+     *
+     * @return the hash code value for this <code>CompositeDataSupport</code> instance
+     */
+    @Override
+    public int hashCode() {
+        int hashcode = compositeType.hashCode();
+
+        for (Object o : contents.values()) {
+            if (o instanceof Object[])
+                hashcode += Arrays.deepHashCode((Object[]) o);
+            else if (o instanceof byte[])
+                hashcode += Arrays.hashCode((byte[]) o);
+            else if (o instanceof short[])
+                hashcode += Arrays.hashCode((short[]) o);
+            else if (o instanceof int[])
+                hashcode += Arrays.hashCode((int[]) o);
+            else if (o instanceof long[])
+                hashcode += Arrays.hashCode((long[]) o);
+            else if (o instanceof char[])
+                hashcode += Arrays.hashCode((char[]) o);
+            else if (o instanceof float[])
+                hashcode += Arrays.hashCode((float[]) o);
+            else if (o instanceof double[])
+                hashcode += Arrays.hashCode((double[]) o);
+            else if (o instanceof boolean[])
+                hashcode += Arrays.hashCode((boolean[]) o);
+            else if (o != null)
+                hashcode += o.hashCode();
+        }
+
+        return hashcode;
+    }
+
+    /**
+     * Returns a string representation of this <code>CompositeDataSupport</code> instance.
+     * <p>
+     * The string representation consists of the name of this class (ie <code>javax.management.openmbean.CompositeDataSupport</code>),
+     * the string representation of the composite type of this instance, and the string representation of the contents
+     * (ie list the itemName=itemValue mappings).
+     *
+     * @return  a string representation of this <code>CompositeDataSupport</code> instance
+     */
+    @Override
+    public String toString() {
+        return new StringBuilder()
+            .append(this.getClass().getName())
+            .append("(compositeType=")
+            .append(compositeType.toString())
+            .append(",contents=")
+            .append(contentString())
+            .append(")")
+            .toString();
+    }
+
+    private String contentString() {
+        StringBuilder sb = new StringBuilder("{");
+        String sep = "";
+        for (Map.Entry<String, Object> entry : contents.entrySet()) {
+            sb.append(sep).append(entry.getKey()).append("=");
+            String s = Arrays.deepToString(new Object[] {entry.getValue()});
+            sb.append(s.substring(1, s.length() - 1));
+            sep = ", ";
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+}

@@ -1,336 +1,330 @@
-/*     */ package com.sun.org.apache.xpath.internal;
-/*     */ 
-/*     */ import java.io.PrintStream;
-/*     */ import java.io.PrintWriter;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XPathException
-/*     */   extends TransformerException
-/*     */ {
-/*     */   static final long serialVersionUID = 4263549717619045963L;
-/*  44 */   Object m_styleNode = null;
-/*     */ 
-/*     */   
-/*     */   protected Exception m_exception;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getStylesheetNode() {
-/*  52 */     return this.m_styleNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setStylesheetNode(Object styleNode) {
-/*  61 */     this.m_styleNode = styleNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XPathException(String message, ExpressionNode ex) {
-/*  76 */     super(message);
-/*  77 */     setLocator(ex);
-/*  78 */     setStylesheetNode(getStylesheetNode(ex));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XPathException(String message) {
-/*  88 */     super(message);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node getStylesheetNode(ExpressionNode ex) {
-/* 100 */     ExpressionNode owner = getExpressionOwner(ex);
-/*     */     
-/* 102 */     if (null != owner && owner instanceof Node)
-/*     */     {
-/* 104 */       return (Node)owner;
-/*     */     }
-/* 106 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ExpressionNode getExpressionOwner(ExpressionNode ex) {
-/* 116 */     ExpressionNode parent = ex.exprGetParent();
-/* 117 */     while (null != parent && parent instanceof Expression)
-/* 118 */       parent = parent.exprGetParent(); 
-/* 119 */     return parent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XPathException(String message, Object styleNode) {
-/* 134 */     super(message);
-/*     */     
-/* 136 */     this.m_styleNode = styleNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XPathException(String message, Node styleNode, Exception e) {
-/* 151 */     super(message);
-/*     */     
-/* 153 */     this.m_styleNode = styleNode;
-/* 154 */     this.m_exception = e;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XPathException(String message, Exception e) {
-/* 167 */     super(message);
-/*     */     
-/* 169 */     this.m_exception = e;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintStream s) {
-/* 181 */     if (s == null) {
-/* 182 */       s = System.err;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 186 */       super.printStackTrace(s);
-/*     */     }
-/* 188 */     catch (Exception exception1) {}
-/*     */     
-/* 190 */     Throwable exception = this.m_exception;
-/*     */     
-/* 192 */     for (int i = 0; i < 10 && null != exception; i++) {
-/*     */       
-/* 194 */       s.println("---------");
-/* 195 */       exception.printStackTrace(s);
-/*     */       
-/* 197 */       if (exception instanceof TransformerException) {
-/*     */         
-/* 199 */         TransformerException se = (TransformerException)exception;
-/* 200 */         Throwable prev = exception;
-/*     */         
-/* 202 */         exception = se.getException();
-/*     */         
-/* 204 */         if (prev == exception) {
-/*     */           break;
-/*     */         }
-/*     */       } else {
-/*     */         
-/* 209 */         exception = null;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessage() {
-/* 222 */     String lastMessage = super.getMessage();
-/* 223 */     Throwable exception = this.m_exception;
-/*     */     
-/* 225 */     while (null != exception) {
-/*     */       
-/* 227 */       String nextMessage = exception.getMessage();
-/*     */       
-/* 229 */       if (null != nextMessage) {
-/* 230 */         lastMessage = nextMessage;
-/*     */       }
-/* 232 */       if (exception instanceof TransformerException) {
-/*     */         
-/* 234 */         TransformerException se = (TransformerException)exception;
-/* 235 */         Throwable prev = exception;
-/*     */         
-/* 237 */         exception = se.getException();
-/*     */         
-/* 239 */         if (prev == exception) {
-/*     */           break;
-/*     */         }
-/*     */         continue;
-/*     */       } 
-/* 244 */       exception = null;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 248 */     return (null != lastMessage) ? lastMessage : "";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintWriter s) {
-/* 260 */     if (s == null) {
-/* 261 */       s = new PrintWriter(System.err);
-/*     */     }
-/*     */     
-/*     */     try {
-/* 265 */       super.printStackTrace(s);
-/*     */     }
-/* 267 */     catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 270 */     boolean isJdk14OrHigher = false;
-/*     */     try {
-/* 272 */       Throwable.class.getMethod("getCause", (Class[])null);
-/* 273 */       isJdk14OrHigher = true;
-/* 274 */     } catch (NoSuchMethodException noSuchMethodException) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 281 */     if (!isJdk14OrHigher) {
-/*     */       
-/* 283 */       Throwable exception = this.m_exception;
-/*     */       
-/* 285 */       for (int i = 0; i < 10 && null != exception; i++) {
-/*     */         
-/* 287 */         s.println("---------");
-/*     */ 
-/*     */         
-/*     */         try {
-/* 291 */           exception.printStackTrace(s);
-/*     */         }
-/* 293 */         catch (Exception e) {
-/*     */           
-/* 295 */           s.println("Could not print stack trace...");
-/*     */         } 
-/*     */         
-/* 298 */         if (exception instanceof TransformerException) {
-/*     */           
-/* 300 */           TransformerException se = (TransformerException)exception;
-/* 301 */           Throwable prev = exception;
-/*     */           
-/* 303 */           exception = se.getException();
-/*     */           
-/* 305 */           if (prev == exception) {
-/*     */             
-/* 307 */             exception = null;
-/*     */ 
-/*     */ 
-/*     */             
-/*     */             break;
-/*     */           } 
-/*     */         } else {
-/* 314 */           exception = null;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getException() {
-/* 328 */     return this.m_exception;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\XPathException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XPathException.java,v 1.3 2005/09/28 13:49:30 pvedula Exp $
+ */
+package com.sun.org.apache.xpath.internal;
+
+import javax.xml.transform.TransformerException;
+
+import org.w3c.dom.Node;
+
+/**
+ * This class implements an exception object that all
+ * XPath classes will throw in case of an error.  This class
+ * extends TransformerException, and may hold other exceptions. In the
+ * case of nested exceptions, printStackTrace will dump
+ * all the traces of the nested exceptions, not just the trace
+ * of this object.
+ * @xsl.usage general
+ */
+public class XPathException extends TransformerException
+{
+    static final long serialVersionUID = 4263549717619045963L;
+
+  /** The home of the expression that caused the error.
+   *  @serial  */
+  Object m_styleNode = null;
+
+  /**
+   * Get the stylesheet node from where this error originated.
+   * @return The stylesheet node from where this error originated, or null.
+   */
+  public Object getStylesheetNode()
+  {
+    return m_styleNode;
+  }
+
+  /**
+   * Set the stylesheet node from where this error originated.
+   * @param styleNode The stylesheet node from where this error originated, or null.
+   */
+  public void setStylesheetNode(Object styleNode)
+  {
+    m_styleNode = styleNode;
+  }
+
+
+  /** A nested exception.
+   *  @serial   */
+  protected Exception m_exception;
+
+  /**
+   * Create an XPathException object that holds
+   * an error message.
+   * @param message The error message.
+   */
+  public XPathException(String message, ExpressionNode ex)
+  {
+    super(message);
+    this.setLocator(ex);
+    setStylesheetNode(getStylesheetNode(ex));
+  }
+
+  /**
+   * Create an XPathException object that holds
+   * an error message.
+   * @param message The error message.
+   */
+  public XPathException(String message)
+  {
+    super(message);
+  }
+
+
+  /**
+   * Get the XSLT ElemVariable that this sub-expression references.  In order for
+   * this to work, the SourceLocator must be the owning ElemTemplateElement.
+   * @return The dereference to the ElemVariable, or null if not found.
+   */
+  public org.w3c.dom.Node getStylesheetNode(ExpressionNode ex)
+  {
+
+    ExpressionNode owner = getExpressionOwner(ex);
+
+    if (null != owner && owner instanceof org.w3c.dom.Node)
+    {
+                return ((org.w3c.dom.Node)owner);
+    }
+    return null;
+
+  }
+
+  /**
+   * Get the first non-Expression parent of this node.
+   * @return null or first ancestor that is not an Expression.
+   */
+  protected ExpressionNode getExpressionOwner(ExpressionNode ex)
+  {
+        ExpressionNode parent = ex.exprGetParent();
+        while((null != parent) && (parent instanceof Expression))
+                parent = parent.exprGetParent();
+        return parent;
+  }
+
+
+
+  /**
+   * Create an XPathException object that holds
+   * an error message and the stylesheet node that
+   * the error originated from.
+   * @param message The error message.
+   * @param styleNode The stylesheet node that the error originated from.
+   */
+  public XPathException(String message, Object styleNode)
+  {
+
+    super(message);
+
+    m_styleNode = styleNode;
+  }
+
+  /**
+   * Create an XPathException object that holds
+   * an error message, the stylesheet node that
+   * the error originated from, and another exception
+   * that caused this exception.
+   * @param message The error message.
+   * @param styleNode The stylesheet node that the error originated from.
+   * @param e The exception that caused this exception.
+   */
+  public XPathException(String message, Node styleNode, Exception e)
+  {
+
+    super(message);
+
+    m_styleNode = styleNode;
+    this.m_exception = e;
+  }
+
+  /**
+   * Create an XPathException object that holds
+   * an error message, and another exception
+   * that caused this exception.
+   * @param message The error message.
+   * @param e The exception that caused this exception.
+   */
+  public XPathException(String message, Exception e)
+  {
+
+    super(message);
+
+    this.m_exception = e;
+  }
+
+  /**
+   * Print the the trace of methods from where the error
+   * originated.  This will trace all nested exception
+   * objects, as well as this object.
+   * @param s The stream where the dump will be sent to.
+   */
+  public void printStackTrace(java.io.PrintStream s)
+  {
+
+    if (s == null)
+      s = System.err;
+
+    try
+    {
+      super.printStackTrace(s);
+    }
+    catch (Exception e){}
+
+    Throwable exception = m_exception;
+
+    for (int i = 0; (i < 10) && (null != exception); i++)
+    {
+      s.println("---------");
+      exception.printStackTrace(s);
+
+      if (exception instanceof TransformerException)
+      {
+        TransformerException se = (TransformerException) exception;
+        Throwable prev = exception;
+
+        exception = se.getException();
+
+        if (prev == exception)
+          break;
+      }
+      else
+      {
+        exception = null;
+      }
+    }
+  }
+
+  /**
+   * Find the most contained message.
+   *
+   * @return The error message of the originating exception.
+   */
+  public String getMessage()
+  {
+
+    String lastMessage = super.getMessage();
+    Throwable exception = m_exception;
+
+    while (null != exception)
+    {
+      String nextMessage = exception.getMessage();
+
+      if (null != nextMessage)
+        lastMessage = nextMessage;
+
+      if (exception instanceof TransformerException)
+      {
+        TransformerException se = (TransformerException) exception;
+        Throwable prev = exception;
+
+        exception = se.getException();
+
+        if (prev == exception)
+          break;
+      }
+      else
+      {
+        exception = null;
+      }
+    }
+
+    return (null != lastMessage) ? lastMessage : "";
+  }
+
+  /**
+   * Print the the trace of methods from where the error
+   * originated.  This will trace all nested exception
+   * objects, as well as this object.
+   * @param s The writer where the dump will be sent to.
+   */
+  public void printStackTrace(java.io.PrintWriter s)
+  {
+
+    if (s == null)
+      s = new java.io.PrintWriter(System.err);
+
+    try
+    {
+      super.printStackTrace(s);
+    }
+    catch (Exception e){}
+
+
+    boolean isJdk14OrHigher = false;
+    try {
+        Throwable.class.getMethod("getCause", (Class[]) null);
+        isJdk14OrHigher = true;
+    } catch (NoSuchMethodException nsme) {
+        // do nothing
+    }
+
+    // The printStackTrace method of the Throwable class in jdk 1.4
+    // and higher will include the cause when printing the backtrace.
+    // The following code is only required when using jdk 1.3 or lower
+    if (!isJdk14OrHigher) {
+
+      Throwable exception = m_exception;
+
+      for (int i = 0; (i < 10) && (null != exception); i++)
+      {
+        s.println("---------");
+
+        try
+        {
+          exception.printStackTrace(s);
+        }
+        catch (Exception e)
+        {
+          s.println("Could not print stack trace...");
+        }
+
+        if (exception instanceof TransformerException)
+        {
+          TransformerException se = (TransformerException) exception;
+          Throwable prev = exception;
+
+          exception = se.getException();
+
+          if (prev == exception)
+          {
+            exception = null;
+
+            break;
+          }
+        }
+        else
+        {
+          exception = null;
+        }
+      }
+    }
+  }
+
+  /**
+   *  Return the embedded exception, if any.
+   *  Overrides javax.xml.transform.TransformerException.getException().
+   *
+   *  @return The embedded exception, or null if there is none.
+   */
+  public Throwable getException()
+  {
+    return m_exception;
+  }
+}

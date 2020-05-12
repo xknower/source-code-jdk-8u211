@@ -1,57 +1,56 @@
-/*    */ package java.net;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UnknownHostException
-/*    */   extends IOException
-/*    */ {
-/*    */   private static final long serialVersionUID = -4639126076052875403L;
-/*    */   
-/*    */   public UnknownHostException(String paramString) {
-/* 47 */     super(paramString);
-/*    */   }
-/*    */   
-/*    */   public UnknownHostException() {}
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\UnknownHostException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.io.IOException;
+
+/**
+ * Thrown to indicate that the IP address of a host could not be determined.
+ *
+ * @author  Jonathan Payne
+ * @since   JDK1.0
+ */
+public
+class UnknownHostException extends IOException {
+    private static final long serialVersionUID = -4639126076052875403L;
+
+    /**
+     * Constructs a new {@code UnknownHostException} with the
+     * specified detail message.
+     *
+     * @param   host   the detail message.
+     */
+    public UnknownHostException(String host) {
+        super(host);
+    }
+
+    /**
+     * Constructs a new {@code UnknownHostException} with no detail
+     * message.
+     */
+    public UnknownHostException() {
+    }
+}

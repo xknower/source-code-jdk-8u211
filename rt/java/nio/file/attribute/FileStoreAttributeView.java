@@ -1,9 +1,38 @@
+/*
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.nio.file.attribute;
 
-public interface FileStoreAttributeView extends AttributeView {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\attribute\FileStoreAttributeView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * An attribute view that is a read-only or updatable view of the attributes of
+ * a {@link java.nio.file.FileStore}.
+ *
+ * @since 1.7
  */
+
+public interface FileStoreAttributeView
+    extends AttributeView
+{
+}

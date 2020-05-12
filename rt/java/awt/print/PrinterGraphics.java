@@ -1,11 +1,47 @@
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.awt.print;
 
-public interface PrinterGraphics {
-  PrinterJob getPrinterJob();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\print\PrinterGraphics.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The <code>PrinterGraphics</code> interface is implemented by
+ * {@link java.awt.Graphics} objects that are passed to
+ * {@link Printable} objects to render a page. It allows an
+ * application to find the {@link PrinterJob} object that is
+ * controlling the printing.
  */
+
+public interface PrinterGraphics {
+
+    /**
+     * Returns the <code>PrinterJob</code> that is controlling the
+     * current rendering request.
+     * @return the <code>PrinterJob</code> controlling the current
+     * rendering request.
+     * @see java.awt.print.Printable
+     */
+    PrinterJob getPrinterJob();
+
+}

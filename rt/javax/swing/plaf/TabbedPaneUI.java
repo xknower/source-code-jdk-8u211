@@ -1,18 +1,41 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.plaf;
 
 import java.awt.Rectangle;
 import javax.swing.JTabbedPane;
 
-public abstract class TabbedPaneUI extends ComponentUI {
-  public abstract int tabForCoordinate(JTabbedPane paramJTabbedPane, int paramInt1, int paramInt2);
-  
-  public abstract Rectangle getTabBounds(JTabbedPane paramJTabbedPane, int paramInt);
-  
-  public abstract int getTabRunCount(JTabbedPane paramJTabbedPane);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\TabbedPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Pluggable look and feel interface for JTabbedPane.
+ *
+ * @author Dave Moore
+ * @author Amy Fowler
  */
+public abstract class TabbedPaneUI extends ComponentUI {
+    public abstract int tabForCoordinate(JTabbedPane pane, int x, int y);
+    public abstract Rectangle getTabBounds(JTabbedPane pane, int index);
+    public abstract int getTabRunCount(JTabbedPane pane);
+}

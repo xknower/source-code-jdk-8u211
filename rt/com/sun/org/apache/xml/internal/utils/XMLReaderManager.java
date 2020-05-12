@@ -1,227 +1,221 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-/*     */ import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
-/*     */ import java.util.HashMap;
-/*     */ import jdk.xml.internal.JdkXmlUtils;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.XMLReader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLReaderManager
-/*     */ {
-/*  40 */   private static final XMLReaderManager m_singletonManager = new XMLReaderManager();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final String property = "org.xml.sax.driver";
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ThreadLocal<ReaderWrapper> m_readers;
-/*     */ 
-/*     */   
-/*     */   private boolean m_overrideDefaultParser;
-/*     */ 
-/*     */   
-/*     */   private HashMap m_inUse;
-/*     */ 
-/*     */   
-/*     */   private boolean _secureProcessing;
-/*     */ 
-/*     */   
-/*  60 */   private String _accessExternalDTD = "all";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XMLSecurityManager _xmlSecurityManager;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static XMLReaderManager getInstance(boolean overrideDefaultParser) {
-/*  74 */     m_singletonManager.setOverrideDefaultParser(overrideDefaultParser);
-/*  75 */     return m_singletonManager;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized XMLReader getXMLReader() throws SAXException {
-/*  87 */     if (this.m_readers == null)
-/*     */     {
-/*     */       
-/*  90 */       this.m_readers = new ThreadLocal<>();
-/*     */     }
-/*     */     
-/*  93 */     if (this.m_inUse == null) {
-/*  94 */       this.m_inUse = new HashMap<>();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 106 */     ReaderWrapper rw = this.m_readers.get();
-/* 107 */     boolean threadHasReader = (rw != null);
-/* 108 */     XMLReader reader = threadHasReader ? rw.reader : null;
-/* 109 */     String factory = SecuritySupport.getSystemProperty("org.xml.sax.driver");
-/* 110 */     if (threadHasReader && this.m_inUse.get(reader) != Boolean.TRUE && rw.overrideDefaultParser == this.m_overrideDefaultParser && (factory == null || reader
-/*     */       
-/* 112 */       .getClass().getName().equals(factory))) {
-/* 113 */       this.m_inUse.put(reader, Boolean.TRUE);
-/*     */     } else {
-/* 115 */       reader = JdkXmlUtils.getXMLReader(this.m_overrideDefaultParser, this._secureProcessing);
-/*     */ 
-/*     */       
-/* 118 */       if (!threadHasReader) {
-/* 119 */         this.m_readers.set(new ReaderWrapper(reader, this.m_overrideDefaultParser));
-/* 120 */         this.m_inUse.put(reader, Boolean.TRUE);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 126 */       reader.setProperty("http://javax.xml.XMLConstants/property/accessExternalDTD", this._accessExternalDTD);
-/* 127 */     } catch (SAXException se) {
-/* 128 */       XMLSecurityManager.printWarning(reader.getClass().getName(), "http://javax.xml.XMLConstants/property/accessExternalDTD", se);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 132 */     String lastProperty = "";
-/*     */     try {
-/* 134 */       if (this._xmlSecurityManager != null) {
-/* 135 */         for (XMLSecurityManager.Limit limit : XMLSecurityManager.Limit.values()) {
-/* 136 */           lastProperty = limit.apiProperty();
-/* 137 */           reader.setProperty(lastProperty, this._xmlSecurityManager
-/* 138 */               .getLimitValueAsString(limit));
-/*     */         } 
-/* 140 */         if (this._xmlSecurityManager.printEntityCountInfo()) {
-/* 141 */           lastProperty = "http://www.oracle.com/xml/jaxp/properties/getEntityCountInfo";
-/* 142 */           reader.setProperty("http://www.oracle.com/xml/jaxp/properties/getEntityCountInfo", "yes");
-/*     */         } 
-/*     */       } 
-/* 145 */     } catch (SAXException se) {
-/* 146 */       XMLSecurityManager.printWarning(reader.getClass().getName(), lastProperty, se);
-/*     */     } 
-/*     */     
-/* 149 */     return reader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void releaseXMLReader(XMLReader reader) {
-/* 161 */     ReaderWrapper rw = this.m_readers.get();
-/* 162 */     if (rw.reader == reader && reader != null) {
-/* 163 */       this.m_inUse.remove(reader);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean overrideDefaultParser() {
-/* 170 */     return this.m_overrideDefaultParser;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOverrideDefaultParser(boolean flag) {
-/* 177 */     this.m_overrideDefaultParser = flag;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFeature(String name, boolean value) {
-/* 184 */     if (name.equals("http://javax.xml.XMLConstants/feature/secure-processing")) {
-/* 185 */       this._secureProcessing = value;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getProperty(String name) {
-/* 193 */     if (name.equals("http://javax.xml.XMLConstants/property/accessExternalDTD"))
-/* 194 */       return this._accessExternalDTD; 
-/* 195 */     if (name.equals("http://apache.org/xml/properties/security-manager")) {
-/* 196 */       return this._xmlSecurityManager;
-/*     */     }
-/* 198 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setProperty(String name, Object value) {
-/* 205 */     if (name.equals("http://javax.xml.XMLConstants/property/accessExternalDTD")) {
-/* 206 */       this._accessExternalDTD = (String)value;
-/* 207 */     } else if (name.equals("http://apache.org/xml/properties/security-manager")) {
-/* 208 */       this._xmlSecurityManager = (XMLSecurityManager)value;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   class ReaderWrapper {
-/*     */     XMLReader reader;
-/*     */     boolean overrideDefaultParser;
-/*     */     
-/*     */     public ReaderWrapper(XMLReader reader, boolean overrideDefaultParser) {
-/* 217 */       this.reader = reader;
-/* 218 */       this.overrideDefaultParser = overrideDefaultParser;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\XMLReaderManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XMLReaderManager.java,v 1.2.4.1 2005/09/15 08:16:02 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
+import java.util.HashMap;
+
+import javax.xml.XMLConstants;
+import jdk.xml.internal.JdkXmlUtils;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
+/**
+ * Creates XMLReader objects and caches them for re-use.
+ * This class follows the singleton pattern.
+ */
+public class XMLReaderManager {
+
+    private static final XMLReaderManager m_singletonManager =
+                                                     new XMLReaderManager();
+    private static final String property = "org.xml.sax.driver";
+
+    /**
+     * Cache of XMLReader objects
+     */
+    private ThreadLocal<ReaderWrapper> m_readers;
+
+    private boolean m_overrideDefaultParser;
+
+    /**
+     * Keeps track of whether an XMLReader object is in use.
+     */
+    private HashMap m_inUse;
+
+    private boolean _secureProcessing;
+     /**
+     * protocols allowed for external DTD references in source file and/or stylesheet.
+     */
+    private String _accessExternalDTD = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
+
+    private XMLSecurityManager _xmlSecurityManager;
+
+    /**
+     * Hidden constructor
+     */
+    private XMLReaderManager() {
+    }
+
+    /**
+     * Retrieves the singleton reader manager
+     */
+    public static XMLReaderManager getInstance(boolean overrideDefaultParser) {
+        m_singletonManager.setOverrideDefaultParser(overrideDefaultParser);
+        return m_singletonManager;
+    }
+
+    /**
+     * Retrieves a cached XMLReader for this thread, or creates a new
+     * XMLReader, if the existing reader is in use.  When the caller no
+     * longer needs the reader, it must release it with a call to
+     * {@link #releaseXMLReader}.
+     */
+    public synchronized XMLReader getXMLReader() throws SAXException {
+        XMLReader reader;
+
+        if (m_readers == null) {
+            // When the m_readers.get() method is called for the first time
+            // on a thread, a new XMLReader will automatically be created.
+            m_readers = new ThreadLocal();
+        }
+
+        if (m_inUse == null) {
+            m_inUse = new HashMap();
+        }
+
+        /**
+         * Constructs a new XMLReader if:
+         * (1) the cached reader for this thread is in use, or
+         * (2) the requirement for overriding has changed,
+         * (3) the cached reader isn't an instance of the class set in the
+         * 'org.xml.sax.driver' property
+         *
+         * otherwise, returns the cached reader
+         */
+        ReaderWrapper rw = m_readers.get();
+        boolean threadHasReader = (rw != null);
+        reader = threadHasReader ? rw.reader : null;
+        String factory = SecuritySupport.getSystemProperty(property);
+        if (threadHasReader && m_inUse.get(reader) != Boolean.TRUE &&
+                (rw.overrideDefaultParser == m_overrideDefaultParser) &&
+                ( factory == null || reader.getClass().getName().equals(factory))) {
+            m_inUse.put(reader, Boolean.TRUE);
+        } else {
+            reader = JdkXmlUtils.getXMLReader(m_overrideDefaultParser, _secureProcessing);
+            // Cache the XMLReader if this is the first time we've created
+            // a reader for this thread.
+            if (!threadHasReader) {
+                m_readers.set(new ReaderWrapper(reader, m_overrideDefaultParser));
+                m_inUse.put(reader, Boolean.TRUE);
+            }
+        }
+
+        try {
+            //reader is cached, but this property might have been reset
+            reader.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, _accessExternalDTD);
+        } catch (SAXException se) {
+            XMLSecurityManager.printWarning(reader.getClass().getName(),
+                    XMLConstants.ACCESS_EXTERNAL_DTD, se);
+        }
+
+        String lastProperty = "";
+        try {
+            if (_xmlSecurityManager != null) {
+                for (XMLSecurityManager.Limit limit : XMLSecurityManager.Limit.values()) {
+                    lastProperty = limit.apiProperty();
+                    reader.setProperty(lastProperty,
+                            _xmlSecurityManager.getLimitValueAsString(limit));
+                }
+                if (_xmlSecurityManager.printEntityCountInfo()) {
+                    lastProperty = XalanConstants.JDK_ENTITY_COUNT_INFO;
+                    reader.setProperty(XalanConstants.JDK_ENTITY_COUNT_INFO, XalanConstants.JDK_YES);
+                }
+            }
+        } catch (SAXException se) {
+            XMLSecurityManager.printWarning(reader.getClass().getName(), lastProperty, se);
+        }
+
+        return reader;
+    }
+
+    /**
+     * Mark the cached XMLReader as available.  If the reader was not
+     * actually in the cache, do nothing.
+     *
+     * @param reader The XMLReader that's being released.
+     */
+    public synchronized void releaseXMLReader(XMLReader reader) {
+        // If the reader that's being released is the cached reader
+        // for this thread, remove it from the m_isUse list.
+        ReaderWrapper rw = m_readers.get();
+        if (rw.reader == reader && reader != null) {
+            m_inUse.remove(reader);
+        }
+    }
+    /**
+     * Return the state of the services mechanism feature.
+     */
+    public boolean overrideDefaultParser() {
+        return m_overrideDefaultParser;
+    }
+
+    /**
+     * Set the state of the services mechanism feature.
+     */
+    public void setOverrideDefaultParser(boolean flag) {
+        m_overrideDefaultParser = flag;
+    }
+
+    /**
+     * Set feature
+     */
+    public void setFeature(String name, boolean value) {
+        if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING)) {
+            _secureProcessing = value;
+        }
+    }
+
+    /**
+     * Get property value
+     */
+    public Object getProperty(String name) {
+        if (name.equals(XMLConstants.ACCESS_EXTERNAL_DTD)) {
+            return _accessExternalDTD;
+        } else if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            return _xmlSecurityManager;
+        }
+        return null;
+    }
+
+    /**
+     * Set property.
+     */
+    public void setProperty(String name, Object value) {
+        if (name.equals(XMLConstants.ACCESS_EXTERNAL_DTD)) {
+            _accessExternalDTD = (String)value;
+        } else if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            _xmlSecurityManager = (XMLSecurityManager)value;
+        }
+    }
+
+    class ReaderWrapper {
+        XMLReader reader;
+        boolean overrideDefaultParser;
+
+        public ReaderWrapper(XMLReader reader, boolean overrideDefaultParser) {
+            this.reader = reader;
+            this.overrideDefaultParser = overrideDefaultParser;
+        }
+    }
+}

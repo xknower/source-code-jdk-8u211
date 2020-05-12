@@ -1,53 +1,50 @@
-/*    */ package java.net;
-/*    */ 
-/*    */ import java.io.InterruptedIOException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SocketTimeoutException
-/*    */   extends InterruptedIOException
-/*    */ {
-/*    */   private static final long serialVersionUID = -8846654841826352300L;
-/*    */   
-/*    */   public SocketTimeoutException(String paramString) {
-/* 43 */     super(paramString);
-/*    */   }
-/*    */   
-/*    */   public SocketTimeoutException() {}
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\SocketTimeoutException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+/**
+ * Signals that a timeout has occurred on a socket read or accept.
+ *
+ * @since   1.4
+ */
+
+public class SocketTimeoutException extends java.io.InterruptedIOException {
+    private static final long serialVersionUID = -8846654841826352300L;
+
+    /**
+     * Constructs a new SocketTimeoutException with a detail
+     * message.
+     * @param msg the detail message
+     */
+    public SocketTimeoutException(String msg) {
+        super(msg);
+    }
+
+    /**
+     * Construct a new SocketTimeoutException with no detailed message.
+     */
+    public SocketTimeoutException() {}
+}

@@ -1,218 +1,213 @@
-/*     */ package com.sun.corba.se.impl.presentation.rmi;
-/*     */ 
-/*     */ import com.sun.corba.se.pept.transport.ContactInfoList;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.orbutil.proxy.LinkedInvocationHandler;
-/*     */ import com.sun.corba.se.spi.presentation.rmi.DynamicMethodMarshaller;
-/*     */ import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-/*     */ import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
-/*     */ import com.sun.corba.se.spi.protocol.CorbaClientDelegate;
-/*     */ import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher;
-/*     */ import com.sun.corba.se.spi.transport.CorbaContactInfoList;
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Proxy;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import javax.rmi.CORBA.Util;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.CORBA.portable.ApplicationException;
-/*     */ import org.omg.CORBA.portable.Delegate;
-/*     */ import org.omg.CORBA.portable.RemarshalException;
-/*     */ import org.omg.CORBA.portable.ServantObject;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StubInvocationHandlerImpl
-/*     */   implements LinkedInvocationHandler
-/*     */ {
-/*     */   private transient PresentationManager.ClassData classData;
-/*     */   private transient PresentationManager pm;
-/*     */   private transient Object stub;
-/*     */   private transient Proxy self;
-/*     */   
-/*     */   public void setProxy(Proxy paramProxy) {
-/*  80 */     this.self = paramProxy;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Proxy getProxy() {
-/*  85 */     return this.self;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StubInvocationHandlerImpl(PresentationManager paramPresentationManager, PresentationManager.ClassData paramClassData, Object paramObject) {
-/*  91 */     SecurityManager securityManager = System.getSecurityManager();
-/*  92 */     if (securityManager != null) {
-/*  93 */       securityManager.checkPermission(new DynamicAccessPermission("access"));
-/*     */     }
-/*  95 */     this.classData = paramClassData;
-/*  96 */     this.pm = paramPresentationManager;
-/*  97 */     this.stub = paramObject;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private boolean isLocal() {
-/* 102 */     boolean bool = false;
-/* 103 */     Delegate delegate = StubAdapter.getDelegate(this.stub);
-/*     */     
-/* 105 */     if (delegate instanceof CorbaClientDelegate) {
-/* 106 */       CorbaClientDelegate corbaClientDelegate = (CorbaClientDelegate)delegate;
-/* 107 */       ContactInfoList contactInfoList = corbaClientDelegate.getContactInfoList();
-/* 108 */       if (contactInfoList instanceof CorbaContactInfoList) {
-/* 109 */         CorbaContactInfoList corbaContactInfoList = (CorbaContactInfoList)contactInfoList;
-/*     */         
-/* 111 */         LocalClientRequestDispatcher localClientRequestDispatcher = corbaContactInfoList.getLocalClientRequestDispatcher();
-/* 112 */         bool = localClientRequestDispatcher.useLocalInvocation(null);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 116 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object invoke(Object paramObject, final Method method, Object[] paramArrayOfObject) throws Throwable {
-/* 127 */     String str = this.classData.getIDLNameTranslator().getIDLName(method);
-/*     */     
-/* 129 */     DynamicMethodMarshaller dynamicMethodMarshaller = this.pm.getDynamicMethodMarshaller(method);
-/*     */     
-/* 131 */     Delegate delegate = null;
-/*     */     try {
-/* 133 */       delegate = StubAdapter.getDelegate(this.stub);
-/* 134 */     } catch (SystemException systemException) {
-/* 135 */       throw Util.mapSystemException(systemException);
-/*     */     } 
-/*     */     
-/* 138 */     if (!isLocal()) {
-/*     */       try {
-/* 140 */         InputStream inputStream = null;
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         try {
-/* 145 */           OutputStream outputStream = (OutputStream)delegate.request(this.stub, str, true);
-/*     */ 
-/*     */           
-/* 148 */           dynamicMethodMarshaller.writeArguments(outputStream, paramArrayOfObject);
-/*     */ 
-/*     */ 
-/*     */           
-/* 152 */           inputStream = (InputStream)delegate.invoke(this.stub, outputStream);
-/*     */ 
-/*     */           
-/* 155 */           return dynamicMethodMarshaller.readResult(inputStream);
-/* 156 */         } catch (ApplicationException applicationException) {
-/* 157 */           throw dynamicMethodMarshaller.readException(applicationException);
-/* 158 */         } catch (RemarshalException remarshalException) {
-/* 159 */           return invoke(paramObject, method, paramArrayOfObject);
-/*     */         } finally {
-/* 161 */           delegate.releaseReply(this.stub, inputStream);
-/*     */         } 
-/* 163 */       } catch (SystemException systemException) {
-/* 164 */         throw Util.mapSystemException(systemException);
-/*     */       } 
-/*     */     }
-/*     */     
-/* 168 */     ORB oRB = (ORB)delegate.orb(this.stub);
-/* 169 */     ServantObject servantObject = delegate.servant_preinvoke(this.stub, str, method
-/* 170 */         .getDeclaringClass());
-/* 171 */     if (servantObject == null) {
-/* 172 */       return invoke(this.stub, method, paramArrayOfObject);
-/*     */     }
-/*     */     try {
-/* 175 */       Object[] arrayOfObject = dynamicMethodMarshaller.copyArguments(paramArrayOfObject, oRB);
-/*     */       
-/* 177 */       if (!method.isAccessible())
-/*     */       {
-/*     */ 
-/*     */         
-/* 181 */         AccessController.doPrivileged(new PrivilegedAction() {
-/*     */               public Object run() {
-/* 183 */                 method.setAccessible(true);
-/* 184 */                 return null;
-/*     */               }
-/*     */             });
-/*     */       }
-/*     */       
-/* 189 */       Object object = method.invoke(servantObject.servant, arrayOfObject);
-/*     */       
-/* 191 */       return dynamicMethodMarshaller.copyResult(object, oRB);
-/* 192 */     } catch (InvocationTargetException invocationTargetException) {
-/* 193 */       Throwable throwable1 = invocationTargetException.getCause();
-/*     */       
-/* 195 */       Throwable throwable2 = (Throwable)Util.copyObject(throwable1, oRB);
-/* 196 */       if (dynamicMethodMarshaller.isDeclaredException(throwable2)) {
-/* 197 */         throw throwable2;
-/*     */       }
-/* 199 */       throw Util.wrapException(throwable2);
-/* 200 */     } catch (Throwable throwable) {
-/* 201 */       if (throwable instanceof ThreadDeath) {
-/* 202 */         throw (ThreadDeath)throwable;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 207 */       throw Util.wrapException(throwable);
-/*     */     } finally {
-/* 209 */       delegate.servant_postinvoke(this.stub, servantObject);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubInvocationHandlerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+import java.lang.reflect.Method ;
+import java.lang.reflect.InvocationHandler ;
+import java.lang.reflect.Proxy ;
+import java.lang.reflect.InvocationTargetException ;
+
+import java.io.ObjectInputStream ;
+import java.io.ObjectOutputStream ;
+import java.io.IOException ;
+
+import java.rmi.Remote ;
+
+import javax.rmi.CORBA.Util ;
+
+import org.omg.CORBA.portable.ObjectImpl ;
+import org.omg.CORBA.portable.Delegate ;
+import org.omg.CORBA.portable.ServantObject ;
+import org.omg.CORBA.portable.ApplicationException ;
+import org.omg.CORBA.portable.RemarshalException ;
+
+import org.omg.CORBA.SystemException ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.pept.transport.ContactInfoList ;
+
+import com.sun.corba.se.spi.transport.CorbaContactInfoList ;
+
+import com.sun.corba.se.spi.protocol.CorbaClientDelegate ;
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher ;
+
+import com.sun.corba.se.spi.presentation.rmi.IDLNameTranslator ;
+import com.sun.corba.se.spi.presentation.rmi.DynamicMethodMarshaller ;
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager ;
+import com.sun.corba.se.spi.presentation.rmi.StubAdapter ;
+
+import com.sun.corba.se.spi.orbutil.proxy.InvocationHandlerFactory ;
+import com.sun.corba.se.spi.orbutil.proxy.LinkedInvocationHandler ;
+
+import com.sun.corba.se.impl.corba.CORBAObjectImpl ;
+
+public final class StubInvocationHandlerImpl implements LinkedInvocationHandler
+{
+    private transient PresentationManager.ClassData classData ;
+    private transient PresentationManager pm ;
+    private transient org.omg.CORBA.Object stub ;
+    private transient Proxy self ;
+
+    public void setProxy( Proxy self )
+    {
+        this.self = self ;
+    }
+
+    public Proxy getProxy()
+    {
+        return self ;
+    }
+
+    public StubInvocationHandlerImpl( PresentationManager pm,
+        PresentationManager.ClassData classData, org.omg.CORBA.Object stub )
+    {
+        SecurityManager s = System.getSecurityManager();
+        if (s != null) {
+            s.checkPermission(new DynamicAccessPermission("access"));
+        }
+        this.classData = classData ;
+        this.pm = pm ;
+        this.stub = stub ;
+    }
+
+    private boolean isLocal()
+    {
+        boolean result = false ;
+        Delegate delegate = StubAdapter.getDelegate( stub ) ;
+
+        if (delegate instanceof CorbaClientDelegate) {
+            CorbaClientDelegate cdel = (CorbaClientDelegate)delegate ;
+            ContactInfoList cil = cdel.getContactInfoList() ;
+            if (cil instanceof CorbaContactInfoList) {
+                CorbaContactInfoList ccil = (CorbaContactInfoList)cil ;
+                LocalClientRequestDispatcher lcrd =
+                    ccil.getLocalClientRequestDispatcher() ;
+                result = lcrd.useLocalInvocation( null ) ;
+            }
+        }
+
+        return result ;
+    }
+
+    /** Invoke the given method with the args and return the result.
+     *  This may result in a remote invocation.
+     *  @param proxy The proxy used for this class (null if not using java.lang.reflect.Proxy)
+     */
+    public Object invoke( Object proxy, final Method method,
+        Object[] args ) throws Throwable
+    {
+        String giopMethodName = classData.getIDLNameTranslator().
+            getIDLName( method )  ;
+        DynamicMethodMarshaller dmm =
+            pm.getDynamicMethodMarshaller( method ) ;
+
+        Delegate delegate = null ;
+        try {
+            delegate = StubAdapter.getDelegate( stub ) ;
+        } catch (SystemException ex) {
+            throw Util.mapSystemException(ex) ;
+        }
+
+        if (!isLocal()) {
+            try {
+                org.omg.CORBA_2_3.portable.InputStream in = null ;
+                try {
+                    // create request
+                    org.omg.CORBA_2_3.portable.OutputStream out =
+                        (org.omg.CORBA_2_3.portable.OutputStream)
+                        delegate.request( stub, giopMethodName, true);
+
+                    // marshal arguments
+                    dmm.writeArguments( out, args ) ;
+
+                    // finish invocation
+                    in = (org.omg.CORBA_2_3.portable.InputStream)
+                        delegate.invoke( stub, out);
+
+                    // unmarshal result
+                    return dmm.readResult( in ) ;
+                } catch (ApplicationException ex) {
+                    throw dmm.readException( ex ) ;
+                } catch (RemarshalException ex) {
+                    return invoke( proxy, method, args ) ;
+                } finally {
+                    delegate.releaseReply( stub, in );
+                }
+            } catch (SystemException ex) {
+                throw Util.mapSystemException(ex) ;
+            }
+        } else {
+            // local branch
+            ORB orb = (ORB)delegate.orb( stub ) ;
+            ServantObject so = delegate.servant_preinvoke( stub, giopMethodName,
+                method.getDeclaringClass() );
+            if (so == null) {
+                return invoke( stub, method, args ) ;
+            }
+            try {
+                Object[] copies = dmm.copyArguments( args, orb ) ;
+
+                if (!method.isAccessible()) {
+                    // Make sure that we can invoke a method from a normally
+                    // inaccessible package, as this reflective class must always
+                    // be able to invoke a non-public method.
+                    AccessController.doPrivileged(new PrivilegedAction() {
+                        public Object run() {
+                            method.setAccessible( true ) ;
+                            return null ;
+                        }
+                    } ) ;
+                }
+
+                Object result = method.invoke( so.servant, copies ) ;
+
+                return dmm.copyResult( result, orb ) ;
+            } catch (InvocationTargetException ex) {
+                Throwable mex = ex.getCause() ;
+                // mex should never be null, as null cannot be thrown
+                Throwable exCopy = (Throwable)Util.copyObject(mex,orb);
+                if (dmm.isDeclaredException( exCopy ))
+                    throw exCopy ;
+                else
+                    throw Util.wrapException(exCopy);
+            } catch (Throwable thr) {
+                if (thr instanceof ThreadDeath)
+                    throw (ThreadDeath)thr ;
+
+                // This is not a user thrown exception from the
+                // method call, so don't copy it.  This is either
+                // an error or a reflective invoke exception.
+                throw Util.wrapException( thr ) ;
+            } finally {
+                delegate.servant_postinvoke( stub, so);
+            }
+        }
+    }
+}

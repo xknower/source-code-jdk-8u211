@@ -1,65 +1,59 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orbutil.closure.Closure;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class IIOPAddressClosureImpl
-/*    */   extends IIOPAddressBase
-/*    */ {
-/*    */   private Closure host;
-/*    */   private Closure port;
-/*    */   
-/*    */   public IIOPAddressClosureImpl(Closure paramClosure1, Closure paramClosure2) {
-/* 45 */     this.host = paramClosure1;
-/* 46 */     this.port = paramClosure2;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String getHost() {
-/* 51 */     return (String)this.host.evaluate();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getPort() {
-/* 56 */     Integer integer = (Integer)this.port.evaluate();
-/* 57 */     return integer.intValue();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\IIOPAddressClosureImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.CORBA.BAD_PARAM ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+import com.sun.corba.se.spi.orbutil.closure.Closure ;
+
+/**
+ * @author
+ */
+public final class IIOPAddressClosureImpl extends IIOPAddressBase
+{
+    private Closure host;
+    private Closure port;
+
+    public IIOPAddressClosureImpl( Closure host, Closure port )
+    {
+        this.host = host ;
+        this.port = port ;
+    }
+
+    public String getHost()
+    {
+        return (String)(host.evaluate()) ;
+    }
+
+    public int getPort()
+    {
+        Integer value = (Integer)(port.evaluate()) ;
+        return value.intValue() ;
+    }
+}

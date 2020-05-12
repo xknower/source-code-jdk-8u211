@@ -1,92 +1,86 @@
-/*    */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*    */ 
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*    */ import com.sun.org.apache.xerces.internal.util.SymbolHash;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ExtendedSchemaDVFactoryImpl
-/*    */   extends BaseSchemaDVFactory
-/*    */ {
-/* 39 */   static SymbolHash fBuiltInTypes = new SymbolHash();
-/*    */   static {
-/* 41 */     createBuiltInTypes();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   static void createBuiltInTypes() {
-/* 46 */     String ANYATOMICTYPE = "anyAtomicType";
-/* 47 */     String DURATION = "duration";
-/* 48 */     String YEARMONTHDURATION = "yearMonthDuration";
-/* 49 */     String DAYTIMEDURATION = "dayTimeDuration";
-/*    */     
-/* 51 */     createBuiltInTypes(fBuiltInTypes, XSSimpleTypeDecl.fAnyAtomicType);
-/*    */ 
-/*    */     
-/* 54 */     fBuiltInTypes.put("anyAtomicType", XSSimpleTypeDecl.fAnyAtomicType);
-/*    */ 
-/*    */     
-/* 57 */     XSSimpleTypeDecl durationDV = (XSSimpleTypeDecl)fBuiltInTypes.get("duration");
-/* 58 */     fBuiltInTypes.put("yearMonthDuration", new XSSimpleTypeDecl(durationDV, "yearMonthDuration", (short)27, (short)1, false, false, false, true, (short)46));
-/* 59 */     fBuiltInTypes.put("dayTimeDuration", new XSSimpleTypeDecl(durationDV, "dayTimeDuration", (short)28, (short)1, false, false, false, true, (short)47));
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public XSSimpleType getBuiltInType(String name) {
-/* 74 */     return (XSSimpleType)fBuiltInTypes.get(name);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public SymbolHash getBuiltInTypes() {
-/* 84 */     return fBuiltInTypes.makeClone();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\ExtendedSchemaDVFactoryImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.util.SymbolHash;
+
+/**
+ * A special factory to create/return built-in schema DVs and create user-defined DVs
+ * that includes anyAtomicType, yearMonthDuration and dayTimeDuration
+ *
+ * @xerces.internal
+ *
+ * @author Khaled Noaman, IBM
+ *
+ * @version $Id: ExtendedSchemaDVFactoryImpl.java,v 1.2 2010-10-26 23:01:03 joehw Exp $
+ */
+public class ExtendedSchemaDVFactoryImpl extends BaseSchemaDVFactory {
+
+    static SymbolHash fBuiltInTypes = new SymbolHash();
+    static {
+        createBuiltInTypes();
+    }
+
+    // create all built-in types
+    static void createBuiltInTypes() {
+        final String ANYATOMICTYPE     = "anyAtomicType";
+        final String DURATION          = "duration";
+        final String YEARMONTHDURATION = "yearMonthDuration";
+        final String DAYTIMEDURATION   = "dayTimeDuration";
+
+        createBuiltInTypes(fBuiltInTypes, XSSimpleTypeDecl.fAnyAtomicType);
+
+        // add anyAtomicType
+        fBuiltInTypes.put(ANYATOMICTYPE, XSSimpleTypeDecl.fAnyAtomicType);
+
+        // add 2 duration types
+        XSSimpleTypeDecl durationDV = (XSSimpleTypeDecl)fBuiltInTypes.get(DURATION);
+        fBuiltInTypes.put(YEARMONTHDURATION, new XSSimpleTypeDecl(durationDV, YEARMONTHDURATION, XSSimpleTypeDecl.DV_YEARMONTHDURATION, XSSimpleType.ORDERED_PARTIAL, false, false, false, true, XSSimpleTypeDecl.YEARMONTHDURATION_DT));
+        fBuiltInTypes.put(DAYTIMEDURATION, new XSSimpleTypeDecl(durationDV, DAYTIMEDURATION, XSSimpleTypeDecl.DV_DAYTIMEDURATION, XSSimpleType.ORDERED_PARTIAL, false, false, false, true, XSSimpleTypeDecl.DAYTIMEDURATION_DT));
+    } //createBuiltInTypes()
+
+    /**
+     * Get a built-in simple type of the given name
+     * REVISIT: its still not decided within the Schema WG how to define the
+     *          ur-types and if all simple types should be derived from a
+     *          complex type, so as of now we ignore the fact that anySimpleType
+     *          is derived from anyType, and pass 'null' as the base of
+     *          anySimpleType. It needs to be changed as per the decision taken.
+     *
+     * @param name  the name of the datatype
+     * @return      the datatype validator of the given name
+     */
+    public XSSimpleType getBuiltInType(String name) {
+        return (XSSimpleType)fBuiltInTypes.get(name);
+    }
+
+    /**
+     * get all built-in simple types, which are stored in a hashtable keyed by
+     * the name
+     *
+     * @return      a hashtable which contains all built-in simple types
+     */
+    public SymbolHash getBuiltInTypes() {
+        return (SymbolHash)fBuiltInTypes.makeClone();
+    }
+}

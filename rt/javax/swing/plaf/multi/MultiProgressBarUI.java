@@ -1,216 +1,210 @@
-/*     */ package javax.swing.plaf.multi;
-/*     */ 
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.util.Vector;
-/*     */ import javax.accessibility.Accessible;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.ProgressBarUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MultiProgressBarUI
-/*     */   extends ProgressBarUI
-/*     */ {
-/*  50 */   protected Vector uis = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ComponentUI[] getUIs() {
-/*  62 */     return MultiLookAndFeel.uisToArray(this.uis);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/*  81 */     boolean bool = ((ComponentUI)this.uis.elementAt(0)).contains(paramJComponent, paramInt1, paramInt2);
-/*  82 */     for (byte b = 1; b < this.uis.size(); b++) {
-/*  83 */       ((ComponentUI)this.uis.elementAt(b)).contains(paramJComponent, paramInt1, paramInt2);
-/*     */     }
-/*  85 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/*  92 */     for (byte b = 0; b < this.uis.size(); b++) {
-/*  93 */       ((ComponentUI)this.uis.elementAt(b)).update(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 103 */     MultiProgressBarUI multiProgressBarUI = new MultiProgressBarUI();
-/* 104 */     return MultiLookAndFeel.createUIs(multiProgressBarUI, multiProgressBarUI.uis, paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 113 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 114 */       ((ComponentUI)this.uis.elementAt(b)).installUI(paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/* 122 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 123 */       ((ComponentUI)this.uis.elementAt(b)).uninstallUI(paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 131 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 132 */       ((ComponentUI)this.uis.elementAt(b)).paint(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 144 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getPreferredSize(paramJComponent);
-/* 145 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 146 */       ((ComponentUI)this.uis.elementAt(b)).getPreferredSize(paramJComponent);
-/*     */     }
-/* 148 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 159 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getMinimumSize(paramJComponent);
-/* 160 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 161 */       ((ComponentUI)this.uis.elementAt(b)).getMinimumSize(paramJComponent);
-/*     */     }
-/* 163 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 174 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getMaximumSize(paramJComponent);
-/* 175 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 176 */       ((ComponentUI)this.uis.elementAt(b)).getMaximumSize(paramJComponent);
-/*     */     }
-/* 178 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAccessibleChildrenCount(JComponent paramJComponent) {
-/* 189 */     int i = ((ComponentUI)this.uis.elementAt(0)).getAccessibleChildrenCount(paramJComponent);
-/* 190 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 191 */       ((ComponentUI)this.uis.elementAt(b)).getAccessibleChildrenCount(paramJComponent);
-/*     */     }
-/* 193 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Accessible getAccessibleChild(JComponent paramJComponent, int paramInt) {
-/* 204 */     Accessible accessible = ((ComponentUI)this.uis.elementAt(0)).getAccessibleChild(paramJComponent, paramInt);
-/* 205 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 206 */       ((ComponentUI)this.uis.elementAt(b)).getAccessibleChild(paramJComponent, paramInt);
-/*     */     }
-/* 208 */     return accessible;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\multi\MultiProgressBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.multi;
+
+import java.util.Vector;
+import javax.swing.plaf.ProgressBarUI;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.JComponent;
+import java.awt.Graphics;
+import java.awt.Dimension;
+import javax.accessibility.Accessible;
+
+/**
+ * A multiplexing UI used to combine <code>ProgressBarUI</code>s.
+ *
+ * <p>This file was automatically generated by AutoMulti.
+ *
+ * @author  Otto Multey
+ */
+public class MultiProgressBarUI extends ProgressBarUI {
+
+    /**
+     * The vector containing the real UIs.  This is populated
+     * in the call to <code>createUI</code>, and can be obtained by calling
+     * the <code>getUIs</code> method.  The first element is guaranteed to be the real UI
+     * obtained from the default look and feel.
+     */
+    protected Vector uis = new Vector();
+
+////////////////////
+// Common UI methods
+////////////////////
+
+    /**
+     * Returns the list of UIs associated with this multiplexing UI.  This
+     * allows processing of the UIs by an application aware of multiplexing
+     * UIs on components.
+     */
+    public ComponentUI[] getUIs() {
+        return MultiLookAndFeel.uisToArray(uis);
+    }
+
+////////////////////
+// ProgressBarUI methods
+////////////////////
+
+////////////////////
+// ComponentUI methods
+////////////////////
+
+    /**
+     * Invokes the <code>contains</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public boolean contains(JComponent a, int b, int c) {
+        boolean returnValue =
+            ((ComponentUI) (uis.elementAt(0))).contains(a,b,c);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).contains(a,b,c);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>update</code> method on each UI handled by this object.
+     */
+    public void update(Graphics a, JComponent b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).update(a,b);
+        }
+    }
+
+    /**
+     * Returns a multiplexing UI instance if any of the auxiliary
+     * <code>LookAndFeel</code>s supports this UI.  Otherwise, just returns the
+     * UI object obtained from the default <code>LookAndFeel</code>.
+     */
+    public static ComponentUI createUI(JComponent a) {
+        ComponentUI mui = new MultiProgressBarUI();
+        return MultiLookAndFeel.createUIs(mui,
+                                          ((MultiProgressBarUI) mui).uis,
+                                          a);
+    }
+
+    /**
+     * Invokes the <code>installUI</code> method on each UI handled by this object.
+     */
+    public void installUI(JComponent a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).installUI(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>uninstallUI</code> method on each UI handled by this object.
+     */
+    public void uninstallUI(JComponent a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).uninstallUI(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>paint</code> method on each UI handled by this object.
+     */
+    public void paint(Graphics a, JComponent b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).paint(a,b);
+        }
+    }
+
+    /**
+     * Invokes the <code>getPreferredSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getPreferredSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getPreferredSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getPreferredSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getMinimumSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getMinimumSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getMinimumSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getMinimumSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getMaximumSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getMaximumSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getMaximumSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getMaximumSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getAccessibleChildrenCount</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public int getAccessibleChildrenCount(JComponent a) {
+        int returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getAccessibleChildrenCount(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getAccessibleChildrenCount(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getAccessibleChild</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Accessible getAccessibleChild(JComponent a, int b) {
+        Accessible returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getAccessibleChild(a,b);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getAccessibleChild(a,b);
+        }
+        return returnValue;
+    }
+}

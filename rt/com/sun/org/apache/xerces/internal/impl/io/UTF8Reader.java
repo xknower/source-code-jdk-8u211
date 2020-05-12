@@ -1,721 +1,716 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.io;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
-/*     */ import com.sun.org.apache.xerces.internal.util.MessageFormatter;
-/*     */ import com.sun.xml.internal.stream.util.BufferAllocator;
-/*     */ import com.sun.xml.internal.stream.util.ThreadLocalBufferAllocator;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.Reader;
-/*     */ import java.util.Locale;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class UTF8Reader
-/*     */   extends Reader
-/*     */ {
-/*     */   public static final int DEFAULT_BUFFER_SIZE = 2048;
-/*     */   private static final boolean DEBUG_READ = false;
-/*     */   protected InputStream fInputStream;
-/*     */   protected byte[] fBuffer;
-/*     */   protected int fOffset;
-/*  71 */   private int fSurrogate = -1;
-/*     */ 
-/*     */ 
-/*     */   
-/*  75 */   private MessageFormatter fFormatter = null;
-/*     */ 
-/*     */   
-/*  78 */   private Locale fLocale = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UTF8Reader(InputStream inputStream) {
-/*  91 */     this(inputStream, 2048, new XMLMessageFormatter(), Locale.getDefault());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UTF8Reader(InputStream inputStream, MessageFormatter messageFormatter, Locale locale) {
-/* 104 */     this(inputStream, 2048, messageFormatter, locale);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UTF8Reader(InputStream inputStream, int size, MessageFormatter messageFormatter, Locale locale) {
-/* 118 */     this.fInputStream = inputStream;
-/* 119 */     BufferAllocator ba = ThreadLocalBufferAllocator.getBufferAllocator();
-/* 120 */     this.fBuffer = ba.getByteBuffer(size);
-/* 121 */     if (this.fBuffer == null) {
-/* 122 */       this.fBuffer = new byte[size];
-/*     */     }
-/* 124 */     this.fFormatter = messageFormatter;
-/* 125 */     this.fLocale = locale;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read() throws IOException {
-/* 148 */     int c = this.fSurrogate;
-/* 149 */     if (this.fSurrogate == -1) {
-/*     */ 
-/*     */       
-/* 152 */       int index = 0;
-/*     */ 
-/*     */ 
-/*     */       
-/* 156 */       int b0 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 157 */       if (b0 == -1) {
-/* 158 */         return -1;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 163 */       if (b0 < 128) {
-/* 164 */         c = (char)b0;
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       }
-/* 169 */       else if ((b0 & 0xE0) == 192 && (b0 & 0x1E) != 0) {
-/*     */         
-/* 171 */         int b1 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 172 */         if (b1 == -1) {
-/* 173 */           expectedByte(2, 2);
-/*     */         }
-/* 175 */         if ((b1 & 0xC0) != 128) {
-/* 176 */           invalidByte(2, 2, b1);
-/*     */         }
-/* 178 */         c = b0 << 6 & 0x7C0 | b1 & 0x3F;
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       }
-/* 183 */       else if ((b0 & 0xF0) == 224) {
-/*     */         
-/* 185 */         int b1 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 186 */         if (b1 == -1) {
-/* 187 */           expectedByte(2, 3);
-/*     */         }
-/* 189 */         if ((b1 & 0xC0) != 128 || (b0 == 237 && b1 >= 160) || ((b0 & 0xF) == 0 && (b1 & 0x20) == 0))
-/*     */         {
-/*     */           
-/* 192 */           invalidByte(2, 3, b1);
-/*     */         }
-/*     */         
-/* 195 */         int b2 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 196 */         if (b2 == -1) {
-/* 197 */           expectedByte(3, 3);
-/*     */         }
-/* 199 */         if ((b2 & 0xC0) != 128) {
-/* 200 */           invalidByte(3, 3, b2);
-/*     */         }
-/* 202 */         c = b0 << 12 & 0xF000 | b1 << 6 & 0xFC0 | b2 & 0x3F;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       }
-/* 210 */       else if ((b0 & 0xF8) == 240) {
-/*     */         
-/* 212 */         int b1 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 213 */         if (b1 == -1) {
-/* 214 */           expectedByte(2, 4);
-/*     */         }
-/* 216 */         if ((b1 & 0xC0) != 128 || ((b1 & 0x30) == 0 && (b0 & 0x7) == 0))
-/*     */         {
-/* 218 */           invalidByte(2, 3, b1);
-/*     */         }
-/*     */         
-/* 221 */         int b2 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 222 */         if (b2 == -1) {
-/* 223 */           expectedByte(3, 4);
-/*     */         }
-/* 225 */         if ((b2 & 0xC0) != 128) {
-/* 226 */           invalidByte(3, 3, b2);
-/*     */         }
-/*     */         
-/* 229 */         int b3 = (index == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[index++] & 0xFF);
-/* 230 */         if (b3 == -1) {
-/* 231 */           expectedByte(4, 4);
-/*     */         }
-/* 233 */         if ((b3 & 0xC0) != 128) {
-/* 234 */           invalidByte(4, 4, b3);
-/*     */         }
-/* 236 */         int uuuuu = b0 << 2 & 0x1C | b1 >> 4 & 0x3;
-/* 237 */         if (uuuuu > 16) {
-/* 238 */           invalidSurrogate(uuuuu);
-/*     */         }
-/* 240 */         int wwww = uuuuu - 1;
-/* 241 */         int hs = 0xD800 | wwww << 6 & 0x3C0 | b1 << 2 & 0x3C | b2 >> 4 & 0x3;
-/*     */ 
-/*     */         
-/* 244 */         int ls = 0xDC00 | b2 << 6 & 0x3C0 | b3 & 0x3F;
-/* 245 */         c = hs;
-/* 246 */         this.fSurrogate = ls;
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 251 */         invalidByte(1, 1, b0);
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 257 */       this.fSurrogate = -1;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 264 */     return c;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read(char[] ch, int offset, int length) throws IOException {
-/* 285 */     int out = offset;
-/* 286 */     if (this.fSurrogate != -1) {
-/* 287 */       ch[offset + 1] = (char)this.fSurrogate;
-/* 288 */       this.fSurrogate = -1;
-/* 289 */       length--;
-/* 290 */       out++;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 294 */     int count = 0;
-/* 295 */     if (this.fOffset == 0) {
-/*     */       
-/* 297 */       if (length > this.fBuffer.length) {
-/* 298 */         length = this.fBuffer.length;
-/*     */       }
-/*     */ 
-/*     */       
-/* 302 */       count = this.fInputStream.read(this.fBuffer, 0, length);
-/* 303 */       if (count == -1) {
-/* 304 */         return -1;
-/*     */       }
-/* 306 */       count += out - offset;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 317 */       count = this.fOffset;
-/* 318 */       this.fOffset = 0;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 322 */     int total = count;
-/*     */ 
-/*     */     
-/* 325 */     byte byte0 = 0; int in;
-/* 326 */     for (in = 0; in < total; ) {
-/* 327 */       byte byte1 = this.fBuffer[in];
-/* 328 */       if (byte1 >= 0) {
-/* 329 */         ch[out++] = (char)byte1;
-/*     */         
-/*     */         in++;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 335 */     for (; in < total; in++) {
-/* 336 */       byte byte1 = this.fBuffer[in];
-/*     */ 
-/*     */ 
-/*     */       
-/* 340 */       if (byte1 >= 0) {
-/* 341 */         ch[out++] = (char)byte1;
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */ 
-/*     */         
-/* 347 */         int b0 = byte1 & 0xFF;
-/* 348 */         if ((b0 & 0xE0) == 192 && (b0 & 0x1E) != 0) {
-/* 349 */           int b1 = -1;
-/* 350 */           if (++in < total) {
-/* 351 */             b1 = this.fBuffer[in] & 0xFF;
-/*     */           } else {
-/*     */             
-/* 354 */             b1 = this.fInputStream.read();
-/* 355 */             if (b1 == -1) {
-/* 356 */               if (out > offset) {
-/* 357 */                 this.fBuffer[0] = (byte)b0;
-/* 358 */                 this.fOffset = 1;
-/* 359 */                 return out - offset;
-/*     */               } 
-/* 361 */               expectedByte(2, 2);
-/*     */             } 
-/* 363 */             count++;
-/*     */           } 
-/* 365 */           if ((b1 & 0xC0) != 128) {
-/* 366 */             if (out > offset) {
-/* 367 */               this.fBuffer[0] = (byte)b0;
-/* 368 */               this.fBuffer[1] = (byte)b1;
-/* 369 */               this.fOffset = 2;
-/* 370 */               return out - offset;
-/*     */             } 
-/* 372 */             invalidByte(2, 2, b1);
-/*     */           } 
-/* 374 */           int c = b0 << 6 & 0x7C0 | b1 & 0x3F;
-/* 375 */           ch[out++] = (char)c;
-/* 376 */           count--;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         }
-/* 382 */         else if ((b0 & 0xF0) == 224) {
-/* 383 */           int b1 = -1;
-/* 384 */           if (++in < total) {
-/* 385 */             b1 = this.fBuffer[in] & 0xFF;
-/*     */           } else {
-/*     */             
-/* 388 */             b1 = this.fInputStream.read();
-/* 389 */             if (b1 == -1) {
-/* 390 */               if (out > offset) {
-/* 391 */                 this.fBuffer[0] = (byte)b0;
-/* 392 */                 this.fOffset = 1;
-/* 393 */                 return out - offset;
-/*     */               } 
-/* 395 */               expectedByte(2, 3);
-/*     */             } 
-/* 397 */             count++;
-/*     */           } 
-/* 399 */           if ((b1 & 0xC0) != 128 || (b0 == 237 && b1 >= 160) || ((b0 & 0xF) == 0 && (b1 & 0x20) == 0)) {
-/*     */ 
-/*     */             
-/* 402 */             if (out > offset) {
-/* 403 */               this.fBuffer[0] = (byte)b0;
-/* 404 */               this.fBuffer[1] = (byte)b1;
-/* 405 */               this.fOffset = 2;
-/* 406 */               return out - offset;
-/*     */             } 
-/* 408 */             invalidByte(2, 3, b1);
-/*     */           } 
-/* 410 */           int b2 = -1;
-/* 411 */           if (++in < total) {
-/* 412 */             b2 = this.fBuffer[in] & 0xFF;
-/*     */           } else {
-/*     */             
-/* 415 */             b2 = this.fInputStream.read();
-/* 416 */             if (b2 == -1) {
-/* 417 */               if (out > offset) {
-/* 418 */                 this.fBuffer[0] = (byte)b0;
-/* 419 */                 this.fBuffer[1] = (byte)b1;
-/* 420 */                 this.fOffset = 2;
-/* 421 */                 return out - offset;
-/*     */               } 
-/* 423 */               expectedByte(3, 3);
-/*     */             } 
-/* 425 */             count++;
-/*     */           } 
-/* 427 */           if ((b2 & 0xC0) != 128) {
-/* 428 */             if (out > offset) {
-/* 429 */               this.fBuffer[0] = (byte)b0;
-/* 430 */               this.fBuffer[1] = (byte)b1;
-/* 431 */               this.fBuffer[2] = (byte)b2;
-/* 432 */               this.fOffset = 3;
-/* 433 */               return out - offset;
-/*     */             } 
-/* 435 */             invalidByte(3, 3, b2);
-/*     */           } 
-/* 437 */           int c = b0 << 12 & 0xF000 | b1 << 6 & 0xFC0 | b2 & 0x3F;
-/*     */           
-/* 439 */           ch[out++] = (char)c;
-/* 440 */           count -= 2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         }
-/* 448 */         else if ((b0 & 0xF8) == 240) {
-/* 449 */           int b1 = -1;
-/* 450 */           if (++in < total) {
-/* 451 */             b1 = this.fBuffer[in] & 0xFF;
-/*     */           } else {
-/*     */             
-/* 454 */             b1 = this.fInputStream.read();
-/* 455 */             if (b1 == -1) {
-/* 456 */               if (out > offset) {
-/* 457 */                 this.fBuffer[0] = (byte)b0;
-/* 458 */                 this.fOffset = 1;
-/* 459 */                 return out - offset;
-/*     */               } 
-/* 461 */               expectedByte(2, 4);
-/*     */             } 
-/* 463 */             count++;
-/*     */           } 
-/* 465 */           if ((b1 & 0xC0) != 128 || ((b1 & 0x30) == 0 && (b0 & 0x7) == 0)) {
-/*     */             
-/* 467 */             if (out > offset) {
-/* 468 */               this.fBuffer[0] = (byte)b0;
-/* 469 */               this.fBuffer[1] = (byte)b1;
-/* 470 */               this.fOffset = 2;
-/* 471 */               return out - offset;
-/*     */             } 
-/* 473 */             invalidByte(2, 4, b1);
-/*     */           } 
-/* 475 */           int b2 = -1;
-/* 476 */           if (++in < total) {
-/* 477 */             b2 = this.fBuffer[in] & 0xFF;
-/*     */           } else {
-/*     */             
-/* 480 */             b2 = this.fInputStream.read();
-/* 481 */             if (b2 == -1) {
-/* 482 */               if (out > offset) {
-/* 483 */                 this.fBuffer[0] = (byte)b0;
-/* 484 */                 this.fBuffer[1] = (byte)b1;
-/* 485 */                 this.fOffset = 2;
-/* 486 */                 return out - offset;
-/*     */               } 
-/* 488 */               expectedByte(3, 4);
-/*     */             } 
-/* 490 */             count++;
-/*     */           } 
-/* 492 */           if ((b2 & 0xC0) != 128) {
-/* 493 */             if (out > offset) {
-/* 494 */               this.fBuffer[0] = (byte)b0;
-/* 495 */               this.fBuffer[1] = (byte)b1;
-/* 496 */               this.fBuffer[2] = (byte)b2;
-/* 497 */               this.fOffset = 3;
-/* 498 */               return out - offset;
-/*     */             } 
-/* 500 */             invalidByte(3, 4, b2);
-/*     */           } 
-/* 502 */           int b3 = -1;
-/* 503 */           if (++in < total) {
-/* 504 */             b3 = this.fBuffer[in] & 0xFF;
-/*     */           } else {
-/*     */             
-/* 507 */             b3 = this.fInputStream.read();
-/* 508 */             if (b3 == -1) {
-/* 509 */               if (out > offset) {
-/* 510 */                 this.fBuffer[0] = (byte)b0;
-/* 511 */                 this.fBuffer[1] = (byte)b1;
-/* 512 */                 this.fBuffer[2] = (byte)b2;
-/* 513 */                 this.fOffset = 3;
-/* 514 */                 return out - offset;
-/*     */               } 
-/* 516 */               expectedByte(4, 4);
-/*     */             } 
-/* 518 */             count++;
-/*     */           } 
-/* 520 */           if ((b3 & 0xC0) != 128) {
-/* 521 */             if (out > offset) {
-/* 522 */               this.fBuffer[0] = (byte)b0;
-/* 523 */               this.fBuffer[1] = (byte)b1;
-/* 524 */               this.fBuffer[2] = (byte)b2;
-/* 525 */               this.fBuffer[3] = (byte)b3;
-/* 526 */               this.fOffset = 4;
-/* 527 */               return out - offset;
-/*     */             } 
-/* 529 */             invalidByte(4, 4, b2);
-/*     */           } 
-/*     */ 
-/*     */           
-/* 533 */           if (out + 1 >= ch.length) {
-/* 534 */             this.fBuffer[0] = (byte)b0;
-/* 535 */             this.fBuffer[1] = (byte)b1;
-/* 536 */             this.fBuffer[2] = (byte)b2;
-/* 537 */             this.fBuffer[3] = (byte)b3;
-/* 538 */             this.fOffset = 4;
-/* 539 */             return out - offset;
-/*     */           } 
-/*     */ 
-/*     */           
-/* 543 */           int uuuuu = b0 << 2 & 0x1C | b1 >> 4 & 0x3;
-/* 544 */           if (uuuuu > 16) {
-/* 545 */             invalidSurrogate(uuuuu);
-/*     */           }
-/* 547 */           int wwww = uuuuu - 1;
-/* 548 */           int zzzz = b1 & 0xF;
-/* 549 */           int yyyyyy = b2 & 0x3F;
-/* 550 */           int xxxxxx = b3 & 0x3F;
-/* 551 */           int hs = 0xD800 | wwww << 6 & 0x3C0 | zzzz << 2 | yyyyyy >> 4;
-/* 552 */           int ls = 0xDC00 | yyyyyy << 6 & 0x3C0 | xxxxxx;
-/*     */ 
-/*     */           
-/* 555 */           ch[out++] = (char)hs;
-/* 556 */           ch[out++] = (char)ls;
-/* 557 */           count -= 2;
-/*     */         
-/*     */         }
-/*     */         else {
-/*     */           
-/* 562 */           if (out > offset) {
-/* 563 */             this.fBuffer[0] = (byte)b0;
-/* 564 */             this.fOffset = 1;
-/* 565 */             return out - offset;
-/*     */           } 
-/* 567 */           invalidByte(1, 1, b0);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 574 */     return count;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long skip(long n) throws IOException {
-/* 590 */     long remaining = n;
-/* 591 */     char[] ch = new char[this.fBuffer.length];
-/*     */     while (true) {
-/* 593 */       int length = (ch.length < remaining) ? ch.length : (int)remaining;
-/* 594 */       int count = read(ch, 0, length);
-/* 595 */       if (count > 0)
-/* 596 */       { remaining -= count;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 601 */         if (remaining <= 0L)
-/*     */           break;  continue; }  break;
-/* 603 */     }  long skipped = n - remaining;
-/* 604 */     return skipped;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean ready() throws IOException {
-/* 618 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean markSupported() {
-/* 625 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void mark(int readAheadLimit) throws IOException {
-/* 642 */     throw new IOException(this.fFormatter.formatMessage(this.fLocale, "OperationNotSupported", new Object[] { "mark()", "UTF-8" }));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() throws IOException {
-/* 659 */     this.fOffset = 0;
-/* 660 */     this.fSurrogate = -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 671 */     BufferAllocator ba = ThreadLocalBufferAllocator.getBufferAllocator();
-/* 672 */     ba.returnByteBuffer(this.fBuffer);
-/* 673 */     this.fBuffer = null;
-/* 674 */     this.fInputStream.close();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void expectedByte(int position, int count) throws MalformedByteSequenceException {
-/* 685 */     throw new MalformedByteSequenceException(this.fFormatter, this.fLocale, "http://www.w3.org/TR/1998/REC-xml-19980210", "ExpectedByte", new Object[] {
-/*     */ 
-/*     */ 
-/*     */           
-/* 689 */           Integer.toString(position), Integer.toString(count)
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void invalidByte(int position, int count, int c) throws MalformedByteSequenceException {
-/* 697 */     throw new MalformedByteSequenceException(this.fFormatter, this.fLocale, "http://www.w3.org/TR/1998/REC-xml-19980210", "InvalidByte", new Object[] {
-/*     */ 
-/*     */ 
-/*     */           
-/* 701 */           Integer.toString(position), Integer.toString(count)
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void invalidSurrogate(int uuuuu) throws MalformedByteSequenceException {
-/* 708 */     throw new MalformedByteSequenceException(this.fFormatter, this.fLocale, "http://www.w3.org/TR/1998/REC-xml-19980210", "InvalidHighSurrogate", new Object[] {
-/*     */ 
-/*     */ 
-/*     */           
-/* 712 */           Integer.toHexString(uuuuu)
-/*     */         });
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\io\UTF8Reader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2000-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.io;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.Reader;
+
+import java.util.Locale;
+import com.sun.org.apache.xerces.internal.util.MessageFormatter;
+import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
+
+import com.sun.xml.internal.stream.util.BufferAllocator;
+import com.sun.xml.internal.stream.util.ThreadLocalBufferAllocator;
+
+/**
+ * <p>A UTF-8 reader.</p>
+ *
+ * @xerces.internal
+ *
+ * @author Andy Clark, IBM
+ *
+ */
+public class UTF8Reader
+    extends Reader {
+
+    //
+    // Constants
+    //
+
+    /** Default byte buffer size (2048). */
+    public static final int DEFAULT_BUFFER_SIZE = 2048;
+
+    // debugging
+
+    /** Debug read. */
+    private static final boolean DEBUG_READ = false;
+
+    //
+    // Data
+    //
+
+    /** Input stream. */
+    protected InputStream fInputStream;
+
+    /** Byte buffer. */
+    protected byte[] fBuffer;
+
+    /** Offset into buffer. */
+    protected int fOffset;
+
+    /** Surrogate character. */
+    private int fSurrogate = -1;
+
+    // message formatter; used to produce localized
+    // exception messages
+    private MessageFormatter fFormatter = null;
+
+    //Locale to use for messages
+    private Locale fLocale = null;
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructs a UTF-8 reader from the specified input stream
+     * using the default buffer size.  Primarily for testing.
+     *
+     * @param inputStream The input stream.
+     */
+    public UTF8Reader(InputStream inputStream) {
+        this(inputStream, DEFAULT_BUFFER_SIZE, new XMLMessageFormatter(), Locale.getDefault());
+    } // <init>(InputStream, MessageFormatter)
+
+    /**
+     * Constructs a UTF-8 reader from the specified input stream
+     * using the default buffer size and the given MessageFormatter.
+     *
+     * @param inputStream The input stream.
+     * @param messageFormatter  given MessageFormatter
+     * @param locale    Locale to use for messages
+     */
+    public UTF8Reader(InputStream inputStream, MessageFormatter messageFormatter,
+            Locale locale) {
+        this(inputStream, DEFAULT_BUFFER_SIZE, messageFormatter, locale);
+    } // <init>(InputStream, MessageFormatter, Locale)
+
+    /**
+     * Constructs a UTF-8 reader from the specified input stream,
+     * buffer size and MessageFormatter.
+     *
+     * @param inputStream The input stream.
+     * @param size        The initial buffer size.
+     * @param messageFormatter  the formatter for localizing/formatting errors.
+     * @param locale    the Locale to use for messages
+     */
+    public UTF8Reader(InputStream inputStream, int size,
+            MessageFormatter messageFormatter, Locale locale) {
+        fInputStream = inputStream;
+        BufferAllocator ba = ThreadLocalBufferAllocator.getBufferAllocator();
+        fBuffer = ba.getByteBuffer(size);
+        if (fBuffer == null) {
+            fBuffer = new byte[size];
+        }
+        fFormatter = messageFormatter;
+        fLocale = locale;
+    } // <init>(InputStream, int, MessageFormatter, Locale)
+
+    //
+    // Reader methods
+    //
+
+    /**
+     * Read a single character.  This method will block until a character is
+     * available, an I/O error occurs, or the end of the stream is reached.
+     *
+     * <p> Subclasses that intend to support efficient single-character input
+     * should override this method.
+     *
+     * @return     The character read, as an integer in the range 0 to 16383
+     *             (<tt>0x00-0xffff</tt>), or -1 if the end of the stream has
+     *             been reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read() throws IOException {
+
+        // decode character
+        int c = fSurrogate;
+        if (fSurrogate == -1) {
+            // NOTE: We use the index into the buffer if there are remaining
+            //       bytes from the last block read. -Ac
+            int index = 0;
+
+            // get first byte
+            int b0 = index == fOffset
+                   ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+            if (b0 == -1) {
+                return -1;
+            }
+
+            // UTF-8:   [0xxx xxxx]
+            // Unicode: [0000 0000] [0xxx xxxx]
+            if (b0 < 0x80) {
+                c = (char)b0;
+            }
+
+            // UTF-8:   [110y yyyy] [10xx xxxx]
+            // Unicode: [0000 0yyy] [yyxx xxxx]
+            else if ((b0 & 0xE0) == 0xC0 && (b0 & 0x1E) != 0) {
+                int b1 = index == fOffset
+                       ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+                if (b1 == -1) {
+                    expectedByte(2, 2);
+                }
+                if ((b1 & 0xC0) != 0x80) {
+                    invalidByte(2, 2, b1);
+                }
+                c = ((b0 << 6) & 0x07C0) | (b1 & 0x003F);
+            }
+
+            // UTF-8:   [1110 zzzz] [10yy yyyy] [10xx xxxx]
+            // Unicode: [zzzz yyyy] [yyxx xxxx]
+            else if ((b0 & 0xF0) == 0xE0) {
+                int b1 = index == fOffset
+                       ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+                if (b1 == -1) {
+                    expectedByte(2, 3);
+                }
+                if ((b1 & 0xC0) != 0x80
+                    || (b0 == 0xED && b1 >= 0xA0)
+                    || ((b0 & 0x0F) == 0 && (b1 & 0x20) == 0)) {
+                    invalidByte(2, 3, b1);
+                }
+                int b2 = index == fOffset
+                       ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+                if (b2 == -1) {
+                    expectedByte(3, 3);
+                }
+                if ((b2 & 0xC0) != 0x80) {
+                    invalidByte(3, 3, b2);
+                }
+                c = ((b0 << 12) & 0xF000) | ((b1 << 6) & 0x0FC0) |
+                    (b2 & 0x003F);
+            }
+
+            // UTF-8:   [1111 0uuu] [10uu zzzz] [10yy yyyy] [10xx xxxx]*
+            // Unicode: [1101 10ww] [wwzz zzyy] (high surrogate)
+            //          [1101 11yy] [yyxx xxxx] (low surrogate)
+            //          * uuuuu = wwww + 1
+            else if ((b0 & 0xF8) == 0xF0) {
+                int b1 = index == fOffset
+                       ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+                if (b1 == -1) {
+                    expectedByte(2, 4);
+                }
+                if ((b1 & 0xC0) != 0x80
+                    || ((b1 & 0x30) == 0 && (b0 & 0x07) == 0)) {
+                    invalidByte(2, 3, b1);
+                }
+                int b2 = index == fOffset
+                       ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+                if (b2 == -1) {
+                    expectedByte(3, 4);
+                }
+                if ((b2 & 0xC0) != 0x80) {
+                    invalidByte(3, 3, b2);
+                }
+                int b3 = index == fOffset
+                       ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+                if (b3 == -1) {
+                    expectedByte(4, 4);
+                }
+                if ((b3 & 0xC0) != 0x80) {
+                    invalidByte(4, 4, b3);
+                }
+                int uuuuu = ((b0 << 2) & 0x001C) | ((b1 >> 4) & 0x0003);
+                if (uuuuu > 0x10) {
+                    invalidSurrogate(uuuuu);
+                }
+                int wwww = uuuuu - 1;
+                int hs = 0xD800 |
+                         ((wwww << 6) & 0x03C0) | ((b1 << 2) & 0x003C) |
+                         ((b2 >> 4) & 0x0003);
+                int ls = 0xDC00 | ((b2 << 6) & 0x03C0) | (b3 & 0x003F);
+                c = hs;
+                fSurrogate = ls;
+            }
+
+            // error
+            else {
+                invalidByte(1, 1, b0);
+            }
+        }
+
+        // use surrogate
+        else {
+            fSurrogate = -1;
+        }
+
+        // return character
+        if (DEBUG_READ) {
+            System.out.println("read(): 0x"+Integer.toHexString(c));
+        }
+        return c;
+
+    } // read():int
+
+    /**
+     * Read characters into a portion of an array.  This method will block
+     * until some input is available, an I/O error occurs, or the end of the
+     * stream is reached.
+     *
+     * @param      ch     Destination buffer
+     * @param      offset Offset at which to start storing characters
+     * @param      length Maximum number of characters to read
+     *
+     * @return     The number of characters read, or -1 if the end of the
+     *             stream has been reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read(char ch[], int offset, int length) throws IOException {
+
+        // handle surrogate
+        int out = offset;
+        if (fSurrogate != -1) {
+            ch[offset + 1] = (char)fSurrogate;
+            fSurrogate = -1;
+            length--;
+            out++;
+        }
+
+        // read bytes
+        int count = 0;
+        if (fOffset == 0) {
+            // adjust length to read
+            if (length > fBuffer.length) {
+                length = fBuffer.length;
+            }
+
+            // perform read operation
+            count = fInputStream.read(fBuffer, 0, length);
+            if (count == -1) {
+                return -1;
+            }
+            count += out - offset;
+        }
+
+        // skip read; last character was in error
+        // NOTE: Having an offset value other than zero means that there was
+        //       an error in the last character read. In this case, we have
+        //       skipped the read so we don't consume any bytes past the
+        //       error. By signalling the error on the next block read we
+        //       allow the method to return the most valid characters that
+        //       it can on the previous block read. -Ac
+        else {
+            count = fOffset;
+            fOffset = 0;
+        }
+
+        // convert bytes to characters
+        final int total = count;
+        int in;
+        byte byte1;
+        final byte byte0 = 0;
+        for (in = 0; in < total; in++) {
+            byte1 = fBuffer[in];
+            if (byte1 >= byte0) {
+                ch[out++] = (char)byte1;
+            }
+            else   {
+                break;
+            }
+        }
+        for ( ; in < total; in++) {
+            byte1 = fBuffer[in];
+
+            // UTF-8:   [0xxx xxxx]
+            // Unicode: [0000 0000] [0xxx xxxx]
+            if (byte1 >= byte0) {
+                ch[out++] = (char)byte1;
+                continue;
+            }
+
+            // UTF-8:   [110y yyyy] [10xx xxxx]
+            // Unicode: [0000 0yyy] [yyxx xxxx]
+            int b0 = byte1 & 0x0FF;
+            if ((b0 & 0xE0) == 0xC0 && (b0 & 0x1E) != 0) {
+                int b1 = -1;
+                if (++in < total) {
+                    b1 = fBuffer[in] & 0x00FF;
+                }
+                else {
+                    b1 = fInputStream.read();
+                    if (b1 == -1) {
+                        if (out > offset) {
+                            fBuffer[0] = (byte)b0;
+                            fOffset = 1;
+                            return out - offset;
+                        }
+                        expectedByte(2, 2);
+                    }
+                    count++;
+                }
+                if ((b1 & 0xC0) != 0x80) {
+                    if (out > offset) {
+                        fBuffer[0] = (byte)b0;
+                        fBuffer[1] = (byte)b1;
+                        fOffset = 2;
+                        return out - offset;
+                    }
+                    invalidByte(2, 2, b1);
+                }
+                int c = ((b0 << 6) & 0x07C0) | (b1 & 0x003F);
+                ch[out++] = (char)c;
+                count -= 1;
+                continue;
+            }
+
+            // UTF-8:   [1110 zzzz] [10yy yyyy] [10xx xxxx]
+            // Unicode: [zzzz yyyy] [yyxx xxxx]
+            if ((b0 & 0xF0) == 0xE0) {
+                int b1 = -1;
+                if (++in < total) {
+                    b1 = fBuffer[in] & 0x00FF;
+                }
+                else {
+                    b1 = fInputStream.read();
+                    if (b1 == -1) {
+                        if (out > offset) {
+                            fBuffer[0] = (byte)b0;
+                            fOffset = 1;
+                            return out - offset;
+                        }
+                        expectedByte(2, 3);
+                    }
+                    count++;
+                }
+                if ((b1 & 0xC0) != 0x80
+                    || (b0 == 0xED && b1 >= 0xA0)
+                    || ((b0 & 0x0F) == 0 && (b1 & 0x20) == 0)) {
+                    if (out > offset) {
+                        fBuffer[0] = (byte)b0;
+                        fBuffer[1] = (byte)b1;
+                        fOffset = 2;
+                        return out - offset;
+                    }
+                    invalidByte(2, 3, b1);
+                }
+                int b2 = -1;
+                if (++in < total) {
+                    b2 = fBuffer[in] & 0x00FF;
+                }
+                else {
+                    b2 = fInputStream.read();
+                    if (b2 == -1) {
+                        if (out > offset) {
+                            fBuffer[0] = (byte)b0;
+                            fBuffer[1] = (byte)b1;
+                            fOffset = 2;
+                            return out - offset;
+                        }
+                        expectedByte(3, 3);
+                    }
+                    count++;
+                }
+                if ((b2 & 0xC0) != 0x80) {
+                    if (out > offset) {
+                        fBuffer[0] = (byte)b0;
+                        fBuffer[1] = (byte)b1;
+                        fBuffer[2] = (byte)b2;
+                        fOffset = 3;
+                        return out - offset;
+                    }
+                    invalidByte(3, 3, b2);
+                }
+                int c = ((b0 << 12) & 0xF000) | ((b1 << 6) & 0x0FC0) |
+                        (b2 & 0x003F);
+                ch[out++] = (char)c;
+                count -= 2;
+                continue;
+            }
+
+            // UTF-8:   [1111 0uuu] [10uu zzzz] [10yy yyyy] [10xx xxxx]*
+            // Unicode: [1101 10ww] [wwzz zzyy] (high surrogate)
+            //          [1101 11yy] [yyxx xxxx] (low surrogate)
+            //          * uuuuu = wwww + 1
+            if ((b0 & 0xF8) == 0xF0) {
+                int b1 = -1;
+                if (++in < total) {
+                    b1 = fBuffer[in] & 0x00FF;
+                }
+                else {
+                    b1 = fInputStream.read();
+                    if (b1 == -1) {
+                        if (out > offset) {
+                            fBuffer[0] = (byte)b0;
+                            fOffset = 1;
+                            return out - offset;
+                        }
+                        expectedByte(2, 4);
+                    }
+                    count++;
+                }
+                if ((b1 & 0xC0) != 0x80
+                    || ((b1 & 0x30) == 0 && (b0 & 0x07) == 0)) {
+                    if (out > offset) {
+                        fBuffer[0] = (byte)b0;
+                        fBuffer[1] = (byte)b1;
+                        fOffset = 2;
+                        return out - offset;
+                    }
+                    invalidByte(2, 4, b1);
+                }
+                int b2 = -1;
+                if (++in < total) {
+                    b2 = fBuffer[in] & 0x00FF;
+                }
+                else {
+                    b2 = fInputStream.read();
+                    if (b2 == -1) {
+                        if (out > offset) {
+                            fBuffer[0] = (byte)b0;
+                            fBuffer[1] = (byte)b1;
+                            fOffset = 2;
+                            return out - offset;
+                        }
+                        expectedByte(3, 4);
+                    }
+                    count++;
+                }
+                if ((b2 & 0xC0) != 0x80) {
+                    if (out > offset) {
+                        fBuffer[0] = (byte)b0;
+                        fBuffer[1] = (byte)b1;
+                        fBuffer[2] = (byte)b2;
+                        fOffset = 3;
+                        return out - offset;
+                    }
+                    invalidByte(3, 4, b2);
+                }
+                int b3 = -1;
+                if (++in < total) {
+                    b3 = fBuffer[in] & 0x00FF;
+                }
+                else {
+                    b3 = fInputStream.read();
+                    if (b3 == -1) {
+                        if (out > offset) {
+                            fBuffer[0] = (byte)b0;
+                            fBuffer[1] = (byte)b1;
+                            fBuffer[2] = (byte)b2;
+                            fOffset = 3;
+                            return out - offset;
+                        }
+                        expectedByte(4, 4);
+                    }
+                    count++;
+                }
+                if ((b3 & 0xC0) != 0x80) {
+                    if (out > offset) {
+                        fBuffer[0] = (byte)b0;
+                        fBuffer[1] = (byte)b1;
+                        fBuffer[2] = (byte)b2;
+                        fBuffer[3] = (byte)b3;
+                        fOffset = 4;
+                        return out - offset;
+                    }
+                    invalidByte(4, 4, b2);
+                }
+
+                // check if output buffer is large enough to hold 2 surrogate chars
+                if (out + 1 >= ch.length) {
+                    fBuffer[0] = (byte)b0;
+                    fBuffer[1] = (byte)b1;
+                    fBuffer[2] = (byte)b2;
+                    fBuffer[3] = (byte)b3;
+                    fOffset = 4;
+                    return out - offset;
+                }
+
+                // decode bytes into surrogate characters
+                int uuuuu = ((b0 << 2) & 0x001C) | ((b1 >> 4) & 0x0003);
+                if (uuuuu > 0x10) {
+                    invalidSurrogate(uuuuu);
+                }
+                int wwww = uuuuu - 1;
+                int zzzz = b1 & 0x000F;
+                int yyyyyy = b2 & 0x003F;
+                int xxxxxx = b3 & 0x003F;
+                int hs = 0xD800 | ((wwww << 6) & 0x03C0) | (zzzz << 2) | (yyyyyy >> 4);
+                int ls = 0xDC00 | ((yyyyyy << 6) & 0x03C0) | xxxxxx;
+
+                // set characters
+                ch[out++] = (char)hs;
+                ch[out++] = (char)ls;
+                count -= 2;
+                continue;
+            }
+
+            // error
+            if (out > offset) {
+                fBuffer[0] = (byte)b0;
+                fOffset = 1;
+                return out - offset;
+            }
+            invalidByte(1, 1, b0);
+        }
+
+        // return number of characters converted
+        if (DEBUG_READ) {
+            System.out.println("read(char[],"+offset+','+length+"): count="+count);
+        }
+        return count;
+
+    } // read(char[],int,int)
+
+    /**
+     * Skip characters.  This method will block until some characters are
+     * available, an I/O error occurs, or the end of the stream is reached.
+     *
+     * @param  n  The number of characters to skip
+     *
+     * @return    The number of characters actually skipped
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public long skip(long n) throws IOException {
+
+        long remaining = n;
+        final char[] ch = new char[fBuffer.length];
+        do {
+            int length = ch.length < remaining ? ch.length : (int)remaining;
+            int count = read(ch, 0, length);
+            if (count > 0) {
+                remaining -= count;
+            }
+            else {
+                break;
+            }
+        } while (remaining > 0);
+
+        long skipped = n - remaining;
+        return skipped;
+
+    } // skip(long):long
+
+    /**
+     * Tell whether this stream is ready to be read.
+     *
+     * @return True if the next read() is guaranteed not to block for input,
+     * false otherwise.  Note that returning false does not guarantee that the
+     * next read will block.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public boolean ready() throws IOException {
+        return false;
+    } // ready()
+
+    /**
+     * Tell whether this stream supports the mark() operation.
+     */
+    public boolean markSupported() {
+        return false;
+    } // markSupported()
+
+    /**
+     * Mark the present position in the stream.  Subsequent calls to reset()
+     * will attempt to reposition the stream to this point.  Not all
+     * character-input streams support the mark() operation.
+     *
+     * @param  readAheadLimit  Limit on the number of characters that may be
+     *                         read while still preserving the mark.  After
+     *                         reading this many characters, attempting to
+     *                         reset the stream may fail.
+     *
+     * @exception  IOException  If the stream does not support mark(),
+     *                          or if some other I/O error occurs
+     */
+    public void mark(int readAheadLimit) throws IOException {
+        throw new IOException(fFormatter.formatMessage(fLocale, "OperationNotSupported", new Object[]{"mark()", "UTF-8"}));
+    } // mark(int)
+
+    /**
+     * Reset the stream.  If the stream has been marked, then attempt to
+     * reposition it at the mark.  If the stream has not been marked, then
+     * attempt to reset it in some way appropriate to the particular stream,
+     * for example by repositioning it to its starting point.  Not all
+     * character-input streams support the reset() operation, and some support
+     * reset() without supporting mark().
+     *
+     * @exception  IOException  If the stream has not been marked,
+     *                          or if the mark has been invalidated,
+     *                          or if the stream does not support reset(),
+     *                          or if some other I/O error occurs
+     */
+    public void reset() throws IOException {
+        fOffset = 0;
+        fSurrogate = -1;
+    } // reset()
+
+    /**
+     * Close the stream.  Once a stream has been closed, further read(),
+     * ready(), mark(), or reset() invocations will throw an IOException.
+     * Closing a previously-closed stream, however, has no effect.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void close() throws IOException {
+        BufferAllocator ba = ThreadLocalBufferAllocator.getBufferAllocator();
+        ba.returnByteBuffer(fBuffer);
+        fBuffer = null;
+        fInputStream.close();
+    } // close()
+
+    //
+    // Private methods
+    //
+
+    /** Throws an exception for expected byte. */
+    private void expectedByte(int position, int count)
+        throws MalformedByteSequenceException {
+
+        throw new MalformedByteSequenceException(fFormatter,
+            fLocale,
+            XMLMessageFormatter.XML_DOMAIN,
+            "ExpectedByte",
+            new Object[] {Integer.toString(position), Integer.toString(count)});
+
+    } // expectedByte(int,int)
+
+    /** Throws an exception for invalid byte. */
+    private void invalidByte(int position, int count, int c)
+        throws MalformedByteSequenceException {
+
+        throw new MalformedByteSequenceException(fFormatter,
+            fLocale,
+            XMLMessageFormatter.XML_DOMAIN,
+            "InvalidByte",
+            new Object [] {Integer.toString(position), Integer.toString(count)});
+
+    } // invalidByte(int,int,int)
+
+    /** Throws an exception for invalid surrogate bits. */
+    private void invalidSurrogate(int uuuuu) throws MalformedByteSequenceException {
+
+        throw new MalformedByteSequenceException(fFormatter,
+            fLocale,
+            XMLMessageFormatter.XML_DOMAIN,
+            "InvalidHighSurrogate",
+            new Object[] {Integer.toHexString(uuuuu)});
+
+    } // invalidSurrogate(int)
+
+} // class UTF8Reader

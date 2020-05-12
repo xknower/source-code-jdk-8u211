@@ -1,998 +1,992 @@
-/*     */ package com.sun.corba.se.impl.interceptors;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.corba.RequestImpl;
-/*     */ import com.sun.corba.se.impl.logging.InterceptorsSystemException;
-/*     */ import com.sun.corba.se.impl.logging.OMGSystemException;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.protocol.giopmsgheaders.ReplyMessage;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.ior.ObjectKeyTemplate;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapter;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.orbutil.closure.ClosureFactory;
-/*     */ import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
-/*     */ import com.sun.corba.se.spi.protocol.ForwardException;
-/*     */ import com.sun.corba.se.spi.protocol.PIHandler;
-/*     */ import com.sun.corba.se.spi.protocol.RetryType;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Stack;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.BAD_PARAM;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.NVList;
-/*     */ import org.omg.CORBA.Policy;
-/*     */ import org.omg.CORBA.PolicyError;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.CORBA.portable.RemarshalException;
-/*     */ import org.omg.IOP.CodecFactory;
-/*     */ import org.omg.PortableInterceptor.Current;
-/*     */ import org.omg.PortableInterceptor.Interceptor;
-/*     */ import org.omg.PortableInterceptor.ORBInitInfoPackage.DuplicateName;
-/*     */ import org.omg.PortableInterceptor.ORBInitializer;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceTemplate;
-/*     */ import org.omg.PortableInterceptor.PolicyFactory;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PIHandlerImpl
-/*     */   implements PIHandler
-/*     */ {
-/*     */   boolean printPushPopEnabled = false;
-/*  92 */   int pushLevel = 0; private ORB orb; InterceptorsSystemException wrapper;
-/*     */   
-/*     */   private void printPush() {
-/*  95 */     if (!this.printPushPopEnabled)
-/*  96 */       return;  printSpaces(this.pushLevel);
-/*  97 */     this.pushLevel++;
-/*  98 */     System.out.println("PUSH");
-/*     */   }
-/*     */   ORBUtilSystemException orbutilWrapper; OMGSystemException omgWrapper;
-/*     */   private void printPop() {
-/* 102 */     if (!this.printPushPopEnabled)
-/* 103 */       return;  this.pushLevel--;
-/* 104 */     printSpaces(this.pushLevel);
-/* 105 */     System.out.println("POP");
-/*     */   }
-/*     */   
-/*     */   private void printSpaces(int paramInt) {
-/* 109 */     for (byte b = 0; b < paramInt; b++) {
-/* 110 */       System.out.print(" ");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 121 */   private int serverRequestIdCounter = 0;
-/*     */ 
-/*     */   
-/* 124 */   CodecFactory codecFactory = null;
-/*     */ 
-/*     */ 
-/*     */   
-/* 128 */   String[] arguments = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private InterceptorList interceptorList;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean hasIORInterceptors;
-/*     */ 
-/*     */   
-/*     */   private boolean hasClientInterceptors;
-/*     */ 
-/*     */   
-/*     */   private boolean hasServerInterceptors;
-/*     */ 
-/*     */   
-/*     */   private InterceptorInvoker interceptorInvoker;
-/*     */ 
-/*     */   
-/*     */   private PICurrent current;
-/*     */ 
-/*     */   
-/*     */   private HashMap policyFactoryTable;
-/*     */ 
-/*     */   
-/* 154 */   private static final short[] REPLY_MESSAGE_TO_PI_REPLY_STATUS = new short[] { 0, 2, 1, 3, 3, 4 };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 165 */   private ThreadLocal threadLocalClientRequestInfoStack = new ThreadLocal()
-/*     */     {
-/*     */       protected Object initialValue() {
-/* 168 */         return new PIHandlerImpl.RequestInfoStack();
-/*     */       }
-/*     */     };
-/*     */ 
-/*     */   
-/* 173 */   private ThreadLocal threadLocalServerRequestInfoStack = new ThreadLocal()
-/*     */     {
-/*     */       protected Object initialValue() {
-/* 176 */         return new PIHandlerImpl.RequestInfoStack();
-/*     */       }
-/*     */     };
-/*     */   
-/*     */   public void close() {
-/* 181 */     this.orb = null;
-/* 182 */     this.wrapper = null;
-/* 183 */     this.orbutilWrapper = null;
-/* 184 */     this.omgWrapper = null;
-/* 185 */     this.codecFactory = null;
-/* 186 */     this.arguments = null;
-/* 187 */     this.interceptorList = null;
-/* 188 */     this.interceptorInvoker = null;
-/* 189 */     this.current = null;
-/* 190 */     this.policyFactoryTable = null;
-/* 191 */     this.threadLocalClientRequestInfoStack = null;
-/* 192 */     this.threadLocalServerRequestInfoStack = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final class RequestInfoStack
-/*     */     extends Stack
-/*     */   {
-/*     */     public int disableCount;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private RequestInfoStack() {
-/* 205 */       this.disableCount = 0;
-/*     */     } }
-/*     */   
-/*     */   public PIHandlerImpl(ORB paramORB, String[] paramArrayOfString) {
-/* 209 */     this.orb = paramORB;
-/* 210 */     this.wrapper = InterceptorsSystemException.get(paramORB, "rpc.protocol");
-/*     */     
-/* 212 */     this.orbutilWrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */     
-/* 214 */     this.omgWrapper = OMGSystemException.get(paramORB, "rpc.protocol");
-/*     */     
-/* 216 */     this.arguments = paramArrayOfString;
-/*     */ 
-/*     */     
-/* 219 */     this.codecFactory = new CodecFactoryImpl(paramORB);
-/*     */ 
-/*     */     
-/* 222 */     this.interceptorList = new InterceptorList(this.wrapper);
-/*     */ 
-/*     */     
-/* 225 */     this.current = new PICurrent(paramORB);
-/*     */ 
-/*     */     
-/* 228 */     this.interceptorInvoker = new InterceptorInvoker(paramORB, this.interceptorList, this.current);
-/*     */ 
-/*     */ 
-/*     */     
-/* 232 */     paramORB.getLocalResolver().register("PICurrent", 
-/* 233 */         ClosureFactory.makeConstant(this.current));
-/* 234 */     paramORB.getLocalResolver().register("CodecFactory", 
-/* 235 */         ClosureFactory.makeConstant(this.codecFactory));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void initialize() {
-/* 240 */     if (this.orb.getORBData().getORBInitializers() != null) {
-/*     */       
-/* 242 */       ORBInitInfoImpl oRBInitInfoImpl = createORBInitInfo();
-/*     */ 
-/*     */ 
-/*     */       
-/* 246 */       this.current.setORBInitializing(true);
-/*     */ 
-/*     */       
-/* 249 */       preInitORBInitializers(oRBInitInfoImpl);
-/*     */ 
-/*     */       
-/* 252 */       postInitORBInitializers(oRBInitInfoImpl);
-/*     */ 
-/*     */       
-/* 255 */       this.interceptorList.sortInterceptors();
-/*     */ 
-/*     */ 
-/*     */       
-/* 259 */       this.current.setORBInitializing(false);
-/*     */ 
-/*     */       
-/* 262 */       oRBInitInfoImpl.setStage(2);
-/*     */ 
-/*     */ 
-/*     */       
-/* 266 */       this.hasIORInterceptors = this.interceptorList.hasInterceptorsOfType(2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 275 */       this.hasClientInterceptors = true;
-/* 276 */       this.hasServerInterceptors = this.interceptorList.hasInterceptorsOfType(1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 282 */       this.interceptorInvoker.setEnabled(true);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void destroyInterceptors() {
-/* 296 */     this.interceptorList.destroyAll();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void objectAdapterCreated(ObjectAdapter paramObjectAdapter) {
-/* 301 */     if (!this.hasIORInterceptors) {
-/*     */       return;
-/*     */     }
-/* 304 */     this.interceptorInvoker.objectAdapterCreated(paramObjectAdapter);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void adapterManagerStateChanged(int paramInt, short paramShort) {
-/* 310 */     if (!this.hasIORInterceptors) {
-/*     */       return;
-/*     */     }
-/* 313 */     this.interceptorInvoker.adapterManagerStateChanged(paramInt, paramShort);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void adapterStateChanged(ObjectReferenceTemplate[] paramArrayOfObjectReferenceTemplate, short paramShort) {
-/* 319 */     if (!this.hasIORInterceptors) {
-/*     */       return;
-/*     */     }
-/* 322 */     this.interceptorInvoker.adapterStateChanged(paramArrayOfObjectReferenceTemplate, paramShort);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void disableInterceptorsThisThread() {
-/* 331 */     if (!this.hasClientInterceptors) {
-/*     */       return;
-/*     */     }
-/* 334 */     RequestInfoStack requestInfoStack = this.threadLocalClientRequestInfoStack.get();
-/* 335 */     requestInfoStack.disableCount++;
-/*     */   }
-/*     */   
-/*     */   public void enableInterceptorsThisThread() {
-/* 339 */     if (!this.hasClientInterceptors) {
-/*     */       return;
-/*     */     }
-/* 342 */     RequestInfoStack requestInfoStack = this.threadLocalClientRequestInfoStack.get();
-/* 343 */     requestInfoStack.disableCount--;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void invokeClientPIStartingPoint() throws RemarshalException {
-/* 349 */     if (!this.hasClientInterceptors)
-/* 350 */       return;  if (!isClientPIEnabledForThisThread()) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 354 */     ClientRequestInfoImpl clientRequestInfoImpl = peekClientRequestInfoImplStack();
-/* 355 */     this.interceptorInvoker.invokeClientInterceptorStartingPoint(clientRequestInfoImpl);
-/*     */ 
-/*     */ 
-/*     */     
-/* 359 */     short s = clientRequestInfoImpl.getReplyStatus();
-/* 360 */     if (s == 1 || s == 3) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 366 */       Exception exception = invokeClientPIEndingPoint(
-/* 367 */           convertPIReplyStatusToReplyMessage(s), clientRequestInfoImpl
-/* 368 */           .getException());
-/* 369 */       if (exception == null);
-/*     */ 
-/*     */       
-/* 372 */       if (exception instanceof SystemException)
-/* 373 */         throw (SystemException)exception; 
-/* 374 */       if (exception instanceof RemarshalException)
-/* 375 */         throw (RemarshalException)exception; 
-/* 376 */       if (exception instanceof org.omg.CORBA.UserException || exception instanceof org.omg.CORBA.portable.ApplicationException)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 382 */         throw this.wrapper.exceptionInvalid();
-/*     */       }
-/*     */     }
-/* 385 */     else if (s != -1) {
-/* 386 */       throw this.wrapper.replyStatusNotInit();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Exception makeCompletedClientRequest(int paramInt, Exception paramException) {
-/* 396 */     return handleClientPIEndingPoint(paramInt, paramException, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Exception invokeClientPIEndingPoint(int paramInt, Exception paramException) {
-/* 403 */     return handleClientPIEndingPoint(paramInt, paramException, true);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Exception handleClientPIEndingPoint(int paramInt, Exception paramException, boolean paramBoolean) {
-/* 408 */     if (!this.hasClientInterceptors) return paramException; 
-/* 409 */     if (!isClientPIEnabledForThisThread()) return paramException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 414 */     short s = REPLY_MESSAGE_TO_PI_REPLY_STATUS[paramInt];
-/*     */ 
-/*     */ 
-/*     */     
-/* 418 */     ClientRequestInfoImpl clientRequestInfoImpl = peekClientRequestInfoImplStack();
-/* 419 */     clientRequestInfoImpl.setReplyStatus(s);
-/* 420 */     clientRequestInfoImpl.setException(paramException);
-/*     */     
-/* 422 */     if (paramBoolean) {
-/*     */       
-/* 424 */       this.interceptorInvoker.invokeClientInterceptorEndingPoint(clientRequestInfoImpl);
-/* 425 */       s = clientRequestInfoImpl.getReplyStatus();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 429 */     if (s == 3 || s == 4) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 433 */       clientRequestInfoImpl.reset();
-/*     */ 
-/*     */       
-/* 436 */       if (paramBoolean) {
-/* 437 */         clientRequestInfoImpl.setRetryRequest(RetryType.AFTER_RESPONSE);
-/*     */       } else {
-/* 439 */         clientRequestInfoImpl.setRetryRequest(RetryType.BEFORE_RESPONSE);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 443 */       paramException = new RemarshalException();
-/* 444 */     } else if (s == 1 || s == 2) {
-/*     */       
-/* 446 */       paramException = clientRequestInfoImpl.getException();
-/*     */     } 
-/*     */     
-/* 449 */     return paramException;
-/*     */   }
-/*     */   
-/*     */   public void initiateClientPIRequest(boolean paramBoolean) {
-/* 453 */     if (!this.hasClientInterceptors)
-/* 454 */       return;  if (!isClientPIEnabledForThisThread()) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 459 */     RequestInfoStack requestInfoStack = this.threadLocalClientRequestInfoStack.get();
-/* 460 */     ClientRequestInfoImpl clientRequestInfoImpl = null;
-/*     */     
-/* 462 */     if (!requestInfoStack.empty()) {
-/* 463 */       clientRequestInfoImpl = (ClientRequestInfoImpl)requestInfoStack.peek();
-/*     */     }
-/*     */     
-/* 466 */     if (!paramBoolean && clientRequestInfoImpl != null && clientRequestInfoImpl.isDIIInitiate()) {
-/*     */ 
-/*     */       
-/* 469 */       clientRequestInfoImpl.setDIIInitiate(false);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 475 */       if (clientRequestInfoImpl == null || !clientRequestInfoImpl.getRetryRequest().isRetry()) {
-/* 476 */         clientRequestInfoImpl = new ClientRequestInfoImpl(this.orb);
-/* 477 */         requestInfoStack.push((E)clientRequestInfoImpl);
-/* 478 */         printPush();
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 485 */       clientRequestInfoImpl.setRetryRequest(RetryType.NONE);
-/* 486 */       clientRequestInfoImpl.incrementEntryCount();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 492 */       clientRequestInfoImpl.setReplyStatus((short)-1);
-/*     */ 
-/*     */       
-/* 495 */       if (paramBoolean) {
-/* 496 */         clientRequestInfoImpl.setDIIInitiate(true);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void cleanupClientPIRequest() {
-/* 502 */     if (!this.hasClientInterceptors)
-/* 503 */       return;  if (!isClientPIEnabledForThisThread())
-/*     */       return; 
-/* 505 */     ClientRequestInfoImpl clientRequestInfoImpl = peekClientRequestInfoImplStack();
-/* 506 */     RetryType retryType = clientRequestInfoImpl.getRetryRequest();
-/*     */ 
-/*     */     
-/* 509 */     if (!retryType.equals(RetryType.BEFORE_RESPONSE)) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 519 */       short s = clientRequestInfoImpl.getReplyStatus();
-/* 520 */       if (s == -1) {
-/* 521 */         invokeClientPIEndingPoint(2, this.wrapper
-/* 522 */             .unknownRequestInvoke(CompletionStatus.COMPLETED_MAYBE));
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 528 */     clientRequestInfoImpl.decrementEntryCount();
-/*     */ 
-/*     */     
-/* 531 */     if (clientRequestInfoImpl.getEntryCount() == 0 && !clientRequestInfoImpl.getRetryRequest().isRetry()) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 535 */       RequestInfoStack requestInfoStack = this.threadLocalClientRequestInfoStack.get();
-/* 536 */       requestInfoStack.pop();
-/* 537 */       printPop();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setClientPIInfo(CorbaMessageMediator paramCorbaMessageMediator) {
-/* 543 */     if (!this.hasClientInterceptors)
-/* 544 */       return;  if (!isClientPIEnabledForThisThread())
-/*     */       return; 
-/* 546 */     peekClientRequestInfoImplStack().setInfo(paramCorbaMessageMediator);
-/*     */   }
-/*     */   
-/*     */   public void setClientPIInfo(RequestImpl paramRequestImpl) {
-/* 550 */     if (!this.hasClientInterceptors)
-/* 551 */       return;  if (!isClientPIEnabledForThisThread())
-/*     */       return; 
-/* 553 */     peekClientRequestInfoImplStack().setDIIRequest(paramRequestImpl);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void invokeServerPIStartingPoint() {
-/* 563 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 565 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 566 */     this.interceptorInvoker.invokeServerInterceptorStartingPoint(serverRequestInfoImpl);
-/*     */ 
-/*     */     
-/* 569 */     serverPIHandleExceptions(serverRequestInfoImpl);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void invokeServerPIIntermediatePoint() {
-/* 574 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 576 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 577 */     this.interceptorInvoker.invokeServerInterceptorIntermediatePoint(serverRequestInfoImpl);
-/*     */ 
-/*     */ 
-/*     */     
-/* 581 */     serverRequestInfoImpl.releaseServant();
-/*     */ 
-/*     */     
-/* 584 */     serverPIHandleExceptions(serverRequestInfoImpl);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void invokeServerPIEndingPoint(ReplyMessage paramReplyMessage) {
-/* 589 */     if (!this.hasServerInterceptors)
-/* 590 */       return;  ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/*     */ 
-/*     */     
-/* 593 */     serverRequestInfoImpl.setReplyMessage(paramReplyMessage);
-/*     */ 
-/*     */ 
-/*     */     
-/* 597 */     serverRequestInfoImpl.setCurrentExecutionPoint(2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 602 */     if (!serverRequestInfoImpl.getAlreadyExecuted()) {
-/* 603 */       int i = paramReplyMessage.getReplyStatus();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 609 */       short s1 = REPLY_MESSAGE_TO_PI_REPLY_STATUS[i];
-/*     */ 
-/*     */ 
-/*     */       
-/* 613 */       if (s1 == 3 || s1 == 4)
-/*     */       {
-/*     */         
-/* 616 */         serverRequestInfoImpl.setForwardRequest(paramReplyMessage.getIOR());
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 624 */       Exception exception1 = serverRequestInfoImpl.getException();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 629 */       if (!serverRequestInfoImpl.isDynamic() && s1 == 2)
-/*     */       {
-/*     */         
-/* 632 */         serverRequestInfoImpl.setException(this.omgWrapper.unknownUserException(CompletionStatus.COMPLETED_MAYBE));
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 637 */       serverRequestInfoImpl.setReplyStatus(s1);
-/* 638 */       this.interceptorInvoker.invokeServerInterceptorEndingPoint(serverRequestInfoImpl);
-/* 639 */       short s2 = serverRequestInfoImpl.getReplyStatus();
-/* 640 */       Exception exception2 = serverRequestInfoImpl.getException();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 645 */       if (s2 == 1 && exception2 != exception1)
-/*     */       {
-/*     */         
-/* 648 */         throw (SystemException)exception2;
-/*     */       }
-/*     */ 
-/*     */       
-/* 652 */       if (s2 == 3) {
-/* 653 */         if (s1 != 3) {
-/*     */           
-/* 655 */           IOR iOR = serverRequestInfoImpl.getForwardRequestIOR();
-/* 656 */           throw new ForwardException(this.orb, iOR);
-/*     */         } 
-/* 658 */         if (serverRequestInfoImpl.isForwardRequestRaisedInEnding())
-/*     */         {
-/* 660 */           paramReplyMessage.setIOR(serverRequestInfoImpl.getForwardRequestIOR());
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void setServerPIInfo(Exception paramException) {
-/* 667 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 669 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 670 */     serverRequestInfoImpl.setException(paramException);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setServerPIInfo(NVList paramNVList) {
-/* 675 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 677 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 678 */     serverRequestInfoImpl.setDSIArguments(paramNVList);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setServerPIExceptionInfo(Any paramAny) {
-/* 683 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 685 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 686 */     serverRequestInfoImpl.setDSIException(paramAny);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setServerPIInfo(Any paramAny) {
-/* 691 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 693 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 694 */     serverRequestInfoImpl.setDSIResult(paramAny);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void initializeServerPIInfo(CorbaMessageMediator paramCorbaMessageMediator, ObjectAdapter paramObjectAdapter, byte[] paramArrayOfbyte, ObjectKeyTemplate paramObjectKeyTemplate) {
-/* 700 */     if (!this.hasServerInterceptors) {
-/*     */       return;
-/*     */     }
-/* 703 */     RequestInfoStack requestInfoStack = this.threadLocalServerRequestInfoStack.get();
-/* 704 */     ServerRequestInfoImpl serverRequestInfoImpl = new ServerRequestInfoImpl(this.orb);
-/* 705 */     requestInfoStack.push((E)serverRequestInfoImpl);
-/* 706 */     printPush();
-/*     */ 
-/*     */ 
-/*     */     
-/* 710 */     paramCorbaMessageMediator.setExecutePIInResponseConstructor(true);
-/*     */     
-/* 712 */     serverRequestInfoImpl.setInfo(paramCorbaMessageMediator, paramObjectAdapter, paramArrayOfbyte, paramObjectKeyTemplate);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setServerPIInfo(Object paramObject, String paramString) {
-/* 718 */     if (!this.hasServerInterceptors)
-/*     */       return; 
-/* 720 */     ServerRequestInfoImpl serverRequestInfoImpl = peekServerRequestInfoImplStack();
-/* 721 */     serverRequestInfoImpl.setInfo(paramObject, paramString);
-/*     */   }
-/*     */   
-/*     */   public void cleanupServerPIRequest() {
-/* 725 */     if (!this.hasServerInterceptors) {
-/*     */       return;
-/*     */     }
-/* 728 */     RequestInfoStack requestInfoStack = this.threadLocalServerRequestInfoStack.get();
-/* 729 */     requestInfoStack.pop();
-/* 730 */     printPop();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void serverPIHandleExceptions(ServerRequestInfoImpl paramServerRequestInfoImpl) {
-/* 747 */     int i = paramServerRequestInfoImpl.getEndingPointCall();
-/* 748 */     if (i == 1)
-/*     */     {
-/* 750 */       throw (SystemException)paramServerRequestInfoImpl.getException();
-/*     */     }
-/* 752 */     if (i == 2 && paramServerRequestInfoImpl
-/* 753 */       .getForwardRequestException() != null) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 757 */       IOR iOR = paramServerRequestInfoImpl.getForwardRequestIOR();
-/* 758 */       throw new ForwardException(this.orb, iOR);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int convertPIReplyStatusToReplyMessage(short paramShort) {
-/* 770 */     byte b1 = 0;
-/* 771 */     for (byte b2 = 0; b2 < REPLY_MESSAGE_TO_PI_REPLY_STATUS.length; b2++) {
-/* 772 */       if (REPLY_MESSAGE_TO_PI_REPLY_STATUS[b2] == paramShort) {
-/* 773 */         b1 = b2;
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/* 777 */     return b1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ClientRequestInfoImpl peekClientRequestInfoImplStack() {
-/* 787 */     RequestInfoStack requestInfoStack = this.threadLocalClientRequestInfoStack.get();
-/* 788 */     ClientRequestInfoImpl clientRequestInfoImpl = null;
-/* 789 */     if (!requestInfoStack.empty()) {
-/* 790 */       clientRequestInfoImpl = (ClientRequestInfoImpl)requestInfoStack.peek();
-/*     */     } else {
-/* 792 */       throw this.wrapper.clientInfoStackNull();
-/*     */     } 
-/*     */     
-/* 795 */     return clientRequestInfoImpl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ServerRequestInfoImpl peekServerRequestInfoImplStack() {
-/* 804 */     RequestInfoStack requestInfoStack = this.threadLocalServerRequestInfoStack.get();
-/* 805 */     ServerRequestInfoImpl serverRequestInfoImpl = null;
-/*     */     
-/* 807 */     if (!requestInfoStack.empty()) {
-/* 808 */       serverRequestInfoImpl = (ServerRequestInfoImpl)requestInfoStack.peek();
-/*     */     } else {
-/* 810 */       throw this.wrapper.serverInfoStackNull();
-/*     */     } 
-/*     */     
-/* 813 */     return serverRequestInfoImpl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isClientPIEnabledForThisThread() {
-/* 822 */     RequestInfoStack requestInfoStack = this.threadLocalClientRequestInfoStack.get();
-/* 823 */     return (requestInfoStack.disableCount == 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void preInitORBInitializers(ORBInitInfoImpl paramORBInitInfoImpl) {
-/* 832 */     paramORBInitInfoImpl.setStage(0);
-/*     */ 
-/*     */ 
-/*     */     
-/* 836 */     for (byte b = 0; b < (this.orb.getORBData().getORBInitializers()).length; 
-/* 837 */       b++) {
-/* 838 */       ORBInitializer oRBInitializer = this.orb.getORBData().getORBInitializers()[b];
-/* 839 */       if (oRBInitializer != null) {
-/*     */         try {
-/* 841 */           oRBInitializer.pre_init(paramORBInitInfoImpl);
-/*     */         }
-/* 843 */         catch (Exception exception) {}
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void postInitORBInitializers(ORBInitInfoImpl paramORBInitInfoImpl) {
-/* 857 */     paramORBInitInfoImpl.setStage(1);
-/*     */ 
-/*     */ 
-/*     */     
-/* 861 */     for (byte b = 0; b < (this.orb.getORBData().getORBInitializers()).length; 
-/* 862 */       b++) {
-/* 863 */       ORBInitializer oRBInitializer = this.orb.getORBData().getORBInitializers()[b];
-/* 864 */       if (oRBInitializer != null) {
-/*     */         try {
-/* 866 */           oRBInitializer.post_init(paramORBInitInfoImpl);
-/*     */         }
-/* 868 */         catch (Exception exception) {}
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ORBInitInfoImpl createORBInitInfo() {
-/* 881 */     ORBInitInfoImpl oRBInitInfoImpl = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 888 */     String str = this.orb.getORBData().getORBId();
-/*     */     
-/* 890 */     oRBInitInfoImpl = new ORBInitInfoImpl(this.orb, this.arguments, str, this.codecFactory);
-/*     */     
-/* 892 */     return oRBInitInfoImpl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void register_interceptor(Interceptor paramInterceptor, int paramInt) throws DuplicateName {
-/* 912 */     if (paramInt >= 3 || paramInt < 0) {
-/* 913 */       throw this.wrapper.typeOutOfRange(new Integer(paramInt));
-/*     */     }
-/*     */     
-/* 916 */     String str = paramInterceptor.name();
-/*     */     
-/* 918 */     if (str == null) {
-/* 919 */       throw this.wrapper.nameNull();
-/*     */     }
-/*     */ 
-/*     */     
-/* 923 */     this.interceptorList.register_interceptor(paramInterceptor, paramInt);
-/*     */   }
-/*     */   
-/*     */   public Current getPICurrent() {
-/* 927 */     return this.current;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void nullParam() throws BAD_PARAM {
-/* 937 */     throw this.orbutilWrapper.nullParam();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Policy create_policy(int paramInt, Any paramAny) throws PolicyError {
-/* 951 */     if (paramAny == null) {
-/* 952 */       nullParam();
-/*     */     }
-/* 954 */     if (this.policyFactoryTable == null) {
-/* 955 */       throw new PolicyError("There is no PolicyFactory Registered for type " + paramInt, (short)0);
-/*     */     }
-/*     */ 
-/*     */     
-/* 959 */     PolicyFactory policyFactory = (PolicyFactory)this.policyFactoryTable.get(new Integer(paramInt));
-/*     */     
-/* 961 */     if (policyFactory == null) {
-/* 962 */       throw new PolicyError(" Could Not Find PolicyFactory for the Type " + paramInt, (short)0);
-/*     */     }
-/*     */ 
-/*     */     
-/* 966 */     return policyFactory.create_policy(paramInt, paramAny);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void registerPolicyFactory(int paramInt, PolicyFactory paramPolicyFactory) {
-/* 975 */     if (this.policyFactoryTable == null) {
-/* 976 */       this.policyFactoryTable = new HashMap<>();
-/*     */     }
-/* 978 */     Integer integer = new Integer(paramInt);
-/* 979 */     Object object = this.policyFactoryTable.get(integer);
-/* 980 */     if (object == null) {
-/* 981 */       this.policyFactoryTable.put(integer, paramPolicyFactory);
-/*     */     } else {
-/*     */       
-/* 984 */       throw this.omgWrapper.policyFactoryRegFailed(new Integer(paramInt));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized int allocateServerRequestId() {
-/* 990 */     return this.serverRequestIdCounter++;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\interceptors\PIHandlerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.interceptors;
+
+import java.util.*;
+import java.io.IOException;
+
+import org.omg.CORBA.Any;
+import org.omg.CORBA.BAD_PARAM;
+import org.omg.CORBA.BAD_POLICY;
+import org.omg.CORBA.BAD_INV_ORDER;
+import org.omg.CORBA.COMM_FAILURE;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.NVList;
+import org.omg.CORBA.OBJECT_NOT_EXIST;
+import org.omg.CORBA.ORBPackage.InvalidName;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.UserException;
+import org.omg.CORBA.UNKNOWN;
+
+import org.omg.CORBA.portable.ApplicationException;
+import org.omg.CORBA.portable.RemarshalException;
+
+import org.omg.IOP.CodecFactory;
+
+import org.omg.PortableInterceptor.ForwardRequest;
+import org.omg.PortableInterceptor.Current;
+import org.omg.PortableInterceptor.Interceptor;
+import org.omg.PortableInterceptor.LOCATION_FORWARD;
+import org.omg.PortableInterceptor.ORBInitializer;
+import org.omg.PortableInterceptor.ORBInitInfo;
+import org.omg.PortableInterceptor.ORBInitInfoPackage.DuplicateName;
+import org.omg.PortableInterceptor.SUCCESSFUL;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+import org.omg.PortableInterceptor.TRANSPORT_RETRY;
+import org.omg.PortableInterceptor.USER_EXCEPTION;
+import org.omg.PortableInterceptor.PolicyFactory;
+import org.omg.PortableInterceptor.ObjectReferenceTemplate;
+
+import com.sun.corba.se.pept.encoding.OutputObject;
+
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.ior.ObjectKeyTemplate;
+import com.sun.corba.se.spi.oa.ObjectAdapter;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.orbutil.closure.ClosureFactory;
+import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
+import com.sun.corba.se.spi.protocol.ForwardException;
+import com.sun.corba.se.spi.protocol.PIHandler;
+import com.sun.corba.se.spi.protocol.RetryType;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+import com.sun.corba.se.impl.logging.InterceptorsSystemException;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.logging.OMGSystemException;
+import com.sun.corba.se.impl.corba.RequestImpl;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.orbutil.StackImpl;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.ReplyMessage;
+
+/**
+ * Provides portable interceptor functionality.
+ */
+public class PIHandlerImpl implements PIHandler
+{
+    // REVISIT - delete these after framework merging.
+    boolean printPushPopEnabled = false;
+    int pushLevel = 0;
+    private void printPush()
+    {
+        if (! printPushPopEnabled) return;
+        printSpaces(pushLevel);
+        pushLevel++;
+        System.out.println("PUSH");
+    }
+    private void printPop()
+    {
+        if (! printPushPopEnabled) return;
+        pushLevel--;
+        printSpaces(pushLevel);
+        System.out.println("POP");
+    }
+    private void printSpaces(int n)
+    {
+        for (int i = 0; i < n; i++) {
+            System.out.print(" ");
+        }
+    }
+
+    private ORB orb;
+    InterceptorsSystemException wrapper;
+    ORBUtilSystemException orbutilWrapper;
+    OMGSystemException omgWrapper;
+
+    // A unique id used in ServerRequestInfo.
+    // This does not correspond to the GIOP request id.
+    private int serverRequestIdCounter = 0;
+
+    // Stores the codec factory for producing codecs
+    CodecFactory codecFactory = null;
+
+    // The arguments passed to the application's main method.  May be null.
+    // This is used for ORBInitializers and set from set_parameters.
+    String[] arguments = null;
+
+    // The list of portable interceptors, organized by type:
+    private InterceptorList interceptorList;
+
+    // Cached information for optimization - do we have any interceptors
+    // registered of the given types?  Set during ORB initialization.
+    private boolean hasIORInterceptors;
+    private boolean hasClientInterceptors;  // temp always true
+    private boolean hasServerInterceptors;
+
+    // The class responsible for invoking interceptors
+    private InterceptorInvoker interceptorInvoker;
+
+    // There will be one PICurrent instantiated for every ORB.
+    private PICurrent current;
+
+    // This table contains a list of PolicyFactories registered using
+    // ORBInitInfo.registerPolicyFactory() method.
+    // Key for the table is PolicyType which is an Integer
+    // Value is PolicyFactory.
+    private HashMap policyFactoryTable;
+
+    // Table to convert from a ReplyMessage.? to a PI replyStatus short.
+    // Note that this table relies on the order and constants of
+    // ReplyMessage not to change.
+    private final static short REPLY_MESSAGE_TO_PI_REPLY_STATUS[] = {
+        SUCCESSFUL.value,       // = ReplyMessage.NO_EXCEPTION
+        USER_EXCEPTION.value,   // = ReplyMessage.USER_EXCEPTION
+        SYSTEM_EXCEPTION.value, // = ReplyMessage.SYSTEM_EXCEPTION
+        LOCATION_FORWARD.value, // = ReplyMessage.LOCATION_FORWARD
+        LOCATION_FORWARD.value, // = ReplyMessage.LOCATION_FORWARD_PERM
+        TRANSPORT_RETRY.value   // = ReplyMessage.NEEDS_ADDRESSING_MODE
+    };
+
+    // ThreadLocal containing a stack to store client request info objects
+    // and a disable count.
+    private ThreadLocal threadLocalClientRequestInfoStack =
+        new ThreadLocal() {
+            protected Object initialValue() {
+                return new RequestInfoStack();
+            }
+        };
+
+    // ThreadLocal containing the current server request info object.
+    private ThreadLocal threadLocalServerRequestInfoStack =
+        new ThreadLocal() {
+            protected Object initialValue() {
+                return new RequestInfoStack();
+            }
+        };
+
+    public void close() {
+        orb = null;
+        wrapper = null;
+        orbutilWrapper = null;
+        omgWrapper = null;
+        codecFactory = null;
+        arguments = null;
+        interceptorList = null;
+        interceptorInvoker = null;
+        current = null;
+        policyFactoryTable = null;
+        threadLocalClientRequestInfoStack = null;
+        threadLocalServerRequestInfoStack = null;
+    }
+
+    // Class to contain all ThreadLocal data for ClientRequestInfo
+    // maintenance.
+    //
+    // We use an ArrayList instead since it is not thread-safe.
+    // RequestInfoStack is used quite frequently.
+    private final class RequestInfoStack extends Stack {
+        // Number of times a request has been made to disable interceptors.
+        // When this reaches 0, interception hooks are disabled.  Any higher
+        // value indicates they are enabled.
+        // NOTE: The is only currently used on the client side.
+        public int disableCount = 0;
+    }
+
+    public PIHandlerImpl( ORB orb, String[] args ) {
+        this.orb = orb ;
+        wrapper = InterceptorsSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+        orbutilWrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+        omgWrapper = OMGSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+        arguments = args ;
+
+        // Create codec factory:
+        codecFactory = new CodecFactoryImpl( orb );
+
+        // Create new interceptor list:
+        interceptorList = new InterceptorList( wrapper );
+
+        // Create a new PICurrent.
+        current = new PICurrent( orb );
+
+        // Create new interceptor invoker, initially disabled:
+        interceptorInvoker = new InterceptorInvoker( orb, interceptorList,
+                                                     current );
+
+        // Register the PI current and Codec factory objects
+        orb.getLocalResolver().register( ORBConstants.PI_CURRENT_NAME,
+            ClosureFactory.makeConstant( current ) ) ;
+        orb.getLocalResolver().register( ORBConstants.CODEC_FACTORY_NAME,
+            ClosureFactory.makeConstant( codecFactory ) ) ;
+    }
+
+    public void initialize() {
+        // If we have any orb initializers, make use of them:
+        if( orb.getORBData().getORBInitializers() != null ) {
+            // Create the ORBInitInfo object to pass to ORB intializers:
+            ORBInitInfoImpl orbInitInfo = createORBInitInfo();
+
+            // Make sure get_slot and set_slot are not called from within
+            // ORB initializers:
+            current.setORBInitializing( true );
+
+            // Call pre_init on all ORB initializers:
+            preInitORBInitializers( orbInitInfo );
+
+            // Call post_init on all ORB initializers:
+            postInitORBInitializers( orbInitInfo );
+
+            // Proprietary: sort interceptors:
+            interceptorList.sortInterceptors();
+
+            // Re-enable get_slot and set_slot to be called from within
+            // ORB initializers:
+            current.setORBInitializing( false );
+
+            // Ensure nobody makes any more calls on this object.
+            orbInitInfo.setStage( ORBInitInfoImpl.STAGE_CLOSED );
+
+            // Set cached flags indicating whether we have interceptors
+            // registered of a given type.
+            hasIORInterceptors = interceptorList.hasInterceptorsOfType(
+                InterceptorList.INTERCEPTOR_TYPE_IOR );
+            // XXX This must always be true, so that using the new generic
+            // RPC framework can pass info between the PI stack and the
+            // framework invocation stack.  Temporary until Harold fixes
+            // this.  Note that this must never be true until after the
+            // ORBInitializer instances complete executing.
+            //hasClientInterceptors = interceptorList.hasInterceptorsOfType(
+                //InterceptorList.INTERCEPTOR_TYPE_CLIENT );
+            hasClientInterceptors = true;
+            hasServerInterceptors = interceptorList.hasInterceptorsOfType(
+                InterceptorList.INTERCEPTOR_TYPE_SERVER );
+
+            // Enable interceptor invoker (not necessary if no interceptors
+            // are registered).  This should be the last stage of ORB
+            // initialization.
+            interceptorInvoker.setEnabled( true );
+        }
+    }
+
+    /**
+     *  ptc/00-08-06 p 205: "When an application calls ORB::destroy, the ORB
+     *  1) waits for all requests in progress to complete
+     *  2) calls the Interceptor::destroy operation for each interceptor
+     *  3) completes destruction of the ORB"
+     *
+     * This must be called at the end of ORB.destroy.  Note that this is not
+     * part of the PIHandler interface, since ORBImpl implements the ORB interface.
+     */
+    public void destroyInterceptors() {
+        interceptorList.destroyAll();
+    }
+
+    public void objectAdapterCreated( ObjectAdapter oa )
+    {
+        if (!hasIORInterceptors)
+            return ;
+
+        interceptorInvoker.objectAdapterCreated( oa ) ;
+    }
+
+    public void adapterManagerStateChanged( int managerId,
+        short newState )
+    {
+        if (!hasIORInterceptors)
+            return ;
+
+        interceptorInvoker.adapterManagerStateChanged( managerId, newState ) ;
+    }
+
+    public void adapterStateChanged( ObjectReferenceTemplate[]
+        templates, short newState )
+    {
+        if (!hasIORInterceptors)
+            return ;
+
+        interceptorInvoker.adapterStateChanged( templates, newState ) ;
+    }
+
+    /*
+     *****************
+     * Client PI hooks
+     *****************/
+
+    public void disableInterceptorsThisThread() {
+        if( !hasClientInterceptors ) return;
+
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalClientRequestInfoStack.get();
+        infoStack.disableCount++;
+    }
+
+    public void enableInterceptorsThisThread() {
+        if( !hasClientInterceptors ) return;
+
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalClientRequestInfoStack.get();
+        infoStack.disableCount--;
+    }
+
+    public void invokeClientPIStartingPoint()
+        throws RemarshalException
+    {
+        if( !hasClientInterceptors ) return;
+        if( !isClientPIEnabledForThisThread() ) return;
+
+        // Invoke the starting interception points and record exception
+        // and reply status info in the info object:
+        ClientRequestInfoImpl info = peekClientRequestInfoImplStack();
+        interceptorInvoker.invokeClientInterceptorStartingPoint( info );
+
+        // Check reply status.  If we will not have another chance later
+        // to invoke the client ending points, do it now.
+        short replyStatus = info.getReplyStatus();
+        if( (replyStatus == SYSTEM_EXCEPTION.value) ||
+            (replyStatus == LOCATION_FORWARD.value) )
+        {
+            // Note: Transport retry cannot happen here since this happens
+            // before the request hits the wire.
+
+            Exception exception = invokeClientPIEndingPoint(
+                convertPIReplyStatusToReplyMessage( replyStatus ),
+                info.getException() );
+            if( exception == null ) {
+                // Do not throw anything.  Otherwise, it must be a
+                // SystemException, UserException or RemarshalException.
+            } if( exception instanceof SystemException ) {
+                throw (SystemException)exception;
+            } else if( exception instanceof RemarshalException ) {
+                throw (RemarshalException)exception;
+            } else if( (exception instanceof UserException) ||
+                     (exception instanceof ApplicationException) ) {
+                // It should not be possible for an interceptor to throw
+                // a UserException.  By asserting instead of throwing the
+                // UserException, we need not declare anything but
+                // RemarshalException in the throws clause.
+                throw wrapper.exceptionInvalid() ;
+            }
+        }
+        else if( replyStatus != ClientRequestInfoImpl.UNINITIALIZED ) {
+            throw wrapper.replyStatusNotInit() ;
+        }
+    }
+
+    // Needed when an error forces a retry AFTER initiateClientPIRequest
+    // but BEFORE invokeClientPIStartingPoint.
+    public Exception makeCompletedClientRequest( int replyStatus,
+        Exception exception ) {
+
+        // 6763340
+        return handleClientPIEndingPoint( replyStatus, exception, false ) ;
+    }
+
+    public Exception invokeClientPIEndingPoint( int replyStatus,
+        Exception exception ) {
+
+        // 6763340
+        return handleClientPIEndingPoint( replyStatus, exception, true ) ;
+    }
+
+    public Exception handleClientPIEndingPoint(
+        int replyStatus, Exception exception, boolean invokeEndingPoint ) {
+        if( !hasClientInterceptors ) return exception;
+        if( !isClientPIEnabledForThisThread() ) return exception;
+
+        // Translate ReplyMessage.replyStatus into PI replyStatus:
+        // Note: this is also an assertion to make sure a valid replyStatus
+        // is passed in (IndexOutOfBoundsException will be thrown otherwise)
+        short piReplyStatus = REPLY_MESSAGE_TO_PI_REPLY_STATUS[replyStatus];
+
+        // Invoke the ending interception points and record exception
+        // and reply status info in the info object:
+        ClientRequestInfoImpl info = peekClientRequestInfoImplStack();
+        info.setReplyStatus( piReplyStatus );
+        info.setException( exception );
+
+        if (invokeEndingPoint) {
+            // 6763340
+            interceptorInvoker.invokeClientInterceptorEndingPoint( info );
+            piReplyStatus = info.getReplyStatus();
+        }
+
+        // Check reply status:
+        if( (piReplyStatus == LOCATION_FORWARD.value) ||
+            (piReplyStatus == TRANSPORT_RETRY.value) ) {
+            // If this is a forward or a retry, reset and reuse
+            // info object:
+            info.reset();
+
+            // fix for 6763340:
+            if (invokeEndingPoint) {
+                info.setRetryRequest( RetryType.AFTER_RESPONSE ) ;
+            } else {
+                info.setRetryRequest( RetryType.BEFORE_RESPONSE ) ;
+            }
+
+            // ... and return a RemarshalException so the orb internals know
+            exception = new RemarshalException();
+        } else if( (piReplyStatus == SYSTEM_EXCEPTION.value) ||
+                 (piReplyStatus == USER_EXCEPTION.value) ) {
+            exception = info.getException();
+        }
+
+        return exception;
+    }
+
+    public void initiateClientPIRequest( boolean diiRequest ) {
+        if( !hasClientInterceptors ) return;
+        if( !isClientPIEnabledForThisThread() ) return;
+
+        // Get the most recent info object from the thread local
+        // ClientRequestInfoImpl stack:
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalClientRequestInfoStack.get();
+        ClientRequestInfoImpl info = null;
+
+        if (!infoStack.empty() ) {
+            info = (ClientRequestInfoImpl)infoStack.peek();
+        }
+
+        if (!diiRequest && (info != null) && info.isDIIInitiate() ) {
+            // In RequestImpl.doInvocation we already called
+            // initiateClientPIRequest( true ), so ignore this initiate.
+            info.setDIIInitiate( false );
+        } else {
+            // If there is no info object or if we are not retrying a request,
+            // push a new ClientRequestInfoImpl on the stack:
+
+            // 6763340: don't push unless this is not a retry
+            if( (info == null) || !info.getRetryRequest().isRetry() ) {
+                info = new ClientRequestInfoImpl( orb );
+                infoStack.push( info );
+                printPush();
+                // Note: the entry count is automatically initialized to 0.
+            }
+
+            // Reset the retry request flag so that recursive calls will
+            // push a new info object, and bump up entry count so we know
+            // when to pop this info object:
+            info.setRetryRequest( RetryType.NONE );
+            info.incrementEntryCount();
+
+            // KMC 6763340: I don't know why this wasn't set earlier,
+            // but we do not want a retry to pick up the previous
+            // reply status, so clear it here.  Most likely a new
+            // info was pushed before, so that this was not a problem.
+            info.setReplyStatus( RequestInfoImpl.UNINITIALIZED ) ;
+
+            // If this is a DII request, make sure we ignore the next initiate.
+            if( diiRequest ) {
+                info.setDIIInitiate( true );
+            }
+        }
+    }
+
+    public void cleanupClientPIRequest() {
+        if( !hasClientInterceptors ) return;
+        if( !isClientPIEnabledForThisThread() ) return;
+
+        ClientRequestInfoImpl info = peekClientRequestInfoImplStack();
+        RetryType rt = info.getRetryRequest() ;
+
+        // fix for 6763340
+        if (!rt.equals( RetryType.BEFORE_RESPONSE )) {
+
+            // If the replyStatus has not yet been set, this is an indication
+            // that the ORB threw an exception before we had a chance to
+            // invoke the client interceptor ending points.
+            //
+            // _REVISIT_ We cannot handle any exceptions or ForwardRequests
+            // flagged by the ending points here because there is no way
+            // to gracefully handle this in any of the calling code.
+            // This is a rare corner case, so we will ignore this for now.
+            short replyStatus = info.getReplyStatus();
+            if (replyStatus == info.UNINITIALIZED ) {
+                invokeClientPIEndingPoint( ReplyMessage.SYSTEM_EXCEPTION,
+                    wrapper.unknownRequestInvoke(
+                        CompletionStatus.COMPLETED_MAYBE ) ) ;
+            }
+        }
+
+        // Decrement entry count, and if it is zero, pop it from the stack.
+        info.decrementEntryCount();
+
+        // fix for 6763340, and probably other cases (non-recursive retry)
+        if (info.getEntryCount() == 0 && !info.getRetryRequest().isRetry()) {
+            // RequestInfoStack<ClientRequestInfoImpl> infoStack =
+            //     threadLocalClientRequestInfoStack.get();
+            RequestInfoStack infoStack =
+                (RequestInfoStack)threadLocalClientRequestInfoStack.get();
+            infoStack.pop();
+            printPop();
+        }
+    }
+
+    public void setClientPIInfo(CorbaMessageMediator messageMediator)
+    {
+        if( !hasClientInterceptors ) return;
+        if( !isClientPIEnabledForThisThread() ) return;
+
+        peekClientRequestInfoImplStack().setInfo(messageMediator);
+    }
+
+    public void setClientPIInfo( RequestImpl requestImpl ) {
+        if( !hasClientInterceptors ) return;
+        if( !isClientPIEnabledForThisThread() ) return;
+
+        peekClientRequestInfoImplStack().setDIIRequest( requestImpl );
+    }
+
+    /*
+     *****************
+     * Server PI hooks
+     *****************/
+
+    public void invokeServerPIStartingPoint()
+    {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        interceptorInvoker.invokeServerInterceptorStartingPoint( info );
+
+        // Handle SystemException or ForwardRequest:
+        serverPIHandleExceptions( info );
+    }
+
+    public void invokeServerPIIntermediatePoint()
+    {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        interceptorInvoker.invokeServerInterceptorIntermediatePoint( info );
+
+        // Clear servant from info object so that the user has control over
+        // its lifetime:
+        info.releaseServant();
+
+        // Handle SystemException or ForwardRequest:
+        serverPIHandleExceptions( info );
+    }
+
+    public void invokeServerPIEndingPoint( ReplyMessage replyMessage )
+    {
+        if( !hasServerInterceptors ) return;
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+
+        // REVISIT: This needs to be done "early" for the following workaround.
+        info.setReplyMessage( replyMessage );
+
+        // REVISIT: This was done inside of invokeServerInterceptorEndingPoint
+        // but needs to be here for now.  See comment in that method for why.
+        info.setCurrentExecutionPoint( info.EXECUTION_POINT_ENDING );
+
+        // It is possible we might have entered this method more than
+        // once (e.g. if an ending point threw a SystemException, then
+        // a new ServerResponseImpl is created).
+        if( !info.getAlreadyExecuted() ) {
+            int replyStatus = replyMessage.getReplyStatus();
+
+            // Translate ReplyMessage.replyStatus into PI replyStatus:
+            // Note: this is also an assertion to make sure a valid
+            // replyStatus is passed in (IndexOutOfBoundsException will be
+            // thrown otherwise)
+            short piReplyStatus =
+                REPLY_MESSAGE_TO_PI_REPLY_STATUS[replyStatus];
+
+            // Make forwarded IOR available to interceptors, if applicable:
+            if( ( piReplyStatus == LOCATION_FORWARD.value ) ||
+                ( piReplyStatus == TRANSPORT_RETRY.value ) )
+            {
+                info.setForwardRequest( replyMessage.getIOR() );
+            }
+
+            // REVISIT: Do early above for now.
+            // Make reply message available to interceptors:
+            //info.setReplyMessage( replyMessage );
+
+            // Remember exception so we can tell if an interceptor changed it.
+            Exception prevException = info.getException();
+
+            // _REVISIT_ We do not have access to the User Exception at
+            // this point, so treat it as an UNKNOWN for now.
+            // Note that if this is a DSI call, we do have the user exception.
+            if( !info.isDynamic() &&
+                (piReplyStatus == USER_EXCEPTION.value) )
+            {
+                info.setException( omgWrapper.unknownUserException(
+                    CompletionStatus.COMPLETED_MAYBE ) ) ;
+            }
+
+            // Invoke the ending interception points:
+            info.setReplyStatus( piReplyStatus );
+            interceptorInvoker.invokeServerInterceptorEndingPoint( info );
+            short newPIReplyStatus = info.getReplyStatus();
+            Exception newException = info.getException();
+
+            // Check reply status.  If an interceptor threw a SystemException
+            // and it is different than the one that we came in with,
+            // rethrow it so the proper response can be constructed:
+            if( ( newPIReplyStatus == SYSTEM_EXCEPTION.value ) &&
+                ( newException != prevException ) )
+            {
+                throw (SystemException)newException;
+            }
+
+            // If we are to forward the location:
+            if( newPIReplyStatus == LOCATION_FORWARD.value ) {
+                if( piReplyStatus != LOCATION_FORWARD.value ) {
+                    // Treat a ForwardRequest as a ForwardException.
+                    IOR ior = info.getForwardRequestIOR();
+                    throw new ForwardException( orb, ior ) ;
+                }
+                else if( info.isForwardRequestRaisedInEnding() ) {
+                    // Treat a ForwardRequest by changing the IOR.
+                    replyMessage.setIOR( info.getForwardRequestIOR() );
+                }
+            }
+        }
+    }
+
+    public void setServerPIInfo( Exception exception ) {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        info.setException( exception );
+    }
+
+    public void setServerPIInfo( NVList arguments )
+    {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        info.setDSIArguments( arguments );
+    }
+
+    public void setServerPIExceptionInfo( Any exception )
+    {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        info.setDSIException( exception );
+    }
+
+    public void setServerPIInfo( Any result )
+    {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        info.setDSIResult( result );
+    }
+
+    public void initializeServerPIInfo( CorbaMessageMediator request,
+        ObjectAdapter oa, byte[] objectId, ObjectKeyTemplate oktemp )
+    {
+        if( !hasServerInterceptors ) return;
+
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalServerRequestInfoStack.get();
+        ServerRequestInfoImpl info = new ServerRequestInfoImpl( orb );
+        infoStack.push( info );
+        printPush();
+
+        // Notify request object that once response is constructed, make
+        // sure we execute ending points.
+        request.setExecutePIInResponseConstructor( true );
+
+        info.setInfo( request, oa, objectId, oktemp );
+    }
+
+    public void setServerPIInfo( java.lang.Object servant,
+                                          String targetMostDerivedInterface )
+    {
+        if( !hasServerInterceptors ) return;
+
+        ServerRequestInfoImpl info = peekServerRequestInfoImplStack();
+        info.setInfo( servant, targetMostDerivedInterface );
+    }
+
+    public void cleanupServerPIRequest() {
+        if( !hasServerInterceptors ) return;
+
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalServerRequestInfoStack.get();
+        infoStack.pop();
+        printPop();
+    }
+
+    /*
+     **********************************************************************
+     *  The following methods are private utility methods.
+     ************************************************************************/
+
+    /**
+     * Handles exceptions for the starting and intermediate points for
+     * server request interceptors.  This is common code that has been
+     * factored out into this utility method.
+     * <p>
+     * This method will NOT work for ending points.
+     */
+    private void serverPIHandleExceptions( ServerRequestInfoImpl info )
+    {
+        int endingPointCall = info.getEndingPointCall();
+        if(endingPointCall == ServerRequestInfoImpl.CALL_SEND_EXCEPTION) {
+            // If a system exception was thrown, throw it to caller:
+            throw (SystemException)info.getException();
+        }
+        else if( (endingPointCall == ServerRequestInfoImpl.CALL_SEND_OTHER) &&
+                 (info.getForwardRequestException() != null) )
+        {
+            // If an interceptor throws a forward request, convert it
+            // into a ForwardException for easier handling:
+            IOR ior = info.getForwardRequestIOR();
+            throw new ForwardException( orb, ior );
+        }
+    }
+
+    /**
+     * Utility method to convert a PI reply status short to a ReplyMessage
+     * constant.  This is a reverse lookup on the table defined in
+     * REPLY_MESSAGE_TO_PI_REPLY_STATUS.  The reverse lookup need not be
+     * performed as quickly since it is only executed in exception
+     * conditions.
+     */
+    private int convertPIReplyStatusToReplyMessage( short replyStatus ) {
+        int result = 0;
+        for( int i = 0; i < REPLY_MESSAGE_TO_PI_REPLY_STATUS.length; i++ ) {
+            if( REPLY_MESSAGE_TO_PI_REPLY_STATUS[i] == replyStatus ) {
+                result = i;
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Convenience method to get the ClientRequestInfoImpl object off the
+     * top of the ThreadLocal stack.  Throws an INTERNAL exception if
+     * the Info stack is empty.
+     */
+    private ClientRequestInfoImpl peekClientRequestInfoImplStack() {
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalClientRequestInfoStack.get();
+        ClientRequestInfoImpl info = null;
+        if( !infoStack.empty() ) {
+            info = (ClientRequestInfoImpl)infoStack.peek();
+        } else {
+            throw wrapper.clientInfoStackNull() ;
+        }
+
+        return info;
+    }
+
+    /**
+     * Convenience method to get the ServerRequestInfoImpl object off the
+     * top of the ThreadLocal stack.  Returns null if there are none.
+     */
+    private ServerRequestInfoImpl peekServerRequestInfoImplStack() {
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalServerRequestInfoStack.get();
+        ServerRequestInfoImpl info = null;
+
+        if( !infoStack.empty() ) {
+            info = (ServerRequestInfoImpl)infoStack.peek();
+        } else {
+            throw wrapper.serverInfoStackNull() ;
+        }
+
+        return info;
+    }
+
+    /**
+     * Convenience method to determine whether Client PI is enabled
+     * for requests on this thread.
+     */
+    private boolean isClientPIEnabledForThisThread() {
+        RequestInfoStack infoStack =
+            (RequestInfoStack)threadLocalClientRequestInfoStack.get();
+        return (infoStack.disableCount == 0);
+    }
+
+    /**
+     * Call pre_init on all ORB initializers
+     */
+    private void preInitORBInitializers( ORBInitInfoImpl info ) {
+
+        // Inform ORBInitInfo we are in pre_init stage
+        info.setStage( ORBInitInfoImpl.STAGE_PRE_INIT );
+
+        // Step through each initializer instantiation and call its
+        // pre_init.  Ignore any exceptions.
+        for( int i = 0; i < orb.getORBData().getORBInitializers().length;
+            i++ ) {
+            ORBInitializer init = orb.getORBData().getORBInitializers()[i];
+            if( init != null ) {
+                try {
+                    init.pre_init( info );
+                }
+                catch( Exception e ) {
+                    // As per orbos/99-12-02, section 9.3.1.2, "If there are
+                    // any exceptions, the ORB shall ignore them and proceed."
+                }
+            }
+        }
+    }
+
+    /**
+     * Call post_init on all ORB initializers
+     */
+    private void postInitORBInitializers( ORBInitInfoImpl info ) {
+
+        // Inform ORBInitInfo we are in post_init stage
+        info.setStage( ORBInitInfoImpl.STAGE_POST_INIT );
+
+        // Step through each initializer instantiation and call its post_init.
+        // Ignore any exceptions.
+        for( int i = 0; i < orb.getORBData().getORBInitializers().length;
+            i++ ) {
+            ORBInitializer init = orb.getORBData().getORBInitializers()[i];
+            if( init != null ) {
+                try {
+                    init.post_init( info );
+                }
+                catch( Exception e ) {
+                    // As per orbos/99-12-02, section 9.3.1.2, "If there are
+                    // any exceptions, the ORB shall ignore them and proceed."
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates the ORBInitInfo object to be passed to ORB intializers'
+     * pre_init and post_init methods
+     */
+    private ORBInitInfoImpl createORBInitInfo() {
+        ORBInitInfoImpl result = null;
+
+        // arguments comes from set_parameters.  May be null.
+
+        // _REVISIT_ The spec does not specify which ID this is to be.
+        // We currently get this from the corba.ORB, which reads it from
+        // the ORB_ID_PROPERTY property.
+        String orbId = orb.getORBData().getORBId() ;
+
+        result = new ORBInitInfoImpl( orb, arguments, orbId, codecFactory );
+
+        return result;
+    }
+
+    /**
+     * Called by ORBInitInfo when an interceptor needs to be registered.
+     * The type is one of:
+     * <ul>
+     *   <li>INTERCEPTOR_TYPE_CLIENT - ClientRequestInterceptor
+     *   <li>INTERCEPTOR_TYPE_SERVER - ServerRequestInterceptor
+     *   <li>INTERCEPTOR_TYPE_IOR - IORInterceptor
+     * </ul>
+     *
+     * @exception DuplicateName Thrown if an interceptor of the given
+     *     name already exists for the given type.
+     */
+    public void register_interceptor( Interceptor interceptor, int type )
+        throws DuplicateName
+    {
+        // We will assume interceptor is not null, since it is called
+        // internally.
+        if( (type >= InterceptorList.NUM_INTERCEPTOR_TYPES) || (type < 0) ) {
+            throw wrapper.typeOutOfRange( new Integer( type ) ) ;
+        }
+
+        String interceptorName = interceptor.name();
+
+        if( interceptorName == null ) {
+            throw wrapper.nameNull() ;
+        }
+
+        // Register with interceptor list:
+        interceptorList.register_interceptor( interceptor, type );
+    }
+
+    public Current getPICurrent( ) {
+        return current;
+    }
+
+    /**
+     * Called when an invalid null parameter was passed.  Throws a
+     * BAD_PARAM with a minor code of 1
+     */
+    private void nullParam()
+        throws BAD_PARAM
+    {
+        throw orbutilWrapper.nullParam() ;
+    }
+
+    /** This is the implementation of standard API defined in org.omg.CORBA.ORB
+     *  class. This method finds the Policy Factory for the given Policy Type
+     *  and instantiates the Policy object from the Factory. It will throw
+     *  PolicyError exception, If the PolicyFactory for the given type is
+     *  not registered.
+     *  _REVISIT_, Once Policy Framework work is completed, Reorganize
+     *  this method to com.sun.corba.se.spi.orb.ORB.
+     */
+    public org.omg.CORBA.Policy create_policy(int type, org.omg.CORBA.Any val)
+        throws org.omg.CORBA.PolicyError
+    {
+        if( val == null ) {
+            nullParam( );
+        }
+        if( policyFactoryTable == null ) {
+            throw new org.omg.CORBA.PolicyError(
+                "There is no PolicyFactory Registered for type " + type,
+                BAD_POLICY.value );
+        }
+        PolicyFactory factory = (PolicyFactory)policyFactoryTable.get(
+            new Integer(type) );
+        if( factory == null ) {
+            throw new org.omg.CORBA.PolicyError(
+                " Could Not Find PolicyFactory for the Type " + type,
+                BAD_POLICY.value);
+        }
+        org.omg.CORBA.Policy policy = factory.create_policy( type, val );
+        return policy;
+    }
+
+    /** This method registers the Policy Factory in the policyFactoryTable,
+     *  which is a HashMap. This method is made package private, because
+     *  it is used internally by the  Interceptors.
+     */
+    public void registerPolicyFactory( int type, PolicyFactory factory ) {
+        if( policyFactoryTable == null ) {
+            policyFactoryTable = new HashMap();
+        }
+        Integer key = new Integer( type );
+        java.lang.Object val = policyFactoryTable.get( key );
+        if( val == null ) {
+            policyFactoryTable.put( key, factory );
+        }
+        else {
+            throw omgWrapper.policyFactoryRegFailed( new Integer( type ) ) ;
+        }
+    }
+
+    public synchronized int allocateServerRequestId ()
+    {
+        return serverRequestIdCounter++;
+    }
+}

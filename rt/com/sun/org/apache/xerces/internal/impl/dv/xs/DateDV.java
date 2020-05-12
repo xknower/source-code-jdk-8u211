@@ -1,100 +1,95 @@
-/*    */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*    */ 
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*    */ import javax.xml.datatype.XMLGregorianCalendar;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class DateDV
-/*    */   extends DateTimeDV
-/*    */ {
-/*    */   public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
-/*    */     try {
-/* 43 */       return parse(content);
-/* 44 */     } catch (Exception ex) {
-/* 45 */       throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[] { content, "date" });
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected AbstractDateTimeDV.DateTimeData parse(String str) throws SchemaDateTimeException {
-/* 58 */     AbstractDateTimeDV.DateTimeData date = new AbstractDateTimeDV.DateTimeData(str, this);
-/* 59 */     int len = str.length();
-/*    */     
-/* 61 */     int end = getDate(str, 0, len, date);
-/* 62 */     parseTimeZone(str, end, len, date);
-/*    */ 
-/*    */ 
-/*    */     
-/* 66 */     validateDateTime(date);
-/*    */ 
-/*    */     
-/* 69 */     saveUnnormalized(date);
-/*    */     
-/* 71 */     if (date.utc != 0 && date.utc != 90) {
-/* 72 */       normalize(date);
-/*    */     }
-/* 74 */     return date;
-/*    */   }
-/*    */   
-/*    */   protected String dateToString(AbstractDateTimeDV.DateTimeData date) {
-/* 78 */     StringBuffer message = new StringBuffer(25);
-/* 79 */     append(message, date.year, 4);
-/* 80 */     message.append('-');
-/* 81 */     append(message, date.month, 2);
-/* 82 */     message.append('-');
-/* 83 */     append(message, date.day, 2);
-/* 84 */     append(message, (char)date.utc, 0);
-/* 85 */     return message.toString();
-/*    */   }
-/*    */   
-/*    */   protected XMLGregorianCalendar getXMLGregorianCalendar(AbstractDateTimeDV.DateTimeData date) {
-/* 89 */     return datatypeFactory.newXMLGregorianCalendar(date.unNormYear, date.unNormMonth, date.unNormDay, -2147483648, -2147483648, -2147483648, -2147483648, 
-/*    */ 
-/*    */         
-/* 92 */         date.hasTimeZone() ? (date.timezoneHr * 60 + date.timezoneMin) : Integer.MIN_VALUE);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\DateDV.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004,2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
+
+/**
+ * Validator for <date> datatype (W3C Schema datatypes)
+ *
+ * @xerces.internal
+ *
+ * @author Elena Litani
+ * @author Gopal Sharma, SUN Microsystems Inc.
+ *
+ * @version $Id: DateDV.java,v 1.7 2010-11-01 04:39:46 joehw Exp $
+ */
+public class DateDV extends DateTimeDV {
+
+    public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
+        try{
+            return parse(content);
+        } catch(Exception ex){
+            throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[]{content, "date"});
+        }
+    }
+
+    /**
+     * Parses, validates and computes normalized version of dateTime object
+     *
+     * @param str    The lexical representation of dateTime object CCYY-MM-DD
+     *               with possible time zone Z or (-),(+)hh:mm
+     * @return normalized dateTime representation
+     * @exception SchemaDateTimeException Invalid lexical representation
+     */
+    protected DateTimeData parse(String str) throws SchemaDateTimeException {
+        DateTimeData date = new DateTimeData(str, this);
+        int len = str.length();
+
+        int end = getDate(str, 0, len, date);
+        parseTimeZone (str, end, len, date);
+
+        //validate and normalize
+        //REVISIT: do we need SchemaDateTimeException?
+        validateDateTime(date);
+
+        //save unnormalized values
+        saveUnnormalized(date);
+
+        if (date.utc!=0 && date.utc!='Z') {
+            normalize(date);
+        }
+        return date;
+    }
+
+    protected String dateToString(DateTimeData date) {
+        StringBuffer message = new StringBuffer(25);
+        append(message, date.year, 4);
+        message.append('-');
+        append(message, date.month, 2);
+        message.append('-');
+        append(message, date.day, 2);
+        append(message, (char)date.utc, 0);
+        return message.toString();
+    }
+
+    protected XMLGregorianCalendar getXMLGregorianCalendar(DateTimeData date) {
+        return datatypeFactory.newXMLGregorianCalendar(date.unNormYear, date.unNormMonth,
+                date.unNormDay, DatatypeConstants.FIELD_UNDEFINED, DatatypeConstants.FIELD_UNDEFINED,
+                DatatypeConstants.FIELD_UNDEFINED, DatatypeConstants.FIELD_UNDEFINED,
+                date.hasTimeZone() ? (date.timezoneHr * 60 + date.timezoneMin) : DatatypeConstants.FIELD_UNDEFINED);
+    }
+
+}

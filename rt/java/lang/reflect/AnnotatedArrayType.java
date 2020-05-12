@@ -1,13 +1,44 @@
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.lang.reflect;
 
-import java.lang.reflect.AnnotatedType;
 
-public interface AnnotatedArrayType extends AnnotatedType {
-  AnnotatedType getAnnotatedGenericComponentType();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\reflect\AnnotatedArrayType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * {@code AnnotatedArrayType} represents the potentially annotated use of an
+ * array type, whose component type may itself represent the annotated use of a
+ * type.
+ *
+ * @since 1.8
  */
+public interface AnnotatedArrayType extends AnnotatedType {
+
+    /**
+     * Returns the potentially annotated generic component type of this array type.
+     *
+     * @return the potentially annotated generic component type of this array type
+     */
+    AnnotatedType  getAnnotatedGenericComponentType();
+}

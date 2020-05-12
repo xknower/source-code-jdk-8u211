@@ -1,90 +1,84 @@
-/*    */ package com.sun.org.apache.xerces.internal.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class XMLErrorCode
-/*    */ {
-/*    */   private String fDomain;
-/*    */   private String fKey;
-/*    */   
-/*    */   public XMLErrorCode(String domain, String key) {
-/* 49 */     this.fDomain = domain;
-/* 50 */     this.fKey = key;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void setValues(String domain, String key) {
-/* 60 */     this.fDomain = domain;
-/* 61 */     this.fKey = key;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public boolean equals(Object obj) {
-/* 70 */     if (!(obj instanceof XMLErrorCode))
-/* 71 */       return false; 
-/* 72 */     XMLErrorCode err = (XMLErrorCode)obj;
-/* 73 */     return (this.fDomain.equals(err.fDomain) && this.fKey.equals(err.fKey));
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 82 */     return this.fDomain.hashCode() + this.fKey.hashCode();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\XMLErrorCode.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2004,2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+/**
+ * <p>A structure that represents an error code, characterized by
+ * a domain and a message key.</p>
+ *
+ * @author Naela Nissar, IBM
+ *
+ */
+final class XMLErrorCode {
+
+    //
+    // Data
+    //
+
+    /** error domain **/
+    private String fDomain;
+
+    /** message key **/
+    private String fKey;
+
+    /**
+     * <p>Constructs an XMLErrorCode with the given domain and key.</p>
+     *
+     * @param domain The error domain.
+     * @param key The key of the error message.
+     */
+    public XMLErrorCode(String domain, String key) {
+        fDomain = domain;
+        fKey = key;
+    }
+
+    /**
+     * <p>Convenience method to set the values of an XMLErrorCode.</p>
+     *
+     * @param domain The error domain.
+     * @param key The key of the error message.
+     */
+    public void setValues(String domain, String key) {
+        fDomain = domain;
+        fKey = key;
+    }
+
+    /**
+     * <p>Indicates whether some other object is equal to this XMLErrorCode.</p>
+     *
+     * @param obj the object with which to compare.
+     */
+    public boolean equals(Object obj) {
+        if (!(obj instanceof XMLErrorCode))
+            return false;
+        XMLErrorCode err = (XMLErrorCode) obj;
+        return (fDomain.equals(err.fDomain) && fKey.equals(err.fKey));
+    }
+
+    /**
+     * <p>Returns a hash code value for this XMLErrorCode.</p>
+     *
+     * @return a hash code value for this XMLErrorCode.
+     */
+    public int hashCode() {
+        return fDomain.hashCode() + fKey.hashCode();
+    }
+}

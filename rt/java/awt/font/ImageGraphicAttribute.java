@@ -1,233 +1,227 @@
-/*     */ package java.awt.font;
-/*     */ 
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Image;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ImageGraphicAttribute
-/*     */   extends GraphicAttribute
-/*     */ {
-/*     */   private Image fImage;
-/*     */   private float fImageWidth;
-/*     */   private float fImageHeight;
-/*     */   private float fOriginX;
-/*     */   private float fOriginY;
-/*     */   
-/*     */   public ImageGraphicAttribute(Image paramImage, int paramInt) {
-/*  71 */     this(paramImage, paramInt, 0.0F, 0.0F);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ImageGraphicAttribute(Image paramImage, int paramInt, float paramFloat1, float paramFloat2) {
-/*  97 */     super(paramInt);
-/*     */ 
-/*     */ 
-/*     */     
-/* 101 */     this.fImage = paramImage;
-/*     */     
-/* 103 */     this.fImageWidth = paramImage.getWidth(null);
-/* 104 */     this.fImageHeight = paramImage.getHeight(null);
-/*     */ 
-/*     */     
-/* 107 */     this.fOriginX = paramFloat1;
-/* 108 */     this.fOriginY = paramFloat2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getAscent() {
-/* 119 */     return Math.max(0.0F, this.fOriginY);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getDescent() {
-/* 130 */     return Math.max(0.0F, this.fImageHeight - this.fOriginY);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getAdvance() {
-/* 141 */     return Math.max(0.0F, this.fImageWidth - this.fOriginX);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Rectangle2D getBounds() {
-/* 155 */     return new Rectangle2D.Float(-this.fOriginX, -this.fOriginY, this.fImageWidth, this.fImageHeight);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void draw(Graphics2D paramGraphics2D, float paramFloat1, float paramFloat2) {
-/* 164 */     paramGraphics2D.drawImage(this.fImage, (int)(paramFloat1 - this.fOriginX), (int)(paramFloat2 - this.fOriginY), null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 173 */     return this.fImage.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*     */     try {
-/* 187 */       return equals((ImageGraphicAttribute)paramObject);
-/*     */     }
-/* 189 */     catch (ClassCastException classCastException) {
-/* 190 */       return false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(ImageGraphicAttribute paramImageGraphicAttribute) {
-/* 205 */     if (paramImageGraphicAttribute == null) {
-/* 206 */       return false;
-/*     */     }
-/*     */     
-/* 209 */     if (this == paramImageGraphicAttribute) {
-/* 210 */       return true;
-/*     */     }
-/*     */     
-/* 213 */     if (this.fOriginX != paramImageGraphicAttribute.fOriginX || this.fOriginY != paramImageGraphicAttribute.fOriginY) {
-/* 214 */       return false;
-/*     */     }
-/*     */     
-/* 217 */     if (getAlignment() != paramImageGraphicAttribute.getAlignment()) {
-/* 218 */       return false;
-/*     */     }
-/*     */     
-/* 221 */     if (!this.fImage.equals(paramImageGraphicAttribute.fImage)) {
-/* 222 */       return false;
-/*     */     }
-/*     */     
-/* 225 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\font\ImageGraphicAttribute.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996 - 1997, All Rights Reserved
+ * (C) Copyright IBM Corp. 1996 - 1998, All Rights Reserved
+ *
+ * The original version of this source code and documentation is
+ * copyrighted and owned by Taligent, Inc., a wholly-owned subsidiary
+ * of IBM. These materials are provided under terms of a License
+ * Agreement between Taligent and Sun. This technology is protected
+ * by multiple US and International patents.
+ *
+ * This notice and attribution to Taligent may not be removed.
+ * Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.awt.font;
+
+import java.awt.Image;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+/**
+ * The <code>ImageGraphicAttribute</code> class is an implementation of
+ * {@link GraphicAttribute} which draws images in
+ * a {@link TextLayout}.
+ * @see GraphicAttribute
+ */
+
+public final class ImageGraphicAttribute extends GraphicAttribute {
+
+    private Image fImage;
+    private float fImageWidth, fImageHeight;
+    private float fOriginX, fOriginY;
+
+    /**
+     * Constucts an <code>ImageGraphicAttribute</code> from the specified
+     * {@link Image}.  The origin is at (0,&nbsp;0).
+     * @param image the <code>Image</code> rendered by this
+     * <code>ImageGraphicAttribute</code>.
+     * This object keeps a reference to <code>image</code>.
+     * @param alignment one of the alignments from this
+     * <code>ImageGraphicAttribute</code>
+     */
+    public ImageGraphicAttribute(Image image, int alignment) {
+
+        this(image, alignment, 0, 0);
+    }
+
+    /**
+     * Constructs an <code>ImageGraphicAttribute</code> from the specified
+     * <code>Image</code>. The point
+     * (<code>originX</code>,&nbsp;<code>originY</code>) in the
+     * <code>Image</code> appears at the origin of the
+     * <code>ImageGraphicAttribute</code> within the text.
+     * @param image the <code>Image</code> rendered by this
+     * <code>ImageGraphicAttribute</code>.
+     * This object keeps a reference to <code>image</code>.
+     * @param alignment one of the alignments from this
+     * <code>ImageGraphicAttribute</code>
+     * @param originX the X coordinate of the point within
+     * the <code>Image</code> that appears at the origin of the
+     * <code>ImageGraphicAttribute</code> in the text line.
+     * @param originY the Y coordinate of the point within
+     * the <code>Image</code> that appears at the origin of the
+     * <code>ImageGraphicAttribute</code> in the text line.
+     */
+    public ImageGraphicAttribute(Image image,
+                                 int alignment,
+                                 float originX,
+                                 float originY) {
+
+        super(alignment);
+
+        // Can't clone image
+        // fImage = (Image) image.clone();
+        fImage = image;
+
+        fImageWidth = image.getWidth(null);
+        fImageHeight = image.getHeight(null);
+
+        // ensure origin is in Image?
+        fOriginX = originX;
+        fOriginY = originY;
+    }
+
+    /**
+     * Returns the ascent of this <code>ImageGraphicAttribute</code>.  The
+     * ascent of an <code>ImageGraphicAttribute</code> is the distance
+     * from the top of the image to the origin.
+     * @return the ascent of this <code>ImageGraphicAttribute</code>.
+     */
+    public float getAscent() {
+
+        return Math.max(0, fOriginY);
+    }
+
+    /**
+     * Returns the descent of this <code>ImageGraphicAttribute</code>.
+     * The descent of an <code>ImageGraphicAttribute</code> is the
+     * distance from the origin to the bottom of the image.
+     * @return the descent of this <code>ImageGraphicAttribute</code>.
+     */
+    public float getDescent() {
+
+        return Math.max(0, fImageHeight-fOriginY);
+    }
+
+    /**
+     * Returns the advance of this <code>ImageGraphicAttribute</code>.
+     * The advance of an <code>ImageGraphicAttribute</code> is the
+     * distance from the origin to the right edge of the image.
+     * @return the advance of this <code>ImageGraphicAttribute</code>.
+     */
+    public float getAdvance() {
+
+        return Math.max(0, fImageWidth-fOriginX);
+    }
+
+    /**
+     * Returns a {@link Rectangle2D} that encloses all of the
+     * bits rendered by this <code>ImageGraphicAttribute</code>, relative
+     * to the rendering position.  A graphic can be rendered beyond its
+     * origin, ascent, descent, or advance;  but if it is, this
+     * method's implementation must indicate where the graphic is rendered.
+     * @return a <code>Rectangle2D</code> that encloses all of the bits
+     * rendered by this <code>ImageGraphicAttribute</code>.
+     */
+    public Rectangle2D getBounds() {
+
+        return new Rectangle2D.Float(
+                        -fOriginX, -fOriginY, fImageWidth, fImageHeight);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void draw(Graphics2D graphics, float x, float y) {
+
+        graphics.drawImage(fImage, (int) (x-fOriginX), (int) (y-fOriginY), null);
+    }
+
+    /**
+     * Returns a hashcode for this <code>ImageGraphicAttribute</code>.
+     * @return  a hash code value for this object.
+     */
+    public int hashCode() {
+
+        return fImage.hashCode();
+    }
+
+    /**
+     * Compares this <code>ImageGraphicAttribute</code> to the specified
+     * {@link Object}.
+     * @param rhs the <code>Object</code> to compare for equality
+     * @return <code>true</code> if this
+     * <code>ImageGraphicAttribute</code> equals <code>rhs</code>;
+     * <code>false</code> otherwise.
+     */
+    public boolean equals(Object rhs) {
+
+        try {
+            return equals((ImageGraphicAttribute) rhs);
+        }
+        catch(ClassCastException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Compares this <code>ImageGraphicAttribute</code> to the specified
+     * <code>ImageGraphicAttribute</code>.
+     * @param rhs the <code>ImageGraphicAttribute</code> to compare for
+     * equality
+     * @return <code>true</code> if this
+     * <code>ImageGraphicAttribute</code> equals <code>rhs</code>;
+     * <code>false</code> otherwise.
+     */
+    public boolean equals(ImageGraphicAttribute rhs) {
+
+        if (rhs == null) {
+            return false;
+        }
+
+        if (this == rhs) {
+            return true;
+        }
+
+        if (fOriginX != rhs.fOriginX || fOriginY != rhs.fOriginY) {
+            return false;
+        }
+
+        if (getAlignment() != rhs.getAlignment()) {
+            return false;
+        }
+
+        if (!fImage.equals(rhs.fImage)) {
+            return false;
+        }
+
+        return true;
+    }
+}

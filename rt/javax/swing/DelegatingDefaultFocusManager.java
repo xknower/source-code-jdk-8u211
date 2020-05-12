@@ -1,168 +1,162 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.AWTEvent;
-/*     */ import java.awt.AWTKeyStroke;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.FocusTraversalPolicy;
-/*     */ import java.awt.KeyEventDispatcher;
-/*     */ import java.awt.KeyboardFocusManager;
-/*     */ import java.awt.Window;
-/*     */ import java.awt.event.KeyEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import java.beans.VetoableChangeListener;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class DelegatingDefaultFocusManager
-/*     */   extends DefaultFocusManager
-/*     */ {
-/*     */   private final KeyboardFocusManager delegate;
-/*     */   
-/*     */   DelegatingDefaultFocusManager(KeyboardFocusManager paramKeyboardFocusManager) {
-/*  45 */     this.delegate = paramKeyboardFocusManager;
-/*  46 */     setDefaultFocusTraversalPolicy(this.gluePolicy);
-/*     */   }
-/*     */   
-/*     */   KeyboardFocusManager getDelegate() {
-/*  50 */     return this.delegate;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void processKeyEvent(Component paramComponent, KeyEvent paramKeyEvent) {
-/*  57 */     this.delegate.processKeyEvent(paramComponent, paramKeyEvent);
-/*     */   }
-/*     */   public void focusNextComponent(Component paramComponent) {
-/*  60 */     this.delegate.focusNextComponent(paramComponent);
-/*     */   }
-/*     */   public void focusPreviousComponent(Component paramComponent) {
-/*  63 */     this.delegate.focusPreviousComponent(paramComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getFocusOwner() {
-/*  77 */     return this.delegate.getFocusOwner();
-/*     */   }
-/*     */   public void clearGlobalFocusOwner() {
-/*  80 */     this.delegate.clearGlobalFocusOwner();
-/*     */   }
-/*     */   public Component getPermanentFocusOwner() {
-/*  83 */     return this.delegate.getPermanentFocusOwner();
-/*     */   }
-/*     */   public Window getFocusedWindow() {
-/*  86 */     return this.delegate.getFocusedWindow();
-/*     */   }
-/*     */   public Window getActiveWindow() {
-/*  89 */     return this.delegate.getActiveWindow();
-/*     */   }
-/*     */   public FocusTraversalPolicy getDefaultFocusTraversalPolicy() {
-/*  92 */     return this.delegate.getDefaultFocusTraversalPolicy();
-/*     */   }
-/*     */   
-/*     */   public void setDefaultFocusTraversalPolicy(FocusTraversalPolicy paramFocusTraversalPolicy) {
-/*  96 */     if (this.delegate != null)
-/*     */     {
-/*  98 */       this.delegate.setDefaultFocusTraversalPolicy(paramFocusTraversalPolicy);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDefaultFocusTraversalKeys(int paramInt, Set<? extends AWTKeyStroke> paramSet) {
-/* 105 */     this.delegate.setDefaultFocusTraversalKeys(paramInt, paramSet);
-/*     */   }
-/*     */   public Set<AWTKeyStroke> getDefaultFocusTraversalKeys(int paramInt) {
-/* 108 */     return this.delegate.getDefaultFocusTraversalKeys(paramInt);
-/*     */   }
-/*     */   public Container getCurrentFocusCycleRoot() {
-/* 111 */     return this.delegate.getCurrentFocusCycleRoot();
-/*     */   }
-/*     */   public void setGlobalCurrentFocusCycleRoot(Container paramContainer) {
-/* 114 */     this.delegate.setGlobalCurrentFocusCycleRoot(paramContainer);
-/*     */   }
-/*     */   public void addPropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/* 117 */     this.delegate.addPropertyChangeListener(paramPropertyChangeListener);
-/*     */   }
-/*     */   public void removePropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/* 120 */     this.delegate.removePropertyChangeListener(paramPropertyChangeListener);
-/*     */   }
-/*     */   
-/*     */   public void addPropertyChangeListener(String paramString, PropertyChangeListener paramPropertyChangeListener) {
-/* 124 */     this.delegate.addPropertyChangeListener(paramString, paramPropertyChangeListener);
-/*     */   }
-/*     */   
-/*     */   public void removePropertyChangeListener(String paramString, PropertyChangeListener paramPropertyChangeListener) {
-/* 128 */     this.delegate.removePropertyChangeListener(paramString, paramPropertyChangeListener);
-/*     */   }
-/*     */   public void addVetoableChangeListener(VetoableChangeListener paramVetoableChangeListener) {
-/* 131 */     this.delegate.addVetoableChangeListener(paramVetoableChangeListener);
-/*     */   }
-/*     */   public void removeVetoableChangeListener(VetoableChangeListener paramVetoableChangeListener) {
-/* 134 */     this.delegate.removeVetoableChangeListener(paramVetoableChangeListener);
-/*     */   }
-/*     */   
-/*     */   public void addVetoableChangeListener(String paramString, VetoableChangeListener paramVetoableChangeListener) {
-/* 138 */     this.delegate.addVetoableChangeListener(paramString, paramVetoableChangeListener);
-/*     */   }
-/*     */   
-/*     */   public void removeVetoableChangeListener(String paramString, VetoableChangeListener paramVetoableChangeListener) {
-/* 142 */     this.delegate.removeVetoableChangeListener(paramString, paramVetoableChangeListener);
-/*     */   }
-/*     */   public void addKeyEventDispatcher(KeyEventDispatcher paramKeyEventDispatcher) {
-/* 145 */     this.delegate.addKeyEventDispatcher(paramKeyEventDispatcher);
-/*     */   }
-/*     */   public void removeKeyEventDispatcher(KeyEventDispatcher paramKeyEventDispatcher) {
-/* 148 */     this.delegate.removeKeyEventDispatcher(paramKeyEventDispatcher);
-/*     */   }
-/*     */   public boolean dispatchEvent(AWTEvent paramAWTEvent) {
-/* 151 */     return this.delegate.dispatchEvent(paramAWTEvent);
-/*     */   }
-/*     */   public boolean dispatchKeyEvent(KeyEvent paramKeyEvent) {
-/* 154 */     return this.delegate.dispatchKeyEvent(paramKeyEvent);
-/*     */   }
-/*     */   public void upFocusCycle(Component paramComponent) {
-/* 157 */     this.delegate.upFocusCycle(paramComponent);
-/*     */   }
-/*     */   public void downFocusCycle(Container paramContainer) {
-/* 160 */     this.delegate.downFocusCycle(paramContainer);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DelegatingDefaultFocusManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.*;
+import java.util.Set;
+
+
+/**
+ * Provides a javax.swing.DefaultFocusManager view onto an arbitrary
+ * java.awt.KeyboardFocusManager. We subclass DefaultFocusManager instead of
+ * FocusManager because it seems more backward-compatible. It is likely that
+ * some pre-1.4 code assumes that the object returned by
+ * FocusManager.getCurrentManager is an instance of DefaultFocusManager unless
+ * set explicitly.
+ */
+final class DelegatingDefaultFocusManager extends DefaultFocusManager {
+    private final KeyboardFocusManager delegate;
+
+    DelegatingDefaultFocusManager(KeyboardFocusManager delegate) {
+        this.delegate = delegate;
+        setDefaultFocusTraversalPolicy(gluePolicy);
+    }
+
+    KeyboardFocusManager getDelegate() {
+        return delegate;
+    }
+
+    // Legacy methods which first appeared in javax.swing.FocusManager.
+    // Client code is most likely to invoke these methods.
+
+    public void processKeyEvent(Component focusedComponent, KeyEvent e) {
+        delegate.processKeyEvent(focusedComponent, e);
+    }
+    public void focusNextComponent(Component aComponent) {
+        delegate.focusNextComponent(aComponent);
+    }
+    public void focusPreviousComponent(Component aComponent) {
+        delegate.focusPreviousComponent(aComponent);
+    }
+
+    // Make sure that we delegate all new methods in KeyboardFocusManager
+    // as well as the legacy methods from Swing. It is theoretically possible,
+    // although unlikely, that a client app will treat this instance as a
+    // new-style KeyboardFocusManager. We might as well be safe.
+    //
+    // The JLS won't let us override the protected methods in
+    // KeyboardFocusManager such that they invoke the corresponding methods on
+    // the delegate. However, since client code would never be able to call
+    // those methods anyways, we don't have to worry about that problem.
+
+    public Component getFocusOwner() {
+        return delegate.getFocusOwner();
+    }
+    public void clearGlobalFocusOwner() {
+        delegate.clearGlobalFocusOwner();
+    }
+    public Component getPermanentFocusOwner() {
+        return delegate.getPermanentFocusOwner();
+    }
+    public Window getFocusedWindow() {
+        return delegate.getFocusedWindow();
+    }
+    public Window getActiveWindow() {
+        return delegate.getActiveWindow();
+    }
+    public FocusTraversalPolicy getDefaultFocusTraversalPolicy() {
+        return delegate.getDefaultFocusTraversalPolicy();
+    }
+    public void setDefaultFocusTraversalPolicy(FocusTraversalPolicy
+                                               defaultPolicy) {
+        if (delegate != null) {
+            // Will be null when invoked from supers constructor.
+            delegate.setDefaultFocusTraversalPolicy(defaultPolicy);
+        }
+    }
+    public void
+        setDefaultFocusTraversalKeys(int id,
+                                     Set<? extends AWTKeyStroke> keystrokes)
+    {
+        delegate.setDefaultFocusTraversalKeys(id, keystrokes);
+    }
+    public Set<AWTKeyStroke> getDefaultFocusTraversalKeys(int id) {
+        return delegate.getDefaultFocusTraversalKeys(id);
+    }
+    public Container getCurrentFocusCycleRoot() {
+        return delegate.getCurrentFocusCycleRoot();
+    }
+    public void setGlobalCurrentFocusCycleRoot(Container newFocusCycleRoot) {
+        delegate.setGlobalCurrentFocusCycleRoot(newFocusCycleRoot);
+    }
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        delegate.addPropertyChangeListener(listener);
+    }
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        delegate.removePropertyChangeListener(listener);
+    }
+    public void addPropertyChangeListener(String propertyName,
+                                          PropertyChangeListener listener) {
+        delegate.addPropertyChangeListener(propertyName, listener);
+    }
+    public void removePropertyChangeListener(String propertyName,
+                                             PropertyChangeListener listener) {
+        delegate.removePropertyChangeListener(propertyName, listener);
+    }
+    public void addVetoableChangeListener(VetoableChangeListener listener) {
+        delegate.addVetoableChangeListener(listener);
+    }
+    public void removeVetoableChangeListener(VetoableChangeListener listener) {
+        delegate.removeVetoableChangeListener(listener);
+    }
+    public void addVetoableChangeListener(String propertyName,
+                                          VetoableChangeListener listener) {
+        delegate.addVetoableChangeListener(propertyName, listener);
+    }
+    public void removeVetoableChangeListener(String propertyName,
+                                             VetoableChangeListener listener) {
+        delegate.removeVetoableChangeListener(propertyName, listener);
+    }
+    public void addKeyEventDispatcher(KeyEventDispatcher dispatcher) {
+        delegate.addKeyEventDispatcher(dispatcher);
+    }
+    public void removeKeyEventDispatcher(KeyEventDispatcher dispatcher) {
+        delegate.removeKeyEventDispatcher(dispatcher);
+    }
+    public boolean dispatchEvent(AWTEvent e) {
+        return delegate.dispatchEvent(e);
+    }
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        return delegate.dispatchKeyEvent(e);
+    }
+    public void upFocusCycle(Component aComponent) {
+        delegate.upFocusCycle(aComponent);
+    }
+    public void downFocusCycle(Container aContainer) {
+        delegate.downFocusCycle(aContainer);
+    }
+}

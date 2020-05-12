@@ -1,75 +1,70 @@
-/*    */ package java.nio.charset;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UnmappableCharacterException
-/*    */   extends CharacterCodingException
-/*    */ {
-/*    */   private static final long serialVersionUID = -7026962371537706123L;
-/*    */   private int inputLength;
-/*    */   
-/*    */   public UnmappableCharacterException(int paramInt) {
-/* 51 */     this.inputLength = paramInt;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getInputLength() {
-/* 59 */     return this.inputLength;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getMessage() {
-/* 67 */     return "Input length = " + this.inputLength;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\charset\UnmappableCharacterException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.charset;
+
+
+/**
+ * Checked exception thrown when an input character (or byte) sequence
+ * is valid but cannot be mapped to an output byte (or character)
+ * sequence.
+ *
+ * @since 1.4
+ */
+
+public class UnmappableCharacterException
+    extends CharacterCodingException
+{
+
+    private static final long serialVersionUID = -7026962371537706123L;
+
+    private int inputLength;
+
+    /**
+     * Constructs an {@code UnmappableCharacterException} with the
+     * given length.
+     * @param inputLength the length of the input
+     */
+    public UnmappableCharacterException(int inputLength) {
+        this.inputLength = inputLength;
+    }
+
+    /**
+     * Returns the length of the input.
+     * @return the length of the input
+     */
+    public int getInputLength() {
+        return inputLength;
+    }
+
+    /**
+     * Returns the message.
+     * @return the message
+     */
+    public String getMessage() {
+        return "Input length = " + inputLength;
+    }
+
+}

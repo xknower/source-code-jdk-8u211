@@ -1,117 +1,110 @@
-/*     */ package com.sun.corba.se.spi.oa;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.copyobject.ObjectCopierFactory;
-/*     */ import javax.rmi.CORBA.Tie;
-/*     */ import org.omg.CORBA.portable.ServantObject;
-/*     */ import org.omg.PortableServer.ServantLocatorPackage.CookieHolder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class OAInvocationInfo
-/*     */   extends ServantObject
-/*     */ {
-/*     */   private Object servantContainer;
-/*     */   private ObjectAdapter oa;
-/*     */   private byte[] oid;
-/*     */   private CookieHolder cookieHolder;
-/*     */   private String operation;
-/*     */   private ObjectCopierFactory factory;
-/*     */   
-/*     */   public OAInvocationInfo(ObjectAdapter paramObjectAdapter, byte[] paramArrayOfbyte) {
-/*  63 */     this.oa = paramObjectAdapter;
-/*  64 */     this.oid = paramArrayOfbyte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OAInvocationInfo(OAInvocationInfo paramOAInvocationInfo, String paramString) {
-/*  70 */     this.servant = paramOAInvocationInfo.servant;
-/*  71 */     this.servantContainer = paramOAInvocationInfo.servantContainer;
-/*  72 */     this.cookieHolder = paramOAInvocationInfo.cookieHolder;
-/*  73 */     this.oa = paramOAInvocationInfo.oa;
-/*  74 */     this.oid = paramOAInvocationInfo.oid;
-/*  75 */     this.factory = paramOAInvocationInfo.factory;
-/*     */     
-/*  77 */     this.operation = paramString;
-/*     */   }
-/*     */   
-/*     */   public ObjectAdapter oa() {
-/*  81 */     return this.oa;
-/*  82 */   } public byte[] id() { return this.oid; } public Object getServantContainer() {
-/*  83 */     return this.servantContainer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CookieHolder getCookieHolder() {
-/*  89 */     if (this.cookieHolder == null) {
-/*  90 */       this.cookieHolder = new CookieHolder();
-/*     */     }
-/*  92 */     return this.cookieHolder;
-/*     */   }
-/*     */   
-/*  95 */   public String getOperation() { return this.operation; } public ObjectCopierFactory getCopierFactory() {
-/*  96 */     return this.factory;
-/*     */   }
-/*     */   
-/*  99 */   public void setOperation(String paramString) { this.operation = paramString; } public void setCopierFactory(ObjectCopierFactory paramObjectCopierFactory) {
-/* 100 */     this.factory = paramObjectCopierFactory;
-/*     */   }
-/*     */   
-/*     */   public void setServant(Object paramObject) {
-/* 104 */     this.servantContainer = paramObject;
-/* 105 */     if (paramObject instanceof Tie) {
-/* 106 */       this.servant = ((Tie)paramObject).getTarget();
-/*     */     } else {
-/* 108 */       this.servant = paramObject;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\oa\OAInvocationInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.spi.oa;
+
+import javax.rmi.CORBA.Tie ;
+
+import org.omg.CORBA.portable.ServantObject;
+
+import org.omg.PortableServer.Servant;
+
+import org.omg.PortableServer.ServantLocatorPackage.CookieHolder;
+
+import com.sun.corba.se.spi.oa.ObjectAdapter ;
+import com.sun.corba.se.spi.copyobject.ObjectCopierFactory ;
+
+/** This class is a holder for the information required to implement POACurrent.
+* It is also used for the ServantObject that is returned by _servant_preinvoke calls.
+* This allows us to avoid allocating an extra object on each collocated invocation.
+*/
+public class OAInvocationInfo extends ServantObject {
+    // This is the container object for the servant.
+    // In the RMI-IIOP case, it is the RMI-IIOP Tie, and the servant is the
+    // target of the Tie.
+    // In all other cases, it is the same as the Servant.
+    private java.lang.Object    servantContainer ;
+
+    // These fields are to support standard OMG APIs.
+    private ObjectAdapter       oa;
+    private byte[]              oid;
+
+    // These fields are to support the Object adapter implementation.
+    private CookieHolder        cookieHolder;
+    private String              operation;
+
+    // This is the copier to be used by javax.rmi.CORBA.Util.copyObject(s)
+    // For the current request.
+    private ObjectCopierFactory factory ;
+
+    public OAInvocationInfo(ObjectAdapter oa, byte[] id )
+    {
+        this.oa = oa;
+        this.oid  = id;
+    }
+
+    // Copy constructor of sorts; used in local optimization path
+    public OAInvocationInfo( OAInvocationInfo info, String operation )
+    {
+        this.servant            = info.servant ;
+        this.servantContainer   = info.servantContainer ;
+        this.cookieHolder       = info.cookieHolder ;
+        this.oa                 = info.oa;
+        this.oid                = info.oid;
+        this.factory            = info.factory ;
+
+        this.operation          = operation;
+    }
+
+    //getters
+    public ObjectAdapter    oa()                    { return oa ; }
+    public byte[]           id()                    { return oid ; }
+    public Object           getServantContainer()   { return servantContainer ; }
+
+    // Create CookieHolder on demand.  This is only called by a single
+    // thread, so no synchronization is needed.
+    public CookieHolder     getCookieHolder()
+    {
+        if (cookieHolder == null)
+            cookieHolder = new CookieHolder() ;
+
+        return cookieHolder;
+    }
+
+    public String           getOperation()      { return operation; }
+    public ObjectCopierFactory  getCopierFactory()      { return factory; }
+
+    //setters
+    public void setOperation( String operation )    { this.operation = operation ; }
+    public void setCopierFactory( ObjectCopierFactory factory )    { this.factory = factory ; }
+
+    public void setServant(Object servant)
+    {
+        servantContainer = servant ;
+        if (servant instanceof Tie)
+            this.servant = ((Tie)servant).getTarget() ;
+        else
+            this.servant = servant;
+    }
+}

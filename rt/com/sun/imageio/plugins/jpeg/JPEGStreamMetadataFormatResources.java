@@ -1,52 +1,46 @@
-/*    */ package com.sun.imageio.plugins.jpeg;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JPEGStreamMetadataFormatResources
-/*    */   extends JPEGMetadataFormatResources
-/*    */ {
-/*    */   protected Object[][] getContents() {
-/* 39 */     Object[][] arrayOfObject = new Object[commonContents.length][2];
-/* 40 */     for (byte b = 0; b < commonContents.length; b++) {
-/* 41 */       arrayOfObject[b][0] = commonContents[b][0];
-/* 42 */       arrayOfObject[b][1] = commonContents[b][1];
-/*    */     } 
-/* 44 */     return arrayOfObject;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\JPEGStreamMetadataFormatResources.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import java.util.ListResourceBundle;
+
+public class JPEGStreamMetadataFormatResources
+       extends JPEGMetadataFormatResources {
+
+    public JPEGStreamMetadataFormatResources() {}
+
+    protected Object[][] getContents() {
+        // return a copy of commonContents; in theory we want a deep clone
+        // of commonContents, but since it only contains (immutable) Strings,
+        // this shallow copy is sufficient
+        Object[][] commonCopy = new Object[commonContents.length][2];
+        for (int i = 0; i < commonContents.length; i++) {
+            commonCopy[i][0] = commonContents[i][0];
+            commonCopy[i][1] = commonContents[i][1];
+        }
+        return commonCopy;
+    }
+}

@@ -1,196 +1,191 @@
-/*     */ package javax.swing.border;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.geom.Path2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.geom.RoundRectangle2D;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class LineBorder
-/*     */   extends AbstractBorder
-/*     */ {
-/*     */   private static Border blackLine;
-/*     */   private static Border grayLine;
-/*     */   protected int thickness;
-/*     */   protected Color lineColor;
-/*     */   protected boolean roundedCorners;
-/*     */   
-/*     */   public static Border createBlackLineBorder() {
-/*  65 */     if (blackLine == null) {
-/*  66 */       blackLine = new LineBorder(Color.black, 1);
-/*     */     }
-/*  68 */     return blackLine;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Border createGrayLineBorder() {
-/*  74 */     if (grayLine == null) {
-/*  75 */       grayLine = new LineBorder(Color.gray, 1);
-/*     */     }
-/*  77 */     return grayLine;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LineBorder(Color paramColor) {
-/*  86 */     this(paramColor, 1, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LineBorder(Color paramColor, int paramInt) {
-/*  95 */     this(paramColor, paramInt, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ConstructorProperties({"lineColor", "thickness", "roundedCorners"})
-/*     */   public LineBorder(Color paramColor, int paramInt, boolean paramBoolean) {
-/* 108 */     this.lineColor = paramColor;
-/* 109 */     this.thickness = paramInt;
-/* 110 */     this.roundedCorners = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 124 */     if (this.thickness > 0 && paramGraphics instanceof Graphics2D) {
-/* 125 */       Rectangle2D.Float float_1, float_2; Graphics2D graphics2D = (Graphics2D)paramGraphics;
-/*     */       
-/* 127 */       Color color = graphics2D.getColor();
-/* 128 */       graphics2D.setColor(this.lineColor);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 133 */       int i = this.thickness;
-/* 134 */       int j = i + i;
-/* 135 */       if (this.roundedCorners) {
-/* 136 */         float f = 0.2F * i;
-/* 137 */         RoundRectangle2D.Float float_3 = new RoundRectangle2D.Float(paramInt1, paramInt2, paramInt3, paramInt4, i, i);
-/* 138 */         RoundRectangle2D.Float float_4 = new RoundRectangle2D.Float((paramInt1 + i), (paramInt2 + i), (paramInt3 - j), (paramInt4 - j), f, f);
-/*     */       } else {
-/*     */         
-/* 141 */         float_1 = new Rectangle2D.Float(paramInt1, paramInt2, paramInt3, paramInt4);
-/* 142 */         float_2 = new Rectangle2D.Float((paramInt1 + i), (paramInt2 + i), (paramInt3 - j), (paramInt4 - j));
-/*     */       } 
-/* 144 */       Path2D.Float float_ = new Path2D.Float(0);
-/* 145 */       float_.append(float_1, false);
-/* 146 */       float_.append(float_2, false);
-/* 147 */       graphics2D.fill(float_);
-/* 148 */       graphics2D.setColor(color);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/* 158 */     paramInsets.set(this.thickness, this.thickness, this.thickness, this.thickness);
-/* 159 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getLineColor() {
-/* 166 */     return this.lineColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getThickness() {
-/* 173 */     return this.thickness;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getRoundedCorners() {
-/* 181 */     return this.roundedCorners;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isBorderOpaque() {
-/* 188 */     return !this.roundedCorners;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\border\LineBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.border;
+
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.beans.ConstructorProperties;
+
+/**
+ * A class which implements a line border of arbitrary thickness
+ * and of a single color.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author David Kloba
+ */
+public class LineBorder extends AbstractBorder
+{
+    private static Border blackLine;
+    private static Border grayLine;
+
+    protected int thickness;
+    protected Color lineColor;
+    protected boolean roundedCorners;
+
+    /** Convenience method for getting the Color.black LineBorder of thickness 1.
+      */
+    public static Border createBlackLineBorder() {
+        if (blackLine == null) {
+            blackLine = new LineBorder(Color.black, 1);
+        }
+        return blackLine;
+    }
+
+    /** Convenience method for getting the Color.gray LineBorder of thickness 1.
+      */
+    public static Border createGrayLineBorder() {
+        if (grayLine == null) {
+            grayLine = new LineBorder(Color.gray, 1);
+        }
+        return grayLine;
+    }
+
+    /**
+     * Creates a line border with the specified color and a
+     * thickness = 1.
+     * @param color the color for the border
+     */
+    public LineBorder(Color color) {
+        this(color, 1, false);
+    }
+
+    /**
+     * Creates a line border with the specified color and thickness.
+     * @param color the color of the border
+     * @param thickness the thickness of the border
+     */
+    public LineBorder(Color color, int thickness)  {
+        this(color, thickness, false);
+    }
+
+    /**
+     * Creates a line border with the specified color, thickness,
+     * and corner shape.
+     * @param color the color of the border
+     * @param thickness the thickness of the border
+     * @param roundedCorners whether or not border corners should be round
+     * @since 1.3
+     */
+    @ConstructorProperties({"lineColor", "thickness", "roundedCorners"})
+    public LineBorder(Color color, int thickness, boolean roundedCorners)  {
+        lineColor = color;
+        this.thickness = thickness;
+        this.roundedCorners = roundedCorners;
+    }
+
+    /**
+     * Paints the border for the specified component with the
+     * specified position and size.
+     * @param c the component for which this border is being painted
+     * @param g the paint graphics
+     * @param x the x position of the painted border
+     * @param y the y position of the painted border
+     * @param width the width of the painted border
+     * @param height the height of the painted border
+     */
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        if ((this.thickness > 0) && (g instanceof Graphics2D)) {
+            Graphics2D g2d = (Graphics2D) g;
+
+            Color oldColor = g2d.getColor();
+            g2d.setColor(this.lineColor);
+
+            Shape outer;
+            Shape inner;
+
+            int offs = this.thickness;
+            int size = offs + offs;
+            if (this.roundedCorners) {
+                float arc = .2f * offs;
+                outer = new RoundRectangle2D.Float(x, y, width, height, offs, offs);
+                inner = new RoundRectangle2D.Float(x + offs, y + offs, width - size, height - size, arc, arc);
+            }
+            else {
+                outer = new Rectangle2D.Float(x, y, width, height);
+                inner = new Rectangle2D.Float(x + offs, y + offs, width - size, height - size);
+            }
+            Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+            path.append(outer, false);
+            path.append(inner, false);
+            g2d.fill(path);
+            g2d.setColor(oldColor);
+        }
+    }
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
+     * @param c the component for which this border insets value applies
+     * @param insets the object to be reinitialized
+     */
+    public Insets getBorderInsets(Component c, Insets insets) {
+        insets.set(thickness, thickness, thickness, thickness);
+        return insets;
+    }
+
+    /**
+     * Returns the color of the border.
+     */
+    public Color getLineColor()     {
+        return lineColor;
+    }
+
+    /**
+     * Returns the thickness of the border.
+     */
+    public int getThickness()       {
+        return thickness;
+    }
+
+    /**
+     * Returns whether this border will be drawn with rounded corners.
+     * @since 1.3
+     */
+    public boolean getRoundedCorners() {
+        return roundedCorners;
+    }
+
+    /**
+     * Returns whether or not the border is opaque.
+     */
+    public boolean isBorderOpaque() {
+        return !roundedCorners;
+    }
+
+}

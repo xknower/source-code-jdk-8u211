@@ -1,68 +1,62 @@
-/*    */ package com.sun.imageio.plugins.common;
-/*    */ 
-/*    */ import java.io.InputStream;
-/*    */ import java.util.PropertyResourceBundle;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class I18NImpl
-/*    */ {
-/*    */   protected static final String getString(String paramString1, String paramString2, String paramString3) {
-/* 51 */     PropertyResourceBundle propertyResourceBundle = null;
-/*    */     
-/*    */     try {
-/* 54 */       InputStream inputStream = Class.forName(paramString1).getResourceAsStream(paramString2);
-/* 55 */       propertyResourceBundle = new PropertyResourceBundle(inputStream);
-/* 56 */     } catch (Throwable throwable) {
-/* 57 */       throw new RuntimeException(throwable);
-/*    */     } 
-/*    */     
-/* 60 */     return (String)propertyResourceBundle.handleGetObject(paramString3);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\common\I18NImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.common;
+
+import java.io.InputStream;
+import java.util.PropertyResourceBundle;
+import java.net.URL;
+
+/**
+ * Class to simplify use of internationalization message strings.
+ * Property files are constructed in terms of content as for JAI with
+ * one "key=value" pair per line. All such files however have the same
+ * name "properties". The resource extractor resolves the extraction of
+ * the file from the jar as the package name is included automatically.
+ *
+ * <p>Extenders need only provide a static method
+ * <code>getString(String)</code> which calls the static method in this
+ * class with the name of the invoking class and returns a
+ * <code>String</code>.
+ */
+public class I18NImpl {
+    /**
+     * Returns the message string with the specified key from the
+     * "properties" file in the package containing the class with
+     * the specified name.
+     */
+    protected static final String getString(String className, String resource_name, String key) {
+        PropertyResourceBundle bundle = null;
+        try {
+            InputStream stream =
+                Class.forName(className).getResourceAsStream(resource_name);
+            bundle = new PropertyResourceBundle(stream);
+        } catch(Throwable e) {
+            throw new RuntimeException(e); // Chain the exception.
+        }
+
+        return (String)bundle.handleGetObject(key);
+    }
+}

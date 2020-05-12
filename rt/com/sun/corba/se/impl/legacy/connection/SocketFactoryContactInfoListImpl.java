@@ -1,68 +1,64 @@
-/*    */ package com.sun.corba.se.impl.legacy.connection;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.transport.CorbaContactInfoListImpl;
-/*    */ import com.sun.corba.se.spi.ior.IOR;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import java.util.Iterator;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SocketFactoryContactInfoListImpl
-/*    */   extends CorbaContactInfoListImpl
-/*    */ {
-/*    */   public SocketFactoryContactInfoListImpl(ORB paramORB) {
-/* 45 */     super(paramORB);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public SocketFactoryContactInfoListImpl(ORB paramORB, IOR paramIOR) {
-/* 50 */     super(paramORB, paramIOR);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Iterator iterator() {
-/* 60 */     return new SocketFactoryContactInfoListIteratorImpl(this.orb, this);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\legacy\connection\SocketFactoryContactInfoListImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.legacy.connection;
+
+import java.util.Iterator;
+
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.impl.transport.CorbaContactInfoListImpl;
+import com.sun.corba.se.impl.transport.CorbaContactInfoListIteratorImpl;
+
+/**
+ * @author Harold Carr
+ */
+public class SocketFactoryContactInfoListImpl
+    extends
+        CorbaContactInfoListImpl
+{
+    // XREVISIT - is this used?
+    public SocketFactoryContactInfoListImpl(ORB orb)
+    {
+        super(orb);
+    }
+
+    public SocketFactoryContactInfoListImpl(ORB orb, IOR targetIOR)
+    {
+        super(orb, targetIOR);
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // pept.transport.ContactInfoList
+    //
+
+    public Iterator iterator()
+    {
+        return new SocketFactoryContactInfoListIteratorImpl(orb, this);
+    }
+}
+
+// End of file.

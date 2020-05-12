@@ -1,434 +1,428 @@
-/*     */ package java.awt.geom;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class Point2D
-/*     */   implements Cloneable
-/*     */ {
-/*     */   public abstract double getX();
-/*     */   
-/*     */   public abstract double getY();
-/*     */   
-/*     */   public abstract void setLocation(double paramDouble1, double paramDouble2);
-/*     */   
-/*     */   public static class Float
-/*     */     extends Point2D
-/*     */     implements Serializable
-/*     */   {
-/*     */     public float x;
-/*     */     public float y;
-/*     */     private static final long serialVersionUID = -2870572449815403710L;
-/*     */     
-/*     */     public Float() {}
-/*     */     
-/*     */     public Float(float param1Float1, float param1Float2) {
-/*  83 */       this.x = param1Float1;
-/*  84 */       this.y = param1Float2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public double getX() {
-/*  92 */       return this.x;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public double getY() {
-/* 100 */       return this.y;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setLocation(double param1Double1, double param1Double2) {
-/* 108 */       this.x = (float)param1Double1;
-/* 109 */       this.y = (float)param1Double2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setLocation(float param1Float1, float param1Float2) {
-/* 121 */       this.x = param1Float1;
-/* 122 */       this.y = param1Float2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public String toString() {
-/* 132 */       return "Point2D.Float[" + this.x + ", " + this.y + "]";
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class Double
-/*     */     extends Point2D
-/*     */     implements Serializable
-/*     */   {
-/*     */     public double x;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public double y;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private static final long serialVersionUID = 6150783262733311327L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Double() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Double(double param1Double1, double param1Double2) {
-/* 180 */       this.x = param1Double1;
-/* 181 */       this.y = param1Double2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public double getX() {
-/* 189 */       return this.x;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public double getY() {
-/* 197 */       return this.y;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setLocation(double param1Double1, double param1Double2) {
-/* 205 */       this.x = param1Double1;
-/* 206 */       this.y = param1Double2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public String toString() {
-/* 216 */       return "Point2D.Double[" + this.x + ", " + this.y + "]";
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocation(Point2D paramPoint2D) {
-/* 274 */     setLocation(paramPoint2D.getX(), paramPoint2D.getY());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static double distanceSq(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 291 */     paramDouble1 -= paramDouble3;
-/* 292 */     paramDouble2 -= paramDouble4;
-/* 293 */     return paramDouble1 * paramDouble1 + paramDouble2 * paramDouble2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static double distance(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 310 */     paramDouble1 -= paramDouble3;
-/* 311 */     paramDouble2 -= paramDouble4;
-/* 312 */     return Math.sqrt(paramDouble1 * paramDouble1 + paramDouble2 * paramDouble2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double distanceSq(double paramDouble1, double paramDouble2) {
-/* 328 */     paramDouble1 -= getX();
-/* 329 */     paramDouble2 -= getY();
-/* 330 */     return paramDouble1 * paramDouble1 + paramDouble2 * paramDouble2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double distanceSq(Point2D paramPoint2D) {
-/* 344 */     double d1 = paramPoint2D.getX() - getX();
-/* 345 */     double d2 = paramPoint2D.getY() - getY();
-/* 346 */     return d1 * d1 + d2 * d2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double distance(double paramDouble1, double paramDouble2) {
-/* 362 */     paramDouble1 -= getX();
-/* 363 */     paramDouble2 -= getY();
-/* 364 */     return Math.sqrt(paramDouble1 * paramDouble1 + paramDouble2 * paramDouble2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double distance(Point2D paramPoint2D) {
-/* 378 */     double d1 = paramPoint2D.getX() - getX();
-/* 379 */     double d2 = paramPoint2D.getY() - getY();
-/* 380 */     return Math.sqrt(d1 * d1 + d2 * d2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     try {
-/* 393 */       return super.clone();
-/* 394 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*     */       
-/* 396 */       throw new InternalError(cloneNotSupportedException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 405 */     long l = Double.doubleToLongBits(getX());
-/* 406 */     l ^= Double.doubleToLongBits(getY()) * 31L;
-/* 407 */     return (int)l ^ (int)(l >> 32L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 422 */     if (paramObject instanceof Point2D) {
-/* 423 */       Point2D point2D = (Point2D)paramObject;
-/* 424 */       return (getX() == point2D.getX() && getY() == point2D.getY());
-/*     */     } 
-/* 426 */     return super.equals(paramObject);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\Point2D.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+import java.io.Serializable;
+
+/**
+ * The <code>Point2D</code> class defines a point representing a location
+ * in {@code (x,y)} coordinate space.
+ * <p>
+ * This class is only the abstract superclass for all objects that
+ * store a 2D coordinate.
+ * The actual storage representation of the coordinates is left to
+ * the subclass.
+ *
+ * @author      Jim Graham
+ * @since 1.2
+ */
+public abstract class Point2D implements Cloneable {
+
+    /**
+     * The <code>Float</code> class defines a point specified in float
+     * precision.
+     * @since 1.2
+     */
+    public static class Float extends Point2D implements Serializable {
+        /**
+         * The X coordinate of this <code>Point2D</code>.
+         * @since 1.2
+         * @serial
+         */
+        public float x;
+
+        /**
+         * The Y coordinate of this <code>Point2D</code>.
+         * @since 1.2
+         * @serial
+         */
+        public float y;
+
+        /**
+         * Constructs and initializes a <code>Point2D</code> with
+         * coordinates (0,&nbsp;0).
+         * @since 1.2
+         */
+        public Float() {
+        }
+
+        /**
+         * Constructs and initializes a <code>Point2D</code> with
+         * the specified coordinates.
+         *
+         * @param x the X coordinate of the newly
+         *          constructed <code>Point2D</code>
+         * @param y the Y coordinate of the newly
+         *          constructed <code>Point2D</code>
+         * @since 1.2
+         */
+        public Float(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getX() {
+            return (double) x;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getY() {
+            return (double) y;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public void setLocation(double x, double y) {
+            this.x = (float) x;
+            this.y = (float) y;
+        }
+
+        /**
+         * Sets the location of this <code>Point2D</code> to the
+         * specified <code>float</code> coordinates.
+         *
+         * @param x the new X coordinate of this {@code Point2D}
+         * @param y the new Y coordinate of this {@code Point2D}
+         * @since 1.2
+         */
+        public void setLocation(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        /**
+         * Returns a <code>String</code> that represents the value
+         * of this <code>Point2D</code>.
+         * @return a string representation of this <code>Point2D</code>.
+         * @since 1.2
+         */
+        public String toString() {
+            return "Point2D.Float["+x+", "+y+"]";
+        }
+
+        /*
+         * JDK 1.6 serialVersionUID
+         */
+        private static final long serialVersionUID = -2870572449815403710L;
+    }
+
+    /**
+     * The <code>Double</code> class defines a point specified in
+     * <code>double</code> precision.
+     * @since 1.2
+     */
+    public static class Double extends Point2D implements Serializable {
+        /**
+         * The X coordinate of this <code>Point2D</code>.
+         * @since 1.2
+         * @serial
+         */
+        public double x;
+
+        /**
+         * The Y coordinate of this <code>Point2D</code>.
+         * @since 1.2
+         * @serial
+         */
+        public double y;
+
+        /**
+         * Constructs and initializes a <code>Point2D</code> with
+         * coordinates (0,&nbsp;0).
+         * @since 1.2
+         */
+        public Double() {
+        }
+
+        /**
+         * Constructs and initializes a <code>Point2D</code> with the
+         * specified coordinates.
+         *
+         * @param x the X coordinate of the newly
+         *          constructed <code>Point2D</code>
+         * @param y the Y coordinate of the newly
+         *          constructed <code>Point2D</code>
+         * @since 1.2
+         */
+        public Double(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getX() {
+            return x;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getY() {
+            return y;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public void setLocation(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        /**
+         * Returns a <code>String</code> that represents the value
+         * of this <code>Point2D</code>.
+         * @return a string representation of this <code>Point2D</code>.
+         * @since 1.2
+         */
+        public String toString() {
+            return "Point2D.Double["+x+", "+y+"]";
+        }
+
+        /*
+         * JDK 1.6 serialVersionUID
+         */
+        private static final long serialVersionUID = 6150783262733311327L;
+    }
+
+    /**
+     * This is an abstract class that cannot be instantiated directly.
+     * Type-specific implementation subclasses are available for
+     * instantiation and provide a number of formats for storing
+     * the information necessary to satisfy the various accessor
+     * methods below.
+     *
+     * @see java.awt.geom.Point2D.Float
+     * @see java.awt.geom.Point2D.Double
+     * @see java.awt.Point
+     * @since 1.2
+     */
+    protected Point2D() {
+    }
+
+    /**
+     * Returns the X coordinate of this <code>Point2D</code> in
+     * <code>double</code> precision.
+     * @return the X coordinate of this <code>Point2D</code>.
+     * @since 1.2
+     */
+    public abstract double getX();
+
+    /**
+     * Returns the Y coordinate of this <code>Point2D</code> in
+     * <code>double</code> precision.
+     * @return the Y coordinate of this <code>Point2D</code>.
+     * @since 1.2
+     */
+    public abstract double getY();
+
+    /**
+     * Sets the location of this <code>Point2D</code> to the
+     * specified <code>double</code> coordinates.
+     *
+     * @param x the new X coordinate of this {@code Point2D}
+     * @param y the new Y coordinate of this {@code Point2D}
+     * @since 1.2
+     */
+    public abstract void setLocation(double x, double y);
+
+    /**
+     * Sets the location of this <code>Point2D</code> to the same
+     * coordinates as the specified <code>Point2D</code> object.
+     * @param p the specified <code>Point2D</code> to which to set
+     * this <code>Point2D</code>
+     * @since 1.2
+     */
+    public void setLocation(Point2D p) {
+        setLocation(p.getX(), p.getY());
+    }
+
+    /**
+     * Returns the square of the distance between two points.
+     *
+     * @param x1 the X coordinate of the first specified point
+     * @param y1 the Y coordinate of the first specified point
+     * @param x2 the X coordinate of the second specified point
+     * @param y2 the Y coordinate of the second specified point
+     * @return the square of the distance between the two
+     * sets of specified coordinates.
+     * @since 1.2
+     */
+    public static double distanceSq(double x1, double y1,
+                                    double x2, double y2)
+    {
+        x1 -= x2;
+        y1 -= y2;
+        return (x1 * x1 + y1 * y1);
+    }
+
+    /**
+     * Returns the distance between two points.
+     *
+     * @param x1 the X coordinate of the first specified point
+     * @param y1 the Y coordinate of the first specified point
+     * @param x2 the X coordinate of the second specified point
+     * @param y2 the Y coordinate of the second specified point
+     * @return the distance between the two sets of specified
+     * coordinates.
+     * @since 1.2
+     */
+    public static double distance(double x1, double y1,
+                                  double x2, double y2)
+    {
+        x1 -= x2;
+        y1 -= y2;
+        return Math.sqrt(x1 * x1 + y1 * y1);
+    }
+
+    /**
+     * Returns the square of the distance from this
+     * <code>Point2D</code> to a specified point.
+     *
+     * @param px the X coordinate of the specified point to be measured
+     *           against this <code>Point2D</code>
+     * @param py the Y coordinate of the specified point to be measured
+     *           against this <code>Point2D</code>
+     * @return the square of the distance between this
+     * <code>Point2D</code> and the specified point.
+     * @since 1.2
+     */
+    public double distanceSq(double px, double py) {
+        px -= getX();
+        py -= getY();
+        return (px * px + py * py);
+    }
+
+    /**
+     * Returns the square of the distance from this
+     * <code>Point2D</code> to a specified <code>Point2D</code>.
+     *
+     * @param pt the specified point to be measured
+     *           against this <code>Point2D</code>
+     * @return the square of the distance between this
+     * <code>Point2D</code> to a specified <code>Point2D</code>.
+     * @since 1.2
+     */
+    public double distanceSq(Point2D pt) {
+        double px = pt.getX() - this.getX();
+        double py = pt.getY() - this.getY();
+        return (px * px + py * py);
+    }
+
+    /**
+     * Returns the distance from this <code>Point2D</code> to
+     * a specified point.
+     *
+     * @param px the X coordinate of the specified point to be measured
+     *           against this <code>Point2D</code>
+     * @param py the Y coordinate of the specified point to be measured
+     *           against this <code>Point2D</code>
+     * @return the distance between this <code>Point2D</code>
+     * and a specified point.
+     * @since 1.2
+     */
+    public double distance(double px, double py) {
+        px -= getX();
+        py -= getY();
+        return Math.sqrt(px * px + py * py);
+    }
+
+    /**
+     * Returns the distance from this <code>Point2D</code> to a
+     * specified <code>Point2D</code>.
+     *
+     * @param pt the specified point to be measured
+     *           against this <code>Point2D</code>
+     * @return the distance between this <code>Point2D</code> and
+     * the specified <code>Point2D</code>.
+     * @since 1.2
+     */
+    public double distance(Point2D pt) {
+        double px = pt.getX() - this.getX();
+        double py = pt.getY() - this.getY();
+        return Math.sqrt(px * px + py * py);
+    }
+
+    /**
+     * Creates a new object of the same class and with the
+     * same contents as this object.
+     * @return     a clone of this instance.
+     * @exception  OutOfMemoryError            if there is not enough memory.
+     * @see        java.lang.Cloneable
+     * @since      1.2
+     */
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError(e);
+        }
+    }
+
+    /**
+     * Returns the hashcode for this <code>Point2D</code>.
+     * @return      a hash code for this <code>Point2D</code>.
+     */
+    public int hashCode() {
+        long bits = java.lang.Double.doubleToLongBits(getX());
+        bits ^= java.lang.Double.doubleToLongBits(getY()) * 31;
+        return (((int) bits) ^ ((int) (bits >> 32)));
+    }
+
+    /**
+     * Determines whether or not two points are equal. Two instances of
+     * <code>Point2D</code> are equal if the values of their
+     * <code>x</code> and <code>y</code> member fields, representing
+     * their position in the coordinate space, are the same.
+     * @param obj an object to be compared with this <code>Point2D</code>
+     * @return <code>true</code> if the object to be compared is
+     *         an instance of <code>Point2D</code> and has
+     *         the same values; <code>false</code> otherwise.
+     * @since 1.2
+     */
+    public boolean equals(Object obj) {
+        if (obj instanceof Point2D) {
+            Point2D p2d = (Point2D) obj;
+            return (getX() == p2d.getX()) && (getY() == p2d.getY());
+        }
+        return super.equals(obj);
+    }
+}

@@ -1,53 +1,47 @@
-/*    */ package com.sun.imageio.plugins.jpeg;
-/*    */ 
-/*    */ import javax.imageio.ImageTypeSpecifier;
-/*    */ import javax.imageio.metadata.IIOMetadataFormat;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JPEGStreamMetadataFormat
-/*    */   extends JPEGMetadataFormat
-/*    */ {
-/* 33 */   private static JPEGStreamMetadataFormat theInstance = null;
-/*    */   
-/*    */   private JPEGStreamMetadataFormat() {
-/* 36 */     super("javax_imageio_jpeg_stream_1.0", 4);
-/*    */     
-/* 38 */     addStreamElements(getRootName());
-/*    */   }
-/*    */   
-/*    */   public static synchronized IIOMetadataFormat getInstance() {
-/* 42 */     if (theInstance == null) {
-/* 43 */       theInstance = new JPEGStreamMetadataFormat();
-/*    */     }
-/* 45 */     return theInstance;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\JPEGStreamMetadataFormat.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+
+public class JPEGStreamMetadataFormat extends JPEGMetadataFormat {
+
+    private static JPEGStreamMetadataFormat theInstance = null;
+
+    private JPEGStreamMetadataFormat() {
+        super(JPEG.nativeStreamMetadataFormatName,
+              CHILD_POLICY_SEQUENCE);
+        addStreamElements(getRootName());
+    }
+
+    public static synchronized IIOMetadataFormat getInstance() {
+        if (theInstance == null) {
+            theInstance = new JPEGStreamMetadataFormat();
+        }
+        return theInstance;
+    }
+}

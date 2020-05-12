@@ -1,2195 +1,1652 @@
-/*      */ package java.net;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.InvalidObjectException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.ObjectStreamException;
-/*      */ import java.io.ObjectStreamField;
-/*      */ import java.io.Serializable;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.security.PrivilegedActionException;
-/*      */ import java.security.PrivilegedExceptionAction;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.LinkedHashMap;
-/*      */ import java.util.LinkedList;
-/*      */ import java.util.List;
-/*      */ import java.util.ServiceLoader;
-/*      */ import sun.misc.Unsafe;
-/*      */ import sun.net.InetAddressCachePolicy;
-/*      */ import sun.net.spi.nameservice.NameService;
-/*      */ import sun.net.spi.nameservice.NameServiceDescriptor;
-/*      */ import sun.net.util.IPAddressUtil;
-/*      */ import sun.security.action.GetBooleanAction;
-/*      */ import sun.security.action.GetPropertyAction;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class InetAddress
-/*      */   implements Serializable
-/*      */ {
-/*      */   static final int IPv4 = 1;
-/*      */   static final int IPv6 = 2;
-/*      */   static transient boolean preferIPv6Address = false;
-/*      */   final transient InetAddressHolder holder;
-/*      */   
-/*      */   static class InetAddressHolder
-/*      */   {
-/*      */     String originalHostName;
-/*      */     String hostName;
-/*      */     int address;
-/*      */     int family;
-/*      */     
-/*      */     InetAddressHolder() {}
-/*      */     
-/*      */     InetAddressHolder(String param1String, int param1Int1, int param1Int2) {
-/*  226 */       this.originalHostName = param1String;
-/*  227 */       this.hostName = param1String;
-/*  228 */       this.address = param1Int1;
-/*  229 */       this.family = param1Int2;
-/*      */     }
-/*      */     
-/*      */     void init(String param1String, int param1Int) {
-/*  233 */       this.originalHostName = param1String;
-/*  234 */       this.hostName = param1String;
-/*  235 */       if (param1Int != -1) {
-/*  236 */         this.family = param1Int;
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     String getHostName() {
-/*  243 */       return this.hostName;
-/*      */     }
-/*      */     
-/*      */     String getOriginalHostName() {
-/*  247 */       return this.originalHostName;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int getAddress() {
-/*  256 */       return this.address;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int getFamily() {
-/*  266 */       return this.family;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   InetAddressHolder holder() {
-/*  274 */     return this.holder;
-/*      */   }
-/*      */ 
-/*      */   
-/*  278 */   private static List<NameService> nameServices = null;
-/*      */ 
-/*      */   
-/*  281 */   private transient String canonicalHostName = null;
-/*      */   private static final long serialVersionUID = 3286316764910316507L;
-/*      */   private static Cache addressCache;
-/*      */   private static Cache negativeCache;
-/*      */   private static boolean addressCacheInit;
-/*      */   static InetAddress[] unknown_array;
-/*      */   static InetAddressImpl impl;
-/*      */   private static final HashMap<String, Void> lookupTable;
-/*      */   
-/*      */   static {
-/*  291 */     preferIPv6Address = ((Boolean)AccessController.<Boolean>doPrivileged(new GetBooleanAction("java.net.preferIPv6Addresses"))).booleanValue();
-/*  292 */     AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*      */         {
-/*      */           public Void run() {
-/*  295 */             System.loadLibrary("net");
-/*  296 */             return null;
-/*      */           }
-/*      */         });
-/*  299 */     init();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  733 */     addressCache = new Cache(Cache.Type.Positive);
-/*      */     
-/*  735 */     negativeCache = new Cache(Cache.Type.Negative);
-/*      */     
-/*  737 */     addressCacheInit = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  743 */     lookupTable = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  974 */     impl = InetAddressImplFactory.create();
-/*      */ 
-/*      */     
-/*  977 */     String str1 = null;
-/*  978 */     String str2 = "sun.net.spi.nameservice.provider.";
-/*  979 */     byte b = 1;
-/*  980 */     nameServices = new ArrayList<>();
-/*  981 */     str1 = AccessController.<String>doPrivileged(new GetPropertyAction(str2 + b));
-/*      */     
-/*  983 */     while (str1 != null) {
-/*  984 */       NameService nameService = createNSProvider(str1);
-/*  985 */       if (nameService != null) {
-/*  986 */         nameServices.add(nameService);
-/*      */       }
-/*  988 */       b++;
-/*  989 */       str1 = AccessController.<String>doPrivileged(new GetPropertyAction(str2 + b));
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  995 */     if (nameServices.size() == 0) {
-/*  996 */       NameService nameService = createNSProvider("default");
-/*  997 */       nameServices.add(nameService);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1443 */     cachedLocalHost = null;
-/* 1444 */     cacheTime = 0L;
-/*      */     
-/* 1446 */     cacheLock = new Object();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1589 */       Unsafe unsafe = Unsafe.getUnsafe();
-/* 1590 */       FIELDS_OFFSET = unsafe.objectFieldOffset(InetAddress.class
-/* 1591 */           .getDeclaredField("holder"));
-/*      */       
-/* 1593 */       UNSAFE = unsafe;
-/* 1594 */     } catch (ReflectiveOperationException reflectiveOperationException) {
-/* 1595 */       throw new Error(reflectiveOperationException);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1622 */     serialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("hostName", String.class), new ObjectStreamField("address", int.class), new ObjectStreamField("family", int.class) };
-/*      */   }
-/*      */   private static InetAddress cachedLocalHost; private static long cacheTime; private static final long maxCacheTime = 5000L; private static final Object cacheLock; private static final long FIELDS_OFFSET; private static final Unsafe UNSAFE; private static final ObjectStreamField[] serialPersistentFields;
-/*      */   InetAddress() {
-/*      */     this.holder = new InetAddressHolder();
-/*      */   }
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1630 */     if (getClass().getClassLoader() != null) {
-/* 1631 */       throw new SecurityException("invalid address type");
-/*      */     }
-/* 1633 */     ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 1634 */     putField.put("hostName", holder().getHostName());
-/* 1635 */     putField.put("address", holder().getAddress());
-/* 1636 */     putField.put("family", holder().getFamily());
-/* 1637 */     paramObjectOutputStream.writeFields();
-/*      */   }
-/*      */   
-/*      */   private Object readResolve() throws ObjectStreamException {
-/*      */     return new Inet4Address(holder().getHostName(), holder().getAddress());
-/*      */   }
-/*      */   
-/*      */   public boolean isMulticastAddress() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isAnyLocalAddress() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isLoopbackAddress() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isLinkLocalAddress() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isSiteLocalAddress() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isMCGlobal() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isMCNodeLocal() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isMCLinkLocal() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isMCSiteLocal() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isMCOrgLocal() {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public boolean isReachable(int paramInt) throws IOException {
-/*      */     return isReachable(null, 0, paramInt);
-/*      */   }
-/*      */   
-/*      */   public boolean isReachable(NetworkInterface paramNetworkInterface, int paramInt1, int paramInt2) throws IOException {
-/*      */     if (paramInt1 < 0)
-/*      */       throw new IllegalArgumentException("ttl can't be negative"); 
-/*      */     if (paramInt2 < 0)
-/*      */       throw new IllegalArgumentException("timeout can't be negative"); 
-/*      */     return impl.isReachable(this, paramInt2, paramNetworkInterface, paramInt1);
-/*      */   }
-/*      */   
-/*      */   public String getHostName() {
-/*      */     return getHostName(true);
-/*      */   }
-/*      */   
-/*      */   String getHostName(boolean paramBoolean) {
-/*      */     if (holder().getHostName() == null)
-/*      */       (holder()).hostName = getHostFromNameService(this, paramBoolean); 
-/*      */     return holder().getHostName();
-/*      */   }
-/*      */   
-/*      */   public String getCanonicalHostName() {
-/*      */     if (this.canonicalHostName == null)
-/*      */       this.canonicalHostName = getHostFromNameService(this, true); 
-/*      */     return this.canonicalHostName;
-/*      */   }
-/*      */   
-/*      */   private static String getHostFromNameService(InetAddress paramInetAddress, boolean paramBoolean) {
-/*      */     String str = null;
-/*      */     for (NameService nameService : nameServices) {
-/*      */       try {
-/*      */         str = nameService.getHostByAddr(paramInetAddress.getAddress());
-/*      */         if (paramBoolean) {
-/*      */           SecurityManager securityManager = System.getSecurityManager();
-/*      */           if (securityManager != null)
-/*      */             securityManager.checkConnect(str, -1); 
-/*      */         } 
-/*      */         InetAddress[] arrayOfInetAddress = getAllByName0(str, paramBoolean);
-/*      */         boolean bool = false;
-/*      */         if (arrayOfInetAddress != null)
-/*      */           for (byte b = 0; !bool && b < arrayOfInetAddress.length; b++)
-/*      */             bool = paramInetAddress.equals(arrayOfInetAddress[b]);  
-/*      */         if (!bool) {
-/*      */           str = paramInetAddress.getHostAddress();
-/*      */           return str;
-/*      */         } 
-/*      */         break;
-/*      */       } catch (SecurityException securityException) {
-/*      */         str = paramInetAddress.getHostAddress();
-/*      */         break;
-/*      */       } catch (UnknownHostException unknownHostException) {
-/*      */         str = paramInetAddress.getHostAddress();
-/*      */       } 
-/*      */     } 
-/*      */     return str;
-/*      */   }
-/*      */   
-/*      */   public byte[] getAddress() {
-/*      */     return null;
-/*      */   }
-/*      */   
-/*      */   public String getHostAddress() {
-/*      */     return null;
-/*      */   }
-/*      */   
-/*      */   public int hashCode() {
-/*      */     return -1;
-/*      */   }
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/*      */     return false;
-/*      */   }
-/*      */   
-/*      */   public String toString() {
-/*      */     String str = holder().getHostName();
-/*      */     return ((str != null) ? str : "") + "/" + getHostAddress();
-/*      */   }
-/*      */   
-/*      */   static final class CacheEntry {
-/*      */     InetAddress[] addresses;
-/*      */     long expiration;
-/*      */     
-/*      */     CacheEntry(InetAddress[] param1ArrayOfInetAddress, long param1Long) {
-/*      */       this.addresses = param1ArrayOfInetAddress;
-/*      */       this.expiration = param1Long;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class Cache {
-/*      */     private LinkedHashMap<String, InetAddress.CacheEntry> cache;
-/*      */     private Type type;
-/*      */     
-/*      */     enum Type {
-/*      */       Positive, Negative;
-/*      */     }
-/*      */     
-/*      */     public Cache(Type param1Type) {
-/*      */       this.type = param1Type;
-/*      */       this.cache = new LinkedHashMap<>();
-/*      */     }
-/*      */     
-/*      */     private int getPolicy() {
-/*      */       if (this.type == Type.Positive)
-/*      */         return InetAddressCachePolicy.get(); 
-/*      */       return InetAddressCachePolicy.getNegative();
-/*      */     }
-/*      */     
-/*      */     public Cache put(String param1String, InetAddress[] param1ArrayOfInetAddress) {
-/*      */       long l;
-/*      */       int i = getPolicy();
-/*      */       if (i == 0)
-/*      */         return this; 
-/*      */       if (i != -1) {
-/*      */         LinkedList<String> linkedList = new LinkedList();
-/*      */         long l1 = System.currentTimeMillis();
-/*      */         for (String str : this.cache.keySet()) {
-/*      */           InetAddress.CacheEntry cacheEntry1 = this.cache.get(str);
-/*      */           if (cacheEntry1.expiration >= 0L && cacheEntry1.expiration < l1)
-/*      */             linkedList.add(str); 
-/*      */         } 
-/*      */         for (String str : linkedList)
-/*      */           this.cache.remove(str); 
-/*      */       } 
-/*      */       if (i == -1) {
-/*      */         l = -1L;
-/*      */       } else {
-/*      */         l = System.currentTimeMillis() + (i * 1000);
-/*      */       } 
-/*      */       InetAddress.CacheEntry cacheEntry = new InetAddress.CacheEntry(param1ArrayOfInetAddress, l);
-/*      */       this.cache.put(param1String, cacheEntry);
-/*      */       return this;
-/*      */     }
-/*      */     
-/*      */     public InetAddress.CacheEntry get(String param1String) {
-/*      */       int i = getPolicy();
-/*      */       if (i == 0)
-/*      */         return null; 
-/*      */       InetAddress.CacheEntry cacheEntry = this.cache.get(param1String);
-/*      */       if (cacheEntry != null && i != -1 && cacheEntry.expiration >= 0L && cacheEntry.expiration < System.currentTimeMillis()) {
-/*      */         this.cache.remove(param1String);
-/*      */         cacheEntry = null;
-/*      */       } 
-/*      */       return cacheEntry;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   enum Type {
-/*      */     Positive, Negative;
-/*      */   }
-/*      */   
-/*      */   private static void cacheInitIfNeeded() {
-/*      */     assert Thread.holdsLock(addressCache);
-/*      */     if (addressCacheInit)
-/*      */       return; 
-/*      */     unknown_array = new InetAddress[1];
-/*      */     unknown_array[0] = impl.anyLocalAddress();
-/*      */     addressCache.put(impl.anyLocalAddress().getHostName(), unknown_array);
-/*      */     addressCacheInit = true;
-/*      */   }
-/*      */   
-/*      */   private static void cacheAddresses(String paramString, InetAddress[] paramArrayOfInetAddress, boolean paramBoolean) {
-/*      */     paramString = paramString.toLowerCase();
-/*      */     synchronized (addressCache) {
-/*      */       cacheInitIfNeeded();
-/*      */       if (paramBoolean) {
-/*      */         addressCache.put(paramString, paramArrayOfInetAddress);
-/*      */       } else {
-/*      */         negativeCache.put(paramString, paramArrayOfInetAddress);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private static InetAddress[] getCachedAddresses(String paramString) {
-/*      */     paramString = paramString.toLowerCase();
-/*      */     synchronized (addressCache) {
-/*      */       cacheInitIfNeeded();
-/*      */       CacheEntry cacheEntry = addressCache.get(paramString);
-/*      */       if (cacheEntry == null)
-/*      */         cacheEntry = negativeCache.get(paramString); 
-/*      */       if (cacheEntry != null)
-/*      */         return cacheEntry.addresses; 
-/*      */     } 
-/*      */     return null;
-/*      */   }
-/*      */   
-/*      */   private static NameService createNSProvider(String paramString) {
-/*      */     if (paramString == null)
-/*      */       return null; 
-/*      */     NameService nameService = null;
-/*      */     if (paramString.equals("default")) {
-/*      */       nameService = new NameService() {
-/*      */           public InetAddress[] lookupAllHostAddr(String param1String) throws UnknownHostException {
-/*      */             return InetAddress.impl.lookupAllHostAddr(param1String);
-/*      */           }
-/*      */           
-/*      */           public String getHostByAddr(byte[] param1ArrayOfbyte) throws UnknownHostException {
-/*      */             return InetAddress.impl.getHostByAddr(param1ArrayOfbyte);
-/*      */           }
-/*      */         };
-/*      */     } else {
-/*      */       final String providerName = paramString;
-/*      */       try {
-/*      */         nameService = AccessController.<NameService>doPrivileged(new PrivilegedExceptionAction<NameService>() {
-/*      */               public NameService run() {
-/*      */                 Iterator<NameServiceDescriptor> iterator = ServiceLoader.<NameServiceDescriptor>load(NameServiceDescriptor.class).iterator();
-/*      */                 while (iterator.hasNext()) {
-/*      */                   NameServiceDescriptor nameServiceDescriptor = iterator.next();
-/*      */                   if (providerName.equalsIgnoreCase(nameServiceDescriptor.getType() + "," + nameServiceDescriptor.getProviderName()))
-/*      */                     try {
-/*      */                       return nameServiceDescriptor.createNameService();
-/*      */                     } catch (Exception exception) {
-/*      */                       exception.printStackTrace();
-/*      */                       System.err.println("Cannot create name service:" + providerName + ": " + exception);
-/*      */                     }  
-/*      */                 } 
-/*      */                 return null;
-/*      */               }
-/*      */             });
-/*      */       } catch (PrivilegedActionException privilegedActionException) {}
-/*      */     } 
-/*      */     return nameService;
-/*      */   }
-/*      */   
-/*      */   public static InetAddress getByAddress(String paramString, byte[] paramArrayOfbyte) throws UnknownHostException {
-/*      */     if (paramString != null && paramString.length() > 0 && paramString.charAt(0) == '[' && paramString.charAt(paramString.length() - 1) == ']')
-/*      */       paramString = paramString.substring(1, paramString.length() - 1); 
-/*      */     if (paramArrayOfbyte != null) {
-/*      */       if (paramArrayOfbyte.length == 4)
-/*      */         return new Inet4Address(paramString, paramArrayOfbyte); 
-/*      */       if (paramArrayOfbyte.length == 16) {
-/*      */         byte[] arrayOfByte = IPAddressUtil.convertFromIPv4MappedAddress(paramArrayOfbyte);
-/*      */         if (arrayOfByte != null)
-/*      */           return new Inet4Address(paramString, arrayOfByte); 
-/*      */         return new Inet6Address(paramString, paramArrayOfbyte);
-/*      */       } 
-/*      */     } 
-/*      */     throw new UnknownHostException("addr is of illegal length");
-/*      */   }
-/*      */   
-/*      */   public static InetAddress getByName(String paramString) throws UnknownHostException {
-/*      */     return getAllByName(paramString)[0];
-/*      */   }
-/*      */   
-/*      */   private static InetAddress getByName(String paramString, InetAddress paramInetAddress) throws UnknownHostException {
-/*      */     return getAllByName(paramString, paramInetAddress)[0];
-/*      */   }
-/*      */   
-/*      */   public static InetAddress[] getAllByName(String paramString) throws UnknownHostException {
-/*      */     return getAllByName(paramString, null);
-/*      */   }
-/*      */   
-/*      */   private static InetAddress[] getAllByName(String paramString, InetAddress paramInetAddress) throws UnknownHostException {
-/*      */     if (paramString == null || paramString.length() == 0) {
-/*      */       InetAddress[] arrayOfInetAddress = new InetAddress[1];
-/*      */       arrayOfInetAddress[0] = impl.loopbackAddress();
-/*      */       return arrayOfInetAddress;
-/*      */     } 
-/*      */     boolean bool = false;
-/*      */     if (paramString.charAt(0) == '[')
-/*      */       if (paramString.length() > 2 && paramString.charAt(paramString.length() - 1) == ']') {
-/*      */         paramString = paramString.substring(1, paramString.length() - 1);
-/*      */         bool = true;
-/*      */       } else {
-/*      */         throw new UnknownHostException(paramString + ": invalid IPv6 address");
-/*      */       }  
-/*      */     if (Character.digit(paramString.charAt(0), 16) != -1 || paramString.charAt(0) == ':') {
-/*      */       byte[] arrayOfByte = null;
-/*      */       int i = -1;
-/*      */       String str = null;
-/*      */       arrayOfByte = IPAddressUtil.textToNumericFormatV4(paramString);
-/*      */       if (arrayOfByte == null) {
-/*      */         int j;
-/*      */         if ((j = paramString.indexOf("%")) != -1) {
-/*      */           i = checkNumericZone(paramString);
-/*      */           if (i == -1)
-/*      */             str = paramString.substring(j + 1); 
-/*      */         } 
-/*      */         if ((arrayOfByte = IPAddressUtil.textToNumericFormatV6(paramString)) == null && paramString.contains(":"))
-/*      */           throw new UnknownHostException(paramString + ": invalid IPv6 address"); 
-/*      */       } else if (bool) {
-/*      */         throw new UnknownHostException("[" + paramString + "]");
-/*      */       } 
-/*      */       InetAddress[] arrayOfInetAddress = new InetAddress[1];
-/*      */       if (arrayOfByte != null) {
-/*      */         if (arrayOfByte.length == 4) {
-/*      */           arrayOfInetAddress[0] = new Inet4Address(null, arrayOfByte);
-/*      */         } else if (str != null) {
-/*      */           arrayOfInetAddress[0] = new Inet6Address(null, arrayOfByte, str);
-/*      */         } else {
-/*      */           arrayOfInetAddress[0] = new Inet6Address(null, arrayOfByte, i);
-/*      */         } 
-/*      */         return arrayOfInetAddress;
-/*      */       } 
-/*      */     } else if (bool) {
-/*      */       throw new UnknownHostException("[" + paramString + "]");
-/*      */     } 
-/*      */     return getAllByName0(paramString, paramInetAddress, true);
-/*      */   }
-/*      */   
-/*      */   public static InetAddress getLoopbackAddress() {
-/*      */     return impl.loopbackAddress();
-/*      */   }
-/*      */   
-/*      */   private static int checkNumericZone(String paramString) throws UnknownHostException {
-/*      */     int i = paramString.indexOf('%');
-/*      */     int j = paramString.length();
-/*      */     int k = 0;
-/*      */     if (i == -1)
-/*      */       return -1; 
-/*      */     for (int m = i + 1; m < j; m++) {
-/*      */       char c = paramString.charAt(m);
-/*      */       if (c == ']') {
-/*      */         if (m == i + 1)
-/*      */           return -1; 
-/*      */         break;
-/*      */       } 
-/*      */       int n;
-/*      */       if ((n = Character.digit(c, 10)) < 0)
-/*      */         return -1; 
-/*      */       k = k * 10 + n;
-/*      */     } 
-/*      */     return k;
-/*      */   }
-/*      */   
-/*      */   private static InetAddress[] getAllByName0(String paramString) throws UnknownHostException {
-/*      */     return getAllByName0(paramString, true);
-/*      */   }
-/*      */   
-/*      */   static InetAddress[] getAllByName0(String paramString, boolean paramBoolean) throws UnknownHostException {
-/*      */     return getAllByName0(paramString, null, paramBoolean);
-/*      */   }
-/*      */   
-/*      */   private static InetAddress[] getAllByName0(String paramString, InetAddress paramInetAddress, boolean paramBoolean) throws UnknownHostException {
-/*      */     if (paramBoolean) {
-/*      */       SecurityManager securityManager = System.getSecurityManager();
-/*      */       if (securityManager != null)
-/*      */         securityManager.checkConnect(paramString, -1); 
-/*      */     } 
-/*      */     InetAddress[] arrayOfInetAddress = getCachedAddresses(paramString);
-/*      */     if (arrayOfInetAddress == null)
-/*      */       arrayOfInetAddress = getAddressesFromNameService(paramString, paramInetAddress); 
-/*      */     if (arrayOfInetAddress == unknown_array)
-/*      */       throw new UnknownHostException(paramString); 
-/*      */     return (InetAddress[])arrayOfInetAddress.clone();
-/*      */   }
-/*      */   
-/*      */   private static InetAddress[] getAddressesFromNameService(String paramString, InetAddress paramInetAddress) throws UnknownHostException {
-/*      */     InetAddress[] arrayOfInetAddress = null;
-/*      */     boolean bool = false;
-/*      */     UnknownHostException unknownHostException = null;
-/*      */     if ((arrayOfInetAddress = checkLookupTable(paramString)) == null)
-/*      */       try {
-/*      */         for (NameService nameService : nameServices) {
-/*      */           try {
-/*      */             arrayOfInetAddress = nameService.lookupAllHostAddr(paramString);
-/*      */             bool = true;
-/*      */             break;
-/*      */           } catch (UnknownHostException unknownHostException1) {
-/*      */             if (paramString.equalsIgnoreCase("localhost")) {
-/*      */               InetAddress[] arrayOfInetAddress1 = { impl.loopbackAddress() };
-/*      */               arrayOfInetAddress = arrayOfInetAddress1;
-/*      */               bool = true;
-/*      */               break;
-/*      */             } 
-/*      */             arrayOfInetAddress = unknown_array;
-/*      */             bool = false;
-/*      */             unknownHostException = unknownHostException1;
-/*      */           } 
-/*      */         } 
-/*      */         if (paramInetAddress != null && arrayOfInetAddress.length > 1 && !arrayOfInetAddress[0].equals(paramInetAddress)) {
-/*      */           byte b = 1;
-/*      */           for (; b < arrayOfInetAddress.length && !arrayOfInetAddress[b].equals(paramInetAddress); b++);
-/*      */           if (b < arrayOfInetAddress.length) {
-/*      */             InetAddress inetAddress = paramInetAddress;
-/*      */             for (byte b1 = 0; b1 < b; b1++) {
-/*      */               InetAddress inetAddress1 = arrayOfInetAddress[b1];
-/*      */               arrayOfInetAddress[b1] = inetAddress;
-/*      */               inetAddress = inetAddress1;
-/*      */             } 
-/*      */             arrayOfInetAddress[b] = inetAddress;
-/*      */           } 
-/*      */         } 
-/*      */         cacheAddresses(paramString, arrayOfInetAddress, bool);
-/*      */         if (!bool && unknownHostException != null)
-/*      */           throw unknownHostException; 
-/*      */       } finally {
-/*      */         updateLookupTable(paramString);
-/*      */       }  
-/*      */     return arrayOfInetAddress;
-/*      */   }
-/*      */   
-/*      */   private static InetAddress[] checkLookupTable(String paramString) {
-/*      */     synchronized (lookupTable) {
-/*      */       if (!lookupTable.containsKey(paramString)) {
-/*      */         lookupTable.put(paramString, null);
-/*      */         return null;
-/*      */       } 
-/*      */       while (lookupTable.containsKey(paramString)) {
-/*      */         try {
-/*      */           lookupTable.wait();
-/*      */         } catch (InterruptedException interruptedException) {}
-/*      */       } 
-/*      */     } 
-/*      */     InetAddress[] arrayOfInetAddress = getCachedAddresses(paramString);
-/*      */     if (arrayOfInetAddress == null)
-/*      */       synchronized (lookupTable) {
-/*      */         lookupTable.put(paramString, null);
-/*      */         return null;
-/*      */       }  
-/*      */     return arrayOfInetAddress;
-/*      */   }
-/*      */   
-/*      */   private static void updateLookupTable(String paramString) {
-/*      */     synchronized (lookupTable) {
-/*      */       lookupTable.remove(paramString);
-/*      */       lookupTable.notifyAll();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public static InetAddress getByAddress(byte[] paramArrayOfbyte) throws UnknownHostException {
-/*      */     return getByAddress(null, paramArrayOfbyte);
-/*      */   }
-/*      */   
-/*      */   public static InetAddress getLocalHost() throws UnknownHostException {
-/*      */     SecurityManager securityManager = System.getSecurityManager();
-/*      */     try {
-/*      */       String str = impl.getLocalHostName();
-/*      */       if (securityManager != null)
-/*      */         securityManager.checkConnect(str, -1); 
-/*      */       if (str.equals("localhost"))
-/*      */         return impl.loopbackAddress(); 
-/*      */       InetAddress inetAddress = null;
-/*      */       synchronized (cacheLock) {
-/*      */         long l = System.currentTimeMillis();
-/*      */         if (cachedLocalHost != null)
-/*      */           if (l - cacheTime < 5000L) {
-/*      */             inetAddress = cachedLocalHost;
-/*      */           } else {
-/*      */             cachedLocalHost = null;
-/*      */           }  
-/*      */         if (inetAddress == null) {
-/*      */           InetAddress[] arrayOfInetAddress;
-/*      */           try {
-/*      */             arrayOfInetAddress = getAddressesFromNameService(str, null);
-/*      */           } catch (UnknownHostException unknownHostException1) {
-/*      */             UnknownHostException unknownHostException2 = new UnknownHostException(str + ": " + unknownHostException1.getMessage());
-/*      */             unknownHostException2.initCause(unknownHostException1);
-/*      */             throw unknownHostException2;
-/*      */           } 
-/*      */           cachedLocalHost = arrayOfInetAddress[0];
-/*      */           cacheTime = l;
-/*      */           inetAddress = arrayOfInetAddress[0];
-/*      */         } 
-/*      */       } 
-/*      */       return inetAddress;
-/*      */     } catch (SecurityException securityException) {
-/*      */       return impl.loopbackAddress();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   static InetAddress anyLocalAddress() {
-/*      */     return impl.anyLocalAddress();
-/*      */   }
-/*      */   
-/*      */   static InetAddressImpl loadImpl(String paramString) {
-/*      */     Object object = null;
-/*      */     String str = AccessController.<String>doPrivileged(new GetPropertyAction("impl.prefix", ""));
-/*      */     try {
-/*      */       object = Class.forName("java.net." + str + paramString).newInstance();
-/*      */     } catch (ClassNotFoundException classNotFoundException) {
-/*      */       System.err.println("Class not found: java.net." + str + paramString + ":\ncheck impl.prefix property in your properties file.");
-/*      */     } catch (InstantiationException instantiationException) {
-/*      */       System.err.println("Could not instantiate: java.net." + str + paramString + ":\ncheck impl.prefix property in your properties file.");
-/*      */     } catch (IllegalAccessException illegalAccessException) {
-/*      */       System.err.println("Cannot access class: java.net." + str + paramString + ":\ncheck impl.prefix property in your properties file.");
-/*      */     } 
-/*      */     if (object == null)
-/*      */       try {
-/*      */         object = Class.forName(paramString).newInstance();
-/*      */       } catch (Exception exception) {
-/*      */         throw new Error("System property impl.prefix incorrect");
-/*      */       }  
-/*      */     return (InetAddressImpl)object;
-/*      */   }
-/*      */   
-/*      */   private void readObjectNoData(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/*      */     if (getClass().getClassLoader() != null)
-/*      */       throw new SecurityException("invalid address type"); 
-/*      */   }
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/*      */     if (getClass().getClassLoader() != null)
-/*      */       throw new SecurityException("invalid address type"); 
-/*      */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/*      */     String str = (String)getField.get("hostName", (Object)null);
-/*      */     int i = getField.get("address", 0);
-/*      */     int j = getField.get("family", 0);
-/*      */     if (j != 1 && j != 2)
-/*      */       throw new InvalidObjectException("invalid address family type: " + j); 
-/*      */     InetAddressHolder inetAddressHolder = new InetAddressHolder(str, i, j);
-/*      */     UNSAFE.putObject(this, FIELDS_OFFSET, inetAddressHolder);
-/*      */   }
-/*      */   
-/*      */   private static native void init();
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\InetAddress.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Random;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.ServiceLoader;
+import java.security.AccessController;
+import java.io.ObjectStreamException;
+import java.io.ObjectStreamField;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectInputStream.GetField;
+import java.io.ObjectOutputStream;
+import java.io.ObjectOutputStream.PutField;
+import sun.security.action.*;
+import sun.net.InetAddressCachePolicy;
+import sun.net.util.IPAddressUtil;
+import sun.net.spi.nameservice.*;
+
+/**
+ * This class represents an Internet Protocol (IP) address.
+ *
+ * <p> An IP address is either a 32-bit or 128-bit unsigned number
+ * used by IP, a lower-level protocol on which protocols like UDP and
+ * TCP are built. The IP address architecture is defined by <a
+ * href="http://www.ietf.org/rfc/rfc790.txt"><i>RFC&nbsp;790:
+ * Assigned Numbers</i></a>, <a
+ * href="http://www.ietf.org/rfc/rfc1918.txt"> <i>RFC&nbsp;1918:
+ * Address Allocation for Private Internets</i></a>, <a
+ * href="http://www.ietf.org/rfc/rfc2365.txt"><i>RFC&nbsp;2365:
+ * Administratively Scoped IP Multicast</i></a>, and <a
+ * href="http://www.ietf.org/rfc/rfc2373.txt"><i>RFC&nbsp;2373: IP
+ * Version 6 Addressing Architecture</i></a>. An instance of an
+ * InetAddress consists of an IP address and possibly its
+ * corresponding host name (depending on whether it is constructed
+ * with a host name or whether it has already done reverse host name
+ * resolution).
+ *
+ * <h3> Address types </h3>
+ *
+ * <blockquote><table cellspacing=2 summary="Description of unicast and multicast address types">
+ *   <tr><th valign=top><i>unicast</i></th>
+ *       <td>An identifier for a single interface. A packet sent to
+ *         a unicast address is delivered to the interface identified by
+ *         that address.
+ *
+ *         <p> The Unspecified Address -- Also called anylocal or wildcard
+ *         address. It must never be assigned to any node. It indicates the
+ *         absence of an address. One example of its use is as the target of
+ *         bind, which allows a server to accept a client connection on any
+ *         interface, in case the server host has multiple interfaces.
+ *
+ *         <p> The <i>unspecified</i> address must not be used as
+ *         the destination address of an IP packet.
+ *
+ *         <p> The <i>Loopback</i> Addresses -- This is the address
+ *         assigned to the loopback interface. Anything sent to this
+ *         IP address loops around and becomes IP input on the local
+ *         host. This address is often used when testing a
+ *         client.</td></tr>
+ *   <tr><th valign=top><i>multicast</i></th>
+ *       <td>An identifier for a set of interfaces (typically belonging
+ *         to different nodes). A packet sent to a multicast address is
+ *         delivered to all interfaces identified by that address.</td></tr>
+ * </table></blockquote>
+ *
+ * <h4> IP address scope </h4>
+ *
+ * <p> <i>Link-local</i> addresses are designed to be used for addressing
+ * on a single link for purposes such as auto-address configuration,
+ * neighbor discovery, or when no routers are present.
+ *
+ * <p> <i>Site-local</i> addresses are designed to be used for addressing
+ * inside of a site without the need for a global prefix.
+ *
+ * <p> <i>Global</i> addresses are unique across the internet.
+ *
+ * <h4> Textual representation of IP addresses </h4>
+ *
+ * The textual representation of an IP address is address family specific.
+ *
+ * <p>
+ *
+ * For IPv4 address format, please refer to <A
+ * HREF="Inet4Address.html#format">Inet4Address#format</A>; For IPv6
+ * address format, please refer to <A
+ * HREF="Inet6Address.html#format">Inet6Address#format</A>.
+ *
+ * <P>There is a <a href="doc-files/net-properties.html#Ipv4IPv6">couple of
+ * System Properties</a> affecting how IPv4 and IPv6 addresses are used.</P>
+ *
+ * <h4> Host Name Resolution </h4>
+ *
+ * Host name-to-IP address <i>resolution</i> is accomplished through
+ * the use of a combination of local machine configuration information
+ * and network naming services such as the Domain Name System (DNS)
+ * and Network Information Service(NIS). The particular naming
+ * services(s) being used is by default the local machine configured
+ * one. For any host name, its corresponding IP address is returned.
+ *
+ * <p> <i>Reverse name resolution</i> means that for any IP address,
+ * the host associated with the IP address is returned.
+ *
+ * <p> The InetAddress class provides methods to resolve host names to
+ * their IP addresses and vice versa.
+ *
+ * <h4> InetAddress Caching </h4>
+ *
+ * The InetAddress class has a cache to store successful as well as
+ * unsuccessful host name resolutions.
+ *
+ * <p> By default, when a security manager is installed, in order to
+ * protect against DNS spoofing attacks,
+ * the result of positive host name resolutions are
+ * cached forever. When a security manager is not installed, the default
+ * behavior is to cache entries for a finite (implementation dependent)
+ * period of time. The result of unsuccessful host
+ * name resolution is cached for a very short period of time (10
+ * seconds) to improve performance.
+ *
+ * <p> If the default behavior is not desired, then a Java security property
+ * can be set to a different Time-to-live (TTL) value for positive
+ * caching. Likewise, a system admin can configure a different
+ * negative caching TTL value when needed.
+ *
+ * <p> Two Java security properties control the TTL values used for
+ *  positive and negative host name resolution caching:
+ *
+ * <blockquote>
+ * <dl>
+ * <dt><b>networkaddress.cache.ttl</b></dt>
+ * <dd>Indicates the caching policy for successful name lookups from
+ * the name service. The value is specified as as integer to indicate
+ * the number of seconds to cache the successful lookup. The default
+ * setting is to cache for an implementation specific period of time.
+ * <p>
+ * A value of -1 indicates "cache forever".
+ * </dd>
+ * <dt><b>networkaddress.cache.negative.ttl</b> (default: 10)</dt>
+ * <dd>Indicates the caching policy for un-successful name lookups
+ * from the name service. The value is specified as as integer to
+ * indicate the number of seconds to cache the failure for
+ * un-successful lookups.
+ * <p>
+ * A value of 0 indicates "never cache".
+ * A value of -1 indicates "cache forever".
+ * </dd>
+ * </dl>
+ * </blockquote>
+ *
+ * @author  Chris Warth
+ * @see     java.net.InetAddress#getByAddress(byte[])
+ * @see     java.net.InetAddress#getByAddress(java.lang.String, byte[])
+ * @see     java.net.InetAddress#getAllByName(java.lang.String)
+ * @see     java.net.InetAddress#getByName(java.lang.String)
+ * @see     java.net.InetAddress#getLocalHost()
+ * @since JDK1.0
+ */
+public
+class InetAddress implements java.io.Serializable {
+    /**
+     * Specify the address family: Internet Protocol, Version 4
+     * @since 1.4
+     */
+    static final int IPv4 = 1;
+
+    /**
+     * Specify the address family: Internet Protocol, Version 6
+     * @since 1.4
+     */
+    static final int IPv6 = 2;
+
+    /* Specify address family preference */
+    static transient boolean preferIPv6Address = false;
+
+    static class InetAddressHolder {
+        /**
+         * Reserve the original application specified hostname.
+         *
+         * The original hostname is useful for domain-based endpoint
+         * identification (see RFC 2818 and RFC 6125).  If an address
+         * was created with a raw IP address, a reverse name lookup
+         * may introduce endpoint identification security issue via
+         * DNS forging.
+         *
+         * Oracle JSSE provider is using this original hostname, via
+         * sun.misc.JavaNetAccess, for SSL/TLS endpoint identification.
+         *
+         * Note: May define a new public method in the future if necessary.
+         */
+        String originalHostName;
+
+        InetAddressHolder() {}
+
+        InetAddressHolder(String hostName, int address, int family) {
+            this.originalHostName = hostName;
+            this.hostName = hostName;
+            this.address = address;
+            this.family = family;
+        }
+
+        void init(String hostName, int family) {
+            this.originalHostName = hostName;
+            this.hostName = hostName;
+            if (family != -1) {
+                this.family = family;
+            }
+        }
+
+        String hostName;
+
+        String getHostName() {
+            return hostName;
+        }
+
+        String getOriginalHostName() {
+            return originalHostName;
+        }
+
+        /**
+         * Holds a 32-bit IPv4 address.
+         */
+        int address;
+
+        int getAddress() {
+            return address;
+        }
+
+        /**
+         * Specifies the address family type, for instance, '1' for IPv4
+         * addresses, and '2' for IPv6 addresses.
+         */
+        int family;
+
+        int getFamily() {
+            return family;
+        }
+    }
+
+    /* Used to store the serializable fields of InetAddress */
+    final transient InetAddressHolder holder;
+
+    InetAddressHolder holder() {
+        return holder;
+    }
+
+    /* Used to store the name service provider */
+    private static List<NameService> nameServices = null;
+
+    /* Used to store the best available hostname */
+    private transient String canonicalHostName = null;
+
+    /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    private static final long serialVersionUID = 3286316764910316507L;
+
+    /*
+     * Load net library into runtime, and perform initializations.
+     */
+    static {
+        preferIPv6Address = java.security.AccessController.doPrivileged(
+            new GetBooleanAction("java.net.preferIPv6Addresses")).booleanValue();
+        AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
+                    System.loadLibrary("net");
+                    return null;
+                }
+            });
+        init();
+    }
+
+    /**
+     * Constructor for the Socket.accept() method.
+     * This creates an empty InetAddress, which is filled in by
+     * the accept() method.  This InetAddress, however, is not
+     * put in the address cache, since it is not created by name.
+     */
+    InetAddress() {
+        holder = new InetAddressHolder();
+    }
+
+    /**
+     * Replaces the de-serialized object with an Inet4Address object.
+     *
+     * @return the alternate object to the de-serialized object.
+     *
+     * @throws ObjectStreamException if a new object replacing this
+     * object could not be created
+     */
+    private Object readResolve() throws ObjectStreamException {
+        // will replace the deserialized 'this' object
+        return new Inet4Address(holder().getHostName(), holder().getAddress());
+    }
+
+    /**
+     * Utility routine to check if the InetAddress is an
+     * IP multicast address.
+     * @return a {@code boolean} indicating if the InetAddress is
+     * an IP multicast address
+     * @since   JDK1.1
+     */
+    public boolean isMulticastAddress() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the InetAddress in a wildcard address.
+     * @return a {@code boolean} indicating if the Inetaddress is
+     *         a wildcard address.
+     * @since 1.4
+     */
+    public boolean isAnyLocalAddress() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the InetAddress is a loopback address.
+     *
+     * @return a {@code boolean} indicating if the InetAddress is
+     * a loopback address; or false otherwise.
+     * @since 1.4
+     */
+    public boolean isLoopbackAddress() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the InetAddress is an link local address.
+     *
+     * @return a {@code boolean} indicating if the InetAddress is
+     * a link local address; or false if address is not a link local unicast address.
+     * @since 1.4
+     */
+    public boolean isLinkLocalAddress() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the InetAddress is a site local address.
+     *
+     * @return a {@code boolean} indicating if the InetAddress is
+     * a site local address; or false if address is not a site local unicast address.
+     * @since 1.4
+     */
+    public boolean isSiteLocalAddress() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the multicast address has global scope.
+     *
+     * @return a {@code boolean} indicating if the address has
+     *         is a multicast address of global scope, false if it is not
+     *         of global scope or it is not a multicast address
+     * @since 1.4
+     */
+    public boolean isMCGlobal() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the multicast address has node scope.
+     *
+     * @return a {@code boolean} indicating if the address has
+     *         is a multicast address of node-local scope, false if it is not
+     *         of node-local scope or it is not a multicast address
+     * @since 1.4
+     */
+    public boolean isMCNodeLocal() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the multicast address has link scope.
+     *
+     * @return a {@code boolean} indicating if the address has
+     *         is a multicast address of link-local scope, false if it is not
+     *         of link-local scope or it is not a multicast address
+     * @since 1.4
+     */
+    public boolean isMCLinkLocal() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the multicast address has site scope.
+     *
+     * @return a {@code boolean} indicating if the address has
+     *         is a multicast address of site-local scope, false if it is not
+     *         of site-local scope or it is not a multicast address
+     * @since 1.4
+     */
+    public boolean isMCSiteLocal() {
+        return false;
+    }
+
+    /**
+     * Utility routine to check if the multicast address has organization scope.
+     *
+     * @return a {@code boolean} indicating if the address has
+     *         is a multicast address of organization-local scope,
+     *         false if it is not of organization-local scope
+     *         or it is not a multicast address
+     * @since 1.4
+     */
+    public boolean isMCOrgLocal() {
+        return false;
+    }
+
+
+    /**
+     * Test whether that address is reachable. Best effort is made by the
+     * implementation to try to reach the host, but firewalls and server
+     * configuration may block requests resulting in a unreachable status
+     * while some specific ports may be accessible.
+     * A typical implementation will use ICMP ECHO REQUESTs if the
+     * privilege can be obtained, otherwise it will try to establish
+     * a TCP connection on port 7 (Echo) of the destination host.
+     * <p>
+     * The timeout value, in milliseconds, indicates the maximum amount of time
+     * the try should take. If the operation times out before getting an
+     * answer, the host is deemed unreachable. A negative value will result
+     * in an IllegalArgumentException being thrown.
+     *
+     * @param   timeout the time, in milliseconds, before the call aborts
+     * @return a {@code boolean} indicating if the address is reachable.
+     * @throws IOException if a network error occurs
+     * @throws  IllegalArgumentException if {@code timeout} is negative.
+     * @since 1.5
+     */
+    public boolean isReachable(int timeout) throws IOException {
+        return isReachable(null, 0 , timeout);
+    }
+
+    /**
+     * Test whether that address is reachable. Best effort is made by the
+     * implementation to try to reach the host, but firewalls and server
+     * configuration may block requests resulting in a unreachable status
+     * while some specific ports may be accessible.
+     * A typical implementation will use ICMP ECHO REQUESTs if the
+     * privilege can be obtained, otherwise it will try to establish
+     * a TCP connection on port 7 (Echo) of the destination host.
+     * <p>
+     * The {@code network interface} and {@code ttl} parameters
+     * let the caller specify which network interface the test will go through
+     * and the maximum number of hops the packets should go through.
+     * A negative value for the {@code ttl} will result in an
+     * IllegalArgumentException being thrown.
+     * <p>
+     * The timeout value, in milliseconds, indicates the maximum amount of time
+     * the try should take. If the operation times out before getting an
+     * answer, the host is deemed unreachable. A negative value will result
+     * in an IllegalArgumentException being thrown.
+     *
+     * @param   netif   the NetworkInterface through which the
+     *                    test will be done, or null for any interface
+     * @param   ttl     the maximum numbers of hops to try or 0 for the
+     *                  default
+     * @param   timeout the time, in milliseconds, before the call aborts
+     * @throws  IllegalArgumentException if either {@code timeout}
+     *                          or {@code ttl} are negative.
+     * @return a {@code boolean}indicating if the address is reachable.
+     * @throws IOException if a network error occurs
+     * @since 1.5
+     */
+    public boolean isReachable(NetworkInterface netif, int ttl,
+                               int timeout) throws IOException {
+        if (ttl < 0)
+            throw new IllegalArgumentException("ttl can't be negative");
+        if (timeout < 0)
+            throw new IllegalArgumentException("timeout can't be negative");
+
+        return impl.isReachable(this, timeout, netif, ttl);
+    }
+
+    /**
+     * Gets the host name for this IP address.
+     *
+     * <p>If this InetAddress was created with a host name,
+     * this host name will be remembered and returned;
+     * otherwise, a reverse name lookup will be performed
+     * and the result will be returned based on the system
+     * configured name lookup service. If a lookup of the name service
+     * is required, call
+     * {@link #getCanonicalHostName() getCanonicalHostName}.
+     *
+     * <p>If there is a security manager, its
+     * {@code checkConnect} method is first called
+     * with the hostname and {@code -1}
+     * as its arguments to see if the operation is allowed.
+     * If the operation is not allowed, it will return
+     * the textual representation of the IP address.
+     *
+     * @return  the host name for this IP address, or if the operation
+     *    is not allowed by the security check, the textual
+     *    representation of the IP address.
+     *
+     * @see InetAddress#getCanonicalHostName
+     * @see SecurityManager#checkConnect
+     */
+    public String getHostName() {
+        return getHostName(true);
+    }
+
+    /**
+     * Returns the hostname for this address.
+     * If the host is equal to null, then this address refers to any
+     * of the local machine's available network addresses.
+     * this is package private so SocketPermission can make calls into
+     * here without a security check.
+     *
+     * <p>If there is a security manager, this method first
+     * calls its {@code checkConnect} method
+     * with the hostname and {@code -1}
+     * as its arguments to see if the calling code is allowed to know
+     * the hostname for this IP address, i.e., to connect to the host.
+     * If the operation is not allowed, it will return
+     * the textual representation of the IP address.
+     *
+     * @return  the host name for this IP address, or if the operation
+     *    is not allowed by the security check, the textual
+     *    representation of the IP address.
+     *
+     * @param check make security check if true
+     *
+     * @see SecurityManager#checkConnect
+     */
+    String getHostName(boolean check) {
+        if (holder().getHostName() == null) {
+            holder().hostName = InetAddress.getHostFromNameService(this, check);
+        }
+        return holder().getHostName();
+    }
+
+    /**
+     * Gets the fully qualified domain name for this IP address.
+     * Best effort method, meaning we may not be able to return
+     * the FQDN depending on the underlying system configuration.
+     *
+     * <p>If there is a security manager, this method first
+     * calls its {@code checkConnect} method
+     * with the hostname and {@code -1}
+     * as its arguments to see if the calling code is allowed to know
+     * the hostname for this IP address, i.e., to connect to the host.
+     * If the operation is not allowed, it will return
+     * the textual representation of the IP address.
+     *
+     * @return  the fully qualified domain name for this IP address,
+     *    or if the operation is not allowed by the security check,
+     *    the textual representation of the IP address.
+     *
+     * @see SecurityManager#checkConnect
+     *
+     * @since 1.4
+     */
+    public String getCanonicalHostName() {
+        if (canonicalHostName == null) {
+            canonicalHostName =
+                InetAddress.getHostFromNameService(this, true);
+        }
+        return canonicalHostName;
+    }
+
+    /**
+     * Returns the hostname for this address.
+     *
+     * <p>If there is a security manager, this method first
+     * calls its {@code checkConnect} method
+     * with the hostname and {@code -1}
+     * as its arguments to see if the calling code is allowed to know
+     * the hostname for this IP address, i.e., to connect to the host.
+     * If the operation is not allowed, it will return
+     * the textual representation of the IP address.
+     *
+     * @return  the host name for this IP address, or if the operation
+     *    is not allowed by the security check, the textual
+     *    representation of the IP address.
+     *
+     * @param check make security check if true
+     *
+     * @see SecurityManager#checkConnect
+     */
+    private static String getHostFromNameService(InetAddress addr, boolean check) {
+        String host = null;
+        for (NameService nameService : nameServices) {
+            try {
+                // first lookup the hostname
+                host = nameService.getHostByAddr(addr.getAddress());
+
+                /* check to see if calling code is allowed to know
+                 * the hostname for this IP address, ie, connect to the host
+                 */
+                if (check) {
+                    SecurityManager sec = System.getSecurityManager();
+                    if (sec != null) {
+                        sec.checkConnect(host, -1);
+                    }
+                }
+
+                /* now get all the IP addresses for this hostname,
+                 * and make sure one of them matches the original IP
+                 * address. We do this to try and prevent spoofing.
+                 */
+
+                InetAddress[] arr = InetAddress.getAllByName0(host, check);
+                boolean ok = false;
+
+                if(arr != null) {
+                    for(int i = 0; !ok && i < arr.length; i++) {
+                        ok = addr.equals(arr[i]);
+                    }
+                }
+
+                //XXX: if it looks a spoof just return the address?
+                if (!ok) {
+                    host = addr.getHostAddress();
+                    return host;
+                }
+
+                break;
+
+            } catch (SecurityException e) {
+                host = addr.getHostAddress();
+                break;
+            } catch (UnknownHostException e) {
+                host = addr.getHostAddress();
+                // let next provider resolve the hostname
+            }
+        }
+
+        return host;
+    }
+
+    /**
+     * Returns the raw IP address of this {@code InetAddress}
+     * object. The result is in network byte order: the highest order
+     * byte of the address is in {@code getAddress()[0]}.
+     *
+     * @return  the raw IP address of this object.
+     */
+    public byte[] getAddress() {
+        return null;
+    }
+
+    /**
+     * Returns the IP address string in textual presentation.
+     *
+     * @return  the raw IP address in a string format.
+     * @since   JDK1.0.2
+     */
+    public String getHostAddress() {
+        return null;
+     }
+
+    /**
+     * Returns a hashcode for this IP address.
+     *
+     * @return  a hash code value for this IP address.
+     */
+    public int hashCode() {
+        return -1;
+    }
+
+    /**
+     * Compares this object against the specified object.
+     * The result is {@code true} if and only if the argument is
+     * not {@code null} and it represents the same IP address as
+     * this object.
+     * <p>
+     * Two instances of {@code InetAddress} represent the same IP
+     * address if the length of the byte arrays returned by
+     * {@code getAddress} is the same for both, and each of the
+     * array components is the same for the byte arrays.
+     *
+     * @param   obj   the object to compare against.
+     * @return  {@code true} if the objects are the same;
+     *          {@code false} otherwise.
+     * @see     java.net.InetAddress#getAddress()
+     */
+    public boolean equals(Object obj) {
+        return false;
+    }
+
+    /**
+     * Converts this IP address to a {@code String}. The
+     * string returned is of the form: hostname / literal IP
+     * address.
+     *
+     * If the host name is unresolved, no reverse name service lookup
+     * is performed. The hostname part will be represented by an empty string.
+     *
+     * @return  a string representation of this IP address.
+     */
+    public String toString() {
+        String hostName = holder().getHostName();
+        return ((hostName != null) ? hostName : "")
+            + "/" + getHostAddress();
+    }
+
+    /*
+     * Cached addresses - our own litle nis, not!
+     */
+    private static Cache addressCache = new Cache(Cache.Type.Positive);
+
+    private static Cache negativeCache = new Cache(Cache.Type.Negative);
+
+    private static boolean addressCacheInit = false;
+
+    static InetAddress[]    unknown_array; // put THIS in cache
+
+    static InetAddressImpl  impl;
+
+    private static final HashMap<String, Void> lookupTable = new HashMap<>();
+
+    /**
+     * Represents a cache entry
+     */
+    static final class CacheEntry {
+
+        CacheEntry(InetAddress[] addresses, long expiration) {
+            this.addresses = addresses;
+            this.expiration = expiration;
+        }
+
+        InetAddress[] addresses;
+        long expiration;
+    }
+
+    /**
+     * A cache that manages entries based on a policy specified
+     * at creation time.
+     */
+    static final class Cache {
+        private LinkedHashMap<String, CacheEntry> cache;
+        private Type type;
+
+        enum Type {Positive, Negative};
+
+        /**
+         * Create cache
+         */
+        public Cache(Type type) {
+            this.type = type;
+            cache = new LinkedHashMap<String, CacheEntry>();
+        }
+
+        private int getPolicy() {
+            if (type == Type.Positive) {
+                return InetAddressCachePolicy.get();
+            } else {
+                return InetAddressCachePolicy.getNegative();
+            }
+        }
+
+        /**
+         * Add an entry to the cache. If there's already an
+         * entry then for this host then the entry will be
+         * replaced.
+         */
+        public Cache put(String host, InetAddress[] addresses) {
+            int policy = getPolicy();
+            if (policy == InetAddressCachePolicy.NEVER) {
+                return this;
+            }
+
+            // purge any expired entries
+
+            if (policy != InetAddressCachePolicy.FOREVER) {
+
+                // As we iterate in insertion order we can
+                // terminate when a non-expired entry is found.
+                LinkedList<String> expired = new LinkedList<>();
+                long now = System.currentTimeMillis();
+                for (String key : cache.keySet()) {
+                    CacheEntry entry = cache.get(key);
+
+                    if (entry.expiration >= 0 && entry.expiration < now) {
+                        expired.add(key);
+                    } else {
+                        break;
+                    }
+                }
+
+                for (String key : expired) {
+                    cache.remove(key);
+                }
+            }
+
+            // create new entry and add it to the cache
+            // -- as a HashMap replaces existing entries we
+            //    don't need to explicitly check if there is
+            //    already an entry for this host.
+            long expiration;
+            if (policy == InetAddressCachePolicy.FOREVER) {
+                expiration = -1;
+            } else {
+                expiration = System.currentTimeMillis() + (policy * 1000);
+            }
+            CacheEntry entry = new CacheEntry(addresses, expiration);
+            cache.put(host, entry);
+            return this;
+        }
+
+        /**
+         * Query the cache for the specific host. If found then
+         * return its CacheEntry, or null if not found.
+         */
+        public CacheEntry get(String host) {
+            int policy = getPolicy();
+            if (policy == InetAddressCachePolicy.NEVER) {
+                return null;
+            }
+            CacheEntry entry = cache.get(host);
+
+            // check if entry has expired
+            if (entry != null && policy != InetAddressCachePolicy.FOREVER) {
+                if (entry.expiration >= 0 &&
+                    entry.expiration < System.currentTimeMillis()) {
+                    cache.remove(host);
+                    entry = null;
+                }
+            }
+
+            return entry;
+        }
+    }
+
+    /*
+     * Initialize cache and insert anyLocalAddress into the
+     * unknown array with no expiry.
+     */
+    private static void cacheInitIfNeeded() {
+        assert Thread.holdsLock(addressCache);
+        if (addressCacheInit) {
+            return;
+        }
+        unknown_array = new InetAddress[1];
+        unknown_array[0] = impl.anyLocalAddress();
+
+        addressCache.put(impl.anyLocalAddress().getHostName(),
+                         unknown_array);
+
+        addressCacheInit = true;
+    }
+
+    /*
+     * Cache the given hostname and addresses.
+     */
+    private static void cacheAddresses(String hostname,
+                                       InetAddress[] addresses,
+                                       boolean success) {
+        hostname = hostname.toLowerCase();
+        synchronized (addressCache) {
+            cacheInitIfNeeded();
+            if (success) {
+                addressCache.put(hostname, addresses);
+            } else {
+                negativeCache.put(hostname, addresses);
+            }
+        }
+    }
+
+    /*
+     * Lookup hostname in cache (positive & negative cache). If
+     * found return addresses, null if not found.
+     */
+    private static InetAddress[] getCachedAddresses(String hostname) {
+        hostname = hostname.toLowerCase();
+
+        // search both positive & negative caches
+
+        synchronized (addressCache) {
+            cacheInitIfNeeded();
+
+            CacheEntry entry = addressCache.get(hostname);
+            if (entry == null) {
+                entry = negativeCache.get(hostname);
+            }
+
+            if (entry != null) {
+                return entry.addresses;
+            }
+        }
+
+        // not found
+        return null;
+    }
+
+    private static NameService createNSProvider(String provider) {
+        if (provider == null)
+            return null;
+
+        NameService nameService = null;
+        if (provider.equals("default")) {
+            // initialize the default name service
+            nameService = new NameService() {
+                public InetAddress[] lookupAllHostAddr(String host)
+                    throws UnknownHostException {
+                    return impl.lookupAllHostAddr(host);
+                }
+                public String getHostByAddr(byte[] addr)
+                    throws UnknownHostException {
+                    return impl.getHostByAddr(addr);
+                }
+            };
+        } else {
+            final String providerName = provider;
+            try {
+                nameService = java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedExceptionAction<NameService>() {
+                        public NameService run() {
+                            Iterator<NameServiceDescriptor> itr =
+                                ServiceLoader.load(NameServiceDescriptor.class)
+                                    .iterator();
+                            while (itr.hasNext()) {
+                                NameServiceDescriptor nsd = itr.next();
+                                if (providerName.
+                                    equalsIgnoreCase(nsd.getType()+","
+                                        +nsd.getProviderName())) {
+                                    try {
+                                        return nsd.createNameService();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        System.err.println(
+                                            "Cannot create name service:"
+                                             +providerName+": " + e);
+                                    }
+                                }
+                            }
+
+                            return null;
+                        }
+                    }
+                );
+            } catch (java.security.PrivilegedActionException e) {
+            }
+        }
+
+        return nameService;
+    }
+
+    static {
+        // create the impl
+        impl = InetAddressImplFactory.create();
+
+        // get name service if provided and requested
+        String provider = null;;
+        String propPrefix = "sun.net.spi.nameservice.provider.";
+        int n = 1;
+        nameServices = new ArrayList<NameService>();
+        provider = AccessController.doPrivileged(
+                new GetPropertyAction(propPrefix + n));
+        while (provider != null) {
+            NameService ns = createNSProvider(provider);
+            if (ns != null)
+                nameServices.add(ns);
+
+            n++;
+            provider = AccessController.doPrivileged(
+                    new GetPropertyAction(propPrefix + n));
+        }
+
+        // if not designate any name services provider,
+        // create a default one
+        if (nameServices.size() == 0) {
+            NameService ns = createNSProvider("default");
+            nameServices.add(ns);
+        }
+    }
+
+    /**
+     * Creates an InetAddress based on the provided host name and IP address.
+     * No name service is checked for the validity of the address.
+     *
+     * <p> The host name can either be a machine name, such as
+     * "{@code java.sun.com}", or a textual representation of its IP
+     * address.
+     * <p> No validity checking is done on the host name either.
+     *
+     * <p> If addr specifies an IPv4 address an instance of Inet4Address
+     * will be returned; otherwise, an instance of Inet6Address
+     * will be returned.
+     *
+     * <p> IPv4 address byte array must be 4 bytes long and IPv6 byte array
+     * must be 16 bytes long
+     *
+     * @param host the specified host
+     * @param addr the raw IP address in network byte order
+     * @return  an InetAddress object created from the raw IP address.
+     * @exception  UnknownHostException  if IP address is of illegal length
+     * @since 1.4
+     */
+    public static InetAddress getByAddress(String host, byte[] addr)
+        throws UnknownHostException {
+        if (host != null && host.length() > 0 && host.charAt(0) == '[') {
+            if (host.charAt(host.length()-1) == ']') {
+                host = host.substring(1, host.length() -1);
+            }
+        }
+        if (addr != null) {
+            if (addr.length == Inet4Address.INADDRSZ) {
+                return new Inet4Address(host, addr);
+            } else if (addr.length == Inet6Address.INADDRSZ) {
+                byte[] newAddr
+                    = IPAddressUtil.convertFromIPv4MappedAddress(addr);
+                if (newAddr != null) {
+                    return new Inet4Address(host, newAddr);
+                } else {
+                    return new Inet6Address(host, addr);
+                }
+            }
+        }
+        throw new UnknownHostException("addr is of illegal length");
+    }
+
+
+    /**
+     * Determines the IP address of a host, given the host's name.
+     *
+     * <p> The host name can either be a machine name, such as
+     * "{@code java.sun.com}", or a textual representation of its
+     * IP address. If a literal IP address is supplied, only the
+     * validity of the address format is checked.
+     *
+     * <p> For {@code host} specified in literal IPv6 address,
+     * either the form defined in RFC 2732 or the literal IPv6 address
+     * format defined in RFC 2373 is accepted. IPv6 scoped addresses are also
+     * supported. See <a href="Inet6Address.html#scoped">here</a> for a description of IPv6
+     * scoped addresses.
+     *
+     * <p> If the host is {@code null} then an {@code InetAddress}
+     * representing an address of the loopback interface is returned.
+     * See <a href="http://www.ietf.org/rfc/rfc3330.txt">RFC&nbsp;3330</a>
+     * section&nbsp;2 and <a href="http://www.ietf.org/rfc/rfc2373.txt">RFC&nbsp;2373</a>
+     * section&nbsp;2.5.3. </p>
+     *
+     * @param      host   the specified host, or {@code null}.
+     * @return     an IP address for the given host name.
+     * @exception  UnknownHostException  if no IP address for the
+     *               {@code host} could be found, or if a scope_id was specified
+     *               for a global IPv6 address.
+     * @exception  SecurityException if a security manager exists
+     *             and its checkConnect method doesn't allow the operation
+     */
+    public static InetAddress getByName(String host)
+        throws UnknownHostException {
+        return InetAddress.getAllByName(host)[0];
+    }
+
+    // called from deployment cache manager
+    private static InetAddress getByName(String host, InetAddress reqAddr)
+        throws UnknownHostException {
+        return InetAddress.getAllByName(host, reqAddr)[0];
+    }
+
+    /**
+     * Given the name of a host, returns an array of its IP addresses,
+     * based on the configured name service on the system.
+     *
+     * <p> The host name can either be a machine name, such as
+     * "{@code java.sun.com}", or a textual representation of its IP
+     * address. If a literal IP address is supplied, only the
+     * validity of the address format is checked.
+     *
+     * <p> For {@code host} specified in <i>literal IPv6 address</i>,
+     * either the form defined in RFC 2732 or the literal IPv6 address
+     * format defined in RFC 2373 is accepted. A literal IPv6 address may
+     * also be qualified by appending a scoped zone identifier or scope_id.
+     * The syntax and usage of scope_ids is described
+     * <a href="Inet6Address.html#scoped">here</a>.
+     * <p> If the host is {@code null} then an {@code InetAddress}
+     * representing an address of the loopback interface is returned.
+     * See <a href="http://www.ietf.org/rfc/rfc3330.txt">RFC&nbsp;3330</a>
+     * section&nbsp;2 and <a href="http://www.ietf.org/rfc/rfc2373.txt">RFC&nbsp;2373</a>
+     * section&nbsp;2.5.3. </p>
+     *
+     * <p> If there is a security manager and {@code host} is not
+     * null and {@code host.length() } is not equal to zero, the
+     * security manager's
+     * {@code checkConnect} method is called
+     * with the hostname and {@code -1}
+     * as its arguments to see if the operation is allowed.
+     *
+     * @param      host   the name of the host, or {@code null}.
+     * @return     an array of all the IP addresses for a given host name.
+     *
+     * @exception  UnknownHostException  if no IP address for the
+     *               {@code host} could be found, or if a scope_id was specified
+     *               for a global IPv6 address.
+     * @exception  SecurityException  if a security manager exists and its
+     *               {@code checkConnect} method doesn't allow the operation.
+     *
+     * @see SecurityManager#checkConnect
+     */
+    public static InetAddress[] getAllByName(String host)
+        throws UnknownHostException {
+        return getAllByName(host, null);
+    }
+
+    private static InetAddress[] getAllByName(String host, InetAddress reqAddr)
+        throws UnknownHostException {
+
+        if (host == null || host.length() == 0) {
+            InetAddress[] ret = new InetAddress[1];
+            ret[0] = impl.loopbackAddress();
+            return ret;
+        }
+
+        boolean ipv6Expected = false;
+        if (host.charAt(0) == '[') {
+            // This is supposed to be an IPv6 literal
+            if (host.length() > 2 && host.charAt(host.length()-1) == ']') {
+                host = host.substring(1, host.length() -1);
+                ipv6Expected = true;
+            } else {
+                // This was supposed to be a IPv6 address, but it's not!
+                throw new UnknownHostException(host + ": invalid IPv6 address");
+            }
+        }
+
+        // if host is an IP address, we won't do further lookup
+        if (Character.digit(host.charAt(0), 16) != -1
+            || (host.charAt(0) == ':')) {
+            byte[] addr = null;
+            int numericZone = -1;
+            String ifname = null;
+            // see if it is IPv4 address
+            addr = IPAddressUtil.textToNumericFormatV4(host);
+            if (addr == null) {
+                // This is supposed to be an IPv6 literal
+                // Check if a numeric or string zone id is present
+                int pos;
+                if ((pos=host.indexOf ("%")) != -1) {
+                    numericZone = checkNumericZone (host);
+                    if (numericZone == -1) { /* remainder of string must be an ifname */
+                        ifname = host.substring (pos+1);
+                    }
+                }
+                if ((addr = IPAddressUtil.textToNumericFormatV6(host)) == null && host.contains(":")) {
+                    throw new UnknownHostException(host + ": invalid IPv6 address");
+                }
+            } else if (ipv6Expected) {
+                // Means an IPv4 litteral between brackets!
+                throw new UnknownHostException("["+host+"]");
+            }
+            InetAddress[] ret = new InetAddress[1];
+            if(addr != null) {
+                if (addr.length == Inet4Address.INADDRSZ) {
+                    ret[0] = new Inet4Address(null, addr);
+                } else {
+                    if (ifname != null) {
+                        ret[0] = new Inet6Address(null, addr, ifname);
+                    } else {
+                        ret[0] = new Inet6Address(null, addr, numericZone);
+                    }
+                }
+                return ret;
+            }
+        } else if (ipv6Expected) {
+            // We were expecting an IPv6 Litteral, but got something else
+            throw new UnknownHostException("["+host+"]");
+        }
+        return getAllByName0(host, reqAddr, true);
+    }
+
+    /**
+     * Returns the loopback address.
+     * <p>
+     * The InetAddress returned will represent the IPv4
+     * loopback address, 127.0.0.1, or the IPv6 loopback
+     * address, ::1. The IPv4 loopback address returned
+     * is only one of many in the form 127.*.*.*
+     *
+     * @return  the InetAddress loopback instance.
+     * @since 1.7
+     */
+    public static InetAddress getLoopbackAddress() {
+        return impl.loopbackAddress();
+    }
+
+
+    /**
+     * check if the literal address string has %nn appended
+     * returns -1 if not, or the numeric value otherwise.
+     *
+     * %nn may also be a string that represents the displayName of
+     * a currently available NetworkInterface.
+     */
+    private static int checkNumericZone (String s) throws UnknownHostException {
+        int percent = s.indexOf ('%');
+        int slen = s.length();
+        int digit, zone=0;
+        if (percent == -1) {
+            return -1;
+        }
+        for (int i=percent+1; i<slen; i++) {
+            char c = s.charAt(i);
+            if (c == ']') {
+                if (i == percent+1) {
+                    /* empty per-cent field */
+                    return -1;
+                }
+                break;
+            }
+            if ((digit = Character.digit (c, 10)) < 0) {
+                return -1;
+            }
+            zone = (zone * 10) + digit;
+        }
+        return zone;
+    }
+
+    private static InetAddress[] getAllByName0 (String host)
+        throws UnknownHostException
+    {
+        return getAllByName0(host, true);
+    }
+
+    /**
+     * package private so SocketPermission can call it
+     */
+    static InetAddress[] getAllByName0 (String host, boolean check)
+        throws UnknownHostException  {
+        return getAllByName0 (host, null, check);
+    }
+
+    private static InetAddress[] getAllByName0 (String host, InetAddress reqAddr, boolean check)
+        throws UnknownHostException  {
+
+        /* If it gets here it is presumed to be a hostname */
+        /* Cache.get can return: null, unknownAddress, or InetAddress[] */
+
+        /* make sure the connection to the host is allowed, before we
+         * give out a hostname
+         */
+        if (check) {
+            SecurityManager security = System.getSecurityManager();
+            if (security != null) {
+                security.checkConnect(host, -1);
+            }
+        }
+
+        InetAddress[] addresses = getCachedAddresses(host);
+
+        /* If no entry in cache, then do the host lookup */
+        if (addresses == null) {
+            addresses = getAddressesFromNameService(host, reqAddr);
+        }
+
+        if (addresses == unknown_array)
+            throw new UnknownHostException(host);
+
+        return addresses.clone();
+    }
+
+    private static InetAddress[] getAddressesFromNameService(String host, InetAddress reqAddr)
+        throws UnknownHostException
+    {
+        InetAddress[] addresses = null;
+        boolean success = false;
+        UnknownHostException ex = null;
+
+        // Check whether the host is in the lookupTable.
+        // 1) If the host isn't in the lookupTable when
+        //    checkLookupTable() is called, checkLookupTable()
+        //    would add the host in the lookupTable and
+        //    return null. So we will do the lookup.
+        // 2) If the host is in the lookupTable when
+        //    checkLookupTable() is called, the current thread
+        //    would be blocked until the host is removed
+        //    from the lookupTable. Then this thread
+        //    should try to look up the addressCache.
+        //     i) if it found the addresses in the
+        //        addressCache, checkLookupTable()  would
+        //        return the addresses.
+        //     ii) if it didn't find the addresses in the
+        //         addressCache for any reason,
+        //         it should add the host in the
+        //         lookupTable and return null so the
+        //         following code would do  a lookup itself.
+        if ((addresses = checkLookupTable(host)) == null) {
+            try {
+                // This is the first thread which looks up the addresses
+                // this host or the cache entry for this host has been
+                // expired so this thread should do the lookup.
+                for (NameService nameService : nameServices) {
+                    try {
+                        /*
+                         * Do not put the call to lookup() inside the
+                         * constructor.  if you do you will still be
+                         * allocating space when the lookup fails.
+                         */
+
+                        addresses = nameService.lookupAllHostAddr(host);
+                        success = true;
+                        break;
+                    } catch (UnknownHostException uhe) {
+                        if (host.equalsIgnoreCase("localhost")) {
+                            InetAddress[] local = new InetAddress[] { impl.loopbackAddress() };
+                            addresses = local;
+                            success = true;
+                            break;
+                        }
+                        else {
+                            addresses = unknown_array;
+                            success = false;
+                            ex = uhe;
+                        }
+                    }
+                }
+
+                // More to do?
+                if (reqAddr != null && addresses.length > 1 && !addresses[0].equals(reqAddr)) {
+                    // Find it?
+                    int i = 1;
+                    for (; i < addresses.length; i++) {
+                        if (addresses[i].equals(reqAddr)) {
+                            break;
+                        }
+                    }
+                    // Rotate
+                    if (i < addresses.length) {
+                        InetAddress tmp, tmp2 = reqAddr;
+                        for (int j = 0; j < i; j++) {
+                            tmp = addresses[j];
+                            addresses[j] = tmp2;
+                            tmp2 = tmp;
+                        }
+                        addresses[i] = tmp2;
+                    }
+                }
+                // Cache the address.
+                cacheAddresses(host, addresses, success);
+
+                if (!success && ex != null)
+                    throw ex;
+
+            } finally {
+                // Delete host from the lookupTable and notify
+                // all threads waiting on the lookupTable monitor.
+                updateLookupTable(host);
+            }
+        }
+
+        return addresses;
+    }
+
+
+    private static InetAddress[] checkLookupTable(String host) {
+        synchronized (lookupTable) {
+            // If the host isn't in the lookupTable, add it in the
+            // lookuptable and return null. The caller should do
+            // the lookup.
+            if (lookupTable.containsKey(host) == false) {
+                lookupTable.put(host, null);
+                return null;
+            }
+
+            // If the host is in the lookupTable, it means that another
+            // thread is trying to look up the addresses of this host.
+            // This thread should wait.
+            while (lookupTable.containsKey(host)) {
+                try {
+                    lookupTable.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+        }
+
+        // The other thread has finished looking up the addresses of
+        // the host. This thread should retry to get the addresses
+        // from the addressCache. If it doesn't get the addresses from
+        // the cache, it will try to look up the addresses itself.
+        InetAddress[] addresses = getCachedAddresses(host);
+        if (addresses == null) {
+            synchronized (lookupTable) {
+                lookupTable.put(host, null);
+                return null;
+            }
+        }
+
+        return addresses;
+    }
+
+    private static void updateLookupTable(String host) {
+        synchronized (lookupTable) {
+            lookupTable.remove(host);
+            lookupTable.notifyAll();
+        }
+    }
+
+    /**
+     * Returns an {@code InetAddress} object given the raw IP address .
+     * The argument is in network byte order: the highest order
+     * byte of the address is in {@code getAddress()[0]}.
+     *
+     * <p> This method doesn't block, i.e. no reverse name service lookup
+     * is performed.
+     *
+     * <p> IPv4 address byte array must be 4 bytes long and IPv6 byte array
+     * must be 16 bytes long
+     *
+     * @param addr the raw IP address in network byte order
+     * @return  an InetAddress object created from the raw IP address.
+     * @exception  UnknownHostException  if IP address is of illegal length
+     * @since 1.4
+     */
+    public static InetAddress getByAddress(byte[] addr)
+        throws UnknownHostException {
+        return getByAddress(null, addr);
+    }
+
+    private static InetAddress cachedLocalHost = null;
+    private static long cacheTime = 0;
+    private static final long maxCacheTime = 5000L;
+    private static final Object cacheLock = new Object();
+
+    /**
+     * Returns the address of the local host. This is achieved by retrieving
+     * the name of the host from the system, then resolving that name into
+     * an {@code InetAddress}.
+     *
+     * <P>Note: The resolved address may be cached for a short period of time.
+     * </P>
+     *
+     * <p>If there is a security manager, its
+     * {@code checkConnect} method is called
+     * with the local host name and {@code -1}
+     * as its arguments to see if the operation is allowed.
+     * If the operation is not allowed, an InetAddress representing
+     * the loopback address is returned.
+     *
+     * @return     the address of the local host.
+     *
+     * @exception  UnknownHostException  if the local host name could not
+     *             be resolved into an address.
+     *
+     * @see SecurityManager#checkConnect
+     * @see java.net.InetAddress#getByName(java.lang.String)
+     */
+    public static InetAddress getLocalHost() throws UnknownHostException {
+
+        SecurityManager security = System.getSecurityManager();
+        try {
+            String local = impl.getLocalHostName();
+
+            if (security != null) {
+                security.checkConnect(local, -1);
+            }
+
+            if (local.equals("localhost")) {
+                return impl.loopbackAddress();
+            }
+
+            InetAddress ret = null;
+            synchronized (cacheLock) {
+                long now = System.currentTimeMillis();
+                if (cachedLocalHost != null) {
+                    if ((now - cacheTime) < maxCacheTime) // Less than 5s old?
+                        ret = cachedLocalHost;
+                    else
+                        cachedLocalHost = null;
+                }
+
+                // we are calling getAddressesFromNameService directly
+                // to avoid getting localHost from cache
+                if (ret == null) {
+                    InetAddress[] localAddrs;
+                    try {
+                        localAddrs =
+                            InetAddress.getAddressesFromNameService(local, null);
+                    } catch (UnknownHostException uhe) {
+                        // Rethrow with a more informative error message.
+                        UnknownHostException uhe2 =
+                            new UnknownHostException(local + ": " +
+                                                     uhe.getMessage());
+                        uhe2.initCause(uhe);
+                        throw uhe2;
+                    }
+                    cachedLocalHost = localAddrs[0];
+                    cacheTime = now;
+                    ret = localAddrs[0];
+                }
+            }
+            return ret;
+        } catch (java.lang.SecurityException e) {
+            return impl.loopbackAddress();
+        }
+    }
+
+    /**
+     * Perform class load-time initializations.
+     */
+    private static native void init();
+
+
+    /*
+     * Returns the InetAddress representing anyLocalAddress
+     * (typically 0.0.0.0 or ::0)
+     */
+    static InetAddress anyLocalAddress() {
+        return impl.anyLocalAddress();
+    }
+
+    /*
+     * Load and instantiate an underlying impl class
+     */
+    static InetAddressImpl loadImpl(String implName) {
+        Object impl = null;
+
+        /*
+         * Property "impl.prefix" will be prepended to the classname
+         * of the implementation object we instantiate, to which we
+         * delegate the real work (like native methods).  This
+         * property can vary across implementations of the java.
+         * classes.  The default is an empty String "".
+         */
+        String prefix = AccessController.doPrivileged(
+                      new GetPropertyAction("impl.prefix", ""));
+        try {
+            impl = Class.forName("java.net." + prefix + implName).newInstance();
+        } catch (ClassNotFoundException e) {
+            System.err.println("Class not found: java.net." + prefix +
+                               implName + ":\ncheck impl.prefix property " +
+                               "in your properties file.");
+        } catch (InstantiationException e) {
+            System.err.println("Could not instantiate: java.net." + prefix +
+                               implName + ":\ncheck impl.prefix property " +
+                               "in your properties file.");
+        } catch (IllegalAccessException e) {
+            System.err.println("Cannot access class: java.net." + prefix +
+                               implName + ":\ncheck impl.prefix property " +
+                               "in your properties file.");
+        }
+
+        if (impl == null) {
+            try {
+                impl = Class.forName(implName).newInstance();
+            } catch (Exception e) {
+                throw new Error("System property impl.prefix incorrect");
+            }
+        }
+
+        return (InetAddressImpl) impl;
+    }
+
+    private void readObjectNoData (ObjectInputStream s) throws
+                         IOException, ClassNotFoundException {
+        if (getClass().getClassLoader() != null) {
+            throw new SecurityException ("invalid address type");
+        }
+    }
+
+    private static final long FIELDS_OFFSET;
+    private static final sun.misc.Unsafe UNSAFE;
+
+    static {
+        try {
+            sun.misc.Unsafe unsafe = sun.misc.Unsafe.getUnsafe();
+            FIELDS_OFFSET = unsafe.objectFieldOffset(
+                InetAddress.class.getDeclaredField("holder")
+            );
+            UNSAFE = unsafe;
+        } catch (ReflectiveOperationException e) {
+            throw new Error(e);
+        }
+    }
+
+    private void readObject (ObjectInputStream s) throws
+                         IOException, ClassNotFoundException {
+        if (getClass().getClassLoader() != null) {
+            throw new SecurityException ("invalid address type");
+        }
+        GetField gf = s.readFields();
+        String host = (String)gf.get("hostName", null);
+        int address = gf.get("address", 0);
+        int family = gf.get("family", 0);
+        if (family != IPv4 && family != IPv6) {
+            throw new InvalidObjectException("invalid address family type: " + family);
+        }
+        InetAddressHolder h = new InetAddressHolder(host, address, family);
+        UNSAFE.putObject(this, FIELDS_OFFSET, h);
+    }
+
+    /* needed because the serializable fields no longer exist */
+
+    /**
+     * @serialField hostName String
+     * @serialField address int
+     * @serialField family int
+     */
+    private static final ObjectStreamField[] serialPersistentFields = {
+        new ObjectStreamField("hostName", String.class),
+        new ObjectStreamField("address", int.class),
+        new ObjectStreamField("family", int.class),
+    };
+
+    private void writeObject (ObjectOutputStream s) throws
+                        IOException {
+        if (getClass().getClassLoader() != null) {
+            throw new SecurityException ("invalid address type");
+        }
+        PutField pf = s.putFields();
+        pf.put("hostName", holder().getHostName());
+        pf.put("address", holder().getAddress());
+        pf.put("family", holder().getFamily());
+        s.writeFields();
+    }
+}
+
+/*
+ * Simple factory to create the impl
+ */
+class InetAddressImplFactory {
+
+    static InetAddressImpl create() {
+        return InetAddress.loadImpl(isIPv6Supported() ?
+                                    "Inet6AddressImpl" : "Inet4AddressImpl");
+    }
+
+    static native boolean isIPv6Supported();
+}

@@ -1,135 +1,130 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.opti;
-/*     */ 
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TextImpl
-/*     */   extends DefaultText
-/*     */ {
-/*  35 */   String fData = null;
-/*  36 */   SchemaDOM fSchemaDOM = null;
-/*     */   int fRow;
-/*     */   int fCol;
-/*     */   
-/*     */   public TextImpl(StringBuffer str, SchemaDOM sDOM, int row, int col) {
-/*  41 */     this.fData = str.toString();
-/*  42 */     this.fSchemaDOM = sDOM;
-/*  43 */     this.fRow = row;
-/*  44 */     this.fCol = col;
-/*  45 */     this.rawname = this.prefix = this.localpart = this.uri = null;
-/*  46 */     this.nodeType = 3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node getParentNode() {
-/*  54 */     return this.fSchemaDOM.relations[this.fRow][0];
-/*     */   }
-/*     */   
-/*     */   public Node getPreviousSibling() {
-/*  58 */     if (this.fCol == 1) {
-/*  59 */       return null;
-/*     */     }
-/*  61 */     return this.fSchemaDOM.relations[this.fRow][this.fCol - 1];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Node getNextSibling() {
-/*  66 */     if (this.fCol == (this.fSchemaDOM.relations[this.fRow]).length - 1) {
-/*  67 */       return null;
-/*     */     }
-/*  69 */     return this.fSchemaDOM.relations[this.fRow][this.fCol + 1];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getData() throws DOMException {
-/*  91 */     return this.fData;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/* 100 */     if (this.fData == null) return 0; 
-/* 101 */     return this.fData.length();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String substringData(int offset, int count) throws DOMException {
-/* 122 */     if (this.fData == null) return null; 
-/* 123 */     if (count < 0 || offset < 0 || offset > this.fData.length())
-/* 124 */       throw new DOMException((short)1, "parameter error"); 
-/* 125 */     if (offset + count >= this.fData.length())
-/* 126 */       return this.fData.substring(offset); 
-/* 127 */     return this.fData.substring(offset, offset + count);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\opti\TextImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.opti;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Node;
+
+/**
+ * @xerces.internal
+ *
+ * @author Neil Graham, IBM
+ */
+
+public class TextImpl extends DefaultText {
+
+    // Data
+    String fData = null;
+    SchemaDOM fSchemaDOM = null;
+    int fRow;
+    int fCol;
+
+    public TextImpl(StringBuffer str, SchemaDOM sDOM, int row, int col) {
+        fData = str.toString();
+        fSchemaDOM = sDOM;
+        fRow = row;
+        fCol = col;
+        rawname = prefix = localpart = uri = null;
+        nodeType = Node.TEXT_NODE;
+    }
+
+    //
+    // org.w3c.dom.Node methods
+    //
+
+    public Node getParentNode() {
+        return fSchemaDOM.relations[fRow][0];
+    }
+
+    public Node getPreviousSibling() {
+        if (fCol == 1) {
+            return null;
+        }
+        return fSchemaDOM.relations[fRow][fCol-1];
+    }
+
+
+    public Node getNextSibling() {
+        if (fCol == fSchemaDOM.relations[fRow].length-1) {
+            return null;
+        }
+        return fSchemaDOM.relations[fRow][fCol+1];
+    }
+
+    // CharacterData methods
+
+    /**
+     * The character data of the node that implements this interface. The DOM
+     * implementation may not put arbitrary limits on the amount of data
+     * that may be stored in a <code>CharacterData</code> node. However,
+     * implementation limits may mean that the entirety of a node's data may
+     * not fit into a single <code>DOMString</code>. In such cases, the user
+     * may call <code>substringData</code> to retrieve the data in
+     * appropriately sized pieces.
+     * @exception DOMException
+     *   NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly.
+     * @exception DOMException
+     *   DOMSTRING_SIZE_ERR: Raised when it would return more characters than
+     *   fit in a <code>DOMString</code> variable on the implementation
+     *   platform.
+     */
+    public String getData()
+                            throws DOMException {
+        return fData;
+    }
+
+    /**
+     * The number of 16-bit units that are available through <code>data</code>
+     * and the <code>substringData</code> method below. This may have the
+     * value zero, i.e., <code>CharacterData</code> nodes may be empty.
+     */
+    public int getLength() {
+        if(fData == null) return 0;
+        return fData.length();
+    }
+
+    /**
+     * Extracts a range of data from the node.
+     * @param offset Start offset of substring to extract.
+     * @param count The number of 16-bit units to extract.
+     * @return The specified substring. If the sum of <code>offset</code> and
+     *   <code>count</code> exceeds the <code>length</code>, then all 16-bit
+     *   units to the end of the data are returned.
+     * @exception DOMException
+     *   INDEX_SIZE_ERR: Raised if the specified <code>offset</code> is
+     *   negative or greater than the number of 16-bit units in
+     *   <code>data</code>, or if the specified <code>count</code> is
+     *   negative.
+     *   <br>DOMSTRING_SIZE_ERR: Raised if the specified range of text does
+     *   not fit into a <code>DOMString</code>.
+     */
+    public String substringData(int offset,
+                                int count)
+                                throws DOMException {
+        if(fData == null) return null;
+        if(count < 0 || offset < 0 || offset > fData.length())
+            throw new DOMException(DOMException.INDEX_SIZE_ERR, "parameter error");
+        if(offset+count >= fData.length())
+            return fData.substring(offset);
+        return fData.substring(offset, offset+count);
+    }
+
+}

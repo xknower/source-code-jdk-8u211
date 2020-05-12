@@ -1,14 +1,44 @@
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.lang.reflect;
 
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Type;
-
-public interface AnnotatedType extends AnnotatedElement {
-  Type getType();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\reflect\AnnotatedType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * {@code AnnotatedType} represents the potentially annotated use of a type in
+ * the program currently running in this VM. The use may be of any type in the
+ * Java programming language, including an array type, a parameterized type, a
+ * type variable, or a wildcard type.
+ *
+ * @since 1.8
  */
+public interface AnnotatedType extends AnnotatedElement {
+
+    /**
+     * Returns the underlying type that this annotated type represents.
+     *
+     * @return the type this annotated type represents
+     */
+    public Type getType();
+}

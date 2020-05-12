@@ -1,149 +1,144 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.BorderLayout;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.LayoutManager;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.ActionListener;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JLabel;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.MatteBorder;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicDesktopIconUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalDesktopIconUI
-/*     */   extends BasicDesktopIconUI
-/*     */ {
-/*     */   JButton button;
-/*     */   JLabel label;
-/*     */   TitleListener titleListener;
-/*     */   private int width;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  52 */     return new MetalDesktopIconUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  59 */     super.installDefaults();
-/*  60 */     LookAndFeel.installColorsAndFont(this.desktopIcon, "DesktopIcon.background", "DesktopIcon.foreground", "DesktopIcon.font");
-/*  61 */     this.width = UIManager.getInt("DesktopIcon.width");
-/*     */   }
-/*     */   
-/*     */   protected void installComponents() {
-/*  65 */     this.frame = this.desktopIcon.getInternalFrame();
-/*  66 */     Icon icon = this.frame.getFrameIcon();
-/*  67 */     String str = this.frame.getTitle();
-/*     */     
-/*  69 */     this.button = new JButton(str, icon);
-/*  70 */     this.button.addActionListener(new ActionListener()
-/*     */         {
-/*  72 */           public void actionPerformed(ActionEvent param1ActionEvent) { MetalDesktopIconUI.this.deiconize(); } });
-/*  73 */     this.button.setFont(this.desktopIcon.getFont());
-/*  74 */     this.button.setBackground(this.desktopIcon.getBackground());
-/*  75 */     this.button.setForeground(this.desktopIcon.getForeground());
-/*     */     
-/*  77 */     int i = (this.button.getPreferredSize()).height;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  82 */     MetalBumps metalBumps = new MetalBumps(i / 3, i, MetalLookAndFeel.getControlHighlight(), MetalLookAndFeel.getControlDarkShadow(), MetalLookAndFeel.getControl());
-/*  83 */     this.label = new JLabel(metalBumps);
-/*     */     
-/*  85 */     this.label.setBorder(new MatteBorder(0, 2, 0, 1, this.desktopIcon.getBackground()));
-/*  86 */     this.desktopIcon.setLayout(new BorderLayout(2, 0));
-/*  87 */     this.desktopIcon.add(this.button, "Center");
-/*  88 */     this.desktopIcon.add(this.label, "West");
-/*     */   }
-/*     */   
-/*     */   protected void uninstallComponents() {
-/*  92 */     this.desktopIcon.setLayout((LayoutManager)null);
-/*  93 */     this.desktopIcon.remove(this.label);
-/*  94 */     this.desktopIcon.remove(this.button);
-/*  95 */     this.button = null;
-/*  96 */     this.frame = null;
-/*     */   }
-/*     */   
-/*     */   protected void installListeners() {
-/* 100 */     super.installListeners();
-/* 101 */     this.desktopIcon.getInternalFrame().addPropertyChangeListener(this.titleListener = new TitleListener());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 106 */     this.desktopIcon.getInternalFrame().removePropertyChangeListener(this.titleListener);
-/*     */     
-/* 108 */     this.titleListener = null;
-/* 109 */     super.uninstallListeners();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 116 */     return getMinimumSize(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 123 */     return new Dimension(this.width, 
-/* 124 */         (this.desktopIcon.getLayout().minimumLayoutSize(this.desktopIcon)).height);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 130 */     return getMinimumSize(paramJComponent);
-/*     */   }
-/*     */   
-/*     */   class TitleListener implements PropertyChangeListener {
-/*     */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 135 */       if (param1PropertyChangeEvent.getPropertyName().equals("title")) {
-/* 136 */         MetalDesktopIconUI.this.button.setText((String)param1PropertyChangeEvent.getNewValue());
-/*     */       }
-/*     */       
-/* 139 */       if (param1PropertyChangeEvent.getPropertyName().equals("frameIcon"))
-/* 140 */         MetalDesktopIconUI.this.button.setIcon((Icon)param1PropertyChangeEvent.getNewValue()); 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalDesktopIconUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import java.beans.*;
+import java.util.EventListener;
+import java.io.Serializable;
+import javax.swing.plaf.basic.BasicDesktopIconUI;
+
+/**
+ * Metal desktop icon.
+ *
+ * @author Steve Wilson
+ */
+public class MetalDesktopIconUI extends BasicDesktopIconUI
+{
+
+    JButton button;
+    JLabel label;
+    TitleListener titleListener;
+    private int width;
+
+    public static ComponentUI createUI(JComponent c)    {
+        return new MetalDesktopIconUI();
+    }
+
+    public MetalDesktopIconUI() {
+    }
+
+    protected void installDefaults() {
+        super.installDefaults();
+        LookAndFeel.installColorsAndFont(desktopIcon, "DesktopIcon.background", "DesktopIcon.foreground", "DesktopIcon.font");
+        width = UIManager.getInt("DesktopIcon.width");
+    }
+
+    protected void installComponents() {
+        frame = desktopIcon.getInternalFrame();
+        Icon icon = frame.getFrameIcon();
+        String title = frame.getTitle();
+
+        button = new JButton (title, icon);
+        button.addActionListener( new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+             deiconize(); }} );
+        button.setFont(desktopIcon.getFont());
+        button.setBackground(desktopIcon.getBackground());
+        button.setForeground(desktopIcon.getForeground());
+
+        int buttonH = button.getPreferredSize().height;
+
+        Icon drag = new MetalBumps((buttonH/3), buttonH,
+                                   MetalLookAndFeel.getControlHighlight(),
+                                   MetalLookAndFeel.getControlDarkShadow(),
+                                   MetalLookAndFeel.getControl());
+        label = new JLabel(drag);
+
+        label.setBorder( new MatteBorder( 0, 2, 0, 1, desktopIcon.getBackground()) );
+        desktopIcon.setLayout(new BorderLayout(2, 0));
+        desktopIcon.add(button, BorderLayout.CENTER);
+        desktopIcon.add(label, BorderLayout.WEST);
+    }
+
+    protected void uninstallComponents() {
+        desktopIcon.setLayout(null);
+        desktopIcon.remove(label);
+        desktopIcon.remove(button);
+        button = null;
+        frame = null;
+    }
+
+    protected void installListeners() {
+        super.installListeners();
+        desktopIcon.getInternalFrame().addPropertyChangeListener(
+                titleListener = new TitleListener());
+    }
+
+    protected void uninstallListeners() {
+        desktopIcon.getInternalFrame().removePropertyChangeListener(
+                titleListener);
+        titleListener = null;
+        super.uninstallListeners();
+    }
+
+
+    public Dimension getPreferredSize(JComponent c) {
+        // Metal desktop icons can not be resized.  Their dimensions should
+        // always be the minimum size.  See getMinimumSize(JComponent c).
+        return getMinimumSize(c);
+    }
+
+    public Dimension getMinimumSize(JComponent c) {
+        // For the metal desktop icon we will use the layout maanger to
+        // determine the correct height of the component, but we want to keep
+        // the width consistent according to the jlf spec.
+        return new Dimension(width,
+                desktopIcon.getLayout().minimumLayoutSize(desktopIcon).height);
+    }
+
+    public Dimension getMaximumSize(JComponent c) {
+        // Metal desktop icons can not be resized.  Their dimensions should
+        // always be the minimum size.  See getMinimumSize(JComponent c).
+        return getMinimumSize(c);
+    }
+
+    class TitleListener implements PropertyChangeListener {
+        public void propertyChange (PropertyChangeEvent e) {
+          if (e.getPropertyName().equals("title")) {
+            button.setText((String)e.getNewValue());
+          }
+
+          if (e.getPropertyName().equals("frameIcon")) {
+            button.setIcon((Icon)e.getNewValue());
+          }
+        }
+    }
+}

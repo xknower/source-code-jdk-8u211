@@ -1,157 +1,151 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import java.util.List;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class UnsupportedElement
-/*     */   extends SyntaxTreeNode
-/*     */ {
-/*  44 */   private Vector _fallbacks = null;
-/*  45 */   private ErrorMsg _message = null;
-/*     */ 
-/*     */   
-/*     */   private boolean _isExtension = false;
-/*     */ 
-/*     */   
-/*     */   public UnsupportedElement(String uri, String prefix, String local, boolean isExtension) {
-/*  52 */     super(uri, prefix, local);
-/*  53 */     this._isExtension = isExtension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setErrorMessage(ErrorMsg message) {
-/*  66 */     this._message = message;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void display(int indent) {
-/*  73 */     indent(indent);
-/*  74 */     Util.println("Unsupported element = " + this._qname.getNamespace() + ":" + this._qname
-/*  75 */         .getLocalPart());
-/*  76 */     displayContents(indent + 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void processFallbacks(Parser parser) {
-/*  85 */     List<SyntaxTreeNode> children = getContents();
-/*  86 */     if (children != null) {
-/*  87 */       int count = children.size();
-/*  88 */       for (int i = 0; i < count; i++) {
-/*  89 */         SyntaxTreeNode child = children.get(i);
-/*  90 */         if (child instanceof Fallback) {
-/*  91 */           Fallback fallback = (Fallback)child;
-/*  92 */           fallback.activate();
-/*  93 */           fallback.parseContents(parser);
-/*  94 */           if (this._fallbacks == null) {
-/*  95 */             this._fallbacks = new Vector();
-/*     */           }
-/*  97 */           this._fallbacks.addElement(child);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/* 107 */     processFallbacks(parser);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 114 */     if (this._fallbacks != null) {
-/* 115 */       int count = this._fallbacks.size();
-/* 116 */       for (int i = 0; i < count; i++) {
-/* 117 */         Fallback fallback = this._fallbacks.elementAt(i);
-/* 118 */         fallback.typeCheck(stable);
-/*     */       } 
-/*     */     } 
-/* 121 */     return Type.Void;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 128 */     if (this._fallbacks != null) {
-/* 129 */       int count = this._fallbacks.size();
-/* 130 */       for (int i = 0; i < count; i++) {
-/* 131 */         Fallback fallback = this._fallbacks.elementAt(i);
-/* 132 */         fallback.translate(classGen, methodGen);
-/*     */       
-/*     */       }
-/*     */ 
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 141 */       ConstantPoolGen cpg = classGen.getConstantPool();
-/* 142 */       InstructionList il = methodGen.getInstructionList();
-/*     */       
-/* 144 */       int unsupportedElem = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "unsupported_ElementF", "(Ljava/lang/String;Z)V");
-/*     */       
-/* 146 */       il.append(new PUSH(cpg, getQName().toString()));
-/* 147 */       il.append(new PUSH(cpg, this._isExtension));
-/* 148 */       il.append(new INVOKESTATIC(unsupportedElem));
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\UnsupportedElement.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: UnsupportedElement.java,v 1.2.4.1 2005/09/05 09:26:51 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import java.util.List;
+import java.util.Vector;
+
+/**
+ * @author Morten Jorgensen
+ */
+final class UnsupportedElement extends SyntaxTreeNode {
+
+    private Vector _fallbacks = null;
+    private ErrorMsg _message = null;
+    private boolean _isExtension = false;
+
+    /**
+     * Basic consutrcor - stores element uri/prefix/localname
+     */
+    public UnsupportedElement(String uri, String prefix, String local, boolean isExtension) {
+        super(uri, prefix, local);
+        _isExtension = isExtension;
+    }
+
+    /**
+     * There are different categories of unsupported elements (believe it
+     * or not): there are elements within the XSLT namespace (these would
+     * be elements that are not yet implemented), there are extensions of
+     * other XSLT processors and there are unrecognised extension elements
+     * of this XSLT processor. The error message passed to this method
+     * should describe the unsupported element itself and what category
+     * the element belongs in.
+     */
+    public void setErrorMessage(ErrorMsg message) {
+        _message = message;
+    }
+
+    /**
+     * Displays the contents of this element
+     */
+    public void display(int indent) {
+        indent(indent);
+        Util.println("Unsupported element = " + _qname.getNamespace() +
+                     ":" + _qname.getLocalPart());
+        displayContents(indent + IndentIncrement);
+    }
+
+
+    /**
+     * Scan and process all fallback children of the unsupported element.
+     */
+    private void processFallbacks(Parser parser) {
+
+        List<SyntaxTreeNode> children = getContents();
+        if (children != null) {
+            final int count = children.size();
+            for (int i = 0; i < count; i++) {
+                SyntaxTreeNode child = children.get(i);
+                if (child instanceof Fallback) {
+                    Fallback fallback = (Fallback)child;
+                    fallback.activate();
+                    fallback.parseContents(parser);
+                    if (_fallbacks == null) {
+                        _fallbacks = new Vector();
+                    }
+                    _fallbacks.addElement(child);
+                }
+            }
+        }
+    }
+
+    /**
+     * Find any fallback in the descendant nodes; then activate & parse it
+     */
+    public void parseContents(Parser parser) {
+        processFallbacks(parser);
+    }
+
+    /**
+     * Run type check on the fallback element (if any).
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (_fallbacks != null) {
+            int count = _fallbacks.size();
+            for (int i = 0; i < count; i++) {
+                Fallback fallback = (Fallback)_fallbacks.elementAt(i);
+                fallback.typeCheck(stable);
+            }
+        }
+        return Type.Void;
+    }
+
+    /**
+     * Translate the fallback element (if any).
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        if (_fallbacks != null) {
+            int count = _fallbacks.size();
+            for (int i = 0; i < count; i++) {
+                Fallback fallback = (Fallback)_fallbacks.elementAt(i);
+                fallback.translate(classGen, methodGen);
+            }
+        }
+        // We only go into the else block in forward-compatibility mode, when
+        // the unsupported element has no fallback.
+        else {
+            // If the unsupported element does not have any fallback child, then
+            // at runtime, a runtime error should be raised when the unsupported
+            // element is instantiated. Otherwise, no error is thrown.
+            ConstantPoolGen cpg = classGen.getConstantPool();
+            InstructionList il = methodGen.getInstructionList();
+
+            final int unsupportedElem = cpg.addMethodref(BASIS_LIBRARY_CLASS, "unsupported_ElementF",
+                                                         "(" + STRING_SIG + "Z)V");
+            il.append(new PUSH(cpg, getQName().toString()));
+            il.append(new PUSH(cpg, _isExtension));
+            il.append(new INVOKESTATIC(unsupportedElem));
+        }
+    }
+}

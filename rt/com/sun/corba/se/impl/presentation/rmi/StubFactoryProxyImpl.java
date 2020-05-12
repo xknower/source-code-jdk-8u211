@@ -1,63 +1,57 @@
-/*    */ package com.sun.corba.se.impl.presentation.rmi;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orbutil.proxy.InvocationHandlerFactory;
-/*    */ import com.sun.corba.se.spi.orbutil.proxy.LinkedInvocationHandler;
-/*    */ import com.sun.corba.se.spi.presentation.rmi.DynamicStub;
-/*    */ import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-/*    */ import java.lang.reflect.Proxy;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class StubFactoryProxyImpl
-/*    */   extends StubFactoryDynamicBase
-/*    */ {
-/*    */   public StubFactoryProxyImpl(PresentationManager.ClassData paramClassData, ClassLoader paramClassLoader) {
-/* 41 */     super(paramClassData, paramClassLoader);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Object makeStub() {
-/* 48 */     InvocationHandlerFactory invocationHandlerFactory = this.classData.getInvocationHandlerFactory();
-/*    */     
-/* 50 */     LinkedInvocationHandler linkedInvocationHandler = (LinkedInvocationHandler)invocationHandlerFactory.getInvocationHandler();
-/* 51 */     Class[] arrayOfClass = invocationHandlerFactory.getProxyInterfaces();
-/* 52 */     DynamicStub dynamicStub = (DynamicStub)Proxy.newProxyInstance(this.loader, arrayOfClass, linkedInvocationHandler);
-/*    */     
-/* 54 */     linkedInvocationHandler.setProxy((Proxy)dynamicStub);
-/* 55 */     return dynamicStub;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubFactoryProxyImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+import java.lang.reflect.Proxy ;
+
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager ;
+import com.sun.corba.se.spi.presentation.rmi.DynamicStub ;
+
+import com.sun.corba.se.spi.orbutil.proxy.InvocationHandlerFactory ;
+import com.sun.corba.se.spi.orbutil.proxy.LinkedInvocationHandler  ;
+
+public class StubFactoryProxyImpl extends StubFactoryDynamicBase
+{
+    public StubFactoryProxyImpl( PresentationManager.ClassData classData,
+        ClassLoader loader )
+    {
+        super( classData, loader ) ;
+    }
+
+    public org.omg.CORBA.Object makeStub()
+    {
+        // Construct the dynamic proxy that implements this stub
+        // using the composite handler
+        InvocationHandlerFactory factory = classData.getInvocationHandlerFactory() ;
+        LinkedInvocationHandler handler =
+            (LinkedInvocationHandler)factory.getInvocationHandler() ;
+        Class[] interfaces = factory.getProxyInterfaces() ;
+        DynamicStub stub = (DynamicStub)Proxy.newProxyInstance( loader, interfaces,
+            handler ) ;
+        handler.setProxy( (Proxy)stub ) ;
+        return stub ;
+    }
+}

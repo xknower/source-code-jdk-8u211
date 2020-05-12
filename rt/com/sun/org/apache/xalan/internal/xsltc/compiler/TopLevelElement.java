@@ -1,105 +1,100 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*    */ 
-/*    */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*    */ import java.util.Vector;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class TopLevelElement
-/*    */   extends SyntaxTreeNode
-/*    */ {
-/* 42 */   protected Vector _dependencies = null;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 48 */     return typeCheckContents(stable);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 56 */     ErrorMsg msg = new ErrorMsg("NOT_IMPLEMENTED_ERR", getClass(), this);
-/* 57 */     getParser().reportError(2, msg);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public InstructionList compile(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 66 */     InstructionList save = methodGen.getInstructionList(); InstructionList result;
-/* 67 */     methodGen.setInstructionList(result = new InstructionList());
-/* 68 */     translate(classGen, methodGen);
-/* 69 */     methodGen.setInstructionList(save);
-/* 70 */     return result;
-/*    */   }
-/*    */   
-/*    */   public void display(int indent) {
-/* 74 */     indent(indent);
-/* 75 */     Util.println("TopLevelElement");
-/* 76 */     displayContents(indent + 4);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void addDependency(TopLevelElement other) {
-/* 84 */     if (this._dependencies == null) {
-/* 85 */       this._dependencies = new Vector();
-/*    */     }
-/* 87 */     if (!this._dependencies.contains(other)) {
-/* 88 */       this._dependencies.addElement(other);
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Vector getDependencies() {
-/* 97 */     return this._dependencies;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\TopLevelElement.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: TopLevelElement.java,v 1.5 2005/09/28 13:48:17 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+class TopLevelElement extends SyntaxTreeNode {
+
+    /*
+     * List of dependencies with other variables, parameters or
+     * keys defined at the top level.
+     */
+    protected Vector _dependencies = null;
+
+    /**
+     * Type check all the children of this node.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        return typeCheckContents(stable);
+    }
+
+    /**
+     * Translate this node into JVM bytecodes.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        ErrorMsg msg = new ErrorMsg(ErrorMsg.NOT_IMPLEMENTED_ERR,
+                                    getClass(), this);
+        getParser().reportError(FATAL, msg);
+    }
+
+    /**
+     * Translate this node into a fresh instruction list.
+     * The original instruction list is saved and restored.
+     */
+    public InstructionList compile(ClassGenerator classGen,
+                                   MethodGenerator methodGen) {
+        final InstructionList result, save = methodGen.getInstructionList();
+        methodGen.setInstructionList(result = new InstructionList());
+        translate(classGen, methodGen);
+        methodGen.setInstructionList(save);
+        return result;
+    }
+
+    public void display(int indent) {
+        indent(indent);
+        Util.println("TopLevelElement");
+        displayContents(indent + IndentIncrement);
+    }
+
+    /**
+     * Add a dependency with other top-level elements like
+     * variables, parameters or keys.
+     */
+    public void addDependency(TopLevelElement other) {
+        if (_dependencies == null) {
+            _dependencies = new Vector();
+        }
+        if (!_dependencies.contains(other)) {
+            _dependencies.addElement(other);
+        }
+    }
+
+    /**
+     * Get the list of dependencies with other top-level elements
+     * like variables, parameteres or keys.
+     */
+    public Vector getDependencies() {
+        return _dependencies;
+    }
+
+}

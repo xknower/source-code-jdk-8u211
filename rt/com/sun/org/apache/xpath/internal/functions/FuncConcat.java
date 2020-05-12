@@ -1,98 +1,92 @@
-/*    */ package com.sun.org.apache.xpath.internal.functions;
-/*    */ 
-/*    */ import com.sun.org.apache.xalan.internal.res.XSLMessages;
-/*    */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XString;
-/*    */ import javax.xml.transform.TransformerException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class FuncConcat
-/*    */   extends FunctionMultiArgs
-/*    */ {
-/*    */   static final long serialVersionUID = 1737228885202314413L;
-/*    */   
-/*    */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/* 49 */     StringBuffer sb = new StringBuffer();
-/*    */ 
-/*    */     
-/* 52 */     sb.append(this.m_arg0.execute(xctxt).str());
-/* 53 */     sb.append(this.m_arg1.execute(xctxt).str());
-/*    */     
-/* 55 */     if (null != this.m_arg2) {
-/* 56 */       sb.append(this.m_arg2.execute(xctxt).str());
-/*    */     }
-/* 58 */     if (null != this.m_args)
-/*    */     {
-/* 60 */       for (int i = 0; i < this.m_args.length; i++)
-/*    */       {
-/* 62 */         sb.append(this.m_args[i].execute(xctxt).str());
-/*    */       }
-/*    */     }
-/*    */     
-/* 66 */     return new XString(sb.toString());
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void checkNumberArgs(int argNum) throws WrongNumberArgsException {
-/* 79 */     if (argNum < 2) {
-/* 80 */       reportWrongNumberArgs();
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected void reportWrongNumberArgs() throws WrongNumberArgsException {
-/* 90 */     throw new WrongNumberArgsException(XSLMessages.createXPATHMessage("gtone", null));
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\functions\FuncConcat.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: FuncConcat.java,v 1.2.4.1 2005/09/14 19:53:44 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.functions;
+
+import com.sun.org.apache.xalan.internal.res.XSLMessages;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+import com.sun.org.apache.xpath.internal.objects.XString;
+
+/**
+ * Execute the Concat() function.
+ * @xsl.usage advanced
+ */
+public class FuncConcat extends FunctionMultiArgs
+{
+    static final long serialVersionUID = 1737228885202314413L;
+
+  /**
+   * Execute the function.  The function must return
+   * a valid object.
+   * @param xctxt The current execution context.
+   * @return A valid XObject.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt) throws javax.xml.transform.TransformerException
+  {
+
+    StringBuffer sb = new StringBuffer();
+
+    // Compiler says we must have at least two arguments.
+    sb.append(m_arg0.execute(xctxt).str());
+    sb.append(m_arg1.execute(xctxt).str());
+
+    if (null != m_arg2)
+      sb.append(m_arg2.execute(xctxt).str());
+
+    if (null != m_args)
+    {
+      for (int i = 0; i < m_args.length; i++)
+      {
+        sb.append(m_args[i].execute(xctxt).str());
+      }
+    }
+
+    return new XString(sb.toString());
+  }
+
+  /**
+   * Check that the number of arguments passed to this function is correct.
+   *
+   *
+   * @param argNum The number of arguments that is being passed to the function.
+   *
+   * @throws WrongNumberArgsException
+   */
+  public void checkNumberArgs(int argNum) throws WrongNumberArgsException
+  {
+    if (argNum < 2)
+      reportWrongNumberArgs();
+  }
+
+  /**
+   * Constructs and throws a WrongNumberArgException with the appropriate
+   * message for this function object.
+   *
+   * @throws WrongNumberArgsException
+   */
+  protected void reportWrongNumberArgs() throws WrongNumberArgsException {
+      throw new WrongNumberArgsException(XSLMessages.createXPATHMessage("gtone", null));
+  }
+}

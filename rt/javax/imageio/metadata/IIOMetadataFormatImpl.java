@@ -1,1279 +1,1273 @@
-/*      */ package javax.imageio.metadata;
-/*      */ 
-/*      */ import com.sun.imageio.plugins.common.StandardMetadataFormat;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.List;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Map;
-/*      */ import java.util.MissingResourceException;
-/*      */ import java.util.ResourceBundle;
-/*      */ import javax.imageio.ImageTypeSpecifier;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class IIOMetadataFormatImpl
-/*      */   implements IIOMetadataFormat
-/*      */ {
-/*      */   public static final String standardMetadataFormatName = "javax_imageio_1.0";
-/*   86 */   private static IIOMetadataFormat standardFormat = null;
-/*      */   
-/*   88 */   private String resourceBaseName = getClass().getName() + "Resources";
-/*      */ 
-/*      */   
-/*      */   private String rootName;
-/*      */   
-/*   93 */   private HashMap elementMap = new HashMap<>();
-/*      */   
-/*      */   class Element
-/*      */   {
-/*      */     String elementName;
-/*      */     int childPolicy;
-/*   99 */     int minChildren = 0;
-/*  100 */     int maxChildren = 0;
-/*      */ 
-/*      */     
-/*  103 */     List childList = new ArrayList();
-/*      */ 
-/*      */     
-/*  106 */     List parentList = new ArrayList();
-/*      */ 
-/*      */     
-/*  109 */     List attrList = new ArrayList();
-/*      */     
-/*  111 */     Map attrMap = new HashMap<>();
-/*      */     
-/*      */     IIOMetadataFormatImpl.ObjectValue objectValue;
-/*      */   }
-/*      */   
-/*      */   class Attribute
-/*      */   {
-/*      */     String attrName;
-/*  119 */     int valueType = 1;
-/*      */     int dataType;
-/*      */     boolean required;
-/*  122 */     String defaultValue = null;
-/*      */     
-/*      */     List enumeratedValues;
-/*      */     
-/*      */     String minValue;
-/*      */     
-/*      */     String maxValue;
-/*      */     
-/*      */     int listMinLength;
-/*      */     
-/*      */     int listMaxLength;
-/*      */   }
-/*      */   
-/*      */   class ObjectValue
-/*      */   {
-/*  137 */     int valueType = 0;
-/*  138 */     Class classType = null;
-/*  139 */     Object defaultValue = null;
-/*      */ 
-/*      */     
-/*  142 */     List enumeratedValues = null;
-/*      */ 
-/*      */     
-/*  145 */     Comparable minValue = null;
-/*  146 */     Comparable maxValue = null;
-/*      */ 
-/*      */     
-/*  149 */     int arrayMinLength = 0;
-/*  150 */     int arrayMaxLength = 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOMetadataFormatImpl(String paramString, int paramInt) {
-/*  171 */     if (paramString == null) {
-/*  172 */       throw new IllegalArgumentException("rootName == null!");
-/*      */     }
-/*  174 */     if (paramInt < 0 || paramInt > 5 || paramInt == 5)
-/*      */     {
-/*      */       
-/*  177 */       throw new IllegalArgumentException("Invalid value for childPolicy!");
-/*      */     }
-/*      */     
-/*  180 */     this.rootName = paramString;
-/*      */     
-/*  182 */     Element element = new Element();
-/*  183 */     element.elementName = paramString;
-/*  184 */     element.childPolicy = paramInt;
-/*      */     
-/*  186 */     this.elementMap.put(paramString, element);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOMetadataFormatImpl(String paramString, int paramInt1, int paramInt2) {
-/*  208 */     if (paramString == null) {
-/*  209 */       throw new IllegalArgumentException("rootName == null!");
-/*      */     }
-/*  211 */     if (paramInt1 < 0) {
-/*  212 */       throw new IllegalArgumentException("minChildren < 0!");
-/*      */     }
-/*  214 */     if (paramInt1 > paramInt2) {
-/*  215 */       throw new IllegalArgumentException("minChildren > maxChildren!");
-/*      */     }
-/*      */     
-/*  218 */     Element element = new Element();
-/*  219 */     element.elementName = paramString;
-/*  220 */     element.childPolicy = 5;
-/*  221 */     element.minChildren = paramInt1;
-/*  222 */     element.maxChildren = paramInt2;
-/*      */     
-/*  224 */     this.rootName = paramString;
-/*  225 */     this.elementMap.put(paramString, element);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setResourceBaseName(String paramString) {
-/*  246 */     if (paramString == null) {
-/*  247 */       throw new IllegalArgumentException("resourceBaseName == null!");
-/*      */     }
-/*  249 */     this.resourceBaseName = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String getResourceBaseName() {
-/*  261 */     return this.resourceBaseName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Element getElement(String paramString, boolean paramBoolean) {
-/*  272 */     if (paramBoolean && paramString == null) {
-/*  273 */       throw new IllegalArgumentException("element name is null!");
-/*      */     }
-/*  275 */     Element element = (Element)this.elementMap.get(paramString);
-/*  276 */     if (paramBoolean && element == null) {
-/*  277 */       throw new IllegalArgumentException("No such element: " + paramString);
-/*      */     }
-/*      */     
-/*  280 */     return element;
-/*      */   }
-/*      */   
-/*      */   private Element getElement(String paramString) {
-/*  284 */     return getElement(paramString, true);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private Attribute getAttribute(String paramString1, String paramString2) {
-/*  289 */     Element element = getElement(paramString1);
-/*  290 */     Attribute attribute = (Attribute)element.attrMap.get(paramString2);
-/*  291 */     if (attribute == null) {
-/*  292 */       throw new IllegalArgumentException("No such attribute \"" + paramString2 + "\"!");
-/*      */     }
-/*      */     
-/*  295 */     return attribute;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addElement(String paramString1, String paramString2, int paramInt) {
-/*  320 */     Element element1 = getElement(paramString2);
-/*  321 */     if (paramInt < 0 || paramInt > 5 || paramInt == 5)
-/*      */     {
-/*      */       
-/*  324 */       throw new IllegalArgumentException("Invalid value for childPolicy!");
-/*      */     }
-/*      */ 
-/*      */     
-/*  328 */     Element element2 = new Element();
-/*  329 */     element2.elementName = paramString1;
-/*  330 */     element2.childPolicy = paramInt;
-/*      */     
-/*  332 */     element1.childList.add(paramString1);
-/*  333 */     element2.parentList.add(paramString2);
-/*      */     
-/*  335 */     this.elementMap.put(paramString1, element2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addElement(String paramString1, String paramString2, int paramInt1, int paramInt2) {
-/*  358 */     Element element1 = getElement(paramString2);
-/*  359 */     if (paramInt1 < 0) {
-/*  360 */       throw new IllegalArgumentException("minChildren < 0!");
-/*      */     }
-/*  362 */     if (paramInt1 > paramInt2) {
-/*  363 */       throw new IllegalArgumentException("minChildren > maxChildren!");
-/*      */     }
-/*      */     
-/*  366 */     Element element2 = new Element();
-/*  367 */     element2.elementName = paramString1;
-/*  368 */     element2.childPolicy = 5;
-/*  369 */     element2.minChildren = paramInt1;
-/*  370 */     element2.maxChildren = paramInt2;
-/*      */     
-/*  372 */     element1.childList.add(paramString1);
-/*  373 */     element2.parentList.add(paramString2);
-/*      */     
-/*  375 */     this.elementMap.put(paramString1, element2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addChildElement(String paramString1, String paramString2) {
-/*  395 */     Element element1 = getElement(paramString2);
-/*  396 */     Element element2 = getElement(paramString1);
-/*  397 */     element1.childList.add(paramString1);
-/*  398 */     element2.parentList.add(paramString2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void removeElement(String paramString) {
-/*  409 */     Element element = getElement(paramString, false);
-/*  410 */     if (element != null) {
-/*  411 */       Iterator<String> iterator = element.parentList.iterator();
-/*  412 */       while (iterator.hasNext()) {
-/*  413 */         String str = iterator.next();
-/*  414 */         Element element1 = getElement(str, false);
-/*  415 */         if (element1 != null) {
-/*  416 */           element1.childList.remove(paramString);
-/*      */         }
-/*      */       } 
-/*  419 */       this.elementMap.remove(paramString);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addAttribute(String paramString1, String paramString2, int paramInt, boolean paramBoolean, String paramString3) {
-/*  448 */     Element element = getElement(paramString1);
-/*  449 */     if (paramString2 == null) {
-/*  450 */       throw new IllegalArgumentException("attrName == null!");
-/*      */     }
-/*  452 */     if (paramInt < 0 || paramInt > 4) {
-/*  453 */       throw new IllegalArgumentException("Invalid value for dataType!");
-/*      */     }
-/*      */     
-/*  456 */     Attribute attribute = new Attribute();
-/*  457 */     attribute.attrName = paramString2;
-/*  458 */     attribute.valueType = 1;
-/*  459 */     attribute.dataType = paramInt;
-/*  460 */     attribute.required = paramBoolean;
-/*  461 */     attribute.defaultValue = paramString3;
-/*      */     
-/*  463 */     element.attrList.add(paramString2);
-/*  464 */     element.attrMap.put(paramString2, attribute);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addAttribute(String paramString1, String paramString2, int paramInt, boolean paramBoolean, String paramString3, List<String> paramList) {
-/*  504 */     Element element = getElement(paramString1);
-/*  505 */     if (paramString2 == null) {
-/*  506 */       throw new IllegalArgumentException("attrName == null!");
-/*      */     }
-/*  508 */     if (paramInt < 0 || paramInt > 4) {
-/*  509 */       throw new IllegalArgumentException("Invalid value for dataType!");
-/*      */     }
-/*  511 */     if (paramList == null) {
-/*  512 */       throw new IllegalArgumentException("enumeratedValues == null!");
-/*      */     }
-/*  514 */     if (paramList.size() == 0) {
-/*  515 */       throw new IllegalArgumentException("enumeratedValues is empty!");
-/*      */     }
-/*  517 */     Iterator<String> iterator = paramList.iterator();
-/*  518 */     while (iterator.hasNext()) {
-/*  519 */       Object object = iterator.next();
-/*  520 */       if (object == null) {
-/*  521 */         throw new IllegalArgumentException("enumeratedValues contains a null!");
-/*      */       }
-/*      */       
-/*  524 */       if (!(object instanceof String)) {
-/*  525 */         throw new IllegalArgumentException("enumeratedValues contains a non-String value!");
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  530 */     Attribute attribute = new Attribute();
-/*  531 */     attribute.attrName = paramString2;
-/*  532 */     attribute.valueType = 16;
-/*  533 */     attribute.dataType = paramInt;
-/*  534 */     attribute.required = paramBoolean;
-/*  535 */     attribute.defaultValue = paramString3;
-/*  536 */     attribute.enumeratedValues = paramList;
-/*      */     
-/*  538 */     element.attrList.add(paramString2);
-/*  539 */     element.attrMap.put(paramString2, attribute);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addAttribute(String paramString1, String paramString2, int paramInt, boolean paramBoolean1, String paramString3, String paramString4, String paramString5, boolean paramBoolean2, boolean paramBoolean3) {
-/*  581 */     Element element = getElement(paramString1);
-/*  582 */     if (paramString2 == null) {
-/*  583 */       throw new IllegalArgumentException("attrName == null!");
-/*      */     }
-/*  585 */     if (paramInt < 0 || paramInt > 4) {
-/*  586 */       throw new IllegalArgumentException("Invalid value for dataType!");
-/*      */     }
-/*      */     
-/*  589 */     Attribute attribute = new Attribute();
-/*  590 */     attribute.attrName = paramString2;
-/*  591 */     attribute.valueType = 2;
-/*  592 */     if (paramBoolean2) {
-/*  593 */       attribute.valueType |= 0x4;
-/*      */     }
-/*  595 */     if (paramBoolean3) {
-/*  596 */       attribute.valueType |= 0x8;
-/*      */     }
-/*  598 */     attribute.dataType = paramInt;
-/*  599 */     attribute.required = paramBoolean1;
-/*  600 */     attribute.defaultValue = paramString3;
-/*  601 */     attribute.minValue = paramString4;
-/*  602 */     attribute.maxValue = paramString5;
-/*      */     
-/*  604 */     element.attrList.add(paramString2);
-/*  605 */     element.attrMap.put(paramString2, attribute);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addAttribute(String paramString1, String paramString2, int paramInt1, boolean paramBoolean, int paramInt2, int paramInt3) {
-/*  637 */     Element element = getElement(paramString1);
-/*  638 */     if (paramString2 == null) {
-/*  639 */       throw new IllegalArgumentException("attrName == null!");
-/*      */     }
-/*  641 */     if (paramInt1 < 0 || paramInt1 > 4) {
-/*  642 */       throw new IllegalArgumentException("Invalid value for dataType!");
-/*      */     }
-/*  644 */     if (paramInt2 < 0 || paramInt2 > paramInt3) {
-/*  645 */       throw new IllegalArgumentException("Invalid list bounds!");
-/*      */     }
-/*      */     
-/*  648 */     Attribute attribute = new Attribute();
-/*  649 */     attribute.attrName = paramString2;
-/*  650 */     attribute.valueType = 32;
-/*  651 */     attribute.dataType = paramInt1;
-/*  652 */     attribute.required = paramBoolean;
-/*  653 */     attribute.listMinLength = paramInt2;
-/*  654 */     attribute.listMaxLength = paramInt3;
-/*      */     
-/*  656 */     element.attrList.add(paramString2);
-/*  657 */     element.attrMap.put(paramString2, attribute);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addBooleanAttribute(String paramString1, String paramString2, boolean paramBoolean1, boolean paramBoolean2) {
-/*  684 */     ArrayList<String> arrayList = new ArrayList();
-/*  685 */     arrayList.add("TRUE");
-/*  686 */     arrayList.add("FALSE");
-/*      */     
-/*  688 */     String str = null;
-/*  689 */     if (paramBoolean1) {
-/*  690 */       str = paramBoolean2 ? "TRUE" : "FALSE";
-/*      */     }
-/*  692 */     addAttribute(paramString1, paramString2, 1, true, str, arrayList);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void removeAttribute(String paramString1, String paramString2) {
-/*  712 */     Element element = getElement(paramString1);
-/*  713 */     element.attrList.remove(paramString2);
-/*  714 */     element.attrMap.remove(paramString2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected <T> void addObjectValue(String paramString, Class<T> paramClass, boolean paramBoolean, T paramT) {
-/*  742 */     Element element = getElement(paramString);
-/*  743 */     ObjectValue objectValue = new ObjectValue();
-/*  744 */     objectValue.valueType = 1;
-/*  745 */     objectValue.classType = paramClass;
-/*  746 */     objectValue.defaultValue = paramT;
-/*      */     
-/*  748 */     element.objectValue = objectValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected <T> void addObjectValue(String paramString, Class<T> paramClass, boolean paramBoolean, T paramT, List<? extends T> paramList) {
-/*  789 */     Element element = getElement(paramString);
-/*  790 */     if (paramList == null) {
-/*  791 */       throw new IllegalArgumentException("enumeratedValues == null!");
-/*      */     }
-/*  793 */     if (paramList.size() == 0) {
-/*  794 */       throw new IllegalArgumentException("enumeratedValues is empty!");
-/*      */     }
-/*  796 */     Iterator<? extends T> iterator = paramList.iterator();
-/*  797 */     while (iterator.hasNext()) {
-/*  798 */       T t = iterator.next();
-/*  799 */       if (t == null) {
-/*  800 */         throw new IllegalArgumentException("enumeratedValues contains a null!");
-/*      */       }
-/*  802 */       if (!paramClass.isInstance(t)) {
-/*  803 */         throw new IllegalArgumentException("enumeratedValues contains a value not of class classType!");
-/*      */       }
-/*      */     } 
-/*      */     
-/*  807 */     ObjectValue objectValue = new ObjectValue();
-/*  808 */     objectValue.valueType = 16;
-/*  809 */     objectValue.classType = paramClass;
-/*  810 */     objectValue.defaultValue = paramT;
-/*  811 */     objectValue.enumeratedValues = paramList;
-/*      */     
-/*  813 */     element.objectValue = objectValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected <T extends Comparable<? super T>> void addObjectValue(String paramString, Class<T> paramClass, T paramT, Comparable<? super T> paramComparable1, Comparable<? super T> paramComparable2, boolean paramBoolean1, boolean paramBoolean2) {
-/*  856 */     Element element = getElement(paramString);
-/*  857 */     ObjectValue objectValue = new ObjectValue();
-/*  858 */     objectValue.valueType = 2;
-/*  859 */     if (paramBoolean1) {
-/*  860 */       objectValue.valueType |= 0x4;
-/*      */     }
-/*  862 */     if (paramBoolean2) {
-/*  863 */       objectValue.valueType |= 0x8;
-/*      */     }
-/*  865 */     objectValue.classType = paramClass;
-/*  866 */     objectValue.defaultValue = paramT;
-/*  867 */     objectValue.minValue = paramComparable1;
-/*  868 */     objectValue.maxValue = paramComparable2;
-/*      */     
-/*  870 */     element.objectValue = objectValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addObjectValue(String paramString, Class<?> paramClass, int paramInt1, int paramInt2) {
-/*  897 */     Element element = getElement(paramString);
-/*  898 */     ObjectValue objectValue = new ObjectValue();
-/*  899 */     objectValue.valueType = 32;
-/*  900 */     objectValue.classType = paramClass;
-/*  901 */     objectValue.arrayMinLength = paramInt1;
-/*  902 */     objectValue.arrayMaxLength = paramInt2;
-/*      */     
-/*  904 */     element.objectValue = objectValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void removeObjectValue(String paramString) {
-/*  917 */     Element element = getElement(paramString);
-/*  918 */     element.objectValue = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getRootName() {
-/*  928 */     return this.rootName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract boolean canNodeAppear(String paramString, ImageTypeSpecifier paramImageTypeSpecifier);
-/*      */ 
-/*      */   
-/*      */   public int getElementMinChildren(String paramString) {
-/*  937 */     Element element = getElement(paramString);
-/*  938 */     if (element.childPolicy != 5) {
-/*  939 */       throw new IllegalArgumentException("Child policy not CHILD_POLICY_REPEAT!");
-/*      */     }
-/*  941 */     return element.minChildren;
-/*      */   }
-/*      */   
-/*      */   public int getElementMaxChildren(String paramString) {
-/*  945 */     Element element = getElement(paramString);
-/*  946 */     if (element.childPolicy != 5) {
-/*  947 */       throw new IllegalArgumentException("Child policy not CHILD_POLICY_REPEAT!");
-/*      */     }
-/*  949 */     return element.maxChildren;
-/*      */   }
-/*      */   
-/*      */   private String getResource(String paramString, Locale paramLocale) {
-/*  953 */     if (paramLocale == null) {
-/*  954 */       paramLocale = Locale.getDefault();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  966 */     ClassLoader classLoader = AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>()
-/*      */         {
-/*      */           public Object run() {
-/*  969 */             return Thread.currentThread().getContextClassLoader();
-/*      */           }
-/*      */         });
-/*      */     
-/*  973 */     ResourceBundle resourceBundle = null;
-/*      */     try {
-/*  975 */       resourceBundle = ResourceBundle.getBundle(this.resourceBaseName, paramLocale, classLoader);
-/*      */     }
-/*  977 */     catch (MissingResourceException missingResourceException) {
-/*      */       try {
-/*  979 */         resourceBundle = ResourceBundle.getBundle(this.resourceBaseName, paramLocale);
-/*  980 */       } catch (MissingResourceException missingResourceException1) {
-/*  981 */         return null;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*      */     try {
-/*  986 */       return resourceBundle.getString(paramString);
-/*  987 */     } catch (MissingResourceException missingResourceException) {
-/*  988 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getElementDescription(String paramString, Locale paramLocale) {
-/* 1024 */     Element element = getElement(paramString);
-/* 1025 */     return getResource(paramString, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getChildPolicy(String paramString) {
-/* 1031 */     Element element = getElement(paramString);
-/* 1032 */     return element.childPolicy;
-/*      */   }
-/*      */   
-/*      */   public String[] getChildNames(String paramString) {
-/* 1036 */     Element element = getElement(paramString);
-/* 1037 */     if (element.childPolicy == 0) {
-/* 1038 */       return null;
-/*      */     }
-/* 1040 */     return (String[])element.childList.toArray((Object[])new String[0]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getAttributeNames(String paramString) {
-/* 1046 */     Element element = getElement(paramString);
-/* 1047 */     List list = element.attrList;
-/*      */     
-/* 1049 */     String[] arrayOfString = new String[list.size()];
-/* 1050 */     return (String[])list.toArray((Object[])arrayOfString);
-/*      */   }
-/*      */   
-/*      */   public int getAttributeValueType(String paramString1, String paramString2) {
-/* 1054 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1055 */     return attribute.valueType;
-/*      */   }
-/*      */   
-/*      */   public int getAttributeDataType(String paramString1, String paramString2) {
-/* 1059 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1060 */     return attribute.dataType;
-/*      */   }
-/*      */   
-/*      */   public boolean isAttributeRequired(String paramString1, String paramString2) {
-/* 1064 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1065 */     return attribute.required;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public String getAttributeDefaultValue(String paramString1, String paramString2) {
-/* 1070 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1071 */     return attribute.defaultValue;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public String[] getAttributeEnumerations(String paramString1, String paramString2) {
-/* 1076 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1077 */     if (attribute.valueType != 16) {
-/* 1078 */       throw new IllegalArgumentException("Attribute not an enumeration!");
-/*      */     }
-/*      */ 
-/*      */     
-/* 1082 */     List list = attribute.enumeratedValues;
-/* 1083 */     Iterator iterator = list.iterator();
-/* 1084 */     String[] arrayOfString = new String[list.size()];
-/* 1085 */     return (String[])list.toArray((Object[])arrayOfString);
-/*      */   }
-/*      */   
-/*      */   public String getAttributeMinValue(String paramString1, String paramString2) {
-/* 1089 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1090 */     if (attribute.valueType != 2 && attribute.valueType != 6 && attribute.valueType != 10 && attribute.valueType != 14)
-/*      */     {
-/*      */ 
-/*      */       
-/* 1094 */       throw new IllegalArgumentException("Attribute not a range!");
-/*      */     }
-/*      */     
-/* 1097 */     return attribute.minValue;
-/*      */   }
-/*      */   
-/*      */   public String getAttributeMaxValue(String paramString1, String paramString2) {
-/* 1101 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1102 */     if (attribute.valueType != 2 && attribute.valueType != 6 && attribute.valueType != 10 && attribute.valueType != 14)
-/*      */     {
-/*      */ 
-/*      */       
-/* 1106 */       throw new IllegalArgumentException("Attribute not a range!");
-/*      */     }
-/*      */     
-/* 1109 */     return attribute.maxValue;
-/*      */   }
-/*      */   
-/*      */   public int getAttributeListMinLength(String paramString1, String paramString2) {
-/* 1113 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1114 */     if (attribute.valueType != 32) {
-/* 1115 */       throw new IllegalArgumentException("Attribute not a list!");
-/*      */     }
-/*      */     
-/* 1118 */     return attribute.listMinLength;
-/*      */   }
-/*      */   
-/*      */   public int getAttributeListMaxLength(String paramString1, String paramString2) {
-/* 1122 */     Attribute attribute = getAttribute(paramString1, paramString2);
-/* 1123 */     if (attribute.valueType != 32) {
-/* 1124 */       throw new IllegalArgumentException("Attribute not a list!");
-/*      */     }
-/*      */     
-/* 1127 */     return attribute.listMaxLength;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getAttributeDescription(String paramString1, String paramString2, Locale paramLocale) {
-/* 1169 */     Element element = getElement(paramString1);
-/* 1170 */     if (paramString2 == null) {
-/* 1171 */       throw new IllegalArgumentException("attrName == null!");
-/*      */     }
-/* 1173 */     Attribute attribute = (Attribute)element.attrMap.get(paramString2);
-/* 1174 */     if (attribute == null) {
-/* 1175 */       throw new IllegalArgumentException("No such attribute!");
-/*      */     }
-/*      */     
-/* 1178 */     String str = paramString1 + "/" + paramString2;
-/* 1179 */     return getResource(str, paramLocale);
-/*      */   }
-/*      */   
-/*      */   private ObjectValue getObjectValue(String paramString) {
-/* 1183 */     Element element = getElement(paramString);
-/* 1184 */     ObjectValue objectValue = element.objectValue;
-/* 1185 */     if (objectValue == null) {
-/* 1186 */       throw new IllegalArgumentException("No object within element " + paramString + "!");
-/*      */     }
-/*      */     
-/* 1189 */     return objectValue;
-/*      */   }
-/*      */   
-/*      */   public int getObjectValueType(String paramString) {
-/* 1193 */     Element element = getElement(paramString);
-/* 1194 */     ObjectValue objectValue = element.objectValue;
-/* 1195 */     if (objectValue == null) {
-/* 1196 */       return 0;
-/*      */     }
-/* 1198 */     return objectValue.valueType;
-/*      */   }
-/*      */   
-/*      */   public Class<?> getObjectClass(String paramString) {
-/* 1202 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1203 */     return objectValue.classType;
-/*      */   }
-/*      */   
-/*      */   public Object getObjectDefaultValue(String paramString) {
-/* 1207 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1208 */     return objectValue.defaultValue;
-/*      */   }
-/*      */   
-/*      */   public Object[] getObjectEnumerations(String paramString) {
-/* 1212 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1213 */     if (objectValue.valueType != 16) {
-/* 1214 */       throw new IllegalArgumentException("Not an enumeration!");
-/*      */     }
-/* 1216 */     List list = objectValue.enumeratedValues;
-/* 1217 */     Object[] arrayOfObject = new Object[list.size()];
-/* 1218 */     return list.toArray(arrayOfObject);
-/*      */   }
-/*      */   
-/*      */   public Comparable<?> getObjectMinValue(String paramString) {
-/* 1222 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1223 */     if ((objectValue.valueType & 0x2) != 2) {
-/* 1224 */       throw new IllegalArgumentException("Not a range!");
-/*      */     }
-/* 1226 */     return objectValue.minValue;
-/*      */   }
-/*      */   
-/*      */   public Comparable<?> getObjectMaxValue(String paramString) {
-/* 1230 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1231 */     if ((objectValue.valueType & 0x2) != 2) {
-/* 1232 */       throw new IllegalArgumentException("Not a range!");
-/*      */     }
-/* 1234 */     return objectValue.maxValue;
-/*      */   }
-/*      */   
-/*      */   public int getObjectArrayMinLength(String paramString) {
-/* 1238 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1239 */     if (objectValue.valueType != 32) {
-/* 1240 */       throw new IllegalArgumentException("Not a list!");
-/*      */     }
-/* 1242 */     return objectValue.arrayMinLength;
-/*      */   }
-/*      */   
-/*      */   public int getObjectArrayMaxLength(String paramString) {
-/* 1246 */     ObjectValue objectValue = getObjectValue(paramString);
-/* 1247 */     if (objectValue.valueType != 32) {
-/* 1248 */       throw new IllegalArgumentException("Not a list!");
-/*      */     }
-/* 1250 */     return objectValue.arrayMaxLength;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static synchronized void createStandardFormat() {
-/* 1256 */     if (standardFormat == null) {
-/* 1257 */       standardFormat = new StandardMetadataFormat();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static IIOMetadataFormat getStandardFormatInstance() {
-/* 1270 */     createStandardFormat();
-/* 1271 */     return standardFormat;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\metadata\IIOMetadataFormatImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.metadata;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import javax.imageio.ImageTypeSpecifier;
+import com.sun.imageio.plugins.common.StandardMetadataFormat;
+
+/**
+ * A concrete class providing a reusable implementation of the
+ * <code>IIOMetadataFormat</code> interface.  In addition, a static
+ * instance representing the standard, plug-in neutral
+ * <code>javax_imageio_1.0</code> format is provided by the
+ * <code>getStandardFormatInstance</code> method.
+ *
+ * <p> In order to supply localized descriptions of elements and
+ * attributes, a <code>ResourceBundle</code> with a base name of
+ * <code>this.getClass().getName() + "Resources"</code> should be
+ * supplied via the usual mechanism used by
+ * <code>ResourceBundle.getBundle</code>.  Briefly, the subclasser
+ * supplies one or more additional classes according to a naming
+ * convention (by default, the fully-qualified name of the subclass
+ * extending <code>IIMetadataFormatImpl</code>, plus the string
+ * "Resources", plus the country, language, and variant codes
+ * separated by underscores).  At run time, calls to
+ * <code>getElementDescription</code> or
+ * <code>getAttributeDescription</code> will attempt to load such
+ * classes dynamically according to the supplied locale, and will use
+ * either the element name, or the element name followed by a '/'
+ * character followed by the attribute name as a key.  This key will
+ * be supplied to the <code>ResourceBundle</code>'s
+ * <code>getString</code> method, and the resulting localized
+ * description of the node or attribute is returned.
+ *
+ * <p> The subclass may supply a different base name for the resource
+ * bundles using the <code>setResourceBaseName</code> method.
+ *
+ * <p> A subclass may choose its own localization mechanism, if so
+ * desired, by overriding the supplied implementations of
+ * <code>getElementDescription</code> and
+ * <code>getAttributeDescription</code>.
+ *
+ * @see ResourceBundle#getBundle(String,Locale)
+ *
+ */
+public abstract class IIOMetadataFormatImpl implements IIOMetadataFormat {
+
+    /**
+     * A <code>String</code> constant containing the standard format
+     * name, <code>"javax_imageio_1.0"</code>.
+     */
+    public static final String standardMetadataFormatName =
+        "javax_imageio_1.0";
+
+    private static IIOMetadataFormat standardFormat = null;
+
+    private String resourceBaseName = this.getClass().getName() + "Resources";
+
+    private String rootName;
+
+    // Element name (String) -> Element
+    private HashMap elementMap = new HashMap();
+
+    class Element {
+        String elementName;
+
+        int childPolicy;
+        int minChildren = 0;
+        int maxChildren = 0;
+
+        // Child names (Strings)
+        List childList = new ArrayList();
+
+        // Parent names (Strings)
+        List parentList = new ArrayList();
+
+        // List of attribute names in the order they were added
+        List attrList = new ArrayList();
+        // Attr name (String) -> Attribute
+        Map attrMap = new HashMap();
+
+        ObjectValue objectValue;
+    }
+
+    class Attribute {
+        String attrName;
+
+        int valueType = VALUE_ARBITRARY;
+        int dataType;
+        boolean required;
+        String defaultValue = null;
+
+        // enumeration
+        List enumeratedValues;
+
+        // range
+        String minValue;
+        String maxValue;
+
+        // list
+        int listMinLength;
+        int listMaxLength;
+    }
+
+    class ObjectValue {
+        int valueType = VALUE_NONE;
+        Class classType = null;
+        Object defaultValue = null;
+
+        // Meaningful only if valueType == VALUE_ENUMERATION
+        List enumeratedValues = null;
+
+        // Meaningful only if valueType == VALUE_RANGE
+        Comparable minValue = null;
+        Comparable maxValue = null;
+
+        // Meaningful only if valueType == VALUE_LIST
+        int arrayMinLength = 0;
+        int arrayMaxLength = 0;
+    }
+
+    /**
+     * Constructs a blank <code>IIOMetadataFormatImpl</code> instance,
+     * with a given root element name and child policy (other than
+     * <code>CHILD_POLICY_REPEAT</code>).  Additional elements, and
+     * their attributes and <code>Object</code> reference information
+     * may be added using the various <code>add</code> methods.
+     *
+     * @param rootName the name of the root element.
+     * @param childPolicy one of the <code>CHILD_POLICY_*</code> constants,
+     * other than <code>CHILD_POLICY_REPEAT</code>.
+     *
+     * @exception IllegalArgumentException if <code>rootName</code> is
+     * <code>null</code>.
+     * @exception IllegalArgumentException if <code>childPolicy</code> is
+     * not one of the predefined constants.
+     */
+    public IIOMetadataFormatImpl(String rootName,
+                                 int childPolicy) {
+        if (rootName == null) {
+            throw new IllegalArgumentException("rootName == null!");
+        }
+        if (childPolicy < CHILD_POLICY_EMPTY ||
+            childPolicy > CHILD_POLICY_MAX ||
+            childPolicy == CHILD_POLICY_REPEAT) {
+            throw new IllegalArgumentException("Invalid value for childPolicy!");
+        }
+
+        this.rootName = rootName;
+
+        Element root = new Element();
+        root.elementName = rootName;
+        root.childPolicy = childPolicy;
+
+        elementMap.put(rootName, root);
+    }
+
+    /**
+     * Constructs a blank <code>IIOMetadataFormatImpl</code> instance,
+     * with a given root element name and a child policy of
+     * <code>CHILD_POLICY_REPEAT</code>.  Additional elements, and
+     * their attributes and <code>Object</code> reference information
+     * may be added using the various <code>add</code> methods.
+     *
+     * @param rootName the name of the root element.
+     * @param minChildren the minimum number of children of the node.
+     * @param maxChildren the maximum number of children of the node.
+     *
+     * @exception IllegalArgumentException if <code>rootName</code> is
+     * <code>null</code>.
+     * @exception IllegalArgumentException if <code>minChildren</code>
+     * is negative or larger than <code>maxChildren</code>.
+     */
+    public IIOMetadataFormatImpl(String rootName,
+                                 int minChildren,
+                                 int maxChildren) {
+        if (rootName == null) {
+            throw new IllegalArgumentException("rootName == null!");
+        }
+        if (minChildren < 0) {
+            throw new IllegalArgumentException("minChildren < 0!");
+        }
+        if (minChildren > maxChildren) {
+            throw new IllegalArgumentException("minChildren > maxChildren!");
+        }
+
+        Element root = new Element();
+        root.elementName = rootName;
+        root.childPolicy = CHILD_POLICY_REPEAT;
+        root.minChildren = minChildren;
+        root.maxChildren = maxChildren;
+
+        this.rootName = rootName;
+        elementMap.put(rootName, root);
+    }
+
+    /**
+     * Sets a new base name for locating <code>ResourceBundle</code>s
+     * containing descriptions of elements and attributes for this
+     * format.
+     *
+     * <p> Prior to the first time this method is called, the base
+     * name will be equal to <code>this.getClass().getName() +
+     * "Resources"</code>.
+     *
+     * @param resourceBaseName a <code>String</code> containing the new
+     * base name.
+     *
+     * @exception IllegalArgumentException if
+     * <code>resourceBaseName</code> is <code>null</code>.
+     *
+     * @see #getResourceBaseName
+     */
+    protected void setResourceBaseName(String resourceBaseName) {
+        if (resourceBaseName == null) {
+            throw new IllegalArgumentException("resourceBaseName == null!");
+        }
+        this.resourceBaseName = resourceBaseName;
+    }
+
+    /**
+     * Returns the currently set base name for locating
+     * <code>ResourceBundle</code>s.
+     *
+     * @return a <code>String</code> containing the base name.
+     *
+     * @see #setResourceBaseName
+     */
+    protected String getResourceBaseName() {
+        return resourceBaseName;
+    }
+
+    /**
+     * Utility method for locating an element.
+     *
+     * @param mustAppear if <code>true</code>, throw an
+     * <code>IllegalArgumentException</code> if no such node exists;
+     * if <code>false</code>, just return null.
+     */
+    private Element getElement(String elementName, boolean mustAppear) {
+        if (mustAppear && (elementName == null)) {
+            throw new IllegalArgumentException("element name is null!");
+        }
+        Element element = (Element)elementMap.get(elementName);
+        if (mustAppear && (element == null)) {
+            throw new IllegalArgumentException("No such element: " +
+                                               elementName);
+        }
+        return element;
+    }
+
+    private Element getElement(String elementName) {
+        return getElement(elementName, true);
+    }
+
+    // Utility method for locating an attribute
+    private Attribute getAttribute(String elementName, String attrName) {
+        Element element = getElement(elementName);
+        Attribute attr = (Attribute)element.attrMap.get(attrName);
+        if (attr == null) {
+            throw new IllegalArgumentException("No such attribute \"" +
+                                               attrName + "\"!");
+        }
+        return attr;
+    }
+
+    // Setup
+
+    /**
+     * Adds a new element type to this metadata document format with a
+     * child policy other than <code>CHILD_POLICY_REPEAT</code>.
+     *
+     * @param elementName the name of the new element.
+     * @param parentName the name of the element that will be the
+     * parent of the new element.
+     * @param childPolicy one of the <code>CHILD_POLICY_*</code>
+     * constants, other than <code>CHILD_POLICY_REPEAT</code>,
+     * indicating the child policy of the new element.
+     *
+     * @exception IllegalArgumentException if <code>parentName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>childPolicy</code>
+     * is not one of the predefined constants.
+     */
+    protected void addElement(String elementName,
+                              String parentName,
+                              int childPolicy) {
+        Element parent = getElement(parentName);
+        if (childPolicy < CHILD_POLICY_EMPTY ||
+            childPolicy > CHILD_POLICY_MAX ||
+            childPolicy == CHILD_POLICY_REPEAT) {
+            throw new IllegalArgumentException
+                ("Invalid value for childPolicy!");
+        }
+
+        Element element = new Element();
+        element.elementName = elementName;
+        element.childPolicy = childPolicy;
+
+        parent.childList.add(elementName);
+        element.parentList.add(parentName);
+
+        elementMap.put(elementName, element);
+    }
+
+    /**
+     * Adds a new element type to this metadata document format with a
+     * child policy of <code>CHILD_POLICY_REPEAT</code>.
+     *
+     * @param elementName the name of the new element.
+     * @param parentName the name of the element that will be the
+     * parent of the new element.
+     * @param minChildren the minimum number of children of the node.
+     * @param maxChildren the maximum number of children of the node.
+     *
+     * @exception IllegalArgumentException if <code>parentName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>minChildren</code>
+     * is negative or larger than <code>maxChildren</code>.
+     */
+    protected void addElement(String elementName,
+                              String parentName,
+                              int minChildren,
+                              int maxChildren) {
+        Element parent = getElement(parentName);
+        if (minChildren < 0) {
+            throw new IllegalArgumentException("minChildren < 0!");
+        }
+        if (minChildren > maxChildren) {
+            throw new IllegalArgumentException("minChildren > maxChildren!");
+        }
+
+        Element element = new Element();
+        element.elementName = elementName;
+        element.childPolicy = CHILD_POLICY_REPEAT;
+        element.minChildren = minChildren;
+        element.maxChildren = maxChildren;
+
+        parent.childList.add(elementName);
+        element.parentList.add(parentName);
+
+        elementMap.put(elementName, element);
+    }
+
+    /**
+     * Adds an existing element to the list of legal children for a
+     * given parent node type.
+     *
+     * @param parentName the name of the element that will be the
+     * new parent of the element.
+     * @param elementName the name of the element to be added as a
+     * child.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>parentName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     */
+    protected void addChildElement(String elementName, String parentName) {
+        Element parent = getElement(parentName);
+        Element element = getElement(elementName);
+        parent.childList.add(elementName);
+        element.parentList.add(parentName);
+    }
+
+    /**
+     * Removes an element from the format.  If no element with the
+     * given name was present, nothing happens and no exception is
+     * thrown.
+     *
+     * @param elementName the name of the element to be removed.
+     */
+    protected void removeElement(String elementName) {
+        Element element = getElement(elementName, false);
+        if (element != null) {
+            Iterator iter = element.parentList.iterator();
+            while (iter.hasNext()) {
+                String parentName = (String)iter.next();
+                Element parent = getElement(parentName, false);
+                if (parent != null) {
+                    parent.childList.remove(elementName);
+                }
+            }
+            elementMap.remove(elementName);
+        }
+    }
+
+    /**
+     * Adds a new attribute to a previously defined element that may
+     * be set to an arbitrary value.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute being added.
+     * @param dataType the data type (string format) of the attribute,
+     * one of the <code>DATATYPE_*</code> constants.
+     * @param required <code>true</code> if the attribute must be present.
+     * @param defaultValue the default value for the attribute, or
+     * <code>null</code>.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>attrName</code> is
+     * <code>null</code>.
+     * @exception IllegalArgumentException if <code>dataType</code> is
+     * not one of the predefined constants.
+     */
+    protected void addAttribute(String elementName,
+                                String attrName,
+                                int dataType,
+                                boolean required,
+                                String defaultValue) {
+        Element element = getElement(elementName);
+        if (attrName == null) {
+            throw new IllegalArgumentException("attrName == null!");
+        }
+        if (dataType < DATATYPE_STRING || dataType > DATATYPE_DOUBLE) {
+            throw new IllegalArgumentException("Invalid value for dataType!");
+        }
+
+        Attribute attr = new Attribute();
+        attr.attrName = attrName;
+        attr.valueType = VALUE_ARBITRARY;
+        attr.dataType = dataType;
+        attr.required = required;
+        attr.defaultValue = defaultValue;
+
+        element.attrList.add(attrName);
+        element.attrMap.put(attrName, attr);
+    }
+
+    /**
+     * Adds a new attribute to a previously defined element that will
+     * be defined by a set of enumerated values.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute being added.
+     * @param dataType the data type (string format) of the attribute,
+     * one of the <code>DATATYPE_*</code> constants.
+     * @param required <code>true</code> if the attribute must be present.
+     * @param defaultValue the default value for the attribute, or
+     * <code>null</code>.
+     * @param enumeratedValues a <code>List</code> of
+     * <code>String</code>s containing the legal values for the
+     * attribute.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>attrName</code> is
+     * <code>null</code>.
+     * @exception IllegalArgumentException if <code>dataType</code> is
+     * not one of the predefined constants.
+     * @exception IllegalArgumentException if
+     * <code>enumeratedValues</code> is <code>null</code>.
+     * @exception IllegalArgumentException if
+     * <code>enumeratedValues</code> does not contain at least one
+     * entry.
+     * @exception IllegalArgumentException if
+     * <code>enumeratedValues</code> contains an element that is not a
+     * <code>String</code> or is <code>null</code>.
+     */
+    protected void addAttribute(String elementName,
+                                String attrName,
+                                int dataType,
+                                boolean required,
+                                String defaultValue,
+                                List<String> enumeratedValues) {
+        Element element = getElement(elementName);
+        if (attrName == null) {
+            throw new IllegalArgumentException("attrName == null!");
+        }
+        if (dataType < DATATYPE_STRING || dataType > DATATYPE_DOUBLE) {
+            throw new IllegalArgumentException("Invalid value for dataType!");
+        }
+        if (enumeratedValues == null) {
+            throw new IllegalArgumentException("enumeratedValues == null!");
+        }
+        if (enumeratedValues.size() == 0) {
+            throw new IllegalArgumentException("enumeratedValues is empty!");
+        }
+        Iterator iter = enumeratedValues.iterator();
+        while (iter.hasNext()) {
+            Object o = iter.next();
+            if (o == null) {
+                throw new IllegalArgumentException
+                    ("enumeratedValues contains a null!");
+            }
+            if (!(o instanceof String)) {
+                throw new IllegalArgumentException
+                    ("enumeratedValues contains a non-String value!");
+            }
+        }
+
+        Attribute attr = new Attribute();
+        attr.attrName = attrName;
+        attr.valueType = VALUE_ENUMERATION;
+        attr.dataType = dataType;
+        attr.required = required;
+        attr.defaultValue = defaultValue;
+        attr.enumeratedValues = enumeratedValues;
+
+        element.attrList.add(attrName);
+        element.attrMap.put(attrName, attr);
+    }
+
+    /**
+     * Adds a new attribute to a previously defined element that will
+     * be defined by a range of values.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute being added.
+     * @param dataType the data type (string format) of the attribute,
+     * one of the <code>DATATYPE_*</code> constants.
+     * @param required <code>true</code> if the attribute must be present.
+     * @param defaultValue the default value for the attribute, or
+     * <code>null</code>.
+     * @param minValue the smallest (inclusive or exclusive depending
+     * on the value of <code>minInclusive</code>) legal value for the
+     * attribute, as a <code>String</code>.
+     * @param maxValue the largest (inclusive or exclusive depending
+     * on the value of <code>minInclusive</code>) legal value for the
+     * attribute, as a <code>String</code>.
+     * @param minInclusive <code>true</code> if <code>minValue</code>
+     * is inclusive.
+     * @param maxInclusive <code>true</code> if <code>maxValue</code>
+     * is inclusive.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>attrName</code> is
+     * <code>null</code>.
+     * @exception IllegalArgumentException if <code>dataType</code> is
+     * not one of the predefined constants.
+     */
+    protected void addAttribute(String elementName,
+                                String attrName,
+                                int dataType,
+                                boolean required,
+                                String defaultValue,
+                                String minValue,
+                                String maxValue,
+                                boolean minInclusive,
+                                boolean maxInclusive) {
+        Element element = getElement(elementName);
+        if (attrName == null) {
+            throw new IllegalArgumentException("attrName == null!");
+        }
+        if (dataType < DATATYPE_STRING || dataType > DATATYPE_DOUBLE) {
+            throw new IllegalArgumentException("Invalid value for dataType!");
+        }
+
+        Attribute attr = new Attribute();
+        attr.attrName = attrName;
+        attr.valueType = VALUE_RANGE;
+        if (minInclusive) {
+            attr.valueType |= VALUE_RANGE_MIN_INCLUSIVE_MASK;
+        }
+        if (maxInclusive) {
+            attr.valueType |= VALUE_RANGE_MAX_INCLUSIVE_MASK;
+        }
+        attr.dataType = dataType;
+        attr.required = required;
+        attr.defaultValue = defaultValue;
+        attr.minValue = minValue;
+        attr.maxValue = maxValue;
+
+        element.attrList.add(attrName);
+        element.attrMap.put(attrName, attr);
+    }
+
+    /**
+     * Adds a new attribute to a previously defined element that will
+     * be defined by a list of values.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute being added.
+     * @param dataType the data type (string format) of the attribute,
+     * one of the <code>DATATYPE_*</code> constants.
+     * @param required <code>true</code> if the attribute must be present.
+     * @param listMinLength the smallest legal number of list items.
+     * @param listMaxLength the largest legal number of list items.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>attrName</code> is
+     * <code>null</code>.
+     * @exception IllegalArgumentException if <code>dataType</code> is
+     * not one of the predefined constants.
+     * @exception IllegalArgumentException if
+     * <code>listMinLength</code> is negative or larger than
+     * <code>listMaxLength</code>.
+     */
+    protected void addAttribute(String elementName,
+                                String attrName,
+                                int dataType,
+                                boolean required,
+                                int listMinLength,
+                                int listMaxLength) {
+        Element element = getElement(elementName);
+        if (attrName == null) {
+            throw new IllegalArgumentException("attrName == null!");
+        }
+        if (dataType < DATATYPE_STRING || dataType > DATATYPE_DOUBLE) {
+            throw new IllegalArgumentException("Invalid value for dataType!");
+        }
+        if (listMinLength < 0 || listMinLength > listMaxLength) {
+            throw new IllegalArgumentException("Invalid list bounds!");
+        }
+
+        Attribute attr = new Attribute();
+        attr.attrName = attrName;
+        attr.valueType = VALUE_LIST;
+        attr.dataType = dataType;
+        attr.required = required;
+        attr.listMinLength = listMinLength;
+        attr.listMaxLength = listMaxLength;
+
+        element.attrList.add(attrName);
+        element.attrMap.put(attrName, attr);
+    }
+
+    /**
+     * Adds a new attribute to a previously defined element that will
+     * be defined by the enumerated values <code>TRUE</code> and
+     * <code>FALSE</code>, with a datatype of
+     * <code>DATATYPE_BOOLEAN</code>.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute being added.
+     * @param hasDefaultValue <code>true</code> if a default value
+     * should be present.
+     * @param defaultValue the default value for the attribute as a
+     * <code>boolean</code>, ignored if <code>hasDefaultValue</code>
+     * is <code>false</code>.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     * @exception IllegalArgumentException if <code>attrName</code> is
+     * <code>null</code>.
+     */
+    protected void addBooleanAttribute(String elementName,
+                                       String attrName,
+                                       boolean hasDefaultValue,
+                                       boolean defaultValue) {
+        List values = new ArrayList();
+        values.add("TRUE");
+        values.add("FALSE");
+
+        String dval = null;
+        if (hasDefaultValue) {
+            dval = defaultValue ? "TRUE" : "FALSE";
+        }
+        addAttribute(elementName,
+                     attrName,
+                     DATATYPE_BOOLEAN,
+                     true,
+                     dval,
+                     values);
+    }
+
+    /**
+     * Removes an attribute from a previously defined element.  If no
+     * attribute with the given name was present in the given element,
+     * nothing happens and no exception is thrown.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute being removed.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this format.
+     */
+    protected void removeAttribute(String elementName, String attrName) {
+        Element element = getElement(elementName);
+        element.attrList.remove(attrName);
+        element.attrMap.remove(attrName);
+    }
+
+    /**
+     * Allows an <code>Object</code> reference of a given class type
+     * to be stored in nodes implementing the named element.  The
+     * value of the <code>Object</code> is unconstrained other than by
+     * its class type.
+     *
+     * <p> If an <code>Object</code> reference was previously allowed,
+     * the previous settings are overwritten.
+     *
+     * @param elementName the name of the element.
+     * @param classType a <code>Class</code> variable indicating the
+     * legal class type for the object value.
+     * @param required <code>true</code> if an object value must be present.
+     * @param defaultValue the default value for the
+     * <code>Object</code> reference, or <code>null</code>.
+     * @param <T> the type of the object.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this format.
+     */
+    protected <T> void addObjectValue(String elementName,
+                                      Class<T> classType,
+                                      boolean required,
+                                      T defaultValue)
+    {
+        Element element = getElement(elementName);
+        ObjectValue obj = new ObjectValue();
+        obj.valueType = VALUE_ARBITRARY;
+        obj.classType = classType;
+        obj.defaultValue = defaultValue;
+
+        element.objectValue = obj;
+    }
+
+    /**
+     * Allows an <code>Object</code> reference of a given class type
+     * to be stored in nodes implementing the named element.  The
+     * value of the <code>Object</code> must be one of the values
+     * given by <code>enumeratedValues</code>.
+     *
+     * <p> If an <code>Object</code> reference was previously allowed,
+     * the previous settings are overwritten.
+     *
+     * @param elementName the name of the element.
+     * @param classType a <code>Class</code> variable indicating the
+     * legal class type for the object value.
+     * @param required <code>true</code> if an object value must be present.
+     * @param defaultValue the default value for the
+     * <code>Object</code> reference, or <code>null</code>.
+     * @param enumeratedValues a <code>List</code> of
+     * <code>Object</code>s containing the legal values for the
+     * object reference.
+     * @param <T> the type of the object.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this format.
+     * @exception IllegalArgumentException if
+     * <code>enumeratedValues</code> is <code>null</code>.
+     * @exception IllegalArgumentException if
+     * <code>enumeratedValues</code> does not contain at least one
+     * entry.
+     * @exception IllegalArgumentException if
+     * <code>enumeratedValues</code> contains an element that is not
+     * an instance of the class type denoted by <code>classType</code>
+     * or is <code>null</code>.
+     */
+    protected <T> void addObjectValue(String elementName,
+                                      Class<T> classType,
+                                      boolean required,
+                                      T defaultValue,
+                                      List<? extends T> enumeratedValues)
+    {
+        Element element = getElement(elementName);
+        if (enumeratedValues == null) {
+            throw new IllegalArgumentException("enumeratedValues == null!");
+        }
+        if (enumeratedValues.size() == 0) {
+            throw new IllegalArgumentException("enumeratedValues is empty!");
+        }
+        Iterator iter = enumeratedValues.iterator();
+        while (iter.hasNext()) {
+            Object o = iter.next();
+            if (o == null) {
+                throw new IllegalArgumentException("enumeratedValues contains a null!");
+            }
+            if (!classType.isInstance(o)) {
+                throw new IllegalArgumentException("enumeratedValues contains a value not of class classType!");
+            }
+        }
+
+        ObjectValue obj = new ObjectValue();
+        obj.valueType = VALUE_ENUMERATION;
+        obj.classType = classType;
+        obj.defaultValue = defaultValue;
+        obj.enumeratedValues = enumeratedValues;
+
+        element.objectValue = obj;
+    }
+
+    /**
+     * Allows an <code>Object</code> reference of a given class type
+     * to be stored in nodes implementing the named element.  The
+     * value of the <code>Object</code> must be within the range given
+     * by <code>minValue</code> and <code>maxValue</code>.
+     * Furthermore, the class type must implement the
+     * <code>Comparable</code> interface.
+     *
+     * <p> If an <code>Object</code> reference was previously allowed,
+     * the previous settings are overwritten.
+     *
+     * @param elementName the name of the element.
+     * @param classType a <code>Class</code> variable indicating the
+     * legal class type for the object value.
+     * @param defaultValue the default value for the
+     * @param minValue the smallest (inclusive or exclusive depending
+     * on the value of <code>minInclusive</code>) legal value for the
+     * object value, as a <code>String</code>.
+     * @param maxValue the largest (inclusive or exclusive depending
+     * on the value of <code>minInclusive</code>) legal value for the
+     * object value, as a <code>String</code>.
+     * @param minInclusive <code>true</code> if <code>minValue</code>
+     * is inclusive.
+     * @param maxInclusive <code>true</code> if <code>maxValue</code>
+     * is inclusive.
+     * @param <T> the type of the object.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this
+     * format.
+     */
+    protected <T extends Object & Comparable<? super T>> void
+        addObjectValue(String elementName,
+                       Class<T> classType,
+                       T defaultValue,
+                       Comparable<? super T> minValue,
+                       Comparable<? super T> maxValue,
+                       boolean minInclusive,
+                       boolean maxInclusive)
+    {
+        Element element = getElement(elementName);
+        ObjectValue obj = new ObjectValue();
+        obj.valueType = VALUE_RANGE;
+        if (minInclusive) {
+            obj.valueType |= VALUE_RANGE_MIN_INCLUSIVE_MASK;
+        }
+        if (maxInclusive) {
+            obj.valueType |= VALUE_RANGE_MAX_INCLUSIVE_MASK;
+        }
+        obj.classType = classType;
+        obj.defaultValue = defaultValue;
+        obj.minValue = minValue;
+        obj.maxValue = maxValue;
+
+        element.objectValue = obj;
+    }
+
+    /**
+     * Allows an <code>Object</code> reference of a given class type
+     * to be stored in nodes implementing the named element.  The
+     * value of the <code>Object</code> must an array of objects of
+     * class type given by <code>classType</code>, with at least
+     * <code>arrayMinLength</code> and at most
+     * <code>arrayMaxLength</code> elements.
+     *
+     * <p> If an <code>Object</code> reference was previously allowed,
+     * the previous settings are overwritten.
+     *
+     * @param elementName the name of the element.
+     * @param classType a <code>Class</code> variable indicating the
+     * legal class type for the object value.
+     * @param arrayMinLength the smallest legal length for the array.
+     * @param arrayMaxLength the largest legal length for the array.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code> is
+     * not a legal element name for this format.
+     */
+    protected void addObjectValue(String elementName,
+                                  Class<?> classType,
+                                  int arrayMinLength,
+                                  int arrayMaxLength) {
+        Element element = getElement(elementName);
+        ObjectValue obj = new ObjectValue();
+        obj.valueType = VALUE_LIST;
+        obj.classType = classType;
+        obj.arrayMinLength = arrayMinLength;
+        obj.arrayMaxLength = arrayMaxLength;
+
+        element.objectValue = obj;
+    }
+
+    /**
+     * Disallows an <code>Object</code> reference from being stored in
+     * nodes implementing the named element.
+     *
+     * @param elementName the name of the element.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code> is
+     * not a legal element name for this format.
+     */
+    protected void removeObjectValue(String elementName) {
+        Element element = getElement(elementName);
+        element.objectValue = null;
+    }
+
+    // Utility method
+
+    // Methods from IIOMetadataFormat
+
+    // Root
+
+    public String getRootName() {
+        return rootName;
+    }
+
+    // Multiplicity
+
+    public abstract boolean canNodeAppear(String elementName,
+                                          ImageTypeSpecifier imageType);
+
+    public int getElementMinChildren(String elementName) {
+        Element element = getElement(elementName);
+        if (element.childPolicy != CHILD_POLICY_REPEAT) {
+            throw new IllegalArgumentException("Child policy not CHILD_POLICY_REPEAT!");
+        }
+        return element.minChildren;
+    }
+
+    public int getElementMaxChildren(String elementName) {
+        Element element = getElement(elementName);
+        if (element.childPolicy != CHILD_POLICY_REPEAT) {
+            throw new IllegalArgumentException("Child policy not CHILD_POLICY_REPEAT!");
+        }
+        return element.maxChildren;
+    }
+
+    private String getResource(String key, Locale locale) {
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+
+        /**
+         * If an applet supplies an implementation of IIOMetadataFormat and
+         * resource bundles, then the resource bundle will need to be
+         * accessed via the applet class loader. So first try the context
+         * class loader to locate the resource bundle.
+         * If that throws MissingResourceException, then try the
+         * system class loader.
+         */
+        ClassLoader loader = (ClassLoader)
+            java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction() {
+                   public Object run() {
+                       return Thread.currentThread().getContextClassLoader();
+                   }
+            });
+
+        ResourceBundle bundle = null;
+        try {
+            bundle = ResourceBundle.getBundle(resourceBaseName,
+                                              locale, loader);
+        } catch (MissingResourceException mre) {
+            try {
+                bundle = ResourceBundle.getBundle(resourceBaseName, locale);
+            } catch (MissingResourceException mre1) {
+                return null;
+            }
+        }
+
+        try {
+            return bundle.getString(key);
+        } catch (MissingResourceException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a <code>String</code> containing a description of the
+     * named element, or <code>null</code>.  The description will be
+     * localized for the supplied <code>Locale</code> if possible.
+     *
+     * <p> The default implementation will first locate a
+     * <code>ResourceBundle</code> using the current resource base
+     * name set by <code>setResourceBaseName</code> and the supplied
+     * <code>Locale</code>, using the fallback mechanism described in
+     * the comments for <code>ResourceBundle.getBundle</code>.  If a
+     * <code>ResourceBundle</code> is found, the element name will be
+     * used as a key to its <code>getString</code> method, and the
+     * result returned.  If no <code>ResourceBundle</code> is found,
+     * or no such key is present, <code>null</code> will be returned.
+     *
+     * <p> If <code>locale</code> is <code>null</code>, the current
+     * default <code>Locale</code> returned by <code>Locale.getLocale</code>
+     * will be used.
+     *
+     * @param elementName the name of the element.
+     * @param locale the <code>Locale</code> for which localization
+     * will be attempted.
+     *
+     * @return the element description.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this format.
+     *
+     * @see #setResourceBaseName
+     */
+    public String getElementDescription(String elementName,
+                                        Locale locale) {
+        Element element = getElement(elementName);
+        return getResource(elementName, locale);
+    }
+
+    // Children
+
+    public int getChildPolicy(String elementName) {
+        Element element = getElement(elementName);
+        return element.childPolicy;
+    }
+
+    public String[] getChildNames(String elementName) {
+        Element element = getElement(elementName);
+        if (element.childPolicy == CHILD_POLICY_EMPTY) {
+            return null;
+        }
+        return (String[])element.childList.toArray(new String[0]);
+    }
+
+    // Attributes
+
+    public String[] getAttributeNames(String elementName) {
+        Element element = getElement(elementName);
+        List names = element.attrList;
+
+        String[] result = new String[names.size()];
+        return (String[])names.toArray(result);
+    }
+
+    public int getAttributeValueType(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        return attr.valueType;
+    }
+
+    public int getAttributeDataType(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        return attr.dataType;
+    }
+
+    public boolean isAttributeRequired(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        return attr.required;
+    }
+
+    public String getAttributeDefaultValue(String elementName,
+                                           String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        return attr.defaultValue;
+    }
+
+    public String[] getAttributeEnumerations(String elementName,
+                                             String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        if (attr.valueType != VALUE_ENUMERATION) {
+            throw new IllegalArgumentException
+                ("Attribute not an enumeration!");
+        }
+
+        List values = attr.enumeratedValues;
+        Iterator iter = values.iterator();
+        String[] result = new String[values.size()];
+        return (String[])values.toArray(result);
+    }
+
+    public String getAttributeMinValue(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        if (attr.valueType != VALUE_RANGE &&
+            attr.valueType != VALUE_RANGE_MIN_INCLUSIVE &&
+            attr.valueType != VALUE_RANGE_MAX_INCLUSIVE &&
+            attr.valueType != VALUE_RANGE_MIN_MAX_INCLUSIVE) {
+            throw new IllegalArgumentException("Attribute not a range!");
+        }
+
+        return attr.minValue;
+    }
+
+    public String getAttributeMaxValue(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        if (attr.valueType != VALUE_RANGE &&
+            attr.valueType != VALUE_RANGE_MIN_INCLUSIVE &&
+            attr.valueType != VALUE_RANGE_MAX_INCLUSIVE &&
+            attr.valueType != VALUE_RANGE_MIN_MAX_INCLUSIVE) {
+            throw new IllegalArgumentException("Attribute not a range!");
+        }
+
+        return attr.maxValue;
+    }
+
+    public int getAttributeListMinLength(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        if (attr.valueType != VALUE_LIST) {
+            throw new IllegalArgumentException("Attribute not a list!");
+        }
+
+        return attr.listMinLength;
+    }
+
+    public int getAttributeListMaxLength(String elementName, String attrName) {
+        Attribute attr = getAttribute(elementName, attrName);
+        if (attr.valueType != VALUE_LIST) {
+            throw new IllegalArgumentException("Attribute not a list!");
+        }
+
+        return attr.listMaxLength;
+    }
+
+    /**
+     * Returns a <code>String</code> containing a description of the
+     * named attribute, or <code>null</code>.  The description will be
+     * localized for the supplied <code>Locale</code> if possible.
+     *
+     * <p> The default implementation will first locate a
+     * <code>ResourceBundle</code> using the current resource base
+     * name set by <code>setResourceBaseName</code> and the supplied
+     * <code>Locale</code>, using the fallback mechanism described in
+     * the comments for <code>ResourceBundle.getBundle</code>.  If a
+     * <code>ResourceBundle</code> is found, the element name followed
+     * by a "/" character followed by the attribute name
+     * (<code>elementName + "/" + attrName</code>) will be used as a
+     * key to its <code>getString</code> method, and the result
+     * returned.  If no <code>ResourceBundle</code> is found, or no
+     * such key is present, <code>null</code> will be returned.
+     *
+     * <p> If <code>locale</code> is <code>null</code>, the current
+     * default <code>Locale</code> returned by <code>Locale.getLocale</code>
+     * will be used.
+     *
+     * @param elementName the name of the element.
+     * @param attrName the name of the attribute.
+     * @param locale the <code>Locale</code> for which localization
+     * will be attempted, or <code>null</code>.
+     *
+     * @return the attribute description.
+     *
+     * @exception IllegalArgumentException if <code>elementName</code>
+     * is <code>null</code>, or is not a legal element name for this format.
+     * @exception IllegalArgumentException if <code>attrName</code> is
+     * <code>null</code> or is not a legal attribute name for this
+     * element.
+     *
+     * @see #setResourceBaseName
+     */
+    public String getAttributeDescription(String elementName,
+                                          String attrName,
+                                          Locale locale) {
+        Element element = getElement(elementName);
+        if (attrName == null) {
+            throw new IllegalArgumentException("attrName == null!");
+        }
+        Attribute attr = (Attribute)element.attrMap.get(attrName);
+        if (attr == null) {
+            throw new IllegalArgumentException("No such attribute!");
+        }
+
+        String key = elementName + "/" + attrName;
+        return getResource(key, locale);
+    }
+
+    private ObjectValue getObjectValue(String elementName) {
+        Element element = getElement(elementName);
+        ObjectValue objv = (ObjectValue)element.objectValue;
+        if (objv == null) {
+            throw new IllegalArgumentException("No object within element " +
+                                               elementName + "!");
+        }
+        return objv;
+    }
+
+    public int getObjectValueType(String elementName) {
+        Element element = getElement(elementName);
+        ObjectValue objv = (ObjectValue)element.objectValue;
+        if (objv == null) {
+            return VALUE_NONE;
+        }
+        return objv.valueType;
+    }
+
+    public Class<?> getObjectClass(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        return objv.classType;
+    }
+
+    public Object getObjectDefaultValue(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        return objv.defaultValue;
+    }
+
+    public Object[] getObjectEnumerations(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        if (objv.valueType != VALUE_ENUMERATION) {
+            throw new IllegalArgumentException("Not an enumeration!");
+        }
+        List vlist = objv.enumeratedValues;
+        Object[] values = new Object[vlist.size()];
+        return vlist.toArray(values);
+    }
+
+    public Comparable<?> getObjectMinValue(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        if ((objv.valueType & VALUE_RANGE) != VALUE_RANGE) {
+            throw new IllegalArgumentException("Not a range!");
+        }
+        return objv.minValue;
+    }
+
+    public Comparable<?> getObjectMaxValue(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        if ((objv.valueType & VALUE_RANGE) != VALUE_RANGE) {
+            throw new IllegalArgumentException("Not a range!");
+        }
+        return objv.maxValue;
+    }
+
+    public int getObjectArrayMinLength(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        if (objv.valueType != VALUE_LIST) {
+            throw new IllegalArgumentException("Not a list!");
+        }
+        return objv.arrayMinLength;
+    }
+
+    public int getObjectArrayMaxLength(String elementName) {
+        ObjectValue objv = getObjectValue(elementName);
+        if (objv.valueType != VALUE_LIST) {
+            throw new IllegalArgumentException("Not a list!");
+        }
+        return objv.arrayMaxLength;
+    }
+
+    // Standard format descriptor
+
+    private synchronized static void createStandardFormat() {
+        if (standardFormat == null) {
+            standardFormat = new StandardMetadataFormat();
+        }
+    }
+
+    /**
+     * Returns an <code>IIOMetadataFormat</code> object describing the
+     * standard, plug-in neutral <code>javax.imageio_1.0</code>
+     * metadata document format described in the comment of the
+     * <code>javax.imageio.metadata</code> package.
+     *
+     * @return a predefined <code>IIOMetadataFormat</code> instance.
+     */
+    public static IIOMetadataFormat getStandardFormatInstance() {
+        createStandardFormat();
+        return standardFormat;
+    }
+}

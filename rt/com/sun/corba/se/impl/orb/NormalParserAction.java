@@ -1,57 +1,51 @@
-/*    */ package com.sun.corba.se.impl.orb;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orb.Operation;
-/*    */ import java.util.Properties;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NormalParserAction
-/*    */   extends ParserActionBase
-/*    */ {
-/*    */   public NormalParserAction(String paramString1, Operation paramOperation, String paramString2) {
-/* 36 */     super(paramString1, false, paramOperation, paramString2);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Object apply(Properties paramProperties) {
-/* 45 */     String str = paramProperties.getProperty(getPropertyName());
-/* 46 */     if (str != null) {
-/* 47 */       return getOperation().operate(str);
-/*    */     }
-/* 49 */     return null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\NormalParserAction.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orb ;
+
+import java.util.Properties ;
+
+import com.sun.corba.se.spi.orb.Operation ;
+
+public class NormalParserAction extends ParserActionBase {
+    public NormalParserAction( String propertyName,
+        Operation operation, String fieldName )
+    {
+        super( propertyName, false, operation, fieldName ) ;
+    }
+
+    /** Create a String[] of all suffixes of property names that
+     * match the propertyName prefix, pass this to op, and return the
+     * result.
+     */
+    public Object apply( Properties props )
+    {
+        Object value = props.getProperty( getPropertyName() ) ;
+        if (value != null)
+            return getOperation().operate( value ) ;
+        else
+            return null ;
+    }
+}

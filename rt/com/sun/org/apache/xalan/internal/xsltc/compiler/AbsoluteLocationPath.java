@@ -1,136 +1,130 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class AbsoluteLocationPath
-/*     */   extends Expression
-/*     */ {
-/*     */   private Expression _path;
-/*     */   
-/*     */   public AbsoluteLocationPath() {
-/*  49 */     this._path = null;
-/*     */   }
-/*     */   
-/*     */   public AbsoluteLocationPath(Expression path) {
-/*  53 */     this._path = path;
-/*  54 */     if (path != null) {
-/*  55 */       this._path.setParent(this);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void setParser(Parser parser) {
-/*  60 */     super.setParser(parser);
-/*  61 */     if (this._path != null) {
-/*  62 */       this._path.setParser(parser);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public Expression getPath() {
-/*  67 */     return this._path;
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/*  71 */     return "AbsoluteLocationPath(" + ((this._path != null) ? this._path
-/*  72 */       .toString() : "null") + ')';
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  76 */     if (this._path != null) {
-/*  77 */       Type ptype = this._path.typeCheck(stable);
-/*  78 */       if (ptype instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/*  79 */         this._path = new CastExpr(this._path, Type.NodeSet);
-/*     */       }
-/*     */     } 
-/*  82 */     return this._type = Type.NodeSet;
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  86 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  87 */     InstructionList il = methodGen.getInstructionList();
-/*  88 */     if (this._path != null) {
-/*  89 */       int initAI = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.AbsoluteIterator", "<init>", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 105 */       this._path.translate(classGen, methodGen);
-/*     */       
-/* 107 */       LocalVariableGen relPathIterator = methodGen.addLocalVariable("abs_location_path_tmp", 
-/* 108 */           Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */       
-/* 110 */       relPathIterator.setStart(il
-/* 111 */           .append(new ASTORE(relPathIterator.getIndex())));
-/*     */ 
-/*     */       
-/* 114 */       il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.AbsoluteIterator")));
-/* 115 */       il.append(DUP);
-/* 116 */       relPathIterator.setEnd(il
-/* 117 */           .append(new ALOAD(relPathIterator.getIndex())));
-/*     */ 
-/*     */       
-/* 120 */       il.append(new INVOKESPECIAL(initAI));
-/*     */     } else {
-/*     */       
-/* 123 */       int gitr = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getIterator", "()Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */       
-/* 126 */       il.append(methodGen.loadDOM());
-/* 127 */       il.append(new INVOKEINTERFACE(gitr, 1));
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\AbsoluteLocationPath.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: AbsoluteLocationPath.java,v 1.2.4.1 2005/09/12 09:44:03 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+final class AbsoluteLocationPath extends Expression {
+    private Expression _path;   // may be null
+
+    public AbsoluteLocationPath() {
+        _path = null;
+    }
+
+    public AbsoluteLocationPath(Expression path) {
+        _path = path;
+        if (path != null) {
+            _path.setParent(this);
+        }
+    }
+
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        if (_path != null) {
+            _path.setParser(parser);
+        }
+    }
+
+    public Expression getPath() {
+        return(_path);
+    }
+
+    public String toString() {
+        return "AbsoluteLocationPath(" +
+            (_path != null ? _path.toString() : "null") + ')';
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (_path != null) {
+            final Type ptype = _path.typeCheck(stable);
+            if (ptype instanceof NodeType) {            // promote to node-set
+                _path = new CastExpr(_path, Type.NodeSet);
+            }
+        }
+        return _type = Type.NodeSet;
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        if (_path != null) {
+            final int initAI = cpg.addMethodref(ABSOLUTE_ITERATOR,
+                                                "<init>",
+                                                "("
+                                                + NODE_ITERATOR_SIG
+                                                + ")V");
+
+            // Compile relative path iterator(s)
+            //
+            // Backwards branches are prohibited if an uninitialized object is
+            // on the stack by section 4.9.4 of the JVM Specification, 2nd Ed.
+            // We don't know whether this code might contain backwards branches,
+            // so we mustn't create the new object until after we've created
+            // this argument to its constructor.  Instead we calculate the
+            // value of the argument to the constructor first, store it in
+            // a temporary variable, create the object and reload the argument
+            // from the temporary to avoid the problem.
+            _path.translate(classGen, methodGen);
+            LocalVariableGen relPathIterator
+                    = methodGen.addLocalVariable("abs_location_path_tmp",
+                                       Util.getJCRefType(NODE_ITERATOR_SIG),
+                                       null, null);
+            relPathIterator.setStart(
+                    il.append(new ASTORE(relPathIterator.getIndex())));
+
+            // Create new AbsoluteIterator
+            il.append(new NEW(cpg.addClass(ABSOLUTE_ITERATOR)));
+            il.append(DUP);
+            relPathIterator.setEnd(
+                    il.append(new ALOAD(relPathIterator.getIndex())));
+
+            // Initialize AbsoluteIterator with iterator from the stack
+            il.append(new INVOKESPECIAL(initAI));
+        }
+        else {
+            final int gitr = cpg.addInterfaceMethodref(DOM_INTF,
+                                                       "getIterator",
+                                                       "()"+NODE_ITERATOR_SIG);
+            il.append(methodGen.loadDOM());
+            il.append(new INVOKEINTERFACE(gitr, 1));
+        }
+    }
+}

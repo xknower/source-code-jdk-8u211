@@ -1,9 +1,45 @@
+/*
+ * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.nio.channels;
 
-public interface ByteChannel extends ReadableByteChannel, WritableByteChannel {}
+import java.io.IOException;
 
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\channels\ByteChannel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A channel that can read and write bytes.  This interface simply unifies
+ * {@link ReadableByteChannel} and {@link WritableByteChannel}; it does not
+ * specify any new operations.
+ *
+ * @author Mark Reinhold
+ * @author JSR-51 Expert Group
+ * @since 1.4
  */
+
+public interface ByteChannel
+    extends ReadableByteChannel, WritableByteChannel
+{
+
+}

@@ -1,387 +1,383 @@
-/*     */ package com.sun.org.apache.xpath.internal.axes;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMIterator;
-/*     */ import com.sun.org.apache.xml.internal.utils.PrefixResolver;
-/*     */ import com.sun.org.apache.xpath.internal.Expression;
-/*     */ import com.sun.org.apache.xpath.internal.VariableStack;
-/*     */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*     */ import com.sun.org.apache.xpath.internal.compiler.Compiler;
-/*     */ import com.sun.org.apache.xpath.internal.compiler.OpMap;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DescendantIterator
-/*     */   extends LocPathIterator
-/*     */ {
-/*     */   static final long serialVersionUID = -1190338607743976938L;
-/*     */   protected transient DTMAxisTraverser m_traverser;
-/*     */   protected int m_axis;
-/*     */   protected int m_extendedTypeID;
-/*     */   
-/*     */   DescendantIterator(Compiler compiler, int opPos, int analysis) throws TransformerException {
-/*  60 */     super(compiler, opPos, analysis, false);
-/*     */     
-/*  62 */     int firstStepPos = OpMap.getFirstChildPos(opPos);
-/*  63 */     int stepType = compiler.getOp(firstStepPos);
-/*     */     
-/*  65 */     boolean orSelf = (42 == stepType);
-/*  66 */     boolean fromRoot = false;
-/*  67 */     if (48 == stepType) {
-/*     */       
-/*  69 */       orSelf = true;
-/*     */     
-/*     */     }
-/*  72 */     else if (50 == stepType) {
-/*     */       
-/*  74 */       fromRoot = true;
-/*     */       
-/*  76 */       int i = compiler.getNextStepPos(firstStepPos);
-/*  77 */       if (compiler.getOp(i) == 42) {
-/*  78 */         orSelf = true;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/*  83 */     int nextStepPos = firstStepPos;
-/*     */     
-/*     */     while (true) {
-/*  86 */       nextStepPos = compiler.getNextStepPos(nextStepPos);
-/*  87 */       if (nextStepPos > 0) {
-/*     */         
-/*  89 */         int stepOp = compiler.getOp(nextStepPos);
-/*  90 */         if (-1 != stepOp) {
-/*  91 */           firstStepPos = nextStepPos;
-/*     */ 
-/*     */           
-/*     */           continue;
-/*     */         } 
-/*     */       } 
-/*     */       
-/*     */       break;
-/*     */     } 
-/*     */     
-/* 101 */     if ((analysis & 0x10000) != 0) {
-/* 102 */       orSelf = false;
-/*     */     }
-/* 104 */     if (fromRoot) {
-/*     */       
-/* 106 */       if (orSelf) {
-/* 107 */         this.m_axis = 18;
-/*     */       } else {
-/* 109 */         this.m_axis = 17;
-/*     */       } 
-/* 111 */     } else if (orSelf) {
-/* 112 */       this.m_axis = 5;
-/*     */     } else {
-/* 114 */       this.m_axis = 4;
-/*     */     } 
-/* 116 */     int whatToShow = compiler.getWhatToShow(firstStepPos);
-/*     */     
-/* 118 */     if (0 == (whatToShow & 0x43) || whatToShow == -1) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 122 */       initNodeTest(whatToShow);
-/*     */     } else {
-/*     */       
-/* 125 */       initNodeTest(whatToShow, compiler.getStepNS(firstStepPos), compiler
-/* 126 */           .getStepLocalName(firstStepPos));
-/*     */     } 
-/* 128 */     initPredicateInfo(compiler, firstStepPos);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DescendantIterator() {
-/* 137 */     super((PrefixResolver)null);
-/* 138 */     this.m_axis = 18;
-/* 139 */     int whatToShow = -1;
-/* 140 */     initNodeTest(whatToShow);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DTMIterator cloneWithReset() throws CloneNotSupportedException {
-/* 155 */     DescendantIterator clone = (DescendantIterator)super.cloneWithReset();
-/* 156 */     clone.m_traverser = this.m_traverser;
-/*     */     
-/* 158 */     clone.resetProximityPositions();
-/*     */     
-/* 160 */     return clone;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int nextNode() {
-/*     */     int next;
-/*     */     VariableStack vars;
-/*     */     int savedStart;
-/* 177 */     if (this.m_foundLast) {
-/* 178 */       return -1;
-/*     */     }
-/* 180 */     if (-1 == this.m_lastFetched)
-/*     */     {
-/* 182 */       resetProximityPositions();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 189 */     if (-1 != this.m_stackFrame) {
-/*     */       
-/* 191 */       vars = this.m_execContext.getVarStack();
-/*     */ 
-/*     */       
-/* 194 */       savedStart = vars.getStackFrame();
-/*     */       
-/* 196 */       vars.setStackFrame(this.m_stackFrame);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 201 */       vars = null;
-/* 202 */       savedStart = 0;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     while (true) {
-/* 209 */       if (0 == this.m_extendedTypeID) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 213 */         next = this.m_lastFetched = (-1 == this.m_lastFetched) ? this.m_traverser.first(this.m_context) : this.m_traverser.next(this.m_context, this.m_lastFetched);
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */ 
-/*     */         
-/* 219 */         next = this.m_lastFetched = (-1 == this.m_lastFetched) ? this.m_traverser.first(this.m_context, this.m_extendedTypeID) : this.m_traverser.next(this.m_context, this.m_lastFetched, this.m_extendedTypeID);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 223 */       if (-1 != next)
-/*     */       
-/* 225 */       { if (1 == acceptNode(next)) {
-/*     */           break;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 233 */         if (next == -1)
-/*     */           break;  continue; }  break;
-/* 235 */     }  if (-1 != next)
-/*     */     
-/* 237 */     { this.m_pos++;
-/* 238 */       int i = next;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 249 */       if (-1 != this.m_stackFrame)
-/*     */       {
-/*     */         
-/* 252 */         vars.setStackFrame(savedStart); }  return i; }  this.m_foundLast = true; byte b = -1; if (-1 != this.m_stackFrame) vars.setStackFrame(savedStart);
-/*     */     
-/*     */     return b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRoot(int context, Object environment) {
-/* 266 */     super.setRoot(context, environment);
-/* 267 */     this.m_traverser = this.m_cdtm.getAxisTraverser(this.m_axis);
-/*     */     
-/* 269 */     String localName = getLocalName();
-/* 270 */     String namespace = getNamespace();
-/* 271 */     int what = this.m_whatToShow;
-/*     */ 
-/*     */     
-/* 274 */     if (-1 == what || "*"
-/* 275 */       .equals(localName) || "*"
-/* 276 */       .equals(namespace)) {
-/*     */       
-/* 278 */       this.m_extendedTypeID = 0;
-/*     */     }
-/*     */     else {
-/*     */       
-/* 282 */       int type = getNodeTypeTest(what);
-/* 283 */       this.m_extendedTypeID = this.m_cdtm.getExpandedTypeID(namespace, localName, type);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int asNode(XPathContext xctxt) throws TransformerException {
-/* 299 */     if (getPredicateCount() > 0) {
-/* 300 */       return super.asNode(xctxt);
-/*     */     }
-/* 302 */     int current = xctxt.getCurrentNode();
-/*     */     
-/* 304 */     DTM dtm = xctxt.getDTM(current);
-/* 305 */     DTMAxisTraverser traverser = dtm.getAxisTraverser(this.m_axis);
-/*     */     
-/* 307 */     String localName = getLocalName();
-/* 308 */     String namespace = getNamespace();
-/* 309 */     int what = this.m_whatToShow;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 315 */     if (-1 == what || localName == "*" || namespace == "*")
-/*     */     {
-/*     */ 
-/*     */       
-/* 319 */       return traverser.first(current);
-/*     */     }
-/*     */ 
-/*     */     
-/* 323 */     int type = getNodeTypeTest(what);
-/* 324 */     int extendedType = dtm.getExpandedTypeID(namespace, localName, type);
-/* 325 */     return traverser.first(current, extendedType);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void detach() {
-/* 338 */     if (this.m_allowDetach) {
-/* 339 */       this.m_traverser = null;
-/* 340 */       this.m_extendedTypeID = 0;
-/*     */ 
-/*     */       
-/* 343 */       super.detach();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAxis() {
-/* 355 */     return this.m_axis;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean deepEquals(Expression expr) {
-/* 373 */     if (!super.deepEquals(expr)) {
-/* 374 */       return false;
-/*     */     }
-/* 376 */     if (this.m_axis != ((DescendantIterator)expr).m_axis) {
-/* 377 */       return false;
-/*     */     }
-/* 379 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\axes\DescendantIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: DescendantIterator.java,v 1.2.4.2 2005/09/14 19:45:21 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.axes;
+
+import com.sun.org.apache.xml.internal.dtm.Axis;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
+import com.sun.org.apache.xml.internal.dtm.DTMFilter;
+import com.sun.org.apache.xml.internal.dtm.DTMIterator;
+import com.sun.org.apache.xpath.internal.Expression;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.compiler.Compiler;
+import com.sun.org.apache.xpath.internal.compiler.OpCodes;
+import com.sun.org.apache.xpath.internal.compiler.OpMap;
+import com.sun.org.apache.xpath.internal.patterns.NodeTest;
+import org.w3c.dom.DOMException;
+
+/**
+ * This class implements an optimized iterator for
+ * descendant, descendant-or-self, or "//foo" patterns.
+ * @see com.sun.org.apache.xpath.internal.axes.LocPathIterator
+ * @xsl.usage advanced
+ */
+public class DescendantIterator extends LocPathIterator
+{
+    static final long serialVersionUID = -1190338607743976938L;
+  /**
+   * Create a DescendantIterator object.
+   *
+   * @param compiler A reference to the Compiler that contains the op map.
+   * @param opPos The position within the op map, which contains the
+   * location path expression for this itterator.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  DescendantIterator(Compiler compiler, int opPos, int analysis)
+          throws javax.xml.transform.TransformerException
+  {
+
+    super(compiler, opPos, analysis, false);
+
+    int firstStepPos = OpMap.getFirstChildPos(opPos);
+    int stepType = compiler.getOp(firstStepPos);
+
+    boolean orSelf = (OpCodes.FROM_DESCENDANTS_OR_SELF == stepType);
+    boolean fromRoot = false;
+    if (OpCodes.FROM_SELF == stepType)
+    {
+      orSelf = true;
+      // firstStepPos += 8;
+    }
+    else if(OpCodes.FROM_ROOT == stepType)
+    {
+      fromRoot = true;
+      // Ugly code... will go away when AST work is done.
+      int nextStepPos = compiler.getNextStepPos(firstStepPos);
+      if(compiler.getOp(nextStepPos) == OpCodes.FROM_DESCENDANTS_OR_SELF)
+        orSelf = true;
+      // firstStepPos += 8;
+    }
+
+    // Find the position of the last step.
+    int nextStepPos = firstStepPos;
+    while(true)
+    {
+      nextStepPos = compiler.getNextStepPos(nextStepPos);
+      if(nextStepPos > 0)
+      {
+        int stepOp = compiler.getOp(nextStepPos);
+        if(OpCodes.ENDOP != stepOp)
+          firstStepPos = nextStepPos;
+        else
+          break;
+      }
+      else
+        break;
+
+    }
+
+    // Fix for http://nagoya.apache.org/bugzilla/show_bug.cgi?id=1336
+    if((analysis & WalkerFactory.BIT_CHILD) != 0)
+      orSelf = false;
+
+    if(fromRoot)
+    {
+      if(orSelf)
+        m_axis = Axis.DESCENDANTSORSELFFROMROOT;
+      else
+        m_axis = Axis.DESCENDANTSFROMROOT;
+    }
+    else if(orSelf)
+      m_axis = Axis.DESCENDANTORSELF;
+    else
+      m_axis = Axis.DESCENDANT;
+
+    int whatToShow = compiler.getWhatToShow(firstStepPos);
+
+    if ((0 == (whatToShow
+               & (DTMFilter.SHOW_ATTRIBUTE | DTMFilter.SHOW_ELEMENT
+                  | DTMFilter.SHOW_PROCESSING_INSTRUCTION))) ||
+                   (whatToShow == DTMFilter.SHOW_ALL))
+      initNodeTest(whatToShow);
+    else
+    {
+      initNodeTest(whatToShow, compiler.getStepNS(firstStepPos),
+                              compiler.getStepLocalName(firstStepPos));
+    }
+    initPredicateInfo(compiler, firstStepPos);
+  }
+
+  /**
+   * Create a DescendantIterator object.
+   *
+   */
+  public DescendantIterator()
+  {
+    super(null);
+    m_axis = Axis.DESCENDANTSORSELFFROMROOT;
+    int whatToShow = DTMFilter.SHOW_ALL;
+    initNodeTest(whatToShow);
+  }
+
+
+  /**
+   *  Get a cloned Iterator that is reset to the beginning
+   *  of the query.
+   *
+   *  @return A cloned NodeIterator set of the start of the query.
+   *
+   *  @throws CloneNotSupportedException
+   */
+  public DTMIterator cloneWithReset() throws CloneNotSupportedException
+  {
+
+    DescendantIterator clone = (DescendantIterator) super.cloneWithReset();
+    clone.m_traverser = m_traverser;
+
+    clone.resetProximityPositions();
+
+    return clone;
+  }
+
+  /**
+   *  Returns the next node in the set and advances the position of the
+   * iterator in the set. After a NodeIterator is created, the first call
+   * to nextNode() returns the first node in the set.
+   *
+   * @return  The next <code>Node</code> in the set being iterated over, or
+   *   <code>null</code> if there are no more members in that set.
+   *
+   * @throws DOMException
+   *    INVALID_STATE_ERR: Raised if this method is called after the
+   *   <code>detach</code> method was invoked.
+   */
+  public int nextNode()
+  {
+        if(m_foundLast)
+                return DTM.NULL;
+
+    if(DTM.NULL == m_lastFetched)
+    {
+      resetProximityPositions();
+    }
+
+    int next;
+
+    com.sun.org.apache.xpath.internal.VariableStack vars;
+    int savedStart;
+    if (-1 != m_stackFrame)
+    {
+      vars = m_execContext.getVarStack();
+
+      // These three statements need to be combined into one operation.
+      savedStart = vars.getStackFrame();
+
+      vars.setStackFrame(m_stackFrame);
+    }
+    else
+    {
+      // Yuck.  Just to shut up the compiler!
+      vars = null;
+      savedStart = 0;
+    }
+
+    try
+    {
+      do
+      {
+        if(0 == m_extendedTypeID)
+        {
+          next = m_lastFetched = (DTM.NULL == m_lastFetched)
+                       ? m_traverser.first(m_context)
+                       : m_traverser.next(m_context, m_lastFetched);
+        }
+        else
+        {
+          next = m_lastFetched = (DTM.NULL == m_lastFetched)
+                       ? m_traverser.first(m_context, m_extendedTypeID)
+                       : m_traverser.next(m_context, m_lastFetched,
+                                          m_extendedTypeID);
+        }
+
+        if (DTM.NULL != next)
+        {
+          if(DTMIterator.FILTER_ACCEPT == acceptNode(next))
+            break;
+          else
+            continue;
+        }
+        else
+          break;
+      }
+      while (next != DTM.NULL);
+
+      if (DTM.NULL != next)
+      {
+        m_pos++;
+        return next;
+      }
+      else
+      {
+        m_foundLast = true;
+
+        return DTM.NULL;
+      }
+    }
+    finally
+    {
+      if (-1 != m_stackFrame)
+      {
+        // These two statements need to be combined into one operation.
+        vars.setStackFrame(savedStart);
+      }
+    }
+  }
+
+  /**
+   * Initialize the context values for this expression
+   * after it is cloned.
+   *
+   * @param context The XPath runtime context for this
+   * transformation.
+   */
+  public void setRoot(int context, Object environment)
+  {
+    super.setRoot(context, environment);
+    m_traverser = m_cdtm.getAxisTraverser(m_axis);
+
+    String localName = getLocalName();
+    String namespace = getNamespace();
+    int what = m_whatToShow;
+    // System.out.println("what: ");
+    // NodeTest.debugWhatToShow(what);
+    if(DTMFilter.SHOW_ALL == what
+       || NodeTest.WILD.equals(localName)
+       || NodeTest.WILD.equals(namespace))
+    {
+      m_extendedTypeID = 0;
+    }
+    else
+    {
+      int type = getNodeTypeTest(what);
+      m_extendedTypeID = m_cdtm.getExpandedTypeID(namespace, localName, type);
+    }
+
+  }
+
+  /**
+   * Return the first node out of the nodeset, if this expression is
+   * a nodeset expression.  This is the default implementation for
+   * nodesets.
+   * <p>WARNING: Do not mutate this class from this function!</p>
+   * @param xctxt The XPath runtime context.
+   * @return the first node out of the nodeset, or DTM.NULL.
+   */
+  public int asNode(XPathContext xctxt)
+    throws javax.xml.transform.TransformerException
+  {
+    if(getPredicateCount() > 0)
+      return super.asNode(xctxt);
+
+    int current = xctxt.getCurrentNode();
+
+    DTM dtm = xctxt.getDTM(current);
+    DTMAxisTraverser traverser = dtm.getAxisTraverser(m_axis);
+
+    String localName = getLocalName();
+    String namespace = getNamespace();
+    int what = m_whatToShow;
+
+    // System.out.print(" (DescendantIterator) ");
+
+    // System.out.println("what: ");
+    // NodeTest.debugWhatToShow(what);
+    if(DTMFilter.SHOW_ALL == what
+       || localName == NodeTest.WILD
+       || namespace == NodeTest.WILD)
+    {
+      return traverser.first(current);
+    }
+    else
+    {
+      int type = getNodeTypeTest(what);
+      int extendedType = dtm.getExpandedTypeID(namespace, localName, type);
+      return traverser.first(current, extendedType);
+    }
+  }
+
+  /**
+   *  Detaches the iterator from the set which it iterated over, releasing
+   * any computational resources and placing the iterator in the INVALID
+   * state. After<code>detach</code> has been invoked, calls to
+   * <code>nextNode</code> or<code>previousNode</code> will raise the
+   * exception INVALID_STATE_ERR.
+   */
+  public void detach()
+  {
+    if (m_allowDetach) {
+      m_traverser = null;
+      m_extendedTypeID = 0;
+
+      // Always call the superclass detach last!
+      super.detach();
+    }
+  }
+
+  /**
+   * Returns the axis being iterated, if it is known.
+   *
+   * @return Axis.CHILD, etc., or -1 if the axis is not known or is of multiple
+   * types.
+   */
+  public int getAxis()
+  {
+    return m_axis;
+  }
+
+
+  /** The traverser to use to navigate over the descendants. */
+  transient protected DTMAxisTraverser m_traverser;
+
+  /** The axis that we are traversing. */
+  protected int m_axis;
+
+  /** The extended type ID, not set until setRoot. */
+  protected int m_extendedTypeID;
+
+  /**
+   * @see Expression#deepEquals(Expression)
+   */
+  public boolean deepEquals(Expression expr)
+  {
+        if(!super.deepEquals(expr))
+                return false;
+
+        if(m_axis != ((DescendantIterator)expr).m_axis)
+                return false;
+
+        return true;
+  }
+
+
+}

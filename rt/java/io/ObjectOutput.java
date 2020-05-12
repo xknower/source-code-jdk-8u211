@@ -1,21 +1,90 @@
+/*
+ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.io;
 
-public interface ObjectOutput extends DataOutput, AutoCloseable {
-  void writeObject(Object paramObject) throws IOException;
-  
-  void write(int paramInt) throws IOException;
-  
-  void write(byte[] paramArrayOfbyte) throws IOException;
-  
-  void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException;
-  
-  void flush() throws IOException;
-  
-  void close() throws IOException;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\ObjectOutput.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * ObjectOutput extends the DataOutput interface to include writing of objects.
+ * DataOutput includes methods for output of primitive types, ObjectOutput
+ * extends that interface to include objects, arrays, and Strings.
+ *
+ * @author  unascribed
+ * @see java.io.InputStream
+ * @see java.io.ObjectOutputStream
+ * @see java.io.ObjectInputStream
+ * @since   JDK1.1
  */
+public interface ObjectOutput extends DataOutput, AutoCloseable {
+    /**
+     * Write an object to the underlying storage or stream.  The
+     * class that implements this interface defines how the object is
+     * written.
+     *
+     * @param obj the object to be written
+     * @exception IOException Any of the usual Input/Output related exceptions.
+     */
+    public void writeObject(Object obj)
+      throws IOException;
+
+    /**
+     * Writes a byte. This method will block until the byte is actually
+     * written.
+     * @param b the byte
+     * @exception IOException If an I/O error has occurred.
+     */
+    public void write(int b) throws IOException;
+
+    /**
+     * Writes an array of bytes. This method will block until the bytes
+     * are actually written.
+     * @param b the data to be written
+     * @exception IOException If an I/O error has occurred.
+     */
+    public void write(byte b[]) throws IOException;
+
+    /**
+     * Writes a sub array of bytes.
+     * @param b the data to be written
+     * @param off       the start offset in the data
+     * @param len       the number of bytes that are written
+     * @exception IOException If an I/O error has occurred.
+     */
+    public void write(byte b[], int off, int len) throws IOException;
+
+    /**
+     * Flushes the stream. This will write any buffered
+     * output bytes.
+     * @exception IOException If an I/O error has occurred.
+     */
+    public void flush() throws IOException;
+
+    /**
+     * Closes the stream. This method must be called
+     * to release any resources associated with the
+     * stream.
+     * @exception IOException If an I/O error has occurred.
+     */
+    public void close() throws IOException;
+}

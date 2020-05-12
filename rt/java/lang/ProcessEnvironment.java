@@ -1,359 +1,351 @@
-/*     */ package java.lang;
-/*     */ 
-/*     */ import java.util.AbstractCollection;
-/*     */ import java.util.AbstractSet;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collection;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Comparator;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ import java.util.TreeMap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ProcessEnvironment
-/*     */   extends HashMap<String, String>
-/*     */ {
-/*     */   private static final long serialVersionUID = -8017839552603542824L;
-/*     */   static final int MIN_NAME_LENGTH = 1;
-/*     */   
-/*     */   private static String validateName(String paramString) {
-/*  76 */     if (paramString.indexOf('=', 1) != -1 || paramString
-/*  77 */       .indexOf(false) != -1) {
-/*  78 */       throw new IllegalArgumentException("Invalid environment variable name: \"" + paramString + "\"");
-/*     */     }
-/*  80 */     return paramString;
-/*     */   }
-/*     */   
-/*     */   private static String validateValue(String paramString) {
-/*  84 */     if (paramString.indexOf(false) != -1) {
-/*  85 */       throw new IllegalArgumentException("Invalid environment variable value: \"" + paramString + "\"");
-/*     */     }
-/*  87 */     return paramString;
-/*     */   }
-/*     */   
-/*     */   private static String nonNullString(Object paramObject) {
-/*  91 */     if (paramObject == null)
-/*  92 */       throw new NullPointerException(); 
-/*  93 */     return (String)paramObject;
-/*     */   }
-/*     */   
-/*     */   public String put(String paramString1, String paramString2) {
-/*  97 */     return super.put(validateName(paramString1), validateValue(paramString2));
-/*     */   }
-/*     */   
-/*     */   public String get(Object paramObject) {
-/* 101 */     return super.get(nonNullString(paramObject));
-/*     */   }
-/*     */   
-/*     */   public boolean containsKey(Object paramObject) {
-/* 105 */     return super.containsKey(nonNullString(paramObject));
-/*     */   }
-/*     */   
-/*     */   public boolean containsValue(Object paramObject) {
-/* 109 */     return super.containsValue(nonNullString(paramObject));
-/*     */   }
-/*     */   
-/*     */   public String remove(Object paramObject) {
-/* 113 */     return super.remove(nonNullString(paramObject));
-/*     */   }
-/*     */   
-/*     */   private static class CheckedEntry implements Map.Entry<String, String>
-/*     */   {
-/*     */     private final Map.Entry<String, String> e;
-/*     */     
-/* 120 */     public CheckedEntry(Map.Entry<String, String> param1Entry) { this.e = param1Entry; }
-/* 121 */     public String getKey() { return this.e.getKey(); } public String getValue() {
-/* 122 */       return this.e.getValue();
-/*     */     } public String setValue(String param1String) {
-/* 124 */       return this.e.setValue(ProcessEnvironment.validateValue(param1String));
-/*     */     }
-/* 126 */     public String toString() { return getKey() + "=" + getValue(); }
-/* 127 */     public boolean equals(Object param1Object) { return this.e.equals(param1Object); } public int hashCode() {
-/* 128 */       return this.e.hashCode();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class CheckedEntrySet extends AbstractSet<Map.Entry<String, String>> {
-/*     */     private final Set<Map.Entry<String, String>> s;
-/*     */     
-/* 135 */     public CheckedEntrySet(Set<Map.Entry<String, String>> param1Set) { this.s = param1Set; }
-/* 136 */     public int size() { return this.s.size(); }
-/* 137 */     public boolean isEmpty() { return this.s.isEmpty(); } public void clear() {
-/* 138 */       this.s.clear();
-/*     */     } public Iterator<Map.Entry<String, String>> iterator() {
-/* 140 */       return new Iterator<Map.Entry<String, String>>() {
-/* 141 */           Iterator<Map.Entry<String, String>> i = ProcessEnvironment.CheckedEntrySet.this.s.iterator(); public boolean hasNext() {
-/* 142 */             return this.i.hasNext();
-/*     */           } public Map.Entry<String, String> next() {
-/* 144 */             return new ProcessEnvironment.CheckedEntry(this.i.next());
-/*     */           } public void remove() {
-/* 146 */             this.i.remove();
-/*     */           }
-/*     */         };
-/*     */     }
-/*     */     private static Map.Entry<String, String> checkedEntry(Object param1Object) {
-/* 151 */       Map.Entry<String, String> entry = (Map.Entry)param1Object;
-/* 152 */       ProcessEnvironment.nonNullString(entry.getKey());
-/* 153 */       ProcessEnvironment.nonNullString(entry.getValue());
-/* 154 */       return entry;
-/*     */     }
-/* 156 */     public boolean contains(Object param1Object) { return this.s.contains(checkedEntry(param1Object)); } public boolean remove(Object param1Object) {
-/* 157 */       return this.s.remove(checkedEntry(param1Object));
-/*     */     } }
-/*     */   private static class CheckedValues extends AbstractCollection<String> {
-/*     */     private final Collection<String> c;
-/*     */     
-/* 162 */     public CheckedValues(Collection<String> param1Collection) { this.c = param1Collection; }
-/* 163 */     public int size() { return this.c.size(); }
-/* 164 */     public boolean isEmpty() { return this.c.isEmpty(); }
-/* 165 */     public void clear() { this.c.clear(); }
-/* 166 */     public Iterator<String> iterator() { return this.c.iterator(); }
-/* 167 */     public boolean contains(Object param1Object) { return this.c.contains(ProcessEnvironment.nonNullString(param1Object)); } public boolean remove(Object param1Object) {
-/* 168 */       return this.c.remove(ProcessEnvironment.nonNullString(param1Object));
-/*     */     }
-/*     */   }
-/*     */   private static class CheckedKeySet extends AbstractSet<String> { private final Set<String> s;
-/*     */     
-/* 173 */     public CheckedKeySet(Set<String> param1Set) { this.s = param1Set; }
-/* 174 */     public int size() { return this.s.size(); }
-/* 175 */     public boolean isEmpty() { return this.s.isEmpty(); }
-/* 176 */     public void clear() { this.s.clear(); }
-/* 177 */     public Iterator<String> iterator() { return this.s.iterator(); }
-/* 178 */     public boolean contains(Object param1Object) { return this.s.contains(ProcessEnvironment.nonNullString(param1Object)); } public boolean remove(Object param1Object) {
-/* 179 */       return this.s.remove(ProcessEnvironment.nonNullString(param1Object));
-/*     */     } }
-/*     */   
-/*     */   public Set<String> keySet() {
-/* 183 */     return new CheckedKeySet(super.keySet());
-/*     */   }
-/*     */   
-/*     */   public Collection<String> values() {
-/* 187 */     return new CheckedValues(super.values());
-/*     */   }
-/*     */   
-/*     */   public Set<Map.Entry<String, String>> entrySet() {
-/* 191 */     return new CheckedEntrySet(super.entrySet());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static final class NameComparator
-/*     */     implements Comparator<String>
-/*     */   {
-/*     */     private NameComparator() {}
-/*     */ 
-/*     */     
-/*     */     public int compare(String param1String1, String param1String2) {
-/* 202 */       int i = param1String1.length();
-/* 203 */       int j = param1String2.length();
-/* 204 */       int k = Math.min(i, j);
-/* 205 */       for (byte b = 0; b < k; b++) {
-/* 206 */         char c1 = param1String1.charAt(b);
-/* 207 */         char c2 = param1String2.charAt(b);
-/* 208 */         if (c1 != c2) {
-/* 209 */           c1 = Character.toUpperCase(c1);
-/* 210 */           c2 = Character.toUpperCase(c2);
-/* 211 */           if (c1 != c2)
-/*     */           {
-/* 213 */             return c1 - c2; } 
-/*     */         } 
-/*     */       } 
-/* 216 */       return i - j;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static final class EntryComparator implements Comparator<Map.Entry<String, String>> {
-/*     */     private EntryComparator() {}
-/*     */     
-/*     */     public int compare(Map.Entry<String, String> param1Entry1, Map.Entry<String, String> param1Entry2) {
-/* 224 */       return ProcessEnvironment.nameComparator.compare(param1Entry1.getKey(), param1Entry2.getKey());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 238 */   private static final NameComparator nameComparator = new NameComparator();
-/* 239 */   private static final EntryComparator entryComparator = new EntryComparator();
-/* 240 */   private static final ProcessEnvironment theEnvironment = new ProcessEnvironment();
-/*     */   
-/* 242 */   private static final Map<String, String> theUnmodifiableEnvironment = Collections.unmodifiableMap(theEnvironment);
-/*     */   static {
-/* 244 */     String str = environmentBlock();
-/*     */     
-/* 246 */     int i = 0; int j, k;
-/* 247 */     for (; (j = str.indexOf(false, i)) != -1 && (
-/*     */       
-/* 249 */       k = str.indexOf('=', i + 1)) != -1; 
-/* 250 */       i = j + 1) {
-/*     */       
-/* 252 */       if (k < j)
-/* 253 */         theEnvironment.put(str.substring(i, k), str
-/* 254 */             .substring(k + 1, j)); 
-/*     */     } 
-/*     */   }
-/* 257 */   private static final Map<String, String> theCaseInsensitiveEnvironment = new TreeMap<>(nameComparator); static {
-/* 258 */     theCaseInsensitiveEnvironment.putAll(theEnvironment);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private ProcessEnvironment() {}
-/*     */ 
-/*     */   
-/*     */   private ProcessEnvironment(int paramInt) {
-/* 266 */     super(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static String getenv(String paramString) {
-/* 279 */     return theCaseInsensitiveEnvironment.get(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static Map<String, String> getenv() {
-/* 284 */     return theUnmodifiableEnvironment;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Map<String, String> environment() {
-/* 290 */     return (Map<String, String>)theEnvironment.clone();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static Map<String, String> emptyEnvironment(int paramInt) {
-/* 295 */     return new ProcessEnvironment(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String toEnvironmentBlock() {
-/* 303 */     ArrayList<Map.Entry<String, String>> arrayList = new ArrayList<>(entrySet());
-/* 304 */     Collections.sort(arrayList, entryComparator);
-/*     */     
-/* 306 */     StringBuilder stringBuilder = new StringBuilder(size() * 30);
-/* 307 */     int i = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 314 */     for (Map.Entry<String, String> entry : arrayList) {
-/* 315 */       String str1 = (String)entry.getKey();
-/* 316 */       String str2 = (String)entry.getValue();
-/* 317 */       if (i < 0 && (i = nameComparator.compare(str1, "SystemRoot")) > 0)
-/*     */       {
-/* 319 */         addToEnvIfSet(stringBuilder, "SystemRoot");
-/*     */       }
-/* 321 */       addToEnv(stringBuilder, str1, str2);
-/*     */     } 
-/* 323 */     if (i < 0)
-/*     */     {
-/* 325 */       addToEnvIfSet(stringBuilder, "SystemRoot");
-/*     */     }
-/* 327 */     if (stringBuilder.length() == 0)
-/*     */     {
-/* 329 */       stringBuilder.append(false);
-/*     */     }
-/*     */     
-/* 332 */     stringBuilder.append(false);
-/* 333 */     return stringBuilder.toString();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static void addToEnvIfSet(StringBuilder paramStringBuilder, String paramString) {
-/* 338 */     String str = getenv(paramString);
-/* 339 */     if (str != null)
-/* 340 */       addToEnv(paramStringBuilder, paramString, str); 
-/*     */   }
-/*     */   
-/*     */   private static void addToEnv(StringBuilder paramStringBuilder, String paramString1, String paramString2) {
-/* 344 */     paramStringBuilder.append(paramString1).append('=').append(paramString2).append(false);
-/*     */   }
-/*     */   
-/*     */   static String toEnvironmentBlock(Map<String, String> paramMap) {
-/* 348 */     return (paramMap == null) ? null : ((ProcessEnvironment)paramMap)
-/* 349 */       .toEnvironmentBlock();
-/*     */   }
-/*     */   
-/*     */   private static native String environmentBlock();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\ProcessEnvironment.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/* We use APIs that access a so-called Windows "Environment Block",
+ * which looks like an array of jchars like this:
+ *
+ * FOO=BAR\u0000 ... GORP=QUUX\u0000\u0000
+ *
+ * This data structure has a number of peculiarities we must contend with:
+ * (see: http://windowssdk.msdn.microsoft.com/en-us/library/ms682009.aspx)
+ * - The NUL jchar separators, and a double NUL jchar terminator.
+ *   It appears that the Windows implementation requires double NUL
+ *   termination even if the environment is empty.  We should always
+ *   generate environments with double NUL termination, while accepting
+ *   empty environments consisting of a single NUL.
+ * - on Windows9x, this is actually an array of 8-bit chars, not jchars,
+ *   encoded in the system default encoding.
+ * - The block must be sorted by Unicode value, case-insensitively,
+ *   as if folded to upper case.
+ * - There are magic environment variables maintained by Windows
+ *   that start with a `=' (!) character.  These are used for
+ *   Windows drive current directory (e.g. "=C:=C:\WINNT") or the
+ *   exit code of the last command (e.g. "=ExitCode=0000001").
+ *
+ * Since Java and non-9x Windows speak the same character set, and
+ * even the same encoding, we don't have to deal with unreliable
+ * conversion to byte streams.  Just add a few NUL terminators.
+ *
+ * System.getenv(String) is case-insensitive, while System.getenv()
+ * returns a map that is case-sensitive, which is consistent with
+ * native Windows APIs.
+ *
+ * The non-private methods in this class are not for general use even
+ * within this package.  Instead, they are the system-dependent parts
+ * of the system-independent method of the same name.  Don't even
+ * think of using this class unless your method's name appears below.
+ *
+ * @author Martin Buchholz
+ * @since 1.5
+ */
+
+package java.lang;
+
+import java.io.*;
+import java.util.*;
+
+final class ProcessEnvironment extends HashMap<String,String>
+{
+
+    private static final long serialVersionUID = -8017839552603542824L;
+
+    private static String validateName(String name) {
+        // An initial `=' indicates a magic Windows variable name -- OK
+        if (name.indexOf('=', 1)   != -1 ||
+            name.indexOf('\u0000') != -1)
+            throw new IllegalArgumentException
+                ("Invalid environment variable name: \"" + name + "\"");
+        return name;
+    }
+
+    private static String validateValue(String value) {
+        if (value.indexOf('\u0000') != -1)
+            throw new IllegalArgumentException
+                ("Invalid environment variable value: \"" + value + "\"");
+        return value;
+    }
+
+    private static String nonNullString(Object o) {
+        if (o == null)
+            throw new NullPointerException();
+        return (String) o;
+    }
+
+    public String put(String key, String value) {
+        return super.put(validateName(key), validateValue(value));
+    }
+
+    public String get(Object key) {
+        return super.get(nonNullString(key));
+    }
+
+    public boolean containsKey(Object key) {
+        return super.containsKey(nonNullString(key));
+    }
+
+    public boolean containsValue(Object value) {
+        return super.containsValue(nonNullString(value));
+    }
+
+    public String remove(Object key) {
+        return super.remove(nonNullString(key));
+    }
+
+    private static class CheckedEntry
+        implements Map.Entry<String,String>
+    {
+        private final Map.Entry<String,String> e;
+        public CheckedEntry(Map.Entry<String,String> e) {this.e = e;}
+        public String getKey()   { return e.getKey();}
+        public String getValue() { return e.getValue();}
+        public String setValue(String value) {
+            return e.setValue(validateValue(value));
+        }
+        public String toString() { return getKey() + "=" + getValue();}
+        public boolean equals(Object o) {return e.equals(o);}
+        public int hashCode()    {return e.hashCode();}
+    }
+
+    private static class CheckedEntrySet
+        extends AbstractSet<Map.Entry<String,String>>
+    {
+        private final Set<Map.Entry<String,String>> s;
+        public CheckedEntrySet(Set<Map.Entry<String,String>> s) {this.s = s;}
+        public int size()        {return s.size();}
+        public boolean isEmpty() {return s.isEmpty();}
+        public void clear()      {       s.clear();}
+        public Iterator<Map.Entry<String,String>> iterator() {
+            return new Iterator<Map.Entry<String,String>>() {
+                Iterator<Map.Entry<String,String>> i = s.iterator();
+                public boolean hasNext() { return i.hasNext();}
+                public Map.Entry<String,String> next() {
+                    return new CheckedEntry(i.next());
+                }
+                public void remove() { i.remove();}
+            };
+        }
+        private static Map.Entry<String,String> checkedEntry(Object o) {
+            @SuppressWarnings("unchecked")
+            Map.Entry<String,String> e = (Map.Entry<String,String>) o;
+            nonNullString(e.getKey());
+            nonNullString(e.getValue());
+            return e;
+        }
+        public boolean contains(Object o) {return s.contains(checkedEntry(o));}
+        public boolean remove(Object o)   {return s.remove(checkedEntry(o));}
+    }
+
+    private static class CheckedValues extends AbstractCollection<String> {
+        private final Collection<String> c;
+        public CheckedValues(Collection<String> c) {this.c = c;}
+        public int size()                  {return c.size();}
+        public boolean isEmpty()           {return c.isEmpty();}
+        public void clear()                {       c.clear();}
+        public Iterator<String> iterator() {return c.iterator();}
+        public boolean contains(Object o)  {return c.contains(nonNullString(o));}
+        public boolean remove(Object o)    {return c.remove(nonNullString(o));}
+    }
+
+    private static class CheckedKeySet extends AbstractSet<String> {
+        private final Set<String> s;
+        public CheckedKeySet(Set<String> s) {this.s = s;}
+        public int size()                  {return s.size();}
+        public boolean isEmpty()           {return s.isEmpty();}
+        public void clear()                {       s.clear();}
+        public Iterator<String> iterator() {return s.iterator();}
+        public boolean contains(Object o)  {return s.contains(nonNullString(o));}
+        public boolean remove(Object o)    {return s.remove(nonNullString(o));}
+    }
+
+    public Set<String> keySet() {
+        return new CheckedKeySet(super.keySet());
+    }
+
+    public Collection<String> values() {
+        return new CheckedValues(super.values());
+    }
+
+    public Set<Map.Entry<String,String>> entrySet() {
+        return new CheckedEntrySet(super.entrySet());
+    }
+
+
+    private static final class NameComparator
+        implements Comparator<String> {
+        public int compare(String s1, String s2) {
+            // We can't use String.compareToIgnoreCase since it
+            // canonicalizes to lower case, while Windows
+            // canonicalizes to upper case!  For example, "_" should
+            // sort *after* "Z", not before.
+            int n1 = s1.length();
+            int n2 = s2.length();
+            int min = Math.min(n1, n2);
+            for (int i = 0; i < min; i++) {
+                char c1 = s1.charAt(i);
+                char c2 = s2.charAt(i);
+                if (c1 != c2) {
+                    c1 = Character.toUpperCase(c1);
+                    c2 = Character.toUpperCase(c2);
+                    if (c1 != c2)
+                        // No overflow because of numeric promotion
+                        return c1 - c2;
+                }
+            }
+            return n1 - n2;
+        }
+    }
+
+    private static final class EntryComparator
+        implements Comparator<Map.Entry<String,String>> {
+        public int compare(Map.Entry<String,String> e1,
+                           Map.Entry<String,String> e2) {
+            return nameComparator.compare(e1.getKey(), e2.getKey());
+        }
+    }
+
+    // Allow `=' as first char in name, e.g. =C:=C:\DIR
+    static final int MIN_NAME_LENGTH = 1;
+
+    private static final NameComparator nameComparator;
+    private static final EntryComparator entryComparator;
+    private static final ProcessEnvironment theEnvironment;
+    private static final Map<String,String> theUnmodifiableEnvironment;
+    private static final Map<String,String> theCaseInsensitiveEnvironment;
+
+    static {
+        nameComparator  = new NameComparator();
+        entryComparator = new EntryComparator();
+        theEnvironment  = new ProcessEnvironment();
+        theUnmodifiableEnvironment
+            = Collections.unmodifiableMap(theEnvironment);
+
+        String envblock = environmentBlock();
+        int beg, end, eql;
+        for (beg = 0;
+             ((end = envblock.indexOf('\u0000', beg  )) != -1 &&
+              // An initial `=' indicates a magic Windows variable name -- OK
+              (eql = envblock.indexOf('='     , beg+1)) != -1);
+             beg = end + 1) {
+            // Ignore corrupted environment strings.
+            if (eql < end)
+                theEnvironment.put(envblock.substring(beg, eql),
+                                   envblock.substring(eql+1,end));
+        }
+
+        theCaseInsensitiveEnvironment = new TreeMap<>(nameComparator);
+        theCaseInsensitiveEnvironment.putAll(theEnvironment);
+    }
+
+    private ProcessEnvironment() {
+        super();
+    }
+
+    private ProcessEnvironment(int capacity) {
+        super(capacity);
+    }
+
+    // Only for use by System.getenv(String)
+    static String getenv(String name) {
+        // The original implementation used a native call to _wgetenv,
+        // but it turns out that _wgetenv is only consistent with
+        // GetEnvironmentStringsW (for non-ASCII) if `wmain' is used
+        // instead of `main', even in a process created using
+        // CREATE_UNICODE_ENVIRONMENT.  Instead we perform the
+        // case-insensitive comparison ourselves.  At least this
+        // guarantees that System.getenv().get(String) will be
+        // consistent with System.getenv(String).
+        return theCaseInsensitiveEnvironment.get(name);
+    }
+
+    // Only for use by System.getenv()
+    static Map<String,String> getenv() {
+        return theUnmodifiableEnvironment;
+    }
+
+    // Only for use by ProcessBuilder.environment()
+    @SuppressWarnings("unchecked")
+    static Map<String,String> environment() {
+        return (Map<String,String>) theEnvironment.clone();
+    }
+
+    // Only for use by ProcessBuilder.environment(String[] envp)
+    static Map<String,String> emptyEnvironment(int capacity) {
+        return new ProcessEnvironment(capacity);
+    }
+
+    private static native String environmentBlock();
+
+    // Only for use by ProcessImpl.start()
+    String toEnvironmentBlock() {
+        // Sort Unicode-case-insensitively by name
+        List<Map.Entry<String,String>> list = new ArrayList<>(entrySet());
+        Collections.sort(list, entryComparator);
+
+        StringBuilder sb = new StringBuilder(size()*30);
+        int cmp = -1;
+
+        // Some versions of MSVCRT.DLL require SystemRoot to be set.
+        // So, we make sure that it is always set, even if not provided
+        // by the caller.
+        final String SYSTEMROOT = "SystemRoot";
+
+        for (Map.Entry<String,String> e : list) {
+            String key = e.getKey();
+            String value = e.getValue();
+            if (cmp < 0 && (cmp = nameComparator.compare(key, SYSTEMROOT)) > 0) {
+                // Not set, so add it here
+                addToEnvIfSet(sb, SYSTEMROOT);
+            }
+            addToEnv(sb, key, value);
+        }
+        if (cmp < 0) {
+            // Got to end of list and still not found
+            addToEnvIfSet(sb, SYSTEMROOT);
+        }
+        if (sb.length() == 0) {
+            // Environment was empty and SystemRoot not set in parent
+            sb.append('\u0000');
+        }
+        // Block is double NUL terminated
+        sb.append('\u0000');
+        return sb.toString();
+    }
+
+    // add the environment variable to the child, if it exists in parent
+    private static void addToEnvIfSet(StringBuilder sb, String name) {
+        String s = getenv(name);
+        if (s != null)
+            addToEnv(sb, name, s);
+    }
+
+    private static void addToEnv(StringBuilder sb, String name, String val) {
+        sb.append(name).append('=').append(val).append('\u0000');
+    }
+
+    static String toEnvironmentBlock(Map<String,String> map) {
+        return map == null ? null :
+            ((ProcessEnvironment)map).toEnvironmentBlock();
+    }
+}

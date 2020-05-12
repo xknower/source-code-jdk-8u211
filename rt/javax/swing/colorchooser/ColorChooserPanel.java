@@ -1,210 +1,205 @@
-/*     */ package javax.swing.colorchooser;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.GridBagConstraints;
-/*     */ import java.awt.GridBagLayout;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JFormattedTextField;
-/*     */ import javax.swing.JLabel;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ColorChooserPanel
-/*     */   extends AbstractColorChooserPanel
-/*     */   implements PropertyChangeListener
-/*     */ {
-/*     */   private static final int MASK = -16777216;
-/*     */   private final ColorModel model;
-/*     */   private final ColorPanel panel;
-/*     */   private final DiagramComponent slider;
-/*     */   private final DiagramComponent diagram;
-/*     */   private final JFormattedTextField text;
-/*     */   private final JLabel label;
-/*     */   
-/*     */   ColorChooserPanel(ColorModel paramColorModel) {
-/*  52 */     this.model = paramColorModel;
-/*  53 */     this.panel = new ColorPanel(this.model);
-/*  54 */     this.slider = new DiagramComponent(this.panel, false);
-/*  55 */     this.diagram = new DiagramComponent(this.panel, true);
-/*  56 */     this.text = new JFormattedTextField();
-/*  57 */     this.label = new JLabel(null, null, 4);
-/*  58 */     ValueFormatter.init(6, true, this.text);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setEnabled(boolean paramBoolean) {
-/*  63 */     super.setEnabled(paramBoolean);
-/*  64 */     setEnabled(this, paramBoolean);
-/*     */   }
-/*     */   
-/*     */   private static void setEnabled(Container paramContainer, boolean paramBoolean) {
-/*  68 */     for (Component component : paramContainer.getComponents()) {
-/*  69 */       component.setEnabled(paramBoolean);
-/*  70 */       if (component instanceof Container) {
-/*  71 */         setEnabled((Container)component, paramBoolean);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void updateChooser() {
-/*  78 */     Color color = getColorFromModel();
-/*  79 */     if (color != null) {
-/*  80 */       this.panel.setColor(color);
-/*  81 */       this.text.setValue(Integer.valueOf(color.getRGB()));
-/*  82 */       this.slider.repaint();
-/*  83 */       this.diagram.repaint();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void buildChooser() {
-/*  89 */     if (0 == getComponentCount()) {
-/*  90 */       setLayout(new GridBagLayout());
-/*     */       
-/*  92 */       GridBagConstraints gridBagConstraints = new GridBagConstraints();
-/*     */       
-/*  94 */       gridBagConstraints.gridx = 3;
-/*  95 */       gridBagConstraints.gridwidth = 2;
-/*  96 */       gridBagConstraints.weighty = 1.0D;
-/*  97 */       gridBagConstraints.anchor = 11;
-/*  98 */       gridBagConstraints.fill = 2;
-/*  99 */       gridBagConstraints.insets.top = 10;
-/* 100 */       gridBagConstraints.insets.right = 10;
-/* 101 */       add(this.panel, gridBagConstraints);
-/*     */       
-/* 103 */       gridBagConstraints.gridwidth = 1;
-/* 104 */       gridBagConstraints.weightx = 1.0D;
-/* 105 */       gridBagConstraints.weighty = 0.0D;
-/* 106 */       gridBagConstraints.anchor = 10;
-/* 107 */       gridBagConstraints.insets.right = 5;
-/* 108 */       gridBagConstraints.insets.bottom = 10;
-/* 109 */       add(this.label, gridBagConstraints);
-/*     */       
-/* 111 */       gridBagConstraints.gridx = 4;
-/* 112 */       gridBagConstraints.weightx = 0.0D;
-/* 113 */       gridBagConstraints.insets.right = 10;
-/* 114 */       add(this.text, gridBagConstraints);
-/*     */       
-/* 116 */       gridBagConstraints.gridx = 2;
-/* 117 */       gridBagConstraints.gridheight = 2;
-/* 118 */       gridBagConstraints.anchor = 11;
-/* 119 */       gridBagConstraints.ipadx = (this.text.getPreferredSize()).height;
-/* 120 */       gridBagConstraints.ipady = (getPreferredSize()).height;
-/* 121 */       add(this.slider, gridBagConstraints);
-/*     */       
-/* 123 */       gridBagConstraints.gridx = 1;
-/* 124 */       gridBagConstraints.insets.left = 10;
-/* 125 */       gridBagConstraints.ipadx = gridBagConstraints.ipady;
-/* 126 */       add(this.diagram, gridBagConstraints);
-/*     */       
-/* 128 */       this.label.setLabelFor(this.text);
-/* 129 */       this.text.addPropertyChangeListener("value", this);
-/* 130 */       this.slider.setBorder(this.text.getBorder());
-/* 131 */       this.diagram.setBorder(this.text.getBorder());
-/*     */       
-/* 133 */       setInheritsPopupMenu(this, true);
-/*     */     } 
-/* 135 */     String str = this.model.getText(this, "HexCode");
-/* 136 */     boolean bool = (str != null) ? true : false;
-/* 137 */     this.text.setVisible(bool);
-/* 138 */     this.text.getAccessibleContext().setAccessibleDescription(str);
-/* 139 */     this.label.setVisible(bool);
-/* 140 */     if (bool) {
-/* 141 */       this.label.setText(str);
-/* 142 */       int i = this.model.getInteger(this, "HexCodeMnemonic");
-/* 143 */       if (i > 0) {
-/* 144 */         this.label.setDisplayedMnemonic(i);
-/* 145 */         i = this.model.getInteger(this, "HexCodeMnemonicIndex");
-/* 146 */         if (i >= 0) {
-/* 147 */           this.label.setDisplayedMnemonicIndex(i);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 151 */     this.panel.buildPanel();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getDisplayName() {
-/* 156 */     return this.model.getText(this, "Name");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getMnemonic() {
-/* 161 */     return this.model.getInteger(this, "Mnemonic");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getDisplayedMnemonicIndex() {
-/* 166 */     return this.model.getInteger(this, "DisplayedMnemonicIndex");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Icon getSmallDisplayIcon() {
-/* 171 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Icon getLargeDisplayIcon() {
-/* 176 */     return null;
-/*     */   }
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 180 */     ColorSelectionModel colorSelectionModel = getColorSelectionModel();
-/* 181 */     if (colorSelectionModel != null) {
-/* 182 */       Object object = paramPropertyChangeEvent.getNewValue();
-/* 183 */       if (object instanceof Integer) {
-/* 184 */         int i = 0xFF000000 & colorSelectionModel.getSelectedColor().getRGB() | ((Integer)object).intValue();
-/* 185 */         colorSelectionModel.setSelectedColor(new Color(i, true));
-/*     */       } 
-/*     */     } 
-/* 188 */     this.text.selectAll();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void setInheritsPopupMenu(JComponent paramJComponent, boolean paramBoolean) {
-/* 198 */     paramJComponent.setInheritsPopupMenu(paramBoolean);
-/* 199 */     for (Component component : paramJComponent.getComponents()) {
-/* 200 */       if (component instanceof JComponent)
-/* 201 */         setInheritsPopupMenu((JComponent)component, paramBoolean); 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\colorchooser\ColorChooserPanel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.colorchooser;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+
+final class ColorChooserPanel extends AbstractColorChooserPanel implements PropertyChangeListener {
+
+    private static final int MASK = 0xFF000000;
+    private final ColorModel model;
+    private final ColorPanel panel;
+    private final DiagramComponent slider;
+    private final DiagramComponent diagram;
+    private final JFormattedTextField text;
+    private final JLabel label;
+
+    ColorChooserPanel(ColorModel model) {
+        this.model = model;
+        this.panel = new ColorPanel(this.model);
+        this.slider = new DiagramComponent(this.panel, false);
+        this.diagram = new DiagramComponent(this.panel, true);
+        this.text = new JFormattedTextField();
+        this.label = new JLabel(null, null, SwingConstants.RIGHT);
+        ValueFormatter.init(6, true, this.text);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        setEnabled(this, enabled);
+    }
+
+    private static void setEnabled(Container container, boolean enabled) {
+        for (Component component : container.getComponents()) {
+            component.setEnabled(enabled);
+            if (component instanceof Container) {
+                setEnabled((Container) component, enabled);
+            }
+        }
+    }
+
+    @Override
+    public void updateChooser() {
+        Color color = getColorFromModel();
+        if (color != null) {
+            this.panel.setColor(color);
+            this.text.setValue(Integer.valueOf(color.getRGB()));
+            this.slider.repaint();
+            this.diagram.repaint();
+        }
+    }
+
+    @Override
+    protected void buildChooser() {
+        if (0 == getComponentCount()) {
+            setLayout(new GridBagLayout());
+
+            GridBagConstraints gbc = new GridBagConstraints();
+
+            gbc.gridx = 3;
+            gbc.gridwidth = 2;
+            gbc.weighty = 1.0;
+            gbc.anchor = GridBagConstraints.NORTH;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets.top = 10;
+            gbc.insets.right = 10;
+            add(this.panel, gbc);
+
+            gbc.gridwidth = 1;
+            gbc.weightx = 1.0;
+            gbc.weighty = 0.0;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.insets.right = 5;
+            gbc.insets.bottom = 10;
+            add(this.label, gbc);
+
+            gbc.gridx = 4;
+            gbc.weightx = 0.0;
+            gbc.insets.right = 10;
+            add(this.text, gbc);
+
+            gbc.gridx = 2;
+            gbc.gridheight = 2;
+            gbc.anchor = GridBagConstraints.NORTH;
+            gbc.ipadx = this.text.getPreferredSize().height;
+            gbc.ipady = getPreferredSize().height;
+            add(this.slider, gbc);
+
+            gbc.gridx = 1;
+            gbc.insets.left = 10;
+            gbc.ipadx = gbc.ipady;
+            add(this.diagram, gbc);
+
+            this.label.setLabelFor(this.text);
+            this.text.addPropertyChangeListener("value", this); // NON-NLS: the property name
+            this.slider.setBorder(this.text.getBorder());
+            this.diagram.setBorder(this.text.getBorder());
+
+            setInheritsPopupMenu(this, true); // CR:4966112
+        }
+        String label = this.model.getText(this, "HexCode"); // NON-NLS: suffix
+        boolean visible = label != null;
+        this.text.setVisible(visible);
+        this.text.getAccessibleContext().setAccessibleDescription(label);
+        this.label.setVisible(visible);
+        if (visible) {
+            this.label.setText(label);
+            int mnemonic = this.model.getInteger(this, "HexCodeMnemonic"); // NON-NLS: suffix
+            if (mnemonic > 0) {
+                this.label.setDisplayedMnemonic(mnemonic);
+                mnemonic = this.model.getInteger(this, "HexCodeMnemonicIndex"); // NON-NLS: suffix
+                if (mnemonic >= 0) {
+                    this.label.setDisplayedMnemonicIndex(mnemonic);
+                }
+            }
+        }
+        this.panel.buildPanel();
+    }
+
+    @Override
+    public String getDisplayName() {
+        return this.model.getText(this, "Name"); // NON-NLS: suffix
+    }
+
+    @Override
+    public int getMnemonic() {
+        return this.model.getInteger(this, "Mnemonic"); // NON-NLS: suffix
+    }
+
+    @Override
+    public int getDisplayedMnemonicIndex() {
+        return this.model.getInteger(this, "DisplayedMnemonicIndex"); // NON-NLS: suffix
+    }
+
+    @Override
+    public Icon getSmallDisplayIcon() {
+        return null;
+    }
+
+    @Override
+    public Icon getLargeDisplayIcon() {
+        return null;
+    }
+
+    public void propertyChange(PropertyChangeEvent event) {
+        ColorSelectionModel model = getColorSelectionModel();
+        if (model != null) {
+            Object object = event.getNewValue();
+            if (object instanceof Integer) {
+                int value = MASK & model.getSelectedColor().getRGB() | (Integer) object;
+                model.setSelectedColor(new Color(value, true));
+            }
+        }
+        this.text.selectAll();
+    }
+
+    /**
+     * Allows to show context popup for all components recursively.
+     *
+     * @param component  the root component of the tree
+     * @param value      whether or not the popup menu is inherited
+     */
+    private static void setInheritsPopupMenu(JComponent component, boolean value) {
+        component.setInheritsPopupMenu(value);
+        for (Object object : component.getComponents()) {
+            if (object instanceof JComponent) {
+                setInheritsPopupMenu((JComponent) object, value);
+            }
+        }
+    }
+}

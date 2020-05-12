@@ -1,11 +1,46 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.tree;
 
-public interface RowMapper {
-  int[] getRowsForPaths(TreePath[] paramArrayOfTreePath);
-}
+import javax.swing.tree.TreePath;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\tree\RowMapper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Defines the requirements for an object that translates paths in
+ * the tree into display rows.
+ *
+ * @author Scott Violet
  */
+public interface RowMapper
+{
+    /**
+     * Returns the rows that the TreePath instances in <code>path</code>
+     * are being displayed at. The receiver should return an array of
+     * the same length as that passed in, and if one of the TreePaths
+     * in <code>path</code> is not valid its entry in the array should
+     * be set to -1.
+     */
+    int[] getRowsForPaths(TreePath[] path);
+}

@@ -1,218 +1,212 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TabSet
-/*     */   implements Serializable
-/*     */ {
-/*     */   private TabStop[] tabs;
-/*  55 */   private int hashCode = Integer.MAX_VALUE;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TabSet(TabStop[] paramArrayOfTabStop) {
-/*  63 */     if (paramArrayOfTabStop != null) {
-/*  64 */       int i = paramArrayOfTabStop.length;
-/*     */       
-/*  66 */       this.tabs = new TabStop[i];
-/*  67 */       System.arraycopy(paramArrayOfTabStop, 0, this.tabs, 0, i);
-/*     */     } else {
-/*     */       
-/*  70 */       this.tabs = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTabCount() {
-/*  77 */     return (this.tabs == null) ? 0 : this.tabs.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TabStop getTab(int paramInt) {
-/*  86 */     int i = getTabCount();
-/*     */     
-/*  88 */     if (paramInt < 0 || paramInt >= i) {
-/*  89 */       throw new IllegalArgumentException(paramInt + " is outside the range of tabs");
-/*     */     }
-/*  91 */     return this.tabs[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TabStop getTabAfter(float paramFloat) {
-/*  99 */     int i = getTabIndexAfter(paramFloat);
-/*     */     
-/* 101 */     return (i == -1) ? null : this.tabs[i];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTabIndex(TabStop paramTabStop) {
-/* 109 */     for (int i = getTabCount() - 1; i >= 0; i--) {
-/*     */       
-/* 111 */       if (getTab(i) == paramTabStop)
-/* 112 */         return i; 
-/* 113 */     }  return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTabIndexAfter(float paramFloat) {
-/* 123 */     int i = 0;
-/* 124 */     int j = getTabCount();
-/* 125 */     while (i != j) {
-/* 126 */       int k = (j - i) / 2 + i;
-/* 127 */       if (paramFloat > this.tabs[k].getPosition()) {
-/* 128 */         if (i == k) {
-/* 129 */           i = j; continue;
-/*     */         } 
-/* 131 */         i = k;
-/*     */         continue;
-/*     */       } 
-/* 134 */       if (k == 0 || paramFloat > this.tabs[k - 1].getPosition())
-/* 135 */         return k; 
-/* 136 */       j = k;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 140 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 154 */     if (paramObject == this) {
-/* 155 */       return true;
-/*     */     }
-/* 157 */     if (paramObject instanceof TabSet) {
-/* 158 */       TabSet tabSet = (TabSet)paramObject;
-/* 159 */       int i = getTabCount();
-/* 160 */       if (tabSet.getTabCount() != i) {
-/* 161 */         return false;
-/*     */       }
-/* 163 */       for (byte b = 0; b < i; b++) {
-/* 164 */         TabStop tabStop1 = getTab(b);
-/* 165 */         TabStop tabStop2 = tabSet.getTab(b);
-/* 166 */         if ((tabStop1 == null && tabStop2 != null) || (tabStop1 != null && 
-/* 167 */           !getTab(b).equals(tabSet.getTab(b)))) {
-/* 168 */           return false;
-/*     */         }
-/*     */       } 
-/* 171 */       return true;
-/*     */     } 
-/* 173 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 183 */     if (this.hashCode == Integer.MAX_VALUE) {
-/* 184 */       this.hashCode = 0;
-/* 185 */       int i = getTabCount();
-/* 186 */       for (byte b = 0; b < i; b++) {
-/* 187 */         TabStop tabStop = getTab(b);
-/* 188 */         this.hashCode ^= (tabStop != null) ? getTab(b).hashCode() : 0;
-/*     */       } 
-/* 190 */       if (this.hashCode == Integer.MAX_VALUE) {
-/* 191 */         this.hashCode--;
-/*     */       }
-/*     */     } 
-/* 194 */     return this.hashCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 201 */     int i = getTabCount();
-/* 202 */     StringBuilder stringBuilder = new StringBuilder("[ ");
-/*     */     
-/* 204 */     for (byte b = 0; b < i; b++) {
-/* 205 */       if (b > 0)
-/* 206 */         stringBuilder.append(" - "); 
-/* 207 */       stringBuilder.append(getTab(b).toString());
-/*     */     } 
-/* 209 */     stringBuilder.append(" ]");
-/* 210 */     return stringBuilder.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\TabSet.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text;
+
+import java.io.Serializable;
+
+/**
+ * A TabSet is comprised of many TabStops. It offers methods for locating the
+ * closest TabStop to a given position and finding all the potential TabStops.
+ * It is also immutable.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Scott Violet
+ */
+public class TabSet implements Serializable
+{
+    /** TabStops this TabSet contains. */
+    private TabStop[]              tabs;
+    /**
+     * Since this class is immutable the hash code could be
+     * calculated once. MAX_VALUE means that it was not initialized
+     * yet. Hash code shouldn't has MAX_VALUE value.
+     */
+    private int hashCode = Integer.MAX_VALUE;
+
+    /**
+     * Creates and returns an instance of TabSet. The array of Tabs
+     * passed in must be sorted in ascending order.
+     */
+    public TabSet(TabStop[] tabs) {
+        // PENDING(sky): If this becomes a problem, make it sort.
+        if(tabs != null) {
+            int          tabCount = tabs.length;
+
+            this.tabs = new TabStop[tabCount];
+            System.arraycopy(tabs, 0, this.tabs, 0, tabCount);
+        }
+        else
+            this.tabs = null;
+    }
+
+    /**
+     * Returns the number of Tab instances the receiver contains.
+     */
+    public int getTabCount() {
+        return (tabs == null) ? 0 : tabs.length;
+    }
+
+    /**
+     * Returns the TabStop at index <code>index</code>. This will throw an
+     * IllegalArgumentException if <code>index</code> is outside the range
+     * of tabs.
+     */
+    public TabStop getTab(int index) {
+        int          numTabs = getTabCount();
+
+        if(index < 0 || index >= numTabs)
+            throw new IllegalArgumentException(index +
+                                              " is outside the range of tabs");
+        return tabs[index];
+    }
+
+    /**
+     * Returns the Tab instance after <code>location</code>. This will
+     * return null if there are no tabs after <code>location</code>.
+     */
+    public TabStop getTabAfter(float location) {
+        int     index = getTabIndexAfter(location);
+
+        return (index == -1) ? null : tabs[index];
+    }
+
+    /**
+     * @return the index of the TabStop <code>tab</code>, or -1 if
+     * <code>tab</code> is not contained in the receiver.
+     */
+    public int getTabIndex(TabStop tab) {
+        for(int counter = getTabCount() - 1; counter >= 0; counter--)
+            // should this use .equals?
+            if(getTab(counter) == tab)
+                return counter;
+        return -1;
+    }
+
+    /**
+     * Returns the index of the Tab to be used after <code>location</code>.
+     * This will return -1 if there are no tabs after <code>location</code>.
+     */
+    public int getTabIndexAfter(float location) {
+        int     current, min, max;
+
+        min = 0;
+        max = getTabCount();
+        while(min != max) {
+            current = (max - min) / 2 + min;
+            if(location > tabs[current].getPosition()) {
+                if(min == current)
+                    min = max;
+                else
+                    min = current;
+            }
+            else {
+                if(current == 0 || location > tabs[current - 1].getPosition())
+                    return current;
+                max = current;
+            }
+        }
+        // no tabs after the passed in location.
+        return -1;
+    }
+
+    /**
+     * Indicates whether this <code>TabSet</code> is equal to another one.
+     * @param o the <code>TabSet</code> instance which this instance
+     *  should be compared to.
+     * @return <code>true</code> if <code>o</code> is the instance of
+     * <code>TabSet</code>, has the same number of <code>TabStop</code>s
+     * and they are all equal, <code>false</code> otherwise.
+     *
+     * @since 1.5
+     */
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof TabSet) {
+            TabSet ts = (TabSet) o;
+            int count = getTabCount();
+            if (ts.getTabCount() != count) {
+                return false;
+            }
+            for (int i=0; i < count; i++) {
+                TabStop ts1 = getTab(i);
+                TabStop ts2 = ts.getTab(i);
+                if ((ts1 == null && ts2 != null) ||
+                        (ts1 != null && !getTab(i).equals(ts.getTab(i)))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hashcode for this set of TabStops.
+     * @return  a hashcode value for this set of TabStops.
+     *
+     * @since 1.5
+     */
+    public int hashCode() {
+        if (hashCode == Integer.MAX_VALUE) {
+            hashCode = 0;
+            int len = getTabCount();
+            for (int i = 0; i < len; i++) {
+                TabStop ts = getTab(i);
+                hashCode ^= ts != null ? getTab(i).hashCode() : 0;
+            }
+            if (hashCode == Integer.MAX_VALUE) {
+                hashCode -= 1;
+            }
+        }
+        return hashCode;
+    }
+
+    /**
+     * Returns the string representation of the set of tabs.
+     */
+    public String toString() {
+        int            tabCount = getTabCount();
+        StringBuilder buffer = new StringBuilder("[ ");
+
+        for(int counter = 0; counter < tabCount; counter++) {
+            if(counter > 0)
+                buffer.append(" - ");
+            buffer.append(getTab(counter).toString());
+        }
+        buffer.append(" ]");
+        return buffer.toString();
+    }
+}

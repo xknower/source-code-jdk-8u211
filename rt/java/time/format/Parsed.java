@@ -1,682 +1,677 @@
-/*     */ package java.time.format;
-/*     */ 
-/*     */ import java.time.DateTimeException;
-/*     */ import java.time.Instant;
-/*     */ import java.time.LocalDate;
-/*     */ import java.time.LocalTime;
-/*     */ import java.time.Period;
-/*     */ import java.time.ZoneId;
-/*     */ import java.time.ZoneOffset;
-/*     */ import java.time.chrono.ChronoLocalDate;
-/*     */ import java.time.chrono.ChronoLocalDateTime;
-/*     */ import java.time.chrono.ChronoZonedDateTime;
-/*     */ import java.time.chrono.Chronology;
-/*     */ import java.time.temporal.ChronoField;
-/*     */ import java.time.temporal.TemporalAccessor;
-/*     */ import java.time.temporal.TemporalField;
-/*     */ import java.time.temporal.TemporalQueries;
-/*     */ import java.time.temporal.TemporalQuery;
-/*     */ import java.time.temporal.UnsupportedTemporalTypeException;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import java.util.Objects;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Parsed
-/*     */   implements TemporalAccessor
-/*     */ {
-/* 129 */   final Map<TemporalField, Long> fieldValues = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ZoneId zone;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Chronology chrono;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean leapSecond;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ResolverStyle resolverStyle;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ChronoLocalDate date;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private LocalTime time;
-/*     */ 
-/*     */ 
-/*     */   
-/* 157 */   Period excessDays = Period.ZERO;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Parsed copy() {
-/* 170 */     Parsed parsed = new Parsed();
-/* 171 */     parsed.fieldValues.putAll(this.fieldValues);
-/* 172 */     parsed.zone = this.zone;
-/* 173 */     parsed.chrono = this.chrono;
-/* 174 */     parsed.leapSecond = this.leapSecond;
-/* 175 */     return parsed;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isSupported(TemporalField paramTemporalField) {
-/* 181 */     if (this.fieldValues.containsKey(paramTemporalField) || (this.date != null && this.date
-/* 182 */       .isSupported(paramTemporalField)) || (this.time != null && this.time
-/* 183 */       .isSupported(paramTemporalField))) {
-/* 184 */       return true;
-/*     */     }
-/* 186 */     return (paramTemporalField != null && !(paramTemporalField instanceof ChronoField) && paramTemporalField.isSupportedBy(this));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public long getLong(TemporalField paramTemporalField) {
-/* 191 */     Objects.requireNonNull(paramTemporalField, "field");
-/* 192 */     Long long_ = this.fieldValues.get(paramTemporalField);
-/* 193 */     if (long_ != null) {
-/* 194 */       return long_.longValue();
-/*     */     }
-/* 196 */     if (this.date != null && this.date.isSupported(paramTemporalField)) {
-/* 197 */       return this.date.getLong(paramTemporalField);
-/*     */     }
-/* 199 */     if (this.time != null && this.time.isSupported(paramTemporalField)) {
-/* 200 */       return this.time.getLong(paramTemporalField);
-/*     */     }
-/* 202 */     if (paramTemporalField instanceof ChronoField) {
-/* 203 */       throw new UnsupportedTemporalTypeException("Unsupported field: " + paramTemporalField);
-/*     */     }
-/* 205 */     return paramTemporalField.getFrom(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <R> R query(TemporalQuery<R> paramTemporalQuery) {
-/* 211 */     if (paramTemporalQuery == TemporalQueries.zoneId())
-/* 212 */       return (R)this.zone; 
-/* 213 */     if (paramTemporalQuery == TemporalQueries.chronology())
-/* 214 */       return (R)this.chrono; 
-/* 215 */     if (paramTemporalQuery == TemporalQueries.localDate())
-/* 216 */       return (this.date != null) ? (R)LocalDate.from(this.date) : null; 
-/* 217 */     if (paramTemporalQuery == TemporalQueries.localTime())
-/* 218 */       return (R)this.time; 
-/* 219 */     if (paramTemporalQuery == TemporalQueries.zone() || paramTemporalQuery == TemporalQueries.offset())
-/* 220 */       return paramTemporalQuery.queryFrom(this); 
-/* 221 */     if (paramTemporalQuery == TemporalQueries.precision()) {
-/* 222 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/* 226 */     return paramTemporalQuery.queryFrom(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   TemporalAccessor resolve(ResolverStyle paramResolverStyle, Set<TemporalField> paramSet) {
-/* 240 */     if (paramSet != null) {
-/* 241 */       this.fieldValues.keySet().retainAll(paramSet);
-/*     */     }
-/* 243 */     this.resolverStyle = paramResolverStyle;
-/* 244 */     resolveFields();
-/* 245 */     resolveTimeLenient();
-/* 246 */     crossCheck();
-/* 247 */     resolvePeriod();
-/* 248 */     resolveFractional();
-/* 249 */     resolveInstant();
-/* 250 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void resolveFields() {
-/* 256 */     resolveInstantFields();
-/* 257 */     resolveDateFields();
-/* 258 */     resolveTimeFields();
-/*     */ 
-/*     */ 
-/*     */     
-/* 262 */     if (this.fieldValues.size() > 0) {
-/* 263 */       byte b = 0;
-/*     */       
-/* 265 */       label41: while (b < 50) {
-/* 266 */         for (Map.Entry<TemporalField, Long> entry : this.fieldValues.entrySet()) {
-/* 267 */           TemporalField temporalField = (TemporalField)entry.getKey();
-/* 268 */           TemporalAccessor temporalAccessor = temporalField.resolve(this.fieldValues, this, this.resolverStyle);
-/* 269 */           if (temporalAccessor != null) {
-/* 270 */             if (temporalAccessor instanceof ChronoZonedDateTime) {
-/* 271 */               ChronoZonedDateTime chronoZonedDateTime = (ChronoZonedDateTime)temporalAccessor;
-/* 272 */               if (this.zone == null) {
-/* 273 */                 this.zone = chronoZonedDateTime.getZone();
-/* 274 */               } else if (!this.zone.equals(chronoZonedDateTime.getZone())) {
-/* 275 */                 throw new DateTimeException("ChronoZonedDateTime must use the effective parsed zone: " + this.zone);
-/*     */               } 
-/* 277 */               temporalAccessor = chronoZonedDateTime.toLocalDateTime();
-/*     */             } 
-/* 279 */             if (temporalAccessor instanceof ChronoLocalDateTime) {
-/* 280 */               ChronoLocalDateTime<ChronoLocalDate> chronoLocalDateTime = (ChronoLocalDateTime)temporalAccessor;
-/* 281 */               updateCheckConflict(chronoLocalDateTime.toLocalTime(), Period.ZERO);
-/* 282 */               updateCheckConflict(chronoLocalDateTime.toLocalDate());
-/* 283 */               b++;
-/*     */               continue label41;
-/*     */             } 
-/* 286 */             if (temporalAccessor instanceof ChronoLocalDate) {
-/* 287 */               updateCheckConflict((ChronoLocalDate)temporalAccessor);
-/* 288 */               b++;
-/*     */               continue label41;
-/*     */             } 
-/* 291 */             if (temporalAccessor instanceof LocalTime) {
-/* 292 */               updateCheckConflict((LocalTime)temporalAccessor, Period.ZERO);
-/* 293 */               b++;
-/*     */               continue label41;
-/*     */             } 
-/* 296 */             throw new DateTimeException("Method resolve() can only return ChronoZonedDateTime, ChronoLocalDateTime, ChronoLocalDate or LocalTime");
-/*     */           } 
-/* 298 */           if (!this.fieldValues.containsKey(temporalField)) {
-/* 299 */             b++;
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 305 */       if (b == 50) {
-/* 306 */         throw new DateTimeException("One of the parsed fields has an incorrectly implemented resolve method");
-/*     */       }
-/*     */       
-/* 309 */       if (b > 0) {
-/* 310 */         resolveInstantFields();
-/* 311 */         resolveDateFields();
-/* 312 */         resolveTimeFields();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void updateCheckConflict(TemporalField paramTemporalField1, TemporalField paramTemporalField2, Long paramLong) {
-/* 318 */     Long long_ = this.fieldValues.put(paramTemporalField2, paramLong);
-/* 319 */     if (long_ != null && long_.longValue() != paramLong.longValue()) {
-/* 320 */       throw new DateTimeException("Conflict found: " + paramTemporalField2 + " " + long_ + " differs from " + paramTemporalField2 + " " + paramLong + " while resolving  " + paramTemporalField1);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void resolveInstantFields() {
-/* 329 */     if (this.fieldValues.containsKey(ChronoField.INSTANT_SECONDS)) {
-/* 330 */       if (this.zone != null) {
-/* 331 */         resolveInstantFields0(this.zone);
-/*     */       } else {
-/* 333 */         Long long_ = this.fieldValues.get(ChronoField.OFFSET_SECONDS);
-/* 334 */         if (long_ != null) {
-/* 335 */           ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds(long_.intValue());
-/* 336 */           resolveInstantFields0(zoneOffset);
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void resolveInstantFields0(ZoneId paramZoneId) {
-/* 343 */     Instant instant = Instant.ofEpochSecond(((Long)this.fieldValues.remove(ChronoField.INSTANT_SECONDS)).longValue());
-/* 344 */     ChronoZonedDateTime<? extends ChronoLocalDate> chronoZonedDateTime = this.chrono.zonedDateTime(instant, paramZoneId);
-/* 345 */     updateCheckConflict(chronoZonedDateTime.toLocalDate());
-/* 346 */     updateCheckConflict(ChronoField.INSTANT_SECONDS, ChronoField.SECOND_OF_DAY, Long.valueOf(chronoZonedDateTime.toLocalTime().toSecondOfDay()));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void resolveDateFields() {
-/* 351 */     updateCheckConflict(this.chrono.resolveDate(this.fieldValues, this.resolverStyle));
-/*     */   }
-/*     */   
-/*     */   private void updateCheckConflict(ChronoLocalDate paramChronoLocalDate) {
-/* 355 */     if (this.date != null) {
-/* 356 */       if (paramChronoLocalDate != null && !this.date.equals(paramChronoLocalDate)) {
-/* 357 */         throw new DateTimeException("Conflict found: Fields resolved to two different dates: " + this.date + " " + paramChronoLocalDate);
-/*     */       }
-/* 359 */     } else if (paramChronoLocalDate != null) {
-/* 360 */       if (!this.chrono.equals(paramChronoLocalDate.getChronology())) {
-/* 361 */         throw new DateTimeException("ChronoLocalDate must use the effective parsed chronology: " + this.chrono);
-/*     */       }
-/* 363 */       this.date = paramChronoLocalDate;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void resolveTimeFields() {
-/* 370 */     if (this.fieldValues.containsKey(ChronoField.CLOCK_HOUR_OF_DAY)) {
-/*     */       
-/* 372 */       long l = ((Long)this.fieldValues.remove(ChronoField.CLOCK_HOUR_OF_DAY)).longValue();
-/* 373 */       if (this.resolverStyle == ResolverStyle.STRICT || (this.resolverStyle == ResolverStyle.SMART && l != 0L)) {
-/* 374 */         ChronoField.CLOCK_HOUR_OF_DAY.checkValidValue(l);
-/*     */       }
-/* 376 */       updateCheckConflict(ChronoField.CLOCK_HOUR_OF_DAY, ChronoField.HOUR_OF_DAY, Long.valueOf((l == 24L) ? 0L : l));
-/*     */     } 
-/* 378 */     if (this.fieldValues.containsKey(ChronoField.CLOCK_HOUR_OF_AMPM)) {
-/*     */       
-/* 380 */       long l = ((Long)this.fieldValues.remove(ChronoField.CLOCK_HOUR_OF_AMPM)).longValue();
-/* 381 */       if (this.resolverStyle == ResolverStyle.STRICT || (this.resolverStyle == ResolverStyle.SMART && l != 0L)) {
-/* 382 */         ChronoField.CLOCK_HOUR_OF_AMPM.checkValidValue(l);
-/*     */       }
-/* 384 */       updateCheckConflict(ChronoField.CLOCK_HOUR_OF_AMPM, ChronoField.HOUR_OF_AMPM, Long.valueOf((l == 12L) ? 0L : l));
-/*     */     } 
-/* 386 */     if (this.fieldValues.containsKey(ChronoField.AMPM_OF_DAY) && this.fieldValues.containsKey(ChronoField.HOUR_OF_AMPM)) {
-/* 387 */       long l1 = ((Long)this.fieldValues.remove(ChronoField.AMPM_OF_DAY)).longValue();
-/* 388 */       long l2 = ((Long)this.fieldValues.remove(ChronoField.HOUR_OF_AMPM)).longValue();
-/* 389 */       if (this.resolverStyle == ResolverStyle.LENIENT) {
-/* 390 */         updateCheckConflict(ChronoField.AMPM_OF_DAY, ChronoField.HOUR_OF_DAY, Long.valueOf(Math.addExact(Math.multiplyExact(l1, 12L), l2)));
-/*     */       } else {
-/* 392 */         ChronoField.AMPM_OF_DAY.checkValidValue(l1);
-/* 393 */         ChronoField.HOUR_OF_AMPM.checkValidValue(l1);
-/* 394 */         updateCheckConflict(ChronoField.AMPM_OF_DAY, ChronoField.HOUR_OF_DAY, Long.valueOf(l1 * 12L + l2));
-/*     */       } 
-/*     */     } 
-/* 397 */     if (this.fieldValues.containsKey(ChronoField.NANO_OF_DAY)) {
-/* 398 */       long l = ((Long)this.fieldValues.remove(ChronoField.NANO_OF_DAY)).longValue();
-/* 399 */       if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 400 */         ChronoField.NANO_OF_DAY.checkValidValue(l);
-/*     */       }
-/* 402 */       updateCheckConflict(ChronoField.NANO_OF_DAY, ChronoField.HOUR_OF_DAY, Long.valueOf(l / 3600000000000L));
-/* 403 */       updateCheckConflict(ChronoField.NANO_OF_DAY, ChronoField.MINUTE_OF_HOUR, Long.valueOf(l / 60000000000L % 60L));
-/* 404 */       updateCheckConflict(ChronoField.NANO_OF_DAY, ChronoField.SECOND_OF_MINUTE, Long.valueOf(l / 1000000000L % 60L));
-/* 405 */       updateCheckConflict(ChronoField.NANO_OF_DAY, ChronoField.NANO_OF_SECOND, Long.valueOf(l % 1000000000L));
-/*     */     } 
-/* 407 */     if (this.fieldValues.containsKey(ChronoField.MICRO_OF_DAY)) {
-/* 408 */       long l = ((Long)this.fieldValues.remove(ChronoField.MICRO_OF_DAY)).longValue();
-/* 409 */       if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 410 */         ChronoField.MICRO_OF_DAY.checkValidValue(l);
-/*     */       }
-/* 412 */       updateCheckConflict(ChronoField.MICRO_OF_DAY, ChronoField.SECOND_OF_DAY, Long.valueOf(l / 1000000L));
-/* 413 */       updateCheckConflict(ChronoField.MICRO_OF_DAY, ChronoField.MICRO_OF_SECOND, Long.valueOf(l % 1000000L));
-/*     */     } 
-/* 415 */     if (this.fieldValues.containsKey(ChronoField.MILLI_OF_DAY)) {
-/* 416 */       long l = ((Long)this.fieldValues.remove(ChronoField.MILLI_OF_DAY)).longValue();
-/* 417 */       if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 418 */         ChronoField.MILLI_OF_DAY.checkValidValue(l);
-/*     */       }
-/* 420 */       updateCheckConflict(ChronoField.MILLI_OF_DAY, ChronoField.SECOND_OF_DAY, Long.valueOf(l / 1000L));
-/* 421 */       updateCheckConflict(ChronoField.MILLI_OF_DAY, ChronoField.MILLI_OF_SECOND, Long.valueOf(l % 1000L));
-/*     */     } 
-/* 423 */     if (this.fieldValues.containsKey(ChronoField.SECOND_OF_DAY)) {
-/* 424 */       long l = ((Long)this.fieldValues.remove(ChronoField.SECOND_OF_DAY)).longValue();
-/* 425 */       if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 426 */         ChronoField.SECOND_OF_DAY.checkValidValue(l);
-/*     */       }
-/* 428 */       updateCheckConflict(ChronoField.SECOND_OF_DAY, ChronoField.HOUR_OF_DAY, Long.valueOf(l / 3600L));
-/* 429 */       updateCheckConflict(ChronoField.SECOND_OF_DAY, ChronoField.MINUTE_OF_HOUR, Long.valueOf(l / 60L % 60L));
-/* 430 */       updateCheckConflict(ChronoField.SECOND_OF_DAY, ChronoField.SECOND_OF_MINUTE, Long.valueOf(l % 60L));
-/*     */     } 
-/* 432 */     if (this.fieldValues.containsKey(ChronoField.MINUTE_OF_DAY)) {
-/* 433 */       long l = ((Long)this.fieldValues.remove(ChronoField.MINUTE_OF_DAY)).longValue();
-/* 434 */       if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 435 */         ChronoField.MINUTE_OF_DAY.checkValidValue(l);
-/*     */       }
-/* 437 */       updateCheckConflict(ChronoField.MINUTE_OF_DAY, ChronoField.HOUR_OF_DAY, Long.valueOf(l / 60L));
-/* 438 */       updateCheckConflict(ChronoField.MINUTE_OF_DAY, ChronoField.MINUTE_OF_HOUR, Long.valueOf(l % 60L));
-/*     */     } 
-/*     */ 
-/*     */     
-/* 442 */     if (this.fieldValues.containsKey(ChronoField.NANO_OF_SECOND)) {
-/* 443 */       long l = ((Long)this.fieldValues.get(ChronoField.NANO_OF_SECOND)).longValue();
-/* 444 */       if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 445 */         ChronoField.NANO_OF_SECOND.checkValidValue(l);
-/*     */       }
-/* 447 */       if (this.fieldValues.containsKey(ChronoField.MICRO_OF_SECOND)) {
-/* 448 */         long l1 = ((Long)this.fieldValues.remove(ChronoField.MICRO_OF_SECOND)).longValue();
-/* 449 */         if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 450 */           ChronoField.MICRO_OF_SECOND.checkValidValue(l1);
-/*     */         }
-/* 452 */         l = l1 * 1000L + l % 1000L;
-/* 453 */         updateCheckConflict(ChronoField.MICRO_OF_SECOND, ChronoField.NANO_OF_SECOND, Long.valueOf(l));
-/*     */       } 
-/* 455 */       if (this.fieldValues.containsKey(ChronoField.MILLI_OF_SECOND)) {
-/* 456 */         long l1 = ((Long)this.fieldValues.remove(ChronoField.MILLI_OF_SECOND)).longValue();
-/* 457 */         if (this.resolverStyle != ResolverStyle.LENIENT) {
-/* 458 */           ChronoField.MILLI_OF_SECOND.checkValidValue(l1);
-/*     */         }
-/* 460 */         updateCheckConflict(ChronoField.MILLI_OF_SECOND, ChronoField.NANO_OF_SECOND, Long.valueOf(l1 * 1000000L + l % 1000000L));
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 465 */     if (this.fieldValues.containsKey(ChronoField.HOUR_OF_DAY) && this.fieldValues.containsKey(ChronoField.MINUTE_OF_HOUR) && this.fieldValues
-/* 466 */       .containsKey(ChronoField.SECOND_OF_MINUTE) && this.fieldValues.containsKey(ChronoField.NANO_OF_SECOND)) {
-/* 467 */       long l1 = ((Long)this.fieldValues.remove(ChronoField.HOUR_OF_DAY)).longValue();
-/* 468 */       long l2 = ((Long)this.fieldValues.remove(ChronoField.MINUTE_OF_HOUR)).longValue();
-/* 469 */       long l3 = ((Long)this.fieldValues.remove(ChronoField.SECOND_OF_MINUTE)).longValue();
-/* 470 */       long l4 = ((Long)this.fieldValues.remove(ChronoField.NANO_OF_SECOND)).longValue();
-/* 471 */       resolveTime(l1, l2, l3, l4);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void resolveTimeLenient() {
-/* 480 */     if (this.time == null) {
-/*     */       
-/* 482 */       if (this.fieldValues.containsKey(ChronoField.MILLI_OF_SECOND)) {
-/* 483 */         long l = ((Long)this.fieldValues.remove(ChronoField.MILLI_OF_SECOND)).longValue();
-/* 484 */         if (this.fieldValues.containsKey(ChronoField.MICRO_OF_SECOND)) {
-/*     */           
-/* 486 */           long l1 = l * 1000L + ((Long)this.fieldValues.get(ChronoField.MICRO_OF_SECOND)).longValue() % 1000L;
-/* 487 */           updateCheckConflict(ChronoField.MILLI_OF_SECOND, ChronoField.MICRO_OF_SECOND, Long.valueOf(l1));
-/* 488 */           this.fieldValues.remove(ChronoField.MICRO_OF_SECOND);
-/* 489 */           this.fieldValues.put(ChronoField.NANO_OF_SECOND, Long.valueOf(l1 * 1000L));
-/*     */         } else {
-/*     */           
-/* 492 */           this.fieldValues.put(ChronoField.NANO_OF_SECOND, Long.valueOf(l * 1000000L));
-/*     */         } 
-/* 494 */       } else if (this.fieldValues.containsKey(ChronoField.MICRO_OF_SECOND)) {
-/*     */         
-/* 496 */         long l = ((Long)this.fieldValues.remove(ChronoField.MICRO_OF_SECOND)).longValue();
-/* 497 */         this.fieldValues.put(ChronoField.NANO_OF_SECOND, Long.valueOf(l * 1000L));
-/*     */       } 
-/*     */ 
-/*     */       
-/* 501 */       Long long_ = this.fieldValues.get(ChronoField.HOUR_OF_DAY);
-/* 502 */       if (long_ != null) {
-/* 503 */         Long long_1 = this.fieldValues.get(ChronoField.MINUTE_OF_HOUR);
-/* 504 */         Long long_2 = this.fieldValues.get(ChronoField.SECOND_OF_MINUTE);
-/* 505 */         Long long_3 = this.fieldValues.get(ChronoField.NANO_OF_SECOND);
-/*     */ 
-/*     */         
-/* 508 */         if ((long_1 == null && (long_2 != null || long_3 != null)) || (long_1 != null && long_2 == null && long_3 != null)) {
-/*     */           return;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 514 */         long l1 = (long_1 != null) ? long_1.longValue() : 0L;
-/* 515 */         long l2 = (long_2 != null) ? long_2.longValue() : 0L;
-/* 516 */         long l3 = (long_3 != null) ? long_3.longValue() : 0L;
-/* 517 */         resolveTime(long_.longValue(), l1, l2, l3);
-/* 518 */         this.fieldValues.remove(ChronoField.HOUR_OF_DAY);
-/* 519 */         this.fieldValues.remove(ChronoField.MINUTE_OF_HOUR);
-/* 520 */         this.fieldValues.remove(ChronoField.SECOND_OF_MINUTE);
-/* 521 */         this.fieldValues.remove(ChronoField.NANO_OF_SECOND);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 526 */     if (this.resolverStyle != ResolverStyle.LENIENT && this.fieldValues.size() > 0) {
-/* 527 */       for (Map.Entry<TemporalField, Long> entry : this.fieldValues.entrySet()) {
-/* 528 */         TemporalField temporalField = (TemporalField)entry.getKey();
-/* 529 */         if (temporalField instanceof ChronoField && temporalField.isTimeBased()) {
-/* 530 */           ((ChronoField)temporalField).checkValidValue(((Long)entry.getValue()).longValue());
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void resolveTime(long paramLong1, long paramLong2, long paramLong3, long paramLong4) {
-/* 537 */     if (this.resolverStyle == ResolverStyle.LENIENT) {
-/* 538 */       long l1 = Math.multiplyExact(paramLong1, 3600000000000L);
-/* 539 */       l1 = Math.addExact(l1, Math.multiplyExact(paramLong2, 60000000000L));
-/* 540 */       l1 = Math.addExact(l1, Math.multiplyExact(paramLong3, 1000000000L));
-/* 541 */       l1 = Math.addExact(l1, paramLong4);
-/* 542 */       int i = (int)Math.floorDiv(l1, 86400000000000L);
-/* 543 */       long l2 = Math.floorMod(l1, 86400000000000L);
-/* 544 */       updateCheckConflict(LocalTime.ofNanoOfDay(l2), Period.ofDays(i));
-/*     */     } else {
-/* 546 */       int i = ChronoField.MINUTE_OF_HOUR.checkValidIntValue(paramLong2);
-/* 547 */       int j = ChronoField.NANO_OF_SECOND.checkValidIntValue(paramLong4);
-/*     */       
-/* 549 */       if (this.resolverStyle == ResolverStyle.SMART && paramLong1 == 24L && i == 0 && paramLong3 == 0L && j == 0) {
-/* 550 */         updateCheckConflict(LocalTime.MIDNIGHT, Period.ofDays(1));
-/*     */       } else {
-/* 552 */         int k = ChronoField.HOUR_OF_DAY.checkValidIntValue(paramLong1);
-/* 553 */         int m = ChronoField.SECOND_OF_MINUTE.checkValidIntValue(paramLong3);
-/* 554 */         updateCheckConflict(LocalTime.of(k, i, m, j), Period.ZERO);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void resolvePeriod() {
-/* 561 */     if (this.date != null && this.time != null && !this.excessDays.isZero()) {
-/* 562 */       this.date = this.date.plus(this.excessDays);
-/* 563 */       this.excessDays = Period.ZERO;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void resolveFractional() {
-/* 570 */     if (this.time == null && (this.fieldValues
-/* 571 */       .containsKey(ChronoField.INSTANT_SECONDS) || this.fieldValues
-/* 572 */       .containsKey(ChronoField.SECOND_OF_DAY) || this.fieldValues
-/* 573 */       .containsKey(ChronoField.SECOND_OF_MINUTE))) {
-/* 574 */       if (this.fieldValues.containsKey(ChronoField.NANO_OF_SECOND)) {
-/* 575 */         long l = ((Long)this.fieldValues.get(ChronoField.NANO_OF_SECOND)).longValue();
-/* 576 */         this.fieldValues.put(ChronoField.MICRO_OF_SECOND, Long.valueOf(l / 1000L));
-/* 577 */         this.fieldValues.put(ChronoField.MILLI_OF_SECOND, Long.valueOf(l / 1000000L));
-/*     */       } else {
-/* 579 */         this.fieldValues.put(ChronoField.NANO_OF_SECOND, Long.valueOf(0L));
-/* 580 */         this.fieldValues.put(ChronoField.MICRO_OF_SECOND, Long.valueOf(0L));
-/* 581 */         this.fieldValues.put(ChronoField.MILLI_OF_SECOND, Long.valueOf(0L));
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void resolveInstant() {
-/* 588 */     if (this.date != null && this.time != null) {
-/* 589 */       if (this.zone != null) {
-/* 590 */         long l = this.date.atTime(this.time).atZone(this.zone).getLong(ChronoField.INSTANT_SECONDS);
-/* 591 */         this.fieldValues.put(ChronoField.INSTANT_SECONDS, Long.valueOf(l));
-/*     */       } else {
-/* 593 */         Long long_ = this.fieldValues.get(ChronoField.OFFSET_SECONDS);
-/* 594 */         if (long_ != null) {
-/* 595 */           ZoneOffset zoneOffset = ZoneOffset.ofTotalSeconds(long_.intValue());
-/* 596 */           long l = this.date.atTime(this.time).atZone(zoneOffset).getLong(ChronoField.INSTANT_SECONDS);
-/* 597 */           this.fieldValues.put(ChronoField.INSTANT_SECONDS, Long.valueOf(l));
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void updateCheckConflict(LocalTime paramLocalTime, Period paramPeriod) {
-/* 604 */     if (this.time != null) {
-/* 605 */       if (!this.time.equals(paramLocalTime)) {
-/* 606 */         throw new DateTimeException("Conflict found: Fields resolved to different times: " + this.time + " " + paramLocalTime);
-/*     */       }
-/* 608 */       if (!this.excessDays.isZero() && !paramPeriod.isZero() && !this.excessDays.equals(paramPeriod)) {
-/* 609 */         throw new DateTimeException("Conflict found: Fields resolved to different excess periods: " + this.excessDays + " " + paramPeriod);
-/*     */       }
-/* 611 */       this.excessDays = paramPeriod;
-/*     */     } else {
-/*     */       
-/* 614 */       this.time = paramLocalTime;
-/* 615 */       this.excessDays = paramPeriod;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void crossCheck() {
-/* 623 */     if (this.date != null) {
-/* 624 */       crossCheck(this.date);
-/*     */     }
-/* 626 */     if (this.time != null) {
-/* 627 */       crossCheck(this.time);
-/* 628 */       if (this.date != null && this.fieldValues.size() > 0) {
-/* 629 */         crossCheck(this.date.atTime(this.time));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void crossCheck(TemporalAccessor paramTemporalAccessor) {
-/* 635 */     for (Iterator<Map.Entry> iterator = this.fieldValues.entrySet().iterator(); iterator.hasNext(); ) {
-/* 636 */       Map.Entry entry = iterator.next();
-/* 637 */       TemporalField temporalField = (TemporalField)entry.getKey();
-/* 638 */       if (paramTemporalAccessor.isSupported(temporalField)) {
-/*     */         long l1;
-/*     */         try {
-/* 641 */           l1 = paramTemporalAccessor.getLong(temporalField);
-/* 642 */         } catch (RuntimeException runtimeException) {
-/*     */           continue;
-/*     */         } 
-/* 645 */         long l2 = ((Long)entry.getValue()).longValue();
-/* 646 */         if (l1 != l2) {
-/* 647 */           throw new DateTimeException("Conflict found: Field " + temporalField + " " + l1 + " differs from " + temporalField + " " + l2 + " derived from " + paramTemporalAccessor);
-/*     */         }
-/*     */         
-/* 650 */         iterator.remove();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 658 */     StringBuilder stringBuilder = new StringBuilder(64);
-/* 659 */     stringBuilder.append(this.fieldValues).append(',').append(this.chrono);
-/* 660 */     if (this.zone != null) {
-/* 661 */       stringBuilder.append(',').append(this.zone);
-/*     */     }
-/* 663 */     if (this.date != null || this.time != null) {
-/* 664 */       stringBuilder.append(" resolved to ");
-/* 665 */       if (this.date != null) {
-/* 666 */         stringBuilder.append(this.date);
-/* 667 */         if (this.time != null) {
-/* 668 */           stringBuilder.append('T').append(this.time);
-/*     */         }
-/*     */       } else {
-/* 671 */         stringBuilder.append(this.time);
-/*     */       } 
-/*     */     } 
-/* 674 */     return stringBuilder.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\format\Parsed.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2008-2013, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.format;
+
+import static java.time.temporal.ChronoField.AMPM_OF_DAY;
+import static java.time.temporal.ChronoField.CLOCK_HOUR_OF_AMPM;
+import static java.time.temporal.ChronoField.CLOCK_HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.HOUR_OF_AMPM;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.INSTANT_SECONDS;
+import static java.time.temporal.ChronoField.MICRO_OF_DAY;
+import static java.time.temporal.ChronoField.MICRO_OF_SECOND;
+import static java.time.temporal.ChronoField.MILLI_OF_DAY;
+import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
+import static java.time.temporal.ChronoField.MINUTE_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.NANO_OF_DAY;
+import static java.time.temporal.ChronoField.NANO_OF_SECOND;
+import static java.time.temporal.ChronoField.OFFSET_SECONDS;
+import static java.time.temporal.ChronoField.SECOND_OF_DAY;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
+
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoLocalDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.time.chrono.Chronology;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalField;
+import java.time.temporal.TemporalQueries;
+import java.time.temporal.TemporalQuery;
+import java.time.temporal.UnsupportedTemporalTypeException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
+
+/**
+ * A store of parsed data.
+ * <p>
+ * This class is used during parsing to collect the data. Part of the parsing process
+ * involves handling optional blocks and multiple copies of the data get created to
+ * support the necessary backtracking.
+ * <p>
+ * Once parsing is completed, this class can be used as the resultant {@code TemporalAccessor}.
+ * In most cases, it is only exposed once the fields have been resolved.
+ *
+ * @implSpec
+ * This class is a mutable context intended for use from a single thread.
+ * Usage of the class is thread-safe within standard parsing as a new instance of this class
+ * is automatically created for each parse and parsing is single-threaded
+ *
+ * @since 1.8
+ */
+final class Parsed implements TemporalAccessor {
+    // some fields are accessed using package scope from DateTimeParseContext
+
+    /**
+     * The parsed fields.
+     */
+    final Map<TemporalField, Long> fieldValues = new HashMap<>();
+    /**
+     * The parsed zone.
+     */
+    ZoneId zone;
+    /**
+     * The parsed chronology.
+     */
+    Chronology chrono;
+    /**
+     * Whether a leap-second is parsed.
+     */
+    boolean leapSecond;
+    /**
+     * The resolver style to use.
+     */
+    private ResolverStyle resolverStyle;
+    /**
+     * The resolved date.
+     */
+    private ChronoLocalDate date;
+    /**
+     * The resolved time.
+     */
+    private LocalTime time;
+    /**
+     * The excess period from time-only parsing.
+     */
+    Period excessDays = Period.ZERO;
+
+    /**
+     * Creates an instance.
+     */
+    Parsed() {
+    }
+
+    /**
+     * Creates a copy.
+     */
+    Parsed copy() {
+        // only copy fields used in parsing stage
+        Parsed cloned = new Parsed();
+        cloned.fieldValues.putAll(this.fieldValues);
+        cloned.zone = this.zone;
+        cloned.chrono = this.chrono;
+        cloned.leapSecond = this.leapSecond;
+        return cloned;
+    }
+
+    //-----------------------------------------------------------------------
+    @Override
+    public boolean isSupported(TemporalField field) {
+        if (fieldValues.containsKey(field) ||
+                (date != null && date.isSupported(field)) ||
+                (time != null && time.isSupported(field))) {
+            return true;
+        }
+        return field != null && (field instanceof ChronoField == false) && field.isSupportedBy(this);
+    }
+
+    @Override
+    public long getLong(TemporalField field) {
+        Objects.requireNonNull(field, "field");
+        Long value = fieldValues.get(field);
+        if (value != null) {
+            return value;
+        }
+        if (date != null && date.isSupported(field)) {
+            return date.getLong(field);
+        }
+        if (time != null && time.isSupported(field)) {
+            return time.getLong(field);
+        }
+        if (field instanceof ChronoField) {
+            throw new UnsupportedTemporalTypeException("Unsupported field: " + field);
+        }
+        return field.getFrom(this);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R> R query(TemporalQuery<R> query) {
+        if (query == TemporalQueries.zoneId()) {
+            return (R) zone;
+        } else if (query == TemporalQueries.chronology()) {
+            return (R) chrono;
+        } else if (query == TemporalQueries.localDate()) {
+            return (R) (date != null ? LocalDate.from(date) : null);
+        } else if (query == TemporalQueries.localTime()) {
+            return (R) time;
+        } else if (query == TemporalQueries.zone() || query == TemporalQueries.offset()) {
+            return query.queryFrom(this);
+        } else if (query == TemporalQueries.precision()) {
+            return null;  // not a complete date/time
+        }
+        // inline TemporalAccessor.super.query(query) as an optimization
+        // non-JDK classes are not permitted to make this optimization
+        return query.queryFrom(this);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Resolves the fields in this context.
+     *
+     * @param resolverStyle  the resolver style, not null
+     * @param resolverFields  the fields to use for resolving, null for all fields
+     * @return this, for method chaining
+     * @throws DateTimeException if resolving one field results in a value for
+     *  another field that is in conflict
+     */
+    TemporalAccessor resolve(ResolverStyle resolverStyle, Set<TemporalField> resolverFields) {
+        if (resolverFields != null) {
+            fieldValues.keySet().retainAll(resolverFields);
+        }
+        this.resolverStyle = resolverStyle;
+        resolveFields();
+        resolveTimeLenient();
+        crossCheck();
+        resolvePeriod();
+        resolveFractional();
+        resolveInstant();
+        return this;
+    }
+
+    //-----------------------------------------------------------------------
+    private void resolveFields() {
+        // resolve ChronoField
+        resolveInstantFields();
+        resolveDateFields();
+        resolveTimeFields();
+
+        // if any other fields, handle them
+        // any lenient date resolution should return epoch-day
+        if (fieldValues.size() > 0) {
+            int changedCount = 0;
+            outer:
+            while (changedCount < 50) {
+                for (Map.Entry<TemporalField, Long> entry : fieldValues.entrySet()) {
+                    TemporalField targetField = entry.getKey();
+                    TemporalAccessor resolvedObject = targetField.resolve(fieldValues, this, resolverStyle);
+                    if (resolvedObject != null) {
+                        if (resolvedObject instanceof ChronoZonedDateTime) {
+                            ChronoZonedDateTime<?> czdt = (ChronoZonedDateTime<?>) resolvedObject;
+                            if (zone == null) {
+                                zone = czdt.getZone();
+                            } else if (zone.equals(czdt.getZone()) == false) {
+                                throw new DateTimeException("ChronoZonedDateTime must use the effective parsed zone: " + zone);
+                            }
+                            resolvedObject = czdt.toLocalDateTime();
+                        }
+                        if (resolvedObject instanceof ChronoLocalDateTime) {
+                            ChronoLocalDateTime<?> cldt = (ChronoLocalDateTime<?>) resolvedObject;
+                            updateCheckConflict(cldt.toLocalTime(), Period.ZERO);
+                            updateCheckConflict(cldt.toLocalDate());
+                            changedCount++;
+                            continue outer;  // have to restart to avoid concurrent modification
+                        }
+                        if (resolvedObject instanceof ChronoLocalDate) {
+                            updateCheckConflict((ChronoLocalDate) resolvedObject);
+                            changedCount++;
+                            continue outer;  // have to restart to avoid concurrent modification
+                        }
+                        if (resolvedObject instanceof LocalTime) {
+                            updateCheckConflict((LocalTime) resolvedObject, Period.ZERO);
+                            changedCount++;
+                            continue outer;  // have to restart to avoid concurrent modification
+                        }
+                        throw new DateTimeException("Method resolve() can only return ChronoZonedDateTime, " +
+                                "ChronoLocalDateTime, ChronoLocalDate or LocalTime");
+                    } else if (fieldValues.containsKey(targetField) == false) {
+                        changedCount++;
+                        continue outer;  // have to restart to avoid concurrent modification
+                    }
+                }
+                break;
+            }
+            if (changedCount == 50) {  // catch infinite loops
+                throw new DateTimeException("One of the parsed fields has an incorrectly implemented resolve method");
+            }
+            // if something changed then have to redo ChronoField resolve
+            if (changedCount > 0) {
+                resolveInstantFields();
+                resolveDateFields();
+                resolveTimeFields();
+            }
+        }
+    }
+
+    private void updateCheckConflict(TemporalField targetField, TemporalField changeField, Long changeValue) {
+        Long old = fieldValues.put(changeField, changeValue);
+        if (old != null && old.longValue() != changeValue.longValue()) {
+            throw new DateTimeException("Conflict found: " + changeField + " " + old +
+                    " differs from " + changeField + " " + changeValue +
+                    " while resolving  " + targetField);
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    private void resolveInstantFields() {
+        // resolve parsed instant seconds to date and time if zone available
+        if (fieldValues.containsKey(INSTANT_SECONDS)) {
+            if (zone != null) {
+                resolveInstantFields0(zone);
+            } else {
+                Long offsetSecs = fieldValues.get(OFFSET_SECONDS);
+                if (offsetSecs != null) {
+                    ZoneOffset offset = ZoneOffset.ofTotalSeconds(offsetSecs.intValue());
+                    resolveInstantFields0(offset);
+                }
+            }
+        }
+    }
+
+    private void resolveInstantFields0(ZoneId selectedZone) {
+        Instant instant = Instant.ofEpochSecond(fieldValues.remove(INSTANT_SECONDS));
+        ChronoZonedDateTime<?> zdt = chrono.zonedDateTime(instant, selectedZone);
+        updateCheckConflict(zdt.toLocalDate());
+        updateCheckConflict(INSTANT_SECONDS, SECOND_OF_DAY, (long) zdt.toLocalTime().toSecondOfDay());
+    }
+
+    //-----------------------------------------------------------------------
+    private void resolveDateFields() {
+        updateCheckConflict(chrono.resolveDate(fieldValues, resolverStyle));
+    }
+
+    private void updateCheckConflict(ChronoLocalDate cld) {
+        if (date != null) {
+            if (cld != null && date.equals(cld) == false) {
+                throw new DateTimeException("Conflict found: Fields resolved to two different dates: " + date + " " + cld);
+            }
+        } else if (cld != null) {
+            if (chrono.equals(cld.getChronology()) == false) {
+                throw new DateTimeException("ChronoLocalDate must use the effective parsed chronology: " + chrono);
+            }
+            date = cld;
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    private void resolveTimeFields() {
+        // simplify fields
+        if (fieldValues.containsKey(CLOCK_HOUR_OF_DAY)) {
+            // lenient allows anything, smart allows 0-24, strict allows 1-24
+            long ch = fieldValues.remove(CLOCK_HOUR_OF_DAY);
+            if (resolverStyle == ResolverStyle.STRICT || (resolverStyle == ResolverStyle.SMART && ch != 0)) {
+                CLOCK_HOUR_OF_DAY.checkValidValue(ch);
+            }
+            updateCheckConflict(CLOCK_HOUR_OF_DAY, HOUR_OF_DAY, ch == 24 ? 0 : ch);
+        }
+        if (fieldValues.containsKey(CLOCK_HOUR_OF_AMPM)) {
+            // lenient allows anything, smart allows 0-12, strict allows 1-12
+            long ch = fieldValues.remove(CLOCK_HOUR_OF_AMPM);
+            if (resolverStyle == ResolverStyle.STRICT || (resolverStyle == ResolverStyle.SMART && ch != 0)) {
+                CLOCK_HOUR_OF_AMPM.checkValidValue(ch);
+            }
+            updateCheckConflict(CLOCK_HOUR_OF_AMPM, HOUR_OF_AMPM, ch == 12 ? 0 : ch);
+        }
+        if (fieldValues.containsKey(AMPM_OF_DAY) && fieldValues.containsKey(HOUR_OF_AMPM)) {
+            long ap = fieldValues.remove(AMPM_OF_DAY);
+            long hap = fieldValues.remove(HOUR_OF_AMPM);
+            if (resolverStyle == ResolverStyle.LENIENT) {
+                updateCheckConflict(AMPM_OF_DAY, HOUR_OF_DAY, Math.addExact(Math.multiplyExact(ap, 12), hap));
+            } else {  // STRICT or SMART
+                AMPM_OF_DAY.checkValidValue(ap);
+                HOUR_OF_AMPM.checkValidValue(ap);
+                updateCheckConflict(AMPM_OF_DAY, HOUR_OF_DAY, ap * 12 + hap);
+            }
+        }
+        if (fieldValues.containsKey(NANO_OF_DAY)) {
+            long nod = fieldValues.remove(NANO_OF_DAY);
+            if (resolverStyle != ResolverStyle.LENIENT) {
+                NANO_OF_DAY.checkValidValue(nod);
+            }
+            updateCheckConflict(NANO_OF_DAY, HOUR_OF_DAY, nod / 3600_000_000_000L);
+            updateCheckConflict(NANO_OF_DAY, MINUTE_OF_HOUR, (nod / 60_000_000_000L) % 60);
+            updateCheckConflict(NANO_OF_DAY, SECOND_OF_MINUTE, (nod / 1_000_000_000L) % 60);
+            updateCheckConflict(NANO_OF_DAY, NANO_OF_SECOND, nod % 1_000_000_000L);
+        }
+        if (fieldValues.containsKey(MICRO_OF_DAY)) {
+            long cod = fieldValues.remove(MICRO_OF_DAY);
+            if (resolverStyle != ResolverStyle.LENIENT) {
+                MICRO_OF_DAY.checkValidValue(cod);
+            }
+            updateCheckConflict(MICRO_OF_DAY, SECOND_OF_DAY, cod / 1_000_000L);
+            updateCheckConflict(MICRO_OF_DAY, MICRO_OF_SECOND, cod % 1_000_000L);
+        }
+        if (fieldValues.containsKey(MILLI_OF_DAY)) {
+            long lod = fieldValues.remove(MILLI_OF_DAY);
+            if (resolverStyle != ResolverStyle.LENIENT) {
+                MILLI_OF_DAY.checkValidValue(lod);
+            }
+            updateCheckConflict(MILLI_OF_DAY, SECOND_OF_DAY, lod / 1_000);
+            updateCheckConflict(MILLI_OF_DAY, MILLI_OF_SECOND, lod % 1_000);
+        }
+        if (fieldValues.containsKey(SECOND_OF_DAY)) {
+            long sod = fieldValues.remove(SECOND_OF_DAY);
+            if (resolverStyle != ResolverStyle.LENIENT) {
+                SECOND_OF_DAY.checkValidValue(sod);
+            }
+            updateCheckConflict(SECOND_OF_DAY, HOUR_OF_DAY, sod / 3600);
+            updateCheckConflict(SECOND_OF_DAY, MINUTE_OF_HOUR, (sod / 60) % 60);
+            updateCheckConflict(SECOND_OF_DAY, SECOND_OF_MINUTE, sod % 60);
+        }
+        if (fieldValues.containsKey(MINUTE_OF_DAY)) {
+            long mod = fieldValues.remove(MINUTE_OF_DAY);
+            if (resolverStyle != ResolverStyle.LENIENT) {
+                MINUTE_OF_DAY.checkValidValue(mod);
+            }
+            updateCheckConflict(MINUTE_OF_DAY, HOUR_OF_DAY, mod / 60);
+            updateCheckConflict(MINUTE_OF_DAY, MINUTE_OF_HOUR, mod % 60);
+        }
+
+        // combine partial second fields strictly, leaving lenient expansion to later
+        if (fieldValues.containsKey(NANO_OF_SECOND)) {
+            long nos = fieldValues.get(NANO_OF_SECOND);
+            if (resolverStyle != ResolverStyle.LENIENT) {
+                NANO_OF_SECOND.checkValidValue(nos);
+            }
+            if (fieldValues.containsKey(MICRO_OF_SECOND)) {
+                long cos = fieldValues.remove(MICRO_OF_SECOND);
+                if (resolverStyle != ResolverStyle.LENIENT) {
+                    MICRO_OF_SECOND.checkValidValue(cos);
+                }
+                nos = cos * 1000 + (nos % 1000);
+                updateCheckConflict(MICRO_OF_SECOND, NANO_OF_SECOND, nos);
+            }
+            if (fieldValues.containsKey(MILLI_OF_SECOND)) {
+                long los = fieldValues.remove(MILLI_OF_SECOND);
+                if (resolverStyle != ResolverStyle.LENIENT) {
+                    MILLI_OF_SECOND.checkValidValue(los);
+                }
+                updateCheckConflict(MILLI_OF_SECOND, NANO_OF_SECOND, los * 1_000_000L + (nos % 1_000_000L));
+            }
+        }
+
+        // convert to time if all four fields available (optimization)
+        if (fieldValues.containsKey(HOUR_OF_DAY) && fieldValues.containsKey(MINUTE_OF_HOUR) &&
+                fieldValues.containsKey(SECOND_OF_MINUTE) && fieldValues.containsKey(NANO_OF_SECOND)) {
+            long hod = fieldValues.remove(HOUR_OF_DAY);
+            long moh = fieldValues.remove(MINUTE_OF_HOUR);
+            long som = fieldValues.remove(SECOND_OF_MINUTE);
+            long nos = fieldValues.remove(NANO_OF_SECOND);
+            resolveTime(hod, moh, som, nos);
+        }
+    }
+
+    private void resolveTimeLenient() {
+        // leniently create a time from incomplete information
+        // done after everything else as it creates information from nothing
+        // which would break updateCheckConflict(field)
+
+        if (time == null) {
+            // NANO_OF_SECOND merged with MILLI/MICRO above
+            if (fieldValues.containsKey(MILLI_OF_SECOND)) {
+                long los = fieldValues.remove(MILLI_OF_SECOND);
+                if (fieldValues.containsKey(MICRO_OF_SECOND)) {
+                    // merge milli-of-second and micro-of-second for better error message
+                    long cos = los * 1_000 + (fieldValues.get(MICRO_OF_SECOND) % 1_000);
+                    updateCheckConflict(MILLI_OF_SECOND, MICRO_OF_SECOND, cos);
+                    fieldValues.remove(MICRO_OF_SECOND);
+                    fieldValues.put(NANO_OF_SECOND, cos * 1_000L);
+                } else {
+                    // convert milli-of-second to nano-of-second
+                    fieldValues.put(NANO_OF_SECOND, los * 1_000_000L);
+                }
+            } else if (fieldValues.containsKey(MICRO_OF_SECOND)) {
+                // convert micro-of-second to nano-of-second
+                long cos = fieldValues.remove(MICRO_OF_SECOND);
+                fieldValues.put(NANO_OF_SECOND, cos * 1_000L);
+            }
+
+            // merge hour/minute/second/nano leniently
+            Long hod = fieldValues.get(HOUR_OF_DAY);
+            if (hod != null) {
+                Long moh = fieldValues.get(MINUTE_OF_HOUR);
+                Long som = fieldValues.get(SECOND_OF_MINUTE);
+                Long nos = fieldValues.get(NANO_OF_SECOND);
+
+                // check for invalid combinations that cannot be defaulted
+                if ((moh == null && (som != null || nos != null)) ||
+                        (moh != null && som == null && nos != null)) {
+                    return;
+                }
+
+                // default as necessary and build time
+                long mohVal = (moh != null ? moh : 0);
+                long somVal = (som != null ? som : 0);
+                long nosVal = (nos != null ? nos : 0);
+                resolveTime(hod, mohVal, somVal, nosVal);
+                fieldValues.remove(HOUR_OF_DAY);
+                fieldValues.remove(MINUTE_OF_HOUR);
+                fieldValues.remove(SECOND_OF_MINUTE);
+                fieldValues.remove(NANO_OF_SECOND);
+            }
+        }
+
+        // validate remaining
+        if (resolverStyle != ResolverStyle.LENIENT && fieldValues.size() > 0) {
+            for (Entry<TemporalField, Long> entry : fieldValues.entrySet()) {
+                TemporalField field = entry.getKey();
+                if (field instanceof ChronoField && field.isTimeBased()) {
+                    ((ChronoField) field).checkValidValue(entry.getValue());
+                }
+            }
+        }
+    }
+
+    private void resolveTime(long hod, long moh, long som, long nos) {
+        if (resolverStyle == ResolverStyle.LENIENT) {
+            long totalNanos = Math.multiplyExact(hod, 3600_000_000_000L);
+            totalNanos = Math.addExact(totalNanos, Math.multiplyExact(moh, 60_000_000_000L));
+            totalNanos = Math.addExact(totalNanos, Math.multiplyExact(som, 1_000_000_000L));
+            totalNanos = Math.addExact(totalNanos, nos);
+            int excessDays = (int) Math.floorDiv(totalNanos, 86400_000_000_000L);  // safe int cast
+            long nod = Math.floorMod(totalNanos, 86400_000_000_000L);
+            updateCheckConflict(LocalTime.ofNanoOfDay(nod), Period.ofDays(excessDays));
+        } else {  // STRICT or SMART
+            int mohVal = MINUTE_OF_HOUR.checkValidIntValue(moh);
+            int nosVal = NANO_OF_SECOND.checkValidIntValue(nos);
+            // handle 24:00 end of day
+            if (resolverStyle == ResolverStyle.SMART && hod == 24 && mohVal == 0 && som == 0 && nosVal == 0) {
+                updateCheckConflict(LocalTime.MIDNIGHT, Period.ofDays(1));
+            } else {
+                int hodVal = HOUR_OF_DAY.checkValidIntValue(hod);
+                int somVal = SECOND_OF_MINUTE.checkValidIntValue(som);
+                updateCheckConflict(LocalTime.of(hodVal, mohVal, somVal, nosVal), Period.ZERO);
+            }
+        }
+    }
+
+    private void resolvePeriod() {
+        // add whole days if we have both date and time
+        if (date != null && time != null && excessDays.isZero() == false) {
+            date = date.plus(excessDays);
+            excessDays = Period.ZERO;
+        }
+    }
+
+    private void resolveFractional() {
+        // ensure fractional seconds available as ChronoField requires
+        // resolveTimeLenient() will have merged MICRO_OF_SECOND/MILLI_OF_SECOND to NANO_OF_SECOND
+        if (time == null &&
+                (fieldValues.containsKey(INSTANT_SECONDS) ||
+                    fieldValues.containsKey(SECOND_OF_DAY) ||
+                    fieldValues.containsKey(SECOND_OF_MINUTE))) {
+            if (fieldValues.containsKey(NANO_OF_SECOND)) {
+                long nos = fieldValues.get(NANO_OF_SECOND);
+                fieldValues.put(MICRO_OF_SECOND, nos / 1000);
+                fieldValues.put(MILLI_OF_SECOND, nos / 1000000);
+            } else {
+                fieldValues.put(NANO_OF_SECOND, 0L);
+                fieldValues.put(MICRO_OF_SECOND, 0L);
+                fieldValues.put(MILLI_OF_SECOND, 0L);
+            }
+        }
+    }
+
+    private void resolveInstant() {
+        // add instant seconds if we have date, time and zone
+        if (date != null && time != null) {
+            if (zone != null) {
+                long instant = date.atTime(time).atZone(zone).getLong(ChronoField.INSTANT_SECONDS);
+                fieldValues.put(INSTANT_SECONDS, instant);
+            } else {
+                Long offsetSecs = fieldValues.get(OFFSET_SECONDS);
+                if (offsetSecs != null) {
+                    ZoneOffset offset = ZoneOffset.ofTotalSeconds(offsetSecs.intValue());
+                    long instant = date.atTime(time).atZone(offset).getLong(ChronoField.INSTANT_SECONDS);
+                    fieldValues.put(INSTANT_SECONDS, instant);
+                }
+            }
+        }
+    }
+
+    private void updateCheckConflict(LocalTime timeToSet, Period periodToSet) {
+        if (time != null) {
+            if (time.equals(timeToSet) == false) {
+                throw new DateTimeException("Conflict found: Fields resolved to different times: " + time + " " + timeToSet);
+            }
+            if (excessDays.isZero() == false && periodToSet.isZero() == false && excessDays.equals(periodToSet) == false) {
+                throw new DateTimeException("Conflict found: Fields resolved to different excess periods: " + excessDays + " " + periodToSet);
+            } else {
+                excessDays = periodToSet;
+            }
+        } else {
+            time = timeToSet;
+            excessDays = periodToSet;
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    private void crossCheck() {
+        // only cross-check date, time and date-time
+        // avoid object creation if possible
+        if (date != null) {
+            crossCheck(date);
+        }
+        if (time != null) {
+            crossCheck(time);
+            if (date != null && fieldValues.size() > 0) {
+                crossCheck(date.atTime(time));
+            }
+        }
+    }
+
+    private void crossCheck(TemporalAccessor target) {
+        for (Iterator<Entry<TemporalField, Long>> it = fieldValues.entrySet().iterator(); it.hasNext(); ) {
+            Entry<TemporalField, Long> entry = it.next();
+            TemporalField field = entry.getKey();
+            if (target.isSupported(field)) {
+                long val1;
+                try {
+                    val1 = target.getLong(field);
+                } catch (RuntimeException ex) {
+                    continue;
+                }
+                long val2 = entry.getValue();
+                if (val1 != val2) {
+                    throw new DateTimeException("Conflict found: Field " + field + " " + val1 +
+                            " differs from " + field + " " + val2 + " derived from " + target);
+                }
+                it.remove();
+            }
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder(64);
+        buf.append(fieldValues).append(',').append(chrono);
+        if (zone != null) {
+            buf.append(',').append(zone);
+        }
+        if (date != null || time != null) {
+            buf.append(" resolved to ");
+            if (date != null) {
+                buf.append(date);
+                if (time != null) {
+                    buf.append('T').append(time);
+                }
+            } else {
+                buf.append(time);
+            }
+        }
+        return buf.toString();
+    }
+
+}

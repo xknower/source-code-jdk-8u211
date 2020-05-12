@@ -1,113 +1,107 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class OrQueryExp
-/*     */   extends QueryEval
-/*     */   implements QueryExp
-/*     */ {
-/*     */   private static final long serialVersionUID = 2962973084421716523L;
-/*     */   private QueryExp exp1;
-/*     */   private QueryExp exp2;
-/*     */   
-/*     */   public OrQueryExp() {}
-/*     */   
-/*     */   public OrQueryExp(QueryExp paramQueryExp1, QueryExp paramQueryExp2) {
-/*  63 */     this.exp1 = paramQueryExp1;
-/*  64 */     this.exp2 = paramQueryExp2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QueryExp getLeftExp() {
-/*  72 */     return this.exp1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QueryExp getRightExp() {
-/*  79 */     return this.exp2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean apply(ObjectName paramObjectName) throws BadStringOperationException, BadBinaryOpValueExpException, BadAttributeValueExpException, InvalidApplicationException {
-/*  97 */     return (this.exp1.apply(paramObjectName) || this.exp2.apply(paramObjectName));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 105 */     return "(" + this.exp1 + ") or (" + this.exp2 + ")";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\OrQueryExp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+
+/**
+ * This class is used by the query-building mechanism to represent
+ * disjunctions of relational expressions.
+ * @serial include
+ *
+ * @since 1.5
+ */
+class OrQueryExp extends QueryEval implements QueryExp {
+
+    /* Serial version */
+    private static final long serialVersionUID = 2962973084421716523L;
+
+    /**
+     * @serial The left query expression
+     */
+    private QueryExp exp1;
+
+    /**
+     * @serial The right query expression
+     */
+    private QueryExp exp2;
+
+
+    /**
+     * Basic Constructor.
+     */
+    public OrQueryExp() {
+    }
+
+    /**
+     * Creates a new OrQueryExp with the specified ValueExps
+     */
+    public OrQueryExp(QueryExp q1, QueryExp q2) {
+        exp1 = q1;
+        exp2 = q2;
+    }
+
+
+    /**
+     * Returns the left query expression.
+     */
+    public QueryExp getLeftExp() {
+        return exp1;
+    }
+
+    /**
+     * Returns the right query expression.
+     */
+    public QueryExp getRightExp() {
+        return exp2;
+    }
+
+    /**
+     * Applies the OrQueryExp on a MBean.
+     *
+     * @param name The name of the MBean on which the OrQueryExp will be applied.
+     *
+     * @return  True if the query was successfully applied to the MBean, false otherwise.
+     *
+     *
+     * @exception BadStringOperationException The string passed to the method is invalid.
+     * @exception BadBinaryOpValueExpException The expression passed to the method is invalid.
+     * @exception BadAttributeValueExpException The attribute value passed to the method is invalid.
+     */
+    public boolean apply(ObjectName name) throws BadStringOperationException,
+        BadBinaryOpValueExpException, BadAttributeValueExpException,
+        InvalidApplicationException {
+        return exp1.apply(name) || exp2.apply(name);
+    }
+
+    /**
+     * Returns a string representation of this OrQueryExp
+     */
+    @Override
+    public String toString() {
+        return "(" + exp1 + ") or (" + exp2 + ")";
+    }
+}

@@ -1,85 +1,80 @@
-/*    */ package javax.management.timer;
-/*    */ 
-/*    */ import com.sun.jmx.defaults.JmxProperties;
-/*    */ import java.util.Date;
-/*    */ import java.util.TimerTask;
-/*    */ import java.util.logging.Level;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class TimerAlarmClock
-/*    */   extends TimerTask
-/*    */ {
-/* 40 */   Timer listener = null;
-/* 41 */   long timeout = 10000L;
-/* 42 */   Date next = null;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public TimerAlarmClock(Timer paramTimer, long paramLong) {
-/* 51 */     this.listener = paramTimer;
-/* 52 */     this.timeout = Math.max(0L, paramLong);
-/*    */   }
-/*    */   
-/*    */   public TimerAlarmClock(Timer paramTimer, Date paramDate) {
-/* 56 */     this.listener = paramTimer;
-/* 57 */     this.next = paramDate;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void run() {
-/*    */     try {
-/* 73 */       TimerAlarmClockNotification timerAlarmClockNotification = new TimerAlarmClockNotification(this);
-/* 74 */       this.listener.notifyAlarmClock(timerAlarmClockNotification);
-/* 75 */     } catch (Exception exception) {
-/* 76 */       JmxProperties.TIMER_LOGGER.logp(Level.FINEST, Timer.class.getName(), "run", "Got unexpected exception when sending a notification", exception);
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\timer\TimerAlarmClock.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.timer;
+
+import java.util.Date;
+import java.util.logging.Level;
+import static com.sun.jmx.defaults.JmxProperties.TIMER_LOGGER;
+
+/**
+ * This class provides a simple implementation of an alarm clock MBean.
+ * The aim of this MBean is to set up an alarm which wakes up the timer every timeout (fixed-delay)
+ * or at the specified date (fixed-rate).
+ */
+
+class TimerAlarmClock extends java.util.TimerTask {
+
+    Timer listener = null;
+    long timeout = 10000;
+    Date next = null;
+
+    /*
+     * ------------------------------------------
+     *  CONSTRUCTORS
+     * ------------------------------------------
+     */
+
+    public TimerAlarmClock(Timer listener, long timeout) {
+        this.listener = listener;
+        this.timeout = Math.max(0L, timeout);
+    }
+
+    public TimerAlarmClock(Timer listener, Date next) {
+        this.listener = listener;
+        this.next = next;
+    }
+
+    /*
+     * ------------------------------------------
+     *  PUBLIC METHODS
+     * ------------------------------------------
+     */
+
+    /**
+     * This method is called by the timer when it is started.
+     */
+    public void run() {
+
+        try {
+            //this.sleep(timeout);
+            TimerAlarmClockNotification notif = new TimerAlarmClockNotification(this);
+            listener.notifyAlarmClock(notif);
+        } catch (Exception e) {
+            TIMER_LOGGER.logp(Level.FINEST, Timer.class.getName(), "run",
+                    "Got unexpected exception when sending a notification", e);
+        }
+    }
+}

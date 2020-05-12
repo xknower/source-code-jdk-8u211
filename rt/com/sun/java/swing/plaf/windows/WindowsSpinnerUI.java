@@ -1,112 +1,106 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import javax.swing.plaf.basic.BasicSpinnerUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsSpinnerUI
-/*     */   extends BasicSpinnerUI
-/*     */ {
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  42 */     return new WindowsSpinnerUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/*  50 */     if (XPStyle.getXP() != null) {
-/*  51 */       paintXPBackground(paramGraphics, paramJComponent);
-/*     */     }
-/*  53 */     super.paint(paramGraphics, paramJComponent);
-/*     */   }
-/*     */   
-/*     */   private TMSchema.State getXPState(JComponent paramJComponent) {
-/*  57 */     TMSchema.State state = TMSchema.State.NORMAL;
-/*  58 */     if (!paramJComponent.isEnabled()) {
-/*  59 */       state = TMSchema.State.DISABLED;
-/*     */     }
-/*  61 */     return state;
-/*     */   }
-/*     */   
-/*     */   private void paintXPBackground(Graphics paramGraphics, JComponent paramJComponent) {
-/*  65 */     XPStyle xPStyle = XPStyle.getXP();
-/*  66 */     if (xPStyle == null) {
-/*     */       return;
-/*     */     }
-/*  69 */     XPStyle.Skin skin = xPStyle.getSkin(paramJComponent, TMSchema.Part.EP_EDIT);
-/*  70 */     TMSchema.State state = getXPState(paramJComponent);
-/*  71 */     skin.paintSkin(paramGraphics, 0, 0, paramJComponent.getWidth(), paramJComponent.getHeight(), state);
-/*     */   }
-/*     */   
-/*     */   protected Component createPreviousButton() {
-/*  75 */     if (XPStyle.getXP() != null) {
-/*  76 */       XPStyle.GlyphButton glyphButton = new XPStyle.GlyphButton(this.spinner, TMSchema.Part.SPNP_DOWN);
-/*  77 */       Dimension dimension = UIManager.getDimension("Spinner.arrowButtonSize");
-/*  78 */       glyphButton.setPreferredSize(dimension);
-/*  79 */       glyphButton.setRequestFocusEnabled(false);
-/*  80 */       installPreviousButtonListeners(glyphButton);
-/*  81 */       return glyphButton;
-/*     */     } 
-/*  83 */     return super.createPreviousButton();
-/*     */   }
-/*     */   
-/*     */   protected Component createNextButton() {
-/*  87 */     if (XPStyle.getXP() != null) {
-/*  88 */       XPStyle.GlyphButton glyphButton = new XPStyle.GlyphButton(this.spinner, TMSchema.Part.SPNP_UP);
-/*  89 */       Dimension dimension = UIManager.getDimension("Spinner.arrowButtonSize");
-/*  90 */       glyphButton.setPreferredSize(dimension);
-/*  91 */       glyphButton.setRequestFocusEnabled(false);
-/*  92 */       installNextButtonListeners(glyphButton);
-/*  93 */       return glyphButton;
-/*     */     } 
-/*  95 */     return super.createNextButton();
-/*     */   }
-/*     */   
-/*     */   private UIResource getUIResource(Object[] paramArrayOfObject) {
-/*  99 */     for (byte b = 0; b < paramArrayOfObject.length; b++) {
-/* 100 */       if (paramArrayOfObject[b] instanceof UIResource) {
-/* 101 */         return (UIResource)paramArrayOfObject[b];
-/*     */       }
-/*     */     } 
-/* 104 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsSpinnerUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.plaf.basic.*;
+import javax.swing.plaf.*;
+import javax.swing.*;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.Part;
+import static com.sun.java.swing.plaf.windows.TMSchema.State;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+
+public class WindowsSpinnerUI extends BasicSpinnerUI {
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsSpinnerUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public void paint(Graphics g, JComponent c) {
+        if (XPStyle.getXP() != null) {
+            paintXPBackground(g, c);
+        }
+        super.paint(g,c);
+    }
+
+    private State getXPState(JComponent c) {
+        State state = State.NORMAL;
+        if (!c.isEnabled()) {
+            state = State.DISABLED;
+        }
+        return state;
+    }
+
+    private void paintXPBackground(Graphics g, JComponent c) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp == null) {
+            return;
+        }
+        Skin skin = xp.getSkin(c, Part.EP_EDIT);
+        State state = getXPState(c);
+        skin.paintSkin(g, 0, 0, c.getWidth(), c.getHeight(), state);
+    }
+
+    protected Component createPreviousButton() {
+        if (XPStyle.getXP() != null) {
+            JButton xpButton = new XPStyle.GlyphButton(spinner, Part.SPNP_DOWN);
+            Dimension size = UIManager.getDimension("Spinner.arrowButtonSize");
+            xpButton.setPreferredSize(size);
+            xpButton.setRequestFocusEnabled(false);
+            installPreviousButtonListeners(xpButton);
+            return xpButton;
+        }
+        return super.createPreviousButton();
+    }
+
+    protected Component createNextButton() {
+        if (XPStyle.getXP() != null) {
+            JButton xpButton = new XPStyle.GlyphButton(spinner, Part.SPNP_UP);
+            Dimension size = UIManager.getDimension("Spinner.arrowButtonSize");
+            xpButton.setPreferredSize(size);
+            xpButton.setRequestFocusEnabled(false);
+            installNextButtonListeners(xpButton);
+            return xpButton;
+        }
+        return super.createNextButton();
+    }
+
+    private UIResource getUIResource(Object[] listeners) {
+        for (int counter = 0; counter < listeners.length; counter++) {
+            if (listeners[counter] instanceof UIResource) {
+                return (UIResource)listeners[counter];
+            }
+        }
+        return null;
+    }
+}

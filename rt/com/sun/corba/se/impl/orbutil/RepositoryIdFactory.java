@@ -1,57 +1,52 @@
-/*    */ package com.sun.corba.se.impl.orbutil;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class RepositoryIdFactory
-/*    */ {
-/* 33 */   private static final RepIdDelegator currentDelegator = new RepIdDelegator();
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static RepositoryIdStrings getRepIdStringsFactory() {
-/* 41 */     return currentDelegator;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static RepositoryIdUtility getRepIdUtility() {
-/* 49 */     return currentDelegator;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\RepositoryIdFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil;
+
+import com.sun.corba.se.spi.orb.ORBVersion;
+import com.sun.corba.se.spi.orb.ORB;
+
+public abstract class RepositoryIdFactory
+{
+    private static final RepIdDelegator currentDelegator
+        = new RepIdDelegator();
+
+    /**
+     * Returns the latest version RepositoryIdStrings instance
+     */
+    public static RepositoryIdStrings getRepIdStringsFactory()
+    {
+        return currentDelegator;
+    }
+
+    /**
+     * Returns the latest version RepositoryIdUtility instance
+     */
+    public static RepositoryIdUtility getRepIdUtility()
+    {
+        return currentDelegator;
+    }
+
+}

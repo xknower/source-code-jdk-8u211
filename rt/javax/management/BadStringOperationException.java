@@ -1,68 +1,63 @@
-/*    */ package javax.management;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class BadStringOperationException
-/*    */   extends Exception
-/*    */ {
-/*    */   private static final long serialVersionUID = 7802201238441662100L;
-/*    */   private String op;
-/*    */   
-/*    */   public BadStringOperationException(String paramString) {
-/* 52 */     this.op = paramString;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 60 */     return "BadStringOperationException: " + this.op;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\BadStringOperationException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+/**
+ * Thrown when an invalid string operation is passed
+ * to a method for constructing a query.
+ *
+ * @since 1.5
+ */
+public class BadStringOperationException extends Exception   {
+
+
+    /* Serial version */
+    private static final long serialVersionUID = 7802201238441662100L;
+
+    /**
+     * @serial The description of the operation that originated this exception
+     */
+    private String op;
+
+    /**
+     * Constructs a <CODE>BadStringOperationException</CODE> with the specified detail
+     * message.
+     *
+     * @param message the detail message.
+     */
+    public BadStringOperationException(String message) {
+        this.op = message;
+    }
+
+
+    /**
+     * Returns the string representing the object.
+     */
+    public String toString()  {
+        return "BadStringOperationException: " + op;
+    }
+
+ }

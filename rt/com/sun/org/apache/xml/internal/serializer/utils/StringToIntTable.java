@@ -1,211 +1,205 @@
-/*     */ package com.sun.org.apache.xml.internal.serializer.utils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StringToIntTable
-/*     */ {
-/*     */   public static final int INVALID_KEY = -10000;
-/*     */   private int m_blocksize;
-/*     */   private String[] m_map;
-/*     */   private int[] m_values;
-/*  54 */   private int m_firstFree = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int m_mapSize;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringToIntTable() {
-/*  66 */     this.m_blocksize = 8;
-/*  67 */     this.m_mapSize = this.m_blocksize;
-/*  68 */     this.m_map = new String[this.m_blocksize];
-/*  69 */     this.m_values = new int[this.m_blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringToIntTable(int blocksize) {
-/*  80 */     this.m_blocksize = blocksize;
-/*  81 */     this.m_mapSize = blocksize;
-/*  82 */     this.m_map = new String[blocksize];
-/*  83 */     this.m_values = new int[this.m_blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getLength() {
-/*  93 */     return this.m_firstFree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void put(String key, int value) {
-/* 105 */     if (this.m_firstFree + 1 >= this.m_mapSize) {
-/*     */       
-/* 107 */       this.m_mapSize += this.m_blocksize;
-/*     */       
-/* 109 */       String[] newMap = new String[this.m_mapSize];
-/*     */       
-/* 111 */       System.arraycopy(this.m_map, 0, newMap, 0, this.m_firstFree + 1);
-/*     */       
-/* 113 */       this.m_map = newMap;
-/*     */       
-/* 115 */       int[] newValues = new int[this.m_mapSize];
-/*     */       
-/* 117 */       System.arraycopy(this.m_values, 0, newValues, 0, this.m_firstFree + 1);
-/*     */       
-/* 119 */       this.m_values = newValues;
-/*     */     } 
-/*     */     
-/* 122 */     this.m_map[this.m_firstFree] = key;
-/* 123 */     this.m_values[this.m_firstFree] = value;
-/*     */     
-/* 125 */     this.m_firstFree++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int get(String key) {
-/* 139 */     for (int i = 0; i < this.m_firstFree; i++) {
-/*     */       
-/* 141 */       if (this.m_map[i].equals(key)) {
-/* 142 */         return this.m_values[i];
-/*     */       }
-/*     */     } 
-/* 145 */     return -10000;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getIgnoreCase(String key) {
-/* 158 */     if (null == key) {
-/* 159 */       return -10000;
-/*     */     }
-/* 161 */     for (int i = 0; i < this.m_firstFree; i++) {
-/*     */       
-/* 163 */       if (this.m_map[i].equalsIgnoreCase(key)) {
-/* 164 */         return this.m_values[i];
-/*     */       }
-/*     */     } 
-/* 167 */     return -10000;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean contains(String key) {
-/* 180 */     for (int i = 0; i < this.m_firstFree; i++) {
-/*     */       
-/* 182 */       if (this.m_map[i].equals(key)) {
-/* 183 */         return true;
-/*     */       }
-/*     */     } 
-/* 186 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String[] keys() {
-/* 196 */     String[] keysArr = new String[this.m_firstFree];
-/*     */     
-/* 198 */     for (int i = 0; i < this.m_firstFree; i++)
-/*     */     {
-/* 200 */       keysArr[i] = this.m_map[i];
-/*     */     }
-/*     */     
-/* 203 */     return keysArr;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serialize\\utils\StringToIntTable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringToIntTable.java,v 1.1.4.1 2005/09/08 11:03:19 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.serializer.utils;
+
+/**
+ * A very simple lookup table that stores a list of strings, the even
+ * number strings being keys, and the odd number strings being values.
+ *
+ * This class is a copy of the one in com.sun.org.apache.xml.internal.utils.
+ * It exists to cut the serializers dependancy on that package.
+ *
+ * This class is not a public API, it is only public so it can be used
+ * in com.sun.org.apache.xml.internal.serializer.
+ *
+ * @xsl.usage internal
+ */
+public final class StringToIntTable
+{
+
+  public static final int INVALID_KEY = -10000;
+
+  /** Block size to allocate          */
+  private int m_blocksize;
+
+  /** Array of strings this table points to. Associated with ints
+   * in m_values         */
+  private String m_map[];
+
+  /** Array of ints this table points. Associated with strings from
+   * m_map.         */
+  private int m_values[];
+
+  /** Number of ints in the table          */
+  private int m_firstFree = 0;
+
+  /** Size of this table         */
+  private int m_mapSize;
+
+  /**
+   * Default constructor.  Note that the default
+   * block size is very small, for small lists.
+   */
+  public StringToIntTable()
+  {
+
+    m_blocksize = 8;
+    m_mapSize = m_blocksize;
+    m_map = new String[m_blocksize];
+    m_values = new int[m_blocksize];
+  }
+
+  /**
+   * Construct a StringToIntTable, using the given block size.
+   *
+   * @param blocksize Size of block to allocate
+   */
+  public StringToIntTable(int blocksize)
+  {
+
+    m_blocksize = blocksize;
+    m_mapSize = blocksize;
+    m_map = new String[blocksize];
+    m_values = new int[m_blocksize];
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return the length of the list
+   */
+  public final int getLength()
+  {
+    return m_firstFree;
+  }
+
+  /**
+   * Append a string onto the vector.
+   *
+   * @param key String to append
+   * @param value The int value of the string
+   */
+  public final void put(String key, int value)
+  {
+
+    if ((m_firstFree + 1) >= m_mapSize)
+    {
+      m_mapSize += m_blocksize;
+
+      String newMap[] = new String[m_mapSize];
+
+      System.arraycopy(m_map, 0, newMap, 0, m_firstFree + 1);
+
+      m_map = newMap;
+
+      int newValues[] = new int[m_mapSize];
+
+      System.arraycopy(m_values, 0, newValues, 0, m_firstFree + 1);
+
+      m_values = newValues;
+    }
+
+    m_map[m_firstFree] = key;
+    m_values[m_firstFree] = value;
+
+    m_firstFree++;
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param key String to look for
+   *
+   * @return The String's int value
+   *
+   */
+  public final int get(String key)
+  {
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      if (m_map[i].equals(key))
+        return m_values[i];
+    }
+
+    return INVALID_KEY;
+  }
+
+  /**
+   * Tell if the table contains the given string. Ignore case.
+   *
+   * @param key String to look for
+   *
+   * @return The string's int value
+   */
+  public final int getIgnoreCase(String key)
+  {
+
+    if (null == key)
+        return INVALID_KEY;
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      if (m_map[i].equalsIgnoreCase(key))
+        return m_values[i];
+    }
+
+    return INVALID_KEY;
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param key String to look for
+   *
+   * @return True if the string is in the table
+   */
+  public final boolean contains(String key)
+  {
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      if (m_map[i].equals(key))
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Return array of keys in the table.
+   *
+   * @return Array of strings
+   */
+  public final String[] keys()
+  {
+    String [] keysArr = new String[m_firstFree];
+
+    for (int i = 0; i < m_firstFree; i++)
+    {
+      keysArr[i] = m_map[i];
+    }
+
+    return keysArr;
+  }
+}

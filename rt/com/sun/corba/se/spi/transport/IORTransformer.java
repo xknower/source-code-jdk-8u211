@@ -1,17 +1,40 @@
-package com.sun.corba.se.spi.transport;
-
-import com.sun.corba.se.spi.encoding.CorbaInputObject;
-import com.sun.corba.se.spi.encoding.CorbaOutputObject;
-import com.sun.corba.se.spi.ior.IOR;
-
-public interface IORTransformer {
-  IOR unmarshal(CorbaInputObject paramCorbaInputObject);
-  
-  void marshal(CorbaOutputObject paramCorbaOutputObject, IOR paramIOR);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\transport\IORTransformer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.transport ;
+
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.encoding.CorbaInputObject ;
+import com.sun.corba.se.spi.encoding.CorbaOutputObject ;
+
+/** Interface that provides operations to transorm an IOR
+ * between its programmatic representation and a representation
+ * in an Input or Output object.
+ */
+public interface IORTransformer {
+    IOR unmarshal( CorbaInputObject io ) ;
+
+    void marshal( CorbaOutputObject oo, IOR ior ) ;
+}

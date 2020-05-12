@@ -1,21 +1,41 @@
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
-public interface Selector {
-  void setTimeout(long paramLong);
-  
-  long getTimeout();
-  
-  void registerInterestOps(EventHandler paramEventHandler);
-  
-  void registerForEvent(EventHandler paramEventHandler);
-  
-  void unregisterForEvent(EventHandler paramEventHandler);
-  
-  void close();
+/**
+ * @author Harold Carr
+ */
+public interface Selector
+{
+    public void setTimeout(long timeout);
+    public long getTimeout();
+    public void registerInterestOps(EventHandler eventHandler);
+    public void registerForEvent(EventHandler eventHander);
+    public void unregisterForEvent(EventHandler eventHandler);
+    public void close();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\Selector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

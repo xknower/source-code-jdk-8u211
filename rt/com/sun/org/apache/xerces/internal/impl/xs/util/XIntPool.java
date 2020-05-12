@@ -1,49 +1,43 @@
-/*    */ package com.sun.org.apache.xerces.internal.impl.xs.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class XIntPool
-/*    */ {
-/*    */   private static final short POOL_SIZE = 10;
-/* 30 */   private static final XInt[] fXIntPool = new XInt[10];
-/*    */   
-/*    */   static {
-/* 33 */     for (int i = 0; i < 10; i++)
-/* 34 */       fXIntPool[i] = new XInt(i); 
-/*    */   }
-/*    */   
-/*    */   public final XInt getXInt(int value) {
-/* 38 */     if (value >= 0 && value < fXIntPool.length) {
-/* 39 */       return fXIntPool[value];
-/*    */     }
-/* 41 */     return new XInt(value);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\x\\util\XIntPool.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.util;
+
+/**
+ * @xerces.internal
+ *
+ * @author Henry Zongaro, IBM
+ */
+public final class XIntPool {
+    private static final short POOL_SIZE = 10;
+    private static final XInt[] fXIntPool = new XInt[POOL_SIZE];
+
+    static {
+        for (int i = 0; i < POOL_SIZE; i++)
+            fXIntPool[i] = new XInt(i);
+    }
+
+    public final XInt getXInt(int value) {
+        if (value >= 0 && value < fXIntPool.length)
+            return fXIntPool[value];
+        else
+            return new XInt(value);
+    }
+}

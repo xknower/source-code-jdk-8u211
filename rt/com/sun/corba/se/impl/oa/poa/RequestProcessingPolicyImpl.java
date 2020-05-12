@@ -1,81 +1,75 @@
-/*    */ package com.sun.corba.se.impl.oa.poa;
-/*    */ 
-/*    */ import org.omg.CORBA.LocalObject;
-/*    */ import org.omg.CORBA.Policy;
-/*    */ import org.omg.PortableServer.RequestProcessingPolicy;
-/*    */ import org.omg.PortableServer.RequestProcessingPolicyValue;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class RequestProcessingPolicyImpl
-/*    */   extends LocalObject
-/*    */   implements RequestProcessingPolicy
-/*    */ {
-/*    */   private RequestProcessingPolicyValue value;
-/*    */   
-/*    */   public RequestProcessingPolicyImpl(RequestProcessingPolicyValue paramRequestProcessingPolicyValue) {
-/* 36 */     this.value = paramRequestProcessingPolicyValue;
-/*    */   }
-/*    */   
-/*    */   public RequestProcessingPolicyValue value() {
-/* 40 */     return this.value;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int policy_type() {
-/* 45 */     return 22;
-/*    */   }
-/*    */   
-/*    */   public Policy copy() {
-/* 49 */     return new RequestProcessingPolicyImpl(this.value);
-/*    */   }
-/*    */   
-/*    */   public void destroy() {
-/* 53 */     this.value = null;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 60 */     String str = null;
-/* 61 */     switch (this.value.value()) {
-/*    */       case 0:
-/* 63 */         str = "USE_ACTIVE_OBJECT_MAP_ONLY";
-/*    */         break;
-/*    */       case 1:
-/* 66 */         str = "USE_DEFAULT_SERVANT";
-/*    */         break;
-/*    */       case 2:
-/* 69 */         str = "USE_SERVANT_MANAGER";
-/*    */         break;
-/*    */     } 
-/*    */     
-/* 73 */     return "RequestProcessingPolicy[" + str + "]";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\RequestProcessingPolicyImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa;
+
+import org.omg.CORBA.*;
+import org.omg.PortableServer.*;
+
+public class RequestProcessingPolicyImpl
+    extends org.omg.CORBA.LocalObject implements RequestProcessingPolicy {
+
+    public RequestProcessingPolicyImpl(RequestProcessingPolicyValue
+                                       value) {
+        this.value = value;
+    }
+
+    public RequestProcessingPolicyValue value() {
+        return value;
+    }
+
+    public int policy_type()
+    {
+        return REQUEST_PROCESSING_POLICY_ID.value ;
+    }
+
+    public Policy copy() {
+        return new RequestProcessingPolicyImpl(value);
+    }
+
+    public void destroy() {
+        value = null;
+    }
+
+    private RequestProcessingPolicyValue value;
+
+    public String toString()
+    {
+        String type = null ;
+        switch (value.value()) {
+            case RequestProcessingPolicyValue._USE_ACTIVE_OBJECT_MAP_ONLY :
+                type = "USE_ACTIVE_OBJECT_MAP_ONLY" ;
+                break ;
+            case RequestProcessingPolicyValue._USE_DEFAULT_SERVANT :
+                type = "USE_DEFAULT_SERVANT" ;
+                break ;
+            case RequestProcessingPolicyValue._USE_SERVANT_MANAGER :
+                type = "USE_SERVANT_MANAGER" ;
+                break ;
+        }
+
+        return "RequestProcessingPolicy[" + type + "]" ;
+    }
+}

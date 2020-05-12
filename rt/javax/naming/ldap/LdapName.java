@@ -1,793 +1,787 @@
-/*     */ package javax.naming.ldap;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.StreamCorruptedException;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import javax.naming.InvalidNameException;
-/*     */ import javax.naming.Name;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class LdapName
-/*     */   implements Name
-/*     */ {
-/*     */   private transient List<Rdn> rdns;
-/*     */   private transient String unparsed;
-/*     */   private static final long serialVersionUID = -1595520034788997356L;
-/*     */   
-/*     */   public LdapName(String paramString) throws InvalidNameException {
-/* 122 */     this.unparsed = paramString;
-/* 123 */     parse();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LdapName(List<Rdn> paramList) {
-/* 145 */     this.rdns = new ArrayList<>(paramList.size());
-/* 146 */     for (byte b = 0; b < paramList.size(); b++) {
-/* 147 */       Rdn rdn = (Rdn)paramList.get(b);
-/* 148 */       if (!(rdn instanceof Rdn)) {
-/* 149 */         throw new IllegalArgumentException("Entry:" + rdn + "  not a valid type;list entries must be of type Rdn");
-/*     */       }
-/*     */       
-/* 152 */       this.rdns.add(rdn);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private LdapName(String paramString, List<Rdn> paramList, int paramInt1, int paramInt2) {
-/* 163 */     this.unparsed = paramString;
-/*     */ 
-/*     */     
-/* 166 */     List<Rdn> list = paramList.subList(paramInt1, paramInt2);
-/* 167 */     this.rdns = new ArrayList<>(list);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 175 */     return this.rdns.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isEmpty() {
-/* 184 */     return this.rdns.isEmpty();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Enumeration<String> getAll() {
-/* 200 */     final Iterator<Rdn> iter = this.rdns.iterator();
-/*     */     
-/* 202 */     return new Enumeration<String>() {
-/*     */         public boolean hasMoreElements() {
-/* 204 */           return iter.hasNext();
-/*     */         }
-/*     */         public String nextElement() {
-/* 207 */           return ((Rdn)iter.next()).toString();
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String get(int paramInt) {
-/* 221 */     return ((Rdn)this.rdns.get(paramInt)).toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Rdn getRdn(int paramInt) {
-/* 233 */     return this.rdns.get(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name getPrefix(int paramInt) {
-/*     */     try {
-/* 251 */       return new LdapName(null, this.rdns, 0, paramInt);
-/* 252 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 253 */       throw new IndexOutOfBoundsException("Posn: " + paramInt + ", Size: " + this.rdns
-/* 254 */           .size());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name getSuffix(int paramInt) {
-/*     */     try {
-/* 275 */       return new LdapName(null, this.rdns, paramInt, this.rdns.size());
-/* 276 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 277 */       throw new IndexOutOfBoundsException("Posn: " + paramInt + ", Size: " + this.rdns
-/* 278 */           .size());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean startsWith(Name paramName) {
-/* 296 */     if (paramName == null) {
-/* 297 */       return false;
-/*     */     }
-/* 299 */     int i = this.rdns.size();
-/* 300 */     int j = paramName.size();
-/* 301 */     return (i >= j && 
-/* 302 */       matches(0, j, paramName));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean startsWith(List<Rdn> paramList) {
-/* 317 */     if (paramList == null) {
-/* 318 */       return false;
-/*     */     }
-/* 320 */     int i = this.rdns.size();
-/* 321 */     int j = paramList.size();
-/* 322 */     return (i >= j && 
-/* 323 */       doesListMatch(0, j, paramList));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean endsWith(Name paramName) {
-/* 339 */     if (paramName == null) {
-/* 340 */       return false;
-/*     */     }
-/* 342 */     int i = this.rdns.size();
-/* 343 */     int j = paramName.size();
-/* 344 */     return (i >= j && 
-/* 345 */       matches(i - j, i, paramName));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean endsWith(List<Rdn> paramList) {
-/* 360 */     if (paramList == null) {
-/* 361 */       return false;
-/*     */     }
-/* 363 */     int i = this.rdns.size();
-/* 364 */     int j = paramList.size();
-/* 365 */     return (i >= j && 
-/* 366 */       doesListMatch(i - j, i, paramList));
-/*     */   }
-/*     */   
-/*     */   private boolean doesListMatch(int paramInt1, int paramInt2, List<Rdn> paramList) {
-/* 370 */     for (int i = paramInt1; i < paramInt2; i++) {
-/* 371 */       if (!((Rdn)this.rdns.get(i)).equals(paramList.get(i - paramInt1))) {
-/* 372 */         return false;
-/*     */       }
-/*     */     } 
-/* 375 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean matches(int paramInt1, int paramInt2, Name paramName) {
-/* 386 */     if (paramName instanceof LdapName) {
-/* 387 */       LdapName ldapName = (LdapName)paramName;
-/* 388 */       return doesListMatch(paramInt1, paramInt2, ldapName.rdns);
-/*     */     } 
-/* 390 */     for (int i = paramInt1; i < paramInt2; i++) {
-/*     */       Rdn rdn;
-/* 392 */       String str = paramName.get(i - paramInt1);
-/*     */       try {
-/* 394 */         rdn = (new Rfc2253Parser(str)).parseRdn();
-/* 395 */       } catch (InvalidNameException invalidNameException) {
-/* 396 */         return false;
-/*     */       } 
-/* 398 */       if (!rdn.equals(this.rdns.get(i))) {
-/* 399 */         return false;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 403 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name addAll(Name paramName) throws InvalidNameException {
-/* 417 */     return addAll(size(), paramName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name addAll(List<Rdn> paramList) {
-/* 428 */     return addAll(size(), paramList);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name addAll(int paramInt, Name paramName) throws InvalidNameException {
-/* 451 */     this.unparsed = null;
-/* 452 */     if (paramName instanceof LdapName) {
-/* 453 */       LdapName ldapName = (LdapName)paramName;
-/* 454 */       this.rdns.addAll(paramInt, ldapName.rdns);
-/*     */     } else {
-/* 456 */       Enumeration<String> enumeration = paramName.getAll();
-/* 457 */       while (enumeration.hasMoreElements()) {
-/* 458 */         this.rdns.add(paramInt++, (new Rfc2253Parser(enumeration
-/* 459 */               .nextElement()))
-/* 460 */             .parseRdn());
-/*     */       }
-/*     */     } 
-/* 463 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name addAll(int paramInt, List<Rdn> paramList) {
-/* 481 */     this.unparsed = null;
-/* 482 */     for (byte b = 0; b < paramList.size(); b++) {
-/* 483 */       Rdn rdn = (Rdn)paramList.get(b);
-/* 484 */       if (!(rdn instanceof Rdn)) {
-/* 485 */         throw new IllegalArgumentException("Entry:" + rdn + "  not a valid type;suffix list entries must be of type Rdn");
-/*     */       }
-/*     */       
-/* 488 */       this.rdns.add(b + paramInt, rdn);
-/*     */     } 
-/* 490 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name add(String paramString) throws InvalidNameException {
-/* 503 */     return add(size(), paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name add(Rdn paramRdn) {
-/* 515 */     return add(size(), paramRdn);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name add(int paramInt, String paramString) throws InvalidNameException {
-/* 536 */     Rdn rdn = (new Rfc2253Parser(paramString)).parseRdn();
-/* 537 */     this.rdns.add(paramInt, rdn);
-/* 538 */     this.unparsed = null;
-/* 539 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Name add(int paramInt, Rdn paramRdn) {
-/* 558 */     if (paramRdn == null) {
-/* 559 */       throw new NullPointerException("Cannot set comp to null");
-/*     */     }
-/* 561 */     this.rdns.add(paramInt, paramRdn);
-/* 562 */     this.unparsed = null;
-/* 563 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object remove(int paramInt) throws InvalidNameException {
-/* 582 */     this.unparsed = null;
-/* 583 */     return ((Rdn)this.rdns.remove(paramInt)).toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<Rdn> getRdns() {
-/* 597 */     return Collections.unmodifiableList(this.rdns);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/* 608 */     return new LdapName(this.unparsed, this.rdns, 0, this.rdns.size());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 620 */     if (this.unparsed != null) {
-/* 621 */       return this.unparsed;
-/*     */     }
-/* 623 */     StringBuilder stringBuilder = new StringBuilder();
-/* 624 */     int i = this.rdns.size();
-/* 625 */     if (i - 1 >= 0) {
-/* 626 */       stringBuilder.append(this.rdns.get(i - 1));
-/*     */     }
-/* 628 */     for (int j = i - 2; j >= 0; j--) {
-/* 629 */       stringBuilder.append(',');
-/* 630 */       stringBuilder.append(this.rdns.get(j));
-/*     */     } 
-/* 632 */     this.unparsed = stringBuilder.toString();
-/* 633 */     return this.unparsed;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 654 */     if (paramObject == this) {
-/* 655 */       return true;
-/*     */     }
-/* 657 */     if (!(paramObject instanceof LdapName)) {
-/* 658 */       return false;
-/*     */     }
-/* 660 */     LdapName ldapName = (LdapName)paramObject;
-/* 661 */     if (this.rdns.size() != ldapName.rdns.size()) {
-/* 662 */       return false;
-/*     */     }
-/* 664 */     if (this.unparsed != null && this.unparsed.equalsIgnoreCase(ldapName.unparsed))
-/*     */     {
-/* 666 */       return true;
-/*     */     }
-/*     */     
-/* 669 */     for (byte b = 0; b < this.rdns.size(); b++) {
-/*     */       
-/* 671 */       Rdn rdn1 = this.rdns.get(b);
-/* 672 */       Rdn rdn2 = ldapName.rdns.get(b);
-/* 673 */       if (!rdn1.equals(rdn2)) {
-/* 674 */         return false;
-/*     */       }
-/*     */     } 
-/* 677 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int compareTo(Object paramObject) {
-/* 707 */     if (!(paramObject instanceof LdapName)) {
-/* 708 */       throw new ClassCastException("The obj is not a LdapName");
-/*     */     }
-/*     */ 
-/*     */     
-/* 712 */     if (paramObject == this) {
-/* 713 */       return 0;
-/*     */     }
-/* 715 */     LdapName ldapName = (LdapName)paramObject;
-/*     */     
-/* 717 */     if (this.unparsed != null && this.unparsed.equalsIgnoreCase(ldapName.unparsed))
-/*     */     {
-/* 719 */       return 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 723 */     int i = Math.min(this.rdns.size(), ldapName.rdns.size());
-/* 724 */     for (byte b = 0; b < i; b++) {
-/*     */       
-/* 726 */       Rdn rdn1 = this.rdns.get(b);
-/* 727 */       Rdn rdn2 = ldapName.rdns.get(b);
-/*     */       
-/* 729 */       int j = rdn1.compareTo(rdn2);
-/* 730 */       if (j != 0) {
-/* 731 */         return j;
-/*     */       }
-/*     */     } 
-/* 734 */     return this.rdns.size() - ldapName.rdns.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 747 */     int i = 0;
-/*     */ 
-/*     */     
-/* 750 */     for (byte b = 0; b < this.rdns.size(); b++) {
-/* 751 */       Rdn rdn = this.rdns.get(b);
-/* 752 */       i += rdn.hashCode();
-/*     */     } 
-/* 754 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 765 */     paramObjectOutputStream.defaultWriteObject();
-/* 766 */     paramObjectOutputStream.writeObject(toString());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 771 */     paramObjectInputStream.defaultReadObject();
-/* 772 */     this.unparsed = (String)paramObjectInputStream.readObject();
-/*     */     try {
-/* 774 */       parse();
-/* 775 */     } catch (InvalidNameException invalidNameException) {
-/*     */       
-/* 777 */       throw new StreamCorruptedException("Invalid name: " + this.unparsed);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parse() throws InvalidNameException {
-/* 785 */     this.rdns = (new Rfc2253Parser(this.unparsed)).parseDn();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\naming\ldap\LdapName.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.naming.ldap;
+
+import javax.naming.Name;
+import javax.naming.InvalidNameException;
+
+import java.util.Enumeration;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.Collections;
+
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
+/**
+ * This class represents a distinguished name as specified by
+ * <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a>.
+ * A distinguished name, or DN, is composed of an ordered list of
+ * components called <em>relative distinguished name</em>s, or RDNs.
+ * Details of a DN's syntax are described in RFC 2253.
+ *<p>
+ * This class resolves a few ambiguities found in RFC 2253
+ * as follows:
+ * <ul>
+ * <li> RFC 2253 leaves the term "whitespace" undefined. The
+ *      ASCII space character 0x20 (" ") is used in its place.
+ * <li> Whitespace is allowed on either side of ',', ';', '=', and '+'.
+ *      Such whitespace is accepted but not generated by this code,
+ *      and is ignored when comparing names.
+ * <li> AttributeValue strings containing '=' or non-leading '#'
+ *      characters (unescaped) are accepted.
+ * </ul>
+ *<p>
+ * String names passed to <code>LdapName</code> or returned by it
+ * use the full Unicode character set. They may also contain
+ * characters encoded into UTF-8 with each octet represented by a
+ * three-character substring such as "\\B4".
+ * They may not, however, contain characters encoded into UTF-8 with
+ * each octet represented by a single character in the string:  the
+ * meaning would be ambiguous.
+ *<p>
+ * <code>LdapName</code> will properly parse all valid names, but
+ * does not attempt to detect all possible violations when parsing
+ * invalid names.  It is "generous" in accepting invalid names.
+ * The "validity" of a name is determined ultimately when it
+ * is supplied to an LDAP server, which may accept or
+ * reject the name based on factors such as its schema information
+ * and interoperability considerations.
+ *<p>
+ * When names are tested for equality, attribute types, both binary
+ * and string values, are case-insensitive.
+ * String values with different but equivalent usage of quoting,
+ * escaping, or UTF8-hex-encoding are considered equal.  The order of
+ * components in multi-valued RDNs (such as "ou=Sales+cn=Bob") is not
+ * significant.
+ * <p>
+ * The components of a LDAP name, that is, RDNs, are numbered. The
+ * indexes of a LDAP name with n RDNs range from 0 to n-1.
+ * This range may be written as [0,n).
+ * The right most RDN is at index 0, and the left most RDN is at
+ * index n-1. For example, the distinguished name:
+ * "CN=Steve Kille, O=Isode Limited, C=GB" is numbered in the following
+ * sequence ranging from 0 to 2: {C=GB, O=Isode Limited, CN=Steve Kille}. An
+ * empty LDAP name is represented by an empty RDN list.
+ *<p>
+ * Concurrent multithreaded read-only access of an instance of
+ * <tt>LdapName</tt> need not be synchronized.
+ *<p>
+ * Unless otherwise noted, the behavior of passing a null argument
+ * to a constructor or method in this class will cause a
+ * NullPointerException to be thrown.
+ *
+ * @author Scott Seligman
+ * @since 1.5
+ */
+
+public class LdapName implements Name {
+
+    private transient List<Rdn> rdns;   // parsed name components
+    private transient String unparsed;  // if non-null, the DN in unparsed form
+    private static final long serialVersionUID = -1595520034788997356L;
+
+    /**
+     * Constructs an LDAP name from the given distinguished name.
+     *
+     * @param name  This is a non-null distinguished name formatted
+     * according to the rules defined in
+     * <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a>.
+     *
+     * @throws InvalidNameException if a syntax violation is detected.
+     * @see Rdn#escapeValue(Object value)
+     */
+    public LdapName(String name) throws InvalidNameException {
+        unparsed = name;
+        parse();
+    }
+
+    /**
+     * Constructs an LDAP name given its parsed RDN components.
+     * <p>
+     * The indexing of RDNs in the list follows the numbering of
+     * RDNs described in the class description.
+     *
+     * @param rdns The non-null list of <tt>Rdn</tt>s forming this LDAP name.
+     */
+    public LdapName(List<Rdn> rdns) {
+
+        // if (rdns instanceof ArrayList<Rdn>) {
+        //      this.rdns = rdns.clone();
+        // } else if (rdns instanceof List<Rdn>) {
+        //      this.rdns = new ArrayList<Rdn>(rdns);
+        // } else {
+        //      throw IllegalArgumentException(
+        //              "Invalid entries, list entries must be of type Rdn");
+        //  }
+
+        this.rdns = new ArrayList<>(rdns.size());
+        for (int i = 0; i < rdns.size(); i++) {
+            Object obj = rdns.get(i);
+            if (!(obj instanceof Rdn)) {
+                throw new IllegalArgumentException("Entry:" + obj +
+                        "  not a valid type;list entries must be of type Rdn");
+            }
+            this.rdns.add((Rdn)obj);
+        }
+    }
+
+    /*
+     * Constructs an LDAP name given its parsed components (the elements
+     * of "rdns" in the range [beg,end)) and, optionally
+     * (if "name" is not null), the unparsed DN.
+     *
+     */
+    private LdapName(String name, List<Rdn> rdns, int beg, int end) {
+        unparsed = name;
+        // this.rdns = rdns.subList(beg, end);
+
+        List<Rdn> sList = rdns.subList(beg, end);
+        this.rdns = new ArrayList<>(sList);
+    }
+
+    /**
+     * Retrieves the number of components in this LDAP name.
+     * @return The non-negative number of components in this LDAP name.
+     */
+    public int size() {
+        return rdns.size();
+    }
+
+    /**
+     * Determines whether this LDAP name is empty.
+     * An empty name is one with zero components.
+     * @return true if this LDAP name is empty, false otherwise.
+     */
+    public boolean isEmpty() {
+        return rdns.isEmpty();
+    }
+
+    /**
+     * Retrieves the components of this name as an enumeration
+     * of strings. The effect of updates to this name on this enumeration
+     * is undefined. If the name has zero components, an empty (non-null)
+     * enumeration is returned.
+     * The order of the components returned by the enumeration is same as
+     * the order in which the components are numbered as described in the
+     * class description.
+     *
+     * @return A non-null enumeration of the components of this LDAP name.
+     * Each element of the enumeration is of class String.
+     */
+    public Enumeration<String> getAll() {
+        final Iterator<Rdn> iter = rdns.iterator();
+
+        return new Enumeration<String>() {
+            public boolean hasMoreElements() {
+                return iter.hasNext();
+            }
+            public String nextElement() {
+                return iter.next().toString();
+            }
+        };
+    }
+
+    /**
+     * Retrieves a component of this LDAP name as a string.
+     * @param  posn The 0-based index of the component to retrieve.
+     *              Must be in the range [0,size()).
+     * @return The non-null component at index posn.
+     * @exception IndexOutOfBoundsException if posn is outside the
+     *          specified range.
+     */
+    public String get(int posn) {
+        return rdns.get(posn).toString();
+    }
+
+    /**
+     * Retrieves an RDN of this LDAP name as an Rdn.
+     * @param   posn The 0-based index of the RDN to retrieve.
+     *          Must be in the range [0,size()).
+     * @return The non-null RDN at index posn.
+     * @exception IndexOutOfBoundsException if posn is outside the
+     *            specified range.
+     */
+    public Rdn getRdn(int posn) {
+        return rdns.get(posn);
+    }
+
+    /**
+     * Creates a name whose components consist of a prefix of the
+     * components of this LDAP name.
+     * Subsequent changes to this name will not affect the name
+     * that is returned and vice versa.
+     * @param  posn     The 0-based index of the component at which to stop.
+     *                  Must be in the range [0,size()].
+     * @return  An instance of <tt>LdapName</tt> consisting of the
+     *          components at indexes in the range [0,posn).
+     *          If posn is zero, an empty LDAP name is returned.
+     * @exception   IndexOutOfBoundsException
+     *              If posn is outside the specified range.
+     */
+    public Name getPrefix(int posn) {
+        try {
+            return new LdapName(null, rdns, 0, posn);
+        } catch (IllegalArgumentException e) {
+            throw new IndexOutOfBoundsException(
+                "Posn: " + posn + ", Size: "+ rdns.size());
+        }
+    }
+
+    /**
+     * Creates a name whose components consist of a suffix of the
+     * components in this LDAP name.
+     * Subsequent changes to this name do not affect the name that is
+     * returned and vice versa.
+     *
+     * @param  posn     The 0-based index of the component at which to start.
+     *                  Must be in the range [0,size()].
+     * @return  An instance of <tt>LdapName</tt> consisting of the
+     *          components at indexes in the range [posn,size()).
+     *          If posn is equal to size(), an empty LDAP name is
+     *          returned.
+     * @exception IndexOutOfBoundsException
+     *          If posn is outside the specified range.
+     */
+    public Name getSuffix(int posn) {
+        try {
+            return new LdapName(null, rdns, posn, rdns.size());
+        } catch (IllegalArgumentException e) {
+            throw new IndexOutOfBoundsException(
+                "Posn: " + posn + ", Size: "+ rdns.size());
+        }
+    }
+
+    /**
+     * Determines whether this LDAP name starts with a specified LDAP name
+     * prefix.
+     * A name <tt>n</tt> is a prefix if it is equal to
+     * <tt>getPrefix(n.size())</tt>--in other words this LDAP
+     * name starts with 'n'. If n is null or not a RFC2253 formatted name
+     * as described in the class description, false is returned.
+     *
+     * @param n The LDAP name to check.
+     * @return  true if <tt>n</tt> is a prefix of this LDAP name,
+     * false otherwise.
+     * @see #getPrefix(int posn)
+     */
+    public boolean startsWith(Name n) {
+        if (n == null) {
+            return false;
+        }
+        int len1 = rdns.size();
+        int len2 = n.size();
+        return (len1 >= len2 &&
+                matches(0, len2, n));
+    }
+
+    /**
+     * Determines whether the specified RDN sequence forms a prefix of this
+     * LDAP name.  Returns true if this LdapName is at least as long as rdns,
+     * and for every position p in the range [0, rdns.size()) the component
+     * getRdn(p) matches rdns.get(p). Returns false otherwise. If rdns is
+     * null, false is returned.
+     *
+     * @param rdns The sequence of <tt>Rdn</tt>s to check.
+     * @return  true if <tt>rdns</tt> form a prefix of this LDAP name,
+     *          false otherwise.
+     */
+    public boolean startsWith(List<Rdn> rdns) {
+        if (rdns == null) {
+            return false;
+        }
+        int len1 = this.rdns.size();
+        int len2 = rdns.size();
+        return (len1 >= len2 &&
+                doesListMatch(0, len2, rdns));
+    }
+
+    /**
+     * Determines whether this LDAP name ends with a specified
+     * LDAP name suffix.
+     * A name <tt>n</tt> is a suffix if it is equal to
+     * <tt>getSuffix(size()-n.size())</tt>--in other words this LDAP
+     * name ends with 'n'. If n is null or not a RFC2253 formatted name
+     * as described in the class description, false is returned.
+     *
+     * @param n The LDAP name to check.
+     * @return true if <tt>n</tt> is a suffix of this name, false otherwise.
+     * @see #getSuffix(int posn)
+     */
+    public boolean endsWith(Name n) {
+        if (n == null) {
+            return false;
+        }
+        int len1 = rdns.size();
+        int len2 = n.size();
+        return (len1 >= len2 &&
+                matches(len1 - len2, len1, n));
+    }
+
+    /**
+     * Determines whether the specified RDN sequence forms a suffix of this
+     * LDAP name.  Returns true if this LdapName is at least as long as rdns,
+     * and for every position p in the range [size() - rdns.size(), size())
+     * the component getRdn(p) matches rdns.get(p). Returns false otherwise.
+     * If rdns is null, false is returned.
+     *
+     * @param rdns The sequence of <tt>Rdn</tt>s to check.
+     * @return  true if <tt>rdns</tt> form a suffix of this LDAP name,
+     *          false otherwise.
+     */
+    public boolean endsWith(List<Rdn> rdns) {
+        if (rdns == null) {
+            return false;
+        }
+        int len1 = this.rdns.size();
+        int len2 = rdns.size();
+        return (len1 >= len2 &&
+                doesListMatch(len1 - len2, len1, rdns));
+    }
+
+    private boolean doesListMatch(int beg, int end, List<Rdn> rdns) {
+        for (int i = beg; i < end; i++) {
+            if (!this.rdns.get(i).equals(rdns.get(i - beg))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
+     * Helper method for startsWith() and endsWith().
+     * Returns true if components [beg,end) match the components of "n".
+     * If "n" is not an LdapName, each of its components is parsed as
+     * the string form of an RDN.
+     * The following must hold:  end - beg == n.size().
+     */
+    private boolean matches(int beg, int end, Name n) {
+        if (n instanceof LdapName) {
+            LdapName ln = (LdapName) n;
+            return doesListMatch(beg, end, ln.rdns);
+        } else {
+            for (int i = beg; i < end; i++) {
+                Rdn rdn;
+                String rdnString = n.get(i - beg);
+                try {
+                    rdn = (new Rfc2253Parser(rdnString)).parseRdn();
+                } catch (InvalidNameException e) {
+                    return false;
+                }
+                if (!rdn.equals(rdns.get(i))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Adds the components of a name -- in order -- to the end of this name.
+     *
+     * @param   suffix The non-null components to add.
+     * @return  The updated name (not a new instance).
+     *
+     * @throws  InvalidNameException if <tt>suffix</tt> is not a valid LDAP
+     *          name, or if the addition of the components would violate the
+     *          syntax rules of this LDAP name.
+     */
+    public Name addAll(Name suffix) throws InvalidNameException {
+         return addAll(size(), suffix);
+    }
+
+
+    /**
+     * Adds the RDNs of a name -- in order -- to the end of this name.
+     *
+     * @param   suffixRdns The non-null suffix <tt>Rdn</tt>s to add.
+     * @return  The updated name (not a new instance).
+     */
+    public Name addAll(List<Rdn> suffixRdns) {
+        return addAll(size(), suffixRdns);
+    }
+
+    /**
+     * Adds the components of a name -- in order -- at a specified position
+     * within this name. Components of this LDAP name at or after the
+     * index (if any) of the first new component are shifted up
+     * (away from index 0) to accommodate the new components.
+     *
+     * @param suffix    The non-null components to add.
+     * @param posn      The index at which to add the new component.
+     *                  Must be in the range [0,size()].
+     *
+     * @return  The updated name (not a new instance).
+     *
+     * @throws  InvalidNameException if <tt>suffix</tt> is not a valid LDAP
+     *          name, or if the addition of the components would violate the
+     *          syntax rules of this LDAP name.
+     * @throws  IndexOutOfBoundsException
+     *          If posn is outside the specified range.
+     */
+    public Name addAll(int posn, Name suffix)
+        throws InvalidNameException {
+        unparsed = null;        // no longer valid
+        if (suffix instanceof LdapName) {
+            LdapName s = (LdapName) suffix;
+            rdns.addAll(posn, s.rdns);
+        } else {
+            Enumeration<String> comps = suffix.getAll();
+            while (comps.hasMoreElements()) {
+                rdns.add(posn++,
+                    (new Rfc2253Parser(comps.nextElement()).
+                    parseRdn()));
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Adds the RDNs of a name -- in order -- at a specified position
+     * within this name. RDNs of this LDAP name at or after the
+     * index (if any) of the first new RDN are shifted up (away from index 0) to
+     * accommodate the new RDNs.
+     *
+     * @param suffixRdns        The non-null suffix <tt>Rdn</tt>s to add.
+     * @param posn              The index at which to add the suffix RDNs.
+     *                          Must be in the range [0,size()].
+     *
+     * @return  The updated name (not a new instance).
+     * @throws  IndexOutOfBoundsException
+     *          If posn is outside the specified range.
+     */
+    public Name addAll(int posn, List<Rdn> suffixRdns) {
+        unparsed = null;
+        for (int i = 0; i < suffixRdns.size(); i++) {
+            Object obj = suffixRdns.get(i);
+            if (!(obj instanceof Rdn)) {
+                throw new IllegalArgumentException("Entry:" + obj +
+                "  not a valid type;suffix list entries must be of type Rdn");
+            }
+            rdns.add(i + posn, (Rdn)obj);
+        }
+        return this;
+    }
+
+    /**
+     * Adds a single component to the end of this LDAP name.
+     *
+     * @param comp      The non-null component to add.
+     * @return          The updated LdapName, not a new instance.
+     *                  Cannot be null.
+     * @exception       InvalidNameException If adding comp at end of the name
+     *                  would violate the name's syntax.
+     */
+    public Name add(String comp) throws InvalidNameException {
+        return add(size(), comp);
+    }
+
+    /**
+     * Adds a single RDN to the end of this LDAP name.
+     *
+     * @param comp      The non-null RDN to add.
+     *
+     * @return          The updated LdapName, not a new instance.
+     *                  Cannot be null.
+     */
+    public Name add(Rdn comp) {
+        return add(size(), comp);
+    }
+
+    /**
+     * Adds a single component at a specified position within this
+     * LDAP name.
+     * Components of this LDAP name at or after the index (if any) of the new
+     * component are shifted up by one (away from index 0) to accommodate
+     * the new component.
+     *
+     * @param  comp     The non-null component to add.
+     * @param  posn     The index at which to add the new component.
+     *                  Must be in the range [0,size()].
+     * @return          The updated LdapName, not a new instance.
+     *                  Cannot be null.
+     * @exception       IndexOutOfBoundsException
+     *                  If posn is outside the specified range.
+     * @exception       InvalidNameException If adding comp at the
+     *                  specified position would violate the name's syntax.
+     */
+    public Name add(int posn, String comp) throws InvalidNameException {
+        Rdn rdn = (new Rfc2253Parser(comp)).parseRdn();
+        rdns.add(posn, rdn);
+        unparsed = null;        // no longer valid
+        return this;
+    }
+
+    /**
+     * Adds a single RDN at a specified position within this
+     * LDAP name.
+     * RDNs of this LDAP name at or after the index (if any) of the new
+     * RDN are shifted up by one (away from index 0) to accommodate
+     * the new RDN.
+     *
+     * @param  comp     The non-null RDN to add.
+     * @param  posn     The index at which to add the new RDN.
+     *                  Must be in the range [0,size()].
+     * @return          The updated LdapName, not a new instance.
+     *                  Cannot be null.
+     * @exception       IndexOutOfBoundsException
+     *                  If posn is outside the specified range.
+     */
+    public Name add(int posn, Rdn comp) {
+        if (comp == null) {
+            throw new NullPointerException("Cannot set comp to null");
+        }
+        rdns.add(posn, comp);
+        unparsed = null;        // no longer valid
+        return this;
+    }
+
+    /**
+     * Removes a component from this LDAP name.
+     * The component of this name at the specified position is removed.
+     * Components with indexes greater than this position (if any)
+     * are shifted down (toward index 0) by one.
+     *
+     * @param posn      The index of the component to remove.
+     *                  Must be in the range [0,size()).
+     * @return          The component removed (a String).
+     *
+     * @throws          IndexOutOfBoundsException
+     *                  if posn is outside the specified range.
+     * @throws          InvalidNameException if deleting the component
+     *                  would violate the syntax rules of the name.
+     */
+    public Object remove(int posn) throws InvalidNameException {
+        unparsed = null;        // no longer valid
+        return rdns.remove(posn).toString();
+    }
+
+    /**
+     * Retrieves the list of relative distinguished names.
+     * The contents of the list are unmodifiable.
+     * The indexing of RDNs in the returned list follows the numbering of
+     * RDNs as described in the class description.
+     * If the name has zero components, an empty list is returned.
+     *
+     * @return  The name as a list of RDNs which are instances of
+     *          the class {@link Rdn Rdn}.
+     */
+    public List<Rdn> getRdns() {
+        return Collections.unmodifiableList(rdns);
+    }
+
+    /**
+     * Generates a new copy of this name.
+     * Subsequent changes to the components of this name will not
+     * affect the new copy, and vice versa.
+     *
+     * @return A copy of the this LDAP name.
+     */
+    public Object clone() {
+        return new LdapName(unparsed, rdns, 0, rdns.size());
+    }
+
+    /**
+     * Returns a string representation of this LDAP name in a format
+     * defined by <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a>
+     * and described in the class description. If the name has zero
+     * components an empty string is returned.
+     *
+     * @return The string representation of the LdapName.
+     */
+    public String toString() {
+        if (unparsed != null) {
+            return unparsed;
+        }
+        StringBuilder builder = new StringBuilder();
+        int size = rdns.size();
+        if ((size - 1) >= 0) {
+            builder.append(rdns.get(size - 1));
+        }
+        for (int next = size - 2; next >= 0; next--) {
+            builder.append(',');
+            builder.append(rdns.get(next));
+        }
+        unparsed = builder.toString();
+        return unparsed;
+    }
+
+    /**
+     * Determines whether two LDAP names are equal.
+     * If obj is null or not an LDAP name, false is returned.
+     * <p>
+     * Two LDAP names are equal if each RDN in one is equal
+     * to the corresponding RDN in the other. This implies
+     * both have the same number of RDNs, and each RDN's
+     * equals() test against the corresponding RDN in the other
+     * name returns true. See {@link Rdn#equals(Object obj)}
+     * for a definition of RDN equality.
+     *
+     * @param  obj      The possibly null object to compare against.
+     * @return          true if obj is equal to this LDAP name,
+     *                  false otherwise.
+     * @see #hashCode
+     */
+    public boolean equals(Object obj) {
+        // check possible shortcuts
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof LdapName)) {
+            return false;
+        }
+        LdapName that = (LdapName) obj;
+        if (rdns.size() != that.rdns.size()) {
+            return false;
+        }
+        if (unparsed != null && unparsed.equalsIgnoreCase(
+                that.unparsed)) {
+            return true;
+        }
+        // Compare RDNs one by one for equality
+        for (int i = 0; i < rdns.size(); i++) {
+            // Compare a single pair of RDNs.
+            Rdn rdn1 = rdns.get(i);
+            Rdn rdn2 = that.rdns.get(i);
+            if (!rdn1.equals(rdn2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Compares this LdapName with the specified Object for order.
+     * Returns a negative integer, zero, or a positive integer as this
+     * Name is less than, equal to, or greater than the given Object.
+     * <p>
+     * If obj is null or not an instance of LdapName, ClassCastException
+     * is thrown.
+     * <p>
+     * Ordering of LDAP names follows the lexicographical rules for
+     * string comparison, with the extension that this applies to all
+     * the RDNs in the LDAP name. All the RDNs are lined up in their
+     * specified order and compared lexicographically.
+     * See {@link Rdn#compareTo(Object obj) Rdn.compareTo(Object obj)}
+     * for RDN comparison rules.
+     * <p>
+     * If this LDAP name is lexicographically lesser than obj,
+     * a negative number is returned.
+     * If this LDAP name is lexicographically greater than obj,
+     * a positive number is returned.
+     * @param obj The non-null LdapName instance to compare against.
+     *
+     * @return  A negative integer, zero, or a positive integer as this Name
+     *          is less than, equal to, or greater than the given obj.
+     * @exception ClassCastException if obj is null or not a LdapName.
+     */
+    public int compareTo(Object obj) {
+
+        if (!(obj instanceof LdapName)) {
+            throw new ClassCastException("The obj is not a LdapName");
+        }
+
+        // check possible shortcuts
+        if (obj == this) {
+            return 0;
+        }
+        LdapName that = (LdapName) obj;
+
+        if (unparsed != null && unparsed.equalsIgnoreCase(
+                        that.unparsed)) {
+            return 0;
+        }
+
+        // Compare RDNs one by one, lexicographically.
+        int minSize = Math.min(rdns.size(), that.rdns.size());
+        for (int i = 0; i < minSize; i++) {
+            // Compare a single pair of RDNs.
+            Rdn rdn1 = rdns.get(i);
+            Rdn rdn2 = that.rdns.get(i);
+
+            int diff = rdn1.compareTo(rdn2);
+            if (diff != 0) {
+                return diff;
+            }
+        }
+        return (rdns.size() - that.rdns.size());        // longer DN wins
+    }
+
+    /**
+     * Computes the hash code of this LDAP name.
+     * The hash code is the sum of the hash codes of individual RDNs
+     * of this  name.
+     *
+     * @return An int representing the hash code of this name.
+     * @see #equals
+     */
+    public int hashCode() {
+        // Sum up the hash codes of the components.
+        int hash = 0;
+
+        // For each RDN...
+        for (int i = 0; i < rdns.size(); i++) {
+            Rdn rdn = rdns.get(i);
+            hash += rdn.hashCode();
+        }
+        return hash;
+    }
+
+    /**
+     * Serializes only the unparsed DN, for compactness and to avoid
+     * any implementation dependency.
+     *
+     * @serialData      The DN string
+     */
+    private void writeObject(ObjectOutputStream s)
+            throws java.io.IOException {
+        s.defaultWriteObject();
+        s.writeObject(toString());
+    }
+
+    private void readObject(ObjectInputStream s)
+            throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        unparsed = (String)s.readObject();
+        try {
+            parse();
+        } catch (InvalidNameException e) {
+            // shouldn't happen
+            throw new java.io.StreamCorruptedException(
+                    "Invalid name: " + unparsed);
+        }
+    }
+
+    private void parse() throws InvalidNameException {
+        // rdns = (ArrayList<Rdn>) (new RFC2253Parser(unparsed)).getDN();
+
+        rdns = new Rfc2253Parser(unparsed).parseDn();
+    }
+}

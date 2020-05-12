@@ -1,334 +1,329 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SymbolHash
-/*     */ {
-/*     */   protected static final int TABLE_SIZE = 101;
-/*     */   protected static final int MAX_HASH_COLLISIONS = 40;
-/*     */   protected static final int MULTIPLIERS_SIZE = 32;
-/*     */   protected static final int MULTIPLIERS_MASK = 31;
-/*     */   protected int fTableSize;
-/*     */   protected Entry[] fBuckets;
-/*  59 */   protected int fNum = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int[] fHashMultipliers;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SymbolHash() {
-/*  73 */     this(101);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SymbolHash(int size) {
-/*  82 */     this.fTableSize = size;
-/*  83 */     this.fBuckets = new Entry[this.fTableSize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void put(Object key, Object value) {
-/* 101 */     int collisionCount = 0;
-/* 102 */     int hash = hash(key);
-/* 103 */     int bucket = hash % this.fTableSize; Entry entry;
-/* 104 */     for (entry = this.fBuckets[bucket]; entry != null; entry = entry.next) {
-/* 105 */       if (key.equals(entry.key)) {
-/*     */         
-/* 107 */         entry.value = value;
-/*     */         return;
-/*     */       } 
-/* 110 */       collisionCount++;
-/*     */     } 
-/*     */     
-/* 113 */     if (this.fNum >= this.fTableSize) {
-/*     */ 
-/*     */       
-/* 116 */       rehash();
-/* 117 */       bucket = hash % this.fTableSize;
-/*     */     }
-/* 119 */     else if (collisionCount >= 40 && key instanceof String) {
-/*     */ 
-/*     */       
-/* 122 */       rebalance();
-/* 123 */       bucket = hash(key) % this.fTableSize;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 127 */     entry = new Entry(key, value, this.fBuckets[bucket]);
-/* 128 */     this.fBuckets[bucket] = entry;
-/* 129 */     this.fNum++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get(Object key) {
-/* 139 */     int bucket = hash(key) % this.fTableSize;
-/* 140 */     Entry entry = search(key, bucket);
-/* 141 */     if (entry != null) {
-/* 142 */       return entry.value;
-/*     */     }
-/* 144 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/* 153 */     return this.fNum;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getValues(Object[] elements, int from) {
-/* 164 */     for (int i = 0, j = 0; i < this.fTableSize && j < this.fNum; i++) {
-/* 165 */       for (Entry entry = this.fBuckets[i]; entry != null; entry = entry.next) {
-/* 166 */         elements[from + j] = entry.value;
-/* 167 */         j++;
-/*     */       } 
-/*     */     } 
-/* 170 */     return this.fNum;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object[] getEntries() {
-/* 177 */     Object[] entries = new Object[this.fNum << 1];
-/* 178 */     for (int i = 0, j = 0; i < this.fTableSize && j < this.fNum << 1; i++) {
-/* 179 */       for (Entry entry = this.fBuckets[i]; entry != null; entry = entry.next) {
-/* 180 */         entries[j] = entry.key;
-/* 181 */         entries[++j] = entry.value;
-/* 182 */         j++;
-/*     */       } 
-/*     */     } 
-/* 185 */     return entries;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SymbolHash makeClone() {
-/* 192 */     SymbolHash newTable = new SymbolHash(this.fTableSize);
-/* 193 */     newTable.fNum = this.fNum;
-/* 194 */     newTable.fHashMultipliers = (this.fHashMultipliers != null) ? (int[])this.fHashMultipliers.clone() : null;
-/* 195 */     for (int i = 0; i < this.fTableSize; i++) {
-/* 196 */       if (this.fBuckets[i] != null) {
-/* 197 */         newTable.fBuckets[i] = this.fBuckets[i].makeClone();
-/*     */       }
-/*     */     } 
-/* 200 */     return newTable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/* 208 */     for (int i = 0; i < this.fTableSize; i++) {
-/* 209 */       this.fBuckets[i] = null;
-/*     */     }
-/* 211 */     this.fNum = 0;
-/* 212 */     this.fHashMultipliers = null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Entry search(Object key, int bucket) {
-/* 217 */     for (Entry entry = this.fBuckets[bucket]; entry != null; entry = entry.next) {
-/* 218 */       if (key.equals(entry.key))
-/* 219 */         return entry; 
-/*     */     } 
-/* 221 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int hash(Object key) {
-/* 230 */     if (this.fHashMultipliers == null || !(key instanceof String)) {
-/* 231 */       return key.hashCode() & Integer.MAX_VALUE;
-/*     */     }
-/* 233 */     return hash0((String)key);
-/*     */   }
-/*     */   
-/*     */   private int hash0(String symbol) {
-/* 237 */     int code = 0;
-/* 238 */     int length = symbol.length();
-/* 239 */     int[] multipliers = this.fHashMultipliers;
-/* 240 */     for (int i = 0; i < length; i++) {
-/* 241 */       code = code * multipliers[i & 0x1F] + symbol.charAt(i);
-/*     */     }
-/* 243 */     return code & Integer.MAX_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void rehash() {
-/* 253 */     rehashCommon((this.fBuckets.length << 1) + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void rebalance() {
-/* 263 */     if (this.fHashMultipliers == null) {
-/* 264 */       this.fHashMultipliers = new int[32];
-/*     */     }
-/* 266 */     PrimeNumberSequenceGenerator.generateSequence(this.fHashMultipliers);
-/* 267 */     rehashCommon(this.fBuckets.length);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void rehashCommon(int newCapacity) {
-/* 272 */     int oldCapacity = this.fBuckets.length;
-/* 273 */     Entry[] oldTable = this.fBuckets;
-/*     */     
-/* 275 */     Entry[] newTable = new Entry[newCapacity];
-/*     */     
-/* 277 */     this.fBuckets = newTable;
-/* 278 */     this.fTableSize = this.fBuckets.length;
-/*     */     
-/* 280 */     for (int i = oldCapacity; i-- > 0;) {
-/* 281 */       for (Entry old = oldTable[i]; old != null; ) {
-/* 282 */         Entry e = old;
-/* 283 */         old = old.next;
-/*     */         
-/* 285 */         int index = hash(e.key) % newCapacity;
-/* 286 */         e.next = newTable[index];
-/* 287 */         newTable[index] = e;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final class Entry
-/*     */   {
-/*     */     public Object key;
-/*     */ 
-/*     */     
-/*     */     public Object value;
-/*     */ 
-/*     */     
-/*     */     public Entry next;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Entry() {
-/* 308 */       this.key = null;
-/* 309 */       this.value = null;
-/* 310 */       this.next = null;
-/*     */     }
-/*     */     
-/*     */     public Entry(Object key, Object value, Entry next) {
-/* 314 */       this.key = key;
-/* 315 */       this.value = value;
-/* 316 */       this.next = next;
-/*     */     }
-/*     */     
-/*     */     public Entry makeClone() {
-/* 320 */       Entry entry = new Entry();
-/* 321 */       entry.key = this.key;
-/* 322 */       entry.value = this.value;
-/* 323 */       if (this.next != null)
-/* 324 */         entry.next = this.next.makeClone(); 
-/* 325 */       return entry;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\SymbolHash.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+
+/**
+ * This class is an unsynchronized hash table primary used for String
+ * to Object mapping.
+ * <p>
+ * The hash code uses the same algorithm as SymbolTable class.
+ *
+ * @author Elena Litani
+ * @version $Id: SymbolHash.java,v 1.7 2010-11-01 04:40:14 joehw Exp $
+ */
+public class SymbolHash {
+
+    //
+    // Constants
+    //
+
+    /** Default table size. */
+    protected static final int TABLE_SIZE = 101;
+
+    /** Maximum hash collisions per bucket. */
+    protected static final int MAX_HASH_COLLISIONS = 40;
+
+    protected static final int MULTIPLIERS_SIZE = 1 << 5;
+    protected static final int MULTIPLIERS_MASK = MULTIPLIERS_SIZE - 1;
+
+    //
+    // Data
+    //
+
+    /** Actual table size **/
+    protected int fTableSize;
+
+    /** Buckets. */
+    protected Entry[] fBuckets;
+
+    /** Number of elements. */
+    protected int fNum = 0;
+
+    /**
+     * Array of randomly selected hash function multipliers or <code>null</code>
+     * if the default String.hashCode() function should be used.
+     */
+    protected int[] fHashMultipliers;
+
+    //
+    // Constructors
+    //
+
+    /** Constructs a key table with the default size. */
+    public SymbolHash() {
+        this(TABLE_SIZE);
+    }
+
+    /**
+     * Constructs a key table with a given size.
+     *
+     * @param size  the size of the key table.
+     */
+    public SymbolHash(int size) {
+        fTableSize = size;
+        fBuckets = new Entry[fTableSize];
+    }
+
+    //
+    // Public methods
+    //
+
+    /**
+     * Adds the key/value mapping to the key table. If the key already exists,
+     * the previous value associated with this key is overwritten by the new
+     * value.
+     *
+     * @param key
+     * @param value
+     */
+    public void put(Object key, Object value) {
+
+        // search for identical key
+        int collisionCount = 0;
+        final int hash = hash(key);
+        int bucket = hash % fTableSize;
+        for (Entry entry = fBuckets[bucket]; entry != null; entry = entry.next) {
+            if (key.equals(entry.key)) {
+                // replace old value
+                entry.value = value;
+                return;
+            }
+            ++collisionCount;
+        }
+
+        if (fNum >= fTableSize) {
+            // Rehash the table if the number of entries
+            // would exceed the number of buckets.
+            rehash();
+            bucket = hash % fTableSize;
+        }
+        else if (collisionCount >= MAX_HASH_COLLISIONS && key instanceof String) {
+            // Select a new hash function and rehash the table if
+            // MAX_HASH_COLLISIONS is exceeded.
+            rebalance();
+            bucket = hash(key) % fTableSize;
+        }
+
+        // create new entry
+        Entry entry = new Entry(key, value, fBuckets[bucket]);
+        fBuckets[bucket] = entry;
+        ++fNum;
+    }
+
+    /**
+     * Get the value associated with the given key.
+     *
+     * @param key
+     * @return the value associated with the given key.
+     */
+    public Object get(Object key) {
+        int bucket = hash(key) % fTableSize;
+        Entry entry = search(key, bucket);
+        if (entry != null) {
+            return entry.value;
+        }
+        return null;
+    }
+
+    /**
+     * Get the number of key/value pairs stored in this table.
+     *
+     * @return the number of key/value pairs stored in this table.
+     */
+    public int getLength() {
+        return fNum;
+    }
+
+    /**
+     * Add all values to the given array. The array must have enough entry.
+     *
+     * @param elements  the array to store the elements
+     * @param from      where to start store element in the array
+     * @return          number of elements copied to the array
+     */
+    public int getValues(Object[] elements, int from) {
+        for (int i=0, j=0; i<fTableSize && j<fNum; i++) {
+            for (Entry entry = fBuckets[i]; entry != null; entry = entry.next) {
+                elements[from+j] = entry.value;
+                j++;
+            }
+        }
+        return fNum;
+    }
+
+    /**
+     * Return key/value pairs of all entries in the map
+     */
+    public Object[] getEntries() {
+        Object[] entries = new Object[fNum << 1];
+        for (int i=0, j=0; i<fTableSize && j<fNum << 1; i++) {
+            for (Entry entry = fBuckets[i]; entry != null; entry = entry.next) {
+                entries[j] = entry.key;
+                entries[++j] = entry.value;
+                j++;
+            }
+        }
+        return entries;
+    }
+
+    /**
+     * Make a clone of this object.
+     */
+    public SymbolHash makeClone() {
+        SymbolHash newTable = new SymbolHash(fTableSize);
+        newTable.fNum = fNum;
+        newTable.fHashMultipliers = fHashMultipliers != null ? (int[]) fHashMultipliers.clone() : null;
+        for (int i = 0; i < fTableSize; i++) {
+            if (fBuckets[i] != null) {
+                newTable.fBuckets[i] = fBuckets[i].makeClone();
+            }
+        }
+        return newTable;
+    }
+
+    /**
+     * Remove all key/value association. This tries to save a bit of GC'ing
+     * by at least keeping the fBuckets array around.
+     */
+    public void clear() {
+        for (int i=0; i<fTableSize; i++) {
+            fBuckets[i] = null;
+        }
+        fNum = 0;
+        fHashMultipliers = null;
+    } // clear():  void
+
+    protected Entry search(Object key, int bucket) {
+        // search for identical key
+        for (Entry entry = fBuckets[bucket]; entry != null; entry = entry.next) {
+            if (key.equals(entry.key))
+                return entry;
+        }
+        return null;
+    }
+
+    /**
+     * Returns a hashcode value for the specified key.
+     *
+     * @param key The key to hash.
+     */
+    protected int hash(Object key) {
+        if (fHashMultipliers == null || !(key instanceof String)) {
+            return key.hashCode() & 0x7FFFFFFF;
+        }
+        return hash0((String) key);
+    } // hash(Object):int
+
+    private int hash0(String symbol) {
+        int code = 0;
+        final int length = symbol.length();
+        final int[] multipliers = fHashMultipliers;
+        for (int i = 0; i < length; ++i) {
+            code = code * multipliers[i & MULTIPLIERS_MASK] + symbol.charAt(i);
+        }
+        return code & 0x7FFFFFFF;
+    } // hash0(String):int
+
+    /**
+     * Increases the capacity of and internally reorganizes this
+     * SymbolHash, in order to accommodate and access its entries more
+     * efficiently.  This method is called automatically when the
+     * number of keys in the SymbolHash exceeds its number of buckets.
+     */
+    protected void rehash() {
+        rehashCommon((fBuckets.length << 1) + 1);
+    }
+
+    /**
+     * Randomly selects a new hash function and reorganizes this SymbolHash
+     * in order to more evenly distribute its entries across the table. This
+     * method is called automatically when the number keys in one of the
+     * SymbolHash's buckets exceeds MAX_HASH_COLLISIONS.
+     */
+    protected void rebalance() {
+        if (fHashMultipliers == null) {
+            fHashMultipliers = new int[MULTIPLIERS_SIZE];
+        }
+        PrimeNumberSequenceGenerator.generateSequence(fHashMultipliers);
+        rehashCommon(fBuckets.length);
+    }
+
+    private void rehashCommon(final int newCapacity) {
+
+        final int oldCapacity = fBuckets.length;
+        final Entry[] oldTable = fBuckets;
+
+        final Entry[] newTable = new Entry[newCapacity];
+
+        fBuckets = newTable;
+        fTableSize = fBuckets.length;
+
+        for (int i = oldCapacity; i-- > 0;) {
+            for (Entry old = oldTable[i]; old != null; ) {
+                Entry e = old;
+                old = old.next;
+
+                int index = hash(e.key) % newCapacity;
+                e.next = newTable[index];
+                newTable[index] = e;
+            }
+        }
+    }
+
+    //
+    // Classes
+    //
+
+    /**
+     * This class is a key table entry. Each entry acts as a node
+     * in a linked list.
+     */
+    protected static final class Entry {
+        // key/value
+        public Object key;
+        public Object value;
+        /** The next entry. */
+        public Entry next;
+
+        public Entry() {
+            key = null;
+            value = null;
+            next = null;
+        }
+
+        public Entry(Object key, Object value, Entry next) {
+            this.key = key;
+            this.value = value;
+            this.next = next;
+        }
+
+        public Entry makeClone() {
+            Entry entry = new Entry();
+            entry.key = key;
+            entry.value = value;
+            if (next != null)
+                entry.next = next.makeClone();
+            return entry;
+        }
+    } // entry
+
+} // class SymbolHash

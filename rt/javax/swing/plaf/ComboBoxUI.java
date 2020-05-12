@@ -1,17 +1,52 @@
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.plaf;
 
 import javax.swing.JComboBox;
 
-public abstract class ComboBoxUI extends ComponentUI {
-  public abstract void setPopupVisible(JComboBox paramJComboBox, boolean paramBoolean);
-  
-  public abstract boolean isPopupVisible(JComboBox paramJComboBox);
-  
-  public abstract boolean isFocusTraversable(JComboBox paramJComboBox);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\ComboBoxUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Pluggable look and feel interface for JComboBox.
+ *
+ * @author Arnaud Weber
+ * @author Tom Santos
  */
+public abstract class ComboBoxUI extends ComponentUI {
+
+    /**
+     * Set the visibility of the popup
+     */
+    public abstract void setPopupVisible( JComboBox c, boolean v );
+
+    /**
+     * Determine the visibility of the popup
+     */
+    public abstract boolean isPopupVisible( JComboBox c );
+
+    /**
+     * Determine whether or not the combo box itself is traversable
+     */
+    public abstract boolean isFocusTraversable( JComboBox c );
+}

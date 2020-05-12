@@ -1,278 +1,272 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ import java.security.AccessController;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BufferedWriter
-/*     */   extends Writer
-/*     */ {
-/*     */   private Writer out;
-/*     */   private char[] cb;
-/*     */   private int nChars;
-/*     */   private int nextChar;
-/*  73 */   private static int defaultCharBufferSize = 8192;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String lineSeparator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedWriter(Writer paramWriter) {
-/*  88 */     this(paramWriter, defaultCharBufferSize);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedWriter(Writer paramWriter, int paramInt) {
-/* 101 */     super(paramWriter);
-/* 102 */     if (paramInt <= 0)
-/* 103 */       throw new IllegalArgumentException("Buffer size <= 0"); 
-/* 104 */     this.out = paramWriter;
-/* 105 */     this.cb = new char[paramInt];
-/* 106 */     this.nChars = paramInt;
-/* 107 */     this.nextChar = 0;
-/*     */     
-/* 109 */     this.lineSeparator = AccessController.<String>doPrivileged(new GetPropertyAction("line.separator"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void ensureOpen() throws IOException {
-/* 115 */     if (this.out == null) {
-/* 116 */       throw new IOException("Stream closed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void flushBuffer() throws IOException {
-/* 125 */     synchronized (this.lock) {
-/* 126 */       ensureOpen();
-/* 127 */       if (this.nextChar == 0)
-/*     */         return; 
-/* 129 */       this.out.write(this.cb, 0, this.nextChar);
-/* 130 */       this.nextChar = 0;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 140 */     synchronized (this.lock) {
-/* 141 */       ensureOpen();
-/* 142 */       if (this.nextChar >= this.nChars)
-/* 143 */         flushBuffer(); 
-/* 144 */       this.cb[this.nextChar++] = (char)paramInt;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int min(int paramInt1, int paramInt2) {
-/* 153 */     if (paramInt1 < paramInt2) return paramInt1; 
-/* 154 */     return paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 174 */     synchronized (this.lock) {
-/* 175 */       ensureOpen();
-/* 176 */       if (paramInt1 < 0 || paramInt1 > paramArrayOfchar.length || paramInt2 < 0 || paramInt1 + paramInt2 > paramArrayOfchar.length || paramInt1 + paramInt2 < 0)
-/*     */       {
-/* 178 */         throw new IndexOutOfBoundsException(); } 
-/* 179 */       if (paramInt2 == 0) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 183 */       if (paramInt2 >= this.nChars) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 187 */         flushBuffer();
-/* 188 */         this.out.write(paramArrayOfchar, paramInt1, paramInt2);
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 192 */       int i = paramInt1, j = paramInt1 + paramInt2;
-/* 193 */       while (i < j) {
-/* 194 */         int k = min(this.nChars - this.nextChar, j - i);
-/* 195 */         System.arraycopy(paramArrayOfchar, i, this.cb, this.nextChar, k);
-/* 196 */         i += k;
-/* 197 */         this.nextChar += k;
-/* 198 */         if (this.nextChar >= this.nChars) {
-/* 199 */           flushBuffer();
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(String paramString, int paramInt1, int paramInt2) throws IOException {
-/* 220 */     synchronized (this.lock) {
-/* 221 */       ensureOpen();
-/*     */       
-/* 223 */       int i = paramInt1, j = paramInt1 + paramInt2;
-/* 224 */       while (i < j) {
-/* 225 */         int k = min(this.nChars - this.nextChar, j - i);
-/* 226 */         paramString.getChars(i, i + k, this.cb, this.nextChar);
-/* 227 */         i += k;
-/* 228 */         this.nextChar += k;
-/* 229 */         if (this.nextChar >= this.nChars) {
-/* 230 */           flushBuffer();
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void newLine() throws IOException {
-/* 243 */     write(this.lineSeparator);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void flush() throws IOException {
-/* 252 */     synchronized (this.lock) {
-/* 253 */       flushBuffer();
-/* 254 */       this.out.flush();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 260 */     synchronized (this.lock) {
-/* 261 */       if (this.out == null) {
-/*     */         return;
-/*     */       }
-/* 264 */       try (Writer null = this.out) {
-/* 265 */         flushBuffer();
-/*     */       } finally {
-/* 267 */         this.out = null;
-/* 268 */         this.cb = null;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\BufferedWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+
+/**
+ * Writes text to a character-output stream, buffering characters so as to
+ * provide for the efficient writing of single characters, arrays, and strings.
+ *
+ * <p> The buffer size may be specified, or the default size may be accepted.
+ * The default is large enough for most purposes.
+ *
+ * <p> A newLine() method is provided, which uses the platform's own notion of
+ * line separator as defined by the system property <tt>line.separator</tt>.
+ * Not all platforms use the newline character ('\n') to terminate lines.
+ * Calling this method to terminate each output line is therefore preferred to
+ * writing a newline character directly.
+ *
+ * <p> In general, a Writer sends its output immediately to the underlying
+ * character or byte stream.  Unless prompt output is required, it is advisable
+ * to wrap a BufferedWriter around any Writer whose write() operations may be
+ * costly, such as FileWriters and OutputStreamWriters.  For example,
+ *
+ * <pre>
+ * PrintWriter out
+ *   = new PrintWriter(new BufferedWriter(new FileWriter("foo.out")));
+ * </pre>
+ *
+ * will buffer the PrintWriter's output to the file.  Without buffering, each
+ * invocation of a print() method would cause characters to be converted into
+ * bytes that would then be written immediately to the file, which can be very
+ * inefficient.
+ *
+ * @see PrintWriter
+ * @see FileWriter
+ * @see OutputStreamWriter
+ * @see java.nio.file.Files#newBufferedWriter
+ *
+ * @author      Mark Reinhold
+ * @since       JDK1.1
+ */
+
+public class BufferedWriter extends Writer {
+
+    private Writer out;
+
+    private char cb[];
+    private int nChars, nextChar;
+
+    private static int defaultCharBufferSize = 8192;
+
+    /**
+     * Line separator string.  This is the value of the line.separator
+     * property at the moment that the stream was created.
+     */
+    private String lineSeparator;
+
+    /**
+     * Creates a buffered character-output stream that uses a default-sized
+     * output buffer.
+     *
+     * @param  out  A Writer
+     */
+    public BufferedWriter(Writer out) {
+        this(out, defaultCharBufferSize);
+    }
+
+    /**
+     * Creates a new buffered character-output stream that uses an output
+     * buffer of the given size.
+     *
+     * @param  out  A Writer
+     * @param  sz   Output-buffer size, a positive integer
+     *
+     * @exception  IllegalArgumentException  If {@code sz <= 0}
+     */
+    public BufferedWriter(Writer out, int sz) {
+        super(out);
+        if (sz <= 0)
+            throw new IllegalArgumentException("Buffer size <= 0");
+        this.out = out;
+        cb = new char[sz];
+        nChars = sz;
+        nextChar = 0;
+
+        lineSeparator = java.security.AccessController.doPrivileged(
+            new sun.security.action.GetPropertyAction("line.separator"));
+    }
+
+    /** Checks to make sure that the stream has not been closed */
+    private void ensureOpen() throws IOException {
+        if (out == null)
+            throw new IOException("Stream closed");
+    }
+
+    /**
+     * Flushes the output buffer to the underlying character stream, without
+     * flushing the stream itself.  This method is non-private only so that it
+     * may be invoked by PrintStream.
+     */
+    void flushBuffer() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (nextChar == 0)
+                return;
+            out.write(cb, 0, nextChar);
+            nextChar = 0;
+        }
+    }
+
+    /**
+     * Writes a single character.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void write(int c) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (nextChar >= nChars)
+                flushBuffer();
+            cb[nextChar++] = (char) c;
+        }
+    }
+
+    /**
+     * Our own little min method, to avoid loading java.lang.Math if we've run
+     * out of file descriptors and we're trying to print a stack trace.
+     */
+    private int min(int a, int b) {
+        if (a < b) return a;
+        return b;
+    }
+
+    /**
+     * Writes a portion of an array of characters.
+     *
+     * <p> Ordinarily this method stores characters from the given array into
+     * this stream's buffer, flushing the buffer to the underlying stream as
+     * needed.  If the requested length is at least as large as the buffer,
+     * however, then this method will flush the buffer and write the characters
+     * directly to the underlying stream.  Thus redundant
+     * <code>BufferedWriter</code>s will not copy data unnecessarily.
+     *
+     * @param  cbuf  A character array
+     * @param  off   Offset from which to start reading characters
+     * @param  len   Number of characters to write
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void write(char cbuf[], int off, int len) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if ((off < 0) || (off > cbuf.length) || (len < 0) ||
+                ((off + len) > cbuf.length) || ((off + len) < 0)) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return;
+            }
+
+            if (len >= nChars) {
+                /* If the request length exceeds the size of the output buffer,
+                   flush the buffer and then write the data directly.  In this
+                   way buffered streams will cascade harmlessly. */
+                flushBuffer();
+                out.write(cbuf, off, len);
+                return;
+            }
+
+            int b = off, t = off + len;
+            while (b < t) {
+                int d = min(nChars - nextChar, t - b);
+                System.arraycopy(cbuf, b, cb, nextChar, d);
+                b += d;
+                nextChar += d;
+                if (nextChar >= nChars)
+                    flushBuffer();
+            }
+        }
+    }
+
+    /**
+     * Writes a portion of a String.
+     *
+     * <p> If the value of the <tt>len</tt> parameter is negative then no
+     * characters are written.  This is contrary to the specification of this
+     * method in the {@linkplain java.io.Writer#write(java.lang.String,int,int)
+     * superclass}, which requires that an {@link IndexOutOfBoundsException} be
+     * thrown.
+     *
+     * @param  s     String to be written
+     * @param  off   Offset from which to start reading characters
+     * @param  len   Number of characters to be written
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void write(String s, int off, int len) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+
+            int b = off, t = off + len;
+            while (b < t) {
+                int d = min(nChars - nextChar, t - b);
+                s.getChars(b, b + d, cb, nextChar);
+                b += d;
+                nextChar += d;
+                if (nextChar >= nChars)
+                    flushBuffer();
+            }
+        }
+    }
+
+    /**
+     * Writes a line separator.  The line separator string is defined by the
+     * system property <tt>line.separator</tt>, and is not necessarily a single
+     * newline ('\n') character.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void newLine() throws IOException {
+        write(lineSeparator);
+    }
+
+    /**
+     * Flushes the stream.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void flush() throws IOException {
+        synchronized (lock) {
+            flushBuffer();
+            out.flush();
+        }
+    }
+
+    @SuppressWarnings("try")
+    public void close() throws IOException {
+        synchronized (lock) {
+            if (out == null) {
+                return;
+            }
+            try (Writer w = out) {
+                flushBuffer();
+            } finally {
+                out = null;
+                cb = null;
+            }
+        }
+    }
+}

@@ -1,83 +1,77 @@
-/*    */ package javax.swing.plaf.synth;
-/*    */ 
-/*    */ import java.awt.Graphics;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SynthCheckBoxUI
-/*    */   extends SynthRadioButtonUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 52 */     return new SynthCheckBoxUI();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected String getPropertyPrefix() {
-/* 60 */     return "CheckBox.";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 65 */     paramSynthContext.getPainter().paintCheckBoxBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 66 */         .getWidth(), paramJComponent.getHeight());
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 75 */     paramSynthContext.getPainter().paintCheckBoxBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthCheckBoxUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.JComponent;
+import java.awt.Graphics;
+import javax.swing.plaf.ComponentUI;
+
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JCheckBox}.
+ *
+ * @author Jeff Dinkins
+ * @since 1.7
+ */
+public class SynthCheckBoxUI extends SynthRadioButtonUI {
+
+    // ********************************
+    //            Create PLAF
+    // ********************************
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param b component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent b) {
+        return new SynthCheckBoxUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getPropertyPrefix() {
+        return "CheckBox.";
+    }
+
+    @Override
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        context.getPainter().paintCheckBoxBackground(context, g, 0, 0,
+                                                  c.getWidth(), c.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintCheckBoxBorder(context, g, x, y, w, h);
+    }
+}

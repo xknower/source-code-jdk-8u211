@@ -1,422 +1,420 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.trax;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collection;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import javax.xml.stream.XMLEventFactory;
-/*     */ import javax.xml.stream.XMLEventWriter;
-/*     */ import javax.xml.stream.XMLStreamException;
-/*     */ import javax.xml.stream.events.Attribute;
-/*     */ import javax.xml.stream.events.Namespace;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.ext.Locator2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SAX2StAXEventWriter
-/*     */   extends SAX2StAXBaseWriter
-/*     */ {
-/*     */   private XMLEventWriter writer;
-/*     */   private XMLEventFactory eventFactory;
-/*  57 */   private List namespaceStack = new ArrayList();
-/*     */ 
-/*     */   
-/*     */   private boolean needToCallStartDocument = false;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAX2StAXEventWriter() {
-/*  65 */     this.eventFactory = XMLEventFactory.newInstance();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAX2StAXEventWriter(XMLEventWriter writer) {
-/*  72 */     this.writer = writer;
-/*  73 */     this.eventFactory = XMLEventFactory.newInstance();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAX2StAXEventWriter(XMLEventWriter writer, XMLEventFactory factory) {
-/*  80 */     this.writer = writer;
-/*  81 */     if (factory != null) {
-/*     */       
-/*  83 */       this.eventFactory = factory;
-/*     */     }
-/*     */     else {
-/*     */       
-/*  87 */       this.eventFactory = XMLEventFactory.newInstance();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLEventWriter getEventWriter() {
-/*  95 */     return this.writer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEventWriter(XMLEventWriter writer) {
-/* 102 */     this.writer = writer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLEventFactory getEventFactory() {
-/* 109 */     return this.eventFactory;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEventFactory(XMLEventFactory factory) {
-/* 116 */     this.eventFactory = factory;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startDocument() throws SAXException {
-/* 122 */     super.startDocument();
-/*     */     
-/* 124 */     this.namespaceStack.clear();
-/*     */     
-/* 126 */     this.eventFactory.setLocation(getCurrentLocation());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 131 */     this.needToCallStartDocument = true;
-/*     */   }
-/*     */   
-/*     */   private void writeStartDocument() throws SAXException {
-/*     */     try {
-/* 136 */       if (this.docLocator == null) {
-/* 137 */         this.writer.add(this.eventFactory.createStartDocument());
-/*     */       } else {
-/*     */         try {
-/* 140 */           this.writer.add(this.eventFactory.createStartDocument(((Locator2)this.docLocator).getEncoding(), ((Locator2)this.docLocator).getXMLVersion()));
-/* 141 */         } catch (ClassCastException e) {
-/* 142 */           this.writer.add(this.eventFactory.createStartDocument());
-/*     */         } 
-/*     */       } 
-/* 145 */     } catch (XMLStreamException e) {
-/* 146 */       throw new SAXException(e);
-/*     */     } 
-/* 148 */     this.needToCallStartDocument = false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void endDocument() throws SAXException {
-/* 153 */     this.eventFactory.setLocation(getCurrentLocation());
-/*     */ 
-/*     */     
-/*     */     try {
-/* 157 */       this.writer.add(this.eventFactory.createEndDocument());
-/*     */     }
-/* 159 */     catch (XMLStreamException e) {
-/*     */       
-/* 161 */       throw new SAXException(e);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 165 */     super.endDocument();
-/*     */ 
-/*     */     
-/* 168 */     this.namespaceStack.clear();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-/* 174 */     if (this.needToCallStartDocument) {
-/* 175 */       writeStartDocument();
-/*     */     }
-/*     */ 
-/*     */     
-/* 179 */     this.eventFactory.setLocation(getCurrentLocation());
-/*     */ 
-/*     */     
-/* 182 */     Collection[] events = { null, null };
-/* 183 */     createStartEvents(attributes, events);
-/*     */     
-/* 185 */     this.namespaceStack.add(events[0]);
-/*     */ 
-/*     */     
-/*     */     try {
-/* 189 */       String[] qname = { null, null };
-/* 190 */       parseQName(qName, qname);
-/*     */       
-/* 192 */       this.writer.add(this.eventFactory.createStartElement(qname[0], uri, qname[1], events[1]
-/* 193 */             .iterator(), events[0].iterator()));
-/*     */     }
-/* 195 */     catch (XMLStreamException e) {
-/*     */       
-/* 197 */       throw new SAXException(e);
-/*     */     }
-/*     */     finally {
-/*     */       
-/* 201 */       super.startElement(uri, localName, qName, attributes);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement(String uri, String localName, String qName) throws SAXException {
-/* 210 */     super.endElement(uri, localName, qName);
-/*     */     
-/* 212 */     this.eventFactory.setLocation(getCurrentLocation());
-/*     */ 
-/*     */     
-/* 215 */     String[] qname = { null, null };
-/* 216 */     parseQName(qName, qname);
-/*     */ 
-/*     */     
-/* 219 */     Collection nsList = this.namespaceStack.remove(this.namespaceStack.size() - 1);
-/* 220 */     Iterator nsIter = nsList.iterator();
-/*     */ 
-/*     */     
-/*     */     try {
-/* 224 */       this.writer.add(this.eventFactory.createEndElement(qname[0], uri, qname[1], nsIter));
-/*     */     
-/*     */     }
-/* 227 */     catch (XMLStreamException e) {
-/*     */       
-/* 229 */       throw new SAXException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void comment(char[] ch, int start, int length) throws SAXException {
-/* 236 */     if (this.needToCallStartDocument)
-/*     */     {
-/*     */ 
-/*     */       
-/* 240 */       writeStartDocument();
-/*     */     }
-/*     */     
-/* 243 */     super.comment(ch, start, length);
-/*     */     
-/* 245 */     this.eventFactory.setLocation(getCurrentLocation());
-/*     */     
-/*     */     try {
-/* 248 */       this.writer.add(this.eventFactory.createComment(new String(ch, start, length)));
-/*     */     
-/*     */     }
-/* 251 */     catch (XMLStreamException e) {
-/*     */       
-/* 253 */       throw new SAXException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(char[] ch, int start, int length) throws SAXException {
-/* 262 */     super.characters(ch, start, length);
-/*     */ 
-/*     */     
-/*     */     try {
-/* 266 */       if (!this.isCDATA)
-/*     */       {
-/* 268 */         this.eventFactory.setLocation(getCurrentLocation());
-/* 269 */         this.writer.add(this.eventFactory.createCharacters(new String(ch, start, length)));
-/*     */       
-/*     */       }
-/*     */     
-/*     */     }
-/* 274 */     catch (XMLStreamException e) {
-/*     */       
-/* 276 */       throw new SAXException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
-/* 285 */     super.ignorableWhitespace(ch, start, length);
-/* 286 */     characters(ch, start, length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void processingInstruction(String target, String data) throws SAXException {
-/* 293 */     if (this.needToCallStartDocument)
-/*     */     {
-/*     */ 
-/*     */       
-/* 297 */       writeStartDocument();
-/*     */     }
-/*     */     
-/* 300 */     super.processingInstruction(target, data);
-/*     */     
-/*     */     try {
-/* 303 */       this.writer.add(this.eventFactory.createProcessingInstruction(target, data));
-/*     */     }
-/* 305 */     catch (XMLStreamException e) {
-/*     */       
-/* 307 */       throw new SAXException(e);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endCDATA() throws SAXException {
-/* 315 */     this.eventFactory.setLocation(getCurrentLocation());
-/*     */     
-/*     */     try {
-/* 318 */       this.writer.add(this.eventFactory.createCData(this.CDATABuffer.toString()));
-/*     */     }
-/* 320 */     catch (XMLStreamException e) {
-/*     */       
-/* 322 */       throw new SAXException(e);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 326 */     super.endCDATA();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void createStartEvents(Attributes attributes, Collection[] events) {
-/* 333 */     Map<Object, Object> nsMap = null;
-/* 334 */     List<Attribute> attrs = null;
-/*     */ 
-/*     */     
-/* 337 */     if (this.namespaces != null) {
-/* 338 */       int nDecls = this.namespaces.size();
-/* 339 */       for (int j = 0; j < nDecls; j++) {
-/* 340 */         String prefix = this.namespaces.elementAt(j++);
-/* 341 */         String uri = this.namespaces.elementAt(j);
-/* 342 */         Namespace ns = createNamespace(prefix, uri);
-/* 343 */         if (nsMap == null) {
-/* 344 */           nsMap = new HashMap<>();
-/*     */         }
-/* 346 */         nsMap.put(prefix, ns);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 351 */     String[] qname = { null, null };
-/* 352 */     for (int i = 0, s = attributes.getLength(); i < s; i++) {
-/*     */       
-/* 354 */       parseQName(attributes.getQName(i), qname);
-/*     */       
-/* 356 */       String attrPrefix = qname[0];
-/* 357 */       String attrLocal = qname[1];
-/*     */       
-/* 359 */       String attrQName = attributes.getQName(i);
-/* 360 */       String attrValue = attributes.getValue(i);
-/* 361 */       String attrURI = attributes.getURI(i);
-/*     */       
-/* 363 */       if ("xmlns".equals(attrQName) || "xmlns".equals(attrPrefix)) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 367 */         if (nsMap == null) {
-/* 368 */           nsMap = new HashMap<>();
-/*     */         }
-/*     */         
-/* 371 */         if (!nsMap.containsKey(attrLocal)) {
-/* 372 */           Namespace ns = createNamespace(attrLocal, attrValue);
-/* 373 */           nsMap.put(attrLocal, ns);
-/*     */         } 
-/*     */       } else {
-/*     */         Attribute attribute;
-/*     */ 
-/*     */         
-/* 379 */         if (attrPrefix.length() > 0) {
-/*     */           
-/* 381 */           attribute = this.eventFactory.createAttribute(attrPrefix, attrURI, attrLocal, attrValue);
-/*     */         
-/*     */         }
-/*     */         else {
-/*     */           
-/* 386 */           attribute = this.eventFactory.createAttribute(attrLocal, attrValue);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 391 */         if (attrs == null)
-/*     */         {
-/* 393 */           attrs = new ArrayList();
-/*     */         }
-/*     */         
-/* 396 */         attrs.add(attribute);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 401 */     events[0] = (nsMap == null) ? Collections.EMPTY_LIST : nsMap.values();
-/* 402 */     events[1] = (attrs == null) ? Collections.EMPTY_LIST : attrs;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Namespace createNamespace(String prefix, String uri) {
-/* 408 */     if (prefix == null || prefix.length() == 0)
-/*     */     {
-/* 410 */       return this.eventFactory.createNamespace(uri);
-/*     */     }
-/*     */ 
-/*     */     
-/* 414 */     return this.eventFactory.createNamespace(prefix, uri);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\trax\SAX2StAXEventWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.org.apache.xalan.internal.xsltc.trax;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.stream.XMLEventFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.*;
+import javax.xml.stream.XMLEventWriter;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.Locator2;
+
+/**
+ * @author Sunitha Reddy
+ */
+public class SAX2StAXEventWriter extends SAX2StAXBaseWriter {
+
+
+    private XMLEventWriter writer;
+
+
+    private XMLEventFactory eventFactory;
+
+
+    private List namespaceStack = new ArrayList();
+
+
+    private boolean needToCallStartDocument = false;
+
+
+    public SAX2StAXEventWriter() {
+
+        eventFactory = XMLEventFactory.newInstance();
+
+    }
+
+
+    public SAX2StAXEventWriter(XMLEventWriter writer) {
+
+        this.writer = writer;
+        eventFactory = XMLEventFactory.newInstance();
+
+    }
+
+    public SAX2StAXEventWriter(XMLEventWriter writer,
+            XMLEventFactory factory) {
+
+        this.writer = writer;
+        if (factory != null) {
+
+            this.eventFactory = factory;
+
+        } else {
+
+            eventFactory = XMLEventFactory.newInstance();
+
+        }
+
+    }
+
+    public XMLEventWriter getEventWriter() {
+
+        return writer;
+
+    }
+
+
+    public void setEventWriter(XMLEventWriter writer) {
+
+        this.writer = writer;
+
+    }
+
+
+    public XMLEventFactory getEventFactory() {
+
+        return eventFactory;
+
+    }
+
+
+    public void setEventFactory(XMLEventFactory factory) {
+
+        this.eventFactory = factory;
+
+    }
+
+    public void startDocument() throws SAXException {
+
+        super.startDocument();
+
+        namespaceStack.clear();
+
+        eventFactory.setLocation(getCurrentLocation());
+
+        // Encoding and version info will be available only after startElement
+        // is called for first time. So, defer START_DOCUMENT event of StAX till
+        // that point of time.
+        needToCallStartDocument = true;
+    }
+
+    private void writeStartDocument() throws SAXException {
+        try {
+            if (docLocator == null)
+                writer.add(eventFactory.createStartDocument());
+            else {
+                try{
+                    writer.add(eventFactory.createStartDocument(((Locator2)docLocator).getEncoding(),((Locator2)docLocator).getXMLVersion()));
+                } catch(ClassCastException e){
+                    writer.add(eventFactory.createStartDocument());
+                }
+            }
+        } catch (XMLStreamException e) {
+            throw new SAXException(e);
+        }
+        needToCallStartDocument = false;
+    }
+
+    public void endDocument() throws SAXException {
+
+        eventFactory.setLocation(getCurrentLocation());
+
+        try {
+
+            writer.add(eventFactory.createEndDocument());
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        }
+
+        super.endDocument();
+
+        // clear the namespaces
+        namespaceStack.clear();
+
+    }
+
+    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+
+        if (needToCallStartDocument) {
+            writeStartDocument();
+        }
+
+        // set document location
+        eventFactory.setLocation(getCurrentLocation());
+
+        // create attribute and namespace events
+        Collection[] events = {null, null};
+        createStartEvents(attributes, events);
+
+        namespaceStack.add(events[0]);
+
+        try {
+
+            String[] qname = {null, null};
+            parseQName(qName, qname);
+
+            writer.add(eventFactory.createStartElement(qname[0], uri,
+                    qname[1], events[1].iterator(), events[0].iterator()));
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        } finally {
+
+            super.startElement(uri, localName, qName, attributes);
+
+        }
+
+    }
+
+    public void endElement(String uri, String localName, String qName)
+            throws SAXException {
+
+        super.endElement(uri, localName, qName);
+
+        eventFactory.setLocation(getCurrentLocation());
+
+        // parse name
+        String[] qname = {null, null};
+        parseQName(qName, qname);
+
+        // get namespaces
+        Collection nsList = (Collection) namespaceStack.remove(namespaceStack.size() - 1);
+        Iterator nsIter = nsList.iterator();
+
+        try {
+
+            writer.add(eventFactory.createEndElement(qname[0], uri, qname[1],
+                    nsIter));
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        }
+
+    }
+
+    public void comment(char[] ch, int start, int length) throws SAXException {
+        if (needToCallStartDocument) {
+            // Drat. We were trying to postpone this until the first element so that we could get
+            // the locator, but we can't output a comment before the start document, so we're just
+            // going to have to do without the locator if it hasn't been set yet.
+            writeStartDocument();
+        }
+
+        super.comment(ch, start, length);
+
+        eventFactory.setLocation(getCurrentLocation());
+        try {
+
+            writer.add(eventFactory.createComment(new String(ch, start,
+                    length)));
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        }
+
+    }
+
+    public void characters(char[] ch, int start, int length)
+            throws SAXException {
+
+        super.characters(ch, start, length);
+
+        try {
+
+            if (!isCDATA) {
+
+                eventFactory.setLocation(getCurrentLocation());
+                writer.add(eventFactory.createCharacters(new String(ch,
+                        start, length)));
+
+            }
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        }
+
+    }
+
+    public void ignorableWhitespace(char[] ch, int start, int length)
+            throws SAXException {
+
+        super.ignorableWhitespace(ch, start, length);
+        characters(ch, start, length);
+
+    }
+
+    public void processingInstruction(String target, String data)
+            throws SAXException {
+
+        if (needToCallStartDocument) {
+            // Drat. We were trying to postpone this until the first element so that we could get
+            // the locator, but we can't output a PI before the start document, so we're just
+            // going to have to do without the locator if it hasn't been set yet.
+            writeStartDocument();
+        }
+
+        super.processingInstruction(target, data);
+        try {
+
+            writer.add(eventFactory.createProcessingInstruction(target, data));
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        }
+
+    }
+
+    public void endCDATA() throws SAXException {
+
+        eventFactory.setLocation(getCurrentLocation());
+        try {
+
+            writer.add(eventFactory.createCData(CDATABuffer.toString()));
+
+        } catch (XMLStreamException e) {
+
+            throw new SAXException(e);
+
+        }
+
+        super.endCDATA();
+
+    }
+
+
+    protected void createStartEvents(Attributes attributes, Collection[] events) {
+
+        Map nsMap = null;
+        List attrs = null;
+
+        // create namespaces
+        if (namespaces != null) {
+            final int nDecls = namespaces.size();
+            for (int i = 0; i < nDecls; i++) {
+                final String prefix = (String) namespaces.elementAt(i++);
+                String uri = (String) namespaces.elementAt(i);
+                Namespace ns = createNamespace(prefix, uri);
+                if (nsMap == null) {
+                    nsMap = new HashMap();
+                }
+                nsMap.put(prefix, ns);
+            }
+        }
+
+        // create attributes
+        String[] qname = {null, null};
+        for (int i = 0, s = attributes.getLength(); i < s; i++) {
+
+            parseQName(attributes.getQName(i), qname);
+
+            String attrPrefix = qname[0];
+            String attrLocal = qname[1];
+
+            String attrQName = attributes.getQName(i);
+            String attrValue = attributes.getValue(i);
+            String attrURI = attributes.getURI(i);
+
+            if ("xmlns".equals(attrQName) || "xmlns".equals(attrPrefix)) {
+                // namespace declaration disguised as an attribute. If the
+                // namespace has already been declared, skip it, otherwise
+                // write it as an namespace
+                if (nsMap == null) {
+                    nsMap = new HashMap();
+                }
+
+                if (!nsMap.containsKey(attrLocal)) {
+                    Namespace ns = createNamespace(attrLocal, attrValue);
+                    nsMap.put(attrLocal, ns);
+                }
+
+            } else {
+
+                Attribute attribute;
+                if (attrPrefix.length() > 0) {
+
+                    attribute = eventFactory.createAttribute(attrPrefix,
+                            attrURI, attrLocal, attrValue);
+
+                } else {
+
+                    attribute = eventFactory.createAttribute(attrLocal,
+                            attrValue);
+
+                }
+
+                if (attrs == null) {
+
+                    attrs = new ArrayList();
+
+                }
+                attrs.add(attribute);
+
+            }
+        }
+
+        events[0] = (nsMap == null ? Collections.EMPTY_LIST : nsMap.values());
+        events[1] = (attrs == null ? Collections.EMPTY_LIST : attrs);
+
+    }
+
+    protected Namespace createNamespace(String prefix, String uri) {
+
+        if (prefix == null || prefix.length() == 0) {
+
+            return eventFactory.createNamespace(uri);
+
+        } else {
+
+            return eventFactory.createNamespace(prefix, uri);
+
+        }
+
+    }
+
+}

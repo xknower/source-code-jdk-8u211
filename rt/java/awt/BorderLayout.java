@@ -1,893 +1,887 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BorderLayout
-/*     */   implements LayoutManager2, Serializable
-/*     */ {
-/*     */   int hgap;
-/*     */   int vgap;
-/*     */   Component north;
-/*     */   Component west;
-/*     */   Component east;
-/*     */   Component south;
-/*     */   Component center;
-/*     */   Component firstLine;
-/*     */   Component lastLine;
-/*     */   Component firstItem;
-/*     */   Component lastItem;
-/*     */   public static final String NORTH = "North";
-/*     */   public static final String SOUTH = "South";
-/*     */   public static final String EAST = "East";
-/*     */   public static final String WEST = "West";
-/*     */   public static final String CENTER = "Center";
-/*     */   public static final String BEFORE_FIRST_LINE = "First";
-/*     */   public static final String AFTER_LAST_LINE = "Last";
-/*     */   public static final String BEFORE_LINE_BEGINS = "Before";
-/*     */   public static final String AFTER_LINE_ENDS = "After";
-/*     */   public static final String PAGE_START = "First";
-/*     */   public static final String PAGE_END = "Last";
-/*     */   public static final String LINE_START = "Before";
-/*     */   public static final String LINE_END = "After";
-/*     */   private static final long serialVersionUID = -8658291919501921765L;
-/*     */   
-/*     */   public BorderLayout() {
-/* 352 */     this(0, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BorderLayout(int paramInt1, int paramInt2) {
-/* 364 */     this.hgap = paramInt1;
-/* 365 */     this.vgap = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getHgap() {
-/* 373 */     return this.hgap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setHgap(int paramInt) {
-/* 382 */     this.hgap = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getVgap() {
-/* 390 */     return this.vgap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setVgap(int paramInt) {
-/* 399 */     this.vgap = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addLayoutComponent(Component paramComponent, Object paramObject) {
-/* 422 */     synchronized (paramComponent.getTreeLock()) {
-/* 423 */       if (paramObject == null || paramObject instanceof String) {
-/* 424 */         addLayoutComponent((String)paramObject, paramComponent);
-/*     */       } else {
-/* 426 */         throw new IllegalArgumentException("cannot add to layout: constraint must be a string (or null)");
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public void addLayoutComponent(String paramString, Component paramComponent) {
-/* 436 */     synchronized (paramComponent.getTreeLock()) {
-/*     */       
-/* 438 */       if (paramString == null) {
-/* 439 */         paramString = "Center";
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 444 */       if ("Center".equals(paramString)) {
-/* 445 */         this.center = paramComponent;
-/* 446 */       } else if ("North".equals(paramString)) {
-/* 447 */         this.north = paramComponent;
-/* 448 */       } else if ("South".equals(paramString)) {
-/* 449 */         this.south = paramComponent;
-/* 450 */       } else if ("East".equals(paramString)) {
-/* 451 */         this.east = paramComponent;
-/* 452 */       } else if ("West".equals(paramString)) {
-/* 453 */         this.west = paramComponent;
-/* 454 */       } else if ("First".equals(paramString)) {
-/* 455 */         this.firstLine = paramComponent;
-/* 456 */       } else if ("Last".equals(paramString)) {
-/* 457 */         this.lastLine = paramComponent;
-/* 458 */       } else if ("Before".equals(paramString)) {
-/* 459 */         this.firstItem = paramComponent;
-/* 460 */       } else if ("After".equals(paramString)) {
-/* 461 */         this.lastItem = paramComponent;
-/*     */       } else {
-/* 463 */         throw new IllegalArgumentException("cannot add to layout: unknown constraint: " + paramString);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeLayoutComponent(Component paramComponent) {
-/* 478 */     synchronized (paramComponent.getTreeLock()) {
-/* 479 */       if (paramComponent == this.center) {
-/* 480 */         this.center = null;
-/* 481 */       } else if (paramComponent == this.north) {
-/* 482 */         this.north = null;
-/* 483 */       } else if (paramComponent == this.south) {
-/* 484 */         this.south = null;
-/* 485 */       } else if (paramComponent == this.east) {
-/* 486 */         this.east = null;
-/* 487 */       } else if (paramComponent == this.west) {
-/* 488 */         this.west = null;
-/*     */       } 
-/* 490 */       if (paramComponent == this.firstLine) {
-/* 491 */         this.firstLine = null;
-/* 492 */       } else if (paramComponent == this.lastLine) {
-/* 493 */         this.lastLine = null;
-/* 494 */       } else if (paramComponent == this.firstItem) {
-/* 495 */         this.firstItem = null;
-/* 496 */       } else if (paramComponent == this.lastItem) {
-/* 497 */         this.lastItem = null;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getLayoutComponent(Object paramObject) {
-/* 518 */     if ("Center".equals(paramObject))
-/* 519 */       return this.center; 
-/* 520 */     if ("North".equals(paramObject))
-/* 521 */       return this.north; 
-/* 522 */     if ("South".equals(paramObject))
-/* 523 */       return this.south; 
-/* 524 */     if ("West".equals(paramObject))
-/* 525 */       return this.west; 
-/* 526 */     if ("East".equals(paramObject))
-/* 527 */       return this.east; 
-/* 528 */     if ("First".equals(paramObject))
-/* 529 */       return this.firstLine; 
-/* 530 */     if ("Last".equals(paramObject))
-/* 531 */       return this.lastLine; 
-/* 532 */     if ("Before".equals(paramObject))
-/* 533 */       return this.firstItem; 
-/* 534 */     if ("After".equals(paramObject)) {
-/* 535 */       return this.lastItem;
-/*     */     }
-/* 537 */     throw new IllegalArgumentException("cannot get component: unknown constraint: " + paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getLayoutComponent(Container paramContainer, Object paramObject) {
-/* 567 */     boolean bool = paramContainer.getComponentOrientation().isLeftToRight();
-/* 568 */     Component component = null;
-/*     */     
-/* 570 */     if ("North".equals(paramObject)) {
-/* 571 */       component = (this.firstLine != null) ? this.firstLine : this.north;
-/* 572 */     } else if ("South".equals(paramObject)) {
-/* 573 */       component = (this.lastLine != null) ? this.lastLine : this.south;
-/* 574 */     } else if ("West".equals(paramObject)) {
-/* 575 */       component = bool ? this.firstItem : this.lastItem;
-/* 576 */       if (component == null) {
-/* 577 */         component = this.west;
-/*     */       }
-/* 579 */     } else if ("East".equals(paramObject)) {
-/* 580 */       component = bool ? this.lastItem : this.firstItem;
-/* 581 */       if (component == null) {
-/* 582 */         component = this.east;
-/*     */       }
-/* 584 */     } else if ("Center".equals(paramObject)) {
-/* 585 */       component = this.center;
-/*     */     } else {
-/* 587 */       throw new IllegalArgumentException("cannot get component: invalid constraint: " + paramObject);
-/*     */     } 
-/*     */     
-/* 590 */     return component;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getConstraints(Component paramComponent) {
-/* 606 */     if (paramComponent == null) {
-/* 607 */       return null;
-/*     */     }
-/* 609 */     if (paramComponent == this.center)
-/* 610 */       return "Center"; 
-/* 611 */     if (paramComponent == this.north)
-/* 612 */       return "North"; 
-/* 613 */     if (paramComponent == this.south)
-/* 614 */       return "South"; 
-/* 615 */     if (paramComponent == this.west)
-/* 616 */       return "West"; 
-/* 617 */     if (paramComponent == this.east)
-/* 618 */       return "East"; 
-/* 619 */     if (paramComponent == this.firstLine)
-/* 620 */       return "First"; 
-/* 621 */     if (paramComponent == this.lastLine)
-/* 622 */       return "Last"; 
-/* 623 */     if (paramComponent == this.firstItem)
-/* 624 */       return "Before"; 
-/* 625 */     if (paramComponent == this.lastItem) {
-/* 626 */       return "After";
-/*     */     }
-/* 628 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension minimumLayoutSize(Container paramContainer) {
-/* 646 */     synchronized (paramContainer.getTreeLock()) {
-/* 647 */       Dimension dimension = new Dimension(0, 0);
-/*     */       
-/* 649 */       boolean bool = paramContainer.getComponentOrientation().isLeftToRight();
-/* 650 */       Component component = null;
-/*     */       
-/* 652 */       if ((component = getChild("East", bool)) != null) {
-/* 653 */         Dimension dimension1 = component.getMinimumSize();
-/* 654 */         dimension.width += dimension1.width + this.hgap;
-/* 655 */         dimension.height = Math.max(dimension1.height, dimension.height);
-/*     */       } 
-/* 657 */       if ((component = getChild("West", bool)) != null) {
-/* 658 */         Dimension dimension1 = component.getMinimumSize();
-/* 659 */         dimension.width += dimension1.width + this.hgap;
-/* 660 */         dimension.height = Math.max(dimension1.height, dimension.height);
-/*     */       } 
-/* 662 */       if ((component = getChild("Center", bool)) != null) {
-/* 663 */         Dimension dimension1 = component.getMinimumSize();
-/* 664 */         dimension.width += dimension1.width;
-/* 665 */         dimension.height = Math.max(dimension1.height, dimension.height);
-/*     */       } 
-/* 667 */       if ((component = getChild("North", bool)) != null) {
-/* 668 */         Dimension dimension1 = component.getMinimumSize();
-/* 669 */         dimension.width = Math.max(dimension1.width, dimension.width);
-/* 670 */         dimension.height += dimension1.height + this.vgap;
-/*     */       } 
-/* 672 */       if ((component = getChild("South", bool)) != null) {
-/* 673 */         Dimension dimension1 = component.getMinimumSize();
-/* 674 */         dimension.width = Math.max(dimension1.width, dimension.width);
-/* 675 */         dimension.height += dimension1.height + this.vgap;
-/*     */       } 
-/*     */       
-/* 678 */       Insets insets = paramContainer.getInsets();
-/* 679 */       dimension.width += insets.left + insets.right;
-/* 680 */       dimension.height += insets.top + insets.bottom;
-/*     */       
-/* 682 */       return dimension;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension preferredLayoutSize(Container paramContainer) {
-/* 702 */     synchronized (paramContainer.getTreeLock()) {
-/* 703 */       Dimension dimension = new Dimension(0, 0);
-/*     */       
-/* 705 */       boolean bool = paramContainer.getComponentOrientation().isLeftToRight();
-/* 706 */       Component component = null;
-/*     */       
-/* 708 */       if ((component = getChild("East", bool)) != null) {
-/* 709 */         Dimension dimension1 = component.getPreferredSize();
-/* 710 */         dimension.width += dimension1.width + this.hgap;
-/* 711 */         dimension.height = Math.max(dimension1.height, dimension.height);
-/*     */       } 
-/* 713 */       if ((component = getChild("West", bool)) != null) {
-/* 714 */         Dimension dimension1 = component.getPreferredSize();
-/* 715 */         dimension.width += dimension1.width + this.hgap;
-/* 716 */         dimension.height = Math.max(dimension1.height, dimension.height);
-/*     */       } 
-/* 718 */       if ((component = getChild("Center", bool)) != null) {
-/* 719 */         Dimension dimension1 = component.getPreferredSize();
-/* 720 */         dimension.width += dimension1.width;
-/* 721 */         dimension.height = Math.max(dimension1.height, dimension.height);
-/*     */       } 
-/* 723 */       if ((component = getChild("North", bool)) != null) {
-/* 724 */         Dimension dimension1 = component.getPreferredSize();
-/* 725 */         dimension.width = Math.max(dimension1.width, dimension.width);
-/* 726 */         dimension.height += dimension1.height + this.vgap;
-/*     */       } 
-/* 728 */       if ((component = getChild("South", bool)) != null) {
-/* 729 */         Dimension dimension1 = component.getPreferredSize();
-/* 730 */         dimension.width = Math.max(dimension1.width, dimension.width);
-/* 731 */         dimension.height += dimension1.height + this.vgap;
-/*     */       } 
-/*     */       
-/* 734 */       Insets insets = paramContainer.getInsets();
-/* 735 */       dimension.width += insets.left + insets.right;
-/* 736 */       dimension.height += insets.top + insets.bottom;
-/*     */       
-/* 738 */       return dimension;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension maximumLayoutSize(Container paramContainer) {
-/* 751 */     return new Dimension(2147483647, 2147483647);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getLayoutAlignmentX(Container paramContainer) {
-/* 762 */     return 0.5F;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getLayoutAlignmentY(Container paramContainer) {
-/* 773 */     return 0.5F;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void invalidateLayout(Container paramContainer) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void layoutContainer(Container paramContainer) {
-/* 803 */     synchronized (paramContainer.getTreeLock()) {
-/* 804 */       Insets insets = paramContainer.getInsets();
-/* 805 */       int i = insets.top;
-/* 806 */       int j = paramContainer.height - insets.bottom;
-/* 807 */       int k = insets.left;
-/* 808 */       int m = paramContainer.width - insets.right;
-/*     */       
-/* 810 */       boolean bool = paramContainer.getComponentOrientation().isLeftToRight();
-/* 811 */       Component component = null;
-/*     */       
-/* 813 */       if ((component = getChild("North", bool)) != null) {
-/* 814 */         component.setSize(m - k, component.height);
-/* 815 */         Dimension dimension = component.getPreferredSize();
-/* 816 */         component.setBounds(k, i, m - k, dimension.height);
-/* 817 */         i += dimension.height + this.vgap;
-/*     */       } 
-/* 819 */       if ((component = getChild("South", bool)) != null) {
-/* 820 */         component.setSize(m - k, component.height);
-/* 821 */         Dimension dimension = component.getPreferredSize();
-/* 822 */         component.setBounds(k, j - dimension.height, m - k, dimension.height);
-/* 823 */         j -= dimension.height + this.vgap;
-/*     */       } 
-/* 825 */       if ((component = getChild("East", bool)) != null) {
-/* 826 */         component.setSize(component.width, j - i);
-/* 827 */         Dimension dimension = component.getPreferredSize();
-/* 828 */         component.setBounds(m - dimension.width, i, dimension.width, j - i);
-/* 829 */         m -= dimension.width + this.hgap;
-/*     */       } 
-/* 831 */       if ((component = getChild("West", bool)) != null) {
-/* 832 */         component.setSize(component.width, j - i);
-/* 833 */         Dimension dimension = component.getPreferredSize();
-/* 834 */         component.setBounds(k, i, dimension.width, j - i);
-/* 835 */         k += dimension.width + this.hgap;
-/*     */       } 
-/* 837 */       if ((component = getChild("Center", bool)) != null) {
-/* 838 */         component.setBounds(k, i, m - k, j - i);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Component getChild(String paramString, boolean paramBoolean) {
-/* 851 */     Component component = null;
-/*     */     
-/* 853 */     if (paramString == "North") {
-/* 854 */       component = (this.firstLine != null) ? this.firstLine : this.north;
-/*     */     }
-/* 856 */     else if (paramString == "South") {
-/* 857 */       component = (this.lastLine != null) ? this.lastLine : this.south;
-/*     */     }
-/* 859 */     else if (paramString == "West") {
-/* 860 */       component = paramBoolean ? this.firstItem : this.lastItem;
-/* 861 */       if (component == null) {
-/* 862 */         component = this.west;
-/*     */       }
-/*     */     }
-/* 865 */     else if (paramString == "East") {
-/* 866 */       component = paramBoolean ? this.lastItem : this.firstItem;
-/* 867 */       if (component == null) {
-/* 868 */         component = this.east;
-/*     */       }
-/*     */     }
-/* 871 */     else if (paramString == "Center") {
-/* 872 */       component = this.center;
-/*     */     } 
-/* 874 */     if (component != null && !component.visible) {
-/* 875 */       component = null;
-/*     */     }
-/* 877 */     return component;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 885 */     return getClass().getName() + "[hgap=" + this.hgap + ",vgap=" + this.vgap + "]";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\BorderLayout.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.util.Hashtable;
+
+/**
+ * A border layout lays out a container, arranging and resizing
+ * its components to fit in five regions:
+ * north, south, east, west, and center.
+ * Each region may contain no more than one component, and
+ * is identified by a corresponding constant:
+ * <code>NORTH</code>, <code>SOUTH</code>, <code>EAST</code>,
+ * <code>WEST</code>, and <code>CENTER</code>.  When adding a
+ * component to a container with a border layout, use one of these
+ * five constants, for example:
+ * <pre>
+ *    Panel p = new Panel();
+ *    p.setLayout(new BorderLayout());
+ *    p.add(new Button("Okay"), BorderLayout.SOUTH);
+ * </pre>
+ * As a convenience, <code>BorderLayout</code> interprets the
+ * absence of a string specification the same as the constant
+ * <code>CENTER</code>:
+ * <pre>
+ *    Panel p2 = new Panel();
+ *    p2.setLayout(new BorderLayout());
+ *    p2.add(new TextArea());  // Same as p.add(new TextArea(), BorderLayout.CENTER);
+ * </pre>
+ * <p>
+ * In addition, <code>BorderLayout</code> supports the relative
+ * positioning constants, <code>PAGE_START</code>, <code>PAGE_END</code>,
+ * <code>LINE_START</code>, and <code>LINE_END</code>.
+ * In a container whose <code>ComponentOrientation</code> is set to
+ * <code>ComponentOrientation.LEFT_TO_RIGHT</code>, these constants map to
+ * <code>NORTH</code>, <code>SOUTH</code>, <code>WEST</code>, and
+ * <code>EAST</code>, respectively.
+ * <p>
+ * For compatibility with previous releases, <code>BorderLayout</code>
+ * also includes the relative positioning constants <code>BEFORE_FIRST_LINE</code>,
+ * <code>AFTER_LAST_LINE</code>, <code>BEFORE_LINE_BEGINS</code> and
+ * <code>AFTER_LINE_ENDS</code>.  These are equivalent to
+ * <code>PAGE_START</code>, <code>PAGE_END</code>, <code>LINE_START</code>
+ * and <code>LINE_END</code> respectively.  For
+ * consistency with the relative positioning constants used by other
+ * components, the latter constants are preferred.
+ * <p>
+ * Mixing both absolute and relative positioning constants can lead to
+ * unpredictable results.  If
+ * you use both types, the relative constants will take precedence.
+ * For example, if you add components using both the <code>NORTH</code>
+ * and <code>PAGE_START</code> constants in a container whose
+ * orientation is <code>LEFT_TO_RIGHT</code>, only the
+ * <code>PAGE_START</code> will be layed out.
+ * <p>
+ * NOTE: Currently (in the Java 2 platform v1.2),
+ * <code>BorderLayout</code> does not support vertical
+ * orientations.  The <code>isVertical</code> setting on the container's
+ * <code>ComponentOrientation</code> is not respected.
+ * <p>
+ * The components are laid out according to their
+ * preferred sizes and the constraints of the container's size.
+ * The <code>NORTH</code> and <code>SOUTH</code> components may
+ * be stretched horizontally; the <code>EAST</code> and
+ * <code>WEST</code> components may be stretched vertically;
+ * the <code>CENTER</code> component may stretch both horizontally
+ * and vertically to fill any space left over.
+ * <p>
+ * Here is an example of five buttons in an applet laid out using
+ * the <code>BorderLayout</code> layout manager:
+ * <p>
+ * <img src="doc-files/BorderLayout-1.gif"
+ * alt="Diagram of an applet demonstrating BorderLayout.
+ *      Each section of the BorderLayout contains a Button corresponding to its position in the layout, one of:
+ *      North, West, Center, East, or South."
+ * style="float:center; margin: 7px 10px;">
+ * <p>
+ * The code for this applet is as follows:
+ *
+ * <hr><blockquote><pre>
+ * import java.awt.*;
+ * import java.applet.Applet;
+ *
+ * public class buttonDir extends Applet {
+ *   public void init() {
+ *     setLayout(new BorderLayout());
+ *     add(new Button("North"), BorderLayout.NORTH);
+ *     add(new Button("South"), BorderLayout.SOUTH);
+ *     add(new Button("East"), BorderLayout.EAST);
+ *     add(new Button("West"), BorderLayout.WEST);
+ *     add(new Button("Center"), BorderLayout.CENTER);
+ *   }
+ * }
+ * </pre></blockquote><hr>
+ * <p>
+ * @author      Arthur van Hoff
+ * @see         java.awt.Container#add(String, Component)
+ * @see         java.awt.ComponentOrientation
+ * @since       JDK1.0
+ */
+public class BorderLayout implements LayoutManager2,
+                                     java.io.Serializable {
+    /**
+     * Constructs a border layout with the horizontal gaps
+     * between components.
+     * The horizontal gap is specified by <code>hgap</code>.
+     *
+     * @see #getHgap()
+     * @see #setHgap(int)
+     *
+     * @serial
+     */
+        int hgap;
+
+    /**
+     * Constructs a border layout with the vertical gaps
+     * between components.
+     * The vertical gap is specified by <code>vgap</code>.
+     *
+     * @see #getVgap()
+     * @see #setVgap(int)
+     * @serial
+     */
+        int vgap;
+
+    /**
+     * Constant to specify components location to be the
+     *      north portion of the border layout.
+     * @serial
+     * @see #getChild(String, boolean)
+     * @see #addLayoutComponent
+     * @see #getLayoutAlignmentX
+     * @see #getLayoutAlignmentY
+     * @see #removeLayoutComponent
+     */
+        Component north;
+     /**
+     * Constant to specify components location to be the
+     *      west portion of the border layout.
+     * @serial
+     * @see #getChild(String, boolean)
+     * @see #addLayoutComponent
+     * @see #getLayoutAlignmentX
+     * @see #getLayoutAlignmentY
+     * @see #removeLayoutComponent
+     */
+        Component west;
+    /**
+     * Constant to specify components location to be the
+     *      east portion of the border layout.
+     * @serial
+     * @see #getChild(String, boolean)
+     * @see #addLayoutComponent
+     * @see #getLayoutAlignmentX
+     * @see #getLayoutAlignmentY
+     * @see #removeLayoutComponent
+     */
+        Component east;
+    /**
+     * Constant to specify components location to be the
+     *      south portion of the border layout.
+     * @serial
+     * @see #getChild(String, boolean)
+     * @see #addLayoutComponent
+     * @see #getLayoutAlignmentX
+     * @see #getLayoutAlignmentY
+     * @see #removeLayoutComponent
+     */
+    Component south;
+    /**
+     * Constant to specify components location to be the
+     *      center portion of the border layout.
+     * @serial
+     * @see #getChild(String, boolean)
+     * @see #addLayoutComponent
+     * @see #getLayoutAlignmentX
+     * @see #getLayoutAlignmentY
+     * @see #removeLayoutComponent
+     */
+        Component center;
+
+    /**
+     *
+     * A relative positioning constant, that can be used instead of
+     * north, south, east, west or center.
+     * mixing the two types of constants can lead to unpredictable results.  If
+     * you use both types, the relative constants will take precedence.
+     * For example, if you add components using both the <code>NORTH</code>
+     * and <code>BEFORE_FIRST_LINE</code> constants in a container whose
+     * orientation is <code>LEFT_TO_RIGHT</code>, only the
+     * <code>BEFORE_FIRST_LINE</code> will be layed out.
+     * This will be the same for lastLine, firstItem, lastItem.
+     * @serial
+     */
+    Component firstLine;
+     /**
+     * A relative positioning constant, that can be used instead of
+     * north, south, east, west or center.
+     * Please read Description for firstLine.
+     * @serial
+     */
+        Component lastLine;
+     /**
+     * A relative positioning constant, that can be used instead of
+     * north, south, east, west or center.
+     * Please read Description for firstLine.
+     * @serial
+     */
+        Component firstItem;
+    /**
+     * A relative positioning constant, that can be used instead of
+     * north, south, east, west or center.
+     * Please read Description for firstLine.
+     * @serial
+     */
+        Component lastItem;
+
+    /**
+     * The north layout constraint (top of container).
+     */
+    public static final String NORTH  = "North";
+
+    /**
+     * The south layout constraint (bottom of container).
+     */
+    public static final String SOUTH  = "South";
+
+    /**
+     * The east layout constraint (right side of container).
+     */
+    public static final String EAST   = "East";
+
+    /**
+     * The west layout constraint (left side of container).
+     */
+    public static final String WEST   = "West";
+
+    /**
+     * The center layout constraint (middle of container).
+     */
+    public static final String CENTER = "Center";
+
+    /**
+     * Synonym for PAGE_START.  Exists for compatibility with previous
+     * versions.  PAGE_START is preferred.
+     *
+     * @see #PAGE_START
+     * @since 1.2
+     */
+    public static final String BEFORE_FIRST_LINE = "First";
+
+    /**
+     * Synonym for PAGE_END.  Exists for compatibility with previous
+     * versions.  PAGE_END is preferred.
+     *
+     * @see #PAGE_END
+     * @since 1.2
+     */
+    public static final String AFTER_LAST_LINE = "Last";
+
+    /**
+     * Synonym for LINE_START.  Exists for compatibility with previous
+     * versions.  LINE_START is preferred.
+     *
+     * @see #LINE_START
+     * @since 1.2
+     */
+    public static final String BEFORE_LINE_BEGINS = "Before";
+
+    /**
+     * Synonym for LINE_END.  Exists for compatibility with previous
+     * versions.  LINE_END is preferred.
+     *
+     * @see #LINE_END
+     * @since 1.2
+     */
+    public static final String AFTER_LINE_ENDS = "After";
+
+    /**
+     * The component comes before the first line of the layout's content.
+     * For Western, left-to-right and top-to-bottom orientations, this is
+     * equivalent to NORTH.
+     *
+     * @see java.awt.Component#getComponentOrientation
+     * @since 1.4
+     */
+    public static final String PAGE_START = BEFORE_FIRST_LINE;
+
+    /**
+     * The component comes after the last line of the layout's content.
+     * For Western, left-to-right and top-to-bottom orientations, this is
+     * equivalent to SOUTH.
+     *
+     * @see java.awt.Component#getComponentOrientation
+     * @since 1.4
+     */
+    public static final String PAGE_END = AFTER_LAST_LINE;
+
+    /**
+     * The component goes at the beginning of the line direction for the
+     * layout. For Western, left-to-right and top-to-bottom orientations,
+     * this is equivalent to WEST.
+     *
+     * @see java.awt.Component#getComponentOrientation
+     * @since 1.4
+     */
+    public static final String LINE_START = BEFORE_LINE_BEGINS;
+
+    /**
+     * The component goes at the end of the line direction for the
+     * layout. For Western, left-to-right and top-to-bottom orientations,
+     * this is equivalent to EAST.
+     *
+     * @see java.awt.Component#getComponentOrientation
+     * @since 1.4
+     */
+    public static final String LINE_END = AFTER_LINE_ENDS;
+
+    /*
+     * JDK 1.1 serialVersionUID
+     */
+     private static final long serialVersionUID = -8658291919501921765L;
+
+    /**
+     * Constructs a new border layout with
+     * no gaps between components.
+     */
+    public BorderLayout() {
+        this(0, 0);
+    }
+
+    /**
+     * Constructs a border layout with the specified gaps
+     * between components.
+     * The horizontal gap is specified by <code>hgap</code>
+     * and the vertical gap is specified by <code>vgap</code>.
+     * @param   hgap   the horizontal gap.
+     * @param   vgap   the vertical gap.
+     */
+    public BorderLayout(int hgap, int vgap) {
+        this.hgap = hgap;
+        this.vgap = vgap;
+    }
+
+    /**
+     * Returns the horizontal gap between components.
+     * @since   JDK1.1
+     */
+    public int getHgap() {
+        return hgap;
+    }
+
+    /**
+     * Sets the horizontal gap between components.
+     * @param hgap the horizontal gap between components
+     * @since   JDK1.1
+     */
+    public void setHgap(int hgap) {
+        this.hgap = hgap;
+    }
+
+    /**
+     * Returns the vertical gap between components.
+     * @since   JDK1.1
+     */
+    public int getVgap() {
+        return vgap;
+    }
+
+    /**
+     * Sets the vertical gap between components.
+     * @param vgap the vertical gap between components
+     * @since   JDK1.1
+     */
+    public void setVgap(int vgap) {
+        this.vgap = vgap;
+    }
+
+    /**
+     * Adds the specified component to the layout, using the specified
+     * constraint object.  For border layouts, the constraint must be
+     * one of the following constants:  <code>NORTH</code>,
+     * <code>SOUTH</code>, <code>EAST</code>,
+     * <code>WEST</code>, or <code>CENTER</code>.
+     * <p>
+     * Most applications do not call this method directly. This method
+     * is called when a component is added to a container using the
+     * <code>Container.add</code> method with the same argument types.
+     * @param   comp         the component to be added.
+     * @param   constraints  an object that specifies how and where
+     *                       the component is added to the layout.
+     * @see     java.awt.Container#add(java.awt.Component, java.lang.Object)
+     * @exception   IllegalArgumentException  if the constraint object is not
+     *                 a string, or if it not one of the five specified
+         *              constants.
+     * @since   JDK1.1
+     */
+    public void addLayoutComponent(Component comp, Object constraints) {
+      synchronized (comp.getTreeLock()) {
+        if ((constraints == null) || (constraints instanceof String)) {
+            addLayoutComponent((String)constraints, comp);
+        } else {
+            throw new IllegalArgumentException("cannot add to layout: constraint must be a string (or null)");
+        }
+      }
+    }
+
+    /**
+     * @deprecated  replaced by <code>addLayoutComponent(Component, Object)</code>.
+     */
+    @Deprecated
+    public void addLayoutComponent(String name, Component comp) {
+      synchronized (comp.getTreeLock()) {
+        /* Special case:  treat null the same as "Center". */
+        if (name == null) {
+            name = "Center";
+        }
+
+        /* Assign the component to one of the known regions of the layout.
+         */
+        if ("Center".equals(name)) {
+            center = comp;
+        } else if ("North".equals(name)) {
+            north = comp;
+        } else if ("South".equals(name)) {
+            south = comp;
+        } else if ("East".equals(name)) {
+            east = comp;
+        } else if ("West".equals(name)) {
+            west = comp;
+        } else if (BEFORE_FIRST_LINE.equals(name)) {
+            firstLine = comp;
+        } else if (AFTER_LAST_LINE.equals(name)) {
+            lastLine = comp;
+        } else if (BEFORE_LINE_BEGINS.equals(name)) {
+            firstItem = comp;
+        } else if (AFTER_LINE_ENDS.equals(name)) {
+            lastItem = comp;
+        } else {
+            throw new IllegalArgumentException("cannot add to layout: unknown constraint: " + name);
+        }
+      }
+    }
+
+    /**
+     * Removes the specified component from this border layout. This
+     * method is called when a container calls its <code>remove</code> or
+     * <code>removeAll</code> methods. Most applications do not call this
+     * method directly.
+     * @param   comp   the component to be removed.
+     * @see     java.awt.Container#remove(java.awt.Component)
+     * @see     java.awt.Container#removeAll()
+     */
+    public void removeLayoutComponent(Component comp) {
+      synchronized (comp.getTreeLock()) {
+        if (comp == center) {
+            center = null;
+        } else if (comp == north) {
+            north = null;
+        } else if (comp == south) {
+            south = null;
+        } else if (comp == east) {
+            east = null;
+        } else if (comp == west) {
+            west = null;
+        }
+        if (comp == firstLine) {
+            firstLine = null;
+        } else if (comp == lastLine) {
+            lastLine = null;
+        } else if (comp == firstItem) {
+            firstItem = null;
+        } else if (comp == lastItem) {
+            lastItem = null;
+        }
+      }
+    }
+
+    /**
+     * Gets the component that was added using the given constraint
+     *
+     * @param   constraints  the desired constraint, one of <code>CENTER</code>,
+     *                       <code>NORTH</code>, <code>SOUTH</code>,
+     *                       <code>WEST</code>, <code>EAST</code>,
+     *                       <code>PAGE_START</code>, <code>PAGE_END</code>,
+     *                       <code>LINE_START</code>, <code>LINE_END</code>
+     * @return  the component at the given location, or <code>null</code> if
+     *          the location is empty
+     * @exception   IllegalArgumentException  if the constraint object is
+     *              not one of the nine specified constants
+     * @see     #addLayoutComponent(java.awt.Component, java.lang.Object)
+     * @since 1.5
+     */
+    public Component getLayoutComponent(Object constraints) {
+        if (CENTER.equals(constraints)) {
+            return center;
+        } else if (NORTH.equals(constraints)) {
+            return north;
+        } else if (SOUTH.equals(constraints)) {
+            return south;
+        } else if (WEST.equals(constraints)) {
+            return west;
+        } else if (EAST.equals(constraints)) {
+            return east;
+        } else if (PAGE_START.equals(constraints)) {
+            return firstLine;
+        } else if (PAGE_END.equals(constraints)) {
+            return lastLine;
+        } else if (LINE_START.equals(constraints)) {
+            return firstItem;
+        } else if (LINE_END.equals(constraints)) {
+            return lastItem;
+        } else {
+            throw new IllegalArgumentException("cannot get component: unknown constraint: " + constraints);
+        }
+    }
+
+
+    /**
+     * Returns the component that corresponds to the given constraint location
+     * based on the target <code>Container</code>'s component orientation.
+     * Components added with the relative constraints <code>PAGE_START</code>,
+     * <code>PAGE_END</code>, <code>LINE_START</code>, and <code>LINE_END</code>
+     * take precedence over components added with the explicit constraints
+     * <code>NORTH</code>, <code>SOUTH</code>, <code>WEST</code>, and <code>EAST</code>.
+     * The <code>Container</code>'s component orientation is used to determine the location of components
+     * added with <code>LINE_START</code> and <code>LINE_END</code>.
+     *
+     * @param   constraints     the desired absolute position, one of <code>CENTER</code>,
+     *                          <code>NORTH</code>, <code>SOUTH</code>,
+     *                          <code>EAST</code>, <code>WEST</code>
+     * @param   target     the {@code Container} used to obtain
+     *                     the constraint location based on the target
+     *                     {@code Container}'s component orientation.
+     * @return  the component at the given location, or <code>null</code> if
+     *          the location is empty
+     * @exception   IllegalArgumentException  if the constraint object is
+     *              not one of the five specified constants
+     * @exception   NullPointerException  if the target parameter is null
+     * @see     #addLayoutComponent(java.awt.Component, java.lang.Object)
+     * @since 1.5
+     */
+    public Component getLayoutComponent(Container target, Object constraints) {
+        boolean ltr = target.getComponentOrientation().isLeftToRight();
+        Component result = null;
+
+        if (NORTH.equals(constraints)) {
+            result = (firstLine != null) ? firstLine : north;
+        } else if (SOUTH.equals(constraints)) {
+            result = (lastLine != null) ? lastLine : south;
+        } else if (WEST.equals(constraints)) {
+            result = ltr ? firstItem : lastItem;
+            if (result == null) {
+                result = west;
+            }
+        } else if (EAST.equals(constraints)) {
+            result = ltr ? lastItem : firstItem;
+            if (result == null) {
+                result = east;
+            }
+        } else if (CENTER.equals(constraints)) {
+            result = center;
+        } else {
+            throw new IllegalArgumentException("cannot get component: invalid constraint: " + constraints);
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Gets the constraints for the specified component
+     *
+     * @param   comp the component to be queried
+     * @return  the constraint for the specified component,
+     *          or null if component is null or is not present
+     *          in this layout
+     * @see #addLayoutComponent(java.awt.Component, java.lang.Object)
+     * @since 1.5
+     */
+    public Object getConstraints(Component comp) {
+        //fix for 6242148 : API method java.awt.BorderLayout.getConstraints(null) should return null
+        if (comp == null){
+            return null;
+        }
+        if (comp == center) {
+            return CENTER;
+        } else if (comp == north) {
+            return NORTH;
+        } else if (comp == south) {
+            return SOUTH;
+        } else if (comp == west) {
+            return WEST;
+        } else if (comp == east) {
+            return EAST;
+        } else if (comp == firstLine) {
+            return PAGE_START;
+        } else if (comp == lastLine) {
+            return PAGE_END;
+        } else if (comp == firstItem) {
+            return LINE_START;
+        } else if (comp == lastItem) {
+            return LINE_END;
+        }
+        return null;
+    }
+
+    /**
+     * Determines the minimum size of the <code>target</code> container
+     * using this layout manager.
+     * <p>
+     * This method is called when a container calls its
+     * <code>getMinimumSize</code> method. Most applications do not call
+     * this method directly.
+     * @param   target   the container in which to do the layout.
+     * @return  the minimum dimensions needed to lay out the subcomponents
+     *          of the specified container.
+     * @see     java.awt.Container
+     * @see     java.awt.BorderLayout#preferredLayoutSize
+     * @see     java.awt.Container#getMinimumSize()
+     */
+    public Dimension minimumLayoutSize(Container target) {
+      synchronized (target.getTreeLock()) {
+        Dimension dim = new Dimension(0, 0);
+
+        boolean ltr = target.getComponentOrientation().isLeftToRight();
+        Component c = null;
+
+        if ((c=getChild(EAST,ltr)) != null) {
+            Dimension d = c.getMinimumSize();
+            dim.width += d.width + hgap;
+            dim.height = Math.max(d.height, dim.height);
+        }
+        if ((c=getChild(WEST,ltr)) != null) {
+            Dimension d = c.getMinimumSize();
+            dim.width += d.width + hgap;
+            dim.height = Math.max(d.height, dim.height);
+        }
+        if ((c=getChild(CENTER,ltr)) != null) {
+            Dimension d = c.getMinimumSize();
+            dim.width += d.width;
+            dim.height = Math.max(d.height, dim.height);
+        }
+        if ((c=getChild(NORTH,ltr)) != null) {
+            Dimension d = c.getMinimumSize();
+            dim.width = Math.max(d.width, dim.width);
+            dim.height += d.height + vgap;
+        }
+        if ((c=getChild(SOUTH,ltr)) != null) {
+            Dimension d = c.getMinimumSize();
+            dim.width = Math.max(d.width, dim.width);
+            dim.height += d.height + vgap;
+        }
+
+        Insets insets = target.getInsets();
+        dim.width += insets.left + insets.right;
+        dim.height += insets.top + insets.bottom;
+
+        return dim;
+      }
+    }
+
+    /**
+     * Determines the preferred size of the <code>target</code>
+     * container using this layout manager, based on the components
+     * in the container.
+     * <p>
+     * Most applications do not call this method directly. This method
+     * is called when a container calls its <code>getPreferredSize</code>
+     * method.
+     * @param   target   the container in which to do the layout.
+     * @return  the preferred dimensions to lay out the subcomponents
+     *          of the specified container.
+     * @see     java.awt.Container
+     * @see     java.awt.BorderLayout#minimumLayoutSize
+     * @see     java.awt.Container#getPreferredSize()
+     */
+    public Dimension preferredLayoutSize(Container target) {
+      synchronized (target.getTreeLock()) {
+        Dimension dim = new Dimension(0, 0);
+
+        boolean ltr = target.getComponentOrientation().isLeftToRight();
+        Component c = null;
+
+        if ((c=getChild(EAST,ltr)) != null) {
+            Dimension d = c.getPreferredSize();
+            dim.width += d.width + hgap;
+            dim.height = Math.max(d.height, dim.height);
+        }
+        if ((c=getChild(WEST,ltr)) != null) {
+            Dimension d = c.getPreferredSize();
+            dim.width += d.width + hgap;
+            dim.height = Math.max(d.height, dim.height);
+        }
+        if ((c=getChild(CENTER,ltr)) != null) {
+            Dimension d = c.getPreferredSize();
+            dim.width += d.width;
+            dim.height = Math.max(d.height, dim.height);
+        }
+        if ((c=getChild(NORTH,ltr)) != null) {
+            Dimension d = c.getPreferredSize();
+            dim.width = Math.max(d.width, dim.width);
+            dim.height += d.height + vgap;
+        }
+        if ((c=getChild(SOUTH,ltr)) != null) {
+            Dimension d = c.getPreferredSize();
+            dim.width = Math.max(d.width, dim.width);
+            dim.height += d.height + vgap;
+        }
+
+        Insets insets = target.getInsets();
+        dim.width += insets.left + insets.right;
+        dim.height += insets.top + insets.bottom;
+
+        return dim;
+      }
+    }
+
+    /**
+     * Returns the maximum dimensions for this layout given the components
+     * in the specified target container.
+     * @param target the component which needs to be laid out
+     * @see Container
+     * @see #minimumLayoutSize
+     * @see #preferredLayoutSize
+     */
+    public Dimension maximumLayoutSize(Container target) {
+        return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Returns the alignment along the x axis.  This specifies how
+     * the component would like to be aligned relative to other
+     * components.  The value should be a number between 0 and 1
+     * where 0 represents alignment along the origin, 1 is aligned
+     * the furthest away from the origin, 0.5 is centered, etc.
+     */
+    public float getLayoutAlignmentX(Container parent) {
+        return 0.5f;
+    }
+
+    /**
+     * Returns the alignment along the y axis.  This specifies how
+     * the component would like to be aligned relative to other
+     * components.  The value should be a number between 0 and 1
+     * where 0 represents alignment along the origin, 1 is aligned
+     * the furthest away from the origin, 0.5 is centered, etc.
+     */
+    public float getLayoutAlignmentY(Container parent) {
+        return 0.5f;
+    }
+
+    /**
+     * Invalidates the layout, indicating that if the layout manager
+     * has cached information it should be discarded.
+     */
+    public void invalidateLayout(Container target) {
+    }
+
+    /**
+     * Lays out the container argument using this border layout.
+     * <p>
+     * This method actually reshapes the components in the specified
+     * container in order to satisfy the constraints of this
+     * <code>BorderLayout</code> object. The <code>NORTH</code>
+     * and <code>SOUTH</code> components, if any, are placed at
+     * the top and bottom of the container, respectively. The
+     * <code>WEST</code> and <code>EAST</code> components are
+     * then placed on the left and right, respectively. Finally,
+     * the <code>CENTER</code> object is placed in any remaining
+     * space in the middle.
+     * <p>
+     * Most applications do not call this method directly. This method
+     * is called when a container calls its <code>doLayout</code> method.
+     * @param   target   the container in which to do the layout.
+     * @see     java.awt.Container
+     * @see     java.awt.Container#doLayout()
+     */
+    public void layoutContainer(Container target) {
+      synchronized (target.getTreeLock()) {
+        Insets insets = target.getInsets();
+        int top = insets.top;
+        int bottom = target.height - insets.bottom;
+        int left = insets.left;
+        int right = target.width - insets.right;
+
+        boolean ltr = target.getComponentOrientation().isLeftToRight();
+        Component c = null;
+
+        if ((c=getChild(NORTH,ltr)) != null) {
+            c.setSize(right - left, c.height);
+            Dimension d = c.getPreferredSize();
+            c.setBounds(left, top, right - left, d.height);
+            top += d.height + vgap;
+        }
+        if ((c=getChild(SOUTH,ltr)) != null) {
+            c.setSize(right - left, c.height);
+            Dimension d = c.getPreferredSize();
+            c.setBounds(left, bottom - d.height, right - left, d.height);
+            bottom -= d.height + vgap;
+        }
+        if ((c=getChild(EAST,ltr)) != null) {
+            c.setSize(c.width, bottom - top);
+            Dimension d = c.getPreferredSize();
+            c.setBounds(right - d.width, top, d.width, bottom - top);
+            right -= d.width + hgap;
+        }
+        if ((c=getChild(WEST,ltr)) != null) {
+            c.setSize(c.width, bottom - top);
+            Dimension d = c.getPreferredSize();
+            c.setBounds(left, top, d.width, bottom - top);
+            left += d.width + hgap;
+        }
+        if ((c=getChild(CENTER,ltr)) != null) {
+            c.setBounds(left, top, right - left, bottom - top);
+        }
+      }
+    }
+
+    /**
+     * Get the component that corresponds to the given constraint location
+     *
+     * @param   key     The desired absolute position,
+     *                  either NORTH, SOUTH, EAST, or WEST.
+     * @param   ltr     Is the component line direction left-to-right?
+     */
+    private Component getChild(String key, boolean ltr) {
+        Component result = null;
+
+        if (key == NORTH) {
+            result = (firstLine != null) ? firstLine : north;
+        }
+        else if (key == SOUTH) {
+            result = (lastLine != null) ? lastLine : south;
+        }
+        else if (key == WEST) {
+            result = ltr ? firstItem : lastItem;
+            if (result == null) {
+                result = west;
+            }
+        }
+        else if (key == EAST) {
+            result = ltr ? lastItem : firstItem;
+            if (result == null) {
+                result = east;
+            }
+        }
+        else if (key == CENTER) {
+            result = center;
+        }
+        if (result != null && !result.visible) {
+            result = null;
+        }
+        return result;
+    }
+
+    /**
+     * Returns a string representation of the state of this border layout.
+     * @return    a string representation of this border layout.
+     */
+    public String toString() {
+        return getClass().getName() + "[hgap=" + hgap + ",vgap=" + vgap + "]";
+    }
+}

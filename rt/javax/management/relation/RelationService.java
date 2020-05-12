@@ -1,3793 +1,3789 @@
-/*      */ package javax.management.relation;
-/*      */ 
-/*      */ import com.sun.jmx.defaults.JmxProperties;
-/*      */ import com.sun.jmx.mbeanserver.Util;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Date;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.Set;
-/*      */ import java.util.concurrent.atomic.AtomicLong;
-/*      */ import javax.management.Attribute;
-/*      */ import javax.management.AttributeNotFoundException;
-/*      */ import javax.management.InstanceNotFoundException;
-/*      */ import javax.management.InvalidAttributeValueException;
-/*      */ import javax.management.MBeanException;
-/*      */ import javax.management.MBeanNotificationInfo;
-/*      */ import javax.management.MBeanRegistration;
-/*      */ import javax.management.MBeanServer;
-/*      */ import javax.management.MBeanServerDelegate;
-/*      */ import javax.management.MBeanServerNotification;
-/*      */ import javax.management.Notification;
-/*      */ import javax.management.NotificationBroadcasterSupport;
-/*      */ import javax.management.NotificationListener;
-/*      */ import javax.management.ObjectName;
-/*      */ import javax.management.ReflectionException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class RelationService
-/*      */   extends NotificationBroadcasterSupport
-/*      */   implements RelationServiceMBean, MBeanRegistration, NotificationListener
-/*      */ {
-/*   84 */   private Map<String, Object> myRelId2ObjMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */   
-/*   88 */   private Map<String, String> myRelId2RelTypeMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */   
-/*   92 */   private Map<ObjectName, String> myRelMBeanObjName2RelIdMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   97 */   private Map<String, RelationType> myRelType2ObjMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  103 */   private Map<String, List<String>> myRelType2RelIdsMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  111 */   private final Map<ObjectName, Map<String, List<String>>> myRefedMBeanObjName2RelIdsMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean myPurgeFlag = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  126 */   private final AtomicLong atomicSeqNo = new AtomicLong();
-/*      */ 
-/*      */   
-/*  129 */   private ObjectName myObjName = null;
-/*      */ 
-/*      */   
-/*  132 */   private MBeanServer myMBeanServer = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*  136 */   private MBeanServerNotificationFilter myUnregNtfFilter = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  141 */   private List<MBeanServerNotification> myUnregNtfList = new ArrayList<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RelationService(boolean paramBoolean) {
-/*  160 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "RelationService");
-/*      */ 
-/*      */     
-/*  163 */     setPurgeFlag(paramBoolean);
-/*      */     
-/*  165 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "RelationService");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void isActive() throws RelationServiceNotRegisteredException {
-/*  180 */     if (this.myMBeanServer == null) {
-/*      */ 
-/*      */       
-/*  183 */       String str = "Relation Service not registered in the MBean Server.";
-/*      */       
-/*  185 */       throw new RelationServiceNotRegisteredException(str);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectName preRegister(MBeanServer paramMBeanServer, ObjectName paramObjectName) throws Exception {
-/*  201 */     this.myMBeanServer = paramMBeanServer;
-/*  202 */     this.myObjName = paramObjectName;
-/*  203 */     return paramObjectName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void postRegister(Boolean paramBoolean) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void preDeregister() throws Exception {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void postDeregister() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getPurgeFlag() {
-/*  239 */     return this.myPurgeFlag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPurgeFlag(boolean paramBoolean) {
-/*  256 */     this.myPurgeFlag = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void createRelationType(String paramString, RoleInfo[] paramArrayOfRoleInfo) throws IllegalArgumentException, InvalidRelationTypeException {
-/*  284 */     if (paramString == null || paramArrayOfRoleInfo == null) {
-/*  285 */       String str = "Invalid parameter.";
-/*  286 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  289 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "createRelationType", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/*  293 */     RelationTypeSupport relationTypeSupport = new RelationTypeSupport(paramString, paramArrayOfRoleInfo);
-/*      */ 
-/*      */     
-/*  296 */     addRelationTypeInt(relationTypeSupport);
-/*      */     
-/*  298 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "createRelationType");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addRelationType(RelationType paramRelationType) throws IllegalArgumentException, InvalidRelationTypeException {
-/*  323 */     if (paramRelationType == null) {
-/*  324 */       String str = "Invalid parameter.";
-/*  325 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  328 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "addRelationType");
-/*      */ 
-/*      */ 
-/*      */     
-/*  332 */     List<RoleInfo> list = paramRelationType.getRoleInfos();
-/*  333 */     if (list == null) {
-/*  334 */       String str = "No role info provided.";
-/*  335 */       throw new InvalidRelationTypeException(str);
-/*      */     } 
-/*      */     
-/*  338 */     RoleInfo[] arrayOfRoleInfo = new RoleInfo[list.size()];
-/*  339 */     byte b = 0;
-/*  340 */     for (RoleInfo roleInfo : list) {
-/*  341 */       arrayOfRoleInfo[b] = roleInfo;
-/*  342 */       b++;
-/*      */     } 
-/*      */     
-/*  345 */     RelationTypeSupport.checkRoleInfos(arrayOfRoleInfo);
-/*      */     
-/*  347 */     addRelationTypeInt(paramRelationType);
-/*      */     
-/*  349 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "addRelationType");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public List<String> getAllRelationTypeNames() {
-/*      */     ArrayList<String> arrayList;
-/*  361 */     synchronized (this.myRelType2ObjMap) {
-/*  362 */       arrayList = new ArrayList(this.myRelType2ObjMap.keySet());
-/*      */     } 
-/*  364 */     return arrayList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public List<RoleInfo> getRoleInfos(String paramString) throws IllegalArgumentException, RelationTypeNotFoundException {
-/*  383 */     if (paramString == null) {
-/*  384 */       String str = "Invalid parameter.";
-/*  385 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  388 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRoleInfos", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/*  392 */     RelationType relationType = getRelationType(paramString);
-/*      */     
-/*  394 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoleInfos");
-/*      */     
-/*  396 */     return relationType.getRoleInfos();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RoleInfo getRoleInfo(String paramString1, String paramString2) throws IllegalArgumentException, RelationTypeNotFoundException, RoleInfoNotFoundException {
-/*  419 */     if (paramString1 == null || paramString2 == null) {
-/*  420 */       String str = "Invalid parameter.";
-/*  421 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  424 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRoleInfo", new Object[] { paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */     
-/*  428 */     RelationType relationType = getRelationType(paramString1);
-/*      */ 
-/*      */     
-/*  431 */     RoleInfo roleInfo = relationType.getRoleInfo(paramString2);
-/*      */     
-/*  433 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoleInfo");
-/*      */     
-/*  435 */     return roleInfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeRelationType(String paramString) throws RelationServiceNotRegisteredException, IllegalArgumentException, RelationTypeNotFoundException {
-/*  457 */     isActive();
-/*      */     
-/*  459 */     if (paramString == null) {
-/*  460 */       String str = "Invalid parameter.";
-/*  461 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  464 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "removeRelationType", paramString);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  469 */     RelationType relationType = getRelationType(paramString);
-/*      */ 
-/*      */     
-/*  472 */     ArrayList arrayList = null;
-/*  473 */     synchronized (this.myRelType2RelIdsMap) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  477 */       List<?> list = this.myRelType2RelIdsMap.get(paramString);
-/*  478 */       if (list != null) {
-/*  479 */         arrayList = new ArrayList(list);
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  484 */     synchronized (this.myRelType2ObjMap) {
-/*  485 */       this.myRelType2ObjMap.remove(paramString);
-/*      */     } 
-/*  487 */     synchronized (this.myRelType2RelIdsMap) {
-/*  488 */       this.myRelType2RelIdsMap.remove(paramString);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  492 */     if (arrayList != null) {
-/*  493 */       for (String str : arrayList) {
-/*      */ 
-/*      */         
-/*      */         try {
-/*      */ 
-/*      */ 
-/*      */           
-/*  500 */           removeRelation(str);
-/*  501 */         } catch (RelationNotFoundException relationNotFoundException) {
-/*  502 */           throw new RuntimeException(relationNotFoundException.getMessage());
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */     
-/*  507 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "removeRelationType");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void createRelation(String paramString1, String paramString2, RoleList paramRoleList) throws RelationServiceNotRegisteredException, IllegalArgumentException, RoleNotFoundException, InvalidRelationIdException, RelationTypeNotFoundException, InvalidRoleValueException {
-/*  561 */     isActive();
-/*      */     
-/*  563 */     if (paramString1 == null || paramString2 == null) {
-/*      */       
-/*  565 */       String str = "Invalid parameter.";
-/*  566 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  569 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "createRelation", new Object[] { paramString1, paramString2, paramRoleList });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  575 */     RelationSupport relationSupport = new RelationSupport(paramString1, this.myObjName, paramString2, paramRoleList);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  585 */     addRelationInt(true, relationSupport, null, paramString1, paramString2, paramRoleList);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  591 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "createRelation");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addRelation(ObjectName paramObjectName) throws IllegalArgumentException, RelationServiceNotRegisteredException, NoSuchMethodException, InvalidRelationIdException, InstanceNotFoundException, InvalidRelationServiceException, RelationTypeNotFoundException, RoleNotFoundException, InvalidRoleValueException {
-/*      */     String str1;
-/*      */     ObjectName objectName;
-/*      */     String str2;
-/*      */     RoleList roleList;
-/*  652 */     if (paramObjectName == null) {
-/*  653 */       str1 = "Invalid parameter.";
-/*  654 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/*  657 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "addRelation", paramObjectName);
-/*      */ 
-/*      */ 
-/*      */     
-/*  661 */     isActive();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  666 */     if (!this.myMBeanServer.isInstanceOf(paramObjectName, "javax.management.relation.Relation")) {
-/*  667 */       str1 = "This MBean does not implement the Relation interface.";
-/*  668 */       throw new NoSuchMethodException(str1);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  677 */       str1 = (String)this.myMBeanServer.getAttribute(paramObjectName, "RelationId");
-/*      */     
-/*      */     }
-/*  680 */     catch (MBeanException mBeanException) {
-/*  681 */       throw new RuntimeException(mBeanException
-/*  682 */           .getTargetException().getMessage());
-/*  683 */     } catch (ReflectionException reflectionException) {
-/*  684 */       throw new RuntimeException(reflectionException.getMessage());
-/*  685 */     } catch (AttributeNotFoundException attributeNotFoundException) {
-/*  686 */       throw new RuntimeException(attributeNotFoundException.getMessage());
-/*      */     } 
-/*      */     
-/*  689 */     if (str1 == null) {
-/*  690 */       String str = "This MBean does not provide a relation id.";
-/*  691 */       throw new InvalidRelationIdException(str);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  701 */       objectName = (ObjectName)this.myMBeanServer.getAttribute(paramObjectName, "RelationServiceName");
-/*      */     
-/*      */     }
-/*  704 */     catch (MBeanException mBeanException) {
-/*  705 */       throw new RuntimeException(mBeanException
-/*  706 */           .getTargetException().getMessage());
-/*  707 */     } catch (ReflectionException reflectionException) {
-/*  708 */       throw new RuntimeException(reflectionException.getMessage());
-/*  709 */     } catch (AttributeNotFoundException attributeNotFoundException) {
-/*  710 */       throw new RuntimeException(attributeNotFoundException.getMessage());
-/*      */     } 
-/*      */     
-/*  713 */     boolean bool = false;
-/*  714 */     if (objectName == null) {
-/*  715 */       bool = true;
-/*      */     }
-/*  717 */     else if (!objectName.equals(this.myObjName)) {
-/*  718 */       bool = true;
-/*      */     } 
-/*  720 */     if (bool) {
-/*  721 */       str2 = "The Relation Service referenced in the MBean is not the current one.";
-/*  722 */       throw new InvalidRelationServiceException(str2);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  730 */       str2 = (String)this.myMBeanServer.getAttribute(paramObjectName, "RelationTypeName");
-/*      */     
-/*      */     }
-/*  733 */     catch (MBeanException mBeanException) {
-/*  734 */       throw new RuntimeException(mBeanException
-/*  735 */           .getTargetException().getMessage());
-/*  736 */     } catch (ReflectionException reflectionException) {
-/*  737 */       throw new RuntimeException(reflectionException.getMessage());
-/*  738 */     } catch (AttributeNotFoundException attributeNotFoundException) {
-/*  739 */       throw new RuntimeException(attributeNotFoundException.getMessage());
-/*      */     } 
-/*  741 */     if (str2 == null) {
-/*  742 */       String str = "No relation type provided.";
-/*  743 */       throw new RelationTypeNotFoundException(str);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  751 */       roleList = (RoleList)this.myMBeanServer.invoke(paramObjectName, "retrieveAllRoles", null, null);
-/*      */ 
-/*      */     
-/*      */     }
-/*  755 */     catch (MBeanException mBeanException) {
-/*  756 */       throw new RuntimeException(mBeanException
-/*  757 */           .getTargetException().getMessage());
-/*  758 */     } catch (ReflectionException reflectionException) {
-/*  759 */       throw new RuntimeException(reflectionException.getMessage());
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  764 */     addRelationInt(false, null, paramObjectName, str1, str2, roleList);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  771 */     synchronized (this.myRelMBeanObjName2RelIdMap) {
-/*  772 */       this.myRelMBeanObjName2RelIdMap.put(paramObjectName, str1);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  780 */       this.myMBeanServer.setAttribute(paramObjectName, new Attribute("RelationServiceManagementFlag", Boolean.TRUE));
-/*      */ 
-/*      */     
-/*      */     }
-/*  784 */     catch (Exception exception) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  790 */     ArrayList<ObjectName> arrayList = new ArrayList();
-/*  791 */     arrayList.add(paramObjectName);
-/*  792 */     updateUnregistrationListener(arrayList, null);
-/*      */     
-/*  794 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "addRelation");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectName isRelationMBean(String paramString) throws IllegalArgumentException, RelationNotFoundException {
-/*  817 */     if (paramString == null) {
-/*  818 */       String str = "Invalid parameter.";
-/*  819 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  822 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "isRelationMBean", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/*  826 */     Object object = getRelation(paramString);
-/*  827 */     if (object instanceof ObjectName) {
-/*  828 */       return (ObjectName)object;
-/*      */     }
-/*  830 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String isRelation(ObjectName paramObjectName) throws IllegalArgumentException {
-/*  848 */     if (paramObjectName == null) {
-/*  849 */       String str1 = "Invalid parameter.";
-/*  850 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/*  853 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "isRelation", paramObjectName);
-/*      */ 
-/*      */     
-/*  856 */     String str = null;
-/*  857 */     synchronized (this.myRelMBeanObjName2RelIdMap) {
-/*  858 */       String str1 = this.myRelMBeanObjName2RelIdMap.get(paramObjectName);
-/*  859 */       if (str1 != null) {
-/*  860 */         str = str1;
-/*      */       }
-/*      */     } 
-/*  863 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Boolean hasRelation(String paramString) throws IllegalArgumentException {
-/*  879 */     if (paramString == null) {
-/*  880 */       String str = "Invalid parameter.";
-/*  881 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  884 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "hasRelation", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  889 */       Object object = getRelation(paramString);
-/*  890 */       return Boolean.valueOf(true);
-/*  891 */     } catch (RelationNotFoundException relationNotFoundException) {
-/*  892 */       return Boolean.valueOf(false);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public List<String> getAllRelationIds() {
-/*      */     ArrayList<String> arrayList;
-/*  904 */     synchronized (this.myRelId2ObjMap) {
-/*  905 */       arrayList = new ArrayList(this.myRelId2ObjMap.keySet());
-/*      */     } 
-/*  907 */     return arrayList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Integer checkRoleReading(String paramString1, String paramString2) throws IllegalArgumentException, RelationTypeNotFoundException {
-/*      */     Integer integer;
-/*  931 */     if (paramString1 == null || paramString2 == null) {
-/*  932 */       String str = "Invalid parameter.";
-/*  933 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/*  936 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "checkRoleReading", new Object[] { paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  942 */     RelationType relationType = getRelationType(paramString2);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  947 */       RoleInfo roleInfo = relationType.getRoleInfo(paramString1);
-/*      */       
-/*  949 */       integer = checkRoleInt(1, paramString1, null, roleInfo, false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*  955 */     catch (RoleInfoNotFoundException roleInfoNotFoundException) {
-/*  956 */       integer = Integer.valueOf(1);
-/*      */     } 
-/*      */     
-/*  959 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleReading");
-/*      */     
-/*  961 */     return integer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Integer checkRoleWriting(Role paramRole, String paramString, Boolean paramBoolean) throws IllegalArgumentException, RelationTypeNotFoundException {
-/*      */     RoleInfo roleInfo;
-/*  991 */     if (paramRole == null || paramString == null || paramBoolean == null) {
-/*      */ 
-/*      */       
-/*  994 */       String str1 = "Invalid parameter.";
-/*  995 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/*  998 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "checkRoleWriting", new Object[] { paramRole, paramString, paramBoolean });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1003 */     RelationType relationType = getRelationType(paramString);
-/*      */     
-/* 1005 */     String str = paramRole.getRoleName();
-/* 1006 */     List<ObjectName> list = paramRole.getRoleValue();
-/* 1007 */     boolean bool = true;
-/* 1008 */     if (paramBoolean.booleanValue()) {
-/* 1009 */       bool = false;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1014 */       roleInfo = relationType.getRoleInfo(str);
-/* 1015 */     } catch (RoleInfoNotFoundException roleInfoNotFoundException) {
-/* 1016 */       JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleWriting");
-/*      */       
-/* 1018 */       return Integer.valueOf(1);
-/*      */     } 
-/*      */     
-/* 1021 */     Integer integer = checkRoleInt(2, str, list, roleInfo, bool);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1027 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleWriting");
-/*      */     
-/* 1029 */     return integer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void sendRelationCreationNotification(String paramString) throws IllegalArgumentException, RelationNotFoundException {
-/* 1053 */     if (paramString == null) {
-/* 1054 */       String str = "Invalid parameter.";
-/* 1055 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1058 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "sendRelationCreationNotification", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1062 */     StringBuilder stringBuilder = new StringBuilder("Creation of relation ");
-/* 1063 */     stringBuilder.append(paramString);
-/*      */ 
-/*      */     
-/* 1066 */     sendNotificationInt(1, stringBuilder
-/* 1067 */         .toString(), paramString, null, null, null, null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1074 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "sendRelationCreationNotification");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void sendRoleUpdateNotification(String paramString, Role paramRole, List<ObjectName> paramList) throws IllegalArgumentException, RelationNotFoundException {
-/* 1107 */     if (paramString == null || paramRole == null || paramList == null) {
-/*      */ 
-/*      */       
-/* 1110 */       String str = "Invalid parameter.";
-/* 1111 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1114 */     if (!(paramList instanceof ArrayList)) {
-/* 1115 */       paramList = new ArrayList<>(paramList);
-/*      */     }
-/* 1117 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "sendRoleUpdateNotification", new Object[] { paramString, paramRole, paramList });
-/*      */ 
-/*      */ 
-/*      */     
-/* 1121 */     String str1 = paramRole.getRoleName();
-/* 1122 */     List<ObjectName> list = paramRole.getRoleValue();
-/*      */ 
-/*      */     
-/* 1125 */     String str2 = Role.roleValueToString(list);
-/* 1126 */     String str3 = Role.roleValueToString(paramList);
-/* 1127 */     StringBuilder stringBuilder = new StringBuilder("Value of role ");
-/* 1128 */     stringBuilder.append(str1);
-/* 1129 */     stringBuilder.append(" has changed\nOld value:\n");
-/* 1130 */     stringBuilder.append(str3);
-/* 1131 */     stringBuilder.append("\nNew value:\n");
-/* 1132 */     stringBuilder.append(str2);
-/*      */ 
-/*      */     
-/* 1135 */     sendNotificationInt(2, stringBuilder
-/* 1136 */         .toString(), paramString, null, str1, list, paramList);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1143 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "sendRoleUpdateNotification");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void sendRelationRemovalNotification(String paramString, List<ObjectName> paramList) throws IllegalArgumentException, RelationNotFoundException {
-/* 1170 */     if (paramString == null) {
-/* 1171 */       String str = "Invalid parameter";
-/* 1172 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1175 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "sendRelationRemovalNotification", new Object[] { paramString, paramList });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1180 */     sendNotificationInt(3, "Removal of relation " + paramString, paramString, paramList, null, null, null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1189 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "sendRelationRemovalNotification");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateRoleMap(String paramString, Role paramRole, List<ObjectName> paramList) throws IllegalArgumentException, RelationServiceNotRegisteredException, RelationNotFoundException {
-/* 1222 */     if (paramString == null || paramRole == null || paramList == null) {
-/*      */ 
-/*      */       
-/* 1225 */       String str1 = "Invalid parameter.";
-/* 1226 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/* 1229 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "updateRoleMap", new Object[] { paramString, paramRole, paramList });
-/*      */ 
-/*      */ 
-/*      */     
-/* 1233 */     isActive();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1237 */     Object object = getRelation(paramString);
-/*      */     
-/* 1239 */     String str = paramRole.getRoleName();
-/* 1240 */     List<ObjectName> list = paramRole.getRoleValue();
-/*      */ 
-/*      */     
-/* 1243 */     ArrayList<ObjectName> arrayList1 = new ArrayList<>(paramList);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1247 */     ArrayList<ObjectName> arrayList2 = new ArrayList();
-/*      */     
-/* 1249 */     for (ObjectName objectName : list) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1255 */       int i = arrayList1.indexOf(objectName);
-/*      */       
-/* 1257 */       if (i == -1) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1263 */         boolean bool = addNewMBeanReference(objectName, paramString, str);
-/*      */ 
-/*      */ 
-/*      */         
-/* 1267 */         if (bool)
-/*      */         {
-/* 1269 */           arrayList2.add(objectName);
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         continue;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1277 */       arrayList1.remove(i);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1282 */     ArrayList<ObjectName> arrayList3 = new ArrayList();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1286 */     for (ObjectName objectName : arrayList1) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1290 */       boolean bool = removeMBeanReference(objectName, paramString, str, false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1295 */       if (bool)
-/*      */       {
-/* 1297 */         arrayList3.add(objectName);
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1304 */     updateUnregistrationListener(arrayList2, arrayList3);
-/*      */     
-/* 1306 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "updateRoleMap");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeRelation(String paramString) throws RelationServiceNotRegisteredException, IllegalArgumentException, RelationNotFoundException {
-/*      */     String str;
-/* 1334 */     isActive();
-/*      */     
-/* 1336 */     if (paramString == null) {
-/* 1337 */       String str1 = "Invalid parameter.";
-/* 1338 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/* 1341 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "removeRelation", paramString);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1346 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */     
-/* 1349 */     if (object instanceof ObjectName) {
-/* 1350 */       ArrayList<ObjectName> arrayList = new ArrayList();
-/* 1351 */       arrayList.add((ObjectName)object);
-/*      */       
-/* 1353 */       updateUnregistrationListener(null, arrayList);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1367 */     sendRelationRemovalNotification(paramString, null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1379 */     ArrayList<ObjectName> arrayList1 = new ArrayList();
-/*      */ 
-/*      */     
-/* 1382 */     ArrayList<ObjectName> arrayList2 = new ArrayList();
-/*      */     
-/* 1384 */     synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/*      */ 
-/*      */       
-/* 1387 */       for (ObjectName objectName : this.myRefedMBeanObjName2RelIdsMap.keySet()) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1391 */         Map map = this.myRefedMBeanObjName2RelIdsMap.get(objectName);
-/*      */         
-/* 1393 */         if (map.containsKey(paramString)) {
-/* 1394 */           map.remove(paramString);
-/* 1395 */           arrayList1.add(objectName);
-/*      */         } 
-/*      */         
-/* 1398 */         if (map.isEmpty())
-/*      */         {
-/*      */ 
-/*      */           
-/* 1402 */           arrayList2.add(objectName);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1408 */       for (ObjectName objectName : arrayList2) {
-/* 1409 */         this.myRefedMBeanObjName2RelIdsMap.remove(objectName);
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1414 */     synchronized (this.myRelId2ObjMap) {
-/* 1415 */       this.myRelId2ObjMap.remove(paramString);
-/*      */     } 
-/*      */     
-/* 1418 */     if (object instanceof ObjectName)
-/*      */     {
-/* 1420 */       synchronized (this.myRelMBeanObjName2RelIdMap) {
-/* 1421 */         this.myRelMBeanObjName2RelIdMap.remove(object);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1428 */     synchronized (this.myRelId2RelTypeMap) {
-/* 1429 */       str = this.myRelId2RelTypeMap.get(paramString);
-/* 1430 */       this.myRelId2RelTypeMap.remove(paramString);
-/*      */     } 
-/*      */     
-/* 1433 */     synchronized (this.myRelType2RelIdsMap) {
-/* 1434 */       List list = this.myRelType2RelIdsMap.get(str);
-/* 1435 */       if (list != null) {
-/*      */         
-/* 1437 */         list.remove(paramString);
-/* 1438 */         if (list.isEmpty())
-/*      */         {
-/* 1440 */           this.myRelType2RelIdsMap.remove(str);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1445 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "removeRelation");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void purgeRelations() throws RelationServiceNotRegisteredException {
-/*      */     ArrayList<MBeanServerNotification> arrayList;
-/* 1479 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "purgeRelations");
-/*      */ 
-/*      */ 
-/*      */     
-/* 1483 */     isActive();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1495 */     synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/* 1496 */       arrayList = new ArrayList<>(this.myUnregNtfList);
-/*      */ 
-/*      */       
-/* 1499 */       this.myUnregNtfList = new ArrayList<>();
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1509 */     ArrayList<ObjectName> arrayList1 = new ArrayList();
-/*      */ 
-/*      */     
-/* 1512 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*      */ 
-/*      */     
-/* 1515 */     synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/* 1516 */       for (MBeanServerNotification mBeanServerNotification : arrayList) {
-/*      */         
-/* 1518 */         ObjectName objectName = mBeanServerNotification.getMBeanName();
-/*      */ 
-/*      */ 
-/*      */         
-/* 1522 */         arrayList1.add(objectName);
-/*      */ 
-/*      */ 
-/*      */         
-/* 1526 */         Map map = this.myRefedMBeanObjName2RelIdsMap.get(objectName);
-/* 1527 */         hashMap.put(objectName, map);
-/*      */         
-/* 1529 */         this.myRefedMBeanObjName2RelIdsMap.remove(objectName);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1535 */     updateUnregistrationListener(null, arrayList1);
-/*      */     
-/* 1537 */     for (MBeanServerNotification mBeanServerNotification : arrayList) {
-/*      */       
-/* 1539 */       ObjectName objectName = mBeanServerNotification.getMBeanName();
-/*      */ 
-/*      */ 
-/*      */       
-/* 1543 */       Map map = (Map)hashMap.get(objectName);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1548 */       for (Map.Entry entry : map.entrySet()) {
-/* 1549 */         String str = (String)entry.getKey();
-/*      */ 
-/*      */         
-/* 1552 */         List<String> list = (List)entry.getValue();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1566 */           handleReferenceUnregistration(str, objectName, list);
-/*      */         
-/*      */         }
-/* 1569 */         catch (RelationNotFoundException relationNotFoundException) {
-/* 1570 */           throw new RuntimeException(relationNotFoundException.getMessage());
-/* 1571 */         } catch (RoleNotFoundException roleNotFoundException) {
-/* 1572 */           throw new RuntimeException(roleNotFoundException.getMessage());
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1577 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "purgeRelations");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Map<String, List<String>> findReferencingRelations(ObjectName paramObjectName, String paramString1, String paramString2) throws IllegalArgumentException {
-/* 1608 */     if (paramObjectName == null) {
-/* 1609 */       String str = "Invalid parameter.";
-/* 1610 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1613 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "findReferencingRelations", new Object[] { paramObjectName, paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */     
-/* 1617 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*      */     
-/* 1619 */     synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1623 */       Map map = this.myRefedMBeanObjName2RelIdsMap.get(paramObjectName);
-/*      */       
-/* 1625 */       if (map != null) {
-/*      */         ArrayList<String> arrayList;
-/*      */         
-/* 1628 */         Set<?> set = map.keySet();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1633 */         if (paramString1 == null) {
-/*      */           
-/* 1635 */           arrayList = new ArrayList(set);
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1639 */           arrayList = new ArrayList();
-/*      */ 
-/*      */ 
-/*      */           
-/* 1643 */           for (String str1 : set) {
-/*      */             String str2;
-/*      */ 
-/*      */             
-/* 1647 */             synchronized (this.myRelId2RelTypeMap) {
-/*      */               
-/* 1649 */               str2 = this.myRelId2RelTypeMap.get(str1);
-/*      */             } 
-/*      */             
-/* 1652 */             if (str2.equals(paramString1))
-/*      */             {
-/* 1654 */               arrayList.add(str1);
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1663 */         for (String str : arrayList) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1667 */           List<?> list = (List)map.get(str);
-/*      */           
-/* 1669 */           if (paramString2 == null) {
-/*      */ 
-/*      */ 
-/*      */             
-/* 1673 */             hashMap.put(str, new ArrayList(list));
-/*      */             continue;
-/*      */           } 
-/* 1676 */           if (list.contains(paramString2)) {
-/*      */ 
-/*      */             
-/* 1679 */             ArrayList<String> arrayList1 = new ArrayList();
-/* 1680 */             arrayList1.add(paramString2);
-/* 1681 */             hashMap.put(str, arrayList1);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1687 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "findReferencingRelations");
-/*      */     
-/* 1689 */     return (Map)hashMap;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Map<ObjectName, List<String>> findAssociatedMBeans(ObjectName paramObjectName, String paramString1, String paramString2) throws IllegalArgumentException {
-/* 1718 */     if (paramObjectName == null) {
-/* 1719 */       String str = "Invalid parameter.";
-/* 1720 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1723 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "findAssociatedMBeans", new Object[] { paramObjectName, paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1730 */     Map<String, List<String>> map = findReferencingRelations(paramObjectName, paramString1, paramString2);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1734 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*      */ 
-/*      */     
-/* 1737 */     for (String str : map.keySet()) {
-/*      */       Map<ObjectName, List<String>> map1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1745 */         map1 = getReferencedMBeans(str);
-/* 1746 */       } catch (RelationNotFoundException relationNotFoundException) {
-/* 1747 */         throw new RuntimeException(relationNotFoundException.getMessage());
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1752 */       for (ObjectName objectName : map1.keySet()) {
-/*      */         
-/* 1754 */         if (!objectName.equals(paramObjectName)) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1758 */           List<String> list = (List)hashMap.get(objectName);
-/* 1759 */           if (list == null) {
-/*      */             
-/* 1761 */             list = new ArrayList();
-/* 1762 */             list.add(str);
-/* 1763 */             hashMap.put(objectName, list);
-/*      */             continue;
-/*      */           } 
-/* 1766 */           list.add(str);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1772 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "findAssociatedMBeans");
-/*      */     
-/* 1774 */     return (Map)hashMap;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public List<String> findRelationsOfType(String paramString) throws IllegalArgumentException, RelationTypeNotFoundException {
-/*      */     ArrayList<String> arrayList;
-/* 1792 */     if (paramString == null) {
-/* 1793 */       String str = "Invalid parameter.";
-/* 1794 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1797 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "findRelationsOfType");
-/*      */ 
-/*      */ 
-/*      */     
-/* 1801 */     RelationType relationType = getRelationType(paramString);
-/*      */ 
-/*      */     
-/* 1804 */     synchronized (this.myRelType2RelIdsMap) {
-/* 1805 */       List<?> list = this.myRelType2RelIdsMap.get(paramString);
-/* 1806 */       if (list == null) {
-/* 1807 */         arrayList = new ArrayList();
-/*      */       } else {
-/* 1809 */         arrayList = new ArrayList(list);
-/*      */       } 
-/*      */     } 
-/* 1812 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "findRelationsOfType");
-/*      */     
-/* 1814 */     return arrayList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public List<ObjectName> getRole(String paramString1, String paramString2) throws RelationServiceNotRegisteredException, IllegalArgumentException, RelationNotFoundException, RoleNotFoundException {
-/*      */     List<ObjectName> list;
-/* 1843 */     if (paramString1 == null || paramString2 == null) {
-/* 1844 */       String str = "Invalid parameter.";
-/* 1845 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1848 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRole", new Object[] { paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */     
-/* 1852 */     isActive();
-/*      */ 
-/*      */     
-/* 1855 */     Object object = getRelation(paramString1);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1859 */     if (object instanceof RelationSupport) {
-/*      */ 
-/*      */       
-/* 1862 */       list = Util.<List>cast(((RelationSupport)object)
-/* 1863 */           .getRoleInt(paramString2, true, this, false));
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/* 1870 */       Object[] arrayOfObject = new Object[1];
-/* 1871 */       arrayOfObject[0] = paramString2;
-/* 1872 */       String[] arrayOfString = new String[1];
-/* 1873 */       arrayOfString[0] = "java.lang.String";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1879 */         List<?> list1 = Util.<List>cast(this.myMBeanServer
-/* 1880 */             .invoke((ObjectName)object, "getRole", arrayOfObject, arrayOfString));
-/*      */ 
-/*      */ 
-/*      */         
-/* 1884 */         if (list1 == null || list1 instanceof ArrayList)
-/* 1885 */         { list = (List)list1; }
-/*      */         else
-/* 1887 */         { list = new ArrayList(list1); } 
-/* 1888 */       } catch (InstanceNotFoundException instanceNotFoundException) {
-/* 1889 */         throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 1890 */       } catch (ReflectionException reflectionException) {
-/* 1891 */         throw new RuntimeException(reflectionException.getMessage());
-/* 1892 */       } catch (MBeanException mBeanException) {
-/* 1893 */         Exception exception = mBeanException.getTargetException();
-/* 1894 */         if (exception instanceof RoleNotFoundException) {
-/* 1895 */           throw (RoleNotFoundException)exception;
-/*      */         }
-/* 1897 */         throw new RuntimeException(exception.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1902 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRole");
-/* 1903 */     return list;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RoleResult getRoles(String paramString, String[] paramArrayOfString) throws RelationServiceNotRegisteredException, IllegalArgumentException, RelationNotFoundException {
-/*      */     RoleResult roleResult;
-/* 1929 */     if (paramString == null || paramArrayOfString == null) {
-/* 1930 */       String str = "Invalid parameter.";
-/* 1931 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 1934 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRoles", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1938 */     isActive();
-/*      */ 
-/*      */     
-/* 1941 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1945 */     if (object instanceof RelationSupport) {
-/*      */       
-/* 1947 */       roleResult = ((RelationSupport)object).getRolesInt(paramArrayOfString, true, this);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1952 */       Object[] arrayOfObject = new Object[1];
-/* 1953 */       arrayOfObject[0] = paramArrayOfString;
-/* 1954 */       String[] arrayOfString = new String[1];
-/*      */       try {
-/* 1956 */         arrayOfString[0] = paramArrayOfString.getClass().getName();
-/* 1957 */       } catch (Exception exception) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1965 */         roleResult = (RoleResult)this.myMBeanServer.invoke((ObjectName)object, "getRoles", arrayOfObject, arrayOfString);
-/*      */ 
-/*      */       
-/*      */       }
-/* 1969 */       catch (InstanceNotFoundException instanceNotFoundException) {
-/* 1970 */         throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 1971 */       } catch (ReflectionException reflectionException) {
-/* 1972 */         throw new RuntimeException(reflectionException.getMessage());
-/* 1973 */       } catch (MBeanException mBeanException) {
-/* 1974 */         throw new RuntimeException(mBeanException
-/* 1975 */             .getTargetException().getMessage());
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1979 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoles");
-/* 1980 */     return roleResult;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RoleResult getAllRoles(String paramString) throws IllegalArgumentException, RelationNotFoundException, RelationServiceNotRegisteredException {
-/*      */     RoleResult roleResult;
-/* 2002 */     if (paramString == null) {
-/* 2003 */       String str = "Invalid parameter.";
-/* 2004 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2007 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRoles", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2011 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2015 */     if (object instanceof RelationSupport) {
-/*      */       
-/* 2017 */       roleResult = ((RelationSupport)object).getAllRolesInt(true, this);
-/*      */     } else {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */         
-/* 2024 */         roleResult = (RoleResult)this.myMBeanServer.getAttribute((ObjectName)object, "AllRoles");
-/*      */       }
-/* 2026 */       catch (Exception exception) {
-/* 2027 */         throw new RuntimeException(exception.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2031 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoles");
-/* 2032 */     return roleResult;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Integer getRoleCardinality(String paramString1, String paramString2) throws IllegalArgumentException, RelationNotFoundException, RoleNotFoundException {
-/*      */     Integer integer;
-/* 2053 */     if (paramString1 == null || paramString2 == null) {
-/* 2054 */       String str = "Invalid parameter.";
-/* 2055 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2058 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRoleCardinality", new Object[] { paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */     
-/* 2062 */     Object object = getRelation(paramString1);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2066 */     if (object instanceof RelationSupport) {
-/*      */ 
-/*      */       
-/* 2069 */       integer = ((RelationSupport)object).getRoleCardinality(paramString2);
-/*      */     }
-/*      */     else {
-/*      */       
-/* 2073 */       Object[] arrayOfObject = new Object[1];
-/* 2074 */       arrayOfObject[0] = paramString2;
-/* 2075 */       String[] arrayOfString = new String[1];
-/* 2076 */       arrayOfString[0] = "java.lang.String";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 2083 */         integer = (Integer)this.myMBeanServer.invoke((ObjectName)object, "getRoleCardinality", arrayOfObject, arrayOfString);
-/*      */ 
-/*      */       
-/*      */       }
-/* 2087 */       catch (InstanceNotFoundException instanceNotFoundException) {
-/* 2088 */         throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 2089 */       } catch (ReflectionException reflectionException) {
-/* 2090 */         throw new RuntimeException(reflectionException.getMessage());
-/* 2091 */       } catch (MBeanException mBeanException) {
-/* 2092 */         Exception exception = mBeanException.getTargetException();
-/* 2093 */         if (exception instanceof RoleNotFoundException) {
-/* 2094 */           throw (RoleNotFoundException)exception;
-/*      */         }
-/* 2096 */         throw new RuntimeException(exception.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2101 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoleCardinality");
-/*      */     
-/* 2103 */     return integer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRole(String paramString, Role paramRole) throws RelationServiceNotRegisteredException, IllegalArgumentException, RelationNotFoundException, RoleNotFoundException, InvalidRoleValueException {
-/* 2145 */     if (paramString == null || paramRole == null) {
-/* 2146 */       String str = "Invalid parameter.";
-/* 2147 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2150 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "setRole", new Object[] { paramString, paramRole });
-/*      */ 
-/*      */ 
-/*      */     
-/* 2154 */     isActive();
-/*      */ 
-/*      */     
-/* 2157 */     Object object = getRelation(paramString);
-/*      */     
-/* 2159 */     if (object instanceof RelationSupport) {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2168 */         ((RelationSupport)object).setRoleInt(paramRole, true, this, false);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 2173 */       catch (RelationTypeNotFoundException relationTypeNotFoundException) {
-/* 2174 */         throw new RuntimeException(relationTypeNotFoundException.getMessage());
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 2179 */       Object[] arrayOfObject = new Object[1];
-/* 2180 */       arrayOfObject[0] = paramRole;
-/* 2181 */       String[] arrayOfString = new String[1];
-/* 2182 */       arrayOfString[0] = "javax.management.relation.Role";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 2190 */         this.myMBeanServer.setAttribute((ObjectName)object, new Attribute("Role", paramRole));
-/*      */       
-/*      */       }
-/* 2193 */       catch (InstanceNotFoundException instanceNotFoundException) {
-/* 2194 */         throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 2195 */       } catch (ReflectionException reflectionException) {
-/* 2196 */         throw new RuntimeException(reflectionException.getMessage());
-/* 2197 */       } catch (MBeanException mBeanException) {
-/* 2198 */         Exception exception = mBeanException.getTargetException();
-/* 2199 */         if (exception instanceof RoleNotFoundException)
-/* 2200 */           throw (RoleNotFoundException)exception; 
-/* 2201 */         if (exception instanceof InvalidRoleValueException) {
-/* 2202 */           throw (InvalidRoleValueException)exception;
-/*      */         }
-/* 2204 */         throw new RuntimeException(exception.getMessage());
-/*      */       
-/*      */       }
-/* 2207 */       catch (AttributeNotFoundException attributeNotFoundException) {
-/* 2208 */         throw new RuntimeException(attributeNotFoundException.getMessage());
-/* 2209 */       } catch (InvalidAttributeValueException invalidAttributeValueException) {
-/* 2210 */         throw new RuntimeException(invalidAttributeValueException.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2214 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "setRole");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RoleResult setRoles(String paramString, RoleList paramRoleList) throws RelationServiceNotRegisteredException, IllegalArgumentException, RelationNotFoundException {
-/*      */     RoleResult roleResult;
-/* 2245 */     if (paramString == null || paramRoleList == null) {
-/* 2246 */       String str = "Invalid parameter.";
-/* 2247 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2250 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "setRoles", new Object[] { paramString, paramRoleList });
-/*      */ 
-/*      */ 
-/*      */     
-/* 2254 */     isActive();
-/*      */ 
-/*      */     
-/* 2257 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2261 */     if (object instanceof RelationSupport) {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */ 
-/*      */         
-/* 2268 */         roleResult = ((RelationSupport)object).setRolesInt(paramRoleList, true, this);
-/*      */       
-/*      */       }
-/* 2271 */       catch (RelationTypeNotFoundException relationTypeNotFoundException) {
-/* 2272 */         throw new RuntimeException(relationTypeNotFoundException.getMessage());
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 2277 */       Object[] arrayOfObject = new Object[1];
-/* 2278 */       arrayOfObject[0] = paramRoleList;
-/* 2279 */       String[] arrayOfString = new String[1];
-/* 2280 */       arrayOfString[0] = "javax.management.relation.RoleList";
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 2285 */         roleResult = (RoleResult)this.myMBeanServer.invoke((ObjectName)object, "setRoles", arrayOfObject, arrayOfString);
-/*      */ 
-/*      */       
-/*      */       }
-/* 2289 */       catch (InstanceNotFoundException instanceNotFoundException) {
-/* 2290 */         throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 2291 */       } catch (ReflectionException reflectionException) {
-/* 2292 */         throw new RuntimeException(reflectionException.getMessage());
-/* 2293 */       } catch (MBeanException mBeanException) {
-/* 2294 */         throw new RuntimeException(mBeanException
-/* 2295 */             .getTargetException().getMessage());
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2299 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "setRoles");
-/* 2300 */     return roleResult;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Map<ObjectName, List<String>> getReferencedMBeans(String paramString) throws IllegalArgumentException, RelationNotFoundException {
-/*      */     Map<ObjectName, List<String>> map;
-/* 2320 */     if (paramString == null) {
-/* 2321 */       String str = "Invalid parameter.";
-/* 2322 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2325 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getReferencedMBeans", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2329 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2333 */     if (object instanceof RelationSupport) {
-/*      */       
-/* 2335 */       map = ((RelationSupport)object).getReferencedMBeans();
-/*      */     } else {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */         
-/* 2341 */         map = Util.<Map>cast(this.myMBeanServer
-/* 2342 */             .getAttribute((ObjectName)object, "ReferencedMBeans"));
-/*      */       }
-/* 2344 */       catch (Exception exception) {
-/* 2345 */         throw new RuntimeException(exception.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2349 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getReferencedMBeans");
-/*      */     
-/* 2351 */     return map;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getRelationTypeName(String paramString) throws IllegalArgumentException, RelationNotFoundException {
-/*      */     String str;
-/* 2369 */     if (paramString == null) {
-/* 2370 */       String str1 = "Invalid parameter.";
-/* 2371 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/* 2374 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRelationTypeName", paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2378 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2382 */     if (object instanceof RelationSupport) {
-/*      */       
-/* 2384 */       str = ((RelationSupport)object).getRelationTypeName();
-/*      */     } else {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */         
-/* 2391 */         str = (String)this.myMBeanServer.getAttribute((ObjectName)object, "RelationTypeName");
-/*      */       }
-/* 2393 */       catch (Exception exception) {
-/* 2394 */         throw new RuntimeException(exception.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2398 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRelationTypeName");
-/*      */     
-/* 2400 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void handleNotification(Notification paramNotification, Object paramObject) {
-/* 2419 */     if (paramNotification == null) {
-/* 2420 */       String str = "Invalid parameter.";
-/* 2421 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2424 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "handleNotification", paramNotification);
-/*      */ 
-/*      */     
-/* 2427 */     if (paramNotification instanceof MBeanServerNotification) {
-/*      */       
-/* 2429 */       MBeanServerNotification mBeanServerNotification = (MBeanServerNotification)paramNotification;
-/* 2430 */       String str = paramNotification.getType();
-/*      */       
-/* 2432 */       if (str.equals("JMX.mbean.unregistered")) {
-/*      */         String str1;
-/*      */         
-/* 2435 */         ObjectName objectName = ((MBeanServerNotification)paramNotification).getMBeanName();
-/*      */ 
-/*      */ 
-/*      */         
-/* 2439 */         boolean bool = false;
-/* 2440 */         synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/*      */           
-/* 2442 */           if (this.myRefedMBeanObjName2RelIdsMap.containsKey(objectName)) {
-/*      */             
-/* 2444 */             synchronized (this.myUnregNtfList) {
-/* 2445 */               this.myUnregNtfList.add(mBeanServerNotification);
-/*      */             } 
-/* 2447 */             bool = true;
-/*      */           } 
-/* 2449 */           if (bool && this.myPurgeFlag) {
-/*      */             
-/*      */             try {
-/*      */ 
-/*      */               
-/* 2454 */               purgeRelations();
-/* 2455 */             } catch (Exception exception) {
-/* 2456 */               throw new RuntimeException(exception.getMessage());
-/*      */             } 
-/*      */           }
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2464 */         synchronized (this.myRelMBeanObjName2RelIdMap) {
-/* 2465 */           str1 = this.myRelMBeanObjName2RelIdMap.get(objectName);
-/*      */         } 
-/* 2467 */         if (str1 != null) {
-/*      */           
-/*      */           try {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 2475 */             removeRelation(str1);
-/* 2476 */           } catch (Exception exception) {
-/* 2477 */             throw new RuntimeException(exception.getMessage());
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2483 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "handleNotification");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MBeanNotificationInfo[] getNotificationInfo() {
-/* 2498 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getNotificationInfo");
-/*      */ 
-/*      */     
-/* 2501 */     String str1 = "javax.management.relation.RelationNotification";
-/*      */     
-/* 2503 */     String[] arrayOfString = { "jmx.relation.creation.basic", "jmx.relation.creation.mbean", "jmx.relation.update.basic", "jmx.relation.update.mbean", "jmx.relation.removal.basic", "jmx.relation.removal.mbean" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2512 */     String str2 = "Sent when a relation is created, updated or deleted.";
-/*      */     
-/* 2514 */     MBeanNotificationInfo mBeanNotificationInfo = new MBeanNotificationInfo(arrayOfString, str1, str2);
-/*      */ 
-/*      */     
-/* 2517 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getNotificationInfo");
-/*      */     
-/* 2519 */     return new MBeanNotificationInfo[] { mBeanNotificationInfo };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addRelationTypeInt(RelationType paramRelationType) throws IllegalArgumentException, InvalidRelationTypeException {
-/* 2537 */     if (paramRelationType == null) {
-/* 2538 */       String str1 = "Invalid parameter.";
-/* 2539 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/* 2542 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "addRelationTypeInt");
-/*      */ 
-/*      */     
-/* 2545 */     String str = paramRelationType.getRelationTypeName();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 2551 */       RelationType relationType = getRelationType(str);
-/*      */       
-/* 2553 */       if (relationType != null) {
-/* 2554 */         String str1 = "There is already a relation type in the Relation Service with name ";
-/* 2555 */         StringBuilder stringBuilder = new StringBuilder(str1);
-/* 2556 */         stringBuilder.append(str);
-/* 2557 */         throw new InvalidRelationTypeException(stringBuilder.toString());
-/*      */       }
-/*      */     
-/* 2560 */     } catch (RelationTypeNotFoundException relationTypeNotFoundException) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2565 */     synchronized (this.myRelType2ObjMap) {
-/* 2566 */       this.myRelType2ObjMap.put(str, paramRelationType);
-/*      */     } 
-/*      */     
-/* 2569 */     if (paramRelationType instanceof RelationTypeSupport) {
-/* 2570 */       ((RelationTypeSupport)paramRelationType).setRelationServiceFlag(true);
-/*      */     }
-/*      */     
-/* 2573 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "addRelationTypeInt");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   RelationType getRelationType(String paramString) throws IllegalArgumentException, RelationTypeNotFoundException {
-/*      */     RelationType relationType;
-/* 2593 */     if (paramString == null) {
-/* 2594 */       String str = "Invalid parameter.";
-/* 2595 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2598 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRelationType", paramString);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2603 */     synchronized (this.myRelType2ObjMap) {
-/* 2604 */       relationType = this.myRelType2ObjMap.get(paramString);
-/*      */     } 
-/*      */     
-/* 2607 */     if (relationType == null) {
-/* 2608 */       String str = "No relation type created in the Relation Service with the name ";
-/* 2609 */       StringBuilder stringBuilder = new StringBuilder(str);
-/* 2610 */       stringBuilder.append(paramString);
-/* 2611 */       throw new RelationTypeNotFoundException(stringBuilder.toString());
-/*      */     } 
-/*      */     
-/* 2614 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRelationType");
-/*      */     
-/* 2616 */     return relationType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Object getRelation(String paramString) throws IllegalArgumentException, RelationNotFoundException {
-/*      */     Object object;
-/* 2637 */     if (paramString == null) {
-/* 2638 */       object = "Invalid parameter.";
-/* 2639 */       throw new IllegalArgumentException(object);
-/*      */     } 
-/*      */     
-/* 2642 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "getRelation", paramString);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2647 */     synchronized (this.myRelId2ObjMap) {
-/* 2648 */       object = this.myRelId2ObjMap.get(paramString);
-/*      */     } 
-/*      */     
-/* 2651 */     if (object == null) {
-/* 2652 */       String str = "No relation associated to relation id " + paramString;
-/* 2653 */       throw new RelationNotFoundException(str);
-/*      */     } 
-/*      */     
-/* 2656 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "getRelation");
-/*      */     
-/* 2658 */     return object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean addNewMBeanReference(ObjectName paramObjectName, String paramString1, String paramString2) throws IllegalArgumentException {
-/* 2680 */     if (paramObjectName == null || paramString1 == null || paramString2 == null) {
-/*      */ 
-/*      */       
-/* 2683 */       String str = "Invalid parameter.";
-/* 2684 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2687 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "addNewMBeanReference", new Object[] { paramObjectName, paramString1, paramString2 });
-/*      */ 
-/*      */ 
-/*      */     
-/* 2691 */     boolean bool = false;
-/*      */     
-/* 2693 */     synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2698 */       Map<Object, Object> map = (Map)this.myRefedMBeanObjName2RelIdsMap.get(paramObjectName);
-/*      */       
-/* 2700 */       if (map == null) {
-/*      */ 
-/*      */         
-/* 2703 */         bool = true;
-/*      */ 
-/*      */ 
-/*      */         
-/* 2707 */         ArrayList<String> arrayList = new ArrayList();
-/* 2708 */         arrayList.add(paramString2);
-/*      */ 
-/*      */         
-/* 2711 */         map = new HashMap<>();
-/* 2712 */         map.put(paramString1, arrayList);
-/*      */         
-/* 2714 */         this.myRefedMBeanObjName2RelIdsMap.put(paramObjectName, map);
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */ 
-/*      */         
-/* 2720 */         List<String> list = (List)map.get(paramString1);
-/*      */         
-/* 2722 */         if (list == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2727 */           list = new ArrayList();
-/* 2728 */           list.add(paramString2);
-/*      */ 
-/*      */           
-/* 2731 */           map.put(paramString1, list);
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */ 
-/*      */           
-/* 2737 */           list.add(paramString2);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2742 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "addNewMBeanReference");
-/*      */     
-/* 2744 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean removeMBeanReference(ObjectName paramObjectName, String paramString1, String paramString2, boolean paramBoolean) throws IllegalArgumentException {
-/* 2768 */     if (paramObjectName == null || paramString1 == null || paramString2 == null) {
-/*      */ 
-/*      */       
-/* 2771 */       String str = "Invalid parameter.";
-/* 2772 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 2775 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "removeMBeanReference", new Object[] { paramObjectName, paramString1, paramString2, 
-/*      */           
-/* 2777 */           Boolean.valueOf(paramBoolean) });
-/*      */     
-/* 2779 */     boolean bool = false;
-/*      */     
-/* 2781 */     synchronized (this.myRefedMBeanObjName2RelIdsMap) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2789 */       Map map = this.myRefedMBeanObjName2RelIdsMap.get(paramObjectName);
-/*      */       
-/* 2791 */       if (map == null) {
-/*      */         
-/* 2793 */         JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "removeMBeanReference");
-/*      */         
-/* 2795 */         return true;
-/*      */       } 
-/*      */       
-/* 2798 */       List list = null;
-/* 2799 */       if (!paramBoolean) {
-/*      */ 
-/*      */         
-/* 2802 */         list = (List)map.get(paramString1);
-/*      */ 
-/*      */         
-/* 2805 */         int i = list.indexOf(paramString2);
-/* 2806 */         if (i != -1) {
-/* 2807 */           list.remove(i);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2813 */       if (list.isEmpty() || paramBoolean)
-/*      */       {
-/*      */         
-/* 2816 */         map.remove(paramString1);
-/*      */       }
-/*      */ 
-/*      */       
-/* 2820 */       if (map.isEmpty()) {
-/*      */         
-/* 2822 */         this.myRefedMBeanObjName2RelIdsMap.remove(paramObjectName);
-/* 2823 */         bool = true;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2827 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "removeMBeanReference");
-/*      */     
-/* 2829 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateUnregistrationListener(List<ObjectName> paramList1, List<ObjectName> paramList2) throws RelationServiceNotRegisteredException {
-/* 2846 */     if (paramList1 != null && paramList2 != null && 
-/* 2847 */       paramList1.isEmpty() && paramList2.isEmpty()) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2853 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "updateUnregistrationListener", new Object[] { paramList1, paramList2 });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2858 */     isActive();
-/*      */     
-/* 2860 */     if (paramList1 != null || paramList2 != null) {
-/*      */       
-/* 2862 */       boolean bool = false;
-/* 2863 */       if (this.myUnregNtfFilter == null) {
-/*      */         
-/* 2865 */         this.myUnregNtfFilter = new MBeanServerNotificationFilter();
-/* 2866 */         bool = true;
-/*      */       } 
-/*      */       
-/* 2869 */       synchronized (this.myUnregNtfFilter) {
-/*      */ 
-/*      */         
-/* 2872 */         if (paramList1 != null) {
-/* 2873 */           for (ObjectName objectName : paramList1) {
-/* 2874 */             this.myUnregNtfFilter.enableObjectName(objectName);
-/*      */           }
-/*      */         }
-/* 2877 */         if (paramList2 != null)
-/*      */         {
-/* 2879 */           for (ObjectName objectName : paramList2) {
-/* 2880 */             this.myUnregNtfFilter.disableObjectName(objectName);
-/*      */           }
-/*      */         }
-/*      */         
-/* 2884 */         if (bool) {
-/*      */           try {
-/* 2886 */             this.myMBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this, this.myUnregNtfFilter, (Object)null);
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           }
-/* 2891 */           catch (InstanceNotFoundException instanceNotFoundException) {
-/* 2892 */             throw new RelationServiceNotRegisteredException(instanceNotFoundException
-/* 2893 */                 .getMessage());
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2939 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "updateUnregistrationListener");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addRelationInt(boolean paramBoolean, RelationSupport paramRelationSupport, ObjectName paramObjectName, String paramString1, String paramString2, RoleList paramRoleList) throws IllegalArgumentException, RelationServiceNotRegisteredException, RoleNotFoundException, InvalidRelationIdException, RelationTypeNotFoundException, InvalidRoleValueException {
-/* 2994 */     if (paramString1 == null || paramString2 == null || (paramBoolean && (paramRelationSupport == null || paramObjectName != null)) || (!paramBoolean && (paramObjectName == null || paramRelationSupport != null))) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3002 */       String str = "Invalid parameter.";
-/* 3003 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 3006 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "addRelationInt", new Object[] {
-/* 3007 */           Boolean.valueOf(paramBoolean), paramRelationSupport, paramObjectName, paramString1, paramString2, paramRoleList
-/*      */         });
-/*      */ 
-/*      */     
-/* 3011 */     isActive();
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 3016 */       Object object = getRelation(paramString1);
-/*      */       
-/* 3018 */       if (object != null) {
-/*      */         
-/* 3020 */         String str = "There is already a relation with id ";
-/* 3021 */         StringBuilder stringBuilder = new StringBuilder(str);
-/* 3022 */         stringBuilder.append(paramString1);
-/* 3023 */         throw new InvalidRelationIdException(stringBuilder.toString());
-/*      */       } 
-/* 3025 */     } catch (RelationNotFoundException relationNotFoundException) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3031 */     RelationType relationType = getRelationType(paramString2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3039 */     ArrayList<RoleInfo> arrayList = new ArrayList<>(relationType.getRoleInfos());
-/*      */     
-/* 3041 */     if (paramRoleList != null)
-/*      */     {
-/* 3043 */       for (Role role : paramRoleList.asList()) {
-/* 3044 */         RoleInfo roleInfo; String str = role.getRoleName();
-/* 3045 */         List<ObjectName> list = role.getRoleValue();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 3051 */           roleInfo = relationType.getRoleInfo(str);
-/* 3052 */         } catch (RoleInfoNotFoundException roleInfoNotFoundException) {
-/* 3053 */           throw new RoleNotFoundException(roleInfoNotFoundException.getMessage());
-/*      */         } 
-/*      */ 
-/*      */         
-/* 3057 */         Integer integer = checkRoleInt(2, str, list, roleInfo, false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 3062 */         int i = integer.intValue();
-/* 3063 */         if (i != 0)
-/*      */         {
-/*      */           
-/* 3066 */           throwRoleProblemException(i, str);
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/* 3071 */         int j = arrayList.indexOf(roleInfo);
-/*      */         
-/* 3073 */         arrayList.remove(j);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 3079 */     initializeMissingRoles(paramBoolean, paramRelationSupport, paramObjectName, paramString1, paramString2, arrayList);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3090 */     synchronized (this.myRelId2ObjMap) {
-/* 3091 */       if (paramBoolean) {
-/*      */         
-/* 3093 */         this.myRelId2ObjMap.put(paramString1, paramRelationSupport);
-/*      */       } else {
-/* 3095 */         this.myRelId2ObjMap.put(paramString1, paramObjectName);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3100 */     synchronized (this.myRelId2RelTypeMap) {
-/* 3101 */       this.myRelId2RelTypeMap.put(paramString1, paramString2);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3106 */     synchronized (this.myRelType2RelIdsMap) {
-/*      */       
-/* 3108 */       List<String> list = this.myRelType2RelIdsMap.get(paramString2);
-/* 3109 */       boolean bool = false;
-/* 3110 */       if (list == null) {
-/* 3111 */         bool = true;
-/* 3112 */         list = new ArrayList();
-/*      */       } 
-/* 3114 */       list.add(paramString1);
-/* 3115 */       if (bool) {
-/* 3116 */         this.myRelType2RelIdsMap.put(paramString2, list);
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3124 */     for (Role role : paramRoleList.asList()) {
-/*      */ 
-/*      */       
-/* 3127 */       ArrayList<ObjectName> arrayList1 = new ArrayList();
-/*      */ 
-/*      */       
-/*      */       try {
-/* 3131 */         updateRoleMap(paramString1, role, arrayList1);
-/*      */       }
-/* 3133 */       catch (RelationNotFoundException relationNotFoundException) {}
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 3141 */       sendRelationCreationNotification(paramString1);
-/*      */     }
-/* 3143 */     catch (RelationNotFoundException relationNotFoundException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/* 3147 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "addRelationInt");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Integer checkRoleInt(int paramInt, String paramString, List<ObjectName> paramList, RoleInfo paramRoleInfo, boolean paramBoolean) throws IllegalArgumentException {
-/* 3181 */     if (paramString == null || paramRoleInfo == null || (paramInt == 2 && paramList == null)) {
-/*      */ 
-/*      */       
-/* 3184 */       String str = "Invalid parameter.";
-/* 3185 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 3188 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "checkRoleInt", new Object[] {
-/* 3189 */           Integer.valueOf(paramInt), paramString, paramList, paramRoleInfo, 
-/* 3190 */           Boolean.valueOf(paramBoolean)
-/*      */         });
-/*      */     
-/* 3193 */     String str1 = paramRoleInfo.getName();
-/* 3194 */     if (!paramString.equals(str1)) {
-/* 3195 */       JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */       
-/* 3197 */       return Integer.valueOf(1);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3201 */     if (paramInt == 1) {
-/* 3202 */       boolean bool = paramRoleInfo.isReadable();
-/* 3203 */       if (!bool) {
-/* 3204 */         JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */         
-/* 3206 */         return Integer.valueOf(2);
-/*      */       } 
-/*      */       
-/* 3209 */       JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */       
-/* 3211 */       return new Integer(0);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3216 */     if (paramBoolean) {
-/* 3217 */       boolean bool = paramRoleInfo.isWritable();
-/* 3218 */       if (!bool) {
-/* 3219 */         JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */         
-/* 3221 */         return new Integer(3);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 3225 */     int i = paramList.size();
-/*      */ 
-/*      */     
-/* 3228 */     boolean bool1 = paramRoleInfo.checkMinDegree(i);
-/* 3229 */     if (!bool1) {
-/* 3230 */       JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */       
-/* 3232 */       return new Integer(4);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3236 */     boolean bool2 = paramRoleInfo.checkMaxDegree(i);
-/* 3237 */     if (!bool2) {
-/* 3238 */       JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */       
-/* 3240 */       return new Integer(5);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3249 */     String str2 = paramRoleInfo.getRefMBeanClassName();
-/*      */     
-/* 3251 */     for (ObjectName objectName : paramList) {
-/*      */ 
-/*      */       
-/* 3254 */       if (objectName == null) {
-/* 3255 */         JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */         
-/* 3257 */         return new Integer(7);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 3263 */         boolean bool = this.myMBeanServer.isInstanceOf(objectName, str2);
-/*      */         
-/* 3265 */         if (!bool) {
-/* 3266 */           JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */           
-/* 3268 */           return new Integer(6);
-/*      */         }
-/*      */       
-/* 3271 */       } catch (InstanceNotFoundException instanceNotFoundException) {
-/* 3272 */         JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */         
-/* 3274 */         return new Integer(7);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 3278 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "checkRoleInt");
-/*      */     
-/* 3280 */     return new Integer(0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initializeMissingRoles(boolean paramBoolean, RelationSupport paramRelationSupport, ObjectName paramObjectName, String paramString1, String paramString2, List<RoleInfo> paramList) throws IllegalArgumentException, RelationServiceNotRegisteredException, InvalidRoleValueException {
-/* 3318 */     if ((paramBoolean && (paramRelationSupport == null || paramObjectName != null)) || (!paramBoolean && (paramObjectName == null || paramRelationSupport != null)) || paramString1 == null || paramString2 == null || paramList == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3327 */       String str = "Invalid parameter.";
-/* 3328 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */     
-/* 3331 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "initializeMissingRoles", new Object[] {
-/* 3332 */           Boolean.valueOf(paramBoolean), paramRelationSupport, paramObjectName, paramString1, paramString2, paramList
-/*      */         });
-/*      */ 
-/*      */ 
-/*      */     
-/* 3337 */     isActive();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3344 */     for (RoleInfo roleInfo : paramList) {
-/*      */       
-/* 3346 */       String str = roleInfo.getName();
-/*      */ 
-/*      */       
-/* 3349 */       ArrayList<ObjectName> arrayList = new ArrayList();
-/*      */       
-/* 3351 */       Role role = new Role(str, arrayList);
-/*      */       
-/* 3353 */       if (paramBoolean) {
-/*      */ 
-/*      */         
-/*      */         try {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 3362 */           paramRelationSupport.setRoleInt(role, true, this, false);
-/*      */         }
-/* 3364 */         catch (RoleNotFoundException roleNotFoundException) {
-/* 3365 */           throw new RuntimeException(roleNotFoundException.getMessage());
-/* 3366 */         } catch (RelationNotFoundException relationNotFoundException) {
-/* 3367 */           throw new RuntimeException(relationNotFoundException.getMessage());
-/* 3368 */         } catch (RelationTypeNotFoundException relationTypeNotFoundException) {
-/* 3369 */           throw new RuntimeException(relationTypeNotFoundException.getMessage());
-/*      */         } 
-/*      */ 
-/*      */         
-/*      */         continue;
-/*      */       } 
-/*      */       
-/* 3376 */       Object[] arrayOfObject = new Object[1];
-/* 3377 */       arrayOfObject[0] = role;
-/* 3378 */       String[] arrayOfString = new String[1];
-/* 3379 */       arrayOfString[0] = "javax.management.relation.Role";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 3391 */         this.myMBeanServer.setAttribute(paramObjectName, new Attribute("Role", role));
-/*      */       
-/*      */       }
-/* 3394 */       catch (InstanceNotFoundException instanceNotFoundException) {
-/* 3395 */         throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 3396 */       } catch (ReflectionException reflectionException) {
-/* 3397 */         throw new RuntimeException(reflectionException.getMessage());
-/* 3398 */       } catch (MBeanException mBeanException) {
-/* 3399 */         Exception exception = mBeanException.getTargetException();
-/* 3400 */         if (exception instanceof InvalidRoleValueException) {
-/* 3401 */           throw (InvalidRoleValueException)exception;
-/*      */         }
-/* 3403 */         throw new RuntimeException(exception.getMessage());
-/*      */       }
-/* 3405 */       catch (AttributeNotFoundException attributeNotFoundException) {
-/* 3406 */         throw new RuntimeException(attributeNotFoundException.getMessage());
-/* 3407 */       } catch (InvalidAttributeValueException invalidAttributeValueException) {
-/* 3408 */         throw new RuntimeException(invalidAttributeValueException.getMessage());
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3413 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "initializeMissingRoles");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static void throwRoleProblemException(int paramInt, String paramString) throws IllegalArgumentException, RoleNotFoundException, InvalidRoleValueException {
-/* 3439 */     if (paramString == null) {
-/* 3440 */       String str = "Invalid parameter.";
-/* 3441 */       throw new IllegalArgumentException(str);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3446 */     byte b = 0;
-/*      */     
-/* 3448 */     String str1 = null;
-/*      */     
-/* 3450 */     switch (paramInt) {
-/*      */       case 1:
-/* 3452 */         str1 = " does not exist in relation.";
-/* 3453 */         b = 1;
-/*      */         break;
-/*      */       case 2:
-/* 3456 */         str1 = " is not readable.";
-/* 3457 */         b = 1;
-/*      */         break;
-/*      */       case 3:
-/* 3460 */         str1 = " is not writable.";
-/* 3461 */         b = 1;
-/*      */         break;
-/*      */       case 4:
-/* 3464 */         str1 = " has a number of MBean references less than the expected minimum degree.";
-/* 3465 */         b = 2;
-/*      */         break;
-/*      */       case 5:
-/* 3468 */         str1 = " has a number of MBean references greater than the expected maximum degree.";
-/* 3469 */         b = 2;
-/*      */         break;
-/*      */       case 6:
-/* 3472 */         str1 = " has an MBean reference to an MBean not of the expected class of references for that role.";
-/* 3473 */         b = 2;
-/*      */         break;
-/*      */       case 7:
-/* 3476 */         str1 = " has a reference to null or to an MBean not registered.";
-/* 3477 */         b = 2;
-/*      */         break;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3482 */     StringBuilder stringBuilder = new StringBuilder(paramString);
-/* 3483 */     stringBuilder.append(str1);
-/* 3484 */     String str2 = stringBuilder.toString();
-/* 3485 */     if (b == 1) {
-/* 3486 */       throw new RoleNotFoundException(str2);
-/*      */     }
-/* 3488 */     if (b == 2) {
-/* 3489 */       throw new InvalidRoleValueException(str2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sendNotificationInt(int paramInt, String paramString1, String paramString2, List<ObjectName> paramList1, String paramString3, List<ObjectName> paramList2, List<ObjectName> paramList3) throws IllegalArgumentException, RelationNotFoundException {
-/*      */     String str1;
-/* 3520 */     if (paramString1 == null || paramString2 == null || (paramInt != 3 && paramList1 != null) || (paramInt == 2 && (paramString3 == null || paramList2 == null || paramList3 == null))) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3527 */       str1 = "Invalid parameter.";
-/* 3528 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/* 3531 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "sendNotificationInt", new Object[] {
-/* 3532 */           Integer.valueOf(paramInt), paramString1, paramString2, paramList1, paramString3, paramList2, paramList3
-/*      */         });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3539 */     synchronized (this.myRelId2RelTypeMap) {
-/* 3540 */       str1 = this.myRelId2RelTypeMap.get(paramString2);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3545 */     ObjectName objectName = isRelationMBean(paramString2);
-/*      */     
-/* 3547 */     String str2 = null;
-/* 3548 */     if (objectName != null) {
-/* 3549 */       switch (paramInt) {
-/*      */         case 1:
-/* 3551 */           str2 = "jmx.relation.creation.mbean";
-/*      */           break;
-/*      */         case 2:
-/* 3554 */           str2 = "jmx.relation.update.mbean";
-/*      */           break;
-/*      */         case 3:
-/* 3557 */           str2 = "jmx.relation.removal.mbean";
-/*      */           break;
-/*      */       } 
-/*      */     } else {
-/* 3561 */       switch (paramInt) {
-/*      */         case 1:
-/* 3563 */           str2 = "jmx.relation.creation.basic";
-/*      */           break;
-/*      */         case 2:
-/* 3566 */           str2 = "jmx.relation.update.basic";
-/*      */           break;
-/*      */         case 3:
-/* 3569 */           str2 = "jmx.relation.removal.basic";
-/*      */           break;
-/*      */       } 
-/*      */ 
-/*      */     
-/*      */     } 
-/* 3575 */     Long long_ = Long.valueOf(this.atomicSeqNo.incrementAndGet());
-/*      */ 
-/*      */     
-/* 3578 */     Date date = new Date();
-/* 3579 */     long l = date.getTime();
-/*      */     
-/* 3581 */     RelationNotification relationNotification = null;
-/*      */     
-/* 3583 */     if (str2.equals("jmx.relation.creation.basic") || str2
-/* 3584 */       .equals("jmx.relation.creation.mbean") || str2
-/* 3585 */       .equals("jmx.relation.removal.basic") || str2
-/* 3586 */       .equals("jmx.relation.removal.mbean")) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3591 */       relationNotification = new RelationNotification(str2, this, long_.longValue(), l, paramString1, paramString2, str1, objectName, paramList1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/* 3599 */     else if (str2.equals("jmx.relation.update.basic") || str2
-/*      */       
-/* 3601 */       .equals("jmx.relation.update.mbean")) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3606 */       relationNotification = new RelationNotification(str2, this, long_.longValue(), l, paramString1, paramString2, str1, objectName, paramString3, paramList2, paramList3);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3617 */     sendNotification(relationNotification);
-/*      */     
-/* 3619 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "sendNotificationInt");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void handleReferenceUnregistration(String paramString, ObjectName paramObjectName, List<String> paramList) throws IllegalArgumentException, RelationServiceNotRegisteredException, RelationNotFoundException, RoleNotFoundException {
-/* 3650 */     if (paramString == null || paramList == null || paramObjectName == null) {
-/*      */ 
-/*      */       
-/* 3653 */       String str1 = "Invalid parameter.";
-/* 3654 */       throw new IllegalArgumentException(str1);
-/*      */     } 
-/*      */     
-/* 3657 */     JmxProperties.RELATION_LOGGER.entering(RelationService.class.getName(), "handleReferenceUnregistration", new Object[] { paramString, paramObjectName, paramList });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3662 */     isActive();
-/*      */ 
-/*      */ 
-/*      */     
-/* 3666 */     String str = getRelationTypeName(paramString);
-/*      */ 
-/*      */ 
-/*      */     
-/* 3670 */     Object object = getRelation(paramString);
-/*      */ 
-/*      */     
-/* 3673 */     boolean bool = false;
-/*      */     
-/* 3675 */     for (String str1 : paramList) {
-/*      */       RoleInfo roleInfo;
-/* 3677 */       if (bool) {
-/*      */         break;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3687 */       int i = getRoleCardinality(paramString, str1).intValue();
-/*      */ 
-/*      */       
-/* 3690 */       int j = i - 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 3698 */         roleInfo = getRoleInfo(str, str1);
-/*      */       }
-/* 3700 */       catch (RelationTypeNotFoundException relationTypeNotFoundException) {
-/* 3701 */         throw new RuntimeException(relationTypeNotFoundException.getMessage());
-/* 3702 */       } catch (RoleInfoNotFoundException roleInfoNotFoundException) {
-/* 3703 */         throw new RuntimeException(roleInfoNotFoundException.getMessage());
-/*      */       } 
-/*      */ 
-/*      */       
-/* 3707 */       boolean bool1 = roleInfo.checkMinDegree(j);
-/*      */       
-/* 3709 */       if (!bool1)
-/*      */       {
-/* 3711 */         bool = true;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 3715 */     if (bool) {
-/*      */       
-/* 3717 */       removeRelation(paramString);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3732 */       for (String str1 : paramList) {
-/*      */         
-/* 3734 */         if (object instanceof RelationSupport) {
-/*      */ 
-/*      */           
-/*      */           try {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 3744 */             ((RelationSupport)object).handleMBeanUnregistrationInt(paramObjectName, str1, true, this);
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           }
-/* 3749 */           catch (RelationTypeNotFoundException relationTypeNotFoundException) {
-/* 3750 */             throw new RuntimeException(relationTypeNotFoundException.getMessage());
-/* 3751 */           } catch (InvalidRoleValueException invalidRoleValueException) {
-/* 3752 */             throw new RuntimeException(invalidRoleValueException.getMessage());
-/*      */           } 
-/*      */           
-/*      */           continue;
-/*      */         } 
-/* 3757 */         Object[] arrayOfObject = new Object[2];
-/* 3758 */         arrayOfObject[0] = paramObjectName;
-/* 3759 */         arrayOfObject[1] = str1;
-/* 3760 */         String[] arrayOfString = new String[2];
-/* 3761 */         arrayOfString[0] = "javax.management.ObjectName";
-/* 3762 */         arrayOfString[1] = "java.lang.String";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 3768 */           this.myMBeanServer.invoke((ObjectName)object, "handleMBeanUnregistration", arrayOfObject, arrayOfString);
-/*      */ 
-/*      */         
-/*      */         }
-/* 3772 */         catch (InstanceNotFoundException instanceNotFoundException) {
-/* 3773 */           throw new RuntimeException(instanceNotFoundException.getMessage());
-/* 3774 */         } catch (ReflectionException reflectionException) {
-/* 3775 */           throw new RuntimeException(reflectionException.getMessage());
-/* 3776 */         } catch (MBeanException mBeanException) {
-/* 3777 */           Exception exception = mBeanException.getTargetException();
-/* 3778 */           throw new RuntimeException(exception.getMessage());
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3785 */     JmxProperties.RELATION_LOGGER.exiting(RelationService.class.getName(), "handleReferenceUnregistration");
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\relation\RelationService.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.relation;
+
+import static com.sun.jmx.defaults.JmxProperties.RELATION_LOGGER;
+import static com.sun.jmx.mbeanserver.Util.cast;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+
+import javax.management.Attribute;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanException;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanRegistration;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerDelegate;
+import javax.management.MBeanServerNotification;
+import javax.management.Notification;
+import javax.management.NotificationBroadcasterSupport;
+import javax.management.NotificationListener;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
+
+/**
+ * The Relation Service is in charge of creating and deleting relation types
+ * and relations, of handling the consistency and of providing query
+ * mechanisms.
+ * <P>It implements the NotificationBroadcaster by extending
+ * NotificationBroadcasterSupport to send notifications when a relation is
+ * removed from it.
+ * <P>It implements the NotificationListener interface to be able to receive
+ * notifications concerning unregistration of MBeans referenced in relation
+ * roles and of relation MBeans.
+ * <P>It implements the MBeanRegistration interface to be able to retrieve
+ * its ObjectName and MBean Server.
+ *
+ * @since 1.5
+ */
+public class RelationService extends NotificationBroadcasterSupport
+    implements RelationServiceMBean, MBeanRegistration, NotificationListener {
+
+    //
+    // Private members
+    //
+
+    // Map associating:
+    //      <relation id> -> <RelationSupport object/ObjectName>
+    // depending if the relation has been created using createRelation()
+    // method (so internally handled) or is an MBean added as a relation by the
+    // user
+    private Map<String,Object> myRelId2ObjMap = new HashMap<String,Object>();
+
+    // Map associating:
+    //      <relation id> -> <relation type name>
+    private Map<String,String> myRelId2RelTypeMap = new HashMap<String,String>();
+
+    // Map associating:
+    //      <relation MBean Object Name> -> <relation id>
+    private Map<ObjectName,String> myRelMBeanObjName2RelIdMap =
+        new HashMap<ObjectName,String>();
+
+    // Map associating:
+    //       <relation type name> -> <RelationType object>
+    private Map<String,RelationType> myRelType2ObjMap =
+        new HashMap<String,RelationType>();
+
+    // Map associating:
+    //       <relation type name> -> ArrayList of <relation id>
+    // to list all the relations of a given type
+    private Map<String,List<String>> myRelType2RelIdsMap =
+        new HashMap<String,List<String>>();
+
+    // Map associating:
+    //       <ObjectName> -> HashMap
+    // the value HashMap mapping:
+    //       <relation id> -> ArrayList of <role name>
+    // to track where a given MBean is referenced.
+    private final Map<ObjectName,Map<String,List<String>>>
+        myRefedMBeanObjName2RelIdsMap =
+            new HashMap<ObjectName,Map<String,List<String>>>();
+
+    // Flag to indicate if, when a notification is received for the
+    // unregistration of an MBean referenced in a relation, if an immediate
+    // "purge" of the relations (look for the relations no
+    // longer valid) has to be performed , or if that will be performed only
+    // when the purgeRelations method will be explicitly called.
+    // true is immediate purge.
+    private boolean myPurgeFlag = true;
+
+    // Internal counter to provide sequence numbers for notifications sent by:
+    // - the Relation Service
+    // - a relation handled by the Relation Service
+    private final AtomicLong atomicSeqNo = new AtomicLong();
+
+    // ObjectName used to register the Relation Service in the MBean Server
+    private ObjectName myObjName = null;
+
+    // MBean Server where the Relation Service is registered
+    private MBeanServer myMBeanServer = null;
+
+    // Filter registered in the MBean Server with the Relation Service to be
+    // informed of referenced MBean deregistrations
+    private MBeanServerNotificationFilter myUnregNtfFilter = null;
+
+    // List of unregistration notifications received (storage used if purge
+    // of relations when unregistering a referenced MBean is not immediate but
+    // on user request)
+    private List<MBeanServerNotification> myUnregNtfList =
+        new ArrayList<MBeanServerNotification>();
+
+    //
+    // Constructor
+    //
+
+    /**
+     * Constructor.
+     *
+     * @param immediatePurgeFlag  flag to indicate when a notification is
+     * received for the unregistration of an MBean referenced in a relation, if
+     * an immediate "purge" of the relations (look for the relations no
+     * longer valid) has to be performed , or if that will be performed only
+     * when the purgeRelations method will be explicitly called.
+     * <P>true is immediate purge.
+     */
+    public RelationService(boolean immediatePurgeFlag) {
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "RelationService");
+
+        setPurgeFlag(immediatePurgeFlag);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "RelationService");
+        return;
+    }
+
+    /**
+     * Checks if the Relation Service is active.
+     * Current condition is that the Relation Service must be registered in the
+     * MBean Server
+     *
+     * @exception RelationServiceNotRegisteredException  if it is not
+     * registered
+     */
+    public void isActive()
+        throws RelationServiceNotRegisteredException {
+        if (myMBeanServer == null) {
+            // MBean Server not set by preRegister(): relation service not
+            // registered
+            String excMsg =
+                "Relation Service not registered in the MBean Server.";
+            throw new RelationServiceNotRegisteredException(excMsg);
+        }
+        return;
+    }
+
+    //
+    // MBeanRegistration interface
+    //
+
+    // Pre-registration: retrieves its ObjectName and MBean Server
+    //
+    // No exception thrown.
+    public ObjectName preRegister(MBeanServer server,
+                                  ObjectName name)
+        throws Exception {
+
+        myMBeanServer = server;
+        myObjName = name;
+        return name;
+    }
+
+    // Post-registration: does nothing
+    public void postRegister(Boolean registrationDone) {
+        return;
+    }
+
+    // Pre-unregistration: does nothing
+    public void preDeregister()
+        throws Exception {
+        return;
+    }
+
+    // Post-unregistration: does nothing
+    public void postDeregister() {
+        return;
+    }
+
+    //
+    // Accessors
+    //
+
+    /**
+     * Returns the flag to indicate if when a notification is received for the
+     * unregistration of an MBean referenced in a relation, if an immediate
+     * "purge" of the relations (look for the relations no longer valid)
+     * has to be performed , or if that will be performed only when the
+     * purgeRelations method will be explicitly called.
+     * <P>true is immediate purge.
+     *
+     * @return true if purges are automatic.
+     *
+     * @see #setPurgeFlag
+     */
+    public boolean getPurgeFlag() {
+        return myPurgeFlag;
+    }
+
+    /**
+     * Sets the flag to indicate if when a notification is received for the
+     * unregistration of an MBean referenced in a relation, if an immediate
+     * "purge" of the relations (look for the relations no longer valid)
+     * has to be performed , or if that will be performed only when the
+     * purgeRelations method will be explicitly called.
+     * <P>true is immediate purge.
+     *
+     * @param purgeFlag  flag
+     *
+     * @see #getPurgeFlag
+     */
+    public void setPurgeFlag(boolean purgeFlag) {
+
+        myPurgeFlag = purgeFlag;
+        return;
+    }
+
+    //
+    // Relation type handling
+    //
+
+    /**
+     * Creates a relation type (a RelationTypeSupport object) with given
+     * role infos (provided by the RoleInfo objects), and adds it in the
+     * Relation Service.
+     *
+     * @param relationTypeName  name of the relation type
+     * @param roleInfoArray  array of role infos
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception InvalidRelationTypeException  If:
+     * <P>- there is already a relation type with that name
+     * <P>- the same name has been used for two different role infos
+     * <P>- no role info provided
+     * <P>- one null role info provided
+     */
+    public void createRelationType(String relationTypeName,
+                                   RoleInfo[] roleInfoArray)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (relationTypeName == null || roleInfoArray == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "createRelationType", relationTypeName);
+
+        // Can throw an InvalidRelationTypeException
+        RelationType relType =
+            new RelationTypeSupport(relationTypeName, roleInfoArray);
+
+        addRelationTypeInt(relType);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "createRelationType");
+        return;
+    }
+
+    /**
+     * Adds given object as a relation type. The object is expected to
+     * implement the RelationType interface.
+     *
+     * @param relationTypeObj  relation type object (implementing the
+     * RelationType interface)
+     *
+     * @exception IllegalArgumentException  if null parameter or if
+     * {@link RelationType#getRelationTypeName
+     * relationTypeObj.getRelationTypeName()} returns null.
+     * @exception InvalidRelationTypeException  if:
+     * <P>- the same name has been used for two different roles
+     * <P>- no role info provided
+     * <P>- one null role info provided
+     * <P>- there is already a relation type with that name
+     */
+    public void addRelationType(RelationType relationTypeObj)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (relationTypeObj == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "addRelationType");
+
+        // Checks the role infos
+        List<RoleInfo> roleInfoList = relationTypeObj.getRoleInfos();
+        if (roleInfoList == null) {
+            String excMsg = "No role info provided.";
+            throw new InvalidRelationTypeException(excMsg);
+        }
+
+        RoleInfo[] roleInfoArray = new RoleInfo[roleInfoList.size()];
+        int i = 0;
+        for (RoleInfo currRoleInfo : roleInfoList) {
+            roleInfoArray[i] = currRoleInfo;
+            i++;
+        }
+        // Can throw InvalidRelationTypeException
+        RelationTypeSupport.checkRoleInfos(roleInfoArray);
+
+        addRelationTypeInt(relationTypeObj);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "addRelationType");
+        return;
+     }
+
+    /**
+     * Retrieves names of all known relation types.
+     *
+     * @return ArrayList of relation type names (Strings)
+     */
+    public List<String> getAllRelationTypeNames() {
+        ArrayList<String> result;
+        synchronized(myRelType2ObjMap) {
+            result = new ArrayList<String>(myRelType2ObjMap.keySet());
+        }
+        return result;
+    }
+
+    /**
+     * Retrieves list of role infos (RoleInfo objects) of a given relation
+     * type.
+     *
+     * @param relationTypeName  name of relation type
+     *
+     * @return ArrayList of RoleInfo.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationTypeNotFoundException  if there is no relation type
+     * with that name.
+     */
+    public List<RoleInfo> getRoleInfos(String relationTypeName)
+        throws IllegalArgumentException,
+               RelationTypeNotFoundException {
+
+        if (relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRoleInfos", relationTypeName);
+
+        // Can throw a RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getRoleInfos");
+        return relType.getRoleInfos();
+    }
+
+    /**
+     * Retrieves role info for given role name of a given relation type.
+     *
+     * @param relationTypeName  name of relation type
+     * @param roleInfoName  name of role
+     *
+     * @return RoleInfo object.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationTypeNotFoundException  if the relation type is not
+     * known in the Relation Service
+     * @exception RoleInfoNotFoundException  if the role is not part of the
+     * relation type.
+     */
+    public RoleInfo getRoleInfo(String relationTypeName,
+                                String roleInfoName)
+        throws IllegalArgumentException,
+               RelationTypeNotFoundException,
+               RoleInfoNotFoundException {
+
+        if (relationTypeName == null || roleInfoName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRoleInfo", new Object[] {relationTypeName, roleInfoName});
+
+        // Can throw a RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        // Can throw a RoleInfoNotFoundException
+        RoleInfo roleInfo = relType.getRoleInfo(roleInfoName);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getRoleInfo");
+        return roleInfo;
+    }
+
+    /**
+     * Removes given relation type from Relation Service.
+     * <P>The relation objects of that type will be removed from the
+     * Relation Service.
+     *
+     * @param relationTypeName  name of the relation type to be removed
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationTypeNotFoundException  If there is no relation type
+     * with that name
+     */
+    public void removeRelationType(String relationTypeName)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RelationTypeNotFoundException {
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        if (relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "removeRelationType", relationTypeName);
+
+        // Checks if the relation type to be removed exists
+        // Can throw a RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        // Retrieves the relation ids for relations of that type
+        List<String> relIdList = null;
+        synchronized(myRelType2RelIdsMap) {
+            // Note: take a copy of the list as it is a part of a map that
+            //       will be updated by removeRelation() below.
+            List<String> relIdList1 =
+                myRelType2RelIdsMap.get(relationTypeName);
+            if (relIdList1 != null) {
+                relIdList = new ArrayList<String>(relIdList1);
+            }
+        }
+
+        // Removes the relation type from all maps
+        synchronized(myRelType2ObjMap) {
+            myRelType2ObjMap.remove(relationTypeName);
+        }
+        synchronized(myRelType2RelIdsMap) {
+            myRelType2RelIdsMap.remove(relationTypeName);
+        }
+
+        // Removes all relations of that type
+        if (relIdList != null) {
+            for (String currRelId : relIdList) {
+                // Note: will remove it from myRelId2RelTypeMap :)
+                //
+                // Can throw RelationServiceNotRegisteredException (detected
+                // above)
+                // Shall not throw a RelationNotFoundException
+                try {
+                    removeRelation(currRelId);
+                } catch (RelationNotFoundException exc1) {
+                    throw new RuntimeException(exc1.getMessage());
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "removeRelationType");
+        return;
+    }
+
+    //
+    // Relation handling
+    //
+
+    /**
+     * Creates a simple relation (represented by a RelationSupport object) of
+     * given relation type, and adds it in the Relation Service.
+     * <P>Roles are initialized according to the role list provided in
+     * parameter. The ones not initialized in this way are set to an empty
+     * ArrayList of ObjectNames.
+     * <P>A RelationNotification, with type RELATION_BASIC_CREATION, is sent.
+     *
+     * @param relationId  relation identifier, to identify uniquely the relation
+     * inside the Relation Service
+     * @param relationTypeName  name of the relation type (has to be created
+     * in the Relation Service)
+     * @param roleList  role list to initialize roles of the relation (can
+     * be null).
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception IllegalArgumentException  if null parameter, except the role
+     * list which can be null if no role initialization
+     * @exception RoleNotFoundException  if a value is provided for a role
+     * that does not exist in the relation type
+     * @exception InvalidRelationIdException  if relation id already used
+     * @exception RelationTypeNotFoundException  if relation type not known in
+     * Relation Service
+     * @exception InvalidRoleValueException if:
+     * <P>- the same role name is used for two different roles
+     * <P>- the number of referenced MBeans in given value is less than
+     * expected minimum degree
+     * <P>- the number of referenced MBeans in provided value exceeds expected
+     * maximum degree
+     * <P>- one referenced MBean in the value is not an Object of the MBean
+     * class expected for that role
+     * <P>- an MBean provided for that role does not exist
+     */
+    public void createRelation(String relationId,
+                               String relationTypeName,
+                               RoleList roleList)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RoleNotFoundException,
+               InvalidRelationIdException,
+               RelationTypeNotFoundException,
+               InvalidRoleValueException {
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        if (relationId == null ||
+            relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "createRelation",
+                new Object[] {relationId, relationTypeName, roleList});
+
+        // Creates RelationSupport object
+        // Can throw InvalidRoleValueException
+        RelationSupport relObj = new RelationSupport(relationId,
+                                               myObjName,
+                                               relationTypeName,
+                                               roleList);
+
+        // Adds relation object as a relation into the Relation Service
+        // Can throw RoleNotFoundException, InvalidRelationId,
+        // RelationTypeNotFoundException, InvalidRoleValueException
+        //
+        // Cannot throw MBeanException
+        addRelationInt(true,
+                       relObj,
+                       null,
+                       relationId,
+                       relationTypeName,
+                       roleList);
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "createRelation");
+        return;
+    }
+
+    /**
+     * Adds an MBean created by the user (and registered by him in the MBean
+     * Server) as a relation in the Relation Service.
+     * <P>To be added as a relation, the MBean must conform to the
+     * following:
+     * <P>- implement the Relation interface
+     * <P>- have for RelationService ObjectName the ObjectName of current
+     * Relation Service
+     * <P>- have a relation id unique and unused in current Relation Service
+     * <P>- have for relation type a relation type created in the Relation
+     * Service
+     * <P>- have roles conforming to the role info provided in the relation
+     * type.
+     *
+     * @param relationObjectName  ObjectName of the relation MBean to be added.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception NoSuchMethodException  If the MBean does not implement the
+     * Relation interface
+     * @exception InvalidRelationIdException  if:
+     * <P>- no relation identifier in MBean
+     * <P>- the relation identifier is already used in the Relation Service
+     * @exception InstanceNotFoundException  if the MBean for given ObjectName
+     * has not been registered
+     * @exception InvalidRelationServiceException  if:
+     * <P>- no Relation Service name in MBean
+     * <P>- the Relation Service name in the MBean is not the one of the
+     * current Relation Service
+     * @exception RelationTypeNotFoundException  if:
+     * <P>- no relation type name in MBean
+     * <P>- the relation type name in MBean does not correspond to a relation
+     * type created in the Relation Service
+     * @exception InvalidRoleValueException  if:
+     * <P>- the number of referenced MBeans in a role is less than
+     * expected minimum degree
+     * <P>- the number of referenced MBeans in a role exceeds expected
+     * maximum degree
+     * <P>- one referenced MBean in the value is not an Object of the MBean
+     * class expected for that role
+     * <P>- an MBean provided for a role does not exist
+     * @exception RoleNotFoundException  if a value is provided for a role
+     * that does not exist in the relation type
+     */
+    public void addRelation(ObjectName relationObjectName)
+        throws IllegalArgumentException,
+               RelationServiceNotRegisteredException,
+               NoSuchMethodException,
+               InvalidRelationIdException,
+               InstanceNotFoundException,
+               InvalidRelationServiceException,
+               RelationTypeNotFoundException,
+               RoleNotFoundException,
+               InvalidRoleValueException {
+
+        if (relationObjectName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "addRelation", relationObjectName);
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Checks that the relation MBean implements the Relation interface.
+        // It will also check that the provided ObjectName corresponds to a
+        // registered MBean (else will throw an InstanceNotFoundException)
+        if ((!(myMBeanServer.isInstanceOf(relationObjectName, "javax.management.relation.Relation")))) {
+            String excMsg = "This MBean does not implement the Relation interface.";
+            throw new NoSuchMethodException(excMsg);
+        }
+        // Checks there is a relation id in the relation MBean (its uniqueness
+        // is checked in addRelationInt())
+        // Can throw InstanceNotFoundException (but detected above)
+        // No MBeanException as no exception raised by this method, and no
+        // ReflectionException
+        String relId;
+        try {
+            relId = (String)(myMBeanServer.getAttribute(relationObjectName,
+                                                        "RelationId"));
+
+        } catch (MBeanException exc1) {
+            throw new RuntimeException(
+                                     (exc1.getTargetException()).getMessage());
+        } catch (ReflectionException exc2) {
+            throw new RuntimeException(exc2.getMessage());
+        } catch (AttributeNotFoundException exc3) {
+            throw new RuntimeException(exc3.getMessage());
+        }
+
+        if (relId == null) {
+            String excMsg = "This MBean does not provide a relation id.";
+            throw new InvalidRelationIdException(excMsg);
+        }
+        // Checks that the Relation Service where the relation MBean is
+        // expected to be added is the current one
+        // Can throw InstanceNotFoundException (but detected above)
+        // No MBeanException as no exception raised by this method, no
+        // ReflectionException
+        ObjectName relServObjName;
+        try {
+            relServObjName = (ObjectName)
+                (myMBeanServer.getAttribute(relationObjectName,
+                                            "RelationServiceName"));
+
+        } catch (MBeanException exc1) {
+            throw new RuntimeException(
+                                     (exc1.getTargetException()).getMessage());
+        } catch (ReflectionException exc2) {
+            throw new RuntimeException(exc2.getMessage());
+        } catch (AttributeNotFoundException exc3) {
+            throw new RuntimeException(exc3.getMessage());
+        }
+
+        boolean badRelServFlag = false;
+        if (relServObjName == null) {
+            badRelServFlag = true;
+
+        } else if (!(relServObjName.equals(myObjName))) {
+            badRelServFlag = true;
+        }
+        if (badRelServFlag) {
+            String excMsg = "The Relation Service referenced in the MBean is not the current one.";
+            throw new InvalidRelationServiceException(excMsg);
+        }
+        // Checks that a relation type has been specified for the relation
+        // Can throw InstanceNotFoundException (but detected above)
+        // No MBeanException as no exception raised by this method, no
+        // ReflectionException
+        String relTypeName;
+        try {
+            relTypeName = (String)(myMBeanServer.getAttribute(relationObjectName,
+                                                              "RelationTypeName"));
+
+        } catch (MBeanException exc1) {
+            throw new RuntimeException(
+                                     (exc1.getTargetException()).getMessage());
+        }catch (ReflectionException exc2) {
+            throw new RuntimeException(exc2.getMessage());
+        } catch (AttributeNotFoundException exc3) {
+            throw new RuntimeException(exc3.getMessage());
+        }
+        if (relTypeName == null) {
+            String excMsg = "No relation type provided.";
+            throw new RelationTypeNotFoundException(excMsg);
+        }
+        // Retrieves all roles without considering read mode
+        // Can throw InstanceNotFoundException (but detected above)
+        // No MBeanException as no exception raised by this method, no
+        // ReflectionException
+        RoleList roleList;
+        try {
+            roleList = (RoleList)(myMBeanServer.invoke(relationObjectName,
+                                                       "retrieveAllRoles",
+                                                       null,
+                                                       null));
+        } catch (MBeanException exc1) {
+            throw new RuntimeException(
+                                     (exc1.getTargetException()).getMessage());
+        } catch (ReflectionException exc2) {
+            throw new RuntimeException(exc2.getMessage());
+        }
+
+        // Can throw RoleNotFoundException, InvalidRelationIdException,
+        // RelationTypeNotFoundException, InvalidRoleValueException
+        addRelationInt(false,
+                       null,
+                       relationObjectName,
+                       relId,
+                       relTypeName,
+                       roleList);
+        // Adds relation MBean ObjectName in map
+        synchronized(myRelMBeanObjName2RelIdMap) {
+            myRelMBeanObjName2RelIdMap.put(relationObjectName, relId);
+        }
+
+        // Updates flag to specify that the relation is managed by the Relation
+        // Service
+        // This flag and setter are inherited from RelationSupport and not parts
+        // of the Relation interface, so may be not supported.
+        try {
+            myMBeanServer.setAttribute(relationObjectName,
+                                       new Attribute(
+                                         "RelationServiceManagementFlag",
+                                         Boolean.TRUE));
+        } catch (Exception exc) {
+            // OK : The flag is not supported.
+        }
+
+        // Updates listener information to received notification for
+        // unregistration of this MBean
+        List<ObjectName> newRefList = new ArrayList<ObjectName>();
+        newRefList.add(relationObjectName);
+        updateUnregistrationListener(newRefList, null);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "addRelation");
+        return;
+    }
+
+    /**
+     * If the relation is represented by an MBean (created by the user and
+     * added as a relation in the Relation Service), returns the ObjectName of
+     * the MBean.
+     *
+     * @param relationId  relation id identifying the relation
+     *
+     * @return ObjectName of the corresponding relation MBean, or null if
+     * the relation is not an MBean.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException there is no relation associated
+     * to that id
+     */
+    public ObjectName isRelationMBean(String relationId)
+        throws IllegalArgumentException,
+               RelationNotFoundException{
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "isRelationMBean", relationId);
+
+        // Can throw RelationNotFoundException
+        Object result = getRelation(relationId);
+        if (result instanceof ObjectName) {
+            return ((ObjectName)result);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the relation id associated to the given ObjectName if the
+     * MBean has been added as a relation in the Relation Service.
+     *
+     * @param objectName  ObjectName of supposed relation
+     *
+     * @return relation id (String) or null (if the ObjectName is not a
+     * relation handled by the Relation Service)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     */
+    public String isRelation(ObjectName objectName)
+        throws IllegalArgumentException {
+
+        if (objectName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "isRelation", objectName);
+
+        String result = null;
+        synchronized(myRelMBeanObjName2RelIdMap) {
+            String relId = myRelMBeanObjName2RelIdMap.get(objectName);
+            if (relId != null) {
+                result = relId;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if there is a relation identified in Relation Service with given
+     * relation id.
+     *
+     * @param relationId  relation id identifying the relation
+     *
+     * @return boolean: true if there is a relation, false else
+     *
+     * @exception IllegalArgumentException  if null parameter
+     */
+    public Boolean hasRelation(String relationId)
+        throws IllegalArgumentException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "hasRelation", relationId);
+
+        try {
+            // Can throw RelationNotFoundException
+            Object result = getRelation(relationId);
+            return true;
+        } catch (RelationNotFoundException exc) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns all the relation ids for all the relations handled by the
+     * Relation Service.
+     *
+     * @return ArrayList of String
+     */
+    public List<String> getAllRelationIds() {
+        List<String> result;
+        synchronized(myRelId2ObjMap) {
+            result = new ArrayList<String>(myRelId2ObjMap.keySet());
+        }
+        return result;
+    }
+
+    /**
+     * Checks if given Role can be read in a relation of the given type.
+     *
+     * @param roleName  name of role to be checked
+     * @param relationTypeName  name of the relation type
+     *
+     * @return an Integer wrapping an integer corresponding to possible
+     * problems represented as constants in RoleUnresolved:
+     * <P>- 0 if role can be read
+     * <P>- integer corresponding to RoleStatus.NO_ROLE_WITH_NAME
+     * <P>- integer corresponding to RoleStatus.ROLE_NOT_READABLE
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationTypeNotFoundException  if the relation type is not
+     * known in the Relation Service
+     */
+    public Integer checkRoleReading(String roleName,
+                                    String relationTypeName)
+        throws IllegalArgumentException,
+               RelationTypeNotFoundException {
+
+        if (roleName == null || relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "checkRoleReading", new Object[] {roleName, relationTypeName});
+
+        Integer result;
+
+        // Can throw a RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        try {
+            // Can throw a RoleInfoNotFoundException to be transformed into
+            // returned value RoleStatus.NO_ROLE_WITH_NAME
+            RoleInfo roleInfo = relType.getRoleInfo(roleName);
+
+            result =  checkRoleInt(1,
+                                   roleName,
+                                   null,
+                                   roleInfo,
+                                   false);
+
+        } catch (RoleInfoNotFoundException exc) {
+            result = Integer.valueOf(RoleStatus.NO_ROLE_WITH_NAME);
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "checkRoleReading");
+        return result;
+    }
+
+    /**
+     * Checks if given Role can be set in a relation of given type.
+     *
+     * @param role  role to be checked
+     * @param relationTypeName  name of relation type
+     * @param initFlag  flag to specify that the checking is done for the
+     * initialization of a role, write access shall not be verified.
+     *
+     * @return an Integer wrapping an integer corresponding to possible
+     * problems represented as constants in RoleUnresolved:
+     * <P>- 0 if role can be set
+     * <P>- integer corresponding to RoleStatus.NO_ROLE_WITH_NAME
+     * <P>- integer for RoleStatus.ROLE_NOT_WRITABLE
+     * <P>- integer for RoleStatus.LESS_THAN_MIN_ROLE_DEGREE
+     * <P>- integer for RoleStatus.MORE_THAN_MAX_ROLE_DEGREE
+     * <P>- integer for RoleStatus.REF_MBEAN_OF_INCORRECT_CLASS
+     * <P>- integer for RoleStatus.REF_MBEAN_NOT_REGISTERED
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationTypeNotFoundException  if unknown relation type
+     */
+    public Integer checkRoleWriting(Role role,
+                                    String relationTypeName,
+                                    Boolean initFlag)
+        throws IllegalArgumentException,
+               RelationTypeNotFoundException {
+
+        if (role == null ||
+            relationTypeName == null ||
+            initFlag == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "checkRoleWriting",
+                new Object[] {role, relationTypeName, initFlag});
+
+        // Can throw a RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        String roleName = role.getRoleName();
+        List<ObjectName> roleValue = role.getRoleValue();
+        boolean writeChkFlag = true;
+        if (initFlag.booleanValue()) {
+            writeChkFlag = false;
+        }
+
+        RoleInfo roleInfo;
+        try {
+            roleInfo = relType.getRoleInfo(roleName);
+        } catch (RoleInfoNotFoundException exc) {
+            RELATION_LOGGER.exiting(RelationService.class.getName(),
+                    "checkRoleWriting");
+            return Integer.valueOf(RoleStatus.NO_ROLE_WITH_NAME);
+        }
+
+        Integer result = checkRoleInt(2,
+                                      roleName,
+                                      roleValue,
+                                      roleInfo,
+                                      writeChkFlag);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "checkRoleWriting");
+        return result;
+    }
+
+    /**
+     * Sends a notification (RelationNotification) for a relation creation.
+     * The notification type is:
+     * <P>- RelationNotification.RELATION_BASIC_CREATION if the relation is an
+     * object internal to the Relation Service
+     * <P>- RelationNotification.RELATION_MBEAN_CREATION if the relation is a
+     * MBean added as a relation.
+     * <P>The source object is the Relation Service itself.
+     * <P>It is called in Relation Service createRelation() and
+     * addRelation() methods.
+     *
+     * @param relationId  relation identifier of the updated relation
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if there is no relation for given
+     * relation id
+     */
+    public void sendRelationCreationNotification(String relationId)
+        throws IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "sendRelationCreationNotification", relationId);
+
+        // Message
+        StringBuilder ntfMsg = new StringBuilder("Creation of relation ");
+        ntfMsg.append(relationId);
+
+        // Can throw RelationNotFoundException
+        sendNotificationInt(1,
+                            ntfMsg.toString(),
+                            relationId,
+                            null,
+                            null,
+                            null,
+                            null);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "sendRelationCreationNotification");
+        return;
+    }
+
+    /**
+     * Sends a notification (RelationNotification) for a role update in the
+     * given relation. The notification type is:
+     * <P>- RelationNotification.RELATION_BASIC_UPDATE if the relation is an
+     * object internal to the Relation Service
+     * <P>- RelationNotification.RELATION_MBEAN_UPDATE if the relation is a
+     * MBean added as a relation.
+     * <P>The source object is the Relation Service itself.
+     * <P>It is called in relation MBean setRole() (for given role) and
+     * setRoles() (for each role) methods (implementation provided in
+     * RelationSupport class).
+     * <P>It is also called in Relation Service setRole() (for given role) and
+     * setRoles() (for each role) methods.
+     *
+     * @param relationId  relation identifier of the updated relation
+     * @param newRole  new role (name and new value)
+     * @param oldValue  old role value (List of ObjectName objects)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if there is no relation for given
+     * relation id
+     */
+    public void sendRoleUpdateNotification(String relationId,
+                                           Role newRole,
+                                           List<ObjectName> oldValue)
+        throws IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null ||
+            newRole == null ||
+            oldValue == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        if (!(oldValue instanceof ArrayList<?>))
+            oldValue = new ArrayList<ObjectName>(oldValue);
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "sendRoleUpdateNotification",
+                new Object[] {relationId, newRole, oldValue});
+
+        String roleName = newRole.getRoleName();
+        List<ObjectName> newRoleVal = newRole.getRoleValue();
+
+        // Message
+        String newRoleValString = Role.roleValueToString(newRoleVal);
+        String oldRoleValString = Role.roleValueToString(oldValue);
+        StringBuilder ntfMsg = new StringBuilder("Value of role ");
+        ntfMsg.append(roleName);
+        ntfMsg.append(" has changed\nOld value:\n");
+        ntfMsg.append(oldRoleValString);
+        ntfMsg.append("\nNew value:\n");
+        ntfMsg.append(newRoleValString);
+
+        // Can throw a RelationNotFoundException
+        sendNotificationInt(2,
+                            ntfMsg.toString(),
+                            relationId,
+                            null,
+                            roleName,
+                            newRoleVal,
+                            oldValue);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "sendRoleUpdateNotification");
+    }
+
+    /**
+     * Sends a notification (RelationNotification) for a relation removal.
+     * The notification type is:
+     * <P>- RelationNotification.RELATION_BASIC_REMOVAL if the relation is an
+     * object internal to the Relation Service
+     * <P>- RelationNotification.RELATION_MBEAN_REMOVAL if the relation is a
+     * MBean added as a relation.
+     * <P>The source object is the Relation Service itself.
+     * <P>It is called in Relation Service removeRelation() method.
+     *
+     * @param relationId  relation identifier of the updated relation
+     * @param unregMBeanList  List of ObjectNames of MBeans expected
+     * to be unregistered due to relation removal (can be null)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if there is no relation for given
+     * relation id
+     */
+    public void sendRelationRemovalNotification(String relationId,
+                                                List<ObjectName> unregMBeanList)
+        throws IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "sendRelationRemovalNotification",
+                new Object[] {relationId, unregMBeanList});
+
+        // Can throw RelationNotFoundException
+        sendNotificationInt(3,
+                            "Removal of relation " + relationId,
+                            relationId,
+                            unregMBeanList,
+                            null,
+                            null,
+                            null);
+
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "sendRelationRemovalNotification");
+        return;
+    }
+
+    /**
+     * Handles update of the Relation Service role map for the update of given
+     * role in given relation.
+     * <P>It is called in relation MBean setRole() (for given role) and
+     * setRoles() (for each role) methods (implementation provided in
+     * RelationSupport class).
+     * <P>It is also called in Relation Service setRole() (for given role) and
+     * setRoles() (for each role) methods.
+     * <P>To allow the Relation Service to maintain the consistency (in case
+     * of MBean unregistration) and to be able to perform queries, this method
+     * must be called when a role is updated.
+     *
+     * @param relationId  relation identifier of the updated relation
+     * @param newRole  new role (name and new value)
+     * @param oldValue  old role value (List of ObjectName objects)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception RelationNotFoundException  if no relation for given id.
+     */
+    public void updateRoleMap(String relationId,
+                              Role newRole,
+                              List<ObjectName> oldValue)
+        throws IllegalArgumentException,
+               RelationServiceNotRegisteredException,
+               RelationNotFoundException {
+
+        if (relationId == null ||
+            newRole == null ||
+            oldValue == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "updateRoleMap", new Object[] {relationId, newRole, oldValue});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Verifies the relation has been added in the Relation Service
+        // Can throw a RelationNotFoundException
+        Object result = getRelation(relationId);
+
+        String roleName = newRole.getRoleName();
+        List<ObjectName> newRoleValue = newRole.getRoleValue();
+        // Note: no need to test if oldValue not null before cloning,
+        //       tested above.
+        List<ObjectName> oldRoleValue =
+            new ArrayList<ObjectName>(oldValue);
+
+        // List of ObjectNames of new referenced MBeans
+        List<ObjectName> newRefList = new ArrayList<ObjectName>();
+
+        for (ObjectName currObjName : newRoleValue) {
+
+            // Checks if this ObjectName was already present in old value
+            // Note: use copy (oldRoleValue) instead of original
+            //       oldValue to speed up, as oldRoleValue is decreased
+            //       by removing unchanged references :)
+            int currObjNamePos = oldRoleValue.indexOf(currObjName);
+
+            if (currObjNamePos == -1) {
+                // New reference to an ObjectName
+
+                // Stores this reference into map
+                // Returns true if new reference, false if MBean already
+                // referenced
+                boolean isNewFlag = addNewMBeanReference(currObjName,
+                                                        relationId,
+                                                        roleName);
+
+                if (isNewFlag) {
+                    // Adds it into list of new reference
+                    newRefList.add(currObjName);
+                }
+
+            } else {
+                // MBean was already referenced in old value
+
+                // Removes it from old value (local list) to ignore it when
+                // looking for remove MBean references
+                oldRoleValue.remove(currObjNamePos);
+            }
+        }
+
+        // List of ObjectNames of MBeans no longer referenced
+        List<ObjectName> obsRefList = new ArrayList<ObjectName>();
+
+        // Each ObjectName remaining in oldRoleValue is an ObjectName no longer
+        // referenced in new value
+        for (ObjectName currObjName : oldRoleValue) {
+            // Removes MBean reference from map
+            // Returns true if the MBean is no longer referenced in any
+            // relation
+            boolean noLongerRefFlag = removeMBeanReference(currObjName,
+                                                          relationId,
+                                                          roleName,
+                                                          false);
+
+            if (noLongerRefFlag) {
+                // Adds it into list of references to be removed
+                obsRefList.add(currObjName);
+            }
+        }
+
+        // To avoid having one listener per ObjectName of referenced MBean,
+        // and to increase performances, there is only one listener recording
+        // all ObjectNames of interest
+        updateUnregistrationListener(newRefList, obsRefList);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "updateRoleMap");
+        return;
+    }
+
+    /**
+     * Removes given relation from the Relation Service.
+     * <P>A RelationNotification notification is sent, its type being:
+     * <P>- RelationNotification.RELATION_BASIC_REMOVAL if the relation was
+     * only internal to the Relation Service
+     * <P>- RelationNotification.RELATION_MBEAN_REMOVAL if the relation is
+     * registered as an MBean.
+     * <P>For MBeans referenced in such relation, nothing will be done,
+     *
+     * @param relationId  relation id of the relation to be removed
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation corresponding to
+     * given relation id
+     */
+    public void removeRelation(String relationId)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RelationNotFoundException {
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "removeRelation", relationId);
+
+        // Checks there is a relation with this id
+        // Can throw RelationNotFoundException
+        Object result = getRelation(relationId);
+
+        // Removes it from listener filter
+        if (result instanceof ObjectName) {
+            List<ObjectName> obsRefList = new ArrayList<ObjectName>();
+            obsRefList.add((ObjectName)result);
+            // Can throw a RelationServiceNotRegisteredException
+            updateUnregistrationListener(null, obsRefList);
+        }
+
+        // Sends a notification
+        // Note: has to be done FIRST as needs the relation to be still in the
+        //       Relation Service
+        // No RelationNotFoundException as checked above
+
+        // Revisit [cebro] Handle CIM "Delete" and "IfDeleted" qualifiers:
+        //   deleting the relation can mean to delete referenced MBeans. In
+        //   that case, MBeans to be unregistered are put in a list sent along
+        //   with the notification below
+
+        // Can throw a RelationNotFoundException (but detected above)
+        sendRelationRemovalNotification(relationId, null);
+
+        // Removes the relation from various internal maps
+
+        //  - MBean reference map
+        // Retrieves the MBeans referenced in this relation
+        // Note: here we cannot use removeMBeanReference() because it would
+        //       require to know the MBeans referenced in the relation. For
+        //       that it would be necessary to call 'getReferencedMBeans()'
+        //       on the relation itself. Ok if it is an internal one, but if
+        //       it is an MBean, it is possible it is already unregistered, so
+        //       not available through the MBean Server.
+        List<ObjectName> refMBeanList = new ArrayList<ObjectName>();
+        // List of MBeans no longer referenced in any relation, to be
+        // removed fom the map
+        List<ObjectName> nonRefObjNameList = new ArrayList<ObjectName>();
+
+        synchronized(myRefedMBeanObjName2RelIdsMap) {
+
+            for (ObjectName currRefObjName :
+                     myRefedMBeanObjName2RelIdsMap.keySet()) {
+
+                // Retrieves relations where the MBean is referenced
+                Map<String,List<String>> relIdMap =
+                    myRefedMBeanObjName2RelIdsMap.get(currRefObjName);
+
+                if (relIdMap.containsKey(relationId)) {
+                    relIdMap.remove(relationId);
+                    refMBeanList.add(currRefObjName);
+                }
+
+                if (relIdMap.isEmpty()) {
+                    // MBean no longer referenced
+                    // Note: do not remove it here because pointed by the
+                    //       iterator!
+                    nonRefObjNameList.add(currRefObjName);
+                }
+            }
+
+            // Cleans MBean reference map by removing MBeans no longer
+            // referenced
+            for (ObjectName currRefObjName : nonRefObjNameList) {
+                myRefedMBeanObjName2RelIdsMap.remove(currRefObjName);
+            }
+        }
+
+        // - Relation id to object map
+        synchronized(myRelId2ObjMap) {
+            myRelId2ObjMap.remove(relationId);
+        }
+
+        if (result instanceof ObjectName) {
+            // - ObjectName to relation id map
+            synchronized(myRelMBeanObjName2RelIdMap) {
+                myRelMBeanObjName2RelIdMap.remove((ObjectName)result);
+            }
+        }
+
+        // Relation id to relation type name map
+        // First retrieves the relation type name
+        String relTypeName;
+        synchronized(myRelId2RelTypeMap) {
+            relTypeName = myRelId2RelTypeMap.get(relationId);
+            myRelId2RelTypeMap.remove(relationId);
+        }
+        // - Relation type name to relation id map
+        synchronized(myRelType2RelIdsMap) {
+            List<String> relIdList = myRelType2RelIdsMap.get(relTypeName);
+            if (relIdList != null) {
+                // Can be null if called from removeRelationType()
+                relIdList.remove(relationId);
+                if (relIdList.isEmpty()) {
+                    // No other relation of that type
+                    myRelType2RelIdsMap.remove(relTypeName);
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "removeRelation");
+        return;
+    }
+
+    /**
+     * Purges the relations.
+     *
+     * <P>Depending on the purgeFlag value, this method is either called
+     * automatically when a notification is received for the unregistration of
+     * an MBean referenced in a relation (if the flag is set to true), or not
+     * (if the flag is set to false).
+     * <P>In that case it is up to the user to call it to maintain the
+     * consistency of the relations. To be kept in mind that if an MBean is
+     * unregistered and the purge not done immediately, if the ObjectName is
+     * reused and assigned to another MBean referenced in a relation, calling
+     * manually this purgeRelations() method will cause trouble, as will
+     * consider the ObjectName as corresponding to the unregistered MBean, not
+     * seeing the new one.
+     *
+     * <P>The behavior depends on the cardinality of the role where the
+     * unregistered MBean is referenced:
+     * <P>- if removing one MBean reference in the role makes its number of
+     * references less than the minimum degree, the relation has to be removed.
+     * <P>- if the remaining number of references after removing the MBean
+     * reference is still in the cardinality range, keep the relation and
+     * update it calling its handleMBeanUnregistration() callback.
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server.
+     */
+    public void purgeRelations()
+        throws RelationServiceNotRegisteredException {
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "purgeRelations");
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Revisit [cebro] Handle the CIM "Delete" and "IfDeleted" qualifier:
+        //    if the unregistered MBean has the "IfDeleted" qualifier,
+        //    possible that the relation itself or other referenced MBeans
+        //    have to be removed (then a notification would have to be sent
+        //    to inform that they should be unregistered.
+
+
+        // Clones the list of notifications to be able to still receive new
+        // notifications while proceeding those ones
+        List<MBeanServerNotification> localUnregNtfList;
+        synchronized(myRefedMBeanObjName2RelIdsMap) {
+            localUnregNtfList =
+                new ArrayList<MBeanServerNotification>(myUnregNtfList);
+            // Resets list
+            myUnregNtfList = new ArrayList<MBeanServerNotification>();
+        }
+
+
+        // Updates the listener filter to avoid receiving notifications for
+        // those MBeans again
+        // Makes also a local "myRefedMBeanObjName2RelIdsMap" map, mapping
+        // ObjectName -> relId -> roles, to remove the MBean from the global
+        // map
+        // List of references to be removed from the listener filter
+        List<ObjectName> obsRefList = new ArrayList<ObjectName>();
+        // Map including ObjectNames for unregistered MBeans, with
+        // referencing relation ids and roles
+        Map<ObjectName,Map<String,List<String>>> localMBean2RelIdMap =
+            new HashMap<ObjectName,Map<String,List<String>>>();
+
+        synchronized(myRefedMBeanObjName2RelIdsMap) {
+            for (MBeanServerNotification currNtf : localUnregNtfList) {
+
+                ObjectName unregMBeanName = currNtf.getMBeanName();
+
+                // Adds the unregsitered MBean in the list of references to
+                // remove from the listener filter
+                obsRefList.add(unregMBeanName);
+
+                // Retrieves the associated map of relation ids and roles
+                Map<String,List<String>> relIdMap =
+                    myRefedMBeanObjName2RelIdsMap.get(unregMBeanName);
+                localMBean2RelIdMap.put(unregMBeanName, relIdMap);
+
+                myRefedMBeanObjName2RelIdsMap.remove(unregMBeanName);
+            }
+        }
+
+        // Updates the listener
+        // Can throw RelationServiceNotRegisteredException
+        updateUnregistrationListener(null, obsRefList);
+
+        for (MBeanServerNotification currNtf : localUnregNtfList) {
+
+            ObjectName unregMBeanName = currNtf.getMBeanName();
+
+            // Retrieves the relations where the MBean is referenced
+            Map<String,List<String>> localRelIdMap =
+                    localMBean2RelIdMap.get(unregMBeanName);
+
+            // List of relation ids where the unregistered MBean is
+            // referenced
+            for (Map.Entry<String,List<String>> currRel :
+                        localRelIdMap.entrySet()) {
+                final String currRelId = currRel.getKey();
+                // List of roles of the relation where the MBean is
+                // referenced
+                List<String> localRoleNameList = currRel.getValue();
+
+                // Checks if the relation has to be removed or not,
+                // regarding expected minimum role cardinality and current
+                // number of references after removal of the current one
+                // If the relation is kept, calls
+                // handleMBeanUnregistration() callback of the relation to
+                // update it
+                //
+                // Can throw RelationServiceNotRegisteredException
+                //
+                // Shall not throw RelationNotFoundException,
+                // RoleNotFoundException, MBeanException
+                try {
+                    handleReferenceUnregistration(currRelId,
+                                                  unregMBeanName,
+                                                  localRoleNameList);
+                } catch (RelationNotFoundException exc1) {
+                    throw new RuntimeException(exc1.getMessage());
+                } catch (RoleNotFoundException exc2) {
+                    throw new RuntimeException(exc2.getMessage());
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "purgeRelations");
+        return;
+    }
+
+    /**
+     * Retrieves the relations where a given MBean is referenced.
+     * <P>This corresponds to the CIM "References" and "ReferenceNames"
+     * operations.
+     *
+     * @param mbeanName  ObjectName of MBean
+     * @param relationTypeName  can be null; if specified, only the relations
+     * of that type will be considered in the search. Else all relation types
+     * are considered.
+     * @param roleName  can be null; if specified, only the relations
+     * where the MBean is referenced in that role will be returned. Else all
+     * roles are considered.
+     *
+     * @return an HashMap, where the keys are the relation ids of the relations
+     * where the MBean is referenced, and the value is, for each key,
+     * an ArrayList of role names (as an MBean can be referenced in several
+     * roles in the same relation).
+     *
+     * @exception IllegalArgumentException  if null parameter
+     */
+    public Map<String,List<String>>
+        findReferencingRelations(ObjectName mbeanName,
+                                 String relationTypeName,
+                                 String roleName)
+            throws IllegalArgumentException {
+
+        if (mbeanName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "findReferencingRelations",
+                new Object[] {mbeanName, relationTypeName, roleName});
+
+        Map<String,List<String>> result = new HashMap<String,List<String>>();
+
+        synchronized(myRefedMBeanObjName2RelIdsMap) {
+
+            // Retrieves the relations referencing the MBean
+            Map<String,List<String>> relId2RoleNamesMap =
+                myRefedMBeanObjName2RelIdsMap.get(mbeanName);
+
+            if (relId2RoleNamesMap != null) {
+
+                // Relation Ids where the MBean is referenced
+                Set<String> allRelIdSet = relId2RoleNamesMap.keySet();
+
+                // List of relation ids of interest regarding the selected
+                // relation type
+                List<String> relIdList;
+                if (relationTypeName == null) {
+                    // Considers all relations
+                    relIdList = new ArrayList<String>(allRelIdSet);
+
+                } else {
+
+                    relIdList = new ArrayList<String>();
+
+                    // Considers only the relation ids for relations of given
+                    // type
+                    for (String currRelId : allRelIdSet) {
+
+                        // Retrieves its relation type
+                        String currRelTypeName;
+                        synchronized(myRelId2RelTypeMap) {
+                            currRelTypeName =
+                                myRelId2RelTypeMap.get(currRelId);
+                        }
+
+                        if (currRelTypeName.equals(relationTypeName)) {
+
+                            relIdList.add(currRelId);
+
+                        }
+                    }
+                }
+
+                // Now looks at the roles where the MBean is expected to be
+                // referenced
+
+                for (String currRelId : relIdList) {
+                    // Retrieves list of role names where the MBean is
+                    // referenced
+                    List<String> currRoleNameList =
+                        relId2RoleNamesMap.get(currRelId);
+
+                    if (roleName == null) {
+                        // All roles to be considered
+                        // Note: no need to test if list not null before
+                        //       cloning, MUST be not null else bug :(
+                        result.put(currRelId,
+                                   new ArrayList<String>(currRoleNameList));
+
+                    }  else if (currRoleNameList.contains(roleName)) {
+                        // Filters only the relations where the MBean is
+                        // referenced in // given role
+                        List<String> dummyList = new ArrayList<String>();
+                        dummyList.add(roleName);
+                        result.put(currRelId, dummyList);
+                    }
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "findReferencingRelations");
+        return result;
+    }
+
+    /**
+     * Retrieves the MBeans associated to given one in a relation.
+     * <P>This corresponds to CIM Associators and AssociatorNames operations.
+     *
+     * @param mbeanName  ObjectName of MBean
+     * @param relationTypeName  can be null; if specified, only the relations
+     * of that type will be considered in the search. Else all
+     * relation types are considered.
+     * @param roleName  can be null; if specified, only the relations
+     * where the MBean is referenced in that role will be considered. Else all
+     * roles are considered.
+     *
+     * @return an HashMap, where the keys are the ObjectNames of the MBeans
+     * associated to given MBean, and the value is, for each key, an ArrayList
+     * of the relation ids of the relations where the key MBean is
+     * associated to given one (as they can be associated in several different
+     * relations).
+     *
+     * @exception IllegalArgumentException  if null parameter
+     */
+    public Map<ObjectName,List<String>>
+        findAssociatedMBeans(ObjectName mbeanName,
+                             String relationTypeName,
+                             String roleName)
+            throws IllegalArgumentException {
+
+        if (mbeanName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "findAssociatedMBeans",
+                new Object[] {mbeanName, relationTypeName, roleName});
+
+        // Retrieves the map <relation id> -> <role names> for those
+        // criterias
+        Map<String,List<String>> relId2RoleNamesMap =
+            findReferencingRelations(mbeanName,
+                                     relationTypeName,
+                                     roleName);
+
+        Map<ObjectName,List<String>> result =
+            new HashMap<ObjectName,List<String>>();
+
+        for (String currRelId : relId2RoleNamesMap.keySet()) {
+
+            // Retrieves ObjectNames of MBeans referenced in this relation
+            //
+            // Shall not throw a RelationNotFoundException if incorrect status
+            // of maps :(
+            Map<ObjectName,List<String>> objName2RoleNamesMap;
+            try {
+                objName2RoleNamesMap = getReferencedMBeans(currRelId);
+            } catch (RelationNotFoundException exc) {
+                throw new RuntimeException(exc.getMessage());
+            }
+
+            // For each MBean associated to given one in a relation, adds the
+            // association <ObjectName> -> <relation id> into result map
+            for (ObjectName currObjName : objName2RoleNamesMap.keySet()) {
+
+                if (!(currObjName.equals(mbeanName))) {
+
+                    // Sees if this MBean is already associated to the given
+                    // one in another relation
+                    List<String> currRelIdList = result.get(currObjName);
+                    if (currRelIdList == null) {
+
+                        currRelIdList = new ArrayList<String>();
+                        currRelIdList.add(currRelId);
+                        result.put(currObjName, currRelIdList);
+
+                    } else {
+                        currRelIdList.add(currRelId);
+                    }
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "findAssociatedMBeans");
+        return result;
+    }
+
+    /**
+     * Returns the relation ids for relations of the given type.
+     *
+     * @param relationTypeName  relation type name
+     *
+     * @return an ArrayList of relation ids.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationTypeNotFoundException  if there is no relation type
+     * with that name.
+     */
+    public List<String> findRelationsOfType(String relationTypeName)
+        throws IllegalArgumentException,
+               RelationTypeNotFoundException {
+
+        if (relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "findRelationsOfType");
+
+        // Can throw RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        List<String> result;
+        synchronized(myRelType2RelIdsMap) {
+            List<String> result1 = myRelType2RelIdsMap.get(relationTypeName);
+            if (result1 == null)
+                result = new ArrayList<String>();
+            else
+                result = new ArrayList<String>(result1);
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "findRelationsOfType");
+        return result;
+    }
+
+    /**
+     * Retrieves role value for given role name in given relation.
+     *
+     * @param relationId  relation id
+     * @param roleName  name of role
+     *
+     * @return the ArrayList of ObjectName objects being the role value
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation with given id
+     * @exception RoleNotFoundException  if:
+     * <P>- there is no role with given name
+     * <P>or
+     * <P>- the role is not readable.
+     *
+     * @see #setRole
+     */
+    public List<ObjectName> getRole(String relationId,
+                                    String roleName)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RelationNotFoundException,
+               RoleNotFoundException {
+
+        if (relationId == null || roleName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRole", new Object[] {relationId, roleName});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        List<ObjectName> result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            // Can throw RoleNotFoundException
+            result = cast(
+                ((RelationSupport)relObj).getRoleInt(roleName,
+                                                     true,
+                                                     this,
+                                                     false));
+
+        } else {
+            // Relation MBean
+            Object[] params = new Object[1];
+            params[0] = roleName;
+            String[] signature = new String[1];
+            signature[0] = "java.lang.String";
+            // Can throw MBeanException wrapping a RoleNotFoundException:
+            // throw wrapped exception
+            //
+            // Shall not throw InstanceNotFoundException or ReflectionException
+            try {
+                List<ObjectName> invokeResult = cast(
+                    myMBeanServer.invoke(((ObjectName)relObj),
+                                         "getRole",
+                                         params,
+                                         signature));
+                if (invokeResult == null || invokeResult instanceof ArrayList<?>)
+                    result = invokeResult;
+                else
+                    result = new ArrayList<ObjectName>(invokeResult);
+            } catch (InstanceNotFoundException exc1) {
+                throw new RuntimeException(exc1.getMessage());
+            } catch (ReflectionException exc2) {
+                throw new RuntimeException(exc2.getMessage());
+            } catch (MBeanException exc3) {
+                Exception wrappedExc = exc3.getTargetException();
+                if (wrappedExc instanceof RoleNotFoundException) {
+                    throw ((RoleNotFoundException)wrappedExc);
+                } else {
+                    throw new RuntimeException(wrappedExc.getMessage());
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(), "getRole");
+        return result;
+    }
+
+    /**
+     * Retrieves values of roles with given names in given relation.
+     *
+     * @param relationId  relation id
+     * @param roleNameArray  array of names of roles to be retrieved
+     *
+     * @return a RoleResult object, including a RoleList (for roles
+     * successfully retrieved) and a RoleUnresolvedList (for roles not
+     * retrieved).
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation with given id
+     *
+     * @see #setRoles
+     */
+    public RoleResult getRoles(String relationId,
+                               String[] roleNameArray)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null || roleNameArray == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRoles", relationId);
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        RoleResult result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            result = ((RelationSupport)relObj).getRolesInt(roleNameArray,
+                                                        true,
+                                                        this);
+        } else {
+            // Relation MBean
+            Object[] params = new Object[1];
+            params[0] = roleNameArray;
+            String[] signature = new String[1];
+            try {
+                signature[0] = (roleNameArray.getClass()).getName();
+            } catch (Exception exc) {
+                // OK : This is an array of java.lang.String
+                //      so this should never happen...
+            }
+            // Shall not throw InstanceNotFoundException, ReflectionException
+            // or MBeanException
+            try {
+                result = (RoleResult)
+                    (myMBeanServer.invoke(((ObjectName)relObj),
+                                          "getRoles",
+                                          params,
+                                          signature));
+            } catch (InstanceNotFoundException exc1) {
+                throw new RuntimeException(exc1.getMessage());
+            } catch (ReflectionException exc2) {
+                throw new RuntimeException(exc2.getMessage());
+            } catch (MBeanException exc3) {
+                throw new
+                    RuntimeException((exc3.getTargetException()).getMessage());
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoles");
+        return result;
+    }
+
+    /**
+     * Returns all roles present in the relation.
+     *
+     * @param relationId  relation id
+     *
+     * @return a RoleResult object, including a RoleList (for roles
+     * successfully retrieved) and a RoleUnresolvedList (for roles not
+     * readable).
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation for given id
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     */
+    public RoleResult getAllRoles(String relationId)
+        throws IllegalArgumentException,
+               RelationNotFoundException,
+               RelationServiceNotRegisteredException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRoles", relationId);
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        RoleResult result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            result = ((RelationSupport)relObj).getAllRolesInt(true, this);
+
+        } else {
+            // Relation MBean
+            // Shall not throw any Exception
+            try {
+                result = (RoleResult)
+                    (myMBeanServer.getAttribute(((ObjectName)relObj),
+                                                "AllRoles"));
+            } catch (Exception exc) {
+                throw new RuntimeException(exc.getMessage());
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(), "getRoles");
+        return result;
+    }
+
+    /**
+     * Retrieves the number of MBeans currently referenced in the given role.
+     *
+     * @param relationId  relation id
+     * @param roleName  name of role
+     *
+     * @return the number of currently referenced MBeans in that role
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation with given id
+     * @exception RoleNotFoundException  if there is no role with given name
+     */
+    public Integer getRoleCardinality(String relationId,
+                                      String roleName)
+        throws IllegalArgumentException,
+               RelationNotFoundException,
+               RoleNotFoundException {
+
+        if (relationId == null || roleName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRoleCardinality", new Object[] {relationId, roleName});
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        Integer result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            // Can throw RoleNotFoundException
+            result = ((RelationSupport)relObj).getRoleCardinality(roleName);
+
+        } else {
+            // Relation MBean
+            Object[] params = new Object[1];
+            params[0] = roleName;
+            String[] signature = new String[1];
+            signature[0] = "java.lang.String";
+            // Can throw MBeanException wrapping RoleNotFoundException:
+            // throw wrapped exception
+            //
+            // Shall not throw InstanceNotFoundException or ReflectionException
+            try {
+                result = (Integer)
+                    (myMBeanServer.invoke(((ObjectName)relObj),
+                                          "getRoleCardinality",
+                                          params,
+                                          signature));
+            } catch (InstanceNotFoundException exc1) {
+                throw new RuntimeException(exc1.getMessage());
+            } catch (ReflectionException exc2) {
+                throw new RuntimeException(exc2.getMessage());
+            } catch (MBeanException exc3) {
+                Exception wrappedExc = exc3.getTargetException();
+                if (wrappedExc instanceof RoleNotFoundException) {
+                    throw ((RoleNotFoundException)wrappedExc);
+                } else {
+                    throw new RuntimeException(wrappedExc.getMessage());
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getRoleCardinality");
+        return result;
+    }
+
+    /**
+     * Sets the given role in given relation.
+     * <P>Will check the role according to its corresponding role definition
+     * provided in relation's relation type
+     * <P>The Relation Service will keep track of the change to keep the
+     * consistency of relations by handling referenced MBean deregistrations.
+     *
+     * @param relationId  relation id
+     * @param role  role to be set (name and new value)
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation with given id
+     * @exception RoleNotFoundException  if the role does not exist or is not
+     * writable
+     * @exception InvalidRoleValueException  if value provided for role is not
+     * valid:
+     * <P>- the number of referenced MBeans in given value is less than
+     * expected minimum degree
+     * <P>or
+     * <P>- the number of referenced MBeans in provided value exceeds expected
+     * maximum degree
+     * <P>or
+     * <P>- one referenced MBean in the value is not an Object of the MBean
+     * class expected for that role
+     * <P>or
+     * <P>- an MBean provided for that role does not exist
+     *
+     * @see #getRole
+     */
+    public void setRole(String relationId,
+                        Role role)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RelationNotFoundException,
+               RoleNotFoundException,
+               InvalidRoleValueException {
+
+        if (relationId == null || role == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "setRole", new Object[] {relationId, role});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            // Can throw RoleNotFoundException,
+            // InvalidRoleValueException and
+            // RelationServiceNotRegisteredException
+            //
+            // Shall not throw RelationTypeNotFoundException
+            // (as relation exists in the RS, its relation type is known)
+            try {
+                ((RelationSupport)relObj).setRoleInt(role,
+                                                  true,
+                                                  this,
+                                                  false);
+
+            } catch (RelationTypeNotFoundException exc) {
+                throw new RuntimeException(exc.getMessage());
+            }
+
+        } else {
+            // Relation MBean
+            Object[] params = new Object[1];
+            params[0] = role;
+            String[] signature = new String[1];
+            signature[0] = "javax.management.relation.Role";
+            // Can throw MBeanException wrapping RoleNotFoundException,
+            // InvalidRoleValueException
+            //
+            // Shall not MBeanException wrapping an MBeanException wrapping
+            // RelationTypeNotFoundException, or ReflectionException, or
+            // InstanceNotFoundException
+            try {
+                myMBeanServer.setAttribute(((ObjectName)relObj),
+                                           new Attribute("Role", role));
+
+            } catch (InstanceNotFoundException exc1) {
+                throw new RuntimeException(exc1.getMessage());
+            } catch (ReflectionException exc3) {
+                throw new RuntimeException(exc3.getMessage());
+            } catch (MBeanException exc2) {
+                Exception wrappedExc = exc2.getTargetException();
+                if (wrappedExc instanceof RoleNotFoundException) {
+                    throw ((RoleNotFoundException)wrappedExc);
+                } else if (wrappedExc instanceof InvalidRoleValueException) {
+                    throw ((InvalidRoleValueException)wrappedExc);
+                } else {
+                    throw new RuntimeException(wrappedExc.getMessage());
+
+                }
+            } catch (AttributeNotFoundException exc4) {
+              throw new RuntimeException(exc4.getMessage());
+            } catch (InvalidAttributeValueException exc5) {
+              throw new RuntimeException(exc5.getMessage());
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(), "setRole");
+        return;
+    }
+
+    /**
+     * Sets the given roles in given relation.
+     * <P>Will check the role according to its corresponding role definition
+     * provided in relation's relation type
+     * <P>The Relation Service keeps track of the changes to keep the
+     * consistency of relations by handling referenced MBean deregistrations.
+     *
+     * @param relationId  relation id
+     * @param roleList  list of roles to be set
+     *
+     * @return a RoleResult object, including a RoleList (for roles
+     * successfully set) and a RoleUnresolvedList (for roles not
+     * set).
+     *
+     * @exception RelationServiceNotRegisteredException  if the Relation
+     * Service is not registered in the MBean Server
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation with given id
+     *
+     * @see #getRoles
+     */
+    public RoleResult setRoles(String relationId,
+                               RoleList roleList)
+        throws RelationServiceNotRegisteredException,
+               IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null || roleList == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "setRoles", new Object[] {relationId, roleList});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        RoleResult result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            // Can throw RelationServiceNotRegisteredException
+            //
+            // Shall not throw RelationTypeNotFoundException (as relation is
+            // known, its relation type exists)
+            try {
+                result = ((RelationSupport)relObj).setRolesInt(roleList,
+                                                            true,
+                                                            this);
+            } catch (RelationTypeNotFoundException exc) {
+                throw new RuntimeException(exc.getMessage());
+            }
+
+        } else {
+            // Relation MBean
+            Object[] params = new Object[1];
+            params[0] = roleList;
+            String[] signature = new String[1];
+            signature[0] = "javax.management.relation.RoleList";
+            // Shall not throw InstanceNotFoundException or an MBeanException
+            // or ReflectionException
+            try {
+                result = (RoleResult)
+                    (myMBeanServer.invoke(((ObjectName)relObj),
+                                          "setRoles",
+                                          params,
+                                          signature));
+            } catch (InstanceNotFoundException exc1) {
+                throw new RuntimeException(exc1.getMessage());
+            } catch (ReflectionException exc3) {
+                throw new RuntimeException(exc3.getMessage());
+            } catch (MBeanException exc2) {
+                throw new
+                    RuntimeException((exc2.getTargetException()).getMessage());
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(), "setRoles");
+        return result;
+    }
+
+    /**
+     * Retrieves MBeans referenced in the various roles of the relation.
+     *
+     * @param relationId  relation id
+     *
+     * @return a HashMap mapping:
+     * <P> ObjectName {@literal ->} ArrayList of String (role names)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation for given
+     * relation id
+     */
+    public Map<ObjectName,List<String>>
+        getReferencedMBeans(String relationId)
+            throws IllegalArgumentException,
+        RelationNotFoundException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getReferencedMBeans", relationId);
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        Map<ObjectName,List<String>> result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            result = ((RelationSupport)relObj).getReferencedMBeans();
+
+        } else {
+            // Relation MBean
+            // No Exception
+            try {
+                result = cast(
+                    myMBeanServer.getAttribute(((ObjectName)relObj),
+                                               "ReferencedMBeans"));
+            } catch (Exception exc) {
+                throw new RuntimeException(exc.getMessage());
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getReferencedMBeans");
+        return result;
+    }
+
+    /**
+     * Returns name of associated relation type for given relation.
+     *
+     * @param relationId  relation id
+     *
+     * @return the name of the associated relation type.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RelationNotFoundException  if no relation for given
+     * relation id
+     */
+    public String getRelationTypeName(String relationId)
+        throws IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRelationTypeName", relationId);
+
+        // Can throw a RelationNotFoundException
+        Object relObj = getRelation(relationId);
+
+        String result;
+
+        if (relObj instanceof RelationSupport) {
+            // Internal relation
+            result = ((RelationSupport)relObj).getRelationTypeName();
+
+        } else {
+            // Relation MBean
+            // No Exception
+            try {
+                result = (String)
+                    (myMBeanServer.getAttribute(((ObjectName)relObj),
+                                                "RelationTypeName"));
+            } catch (Exception exc) {
+                throw new RuntimeException(exc.getMessage());
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getRelationTypeName");
+        return result;
+    }
+
+    //
+    // NotificationListener Interface
+    //
+
+    /**
+     * Invoked when a JMX notification occurs.
+     * Currently handles notifications for unregistration of MBeans, either
+     * referenced in a relation role or being a relation itself.
+     *
+     * @param notif  The notification.
+     * @param handback  An opaque object which helps the listener to
+     * associate information regarding the MBean emitter (can be null).
+     */
+    public void handleNotification(Notification notif,
+                                   Object handback) {
+
+        if (notif == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "handleNotification", notif);
+
+        if (notif instanceof MBeanServerNotification) {
+
+            MBeanServerNotification mbsNtf = (MBeanServerNotification) notif;
+            String ntfType = notif.getType();
+
+            if (ntfType.equals(
+                       MBeanServerNotification.UNREGISTRATION_NOTIFICATION )) {
+                ObjectName mbeanName =
+                    ((MBeanServerNotification)notif).getMBeanName();
+
+                // Note: use a flag to block access to
+                // myRefedMBeanObjName2RelIdsMap only for a quick access
+                boolean isRefedMBeanFlag = false;
+                synchronized(myRefedMBeanObjName2RelIdsMap) {
+
+                    if (myRefedMBeanObjName2RelIdsMap.containsKey(mbeanName)) {
+                        // Unregistration of a referenced MBean
+                        synchronized(myUnregNtfList) {
+                            myUnregNtfList.add(mbsNtf);
+                        }
+                        isRefedMBeanFlag = true;
+                    }
+                    if (isRefedMBeanFlag && myPurgeFlag) {
+                        // Immediate purge
+                        // Can throw RelationServiceNotRegisteredException
+                        // but assume that will be fine :)
+                        try {
+                            purgeRelations();
+                        } catch (Exception exc) {
+                            throw new RuntimeException(exc.getMessage());
+                        }
+                    }
+                }
+
+                // Note: do both tests as a relation can be an MBean and be
+                //       itself referenced in another relation :)
+                String relId;
+                synchronized(myRelMBeanObjName2RelIdMap){
+                    relId = myRelMBeanObjName2RelIdMap.get(mbeanName);
+                }
+                if (relId != null) {
+                    // Unregistration of a relation MBean
+                    // Can throw RelationTypeNotFoundException,
+                    // RelationServiceNotRegisteredException
+                    //
+                    // Shall not throw RelationTypeNotFoundException or
+                    // InstanceNotFoundException
+                    try {
+                        removeRelation(relId);
+                    } catch (Exception exc) {
+                        throw new RuntimeException(exc.getMessage());
+                    }
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "handleNotification");
+        return;
+    }
+
+    //
+    // NotificationBroadcaster interface
+    //
+
+    /**
+     * Returns a NotificationInfo object containing the name of the Java class
+     * of the notification and the notification types sent.
+     */
+    public MBeanNotificationInfo[] getNotificationInfo() {
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getNotificationInfo");
+
+        String ntfClass = "javax.management.relation.RelationNotification";
+
+        String[] ntfTypes = new String[] {
+            RelationNotification.RELATION_BASIC_CREATION,
+            RelationNotification.RELATION_MBEAN_CREATION,
+            RelationNotification.RELATION_BASIC_UPDATE,
+            RelationNotification.RELATION_MBEAN_UPDATE,
+            RelationNotification.RELATION_BASIC_REMOVAL,
+            RelationNotification.RELATION_MBEAN_REMOVAL,
+        };
+
+        String ntfDesc = "Sent when a relation is created, updated or deleted.";
+
+        MBeanNotificationInfo ntfInfo =
+            new MBeanNotificationInfo(ntfTypes, ntfClass, ntfDesc);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getNotificationInfo");
+        return new MBeanNotificationInfo[] {ntfInfo};
+    }
+
+    //
+    // Misc
+    //
+
+    // Adds given object as a relation type.
+    //
+    // -param relationTypeObj  relation type object
+    //
+    // -exception IllegalArgumentException  if null parameter
+    // -exception InvalidRelationTypeException  if there is already a relation
+    //  type with that name
+    private void addRelationTypeInt(RelationType relationTypeObj)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (relationTypeObj == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "addRelationTypeInt");
+
+        String relTypeName = relationTypeObj.getRelationTypeName();
+
+        // Checks that there is not already a relation type with that name
+        // existing in the Relation Service
+        try {
+            // Can throw a RelationTypeNotFoundException (in fact should ;)
+            RelationType relType = getRelationType(relTypeName);
+
+            if (relType != null) {
+                String excMsg = "There is already a relation type in the Relation Service with name ";
+                StringBuilder excMsgStrB = new StringBuilder(excMsg);
+                excMsgStrB.append(relTypeName);
+                throw new InvalidRelationTypeException(excMsgStrB.toString());
+            }
+
+        } catch (RelationTypeNotFoundException exc) {
+            // OK : The RelationType could not be found.
+        }
+
+        // Adds the relation type
+        synchronized(myRelType2ObjMap) {
+            myRelType2ObjMap.put(relTypeName, relationTypeObj);
+        }
+
+        if (relationTypeObj instanceof RelationTypeSupport) {
+            ((RelationTypeSupport)relationTypeObj).setRelationServiceFlag(true);
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "addRelationTypeInt");
+        return;
+     }
+
+    // Retrieves relation type with given name
+    //
+    // -param relationTypeName  expected name of a relation type created in the
+    //  Relation Service
+    //
+    // -return RelationType object corresponding to given name
+    //
+    // -exception IllegalArgumentException  if null parameter
+    // -exception RelationTypeNotFoundException  if no relation type for that
+    //  name created in Relation Service
+    //
+    RelationType getRelationType(String relationTypeName)
+        throws IllegalArgumentException,
+               RelationTypeNotFoundException {
+
+        if (relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRelationType", relationTypeName);
+
+        // No null relation type accepted, so can use get()
+        RelationType relType;
+        synchronized(myRelType2ObjMap) {
+            relType = (myRelType2ObjMap.get(relationTypeName));
+        }
+
+        if (relType == null) {
+            String excMsg = "No relation type created in the Relation Service with the name ";
+            StringBuilder excMsgStrB = new StringBuilder(excMsg);
+            excMsgStrB.append(relationTypeName);
+            throw new RelationTypeNotFoundException(excMsgStrB.toString());
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getRelationType");
+        return relType;
+    }
+
+    // Retrieves relation corresponding to given relation id.
+    // Returns either:
+    // - a RelationSupport object if the relation is internal
+    // or
+    // - the ObjectName of the corresponding MBean
+    //
+    // -param relationId  expected relation id
+    //
+    // -return RelationSupport object or ObjectName of relation with given id
+    //
+    // -exception IllegalArgumentException  if null parameter
+    // -exception RelationNotFoundException  if no relation for that
+    //  relation id created in Relation Service
+    //
+    Object getRelation(String relationId)
+        throws IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (relationId == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "getRelation", relationId);
+
+        // No null relation  accepted, so can use get()
+        Object rel;
+        synchronized(myRelId2ObjMap) {
+            rel = myRelId2ObjMap.get(relationId);
+        }
+
+        if (rel == null) {
+            String excMsg = "No relation associated to relation id " + relationId;
+            throw new RelationNotFoundException(excMsg);
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "getRelation");
+        return rel;
+    }
+
+    // Adds a new MBean reference (reference to an ObjectName) in the
+    // referenced MBean map (myRefedMBeanObjName2RelIdsMap).
+    //
+    // -param objectName  ObjectName of new referenced MBean
+    // -param relationId  relation id of the relation where the MBean is
+    //  referenced
+    // -param roleName  name of the role where the MBean is referenced
+    //
+    // -return boolean:
+    //  - true  if the MBean was not referenced before, so really a new
+    //    reference
+    //  - false else
+    //
+    // -exception IllegalArgumentException  if null parameter
+    private boolean addNewMBeanReference(ObjectName objectName,
+                                         String relationId,
+                                         String roleName)
+        throws IllegalArgumentException {
+
+        if (objectName == null ||
+            relationId == null ||
+            roleName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "addNewMBeanReference",
+                new Object[] {objectName, relationId, roleName});
+
+        boolean isNewFlag = false;
+
+        synchronized(myRefedMBeanObjName2RelIdsMap) {
+
+            // Checks if the MBean was already referenced
+            // No null value allowed, use get() directly
+            Map<String,List<String>> mbeanRefMap =
+                myRefedMBeanObjName2RelIdsMap.get(objectName);
+
+            if (mbeanRefMap == null) {
+                // MBean not referenced in any relation yet
+
+                isNewFlag = true;
+
+                // List of roles where the MBean is referenced in given
+                // relation
+                List<String> roleNames = new ArrayList<String>();
+                roleNames.add(roleName);
+
+                // Map of relations where the MBean is referenced
+                mbeanRefMap = new HashMap<String,List<String>>();
+                mbeanRefMap.put(relationId, roleNames);
+
+                myRefedMBeanObjName2RelIdsMap.put(objectName, mbeanRefMap);
+
+            } else {
+                // MBean already referenced in at least another relation
+                // Checks if already referenced in another role in current
+                // relation
+                List<String> roleNames = mbeanRefMap.get(relationId);
+
+                if (roleNames == null) {
+                    // MBean not referenced in current relation
+
+                    // List of roles where the MBean is referenced in given
+                    // relation
+                    roleNames = new ArrayList<String>();
+                    roleNames.add(roleName);
+
+                    // Adds new reference done in current relation
+                    mbeanRefMap.put(relationId, roleNames);
+
+                } else {
+                    // MBean already referenced in current relation in another
+                    // role
+                    // Adds new reference done
+                    roleNames.add(roleName);
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "addNewMBeanReference");
+        return isNewFlag;
+    }
+
+    // Removes an obsolete MBean reference (reference to an ObjectName) in
+    // the referenced MBean map (myRefedMBeanObjName2RelIdsMap).
+    //
+    // -param objectName  ObjectName of MBean no longer referenced
+    // -param relationId  relation id of the relation where the MBean was
+    //  referenced
+    // -param roleName  name of the role where the MBean was referenced
+    // -param allRolesFlag  flag, if true removes reference to MBean for all
+    //  roles in the relation, not only for the one above
+    //
+    // -return boolean:
+    //  - true  if the MBean is no longer reference in any relation
+    //  - false else
+    //
+    // -exception IllegalArgumentException  if null parameter
+    private boolean removeMBeanReference(ObjectName objectName,
+                                         String relationId,
+                                         String roleName,
+                                         boolean allRolesFlag)
+        throws IllegalArgumentException {
+
+        if (objectName == null ||
+            relationId == null ||
+            roleName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "removeMBeanReference",
+                new Object[] {objectName, relationId, roleName, allRolesFlag});
+
+        boolean noLongerRefFlag = false;
+
+        synchronized(myRefedMBeanObjName2RelIdsMap) {
+
+            // Retrieves the set of relations (designed via their relation ids)
+            // where the MBean is referenced
+            // Note that it is possible that the MBean has already been removed
+            // from the internal map: this is the case when the MBean is
+            // unregistered, the role is updated, then we arrive here.
+            Map<String,List<String>> mbeanRefMap =
+                (myRefedMBeanObjName2RelIdsMap.get(objectName));
+
+            if (mbeanRefMap == null) {
+                // The MBean is no longer referenced
+                RELATION_LOGGER.exiting(RelationService.class.getName(),
+                        "removeMBeanReference");
+                return true;
+            }
+
+            List<String> roleNames = null;
+            if (!allRolesFlag) {
+                // Now retrieves the roles of current relation where the MBean
+                // was referenced
+                roleNames = mbeanRefMap.get(relationId);
+
+                // Removes obsolete reference to role
+                int obsRefIdx = roleNames.indexOf(roleName);
+                if (obsRefIdx != -1) {
+                    roleNames.remove(obsRefIdx);
+                }
+            }
+
+            // Checks if there is still at least one role in current relation
+            // where the MBean is referenced
+            if (roleNames.isEmpty() || allRolesFlag) {
+                // MBean no longer referenced in current relation: removes
+                // entry
+                mbeanRefMap.remove(relationId);
+            }
+
+            // Checks if the MBean is still referenced in at least on relation
+            if (mbeanRefMap.isEmpty()) {
+                // MBean no longer referenced in any relation: removes entry
+                myRefedMBeanObjName2RelIdsMap.remove(objectName);
+                noLongerRefFlag = true;
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "removeMBeanReference");
+        return noLongerRefFlag;
+    }
+
+    // Updates the listener registered to the MBean Server to be informed of
+    // referenced MBean deregistrations
+    //
+    // -param newRefList  ArrayList of ObjectNames for new references done
+    //  to MBeans (can be null)
+    // -param obsoleteRefList  ArrayList of ObjectNames for obsolete references
+    //  to MBeans (can be null)
+    //
+    // -exception RelationServiceNotRegisteredException  if the Relation
+    //  Service is not registered in the MBean Server.
+    private void updateUnregistrationListener(List<ObjectName> newRefList,
+                                              List<ObjectName> obsoleteRefList)
+        throws RelationServiceNotRegisteredException {
+
+        if (newRefList != null && obsoleteRefList != null) {
+            if (newRefList.isEmpty() && obsoleteRefList.isEmpty()) {
+                // Nothing to do :)
+                return;
+            }
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "updateUnregistrationListener",
+                new Object[] {newRefList, obsoleteRefList});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        if (newRefList != null || obsoleteRefList != null) {
+
+            boolean newListenerFlag = false;
+            if (myUnregNtfFilter == null) {
+                // Initialize it to be able to synchronise it :)
+                myUnregNtfFilter = new MBeanServerNotificationFilter();
+                newListenerFlag = true;
+            }
+
+            synchronized(myUnregNtfFilter) {
+
+                // Enables ObjectNames in newRefList
+                if (newRefList != null) {
+                    for (ObjectName newObjName : newRefList)
+                        myUnregNtfFilter.enableObjectName(newObjName);
+                }
+
+                if (obsoleteRefList != null) {
+                    // Disables ObjectNames in obsoleteRefList
+                    for (ObjectName obsObjName : obsoleteRefList)
+                        myUnregNtfFilter.disableObjectName(obsObjName);
+                }
+
+// Under test
+                if (newListenerFlag) {
+                    try {
+                        myMBeanServer.addNotificationListener(
+                                MBeanServerDelegate.DELEGATE_NAME,
+                                this,
+                                myUnregNtfFilter,
+                                null);
+                    } catch (InstanceNotFoundException exc) {
+                        throw new
+                       RelationServiceNotRegisteredException(exc.getMessage());
+                    }
+                }
+// End test
+
+
+//              if (!newListenerFlag) {
+                    // The Relation Service was already registered as a
+                    // listener:
+                    // removes it
+                    // Shall not throw InstanceNotFoundException (as the
+                    // MBean Server Delegate is expected to exist) or
+                    // ListenerNotFoundException (as it has been checked above
+                    // that the Relation Service is registered)
+//                  try {
+//                      myMBeanServer.removeNotificationListener(
+//                              MBeanServerDelegate.DELEGATE_NAME,
+//                              this);
+//                  } catch (InstanceNotFoundException exc1) {
+//                      throw new RuntimeException(exc1.getMessage());
+//                  } catch (ListenerNotFoundException exc2) {
+//                      throw new
+//                          RelationServiceNotRegisteredException(exc2.getMessage());
+//                  }
+//              }
+
+                // Adds Relation Service with current filter
+                // Can throw InstanceNotFoundException if the Relation
+                // Service is not registered, to be transformed into
+                // RelationServiceNotRegisteredException
+                //
+                // Assume that there will not be any InstanceNotFoundException
+                // for the MBean Server Delegate :)
+//              try {
+//                  myMBeanServer.addNotificationListener(
+//                              MBeanServerDelegate.DELEGATE_NAME,
+//                              this,
+//                              myUnregNtfFilter,
+//                              null);
+//              } catch (InstanceNotFoundException exc) {
+//                  throw new
+//                     RelationServiceNotRegisteredException(exc.getMessage());
+//              }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "updateUnregistrationListener");
+        return;
+    }
+
+    // Adds a relation (being either a RelationSupport object or an MBean
+    // referenced using its ObjectName) in the Relation Service.
+    // Will send a notification RelationNotification with type:
+    // - RelationNotification.RELATION_BASIC_CREATION for internal relation
+    //   creation
+    // - RelationNotification.RELATION_MBEAN_CREATION for an MBean being added
+    //   as a relation.
+    //
+    // -param relationBaseFlag  flag true if the relation is a RelationSupport
+    //  object, false if it is an MBean
+    // -param relationObj  RelationSupport object (if relation is internal)
+    // -param relationObjName  ObjectName of the MBean to be added as a relation
+    //  (only for the relation MBean)
+    // -param relationId  relation identifier, to uniquely identify the relation
+    //  inside the Relation Service
+    // -param relationTypeName  name of the relation type (has to be created
+    //  in the Relation Service)
+    // -param roleList  role list to initialize roles of the relation
+    //  (can be null)
+    //
+    // -exception IllegalArgumentException  if null paramater
+    // -exception RelationServiceNotRegisteredException  if the Relation
+    //  Service is not registered in the MBean Server
+    // -exception RoleNotFoundException  if a value is provided for a role
+    //  that does not exist in the relation type
+    // -exception InvalidRelationIdException  if relation id already used
+    // -exception RelationTypeNotFoundException  if relation type not known in
+    //  Relation Service
+    // -exception InvalidRoleValueException if:
+    //  - the same role name is used for two different roles
+    //  - the number of referenced MBeans in given value is less than
+    //    expected minimum degree
+    //  - the number of referenced MBeans in provided value exceeds expected
+    //    maximum degree
+    //  - one referenced MBean in the value is not an Object of the MBean
+    //    class expected for that role
+    //  - an MBean provided for that role does not exist
+    private void addRelationInt(boolean relationBaseFlag,
+                                RelationSupport relationObj,
+                                ObjectName relationObjName,
+                                String relationId,
+                                String relationTypeName,
+                                RoleList roleList)
+        throws IllegalArgumentException,
+               RelationServiceNotRegisteredException,
+               RoleNotFoundException,
+               InvalidRelationIdException,
+               RelationTypeNotFoundException,
+               InvalidRoleValueException {
+
+        if (relationId == null ||
+            relationTypeName == null ||
+            (relationBaseFlag &&
+             (relationObj == null ||
+              relationObjName != null)) ||
+            (!relationBaseFlag &&
+             (relationObjName == null ||
+              relationObj != null))) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "addRelationInt", new Object[] {relationBaseFlag, relationObj,
+                relationObjName, relationId, relationTypeName, roleList});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Checks if there is already a relation with given id
+        try {
+            // Can throw a RelationNotFoundException (in fact should :)
+            Object rel = getRelation(relationId);
+
+            if (rel != null) {
+                // There is already a relation with that id
+                String excMsg = "There is already a relation with id ";
+                StringBuilder excMsgStrB = new StringBuilder(excMsg);
+                excMsgStrB.append(relationId);
+                throw new InvalidRelationIdException(excMsgStrB.toString());
+            }
+        } catch (RelationNotFoundException exc) {
+            // OK : The Relation could not be found.
+        }
+
+        // Retrieves the relation type
+        // Can throw RelationTypeNotFoundException
+        RelationType relType = getRelationType(relationTypeName);
+
+        // Checks that each provided role conforms to its role info provided in
+        // the relation type
+        // First retrieves a local list of the role infos of the relation type
+        // to see which roles have not been initialized
+        // Note: no need to test if list not null before cloning, not allowed
+        //       to have an empty relation type.
+        List<RoleInfo> roleInfoList = new ArrayList<RoleInfo>(relType.getRoleInfos());
+
+        if (roleList != null) {
+
+            for (Role currRole : roleList.asList()) {
+                String currRoleName = currRole.getRoleName();
+                List<ObjectName> currRoleValue = currRole.getRoleValue();
+                // Retrieves corresponding role info
+                // Can throw a RoleInfoNotFoundException to be converted into a
+                // RoleNotFoundException
+                RoleInfo roleInfo;
+                try {
+                    roleInfo = relType.getRoleInfo(currRoleName);
+                } catch (RoleInfoNotFoundException exc) {
+                    throw new RoleNotFoundException(exc.getMessage());
+                }
+
+                // Checks that role conforms to role info,
+                Integer status = checkRoleInt(2,
+                                              currRoleName,
+                                              currRoleValue,
+                                              roleInfo,
+                                              false);
+                int pbType = status.intValue();
+                if (pbType != 0) {
+                    // A problem has occurred: throws appropriate exception
+                    // here InvalidRoleValueException
+                    throwRoleProblemException(pbType, currRoleName);
+                }
+
+                // Removes role info for that list from list of role infos for
+                // roles to be defaulted
+                int roleInfoIdx = roleInfoList.indexOf(roleInfo);
+                // Note: no need to check if != -1, MUST be there :)
+                roleInfoList.remove(roleInfoIdx);
+            }
+        }
+
+        // Initializes roles not initialized by roleList
+        // Can throw InvalidRoleValueException
+        initializeMissingRoles(relationBaseFlag,
+                               relationObj,
+                               relationObjName,
+                               relationId,
+                               relationTypeName,
+                               roleInfoList);
+
+        // Creation of relation successfull!!!!
+
+        // Updates internal maps
+        // Relation id to object map
+        synchronized(myRelId2ObjMap) {
+            if (relationBaseFlag) {
+                // Note: do not clone relation object, created by us :)
+                myRelId2ObjMap.put(relationId, relationObj);
+            } else {
+                myRelId2ObjMap.put(relationId, relationObjName);
+            }
+        }
+
+        // Relation id to relation type name map
+        synchronized(myRelId2RelTypeMap) {
+            myRelId2RelTypeMap.put(relationId,
+                                   relationTypeName);
+        }
+
+        // Relation type to relation id map
+        synchronized(myRelType2RelIdsMap) {
+            List<String> relIdList =
+                myRelType2RelIdsMap.get(relationTypeName);
+            boolean firstRelFlag = false;
+            if (relIdList == null) {
+                firstRelFlag = true;
+                relIdList = new ArrayList<String>();
+            }
+            relIdList.add(relationId);
+            if (firstRelFlag) {
+                myRelType2RelIdsMap.put(relationTypeName, relIdList);
+            }
+        }
+
+        // Referenced MBean to relation id map
+        // Only role list parameter used, as default initialization of roles
+        // done automatically in initializeMissingRoles() sets each
+        // uninitialized role to an empty value.
+        for (Role currRole : roleList.asList()) {
+            // Creates a dummy empty ArrayList of ObjectNames to be the old
+            // role value :)
+            List<ObjectName> dummyList = new ArrayList<ObjectName>();
+            // Will not throw a RelationNotFoundException (as the RelId2Obj map
+            // has been updated above) so catch it :)
+            try {
+                updateRoleMap(relationId, currRole, dummyList);
+
+            } catch (RelationNotFoundException exc) {
+                // OK : The Relation could not be found.
+            }
+        }
+
+        // Sends a notification for relation creation
+        // Will not throw RelationNotFoundException so catch it :)
+        try {
+            sendRelationCreationNotification(relationId);
+
+        } catch (RelationNotFoundException exc) {
+            // OK : The Relation could not be found.
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "addRelationInt");
+        return;
+    }
+
+    // Checks that given role conforms to given role info.
+    //
+    // -param chkType  type of check:
+    //  - 1: read, just check read access
+    //  - 2: write, check value and write access if writeChkFlag
+    // -param roleName  role name
+    // -param roleValue  role value
+    // -param roleInfo  corresponding role info
+    // -param writeChkFlag  boolean to specify a current write access and
+    //  to check it
+    //
+    // -return Integer with value:
+    //  - 0: ok
+    //  - RoleStatus.NO_ROLE_WITH_NAME
+    //  - RoleStatus.ROLE_NOT_READABLE
+    //  - RoleStatus.ROLE_NOT_WRITABLE
+    //  - RoleStatus.LESS_THAN_MIN_ROLE_DEGREE
+    //  - RoleStatus.MORE_THAN_MAX_ROLE_DEGREE
+    //  - RoleStatus.REF_MBEAN_OF_INCORRECT_CLASS
+    //  - RoleStatus.REF_MBEAN_NOT_REGISTERED
+    //
+    // -exception IllegalArgumentException  if null parameter
+    private Integer checkRoleInt(int chkType,
+                                 String roleName,
+                                 List<ObjectName> roleValue,
+                                 RoleInfo roleInfo,
+                                 boolean writeChkFlag)
+        throws IllegalArgumentException {
+
+        if (roleName == null ||
+            roleInfo == null ||
+            (chkType == 2 && roleValue == null)) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "checkRoleInt", new Object[] {chkType, roleName,
+                roleValue, roleInfo, writeChkFlag});
+
+        // Compares names
+        String expName = roleInfo.getName();
+        if (!(roleName.equals(expName))) {
+            RELATION_LOGGER.exiting(RelationService.class.getName(),
+                    "checkRoleInt");
+            return Integer.valueOf(RoleStatus.NO_ROLE_WITH_NAME);
+        }
+
+        // Checks read access if required
+        if (chkType == 1) {
+            boolean isReadable = roleInfo.isReadable();
+            if (!isReadable) {
+                RELATION_LOGGER.exiting(RelationService.class.getName(),
+                        "checkRoleInt");
+                return Integer.valueOf(RoleStatus.ROLE_NOT_READABLE);
+            } else {
+                // End of check :)
+                RELATION_LOGGER.exiting(RelationService.class.getName(),
+                        "checkRoleInt");
+                return new Integer(0);
+            }
+        }
+
+        // Checks write access if required
+        if (writeChkFlag) {
+            boolean isWritable = roleInfo.isWritable();
+            if (!isWritable) {
+                RELATION_LOGGER.exiting(RelationService.class.getName(),
+                        "checkRoleInt");
+                return new Integer(RoleStatus.ROLE_NOT_WRITABLE);
+            }
+        }
+
+        int refNbr = roleValue.size();
+
+        // Checks minimum cardinality
+        boolean chkMinFlag = roleInfo.checkMinDegree(refNbr);
+        if (!chkMinFlag) {
+            RELATION_LOGGER.exiting(RelationService.class.getName(),
+                    "checkRoleInt");
+            return new Integer(RoleStatus.LESS_THAN_MIN_ROLE_DEGREE);
+        }
+
+        // Checks maximum cardinality
+        boolean chkMaxFlag = roleInfo.checkMaxDegree(refNbr);
+        if (!chkMaxFlag) {
+            RELATION_LOGGER.exiting(RelationService.class.getName(),
+                    "checkRoleInt");
+            return new Integer(RoleStatus.MORE_THAN_MAX_ROLE_DEGREE);
+        }
+
+        // Verifies that each referenced MBean is registered in the MBean
+        // Server and that it is an instance of the class specified in the
+        // role info, or of a subclass of it
+        // Note that here again this is under the assumption that
+        // referenced MBeans, relation MBeans and the Relation Service are
+        // registered in the same MBean Server.
+        String expClassName = roleInfo.getRefMBeanClassName();
+
+        for (ObjectName currObjName : roleValue) {
+
+            // Checks it is registered
+            if (currObjName == null) {
+                RELATION_LOGGER.exiting(RelationService.class.getName(),
+                        "checkRoleInt");
+                return new Integer(RoleStatus.REF_MBEAN_NOT_REGISTERED);
+            }
+
+            // Checks if it is of the correct class
+            // Can throw an InstanceNotFoundException, if MBean not registered
+            try {
+                boolean classSts = myMBeanServer.isInstanceOf(currObjName,
+                                                              expClassName);
+                if (!classSts) {
+                    RELATION_LOGGER.exiting(RelationService.class.getName(),
+                            "checkRoleInt");
+                    return new Integer(RoleStatus.REF_MBEAN_OF_INCORRECT_CLASS);
+                }
+
+            } catch (InstanceNotFoundException exc) {
+                RELATION_LOGGER.exiting(RelationService.class.getName(),
+                        "checkRoleInt");
+                return new Integer(RoleStatus.REF_MBEAN_NOT_REGISTERED);
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "checkRoleInt");
+        return new Integer(0);
+    }
+
+
+    // Initializes roles associated to given role infos to default value (empty
+    // ArrayList of ObjectNames) in given relation.
+    // It will succeed for every role except if the role info has a minimum
+    // cardinality greater than 0. In that case, an InvalidRoleValueException
+    // will be raised.
+    //
+    // -param relationBaseFlag  flag true if the relation is a RelationSupport
+    //  object, false if it is an MBean
+    // -param relationObj  RelationSupport object (if relation is internal)
+    // -param relationObjName  ObjectName of the MBean to be added as a relation
+    //  (only for the relation MBean)
+    // -param relationId  relation id
+    // -param relationTypeName  name of the relation type (has to be created
+    //  in the Relation Service)
+    // -param roleInfoList  list of role infos for roles to be defaulted
+    //
+    // -exception IllegalArgumentException  if null paramater
+    // -exception RelationServiceNotRegisteredException  if the Relation
+    //  Service is not registered in the MBean Server
+    // -exception InvalidRoleValueException  if role must have a non-empty
+    //  value
+
+    // Revisit [cebro] Handle CIM qualifiers as REQUIRED to detect roles which
+    //    should have been initialized by the user
+    private void initializeMissingRoles(boolean relationBaseFlag,
+                                        RelationSupport relationObj,
+                                        ObjectName relationObjName,
+                                        String relationId,
+                                        String relationTypeName,
+                                        List<RoleInfo> roleInfoList)
+        throws IllegalArgumentException,
+               RelationServiceNotRegisteredException,
+               InvalidRoleValueException {
+
+        if ((relationBaseFlag &&
+             (relationObj == null ||
+              relationObjName != null)) ||
+            (!relationBaseFlag &&
+             (relationObjName == null ||
+              relationObj != null)) ||
+            relationId == null ||
+            relationTypeName == null ||
+            roleInfoList == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "initializeMissingRoles", new Object[] {relationBaseFlag,
+                relationObj, relationObjName, relationId, relationTypeName,
+                roleInfoList});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // For each role info (corresponding to a role not initialized by the
+        // role list provided by the user), try to set in the relation a role
+        // with an empty list of ObjectNames.
+        // A check is performed to verify that the role can be set to an
+        // empty value, according to its minimum cardinality
+        for (RoleInfo currRoleInfo : roleInfoList) {
+
+            String roleName = currRoleInfo.getName();
+
+            // Creates an empty value
+            List<ObjectName> emptyValue = new ArrayList<ObjectName>();
+            // Creates a role
+            Role role = new Role(roleName, emptyValue);
+
+            if (relationBaseFlag) {
+
+                // Internal relation
+                // Can throw InvalidRoleValueException
+                //
+                // Will not throw RoleNotFoundException (role to be
+                // initialized), or RelationNotFoundException, or
+                // RelationTypeNotFoundException
+                try {
+                    relationObj.setRoleInt(role, true, this, false);
+
+                } catch (RoleNotFoundException exc1) {
+                    throw new RuntimeException(exc1.getMessage());
+                } catch (RelationNotFoundException exc2) {
+                    throw new RuntimeException(exc2.getMessage());
+                } catch (RelationTypeNotFoundException exc3) {
+                    throw new RuntimeException(exc3.getMessage());
+                }
+
+            } else {
+
+                // Relation is an MBean
+                // Use standard setRole()
+                Object[] params = new Object[1];
+                params[0] = role;
+                String[] signature = new String[1];
+                signature[0] = "javax.management.relation.Role";
+                // Can throw MBeanException wrapping
+                // InvalidRoleValueException. Returns the target exception to
+                // be homogeneous.
+                //
+                // Will not throw MBeanException (wrapping
+                // RoleNotFoundException or MBeanException) or
+                // InstanceNotFoundException, or ReflectionException
+                //
+                // Again here the assumption is that the Relation Service and
+                // the relation MBeans are registered in the same MBean Server.
+                try {
+                    myMBeanServer.setAttribute(relationObjName,
+                                               new Attribute("Role", role));
+
+                } catch (InstanceNotFoundException exc1) {
+                    throw new RuntimeException(exc1.getMessage());
+                } catch (ReflectionException exc3) {
+                    throw new RuntimeException(exc3.getMessage());
+                } catch (MBeanException exc2) {
+                    Exception wrappedExc = exc2.getTargetException();
+                    if (wrappedExc instanceof InvalidRoleValueException) {
+                        throw ((InvalidRoleValueException)wrappedExc);
+                    } else {
+                        throw new RuntimeException(wrappedExc.getMessage());
+                    }
+                } catch (AttributeNotFoundException exc4) {
+                  throw new RuntimeException(exc4.getMessage());
+                } catch (InvalidAttributeValueException exc5) {
+                  throw new RuntimeException(exc5.getMessage());
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "initializeMissingRoles");
+        return;
+    }
+
+    // Throws an exception corresponding to a given problem type
+    //
+    // -param pbType  possible problem, defined in RoleUnresolved
+    // -param roleName  role name
+    //
+    // -exception IllegalArgumentException  if null parameter
+    // -exception RoleNotFoundException  for problems:
+    //  - NO_ROLE_WITH_NAME
+    //  - ROLE_NOT_READABLE
+    //  - ROLE_NOT_WRITABLE
+    // -exception InvalidRoleValueException  for problems:
+    //  - LESS_THAN_MIN_ROLE_DEGREE
+    //  - MORE_THAN_MAX_ROLE_DEGREE
+    //  - REF_MBEAN_OF_INCORRECT_CLASS
+    //  - REF_MBEAN_NOT_REGISTERED
+    static void throwRoleProblemException(int pbType,
+                                          String roleName)
+        throws IllegalArgumentException,
+               RoleNotFoundException,
+               InvalidRoleValueException {
+
+        if (roleName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        // Exception type: 1 = RoleNotFoundException
+        //                 2 = InvalidRoleValueException
+        int excType = 0;
+
+        String excMsgPart = null;
+
+        switch (pbType) {
+        case RoleStatus.NO_ROLE_WITH_NAME:
+            excMsgPart = " does not exist in relation.";
+            excType = 1;
+            break;
+        case RoleStatus.ROLE_NOT_READABLE:
+            excMsgPart = " is not readable.";
+            excType = 1;
+            break;
+        case RoleStatus.ROLE_NOT_WRITABLE:
+            excMsgPart = " is not writable.";
+            excType = 1;
+            break;
+        case RoleStatus.LESS_THAN_MIN_ROLE_DEGREE:
+            excMsgPart = " has a number of MBean references less than the expected minimum degree.";
+            excType = 2;
+            break;
+        case RoleStatus.MORE_THAN_MAX_ROLE_DEGREE:
+            excMsgPart = " has a number of MBean references greater than the expected maximum degree.";
+            excType = 2;
+            break;
+        case RoleStatus.REF_MBEAN_OF_INCORRECT_CLASS:
+            excMsgPart = " has an MBean reference to an MBean not of the expected class of references for that role.";
+            excType = 2;
+            break;
+        case RoleStatus.REF_MBEAN_NOT_REGISTERED:
+            excMsgPart = " has a reference to null or to an MBean not registered.";
+            excType = 2;
+            break;
+        }
+        // No default as we must have been in one of those cases
+
+        StringBuilder excMsgStrB = new StringBuilder(roleName);
+        excMsgStrB.append(excMsgPart);
+        String excMsg = excMsgStrB.toString();
+        if (excType == 1) {
+            throw new RoleNotFoundException(excMsg);
+
+        } else if (excType == 2) {
+            throw new InvalidRoleValueException(excMsg);
+        }
+    }
+
+    // Sends a notification of given type, with given parameters
+    //
+    // -param intNtfType  integer to represent notification type:
+    //  - 1 : create
+    //  - 2 : update
+    //  - 3 : delete
+    // -param message  human-readable message
+    // -param relationId  relation id of the created/updated/deleted relation
+    // -param unregMBeanList  list of ObjectNames of referenced MBeans
+    //  expected to be unregistered due to relation removal (only for removal,
+    //  due to CIM qualifiers, can be null)
+    // -param roleName  role name
+    // -param roleNewValue  role new value (ArrayList of ObjectNames)
+    // -param oldValue  old role value (ArrayList of ObjectNames)
+    //
+    // -exception IllegalArgument  if null parameter
+    // -exception RelationNotFoundException  if no relation for given id
+    private void sendNotificationInt(int intNtfType,
+                                     String message,
+                                     String relationId,
+                                     List<ObjectName> unregMBeanList,
+                                     String roleName,
+                                     List<ObjectName> roleNewValue,
+                                     List<ObjectName> oldValue)
+        throws IllegalArgumentException,
+               RelationNotFoundException {
+
+        if (message == null ||
+            relationId == null ||
+            (intNtfType != 3 && unregMBeanList != null) ||
+            (intNtfType == 2 &&
+             (roleName == null ||
+              roleNewValue == null ||
+              oldValue == null))) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "sendNotificationInt", new Object[] {intNtfType, message,
+                relationId, unregMBeanList, roleName, roleNewValue, oldValue});
+
+        // Relation type name
+        // Note: do not use getRelationTypeName() as if it is a relation MBean
+        //       it is already unregistered.
+        String relTypeName;
+        synchronized(myRelId2RelTypeMap) {
+            relTypeName = (myRelId2RelTypeMap.get(relationId));
+        }
+
+        // ObjectName (for a relation MBean)
+        // Can also throw a RelationNotFoundException, but detected above
+        ObjectName relObjName = isRelationMBean(relationId);
+
+        String ntfType = null;
+        if (relObjName != null) {
+            switch (intNtfType) {
+            case 1:
+                ntfType = RelationNotification.RELATION_MBEAN_CREATION;
+                break;
+            case 2:
+                ntfType = RelationNotification.RELATION_MBEAN_UPDATE;
+                break;
+            case 3:
+                ntfType = RelationNotification.RELATION_MBEAN_REMOVAL;
+                break;
+            }
+        } else {
+            switch (intNtfType) {
+            case 1:
+                ntfType = RelationNotification.RELATION_BASIC_CREATION;
+                break;
+            case 2:
+                ntfType = RelationNotification.RELATION_BASIC_UPDATE;
+                break;
+            case 3:
+                ntfType = RelationNotification.RELATION_BASIC_REMOVAL;
+                break;
+            }
+        }
+
+        // Sequence number
+        Long seqNo = atomicSeqNo.incrementAndGet();
+
+        // Timestamp
+        Date currDate = new Date();
+        long timeStamp = currDate.getTime();
+
+        RelationNotification ntf = null;
+
+        if (ntfType.equals(RelationNotification.RELATION_BASIC_CREATION) ||
+            ntfType.equals(RelationNotification.RELATION_MBEAN_CREATION) ||
+            ntfType.equals(RelationNotification.RELATION_BASIC_REMOVAL) ||
+            ntfType.equals(RelationNotification.RELATION_MBEAN_REMOVAL))
+
+            // Creation or removal
+            ntf = new RelationNotification(ntfType,
+                                           this,
+                                           seqNo.longValue(),
+                                           timeStamp,
+                                           message,
+                                           relationId,
+                                           relTypeName,
+                                           relObjName,
+                                           unregMBeanList);
+
+        else if (ntfType.equals(RelationNotification.RELATION_BASIC_UPDATE)
+                 ||
+                 ntfType.equals(RelationNotification.RELATION_MBEAN_UPDATE))
+            {
+                // Update
+                ntf = new RelationNotification(ntfType,
+                                               this,
+                                               seqNo.longValue(),
+                                               timeStamp,
+                                               message,
+                                               relationId,
+                                               relTypeName,
+                                               relObjName,
+                                               roleName,
+                                               roleNewValue,
+                                               oldValue);
+            }
+
+        sendNotification(ntf);
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "sendNotificationInt");
+        return;
+    }
+
+    // Checks, for the unregistration of an MBean referenced in the roles given
+    // in parameter, if the relation has to be removed or not, regarding
+    // expected minimum role cardinality and current number of
+    // references in each role after removal of the current one.
+    // If the relation is kept, calls handleMBeanUnregistration() callback of
+    // the relation to update it.
+    //
+    // -param relationId  relation id
+    // -param objectName  ObjectName of the unregistered MBean
+    // -param roleNameList  list of names of roles where the unregistered
+    //  MBean is referenced.
+    //
+    // -exception IllegalArgumentException  if null parameter
+    // -exception RelationServiceNotRegisteredException  if the Relation
+    //  Service is not registered in the MBean Server
+    // -exception RelationNotFoundException  if unknown relation id
+    // -exception RoleNotFoundException  if one role given as parameter does
+    //  not exist in the relation
+    private void handleReferenceUnregistration(String relationId,
+                                               ObjectName objectName,
+                                               List<String> roleNameList)
+        throws IllegalArgumentException,
+               RelationServiceNotRegisteredException,
+               RelationNotFoundException,
+               RoleNotFoundException {
+
+        if (relationId == null ||
+            roleNameList == null ||
+            objectName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationService.class.getName(),
+                "handleReferenceUnregistration",
+                new Object[] {relationId, objectName, roleNameList});
+
+        // Can throw RelationServiceNotRegisteredException
+        isActive();
+
+        // Retrieves the relation type name of the relation
+        // Can throw RelationNotFoundException
+        String currRelTypeName = getRelationTypeName(relationId);
+
+        // Retrieves the relation
+        // Can throw RelationNotFoundException, but already detected above
+        Object relObj = getRelation(relationId);
+
+        // Flag to specify if the relation has to be deleted
+        boolean deleteRelFlag = false;
+
+        for (String currRoleName : roleNameList) {
+
+            if (deleteRelFlag) {
+                break;
+            }
+
+            // Retrieves number of MBeans currently referenced in role
+            // BEWARE! Do not use getRole() as role may be not readable
+            //
+            // Can throw RelationNotFoundException (but already checked),
+            // RoleNotFoundException
+            int currRoleRefNbr =
+                (getRoleCardinality(relationId, currRoleName)).intValue();
+
+            // Retrieves new number of element in role
+            int currRoleNewRefNbr = currRoleRefNbr - 1;
+
+            // Retrieves role info for that role
+            //
+            // Shall not throw RelationTypeNotFoundException or
+            // RoleInfoNotFoundException
+            RoleInfo currRoleInfo;
+            try {
+                currRoleInfo = getRoleInfo(currRelTypeName,
+                                           currRoleName);
+            } catch (RelationTypeNotFoundException exc1) {
+                throw new RuntimeException(exc1.getMessage());
+            } catch (RoleInfoNotFoundException exc2) {
+                throw new RuntimeException(exc2.getMessage());
+            }
+
+            // Checks with expected minimum number of elements
+            boolean chkMinFlag = currRoleInfo.checkMinDegree(currRoleNewRefNbr);
+
+            if (!chkMinFlag) {
+                // The relation has to be deleted
+                deleteRelFlag = true;
+            }
+        }
+
+        if (deleteRelFlag) {
+            // Removes the relation
+            removeRelation(relationId);
+
+        } else {
+
+            // Updates each role in the relation using
+            // handleMBeanUnregistration() callback
+            //
+            // BEWARE: this roleNameList list MUST BE A COPY of a role name
+            //         list for a referenced MBean in a relation, NOT a
+            //         reference to an original one part of the
+            //         myRefedMBeanObjName2RelIdsMap!!!! Because each role
+            //         which name is in that list will be updated (potentially
+            //         using setRole(). So the Relation Service will update the
+            //         myRefedMBeanObjName2RelIdsMap to refelect the new role
+            //         value!
+            for (String currRoleName : roleNameList) {
+
+                if (relObj instanceof RelationSupport) {
+                    // Internal relation
+                    // Can throw RoleNotFoundException (but already checked)
+                    //
+                    // Shall not throw
+                    // RelationTypeNotFoundException,
+                    // InvalidRoleValueException (value was correct, removing
+                    // one reference shall not invalidate it, else detected
+                    // above)
+                    try {
+                        ((RelationSupport)relObj).handleMBeanUnregistrationInt(
+                                                  objectName,
+                                                  currRoleName,
+                                                  true,
+                                                  this);
+                    } catch (RelationTypeNotFoundException exc3) {
+                        throw new RuntimeException(exc3.getMessage());
+                    } catch (InvalidRoleValueException exc4) {
+                        throw new RuntimeException(exc4.getMessage());
+                    }
+
+                } else {
+                    // Relation MBean
+                    Object[] params = new Object[2];
+                    params[0] = objectName;
+                    params[1] = currRoleName;
+                    String[] signature = new String[2];
+                    signature[0] = "javax.management.ObjectName";
+                    signature[1] = "java.lang.String";
+                    // Shall not throw InstanceNotFoundException, or
+                    // MBeanException (wrapping RoleNotFoundException or
+                    // MBeanException or InvalidRoleValueException) or
+                    // ReflectionException
+                    try {
+                        myMBeanServer.invoke(((ObjectName)relObj),
+                                             "handleMBeanUnregistration",
+                                             params,
+                                             signature);
+                    } catch (InstanceNotFoundException exc1) {
+                        throw new RuntimeException(exc1.getMessage());
+                    } catch (ReflectionException exc3) {
+                        throw new RuntimeException(exc3.getMessage());
+                    } catch (MBeanException exc2) {
+                        Exception wrappedExc = exc2.getTargetException();
+                        throw new RuntimeException(wrappedExc.getMessage());
+                    }
+
+                }
+            }
+        }
+
+        RELATION_LOGGER.exiting(RelationService.class.getName(),
+                "handleReferenceUnregistration");
+        return;
+    }
+}

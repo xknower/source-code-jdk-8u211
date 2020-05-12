@@ -1,222 +1,216 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import sun.awt.AppContext;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class ModalEventFilter
-/*     */   implements EventFilter
-/*     */ {
-/*     */   protected Dialog modalDialog;
-/*     */   protected boolean disabled;
-/*     */   
-/*     */   protected ModalEventFilter(Dialog paramDialog) {
-/*  37 */     this.modalDialog = paramDialog;
-/*  38 */     this.disabled = false;
-/*     */   }
-/*     */   
-/*     */   Dialog getModalDialog() {
-/*  42 */     return this.modalDialog;
-/*     */   }
-/*     */   
-/*     */   public EventFilter.FilterAction acceptEvent(AWTEvent paramAWTEvent) {
-/*  46 */     if (this.disabled || !this.modalDialog.isVisible()) {
-/*  47 */       return EventFilter.FilterAction.ACCEPT;
-/*     */     }
-/*  49 */     int i = paramAWTEvent.getID();
-/*  50 */     if ((i >= 500 && i <= 507) || (i >= 1001 && i <= 1001) || i == 201) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  56 */       Object object = paramAWTEvent.getSource();
-/*  57 */       if (!(object instanceof sun.awt.ModalExclude))
-/*     */       {
-/*     */         
-/*  60 */         if (object instanceof Component) {
-/*  61 */           Component component = (Component)object;
-/*  62 */           while (component != null && !(component instanceof Window)) {
-/*  63 */             component = component.getParent_NoClientCode();
-/*     */           }
-/*  65 */           if (component != null)
-/*  66 */             return acceptWindow((Window)component); 
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*  70 */     return EventFilter.FilterAction.ACCEPT;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract EventFilter.FilterAction acceptWindow(Window paramWindow);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void disable() {
-/*  81 */     this.disabled = true;
-/*     */   }
-/*     */   
-/*     */   int compareTo(ModalEventFilter paramModalEventFilter) {
-/*  85 */     Dialog dialog1 = paramModalEventFilter.getModalDialog();
-/*     */ 
-/*     */     
-/*  88 */     Dialog dialog2 = this.modalDialog;
-/*  89 */     while (dialog2 != null) {
-/*  90 */       if (dialog2 == dialog1) {
-/*  91 */         return 1;
-/*     */       }
-/*  93 */       Container container = dialog2.getParent_NoClientCode();
-/*     */     } 
-/*  95 */     dialog2 = dialog1;
-/*  96 */     while (dialog2 != null) {
-/*  97 */       if (dialog2 == this.modalDialog) {
-/*  98 */         return -1;
-/*     */       }
-/* 100 */       Container container = dialog2.getParent_NoClientCode();
-/*     */     } 
-/*     */     
-/* 103 */     Dialog dialog3 = this.modalDialog.getModalBlocker();
-/* 104 */     while (dialog3 != null) {
-/* 105 */       if (dialog3 == dialog1) {
-/* 106 */         return -1;
-/*     */       }
-/* 108 */       dialog3 = dialog3.getModalBlocker();
-/*     */     } 
-/* 110 */     dialog3 = dialog1.getModalBlocker();
-/* 111 */     while (dialog3 != null) {
-/* 112 */       if (dialog3 == this.modalDialog) {
-/* 113 */         return 1;
-/*     */       }
-/* 115 */       dialog3 = dialog3.getModalBlocker();
-/*     */     } 
-/*     */     
-/* 118 */     return this.modalDialog.getModalityType().compareTo(dialog1.getModalityType());
-/*     */   }
-/*     */   
-/*     */   static ModalEventFilter createFilterForDialog(Dialog paramDialog) {
-/* 122 */     switch (paramDialog.getModalityType()) { case DOCUMENT_MODAL:
-/* 123 */         return new DocumentModalEventFilter(paramDialog);
-/* 124 */       case APPLICATION_MODAL: return new ApplicationModalEventFilter(paramDialog);
-/* 125 */       case TOOLKIT_MODAL: return new ToolkitModalEventFilter(paramDialog); }
-/*     */     
-/* 127 */     return null;
-/*     */   }
-/*     */   
-/*     */   private static class ToolkitModalEventFilter
-/*     */     extends ModalEventFilter {
-/*     */     private AppContext appContext;
-/*     */     
-/*     */     ToolkitModalEventFilter(Dialog param1Dialog) {
-/* 135 */       super(param1Dialog);
-/* 136 */       this.appContext = param1Dialog.appContext;
-/*     */     }
-/*     */     
-/*     */     protected EventFilter.FilterAction acceptWindow(Window param1Window) {
-/* 140 */       if (param1Window.isModalExcluded(Dialog.ModalExclusionType.TOOLKIT_EXCLUDE)) {
-/* 141 */         return EventFilter.FilterAction.ACCEPT;
-/*     */       }
-/* 143 */       if (param1Window.appContext != this.appContext) {
-/* 144 */         return EventFilter.FilterAction.REJECT;
-/*     */       }
-/* 146 */       while (param1Window != null) {
-/* 147 */         if (param1Window == this.modalDialog) {
-/* 148 */           return EventFilter.FilterAction.ACCEPT_IMMEDIATELY;
-/*     */         }
-/* 150 */         param1Window = param1Window.getOwner();
-/*     */       } 
-/* 152 */       return EventFilter.FilterAction.REJECT;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class ApplicationModalEventFilter
-/*     */     extends ModalEventFilter {
-/*     */     private AppContext appContext;
-/*     */     
-/*     */     ApplicationModalEventFilter(Dialog param1Dialog) {
-/* 161 */       super(param1Dialog);
-/* 162 */       this.appContext = param1Dialog.appContext;
-/*     */     }
-/*     */     
-/*     */     protected EventFilter.FilterAction acceptWindow(Window param1Window) {
-/* 166 */       if (param1Window.isModalExcluded(Dialog.ModalExclusionType.APPLICATION_EXCLUDE)) {
-/* 167 */         return EventFilter.FilterAction.ACCEPT;
-/*     */       }
-/* 169 */       if (param1Window.appContext == this.appContext) {
-/* 170 */         while (param1Window != null) {
-/* 171 */           if (param1Window == this.modalDialog) {
-/* 172 */             return EventFilter.FilterAction.ACCEPT_IMMEDIATELY;
-/*     */           }
-/* 174 */           param1Window = param1Window.getOwner();
-/*     */         } 
-/* 176 */         return EventFilter.FilterAction.REJECT;
-/*     */       } 
-/* 178 */       return EventFilter.FilterAction.ACCEPT;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class DocumentModalEventFilter
-/*     */     extends ModalEventFilter {
-/*     */     private Window documentRoot;
-/*     */     
-/*     */     DocumentModalEventFilter(Dialog param1Dialog) {
-/* 187 */       super(param1Dialog);
-/* 188 */       this.documentRoot = param1Dialog.getDocumentRoot();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected EventFilter.FilterAction acceptWindow(Window param1Window) {
-/* 194 */       if (param1Window.isModalExcluded(Dialog.ModalExclusionType.APPLICATION_EXCLUDE)) {
-/* 195 */         Window window = this.modalDialog.getOwner();
-/* 196 */         while (window != null) {
-/* 197 */           if (window == param1Window) {
-/* 198 */             return EventFilter.FilterAction.REJECT;
-/*     */           }
-/* 200 */           window = window.getOwner();
-/*     */         } 
-/* 202 */         return EventFilter.FilterAction.ACCEPT;
-/*     */       } 
-/* 204 */       while (param1Window != null) {
-/* 205 */         if (param1Window == this.modalDialog) {
-/* 206 */           return EventFilter.FilterAction.ACCEPT_IMMEDIATELY;
-/*     */         }
-/* 208 */         if (param1Window == this.documentRoot) {
-/* 209 */           return EventFilter.FilterAction.REJECT;
-/*     */         }
-/* 211 */         param1Window = param1Window.getOwner();
-/*     */       } 
-/* 213 */       return EventFilter.FilterAction.ACCEPT;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\ModalEventFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.awt;
+
+import java.awt.event.*;
+
+import sun.awt.AppContext;
+
+abstract class ModalEventFilter implements EventFilter {
+
+    protected Dialog modalDialog;
+    protected boolean disabled;
+
+    protected ModalEventFilter(Dialog modalDialog) {
+        this.modalDialog = modalDialog;
+        disabled = false;
+    }
+
+    Dialog getModalDialog() {
+        return modalDialog;
+    }
+
+    public FilterAction acceptEvent(AWTEvent event) {
+        if (disabled || !modalDialog.isVisible()) {
+            return FilterAction.ACCEPT;
+        }
+        int eventID = event.getID();
+        if ((eventID >= MouseEvent.MOUSE_FIRST &&
+             eventID <= MouseEvent.MOUSE_LAST) ||
+            (eventID >= ActionEvent.ACTION_FIRST &&
+             eventID <= ActionEvent.ACTION_LAST) ||
+            eventID == WindowEvent.WINDOW_CLOSING)
+        {
+            Object o = event.getSource();
+            if (o instanceof sun.awt.ModalExclude) {
+                // Exclude this object from modality and
+                // continue to pump it's events.
+            } else if (o instanceof Component) {
+                Component c = (Component)o;
+                while ((c != null) && !(c instanceof Window)) {
+                    c = c.getParent_NoClientCode();
+                }
+                if (c != null) {
+                    return acceptWindow((Window)c);
+                }
+            }
+        }
+        return FilterAction.ACCEPT;
+    }
+
+    protected abstract FilterAction acceptWindow(Window w);
+
+    // When a modal dialog is hidden its modal filter may not be deleted from
+    // EventDispatchThread event filters immediately, so we need to mark the filter
+    // as disabled to prevent it from working. Simple checking for visibility of
+    // the modalDialog is not enough, as it can be hidden and then shown again
+    // with a new event pump and a new filter
+    void disable() {
+        disabled = true;
+    }
+
+    int compareTo(ModalEventFilter another) {
+        Dialog anotherDialog = another.getModalDialog();
+        // check if modalDialog is from anotherDialog's hierarchy
+        //   or vice versa
+        Component c = modalDialog;
+        while (c != null) {
+            if (c == anotherDialog) {
+                return 1;
+            }
+            c = c.getParent_NoClientCode();
+        }
+        c = anotherDialog;
+        while (c != null) {
+            if (c == modalDialog) {
+                return -1;
+            }
+            c = c.getParent_NoClientCode();
+        }
+        // check if one dialog blocks (directly or indirectly) another
+        Dialog blocker = modalDialog.getModalBlocker();
+        while (blocker != null) {
+            if (blocker == anotherDialog) {
+                return -1;
+            }
+            blocker = blocker.getModalBlocker();
+        }
+        blocker = anotherDialog.getModalBlocker();
+        while (blocker != null) {
+            if (blocker == modalDialog) {
+                return 1;
+            }
+            blocker = blocker.getModalBlocker();
+        }
+        // compare modality types
+        return modalDialog.getModalityType().compareTo(anotherDialog.getModalityType());
+    }
+
+    static ModalEventFilter createFilterForDialog(Dialog modalDialog) {
+        switch (modalDialog.getModalityType()) {
+            case DOCUMENT_MODAL: return new DocumentModalEventFilter(modalDialog);
+            case APPLICATION_MODAL: return new ApplicationModalEventFilter(modalDialog);
+            case TOOLKIT_MODAL: return new ToolkitModalEventFilter(modalDialog);
+        }
+        return null;
+    }
+
+    private static class ToolkitModalEventFilter extends ModalEventFilter {
+
+        private AppContext appContext;
+
+        ToolkitModalEventFilter(Dialog modalDialog) {
+            super(modalDialog);
+            appContext = modalDialog.appContext;
+        }
+
+        protected FilterAction acceptWindow(Window w) {
+            if (w.isModalExcluded(Dialog.ModalExclusionType.TOOLKIT_EXCLUDE)) {
+                return FilterAction.ACCEPT;
+            }
+            if (w.appContext != appContext) {
+                return FilterAction.REJECT;
+            }
+            while (w != null) {
+                if (w == modalDialog) {
+                    return FilterAction.ACCEPT_IMMEDIATELY;
+                }
+                w = w.getOwner();
+            }
+            return FilterAction.REJECT;
+        }
+    }
+
+    private static class ApplicationModalEventFilter extends ModalEventFilter {
+
+        private AppContext appContext;
+
+        ApplicationModalEventFilter(Dialog modalDialog) {
+            super(modalDialog);
+            appContext = modalDialog.appContext;
+        }
+
+        protected FilterAction acceptWindow(Window w) {
+            if (w.isModalExcluded(Dialog.ModalExclusionType.APPLICATION_EXCLUDE)) {
+                return FilterAction.ACCEPT;
+            }
+            if (w.appContext == appContext) {
+                while (w != null) {
+                    if (w == modalDialog) {
+                        return FilterAction.ACCEPT_IMMEDIATELY;
+                    }
+                    w = w.getOwner();
+                }
+                return FilterAction.REJECT;
+            }
+            return FilterAction.ACCEPT;
+        }
+    }
+
+    private static class DocumentModalEventFilter extends ModalEventFilter {
+
+        private Window documentRoot;
+
+        DocumentModalEventFilter(Dialog modalDialog) {
+            super(modalDialog);
+            documentRoot = modalDialog.getDocumentRoot();
+        }
+
+        protected FilterAction acceptWindow(Window w) {
+            // application- and toolkit-excluded windows are blocked by
+            // document-modal dialogs from their child hierarchy
+            if (w.isModalExcluded(Dialog.ModalExclusionType.APPLICATION_EXCLUDE)) {
+                Window w1 = modalDialog.getOwner();
+                while (w1 != null) {
+                    if (w1 == w) {
+                        return FilterAction.REJECT;
+                    }
+                    w1 = w1.getOwner();
+                }
+                return FilterAction.ACCEPT;
+            }
+            while (w != null) {
+                if (w == modalDialog) {
+                    return FilterAction.ACCEPT_IMMEDIATELY;
+                }
+                if (w == documentRoot) {
+                    return FilterAction.REJECT;
+                }
+                w = w.getOwner();
+            }
+            return FilterAction.ACCEPT;
+        }
+    }
+}

@@ -1,64 +1,58 @@
-/*    */ package com.sun.corba.se.impl.resolver;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.resolver.Resolver;
-/*    */ import java.util.HashSet;
-/*    */ import java.util.Set;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class CompositeResolverImpl
-/*    */   implements Resolver
-/*    */ {
-/*    */   private Resolver first;
-/*    */   private Resolver second;
-/*    */   
-/*    */   public CompositeResolverImpl(Resolver paramResolver1, Resolver paramResolver2) {
-/* 39 */     this.first = paramResolver1;
-/* 40 */     this.second = paramResolver2;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Object resolve(String paramString) {
-/* 45 */     Object object = this.first.resolve(paramString);
-/* 46 */     if (object == null)
-/* 47 */       object = this.second.resolve(paramString); 
-/* 48 */     return object;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Set list() {
-/* 53 */     HashSet hashSet = new HashSet();
-/* 54 */     hashSet.addAll(this.first.list());
-/* 55 */     hashSet.addAll(this.second.list());
-/* 56 */     return hashSet;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\resolver\CompositeResolverImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.resolver ;
+
+import java.util.Set ;
+import java.util.HashSet ;
+
+import com.sun.corba.se.spi.resolver.Resolver ;
+
+public class CompositeResolverImpl implements Resolver {
+    private Resolver first ;
+    private Resolver second ;
+
+    public CompositeResolverImpl( Resolver first, Resolver second )
+    {
+        this.first = first ;
+        this.second = second ;
+    }
+
+    public org.omg.CORBA.Object resolve( String name )
+    {
+        org.omg.CORBA.Object result = first.resolve( name ) ;
+        if (result == null)
+            result = second.resolve( name ) ;
+        return result ;
+    }
+
+    public java.util.Set list()
+    {
+        Set result = new HashSet() ;
+        result.addAll( first.list() ) ;
+        result.addAll( second.list() ) ;
+        return result ;
+    }
+}

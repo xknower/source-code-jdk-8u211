@@ -1,124 +1,118 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import java.util.StringTokenizer;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class UseAttributeSets
-/*     */   extends Instruction
-/*     */ {
-/*     */   private static final String ATTR_SET_NOT_FOUND = "";
-/*  50 */   private final Vector _sets = new Vector(2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UseAttributeSets(String setNames, Parser parser) {
-/*  56 */     setParser(parser);
-/*  57 */     addAttributeSets(setNames);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAttributeSets(String setNames) {
-/*  66 */     if (setNames != null && !setNames.equals("")) {
-/*  67 */       StringTokenizer tokens = new StringTokenizer(setNames);
-/*  68 */       while (tokens.hasMoreTokens()) {
-/*     */         
-/*  70 */         QName qname = getParser().getQNameIgnoreDefaultNs(tokens.nextToken());
-/*  71 */         this._sets.add(qname);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  80 */     return Type.Void;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  88 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  89 */     InstructionList il = methodGen.getInstructionList();
-/*  90 */     SymbolTable symbolTable = getParser().getSymbolTable();
-/*     */ 
-/*     */     
-/*  93 */     for (int i = 0; i < this._sets.size(); i++) {
-/*     */       
-/*  95 */       QName name = this._sets.elementAt(i);
-/*     */       
-/*  97 */       AttributeSet attrs = symbolTable.lookupAttributeSet(name);
-/*     */       
-/*  99 */       if (attrs != null) {
-/* 100 */         String methodName = attrs.getMethodName();
-/* 101 */         il.append(classGen.loadTranslet());
-/* 102 */         il.append(methodGen.loadDOM());
-/* 103 */         il.append(methodGen.loadIterator());
-/* 104 */         il.append(methodGen.loadHandler());
-/* 105 */         il.append(methodGen.loadCurrentNode());
-/* 106 */         int method = cpg.addMethodref(classGen.getClassName(), methodName, "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;I)V");
-/*     */         
-/* 108 */         il.append(new INVOKESPECIAL(method));
-/*     */       }
-/*     */       else {
-/*     */         
-/* 112 */         Parser parser = getParser();
-/* 113 */         String atrs = name.toString();
-/* 114 */         reportError(this, parser, "ATTRIBSET_UNDEF_ERR", atrs);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\UseAttributeSets.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: UseAttributeSets.java,v 1.5 2005/09/28 13:48:17 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class UseAttributeSets extends Instruction {
+
+    // Only error that can occur:
+    private final static String ATTR_SET_NOT_FOUND =
+        "";
+
+    // Contains the names of all references attribute sets
+    private final Vector _sets = new Vector(2);
+
+    /**
+     * Constructur - define initial attribute sets to use
+     */
+    public UseAttributeSets(String setNames, Parser parser) {
+        setParser(parser);
+        addAttributeSets(setNames);
+    }
+
+    /**
+     * This method is made public to enable an AttributeSet object to merge
+     * itself with another AttributeSet (including any other AttributeSets
+     * the two may inherit from).
+     */
+    public void addAttributeSets(String setNames) {
+        if ((setNames != null) && (!setNames.equals(Constants.EMPTYSTRING))) {
+            final StringTokenizer tokens = new StringTokenizer(setNames);
+            while (tokens.hasMoreTokens()) {
+                final QName qname =
+                    getParser().getQNameIgnoreDefaultNs(tokens.nextToken());
+                _sets.add(qname);
+            }
+        }
+    }
+
+    /**
+     * Do nada.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        return Type.Void;
+    }
+
+    /**
+     * Generate a call to the method compiled for this attribute set
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        final SymbolTable symbolTable = getParser().getSymbolTable();
+
+        // Go through each attribute set and generate a method call
+        for (int i=0; i<_sets.size(); i++) {
+            // Get the attribute set name
+            final QName name = (QName)_sets.elementAt(i);
+            // Get the AttributeSet reference from the symbol table
+            final AttributeSet attrs = symbolTable.lookupAttributeSet(name);
+            // Compile the call to the set's method if the set exists
+            if (attrs != null) {
+                final String methodName = attrs.getMethodName();
+                il.append(classGen.loadTranslet());
+                il.append(methodGen.loadDOM());
+                il.append(methodGen.loadIterator());
+                il.append(methodGen.loadHandler());
+                il.append(methodGen.loadCurrentNode());
+                final int method = cpg.addMethodref(classGen.getClassName(),
+                                                    methodName, ATTR_SET_SIG);
+                il.append(new INVOKESPECIAL(method));
+            }
+            // Generate an error if the attribute set does not exist
+            else {
+                final Parser parser = getParser();
+                final String atrs = name.toString();
+                reportError(this, parser, ErrorMsg.ATTRIBSET_UNDEF_ERR, atrs);
+            }
+        }
+    }
+}

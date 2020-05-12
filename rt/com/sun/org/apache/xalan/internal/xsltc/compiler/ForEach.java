@@ -1,202 +1,197 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFGT;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ForEach
-/*     */   extends Instruction
-/*     */ {
-/*     */   private Expression _select;
-/*     */   private Type _type;
-/*     */   
-/*     */   public void display(int indent) {
-/*  56 */     indent(indent);
-/*  57 */     Util.println("ForEach");
-/*  58 */     indent(indent + 4);
-/*  59 */     Util.println("select " + this._select.toString());
-/*  60 */     displayContents(indent + 4);
-/*     */   }
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/*  64 */     this._select = parser.parseExpression(this, "select", null);
-/*     */     
-/*  66 */     parseChildren(parser);
-/*     */ 
-/*     */     
-/*  69 */     if (this._select.isDummy()) {
-/*  70 */       reportError(this, parser, "REQUIRED_ATTR_ERR", "select");
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  75 */     this._type = this._select.typeCheck(stable);
-/*     */     
-/*  77 */     if (this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType || this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType) {
-/*  78 */       this._select = new CastExpr(this._select, Type.NodeSet);
-/*  79 */       typeCheckContents(stable);
-/*  80 */       return Type.Void;
-/*     */     } 
-/*  82 */     if (this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType || this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType) {
-/*  83 */       typeCheckContents(stable);
-/*  84 */       return Type.Void;
-/*     */     } 
-/*  86 */     throw new TypeCheckError(this);
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  90 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  91 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */     
-/*  94 */     il.append(methodGen.loadCurrentNode());
-/*  95 */     il.append(methodGen.loadIterator());
-/*     */ 
-/*     */     
-/*  98 */     Vector<SyntaxTreeNode> sortObjects = new Vector();
-/*  99 */     Iterator<SyntaxTreeNode> children = elements();
-/* 100 */     while (children.hasNext()) {
-/* 101 */       SyntaxTreeNode child = children.next();
-/* 102 */       if (child instanceof Sort) {
-/* 103 */         sortObjects.addElement(child);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 107 */     if (this._type != null && this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType) {
-/*     */       
-/* 109 */       il.append(methodGen.loadDOM());
-/*     */ 
-/*     */       
-/* 112 */       if (sortObjects.size() > 0) {
-/* 113 */         ErrorMsg msg = new ErrorMsg("RESULT_TREE_SORT_ERR", this);
-/* 114 */         getParser().reportError(4, msg);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 118 */       this._select.translate(classGen, methodGen);
-/*     */       
-/* 120 */       this._type.translateTo(classGen, methodGen, Type.NodeSet);
-/*     */       
-/* 122 */       il.append(SWAP);
-/* 123 */       il.append(methodGen.storeDOM());
-/*     */     }
-/*     */     else {
-/*     */       
-/* 127 */       if (sortObjects.size() > 0) {
-/* 128 */         Sort.translateSortIterator(classGen, methodGen, this._select, (Vector)sortObjects);
-/*     */       }
-/*     */       else {
-/*     */         
-/* 132 */         this._select.translate(classGen, methodGen);
-/*     */       } 
-/*     */       
-/* 135 */       if (!(this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType)) {
-/* 136 */         il.append(methodGen.loadContextNode());
-/* 137 */         il.append(methodGen.setStartNode());
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 143 */     il.append(methodGen.storeIterator());
-/*     */ 
-/*     */     
-/* 146 */     initializeVariables(classGen, methodGen);
-/*     */     
-/* 148 */     BranchHandle nextNode = il.append(new GOTO(null));
-/* 149 */     InstructionHandle loop = il.append(NOP);
-/*     */     
-/* 151 */     translateContents(classGen, methodGen);
-/*     */     
-/* 153 */     nextNode.setTarget(il.append(methodGen.loadIterator()));
-/* 154 */     il.append(methodGen.nextNode());
-/* 155 */     il.append(DUP);
-/* 156 */     il.append(methodGen.storeCurrentNode());
-/* 157 */     il.append(new IFGT(loop));
-/*     */ 
-/*     */     
-/* 160 */     if (this._type != null && this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType) {
-/* 161 */       il.append(methodGen.storeDOM());
-/*     */     }
-/*     */ 
-/*     */     
-/* 165 */     il.append(methodGen.storeIterator());
-/* 166 */     il.append(methodGen.storeCurrentNode());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void initializeVariables(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 187 */     int n = elementCount();
-/* 188 */     for (int i = 0; i < n; i++) {
-/* 189 */       SyntaxTreeNode child = getContents().get(i);
-/* 190 */       if (child instanceof Variable) {
-/* 191 */         Variable var = (Variable)child;
-/* 192 */         var.initialize(classGen, methodGen);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\ForEach.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ForEach.java,v 1.2.4.1 2005/09/01 15:23:46 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GOTO;
+import com.sun.org.apache.bcel.internal.generic.IFGT;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import java.util.Iterator;
+import java.util.Vector;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class ForEach extends Instruction {
+
+    private Expression _select;
+    private Type       _type;
+
+    public void display(int indent) {
+        indent(indent);
+        Util.println("ForEach");
+        indent(indent + IndentIncrement);
+        Util.println("select " + _select.toString());
+        displayContents(indent + IndentIncrement);
+    }
+
+    public void parseContents(Parser parser) {
+        _select = parser.parseExpression(this, "select", null);
+
+        parseChildren(parser);
+
+        // make sure required attribute(s) have been set
+        if (_select.isDummy()) {
+            reportError(this, parser, ErrorMsg.REQUIRED_ATTR_ERR, "select");
+        }
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        _type = _select.typeCheck(stable);
+
+        if (_type instanceof ReferenceType || _type instanceof NodeType) {
+            _select = new CastExpr(_select, Type.NodeSet);
+            typeCheckContents(stable);
+            return Type.Void;
+        }
+        if (_type instanceof NodeSetType||_type instanceof ResultTreeType) {
+            typeCheckContents(stable);
+            return Type.Void;
+        }
+        throw new TypeCheckError(this);
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Save current node and current iterator on the stack
+        il.append(methodGen.loadCurrentNode());
+        il.append(methodGen.loadIterator());
+
+        // Collect sort objects associated with this instruction
+        final Vector sortObjects = new Vector();
+        Iterator<SyntaxTreeNode> children = elements();
+        while (children.hasNext()) {
+            final SyntaxTreeNode child = children.next();
+            if (child instanceof Sort) {
+                sortObjects.addElement(child);
+            }
+        }
+
+        if ((_type != null) && (_type instanceof ResultTreeType)) {
+            // Store existing DOM on stack - must be restored when loop is done
+            il.append(methodGen.loadDOM());
+
+            // <xsl:sort> cannot be applied to a result tree - issue warning
+            if (sortObjects.size() > 0) {
+                ErrorMsg msg = new ErrorMsg(ErrorMsg.RESULT_TREE_SORT_ERR,this);
+                getParser().reportError(WARNING, msg);
+            }
+
+            // Put the result tree on the stack (DOM)
+            _select.translate(classGen, methodGen);
+            // Get an iterator for the whole DOM - excluding the root node
+            _type.translateTo(classGen, methodGen, Type.NodeSet);
+            // Store the result tree as the default DOM
+            il.append(SWAP);
+            il.append(methodGen.storeDOM());
+        }
+        else {
+            // Compile node iterator
+            if (sortObjects.size() > 0) {
+                Sort.translateSortIterator(classGen, methodGen,
+                                           _select, sortObjects);
+            }
+            else {
+                _select.translate(classGen, methodGen);
+            }
+
+            if (_type instanceof ReferenceType == false) {
+                il.append(methodGen.loadContextNode());
+                il.append(methodGen.setStartNode());
+            }
+        }
+
+
+        // Overwrite current iterator
+        il.append(methodGen.storeIterator());
+
+        // Give local variables (if any) default values before starting loop
+        initializeVariables(classGen, methodGen);
+
+        final BranchHandle nextNode = il.append(new GOTO(null));
+        final InstructionHandle loop = il.append(NOP);
+
+        translateContents(classGen, methodGen);
+
+        nextNode.setTarget(il.append(methodGen.loadIterator()));
+        il.append(methodGen.nextNode());
+        il.append(DUP);
+        il.append(methodGen.storeCurrentNode());
+        il.append(new IFGT(loop));
+
+        // Restore current DOM (if result tree was used instead for this loop)
+        if ((_type != null) && (_type instanceof ResultTreeType)) {
+            il.append(methodGen.storeDOM());
+        }
+
+        // Restore current node and current iterator from the stack
+        il.append(methodGen.storeIterator());
+        il.append(methodGen.storeCurrentNode());
+    }
+
+    /**
+     * The code that is generated by nested for-each loops can appear to some
+     * JVMs as if it is accessing un-initialized variables. We must add some
+     * code that pushes the default variable value on the stack and pops it
+     * into the variable slot. This is done by the Variable.initialize()
+     * method. The code that we compile for this loop looks like this:
+     *
+     *           initialize iterator
+     *           initialize variables <-- HERE!!!
+     *           goto   Iterate
+     *  Loop:    :
+     *           : (code for <xsl:for-each> contents)
+     *           :
+     *  Iterate: node = iterator.next();
+     *           if (node != END) goto Loop
+     */
+    public void initializeVariables(ClassGenerator classGen,
+                                   MethodGenerator methodGen) {
+        final int n = elementCount();
+        for (int i = 0; i < n; i++) {
+            final SyntaxTreeNode child = getContents().get(i);
+            if (child instanceof Variable) {
+                Variable var = (Variable)child;
+                var.initialize(classGen, methodGen);
+            }
+        }
+    }
+
+}

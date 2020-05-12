@@ -1,317 +1,311 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import java.awt.geom.AffineTransform;
-/*     */ import java.awt.image.ColorModel;
-/*     */ import java.lang.ref.SoftReference;
-/*     */ import java.util.Arrays;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class MultipleGradientPaint
-/*     */   implements Paint
-/*     */ {
-/*     */   final int transparency;
-/*     */   final float[] fractions;
-/*     */   final Color[] colors;
-/*     */   final AffineTransform gradientTransform;
-/*     */   final CycleMethod cycleMethod;
-/*     */   final ColorSpaceType colorSpace;
-/*     */   ColorModel model;
-/*     */   float[] normalizedIntervals;
-/*     */   boolean isSimpleLookup;
-/*     */   SoftReference<int[][]> gradients;
-/*     */   SoftReference<int[]> gradient;
-/*     */   int fastGradientArraySize;
-/*     */   
-/*     */   public enum CycleMethod
-/*     */   {
-/*  51 */     NO_CYCLE,
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  57 */     REFLECT,
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  63 */     REPEAT;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public enum ColorSpaceType
-/*     */   {
-/*  73 */     SRGB,
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  79 */     LINEAR_RGB;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MultipleGradientPaint(float[] paramArrayOffloat, Color[] paramArrayOfColor, CycleMethod paramCycleMethod, ColorSpaceType paramColorSpaceType, AffineTransform paramAffineTransform) {
-/* 142 */     if (paramArrayOffloat == null) {
-/* 143 */       throw new NullPointerException("Fractions array cannot be null");
-/*     */     }
-/*     */     
-/* 146 */     if (paramArrayOfColor == null) {
-/* 147 */       throw new NullPointerException("Colors array cannot be null");
-/*     */     }
-/*     */     
-/* 150 */     if (paramCycleMethod == null) {
-/* 151 */       throw new NullPointerException("Cycle method cannot be null");
-/*     */     }
-/*     */     
-/* 154 */     if (paramColorSpaceType == null) {
-/* 155 */       throw new NullPointerException("Color space cannot be null");
-/*     */     }
-/*     */     
-/* 158 */     if (paramAffineTransform == null) {
-/* 159 */       throw new NullPointerException("Gradient transform cannot be null");
-/*     */     }
-/*     */ 
-/*     */     
-/* 163 */     if (paramArrayOffloat.length != paramArrayOfColor.length) {
-/* 164 */       throw new IllegalArgumentException("Colors and fractions must have equal size");
-/*     */     }
-/*     */ 
-/*     */     
-/* 168 */     if (paramArrayOfColor.length < 2) {
-/* 169 */       throw new IllegalArgumentException("User must specify at least 2 colors");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 175 */     float f = -1.0F;
-/* 176 */     for (float f1 : paramArrayOffloat) {
-/* 177 */       if (f1 < 0.0F || f1 > 1.0F) {
-/* 178 */         throw new IllegalArgumentException("Fraction values must be in the range 0 to 1: " + f1);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 183 */       if (f1 <= f) {
-/* 184 */         throw new IllegalArgumentException("Keyframe fractions must be increasing: " + f1);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 189 */       f = f1;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 196 */     boolean bool1 = false;
-/* 197 */     boolean bool2 = false;
-/* 198 */     int i = paramArrayOffloat.length;
-/* 199 */     byte b1 = 0;
-/*     */     
-/* 201 */     if (paramArrayOffloat[0] != 0.0F) {
-/*     */       
-/* 203 */       bool1 = true;
-/* 204 */       i++;
-/* 205 */       b1++;
-/*     */     } 
-/* 207 */     if (paramArrayOffloat[paramArrayOffloat.length - 1] != 1.0F) {
-/*     */       
-/* 209 */       bool2 = true;
-/* 210 */       i++;
-/*     */     } 
-/*     */     
-/* 213 */     this.fractions = new float[i];
-/* 214 */     System.arraycopy(paramArrayOffloat, 0, this.fractions, b1, paramArrayOffloat.length);
-/* 215 */     this.colors = new Color[i];
-/* 216 */     System.arraycopy(paramArrayOfColor, 0, this.colors, b1, paramArrayOfColor.length);
-/*     */     
-/* 218 */     if (bool1) {
-/* 219 */       this.fractions[0] = 0.0F;
-/* 220 */       this.colors[0] = paramArrayOfColor[0];
-/*     */     } 
-/* 222 */     if (bool2) {
-/* 223 */       this.fractions[i - 1] = 1.0F;
-/* 224 */       this.colors[i - 1] = paramArrayOfColor[paramArrayOfColor.length - 1];
-/*     */     } 
-/*     */ 
-/*     */     
-/* 228 */     this.colorSpace = paramColorSpaceType;
-/* 229 */     this.cycleMethod = paramCycleMethod;
-/*     */ 
-/*     */     
-/* 232 */     this.gradientTransform = new AffineTransform(paramAffineTransform);
-/*     */ 
-/*     */     
-/* 235 */     boolean bool3 = true;
-/* 236 */     for (byte b2 = 0; b2 < paramArrayOfColor.length; b2++) {
-/* 237 */       bool3 = (bool3 && paramArrayOfColor[b2].getAlpha() == 255) ? true : false;
-/*     */     }
-/* 239 */     this.transparency = bool3 ? 1 : 3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final float[] getFractions() {
-/* 252 */     return Arrays.copyOf(this.fractions, this.fractions.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Color[] getColors() {
-/* 263 */     return Arrays.<Color>copyOf(this.colors, this.colors.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final CycleMethod getCycleMethod() {
-/* 272 */     return this.cycleMethod;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final ColorSpaceType getColorSpace() {
-/* 283 */     return this.colorSpace;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final AffineTransform getTransform() {
-/* 296 */     return new AffineTransform(this.gradientTransform);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getTransparency() {
-/* 309 */     return this.transparency;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\MultipleGradientPaint.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.awt.geom.AffineTransform;
+import java.awt.image.ColorModel;
+import java.lang.ref.SoftReference;
+import java.util.Arrays;
+
+/**
+ * This is the superclass for Paints which use a multiple color
+ * gradient to fill in their raster.  It provides storage for variables and
+ * enumerated values common to
+ * {@code LinearGradientPaint} and {@code RadialGradientPaint}.
+ *
+ * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans
+ * @since 1.6
+ */
+public abstract class MultipleGradientPaint implements Paint {
+
+    /** The method to use when painting outside the gradient bounds.
+     * @since 1.6
+     */
+    public static enum CycleMethod {
+        /**
+         * Use the terminal colors to fill the remaining area.
+         */
+        NO_CYCLE,
+
+        /**
+         * Cycle the gradient colors start-to-end, end-to-start
+         * to fill the remaining area.
+         */
+        REFLECT,
+
+        /**
+         * Cycle the gradient colors start-to-end, start-to-end
+         * to fill the remaining area.
+         */
+        REPEAT
+    }
+
+    /** The color space in which to perform the gradient interpolation.
+     * @since 1.6
+     */
+    public static enum ColorSpaceType {
+        /**
+         * Indicates that the color interpolation should occur in sRGB space.
+         */
+        SRGB,
+
+        /**
+         * Indicates that the color interpolation should occur in linearized
+         * RGB space.
+         */
+        LINEAR_RGB
+    }
+
+    /** The transparency of this paint object. */
+    final int transparency;
+
+    /** Gradient keyframe values in the range 0 to 1. */
+    final float[] fractions;
+
+    /** Gradient colors. */
+    final Color[] colors;
+
+    /** Transform to apply to gradient. */
+    final AffineTransform gradientTransform;
+
+    /** The method to use when painting outside the gradient bounds. */
+    final CycleMethod cycleMethod;
+
+    /** The color space in which to perform the gradient interpolation. */
+    final ColorSpaceType colorSpace;
+
+    /**
+     * The following fields are used only by MultipleGradientPaintContext
+     * to cache certain values that remain constant and do not need to be
+     * recalculated for each context created from this paint instance.
+     */
+    ColorModel model;
+    float[] normalizedIntervals;
+    boolean isSimpleLookup;
+    SoftReference<int[][]> gradients;
+    SoftReference<int[]> gradient;
+    int fastGradientArraySize;
+
+    /**
+     * Package-private constructor.
+     *
+     * @param fractions numbers ranging from 0.0 to 1.0 specifying the
+     *                  distribution of colors along the gradient
+     * @param colors array of colors corresponding to each fractional value
+     * @param cycleMethod either {@code NO_CYCLE}, {@code REFLECT},
+     *                    or {@code REPEAT}
+     * @param colorSpace which color space to use for interpolation,
+     *                   either {@code SRGB} or {@code LINEAR_RGB}
+     * @param gradientTransform transform to apply to the gradient
+     *
+     * @throws NullPointerException
+     * if {@code fractions} array is null,
+     * or {@code colors} array is null,
+     * or {@code gradientTransform} is null,
+     * or {@code cycleMethod} is null,
+     * or {@code colorSpace} is null
+     * @throws IllegalArgumentException
+     * if {@code fractions.length != colors.length},
+     * or {@code colors} is less than 2 in size,
+     * or a {@code fractions} value is less than 0.0 or greater than 1.0,
+     * or the {@code fractions} are not provided in strictly increasing order
+     */
+    MultipleGradientPaint(float[] fractions,
+                          Color[] colors,
+                          CycleMethod cycleMethod,
+                          ColorSpaceType colorSpace,
+                          AffineTransform gradientTransform)
+    {
+        if (fractions == null) {
+            throw new NullPointerException("Fractions array cannot be null");
+        }
+
+        if (colors == null) {
+            throw new NullPointerException("Colors array cannot be null");
+        }
+
+        if (cycleMethod == null) {
+            throw new NullPointerException("Cycle method cannot be null");
+        }
+
+        if (colorSpace == null) {
+            throw new NullPointerException("Color space cannot be null");
+        }
+
+        if (gradientTransform == null) {
+            throw new NullPointerException("Gradient transform cannot be "+
+                                           "null");
+        }
+
+        if (fractions.length != colors.length) {
+            throw new IllegalArgumentException("Colors and fractions must " +
+                                               "have equal size");
+        }
+
+        if (colors.length < 2) {
+            throw new IllegalArgumentException("User must specify at least " +
+                                               "2 colors");
+        }
+
+        // check that values are in the proper range and progress
+        // in increasing order from 0 to 1
+        float previousFraction = -1.0f;
+        for (float currentFraction : fractions) {
+            if (currentFraction < 0f || currentFraction > 1f) {
+                throw new IllegalArgumentException("Fraction values must " +
+                                                   "be in the range 0 to 1: " +
+                                                   currentFraction);
+            }
+
+            if (currentFraction <= previousFraction) {
+                throw new IllegalArgumentException("Keyframe fractions " +
+                                                   "must be increasing: " +
+                                                   currentFraction);
+            }
+
+            previousFraction = currentFraction;
+        }
+
+        // We have to deal with the cases where the first gradient stop is not
+        // equal to 0 and/or the last gradient stop is not equal to 1.
+        // In both cases, create a new point and replicate the previous
+        // extreme point's color.
+        boolean fixFirst = false;
+        boolean fixLast = false;
+        int len = fractions.length;
+        int off = 0;
+
+        if (fractions[0] != 0f) {
+            // first stop is not equal to zero, fix this condition
+            fixFirst = true;
+            len++;
+            off++;
+        }
+        if (fractions[fractions.length-1] != 1f) {
+            // last stop is not equal to one, fix this condition
+            fixLast = true;
+            len++;
+        }
+
+        this.fractions = new float[len];
+        System.arraycopy(fractions, 0, this.fractions, off, fractions.length);
+        this.colors = new Color[len];
+        System.arraycopy(colors, 0, this.colors, off, colors.length);
+
+        if (fixFirst) {
+            this.fractions[0] = 0f;
+            this.colors[0] = colors[0];
+        }
+        if (fixLast) {
+            this.fractions[len-1] = 1f;
+            this.colors[len-1] = colors[colors.length - 1];
+        }
+
+        // copy some flags
+        this.colorSpace = colorSpace;
+        this.cycleMethod = cycleMethod;
+
+        // copy the gradient transform
+        this.gradientTransform = new AffineTransform(gradientTransform);
+
+        // determine transparency
+        boolean opaque = true;
+        for (int i = 0; i < colors.length; i++){
+            opaque = opaque && (colors[i].getAlpha() == 0xff);
+        }
+        this.transparency = opaque ? OPAQUE : TRANSLUCENT;
+    }
+
+    /**
+     * Returns a copy of the array of floats used by this gradient
+     * to calculate color distribution.
+     * The returned array always has 0 as its first value and 1 as its
+     * last value, with increasing values in between.
+     *
+     * @return a copy of the array of floats used by this gradient to
+     * calculate color distribution
+     */
+    public final float[] getFractions() {
+        return Arrays.copyOf(fractions, fractions.length);
+    }
+
+    /**
+     * Returns a copy of the array of colors used by this gradient.
+     * The first color maps to the first value in the fractions array,
+     * and the last color maps to the last value in the fractions array.
+     *
+     * @return a copy of the array of colors used by this gradient
+     */
+    public final Color[] getColors() {
+        return Arrays.copyOf(colors, colors.length);
+    }
+
+    /**
+     * Returns the enumerated type which specifies cycling behavior.
+     *
+     * @return the enumerated type which specifies cycling behavior
+     */
+    public final CycleMethod getCycleMethod() {
+        return cycleMethod;
+    }
+
+    /**
+     * Returns the enumerated type which specifies color space for
+     * interpolation.
+     *
+     * @return the enumerated type which specifies color space for
+     * interpolation
+     */
+    public final ColorSpaceType getColorSpace() {
+        return colorSpace;
+    }
+
+    /**
+     * Returns a copy of the transform applied to the gradient.
+     *
+     * <p>
+     * Note that if no transform is applied to the gradient
+     * when it is created, the identity transform is used.
+     *
+     * @return a copy of the transform applied to the gradient
+     */
+    public final AffineTransform getTransform() {
+        return new AffineTransform(gradientTransform);
+    }
+
+    /**
+     * Returns the transparency mode for this {@code Paint} object.
+     *
+     * @return {@code OPAQUE} if all colors used by this
+     *         {@code Paint} object are opaque,
+     *         {@code TRANSLUCENT} if at least one of the
+     *         colors used by this {@code Paint} object is not opaque.
+     * @see java.awt.Transparency
+     */
+    public final int getTransparency() {
+        return transparency;
+    }
+}

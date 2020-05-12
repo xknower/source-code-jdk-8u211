@@ -1,186 +1,180 @@
-/*     */ package java.nio.file.attribute;
-/*     */ 
-/*     */ import java.util.Collections;
-/*     */ import java.util.EnumSet;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class PosixFilePermissions
-/*     */ {
-/*     */   private static void writeBits(StringBuilder paramStringBuilder, boolean paramBoolean1, boolean paramBoolean2, boolean paramBoolean3) {
-/*  43 */     if (paramBoolean1) {
-/*  44 */       paramStringBuilder.append('r');
-/*     */     } else {
-/*  46 */       paramStringBuilder.append('-');
-/*     */     } 
-/*  48 */     if (paramBoolean2) {
-/*  49 */       paramStringBuilder.append('w');
-/*     */     } else {
-/*  51 */       paramStringBuilder.append('-');
-/*     */     } 
-/*  53 */     if (paramBoolean3) {
-/*  54 */       paramStringBuilder.append('x');
-/*     */     } else {
-/*  56 */       paramStringBuilder.append('-');
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String toString(Set<PosixFilePermission> paramSet) {
-/*  74 */     StringBuilder stringBuilder = new StringBuilder(9);
-/*  75 */     writeBits(stringBuilder, paramSet.contains(PosixFilePermission.OWNER_READ), paramSet.contains(PosixFilePermission.OWNER_WRITE), paramSet
-/*  76 */         .contains(PosixFilePermission.OWNER_EXECUTE));
-/*  77 */     writeBits(stringBuilder, paramSet.contains(PosixFilePermission.GROUP_READ), paramSet.contains(PosixFilePermission.GROUP_WRITE), paramSet
-/*  78 */         .contains(PosixFilePermission.GROUP_EXECUTE));
-/*  79 */     writeBits(stringBuilder, paramSet.contains(PosixFilePermission.OTHERS_READ), paramSet.contains(PosixFilePermission.OTHERS_WRITE), paramSet
-/*  80 */         .contains(PosixFilePermission.OTHERS_EXECUTE));
-/*  81 */     return stringBuilder.toString();
-/*     */   }
-/*     */   
-/*     */   private static boolean isSet(char paramChar1, char paramChar2) {
-/*  85 */     if (paramChar1 == paramChar2)
-/*  86 */       return true; 
-/*  87 */     if (paramChar1 == '-')
-/*  88 */       return false; 
-/*  89 */     throw new IllegalArgumentException("Invalid mode");
-/*     */   }
-/*  91 */   private static boolean isR(char paramChar) { return isSet(paramChar, 'r'); }
-/*  92 */   private static boolean isW(char paramChar) { return isSet(paramChar, 'w'); } private static boolean isX(char paramChar) {
-/*  93 */     return isSet(paramChar, 'x');
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Set<PosixFilePermission> fromString(String paramString) {
-/* 127 */     if (paramString.length() != 9)
-/* 128 */       throw new IllegalArgumentException("Invalid mode"); 
-/* 129 */     EnumSet<PosixFilePermission> enumSet = EnumSet.noneOf(PosixFilePermission.class);
-/* 130 */     if (isR(paramString.charAt(0))) enumSet.add(PosixFilePermission.OWNER_READ); 
-/* 131 */     if (isW(paramString.charAt(1))) enumSet.add(PosixFilePermission.OWNER_WRITE); 
-/* 132 */     if (isX(paramString.charAt(2))) enumSet.add(PosixFilePermission.OWNER_EXECUTE); 
-/* 133 */     if (isR(paramString.charAt(3))) enumSet.add(PosixFilePermission.GROUP_READ); 
-/* 134 */     if (isW(paramString.charAt(4))) enumSet.add(PosixFilePermission.GROUP_WRITE); 
-/* 135 */     if (isX(paramString.charAt(5))) enumSet.add(PosixFilePermission.GROUP_EXECUTE); 
-/* 136 */     if (isR(paramString.charAt(6))) enumSet.add(PosixFilePermission.OTHERS_READ); 
-/* 137 */     if (isW(paramString.charAt(7))) enumSet.add(PosixFilePermission.OTHERS_WRITE); 
-/* 138 */     if (isX(paramString.charAt(8))) enumSet.add(PosixFilePermission.OTHERS_EXECUTE); 
-/* 139 */     return enumSet;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static FileAttribute<Set<PosixFilePermission>> asFileAttribute(Set<PosixFilePermission> paramSet) {
-/* 163 */     paramSet = new HashSet<>(paramSet);
-/* 164 */     for (PosixFilePermission posixFilePermission : paramSet) {
-/* 165 */       if (posixFilePermission == null)
-/* 166 */         throw new NullPointerException(); 
-/*     */     } 
-/* 168 */     final Set<PosixFilePermission> value = paramSet;
-/* 169 */     return new FileAttribute<Set<PosixFilePermission>>()
-/*     */       {
-/*     */         public String name() {
-/* 172 */           return "posix:permissions";
-/*     */         }
-/*     */         
-/*     */         public Set<PosixFilePermission> value() {
-/* 176 */           return Collections.unmodifiableSet(value);
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\attribute\PosixFilePermissions.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file.attribute;
+
+import static java.nio.file.attribute.PosixFilePermission.*;
+import java.util.*;
+
+/**
+ * This class consists exclusively of static methods that operate on sets of
+ * {@link PosixFilePermission} objects.
+ *
+ * @since 1.7
+ */
+
+public final class PosixFilePermissions {
+    private PosixFilePermissions() { }
+
+    // Write string representation of permission bits to {@code sb}.
+    private static void writeBits(StringBuilder sb, boolean r, boolean w, boolean x) {
+        if (r) {
+            sb.append('r');
+        } else {
+            sb.append('-');
+        }
+        if (w) {
+            sb.append('w');
+        } else {
+            sb.append('-');
+        }
+        if (x) {
+            sb.append('x');
+        } else {
+            sb.append('-');
+        }
+    }
+
+    /**
+     * Returns the {@code String} representation of a set of permissions. It
+     * is guaranteed that the returned {@code String} can be parsed by the
+     * {@link #fromString} method.
+     *
+     * <p> If the set contains {@code null} or elements that are not of type
+     * {@code PosixFilePermission} then these elements are ignored.
+     *
+     * @param   perms
+     *          the set of permissions
+     *
+     * @return  the string representation of the permission set
+     */
+    public static String toString(Set<PosixFilePermission> perms) {
+        StringBuilder sb = new StringBuilder(9);
+        writeBits(sb, perms.contains(OWNER_READ), perms.contains(OWNER_WRITE),
+          perms.contains(OWNER_EXECUTE));
+        writeBits(sb, perms.contains(GROUP_READ), perms.contains(GROUP_WRITE),
+          perms.contains(GROUP_EXECUTE));
+        writeBits(sb, perms.contains(OTHERS_READ), perms.contains(OTHERS_WRITE),
+          perms.contains(OTHERS_EXECUTE));
+        return sb.toString();
+    }
+
+    private static boolean isSet(char c, char setValue) {
+        if (c == setValue)
+            return true;
+        if (c == '-')
+            return false;
+        throw new IllegalArgumentException("Invalid mode");
+    }
+    private static boolean isR(char c) { return isSet(c, 'r'); }
+    private static boolean isW(char c) { return isSet(c, 'w'); }
+    private static boolean isX(char c) { return isSet(c, 'x'); }
+
+    /**
+     * Returns the set of permissions corresponding to a given {@code String}
+     * representation.
+     *
+     * <p> The {@code perms} parameter is a {@code String} representing the
+     * permissions. It has 9 characters that are interpreted as three sets of
+     * three. The first set refers to the owner's permissions; the next to the
+     * group permissions and the last to others. Within each set, the first
+     * character is {@code 'r'} to indicate permission to read, the second
+     * character is {@code 'w'} to indicate permission to write, and the third
+     * character is {@code 'x'} for execute permission. Where a permission is
+     * not set then the corresponding character is set to {@code '-'}.
+     *
+     * <p> <b>Usage Example:</b>
+     * Suppose we require the set of permissions that indicate the owner has read,
+     * write, and execute permissions, the group has read and execute permissions
+     * and others have none.
+     * <pre>
+     *   Set&lt;PosixFilePermission&gt; perms = PosixFilePermissions.fromString("rwxr-x---");
+     * </pre>
+     *
+     * @param   perms
+     *          string representing a set of permissions
+     *
+     * @return  the resulting set of permissions
+     *
+     * @throws  IllegalArgumentException
+     *          if the string cannot be converted to a set of permissions
+     *
+     * @see #toString(Set)
+     */
+    public static Set<PosixFilePermission> fromString(String perms) {
+        if (perms.length() != 9)
+            throw new IllegalArgumentException("Invalid mode");
+        Set<PosixFilePermission> result = EnumSet.noneOf(PosixFilePermission.class);
+        if (isR(perms.charAt(0))) result.add(OWNER_READ);
+        if (isW(perms.charAt(1))) result.add(OWNER_WRITE);
+        if (isX(perms.charAt(2))) result.add(OWNER_EXECUTE);
+        if (isR(perms.charAt(3))) result.add(GROUP_READ);
+        if (isW(perms.charAt(4))) result.add(GROUP_WRITE);
+        if (isX(perms.charAt(5))) result.add(GROUP_EXECUTE);
+        if (isR(perms.charAt(6))) result.add(OTHERS_READ);
+        if (isW(perms.charAt(7))) result.add(OTHERS_WRITE);
+        if (isX(perms.charAt(8))) result.add(OTHERS_EXECUTE);
+        return result;
+    }
+
+    /**
+     * Creates a {@link FileAttribute}, encapsulating a copy of the given file
+     * permissions, suitable for passing to the {@link java.nio.file.Files#createFile
+     * createFile} or {@link java.nio.file.Files#createDirectory createDirectory}
+     * methods.
+     *
+     * @param   perms
+     *          the set of permissions
+     *
+     * @return  an attribute encapsulating the given file permissions with
+     *          {@link FileAttribute#name name} {@code "posix:permissions"}
+     *
+     * @throws  ClassCastException
+     *          if the set contains elements that are not of type {@code
+     *          PosixFilePermission}
+     */
+    public static FileAttribute<Set<PosixFilePermission>>
+        asFileAttribute(Set<PosixFilePermission> perms)
+    {
+        // copy set and check for nulls (CCE will be thrown if an element is not
+        // a PosixFilePermission)
+        perms = new HashSet<PosixFilePermission>(perms);
+        for (PosixFilePermission p: perms) {
+            if (p == null)
+                throw new NullPointerException();
+        }
+        final Set<PosixFilePermission> value = perms;
+        return new FileAttribute<Set<PosixFilePermission>>() {
+            @Override
+            public String name() {
+                return "posix:permissions";
+            }
+            @Override
+            public Set<PosixFilePermission> value() {
+                return Collections.unmodifiableSet(value);
+            }
+        };
+    }
+}

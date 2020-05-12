@@ -1,133 +1,130 @@
-/*     */ package com.sun.org.apache.xpath.internal.objects;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMManager;
-/*     */ import com.sun.org.apache.xpath.internal.NodeSetDTM;
-/*     */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.NodeList;
-/*     */ import org.w3c.dom.traversal.NodeIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XNodeSetForDOM
-/*     */   extends XNodeSet
-/*     */ {
-/*     */   static final long serialVersionUID = -8396190713754624640L;
-/*     */   Object m_origObj;
-/*     */   
-/*     */   public XNodeSetForDOM(Node node, DTMManager dtmMgr) {
-/*  44 */     this.m_dtmMgr = dtmMgr;
-/*  45 */     this.m_origObj = node;
-/*  46 */     int dtmHandle = dtmMgr.getDTMHandleFromNode(node);
-/*  47 */     setObject(new NodeSetDTM(dtmMgr));
-/*  48 */     ((NodeSetDTM)this.m_obj).addNode(dtmHandle);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XNodeSetForDOM(XNodeSet val) {
-/*  58 */     super(val);
-/*  59 */     if (val instanceof XNodeSetForDOM) {
-/*  60 */       this.m_origObj = ((XNodeSetForDOM)val).m_origObj;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public XNodeSetForDOM(NodeList nodeList, XPathContext xctxt) {
-/*  65 */     this.m_dtmMgr = xctxt.getDTMManager();
-/*  66 */     this.m_origObj = nodeList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  72 */     NodeSetDTM nsdtm = new NodeSetDTM(nodeList, xctxt);
-/*  73 */     this.m_last = nsdtm.getLength();
-/*  74 */     setObject(nsdtm);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public XNodeSetForDOM(NodeIterator nodeIter, XPathContext xctxt) {
-/*  79 */     this.m_dtmMgr = xctxt.getDTMManager();
-/*  80 */     this.m_origObj = nodeIter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  86 */     NodeSetDTM nsdtm = new NodeSetDTM(nodeIter, xctxt);
-/*  87 */     this.m_last = nsdtm.getLength();
-/*  88 */     setObject(nsdtm);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object object() {
-/*  99 */     return this.m_origObj;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeIterator nodeset() throws TransformerException {
-/* 111 */     return (this.m_origObj instanceof NodeIterator) ? (NodeIterator)this.m_origObj : super
-/* 112 */       .nodeset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NodeList nodelist() throws TransformerException {
-/* 124 */     return (this.m_origObj instanceof NodeList) ? (NodeList)this.m_origObj : super
-/* 125 */       .nodelist();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\objects\XNodeSetForDOM.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XNodeSetForDOM.java,v 1.2.4.1 2005/09/14 20:34:46 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.objects;
+
+import com.sun.org.apache.xml.internal.dtm.DTMManager;
+import com.sun.org.apache.xpath.internal.NodeSetDTM;
+import com.sun.org.apache.xpath.internal.XPathContext;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.traversal.NodeIterator;
+
+/**
+ * This class overrides the XNodeSet#object() method to provide the original
+ * Node object, NodeList object, or NodeIterator.
+ */
+public class XNodeSetForDOM extends XNodeSet
+{
+    static final long serialVersionUID = -8396190713754624640L;
+  Object m_origObj;
+
+  public XNodeSetForDOM(Node node, DTMManager dtmMgr)
+  {
+    m_dtmMgr = dtmMgr;
+    m_origObj = node;
+    int dtmHandle = dtmMgr.getDTMHandleFromNode(node);
+    setObject(new NodeSetDTM(dtmMgr));
+    ((NodeSetDTM) m_obj).addNode(dtmHandle);
+  }
+
+  /**
+   * Construct a XNodeSet object.
+   *
+   * @param val Value of the XNodeSet object
+   */
+  public XNodeSetForDOM(XNodeSet val)
+  {
+        super(val);
+        if(val instanceof XNodeSetForDOM)
+        m_origObj = ((XNodeSetForDOM)val).m_origObj;
+  }
+
+  public XNodeSetForDOM(NodeList nodeList, XPathContext xctxt)
+  {
+    m_dtmMgr = xctxt.getDTMManager();
+    m_origObj = nodeList;
+
+    // JKESS 20020514: Longer-term solution is to force
+    // folks to request length through an accessor, so we can defer this
+    // retrieval... but that requires an API change.
+    // m_obj=new com.sun.org.apache.xpath.internal.NodeSetDTM(nodeList, xctxt);
+    com.sun.org.apache.xpath.internal.NodeSetDTM nsdtm=new com.sun.org.apache.xpath.internal.NodeSetDTM(nodeList, xctxt);
+    m_last=nsdtm.getLength();
+    setObject(nsdtm);
+  }
+
+  public XNodeSetForDOM(NodeIterator nodeIter, XPathContext xctxt)
+  {
+    m_dtmMgr = xctxt.getDTMManager();
+    m_origObj = nodeIter;
+
+    // JKESS 20020514: Longer-term solution is to force
+    // folks to request length through an accessor, so we can defer this
+    // retrieval... but that requires an API change.
+    // m_obj = new com.sun.org.apache.xpath.internal.NodeSetDTM(nodeIter, xctxt);
+    com.sun.org.apache.xpath.internal.NodeSetDTM nsdtm=new com.sun.org.apache.xpath.internal.NodeSetDTM(nodeIter, xctxt);
+    m_last=nsdtm.getLength();
+    setObject(nsdtm);
+  }
+
+  /**
+   * Return the original DOM object that the user passed in.  For use primarily
+   * by the extension mechanism.
+   *
+   * @return The object that this class wraps
+   */
+  public Object object()
+  {
+    return m_origObj;
+  }
+
+  /**
+   * Cast result object to a nodelist. Always issues an error.
+   *
+   * @return null
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public NodeIterator nodeset() throws javax.xml.transform.TransformerException
+  {
+    return (m_origObj instanceof NodeIterator)
+                   ? (NodeIterator)m_origObj : super.nodeset();
+  }
+
+  /**
+   * Cast result object to a nodelist. Always issues an error.
+   *
+   * @return null
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public NodeList nodelist() throws javax.xml.transform.TransformerException
+  {
+    return (m_origObj instanceof NodeList)
+                   ? (NodeList)m_origObj : super.nodelist();
+  }
+
+
+
+}

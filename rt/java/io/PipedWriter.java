@@ -1,189 +1,184 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PipedWriter
-/*     */   extends Writer
-/*     */ {
-/*     */   private PipedReader sink;
-/*     */   private boolean closed = false;
-/*     */   
-/*     */   public PipedWriter(PipedReader paramPipedReader) throws IOException {
-/*  59 */     connect(paramPipedReader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PipedWriter() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void connect(PipedReader paramPipedReader) throws IOException {
-/*  92 */     if (paramPipedReader == null)
-/*  93 */       throw new NullPointerException(); 
-/*  94 */     if (this.sink != null || paramPipedReader.connected)
-/*  95 */       throw new IOException("Already connected"); 
-/*  96 */     if (paramPipedReader.closedByReader || this.closed) {
-/*  97 */       throw new IOException("Pipe closed");
-/*     */     }
-/*     */     
-/* 100 */     this.sink = paramPipedReader;
-/* 101 */     paramPipedReader.in = -1;
-/* 102 */     paramPipedReader.out = 0;
-/* 103 */     paramPipedReader.connected = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 121 */     if (this.sink == null) {
-/* 122 */       throw new IOException("Pipe not connected");
-/*     */     }
-/* 124 */     this.sink.receive(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 145 */     if (this.sink == null)
-/* 146 */       throw new IOException("Pipe not connected"); 
-/* 147 */     if ((paramInt1 | paramInt2 | paramInt1 + paramInt2 | paramArrayOfchar.length - paramInt1 + paramInt2) < 0) {
-/* 148 */       throw new IndexOutOfBoundsException();
-/*     */     }
-/* 150 */     this.sink.receive(paramArrayOfchar, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void flush() throws IOException {
-/* 161 */     if (this.sink != null) {
-/* 162 */       if (this.sink.closedByReader || this.closed) {
-/* 163 */         throw new IOException("Pipe closed");
-/*     */       }
-/* 165 */       synchronized (this.sink) {
-/* 166 */         this.sink.notifyAll();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 179 */     this.closed = true;
-/* 180 */     if (this.sink != null)
-/* 181 */       this.sink.receivedLast(); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\PipedWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+
+/**
+ * Piped character-output streams.
+ *
+ * @author      Mark Reinhold
+ * @since       JDK1.1
+ */
+
+public class PipedWriter extends Writer {
+
+    /* REMIND: identification of the read and write sides needs to be
+       more sophisticated.  Either using thread groups (but what about
+       pipes within a thread?) or using finalization (but it may be a
+       long time until the next GC). */
+    private PipedReader sink;
+
+    /* This flag records the open status of this particular writer. It
+     * is independent of the status flags defined in PipedReader. It is
+     * used to do a sanity check on connect.
+     */
+    private boolean closed = false;
+
+    /**
+     * Creates a piped writer connected to the specified piped
+     * reader. Data characters written to this stream will then be
+     * available as input from <code>snk</code>.
+     *
+     * @param      snk   The piped reader to connect to.
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public PipedWriter(PipedReader snk)  throws IOException {
+        connect(snk);
+    }
+
+    /**
+     * Creates a piped writer that is not yet connected to a
+     * piped reader. It must be connected to a piped reader,
+     * either by the receiver or the sender, before being used.
+     *
+     * @see     java.io.PipedReader#connect(java.io.PipedWriter)
+     * @see     java.io.PipedWriter#connect(java.io.PipedReader)
+     */
+    public PipedWriter() {
+    }
+
+    /**
+     * Connects this piped writer to a receiver. If this object
+     * is already connected to some other piped reader, an
+     * <code>IOException</code> is thrown.
+     * <p>
+     * If <code>snk</code> is an unconnected piped reader and
+     * <code>src</code> is an unconnected piped writer, they may
+     * be connected by either the call:
+     * <blockquote><pre>
+     * src.connect(snk)</pre></blockquote>
+     * or the call:
+     * <blockquote><pre>
+     * snk.connect(src)</pre></blockquote>
+     * The two calls have the same effect.
+     *
+     * @param      snk   the piped reader to connect to.
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public synchronized void connect(PipedReader snk) throws IOException {
+        if (snk == null) {
+            throw new NullPointerException();
+        } else if (sink != null || snk.connected) {
+            throw new IOException("Already connected");
+        } else if (snk.closedByReader || closed) {
+            throw new IOException("Pipe closed");
+        }
+
+        sink = snk;
+        snk.in = -1;
+        snk.out = 0;
+        snk.connected = true;
+    }
+
+    /**
+     * Writes the specified <code>char</code> to the piped output stream.
+     * If a thread was reading data characters from the connected piped input
+     * stream, but the thread is no longer alive, then an
+     * <code>IOException</code> is thrown.
+     * <p>
+     * Implements the <code>write</code> method of <code>Writer</code>.
+     *
+     * @param      c   the <code>char</code> to be written.
+     * @exception  IOException  if the pipe is
+     *          <a href=PipedOutputStream.html#BROKEN> <code>broken</code></a>,
+     *          {@link #connect(java.io.PipedReader) unconnected}, closed
+     *          or an I/O error occurs.
+     */
+    public void write(int c)  throws IOException {
+        if (sink == null) {
+            throw new IOException("Pipe not connected");
+        }
+        sink.receive(c);
+    }
+
+    /**
+     * Writes <code>len</code> characters from the specified character array
+     * starting at offset <code>off</code> to this piped output stream.
+     * This method blocks until all the characters are written to the output
+     * stream.
+     * If a thread was reading data characters from the connected piped input
+     * stream, but the thread is no longer alive, then an
+     * <code>IOException</code> is thrown.
+     *
+     * @param      cbuf  the data.
+     * @param      off   the start offset in the data.
+     * @param      len   the number of characters to write.
+     * @exception  IOException  if the pipe is
+     *          <a href=PipedOutputStream.html#BROKEN> <code>broken</code></a>,
+     *          {@link #connect(java.io.PipedReader) unconnected}, closed
+     *          or an I/O error occurs.
+     */
+    public void write(char cbuf[], int off, int len) throws IOException {
+        if (sink == null) {
+            throw new IOException("Pipe not connected");
+        } else if ((off | len | (off + len) | (cbuf.length - (off + len))) < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+        sink.receive(cbuf, off, len);
+    }
+
+    /**
+     * Flushes this output stream and forces any buffered output characters
+     * to be written out.
+     * This will notify any readers that characters are waiting in the pipe.
+     *
+     * @exception  IOException  if the pipe is closed, or an I/O error occurs.
+     */
+    public synchronized void flush() throws IOException {
+        if (sink != null) {
+            if (sink.closedByReader || closed) {
+                throw new IOException("Pipe closed");
+            }
+            synchronized (sink) {
+                sink.notifyAll();
+            }
+        }
+    }
+
+    /**
+     * Closes this piped output stream and releases any system resources
+     * associated with this stream. This stream may no longer be used for
+     * writing characters.
+     *
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public void close()  throws IOException {
+        closed = true;
+        if (sink != null) {
+            sink.receivedLast();
+        }
+    }
+}

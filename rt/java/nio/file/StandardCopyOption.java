@@ -1,53 +1,47 @@
-/*    */ package java.nio.file;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum StandardCopyOption
-/*    */   implements CopyOption
-/*    */ {
-/* 38 */   REPLACE_EXISTING,
-/*    */ 
-/*    */ 
-/*    */   
-/* 42 */   COPY_ATTRIBUTES,
-/*    */ 
-/*    */ 
-/*    */   
-/* 46 */   ATOMIC_MOVE;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\StandardCopyOption.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file;
+
+/**
+ * Defines the standard copy options.
+ *
+ * @since 1.7
+ */
+
+public enum StandardCopyOption implements CopyOption {
+    /**
+     * Replace an existing file if it exists.
+     */
+    REPLACE_EXISTING,
+    /**
+     * Copy attributes to the new file.
+     */
+    COPY_ATTRIBUTES,
+    /**
+     * Move the file as an atomic file system operation.
+     */
+    ATOMIC_MOVE;
+}

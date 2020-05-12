@@ -1,263 +1,257 @@
-/*     */ package com.sun.corba.se.impl.encoding;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.pept.transport.ByteBufferPool;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.nio.ByteBuffer;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ByteBufferWithInfo
-/*     */ {
-/*     */   private ORB orb;
-/*     */   private boolean debug;
-/*     */   private int index;
-/*     */   public ByteBuffer byteBuffer;
-/*     */   public int buflen;
-/*     */   public int needed;
-/*     */   public boolean fragmented;
-/*     */   
-/*     */   public ByteBufferWithInfo(ORB paramORB, ByteBuffer paramByteBuffer, int paramInt) {
-/*  63 */     this.orb = (ORB)paramORB;
-/*  64 */     this.debug = this.orb.transportDebugFlag;
-/*  65 */     this.byteBuffer = paramByteBuffer;
-/*  66 */     if (paramByteBuffer != null)
-/*     */     {
-/*  68 */       this.buflen = paramByteBuffer.limit();
-/*     */     }
-/*  70 */     position(paramInt);
-/*  71 */     this.needed = 0;
-/*  72 */     this.fragmented = false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ByteBufferWithInfo(ORB paramORB, ByteBuffer paramByteBuffer) {
-/*  77 */     this(paramORB, paramByteBuffer, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBufferWithInfo(ORB paramORB, BufferManagerWrite paramBufferManagerWrite) {
-/*  83 */     this(paramORB, paramBufferManagerWrite, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBufferWithInfo(ORB paramORB, BufferManagerWrite paramBufferManagerWrite, boolean paramBoolean) {
-/*  95 */     this.orb = (ORB)paramORB;
-/*  96 */     this.debug = this.orb.transportDebugFlag;
-/*     */     
-/*  98 */     int i = paramBufferManagerWrite.getBufferSize();
-/*     */     
-/* 100 */     if (paramBoolean) {
-/*     */       
-/* 102 */       ByteBufferPool byteBufferPool = this.orb.getByteBufferPool();
-/* 103 */       this.byteBuffer = byteBufferPool.getByteBuffer(i);
-/*     */       
-/* 105 */       if (this.debug)
-/*     */       {
-/*     */         
-/* 108 */         int j = System.identityHashCode(this.byteBuffer);
-/* 109 */         StringBuffer stringBuffer = new StringBuffer(80);
-/* 110 */         stringBuffer.append("constructor (ORB, BufferManagerWrite) - got ")
-/* 111 */           .append("ByteBuffer id (").append(j)
-/* 112 */           .append(") from ByteBufferPool.");
-/* 113 */         String str = stringBuffer.toString();
-/* 114 */         dprint(str);
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 120 */       this.byteBuffer = ByteBuffer.allocate(i);
-/*     */     } 
-/*     */     
-/* 123 */     position(0);
-/* 124 */     this.buflen = i;
-/* 125 */     this.byteBuffer.limit(this.buflen);
-/* 126 */     this.needed = 0;
-/* 127 */     this.fragmented = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBufferWithInfo(ByteBufferWithInfo paramByteBufferWithInfo) {
-/* 133 */     this.orb = paramByteBufferWithInfo.orb;
-/* 134 */     this.debug = paramByteBufferWithInfo.debug;
-/* 135 */     this.byteBuffer = paramByteBufferWithInfo.byteBuffer;
-/* 136 */     this.buflen = paramByteBufferWithInfo.buflen;
-/* 137 */     this.byteBuffer.limit(this.buflen);
-/* 138 */     position(paramByteBufferWithInfo.position());
-/* 139 */     this.needed = paramByteBufferWithInfo.needed;
-/* 140 */     this.fragmented = paramByteBufferWithInfo.fragmented;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getSize() {
-/* 146 */     return position();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/* 152 */     return this.buflen;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int position() {
-/* 166 */     return this.index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void position(int paramInt) {
-/* 176 */     this.byteBuffer.position(paramInt);
-/* 177 */     this.index = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLength(int paramInt) {
-/* 183 */     this.buflen = paramInt;
-/* 184 */     this.byteBuffer.limit(this.buflen);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void growBuffer(ORB paramORB) {
-/* 195 */     int i = this.byteBuffer.limit() * 2;
-/*     */     
-/* 197 */     while (position() + this.needed >= i) {
-/* 198 */       i *= 2;
-/*     */     }
-/* 200 */     ByteBufferPool byteBufferPool = paramORB.getByteBufferPool();
-/* 201 */     ByteBuffer byteBuffer = byteBufferPool.getByteBuffer(i);
-/*     */     
-/* 203 */     if (this.debug) {
-/*     */ 
-/*     */       
-/* 206 */       int j = System.identityHashCode(byteBuffer);
-/* 207 */       StringBuffer stringBuffer = new StringBuffer(80);
-/* 208 */       stringBuffer.append("growBuffer() - got ByteBuffer id (");
-/* 209 */       stringBuffer.append(j).append(") from ByteBufferPool.");
-/* 210 */       String str = stringBuffer.toString();
-/* 211 */       dprint(str);
-/*     */     } 
-/*     */     
-/* 214 */     this.byteBuffer.position(0);
-/* 215 */     byteBuffer.put(this.byteBuffer);
-/*     */ 
-/*     */     
-/* 218 */     if (this.debug) {
-/*     */ 
-/*     */       
-/* 221 */       int j = System.identityHashCode(this.byteBuffer);
-/* 222 */       StringBuffer stringBuffer = new StringBuffer(80);
-/* 223 */       stringBuffer.append("growBuffer() - releasing ByteBuffer id (");
-/* 224 */       stringBuffer.append(j).append(") to ByteBufferPool.");
-/* 225 */       String str = stringBuffer.toString();
-/* 226 */       dprint(str);
-/*     */     } 
-/* 228 */     byteBufferPool.releaseByteBuffer(this.byteBuffer);
-/*     */ 
-/*     */     
-/* 231 */     this.byteBuffer = byteBuffer;
-/*     */ 
-/*     */     
-/* 234 */     this.buflen = i;
-/* 235 */     this.byteBuffer.limit(this.buflen);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 240 */     StringBuffer stringBuffer = new StringBuffer("ByteBufferWithInfo:");
-/*     */     
-/* 242 */     stringBuffer.append(" buflen = " + this.buflen);
-/* 243 */     stringBuffer.append(" byteBuffer.limit = " + this.byteBuffer.limit());
-/* 244 */     stringBuffer.append(" index = " + this.index);
-/* 245 */     stringBuffer.append(" position = " + position());
-/* 246 */     stringBuffer.append(" needed = " + this.needed);
-/* 247 */     stringBuffer.append(" byteBuffer = " + ((this.byteBuffer == null) ? "null" : "not null"));
-/* 248 */     stringBuffer.append(" fragmented = " + this.fragmented);
-/*     */     
-/* 250 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void dprint(String paramString) {
-/* 255 */     ORBUtility.dprint("ByteBufferWithInfo", paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\ByteBufferWithInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.encoding;
+
+import java.nio.ByteBuffer;
+
+
+import com.sun.corba.se.impl.encoding.BufferManagerWrite;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.pept.transport.ByteBufferPool;
+import com.sun.corba.se.spi.orb.ORB;
+
+
+// Notes about the class.
+// Assumptions, the ByteBuffer's position is set by the constructor's
+// index variable and the ByteBuffer's limit points to the end of the
+// data. Also, since the index variable tracks the current empty
+// position in the buffer, the ByteBuffer's position is updated
+// any time there's a call to this class's position().
+// Although, a ByteBuffer's length is it's capacity(), the context in
+// which length is used in this object, this.buflen is actually the
+// ByteBuffer limit().
+
+public class ByteBufferWithInfo
+{
+    private ORB orb;
+    private boolean debug;
+    // REVISIT - index should eventually be replaced with byteBuffer.position()
+    private int     index;     // Current empty position in buffer.
+    // REVISIT - CHANGE THESE TO PRIVATE
+    public ByteBuffer byteBuffer;// Marshal buffer.
+    public int     buflen;     // Total length of buffer. // Unnecessary...
+    public int     needed;     // How many more bytes are needed on overflow.
+    public boolean fragmented; // Did the overflow operation fragment?
+
+    public ByteBufferWithInfo(org.omg.CORBA.ORB orb,
+                              ByteBuffer byteBuffer,
+                              int index)
+    {
+        this.orb = (com.sun.corba.se.spi.orb.ORB)orb;
+        debug = this.orb.transportDebugFlag;
+        this.byteBuffer = byteBuffer;
+        if (byteBuffer != null)
+        {
+            this.buflen = byteBuffer.limit();
+        }
+        position(index);
+        this.needed = 0;
+        this.fragmented = false;
+    }
+
+    public ByteBufferWithInfo(org.omg.CORBA.ORB orb, ByteBuffer byteBuffer)
+    {
+        this(orb, byteBuffer, 0);
+    }
+
+    public ByteBufferWithInfo(org.omg.CORBA.ORB orb,
+                              BufferManagerWrite bufferManager)
+    {
+        this(orb, bufferManager, true);
+    }
+
+    // Right now, EncapsOutputStream's do not use pooled byte buffers.
+    // EncapsOutputStream's is the only one that does not use pooled
+    // byte buffers. Hence, the reason for the boolean 'usePooledByteBuffers'.
+    // See EncapsOutputStream for additional information.
+
+    public ByteBufferWithInfo(org.omg.CORBA.ORB orb,
+                              BufferManagerWrite bufferManager,
+                              boolean usePooledByteBuffers)
+    {
+        this.orb = (com.sun.corba.se.spi.orb.ORB)orb;
+        debug = this.orb.transportDebugFlag;
+
+        int bufferSize = bufferManager.getBufferSize();
+
+        if (usePooledByteBuffers)
+        {
+            ByteBufferPool byteBufferPool = this.orb.getByteBufferPool();
+            this.byteBuffer = byteBufferPool.getByteBuffer(bufferSize);
+
+            if (debug)
+            {
+                // print address of ByteBuffer gotten from pool
+                int bbAddress = System.identityHashCode(byteBuffer);
+                StringBuffer sb = new StringBuffer(80);
+                sb.append("constructor (ORB, BufferManagerWrite) - got ")
+                  .append("ByteBuffer id (").append(bbAddress)
+                  .append(") from ByteBufferPool.");
+                String msgStr = sb.toString();
+                dprint(msgStr);
+            }
+        }
+        else
+        {
+             // don't allocate from pool, allocate non-direct ByteBuffer
+             this.byteBuffer = ByteBuffer.allocate(bufferSize);
+        }
+
+        position(0);
+        this.buflen = bufferSize;
+        this.byteBuffer.limit(this.buflen);
+        this.needed = 0;
+        this.fragmented = false;
+    }
+
+    // Shallow copy constructor
+    public ByteBufferWithInfo (ByteBufferWithInfo bbwi)
+    {
+        this.orb = bbwi.orb;
+        this.debug = bbwi.debug;
+        this.byteBuffer = bbwi.byteBuffer;
+        this.buflen = bbwi.buflen;
+        this.byteBuffer.limit(this.buflen);
+        position(bbwi.position());
+        this.needed = bbwi.needed;
+        this.fragmented = bbwi.fragmented;
+    }
+
+    // So IIOPOutputStream seems more intuitive
+    public int getSize()
+    {
+        return position();
+    }
+
+    // accessor to buflen
+    public int getLength()
+    {
+         return buflen;
+    }
+
+    // get position in this buffer
+    public int position()
+    {
+        // REVISIT - This should be changed to return the
+        //           value of byteBuffer.position() rather
+        //           than this.index. But, byteBuffer.position
+        //           is manipulated via ByteBuffer writes, reads,
+        //           gets and puts. These locations need to be
+        //           investigated and updated before
+        //           byteBuffer.position() can be returned here.
+        // return byteBuffer.position();
+        return index;
+    }
+
+    // set position in this buffer
+    public void position(int newPosition)
+    {
+        // REVISIT - This should be changed to set only the
+        //           value of byteBuffer.position rather
+        //           than this.index. This change should be made
+        //           in conjunction with the change to this.position().
+        byteBuffer.position(newPosition);
+        index = newPosition;
+    }
+
+    // mutator to buflen
+    public void setLength(int theLength)
+    {
+        buflen = theLength;
+        byteBuffer.limit(buflen);
+    }
+
+    // Grow byteBuffer to a size larger than position() + needed
+    public void growBuffer(com.sun.corba.se.spi.orb.ORB orb)
+    {
+        // This code used to live directly in CDROutputStream.grow.
+
+        // Recall that the byteBuffer size is 'really' the limit or
+        // buflen.
+
+        int newLength = byteBuffer.limit() * 2;
+
+        while (position() + needed >= newLength)
+            newLength = newLength * 2;
+
+        ByteBufferPool byteBufferPool = orb.getByteBufferPool();
+        ByteBuffer newBB = byteBufferPool.getByteBuffer(newLength);
+
+        if (debug)
+        {
+            // print address of ByteBuffer just gotten
+            int newbbAddress = System.identityHashCode(newBB);
+            StringBuffer sb = new StringBuffer(80);
+            sb.append("growBuffer() - got ByteBuffer id (");
+            sb.append(newbbAddress).append(") from ByteBufferPool.");
+            String msgStr = sb.toString();
+            dprint(msgStr);
+        }
+
+        byteBuffer.position(0);
+        newBB.put(byteBuffer);
+
+        // return 'old' byteBuffer reference to the ByteBuffer pool
+        if (debug)
+        {
+            // print address of ByteBuffer being released
+            int bbAddress = System.identityHashCode(byteBuffer);
+            StringBuffer sb = new StringBuffer(80);
+            sb.append("growBuffer() - releasing ByteBuffer id (");
+            sb.append(bbAddress).append(") to ByteBufferPool.");
+            String msgStr2 = sb.toString();
+            dprint(msgStr2);
+        }
+        byteBufferPool.releaseByteBuffer(byteBuffer);
+
+        // update the byteBuffer with a larger ByteBuffer
+        byteBuffer = newBB;
+
+        // limit and buflen must be set to newLength.
+        buflen = newLength;
+        byteBuffer.limit(buflen);
+    }
+
+    public String toString()
+    {
+        StringBuffer str = new StringBuffer("ByteBufferWithInfo:");
+
+        str.append(" buflen = " + buflen);
+        str.append(" byteBuffer.limit = " + byteBuffer.limit());
+        str.append(" index = " + index);
+        str.append(" position = " + position());
+        str.append(" needed = " + needed);
+        str.append(" byteBuffer = " + (byteBuffer == null ? "null" : "not null"));
+        str.append(" fragmented = " + fragmented);
+
+        return str.toString();
+    }
+
+    protected void dprint(String msg)
+    {
+        ORBUtility.dprint("ByteBufferWithInfo", msg);
+    }
+}

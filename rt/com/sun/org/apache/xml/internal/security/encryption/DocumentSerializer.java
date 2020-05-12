@@ -1,119 +1,114 @@
-/*     */ package com.sun.org.apache.xml.internal.security.encryption;
-/*     */ 
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.StringReader;
-/*     */ import javax.xml.parsers.DocumentBuilder;
-/*     */ import javax.xml.parsers.DocumentBuilderFactory;
-/*     */ import javax.xml.parsers.ParserConfigurationException;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.DocumentFragment;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DocumentSerializer
-/*     */   extends AbstractSerializer
-/*     */ {
-/*     */   protected DocumentBuilderFactory dbf;
-/*     */   
-/*     */   public Node deserialize(byte[] paramArrayOfbyte, Node paramNode) throws XMLEncryptionException {
-/*  55 */     byte[] arrayOfByte = createContext(paramArrayOfbyte, paramNode);
-/*  56 */     return deserialize(paramNode, new InputSource(new ByteArrayInputStream(arrayOfByte)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node deserialize(String paramString, Node paramNode) throws XMLEncryptionException {
-/*  66 */     String str = createContext(paramString, paramNode);
-/*  67 */     return deserialize(paramNode, new InputSource(new StringReader(str)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Node deserialize(Node paramNode, InputSource paramInputSource) throws XMLEncryptionException {
-/*     */     try {
-/*  78 */       if (this.dbf == null) {
-/*  79 */         this.dbf = DocumentBuilderFactory.newInstance();
-/*  80 */         this.dbf.setNamespaceAware(true);
-/*  81 */         this.dbf.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", Boolean.TRUE.booleanValue());
-/*  82 */         this.dbf.setAttribute("http://xml.org/sax/features/namespaces", Boolean.TRUE);
-/*  83 */         this.dbf.setValidating(false);
-/*     */       } 
-/*  85 */       DocumentBuilder documentBuilder = this.dbf.newDocumentBuilder();
-/*  86 */       Document document1 = documentBuilder.parse(paramInputSource);
-/*     */       
-/*  88 */       Document document2 = null;
-/*  89 */       if (9 == paramNode.getNodeType()) {
-/*  90 */         document2 = (Document)paramNode;
-/*     */       } else {
-/*  92 */         document2 = paramNode.getOwnerDocument();
-/*     */       } 
-/*     */ 
-/*     */       
-/*  96 */       Element element = (Element)document2.importNode(document1.getDocumentElement(), true);
-/*  97 */       DocumentFragment documentFragment = document2.createDocumentFragment();
-/*  98 */       Node node = element.getFirstChild();
-/*  99 */       while (node != null) {
-/* 100 */         element.removeChild(node);
-/* 101 */         documentFragment.appendChild(node);
-/* 102 */         node = element.getFirstChild();
-/*     */       } 
-/* 104 */       return documentFragment;
-/* 105 */     } catch (SAXException sAXException) {
-/* 106 */       throw new XMLEncryptionException("empty", sAXException);
-/* 107 */     } catch (ParserConfigurationException parserConfigurationException) {
-/* 108 */       throw new XMLEncryptionException("empty", parserConfigurationException);
-/* 109 */     } catch (IOException iOException) {
-/* 110 */       throw new XMLEncryptionException("empty", iOException);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\encryption\DocumentSerializer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.encryption;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+/**
+ * Converts <code>String</code>s into <code>Node</code>s and visa versa.
+ */
+public class DocumentSerializer extends AbstractSerializer {
+
+    protected DocumentBuilderFactory dbf;
+
+    /**
+     * @param source
+     * @param ctx
+     * @return the Node resulting from the parse of the source
+     * @throws XMLEncryptionException
+     */
+    public Node deserialize(byte[] source, Node ctx) throws XMLEncryptionException {
+        byte[] fragment = createContext(source, ctx);
+        return deserialize(ctx, new InputSource(new ByteArrayInputStream(fragment)));
+    }
+
+    /**
+     * @param source
+     * @param ctx
+     * @return the Node resulting from the parse of the source
+     * @throws XMLEncryptionException
+     */
+    public Node deserialize(String source, Node ctx) throws XMLEncryptionException {
+        String fragment = createContext(source, ctx);
+        return deserialize(ctx, new InputSource(new StringReader(fragment)));
+    }
+
+    /**
+     * @param ctx
+     * @param inputSource
+     * @return the Node resulting from the parse of the source
+     * @throws XMLEncryptionException
+     */
+    private Node deserialize(Node ctx, InputSource inputSource) throws XMLEncryptionException {
+        try {
+            if (dbf == null) {
+                dbf = DocumentBuilderFactory.newInstance();
+                dbf.setNamespaceAware(true);
+                dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+                dbf.setAttribute("http://xml.org/sax/features/namespaces", Boolean.TRUE);
+                dbf.setValidating(false);
+            }
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document d = db.parse(inputSource);
+
+            Document contextDocument = null;
+            if (Node.DOCUMENT_NODE == ctx.getNodeType()) {
+                contextDocument = (Document)ctx;
+            } else {
+                contextDocument = ctx.getOwnerDocument();
+            }
+
+            Element fragElt =
+                    (Element) contextDocument.importNode(d.getDocumentElement(), true);
+            DocumentFragment result = contextDocument.createDocumentFragment();
+            Node child = fragElt.getFirstChild();
+            while (child != null) {
+                fragElt.removeChild(child);
+                result.appendChild(child);
+                child = fragElt.getFirstChild();
+            }
+            return result;
+        } catch (SAXException se) {
+            throw new XMLEncryptionException("empty", se);
+        } catch (ParserConfigurationException pce) {
+            throw new XMLEncryptionException("empty", pce);
+        } catch (IOException ioe) {
+            throw new XMLEncryptionException("empty", ioe);
+        }
+    }
+
+}

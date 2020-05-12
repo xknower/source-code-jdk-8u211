@@ -1,403 +1,406 @@
-/*     */ package com.sun.jmx.snmp.agent;
-/*     */ 
-/*     */ import com.sun.jmx.snmp.SnmpStatusException;
-/*     */ import com.sun.jmx.snmp.SnmpVarBind;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class SnmpMibNode
-/*     */   implements Serializable
-/*     */ {
-/*     */   protected int[] varList;
-/*     */   
-/*     */   public long getNextVarId(long paramLong, Object paramObject) throws SnmpStatusException {
-/*  79 */     return getNextIdentifier(this.varList, paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getNextVarId(long paramLong, Object paramObject, int paramInt) throws SnmpStatusException {
-/* 104 */     long l = paramLong;
-/*     */     do {
-/* 106 */       l = getNextVarId(l, paramObject);
-/* 107 */     } while (skipVariable(l, paramObject, paramInt));
-/*     */     
-/* 109 */     return l;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean skipVariable(long paramLong, Object paramObject, int paramInt) {
-/* 133 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void findHandlingNode(SnmpVarBind paramSnmpVarBind, long[] paramArrayOflong, int paramInt, SnmpRequestTree paramSnmpRequestTree) throws SnmpStatusException {
-/* 158 */     throw new SnmpStatusException(225);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   long[] findNextHandlingNode(SnmpVarBind paramSnmpVarBind, long[] paramArrayOflong, int paramInt1, int paramInt2, SnmpRequestTree paramSnmpRequestTree, AcmChecker paramAcmChecker) throws SnmpStatusException {
-/* 186 */     throw new SnmpStatusException(225);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract void get(SnmpMibSubRequest paramSnmpMibSubRequest, int paramInt) throws SnmpStatusException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract void set(SnmpMibSubRequest paramSnmpMibSubRequest, int paramInt) throws SnmpStatusException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract void check(SnmpMibSubRequest paramSnmpMibSubRequest, int paramInt) throws SnmpStatusException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void sort(int[] paramArrayOfint) {
-/* 248 */     QuickSort(paramArrayOfint, 0, paramArrayOfint.length - 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void getRootOid(Vector<Integer> paramVector) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void QuickSort(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 278 */     int i = paramInt1;
-/* 279 */     int j = paramInt2;
-/*     */ 
-/*     */     
-/* 282 */     if (paramInt2 > paramInt1) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 287 */       int k = paramArrayOfint[(paramInt1 + paramInt2) / 2];
-/*     */ 
-/*     */       
-/* 290 */       while (i <= j) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 294 */         while (i < paramInt2 && paramArrayOfint[i] < k) {
-/* 295 */           i++;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 300 */         while (j > paramInt1 && paramArrayOfint[j] > k) {
-/* 301 */           j--;
-/*     */         }
-/*     */         
-/* 304 */         if (i <= j) {
-/* 305 */           swap(paramArrayOfint, i, j);
-/* 306 */           i++;
-/* 307 */           j--;
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 314 */       if (paramInt1 < j) {
-/* 315 */         QuickSort(paramArrayOfint, paramInt1, j);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 320 */       if (i < paramInt2) {
-/* 321 */         QuickSort(paramArrayOfint, i, paramInt2);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final int getNextIdentifier(int[] paramArrayOfint, long paramLong) throws SnmpStatusException {
-/* 346 */     int[] arrayOfInt = paramArrayOfint;
-/* 347 */     int i = (int)paramLong;
-/*     */     
-/* 349 */     if (arrayOfInt == null) {
-/* 350 */       throw new SnmpStatusException(225);
-/*     */     }
-/*     */     
-/* 353 */     int j = 0;
-/* 354 */     int k = arrayOfInt.length;
-/* 355 */     int m = j + (k - j) / 2;
-/* 356 */     int n = 0;
-/*     */ 
-/*     */ 
-/*     */     
-/* 360 */     if (k < 1) {
-/* 361 */       throw new SnmpStatusException(225);
-/*     */     }
-/*     */     
-/* 364 */     if (arrayOfInt[k - 1] <= i) {
-/* 365 */       throw new SnmpStatusException(225);
-/*     */     }
-/*     */     
-/* 368 */     while (j <= k) {
-/* 369 */       n = arrayOfInt[m];
-/* 370 */       if (i == n) {
-/*     */ 
-/*     */         
-/* 373 */         m++;
-/* 374 */         return arrayOfInt[m];
-/*     */       } 
-/* 376 */       if (n < i) {
-/* 377 */         j = m + 1;
-/*     */       } else {
-/* 379 */         k = m - 1;
-/*     */       } 
-/* 381 */       m = j + (k - j) / 2;
-/*     */     } 
-/* 383 */     return arrayOfInt[m];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final void swap(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 393 */     int i = paramArrayOfint[paramInt1];
-/* 394 */     paramArrayOfint[paramInt1] = paramArrayOfint[paramInt2];
-/* 395 */     paramArrayOfint[paramInt2] = i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\agent\SnmpMibNode.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp.agent;
+
+
+
+// java imports
+//
+import java.io.Serializable;
+import java.util.Vector;
+import java.util.Hashtable;
+import java.util.Enumeration;
+
+// jmx imports
+//
+import com.sun.jmx.snmp.SnmpOid;
+import com.sun.jmx.snmp.SnmpValue;
+import com.sun.jmx.snmp.SnmpVarBind;
+import com.sun.jmx.snmp.SnmpDefinitions;
+import com.sun.jmx.snmp.SnmpStatusException;
+
+/**
+ * The <CODE>SnmpMibNode</CODE> class represents a node in an SNMP MIB.
+ * <P>
+ * This class is used internally and by the class generated by
+ * <CODE>mibgen</CODE>.
+ * You should not need to use this class directly.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public abstract class SnmpMibNode implements Serializable {
+
+    // ---------------------------------------------------------------------
+    // PUBLIC METHODS
+    //----------------------------------------------------------------------
+
+    /**
+     * Get the next OID arc corresponding to a readable scalar variable,
+     * a branch leading to a subgroub, or a table.
+     *
+     * @param id Id we start from looking for the next.
+     * @param userData A contextual object containing user-data.
+     *        This object is allocated through the <code>
+     *        {@link com.sun.jmx.snmp.agent.SnmpUserDataFactory}</code>
+     *        for each incoming SNMP request.
+     *
+     * @return The next id in this group.
+     *
+     * @exception SnmpStatusException If no id is found after the given id.
+     */
+    public long getNextVarId(long id, Object userData)
+        throws SnmpStatusException {
+        return getNextIdentifier(varList,id);
+    }
+
+    /**
+     * Get the next OID arc corresponding to a readable scalar variable,
+     * a branch leading to a subgroub, or a table, possibly skipping over
+     * those arcs that must not or cannot be returned.
+     *
+     * Calls {@link #getNextVarId(long,java.lang.Object)} until
+     * {@link #skipVariable(long,java.lang.Object,int)} returns false.
+     *
+     * @param id Id we start from looking for the next.
+     * @param userData A contextual object containing user-data.
+     *        This object is allocated through the <code>
+     *        {@link com.sun.jmx.snmp.agent.SnmpUserDataFactory}</code>
+     *        for each incoming SNMP request.
+     * @param pduVersion Protocol version of the original request PDU.
+     *
+     * @return The next id in this group which can be returned using
+     *         the given PDU's protocol version.
+     *
+     * @exception SnmpStatusException If no id is found after the given id.
+     */
+    public long getNextVarId(long id, Object userData, int pduVersion)
+        throws SnmpStatusException {
+        long varid=id;
+        do {
+            varid = getNextVarId(varid,userData);
+        } while (skipVariable(varid,userData,pduVersion));
+
+        return varid;
+    }
+
+    /**
+     * Hook for subclasses.
+     * The default implementation of this method is to always return
+     * false. Subclasses should redefine this method so that it returns
+     * true when:
+     * <ul><li>the variable is a leaf that is not instantiated,</li>
+     * <li>or the variable is a leaf whose type cannot be returned by that
+     *     version of the protocol (e.g. an Counter64 with SNMPv1).</li>
+     * </ul>
+     *
+     * @param id Id we start from looking for the next.
+     * @param userData A contextual object containing user-data.
+     *        This object is allocated through the <code>
+     *        {@link com.sun.jmx.snmp.agent.SnmpUserDataFactory}</code>
+     *        for each incoming SNMP request.
+     * @param pduVersion Protocol version of the original request PDU.
+     *
+     * @return true if the variable must be skipped by the get-next
+     *         algorithm.
+     */
+    protected boolean skipVariable(long id, Object userData, int pduVersion) {
+        return false;
+    }
+
+    /**
+     * Find the node which handles a varbind, and register it in the
+     * SnmpRequestTree. This method is a pure internal method. You should
+     * never try to call it directly.
+     *
+     * @param varbind  The varbind to be handled
+     *
+     * @param oid      The OID array extracted from the varbind
+     *
+     * @param depth    The depth reached in the OID at this step of the
+     *                 processing.
+     *
+     * @param handlers The Hashtable in which the varbind will be registered
+     *                 with its handling node. This hashtable contains
+     *                 <CODE>SnmpRequestTree.Handler</CODE> items.
+     *
+     * @exception SnmpStatusException No handling node was found.
+     **/
+    void findHandlingNode(SnmpVarBind varbind,
+                          long[] oid, int depth,
+                          SnmpRequestTree handlers)
+        throws SnmpStatusException {
+        throw new SnmpStatusException(SnmpStatusException.noSuchObject);
+    }
+
+    /**
+     * Find the node which handles the leaf that immediately follows the
+     * given varbind OID, and register the it in the SnmpRequestTree.
+     * This method is a pure internal method. You should never try to call
+     * it directly.
+     *
+     * @param varbind  The varbind to be handled
+     *
+     * @param oid      The OID array extracted from the varbind
+     *
+     * @param depth    The depth reached in the OID at this step of the
+     *                 processing.
+     *
+     * @param handlers The Hashtable in which the varbind will be registered
+     *                 with its handling node. This hashtable contains
+     *                 SnmpRequestTree.Handler items.
+     *
+     * @return The SnmpOid of the next leaf.
+     *
+     * @exception SnmpStatusException No handling node was found.
+     **/
+    long[] findNextHandlingNode(SnmpVarBind varbind,
+                                 long[] oid, int pos, int depth,
+                                 SnmpRequestTree handlers, AcmChecker checker)
+        throws SnmpStatusException {
+        throw new SnmpStatusException(SnmpStatusException.noSuchObject);
+    }
+
+    /**
+     * Generic handling of the <CODE>get</CODE> operation.
+     *
+     * <p> You can override this method if you need to implement some
+     * specific policies for minimizing the accesses made to some remote
+     * underlying resources.
+     * <p>
+     *
+     * @param req   The sub-request that must be handled by this node.
+     *
+     * @param depth The depth reached in the OID tree.
+     *
+     * @exception SnmpStatusException An error occurred while accessing
+     *  the MIB node.
+     */
+    public abstract void get(SnmpMibSubRequest req, int depth)
+        throws SnmpStatusException;
+
+    /**
+     * Generic handling of the <CODE>set</CODE> operation.
+     * <p> You can override this method if you need to implement some
+     * specific policies for minimizing the accesses made to some remote
+     * underlying resources.
+     * <p>
+     *
+     * @param req   The sub-request that must be handled by this node.
+     *
+     * @param depth The depth reached in the OID tree.
+     *
+     * @exception SnmpStatusException An error occurred while accessing
+     *  the MIB node.
+     */
+    public abstract void set(SnmpMibSubRequest req, int depth)
+        throws SnmpStatusException;
+
+    /**
+     * Generic handling of the <CODE>check</CODE> operation.
+     * <p> You can override this method if you need to implement some
+     * specific policies for minimizing the accesses made to some remote
+     * underlying resources, or if you need to implement some consistency
+     * checks between the different values provided in the varbind list.
+     * <p>
+     *
+     * @param req   The sub-request that must be handled by this node.
+     *
+     * @param depth The depth reached in the OID tree.
+     *
+     * @exception SnmpStatusException An error occurred while accessing
+     *  the MIB node.
+     */
+    public abstract void check(SnmpMibSubRequest req, int depth)
+        throws SnmpStatusException;
+
+    /**
+     * Sorts the specified integer array.
+     *
+     * @param array An integer array.
+     */
+    static public void sort(int array[]) {
+        QuickSort(array, 0, array.length - 1);
+    }
+
+    /**
+     * Computes the root OID of the MIB.
+     */
+    public void getRootOid(Vector<Integer> result) {
+        return;
+    }
+
+    //----------------------------------------------------------------------
+    // PACKAGE METHODS
+    //----------------------------------------------------------------------
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort
+     * algorithm.  This will handle arrays that are already
+     * sorted, and arrays with duplicate keys.
+     *
+     * If you think of a one dimensional array as going from
+     * the lowest index on the left to the highest index on the right
+     * then the parameters to this function are lowest index or
+     * left and highest index or right.  The first time you call
+     * this function it will be with the parameters 0, a.length - 1.
+     *
+     * @param a An integer array.
+     * @param lo0 Left boundary of array partition.
+     * @param hi0 Right boundary of array partition.
+     */
+    static void QuickSort(int a[], int lo0, int hi0) {
+        int lo = lo0;
+        int hi = hi0;
+        int mid;
+
+        if ( hi0 > lo0) {
+
+            /* Arbitrarily establishing partition element as the midpoint of
+             * the array.
+             */
+            mid = a[ ( lo0 + hi0 ) / 2 ];
+
+            // loop through the array until indices cross
+            while( lo <= hi ) {
+                /* find the first element that is greater than or equal to
+                 * the partition element starting from the left Index.
+                 */
+                while( ( lo < hi0 )  && ( a[lo] < mid ))
+                    ++lo;
+
+                /* find an element that is smaller than or equal to
+                 * the partition element starting from the right Index.
+                 */
+                while( ( hi > lo0 ) && ( a[hi] > mid ))
+                    --hi;
+
+                // if the indexes have not crossed, swap
+                if( lo <= hi ) {
+                    swap(a, lo, hi);
+                    ++lo;
+                    --hi;
+                }
+            }
+
+            /* If the right index has not reached the left side of array
+             * must now sort the left partition.
+             */
+            if( lo0 < hi )
+                QuickSort( a, lo0, hi );
+
+            /* If the left index has not reached the right side of array
+             * must now sort the right partition.
+             */
+            if( lo < hi0 )
+                QuickSort( a, lo, hi0 );
+
+        }
+    }
+
+    //----------------------------------------------------------------------
+    // PROTECTED METHODS
+    //----------------------------------------------------------------------
+
+    /**
+     * This will give the first element greater than <CODE>value</CODE>
+     * in a sorted array.
+     * If there is no element of the array greater than <CODE>value</CODE>,
+     * the method will throw a <CODE>SnmpStatusException</CODE>.
+     *
+     * @param table A sorted integer array.
+     *
+     * @param value The greatest value.
+     *
+     * @exception SnmpStatusException If there is no element greater than
+     *     <CODE>value</CODE>.
+     */
+    final static protected int getNextIdentifier(int table[], long value)
+        throws SnmpStatusException {
+
+        final int[] a = table;
+        final int val= (int) value;
+
+        if (a == null) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchObject);
+        }
+
+        int low= 0;
+        int max= a.length;
+        int curr= low + (max-low)/2;
+        int elmt= 0;
+
+        // Basic check
+        //
+        if (max < 1) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchObject);
+        }
+
+        if (a[max-1] <= val) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchObject);
+        }
+
+        while (low <= max) {
+            elmt= a[curr];
+            if (val == elmt) {
+                // We ned to get the next index ...
+                //
+                curr++;
+                return a[curr];
+            }
+            if (elmt < val) {
+                low= curr +1;
+            } else {
+                max= curr -1;
+            }
+            curr= low + (max-low)/2;
+        }
+        return a[curr];
+    }
+
+
+    //----------------------------------------------------------------------
+    // PRIVATE METHODS
+    //----------------------------------------------------------------------
+
+    final static private void swap(int a[], int i, int j) {
+        int T;
+        T = a[i];
+        a[i] = a[j];
+        a[j] = T;
+    }
+
+    //----------------------------------------------------------------------
+    // PROTECTED VARIABLES
+    //----------------------------------------------------------------------
+
+    /**
+     * Contains the list of variable identifiers.
+     */
+    protected int[] varList;
+}

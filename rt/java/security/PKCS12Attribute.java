@@ -1,291 +1,285 @@
-/*     */ package java.security;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.math.BigInteger;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.regex.Pattern;
-/*     */ import sun.security.util.Debug;
-/*     */ import sun.security.util.DerInputStream;
-/*     */ import sun.security.util.DerOutputStream;
-/*     */ import sun.security.util.DerValue;
-/*     */ import sun.security.util.ObjectIdentifier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class PKCS12Attribute
-/*     */   implements KeyStore.Entry.Attribute
-/*     */ {
-/*  44 */   private static final Pattern COLON_SEPARATED_HEX_PAIRS = Pattern.compile("^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2})+$");
-/*     */   public PKCS12Attribute(String paramString1, String paramString2) {
-/*     */     ObjectIdentifier objectIdentifier;
-/*     */     String[] arrayOfString;
-/*  48 */     this.hashValue = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  73 */     if (paramString1 == null || paramString2 == null) {
-/*  74 */       throw new NullPointerException();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/*  79 */       objectIdentifier = new ObjectIdentifier(paramString1);
-/*  80 */     } catch (IOException iOException) {
-/*  81 */       throw new IllegalArgumentException("Incorrect format: name", iOException);
-/*     */     } 
-/*  83 */     this.name = paramString1;
-/*     */ 
-/*     */     
-/*  86 */     int i = paramString2.length();
-/*     */     
-/*  88 */     if (paramString2.charAt(0) == '[' && paramString2.charAt(i - 1) == ']') {
-/*  89 */       arrayOfString = paramString2.substring(1, i - 1).split(", ");
-/*     */     } else {
-/*  91 */       arrayOfString = new String[] { paramString2 };
-/*     */     } 
-/*  93 */     this.value = paramString2;
-/*     */     
-/*     */     try {
-/*  96 */       this.encoded = encode(objectIdentifier, arrayOfString);
-/*  97 */     } catch (IOException iOException) {
-/*  98 */       throw new IllegalArgumentException("Incorrect format: value", iOException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String name;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String value;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private byte[] encoded;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int hashValue;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PKCS12Attribute(byte[] paramArrayOfbyte) {
-/*     */     this.hashValue = -1;
-/* 125 */     if (paramArrayOfbyte == null) {
-/* 126 */       throw new NullPointerException();
-/*     */     }
-/* 128 */     this.encoded = (byte[])paramArrayOfbyte.clone();
-/*     */     
-/*     */     try {
-/* 131 */       parse(paramArrayOfbyte);
-/* 132 */     } catch (IOException iOException) {
-/* 133 */       throw new IllegalArgumentException("Incorrect format: encoded", iOException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 145 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue() {
-/* 172 */     return this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] getEncoded() {
-/* 181 */     return (byte[])this.encoded.clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 195 */     if (this == paramObject) {
-/* 196 */       return true;
-/*     */     }
-/* 198 */     if (!(paramObject instanceof PKCS12Attribute)) {
-/* 199 */       return false;
-/*     */     }
-/* 201 */     return Arrays.equals(this.encoded, ((PKCS12Attribute)paramObject).getEncoded());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 212 */     if (this.hashValue == -1) {
-/* 213 */       Arrays.hashCode(this.encoded);
-/*     */     }
-/* 215 */     return this.hashValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 225 */     return this.name + "=" + this.value;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private byte[] encode(ObjectIdentifier paramObjectIdentifier, String[] paramArrayOfString) throws IOException {
-/* 230 */     DerOutputStream derOutputStream1 = new DerOutputStream();
-/* 231 */     derOutputStream1.putOID(paramObjectIdentifier);
-/* 232 */     DerOutputStream derOutputStream2 = new DerOutputStream();
-/* 233 */     for (String str : paramArrayOfString) {
-/* 234 */       if (COLON_SEPARATED_HEX_PAIRS.matcher(str).matches()) {
-/*     */         
-/* 236 */         byte[] arrayOfByte = (new BigInteger(str.replace(":", ""), 16)).toByteArray();
-/* 237 */         if (arrayOfByte[0] == 0) {
-/* 238 */           arrayOfByte = Arrays.copyOfRange(arrayOfByte, 1, arrayOfByte.length);
-/*     */         }
-/* 240 */         derOutputStream2.putOctetString(arrayOfByte);
-/*     */       } else {
-/* 242 */         derOutputStream2.putUTF8String(str);
-/*     */       } 
-/*     */     } 
-/* 245 */     derOutputStream1.write((byte)49, derOutputStream2);
-/* 246 */     DerOutputStream derOutputStream3 = new DerOutputStream();
-/* 247 */     derOutputStream3.write((byte)48, derOutputStream1);
-/*     */     
-/* 249 */     return derOutputStream3.toByteArray();
-/*     */   }
-/*     */   
-/*     */   private void parse(byte[] paramArrayOfbyte) throws IOException {
-/* 253 */     DerInputStream derInputStream1 = new DerInputStream(paramArrayOfbyte);
-/* 254 */     DerValue[] arrayOfDerValue1 = derInputStream1.getSequence(2);
-/* 255 */     ObjectIdentifier objectIdentifier = arrayOfDerValue1[0].getOID();
-/*     */     
-/* 257 */     DerInputStream derInputStream2 = new DerInputStream(arrayOfDerValue1[1].toByteArray());
-/* 258 */     DerValue[] arrayOfDerValue2 = derInputStream2.getSet(1);
-/* 259 */     String[] arrayOfString = new String[arrayOfDerValue2.length];
-/*     */     
-/* 261 */     for (byte b = 0; b < arrayOfDerValue2.length; b++) {
-/* 262 */       if ((arrayOfDerValue2[b]).tag == 4)
-/* 263 */       { arrayOfString[b] = Debug.toString(arrayOfDerValue2[b].getOctetString()); }
-/* 264 */       else { String str; if ((str = arrayOfDerValue2[b].getAsString()) != null) {
-/*     */           
-/* 266 */           arrayOfString[b] = str;
-/* 267 */         } else if ((arrayOfDerValue2[b]).tag == 6) {
-/* 268 */           arrayOfString[b] = arrayOfDerValue2[b].getOID().toString();
-/* 269 */         } else if ((arrayOfDerValue2[b]).tag == 24) {
-/* 270 */           arrayOfString[b] = arrayOfDerValue2[b].getGeneralizedTime().toString();
-/* 271 */         } else if ((arrayOfDerValue2[b]).tag == 23) {
-/* 272 */           arrayOfString[b] = arrayOfDerValue2[b].getUTCTime().toString();
-/* 273 */         } else if ((arrayOfDerValue2[b]).tag == 2) {
-/* 274 */           arrayOfString[b] = arrayOfDerValue2[b].getBigInteger().toString();
-/* 275 */         } else if ((arrayOfDerValue2[b]).tag == 1) {
-/* 276 */           arrayOfString[b] = String.valueOf(arrayOfDerValue2[b].getBoolean());
-/*     */         } else {
-/* 278 */           arrayOfString[b] = Debug.toString(arrayOfDerValue2[b].getDataBytes());
-/*     */         }  }
-/*     */     
-/*     */     } 
-/* 282 */     this.name = objectIdentifier.toString();
-/* 283 */     this.value = (arrayOfString.length == 1) ? arrayOfString[0] : Arrays.toString((Object[])arrayOfString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\PKCS12Attribute.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.regex.Pattern;
+import sun.security.util.*;
+
+/**
+ * An attribute associated with a PKCS12 keystore entry.
+ * The attribute name is an ASN.1 Object Identifier and the attribute
+ * value is a set of ASN.1 types.
+ *
+ * @since 1.8
+ */
+public final class PKCS12Attribute implements KeyStore.Entry.Attribute {
+
+    private static final Pattern COLON_SEPARATED_HEX_PAIRS =
+        Pattern.compile("^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2})+$");
+    private String name;
+    private String value;
+    private byte[] encoded;
+    private int hashValue = -1;
+
+    /**
+     * Constructs a PKCS12 attribute from its name and value.
+     * The name is an ASN.1 Object Identifier represented as a list of
+     * dot-separated integers.
+     * A string value is represented as the string itself.
+     * A binary value is represented as a string of colon-separated
+     * pairs of hexadecimal digits.
+     * Multi-valued attributes are represented as a comma-separated
+     * list of values, enclosed in square brackets. See
+     * {@link Arrays#toString(java.lang.Object[])}.
+     * <p>
+     * A string value will be DER-encoded as an ASN.1 UTF8String and a
+     * binary value will be DER-encoded as an ASN.1 Octet String.
+     *
+     * @param name the attribute's identifier
+     * @param value the attribute's value
+     *
+     * @exception NullPointerException if {@code name} or {@code value}
+     *     is {@code null}
+     * @exception IllegalArgumentException if {@code name} or
+     *     {@code value} is incorrectly formatted
+     */
+    public PKCS12Attribute(String name, String value) {
+        if (name == null || value == null) {
+            throw new NullPointerException();
+        }
+        // Validate name
+        ObjectIdentifier type;
+        try {
+            type = new ObjectIdentifier(name);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Incorrect format: name", e);
+        }
+        this.name = name;
+
+        // Validate value
+        int length = value.length();
+        String[] values;
+        if (value.charAt(0) == '[' && value.charAt(length - 1) == ']') {
+            values = value.substring(1, length - 1).split(", ");
+        } else {
+            values = new String[]{ value };
+        }
+        this.value = value;
+
+        try {
+            this.encoded = encode(type, values);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Incorrect format: value", e);
+        }
+    }
+
+    /**
+     * Constructs a PKCS12 attribute from its ASN.1 DER encoding.
+     * The DER encoding is specified by the following ASN.1 definition:
+     * <pre>
+     *
+     * Attribute ::= SEQUENCE {
+     *     type   AttributeType,
+     *     values SET OF AttributeValue
+     * }
+     * AttributeType ::= OBJECT IDENTIFIER
+     * AttributeValue ::= ANY defined by type
+     *
+     * </pre>
+     *
+     * @param encoded the attribute's ASN.1 DER encoding. It is cloned
+     *     to prevent subsequent modificaion.
+     *
+     * @exception NullPointerException if {@code encoded} is
+     *     {@code null}
+     * @exception IllegalArgumentException if {@code encoded} is
+     *     incorrectly formatted
+     */
+    public PKCS12Attribute(byte[] encoded) {
+        if (encoded == null) {
+            throw new NullPointerException();
+        }
+        this.encoded = encoded.clone();
+
+        try {
+            parse(encoded);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Incorrect format: encoded", e);
+        }
+    }
+
+    /**
+     * Returns the attribute's ASN.1 Object Identifier represented as a
+     * list of dot-separated integers.
+     *
+     * @return the attribute's identifier
+     */
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Returns the attribute's ASN.1 DER-encoded value as a string.
+     * An ASN.1 DER-encoded value is returned in one of the following
+     * {@code String} formats:
+     * <ul>
+     * <li> the DER encoding of a basic ASN.1 type that has a natural
+     *      string representation is returned as the string itself.
+     *      Such types are currently limited to BOOLEAN, INTEGER,
+     *      OBJECT IDENTIFIER, UTCTime, GeneralizedTime and the
+     *      following six ASN.1 string types: UTF8String,
+     *      PrintableString, T61String, IA5String, BMPString and
+     *      GeneralString.
+     * <li> the DER encoding of any other ASN.1 type is not decoded but
+     *      returned as a binary string of colon-separated pairs of
+     *      hexadecimal digits.
+     * </ul>
+     * Multi-valued attributes are represented as a comma-separated
+     * list of values, enclosed in square brackets. See
+     * {@link Arrays#toString(java.lang.Object[])}.
+     *
+     * @return the attribute value's string encoding
+     */
+    @Override
+    public String getValue() {
+        return value;
+    }
+
+    /**
+     * Returns the attribute's ASN.1 DER encoding.
+     *
+     * @return a clone of the attribute's DER encoding
+     */
+    public byte[] getEncoded() {
+        return encoded.clone();
+    }
+
+    /**
+     * Compares this {@code PKCS12Attribute} and a specified object for
+     * equality.
+     *
+     * @param obj the comparison object
+     *
+     * @return true if {@code obj} is a {@code PKCS12Attribute} and
+     * their DER encodings are equal.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof PKCS12Attribute)) {
+            return false;
+        }
+        return Arrays.equals(encoded, ((PKCS12Attribute) obj).getEncoded());
+    }
+
+    /**
+     * Returns the hashcode for this {@code PKCS12Attribute}.
+     * The hash code is computed from its DER encoding.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        if (hashValue == -1) {
+            Arrays.hashCode(encoded);
+        }
+        return hashValue;
+    }
+
+    /**
+     * Returns a string representation of this {@code PKCS12Attribute}.
+     *
+     * @return a name/value pair separated by an 'equals' symbol
+     */
+    @Override
+    public String toString() {
+        return (name + "=" + value);
+    }
+
+    private byte[] encode(ObjectIdentifier type, String[] values)
+            throws IOException {
+        DerOutputStream attribute = new DerOutputStream();
+        attribute.putOID(type);
+        DerOutputStream attrContent = new DerOutputStream();
+        for (String value : values) {
+            if (COLON_SEPARATED_HEX_PAIRS.matcher(value).matches()) {
+                byte[] bytes =
+                    new BigInteger(value.replace(":", ""), 16).toByteArray();
+                if (bytes[0] == 0) {
+                    bytes = Arrays.copyOfRange(bytes, 1, bytes.length);
+                }
+                attrContent.putOctetString(bytes);
+            } else {
+                attrContent.putUTF8String(value);
+            }
+        }
+        attribute.write(DerValue.tag_Set, attrContent);
+        DerOutputStream attributeValue = new DerOutputStream();
+        attributeValue.write(DerValue.tag_Sequence, attribute);
+
+        return attributeValue.toByteArray();
+    }
+
+    private void parse(byte[] encoded) throws IOException {
+        DerInputStream attributeValue = new DerInputStream(encoded);
+        DerValue[] attrSeq = attributeValue.getSequence(2);
+        ObjectIdentifier type = attrSeq[0].getOID();
+        DerInputStream attrContent =
+            new DerInputStream(attrSeq[1].toByteArray());
+        DerValue[] attrValueSet = attrContent.getSet(1);
+        String[] values = new String[attrValueSet.length];
+        String printableString;
+        for (int i = 0; i < attrValueSet.length; i++) {
+            if (attrValueSet[i].tag == DerValue.tag_OctetString) {
+                values[i] = Debug.toString(attrValueSet[i].getOctetString());
+            } else if ((printableString = attrValueSet[i].getAsString())
+                != null) {
+                values[i] = printableString;
+            } else if (attrValueSet[i].tag == DerValue.tag_ObjectId) {
+                values[i] = attrValueSet[i].getOID().toString();
+            } else if (attrValueSet[i].tag == DerValue.tag_GeneralizedTime) {
+                values[i] = attrValueSet[i].getGeneralizedTime().toString();
+            } else if (attrValueSet[i].tag == DerValue.tag_UtcTime) {
+                values[i] = attrValueSet[i].getUTCTime().toString();
+            } else if (attrValueSet[i].tag == DerValue.tag_Integer) {
+                values[i] = attrValueSet[i].getBigInteger().toString();
+            } else if (attrValueSet[i].tag == DerValue.tag_Boolean) {
+                values[i] = String.valueOf(attrValueSet[i].getBoolean());
+            } else {
+                values[i] = Debug.toString(attrValueSet[i].getDataBytes());
+            }
+        }
+
+        this.name = type.toString();
+        this.value = values.length == 1 ? values[0] : Arrays.toString(values);
+    }
+}

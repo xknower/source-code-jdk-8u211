@@ -1,2750 +1,2744 @@
-/*      */ package javax.swing.text;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.font.TextAttribute;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.lang.ref.ReferenceQueue;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.Stack;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.SwingUtilities;
-/*      */ import javax.swing.event.ChangeEvent;
-/*      */ import javax.swing.event.ChangeListener;
-/*      */ import javax.swing.event.DocumentEvent;
-/*      */ import javax.swing.event.DocumentListener;
-/*      */ import javax.swing.event.UndoableEditEvent;
-/*      */ import javax.swing.undo.AbstractUndoableEdit;
-/*      */ import javax.swing.undo.CannotRedoException;
-/*      */ import javax.swing.undo.CannotUndoException;
-/*      */ import javax.swing.undo.UndoableEdit;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class DefaultStyledDocument
-/*      */   extends AbstractDocument
-/*      */   implements StyledDocument
-/*      */ {
-/*      */   public static final int BUFFER_SIZE_DEFAULT = 4096;
-/*      */   protected ElementBuffer buffer;
-/*      */   private transient Vector<Style> listeningStyles;
-/*      */   private transient ChangeListener styleChangeListener;
-/*      */   private transient ChangeListener styleContextChangeListener;
-/*      */   private transient ChangeUpdateRunnable updateRunnable;
-/*      */   
-/*      */   public DefaultStyledDocument(AbstractDocument.Content paramContent, StyleContext paramStyleContext) {
-/*   82 */     super(paramContent, paramStyleContext);
-/*   83 */     this.listeningStyles = new Vector<>();
-/*   84 */     this.buffer = new ElementBuffer(createDefaultRoot());
-/*   85 */     Style style = paramStyleContext.getStyle("default");
-/*   86 */     setLogicalStyle(0, style);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DefaultStyledDocument(StyleContext paramStyleContext) {
-/*   96 */     this(new GapContent(4096), paramStyleContext);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DefaultStyledDocument() {
-/*  106 */     this(new GapContent(4096), new StyleContext());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element getDefaultRootElement() {
-/*  116 */     return this.buffer.getRootElement();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void create(ElementSpec[] paramArrayOfElementSpec) {
-/*      */     try {
-/*  127 */       if (getLength() != 0) {
-/*  128 */         remove(0, getLength());
-/*      */       }
-/*  130 */       writeLock();
-/*      */ 
-/*      */       
-/*  133 */       AbstractDocument.Content content = getContent();
-/*  134 */       int i = paramArrayOfElementSpec.length;
-/*  135 */       StringBuilder stringBuilder = new StringBuilder();
-/*  136 */       for (byte b = 0; b < i; b++) {
-/*  137 */         ElementSpec elementSpec = paramArrayOfElementSpec[b];
-/*  138 */         if (elementSpec.getLength() > 0) {
-/*  139 */           stringBuilder.append(elementSpec.getArray(), elementSpec.getOffset(), elementSpec.getLength());
-/*      */         }
-/*      */       } 
-/*  142 */       UndoableEdit undoableEdit = content.insertString(0, stringBuilder.toString());
-/*      */ 
-/*      */       
-/*  145 */       int j = stringBuilder.length();
-/*  146 */       AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(this, 0, j, DocumentEvent.EventType.INSERT);
-/*      */       
-/*  148 */       defaultDocumentEvent.addEdit(undoableEdit);
-/*  149 */       this.buffer.create(j, paramArrayOfElementSpec, defaultDocumentEvent);
-/*      */ 
-/*      */       
-/*  152 */       super.insertUpdate(defaultDocumentEvent, null);
-/*      */ 
-/*      */       
-/*  155 */       defaultDocumentEvent.end();
-/*  156 */       fireInsertUpdate(defaultDocumentEvent);
-/*  157 */       fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));
-/*  158 */     } catch (BadLocationException badLocationException) {
-/*  159 */       throw new StateInvariantError("problem initializing");
-/*      */     } finally {
-/*  161 */       writeUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void insert(int paramInt, ElementSpec[] paramArrayOfElementSpec) throws BadLocationException {
-/*  184 */     if (paramArrayOfElementSpec == null || paramArrayOfElementSpec.length == 0) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*      */     try {
-/*  189 */       writeLock();
-/*      */ 
-/*      */       
-/*  192 */       AbstractDocument.Content content = getContent();
-/*  193 */       int i = paramArrayOfElementSpec.length;
-/*  194 */       StringBuilder stringBuilder = new StringBuilder();
-/*  195 */       for (byte b = 0; b < i; b++) {
-/*  196 */         ElementSpec elementSpec = paramArrayOfElementSpec[b];
-/*  197 */         if (elementSpec.getLength() > 0) {
-/*  198 */           stringBuilder.append(elementSpec.getArray(), elementSpec.getOffset(), elementSpec.getLength());
-/*      */         }
-/*      */       } 
-/*  201 */       if (stringBuilder.length() == 0) {
-/*      */         return;
-/*      */       }
-/*      */       
-/*  205 */       UndoableEdit undoableEdit = content.insertString(paramInt, stringBuilder.toString());
-/*      */ 
-/*      */       
-/*  208 */       int j = stringBuilder.length();
-/*  209 */       AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(this, paramInt, j, DocumentEvent.EventType.INSERT);
-/*      */       
-/*  211 */       defaultDocumentEvent.addEdit(undoableEdit);
-/*  212 */       this.buffer.insert(paramInt, j, paramArrayOfElementSpec, defaultDocumentEvent);
-/*      */ 
-/*      */       
-/*  215 */       super.insertUpdate(defaultDocumentEvent, null);
-/*      */ 
-/*      */       
-/*  218 */       defaultDocumentEvent.end();
-/*  219 */       fireInsertUpdate(defaultDocumentEvent);
-/*  220 */       fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));
-/*      */     } finally {
-/*  222 */       writeUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeElement(Element paramElement) {
-/*      */     try {
-/*  265 */       writeLock();
-/*  266 */       removeElementImpl(paramElement);
-/*      */     } finally {
-/*  268 */       writeUnlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void removeElementImpl(Element paramElement) {
-/*  273 */     if (paramElement.getDocument() != this) {
-/*  274 */       throw new IllegalArgumentException("element doesn't belong to document");
-/*      */     }
-/*  276 */     AbstractDocument.BranchElement branchElement = (AbstractDocument.BranchElement)paramElement.getParentElement();
-/*  277 */     if (branchElement == null) {
-/*  278 */       throw new IllegalArgumentException("can't remove the root element");
-/*      */     }
-/*      */     
-/*  281 */     int i = paramElement.getStartOffset();
-/*  282 */     int j = i;
-/*  283 */     int k = paramElement.getEndOffset();
-/*  284 */     int m = k;
-/*  285 */     int n = getLength() + 1;
-/*  286 */     AbstractDocument.Content content = getContent();
-/*  287 */     boolean bool = false;
-/*  288 */     boolean bool1 = Utilities.isComposedTextElement(paramElement);
-/*      */     
-/*  290 */     if (k >= n) {
-/*      */       
-/*  292 */       if (i <= 0) {
-/*  293 */         throw new IllegalArgumentException("can't remove the whole content");
-/*      */       }
-/*  295 */       m = n - 1;
-/*      */       try {
-/*  297 */         if (content.getString(i - 1, 1).charAt(0) == '\n') {
-/*  298 */           j--;
-/*      */         }
-/*  300 */       } catch (BadLocationException badLocationException) {
-/*  301 */         throw new IllegalStateException(badLocationException);
-/*      */       } 
-/*  303 */       bool = true;
-/*      */     } 
-/*  305 */     int i1 = m - j;
-/*      */     
-/*  307 */     AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(this, j, i1, DocumentEvent.EventType.REMOVE);
-/*      */     
-/*  309 */     UndoableEdit undoableEdit = null;
-/*      */     
-/*  311 */     while (branchElement.getElementCount() == 1) {
-/*  312 */       paramElement = branchElement;
-/*  313 */       branchElement = (AbstractDocument.BranchElement)branchElement.getParentElement();
-/*  314 */       if (branchElement == null) {
-/*  315 */         throw new IllegalStateException("invalid element structure");
-/*      */       }
-/*      */     } 
-/*  318 */     Element[] arrayOfElement1 = { paramElement };
-/*  319 */     Element[] arrayOfElement2 = new Element[0];
-/*  320 */     int i2 = branchElement.getElementIndex(i);
-/*  321 */     branchElement.replace(i2, 1, arrayOfElement2);
-/*  322 */     defaultDocumentEvent.addEdit(new AbstractDocument.ElementEdit(branchElement, i2, arrayOfElement1, arrayOfElement2));
-/*  323 */     if (i1 > 0) {
-/*      */       try {
-/*  325 */         undoableEdit = content.remove(j, i1);
-/*  326 */         if (undoableEdit != null) {
-/*  327 */           defaultDocumentEvent.addEdit(undoableEdit);
-/*      */         }
-/*  329 */       } catch (BadLocationException badLocationException) {
-/*      */         
-/*  331 */         throw new IllegalStateException(badLocationException);
-/*      */       } 
-/*  333 */       n -= i1;
-/*      */     } 
-/*      */     
-/*  336 */     if (bool) {
-/*      */       
-/*  338 */       Element element1 = branchElement.getElement(branchElement.getElementCount() - 1);
-/*  339 */       while (element1 != null && !element1.isLeaf()) {
-/*  340 */         element1 = element1.getElement(element1.getElementCount() - 1);
-/*      */       }
-/*  342 */       if (element1 == null) {
-/*  343 */         throw new IllegalStateException("invalid element structure");
-/*      */       }
-/*  345 */       int i3 = element1.getStartOffset();
-/*  346 */       AbstractDocument.BranchElement branchElement1 = (AbstractDocument.BranchElement)element1.getParentElement();
-/*  347 */       int i4 = branchElement1.getElementIndex(i3);
-/*      */       
-/*  349 */       Element element2 = createLeafElement(branchElement1, element1.getAttributes(), i3, n);
-/*      */       
-/*  351 */       Element[] arrayOfElement3 = { element1 };
-/*  352 */       Element[] arrayOfElement4 = { element2 };
-/*  353 */       branchElement1.replace(i4, 1, arrayOfElement4);
-/*  354 */       defaultDocumentEvent.addEdit(new AbstractDocument.ElementEdit(branchElement1, i4, arrayOfElement3, arrayOfElement4));
-/*      */     } 
-/*      */ 
-/*      */     
-/*  358 */     postRemoveUpdate(defaultDocumentEvent);
-/*  359 */     defaultDocumentEvent.end();
-/*  360 */     fireRemoveUpdate(defaultDocumentEvent);
-/*  361 */     if (!bool1 || undoableEdit == null)
-/*      */     {
-/*  363 */       fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Style addStyle(String paramString, Style paramStyle) {
-/*  384 */     StyleContext styleContext = (StyleContext)getAttributeContext();
-/*  385 */     return styleContext.addStyle(paramString, paramStyle);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeStyle(String paramString) {
-/*  394 */     StyleContext styleContext = (StyleContext)getAttributeContext();
-/*  395 */     styleContext.removeStyle(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Style getStyle(String paramString) {
-/*  405 */     StyleContext styleContext = (StyleContext)getAttributeContext();
-/*  406 */     return styleContext.getStyle(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Enumeration<?> getStyleNames() {
-/*  416 */     return ((StyleContext)getAttributeContext()).getStyleNames();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLogicalStyle(int paramInt, Style paramStyle) {
-/*  436 */     Element element = getParagraphElement(paramInt);
-/*  437 */     if (element != null && element instanceof AbstractDocument.AbstractElement) {
-/*      */       try {
-/*  439 */         writeLock();
-/*  440 */         StyleChangeUndoableEdit styleChangeUndoableEdit = new StyleChangeUndoableEdit((AbstractDocument.AbstractElement)element, paramStyle);
-/*  441 */         ((AbstractDocument.AbstractElement)element).setResolveParent(paramStyle);
-/*  442 */         int i = element.getStartOffset();
-/*  443 */         int j = element.getEndOffset();
-/*  444 */         AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(this, i, j - i, DocumentEvent.EventType.CHANGE);
-/*      */         
-/*  446 */         defaultDocumentEvent.addEdit(styleChangeUndoableEdit);
-/*  447 */         defaultDocumentEvent.end();
-/*  448 */         fireChangedUpdate(defaultDocumentEvent);
-/*  449 */         fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));
-/*      */       } finally {
-/*  451 */         writeUnlock();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Style getLogicalStyle(int paramInt) {
-/*  466 */     Style style = null;
-/*  467 */     Element element = getParagraphElement(paramInt);
-/*  468 */     if (element != null) {
-/*  469 */       AttributeSet attributeSet1 = element.getAttributes();
-/*  470 */       AttributeSet attributeSet2 = attributeSet1.getResolveParent();
-/*  471 */       if (attributeSet2 instanceof Style) {
-/*  472 */         style = (Style)attributeSet2;
-/*      */       }
-/*      */     } 
-/*  475 */     return style;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCharacterAttributes(int paramInt1, int paramInt2, AttributeSet paramAttributeSet, boolean paramBoolean) {
-/*  496 */     if (paramInt2 == 0) {
-/*      */       return;
-/*      */     }
-/*      */     try {
-/*  500 */       writeLock();
-/*  501 */       AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(this, paramInt1, paramInt2, DocumentEvent.EventType.CHANGE);
-/*      */ 
-/*      */ 
-/*      */       
-/*  505 */       this.buffer.change(paramInt1, paramInt2, defaultDocumentEvent);
-/*      */       
-/*  507 */       AttributeSet attributeSet = paramAttributeSet.copyAttributes();
-/*      */       
-/*      */       int i;
-/*      */       
-/*  511 */       for (i = paramInt1; i < paramInt1 + paramInt2; i = j) {
-/*  512 */         Element element = getCharacterElement(i);
-/*  513 */         int j = element.getEndOffset();
-/*  514 */         if (i == j) {
-/*      */           break;
-/*      */         }
-/*      */         
-/*  518 */         MutableAttributeSet mutableAttributeSet = (MutableAttributeSet)element.getAttributes();
-/*  519 */         defaultDocumentEvent.addEdit(new AttributeUndoableEdit(element, attributeSet, paramBoolean));
-/*  520 */         if (paramBoolean) {
-/*  521 */           mutableAttributeSet.removeAttributes(mutableAttributeSet);
-/*      */         }
-/*  523 */         mutableAttributeSet.addAttributes(paramAttributeSet);
-/*      */       } 
-/*  525 */       defaultDocumentEvent.end();
-/*  526 */       fireChangedUpdate(defaultDocumentEvent);
-/*  527 */       fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));
-/*      */     } finally {
-/*  529 */       writeUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setParagraphAttributes(int paramInt1, int paramInt2, AttributeSet paramAttributeSet, boolean paramBoolean) {
-/*      */     try {
-/*  550 */       writeLock();
-/*  551 */       AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(this, paramInt1, paramInt2, DocumentEvent.EventType.CHANGE);
-/*      */ 
-/*      */       
-/*  554 */       AttributeSet attributeSet = paramAttributeSet.copyAttributes();
-/*      */ 
-/*      */       
-/*  557 */       Element element = getDefaultRootElement();
-/*  558 */       int i = element.getElementIndex(paramInt1);
-/*  559 */       int j = element.getElementIndex(paramInt1 + ((paramInt2 > 0) ? (paramInt2 - 1) : 0));
-/*  560 */       boolean bool = Boolean.TRUE.equals(getProperty("i18n"));
-/*  561 */       boolean bool1 = false;
-/*  562 */       for (int k = i; k <= j; k++) {
-/*  563 */         Element element1 = element.getElement(k);
-/*  564 */         MutableAttributeSet mutableAttributeSet = (MutableAttributeSet)element1.getAttributes();
-/*  565 */         defaultDocumentEvent.addEdit(new AttributeUndoableEdit(element1, attributeSet, paramBoolean));
-/*  566 */         if (paramBoolean) {
-/*  567 */           mutableAttributeSet.removeAttributes(mutableAttributeSet);
-/*      */         }
-/*  569 */         mutableAttributeSet.addAttributes(paramAttributeSet);
-/*  570 */         if (bool && !bool1) {
-/*  571 */           bool1 = (mutableAttributeSet.getAttribute(TextAttribute.RUN_DIRECTION) != null) ? true : false;
-/*      */         }
-/*      */       } 
-/*      */       
-/*  575 */       if (bool1) {
-/*  576 */         updateBidi(defaultDocumentEvent);
-/*      */       }
-/*      */       
-/*  579 */       defaultDocumentEvent.end();
-/*  580 */       fireChangedUpdate(defaultDocumentEvent);
-/*  581 */       fireUndoableEditUpdate(new UndoableEditEvent(this, defaultDocumentEvent));
-/*      */     } finally {
-/*  583 */       writeUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element getParagraphElement(int paramInt) {
-/*      */     Element element;
-/*  597 */     for (element = getDefaultRootElement(); !element.isLeaf(); ) {
-/*  598 */       int i = element.getElementIndex(paramInt);
-/*  599 */       element = element.getElement(i);
-/*      */     } 
-/*  601 */     if (element != null)
-/*  602 */       return element.getParentElement(); 
-/*  603 */     return element;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element getCharacterElement(int paramInt) {
-/*      */     Element element;
-/*  614 */     for (element = getDefaultRootElement(); !element.isLeaf(); ) {
-/*  615 */       int i = element.getElementIndex(paramInt);
-/*  616 */       element = element.getElement(i);
-/*      */     } 
-/*  618 */     return element;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void insertUpdate(AbstractDocument.DefaultDocumentEvent paramDefaultDocumentEvent, AttributeSet paramAttributeSet) {
-/*  633 */     int i = paramDefaultDocumentEvent.getOffset();
-/*  634 */     int j = paramDefaultDocumentEvent.getLength();
-/*  635 */     if (paramAttributeSet == null) {
-/*  636 */       paramAttributeSet = SimpleAttributeSet.EMPTY;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  642 */     Element element1 = getParagraphElement(i + j);
-/*  643 */     AttributeSet attributeSet1 = element1.getAttributes();
-/*      */     
-/*  645 */     Element element2 = getParagraphElement(i);
-/*  646 */     Element element3 = element2.getElement(element2
-/*  647 */         .getElementIndex(i));
-/*  648 */     int k = i + j;
-/*  649 */     boolean bool = (element3.getEndOffset() == k) ? true : false;
-/*  650 */     AttributeSet attributeSet2 = element3.getAttributes();
-/*      */     
-/*      */     try {
-/*  653 */       Segment segment = new Segment();
-/*  654 */       Vector<ElementSpec> vector = new Vector();
-/*  655 */       ElementSpec elementSpec1 = null;
-/*  656 */       boolean bool1 = false;
-/*  657 */       short s = 6;
-/*      */       
-/*  659 */       if (i > 0) {
-/*  660 */         getText(i - 1, 1, segment);
-/*  661 */         if (segment.array[segment.offset] == '\n') {
-/*      */           
-/*  663 */           bool1 = true;
-/*      */           
-/*  665 */           s = createSpecsForInsertAfterNewline(element1, element2, attributeSet1, vector, i, k);
-/*      */           
-/*  667 */           for (int i3 = vector.size() - 1; i3 >= 0; 
-/*  668 */             i3--) {
-/*  669 */             ElementSpec elementSpec = vector.elementAt(i3);
-/*  670 */             if (elementSpec.getType() == 1) {
-/*  671 */               elementSpec1 = elementSpec;
-/*      */               
-/*      */               break;
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  679 */       if (!bool1) {
-/*  680 */         attributeSet1 = element2.getAttributes();
-/*      */       }
-/*  682 */       getText(i, j, segment);
-/*  683 */       char[] arrayOfChar = segment.array;
-/*  684 */       int m = segment.offset + segment.count;
-/*  685 */       int n = segment.offset;
-/*      */       
-/*  687 */       for (int i1 = segment.offset; i1 < m; i1++) {
-/*  688 */         if (arrayOfChar[i1] == '\n') {
-/*  689 */           int i3 = i1 + 1;
-/*  690 */           vector.addElement(new ElementSpec(paramAttributeSet, (short)3, i3 - n));
-/*      */ 
-/*      */           
-/*  693 */           vector.addElement(new ElementSpec(null, (short)2));
-/*      */           
-/*  695 */           elementSpec1 = new ElementSpec(attributeSet1, (short)1);
-/*      */           
-/*  697 */           vector.addElement(elementSpec1);
-/*  698 */           n = i3;
-/*      */         } 
-/*      */       } 
-/*  701 */       if (n < m) {
-/*  702 */         vector.addElement(new ElementSpec(paramAttributeSet, (short)3, m - n));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  707 */       ElementSpec elementSpec2 = vector.firstElement();
-/*      */       
-/*  709 */       int i2 = getLength();
-/*      */ 
-/*      */       
-/*  712 */       if (elementSpec2.getType() == 3 && attributeSet2
-/*  713 */         .isEqual(paramAttributeSet)) {
-/*  714 */         elementSpec2.setDirection((short)4);
-/*      */       }
-/*      */ 
-/*      */       
-/*  718 */       if (elementSpec1 != null) {
-/*  719 */         if (bool1) {
-/*  720 */           elementSpec1.setDirection(s);
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         }
-/*  725 */         else if (element2.getEndOffset() != k) {
-/*  726 */           elementSpec1.setDirection((short)7);
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */ 
-/*      */           
-/*  732 */           Element element = element2.getParentElement();
-/*  733 */           int i3 = element.getElementIndex(i);
-/*  734 */           if (i3 + 1 < element.getElementCount() && 
-/*  735 */             !element.getElement(i3 + 1).isLeaf()) {
-/*  736 */             elementSpec1.setDirection((short)5);
-/*      */           }
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  747 */       if (bool && k < i2) {
-/*  748 */         ElementSpec elementSpec = vector.lastElement();
-/*  749 */         if (elementSpec.getType() == 3 && elementSpec
-/*  750 */           .getDirection() != 4 && ((elementSpec1 == null && (element1 == element2 || bool1)) || (elementSpec1 != null && elementSpec1
-/*      */ 
-/*      */           
-/*  753 */           .getDirection() != 6)))
-/*      */         {
-/*  755 */           Element element = element1.getElement(element1
-/*  756 */               .getElementIndex(k));
-/*      */           
-/*  758 */           if (element.isLeaf() && paramAttributeSet
-/*  759 */             .isEqual(element.getAttributes())) {
-/*  760 */             elementSpec.setDirection((short)5);
-/*      */           
-/*      */           }
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*  767 */       else if (!bool && elementSpec1 != null && elementSpec1
-/*  768 */         .getDirection() == 7) {
-/*      */         
-/*  770 */         ElementSpec elementSpec = vector.lastElement();
-/*  771 */         if (elementSpec.getType() == 3 && elementSpec
-/*  772 */           .getDirection() != 4 && paramAttributeSet
-/*  773 */           .isEqual(attributeSet2)) {
-/*  774 */           elementSpec.setDirection((short)5);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  780 */       if (Utilities.isComposedTextAttributeDefined(paramAttributeSet)) {
-/*  781 */         MutableAttributeSet mutableAttributeSet = (MutableAttributeSet)paramAttributeSet;
-/*  782 */         mutableAttributeSet.addAttributes(attributeSet2);
-/*  783 */         mutableAttributeSet.addAttribute("$ename", "content");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  788 */         mutableAttributeSet.addAttribute(StyleConstants.NameAttribute, "content");
-/*      */         
-/*  790 */         if (mutableAttributeSet.isDefined("CR")) {
-/*  791 */           mutableAttributeSet.removeAttribute("CR");
-/*      */         }
-/*      */       } 
-/*      */       
-/*  795 */       ElementSpec[] arrayOfElementSpec = new ElementSpec[vector.size()];
-/*  796 */       vector.copyInto((Object[])arrayOfElementSpec);
-/*  797 */       this.buffer.insert(i, j, arrayOfElementSpec, paramDefaultDocumentEvent);
-/*  798 */     } catch (BadLocationException badLocationException) {}
-/*      */ 
-/*      */     
-/*  801 */     super.insertUpdate(paramDefaultDocumentEvent, paramAttributeSet);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   short createSpecsForInsertAfterNewline(Element paramElement1, Element paramElement2, AttributeSet paramAttributeSet, Vector<ElementSpec> paramVector, int paramInt1, int paramInt2) {
-/*  815 */     if (paramElement1.getParentElement() == paramElement2.getParentElement()) {
-/*      */ 
-/*      */       
-/*  818 */       ElementSpec elementSpec = new ElementSpec(paramAttributeSet, (short)2);
-/*  819 */       paramVector.addElement(elementSpec);
-/*  820 */       elementSpec = new ElementSpec(paramAttributeSet, (short)1);
-/*  821 */       paramVector.addElement(elementSpec);
-/*  822 */       if (paramElement2.getEndOffset() != paramInt2) {
-/*  823 */         return 7;
-/*      */       }
-/*  825 */       Element element = paramElement2.getParentElement();
-/*  826 */       if (element.getElementIndex(paramInt1) + 1 < element.getElementCount()) {
-/*  827 */         return 5;
-/*      */       }
-/*      */     }
-/*      */     else {
-/*      */       
-/*  832 */       Vector<Element> vector1 = new Vector();
-/*  833 */       Vector<Element> vector2 = new Vector();
-/*  834 */       Element element = paramElement2;
-/*  835 */       while (element != null) {
-/*  836 */         vector1.addElement(element);
-/*  837 */         element = element.getParentElement();
-/*      */       } 
-/*  839 */       element = paramElement1;
-/*  840 */       int i = -1;
-/*  841 */       while (element != null && (i = vector1.indexOf(element)) == -1) {
-/*  842 */         vector2.addElement(element);
-/*  843 */         element = element.getParentElement();
-/*      */       } 
-/*  845 */       if (element != null) {
-/*      */ 
-/*      */         
-/*  848 */         for (byte b = 0; b < i; 
-/*  849 */           b++) {
-/*  850 */           paramVector.addElement(new ElementSpec(null, (short)2));
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/*  855 */         int j = vector2.size() - 1;
-/*  856 */         for (; j >= 0; j--) {
-/*  857 */           ElementSpec elementSpec = new ElementSpec(((Element)vector2.elementAt(j)).getAttributes(), (short)1);
-/*      */           
-/*  859 */           if (j > 0)
-/*  860 */             elementSpec.setDirection((short)5); 
-/*  861 */           paramVector.addElement(elementSpec);
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/*  866 */         if (vector2.size() > 0) {
-/*  867 */           return 5;
-/*      */         }
-/*      */         
-/*  870 */         return 7;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  874 */     return 6;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void removeUpdate(AbstractDocument.DefaultDocumentEvent paramDefaultDocumentEvent) {
-/*  883 */     super.removeUpdate(paramDefaultDocumentEvent);
-/*  884 */     this.buffer.remove(paramDefaultDocumentEvent.getOffset(), paramDefaultDocumentEvent.getLength(), paramDefaultDocumentEvent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected AbstractDocument.AbstractElement createDefaultRoot() {
-/*  898 */     writeLock();
-/*  899 */     SectionElement sectionElement = new SectionElement();
-/*  900 */     AbstractDocument.BranchElement branchElement = new AbstractDocument.BranchElement(this, sectionElement, null);
-/*      */     
-/*  902 */     AbstractDocument.LeafElement leafElement = new AbstractDocument.LeafElement(this, branchElement, null, 0, 1);
-/*  903 */     Element[] arrayOfElement = new Element[1];
-/*  904 */     arrayOfElement[0] = leafElement;
-/*  905 */     branchElement.replace(0, 0, arrayOfElement);
-/*      */     
-/*  907 */     arrayOfElement[0] = branchElement;
-/*  908 */     sectionElement.replace(0, 0, arrayOfElement);
-/*  909 */     writeUnlock();
-/*  910 */     return sectionElement;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getForeground(AttributeSet paramAttributeSet) {
-/*  920 */     StyleContext styleContext = (StyleContext)getAttributeContext();
-/*  921 */     return styleContext.getForeground(paramAttributeSet);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getBackground(AttributeSet paramAttributeSet) {
-/*  931 */     StyleContext styleContext = (StyleContext)getAttributeContext();
-/*  932 */     return styleContext.getBackground(paramAttributeSet);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Font getFont(AttributeSet paramAttributeSet) {
-/*  942 */     StyleContext styleContext = (StyleContext)getAttributeContext();
-/*  943 */     return styleContext.getFont(paramAttributeSet);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void styleChanged(Style paramStyle) {
-/*  954 */     if (getLength() != 0) {
-/*      */       
-/*  956 */       if (this.updateRunnable == null) {
-/*  957 */         this.updateRunnable = new ChangeUpdateRunnable();
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  962 */       synchronized (this.updateRunnable) {
-/*  963 */         if (!this.updateRunnable.isPending) {
-/*  964 */           SwingUtilities.invokeLater(this.updateRunnable);
-/*  965 */           this.updateRunnable.isPending = true;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addDocumentListener(DocumentListener paramDocumentListener) {
-/*  978 */     synchronized (this.listeningStyles) {
-/*      */       
-/*  980 */       int i = this.listenerList.getListenerCount(DocumentListener.class);
-/*  981 */       super.addDocumentListener(paramDocumentListener);
-/*  982 */       if (i == 0) {
-/*  983 */         if (this.styleContextChangeListener == null) {
-/*  984 */           this
-/*  985 */             .styleContextChangeListener = createStyleContextChangeListener();
-/*      */         }
-/*  987 */         if (this.styleContextChangeListener != null) {
-/*  988 */           StyleContext styleContext = (StyleContext)getAttributeContext();
-/*      */           
-/*  990 */           List<ChangeListener> list = AbstractChangeHandler.getStaleListeners(this.styleContextChangeListener);
-/*  991 */           for (ChangeListener changeListener : list) {
-/*  992 */             styleContext.removeChangeListener(changeListener);
-/*      */           }
-/*  994 */           styleContext.addChangeListener(this.styleContextChangeListener);
-/*      */         } 
-/*  996 */         updateStylesListeningTo();
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeDocumentListener(DocumentListener paramDocumentListener) {
-/* 1008 */     synchronized (this.listeningStyles) {
-/* 1009 */       super.removeDocumentListener(paramDocumentListener);
-/* 1010 */       if (this.listenerList.getListenerCount(DocumentListener.class) == 0) {
-/* 1011 */         for (int i = this.listeningStyles.size() - 1; i >= 0; 
-/* 1012 */           i--) {
-/* 1013 */           ((Style)this.listeningStyles.elementAt(i))
-/* 1014 */             .removeChangeListener(this.styleChangeListener);
-/*      */         }
-/* 1016 */         this.listeningStyles.removeAllElements();
-/* 1017 */         if (this.styleContextChangeListener != null) {
-/* 1018 */           StyleContext styleContext = (StyleContext)getAttributeContext();
-/* 1019 */           styleContext.removeChangeListener(this.styleContextChangeListener);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ChangeListener createStyleChangeListener() {
-/* 1029 */     return new StyleChangeHandler(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ChangeListener createStyleContextChangeListener() {
-/* 1036 */     return new StyleContextChangeHandler(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void updateStylesListeningTo() {
-/* 1044 */     synchronized (this.listeningStyles) {
-/* 1045 */       StyleContext styleContext = (StyleContext)getAttributeContext();
-/* 1046 */       if (this.styleChangeListener == null) {
-/* 1047 */         this.styleChangeListener = createStyleChangeListener();
-/*      */       }
-/* 1049 */       if (this.styleChangeListener != null && styleContext != null) {
-/* 1050 */         Enumeration<?> enumeration = styleContext.getStyleNames();
-/* 1051 */         Vector<Style> vector = (Vector)this.listeningStyles.clone();
-/* 1052 */         this.listeningStyles.removeAllElements();
-/*      */         
-/* 1054 */         List<ChangeListener> list = AbstractChangeHandler.getStaleListeners(this.styleChangeListener);
-/* 1055 */         while (enumeration.hasMoreElements()) {
-/* 1056 */           String str = (String)enumeration.nextElement();
-/* 1057 */           Style style = styleContext.getStyle(str);
-/* 1058 */           int j = vector.indexOf(style);
-/* 1059 */           this.listeningStyles.addElement(style);
-/* 1060 */           if (j == -1) {
-/* 1061 */             for (ChangeListener changeListener : list) {
-/* 1062 */               style.removeChangeListener(changeListener);
-/*      */             }
-/* 1064 */             style.addChangeListener(this.styleChangeListener);
-/*      */             continue;
-/*      */           } 
-/* 1067 */           vector.removeElementAt(j);
-/*      */         } 
-/*      */         
-/* 1070 */         for (int i = vector.size() - 1; i >= 0; i--) {
-/* 1071 */           Style style = vector.elementAt(i);
-/* 1072 */           style.removeChangeListener(this.styleChangeListener);
-/*      */         } 
-/* 1074 */         if (this.listeningStyles.size() == 0) {
-/* 1075 */           this.styleChangeListener = null;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws ClassNotFoundException, IOException {
-/* 1083 */     this.listeningStyles = new Vector<>();
-/* 1084 */     paramObjectInputStream.defaultReadObject();
-/*      */     
-/* 1086 */     if (this.styleContextChangeListener == null && this.listenerList
-/* 1087 */       .getListenerCount(DocumentListener.class) > 0) {
-/* 1088 */       this.styleContextChangeListener = createStyleContextChangeListener();
-/* 1089 */       if (this.styleContextChangeListener != null) {
-/* 1090 */         StyleContext styleContext = (StyleContext)getAttributeContext();
-/* 1091 */         styleContext.addChangeListener(this.styleContextChangeListener);
-/*      */       } 
-/* 1093 */       updateStylesListeningTo();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class SectionElement
-/*      */     extends AbstractDocument.BranchElement
-/*      */   {
-/*      */     public SectionElement() {
-/* 1137 */       super(null, null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 1146 */       return "section";
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class ElementSpec
-/*      */   {
-/*      */     public static final short StartTagType = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final short EndTagType = 2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final short ContentType = 3;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final short JoinPreviousDirection = 4;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final short JoinNextDirection = 5;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final short OriginateDirection = 6;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public static final short JoinFractureDirection = 7;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private AttributeSet attr;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int len;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private short type;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private short direction;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int offs;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private char[] data;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ElementSpec(AttributeSet param1AttributeSet, short param1Short) {
-/* 1225 */       this(param1AttributeSet, param1Short, null, 0, 0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ElementSpec(AttributeSet param1AttributeSet, short param1Short, int param1Int) {
-/* 1239 */       this(param1AttributeSet, param1Short, null, 0, param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ElementSpec(AttributeSet param1AttributeSet, short param1Short, char[] param1ArrayOfchar, int param1Int1, int param1Int2) {
-/* 1255 */       this.attr = param1AttributeSet;
-/* 1256 */       this.type = param1Short;
-/* 1257 */       this.data = param1ArrayOfchar;
-/* 1258 */       this.offs = param1Int1;
-/* 1259 */       this.len = param1Int2;
-/* 1260 */       this.direction = 6;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setType(short param1Short) {
-/* 1270 */       this.type = param1Short;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public short getType() {
-/* 1280 */       return this.type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setDirection(short param1Short) {
-/* 1290 */       this.direction = param1Short;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public short getDirection() {
-/* 1299 */       return this.direction;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet getAttributes() {
-/* 1308 */       return this.attr;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public char[] getArray() {
-/* 1317 */       return this.data;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getOffset() {
-/* 1327 */       return this.offs;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getLength() {
-/* 1336 */       return this.len;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 1345 */       String str1 = "??";
-/* 1346 */       String str2 = "??";
-/* 1347 */       switch (this.type) {
-/*      */         case 1:
-/* 1349 */           str1 = "StartTag";
-/*      */           break;
-/*      */         case 3:
-/* 1352 */           str1 = "Content";
-/*      */           break;
-/*      */         case 2:
-/* 1355 */           str1 = "EndTag";
-/*      */           break;
-/*      */       } 
-/* 1358 */       switch (this.direction) {
-/*      */         case 4:
-/* 1360 */           str2 = "JoinPrevious";
-/*      */           break;
-/*      */         case 5:
-/* 1363 */           str2 = "JoinNext";
-/*      */           break;
-/*      */         case 6:
-/* 1366 */           str2 = "Originate";
-/*      */           break;
-/*      */         case 7:
-/* 1369 */           str2 = "Fracture";
-/*      */           break;
-/*      */       } 
-/* 1372 */       return str1 + ":" + str2 + ":" + getLength();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public class ElementBuffer
-/*      */     implements Serializable
-/*      */   {
-/*      */     Element root;
-/*      */     
-/*      */     transient int pos;
-/*      */     
-/*      */     transient int offset;
-/*      */     
-/*      */     transient int length;
-/*      */     
-/*      */     transient int endOffset;
-/*      */     
-/*      */     transient Vector<ElemChanges> changes;
-/*      */     
-/*      */     transient Stack<ElemChanges> path;
-/*      */     
-/*      */     transient boolean insertOp;
-/*      */     
-/*      */     transient boolean recreateLeafs;
-/*      */     
-/*      */     transient ElemChanges[] insertPath;
-/*      */     transient boolean createdFracture;
-/*      */     transient Element fracturedParent;
-/*      */     transient Element fracturedChild;
-/*      */     transient boolean offsetLastIndex;
-/*      */     transient boolean offsetLastIndexOnReplace;
-/*      */     
-/*      */     public ElementBuffer(Element param1Element) {
-/* 1406 */       this.root = param1Element;
-/* 1407 */       this.changes = new Vector<>();
-/* 1408 */       this.path = new Stack<>();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element getRootElement() {
-/* 1417 */       return this.root;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void insert(int param1Int1, int param1Int2, DefaultStyledDocument.ElementSpec[] param1ArrayOfElementSpec, AbstractDocument.DefaultDocumentEvent param1DefaultDocumentEvent) {
-/* 1430 */       if (param1Int2 == 0) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 1434 */       this.insertOp = true;
-/* 1435 */       beginEdits(param1Int1, param1Int2);
-/* 1436 */       insertUpdate(param1ArrayOfElementSpec);
-/* 1437 */       endEdits(param1DefaultDocumentEvent);
-/*      */       
-/* 1439 */       this.insertOp = false;
-/*      */     }
-/*      */     
-/*      */     void create(int param1Int, DefaultStyledDocument.ElementSpec[] param1ArrayOfElementSpec, AbstractDocument.DefaultDocumentEvent param1DefaultDocumentEvent) {
-/* 1443 */       this.insertOp = true;
-/* 1444 */       beginEdits(this.offset, param1Int);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1452 */       Element element1 = this.root;
-/* 1453 */       int i = element1.getElementIndex(0);
-/* 1454 */       while (!element1.isLeaf()) {
-/* 1455 */         Element element = element1.getElement(i);
-/* 1456 */         push(element1, i);
-/* 1457 */         element1 = element;
-/* 1458 */         i = element1.getElementIndex(0);
-/*      */       } 
-/* 1460 */       ElemChanges elemChanges = this.path.peek();
-/* 1461 */       Element element2 = elemChanges.parent.getElement(elemChanges.index);
-/* 1462 */       elemChanges.added.addElement(DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2
-/* 1463 */             .getAttributes(), DefaultStyledDocument.this.getLength(), element2
-/* 1464 */             .getEndOffset()));
-/* 1465 */       elemChanges.removed.addElement(element2);
-/* 1466 */       while (this.path.size() > 1) {
-/* 1467 */         pop();
-/*      */       }
-/*      */       
-/* 1470 */       int j = param1ArrayOfElementSpec.length;
-/*      */ 
-/*      */       
-/* 1473 */       AttributeSet attributeSet = null;
-/* 1474 */       if (j > 0 && param1ArrayOfElementSpec[0].getType() == 1) {
-/* 1475 */         attributeSet = param1ArrayOfElementSpec[0].getAttributes();
-/*      */       }
-/* 1477 */       if (attributeSet == null) {
-/* 1478 */         attributeSet = SimpleAttributeSet.EMPTY;
-/*      */       }
-/*      */       
-/* 1481 */       MutableAttributeSet mutableAttributeSet = (MutableAttributeSet)this.root.getAttributes();
-/* 1482 */       param1DefaultDocumentEvent.addEdit(new DefaultStyledDocument.AttributeUndoableEdit(this.root, attributeSet, true));
-/* 1483 */       mutableAttributeSet.removeAttributes(mutableAttributeSet);
-/* 1484 */       mutableAttributeSet.addAttributes(attributeSet);
-/*      */ 
-/*      */       
-/* 1487 */       for (byte b = 1; b < j; b++) {
-/* 1488 */         insertElement(param1ArrayOfElementSpec[b]);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1492 */       while (this.path.size() != 0) {
-/* 1493 */         pop();
-/*      */       }
-/*      */       
-/* 1496 */       endEdits(param1DefaultDocumentEvent);
-/* 1497 */       this.insertOp = false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void remove(int param1Int1, int param1Int2, AbstractDocument.DefaultDocumentEvent param1DefaultDocumentEvent) {
-/* 1508 */       beginEdits(param1Int1, param1Int2);
-/* 1509 */       removeUpdate();
-/* 1510 */       endEdits(param1DefaultDocumentEvent);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void change(int param1Int1, int param1Int2, AbstractDocument.DefaultDocumentEvent param1DefaultDocumentEvent) {
-/* 1521 */       beginEdits(param1Int1, param1Int2);
-/* 1522 */       changeUpdate();
-/* 1523 */       endEdits(param1DefaultDocumentEvent);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void insertUpdate(DefaultStyledDocument.ElementSpec[] param1ArrayOfElementSpec) {
-/*      */       byte b;
-/* 1533 */       Element element = this.root;
-/* 1534 */       int i = element.getElementIndex(this.offset);
-/* 1535 */       while (!element.isLeaf()) {
-/* 1536 */         Element element1 = element.getElement(i);
-/* 1537 */         push(element, element1.isLeaf() ? i : (i + 1));
-/* 1538 */         element = element1;
-/* 1539 */         i = element.getElementIndex(this.offset);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1543 */       this.insertPath = new ElemChanges[this.path.size()];
-/* 1544 */       this.path.copyInto((Object[])this.insertPath);
-/*      */ 
-/*      */       
-/* 1547 */       this.createdFracture = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1552 */       this.recreateLeafs = false;
-/* 1553 */       if (param1ArrayOfElementSpec[0].getType() == 3) {
-/* 1554 */         insertFirstContent(param1ArrayOfElementSpec);
-/* 1555 */         this.pos += param1ArrayOfElementSpec[0].getLength();
-/* 1556 */         b = 1;
-/*      */       } else {
-/*      */         
-/* 1559 */         fractureDeepestLeaf(param1ArrayOfElementSpec);
-/* 1560 */         b = 0;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1564 */       int j = param1ArrayOfElementSpec.length;
-/* 1565 */       for (; b < j; b++) {
-/* 1566 */         insertElement(param1ArrayOfElementSpec[b]);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1570 */       if (!this.createdFracture) {
-/* 1571 */         fracture(-1);
-/*      */       }
-/*      */       
-/* 1574 */       while (this.path.size() != 0) {
-/* 1575 */         pop();
-/*      */       }
-/*      */ 
-/*      */       
-/* 1579 */       if (this.offsetLastIndex && this.offsetLastIndexOnReplace) {
-/* 1580 */         (this.insertPath[this.insertPath.length - 1]).index++;
-/*      */       }
-/*      */       
-/*      */       int k;
-/*      */       
-/* 1585 */       for (k = this.insertPath.length - 1; k >= 0; 
-/* 1586 */         k--) {
-/* 1587 */         ElemChanges elemChanges = this.insertPath[k];
-/* 1588 */         if (elemChanges.parent == this.fracturedParent)
-/* 1589 */           elemChanges.added.addElement(this.fracturedChild); 
-/* 1590 */         if ((elemChanges.added.size() > 0 || elemChanges.removed
-/* 1591 */           .size() > 0) && !this.changes.contains(elemChanges))
-/*      */         {
-/* 1593 */           this.changes.addElement(elemChanges);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1600 */       if (this.offset == 0 && this.fracturedParent != null && param1ArrayOfElementSpec[0]
-/* 1601 */         .getType() == 2) {
-/* 1602 */         k = 0;
-/* 1603 */         while (k < param1ArrayOfElementSpec.length && param1ArrayOfElementSpec[k]
-/* 1604 */           .getType() == 2) {
-/* 1605 */           k++;
-/*      */         }
-/* 1607 */         ElemChanges elemChanges = this.insertPath[this.insertPath.length - k - 1];
-/*      */         
-/* 1609 */         elemChanges.removed.insertElementAt(elemChanges.parent
-/* 1610 */             .getElement(--elemChanges.index), 0);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void removeUpdate() {
-/* 1620 */       removeElements(this.root, this.offset, this.offset + this.length);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void changeUpdate() {
-/* 1628 */       boolean bool = split(this.offset, this.length);
-/* 1629 */       if (!bool) {
-/*      */         
-/* 1631 */         while (this.path.size() != 0) {
-/* 1632 */           pop();
-/*      */         }
-/* 1634 */         split(this.offset + this.length, 0);
-/*      */       } 
-/* 1636 */       while (this.path.size() != 0) {
-/* 1637 */         pop();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     boolean split(int param1Int1, int param1Int2) {
-/* 1642 */       boolean bool = false;
-/*      */       
-/* 1644 */       Element element1 = this.root;
-/* 1645 */       int i = element1.getElementIndex(param1Int1);
-/* 1646 */       while (!element1.isLeaf()) {
-/* 1647 */         push(element1, i);
-/* 1648 */         element1 = element1.getElement(i);
-/* 1649 */         i = element1.getElementIndex(param1Int1);
-/*      */       } 
-/*      */       
-/* 1652 */       ElemChanges elemChanges = this.path.peek();
-/* 1653 */       Element element2 = elemChanges.parent.getElement(elemChanges.index);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1657 */       if (element2.getStartOffset() < param1Int1 && param1Int1 < element2.getEndOffset()) {
-/*      */ 
-/*      */         
-/* 1660 */         int j = elemChanges.index;
-/* 1661 */         int k = j;
-/* 1662 */         if (param1Int1 + param1Int2 < elemChanges.parent.getEndOffset() && param1Int2 != 0) {
-/*      */           
-/* 1664 */           k = elemChanges.parent.getElementIndex(param1Int1 + param1Int2);
-/* 1665 */           if (k == j) {
-/*      */             
-/* 1667 */             elemChanges.removed.addElement(element2);
-/* 1668 */             element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), element2
-/* 1669 */                 .getStartOffset(), param1Int1);
-/* 1670 */             elemChanges.added.addElement(element1);
-/* 1671 */             element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), param1Int1, param1Int1 + param1Int2);
-/*      */             
-/* 1673 */             elemChanges.added.addElement(element1);
-/* 1674 */             element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), param1Int1 + param1Int2, element2
-/* 1675 */                 .getEndOffset());
-/* 1676 */             elemChanges.added.addElement(element1);
-/* 1677 */             return true;
-/*      */           } 
-/* 1679 */           element2 = elemChanges.parent.getElement(k);
-/* 1680 */           if (param1Int1 + param1Int2 == element2.getStartOffset())
-/*      */           {
-/* 1682 */             k = j;
-/*      */           }
-/*      */           
-/* 1685 */           bool = true;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1689 */         this.pos = param1Int1;
-/* 1690 */         element2 = elemChanges.parent.getElement(j);
-/* 1691 */         elemChanges.removed.addElement(element2);
-/* 1692 */         element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), element2
-/* 1693 */             .getStartOffset(), this.pos);
-/* 1694 */         elemChanges.added.addElement(element1);
-/* 1695 */         element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), this.pos, element2
-/* 1696 */             .getEndOffset());
-/* 1697 */         elemChanges.added.addElement(element1);
-/*      */ 
-/*      */         
-/* 1700 */         for (int m = j + 1; m < k; m++) {
-/* 1701 */           element2 = elemChanges.parent.getElement(m);
-/* 1702 */           elemChanges.removed.addElement(element2);
-/* 1703 */           elemChanges.added.addElement(element2);
-/*      */         } 
-/*      */         
-/* 1706 */         if (k != j) {
-/* 1707 */           element2 = elemChanges.parent.getElement(k);
-/* 1708 */           this.pos = param1Int1 + param1Int2;
-/* 1709 */           elemChanges.removed.addElement(element2);
-/* 1710 */           element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), element2
-/* 1711 */               .getStartOffset(), this.pos);
-/* 1712 */           elemChanges.added.addElement(element1);
-/* 1713 */           element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2.getAttributes(), this.pos, element2
-/* 1714 */               .getEndOffset());
-/* 1715 */           elemChanges.added.addElement(element1);
-/*      */         } 
-/*      */       } 
-/* 1718 */       return bool;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void endEdits(AbstractDocument.DefaultDocumentEvent param1DefaultDocumentEvent) {
-/* 1726 */       int i = this.changes.size();
-/* 1727 */       for (byte b = 0; b < i; b++) {
-/* 1728 */         ElemChanges elemChanges = this.changes.elementAt(b);
-/* 1729 */         Element[] arrayOfElement1 = new Element[elemChanges.removed.size()];
-/* 1730 */         elemChanges.removed.copyInto((Object[])arrayOfElement1);
-/* 1731 */         Element[] arrayOfElement2 = new Element[elemChanges.added.size()];
-/* 1732 */         elemChanges.added.copyInto((Object[])arrayOfElement2);
-/* 1733 */         int j = elemChanges.index;
-/* 1734 */         ((AbstractDocument.BranchElement)elemChanges.parent).replace(j, arrayOfElement1.length, arrayOfElement2);
-/* 1735 */         AbstractDocument.ElementEdit elementEdit = new AbstractDocument.ElementEdit(elemChanges.parent, j, arrayOfElement1, arrayOfElement2);
-/* 1736 */         param1DefaultDocumentEvent.addEdit(elementEdit);
-/*      */       } 
-/*      */       
-/* 1739 */       this.changes.removeAllElements();
-/* 1740 */       this.path.removeAllElements();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void beginEdits(int param1Int1, int param1Int2) {
-/* 1767 */       this.offset = param1Int1;
-/* 1768 */       this.length = param1Int2;
-/* 1769 */       this.endOffset = param1Int1 + param1Int2;
-/* 1770 */       this.pos = param1Int1;
-/* 1771 */       if (this.changes == null) {
-/* 1772 */         this.changes = new Vector<>();
-/*      */       } else {
-/* 1774 */         this.changes.removeAllElements();
-/*      */       } 
-/* 1776 */       if (this.path == null) {
-/* 1777 */         this.path = new Stack<>();
-/*      */       } else {
-/* 1779 */         this.path.removeAllElements();
-/*      */       } 
-/* 1781 */       this.fracturedParent = null;
-/* 1782 */       this.fracturedChild = null;
-/* 1783 */       this.offsetLastIndex = this.offsetLastIndexOnReplace = false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void push(Element param1Element, int param1Int, boolean param1Boolean) {
-/* 1795 */       ElemChanges elemChanges = new ElemChanges(param1Element, param1Int, param1Boolean);
-/* 1796 */       this.path.push(elemChanges);
-/*      */     }
-/*      */     
-/*      */     void push(Element param1Element, int param1Int) {
-/* 1800 */       push(param1Element, param1Int, false);
-/*      */     }
-/*      */     
-/*      */     void pop() {
-/* 1804 */       ElemChanges elemChanges = this.path.peek();
-/* 1805 */       this.path.pop();
-/* 1806 */       if (elemChanges.added.size() > 0 || elemChanges.removed.size() > 0) {
-/* 1807 */         this.changes.addElement(elemChanges);
-/* 1808 */       } else if (!this.path.isEmpty()) {
-/* 1809 */         Element element = elemChanges.parent;
-/* 1810 */         if (element.getElementCount() == 0) {
-/*      */ 
-/*      */           
-/* 1813 */           elemChanges = this.path.peek();
-/* 1814 */           elemChanges.added.removeElement(element);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void advance(int param1Int) {
-/* 1823 */       this.pos += param1Int; } void insertElement(DefaultStyledDocument.ElementSpec param1ElementSpec) {
-/*      */       Element element1;
-/*      */       int i;
-/*      */       Element element2;
-/* 1827 */       ElemChanges elemChanges = this.path.peek();
-/* 1828 */       switch (param1ElementSpec.getType()) {
-/*      */         case 1:
-/* 1830 */           switch (param1ElementSpec.getDirection()) {
-/*      */ 
-/*      */             
-/*      */             case 5:
-/* 1834 */               element1 = elemChanges.parent.getElement(elemChanges.index);
-/*      */               
-/* 1836 */               if (element1.isLeaf())
-/*      */               {
-/*      */                 
-/* 1839 */                 if (elemChanges.index + 1 < elemChanges.parent.getElementCount()) {
-/* 1840 */                   element1 = elemChanges.parent.getElement(elemChanges.index + 1);
-/*      */                 } else {
-/* 1842 */                   throw new StateInvariantError("Join next to leaf");
-/*      */                 } 
-/*      */               }
-/*      */ 
-/*      */ 
-/*      */               
-/* 1848 */               push(element1, 0, true);
-/*      */               break;
-/*      */             case 7:
-/* 1851 */               if (!this.createdFracture)
-/*      */               {
-/* 1853 */                 fracture(this.path.size() - 1);
-/*      */               }
-/*      */ 
-/*      */               
-/* 1857 */               if (!elemChanges.isFracture) {
-/* 1858 */                 push(this.fracturedChild, 0, true);
-/*      */                 
-/*      */                 break;
-/*      */               } 
-/* 1862 */               push(elemChanges.parent.getElement(0), 0, true);
-/*      */               break;
-/*      */           } 
-/* 1865 */           element2 = DefaultStyledDocument.this.createBranchElement(elemChanges.parent, param1ElementSpec
-/* 1866 */               .getAttributes());
-/* 1867 */           elemChanges.added.addElement(element2);
-/* 1868 */           push(element2, 0);
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 2:
-/* 1873 */           pop();
-/*      */           break;
-/*      */         case 3:
-/* 1876 */           i = param1ElementSpec.getLength();
-/* 1877 */           if (param1ElementSpec.getDirection() != 5) {
-/* 1878 */             element2 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, param1ElementSpec.getAttributes(), this.pos, this.pos + i);
-/*      */             
-/* 1880 */             elemChanges.added.addElement(element2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           }
-/* 1888 */           else if (!elemChanges.isFracture) {
-/* 1889 */             element2 = null;
-/* 1890 */             if (this.insertPath != null) {
-/* 1891 */               int j = this.insertPath.length - 1;
-/* 1892 */               for (; j >= 0; j--) {
-/* 1893 */                 if (this.insertPath[j] == elemChanges) {
-/* 1894 */                   if (j != this.insertPath.length - 1)
-/* 1895 */                     element2 = elemChanges.parent.getElement(elemChanges.index); 
-/*      */                   break;
-/*      */                 } 
-/*      */               } 
-/*      */             } 
-/* 1900 */             if (element2 == null)
-/* 1901 */               element2 = elemChanges.parent.getElement(elemChanges.index + 1); 
-/* 1902 */             Element element = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2
-/* 1903 */                 .getAttributes(), this.pos, element2.getEndOffset());
-/* 1904 */             elemChanges.added.addElement(element);
-/* 1905 */             elemChanges.removed.addElement(element2);
-/*      */           }
-/*      */           else {
-/*      */             
-/* 1909 */             element2 = elemChanges.parent.getElement(0);
-/* 1910 */             Element element = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element2
-/* 1911 */                 .getAttributes(), this.pos, element2.getEndOffset());
-/* 1912 */             elemChanges.added.addElement(element);
-/* 1913 */             elemChanges.removed.addElement(element2);
-/*      */           } 
-/*      */           
-/* 1916 */           this.pos += i;
-/*      */           break;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean removeElements(Element param1Element, int param1Int1, int param1Int2) {
-/* 1930 */       if (!param1Element.isLeaf()) {
-/*      */         
-/* 1932 */         int i = param1Element.getElementIndex(param1Int1);
-/* 1933 */         int j = param1Element.getElementIndex(param1Int2);
-/* 1934 */         push(param1Element, i);
-/* 1935 */         ElemChanges elemChanges = this.path.peek();
-/*      */ 
-/*      */ 
-/*      */         
-/* 1939 */         if (i == j) {
-/* 1940 */           Element element = param1Element.getElement(i);
-/* 1941 */           if (param1Int1 <= element.getStartOffset() && param1Int2 >= element
-/* 1942 */             .getEndOffset()) {
-/*      */             
-/* 1944 */             elemChanges.removed.addElement(element);
-/*      */           }
-/* 1946 */           else if (removeElements(element, param1Int1, param1Int2)) {
-/* 1947 */             elemChanges.removed.addElement(element);
-/*      */           }
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1953 */           Element element1 = param1Element.getElement(i);
-/* 1954 */           Element element2 = param1Element.getElement(j);
-/* 1955 */           boolean bool = (param1Int2 < param1Element.getEndOffset()) ? true : false;
-/* 1956 */           if (bool && canJoin(element1, element2)) {
-/*      */             
-/* 1958 */             for (int k = i; k <= j; k++) {
-/* 1959 */               elemChanges.removed.addElement(param1Element.getElement(k));
-/*      */             }
-/* 1961 */             Element element = join(param1Element, element1, element2, param1Int1, param1Int2);
-/* 1962 */             elemChanges.added.addElement(element);
-/*      */           } else {
-/*      */             
-/* 1965 */             int k = i + 1;
-/* 1966 */             int m = j - 1;
-/* 1967 */             if (element1.getStartOffset() == param1Int1 || (i == 0 && element1
-/*      */               
-/* 1969 */               .getStartOffset() > param1Int1 && element1
-/* 1970 */               .getEndOffset() <= param1Int2)) {
-/*      */               
-/* 1972 */               element1 = null;
-/* 1973 */               k = i;
-/*      */             } 
-/* 1975 */             if (!bool) {
-/* 1976 */               element2 = null;
-/* 1977 */               m++;
-/*      */             }
-/* 1979 */             else if (element2.getStartOffset() == param1Int2) {
-/*      */               
-/* 1981 */               element2 = null;
-/*      */             } 
-/* 1983 */             if (k <= m) {
-/* 1984 */               elemChanges.index = k;
-/*      */             }
-/* 1986 */             for (int n = k; n <= m; n++) {
-/* 1987 */               elemChanges.removed.addElement(param1Element.getElement(n));
-/*      */             }
-/* 1989 */             if (element1 != null && 
-/* 1990 */               removeElements(element1, param1Int1, param1Int2)) {
-/* 1991 */               elemChanges.removed.insertElementAt(element1, 0);
-/* 1992 */               elemChanges.index = i;
-/*      */             } 
-/*      */             
-/* 1995 */             if (element2 != null && 
-/* 1996 */               removeElements(element2, param1Int1, param1Int2)) {
-/* 1997 */               elemChanges.removed.addElement(element2);
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2004 */         pop();
-/*      */ 
-/*      */         
-/* 2007 */         if (param1Element.getElementCount() == elemChanges.removed.size() - elemChanges.added
-/* 2008 */           .size()) {
-/* 2009 */           return true;
-/*      */         }
-/*      */       } 
-/* 2012 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     boolean canJoin(Element param1Element1, Element param1Element2) {
-/* 2020 */       if (param1Element1 == null || param1Element2 == null) {
-/* 2021 */         return false;
-/*      */       }
-/*      */       
-/* 2024 */       boolean bool1 = param1Element1.isLeaf();
-/* 2025 */       boolean bool2 = param1Element2.isLeaf();
-/* 2026 */       if (bool1 != bool2) {
-/* 2027 */         return false;
-/*      */       }
-/* 2029 */       if (bool1)
-/*      */       {
-/*      */         
-/* 2032 */         return param1Element1.getAttributes().isEqual(param1Element2.getAttributes());
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2037 */       String str1 = param1Element1.getName();
-/* 2038 */       String str2 = param1Element2.getName();
-/* 2039 */       if (str1 != null) {
-/* 2040 */         return str1.equals(str2);
-/*      */       }
-/* 2042 */       if (str2 != null) {
-/* 2043 */         return str2.equals(str1);
-/*      */       }
-/*      */       
-/* 2046 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Element join(Element param1Element1, Element param1Element2, Element param1Element3, int param1Int1, int param1Int2) {
-/* 2054 */       if (param1Element2.isLeaf() && param1Element3.isLeaf())
-/* 2055 */         return DefaultStyledDocument.this.createLeafElement(param1Element1, param1Element2.getAttributes(), param1Element2.getStartOffset(), param1Element3
-/* 2056 */             .getEndOffset()); 
-/* 2057 */       if (!param1Element2.isLeaf() && !param1Element3.isLeaf()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2062 */         Element element1 = DefaultStyledDocument.this.createBranchElement(param1Element1, param1Element2.getAttributes());
-/* 2063 */         int i = param1Element2.getElementIndex(param1Int1);
-/* 2064 */         int j = param1Element3.getElementIndex(param1Int2);
-/* 2065 */         Element element2 = param1Element2.getElement(i);
-/* 2066 */         if (element2.getStartOffset() >= param1Int1) {
-/* 2067 */           element2 = null;
-/*      */         }
-/* 2069 */         Element element3 = param1Element3.getElement(j);
-/* 2070 */         if (element3.getStartOffset() == param1Int2) {
-/* 2071 */           element3 = null;
-/*      */         }
-/* 2073 */         Vector<Element> vector = new Vector();
-/*      */         
-/*      */         int k;
-/* 2076 */         for (k = 0; k < i; k++) {
-/* 2077 */           vector.addElement(clone(element1, param1Element2.getElement(k)));
-/*      */         }
-/*      */ 
-/*      */         
-/* 2081 */         if (canJoin(element2, element3)) {
-/* 2082 */           Element element = join(element1, element2, element3, param1Int1, param1Int2);
-/* 2083 */           vector.addElement(element);
-/*      */         } else {
-/* 2085 */           if (element2 != null) {
-/* 2086 */             vector.addElement(cloneAsNecessary(element1, element2, param1Int1, param1Int2));
-/*      */           }
-/* 2088 */           if (element3 != null) {
-/* 2089 */             vector.addElement(cloneAsNecessary(element1, element3, param1Int1, param1Int2));
-/*      */           }
-/*      */         } 
-/*      */ 
-/*      */         
-/* 2094 */         k = param1Element3.getElementCount();
-/* 2095 */         for (int m = (element3 == null) ? j : (j + 1); m < k; m++) {
-/* 2096 */           vector.addElement(clone(element1, param1Element3.getElement(m)));
-/*      */         }
-/*      */ 
-/*      */         
-/* 2100 */         Element[] arrayOfElement = new Element[vector.size()];
-/* 2101 */         vector.copyInto((Object[])arrayOfElement);
-/* 2102 */         ((AbstractDocument.BranchElement)element1).replace(0, 0, arrayOfElement);
-/* 2103 */         return element1;
-/*      */       } 
-/* 2105 */       throw new StateInvariantError("No support to join leaf element with non-leaf element");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element clone(Element param1Element1, Element param1Element2) {
-/* 2119 */       if (param1Element2.isLeaf()) {
-/* 2120 */         return DefaultStyledDocument.this.createLeafElement(param1Element1, param1Element2.getAttributes(), param1Element2
-/* 2121 */             .getStartOffset(), param1Element2
-/* 2122 */             .getEndOffset());
-/*      */       }
-/* 2124 */       Element element = DefaultStyledDocument.this.createBranchElement(param1Element1, param1Element2.getAttributes());
-/* 2125 */       int i = param1Element2.getElementCount();
-/* 2126 */       Element[] arrayOfElement = new Element[i];
-/* 2127 */       for (byte b = 0; b < i; b++) {
-/* 2128 */         arrayOfElement[b] = clone(element, param1Element2.getElement(b));
-/*      */       }
-/* 2130 */       ((AbstractDocument.BranchElement)element).replace(0, 0, arrayOfElement);
-/* 2131 */       return element;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Element cloneAsNecessary(Element param1Element1, Element param1Element2, int param1Int1, int param1Int2) {
-/* 2140 */       if (param1Element2.isLeaf()) {
-/* 2141 */         return DefaultStyledDocument.this.createLeafElement(param1Element1, param1Element2.getAttributes(), param1Element2
-/* 2142 */             .getStartOffset(), param1Element2
-/* 2143 */             .getEndOffset());
-/*      */       }
-/* 2145 */       Element element = DefaultStyledDocument.this.createBranchElement(param1Element1, param1Element2.getAttributes());
-/* 2146 */       int i = param1Element2.getElementCount();
-/* 2147 */       ArrayList<Element> arrayList = new ArrayList(i);
-/* 2148 */       for (byte b = 0; b < i; b++) {
-/* 2149 */         Element element1 = param1Element2.getElement(b);
-/* 2150 */         if (element1.getStartOffset() < param1Int1 || element1.getEndOffset() > param1Int2) {
-/* 2151 */           arrayList.add(cloneAsNecessary(element, element1, param1Int1, param1Int2));
-/*      */         }
-/*      */       } 
-/* 2154 */       Element[] arrayOfElement = new Element[arrayList.size()];
-/* 2155 */       arrayOfElement = arrayList.<Element>toArray(arrayOfElement);
-/* 2156 */       ((AbstractDocument.BranchElement)element).replace(0, 0, arrayOfElement);
-/* 2157 */       return element;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void fracture(int param1Int) {
-/* 2172 */       int i = this.insertPath.length;
-/* 2173 */       int j = -1;
-/* 2174 */       boolean bool = this.recreateLeafs;
-/* 2175 */       ElemChanges elemChanges = this.insertPath[i - 1];
-/*      */ 
-/*      */ 
-/*      */       
-/* 2179 */       boolean bool1 = (elemChanges.index + 1 < elemChanges.parent.getElementCount()) ? true : false;
-/* 2180 */       int k = bool ? i : -1;
-/* 2181 */       int m = i - 1;
-/*      */       
-/* 2183 */       this.createdFracture = true;
-/*      */ 
-/*      */ 
-/*      */       
-/* 2187 */       for (int n = i - 2; n >= 0; n--) {
-/* 2188 */         ElemChanges elemChanges1 = this.insertPath[n];
-/* 2189 */         if (elemChanges1.added.size() > 0 || n == param1Int) {
-/* 2190 */           j = n;
-/* 2191 */           if (!bool && bool1) {
-/* 2192 */             bool = true;
-/* 2193 */             if (k == -1)
-/* 2194 */               k = m + 1; 
-/*      */           } 
-/*      */         } 
-/* 2197 */         if (!bool1 && elemChanges1.index < elemChanges1.parent
-/* 2198 */           .getElementCount()) {
-/* 2199 */           bool1 = true;
-/* 2200 */           m = n;
-/*      */         } 
-/*      */       } 
-/* 2203 */       if (bool) {
-/*      */ 
-/*      */         
-/* 2206 */         if (j == -1)
-/* 2207 */           j = i - 1; 
-/* 2208 */         fractureFrom(this.insertPath, j, k);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void fractureFrom(ElemChanges[] param1ArrayOfElemChanges, int param1Int1, int param1Int2) {
-/*      */       Element element1, element2;
-/* 2224 */       ElemChanges elemChanges = param1ArrayOfElemChanges[param1Int1];
-/*      */ 
-/*      */       
-/* 2227 */       int i = param1ArrayOfElemChanges.length;
-/*      */       
-/* 2229 */       if (param1Int1 + 1 == i) {
-/* 2230 */         element1 = elemChanges.parent.getElement(elemChanges.index);
-/*      */       } else {
-/* 2232 */         element1 = elemChanges.parent.getElement(elemChanges.index - 1);
-/* 2233 */       }  if (element1.isLeaf()) {
-/* 2234 */         element2 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element1
-/* 2235 */             .getAttributes(), Math.max(this.endOffset, element1
-/* 2236 */               .getStartOffset()), element1.getEndOffset());
-/*      */       } else {
-/*      */         
-/* 2239 */         element2 = DefaultStyledDocument.this.createBranchElement(elemChanges.parent, element1
-/* 2240 */             .getAttributes());
-/*      */       } 
-/* 2242 */       this.fracturedParent = elemChanges.parent;
-/* 2243 */       this.fracturedChild = element2;
-/*      */ 
-/*      */ 
-/*      */       
-/* 2247 */       Element element3 = element2;
-/*      */       
-/* 2249 */       while (++param1Int1 < param1Int2) {
-/* 2250 */         Element[] arrayOfElement; int k; boolean bool1 = (param1Int1 + 1 == param1Int2) ? true : false;
-/* 2251 */         boolean bool2 = (param1Int1 + 1 == i) ? true : false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2256 */         elemChanges = param1ArrayOfElemChanges[param1Int1];
-/*      */ 
-/*      */ 
-/*      */         
-/* 2260 */         if (bool1) {
-/* 2261 */           if (this.offsetLastIndex || !bool2) {
-/* 2262 */             element1 = null;
-/*      */           } else {
-/* 2264 */             element1 = elemChanges.parent.getElement(elemChanges.index);
-/*      */           } 
-/*      */         } else {
-/* 2267 */           element1 = elemChanges.parent.getElement(elemChanges.index - 1);
-/*      */         } 
-/*      */         
-/* 2270 */         if (element1 != null) {
-/* 2271 */           if (element1.isLeaf()) {
-/* 2272 */             element2 = DefaultStyledDocument.this.createLeafElement(element3, element1
-/* 2273 */                 .getAttributes(), Math.max(this.endOffset, element1
-/* 2274 */                   .getStartOffset()), element1.getEndOffset());
-/*      */           } else {
-/*      */             
-/* 2277 */             element2 = DefaultStyledDocument.this.createBranchElement(element3, element1
-/* 2278 */                 .getAttributes());
-/*      */           } 
-/*      */         } else {
-/*      */           
-/* 2282 */           element2 = null;
-/*      */         } 
-/*      */         
-/* 2285 */         int j = elemChanges.parent.getElementCount() - elemChanges.index;
-/*      */ 
-/*      */ 
-/*      */         
-/* 2289 */         byte b1 = 1;
-/*      */         
-/* 2291 */         if (element2 == null) {
-/*      */           
-/* 2293 */           if (bool2) {
-/* 2294 */             j--;
-/* 2295 */             k = elemChanges.index + 1;
-/*      */           } else {
-/*      */             
-/* 2298 */             k = elemChanges.index;
-/*      */           } 
-/* 2300 */           b1 = 0;
-/* 2301 */           arrayOfElement = new Element[j];
-/*      */         } else {
-/*      */           
-/* 2304 */           if (!bool1) {
-/*      */             
-/* 2306 */             j++;
-/* 2307 */             k = elemChanges.index;
-/*      */           }
-/*      */           else {
-/*      */             
-/* 2311 */             k = elemChanges.index + 1;
-/*      */           } 
-/* 2313 */           arrayOfElement = new Element[j];
-/* 2314 */           arrayOfElement[0] = element2;
-/*      */         } 
-/*      */         
-/* 2317 */         for (byte b2 = b1; b2 < j; 
-/* 2318 */           b2++) {
-/* 2319 */           Element element = elemChanges.parent.getElement(k++);
-/* 2320 */           arrayOfElement[b2] = recreateFracturedElement(element3, element);
-/* 2321 */           elemChanges.removed.addElement(element);
-/*      */         } 
-/* 2323 */         ((AbstractDocument.BranchElement)element3).replace(0, 0, arrayOfElement);
-/* 2324 */         element3 = element2;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Element recreateFracturedElement(Element param1Element1, Element param1Element2) {
-/* 2335 */       if (param1Element2.isLeaf()) {
-/* 2336 */         return DefaultStyledDocument.this.createLeafElement(param1Element1, param1Element2.getAttributes(), 
-/* 2337 */             Math.max(param1Element2.getStartOffset(), this.endOffset), param1Element2
-/*      */             
-/* 2339 */             .getEndOffset());
-/*      */       }
-/*      */       
-/* 2342 */       Element element = DefaultStyledDocument.this.createBranchElement(param1Element1, param1Element2
-/* 2343 */           .getAttributes());
-/* 2344 */       int i = param1Element2.getElementCount();
-/* 2345 */       Element[] arrayOfElement = new Element[i];
-/* 2346 */       for (byte b = 0; b < i; b++) {
-/* 2347 */         arrayOfElement[b] = recreateFracturedElement(element, param1Element2
-/* 2348 */             .getElement(b));
-/*      */       }
-/* 2350 */       ((AbstractDocument.BranchElement)element).replace(0, 0, arrayOfElement);
-/* 2351 */       return element;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void fractureDeepestLeaf(DefaultStyledDocument.ElementSpec[] param1ArrayOfElementSpec) {
-/* 2360 */       ElemChanges elemChanges = this.path.peek();
-/* 2361 */       Element element = elemChanges.parent.getElement(elemChanges.index);
-/*      */ 
-/*      */       
-/* 2364 */       if (this.offset != 0) {
-/* 2365 */         Element element1 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element
-/* 2366 */             .getAttributes(), element
-/* 2367 */             .getStartOffset(), this.offset);
-/*      */ 
-/*      */         
-/* 2370 */         elemChanges.added.addElement(element1);
-/*      */       } 
-/* 2372 */       elemChanges.removed.addElement(element);
-/* 2373 */       if (element.getEndOffset() != this.endOffset) {
-/* 2374 */         this.recreateLeafs = true;
-/*      */       } else {
-/* 2376 */         this.offsetLastIndex = true;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void insertFirstContent(DefaultStyledDocument.ElementSpec[] param1ArrayOfElementSpec) {
-/* 2384 */       DefaultStyledDocument.ElementSpec elementSpec = param1ArrayOfElementSpec[0];
-/* 2385 */       ElemChanges elemChanges = this.path.peek();
-/* 2386 */       Element element1 = elemChanges.parent.getElement(elemChanges.index);
-/* 2387 */       int i = this.offset + elementSpec.getLength();
-/* 2388 */       boolean bool = (param1ArrayOfElementSpec.length == 1) ? true : false;
-/*      */       
-/* 2390 */       switch (elementSpec.getDirection()) {
-/*      */         case 4:
-/* 2392 */           if (element1.getEndOffset() != i && !bool) {
-/*      */ 
-/*      */             
-/* 2395 */             Element element = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element1
-/* 2396 */                 .getAttributes(), element1.getStartOffset(), i);
-/*      */             
-/* 2398 */             elemChanges.added.addElement(element);
-/* 2399 */             elemChanges.removed.addElement(element1);
-/*      */             
-/* 2401 */             if (element1.getEndOffset() != this.endOffset) {
-/* 2402 */               this.recreateLeafs = true;
-/*      */             } else {
-/* 2404 */               this.offsetLastIndex = true;
-/*      */             } 
-/*      */           } else {
-/* 2407 */             this.offsetLastIndex = true;
-/* 2408 */             this.offsetLastIndexOnReplace = true;
-/*      */           } 
-/*      */           return;
-/*      */ 
-/*      */         
-/*      */         case 5:
-/* 2414 */           if (this.offset != 0) {
-/*      */ 
-/*      */             
-/* 2417 */             Element element3 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element1
-/* 2418 */                 .getAttributes(), element1.getStartOffset(), this.offset);
-/*      */             
-/* 2420 */             elemChanges.added.addElement(element3);
-/*      */ 
-/*      */             
-/* 2423 */             Element element4 = elemChanges.parent.getElement(elemChanges.index + 1);
-/* 2424 */             if (bool) {
-/* 2425 */               element3 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element4
-/* 2426 */                   .getAttributes(), this.offset, element4.getEndOffset());
-/*      */             } else {
-/* 2428 */               element3 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element4
-/* 2429 */                   .getAttributes(), this.offset, i);
-/* 2430 */             }  elemChanges.added.addElement(element3);
-/* 2431 */             elemChanges.removed.addElement(element1);
-/* 2432 */             elemChanges.removed.addElement(element4);
-/*      */           } 
-/*      */           return;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2440 */       if (element1.getStartOffset() != this.offset) {
-/* 2441 */         Element element = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, element1
-/* 2442 */             .getAttributes(), element1.getStartOffset(), this.offset);
-/*      */         
-/* 2444 */         elemChanges.added.addElement(element);
-/*      */       } 
-/* 2446 */       elemChanges.removed.addElement(element1);
-/*      */       
-/* 2448 */       Element element2 = DefaultStyledDocument.this.createLeafElement(elemChanges.parent, elementSpec
-/* 2449 */           .getAttributes(), this.offset, i);
-/*      */       
-/* 2451 */       elemChanges.added.addElement(element2);
-/* 2452 */       if (element1.getEndOffset() != this.endOffset) {
-/*      */         
-/* 2454 */         this.recreateLeafs = true;
-/*      */       } else {
-/*      */         
-/* 2457 */         this.offsetLastIndex = true;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     class ElemChanges
-/*      */     {
-/*      */       Element parent;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       int index;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       Vector<Element> added;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       Vector<Element> removed;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       boolean isFracture;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       ElemChanges(Element param2Element, int param2Int, boolean param2Boolean) {
-/* 2496 */         this.parent = param2Element;
-/* 2497 */         this.index = param2Int;
-/* 2498 */         this.isFracture = param2Boolean;
-/* 2499 */         this.added = new Vector<>();
-/* 2500 */         this.removed = new Vector<>();
-/*      */       }
-/*      */       
-/*      */       public String toString() {
-/* 2504 */         return "added: " + this.added + "\nremoved: " + this.removed + "\n";
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class AttributeUndoableEdit
-/*      */     extends AbstractUndoableEdit
-/*      */   {
-/*      */     protected AttributeSet newAttributes;
-/*      */     
-/*      */     protected AttributeSet copy;
-/*      */     
-/*      */     protected boolean isReplacing;
-/*      */     
-/*      */     protected Element element;
-/*      */ 
-/*      */     
-/*      */     public AttributeUndoableEdit(Element param1Element, AttributeSet param1AttributeSet, boolean param1Boolean) {
-/* 2524 */       this.element = param1Element;
-/* 2525 */       this.newAttributes = param1AttributeSet;
-/* 2526 */       this.isReplacing = param1Boolean;
-/*      */ 
-/*      */       
-/* 2529 */       this.copy = param1Element.getAttributes().copyAttributes();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void redo() throws CannotRedoException {
-/* 2538 */       super.redo();
-/*      */       
-/* 2540 */       MutableAttributeSet mutableAttributeSet = (MutableAttributeSet)this.element.getAttributes();
-/* 2541 */       if (this.isReplacing)
-/* 2542 */         mutableAttributeSet.removeAttributes(mutableAttributeSet); 
-/* 2543 */       mutableAttributeSet.addAttributes(this.newAttributes);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void undo() throws CannotUndoException {
-/* 2552 */       super.undo();
-/* 2553 */       MutableAttributeSet mutableAttributeSet = (MutableAttributeSet)this.element.getAttributes();
-/* 2554 */       mutableAttributeSet.removeAttributes(mutableAttributeSet);
-/* 2555 */       mutableAttributeSet.addAttributes(this.copy);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class StyleChangeUndoableEdit
-/*      */     extends AbstractUndoableEdit
-/*      */   {
-/*      */     protected AbstractDocument.AbstractElement element;
-/*      */ 
-/*      */     
-/*      */     protected Style newStyle;
-/*      */ 
-/*      */     
-/*      */     protected AttributeSet oldStyle;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public StyleChangeUndoableEdit(AbstractDocument.AbstractElement param1AbstractElement, Style param1Style) {
-/* 2575 */       this.element = param1AbstractElement;
-/* 2576 */       this.newStyle = param1Style;
-/* 2577 */       this.oldStyle = param1AbstractElement.getResolveParent();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void redo() throws CannotRedoException {
-/* 2586 */       super.redo();
-/* 2587 */       this.element.setResolveParent(this.newStyle);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void undo() throws CannotUndoException {
-/* 2596 */       super.undo();
-/* 2597 */       this.element.setResolveParent(this.oldStyle);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static abstract class AbstractChangeHandler
-/*      */     implements ChangeListener
-/*      */   {
-/*      */     private class DocReference
-/*      */       extends WeakReference<DefaultStyledDocument>
-/*      */     {
-/*      */       DocReference(DefaultStyledDocument param2DefaultStyledDocument, ReferenceQueue<DefaultStyledDocument> param2ReferenceQueue) {
-/* 2617 */         super(param2DefaultStyledDocument, param2ReferenceQueue);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       ChangeListener getListener() {
-/* 2624 */         return DefaultStyledDocument.AbstractChangeHandler.this;
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/* 2629 */     private static final Map<Class, ReferenceQueue<DefaultStyledDocument>> queueMap = (Map)new HashMap<>();
-/*      */     
-/*      */     private DocReference doc;
-/*      */ 
-/*      */     
-/*      */     AbstractChangeHandler(DefaultStyledDocument param1DefaultStyledDocument) {
-/*      */       ReferenceQueue<DefaultStyledDocument> referenceQueue;
-/* 2636 */       Class<?> clazz = getClass();
-/*      */       
-/* 2638 */       synchronized (queueMap) {
-/* 2639 */         referenceQueue = queueMap.get(clazz);
-/* 2640 */         if (referenceQueue == null) {
-/* 2641 */           referenceQueue = new ReferenceQueue();
-/* 2642 */           queueMap.put(clazz, referenceQueue);
-/*      */         } 
-/*      */       } 
-/* 2645 */       this.doc = new DocReference(param1DefaultStyledDocument, referenceQueue);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     static List<ChangeListener> getStaleListeners(ChangeListener param1ChangeListener) {
-/* 2654 */       ArrayList<ChangeListener> arrayList = new ArrayList();
-/* 2655 */       ReferenceQueue referenceQueue = queueMap.get(param1ChangeListener.getClass());
-/*      */       
-/* 2657 */       if (referenceQueue != null)
-/*      */       {
-/* 2659 */         synchronized (referenceQueue) {
-/* 2660 */           DocReference docReference; while ((docReference = (DocReference)referenceQueue.poll()) != null) {
-/* 2661 */             arrayList.add(docReference.getListener());
-/*      */           }
-/*      */         } 
-/*      */       }
-/*      */       
-/* 2666 */       return arrayList;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/* 2673 */       DefaultStyledDocument defaultStyledDocument = this.doc.get();
-/* 2674 */       if (defaultStyledDocument != null) {
-/* 2675 */         fireStateChanged(defaultStyledDocument, param1ChangeEvent);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     abstract void fireStateChanged(DefaultStyledDocument param1DefaultStyledDocument, ChangeEvent param1ChangeEvent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class StyleChangeHandler
-/*      */     extends AbstractChangeHandler
-/*      */   {
-/*      */     StyleChangeHandler(DefaultStyledDocument param1DefaultStyledDocument) {
-/* 2690 */       super(param1DefaultStyledDocument);
-/*      */     }
-/*      */     
-/*      */     void fireStateChanged(DefaultStyledDocument param1DefaultStyledDocument, ChangeEvent param1ChangeEvent) {
-/* 2694 */       Object object = param1ChangeEvent.getSource();
-/* 2695 */       if (object instanceof Style) {
-/* 2696 */         param1DefaultStyledDocument.styleChanged((Style)object);
-/*      */       } else {
-/* 2698 */         param1DefaultStyledDocument.styleChanged((Style)null);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class StyleContextChangeHandler
-/*      */     extends AbstractChangeHandler
-/*      */   {
-/*      */     StyleContextChangeHandler(DefaultStyledDocument param1DefaultStyledDocument) {
-/* 2711 */       super(param1DefaultStyledDocument);
-/*      */     }
-/*      */     
-/*      */     void fireStateChanged(DefaultStyledDocument param1DefaultStyledDocument, ChangeEvent param1ChangeEvent) {
-/* 2715 */       param1DefaultStyledDocument.updateStylesListeningTo();
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   class ChangeUpdateRunnable
-/*      */     implements Runnable
-/*      */   {
-/*      */     boolean isPending;
-/*      */     
-/*      */     ChangeUpdateRunnable() {
-/* 2725 */       this.isPending = false;
-/*      */     }
-/*      */     public void run() {
-/* 2728 */       synchronized (this) {
-/* 2729 */         this.isPending = false;
-/*      */       } 
-/*      */       
-/*      */       try {
-/* 2733 */         DefaultStyledDocument.this.writeLock();
-/*      */         
-/* 2735 */         AbstractDocument.DefaultDocumentEvent defaultDocumentEvent = new AbstractDocument.DefaultDocumentEvent(DefaultStyledDocument.this, 0, DefaultStyledDocument.this.getLength(), DocumentEvent.EventType.CHANGE);
-/*      */         
-/* 2737 */         defaultDocumentEvent.end();
-/* 2738 */         DefaultStyledDocument.this.fireChangedUpdate(defaultDocumentEvent);
-/*      */       } finally {
-/* 2740 */         DefaultStyledDocument.this.writeUnlock();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\DefaultStyledDocument.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.font.TextAttribute;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+import java.util.Vector;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import javax.swing.event.*;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.SwingUtilities;
+import static sun.swing.SwingUtilities2.IMPLIED_CR;
+
+/**
+ * A document that can be marked up with character and paragraph
+ * styles in a manner similar to the Rich Text Format.  The element
+ * structure for this document represents style crossings for
+ * style runs.  These style runs are mapped into a paragraph element
+ * structure (which may reside in some other structure).  The
+ * style runs break at paragraph boundaries since logical styles are
+ * assigned to paragraph boundaries.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Timothy Prinzing
+ * @see     Document
+ * @see     AbstractDocument
+ */
+public class DefaultStyledDocument extends AbstractDocument implements StyledDocument {
+
+    /**
+     * Constructs a styled document.
+     *
+     * @param c  the container for the content
+     * @param styles resources and style definitions which may
+     *  be shared across documents
+     */
+    public DefaultStyledDocument(Content c, StyleContext styles) {
+        super(c, styles);
+        listeningStyles = new Vector<Style>();
+        buffer = new ElementBuffer(createDefaultRoot());
+        Style defaultStyle = styles.getStyle(StyleContext.DEFAULT_STYLE);
+        setLogicalStyle(0, defaultStyle);
+    }
+
+    /**
+     * Constructs a styled document with the default content
+     * storage implementation and a shared set of styles.
+     *
+     * @param styles the styles
+     */
+    public DefaultStyledDocument(StyleContext styles) {
+        this(new GapContent(BUFFER_SIZE_DEFAULT), styles);
+    }
+
+    /**
+     * Constructs a default styled document.  This buffers
+     * input content by a size of <em>BUFFER_SIZE_DEFAULT</em>
+     * and has a style context that is scoped by the lifetime
+     * of the document and is not shared with other documents.
+     */
+    public DefaultStyledDocument() {
+        this(new GapContent(BUFFER_SIZE_DEFAULT), new StyleContext());
+    }
+
+    /**
+     * Gets the default root element.
+     *
+     * @return the root
+     * @see Document#getDefaultRootElement
+     */
+    public Element getDefaultRootElement() {
+        return buffer.getRootElement();
+    }
+
+    /**
+     * Initialize the document to reflect the given element
+     * structure (i.e. the structure reported by the
+     * <code>getDefaultRootElement</code> method.  If the
+     * document contained any data it will first be removed.
+     */
+    protected void create(ElementSpec[] data) {
+        try {
+            if (getLength() != 0) {
+                remove(0, getLength());
+            }
+            writeLock();
+
+            // install the content
+            Content c = getContent();
+            int n = data.length;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                ElementSpec es = data[i];
+                if (es.getLength() > 0) {
+                    sb.append(es.getArray(), es.getOffset(),  es.getLength());
+                }
+            }
+            UndoableEdit cEdit = c.insertString(0, sb.toString());
+
+            // build the event and element structure
+            int length = sb.length();
+            DefaultDocumentEvent evnt =
+                new DefaultDocumentEvent(0, length, DocumentEvent.EventType.INSERT);
+            evnt.addEdit(cEdit);
+            buffer.create(length, data, evnt);
+
+            // update bidi (possibly)
+            super.insertUpdate(evnt, null);
+
+            // notify the listeners
+            evnt.end();
+            fireInsertUpdate(evnt);
+            fireUndoableEditUpdate(new UndoableEditEvent(this, evnt));
+        } catch (BadLocationException ble) {
+            throw new StateInvariantError("problem initializing");
+        } finally {
+            writeUnlock();
+        }
+
+    }
+
+    /**
+     * Inserts new elements in bulk.  This is useful to allow
+     * parsing with the document in an unlocked state and
+     * prepare an element structure modification.  This method
+     * takes an array of tokens that describe how to update an
+     * element structure so the time within a write lock can
+     * be greatly reduced in an asynchronous update situation.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offset the starting offset &gt;= 0
+     * @param data the element data
+     * @exception BadLocationException for an invalid starting offset
+     */
+    protected void insert(int offset, ElementSpec[] data) throws BadLocationException {
+        if (data == null || data.length == 0) {
+            return;
+        }
+
+        try {
+            writeLock();
+
+            // install the content
+            Content c = getContent();
+            int n = data.length;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                ElementSpec es = data[i];
+                if (es.getLength() > 0) {
+                    sb.append(es.getArray(), es.getOffset(),  es.getLength());
+                }
+            }
+            if (sb.length() == 0) {
+                // Nothing to insert, bail.
+                return;
+            }
+            UndoableEdit cEdit = c.insertString(offset, sb.toString());
+
+            // create event and build the element structure
+            int length = sb.length();
+            DefaultDocumentEvent evnt =
+                new DefaultDocumentEvent(offset, length, DocumentEvent.EventType.INSERT);
+            evnt.addEdit(cEdit);
+            buffer.insert(offset, length, data, evnt);
+
+            // update bidi (possibly)
+            super.insertUpdate(evnt, null);
+
+            // notify the listeners
+            evnt.end();
+            fireInsertUpdate(evnt);
+            fireUndoableEditUpdate(new UndoableEditEvent(this, evnt));
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    /**
+     * Removes an element from this document.
+     *
+     * <p>The element is removed from its parent element, as well as
+     * the text in the range identified by the element.  If the
+     * element isn't associated with the document, {@code
+     * IllegalArgumentException} is thrown.</p>
+     *
+     * <p>As empty branch elements are not allowed in the document, if the
+     * element is the sole child, its parent element is removed as well,
+     * recursively.  This means that when replacing all the children of a
+     * particular element, new children should be added <em>before</em>
+     * removing old children.
+     *
+     * <p>Element removal results in two events being fired, the
+     * {@code DocumentEvent} for changes in element structure and {@code
+     * UndoableEditEvent} for changes in document content.</p>
+     *
+     * <p>If the element contains end-of-content mark (the last {@code
+     * "\n"} character in document), this character is not removed;
+     * instead, preceding leaf element is extended to cover the
+     * character.  If the last leaf already ends with {@code "\n",} it is
+     * included in content removal.</p>
+     *
+     * <p>If the element is {@code null,} {@code NullPointerException} is
+     * thrown.  If the element structure would become invalid after the removal,
+     * for example if the element is the document root element, {@code
+     * IllegalArgumentException} is thrown.  If the current element structure is
+     * invalid, {@code IllegalStateException} is thrown.</p>
+     *
+     * @param  elem                      the element to remove
+     * @throws NullPointerException      if the element is {@code null}
+     * @throws IllegalArgumentException  if the element could not be removed
+     * @throws IllegalStateException     if the element structure is invalid
+     *
+     * @since  1.7
+     */
+    public void removeElement(Element elem) {
+        try {
+            writeLock();
+            removeElementImpl(elem);
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    private void removeElementImpl(Element elem) {
+        if (elem.getDocument() != this) {
+            throw new IllegalArgumentException("element doesn't belong to document");
+        }
+        BranchElement parent = (BranchElement) elem.getParentElement();
+        if (parent == null) {
+            throw new IllegalArgumentException("can't remove the root element");
+        }
+
+        int startOffset = elem.getStartOffset();
+        int removeFrom = startOffset;
+        int endOffset = elem.getEndOffset();
+        int removeTo = endOffset;
+        int lastEndOffset = getLength() + 1;
+        Content content = getContent();
+        boolean atEnd = false;
+        boolean isComposedText = Utilities.isComposedTextElement(elem);
+
+        if (endOffset >= lastEndOffset) {
+            // element includes the last "\n" character, needs special handling
+            if (startOffset <= 0) {
+                throw new IllegalArgumentException("can't remove the whole content");
+            }
+            removeTo = lastEndOffset - 1; // last "\n" must not be removed
+            try {
+                if (content.getString(startOffset - 1, 1).charAt(0) == '\n') {
+                    removeFrom--; // preceding leaf ends with "\n", remove it
+                }
+            } catch (BadLocationException ble) { // can't happen
+                throw new IllegalStateException(ble);
+            }
+            atEnd = true;
+        }
+        int length = removeTo - removeFrom;
+
+        DefaultDocumentEvent dde = new DefaultDocumentEvent(removeFrom,
+                length, DefaultDocumentEvent.EventType.REMOVE);
+        UndoableEdit ue = null;
+        // do not leave empty branch elements
+        while (parent.getElementCount() == 1) {
+            elem = parent;
+            parent = (BranchElement) parent.getParentElement();
+            if (parent == null) { // shouldn't happen
+                throw new IllegalStateException("invalid element structure");
+            }
+        }
+        Element[] removed = { elem };
+        Element[] added = {};
+        int index = parent.getElementIndex(startOffset);
+        parent.replace(index, 1, added);
+        dde.addEdit(new ElementEdit(parent, index, removed, added));
+        if (length > 0) {
+            try {
+                ue = content.remove(removeFrom, length);
+                if (ue != null) {
+                    dde.addEdit(ue);
+                }
+            } catch (BadLocationException ble) {
+                // can only happen if the element structure is severely broken
+                throw new IllegalStateException(ble);
+            }
+            lastEndOffset -= length;
+        }
+
+        if (atEnd) {
+            // preceding leaf element should be extended to cover orphaned "\n"
+            Element prevLeaf = parent.getElement(parent.getElementCount() - 1);
+            while ((prevLeaf != null) && !prevLeaf.isLeaf()) {
+                prevLeaf = prevLeaf.getElement(prevLeaf.getElementCount() - 1);
+            }
+            if (prevLeaf == null) { // shouldn't happen
+                throw new IllegalStateException("invalid element structure");
+            }
+            int prevStartOffset = prevLeaf.getStartOffset();
+            BranchElement prevParent = (BranchElement) prevLeaf.getParentElement();
+            int prevIndex = prevParent.getElementIndex(prevStartOffset);
+            Element newElem;
+            newElem = createLeafElement(prevParent, prevLeaf.getAttributes(),
+                                            prevStartOffset, lastEndOffset);
+            Element[] prevRemoved = { prevLeaf };
+            Element[] prevAdded = { newElem };
+            prevParent.replace(prevIndex, 1, prevAdded);
+            dde.addEdit(new ElementEdit(prevParent, prevIndex,
+                                                    prevRemoved, prevAdded));
+        }
+
+        postRemoveUpdate(dde);
+        dde.end();
+        fireRemoveUpdate(dde);
+        if (! (isComposedText && (ue != null))) {
+            // do not fire UndoabeEdit event for composed text edit (unsupported)
+            fireUndoableEditUpdate(new UndoableEditEvent(this, dde));
+        }
+    }
+
+    /**
+     * Adds a new style into the logical style hierarchy.  Style attributes
+     * resolve from bottom up so an attribute specified in a child
+     * will override an attribute specified in the parent.
+     *
+     * @param nm   the name of the style (must be unique within the
+     *   collection of named styles).  The name may be null if the style
+     *   is unnamed, but the caller is responsible
+     *   for managing the reference returned as an unnamed style can't
+     *   be fetched by name.  An unnamed style may be useful for things
+     *   like character attribute overrides such as found in a style
+     *   run.
+     * @param parent the parent style.  This may be null if unspecified
+     *   attributes need not be resolved in some other style.
+     * @return the style
+     */
+    public Style addStyle(String nm, Style parent) {
+        StyleContext styles = (StyleContext) getAttributeContext();
+        return styles.addStyle(nm, parent);
+    }
+
+    /**
+     * Removes a named style previously added to the document.
+     *
+     * @param nm  the name of the style to remove
+     */
+    public void removeStyle(String nm) {
+        StyleContext styles = (StyleContext) getAttributeContext();
+        styles.removeStyle(nm);
+    }
+
+    /**
+     * Fetches a named style previously added.
+     *
+     * @param nm  the name of the style
+     * @return the style
+     */
+    public Style getStyle(String nm) {
+        StyleContext styles = (StyleContext) getAttributeContext();
+        return styles.getStyle(nm);
+    }
+
+
+    /**
+     * Fetches the list of of style names.
+     *
+     * @return all the style names
+     */
+    public Enumeration<?> getStyleNames() {
+        return ((StyleContext) getAttributeContext()).getStyleNames();
+    }
+
+    /**
+     * Sets the logical style to use for the paragraph at the
+     * given position.  If attributes aren't explicitly set
+     * for character and paragraph attributes they will resolve
+     * through the logical style assigned to the paragraph, which
+     * in turn may resolve through some hierarchy completely
+     * independent of the element hierarchy in the document.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param pos the offset from the start of the document &gt;= 0
+     * @param s  the logical style to assign to the paragraph, null if none
+     */
+    public void setLogicalStyle(int pos, Style s) {
+        Element paragraph = getParagraphElement(pos);
+        if ((paragraph != null) && (paragraph instanceof AbstractElement)) {
+            try {
+                writeLock();
+                StyleChangeUndoableEdit edit = new StyleChangeUndoableEdit((AbstractElement)paragraph, s);
+                ((AbstractElement)paragraph).setResolveParent(s);
+                int p0 = paragraph.getStartOffset();
+                int p1 = paragraph.getEndOffset();
+                DefaultDocumentEvent e =
+                  new DefaultDocumentEvent(p0, p1 - p0, DocumentEvent.EventType.CHANGE);
+                e.addEdit(edit);
+                e.end();
+                fireChangedUpdate(e);
+                fireUndoableEditUpdate(new UndoableEditEvent(this, e));
+            } finally {
+                writeUnlock();
+            }
+        }
+    }
+
+    /**
+     * Fetches the logical style assigned to the paragraph
+     * represented by the given position.
+     *
+     * @param p the location to translate to a paragraph
+     *  and determine the logical style assigned &gt;= 0.  This
+     *  is an offset from the start of the document.
+     * @return the style, null if none
+     */
+    public Style getLogicalStyle(int p) {
+        Style s = null;
+        Element paragraph = getParagraphElement(p);
+        if (paragraph != null) {
+            AttributeSet a = paragraph.getAttributes();
+            AttributeSet parent = a.getResolveParent();
+            if (parent instanceof Style) {
+                s = (Style) parent;
+            }
+        }
+        return s;
+    }
+
+    /**
+     * Sets attributes for some part of the document.
+     * A write lock is held by this operation while changes
+     * are being made, and a DocumentEvent is sent to the listeners
+     * after the change has been successfully completed.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offset the offset in the document &gt;= 0
+     * @param length the length &gt;= 0
+     * @param s the attributes
+     * @param replace true if the previous attributes should be replaced
+     *  before setting the new attributes
+     */
+    public void setCharacterAttributes(int offset, int length, AttributeSet s, boolean replace) {
+        if (length == 0) {
+            return;
+        }
+        try {
+            writeLock();
+            DefaultDocumentEvent changes =
+                new DefaultDocumentEvent(offset, length, DocumentEvent.EventType.CHANGE);
+
+            // split elements that need it
+            buffer.change(offset, length, changes);
+
+            AttributeSet sCopy = s.copyAttributes();
+
+            // PENDING(prinz) - this isn't a very efficient way to iterate
+            int lastEnd;
+            for (int pos = offset; pos < (offset + length); pos = lastEnd) {
+                Element run = getCharacterElement(pos);
+                lastEnd = run.getEndOffset();
+                if (pos == lastEnd) {
+                    // offset + length beyond length of document, bail.
+                    break;
+                }
+                MutableAttributeSet attr = (MutableAttributeSet) run.getAttributes();
+                changes.addEdit(new AttributeUndoableEdit(run, sCopy, replace));
+                if (replace) {
+                    attr.removeAttributes(attr);
+                }
+                attr.addAttributes(s);
+            }
+            changes.end();
+            fireChangedUpdate(changes);
+            fireUndoableEditUpdate(new UndoableEditEvent(this, changes));
+        } finally {
+            writeUnlock();
+        }
+
+    }
+
+    /**
+     * Sets attributes for a paragraph.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offset the offset into the paragraph &gt;= 0
+     * @param length the number of characters affected &gt;= 0
+     * @param s the attributes
+     * @param replace whether to replace existing attributes, or merge them
+     */
+    public void setParagraphAttributes(int offset, int length, AttributeSet s,
+                                       boolean replace) {
+        try {
+            writeLock();
+            DefaultDocumentEvent changes =
+                new DefaultDocumentEvent(offset, length, DocumentEvent.EventType.CHANGE);
+
+            AttributeSet sCopy = s.copyAttributes();
+
+            // PENDING(prinz) - this assumes a particular element structure
+            Element section = getDefaultRootElement();
+            int index0 = section.getElementIndex(offset);
+            int index1 = section.getElementIndex(offset + ((length > 0) ? length - 1 : 0));
+            boolean isI18N = Boolean.TRUE.equals(getProperty(I18NProperty));
+            boolean hasRuns = false;
+            for (int i = index0; i <= index1; i++) {
+                Element paragraph = section.getElement(i);
+                MutableAttributeSet attr = (MutableAttributeSet) paragraph.getAttributes();
+                changes.addEdit(new AttributeUndoableEdit(paragraph, sCopy, replace));
+                if (replace) {
+                    attr.removeAttributes(attr);
+                }
+                attr.addAttributes(s);
+                if (isI18N && !hasRuns) {
+                    hasRuns = (attr.getAttribute(TextAttribute.RUN_DIRECTION) != null);
+                }
+            }
+
+            if (hasRuns) {
+                updateBidi( changes );
+            }
+
+            changes.end();
+            fireChangedUpdate(changes);
+            fireUndoableEditUpdate(new UndoableEditEvent(this, changes));
+        } finally {
+            writeUnlock();
+        }
+    }
+
+    /**
+     * Gets the paragraph element at the offset <code>pos</code>.
+     * A paragraph consists of at least one child Element, which is usually
+     * a leaf.
+     *
+     * @param pos the starting offset &gt;= 0
+     * @return the element
+     */
+    public Element getParagraphElement(int pos) {
+        Element e;
+        for (e = getDefaultRootElement(); ! e.isLeaf(); ) {
+            int index = e.getElementIndex(pos);
+            e = e.getElement(index);
+        }
+        if(e != null)
+            return e.getParentElement();
+        return e;
+    }
+
+    /**
+     * Gets a character element based on a position.
+     *
+     * @param pos the position in the document &gt;= 0
+     * @return the element
+     */
+    public Element getCharacterElement(int pos) {
+        Element e;
+        for (e = getDefaultRootElement(); ! e.isLeaf(); ) {
+            int index = e.getElementIndex(pos);
+            e = e.getElement(index);
+        }
+        return e;
+    }
+
+    // --- local methods -------------------------------------------------
+
+    /**
+     * Updates document structure as a result of text insertion.  This
+     * will happen within a write lock.  This implementation simply
+     * parses the inserted content for line breaks and builds up a set
+     * of instructions for the element buffer.
+     *
+     * @param chng a description of the document change
+     * @param attr the attributes
+     */
+    protected void insertUpdate(DefaultDocumentEvent chng, AttributeSet attr) {
+        int offset = chng.getOffset();
+        int length = chng.getLength();
+        if (attr == null) {
+            attr = SimpleAttributeSet.EMPTY;
+        }
+
+        // Paragraph attributes should come from point after insertion.
+        // You really only notice this when inserting at a paragraph
+        // boundary.
+        Element paragraph = getParagraphElement(offset + length);
+        AttributeSet pattr = paragraph.getAttributes();
+        // Character attributes should come from actual insertion point.
+        Element pParagraph = getParagraphElement(offset);
+        Element run = pParagraph.getElement(pParagraph.getElementIndex
+                                            (offset));
+        int endOffset = offset + length;
+        boolean insertingAtBoundry = (run.getEndOffset() == endOffset);
+        AttributeSet cattr = run.getAttributes();
+
+        try {
+            Segment s = new Segment();
+            Vector<ElementSpec> parseBuffer = new Vector<ElementSpec>();
+            ElementSpec lastStartSpec = null;
+            boolean insertingAfterNewline = false;
+            short lastStartDirection = ElementSpec.OriginateDirection;
+            // Check if the previous character was a newline.
+            if (offset > 0) {
+                getText(offset - 1, 1, s);
+                if (s.array[s.offset] == '\n') {
+                    // Inserting after a newline.
+                    insertingAfterNewline = true;
+                    lastStartDirection = createSpecsForInsertAfterNewline
+                                  (paragraph, pParagraph, pattr, parseBuffer,
+                                   offset, endOffset);
+                    for(int counter = parseBuffer.size() - 1; counter >= 0;
+                        counter--) {
+                        ElementSpec spec = parseBuffer.elementAt(counter);
+                        if(spec.getType() == ElementSpec.StartTagType) {
+                            lastStartSpec = spec;
+                            break;
+                        }
+                    }
+                }
+            }
+            // If not inserting after a new line, pull the attributes for
+            // new paragraphs from the paragraph under the insertion point.
+            if(!insertingAfterNewline)
+                pattr = pParagraph.getAttributes();
+
+            getText(offset, length, s);
+            char[] txt = s.array;
+            int n = s.offset + s.count;
+            int lastOffset = s.offset;
+
+            for (int i = s.offset; i < n; i++) {
+                if (txt[i] == '\n') {
+                    int breakOffset = i + 1;
+                    parseBuffer.addElement(
+                        new ElementSpec(attr, ElementSpec.ContentType,
+                                               breakOffset - lastOffset));
+                    parseBuffer.addElement(
+                        new ElementSpec(null, ElementSpec.EndTagType));
+                    lastStartSpec = new ElementSpec(pattr, ElementSpec.
+                                                   StartTagType);
+                    parseBuffer.addElement(lastStartSpec);
+                    lastOffset = breakOffset;
+                }
+            }
+            if (lastOffset < n) {
+                parseBuffer.addElement(
+                    new ElementSpec(attr, ElementSpec.ContentType,
+                                           n - lastOffset));
+            }
+
+            ElementSpec first = parseBuffer.firstElement();
+
+            int docLength = getLength();
+
+            // Check for join previous of first content.
+            if(first.getType() == ElementSpec.ContentType &&
+               cattr.isEqual(attr)) {
+                first.setDirection(ElementSpec.JoinPreviousDirection);
+            }
+
+            // Do a join fracture/next for last start spec if necessary.
+            if(lastStartSpec != null) {
+                if(insertingAfterNewline) {
+                    lastStartSpec.setDirection(lastStartDirection);
+                }
+                // Join to the fracture if NOT inserting at the end
+                // (fracture only happens when not inserting at end of
+                // paragraph).
+                else if(pParagraph.getEndOffset() != endOffset) {
+                    lastStartSpec.setDirection(ElementSpec.
+                                               JoinFractureDirection);
+                }
+                // Join to next if parent of pParagraph has another
+                // element after pParagraph, and it isn't a leaf.
+                else {
+                    Element parent = pParagraph.getParentElement();
+                    int pParagraphIndex = parent.getElementIndex(offset);
+                    if((pParagraphIndex + 1) < parent.getElementCount() &&
+                       !parent.getElement(pParagraphIndex + 1).isLeaf()) {
+                        lastStartSpec.setDirection(ElementSpec.
+                                                   JoinNextDirection);
+                    }
+                }
+            }
+
+            // Do a JoinNext for last spec if it is content, it doesn't
+            // already have a direction set, no new paragraphs have been
+            // inserted or a new paragraph has been inserted and its join
+            // direction isn't originate, and the element at endOffset
+            // is a leaf.
+            if(insertingAtBoundry && endOffset < docLength) {
+                ElementSpec last = parseBuffer.lastElement();
+                if(last.getType() == ElementSpec.ContentType &&
+                   last.getDirection() != ElementSpec.JoinPreviousDirection &&
+                   ((lastStartSpec == null && (paragraph == pParagraph ||
+                                               insertingAfterNewline)) ||
+                    (lastStartSpec != null && lastStartSpec.getDirection() !=
+                     ElementSpec.OriginateDirection))) {
+                    Element nextRun = paragraph.getElement(paragraph.
+                                           getElementIndex(endOffset));
+                    // Don't try joining to a branch!
+                    if(nextRun.isLeaf() &&
+                       attr.isEqual(nextRun.getAttributes())) {
+                        last.setDirection(ElementSpec.JoinNextDirection);
+                    }
+                }
+            }
+            // If not inserting at boundary and there is going to be a
+            // fracture, then can join next on last content if cattr
+            // matches the new attributes.
+            else if(!insertingAtBoundry && lastStartSpec != null &&
+                    lastStartSpec.getDirection() ==
+                    ElementSpec.JoinFractureDirection) {
+                ElementSpec last = parseBuffer.lastElement();
+                if(last.getType() == ElementSpec.ContentType &&
+                   last.getDirection() != ElementSpec.JoinPreviousDirection &&
+                   attr.isEqual(cattr)) {
+                    last.setDirection(ElementSpec.JoinNextDirection);
+                }
+            }
+
+            // Check for the composed text element. If it is, merge the character attributes
+            // into this element as well.
+            if (Utilities.isComposedTextAttributeDefined(attr)) {
+                MutableAttributeSet mattr = (MutableAttributeSet) attr;
+                mattr.addAttributes(cattr);
+                mattr.addAttribute(AbstractDocument.ElementNameAttribute,
+                        AbstractDocument.ContentElementName);
+
+                // Assure that the composed text element is named properly
+                // and doesn't have the CR attribute defined.
+                mattr.addAttribute(StyleConstants.NameAttribute,
+                        AbstractDocument.ContentElementName);
+                if (mattr.isDefined(IMPLIED_CR)) {
+                    mattr.removeAttribute(IMPLIED_CR);
+                }
+            }
+
+            ElementSpec[] spec = new ElementSpec[parseBuffer.size()];
+            parseBuffer.copyInto(spec);
+            buffer.insert(offset, length, spec, chng);
+        } catch (BadLocationException bl) {
+        }
+
+        super.insertUpdate( chng, attr );
+    }
+
+    /**
+     * This is called by insertUpdate when inserting after a new line.
+     * It generates, in <code>parseBuffer</code>, ElementSpecs that will
+     * position the stack in <code>paragraph</code>.<p>
+     * It returns the direction the last StartSpec should have (this don't
+     * necessarily create the last start spec).
+     */
+    short createSpecsForInsertAfterNewline(Element paragraph,
+            Element pParagraph, AttributeSet pattr, Vector<ElementSpec> parseBuffer,
+                                                 int offset, int endOffset) {
+        // Need to find the common parent of pParagraph and paragraph.
+        if(paragraph.getParentElement() == pParagraph.getParentElement()) {
+            // The simple (and common) case that pParagraph and
+            // paragraph have the same parent.
+            ElementSpec spec = new ElementSpec(pattr, ElementSpec.EndTagType);
+            parseBuffer.addElement(spec);
+            spec = new ElementSpec(pattr, ElementSpec.StartTagType);
+            parseBuffer.addElement(spec);
+            if(pParagraph.getEndOffset() != endOffset)
+                return ElementSpec.JoinFractureDirection;
+
+            Element parent = pParagraph.getParentElement();
+            if((parent.getElementIndex(offset) + 1) < parent.getElementCount())
+                return ElementSpec.JoinNextDirection;
+        }
+        else {
+            // Will only happen for text with more than 2 levels.
+            // Find the common parent of a paragraph and pParagraph
+            Vector<Element> leftParents = new Vector<Element>();
+            Vector<Element> rightParents = new Vector<Element>();
+            Element e = pParagraph;
+            while(e != null) {
+                leftParents.addElement(e);
+                e = e.getParentElement();
+            }
+            e = paragraph;
+            int leftIndex = -1;
+            while(e != null && (leftIndex = leftParents.indexOf(e)) == -1) {
+                rightParents.addElement(e);
+                e = e.getParentElement();
+            }
+            if(e != null) {
+                // e identifies the common parent.
+                // Build the ends.
+                for(int counter = 0; counter < leftIndex;
+                    counter++) {
+                    parseBuffer.addElement(new ElementSpec
+                                              (null, ElementSpec.EndTagType));
+                }
+                // And the starts.
+                ElementSpec spec;
+                for(int counter = rightParents.size() - 1;
+                    counter >= 0; counter--) {
+                    spec = new ElementSpec(rightParents.elementAt(counter).getAttributes(),
+                                   ElementSpec.StartTagType);
+                    if(counter > 0)
+                        spec.setDirection(ElementSpec.JoinNextDirection);
+                    parseBuffer.addElement(spec);
+                }
+                // If there are right parents, then we generated starts
+                // down the right subtree and there will be an element to
+                // join to.
+                if(rightParents.size() > 0)
+                    return ElementSpec.JoinNextDirection;
+                // No right subtree, e.getElement(endOffset) is a
+                // leaf. There will be a facture.
+                return ElementSpec.JoinFractureDirection;
+            }
+            // else: Could throw an exception here, but should never get here!
+        }
+        return ElementSpec.OriginateDirection;
+    }
+
+    /**
+     * Updates document structure as a result of text removal.
+     *
+     * @param chng a description of the document change
+     */
+    protected void removeUpdate(DefaultDocumentEvent chng) {
+        super.removeUpdate(chng);
+        buffer.remove(chng.getOffset(), chng.getLength(), chng);
+    }
+
+    /**
+     * Creates the root element to be used to represent the
+     * default document structure.
+     *
+     * @return the element base
+     */
+    protected AbstractElement createDefaultRoot() {
+        // grabs a write-lock for this initialization and
+        // abandon it during initialization so in normal
+        // operation we can detect an illegitimate attempt
+        // to mutate attributes.
+        writeLock();
+        BranchElement section = new SectionElement();
+        BranchElement paragraph = new BranchElement(section, null);
+
+        LeafElement brk = new LeafElement(paragraph, null, 0, 1);
+        Element[] buff = new Element[1];
+        buff[0] = brk;
+        paragraph.replace(0, 0, buff);
+
+        buff[0] = paragraph;
+        section.replace(0, 0, buff);
+        writeUnlock();
+        return section;
+    }
+
+    /**
+     * Gets the foreground color from an attribute set.
+     *
+     * @param attr the attribute set
+     * @return the color
+     */
+    public Color getForeground(AttributeSet attr) {
+        StyleContext styles = (StyleContext) getAttributeContext();
+        return styles.getForeground(attr);
+    }
+
+    /**
+     * Gets the background color from an attribute set.
+     *
+     * @param attr the attribute set
+     * @return the color
+     */
+    public Color getBackground(AttributeSet attr) {
+        StyleContext styles = (StyleContext) getAttributeContext();
+        return styles.getBackground(attr);
+    }
+
+    /**
+     * Gets the font from an attribute set.
+     *
+     * @param attr the attribute set
+     * @return the font
+     */
+    public Font getFont(AttributeSet attr) {
+        StyleContext styles = (StyleContext) getAttributeContext();
+        return styles.getFont(attr);
+    }
+
+    /**
+     * Called when any of this document's styles have changed.
+     * Subclasses may wish to be intelligent about what gets damaged.
+     *
+     * @param style The Style that has changed.
+     */
+    protected void styleChanged(Style style) {
+        // Only propagate change updated if have content
+        if (getLength() != 0) {
+            // lazily create a ChangeUpdateRunnable
+            if (updateRunnable == null) {
+                updateRunnable = new ChangeUpdateRunnable();
+            }
+
+            // We may get a whole batch of these at once, so only
+            // queue the runnable if it is not already pending
+            synchronized(updateRunnable) {
+                if (!updateRunnable.isPending) {
+                    SwingUtilities.invokeLater(updateRunnable);
+                    updateRunnable.isPending = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds a document listener for notification of any changes.
+     *
+     * @param listener the listener
+     * @see Document#addDocumentListener
+     */
+    public void addDocumentListener(DocumentListener listener) {
+        synchronized(listeningStyles) {
+            int oldDLCount = listenerList.getListenerCount
+                                          (DocumentListener.class);
+            super.addDocumentListener(listener);
+            if (oldDLCount == 0) {
+                if (styleContextChangeListener == null) {
+                    styleContextChangeListener =
+                                      createStyleContextChangeListener();
+                }
+                if (styleContextChangeListener != null) {
+                    StyleContext styles = (StyleContext)getAttributeContext();
+                    List<ChangeListener> staleListeners =
+                        AbstractChangeHandler.getStaleListeners(styleContextChangeListener);
+                    for (ChangeListener l: staleListeners) {
+                        styles.removeChangeListener(l);
+                    }
+                    styles.addChangeListener(styleContextChangeListener);
+                }
+                updateStylesListeningTo();
+            }
+        }
+    }
+
+    /**
+     * Removes a document listener.
+     *
+     * @param listener the listener
+     * @see Document#removeDocumentListener
+     */
+    public void removeDocumentListener(DocumentListener listener) {
+        synchronized(listeningStyles) {
+            super.removeDocumentListener(listener);
+            if (listenerList.getListenerCount(DocumentListener.class) == 0) {
+                for (int counter = listeningStyles.size() - 1; counter >= 0;
+                     counter--) {
+                    listeningStyles.elementAt(counter).
+                                    removeChangeListener(styleChangeListener);
+                }
+                listeningStyles.removeAllElements();
+                if (styleContextChangeListener != null) {
+                    StyleContext styles = (StyleContext)getAttributeContext();
+                    styles.removeChangeListener(styleContextChangeListener);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns a new instance of StyleChangeHandler.
+     */
+    ChangeListener createStyleChangeListener() {
+        return new StyleChangeHandler(this);
+    }
+
+    /**
+     * Returns a new instance of StyleContextChangeHandler.
+     */
+    ChangeListener createStyleContextChangeListener() {
+        return new StyleContextChangeHandler(this);
+    }
+
+    /**
+     * Adds a ChangeListener to new styles, and removes ChangeListener from
+     * old styles.
+     */
+    void updateStylesListeningTo() {
+        synchronized(listeningStyles) {
+            StyleContext styles = (StyleContext)getAttributeContext();
+            if (styleChangeListener == null) {
+                styleChangeListener = createStyleChangeListener();
+            }
+            if (styleChangeListener != null && styles != null) {
+                Enumeration styleNames = styles.getStyleNames();
+                Vector v = (Vector)listeningStyles.clone();
+                listeningStyles.removeAllElements();
+                List<ChangeListener> staleListeners =
+                    AbstractChangeHandler.getStaleListeners(styleChangeListener);
+                while (styleNames.hasMoreElements()) {
+                    String name = (String)styleNames.nextElement();
+                    Style aStyle = styles.getStyle(name);
+                    int index = v.indexOf(aStyle);
+                    listeningStyles.addElement(aStyle);
+                    if (index == -1) {
+                        for (ChangeListener l: staleListeners) {
+                            aStyle.removeChangeListener(l);
+                        }
+                        aStyle.addChangeListener(styleChangeListener);
+                    }
+                    else {
+                        v.removeElementAt(index);
+                    }
+                }
+                for (int counter = v.size() - 1; counter >= 0; counter--) {
+                    Style aStyle = (Style)v.elementAt(counter);
+                    aStyle.removeChangeListener(styleChangeListener);
+                }
+                if (listeningStyles.size() == 0) {
+                    styleChangeListener = null;
+                }
+            }
+        }
+    }
+
+    private void readObject(ObjectInputStream s)
+            throws ClassNotFoundException, IOException {
+        listeningStyles = new Vector<Style>();
+        s.defaultReadObject();
+        // Reinstall style listeners.
+        if (styleContextChangeListener == null &&
+            listenerList.getListenerCount(DocumentListener.class) > 0) {
+            styleContextChangeListener = createStyleContextChangeListener();
+            if (styleContextChangeListener != null) {
+                StyleContext styles = (StyleContext)getAttributeContext();
+                styles.addChangeListener(styleContextChangeListener);
+            }
+            updateStylesListeningTo();
+        }
+    }
+
+    // --- member variables -----------------------------------------------------------
+
+    /**
+     * The default size of the initial content buffer.
+     */
+    public static final int BUFFER_SIZE_DEFAULT = 4096;
+
+    protected ElementBuffer buffer;
+
+    /** Styles listening to. */
+    private transient Vector<Style> listeningStyles;
+
+    /** Listens to Styles. */
+    private transient ChangeListener styleChangeListener;
+
+    /** Listens to Styles. */
+    private transient ChangeListener styleContextChangeListener;
+
+    /** Run to create a change event for the document */
+    private transient ChangeUpdateRunnable updateRunnable;
+
+    /**
+     * Default root element for a document... maps out the
+     * paragraphs/lines contained.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class SectionElement extends BranchElement {
+
+        /**
+         * Creates a new SectionElement.
+         */
+        public SectionElement() {
+            super(null, null);
+        }
+
+        /**
+         * Gets the name of the element.
+         *
+         * @return the name
+         */
+        public String getName() {
+            return SectionElementName;
+        }
+    }
+
+    /**
+     * Specification for building elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public static class ElementSpec {
+
+        /**
+         * A possible value for getType.  This specifies
+         * that this record type is a start tag and
+         * represents markup that specifies the start
+         * of an element.
+         */
+        public static final short StartTagType = 1;
+
+        /**
+         * A possible value for getType.  This specifies
+         * that this record type is a end tag and
+         * represents markup that specifies the end
+         * of an element.
+         */
+        public static final short EndTagType = 2;
+
+        /**
+         * A possible value for getType.  This specifies
+         * that this record type represents content.
+         */
+        public static final short ContentType = 3;
+
+        /**
+         * A possible value for getDirection.  This specifies
+         * that the data associated with this record should
+         * be joined to what precedes it.
+         */
+        public static final short JoinPreviousDirection = 4;
+
+        /**
+         * A possible value for getDirection.  This specifies
+         * that the data associated with this record should
+         * be joined to what follows it.
+         */
+        public static final short JoinNextDirection = 5;
+
+        /**
+         * A possible value for getDirection.  This specifies
+         * that the data associated with this record should
+         * be used to originate a new element.  This would be
+         * the normal value.
+         */
+        public static final short OriginateDirection = 6;
+
+        /**
+         * A possible value for getDirection.  This specifies
+         * that the data associated with this record should
+         * be joined to the fractured element.
+         */
+        public static final short JoinFractureDirection = 7;
+
+
+        /**
+         * Constructor useful for markup when the markup will not
+         * be stored in the document.
+         *
+         * @param a the attributes for the element
+         * @param type the type of the element (StartTagType, EndTagType,
+         *  ContentType)
+         */
+        public ElementSpec(AttributeSet a, short type) {
+            this(a, type, null, 0, 0);
+        }
+
+        /**
+         * Constructor for parsing inside the document when
+         * the data has already been added, but len information
+         * is needed.
+         *
+         * @param a the attributes for the element
+         * @param type the type of the element (StartTagType, EndTagType,
+         *  ContentType)
+         * @param len the length &gt;= 0
+         */
+        public ElementSpec(AttributeSet a, short type, int len) {
+            this(a, type, null, 0, len);
+        }
+
+        /**
+         * Constructor for creating a spec externally for batch
+         * input of content and markup into the document.
+         *
+         * @param a the attributes for the element
+         * @param type the type of the element (StartTagType, EndTagType,
+         *  ContentType)
+         * @param txt the text for the element
+         * @param offs the offset into the text &gt;= 0
+         * @param len the length of the text &gt;= 0
+         */
+        public ElementSpec(AttributeSet a, short type, char[] txt,
+                                  int offs, int len) {
+            attr = a;
+            this.type = type;
+            this.data = txt;
+            this.offs = offs;
+            this.len = len;
+            this.direction = OriginateDirection;
+        }
+
+        /**
+         * Sets the element type.
+         *
+         * @param type the type of the element (StartTagType, EndTagType,
+         *  ContentType)
+         */
+        public void setType(short type) {
+            this.type = type;
+        }
+
+        /**
+         * Gets the element type.
+         *
+         * @return  the type of the element (StartTagType, EndTagType,
+         *  ContentType)
+         */
+        public short getType() {
+            return type;
+        }
+
+        /**
+         * Sets the direction.
+         *
+         * @param direction the direction (JoinPreviousDirection,
+         *   JoinNextDirection)
+         */
+        public void setDirection(short direction) {
+            this.direction = direction;
+        }
+
+        /**
+         * Gets the direction.
+         *
+         * @return the direction (JoinPreviousDirection, JoinNextDirection)
+         */
+        public short getDirection() {
+            return direction;
+        }
+
+        /**
+         * Gets the element attributes.
+         *
+         * @return the attribute set
+         */
+        public AttributeSet getAttributes() {
+            return attr;
+        }
+
+        /**
+         * Gets the array of characters.
+         *
+         * @return the array
+         */
+        public char[] getArray() {
+            return data;
+        }
+
+
+        /**
+         * Gets the starting offset.
+         *
+         * @return the offset &gt;= 0
+         */
+        public int getOffset() {
+            return offs;
+        }
+
+        /**
+         * Gets the length.
+         *
+         * @return the length &gt;= 0
+         */
+        public int getLength() {
+            return len;
+        }
+
+        /**
+         * Converts the element to a string.
+         *
+         * @return the string
+         */
+        public String toString() {
+            String tlbl = "??";
+            String plbl = "??";
+            switch(type) {
+            case StartTagType:
+                tlbl = "StartTag";
+                break;
+            case ContentType:
+                tlbl = "Content";
+                break;
+            case EndTagType:
+                tlbl = "EndTag";
+                break;
+            }
+            switch(direction) {
+            case JoinPreviousDirection:
+                plbl = "JoinPrevious";
+                break;
+            case JoinNextDirection:
+                plbl = "JoinNext";
+                break;
+            case OriginateDirection:
+                plbl = "Originate";
+                break;
+            case JoinFractureDirection:
+                plbl = "Fracture";
+                break;
+            }
+            return tlbl + ":" + plbl + ":" + getLength();
+        }
+
+        private AttributeSet attr;
+        private int len;
+        private short type;
+        private short direction;
+
+        private int offs;
+        private char[] data;
+    }
+
+    /**
+     * Class to manage changes to the element
+     * hierarchy.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public class ElementBuffer implements Serializable {
+
+        /**
+         * Creates a new ElementBuffer.
+         *
+         * @param root the root element
+         * @since 1.4
+         */
+        public ElementBuffer(Element root) {
+            this.root = root;
+            changes = new Vector<ElemChanges>();
+            path = new Stack<ElemChanges>();
+        }
+
+        /**
+         * Gets the root element.
+         *
+         * @return the root element
+         */
+        public Element getRootElement() {
+            return root;
+        }
+
+        /**
+         * Inserts new content.
+         *
+         * @param offset the starting offset &gt;= 0
+         * @param length the length &gt;= 0
+         * @param data the data to insert
+         * @param de the event capturing this edit
+         */
+        public void insert(int offset, int length, ElementSpec[] data,
+                                 DefaultDocumentEvent de) {
+            if (length == 0) {
+                // Nothing was inserted, no structure change.
+                return;
+            }
+            insertOp = true;
+            beginEdits(offset, length);
+            insertUpdate(data);
+            endEdits(de);
+
+            insertOp = false;
+        }
+
+        void create(int length, ElementSpec[] data, DefaultDocumentEvent de) {
+            insertOp = true;
+            beginEdits(offset, length);
+
+            // PENDING(prinz) this needs to be fixed to create a new
+            // root element as well, but requires changes to the
+            // DocumentEvent to inform the views that there is a new
+            // root element.
+
+            // Recreate the ending fake element to have the correct offsets.
+            Element elem = root;
+            int index = elem.getElementIndex(0);
+            while (! elem.isLeaf()) {
+                Element child = elem.getElement(index);
+                push(elem, index);
+                elem = child;
+                index = elem.getElementIndex(0);
+            }
+            ElemChanges ec = path.peek();
+            Element child = ec.parent.getElement(ec.index);
+            ec.added.addElement(createLeafElement(ec.parent,
+                                child.getAttributes(), getLength(),
+                                child.getEndOffset()));
+            ec.removed.addElement(child);
+            while (path.size() > 1) {
+                pop();
+            }
+
+            int n = data.length;
+
+            // Reset the root elements attributes.
+            AttributeSet newAttrs = null;
+            if (n > 0 && data[0].getType() == ElementSpec.StartTagType) {
+                newAttrs = data[0].getAttributes();
+            }
+            if (newAttrs == null) {
+                newAttrs = SimpleAttributeSet.EMPTY;
+            }
+            MutableAttributeSet attr = (MutableAttributeSet)root.
+                                       getAttributes();
+            de.addEdit(new AttributeUndoableEdit(root, newAttrs, true));
+            attr.removeAttributes(attr);
+            attr.addAttributes(newAttrs);
+
+            // fold in the specified subtree
+            for (int i = 1; i < n; i++) {
+                insertElement(data[i]);
+            }
+
+            // pop the remaining path
+            while (path.size() != 0) {
+                pop();
+            }
+
+            endEdits(de);
+            insertOp = false;
+        }
+
+        /**
+         * Removes content.
+         *
+         * @param offset the starting offset &gt;= 0
+         * @param length the length &gt;= 0
+         * @param de the event capturing this edit
+         */
+        public void remove(int offset, int length, DefaultDocumentEvent de) {
+            beginEdits(offset, length);
+            removeUpdate();
+            endEdits(de);
+        }
+
+        /**
+         * Changes content.
+         *
+         * @param offset the starting offset &gt;= 0
+         * @param length the length &gt;= 0
+         * @param de the event capturing this edit
+         */
+        public void change(int offset, int length, DefaultDocumentEvent de) {
+            beginEdits(offset, length);
+            changeUpdate();
+            endEdits(de);
+        }
+
+        /**
+         * Inserts an update into the document.
+         *
+         * @param data the elements to insert
+         */
+        protected void insertUpdate(ElementSpec[] data) {
+            // push the path
+            Element elem = root;
+            int index = elem.getElementIndex(offset);
+            while (! elem.isLeaf()) {
+                Element child = elem.getElement(index);
+                push(elem, (child.isLeaf() ? index : index+1));
+                elem = child;
+                index = elem.getElementIndex(offset);
+            }
+
+            // Build a copy of the original path.
+            insertPath = new ElemChanges[path.size()];
+            path.copyInto(insertPath);
+
+            // Haven't created the fracture yet.
+            createdFracture = false;
+
+            // Insert the first content.
+            int i;
+
+            recreateLeafs = false;
+            if(data[0].getType() == ElementSpec.ContentType) {
+                insertFirstContent(data);
+                pos += data[0].getLength();
+                i = 1;
+            }
+            else {
+                fractureDeepestLeaf(data);
+                i = 0;
+            }
+
+            // fold in the specified subtree
+            int n = data.length;
+            for (; i < n; i++) {
+                insertElement(data[i]);
+            }
+
+            // Fracture, if we haven't yet.
+            if(!createdFracture)
+                fracture(-1);
+
+            // pop the remaining path
+            while (path.size() != 0) {
+                pop();
+            }
+
+            // Offset the last index if necessary.
+            if(offsetLastIndex && offsetLastIndexOnReplace) {
+                insertPath[insertPath.length - 1].index++;
+            }
+
+            // Make sure an edit is going to be created for each of the
+            // original path items that have a change.
+            for(int counter = insertPath.length - 1; counter >= 0;
+                counter--) {
+                ElemChanges change = insertPath[counter];
+                if(change.parent == fracturedParent)
+                    change.added.addElement(fracturedChild);
+                if((change.added.size() > 0 ||
+                    change.removed.size() > 0) && !changes.contains(change)) {
+                    // PENDING(sky): Do I need to worry about order here?
+                    changes.addElement(change);
+                }
+            }
+
+            // An insert at 0 with an initial end implies some elements
+            // will have no children (the bottomost leaf would have length 0)
+            // this will find what element need to be removed and remove it.
+            if (offset == 0 && fracturedParent != null &&
+                data[0].getType() == ElementSpec.EndTagType) {
+                int counter = 0;
+                while (counter < data.length &&
+                       data[counter].getType() == ElementSpec.EndTagType) {
+                    counter++;
+                }
+                ElemChanges change = insertPath[insertPath.length -
+                                               counter - 1];
+                change.removed.insertElementAt(change.parent.getElement
+                                               (--change.index), 0);
+            }
+        }
+
+        /**
+         * Updates the element structure in response to a removal from the
+         * associated sequence in the document.  Any elements consumed by the
+         * span of the removal are removed.
+         */
+        protected void removeUpdate() {
+            removeElements(root, offset, offset + length);
+        }
+
+        /**
+         * Updates the element structure in response to a change in the
+         * document.
+         */
+        protected void changeUpdate() {
+            boolean didEnd = split(offset, length);
+            if (! didEnd) {
+                // need to do the other end
+                while (path.size() != 0) {
+                    pop();
+                }
+                split(offset + length, 0);
+            }
+            while (path.size() != 0) {
+                pop();
+            }
+        }
+
+        boolean split(int offs, int len) {
+            boolean splitEnd = false;
+            // push the path
+            Element e = root;
+            int index = e.getElementIndex(offs);
+            while (! e.isLeaf()) {
+                push(e, index);
+                e = e.getElement(index);
+                index = e.getElementIndex(offs);
+            }
+
+            ElemChanges ec = path.peek();
+            Element child = ec.parent.getElement(ec.index);
+            // make sure there is something to do... if the
+            // offset is already at a boundary then there is
+            // nothing to do.
+            if (child.getStartOffset() < offs && offs < child.getEndOffset()) {
+                // we need to split, now see if the other end is within
+                // the same parent.
+                int index0 = ec.index;
+                int index1 = index0;
+                if (((offs + len) < ec.parent.getEndOffset()) && (len != 0)) {
+                    // it's a range split in the same parent
+                    index1 = ec.parent.getElementIndex(offs+len);
+                    if (index1 == index0) {
+                        // it's a three-way split
+                        ec.removed.addElement(child);
+                        e = createLeafElement(ec.parent, child.getAttributes(),
+                                              child.getStartOffset(), offs);
+                        ec.added.addElement(e);
+                        e = createLeafElement(ec.parent, child.getAttributes(),
+                                          offs, offs + len);
+                        ec.added.addElement(e);
+                        e = createLeafElement(ec.parent, child.getAttributes(),
+                                              offs + len, child.getEndOffset());
+                        ec.added.addElement(e);
+                        return true;
+                    } else {
+                        child = ec.parent.getElement(index1);
+                        if ((offs + len) == child.getStartOffset()) {
+                            // end is already on a boundary
+                            index1 = index0;
+                        }
+                    }
+                    splitEnd = true;
+                }
+
+                // split the first location
+                pos = offs;
+                child = ec.parent.getElement(index0);
+                ec.removed.addElement(child);
+                e = createLeafElement(ec.parent, child.getAttributes(),
+                                      child.getStartOffset(), pos);
+                ec.added.addElement(e);
+                e = createLeafElement(ec.parent, child.getAttributes(),
+                                      pos, child.getEndOffset());
+                ec.added.addElement(e);
+
+                // pick up things in the middle
+                for (int i = index0 + 1; i < index1; i++) {
+                    child = ec.parent.getElement(i);
+                    ec.removed.addElement(child);
+                    ec.added.addElement(child);
+                }
+
+                if (index1 != index0) {
+                    child = ec.parent.getElement(index1);
+                    pos = offs + len;
+                    ec.removed.addElement(child);
+                    e = createLeafElement(ec.parent, child.getAttributes(),
+                                          child.getStartOffset(), pos);
+                    ec.added.addElement(e);
+                    e = createLeafElement(ec.parent, child.getAttributes(),
+                                          pos, child.getEndOffset());
+                    ec.added.addElement(e);
+                }
+            }
+            return splitEnd;
+        }
+
+        /**
+         * Creates the UndoableEdit record for the edits made
+         * in the buffer.
+         */
+        void endEdits(DefaultDocumentEvent de) {
+            int n = changes.size();
+            for (int i = 0; i < n; i++) {
+                ElemChanges ec = changes.elementAt(i);
+                Element[] removed = new Element[ec.removed.size()];
+                ec.removed.copyInto(removed);
+                Element[] added = new Element[ec.added.size()];
+                ec.added.copyInto(added);
+                int index = ec.index;
+                ((BranchElement) ec.parent).replace(index, removed.length, added);
+                ElementEdit ee = new ElementEdit(ec.parent, index, removed, added);
+                de.addEdit(ee);
+            }
+
+            changes.removeAllElements();
+            path.removeAllElements();
+
+            /*
+            for (int i = 0; i < n; i++) {
+                ElemChanges ec = (ElemChanges) changes.elementAt(i);
+                System.err.print("edited: " + ec.parent + " at: " + ec.index +
+                    " removed " + ec.removed.size());
+                if (ec.removed.size() > 0) {
+                    int r0 = ((Element) ec.removed.firstElement()).getStartOffset();
+                    int r1 = ((Element) ec.removed.lastElement()).getEndOffset();
+                    System.err.print("[" + r0 + "," + r1 + "]");
+                }
+                System.err.print(" added " + ec.added.size());
+                if (ec.added.size() > 0) {
+                    int p0 = ((Element) ec.added.firstElement()).getStartOffset();
+                    int p1 = ((Element) ec.added.lastElement()).getEndOffset();
+                    System.err.print("[" + p0 + "," + p1 + "]");
+                }
+                System.err.println("");
+            }
+            */
+        }
+
+        /**
+         * Initialize the buffer
+         */
+        void beginEdits(int offset, int length) {
+            this.offset = offset;
+            this.length = length;
+            this.endOffset = offset + length;
+            pos = offset;
+            if (changes == null) {
+                changes = new Vector<ElemChanges>();
+            } else {
+                changes.removeAllElements();
+            }
+            if (path == null) {
+                path = new Stack<ElemChanges>();
+            } else {
+                path.removeAllElements();
+            }
+            fracturedParent = null;
+            fracturedChild = null;
+            offsetLastIndex = offsetLastIndexOnReplace = false;
+        }
+
+        /**
+         * Pushes a new element onto the stack that represents
+         * the current path.
+         * @param record Whether or not the push should be
+         *  recorded as an element change or not.
+         * @param isFracture true if pushing on an element that was created
+         * as the result of a fracture.
+         */
+        void push(Element e, int index, boolean isFracture) {
+            ElemChanges ec = new ElemChanges(e, index, isFracture);
+            path.push(ec);
+        }
+
+        void push(Element e, int index) {
+            push(e, index, false);
+        }
+
+        void pop() {
+            ElemChanges ec = path.peek();
+            path.pop();
+            if ((ec.added.size() > 0) || (ec.removed.size() > 0)) {
+                changes.addElement(ec);
+            } else if (! path.isEmpty()) {
+                Element e = ec.parent;
+                if(e.getElementCount() == 0) {
+                    // if we pushed a branch element that didn't get
+                    // used, make sure its not marked as having been added.
+                    ec = path.peek();
+                    ec.added.removeElement(e);
+                }
+            }
+        }
+
+        /**
+         * move the current offset forward by n.
+         */
+        void advance(int n) {
+            pos += n;
+        }
+
+        void insertElement(ElementSpec es) {
+            ElemChanges ec = path.peek();
+            switch(es.getType()) {
+            case ElementSpec.StartTagType:
+                switch(es.getDirection()) {
+                case ElementSpec.JoinNextDirection:
+                    // Don't create a new element, use the existing one
+                    // at the specified location.
+                    Element parent = ec.parent.getElement(ec.index);
+
+                    if(parent.isLeaf()) {
+                        // This happens if inserting into a leaf, followed
+                        // by a join next where next sibling is not a leaf.
+                        if((ec.index + 1) < ec.parent.getElementCount())
+                            parent = ec.parent.getElement(ec.index + 1);
+                        else
+                            throw new StateInvariantError("Join next to leaf");
+                    }
+                    // Not really a fracture, but need to treat it like
+                    // one so that content join next will work correctly.
+                    // We can do this because there will never be a join
+                    // next followed by a join fracture.
+                    push(parent, 0, true);
+                    break;
+                case ElementSpec.JoinFractureDirection:
+                    if(!createdFracture) {
+                        // Should always be something on the stack!
+                        fracture(path.size() - 1);
+                    }
+                    // If parent isn't a fracture, fracture will be
+                    // fracturedChild.
+                    if(!ec.isFracture) {
+                        push(fracturedChild, 0, true);
+                    }
+                    else
+                        // Parent is a fracture, use 1st element.
+                        push(ec.parent.getElement(0), 0, true);
+                    break;
+                default:
+                    Element belem = createBranchElement(ec.parent,
+                                                        es.getAttributes());
+                    ec.added.addElement(belem);
+                    push(belem, 0);
+                    break;
+                }
+                break;
+            case ElementSpec.EndTagType:
+                pop();
+                break;
+            case ElementSpec.ContentType:
+              int len = es.getLength();
+                if (es.getDirection() != ElementSpec.JoinNextDirection) {
+                    Element leaf = createLeafElement(ec.parent, es.getAttributes(),
+                                                     pos, pos + len);
+                    ec.added.addElement(leaf);
+                }
+                else {
+                    // JoinNext on tail is only applicable if last element
+                    // and attributes come from that of first element.
+                    // With a little extra testing it would be possible
+                    // to NOT due this again, as more than likely fracture()
+                    // created this element.
+                    if(!ec.isFracture) {
+                        Element first = null;
+                        if(insertPath != null) {
+                            for(int counter = insertPath.length - 1;
+                                counter >= 0; counter--) {
+                                if(insertPath[counter] == ec) {
+                                    if(counter != (insertPath.length - 1))
+                                        first = ec.parent.getElement(ec.index);
+                                    break;
+                                }
+                            }
+                        }
+                        if(first == null)
+                            first = ec.parent.getElement(ec.index + 1);
+                        Element leaf = createLeafElement(ec.parent, first.
+                                 getAttributes(), pos, first.getEndOffset());
+                        ec.added.addElement(leaf);
+                        ec.removed.addElement(first);
+                    }
+                    else {
+                        // Parent was fractured element.
+                        Element first = ec.parent.getElement(0);
+                        Element leaf = createLeafElement(ec.parent, first.
+                                 getAttributes(), pos, first.getEndOffset());
+                        ec.added.addElement(leaf);
+                        ec.removed.addElement(first);
+                    }
+                }
+                pos += len;
+                break;
+            }
+        }
+
+        /**
+         * Remove the elements from <code>elem</code> in range
+         * <code>rmOffs0</code>, <code>rmOffs1</code>. This uses
+         * <code>canJoin</code> and <code>join</code> to handle joining
+         * the endpoints of the insertion.
+         *
+         * @return true if elem will no longer have any elements.
+         */
+        boolean removeElements(Element elem, int rmOffs0, int rmOffs1) {
+            if (! elem.isLeaf()) {
+                // update path for changes
+                int index0 = elem.getElementIndex(rmOffs0);
+                int index1 = elem.getElementIndex(rmOffs1);
+                push(elem, index0);
+                ElemChanges ec = path.peek();
+
+                // if the range is contained by one element,
+                // we just forward the request
+                if (index0 == index1) {
+                    Element child0 = elem.getElement(index0);
+                    if(rmOffs0 <= child0.getStartOffset() &&
+                       rmOffs1 >= child0.getEndOffset()) {
+                        // Element totally removed.
+                        ec.removed.addElement(child0);
+                    }
+                    else if(removeElements(child0, rmOffs0, rmOffs1)) {
+                        ec.removed.addElement(child0);
+                    }
+                } else {
+                    // the removal range spans elements.  If we can join
+                    // the two endpoints, do it.  Otherwise we remove the
+                    // interior and forward to the endpoints.
+                    Element child0 = elem.getElement(index0);
+                    Element child1 = elem.getElement(index1);
+                    boolean containsOffs1 = (rmOffs1 < elem.getEndOffset());
+                    if (containsOffs1 && canJoin(child0, child1)) {
+                        // remove and join
+                        for (int i = index0; i <= index1; i++) {
+                            ec.removed.addElement(elem.getElement(i));
+                        }
+                        Element e = join(elem, child0, child1, rmOffs0, rmOffs1);
+                        ec.added.addElement(e);
+                    } else {
+                        // remove interior and forward
+                        int rmIndex0 = index0 + 1;
+                        int rmIndex1 = index1 - 1;
+                        if (child0.getStartOffset() == rmOffs0 ||
+                            (index0 == 0 &&
+                             child0.getStartOffset() > rmOffs0 &&
+                             child0.getEndOffset() <= rmOffs1)) {
+                            // start element completely consumed
+                            child0 = null;
+                            rmIndex0 = index0;
+                        }
+                        if (!containsOffs1) {
+                            child1 = null;
+                            rmIndex1++;
+                        }
+                        else if (child1.getStartOffset() == rmOffs1) {
+                            // end element not touched
+                            child1 = null;
+                        }
+                        if (rmIndex0 <= rmIndex1) {
+                            ec.index = rmIndex0;
+                        }
+                        for (int i = rmIndex0; i <= rmIndex1; i++) {
+                            ec.removed.addElement(elem.getElement(i));
+                        }
+                        if (child0 != null) {
+                            if(removeElements(child0, rmOffs0, rmOffs1)) {
+                                ec.removed.insertElementAt(child0, 0);
+                                ec.index = index0;
+                            }
+                        }
+                        if (child1 != null) {
+                            if(removeElements(child1, rmOffs0, rmOffs1)) {
+                                ec.removed.addElement(child1);
+                            }
+                        }
+                    }
+                }
+
+                // publish changes
+                pop();
+
+                // Return true if we no longer have any children.
+                if(elem.getElementCount() == (ec.removed.size() -
+                                              ec.added.size())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Can the two given elements be coelesced together
+         * into one element?
+         */
+        boolean canJoin(Element e0, Element e1) {
+            if ((e0 == null) || (e1 == null)) {
+                return false;
+            }
+            // Don't join a leaf to a branch.
+            boolean leaf0 = e0.isLeaf();
+            boolean leaf1 = e1.isLeaf();
+            if(leaf0 != leaf1) {
+                return false;
+            }
+            if (leaf0) {
+                // Only join leaves if the attributes match, otherwise
+                // style information will be lost.
+                return e0.getAttributes().isEqual(e1.getAttributes());
+            }
+            // Only join non-leafs if the names are equal. This may result
+            // in loss of style information, but this is typically acceptable
+            // for non-leafs.
+            String name0 = e0.getName();
+            String name1 = e1.getName();
+            if (name0 != null) {
+                return name0.equals(name1);
+            }
+            if (name1 != null) {
+                return name1.equals(name0);
+            }
+            // Both names null, treat as equal.
+            return true;
+        }
+
+        /**
+         * Joins the two elements carving out a hole for the
+         * given removed range.
+         */
+        Element join(Element p, Element left, Element right, int rmOffs0, int rmOffs1) {
+            if (left.isLeaf() && right.isLeaf()) {
+                return createLeafElement(p, left.getAttributes(), left.getStartOffset(),
+                                         right.getEndOffset());
+            } else if ((!left.isLeaf()) && (!right.isLeaf())) {
+                // join two branch elements.  This copies the children before
+                // the removal range on the left element, and after the removal
+                // range on the right element.  The two elements on the edge
+                // are joined if possible and needed.
+                Element to = createBranchElement(p, left.getAttributes());
+                int ljIndex = left.getElementIndex(rmOffs0);
+                int rjIndex = right.getElementIndex(rmOffs1);
+                Element lj = left.getElement(ljIndex);
+                if (lj.getStartOffset() >= rmOffs0) {
+                    lj = null;
+                }
+                Element rj = right.getElement(rjIndex);
+                if (rj.getStartOffset() == rmOffs1) {
+                    rj = null;
+                }
+                Vector<Element> children = new Vector<Element>();
+
+                // transfer the left
+                for (int i = 0; i < ljIndex; i++) {
+                    children.addElement(clone(to, left.getElement(i)));
+                }
+
+                // transfer the join/middle
+                if (canJoin(lj, rj)) {
+                    Element e = join(to, lj, rj, rmOffs0, rmOffs1);
+                    children.addElement(e);
+                } else {
+                    if (lj != null) {
+                        children.addElement(cloneAsNecessary(to, lj, rmOffs0, rmOffs1));
+                    }
+                    if (rj != null) {
+                        children.addElement(cloneAsNecessary(to, rj, rmOffs0, rmOffs1));
+                    }
+                }
+
+                // transfer the right
+                int n = right.getElementCount();
+                for (int i = (rj == null) ? rjIndex : rjIndex + 1; i < n; i++) {
+                    children.addElement(clone(to, right.getElement(i)));
+                }
+
+                // install the children
+                Element[] c = new Element[children.size()];
+                children.copyInto(c);
+                ((BranchElement)to).replace(0, 0, c);
+                return to;
+            } else {
+                throw new StateInvariantError(
+                    "No support to join leaf element with non-leaf element");
+            }
+        }
+
+        /**
+         * Creates a copy of this element, with a different
+         * parent.
+         *
+         * @param parent the parent element
+         * @param clonee the element to be cloned
+         * @return the copy
+         */
+        public Element clone(Element parent, Element clonee) {
+            if (clonee.isLeaf()) {
+                return createLeafElement(parent, clonee.getAttributes(),
+                                         clonee.getStartOffset(),
+                                         clonee.getEndOffset());
+            }
+            Element e = createBranchElement(parent, clonee.getAttributes());
+            int n = clonee.getElementCount();
+            Element[] children = new Element[n];
+            for (int i = 0; i < n; i++) {
+                children[i] = clone(e, clonee.getElement(i));
+            }
+            ((BranchElement)e).replace(0, 0, children);
+            return e;
+        }
+
+        /**
+         * Creates a copy of this element, with a different
+         * parent. Children of this element included in the
+         * removal range will be discarded.
+         */
+        Element cloneAsNecessary(Element parent, Element clonee, int rmOffs0, int rmOffs1) {
+            if (clonee.isLeaf()) {
+                return createLeafElement(parent, clonee.getAttributes(),
+                                         clonee.getStartOffset(),
+                                         clonee.getEndOffset());
+            }
+            Element e = createBranchElement(parent, clonee.getAttributes());
+            int n = clonee.getElementCount();
+            ArrayList<Element> childrenList = new ArrayList<Element>(n);
+            for (int i = 0; i < n; i++) {
+                Element elem = clonee.getElement(i);
+                if (elem.getStartOffset() < rmOffs0 || elem.getEndOffset() > rmOffs1) {
+                    childrenList.add(cloneAsNecessary(e, elem, rmOffs0, rmOffs1));
+                }
+            }
+            Element[] children = new Element[childrenList.size()];
+            children = childrenList.toArray(children);
+            ((BranchElement)e).replace(0, 0, children);
+            return e;
+        }
+
+        /**
+         * Determines if a fracture needs to be performed. A fracture
+         * can be thought of as moving the right part of a tree to a
+         * new location, where the right part is determined by what has
+         * been inserted. <code>depth</code> is used to indicate a
+         * JoinToFracture is needed to an element at a depth
+         * of <code>depth</code>. Where the root is 0, 1 is the children
+         * of the root...
+         * <p>This will invoke <code>fractureFrom</code> if it is determined
+         * a fracture needs to happen.
+         */
+        void fracture(int depth) {
+            int cLength = insertPath.length;
+            int lastIndex = -1;
+            boolean needRecreate = recreateLeafs;
+            ElemChanges lastChange = insertPath[cLength - 1];
+            // Use childAltered to determine when a child has been altered,
+            // that is the point of insertion is less than the element count.
+            boolean childAltered = ((lastChange.index + 1) <
+                                    lastChange.parent.getElementCount());
+            int deepestAlteredIndex = (needRecreate) ? cLength : -1;
+            int lastAlteredIndex = cLength - 1;
+
+            createdFracture = true;
+            // Determine where to start recreating from.
+            // Start at - 2, as first one is indicated by recreateLeafs and
+            // childAltered.
+            for(int counter = cLength - 2; counter >= 0; counter--) {
+                ElemChanges change = insertPath[counter];
+                if(change.added.size() > 0 || counter == depth) {
+                    lastIndex = counter;
+                    if(!needRecreate && childAltered) {
+                        needRecreate = true;
+                        if(deepestAlteredIndex == -1)
+                            deepestAlteredIndex = lastAlteredIndex + 1;
+                    }
+                }
+                if(!childAltered && change.index <
+                   change.parent.getElementCount()) {
+                    childAltered = true;
+                    lastAlteredIndex = counter;
+                }
+            }
+            if(needRecreate) {
+                // Recreate all children to right of parent starting
+                // at lastIndex.
+                if(lastIndex == -1)
+                    lastIndex = cLength - 1;
+                fractureFrom(insertPath, lastIndex, deepestAlteredIndex);
+            }
+        }
+
+        /**
+         * Recreates the elements to the right of the insertion point.
+         * This starts at <code>startIndex</code> in <code>changed</code>,
+         * and calls duplicate to duplicate existing elements.
+         * This will also duplicate the elements along the insertion
+         * point, until a depth of <code>endFractureIndex</code> is
+         * reached, at which point only the elements to the right of
+         * the insertion point are duplicated.
+         */
+        void fractureFrom(ElemChanges[] changed, int startIndex,
+                          int endFractureIndex) {
+            // Recreate the element representing the inserted index.
+            ElemChanges change = changed[startIndex];
+            Element child;
+            Element newChild;
+            int changeLength = changed.length;
+
+            if((startIndex + 1) == changeLength)
+                child = change.parent.getElement(change.index);
+            else
+                child = change.parent.getElement(change.index - 1);
+            if(child.isLeaf()) {
+                newChild = createLeafElement(change.parent,
+                               child.getAttributes(), Math.max(endOffset,
+                               child.getStartOffset()), child.getEndOffset());
+            }
+            else {
+                newChild = createBranchElement(change.parent,
+                                               child.getAttributes());
+            }
+            fracturedParent = change.parent;
+            fracturedChild = newChild;
+
+            // Recreate all the elements to the right of the
+            // insertion point.
+            Element parent = newChild;
+
+            while(++startIndex < endFractureIndex) {
+                boolean isEnd = ((startIndex + 1) == endFractureIndex);
+                boolean isEndLeaf = ((startIndex + 1) == changeLength);
+
+                // Create the newChild, a duplicate of the elment at
+                // index. This isn't done if isEnd and offsetLastIndex are true
+                // indicating a join previous was done.
+                change = changed[startIndex];
+
+                // Determine the child to duplicate, won't have to duplicate
+                // if at end of fracture, or offseting index.
+                if(isEnd) {
+                    if(offsetLastIndex || !isEndLeaf)
+                        child = null;
+                    else
+                        child = change.parent.getElement(change.index);
+                }
+                else {
+                    child = change.parent.getElement(change.index - 1);
+                }
+                // Duplicate it.
+                if(child != null) {
+                    if(child.isLeaf()) {
+                        newChild = createLeafElement(parent,
+                               child.getAttributes(), Math.max(endOffset,
+                               child.getStartOffset()), child.getEndOffset());
+                    }
+                    else {
+                        newChild = createBranchElement(parent,
+                                                   child.getAttributes());
+                    }
+                }
+                else
+                    newChild = null;
+
+                // Recreate the remaining children (there may be none).
+                int kidsToMove = change.parent.getElementCount() -
+                                 change.index;
+                Element[] kids;
+                int moveStartIndex;
+                int kidStartIndex = 1;
+
+                if(newChild == null) {
+                    // Last part of fracture.
+                    if(isEndLeaf) {
+                        kidsToMove--;
+                        moveStartIndex = change.index + 1;
+                    }
+                    else {
+                        moveStartIndex = change.index;
+                    }
+                    kidStartIndex = 0;
+                    kids = new Element[kidsToMove];
+                }
+                else {
+                    if(!isEnd) {
+                        // Branch.
+                        kidsToMove++;
+                        moveStartIndex = change.index;
+                    }
+                    else {
+                        // Last leaf, need to recreate part of it.
+                        moveStartIndex = change.index + 1;
+                    }
+                    kids = new Element[kidsToMove];
+                    kids[0] = newChild;
+                }
+
+                for(int counter = kidStartIndex; counter < kidsToMove;
+                    counter++) {
+                    Element toMove =change.parent.getElement(moveStartIndex++);
+                    kids[counter] = recreateFracturedElement(parent, toMove);
+                    change.removed.addElement(toMove);
+                }
+                ((BranchElement)parent).replace(0, 0, kids);
+                parent = newChild;
+            }
+        }
+
+        /**
+         * Recreates <code>toDuplicate</code>. This is called when an
+         * element needs to be created as the result of an insertion. This
+         * will recurse and create all the children. This is similar to
+         * <code>clone</code>, but deteremines the offsets differently.
+         */
+        Element recreateFracturedElement(Element parent, Element toDuplicate) {
+            if(toDuplicate.isLeaf()) {
+                return createLeafElement(parent, toDuplicate.getAttributes(),
+                                         Math.max(toDuplicate.getStartOffset(),
+                                                  endOffset),
+                                         toDuplicate.getEndOffset());
+            }
+            // Not a leaf
+            Element newParent = createBranchElement(parent, toDuplicate.
+                                                    getAttributes());
+            int childCount = toDuplicate.getElementCount();
+            Element[] newKids = new Element[childCount];
+            for(int counter = 0; counter < childCount; counter++) {
+                newKids[counter] = recreateFracturedElement(newParent,
+                                             toDuplicate.getElement(counter));
+            }
+            ((BranchElement)newParent).replace(0, 0, newKids);
+            return newParent;
+        }
+
+        /**
+         * Splits the bottommost leaf in <code>path</code>.
+         * This is called from insert when the first element is NOT content.
+         */
+        void fractureDeepestLeaf(ElementSpec[] specs) {
+            // Split the bottommost leaf. It will be recreated elsewhere.
+            ElemChanges ec = path.peek();
+            Element child = ec.parent.getElement(ec.index);
+            // Inserts at offset 0 do not need to recreate child (it would
+            // have a length of 0!).
+            if (offset != 0) {
+                Element newChild = createLeafElement(ec.parent,
+                                                 child.getAttributes(),
+                                                 child.getStartOffset(),
+                                                 offset);
+
+                ec.added.addElement(newChild);
+            }
+            ec.removed.addElement(child);
+            if(child.getEndOffset() != endOffset)
+                recreateLeafs = true;
+            else
+                offsetLastIndex = true;
+        }
+
+        /**
+         * Inserts the first content. This needs to be separate to handle
+         * joining.
+         */
+        void insertFirstContent(ElementSpec[] specs) {
+            ElementSpec firstSpec = specs[0];
+            ElemChanges ec = path.peek();
+            Element child = ec.parent.getElement(ec.index);
+            int firstEndOffset = offset + firstSpec.getLength();
+            boolean isOnlyContent = (specs.length == 1);
+
+            switch(firstSpec.getDirection()) {
+            case ElementSpec.JoinPreviousDirection:
+                if(child.getEndOffset() != firstEndOffset &&
+                    !isOnlyContent) {
+                    // Create the left split part containing new content.
+                    Element newE = createLeafElement(ec.parent,
+                            child.getAttributes(), child.getStartOffset(),
+                            firstEndOffset);
+                    ec.added.addElement(newE);
+                    ec.removed.addElement(child);
+                    // Remainder will be created later.
+                    if(child.getEndOffset() != endOffset)
+                        recreateLeafs = true;
+                    else
+                        offsetLastIndex = true;
+                }
+                else {
+                    offsetLastIndex = true;
+                    offsetLastIndexOnReplace = true;
+                }
+                // else Inserted at end, and is total length.
+                // Update index incase something added/removed.
+                break;
+            case ElementSpec.JoinNextDirection:
+                if(offset != 0) {
+                    // Recreate the first element, its offset will have
+                    // changed.
+                    Element newE = createLeafElement(ec.parent,
+                            child.getAttributes(), child.getStartOffset(),
+                            offset);
+                    ec.added.addElement(newE);
+                    // Recreate the second, merge part. We do no checking
+                    // to see if JoinNextDirection is valid here!
+                    Element nextChild = ec.parent.getElement(ec.index + 1);
+                    if(isOnlyContent)
+                        newE = createLeafElement(ec.parent, nextChild.
+                            getAttributes(), offset, nextChild.getEndOffset());
+                    else
+                        newE = createLeafElement(ec.parent, nextChild.
+                            getAttributes(), offset, firstEndOffset);
+                    ec.added.addElement(newE);
+                    ec.removed.addElement(child);
+                    ec.removed.addElement(nextChild);
+                }
+                // else nothin to do.
+                // PENDING: if !isOnlyContent could raise here!
+                break;
+            default:
+                // Inserted into middle, need to recreate split left
+                // new content, and split right.
+                if(child.getStartOffset() != offset) {
+                    Element newE = createLeafElement(ec.parent,
+                            child.getAttributes(), child.getStartOffset(),
+                            offset);
+                    ec.added.addElement(newE);
+                }
+                ec.removed.addElement(child);
+                // new content
+                Element newE = createLeafElement(ec.parent,
+                                                 firstSpec.getAttributes(),
+                                                 offset, firstEndOffset);
+                ec.added.addElement(newE);
+                if(child.getEndOffset() != endOffset) {
+                    // Signals need to recreate right split later.
+                    recreateLeafs = true;
+                }
+                else {
+                    offsetLastIndex = true;
+                }
+                break;
+            }
+        }
+
+        Element root;
+        transient int pos;          // current position
+        transient int offset;
+        transient int length;
+        transient int endOffset;
+        transient Vector<ElemChanges> changes;
+        transient Stack<ElemChanges> path;
+        transient boolean insertOp;
+
+        transient boolean recreateLeafs; // For insert.
+
+        /** For insert, path to inserted elements. */
+        transient ElemChanges[] insertPath;
+        /** Only for insert, set to true when the fracture has been created. */
+        transient boolean createdFracture;
+        /** Parent that contains the fractured child. */
+        transient Element fracturedParent;
+        /** Fractured child. */
+        transient Element fracturedChild;
+        /** Used to indicate when fracturing that the last leaf should be
+         * skipped. */
+        transient boolean offsetLastIndex;
+        /** Used to indicate that the parent of the deepest leaf should
+         * offset the index by 1 when adding/removing elements in an
+         * insert. */
+        transient boolean offsetLastIndexOnReplace;
+
+        /*
+         * Internal record used to hold element change specifications
+         */
+        class ElemChanges {
+
+            ElemChanges(Element parent, int index, boolean isFracture) {
+                this.parent = parent;
+                this.index = index;
+                this.isFracture = isFracture;
+                added = new Vector<Element>();
+                removed = new Vector<Element>();
+            }
+
+            public String toString() {
+                return "added: " + added + "\nremoved: " + removed + "\n";
+            }
+
+            Element parent;
+            int index;
+            Vector<Element> added;
+            Vector<Element> removed;
+            boolean isFracture;
+        }
+
+    }
+
+    /**
+     * An UndoableEdit used to remember AttributeSet changes to an
+     * Element.
+     */
+    public static class AttributeUndoableEdit extends AbstractUndoableEdit {
+        public AttributeUndoableEdit(Element element, AttributeSet newAttributes,
+                              boolean isReplacing) {
+            super();
+            this.element = element;
+            this.newAttributes = newAttributes;
+            this.isReplacing = isReplacing;
+            // If not replacing, it may be more efficient to only copy the
+            // changed values...
+            copy = element.getAttributes().copyAttributes();
+        }
+
+        /**
+         * Redoes a change.
+         *
+         * @exception CannotRedoException if the change cannot be redone
+         */
+        public void redo() throws CannotRedoException {
+            super.redo();
+            MutableAttributeSet as = (MutableAttributeSet)element
+                                     .getAttributes();
+            if(isReplacing)
+                as.removeAttributes(as);
+            as.addAttributes(newAttributes);
+        }
+
+        /**
+         * Undoes a change.
+         *
+         * @exception CannotUndoException if the change cannot be undone
+         */
+        public void undo() throws CannotUndoException {
+            super.undo();
+            MutableAttributeSet as = (MutableAttributeSet)element.getAttributes();
+            as.removeAttributes(as);
+            as.addAttributes(copy);
+        }
+
+        // AttributeSet containing additional entries, must be non-mutable!
+        protected AttributeSet newAttributes;
+        // Copy of the AttributeSet the Element contained.
+        protected AttributeSet copy;
+        // true if all the attributes in the element were removed first.
+        protected boolean isReplacing;
+        // Efected Element.
+        protected Element element;
+    }
+
+    /**
+     * UndoableEdit for changing the resolve parent of an Element.
+     */
+    static class StyleChangeUndoableEdit extends AbstractUndoableEdit {
+        public StyleChangeUndoableEdit(AbstractElement element,
+                                       Style newStyle) {
+            super();
+            this.element = element;
+            this.newStyle = newStyle;
+            oldStyle = element.getResolveParent();
+        }
+
+        /**
+         * Redoes a change.
+         *
+         * @exception CannotRedoException if the change cannot be redone
+         */
+        public void redo() throws CannotRedoException {
+            super.redo();
+            element.setResolveParent(newStyle);
+        }
+
+        /**
+         * Undoes a change.
+         *
+         * @exception CannotUndoException if the change cannot be undone
+         */
+        public void undo() throws CannotUndoException {
+            super.undo();
+            element.setResolveParent(oldStyle);
+        }
+
+        /** Element to change resolve parent of. */
+        protected AbstractElement element;
+        /** New style. */
+        protected Style newStyle;
+        /** Old style, before setting newStyle. */
+        protected AttributeSet oldStyle;
+    }
+
+    /**
+     * Base class for style change handlers with support for stale objects detection.
+     */
+    abstract static class AbstractChangeHandler implements ChangeListener {
+
+        /* This has an implicit reference to the handler object.  */
+        private class DocReference extends WeakReference<DefaultStyledDocument> {
+
+            DocReference(DefaultStyledDocument d, ReferenceQueue<DefaultStyledDocument> q) {
+                super(d, q);
+            }
+
+            /**
+             * Return a reference to the style change handler object.
+             */
+            ChangeListener getListener() {
+                return AbstractChangeHandler.this;
+            }
+        }
+
+        /** Class-specific reference queues.  */
+        private final static Map<Class, ReferenceQueue<DefaultStyledDocument>> queueMap
+                = new HashMap<Class, ReferenceQueue<DefaultStyledDocument>>();
+
+        /** A weak reference to the document object.  */
+        private DocReference doc;
+
+        AbstractChangeHandler(DefaultStyledDocument d) {
+            Class c = getClass();
+            ReferenceQueue<DefaultStyledDocument> q;
+            synchronized (queueMap) {
+                q = queueMap.get(c);
+                if (q == null) {
+                    q = new ReferenceQueue<DefaultStyledDocument>();
+                    queueMap.put(c, q);
+                }
+            }
+            doc = new DocReference(d, q);
+        }
+
+        /**
+         * Return a list of stale change listeners.
+         *
+         * A change listener becomes "stale" when its document is cleaned by GC.
+         */
+        static List<ChangeListener> getStaleListeners(ChangeListener l) {
+            List<ChangeListener> staleListeners = new ArrayList<ChangeListener>();
+            ReferenceQueue<DefaultStyledDocument> q = queueMap.get(l.getClass());
+
+            if (q != null) {
+                DocReference r;
+                synchronized (q) {
+                    while ((r = (DocReference) q.poll()) != null) {
+                        staleListeners.add(r.getListener());
+                    }
+                }
+            }
+
+            return staleListeners;
+        }
+
+        /**
+         * The ChangeListener wrapper which guards against dead documents.
+         */
+        public void stateChanged(ChangeEvent e) {
+            DefaultStyledDocument d = doc.get();
+            if (d != null) {
+                fireStateChanged(d, e);
+            }
+        }
+
+        /** Run the actual class-specific stateChanged() method.  */
+        abstract void fireStateChanged(DefaultStyledDocument d, ChangeEvent e);
+    }
+
+    /**
+     * Added to all the Styles. When instances of this receive a
+     * stateChanged method, styleChanged is invoked.
+     */
+    static class StyleChangeHandler extends AbstractChangeHandler {
+
+        StyleChangeHandler(DefaultStyledDocument d) {
+            super(d);
+        }
+
+        void fireStateChanged(DefaultStyledDocument d, ChangeEvent e) {
+            Object source = e.getSource();
+            if (source instanceof Style) {
+                d.styleChanged((Style) source);
+            } else {
+                d.styleChanged(null);
+            }
+        }
+    }
+
+
+    /**
+     * Added to the StyleContext. When the StyleContext changes, this invokes
+     * <code>updateStylesListeningTo</code>.
+     */
+    static class StyleContextChangeHandler extends AbstractChangeHandler {
+
+        StyleContextChangeHandler(DefaultStyledDocument d) {
+            super(d);
+        }
+
+        void fireStateChanged(DefaultStyledDocument d, ChangeEvent e) {
+            d.updateStylesListeningTo();
+        }
+    }
+
+
+    /**
+     * When run this creates a change event for the complete document
+     * and fires it.
+     */
+    class ChangeUpdateRunnable implements Runnable {
+        boolean isPending = false;
+
+        public void run() {
+            synchronized(this) {
+                isPending = false;
+            }
+
+            try {
+                writeLock();
+                DefaultDocumentEvent dde = new DefaultDocumentEvent(0,
+                                              getLength(),
+                                              DocumentEvent.EventType.CHANGE);
+                dde.end();
+                fireChangedUpdate(dde);
+            } finally {
+                writeUnlock();
+            }
+        }
+    }
+}

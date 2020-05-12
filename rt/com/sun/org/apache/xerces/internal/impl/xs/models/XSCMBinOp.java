@@ -1,135 +1,141 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.models;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dtd.models.CMNode;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dtd.models.CMStateSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XSCMBinOp
-/*     */   extends CMNode
-/*     */ {
-/*     */   private CMNode fLeftChild;
-/*     */   private CMNode fRightChild;
-/*     */   
-/*     */   public XSCMBinOp(int type, CMNode leftNode, CMNode rightNode) {
-/*  41 */     super(type);
-/*     */ 
-/*     */     
-/*  44 */     if (type() != 101 && 
-/*  45 */       type() != 102) {
-/*  46 */       throw new RuntimeException("ImplementationMessages.VAL_BST");
-/*     */     }
-/*     */ 
-/*     */     
-/*  50 */     this.fLeftChild = leftNode;
-/*  51 */     this.fRightChild = rightNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final CMNode getLeft() {
-/*  59 */     return this.fLeftChild;
-/*     */   }
-/*     */   
-/*     */   final CMNode getRight() {
-/*  63 */     return this.fRightChild;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isNullable() {
-/*  76 */     if (type() == 101)
-/*  77 */       return (this.fLeftChild.isNullable() || this.fRightChild.isNullable()); 
-/*  78 */     if (type() == 102) {
-/*  79 */       return (this.fLeftChild.isNullable() && this.fRightChild.isNullable());
-/*     */     }
-/*  81 */     throw new RuntimeException("ImplementationMessages.VAL_BST");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void calcFirstPos(CMStateSet toSet) {
-/*  89 */     if (type() == 101) {
-/*     */       
-/*  91 */       toSet.setTo(this.fLeftChild.firstPos());
-/*  92 */       toSet.union(this.fRightChild.firstPos());
-/*     */     }
-/*  94 */     else if (type() == 102) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 100 */       toSet.setTo(this.fLeftChild.firstPos());
-/* 101 */       if (this.fLeftChild.isNullable()) {
-/* 102 */         toSet.union(this.fRightChild.firstPos());
-/*     */       }
-/*     */     } else {
-/* 105 */       throw new RuntimeException("ImplementationMessages.VAL_BST");
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void calcLastPos(CMStateSet toSet) {
-/* 110 */     if (type() == 101) {
-/*     */       
-/* 112 */       toSet.setTo(this.fLeftChild.lastPos());
-/* 113 */       toSet.union(this.fRightChild.lastPos());
-/*     */     }
-/* 115 */     else if (type() == 102) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 121 */       toSet.setTo(this.fRightChild.lastPos());
-/* 122 */       if (this.fRightChild.isNullable()) {
-/* 123 */         toSet.union(this.fLeftChild.lastPos());
-/*     */       }
-/*     */     } else {
-/* 126 */       throw new RuntimeException("ImplementationMessages.VAL_BST");
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\models\XSCMBinOp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.models;
+
+import com.sun.org.apache.xerces.internal.impl.dtd.models.CMNode;
+import com.sun.org.apache.xerces.internal.impl.dtd.models.CMStateSet;
+import com.sun.org.apache.xerces.internal.impl.xs.XSModelGroupImpl;
+
+/**
+ *
+ * Content model Bin-Op node.
+ *
+ * @xerces.internal
+ *
+ * @author Neil Graham, IBM
+ */
+public class XSCMBinOp extends CMNode {
+    // -------------------------------------------------------------------
+    //  Constructors
+    // -------------------------------------------------------------------
+    public XSCMBinOp(int type, CMNode leftNode, CMNode rightNode)
+    {
+        super(type);
+
+        // Insure that its one of the types we require
+        if ((type() != XSModelGroupImpl.MODELGROUP_CHOICE)
+        &&  (type() != XSModelGroupImpl.MODELGROUP_SEQUENCE)) {
+            throw new RuntimeException("ImplementationMessages.VAL_BST");
+        }
+
+        // Store the nodes and init any data that needs it
+        fLeftChild = leftNode;
+        fRightChild = rightNode;
+    }
+
+
+    // -------------------------------------------------------------------
+    //  Package, final methods
+    // -------------------------------------------------------------------
+    final CMNode getLeft() {
+        return fLeftChild;
+    }
+
+    final CMNode getRight() {
+        return fRightChild;
+    }
+
+
+    // -------------------------------------------------------------------
+    //  Package, inherited methods
+    // -------------------------------------------------------------------
+    public boolean isNullable() {
+        //
+        //  If its an alternation, then if either child is nullable then
+        //  this node is nullable. If its a concatenation, then both of
+        //  them have to be nullable.
+        //
+        if (type() == XSModelGroupImpl.MODELGROUP_CHOICE)
+            return (fLeftChild.isNullable() || fRightChild.isNullable());
+        else if (type() == XSModelGroupImpl.MODELGROUP_SEQUENCE)
+            return (fLeftChild.isNullable() && fRightChild.isNullable());
+        else
+            throw new RuntimeException("ImplementationMessages.VAL_BST");
+    }
+
+
+    // -------------------------------------------------------------------
+    //  Protected, inherited methods
+    // -------------------------------------------------------------------
+    protected void calcFirstPos(CMStateSet toSet) {
+        if (type() == XSModelGroupImpl.MODELGROUP_CHOICE) {
+            // Its the the union of the first positions of our children.
+            toSet.setTo(fLeftChild.firstPos());
+            toSet.union(fRightChild.firstPos());
+        }
+         else if (type() == XSModelGroupImpl.MODELGROUP_SEQUENCE) {
+            //
+            //  If our left child is nullable, then its the union of our
+            //  children's first positions. Else is our left child's first
+            //  positions.
+            //
+            toSet.setTo(fLeftChild.firstPos());
+            if (fLeftChild.isNullable())
+                toSet.union(fRightChild.firstPos());
+        }
+         else {
+            throw new RuntimeException("ImplementationMessages.VAL_BST");
+        }
+    }
+
+    protected void calcLastPos(CMStateSet toSet) {
+        if (type() == XSModelGroupImpl.MODELGROUP_CHOICE) {
+            // Its the the union of the first positions of our children.
+            toSet.setTo(fLeftChild.lastPos());
+            toSet.union(fRightChild.lastPos());
+        }
+        else if (type() == XSModelGroupImpl.MODELGROUP_SEQUENCE) {
+            //
+            //  If our right child is nullable, then its the union of our
+            //  children's last positions. Else is our right child's last
+            //  positions.
+            //
+            toSet.setTo(fRightChild.lastPos());
+            if (fRightChild.isNullable())
+                toSet.union(fLeftChild.lastPos());
+        }
+        else {
+            throw new RuntimeException("ImplementationMessages.VAL_BST");
+        }
+    }
+
+
+    // -------------------------------------------------------------------
+    //  Private data members
+    //
+    //  fLeftChild
+    //  fRightChild
+    //      These are the references to the two nodes that are on either
+    //      side of this binary operation.
+    // -------------------------------------------------------------------
+    private CMNode  fLeftChild;
+    private CMNode  fRightChild;
+} // XSCMBinOp

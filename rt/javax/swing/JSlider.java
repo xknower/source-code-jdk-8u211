@@ -1,1526 +1,1520 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Image;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.Dictionary;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.Hashtable;
-/*      */ import javax.accessibility.Accessible;
-/*      */ import javax.accessibility.AccessibleContext;
-/*      */ import javax.accessibility.AccessibleRole;
-/*      */ import javax.accessibility.AccessibleState;
-/*      */ import javax.accessibility.AccessibleStateSet;
-/*      */ import javax.accessibility.AccessibleValue;
-/*      */ import javax.swing.event.ChangeEvent;
-/*      */ import javax.swing.event.ChangeListener;
-/*      */ import javax.swing.plaf.SliderUI;
-/*      */ import javax.swing.plaf.UIResource;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class JSlider
-/*      */   extends JComponent
-/*      */   implements SwingConstants, Accessible
-/*      */ {
-/*      */   private static final String uiClassID = "SliderUI";
-/*      */   private boolean paintTicks = false;
-/*      */   private boolean paintTrack = true;
-/*      */   private boolean paintLabels = false;
-/*      */   private boolean isInverted = false;
-/*      */   protected BoundedRangeModel sliderModel;
-/*      */   protected int majorTickSpacing;
-/*      */   protected int minorTickSpacing;
-/*      */   protected boolean snapToTicks = false;
-/*      */   boolean snapToValue = true;
-/*      */   protected int orientation;
-/*      */   private Dictionary labelTable;
-/*  152 */   protected ChangeListener changeListener = createChangeListener();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  163 */   protected transient ChangeEvent changeEvent = null;
-/*      */ 
-/*      */   
-/*      */   private void checkOrientation(int paramInt) {
-/*  167 */     switch (paramInt) {
-/*      */       case 0:
-/*      */       case 1:
-/*      */         return;
-/*      */     } 
-/*  172 */     throw new IllegalArgumentException("orientation must be one of: VERTICAL, HORIZONTAL");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSlider() {
-/*  182 */     this(0, 0, 100, 50);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSlider(int paramInt) {
-/*  198 */     this(paramInt, 0, 100, 50);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSlider(int paramInt1, int paramInt2) {
-/*  219 */     this(0, paramInt1, paramInt2, (paramInt1 + paramInt2) / 2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSlider(int paramInt1, int paramInt2, int paramInt3) {
-/*  241 */     this(0, paramInt1, paramInt2, paramInt3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSlider(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  272 */     checkOrientation(paramInt1);
-/*  273 */     this.orientation = paramInt1;
-/*  274 */     setModel(new DefaultBoundedRangeModel(paramInt4, 0, paramInt2, paramInt3));
-/*  275 */     updateUI();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JSlider(BoundedRangeModel paramBoundedRangeModel) {
-/*  285 */     this.orientation = 0;
-/*  286 */     setModel(paramBoundedRangeModel);
-/*  287 */     updateUI();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SliderUI getUI() {
-/*  297 */     return (SliderUI)this.ui;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUI(SliderUI paramSliderUI) {
-/*  313 */     setUI(paramSliderUI);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateUI() {
-/*  323 */     setUI((SliderUI)UIManager.getUI(this));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  328 */     updateLabelUIs();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getUIClassID() {
-/*  340 */     return "SliderUI";
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class ModelListener
-/*      */     implements ChangeListener, Serializable
-/*      */   {
-/*      */     private ModelListener() {}
-/*      */     
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/*  350 */       JSlider.this.fireStateChanged();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ChangeListener createChangeListener() {
-/*  370 */     return new ModelListener();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addChangeListener(ChangeListener paramChangeListener) {
-/*  382 */     this.listenerList.add(ChangeListener.class, paramChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeChangeListener(ChangeListener paramChangeListener) {
-/*  395 */     this.listenerList.remove(ChangeListener.class, paramChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ChangeListener[] getChangeListeners() {
-/*  408 */     return this.listenerList.<ChangeListener>getListeners(ChangeListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireStateChanged() {
-/*  426 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*  427 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/*  428 */       if (arrayOfObject[i] == ChangeListener.class) {
-/*  429 */         if (this.changeEvent == null) {
-/*  430 */           this.changeEvent = new ChangeEvent(this);
-/*      */         }
-/*  432 */         ((ChangeListener)arrayOfObject[i + 1]).stateChanged(this.changeEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BoundedRangeModel getModel() {
-/*  447 */     return this.sliderModel;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setModel(BoundedRangeModel paramBoundedRangeModel) {
-/*  468 */     BoundedRangeModel boundedRangeModel = getModel();
-/*      */     
-/*  470 */     if (boundedRangeModel != null) {
-/*  471 */       boundedRangeModel.removeChangeListener(this.changeListener);
-/*      */     }
-/*      */     
-/*  474 */     this.sliderModel = paramBoundedRangeModel;
-/*      */     
-/*  476 */     if (paramBoundedRangeModel != null) {
-/*  477 */       paramBoundedRangeModel.addChangeListener(this.changeListener);
-/*      */     }
-/*      */     
-/*  480 */     if (this.accessibleContext != null) {
-/*  481 */       this.accessibleContext.firePropertyChange("AccessibleValue", (boundedRangeModel == null) ? null : 
-/*      */ 
-/*      */           
-/*  484 */           Integer.valueOf(boundedRangeModel.getValue()), (paramBoundedRangeModel == null) ? null : 
-/*      */           
-/*  486 */           Integer.valueOf(paramBoundedRangeModel.getValue()));
-/*      */     }
-/*      */     
-/*  489 */     firePropertyChange("model", boundedRangeModel, this.sliderModel);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getValue() {
-/*  502 */     return getModel().getValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setValue(int paramInt) {
-/*  526 */     BoundedRangeModel boundedRangeModel = getModel();
-/*  527 */     int i = boundedRangeModel.getValue();
-/*  528 */     if (i == paramInt) {
-/*      */       return;
-/*      */     }
-/*  531 */     boundedRangeModel.setValue(paramInt);
-/*      */     
-/*  533 */     if (this.accessibleContext != null) {
-/*  534 */       this.accessibleContext.firePropertyChange("AccessibleValue", 
-/*      */           
-/*  536 */           Integer.valueOf(i), 
-/*  537 */           Integer.valueOf(boundedRangeModel.getValue()));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinimum() {
-/*  551 */     return getModel().getMinimum();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMinimum(int paramInt) {
-/*  577 */     int i = getModel().getMinimum();
-/*  578 */     getModel().setMinimum(paramInt);
-/*  579 */     firePropertyChange("minimum", Integer.valueOf(i), Integer.valueOf(paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMaximum() {
-/*  592 */     return getModel().getMaximum();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMaximum(int paramInt) {
-/*  618 */     int i = getModel().getMaximum();
-/*  619 */     getModel().setMaximum(paramInt);
-/*  620 */     firePropertyChange("maximum", Integer.valueOf(i), Integer.valueOf(paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getValueIsAdjusting() {
-/*  633 */     return getModel().getValueIsAdjusting();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setValueIsAdjusting(boolean paramBoolean) {
-/*  650 */     BoundedRangeModel boundedRangeModel = getModel();
-/*  651 */     boolean bool = boundedRangeModel.getValueIsAdjusting();
-/*  652 */     boundedRangeModel.setValueIsAdjusting(paramBoolean);
-/*      */     
-/*  654 */     if (bool != paramBoolean && this.accessibleContext != null) {
-/*  655 */       this.accessibleContext.firePropertyChange("AccessibleState", bool ? AccessibleState.BUSY : null, paramBoolean ? AccessibleState.BUSY : null);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getExtent() {
-/*  672 */     return getModel().getExtent();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setExtent(int paramInt) {
-/*  698 */     getModel().setExtent(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getOrientation() {
-/*  709 */     return this.orientation;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOrientation(int paramInt) {
-/*  731 */     checkOrientation(paramInt);
-/*  732 */     int i = this.orientation;
-/*  733 */     this.orientation = paramInt;
-/*  734 */     firePropertyChange("orientation", i, paramInt);
-/*      */     
-/*  736 */     if (i != paramInt && this.accessibleContext != null) {
-/*  737 */       this.accessibleContext.firePropertyChange("AccessibleState", (i == 1) ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL, (paramInt == 1) ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  744 */     if (paramInt != i) {
-/*  745 */       revalidate();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFont(Font paramFont) {
-/*  756 */     super.setFont(paramFont);
-/*  757 */     updateLabelSizes();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean imageUpdate(Image paramImage, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  765 */     if (!isShowing()) {
-/*  766 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/*  770 */     Enumeration<Component> enumeration = this.labelTable.elements();
-/*      */     
-/*  772 */     while (enumeration.hasMoreElements()) {
-/*  773 */       Component component = enumeration.nextElement();
-/*      */       
-/*  775 */       if (component instanceof JLabel) {
-/*  776 */         JLabel jLabel = (JLabel)component;
-/*      */         
-/*  778 */         if (SwingUtilities.doesIconReferenceImage(jLabel.getIcon(), paramImage) || 
-/*  779 */           SwingUtilities.doesIconReferenceImage(jLabel.getDisabledIcon(), paramImage)) {
-/*  780 */           return super.imageUpdate(paramImage, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  785 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dictionary getLabelTable() {
-/*  800 */     return this.labelTable;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLabelTable(Dictionary paramDictionary) {
-/*  828 */     Dictionary dictionary = this.labelTable;
-/*  829 */     this.labelTable = paramDictionary;
-/*  830 */     updateLabelUIs();
-/*  831 */     firePropertyChange("labelTable", dictionary, this.labelTable);
-/*  832 */     if (paramDictionary != dictionary) {
-/*  833 */       revalidate();
-/*  834 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void updateLabelUIs() {
-/*  849 */     Dictionary dictionary = getLabelTable();
-/*      */     
-/*  851 */     if (dictionary == null) {
-/*      */       return;
-/*      */     }
-/*  854 */     Enumeration enumeration = dictionary.keys();
-/*  855 */     while (enumeration.hasMoreElements()) {
-/*  856 */       JComponent jComponent = (JComponent)dictionary.get(enumeration.nextElement());
-/*  857 */       jComponent.updateUI();
-/*  858 */       jComponent.setSize(jComponent.getPreferredSize());
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void updateLabelSizes() {
-/*  863 */     Dictionary dictionary = getLabelTable();
-/*  864 */     if (dictionary != null) {
-/*  865 */       Enumeration<JComponent> enumeration = dictionary.elements();
-/*  866 */       while (enumeration.hasMoreElements()) {
-/*  867 */         JComponent jComponent = enumeration.nextElement();
-/*  868 */         jComponent.setSize(jComponent.getPreferredSize());
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Hashtable createStandardLabels(int paramInt) {
-/*  896 */     return createStandardLabels(paramInt, getMinimum());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Hashtable createStandardLabels(int paramInt1, int paramInt2) {
-/*  924 */     if (paramInt2 > getMaximum() || paramInt2 < getMinimum()) {
-/*  925 */       throw new IllegalArgumentException("Slider label start point out of range.");
-/*      */     }
-/*      */     
-/*  928 */     if (paramInt1 <= 0)
-/*  929 */       throw new IllegalArgumentException("Label incremement must be > 0"); 
-/*      */     class SmartHashtable
-/*      */       extends Hashtable<Object, Object>
-/*      */       implements PropertyChangeListener {
-/*  933 */       int increment = 0;
-/*  934 */       int start = 0;
-/*      */       boolean startAtMin = false;
-/*      */       
-/*      */       class LabelUIResource extends JLabel implements UIResource {
-/*      */         public LabelUIResource(String param2String, int param2Int) {
-/*  939 */           super(param2String, param2Int);
-/*  940 */           setName("Slider.label");
-/*      */         }
-/*      */         
-/*      */         public Font getFont() {
-/*  944 */           Font font = super.getFont();
-/*  945 */           if (font != null && !(font instanceof UIResource)) {
-/*  946 */             return font;
-/*      */           }
-/*  948 */           return JSlider.this.getFont();
-/*      */         }
-/*      */         
-/*      */         public Color getForeground() {
-/*  952 */           Color color = super.getForeground();
-/*  953 */           if (color != null && !(color instanceof UIResource)) {
-/*  954 */             return color;
-/*      */           }
-/*  956 */           if (!(JSlider.this.getForeground() instanceof UIResource)) {
-/*  957 */             return JSlider.this.getForeground();
-/*      */           }
-/*  959 */           return color;
-/*      */         }
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public SmartHashtable(int param1Int1, int param1Int2) {
-/*  965 */         this.increment = param1Int1;
-/*  966 */         this.start = param1Int2;
-/*  967 */         this.startAtMin = (param1Int2 == JSlider.this.getMinimum());
-/*  968 */         createLabels();
-/*      */       }
-/*      */       
-/*      */       public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/*  972 */         if (param1PropertyChangeEvent.getPropertyName().equals("minimum") && this.startAtMin) {
-/*  973 */           this.start = JSlider.this.getMinimum();
-/*      */         }
-/*      */         
-/*  976 */         if (param1PropertyChangeEvent.getPropertyName().equals("minimum") || param1PropertyChangeEvent
-/*  977 */           .getPropertyName().equals("maximum")) {
-/*      */           
-/*  979 */           Enumeration<Object> enumeration = JSlider.this.getLabelTable().keys();
-/*  980 */           Hashtable<Object, Object> hashtable = new Hashtable<>();
-/*      */ 
-/*      */           
-/*  983 */           while (enumeration.hasMoreElements()) {
-/*  984 */             Object object = enumeration.nextElement();
-/*  985 */             Object object1 = JSlider.this.labelTable.get(object);
-/*  986 */             if (!(object1 instanceof LabelUIResource)) {
-/*  987 */               hashtable.put(object, object1);
-/*      */             }
-/*      */           } 
-/*      */           
-/*  991 */           clear();
-/*  992 */           createLabels();
-/*      */ 
-/*      */           
-/*  995 */           enumeration = hashtable.keys();
-/*  996 */           while (enumeration.hasMoreElements()) {
-/*  997 */             Object object = enumeration.nextElement();
-/*  998 */             put(object, hashtable.get(object));
-/*      */           } 
-/*      */           
-/* 1001 */           ((JSlider)param1PropertyChangeEvent.getSource()).setLabelTable(this);
-/*      */         } 
-/*      */       }
-/*      */       
-/*      */       void createLabels() {
-/* 1006 */         for (int i = this.start; i <= JSlider.this.getMaximum(); i += this.increment) {
-/* 1007 */           put(Integer.valueOf(i), new LabelUIResource("" + i, 0));
-/*      */         }
-/*      */       }
-/*      */     };
-/*      */     
-/* 1012 */     SmartHashtable smartHashtable = new SmartHashtable(paramInt1, paramInt2);
-/*      */     
-/* 1014 */     Dictionary dictionary = getLabelTable();
-/*      */     
-/* 1016 */     if (dictionary != null && dictionary instanceof PropertyChangeListener) {
-/* 1017 */       removePropertyChangeListener((PropertyChangeListener)dictionary);
-/*      */     }
-/*      */     
-/* 1020 */     addPropertyChangeListener(smartHashtable);
-/*      */     
-/* 1022 */     return smartHashtable;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getInverted() {
-/* 1033 */     return this.isInverted;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setInverted(boolean paramBoolean) {
-/* 1058 */     boolean bool = this.isInverted;
-/* 1059 */     this.isInverted = paramBoolean;
-/* 1060 */     firePropertyChange("inverted", bool, this.isInverted);
-/* 1061 */     if (paramBoolean != bool) {
-/* 1062 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMajorTickSpacing() {
-/* 1078 */     return this.majorTickSpacing;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMajorTickSpacing(int paramInt) {
-/* 1114 */     int i = this.majorTickSpacing;
-/* 1115 */     this.majorTickSpacing = paramInt;
-/* 1116 */     if (this.labelTable == null && getMajorTickSpacing() > 0 && getPaintLabels()) {
-/* 1117 */       setLabelTable(createStandardLabels(getMajorTickSpacing()));
-/*      */     }
-/* 1119 */     firePropertyChange("majorTickSpacing", i, this.majorTickSpacing);
-/* 1120 */     if (this.majorTickSpacing != i && getPaintTicks()) {
-/* 1121 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinorTickSpacing() {
-/* 1138 */     return this.minorTickSpacing;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMinorTickSpacing(int paramInt) {
-/* 1161 */     int i = this.minorTickSpacing;
-/* 1162 */     this.minorTickSpacing = paramInt;
-/* 1163 */     firePropertyChange("minorTickSpacing", i, this.minorTickSpacing);
-/* 1164 */     if (this.minorTickSpacing != i && getPaintTicks()) {
-/* 1165 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getSnapToTicks() {
-/* 1179 */     return this.snapToTicks;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean getSnapToValue() {
-/* 1192 */     return this.snapToValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSnapToTicks(boolean paramBoolean) {
-/* 1209 */     boolean bool = this.snapToTicks;
-/* 1210 */     this.snapToTicks = paramBoolean;
-/* 1211 */     firePropertyChange("snapToTicks", bool, this.snapToTicks);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setSnapToValue(boolean paramBoolean) {
-/* 1230 */     boolean bool = this.snapToValue;
-/* 1231 */     this.snapToValue = paramBoolean;
-/* 1232 */     firePropertyChange("snapToValue", bool, this.snapToValue);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getPaintTicks() {
-/* 1242 */     return this.paintTicks;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPaintTicks(boolean paramBoolean) {
-/* 1258 */     boolean bool = this.paintTicks;
-/* 1259 */     this.paintTicks = paramBoolean;
-/* 1260 */     firePropertyChange("paintTicks", bool, this.paintTicks);
-/* 1261 */     if (this.paintTicks != bool) {
-/* 1262 */       revalidate();
-/* 1263 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getPaintTrack() {
-/* 1273 */     return this.paintTrack;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPaintTrack(boolean paramBoolean) {
-/* 1289 */     boolean bool = this.paintTrack;
-/* 1290 */     this.paintTrack = paramBoolean;
-/* 1291 */     firePropertyChange("paintTrack", bool, this.paintTrack);
-/* 1292 */     if (this.paintTrack != bool) {
-/* 1293 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getPaintLabels() {
-/* 1304 */     return this.paintLabels;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPaintLabels(boolean paramBoolean) {
-/* 1331 */     boolean bool = this.paintLabels;
-/* 1332 */     this.paintLabels = paramBoolean;
-/* 1333 */     if (this.labelTable == null && getMajorTickSpacing() > 0) {
-/* 1334 */       setLabelTable(createStandardLabels(getMajorTickSpacing()));
-/*      */     }
-/* 1336 */     firePropertyChange("paintLabels", bool, this.paintLabels);
-/* 1337 */     if (this.paintLabels != bool) {
-/* 1338 */       revalidate();
-/* 1339 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1349 */     paramObjectOutputStream.defaultWriteObject();
-/* 1350 */     if (getUIClassID().equals("SliderUI")) {
-/* 1351 */       byte b = JComponent.getWriteObjCounter(this);
-/* 1352 */       b = (byte)(b - 1); JComponent.setWriteObjCounter(this, b);
-/* 1353 */       if (b == 0 && this.ui != null) {
-/* 1354 */         this.ui.installUI(this);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String paramString() {
-/* 1370 */     String str1 = this.paintTicks ? "true" : "false";
-/*      */     
-/* 1372 */     String str2 = this.paintTrack ? "true" : "false";
-/*      */     
-/* 1374 */     String str3 = this.paintLabels ? "true" : "false";
-/*      */     
-/* 1376 */     String str4 = this.isInverted ? "true" : "false";
-/*      */     
-/* 1378 */     String str5 = this.snapToTicks ? "true" : "false";
-/*      */     
-/* 1380 */     String str6 = this.snapToValue ? "true" : "false";
-/*      */     
-/* 1382 */     String str7 = (this.orientation == 0) ? "HORIZONTAL" : "VERTICAL";
-/*      */ 
-/*      */     
-/* 1385 */     return super.paramString() + ",isInverted=" + str4 + ",majorTickSpacing=" + this.majorTickSpacing + ",minorTickSpacing=" + this.minorTickSpacing + ",orientation=" + str7 + ",paintLabels=" + str3 + ",paintTicks=" + str1 + ",paintTrack=" + str2 + ",snapToTicks=" + str5 + ",snapToValue=" + str6;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AccessibleContext getAccessibleContext() {
-/* 1412 */     if (this.accessibleContext == null) {
-/* 1413 */       this.accessibleContext = new AccessibleJSlider();
-/*      */     }
-/* 1415 */     return this.accessibleContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class AccessibleJSlider
-/*      */     extends JComponent.AccessibleJComponent
-/*      */     implements AccessibleValue
-/*      */   {
-/*      */     public AccessibleStateSet getAccessibleStateSet() {
-/* 1443 */       AccessibleStateSet accessibleStateSet = super.getAccessibleStateSet();
-/* 1444 */       if (JSlider.this.getValueIsAdjusting()) {
-/* 1445 */         accessibleStateSet.add(AccessibleState.BUSY);
-/*      */       }
-/* 1447 */       if (JSlider.this.getOrientation() == 1) {
-/* 1448 */         accessibleStateSet.add(AccessibleState.VERTICAL);
-/*      */       } else {
-/*      */         
-/* 1451 */         accessibleStateSet.add(AccessibleState.HORIZONTAL);
-/*      */       } 
-/* 1453 */       return accessibleStateSet;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleRole getAccessibleRole() {
-/* 1462 */       return AccessibleRole.SLIDER;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleValue getAccessibleValue() {
-/* 1474 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getCurrentAccessibleValue() {
-/* 1483 */       return Integer.valueOf(JSlider.this.getValue());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean setCurrentAccessibleValue(Number param1Number) {
-/* 1493 */       if (param1Number == null) {
-/* 1494 */         return false;
-/*      */       }
-/* 1496 */       JSlider.this.setValue(param1Number.intValue());
-/* 1497 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getMinimumAccessibleValue() {
-/* 1506 */       return Integer.valueOf(JSlider.this.getMinimum());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getMaximumAccessibleValue() {
-/* 1516 */       BoundedRangeModel boundedRangeModel = JSlider.this.getModel();
-/* 1517 */       return Integer.valueOf(boundedRangeModel.getMaximum() - boundedRangeModel.getExtent());
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\JSlider.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.accessibility.*;
+
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
+
+import java.awt.*;
+import java.util.*;
+import java.beans.*;
+
+
+/**
+ * A component that lets the user graphically select a value by sliding
+ * a knob within a bounded interval. The knob is always positioned
+ * at the points that match integer values within the specified interval.
+ * <p>
+ * The slider can show both
+ * major tick marks, and minor tick marks between the major ones.  The number of
+ * values between the tick marks is controlled with
+ * <code>setMajorTickSpacing</code> and <code>setMinorTickSpacing</code>.
+ * Painting of tick marks is controlled by {@code setPaintTicks}.
+ * <p>
+ * Sliders can also print text labels at regular intervals (or at
+ * arbitrary locations) along the slider track.  Painting of labels is
+ * controlled by {@code setLabelTable} and {@code setPaintLabels}.
+ * <p>
+ * For further information and examples see
+ * <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/slider.html">How to Use Sliders</a>,
+ * a section in <em>The Java Tutorial.</em>
+ * <p>
+ * <strong>Warning:</strong> Swing is not thread safe. For more
+ * information see <a
+ * href="package-summary.html#threading">Swing's Threading
+ * Policy</a>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @beaninfo
+ *      attribute: isContainer false
+ *    description: A component that supports selecting a integer value from a range.
+ *
+ * @author David Kloba
+ */
+public class JSlider extends JComponent implements SwingConstants, Accessible {
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    private static final String uiClassID = "SliderUI";
+
+    private boolean paintTicks = false;
+    private boolean paintTrack = true;
+    private boolean paintLabels = false;
+    private boolean isInverted = false;
+
+    /**
+     * The data model that handles the numeric maximum value,
+     * minimum value, and current-position value for the slider.
+     */
+    protected BoundedRangeModel sliderModel;
+
+    /**
+     * The number of values between the major tick marks -- the
+     * larger marks that break up the minor tick marks.
+     */
+    protected int majorTickSpacing;
+
+    /**
+     * The number of values between the minor tick marks -- the
+     * smaller marks that occur between the major tick marks.
+     * @see #setMinorTickSpacing
+     */
+    protected int minorTickSpacing;
+
+    /**
+     * If true, the knob (and the data value it represents)
+     * resolve to the closest tick mark next to where the user
+     * positioned the knob.  The default is false.
+     * @see #setSnapToTicks
+     */
+    protected boolean snapToTicks = false;
+
+    /**
+     * If true, the knob (and the data value it represents)
+     * resolve to the closest slider value next to where the user
+     * positioned the knob.
+     */
+    boolean snapToValue = true;
+
+    /**
+     * Whether the slider is horizontal or vertical
+     * The default is horizontal.
+     *
+     * @see #setOrientation
+     */
+    protected int orientation;
+
+
+    /**
+     * {@code Dictionary} of what labels to draw at which values
+     */
+    private Dictionary labelTable;
+
+
+    /**
+     * The changeListener (no suffix) is the listener we add to the
+     * slider's model.  This listener is initialized to the
+     * {@code ChangeListener} returned from {@code createChangeListener},
+     * which by default just forwards events
+     * to {@code ChangeListener}s (if any) added directly to the slider.
+     *
+     * @see #addChangeListener
+     * @see #createChangeListener
+     */
+    protected ChangeListener changeListener = createChangeListener();
+
+
+    /**
+     * Only one <code>ChangeEvent</code> is needed per slider instance since the
+     * event's only (read-only) state is the source property.  The source
+     * of events generated here is always "this". The event is lazily
+     * created the first time that an event notification is fired.
+     *
+     * @see #fireStateChanged
+     */
+    protected transient ChangeEvent changeEvent = null;
+
+
+    private void checkOrientation(int orientation) {
+        switch (orientation) {
+        case VERTICAL:
+        case HORIZONTAL:
+            break;
+        default:
+            throw new IllegalArgumentException("orientation must be one of: VERTICAL, HORIZONTAL");
+        }
+    }
+
+
+    /**
+     * Creates a horizontal slider with the range 0 to 100 and
+     * an initial value of 50.
+     */
+    public JSlider() {
+        this(HORIZONTAL, 0, 100, 50);
+    }
+
+
+    /**
+     * Creates a slider using the specified orientation with the
+     * range {@code 0} to {@code 100} and an initial value of {@code 50}.
+     * The orientation can be
+     * either <code>SwingConstants.VERTICAL</code> or
+     * <code>SwingConstants.HORIZONTAL</code>.
+     *
+     * @param  orientation  the orientation of the slider
+     * @throws IllegalArgumentException if orientation is not one of {@code VERTICAL}, {@code HORIZONTAL}
+     * @see #setOrientation
+     */
+    public JSlider(int orientation) {
+        this(orientation, 0, 100, 50);
+    }
+
+
+    /**
+     * Creates a horizontal slider using the specified min and max
+     * with an initial value equal to the average of the min plus max.
+     * <p>
+     * The <code>BoundedRangeModel</code> that holds the slider's data
+     * handles any issues that may arise from improperly setting the
+     * minimum and maximum values on the slider.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     *
+     * @param min  the minimum value of the slider
+     * @param max  the maximum value of the slider
+     *
+     * @see BoundedRangeModel
+     * @see #setMinimum
+     * @see #setMaximum
+     */
+    public JSlider(int min, int max) {
+        this(HORIZONTAL, min, max, (min + max) / 2);
+    }
+
+
+    /**
+     * Creates a horizontal slider using the specified min, max and value.
+     * <p>
+     * The <code>BoundedRangeModel</code> that holds the slider's data
+     * handles any issues that may arise from improperly setting the
+     * minimum, initial, and maximum values on the slider.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     *
+     * @param min  the minimum value of the slider
+     * @param max  the maximum value of the slider
+     * @param value  the initial value of the slider
+     *
+     * @see BoundedRangeModel
+     * @see #setMinimum
+     * @see #setMaximum
+     * @see #setValue
+     */
+    public JSlider(int min, int max, int value) {
+        this(HORIZONTAL, min, max, value);
+    }
+
+
+    /**
+     * Creates a slider with the specified orientation and the
+     * specified minimum, maximum, and initial values.
+     * The orientation can be
+     * either <code>SwingConstants.VERTICAL</code> or
+     * <code>SwingConstants.HORIZONTAL</code>.
+     * <p>
+     * The <code>BoundedRangeModel</code> that holds the slider's data
+     * handles any issues that may arise from improperly setting the
+     * minimum, initial, and maximum values on the slider.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     *
+     * @param orientation  the orientation of the slider
+     * @param min  the minimum value of the slider
+     * @param max  the maximum value of the slider
+     * @param value  the initial value of the slider
+     *
+     * @throws IllegalArgumentException if orientation is not one of {@code VERTICAL}, {@code HORIZONTAL}
+     *
+     * @see BoundedRangeModel
+     * @see #setOrientation
+     * @see #setMinimum
+     * @see #setMaximum
+     * @see #setValue
+     */
+    public JSlider(int orientation, int min, int max, int value)
+    {
+        checkOrientation(orientation);
+        this.orientation = orientation;
+        setModel(new DefaultBoundedRangeModel(value, 0, min, max));
+        updateUI();
+    }
+
+
+    /**
+     * Creates a horizontal slider using the specified
+     * BoundedRangeModel.
+     */
+    public JSlider(BoundedRangeModel brm)
+    {
+        this.orientation = JSlider.HORIZONTAL;
+        setModel(brm);
+        updateUI();
+    }
+
+
+    /**
+     * Gets the UI object which implements the L&amp;F for this component.
+     *
+     * @return the SliderUI object that implements the Slider L&amp;F
+     */
+    public SliderUI getUI() {
+        return(SliderUI)ui;
+    }
+
+
+    /**
+     * Sets the UI object which implements the L&amp;F for this component.
+     *
+     * @param ui the SliderUI L&amp;F object
+     * @see UIDefaults#getUI
+     * @beaninfo
+     *        bound: true
+     *       hidden: true
+     *    attribute: visualUpdate true
+     *  description: The UI object that implements the slider's LookAndFeel.
+     */
+    public void setUI(SliderUI ui) {
+        super.setUI(ui);
+    }
+
+
+    /**
+     * Resets the UI property to a value from the current look and feel.
+     *
+     * @see JComponent#updateUI
+     */
+    public void updateUI() {
+        setUI((SliderUI)UIManager.getUI(this));
+        // The labels preferred size may be derived from the font
+        // of the slider, so we must update the UI of the slider first, then
+        // that of labels.  This way when setSize is called the right
+        // font is used.
+        updateLabelUIs();
+    }
+
+
+    /**
+     * Returns the name of the L&amp;F class that renders this component.
+     *
+     * @return "SliderUI"
+     * @see JComponent#getUIClassID
+     * @see UIDefaults#getUI
+     */
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
+
+    /**
+     * We pass Change events along to the listeners with the
+     * the slider (instead of the model itself) as the event source.
+     */
+    private class ModelListener implements ChangeListener, Serializable {
+        public void stateChanged(ChangeEvent e) {
+            fireStateChanged();
+        }
+    }
+
+
+    /**
+     * Subclasses that want to handle {@code ChangeEvent}s
+     * from the model differently
+     * can override this to return
+     * an instance of a custom <code>ChangeListener</code> implementation.
+     * The default {@code ChangeListener} simply calls the
+     * {@code fireStateChanged} method to forward {@code ChangeEvent}s
+     * to the {@code ChangeListener}s that have been added directly to the
+     * slider.
+     * @see #changeListener
+     * @see #fireStateChanged
+     * @see javax.swing.event.ChangeListener
+     * @see javax.swing.BoundedRangeModel
+     */
+    protected ChangeListener createChangeListener() {
+        return new ModelListener();
+    }
+
+
+    /**
+     * Adds a ChangeListener to the slider.
+     *
+     * @param l the ChangeListener to add
+     * @see #fireStateChanged
+     * @see #removeChangeListener
+     */
+    public void addChangeListener(ChangeListener l) {
+        listenerList.add(ChangeListener.class, l);
+    }
+
+
+    /**
+     * Removes a ChangeListener from the slider.
+     *
+     * @param l the ChangeListener to remove
+     * @see #fireStateChanged
+     * @see #addChangeListener
+
+     */
+    public void removeChangeListener(ChangeListener l) {
+        listenerList.remove(ChangeListener.class, l);
+    }
+
+
+    /**
+     * Returns an array of all the <code>ChangeListener</code>s added
+     * to this JSlider with addChangeListener().
+     *
+     * @return all of the <code>ChangeListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ChangeListener[] getChangeListeners() {
+        return listenerList.getListeners(ChangeListener.class);
+    }
+
+
+    /**
+     * Send a {@code ChangeEvent}, whose source is this {@code JSlider}, to
+     * all {@code ChangeListener}s that have registered interest in
+     * {@code ChangeEvent}s.
+     * This method is called each time a {@code ChangeEvent} is received from
+     * the model.
+     * <p>
+     * The event instance is created if necessary, and stored in
+     * {@code changeEvent}.
+     *
+     * @see #addChangeListener
+     * @see EventListenerList
+     */
+    protected void fireStateChanged() {
+        Object[] listeners = listenerList.getListenerList();
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i]==ChangeListener.class) {
+                if (changeEvent == null) {
+                    changeEvent = new ChangeEvent(this);
+                }
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
+
+
+    /**
+     * Returns the {@code BoundedRangeModel} that handles the slider's three
+     * fundamental properties: minimum, maximum, value.
+     *
+     * @return the data model for this component
+     * @see #setModel
+     * @see    BoundedRangeModel
+     */
+    public BoundedRangeModel getModel() {
+        return sliderModel;
+    }
+
+
+    /**
+     * Sets the {@code BoundedRangeModel} that handles the slider's three
+     * fundamental properties: minimum, maximum, value.
+     *<p>
+     * Attempts to pass a {@code null} model to this method result in
+     * undefined behavior, and, most likely, exceptions.
+     *
+     * @param  newModel the new, {@code non-null} <code>BoundedRangeModel</code> to use
+     *
+     * @see #getModel
+     * @see    BoundedRangeModel
+     * @beaninfo
+     *       bound: true
+     * description: The sliders BoundedRangeModel.
+     */
+    public void setModel(BoundedRangeModel newModel)
+    {
+        BoundedRangeModel oldModel = getModel();
+
+        if (oldModel != null) {
+            oldModel.removeChangeListener(changeListener);
+        }
+
+        sliderModel = newModel;
+
+        if (newModel != null) {
+            newModel.addChangeListener(changeListener);
+        }
+
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                                                AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+                                                (oldModel == null
+                                                 ? null : Integer.valueOf(oldModel.getValue())),
+                                                (newModel == null
+                                                 ? null : Integer.valueOf(newModel.getValue())));
+        }
+
+        firePropertyChange("model", oldModel, sliderModel);
+    }
+
+
+    /**
+     * Returns the slider's current value
+     * from the {@code BoundedRangeModel}.
+     *
+     * @return  the current value of the slider
+     * @see     #setValue
+     * @see     BoundedRangeModel#getValue
+     */
+    public int getValue() {
+        return getModel().getValue();
+    }
+
+    /**
+     * Sets the slider's current value to {@code n}.  This method
+     * forwards the new value to the model.
+     * <p>
+     * The data model (an instance of {@code BoundedRangeModel})
+     * handles any mathematical
+     * issues arising from assigning faulty values.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     * <p>
+     * If the new value is different from the previous value,
+     * all change listeners are notified.
+     *
+     * @param   n       the new value
+     * @see     #getValue
+     * @see     #addChangeListener
+     * @see     BoundedRangeModel#setValue
+     * @beaninfo
+     *   preferred: true
+     * description: The sliders current value.
+     */
+    public void setValue(int n) {
+        BoundedRangeModel m = getModel();
+        int oldValue = m.getValue();
+        if (oldValue == n) {
+            return;
+        }
+        m.setValue(n);
+
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                                                AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+                                                Integer.valueOf(oldValue),
+                                                Integer.valueOf(m.getValue()));
+        }
+    }
+
+
+    /**
+     * Returns the minimum value supported by the slider
+     * from the <code>BoundedRangeModel</code>.
+     *
+     * @return the value of the model's minimum property
+     * @see #setMinimum
+     * @see     BoundedRangeModel#getMinimum
+     */
+    public int getMinimum() {
+        return getModel().getMinimum();
+    }
+
+
+    /**
+     * Sets the slider's minimum value to {@code minimum}.  This method
+     * forwards the new minimum value to the model.
+     * <p>
+     * The data model (an instance of {@code BoundedRangeModel})
+     * handles any mathematical
+     * issues arising from assigning faulty values.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     * <p>
+     * If the new minimum value is different from the previous minimum value,
+     * all change listeners are notified.
+     *
+     * @param minimum  the new minimum
+     * @see #getMinimum
+     * @see    #addChangeListener
+     * @see BoundedRangeModel#setMinimum
+     * @beaninfo
+     *       bound: true
+     *   preferred: true
+     * description: The sliders minimum value.
+     */
+    public void setMinimum(int minimum) {
+        int oldMin = getModel().getMinimum();
+        getModel().setMinimum(minimum);
+        firePropertyChange( "minimum", Integer.valueOf( oldMin ), Integer.valueOf( minimum ) );
+    }
+
+
+    /**
+     * Returns the maximum value supported by the slider
+     * from the <code>BoundedRangeModel</code>.
+     *
+     * @return the value of the model's maximum property
+     * @see #setMaximum
+     * @see BoundedRangeModel#getMaximum
+     */
+    public int getMaximum() {
+        return getModel().getMaximum();
+    }
+
+
+    /**
+     * Sets the slider's maximum value to {@code maximum}.  This method
+     * forwards the new maximum value to the model.
+     * <p>
+     * The data model (an instance of {@code BoundedRangeModel})
+     * handles any mathematical
+     * issues arising from assigning faulty values.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     * <p>
+     * If the new maximum value is different from the previous maximum value,
+     * all change listeners are notified.
+     *
+     * @param maximum  the new maximum
+     * @see #getMaximum
+     * @see #addChangeListener
+     * @see BoundedRangeModel#setMaximum
+     * @beaninfo
+     *       bound: true
+     *   preferred: true
+     * description: The sliders maximum value.
+     */
+    public void setMaximum(int maximum) {
+        int oldMax = getModel().getMaximum();
+        getModel().setMaximum(maximum);
+        firePropertyChange( "maximum", Integer.valueOf( oldMax ), Integer.valueOf( maximum ) );
+    }
+
+
+    /**
+     * Returns the {@code valueIsAdjusting} property from the model.  For
+     * details on how this is used, see the {@code setValueIsAdjusting}
+     * documentation.
+     *
+     * @return the value of the model's {@code valueIsAdjusting} property
+     * @see #setValueIsAdjusting
+     */
+    public boolean getValueIsAdjusting() {
+        return getModel().getValueIsAdjusting();
+    }
+
+
+    /**
+     * Sets the model's {@code valueIsAdjusting} property.  Slider look and
+     * feel implementations should set this property to {@code true} when
+     * a knob drag begins, and to {@code false} when the drag ends.
+     *
+     * @param b the new value for the {@code valueIsAdjusting} property
+     * @see   #getValueIsAdjusting
+     * @see   BoundedRangeModel#setValueIsAdjusting
+     * @beaninfo
+     *      expert: true
+     * description: True if the slider knob is being dragged.
+     */
+    public void setValueIsAdjusting(boolean b) {
+        BoundedRangeModel m = getModel();
+        boolean oldValue = m.getValueIsAdjusting();
+        m.setValueIsAdjusting(b);
+
+        if ((oldValue != b) && (accessibleContext != null)) {
+            accessibleContext.firePropertyChange(
+                                                AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                ((oldValue) ? AccessibleState.BUSY : null),
+                                                ((b) ? AccessibleState.BUSY : null));
+        }
+    }
+
+
+    /**
+     * Returns the "extent" from the <code>BoundedRangeModel</code>.
+     * This represents the range of values "covered" by the knob.
+     *
+     * @return an int representing the extent
+     * @see #setExtent
+     * @see BoundedRangeModel#getExtent
+     */
+    public int getExtent() {
+        return getModel().getExtent();
+    }
+
+
+    /**
+     * Sets the size of the range "covered" by the knob.  Most look
+     * and feel implementations will change the value by this amount
+     * if the user clicks on either side of the knob.  This method just
+     * forwards the new extent value to the model.
+     * <p>
+     * The data model (an instance of {@code BoundedRangeModel})
+     * handles any mathematical
+     * issues arising from assigning faulty values.  See the
+     * {@code BoundedRangeModel} documentation for details.
+     * <p>
+     * If the new extent value is different from the previous extent value,
+     * all change listeners are notified.
+     *
+     * @param extent the new extent
+     * @see   #getExtent
+     * @see   BoundedRangeModel#setExtent
+     * @beaninfo
+     *      expert: true
+     * description: Size of the range covered by the knob.
+     */
+    public void setExtent(int extent) {
+        getModel().setExtent(extent);
+    }
+
+
+    /**
+     * Return this slider's vertical or horizontal orientation.
+     * @return {@code SwingConstants.VERTICAL} or
+     *  {@code SwingConstants.HORIZONTAL}
+     * @see #setOrientation
+     */
+    public int getOrientation() {
+        return orientation;
+    }
+
+
+    /**
+     * Set the slider's orientation to either {@code SwingConstants.VERTICAL} or
+     * {@code SwingConstants.HORIZONTAL}.
+     *
+     * @param orientation {@code HORIZONTAL} or {@code VERTICAL}
+     * @throws IllegalArgumentException if orientation is not one of {@code VERTICAL}, {@code HORIZONTAL}
+     * @see #getOrientation
+     * @beaninfo
+     *    preferred: true
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Set the scrollbars orientation to either VERTICAL or HORIZONTAL.
+     *         enum: VERTICAL JSlider.VERTICAL
+     *               HORIZONTAL JSlider.HORIZONTAL
+     *
+     */
+    public void setOrientation(int orientation)
+    {
+        checkOrientation(orientation);
+        int oldValue = this.orientation;
+        this.orientation = orientation;
+        firePropertyChange("orientation", oldValue, orientation);
+
+        if ((oldValue != orientation) && (accessibleContext != null)) {
+            accessibleContext.firePropertyChange(
+                                                AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                ((oldValue == VERTICAL)
+                                                 ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL),
+                                                ((orientation == VERTICAL)
+                                                 ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL));
+        }
+        if (orientation != oldValue) {
+            revalidate();
+        }
+    }
+
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since 1.6
+     */
+    public void setFont(Font font) {
+        super.setFont(font);
+        updateLabelSizes();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.7
+     */
+    public boolean imageUpdate(Image img, int infoflags, int x, int y, int w, int h) {
+        if (!isShowing()) {
+            return false;
+        }
+
+        // Check that there is a label with such image
+        Enumeration elements = labelTable.elements();
+
+        while (elements.hasMoreElements()) {
+            Component component = (Component) elements.nextElement();
+
+            if (component instanceof JLabel) {
+                JLabel label = (JLabel) component;
+
+                if (SwingUtilities.doesIconReferenceImage(label.getIcon(), img) ||
+                        SwingUtilities.doesIconReferenceImage(label.getDisabledIcon(), img)) {
+                    return super.imageUpdate(img, infoflags, x, y, w, h);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the dictionary of what labels to draw at which values.
+     *
+     * @return the <code>Dictionary</code> containing labels and
+     *    where to draw them
+     */
+    public Dictionary getLabelTable() {
+/*
+        if ( labelTable == null && getMajorTickSpacing() > 0 ) {
+            setLabelTable( createStandardLabels( getMajorTickSpacing() ) );
+        }
+*/
+        return labelTable;
+    }
+
+
+    /**
+     * Used to specify what label will be drawn at any given value.
+     * The key-value pairs are of this format:
+     * <code>{ Integer value, java.swing.JComponent label }</code>.
+     * <p>
+     * An easy way to generate a standard table of value labels is by using the
+     * {@code createStandardLabels} method.
+     * <p>
+     * Once the labels have been set, this method calls {@link #updateLabelUIs}.
+     * Note that the labels are only painted if the {@code paintLabels}
+     * property is {@code true}.
+     *
+     * @param labels new {@code Dictionary} of labels, or {@code null} to
+     *        remove all labels
+     * @see #createStandardLabels(int)
+     * @see #getLabelTable
+     * @see #setPaintLabels
+     * @beaninfo
+     *       hidden: true
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Specifies what labels will be drawn for any given value.
+     */
+    public void setLabelTable( Dictionary labels ) {
+        Dictionary oldTable = labelTable;
+        labelTable = labels;
+        updateLabelUIs();
+        firePropertyChange("labelTable", oldTable, labelTable );
+        if (labels != oldTable) {
+            revalidate();
+            repaint();
+        }
+    }
+
+
+    /**
+     * Updates the UIs for the labels in the label table by calling
+     * {@code updateUI} on each label.  The UIs are updated from
+     * the current look and feel.  The labels are also set to their
+     * preferred size.
+     *
+     * @see #setLabelTable
+     * @see JComponent#updateUI
+     */
+    protected void updateLabelUIs() {
+        Dictionary labelTable = getLabelTable();
+
+        if (labelTable == null) {
+            return;
+        }
+        Enumeration labels = labelTable.keys();
+        while ( labels.hasMoreElements() ) {
+            JComponent component = (JComponent) labelTable.get(labels.nextElement());
+            component.updateUI();
+            component.setSize(component.getPreferredSize());
+        }
+    }
+
+    private void updateLabelSizes() {
+        Dictionary labelTable = getLabelTable();
+        if (labelTable != null) {
+            Enumeration labels = labelTable.elements();
+            while (labels.hasMoreElements()) {
+                JComponent component = (JComponent) labels.nextElement();
+                component.setSize(component.getPreferredSize());
+            }
+        }
+    }
+
+
+    /**
+     * Creates a {@code Hashtable} of numerical text labels, starting at the
+     * slider minimum, and using the increment specified.
+     * For example, if you call <code>createStandardLabels( 10 )</code>
+     * and the slider minimum is zero,
+     * then labels will be created for the values 0, 10, 20, 30, and so on.
+     * <p>
+     * For the labels to be drawn on the slider, the returned {@code Hashtable}
+     * must be passed into {@code setLabelTable}, and {@code setPaintLabels}
+     * must be set to {@code true}.
+     * <p>
+     * For further details on the makeup of the returned {@code Hashtable}, see
+     * the {@code setLabelTable} documentation.
+     *
+     * @param  increment  distance between labels in the generated hashtable
+     * @return a new {@code Hashtable} of labels
+     * @see #setLabelTable
+     * @see #setPaintLabels
+     * @throws IllegalArgumentException if {@code increment} is less than or
+     *          equal to zero
+     */
+    public Hashtable createStandardLabels( int increment ) {
+        return createStandardLabels( increment, getMinimum() );
+    }
+
+
+    /**
+     * Creates a {@code Hashtable} of numerical text labels, starting at the
+     * starting point specified, and using the increment specified.
+     * For example, if you call
+     * <code>createStandardLabels( 10, 2 )</code>,
+     * then labels will be created for the values 2, 12, 22, 32, and so on.
+     * <p>
+     * For the labels to be drawn on the slider, the returned {@code Hashtable}
+     * must be passed into {@code setLabelTable}, and {@code setPaintLabels}
+     * must be set to {@code true}.
+     * <p>
+     * For further details on the makeup of the returned {@code Hashtable}, see
+     * the {@code setLabelTable} documentation.
+     *
+     * @param  increment  distance between labels in the generated hashtable
+     * @param  start      value at which the labels will begin
+     * @return a new {@code Hashtable} of labels
+     * @see #setLabelTable
+     * @see #setPaintLabels
+     * @exception IllegalArgumentException if {@code start} is
+     *          out of range, or if {@code increment} is less than or equal
+     *          to zero
+     */
+    public Hashtable createStandardLabels( int increment, int start ) {
+        if ( start > getMaximum() || start < getMinimum() ) {
+            throw new IllegalArgumentException( "Slider label start point out of range." );
+        }
+
+        if ( increment <= 0 ) {
+            throw new IllegalArgumentException( "Label incremement must be > 0" );
+        }
+
+        class SmartHashtable extends Hashtable<Object, Object> implements PropertyChangeListener {
+            int increment = 0;
+            int start = 0;
+            boolean startAtMin = false;
+
+            class LabelUIResource extends JLabel implements UIResource {
+                public LabelUIResource( String text, int alignment ) {
+                    super( text, alignment );
+                    setName("Slider.label");
+                }
+
+                public Font getFont() {
+                    Font font = super.getFont();
+                    if (font != null && !(font instanceof UIResource)) {
+                        return font;
+                    }
+                    return JSlider.this.getFont();
+                }
+
+                public Color getForeground() {
+                    Color fg = super.getForeground();
+                    if (fg != null && !(fg instanceof UIResource)) {
+                        return fg;
+                    }
+                    if (!(JSlider.this.getForeground() instanceof UIResource)) {
+                        return JSlider.this.getForeground();
+                    }
+                    return fg;
+                }
+            }
+
+            public SmartHashtable( int increment, int start ) {
+                super();
+                this.increment = increment;
+                this.start = start;
+                startAtMin = start == getMinimum();
+                createLabels();
+            }
+
+            public void propertyChange( PropertyChangeEvent e ) {
+                if ( e.getPropertyName().equals( "minimum" ) && startAtMin ) {
+                    start = getMinimum();
+                }
+
+                if ( e.getPropertyName().equals( "minimum" ) ||
+                     e.getPropertyName().equals( "maximum" ) ) {
+
+                    Enumeration keys = getLabelTable().keys();
+                    Hashtable<Object, Object> hashtable = new Hashtable<Object, Object>();
+
+                    // Save the labels that were added by the developer
+                    while ( keys.hasMoreElements() ) {
+                        Object key = keys.nextElement();
+                        Object value = labelTable.get(key);
+                        if ( !(value instanceof LabelUIResource) ) {
+                            hashtable.put( key, value );
+                        }
+                    }
+
+                    clear();
+                    createLabels();
+
+                    // Add the saved labels
+                    keys = hashtable.keys();
+                    while ( keys.hasMoreElements() ) {
+                        Object key = keys.nextElement();
+                        put( key, hashtable.get( key ) );
+                    }
+
+                    ((JSlider)e.getSource()).setLabelTable( this );
+                }
+            }
+
+            void createLabels() {
+                for ( int labelIndex = start; labelIndex <= getMaximum(); labelIndex += increment ) {
+                    put( Integer.valueOf( labelIndex ), new LabelUIResource( ""+labelIndex, JLabel.CENTER ) );
+                }
+            }
+        }
+
+        SmartHashtable table = new SmartHashtable( increment, start );
+
+        Dictionary labelTable = getLabelTable();
+
+        if (labelTable != null && (labelTable instanceof PropertyChangeListener)) {
+            removePropertyChangeListener((PropertyChangeListener) labelTable);
+        }
+
+        addPropertyChangeListener( table );
+
+        return table;
+    }
+
+
+    /**
+     * Returns true if the value-range shown for the slider is reversed,
+     *
+     * @return true if the slider values are reversed from their normal order
+     * @see #setInverted
+     */
+    public boolean getInverted() {
+        return isInverted;
+    }
+
+
+    /**
+     * Specify true to reverse the value-range shown for the slider and false to
+     * put the value range in the normal order.  The order depends on the
+     * slider's <code>ComponentOrientation</code> property.  Normal (non-inverted)
+     * horizontal sliders with a <code>ComponentOrientation</code> value of
+     * <code>LEFT_TO_RIGHT</code> have their maximum on the right.
+     * Normal horizontal sliders with a <code>ComponentOrientation</code> value of
+     * <code>RIGHT_TO_LEFT</code> have their maximum on the left.  Normal vertical
+     * sliders have their maximum on the top.  These labels are reversed when the
+     * slider is inverted.
+     * <p>
+     * By default, the value of this property is {@code false}.
+     *
+     * @param b  true to reverse the slider values from their normal order
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: If true reverses the slider values from their normal order
+     *
+     */
+    public void setInverted( boolean b ) {
+        boolean oldValue = isInverted;
+        isInverted = b;
+        firePropertyChange("inverted", oldValue, isInverted);
+        if (b != oldValue) {
+            repaint();
+        }
+    }
+
+
+    /**
+     * This method returns the major tick spacing.  The number that is returned
+     * represents the distance, measured in values, between each major tick mark.
+     * If you have a slider with a range from 0 to 50 and the major tick spacing
+     * is set to 10, you will get major ticks next to the following values:
+     * 0, 10, 20, 30, 40, 50.
+     *
+     * @return the number of values between major ticks
+     * @see #setMajorTickSpacing
+     */
+    public int getMajorTickSpacing() {
+        return majorTickSpacing;
+    }
+
+
+    /**
+     * This method sets the major tick spacing.  The number that is passed in
+     * represents the distance, measured in values, between each major tick mark.
+     * If you have a slider with a range from 0 to 50 and the major tick spacing
+     * is set to 10, you will get major ticks next to the following values:
+     * 0, 10, 20, 30, 40, 50.
+     * <p>
+     * In order for major ticks to be painted, {@code setPaintTicks} must be
+     * set to {@code true}.
+     * <p>
+     * This method will also set up a label table for you.
+     * If there is not already a label table, and the major tick spacing is
+     * {@code > 0}, and {@code getPaintLabels} returns
+     * {@code true}, a standard label table will be generated (by calling
+     * {@code createStandardLabels}) with labels at the major tick marks.
+     * For the example above, you would get text labels: "0",
+     * "10", "20", "30", "40", "50".
+     * The label table is then set on the slider by calling
+     * {@code setLabelTable}.
+     *
+     * @param  n  new value for the {@code majorTickSpacing} property
+     * @see #getMajorTickSpacing
+     * @see #setPaintTicks
+     * @see #setLabelTable
+     * @see #createStandardLabels(int)
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Sets the number of values between major tick marks.
+     *
+     */
+    public void setMajorTickSpacing(int n) {
+        int oldValue = majorTickSpacing;
+        majorTickSpacing = n;
+        if ( labelTable == null && getMajorTickSpacing() > 0 && getPaintLabels() ) {
+            setLabelTable( createStandardLabels( getMajorTickSpacing() ) );
+        }
+        firePropertyChange("majorTickSpacing", oldValue, majorTickSpacing);
+        if (majorTickSpacing != oldValue && getPaintTicks()) {
+            repaint();
+        }
+    }
+
+
+
+    /**
+     * This method returns the minor tick spacing.  The number that is returned
+     * represents the distance, measured in values, between each minor tick mark.
+     * If you have a slider with a range from 0 to 50 and the minor tick spacing
+     * is set to 10, you will get minor ticks next to the following values:
+     * 0, 10, 20, 30, 40, 50.
+     *
+     * @return the number of values between minor ticks
+     * @see #getMinorTickSpacing
+     */
+    public int getMinorTickSpacing() {
+        return minorTickSpacing;
+    }
+
+
+    /**
+     * This method sets the minor tick spacing.  The number that is passed in
+     * represents the distance, measured in values, between each minor tick mark.
+     * If you have a slider with a range from 0 to 50 and the minor tick spacing
+     * is set to 10, you will get minor ticks next to the following values:
+     * 0, 10, 20, 30, 40, 50.
+     * <p>
+     * In order for minor ticks to be painted, {@code setPaintTicks} must be
+     * set to {@code true}.
+     *
+     * @param  n  new value for the {@code minorTickSpacing} property
+     * @see #getMinorTickSpacing
+     * @see #setPaintTicks
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Sets the number of values between minor tick marks.
+     */
+    public void setMinorTickSpacing(int n) {
+        int oldValue = minorTickSpacing;
+        minorTickSpacing = n;
+        firePropertyChange("minorTickSpacing", oldValue, minorTickSpacing);
+        if (minorTickSpacing != oldValue && getPaintTicks()) {
+            repaint();
+        }
+    }
+
+
+    /**
+     * Returns true if the knob (and the data value it represents)
+     * resolve to the closest tick mark next to where the user
+     * positioned the knob.
+     *
+     * @return true if the value snaps to the nearest tick mark, else false
+     * @see #setSnapToTicks
+     */
+    public boolean getSnapToTicks() {
+        return snapToTicks;
+    }
+
+
+    /**
+     * Returns true if the knob (and the data value it represents)
+     * resolve to the closest slider value next to where the user
+     * positioned the knob.
+     *
+     * @return true if the value snaps to the nearest slider value, else false
+     * @see #setSnapToValue
+     */
+    boolean getSnapToValue() {
+        return snapToValue;
+    }
+
+
+    /**
+     * Specifying true makes the knob (and the data value it represents)
+     * resolve to the closest tick mark next to where the user
+     * positioned the knob.
+     * By default, this property is {@code false}.
+     *
+     * @param b  true to snap the knob to the nearest tick mark
+     * @see #getSnapToTicks
+     * @beaninfo
+     *       bound: true
+     * description: If true snap the knob to the nearest tick mark.
+     */
+    public void setSnapToTicks(boolean b) {
+        boolean oldValue = snapToTicks;
+        snapToTicks = b;
+        firePropertyChange("snapToTicks", oldValue, snapToTicks);
+    }
+
+
+    /**
+     * Specifying true makes the knob (and the data value it represents)
+     * resolve to the closest slider value next to where the user
+     * positioned the knob. If the {@code snapToTicks} property has also been
+     * set to {@code true}, the snap-to-ticks behavior will prevail.
+     * By default, the snapToValue property is {@code true}.
+     *
+     * @param b  true to snap the knob to the nearest slider value
+     * @see #getSnapToValue
+     * @see #setSnapToTicks
+     * @beaninfo
+     *       bound: true
+     * description: If true snap the knob to the nearest slider value.
+     */
+    void setSnapToValue(boolean b) {
+        boolean oldValue = snapToValue;
+        snapToValue = b;
+        firePropertyChange("snapToValue", oldValue, snapToValue);
+    }
+
+
+    /**
+     * Tells if tick marks are to be painted.
+     * @return true if tick marks are painted, else false
+     * @see #setPaintTicks
+     */
+    public boolean getPaintTicks() {
+        return paintTicks;
+    }
+
+
+    /**
+     * Determines whether tick marks are painted on the slider.
+     * By default, this property is {@code false}.
+     *
+     * @param  b  whether or not tick marks should be painted
+     * @see #getPaintTicks
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: If true tick marks are painted on the slider.
+     */
+    public void setPaintTicks(boolean b) {
+        boolean oldValue = paintTicks;
+        paintTicks = b;
+        firePropertyChange("paintTicks", oldValue, paintTicks);
+        if (paintTicks != oldValue) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Tells if the track (area the slider slides in) is to be painted.
+     * @return true if track is painted, else false
+     * @see #setPaintTrack
+     */
+    public boolean getPaintTrack() {
+        return paintTrack;
+    }
+
+
+    /**
+     * Determines whether the track is painted on the slider.
+     * By default, this property is {@code true}.
+     *
+     * @param  b  whether or not to paint the slider track
+     * @see #getPaintTrack
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: If true, the track is painted on the slider.
+     */
+    public void setPaintTrack(boolean b) {
+        boolean oldValue = paintTrack;
+        paintTrack = b;
+        firePropertyChange("paintTrack", oldValue, paintTrack);
+        if (paintTrack != oldValue) {
+            repaint();
+        }
+    }
+
+
+    /**
+     * Tells if labels are to be painted.
+     * @return true if labels are painted, else false
+     * @see #setPaintLabels
+     */
+    public boolean getPaintLabels() {
+        return paintLabels;
+    }
+
+
+    /**
+     * Determines whether labels are painted on the slider.
+     * <p>
+     * This method will also set up a label table for you.
+     * If there is not already a label table, and the major tick spacing is
+     * {@code > 0},
+     * a standard label table will be generated (by calling
+     * {@code createStandardLabels}) with labels at the major tick marks.
+     * The label table is then set on the slider by calling
+     * {@code setLabelTable}.
+     * <p>
+     * By default, this property is {@code false}.
+     *
+     * @param  b  whether or not to paint labels
+     * @see #getPaintLabels
+     * @see #getLabelTable
+     * @see #createStandardLabels(int)
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: If true labels are painted on the slider.
+     */
+    public void setPaintLabels(boolean b) {
+        boolean oldValue = paintLabels;
+        paintLabels = b;
+        if ( labelTable == null && getMajorTickSpacing() > 0 ) {
+            setLabelTable( createStandardLabels( getMajorTickSpacing() ) );
+        }
+        firePropertyChange("paintLabels", oldValue, paintLabels);
+        if (paintLabels != oldValue) {
+            revalidate();
+            repaint();
+        }
+    }
+
+
+    /**
+     * See readObject() and writeObject() in JComponent for more
+     * information about serialization in Swing.
+     */
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        if (getUIClassID().equals(uiClassID)) {
+            byte count = JComponent.getWriteObjCounter(this);
+            JComponent.setWriteObjCounter(this, --count);
+            if (count == 0 && ui != null) {
+                ui.installUI(this);
+            }
+        }
+    }
+
+
+    /**
+     * Returns a string representation of this JSlider. This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this JSlider.
+     */
+    protected String paramString() {
+        String paintTicksString = (paintTicks ?
+                                   "true" : "false");
+        String paintTrackString = (paintTrack ?
+                                   "true" : "false");
+        String paintLabelsString = (paintLabels ?
+                                    "true" : "false");
+        String isInvertedString = (isInverted ?
+                                   "true" : "false");
+        String snapToTicksString = (snapToTicks ?
+                                    "true" : "false");
+        String snapToValueString = (snapToValue ?
+                                    "true" : "false");
+        String orientationString = (orientation == HORIZONTAL ?
+                                    "HORIZONTAL" : "VERTICAL");
+
+        return super.paramString() +
+        ",isInverted=" + isInvertedString +
+        ",majorTickSpacing=" + majorTickSpacing +
+        ",minorTickSpacing=" + minorTickSpacing +
+        ",orientation=" + orientationString +
+        ",paintLabels=" + paintLabelsString +
+        ",paintTicks=" + paintTicksString +
+        ",paintTrack=" + paintTrackString +
+        ",snapToTicks=" + snapToTicksString +
+        ",snapToValue=" + snapToValueString;
+    }
+
+
+/////////////////
+// Accessibility support
+////////////////
+
+    /**
+     * Gets the AccessibleContext associated with this JSlider.
+     * For sliders, the AccessibleContext takes the form of an
+     * AccessibleJSlider.
+     * A new AccessibleJSlider instance is created if necessary.
+     *
+     * @return an AccessibleJSlider that serves as the
+     *         AccessibleContext of this JSlider
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJSlider();
+        }
+        return accessibleContext;
+    }
+
+    /**
+     * This class implements accessibility support for the
+     * <code>JSlider</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to slider user-interface elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class AccessibleJSlider extends AccessibleJComponent
+    implements AccessibleValue {
+
+        /**
+         * Get the state set of this object.
+         *
+         * @return an instance of AccessibleState containing the current state
+         * of the object
+         * @see AccessibleState
+         */
+        public AccessibleStateSet getAccessibleStateSet() {
+            AccessibleStateSet states = super.getAccessibleStateSet();
+            if (getValueIsAdjusting()) {
+                states.add(AccessibleState.BUSY);
+            }
+            if (getOrientation() == VERTICAL) {
+                states.add(AccessibleState.VERTICAL);
+            }
+            else {
+                states.add(AccessibleState.HORIZONTAL);
+            }
+            return states;
+        }
+
+        /**
+         * Get the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of the object
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.SLIDER;
+        }
+
+        /**
+         * Get the AccessibleValue associated with this object.  In the
+         * implementation of the Java Accessibility API for this class,
+         * return this object, which is responsible for implementing the
+         * AccessibleValue interface on behalf of itself.
+         *
+         * @return this object
+         */
+        public AccessibleValue getAccessibleValue() {
+            return this;
+        }
+
+        /**
+         * Get the accessible value of this object.
+         *
+         * @return The current value of this object.
+         */
+        public Number getCurrentAccessibleValue() {
+            return Integer.valueOf(getValue());
+        }
+
+        /**
+         * Set the value of this object as a Number.
+         *
+         * @return True if the value was set.
+         */
+        public boolean setCurrentAccessibleValue(Number n) {
+            // TIGER - 4422535
+            if (n == null) {
+                return false;
+            }
+            setValue(n.intValue());
+            return true;
+        }
+
+        /**
+         * Get the minimum accessible value of this object.
+         *
+         * @return The minimum value of this object.
+         */
+        public Number getMinimumAccessibleValue() {
+            return Integer.valueOf(getMinimum());
+        }
+
+        /**
+         * Get the maximum accessible value of this object.
+         *
+         * @return The maximum value of this object.
+         */
+        public Number getMaximumAccessibleValue() {
+            // TIGER - 4422362
+            BoundedRangeModel model = JSlider.this.getModel();
+            return Integer.valueOf(model.getMaximum() - model.getExtent());
+        }
+    } // AccessibleJSlider
+}

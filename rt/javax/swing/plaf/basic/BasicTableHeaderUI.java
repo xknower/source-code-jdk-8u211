@@ -1,967 +1,961 @@
-/*     */ package javax.swing.plaf.basic;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Cursor;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.FocusEvent;
-/*     */ import java.awt.event.FocusListener;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.util.Enumeration;
-/*     */ import javax.swing.CellRendererPane;
-/*     */ import javax.swing.InputMap;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JScrollPane;
-/*     */ import javax.swing.JTable;
-/*     */ import javax.swing.JViewport;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.RowSorter;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.event.MouseInputListener;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.TableHeaderUI;
-/*     */ import javax.swing.table.JTableHeader;
-/*     */ import javax.swing.table.TableCellRenderer;
-/*     */ import javax.swing.table.TableColumn;
-/*     */ import javax.swing.table.TableColumnModel;
-/*     */ import javax.swing.table.TableModel;
-/*     */ import sun.swing.DefaultLookup;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ import sun.swing.UIAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BasicTableHeaderUI
-/*     */   extends TableHeaderUI
-/*     */ {
-/*  46 */   private static Cursor resizeCursor = Cursor.getPredefinedCursor(11);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected JTableHeader header;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected CellRendererPane rendererPane;
-/*     */ 
-/*     */   
-/*     */   protected MouseInputListener mouseInputListener;
-/*     */ 
-/*     */   
-/*  60 */   private int rolloverColumn = -1;
-/*     */ 
-/*     */   
-/*  63 */   private int selectedColumnIndex = 0;
-/*     */   
-/*  65 */   private static FocusListener focusListener = new FocusListener() {
-/*     */       public void focusGained(FocusEvent param1FocusEvent) {
-/*  67 */         repaintHeader(param1FocusEvent.getSource());
-/*     */       }
-/*     */       
-/*     */       public void focusLost(FocusEvent param1FocusEvent) {
-/*  71 */         repaintHeader(param1FocusEvent.getSource());
-/*     */       }
-/*     */       
-/*     */       private void repaintHeader(Object param1Object) {
-/*  75 */         if (param1Object instanceof JTableHeader) {
-/*  76 */           JTableHeader jTableHeader = (JTableHeader)param1Object;
-/*     */ 
-/*     */           
-/*  79 */           BasicTableHeaderUI basicTableHeaderUI = (BasicTableHeaderUI)BasicLookAndFeel.getUIOfType(jTableHeader.getUI(), BasicTableHeaderUI.class);
-/*     */           
-/*  81 */           if (basicTableHeaderUI == null) {
-/*     */             return;
-/*     */           }
-/*     */           
-/*  85 */           jTableHeader.repaint(jTableHeader.getHeaderRect(basicTableHeaderUI.getSelectedColumnIndex()));
-/*     */         } 
-/*     */       }
-/*     */     };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public class MouseInputHandler
-/*     */     implements MouseInputListener
-/*     */   {
-/*     */     private int mouseXOffset;
-/*     */     
-/*  97 */     private Cursor otherCursor = BasicTableHeaderUI.resizeCursor;
-/*     */     
-/*     */     public void mouseClicked(MouseEvent param1MouseEvent) {
-/* 100 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 103 */       if (param1MouseEvent.getClickCount() % 2 == 1 && 
-/* 104 */         SwingUtilities.isLeftMouseButton(param1MouseEvent)) {
-/* 105 */         JTable jTable = BasicTableHeaderUI.this.header.getTable();
-/*     */         RowSorter<? extends TableModel> rowSorter;
-/* 107 */         if (jTable != null && (rowSorter = jTable.getRowSorter()) != null) {
-/* 108 */           int i = BasicTableHeaderUI.this.header.columnAtPoint(param1MouseEvent.getPoint());
-/* 109 */           if (i != -1) {
-/* 110 */             i = jTable.convertColumnIndexToModel(i);
-/*     */             
-/* 112 */             rowSorter.toggleSortOrder(i);
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private TableColumn getResizingColumn(Point param1Point) {
-/* 119 */       return getResizingColumn(param1Point, BasicTableHeaderUI.this.header.columnAtPoint(param1Point));
-/*     */     }
-/*     */     private TableColumn getResizingColumn(Point param1Point, int param1Int) {
-/*     */       int j;
-/* 123 */       if (param1Int == -1) {
-/* 124 */         return null;
-/*     */       }
-/* 126 */       Rectangle rectangle = BasicTableHeaderUI.this.header.getHeaderRect(param1Int);
-/* 127 */       rectangle.grow(-3, 0);
-/* 128 */       if (rectangle.contains(param1Point)) {
-/* 129 */         return null;
-/*     */       }
-/* 131 */       int i = rectangle.x + rectangle.width / 2;
-/*     */       
-/* 133 */       if (BasicTableHeaderUI.this.header.getComponentOrientation().isLeftToRight()) {
-/* 134 */         j = (param1Point.x < i) ? (param1Int - 1) : param1Int;
-/*     */       } else {
-/* 136 */         j = (param1Point.x < i) ? param1Int : (param1Int - 1);
-/*     */       } 
-/* 138 */       if (j == -1) {
-/* 139 */         return null;
-/*     */       }
-/* 141 */       return BasicTableHeaderUI.this.header.getColumnModel().getColumn(j);
-/*     */     }
-/*     */     
-/*     */     public void mousePressed(MouseEvent param1MouseEvent) {
-/* 145 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 148 */       BasicTableHeaderUI.this.header.setDraggedColumn((TableColumn)null);
-/* 149 */       BasicTableHeaderUI.this.header.setResizingColumn((TableColumn)null);
-/* 150 */       BasicTableHeaderUI.this.header.setDraggedDistance(0);
-/*     */       
-/* 152 */       Point point = param1MouseEvent.getPoint();
-/*     */ 
-/*     */       
-/* 155 */       TableColumnModel tableColumnModel = BasicTableHeaderUI.this.header.getColumnModel();
-/* 156 */       int i = BasicTableHeaderUI.this.header.columnAtPoint(point);
-/*     */       
-/* 158 */       if (i != -1) {
-/*     */         
-/* 160 */         TableColumn tableColumn = getResizingColumn(point, i);
-/* 161 */         if (BasicTableHeaderUI.canResize(tableColumn, BasicTableHeaderUI.this.header)) {
-/* 162 */           BasicTableHeaderUI.this.header.setResizingColumn(tableColumn);
-/* 163 */           if (BasicTableHeaderUI.this.header.getComponentOrientation().isLeftToRight()) {
-/* 164 */             this.mouseXOffset = point.x - tableColumn.getWidth();
-/*     */           } else {
-/* 166 */             this.mouseXOffset = point.x + tableColumn.getWidth();
-/*     */           }
-/*     */         
-/* 169 */         } else if (BasicTableHeaderUI.this.header.getReorderingAllowed()) {
-/* 170 */           TableColumn tableColumn1 = tableColumnModel.getColumn(i);
-/* 171 */           BasicTableHeaderUI.this.header.setDraggedColumn(tableColumn1);
-/* 172 */           this.mouseXOffset = point.x;
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 176 */       if (BasicTableHeaderUI.this.header.getReorderingAllowed()) {
-/* 177 */         int j = BasicTableHeaderUI.this.rolloverColumn;
-/* 178 */         BasicTableHeaderUI.this.rolloverColumn = -1;
-/* 179 */         BasicTableHeaderUI.this.rolloverColumnUpdated(j, BasicTableHeaderUI.this.rolloverColumn);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private void swapCursor() {
-/* 184 */       Cursor cursor = BasicTableHeaderUI.this.header.getCursor();
-/* 185 */       BasicTableHeaderUI.this.header.setCursor(this.otherCursor);
-/* 186 */       this.otherCursor = cursor;
-/*     */     }
-/*     */     
-/*     */     public void mouseMoved(MouseEvent param1MouseEvent) {
-/* 190 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 193 */       if (BasicTableHeaderUI.canResize(getResizingColumn(param1MouseEvent.getPoint()), BasicTableHeaderUI.this.header) != (
-/* 194 */         (BasicTableHeaderUI.this.header.getCursor() == BasicTableHeaderUI.resizeCursor))) {
-/* 195 */         swapCursor();
-/*     */       }
-/* 197 */       BasicTableHeaderUI.this.updateRolloverColumn(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/* 201 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 204 */       int i = param1MouseEvent.getX();
-/*     */       
-/* 206 */       TableColumn tableColumn1 = BasicTableHeaderUI.this.header.getResizingColumn();
-/* 207 */       TableColumn tableColumn2 = BasicTableHeaderUI.this.header.getDraggedColumn();
-/*     */       
-/* 209 */       boolean bool = BasicTableHeaderUI.this.header.getComponentOrientation().isLeftToRight();
-/*     */       
-/* 211 */       if (tableColumn1 != null) {
-/* 212 */         int k, j = tableColumn1.getWidth();
-/*     */         
-/* 214 */         if (bool) {
-/* 215 */           k = i - this.mouseXOffset;
-/*     */         } else {
-/* 217 */           k = this.mouseXOffset - i;
-/*     */         } 
-/* 219 */         this.mouseXOffset += BasicTableHeaderUI.this.changeColumnWidth(tableColumn1, BasicTableHeaderUI.this.header, j, k);
-/*     */       
-/*     */       }
-/* 222 */       else if (tableColumn2 != null) {
-/* 223 */         TableColumnModel tableColumnModel = BasicTableHeaderUI.this.header.getColumnModel();
-/* 224 */         int j = i - this.mouseXOffset;
-/* 225 */         byte b = (j < 0) ? -1 : 1;
-/* 226 */         int k = BasicTableHeaderUI.this.viewIndexForColumn(tableColumn2);
-/* 227 */         int m = k + (bool ? b : -b);
-/* 228 */         if (0 <= m && m < tableColumnModel.getColumnCount()) {
-/* 229 */           int n = tableColumnModel.getColumn(m).getWidth();
-/* 230 */           if (Math.abs(j) > n / 2) {
-/*     */             
-/* 232 */             this.mouseXOffset += b * n;
-/* 233 */             BasicTableHeaderUI.this.header.setDraggedDistance(j - b * n);
-/*     */ 
-/*     */ 
-/*     */             
-/* 237 */             int i1 = SwingUtilities2.convertColumnIndexToModel(BasicTableHeaderUI.this.header
-/* 238 */                 .getColumnModel(), BasicTableHeaderUI.this
-/* 239 */                 .getSelectedColumnIndex());
-/*     */ 
-/*     */             
-/* 242 */             tableColumnModel.moveColumn(k, m);
-/*     */ 
-/*     */             
-/* 245 */             BasicTableHeaderUI.this.selectColumn(
-/* 246 */                 SwingUtilities2.convertColumnIndexToView(BasicTableHeaderUI.this.header
-/* 247 */                   .getColumnModel(), i1), false);
-/*     */             
-/*     */             return;
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 253 */         setDraggedDistance(j, k);
-/*     */       } 
-/*     */       
-/* 256 */       BasicTableHeaderUI.this.updateRolloverColumn(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/* 260 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 263 */       setDraggedDistance(0, BasicTableHeaderUI.this.viewIndexForColumn(BasicTableHeaderUI.this.header.getDraggedColumn()));
-/*     */       
-/* 265 */       BasicTableHeaderUI.this.header.setResizingColumn((TableColumn)null);
-/* 266 */       BasicTableHeaderUI.this.header.setDraggedColumn((TableColumn)null);
-/*     */       
-/* 268 */       BasicTableHeaderUI.this.updateRolloverColumn(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseEntered(MouseEvent param1MouseEvent) {
-/* 272 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 275 */       BasicTableHeaderUI.this.updateRolloverColumn(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseExited(MouseEvent param1MouseEvent) {
-/* 279 */       if (!BasicTableHeaderUI.this.header.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 282 */       int i = BasicTableHeaderUI.this.rolloverColumn;
-/* 283 */       BasicTableHeaderUI.this.rolloverColumn = -1;
-/* 284 */       BasicTableHeaderUI.this.rolloverColumnUpdated(i, BasicTableHeaderUI.this.rolloverColumn);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private void setDraggedDistance(int param1Int1, int param1Int2) {
-/* 291 */       BasicTableHeaderUI.this.header.setDraggedDistance(param1Int1);
-/* 292 */       if (param1Int2 != -1) {
-/* 293 */         BasicTableHeaderUI.this.header.getColumnModel().moveColumn(param1Int2, param1Int2);
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected MouseInputListener createMouseInputListener() {
-/* 306 */     return new MouseInputHandler();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 314 */     return new BasicTableHeaderUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 320 */     this.header = (JTableHeader)paramJComponent;
-/*     */     
-/* 322 */     this.rendererPane = new CellRendererPane();
-/* 323 */     this.header.add(this.rendererPane);
-/*     */     
-/* 325 */     installDefaults();
-/* 326 */     installListeners();
-/* 327 */     installKeyboardActions();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/* 339 */     LookAndFeel.installColorsAndFont(this.header, "TableHeader.background", "TableHeader.foreground", "TableHeader.font");
-/*     */     
-/* 341 */     LookAndFeel.installProperty(this.header, "opaque", Boolean.TRUE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners() {
-/* 348 */     this.mouseInputListener = createMouseInputListener();
-/*     */     
-/* 350 */     this.header.addMouseListener(this.mouseInputListener);
-/* 351 */     this.header.addMouseMotionListener(this.mouseInputListener);
-/* 352 */     this.header.addFocusListener(focusListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installKeyboardActions() {
-/* 359 */     InputMap inputMap = (InputMap)DefaultLookup.get(this.header, this, "TableHeader.ancestorInputMap");
-/*     */     
-/* 361 */     SwingUtilities.replaceUIInputMap(this.header, 1, inputMap);
-/*     */     
-/* 363 */     LazyActionMap.installLazyActionMap(this.header, BasicTableHeaderUI.class, "TableHeader.actionMap");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/* 370 */     uninstallDefaults();
-/* 371 */     uninstallListeners();
-/* 372 */     uninstallKeyboardActions();
-/*     */     
-/* 374 */     this.header.remove(this.rendererPane);
-/* 375 */     this.rendererPane = null;
-/* 376 */     this.header = null;
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults() {}
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 382 */     this.header.removeMouseListener(this.mouseInputListener);
-/* 383 */     this.header.removeMouseMotionListener(this.mouseInputListener);
-/*     */     
-/* 385 */     this.mouseInputListener = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallKeyboardActions() {
-/* 392 */     SwingUtilities.replaceUIInputMap(this.header, 0, null);
-/* 393 */     SwingUtilities.replaceUIActionMap(this.header, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void loadActionMap(LazyActionMap paramLazyActionMap) {
-/* 400 */     paramLazyActionMap.put(new Actions("toggleSortOrder"));
-/* 401 */     paramLazyActionMap.put(new Actions("selectColumnToLeft"));
-/* 402 */     paramLazyActionMap.put(new Actions("selectColumnToRight"));
-/* 403 */     paramLazyActionMap.put(new Actions("moveColumnLeft"));
-/* 404 */     paramLazyActionMap.put(new Actions("moveColumnRight"));
-/* 405 */     paramLazyActionMap.put(new Actions("resizeLeft"));
-/* 406 */     paramLazyActionMap.put(new Actions("resizeRight"));
-/* 407 */     paramLazyActionMap.put(new Actions("focusTable"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int getRolloverColumn() {
-/* 424 */     return this.rolloverColumn;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void rolloverColumnUpdated(int paramInt1, int paramInt2) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void updateRolloverColumn(MouseEvent paramMouseEvent) {
-/* 444 */     if (this.header.getDraggedColumn() == null && this.header
-/* 445 */       .contains(paramMouseEvent.getPoint())) {
-/*     */       
-/* 447 */       int i = this.header.columnAtPoint(paramMouseEvent.getPoint());
-/* 448 */       if (i != this.rolloverColumn) {
-/* 449 */         int j = this.rolloverColumn;
-/* 450 */         this.rolloverColumn = i;
-/* 451 */         rolloverColumnUpdated(j, this.rolloverColumn);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int selectNextColumn(boolean paramBoolean) {
-/* 460 */     int i = getSelectedColumnIndex();
-/* 461 */     if (i < this.header.getColumnModel().getColumnCount() - 1) {
-/* 462 */       i++;
-/* 463 */       if (paramBoolean) {
-/* 464 */         selectColumn(i);
-/*     */       }
-/*     */     } 
-/* 467 */     return i;
-/*     */   }
-/*     */   
-/*     */   private int selectPreviousColumn(boolean paramBoolean) {
-/* 471 */     int i = getSelectedColumnIndex();
-/* 472 */     if (i > 0) {
-/* 473 */       i--;
-/* 474 */       if (paramBoolean) {
-/* 475 */         selectColumn(i);
-/*     */       }
-/*     */     } 
-/* 478 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void selectColumn(int paramInt) {
-/* 486 */     selectColumn(paramInt, true);
-/*     */   }
-/*     */   
-/*     */   void selectColumn(int paramInt, boolean paramBoolean) {
-/* 490 */     Rectangle rectangle = this.header.getHeaderRect(this.selectedColumnIndex);
-/* 491 */     this.header.repaint(rectangle);
-/* 492 */     this.selectedColumnIndex = paramInt;
-/* 493 */     rectangle = this.header.getHeaderRect(paramInt);
-/* 494 */     this.header.repaint(rectangle);
-/* 495 */     if (paramBoolean) {
-/* 496 */       scrollToColumn(paramInt);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void scrollToColumn(int paramInt) {
-/*     */     Container container;
-/*     */     JTable jTable;
-/* 509 */     if (this.header.getParent() == null || (
-/* 510 */       container = this.header.getParent().getParent()) == null || !(container instanceof JScrollPane) || (
-/*     */       
-/* 512 */       jTable = this.header.getTable()) == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 517 */     Rectangle rectangle1 = jTable.getVisibleRect();
-/* 518 */     Rectangle rectangle2 = jTable.getCellRect(0, paramInt, true);
-/* 519 */     rectangle1.x = rectangle2.x;
-/* 520 */     rectangle1.width = rectangle2.width;
-/* 521 */     jTable.scrollRectToVisible(rectangle1);
-/*     */   }
-/*     */   
-/*     */   private int getSelectedColumnIndex() {
-/* 525 */     int i = this.header.getColumnModel().getColumnCount();
-/* 526 */     if (this.selectedColumnIndex >= i && i > 0) {
-/* 527 */       this.selectedColumnIndex = i - 1;
-/*     */     }
-/* 529 */     return this.selectedColumnIndex;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static boolean canResize(TableColumn paramTableColumn, JTableHeader paramJTableHeader) {
-/* 534 */     return (paramTableColumn != null && paramJTableHeader.getResizingAllowed() && paramTableColumn
-/* 535 */       .getResizable());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int changeColumnWidth(TableColumn paramTableColumn, JTableHeader paramJTableHeader, int paramInt1, int paramInt2) {
-/* 541 */     paramTableColumn.setWidth(paramInt2);
-/*     */     
-/*     */     Container container;
-/*     */     
-/*     */     JTable jTable;
-/* 546 */     if (paramJTableHeader.getParent() == null || (
-/* 547 */       container = paramJTableHeader.getParent().getParent()) == null || !(container instanceof JScrollPane) || (
-/*     */       
-/* 549 */       jTable = paramJTableHeader.getTable()) == null) {
-/* 550 */       return 0;
-/*     */     }
-/*     */     
-/* 553 */     if (!container.getComponentOrientation().isLeftToRight() && 
-/* 554 */       !paramJTableHeader.getComponentOrientation().isLeftToRight()) {
-/* 555 */       JViewport jViewport = ((JScrollPane)container).getViewport();
-/* 556 */       int i = jViewport.getWidth();
-/* 557 */       int j = paramInt2 - paramInt1;
-/* 558 */       int k = jTable.getWidth() + j;
-/*     */ 
-/*     */       
-/* 561 */       Dimension dimension = jTable.getSize();
-/* 562 */       dimension.width += j;
-/* 563 */       jTable.setSize(dimension);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 569 */       if (k >= i && jTable
-/* 570 */         .getAutoResizeMode() == 0) {
-/* 571 */         Point point = jViewport.getViewPosition();
-/* 572 */         point.x = Math.max(0, Math.min(k - i, point.x + j));
-/*     */         
-/* 574 */         jViewport.setViewPosition(point);
-/* 575 */         return j;
-/*     */       } 
-/*     */     } 
-/* 578 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/* 594 */     super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/* 595 */     int i = -1;
-/* 596 */     TableColumnModel tableColumnModel = this.header.getColumnModel();
-/* 597 */     for (byte b = 0; b < tableColumnModel.getColumnCount(); 
-/* 598 */       b++) {
-/* 599 */       TableColumn tableColumn = tableColumnModel.getColumn(b);
-/* 600 */       Component component = getHeaderRenderer(b);
-/* 601 */       Dimension dimension = component.getPreferredSize();
-/* 602 */       int j = component.getBaseline(dimension.width, paramInt2);
-/* 603 */       if (j >= 0) {
-/* 604 */         if (i == -1) {
-/* 605 */           i = j;
-/*     */         }
-/* 607 */         else if (i != j) {
-/* 608 */           i = -1;
-/*     */           break;
-/*     */         } 
-/*     */       }
-/*     */     } 
-/* 613 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 621 */     if (this.header.getColumnModel().getColumnCount() <= 0) {
-/*     */       return;
-/*     */     }
-/* 624 */     boolean bool = this.header.getComponentOrientation().isLeftToRight();
-/*     */     
-/* 626 */     Rectangle rectangle1 = paramGraphics.getClipBounds();
-/* 627 */     Point point1 = rectangle1.getLocation();
-/* 628 */     Point point2 = new Point(rectangle1.x + rectangle1.width - 1, rectangle1.y);
-/* 629 */     TableColumnModel tableColumnModel = this.header.getColumnModel();
-/* 630 */     int i = this.header.columnAtPoint(bool ? point1 : point2);
-/* 631 */     int j = this.header.columnAtPoint(bool ? point2 : point1);
-/*     */     
-/* 633 */     if (i == -1) {
-/* 634 */       i = 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 638 */     if (j == -1) {
-/* 639 */       j = tableColumnModel.getColumnCount() - 1;
-/*     */     }
-/*     */     
-/* 642 */     TableColumn tableColumn = this.header.getDraggedColumn();
-/*     */     
-/* 644 */     Rectangle rectangle2 = this.header.getHeaderRect(bool ? i : j);
-/*     */     
-/* 646 */     if (bool) {
-/* 647 */       for (int k = i; k <= j; k++) {
-/* 648 */         TableColumn tableColumn1 = tableColumnModel.getColumn(k);
-/* 649 */         int m = tableColumn1.getWidth();
-/* 650 */         rectangle2.width = m;
-/* 651 */         if (tableColumn1 != tableColumn) {
-/* 652 */           paintCell(paramGraphics, rectangle2, k);
-/*     */         }
-/* 654 */         rectangle2.x += m;
-/*     */       } 
-/*     */     } else {
-/* 657 */       for (int k = j; k >= i; k--) {
-/* 658 */         TableColumn tableColumn1 = tableColumnModel.getColumn(k);
-/* 659 */         int m = tableColumn1.getWidth();
-/* 660 */         rectangle2.width = m;
-/* 661 */         if (tableColumn1 != tableColumn) {
-/* 662 */           paintCell(paramGraphics, rectangle2, k);
-/*     */         }
-/* 664 */         rectangle2.x += m;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 669 */     if (tableColumn != null) {
-/* 670 */       int k = viewIndexForColumn(tableColumn);
-/* 671 */       Rectangle rectangle = this.header.getHeaderRect(k);
-/*     */ 
-/*     */       
-/* 674 */       paramGraphics.setColor(this.header.getParent().getBackground());
-/* 675 */       paramGraphics.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */ 
-/*     */       
-/* 678 */       rectangle.x += this.header.getDraggedDistance();
-/*     */ 
-/*     */       
-/* 681 */       paramGraphics.setColor(this.header.getBackground());
-/* 682 */       paramGraphics.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */ 
-/*     */       
-/* 685 */       paintCell(paramGraphics, rectangle, k);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 689 */     this.rendererPane.removeAll();
-/*     */   }
-/*     */   
-/*     */   private Component getHeaderRenderer(int paramInt) {
-/* 693 */     TableColumn tableColumn = this.header.getColumnModel().getColumn(paramInt);
-/* 694 */     TableCellRenderer tableCellRenderer = tableColumn.getHeaderRenderer();
-/* 695 */     if (tableCellRenderer == null) {
-/* 696 */       tableCellRenderer = this.header.getDefaultRenderer();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 701 */     boolean bool = (!this.header.isPaintingForPrint() && paramInt == getSelectedColumnIndex() && this.header.hasFocus()) ? true : false;
-/* 702 */     return tableCellRenderer.getTableCellRendererComponent(this.header.getTable(), tableColumn
-/* 703 */         .getHeaderValue(), false, bool, -1, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void paintCell(Graphics paramGraphics, Rectangle paramRectangle, int paramInt) {
-/* 709 */     Component component = getHeaderRenderer(paramInt);
-/* 710 */     this.rendererPane.paintComponent(paramGraphics, component, this.header, paramRectangle.x, paramRectangle.y, paramRectangle.width, paramRectangle.height, true);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private int viewIndexForColumn(TableColumn paramTableColumn) {
-/* 715 */     TableColumnModel tableColumnModel = this.header.getColumnModel();
-/* 716 */     for (byte b = 0; b < tableColumnModel.getColumnCount(); b++) {
-/* 717 */       if (tableColumnModel.getColumn(b) == paramTableColumn) {
-/* 718 */         return b;
-/*     */       }
-/*     */     } 
-/* 721 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getHeaderHeight() {
-/* 729 */     int i = 0;
-/* 730 */     boolean bool = false;
-/* 731 */     TableColumnModel tableColumnModel = this.header.getColumnModel();
-/* 732 */     for (byte b = 0; b < tableColumnModel.getColumnCount(); b++) {
-/* 733 */       TableColumn tableColumn = tableColumnModel.getColumn(b);
-/* 734 */       boolean bool1 = (tableColumn.getHeaderRenderer() == null) ? true : false;
-/*     */       
-/* 736 */       if (!bool1 || !bool) {
-/* 737 */         Component component = getHeaderRenderer(b);
-/* 738 */         int j = (component.getPreferredSize()).height;
-/* 739 */         i = Math.max(i, j);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 745 */         if (bool1 && j > 0) {
-/* 746 */           Object object = tableColumn.getHeaderValue();
-/* 747 */           if (object != null) {
-/* 748 */             object = object.toString();
-/*     */             
-/* 750 */             if (object != null && !object.equals("")) {
-/* 751 */               bool = true;
-/*     */             }
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 757 */     return i;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Dimension createHeaderSize(long paramLong) {
-/* 762 */     if (paramLong > 2147483647L) {
-/* 763 */       paramLong = 2147483647L;
-/*     */     }
-/* 765 */     return new Dimension((int)paramLong, getHeaderHeight());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 774 */     long l = 0L;
-/* 775 */     Enumeration<TableColumn> enumeration = this.header.getColumnModel().getColumns();
-/* 776 */     while (enumeration.hasMoreElements()) {
-/* 777 */       TableColumn tableColumn = enumeration.nextElement();
-/* 778 */       l += tableColumn.getMinWidth();
-/*     */     } 
-/* 780 */     return createHeaderSize(l);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 790 */     long l = 0L;
-/* 791 */     Enumeration<TableColumn> enumeration = this.header.getColumnModel().getColumns();
-/* 792 */     while (enumeration.hasMoreElements()) {
-/* 793 */       TableColumn tableColumn = enumeration.nextElement();
-/* 794 */       l += tableColumn.getPreferredWidth();
-/*     */     } 
-/* 796 */     return createHeaderSize(l);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 804 */     long l = 0L;
-/* 805 */     Enumeration<TableColumn> enumeration = this.header.getColumnModel().getColumns();
-/* 806 */     while (enumeration.hasMoreElements()) {
-/* 807 */       TableColumn tableColumn = enumeration.nextElement();
-/* 808 */       l += tableColumn.getMaxWidth();
-/*     */     } 
-/* 810 */     return createHeaderSize(l);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class Actions
-/*     */     extends UIAction
-/*     */   {
-/*     */     public static final String TOGGLE_SORT_ORDER = "toggleSortOrder";
-/*     */     
-/*     */     public static final String SELECT_COLUMN_TO_LEFT = "selectColumnToLeft";
-/*     */     
-/*     */     public static final String SELECT_COLUMN_TO_RIGHT = "selectColumnToRight";
-/*     */     
-/*     */     public static final String MOVE_COLUMN_LEFT = "moveColumnLeft";
-/*     */     
-/*     */     public static final String MOVE_COLUMN_RIGHT = "moveColumnRight";
-/*     */     
-/*     */     public static final String RESIZE_LEFT = "resizeLeft";
-/*     */     public static final String RESIZE_RIGHT = "resizeRight";
-/*     */     public static final String FOCUS_TABLE = "focusTable";
-/*     */     
-/*     */     public Actions(String param1String) {
-/* 832 */       super(param1String);
-/*     */     }
-/*     */     
-/*     */     public boolean isEnabled(Object param1Object) {
-/* 836 */       if (param1Object instanceof JTableHeader) {
-/* 837 */         JTableHeader jTableHeader = (JTableHeader)param1Object;
-/* 838 */         TableColumnModel tableColumnModel = jTableHeader.getColumnModel();
-/* 839 */         if (tableColumnModel.getColumnCount() <= 0) {
-/* 840 */           return false;
-/*     */         }
-/*     */         
-/* 843 */         String str = getName();
-/*     */         
-/* 845 */         BasicTableHeaderUI basicTableHeaderUI = (BasicTableHeaderUI)BasicLookAndFeel.getUIOfType(jTableHeader.getUI(), BasicTableHeaderUI.class);
-/*     */         
-/* 847 */         if (basicTableHeaderUI != null) {
-/* 848 */           if (str == "moveColumnLeft")
-/* 849 */             return (jTableHeader.getReorderingAllowed() && 
-/* 850 */               maybeMoveColumn(true, jTableHeader, basicTableHeaderUI, false)); 
-/* 851 */           if (str == "moveColumnRight")
-/* 852 */             return (jTableHeader.getReorderingAllowed() && 
-/* 853 */               maybeMoveColumn(false, jTableHeader, basicTableHeaderUI, false)); 
-/* 854 */           if (str == "resizeLeft" || str == "resizeRight")
-/*     */           {
-/* 856 */             return BasicTableHeaderUI.canResize(tableColumnModel.getColumn(basicTableHeaderUI.getSelectedColumnIndex()), jTableHeader); } 
-/* 857 */           if (str == "focusTable") {
-/* 858 */             return (jTableHeader.getTable() != null);
-/*     */           }
-/*     */         } 
-/*     */       } 
-/* 862 */       return true;
-/*     */     }
-/*     */     
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 866 */       JTableHeader jTableHeader = (JTableHeader)param1ActionEvent.getSource();
-/*     */ 
-/*     */       
-/* 869 */       BasicTableHeaderUI basicTableHeaderUI = (BasicTableHeaderUI)BasicLookAndFeel.getUIOfType(jTableHeader.getUI(), BasicTableHeaderUI.class);
-/*     */       
-/* 871 */       if (basicTableHeaderUI == null) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 875 */       String str = getName();
-/* 876 */       if ("toggleSortOrder" == str) {
-/* 877 */         JTable jTable = jTableHeader.getTable();
-/* 878 */         RowSorter<? extends TableModel> rowSorter = (jTable == null) ? null : jTable.getRowSorter();
-/* 879 */         if (rowSorter != null) {
-/* 880 */           int i = basicTableHeaderUI.getSelectedColumnIndex();
-/* 881 */           i = jTable.convertColumnIndexToModel(i);
-/*     */           
-/* 883 */           rowSorter.toggleSortOrder(i);
-/*     */         } 
-/* 885 */       } else if ("selectColumnToLeft" == str) {
-/* 886 */         if (jTableHeader.getComponentOrientation().isLeftToRight()) {
-/* 887 */           basicTableHeaderUI.selectPreviousColumn(true);
-/*     */         } else {
-/* 889 */           basicTableHeaderUI.selectNextColumn(true);
-/*     */         } 
-/* 891 */       } else if ("selectColumnToRight" == str) {
-/* 892 */         if (jTableHeader.getComponentOrientation().isLeftToRight()) {
-/* 893 */           basicTableHeaderUI.selectNextColumn(true);
-/*     */         } else {
-/* 895 */           basicTableHeaderUI.selectPreviousColumn(true);
-/*     */         } 
-/* 897 */       } else if ("moveColumnLeft" == str) {
-/* 898 */         moveColumn(true, jTableHeader, basicTableHeaderUI);
-/* 899 */       } else if ("moveColumnRight" == str) {
-/* 900 */         moveColumn(false, jTableHeader, basicTableHeaderUI);
-/* 901 */       } else if ("resizeLeft" == str) {
-/* 902 */         resize(true, jTableHeader, basicTableHeaderUI);
-/* 903 */       } else if ("resizeRight" == str) {
-/* 904 */         resize(false, jTableHeader, basicTableHeaderUI);
-/* 905 */       } else if ("focusTable" == str) {
-/* 906 */         JTable jTable = jTableHeader.getTable();
-/* 907 */         if (jTable != null) {
-/* 908 */           jTable.requestFocusInWindow();
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private void moveColumn(boolean param1Boolean, JTableHeader param1JTableHeader, BasicTableHeaderUI param1BasicTableHeaderUI) {
-/* 915 */       maybeMoveColumn(param1Boolean, param1JTableHeader, param1BasicTableHeaderUI, true);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private boolean maybeMoveColumn(boolean param1Boolean1, JTableHeader param1JTableHeader, BasicTableHeaderUI param1BasicTableHeaderUI, boolean param1Boolean2) {
-/* 920 */       int j, i = param1BasicTableHeaderUI.getSelectedColumnIndex();
-/*     */ 
-/*     */       
-/* 923 */       if (param1JTableHeader.getComponentOrientation().isLeftToRight()) {
-/*     */         
-/* 925 */         j = param1Boolean1 ? param1BasicTableHeaderUI.selectPreviousColumn(param1Boolean2) : param1BasicTableHeaderUI.selectNextColumn(param1Boolean2);
-/*     */       } else {
-/*     */         
-/* 928 */         j = param1Boolean1 ? param1BasicTableHeaderUI.selectNextColumn(param1Boolean2) : param1BasicTableHeaderUI.selectPreviousColumn(param1Boolean2);
-/*     */       } 
-/*     */       
-/* 931 */       if (j != i) {
-/* 932 */         if (param1Boolean2) {
-/* 933 */           param1JTableHeader.getColumnModel().moveColumn(i, j);
-/*     */         } else {
-/* 935 */           return true;
-/*     */         } 
-/*     */       }
-/*     */       
-/* 939 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private void resize(boolean param1Boolean, JTableHeader param1JTableHeader, BasicTableHeaderUI param1BasicTableHeaderUI) {
-/* 944 */       int i = param1BasicTableHeaderUI.getSelectedColumnIndex();
-/*     */       
-/* 946 */       TableColumn tableColumn = param1JTableHeader.getColumnModel().getColumn(i);
-/*     */       
-/* 948 */       param1JTableHeader.setResizingColumn(tableColumn);
-/* 949 */       int j = tableColumn.getWidth();
-/* 950 */       int k = j;
-/*     */       
-/* 952 */       if (param1JTableHeader.getComponentOrientation().isLeftToRight()) {
-/* 953 */         k += param1Boolean ? -1 : 1;
-/*     */       } else {
-/* 955 */         k += param1Boolean ? 1 : -1;
-/*     */       } 
-/*     */       
-/* 958 */       param1BasicTableHeaderUI.changeColumnWidth(tableColumn, param1JTableHeader, j, k);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicTableHeaderUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.table.*;
+
+import sun.swing.*;
+
+/**
+ * BasicTableHeaderUI implementation
+ *
+ * @author Alan Chung
+ * @author Philip Milne
+ */
+public class BasicTableHeaderUI extends TableHeaderUI {
+
+    private static Cursor resizeCursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+
+//
+// Instance Variables
+//
+
+    /** The JTableHeader that is delegating the painting to this UI. */
+    protected JTableHeader header;
+    protected CellRendererPane rendererPane;
+
+    // Listeners that are attached to the JTable
+    protected MouseInputListener mouseInputListener;
+
+    // The column header over which the mouse currently is.
+    private int rolloverColumn = -1;
+
+    // The column that should be highlighted when the table header has the focus.
+    private int selectedColumnIndex = 0; // Read ONLY via getSelectedColumnIndex!
+
+    private static FocusListener focusListener = new FocusListener() {
+        public void focusGained(FocusEvent e) {
+            repaintHeader(e.getSource());
+        }
+
+        public void focusLost(FocusEvent e) {
+            repaintHeader(e.getSource());
+        }
+
+        private void repaintHeader(Object source) {
+            if (source instanceof JTableHeader) {
+                JTableHeader th = (JTableHeader)source;
+                BasicTableHeaderUI ui =
+                   (BasicTableHeaderUI)BasicLookAndFeel.
+                                        getUIOfType(th.getUI(),
+                                            BasicTableHeaderUI.class);
+                if (ui == null) {
+                    return;
+                }
+
+                th.repaint(th.getHeaderRect(ui.getSelectedColumnIndex()));
+            }
+        }
+    };
+
+    /**
+     * This class should be treated as a &quot;protected&quot; inner class.
+     * Instantiate it only within subclasses of {@code BasicTableHeaderUI}.
+     */
+    public class MouseInputHandler implements MouseInputListener {
+
+        private int mouseXOffset;
+        private Cursor otherCursor = resizeCursor;
+
+        public void mouseClicked(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            if (e.getClickCount() % 2 == 1 &&
+                    SwingUtilities.isLeftMouseButton(e)) {
+                JTable table = header.getTable();
+                RowSorter sorter;
+                if (table != null && (sorter = table.getRowSorter()) != null) {
+                    int columnIndex = header.columnAtPoint(e.getPoint());
+                    if (columnIndex != -1) {
+                        columnIndex = table.convertColumnIndexToModel(
+                                columnIndex);
+                        sorter.toggleSortOrder(columnIndex);
+                    }
+                }
+            }
+        }
+
+        private TableColumn getResizingColumn(Point p) {
+            return getResizingColumn(p, header.columnAtPoint(p));
+        }
+
+        private TableColumn getResizingColumn(Point p, int column) {
+            if (column == -1) {
+                 return null;
+            }
+            Rectangle r = header.getHeaderRect(column);
+            r.grow(-3, 0);
+            if (r.contains(p)) {
+                return null;
+            }
+            int midPoint = r.x + r.width/2;
+            int columnIndex;
+            if( header.getComponentOrientation().isLeftToRight() ) {
+                columnIndex = (p.x < midPoint) ? column - 1 : column;
+            } else {
+                columnIndex = (p.x < midPoint) ? column : column - 1;
+            }
+            if (columnIndex == -1) {
+                return null;
+            }
+            return header.getColumnModel().getColumn(columnIndex);
+        }
+
+        public void mousePressed(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            header.setDraggedColumn(null);
+            header.setResizingColumn(null);
+            header.setDraggedDistance(0);
+
+            Point p = e.getPoint();
+
+            // First find which header cell was hit
+            TableColumnModel columnModel = header.getColumnModel();
+            int index = header.columnAtPoint(p);
+
+            if (index != -1) {
+                // The last 3 pixels + 3 pixels of next column are for resizing
+                TableColumn resizingColumn = getResizingColumn(p, index);
+                if (canResize(resizingColumn, header)) {
+                    header.setResizingColumn(resizingColumn);
+                    if( header.getComponentOrientation().isLeftToRight() ) {
+                        mouseXOffset = p.x - resizingColumn.getWidth();
+                    } else {
+                        mouseXOffset = p.x + resizingColumn.getWidth();
+                    }
+                }
+                else if (header.getReorderingAllowed()) {
+                    TableColumn hitColumn = columnModel.getColumn(index);
+                    header.setDraggedColumn(hitColumn);
+                    mouseXOffset = p.x;
+                }
+            }
+
+            if (header.getReorderingAllowed()) {
+                int oldRolloverColumn = rolloverColumn;
+                rolloverColumn = -1;
+                rolloverColumnUpdated(oldRolloverColumn, rolloverColumn);
+            }
+        }
+
+        private void swapCursor() {
+            Cursor tmp = header.getCursor();
+            header.setCursor(otherCursor);
+            otherCursor = tmp;
+        }
+
+        public void mouseMoved(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            if (canResize(getResizingColumn(e.getPoint()), header) !=
+                (header.getCursor() == resizeCursor)) {
+                swapCursor();
+            }
+            updateRolloverColumn(e);
+       }
+
+        public void mouseDragged(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            int mouseX = e.getX();
+
+            TableColumn resizingColumn  = header.getResizingColumn();
+            TableColumn draggedColumn  = header.getDraggedColumn();
+
+            boolean headerLeftToRight = header.getComponentOrientation().isLeftToRight();
+
+            if (resizingColumn != null) {
+                int oldWidth = resizingColumn.getWidth();
+                int newWidth;
+                if (headerLeftToRight) {
+                    newWidth = mouseX - mouseXOffset;
+                } else  {
+                    newWidth = mouseXOffset - mouseX;
+                }
+                mouseXOffset += changeColumnWidth(resizingColumn, header,
+                                                  oldWidth, newWidth);
+            }
+            else if (draggedColumn != null) {
+                TableColumnModel cm = header.getColumnModel();
+                int draggedDistance = mouseX - mouseXOffset;
+                int direction = (draggedDistance < 0) ? -1 : 1;
+                int columnIndex = viewIndexForColumn(draggedColumn);
+                int newColumnIndex = columnIndex + (headerLeftToRight ? direction : -direction);
+                if (0 <= newColumnIndex && newColumnIndex < cm.getColumnCount()) {
+                    int width = cm.getColumn(newColumnIndex).getWidth();
+                    if (Math.abs(draggedDistance) > (width / 2)) {
+
+                        mouseXOffset = mouseXOffset + direction * width;
+                        header.setDraggedDistance(draggedDistance - direction * width);
+
+                        //Cache the selected column.
+                        int selectedIndex =
+                                SwingUtilities2.convertColumnIndexToModel(
+                                        header.getColumnModel(),
+                                        getSelectedColumnIndex());
+
+                        //Now do the move.
+                        cm.moveColumn(columnIndex, newColumnIndex);
+
+                        //Update the selected index.
+                        selectColumn(
+                            SwingUtilities2.convertColumnIndexToView(
+                                    header.getColumnModel(), selectedIndex),
+                            false);
+
+                        return;
+                    }
+                }
+                setDraggedDistance(draggedDistance, columnIndex);
+            }
+
+            updateRolloverColumn(e);
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            setDraggedDistance(0, viewIndexForColumn(header.getDraggedColumn()));
+
+            header.setResizingColumn(null);
+            header.setDraggedColumn(null);
+
+            updateRolloverColumn(e);
+        }
+
+        public void mouseEntered(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            updateRolloverColumn(e);
+        }
+
+        public void mouseExited(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
+            int oldRolloverColumn = rolloverColumn;
+            rolloverColumn = -1;
+            rolloverColumnUpdated(oldRolloverColumn, rolloverColumn);
+        }
+//
+// Protected & Private Methods
+//
+
+        private void setDraggedDistance(int draggedDistance, int column) {
+            header.setDraggedDistance(draggedDistance);
+            if (column != -1) {
+                header.getColumnModel().moveColumn(column, column);
+            }
+        }
+    }
+
+//
+//  Factory methods for the Listeners
+//
+
+    /**
+     * Creates the mouse listener for the JTableHeader.
+     */
+    protected MouseInputListener createMouseInputListener() {
+        return new MouseInputHandler();
+    }
+
+//
+//  The installation/uninstall procedures and support
+//
+
+    public static ComponentUI createUI(JComponent h) {
+        return new BasicTableHeaderUI();
+    }
+
+//  Installation
+
+    public void installUI(JComponent c) {
+        header = (JTableHeader)c;
+
+        rendererPane = new CellRendererPane();
+        header.add(rendererPane);
+
+        installDefaults();
+        installListeners();
+        installKeyboardActions();
+    }
+
+    /**
+     * Initializes JTableHeader properties such as font, foreground, and background.
+     * The font, foreground, and background properties are only set if their
+     * current value is either null or a UIResource, other properties are set
+     * if the current value is null.
+     *
+     * @see #installUI
+     */
+    protected void installDefaults() {
+        LookAndFeel.installColorsAndFont(header, "TableHeader.background",
+                                         "TableHeader.foreground", "TableHeader.font");
+        LookAndFeel.installProperty(header, "opaque", Boolean.TRUE);
+    }
+
+    /**
+     * Attaches listeners to the JTableHeader.
+     */
+    protected void installListeners() {
+        mouseInputListener = createMouseInputListener();
+
+        header.addMouseListener(mouseInputListener);
+        header.addMouseMotionListener(mouseInputListener);
+        header.addFocusListener(focusListener);
+    }
+
+    /**
+     * Register all keyboard actions on the JTableHeader.
+     */
+    protected void installKeyboardActions() {
+        InputMap keyMap = (InputMap)DefaultLookup.get(header, this,
+                "TableHeader.ancestorInputMap");
+        SwingUtilities.replaceUIInputMap(header,
+                                JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, keyMap);
+        LazyActionMap.installLazyActionMap(header, BasicTableHeaderUI.class,
+                "TableHeader.actionMap");
+    }
+
+// Uninstall methods
+
+    public void uninstallUI(JComponent c) {
+        uninstallDefaults();
+        uninstallListeners();
+        uninstallKeyboardActions();
+
+        header.remove(rendererPane);
+        rendererPane = null;
+        header = null;
+    }
+
+    protected void uninstallDefaults() {}
+
+    protected void uninstallListeners() {
+        header.removeMouseListener(mouseInputListener);
+        header.removeMouseMotionListener(mouseInputListener);
+
+        mouseInputListener = null;
+    }
+
+    /**
+     * Unregisters default key actions.
+     */
+    protected void uninstallKeyboardActions() {
+        SwingUtilities.replaceUIInputMap(header, JComponent.WHEN_FOCUSED, null);
+        SwingUtilities.replaceUIActionMap(header, null);
+    }
+
+    /**
+     * Populates TableHeader's actions.
+     */
+    static void loadActionMap(LazyActionMap map) {
+        map.put(new Actions(Actions.TOGGLE_SORT_ORDER));
+        map.put(new Actions(Actions.SELECT_COLUMN_TO_LEFT));
+        map.put(new Actions(Actions.SELECT_COLUMN_TO_RIGHT));
+        map.put(new Actions(Actions.MOVE_COLUMN_LEFT));
+        map.put(new Actions(Actions.MOVE_COLUMN_RIGHT));
+        map.put(new Actions(Actions.RESIZE_LEFT));
+        map.put(new Actions(Actions.RESIZE_RIGHT));
+        map.put(new Actions(Actions.FOCUS_TABLE));
+    }
+
+//
+// Support for mouse rollover
+//
+
+    /**
+     * Returns the index of the column header over which the mouse
+     * currently is. When the mouse is not over the table header,
+     * -1 is returned.
+     *
+     * @see #rolloverColumnUpdated(int, int)
+     * @return the index of the current rollover column
+     * @since 1.6
+     */
+    protected int getRolloverColumn() {
+        return rolloverColumn;
+    }
+
+    /**
+     * This method gets called every time when a rollover column in the table
+     * header is updated. Every look and feel that supports a rollover effect
+     * in a table header should override this method and repaint the header.
+     *
+     * @param oldColumn the index of the previous rollover column or -1 if the
+     * mouse was not over a column
+     * @param newColumn the index of the new rollover column or -1 if the mouse
+     * is not over a column
+     * @see #getRolloverColumn()
+     * @see JTableHeader#getHeaderRect(int)
+     * @since 1.6
+     */
+    protected void rolloverColumnUpdated(int oldColumn, int newColumn) {
+    }
+
+    private void updateRolloverColumn(MouseEvent e) {
+        if (header.getDraggedColumn() == null &&
+            header.contains(e.getPoint())) {
+
+            int col = header.columnAtPoint(e.getPoint());
+            if (col != rolloverColumn) {
+                int oldRolloverColumn = rolloverColumn;
+                rolloverColumn = col;
+                rolloverColumnUpdated(oldRolloverColumn, rolloverColumn);
+            }
+        }
+    }
+
+//
+// Support for keyboard and mouse access
+//
+    private int selectNextColumn(boolean doIt) {
+        int newIndex = getSelectedColumnIndex();
+        if (newIndex < header.getColumnModel().getColumnCount() - 1) {
+            newIndex++;
+            if (doIt) {
+                selectColumn(newIndex);
+            }
+        }
+        return newIndex;
+    }
+
+    private int selectPreviousColumn(boolean doIt) {
+        int newIndex = getSelectedColumnIndex();
+        if (newIndex > 0) {
+            newIndex--;
+            if (doIt) {
+                selectColumn(newIndex);
+            }
+        }
+        return newIndex;
+    }
+
+    /**
+     * Selects the specified column in the table header. Repaints the
+     * affected header cells and makes sure the newly selected one is visible.
+     */
+    void selectColumn(int newColIndex) {
+        selectColumn(newColIndex, true);
+    }
+
+    void selectColumn(int newColIndex, boolean doScroll) {
+        Rectangle repaintRect = header.getHeaderRect(selectedColumnIndex);
+        header.repaint(repaintRect);
+        selectedColumnIndex = newColIndex;
+        repaintRect = header.getHeaderRect(newColIndex);
+        header.repaint(repaintRect);
+        if (doScroll) {
+            scrollToColumn(newColIndex);
+        }
+        return;
+    }
+    /**
+     * Used by selectColumn to scroll horizontally, if necessary,
+     * to ensure that the newly selected column is visible.
+     */
+    private void scrollToColumn(int col) {
+        Container container;
+        JTable table;
+
+        //Test whether the header is in a scroll pane and has a table.
+        if ((header.getParent() == null) ||
+            ((container = header.getParent().getParent()) == null) ||
+            !(container instanceof JScrollPane) ||
+            ((table = header.getTable()) == null)) {
+            return;
+        }
+
+        //Now scroll, if necessary.
+        Rectangle vis = table.getVisibleRect();
+        Rectangle cellBounds = table.getCellRect(0, col, true);
+        vis.x = cellBounds.x;
+        vis.width = cellBounds.width;
+        table.scrollRectToVisible(vis);
+    }
+
+    private int getSelectedColumnIndex() {
+        int numCols = header.getColumnModel().getColumnCount();
+        if (selectedColumnIndex >= numCols && numCols > 0) {
+            selectedColumnIndex = numCols - 1;
+        }
+        return selectedColumnIndex;
+    }
+
+    private static boolean canResize(TableColumn column,
+                                     JTableHeader header) {
+        return (column != null) && header.getResizingAllowed()
+                                && column.getResizable();
+    }
+
+    private int changeColumnWidth(TableColumn resizingColumn,
+                                  JTableHeader th,
+                                  int oldWidth, int newWidth) {
+        resizingColumn.setWidth(newWidth);
+
+        Container container;
+        JTable table;
+
+        if ((th.getParent() == null) ||
+            ((container = th.getParent().getParent()) == null) ||
+            !(container instanceof JScrollPane) ||
+            ((table = th.getTable()) == null)) {
+            return 0;
+        }
+
+        if (!container.getComponentOrientation().isLeftToRight() &&
+                !th.getComponentOrientation().isLeftToRight()) {
+                JViewport viewport = ((JScrollPane)container).getViewport();
+                int viewportWidth = viewport.getWidth();
+                int diff = newWidth - oldWidth;
+                int newHeaderWidth = table.getWidth() + diff;
+
+                /* Resize a table */
+                Dimension tableSize = table.getSize();
+                tableSize.width += diff;
+                table.setSize(tableSize);
+
+                /* If this table is in AUTO_RESIZE_OFF mode and
+                 * has a horizontal scrollbar, we need to update
+                 * a view's position.
+                 */
+                if ((newHeaderWidth >= viewportWidth) &&
+                    (table.getAutoResizeMode() == JTable.AUTO_RESIZE_OFF)) {
+                    Point p = viewport.getViewPosition();
+                    p.x = Math.max(0, Math.min(newHeaderWidth - viewportWidth,
+                                               p.x + diff));
+                    viewport.setViewPosition(p);
+                    return diff;
+            }
+        }
+        return 0;
+    }
+
+//
+// Baseline
+//
+
+    /**
+     * Returns the baseline.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public int getBaseline(JComponent c, int width, int height) {
+        super.getBaseline(c, width, height);
+        int baseline = -1;
+        TableColumnModel columnModel = header.getColumnModel();
+        for(int column = 0; column < columnModel.getColumnCount();
+            column++) {
+            TableColumn aColumn = columnModel.getColumn(column);
+            Component comp = getHeaderRenderer(column);
+            Dimension pref = comp.getPreferredSize();
+            int columnBaseline = comp.getBaseline(pref.width, height);
+            if (columnBaseline >= 0) {
+                if (baseline == -1) {
+                    baseline = columnBaseline;
+                }
+                else if (baseline != columnBaseline) {
+                    baseline = -1;
+                    break;
+                }
+            }
+        }
+        return baseline;
+    }
+
+//
+// Paint Methods and support
+//
+
+    public void paint(Graphics g, JComponent c) {
+        if (header.getColumnModel().getColumnCount() <= 0) {
+            return;
+        }
+        boolean ltr = header.getComponentOrientation().isLeftToRight();
+
+        Rectangle clip = g.getClipBounds();
+        Point left = clip.getLocation();
+        Point right = new Point( clip.x + clip.width - 1, clip.y );
+        TableColumnModel cm = header.getColumnModel();
+        int cMin = header.columnAtPoint( ltr ? left : right );
+        int cMax = header.columnAtPoint( ltr ? right : left );
+        // This should never happen.
+        if (cMin == -1) {
+            cMin =  0;
+        }
+        // If the table does not have enough columns to fill the view we'll get -1.
+        // Replace this with the index of the last column.
+        if (cMax == -1) {
+            cMax = cm.getColumnCount()-1;
+        }
+
+        TableColumn draggedColumn = header.getDraggedColumn();
+        int columnWidth;
+        Rectangle cellRect = header.getHeaderRect(ltr ? cMin : cMax);
+        TableColumn aColumn;
+        if (ltr) {
+            for(int column = cMin; column <= cMax ; column++) {
+                aColumn = cm.getColumn(column);
+                columnWidth = aColumn.getWidth();
+                cellRect.width = columnWidth;
+                if (aColumn != draggedColumn) {
+                    paintCell(g, cellRect, column);
+                }
+                cellRect.x += columnWidth;
+            }
+        } else {
+            for(int column = cMax; column >= cMin; column--) {
+                aColumn = cm.getColumn(column);
+                columnWidth = aColumn.getWidth();
+                cellRect.width = columnWidth;
+                if (aColumn != draggedColumn) {
+                    paintCell(g, cellRect, column);
+                }
+                cellRect.x += columnWidth;
+            }
+        }
+
+        // Paint the dragged column if we are dragging.
+        if (draggedColumn != null) {
+            int draggedColumnIndex = viewIndexForColumn(draggedColumn);
+            Rectangle draggedCellRect = header.getHeaderRect(draggedColumnIndex);
+
+            // Draw a gray well in place of the moving column.
+            g.setColor(header.getParent().getBackground());
+            g.fillRect(draggedCellRect.x, draggedCellRect.y,
+                               draggedCellRect.width, draggedCellRect.height);
+
+            draggedCellRect.x += header.getDraggedDistance();
+
+            // Fill the background.
+            g.setColor(header.getBackground());
+            g.fillRect(draggedCellRect.x, draggedCellRect.y,
+                       draggedCellRect.width, draggedCellRect.height);
+
+            paintCell(g, draggedCellRect, draggedColumnIndex);
+        }
+
+        // Remove all components in the rendererPane.
+        rendererPane.removeAll();
+    }
+
+    private Component getHeaderRenderer(int columnIndex) {
+        TableColumn aColumn = header.getColumnModel().getColumn(columnIndex);
+        TableCellRenderer renderer = aColumn.getHeaderRenderer();
+        if (renderer == null) {
+            renderer = header.getDefaultRenderer();
+        }
+
+        boolean hasFocus = !header.isPaintingForPrint()
+                           && (columnIndex == getSelectedColumnIndex())
+                           && header.hasFocus();
+        return renderer.getTableCellRendererComponent(header.getTable(),
+                                                aColumn.getHeaderValue(),
+                                                false, hasFocus,
+                                                -1, columnIndex);
+    }
+
+    private void paintCell(Graphics g, Rectangle cellRect, int columnIndex) {
+        Component component = getHeaderRenderer(columnIndex);
+        rendererPane.paintComponent(g, component, header, cellRect.x, cellRect.y,
+                            cellRect.width, cellRect.height, true);
+    }
+
+    private int viewIndexForColumn(TableColumn aColumn) {
+        TableColumnModel cm = header.getColumnModel();
+        for (int column = 0; column < cm.getColumnCount(); column++) {
+            if (cm.getColumn(column) == aColumn) {
+                return column;
+            }
+        }
+        return -1;
+    }
+
+//
+// Size Methods
+//
+
+    private int getHeaderHeight() {
+        int height = 0;
+        boolean accomodatedDefault = false;
+        TableColumnModel columnModel = header.getColumnModel();
+        for(int column = 0; column < columnModel.getColumnCount(); column++) {
+            TableColumn aColumn = columnModel.getColumn(column);
+            boolean isDefault = (aColumn.getHeaderRenderer() == null);
+
+            if (!isDefault || !accomodatedDefault) {
+                Component comp = getHeaderRenderer(column);
+                int rendererHeight = comp.getPreferredSize().height;
+                height = Math.max(height, rendererHeight);
+
+                // Configuring the header renderer to calculate its preferred size
+                // is expensive. Optimise this by assuming the default renderer
+                // always has the same height as the first non-zero height that
+                // it returns for a non-null/non-empty value.
+                if (isDefault && rendererHeight > 0) {
+                    Object headerValue = aColumn.getHeaderValue();
+                    if (headerValue != null) {
+                        headerValue = headerValue.toString();
+
+                        if (headerValue != null && !headerValue.equals("")) {
+                            accomodatedDefault = true;
+                        }
+                    }
+                }
+            }
+        }
+        return height;
+    }
+
+    private Dimension createHeaderSize(long width) {
+        // None of the callers include the intercell spacing, do it here.
+        if (width > Integer.MAX_VALUE) {
+            width = Integer.MAX_VALUE;
+        }
+        return new Dimension((int)width, getHeaderHeight());
+    }
+
+
+    /**
+     * Return the minimum size of the header. The minimum width is the sum
+     * of the minimum widths of each column (plus inter-cell spacing).
+     */
+    public Dimension getMinimumSize(JComponent c) {
+        long width = 0;
+        Enumeration enumeration = header.getColumnModel().getColumns();
+        while (enumeration.hasMoreElements()) {
+            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            width = width + aColumn.getMinWidth();
+        }
+        return createHeaderSize(width);
+    }
+
+    /**
+     * Return the preferred size of the header. The preferred height is the
+     * maximum of the preferred heights of all of the components provided
+     * by the header renderers. The preferred width is the sum of the
+     * preferred widths of each column (plus inter-cell spacing).
+     */
+    public Dimension getPreferredSize(JComponent c) {
+        long width = 0;
+        Enumeration enumeration = header.getColumnModel().getColumns();
+        while (enumeration.hasMoreElements()) {
+            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            width = width + aColumn.getPreferredWidth();
+        }
+        return createHeaderSize(width);
+    }
+
+    /**
+     * Return the maximum size of the header. The maximum width is the sum
+     * of the maximum widths of each column (plus inter-cell spacing).
+     */
+    public Dimension getMaximumSize(JComponent c) {
+        long width = 0;
+        Enumeration enumeration = header.getColumnModel().getColumns();
+        while (enumeration.hasMoreElements()) {
+            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            width = width + aColumn.getMaxWidth();
+        }
+        return createHeaderSize(width);
+    }
+
+    private static class Actions extends UIAction {
+        public static final String TOGGLE_SORT_ORDER =
+            "toggleSortOrder";
+        public static final String SELECT_COLUMN_TO_LEFT =
+            "selectColumnToLeft";
+        public static final String SELECT_COLUMN_TO_RIGHT =
+            "selectColumnToRight";
+        public static final String MOVE_COLUMN_LEFT =
+            "moveColumnLeft";
+        public static final String MOVE_COLUMN_RIGHT =
+            "moveColumnRight";
+        public static final String RESIZE_LEFT =
+            "resizeLeft";
+        public static final String RESIZE_RIGHT =
+            "resizeRight";
+        public static final String FOCUS_TABLE =
+            "focusTable";
+
+        public Actions(String name) {
+            super(name);
+        }
+
+        public boolean isEnabled(Object sender) {
+            if (sender instanceof JTableHeader) {
+                JTableHeader th = (JTableHeader)sender;
+                TableColumnModel cm = th.getColumnModel();
+                if (cm.getColumnCount() <= 0) {
+                    return false;
+                }
+
+                String key = getName();
+                BasicTableHeaderUI ui =
+                    (BasicTableHeaderUI)BasicLookAndFeel.getUIOfType(th.getUI(),
+                                                      BasicTableHeaderUI.class);
+                if (ui != null) {
+                    if (key == MOVE_COLUMN_LEFT) {
+                        return th.getReorderingAllowed()
+                            && maybeMoveColumn(true, th, ui, false);
+                    } else if (key == MOVE_COLUMN_RIGHT) {
+                        return th.getReorderingAllowed()
+                            && maybeMoveColumn(false, th, ui, false);
+                    } else if (key == RESIZE_LEFT ||
+                               key == RESIZE_RIGHT) {
+                        return canResize(cm.getColumn(ui.getSelectedColumnIndex()), th);
+                    } else if (key == FOCUS_TABLE) {
+                        return (th.getTable() != null);
+                    }
+                }
+            }
+            return true;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            JTableHeader th = (JTableHeader)e.getSource();
+            BasicTableHeaderUI ui =
+                (BasicTableHeaderUI)BasicLookAndFeel.
+                                        getUIOfType(th.getUI(),
+                                            BasicTableHeaderUI.class);
+            if (ui == null) {
+                return;
+            }
+
+            String name = getName();
+            if (TOGGLE_SORT_ORDER == name) {
+                JTable table = th.getTable();
+                RowSorter sorter = table == null ? null : table.getRowSorter();
+                if (sorter != null) {
+                    int columnIndex = ui.getSelectedColumnIndex();
+                    columnIndex = table.convertColumnIndexToModel(
+                                                      columnIndex);
+                    sorter.toggleSortOrder(columnIndex);
+                }
+            } else if (SELECT_COLUMN_TO_LEFT == name) {
+                if (th.getComponentOrientation().isLeftToRight()) {
+                    ui.selectPreviousColumn(true);
+                } else {
+                    ui.selectNextColumn(true);
+                }
+            } else if (SELECT_COLUMN_TO_RIGHT == name) {
+                if (th.getComponentOrientation().isLeftToRight()) {
+                    ui.selectNextColumn(true);
+                } else {
+                    ui.selectPreviousColumn(true);
+                }
+            } else if (MOVE_COLUMN_LEFT == name) {
+                moveColumn(true, th, ui);
+            } else if (MOVE_COLUMN_RIGHT == name) {
+                moveColumn(false, th, ui);
+            } else if (RESIZE_LEFT == name) {
+                resize(true, th, ui);
+            } else if (RESIZE_RIGHT == name) {
+                resize(false, th, ui);
+            } else if (FOCUS_TABLE == name) {
+                JTable table = th.getTable();
+                if (table != null) {
+                    table.requestFocusInWindow();
+                }
+            }
+        }
+
+        private void moveColumn(boolean leftArrow, JTableHeader th,
+                                BasicTableHeaderUI ui) {
+            maybeMoveColumn(leftArrow, th, ui, true);
+        }
+
+        private boolean maybeMoveColumn(boolean leftArrow, JTableHeader th,
+                                        BasicTableHeaderUI ui, boolean doIt) {
+            int oldIndex = ui.getSelectedColumnIndex();
+            int newIndex;
+
+            if (th.getComponentOrientation().isLeftToRight()) {
+                newIndex = leftArrow ? ui.selectPreviousColumn(doIt)
+                                     : ui.selectNextColumn(doIt);
+            } else {
+                newIndex = leftArrow ? ui.selectNextColumn(doIt)
+                                     : ui.selectPreviousColumn(doIt);
+            }
+
+            if (newIndex != oldIndex) {
+                if (doIt) {
+                    th.getColumnModel().moveColumn(oldIndex, newIndex);
+                } else {
+                    return true; // we'd do the move if asked
+                }
+            }
+
+            return false;
+        }
+
+        private void resize(boolean leftArrow, JTableHeader th,
+                            BasicTableHeaderUI ui) {
+            int columnIndex = ui.getSelectedColumnIndex();
+            TableColumn resizingColumn =
+                th.getColumnModel().getColumn(columnIndex);
+
+            th.setResizingColumn(resizingColumn);
+            int oldWidth = resizingColumn.getWidth();
+            int newWidth = oldWidth;
+
+            if (th.getComponentOrientation().isLeftToRight()) {
+                newWidth = newWidth + (leftArrow ? -1 : 1);
+            } else {
+                newWidth = newWidth + (leftArrow ? 1 : -1);
+            }
+
+            ui.changeColumnWidth(resizingColumn, th, oldWidth, newWidth);
+        }
+    }
+}  // End of Class BasicTableHeaderUI

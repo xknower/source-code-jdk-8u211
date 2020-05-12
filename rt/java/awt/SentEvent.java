@@ -1,97 +1,91 @@
-/*    */ package java.awt;
-/*    */ 
-/*    */ import sun.awt.AppContext;
-/*    */ import sun.awt.SunToolkit;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class SentEvent
-/*    */   extends AWTEvent
-/*    */   implements ActiveEvent
-/*    */ {
-/*    */   private static final long serialVersionUID = -383615247028828931L;
-/*    */   static final int ID = 1007;
-/*    */   boolean dispatched;
-/*    */   private AWTEvent nested;
-/*    */   private AppContext toNotify;
-/*    */   
-/*    */   SentEvent() {
-/* 53 */     this(null);
-/*    */   }
-/*    */   SentEvent(AWTEvent paramAWTEvent) {
-/* 56 */     this(paramAWTEvent, null);
-/*    */   }
-/*    */   SentEvent(AWTEvent paramAWTEvent, AppContext paramAppContext) {
-/* 59 */     super((paramAWTEvent != null) ? paramAWTEvent
-/* 60 */         .getSource() : 
-/* 61 */         Toolkit.getDefaultToolkit(), 1007);
-/*    */     
-/* 63 */     this.nested = paramAWTEvent;
-/* 64 */     this.toNotify = paramAppContext;
-/*    */   }
-/*    */   
-/*    */   public void dispatch() {
-/*    */     try {
-/* 69 */       if (this.nested != null) {
-/* 70 */         Toolkit.getEventQueue().dispatchEvent(this.nested);
-/*    */       }
-/*    */     } finally {
-/* 73 */       this.dispatched = true;
-/* 74 */       if (this.toNotify != null) {
-/* 75 */         SunToolkit.postEvent(this.toNotify, new SentEvent());
-/*    */       }
-/* 77 */       synchronized (this) {
-/* 78 */         notifyAll();
-/*    */       } 
-/*    */     } 
-/*    */   }
-/*    */   final void dispose() {
-/* 83 */     this.dispatched = true;
-/* 84 */     if (this.toNotify != null) {
-/* 85 */       SunToolkit.postEvent(this.toNotify, new SentEvent());
-/*    */     }
-/* 87 */     synchronized (this) {
-/* 88 */       notifyAll();
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\SentEvent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import sun.awt.AppContext;
+import sun.awt.SunToolkit;
+
+/**
+ * A wrapping tag for a nested AWTEvent which indicates that the event was
+ * sent from another AppContext. The destination AppContext should handle the
+ * event even if it is currently blocked waiting for a SequencedEvent or
+ * another SentEvent to be handled.
+ *
+ * @author David Mendenhall
+ */
+class SentEvent extends AWTEvent implements ActiveEvent {
+    /*
+     * serialVersionUID
+     */
+    private static final long serialVersionUID = -383615247028828931L;
+
+    static final int ID =
+        java.awt.event.FocusEvent.FOCUS_LAST + 2;
+
+    boolean dispatched;
+    private AWTEvent nested;
+    private AppContext toNotify;
+
+    SentEvent() {
+        this(null);
+    }
+    SentEvent(AWTEvent nested) {
+        this(nested, null);
+    }
+    SentEvent(AWTEvent nested, AppContext toNotify) {
+        super((nested != null)
+                  ? nested.getSource()
+                  : Toolkit.getDefaultToolkit(),
+              ID);
+        this.nested = nested;
+        this.toNotify = toNotify;
+    }
+
+    public void dispatch() {
+        try {
+            if (nested != null) {
+                Toolkit.getEventQueue().dispatchEvent(nested);
+            }
+        } finally {
+            dispatched = true;
+            if (toNotify != null) {
+                SunToolkit.postEvent(toNotify, new SentEvent());
+            }
+            synchronized (this) {
+                notifyAll();
+            }
+        }
+    }
+    final void dispose() {
+        dispatched = true;
+        if (toNotify != null) {
+            SunToolkit.postEvent(toNotify, new SentEvent());
+        }
+        synchronized (this) {
+            notifyAll();
+        }
+    }
+}

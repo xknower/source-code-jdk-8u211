@@ -1,2424 +1,2418 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Cursor;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.FontMetrics;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.event.FocusListener;
-/*      */ import java.awt.event.MouseEvent;
-/*      */ import java.beans.Transient;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.List;
-/*      */ import java.util.Locale;
-/*      */ import javax.accessibility.Accessible;
-/*      */ import javax.accessibility.AccessibleComponent;
-/*      */ import javax.accessibility.AccessibleContext;
-/*      */ import javax.accessibility.AccessibleIcon;
-/*      */ import javax.accessibility.AccessibleRole;
-/*      */ import javax.accessibility.AccessibleSelection;
-/*      */ import javax.accessibility.AccessibleState;
-/*      */ import javax.accessibility.AccessibleStateSet;
-/*      */ import javax.swing.event.ChangeEvent;
-/*      */ import javax.swing.event.ChangeListener;
-/*      */ import javax.swing.plaf.TabbedPaneUI;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class JTabbedPane
-/*      */   extends JComponent
-/*      */   implements Serializable, Accessible, SwingConstants
-/*      */ {
-/*      */   public static final int WRAP_TAB_LAYOUT = 0;
-/*      */   public static final int SCROLL_TAB_LAYOUT = 1;
-/*      */   private static final String uiClassID = "TabbedPaneUI";
-/*  137 */   protected int tabPlacement = 1;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int tabLayoutPolicy;
-/*      */ 
-/*      */   
-/*      */   protected SingleSelectionModel model;
-/*      */ 
-/*      */   
-/*      */   private boolean haveRegistered;
-/*      */ 
-/*      */   
-/*  150 */   protected ChangeListener changeListener = null;
-/*      */ 
-/*      */   
-/*      */   private final List<Page> pages;
-/*      */   
-/*  155 */   private Component visComp = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  163 */   protected transient ChangeEvent changeEvent = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JTabbedPane() {
-/*  171 */     this(1, 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JTabbedPane(int paramInt) {
-/*  183 */     this(paramInt, 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JTabbedPane(int paramInt1, int paramInt2) {
-/*  202 */     setTabPlacement(paramInt1);
-/*  203 */     setTabLayoutPolicy(paramInt2);
-/*  204 */     this.pages = new ArrayList<>(1);
-/*  205 */     setModel(new DefaultSingleSelectionModel());
-/*  206 */     updateUI();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TabbedPaneUI getUI() {
-/*  216 */     return (TabbedPaneUI)this.ui;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUI(TabbedPaneUI paramTabbedPaneUI) {
-/*  231 */     setUI(paramTabbedPaneUI);
-/*      */     
-/*  233 */     for (byte b = 0; b < getTabCount(); b++) {
-/*  234 */       Icon icon = ((Page)this.pages.get(b)).disabledIcon;
-/*  235 */       if (icon instanceof javax.swing.plaf.UIResource) {
-/*  236 */         setDisabledIconAt(b, (Icon)null);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateUI() {
-/*  247 */     setUI((TabbedPaneUI)UIManager.getUI(this));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getUIClassID() {
-/*  260 */     return "TabbedPaneUI";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class ModelListener
-/*      */     implements ChangeListener, Serializable
-/*      */   {
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/*  270 */       JTabbedPane.this.fireStateChanged();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ChangeListener createChangeListener() {
-/*  282 */     return new ModelListener();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addChangeListener(ChangeListener paramChangeListener) {
-/*  293 */     this.listenerList.add(ChangeListener.class, paramChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeChangeListener(ChangeListener paramChangeListener) {
-/*  304 */     this.listenerList.remove(ChangeListener.class, paramChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ChangeListener[] getChangeListeners() {
-/*  316 */     return this.listenerList.<ChangeListener>getListeners(ChangeListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireStateChanged() {
-/*  353 */     int i = getSelectedIndex();
-/*      */ 
-/*      */     
-/*  356 */     if (i < 0) {
-/*      */       
-/*  358 */       if (this.visComp != null && this.visComp.isVisible())
-/*      */       {
-/*  360 */         this.visComp.setVisible(false);
-/*      */       }
-/*      */ 
-/*      */       
-/*  364 */       this.visComp = null;
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/*  369 */       Component component = getComponentAt(i);
-/*      */ 
-/*      */       
-/*  372 */       if (component != null && component != this.visComp) {
-/*  373 */         boolean bool = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  382 */         if (this.visComp != null) {
-/*      */           
-/*  384 */           bool = (SwingUtilities.findFocusOwner(this.visComp) != null) ? true : false;
-/*      */ 
-/*      */           
-/*  387 */           if (this.visComp.isVisible())
-/*      */           {
-/*  389 */             this.visComp.setVisible(false);
-/*      */           }
-/*      */         } 
-/*      */         
-/*  393 */         if (!component.isVisible()) {
-/*  394 */           component.setVisible(true);
-/*      */         }
-/*      */         
-/*  397 */         if (bool) {
-/*  398 */           SwingUtilities2.tabbedPaneChangeFocusTo(component);
-/*      */         }
-/*      */         
-/*  401 */         this.visComp = component;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  408 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */ 
-/*      */     
-/*  411 */     for (int j = arrayOfObject.length - 2; j >= 0; j -= 2) {
-/*  412 */       if (arrayOfObject[j] == ChangeListener.class) {
-/*      */         
-/*  414 */         if (this.changeEvent == null)
-/*  415 */           this.changeEvent = new ChangeEvent(this); 
-/*  416 */         ((ChangeListener)arrayOfObject[j + 1]).stateChanged(this.changeEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SingleSelectionModel getModel() {
-/*  427 */     return this.model;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setModel(SingleSelectionModel paramSingleSelectionModel) {
-/*  440 */     SingleSelectionModel singleSelectionModel = getModel();
-/*      */     
-/*  442 */     if (singleSelectionModel != null) {
-/*  443 */       singleSelectionModel.removeChangeListener(this.changeListener);
-/*  444 */       this.changeListener = null;
-/*      */     } 
-/*      */     
-/*  447 */     this.model = paramSingleSelectionModel;
-/*      */     
-/*  449 */     if (paramSingleSelectionModel != null) {
-/*  450 */       this.changeListener = createChangeListener();
-/*  451 */       paramSingleSelectionModel.addChangeListener(this.changeListener);
-/*      */     } 
-/*      */     
-/*  454 */     firePropertyChange("model", singleSelectionModel, paramSingleSelectionModel);
-/*  455 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getTabPlacement() {
-/*  463 */     return this.tabPlacement;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTabPlacement(int paramInt) {
-/*  492 */     if (paramInt != 1 && paramInt != 2 && paramInt != 3 && paramInt != 4)
-/*      */     {
-/*  494 */       throw new IllegalArgumentException("illegal tab placement: must be TOP, BOTTOM, LEFT, or RIGHT");
-/*      */     }
-/*  496 */     if (this.tabPlacement != paramInt) {
-/*  497 */       int i = this.tabPlacement;
-/*  498 */       this.tabPlacement = paramInt;
-/*  499 */       firePropertyChange("tabPlacement", i, paramInt);
-/*  500 */       revalidate();
-/*  501 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getTabLayoutPolicy() {
-/*  512 */     return this.tabLayoutPolicy;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTabLayoutPolicy(int paramInt) {
-/*  546 */     if (paramInt != 0 && paramInt != 1) {
-/*  547 */       throw new IllegalArgumentException("illegal tab layout policy: must be WRAP_TAB_LAYOUT or SCROLL_TAB_LAYOUT");
-/*      */     }
-/*  549 */     if (this.tabLayoutPolicy != paramInt) {
-/*  550 */       int i = this.tabLayoutPolicy;
-/*  551 */       this.tabLayoutPolicy = paramInt;
-/*  552 */       firePropertyChange("tabLayoutPolicy", i, paramInt);
-/*  553 */       revalidate();
-/*  554 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Transient
-/*      */   public int getSelectedIndex() {
-/*  567 */     return this.model.getSelectedIndex();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectedIndex(int paramInt) {
-/*  588 */     if (paramInt != -1) {
-/*  589 */       checkIndex(paramInt);
-/*      */     }
-/*  591 */     setSelectedIndexImpl(paramInt, true);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void setSelectedIndexImpl(int paramInt, boolean paramBoolean) {
-/*  596 */     int i = this.model.getSelectedIndex();
-/*  597 */     Page page1 = null, page2 = null;
-/*  598 */     String str = null;
-/*      */     
-/*  600 */     paramBoolean = (paramBoolean && i != paramInt);
-/*      */     
-/*  602 */     if (paramBoolean) {
-/*  603 */       if (this.accessibleContext != null) {
-/*  604 */         str = this.accessibleContext.getAccessibleName();
-/*      */       }
-/*      */       
-/*  607 */       if (i >= 0) {
-/*  608 */         page1 = this.pages.get(i);
-/*      */       }
-/*      */       
-/*  611 */       if (paramInt >= 0) {
-/*  612 */         page2 = this.pages.get(paramInt);
-/*      */       }
-/*      */     } 
-/*      */     
-/*  616 */     this.model.setSelectedIndex(paramInt);
-/*      */     
-/*  618 */     if (paramBoolean) {
-/*  619 */       changeAccessibleSelection(page1, str, page2);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private void changeAccessibleSelection(Page paramPage1, String paramString, Page paramPage2) {
-/*  624 */     if (this.accessibleContext == null) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*  628 */     if (paramPage1 != null) {
-/*  629 */       paramPage1.firePropertyChange("AccessibleState", AccessibleState.SELECTED, null);
-/*      */     }
-/*      */ 
-/*      */     
-/*  633 */     if (paramPage2 != null) {
-/*  634 */       paramPage2.firePropertyChange("AccessibleState", null, AccessibleState.SELECTED);
-/*      */     }
-/*      */ 
-/*      */     
-/*  638 */     this.accessibleContext.firePropertyChange("AccessibleName", paramString, this.accessibleContext
-/*      */ 
-/*      */         
-/*  641 */         .getAccessibleName());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Transient
-/*      */   public Component getSelectedComponent() {
-/*  653 */     int i = getSelectedIndex();
-/*  654 */     if (i == -1) {
-/*  655 */       return null;
-/*      */     }
-/*  657 */     return getComponentAt(i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectedComponent(Component paramComponent) {
-/*  673 */     int i = indexOfComponent(paramComponent);
-/*  674 */     if (i != -1) {
-/*  675 */       setSelectedIndex(i);
-/*      */     } else {
-/*  677 */       throw new IllegalArgumentException("component not found in tabbed pane");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void insertTab(String paramString1, Icon paramIcon, Component paramComponent, String paramString2, int paramInt) {
-/*  700 */     int i = paramInt;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  708 */     int j = indexOfComponent(paramComponent);
-/*  709 */     if (paramComponent != null && j != -1) {
-/*  710 */       removeTabAt(j);
-/*  711 */       if (i > j) {
-/*  712 */         i--;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  716 */     int k = getSelectedIndex();
-/*      */     
-/*  718 */     this.pages.add(i, new Page(this, (paramString1 != null) ? paramString1 : "", paramIcon, null, paramComponent, paramString2));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  723 */     if (paramComponent != null) {
-/*  724 */       addImpl(paramComponent, (Object)null, -1);
-/*  725 */       paramComponent.setVisible(false);
-/*      */     } else {
-/*  727 */       firePropertyChange("indexForNullComponent", -1, paramInt);
-/*      */     } 
-/*      */     
-/*  730 */     if (this.pages.size() == 1) {
-/*  731 */       setSelectedIndex(0);
-/*      */     }
-/*      */     
-/*  734 */     if (k >= i) {
-/*  735 */       setSelectedIndexImpl(k + 1, false);
-/*      */     }
-/*      */     
-/*  738 */     if (!this.haveRegistered && paramString2 != null) {
-/*  739 */       ToolTipManager.sharedInstance().registerComponent(this);
-/*  740 */       this.haveRegistered = true;
-/*      */     } 
-/*      */     
-/*  743 */     if (this.accessibleContext != null) {
-/*  744 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", null, paramComponent);
-/*      */     }
-/*      */ 
-/*      */     
-/*  748 */     revalidate();
-/*  749 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addTab(String paramString1, Icon paramIcon, Component paramComponent, String paramString2) {
-/*  767 */     insertTab(paramString1, paramIcon, paramComponent, paramString2, this.pages.size());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addTab(String paramString, Icon paramIcon, Component paramComponent) {
-/*  783 */     insertTab(paramString, paramIcon, paramComponent, (String)null, this.pages.size());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addTab(String paramString, Component paramComponent) {
-/*  798 */     insertTab(paramString, (Icon)null, paramComponent, (String)null, this.pages.size());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component add(Component paramComponent) {
-/*  814 */     if (!(paramComponent instanceof javax.swing.plaf.UIResource)) {
-/*  815 */       addTab(paramComponent.getName(), paramComponent);
-/*      */     } else {
-/*  817 */       super.add(paramComponent);
-/*      */     } 
-/*  819 */     return paramComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component add(String paramString, Component paramComponent) {
-/*  834 */     if (!(paramComponent instanceof javax.swing.plaf.UIResource)) {
-/*  835 */       addTab(paramString, paramComponent);
-/*      */     } else {
-/*  837 */       super.add(paramString, paramComponent);
-/*      */     } 
-/*  839 */     return paramComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component add(Component paramComponent, int paramInt) {
-/*  855 */     if (!(paramComponent instanceof javax.swing.plaf.UIResource)) {
-/*      */ 
-/*      */       
-/*  858 */       insertTab(paramComponent.getName(), (Icon)null, paramComponent, (String)null, (paramInt == -1) ? 
-/*  859 */           getTabCount() : paramInt);
-/*      */     } else {
-/*  861 */       super.add(paramComponent, paramInt);
-/*      */     } 
-/*  863 */     return paramComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(Component paramComponent, Object paramObject) {
-/*  880 */     if (!(paramComponent instanceof javax.swing.plaf.UIResource)) {
-/*  881 */       if (paramObject instanceof String) {
-/*  882 */         addTab((String)paramObject, paramComponent);
-/*  883 */       } else if (paramObject instanceof Icon) {
-/*  884 */         addTab((String)null, (Icon)paramObject, paramComponent);
-/*      */       } else {
-/*  886 */         add(paramComponent);
-/*      */       } 
-/*      */     } else {
-/*  889 */       super.add(paramComponent, paramObject);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(Component paramComponent, Object paramObject, int paramInt) {
-/*  908 */     if (!(paramComponent instanceof javax.swing.plaf.UIResource)) {
-/*      */       
-/*  910 */       Icon icon = (paramObject instanceof Icon) ? (Icon)paramObject : null;
-/*  911 */       String str = (paramObject instanceof String) ? (String)paramObject : null;
-/*      */ 
-/*      */       
-/*  914 */       insertTab(str, icon, paramComponent, (String)null, (paramInt == -1) ? getTabCount() : paramInt);
-/*      */     } else {
-/*  916 */       super.add(paramComponent, paramObject, paramInt);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeTabAt(int paramInt) {
-/*  933 */     checkIndex(paramInt);
-/*      */     
-/*  935 */     Component component = getComponentAt(paramInt);
-/*  936 */     boolean bool = false;
-/*  937 */     int i = getSelectedIndex();
-/*  938 */     String str = null;
-/*      */ 
-/*      */     
-/*  941 */     if (component == this.visComp) {
-/*  942 */       bool = (SwingUtilities.findFocusOwner(this.visComp) != null) ? true : false;
-/*  943 */       this.visComp = null;
-/*      */     } 
-/*      */     
-/*  946 */     if (this.accessibleContext != null) {
-/*      */       
-/*  948 */       if (paramInt == i) {
-/*      */         
-/*  950 */         ((Page)this.pages.get(paramInt)).firePropertyChange("AccessibleState", AccessibleState.SELECTED, null);
-/*      */ 
-/*      */ 
-/*      */         
-/*  954 */         str = this.accessibleContext.getAccessibleName();
-/*      */       } 
-/*      */       
-/*  957 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", component, null);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  963 */     setTabComponentAt(paramInt, (Component)null);
-/*  964 */     this.pages.remove(paramInt);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  971 */     putClientProperty("__index_to_remove__", Integer.valueOf(paramInt));
-/*      */ 
-/*      */     
-/*  974 */     if (i > paramInt) {
-/*  975 */       setSelectedIndexImpl(i - 1, false);
-/*      */     
-/*      */     }
-/*  978 */     else if (i >= getTabCount()) {
-/*  979 */       setSelectedIndexImpl(i - 1, false);
-/*      */       
-/*  981 */       Page page = (i != 0) ? this.pages.get(i - 1) : null;
-/*      */ 
-/*      */       
-/*  984 */       changeAccessibleSelection((Page)null, str, page);
-/*      */     
-/*      */     }
-/*  987 */     else if (paramInt == i) {
-/*  988 */       fireStateChanged();
-/*  989 */       changeAccessibleSelection((Page)null, str, this.pages.get(paramInt));
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  995 */     if (component != null) {
-/*  996 */       Component[] arrayOfComponent = getComponents();
-/*  997 */       for (int j = arrayOfComponent.length; --j >= 0;) {
-/*  998 */         if (arrayOfComponent[j] == component) {
-/*  999 */           super.remove(j);
-/* 1000 */           component.setVisible(true);
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 1006 */     if (bool) {
-/* 1007 */       SwingUtilities2.tabbedPaneChangeFocusTo(getSelectedComponent());
-/*      */     }
-/*      */     
-/* 1010 */     revalidate();
-/* 1011 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(Component paramComponent) {
-/* 1024 */     int i = indexOfComponent(paramComponent);
-/* 1025 */     if (i != -1) {
-/* 1026 */       removeTabAt(i);
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1030 */       Component[] arrayOfComponent = getComponents();
-/* 1031 */       for (byte b = 0; b < arrayOfComponent.length; b++) {
-/* 1032 */         if (paramComponent == arrayOfComponent[b]) {
-/* 1033 */           super.remove(b);
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void remove(int paramInt) {
-/* 1051 */     removeTabAt(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeAll() {
-/* 1062 */     setSelectedIndexImpl(-1, true);
-/*      */     
-/* 1064 */     int i = getTabCount();
-/*      */ 
-/*      */     
-/* 1067 */     while (i-- > 0) {
-/* 1068 */       removeTabAt(i);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getTabCount() {
-/* 1078 */     return this.pages.size();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getTabRunCount() {
-/* 1093 */     if (this.ui != null) {
-/* 1094 */       return ((TabbedPaneUI)this.ui).getTabRunCount(this);
-/*      */     }
-/* 1096 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTitleAt(int paramInt) {
-/* 1112 */     return ((Page)this.pages.get(paramInt)).title;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getIconAt(int paramInt) {
-/* 1126 */     return ((Page)this.pages.get(paramInt)).icon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getDisabledIconAt(int paramInt) {
-/* 1145 */     Page page = this.pages.get(paramInt);
-/* 1146 */     if (page.disabledIcon == null) {
-/* 1147 */       page.disabledIcon = UIManager.getLookAndFeel().getDisabledIcon(this, page.icon);
-/*      */     }
-/* 1149 */     return page.disabledIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getToolTipTextAt(int paramInt) {
-/* 1164 */     return ((Page)this.pages.get(paramInt)).tip;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getBackgroundAt(int paramInt) {
-/* 1179 */     return ((Page)this.pages.get(paramInt)).getBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getForegroundAt(int paramInt) {
-/* 1194 */     return ((Page)this.pages.get(paramInt)).getForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEnabledAt(int paramInt) {
-/* 1210 */     return ((Page)this.pages.get(paramInt)).isEnabled();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getComponentAt(int paramInt) {
-/* 1224 */     return ((Page)this.pages.get(paramInt)).component;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMnemonicAt(int paramInt) {
-/* 1244 */     checkIndex(paramInt);
-/*      */     
-/* 1246 */     Page page = this.pages.get(paramInt);
-/* 1247 */     return page.getMnemonic();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getDisplayedMnemonicIndexAt(int paramInt) {
-/* 1265 */     checkIndex(paramInt);
-/*      */     
-/* 1267 */     Page page = this.pages.get(paramInt);
-/* 1268 */     return page.getDisplayedMnemonicIndex();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Rectangle getBoundsAt(int paramInt) {
-/* 1287 */     checkIndex(paramInt);
-/* 1288 */     if (this.ui != null) {
-/* 1289 */       return ((TabbedPaneUI)this.ui).getTabBounds(this, paramInt);
-/*      */     }
-/* 1291 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTitleAt(int paramInt, String paramString) {
-/* 1316 */     Page page = this.pages.get(paramInt);
-/* 1317 */     String str = page.title;
-/* 1318 */     page.title = paramString;
-/*      */     
-/* 1320 */     if (str != paramString) {
-/* 1321 */       firePropertyChange("indexForTitle", -1, paramInt);
-/*      */     }
-/* 1323 */     page.updateDisplayedMnemonicIndex();
-/* 1324 */     if (str != paramString && this.accessibleContext != null) {
-/* 1325 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", str, paramString);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1329 */     if (paramString == null || str == null || 
-/* 1330 */       !paramString.equals(str)) {
-/* 1331 */       revalidate();
-/* 1332 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIconAt(int paramInt, Icon paramIcon) {
-/* 1360 */     Page page = this.pages.get(paramInt);
-/* 1361 */     Icon icon = page.icon;
-/* 1362 */     if (paramIcon != icon) {
-/* 1363 */       page.icon = paramIcon;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1369 */       if (page.disabledIcon instanceof javax.swing.plaf.UIResource) {
-/* 1370 */         page.disabledIcon = null;
-/*      */       }
-/*      */ 
-/*      */       
-/* 1374 */       if (this.accessibleContext != null) {
-/* 1375 */         this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1379 */       revalidate();
-/* 1380 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDisabledIconAt(int paramInt, Icon paramIcon) {
-/* 1401 */     Icon icon = ((Page)this.pages.get(paramInt)).disabledIcon;
-/* 1402 */     ((Page)this.pages.get(paramInt)).disabledIcon = paramIcon;
-/* 1403 */     if (paramIcon != icon && !isEnabledAt(paramInt)) {
-/* 1404 */       revalidate();
-/* 1405 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setToolTipTextAt(int paramInt, String paramString) {
-/* 1426 */     String str = ((Page)this.pages.get(paramInt)).tip;
-/* 1427 */     ((Page)this.pages.get(paramInt)).tip = paramString;
-/*      */     
-/* 1429 */     if (str != paramString && this.accessibleContext != null) {
-/* 1430 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", str, paramString);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1434 */     if (!this.haveRegistered && paramString != null) {
-/* 1435 */       ToolTipManager.sharedInstance().registerComponent(this);
-/* 1436 */       this.haveRegistered = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBackgroundAt(int paramInt, Color paramColor) {
-/* 1462 */     Color color = ((Page)this.pages.get(paramInt)).background;
-/* 1463 */     ((Page)this.pages.get(paramInt)).setBackground(paramColor);
-/* 1464 */     if (paramColor == null || color == null || 
-/* 1465 */       !paramColor.equals(color)) {
-/* 1466 */       Rectangle rectangle = getBoundsAt(paramInt);
-/* 1467 */       if (rectangle != null) {
-/* 1468 */         repaint(rectangle);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setForegroundAt(int paramInt, Color paramColor) {
-/* 1495 */     Color color = ((Page)this.pages.get(paramInt)).foreground;
-/* 1496 */     ((Page)this.pages.get(paramInt)).setForeground(paramColor);
-/* 1497 */     if (paramColor == null || color == null || 
-/* 1498 */       !paramColor.equals(color)) {
-/* 1499 */       Rectangle rectangle = getBoundsAt(paramInt);
-/* 1500 */       if (rectangle != null) {
-/* 1501 */         repaint(rectangle);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEnabledAt(int paramInt, boolean paramBoolean) {
-/* 1518 */     boolean bool = ((Page)this.pages.get(paramInt)).isEnabled();
-/* 1519 */     ((Page)this.pages.get(paramInt)).setEnabled(paramBoolean);
-/* 1520 */     if (paramBoolean != bool) {
-/* 1521 */       revalidate();
-/* 1522 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setComponentAt(int paramInt, Component paramComponent) {
-/* 1541 */     Page page = this.pages.get(paramInt);
-/* 1542 */     if (paramComponent != page.component) {
-/* 1543 */       boolean bool1 = false;
-/*      */       
-/* 1545 */       if (page.component != null) {
-/*      */         
-/* 1547 */         bool1 = (SwingUtilities.findFocusOwner(page.component) != null) ? true : false;
-/*      */ 
-/*      */ 
-/*      */         
-/* 1551 */         synchronized (getTreeLock()) {
-/* 1552 */           int i = getComponentCount();
-/* 1553 */           Component[] arrayOfComponent = getComponents();
-/* 1554 */           for (byte b = 0; b < i; b++) {
-/* 1555 */             if (arrayOfComponent[b] == page.component) {
-/* 1556 */               super.remove(b);
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1562 */       page.component = paramComponent;
-/* 1563 */       boolean bool2 = (getSelectedIndex() == paramInt) ? true : false;
-/*      */       
-/* 1565 */       if (bool2) {
-/* 1566 */         this.visComp = paramComponent;
-/*      */       }
-/*      */       
-/* 1569 */       if (paramComponent != null) {
-/* 1570 */         paramComponent.setVisible(bool2);
-/* 1571 */         addImpl(paramComponent, (Object)null, -1);
-/*      */         
-/* 1573 */         if (bool1) {
-/* 1574 */           SwingUtilities2.tabbedPaneChangeFocusTo(paramComponent);
-/*      */         }
-/*      */       } else {
-/* 1577 */         repaint();
-/*      */       } 
-/*      */       
-/* 1580 */       revalidate();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDisplayedMnemonicIndexAt(int paramInt1, int paramInt2) {
-/* 1623 */     checkIndex(paramInt1);
-/*      */     
-/* 1625 */     Page page = this.pages.get(paramInt1);
-/*      */     
-/* 1627 */     page.setDisplayedMnemonicIndex(paramInt2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMnemonicAt(int paramInt1, int paramInt2) {
-/* 1663 */     checkIndex(paramInt1);
-/*      */     
-/* 1665 */     Page page = this.pages.get(paramInt1);
-/* 1666 */     page.setMnemonic(paramInt2);
-/*      */     
-/* 1668 */     firePropertyChange("mnemonicAt", (Object)null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexOfTab(String paramString) {
-/* 1682 */     for (byte b = 0; b < getTabCount(); b++) {
-/* 1683 */       if (getTitleAt(b).equals((paramString == null) ? "" : paramString)) {
-/* 1684 */         return b;
-/*      */       }
-/*      */     } 
-/* 1687 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexOfTab(Icon paramIcon) {
-/* 1699 */     for (byte b = 0; b < getTabCount(); b++) {
-/* 1700 */       Icon icon = getIconAt(b);
-/* 1701 */       if ((icon != null && icon.equals(paramIcon)) || (icon == null && icon == paramIcon))
-/*      */       {
-/* 1703 */         return b;
-/*      */       }
-/*      */     } 
-/* 1706 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexOfComponent(Component paramComponent) {
-/* 1718 */     for (byte b = 0; b < getTabCount(); b++) {
-/* 1719 */       Component component = getComponentAt(b);
-/* 1720 */       if ((component != null && component.equals(paramComponent)) || (component == null && component == paramComponent))
-/*      */       {
-/* 1722 */         return b;
-/*      */       }
-/*      */     } 
-/* 1725 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexAtLocation(int paramInt1, int paramInt2) {
-/* 1740 */     if (this.ui != null) {
-/* 1741 */       return ((TabbedPaneUI)this.ui).tabForCoordinate(this, paramInt1, paramInt2);
-/*      */     }
-/* 1743 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getToolTipText(MouseEvent paramMouseEvent) {
-/* 1756 */     if (this.ui != null) {
-/* 1757 */       int i = ((TabbedPaneUI)this.ui).tabForCoordinate(this, paramMouseEvent.getX(), paramMouseEvent.getY());
-/*      */       
-/* 1759 */       if (i != -1) {
-/* 1760 */         return ((Page)this.pages.get(i)).tip;
-/*      */       }
-/*      */     } 
-/* 1763 */     return super.getToolTipText(paramMouseEvent);
-/*      */   }
-/*      */   
-/*      */   private void checkIndex(int paramInt) {
-/* 1767 */     if (paramInt < 0 || paramInt >= this.pages.size()) {
-/* 1768 */       throw new IndexOutOfBoundsException("Index: " + paramInt + ", Tab count: " + this.pages.size());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1779 */     paramObjectOutputStream.defaultWriteObject();
-/* 1780 */     if (getUIClassID().equals("TabbedPaneUI")) {
-/* 1781 */       byte b = JComponent.getWriteObjCounter(this);
-/* 1782 */       b = (byte)(b - 1); JComponent.setWriteObjCounter(this, b);
-/* 1783 */       if (b == 0 && this.ui != null) {
-/* 1784 */         this.ui.installUI(this);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void compWriteObjectNotify() {
-/* 1794 */     super.compWriteObjectNotify();
-/*      */ 
-/*      */     
-/* 1797 */     if (getToolTipText() == null && this.haveRegistered) {
-/* 1798 */       ToolTipManager.sharedInstance().unregisterComponent(this);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1810 */     paramObjectInputStream.defaultReadObject();
-/* 1811 */     if (this.ui != null && getUIClassID().equals("TabbedPaneUI")) {
-/* 1812 */       this.ui.installUI(this);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1816 */     if (getToolTipText() == null && this.haveRegistered) {
-/* 1817 */       ToolTipManager.sharedInstance().registerComponent(this);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String paramString() {
-/*      */     String str1;
-/* 1834 */     if (this.tabPlacement == 1)
-/* 1835 */     { str1 = "TOP"; }
-/* 1836 */     else if (this.tabPlacement == 3)
-/* 1837 */     { str1 = "BOTTOM"; }
-/* 1838 */     else if (this.tabPlacement == 2)
-/* 1839 */     { str1 = "LEFT"; }
-/* 1840 */     else if (this.tabPlacement == 4)
-/* 1841 */     { str1 = "RIGHT"; }
-/* 1842 */     else { str1 = ""; }
-/* 1843 */      String str2 = this.haveRegistered ? "true" : "false";
-/*      */ 
-/*      */     
-/* 1846 */     return super.paramString() + ",haveRegistered=" + str2 + ",tabPlacement=" + str1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AccessibleContext getAccessibleContext() {
-/* 1865 */     if (this.accessibleContext == null) {
-/* 1866 */       this.accessibleContext = new AccessibleJTabbedPane();
-/*      */ 
-/*      */       
-/* 1869 */       int i = getTabCount();
-/* 1870 */       for (byte b = 0; b < i; b++) {
-/* 1871 */         ((Page)this.pages.get(b)).initAccessibleContext();
-/*      */       }
-/*      */     } 
-/* 1874 */     return this.accessibleContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class AccessibleJTabbedPane
-/*      */     extends JComponent.AccessibleJComponent
-/*      */     implements AccessibleSelection, ChangeListener
-/*      */   {
-/*      */     public String getAccessibleName() {
-/* 1903 */       if (this.accessibleName != null) {
-/* 1904 */         return this.accessibleName;
-/*      */       }
-/*      */       
-/* 1907 */       String str = (String)JTabbedPane.this.getClientProperty("AccessibleName");
-/*      */       
-/* 1909 */       if (str != null) {
-/* 1910 */         return str;
-/*      */       }
-/*      */       
-/* 1913 */       int i = JTabbedPane.this.getSelectedIndex();
-/*      */       
-/* 1915 */       if (i >= 0) {
-/* 1916 */         return ((JTabbedPane.Page)JTabbedPane.this.pages.get(i)).getAccessibleName();
-/*      */       }
-/*      */       
-/* 1919 */       return super.getAccessibleName();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleJTabbedPane() {
-/* 1927 */       JTabbedPane.this.model.addChangeListener(this);
-/*      */     }
-/*      */     
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/* 1931 */       Object object = param1ChangeEvent.getSource();
-/* 1932 */       firePropertyChange("AccessibleSelection", null, object);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleRole getAccessibleRole() {
-/* 1943 */       return AccessibleRole.PAGE_TAB_LIST;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getAccessibleChildrenCount() {
-/* 1952 */       return JTabbedPane.this.getTabCount();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Accessible getAccessibleChild(int param1Int) {
-/* 1963 */       if (param1Int < 0 || param1Int >= JTabbedPane.this.getTabCount()) {
-/* 1964 */         return null;
-/*      */       }
-/* 1966 */       return JTabbedPane.this.pages.get(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleSelection getAccessibleSelection() {
-/* 1979 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Accessible getAccessibleAt(Point param1Point) {
-/* 1991 */       int i = ((TabbedPaneUI)JTabbedPane.this.ui).tabForCoordinate(JTabbedPane.this, param1Point.x, param1Point.y);
-/*      */       
-/* 1993 */       if (i == -1) {
-/* 1994 */         i = JTabbedPane.this.getSelectedIndex();
-/*      */       }
-/* 1996 */       return getAccessibleChild(i);
-/*      */     }
-/*      */     
-/*      */     public int getAccessibleSelectionCount() {
-/* 2000 */       return 1;
-/*      */     }
-/*      */     
-/*      */     public Accessible getAccessibleSelection(int param1Int) {
-/* 2004 */       int i = JTabbedPane.this.getSelectedIndex();
-/* 2005 */       if (i == -1) {
-/* 2006 */         return null;
-/*      */       }
-/* 2008 */       return JTabbedPane.this.pages.get(i);
-/*      */     }
-/*      */     
-/*      */     public boolean isAccessibleChildSelected(int param1Int) {
-/* 2012 */       return (param1Int == JTabbedPane.this.getSelectedIndex());
-/*      */     }
-/*      */     
-/*      */     public void addAccessibleSelection(int param1Int) {
-/* 2016 */       JTabbedPane.this.setSelectedIndex(param1Int);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void removeAccessibleSelection(int param1Int) {}
-/*      */ 
-/*      */     
-/*      */     public void clearAccessibleSelection() {}
-/*      */ 
-/*      */     
-/*      */     public void selectAllAccessibleSelection() {}
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class Page
-/*      */     extends AccessibleContext
-/*      */     implements Serializable, Accessible, AccessibleComponent
-/*      */   {
-/*      */     String title;
-/*      */     Color background;
-/*      */     Color foreground;
-/*      */     Icon icon;
-/*      */     Icon disabledIcon;
-/*      */     JTabbedPane parent;
-/*      */     Component component;
-/*      */     String tip;
-/*      */     boolean enabled = true;
-/*      */     boolean needsUIUpdate;
-/* 2044 */     int mnemonic = -1;
-/* 2045 */     int mnemonicIndex = -1;
-/*      */     
-/*      */     Component tabComponent;
-/*      */     
-/*      */     Page(JTabbedPane param1JTabbedPane1, String param1String1, Icon param1Icon1, Icon param1Icon2, Component param1Component, String param1String2) {
-/* 2050 */       this.title = param1String1;
-/* 2051 */       this.icon = param1Icon1;
-/* 2052 */       this.disabledIcon = param1Icon2;
-/* 2053 */       this.parent = param1JTabbedPane1;
-/* 2054 */       setAccessibleParent(param1JTabbedPane1);
-/* 2055 */       this.component = param1Component;
-/* 2056 */       this.tip = param1String2;
-/*      */       
-/* 2058 */       initAccessibleContext();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void initAccessibleContext() {
-/* 2065 */       if (JTabbedPane.this.accessibleContext != null && this.component instanceof Accessible) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2073 */         AccessibleContext accessibleContext = this.component.getAccessibleContext();
-/* 2074 */         if (accessibleContext != null) {
-/* 2075 */           accessibleContext.setAccessibleParent(this);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     void setMnemonic(int param1Int) {
-/* 2081 */       this.mnemonic = param1Int;
-/* 2082 */       updateDisplayedMnemonicIndex();
-/*      */     }
-/*      */     
-/*      */     int getMnemonic() {
-/* 2086 */       return this.mnemonic;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void setDisplayedMnemonicIndex(int param1Int) {
-/* 2093 */       if (this.mnemonicIndex != param1Int) {
-/* 2094 */         if (param1Int != -1 && (this.title == null || param1Int < 0 || param1Int >= this.title
-/*      */           
-/* 2096 */           .length())) {
-/* 2097 */           throw new IllegalArgumentException("Invalid mnemonic index: " + param1Int);
-/*      */         }
-/*      */         
-/* 2100 */         this.mnemonicIndex = param1Int;
-/* 2101 */         JTabbedPane.this.firePropertyChange("displayedMnemonicIndexAt", (Object)null, (Object)null);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int getDisplayedMnemonicIndex() {
-/* 2110 */       return this.mnemonicIndex;
-/*      */     }
-/*      */     
-/*      */     void updateDisplayedMnemonicIndex() {
-/* 2114 */       setDisplayedMnemonicIndex(
-/* 2115 */           SwingUtilities.findDisplayedMnemonicIndex(this.title, this.mnemonic));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleContext getAccessibleContext() {
-/* 2123 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getAccessibleName() {
-/* 2130 */       if (this.accessibleName != null)
-/* 2131 */         return this.accessibleName; 
-/* 2132 */       if (this.title != null) {
-/* 2133 */         return this.title;
-/*      */       }
-/* 2135 */       return null;
-/*      */     }
-/*      */     
-/*      */     public String getAccessibleDescription() {
-/* 2139 */       if (this.accessibleDescription != null)
-/* 2140 */         return this.accessibleDescription; 
-/* 2141 */       if (this.tip != null) {
-/* 2142 */         return this.tip;
-/*      */       }
-/* 2144 */       return null;
-/*      */     }
-/*      */     
-/*      */     public AccessibleRole getAccessibleRole() {
-/* 2148 */       return AccessibleRole.PAGE_TAB;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public AccessibleStateSet getAccessibleStateSet() {
-/* 2153 */       AccessibleStateSet accessibleStateSet = this.parent.getAccessibleContext().getAccessibleStateSet();
-/* 2154 */       accessibleStateSet.add(AccessibleState.SELECTABLE);
-/* 2155 */       int i = this.parent.indexOfTab(this.title);
-/* 2156 */       if (i == this.parent.getSelectedIndex()) {
-/* 2157 */         accessibleStateSet.add(AccessibleState.SELECTED);
-/*      */       }
-/* 2159 */       return accessibleStateSet;
-/*      */     }
-/*      */     
-/*      */     public int getAccessibleIndexInParent() {
-/* 2163 */       return this.parent.indexOfTab(this.title);
-/*      */     }
-/*      */     
-/*      */     public int getAccessibleChildrenCount() {
-/* 2167 */       if (this.component instanceof Accessible) {
-/* 2168 */         return 1;
-/*      */       }
-/* 2170 */       return 0;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public Accessible getAccessibleChild(int param1Int) {
-/* 2175 */       if (this.component instanceof Accessible) {
-/* 2176 */         return (Accessible)this.component;
-/*      */       }
-/* 2178 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public Locale getLocale() {
-/* 2183 */       return this.parent.getLocale();
-/*      */     }
-/*      */     
-/*      */     public AccessibleComponent getAccessibleComponent() {
-/* 2187 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Color getBackground() {
-/* 2194 */       return (this.background != null) ? this.background : this.parent.getBackground();
-/*      */     }
-/*      */     
-/*      */     public void setBackground(Color param1Color) {
-/* 2198 */       this.background = param1Color;
-/*      */     }
-/*      */     
-/*      */     public Color getForeground() {
-/* 2202 */       return (this.foreground != null) ? this.foreground : this.parent.getForeground();
-/*      */     }
-/*      */     
-/*      */     public void setForeground(Color param1Color) {
-/* 2206 */       this.foreground = param1Color;
-/*      */     }
-/*      */     
-/*      */     public Cursor getCursor() {
-/* 2210 */       return this.parent.getCursor();
-/*      */     }
-/*      */     
-/*      */     public void setCursor(Cursor param1Cursor) {
-/* 2214 */       this.parent.setCursor(param1Cursor);
-/*      */     }
-/*      */     
-/*      */     public Font getFont() {
-/* 2218 */       return this.parent.getFont();
-/*      */     }
-/*      */     
-/*      */     public void setFont(Font param1Font) {
-/* 2222 */       this.parent.setFont(param1Font);
-/*      */     }
-/*      */     
-/*      */     public FontMetrics getFontMetrics(Font param1Font) {
-/* 2226 */       return this.parent.getFontMetrics(param1Font);
-/*      */     }
-/*      */     
-/*      */     public boolean isEnabled() {
-/* 2230 */       return this.enabled;
-/*      */     }
-/*      */     
-/*      */     public void setEnabled(boolean param1Boolean) {
-/* 2234 */       this.enabled = param1Boolean;
-/*      */     }
-/*      */     
-/*      */     public boolean isVisible() {
-/* 2238 */       return this.parent.isVisible();
-/*      */     }
-/*      */     
-/*      */     public void setVisible(boolean param1Boolean) {
-/* 2242 */       this.parent.setVisible(param1Boolean);
-/*      */     }
-/*      */     
-/*      */     public boolean isShowing() {
-/* 2246 */       return this.parent.isShowing();
-/*      */     }
-/*      */     
-/*      */     public boolean contains(Point param1Point) {
-/* 2250 */       Rectangle rectangle = getBounds();
-/* 2251 */       return rectangle.contains(param1Point);
-/*      */     }
-/*      */     
-/*      */     public Point getLocationOnScreen() {
-/* 2255 */       Point point1 = this.parent.getLocationOnScreen();
-/* 2256 */       Point point2 = getLocation();
-/* 2257 */       point2.translate(point1.x, point1.y);
-/* 2258 */       return point2;
-/*      */     }
-/*      */     
-/*      */     public Point getLocation() {
-/* 2262 */       Rectangle rectangle = getBounds();
-/* 2263 */       return new Point(rectangle.x, rectangle.y);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void setLocation(Point param1Point) {}
-/*      */ 
-/*      */     
-/*      */     public Rectangle getBounds() {
-/* 2271 */       return this.parent.getUI().getTabBounds(this.parent, this.parent
-/* 2272 */           .indexOfTab(this.title));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void setBounds(Rectangle param1Rectangle) {}
-/*      */ 
-/*      */     
-/*      */     public Dimension getSize() {
-/* 2280 */       Rectangle rectangle = getBounds();
-/* 2281 */       return new Dimension(rectangle.width, rectangle.height);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void setSize(Dimension param1Dimension) {}
-/*      */ 
-/*      */     
-/*      */     public Accessible getAccessibleAt(Point param1Point) {
-/* 2289 */       if (this.component instanceof Accessible) {
-/* 2290 */         return (Accessible)this.component;
-/*      */       }
-/* 2292 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean isFocusTraversable() {
-/* 2297 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void requestFocus() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addFocusListener(FocusListener param1FocusListener) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeFocusListener(FocusListener param1FocusListener) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleIcon[] getAccessibleIcon() {
-/* 2322 */       AccessibleIcon accessibleIcon = null;
-/* 2323 */       if (this.enabled && this.icon instanceof ImageIcon) {
-/*      */         
-/* 2325 */         AccessibleContext accessibleContext = ((ImageIcon)this.icon).getAccessibleContext();
-/* 2326 */         accessibleIcon = (AccessibleIcon)accessibleContext;
-/* 2327 */       } else if (!this.enabled && this.disabledIcon instanceof ImageIcon) {
-/*      */         
-/* 2329 */         AccessibleContext accessibleContext = ((ImageIcon)this.disabledIcon).getAccessibleContext();
-/* 2330 */         accessibleIcon = (AccessibleIcon)accessibleContext;
-/*      */       } 
-/* 2332 */       if (accessibleIcon != null) {
-/* 2333 */         AccessibleIcon[] arrayOfAccessibleIcon = new AccessibleIcon[1];
-/* 2334 */         arrayOfAccessibleIcon[0] = accessibleIcon;
-/* 2335 */         return arrayOfAccessibleIcon;
-/*      */       } 
-/* 2337 */       return null;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTabComponentAt(int paramInt, Component paramComponent) {
-/* 2369 */     if (paramComponent != null && indexOfComponent(paramComponent) != -1) {
-/* 2370 */       throw new IllegalArgumentException("Component is already added to this JTabbedPane");
-/*      */     }
-/* 2372 */     Component component = getTabComponentAt(paramInt);
-/* 2373 */     if (paramComponent != component) {
-/* 2374 */       int i = indexOfTabComponent(paramComponent);
-/* 2375 */       if (i != -1) {
-/* 2376 */         setTabComponentAt(i, (Component)null);
-/*      */       }
-/* 2378 */       ((Page)this.pages.get(paramInt)).tabComponent = paramComponent;
-/* 2379 */       firePropertyChange("indexForTabComponent", -1, paramInt);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component getTabComponentAt(int paramInt) {
-/* 2395 */     return ((Page)this.pages.get(paramInt)).tabComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexOfTabComponent(Component paramComponent) {
-/* 2410 */     for (byte b = 0; b < getTabCount(); b++) {
-/* 2411 */       Component component = getTabComponentAt(b);
-/* 2412 */       if (component == paramComponent) {
-/* 2413 */         return b;
-/*      */       }
-/*      */     } 
-/* 2416 */     return -1;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\JTabbedPane.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.Transient;
+import java.util.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.accessibility.*;
+import sun.swing.SwingUtilities2;
+
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
+/**
+ * A component that lets the user switch between a group of components by
+ * clicking on a tab with a given title and/or icon.
+ * For examples and information on using tabbed panes see
+ * <a href="https://docs.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html">How to Use Tabbed Panes</a>,
+ * a section in <em>The Java Tutorial</em>.
+ * <p>
+ * Tabs/components are added to a <code>TabbedPane</code> object by using the
+ * <code>addTab</code> and <code>insertTab</code> methods.
+ * A tab is represented by an index corresponding
+ * to the position it was added in, where the first tab has an index equal to 0
+ * and the last tab has an index equal to the tab count minus 1.
+ * <p>
+ * The <code>TabbedPane</code> uses a <code>SingleSelectionModel</code>
+ * to represent the set
+ * of tab indices and the currently selected index.  If the tab count
+ * is greater than 0, then there will always be a selected index, which
+ * by default will be initialized to the first tab.  If the tab count is
+ * 0, then the selected index will be -1.
+ * <p>
+ * The tab title can be rendered by a <code>Component</code>.
+ * For example, the following produce similar results:
+ * <pre>
+ * // In this case the look and feel renders the title for the tab.
+ * tabbedPane.addTab("Tab", myComponent);
+ * // In this case the custom component is responsible for rendering the
+ * // title of the tab.
+ * tabbedPane.addTab(null, myComponent);
+ * tabbedPane.setTabComponentAt(0, new JLabel("Tab"));
+ * </pre>
+ * The latter is typically used when you want a more complex user interaction
+ * that requires custom components on the tab.  For example, you could
+ * provide a custom component that animates or one that has widgets for
+ * closing the tab.
+ * <p>
+ * If you specify a component for a tab, the <code>JTabbedPane</code>
+ * will not render any text or icon you have specified for the tab.
+ * <p>
+ * <strong>Note:</strong>
+ * Do not use <code>setVisible</code> directly on a tab component to make it visible,
+ * use <code>setSelectedComponent</code> or <code>setSelectedIndex</code> methods instead.
+ * <p>
+ * <strong>Warning:</strong> Swing is not thread safe. For more
+ * information see <a
+ * href="package-summary.html#threading">Swing's Threading
+ * Policy</a>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @beaninfo
+ *      attribute: isContainer true
+ *    description: A component which provides a tab folder metaphor for
+ *                 displaying one component from a set of components.
+ *
+ * @author Dave Moore
+ * @author Philip Milne
+ * @author Amy Fowler
+ *
+ * @see SingleSelectionModel
+ */
+public class JTabbedPane extends JComponent
+       implements Serializable, Accessible, SwingConstants {
+
+   /**
+    * The tab layout policy for wrapping tabs in multiple runs when all
+    * tabs will not fit within a single run.
+    */
+    public static final int WRAP_TAB_LAYOUT = 0;
+
+   /**
+    * Tab layout policy for providing a subset of available tabs when all
+    * the tabs will not fit within a single run.  If all the tabs do
+    * not fit within a single run the look and feel will provide a way
+    * to navigate to hidden tabs.
+    */
+    public static final int SCROLL_TAB_LAYOUT = 1;
+
+
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    private static final String uiClassID = "TabbedPaneUI";
+
+    /**
+     * Where the tabs are placed.
+     * @see #setTabPlacement
+     */
+    protected int tabPlacement = TOP;
+
+    private int tabLayoutPolicy;
+
+    /** The default selection model */
+    protected SingleSelectionModel model;
+
+    private boolean haveRegistered;
+
+    /**
+     * The <code>changeListener</code> is the listener we add to the
+     * model.
+     */
+    protected ChangeListener changeListener = null;
+
+    private final java.util.List<Page> pages;
+
+    /* The component that is currently visible */
+    private Component visComp = null;
+
+    /**
+     * Only one <code>ChangeEvent</code> is needed per <code>TabPane</code>
+     * instance since the
+     * event's only (read-only) state is the source property.  The source
+     * of events generated here is always "this".
+     */
+    protected transient ChangeEvent changeEvent = null;
+
+    /**
+     * Creates an empty <code>TabbedPane</code> with a default
+     * tab placement of <code>JTabbedPane.TOP</code>.
+     * @see #addTab
+     */
+    public JTabbedPane() {
+        this(TOP, WRAP_TAB_LAYOUT);
+    }
+
+    /**
+     * Creates an empty <code>TabbedPane</code> with the specified tab placement
+     * of either: <code>JTabbedPane.TOP</code>, <code>JTabbedPane.BOTTOM</code>,
+     * <code>JTabbedPane.LEFT</code>, or <code>JTabbedPane.RIGHT</code>.
+     *
+     * @param tabPlacement the placement for the tabs relative to the content
+     * @see #addTab
+     */
+    public JTabbedPane(int tabPlacement) {
+        this(tabPlacement, WRAP_TAB_LAYOUT);
+    }
+
+    /**
+     * Creates an empty <code>TabbedPane</code> with the specified tab placement
+     * and tab layout policy.  Tab placement may be either:
+     * <code>JTabbedPane.TOP</code>, <code>JTabbedPane.BOTTOM</code>,
+     * <code>JTabbedPane.LEFT</code>, or <code>JTabbedPane.RIGHT</code>.
+     * Tab layout policy may be either: <code>JTabbedPane.WRAP_TAB_LAYOUT</code>
+     * or <code>JTabbedPane.SCROLL_TAB_LAYOUT</code>.
+     *
+     * @param tabPlacement the placement for the tabs relative to the content
+     * @param tabLayoutPolicy the policy for laying out tabs when all tabs will not fit on one run
+     * @exception IllegalArgumentException if tab placement or tab layout policy are not
+     *            one of the above supported values
+     * @see #addTab
+     * @since 1.4
+     */
+    public JTabbedPane(int tabPlacement, int tabLayoutPolicy) {
+        setTabPlacement(tabPlacement);
+        setTabLayoutPolicy(tabLayoutPolicy);
+        pages = new ArrayList<Page>(1);
+        setModel(new DefaultSingleSelectionModel());
+        updateUI();
+    }
+
+    /**
+     * Returns the UI object which implements the L&amp;F for this component.
+     *
+     * @return a <code>TabbedPaneUI</code> object
+     * @see #setUI
+     */
+    public TabbedPaneUI getUI() {
+        return (TabbedPaneUI)ui;
+    }
+
+    /**
+     * Sets the UI object which implements the L&amp;F for this component.
+     *
+     * @param ui the new UI object
+     * @see UIDefaults#getUI
+     * @beaninfo
+     *        bound: true
+     *       hidden: true
+     *    attribute: visualUpdate true
+     *  description: The UI object that implements the tabbedpane's LookAndFeel
+     */
+    public void setUI(TabbedPaneUI ui) {
+        super.setUI(ui);
+        // disabled icons are generated by LF so they should be unset here
+        for (int i = 0; i < getTabCount(); i++) {
+            Icon icon = pages.get(i).disabledIcon;
+            if (icon instanceof UIResource) {
+                setDisabledIconAt(i, null);
+            }
+        }
+    }
+
+    /**
+     * Resets the UI property to a value from the current look and feel.
+     *
+     * @see JComponent#updateUI
+     */
+    public void updateUI() {
+        setUI((TabbedPaneUI)UIManager.getUI(this));
+    }
+
+
+    /**
+     * Returns the name of the UI class that implements the
+     * L&amp;F for this component.
+     *
+     * @return the string "TabbedPaneUI"
+     * @see JComponent#getUIClassID
+     * @see UIDefaults#getUI
+     */
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
+
+    /**
+     * We pass <code>ModelChanged</code> events along to the listeners with
+     * the tabbedpane (instead of the model itself) as the event source.
+     */
+    protected class ModelListener implements ChangeListener, Serializable {
+        public void stateChanged(ChangeEvent e) {
+            fireStateChanged();
+        }
+    }
+
+    /**
+     * Subclasses that want to handle <code>ChangeEvents</code> differently
+     * can override this to return a subclass of <code>ModelListener</code> or
+     * another <code>ChangeListener</code> implementation.
+     *
+     * @see #fireStateChanged
+     */
+    protected ChangeListener createChangeListener() {
+        return new ModelListener();
+    }
+
+    /**
+     * Adds a <code>ChangeListener</code> to this tabbedpane.
+     *
+     * @param l the <code>ChangeListener</code> to add
+     * @see #fireStateChanged
+     * @see #removeChangeListener
+     */
+    public void addChangeListener(ChangeListener l) {
+        listenerList.add(ChangeListener.class, l);
+    }
+
+    /**
+     * Removes a <code>ChangeListener</code> from this tabbedpane.
+     *
+     * @param l the <code>ChangeListener</code> to remove
+     * @see #fireStateChanged
+     * @see #addChangeListener
+     */
+    public void removeChangeListener(ChangeListener l) {
+        listenerList.remove(ChangeListener.class, l);
+    }
+
+   /**
+     * Returns an array of all the <code>ChangeListener</code>s added
+     * to this <code>JTabbedPane</code> with <code>addChangeListener</code>.
+     *
+     * @return all of the <code>ChangeListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ChangeListener[] getChangeListeners() {
+        return listenerList.getListeners(ChangeListener.class);
+    }
+
+    /**
+     * Sends a {@code ChangeEvent}, with this {@code JTabbedPane} as the source,
+     * to each registered listener. This method is called each time there is
+     * a change to either the selected index or the selected tab in the
+     * {@code JTabbedPane}. Usually, the selected index and selected tab change
+     * together. However, there are some cases, such as tab addition, where the
+     * selected index changes and the same tab remains selected. There are other
+     * cases, such as deleting the selected tab, where the index remains the
+     * same, but a new tab moves to that index. Events are fired for all of
+     * these cases.
+     *
+     * @see #addChangeListener
+     * @see EventListenerList
+     */
+    protected void fireStateChanged() {
+        /* --- Begin code to deal with visibility --- */
+
+        /* This code deals with changing the visibility of components to
+         * hide and show the contents for the selected tab. It duplicates
+         * logic already present in BasicTabbedPaneUI, logic that is
+         * processed during the layout pass. This code exists to allow
+         * developers to do things that are quite difficult to accomplish
+         * with the previous model of waiting for the layout pass to process
+         * visibility changes; such as requesting focus on the new visible
+         * component.
+         *
+         * For the average code, using the typical JTabbedPane methods,
+         * all visibility changes will now be processed here. However,
+         * the code in BasicTabbedPaneUI still exists, for the purposes
+         * of backward compatibility. Therefore, when making changes to
+         * this code, ensure that the BasicTabbedPaneUI code is kept in
+         * synch.
+         */
+
+        int selIndex = getSelectedIndex();
+
+        /* if the selection is now nothing */
+        if (selIndex < 0) {
+            /* if there was a previous visible component */
+            if (visComp != null && visComp.isVisible()) {
+                /* make it invisible */
+                visComp.setVisible(false);
+            }
+
+            /* now there's no visible component */
+            visComp = null;
+
+        /* else - the selection is now something */
+        } else {
+            /* Fetch the component for the new selection */
+            Component newComp = getComponentAt(selIndex);
+
+            /* if the new component is non-null and different */
+            if (newComp != null && newComp != visComp) {
+                boolean shouldChangeFocus = false;
+
+                /* Note: the following (clearing of the old visible component)
+                 * is inside this if-statement for good reason: Tabbed pane
+                 * should continue to show the previously visible component
+                 * if there is no component for the chosen tab.
+                 */
+
+                /* if there was a previous visible component */
+                if (visComp != null) {
+                    shouldChangeFocus =
+                        (SwingUtilities.findFocusOwner(visComp) != null);
+
+                    /* if it's still visible */
+                    if (visComp.isVisible()) {
+                        /* make it invisible */
+                        visComp.setVisible(false);
+                    }
+                }
+
+                if (!newComp.isVisible()) {
+                    newComp.setVisible(true);
+                }
+
+                if (shouldChangeFocus) {
+                    SwingUtilities2.tabbedPaneChangeFocusTo(newComp);
+                }
+
+                visComp = newComp;
+            } /* else - the visible component shouldn't changed */
+        }
+
+        /* --- End code to deal with visibility --- */
+
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ChangeListener.class) {
+                // Lazily create the event:
+                if (changeEvent == null)
+                    changeEvent = new ChangeEvent(this);
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
+
+    /**
+     * Returns the model associated with this tabbedpane.
+     *
+     * @see #setModel
+     */
+    public SingleSelectionModel getModel() {
+        return model;
+    }
+
+    /**
+     * Sets the model to be used with this tabbedpane.
+     *
+     * @param model the model to be used
+     * @see #getModel
+     * @beaninfo
+     *       bound: true
+     * description: The tabbedpane's SingleSelectionModel.
+     */
+    public void setModel(SingleSelectionModel model) {
+        SingleSelectionModel oldModel = getModel();
+
+        if (oldModel != null) {
+            oldModel.removeChangeListener(changeListener);
+            changeListener = null;
+        }
+
+        this.model = model;
+
+        if (model != null) {
+            changeListener = createChangeListener();
+            model.addChangeListener(changeListener);
+        }
+
+        firePropertyChange("model", oldModel, model);
+        repaint();
+    }
+
+    /**
+     * Returns the placement of the tabs for this tabbedpane.
+     * @see #setTabPlacement
+     */
+    public int getTabPlacement() {
+        return tabPlacement;
+    }
+
+    /**
+     * Sets the tab placement for this tabbedpane.
+     * Possible values are:<ul>
+     * <li><code>JTabbedPane.TOP</code>
+     * <li><code>JTabbedPane.BOTTOM</code>
+     * <li><code>JTabbedPane.LEFT</code>
+     * <li><code>JTabbedPane.RIGHT</code>
+     * </ul>
+     * The default value, if not set, is <code>SwingConstants.TOP</code>.
+     *
+     * @param tabPlacement the placement for the tabs relative to the content
+     * @exception IllegalArgumentException if tab placement value isn't one
+     *                          of the above valid values
+     *
+     * @beaninfo
+     *    preferred: true
+     *        bound: true
+     *    attribute: visualUpdate true
+     *         enum: TOP JTabbedPane.TOP
+     *               LEFT JTabbedPane.LEFT
+     *               BOTTOM JTabbedPane.BOTTOM
+     *               RIGHT JTabbedPane.RIGHT
+     *  description: The tabbedpane's tab placement.
+     *
+     */
+    public void setTabPlacement(int tabPlacement) {
+        if (tabPlacement != TOP && tabPlacement != LEFT &&
+            tabPlacement != BOTTOM && tabPlacement != RIGHT) {
+            throw new IllegalArgumentException("illegal tab placement: must be TOP, BOTTOM, LEFT, or RIGHT");
+        }
+        if (this.tabPlacement != tabPlacement) {
+            int oldValue = this.tabPlacement;
+            this.tabPlacement = tabPlacement;
+            firePropertyChange("tabPlacement", oldValue, tabPlacement);
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the policy used by the tabbedpane to layout the tabs when all the
+     * tabs will not fit within a single run.
+     * @see #setTabLayoutPolicy
+     * @since 1.4
+     */
+    public int getTabLayoutPolicy() {
+        return tabLayoutPolicy;
+    }
+
+   /**
+     * Sets the policy which the tabbedpane will use in laying out the tabs
+     * when all the tabs will not fit within a single run.
+     * Possible values are:
+     * <ul>
+     * <li><code>JTabbedPane.WRAP_TAB_LAYOUT</code>
+     * <li><code>JTabbedPane.SCROLL_TAB_LAYOUT</code>
+     * </ul>
+     *
+     * The default value, if not set by the UI, is <code>JTabbedPane.WRAP_TAB_LAYOUT</code>.
+     * <p>
+     * Some look and feels might only support a subset of the possible
+     * layout policies, in which case the value of this property may be
+     * ignored.
+     *
+     * @param tabLayoutPolicy the policy used to layout the tabs
+     * @exception IllegalArgumentException if layoutPolicy value isn't one
+     *                          of the above valid values
+     * @see #getTabLayoutPolicy
+     * @since 1.4
+     *
+     * @beaninfo
+     *    preferred: true
+     *        bound: true
+     *    attribute: visualUpdate true
+     *         enum: WRAP_TAB_LAYOUT JTabbedPane.WRAP_TAB_LAYOUT
+     *               SCROLL_TAB_LAYOUT JTabbedPane.SCROLL_TAB_LAYOUT
+     *  description: The tabbedpane's policy for laying out the tabs
+     *
+     */
+    public void setTabLayoutPolicy(int tabLayoutPolicy) {
+        if (tabLayoutPolicy != WRAP_TAB_LAYOUT && tabLayoutPolicy != SCROLL_TAB_LAYOUT) {
+            throw new IllegalArgumentException("illegal tab layout policy: must be WRAP_TAB_LAYOUT or SCROLL_TAB_LAYOUT");
+        }
+        if (this.tabLayoutPolicy != tabLayoutPolicy) {
+            int oldValue = this.tabLayoutPolicy;
+            this.tabLayoutPolicy = tabLayoutPolicy;
+            firePropertyChange("tabLayoutPolicy", oldValue, tabLayoutPolicy);
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the currently selected index for this tabbedpane.
+     * Returns -1 if there is no currently selected tab.
+     *
+     * @return the index of the selected tab
+     * @see #setSelectedIndex
+     */
+    @Transient
+    public int getSelectedIndex() {
+        return model.getSelectedIndex();
+    }
+
+    /**
+     * Sets the selected index for this tabbedpane. The index must be
+     * a valid tab index or -1, which indicates that no tab should be selected
+     * (can also be used when there are no tabs in the tabbedpane).  If a -1
+     * value is specified when the tabbedpane contains one or more tabs, then
+     * the results will be implementation defined.
+     *
+     * @param index  the index to be selected
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < -1 || index >= tab count)}
+     *
+     * @see #getSelectedIndex
+     * @see SingleSelectionModel#setSelectedIndex
+     * @beaninfo
+     *   preferred: true
+     * description: The tabbedpane's selected tab index.
+     */
+    public void setSelectedIndex(int index) {
+        if (index != -1) {
+            checkIndex(index);
+        }
+        setSelectedIndexImpl(index, true);
+    }
+
+
+    private void setSelectedIndexImpl(int index, boolean doAccessibleChanges) {
+        int oldIndex = model.getSelectedIndex();
+        Page oldPage = null, newPage = null;
+        String oldName = null;
+
+        doAccessibleChanges = doAccessibleChanges && (oldIndex != index);
+
+        if (doAccessibleChanges) {
+            if (accessibleContext != null) {
+                oldName = accessibleContext.getAccessibleName();
+            }
+
+            if (oldIndex >= 0) {
+                oldPage = pages.get(oldIndex);
+            }
+
+            if (index >= 0) {
+                newPage = pages.get(index);
+            }
+        }
+
+        model.setSelectedIndex(index);
+
+        if (doAccessibleChanges) {
+            changeAccessibleSelection(oldPage, oldName, newPage);
+        }
+    }
+
+    private void changeAccessibleSelection(Page oldPage, String oldName, Page newPage) {
+        if (accessibleContext == null) {
+            return;
+        }
+
+        if (oldPage != null) {
+            oldPage.firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                       AccessibleState.SELECTED, null);
+        }
+
+        if (newPage != null) {
+            newPage.firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                       null, AccessibleState.SELECTED);
+        }
+
+        accessibleContext.firePropertyChange(
+            AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+            oldName,
+            accessibleContext.getAccessibleName());
+    }
+
+    /**
+     * Returns the currently selected component for this tabbedpane.
+     * Returns <code>null</code> if there is no currently selected tab.
+     *
+     * @return the component corresponding to the selected tab
+     * @see #setSelectedComponent
+     */
+    @Transient
+    public Component getSelectedComponent() {
+        int index = getSelectedIndex();
+        if (index == -1) {
+            return null;
+        }
+        return getComponentAt(index);
+    }
+
+    /**
+     * Sets the selected component for this tabbedpane.  This
+     * will automatically set the <code>selectedIndex</code> to the index
+     * corresponding to the specified component.
+     *
+     * @exception IllegalArgumentException if component not found in tabbed
+     *          pane
+     * @see #getSelectedComponent
+     * @beaninfo
+     *   preferred: true
+     * description: The tabbedpane's selected component.
+     */
+    public void setSelectedComponent(Component c) {
+        int index = indexOfComponent(c);
+        if (index != -1) {
+            setSelectedIndex(index);
+        } else {
+            throw new IllegalArgumentException("component not found in tabbed pane");
+        }
+    }
+
+    /**
+     * Inserts a new tab for the given component, at the given index,
+     * represented by the given title and/or icon, either of which may
+     * be {@code null}.
+     *
+     * @param title the title to be displayed on the tab
+     * @param icon the icon to be displayed on the tab
+     * @param component the component to be displayed when this tab is clicked.
+     * @param tip the tooltip to be displayed for this tab
+     * @param index the position to insert this new tab
+     *       ({@code > 0 and <= getTabCount()})
+     *
+     * @throws IndexOutOfBoundsException if the index is out of range
+     *         ({@code < 0 or > getTabCount()})
+     *
+     * @see #addTab
+     * @see #removeTabAt
+     */
+    public void insertTab(String title, Icon icon, Component component, String tip, int index) {
+        int newIndex = index;
+
+        // If component already exists, remove corresponding
+        // tab so that new tab gets added correctly
+        // Note: we are allowing component=null because of compatibility,
+        // but we really should throw an exception because much of the
+        // rest of the JTabbedPane implementation isn't designed to deal
+        // with null components for tabs.
+        int removeIndex = indexOfComponent(component);
+        if (component != null && removeIndex != -1) {
+            removeTabAt(removeIndex);
+            if (newIndex > removeIndex) {
+                newIndex--;
+            }
+        }
+
+        int selectedIndex = getSelectedIndex();
+
+        pages.add(
+            newIndex,
+            new Page(this, title != null? title : "", icon, null, component, tip));
+
+
+        if (component != null) {
+            addImpl(component, null, -1);
+            component.setVisible(false);
+        } else {
+            firePropertyChange("indexForNullComponent", -1, index);
+        }
+
+        if (pages.size() == 1) {
+            setSelectedIndex(0);
+        }
+
+        if (selectedIndex >= newIndex) {
+            setSelectedIndexImpl(selectedIndex + 1, false);
+        }
+
+        if (!haveRegistered && tip != null) {
+            ToolTipManager.sharedInstance().registerComponent(this);
+            haveRegistered = true;
+        }
+
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    null, component);
+        }
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Adds a <code>component</code> and <code>tip</code>
+     * represented by a <code>title</code> and/or <code>icon</code>,
+     * either of which can be <code>null</code>.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param title the title to be displayed in this tab
+     * @param icon the icon to be displayed in this tab
+     * @param component the component to be displayed when this tab is clicked
+     * @param tip the tooltip to be displayed for this tab
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public void addTab(String title, Icon icon, Component component, String tip) {
+        insertTab(title, icon, component, tip, pages.size());
+    }
+
+    /**
+     * Adds a <code>component</code> represented by a <code>title</code>
+     * and/or <code>icon</code>, either of which can be <code>null</code>.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param title the title to be displayed in this tab
+     * @param icon the icon to be displayed in this tab
+     * @param component the component to be displayed when this tab is clicked
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public void addTab(String title, Icon icon, Component component) {
+        insertTab(title, icon, component, null, pages.size());
+    }
+
+    /**
+     * Adds a <code>component</code> represented by a <code>title</code>
+     * and no icon.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param title the title to be displayed in this tab
+     * @param component the component to be displayed when this tab is clicked
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public void addTab(String title, Component component) {
+        insertTab(title, null, component, null, pages.size());
+    }
+
+    /**
+     * Adds a <code>component</code> with a tab title defaulting to
+     * the name of the component which is the result of calling
+     * <code>component.getName</code>.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param component the component to be displayed when this tab is clicked
+     * @return the component
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public Component add(Component component) {
+        if (!(component instanceof UIResource)) {
+            addTab(component.getName(), component);
+        } else {
+            super.add(component);
+        }
+        return component;
+    }
+
+    /**
+     * Adds a <code>component</code> with the specified tab title.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param title the title to be displayed in this tab
+     * @param component the component to be displayed when this tab is clicked
+     * @return the component
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public Component add(String title, Component component) {
+        if (!(component instanceof UIResource)) {
+            addTab(title, component);
+        } else {
+            super.add(title, component);
+        }
+        return component;
+    }
+
+    /**
+     * Adds a <code>component</code> at the specified tab index with a tab
+     * title defaulting to the name of the component.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param component the component to be displayed when this tab is clicked
+     * @param index the position to insert this new tab
+     * @return the component
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public Component add(Component component, int index) {
+        if (!(component instanceof UIResource)) {
+            // Container.add() interprets -1 as "append", so convert
+            // the index appropriately to be handled by the vector
+            insertTab(component.getName(), null, component, null,
+                      index == -1? getTabCount() : index);
+        } else {
+            super.add(component, index);
+        }
+        return component;
+    }
+
+    /**
+     * Adds a <code>component</code> to the tabbed pane.
+     * If <code>constraints</code> is a <code>String</code> or an
+     * <code>Icon</code>, it will be used for the tab title,
+     * otherwise the component's name will be used as the tab title.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param component the component to be displayed when this tab is clicked
+     * @param constraints the object to be displayed in the tab
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public void add(Component component, Object constraints) {
+        if (!(component instanceof UIResource)) {
+            if (constraints instanceof String) {
+                addTab((String)constraints, component);
+            } else if (constraints instanceof Icon) {
+                addTab(null, (Icon)constraints, component);
+            } else {
+                add(component);
+            }
+        } else {
+            super.add(component, constraints);
+        }
+    }
+
+    /**
+     * Adds a <code>component</code> at the specified tab index.
+     * If <code>constraints</code> is a <code>String</code> or an
+     * <code>Icon</code>, it will be used for the tab title,
+     * otherwise the component's name will be used as the tab title.
+     * Cover method for <code>insertTab</code>.
+     *
+     * @param component the component to be displayed when this tab is clicked
+     * @param constraints the object to be displayed in the tab
+     * @param index the position to insert this new tab
+     *
+     * @see #insertTab
+     * @see #removeTabAt
+     */
+    public void add(Component component, Object constraints, int index) {
+        if (!(component instanceof UIResource)) {
+
+            Icon icon = constraints instanceof Icon? (Icon)constraints : null;
+            String title = constraints instanceof String? (String)constraints : null;
+            // Container.add() interprets -1 as "append", so convert
+            // the index appropriately to be handled by the vector
+            insertTab(title, icon, component, null, index == -1? getTabCount() : index);
+        } else {
+            super.add(component, constraints, index);
+        }
+    }
+
+    /**
+     * Removes the tab at <code>index</code>.
+     * After the component associated with <code>index</code> is removed,
+     * its visibility is reset to true to ensure it will be visible
+     * if added to other containers.
+     * @param index the index of the tab to be removed
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #addTab
+     * @see #insertTab
+     */
+    public void removeTabAt(int index) {
+        checkIndex(index);
+
+        Component component = getComponentAt(index);
+        boolean shouldChangeFocus = false;
+        int selected = getSelectedIndex();
+        String oldName = null;
+
+        /* if we're about to remove the visible component */
+        if (component == visComp) {
+            shouldChangeFocus = (SwingUtilities.findFocusOwner(visComp) != null);
+            visComp = null;
+        }
+
+        if (accessibleContext != null) {
+            /* if we're removing the selected page */
+            if (index == selected) {
+                /* fire an accessible notification that it's unselected */
+                pages.get(index).firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                    AccessibleState.SELECTED, null);
+
+                oldName = accessibleContext.getAccessibleName();
+            }
+
+            accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    component, null);
+        }
+
+        // Force the tabComponent to be cleaned up.
+        setTabComponentAt(index, null);
+        pages.remove(index);
+
+        // NOTE 4/15/2002 (joutwate):
+        // This fix is implemented using client properties since there is
+        // currently no IndexPropertyChangeEvent.  Once
+        // IndexPropertyChangeEvents have been added this code should be
+        // modified to use it.
+        putClientProperty("__index_to_remove__", Integer.valueOf(index));
+
+        /* if the selected tab is after the removal */
+        if (selected > index) {
+            setSelectedIndexImpl(selected - 1, false);
+
+        /* if the selected tab is the last tab */
+        } else if (selected >= getTabCount()) {
+            setSelectedIndexImpl(selected - 1, false);
+            Page newSelected = (selected != 0)
+                ? pages.get(selected - 1)
+                : null;
+
+            changeAccessibleSelection(null, oldName, newSelected);
+
+        /* selected index hasn't changed, but the associated tab has */
+        } else if (index == selected) {
+            fireStateChanged();
+            changeAccessibleSelection(null, oldName, pages.get(index));
+        }
+
+        // We can't assume the tab indices correspond to the
+        // container's children array indices, so make sure we
+        // remove the correct child!
+        if (component != null) {
+            Component components[] = getComponents();
+            for (int i = components.length; --i >= 0; ) {
+                if (components[i] == component) {
+                    super.remove(i);
+                    component.setVisible(true);
+                    break;
+                }
+            }
+        }
+
+        if (shouldChangeFocus) {
+            SwingUtilities2.tabbedPaneChangeFocusTo(getSelectedComponent());
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Removes the specified <code>Component</code> from the
+     * <code>JTabbedPane</code>. The method does nothing
+     * if the <code>component</code> is null.
+     *
+     * @param component the component to remove from the tabbedpane
+     * @see #addTab
+     * @see #removeTabAt
+     */
+    public void remove(Component component) {
+        int index = indexOfComponent(component);
+        if (index != -1) {
+            removeTabAt(index);
+        } else {
+            // Container#remove(comp) invokes Container#remove(int)
+            // so make sure JTabbedPane#remove(int) isn't called here
+            Component children[] = getComponents();
+            for (int i=0; i < children.length; i++) {
+                if (component == children[i]) {
+                    super.remove(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes the tab and component which corresponds to the specified index.
+     *
+     * @param index the index of the component to remove from the
+     *          <code>tabbedpane</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     * @see #addTab
+     * @see #removeTabAt
+     */
+    public void remove(int index) {
+        removeTabAt(index);
+    }
+
+    /**
+     * Removes all the tabs and their corresponding components
+     * from the <code>tabbedpane</code>.
+     *
+     * @see #addTab
+     * @see #removeTabAt
+     */
+    public void removeAll() {
+        setSelectedIndexImpl(-1, true);
+
+        int tabCount = getTabCount();
+        // We invoke removeTabAt for each tab, otherwise we may end up
+        // removing Components added by the UI.
+        while (tabCount-- > 0) {
+            removeTabAt(tabCount);
+        }
+    }
+
+    /**
+     * Returns the number of tabs in this <code>tabbedpane</code>.
+     *
+     * @return an integer specifying the number of tabbed pages
+     */
+    public int getTabCount() {
+        return pages.size();
+    }
+
+    /**
+     * Returns the number of tab runs currently used to display
+     * the tabs.
+     * @return an integer giving the number of rows if the
+     *          <code>tabPlacement</code>
+     *          is <code>TOP</code> or <code>BOTTOM</code>
+     *          and the number of columns if
+     *          <code>tabPlacement</code>
+     *          is <code>LEFT</code> or <code>RIGHT</code>,
+     *          or 0 if there is no UI set on this <code>tabbedpane</code>
+     */
+    public int getTabRunCount() {
+        if (ui != null) {
+            return ((TabbedPaneUI)ui).getTabRunCount(this);
+        }
+        return 0;
+    }
+
+
+// Getters for the Pages
+
+    /**
+     * Returns the tab title at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return the title at <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     * @see #setTitleAt
+     */
+    public String getTitleAt(int index) {
+        return pages.get(index).title;
+    }
+
+    /**
+     * Returns the tab icon at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return the icon at <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setIconAt
+     */
+    public Icon getIconAt(int index) {
+        return pages.get(index).icon;
+    }
+
+    /**
+     * Returns the tab disabled icon at <code>index</code>.
+     * If the tab disabled icon doesn't exist at <code>index</code>
+     * this will forward the call to the look and feel to construct
+     * an appropriate disabled Icon from the corresponding enabled
+     * Icon. Some look and feels might not render the disabled Icon,
+     * in which case it won't be created.
+     *
+     * @param index  the index of the item being queried
+     * @return the icon at <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setDisabledIconAt
+     */
+    public Icon getDisabledIconAt(int index) {
+        Page page = pages.get(index);
+        if (page.disabledIcon == null) {
+            page.disabledIcon = UIManager.getLookAndFeel().getDisabledIcon(this, page.icon);
+        }
+        return page.disabledIcon;
+    }
+
+    /**
+     * Returns the tab tooltip text at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return a string containing the tool tip text at <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setToolTipTextAt
+     * @since 1.3
+     */
+    public String getToolTipTextAt(int index) {
+        return pages.get(index).tip;
+    }
+
+    /**
+     * Returns the tab background color at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return the <code>Color</code> of the tab background at
+     *          <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setBackgroundAt
+     */
+    public Color getBackgroundAt(int index) {
+        return pages.get(index).getBackground();
+    }
+
+    /**
+     * Returns the tab foreground color at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return the <code>Color</code> of the tab foreground at
+     *          <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setForegroundAt
+     */
+    public Color getForegroundAt(int index) {
+        return pages.get(index).getForeground();
+    }
+
+    /**
+     * Returns whether or not the tab at <code>index</code> is
+     * currently enabled.
+     *
+     * @param index  the index of the item being queried
+     * @return true if the tab at <code>index</code> is enabled;
+     *          false otherwise
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setEnabledAt
+     */
+    public boolean isEnabledAt(int index) {
+        return pages.get(index).isEnabled();
+    }
+
+    /**
+     * Returns the component at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return the <code>Component</code> at <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setComponentAt
+     */
+    public Component getComponentAt(int index) {
+        return pages.get(index).component;
+    }
+
+    /**
+     * Returns the keyboard mnemonic for accessing the specified tab.
+     * The mnemonic is the key which when combined with the look and feel's
+     * mouseless modifier (usually Alt) will activate the specified
+     * tab.
+     *
+     * @since 1.4
+     * @param tabIndex the index of the tab that the mnemonic refers to
+     * @return the key code which represents the mnemonic;
+     *         -1 if a mnemonic is not specified for the tab
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            (<code>tabIndex</code> &lt; 0 ||
+     *              <code>tabIndex</code> &gt;= tab count)
+     * @see #setDisplayedMnemonicIndexAt(int,int)
+     * @see #setMnemonicAt(int,int)
+     */
+    public int getMnemonicAt(int tabIndex) {
+        checkIndex(tabIndex);
+
+        Page page = pages.get(tabIndex);
+        return page.getMnemonic();
+    }
+
+    /**
+     * Returns the character, as an index, that the look and feel should
+     * provide decoration for as representing the mnemonic character.
+     *
+     * @since 1.4
+     * @param tabIndex the index of the tab that the mnemonic refers to
+     * @return index representing mnemonic character if one exists;
+     *    otherwise returns -1
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            (<code>tabIndex</code> &lt; 0 ||
+     *              <code>tabIndex</code> &gt;= tab count)
+     * @see #setDisplayedMnemonicIndexAt(int,int)
+     * @see #setMnemonicAt(int,int)
+     */
+    public int getDisplayedMnemonicIndexAt(int tabIndex) {
+        checkIndex(tabIndex);
+
+        Page page = pages.get(tabIndex);
+        return page.getDisplayedMnemonicIndex();
+    }
+
+    /**
+     * Returns the tab bounds at <code>index</code>.  If the tab at
+     * this index is not currently visible in the UI, then returns
+     * <code>null</code>.
+     * If there is no UI set on this <code>tabbedpane</code>,
+     * then returns <code>null</code>.
+     *
+     * @param index the index to be queried
+     * @return a <code>Rectangle</code> containing the tab bounds at
+     *          <code>index</code>, or <code>null</code> if tab at
+     *          <code>index</code> is not currently visible in the UI,
+     *          or if there is no UI set on this <code>tabbedpane</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     */
+    public Rectangle getBoundsAt(int index) {
+        checkIndex(index);
+        if (ui != null) {
+            return ((TabbedPaneUI)ui).getTabBounds(this, index);
+        }
+        return null;
+    }
+
+
+// Setters for the Pages
+
+    /**
+     * Sets the title at <code>index</code> to <code>title</code> which
+     * can be <code>null</code>.
+     * The title is not shown if a tab component for this tab was specified.
+     * An internal exception is raised if there is no tab at that index.
+     *
+     * @param index the tab index where the title should be set
+     * @param title the title to be displayed in the tab
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #getTitleAt
+     * @see #setTabComponentAt
+     * @beaninfo
+     *    preferred: true
+     *    attribute: visualUpdate true
+     *  description: The title at the specified tab index.
+     */
+    public void setTitleAt(int index, String title) {
+        Page page = pages.get(index);
+        String oldTitle =page.title;
+        page.title = title;
+
+        if (oldTitle != title) {
+            firePropertyChange("indexForTitle", -1, index);
+        }
+        page.updateDisplayedMnemonicIndex();
+        if ((oldTitle != title) && (accessibleContext != null)) {
+            accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    oldTitle, title);
+        }
+        if (title == null || oldTitle == null ||
+            !title.equals(oldTitle)) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Sets the icon at <code>index</code> to <code>icon</code> which can be
+     * <code>null</code>. This does not set disabled icon at <code>icon</code>.
+     * If the new Icon is different than the current Icon and disabled icon
+     * is not explicitly set, the LookAndFeel will be asked to generate a disabled
+     * Icon. To explicitly set disabled icon, use <code>setDisableIconAt()</code>.
+     * The icon is not shown if a tab component for this tab was specified.
+     * An internal exception is raised if there is no tab at that index.
+     *
+     * @param index the tab index where the icon should be set
+     * @param icon the icon to be displayed in the tab
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setDisabledIconAt
+     * @see #getIconAt
+     * @see #getDisabledIconAt
+     * @see #setTabComponentAt
+     * @beaninfo
+     *    preferred: true
+     *    attribute: visualUpdate true
+     *  description: The icon at the specified tab index.
+     */
+    public void setIconAt(int index, Icon icon) {
+        Page page = pages.get(index);
+        Icon oldIcon = page.icon;
+        if (icon != oldIcon) {
+            page.icon = icon;
+
+            /* If the default icon has really changed and we had
+             * generated the disabled icon for this page, then
+             * clear the disabledIcon field of the page.
+             */
+            if (page.disabledIcon instanceof UIResource) {
+                page.disabledIcon = null;
+            }
+
+            // Fire the accessibility Visible data change
+            if (accessibleContext != null) {
+                accessibleContext.firePropertyChange(
+                        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                        oldIcon, icon);
+            }
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Sets the disabled icon at <code>index</code> to <code>icon</code>
+     * which can be <code>null</code>.
+     * An internal exception is raised if there is no tab at that index.
+     *
+     * @param index the tab index where the disabled icon should be set
+     * @param disabledIcon the icon to be displayed in the tab when disabled
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #getDisabledIconAt
+     * @beaninfo
+     *    preferred: true
+     *    attribute: visualUpdate true
+     *  description: The disabled icon at the specified tab index.
+     */
+    public void setDisabledIconAt(int index, Icon disabledIcon) {
+        Icon oldIcon = pages.get(index).disabledIcon;
+        pages.get(index).disabledIcon = disabledIcon;
+        if (disabledIcon != oldIcon && !isEnabledAt(index)) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Sets the tooltip text at <code>index</code> to <code>toolTipText</code>
+     * which can be <code>null</code>.
+     * An internal exception is raised if there is no tab at that index.
+     *
+     * @param index the tab index where the tooltip text should be set
+     * @param toolTipText the tooltip text to be displayed for the tab
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #getToolTipTextAt
+     * @beaninfo
+     *    preferred: true
+     *  description: The tooltip text at the specified tab index.
+     * @since 1.3
+     */
+    public void setToolTipTextAt(int index, String toolTipText) {
+        String oldToolTipText = pages.get(index).tip;
+        pages.get(index).tip = toolTipText;
+
+        if ((oldToolTipText != toolTipText) && (accessibleContext != null)) {
+            accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    oldToolTipText, toolTipText);
+        }
+        if (!haveRegistered && toolTipText != null) {
+            ToolTipManager.sharedInstance().registerComponent(this);
+            haveRegistered = true;
+        }
+    }
+
+    /**
+     * Sets the background color at <code>index</code> to
+     * <code>background</code>
+     * which can be <code>null</code>, in which case the tab's background color
+     * will default to the background color of the <code>tabbedpane</code>.
+     * An internal exception is raised if there is no tab at that index.
+     * <p>
+     * It is up to the look and feel to honor this property, some may
+     * choose to ignore it.
+     *
+     * @param index the tab index where the background should be set
+     * @param background the color to be displayed in the tab's background
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #getBackgroundAt
+     * @beaninfo
+     *    preferred: true
+     *    attribute: visualUpdate true
+     *  description: The background color at the specified tab index.
+     */
+    public void setBackgroundAt(int index, Color background) {
+        Color oldBg = pages.get(index).background;
+        pages.get(index).setBackground(background);
+        if (background == null || oldBg == null ||
+            !background.equals(oldBg)) {
+            Rectangle tabBounds = getBoundsAt(index);
+            if (tabBounds != null) {
+                repaint(tabBounds);
+            }
+        }
+    }
+
+    /**
+     * Sets the foreground color at <code>index</code> to
+     * <code>foreground</code> which can be
+     * <code>null</code>, in which case the tab's foreground color
+     * will default to the foreground color of this <code>tabbedpane</code>.
+     * An internal exception is raised if there is no tab at that index.
+     * <p>
+     * It is up to the look and feel to honor this property, some may
+     * choose to ignore it.
+     *
+     * @param index the tab index where the foreground should be set
+     * @param foreground the color to be displayed as the tab's foreground
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #getForegroundAt
+     * @beaninfo
+     *    preferred: true
+     *    attribute: visualUpdate true
+     *  description: The foreground color at the specified tab index.
+     */
+    public void setForegroundAt(int index, Color foreground) {
+        Color oldFg = pages.get(index).foreground;
+        pages.get(index).setForeground(foreground);
+        if (foreground == null || oldFg == null ||
+            !foreground.equals(oldFg)) {
+            Rectangle tabBounds = getBoundsAt(index);
+            if (tabBounds != null) {
+                repaint(tabBounds);
+            }
+        }
+    }
+
+    /**
+     * Sets whether or not the tab at <code>index</code> is enabled.
+     * An internal exception is raised if there is no tab at that index.
+     *
+     * @param index the tab index which should be enabled/disabled
+     * @param enabled whether or not the tab should be enabled
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #isEnabledAt
+     */
+    public void setEnabledAt(int index, boolean enabled) {
+        boolean oldEnabled = pages.get(index).isEnabled();
+        pages.get(index).setEnabled(enabled);
+        if (enabled != oldEnabled) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Sets the component at <code>index</code> to <code>component</code>.
+     * An internal exception is raised if there is no tab at that index.
+     *
+     * @param index the tab index where this component is being placed
+     * @param component the component for the tab
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #getComponentAt
+     * @beaninfo
+     *    attribute: visualUpdate true
+     *  description: The component at the specified tab index.
+     */
+    public void setComponentAt(int index, Component component) {
+        Page page = pages.get(index);
+        if (component != page.component) {
+            boolean shouldChangeFocus = false;
+
+            if (page.component != null) {
+                shouldChangeFocus =
+                    (SwingUtilities.findFocusOwner(page.component) != null);
+
+                // REMIND(aim): this is really silly;
+                // why not if (page.component.getParent() == this) remove(component)
+                synchronized(getTreeLock()) {
+                    int count = getComponentCount();
+                    Component children[] = getComponents();
+                    for (int i = 0; i < count; i++) {
+                        if (children[i] == page.component) {
+                            super.remove(i);
+                        }
+                    }
+                }
+            }
+
+            page.component = component;
+            boolean selectedPage = (getSelectedIndex() == index);
+
+            if (selectedPage) {
+                this.visComp = component;
+            }
+
+            if (component != null) {
+                component.setVisible(selectedPage);
+                addImpl(component, null, -1);
+
+                if (shouldChangeFocus) {
+                    SwingUtilities2.tabbedPaneChangeFocusTo(component);
+                }
+            } else {
+                repaint();
+            }
+
+            revalidate();
+        }
+    }
+
+    /**
+     * Provides a hint to the look and feel as to which character in the
+     * text should be decorated to represent the mnemonic. Not all look and
+     * feels may support this. A value of -1 indicates either there is
+     * no mnemonic for this tab, or you do not wish the mnemonic to be
+     * displayed for this tab.
+     * <p>
+     * The value of this is updated as the properties relating to the
+     * mnemonic change (such as the mnemonic itself, the text...).
+     * You should only ever have to call this if
+     * you do not wish the default character to be underlined. For example, if
+     * the text at tab index 3 was 'Apple Price', with a mnemonic of 'p',
+     * and you wanted the 'P'
+     * to be decorated, as 'Apple <u>P</u>rice', you would have to invoke
+     * <code>setDisplayedMnemonicIndex(3, 6)</code> after invoking
+     * <code>setMnemonicAt(3, KeyEvent.VK_P)</code>.
+     * <p>Note that it is the programmer's responsibility to ensure
+     * that each tab has a unique mnemonic or unpredictable results may
+     * occur.
+     *
+     * @since 1.4
+     * @param tabIndex the index of the tab that the mnemonic refers to
+     * @param mnemonicIndex index into the <code>String</code> to underline
+     * @exception IndexOutOfBoundsException if <code>tabIndex</code> is
+     *            out of range ({@code tabIndex < 0 || tabIndex >= tab
+     *            count})
+     * @exception IllegalArgumentException will be thrown if
+     *            <code>mnemonicIndex</code> is &gt;= length of the tab
+     *            title , or &lt; -1
+     * @see #setMnemonicAt(int,int)
+     * @see #getDisplayedMnemonicIndexAt(int)
+     *
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: the index into the String to draw the keyboard character
+     *               mnemonic at
+     */
+    public void setDisplayedMnemonicIndexAt(int tabIndex, int mnemonicIndex) {
+        checkIndex(tabIndex);
+
+        Page page = pages.get(tabIndex);
+
+        page.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+
+    /**
+     * Sets the keyboard mnemonic for accessing the specified tab.
+     * The mnemonic is the key which when combined with the look and feel's
+     * mouseless modifier (usually Alt) will activate the specified
+     * tab.
+     * <p>
+     * A mnemonic must correspond to a single key on the keyboard
+     * and should be specified using one of the <code>VK_XXX</code>
+     * keycodes defined in <code>java.awt.event.KeyEvent</code>
+     * or one of the extended keycodes obtained through
+     * <code>java.awt.event.KeyEvent.getExtendedKeyCodeForChar</code>.
+     * Mnemonics are case-insensitive, therefore a key event
+     * with the corresponding keycode would cause the button to be
+     * activated whether or not the Shift modifier was pressed.
+     * <p>
+     * This will update the displayed mnemonic property for the specified
+     * tab.
+     *
+     * @since 1.4
+     * @param tabIndex the index of the tab that the mnemonic refers to
+     * @param mnemonic the key code which represents the mnemonic
+     * @exception IndexOutOfBoundsException if <code>tabIndex</code> is out
+     *            of range ({@code tabIndex < 0 || tabIndex >= tab count})
+     * @see #getMnemonicAt(int)
+     * @see #setDisplayedMnemonicIndexAt(int,int)
+     *
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The keyboard mnenmonic, as a KeyEvent VK constant,
+     *               for the specified tab
+     */
+    public void setMnemonicAt(int tabIndex, int mnemonic) {
+        checkIndex(tabIndex);
+
+        Page page = pages.get(tabIndex);
+        page.setMnemonic(mnemonic);
+
+        firePropertyChange("mnemonicAt", null, null);
+    }
+
+// end of Page setters
+
+    /**
+     * Returns the first tab index with a given <code>title</code>,  or
+     * -1 if no tab has this title.
+     *
+     * @param title the title for the tab
+     * @return the first tab index which matches <code>title</code>, or
+     *          -1 if no tab has this title
+     */
+    public int indexOfTab(String title) {
+        for(int i = 0; i < getTabCount(); i++) {
+            if (getTitleAt(i).equals(title == null? "" : title)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the first tab index with a given <code>icon</code>,
+     * or -1 if no tab has this icon.
+     *
+     * @param icon the icon for the tab
+     * @return the first tab index which matches <code>icon</code>,
+     *          or -1 if no tab has this icon
+     */
+    public int indexOfTab(Icon icon) {
+        for(int i = 0; i < getTabCount(); i++) {
+            Icon tabIcon = getIconAt(i);
+            if ((tabIcon != null && tabIcon.equals(icon)) ||
+                (tabIcon == null && tabIcon == icon)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the index of the tab for the specified component.
+     * Returns -1 if there is no tab for this component.
+     *
+     * @param component the component for the tab
+     * @return the first tab which matches this component, or -1
+     *          if there is no tab for this component
+     */
+    public int indexOfComponent(Component component) {
+        for(int i = 0; i < getTabCount(); i++) {
+            Component c = getComponentAt(i);
+            if ((c != null && c.equals(component)) ||
+                (c == null && c == component)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the tab index corresponding to the tab whose bounds
+     * intersect the specified location.  Returns -1 if no tab
+     * intersects the location.
+     *
+     * @param x the x location relative to this tabbedpane
+     * @param y the y location relative to this tabbedpane
+     * @return the tab index which intersects the location, or
+     *         -1 if no tab intersects the location
+     * @since 1.4
+     */
+    public int indexAtLocation(int x, int y) {
+        if (ui != null) {
+            return ((TabbedPaneUI)ui).tabForCoordinate(this, x, y);
+        }
+        return -1;
+    }
+
+
+    /**
+     * Returns the tooltip text for the component determined by the
+     * mouse event location.
+     *
+     * @param event  the <code>MouseEvent</code> that tells where the
+     *          cursor is lingering
+     * @return the <code>String</code> containing the tooltip text
+     */
+    public String getToolTipText(MouseEvent event) {
+        if (ui != null) {
+            int index = ((TabbedPaneUI)ui).tabForCoordinate(this, event.getX(), event.getY());
+
+            if (index != -1) {
+                return pages.get(index).tip;
+            }
+        }
+        return super.getToolTipText(event);
+    }
+
+    private void checkIndex(int index) {
+        if (index < 0 || index >= pages.size()) {
+            throw new IndexOutOfBoundsException("Index: "+index+", Tab count: "+pages.size());
+        }
+    }
+
+
+    /**
+     * See <code>readObject</code> and <code>writeObject</code> in
+     * <code>JComponent</code> for more
+     * information about serialization in Swing.
+     */
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        if (getUIClassID().equals(uiClassID)) {
+            byte count = JComponent.getWriteObjCounter(this);
+            JComponent.setWriteObjCounter(this, --count);
+            if (count == 0 && ui != null) {
+                ui.installUI(this);
+            }
+        }
+    }
+
+    /* Called from the <code>JComponent</code>'s
+     * <code>EnableSerializationFocusListener</code> to
+     * do any Swing-specific pre-serialization configuration.
+     */
+    void compWriteObjectNotify() {
+        super.compWriteObjectNotify();
+        // If ToolTipText != null, then the tooltip has already been
+        // unregistered by JComponent.compWriteObjectNotify()
+        if (getToolTipText() == null && haveRegistered) {
+            ToolTipManager.sharedInstance().unregisterComponent(this);
+        }
+    }
+
+    /**
+     * See <code>readObject</code> and <code>writeObject</code> in
+     * <code>JComponent</code> for more
+     * information about serialization in Swing.
+     */
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException
+    {
+        s.defaultReadObject();
+        if ((ui != null) && (getUIClassID().equals(uiClassID))) {
+            ui.installUI(this);
+        }
+        // If ToolTipText != null, then the tooltip has already been
+        // registered by JComponent.readObject()
+        if (getToolTipText() == null && haveRegistered) {
+            ToolTipManager.sharedInstance().registerComponent(this);
+        }
+    }
+
+
+    /**
+     * Returns a string representation of this <code>JTabbedPane</code>.
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this JTabbedPane.
+     */
+    protected String paramString() {
+        String tabPlacementString;
+        if (tabPlacement == TOP) {
+            tabPlacementString = "TOP";
+        } else if (tabPlacement == BOTTOM) {
+            tabPlacementString = "BOTTOM";
+        } else if (tabPlacement == LEFT) {
+            tabPlacementString = "LEFT";
+        } else if (tabPlacement == RIGHT) {
+            tabPlacementString = "RIGHT";
+        } else tabPlacementString = "";
+        String haveRegisteredString = (haveRegistered ?
+                                       "true" : "false");
+
+        return super.paramString() +
+        ",haveRegistered=" + haveRegisteredString +
+        ",tabPlacement=" + tabPlacementString;
+    }
+
+/////////////////
+// Accessibility support
+////////////////
+
+    /**
+     * Gets the AccessibleContext associated with this JTabbedPane.
+     * For tabbed panes, the AccessibleContext takes the form of an
+     * AccessibleJTabbedPane.
+     * A new AccessibleJTabbedPane instance is created if necessary.
+     *
+     * @return an AccessibleJTabbedPane that serves as the
+     *         AccessibleContext of this JTabbedPane
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJTabbedPane();
+
+            // initialize AccessibleContext for the existing pages
+            int count = getTabCount();
+            for (int i = 0; i < count; i++) {
+                pages.get(i).initAccessibleContext();
+            }
+        }
+        return accessibleContext;
+    }
+
+    /**
+     * This class implements accessibility support for the
+     * <code>JTabbedPane</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to tabbed pane user-interface
+     * elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class AccessibleJTabbedPane extends AccessibleJComponent
+        implements AccessibleSelection, ChangeListener {
+
+        /**
+         * Returns the accessible name of this object, or {@code null} if
+         * there is no accessible name.
+         *
+         * @return the accessible name of this object, nor {@code null}.
+         * @since 1.6
+         */
+        public String getAccessibleName() {
+            if (accessibleName != null) {
+                return accessibleName;
+            }
+
+            String cp = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
+
+            if (cp != null) {
+                return cp;
+            }
+
+            int index = getSelectedIndex();
+
+            if (index >= 0) {
+                return pages.get(index).getAccessibleName();
+            }
+
+            return super.getAccessibleName();
+        }
+
+        /**
+         *  Constructs an AccessibleJTabbedPane
+         */
+        public AccessibleJTabbedPane() {
+            super();
+            JTabbedPane.this.model.addChangeListener(this);
+        }
+
+        public void stateChanged(ChangeEvent e) {
+            Object o = e.getSource();
+            firePropertyChange(AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY,
+                               null, o);
+        }
+
+        /**
+         * Get the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of
+         *          the object
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.PAGE_TAB_LIST;
+        }
+
+        /**
+         * Returns the number of accessible children in the object.
+         *
+         * @return the number of accessible children in the object.
+         */
+        public int getAccessibleChildrenCount() {
+            return getTabCount();
+        }
+
+        /**
+         * Return the specified Accessible child of the object.
+         *
+         * @param i zero-based index of child
+         * @return the Accessible child of the object
+         * @exception IllegalArgumentException if index is out of bounds
+         */
+        public Accessible getAccessibleChild(int i) {
+            if (i < 0 || i >= getTabCount()) {
+                return null;
+            }
+            return pages.get(i);
+        }
+
+        /**
+         * Gets the <code>AccessibleSelection</code> associated with
+         * this object.  In the implementation of the Java
+         * Accessibility API for this class,
+         * returns this object, which is responsible for implementing the
+         * <code>AccessibleSelection</code> interface on behalf of itself.
+         *
+         * @return this object
+         */
+        public AccessibleSelection getAccessibleSelection() {
+           return this;
+        }
+
+        /**
+         * Returns the <code>Accessible</code> child contained at
+         * the local coordinate <code>Point</code>, if one exists.
+         * Otherwise returns the currently selected tab.
+         *
+         * @return the <code>Accessible</code> at the specified
+         *    location, if it exists
+         */
+        public Accessible getAccessibleAt(Point p) {
+            int tab = ((TabbedPaneUI) ui).tabForCoordinate(JTabbedPane.this,
+                                                           p.x, p.y);
+            if (tab == -1) {
+                tab = getSelectedIndex();
+            }
+            return getAccessibleChild(tab);
+        }
+
+        public int getAccessibleSelectionCount() {
+            return 1;
+        }
+
+        public Accessible getAccessibleSelection(int i) {
+            int index = getSelectedIndex();
+            if (index == -1) {
+                return null;
+            }
+            return pages.get(index);
+        }
+
+        public boolean isAccessibleChildSelected(int i) {
+            return (i == getSelectedIndex());
+        }
+
+        public void addAccessibleSelection(int i) {
+           setSelectedIndex(i);
+        }
+
+        public void removeAccessibleSelection(int i) {
+           // can't do
+        }
+
+        public void clearAccessibleSelection() {
+           // can't do
+        }
+
+        public void selectAllAccessibleSelection() {
+           // can't do
+        }
+    }
+
+    private class Page extends AccessibleContext
+        implements Serializable, Accessible, AccessibleComponent {
+        String title;
+        Color background;
+        Color foreground;
+        Icon icon;
+        Icon disabledIcon;
+        JTabbedPane parent;
+        Component component;
+        String tip;
+        boolean enabled = true;
+        boolean needsUIUpdate;
+        int mnemonic = -1;
+        int mnemonicIndex = -1;
+        Component tabComponent;
+
+        Page(JTabbedPane parent,
+             String title, Icon icon, Icon disabledIcon, Component component, String tip) {
+            this.title = title;
+            this.icon = icon;
+            this.disabledIcon = disabledIcon;
+            this.parent = parent;
+            this.setAccessibleParent(parent);
+            this.component = component;
+            this.tip = tip;
+
+            initAccessibleContext();
+        }
+
+        /*
+         * initializes the AccessibleContext for the page
+         */
+        void initAccessibleContext() {
+            if (JTabbedPane.this.accessibleContext != null &&
+                component instanceof Accessible) {
+                /*
+                 * Do initialization if the AccessibleJTabbedPane
+                 * has been instantiated. We do not want to load
+                 * Accessibility classes unnecessarily.
+                 */
+                AccessibleContext ac;
+                ac = component.getAccessibleContext();
+                if (ac != null) {
+                    ac.setAccessibleParent(this);
+                }
+            }
+        }
+
+        void setMnemonic(int mnemonic) {
+            this.mnemonic = mnemonic;
+            updateDisplayedMnemonicIndex();
+        }
+
+        int getMnemonic() {
+            return mnemonic;
+        }
+
+        /*
+         * Sets the page displayed mnemonic index
+         */
+        void setDisplayedMnemonicIndex(int mnemonicIndex) {
+            if (this.mnemonicIndex != mnemonicIndex) {
+                if (mnemonicIndex != -1 && (title == null ||
+                        mnemonicIndex < 0 ||
+                        mnemonicIndex >= title.length())) {
+                    throw new IllegalArgumentException(
+                                "Invalid mnemonic index: " + mnemonicIndex);
+                }
+                this.mnemonicIndex = mnemonicIndex;
+                JTabbedPane.this.firePropertyChange("displayedMnemonicIndexAt",
+                                                    null, null);
+            }
+        }
+
+        /*
+         * Returns the page displayed mnemonic index
+         */
+        int getDisplayedMnemonicIndex() {
+            return this.mnemonicIndex;
+        }
+
+        void updateDisplayedMnemonicIndex() {
+            setDisplayedMnemonicIndex(
+                SwingUtilities.findDisplayedMnemonicIndex(title, mnemonic));
+        }
+
+        /////////////////
+        // Accessibility support
+        ////////////////
+
+        public AccessibleContext getAccessibleContext() {
+            return this;
+        }
+
+
+        // AccessibleContext methods
+
+        public String getAccessibleName() {
+            if (accessibleName != null) {
+                return accessibleName;
+            } else if (title != null) {
+                return title;
+            }
+            return null;
+        }
+
+        public String getAccessibleDescription() {
+            if (accessibleDescription != null) {
+                return accessibleDescription;
+            } else if (tip != null) {
+                return tip;
+            }
+            return null;
+        }
+
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.PAGE_TAB;
+        }
+
+        public AccessibleStateSet getAccessibleStateSet() {
+            AccessibleStateSet states;
+            states = parent.getAccessibleContext().getAccessibleStateSet();
+            states.add(AccessibleState.SELECTABLE);
+            int i = parent.indexOfTab(title);
+            if (i == parent.getSelectedIndex()) {
+                states.add(AccessibleState.SELECTED);
+            }
+            return states;
+        }
+
+        public int getAccessibleIndexInParent() {
+            return parent.indexOfTab(title);
+        }
+
+        public int getAccessibleChildrenCount() {
+            if (component instanceof Accessible) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        public Accessible getAccessibleChild(int i) {
+            if (component instanceof Accessible) {
+                return (Accessible) component;
+            } else {
+                return null;
+            }
+        }
+
+        public Locale getLocale() {
+            return parent.getLocale();
+        }
+
+        public AccessibleComponent getAccessibleComponent() {
+            return this;
+        }
+
+
+        // AccessibleComponent methods
+
+        public Color getBackground() {
+            return background != null? background : parent.getBackground();
+        }
+
+        public void setBackground(Color c) {
+            background = c;
+        }
+
+        public Color getForeground() {
+            return foreground != null? foreground : parent.getForeground();
+        }
+
+        public void setForeground(Color c) {
+            foreground = c;
+        }
+
+        public Cursor getCursor() {
+            return parent.getCursor();
+        }
+
+        public void setCursor(Cursor c) {
+            parent.setCursor(c);
+        }
+
+        public Font getFont() {
+            return parent.getFont();
+        }
+
+        public void setFont(Font f) {
+            parent.setFont(f);
+        }
+
+        public FontMetrics getFontMetrics(Font f) {
+            return parent.getFontMetrics(f);
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean b) {
+            enabled = b;
+        }
+
+        public boolean isVisible() {
+            return parent.isVisible();
+        }
+
+        public void setVisible(boolean b) {
+            parent.setVisible(b);
+        }
+
+        public boolean isShowing() {
+            return parent.isShowing();
+        }
+
+        public boolean contains(Point p) {
+            Rectangle r = getBounds();
+            return r.contains(p);
+        }
+
+        public Point getLocationOnScreen() {
+             Point parentLocation = parent.getLocationOnScreen();
+             Point componentLocation = getLocation();
+             componentLocation.translate(parentLocation.x, parentLocation.y);
+             return componentLocation;
+        }
+
+        public Point getLocation() {
+             Rectangle r = getBounds();
+             return new Point(r.x, r.y);
+        }
+
+        public void setLocation(Point p) {
+            // do nothing
+        }
+
+        public Rectangle getBounds() {
+            return parent.getUI().getTabBounds(parent,
+                                               parent.indexOfTab(title));
+        }
+
+        public void setBounds(Rectangle r) {
+            // do nothing
+        }
+
+        public Dimension getSize() {
+            Rectangle r = getBounds();
+            return new Dimension(r.width, r.height);
+        }
+
+        public void setSize(Dimension d) {
+            // do nothing
+        }
+
+        public Accessible getAccessibleAt(Point p) {
+            if (component instanceof Accessible) {
+                return (Accessible) component;
+            } else {
+                return null;
+            }
+        }
+
+        public boolean isFocusTraversable() {
+            return false;
+        }
+
+        public void requestFocus() {
+            // do nothing
+        }
+
+        public void addFocusListener(FocusListener l) {
+            // do nothing
+        }
+
+        public void removeFocusListener(FocusListener l) {
+            // do nothing
+        }
+
+        // TIGER - 4732339
+        /**
+         * Returns an AccessibleIcon
+         *
+         * @return the enabled icon if one exists and the page
+         * is enabled. Otherwise, returns the disabled icon if
+         * one exists and the page is disabled.  Otherwise, null
+         * is returned.
+         */
+        public AccessibleIcon [] getAccessibleIcon() {
+            AccessibleIcon accessibleIcon = null;
+            if (enabled && icon instanceof ImageIcon) {
+                AccessibleContext ac =
+                    ((ImageIcon)icon).getAccessibleContext();
+                accessibleIcon = (AccessibleIcon)ac;
+            } else if (!enabled && disabledIcon instanceof ImageIcon) {
+                AccessibleContext ac =
+                    ((ImageIcon)disabledIcon).getAccessibleContext();
+                accessibleIcon = (AccessibleIcon)ac;
+            }
+            if (accessibleIcon != null) {
+                AccessibleIcon [] returnIcons = new AccessibleIcon[1];
+                returnIcons[0] = accessibleIcon;
+                return returnIcons;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+    * Sets the component that is responsible for rendering the
+    * title for the specified tab.  A null value means
+    * <code>JTabbedPane</code> will render the title and/or icon for
+    * the specified tab.  A non-null value means the component will
+    * render the title and <code>JTabbedPane</code> will not render
+    * the title and/or icon.
+    * <p>
+    * Note: The component must not be one that the developer has
+    *       already added to the tabbed pane.
+    *
+    * @param index the tab index where the component should be set
+    * @param component the component to render the title for the
+    *                  specified tab
+    * @exception IndexOutOfBoundsException if index is out of range
+    *            {@code (index < 0 || index >= tab count)}
+    * @exception IllegalArgumentException if component has already been
+    *            added to this <code>JTabbedPane</code>
+    *
+    * @see #getTabComponentAt
+    * @beaninfo
+    *    preferred: true
+    *    attribute: visualUpdate true
+    *  description: The tab component at the specified tab index.
+    * @since 1.6
+    */
+    public void setTabComponentAt(int index, Component component) {
+        if (component != null && indexOfComponent(component) != -1) {
+            throw new IllegalArgumentException("Component is already added to this JTabbedPane");
+        }
+        Component oldValue = getTabComponentAt(index);
+        if (component != oldValue) {
+            int tabComponentIndex = indexOfTabComponent(component);
+            if (tabComponentIndex != -1) {
+                setTabComponentAt(tabComponentIndex, null);
+            }
+            pages.get(index).tabComponent = component;
+            firePropertyChange("indexForTabComponent", -1, index);
+        }
+    }
+
+    /**
+     * Returns the tab component at <code>index</code>.
+     *
+     * @param index  the index of the item being queried
+     * @return the tab component at <code>index</code>
+     * @exception IndexOutOfBoundsException if index is out of range
+     *            {@code (index < 0 || index >= tab count)}
+     *
+     * @see #setTabComponentAt
+     * @since 1.6
+     */
+    public Component getTabComponentAt(int index) {
+        return pages.get(index).tabComponent;
+    }
+
+    /**
+     * Returns the index of the tab for the specified tab component.
+     * Returns -1 if there is no tab for this tab component.
+     *
+     * @param tabComponent the tab component for the tab
+     * @return the first tab which matches this tab component, or -1
+     *          if there is no tab for this tab component
+     * @see #setTabComponentAt
+     * @see #getTabComponentAt
+     * @since 1.6
+     */
+     public int indexOfTabComponent(Component tabComponent) {
+        for(int i = 0; i < getTabCount(); i++) {
+            Component c = getTabComponentAt(i);
+            if (c == tabComponent) {
+                return i;
+            }
+        }
+        return -1;
+    }
+}

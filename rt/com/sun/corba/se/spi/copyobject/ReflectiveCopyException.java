@@ -1,48 +1,42 @@
-/*    */ package com.sun.corba.se.spi.copyobject;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ReflectiveCopyException
-/*    */   extends Exception
-/*    */ {
-/*    */   public ReflectiveCopyException() {}
-/*    */   
-/*    */   public ReflectiveCopyException(String paramString) {
-/* 35 */     super(paramString);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public ReflectiveCopyException(String paramString, Throwable paramThrowable) {
-/* 40 */     super(paramString, paramThrowable);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\copyobject\ReflectiveCopyException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.spi.copyobject ;
+
+public class ReflectiveCopyException extends Exception {
+    public ReflectiveCopyException()
+    {
+        super() ;
+    }
+
+    public ReflectiveCopyException( String msg )
+    {
+        super( msg ) ;
+    }
+
+    public ReflectiveCopyException( String msg, Throwable t )
+    {
+        super( msg, t ) ;
+    }
+}

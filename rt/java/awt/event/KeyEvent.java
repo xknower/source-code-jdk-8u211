@@ -1,1706 +1,1699 @@
-/*      */ package java.awt.event;
-/*      */ 
-/*      */ import java.awt.Component;
-/*      */ import java.awt.GraphicsEnvironment;
-/*      */ import java.awt.Toolkit;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import sun.awt.AWTAccessor;
-/*      */ import sun.awt.ExtendedKeyCodes;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class KeyEvent
-/*      */   extends InputEvent
-/*      */ {
-/*      */   private boolean isProxyActive = false;
-/*      */   public static final int KEY_FIRST = 400;
-/*      */   public static final int KEY_LAST = 402;
-/*      */   public static final int KEY_TYPED = 400;
-/*      */   public static final int KEY_PRESSED = 401;
-/*      */   public static final int KEY_RELEASED = 402;
-/*      */   public static final int VK_ENTER = 10;
-/*      */   public static final int VK_BACK_SPACE = 8;
-/*      */   public static final int VK_TAB = 9;
-/*      */   public static final int VK_CANCEL = 3;
-/*      */   public static final int VK_CLEAR = 12;
-/*      */   public static final int VK_SHIFT = 16;
-/*      */   public static final int VK_CONTROL = 17;
-/*      */   public static final int VK_ALT = 18;
-/*      */   public static final int VK_PAUSE = 19;
-/*      */   public static final int VK_CAPS_LOCK = 20;
-/*      */   public static final int VK_ESCAPE = 27;
-/*      */   public static final int VK_SPACE = 32;
-/*      */   public static final int VK_PAGE_UP = 33;
-/*      */   public static final int VK_PAGE_DOWN = 34;
-/*      */   public static final int VK_END = 35;
-/*      */   public static final int VK_HOME = 36;
-/*      */   public static final int VK_LEFT = 37;
-/*      */   public static final int VK_UP = 38;
-/*      */   public static final int VK_RIGHT = 39;
-/*      */   public static final int VK_DOWN = 40;
-/*      */   public static final int VK_COMMA = 44;
-/*      */   public static final int VK_MINUS = 45;
-/*      */   public static final int VK_PERIOD = 46;
-/*      */   public static final int VK_SLASH = 47;
-/*      */   public static final int VK_0 = 48;
-/*      */   public static final int VK_1 = 49;
-/*      */   public static final int VK_2 = 50;
-/*      */   public static final int VK_3 = 51;
-/*      */   public static final int VK_4 = 52;
-/*      */   public static final int VK_5 = 53;
-/*      */   public static final int VK_6 = 54;
-/*      */   public static final int VK_7 = 55;
-/*      */   public static final int VK_8 = 56;
-/*      */   public static final int VK_9 = 57;
-/*      */   public static final int VK_SEMICOLON = 59;
-/*      */   public static final int VK_EQUALS = 61;
-/*      */   public static final int VK_A = 65;
-/*      */   public static final int VK_B = 66;
-/*      */   public static final int VK_C = 67;
-/*      */   public static final int VK_D = 68;
-/*      */   public static final int VK_E = 69;
-/*      */   public static final int VK_F = 70;
-/*      */   public static final int VK_G = 71;
-/*      */   public static final int VK_H = 72;
-/*      */   public static final int VK_I = 73;
-/*      */   public static final int VK_J = 74;
-/*      */   public static final int VK_K = 75;
-/*      */   public static final int VK_L = 76;
-/*      */   public static final int VK_M = 77;
-/*      */   public static final int VK_N = 78;
-/*      */   public static final int VK_O = 79;
-/*      */   public static final int VK_P = 80;
-/*      */   public static final int VK_Q = 81;
-/*      */   public static final int VK_R = 82;
-/*      */   public static final int VK_S = 83;
-/*      */   public static final int VK_T = 84;
-/*      */   public static final int VK_U = 85;
-/*      */   public static final int VK_V = 86;
-/*      */   public static final int VK_W = 87;
-/*      */   public static final int VK_X = 88;
-/*      */   public static final int VK_Y = 89;
-/*      */   public static final int VK_Z = 90;
-/*      */   public static final int VK_OPEN_BRACKET = 91;
-/*      */   public static final int VK_BACK_SLASH = 92;
-/*      */   public static final int VK_CLOSE_BRACKET = 93;
-/*      */   public static final int VK_NUMPAD0 = 96;
-/*      */   public static final int VK_NUMPAD1 = 97;
-/*      */   public static final int VK_NUMPAD2 = 98;
-/*      */   public static final int VK_NUMPAD3 = 99;
-/*      */   public static final int VK_NUMPAD4 = 100;
-/*      */   public static final int VK_NUMPAD5 = 101;
-/*      */   public static final int VK_NUMPAD6 = 102;
-/*      */   public static final int VK_NUMPAD7 = 103;
-/*      */   public static final int VK_NUMPAD8 = 104;
-/*      */   public static final int VK_NUMPAD9 = 105;
-/*      */   public static final int VK_MULTIPLY = 106;
-/*      */   public static final int VK_ADD = 107;
-/*      */   public static final int VK_SEPARATER = 108;
-/*      */   public static final int VK_SEPARATOR = 108;
-/*      */   public static final int VK_SUBTRACT = 109;
-/*      */   public static final int VK_DECIMAL = 110;
-/*      */   public static final int VK_DIVIDE = 111;
-/*      */   public static final int VK_DELETE = 127;
-/*      */   public static final int VK_NUM_LOCK = 144;
-/*      */   public static final int VK_SCROLL_LOCK = 145;
-/*      */   public static final int VK_F1 = 112;
-/*      */   public static final int VK_F2 = 113;
-/*      */   public static final int VK_F3 = 114;
-/*      */   public static final int VK_F4 = 115;
-/*      */   public static final int VK_F5 = 116;
-/*      */   public static final int VK_F6 = 117;
-/*      */   public static final int VK_F7 = 118;
-/*      */   public static final int VK_F8 = 119;
-/*      */   public static final int VK_F9 = 120;
-/*      */   public static final int VK_F10 = 121;
-/*      */   public static final int VK_F11 = 122;
-/*      */   public static final int VK_F12 = 123;
-/*      */   public static final int VK_F13 = 61440;
-/*      */   public static final int VK_F14 = 61441;
-/*      */   public static final int VK_F15 = 61442;
-/*      */   public static final int VK_F16 = 61443;
-/*      */   public static final int VK_F17 = 61444;
-/*      */   public static final int VK_F18 = 61445;
-/*      */   public static final int VK_F19 = 61446;
-/*      */   public static final int VK_F20 = 61447;
-/*      */   public static final int VK_F21 = 61448;
-/*      */   public static final int VK_F22 = 61449;
-/*      */   public static final int VK_F23 = 61450;
-/*      */   public static final int VK_F24 = 61451;
-/*      */   public static final int VK_PRINTSCREEN = 154;
-/*      */   public static final int VK_INSERT = 155;
-/*      */   public static final int VK_HELP = 156;
-/*      */   public static final int VK_META = 157;
-/*      */   public static final int VK_BACK_QUOTE = 192;
-/*      */   public static final int VK_QUOTE = 222;
-/*      */   public static final int VK_KP_UP = 224;
-/*      */   public static final int VK_KP_DOWN = 225;
-/*      */   public static final int VK_KP_LEFT = 226;
-/*      */   public static final int VK_KP_RIGHT = 227;
-/*      */   public static final int VK_DEAD_GRAVE = 128;
-/*      */   public static final int VK_DEAD_ACUTE = 129;
-/*      */   public static final int VK_DEAD_CIRCUMFLEX = 130;
-/*      */   public static final int VK_DEAD_TILDE = 131;
-/*      */   public static final int VK_DEAD_MACRON = 132;
-/*      */   public static final int VK_DEAD_BREVE = 133;
-/*      */   public static final int VK_DEAD_ABOVEDOT = 134;
-/*      */   public static final int VK_DEAD_DIAERESIS = 135;
-/*      */   public static final int VK_DEAD_ABOVERING = 136;
-/*      */   public static final int VK_DEAD_DOUBLEACUTE = 137;
-/*      */   public static final int VK_DEAD_CARON = 138;
-/*      */   public static final int VK_DEAD_CEDILLA = 139;
-/*      */   public static final int VK_DEAD_OGONEK = 140;
-/*      */   public static final int VK_DEAD_IOTA = 141;
-/*      */   public static final int VK_DEAD_VOICED_SOUND = 142;
-/*      */   public static final int VK_DEAD_SEMIVOICED_SOUND = 143;
-/*      */   public static final int VK_AMPERSAND = 150;
-/*      */   public static final int VK_ASTERISK = 151;
-/*      */   public static final int VK_QUOTEDBL = 152;
-/*      */   public static final int VK_LESS = 153;
-/*      */   public static final int VK_GREATER = 160;
-/*      */   public static final int VK_BRACELEFT = 161;
-/*      */   public static final int VK_BRACERIGHT = 162;
-/*      */   public static final int VK_AT = 512;
-/*      */   public static final int VK_COLON = 513;
-/*      */   public static final int VK_CIRCUMFLEX = 514;
-/*      */   public static final int VK_DOLLAR = 515;
-/*      */   public static final int VK_EURO_SIGN = 516;
-/*      */   public static final int VK_EXCLAMATION_MARK = 517;
-/*      */   public static final int VK_INVERTED_EXCLAMATION_MARK = 518;
-/*      */   public static final int VK_LEFT_PARENTHESIS = 519;
-/*      */   public static final int VK_NUMBER_SIGN = 520;
-/*      */   public static final int VK_PLUS = 521;
-/*      */   public static final int VK_RIGHT_PARENTHESIS = 522;
-/*      */   public static final int VK_UNDERSCORE = 523;
-/*      */   public static final int VK_WINDOWS = 524;
-/*      */   public static final int VK_CONTEXT_MENU = 525;
-/*      */   public static final int VK_FINAL = 24;
-/*      */   public static final int VK_CONVERT = 28;
-/*      */   public static final int VK_NONCONVERT = 29;
-/*      */   public static final int VK_ACCEPT = 30;
-/*      */   public static final int VK_MODECHANGE = 31;
-/*      */   public static final int VK_KANA = 21;
-/*      */   public static final int VK_KANJI = 25;
-/*      */   public static final int VK_ALPHANUMERIC = 240;
-/*      */   public static final int VK_KATAKANA = 241;
-/*      */   public static final int VK_HIRAGANA = 242;
-/*      */   public static final int VK_FULL_WIDTH = 243;
-/*      */   public static final int VK_HALF_WIDTH = 244;
-/*      */   public static final int VK_ROMAN_CHARACTERS = 245;
-/*      */   public static final int VK_ALL_CANDIDATES = 256;
-/*      */   public static final int VK_PREVIOUS_CANDIDATE = 257;
-/*      */   public static final int VK_CODE_INPUT = 258;
-/*      */   public static final int VK_JAPANESE_KATAKANA = 259;
-/*      */   public static final int VK_JAPANESE_HIRAGANA = 260;
-/*      */   public static final int VK_JAPANESE_ROMAN = 261;
-/*      */   public static final int VK_KANA_LOCK = 262;
-/*      */   public static final int VK_INPUT_METHOD_ON_OFF = 263;
-/*      */   public static final int VK_CUT = 65489;
-/*      */   public static final int VK_COPY = 65485;
-/*      */   public static final int VK_PASTE = 65487;
-/*      */   public static final int VK_UNDO = 65483;
-/*      */   public static final int VK_AGAIN = 65481;
-/*      */   public static final int VK_FIND = 65488;
-/*      */   public static final int VK_PROPS = 65482;
-/*      */   public static final int VK_STOP = 65480;
-/*      */   public static final int VK_COMPOSE = 65312;
-/*      */   public static final int VK_ALT_GRAPH = 65406;
-/*      */   public static final int VK_BEGIN = 65368;
-/*      */   public static final int VK_UNDEFINED = 0;
-/*      */   public static final char CHAR_UNDEFINED = '￿';
-/*      */   public static final int KEY_LOCATION_UNKNOWN = 0;
-/*      */   public static final int KEY_LOCATION_STANDARD = 1;
-/*      */   public static final int KEY_LOCATION_LEFT = 2;
-/*      */   public static final int KEY_LOCATION_RIGHT = 3;
-/*      */   public static final int KEY_LOCATION_NUMPAD = 4;
-/*      */   int keyCode;
-/*      */   char keyChar;
-/*      */   int keyLocation;
-/*  901 */   private transient long rawCode = 0L;
-/*  902 */   private transient long primaryLevelUnicode = 0L;
-/*  903 */   private transient long scancode = 0L;
-/*  904 */   private transient long extendedKeyCode = 0L;
-/*      */ 
-/*      */   
-/*      */   private static final long serialVersionUID = -2352130953028126954L;
-/*      */   
-/*      */   private Component originalSource;
-/*      */ 
-/*      */   
-/*      */   static {
-/*  913 */     NativeLibLoader.loadLibraries();
-/*  914 */     if (!GraphicsEnvironment.isHeadless()) {
-/*  915 */       initIDs();
-/*      */     }
-/*      */     
-/*  918 */     AWTAccessor.setKeyEventAccessor(new AWTAccessor.KeyEventAccessor()
-/*      */         {
-/*      */           public void setRawCode(KeyEvent param1KeyEvent, long param1Long) {
-/*  921 */             param1KeyEvent.rawCode = param1Long;
-/*      */           }
-/*      */ 
-/*      */           
-/*      */           public void setPrimaryLevelUnicode(KeyEvent param1KeyEvent, long param1Long) {
-/*  926 */             param1KeyEvent.primaryLevelUnicode = param1Long;
-/*      */           }
-/*      */ 
-/*      */           
-/*      */           public void setExtendedKeyCode(KeyEvent param1KeyEvent, long param1Long) {
-/*  931 */             param1KeyEvent.extendedKeyCode = param1Long;
-/*      */           }
-/*      */           
-/*      */           public Component getOriginalSource(KeyEvent param1KeyEvent) {
-/*  935 */             return param1KeyEvent.originalSource;
-/*      */           }
-/*      */         });
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private KeyEvent(Component paramComponent, int paramInt1, long paramLong, int paramInt2, int paramInt3, char paramChar, int paramInt4, boolean paramBoolean) {
-/*  956 */     this(paramComponent, paramInt1, paramLong, paramInt2, paramInt3, paramChar, paramInt4);
-/*  957 */     this.isProxyActive = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyEvent(Component paramComponent, int paramInt1, long paramLong, int paramInt2, int paramInt3, char paramChar, int paramInt4) {
-/* 1012 */     super(paramComponent, paramInt1, paramLong, paramInt2);
-/* 1013 */     if (paramInt1 == 400) {
-/* 1014 */       if (paramChar == Character.MAX_VALUE) {
-/* 1015 */         throw new IllegalArgumentException("invalid keyChar");
-/*      */       }
-/* 1017 */       if (paramInt3 != 0) {
-/* 1018 */         throw new IllegalArgumentException("invalid keyCode");
-/*      */       }
-/* 1020 */       if (paramInt4 != 0) {
-/* 1021 */         throw new IllegalArgumentException("invalid keyLocation");
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1025 */     this.keyCode = paramInt3;
-/* 1026 */     this.keyChar = paramChar;
-/*      */     
-/* 1028 */     if (paramInt4 < 0 || paramInt4 > 4)
-/*      */     {
-/* 1030 */       throw new IllegalArgumentException("invalid keyLocation");
-/*      */     }
-/* 1032 */     this.keyLocation = paramInt4;
-/* 1033 */     if (getModifiers() != 0 && getModifiersEx() == 0) {
-/* 1034 */       setNewModifiers();
-/* 1035 */     } else if (getModifiers() == 0 && getModifiersEx() != 0) {
-/* 1036 */       setOldModifiers();
-/*      */     } 
-/* 1038 */     this.originalSource = paramComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyEvent(Component paramComponent, int paramInt1, long paramLong, int paramInt2, int paramInt3, char paramChar) {
-/* 1083 */     this(paramComponent, paramInt1, paramLong, paramInt2, paramInt3, paramChar, 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Deprecated
-/*      */   public KeyEvent(Component paramComponent, int paramInt1, long paramLong, int paramInt2, int paramInt3) {
-/* 1093 */     this(paramComponent, paramInt1, paramLong, paramInt2, paramInt3, (char)paramInt3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getKeyCode() {
-/* 1104 */     return this.keyCode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setKeyCode(int paramInt) {
-/* 1113 */     this.keyCode = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public char getKeyChar() {
-/* 1131 */     return this.keyChar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setKeyChar(char paramChar) {
-/* 1141 */     this.keyChar = paramChar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Deprecated
-/*      */   public void setModifiers(int paramInt) {
-/* 1159 */     this.modifiers = paramInt;
-/* 1160 */     if (getModifiers() != 0 && getModifiersEx() == 0) {
-/* 1161 */       setNewModifiers();
-/* 1162 */     } else if (getModifiers() == 0 && getModifiersEx() != 0) {
-/* 1163 */       setOldModifiers();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getKeyLocation() {
-/* 1180 */     return this.keyLocation;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getKeyText(int paramInt) {
-/* 1191 */     if ((paramInt >= 48 && paramInt <= 57) || (paramInt >= 65 && paramInt <= 90))
-/*      */     {
-/* 1193 */       return String.valueOf((char)paramInt);
-/*      */     }
-/*      */     
-/* 1196 */     switch (paramInt) { case 10:
-/* 1197 */         return Toolkit.getProperty("AWT.enter", "Enter");
-/* 1198 */       case 8: return Toolkit.getProperty("AWT.backSpace", "Backspace");
-/* 1199 */       case 9: return Toolkit.getProperty("AWT.tab", "Tab");
-/* 1200 */       case 3: return Toolkit.getProperty("AWT.cancel", "Cancel");
-/* 1201 */       case 12: return Toolkit.getProperty("AWT.clear", "Clear");
-/* 1202 */       case 65312: return Toolkit.getProperty("AWT.compose", "Compose");
-/* 1203 */       case 19: return Toolkit.getProperty("AWT.pause", "Pause");
-/* 1204 */       case 20: return Toolkit.getProperty("AWT.capsLock", "Caps Lock");
-/* 1205 */       case 27: return Toolkit.getProperty("AWT.escape", "Escape");
-/* 1206 */       case 32: return Toolkit.getProperty("AWT.space", "Space");
-/* 1207 */       case 33: return Toolkit.getProperty("AWT.pgup", "Page Up");
-/* 1208 */       case 34: return Toolkit.getProperty("AWT.pgdn", "Page Down");
-/* 1209 */       case 35: return Toolkit.getProperty("AWT.end", "End");
-/* 1210 */       case 36: return Toolkit.getProperty("AWT.home", "Home");
-/* 1211 */       case 37: return Toolkit.getProperty("AWT.left", "Left");
-/* 1212 */       case 38: return Toolkit.getProperty("AWT.up", "Up");
-/* 1213 */       case 39: return Toolkit.getProperty("AWT.right", "Right");
-/* 1214 */       case 40: return Toolkit.getProperty("AWT.down", "Down");
-/* 1215 */       case 65368: return Toolkit.getProperty("AWT.begin", "Begin");
-/*      */       
-/*      */       case 16:
-/* 1218 */         return Toolkit.getProperty("AWT.shift", "Shift");
-/* 1219 */       case 17: return Toolkit.getProperty("AWT.control", "Control");
-/* 1220 */       case 18: return Toolkit.getProperty("AWT.alt", "Alt");
-/* 1221 */       case 157: return Toolkit.getProperty("AWT.meta", "Meta");
-/* 1222 */       case 65406: return Toolkit.getProperty("AWT.altGraph", "Alt Graph");
-/*      */       
-/*      */       case 44:
-/* 1225 */         return Toolkit.getProperty("AWT.comma", "Comma");
-/* 1226 */       case 46: return Toolkit.getProperty("AWT.period", "Period");
-/* 1227 */       case 47: return Toolkit.getProperty("AWT.slash", "Slash");
-/* 1228 */       case 59: return Toolkit.getProperty("AWT.semicolon", "Semicolon");
-/* 1229 */       case 61: return Toolkit.getProperty("AWT.equals", "Equals");
-/* 1230 */       case 91: return Toolkit.getProperty("AWT.openBracket", "Open Bracket");
-/* 1231 */       case 92: return Toolkit.getProperty("AWT.backSlash", "Back Slash");
-/* 1232 */       case 93: return Toolkit.getProperty("AWT.closeBracket", "Close Bracket");
-/*      */       
-/*      */       case 106:
-/* 1235 */         return Toolkit.getProperty("AWT.multiply", "NumPad *");
-/* 1236 */       case 107: return Toolkit.getProperty("AWT.add", "NumPad +");
-/* 1237 */       case 108: return Toolkit.getProperty("AWT.separator", "NumPad ,");
-/* 1238 */       case 109: return Toolkit.getProperty("AWT.subtract", "NumPad -");
-/* 1239 */       case 110: return Toolkit.getProperty("AWT.decimal", "NumPad .");
-/* 1240 */       case 111: return Toolkit.getProperty("AWT.divide", "NumPad /");
-/* 1241 */       case 127: return Toolkit.getProperty("AWT.delete", "Delete");
-/* 1242 */       case 144: return Toolkit.getProperty("AWT.numLock", "Num Lock");
-/* 1243 */       case 145: return Toolkit.getProperty("AWT.scrollLock", "Scroll Lock");
-/*      */       case 524:
-/* 1245 */         return Toolkit.getProperty("AWT.windows", "Windows");
-/* 1246 */       case 525: return Toolkit.getProperty("AWT.context", "Context Menu");
-/*      */       case 112:
-/* 1248 */         return Toolkit.getProperty("AWT.f1", "F1");
-/* 1249 */       case 113: return Toolkit.getProperty("AWT.f2", "F2");
-/* 1250 */       case 114: return Toolkit.getProperty("AWT.f3", "F3");
-/* 1251 */       case 115: return Toolkit.getProperty("AWT.f4", "F4");
-/* 1252 */       case 116: return Toolkit.getProperty("AWT.f5", "F5");
-/* 1253 */       case 117: return Toolkit.getProperty("AWT.f6", "F6");
-/* 1254 */       case 118: return Toolkit.getProperty("AWT.f7", "F7");
-/* 1255 */       case 119: return Toolkit.getProperty("AWT.f8", "F8");
-/* 1256 */       case 120: return Toolkit.getProperty("AWT.f9", "F9");
-/* 1257 */       case 121: return Toolkit.getProperty("AWT.f10", "F10");
-/* 1258 */       case 122: return Toolkit.getProperty("AWT.f11", "F11");
-/* 1259 */       case 123: return Toolkit.getProperty("AWT.f12", "F12");
-/* 1260 */       case 61440: return Toolkit.getProperty("AWT.f13", "F13");
-/* 1261 */       case 61441: return Toolkit.getProperty("AWT.f14", "F14");
-/* 1262 */       case 61442: return Toolkit.getProperty("AWT.f15", "F15");
-/* 1263 */       case 61443: return Toolkit.getProperty("AWT.f16", "F16");
-/* 1264 */       case 61444: return Toolkit.getProperty("AWT.f17", "F17");
-/* 1265 */       case 61445: return Toolkit.getProperty("AWT.f18", "F18");
-/* 1266 */       case 61446: return Toolkit.getProperty("AWT.f19", "F19");
-/* 1267 */       case 61447: return Toolkit.getProperty("AWT.f20", "F20");
-/* 1268 */       case 61448: return Toolkit.getProperty("AWT.f21", "F21");
-/* 1269 */       case 61449: return Toolkit.getProperty("AWT.f22", "F22");
-/* 1270 */       case 61450: return Toolkit.getProperty("AWT.f23", "F23");
-/* 1271 */       case 61451: return Toolkit.getProperty("AWT.f24", "F24");
-/*      */       case 154:
-/* 1273 */         return Toolkit.getProperty("AWT.printScreen", "Print Screen");
-/* 1274 */       case 155: return Toolkit.getProperty("AWT.insert", "Insert");
-/* 1275 */       case 156: return Toolkit.getProperty("AWT.help", "Help");
-/* 1276 */       case 192: return Toolkit.getProperty("AWT.backQuote", "Back Quote");
-/* 1277 */       case 222: return Toolkit.getProperty("AWT.quote", "Quote");
-/*      */       case 224:
-/* 1279 */         return Toolkit.getProperty("AWT.up", "Up");
-/* 1280 */       case 225: return Toolkit.getProperty("AWT.down", "Down");
-/* 1281 */       case 226: return Toolkit.getProperty("AWT.left", "Left");
-/* 1282 */       case 227: return Toolkit.getProperty("AWT.right", "Right");
-/*      */       case 128:
-/* 1284 */         return Toolkit.getProperty("AWT.deadGrave", "Dead Grave");
-/* 1285 */       case 129: return Toolkit.getProperty("AWT.deadAcute", "Dead Acute");
-/* 1286 */       case 130: return Toolkit.getProperty("AWT.deadCircumflex", "Dead Circumflex");
-/* 1287 */       case 131: return Toolkit.getProperty("AWT.deadTilde", "Dead Tilde");
-/* 1288 */       case 132: return Toolkit.getProperty("AWT.deadMacron", "Dead Macron");
-/* 1289 */       case 133: return Toolkit.getProperty("AWT.deadBreve", "Dead Breve");
-/* 1290 */       case 134: return Toolkit.getProperty("AWT.deadAboveDot", "Dead Above Dot");
-/* 1291 */       case 135: return Toolkit.getProperty("AWT.deadDiaeresis", "Dead Diaeresis");
-/* 1292 */       case 136: return Toolkit.getProperty("AWT.deadAboveRing", "Dead Above Ring");
-/* 1293 */       case 137: return Toolkit.getProperty("AWT.deadDoubleAcute", "Dead Double Acute");
-/* 1294 */       case 138: return Toolkit.getProperty("AWT.deadCaron", "Dead Caron");
-/* 1295 */       case 139: return Toolkit.getProperty("AWT.deadCedilla", "Dead Cedilla");
-/* 1296 */       case 140: return Toolkit.getProperty("AWT.deadOgonek", "Dead Ogonek");
-/* 1297 */       case 141: return Toolkit.getProperty("AWT.deadIota", "Dead Iota");
-/* 1298 */       case 142: return Toolkit.getProperty("AWT.deadVoicedSound", "Dead Voiced Sound");
-/* 1299 */       case 143: return Toolkit.getProperty("AWT.deadSemivoicedSound", "Dead Semivoiced Sound");
-/*      */       case 150:
-/* 1301 */         return Toolkit.getProperty("AWT.ampersand", "Ampersand");
-/* 1302 */       case 151: return Toolkit.getProperty("AWT.asterisk", "Asterisk");
-/* 1303 */       case 152: return Toolkit.getProperty("AWT.quoteDbl", "Double Quote");
-/* 1304 */       case 153: return Toolkit.getProperty("AWT.Less", "Less");
-/* 1305 */       case 160: return Toolkit.getProperty("AWT.greater", "Greater");
-/* 1306 */       case 161: return Toolkit.getProperty("AWT.braceLeft", "Left Brace");
-/* 1307 */       case 162: return Toolkit.getProperty("AWT.braceRight", "Right Brace");
-/* 1308 */       case 512: return Toolkit.getProperty("AWT.at", "At");
-/* 1309 */       case 513: return Toolkit.getProperty("AWT.colon", "Colon");
-/* 1310 */       case 514: return Toolkit.getProperty("AWT.circumflex", "Circumflex");
-/* 1311 */       case 515: return Toolkit.getProperty("AWT.dollar", "Dollar");
-/* 1312 */       case 516: return Toolkit.getProperty("AWT.euro", "Euro");
-/* 1313 */       case 517: return Toolkit.getProperty("AWT.exclamationMark", "Exclamation Mark");
-/* 1314 */       case 518: return Toolkit.getProperty("AWT.invertedExclamationMark", "Inverted Exclamation Mark");
-/* 1315 */       case 519: return Toolkit.getProperty("AWT.leftParenthesis", "Left Parenthesis");
-/* 1316 */       case 520: return Toolkit.getProperty("AWT.numberSign", "Number Sign");
-/* 1317 */       case 45: return Toolkit.getProperty("AWT.minus", "Minus");
-/* 1318 */       case 521: return Toolkit.getProperty("AWT.plus", "Plus");
-/* 1319 */       case 522: return Toolkit.getProperty("AWT.rightParenthesis", "Right Parenthesis");
-/* 1320 */       case 523: return Toolkit.getProperty("AWT.underscore", "Underscore");
-/*      */       case 24:
-/* 1322 */         return Toolkit.getProperty("AWT.final", "Final");
-/* 1323 */       case 28: return Toolkit.getProperty("AWT.convert", "Convert");
-/* 1324 */       case 29: return Toolkit.getProperty("AWT.noconvert", "No Convert");
-/* 1325 */       case 30: return Toolkit.getProperty("AWT.accept", "Accept");
-/* 1326 */       case 31: return Toolkit.getProperty("AWT.modechange", "Mode Change");
-/* 1327 */       case 21: return Toolkit.getProperty("AWT.kana", "Kana");
-/* 1328 */       case 25: return Toolkit.getProperty("AWT.kanji", "Kanji");
-/* 1329 */       case 240: return Toolkit.getProperty("AWT.alphanumeric", "Alphanumeric");
-/* 1330 */       case 241: return Toolkit.getProperty("AWT.katakana", "Katakana");
-/* 1331 */       case 242: return Toolkit.getProperty("AWT.hiragana", "Hiragana");
-/* 1332 */       case 243: return Toolkit.getProperty("AWT.fullWidth", "Full-Width");
-/* 1333 */       case 244: return Toolkit.getProperty("AWT.halfWidth", "Half-Width");
-/* 1334 */       case 245: return Toolkit.getProperty("AWT.romanCharacters", "Roman Characters");
-/* 1335 */       case 256: return Toolkit.getProperty("AWT.allCandidates", "All Candidates");
-/* 1336 */       case 257: return Toolkit.getProperty("AWT.previousCandidate", "Previous Candidate");
-/* 1337 */       case 258: return Toolkit.getProperty("AWT.codeInput", "Code Input");
-/* 1338 */       case 259: return Toolkit.getProperty("AWT.japaneseKatakana", "Japanese Katakana");
-/* 1339 */       case 260: return Toolkit.getProperty("AWT.japaneseHiragana", "Japanese Hiragana");
-/* 1340 */       case 261: return Toolkit.getProperty("AWT.japaneseRoman", "Japanese Roman");
-/* 1341 */       case 262: return Toolkit.getProperty("AWT.kanaLock", "Kana Lock");
-/* 1342 */       case 263: return Toolkit.getProperty("AWT.inputMethodOnOff", "Input Method On/Off");
-/*      */       case 65481:
-/* 1344 */         return Toolkit.getProperty("AWT.again", "Again");
-/* 1345 */       case 65483: return Toolkit.getProperty("AWT.undo", "Undo");
-/* 1346 */       case 65485: return Toolkit.getProperty("AWT.copy", "Copy");
-/* 1347 */       case 65487: return Toolkit.getProperty("AWT.paste", "Paste");
-/* 1348 */       case 65489: return Toolkit.getProperty("AWT.cut", "Cut");
-/* 1349 */       case 65488: return Toolkit.getProperty("AWT.find", "Find");
-/* 1350 */       case 65482: return Toolkit.getProperty("AWT.props", "Props");
-/* 1351 */       case 65480: return Toolkit.getProperty("AWT.stop", "Stop"); }
-/*      */ 
-/*      */     
-/* 1354 */     if (paramInt >= 96 && paramInt <= 105) {
-/* 1355 */       String str1 = Toolkit.getProperty("AWT.numpad", "NumPad");
-/* 1356 */       char c = (char)(paramInt - 96 + 48);
-/* 1357 */       return str1 + "-" + c;
-/*      */     } 
-/*      */     
-/* 1360 */     if ((paramInt & 0x1000000) != 0) {
-/* 1361 */       return String.valueOf((char)(paramInt ^ 0x1000000));
-/*      */     }
-/* 1363 */     String str = Toolkit.getProperty("AWT.unknown", "Unknown");
-/* 1364 */     return str + " keyCode: 0x" + Integer.toString(paramInt, 16);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getKeyModifiersText(int paramInt) {
-/* 1384 */     StringBuilder stringBuilder = new StringBuilder();
-/* 1385 */     if ((paramInt & 0x4) != 0) {
-/* 1386 */       stringBuilder.append(Toolkit.getProperty("AWT.meta", "Meta"));
-/* 1387 */       stringBuilder.append("+");
-/*      */     } 
-/* 1389 */     if ((paramInt & 0x2) != 0) {
-/* 1390 */       stringBuilder.append(Toolkit.getProperty("AWT.control", "Ctrl"));
-/* 1391 */       stringBuilder.append("+");
-/*      */     } 
-/* 1393 */     if ((paramInt & 0x8) != 0) {
-/* 1394 */       stringBuilder.append(Toolkit.getProperty("AWT.alt", "Alt"));
-/* 1395 */       stringBuilder.append("+");
-/*      */     } 
-/* 1397 */     if ((paramInt & 0x1) != 0) {
-/* 1398 */       stringBuilder.append(Toolkit.getProperty("AWT.shift", "Shift"));
-/* 1399 */       stringBuilder.append("+");
-/*      */     } 
-/* 1401 */     if ((paramInt & 0x20) != 0) {
-/* 1402 */       stringBuilder.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-/* 1403 */       stringBuilder.append("+");
-/*      */     } 
-/* 1405 */     if ((paramInt & 0x10) != 0) {
-/* 1406 */       stringBuilder.append(Toolkit.getProperty("AWT.button1", "Button1"));
-/* 1407 */       stringBuilder.append("+");
-/*      */     } 
-/* 1409 */     if (stringBuilder.length() > 0) {
-/* 1410 */       stringBuilder.setLength(stringBuilder.length() - 1);
-/*      */     }
-/* 1412 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isActionKey() {
-/* 1425 */     switch (this.keyCode) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 19:
-/*      */       case 20:
-/*      */       case 21:
-/*      */       case 24:
-/*      */       case 25:
-/*      */       case 28:
-/*      */       case 29:
-/*      */       case 30:
-/*      */       case 31:
-/*      */       case 33:
-/*      */       case 34:
-/*      */       case 35:
-/*      */       case 36:
-/*      */       case 37:
-/*      */       case 38:
-/*      */       case 39:
-/*      */       case 40:
-/*      */       case 112:
-/*      */       case 113:
-/*      */       case 114:
-/*      */       case 115:
-/*      */       case 116:
-/*      */       case 117:
-/*      */       case 118:
-/*      */       case 119:
-/*      */       case 120:
-/*      */       case 121:
-/*      */       case 122:
-/*      */       case 123:
-/*      */       case 144:
-/*      */       case 145:
-/*      */       case 154:
-/*      */       case 155:
-/*      */       case 156:
-/*      */       case 224:
-/*      */       case 225:
-/*      */       case 226:
-/*      */       case 227:
-/*      */       case 240:
-/*      */       case 241:
-/*      */       case 242:
-/*      */       case 243:
-/*      */       case 244:
-/*      */       case 245:
-/*      */       case 256:
-/*      */       case 257:
-/*      */       case 258:
-/*      */       case 259:
-/*      */       case 260:
-/*      */       case 261:
-/*      */       case 262:
-/*      */       case 263:
-/*      */       case 524:
-/*      */       case 525:
-/*      */       case 61440:
-/*      */       case 61441:
-/*      */       case 61442:
-/*      */       case 61443:
-/*      */       case 61444:
-/*      */       case 61445:
-/*      */       case 61446:
-/*      */       case 61447:
-/*      */       case 61448:
-/*      */       case 61449:
-/*      */       case 61450:
-/*      */       case 61451:
-/*      */       case 65368:
-/*      */       case 65480:
-/*      */       case 65481:
-/*      */       case 65482:
-/*      */       case 65483:
-/*      */       case 65485:
-/*      */       case 65487:
-/*      */       case 65488:
-/*      */       case 65489:
-/* 1506 */         return true;
-/*      */     } 
-/* 1508 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String paramString() {
-/* 1518 */     StringBuilder stringBuilder = new StringBuilder(100);
-/*      */     
-/* 1520 */     switch (this.id) {
-/*      */       case 401:
-/* 1522 */         stringBuilder.append("KEY_PRESSED");
-/*      */         break;
-/*      */       case 402:
-/* 1525 */         stringBuilder.append("KEY_RELEASED");
-/*      */         break;
-/*      */       case 400:
-/* 1528 */         stringBuilder.append("KEY_TYPED");
-/*      */         break;
-/*      */       default:
-/* 1531 */         stringBuilder.append("unknown type");
-/*      */         break;
-/*      */     } 
-/*      */     
-/* 1535 */     stringBuilder.append(",keyCode=").append(this.keyCode);
-/* 1536 */     stringBuilder.append(",keyText=").append(getKeyText(this.keyCode));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1542 */     stringBuilder.append(",keyChar=");
-/* 1543 */     switch (this.keyChar) {
-/*      */       case '\b':
-/* 1545 */         stringBuilder.append(getKeyText(8));
-/*      */         break;
-/*      */       case '\t':
-/* 1548 */         stringBuilder.append(getKeyText(9));
-/*      */         break;
-/*      */       case '\n':
-/* 1551 */         stringBuilder.append(getKeyText(10));
-/*      */         break;
-/*      */       case '\030':
-/* 1554 */         stringBuilder.append(getKeyText(3));
-/*      */         break;
-/*      */       case '\033':
-/* 1557 */         stringBuilder.append(getKeyText(27));
-/*      */         break;
-/*      */       case '':
-/* 1560 */         stringBuilder.append(getKeyText(127));
-/*      */         break;
-/*      */       case '￿':
-/* 1563 */         stringBuilder.append(Toolkit.getProperty("AWT.undefined", "Undefined"));
-/* 1564 */         stringBuilder.append(" keyChar");
-/*      */         break;
-/*      */       default:
-/* 1567 */         stringBuilder.append("'").append(this.keyChar).append("'");
-/*      */         break;
-/*      */     } 
-/*      */     
-/* 1571 */     if (getModifiers() != 0) {
-/* 1572 */       stringBuilder.append(",modifiers=").append(getKeyModifiersText(this.modifiers));
-/*      */     }
-/* 1574 */     if (getModifiersEx() != 0) {
-/* 1575 */       stringBuilder.append(",extModifiers=").append(getModifiersExText(this.modifiers));
-/*      */     }
-/*      */     
-/* 1578 */     stringBuilder.append(",keyLocation=");
-/* 1579 */     switch (this.keyLocation)
-/*      */     { case 0:
-/* 1581 */         stringBuilder.append("KEY_LOCATION_UNKNOWN");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1599 */         stringBuilder.append(",rawCode=").append(this.rawCode);
-/* 1600 */         stringBuilder.append(",primaryLevelUnicode=").append(this.primaryLevelUnicode);
-/* 1601 */         stringBuilder.append(",scancode=").append(this.scancode);
-/* 1602 */         stringBuilder.append(",extendedKeyCode=0x").append(Long.toHexString(this.extendedKeyCode));
-/*      */         
-/* 1604 */         return stringBuilder.toString();case 1: stringBuilder.append("KEY_LOCATION_STANDARD"); stringBuilder.append(",rawCode=").append(this.rawCode); stringBuilder.append(",primaryLevelUnicode=").append(this.primaryLevelUnicode); stringBuilder.append(",scancode=").append(this.scancode); stringBuilder.append(",extendedKeyCode=0x").append(Long.toHexString(this.extendedKeyCode)); return stringBuilder.toString();case 2: stringBuilder.append("KEY_LOCATION_LEFT"); stringBuilder.append(",rawCode=").append(this.rawCode); stringBuilder.append(",primaryLevelUnicode=").append(this.primaryLevelUnicode); stringBuilder.append(",scancode=").append(this.scancode); stringBuilder.append(",extendedKeyCode=0x").append(Long.toHexString(this.extendedKeyCode)); return stringBuilder.toString();case 3: stringBuilder.append("KEY_LOCATION_RIGHT"); stringBuilder.append(",rawCode=").append(this.rawCode); stringBuilder.append(",primaryLevelUnicode=").append(this.primaryLevelUnicode); stringBuilder.append(",scancode=").append(this.scancode); stringBuilder.append(",extendedKeyCode=0x").append(Long.toHexString(this.extendedKeyCode)); return stringBuilder.toString();case 4: stringBuilder.append("KEY_LOCATION_NUMPAD"); stringBuilder.append(",rawCode=").append(this.rawCode); stringBuilder.append(",primaryLevelUnicode=").append(this.primaryLevelUnicode); stringBuilder.append(",scancode=").append(this.scancode); stringBuilder.append(",extendedKeyCode=0x").append(Long.toHexString(this.extendedKeyCode)); return stringBuilder.toString(); }  stringBuilder.append("KEY_LOCATION_UNKNOWN"); stringBuilder.append(",rawCode=").append(this.rawCode); stringBuilder.append(",primaryLevelUnicode=").append(this.primaryLevelUnicode); stringBuilder.append(",scancode=").append(this.scancode); stringBuilder.append(",extendedKeyCode=0x").append(Long.toHexString(this.extendedKeyCode)); return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getExtendedKeyCode() {
-/* 1619 */     return (int)this.extendedKeyCode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int getExtendedKeyCodeForChar(int paramInt) {
-/* 1635 */     return ExtendedKeyCodes.getExtendedKeyCodeForChar(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void setNewModifiers() {
-/* 1643 */     if ((this.modifiers & 0x1) != 0) {
-/* 1644 */       this.modifiers |= 0x40;
-/*      */     }
-/* 1646 */     if ((this.modifiers & 0x8) != 0) {
-/* 1647 */       this.modifiers |= 0x200;
-/*      */     }
-/* 1649 */     if ((this.modifiers & 0x2) != 0) {
-/* 1650 */       this.modifiers |= 0x80;
-/*      */     }
-/* 1652 */     if ((this.modifiers & 0x4) != 0) {
-/* 1653 */       this.modifiers |= 0x100;
-/*      */     }
-/* 1655 */     if ((this.modifiers & 0x20) != 0) {
-/* 1656 */       this.modifiers |= 0x2000;
-/*      */     }
-/* 1658 */     if ((this.modifiers & 0x10) != 0) {
-/* 1659 */       this.modifiers |= 0x400;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void setOldModifiers() {
-/* 1667 */     if ((this.modifiers & 0x40) != 0) {
-/* 1668 */       this.modifiers |= 0x1;
-/*      */     }
-/* 1670 */     if ((this.modifiers & 0x200) != 0) {
-/* 1671 */       this.modifiers |= 0x8;
-/*      */     }
-/* 1673 */     if ((this.modifiers & 0x80) != 0) {
-/* 1674 */       this.modifiers |= 0x2;
-/*      */     }
-/* 1676 */     if ((this.modifiers & 0x100) != 0) {
-/* 1677 */       this.modifiers |= 0x4;
-/*      */     }
-/* 1679 */     if ((this.modifiers & 0x2000) != 0) {
-/* 1680 */       this.modifiers |= 0x20;
-/*      */     }
-/* 1682 */     if ((this.modifiers & 0x400) != 0) {
-/* 1683 */       this.modifiers |= 0x10;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1694 */     paramObjectInputStream.defaultReadObject();
-/* 1695 */     if (getModifiers() != 0 && getModifiersEx() == 0)
-/* 1696 */       setNewModifiers(); 
-/*      */   }
-/*      */   
-/*      */   private static native void initIDs();
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\event\KeyEvent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.event;
+
+import java.awt.Component;
+import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import sun.awt.AWTAccessor;
+
+/**
+ * An event which indicates that a keystroke occurred in a component.
+ * <p>
+ * This low-level event is generated by a component object (such as a text
+ * field) when a key is pressed, released, or typed.
+ * The event is passed to every <code>KeyListener</code>
+ * or <code>KeyAdapter</code> object which registered to receive such
+ * events using the component's <code>addKeyListener</code> method.
+ * (<code>KeyAdapter</code> objects implement the
+ * <code>KeyListener</code> interface.)  Each such listener object
+ * gets this <code>KeyEvent</code> when the event occurs.
+ * <p>
+ * <em>"Key typed" events</em> are higher-level and generally do not depend on
+ * the platform or keyboard layout.  They are generated when a Unicode character
+ * is entered, and are the preferred way to find out about character input.
+ * In the simplest case, a key typed event is produced by a single key press
+ * (e.g., 'a').  Often, however, characters are produced by series of key
+ * presses (e.g., 'shift' + 'a'), and the mapping from key pressed events to
+ * key typed events may be many-to-one or many-to-many.  Key releases are not
+ * usually necessary to generate a key typed event, but there are some cases
+ * where the key typed event is not generated until a key is released (e.g.,
+ * entering ASCII sequences via the Alt-Numpad method in Windows).
+ * No key typed events are generated for keys that don't generate Unicode
+ * characters (e.g., action keys, modifier keys, etc.).
+ * <p>
+ * The getKeyChar method always returns a valid Unicode character or
+ * CHAR_UNDEFINED.  Character input is reported by KEY_TYPED events:
+ * KEY_PRESSED and KEY_RELEASED events are not necessarily associated
+ * with character input.  Therefore, the result of the getKeyChar method
+ * is guaranteed to be meaningful only for KEY_TYPED events.
+ * <p>
+ * For key pressed and key released events, the getKeyCode method returns
+ * the event's keyCode.  For key typed events, the getKeyCode method
+ * always returns {@code VK_UNDEFINED}. The {@code getExtendedKeyCode} method
+ * may also be used with many international keyboard layouts.
+ *
+ * <p>
+ * <em>"Key pressed" and "key released" events</em> are lower-level and depend
+ * on the platform and keyboard layout. They are generated whenever a key is
+ * pressed or released, and are the only way to find out about keys that don't
+ * generate character input (e.g., action keys, modifier keys, etc.). The key
+ * being pressed or released is indicated by the {@code getKeyCode} and {@code getExtendedKeyCode}
+ * methods, which return a virtual key code.
+ *
+ * <p>
+ * <em>Virtual key codes</em> are used to report which keyboard key has
+ * been pressed, rather than a character generated by the combination
+ * of one or more keystrokes (such as "A", which comes from shift and "a").
+ *
+ * <p>
+ * For example, pressing the Shift key will cause a KEY_PRESSED event
+ * with a VK_SHIFT keyCode, while pressing the 'a' key will result in
+ * a VK_A keyCode.  After the 'a' key is released, a KEY_RELEASED event
+ * will be fired with VK_A. Separately, a KEY_TYPED event with a keyChar
+ * value of 'A' is generated.
+ *
+ * <p>
+ * Pressing and releasing a key on the keyboard results in the generating
+ * the following key events (in order):
+ * <PRE>
+ *    {@code KEY_PRESSED}
+ *    {@code KEY_TYPED} (is only generated if a valid Unicode character could be generated.)
+ *    {@code KEY_RELEASED}
+ * </PRE>
+ *
+ * But in some cases (e.g. auto-repeat or input method is activated) the order
+ * could be different (and platform dependent).
+ *
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>Key combinations which do not result in Unicode characters, such as action
+ * keys like F1 and the HELP key, do not generate KEY_TYPED events.
+ * <li>Not all keyboards or systems are capable of generating all
+ * virtual key codes.  No attempt is made in Java to generate these keys
+ * artificially.
+ * <li>Virtual key codes do not identify a physical key: they depend on the
+ * platform and keyboard layout. For example, the key that generates VK_Q
+ * when using a U.S. keyboard layout will generate VK_A when using a French
+ * keyboard layout.
+ * <li>The key that generates {@code VK_Q} when using a U.S. keyboard layout also
+ * generates a unique code for Russian or Hebrew layout. There is no a
+ * {@code VK_} constant for these and many other codes in various layouts. These codes
+ * may be obtained by using {@code getExtendedKeyCode} and are used whenever
+ * a {@code VK_} constant is used.
+ * <li>Not all characters have a keycode associated with them.  For example,
+ * there is no keycode for the question mark because there is no keyboard
+ * for which it appears on the primary layer.
+ * <li>In order to support the platform-independent handling of action keys,
+ * the Java platform uses a few additional virtual key constants for functions
+ * that would otherwise have to be recognized by interpreting virtual key codes
+ * and modifiers. For example, for Japanese Windows keyboards, VK_ALL_CANDIDATES
+ * is returned instead of VK_CONVERT with the ALT modifier.
+ * <li>As specified in <a href="../doc-files/FocusSpec.html">Focus Specification</a>
+ * key events are dispatched to the focus owner by default.
+ * </ul>
+ *
+ * <p>
+ * WARNING: Aside from those keys that are defined by the Java language
+ * (VK_ENTER, VK_BACK_SPACE, and VK_TAB), do not rely on the values of the VK_
+ * constants.  Sun reserves the right to change these values as needed
+ * to accommodate a wider range of keyboards in the future.
+ * <p>
+ * An unspecified behavior will be caused if the {@code id} parameter
+ * of any particular {@code KeyEvent} instance is not
+ * in the range from {@code KEY_FIRST} to {@code KEY_LAST}.
+ *
+ * @author Carl Quinn
+ * @author Amy Fowler
+ * @author Norbert Lindenberg
+ *
+ * @see KeyAdapter
+ * @see KeyListener
+ * @see <a href="https://docs.oracle.com/javase/tutorial/uiswing/events/keylistener.html">Tutorial: Writing a Key Listener</a>
+ *
+ * @since 1.1
+ */
+public class KeyEvent extends InputEvent {
+
+    /**
+     * Stores the state of native event dispatching system
+     * - true, if when the event was created event proxying
+     *         mechanism was active
+     * - false, if it was inactive
+     * Used in Component.dispatchEventImpl to correctly dispatch
+     * events when proxy is active
+     */
+    private boolean isProxyActive = false;
+
+    /**
+     * The first number in the range of ids used for key events.
+     */
+    public static final int KEY_FIRST = 400;
+
+    /**
+     * The last number in the range of ids used for key events.
+     */
+    public static final int KEY_LAST  = 402;
+
+    /**
+     * The "key typed" event.  This event is generated when a character is
+     * entered.  In the simplest case, it is produced by a single key press.
+     * Often, however, characters are produced by series of key presses, and
+     * the mapping from key pressed events to key typed events may be
+     * many-to-one or many-to-many.
+     */
+    public static final int KEY_TYPED = KEY_FIRST;
+
+    /**
+     * The "key pressed" event. This event is generated when a key
+     * is pushed down.
+     */
+    public static final int KEY_PRESSED = 1 + KEY_FIRST; //Event.KEY_PRESS
+
+    /**
+     * The "key released" event. This event is generated when a key
+     * is let up.
+     */
+    public static final int KEY_RELEASED = 2 + KEY_FIRST; //Event.KEY_RELEASE
+
+    /* Virtual key codes. */
+
+    public static final int VK_ENTER          = '\n';
+    public static final int VK_BACK_SPACE     = '\b';
+    public static final int VK_TAB            = '\t';
+    public static final int VK_CANCEL         = 0x03;
+    public static final int VK_CLEAR          = 0x0C;
+    public static final int VK_SHIFT          = 0x10;
+    public static final int VK_CONTROL        = 0x11;
+    public static final int VK_ALT            = 0x12;
+    public static final int VK_PAUSE          = 0x13;
+    public static final int VK_CAPS_LOCK      = 0x14;
+    public static final int VK_ESCAPE         = 0x1B;
+    public static final int VK_SPACE          = 0x20;
+    public static final int VK_PAGE_UP        = 0x21;
+    public static final int VK_PAGE_DOWN      = 0x22;
+    public static final int VK_END            = 0x23;
+    public static final int VK_HOME           = 0x24;
+
+    /**
+     * Constant for the non-numpad <b>left</b> arrow key.
+     * @see #VK_KP_LEFT
+     */
+    public static final int VK_LEFT           = 0x25;
+
+    /**
+     * Constant for the non-numpad <b>up</b> arrow key.
+     * @see #VK_KP_UP
+     */
+    public static final int VK_UP             = 0x26;
+
+    /**
+     * Constant for the non-numpad <b>right</b> arrow key.
+     * @see #VK_KP_RIGHT
+     */
+    public static final int VK_RIGHT          = 0x27;
+
+    /**
+     * Constant for the non-numpad <b>down</b> arrow key.
+     * @see #VK_KP_DOWN
+     */
+    public static final int VK_DOWN           = 0x28;
+
+    /**
+     * Constant for the comma key, ","
+     */
+    public static final int VK_COMMA          = 0x2C;
+
+    /**
+     * Constant for the minus key, "-"
+     * @since 1.2
+     */
+    public static final int VK_MINUS          = 0x2D;
+
+    /**
+     * Constant for the period key, "."
+     */
+    public static final int VK_PERIOD         = 0x2E;
+
+    /**
+     * Constant for the forward slash key, "/"
+     */
+    public static final int VK_SLASH          = 0x2F;
+
+    /** VK_0 thru VK_9 are the same as ASCII '0' thru '9' (0x30 - 0x39) */
+    public static final int VK_0              = 0x30;
+    public static final int VK_1              = 0x31;
+    public static final int VK_2              = 0x32;
+    public static final int VK_3              = 0x33;
+    public static final int VK_4              = 0x34;
+    public static final int VK_5              = 0x35;
+    public static final int VK_6              = 0x36;
+    public static final int VK_7              = 0x37;
+    public static final int VK_8              = 0x38;
+    public static final int VK_9              = 0x39;
+
+    /**
+     * Constant for the semicolon key, ";"
+     */
+    public static final int VK_SEMICOLON      = 0x3B;
+
+    /**
+     * Constant for the equals key, "="
+     */
+    public static final int VK_EQUALS         = 0x3D;
+
+    /** VK_A thru VK_Z are the same as ASCII 'A' thru 'Z' (0x41 - 0x5A) */
+    public static final int VK_A              = 0x41;
+    public static final int VK_B              = 0x42;
+    public static final int VK_C              = 0x43;
+    public static final int VK_D              = 0x44;
+    public static final int VK_E              = 0x45;
+    public static final int VK_F              = 0x46;
+    public static final int VK_G              = 0x47;
+    public static final int VK_H              = 0x48;
+    public static final int VK_I              = 0x49;
+    public static final int VK_J              = 0x4A;
+    public static final int VK_K              = 0x4B;
+    public static final int VK_L              = 0x4C;
+    public static final int VK_M              = 0x4D;
+    public static final int VK_N              = 0x4E;
+    public static final int VK_O              = 0x4F;
+    public static final int VK_P              = 0x50;
+    public static final int VK_Q              = 0x51;
+    public static final int VK_R              = 0x52;
+    public static final int VK_S              = 0x53;
+    public static final int VK_T              = 0x54;
+    public static final int VK_U              = 0x55;
+    public static final int VK_V              = 0x56;
+    public static final int VK_W              = 0x57;
+    public static final int VK_X              = 0x58;
+    public static final int VK_Y              = 0x59;
+    public static final int VK_Z              = 0x5A;
+
+    /**
+     * Constant for the open bracket key, "["
+     */
+    public static final int VK_OPEN_BRACKET   = 0x5B;
+
+    /**
+     * Constant for the back slash key, "\"
+     */
+    public static final int VK_BACK_SLASH     = 0x5C;
+
+    /**
+     * Constant for the close bracket key, "]"
+     */
+    public static final int VK_CLOSE_BRACKET  = 0x5D;
+
+    public static final int VK_NUMPAD0        = 0x60;
+    public static final int VK_NUMPAD1        = 0x61;
+    public static final int VK_NUMPAD2        = 0x62;
+    public static final int VK_NUMPAD3        = 0x63;
+    public static final int VK_NUMPAD4        = 0x64;
+    public static final int VK_NUMPAD5        = 0x65;
+    public static final int VK_NUMPAD6        = 0x66;
+    public static final int VK_NUMPAD7        = 0x67;
+    public static final int VK_NUMPAD8        = 0x68;
+    public static final int VK_NUMPAD9        = 0x69;
+    public static final int VK_MULTIPLY       = 0x6A;
+    public static final int VK_ADD            = 0x6B;
+
+    /**
+     * This constant is obsolete, and is included only for backwards
+     * compatibility.
+     * @see #VK_SEPARATOR
+     */
+    public static final int VK_SEPARATER      = 0x6C;
+
+    /**
+     * Constant for the Numpad Separator key.
+     * @since 1.4
+     */
+    public static final int VK_SEPARATOR      = VK_SEPARATER;
+
+    public static final int VK_SUBTRACT       = 0x6D;
+    public static final int VK_DECIMAL        = 0x6E;
+    public static final int VK_DIVIDE         = 0x6F;
+    public static final int VK_DELETE         = 0x7F; /* ASCII DEL */
+    public static final int VK_NUM_LOCK       = 0x90;
+    public static final int VK_SCROLL_LOCK    = 0x91;
+
+    /** Constant for the F1 function key. */
+    public static final int VK_F1             = 0x70;
+
+    /** Constant for the F2 function key. */
+    public static final int VK_F2             = 0x71;
+
+    /** Constant for the F3 function key. */
+    public static final int VK_F3             = 0x72;
+
+    /** Constant for the F4 function key. */
+    public static final int VK_F4             = 0x73;
+
+    /** Constant for the F5 function key. */
+    public static final int VK_F5             = 0x74;
+
+    /** Constant for the F6 function key. */
+    public static final int VK_F6             = 0x75;
+
+    /** Constant for the F7 function key. */
+    public static final int VK_F7             = 0x76;
+
+    /** Constant for the F8 function key. */
+    public static final int VK_F8             = 0x77;
+
+    /** Constant for the F9 function key. */
+    public static final int VK_F9             = 0x78;
+
+    /** Constant for the F10 function key. */
+    public static final int VK_F10            = 0x79;
+
+    /** Constant for the F11 function key. */
+    public static final int VK_F11            = 0x7A;
+
+    /** Constant for the F12 function key. */
+    public static final int VK_F12            = 0x7B;
+
+    /**
+     * Constant for the F13 function key.
+     * @since 1.2
+     */
+    /* F13 - F24 are used on IBM 3270 keyboard; use random range for constants. */
+    public static final int VK_F13            = 0xF000;
+
+    /**
+     * Constant for the F14 function key.
+     * @since 1.2
+     */
+    public static final int VK_F14            = 0xF001;
+
+    /**
+     * Constant for the F15 function key.
+     * @since 1.2
+     */
+    public static final int VK_F15            = 0xF002;
+
+    /**
+     * Constant for the F16 function key.
+     * @since 1.2
+     */
+    public static final int VK_F16            = 0xF003;
+
+    /**
+     * Constant for the F17 function key.
+     * @since 1.2
+     */
+    public static final int VK_F17            = 0xF004;
+
+    /**
+     * Constant for the F18 function key.
+     * @since 1.2
+     */
+    public static final int VK_F18            = 0xF005;
+
+    /**
+     * Constant for the F19 function key.
+     * @since 1.2
+     */
+    public static final int VK_F19            = 0xF006;
+
+    /**
+     * Constant for the F20 function key.
+     * @since 1.2
+     */
+    public static final int VK_F20            = 0xF007;
+
+    /**
+     * Constant for the F21 function key.
+     * @since 1.2
+     */
+    public static final int VK_F21            = 0xF008;
+
+    /**
+     * Constant for the F22 function key.
+     * @since 1.2
+     */
+    public static final int VK_F22            = 0xF009;
+
+    /**
+     * Constant for the F23 function key.
+     * @since 1.2
+     */
+    public static final int VK_F23            = 0xF00A;
+
+    /**
+     * Constant for the F24 function key.
+     * @since 1.2
+     */
+    public static final int VK_F24            = 0xF00B;
+
+    public static final int VK_PRINTSCREEN    = 0x9A;
+    public static final int VK_INSERT         = 0x9B;
+    public static final int VK_HELP           = 0x9C;
+    public static final int VK_META           = 0x9D;
+
+    public static final int VK_BACK_QUOTE     = 0xC0;
+    public static final int VK_QUOTE          = 0xDE;
+
+    /**
+     * Constant for the numeric keypad <b>up</b> arrow key.
+     * @see #VK_UP
+     * @since 1.2
+     */
+    public static final int VK_KP_UP          = 0xE0;
+
+    /**
+     * Constant for the numeric keypad <b>down</b> arrow key.
+     * @see #VK_DOWN
+     * @since 1.2
+     */
+    public static final int VK_KP_DOWN        = 0xE1;
+
+    /**
+     * Constant for the numeric keypad <b>left</b> arrow key.
+     * @see #VK_LEFT
+     * @since 1.2
+     */
+    public static final int VK_KP_LEFT        = 0xE2;
+
+    /**
+     * Constant for the numeric keypad <b>right</b> arrow key.
+     * @see #VK_RIGHT
+     * @since 1.2
+     */
+    public static final int VK_KP_RIGHT       = 0xE3;
+
+    /* For European keyboards */
+    /** @since 1.2 */
+    public static final int VK_DEAD_GRAVE               = 0x80;
+    /** @since 1.2 */
+    public static final int VK_DEAD_ACUTE               = 0x81;
+    /** @since 1.2 */
+    public static final int VK_DEAD_CIRCUMFLEX          = 0x82;
+    /** @since 1.2 */
+    public static final int VK_DEAD_TILDE               = 0x83;
+    /** @since 1.2 */
+    public static final int VK_DEAD_MACRON              = 0x84;
+    /** @since 1.2 */
+    public static final int VK_DEAD_BREVE               = 0x85;
+    /** @since 1.2 */
+    public static final int VK_DEAD_ABOVEDOT            = 0x86;
+    /** @since 1.2 */
+    public static final int VK_DEAD_DIAERESIS           = 0x87;
+    /** @since 1.2 */
+    public static final int VK_DEAD_ABOVERING           = 0x88;
+    /** @since 1.2 */
+    public static final int VK_DEAD_DOUBLEACUTE         = 0x89;
+    /** @since 1.2 */
+    public static final int VK_DEAD_CARON               = 0x8a;
+    /** @since 1.2 */
+    public static final int VK_DEAD_CEDILLA             = 0x8b;
+    /** @since 1.2 */
+    public static final int VK_DEAD_OGONEK              = 0x8c;
+    /** @since 1.2 */
+    public static final int VK_DEAD_IOTA                = 0x8d;
+    /** @since 1.2 */
+    public static final int VK_DEAD_VOICED_SOUND        = 0x8e;
+    /** @since 1.2 */
+    public static final int VK_DEAD_SEMIVOICED_SOUND    = 0x8f;
+
+    /** @since 1.2 */
+    public static final int VK_AMPERSAND                = 0x96;
+    /** @since 1.2 */
+    public static final int VK_ASTERISK                 = 0x97;
+    /** @since 1.2 */
+    public static final int VK_QUOTEDBL                 = 0x98;
+    /** @since 1.2 */
+    public static final int VK_LESS                     = 0x99;
+
+    /** @since 1.2 */
+    public static final int VK_GREATER                  = 0xa0;
+    /** @since 1.2 */
+    public static final int VK_BRACELEFT                = 0xa1;
+    /** @since 1.2 */
+    public static final int VK_BRACERIGHT               = 0xa2;
+
+    /**
+     * Constant for the "@" key.
+     * @since 1.2
+     */
+    public static final int VK_AT                       = 0x0200;
+
+    /**
+     * Constant for the ":" key.
+     * @since 1.2
+     */
+    public static final int VK_COLON                    = 0x0201;
+
+    /**
+     * Constant for the "^" key.
+     * @since 1.2
+     */
+    public static final int VK_CIRCUMFLEX               = 0x0202;
+
+    /**
+     * Constant for the "$" key.
+     * @since 1.2
+     */
+    public static final int VK_DOLLAR                   = 0x0203;
+
+    /**
+     * Constant for the Euro currency sign key.
+     * @since 1.2
+     */
+    public static final int VK_EURO_SIGN                = 0x0204;
+
+    /**
+     * Constant for the "!" key.
+     * @since 1.2
+     */
+    public static final int VK_EXCLAMATION_MARK         = 0x0205;
+
+    /**
+     * Constant for the inverted exclamation mark key.
+     * @since 1.2
+     */
+    public static final int VK_INVERTED_EXCLAMATION_MARK = 0x0206;
+
+    /**
+     * Constant for the "(" key.
+     * @since 1.2
+     */
+    public static final int VK_LEFT_PARENTHESIS         = 0x0207;
+
+    /**
+     * Constant for the "#" key.
+     * @since 1.2
+     */
+    public static final int VK_NUMBER_SIGN              = 0x0208;
+
+    /**
+     * Constant for the "+" key.
+     * @since 1.2
+     */
+    public static final int VK_PLUS                     = 0x0209;
+
+    /**
+     * Constant for the ")" key.
+     * @since 1.2
+     */
+    public static final int VK_RIGHT_PARENTHESIS        = 0x020A;
+
+    /**
+     * Constant for the "_" key.
+     * @since 1.2
+     */
+    public static final int VK_UNDERSCORE               = 0x020B;
+
+    /**
+     * Constant for the Microsoft Windows "Windows" key.
+     * It is used for both the left and right version of the key.
+     * @see #getKeyLocation()
+     * @since 1.5
+     */
+    public static final int VK_WINDOWS                  = 0x020C;
+
+    /**
+     * Constant for the Microsoft Windows Context Menu key.
+     * @since 1.5
+     */
+    public static final int VK_CONTEXT_MENU             = 0x020D;
+
+    /* for input method support on Asian Keyboards */
+
+    /* not clear what this means - listed in Microsoft Windows API */
+    public static final int VK_FINAL                    = 0x0018;
+
+    /** Constant for the Convert function key. */
+    /* Japanese PC 106 keyboard, Japanese Solaris keyboard: henkan */
+    public static final int VK_CONVERT                  = 0x001C;
+
+    /** Constant for the Don't Convert function key. */
+    /* Japanese PC 106 keyboard: muhenkan */
+    public static final int VK_NONCONVERT               = 0x001D;
+
+    /** Constant for the Accept or Commit function key. */
+    /* Japanese Solaris keyboard: kakutei */
+    public static final int VK_ACCEPT                   = 0x001E;
+
+    /* not clear what this means - listed in Microsoft Windows API */
+    public static final int VK_MODECHANGE               = 0x001F;
+
+    /* replaced by VK_KANA_LOCK for Microsoft Windows and Solaris;
+       might still be used on other platforms */
+    public static final int VK_KANA                     = 0x0015;
+
+    /* replaced by VK_INPUT_METHOD_ON_OFF for Microsoft Windows and Solaris;
+       might still be used for other platforms */
+    public static final int VK_KANJI                    = 0x0019;
+
+    /**
+     * Constant for the Alphanumeric function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard: eisuu */
+    public static final int VK_ALPHANUMERIC             = 0x00F0;
+
+    /**
+     * Constant for the Katakana function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard: katakana */
+    public static final int VK_KATAKANA                 = 0x00F1;
+
+    /**
+     * Constant for the Hiragana function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard: hiragana */
+    public static final int VK_HIRAGANA                 = 0x00F2;
+
+    /**
+     * Constant for the Full-Width Characters function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard: zenkaku */
+    public static final int VK_FULL_WIDTH               = 0x00F3;
+
+    /**
+     * Constant for the Half-Width Characters function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard: hankaku */
+    public static final int VK_HALF_WIDTH               = 0x00F4;
+
+    /**
+     * Constant for the Roman Characters function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard: roumaji */
+    public static final int VK_ROMAN_CHARACTERS         = 0x00F5;
+
+    /**
+     * Constant for the All Candidates function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard - VK_CONVERT + ALT: zenkouho */
+    public static final int VK_ALL_CANDIDATES           = 0x0100;
+
+    /**
+     * Constant for the Previous Candidate function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard - VK_CONVERT + SHIFT: maekouho */
+    public static final int VK_PREVIOUS_CANDIDATE       = 0x0101;
+
+    /**
+     * Constant for the Code Input function key.
+     * @since 1.2
+     */
+    /* Japanese PC 106 keyboard - VK_ALPHANUMERIC + ALT: kanji bangou */
+    public static final int VK_CODE_INPUT               = 0x0102;
+
+    /**
+     * Constant for the Japanese-Katakana function key.
+     * This key switches to a Japanese input method and selects its Katakana input mode.
+     * @since 1.2
+     */
+    /* Japanese Macintosh keyboard - VK_JAPANESE_HIRAGANA + SHIFT */
+    public static final int VK_JAPANESE_KATAKANA        = 0x0103;
+
+    /**
+     * Constant for the Japanese-Hiragana function key.
+     * This key switches to a Japanese input method and selects its Hiragana input mode.
+     * @since 1.2
+     */
+    /* Japanese Macintosh keyboard */
+    public static final int VK_JAPANESE_HIRAGANA        = 0x0104;
+
+    /**
+     * Constant for the Japanese-Roman function key.
+     * This key switches to a Japanese input method and selects its Roman-Direct input mode.
+     * @since 1.2
+     */
+    /* Japanese Macintosh keyboard */
+    public static final int VK_JAPANESE_ROMAN           = 0x0105;
+
+    /**
+     * Constant for the locking Kana function key.
+     * This key locks the keyboard into a Kana layout.
+     * @since 1.3
+     */
+    /* Japanese PC 106 keyboard with special Windows driver - eisuu + Control; Japanese Solaris keyboard: kana */
+    public static final int VK_KANA_LOCK                = 0x0106;
+
+    /**
+     * Constant for the input method on/off key.
+     * @since 1.3
+     */
+    /* Japanese PC 106 keyboard: kanji. Japanese Solaris keyboard: nihongo */
+    public static final int VK_INPUT_METHOD_ON_OFF      = 0x0107;
+
+    /* for Sun keyboards */
+    /** @since 1.2 */
+    public static final int VK_CUT                      = 0xFFD1;
+    /** @since 1.2 */
+    public static final int VK_COPY                     = 0xFFCD;
+    /** @since 1.2 */
+    public static final int VK_PASTE                    = 0xFFCF;
+    /** @since 1.2 */
+    public static final int VK_UNDO                     = 0xFFCB;
+    /** @since 1.2 */
+    public static final int VK_AGAIN                    = 0xFFC9;
+    /** @since 1.2 */
+    public static final int VK_FIND                     = 0xFFD0;
+    /** @since 1.2 */
+    public static final int VK_PROPS                    = 0xFFCA;
+    /** @since 1.2 */
+    public static final int VK_STOP                     = 0xFFC8;
+
+    /**
+     * Constant for the Compose function key.
+     * @since 1.2
+     */
+    public static final int VK_COMPOSE                  = 0xFF20;
+
+    /**
+     * Constant for the AltGraph function key.
+     * @since 1.2
+     */
+    public static final int VK_ALT_GRAPH                = 0xFF7E;
+
+    /**
+     * Constant for the Begin key.
+     * @since 1.5
+     */
+    public static final int VK_BEGIN                    = 0xFF58;
+
+    /**
+     * This value is used to indicate that the keyCode is unknown.
+     * KEY_TYPED events do not have a keyCode value; this value
+     * is used instead.
+     */
+    public static final int VK_UNDEFINED      = 0x0;
+
+    /**
+     * KEY_PRESSED and KEY_RELEASED events which do not map to a
+     * valid Unicode character use this for the keyChar value.
+     */
+    public static final char CHAR_UNDEFINED   = 0xFFFF;
+
+    /**
+     * A constant indicating that the keyLocation is indeterminate
+     * or not relevant.
+     * <code>KEY_TYPED</code> events do not have a keyLocation; this value
+     * is used instead.
+     * @since 1.4
+     */
+    public static final int KEY_LOCATION_UNKNOWN  = 0;
+
+    /**
+     * A constant indicating that the key pressed or released
+     * is not distinguished as the left or right version of a key,
+     * and did not originate on the numeric keypad (or did not
+     * originate with a virtual key corresponding to the numeric
+     * keypad).
+     * @since 1.4
+     */
+    public static final int KEY_LOCATION_STANDARD = 1;
+
+    /**
+     * A constant indicating that the key pressed or released is in
+     * the left key location (there is more than one possible location
+     * for this key).  Example: the left shift key.
+     * @since 1.4
+     */
+    public static final int KEY_LOCATION_LEFT     = 2;
+
+    /**
+     * A constant indicating that the key pressed or released is in
+     * the right key location (there is more than one possible location
+     * for this key).  Example: the right shift key.
+     * @since 1.4
+     */
+    public static final int KEY_LOCATION_RIGHT    = 3;
+
+    /**
+     * A constant indicating that the key event originated on the
+     * numeric keypad or with a virtual key corresponding to the
+     * numeric keypad.
+     * @since 1.4
+     */
+    public static final int KEY_LOCATION_NUMPAD   = 4;
+
+    /**
+     * The unique value assigned to each of the keys on the
+     * keyboard.  There is a common set of key codes that
+     * can be fired by most keyboards.
+     * The symbolic name for a key code should be used rather
+     * than the code value itself.
+     *
+     * @serial
+     * @see #getKeyCode()
+     * @see #setKeyCode(int)
+     */
+    int  keyCode;
+
+    /**
+     * <code>keyChar</code> is a valid unicode character
+     * that is fired by a key or a key combination on
+     * a keyboard.
+     *
+     * @serial
+     * @see #getKeyChar()
+     * @see #setKeyChar(char)
+     */
+    char keyChar;
+
+    /**
+     * The location of the key on the keyboard.
+     *
+     * Some keys occur more than once on a keyboard, e.g. the left and
+     * right shift keys.  Additionally, some keys occur on the numeric
+     * keypad.  This variable is used to distinguish such keys.
+     *
+     * The only legal values are <code>KEY_LOCATION_UNKNOWN</code>,
+     * <code>KEY_LOCATION_STANDARD</code>, <code>KEY_LOCATION_LEFT</code>,
+     * <code>KEY_LOCATION_RIGHT</code>, and <code>KEY_LOCATION_NUMPAD</code>.
+     *
+     * @serial
+     * @see #getKeyLocation()
+     */
+    int keyLocation;
+
+    //set from native code.
+    private transient long rawCode = 0;
+    private transient long primaryLevelUnicode = 0;
+    private transient long scancode = 0; // for MS Windows only
+    private transient long extendedKeyCode = 0;
+
+    /*
+     * JDK 1.1 serialVersionUID
+     */
+    private static final long serialVersionUID = -2352130953028126954L;
+
+    static {
+        /* ensure that the necessary native libraries are loaded */
+        NativeLibLoader.loadLibraries();
+        if (!GraphicsEnvironment.isHeadless()) {
+            initIDs();
+        }
+
+        AWTAccessor.setKeyEventAccessor(
+            new AWTAccessor.KeyEventAccessor() {
+                public void setRawCode(KeyEvent ev, long rawCode) {
+                    ev.rawCode = rawCode;
+                }
+
+                public void setPrimaryLevelUnicode(KeyEvent ev,
+                                                   long primaryLevelUnicode) {
+                    ev.primaryLevelUnicode = primaryLevelUnicode;
+                }
+
+                public void setExtendedKeyCode(KeyEvent ev,
+                                               long extendedKeyCode) {
+                    ev.extendedKeyCode = extendedKeyCode;
+                }
+
+                public Component getOriginalSource( KeyEvent ev ) {
+                    return ev.originalSource;
+                }
+            });
+    }
+
+    /**
+     * Initialize JNI field and method IDs for fields that may be
+     * accessed from C.
+     */
+    private static native void initIDs();
+
+    /**
+     * The original event source.
+     *
+     * Event source can be changed during processing, but in some cases
+     * we need to be able to obtain original source.
+     */
+    private Component originalSource;
+
+    private KeyEvent(Component source, int id, long when, int modifiers,
+                    int keyCode, char keyChar, int keyLocation, boolean isProxyActive) {
+        this(source, id, when, modifiers, keyCode, keyChar, keyLocation);
+        this.isProxyActive = isProxyActive;
+    }
+
+    /**
+     * Constructs a <code>KeyEvent</code> object.
+     * <p>This method throws an
+     * <code>IllegalArgumentException</code> if <code>source</code>
+     * is <code>null</code>.
+     *
+     * @param source    The <code>Component</code> that originated the event
+     * @param id              An integer indicating the type of event.
+     *                  For information on allowable values, see
+     *                  the class description for {@link KeyEvent}
+     * @param when      A long integer that specifies the time the event
+     *                  occurred.
+     *                     Passing negative or zero value
+     *                     is not recommended
+     * @param modifiers The modifier keys down during event (shift, ctrl,
+     *                  alt, meta).
+     *                     Passing negative value
+     *                     is not recommended.
+     *                     Zero value means that no modifiers were passed.
+     *                  Use either an extended _DOWN_MASK or old _MASK modifiers,
+     *                  however do not mix models in the one event.
+     *                  The extended modifiers are preferred for using
+     * @param keyCode   The integer code for an actual key, or VK_UNDEFINED
+     *                  (for a key-typed event)
+     * @param keyChar   The Unicode character generated by this event, or
+     *                  CHAR_UNDEFINED (for key-pressed and key-released
+     *                  events which do not map to a valid Unicode character)
+     * @param keyLocation  Identifies the key location.  The only legal
+     *        values are <code>KEY_LOCATION_UNKNOWN</code>,
+     *        <code>KEY_LOCATION_STANDARD</code>, <code>KEY_LOCATION_LEFT</code>,
+     *        <code>KEY_LOCATION_RIGHT</code>, and <code>KEY_LOCATION_NUMPAD</code>.
+     * @throws IllegalArgumentException
+     *     if <code>id</code> is <code>KEY_TYPED</code> and
+     *       <code>keyChar</code> is <code>CHAR_UNDEFINED</code>;
+     *     or if <code>id</code> is <code>KEY_TYPED</code> and
+     *       <code>keyCode</code> is not <code>VK_UNDEFINED</code>;
+     *     or if <code>id</code> is <code>KEY_TYPED</code> and
+     *       <code>keyLocation</code> is not <code>KEY_LOCATION_UNKNOWN</code>;
+     *     or if <code>keyLocation</code> is not one of the legal
+     *       values enumerated above.
+     * @throws IllegalArgumentException if <code>source</code> is null
+     * @see #getSource()
+     * @see #getID()
+     * @see #getWhen()
+     * @see #getModifiers()
+     * @see #getKeyCode()
+     * @see #getKeyChar()
+     * @see #getKeyLocation()
+     * @since 1.4
+     */
+    public KeyEvent(Component source, int id, long when, int modifiers,
+                    int keyCode, char keyChar, int keyLocation) {
+        super(source, id, when, modifiers);
+        if (id == KEY_TYPED) {
+            if (keyChar == CHAR_UNDEFINED) {
+                throw new IllegalArgumentException("invalid keyChar");
+            }
+            if (keyCode != VK_UNDEFINED) {
+                throw new IllegalArgumentException("invalid keyCode");
+            }
+            if (keyLocation != KEY_LOCATION_UNKNOWN) {
+                throw new IllegalArgumentException("invalid keyLocation");
+            }
+        }
+
+        this.keyCode = keyCode;
+        this.keyChar = keyChar;
+
+        if ((keyLocation < KEY_LOCATION_UNKNOWN) ||
+            (keyLocation > KEY_LOCATION_NUMPAD)) {
+            throw new IllegalArgumentException("invalid keyLocation");
+        }
+        this.keyLocation = keyLocation;
+        if ((getModifiers() != 0) && (getModifiersEx() == 0)) {
+            setNewModifiers();
+        } else if ((getModifiers() == 0) && (getModifiersEx() != 0)) {
+            setOldModifiers();
+        }
+        originalSource = source;
+    }
+
+    /**
+     * Constructs a <code>KeyEvent</code> object.
+     * <p> This method throws an
+     * <code>IllegalArgumentException</code> if <code>source</code>
+     * is <code>null</code>.
+     *
+     * @param source    The <code>Component</code> that originated the event
+     * @param id              An integer indicating the type of event.
+     *                  For information on allowable values, see
+     *                  the class description for {@link KeyEvent}
+     * @param when      A long integer that specifies the time the event
+     *                  occurred.
+     *                     Passing negative or zero value
+     *                     is not recommended
+     * @param modifiers The modifier keys down during event (shift, ctrl,
+     *                  alt, meta).
+     *                     Passing negative value
+     *                     is not recommended.
+     *                     Zero value means that no modifiers were passed.
+     *                  Use either an extended _DOWN_MASK or old _MASK modifiers,
+     *                  however do not mix models in the one event.
+     *                  The extended modifiers are preferred for using
+     * @param keyCode   The integer code for an actual key, or VK_UNDEFINED
+     *                  (for a key-typed event)
+     * @param keyChar   The Unicode character generated by this event, or
+     *                  CHAR_UNDEFINED (for key-pressed and key-released
+     *                  events which do not map to a valid Unicode character)
+     * @throws IllegalArgumentException  if <code>id</code> is
+     *     <code>KEY_TYPED</code> and <code>keyChar</code> is
+     *     <code>CHAR_UNDEFINED</code>; or if <code>id</code> is
+     *     <code>KEY_TYPED</code> and <code>keyCode</code> is not
+     *     <code>VK_UNDEFINED</code>
+     * @throws IllegalArgumentException if <code>source</code> is null
+     * @see #getSource()
+     * @see #getID()
+     * @see #getWhen()
+     * @see #getModifiers()
+     * @see #getKeyCode()
+     * @see #getKeyChar()
+     */
+    public KeyEvent(Component source, int id, long when, int modifiers,
+                    int keyCode, char keyChar) {
+        this(source, id, when, modifiers, keyCode, keyChar,
+          KEY_LOCATION_UNKNOWN);
+    }
+
+    /**
+     * @deprecated as of JDK1.1
+     */
+    @Deprecated
+    public KeyEvent(Component source, int id, long when, int modifiers,
+                    int keyCode) {
+        this(source, id, when, modifiers, keyCode, (char)keyCode);
+    }
+
+    /**
+     * Returns the integer keyCode associated with the key in this event.
+     *
+     * @return the integer code for an actual key on the keyboard.
+     *         (For <code>KEY_TYPED</code> events, the keyCode is
+     *         <code>VK_UNDEFINED</code>.)
+     */
+    public int getKeyCode() {
+        return keyCode;
+    }
+
+    /**
+     * Set the keyCode value to indicate a physical key.
+     *
+     * @param keyCode an integer corresponding to an actual key on the keyboard.
+     */
+    public void setKeyCode(int keyCode) {
+        this.keyCode = keyCode;
+    }
+
+    /**
+     * Returns the character associated with the key in this event.
+     * For example, the <code>KEY_TYPED</code> event for shift + "a"
+     * returns the value for "A".
+     * <p>
+     * <code>KEY_PRESSED</code> and <code>KEY_RELEASED</code> events
+     * are not intended for reporting of character input.  Therefore,
+     * the values returned by this method are guaranteed to be
+     * meaningful only for <code>KEY_TYPED</code> events.
+     *
+     * @return the Unicode character defined for this key event.
+     *         If no valid Unicode character exists for this key event,
+     *         <code>CHAR_UNDEFINED</code> is returned.
+     */
+    public char getKeyChar() {
+        return keyChar;
+    }
+
+    /**
+     * Set the keyChar value to indicate a logical character.
+     *
+     * @param keyChar a char corresponding to to the combination of keystrokes
+     *                that make up this event.
+     */
+    public void setKeyChar(char keyChar) {
+        this.keyChar = keyChar;
+    }
+
+    /**
+     * Set the modifiers to indicate additional keys that were held down
+     * (e.g. shift, ctrl, alt, meta) defined as part of InputEvent.
+     * <p>
+     * NOTE:  use of this method is not recommended, because many AWT
+     * implementations do not recognize modifier changes.  This is
+     * especially true for <code>KEY_TYPED</code> events where the shift
+     * modifier is changed.
+     *
+     * @param modifiers an integer combination of the modifier constants.
+     * @see InputEvent
+     * @deprecated as of JDK1.1.4
+     */
+    @Deprecated
+    public void setModifiers(int modifiers) {
+        this.modifiers = modifiers;
+        if ((getModifiers() != 0) && (getModifiersEx() == 0)) {
+            setNewModifiers();
+        } else if ((getModifiers() == 0) && (getModifiersEx() != 0)) {
+            setOldModifiers();
+        }
+    }
+
+    /**
+     * Returns the location of the key that originated this key event.
+     *
+     * Some keys occur more than once on a keyboard, e.g. the left and
+     * right shift keys.  Additionally, some keys occur on the numeric
+     * keypad.  This provides a way of distinguishing such keys.
+     *
+     * @return the location of the key that was pressed or released.
+     *         Always returns <code>KEY_LOCATION_UNKNOWN</code> for
+     *         <code>KEY_TYPED</code> events.
+     * @since 1.4
+     */
+    public int getKeyLocation() {
+        return keyLocation;
+    }
+
+    /**
+     * Returns a String describing the keyCode, such as "HOME", "F1" or "A".
+     * These strings can be localized by changing the awt.properties file.
+     *
+     * @return a string containing a text description for a physical key,
+     *         identified by its keyCode
+     */
+    public static String getKeyText(int keyCode) {
+        if (keyCode >= VK_0 && keyCode <= VK_9 ||
+            keyCode >= VK_A && keyCode <= VK_Z) {
+            return String.valueOf((char)keyCode);
+        }
+
+        switch(keyCode) {
+          case VK_ENTER: return Toolkit.getProperty("AWT.enter", "Enter");
+          case VK_BACK_SPACE: return Toolkit.getProperty("AWT.backSpace", "Backspace");
+          case VK_TAB: return Toolkit.getProperty("AWT.tab", "Tab");
+          case VK_CANCEL: return Toolkit.getProperty("AWT.cancel", "Cancel");
+          case VK_CLEAR: return Toolkit.getProperty("AWT.clear", "Clear");
+          case VK_COMPOSE: return Toolkit.getProperty("AWT.compose", "Compose");
+          case VK_PAUSE: return Toolkit.getProperty("AWT.pause", "Pause");
+          case VK_CAPS_LOCK: return Toolkit.getProperty("AWT.capsLock", "Caps Lock");
+          case VK_ESCAPE: return Toolkit.getProperty("AWT.escape", "Escape");
+          case VK_SPACE: return Toolkit.getProperty("AWT.space", "Space");
+          case VK_PAGE_UP: return Toolkit.getProperty("AWT.pgup", "Page Up");
+          case VK_PAGE_DOWN: return Toolkit.getProperty("AWT.pgdn", "Page Down");
+          case VK_END: return Toolkit.getProperty("AWT.end", "End");
+          case VK_HOME: return Toolkit.getProperty("AWT.home", "Home");
+          case VK_LEFT: return Toolkit.getProperty("AWT.left", "Left");
+          case VK_UP: return Toolkit.getProperty("AWT.up", "Up");
+          case VK_RIGHT: return Toolkit.getProperty("AWT.right", "Right");
+          case VK_DOWN: return Toolkit.getProperty("AWT.down", "Down");
+          case VK_BEGIN: return Toolkit.getProperty("AWT.begin", "Begin");
+
+          // modifiers
+          case VK_SHIFT: return Toolkit.getProperty("AWT.shift", "Shift");
+          case VK_CONTROL: return Toolkit.getProperty("AWT.control", "Control");
+          case VK_ALT: return Toolkit.getProperty("AWT.alt", "Alt");
+          case VK_META: return Toolkit.getProperty("AWT.meta", "Meta");
+          case VK_ALT_GRAPH: return Toolkit.getProperty("AWT.altGraph", "Alt Graph");
+
+          // punctuation
+          case VK_COMMA: return Toolkit.getProperty("AWT.comma", "Comma");
+          case VK_PERIOD: return Toolkit.getProperty("AWT.period", "Period");
+          case VK_SLASH: return Toolkit.getProperty("AWT.slash", "Slash");
+          case VK_SEMICOLON: return Toolkit.getProperty("AWT.semicolon", "Semicolon");
+          case VK_EQUALS: return Toolkit.getProperty("AWT.equals", "Equals");
+          case VK_OPEN_BRACKET: return Toolkit.getProperty("AWT.openBracket", "Open Bracket");
+          case VK_BACK_SLASH: return Toolkit.getProperty("AWT.backSlash", "Back Slash");
+          case VK_CLOSE_BRACKET: return Toolkit.getProperty("AWT.closeBracket", "Close Bracket");
+
+          // numpad numeric keys handled below
+          case VK_MULTIPLY: return Toolkit.getProperty("AWT.multiply", "NumPad *");
+          case VK_ADD: return Toolkit.getProperty("AWT.add", "NumPad +");
+          case VK_SEPARATOR: return Toolkit.getProperty("AWT.separator", "NumPad ,");
+          case VK_SUBTRACT: return Toolkit.getProperty("AWT.subtract", "NumPad -");
+          case VK_DECIMAL: return Toolkit.getProperty("AWT.decimal", "NumPad .");
+          case VK_DIVIDE: return Toolkit.getProperty("AWT.divide", "NumPad /");
+          case VK_DELETE: return Toolkit.getProperty("AWT.delete", "Delete");
+          case VK_NUM_LOCK: return Toolkit.getProperty("AWT.numLock", "Num Lock");
+          case VK_SCROLL_LOCK: return Toolkit.getProperty("AWT.scrollLock", "Scroll Lock");
+
+          case VK_WINDOWS: return Toolkit.getProperty("AWT.windows", "Windows");
+          case VK_CONTEXT_MENU: return Toolkit.getProperty("AWT.context", "Context Menu");
+
+          case VK_F1: return Toolkit.getProperty("AWT.f1", "F1");
+          case VK_F2: return Toolkit.getProperty("AWT.f2", "F2");
+          case VK_F3: return Toolkit.getProperty("AWT.f3", "F3");
+          case VK_F4: return Toolkit.getProperty("AWT.f4", "F4");
+          case VK_F5: return Toolkit.getProperty("AWT.f5", "F5");
+          case VK_F6: return Toolkit.getProperty("AWT.f6", "F6");
+          case VK_F7: return Toolkit.getProperty("AWT.f7", "F7");
+          case VK_F8: return Toolkit.getProperty("AWT.f8", "F8");
+          case VK_F9: return Toolkit.getProperty("AWT.f9", "F9");
+          case VK_F10: return Toolkit.getProperty("AWT.f10", "F10");
+          case VK_F11: return Toolkit.getProperty("AWT.f11", "F11");
+          case VK_F12: return Toolkit.getProperty("AWT.f12", "F12");
+          case VK_F13: return Toolkit.getProperty("AWT.f13", "F13");
+          case VK_F14: return Toolkit.getProperty("AWT.f14", "F14");
+          case VK_F15: return Toolkit.getProperty("AWT.f15", "F15");
+          case VK_F16: return Toolkit.getProperty("AWT.f16", "F16");
+          case VK_F17: return Toolkit.getProperty("AWT.f17", "F17");
+          case VK_F18: return Toolkit.getProperty("AWT.f18", "F18");
+          case VK_F19: return Toolkit.getProperty("AWT.f19", "F19");
+          case VK_F20: return Toolkit.getProperty("AWT.f20", "F20");
+          case VK_F21: return Toolkit.getProperty("AWT.f21", "F21");
+          case VK_F22: return Toolkit.getProperty("AWT.f22", "F22");
+          case VK_F23: return Toolkit.getProperty("AWT.f23", "F23");
+          case VK_F24: return Toolkit.getProperty("AWT.f24", "F24");
+
+          case VK_PRINTSCREEN: return Toolkit.getProperty("AWT.printScreen", "Print Screen");
+          case VK_INSERT: return Toolkit.getProperty("AWT.insert", "Insert");
+          case VK_HELP: return Toolkit.getProperty("AWT.help", "Help");
+          case VK_BACK_QUOTE: return Toolkit.getProperty("AWT.backQuote", "Back Quote");
+          case VK_QUOTE: return Toolkit.getProperty("AWT.quote", "Quote");
+
+          case VK_KP_UP: return Toolkit.getProperty("AWT.up", "Up");
+          case VK_KP_DOWN: return Toolkit.getProperty("AWT.down", "Down");
+          case VK_KP_LEFT: return Toolkit.getProperty("AWT.left", "Left");
+          case VK_KP_RIGHT: return Toolkit.getProperty("AWT.right", "Right");
+
+          case VK_DEAD_GRAVE: return Toolkit.getProperty("AWT.deadGrave", "Dead Grave");
+          case VK_DEAD_ACUTE: return Toolkit.getProperty("AWT.deadAcute", "Dead Acute");
+          case VK_DEAD_CIRCUMFLEX: return Toolkit.getProperty("AWT.deadCircumflex", "Dead Circumflex");
+          case VK_DEAD_TILDE: return Toolkit.getProperty("AWT.deadTilde", "Dead Tilde");
+          case VK_DEAD_MACRON: return Toolkit.getProperty("AWT.deadMacron", "Dead Macron");
+          case VK_DEAD_BREVE: return Toolkit.getProperty("AWT.deadBreve", "Dead Breve");
+          case VK_DEAD_ABOVEDOT: return Toolkit.getProperty("AWT.deadAboveDot", "Dead Above Dot");
+          case VK_DEAD_DIAERESIS: return Toolkit.getProperty("AWT.deadDiaeresis", "Dead Diaeresis");
+          case VK_DEAD_ABOVERING: return Toolkit.getProperty("AWT.deadAboveRing", "Dead Above Ring");
+          case VK_DEAD_DOUBLEACUTE: return Toolkit.getProperty("AWT.deadDoubleAcute", "Dead Double Acute");
+          case VK_DEAD_CARON: return Toolkit.getProperty("AWT.deadCaron", "Dead Caron");
+          case VK_DEAD_CEDILLA: return Toolkit.getProperty("AWT.deadCedilla", "Dead Cedilla");
+          case VK_DEAD_OGONEK: return Toolkit.getProperty("AWT.deadOgonek", "Dead Ogonek");
+          case VK_DEAD_IOTA: return Toolkit.getProperty("AWT.deadIota", "Dead Iota");
+          case VK_DEAD_VOICED_SOUND: return Toolkit.getProperty("AWT.deadVoicedSound", "Dead Voiced Sound");
+          case VK_DEAD_SEMIVOICED_SOUND: return Toolkit.getProperty("AWT.deadSemivoicedSound", "Dead Semivoiced Sound");
+
+          case VK_AMPERSAND: return Toolkit.getProperty("AWT.ampersand", "Ampersand");
+          case VK_ASTERISK: return Toolkit.getProperty("AWT.asterisk", "Asterisk");
+          case VK_QUOTEDBL: return Toolkit.getProperty("AWT.quoteDbl", "Double Quote");
+          case VK_LESS: return Toolkit.getProperty("AWT.Less", "Less");
+          case VK_GREATER: return Toolkit.getProperty("AWT.greater", "Greater");
+          case VK_BRACELEFT: return Toolkit.getProperty("AWT.braceLeft", "Left Brace");
+          case VK_BRACERIGHT: return Toolkit.getProperty("AWT.braceRight", "Right Brace");
+          case VK_AT: return Toolkit.getProperty("AWT.at", "At");
+          case VK_COLON: return Toolkit.getProperty("AWT.colon", "Colon");
+          case VK_CIRCUMFLEX: return Toolkit.getProperty("AWT.circumflex", "Circumflex");
+          case VK_DOLLAR: return Toolkit.getProperty("AWT.dollar", "Dollar");
+          case VK_EURO_SIGN: return Toolkit.getProperty("AWT.euro", "Euro");
+          case VK_EXCLAMATION_MARK: return Toolkit.getProperty("AWT.exclamationMark", "Exclamation Mark");
+          case VK_INVERTED_EXCLAMATION_MARK: return Toolkit.getProperty("AWT.invertedExclamationMark", "Inverted Exclamation Mark");
+          case VK_LEFT_PARENTHESIS: return Toolkit.getProperty("AWT.leftParenthesis", "Left Parenthesis");
+          case VK_NUMBER_SIGN: return Toolkit.getProperty("AWT.numberSign", "Number Sign");
+          case VK_MINUS: return Toolkit.getProperty("AWT.minus", "Minus");
+          case VK_PLUS: return Toolkit.getProperty("AWT.plus", "Plus");
+          case VK_RIGHT_PARENTHESIS: return Toolkit.getProperty("AWT.rightParenthesis", "Right Parenthesis");
+          case VK_UNDERSCORE: return Toolkit.getProperty("AWT.underscore", "Underscore");
+
+          case VK_FINAL: return Toolkit.getProperty("AWT.final", "Final");
+          case VK_CONVERT: return Toolkit.getProperty("AWT.convert", "Convert");
+          case VK_NONCONVERT: return Toolkit.getProperty("AWT.noconvert", "No Convert");
+          case VK_ACCEPT: return Toolkit.getProperty("AWT.accept", "Accept");
+          case VK_MODECHANGE: return Toolkit.getProperty("AWT.modechange", "Mode Change");
+          case VK_KANA: return Toolkit.getProperty("AWT.kana", "Kana");
+          case VK_KANJI: return Toolkit.getProperty("AWT.kanji", "Kanji");
+          case VK_ALPHANUMERIC: return Toolkit.getProperty("AWT.alphanumeric", "Alphanumeric");
+          case VK_KATAKANA: return Toolkit.getProperty("AWT.katakana", "Katakana");
+          case VK_HIRAGANA: return Toolkit.getProperty("AWT.hiragana", "Hiragana");
+          case VK_FULL_WIDTH: return Toolkit.getProperty("AWT.fullWidth", "Full-Width");
+          case VK_HALF_WIDTH: return Toolkit.getProperty("AWT.halfWidth", "Half-Width");
+          case VK_ROMAN_CHARACTERS: return Toolkit.getProperty("AWT.romanCharacters", "Roman Characters");
+          case VK_ALL_CANDIDATES: return Toolkit.getProperty("AWT.allCandidates", "All Candidates");
+          case VK_PREVIOUS_CANDIDATE: return Toolkit.getProperty("AWT.previousCandidate", "Previous Candidate");
+          case VK_CODE_INPUT: return Toolkit.getProperty("AWT.codeInput", "Code Input");
+          case VK_JAPANESE_KATAKANA: return Toolkit.getProperty("AWT.japaneseKatakana", "Japanese Katakana");
+          case VK_JAPANESE_HIRAGANA: return Toolkit.getProperty("AWT.japaneseHiragana", "Japanese Hiragana");
+          case VK_JAPANESE_ROMAN: return Toolkit.getProperty("AWT.japaneseRoman", "Japanese Roman");
+          case VK_KANA_LOCK: return Toolkit.getProperty("AWT.kanaLock", "Kana Lock");
+          case VK_INPUT_METHOD_ON_OFF: return Toolkit.getProperty("AWT.inputMethodOnOff", "Input Method On/Off");
+
+          case VK_AGAIN: return Toolkit.getProperty("AWT.again", "Again");
+          case VK_UNDO: return Toolkit.getProperty("AWT.undo", "Undo");
+          case VK_COPY: return Toolkit.getProperty("AWT.copy", "Copy");
+          case VK_PASTE: return Toolkit.getProperty("AWT.paste", "Paste");
+          case VK_CUT: return Toolkit.getProperty("AWT.cut", "Cut");
+          case VK_FIND: return Toolkit.getProperty("AWT.find", "Find");
+          case VK_PROPS: return Toolkit.getProperty("AWT.props", "Props");
+          case VK_STOP: return Toolkit.getProperty("AWT.stop", "Stop");
+        }
+
+        if (keyCode >= VK_NUMPAD0 && keyCode <= VK_NUMPAD9) {
+            String numpad = Toolkit.getProperty("AWT.numpad", "NumPad");
+            char c = (char)(keyCode - VK_NUMPAD0 + '0');
+            return numpad + "-" + c;
+        }
+
+        if ((keyCode & 0x01000000) != 0) {
+            return String.valueOf((char)(keyCode ^ 0x01000000 ));
+        }
+        String unknown = Toolkit.getProperty("AWT.unknown", "Unknown");
+        return unknown + " keyCode: 0x" + Integer.toString(keyCode, 16);
+    }
+
+    /**
+     * Returns a <code>String</code> describing the modifier key(s),
+     * such as "Shift", or "Ctrl+Shift".  These strings can be
+     * localized by changing the <code>awt.properties</code> file.
+     * <p>
+     * Note that <code>InputEvent.ALT_MASK</code> and
+     * <code>InputEvent.BUTTON2_MASK</code> have the same value,
+     * so the string "Alt" is returned for both modifiers.  Likewise,
+     * <code>InputEvent.META_MASK</code> and
+     * <code>InputEvent.BUTTON3_MASK</code> have the same value,
+     * so the string "Meta" is returned for both modifiers.
+     *
+     * @return string a text description of the combination of modifier
+     *                keys that were held down during the event
+     * @see InputEvent#getModifiersExText(int)
+     */
+    public static String getKeyModifiersText(int modifiers) {
+        StringBuilder buf = new StringBuilder();
+        if ((modifiers & InputEvent.META_MASK) != 0) {
+            buf.append(Toolkit.getProperty("AWT.meta", "Meta"));
+            buf.append("+");
+        }
+        if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+            buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
+            buf.append("+");
+        }
+        if ((modifiers & InputEvent.ALT_MASK) != 0) {
+            buf.append(Toolkit.getProperty("AWT.alt", "Alt"));
+            buf.append("+");
+        }
+        if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+            buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
+            buf.append("+");
+        }
+        if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+            buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+            buf.append("+");
+        }
+        if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
+            buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
+            buf.append("+");
+        }
+        if (buf.length() > 0) {
+            buf.setLength(buf.length()-1); // remove trailing '+'
+        }
+        return buf.toString();
+    }
+
+
+    /**
+     * Returns whether the key in this event is an "action" key.
+     * Typically an action key does not fire a unicode character and is
+     * not a modifier key.
+     *
+     * @return <code>true</code> if the key is an "action" key,
+     *         <code>false</code> otherwise
+     */
+    public boolean isActionKey() {
+        switch (keyCode) {
+          case VK_HOME:
+          case VK_END:
+          case VK_PAGE_UP:
+          case VK_PAGE_DOWN:
+          case VK_UP:
+          case VK_DOWN:
+          case VK_LEFT:
+          case VK_RIGHT:
+          case VK_BEGIN:
+
+          case VK_KP_LEFT:
+          case VK_KP_UP:
+          case VK_KP_RIGHT:
+          case VK_KP_DOWN:
+
+          case VK_F1:
+          case VK_F2:
+          case VK_F3:
+          case VK_F4:
+          case VK_F5:
+          case VK_F6:
+          case VK_F7:
+          case VK_F8:
+          case VK_F9:
+          case VK_F10:
+          case VK_F11:
+          case VK_F12:
+          case VK_F13:
+          case VK_F14:
+          case VK_F15:
+          case VK_F16:
+          case VK_F17:
+          case VK_F18:
+          case VK_F19:
+          case VK_F20:
+          case VK_F21:
+          case VK_F22:
+          case VK_F23:
+          case VK_F24:
+          case VK_PRINTSCREEN:
+          case VK_SCROLL_LOCK:
+          case VK_CAPS_LOCK:
+          case VK_NUM_LOCK:
+          case VK_PAUSE:
+          case VK_INSERT:
+
+          case VK_FINAL:
+          case VK_CONVERT:
+          case VK_NONCONVERT:
+          case VK_ACCEPT:
+          case VK_MODECHANGE:
+          case VK_KANA:
+          case VK_KANJI:
+          case VK_ALPHANUMERIC:
+          case VK_KATAKANA:
+          case VK_HIRAGANA:
+          case VK_FULL_WIDTH:
+          case VK_HALF_WIDTH:
+          case VK_ROMAN_CHARACTERS:
+          case VK_ALL_CANDIDATES:
+          case VK_PREVIOUS_CANDIDATE:
+          case VK_CODE_INPUT:
+          case VK_JAPANESE_KATAKANA:
+          case VK_JAPANESE_HIRAGANA:
+          case VK_JAPANESE_ROMAN:
+          case VK_KANA_LOCK:
+          case VK_INPUT_METHOD_ON_OFF:
+
+          case VK_AGAIN:
+          case VK_UNDO:
+          case VK_COPY:
+          case VK_PASTE:
+          case VK_CUT:
+          case VK_FIND:
+          case VK_PROPS:
+          case VK_STOP:
+
+          case VK_HELP:
+          case VK_WINDOWS:
+          case VK_CONTEXT_MENU:
+              return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns a parameter string identifying this event.
+     * This method is useful for event logging and for debugging.
+     *
+     * @return a string identifying the event and its attributes
+     */
+    public String paramString() {
+        StringBuilder str = new StringBuilder(100);
+
+        switch (id) {
+          case KEY_PRESSED:
+            str.append("KEY_PRESSED");
+            break;
+          case KEY_RELEASED:
+            str.append("KEY_RELEASED");
+            break;
+          case KEY_TYPED:
+            str.append("KEY_TYPED");
+            break;
+          default:
+            str.append("unknown type");
+            break;
+        }
+
+        str.append(",keyCode=").append(keyCode);
+        str.append(",keyText=").append(getKeyText(keyCode));
+
+        /* Some keychars don't print well, e.g. escape, backspace,
+         * tab, return, delete, cancel.  Get keyText for the keyCode
+         * instead of the keyChar.
+         */
+        str.append(",keyChar=");
+        switch (keyChar) {
+          case '\b':
+            str.append(getKeyText(VK_BACK_SPACE));
+            break;
+          case '\t':
+            str.append(getKeyText(VK_TAB));
+            break;
+          case '\n':
+            str.append(getKeyText(VK_ENTER));
+            break;
+          case '\u0018':
+            str.append(getKeyText(VK_CANCEL));
+            break;
+          case '\u001b':
+            str.append(getKeyText(VK_ESCAPE));
+            break;
+          case '\u007f':
+            str.append(getKeyText(VK_DELETE));
+            break;
+          case CHAR_UNDEFINED:
+            str.append(Toolkit.getProperty("AWT.undefined", "Undefined"));
+            str.append(" keyChar");
+            break;
+          default:
+            str.append("'").append(keyChar).append("'");
+            break;
+        }
+
+        if (getModifiers() != 0) {
+            str.append(",modifiers=").append(getKeyModifiersText(modifiers));
+        }
+        if (getModifiersEx() != 0) {
+            str.append(",extModifiers=").append(getModifiersExText(modifiers));
+        }
+
+        str.append(",keyLocation=");
+        switch (keyLocation) {
+          case KEY_LOCATION_UNKNOWN:
+            str.append("KEY_LOCATION_UNKNOWN");
+            break;
+          case KEY_LOCATION_STANDARD:
+            str.append("KEY_LOCATION_STANDARD");
+            break;
+          case KEY_LOCATION_LEFT:
+            str.append("KEY_LOCATION_LEFT");
+            break;
+          case KEY_LOCATION_RIGHT:
+            str.append("KEY_LOCATION_RIGHT");
+            break;
+          case KEY_LOCATION_NUMPAD:
+            str.append("KEY_LOCATION_NUMPAD");
+            break;
+          default:
+            str.append("KEY_LOCATION_UNKNOWN");
+            break;
+        }
+        str.append(",rawCode=").append(rawCode);
+        str.append(",primaryLevelUnicode=").append(primaryLevelUnicode);
+        str.append(",scancode=").append(scancode);
+        str.append(",extendedKeyCode=0x").append(Long.toHexString(extendedKeyCode));
+
+        return str.toString();
+    }
+    /**
+     * Returns an extended key code for the event.
+     * The extended key code is a unique id assigned to  a key on the keyboard
+     * just like {@code keyCode}. However, unlike {@code keyCode}, this value depends on the
+     * current keyboard layout. For instance, pressing the left topmost letter key
+     * in a common English layout produces the same value as {@code keyCode}, {@code VK_Q}.
+     * Pressing the same key in a regular Russian layout gives another code, unique for the
+     * letter "Cyrillic I short".
+     *
+     * @since 1.7
+     *
+     */
+    public  int getExtendedKeyCode() {
+        return (int)extendedKeyCode;
+    }
+    /**
+     * Returns an extended key code for a unicode character.
+     *
+     * @return for a unicode character with a corresponding {@code VK_} constant -- this
+     *   {@code VK_} constant; for a character appearing on the primary
+     *   level of a known keyboard layout -- a unique integer.
+     *   If a character does not appear on the primary level of a known keyboard,
+     *   {@code VK_UNDEFINED} is returned.
+     *
+     * @since 1.7
+     *
+     */
+    public static int getExtendedKeyCodeForChar(int c) {
+        // Return a keycode (if any) associated with a character.
+        return sun.awt.ExtendedKeyCodes.getExtendedKeyCodeForChar(c);
+    }
+
+    /**
+     * Sets new modifiers by the old ones. The key modifiers
+     * override overlaping mouse modifiers.
+     */
+    private void setNewModifiers() {
+        if ((modifiers & SHIFT_MASK) != 0) {
+            modifiers |= SHIFT_DOWN_MASK;
+        }
+        if ((modifiers & ALT_MASK) != 0) {
+            modifiers |= ALT_DOWN_MASK;
+        }
+        if ((modifiers & CTRL_MASK) != 0) {
+            modifiers |= CTRL_DOWN_MASK;
+        }
+        if ((modifiers & META_MASK) != 0) {
+            modifiers |= META_DOWN_MASK;
+        }
+        if ((modifiers & ALT_GRAPH_MASK) != 0) {
+            modifiers |= ALT_GRAPH_DOWN_MASK;
+        }
+        if ((modifiers & BUTTON1_MASK) != 0) {
+            modifiers |= BUTTON1_DOWN_MASK;
+        }
+    }
+
+    /**
+     * Sets old modifiers by the new ones.
+     */
+    private void setOldModifiers() {
+        if ((modifiers & SHIFT_DOWN_MASK) != 0) {
+            modifiers |= SHIFT_MASK;
+        }
+        if ((modifiers & ALT_DOWN_MASK) != 0) {
+            modifiers |= ALT_MASK;
+        }
+        if ((modifiers & CTRL_DOWN_MASK) != 0) {
+            modifiers |= CTRL_MASK;
+        }
+        if ((modifiers & META_DOWN_MASK) != 0) {
+            modifiers |= META_MASK;
+        }
+        if ((modifiers & ALT_GRAPH_DOWN_MASK) != 0) {
+            modifiers |= ALT_GRAPH_MASK;
+        }
+        if ((modifiers & BUTTON1_DOWN_MASK) != 0) {
+            modifiers |= BUTTON1_MASK;
+        }
+    }
+
+    /**
+     * Sets new modifiers by the old ones. The key modifiers
+     * override overlaping mouse modifiers.
+     * @serial
+     */
+    private void readObject(ObjectInputStream s)
+      throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        if (getModifiers() != 0 && getModifiersEx() == 0) {
+            setNewModifiers();
+        }
+    }
+}

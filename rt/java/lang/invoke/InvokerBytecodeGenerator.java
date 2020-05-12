@@ -1,1454 +1,1448 @@
-/*      */ package java.lang.invoke;
-/*      */ 
-/*      */ import java.io.File;
-/*      */ import java.io.FileOutputStream;
-/*      */ import java.io.IOException;
-/*      */ import java.lang.invoke.InvokerBytecodeGenerator;
-/*      */ import java.lang.invoke.LambdaForm;
-/*      */ import java.lang.invoke.MemberName;
-/*      */ import java.lang.invoke.MethodHandle;
-/*      */ import java.lang.invoke.MethodHandleImpl;
-/*      */ import java.lang.invoke.MethodHandleStatics;
-/*      */ import java.lang.invoke.MethodType;
-/*      */ import java.lang.invoke.MethodTypeForm;
-/*      */ import java.lang.reflect.Array;
-/*      */ import java.lang.reflect.Modifier;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.Arrays;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import jdk.internal.org.objectweb.asm.ClassWriter;
-/*      */ import jdk.internal.org.objectweb.asm.Label;
-/*      */ import jdk.internal.org.objectweb.asm.MethodVisitor;
-/*      */ import sun.invoke.util.VerifyAccess;
-/*      */ import sun.invoke.util.VerifyType;
-/*      */ import sun.invoke.util.Wrapper;
-/*      */ import sun.misc.Unsafe;
-/*      */ import sun.reflect.misc.ReflectUtil;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ class InvokerBytecodeGenerator
-/*      */ {
-/*      */   private static final String MH = "java/lang/invoke/MethodHandle";
-/*      */   private static final String MHI = "java/lang/invoke/MethodHandleImpl";
-/*      */   private static final String LF = "java/lang/invoke/LambdaForm";
-/*      */   private static final String LFN = "java/lang/invoke/LambdaForm$Name";
-/*      */   private static final String CLS = "java/lang/Class";
-/*      */   private static final String OBJ = "java/lang/Object";
-/*      */   private static final String OBJARY = "[Ljava/lang/Object;";
-/*      */   private static final String MH_SIG = "Ljava/lang/invoke/MethodHandle;";
-/*      */   private static final String LF_SIG = "Ljava/lang/invoke/LambdaForm;";
-/*      */   private static final String LFN_SIG = "Ljava/lang/invoke/LambdaForm$Name;";
-/*      */   private static final String LL_SIG = "(Ljava/lang/Object;)Ljava/lang/Object;";
-/*      */   private static final String LLV_SIG = "(Ljava/lang/Object;Ljava/lang/Object;)V";
-/*      */   private static final String CLL_SIG = "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;";
-/*      */   private static final String superName = "java/lang/Object";
-/*      */   private final String className;
-/*      */   private final String sourceFile;
-/*      */   private final LambdaForm lambdaForm;
-/*      */   private final String invokerName;
-/*      */   private final MethodType invokerType;
-/*      */   private final int[] localsMap;
-/*      */   private final LambdaForm.BasicType[] localTypes;
-/*      */   private final Class<?>[] localClasses;
-/*      */   private ClassWriter cw;
-/*      */   private MethodVisitor mv;
-/*   88 */   private static final MemberName.Factory MEMBERNAME_FACTORY = MemberName.getFactory();
-/*   89 */   private static final Class<?> HOST_CLASS = LambdaForm.class;
-/*      */   private static final HashMap<String, Integer> DUMP_CLASS_FILES_COUNTERS;
-/*      */   private static final File DUMP_CLASS_FILES_DIR;
-/*      */   
-/*      */   private InvokerBytecodeGenerator(LambdaForm paramLambdaForm, int paramInt, String paramString1, String paramString2, MethodType paramMethodType) {
-/*   94 */     if (paramString2.contains(".")) {
-/*   95 */       int i = paramString2.indexOf(".");
-/*   96 */       paramString1 = paramString2.substring(0, i);
-/*   97 */       paramString2 = paramString2.substring(i + 1);
-/*      */     } 
-/*   99 */     if (MethodHandleStatics.DUMP_CLASS_FILES) {
-/*  100 */       paramString1 = makeDumpableClassName(paramString1);
-/*      */     }
-/*  102 */     this.className = "java/lang/invoke/LambdaForm$" + paramString1;
-/*  103 */     this.sourceFile = "LambdaForm$" + paramString1;
-/*  104 */     this.lambdaForm = paramLambdaForm;
-/*  105 */     this.invokerName = paramString2;
-/*  106 */     this.invokerType = paramMethodType;
-/*  107 */     this.localsMap = new int[paramInt + 1];
-/*      */     
-/*  109 */     this.localTypes = new LambdaForm.BasicType[paramInt + 1];
-/*  110 */     this.localClasses = new Class[paramInt + 1];
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private InvokerBytecodeGenerator(String paramString1, String paramString2, MethodType paramMethodType) {
-/*  115 */     this(null, paramMethodType.parameterCount(), paramString1, paramString2, paramMethodType);
-/*      */ 
-/*      */     
-/*  118 */     this.localTypes[this.localTypes.length - 1] = LambdaForm.BasicType.V_TYPE;
-/*  119 */     for (byte b = 0; b < this.localsMap.length; b++) {
-/*  120 */       this.localsMap[b] = paramMethodType.parameterSlotCount() - paramMethodType.parameterSlotDepth(b);
-/*  121 */       if (b < paramMethodType.parameterCount()) {
-/*  122 */         this.localTypes[b] = LambdaForm.BasicType.basicType(paramMethodType.parameterType(b));
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private InvokerBytecodeGenerator(String paramString, LambdaForm paramLambdaForm, MethodType paramMethodType) {
-/*  128 */     this(paramLambdaForm, paramLambdaForm.names.length, paramString, paramLambdaForm.debugName, paramMethodType);
-/*      */ 
-/*      */     
-/*  131 */     LambdaForm.Name[] arrayOfName = paramLambdaForm.names; byte b; int i;
-/*  132 */     for (b = 0, i = 0; b < this.localsMap.length; b++) {
-/*  133 */       this.localsMap[b] = i;
-/*  134 */       if (b < arrayOfName.length) {
-/*  135 */         LambdaForm.BasicType basicType = arrayOfName[b].type();
-/*  136 */         i += basicType.basicTypeSlots();
-/*  137 */         this.localTypes[b] = basicType;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*  149 */     if (MethodHandleStatics.DUMP_CLASS_FILES) {
-/*  150 */       DUMP_CLASS_FILES_COUNTERS = new HashMap<>();
-/*      */       try {
-/*  152 */         File file = new File("DUMP_CLASS_FILES");
-/*  153 */         if (!file.exists()) {
-/*  154 */           file.mkdirs();
-/*      */         }
-/*  156 */         DUMP_CLASS_FILES_DIR = file;
-/*  157 */         System.out.println("Dumping class files to " + DUMP_CLASS_FILES_DIR + "/...");
-/*  158 */       } catch (Exception exception) {
-/*  159 */         throw MethodHandleStatics.newInternalError(exception);
-/*      */       } 
-/*      */     } else {
-/*  162 */       DUMP_CLASS_FILES_COUNTERS = null;
-/*  163 */       DUMP_CLASS_FILES_DIR = null;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   static void maybeDump(final String className, final byte[] classFile) {
-/*  168 */     if (MethodHandleStatics.DUMP_CLASS_FILES) {
-/*  169 */       AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*      */           {
-/*      */             public Void run() {
-/*      */               try {
-/*  173 */                 String str = className;
-/*      */                 
-/*  175 */                 File file = new File(InvokerBytecodeGenerator.DUMP_CLASS_FILES_DIR, str + ".class");
-/*  176 */                 System.out.println("dump: " + file);
-/*  177 */                 file.getParentFile().mkdirs();
-/*  178 */                 FileOutputStream fileOutputStream = new FileOutputStream(file);
-/*  179 */                 fileOutputStream.write(classFile);
-/*  180 */                 fileOutputStream.close();
-/*  181 */                 return null;
-/*  182 */               } catch (IOException iOException) {
-/*  183 */                 throw MethodHandleStatics.newInternalError(iOException);
-/*      */               } 
-/*      */             }
-/*      */           });
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static String makeDumpableClassName(String paramString) {
-/*      */     Integer integer;
-/*  193 */     synchronized (DUMP_CLASS_FILES_COUNTERS) {
-/*  194 */       integer = DUMP_CLASS_FILES_COUNTERS.get(paramString);
-/*  195 */       if (integer == null) integer = Integer.valueOf(0); 
-/*  196 */       DUMP_CLASS_FILES_COUNTERS.put(paramString, Integer.valueOf(integer.intValue() + 1));
-/*      */     } 
-/*  198 */     String str = integer.toString();
-/*  199 */     while (str.length() < 3)
-/*  200 */       str = "0" + str; 
-/*  201 */     paramString = paramString + str;
-/*  202 */     return paramString;
-/*      */   }
-/*      */   
-/*      */   class CpPatch { final int index;
-/*      */     final String placeholder;
-/*      */     final Object value;
-/*      */     
-/*      */     CpPatch(int param1Int, String param1String, Object param1Object) {
-/*  210 */       this.index = param1Int;
-/*  211 */       this.placeholder = param1String;
-/*  212 */       this.value = param1Object;
-/*      */     }
-/*      */     public String toString() {
-/*  215 */       return "CpPatch/index=" + this.index + ",placeholder=" + this.placeholder + ",value=" + this.value;
-/*      */     } }
-/*      */ 
-/*      */   
-/*  219 */   Map<Object, CpPatch> cpPatches = new HashMap<>();
-/*      */   
-/*  221 */   int cph = 0;
-/*      */   
-/*      */   String constantPlaceholder(Object paramObject) {
-/*  224 */     String str = "CONSTANT_PLACEHOLDER_" + this.cph++;
-/*  225 */     if (MethodHandleStatics.DUMP_CLASS_FILES) str = str + " <<" + debugString(paramObject) + ">>"; 
-/*  226 */     if (this.cpPatches.containsKey(str)) {
-/*  227 */       throw new InternalError("observed CP placeholder twice: " + str);
-/*      */     }
-/*      */     
-/*  230 */     int i = this.cw.newConst(str);
-/*  231 */     this.cpPatches.put(str, new CpPatch(i, str, paramObject));
-/*  232 */     return str;
-/*      */   }
-/*      */   
-/*      */   Object[] cpPatches(byte[] paramArrayOfbyte) {
-/*  236 */     int i = getConstantPoolSize(paramArrayOfbyte);
-/*  237 */     Object[] arrayOfObject = new Object[i];
-/*  238 */     for (CpPatch cpPatch : this.cpPatches.values()) {
-/*  239 */       if (cpPatch.index >= i)
-/*  240 */         throw new InternalError("in cpool[" + i + "]: " + cpPatch + "\n" + Arrays.toString(Arrays.copyOf(paramArrayOfbyte, 20))); 
-/*  241 */       arrayOfObject[cpPatch.index] = cpPatch.value;
-/*      */     } 
-/*  243 */     return arrayOfObject;
-/*      */   }
-/*      */   
-/*      */   private static String debugString(Object paramObject) {
-/*  247 */     if (paramObject instanceof MethodHandle) {
-/*  248 */       MethodHandle methodHandle = (MethodHandle)paramObject;
-/*  249 */       MemberName memberName = methodHandle.internalMemberName();
-/*  250 */       if (memberName != null)
-/*  251 */         return memberName.toString(); 
-/*  252 */       return methodHandle.debugString();
-/*      */     } 
-/*  254 */     return paramObject.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int getConstantPoolSize(byte[] paramArrayOfbyte) {
-/*  269 */     return (paramArrayOfbyte[8] & 0xFF) << 8 | paramArrayOfbyte[9] & 0xFF;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private MemberName loadMethod(byte[] paramArrayOfbyte) {
-/*  276 */     Class<?> clazz = loadAndInitializeInvokerClass(paramArrayOfbyte, cpPatches(paramArrayOfbyte));
-/*  277 */     return resolveInvokerMember(clazz, this.invokerName, this.invokerType);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Class<?> loadAndInitializeInvokerClass(byte[] paramArrayOfbyte, Object[] paramArrayOfObject) {
-/*  284 */     Class<?> clazz = MethodHandleStatics.UNSAFE.defineAnonymousClass(HOST_CLASS, paramArrayOfbyte, paramArrayOfObject);
-/*  285 */     MethodHandleStatics.UNSAFE.ensureClassInitialized(clazz);
-/*  286 */     return clazz;
-/*      */   }
-/*      */   
-/*      */   private static MemberName resolveInvokerMember(Class<?> paramClass, String paramString, MethodType paramMethodType) {
-/*  290 */     MemberName memberName = new MemberName(paramClass, paramString, paramMethodType, (byte)6);
-/*      */ 
-/*      */     
-/*      */     try {
-/*  294 */       memberName = MEMBERNAME_FACTORY.resolveOrFail((byte)6, memberName, HOST_CLASS, ReflectiveOperationException.class);
-/*  295 */     } catch (ReflectiveOperationException reflectiveOperationException) {
-/*  296 */       throw MethodHandleStatics.newInternalError(reflectiveOperationException);
-/*      */     } 
-/*      */     
-/*  299 */     return memberName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void classFilePrologue() {
-/*  307 */     this.cw = new ClassWriter(3);
-/*  308 */     this.cw.visit(52, 48, this.className, null, "java/lang/Object", null);
-/*  309 */     this.cw.visitSource(this.sourceFile, null);
-/*      */     
-/*  311 */     String str = this.invokerType.toMethodDescriptorString();
-/*  312 */     this.mv = this.cw.visitMethod(8, this.invokerName, str, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void classFileEpilogue() {
-/*  319 */     this.mv.visitMaxs(0, 0);
-/*  320 */     this.mv.visitEnd();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitConst(Object paramObject) {
-/*  327 */     if (paramObject == null) {
-/*  328 */       this.mv.visitInsn(1);
-/*      */       return;
-/*      */     } 
-/*  331 */     if (paramObject instanceof Integer) {
-/*  332 */       emitIconstInsn(((Integer)paramObject).intValue());
-/*      */       return;
-/*      */     } 
-/*  335 */     if (paramObject instanceof Long) {
-/*  336 */       long l = ((Long)paramObject).longValue();
-/*  337 */       if (l == (short)(int)l) {
-/*  338 */         emitIconstInsn((int)l);
-/*  339 */         this.mv.visitInsn(133);
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*  343 */     if (paramObject instanceof Float) {
-/*  344 */       float f = ((Float)paramObject).floatValue();
-/*  345 */       if (f == (short)(int)f) {
-/*  346 */         emitIconstInsn((int)f);
-/*  347 */         this.mv.visitInsn(134);
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*  351 */     if (paramObject instanceof Double) {
-/*  352 */       double d = ((Double)paramObject).doubleValue();
-/*  353 */       if (d == (short)(int)d) {
-/*  354 */         emitIconstInsn((int)d);
-/*  355 */         this.mv.visitInsn(135);
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*  359 */     if (paramObject instanceof Boolean) {
-/*  360 */       emitIconstInsn(((Boolean)paramObject).booleanValue() ? 1 : 0);
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  364 */     this.mv.visitLdcInsn(paramObject);
-/*      */   }
-/*      */   
-/*      */   private void emitIconstInsn(int paramInt) {
-/*      */     byte b;
-/*  369 */     switch (paramInt) { case 0:
-/*  370 */         b = 3; break;
-/*  371 */       case 1: b = 4; break;
-/*  372 */       case 2: b = 5; break;
-/*  373 */       case 3: b = 6; break;
-/*  374 */       case 4: b = 7; break;
-/*  375 */       case 5: b = 8; break;
-/*      */       default:
-/*  377 */         if (paramInt == (byte)paramInt) {
-/*  378 */           this.mv.visitIntInsn(16, paramInt & 0xFF);
-/*  379 */         } else if (paramInt == (short)paramInt) {
-/*  380 */           this.mv.visitIntInsn(17, (char)paramInt);
-/*      */         } else {
-/*  382 */           this.mv.visitLdcInsn(Integer.valueOf(paramInt));
-/*      */         } 
-/*      */         return; }
-/*      */     
-/*  386 */     this.mv.visitInsn(b);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitLoadInsn(LambdaForm.BasicType paramBasicType, int paramInt) {
-/*  393 */     int i = loadInsnOpcode(paramBasicType);
-/*  394 */     this.mv.visitVarInsn(i, this.localsMap[paramInt]);
-/*      */   }
-/*      */   
-/*      */   private int loadInsnOpcode(LambdaForm.BasicType paramBasicType) throws InternalError {
-/*  398 */     switch (paramBasicType) { case SELECT_ALTERNATIVE:
-/*  399 */         return 21;
-/*  400 */       case GUARD_WITH_CATCH: return 22;
-/*  401 */       case NEW_ARRAY: return 23;
-/*  402 */       case ARRAY_LOAD: return 24;
-/*  403 */       case ARRAY_STORE: return 25; }
-/*      */     
-/*  405 */     throw new InternalError("unknown type: " + paramBasicType);
-/*      */   }
-/*      */   
-/*      */   private void emitAloadInsn(int paramInt) {
-/*  409 */     emitLoadInsn(LambdaForm.BasicType.L_TYPE, paramInt);
-/*      */   }
-/*      */   
-/*      */   private void emitStoreInsn(LambdaForm.BasicType paramBasicType, int paramInt) {
-/*  413 */     int i = storeInsnOpcode(paramBasicType);
-/*  414 */     this.mv.visitVarInsn(i, this.localsMap[paramInt]);
-/*      */   }
-/*      */   
-/*      */   private int storeInsnOpcode(LambdaForm.BasicType paramBasicType) throws InternalError {
-/*  418 */     switch (paramBasicType) { case SELECT_ALTERNATIVE:
-/*  419 */         return 54;
-/*  420 */       case GUARD_WITH_CATCH: return 55;
-/*  421 */       case NEW_ARRAY: return 56;
-/*  422 */       case ARRAY_LOAD: return 57;
-/*  423 */       case ARRAY_STORE: return 58; }
-/*      */     
-/*  425 */     throw new InternalError("unknown type: " + paramBasicType);
-/*      */   }
-/*      */   
-/*      */   private void emitAstoreInsn(int paramInt) {
-/*  429 */     emitStoreInsn(LambdaForm.BasicType.L_TYPE, paramInt);
-/*      */   }
-/*      */   
-/*      */   private byte arrayTypeCode(Wrapper paramWrapper) {
-/*  433 */     switch (paramWrapper) { case SELECT_ALTERNATIVE:
-/*  434 */         return 4;
-/*  435 */       case GUARD_WITH_CATCH: return 8;
-/*  436 */       case NEW_ARRAY: return 5;
-/*  437 */       case ARRAY_LOAD: return 9;
-/*  438 */       case ARRAY_STORE: return 10;
-/*  439 */       case IDENTITY: return 11;
-/*  440 */       case ZERO: return 6;
-/*  441 */       case NONE: return 7;
-/*  442 */       case null: return 0; }
-/*  443 */      throw new InternalError();
-/*      */   }
-/*      */   
-/*      */   private int arrayInsnOpcode(byte paramByte, int paramInt) throws InternalError {
-/*      */     byte b;
-/*  448 */     assert paramInt == 83 || paramInt == 50;
-/*      */     
-/*  450 */     switch (paramByte) { case 4:
-/*  451 */         b = 84;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  462 */         return b - 83 + paramInt;case 8: b = 84; return b - 83 + paramInt;case 5: b = 85; return b - 83 + paramInt;case 9: b = 86; return b - 83 + paramInt;case 10: b = 79; return b - 83 + paramInt;case 11: b = 80; return b - 83 + paramInt;case 6: b = 81; return b - 83 + paramInt;case 7: b = 82; return b - 83 + paramInt;case 0: b = 83; return b - 83 + paramInt; }
-/*      */     
-/*      */     throw new InternalError();
-/*      */   }
-/*      */   private void freeFrameLocal(int paramInt) {
-/*  467 */     int i = indexForFrameLocal(paramInt);
-/*  468 */     if (i < 0)
-/*  469 */       return;  LambdaForm.BasicType basicType = this.localTypes[i];
-/*  470 */     int j = makeLocalTemp(basicType);
-/*  471 */     this.mv.visitVarInsn(loadInsnOpcode(basicType), paramInt);
-/*  472 */     this.mv.visitVarInsn(storeInsnOpcode(basicType), j);
-/*  473 */     assert this.localsMap[i] == paramInt;
-/*  474 */     this.localsMap[i] = j;
-/*  475 */     assert indexForFrameLocal(paramInt) < 0;
-/*      */   }
-/*      */   private int indexForFrameLocal(int paramInt) {
-/*  478 */     for (byte b = 0; b < this.localsMap.length; b++) {
-/*  479 */       if (this.localsMap[b] == paramInt && this.localTypes[b] != LambdaForm.BasicType.V_TYPE)
-/*  480 */         return b; 
-/*      */     } 
-/*  482 */     return -1;
-/*      */   }
-/*      */   private int makeLocalTemp(LambdaForm.BasicType paramBasicType) {
-/*  485 */     int i = this.localsMap[this.localsMap.length - 1];
-/*  486 */     this.localsMap[this.localsMap.length - 1] = i + paramBasicType.basicTypeSlots();
-/*  487 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitBoxing(Wrapper paramWrapper) {
-/*  496 */     String str1 = "java/lang/" + paramWrapper.wrapperType().getSimpleName();
-/*  497 */     String str2 = "valueOf";
-/*  498 */     String str3 = "(" + paramWrapper.basicTypeChar() + ")L" + str1 + ";";
-/*  499 */     this.mv.visitMethodInsn(184, str1, str2, str3, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitUnboxing(Wrapper paramWrapper) {
-/*  508 */     String str1 = "java/lang/" + paramWrapper.wrapperType().getSimpleName();
-/*  509 */     String str2 = paramWrapper.primitiveSimpleName() + "Value";
-/*  510 */     String str3 = "()" + paramWrapper.basicTypeChar();
-/*  511 */     emitReferenceCast(paramWrapper.wrapperType(), null);
-/*  512 */     this.mv.visitMethodInsn(182, str1, str2, str3, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitImplicitConversion(LambdaForm.BasicType paramBasicType, Class<?> paramClass, Object paramObject) {
-/*  524 */     assert LambdaForm.BasicType.basicType(paramClass) == paramBasicType;
-/*  525 */     if (paramClass == paramBasicType.basicTypeClass() && paramBasicType != LambdaForm.BasicType.L_TYPE)
-/*      */       return; 
-/*  527 */     switch (paramBasicType) {
-/*      */       case ARRAY_STORE:
-/*  529 */         if (VerifyType.isNullConversion(Object.class, paramClass, false)) {
-/*  530 */           if (MethodHandleStatics.PROFILE_LEVEL > 0)
-/*  531 */             emitReferenceCast(Object.class, paramObject); 
-/*      */           return;
-/*      */         } 
-/*  534 */         emitReferenceCast(paramClass, paramObject);
-/*      */         return;
-/*      */       case SELECT_ALTERNATIVE:
-/*  537 */         if (!VerifyType.isNullConversion(int.class, paramClass, false))
-/*  538 */           emitPrimCast(paramBasicType.basicTypeWrapper(), Wrapper.forPrimitiveType(paramClass)); 
-/*      */         return;
-/*      */     } 
-/*  541 */     throw MethodHandleStatics.newInternalError("bad implicit conversion: tc=" + paramBasicType + ": " + paramClass);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private boolean assertStaticType(Class<?> paramClass, LambdaForm.Name paramName) {
-/*  546 */     int i = paramName.index();
-/*  547 */     Class<?> clazz = this.localClasses[i];
-/*  548 */     if (clazz != null && (clazz == paramClass || paramClass.isAssignableFrom(clazz)))
-/*  549 */       return true; 
-/*  550 */     if (clazz == null || clazz.isAssignableFrom(paramClass)) {
-/*  551 */       this.localClasses[i] = paramClass;
-/*      */     }
-/*  553 */     return false;
-/*      */   }
-/*      */   
-/*      */   private void emitReferenceCast(Class<?> paramClass, Object paramObject) {
-/*  557 */     LambdaForm.Name name = null;
-/*  558 */     if (paramObject instanceof LambdaForm.Name) {
-/*  559 */       LambdaForm.Name name1 = (LambdaForm.Name)paramObject;
-/*  560 */       if (assertStaticType(paramClass, name1))
-/*      */         return; 
-/*  562 */       if (this.lambdaForm.useCount(name1) > 1)
-/*      */       {
-/*  564 */         name = name1;
-/*      */       }
-/*      */     } 
-/*  567 */     if (isStaticallyNameable(paramClass)) {
-/*  568 */       String str = getInternalName(paramClass);
-/*  569 */       this.mv.visitTypeInsn(192, str);
-/*      */     } else {
-/*  571 */       this.mv.visitLdcInsn(constantPlaceholder(paramClass));
-/*  572 */       this.mv.visitTypeInsn(192, "java/lang/Class");
-/*  573 */       this.mv.visitInsn(95);
-/*  574 */       this.mv.visitMethodInsn(184, "java/lang/invoke/MethodHandleImpl", "castReference", "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;", false);
-/*  575 */       if (Object[].class.isAssignableFrom(paramClass)) {
-/*  576 */         this.mv.visitTypeInsn(192, "[Ljava/lang/Object;");
-/*  577 */       } else if (MethodHandleStatics.PROFILE_LEVEL > 0) {
-/*  578 */         this.mv.visitTypeInsn(192, "java/lang/Object");
-/*      */       } 
-/*  580 */     }  if (name != null) {
-/*  581 */       this.mv.visitInsn(89);
-/*  582 */       emitAstoreInsn(name.index());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitReturnInsn(LambdaForm.BasicType paramBasicType) {
-/*      */     char c;
-/*  591 */     switch (paramBasicType) { case SELECT_ALTERNATIVE:
-/*  592 */         c = '¬'; break;
-/*  593 */       case GUARD_WITH_CATCH: c = '­'; break;
-/*  594 */       case NEW_ARRAY: c = '®'; break;
-/*  595 */       case ARRAY_LOAD: c = '¯'; break;
-/*  596 */       case ARRAY_STORE: c = '°'; break;
-/*  597 */       case IDENTITY: c = '±'; break;
-/*      */       default:
-/*  599 */         throw new InternalError("unknown return type: " + paramBasicType); }
-/*      */     
-/*  601 */     this.mv.visitInsn(c);
-/*      */   }
-/*      */   
-/*      */   private static String getInternalName(Class<?> paramClass) {
-/*  605 */     if (paramClass == Object.class) return "java/lang/Object"; 
-/*  606 */     if (paramClass == Object[].class) return "[Ljava/lang/Object;"; 
-/*  607 */     if (paramClass == Class.class) return "java/lang/Class"; 
-/*  608 */     if (paramClass == MethodHandle.class) return "java/lang/invoke/MethodHandle"; 
-/*  609 */     assert VerifyAccess.isTypeVisible(paramClass, Object.class) : paramClass.getName();
-/*  610 */     return paramClass.getName().replace('.', '/');
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static MemberName generateCustomizedCode(LambdaForm paramLambdaForm, MethodType paramMethodType) {
-/*  617 */     InvokerBytecodeGenerator invokerBytecodeGenerator = new InvokerBytecodeGenerator("MH", paramLambdaForm, paramMethodType);
-/*  618 */     return invokerBytecodeGenerator.loadMethod(invokerBytecodeGenerator.generateCustomizedCodeBytes());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean checkActualReceiver() {
-/*  624 */     this.mv.visitInsn(89);
-/*  625 */     this.mv.visitVarInsn(25, this.localsMap[0]);
-/*  626 */     this.mv.visitMethodInsn(184, "java/lang/invoke/MethodHandleImpl", "assertSame", "(Ljava/lang/Object;Ljava/lang/Object;)V", false);
-/*  627 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private byte[] generateCustomizedCodeBytes() {
-/*  634 */     classFilePrologue();
-/*      */ 
-/*      */     
-/*  637 */     this.mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Hidden;", true);
-/*      */ 
-/*      */     
-/*  640 */     this.mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Compiled;", true);
-/*      */     
-/*  642 */     if (this.lambdaForm.forceInline) {
-/*      */       
-/*  644 */       this.mv.visitAnnotation("Ljava/lang/invoke/ForceInline;", true);
-/*      */     } else {
-/*  646 */       this.mv.visitAnnotation("Ljava/lang/invoke/DontInline;", true);
-/*      */     } 
-/*      */     
-/*  649 */     if (this.lambdaForm.customized != null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  654 */       this.mv.visitLdcInsn(constantPlaceholder(this.lambdaForm.customized));
-/*  655 */       this.mv.visitTypeInsn(192, "java/lang/invoke/MethodHandle");
-/*  656 */       assert checkActualReceiver();
-/*  657 */       this.mv.visitVarInsn(58, this.localsMap[0]);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  662 */     LambdaForm.Name name = null;
-/*  663 */     int i = this.lambdaForm.arity; while (true) { if (i < this.lambdaForm.names.length)
-/*  664 */       { Class<?> clazz; MemberName memberName; LambdaForm.Name name1 = this.lambdaForm.names[i];
-/*      */         
-/*  666 */         emitStoreResult(name);
-/*  667 */         name = name1;
-/*  668 */         MethodHandleImpl.Intrinsic intrinsic = name1.function.intrinsicName();
-/*  669 */         switch (intrinsic)
-/*      */         { case SELECT_ALTERNATIVE:
-/*  671 */             assert isSelectAlternative(i);
-/*  672 */             if (MethodHandleStatics.PROFILE_GWT) {
-/*  673 */               assert name1.arguments[0] instanceof LambdaForm.Name && 
-/*  674 */                 nameRefersTo((LambdaForm.Name)name1.arguments[0], MethodHandleImpl.class, "profileBoolean");
-/*  675 */               this.mv.visitAnnotation("Ljava/lang/invoke/InjectedProfile;", true);
-/*      */             } 
-/*  677 */             name = emitSelectAlternative(name1, this.lambdaForm.names[i + 1]);
-/*  678 */             i++;
-/*      */             break;
-/*      */           case GUARD_WITH_CATCH:
-/*  681 */             assert isGuardWithCatch(i);
-/*  682 */             name = emitGuardWithCatch(i);
-/*  683 */             i += 2;
-/*      */             break;
-/*      */           case NEW_ARRAY:
-/*  686 */             clazz = name1.function.methodType().returnType();
-/*  687 */             if (isStaticallyNameable(clazz)) {
-/*  688 */               emitNewArray(name1);
-/*      */               break;
-/*      */             } 
-/*      */           
-/*      */           case ARRAY_LOAD:
-/*  693 */             emitArrayLoad(name1);
-/*      */             break;
-/*      */           case ARRAY_STORE:
-/*  696 */             emitArrayStore(name1);
-/*      */             break;
-/*      */           case IDENTITY:
-/*  699 */             assert name1.arguments.length == 1;
-/*  700 */             emitPushArguments(name1);
-/*      */             break;
-/*      */           case ZERO:
-/*  703 */             assert name1.arguments.length == 0;
-/*  704 */             emitConst(name1.type.basicTypeWrapper().zero());
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case NONE:
-/*  713 */             memberName = name1.function.member();
-/*  714 */             if (isStaticallyInvocable(memberName))
-/*  715 */             { emitStaticInvoke(memberName, name1); }
-/*      */             else
-/*  717 */             { emitInvoke(name1); }  i++; continue;
-/*      */           default:
-/*      */             throw MethodHandleStatics.newInternalError("Unknown intrinsic: " + intrinsic); }  }
-/*      */       else { break; }
-/*      */        i++; }
-/*  722 */      emitReturn(name);
-/*      */     
-/*  724 */     classFileEpilogue();
-/*  725 */     bogusMethod(new Object[] { this.lambdaForm });
-/*      */     
-/*  727 */     byte[] arrayOfByte = this.cw.toByteArray();
-/*  728 */     maybeDump(this.className, arrayOfByte);
-/*  729 */     return arrayOfByte;
-/*      */   }
-/*      */   
-/*  732 */   void emitArrayLoad(LambdaForm.Name paramName) { emitArrayOp(paramName, 50); } void emitArrayStore(LambdaForm.Name paramName) {
-/*  733 */     emitArrayOp(paramName, 83);
-/*      */   }
-/*      */   void emitArrayOp(LambdaForm.Name paramName, int paramInt) {
-/*  736 */     assert paramInt == 50 || paramInt == 83;
-/*  737 */     Class<?> clazz = paramName.function.methodType().parameterType(0).getComponentType();
-/*  738 */     assert clazz != null;
-/*  739 */     emitPushArguments(paramName);
-/*  740 */     if (clazz.isPrimitive()) {
-/*  741 */       Wrapper wrapper = Wrapper.forPrimitiveType(clazz);
-/*  742 */       paramInt = arrayInsnOpcode(arrayTypeCode(wrapper), paramInt);
-/*      */     } 
-/*  744 */     this.mv.visitInsn(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void emitInvoke(LambdaForm.Name paramName) {
-/*  751 */     assert !isLinkerMethodInvoke(paramName);
-/*      */ 
-/*      */     
-/*  754 */     MethodHandle methodHandle = paramName.function.resolvedHandle;
-/*  755 */     assert methodHandle != null : paramName.exprString();
-/*  756 */     this.mv.visitLdcInsn(constantPlaceholder(methodHandle));
-/*  757 */     emitReferenceCast(MethodHandle.class, methodHandle);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  768 */     emitPushArguments(paramName);
-/*      */ 
-/*      */     
-/*  771 */     MethodType methodType = paramName.function.methodType();
-/*  772 */     this.mv.visitMethodInsn(182, "java/lang/invoke/MethodHandle", "invokeBasic", methodType.basicType().toMethodDescriptorString(), false);
-/*      */   }
-/*      */   
-/*  775 */   private static Class<?>[] STATICALLY_INVOCABLE_PACKAGES = new Class[] { Object.class, Arrays.class, Unsafe.class };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static boolean isStaticallyInvocable(LambdaForm.Name paramName) {
-/*  784 */     return isStaticallyInvocable(paramName.function.member());
-/*      */   }
-/*      */   
-/*      */   static boolean isStaticallyInvocable(MemberName paramMemberName) {
-/*  788 */     if (paramMemberName == null) return false; 
-/*  789 */     if (paramMemberName.isConstructor()) return false; 
-/*  790 */     Class<?> clazz = paramMemberName.getDeclaringClass();
-/*  791 */     if (clazz.isArray() || clazz.isPrimitive())
-/*  792 */       return false; 
-/*  793 */     if (clazz.isAnonymousClass() || clazz.isLocalClass())
-/*  794 */       return false; 
-/*  795 */     if (clazz.getClassLoader() != MethodHandle.class.getClassLoader())
-/*  796 */       return false; 
-/*  797 */     if (ReflectUtil.isVMAnonymousClass(clazz))
-/*  798 */       return false; 
-/*  799 */     MethodType methodType = paramMemberName.getMethodOrFieldType();
-/*  800 */     if (!isStaticallyNameable(methodType.returnType()))
-/*  801 */       return false; 
-/*  802 */     for (Class<?> clazz1 : methodType.parameterArray()) {
-/*  803 */       if (!isStaticallyNameable(clazz1))
-/*  804 */         return false; 
-/*  805 */     }  if (!paramMemberName.isPrivate() && VerifyAccess.isSamePackage(MethodHandle.class, clazz))
-/*  806 */       return true; 
-/*  807 */     if (paramMemberName.isPublic() && isStaticallyNameable(clazz))
-/*  808 */       return true; 
-/*  809 */     return false;
-/*      */   }
-/*      */   
-/*      */   static boolean isStaticallyNameable(Class<?> paramClass) {
-/*  813 */     if (paramClass == Object.class)
-/*  814 */       return true; 
-/*  815 */     while (paramClass.isArray())
-/*  816 */       paramClass = paramClass.getComponentType(); 
-/*  817 */     if (paramClass.isPrimitive())
-/*  818 */       return true; 
-/*  819 */     if (ReflectUtil.isVMAnonymousClass(paramClass)) {
-/*  820 */       return false;
-/*      */     }
-/*  822 */     if (paramClass.getClassLoader() != Object.class.getClassLoader())
-/*  823 */       return false; 
-/*  824 */     if (VerifyAccess.isSamePackage(MethodHandle.class, paramClass))
-/*  825 */       return true; 
-/*  826 */     if (!Modifier.isPublic(paramClass.getModifiers()))
-/*  827 */       return false; 
-/*  828 */     for (Class<?> clazz : STATICALLY_INVOCABLE_PACKAGES) {
-/*  829 */       if (VerifyAccess.isSamePackage(clazz, paramClass))
-/*  830 */         return true; 
-/*      */     } 
-/*  832 */     return false;
-/*      */   }
-/*      */   
-/*      */   void emitStaticInvoke(LambdaForm.Name paramName) {
-/*  836 */     emitStaticInvoke(paramName.function.member(), paramName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void emitStaticInvoke(MemberName paramMemberName, LambdaForm.Name paramName) {
-/*  843 */     assert paramMemberName.equals(paramName.function.member());
-/*  844 */     Class<?> clazz = paramMemberName.getDeclaringClass();
-/*  845 */     String str1 = getInternalName(clazz);
-/*  846 */     String str2 = paramMemberName.getName();
-/*      */     
-/*  848 */     byte b = paramMemberName.getReferenceKind();
-/*  849 */     if (b == 7) {
-/*      */       
-/*  851 */       assert paramMemberName.canBeStaticallyBound() : paramMemberName;
-/*  852 */       b = 5;
-/*      */     } 
-/*      */     
-/*  855 */     if (paramMemberName.getDeclaringClass().isInterface() && b == 5)
-/*      */     {
-/*      */       
-/*  858 */       b = 9;
-/*      */     }
-/*      */ 
-/*      */     
-/*  862 */     emitPushArguments(paramName);
-/*      */ 
-/*      */     
-/*  865 */     if (paramMemberName.isMethod()) {
-/*  866 */       String str = paramMemberName.getMethodType().toMethodDescriptorString();
-/*  867 */       this.mv.visitMethodInsn(refKindOpcode(b), str1, str2, str, paramMemberName
-/*  868 */           .getDeclaringClass().isInterface());
-/*      */     } else {
-/*  870 */       String str = MethodType.toFieldDescriptorString(paramMemberName.getFieldType());
-/*  871 */       this.mv.visitFieldInsn(refKindOpcode(b), str1, str2, str);
-/*      */     } 
-/*      */     
-/*  874 */     if (paramName.type == LambdaForm.BasicType.L_TYPE) {
-/*  875 */       Class<?> clazz1 = paramMemberName.getInvocationType().returnType();
-/*  876 */       assert !clazz1.isPrimitive();
-/*  877 */       if (clazz1 != Object.class && !clazz1.isInterface()) {
-/*  878 */         assertStaticType(clazz1, paramName);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   void emitNewArray(LambdaForm.Name paramName) throws InternalError {
-/*  884 */     Class<?> clazz1 = paramName.function.methodType().returnType();
-/*  885 */     if (paramName.arguments.length == 0) {
-/*      */       Object object;
-/*      */       
-/*      */       try {
-/*  889 */         object = paramName.function.resolvedHandle.invoke();
-/*  890 */       } catch (Throwable throwable) {
-/*  891 */         throw MethodHandleStatics.newInternalError(throwable);
-/*      */       } 
-/*  893 */       assert Array.getLength(object) == 0;
-/*  894 */       assert object.getClass() == clazz1;
-/*  895 */       this.mv.visitLdcInsn(constantPlaceholder(object));
-/*  896 */       emitReferenceCast(clazz1, object);
-/*      */       return;
-/*      */     } 
-/*  899 */     Class<?> clazz2 = clazz1.getComponentType();
-/*  900 */     assert clazz2 != null;
-/*  901 */     emitIconstInsn(paramName.arguments.length);
-/*  902 */     int i = 83;
-/*  903 */     if (!clazz2.isPrimitive()) {
-/*  904 */       this.mv.visitTypeInsn(189, getInternalName(clazz2));
-/*      */     } else {
-/*  906 */       byte b1 = arrayTypeCode(Wrapper.forPrimitiveType(clazz2));
-/*  907 */       i = arrayInsnOpcode(b1, i);
-/*  908 */       this.mv.visitIntInsn(188, b1);
-/*      */     } 
-/*      */     
-/*  911 */     for (byte b = 0; b < paramName.arguments.length; b++) {
-/*  912 */       this.mv.visitInsn(89);
-/*  913 */       emitIconstInsn(b);
-/*  914 */       emitPushArgument(paramName, b);
-/*  915 */       this.mv.visitInsn(i);
-/*      */     } 
-/*      */     
-/*  918 */     assertStaticType(clazz1, paramName);
-/*      */   }
-/*      */   int refKindOpcode(byte paramByte) {
-/*  921 */     switch (paramByte) { case 5:
-/*  922 */         return 182;
-/*  923 */       case 6: return 184;
-/*  924 */       case 7: return 183;
-/*  925 */       case 9: return 185;
-/*  926 */       case 1: return 180;
-/*  927 */       case 3: return 181;
-/*  928 */       case 2: return 178;
-/*  929 */       case 4: return 179; }
-/*      */     
-/*  931 */     throw new InternalError("refKind=" + paramByte);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean memberRefersTo(MemberName paramMemberName, Class<?> paramClass, String paramString) {
-/*  938 */     return (paramMemberName != null && paramMemberName
-/*  939 */       .getDeclaringClass() == paramClass && paramMemberName
-/*  940 */       .getName().equals(paramString));
-/*      */   }
-/*      */   private boolean nameRefersTo(LambdaForm.Name paramName, Class<?> paramClass, String paramString) {
-/*  943 */     return (paramName.function != null && 
-/*  944 */       memberRefersTo(paramName.function.member(), paramClass, paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isInvokeBasic(LambdaForm.Name paramName) {
-/*  951 */     if (paramName.function == null)
-/*  952 */       return false; 
-/*  953 */     if (paramName.arguments.length < 1)
-/*  954 */       return false; 
-/*  955 */     MemberName memberName = paramName.function.member();
-/*  956 */     return (memberRefersTo(memberName, MethodHandle.class, "invokeBasic") && 
-/*  957 */       !memberName.isPublic() && !memberName.isStatic());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isLinkerMethodInvoke(LambdaForm.Name paramName) {
-/*  964 */     if (paramName.function == null)
-/*  965 */       return false; 
-/*  966 */     if (paramName.arguments.length < 1)
-/*  967 */       return false; 
-/*  968 */     MemberName memberName = paramName.function.member();
-/*  969 */     return (memberName != null && memberName
-/*  970 */       .getDeclaringClass() == MethodHandle.class && 
-/*  971 */       !memberName.isPublic() && memberName.isStatic() && memberName
-/*  972 */       .getName().startsWith("linkTo"));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isSelectAlternative(int paramInt) {
-/*  982 */     if (paramInt + 1 >= this.lambdaForm.names.length) return false; 
-/*  983 */     LambdaForm.Name name1 = this.lambdaForm.names[paramInt];
-/*  984 */     LambdaForm.Name name2 = this.lambdaForm.names[paramInt + 1];
-/*  985 */     return (nameRefersTo(name1, MethodHandleImpl.class, "selectAlternative") && 
-/*  986 */       isInvokeBasic(name2) && name2
-/*  987 */       .lastUseIndex(name1) == 0 && this.lambdaForm
-/*  988 */       .lastUseIndex(name1) == paramInt + 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isGuardWithCatch(int paramInt) {
-/*  999 */     if (paramInt + 2 >= this.lambdaForm.names.length) return false; 
-/* 1000 */     LambdaForm.Name name1 = this.lambdaForm.names[paramInt];
-/* 1001 */     LambdaForm.Name name2 = this.lambdaForm.names[paramInt + 1];
-/* 1002 */     LambdaForm.Name name3 = this.lambdaForm.names[paramInt + 2];
-/* 1003 */     return (nameRefersTo(name2, MethodHandleImpl.class, "guardWithCatch") && 
-/* 1004 */       isInvokeBasic(name1) && 
-/* 1005 */       isInvokeBasic(name3) && name2
-/* 1006 */       .lastUseIndex(name1) == 3 && this.lambdaForm
-/* 1007 */       .lastUseIndex(name1) == paramInt + 1 && name3
-/* 1008 */       .lastUseIndex(name2) == 1 && this.lambdaForm
-/* 1009 */       .lastUseIndex(name2) == paramInt + 2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private LambdaForm.Name emitSelectAlternative(LambdaForm.Name paramName1, LambdaForm.Name paramName2) {
-/* 1024 */     assert isStaticallyInvocable(paramName2);
-/*      */     
-/* 1026 */     LambdaForm.Name name = (LambdaForm.Name)paramName2.arguments[0];
-/*      */     
-/* 1028 */     Label label1 = new Label();
-/* 1029 */     Label label2 = new Label();
-/*      */ 
-/*      */     
-/* 1032 */     emitPushArgument(paramName1, 0);
-/*      */ 
-/*      */     
-/* 1035 */     this.mv.visitJumpInsn(153, label1);
-/*      */ 
-/*      */     
-/* 1038 */     Class[] arrayOfClass = (Class[])this.localClasses.clone();
-/* 1039 */     emitPushArgument(paramName1, 1);
-/* 1040 */     emitAstoreInsn(name.index());
-/* 1041 */     emitStaticInvoke(paramName2);
-/*      */ 
-/*      */     
-/* 1044 */     this.mv.visitJumpInsn(167, label2);
-/*      */ 
-/*      */     
-/* 1047 */     this.mv.visitLabel(label1);
-/*      */ 
-/*      */     
-/* 1050 */     System.arraycopy(arrayOfClass, 0, this.localClasses, 0, arrayOfClass.length);
-/* 1051 */     emitPushArgument(paramName1, 2);
-/* 1052 */     emitAstoreInsn(name.index());
-/* 1053 */     emitStaticInvoke(paramName2);
-/*      */ 
-/*      */     
-/* 1056 */     this.mv.visitLabel(label2);
-/*      */     
-/* 1058 */     System.arraycopy(arrayOfClass, 0, this.localClasses, 0, arrayOfClass.length);
-/*      */     
-/* 1060 */     return paramName2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private LambdaForm.Name emitGuardWithCatch(int paramInt) {
-/* 1084 */     LambdaForm.Name name1 = this.lambdaForm.names[paramInt];
-/* 1085 */     LambdaForm.Name name2 = this.lambdaForm.names[paramInt + 1];
-/* 1086 */     LambdaForm.Name name3 = this.lambdaForm.names[paramInt + 2];
-/*      */     
-/* 1088 */     Label label1 = new Label();
-/* 1089 */     Label label2 = new Label();
-/* 1090 */     Label label3 = new Label();
-/* 1091 */     Label label4 = new Label();
-/*      */     
-/* 1093 */     Class<?> clazz = name3.function.resolvedHandle.type().returnType();
-/*      */ 
-/*      */     
-/* 1096 */     MethodType methodType1 = name1.function.resolvedHandle.type().dropParameterTypes(0, 1).changeReturnType(clazz);
-/*      */     
-/* 1098 */     this.mv.visitTryCatchBlock(label1, label2, label3, "java/lang/Throwable");
-/*      */ 
-/*      */     
-/* 1101 */     this.mv.visitLabel(label1);
-/*      */     
-/* 1103 */     emitPushArgument(name2, 0);
-/* 1104 */     emitPushArguments(name1, 1);
-/* 1105 */     this.mv.visitMethodInsn(182, "java/lang/invoke/MethodHandle", "invokeBasic", methodType1.basicType().toMethodDescriptorString(), false);
-/* 1106 */     this.mv.visitLabel(label2);
-/* 1107 */     this.mv.visitJumpInsn(167, label4);
-/*      */ 
-/*      */     
-/* 1110 */     this.mv.visitLabel(label3);
-/*      */ 
-/*      */     
-/* 1113 */     this.mv.visitInsn(89);
-/*      */     
-/* 1115 */     emitPushArgument(name2, 1);
-/* 1116 */     this.mv.visitInsn(95);
-/* 1117 */     this.mv.visitMethodInsn(182, "java/lang/Class", "isInstance", "(Ljava/lang/Object;)Z", false);
-/* 1118 */     Label label5 = new Label();
-/* 1119 */     this.mv.visitJumpInsn(153, label5);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1123 */     emitPushArgument(name2, 2);
-/* 1124 */     this.mv.visitInsn(95);
-/* 1125 */     emitPushArguments(name1, 1);
-/* 1126 */     MethodType methodType2 = methodType1.insertParameterTypes(0, new Class[] { Throwable.class });
-/* 1127 */     this.mv.visitMethodInsn(182, "java/lang/invoke/MethodHandle", "invokeBasic", methodType2.basicType().toMethodDescriptorString(), false);
-/* 1128 */     this.mv.visitJumpInsn(167, label4);
-/*      */     
-/* 1130 */     this.mv.visitLabel(label5);
-/* 1131 */     this.mv.visitInsn(191);
-/*      */     
-/* 1133 */     this.mv.visitLabel(label4);
-/*      */     
-/* 1135 */     return name3;
-/*      */   }
-/*      */   
-/*      */   private void emitPushArguments(LambdaForm.Name paramName) {
-/* 1139 */     emitPushArguments(paramName, 0);
-/*      */   }
-/*      */   
-/*      */   private void emitPushArguments(LambdaForm.Name paramName, int paramInt) {
-/* 1143 */     for (int i = paramInt; i < paramName.arguments.length; i++) {
-/* 1144 */       emitPushArgument(paramName, i);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private void emitPushArgument(LambdaForm.Name paramName, int paramInt) {
-/* 1149 */     Object object = paramName.arguments[paramInt];
-/* 1150 */     Class<?> clazz = paramName.function.methodType().parameterType(paramInt);
-/* 1151 */     emitPushArgument(clazz, object);
-/*      */   }
-/*      */   
-/*      */   private void emitPushArgument(Class<?> paramClass, Object paramObject) {
-/* 1155 */     LambdaForm.BasicType basicType = LambdaForm.BasicType.basicType(paramClass);
-/* 1156 */     if (paramObject instanceof LambdaForm.Name) {
-/* 1157 */       LambdaForm.Name name = (LambdaForm.Name)paramObject;
-/* 1158 */       emitLoadInsn(name.type, name.index());
-/* 1159 */       emitImplicitConversion(name.type, paramClass, name);
-/* 1160 */     } else if ((paramObject == null || paramObject instanceof String) && basicType == LambdaForm.BasicType.L_TYPE) {
-/* 1161 */       emitConst(paramObject);
-/*      */     }
-/* 1163 */     else if (Wrapper.isWrapperType(paramObject.getClass()) && basicType != LambdaForm.BasicType.L_TYPE) {
-/* 1164 */       emitConst(paramObject);
-/*      */     } else {
-/* 1166 */       this.mv.visitLdcInsn(constantPlaceholder(paramObject));
-/* 1167 */       emitImplicitConversion(LambdaForm.BasicType.L_TYPE, paramClass, paramObject);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitStoreResult(LambdaForm.Name paramName) {
-/* 1176 */     if (paramName != null && paramName.type != LambdaForm.BasicType.V_TYPE)
-/*      */     {
-/* 1178 */       emitStoreInsn(paramName.type, paramName.index());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitReturn(LambdaForm.Name paramName) {
-/* 1187 */     Class<?> clazz = this.invokerType.returnType();
-/* 1188 */     LambdaForm.BasicType basicType = this.lambdaForm.returnType();
-/* 1189 */     assert basicType == LambdaForm.BasicType.basicType(clazz);
-/* 1190 */     if (basicType == LambdaForm.BasicType.V_TYPE) {
-/*      */       
-/* 1192 */       this.mv.visitInsn(177);
-/*      */     } else {
-/*      */       
-/* 1195 */       LambdaForm.Name name = this.lambdaForm.names[this.lambdaForm.result];
-/*      */ 
-/*      */       
-/* 1198 */       if (name != paramName) {
-/* 1199 */         emitLoadInsn(basicType, this.lambdaForm.result);
-/*      */       }
-/*      */       
-/* 1202 */       emitImplicitConversion(basicType, clazz, name);
-/*      */ 
-/*      */       
-/* 1205 */       emitReturnInsn(basicType);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void emitPrimCast(Wrapper paramWrapper1, Wrapper paramWrapper2) {
-/* 1225 */     if (paramWrapper1 == paramWrapper2) {
-/*      */       return;
-/*      */     }
-/*      */     
-/* 1229 */     if (paramWrapper1.isSubwordOrInt()) {
-/*      */       
-/* 1231 */       emitI2X(paramWrapper2);
-/*      */     
-/*      */     }
-/* 1234 */     else if (paramWrapper2.isSubwordOrInt()) {
-/*      */       
-/* 1236 */       emitX2I(paramWrapper1);
-/* 1237 */       if (paramWrapper2.bitWidth() < 32)
-/*      */       {
-/* 1239 */         emitI2X(paramWrapper2);
-/*      */       }
-/*      */     } else {
-/*      */       
-/* 1243 */       boolean bool = false;
-/* 1244 */       switch (paramWrapper1) {
-/*      */         case IDENTITY:
-/* 1246 */           switch (paramWrapper2) { case ZERO:
-/* 1247 */               this.mv.visitInsn(137); break;
-/* 1248 */             case NONE: this.mv.visitInsn(138); break; }
-/* 1249 */            bool = true;
-/*      */           break;
-/*      */         
-/*      */         case ZERO:
-/* 1253 */           switch (paramWrapper2) { case IDENTITY:
-/* 1254 */               this.mv.visitInsn(140); break;
-/* 1255 */             case NONE: this.mv.visitInsn(141); break; }
-/* 1256 */            bool = true;
-/*      */           break;
-/*      */         
-/*      */         case NONE:
-/* 1260 */           switch (paramWrapper2) { case IDENTITY:
-/* 1261 */               this.mv.visitInsn(143); break;
-/* 1262 */             case ZERO: this.mv.visitInsn(144); break; }
-/* 1263 */            bool = true;
-/*      */           break;
-/*      */         
-/*      */         default:
-/* 1267 */           bool = true;
-/*      */           break;
-/*      */       } 
-/* 1270 */       if (bool) {
-/* 1271 */         throw new IllegalStateException("unhandled prim cast: " + paramWrapper1 + "2" + paramWrapper2);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void emitI2X(Wrapper paramWrapper) {
-/* 1278 */     switch (paramWrapper) { case GUARD_WITH_CATCH:
-/* 1279 */         this.mv.visitInsn(145);
-/* 1280 */       case ARRAY_LOAD: this.mv.visitInsn(147);
-/* 1281 */       case NEW_ARRAY: this.mv.visitInsn(146);
-/*      */       case ARRAY_STORE: return;
-/* 1283 */       case IDENTITY: this.mv.visitInsn(133);
-/* 1284 */       case ZERO: this.mv.visitInsn(134);
-/* 1285 */       case NONE: this.mv.visitInsn(135);
-/*      */       
-/*      */       case SELECT_ALTERNATIVE:
-/* 1288 */         this.mv.visitInsn(4);
-/* 1289 */         this.mv.visitInsn(126); }
-/*      */     
-/* 1291 */     throw new InternalError("unknown type: " + paramWrapper);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void emitX2I(Wrapper paramWrapper) {
-/* 1296 */     switch (paramWrapper) { case IDENTITY:
-/* 1297 */         this.mv.visitInsn(136); return;
-/* 1298 */       case ZERO: this.mv.visitInsn(139); return;
-/* 1299 */       case NONE: this.mv.visitInsn(142); return; }
-/* 1300 */      throw new InternalError("unknown type: " + paramWrapper);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static MemberName generateLambdaFormInterpreterEntryPoint(String paramString) {
-/* 1308 */     assert LambdaForm.isValidSignature(paramString);
-/* 1309 */     String str = "interpret_" + LambdaForm.signatureReturn(paramString).basicTypeChar();
-/* 1310 */     MethodType methodType = LambdaForm.signatureType(paramString);
-/* 1311 */     methodType = methodType.changeParameterType(0, MethodHandle.class);
-/* 1312 */     InvokerBytecodeGenerator invokerBytecodeGenerator = new InvokerBytecodeGenerator("LFI", str, methodType);
-/* 1313 */     return invokerBytecodeGenerator.loadMethod(invokerBytecodeGenerator.generateLambdaFormInterpreterEntryPointBytes());
-/*      */   }
-/*      */   
-/*      */   private byte[] generateLambdaFormInterpreterEntryPointBytes() {
-/* 1317 */     classFilePrologue();
-/*      */ 
-/*      */     
-/* 1320 */     this.mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Hidden;", true);
-/*      */ 
-/*      */     
-/* 1323 */     this.mv.visitAnnotation("Ljava/lang/invoke/DontInline;", true);
-/*      */ 
-/*      */     
-/* 1326 */     emitIconstInsn(this.invokerType.parameterCount());
-/* 1327 */     this.mv.visitTypeInsn(189, "java/lang/Object");
-/*      */ 
-/*      */     
-/* 1330 */     for (byte b = 0; b < this.invokerType.parameterCount(); b++) {
-/* 1331 */       Class<?> clazz1 = this.invokerType.parameterType(b);
-/* 1332 */       this.mv.visitInsn(89);
-/* 1333 */       emitIconstInsn(b);
-/* 1334 */       emitLoadInsn(LambdaForm.BasicType.basicType(clazz1), b);
-/*      */       
-/* 1336 */       if (clazz1.isPrimitive()) {
-/* 1337 */         emitBoxing(Wrapper.forPrimitiveType(clazz1));
-/*      */       }
-/* 1339 */       this.mv.visitInsn(83);
-/*      */     } 
-/*      */     
-/* 1342 */     emitAloadInsn(0);
-/* 1343 */     this.mv.visitFieldInsn(180, "java/lang/invoke/MethodHandle", "form", "Ljava/lang/invoke/LambdaForm;");
-/* 1344 */     this.mv.visitInsn(95);
-/* 1345 */     this.mv.visitMethodInsn(182, "java/lang/invoke/LambdaForm", "interpretWithArguments", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
-/*      */ 
-/*      */     
-/* 1348 */     Class<?> clazz = this.invokerType.returnType();
-/* 1349 */     if (clazz.isPrimitive() && clazz != void.class) {
-/* 1350 */       emitUnboxing(Wrapper.forPrimitiveType(clazz));
-/*      */     }
-/*      */ 
-/*      */     
-/* 1354 */     emitReturnInsn(LambdaForm.BasicType.basicType(clazz));
-/*      */     
-/* 1356 */     classFileEpilogue();
-/* 1357 */     bogusMethod(new Object[] { this.invokerType });
-/*      */     
-/* 1359 */     byte[] arrayOfByte = this.cw.toByteArray();
-/* 1360 */     maybeDump(this.className, arrayOfByte);
-/* 1361 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static MemberName generateNamedFunctionInvoker(MethodTypeForm paramMethodTypeForm) {
-/* 1368 */     MethodType methodType = LambdaForm.NamedFunction.INVOKER_METHOD_TYPE;
-/* 1369 */     String str = "invoke_" + LambdaForm.shortenSignature(LambdaForm.basicTypeSignature(paramMethodTypeForm.erasedType()));
-/* 1370 */     InvokerBytecodeGenerator invokerBytecodeGenerator = new InvokerBytecodeGenerator("NFI", str, methodType);
-/* 1371 */     return invokerBytecodeGenerator.loadMethod(invokerBytecodeGenerator.generateNamedFunctionInvokerImpl(paramMethodTypeForm));
-/*      */   }
-/*      */   
-/*      */   private byte[] generateNamedFunctionInvokerImpl(MethodTypeForm paramMethodTypeForm) {
-/* 1375 */     MethodType methodType = paramMethodTypeForm.erasedType();
-/* 1376 */     classFilePrologue();
-/*      */ 
-/*      */     
-/* 1379 */     this.mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Hidden;", true);
-/*      */ 
-/*      */     
-/* 1382 */     this.mv.visitAnnotation("Ljava/lang/invoke/ForceInline;", true);
-/*      */ 
-/*      */     
-/* 1385 */     emitAloadInsn(0);
-/*      */ 
-/*      */     
-/* 1388 */     for (byte b = 0; b < methodType.parameterCount(); b++) {
-/* 1389 */       emitAloadInsn(1);
-/* 1390 */       emitIconstInsn(b);
-/* 1391 */       this.mv.visitInsn(50);
-/*      */ 
-/*      */       
-/* 1394 */       Class<?> clazz1 = methodType.parameterType(b);
-/* 1395 */       if (clazz1.isPrimitive()) {
-/* 1396 */         Class<?> clazz2 = methodType.basicType().wrap().parameterType(b);
-/* 1397 */         Wrapper wrapper1 = Wrapper.forBasicType(clazz1);
-/* 1398 */         Wrapper wrapper2 = wrapper1.isSubwordOrInt() ? Wrapper.INT : wrapper1;
-/* 1399 */         emitUnboxing(wrapper2);
-/* 1400 */         emitPrimCast(wrapper2, wrapper1);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1405 */     String str = methodType.basicType().toMethodDescriptorString();
-/* 1406 */     this.mv.visitMethodInsn(182, "java/lang/invoke/MethodHandle", "invokeBasic", str, false);
-/*      */ 
-/*      */     
-/* 1409 */     Class<?> clazz = methodType.returnType();
-/* 1410 */     if (clazz != void.class && clazz.isPrimitive()) {
-/* 1411 */       Wrapper wrapper1 = Wrapper.forBasicType(clazz);
-/* 1412 */       Wrapper wrapper2 = wrapper1.isSubwordOrInt() ? Wrapper.INT : wrapper1;
-/*      */       
-/* 1414 */       emitPrimCast(wrapper1, wrapper2);
-/* 1415 */       emitBoxing(wrapper2);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1419 */     if (clazz == void.class) {
-/* 1420 */       this.mv.visitInsn(1);
-/*      */     }
-/* 1422 */     emitReturnInsn(LambdaForm.BasicType.L_TYPE);
-/*      */     
-/* 1424 */     classFileEpilogue();
-/* 1425 */     bogusMethod(new Object[] { methodType });
-/*      */     
-/* 1427 */     byte[] arrayOfByte = this.cw.toByteArray();
-/* 1428 */     maybeDump(this.className, arrayOfByte);
-/* 1429 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void bogusMethod(Object... paramVarArgs) {
-/* 1437 */     if (MethodHandleStatics.DUMP_CLASS_FILES) {
-/* 1438 */       this.mv = this.cw.visitMethod(8, "dummy", "()V", null, null);
-/* 1439 */       for (Object object : paramVarArgs) {
-/* 1440 */         this.mv.visitLdcInsn(object.toString());
-/* 1441 */         this.mv.visitInsn(87);
-/*      */       } 
-/* 1443 */       this.mv.visitInsn(177);
-/* 1444 */       this.mv.visitMaxs(0, 0);
-/* 1445 */       this.mv.visitEnd();
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\invoke\InvokerBytecodeGenerator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.invoke;
+
+import java.io.*;
+import java.util.*;
+import java.lang.reflect.Modifier;
+
+import jdk.internal.org.objectweb.asm.*;
+
+import static java.lang.invoke.LambdaForm.*;
+import static java.lang.invoke.LambdaForm.BasicType.*;
+import static java.lang.invoke.MethodHandleStatics.*;
+import static java.lang.invoke.MethodHandleNatives.Constants.*;
+
+import sun.invoke.util.VerifyAccess;
+import sun.invoke.util.VerifyType;
+import sun.invoke.util.Wrapper;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * Code generation backend for LambdaForm.
+ * <p>
+ * @author John Rose, JSR 292 EG
+ */
+class InvokerBytecodeGenerator {
+    /** Define class names for convenience. */
+    private static final String MH      = "java/lang/invoke/MethodHandle";
+    private static final String MHI     = "java/lang/invoke/MethodHandleImpl";
+    private static final String LF      = "java/lang/invoke/LambdaForm";
+    private static final String LFN     = "java/lang/invoke/LambdaForm$Name";
+    private static final String CLS     = "java/lang/Class";
+    private static final String OBJ     = "java/lang/Object";
+    private static final String OBJARY  = "[Ljava/lang/Object;";
+
+    private static final String MH_SIG  = "L" + MH + ";";
+    private static final String LF_SIG  = "L" + LF + ";";
+    private static final String LFN_SIG = "L" + LFN + ";";
+    private static final String LL_SIG  = "(L" + OBJ + ";)L" + OBJ + ";";
+    private static final String LLV_SIG = "(L" + OBJ + ";L" + OBJ + ";)V";
+    private static final String CLL_SIG = "(L" + CLS + ";L" + OBJ + ";)L" + OBJ + ";";
+
+    /** Name of its super class*/
+    private static final String superName = OBJ;
+
+    /** Name of new class */
+    private final String className;
+
+    /** Name of the source file (for stack trace printing). */
+    private final String sourceFile;
+
+    private final LambdaForm lambdaForm;
+    private final String     invokerName;
+    private final MethodType invokerType;
+
+    /** Info about local variables in compiled lambda form */
+    private final int[]       localsMap;    // index
+    private final BasicType[] localTypes;   // basic type
+    private final Class<?>[]  localClasses; // type
+
+    /** ASM bytecode generation. */
+    private ClassWriter cw;
+    private MethodVisitor mv;
+
+    private static final MemberName.Factory MEMBERNAME_FACTORY = MemberName.getFactory();
+    private static final Class<?> HOST_CLASS = LambdaForm.class;
+
+    /** Main constructor; other constructors delegate to this one. */
+    private InvokerBytecodeGenerator(LambdaForm lambdaForm, int localsMapSize,
+                                     String className, String invokerName, MethodType invokerType) {
+        if (invokerName.contains(".")) {
+            int p = invokerName.indexOf(".");
+            className = invokerName.substring(0, p);
+            invokerName = invokerName.substring(p+1);
+        }
+        if (DUMP_CLASS_FILES) {
+            className = makeDumpableClassName(className);
+        }
+        this.className  = LF + "$" + className;
+        this.sourceFile = "LambdaForm$" + className;
+        this.lambdaForm = lambdaForm;
+        this.invokerName = invokerName;
+        this.invokerType = invokerType;
+        this.localsMap = new int[localsMapSize+1];
+        // last entry of localsMap is count of allocated local slots
+        this.localTypes = new BasicType[localsMapSize+1];
+        this.localClasses = new Class<?>[localsMapSize+1];
+    }
+
+    /** For generating LambdaForm interpreter entry points. */
+    private InvokerBytecodeGenerator(String className, String invokerName, MethodType invokerType) {
+        this(null, invokerType.parameterCount(),
+             className, invokerName, invokerType);
+        // Create an array to map name indexes to locals indexes.
+        localTypes[localTypes.length - 1] = V_TYPE;
+        for (int i = 0; i < localsMap.length; i++) {
+            localsMap[i] = invokerType.parameterSlotCount() - invokerType.parameterSlotDepth(i);
+            if (i < invokerType.parameterCount())
+                localTypes[i] = basicType(invokerType.parameterType(i));
+        }
+    }
+
+    /** For generating customized code for a single LambdaForm. */
+    private InvokerBytecodeGenerator(String className, LambdaForm form, MethodType invokerType) {
+        this(form, form.names.length,
+             className, form.debugName, invokerType);
+        // Create an array to map name indexes to locals indexes.
+        Name[] names = form.names;
+        for (int i = 0, index = 0; i < localsMap.length; i++) {
+            localsMap[i] = index;
+            if (i < names.length) {
+                BasicType type = names[i].type();
+                index += type.basicTypeSlots();
+                localTypes[i] = type;
+            }
+        }
+    }
+
+
+    /** instance counters for dumped classes */
+    private final static HashMap<String,Integer> DUMP_CLASS_FILES_COUNTERS;
+    /** debugging flag for saving generated class files */
+    private final static File DUMP_CLASS_FILES_DIR;
+
+    static {
+        if (DUMP_CLASS_FILES) {
+            DUMP_CLASS_FILES_COUNTERS = new HashMap<>();
+            try {
+                File dumpDir = new File("DUMP_CLASS_FILES");
+                if (!dumpDir.exists()) {
+                    dumpDir.mkdirs();
+                }
+                DUMP_CLASS_FILES_DIR = dumpDir;
+                System.out.println("Dumping class files to "+DUMP_CLASS_FILES_DIR+"/...");
+            } catch (Exception e) {
+                throw newInternalError(e);
+            }
+        } else {
+            DUMP_CLASS_FILES_COUNTERS = null;
+            DUMP_CLASS_FILES_DIR = null;
+        }
+    }
+
+    static void maybeDump(final String className, final byte[] classFile) {
+        if (DUMP_CLASS_FILES) {
+            java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
+                    try {
+                        String dumpName = className;
+                        //dumpName = dumpName.replace('/', '-');
+                        File dumpFile = new File(DUMP_CLASS_FILES_DIR, dumpName+".class");
+                        System.out.println("dump: " + dumpFile);
+                        dumpFile.getParentFile().mkdirs();
+                        FileOutputStream file = new FileOutputStream(dumpFile);
+                        file.write(classFile);
+                        file.close();
+                        return null;
+                    } catch (IOException ex) {
+                        throw newInternalError(ex);
+                    }
+                }
+            });
+        }
+
+    }
+
+    private static String makeDumpableClassName(String className) {
+        Integer ctr;
+        synchronized (DUMP_CLASS_FILES_COUNTERS) {
+            ctr = DUMP_CLASS_FILES_COUNTERS.get(className);
+            if (ctr == null)  ctr = 0;
+            DUMP_CLASS_FILES_COUNTERS.put(className, ctr+1);
+        }
+        String sfx = ctr.toString();
+        while (sfx.length() < 3)
+            sfx = "0"+sfx;
+        className += sfx;
+        return className;
+    }
+
+    class CpPatch {
+        final int index;
+        final String placeholder;
+        final Object value;
+        CpPatch(int index, String placeholder, Object value) {
+            this.index = index;
+            this.placeholder = placeholder;
+            this.value = value;
+        }
+        public String toString() {
+            return "CpPatch/index="+index+",placeholder="+placeholder+",value="+value;
+        }
+    }
+
+    Map<Object, CpPatch> cpPatches = new HashMap<>();
+
+    int cph = 0;  // for counting constant placeholders
+
+    String constantPlaceholder(Object arg) {
+        String cpPlaceholder = "CONSTANT_PLACEHOLDER_" + cph++;
+        if (DUMP_CLASS_FILES) cpPlaceholder += " <<" + debugString(arg) + ">>";  // debugging aid
+        if (cpPatches.containsKey(cpPlaceholder)) {
+            throw new InternalError("observed CP placeholder twice: " + cpPlaceholder);
+        }
+        // insert placeholder in CP and remember the patch
+        int index = cw.newConst((Object) cpPlaceholder);  // TODO check if aready in the constant pool
+        cpPatches.put(cpPlaceholder, new CpPatch(index, cpPlaceholder, arg));
+        return cpPlaceholder;
+    }
+
+    Object[] cpPatches(byte[] classFile) {
+        int size = getConstantPoolSize(classFile);
+        Object[] res = new Object[size];
+        for (CpPatch p : cpPatches.values()) {
+            if (p.index >= size)
+                throw new InternalError("in cpool["+size+"]: "+p+"\n"+Arrays.toString(Arrays.copyOf(classFile, 20)));
+            res[p.index] = p.value;
+        }
+        return res;
+    }
+
+    private static String debugString(Object arg) {
+        if (arg instanceof MethodHandle) {
+            MethodHandle mh = (MethodHandle) arg;
+            MemberName member = mh.internalMemberName();
+            if (member != null)
+                return member.toString();
+            return mh.debugString();
+        }
+        return arg.toString();
+    }
+
+    /**
+     * Extract the number of constant pool entries from a given class file.
+     *
+     * @param classFile the bytes of the class file in question.
+     * @return the number of entries in the constant pool.
+     */
+    private static int getConstantPoolSize(byte[] classFile) {
+        // The first few bytes:
+        // u4 magic;
+        // u2 minor_version;
+        // u2 major_version;
+        // u2 constant_pool_count;
+        return ((classFile[8] & 0xFF) << 8) | (classFile[9] & 0xFF);
+    }
+
+    /**
+     * Extract the MemberName of a newly-defined method.
+     */
+    private MemberName loadMethod(byte[] classFile) {
+        Class<?> invokerClass = loadAndInitializeInvokerClass(classFile, cpPatches(classFile));
+        return resolveInvokerMember(invokerClass, invokerName, invokerType);
+    }
+
+    /**
+     * Define a given class as anonymous class in the runtime system.
+     */
+    private static Class<?> loadAndInitializeInvokerClass(byte[] classBytes, Object[] patches) {
+        Class<?> invokerClass = UNSAFE.defineAnonymousClass(HOST_CLASS, classBytes, patches);
+        UNSAFE.ensureClassInitialized(invokerClass);  // Make sure the class is initialized; VM might complain.
+        return invokerClass;
+    }
+
+    private static MemberName resolveInvokerMember(Class<?> invokerClass, String name, MethodType type) {
+        MemberName member = new MemberName(invokerClass, name, type, REF_invokeStatic);
+        //System.out.println("resolveInvokerMember => "+member);
+        //for (Method m : invokerClass.getDeclaredMethods())  System.out.println("  "+m);
+        try {
+            member = MEMBERNAME_FACTORY.resolveOrFail(REF_invokeStatic, member, HOST_CLASS, ReflectiveOperationException.class);
+        } catch (ReflectiveOperationException e) {
+            throw newInternalError(e);
+        }
+        //System.out.println("resolveInvokerMember => "+member);
+        return member;
+    }
+
+    /**
+     * Set up class file generation.
+     */
+    private void classFilePrologue() {
+        final int NOT_ACC_PUBLIC = 0;  // not ACC_PUBLIC
+        cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
+        cw.visit(Opcodes.V1_8, NOT_ACC_PUBLIC + Opcodes.ACC_FINAL + Opcodes.ACC_SUPER, className, null, superName, null);
+        cw.visitSource(sourceFile, null);
+
+        String invokerDesc = invokerType.toMethodDescriptorString();
+        mv = cw.visitMethod(Opcodes.ACC_STATIC, invokerName, invokerDesc, null, null);
+    }
+
+    /**
+     * Tear down class file generation.
+     */
+    private void classFileEpilogue() {
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+
+    /*
+     * Low-level emit helpers.
+     */
+    private void emitConst(Object con) {
+        if (con == null) {
+            mv.visitInsn(Opcodes.ACONST_NULL);
+            return;
+        }
+        if (con instanceof Integer) {
+            emitIconstInsn((int) con);
+            return;
+        }
+        if (con instanceof Long) {
+            long x = (long) con;
+            if (x == (short) x) {
+                emitIconstInsn((int) x);
+                mv.visitInsn(Opcodes.I2L);
+                return;
+            }
+        }
+        if (con instanceof Float) {
+            float x = (float) con;
+            if (x == (short) x) {
+                emitIconstInsn((int) x);
+                mv.visitInsn(Opcodes.I2F);
+                return;
+            }
+        }
+        if (con instanceof Double) {
+            double x = (double) con;
+            if (x == (short) x) {
+                emitIconstInsn((int) x);
+                mv.visitInsn(Opcodes.I2D);
+                return;
+            }
+        }
+        if (con instanceof Boolean) {
+            emitIconstInsn((boolean) con ? 1 : 0);
+            return;
+        }
+        // fall through:
+        mv.visitLdcInsn(con);
+    }
+
+    private void emitIconstInsn(int i) {
+        int opcode;
+        switch (i) {
+        case 0:  opcode = Opcodes.ICONST_0;  break;
+        case 1:  opcode = Opcodes.ICONST_1;  break;
+        case 2:  opcode = Opcodes.ICONST_2;  break;
+        case 3:  opcode = Opcodes.ICONST_3;  break;
+        case 4:  opcode = Opcodes.ICONST_4;  break;
+        case 5:  opcode = Opcodes.ICONST_5;  break;
+        default:
+            if (i == (byte) i) {
+                mv.visitIntInsn(Opcodes.BIPUSH, i & 0xFF);
+            } else if (i == (short) i) {
+                mv.visitIntInsn(Opcodes.SIPUSH, (char) i);
+            } else {
+                mv.visitLdcInsn(i);
+            }
+            return;
+        }
+        mv.visitInsn(opcode);
+    }
+
+    /*
+     * NOTE: These load/store methods use the localsMap to find the correct index!
+     */
+    private void emitLoadInsn(BasicType type, int index) {
+        int opcode = loadInsnOpcode(type);
+        mv.visitVarInsn(opcode, localsMap[index]);
+    }
+
+    private int loadInsnOpcode(BasicType type) throws InternalError {
+        switch (type) {
+            case I_TYPE: return Opcodes.ILOAD;
+            case J_TYPE: return Opcodes.LLOAD;
+            case F_TYPE: return Opcodes.FLOAD;
+            case D_TYPE: return Opcodes.DLOAD;
+            case L_TYPE: return Opcodes.ALOAD;
+            default:
+                throw new InternalError("unknown type: " + type);
+        }
+    }
+    private void emitAloadInsn(int index) {
+        emitLoadInsn(L_TYPE, index);
+    }
+
+    private void emitStoreInsn(BasicType type, int index) {
+        int opcode = storeInsnOpcode(type);
+        mv.visitVarInsn(opcode, localsMap[index]);
+    }
+
+    private int storeInsnOpcode(BasicType type) throws InternalError {
+        switch (type) {
+            case I_TYPE: return Opcodes.ISTORE;
+            case J_TYPE: return Opcodes.LSTORE;
+            case F_TYPE: return Opcodes.FSTORE;
+            case D_TYPE: return Opcodes.DSTORE;
+            case L_TYPE: return Opcodes.ASTORE;
+            default:
+                throw new InternalError("unknown type: " + type);
+        }
+    }
+    private void emitAstoreInsn(int index) {
+        emitStoreInsn(L_TYPE, index);
+    }
+
+    private byte arrayTypeCode(Wrapper elementType) {
+        switch (elementType) {
+            case BOOLEAN: return Opcodes.T_BOOLEAN;
+            case BYTE:    return Opcodes.T_BYTE;
+            case CHAR:    return Opcodes.T_CHAR;
+            case SHORT:   return Opcodes.T_SHORT;
+            case INT:     return Opcodes.T_INT;
+            case LONG:    return Opcodes.T_LONG;
+            case FLOAT:   return Opcodes.T_FLOAT;
+            case DOUBLE:  return Opcodes.T_DOUBLE;
+            case OBJECT:  return 0; // in place of Opcodes.T_OBJECT
+            default:      throw new InternalError();
+        }
+    }
+
+    private int arrayInsnOpcode(byte tcode, int aaop) throws InternalError {
+        assert(aaop == Opcodes.AASTORE || aaop == Opcodes.AALOAD);
+        int xas;
+        switch (tcode) {
+            case Opcodes.T_BOOLEAN: xas = Opcodes.BASTORE; break;
+            case Opcodes.T_BYTE:    xas = Opcodes.BASTORE; break;
+            case Opcodes.T_CHAR:    xas = Opcodes.CASTORE; break;
+            case Opcodes.T_SHORT:   xas = Opcodes.SASTORE; break;
+            case Opcodes.T_INT:     xas = Opcodes.IASTORE; break;
+            case Opcodes.T_LONG:    xas = Opcodes.LASTORE; break;
+            case Opcodes.T_FLOAT:   xas = Opcodes.FASTORE; break;
+            case Opcodes.T_DOUBLE:  xas = Opcodes.DASTORE; break;
+            case 0:                 xas = Opcodes.AASTORE; break;
+            default:      throw new InternalError();
+        }
+        return xas - Opcodes.AASTORE + aaop;
+    }
+
+
+    private void freeFrameLocal(int oldFrameLocal) {
+        int i = indexForFrameLocal(oldFrameLocal);
+        if (i < 0)  return;
+        BasicType type = localTypes[i];
+        int newFrameLocal = makeLocalTemp(type);
+        mv.visitVarInsn(loadInsnOpcode(type), oldFrameLocal);
+        mv.visitVarInsn(storeInsnOpcode(type), newFrameLocal);
+        assert(localsMap[i] == oldFrameLocal);
+        localsMap[i] = newFrameLocal;
+        assert(indexForFrameLocal(oldFrameLocal) < 0);
+    }
+    private int indexForFrameLocal(int frameLocal) {
+        for (int i = 0; i < localsMap.length; i++) {
+            if (localsMap[i] == frameLocal && localTypes[i] != V_TYPE)
+                return i;
+        }
+        return -1;
+    }
+    private int makeLocalTemp(BasicType type) {
+        int frameLocal = localsMap[localsMap.length - 1];
+        localsMap[localsMap.length - 1] = frameLocal + type.basicTypeSlots();
+        return frameLocal;
+    }
+
+    /**
+     * Emit a boxing call.
+     *
+     * @param wrapper primitive type class to box.
+     */
+    private void emitBoxing(Wrapper wrapper) {
+        String owner = "java/lang/" + wrapper.wrapperType().getSimpleName();
+        String name  = "valueOf";
+        String desc  = "(" + wrapper.basicTypeChar() + ")L" + owner + ";";
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc, false);
+    }
+
+    /**
+     * Emit an unboxing call (plus preceding checkcast).
+     *
+     * @param wrapper wrapper type class to unbox.
+     */
+    private void emitUnboxing(Wrapper wrapper) {
+        String owner = "java/lang/" + wrapper.wrapperType().getSimpleName();
+        String name  = wrapper.primitiveSimpleName() + "Value";
+        String desc  = "()" + wrapper.basicTypeChar();
+        emitReferenceCast(wrapper.wrapperType(), null);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, name, desc, false);
+    }
+
+    /**
+     * Emit an implicit conversion for an argument which must be of the given pclass.
+     * This is usually a no-op, except when pclass is a subword type or a reference other than Object or an interface.
+     *
+     * @param ptype type of value present on stack
+     * @param pclass type of value required on stack
+     * @param arg compile-time representation of value on stack (Node, constant) or null if none
+     */
+    private void emitImplicitConversion(BasicType ptype, Class<?> pclass, Object arg) {
+        assert(basicType(pclass) == ptype);  // boxing/unboxing handled by caller
+        if (pclass == ptype.basicTypeClass() && ptype != L_TYPE)
+            return;   // nothing to do
+        switch (ptype) {
+            case L_TYPE:
+                if (VerifyType.isNullConversion(Object.class, pclass, false)) {
+                    if (PROFILE_LEVEL > 0)
+                        emitReferenceCast(Object.class, arg);
+                    return;
+                }
+                emitReferenceCast(pclass, arg);
+                return;
+            case I_TYPE:
+                if (!VerifyType.isNullConversion(int.class, pclass, false))
+                    emitPrimCast(ptype.basicTypeWrapper(), Wrapper.forPrimitiveType(pclass));
+                return;
+        }
+        throw newInternalError("bad implicit conversion: tc="+ptype+": "+pclass);
+    }
+
+    /** Update localClasses type map.  Return true if the information is already present. */
+    private boolean assertStaticType(Class<?> cls, Name n) {
+        int local = n.index();
+        Class<?> aclass = localClasses[local];
+        if (aclass != null && (aclass == cls || cls.isAssignableFrom(aclass))) {
+            return true;  // type info is already present
+        } else if (aclass == null || aclass.isAssignableFrom(cls)) {
+            localClasses[local] = cls;  // type info can be improved
+        }
+        return false;
+    }
+
+    private void emitReferenceCast(Class<?> cls, Object arg) {
+        Name writeBack = null;  // local to write back result
+        if (arg instanceof Name) {
+            Name n = (Name) arg;
+            if (assertStaticType(cls, n))
+                return;  // this cast was already performed
+            if (lambdaForm.useCount(n) > 1) {
+                // This guy gets used more than once.
+                writeBack = n;
+            }
+        }
+        if (isStaticallyNameable(cls)) {
+            String sig = getInternalName(cls);
+            mv.visitTypeInsn(Opcodes.CHECKCAST, sig);
+        } else {
+            mv.visitLdcInsn(constantPlaceholder(cls));
+            mv.visitTypeInsn(Opcodes.CHECKCAST, CLS);
+            mv.visitInsn(Opcodes.SWAP);
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, MHI, "castReference", CLL_SIG, false);
+            if (Object[].class.isAssignableFrom(cls))
+                mv.visitTypeInsn(Opcodes.CHECKCAST, OBJARY);
+            else if (PROFILE_LEVEL > 0)
+                mv.visitTypeInsn(Opcodes.CHECKCAST, OBJ);
+        }
+        if (writeBack != null) {
+            mv.visitInsn(Opcodes.DUP);
+            emitAstoreInsn(writeBack.index());
+        }
+    }
+
+    /**
+     * Emits an actual return instruction conforming to the given return type.
+     */
+    private void emitReturnInsn(BasicType type) {
+        int opcode;
+        switch (type) {
+        case I_TYPE:  opcode = Opcodes.IRETURN;  break;
+        case J_TYPE:  opcode = Opcodes.LRETURN;  break;
+        case F_TYPE:  opcode = Opcodes.FRETURN;  break;
+        case D_TYPE:  opcode = Opcodes.DRETURN;  break;
+        case L_TYPE:  opcode = Opcodes.ARETURN;  break;
+        case V_TYPE:  opcode = Opcodes.RETURN;   break;
+        default:
+            throw new InternalError("unknown return type: " + type);
+        }
+        mv.visitInsn(opcode);
+    }
+
+    private static String getInternalName(Class<?> c) {
+        if (c == Object.class)             return OBJ;
+        else if (c == Object[].class)      return OBJARY;
+        else if (c == Class.class)         return CLS;
+        else if (c == MethodHandle.class)  return MH;
+        assert(VerifyAccess.isTypeVisible(c, Object.class)) : c.getName();
+        return c.getName().replace('.', '/');
+    }
+
+    /**
+     * Generate customized bytecode for a given LambdaForm.
+     */
+    static MemberName generateCustomizedCode(LambdaForm form, MethodType invokerType) {
+        InvokerBytecodeGenerator g = new InvokerBytecodeGenerator("MH", form, invokerType);
+        return g.loadMethod(g.generateCustomizedCodeBytes());
+    }
+
+    /** Generates code to check that actual receiver and LambdaForm matches */
+    private boolean checkActualReceiver() {
+        // Expects MethodHandle on the stack and actual receiver MethodHandle in slot #0
+        mv.visitInsn(Opcodes.DUP);
+        mv.visitVarInsn(Opcodes.ALOAD, localsMap[0]);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, MHI, "assertSame", LLV_SIG, false);
+        return true;
+    }
+
+    /**
+     * Generate an invoker method for the passed {@link LambdaForm}.
+     */
+    private byte[] generateCustomizedCodeBytes() {
+        classFilePrologue();
+
+        // Suppress this method in backtraces displayed to the user.
+        mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Hidden;", true);
+
+        // Mark this method as a compiled LambdaForm
+        mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Compiled;", true);
+
+        if (lambdaForm.forceInline) {
+            // Force inlining of this invoker method.
+            mv.visitAnnotation("Ljava/lang/invoke/ForceInline;", true);
+        } else {
+            mv.visitAnnotation("Ljava/lang/invoke/DontInline;", true);
+        }
+
+        if (lambdaForm.customized != null) {
+            // Since LambdaForm is customized for a particular MethodHandle, it's safe to substitute
+            // receiver MethodHandle (at slot #0) with an embedded constant and use it instead.
+            // It enables more efficient code generation in some situations, since embedded constants
+            // are compile-time constants for JIT compiler.
+            mv.visitLdcInsn(constantPlaceholder(lambdaForm.customized));
+            mv.visitTypeInsn(Opcodes.CHECKCAST, MH);
+            assert(checkActualReceiver()); // expects MethodHandle on top of the stack
+            mv.visitVarInsn(Opcodes.ASTORE, localsMap[0]);
+        }
+
+        // iterate over the form's names, generating bytecode instructions for each
+        // start iterating at the first name following the arguments
+        Name onStack = null;
+        for (int i = lambdaForm.arity; i < lambdaForm.names.length; i++) {
+            Name name = lambdaForm.names[i];
+
+            emitStoreResult(onStack);
+            onStack = name;  // unless otherwise modified below
+            MethodHandleImpl.Intrinsic intr = name.function.intrinsicName();
+            switch (intr) {
+                case SELECT_ALTERNATIVE:
+                    assert isSelectAlternative(i);
+                    if (PROFILE_GWT) {
+                        assert(name.arguments[0] instanceof Name &&
+                               nameRefersTo((Name)name.arguments[0], MethodHandleImpl.class, "profileBoolean"));
+                        mv.visitAnnotation("Ljava/lang/invoke/InjectedProfile;", true);
+                    }
+                    onStack = emitSelectAlternative(name, lambdaForm.names[i+1]);
+                    i++;  // skip MH.invokeBasic of the selectAlternative result
+                    continue;
+                case GUARD_WITH_CATCH:
+                    assert isGuardWithCatch(i);
+                    onStack = emitGuardWithCatch(i);
+                    i = i+2; // Jump to the end of GWC idiom
+                    continue;
+                case NEW_ARRAY:
+                    Class<?> rtype = name.function.methodType().returnType();
+                    if (isStaticallyNameable(rtype)) {
+                        emitNewArray(name);
+                        continue;
+                    }
+                    break;
+                case ARRAY_LOAD:
+                    emitArrayLoad(name);
+                    continue;
+                case ARRAY_STORE:
+                    emitArrayStore(name);
+                    continue;
+                case IDENTITY:
+                    assert(name.arguments.length == 1);
+                    emitPushArguments(name);
+                    continue;
+                case ZERO:
+                    assert(name.arguments.length == 0);
+                    emitConst(name.type.basicTypeWrapper().zero());
+                    continue;
+                case NONE:
+                    // no intrinsic associated
+                    break;
+                default:
+                    throw newInternalError("Unknown intrinsic: "+intr);
+            }
+
+            MemberName member = name.function.member();
+            if (isStaticallyInvocable(member)) {
+                emitStaticInvoke(member, name);
+            } else {
+                emitInvoke(name);
+            }
+        }
+
+        // return statement
+        emitReturn(onStack);
+
+        classFileEpilogue();
+        bogusMethod(lambdaForm);
+
+        final byte[] classFile = cw.toByteArray();
+        maybeDump(className, classFile);
+        return classFile;
+    }
+
+    void emitArrayLoad(Name name)  { emitArrayOp(name, Opcodes.AALOAD);  }
+    void emitArrayStore(Name name) { emitArrayOp(name, Opcodes.AASTORE); }
+
+    void emitArrayOp(Name name, int arrayOpcode) {
+        assert arrayOpcode == Opcodes.AALOAD || arrayOpcode == Opcodes.AASTORE;
+        Class<?> elementType = name.function.methodType().parameterType(0).getComponentType();
+        assert elementType != null;
+        emitPushArguments(name);
+        if (elementType.isPrimitive()) {
+            Wrapper w = Wrapper.forPrimitiveType(elementType);
+            arrayOpcode = arrayInsnOpcode(arrayTypeCode(w), arrayOpcode);
+        }
+        mv.visitInsn(arrayOpcode);
+    }
+
+    /**
+     * Emit an invoke for the given name.
+     */
+    void emitInvoke(Name name) {
+        assert(!isLinkerMethodInvoke(name));  // should use the static path for these
+        if (true) {
+            // push receiver
+            MethodHandle target = name.function.resolvedHandle;
+            assert(target != null) : name.exprString();
+            mv.visitLdcInsn(constantPlaceholder(target));
+            emitReferenceCast(MethodHandle.class, target);
+        } else {
+            // load receiver
+            emitAloadInsn(0);
+            emitReferenceCast(MethodHandle.class, null);
+            mv.visitFieldInsn(Opcodes.GETFIELD, MH, "form", LF_SIG);
+            mv.visitFieldInsn(Opcodes.GETFIELD, LF, "names", LFN_SIG);
+            // TODO more to come
+        }
+
+        // push arguments
+        emitPushArguments(name);
+
+        // invocation
+        MethodType type = name.function.methodType();
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, MH, "invokeBasic", type.basicType().toMethodDescriptorString(), false);
+    }
+
+    static private Class<?>[] STATICALLY_INVOCABLE_PACKAGES = {
+        // Sample classes from each package we are willing to bind to statically:
+        java.lang.Object.class,
+        java.util.Arrays.class,
+        sun.misc.Unsafe.class
+        //MethodHandle.class already covered
+    };
+
+    static boolean isStaticallyInvocable(Name name) {
+        return isStaticallyInvocable(name.function.member());
+    }
+
+    static boolean isStaticallyInvocable(MemberName member) {
+        if (member == null)  return false;
+        if (member.isConstructor())  return false;
+        Class<?> cls = member.getDeclaringClass();
+        if (cls.isArray() || cls.isPrimitive())
+            return false;  // FIXME
+        if (cls.isAnonymousClass() || cls.isLocalClass())
+            return false;  // inner class of some sort
+        if (cls.getClassLoader() != MethodHandle.class.getClassLoader())
+            return false;  // not on BCP
+        if (ReflectUtil.isVMAnonymousClass(cls)) // FIXME: switch to supported API once it is added
+            return false;
+        MethodType mtype = member.getMethodOrFieldType();
+        if (!isStaticallyNameable(mtype.returnType()))
+            return false;
+        for (Class<?> ptype : mtype.parameterArray())
+            if (!isStaticallyNameable(ptype))
+                return false;
+        if (!member.isPrivate() && VerifyAccess.isSamePackage(MethodHandle.class, cls))
+            return true;   // in java.lang.invoke package
+        if (member.isPublic() && isStaticallyNameable(cls))
+            return true;
+        return false;
+    }
+
+    static boolean isStaticallyNameable(Class<?> cls) {
+        if (cls == Object.class)
+            return true;
+        while (cls.isArray())
+            cls = cls.getComponentType();
+        if (cls.isPrimitive())
+            return true;  // int[].class, for example
+        if (ReflectUtil.isVMAnonymousClass(cls)) // FIXME: switch to supported API once it is added
+            return false;
+        // could use VerifyAccess.isClassAccessible but the following is a safe approximation
+        if (cls.getClassLoader() != Object.class.getClassLoader())
+            return false;
+        if (VerifyAccess.isSamePackage(MethodHandle.class, cls))
+            return true;
+        if (!Modifier.isPublic(cls.getModifiers()))
+            return false;
+        for (Class<?> pkgcls : STATICALLY_INVOCABLE_PACKAGES) {
+            if (VerifyAccess.isSamePackage(pkgcls, cls))
+                return true;
+        }
+        return false;
+    }
+
+    void emitStaticInvoke(Name name) {
+        emitStaticInvoke(name.function.member(), name);
+    }
+
+    /**
+     * Emit an invoke for the given name, using the MemberName directly.
+     */
+    void emitStaticInvoke(MemberName member, Name name) {
+        assert(member.equals(name.function.member()));
+        Class<?> defc = member.getDeclaringClass();
+        String cname = getInternalName(defc);
+        String mname = member.getName();
+        String mtype;
+        byte refKind = member.getReferenceKind();
+        if (refKind == REF_invokeSpecial) {
+            // in order to pass the verifier, we need to convert this to invokevirtual in all cases
+            assert(member.canBeStaticallyBound()) : member;
+            refKind = REF_invokeVirtual;
+        }
+
+        if (member.getDeclaringClass().isInterface() && refKind == REF_invokeVirtual) {
+            // Methods from Object declared in an interface can be resolved by JVM to invokevirtual kind.
+            // Need to convert it back to invokeinterface to pass verification and make the invocation works as expected.
+            refKind = REF_invokeInterface;
+        }
+
+        // push arguments
+        emitPushArguments(name);
+
+        // invocation
+        if (member.isMethod()) {
+            mtype = member.getMethodType().toMethodDescriptorString();
+            mv.visitMethodInsn(refKindOpcode(refKind), cname, mname, mtype,
+                               member.getDeclaringClass().isInterface());
+        } else {
+            mtype = MethodType.toFieldDescriptorString(member.getFieldType());
+            mv.visitFieldInsn(refKindOpcode(refKind), cname, mname, mtype);
+        }
+        // Issue a type assertion for the result, so we can avoid casts later.
+        if (name.type == L_TYPE) {
+            Class<?> rtype = member.getInvocationType().returnType();
+            assert(!rtype.isPrimitive());
+            if (rtype != Object.class && !rtype.isInterface()) {
+                assertStaticType(rtype, name);
+            }
+        }
+    }
+
+    void emitNewArray(Name name) throws InternalError {
+        Class<?> rtype = name.function.methodType().returnType();
+        if (name.arguments.length == 0) {
+            // The array will be a constant.
+            Object emptyArray;
+            try {
+                emptyArray = name.function.resolvedHandle.invoke();
+            } catch (Throwable ex) {
+                throw newInternalError(ex);
+            }
+            assert(java.lang.reflect.Array.getLength(emptyArray) == 0);
+            assert(emptyArray.getClass() == rtype);  // exact typing
+            mv.visitLdcInsn(constantPlaceholder(emptyArray));
+            emitReferenceCast(rtype, emptyArray);
+            return;
+        }
+        Class<?> arrayElementType = rtype.getComponentType();
+        assert(arrayElementType != null);
+        emitIconstInsn(name.arguments.length);
+        int xas = Opcodes.AASTORE;
+        if (!arrayElementType.isPrimitive()) {
+            mv.visitTypeInsn(Opcodes.ANEWARRAY, getInternalName(arrayElementType));
+        } else {
+            byte tc = arrayTypeCode(Wrapper.forPrimitiveType(arrayElementType));
+            xas = arrayInsnOpcode(tc, xas);
+            mv.visitIntInsn(Opcodes.NEWARRAY, tc);
+        }
+        // store arguments
+        for (int i = 0; i < name.arguments.length; i++) {
+            mv.visitInsn(Opcodes.DUP);
+            emitIconstInsn(i);
+            emitPushArgument(name, i);
+            mv.visitInsn(xas);
+        }
+        // the array is left on the stack
+        assertStaticType(rtype, name);
+    }
+    int refKindOpcode(byte refKind) {
+        switch (refKind) {
+        case REF_invokeVirtual:      return Opcodes.INVOKEVIRTUAL;
+        case REF_invokeStatic:       return Opcodes.INVOKESTATIC;
+        case REF_invokeSpecial:      return Opcodes.INVOKESPECIAL;
+        case REF_invokeInterface:    return Opcodes.INVOKEINTERFACE;
+        case REF_getField:           return Opcodes.GETFIELD;
+        case REF_putField:           return Opcodes.PUTFIELD;
+        case REF_getStatic:          return Opcodes.GETSTATIC;
+        case REF_putStatic:          return Opcodes.PUTSTATIC;
+        }
+        throw new InternalError("refKind="+refKind);
+    }
+
+    /**
+     * Check if MemberName is a call to a method named {@code name} in class {@code declaredClass}.
+     */
+    private boolean memberRefersTo(MemberName member, Class<?> declaringClass, String name) {
+        return member != null &&
+               member.getDeclaringClass() == declaringClass &&
+               member.getName().equals(name);
+    }
+    private boolean nameRefersTo(Name name, Class<?> declaringClass, String methodName) {
+        return name.function != null &&
+               memberRefersTo(name.function.member(), declaringClass, methodName);
+    }
+
+    /**
+     * Check if MemberName is a call to MethodHandle.invokeBasic.
+     */
+    private boolean isInvokeBasic(Name name) {
+        if (name.function == null)
+            return false;
+        if (name.arguments.length < 1)
+            return false;  // must have MH argument
+        MemberName member = name.function.member();
+        return memberRefersTo(member, MethodHandle.class, "invokeBasic") &&
+               !member.isPublic() && !member.isStatic();
+    }
+
+    /**
+     * Check if MemberName is a call to MethodHandle.linkToStatic, etc.
+     */
+    private boolean isLinkerMethodInvoke(Name name) {
+        if (name.function == null)
+            return false;
+        if (name.arguments.length < 1)
+            return false;  // must have MH argument
+        MemberName member = name.function.member();
+        return member != null &&
+               member.getDeclaringClass() == MethodHandle.class &&
+               !member.isPublic() && member.isStatic() &&
+               member.getName().startsWith("linkTo");
+    }
+
+    /**
+     * Check if i-th name is a call to MethodHandleImpl.selectAlternative.
+     */
+    private boolean isSelectAlternative(int pos) {
+        // selectAlternative idiom:
+        //   t_{n}:L=MethodHandleImpl.selectAlternative(...)
+        //   t_{n+1}:?=MethodHandle.invokeBasic(t_{n}, ...)
+        if (pos+1 >= lambdaForm.names.length)  return false;
+        Name name0 = lambdaForm.names[pos];
+        Name name1 = lambdaForm.names[pos+1];
+        return nameRefersTo(name0, MethodHandleImpl.class, "selectAlternative") &&
+               isInvokeBasic(name1) &&
+               name1.lastUseIndex(name0) == 0 &&        // t_{n+1}:?=MethodHandle.invokeBasic(t_{n}, ...)
+               lambdaForm.lastUseIndex(name0) == pos+1; // t_{n} is local: used only in t_{n+1}
+    }
+
+    /**
+     * Check if i-th name is a start of GuardWithCatch idiom.
+     */
+    private boolean isGuardWithCatch(int pos) {
+        // GuardWithCatch idiom:
+        //   t_{n}:L=MethodHandle.invokeBasic(...)
+        //   t_{n+1}:L=MethodHandleImpl.guardWithCatch(*, *, *, t_{n});
+        //   t_{n+2}:?=MethodHandle.invokeBasic(t_{n+1})
+        if (pos+2 >= lambdaForm.names.length)  return false;
+        Name name0 = lambdaForm.names[pos];
+        Name name1 = lambdaForm.names[pos+1];
+        Name name2 = lambdaForm.names[pos+2];
+        return nameRefersTo(name1, MethodHandleImpl.class, "guardWithCatch") &&
+               isInvokeBasic(name0) &&
+               isInvokeBasic(name2) &&
+               name1.lastUseIndex(name0) == 3 &&          // t_{n+1}:L=MethodHandleImpl.guardWithCatch(*, *, *, t_{n});
+               lambdaForm.lastUseIndex(name0) == pos+1 && // t_{n} is local: used only in t_{n+1}
+               name2.lastUseIndex(name1) == 1 &&          // t_{n+2}:?=MethodHandle.invokeBasic(t_{n+1})
+               lambdaForm.lastUseIndex(name1) == pos+2;   // t_{n+1} is local: used only in t_{n+2}
+    }
+
+    /**
+     * Emit bytecode for the selectAlternative idiom.
+     *
+     * The pattern looks like (Cf. MethodHandleImpl.makeGuardWithTest):
+     * <blockquote><pre>{@code
+     *   Lambda(a0:L,a1:I)=>{
+     *     t2:I=foo.test(a1:I);
+     *     t3:L=MethodHandleImpl.selectAlternative(t2:I,(MethodHandle(int)int),(MethodHandle(int)int));
+     *     t4:I=MethodHandle.invokeBasic(t3:L,a1:I);t4:I}
+     * }</pre></blockquote>
+     */
+    private Name emitSelectAlternative(Name selectAlternativeName, Name invokeBasicName) {
+        assert isStaticallyInvocable(invokeBasicName);
+
+        Name receiver = (Name) invokeBasicName.arguments[0];
+
+        Label L_fallback = new Label();
+        Label L_done     = new Label();
+
+        // load test result
+        emitPushArgument(selectAlternativeName, 0);
+
+        // if_icmpne L_fallback
+        mv.visitJumpInsn(Opcodes.IFEQ, L_fallback);
+
+        // invoke selectAlternativeName.arguments[1]
+        Class<?>[] preForkClasses = localClasses.clone();
+        emitPushArgument(selectAlternativeName, 1);  // get 2nd argument of selectAlternative
+        emitAstoreInsn(receiver.index());  // store the MH in the receiver slot
+        emitStaticInvoke(invokeBasicName);
+
+        // goto L_done
+        mv.visitJumpInsn(Opcodes.GOTO, L_done);
+
+        // L_fallback:
+        mv.visitLabel(L_fallback);
+
+        // invoke selectAlternativeName.arguments[2]
+        System.arraycopy(preForkClasses, 0, localClasses, 0, preForkClasses.length);
+        emitPushArgument(selectAlternativeName, 2);  // get 3rd argument of selectAlternative
+        emitAstoreInsn(receiver.index());  // store the MH in the receiver slot
+        emitStaticInvoke(invokeBasicName);
+
+        // L_done:
+        mv.visitLabel(L_done);
+        // for now do not bother to merge typestate; just reset to the dominator state
+        System.arraycopy(preForkClasses, 0, localClasses, 0, preForkClasses.length);
+
+        return invokeBasicName;  // return what's on stack
+    }
+
+    /**
+      * Emit bytecode for the guardWithCatch idiom.
+      *
+      * The pattern looks like (Cf. MethodHandleImpl.makeGuardWithCatch):
+      * <blockquote><pre>{@code
+      *  guardWithCatch=Lambda(a0:L,a1:L,a2:L,a3:L,a4:L,a5:L,a6:L,a7:L)=>{
+      *    t8:L=MethodHandle.invokeBasic(a4:L,a6:L,a7:L);
+      *    t9:L=MethodHandleImpl.guardWithCatch(a1:L,a2:L,a3:L,t8:L);
+      *   t10:I=MethodHandle.invokeBasic(a5:L,t9:L);t10:I}
+      * }</pre></blockquote>
+      *
+      * It is compiled into bytecode equivalent of the following code:
+      * <blockquote><pre>{@code
+      *  try {
+      *      return a1.invokeBasic(a6, a7);
+      *  } catch (Throwable e) {
+      *      if (!a2.isInstance(e)) throw e;
+      *      return a3.invokeBasic(ex, a6, a7);
+      *  }}
+      */
+    private Name emitGuardWithCatch(int pos) {
+        Name args    = lambdaForm.names[pos];
+        Name invoker = lambdaForm.names[pos+1];
+        Name result  = lambdaForm.names[pos+2];
+
+        Label L_startBlock = new Label();
+        Label L_endBlock = new Label();
+        Label L_handler = new Label();
+        Label L_done = new Label();
+
+        Class<?> returnType = result.function.resolvedHandle.type().returnType();
+        MethodType type = args.function.resolvedHandle.type()
+                              .dropParameterTypes(0,1)
+                              .changeReturnType(returnType);
+
+        mv.visitTryCatchBlock(L_startBlock, L_endBlock, L_handler, "java/lang/Throwable");
+
+        // Normal case
+        mv.visitLabel(L_startBlock);
+        // load target
+        emitPushArgument(invoker, 0);
+        emitPushArguments(args, 1); // skip 1st argument: method handle
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, MH, "invokeBasic", type.basicType().toMethodDescriptorString(), false);
+        mv.visitLabel(L_endBlock);
+        mv.visitJumpInsn(Opcodes.GOTO, L_done);
+
+        // Exceptional case
+        mv.visitLabel(L_handler);
+
+        // Check exception's type
+        mv.visitInsn(Opcodes.DUP);
+        // load exception class
+        emitPushArgument(invoker, 1);
+        mv.visitInsn(Opcodes.SWAP);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "isInstance", "(Ljava/lang/Object;)Z", false);
+        Label L_rethrow = new Label();
+        mv.visitJumpInsn(Opcodes.IFEQ, L_rethrow);
+
+        // Invoke catcher
+        // load catcher
+        emitPushArgument(invoker, 2);
+        mv.visitInsn(Opcodes.SWAP);
+        emitPushArguments(args, 1); // skip 1st argument: method handle
+        MethodType catcherType = type.insertParameterTypes(0, Throwable.class);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, MH, "invokeBasic", catcherType.basicType().toMethodDescriptorString(), false);
+        mv.visitJumpInsn(Opcodes.GOTO, L_done);
+
+        mv.visitLabel(L_rethrow);
+        mv.visitInsn(Opcodes.ATHROW);
+
+        mv.visitLabel(L_done);
+
+        return result;
+    }
+
+    private void emitPushArguments(Name args) {
+        emitPushArguments(args, 0);
+    }
+
+    private void emitPushArguments(Name args, int start) {
+        for (int i = start; i < args.arguments.length; i++) {
+            emitPushArgument(args, i);
+        }
+    }
+
+    private void emitPushArgument(Name name, int paramIndex) {
+        Object arg = name.arguments[paramIndex];
+        Class<?> ptype = name.function.methodType().parameterType(paramIndex);
+        emitPushArgument(ptype, arg);
+    }
+
+    private void emitPushArgument(Class<?> ptype, Object arg) {
+        BasicType bptype = basicType(ptype);
+        if (arg instanceof Name) {
+            Name n = (Name) arg;
+            emitLoadInsn(n.type, n.index());
+            emitImplicitConversion(n.type, ptype, n);
+        } else if ((arg == null || arg instanceof String) && bptype == L_TYPE) {
+            emitConst(arg);
+        } else {
+            if (Wrapper.isWrapperType(arg.getClass()) && bptype != L_TYPE) {
+                emitConst(arg);
+            } else {
+                mv.visitLdcInsn(constantPlaceholder(arg));
+                emitImplicitConversion(L_TYPE, ptype, arg);
+            }
+        }
+    }
+
+    /**
+     * Store the name to its local, if necessary.
+     */
+    private void emitStoreResult(Name name) {
+        if (name != null && name.type != V_TYPE) {
+            // non-void: actually assign
+            emitStoreInsn(name.type, name.index());
+        }
+    }
+
+    /**
+     * Emits a return statement from a LF invoker. If required, the result type is cast to the correct return type.
+     */
+    private void emitReturn(Name onStack) {
+        // return statement
+        Class<?> rclass = invokerType.returnType();
+        BasicType rtype = lambdaForm.returnType();
+        assert(rtype == basicType(rclass));  // must agree
+        if (rtype == V_TYPE) {
+            // void
+            mv.visitInsn(Opcodes.RETURN);
+            // it doesn't matter what rclass is; the JVM will discard any value
+        } else {
+            LambdaForm.Name rn = lambdaForm.names[lambdaForm.result];
+
+            // put return value on the stack if it is not already there
+            if (rn != onStack) {
+                emitLoadInsn(rtype, lambdaForm.result);
+            }
+
+            emitImplicitConversion(rtype, rclass, rn);
+
+            // generate actual return statement
+            emitReturnInsn(rtype);
+        }
+    }
+
+    /**
+     * Emit a type conversion bytecode casting from "from" to "to".
+     */
+    private void emitPrimCast(Wrapper from, Wrapper to) {
+        // Here's how.
+        // -   indicates forbidden
+        // <-> indicates implicit
+        //      to ----> boolean  byte     short    char     int      long     float    double
+        // from boolean    <->        -        -        -        -        -        -        -
+        //      byte        -       <->       i2s      i2c      <->      i2l      i2f      i2d
+        //      short       -       i2b       <->      i2c      <->      i2l      i2f      i2d
+        //      char        -       i2b       i2s      <->      <->      i2l      i2f      i2d
+        //      int         -       i2b       i2s      i2c      <->      i2l      i2f      i2d
+        //      long        -     l2i,i2b   l2i,i2s  l2i,i2c    l2i      <->      l2f      l2d
+        //      float       -     f2i,i2b   f2i,i2s  f2i,i2c    f2i      f2l      <->      f2d
+        //      double      -     d2i,i2b   d2i,i2s  d2i,i2c    d2i      d2l      d2f      <->
+        if (from == to) {
+            // no cast required, should be dead code anyway
+            return;
+        }
+        if (from.isSubwordOrInt()) {
+            // cast from {byte,short,char,int} to anything
+            emitI2X(to);
+        } else {
+            // cast from {long,float,double} to anything
+            if (to.isSubwordOrInt()) {
+                // cast to {byte,short,char,int}
+                emitX2I(from);
+                if (to.bitWidth() < 32) {
+                    // targets other than int require another conversion
+                    emitI2X(to);
+                }
+            } else {
+                // cast to {long,float,double} - this is verbose
+                boolean error = false;
+                switch (from) {
+                case LONG:
+                    switch (to) {
+                    case FLOAT:   mv.visitInsn(Opcodes.L2F);  break;
+                    case DOUBLE:  mv.visitInsn(Opcodes.L2D);  break;
+                    default:      error = true;               break;
+                    }
+                    break;
+                case FLOAT:
+                    switch (to) {
+                    case LONG :   mv.visitInsn(Opcodes.F2L);  break;
+                    case DOUBLE:  mv.visitInsn(Opcodes.F2D);  break;
+                    default:      error = true;               break;
+                    }
+                    break;
+                case DOUBLE:
+                    switch (to) {
+                    case LONG :   mv.visitInsn(Opcodes.D2L);  break;
+                    case FLOAT:   mv.visitInsn(Opcodes.D2F);  break;
+                    default:      error = true;               break;
+                    }
+                    break;
+                default:
+                    error = true;
+                    break;
+                }
+                if (error) {
+                    throw new IllegalStateException("unhandled prim cast: " + from + "2" + to);
+                }
+            }
+        }
+    }
+
+    private void emitI2X(Wrapper type) {
+        switch (type) {
+        case BYTE:    mv.visitInsn(Opcodes.I2B);  break;
+        case SHORT:   mv.visitInsn(Opcodes.I2S);  break;
+        case CHAR:    mv.visitInsn(Opcodes.I2C);  break;
+        case INT:     /* naught */                break;
+        case LONG:    mv.visitInsn(Opcodes.I2L);  break;
+        case FLOAT:   mv.visitInsn(Opcodes.I2F);  break;
+        case DOUBLE:  mv.visitInsn(Opcodes.I2D);  break;
+        case BOOLEAN:
+            // For compatibility with ValueConversions and explicitCastArguments:
+            mv.visitInsn(Opcodes.ICONST_1);
+            mv.visitInsn(Opcodes.IAND);
+            break;
+        default:   throw new InternalError("unknown type: " + type);
+        }
+    }
+
+    private void emitX2I(Wrapper type) {
+        switch (type) {
+        case LONG:    mv.visitInsn(Opcodes.L2I);  break;
+        case FLOAT:   mv.visitInsn(Opcodes.F2I);  break;
+        case DOUBLE:  mv.visitInsn(Opcodes.D2I);  break;
+        default:      throw new InternalError("unknown type: " + type);
+        }
+    }
+
+    /**
+     * Generate bytecode for a LambdaForm.vmentry which calls interpretWithArguments.
+     */
+    static MemberName generateLambdaFormInterpreterEntryPoint(String sig) {
+        assert(isValidSignature(sig));
+        String name = "interpret_"+signatureReturn(sig).basicTypeChar();
+        MethodType type = signatureType(sig);  // sig includes leading argument
+        type = type.changeParameterType(0, MethodHandle.class);
+        InvokerBytecodeGenerator g = new InvokerBytecodeGenerator("LFI", name, type);
+        return g.loadMethod(g.generateLambdaFormInterpreterEntryPointBytes());
+    }
+
+    private byte[] generateLambdaFormInterpreterEntryPointBytes() {
+        classFilePrologue();
+
+        // Suppress this method in backtraces displayed to the user.
+        mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Hidden;", true);
+
+        // Don't inline the interpreter entry.
+        mv.visitAnnotation("Ljava/lang/invoke/DontInline;", true);
+
+        // create parameter array
+        emitIconstInsn(invokerType.parameterCount());
+        mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+
+        // fill parameter array
+        for (int i = 0; i < invokerType.parameterCount(); i++) {
+            Class<?> ptype = invokerType.parameterType(i);
+            mv.visitInsn(Opcodes.DUP);
+            emitIconstInsn(i);
+            emitLoadInsn(basicType(ptype), i);
+            // box if primitive type
+            if (ptype.isPrimitive()) {
+                emitBoxing(Wrapper.forPrimitiveType(ptype));
+            }
+            mv.visitInsn(Opcodes.AASTORE);
+        }
+        // invoke
+        emitAloadInsn(0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, MH, "form", "Ljava/lang/invoke/LambdaForm;");
+        mv.visitInsn(Opcodes.SWAP);  // swap form and array; avoid local variable
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, LF, "interpretWithArguments", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
+
+        // maybe unbox
+        Class<?> rtype = invokerType.returnType();
+        if (rtype.isPrimitive() && rtype != void.class) {
+            emitUnboxing(Wrapper.forPrimitiveType(rtype));
+        }
+
+        // return statement
+        emitReturnInsn(basicType(rtype));
+
+        classFileEpilogue();
+        bogusMethod(invokerType);
+
+        final byte[] classFile = cw.toByteArray();
+        maybeDump(className, classFile);
+        return classFile;
+    }
+
+    /**
+     * Generate bytecode for a NamedFunction invoker.
+     */
+    static MemberName generateNamedFunctionInvoker(MethodTypeForm typeForm) {
+        MethodType invokerType = NamedFunction.INVOKER_METHOD_TYPE;
+        String invokerName = "invoke_" + shortenSignature(basicTypeSignature(typeForm.erasedType()));
+        InvokerBytecodeGenerator g = new InvokerBytecodeGenerator("NFI", invokerName, invokerType);
+        return g.loadMethod(g.generateNamedFunctionInvokerImpl(typeForm));
+    }
+
+    private byte[] generateNamedFunctionInvokerImpl(MethodTypeForm typeForm) {
+        MethodType dstType = typeForm.erasedType();
+        classFilePrologue();
+
+        // Suppress this method in backtraces displayed to the user.
+        mv.visitAnnotation("Ljava/lang/invoke/LambdaForm$Hidden;", true);
+
+        // Force inlining of this invoker method.
+        mv.visitAnnotation("Ljava/lang/invoke/ForceInline;", true);
+
+        // Load receiver
+        emitAloadInsn(0);
+
+        // Load arguments from array
+        for (int i = 0; i < dstType.parameterCount(); i++) {
+            emitAloadInsn(1);
+            emitIconstInsn(i);
+            mv.visitInsn(Opcodes.AALOAD);
+
+            // Maybe unbox
+            Class<?> dptype = dstType.parameterType(i);
+            if (dptype.isPrimitive()) {
+                Class<?> sptype = dstType.basicType().wrap().parameterType(i);
+                Wrapper dstWrapper = Wrapper.forBasicType(dptype);
+                Wrapper srcWrapper = dstWrapper.isSubwordOrInt() ? Wrapper.INT : dstWrapper;  // narrow subword from int
+                emitUnboxing(srcWrapper);
+                emitPrimCast(srcWrapper, dstWrapper);
+            }
+        }
+
+        // Invoke
+        String targetDesc = dstType.basicType().toMethodDescriptorString();
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, MH, "invokeBasic", targetDesc, false);
+
+        // Box primitive types
+        Class<?> rtype = dstType.returnType();
+        if (rtype != void.class && rtype.isPrimitive()) {
+            Wrapper srcWrapper = Wrapper.forBasicType(rtype);
+            Wrapper dstWrapper = srcWrapper.isSubwordOrInt() ? Wrapper.INT : srcWrapper;  // widen subword to int
+            // boolean casts not allowed
+            emitPrimCast(srcWrapper, dstWrapper);
+            emitBoxing(dstWrapper);
+        }
+
+        // If the return type is void we return a null reference.
+        if (rtype == void.class) {
+            mv.visitInsn(Opcodes.ACONST_NULL);
+        }
+        emitReturnInsn(L_TYPE);  // NOTE: NamedFunction invokers always return a reference value.
+
+        classFileEpilogue();
+        bogusMethod(dstType);
+
+        final byte[] classFile = cw.toByteArray();
+        maybeDump(className, classFile);
+        return classFile;
+    }
+
+    /**
+     * Emit a bogus method that just loads some string constants. This is to get the constants into the constant pool
+     * for debugging purposes.
+     */
+    private void bogusMethod(Object... os) {
+        if (DUMP_CLASS_FILES) {
+            mv = cw.visitMethod(Opcodes.ACC_STATIC, "dummy", "()V", null, null);
+            for (Object o : os) {
+                mv.visitLdcInsn(o.toString());
+                mv.visitInsn(Opcodes.POP);
+            }
+            mv.visitInsn(Opcodes.RETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+        }
+    }
+}

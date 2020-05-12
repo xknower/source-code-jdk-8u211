@@ -1,169 +1,163 @@
-/*     */ package com.sun.corba.se.impl.orbutil;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CacheTable
-/*     */ {
-/*     */   private boolean noReverseMap;
-/*     */   static final int INITIAL_SIZE = 16;
-/*     */   static final int MAX_SIZE = 1073741824;
-/*     */   int size;
-/*     */   int entryCount;
-/*     */   private Entry[] map;
-/*     */   private Entry[] rmap;
-/*     */   private ORB orb;
-/*     */   private ORBUtilSystemException wrapper;
-/*     */   
-/*     */   class Entry
-/*     */   {
-/*     */     Object key;
-/*     */     int val;
-/*     */     Entry next;
-/*     */     Entry rnext;
-/*     */     
-/*     */     public Entry(Object param1Object, int param1Int) {
-/*  42 */       this.key = param1Object;
-/*  43 */       this.val = param1Int;
-/*  44 */       this.next = null;
-/*  45 */       this.rnext = null;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private CacheTable() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CacheTable(ORB paramORB, boolean paramBoolean) {
-/*  63 */     this.orb = paramORB;
-/*  64 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.encoding");
-/*     */     
-/*  66 */     this.noReverseMap = paramBoolean;
-/*  67 */     this.size = 16;
-/*  68 */     this.entryCount = 0;
-/*  69 */     initTables();
-/*     */   }
-/*     */   private void initTables() {
-/*  72 */     this.map = new Entry[this.size];
-/*  73 */     this.rmap = this.noReverseMap ? null : new Entry[this.size];
-/*     */   }
-/*     */   private void grow() {
-/*  76 */     if (this.size == 1073741824)
-/*     */       return; 
-/*  78 */     Entry[] arrayOfEntry = this.map;
-/*  79 */     int i = this.size;
-/*  80 */     this.size <<= 1;
-/*  81 */     initTables();
-/*     */     
-/*  83 */     for (byte b = 0; b < i; b++) {
-/*  84 */       for (Entry entry = arrayOfEntry[b]; entry != null; entry = entry.next) {
-/*  85 */         put_table(entry.key, entry.val);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private int moduloTableSize(int paramInt) {
-/*  91 */     paramInt += paramInt << 9 ^ 0xFFFFFFFF;
-/*  92 */     paramInt ^= paramInt >>> 14;
-/*  93 */     paramInt += paramInt << 4;
-/*  94 */     paramInt ^= paramInt >>> 10;
-/*  95 */     return paramInt & this.size - 1;
-/*     */   }
-/*     */   private int hash(Object paramObject) {
-/*  98 */     return moduloTableSize(System.identityHashCode(paramObject));
-/*     */   }
-/*     */   private int hash(int paramInt) {
-/* 101 */     return moduloTableSize(paramInt);
-/*     */   }
-/*     */   public final void put(Object paramObject, int paramInt) {
-/* 104 */     if (put_table(paramObject, paramInt)) {
-/* 105 */       this.entryCount++;
-/* 106 */       if (this.entryCount > this.size * 3 / 4)
-/* 107 */         grow(); 
-/*     */     } 
-/*     */   }
-/*     */   private boolean put_table(Object paramObject, int paramInt) {
-/* 111 */     int i = hash(paramObject); Entry entry;
-/* 112 */     for (entry = this.map[i]; entry != null; entry = entry.next) {
-/* 113 */       if (entry.key == paramObject) {
-/* 114 */         if (entry.val != paramInt) {
-/* 115 */           throw this.wrapper.duplicateIndirectionOffset();
-/*     */         }
-/*     */ 
-/*     */         
-/* 119 */         return false;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 124 */     entry = new Entry(paramObject, paramInt);
-/* 125 */     entry.next = this.map[i];
-/* 126 */     this.map[i] = entry;
-/* 127 */     if (!this.noReverseMap) {
-/* 128 */       int j = hash(paramInt);
-/* 129 */       entry.rnext = this.rmap[j];
-/* 130 */       this.rmap[j] = entry;
-/*     */     } 
-/* 132 */     return true;
-/*     */   }
-/*     */   public final boolean containsKey(Object paramObject) {
-/* 135 */     return (getVal(paramObject) != -1);
-/*     */   }
-/*     */   public final int getVal(Object paramObject) {
-/* 138 */     int i = hash(paramObject);
-/* 139 */     for (Entry entry = this.map[i]; entry != null; entry = entry.next) {
-/* 140 */       if (entry.key == paramObject)
-/* 141 */         return entry.val; 
-/*     */     } 
-/* 143 */     return -1;
-/*     */   }
-/*     */   public final boolean containsVal(int paramInt) {
-/* 146 */     return (getKey(paramInt) != null);
-/*     */   }
-/*     */   public final boolean containsOrderedVal(int paramInt) {
-/* 149 */     return containsVal(paramInt);
-/*     */   }
-/*     */   public final Object getKey(int paramInt) {
-/* 152 */     int i = hash(paramInt);
-/* 153 */     for (Entry entry = this.rmap[i]; entry != null; entry = entry.rnext) {
-/* 154 */       if (entry.val == paramInt)
-/* 155 */         return entry.key; 
-/*     */     } 
-/* 157 */     return null;
-/*     */   }
-/*     */   public void done() {
-/* 160 */     this.map = null;
-/* 161 */     this.rmap = null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\CacheTable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.CompletionStatus;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+
+public class CacheTable {
+    class Entry {
+        java.lang.Object key;
+        int val;
+        Entry next;  // this chains the collision list of table "map"
+        Entry rnext; // this chains the collision list of table "rmap"
+        public Entry(java.lang.Object k, int v) {
+            key = k;
+            val = v;
+            next = null;
+            rnext = null;
+        }
+    }
+    private boolean noReverseMap;
+    // size must be power of 2
+    static final int INITIAL_SIZE = 16;
+    static final int MAX_SIZE = 1 << 30;
+    int size;
+    int entryCount;
+    private Entry [] map;
+    private Entry [] rmap;
+
+    private ORB orb;
+    private ORBUtilSystemException wrapper;
+
+    private CacheTable() {}
+    public  CacheTable(ORB orb, boolean u) {
+        //System.out.println("using new cache table");
+        this.orb = orb;
+        wrapper = ORBUtilSystemException.get(orb,
+            CORBALogDomains.RPC_ENCODING);
+        noReverseMap = u;
+        size = INITIAL_SIZE;
+        entryCount = 0;
+        initTables();
+    }
+    private void initTables() {
+        map = new Entry[size];
+        rmap = noReverseMap ? null : new Entry[size];
+    }
+    private void grow() {
+        if (size == MAX_SIZE)
+                return;
+        Entry [] oldMap = map;
+        int oldSize = size;
+        size <<= 1;
+        initTables();
+        // now rehash the entries into the new table
+        for (int i = 0; i < oldSize; i++) {
+            for (Entry e = oldMap[i]; e != null; e = e.next)
+                put_table(e.key, e.val);
+        }
+    }
+    private int moduloTableSize(int h) {
+        // these are the "supplemental hash function" copied from
+        // java.util.HashMap, supposed to be "critical"
+        h += ~(h << 9);
+        h ^=  (h >>> 14);
+        h +=  (h << 4);
+        h ^=  (h >>> 10);
+        return h & (size - 1);
+    }
+    private int hash(java.lang.Object key) {
+        return moduloTableSize(System.identityHashCode(key));
+    }
+    private int hash(int val) {
+        return moduloTableSize(val);
+    }
+    public final void put(java.lang.Object key, int val) {
+        if (put_table(key, val)) {
+            entryCount++;
+            if (entryCount > size * 3 / 4)
+                grow();
+        }
+    }
+    private boolean put_table(java.lang.Object key, int val) {
+        int index = hash(key);
+        for (Entry e = map[index]; e != null; e = e.next) {
+            if (e.key == key) {
+                if (e.val != val) {
+                    throw wrapper.duplicateIndirectionOffset();
+                }
+                // if we get here we are trying to put in the same key/val pair
+                // this is a no-op, so we just return
+                return false;
+            }
+        }
+        // this means the key is not present in our table
+        // then it shouldnt be present in our reverse table either
+        Entry newEntry = new Entry(key, val);
+        newEntry.next = map[index];
+        map[index] = newEntry;
+        if (!noReverseMap) {
+            int rindex = hash(val);
+            newEntry.rnext = rmap[rindex];
+            rmap[rindex] = newEntry;
+        }
+        return true;
+    }
+    public final boolean containsKey(java.lang.Object key) {
+        return (getVal(key) != -1);
+    }
+    public final int getVal(java.lang.Object key) {
+        int index = hash(key);
+        for (Entry e = map[index]; e != null; e = e.next) {
+            if (e.key == key)
+                return e.val;
+        }
+        return -1;
+    }
+    public final boolean containsVal(int val) {
+        return (getKey(val) != null);
+    }
+    public final boolean containsOrderedVal(int val) {
+        return containsVal(val);
+    }
+    public final java.lang.Object getKey(int val) {
+        int index = hash(val);
+        for (Entry e = rmap[index]; e != null; e = e.rnext) {
+            if (e.val == val)
+                return e.key;
+        }
+        return null;
+    }
+    public void done() {
+        map = null;
+        rmap = null;
+    }
+}

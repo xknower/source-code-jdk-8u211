@@ -1,72 +1,66 @@
-/*    */ package com.sun.corba.se.impl.orb;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orb.Operation;
-/*    */ import com.sun.corba.se.spi.orb.PropertyParser;
-/*    */ import com.sun.corba.se.spi.orb.StringPair;
-/*    */ import java.util.Properties;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class PrefixParserData
-/*    */   extends ParserDataBase
-/*    */ {
-/*    */   private StringPair[] testData;
-/*    */   private Class componentType;
-/*    */   
-/*    */   public PrefixParserData(String paramString1, Operation paramOperation, String paramString2, Object paramObject1, Object paramObject2, StringPair[] paramArrayOfStringPair, Class paramClass) {
-/* 43 */     super(paramString1, paramOperation, paramString2, paramObject1, paramObject2);
-/* 44 */     this.testData = paramArrayOfStringPair;
-/* 45 */     this.componentType = paramClass;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void addToParser(PropertyParser paramPropertyParser) {
-/* 50 */     paramPropertyParser.addPrefix(getPropertyName(), getOperation(), getFieldName(), this.componentType);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void addToProperties(Properties paramProperties) {
-/* 56 */     for (byte b = 0; b < this.testData.length; b++) {
-/* 57 */       StringPair stringPair = this.testData[b];
-/*    */       
-/* 59 */       String str = getPropertyName();
-/* 60 */       if (str.charAt(str.length() - 1) != '.') {
-/* 61 */         str = str + ".";
-/*    */       }
-/* 63 */       paramProperties.setProperty(str + stringPair.getFirst(), stringPair.getSecond());
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\PrefixParserData.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orb ;
+
+import java.util.Properties ;
+
+import com.sun.corba.se.spi.orb.StringPair ;
+import com.sun.corba.se.spi.orb.Operation ;
+import com.sun.corba.se.spi.orb.PropertyParser ;
+
+public class PrefixParserData extends ParserDataBase {
+
+    private StringPair[] testData ;
+    private Class componentType ;
+
+    public PrefixParserData( String  propertyName,
+        Operation operation, String fieldName, Object defaultValue,
+        Object testValue, StringPair[] testData, Class componentType )
+    {
+        super( propertyName, operation, fieldName, defaultValue, testValue ) ;
+        this.testData = testData ;
+        this.componentType = componentType ;
+    }
+
+    public void addToParser( PropertyParser parser )
+    {
+        parser.addPrefix( getPropertyName(), getOperation(), getFieldName(),
+            componentType ) ;
+    }
+
+    public void addToProperties( Properties props )
+    {
+        for (int ctr=0; ctr<testData.length; ctr++) {
+            StringPair sp = testData[ctr] ;
+
+            String propName = getPropertyName() ;
+            if (propName.charAt( propName.length() - 1 ) != '.')
+                propName += "." ;
+
+            props.setProperty( propName + sp.getFirst(), sp.getSecond() ) ;
+        }
+    }
+}

@@ -1,13 +1,43 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package javax.swing.event;
+
 
 import java.util.EventListener;
 
-public interface ChangeListener extends EventListener {
-  void stateChanged(ChangeEvent paramChangeEvent);
-}
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\ChangeListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Defines an object which listens for ChangeEvents.
+ *
+ * @author Jeff Dinkins
  */
+public interface ChangeListener extends EventListener {
+    /**
+     * Invoked when the target of the listener has changed its state.
+     *
+     * @param e  a ChangeEvent object
+     */
+    void stateChanged(ChangeEvent e);
+}

@@ -1,83 +1,77 @@
-/*    */ package java.security.cert;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum PKIXReason
-/*    */   implements CertPathValidatorException.Reason
-/*    */ {
-/* 40 */   NAME_CHAINING,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 45 */   INVALID_KEY_USAGE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 50 */   INVALID_POLICY,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 55 */   NO_TRUST_ANCHOR,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 61 */   UNRECOGNIZED_CRIT_EXT,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 66 */   NOT_CA_CERT,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 71 */   PATH_TOO_LONG,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 76 */   INVALID_NAME;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\cert\PKIXReason.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security.cert;
+
+/**
+ * The {@code PKIXReason} enumerates the potential PKIX-specific reasons
+ * that an X.509 certification path may be invalid according to the PKIX
+ * (RFC 3280) standard. These reasons are in addition to those of the
+ * {@code CertPathValidatorException.BasicReason} enumeration.
+ *
+ * @since 1.7
+ */
+public enum PKIXReason implements CertPathValidatorException.Reason {
+    /**
+     * The certificate does not chain correctly.
+     */
+    NAME_CHAINING,
+
+    /**
+     * The certificate's key usage is invalid.
+     */
+    INVALID_KEY_USAGE,
+
+    /**
+     * The policy constraints have been violated.
+     */
+    INVALID_POLICY,
+
+    /**
+     * No acceptable trust anchor found.
+     */
+    NO_TRUST_ANCHOR,
+
+    /**
+     * The certificate contains one or more unrecognized critical
+     * extensions.
+     */
+    UNRECOGNIZED_CRIT_EXT,
+
+    /**
+     * The certificate is not a CA certificate.
+     */
+    NOT_CA_CERT,
+
+    /**
+     * The path length constraint has been violated.
+     */
+    PATH_TOO_LONG,
+
+    /**
+     * The name constraints have been violated.
+     */
+    INVALID_NAME
+}

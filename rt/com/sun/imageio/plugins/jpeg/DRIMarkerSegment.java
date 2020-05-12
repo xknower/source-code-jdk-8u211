@@ -1,89 +1,83 @@
-/*    */ package com.sun.imageio.plugins.jpeg;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import javax.imageio.metadata.IIOInvalidTreeException;
-/*    */ import javax.imageio.metadata.IIOMetadataNode;
-/*    */ import javax.imageio.stream.ImageOutputStream;
-/*    */ import org.w3c.dom.Node;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class DRIMarkerSegment
-/*    */   extends MarkerSegment
-/*    */ {
-/* 43 */   int restartInterval = 0;
-/*    */ 
-/*    */   
-/*    */   DRIMarkerSegment(JPEGBuffer paramJPEGBuffer) throws IOException {
-/* 47 */     super(paramJPEGBuffer);
-/* 48 */     this.restartInterval = (paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF) << 8;
-/* 49 */     this.restartInterval |= paramJPEGBuffer.buf[paramJPEGBuffer.bufPtr++] & 0xFF;
-/* 50 */     paramJPEGBuffer.bufAvail -= this.length;
-/*    */   }
-/*    */   
-/*    */   DRIMarkerSegment(Node paramNode) throws IIOInvalidTreeException {
-/* 54 */     super(221);
-/* 55 */     updateFromNativeNode(paramNode, true);
-/*    */   }
-/*    */   
-/*    */   IIOMetadataNode getNativeNode() {
-/* 59 */     IIOMetadataNode iIOMetadataNode = new IIOMetadataNode("dri");
-/* 60 */     iIOMetadataNode.setAttribute("interval", Integer.toString(this.restartInterval));
-/* 61 */     return iIOMetadataNode;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void updateFromNativeNode(Node paramNode, boolean paramBoolean) throws IIOInvalidTreeException {
-/* 66 */     this.restartInterval = getAttributeValue(paramNode, null, "interval", 0, 65535, true);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   void write(ImageOutputStream paramImageOutputStream) throws IOException {}
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   void print() {
-/* 79 */     printTag("DRI");
-/* 80 */     System.out.println("Interval: " + 
-/* 81 */         Integer.toString(this.restartInterval));
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\DRIMarkerSegment.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageOutputStream;
+
+import java.io.IOException;
+
+import org.w3c.dom.Node;
+
+/**
+     * A DRI (Define Restart Interval) marker segment.
+     */
+class DRIMarkerSegment extends MarkerSegment {
+    /**
+     * Restart interval, or 0 if none is specified.
+     */
+    int restartInterval = 0;
+
+    DRIMarkerSegment(JPEGBuffer buffer)
+        throws IOException {
+        super(buffer);
+        restartInterval = (buffer.buf[buffer.bufPtr++] & 0xff) << 8;
+        restartInterval |= buffer.buf[buffer.bufPtr++] & 0xff;
+        buffer.bufAvail -= length;
+    }
+
+    DRIMarkerSegment(Node node) throws IIOInvalidTreeException {
+        super(JPEG.DRI);
+        updateFromNativeNode(node, true);
+    }
+
+    IIOMetadataNode getNativeNode() {
+        IIOMetadataNode node = new IIOMetadataNode("dri");
+        node.setAttribute("interval", Integer.toString(restartInterval));
+        return node;
+    }
+
+    void updateFromNativeNode(Node node, boolean fromScratch)
+        throws IIOInvalidTreeException {
+        restartInterval = getAttributeValue(node, null, "interval",
+                                            0, 65535, true);
+    }
+
+    /**
+     * Writes the data for this segment to the stream in
+     * valid JPEG format.
+     */
+    void write(ImageOutputStream ios) throws IOException {
+        // We don't write DRI segments; the IJG library does.
+    }
+
+    void print() {
+        printTag("DRI");
+        System.out.println("Interval: "
+                           + Integer.toString(restartInterval));
+    }
+}

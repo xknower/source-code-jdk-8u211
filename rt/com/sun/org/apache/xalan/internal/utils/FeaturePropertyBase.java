@@ -1,219 +1,215 @@
-/*     */ package com.sun.org.apache.xalan.internal.utils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class FeaturePropertyBase
-/*     */ {
-/*     */   public enum State
-/*     */   {
-/*  43 */     DEFAULT, FSP, JAXPDOTPROPERTIES, SYSTEMPROPERTY, APIPROPERTY;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  50 */   String[] values = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*  54 */   State[] states = new State[] { State.DEFAULT, State.DEFAULT };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValue(Enum property, State state, String value) {
-/*  66 */     if (state.compareTo(this.states[property.ordinal()]) >= 0) {
-/*  67 */       this.values[property.ordinal()] = value;
-/*  68 */       this.states[property.ordinal()] = state;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValue(int index, State state, String value) {
-/*  80 */     if (state.compareTo(this.states[index]) >= 0) {
-/*  81 */       this.values[index] = value;
-/*  82 */       this.states[index] = state;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean setValue(String propertyName, State state, Object value) {
-/*  95 */     int index = getIndex(propertyName);
-/*  96 */     if (index > -1) {
-/*  97 */       setValue(index, state, (String)value);
-/*  98 */       return true;
-/*     */     } 
-/* 100 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean setValue(String propertyName, State state, boolean value) {
-/* 112 */     int index = getIndex(propertyName);
-/* 113 */     if (index > -1) {
-/* 114 */       if (value) {
-/* 115 */         setValue(index, state, "true");
-/*     */       } else {
-/* 117 */         setValue(index, state, "false");
-/*     */       } 
-/* 119 */       return true;
-/*     */     } 
-/* 121 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(Enum property) {
-/* 131 */     return this.values[property.ordinal()];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(String property) {
-/* 141 */     int index = getIndex(property);
-/* 142 */     if (index > -1) {
-/* 143 */       return getValueByIndex(index);
-/*     */     }
-/* 145 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValueAsString(String propertyName) {
-/* 156 */     int index = getIndex(propertyName);
-/* 157 */     if (index > -1) {
-/* 158 */       return getValueByIndex(index);
-/*     */     }
-/*     */     
-/* 161 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValueByIndex(int index) {
-/* 170 */     return this.values[index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract int getIndex(String paramString);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <E extends Enum<E>> int getIndex(Class<E> property, String propertyName) {
-/* 181 */     for (Enum<E> enumItem : (Enum[])property.getEnumConstants()) {
-/* 182 */       if (enumItem.toString().equals(propertyName))
-/*     */       {
-/* 184 */         return enumItem.ordinal();
-/*     */       }
-/*     */     } 
-/* 187 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void getSystemProperty(Enum property, String systemProperty) {
-/*     */     try {
-/* 199 */       String value = SecuritySupport.getSystemProperty(systemProperty);
-/* 200 */       if (value != null) {
-/* 201 */         this.values[property.ordinal()] = value;
-/* 202 */         this.states[property.ordinal()] = State.SYSTEMPROPERTY;
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 206 */       value = SecuritySupport.readJAXPProperty(systemProperty);
-/* 207 */       if (value != null) {
-/* 208 */         this.values[property.ordinal()] = value;
-/* 209 */         this.states[property.ordinal()] = State.JAXPDOTPROPERTIES;
-/*     */       } 
-/* 211 */     } catch (NumberFormatException numberFormatException) {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\interna\\utils\FeaturePropertyBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.org.apache.xalan.internal.utils;
+
+import com.sun.org.apache.xalan.internal.XalanConstants;
+
+/**
+ * This is the base class for features and properties
+ *
+ */
+public abstract class FeaturePropertyBase {
+
+    /**
+     * States of the settings of a property, in the order: default value, value
+     * set by FEATURE_SECURE_PROCESSING, jaxp.properties file, jaxp system
+     * properties, and jaxp api properties
+     */
+    public static enum State {
+        //this order reflects the overriding order
+        DEFAULT, FSP, JAXPDOTPROPERTIES, SYSTEMPROPERTY, APIPROPERTY
+    }
+
+
+    /**
+     * Values of the properties as defined in enum Properties
+     */
+    String[] values = null;
+    /**
+     * States of the settings for each property in Properties above
+     */
+    State[] states = {State.DEFAULT, State.DEFAULT};
+
+
+    /**
+     * Set the value for a specific property.
+     *
+     * @param property the property
+     * @param state the state of the property
+     * @param value the value of the property
+     */
+    public void setValue(Enum property, State state, String value) {
+        //only update if it shall override
+        if (state.compareTo(states[property.ordinal()]) >= 0) {
+            values[property.ordinal()] = value;
+            states[property.ordinal()] = state;
+        }
+    }
+
+    /**
+     * Set the value of a property by its index
+     * @param index the index of the property
+     * @param state the state of the property
+     * @param value the value of the property
+     */
+    public void setValue(int index, State state, String value) {
+        //only update if it shall override
+        if (state.compareTo(states[index]) >= 0) {
+            values[index] = value;
+            states[index] = state;
+        }
+    }
+
+     /**
+     * Set value by property name and state
+     * @param propertyName property name
+     * @param state the state of the property
+     * @param value the value of the property
+     * @return true if the property is managed by the security property manager;
+     *         false if otherwise.
+     */
+    public boolean setValue(String propertyName, State state, Object value) {
+        int index = getIndex(propertyName);
+        if (index > -1) {
+            setValue(index, state, (String)value);
+            return true;
+        }
+        return false;
+    }
+
+     /**
+     * Set value by property name and state
+     * @param propertyName property name
+     * @param state the state of the property
+     * @param value the value of the property
+     * @return true if the property is managed by the security property manager;
+     *         false if otherwise.
+     */
+    public boolean setValue(String propertyName, State state, boolean value) {
+        int index = getIndex(propertyName);
+        if (index > -1) {
+            if (value) {
+                setValue(index, state, XalanConstants.FEATURE_TRUE);
+            } else {
+                setValue(index, state, XalanConstants.FEATURE_FALSE);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Return the value of the specified property
+     *
+     * @param property the property
+     * @return the value of the property
+     */
+    public String getValue(Enum property) {
+        return values[property.ordinal()];
+    }
+
+    /**
+     * Return the value of the specified property
+     *
+     * @param property the property
+     * @return the value of the property
+     */
+    public String getValue(String property) {
+        int index = getIndex(property);
+        if (index > -1) {
+            return getValueByIndex(index);
+        }
+        return null;
+    }
+
+    /**
+     * Return the value of the specified property.
+     *
+     * @param propertyName the property name
+     * @return the value of the property as a string. If a property is managed
+     * by this manager, its value shall not be null.
+     */
+    public String getValueAsString(String propertyName) {
+        int index = getIndex(propertyName);
+        if (index > -1) {
+            return getValueByIndex(index);
+        }
+
+        return null;
+    }
+
+    /**
+     * Return the value of a property by its ordinal
+     * @param index the index of a property
+     * @return value of a property
+     */
+    public String getValueByIndex(int index) {
+        return values[index];
+    }
+
+    /**
+     * Get the index by property name
+     * @param propertyName property name
+     * @return the index of the property if found; return -1 if not
+     */
+    public abstract int getIndex(String propertyName);
+
+    public <E extends Enum<E>> int getIndex(Class<E> property, String propertyName) {
+        for (Enum<E> enumItem : property.getEnumConstants()) {
+            if (enumItem.toString().equals(propertyName)) {
+                //internally, ordinal is used as index
+                return enumItem.ordinal();
+            }
+        }
+        return -1;
+    };
+
+
+    /**
+     * Read from system properties, or those in jaxp.properties
+     *
+     * @param property the property
+     * @param systemProperty the name of the system property
+     */
+    void getSystemProperty(Enum property, String systemProperty) {
+        try {
+            String value = SecuritySupport.getSystemProperty(systemProperty);
+            if (value != null) {
+                values[property.ordinal()] = value;
+                states[property.ordinal()] = State.SYSTEMPROPERTY;
+                return;
+            }
+
+            value = SecuritySupport.readJAXPProperty(systemProperty);
+            if (value != null) {
+                values[property.ordinal()] = value;
+                states[property.ordinal()] = State.JAXPDOTPROPERTIES;
+            }
+        } catch (NumberFormatException e) {
+            //invalid setting ignored
+        }
+    }
+}

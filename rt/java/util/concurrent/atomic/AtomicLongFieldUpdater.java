@@ -1,675 +1,659 @@
-/*     */ package java.util.concurrent.atomic;
-/*     */ 
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ import java.util.Objects;
-/*     */ import java.util.function.LongBinaryOperator;
-/*     */ import java.util.function.LongUnaryOperator;
-/*     */ import sun.misc.Unsafe;
-/*     */ import sun.reflect.CallerSensitive;
-/*     */ import sun.reflect.Reflection;
-/*     */ import sun.reflect.misc.ReflectUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class AtomicLongFieldUpdater<T>
-/*     */ {
-/*     */   @CallerSensitive
-/*     */   public static <U> AtomicLongFieldUpdater<U> newUpdater(Class<U> paramClass, String paramString) {
-/*  87 */     Class<?> clazz = Reflection.getCallerClass();
-/*  88 */     if (AtomicLong.VM_SUPPORTS_LONG_CAS) {
-/*  89 */       return new CASUpdater<>(paramClass, paramString, clazz);
-/*     */     }
-/*  91 */     return new LockedUpdater<>(paramClass, paramString, clazz);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getAndSet(T paramT, long paramLong) {
-/*     */     while (true) {
-/* 176 */       long l = get(paramT);
-/* 177 */       if (compareAndSet(paramT, l, paramLong)) {
-/* 178 */         return l;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getAndIncrement(T paramT) {
-/*     */     while (true) {
-/* 191 */       long l1 = get(paramT);
-/* 192 */       long l2 = l1 + 1L;
-/* 193 */       if (compareAndSet(paramT, l1, l2)) {
-/* 194 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getAndDecrement(T paramT) {
-/*     */     while (true) {
-/* 207 */       long l1 = get(paramT);
-/* 208 */       long l2 = l1 - 1L;
-/* 209 */       if (compareAndSet(paramT, l1, l2)) {
-/* 210 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getAndAdd(T paramT, long paramLong) {
-/*     */     while (true) {
-/* 224 */       long l1 = get(paramT);
-/* 225 */       long l2 = l1 + paramLong;
-/* 226 */       if (compareAndSet(paramT, l1, l2)) {
-/* 227 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long incrementAndGet(T paramT) {
-/*     */     while (true) {
-/* 240 */       long l1 = get(paramT);
-/* 241 */       long l2 = l1 + 1L;
-/* 242 */       if (compareAndSet(paramT, l1, l2)) {
-/* 243 */         return l2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long decrementAndGet(T paramT) {
-/*     */     while (true) {
-/* 256 */       long l1 = get(paramT);
-/* 257 */       long l2 = l1 - 1L;
-/* 258 */       if (compareAndSet(paramT, l1, l2)) {
-/* 259 */         return l2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long addAndGet(T paramT, long paramLong) {
-/*     */     while (true) {
-/* 273 */       long l1 = get(paramT);
-/* 274 */       long l2 = l1 + paramLong;
-/* 275 */       if (compareAndSet(paramT, l1, l2)) {
-/* 276 */         return l2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndUpdate(T paramT, LongUnaryOperator paramLongUnaryOperator) {
-/*     */     while (true) {
-/* 293 */       long l1 = get(paramT);
-/* 294 */       long l2 = paramLongUnaryOperator.applyAsLong(l1);
-/* 295 */       if (compareAndSet(paramT, l1, l2)) {
-/* 296 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long updateAndGet(T paramT, LongUnaryOperator paramLongUnaryOperator) {
-/*     */     while (true) {
-/* 313 */       long l1 = get(paramT);
-/* 314 */       long l2 = paramLongUnaryOperator.applyAsLong(l1);
-/* 315 */       if (compareAndSet(paramT, l1, l2)) {
-/* 316 */         return l2;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long getAndAccumulate(T paramT, long paramLong, LongBinaryOperator paramLongBinaryOperator) {
-/*     */     while (true) {
-/* 338 */       long l1 = get(paramT);
-/* 339 */       long l2 = paramLongBinaryOperator.applyAsLong(l1, paramLong);
-/* 340 */       if (compareAndSet(paramT, l1, l2)) {
-/* 341 */         return l1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long accumulateAndGet(T paramT, long paramLong, LongBinaryOperator paramLongBinaryOperator) {
-/*     */     while (true) {
-/* 363 */       long l1 = get(paramT);
-/* 364 */       long l2 = paramLongBinaryOperator.applyAsLong(l1, paramLong);
-/* 365 */       if (compareAndSet(paramT, l1, l2))
-/* 366 */         return l2; 
-/*     */     } 
-/*     */   }
-/*     */   
-/* 370 */   private static final class CASUpdater<T> extends AtomicLongFieldUpdater<T> { private static final Unsafe U = Unsafe.getUnsafe();
-/*     */ 
-/*     */     
-/*     */     private final long offset;
-/*     */ 
-/*     */     
-/*     */     private final Class<?> cclass;
-/*     */     
-/*     */     private final Class<T> tclass;
-/*     */ 
-/*     */     
-/*     */     CASUpdater(final Class<T> tclass, final String fieldName, Class<?> param1Class1) {
-/*     */       Field field;
-/*     */       int i;
-/*     */       try {
-/* 385 */         field = AccessController.<Field>doPrivileged(new PrivilegedExceptionAction<Field>()
-/*     */             {
-/*     */               public Field run() throws NoSuchFieldException {
-/* 388 */                 return tclass.getDeclaredField(fieldName);
-/*     */               }
-/*     */             });
-/* 391 */         i = field.getModifiers();
-/* 392 */         ReflectUtil.ensureMemberAccess(param1Class1, tclass, null, i);
-/*     */         
-/* 394 */         ClassLoader classLoader1 = tclass.getClassLoader();
-/* 395 */         ClassLoader classLoader2 = param1Class1.getClassLoader();
-/* 396 */         if (classLoader2 != null && classLoader2 != classLoader1 && (classLoader1 == null || 
-/* 397 */           !isAncestor(classLoader1, classLoader2))) {
-/* 398 */           ReflectUtil.checkPackageAccess(tclass);
-/*     */         }
-/* 400 */       } catch (PrivilegedActionException privilegedActionException) {
-/* 401 */         throw new RuntimeException(privilegedActionException.getException());
-/* 402 */       } catch (Exception exception) {
-/* 403 */         throw new RuntimeException(exception);
-/*     */       } 
-/*     */       
-/* 406 */       if (field.getType() != long.class) {
-/* 407 */         throw new IllegalArgumentException("Must be long type");
-/*     */       }
-/* 409 */       if (!Modifier.isVolatile(i)) {
-/* 410 */         throw new IllegalArgumentException("Must be volatile type");
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 419 */       this
-/*     */         
-/* 421 */         .cclass = (Modifier.isProtected(i) && tclass.isAssignableFrom(param1Class1) && !AtomicLongFieldUpdater.isSamePackage(tclass, param1Class1)) ? param1Class1 : tclass;
-/*     */       
-/* 423 */       this.tclass = tclass;
-/* 424 */       this.offset = U.objectFieldOffset(field);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final void accessCheck(T param1T) {
-/* 432 */       if (!this.cclass.isInstance(param1T)) {
-/* 433 */         throwAccessCheckException(param1T);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final void throwAccessCheckException(T param1T) {
-/* 441 */       if (this.cclass == this.tclass) {
-/* 442 */         throw new ClassCastException();
-/*     */       }
-/* 444 */       throw new RuntimeException(new IllegalAccessException("Class " + this.cclass
-/*     */ 
-/*     */             
-/* 447 */             .getName() + " can not access a protected member of class " + this.tclass
-/*     */             
-/* 449 */             .getName() + " using an instance of " + param1T
-/*     */             
-/* 451 */             .getClass().getName()));
-/*     */     }
-/*     */     
-/*     */     public final boolean compareAndSet(T param1T, long param1Long1, long param1Long2) {
-/* 455 */       accessCheck(param1T);
-/* 456 */       return U.compareAndSwapLong(param1T, this.offset, param1Long1, param1Long2);
-/*     */     }
-/*     */     
-/*     */     public final boolean weakCompareAndSet(T param1T, long param1Long1, long param1Long2) {
-/* 460 */       accessCheck(param1T);
-/* 461 */       return U.compareAndSwapLong(param1T, this.offset, param1Long1, param1Long2);
-/*     */     }
-/*     */     
-/*     */     public final void set(T param1T, long param1Long) {
-/* 465 */       accessCheck(param1T);
-/* 466 */       U.putLongVolatile(param1T, this.offset, param1Long);
-/*     */     }
-/*     */     
-/*     */     public final void lazySet(T param1T, long param1Long) {
-/* 470 */       accessCheck(param1T);
-/* 471 */       U.putOrderedLong(param1T, this.offset, param1Long);
-/*     */     }
-/*     */     
-/*     */     public final long get(T param1T) {
-/* 475 */       accessCheck(param1T);
-/* 476 */       return U.getLongVolatile(param1T, this.offset);
-/*     */     }
-/*     */     
-/*     */     public final long getAndSet(T param1T, long param1Long) {
-/* 480 */       accessCheck(param1T);
-/* 481 */       return U.getAndSetLong(param1T, this.offset, param1Long);
-/*     */     }
-/*     */     
-/*     */     public final long getAndAdd(T param1T, long param1Long) {
-/* 485 */       accessCheck(param1T);
-/* 486 */       return U.getAndAddLong(param1T, this.offset, param1Long);
-/*     */     }
-/*     */     
-/*     */     public final long getAndIncrement(T param1T) {
-/* 490 */       return getAndAdd(param1T, 1L);
-/*     */     }
-/*     */     
-/*     */     public final long getAndDecrement(T param1T) {
-/* 494 */       return getAndAdd(param1T, -1L);
-/*     */     }
-/*     */     
-/*     */     public final long incrementAndGet(T param1T) {
-/* 498 */       return getAndAdd(param1T, 1L) + 1L;
-/*     */     }
-/*     */     
-/*     */     public final long decrementAndGet(T param1T) {
-/* 502 */       return getAndAdd(param1T, -1L) - 1L;
-/*     */     }
-/*     */     
-/*     */     public final long addAndGet(T param1T, long param1Long) {
-/* 506 */       return getAndAdd(param1T, param1Long) + param1Long;
-/*     */     } }
-/*     */ 
-/*     */   
-/*     */   private static final class LockedUpdater<T> extends AtomicLongFieldUpdater<T> {
-/* 511 */     private static final Unsafe U = Unsafe.getUnsafe();
-/*     */ 
-/*     */     
-/*     */     private final long offset;
-/*     */ 
-/*     */     
-/*     */     private final Class<?> cclass;
-/*     */     
-/*     */     private final Class<T> tclass;
-/*     */ 
-/*     */     
-/*     */     LockedUpdater(final Class<T> tclass, final String fieldName, Class<?> param1Class1) {
-/* 523 */       Field field = null;
-/* 524 */       int i = 0;
-/*     */       try {
-/* 526 */         field = AccessController.<Field>doPrivileged(new PrivilegedExceptionAction<Field>()
-/*     */             {
-/*     */               public Field run() throws NoSuchFieldException {
-/* 529 */                 return tclass.getDeclaredField(fieldName);
-/*     */               }
-/*     */             });
-/* 532 */         i = field.getModifiers();
-/* 533 */         ReflectUtil.ensureMemberAccess(param1Class1, tclass, null, i);
-/*     */         
-/* 535 */         ClassLoader classLoader1 = tclass.getClassLoader();
-/* 536 */         ClassLoader classLoader2 = param1Class1.getClassLoader();
-/* 537 */         if (classLoader2 != null && classLoader2 != classLoader1 && (classLoader1 == null || 
-/* 538 */           !isAncestor(classLoader1, classLoader2))) {
-/* 539 */           ReflectUtil.checkPackageAccess(tclass);
-/*     */         }
-/* 541 */       } catch (PrivilegedActionException privilegedActionException) {
-/* 542 */         throw new RuntimeException(privilegedActionException.getException());
-/* 543 */       } catch (Exception exception) {
-/* 544 */         throw new RuntimeException(exception);
-/*     */       } 
-/*     */       
-/* 547 */       if (field.getType() != long.class) {
-/* 548 */         throw new IllegalArgumentException("Must be long type");
-/*     */       }
-/* 550 */       if (!Modifier.isVolatile(i)) {
-/* 551 */         throw new IllegalArgumentException("Must be volatile type");
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 560 */       this
-/*     */         
-/* 562 */         .cclass = (Modifier.isProtected(i) && tclass.isAssignableFrom(param1Class1) && !AtomicLongFieldUpdater.isSamePackage(tclass, param1Class1)) ? param1Class1 : tclass;
-/*     */       
-/* 564 */       this.tclass = tclass;
-/* 565 */       this.offset = U.objectFieldOffset(field);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final void accessCheck(T param1T) {
-/* 573 */       if (!this.cclass.isInstance(param1T)) {
-/* 574 */         throw accessCheckException(param1T);
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final RuntimeException accessCheckException(T param1T) {
-/* 582 */       if (this.cclass == this.tclass) {
-/* 583 */         return new ClassCastException();
-/*     */       }
-/* 585 */       return new RuntimeException(new IllegalAccessException("Class " + this.cclass
-/*     */ 
-/*     */             
-/* 588 */             .getName() + " can not access a protected member of class " + this.tclass
-/*     */             
-/* 590 */             .getName() + " using an instance of " + param1T
-/*     */             
-/* 592 */             .getClass().getName()));
-/*     */     }
-/*     */     
-/*     */     public final boolean compareAndSet(T param1T, long param1Long1, long param1Long2) {
-/* 596 */       accessCheck(param1T);
-/* 597 */       synchronized (this) {
-/* 598 */         long l = U.getLong(param1T, this.offset);
-/* 599 */         if (l != param1Long1)
-/* 600 */           return false; 
-/* 601 */         U.putLong(param1T, this.offset, param1Long2);
-/* 602 */         return true;
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public final boolean weakCompareAndSet(T param1T, long param1Long1, long param1Long2) {
-/* 607 */       return compareAndSet(param1T, param1Long1, param1Long2);
-/*     */     }
-/*     */     
-/*     */     public final void set(T param1T, long param1Long) {
-/* 611 */       accessCheck(param1T);
-/* 612 */       synchronized (this) {
-/* 613 */         U.putLong(param1T, this.offset, param1Long);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public final void lazySet(T param1T, long param1Long) {
-/* 618 */       set(param1T, param1Long);
-/*     */     }
-/*     */     
-/*     */     public final long get(T param1T) {
-/* 622 */       accessCheck(param1T);
-/* 623 */       synchronized (this) {
-/* 624 */         return U.getLong(param1T, this.offset);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean isAncestor(ClassLoader paramClassLoader1, ClassLoader paramClassLoader2) {
-/* 635 */     ClassLoader classLoader = paramClassLoader1;
-/*     */     while (true) {
-/* 637 */       classLoader = classLoader.getParent();
-/* 638 */       if (paramClassLoader2 == classLoader) {
-/* 639 */         return true;
-/*     */       }
-/* 641 */       if (classLoader == null) {
-/* 642 */         return false;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isSamePackage(Class<?> paramClass1, Class<?> paramClass2) {
-/* 650 */     return (paramClass1.getClassLoader() == paramClass2.getClassLoader() && 
-/* 651 */       Objects.equals(getPackageName(paramClass1), getPackageName(paramClass2)));
-/*     */   }
-/*     */   
-/*     */   private static String getPackageName(Class<?> paramClass) {
-/* 655 */     String str = paramClass.getName();
-/* 656 */     int i = str.lastIndexOf('.');
-/* 657 */     return (i != -1) ? str.substring(0, i) : "";
-/*     */   }
-/*     */   
-/*     */   public abstract boolean compareAndSet(T paramT, long paramLong1, long paramLong2);
-/*     */   
-/*     */   public abstract boolean weakCompareAndSet(T paramT, long paramLong1, long paramLong2);
-/*     */   
-/*     */   public abstract void set(T paramT, long paramLong);
-/*     */   
-/*     */   public abstract void lazySet(T paramT, long paramLong);
-/*     */   
-/*     */   public abstract long get(T paramT);
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\atomic\AtomicLongFieldUpdater.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent.atomic;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
+import java.util.function.LongBinaryOperator;
+import java.util.function.LongUnaryOperator;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
+
+/**
+ * A reflection-based utility that enables atomic updates to
+ * designated {@code volatile long} fields of designated classes.
+ * This class is designed for use in atomic data structures in which
+ * several fields of the same node are independently subject to atomic
+ * updates.
+ *
+ * <p>Note that the guarantees of the {@code compareAndSet}
+ * method in this class are weaker than in other atomic classes.
+ * Because this class cannot ensure that all uses of the field
+ * are appropriate for purposes of atomic access, it can
+ * guarantee atomicity only with respect to other invocations of
+ * {@code compareAndSet} and {@code set} on the same updater.
+ *
+ * @since 1.5
+ * @author Doug Lea
+ * @param <T> The type of the object holding the updatable field
+ */
+public abstract class AtomicLongFieldUpdater<T> {
+    /**
+     * Creates and returns an updater for objects with the given field.
+     * The Class argument is needed to check that reflective types and
+     * generic types match.
+     *
+     * @param tclass the class of the objects holding the field
+     * @param fieldName the name of the field to be updated
+     * @param <U> the type of instances of tclass
+     * @return the updater
+     * @throws IllegalArgumentException if the field is not a
+     * volatile long type
+     * @throws RuntimeException with a nested reflection-based
+     * exception if the class does not hold field or is the wrong type,
+     * or the field is inaccessible to the caller according to Java language
+     * access control
+     */
+    @CallerSensitive
+    public static <U> AtomicLongFieldUpdater<U> newUpdater(Class<U> tclass,
+                                                           String fieldName) {
+        Class<?> caller = Reflection.getCallerClass();
+        if (AtomicLong.VM_SUPPORTS_LONG_CAS)
+            return new CASUpdater<U>(tclass, fieldName, caller);
+        else
+            return new LockedUpdater<U>(tclass, fieldName, caller);
+    }
+
+    /**
+     * Protected do-nothing constructor for use by subclasses.
+     */
+    protected AtomicLongFieldUpdater() {
+    }
+
+    /**
+     * Atomically sets the field of the given object managed by this updater
+     * to the given updated value if the current value {@code ==} the
+     * expected value. This method is guaranteed to be atomic with respect to
+     * other calls to {@code compareAndSet} and {@code set}, but not
+     * necessarily with respect to other changes in the field.
+     *
+     * @param obj An object whose field to conditionally set
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful
+     * @throws ClassCastException if {@code obj} is not an instance
+     * of the class possessing the field established in the constructor
+     */
+    public abstract boolean compareAndSet(T obj, long expect, long update);
+
+    /**
+     * Atomically sets the field of the given object managed by this updater
+     * to the given updated value if the current value {@code ==} the
+     * expected value. This method is guaranteed to be atomic with respect to
+     * other calls to {@code compareAndSet} and {@code set}, but not
+     * necessarily with respect to other changes in the field.
+     *
+     * <p><a href="package-summary.html#weakCompareAndSet">May fail
+     * spuriously and does not provide ordering guarantees</a>, so is
+     * only rarely an appropriate alternative to {@code compareAndSet}.
+     *
+     * @param obj An object whose field to conditionally set
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful
+     * @throws ClassCastException if {@code obj} is not an instance
+     * of the class possessing the field established in the constructor
+     */
+    public abstract boolean weakCompareAndSet(T obj, long expect, long update);
+
+    /**
+     * Sets the field of the given object managed by this updater to the
+     * given updated value. This operation is guaranteed to act as a volatile
+     * store with respect to subsequent invocations of {@code compareAndSet}.
+     *
+     * @param obj An object whose field to set
+     * @param newValue the new value
+     */
+    public abstract void set(T obj, long newValue);
+
+    /**
+     * Eventually sets the field of the given object managed by this
+     * updater to the given updated value.
+     *
+     * @param obj An object whose field to set
+     * @param newValue the new value
+     * @since 1.6
+     */
+    public abstract void lazySet(T obj, long newValue);
+
+    /**
+     * Gets the current value held in the field of the given object managed
+     * by this updater.
+     *
+     * @param obj An object whose field to get
+     * @return the current value
+     */
+    public abstract long get(T obj);
+
+    /**
+     * Atomically sets the field of the given object managed by this updater
+     * to the given value and returns the old value.
+     *
+     * @param obj An object whose field to get and set
+     * @param newValue the new value
+     * @return the previous value
+     */
+    public long getAndSet(T obj, long newValue) {
+        long prev;
+        do {
+            prev = get(obj);
+        } while (!compareAndSet(obj, prev, newValue));
+        return prev;
+    }
+
+    /**
+     * Atomically increments by one the current value of the field of the
+     * given object managed by this updater.
+     *
+     * @param obj An object whose field to get and set
+     * @return the previous value
+     */
+    public long getAndIncrement(T obj) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = prev + 1;
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically decrements by one the current value of the field of the
+     * given object managed by this updater.
+     *
+     * @param obj An object whose field to get and set
+     * @return the previous value
+     */
+    public long getAndDecrement(T obj) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = prev - 1;
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically adds the given value to the current value of the field of
+     * the given object managed by this updater.
+     *
+     * @param obj An object whose field to get and set
+     * @param delta the value to add
+     * @return the previous value
+     */
+    public long getAndAdd(T obj, long delta) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = prev + delta;
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically increments by one the current value of the field of the
+     * given object managed by this updater.
+     *
+     * @param obj An object whose field to get and set
+     * @return the updated value
+     */
+    public long incrementAndGet(T obj) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = prev + 1;
+        } while (!compareAndSet(obj, prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically decrements by one the current value of the field of the
+     * given object managed by this updater.
+     *
+     * @param obj An object whose field to get and set
+     * @return the updated value
+     */
+    public long decrementAndGet(T obj) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = prev - 1;
+        } while (!compareAndSet(obj, prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically adds the given value to the current value of the field of
+     * the given object managed by this updater.
+     *
+     * @param obj An object whose field to get and set
+     * @param delta the value to add
+     * @return the updated value
+     */
+    public long addAndGet(T obj, long delta) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = prev + delta;
+        } while (!compareAndSet(obj, prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this updater
+     * with the results of applying the given function, returning the previous
+     * value. The function should be side-effect-free, since it may be
+     * re-applied when attempted updates fail due to contention among threads.
+     *
+     * @param obj An object whose field to get and set
+     * @param updateFunction a side-effect-free function
+     * @return the previous value
+     * @since 1.8
+     */
+    public final long getAndUpdate(T obj, LongUnaryOperator updateFunction) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = updateFunction.applyAsLong(prev);
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this updater
+     * with the results of applying the given function, returning the updated
+     * value. The function should be side-effect-free, since it may be
+     * re-applied when attempted updates fail due to contention among threads.
+     *
+     * @param obj An object whose field to get and set
+     * @param updateFunction a side-effect-free function
+     * @return the updated value
+     * @since 1.8
+     */
+    public final long updateAndGet(T obj, LongUnaryOperator updateFunction) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = updateFunction.applyAsLong(prev);
+        } while (!compareAndSet(obj, prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this
+     * updater with the results of applying the given function to the
+     * current and given values, returning the previous value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.  The
+     * function is applied with the current value as its first argument,
+     * and the given update as the second argument.
+     *
+     * @param obj An object whose field to get and set
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the previous value
+     * @since 1.8
+     */
+    public final long getAndAccumulate(T obj, long x,
+                                       LongBinaryOperator accumulatorFunction) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = accumulatorFunction.applyAsLong(prev, x);
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this
+     * updater with the results of applying the given function to the
+     * current and given values, returning the updated value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.  The
+     * function is applied with the current value as its first argument,
+     * and the given update as the second argument.
+     *
+     * @param obj An object whose field to get and set
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the updated value
+     * @since 1.8
+     */
+    public final long accumulateAndGet(T obj, long x,
+                                       LongBinaryOperator accumulatorFunction) {
+        long prev, next;
+        do {
+            prev = get(obj);
+            next = accumulatorFunction.applyAsLong(prev, x);
+        } while (!compareAndSet(obj, prev, next));
+        return next;
+    }
+
+    private static final class CASUpdater<T> extends AtomicLongFieldUpdater<T> {
+        private static final sun.misc.Unsafe U = sun.misc.Unsafe.getUnsafe();
+        private final long offset;
+        /**
+         * if field is protected, the subclass constructing updater, else
+         * the same as tclass
+         */
+        private final Class<?> cclass;
+        /** class holding the field */
+        private final Class<T> tclass;
+
+        CASUpdater(final Class<T> tclass, final String fieldName,
+                   final Class<?> caller) {
+            final Field field;
+            final int modifiers;
+            try {
+                field = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<Field>() {
+                        public Field run() throws NoSuchFieldException {
+                            return tclass.getDeclaredField(fieldName);
+                        }
+                    });
+                modifiers = field.getModifiers();
+                sun.reflect.misc.ReflectUtil.ensureMemberAccess(
+                    caller, tclass, null, modifiers);
+                ClassLoader cl = tclass.getClassLoader();
+                ClassLoader ccl = caller.getClassLoader();
+                if ((ccl != null) && (ccl != cl) &&
+                    ((cl == null) || !isAncestor(cl, ccl))) {
+                    sun.reflect.misc.ReflectUtil.checkPackageAccess(tclass);
+                }
+            } catch (PrivilegedActionException pae) {
+                throw new RuntimeException(pae.getException());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+
+            if (field.getType() != long.class)
+                throw new IllegalArgumentException("Must be long type");
+
+            if (!Modifier.isVolatile(modifiers))
+                throw new IllegalArgumentException("Must be volatile type");
+
+            // Access to protected field members is restricted to receivers only
+            // of the accessing class, or one of its subclasses, and the
+            // accessing class must in turn be a subclass (or package sibling)
+            // of the protected member's defining class.
+            // If the updater refers to a protected field of a declaring class
+            // outside the current package, the receiver argument will be
+            // narrowed to the type of the accessing class.
+            this.cclass = (Modifier.isProtected(modifiers) &&
+                           tclass.isAssignableFrom(caller) &&
+                           !isSamePackage(tclass, caller))
+                          ? caller : tclass;
+            this.tclass = tclass;
+            this.offset = U.objectFieldOffset(field);
+        }
+
+        /**
+         * Checks that target argument is instance of cclass.  On
+         * failure, throws cause.
+         */
+        private final void accessCheck(T obj) {
+            if (!cclass.isInstance(obj))
+                throwAccessCheckException(obj);
+        }
+
+        /**
+         * Throws access exception if accessCheck failed due to
+         * protected access, else ClassCastException.
+         */
+        private final void throwAccessCheckException(T obj) {
+            if (cclass == tclass)
+                throw new ClassCastException();
+            else
+                throw new RuntimeException(
+                    new IllegalAccessException(
+                        "Class " +
+                        cclass.getName() +
+                        " can not access a protected member of class " +
+                        tclass.getName() +
+                        " using an instance of " +
+                        obj.getClass().getName()));
+        }
+
+        public final boolean compareAndSet(T obj, long expect, long update) {
+            accessCheck(obj);
+            return U.compareAndSwapLong(obj, offset, expect, update);
+        }
+
+        public final boolean weakCompareAndSet(T obj, long expect, long update) {
+            accessCheck(obj);
+            return U.compareAndSwapLong(obj, offset, expect, update);
+        }
+
+        public final void set(T obj, long newValue) {
+            accessCheck(obj);
+            U.putLongVolatile(obj, offset, newValue);
+        }
+
+        public final void lazySet(T obj, long newValue) {
+            accessCheck(obj);
+            U.putOrderedLong(obj, offset, newValue);
+        }
+
+        public final long get(T obj) {
+            accessCheck(obj);
+            return U.getLongVolatile(obj, offset);
+        }
+
+        public final long getAndSet(T obj, long newValue) {
+            accessCheck(obj);
+            return U.getAndSetLong(obj, offset, newValue);
+        }
+
+        public final long getAndAdd(T obj, long delta) {
+            accessCheck(obj);
+            return U.getAndAddLong(obj, offset, delta);
+        }
+
+        public final long getAndIncrement(T obj) {
+            return getAndAdd(obj, 1);
+        }
+
+        public final long getAndDecrement(T obj) {
+            return getAndAdd(obj, -1);
+        }
+
+        public final long incrementAndGet(T obj) {
+            return getAndAdd(obj, 1) + 1;
+        }
+
+        public final long decrementAndGet(T obj) {
+            return getAndAdd(obj, -1) - 1;
+        }
+
+        public final long addAndGet(T obj, long delta) {
+            return getAndAdd(obj, delta) + delta;
+        }
+    }
+
+    private static final class LockedUpdater<T> extends AtomicLongFieldUpdater<T> {
+        private static final sun.misc.Unsafe U = sun.misc.Unsafe.getUnsafe();
+        private final long offset;
+        /**
+         * if field is protected, the subclass constructing updater, else
+         * the same as tclass
+         */
+        private final Class<?> cclass;
+        /** class holding the field */
+        private final Class<T> tclass;
+
+        LockedUpdater(final Class<T> tclass, final String fieldName,
+                      final Class<?> caller) {
+            Field field = null;
+            int modifiers = 0;
+            try {
+                field = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<Field>() {
+                        public Field run() throws NoSuchFieldException {
+                            return tclass.getDeclaredField(fieldName);
+                        }
+                    });
+                modifiers = field.getModifiers();
+                sun.reflect.misc.ReflectUtil.ensureMemberAccess(
+                    caller, tclass, null, modifiers);
+                ClassLoader cl = tclass.getClassLoader();
+                ClassLoader ccl = caller.getClassLoader();
+                if ((ccl != null) && (ccl != cl) &&
+                    ((cl == null) || !isAncestor(cl, ccl))) {
+                    sun.reflect.misc.ReflectUtil.checkPackageAccess(tclass);
+                }
+            } catch (PrivilegedActionException pae) {
+                throw new RuntimeException(pae.getException());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+
+            if (field.getType() != long.class)
+                throw new IllegalArgumentException("Must be long type");
+
+            if (!Modifier.isVolatile(modifiers))
+                throw new IllegalArgumentException("Must be volatile type");
+
+            // Access to protected field members is restricted to receivers only
+            // of the accessing class, or one of its subclasses, and the
+            // accessing class must in turn be a subclass (or package sibling)
+            // of the protected member's defining class.
+            // If the updater refers to a protected field of a declaring class
+            // outside the current package, the receiver argument will be
+            // narrowed to the type of the accessing class.
+            this.cclass = (Modifier.isProtected(modifiers) &&
+                           tclass.isAssignableFrom(caller) &&
+                           !isSamePackage(tclass, caller))
+                          ? caller : tclass;
+            this.tclass = tclass;
+            this.offset = U.objectFieldOffset(field);
+        }
+
+        /**
+         * Checks that target argument is instance of cclass.  On
+         * failure, throws cause.
+         */
+        private final void accessCheck(T obj) {
+            if (!cclass.isInstance(obj))
+                throw accessCheckException(obj);
+        }
+
+        /**
+         * Returns access exception if accessCheck failed due to
+         * protected access, else ClassCastException.
+         */
+        private final RuntimeException accessCheckException(T obj) {
+            if (cclass == tclass)
+                return new ClassCastException();
+            else
+                return new RuntimeException(
+                    new IllegalAccessException(
+                        "Class " +
+                        cclass.getName() +
+                        " can not access a protected member of class " +
+                        tclass.getName() +
+                        " using an instance of " +
+                        obj.getClass().getName()));
+        }
+
+        public final boolean compareAndSet(T obj, long expect, long update) {
+            accessCheck(obj);
+            synchronized (this) {
+                long v = U.getLong(obj, offset);
+                if (v != expect)
+                    return false;
+                U.putLong(obj, offset, update);
+                return true;
+            }
+        }
+
+        public final boolean weakCompareAndSet(T obj, long expect, long update) {
+            return compareAndSet(obj, expect, update);
+        }
+
+        public final void set(T obj, long newValue) {
+            accessCheck(obj);
+            synchronized (this) {
+                U.putLong(obj, offset, newValue);
+            }
+        }
+
+        public final void lazySet(T obj, long newValue) {
+            set(obj, newValue);
+        }
+
+        public final long get(T obj) {
+            accessCheck(obj);
+            synchronized (this) {
+                return U.getLong(obj, offset);
+            }
+        }
+    }
+
+    /**
+     * Returns true if the second classloader can be found in the first
+     * classloader's delegation chain.
+     * Equivalent to the inaccessible: first.isAncestor(second).
+     */
+    static boolean isAncestor(ClassLoader first, ClassLoader second) {
+        ClassLoader acl = first;
+        do {
+            acl = acl.getParent();
+            if (second == acl) {
+                return true;
+            }
+        } while (acl != null);
+        return false;
+    }
+
+    /**
+     * Returns true if the two classes have the same class loader and
+     * package qualifier
+     */
+    private static boolean isSamePackage(Class<?> class1, Class<?> class2) {
+        return class1.getClassLoader() == class2.getClassLoader()
+               && Objects.equals(getPackageName(class1), getPackageName(class2));
+}
+
+    private static String getPackageName(Class<?> cls) {
+        String cn = cls.getName();
+        int dot = cn.lastIndexOf('.');
+        return (dot != -1) ? cn.substring(0, dot) : "";
+    }
+}

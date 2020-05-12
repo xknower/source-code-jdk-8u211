@@ -1,135 +1,129 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class MatchingIterator
-/*     */   extends DTMAxisIteratorBase
-/*     */ {
-/*     */   private DTMAxisIterator _source;
-/*     */   private final int _match;
-/*     */   
-/*     */   public MatchingIterator(int match, DTMAxisIterator source) {
-/*  63 */     this._source = source;
-/*  64 */     this._match = match;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setRestartable(boolean isRestartable) {
-/*  69 */     this._isRestartable = isRestartable;
-/*  70 */     this._source.setRestartable(isRestartable);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DTMAxisIterator cloneIterator() {
-/*     */     try {
-/*  76 */       MatchingIterator clone = (MatchingIterator)clone();
-/*  77 */       clone._source = this._source.cloneIterator();
-/*  78 */       clone._isRestartable = false;
-/*  79 */       return clone.reset();
-/*     */     }
-/*  81 */     catch (CloneNotSupportedException e) {
-/*  82 */       BasisLibrary.runTimeError("ITERATOR_CLONE_ERR", e
-/*  83 */           .toString());
-/*  84 */       return null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator setStartNode(int node) {
-/*  89 */     if (this._isRestartable) {
-/*     */       
-/*  91 */       this._source.setStartNode(node);
-/*     */ 
-/*     */       
-/*  94 */       this._position = 1;
-/*  95 */       while ((node = this._source.next()) != -1 && node != this._match) {
-/*  96 */         this._position++;
-/*     */       }
-/*     */     } 
-/*  99 */     return this;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator reset() {
-/* 103 */     this._source.reset();
-/* 104 */     return resetPosition();
-/*     */   }
-/*     */   
-/*     */   public int next() {
-/* 108 */     return this._source.next();
-/*     */   }
-/*     */   
-/*     */   public int getLast() {
-/* 112 */     if (this._last == -1) {
-/* 113 */       this._last = this._source.getLast();
-/*     */     }
-/* 115 */     return this._last;
-/*     */   }
-/*     */   
-/*     */   public int getPosition() {
-/* 119 */     return this._position;
-/*     */   }
-/*     */   
-/*     */   public void setMark() {
-/* 123 */     this._source.setMark();
-/*     */   }
-/*     */   
-/*     */   public void gotoMark() {
-/* 127 */     this._source.gotoMark();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\MatchingIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: MatchingIterator.java,v 1.2.4.1 2005/09/06 09:22:07 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+
+/**
+ * This is a special kind of iterator that takes a source iterator and a
+ * node N. If initialized with a node M (the parent of N) it computes the
+ * position of N amongst the children of M. This position can be obtained
+ * by calling getPosition().
+ * It is an iterator even though next() will never be called. It is used to
+ * match patterns with a single predicate like:
+ *
+ *    BOOK[position() = last()]
+ *
+ * In this example, the source iterator will return elements of type BOOK,
+ * a call to position() will return the position of N. Notice that because
+ * of the way the pattern matching is implemented, N will always be a node
+ * in the source since (i) it is a BOOK or the test sequence would not be
+ * considered and (ii) the source iterator is initialized with M which is
+ * the parent of N. Also, and still in this example, a call to last() will
+ * return the number of elements in the source (i.e. the number of BOOKs).
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public final class MatchingIterator extends DTMAxisIteratorBase {
+
+    /**
+     * A reference to a source iterator.
+     */
+    private DTMAxisIterator _source;
+
+    /**
+     * The node to match.
+     */
+    private final int _match;
+
+    public MatchingIterator(int match, DTMAxisIterator source) {
+        _source = source;
+        _match = match;
+    }
+
+
+    public void setRestartable(boolean isRestartable) {
+        _isRestartable = isRestartable;
+        _source.setRestartable(isRestartable);
+    }
+
+    public DTMAxisIterator cloneIterator() {
+
+        try {
+            final MatchingIterator clone = (MatchingIterator) super.clone();
+            clone._source = _source.cloneIterator();
+            clone._isRestartable = false;
+            return clone.reset();
+        }
+        catch (CloneNotSupportedException e) {
+            BasisLibrary.runTimeError(BasisLibrary.ITERATOR_CLONE_ERR,
+                                      e.toString());
+            return null;
+        }
+    }
+
+    public DTMAxisIterator setStartNode(int node) {
+        if (_isRestartable) {
+            // iterator is not a clone
+            _source.setStartNode(node);
+
+            // Calculate the position of the node in the set
+            _position = 1;
+            while ((node = _source.next()) != END && node != _match) {
+                _position++;
+            }
+        }
+        return this;
+    }
+
+    public DTMAxisIterator reset() {
+        _source.reset();
+        return resetPosition();
+    }
+
+    public int next() {
+        return _source.next();
+    }
+
+    public int getLast() {
+        if (_last == -1) {
+            _last = _source.getLast();
+        }
+        return _last;
+    }
+
+    public int getPosition() {
+        return _position;
+    }
+
+    public void setMark() {
+        _source.setMark();
+    }
+
+    public void gotoMark() {
+        _source.gotoMark();
+    }
+}

@@ -1,57 +1,51 @@
-/*    */ package java.util.prefs;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class WindowsPreferencesFactory
-/*    */   implements PreferencesFactory
-/*    */ {
-/*    */   public Preferences userRoot() {
-/* 42 */     return WindowsPreferences.getUserRoot();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Preferences systemRoot() {
-/* 49 */     return WindowsPreferences.getSystemRoot();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\prefs\WindowsPreferencesFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.prefs;
+
+/**
+ * Implementation of  <tt>PreferencesFactory</tt> to return
+ * WindowsPreferences objects.
+ *
+ * @author  Konstantin Kladko
+ * @see Preferences
+ * @see WindowsPreferences
+ * @since 1.4
+ */
+class WindowsPreferencesFactory implements PreferencesFactory  {
+
+    /**
+     * Returns WindowsPreferences.userRoot
+     */
+    public Preferences userRoot() {
+        return WindowsPreferences.getUserRoot();
+    }
+
+    /**
+     * Returns WindowsPreferences.systemRoot
+     */
+    public Preferences systemRoot() {
+        return WindowsPreferences.getSystemRoot();
+    }
+}

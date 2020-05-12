@@ -1,11 +1,37 @@
+/*
+ * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.awt;
 
-interface Conditional {
-  boolean evaluate();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\Conditional.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Conditional is used by the EventDispatchThread's message pumps to
+ * determine if a given pump should continue to run, or should instead exit
+ * and yield control to the parent pump.
+ *
+ * @author David Mendenhall
  */
+interface Conditional {
+    boolean evaluate();
+}

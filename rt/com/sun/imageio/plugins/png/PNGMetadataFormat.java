@@ -1,506 +1,500 @@
-/*     */ package com.sun.imageio.plugins.png;
-/*     */ 
-/*     */ import java.util.Arrays;
-/*     */ import javax.imageio.ImageTypeSpecifier;
-/*     */ import javax.imageio.metadata.IIOMetadataFormat;
-/*     */ import javax.imageio.metadata.IIOMetadataFormatImpl;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PNGMetadataFormat
-/*     */   extends IIOMetadataFormatImpl
-/*     */ {
-/*  38 */   private static IIOMetadataFormat instance = null;
-/*     */   
-/*  40 */   private static String VALUE_0 = "0";
-/*  41 */   private static String VALUE_1 = "1";
-/*  42 */   private static String VALUE_12 = "12";
-/*  43 */   private static String VALUE_23 = "23";
-/*  44 */   private static String VALUE_31 = "31";
-/*  45 */   private static String VALUE_59 = "59";
-/*  46 */   private static String VALUE_60 = "60";
-/*  47 */   private static String VALUE_255 = "255";
-/*  48 */   private static String VALUE_MAX_16 = "65535";
-/*  49 */   private static String VALUE_MAX_32 = "2147483647";
-/*     */   
-/*     */   private PNGMetadataFormat() {
-/*  52 */     super("javax_imageio_png_1.0", 2);
-/*     */ 
-/*     */ 
-/*     */     
-/*  56 */     addElement("IHDR", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/*  59 */     addAttribute("IHDR", "width", 2, true, null, VALUE_1, VALUE_MAX_32, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/*  63 */     addAttribute("IHDR", "height", 2, true, null, VALUE_1, VALUE_MAX_32, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/*  67 */     addAttribute("IHDR", "bitDepth", 2, true, (String)null, 
-/*     */         
-/*  69 */         Arrays.asList(PNGMetadata.IHDR_bitDepths));
-/*     */     
-/*  71 */     String[] arrayOfString = { "Grayscale", "RGB", "Palette", "GrayAlpha", "RGBAlpha" };
-/*     */ 
-/*     */     
-/*  74 */     addAttribute("IHDR", "colorType", 0, true, (String)null, 
-/*     */         
-/*  76 */         Arrays.asList(arrayOfString));
-/*     */     
-/*  78 */     addAttribute("IHDR", "compressionMethod", 0, true, (String)null, 
-/*     */         
-/*  80 */         Arrays.asList(PNGMetadata.IHDR_compressionMethodNames));
-/*     */     
-/*  82 */     addAttribute("IHDR", "filterMethod", 0, true, (String)null, 
-/*     */         
-/*  84 */         Arrays.asList(PNGMetadata.IHDR_filterMethodNames));
-/*     */     
-/*  86 */     addAttribute("IHDR", "interlaceMethod", 0, true, (String)null, 
-/*     */         
-/*  88 */         Arrays.asList(PNGMetadata.IHDR_interlaceMethodNames));
-/*     */ 
-/*     */     
-/*  91 */     addElement("PLTE", "javax_imageio_png_1.0", 1, 256);
-/*     */ 
-/*     */ 
-/*     */     
-/*  95 */     addElement("PLTEEntry", "PLTE", 0);
-/*     */ 
-/*     */     
-/*  98 */     addAttribute("PLTEEntry", "index", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 102 */     addAttribute("PLTEEntry", "red", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 106 */     addAttribute("PLTEEntry", "green", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 110 */     addAttribute("PLTEEntry", "blue", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 115 */     addElement("bKGD", "javax_imageio_png_1.0", 3);
-/*     */ 
-/*     */ 
-/*     */     
-/* 119 */     addElement("bKGD_Grayscale", "bKGD", 0);
-/*     */ 
-/*     */     
-/* 122 */     addAttribute("bKGD_Grayscale", "gray", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 127 */     addElement("bKGD_RGB", "bKGD", 0);
-/*     */ 
-/*     */     
-/* 130 */     addAttribute("bKGD_RGB", "red", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 134 */     addAttribute("bKGD_RGB", "green", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 138 */     addAttribute("bKGD_RGB", "blue", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 143 */     addElement("bKGD_Palette", "bKGD", 0);
-/*     */ 
-/*     */     
-/* 146 */     addAttribute("bKGD_Palette", "index", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 151 */     addElement("cHRM", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/* 154 */     addAttribute("cHRM", "whitePointX", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 158 */     addAttribute("cHRM", "whitePointY", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 162 */     addAttribute("cHRM", "redX", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 166 */     addAttribute("cHRM", "redY", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 170 */     addAttribute("cHRM", "greenX", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 174 */     addAttribute("cHRM", "greenY", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 178 */     addAttribute("cHRM", "blueX", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 182 */     addAttribute("cHRM", "blueY", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 187 */     addElement("gAMA", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/* 190 */     addAttribute("gAMA", "value", 2, true, null, VALUE_0, VALUE_MAX_32, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 195 */     addElement("hIST", "javax_imageio_png_1.0", 1, 256);
-/*     */ 
-/*     */ 
-/*     */     
-/* 199 */     addElement("hISTEntry", "hIST", 0);
-/*     */ 
-/*     */     
-/* 202 */     addAttribute("hISTEntry", "index", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 206 */     addAttribute("hISTEntry", "value", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 211 */     addElement("iCCP", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/* 214 */     addAttribute("iCCP", "profileName", 0, true, null);
-/*     */ 
-/*     */     
-/* 217 */     addAttribute("iCCP", "compressionMethod", 0, true, (String)null, 
-/*     */         
-/* 219 */         Arrays.asList(PNGMetadata.iCCP_compressionMethodNames));
-/*     */     
-/* 221 */     addObjectValue("iCCP", byte.class, 0, 2147483647);
-/*     */ 
-/*     */     
-/* 224 */     addElement("iTXt", "javax_imageio_png_1.0", 1, 2147483647);
-/*     */ 
-/*     */ 
-/*     */     
-/* 228 */     addElement("iTXtEntry", "iTXt", 0);
-/*     */ 
-/*     */     
-/* 231 */     addAttribute("iTXtEntry", "keyword", 0, true, null);
-/*     */ 
-/*     */     
-/* 234 */     addBooleanAttribute("iTXtEntry", "compressionFlag", false, false);
-/*     */ 
-/*     */     
-/* 237 */     addAttribute("iTXtEntry", "compressionMethod", 0, true, null);
-/*     */ 
-/*     */     
-/* 240 */     addAttribute("iTXtEntry", "languageTag", 0, true, null);
-/*     */ 
-/*     */     
-/* 243 */     addAttribute("iTXtEntry", "translatedKeyword", 0, true, null);
-/*     */ 
-/*     */     
-/* 246 */     addAttribute("iTXtEntry", "text", 0, true, null);
-/*     */ 
-/*     */ 
-/*     */     
-/* 250 */     addElement("pHYS", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/* 253 */     addAttribute("pHYS", "pixelsPerUnitXAxis", 2, true, null, VALUE_0, VALUE_MAX_32, true, true);
-/*     */ 
-/*     */     
-/* 256 */     addAttribute("pHYS", "pixelsPerUnitYAxis", 2, true, null, VALUE_0, VALUE_MAX_32, true, true);
-/*     */ 
-/*     */     
-/* 259 */     addAttribute("pHYS", "unitSpecifier", 0, true, (String)null, 
-/*     */         
-/* 261 */         Arrays.asList(PNGMetadata.unitSpecifierNames));
-/*     */ 
-/*     */     
-/* 264 */     addElement("sBIT", "javax_imageio_png_1.0", 3);
-/*     */ 
-/*     */ 
-/*     */     
-/* 268 */     addElement("sBIT_Grayscale", "sBIT", 0);
-/*     */ 
-/*     */     
-/* 271 */     addAttribute("sBIT_Grayscale", "gray", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 276 */     addElement("sBIT_GrayAlpha", "sBIT", 0);
-/*     */ 
-/*     */     
-/* 279 */     addAttribute("sBIT_GrayAlpha", "gray", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 283 */     addAttribute("sBIT_GrayAlpha", "alpha", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 288 */     addElement("sBIT_RGB", "sBIT", 0);
-/*     */ 
-/*     */     
-/* 291 */     addAttribute("sBIT_RGB", "red", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 295 */     addAttribute("sBIT_RGB", "green", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 299 */     addAttribute("sBIT_RGB", "blue", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 304 */     addElement("sBIT_RGBAlpha", "sBIT", 0);
-/*     */ 
-/*     */     
-/* 307 */     addAttribute("sBIT_RGBAlpha", "red", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 311 */     addAttribute("sBIT_RGBAlpha", "green", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 315 */     addAttribute("sBIT_RGBAlpha", "blue", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 319 */     addAttribute("sBIT_RGBAlpha", "alpha", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 324 */     addElement("sBIT_Palette", "sBIT", 0);
-/*     */ 
-/*     */     
-/* 327 */     addAttribute("sBIT_Palette", "red", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 331 */     addAttribute("sBIT_Palette", "green", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 335 */     addAttribute("sBIT_Palette", "blue", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 340 */     addElement("sPLT", "javax_imageio_png_1.0", 1, 256);
-/*     */ 
-/*     */ 
-/*     */     
-/* 344 */     addElement("sPLTEntry", "sPLT", 0);
-/*     */ 
-/*     */     
-/* 347 */     addAttribute("sPLTEntry", "index", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 351 */     addAttribute("sPLTEntry", "red", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 355 */     addAttribute("sPLTEntry", "green", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 359 */     addAttribute("sPLTEntry", "blue", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 363 */     addAttribute("sPLTEntry", "alpha", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 368 */     addElement("sRGB", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/* 371 */     addAttribute("sRGB", "renderingIntent", 0, true, (String)null, 
-/*     */         
-/* 373 */         Arrays.asList(PNGMetadata.renderingIntentNames));
-/*     */ 
-/*     */     
-/* 376 */     addElement("tEXt", "javax_imageio_png_1.0", 1, 2147483647);
-/*     */ 
-/*     */ 
-/*     */     
-/* 380 */     addElement("tEXtEntry", "tEXt", 0);
-/*     */ 
-/*     */     
-/* 383 */     addAttribute("tEXtEntry", "keyword", 0, true, null);
-/*     */ 
-/*     */     
-/* 386 */     addAttribute("tEXtEntry", "value", 0, true, null);
-/*     */ 
-/*     */ 
-/*     */     
-/* 390 */     addElement("tIME", "javax_imageio_png_1.0", 0);
-/*     */ 
-/*     */     
-/* 393 */     addAttribute("tIME", "year", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 397 */     addAttribute("tIME", "month", 2, true, null, VALUE_1, VALUE_12, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 401 */     addAttribute("tIME", "day", 2, true, null, VALUE_1, VALUE_31, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 405 */     addAttribute("tIME", "hour", 2, true, null, VALUE_0, VALUE_23, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 409 */     addAttribute("tIME", "minute", 2, true, null, VALUE_0, VALUE_59, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 413 */     addAttribute("tIME", "second", 2, true, null, VALUE_0, VALUE_60, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 418 */     addElement("tRNS", "javax_imageio_png_1.0", 3);
-/*     */ 
-/*     */ 
-/*     */     
-/* 422 */     addElement("tRNS_Grayscale", "tRNS", 0);
-/*     */ 
-/*     */     
-/* 425 */     addAttribute("tRNS_Grayscale", "gray", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 430 */     addElement("tRNS_RGB", "tRNS", 0);
-/*     */ 
-/*     */     
-/* 433 */     addAttribute("tRNS_RGB", "red", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 437 */     addAttribute("tRNS_RGB", "green", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 441 */     addAttribute("tRNS_RGB", "blue", 2, true, null, VALUE_0, VALUE_MAX_16, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 446 */     addElement("tRNS_Palette", "tRNS", 0);
-/*     */ 
-/*     */     
-/* 449 */     addAttribute("tRNS_Palette", "index", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 453 */     addAttribute("tRNS_Palette", "alpha", 2, true, null, VALUE_0, VALUE_255, true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 458 */     addElement("zTXt", "javax_imageio_png_1.0", 1, 2147483647);
-/*     */ 
-/*     */ 
-/*     */     
-/* 462 */     addElement("zTXtEntry", "zTXt", 0);
-/*     */ 
-/*     */     
-/* 465 */     addAttribute("zTXtEntry", "keyword", 0, true, null);
-/*     */ 
-/*     */     
-/* 468 */     addAttribute("zTXtEntry", "compressionMethod", 0, true, (String)null, 
-/*     */         
-/* 470 */         Arrays.asList(PNGMetadata.zTXt_compressionMethodNames));
-/*     */     
-/* 472 */     addAttribute("zTXtEntry", "text", 0, true, null);
-/*     */ 
-/*     */ 
-/*     */     
-/* 476 */     addElement("UnknownChunks", "javax_imageio_png_1.0", 1, 2147483647);
-/*     */ 
-/*     */ 
-/*     */     
-/* 480 */     addElement("UnknownChunk", "UnknownChunks", 0);
-/*     */ 
-/*     */     
-/* 483 */     addAttribute("UnknownChunk", "type", 0, true, null);
-/*     */ 
-/*     */     
-/* 486 */     addObjectValue("UnknownChunk", byte.class, 0, 2147483647);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean canNodeAppear(String paramString, ImageTypeSpecifier paramImageTypeSpecifier) {
-/* 491 */     return true;
-/*     */   }
-/*     */   
-/*     */   public static synchronized IIOMetadataFormat getInstance() {
-/* 495 */     if (instance == null) {
-/* 496 */       instance = new PNGMetadataFormat();
-/*     */     }
-/* 498 */     return instance;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\png\PNGMetadataFormat.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.png;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ListResourceBundle;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+
+public class PNGMetadataFormat extends IIOMetadataFormatImpl {
+
+    private static IIOMetadataFormat instance = null;
+
+    private static String VALUE_0 = "0";
+    private static String VALUE_1 = "1";
+    private static String VALUE_12 = "12";
+    private static String VALUE_23 = "23";
+    private static String VALUE_31 = "31";
+    private static String VALUE_59 = "59";
+    private static String VALUE_60 = "60";
+    private static String VALUE_255 = "255";
+    private static String VALUE_MAX_16 = "65535"; // 2^16 - 1
+    private static String VALUE_MAX_32 = "2147483647"; // 2^32 - 1
+
+    private PNGMetadataFormat() {
+        super(PNGMetadata.nativeMetadataFormatName,
+              CHILD_POLICY_SOME);
+
+        // root -> IHDR
+        addElement("IHDR", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("IHDR", "width",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_1, VALUE_MAX_32, true, true);
+
+        addAttribute("IHDR", "height",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_1, VALUE_MAX_32, true, true);
+
+        addAttribute("IHDR", "bitDepth",
+                     DATATYPE_INTEGER, true, null,
+                     Arrays.asList(PNGMetadata.IHDR_bitDepths));
+
+        String[] colorTypes = {
+            "Grayscale", "RGB", "Palette", "GrayAlpha", "RGBAlpha"
+        };
+        addAttribute("IHDR", "colorType",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(colorTypes));
+
+        addAttribute("IHDR", "compressionMethod",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.IHDR_compressionMethodNames));
+
+        addAttribute("IHDR", "filterMethod",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.IHDR_filterMethodNames));
+
+        addAttribute("IHDR", "interlaceMethod",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.IHDR_interlaceMethodNames));
+
+        // root -> PLTE
+        addElement("PLTE", PNGMetadata.nativeMetadataFormatName,
+                   1, 256);
+
+        // root -> PLTE -> PLTEEntry
+        addElement("PLTEEntry", "PLTE",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("PLTEEntry", "index",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("PLTEEntry", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("PLTEEntry", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("PLTEEntry", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> bKGD
+        addElement("bKGD", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_CHOICE);
+
+        // root -> bKGD -> bKGD_Grayscale
+        addElement("bKGD_Grayscale", "bKGD",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("bKGD_Grayscale", "gray",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        // root -> bKGD -> bKGD_RGB
+        addElement("bKGD_RGB", "bKGD",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("bKGD_RGB", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("bKGD_RGB", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("bKGD_RGB", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        // root -> bKGD -> bKGD_Palette
+        addElement("bKGD_Palette", "bKGD",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("bKGD_Palette", "index",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> cHRM
+        addElement("cHRM", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("cHRM", "whitePointX",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "whitePointY",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "redX",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "redY",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "greenX",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "greenY",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "blueX",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("cHRM", "blueY",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        // root -> gAMA
+        addElement("gAMA", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("gAMA", "value",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_32, true, true);
+
+        // root -> hIST
+        addElement("hIST", PNGMetadata.nativeMetadataFormatName,
+                   1, 256);
+
+        // root -> hISTEntry
+        addElement("hISTEntry", "hIST",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("hISTEntry", "index",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("hISTEntry", "value",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        // root -> iCCP
+        addElement("iCCP", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("iCCP", "profileName",
+                     DATATYPE_STRING, true, null);
+
+        addAttribute("iCCP", "compressionMethod",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.iCCP_compressionMethodNames));
+
+        addObjectValue("iCCP", byte.class, 0, Integer.MAX_VALUE);
+
+        // root -> iTXt
+        addElement("iTXt", PNGMetadata.nativeMetadataFormatName,
+                   1, Integer.MAX_VALUE);
+
+        // root -> iTXt -> iTXtEntry
+        addElement("iTXtEntry", "iTXt",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("iTXtEntry", "keyword",
+                     DATATYPE_STRING, true, null);
+
+        addBooleanAttribute("iTXtEntry", "compressionFlag",
+                            false, false);
+
+        addAttribute("iTXtEntry", "compressionMethod",
+                     DATATYPE_STRING, true, null);
+
+        addAttribute("iTXtEntry", "languageTag",
+                     DATATYPE_STRING, true, null);
+
+        addAttribute("iTXtEntry", "translatedKeyword",
+                     DATATYPE_STRING, true, null);
+
+        addAttribute("iTXtEntry", "text",
+                     DATATYPE_STRING, true, null);
+
+        // root -> pHYS
+        addElement("pHYS", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("pHYS", "pixelsPerUnitXAxis",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_32, true, true);
+        addAttribute("pHYS", "pixelsPerUnitYAxis",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_32, true, true);
+        addAttribute("pHYS", "unitSpecifier",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.unitSpecifierNames));
+
+        // root -> sBIT
+        addElement("sBIT", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_CHOICE);
+
+        // root -> sBIT -> sBIT_Grayscale
+        addElement("sBIT_Grayscale", "sBIT",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sBIT_Grayscale", "gray",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> sBIT -> sBIT_GrayAlpha
+        addElement("sBIT_GrayAlpha", "sBIT",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sBIT_GrayAlpha", "gray",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_GrayAlpha", "alpha",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> sBIT -> sBIT_RGB
+        addElement("sBIT_RGB", "sBIT",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sBIT_RGB", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_RGB", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_RGB", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> sBIT -> sBIT_RGBAlpha
+        addElement("sBIT_RGBAlpha", "sBIT",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sBIT_RGBAlpha", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_RGBAlpha", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_RGBAlpha", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_RGBAlpha", "alpha",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> sBIT -> sBIT_Palette
+        addElement("sBIT_Palette", "sBIT",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sBIT_Palette", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_Palette", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sBIT_Palette", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> sPLT
+        addElement("sPLT", PNGMetadata.nativeMetadataFormatName,
+                   1, 256);
+
+        // root -> sPLT -> sPLTEntry
+        addElement("sPLTEntry", "sPLT",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sPLTEntry", "index",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sPLTEntry", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sPLTEntry", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sPLTEntry", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("sPLTEntry", "alpha",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> sRGB
+        addElement("sRGB", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("sRGB", "renderingIntent",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.renderingIntentNames));
+
+        // root -> tEXt
+        addElement("tEXt", PNGMetadata.nativeMetadataFormatName,
+                   1, Integer.MAX_VALUE);
+
+        // root -> tEXt -> tEXtEntry
+        addElement("tEXtEntry", "tEXt",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("tEXtEntry", "keyword",
+                     DATATYPE_STRING, true, null);
+
+        addAttribute("tEXtEntry", "value",
+                     DATATYPE_STRING, true, null);
+
+        // root -> tIME
+        addElement("tIME", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("tIME", "year",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("tIME", "month",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_1, VALUE_12, true, true);
+
+        addAttribute("tIME", "day",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_1, VALUE_31, true, true);
+
+        addAttribute("tIME", "hour",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_23, true, true);
+
+        addAttribute("tIME", "minute",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_59, true, true);
+
+        addAttribute("tIME", "second",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_60, true, true);
+
+        // root -> tRNS
+        addElement("tRNS", PNGMetadata.nativeMetadataFormatName,
+                   CHILD_POLICY_CHOICE);
+
+        // root -> tRNS -> tRNS_Grayscale
+        addElement("tRNS_Grayscale", "tRNS",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("tRNS_Grayscale", "gray",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        // root -> tRNS -> tRNS_RGB
+        addElement("tRNS_RGB", "tRNS",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("tRNS_RGB", "red",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("tRNS_RGB", "green",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        addAttribute("tRNS_RGB", "blue",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_MAX_16, true, true);
+
+        // root -> tRNS -> tRNS_Palette
+        addElement("tRNS_Palette", "tRNS",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("tRNS_Palette", "index",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        addAttribute("tRNS_Palette", "alpha",
+                     DATATYPE_INTEGER, true, null,
+                     VALUE_0, VALUE_255, true, true);
+
+        // root -> zTXt
+        addElement("zTXt", PNGMetadata.nativeMetadataFormatName,
+                   1, Integer.MAX_VALUE);
+
+        // root -> zTXt -> zTXtEntry
+        addElement("zTXtEntry", "zTXt",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("zTXtEntry", "keyword",
+                     DATATYPE_STRING, true, null);
+
+        addAttribute("zTXtEntry", "compressionMethod",
+                     DATATYPE_STRING, true, null,
+                     Arrays.asList(PNGMetadata.zTXt_compressionMethodNames));
+
+        addAttribute("zTXtEntry", "text",
+                     DATATYPE_STRING, true, null);
+
+        // root -> UnknownChunks
+        addElement("UnknownChunks", PNGMetadata.nativeMetadataFormatName,
+                   1, Integer.MAX_VALUE);
+
+        // root -> UnknownChunks -> UnknownChunk
+        addElement("UnknownChunk", "UnknownChunks",
+                   CHILD_POLICY_EMPTY);
+
+        addAttribute("UnknownChunk", "type",
+                     DATATYPE_STRING, true, null);
+
+        addObjectValue("UnknownChunk", byte.class, 0, Integer.MAX_VALUE);
+    }
+
+    public boolean canNodeAppear(String elementName,
+                                 ImageTypeSpecifier imageType) {
+        return true;
+    }
+
+    public static synchronized IIOMetadataFormat getInstance() {
+        if (instance == null) {
+            instance = new PNGMetadataFormat();
+        }
+        return instance;
+    }
+}

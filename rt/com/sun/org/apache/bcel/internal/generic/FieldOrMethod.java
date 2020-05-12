@@ -1,126 +1,120 @@
-/*     */ package com.sun.org.apache.bcel.internal.generic;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantCP;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantNameAndType;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantPool;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantUtf8;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class FieldOrMethod
-/*     */   extends CPInstruction
-/*     */   implements LoadClass
-/*     */ {
-/*     */   FieldOrMethod() {}
-/*     */   
-/*     */   protected FieldOrMethod(short opcode, int index) {
-/*  79 */     super(opcode, index);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSignature(ConstantPoolGen cpg) {
-/*  85 */     ConstantPool cp = cpg.getConstantPool();
-/*  86 */     ConstantCP cmr = (ConstantCP)cp.getConstant(this.index);
-/*  87 */     ConstantNameAndType cnat = (ConstantNameAndType)cp.getConstant(cmr.getNameAndTypeIndex());
-/*     */     
-/*  89 */     return ((ConstantUtf8)cp.getConstant(cnat.getSignatureIndex())).getBytes();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName(ConstantPoolGen cpg) {
-/*  95 */     ConstantPool cp = cpg.getConstantPool();
-/*  96 */     ConstantCP cmr = (ConstantCP)cp.getConstant(this.index);
-/*  97 */     ConstantNameAndType cnat = (ConstantNameAndType)cp.getConstant(cmr.getNameAndTypeIndex());
-/*  98 */     return ((ConstantUtf8)cp.getConstant(cnat.getNameIndex())).getBytes();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getClassName(ConstantPoolGen cpg) {
-/* 104 */     ConstantPool cp = cpg.getConstantPool();
-/* 105 */     ConstantCP cmr = (ConstantCP)cp.getConstant(this.index);
-/* 106 */     return cp.getConstantString(cmr.getClassIndex(), (byte)7).replace('/', '.');
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectType getClassType(ConstantPoolGen cpg) {
-/* 112 */     return new ObjectType(getClassName(cpg));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectType getLoadClassType(ConstantPoolGen cpg) {
-/* 118 */     return getClassType(cpg);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\internal\generic\FieldOrMethod.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.generic;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+import com.sun.org.apache.bcel.internal.classfile.*;
+
+/**
+ * Super class for InvokeInstruction and FieldInstruction, since they have
+ * some methods in common!
+ *
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ */
+public abstract class FieldOrMethod extends CPInstruction implements LoadClass {
+  /**
+   * Empty constructor needed for the Class.newInstance() statement in
+   * Instruction.readInstruction(). Not to be used otherwise.
+   */
+  FieldOrMethod() {}
+
+  /**
+   * @param index to constant pool
+   */
+  protected FieldOrMethod(short opcode, int index) {
+    super(opcode, index);
+  }
+
+  /** @return signature of referenced method/field.
+   */
+  public String getSignature(ConstantPoolGen cpg) {
+    ConstantPool        cp   = cpg.getConstantPool();
+    ConstantCP          cmr  = (ConstantCP)cp.getConstant(index);
+    ConstantNameAndType cnat = (ConstantNameAndType)cp.getConstant(cmr.getNameAndTypeIndex());
+
+    return ((ConstantUtf8)cp.getConstant(cnat.getSignatureIndex())).getBytes();
+  }
+
+  /** @return name of referenced method/field.
+   */
+  public String getName(ConstantPoolGen cpg) {
+    ConstantPool        cp   = cpg.getConstantPool();
+    ConstantCP          cmr  = (ConstantCP)cp.getConstant(index);
+    ConstantNameAndType cnat = (ConstantNameAndType)cp.getConstant(cmr.getNameAndTypeIndex());
+    return ((ConstantUtf8)cp.getConstant(cnat.getNameIndex())).getBytes();
+  }
+
+  /** @return name of the referenced class/interface
+   */
+  public String getClassName(ConstantPoolGen cpg) {
+    ConstantPool cp  = cpg.getConstantPool();
+    ConstantCP   cmr = (ConstantCP)cp.getConstant(index);
+    return cp.getConstantString(cmr.getClassIndex(), com.sun.org.apache.bcel.internal.Constants.CONSTANT_Class).replace('/', '.');
+  }
+
+  /** @return type of the referenced class/interface
+   */
+  public ObjectType getClassType(ConstantPoolGen cpg) {
+    return new ObjectType(getClassName(cpg));
+  }
+
+  /** @return type of the referenced class/interface
+   */
+  public ObjectType getLoadClassType(ConstantPoolGen cpg) {
+    return getClassType(cpg);
+  }
+}

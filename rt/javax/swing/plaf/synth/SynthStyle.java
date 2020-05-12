@@ -1,1059 +1,1053 @@
-/*      */ package javax.swing.plaf.synth;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Insets;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import javax.swing.Icon;
-/*      */ import javax.swing.JComponent;
-/*      */ import javax.swing.LookAndFeel;
-/*      */ import javax.swing.UIDefaults;
-/*      */ import javax.swing.border.Border;
-/*      */ import javax.swing.plaf.basic.BasicLookAndFeel;
-/*      */ import javax.swing.text.JTextComponent;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class SynthStyle
-/*      */ {
-/*      */   private static Map<Object, Object> DEFAULT_VALUES;
-/*   61 */   private static final SynthGraphicsUtils SYNTH_GRAPHICS = new SynthGraphicsUtils();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void populateDefaultValues() {
-/*   68 */     UIDefaults.LazyInputMap lazyInputMap1 = new UIDefaults.LazyInputMap(new Object[] { "SPACE", "pressed", "released SPACE", "released" });
-/*      */ 
-/*      */ 
-/*      */     
-/*   72 */     DEFAULT_VALUES.put("Button.focusInputMap", lazyInputMap1);
-/*   73 */     DEFAULT_VALUES.put("CheckBox.focusInputMap", lazyInputMap1);
-/*   74 */     DEFAULT_VALUES.put("RadioButton.focusInputMap", lazyInputMap1);
-/*   75 */     DEFAULT_VALUES.put("ToggleButton.focusInputMap", lazyInputMap1);
-/*   76 */     DEFAULT_VALUES.put("SynthArrowButton.focusInputMap", lazyInputMap1);
-/*   77 */     DEFAULT_VALUES.put("List.dropLineColor", Color.BLACK);
-/*   78 */     DEFAULT_VALUES.put("Tree.dropLineColor", Color.BLACK);
-/*   79 */     DEFAULT_VALUES.put("Table.dropLineColor", Color.BLACK);
-/*   80 */     DEFAULT_VALUES.put("Table.dropLineShortColor", Color.RED);
-/*      */     
-/*   82 */     UIDefaults.LazyInputMap lazyInputMap2 = new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-previous-word", "ctrl KP_LEFT", "caret-previous-word", "ctrl RIGHT", "caret-next-word", "ctrl KP_RIGHT", "caret-next-word", "ctrl shift LEFT", "selection-previous-word", "ctrl shift KP_LEFT", "selection-previous-word", "ctrl shift RIGHT", "selection-next-word", "ctrl shift KP_RIGHT", "selection-next-word", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "UP", "caret-up", "KP_UP", "caret-up", "DOWN", "caret-down", "KP_DOWN", "caret-down", "PAGE_UP", "page-up", "PAGE_DOWN", "page-down", "shift PAGE_UP", "selection-page-up", "shift PAGE_DOWN", "selection-page-down", "ctrl shift PAGE_UP", "selection-page-left", "ctrl shift PAGE_DOWN", "selection-page-right", "shift UP", "selection-up", "shift KP_UP", "selection-up", "shift DOWN", "selection-down", "shift KP_DOWN", "selection-down", "ENTER", "insert-break", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "ctrl DELETE", "delete-next-word", "ctrl BACK_SPACE", "delete-previous-word", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "TAB", "insert-tab", "ctrl BACK_SLASH", "unselect", "ctrl HOME", "caret-begin", "ctrl END", "caret-end", "ctrl shift HOME", "selection-begin", "ctrl shift END", "selection-end", "ctrl T", "next-link-action", "ctrl shift T", "previous-link-action", "ctrl SPACE", "activate-link-action", "control shift O", "toggle-componentOrientation" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  146 */     DEFAULT_VALUES.put("EditorPane.focusInputMap", lazyInputMap2);
-/*  147 */     DEFAULT_VALUES.put("TextArea.focusInputMap", lazyInputMap2);
-/*  148 */     DEFAULT_VALUES.put("TextPane.focusInputMap", lazyInputMap2);
-/*      */     
-/*  150 */     UIDefaults.LazyInputMap lazyInputMap3 = new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-previous-word", "ctrl KP_LEFT", "caret-previous-word", "ctrl RIGHT", "caret-next-word", "ctrl KP_RIGHT", "caret-next-word", "ctrl shift LEFT", "selection-previous-word", "ctrl shift KP_LEFT", "selection-previous-word", "ctrl shift RIGHT", "selection-next-word", "ctrl shift KP_RIGHT", "selection-next-word", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "ctrl DELETE", "delete-next-word", "ctrl BACK_SPACE", "delete-previous-word", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "ENTER", "notify-field-accept", "ctrl BACK_SLASH", "unselect", "control shift O", "toggle-componentOrientation" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  191 */     DEFAULT_VALUES.put("TextField.focusInputMap", lazyInputMap3);
-/*  192 */     DEFAULT_VALUES.put("PasswordField.focusInputMap", lazyInputMap3);
-/*      */ 
-/*      */     
-/*  195 */     DEFAULT_VALUES.put("ComboBox.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ESCAPE", "hidePopup", "PAGE_UP", "pageUpPassThrough", "PAGE_DOWN", "pageDownPassThrough", "HOME", "homePassThrough", "END", "endPassThrough", "DOWN", "selectNext", "KP_DOWN", "selectNext", "alt DOWN", "togglePopup", "alt KP_DOWN", "togglePopup", "alt UP", "togglePopup", "alt KP_UP", "togglePopup", "SPACE", "spacePopup", "ENTER", "enterPressed", "UP", "selectPrevious", "KP_UP", "selectPrevious" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  214 */     DEFAULT_VALUES.put("Desktop.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl F5", "restore", "ctrl F4", "close", "ctrl F7", "move", "ctrl F8", "resize", "RIGHT", "right", "KP_RIGHT", "right", "shift RIGHT", "shrinkRight", "shift KP_RIGHT", "shrinkRight", "LEFT", "left", "KP_LEFT", "left", "shift LEFT", "shrinkLeft", "shift KP_LEFT", "shrinkLeft", "UP", "up", "KP_UP", "up", "shift UP", "shrinkUp", "shift KP_UP", "shrinkUp", "DOWN", "down", "KP_DOWN", "down", "shift DOWN", "shrinkDown", "shift KP_DOWN", "shrinkDown", "ESCAPE", "escape", "ctrl F9", "minimize", "ctrl F10", "maximize", "ctrl F6", "selectNextFrame", "ctrl TAB", "selectNextFrame", "ctrl alt F6", "selectNextFrame", "shift ctrl alt F6", "selectPreviousFrame", "ctrl F12", "navigateNext", "shift ctrl F12", "navigatePrevious" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  247 */     DEFAULT_VALUES.put("FileChooser.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ESCAPE", "cancelSelection", "F2", "editFileName", "F5", "refresh", "BACK_SPACE", "Go Up", "ENTER", "approveSelection", "ctrl ENTER", "approveSelection" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  257 */     DEFAULT_VALUES.put("FormattedTextField.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-previous-word", "ctrl KP_LEFT", "caret-previous-word", "ctrl RIGHT", "caret-next-word", "ctrl KP_RIGHT", "caret-next-word", "ctrl shift LEFT", "selection-previous-word", "ctrl shift KP_LEFT", "selection-previous-word", "ctrl shift RIGHT", "selection-next-word", "ctrl shift KP_RIGHT", "selection-next-word", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "ctrl DELETE", "delete-next-word", "ctrl BACK_SPACE", "delete-previous-word", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "ENTER", "notify-field-accept", "ctrl BACK_SLASH", "unselect", "control shift O", "toggle-componentOrientation", "ESCAPE", "reset-field-edit", "UP", "increment", "KP_UP", "increment", "DOWN", "decrement", "KP_DOWN", "decrement" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  305 */     DEFAULT_VALUES.put("InternalFrame.icon", 
-/*  306 */         LookAndFeel.makeIcon(BasicLookAndFeel.class, "icons/JavaCup16.png"));
-/*      */ 
-/*      */     
-/*  309 */     DEFAULT_VALUES.put("InternalFrame.windowBindings", new Object[] { "shift ESCAPE", "showSystemMenu", "ctrl SPACE", "showSystemMenu", "ESCAPE", "hideSystemMenu" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  315 */     DEFAULT_VALUES.put("List.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy", "ctrl V", "paste", "ctrl X", "cut", "COPY", "copy", "PASTE", "paste", "CUT", "cut", "control INSERT", "copy", "shift INSERT", "paste", "shift DELETE", "cut", "UP", "selectPreviousRow", "KP_UP", "selectPreviousRow", "shift UP", "selectPreviousRowExtendSelection", "shift KP_UP", "selectPreviousRowExtendSelection", "ctrl shift UP", "selectPreviousRowExtendSelection", "ctrl shift KP_UP", "selectPreviousRowExtendSelection", "ctrl UP", "selectPreviousRowChangeLead", "ctrl KP_UP", "selectPreviousRowChangeLead", "DOWN", "selectNextRow", "KP_DOWN", "selectNextRow", "shift DOWN", "selectNextRowExtendSelection", "shift KP_DOWN", "selectNextRowExtendSelection", "ctrl shift DOWN", "selectNextRowExtendSelection", "ctrl shift KP_DOWN", "selectNextRowExtendSelection", "ctrl DOWN", "selectNextRowChangeLead", "ctrl KP_DOWN", "selectNextRowChangeLead", "LEFT", "selectPreviousColumn", "KP_LEFT", "selectPreviousColumn", "shift LEFT", "selectPreviousColumnExtendSelection", "shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl shift LEFT", "selectPreviousColumnExtendSelection", "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl LEFT", "selectPreviousColumnChangeLead", "ctrl KP_LEFT", "selectPreviousColumnChangeLead", "RIGHT", "selectNextColumn", "KP_RIGHT", "selectNextColumn", "shift RIGHT", "selectNextColumnExtendSelection", "shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl shift RIGHT", "selectNextColumnExtendSelection", "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl RIGHT", "selectNextColumnChangeLead", "ctrl KP_RIGHT", "selectNextColumnChangeLead", "HOME", "selectFirstRow", "shift HOME", "selectFirstRowExtendSelection", "ctrl shift HOME", "selectFirstRowExtendSelection", "ctrl HOME", "selectFirstRowChangeLead", "END", "selectLastRow", "shift END", "selectLastRowExtendSelection", "ctrl shift END", "selectLastRowExtendSelection", "ctrl END", "selectLastRowChangeLead", "PAGE_UP", "scrollUp", "shift PAGE_UP", "scrollUpExtendSelection", "ctrl shift PAGE_UP", "scrollUpExtendSelection", "ctrl PAGE_UP", "scrollUpChangeLead", "PAGE_DOWN", "scrollDown", "shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl PAGE_DOWN", "scrollDownChangeLead", "ctrl A", "selectAll", "ctrl SLASH", "selectAll", "ctrl BACK_SLASH", "clearSelection", "SPACE", "addToSelection", "ctrl SPACE", "toggleAndAnchor", "shift SPACE", "extendTo", "ctrl shift SPACE", "moveSelectionTo" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  383 */     DEFAULT_VALUES.put("List.focusInputMap.RightToLeft", new UIDefaults.LazyInputMap(new Object[] { "LEFT", "selectNextColumn", "KP_LEFT", "selectNextColumn", "shift LEFT", "selectNextColumnExtendSelection", "shift KP_LEFT", "selectNextColumnExtendSelection", "ctrl shift LEFT", "selectNextColumnExtendSelection", "ctrl shift KP_LEFT", "selectNextColumnExtendSelection", "ctrl LEFT", "selectNextColumnChangeLead", "ctrl KP_LEFT", "selectNextColumnChangeLead", "RIGHT", "selectPreviousColumn", "KP_RIGHT", "selectPreviousColumn", "shift RIGHT", "selectPreviousColumnExtendSelection", "shift KP_RIGHT", "selectPreviousColumnExtendSelection", "ctrl shift RIGHT", "selectPreviousColumnExtendSelection", "ctrl shift KP_RIGHT", "selectPreviousColumnExtendSelection", "ctrl RIGHT", "selectPreviousColumnChangeLead", "ctrl KP_RIGHT", "selectPreviousColumnChangeLead" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  403 */     DEFAULT_VALUES.put("MenuBar.windowBindings", new Object[] { "F10", "takeFocus" });
-/*      */ 
-/*      */     
-/*  406 */     DEFAULT_VALUES.put("OptionPane.windowBindings", new Object[] { "ESCAPE", "close" });
-/*      */ 
-/*      */     
-/*  409 */     DEFAULT_VALUES.put("RootPane.defaultButtonWindowKeyBindings", new Object[] { "ENTER", "press", "released ENTER", "release", "ctrl ENTER", "press", "ctrl released ENTER", "release" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  417 */     DEFAULT_VALUES.put("RootPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "shift F10", "postPopup" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  422 */     DEFAULT_VALUES.put("ScrollBar.anecstorInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "positiveUnitIncrement", "KP_RIGHT", "positiveUnitIncrement", "DOWN", "positiveUnitIncrement", "KP_DOWN", "positiveUnitIncrement", "PAGE_DOWN", "positiveBlockIncrement", "LEFT", "negativeUnitIncrement", "KP_LEFT", "negativeUnitIncrement", "UP", "negativeUnitIncrement", "KP_UP", "negativeUnitIncrement", "PAGE_UP", "negativeBlockIncrement", "HOME", "minScroll", "END", "maxScroll" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  438 */     DEFAULT_VALUES.put("ScrollBar.ancestorInputMap.RightToLeft", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "negativeUnitIncrement", "KP_RIGHT", "negativeUnitIncrement", "LEFT", "positiveUnitIncrement", "KP_LEFT", "positiveUnitIncrement" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  446 */     DEFAULT_VALUES.put("ScrollPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "unitScrollRight", "KP_RIGHT", "unitScrollRight", "DOWN", "unitScrollDown", "KP_DOWN", "unitScrollDown", "LEFT", "unitScrollLeft", "KP_LEFT", "unitScrollLeft", "UP", "unitScrollUp", "KP_UP", "unitScrollUp", "PAGE_UP", "scrollUp", "PAGE_DOWN", "scrollDown", "ctrl PAGE_UP", "scrollLeft", "ctrl PAGE_DOWN", "scrollRight", "ctrl HOME", "scrollHome", "ctrl END", "scrollEnd" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  463 */     DEFAULT_VALUES.put("ScrollPane.ancestorInputMap.RightToLeft", new UIDefaults.LazyInputMap(new Object[] { "ctrl PAGE_UP", "scrollRight", "ctrl PAGE_DOWN", "scrollLeft" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  469 */     DEFAULT_VALUES.put("SplitPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "UP", "negativeIncrement", "DOWN", "positiveIncrement", "LEFT", "negativeIncrement", "RIGHT", "positiveIncrement", "KP_UP", "negativeIncrement", "KP_DOWN", "positiveIncrement", "KP_LEFT", "negativeIncrement", "KP_RIGHT", "positiveIncrement", "HOME", "selectMin", "END", "selectMax", "F8", "startResize", "F6", "toggleFocus", "ctrl TAB", "focusOutForward", "ctrl shift TAB", "focusOutBackward" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  487 */     DEFAULT_VALUES.put("Spinner.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "UP", "increment", "KP_UP", "increment", "DOWN", "decrement", "KP_DOWN", "decrement" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  495 */     DEFAULT_VALUES.put("Slider.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "positiveUnitIncrement", "KP_RIGHT", "positiveUnitIncrement", "DOWN", "negativeUnitIncrement", "KP_DOWN", "negativeUnitIncrement", "PAGE_DOWN", "negativeBlockIncrement", "ctrl PAGE_DOWN", "negativeBlockIncrement", "LEFT", "negativeUnitIncrement", "KP_LEFT", "negativeUnitIncrement", "UP", "positiveUnitIncrement", "KP_UP", "positiveUnitIncrement", "PAGE_UP", "positiveBlockIncrement", "ctrl PAGE_UP", "positiveBlockIncrement", "HOME", "minScroll", "END", "maxScroll" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  513 */     DEFAULT_VALUES.put("Slider.focusInputMap.RightToLeft", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "negativeUnitIncrement", "KP_RIGHT", "negativeUnitIncrement", "LEFT", "positiveUnitIncrement", "KP_LEFT", "positiveUnitIncrement" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  521 */     DEFAULT_VALUES.put("TabbedPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl PAGE_DOWN", "navigatePageDown", "ctrl PAGE_UP", "navigatePageUp", "ctrl UP", "requestFocus", "ctrl KP_UP", "requestFocus" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  529 */     DEFAULT_VALUES.put("TabbedPane.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "navigateRight", "KP_RIGHT", "navigateRight", "LEFT", "navigateLeft", "KP_LEFT", "navigateLeft", "UP", "navigateUp", "KP_UP", "navigateUp", "DOWN", "navigateDown", "KP_DOWN", "navigateDown", "ctrl DOWN", "requestFocusForVisibleComponent", "ctrl KP_DOWN", "requestFocusForVisibleComponent" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  543 */     DEFAULT_VALUES.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy", "ctrl V", "paste", "ctrl X", "cut", "COPY", "copy", "PASTE", "paste", "CUT", "cut", "control INSERT", "copy", "shift INSERT", "paste", "shift DELETE", "cut", "RIGHT", "selectNextColumn", "KP_RIGHT", "selectNextColumn", "shift RIGHT", "selectNextColumnExtendSelection", "shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl shift RIGHT", "selectNextColumnExtendSelection", "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl RIGHT", "selectNextColumnChangeLead", "ctrl KP_RIGHT", "selectNextColumnChangeLead", "LEFT", "selectPreviousColumn", "KP_LEFT", "selectPreviousColumn", "shift LEFT", "selectPreviousColumnExtendSelection", "shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl shift LEFT", "selectPreviousColumnExtendSelection", "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl LEFT", "selectPreviousColumnChangeLead", "ctrl KP_LEFT", "selectPreviousColumnChangeLead", "DOWN", "selectNextRow", "KP_DOWN", "selectNextRow", "shift DOWN", "selectNextRowExtendSelection", "shift KP_DOWN", "selectNextRowExtendSelection", "ctrl shift DOWN", "selectNextRowExtendSelection", "ctrl shift KP_DOWN", "selectNextRowExtendSelection", "ctrl DOWN", "selectNextRowChangeLead", "ctrl KP_DOWN", "selectNextRowChangeLead", "UP", "selectPreviousRow", "KP_UP", "selectPreviousRow", "shift UP", "selectPreviousRowExtendSelection", "shift KP_UP", "selectPreviousRowExtendSelection", "ctrl shift UP", "selectPreviousRowExtendSelection", "ctrl shift KP_UP", "selectPreviousRowExtendSelection", "ctrl UP", "selectPreviousRowChangeLead", "ctrl KP_UP", "selectPreviousRowChangeLead", "HOME", "selectFirstColumn", "shift HOME", "selectFirstColumnExtendSelection", "ctrl shift HOME", "selectFirstRowExtendSelection", "ctrl HOME", "selectFirstRow", "END", "selectLastColumn", "shift END", "selectLastColumnExtendSelection", "ctrl shift END", "selectLastRowExtendSelection", "ctrl END", "selectLastRow", "PAGE_UP", "scrollUpChangeSelection", "shift PAGE_UP", "scrollUpExtendSelection", "ctrl shift PAGE_UP", "scrollLeftExtendSelection", "ctrl PAGE_UP", "scrollLeftChangeSelection", "PAGE_DOWN", "scrollDownChangeSelection", "shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl shift PAGE_DOWN", "scrollRightExtendSelection", "ctrl PAGE_DOWN", "scrollRightChangeSelection", "TAB", "selectNextColumnCell", "shift TAB", "selectPreviousColumnCell", "ENTER", "selectNextRowCell", "shift ENTER", "selectPreviousRowCell", "ctrl A", "selectAll", "ctrl SLASH", "selectAll", "ctrl BACK_SLASH", "clearSelection", "ESCAPE", "cancel", "F2", "startEditing", "SPACE", "addToSelection", "ctrl SPACE", "toggleAndAnchor", "shift SPACE", "extendTo", "ctrl shift SPACE", "moveSelectionTo", "F8", "focusHeader" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  618 */     DEFAULT_VALUES.put("TableHeader.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "SPACE", "toggleSortOrder", "LEFT", "selectColumnToLeft", "KP_LEFT", "selectColumnToLeft", "RIGHT", "selectColumnToRight", "KP_RIGHT", "selectColumnToRight", "alt LEFT", "moveColumnLeft", "alt KP_LEFT", "moveColumnLeft", "alt RIGHT", "moveColumnRight", "alt KP_RIGHT", "moveColumnRight", "alt shift LEFT", "resizeLeft", "alt shift KP_LEFT", "resizeLeft", "alt shift RIGHT", "resizeRight", "alt shift KP_RIGHT", "resizeRight", "ESCAPE", "focusTable" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  636 */     DEFAULT_VALUES.put("Tree.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ESCAPE", "cancel" }));
-/*      */ 
-/*      */ 
-/*      */     
-/*  640 */     DEFAULT_VALUES.put("Tree.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "ADD", "expand", "SUBTRACT", "collapse", "ctrl C", "copy", "ctrl V", "paste", "ctrl X", "cut", "COPY", "copy", "PASTE", "paste", "CUT", "cut", "control INSERT", "copy", "shift INSERT", "paste", "shift DELETE", "cut", "UP", "selectPrevious", "KP_UP", "selectPrevious", "shift UP", "selectPreviousExtendSelection", "shift KP_UP", "selectPreviousExtendSelection", "ctrl shift UP", "selectPreviousExtendSelection", "ctrl shift KP_UP", "selectPreviousExtendSelection", "ctrl UP", "selectPreviousChangeLead", "ctrl KP_UP", "selectPreviousChangeLead", "DOWN", "selectNext", "KP_DOWN", "selectNext", "shift DOWN", "selectNextExtendSelection", "shift KP_DOWN", "selectNextExtendSelection", "ctrl shift DOWN", "selectNextExtendSelection", "ctrl shift KP_DOWN", "selectNextExtendSelection", "ctrl DOWN", "selectNextChangeLead", "ctrl KP_DOWN", "selectNextChangeLead", "RIGHT", "selectChild", "KP_RIGHT", "selectChild", "LEFT", "selectParent", "KP_LEFT", "selectParent", "PAGE_UP", "scrollUpChangeSelection", "shift PAGE_UP", "scrollUpExtendSelection", "ctrl shift PAGE_UP", "scrollUpExtendSelection", "ctrl PAGE_UP", "scrollUpChangeLead", "PAGE_DOWN", "scrollDownChangeSelection", "shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl PAGE_DOWN", "scrollDownChangeLead", "HOME", "selectFirst", "shift HOME", "selectFirstExtendSelection", "ctrl shift HOME", "selectFirstExtendSelection", "ctrl HOME", "selectFirstChangeLead", "END", "selectLast", "shift END", "selectLastExtendSelection", "ctrl shift END", "selectLastExtendSelection", "ctrl END", "selectLastChangeLead", "F2", "startEditing", "ctrl A", "selectAll", "ctrl SLASH", "selectAll", "ctrl BACK_SLASH", "clearSelection", "ctrl LEFT", "scrollLeft", "ctrl KP_LEFT", "scrollLeft", "ctrl RIGHT", "scrollRight", "ctrl KP_RIGHT", "scrollRight", "SPACE", "addToSelection", "ctrl SPACE", "toggleAndAnchor", "shift SPACE", "extendTo", "ctrl shift SPACE", "moveSelectionTo" }));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  702 */     DEFAULT_VALUES.put("Tree.focusInputMap.RightToLeft", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "selectParent", "KP_RIGHT", "selectParent", "LEFT", "selectChild", "KP_LEFT", "selectChild" }));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Object getDefaultValue(Object paramObject) {
-/*  716 */     synchronized (SynthStyle.class) {
-/*  717 */       if (DEFAULT_VALUES == null) {
-/*  718 */         DEFAULT_VALUES = new HashMap<>();
-/*  719 */         populateDefaultValues();
-/*      */       } 
-/*  721 */       Object object = DEFAULT_VALUES.get(paramObject);
-/*  722 */       if (object instanceof UIDefaults.LazyValue) {
-/*  723 */         object = ((UIDefaults.LazyValue)object).createValue(null);
-/*  724 */         DEFAULT_VALUES.put(paramObject, object);
-/*      */       } 
-/*  726 */       return object;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SynthGraphicsUtils getGraphicsUtils(SynthContext paramSynthContext) {
-/*  743 */     return SYNTH_GRAPHICS;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getColor(SynthContext paramSynthContext, ColorType paramColorType) {
-/*  759 */     JComponent jComponent = paramSynthContext.getComponent();
-/*  760 */     Region region = paramSynthContext.getRegion();
-/*      */     
-/*  762 */     if ((paramSynthContext.getComponentState() & 0x8) != 0)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  770 */       if (jComponent instanceof JTextComponent) {
-/*  771 */         JTextComponent jTextComponent = (JTextComponent)jComponent;
-/*  772 */         Color color1 = jTextComponent.getDisabledTextColor();
-/*  773 */         if (color1 == null || color1 instanceof javax.swing.plaf.UIResource) {
-/*  774 */           return getColorForState(paramSynthContext, paramColorType);
-/*      */         }
-/*  776 */       } else if (jComponent instanceof javax.swing.JLabel && (paramColorType == ColorType.FOREGROUND || paramColorType == ColorType.TEXT_FOREGROUND)) {
-/*      */ 
-/*      */         
-/*  779 */         return getColorForState(paramSynthContext, paramColorType);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  785 */     Color color = null;
-/*  786 */     if (!region.isSubregion()) {
-/*  787 */       if (paramColorType == ColorType.BACKGROUND) {
-/*  788 */         color = jComponent.getBackground();
-/*      */       }
-/*  790 */       else if (paramColorType == ColorType.FOREGROUND) {
-/*  791 */         color = jComponent.getForeground();
-/*      */       }
-/*  793 */       else if (paramColorType == ColorType.TEXT_FOREGROUND) {
-/*  794 */         color = jComponent.getForeground();
-/*      */       } 
-/*      */     }
-/*      */     
-/*  798 */     if (color == null || color instanceof javax.swing.plaf.UIResource)
-/*      */     {
-/*  800 */       color = getColorForState(paramSynthContext, paramColorType);
-/*      */     }
-/*      */     
-/*  803 */     if (color == null) {
-/*      */       
-/*  805 */       if (paramColorType == ColorType.BACKGROUND || paramColorType == ColorType.TEXT_BACKGROUND)
-/*      */       {
-/*  807 */         return jComponent.getBackground();
-/*      */       }
-/*  809 */       if (paramColorType == ColorType.FOREGROUND || paramColorType == ColorType.TEXT_FOREGROUND)
-/*      */       {
-/*  811 */         return jComponent.getForeground();
-/*      */       }
-/*      */     } 
-/*  814 */     return color;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract Color getColorForState(SynthContext paramSynthContext, ColorType paramColorType);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Font getFont(SynthContext paramSynthContext) {
-/*  838 */     JComponent jComponent = paramSynthContext.getComponent();
-/*  839 */     if (paramSynthContext.getComponentState() == 1) {
-/*  840 */       return jComponent.getFont();
-/*      */     }
-/*  842 */     Font font = jComponent.getFont();
-/*  843 */     if (font != null && !(font instanceof javax.swing.plaf.UIResource)) {
-/*  844 */       return font;
-/*      */     }
-/*  846 */     return getFontForState(paramSynthContext);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract Font getFontForState(SynthContext paramSynthContext);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Insets getInsets(SynthContext paramSynthContext, Insets paramInsets) {
-/*  866 */     if (paramInsets == null) {
-/*  867 */       paramInsets = new Insets(0, 0, 0, 0);
-/*      */     }
-/*  869 */     paramInsets.top = paramInsets.bottom = paramInsets.left = paramInsets.right = 0;
-/*  870 */     return paramInsets;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SynthPainter getPainter(SynthContext paramSynthContext) {
-/*  881 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isOpaque(SynthContext paramSynthContext) {
-/*  891 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object get(SynthContext paramSynthContext, Object paramObject) {
-/*  902 */     return getDefaultValue(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void installDefaults(SynthContext paramSynthContext, SynthUI paramSynthUI) {
-/*  908 */     if (!paramSynthContext.isSubregion()) {
-/*  909 */       JComponent jComponent = paramSynthContext.getComponent();
-/*  910 */       Border border = jComponent.getBorder();
-/*      */       
-/*  912 */       if (border == null || border instanceof javax.swing.plaf.UIResource) {
-/*  913 */         jComponent.setBorder(new SynthBorder(paramSynthUI, getInsets(paramSynthContext, null)));
-/*      */       }
-/*      */     } 
-/*  916 */     installDefaults(paramSynthContext);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void installDefaults(SynthContext paramSynthContext) {
-/*  927 */     if (!paramSynthContext.isSubregion()) {
-/*  928 */       JComponent jComponent = paramSynthContext.getComponent();
-/*  929 */       Region region = paramSynthContext.getRegion();
-/*  930 */       Font font = jComponent.getFont();
-/*      */       
-/*  932 */       if (font == null || font instanceof javax.swing.plaf.UIResource) {
-/*  933 */         jComponent.setFont(getFontForState(paramSynthContext));
-/*      */       }
-/*  935 */       Color color1 = jComponent.getBackground();
-/*  936 */       if (color1 == null || color1 instanceof javax.swing.plaf.UIResource) {
-/*  937 */         jComponent.setBackground(getColorForState(paramSynthContext, ColorType.BACKGROUND));
-/*      */       }
-/*      */       
-/*  940 */       Color color2 = jComponent.getForeground();
-/*  941 */       if (color2 == null || color2 instanceof javax.swing.plaf.UIResource) {
-/*  942 */         jComponent.setForeground(getColorForState(paramSynthContext, ColorType.FOREGROUND));
-/*      */       }
-/*      */       
-/*  945 */       LookAndFeel.installProperty(jComponent, "opaque", Boolean.valueOf(isOpaque(paramSynthContext)));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void uninstallDefaults(SynthContext paramSynthContext) {
-/*  960 */     if (!paramSynthContext.isSubregion()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  967 */       JComponent jComponent = paramSynthContext.getComponent();
-/*  968 */       Border border = jComponent.getBorder();
-/*      */       
-/*  970 */       if (border instanceof javax.swing.plaf.UIResource) {
-/*  971 */         jComponent.setBorder((Border)null);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getInt(SynthContext paramSynthContext, Object paramObject, int paramInt) {
-/*  989 */     Object object = get(paramSynthContext, paramObject);
-/*      */     
-/*  991 */     if (object instanceof Number) {
-/*  992 */       return ((Number)object).intValue();
-/*      */     }
-/*  994 */     return paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getBoolean(SynthContext paramSynthContext, Object paramObject, boolean paramBoolean) {
-/* 1009 */     Object object = get(paramSynthContext, paramObject);
-/*      */     
-/* 1011 */     if (object instanceof Boolean) {
-/* 1012 */       return ((Boolean)object).booleanValue();
-/*      */     }
-/* 1014 */     return paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getIcon(SynthContext paramSynthContext, Object paramObject) {
-/* 1026 */     Object object = get(paramSynthContext, paramObject);
-/*      */     
-/* 1028 */     if (object instanceof Icon) {
-/* 1029 */       return (Icon)object;
-/*      */     }
-/* 1031 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getString(SynthContext paramSynthContext, Object paramObject, String paramString) {
-/* 1046 */     Object object = get(paramSynthContext, paramObject);
-/*      */     
-/* 1048 */     if (object instanceof String) {
-/* 1049 */       return (String)object;
-/*      */     }
-/* 1051 */     return paramString;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthStyle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicLookAndFeel;
+import javax.swing.text.DefaultEditorKit;
+import java.util.HashMap;
+import java.util.Map;
+import javax.swing.text.JTextComponent;
+
+/**
+ * <code>SynthStyle</code> is a set of style properties.
+ * Each <code>SynthUI</code> references at least one
+ * <code>SynthStyle</code> that is obtained using a
+ * <code>SynthStyleFactory</code>. You typically don't need to interact with
+ * this class directly, rather you will load a
+ * <a href="doc-files/synthFileFormat.html">Synth File Format file</a> into
+ * <code>SynthLookAndFeel</code> that will create a set of SynthStyles.
+ *
+ * @see SynthLookAndFeel
+ * @see SynthStyleFactory
+ *
+ * @since 1.5
+ * @author Scott Violet
+ */
+public abstract class SynthStyle {
+    /**
+     * Contains the default values for certain properties.
+     */
+    private static Map<Object, Object> DEFAULT_VALUES;
+
+    /**
+     * Shared SynthGraphics.
+     */
+    private static final SynthGraphicsUtils SYNTH_GRAPHICS =
+                              new SynthGraphicsUtils();
+
+    /**
+     * Adds the default values that we know about to DEFAULT_VALUES.
+     */
+    private static void populateDefaultValues() {
+        Object buttonMap = new UIDefaults.LazyInputMap(new Object[] {
+                          "SPACE", "pressed",
+                 "released SPACE", "released"
+        });
+        DEFAULT_VALUES.put("Button.focusInputMap", buttonMap);
+        DEFAULT_VALUES.put("CheckBox.focusInputMap", buttonMap);
+        DEFAULT_VALUES.put("RadioButton.focusInputMap", buttonMap);
+        DEFAULT_VALUES.put("ToggleButton.focusInputMap", buttonMap);
+        DEFAULT_VALUES.put("SynthArrowButton.focusInputMap", buttonMap);
+        DEFAULT_VALUES.put("List.dropLineColor", Color.BLACK);
+        DEFAULT_VALUES.put("Tree.dropLineColor", Color.BLACK);
+        DEFAULT_VALUES.put("Table.dropLineColor", Color.BLACK);
+        DEFAULT_VALUES.put("Table.dropLineShortColor", Color.RED);
+
+        Object multilineInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+
+                               "UP", DefaultEditorKit.upAction,
+                            "KP_UP", DefaultEditorKit.upAction,
+                             "DOWN", DefaultEditorKit.downAction,
+                          "KP_DOWN", DefaultEditorKit.downAction,
+                          "PAGE_UP", DefaultEditorKit.pageUpAction,
+                        "PAGE_DOWN", DefaultEditorKit.pageDownAction,
+                    "shift PAGE_UP", "selection-page-up",
+                  "shift PAGE_DOWN", "selection-page-down",
+               "ctrl shift PAGE_UP", "selection-page-left",
+             "ctrl shift PAGE_DOWN", "selection-page-right",
+                         "shift UP", DefaultEditorKit.selectionUpAction,
+                      "shift KP_UP", DefaultEditorKit.selectionUpAction,
+                       "shift DOWN", DefaultEditorKit.selectionDownAction,
+                    "shift KP_DOWN", DefaultEditorKit.selectionDownAction,
+                            "ENTER", DefaultEditorKit.insertBreakAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                      "ctrl DELETE", DefaultEditorKit.deleteNextWordAction,
+                  "ctrl BACK_SPACE", DefaultEditorKit.deletePrevWordAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                              "TAB", DefaultEditorKit.insertTabAction,
+                  "ctrl BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                        "ctrl HOME", DefaultEditorKit.beginAction,
+                         "ctrl END", DefaultEditorKit.endAction,
+                  "ctrl shift HOME", DefaultEditorKit.selectionBeginAction,
+                   "ctrl shift END", DefaultEditorKit.selectionEndAction,
+                           "ctrl T", "next-link-action",
+                     "ctrl shift T", "previous-link-action",
+                       "ctrl SPACE", "activate-link-action",
+                   "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
+        });
+        DEFAULT_VALUES.put("EditorPane.focusInputMap", multilineInputMap);
+        DEFAULT_VALUES.put("TextArea.focusInputMap", multilineInputMap);
+        DEFAULT_VALUES.put("TextPane.focusInputMap", multilineInputMap);
+
+        Object fieldInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                      "ctrl DELETE", DefaultEditorKit.deleteNextWordAction,
+                  "ctrl BACK_SPACE", DefaultEditorKit.deletePrevWordAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                            "ENTER", JTextField.notifyAction,
+                  "ctrl BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                   "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
+        });
+        DEFAULT_VALUES.put("TextField.focusInputMap", fieldInputMap);
+        DEFAULT_VALUES.put("PasswordField.focusInputMap", fieldInputMap);
+
+
+        DEFAULT_VALUES.put("ComboBox.ancestorInputMap",
+                  new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "hidePopup",
+                    "PAGE_UP", "pageUpPassThrough",
+                  "PAGE_DOWN", "pageDownPassThrough",
+                       "HOME", "homePassThrough",
+                        "END", "endPassThrough",
+                       "DOWN", "selectNext",
+                    "KP_DOWN", "selectNext",
+                   "alt DOWN", "togglePopup",
+                "alt KP_DOWN", "togglePopup",
+                     "alt UP", "togglePopup",
+                  "alt KP_UP", "togglePopup",
+                      "SPACE", "spacePopup",
+                     "ENTER", "enterPressed",
+                         "UP", "selectPrevious",
+                      "KP_UP", "selectPrevious"
+                  }));
+
+        DEFAULT_VALUES.put("Desktop.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                 "ctrl F5", "restore",
+                 "ctrl F4", "close",
+                 "ctrl F7", "move",
+                 "ctrl F8", "resize",
+                   "RIGHT", "right",
+                "KP_RIGHT", "right",
+             "shift RIGHT", "shrinkRight",
+          "shift KP_RIGHT", "shrinkRight",
+                    "LEFT", "left",
+                 "KP_LEFT", "left",
+              "shift LEFT", "shrinkLeft",
+           "shift KP_LEFT", "shrinkLeft",
+                      "UP", "up",
+                   "KP_UP", "up",
+                "shift UP", "shrinkUp",
+             "shift KP_UP", "shrinkUp",
+                    "DOWN", "down",
+                 "KP_DOWN", "down",
+              "shift DOWN", "shrinkDown",
+           "shift KP_DOWN", "shrinkDown",
+                  "ESCAPE", "escape",
+                 "ctrl F9", "minimize",
+                "ctrl F10", "maximize",
+                 "ctrl F6", "selectNextFrame",
+                "ctrl TAB", "selectNextFrame",
+             "ctrl alt F6", "selectNextFrame",
+       "shift ctrl alt F6", "selectPreviousFrame",
+                "ctrl F12", "navigateNext",
+           "shift ctrl F12", "navigatePrevious"
+               }));
+
+        DEFAULT_VALUES.put("FileChooser.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "cancelSelection",
+                     "F2", "editFileName",
+                     "F5", "refresh",
+                     "BACK_SPACE", "Go Up",
+                     "ENTER", "approveSelection",
+                "ctrl ENTER", "approveSelection"
+               }));
+
+        DEFAULT_VALUES.put("FormattedTextField.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                      "ctrl DELETE", DefaultEditorKit.deleteNextWordAction,
+                  "ctrl BACK_SPACE", DefaultEditorKit.deletePrevWordAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                            "ENTER", JTextField.notifyAction,
+                  "ctrl BACK_SLASH", "unselect",
+                   "control shift O", "toggle-componentOrientation",
+                           "ESCAPE", "reset-field-edit",
+                               "UP", "increment",
+                            "KP_UP", "increment",
+                             "DOWN", "decrement",
+                          "KP_DOWN", "decrement",
+              }));
+
+        DEFAULT_VALUES.put("InternalFrame.icon",
+                           LookAndFeel.makeIcon(BasicLookAndFeel.class,
+                                                    "icons/JavaCup16.png"));
+
+        DEFAULT_VALUES.put("InternalFrame.windowBindings",
+            new Object[] {
+              "shift ESCAPE", "showSystemMenu",
+                "ctrl SPACE", "showSystemMenu",
+              "ESCAPE", "hideSystemMenu"});
+
+        DEFAULT_VALUES.put("List.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", "copy",
+                           "ctrl V", "paste",
+                           "ctrl X", "cut",
+                             "COPY", "copy",
+                            "PASTE", "paste",
+                              "CUT", "cut",
+                   "control INSERT", "copy",
+                     "shift INSERT", "paste",
+                     "shift DELETE", "cut",
+                               "UP", "selectPreviousRow",
+                            "KP_UP", "selectPreviousRow",
+                         "shift UP", "selectPreviousRowExtendSelection",
+                      "shift KP_UP", "selectPreviousRowExtendSelection",
+                    "ctrl shift UP", "selectPreviousRowExtendSelection",
+                 "ctrl shift KP_UP", "selectPreviousRowExtendSelection",
+                          "ctrl UP", "selectPreviousRowChangeLead",
+                       "ctrl KP_UP", "selectPreviousRowChangeLead",
+                             "DOWN", "selectNextRow",
+                          "KP_DOWN", "selectNextRow",
+                       "shift DOWN", "selectNextRowExtendSelection",
+                    "shift KP_DOWN", "selectNextRowExtendSelection",
+                  "ctrl shift DOWN", "selectNextRowExtendSelection",
+               "ctrl shift KP_DOWN", "selectNextRowExtendSelection",
+                        "ctrl DOWN", "selectNextRowChangeLead",
+                     "ctrl KP_DOWN", "selectNextRowChangeLead",
+                             "LEFT", "selectPreviousColumn",
+                          "KP_LEFT", "selectPreviousColumn",
+                       "shift LEFT", "selectPreviousColumnExtendSelection",
+                    "shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                  "ctrl shift LEFT", "selectPreviousColumnExtendSelection",
+               "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                        "ctrl LEFT", "selectPreviousColumnChangeLead",
+                     "ctrl KP_LEFT", "selectPreviousColumnChangeLead",
+                            "RIGHT", "selectNextColumn",
+                         "KP_RIGHT", "selectNextColumn",
+                      "shift RIGHT", "selectNextColumnExtendSelection",
+                   "shift KP_RIGHT", "selectNextColumnExtendSelection",
+                 "ctrl shift RIGHT", "selectNextColumnExtendSelection",
+              "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection",
+                       "ctrl RIGHT", "selectNextColumnChangeLead",
+                    "ctrl KP_RIGHT", "selectNextColumnChangeLead",
+                             "HOME", "selectFirstRow",
+                       "shift HOME", "selectFirstRowExtendSelection",
+                  "ctrl shift HOME", "selectFirstRowExtendSelection",
+                        "ctrl HOME", "selectFirstRowChangeLead",
+                              "END", "selectLastRow",
+                        "shift END", "selectLastRowExtendSelection",
+                   "ctrl shift END", "selectLastRowExtendSelection",
+                         "ctrl END", "selectLastRowChangeLead",
+                          "PAGE_UP", "scrollUp",
+                    "shift PAGE_UP", "scrollUpExtendSelection",
+               "ctrl shift PAGE_UP", "scrollUpExtendSelection",
+                     "ctrl PAGE_UP", "scrollUpChangeLead",
+                        "PAGE_DOWN", "scrollDown",
+                  "shift PAGE_DOWN", "scrollDownExtendSelection",
+             "ctrl shift PAGE_DOWN", "scrollDownExtendSelection",
+                   "ctrl PAGE_DOWN", "scrollDownChangeLead",
+                           "ctrl A", "selectAll",
+                       "ctrl SLASH", "selectAll",
+                  "ctrl BACK_SLASH", "clearSelection",
+                            "SPACE", "addToSelection",
+                       "ctrl SPACE", "toggleAndAnchor",
+                      "shift SPACE", "extendTo",
+                 "ctrl shift SPACE", "moveSelectionTo"
+               }));
+
+        DEFAULT_VALUES.put("List.focusInputMap.RightToLeft",
+               new UIDefaults.LazyInputMap(new Object[] {
+                             "LEFT", "selectNextColumn",
+                          "KP_LEFT", "selectNextColumn",
+                       "shift LEFT", "selectNextColumnExtendSelection",
+                    "shift KP_LEFT", "selectNextColumnExtendSelection",
+                  "ctrl shift LEFT", "selectNextColumnExtendSelection",
+               "ctrl shift KP_LEFT", "selectNextColumnExtendSelection",
+                        "ctrl LEFT", "selectNextColumnChangeLead",
+                     "ctrl KP_LEFT", "selectNextColumnChangeLead",
+                            "RIGHT", "selectPreviousColumn",
+                         "KP_RIGHT", "selectPreviousColumn",
+                      "shift RIGHT", "selectPreviousColumnExtendSelection",
+                   "shift KP_RIGHT", "selectPreviousColumnExtendSelection",
+                 "ctrl shift RIGHT", "selectPreviousColumnExtendSelection",
+              "ctrl shift KP_RIGHT", "selectPreviousColumnExtendSelection",
+                       "ctrl RIGHT", "selectPreviousColumnChangeLead",
+                    "ctrl KP_RIGHT", "selectPreviousColumnChangeLead",
+               }));
+
+        DEFAULT_VALUES.put("MenuBar.windowBindings",
+                                new Object[] { "F10", "takeFocus" });
+
+        DEFAULT_VALUES.put("OptionPane.windowBindings",
+                 new Object[] { "ESCAPE", "close" });
+
+        DEFAULT_VALUES.put("RootPane.defaultButtonWindowKeyBindings",
+                 new Object[] {
+                             "ENTER", "press",
+                    "released ENTER", "release",
+                        "ctrl ENTER", "press",
+               "ctrl released ENTER", "release"
+                 });
+
+        DEFAULT_VALUES.put("RootPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                    "shift F10", "postPopup"
+               }));
+
+        DEFAULT_VALUES.put("ScrollBar.anecstorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "positiveUnitIncrement",
+                    "KP_RIGHT", "positiveUnitIncrement",
+                        "DOWN", "positiveUnitIncrement",
+                     "KP_DOWN", "positiveUnitIncrement",
+                   "PAGE_DOWN", "positiveBlockIncrement",
+                        "LEFT", "negativeUnitIncrement",
+                     "KP_LEFT", "negativeUnitIncrement",
+                          "UP", "negativeUnitIncrement",
+                       "KP_UP", "negativeUnitIncrement",
+                     "PAGE_UP", "negativeBlockIncrement",
+                        "HOME", "minScroll",
+                         "END", "maxScroll"
+               }));
+
+        DEFAULT_VALUES.put("ScrollBar.ancestorInputMap.RightToLeft",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "negativeUnitIncrement",
+                    "KP_RIGHT", "negativeUnitIncrement",
+                        "LEFT", "positiveUnitIncrement",
+                     "KP_LEFT", "positiveUnitIncrement",
+               }));
+
+        DEFAULT_VALUES.put("ScrollPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                           "RIGHT", "unitScrollRight",
+                        "KP_RIGHT", "unitScrollRight",
+                            "DOWN", "unitScrollDown",
+                         "KP_DOWN", "unitScrollDown",
+                            "LEFT", "unitScrollLeft",
+                         "KP_LEFT", "unitScrollLeft",
+                              "UP", "unitScrollUp",
+                           "KP_UP", "unitScrollUp",
+                         "PAGE_UP", "scrollUp",
+                       "PAGE_DOWN", "scrollDown",
+                    "ctrl PAGE_UP", "scrollLeft",
+                  "ctrl PAGE_DOWN", "scrollRight",
+                       "ctrl HOME", "scrollHome",
+                        "ctrl END", "scrollEnd"
+               }));
+        DEFAULT_VALUES.put("ScrollPane.ancestorInputMap.RightToLeft",
+               new UIDefaults.LazyInputMap(new Object[] {
+                    "ctrl PAGE_UP", "scrollRight",
+                  "ctrl PAGE_DOWN", "scrollLeft",
+               }));
+
+        DEFAULT_VALUES.put("SplitPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                        "UP", "negativeIncrement",
+                      "DOWN", "positiveIncrement",
+                      "LEFT", "negativeIncrement",
+                     "RIGHT", "positiveIncrement",
+                     "KP_UP", "negativeIncrement",
+                   "KP_DOWN", "positiveIncrement",
+                   "KP_LEFT", "negativeIncrement",
+                  "KP_RIGHT", "positiveIncrement",
+                      "HOME", "selectMin",
+                       "END", "selectMax",
+                        "F8", "startResize",
+                        "F6", "toggleFocus",
+                  "ctrl TAB", "focusOutForward",
+            "ctrl shift TAB", "focusOutBackward"
+               }));
+
+        DEFAULT_VALUES.put("Spinner.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                          "UP", "increment",
+                       "KP_UP", "increment",
+                        "DOWN", "decrement",
+                     "KP_DOWN", "decrement"
+               }));
+
+        DEFAULT_VALUES.put("Slider.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "positiveUnitIncrement",
+                    "KP_RIGHT", "positiveUnitIncrement",
+                        "DOWN", "negativeUnitIncrement",
+                     "KP_DOWN", "negativeUnitIncrement",
+                   "PAGE_DOWN", "negativeBlockIncrement",
+              "ctrl PAGE_DOWN", "negativeBlockIncrement",
+                        "LEFT", "negativeUnitIncrement",
+                     "KP_LEFT", "negativeUnitIncrement",
+                          "UP", "positiveUnitIncrement",
+                       "KP_UP", "positiveUnitIncrement",
+                     "PAGE_UP", "positiveBlockIncrement",
+                "ctrl PAGE_UP", "positiveBlockIncrement",
+                        "HOME", "minScroll",
+                         "END", "maxScroll"
+               }));
+
+        DEFAULT_VALUES.put("Slider.focusInputMap.RightToLeft",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "negativeUnitIncrement",
+                    "KP_RIGHT", "negativeUnitIncrement",
+                        "LEFT", "positiveUnitIncrement",
+                     "KP_LEFT", "positiveUnitIncrement",
+               }));
+
+        DEFAULT_VALUES.put("TabbedPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                   "ctrl PAGE_DOWN", "navigatePageDown",
+                     "ctrl PAGE_UP", "navigatePageUp",
+                          "ctrl UP", "requestFocus",
+                       "ctrl KP_UP", "requestFocus",
+               }));
+
+        DEFAULT_VALUES.put("TabbedPane.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                         "RIGHT", "navigateRight",
+                      "KP_RIGHT", "navigateRight",
+                          "LEFT", "navigateLeft",
+                       "KP_LEFT", "navigateLeft",
+                            "UP", "navigateUp",
+                         "KP_UP", "navigateUp",
+                          "DOWN", "navigateDown",
+                       "KP_DOWN", "navigateDown",
+                     "ctrl DOWN", "requestFocusForVisibleComponent",
+                  "ctrl KP_DOWN", "requestFocusForVisibleComponent",
+              }));
+
+        DEFAULT_VALUES.put("Table.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                               "ctrl C", "copy",
+                               "ctrl V", "paste",
+                               "ctrl X", "cut",
+                                 "COPY", "copy",
+                                "PASTE", "paste",
+                                  "CUT", "cut",
+                       "control INSERT", "copy",
+                         "shift INSERT", "paste",
+                         "shift DELETE", "cut",
+                                "RIGHT", "selectNextColumn",
+                             "KP_RIGHT", "selectNextColumn",
+                          "shift RIGHT", "selectNextColumnExtendSelection",
+                       "shift KP_RIGHT", "selectNextColumnExtendSelection",
+                     "ctrl shift RIGHT", "selectNextColumnExtendSelection",
+                  "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection",
+                           "ctrl RIGHT", "selectNextColumnChangeLead",
+                        "ctrl KP_RIGHT", "selectNextColumnChangeLead",
+                                 "LEFT", "selectPreviousColumn",
+                              "KP_LEFT", "selectPreviousColumn",
+                           "shift LEFT", "selectPreviousColumnExtendSelection",
+                        "shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                      "ctrl shift LEFT", "selectPreviousColumnExtendSelection",
+                   "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                            "ctrl LEFT", "selectPreviousColumnChangeLead",
+                         "ctrl KP_LEFT", "selectPreviousColumnChangeLead",
+                                 "DOWN", "selectNextRow",
+                              "KP_DOWN", "selectNextRow",
+                           "shift DOWN", "selectNextRowExtendSelection",
+                        "shift KP_DOWN", "selectNextRowExtendSelection",
+                      "ctrl shift DOWN", "selectNextRowExtendSelection",
+                   "ctrl shift KP_DOWN", "selectNextRowExtendSelection",
+                            "ctrl DOWN", "selectNextRowChangeLead",
+                         "ctrl KP_DOWN", "selectNextRowChangeLead",
+                                   "UP", "selectPreviousRow",
+                                "KP_UP", "selectPreviousRow",
+                             "shift UP", "selectPreviousRowExtendSelection",
+                          "shift KP_UP", "selectPreviousRowExtendSelection",
+                        "ctrl shift UP", "selectPreviousRowExtendSelection",
+                     "ctrl shift KP_UP", "selectPreviousRowExtendSelection",
+                              "ctrl UP", "selectPreviousRowChangeLead",
+                           "ctrl KP_UP", "selectPreviousRowChangeLead",
+                                 "HOME", "selectFirstColumn",
+                           "shift HOME", "selectFirstColumnExtendSelection",
+                      "ctrl shift HOME", "selectFirstRowExtendSelection",
+                            "ctrl HOME", "selectFirstRow",
+                                  "END", "selectLastColumn",
+                            "shift END", "selectLastColumnExtendSelection",
+                       "ctrl shift END", "selectLastRowExtendSelection",
+                             "ctrl END", "selectLastRow",
+                              "PAGE_UP", "scrollUpChangeSelection",
+                        "shift PAGE_UP", "scrollUpExtendSelection",
+                   "ctrl shift PAGE_UP", "scrollLeftExtendSelection",
+                         "ctrl PAGE_UP", "scrollLeftChangeSelection",
+                            "PAGE_DOWN", "scrollDownChangeSelection",
+                      "shift PAGE_DOWN", "scrollDownExtendSelection",
+                 "ctrl shift PAGE_DOWN", "scrollRightExtendSelection",
+                       "ctrl PAGE_DOWN", "scrollRightChangeSelection",
+                                  "TAB", "selectNextColumnCell",
+                            "shift TAB", "selectPreviousColumnCell",
+                                "ENTER", "selectNextRowCell",
+                          "shift ENTER", "selectPreviousRowCell",
+                               "ctrl A", "selectAll",
+                           "ctrl SLASH", "selectAll",
+                      "ctrl BACK_SLASH", "clearSelection",
+                               "ESCAPE", "cancel",
+                                   "F2", "startEditing",
+                                "SPACE", "addToSelection",
+                           "ctrl SPACE", "toggleAndAnchor",
+                          "shift SPACE", "extendTo",
+                     "ctrl shift SPACE", "moveSelectionTo",
+                                   "F8", "focusHeader"
+               }));
+
+       DEFAULT_VALUES.put("TableHeader.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                                "SPACE", "toggleSortOrder",
+                                 "LEFT", "selectColumnToLeft",
+                              "KP_LEFT", "selectColumnToLeft",
+                                "RIGHT", "selectColumnToRight",
+                             "KP_RIGHT", "selectColumnToRight",
+                             "alt LEFT", "moveColumnLeft",
+                          "alt KP_LEFT", "moveColumnLeft",
+                            "alt RIGHT", "moveColumnRight",
+                         "alt KP_RIGHT", "moveColumnRight",
+                       "alt shift LEFT", "resizeLeft",
+                    "alt shift KP_LEFT", "resizeLeft",
+                      "alt shift RIGHT", "resizeRight",
+                   "alt shift KP_RIGHT", "resizeRight",
+                               "ESCAPE", "focusTable",
+               }));
+
+        DEFAULT_VALUES.put("Tree.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "cancel"
+               }));
+        DEFAULT_VALUES.put("Tree.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                                    "ADD", "expand",
+                               "SUBTRACT", "collapse",
+                                 "ctrl C", "copy",
+                                 "ctrl V", "paste",
+                                 "ctrl X", "cut",
+                                   "COPY", "copy",
+                                  "PASTE", "paste",
+                                    "CUT", "cut",
+                         "control INSERT", "copy",
+                           "shift INSERT", "paste",
+                           "shift DELETE", "cut",
+                                     "UP", "selectPrevious",
+                                  "KP_UP", "selectPrevious",
+                               "shift UP", "selectPreviousExtendSelection",
+                            "shift KP_UP", "selectPreviousExtendSelection",
+                          "ctrl shift UP", "selectPreviousExtendSelection",
+                       "ctrl shift KP_UP", "selectPreviousExtendSelection",
+                                "ctrl UP", "selectPreviousChangeLead",
+                             "ctrl KP_UP", "selectPreviousChangeLead",
+                                   "DOWN", "selectNext",
+                                "KP_DOWN", "selectNext",
+                             "shift DOWN", "selectNextExtendSelection",
+                          "shift KP_DOWN", "selectNextExtendSelection",
+                        "ctrl shift DOWN", "selectNextExtendSelection",
+                     "ctrl shift KP_DOWN", "selectNextExtendSelection",
+                              "ctrl DOWN", "selectNextChangeLead",
+                           "ctrl KP_DOWN", "selectNextChangeLead",
+                                  "RIGHT", "selectChild",
+                               "KP_RIGHT", "selectChild",
+                                   "LEFT", "selectParent",
+                                "KP_LEFT", "selectParent",
+                                "PAGE_UP", "scrollUpChangeSelection",
+                          "shift PAGE_UP", "scrollUpExtendSelection",
+                     "ctrl shift PAGE_UP", "scrollUpExtendSelection",
+                           "ctrl PAGE_UP", "scrollUpChangeLead",
+                              "PAGE_DOWN", "scrollDownChangeSelection",
+                        "shift PAGE_DOWN", "scrollDownExtendSelection",
+                   "ctrl shift PAGE_DOWN", "scrollDownExtendSelection",
+                         "ctrl PAGE_DOWN", "scrollDownChangeLead",
+                                   "HOME", "selectFirst",
+                             "shift HOME", "selectFirstExtendSelection",
+                        "ctrl shift HOME", "selectFirstExtendSelection",
+                              "ctrl HOME", "selectFirstChangeLead",
+                                    "END", "selectLast",
+                              "shift END", "selectLastExtendSelection",
+                         "ctrl shift END", "selectLastExtendSelection",
+                               "ctrl END", "selectLastChangeLead",
+                                     "F2", "startEditing",
+                                 "ctrl A", "selectAll",
+                             "ctrl SLASH", "selectAll",
+                        "ctrl BACK_SLASH", "clearSelection",
+                              "ctrl LEFT", "scrollLeft",
+                           "ctrl KP_LEFT", "scrollLeft",
+                             "ctrl RIGHT", "scrollRight",
+                          "ctrl KP_RIGHT", "scrollRight",
+                                  "SPACE", "addToSelection",
+                             "ctrl SPACE", "toggleAndAnchor",
+                            "shift SPACE", "extendTo",
+                       "ctrl shift SPACE", "moveSelectionTo"
+               }));
+        DEFAULT_VALUES.put("Tree.focusInputMap.RightToLeft",
+               new UIDefaults.LazyInputMap(new Object[] {
+                                  "RIGHT", "selectParent",
+                               "KP_RIGHT", "selectParent",
+                                   "LEFT", "selectChild",
+                                "KP_LEFT", "selectChild",
+               }));
+    }
+
+    /**
+     * Returns the default value for the specified property, or null if there
+     * is no default for the specified value.
+     */
+    private static Object getDefaultValue(Object key) {
+        synchronized(SynthStyle.class) {
+            if (DEFAULT_VALUES == null) {
+                DEFAULT_VALUES = new HashMap<Object, Object>();
+                populateDefaultValues();
+            }
+            Object value = DEFAULT_VALUES.get(key);
+            if (value instanceof UIDefaults.LazyValue) {
+                value = ((UIDefaults.LazyValue)value).createValue(null);
+                DEFAULT_VALUES.put(key, value);
+            }
+            return value;
+        }
+    }
+
+    /**
+     * Constructs a SynthStyle.
+     */
+    public SynthStyle() {
+    }
+
+    /**
+     * Returns the <code>SynthGraphicUtils</code> for the specified context.
+     *
+     * @param context SynthContext identifying requester
+     * @return SynthGraphicsUtils
+     */
+    public SynthGraphicsUtils getGraphicsUtils(SynthContext context) {
+        return SYNTH_GRAPHICS;
+    }
+
+    /**
+     * Returns the color for the specified state. This gives precedence to
+     * foreground and background of the <code>JComponent</code>. If the
+     * <code>Color</code> from the <code>JComponent</code> is not appropriate,
+     * or not used, this will invoke <code>getColorForState</code>. Subclasses
+     * should generally not have to override this, instead override
+     * {@link #getColorForState}.
+     *
+     * @param context SynthContext identifying requester
+     * @param type Type of color being requested.
+     * @return Color
+     */
+    public Color getColor(SynthContext context, ColorType type) {
+        JComponent c = context.getComponent();
+        Region id = context.getRegion();
+
+        if ((context.getComponentState() & SynthConstants.DISABLED) != 0) {
+            //This component is disabled, so return the disabled color.
+            //In some cases this means ignoring the color specified by the
+            //developer on the component. In other cases it means using a
+            //specified disabledTextColor, such as on JTextComponents.
+            //For example, JLabel doesn't specify a disabled color that the
+            //developer can set, yet it should have a disabled color to the
+            //text when the label is disabled. This code allows for that.
+            if (c instanceof JTextComponent) {
+                JTextComponent txt = (JTextComponent)c;
+                Color disabledColor = txt.getDisabledTextColor();
+                if (disabledColor == null || disabledColor instanceof UIResource) {
+                    return getColorForState(context, type);
+                }
+            } else if (c instanceof JLabel &&
+                            (type == ColorType.FOREGROUND ||
+                             type == ColorType.TEXT_FOREGROUND)) {
+                return getColorForState(context, type);
+            }
+        }
+
+        // If the developer has specified a color, prefer it. Otherwise, get
+        // the color for the state.
+        Color color = null;
+        if (!id.isSubregion()) {
+            if (type == ColorType.BACKGROUND) {
+                color = c.getBackground();
+            }
+            else if (type == ColorType.FOREGROUND) {
+                color = c.getForeground();
+            }
+            else if (type == ColorType.TEXT_FOREGROUND) {
+                color = c.getForeground();
+            }
+        }
+
+        if (color == null || color instanceof UIResource) {
+            // Then use what we've locally defined
+            color = getColorForState(context, type);
+        }
+
+        if (color == null) {
+            // No color, fallback to that of the widget.
+            if (type == ColorType.BACKGROUND ||
+                        type == ColorType.TEXT_BACKGROUND) {
+                return c.getBackground();
+            }
+            else if (type == ColorType.FOREGROUND ||
+                     type == ColorType.TEXT_FOREGROUND) {
+                return c.getForeground();
+            }
+        }
+        return color;
+    }
+
+    /**
+     * Returns the color for the specified state. This should NOT call any
+     * methods on the <code>JComponent</code>.
+     *
+     * @param context SynthContext identifying requester
+     * @param type Type of color being requested.
+     * @return Color to render with
+     */
+    protected abstract Color getColorForState(SynthContext context,
+                                              ColorType type);
+
+    /**
+     * Returns the Font for the specified state. This redirects to the
+     * <code>JComponent</code> from the <code>context</code> as necessary.
+     * If this does not redirect
+     * to the JComponent {@link #getFontForState} is invoked.
+     *
+     * @param context SynthContext identifying requester
+     * @return Font to render with
+     */
+    public Font getFont(SynthContext context) {
+        JComponent c = context.getComponent();
+        if (context.getComponentState() == SynthConstants.ENABLED) {
+            return c.getFont();
+        }
+        Font cFont = c.getFont();
+        if (cFont != null && !(cFont instanceof UIResource)) {
+            return cFont;
+        }
+        return getFontForState(context);
+    }
+
+    /**
+     * Returns the font for the specified state. This should NOT call any
+     * method on the <code>JComponent</code>.
+     *
+     * @param context SynthContext identifying requester
+     * @return Font to render with
+     */
+    protected abstract Font getFontForState(SynthContext context);
+
+    /**
+     * Returns the Insets that are used to calculate sizing information.
+     *
+     * @param context SynthContext identifying requester
+     * @param insets Insets to place return value in.
+     * @return Sizing Insets.
+     */
+    public Insets getInsets(SynthContext context, Insets insets) {
+        if (insets == null) {
+            insets = new Insets(0, 0, 0, 0);
+        }
+        insets.top = insets.bottom = insets.left = insets.right = 0;
+        return insets;
+    }
+
+    /**
+     * Returns the <code>SynthPainter</code> that will be used for painting.
+     * This may return null.
+     *
+     * @param context SynthContext identifying requester
+     * @return SynthPainter to use
+     */
+    public SynthPainter getPainter(SynthContext context) {
+        return null;
+    }
+
+    /**
+     * Returns true if the region is opaque.
+     *
+     * @param context SynthContext identifying requester
+     * @return true if region is opaque.
+     */
+    public boolean isOpaque(SynthContext context) {
+        return true;
+    }
+
+    /**
+     * Getter for a region specific style property.
+     *
+     * @param context SynthContext identifying requester
+     * @param key Property being requested.
+     * @return Value of the named property
+     */
+    public Object get(SynthContext context, Object key) {
+        return getDefaultValue(key);
+    }
+
+    void installDefaults(SynthContext context, SynthUI ui) {
+        // Special case the Border as this will likely change when the LAF
+        // can have more control over this.
+        if (!context.isSubregion()) {
+            JComponent c = context.getComponent();
+            Border border = c.getBorder();
+
+            if (border == null || border instanceof UIResource) {
+                c.setBorder(new SynthBorder(ui, getInsets(context, null)));
+            }
+        }
+        installDefaults(context);
+    }
+
+    /**
+     * Installs the necessary state from this Style on the
+     * <code>JComponent</code> from <code>context</code>.
+     *
+     * @param context SynthContext identifying component to install properties
+     *        to.
+     */
+    public void installDefaults(SynthContext context) {
+        if (!context.isSubregion()) {
+            JComponent c = context.getComponent();
+            Region region = context.getRegion();
+            Font font = c.getFont();
+
+            if (font == null || (font instanceof UIResource)) {
+                c.setFont(getFontForState(context));
+            }
+            Color background = c.getBackground();
+            if (background == null || (background instanceof UIResource)) {
+                c.setBackground(getColorForState(context,
+                                                 ColorType.BACKGROUND));
+            }
+            Color foreground = c.getForeground();
+            if (foreground == null || (foreground instanceof UIResource)) {
+                c.setForeground(getColorForState(context,
+                         ColorType.FOREGROUND));
+            }
+            LookAndFeel.installProperty(c, "opaque", Boolean.valueOf(isOpaque(context)));
+        }
+    }
+
+    /**
+     * Uninstalls any state that this style installed on
+     * the <code>JComponent</code> from <code>context</code>.
+     * <p>
+     * Styles should NOT depend upon this being called, in certain cases
+     * it may never be called.
+     *
+     * @param context SynthContext identifying component to install properties
+     *        to.
+     */
+    public void uninstallDefaults(SynthContext context) {
+        if (!context.isSubregion()) {
+            // NOTE: because getForeground, getBackground and getFont will look
+            // at the parent Container, if we set them to null it may
+            // mean we they return a non-null and non-UIResource value
+            // preventing install from correctly settings its colors/font. For
+            // this reason we do not uninstall the fg/bg/font.
+
+            JComponent c = context.getComponent();
+            Border border = c.getBorder();
+
+            if (border instanceof UIResource) {
+                c.setBorder(null);
+            }
+        }
+    }
+
+    /**
+     * Convenience method to get a specific style property whose value is
+     * a <code>Number</code>. If the value is a <code>Number</code>,
+     * <code>intValue</code> is returned, otherwise <code>defaultValue</code>
+     * is returned.
+     *
+     * @param context SynthContext identifying requester
+     * @param key Property being requested.
+     * @param defaultValue Value to return if the property has not been
+     *        specified, or is not a Number
+     * @return Value of the named property
+     */
+    public int getInt(SynthContext context, Object key, int defaultValue) {
+        Object value = get(context, key);
+
+        if (value instanceof Number) {
+            return ((Number)value).intValue();
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Convenience method to get a specific style property whose value is
+     * an Boolean.
+     *
+     * @param context SynthContext identifying requester
+     * @param key Property being requested.
+     * @param defaultValue Value to return if the property has not been
+     *        specified, or is not a Boolean
+     * @return Value of the named property
+     */
+    public boolean getBoolean(SynthContext context, Object key,
+                              boolean defaultValue) {
+        Object value = get(context, key);
+
+        if (value instanceof Boolean) {
+            return ((Boolean)value).booleanValue();
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Convenience method to get a specific style property whose value is
+     * an Icon.
+     *
+     * @param context SynthContext identifying requester
+     * @param key Property being requested.
+     * @return Value of the named property, or null if not specified
+     */
+    public Icon getIcon(SynthContext context, Object key) {
+        Object value = get(context, key);
+
+        if (value instanceof Icon) {
+            return (Icon)value;
+        }
+        return null;
+    }
+
+    /**
+     * Convenience method to get a specific style property whose value is
+     * a String.
+     *
+     * @param context SynthContext identifying requester
+     * @param key Property being requested.
+     * @param defaultValue Value to return if the property has not been
+     *        specified, or is not a String
+     * @return Value of the named property
+     */
+    public String getString(SynthContext context, Object key,
+                              String defaultValue) {
+        Object value = get(context, key);
+
+        if (value instanceof String) {
+            return (String)value;
+        }
+        return defaultValue;
+    }
+}

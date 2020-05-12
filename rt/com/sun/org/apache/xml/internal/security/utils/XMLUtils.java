@@ -1,1045 +1,1040 @@
-/*      */ package com.sun.org.apache.xml.internal.security.utils;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
-/*      */ import com.sun.org.apache.xml.internal.security.c14n.Canonicalizer;
-/*      */ import com.sun.org.apache.xml.internal.security.c14n.InvalidCanonicalizerException;
-/*      */ import java.io.IOException;
-/*      */ import java.io.OutputStream;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashSet;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.Set;
-/*      */ import java.util.logging.Level;
-/*      */ import java.util.logging.Logger;
-/*      */ import org.w3c.dom.Attr;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.Element;
-/*      */ import org.w3c.dom.NamedNodeMap;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ import org.w3c.dom.ProcessingInstruction;
-/*      */ import org.w3c.dom.Text;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XMLUtils
-/*      */ {
-/*   55 */   private static boolean ignoreLineBreaks = ((Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>() {
-/*      */         public Boolean run() {
-/*   57 */           return Boolean.valueOf(
-/*   58 */               Boolean.getBoolean("com.sun.org.apache.xml.internal.security.ignoreLineBreaks"));
-/*      */         }
-/*   60 */       })).booleanValue();
-/*      */   
-/*   62 */   private static volatile String dsPrefix = "ds";
-/*   63 */   private static volatile String ds11Prefix = "dsig11";
-/*   64 */   private static volatile String xencPrefix = "xenc";
-/*   65 */   private static volatile String xenc11Prefix = "xenc11";
-/*      */ 
-/*      */ 
-/*      */   
-/*   69 */   private static final Logger log = Logger.getLogger(XMLUtils.class.getName());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setDsPrefix(String paramString) {
-/*   87 */     JavaUtils.checkRegisterPermission();
-/*   88 */     dsPrefix = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setDs11Prefix(String paramString) {
-/*   98 */     JavaUtils.checkRegisterPermission();
-/*   99 */     ds11Prefix = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setXencPrefix(String paramString) {
-/*  109 */     JavaUtils.checkRegisterPermission();
-/*  110 */     xencPrefix = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setXenc11Prefix(String paramString) {
-/*  120 */     JavaUtils.checkRegisterPermission();
-/*  121 */     xenc11Prefix = paramString;
-/*      */   }
-/*      */   
-/*      */   public static Element getNextElement(Node paramNode) {
-/*  125 */     Node node = paramNode;
-/*  126 */     while (node != null && node.getNodeType() != 1) {
-/*  127 */       node = node.getNextSibling();
-/*      */     }
-/*  129 */     return (Element)node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void getSet(Node paramNode1, Set<Node> paramSet, Node paramNode2, boolean paramBoolean) {
-/*  139 */     if (paramNode2 != null && isDescendantOrSelf(paramNode2, paramNode1)) {
-/*      */       return;
-/*      */     }
-/*  142 */     getSetRec(paramNode1, paramSet, paramNode2, paramBoolean);
-/*      */   }
-/*      */   
-/*      */   private static void getSetRec(Node paramNode1, Set<Node> paramSet, Node paramNode2, boolean paramBoolean) {
-/*      */     Element element;
-/*      */     Node node;
-/*  148 */     if (paramNode1 == paramNode2) {
-/*      */       return;
-/*      */     }
-/*  151 */     switch (paramNode1.getNodeType()) {
-/*      */       case 1:
-/*  153 */         paramSet.add(paramNode1);
-/*  154 */         element = (Element)paramNode1;
-/*  155 */         if (element.hasAttributes()) {
-/*  156 */           NamedNodeMap namedNodeMap = element.getAttributes();
-/*  157 */           for (byte b = 0; b < namedNodeMap.getLength(); b++) {
-/*  158 */             paramSet.add(namedNodeMap.item(b));
-/*      */           }
-/*      */         } 
-/*      */       
-/*      */       case 9:
-/*  163 */         for (node = paramNode1.getFirstChild(); node != null; node = node.getNextSibling()) {
-/*  164 */           if (node.getNodeType() == 3) {
-/*  165 */             paramSet.add(node);
-/*  166 */             while (node != null && node.getNodeType() == 3) {
-/*  167 */               node = node.getNextSibling();
-/*      */             }
-/*  169 */             if (node == null) {
-/*      */               return;
-/*      */             }
-/*      */           } 
-/*  173 */           getSetRec(node, paramSet, paramNode2, paramBoolean);
-/*      */         } 
-/*      */         return;
-/*      */       case 8:
-/*  177 */         if (paramBoolean) {
-/*  178 */           paramSet.add(paramNode1);
-/*      */         }
-/*      */         return;
-/*      */       case 10:
-/*      */         return;
-/*      */     } 
-/*  184 */     paramSet.add(paramNode1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void outputDOM(Node paramNode, OutputStream paramOutputStream) {
-/*  196 */     outputDOM(paramNode, paramOutputStream, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void outputDOM(Node paramNode, OutputStream paramOutputStream, boolean paramBoolean) {
-/*      */     try {
-/*  210 */       if (paramBoolean) {
-/*  211 */         paramOutputStream.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".getBytes("UTF-8"));
-/*      */       }
-/*      */       
-/*  214 */       paramOutputStream.write(Canonicalizer.getInstance("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments")
-/*  215 */           .canonicalizeSubtree(paramNode));
-/*      */     }
-/*  217 */     catch (IOException iOException) {
-/*  218 */       if (log.isLoggable(Level.FINE)) {
-/*  219 */         log.log(Level.FINE, iOException.getMessage(), iOException);
-/*      */       }
-/*      */     }
-/*  222 */     catch (InvalidCanonicalizerException invalidCanonicalizerException) {
-/*  223 */       if (log.isLoggable(Level.FINE)) {
-/*  224 */         log.log(Level.FINE, invalidCanonicalizerException.getMessage(), invalidCanonicalizerException);
-/*      */       }
-/*  226 */     } catch (CanonicalizationException canonicalizationException) {
-/*  227 */       if (log.isLoggable(Level.FINE)) {
-/*  228 */         log.log(Level.FINE, canonicalizationException.getMessage(), canonicalizationException);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void outputDOMc14nWithComments(Node paramNode, OutputStream paramOutputStream) {
-/*      */     try {
-/*  248 */       paramOutputStream.write(Canonicalizer.getInstance("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments")
-/*  249 */           .canonicalizeSubtree(paramNode));
-/*      */     }
-/*  251 */     catch (IOException iOException) {
-/*  252 */       if (log.isLoggable(Level.FINE)) {
-/*  253 */         log.log(Level.FINE, iOException.getMessage(), iOException);
-/*      */       }
-/*      */     }
-/*  256 */     catch (InvalidCanonicalizerException invalidCanonicalizerException) {
-/*  257 */       if (log.isLoggable(Level.FINE)) {
-/*  258 */         log.log(Level.FINE, invalidCanonicalizerException.getMessage(), invalidCanonicalizerException);
-/*      */       }
-/*      */     }
-/*  261 */     catch (CanonicalizationException canonicalizationException) {
-/*  262 */       if (log.isLoggable(Level.FINE)) {
-/*  263 */         log.log(Level.FINE, canonicalizationException.getMessage(), canonicalizationException);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getFullTextChildrenFromElement(Element paramElement) {
-/*  276 */     StringBuilder stringBuilder = new StringBuilder();
-/*      */     
-/*  278 */     Node node = paramElement.getFirstChild();
-/*  279 */     while (node != null) {
-/*  280 */       if (node.getNodeType() == 3) {
-/*  281 */         stringBuilder.append(((Text)node).getData());
-/*      */       }
-/*  283 */       node = node.getNextSibling();
-/*      */     } 
-/*      */     
-/*  286 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element createElementInSignatureSpace(Document paramDocument, String paramString) {
-/*  297 */     if (paramDocument == null) {
-/*  298 */       throw new RuntimeException("Document is null");
-/*      */     }
-/*      */     
-/*  301 */     if (dsPrefix == null || dsPrefix.length() == 0) {
-/*  302 */       return paramDocument.createElementNS("http://www.w3.org/2000/09/xmldsig#", paramString);
-/*      */     }
-/*  304 */     return paramDocument.createElementNS("http://www.w3.org/2000/09/xmldsig#", dsPrefix + ":" + paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element createElementInSignature11Space(Document paramDocument, String paramString) {
-/*  315 */     if (paramDocument == null) {
-/*  316 */       throw new RuntimeException("Document is null");
-/*      */     }
-/*      */     
-/*  319 */     if (ds11Prefix == null || ds11Prefix.length() == 0) {
-/*  320 */       return paramDocument.createElementNS("http://www.w3.org/2009/xmldsig11#", paramString);
-/*      */     }
-/*  322 */     return paramDocument.createElementNS("http://www.w3.org/2009/xmldsig11#", ds11Prefix + ":" + paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element createElementInEncryptionSpace(Document paramDocument, String paramString) {
-/*  333 */     if (paramDocument == null) {
-/*  334 */       throw new RuntimeException("Document is null");
-/*      */     }
-/*      */     
-/*  337 */     if (xencPrefix == null || xencPrefix.length() == 0) {
-/*  338 */       return paramDocument.createElementNS("http://www.w3.org/2001/04/xmlenc#", paramString);
-/*      */     }
-/*  340 */     return paramDocument
-/*  341 */       .createElementNS("http://www.w3.org/2001/04/xmlenc#", xencPrefix + ":" + paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element createElementInEncryption11Space(Document paramDocument, String paramString) {
-/*  354 */     if (paramDocument == null) {
-/*  355 */       throw new RuntimeException("Document is null");
-/*      */     }
-/*      */     
-/*  358 */     if (xenc11Prefix == null || xenc11Prefix.length() == 0) {
-/*  359 */       return paramDocument.createElementNS("http://www.w3.org/2009/xmlenc11#", paramString);
-/*      */     }
-/*  361 */     return paramDocument
-/*  362 */       .createElementNS("http://www.w3.org/2009/xmlenc11#", xenc11Prefix + ":" + paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean elementIsInSignatureSpace(Element paramElement, String paramString) {
-/*  377 */     if (paramElement == null) {
-/*  378 */       return false;
-/*      */     }
-/*      */     
-/*  381 */     return ("http://www.w3.org/2000/09/xmldsig#".equals(paramElement.getNamespaceURI()) && paramElement
-/*  382 */       .getLocalName().equals(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean elementIsInSignature11Space(Element paramElement, String paramString) {
-/*  395 */     if (paramElement == null) {
-/*  396 */       return false;
-/*      */     }
-/*      */     
-/*  399 */     return ("http://www.w3.org/2009/xmldsig11#".equals(paramElement.getNamespaceURI()) && paramElement
-/*  400 */       .getLocalName().equals(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean elementIsInEncryptionSpace(Element paramElement, String paramString) {
-/*  413 */     if (paramElement == null) {
-/*  414 */       return false;
-/*      */     }
-/*  416 */     return ("http://www.w3.org/2001/04/xmlenc#".equals(paramElement.getNamespaceURI()) && paramElement
-/*  417 */       .getLocalName().equals(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean elementIsInEncryption11Space(Element paramElement, String paramString) {
-/*  430 */     if (paramElement == null) {
-/*  431 */       return false;
-/*      */     }
-/*  433 */     return ("http://www.w3.org/2009/xmlenc11#".equals(paramElement.getNamespaceURI()) && paramElement
-/*  434 */       .getLocalName().equals(paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Document getOwnerDocument(Node paramNode) {
-/*  447 */     if (paramNode.getNodeType() == 9) {
-/*  448 */       return (Document)paramNode;
-/*      */     }
-/*      */     try {
-/*  451 */       return paramNode.getOwnerDocument();
-/*  452 */     } catch (NullPointerException nullPointerException) {
-/*  453 */       throw new NullPointerException(I18n.translate("endorsed.jdk1.4.0") + " Original message was \"" + nullPointerException
-/*      */           
-/*  455 */           .getMessage() + "\"");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Document getOwnerDocument(Set<Node> paramSet) {
-/*  469 */     NullPointerException nullPointerException = null;
-/*  470 */     for (Node node : paramSet) {
-/*  471 */       short s = node.getNodeType();
-/*  472 */       if (s == 9) {
-/*  473 */         return (Document)node;
-/*      */       }
-/*      */       try {
-/*  476 */         if (s == 2) {
-/*  477 */           return ((Attr)node).getOwnerElement().getOwnerDocument();
-/*      */         }
-/*  479 */         return node.getOwnerDocument();
-/*  480 */       } catch (NullPointerException nullPointerException1) {
-/*  481 */         nullPointerException = nullPointerException1;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  485 */     throw new NullPointerException(I18n.translate("endorsed.jdk1.4.0") + " Original message was \"" + ((nullPointerException == null) ? "" : nullPointerException
-/*      */         
-/*  487 */         .getMessage()) + "\"");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element createDSctx(Document paramDocument, String paramString1, String paramString2) {
-/*  499 */     if (paramString1 == null || paramString1.trim().length() == 0) {
-/*  500 */       throw new IllegalArgumentException("You must supply a prefix");
-/*      */     }
-/*      */     
-/*  503 */     Element element = paramDocument.createElementNS(null, "namespaceContext");
-/*      */     
-/*  505 */     element.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + paramString1.trim(), paramString2);
-/*      */     
-/*  507 */     return element;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void addReturnToElement(Element paramElement) {
-/*  516 */     if (!ignoreLineBreaks) {
-/*  517 */       Document document = paramElement.getOwnerDocument();
-/*  518 */       paramElement.appendChild(document.createTextNode("\n"));
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public static void addReturnToElement(Document paramDocument, HelperNodeList paramHelperNodeList) {
-/*  523 */     if (!ignoreLineBreaks) {
-/*  524 */       paramHelperNodeList.appendChild(paramDocument.createTextNode("\n"));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public static void addReturnBeforeChild(Element paramElement, Node paramNode) {
-/*  529 */     if (!ignoreLineBreaks) {
-/*  530 */       Document document = paramElement.getOwnerDocument();
-/*  531 */       paramElement.insertBefore(document.createTextNode("\n"), paramNode);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Set<Node> convertNodelistToSet(NodeList paramNodeList) {
-/*  542 */     if (paramNodeList == null) {
-/*  543 */       return new HashSet<>();
-/*      */     }
-/*      */     
-/*  546 */     int i = paramNodeList.getLength();
-/*  547 */     HashSet<Node> hashSet = new HashSet(i);
-/*      */     
-/*  549 */     for (byte b = 0; b < i; b++) {
-/*  550 */       hashSet.add(paramNodeList.item(b));
-/*      */     }
-/*      */     
-/*  553 */     return hashSet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void circumventBug2650(Document paramDocument) {
-/*  570 */     Element element = paramDocument.getDocumentElement();
-/*      */ 
-/*      */ 
-/*      */     
-/*  574 */     Attr attr = element.getAttributeNodeNS("http://www.w3.org/2000/xmlns/", "xmlns");
-/*      */     
-/*  576 */     if (attr == null) {
-/*  577 */       element.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", "");
-/*      */     }
-/*      */     
-/*  580 */     circumventBug2650internal(paramDocument);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void circumventBug2650internal(Node paramNode) {
-/*  592 */     Node node1 = null;
-/*  593 */     Node node2 = null;
-/*      */     while (true) {
-/*      */       Element element;
-/*  596 */       switch (paramNode.getNodeType()) {
-/*      */         case 1:
-/*  598 */           element = (Element)paramNode;
-/*  599 */           if (!element.hasChildNodes()) {
-/*      */             break;
-/*      */           }
-/*  602 */           if (element.hasAttributes()) {
-/*  603 */             NamedNodeMap namedNodeMap = element.getAttributes();
-/*  604 */             int i = namedNodeMap.getLength();
-/*      */             
-/*  606 */             for (Node node = element.getFirstChild(); node != null; 
-/*  607 */               node = node.getNextSibling()) {
-/*      */               
-/*  609 */               if (node.getNodeType() == 1) {
-/*      */ 
-/*      */                 
-/*  612 */                 Element element1 = (Element)node;
-/*      */                 
-/*  614 */                 for (byte b = 0; b < i; b++)
-/*  615 */                 { Attr attr = (Attr)namedNodeMap.item(b);
-/*  616 */                   if ("http://www.w3.org/2000/xmlns/".equals(attr.getNamespaceURI()))
-/*      */                   {
-/*      */                     
-/*  619 */                     if (!element1.hasAttributeNS("http://www.w3.org/2000/xmlns/", attr
-/*  620 */                         .getLocalName()))
-/*      */                     {
-/*      */                       
-/*  623 */                       element1.setAttributeNS("http://www.w3.org/2000/xmlns/", attr
-/*  624 */                           .getName(), attr
-/*  625 */                           .getNodeValue()); }  }  } 
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/*      */         case 5:
-/*      */         case 9:
-/*  631 */           node1 = paramNode;
-/*  632 */           node2 = paramNode.getFirstChild();
-/*      */           break;
-/*      */       } 
-/*  635 */       while (node2 == null && node1 != null) {
-/*  636 */         node2 = node1.getNextSibling();
-/*  637 */         node1 = node1.getParentNode();
-/*      */       } 
-/*  639 */       if (node2 == null) {
-/*      */         return;
-/*      */       }
-/*      */       
-/*  643 */       paramNode = node2;
-/*  644 */       node2 = paramNode.getNextSibling();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element selectDsNode(Node paramNode, String paramString, int paramInt) {
-/*  655 */     while (paramNode != null) {
-/*  656 */       if ("http://www.w3.org/2000/09/xmldsig#".equals(paramNode.getNamespaceURI()) && paramNode
-/*  657 */         .getLocalName().equals(paramString)) {
-/*  658 */         if (paramInt == 0) {
-/*  659 */           return (Element)paramNode;
-/*      */         }
-/*  661 */         paramInt--;
-/*      */       } 
-/*  663 */       paramNode = paramNode.getNextSibling();
-/*      */     } 
-/*  665 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element selectDs11Node(Node paramNode, String paramString, int paramInt) {
-/*  675 */     while (paramNode != null) {
-/*  676 */       if ("http://www.w3.org/2009/xmldsig11#".equals(paramNode.getNamespaceURI()) && paramNode
-/*  677 */         .getLocalName().equals(paramString)) {
-/*  678 */         if (paramInt == 0) {
-/*  679 */           return (Element)paramNode;
-/*      */         }
-/*  681 */         paramInt--;
-/*      */       } 
-/*  683 */       paramNode = paramNode.getNextSibling();
-/*      */     } 
-/*  685 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element selectXencNode(Node paramNode, String paramString, int paramInt) {
-/*  695 */     while (paramNode != null) {
-/*  696 */       if ("http://www.w3.org/2001/04/xmlenc#".equals(paramNode.getNamespaceURI()) && paramNode
-/*  697 */         .getLocalName().equals(paramString)) {
-/*  698 */         if (paramInt == 0) {
-/*  699 */           return (Element)paramNode;
-/*      */         }
-/*  701 */         paramInt--;
-/*      */       } 
-/*  703 */       paramNode = paramNode.getNextSibling();
-/*      */     } 
-/*  705 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Text selectDsNodeText(Node paramNode, String paramString, int paramInt) {
-/*  716 */     Element element = selectDsNode(paramNode, paramString, paramInt);
-/*  717 */     if (element == null) {
-/*  718 */       return null;
-/*      */     }
-/*  720 */     Node node = element.getFirstChild();
-/*  721 */     while (node != null && node.getNodeType() != 3) {
-/*  722 */       node = node.getNextSibling();
-/*      */     }
-/*  724 */     return (Text)node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Text selectDs11NodeText(Node paramNode, String paramString, int paramInt) {
-/*  734 */     Element element = selectDs11Node(paramNode, paramString, paramInt);
-/*  735 */     if (element == null) {
-/*  736 */       return null;
-/*      */     }
-/*  738 */     Node node = element.getFirstChild();
-/*  739 */     while (node != null && node.getNodeType() != 3) {
-/*  740 */       node = node.getNextSibling();
-/*      */     }
-/*  742 */     return (Text)node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Text selectNodeText(Node paramNode, String paramString1, String paramString2, int paramInt) {
-/*  753 */     Element element = selectNode(paramNode, paramString1, paramString2, paramInt);
-/*  754 */     if (element == null) {
-/*  755 */       return null;
-/*      */     }
-/*  757 */     Node node = element.getFirstChild();
-/*  758 */     while (node != null && node.getNodeType() != 3) {
-/*  759 */       node = node.getNextSibling();
-/*      */     }
-/*  761 */     return (Text)node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element selectNode(Node paramNode, String paramString1, String paramString2, int paramInt) {
-/*  772 */     while (paramNode != null) {
-/*  773 */       if (paramNode.getNamespaceURI() != null && paramNode.getNamespaceURI().equals(paramString1) && paramNode
-/*  774 */         .getLocalName().equals(paramString2)) {
-/*  775 */         if (paramInt == 0) {
-/*  776 */           return (Element)paramNode;
-/*      */         }
-/*  778 */         paramInt--;
-/*      */       } 
-/*  780 */       paramNode = paramNode.getNextSibling();
-/*      */     } 
-/*  782 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element[] selectDsNodes(Node paramNode, String paramString) {
-/*  791 */     return selectNodes(paramNode, "http://www.w3.org/2000/09/xmldsig#", paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element[] selectDs11Nodes(Node paramNode, String paramString) {
-/*  800 */     return selectNodes(paramNode, "http://www.w3.org/2009/xmldsig11#", paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Element[] selectNodes(Node paramNode, String paramString1, String paramString2) {
-/*  810 */     ArrayList<Element> arrayList = new ArrayList();
-/*  811 */     while (paramNode != null) {
-/*  812 */       if (paramNode.getNamespaceURI() != null && paramNode.getNamespaceURI().equals(paramString1) && paramNode
-/*  813 */         .getLocalName().equals(paramString2)) {
-/*  814 */         arrayList.add((Element)paramNode);
-/*      */       }
-/*  816 */       paramNode = paramNode.getNextSibling();
-/*      */     } 
-/*  818 */     return arrayList.<Element>toArray(new Element[arrayList.size()]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Set<Node> excludeNodeFromSet(Node paramNode, Set<Node> paramSet) {
-/*  827 */     HashSet<Node> hashSet = new HashSet();
-/*  828 */     Iterator<Node> iterator = paramSet.iterator();
-/*      */     
-/*  830 */     while (iterator.hasNext()) {
-/*  831 */       Node node = iterator.next();
-/*      */       
-/*  833 */       if (!isDescendantOrSelf(paramNode, node)) {
-/*  834 */         hashSet.add(node);
-/*      */       }
-/*      */     } 
-/*  837 */     return hashSet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getStrFromNode(Node paramNode) {
-/*  847 */     if (paramNode.getNodeType() == 3) {
-/*      */ 
-/*      */       
-/*  850 */       StringBuilder stringBuilder = new StringBuilder();
-/*      */       
-/*  852 */       Node node = paramNode.getParentNode().getFirstChild();
-/*  853 */       for (; node != null; 
-/*  854 */         node = node.getNextSibling()) {
-/*  855 */         if (node.getNodeType() == 3) {
-/*  856 */           stringBuilder.append(((Text)node).getData());
-/*      */         }
-/*      */       } 
-/*      */       
-/*  860 */       return stringBuilder.toString();
-/*  861 */     }  if (paramNode.getNodeType() == 2)
-/*  862 */       return ((Attr)paramNode).getNodeValue(); 
-/*  863 */     if (paramNode.getNodeType() == 7) {
-/*  864 */       return ((ProcessingInstruction)paramNode).getNodeValue();
-/*      */     }
-/*      */     
-/*  867 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean isDescendantOrSelf(Node paramNode1, Node paramNode2) {
-/*  879 */     if (paramNode1 == paramNode2) {
-/*  880 */       return true;
-/*      */     }
-/*      */     
-/*  883 */     Node node = paramNode2;
-/*      */     
-/*      */     while (true) {
-/*  886 */       if (node == null) {
-/*  887 */         return false;
-/*      */       }
-/*      */       
-/*  890 */       if (node == paramNode1) {
-/*  891 */         return true;
-/*      */       }
-/*      */       
-/*  894 */       if (node.getNodeType() == 2) {
-/*  895 */         node = ((Attr)node).getOwnerElement(); continue;
-/*      */       } 
-/*  897 */       node = node.getParentNode();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static boolean ignoreLineBreaks() {
-/*  903 */     return ignoreLineBreaks;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String getAttributeValue(Element paramElement, String paramString) {
-/*  921 */     Attr attr = paramElement.getAttributeNodeNS((String)null, paramString);
-/*  922 */     return (attr == null) ? null : attr.getValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean protectAgainstWrappingAttack(Node paramNode, String paramString) {
-/*  932 */     Node node1 = paramNode.getParentNode();
-/*  933 */     Node node2 = null;
-/*  934 */     Element element = null;
-/*      */     
-/*  936 */     String str = paramString.trim();
-/*  937 */     if (!str.isEmpty() && str.charAt(0) == '#') {
-/*  938 */       str = str.substring(1);
-/*      */     }
-/*      */     
-/*  941 */     while (paramNode != null) {
-/*  942 */       if (paramNode.getNodeType() == 1) {
-/*  943 */         Element element1 = (Element)paramNode;
-/*      */         
-/*  945 */         NamedNodeMap namedNodeMap = element1.getAttributes();
-/*  946 */         if (namedNodeMap != null) {
-/*  947 */           for (byte b = 0; b < namedNodeMap.getLength(); b++) {
-/*  948 */             Attr attr = (Attr)namedNodeMap.item(b);
-/*  949 */             if (attr.isId() && str.equals(attr.getValue())) {
-/*  950 */               if (element == null) {
-/*      */                 
-/*  952 */                 element = attr.getOwnerElement();
-/*      */               } else {
-/*  954 */                 log.log(Level.FINE, "Multiple elements with the same 'Id' attribute value!");
-/*  955 */                 return false;
-/*      */               } 
-/*      */             }
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */       
-/*  962 */       node2 = paramNode;
-/*  963 */       paramNode = paramNode.getFirstChild();
-/*      */ 
-/*      */       
-/*  966 */       if (paramNode == null)
-/*      */       {
-/*  968 */         paramNode = node2.getNextSibling();
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  973 */       while (paramNode == null) {
-/*  974 */         node2 = node2.getParentNode();
-/*  975 */         if (node2 == node1) {
-/*  976 */           return true;
-/*      */         }
-/*      */         
-/*  979 */         paramNode = node2.getNextSibling();
-/*      */       } 
-/*      */     } 
-/*  982 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean protectAgainstWrappingAttack(Node paramNode, Element paramElement, String paramString) {
-/*  993 */     Node node1 = paramNode.getParentNode();
-/*  994 */     Node node2 = null;
-/*      */     
-/*  996 */     String str = paramString.trim();
-/*  997 */     if (!str.isEmpty() && str.charAt(0) == '#') {
-/*  998 */       str = str.substring(1);
-/*      */     }
-/*      */     
-/* 1001 */     while (paramNode != null) {
-/* 1002 */       if (paramNode.getNodeType() == 1) {
-/* 1003 */         Element element = (Element)paramNode;
-/*      */         
-/* 1005 */         NamedNodeMap namedNodeMap = element.getAttributes();
-/* 1006 */         if (namedNodeMap != null) {
-/* 1007 */           for (byte b = 0; b < namedNodeMap.getLength(); b++) {
-/* 1008 */             Attr attr = (Attr)namedNodeMap.item(b);
-/* 1009 */             if (attr.isId() && str.equals(attr.getValue()) && element != paramElement) {
-/* 1010 */               log.log(Level.FINE, "Multiple elements with the same 'Id' attribute value!");
-/* 1011 */               return false;
-/*      */             } 
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1017 */       node2 = paramNode;
-/* 1018 */       paramNode = paramNode.getFirstChild();
-/*      */ 
-/*      */       
-/* 1021 */       if (paramNode == null)
-/*      */       {
-/* 1023 */         paramNode = node2.getNextSibling();
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1028 */       while (paramNode == null) {
-/* 1029 */         node2 = node2.getParentNode();
-/* 1030 */         if (node2 == node1) {
-/* 1031 */           return true;
-/*      */         }
-/*      */         
-/* 1034 */         paramNode = node2.getNextSibling();
-/*      */       } 
-/*      */     } 
-/* 1037 */     return true;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\XMLUtils.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
+import com.sun.org.apache.xml.internal.security.c14n.Canonicalizer;
+import com.sun.org.apache.xml.internal.security.c14n.InvalidCanonicalizerException;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.ProcessingInstruction;
+import org.w3c.dom.Text;
+
+/**
+ * DOM and XML accessibility and comfort functions.
+ *
+ * @author Christian Geuer-Pollmann
+ */
+public class XMLUtils {
+
+    private static boolean ignoreLineBreaks =
+        AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            public Boolean run() {
+                return Boolean.valueOf(Boolean.getBoolean
+                    ("com.sun.org.apache.xml.internal.security.ignoreLineBreaks"));
+            }
+        }).booleanValue();
+
+    private static volatile String dsPrefix = "ds";
+    private static volatile String ds11Prefix = "dsig11";
+    private static volatile String xencPrefix = "xenc";
+    private static volatile String xenc11Prefix = "xenc11";
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static final java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(XMLUtils.class.getName());
+
+
+    /**
+     * Constructor XMLUtils
+     *
+     */
+    private XMLUtils() {
+        // we don't allow instantiation
+    }
+
+    /**
+     * Set the prefix for the digital signature namespace
+     * @param prefix the new prefix for the digital signature namespace
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the prefix
+     */
+    public static void setDsPrefix(String prefix) {
+        JavaUtils.checkRegisterPermission();
+        dsPrefix = prefix;
+    }
+
+    /**
+     * Set the prefix for the digital signature 1.1 namespace
+     * @param prefix the new prefix for the digital signature 1.1 namespace
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the prefix
+     */
+    public static void setDs11Prefix(String prefix) {
+        JavaUtils.checkRegisterPermission();
+        ds11Prefix = prefix;
+    }
+
+    /**
+     * Set the prefix for the encryption namespace
+     * @param prefix the new prefix for the encryption namespace
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the prefix
+     */
+    public static void setXencPrefix(String prefix) {
+        JavaUtils.checkRegisterPermission();
+        xencPrefix = prefix;
+    }
+
+    /**
+     * Set the prefix for the encryption namespace 1.1
+     * @param prefix the new prefix for the encryption namespace 1.1
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the prefix
+     */
+    public static void setXenc11Prefix(String prefix) {
+        JavaUtils.checkRegisterPermission();
+        xenc11Prefix = prefix;
+    }
+
+    public static Element getNextElement(Node el) {
+        Node node = el;
+        while ((node != null) && (node.getNodeType() != Node.ELEMENT_NODE)) {
+            node = node.getNextSibling();
+        }
+        return (Element)node;
+    }
+
+    /**
+     * @param rootNode
+     * @param result
+     * @param exclude
+     * @param com whether comments or not
+     */
+    public static void getSet(Node rootNode, Set<Node> result, Node exclude, boolean com) {
+        if ((exclude != null) && isDescendantOrSelf(exclude, rootNode)) {
+            return;
+        }
+        getSetRec(rootNode, result, exclude, com);
+    }
+
+    @SuppressWarnings("fallthrough")
+    private static void getSetRec(final Node rootNode, final Set<Node> result,
+                                final Node exclude, final boolean com) {
+        if (rootNode == exclude) {
+            return;
+        }
+        switch (rootNode.getNodeType()) {
+        case Node.ELEMENT_NODE:
+            result.add(rootNode);
+            Element el = (Element)rootNode;
+            if (el.hasAttributes()) {
+                NamedNodeMap nl = el.getAttributes();
+                for (int i = 0;i < nl.getLength(); i++) {
+                    result.add(nl.item(i));
+                }
+            }
+            //no return keep working
+        case Node.DOCUMENT_NODE:
+            for (Node r = rootNode.getFirstChild(); r != null; r = r.getNextSibling()) {
+                if (r.getNodeType() == Node.TEXT_NODE) {
+                    result.add(r);
+                    while ((r != null) && (r.getNodeType() == Node.TEXT_NODE)) {
+                        r = r.getNextSibling();
+                    }
+                    if (r == null) {
+                        return;
+                    }
+                }
+                getSetRec(r, result, exclude, com);
+            }
+            return;
+        case Node.COMMENT_NODE:
+            if (com) {
+                result.add(rootNode);
+            }
+            return;
+        case Node.DOCUMENT_TYPE_NODE:
+            return;
+        default:
+            result.add(rootNode);
+        }
+    }
+
+
+    /**
+     * Outputs a DOM tree to an {@link OutputStream}.
+     *
+     * @param contextNode root node of the DOM tree
+     * @param os the {@link OutputStream}
+     */
+    public static void outputDOM(Node contextNode, OutputStream os) {
+        XMLUtils.outputDOM(contextNode, os, false);
+    }
+
+    /**
+     * Outputs a DOM tree to an {@link OutputStream}. <I>If an Exception is
+     * thrown during execution, it's StackTrace is output to System.out, but the
+     * Exception is not re-thrown.</I>
+     *
+     * @param contextNode root node of the DOM tree
+     * @param os the {@link OutputStream}
+     * @param addPreamble
+     */
+    public static void outputDOM(Node contextNode, OutputStream os, boolean addPreamble) {
+        try {
+            if (addPreamble) {
+                os.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".getBytes("UTF-8"));
+            }
+
+            os.write(Canonicalizer.getInstance(
+                Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS).canonicalizeSubtree(contextNode)
+            );
+        } catch (IOException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+        }
+        catch (InvalidCanonicalizerException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+        } catch (CanonicalizationException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+        }
+    }
+
+    /**
+     * Serializes the <CODE>contextNode</CODE> into the OutputStream, <I>but
+     * suppresses all Exceptions</I>.
+     * <BR />
+     * NOTE: <I>This should only be used for debugging purposes,
+     * NOT in a production environment; this method ignores all exceptions,
+     * so you won't notice if something goes wrong. If you're asking what is to
+     * be used in a production environment, simply use the code inside the
+     * <code>try{}</code> statement, but handle the Exceptions appropriately.</I>
+     *
+     * @param contextNode
+     * @param os
+     */
+    public static void outputDOMc14nWithComments(Node contextNode, OutputStream os) {
+        try {
+            os.write(Canonicalizer.getInstance(
+                Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS).canonicalizeSubtree(contextNode)
+            );
+        } catch (IOException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+            // throw new RuntimeException(ex.getMessage());
+        } catch (InvalidCanonicalizerException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+            // throw new RuntimeException(ex.getMessage());
+        } catch (CanonicalizationException ex) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+            // throw new RuntimeException(ex.getMessage());
+        }
+    }
+
+    /**
+     * Method getFullTextChildrenFromElement
+     *
+     * @param element
+     * @return the string of children
+     */
+    public static String getFullTextChildrenFromElement(Element element) {
+        StringBuilder sb = new StringBuilder();
+
+        Node child = element.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.TEXT_NODE) {
+                sb.append(((Text)child).getData());
+            }
+            child = child.getNextSibling();
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Creates an Element in the XML Signature specification namespace.
+     *
+     * @param doc the factory Document
+     * @param elementName the local name of the Element
+     * @return the Element
+     */
+    public static Element createElementInSignatureSpace(Document doc, String elementName) {
+        if (doc == null) {
+            throw new RuntimeException("Document is null");
+        }
+
+        if ((dsPrefix == null) || (dsPrefix.length() == 0)) {
+            return doc.createElementNS(Constants.SignatureSpecNS, elementName);
+        }
+        return doc.createElementNS(Constants.SignatureSpecNS, dsPrefix + ":" + elementName);
+    }
+
+    /**
+     * Creates an Element in the XML Signature 1.1 specification namespace.
+     *
+     * @param doc the factory Document
+     * @param elementName the local name of the Element
+     * @return the Element
+     */
+    public static Element createElementInSignature11Space(Document doc, String elementName) {
+        if (doc == null) {
+            throw new RuntimeException("Document is null");
+        }
+
+        if ((ds11Prefix == null) || (ds11Prefix.length() == 0)) {
+            return doc.createElementNS(Constants.SignatureSpec11NS, elementName);
+        }
+        return doc.createElementNS(Constants.SignatureSpec11NS, ds11Prefix + ":" + elementName);
+    }
+
+    /**
+     * Creates an Element in the XML Encryption specification namespace.
+     *
+     * @param doc the factory Document
+     * @param elementName the local name of the Element
+     * @return the Element
+     */
+    public static Element createElementInEncryptionSpace(Document doc, String elementName) {
+        if (doc == null) {
+            throw new RuntimeException("Document is null");
+        }
+
+        if ((xencPrefix == null) || (xencPrefix.length() == 0)) {
+            return doc.createElementNS(EncryptionConstants.EncryptionSpecNS, elementName);
+        }
+        return
+            doc.createElementNS(
+                EncryptionConstants.EncryptionSpecNS, xencPrefix + ":" + elementName
+            );
+    }
+
+    /**
+     * Creates an Element in the XML Encryption 1.1 specification namespace.
+     *
+     * @param doc the factory Document
+     * @param elementName the local name of the Element
+     * @return the Element
+     */
+    public static Element createElementInEncryption11Space(Document doc, String elementName) {
+        if (doc == null) {
+            throw new RuntimeException("Document is null");
+        }
+
+        if ((xenc11Prefix == null) || (xenc11Prefix.length() == 0)) {
+            return doc.createElementNS(EncryptionConstants.EncryptionSpec11NS, elementName);
+        }
+        return
+            doc.createElementNS(
+                EncryptionConstants.EncryptionSpec11NS, xenc11Prefix + ":" + elementName
+            );
+    }
+
+    /**
+     * Returns true if the element is in XML Signature namespace and the local
+     * name equals the supplied one.
+     *
+     * @param element
+     * @param localName
+     * @return true if the element is in XML Signature namespace and the local name equals
+     * the supplied one
+     */
+    public static boolean elementIsInSignatureSpace(Element element, String localName) {
+        if (element == null){
+            return false;
+        }
+
+        return Constants.SignatureSpecNS.equals(element.getNamespaceURI())
+            && element.getLocalName().equals(localName);
+    }
+
+    /**
+     * Returns true if the element is in XML Signature 1.1 namespace and the local
+     * name equals the supplied one.
+     *
+     * @param element
+     * @param localName
+     * @return true if the element is in XML Signature namespace and the local name equals
+     * the supplied one
+     */
+    public static boolean elementIsInSignature11Space(Element element, String localName) {
+        if (element == null) {
+            return false;
+        }
+
+        return Constants.SignatureSpec11NS.equals(element.getNamespaceURI())
+            && element.getLocalName().equals(localName);
+    }
+
+    /**
+     * Returns true if the element is in XML Encryption namespace and the local
+     * name equals the supplied one.
+     *
+     * @param element
+     * @param localName
+     * @return true if the element is in XML Encryption namespace and the local name
+     * equals the supplied one
+     */
+    public static boolean elementIsInEncryptionSpace(Element element, String localName) {
+        if (element == null){
+            return false;
+        }
+        return EncryptionConstants.EncryptionSpecNS.equals(element.getNamespaceURI())
+            && element.getLocalName().equals(localName);
+    }
+
+    /**
+     * Returns true if the element is in XML Encryption 1.1 namespace and the local
+     * name equals the supplied one.
+     *
+     * @param element
+     * @param localName
+     * @return true if the element is in XML Encryption 1.1 namespace and the local name
+     * equals the supplied one
+     */
+    public static boolean elementIsInEncryption11Space(Element element, String localName) {
+        if (element == null){
+            return false;
+        }
+        return EncryptionConstants.EncryptionSpec11NS.equals(element.getNamespaceURI())
+            && element.getLocalName().equals(localName);
+    }
+
+    /**
+     * This method returns the owner document of a particular node.
+     * This method is necessary because it <I>always</I> returns a
+     * {@link Document}. {@link Node#getOwnerDocument} returns <CODE>null</CODE>
+     * if the {@link Node} is a {@link Document}.
+     *
+     * @param node
+     * @return the owner document of the node
+     */
+    public static Document getOwnerDocument(Node node) {
+        if (node.getNodeType() == Node.DOCUMENT_NODE) {
+            return (Document) node;
+        }
+        try {
+            return node.getOwnerDocument();
+        } catch (NullPointerException npe) {
+            throw new NullPointerException(I18n.translate("endorsed.jdk1.4.0")
+                                           + " Original message was \""
+                                           + npe.getMessage() + "\"");
+        }
+    }
+
+    /**
+     * This method returns the first non-null owner document of the Nodes in this Set.
+     * This method is necessary because it <I>always</I> returns a
+     * {@link Document}. {@link Node#getOwnerDocument} returns <CODE>null</CODE>
+     * if the {@link Node} is a {@link Document}.
+     *
+     * @param xpathNodeSet
+     * @return the owner document
+     */
+    public static Document getOwnerDocument(Set<Node> xpathNodeSet) {
+        NullPointerException npe = null;
+        for (Node node : xpathNodeSet) {
+            int nodeType = node.getNodeType();
+            if (nodeType == Node.DOCUMENT_NODE) {
+                return (Document) node;
+            }
+            try {
+                if (nodeType == Node.ATTRIBUTE_NODE) {
+                    return ((Attr)node).getOwnerElement().getOwnerDocument();
+                }
+                return node.getOwnerDocument();
+            } catch (NullPointerException e) {
+                npe = e;
+            }
+        }
+
+        throw new NullPointerException(I18n.translate("endorsed.jdk1.4.0")
+                                       + " Original message was \""
+                                       + (npe == null ? "" : npe.getMessage()) + "\"");
+    }
+
+    /**
+     * Method createDSctx
+     *
+     * @param doc
+     * @param prefix
+     * @param namespace
+     * @return the element.
+     */
+    public static Element createDSctx(Document doc, String prefix, String namespace) {
+        if ((prefix == null) || (prefix.trim().length() == 0)) {
+            throw new IllegalArgumentException("You must supply a prefix");
+        }
+
+        Element ctx = doc.createElementNS(null, "namespaceContext");
+
+        ctx.setAttributeNS(Constants.NamespaceSpecNS, "xmlns:" + prefix.trim(), namespace);
+
+        return ctx;
+    }
+
+    /**
+     * Method addReturnToElement
+     *
+     * @param e
+     */
+    public static void addReturnToElement(Element e) {
+        if (!ignoreLineBreaks) {
+            Document doc = e.getOwnerDocument();
+            e.appendChild(doc.createTextNode("\n"));
+        }
+    }
+
+    public static void addReturnToElement(Document doc, HelperNodeList nl) {
+        if (!ignoreLineBreaks) {
+            nl.appendChild(doc.createTextNode("\n"));
+        }
+    }
+
+    public static void addReturnBeforeChild(Element e, Node child) {
+        if (!ignoreLineBreaks) {
+            Document doc = e.getOwnerDocument();
+            e.insertBefore(doc.createTextNode("\n"), child);
+        }
+    }
+
+    /**
+     * Method convertNodelistToSet
+     *
+     * @param xpathNodeSet
+     * @return the set with the nodelist
+     */
+    public static Set<Node> convertNodelistToSet(NodeList xpathNodeSet) {
+        if (xpathNodeSet == null) {
+            return new HashSet<Node>();
+        }
+
+        int length = xpathNodeSet.getLength();
+        Set<Node> set = new HashSet<Node>(length);
+
+        for (int i = 0; i < length; i++) {
+            set.add(xpathNodeSet.item(i));
+        }
+
+        return set;
+    }
+
+    /**
+     * This method spreads all namespace attributes in a DOM document to their
+     * children. This is needed because the XML Signature XPath transform
+     * must evaluate the XPath against all nodes in the input, even against
+     * XPath namespace nodes. Through a bug in XalanJ2, the namespace nodes are
+     * not fully visible in the Xalan XPath model, so we have to do this by
+     * hand in DOM spaces so that the nodes become visible in XPath space.
+     *
+     * @param doc
+     * @see <A HREF="http://nagoya.apache.org/bugzilla/show_bug.cgi?id=2650">
+     * Namespace axis resolution is not XPath compliant </A>
+     */
+    public static void circumventBug2650(Document doc) {
+
+        Element documentElement = doc.getDocumentElement();
+
+        // if the document element has no xmlns definition, we add xmlns=""
+        Attr xmlnsAttr =
+            documentElement.getAttributeNodeNS(Constants.NamespaceSpecNS, "xmlns");
+
+        if (xmlnsAttr == null) {
+            documentElement.setAttributeNS(Constants.NamespaceSpecNS, "xmlns", "");
+        }
+
+        XMLUtils.circumventBug2650internal(doc);
+    }
+
+    /**
+     * This is the work horse for {@link #circumventBug2650}.
+     *
+     * @param node
+     * @see <A HREF="http://nagoya.apache.org/bugzilla/show_bug.cgi?id=2650">
+     * Namespace axis resolution is not XPath compliant </A>
+     */
+    @SuppressWarnings("fallthrough")
+    private static void circumventBug2650internal(Node node) {
+        Node parent = null;
+        Node sibling = null;
+        final String namespaceNs = Constants.NamespaceSpecNS;
+        do {
+            switch (node.getNodeType()) {
+            case Node.ELEMENT_NODE :
+                Element element = (Element) node;
+                if (!element.hasChildNodes()) {
+                    break;
+                }
+                if (element.hasAttributes()) {
+                    NamedNodeMap attributes = element.getAttributes();
+                    int attributesLength = attributes.getLength();
+
+                    for (Node child = element.getFirstChild(); child!=null;
+                        child = child.getNextSibling()) {
+
+                        if (child.getNodeType() != Node.ELEMENT_NODE) {
+                            continue;
+                        }
+                        Element childElement = (Element) child;
+
+                        for (int i = 0; i < attributesLength; i++) {
+                            Attr currentAttr = (Attr) attributes.item(i);
+                            if (!namespaceNs.equals(currentAttr.getNamespaceURI())) {
+                                continue;
+                            }
+                            if (childElement.hasAttributeNS(namespaceNs,
+                                                            currentAttr.getLocalName())) {
+                                continue;
+                            }
+                            childElement.setAttributeNS(namespaceNs,
+                                                        currentAttr.getName(),
+                                                        currentAttr.getNodeValue());
+                        }
+                    }
+                }
+            case Node.ENTITY_REFERENCE_NODE :
+            case Node.DOCUMENT_NODE :
+                parent = node;
+                sibling = node.getFirstChild();
+                break;
+            }
+            while ((sibling == null) && (parent != null)) {
+                sibling = parent.getNextSibling();
+                parent = parent.getParentNode();
+            }
+            if (sibling == null) {
+                return;
+            }
+
+            node = sibling;
+            sibling = node.getNextSibling();
+        } while (true);
+    }
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @param number
+     * @return nodes with the constraint
+     */
+    public static Element selectDsNode(Node sibling, String nodeName, int number) {
+        while (sibling != null) {
+            if (Constants.SignatureSpecNS.equals(sibling.getNamespaceURI())
+                && sibling.getLocalName().equals(nodeName)) {
+                if (number == 0){
+                    return (Element)sibling;
+                }
+                number--;
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return null;
+    }
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @param number
+     * @return nodes with the constraint
+     */
+    public static Element selectDs11Node(Node sibling, String nodeName, int number) {
+        while (sibling != null) {
+            if (Constants.SignatureSpec11NS.equals(sibling.getNamespaceURI())
+                && sibling.getLocalName().equals(nodeName)) {
+                if (number == 0){
+                    return (Element)sibling;
+                }
+                number--;
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return null;
+    }
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @param number
+     * @return nodes with the constrain
+     */
+    public static Element selectXencNode(Node sibling, String nodeName, int number) {
+        while (sibling != null) {
+            if (EncryptionConstants.EncryptionSpecNS.equals(sibling.getNamespaceURI())
+                && sibling.getLocalName().equals(nodeName)) {
+                if (number == 0){
+                    return (Element)sibling;
+                }
+                number--;
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return null;
+    }
+
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @param number
+     * @return nodes with the constrain
+     */
+    public static Text selectDsNodeText(Node sibling, String nodeName, int number) {
+        Node n = selectDsNode(sibling,nodeName,number);
+        if (n == null) {
+            return null;
+        }
+        n = n.getFirstChild();
+        while (n != null && n.getNodeType() != Node.TEXT_NODE) {
+            n = n.getNextSibling();
+        }
+        return (Text)n;
+    }
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @param number
+     * @return nodes with the constrain
+     */
+    public static Text selectDs11NodeText(Node sibling, String nodeName, int number) {
+        Node n = selectDs11Node(sibling,nodeName,number);
+        if (n == null) {
+            return null;
+        }
+        n = n.getFirstChild();
+        while (n != null && n.getNodeType() != Node.TEXT_NODE) {
+            n = n.getNextSibling();
+        }
+        return (Text)n;
+    }
+
+    /**
+     * @param sibling
+     * @param uri
+     * @param nodeName
+     * @param number
+     * @return nodes with the constrain
+     */
+    public static Text selectNodeText(Node sibling, String uri, String nodeName, int number) {
+        Node n = selectNode(sibling,uri,nodeName,number);
+        if (n == null) {
+            return null;
+        }
+        n = n.getFirstChild();
+        while (n != null && n.getNodeType() != Node.TEXT_NODE) {
+            n = n.getNextSibling();
+        }
+        return (Text)n;
+    }
+
+    /**
+     * @param sibling
+     * @param uri
+     * @param nodeName
+     * @param number
+     * @return nodes with the constrain
+     */
+    public static Element selectNode(Node sibling, String uri, String nodeName, int number) {
+        while (sibling != null) {
+            if (sibling.getNamespaceURI() != null && sibling.getNamespaceURI().equals(uri)
+                && sibling.getLocalName().equals(nodeName)) {
+                if (number == 0){
+                    return (Element)sibling;
+                }
+                number--;
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return null;
+    }
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @return nodes with the constrain
+     */
+    public static Element[] selectDsNodes(Node sibling, String nodeName) {
+        return selectNodes(sibling, Constants.SignatureSpecNS, nodeName);
+    }
+
+    /**
+     * @param sibling
+     * @param nodeName
+     * @return nodes with the constrain
+     */
+    public static Element[] selectDs11Nodes(Node sibling, String nodeName) {
+        return selectNodes(sibling, Constants.SignatureSpec11NS, nodeName);
+    }
+
+    /**
+     * @param sibling
+     * @param uri
+     * @param nodeName
+     * @return nodes with the constraint
+     */
+    public static Element[] selectNodes(Node sibling, String uri, String nodeName) {
+        List<Element> list = new ArrayList<Element>();
+        while (sibling != null) {
+            if (sibling.getNamespaceURI() != null && sibling.getNamespaceURI().equals(uri)
+                && sibling.getLocalName().equals(nodeName)) {
+                list.add((Element)sibling);
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return list.toArray(new Element[list.size()]);
+    }
+
+    /**
+     * @param signatureElement
+     * @param inputSet
+     * @return nodes with the constrain
+     */
+    public static Set<Node> excludeNodeFromSet(Node signatureElement, Set<Node> inputSet) {
+        Set<Node> resultSet = new HashSet<Node>();
+        Iterator<Node> iterator = inputSet.iterator();
+
+        while (iterator.hasNext()) {
+            Node inputNode = iterator.next();
+
+            if (!XMLUtils.isDescendantOrSelf(signatureElement, inputNode)) {
+                resultSet.add(inputNode);
+            }
+        }
+        return resultSet;
+    }
+
+    /**
+     * Method getStrFromNode
+     *
+     * @param xpathnode
+     * @return the string for the node.
+     */
+    public static String getStrFromNode(Node xpathnode) {
+        if (xpathnode.getNodeType() == Node.TEXT_NODE) {
+            // we iterate over all siblings of the context node because eventually,
+            // the text is "polluted" with pi's or comments
+            StringBuilder sb = new StringBuilder();
+
+            for (Node currentSibling = xpathnode.getParentNode().getFirstChild();
+                currentSibling != null;
+                currentSibling = currentSibling.getNextSibling()) {
+                if (currentSibling.getNodeType() == Node.TEXT_NODE) {
+                    sb.append(((Text) currentSibling).getData());
+                }
+            }
+
+            return sb.toString();
+        } else if (xpathnode.getNodeType() == Node.ATTRIBUTE_NODE) {
+            return ((Attr) xpathnode).getNodeValue();
+        } else if (xpathnode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+            return ((ProcessingInstruction) xpathnode).getNodeValue();
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns true if the descendantOrSelf is on the descendant-or-self axis
+     * of the context node.
+     *
+     * @param ctx
+     * @param descendantOrSelf
+     * @return true if the node is descendant
+     */
+    public static boolean isDescendantOrSelf(Node ctx, Node descendantOrSelf) {
+        if (ctx == descendantOrSelf) {
+            return true;
+        }
+
+        Node parent = descendantOrSelf;
+
+        while (true) {
+            if (parent == null) {
+                return false;
+            }
+
+            if (parent == ctx) {
+                return true;
+            }
+
+            if (parent.getNodeType() == Node.ATTRIBUTE_NODE) {
+                parent = ((Attr) parent).getOwnerElement();
+            } else {
+                parent = parent.getParentNode();
+            }
+        }
+    }
+
+    public static boolean ignoreLineBreaks() {
+        return ignoreLineBreaks;
+    }
+
+    /**
+     * Returns the attribute value for the attribute with the specified name.
+     * Returns null if there is no such attribute, or
+     * the empty string if the attribute value is empty.
+     *
+     * <p>This works around a limitation of the DOM
+     * <code>Element.getAttributeNode</code> method, which does not distinguish
+     * between an unspecified attribute and an attribute with a value of
+     * "" (it returns "" for both cases).
+     *
+     * @param elem the element containing the attribute
+     * @param name the name of the attribute
+     * @return the attribute value (may be null if unspecified)
+     */
+    public static String getAttributeValue(Element elem, String name) {
+        Attr attr = elem.getAttributeNodeNS(null, name);
+        return (attr == null) ? null : attr.getValue();
+    }
+
+    /**
+     * This method is a tree-search to help prevent against wrapping attacks. It checks that no
+     * two Elements have ID Attributes that match the "value" argument, if this is the case then
+     * "false" is returned. Note that a return value of "true" does not necessarily mean that
+     * a matching Element has been found, just that no wrapping attack has been detected.
+     */
+    public static boolean protectAgainstWrappingAttack(Node startNode, String value) {
+        Node startParent = startNode.getParentNode();
+        Node processedNode = null;
+        Element foundElement = null;
+
+        String id = value.trim();
+        if (!id.isEmpty() && id.charAt(0) == '#') {
+            id = id.substring(1);
+        }
+
+        while (startNode != null) {
+            if (startNode.getNodeType() == Node.ELEMENT_NODE) {
+                Element se = (Element) startNode;
+
+                NamedNodeMap attributes = se.getAttributes();
+                if (attributes != null) {
+                    for (int i = 0; i < attributes.getLength(); i++) {
+                        Attr attr = (Attr)attributes.item(i);
+                        if (attr.isId() && id.equals(attr.getValue())) {
+                            if (foundElement == null) {
+                                // Continue searching to find duplicates
+                                foundElement = attr.getOwnerElement();
+                            } else {
+                                log.log(java.util.logging.Level.FINE, "Multiple elements with the same 'Id' attribute value!");
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            processedNode = startNode;
+            startNode = startNode.getFirstChild();
+
+            // no child, this node is done.
+            if (startNode == null) {
+                // close node processing, get sibling
+                startNode = processedNode.getNextSibling();
+            }
+
+            // no more siblings, get parent, all children
+            // of parent are processed.
+            while (startNode == null) {
+                processedNode = processedNode.getParentNode();
+                if (processedNode == startParent) {
+                    return true;
+                }
+                // close parent node processing (processed node now)
+                startNode = processedNode.getNextSibling();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * This method is a tree-search to help prevent against wrapping attacks. It checks that no other
+     * Element than the given "knownElement" argument has an ID attribute that matches the "value"
+     * argument, which is the ID value of "knownElement". If this is the case then "false" is returned.
+     */
+    public static boolean protectAgainstWrappingAttack(
+        Node startNode, Element knownElement, String value
+    ) {
+        Node startParent = startNode.getParentNode();
+        Node processedNode = null;
+
+        String id = value.trim();
+        if (!id.isEmpty() && id.charAt(0) == '#') {
+            id = id.substring(1);
+        }
+
+        while (startNode != null) {
+            if (startNode.getNodeType() == Node.ELEMENT_NODE) {
+                Element se = (Element) startNode;
+
+                NamedNodeMap attributes = se.getAttributes();
+                if (attributes != null) {
+                    for (int i = 0; i < attributes.getLength(); i++) {
+                        Attr attr = (Attr)attributes.item(i);
+                        if (attr.isId() && id.equals(attr.getValue()) && se != knownElement) {
+                            log.log(java.util.logging.Level.FINE, "Multiple elements with the same 'Id' attribute value!");
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            processedNode = startNode;
+            startNode = startNode.getFirstChild();
+
+            // no child, this node is done.
+            if (startNode == null) {
+                // close node processing, get sibling
+                startNode = processedNode.getNextSibling();
+            }
+
+            // no more siblings, get parent, all children
+            // of parent are processed.
+            while (startNode == null) {
+                processedNode = processedNode.getParentNode();
+                if (processedNode == startParent) {
+                    return true;
+                }
+                // close parent node processing (processed node now)
+                startNode = processedNode.getNextSibling();
+            }
+        }
+        return true;
+    }
+
+}

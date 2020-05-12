@@ -1,116 +1,110 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpScopedPduBulk
-/*     */   extends SnmpScopedPduPacket
-/*     */   implements SnmpPduBulkType
-/*     */ {
-/*     */   private static final long serialVersionUID = -1648623646227038885L;
-/*     */   int nonRepeaters;
-/*     */   int maxRepetitions;
-/*     */   
-/*     */   public void setMaxRepetitions(int paramInt) {
-/*  65 */     this.maxRepetitions = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setNonRepeaters(int paramInt) {
-/*  73 */     this.nonRepeaters = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getMaxRepetitions() {
-/*  80 */     return this.maxRepetitions;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getNonRepeaters() {
-/*  86 */     return this.nonRepeaters;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpPdu getResponsePdu() {
-/*  93 */     SnmpScopedPduRequest snmpScopedPduRequest = new SnmpScopedPduRequest();
-/*  94 */     snmpScopedPduRequest.address = this.address;
-/*  95 */     snmpScopedPduRequest.port = this.port;
-/*  96 */     snmpScopedPduRequest.version = this.version;
-/*  97 */     snmpScopedPduRequest.requestId = this.requestId;
-/*  98 */     snmpScopedPduRequest.msgId = this.msgId;
-/*  99 */     snmpScopedPduRequest.msgMaxSize = this.msgMaxSize;
-/* 100 */     snmpScopedPduRequest.msgFlags = this.msgFlags;
-/* 101 */     snmpScopedPduRequest.msgSecurityModel = this.msgSecurityModel;
-/* 102 */     snmpScopedPduRequest.contextEngineId = this.contextEngineId;
-/* 103 */     snmpScopedPduRequest.contextName = this.contextName;
-/* 104 */     snmpScopedPduRequest.securityParameters = this.securityParameters;
-/* 105 */     snmpScopedPduRequest.type = 162;
-/* 106 */     snmpScopedPduRequest.errorStatus = 0;
-/* 107 */     snmpScopedPduRequest.errorIndex = 0;
-/* 108 */     return snmpScopedPduRequest;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpScopedPduBulk.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp;
+/**
+ * Represents a <CODE>get-bulk</CODE> PDU as defined in RFC 1448.
+ * <P>
+ * <P>
+ * The <CODE>SnmpSocpedPduBulk</CODE> extends {@link com.sun.jmx.snmp.SnmpScopedPduPacket SnmpScopedPduPacket}
+ * and defines attributes specific to the <CODE>get-bulk</CODE> PDU (see RFC 1448).
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+
+public class SnmpScopedPduBulk extends SnmpScopedPduPacket
+    implements SnmpPduBulkType {
+    private static final long serialVersionUID = -1648623646227038885L;
+
+    /**
+     * The <CODE>non-repeaters</CODE> value.
+     * @serial
+     */
+    int            nonRepeaters;
+
+
+    /**
+     * The <CODE>max-repetitions</CODE> value.
+     * @serial
+     */
+    int            maxRepetitions;
+
+    public SnmpScopedPduBulk() {
+        type = pduGetBulkRequestPdu;
+        version = snmpVersionThree;
+    }
+
+    /**
+     * The <CODE>max-repetitions</CODE> setter.
+     * @param max Maximum repetition.
+     */
+    public void setMaxRepetitions(int max) {
+        maxRepetitions = max;
+    }
+
+    /**
+     * The <CODE>non-repeaters</CODE> setter.
+     * @param nr Non repeaters.
+     */
+    public void setNonRepeaters(int nr) {
+        nonRepeaters = nr;
+    }
+
+    /**
+     * The <CODE>max-repetitions</CODE> getter.
+     * @return Maximum repetition.
+     */
+    public int getMaxRepetitions() { return maxRepetitions; }
+
+    /**
+     * The <CODE>non-repeaters</CODE> getter.
+     * @return Non repeaters.
+     */
+    public int getNonRepeaters() { return nonRepeaters; }
+
+    /**
+     * Generates the pdu to use for response.
+     * @return Response pdu.
+     */
+    public SnmpPdu getResponsePdu() {
+        SnmpScopedPduRequest result = new SnmpScopedPduRequest();
+        result.address = address ;
+        result.port = port ;
+        result.version = version ;
+        result.requestId = requestId;
+        result.msgId = msgId;
+        result.msgMaxSize = msgMaxSize;
+        result.msgFlags = msgFlags;
+        result.msgSecurityModel = msgSecurityModel;
+        result.contextEngineId = contextEngineId;
+        result.contextName = contextName;
+        result.securityParameters = securityParameters;
+        result.type = pduGetResponsePdu ;
+        result.errorStatus = SnmpDefinitions.snmpRspNoError ;
+        result.errorIndex = 0 ;
+        return result;
+    }
+}

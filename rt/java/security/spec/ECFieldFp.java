@@ -1,104 +1,98 @@
-/*    */ package java.security.spec;
-/*    */ 
-/*    */ import java.math.BigInteger;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ECFieldFp
-/*    */   implements ECField
-/*    */ {
-/*    */   private BigInteger p;
-/*    */   
-/*    */   public ECFieldFp(BigInteger paramBigInteger) {
-/* 53 */     if (paramBigInteger.signum() != 1) {
-/* 54 */       throw new IllegalArgumentException("p is not positive");
-/*    */     }
-/* 56 */     this.p = paramBigInteger;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getFieldSize() {
-/* 65 */     return this.p.bitLength();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public BigInteger getP() {
-/* 73 */     return this.p;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 84 */     if (this == paramObject) return true; 
-/* 85 */     if (paramObject instanceof ECFieldFp) {
-/* 86 */       return this.p.equals(((ECFieldFp)paramObject).p);
-/*    */     }
-/* 88 */     return false;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 96 */     return this.p.hashCode();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\spec\ECFieldFp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.security.spec;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+
+/**
+ * This immutable class defines an elliptic curve (EC) prime
+ * finite field.
+ *
+ * @see ECField
+ *
+ * @author Valerie Peng
+ *
+ * @since 1.5
+ */
+public class ECFieldFp implements ECField {
+
+    private BigInteger p;
+
+    /**
+     * Creates an elliptic curve prime finite field
+     * with the specified prime {@code p}.
+     * @param p the prime.
+     * @exception NullPointerException if {@code p} is null.
+     * @exception IllegalArgumentException if {@code p}
+     * is not positive.
+     */
+    public ECFieldFp(BigInteger p) {
+        if (p.signum() != 1) {
+            throw new IllegalArgumentException("p is not positive");
+        }
+        this.p = p;
+    }
+
+    /**
+     * Returns the field size in bits which is size of prime p
+     * for this prime finite field.
+     * @return the field size in bits.
+     */
+    public int getFieldSize() {
+        return p.bitLength();
+    };
+
+    /**
+     * Returns the prime {@code p} of this prime finite field.
+     * @return the prime.
+     */
+    public BigInteger getP() {
+        return p;
+    }
+
+    /**
+     * Compares this prime finite field for equality with the
+     * specified object.
+     * @param obj the object to be compared.
+     * @return true if {@code obj} is an instance
+     * of ECFieldFp and the prime value match, false otherwise.
+     */
+    public boolean equals(Object obj) {
+        if (this == obj)  return true;
+        if (obj instanceof ECFieldFp) {
+            return (p.equals(((ECFieldFp)obj).p));
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code value for this prime finite field.
+     * @return a hash code value.
+     */
+    public int hashCode() {
+        return p.hashCode();
+    }
+}

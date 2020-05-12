@@ -1,82 +1,76 @@
-/*    */ package com.sun.org.apache.regexp.internal;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class CharacterArrayCharacterIterator
-/*    */   implements CharacterIterator
-/*    */ {
-/*    */   private final char[] src;
-/*    */   private final int off;
-/*    */   private final int len;
-/*    */   
-/*    */   public CharacterArrayCharacterIterator(char[] src, int off, int len) {
-/* 40 */     this.src = src;
-/* 41 */     this.off = off;
-/* 42 */     this.len = len;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String substring(int beginIndex, int endIndex) {
-/* 48 */     if (endIndex > this.len) {
-/* 49 */       throw new IndexOutOfBoundsException("endIndex=" + endIndex + "; sequence size=" + this.len);
-/*    */     }
-/*    */     
-/* 52 */     if (beginIndex < 0 || beginIndex > endIndex) {
-/* 53 */       throw new IndexOutOfBoundsException("beginIndex=" + beginIndex + "; endIndex=" + endIndex);
-/*    */     }
-/*    */     
-/* 56 */     return new String(this.src, this.off + beginIndex, endIndex - beginIndex);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String substring(int beginIndex) {
-/* 62 */     return substring(beginIndex, this.len);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public char charAt(int pos) {
-/* 68 */     return this.src[this.off + pos];
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public boolean isEnd(int pos) {
-/* 74 */     return (pos >= this.len);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\regexp\internal\CharacterArrayCharacterIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.regexp.internal;
+
+/**
+ * Encapsulates char[] as CharacterIterator
+ *
+ * @author <a href="mailto:ales.novak@netbeans.com">Ales Novak</a>
+ */
+public final class CharacterArrayCharacterIterator implements CharacterIterator
+{
+    /** encapsulated */
+    private final char[] src;
+    /** offset in the char array */
+    private final int off;
+    /** used portion of the array */
+    private final int len;
+
+    /** @param src - encapsulated String */
+    public CharacterArrayCharacterIterator(char[] src, int off, int len)
+    {
+        this.src = src;
+        this.off = off;
+        this.len = len;
+    }
+
+    /** @return a substring */
+    public String substring(int beginIndex, int endIndex)
+    {
+        if (endIndex > len) {
+            throw new IndexOutOfBoundsException("endIndex=" + endIndex
+                                                + "; sequence size=" + len);
+        }
+        if (beginIndex < 0 || beginIndex > endIndex) {
+            throw new IndexOutOfBoundsException("beginIndex=" + beginIndex
+                                                + "; endIndex=" + endIndex);
+        }
+        return new String(src, off + beginIndex, endIndex - beginIndex);
+    }
+
+    /** @return a substring */
+    public String substring(int beginIndex)
+    {
+        return substring(beginIndex, len);
+    }
+
+    /** @return a character at the specified position. */
+    public char charAt(int pos)
+    {
+        return src[off + pos];
+    }
+
+    /** @return <tt>true</tt> iff if the specified index is after the end of the character stream */
+    public boolean isEnd(int pos)
+    {
+        return (pos >= len);
+    }
+}

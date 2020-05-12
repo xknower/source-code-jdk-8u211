@@ -1,215 +1,209 @@
-/*     */ package com.sun.corba.se.spi.presentation.rmi;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.oa.poa.POAManagerImpl;
-/*     */ import java.rmi.RemoteException;
-/*     */ import javax.rmi.CORBA.Stub;
-/*     */ import javax.rmi.CORBA.Tie;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.portable.Delegate;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.PortableServer.POA;
-/*     */ import org.omg.PortableServer.POAManager;
-/*     */ import org.omg.PortableServer.POAPackage.ServantNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.WrongPolicy;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class StubAdapter
-/*     */ {
-/*  64 */   private static ORBUtilSystemException wrapper = ORBUtilSystemException.get("rpc.presentation");
-/*     */ 
-/*     */   
-/*     */   public static boolean isStubClass(Class<?> paramClass) {
-/*  68 */     return (ObjectImpl.class.isAssignableFrom(paramClass) || DynamicStub.class
-/*  69 */       .isAssignableFrom(paramClass));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static boolean isStub(Object paramObject) {
-/*  74 */     return (paramObject instanceof DynamicStub || paramObject instanceof ObjectImpl);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setDelegate(Object paramObject, Delegate paramDelegate) {
-/*  80 */     if (paramObject instanceof DynamicStub) {
-/*  81 */       ((DynamicStub)paramObject).setDelegate(paramDelegate);
-/*  82 */     } else if (paramObject instanceof ObjectImpl) {
-/*  83 */       ((ObjectImpl)paramObject)._set_delegate(paramDelegate);
-/*     */     } else {
-/*  85 */       throw wrapper.setDelegateRequiresStub();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Object activateServant(Servant paramServant) {
-/*  92 */     POA pOA = paramServant._default_POA();
-/*  93 */     Object object = null;
-/*     */     
-/*     */     try {
-/*  96 */       object = pOA.servant_to_reference(paramServant);
-/*  97 */     } catch (ServantNotActive servantNotActive) {
-/*  98 */       throw wrapper.getDelegateServantNotActive(servantNotActive);
-/*  99 */     } catch (WrongPolicy wrongPolicy) {
-/* 100 */       throw wrapper.getDelegateWrongPolicy(wrongPolicy);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 105 */     POAManager pOAManager = pOA.the_POAManager();
-/* 106 */     if (pOAManager instanceof POAManagerImpl) {
-/* 107 */       POAManagerImpl pOAManagerImpl = (POAManagerImpl)pOAManager;
-/* 108 */       pOAManagerImpl.implicitActivation();
-/*     */     } 
-/*     */     
-/* 111 */     return object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Object activateTie(Tie paramTie) {
-/* 125 */     if (paramTie instanceof ObjectImpl)
-/* 126 */       return paramTie.thisObject(); 
-/* 127 */     if (paramTie instanceof Servant) {
-/* 128 */       Servant servant = (Servant)paramTie;
-/* 129 */       return activateServant(servant);
-/*     */     } 
-/* 131 */     throw wrapper.badActivateTieCall();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Delegate getDelegate(Object paramObject) {
-/* 141 */     if (paramObject instanceof DynamicStub)
-/* 142 */       return ((DynamicStub)paramObject).getDelegate(); 
-/* 143 */     if (paramObject instanceof ObjectImpl)
-/* 144 */       return ((ObjectImpl)paramObject)._get_delegate(); 
-/* 145 */     if (paramObject instanceof Tie) {
-/* 146 */       Tie tie = (Tie)paramObject;
-/* 147 */       Object object = activateTie(tie);
-/* 148 */       return getDelegate(object);
-/*     */     } 
-/* 150 */     throw wrapper.getDelegateRequiresStub();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static ORB getORB(Object paramObject) {
-/* 155 */     if (paramObject instanceof DynamicStub)
-/* 156 */       return ((DynamicStub)paramObject).getORB(); 
-/* 157 */     if (paramObject instanceof ObjectImpl) {
-/* 158 */       return ((ObjectImpl)paramObject)._orb();
-/*     */     }
-/* 160 */     throw wrapper.getOrbRequiresStub();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String[] getTypeIds(Object paramObject) {
-/* 165 */     if (paramObject instanceof DynamicStub)
-/* 166 */       return ((DynamicStub)paramObject).getTypeIds(); 
-/* 167 */     if (paramObject instanceof ObjectImpl) {
-/* 168 */       return ((ObjectImpl)paramObject)._ids();
-/*     */     }
-/* 170 */     throw wrapper.getTypeIdsRequiresStub();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void connect(Object paramObject, ORB paramORB) throws RemoteException {
-/* 176 */     if (paramObject instanceof DynamicStub) {
-/* 177 */       ((DynamicStub)paramObject).connect(paramORB);
-/*     */     }
-/* 179 */     else if (paramObject instanceof Stub) {
-/* 180 */       ((Stub)paramObject).connect(paramORB);
-/* 181 */     } else if (paramObject instanceof ObjectImpl) {
-/* 182 */       paramORB.connect((Object)paramObject);
-/*     */     } else {
-/* 184 */       throw wrapper.connectRequiresStub();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public static boolean isLocal(Object paramObject) {
-/* 189 */     if (paramObject instanceof DynamicStub)
-/* 190 */       return ((DynamicStub)paramObject).isLocal(); 
-/* 191 */     if (paramObject instanceof ObjectImpl) {
-/* 192 */       return ((ObjectImpl)paramObject)._is_local();
-/*     */     }
-/* 194 */     throw wrapper.isLocalRequiresStub();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static OutputStream request(Object paramObject, String paramString, boolean paramBoolean) {
-/* 200 */     if (paramObject instanceof DynamicStub) {
-/* 201 */       return ((DynamicStub)paramObject).request(paramString, paramBoolean);
-/*     */     }
-/* 203 */     if (paramObject instanceof ObjectImpl) {
-/* 204 */       return ((ObjectImpl)paramObject)._request(paramString, paramBoolean);
-/*     */     }
-/*     */     
-/* 207 */     throw wrapper.requestRequiresStub();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\presentation\rmi\StubAdapter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.presentation.rmi ;
+
+import javax.rmi.CORBA.Tie ;
+
+import org.omg.CORBA.portable.Delegate ;
+import org.omg.CORBA.portable.ObjectImpl ;
+import org.omg.CORBA.portable.OutputStream ;
+
+import org.omg.PortableServer.POA ;
+import org.omg.PortableServer.POAManager ;
+import org.omg.PortableServer.Servant ;
+
+import org.omg.PortableServer.POAPackage.WrongPolicy ;
+import org.omg.PortableServer.POAPackage.ServantNotActive ;
+import org.omg.PortableServer.POAManagerPackage.AdapterInactive ;
+
+import org.omg.CORBA.ORB ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+// XXX Getting rid of this requires introducing an ObjectAdapterManager abstraction
+// as an interface into the OA framework.
+import com.sun.corba.se.impl.oa.poa.POAManagerImpl ;
+
+/** Provide access to stub delegate and type id information
+ * independent of the stub type.  This class exists because
+ * ObjectImpl does not have an interface for the 3 delegate and
+ * type id methods, so a DynamicStub has a different type.
+ * We cannot simply change ObjectImpl as it is a standard API.
+ * We also cannot change the code generation of Stubs, as that
+ * is also standard.  Hence I am left with this ugly class.
+ */
+public abstract class StubAdapter
+{
+    private StubAdapter() {}
+
+    private static ORBUtilSystemException wrapper =
+        ORBUtilSystemException.get( CORBALogDomains.RPC_PRESENTATION ) ;
+
+    public static boolean isStubClass( Class cls )
+    {
+        return (ObjectImpl.class.isAssignableFrom( cls )) ||
+            (DynamicStub.class.isAssignableFrom( cls )) ;
+    }
+
+    public static boolean isStub( Object stub )
+    {
+        return (stub instanceof DynamicStub) ||
+            (stub instanceof ObjectImpl) ;
+    }
+
+    public static void setDelegate( Object stub, Delegate delegate )
+    {
+        if (stub instanceof DynamicStub)
+            ((DynamicStub)stub).setDelegate( delegate ) ;
+        else if (stub instanceof ObjectImpl)
+            ((ObjectImpl)stub)._set_delegate( delegate ) ;
+        else
+            throw wrapper.setDelegateRequiresStub() ;
+    }
+
+    /** Use implicit activation to get an object reference for the servant.
+     */
+    public static org.omg.CORBA.Object activateServant( Servant servant )
+    {
+        POA poa = servant._default_POA() ;
+        org.omg.CORBA.Object ref = null ;
+
+        try {
+            ref = poa.servant_to_reference( servant ) ;
+        } catch (ServantNotActive sna) {
+            throw wrapper.getDelegateServantNotActive( sna ) ;
+        } catch (WrongPolicy wp) {
+            throw wrapper.getDelegateWrongPolicy( wp ) ;
+        }
+
+        // Make sure that the POAManager is activated if no other
+        // POAManager state management has taken place.
+        POAManager mgr = poa.the_POAManager() ;
+        if (mgr instanceof POAManagerImpl) {
+            POAManagerImpl mgrImpl = (POAManagerImpl)mgr ;
+            mgrImpl.implicitActivation() ;
+        }
+
+        return ref ;
+    }
+
+    /** Given any Tie, return the corresponding object refernce, activating
+     * the Servant if necessary.
+     */
+    public static org.omg.CORBA.Object activateTie( Tie tie )
+    {
+        /** Any implementation of Tie should be either a Servant or an ObjectImpl,
+         * depending on which style of code generation is used.  rmic -iiop by
+         * default results in an ObjectImpl-based Tie, while rmic -iiop -poa
+         * results in a Servant-based Tie.  Dynamic RMI-IIOP also uses Servant-based
+         * Ties (see impl.presentation.rmi.ReflectiveTie).
+         */
+        if (tie instanceof ObjectImpl) {
+            return tie.thisObject() ;
+        } else if (tie instanceof Servant) {
+            Servant servant = (Servant)tie ;
+            return activateServant( servant ) ;
+        } else {
+            throw wrapper.badActivateTieCall() ;
+        }
+    }
+
+
+    /** This also gets the delegate from a Servant by
+     * using Servant._this_object()
+     */
+    public static Delegate getDelegate( Object stub )
+    {
+        if (stub instanceof DynamicStub)
+            return ((DynamicStub)stub).getDelegate() ;
+        else if (stub instanceof ObjectImpl)
+            return ((ObjectImpl)stub)._get_delegate() ;
+        else if (stub instanceof Tie) {
+            Tie tie = (Tie)stub ;
+            org.omg.CORBA.Object ref = activateTie( tie ) ;
+            return getDelegate( ref ) ;
+        } else
+            throw wrapper.getDelegateRequiresStub() ;
+    }
+
+    public static ORB getORB( Object stub )
+    {
+        if (stub instanceof DynamicStub)
+            return ((DynamicStub)stub).getORB() ;
+        else if (stub instanceof ObjectImpl)
+            return (ORB)((ObjectImpl)stub)._orb() ;
+        else
+            throw wrapper.getOrbRequiresStub() ;
+    }
+
+    public static String[] getTypeIds( Object stub )
+    {
+        if (stub instanceof DynamicStub)
+            return ((DynamicStub)stub).getTypeIds() ;
+        else if (stub instanceof ObjectImpl)
+            return ((ObjectImpl)stub)._ids() ;
+        else
+            throw wrapper.getTypeIdsRequiresStub() ;
+    }
+
+    public static void connect( Object stub,
+        ORB orb ) throws java.rmi.RemoteException
+    {
+        if (stub instanceof DynamicStub)
+            ((DynamicStub)stub).connect(
+                (com.sun.corba.se.spi.orb.ORB)orb ) ;
+        else if (stub instanceof javax.rmi.CORBA.Stub)
+            ((javax.rmi.CORBA.Stub)stub).connect( orb ) ;
+        else if (stub instanceof ObjectImpl)
+            orb.connect( (org.omg.CORBA.Object)stub ) ;
+        else
+            throw wrapper.connectRequiresStub() ;
+    }
+
+    public static boolean isLocal( Object stub )
+    {
+        if (stub instanceof DynamicStub)
+            return ((DynamicStub)stub).isLocal() ;
+        else if (stub instanceof ObjectImpl)
+            return ((ObjectImpl)stub)._is_local() ;
+        else
+            throw wrapper.isLocalRequiresStub() ;
+    }
+
+    public static OutputStream request( Object stub,
+        String operation, boolean responseExpected )
+    {
+        if (stub instanceof DynamicStub)
+            return ((DynamicStub)stub).request( operation,
+                responseExpected ) ;
+        else if (stub instanceof ObjectImpl)
+            return ((ObjectImpl)stub)._request( operation,
+                responseExpected ) ;
+        else
+            throw wrapper.requestRequiresStub() ;
+    }
+}

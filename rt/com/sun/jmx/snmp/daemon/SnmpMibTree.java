@@ -1,333 +1,269 @@
-/*     */ package com.sun.jmx.snmp.daemon;
-/*     */ 
-/*     */ import com.sun.jmx.snmp.SnmpOid;
-/*     */ import com.sun.jmx.snmp.agent.SnmpMibAgent;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class SnmpMibTree
-/*     */ {
-/*  51 */   private SnmpMibAgent defaultAgent = null;
-/*  52 */   private TreeNode root = new TreeNode(-1L, null, null);
-/*     */ 
-/*     */   
-/*     */   public void setDefaultAgent(SnmpMibAgent paramSnmpMibAgent) {
-/*  56 */     this.defaultAgent = paramSnmpMibAgent;
-/*  57 */     this.root.agent = paramSnmpMibAgent;
-/*     */   }
-/*     */   
-/*     */   public SnmpMibAgent getDefaultAgent() {
-/*  61 */     return this.defaultAgent;
-/*     */   }
-/*     */   
-/*     */   public void register(SnmpMibAgent paramSnmpMibAgent) {
-/*  65 */     this.root.registerNode(paramSnmpMibAgent);
-/*     */   }
-/*     */   
-/*     */   public void register(SnmpMibAgent paramSnmpMibAgent, long[] paramArrayOflong) {
-/*  69 */     this.root.registerNode(paramArrayOflong, 0, paramSnmpMibAgent);
-/*     */   }
-/*     */   
-/*     */   public SnmpMibAgent getAgentMib(SnmpOid paramSnmpOid) {
-/*  73 */     TreeNode treeNode = this.root.retrieveMatchingBranch(paramSnmpOid.longValue(), 0);
-/*  74 */     if (treeNode == null) {
-/*  75 */       return this.defaultAgent;
-/*     */     }
-/*  77 */     if (treeNode.getAgentMib() == null) {
-/*  78 */       return this.defaultAgent;
-/*     */     }
-/*  80 */     return treeNode.getAgentMib();
-/*     */   }
-/*     */   
-/*     */   public void unregister(SnmpMibAgent paramSnmpMibAgent, SnmpOid[] paramArrayOfSnmpOid) {
-/*  84 */     for (byte b = 0; b < paramArrayOfSnmpOid.length; b++) {
-/*  85 */       long[] arrayOfLong = paramArrayOfSnmpOid[b].longValue();
-/*  86 */       TreeNode treeNode = this.root.retrieveMatchingBranch(arrayOfLong, 0);
-/*  87 */       if (treeNode != null)
-/*     */       {
-/*  89 */         treeNode.removeAgent(paramSnmpMibAgent);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void unregister(SnmpMibAgent paramSnmpMibAgent) {
-/*  96 */     this.root.removeAgentFully(paramSnmpMibAgent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printTree() {
-/* 109 */     this.root.printTree(">");
-/*     */   }
-/*     */   
-/*     */   final class TreeNode {
-/*     */     private Vector<TreeNode> children;
-/*     */     private Vector<SnmpMibAgent> agents;
-/*     */     private long nodeValue;
-/*     */     private SnmpMibAgent agent;
-/*     */     private TreeNode parent;
-/*     */     
-/*     */     void registerNode(SnmpMibAgent param1SnmpMibAgent) {
-/* 120 */       long[] arrayOfLong = param1SnmpMibAgent.getRootOid();
-/* 121 */       registerNode(arrayOfLong, 0, param1SnmpMibAgent);
-/*     */     }
-/*     */     
-/*     */     TreeNode retrieveMatchingBranch(long[] param1ArrayOflong, int param1Int) {
-/* 125 */       TreeNode treeNode1 = retrieveChild(param1ArrayOflong, param1Int);
-/* 126 */       if (treeNode1 == null)
-/* 127 */         return this; 
-/* 128 */       if (this.children.isEmpty())
-/*     */       {
-/*     */         
-/* 131 */         return treeNode1;
-/*     */       }
-/* 133 */       if (param1Int + 1 == param1ArrayOflong.length)
-/*     */       {
-/*     */         
-/* 136 */         return treeNode1;
-/*     */       }
-/*     */       
-/* 139 */       TreeNode treeNode2 = treeNode1.retrieveMatchingBranch(param1ArrayOflong, param1Int + 1);
-/*     */ 
-/*     */ 
-/*     */       
-/* 143 */       return (treeNode2.agent == null) ? this : treeNode2;
-/*     */     }
-/*     */     
-/*     */     SnmpMibAgent getAgentMib() {
-/* 147 */       return this.agent;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void printTree(String param1String) {
-/* 152 */       StringBuilder stringBuilder = new StringBuilder();
-/* 153 */       if (this.agents == null) {
-/*     */         return;
-/*     */       }
-/*     */       Enumeration<SnmpMibAgent> enumeration;
-/* 157 */       for (enumeration = this.agents.elements(); enumeration.hasMoreElements(); ) {
-/* 158 */         SnmpMibAgent snmpMibAgent = enumeration.nextElement();
-/* 159 */         if (snmpMibAgent == null) {
-/* 160 */           stringBuilder.append("empty "); continue;
-/*     */         } 
-/* 162 */         stringBuilder.append(snmpMibAgent.getMibName()).append(" ");
-/*     */       } 
-/* 164 */       param1String = param1String + " ";
-/* 165 */       if (this.children == null) {
-/*     */         return;
-/*     */       }
-/* 168 */       for (enumeration = (Enumeration)this.children.elements(); enumeration.hasMoreElements(); ) {
-/* 169 */         TreeNode treeNode = (TreeNode)enumeration.nextElement();
-/* 170 */         treeNode.printTree(param1String);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private TreeNode(long param1Long, SnmpMibAgent param1SnmpMibAgent, TreeNode param1TreeNode) {
-/* 262 */       this.children = new Vector<>();
-/* 263 */       this.agents = new Vector<>();
-/*     */       this.nodeValue = param1Long;
-/*     */       this.parent = param1TreeNode;
-/*     */       this.agents.addElement(param1SnmpMibAgent);
-/*     */     }
-/*     */     
-/*     */     private void removeAgentFully(SnmpMibAgent param1SnmpMibAgent) {
-/*     */       Vector<TreeNode> vector = new Vector();
-/*     */       Enumeration<TreeNode> enumeration = this.children.elements();
-/*     */       while (enumeration.hasMoreElements()) {
-/*     */         TreeNode treeNode = enumeration.nextElement();
-/*     */         treeNode.removeAgentFully(param1SnmpMibAgent);
-/*     */         if (treeNode.agents.isEmpty())
-/*     */           vector.add(treeNode); 
-/*     */       } 
-/*     */       for (enumeration = vector.elements(); enumeration.hasMoreElements();)
-/*     */         this.children.removeElement(enumeration.nextElement()); 
-/*     */       removeAgent(param1SnmpMibAgent);
-/*     */     }
-/*     */     
-/*     */     private void removeAgent(SnmpMibAgent param1SnmpMibAgent) {
-/*     */       if (!this.agents.contains(param1SnmpMibAgent))
-/*     */         return; 
-/*     */       this.agents.removeElement(param1SnmpMibAgent);
-/*     */       if (!this.agents.isEmpty())
-/*     */         this.agent = this.agents.firstElement(); 
-/*     */     }
-/*     */     
-/*     */     private void setAgent(SnmpMibAgent param1SnmpMibAgent) {
-/*     */       this.agent = param1SnmpMibAgent;
-/*     */     }
-/*     */     
-/*     */     private void registerNode(long[] param1ArrayOflong, int param1Int, SnmpMibAgent param1SnmpMibAgent) {
-/*     */       if (param1Int >= param1ArrayOflong.length)
-/*     */         return; 
-/*     */       TreeNode treeNode = retrieveChild(param1ArrayOflong, param1Int);
-/*     */       if (treeNode == null) {
-/*     */         long l = param1ArrayOflong[param1Int];
-/*     */         treeNode = new TreeNode(l, param1SnmpMibAgent, this);
-/*     */         this.children.addElement(treeNode);
-/*     */       } else if (!this.agents.contains(param1SnmpMibAgent)) {
-/*     */         this.agents.addElement(param1SnmpMibAgent);
-/*     */       } 
-/*     */       if (param1Int == param1ArrayOflong.length - 1) {
-/*     */         treeNode.setAgent(param1SnmpMibAgent);
-/*     */       } else {
-/*     */         treeNode.registerNode(param1ArrayOflong, param1Int + 1, param1SnmpMibAgent);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private TreeNode retrieveChild(long[] param1ArrayOflong, int param1Int) {
-/*     */       long l = param1ArrayOflong[param1Int];
-/*     */       for (Enumeration<TreeNode> enumeration = this.children.elements(); enumeration.hasMoreElements(); ) {
-/*     */         TreeNode treeNode = enumeration.nextElement();
-/*     */         if (treeNode.match(l))
-/*     */           return treeNode; 
-/*     */       } 
-/*     */       return null;
-/*     */     }
-/*     */     
-/*     */     private boolean match(long param1Long) {
-/*     */       return (this.nodeValue == param1Long);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\daemon\SnmpMibTree.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp.daemon;
+
+
+
+// java imports
+//
+import java.util.Vector;
+import java.util.Enumeration;
+
+// jmx imports
+//
+import com.sun.jmx.snmp.SnmpOid;
+
+// SNMP Runtime imports
+//
+import com.sun.jmx.snmp.agent.SnmpMibAgent;
+
+/**
+ * The class is used for building a tree representation of the different
+ * root oids of the supported MIBs. Each node is associated to a specific MIB.
+ */
+final class SnmpMibTree {
+
+    public SnmpMibTree() {
+      defaultAgent= null;
+      root= new TreeNode(-1, null, null);
+    }
+
+    public void setDefaultAgent(SnmpMibAgent def) {
+        defaultAgent= def;
+        root.agent= def;
+    }
+
+    public SnmpMibAgent getDefaultAgent() {
+        return defaultAgent;
+    }
+
+    public void register(SnmpMibAgent agent) {
+        root.registerNode(agent);
+    }
+
+    public void register(SnmpMibAgent agent, long[] oid) {
+      root.registerNode(oid, 0, agent);
+    }
+
+    public SnmpMibAgent getAgentMib(SnmpOid oid) {
+        TreeNode node= root.retrieveMatchingBranch(oid.longValue(), 0);
+        if (node == null)
+            return defaultAgent;
+        else
+            if(node.getAgentMib() == null)
+                return defaultAgent;
+            else
+                return node.getAgentMib();
+    }
+
+    public void unregister(SnmpMibAgent agent, SnmpOid[] oids) {
+        for(int i = 0; i < oids.length; i++) {
+            long[] oid = oids[i].longValue();
+            TreeNode node = root.retrieveMatchingBranch(oid, 0);
+            if (node == null)
+                continue;
+            node.removeAgent(agent);
+        }
+    }
+
+
+    public void unregister(SnmpMibAgent agent) {
+
+        root.removeAgentFully(agent);
+    }
+
+    /*
+    public void unregister(SnmpMibAgent agent) {
+        long[] oid= agent.getRootOid();
+        TreeNode node= root.retrieveMatchingBranch(oid, 0);
+        if (node == null)
+            return;
+        node.removeAgent(agent);
+    }
+    */
+    public void printTree() {
+        root.printTree(">");
+    }
+
+    private SnmpMibAgent defaultAgent;
+    private TreeNode root;
+
+    // A SnmpMibTree object is a tree of TreeNode
+    //
+    final class TreeNode {
+
+        void registerNode(SnmpMibAgent agent) {
+            long[] oid= agent.getRootOid();
+            registerNode(oid, 0, agent);
+        }
+
+        TreeNode retrieveMatchingBranch(long[] oid, int cursor) {
+            TreeNode node= retrieveChild(oid, cursor);
+            if (node == null)
+                return this;
+            if (children.isEmpty()) {
+                // In this case, the node does not have any children. So no point to
+                // continue the search ...
+                return node;
+            }
+            if( cursor + 1 == oid.length) {
+                // In this case, the oid does not have any more element. So the search
+                // is over.
+                return node;
+            }
+
+            TreeNode n = node.retrieveMatchingBranch(oid, cursor + 1);
+            //If the returned node got a null agent, we have to replace it by
+            //the current one (in case it is not null)
+            //
+            return n.agent == null ? this : n;
+        }
+
+        SnmpMibAgent getAgentMib() {
+            return agent;
+        }
+
+        public void printTree(String ident) {
+
+            StringBuilder buff= new StringBuilder();
+            if (agents == null) {
+                return;
+            }
+
+            for(Enumeration<SnmpMibAgent> e= agents.elements(); e.hasMoreElements(); ) {
+                SnmpMibAgent mib= e.nextElement();
+                if (mib == null)
+                    buff.append("empty ");
+                else
+                    buff.append(mib.getMibName()).append(" ");
+            }
+            ident+= " ";
+            if (children == null) {
+                return;
+            }
+            for(Enumeration<TreeNode> e= children.elements(); e.hasMoreElements(); ) {
+                TreeNode node= e.nextElement();
+                node.printTree(ident);
+            }
+        }
+
+        // PRIVATE STUFF
+        //--------------
+
+        /**
+         * Only the treeNode class can create an instance of treeNode.
+         * The creation occurs when registering a new oid.
+         */
+        private TreeNode(long nodeValue, SnmpMibAgent agent, TreeNode sup) {
+            this.nodeValue= nodeValue;
+            this.parent= sup;
+            agents.addElement(agent);
+        }
+
+        private void removeAgentFully(SnmpMibAgent agent) {
+            Vector<TreeNode> v = new Vector<>();
+            for(Enumeration<TreeNode> e= children.elements();
+                e.hasMoreElements(); ) {
+
+                TreeNode node= e.nextElement();
+                node.removeAgentFully(agent);
+                if(node.agents.isEmpty())
+                    v.add(node);
+
+            }
+            for(Enumeration<TreeNode> e= v.elements(); e.hasMoreElements(); ) {
+                children.removeElement(e.nextElement());
+            }
+            removeAgent(agent);
+
+        }
+
+        private void removeAgent(SnmpMibAgent mib) {
+            if (!agents.contains(mib))
+                return;
+            agents.removeElement(mib);
+
+            if (!agents.isEmpty())
+                agent= agents.firstElement();
+
+        }
+
+        private void setAgent(SnmpMibAgent agent) {
+            this.agent = agent;
+        }
+
+        private void registerNode(long[] oid, int cursor, SnmpMibAgent agent) {
+
+            if (cursor >= oid.length)
+                //That's it !
+                //
+                return;
+            TreeNode child = retrieveChild(oid, cursor);
+            if (child == null) {
+                // Create a child and register it !
+                //
+                long theValue= oid[cursor];
+                child= new TreeNode(theValue, agent, this);
+                children.addElement(child);
+            }
+            else
+                if (agents.contains(agent) == false) {
+                    agents.addElement(agent);
+                }
+
+            // We have to set the agent attribute
+            //
+            if(cursor == (oid.length - 1)) {
+              child.setAgent(agent);
+            }
+            else
+              child.registerNode(oid, cursor+1, agent);
+        }
+
+        private TreeNode retrieveChild(long[] oid, int current) {
+            long theValue= oid[current];
+
+            for(Enumeration<TreeNode> e= children.elements(); e.hasMoreElements(); ) {
+                TreeNode node= e.nextElement();
+                if (node.match(theValue))
+                    return node;
+            }
+            return null;
+        }
+
+        private boolean match(long value) {
+            return (nodeValue == value) ? true : false;
+        }
+
+        private Vector<TreeNode> children= new Vector<>();
+        private Vector<SnmpMibAgent> agents= new Vector<>();
+        private long nodeValue;
+        private SnmpMibAgent agent;
+        private TreeNode parent;
+
+    }; // end of class TreeNode
+}

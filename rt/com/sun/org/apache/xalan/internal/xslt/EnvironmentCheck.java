@@ -1,1259 +1,1253 @@
-/*      */ package com.sun.org.apache.xalan.internal.xslt;
-/*      */ 
-/*      */ import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
-/*      */ import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-/*      */ import java.io.File;
-/*      */ import java.io.FileWriter;
-/*      */ import java.io.PrintWriter;
-/*      */ import java.lang.reflect.Field;
-/*      */ import java.lang.reflect.Method;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Collections;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.StringTokenizer;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.Element;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.xml.sax.Attributes;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class EnvironmentCheck
-/*      */ {
-/*      */   public static final String ERROR = "ERROR.";
-/*      */   public static final String WARNING = "WARNING.";
-/*      */   public static final String ERROR_FOUND = "At least one error was found!";
-/*      */   public static final String VERSION = "version.";
-/*      */   public static final String FOUNDCLASSES = "foundclasses.";
-/*      */   public static final String CLASS_PRESENT = "present-unknown-version";
-/*      */   public static final String CLASS_NOTPRESENT = "not-present";
-/*      */   
-/*      */   public static void main(String[] args) {
-/*  109 */     PrintWriter sendOutputTo = new PrintWriter(System.out, true);
-/*      */ 
-/*      */     
-/*  112 */     for (int i = 0; i < args.length; i++) {
-/*      */       
-/*  114 */       if ("-out".equalsIgnoreCase(args[i])) {
-/*      */         
-/*  116 */         i++;
-/*      */         
-/*  118 */         if (i < args.length) {
-/*      */           
-/*      */           try
-/*      */           {
-/*  122 */             sendOutputTo = new PrintWriter(new FileWriter(args[i], true));
-/*      */           }
-/*  124 */           catch (Exception e)
-/*      */           {
-/*  126 */             System.err.println("# WARNING: -out " + args[i] + " threw " + e
-/*  127 */                 .toString());
-/*      */           }
-/*      */         
-/*      */         } else {
-/*      */           
-/*  132 */           System.err.println("# WARNING: -out argument should have a filename, output sent to console");
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  138 */     EnvironmentCheck app = new EnvironmentCheck();
-/*  139 */     app.checkEnvironment(sendOutputTo);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean checkEnvironment(PrintWriter pw) {
-/*  170 */     if (null != pw) {
-/*  171 */       this.outWriter = pw;
-/*      */     }
-/*      */     
-/*  174 */     Map<String, Object> hash = getEnvironmentHash();
-/*      */ 
-/*      */     
-/*  177 */     boolean environmentHasErrors = writeEnvironmentReport(hash);
-/*      */     
-/*  179 */     if (environmentHasErrors) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  183 */       logMsg("# WARNING: Potential problems found in your environment!");
-/*  184 */       logMsg("#    Check any 'ERROR' items above against the Xalan FAQs");
-/*  185 */       logMsg("#    to correct potential problems with your classes/jars");
-/*  186 */       logMsg("#    http://xml.apache.org/xalan-j/faq.html");
-/*  187 */       if (null != this.outWriter)
-/*  188 */         this.outWriter.flush(); 
-/*  189 */       return false;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  193 */     logMsg("# YAHOO! Your environment seems to be OK.");
-/*  194 */     if (null != this.outWriter)
-/*  195 */       this.outWriter.flush(); 
-/*  196 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Map<String, Object> getEnvironmentHash() {
-/*  223 */     Map<String, Object> hash = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  228 */     checkJAXPVersion(hash);
-/*  229 */     checkProcessorVersion(hash);
-/*  230 */     checkParserVersion(hash);
-/*  231 */     checkAntVersion(hash);
-/*  232 */     if (!checkDOML3(hash)) {
-/*  233 */       checkDOMVersion(hash);
-/*      */     }
-/*  235 */     checkSAXVersion(hash);
-/*  236 */     checkSystemProperties(hash);
-/*      */     
-/*  238 */     return hash;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean writeEnvironmentReport(Map<String, Object> h) {
-/*  258 */     if (null == h) {
-/*      */       
-/*  260 */       logMsg("# ERROR: writeEnvironmentReport called with null Map");
-/*  261 */       return false;
-/*      */     } 
-/*      */     
-/*  264 */     boolean errors = false;
-/*      */     
-/*  266 */     logMsg("#---- BEGIN writeEnvironmentReport($Revision: 1.10 $): Useful stuff found: ----");
-/*      */ 
-/*      */ 
-/*      */     
-/*  270 */     for (Map.Entry<String, Object> entry : h.entrySet()) {
-/*  271 */       String keyStr = entry.getKey();
-/*      */       
-/*      */       try {
-/*  274 */         if (keyStr.startsWith("foundclasses.")) {
-/*  275 */           List<Map> v = (ArrayList)entry.getValue();
-/*  276 */           errors |= logFoundJars(v, keyStr);
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           continue;
-/*      */         } 
-/*      */ 
-/*      */         
-/*  284 */         if (keyStr.startsWith("ERROR.")) {
-/*  285 */           errors = true;
-/*      */         }
-/*  287 */         logMsg(keyStr + "=" + h.get(keyStr));
-/*      */       }
-/*  289 */       catch (Exception e) {
-/*  290 */         logMsg("Reading-" + keyStr + "= threw: " + e.toString());
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  294 */     logMsg("#----- END writeEnvironmentReport: Useful properties found: -----");
-/*      */ 
-/*      */     
-/*  297 */     return errors;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  322 */   public String[] jarNames = new String[] { "xalan.jar", "xalansamples.jar", "xalanj1compat.jar", "xalanservlet.jar", "serializer.jar", "xerces.jar", "xercesImpl.jar", "testxsl.jar", "crimson.jar", "lotusxsl.jar", "jaxp.jar", "parser.jar", "dom.jar", "sax.jar", "xml.jar", "xml-apis.jar", "xsltc.jar" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final Map<Long, String> JARVERSIONS;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean logFoundJars(List<Map> v, String desc) {
-/*  352 */     if (null == v || v.size() < 1) {
-/*  353 */       return false;
-/*      */     }
-/*  355 */     boolean errors = false;
-/*      */     
-/*  357 */     logMsg("#---- BEGIN Listing XML-related jars in: " + desc + " ----");
-/*      */     
-/*  359 */     for (Map<String, String> v1 : v) {
-/*  360 */       for (Map.Entry<String, String> entry : v1.entrySet()) {
-/*  361 */         String keyStr = entry.getKey();
-/*      */         try {
-/*  363 */           if (keyStr.startsWith("ERROR.")) {
-/*  364 */             errors = true;
-/*      */           }
-/*  366 */           logMsg(keyStr + "=" + (String)entry.getValue());
-/*      */         }
-/*  368 */         catch (Exception e) {
-/*  369 */           errors = true;
-/*  370 */           logMsg("Reading-" + keyStr + "= threw: " + e.toString());
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  375 */     logMsg("#----- END Listing XML-related jars in: " + desc + " -----");
-/*      */     
-/*  377 */     return errors;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void appendEnvironmentReport(Node container, Document factory, Map<String, Object> h) {
-/*  395 */     if (null == container || null == factory) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  402 */       Element envCheckNode = factory.createElement("EnvironmentCheck");
-/*  403 */       envCheckNode.setAttribute("version", "$Revision: 1.10 $");
-/*  404 */       container.appendChild(envCheckNode);
-/*      */       
-/*  406 */       if (null == h) {
-/*      */         
-/*  408 */         Element element = factory.createElement("status");
-/*  409 */         element.setAttribute("result", "ERROR");
-/*  410 */         element.appendChild(factory.createTextNode("appendEnvironmentReport called with null Map!"));
-/*  411 */         envCheckNode.appendChild(element);
-/*      */         
-/*      */         return;
-/*      */       } 
-/*  415 */       boolean errors = false;
-/*      */       
-/*  417 */       Element hashNode = factory.createElement("environment");
-/*  418 */       envCheckNode.appendChild(hashNode);
-/*      */       
-/*  420 */       for (Map.Entry<String, Object> entry : h.entrySet()) {
-/*  421 */         String keyStr = entry.getKey();
-/*      */         
-/*      */         try {
-/*  424 */           if (keyStr.startsWith("foundclasses.")) {
-/*  425 */             List<Map> v = (List<Map>)entry.getValue();
-/*      */             
-/*  427 */             errors |= appendFoundJars(hashNode, factory, v, keyStr);
-/*      */ 
-/*      */             
-/*      */             continue;
-/*      */           } 
-/*      */ 
-/*      */           
-/*  434 */           if (keyStr.startsWith("ERROR.")) {
-/*  435 */             errors = true;
-/*      */           }
-/*  437 */           Element node = factory.createElement("item");
-/*  438 */           node.setAttribute("key", keyStr);
-/*  439 */           node.appendChild(factory.createTextNode((String)h.get(keyStr)));
-/*  440 */           hashNode.appendChild(node);
-/*      */         }
-/*  442 */         catch (Exception e) {
-/*  443 */           errors = true;
-/*  444 */           Element node = factory.createElement("item");
-/*  445 */           node.setAttribute("key", keyStr);
-/*  446 */           node.appendChild(factory.createTextNode("ERROR. Reading " + keyStr + " threw: " + e.toString()));
-/*  447 */           hashNode.appendChild(node);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  451 */       Element statusNode = factory.createElement("status");
-/*  452 */       statusNode.setAttribute("result", errors ? "ERROR" : "OK");
-/*  453 */       envCheckNode.appendChild(statusNode);
-/*      */     }
-/*  455 */     catch (Exception e2) {
-/*      */       
-/*  457 */       System.err.println("appendEnvironmentReport threw: " + e2.toString());
-/*  458 */       e2.printStackTrace();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean appendFoundJars(Node container, Document factory, List<Map> v, String desc) {
-/*  481 */     if (null == v || v.size() < 1) {
-/*  482 */       return false;
-/*      */     }
-/*  484 */     boolean errors = false;
-/*      */     
-/*  486 */     for (Map<String, String> v1 : v) {
-/*  487 */       for (Map.Entry<String, String> entry : v1.entrySet()) {
-/*  488 */         String keyStr = entry.getKey();
-/*      */         try {
-/*  490 */           if (keyStr.startsWith("ERROR.")) {
-/*  491 */             errors = true;
-/*      */           }
-/*  493 */           Element node = factory.createElement("foundJar");
-/*  494 */           node.setAttribute("name", keyStr.substring(0, keyStr.indexOf("-")));
-/*  495 */           node.setAttribute("desc", keyStr.substring(keyStr.indexOf("-") + 1));
-/*  496 */           node.appendChild(factory.createTextNode(entry.getValue()));
-/*  497 */           container.appendChild(node);
-/*  498 */         } catch (Exception e) {
-/*  499 */           errors = true;
-/*  500 */           Element node = factory.createElement("foundJar");
-/*  501 */           node.appendChild(factory.createTextNode("ERROR. Reading " + keyStr + " threw: " + e.toString()));
-/*  502 */           container.appendChild(node);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*  506 */     return errors;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkSystemProperties(Map<String, Object> h) {
-/*  525 */     if (null == h) {
-/*  526 */       h = new HashMap<>();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     try {
-/*  531 */       String javaVersion = SecuritySupport.getSystemProperty("java.version");
-/*      */       
-/*  533 */       h.put("java.version", javaVersion);
-/*      */     }
-/*  535 */     catch (SecurityException se) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  539 */       h.put("java.version", "WARNING: SecurityException thrown accessing system version properties");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  550 */       String cp = SecuritySupport.getSystemProperty("java.class.path");
-/*      */       
-/*  552 */       h.put("java.class.path", cp);
-/*      */       
-/*  554 */       List<Map> classpathJars = checkPathForJars(cp, this.jarNames);
-/*      */       
-/*  556 */       if (null != classpathJars) {
-/*  557 */         h.put("foundclasses.java.class.path", classpathJars);
-/*      */       }
-/*      */ 
-/*      */       
-/*  561 */       String othercp = SecuritySupport.getSystemProperty("sun.boot.class.path");
-/*      */       
-/*  563 */       if (null != othercp) {
-/*  564 */         h.put("sun.boot.class.path", othercp);
-/*  565 */         classpathJars = checkPathForJars(othercp, this.jarNames);
-/*      */         
-/*  567 */         if (null != classpathJars) {
-/*  568 */           h.put("foundclasses.sun.boot.class.path", classpathJars);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  574 */       othercp = SecuritySupport.getSystemProperty("java.ext.dirs");
-/*      */       
-/*  576 */       if (null != othercp)
-/*      */       {
-/*  578 */         h.put("java.ext.dirs", othercp);
-/*      */         
-/*  580 */         classpathJars = checkPathForJars(othercp, this.jarNames);
-/*      */         
-/*  582 */         if (null != classpathJars) {
-/*  583 */           h.put("foundclasses.java.ext.dirs", classpathJars);
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/*  590 */     catch (SecurityException se2) {
-/*      */ 
-/*      */       
-/*  593 */       h.put("java.class.path", "WARNING: SecurityException thrown accessing system classpath properties");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected List<Map> checkPathForJars(String cp, String[] jars) {
-/*  619 */     if (null == cp || null == jars || 0 == cp.length() || 0 == jars.length)
-/*      */     {
-/*  621 */       return null;
-/*      */     }
-/*  623 */     List<Map> v = new ArrayList<>();
-/*  624 */     StringTokenizer st = new StringTokenizer(cp, File.pathSeparator);
-/*      */     
-/*  626 */     while (st.hasMoreTokens()) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  630 */       String filename = st.nextToken();
-/*      */       
-/*  632 */       for (int i = 0; i < jars.length; i++) {
-/*      */         
-/*  634 */         if (filename.indexOf(jars[i]) > -1) {
-/*      */           
-/*  636 */           File f = new File(filename);
-/*      */           
-/*  638 */           if (f.exists()) {
-/*      */ 
-/*      */             
-/*      */             try {
-/*      */ 
-/*      */               
-/*  644 */               Map<String, String> h = new HashMap<>(2);
-/*      */               
-/*  646 */               h.put(jars[i] + "-path", f.getAbsolutePath());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*  653 */               if (!"xalan.jar".equalsIgnoreCase(jars[i])) {
-/*  654 */                 h.put(jars[i] + "-apparent.version", 
-/*  655 */                     getApparentVersion(jars[i], f.length()));
-/*      */               }
-/*  657 */               v.add(h);
-/*  658 */             } catch (Exception exception) {}
-/*      */           
-/*      */           }
-/*      */           else {
-/*      */             
-/*  663 */             Map<String, String> h = new HashMap<>(2);
-/*      */             
-/*  665 */             h.put(jars[i] + "-path", "WARNING. Classpath entry: " + filename + " does not exist");
-/*      */             
-/*  667 */             h.put(jars[i] + "-apparent.version", "not-present");
-/*  668 */             v.add(h);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  674 */     return v;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String getApparentVersion(String jarName, long jarSize) {
-/*  700 */     String foundSize = JARVERSIONS.get(new Long(jarSize));
-/*      */     
-/*  702 */     if (null != foundSize && foundSize.startsWith(jarName))
-/*      */     {
-/*  704 */       return foundSize;
-/*      */     }
-/*      */ 
-/*      */     
-/*  708 */     if ("xerces.jar".equalsIgnoreCase(jarName) || "xercesImpl.jar"
-/*  709 */       .equalsIgnoreCase(jarName))
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  716 */       return jarName + " " + "WARNING." + "present-unknown-version";
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  722 */     return jarName + " " + "present-unknown-version";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkJAXPVersion(Map<String, Object> h) {
-/*  739 */     if (null == h) {
-/*  740 */       h = new HashMap<>();
-/*      */     }
-/*  742 */     Class<?> clazz = null;
-/*      */ 
-/*      */     
-/*      */     try {
-/*  746 */       String JAXP1_CLASS = "javax.xml.stream.XMLStreamConstants";
-/*      */       
-/*  748 */       clazz = ObjectFactory.findProviderClass("javax.xml.stream.XMLStreamConstants", true);
-/*      */ 
-/*      */       
-/*  751 */       h.put("version.JAXP", "1.4");
-/*      */     }
-/*  753 */     catch (Exception e) {
-/*      */       
-/*  755 */       h.put("ERROR.version.JAXP", "1.3");
-/*  756 */       h.put("ERROR.", "At least one error was found!");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkProcessorVersion(Map<String, Object> h) {
-/*  770 */     if (null == h) {
-/*  771 */       h = new HashMap<>();
-/*      */     }
-/*      */     
-/*      */     try {
-/*  775 */       String XALAN1_VERSION_CLASS = "com.sun.org.apache.xalan.internal.xslt.XSLProcessorVersion";
-/*      */ 
-/*      */       
-/*  778 */       Class<?> clazz = ObjectFactory.findProviderClass("com.sun.org.apache.xalan.internal.xslt.XSLProcessorVersion", true);
-/*      */ 
-/*      */       
-/*  781 */       StringBuffer buf = new StringBuffer();
-/*  782 */       Field f = clazz.getField("PRODUCT");
-/*      */       
-/*  784 */       buf.append(f.get(null));
-/*  785 */       buf.append(';');
-/*      */       
-/*  787 */       f = clazz.getField("LANGUAGE");
-/*      */       
-/*  789 */       buf.append(f.get(null));
-/*  790 */       buf.append(';');
-/*      */       
-/*  792 */       f = clazz.getField("S_VERSION");
-/*      */       
-/*  794 */       buf.append(f.get(null));
-/*  795 */       buf.append(';');
-/*  796 */       h.put("version.xalan1", buf.toString());
-/*      */     }
-/*  798 */     catch (Exception e1) {
-/*      */       
-/*  800 */       h.put("version.xalan1", "not-present");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  807 */       String XALAN2_VERSION_CLASS = "com.sun.org.apache.xalan.internal.processor.XSLProcessorVersion";
-/*      */ 
-/*      */       
-/*  810 */       Class<?> clazz = ObjectFactory.findProviderClass("com.sun.org.apache.xalan.internal.processor.XSLProcessorVersion", true);
-/*      */ 
-/*      */       
-/*  813 */       StringBuffer buf = new StringBuffer();
-/*  814 */       Field f = clazz.getField("S_VERSION");
-/*  815 */       buf.append(f.get(null));
-/*      */       
-/*  817 */       h.put("version.xalan2x", buf.toString());
-/*      */     }
-/*  819 */     catch (Exception e2) {
-/*      */       
-/*  821 */       h.put("version.xalan2x", "not-present");
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  826 */       String XALAN2_2_VERSION_CLASS = "com.sun.org.apache.xalan.internal.Version";
-/*      */       
-/*  828 */       String XALAN2_2_VERSION_METHOD = "getVersion";
-/*  829 */       Class[] noArgs = new Class[0];
-/*      */       
-/*  831 */       Class<?> clazz = ObjectFactory.findProviderClass("com.sun.org.apache.xalan.internal.Version", true);
-/*      */       
-/*  833 */       Method method = clazz.getMethod("getVersion", noArgs);
-/*  834 */       Object returnValue = method.invoke(null, new Object[0]);
-/*      */       
-/*  836 */       h.put("version.xalan2_2", returnValue);
-/*      */     }
-/*  838 */     catch (Exception e2) {
-/*      */       
-/*  840 */       h.put("version.xalan2_2", "not-present");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkParserVersion(Map<String, Object> h) {
-/*  856 */     if (null == h) {
-/*  857 */       h = new HashMap<>();
-/*      */     }
-/*      */     
-/*      */     try {
-/*  861 */       String XERCES1_VERSION_CLASS = "com.sun.org.apache.xerces.internal.framework.Version";
-/*      */       
-/*  863 */       Class<?> clazz = ObjectFactory.findProviderClass("com.sun.org.apache.xerces.internal.framework.Version", true);
-/*      */ 
-/*      */       
-/*  866 */       Field f = clazz.getField("fVersion");
-/*  867 */       String parserVersion = (String)f.get(null);
-/*      */       
-/*  869 */       h.put("version.xerces1", parserVersion);
-/*      */     }
-/*  871 */     catch (Exception e) {
-/*      */       
-/*  873 */       h.put("version.xerces1", "not-present");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  879 */       String XERCES2_VERSION_CLASS = "com.sun.org.apache.xerces.internal.impl.Version";
-/*      */       
-/*  881 */       Class<?> clazz = ObjectFactory.findProviderClass("com.sun.org.apache.xerces.internal.impl.Version", true);
-/*      */ 
-/*      */       
-/*  884 */       Field f = clazz.getField("fVersion");
-/*  885 */       String parserVersion = (String)f.get(null);
-/*      */       
-/*  887 */       h.put("version.xerces2", parserVersion);
-/*      */     }
-/*  889 */     catch (Exception e) {
-/*      */       
-/*  891 */       h.put("version.xerces2", "not-present");
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  896 */       String CRIMSON_CLASS = "org.apache.crimson.parser.Parser2";
-/*      */       
-/*  898 */       Class<?> clazz = ObjectFactory.findProviderClass("org.apache.crimson.parser.Parser2", true);
-/*      */ 
-/*      */       
-/*  901 */       h.put("version.crimson", "present-unknown-version");
-/*      */     }
-/*  903 */     catch (Exception e) {
-/*      */       
-/*  905 */       h.put("version.crimson", "not-present");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkAntVersion(Map<String, Object> h) {
-/*  917 */     if (null == h) {
-/*  918 */       h = new HashMap<>();
-/*      */     }
-/*      */     
-/*      */     try {
-/*  922 */       String ANT_VERSION_CLASS = "org.apache.tools.ant.Main";
-/*  923 */       String ANT_VERSION_METHOD = "getAntVersion";
-/*  924 */       Class[] noArgs = new Class[0];
-/*      */       
-/*  926 */       Class<?> clazz = ObjectFactory.findProviderClass("org.apache.tools.ant.Main", true);
-/*      */       
-/*  928 */       Method method = clazz.getMethod("getAntVersion", noArgs);
-/*  929 */       Object returnValue = method.invoke(null, new Object[0]);
-/*      */       
-/*  931 */       h.put("version.ant", returnValue);
-/*      */     }
-/*  933 */     catch (Exception e) {
-/*      */       
-/*  935 */       h.put("version.ant", "not-present");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean checkDOML3(Map<String, Object> h) {
-/*  947 */     if (null == h) {
-/*  948 */       h = new HashMap<>();
-/*      */     }
-/*  950 */     String DOM_CLASS = "org.w3c.dom.Document";
-/*  951 */     String DOM_LEVEL3_METHOD = "getDoctype";
-/*      */ 
-/*      */     
-/*      */     try {
-/*  955 */       Class<?> clazz = ObjectFactory.findProviderClass("org.w3c.dom.Document", true);
-/*      */       
-/*  957 */       Method method = clazz.getMethod("getDoctype", (Class[])null);
-/*      */ 
-/*      */ 
-/*      */       
-/*  961 */       h.put("version.DOM", "3.0");
-/*  962 */       return true;
-/*      */     }
-/*  964 */     catch (Exception e) {
-/*      */       
-/*  966 */       return false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkDOMVersion(Map<String, Object> h) {
-/*  982 */     if (null == h) {
-/*  983 */       h = new HashMap<>();
-/*      */     }
-/*  985 */     String DOM_LEVEL2_CLASS = "org.w3c.dom.Document";
-/*  986 */     String DOM_LEVEL2_METHOD = "createElementNS";
-/*  987 */     String DOM_LEVEL3_METHOD = "getDoctype";
-/*  988 */     String DOM_LEVEL2WD_CLASS = "org.w3c.dom.Node";
-/*  989 */     String DOM_LEVEL2WD_METHOD = "supported";
-/*  990 */     String DOM_LEVEL2FD_CLASS = "org.w3c.dom.Node";
-/*  991 */     String DOM_LEVEL2FD_METHOD = "isSupported";
-/*  992 */     Class[] twoStringArgs = { String.class, String.class };
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  997 */       Class<?> clazz = ObjectFactory.findProviderClass("org.w3c.dom.Document", true);
-/*      */       
-/*  999 */       Method method = clazz.getMethod("createElementNS", twoStringArgs);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1003 */       h.put("version.DOM", "2.0");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1009 */         clazz = ObjectFactory.findProviderClass("org.w3c.dom.Node", true);
-/*      */         
-/* 1011 */         method = clazz.getMethod("supported", twoStringArgs);
-/*      */         
-/* 1013 */         h.put("ERROR.version.DOM.draftlevel", "2.0wd");
-/* 1014 */         h.put("ERROR.", "At least one error was found!");
-/*      */       }
-/* 1016 */       catch (Exception e2) {
-/*      */         
-/*      */         try
-/*      */         {
-/*      */           
-/* 1021 */           clazz = ObjectFactory.findProviderClass("org.w3c.dom.Node", true);
-/*      */           
-/* 1023 */           method = clazz.getMethod("isSupported", twoStringArgs);
-/*      */           
-/* 1025 */           h.put("version.DOM.draftlevel", "2.0fd");
-/*      */         }
-/* 1027 */         catch (Exception e3)
-/*      */         {
-/* 1029 */           h.put("ERROR.version.DOM.draftlevel", "2.0unknown");
-/* 1030 */           h.put("ERROR.", "At least one error was found!");
-/*      */         }
-/*      */       
-/*      */       } 
-/* 1034 */     } catch (Exception e) {
-/*      */       
-/* 1036 */       h.put("ERROR.version.DOM", "ERROR attempting to load DOM level 2 class: " + e
-/* 1037 */           .toString());
-/* 1038 */       h.put("ERROR.", "At least one error was found!");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void checkSAXVersion(Map<String, Object> h) {
-/* 1058 */     if (null == h) {
-/* 1059 */       h = new HashMap<>();
-/*      */     }
-/* 1061 */     String SAX_VERSION1_CLASS = "org.xml.sax.Parser";
-/* 1062 */     String SAX_VERSION1_METHOD = "parse";
-/* 1063 */     String SAX_VERSION2_CLASS = "org.xml.sax.XMLReader";
-/* 1064 */     String SAX_VERSION2_METHOD = "parse";
-/* 1065 */     String SAX_VERSION2BETA_CLASSNF = "org.xml.sax.helpers.AttributesImpl";
-/* 1066 */     String SAX_VERSION2BETA_METHODNF = "setAttributes";
-/* 1067 */     Class[] oneStringArg = { String.class };
-/*      */     
-/* 1069 */     Class[] attributesArg = { Attributes.class };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1075 */       Class<?> clazz = ObjectFactory.findProviderClass("org.xml.sax.helpers.AttributesImpl", true);
-/*      */       
-/* 1077 */       Method method = clazz.getMethod("setAttributes", attributesArg);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1081 */       h.put("version.SAX", "2.0");
-/*      */     }
-/* 1083 */     catch (Exception e) {
-/*      */ 
-/*      */       
-/* 1086 */       h.put("ERROR.version.SAX", "ERROR attempting to load SAX version 2 class: " + e
-/* 1087 */           .toString());
-/* 1088 */       h.put("ERROR.", "At least one error was found!");
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1092 */         Class<?> clazz = ObjectFactory.findProviderClass("org.xml.sax.XMLReader", true);
-/*      */         
-/* 1094 */         Method method = clazz.getMethod("parse", oneStringArg);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1099 */         h.put("version.SAX-backlevel", "2.0beta2-or-earlier");
-/*      */       }
-/* 1101 */       catch (Exception e2) {
-/*      */ 
-/*      */         
-/* 1104 */         h.put("ERROR.version.SAX", "ERROR attempting to load SAX version 2 class: " + e
-/* 1105 */             .toString());
-/* 1106 */         h.put("ERROR.", "At least one error was found!");
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1110 */           Class<?> clazz = ObjectFactory.findProviderClass("org.xml.sax.Parser", true);
-/*      */           
-/* 1112 */           Method method = clazz.getMethod("parse", oneStringArg);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1117 */           h.put("version.SAX-backlevel", "1.0");
-/*      */         }
-/* 1119 */         catch (Exception e3) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1123 */           h.put("ERROR.version.SAX-backlevel", "ERROR attempting to load SAX version 1 class: " + e3
-/* 1124 */               .toString());
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/* 1149 */     Map<Long, String> jarVersions = new HashMap<>();
-/* 1150 */     jarVersions.put(new Long(857192L), "xalan.jar from xalan-j_1_1");
-/* 1151 */     jarVersions.put(new Long(440237L), "xalan.jar from xalan-j_1_2");
-/* 1152 */     jarVersions.put(new Long(436094L), "xalan.jar from xalan-j_1_2_1");
-/* 1153 */     jarVersions.put(new Long(426249L), "xalan.jar from xalan-j_1_2_2");
-/* 1154 */     jarVersions.put(new Long(702536L), "xalan.jar from xalan-j_2_0_0");
-/* 1155 */     jarVersions.put(new Long(720930L), "xalan.jar from xalan-j_2_0_1");
-/* 1156 */     jarVersions.put(new Long(732330L), "xalan.jar from xalan-j_2_1_0");
-/* 1157 */     jarVersions.put(new Long(872241L), "xalan.jar from xalan-j_2_2_D10");
-/* 1158 */     jarVersions.put(new Long(882739L), "xalan.jar from xalan-j_2_2_D11");
-/* 1159 */     jarVersions.put(new Long(923866L), "xalan.jar from xalan-j_2_2_0");
-/* 1160 */     jarVersions.put(new Long(905872L), "xalan.jar from xalan-j_2_3_D1");
-/* 1161 */     jarVersions.put(new Long(906122L), "xalan.jar from xalan-j_2_3_0");
-/* 1162 */     jarVersions.put(new Long(906248L), "xalan.jar from xalan-j_2_3_1");
-/* 1163 */     jarVersions.put(new Long(983377L), "xalan.jar from xalan-j_2_4_D1");
-/* 1164 */     jarVersions.put(new Long(997276L), "xalan.jar from xalan-j_2_4_0");
-/* 1165 */     jarVersions.put(new Long(1031036L), "xalan.jar from xalan-j_2_4_1");
-/*      */ 
-/*      */     
-/* 1168 */     jarVersions.put(new Long(596540L), "xsltc.jar from xalan-j_2_2_0");
-/* 1169 */     jarVersions.put(new Long(590247L), "xsltc.jar from xalan-j_2_3_D1");
-/* 1170 */     jarVersions.put(new Long(589914L), "xsltc.jar from xalan-j_2_3_0");
-/* 1171 */     jarVersions.put(new Long(589915L), "xsltc.jar from xalan-j_2_3_1");
-/* 1172 */     jarVersions.put(new Long(1306667L), "xsltc.jar from xalan-j_2_4_D1");
-/* 1173 */     jarVersions.put(new Long(1328227L), "xsltc.jar from xalan-j_2_4_0");
-/* 1174 */     jarVersions.put(new Long(1344009L), "xsltc.jar from xalan-j_2_4_1");
-/* 1175 */     jarVersions.put(new Long(1348361L), "xsltc.jar from xalan-j_2_5_D1");
-/*      */ 
-/*      */     
-/* 1178 */     jarVersions.put(new Long(1268634L), "xsltc.jar-bundled from xalan-j_2_3_0");
-/*      */     
-/* 1180 */     jarVersions.put(new Long(100196L), "xml-apis.jar from xalan-j_2_2_0 or xalan-j_2_3_D1");
-/* 1181 */     jarVersions.put(new Long(108484L), "xml-apis.jar from xalan-j_2_3_0, or xalan-j_2_3_1 from xml-commons-1.0.b2");
-/* 1182 */     jarVersions.put(new Long(109049L), "xml-apis.jar from xalan-j_2_4_0 from xml-commons RIVERCOURT1 branch");
-/* 1183 */     jarVersions.put(new Long(113749L), "xml-apis.jar from xalan-j_2_4_1 from factoryfinder-build of xml-commons RIVERCOURT1");
-/* 1184 */     jarVersions.put(new Long(124704L), "xml-apis.jar from tck-jaxp-1_2_0 branch of xml-commons");
-/* 1185 */     jarVersions.put(new Long(124724L), "xml-apis.jar from tck-jaxp-1_2_0 branch of xml-commons, tag: xml-commons-external_1_2_01");
-/* 1186 */     jarVersions.put(new Long(194205L), "xml-apis.jar from head branch of xml-commons, tag: xml-commons-external_1_3_02");
-/*      */ 
-/*      */ 
-/*      */     
-/* 1190 */     jarVersions.put(new Long(424490L), "xalan.jar from Xerces Tools releases - ERROR:DO NOT USE!");
-/*      */     
-/* 1192 */     jarVersions.put(new Long(1591855L), "xerces.jar from xalan-j_1_1 from xerces-1...");
-/* 1193 */     jarVersions.put(new Long(1498679L), "xerces.jar from xalan-j_1_2 from xerces-1_2_0.bin");
-/* 1194 */     jarVersions.put(new Long(1484896L), "xerces.jar from xalan-j_1_2_1 from xerces-1_2_1.bin");
-/* 1195 */     jarVersions.put(new Long(804460L), "xerces.jar from xalan-j_1_2_2 from xerces-1_2_2.bin");
-/* 1196 */     jarVersions.put(new Long(1499244L), "xerces.jar from xalan-j_2_0_0 from xerces-1_2_3.bin");
-/* 1197 */     jarVersions.put(new Long(1605266L), "xerces.jar from xalan-j_2_0_1 from xerces-1_3_0.bin");
-/* 1198 */     jarVersions.put(new Long(904030L), "xerces.jar from xalan-j_2_1_0 from xerces-1_4.bin");
-/* 1199 */     jarVersions.put(new Long(904030L), "xerces.jar from xerces-1_4_0.bin");
-/* 1200 */     jarVersions.put(new Long(1802885L), "xerces.jar from xerces-1_4_2.bin");
-/* 1201 */     jarVersions.put(new Long(1734594L), "xerces.jar from Xerces-J-bin.2.0.0.beta3");
-/* 1202 */     jarVersions.put(new Long(1808883L), "xerces.jar from xalan-j_2_2_D10,D11,D12 or xerces-1_4_3.bin");
-/* 1203 */     jarVersions.put(new Long(1812019L), "xerces.jar from xalan-j_2_2_0");
-/* 1204 */     jarVersions.put(new Long(1720292L), "xercesImpl.jar from xalan-j_2_3_D1");
-/* 1205 */     jarVersions.put(new Long(1730053L), "xercesImpl.jar from xalan-j_2_3_0 or xalan-j_2_3_1 from xerces-2_0_0");
-/* 1206 */     jarVersions.put(new Long(1728861L), "xercesImpl.jar from xalan-j_2_4_D1 from xerces-2_0_1");
-/* 1207 */     jarVersions.put(new Long(972027L), "xercesImpl.jar from xalan-j_2_4_0 from xerces-2_1");
-/* 1208 */     jarVersions.put(new Long(831587L), "xercesImpl.jar from xalan-j_2_4_1 from xerces-2_2");
-/* 1209 */     jarVersions.put(new Long(891817L), "xercesImpl.jar from xalan-j_2_5_D1 from xerces-2_3");
-/* 1210 */     jarVersions.put(new Long(895924L), "xercesImpl.jar from xerces-2_4");
-/* 1211 */     jarVersions.put(new Long(1010806L), "xercesImpl.jar from Xerces-J-bin.2.6.2");
-/* 1212 */     jarVersions.put(new Long(1203860L), "xercesImpl.jar from Xerces-J-bin.2.7.1");
-/*      */     
-/* 1214 */     jarVersions.put(new Long(37485L), "xalanj1compat.jar from xalan-j_2_0_0");
-/* 1215 */     jarVersions.put(new Long(38100L), "xalanj1compat.jar from xalan-j_2_0_1");
-/*      */     
-/* 1217 */     jarVersions.put(new Long(18779L), "xalanservlet.jar from xalan-j_2_0_0");
-/* 1218 */     jarVersions.put(new Long(21453L), "xalanservlet.jar from xalan-j_2_0_1");
-/* 1219 */     jarVersions.put(new Long(24826L), "xalanservlet.jar from xalan-j_2_3_1 or xalan-j_2_4_1");
-/* 1220 */     jarVersions.put(new Long(24831L), "xalanservlet.jar from xalan-j_2_4_1");
-/*      */ 
-/*      */ 
-/*      */     
-/* 1224 */     jarVersions.put(new Long(5618L), "jaxp.jar from jaxp1.0.1");
-/* 1225 */     jarVersions.put(new Long(136133L), "parser.jar from jaxp1.0.1");
-/* 1226 */     jarVersions.put(new Long(28404L), "jaxp.jar from jaxp-1.1");
-/* 1227 */     jarVersions.put(new Long(187162L), "crimson.jar from jaxp-1.1");
-/* 1228 */     jarVersions.put(new Long(801714L), "xalan.jar from jaxp-1.1");
-/* 1229 */     jarVersions.put(new Long(196399L), "crimson.jar from crimson-1.1.1");
-/* 1230 */     jarVersions.put(new Long(33323L), "jaxp.jar from crimson-1.1.1 or jakarta-ant-1.4.1b1");
-/* 1231 */     jarVersions.put(new Long(152717L), "crimson.jar from crimson-1.1.2beta2");
-/* 1232 */     jarVersions.put(new Long(88143L), "xml-apis.jar from crimson-1.1.2beta2");
-/* 1233 */     jarVersions.put(new Long(206384L), "crimson.jar from crimson-1.1.3 or jakarta-ant-1.4.1b1");
-/*      */ 
-/*      */     
-/* 1236 */     jarVersions.put(new Long(136198L), "parser.jar from jakarta-ant-1.3 or 1.2");
-/* 1237 */     jarVersions.put(new Long(5537L), "jaxp.jar from jakarta-ant-1.3 or 1.2");
-/*      */     
-/* 1239 */     JARVERSIONS = Collections.unmodifiableMap(jarVersions);
-/*      */   }
-/*      */ 
-/*      */   
-/* 1243 */   protected PrintWriter outWriter = new PrintWriter(System.out, true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void logMsg(String s) {
-/* 1251 */     this.outWriter.println(s);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xslt\EnvironmentCheck.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: EnvironmentCheck.java,v 1.2.4.1 2005/09/09 07:13:59 pvedula Exp $
+ */
+package com.sun.org.apache.xalan.internal.xslt;
+
+import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+/**
+ * Utility class to report simple information about the environment.
+ * Simplistic reporting about certain classes found in your JVM may
+ * help answer some FAQs for simple problems.
+ *
+ * <p>Usage-command line:
+ * <code>
+ * java com.sun.org.apache.xalan.internal.xslt.EnvironmentCheck [-out outFile]
+ * </code></p>
+ *
+ * <p>Usage-from program:
+ * <code>
+ * boolean environmentOK =
+ * (new EnvironmentCheck()).checkEnvironment(yourPrintWriter);
+ * </code></p>
+ *
+ * <p>Usage-from stylesheet:
+ * <code><pre>
+ *    &lt;?xml version="1.0"?&gt;
+ *    &lt;xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
+ *        xmlns:xalan="http://xml.apache.org/xalan"
+ *        exclude-result-prefixes="xalan"&gt;
+ *    &lt;xsl:output indent="yes"/&gt;
+ *    &lt;xsl:template match="/"&gt;
+ *      &lt;xsl:copy-of select="xalan:checkEnvironment()"/&gt;
+ *    &lt;/xsl:template&gt;
+ *    &lt;/xsl:stylesheet&gt;
+ * </pre></code></p>
+ *
+ * <p>Xalan users reporting problems are encouraged to use this class
+ * to see if there are potential problems with their actual
+ * Java environment <b>before</b> reporting a bug.  Note that you
+ * should both check from the JVM/JRE's command line as well as
+ * temporarily calling checkEnvironment() directly from your code,
+ * since the classpath may differ (especially for servlets, etc).</p>
+ *
+ * <p>Also see http://xml.apache.org/xalan-j/faq.html</p>
+ *
+ * <p>Note: This class is pretty simplistic:
+ * results are not necessarily definitive nor will it find all
+ * problems related to environment setup.  Also, you should avoid
+ * calling this in deployed production code, both because it is
+ * quite slow and because it forces classes to get loaded.</p>
+ *
+ * <p>Note: This class explicitly has very limited compile-time
+ * dependencies to enable easy compilation and usage even when
+ * Xalan, DOM/SAX/JAXP, etc. are not present.</p>
+ *
+ * <p>Note: for an improved version of this utility, please see
+ * the xml-commons' project Which utility which does the same kind
+ * of thing but in a much simpler manner.</p>
+ *
+ * @author Shane_Curcuru@us.ibm.com
+ * @version $Id: EnvironmentCheck.java,v 1.10 2010-11-01 04:34:13 joehw Exp $
+ */
+public class EnvironmentCheck
+{
+
+  /**
+   * Command line runnability: checks for [-out outFilename] arg.
+   * <p>Command line entrypoint; Sets output and calls
+   * {@link #checkEnvironment(PrintWriter)}.</p>
+   * @param args command line args
+   */
+  public static void main(String[] args)
+  {
+    // Default to System.out, autoflushing
+    PrintWriter sendOutputTo = new PrintWriter(System.out, true);
+
+    // Read our simplistic input args, if supplied
+    for (int i = 0; i < args.length; i++)
+    {
+      if ("-out".equalsIgnoreCase(args[i]))
+      {
+        i++;
+
+        if (i < args.length)
+        {
+          try
+          {
+            sendOutputTo = new PrintWriter(new FileWriter(args[i], true));
+          }
+          catch (Exception e)
+          {
+            System.err.println("# WARNING: -out " + args[i] + " threw "
+                               + e.toString());
+          }
+        }
+        else
+        {
+          System.err.println(
+            "# WARNING: -out argument should have a filename, output sent to console");
+        }
+      }
+    }
+
+    EnvironmentCheck app = new EnvironmentCheck();
+    app.checkEnvironment(sendOutputTo);
+  }
+
+  /**
+   * Programmatic entrypoint: Report on basic Java environment
+   * and CLASSPATH settings that affect Xalan.
+   *
+   * <p>Note that this class is not advanced enough to tell you
+   * everything about the environment that affects Xalan, and
+   * sometimes reports errors that will not actually affect
+   * Xalan's behavior.  Currently, it very simplistically
+   * checks the JVM's environment for some basic properties and
+   * logs them out; it will report a problem if it finds a setting
+   * or .jar file that is <i>likely</i> to cause problems.</p>
+   *
+   * <p>Advanced users can peruse the code herein to help them
+   * investigate potential environment problems found; other users
+   * may simply send the output from this tool along with any bugs
+   * they submit to help us in the debugging process.</p>
+   *
+   * @param pw PrintWriter to send output to; can be sent to a
+   * file that will look similar to a Properties file; defaults
+   * to System.out if null
+   * @return true if your environment appears to have no major
+   * problems; false if potential environment problems found
+   * @see #getEnvironmentHash()
+   */
+  public boolean checkEnvironment(PrintWriter pw)
+  {
+
+    // Use user-specified output writer if non-null
+    if (null != pw)
+      outWriter = pw;
+
+    // Setup a hash to store various environment information in
+    Map<String, Object> hash = getEnvironmentHash();
+
+    // Check for ERROR keys in the hashtable, and print report
+    boolean environmentHasErrors = writeEnvironmentReport(hash);
+
+    if (environmentHasErrors)
+    {
+      // Note: many logMsg calls have # at the start to
+      //  fake a property-file like output
+      logMsg("# WARNING: Potential problems found in your environment!");
+      logMsg("#    Check any 'ERROR' items above against the Xalan FAQs");
+      logMsg("#    to correct potential problems with your classes/jars");
+      logMsg("#    http://xml.apache.org/xalan-j/faq.html");
+      if (null != outWriter)
+        outWriter.flush();
+      return false;
+    }
+    else
+    {
+      logMsg("# YAHOO! Your environment seems to be OK.");
+      if (null != outWriter)
+        outWriter.flush();
+      return true;
+    }
+  }
+
+  /**
+   * Fill a hash with basic environment settings that affect Xalan.
+   *
+   * <p>Worker method called from various places.</p>
+   * <p>Various system and CLASSPATH, etc. properties are put into
+   * the hash as keys with a brief description of the current state
+   * of that item as the value.  Any serious problems will be put in
+   * with a key that is prefixed with {@link #ERROR 'ERROR.'} so it
+   * stands out in any resulting report; also a key with just that
+   * constant will be set as well for any error.</p>
+   * <p>Note that some legitimate cases are flaged as potential
+   * errors - namely when a developer recompiles xalan.jar on their
+   * own - and even a non-error state doesn't guaruntee that
+   * everything in the environment is correct.  But this will help
+   * point out the most common classpath and system property
+   * problems that we've seen.</p>
+   *
+   * @return Map full of useful environment info about Xalan and related
+   * system properties, etc.
+   */
+  public Map<String, Object> getEnvironmentHash()
+  {
+    // Setup a hash to store various environment information in
+    Map<String, Object> hash = new HashMap<>();
+
+    // Call various worker methods to fill in the hash
+    //  These are explicitly separate for maintenance and so
+    //  advanced users could call them standalone
+    checkJAXPVersion(hash);
+    checkProcessorVersion(hash);
+    checkParserVersion(hash);
+    checkAntVersion(hash);
+    if (!checkDOML3(hash)) {
+    checkDOMVersion(hash);
+    }
+    checkSAXVersion(hash);
+    checkSystemProperties(hash);
+
+    return hash;
+  }
+
+  /**
+   * Dump a basic Xalan environment report to outWriter.
+   *
+   * <p>This dumps a simple header and then each of the entries in
+   * the Map to our PrintWriter; it does special processing
+   * for entries that are .jars found in the classpath.</p>
+   *
+   * @param h Map of items to report on; presumably
+   * filled in by our various check*() methods
+   * @return true if your environment appears to have no major
+   * problems; false if potential environment problems found
+   * @see #appendEnvironmentReport(Node, Document, Map)
+   * for an equivalent that appends to a Node instead
+   */
+  protected boolean writeEnvironmentReport(Map<String, Object> h)
+  {
+
+    if (null == h)
+    {
+      logMsg("# ERROR: writeEnvironmentReport called with null Map");
+      return false;
+    }
+
+    boolean errors = false;
+
+    logMsg(
+      "#---- BEGIN writeEnvironmentReport($Revision: 1.10 $): Useful stuff found: ----");
+
+    // Fake the Properties-like output
+    for (Map.Entry<String, Object> entry : h.entrySet()) {
+        String keyStr = entry.getKey();
+        try {
+            // Special processing for classes found..
+            if (keyStr.startsWith(FOUNDCLASSES)) {
+                List<Map> v = (ArrayList<Map>)entry.getValue();
+                errors |= logFoundJars(v, keyStr);
+            }
+            // ..normal processing for all other entries
+            else {
+                // Note: we could just check for the ERROR key by itself,
+                //    since we now set that, but since we have to go
+                //    through the whole hash anyway, do it this way,
+                //    which is safer for maintenance
+                if (keyStr.startsWith(ERROR)) {
+                    errors = true;
+                }
+                logMsg(keyStr + "=" + h.get(keyStr));
+            }
+        } catch (Exception e) {
+            logMsg("Reading-" + keyStr + "= threw: " + e.toString());
+        }
+    }
+
+    logMsg(
+      "#----- END writeEnvironmentReport: Useful properties found: -----");
+
+    return errors;
+  }
+
+  /** Prefixed to hash keys that signify serious problems.  */
+  public static final String ERROR = "ERROR.";
+
+  /** Added to descriptions that signify potential problems.  */
+  public static final String WARNING = "WARNING.";
+
+  /** Value for any error found.  */
+  public static final String ERROR_FOUND = "At least one error was found!";
+
+  /** Prefixed to hash keys that signify version numbers.  */
+  public static final String VERSION = "version.";
+
+  /** Prefixed to hash keys that signify .jars found in classpath.  */
+  public static final String FOUNDCLASSES = "foundclasses.";
+
+  /** Marker that a class or .jar was found.  */
+  public static final String CLASS_PRESENT = "present-unknown-version";
+
+  /** Marker that a class or .jar was not found.  */
+  public static final String CLASS_NOTPRESENT = "not-present";
+
+  /** Listing of common .jar files that include Xalan-related classes.  */
+  public String[] jarNames =
+  {
+    "xalan.jar", "xalansamples.jar", "xalanj1compat.jar", "xalanservlet.jar",
+    "serializer.jar",   // Serializer (shared between Xalan & Xerces)
+    "xerces.jar",       // Xerces-J 1.x
+    "xercesImpl.jar",   // Xerces-J 2.x
+    "testxsl.jar",
+    "crimson.jar",
+    "lotusxsl.jar",
+    "jaxp.jar", "parser.jar", "dom.jar", "sax.jar", "xml.jar",
+    "xml-apis.jar",
+    "xsltc.jar"
+  };
+
+  /**
+   * Print out report of .jars found in a classpath.
+   *
+   * Takes the information encoded from a checkPathForJars()
+   * call and dumps it out to our PrintWriter.
+   *
+   * @param v List of Maps of .jar file info
+   * @param desc description to print out in header
+   *
+   * @return false if OK, true if any .jars were reported
+   * as having errors
+   * @see #checkPathForJars(String, String[])
+   */
+  protected boolean logFoundJars(List<Map> v, String desc)
+  {
+
+    if ((null == v) || (v.size() < 1))
+      return false;
+
+    boolean errors = false;
+
+    logMsg("#---- BEGIN Listing XML-related jars in: " + desc + " ----");
+
+    for (Map<String, String> v1 : v) {
+        for (Map.Entry<String, String> entry : v1.entrySet()) {
+            String keyStr = entry.getKey();
+            try {
+                if (keyStr.startsWith(ERROR)) {
+                    errors = true;
+                }
+                logMsg(keyStr + "=" + entry.getValue());
+
+            } catch (Exception e) {
+                errors = true;
+                logMsg("Reading-" + keyStr + "= threw: " + e.toString());
+            }
+        }
+    }
+
+    logMsg("#----- END Listing XML-related jars in: " + desc + " -----");
+
+    return errors;
+  }
+
+  /**
+   * Stylesheet extension entrypoint: Dump a basic Xalan
+   * environment report from getEnvironmentHash() to a Node.
+   *
+   * <p>Copy of writeEnvironmentReport that creates a Node suitable
+   * for other processing instead of a properties-like text output.
+   * </p>
+   * @param container Node to append our report to
+   * @param factory Document providing createElement, etc. services
+   * @param h Hash presumably from {@link #getEnvironmentHash()}
+   * @see #writeEnvironmentReport(Map)
+   * for an equivalent that writes to a PrintWriter instead
+   */
+  public void appendEnvironmentReport(Node container, Document factory, Map<String, Object> h)
+  {
+    if ((null == container) || (null == factory))
+    {
+      return;
+    }
+
+    try
+    {
+      Element envCheckNode = factory.createElement("EnvironmentCheck");
+      envCheckNode.setAttribute("version", "$Revision: 1.10 $");
+      container.appendChild(envCheckNode);
+
+      if (null == h)
+      {
+        Element statusNode = factory.createElement("status");
+        statusNode.setAttribute("result", "ERROR");
+        statusNode.appendChild(factory.createTextNode("appendEnvironmentReport called with null Map!"));
+        envCheckNode.appendChild(statusNode);
+        return;
+      }
+
+      boolean errors = false;
+
+      Element hashNode = factory.createElement("environment");
+      envCheckNode.appendChild(hashNode);
+
+      for (Map.Entry<String, Object> entry : h.entrySet()) {
+          String keyStr = entry.getKey();
+          try {
+              // Special processing for classes found..
+              if (keyStr.startsWith(FOUNDCLASSES)) {
+                  List<Map> v = (List<Map>)entry.getValue();
+                  // errors |= logFoundJars(v, keyStr);
+                  errors |= appendFoundJars(hashNode, factory, v, keyStr);
+              } // ..normal processing for all other entries
+              else {
+                  // Note: we could just check for the ERROR key by itself,
+                  //    since we now set that, but since we have to go
+                  //    through the whole hash anyway, do it this way,
+                  //    which is safer for maintenance
+                  if (keyStr.startsWith(ERROR)) {
+                      errors = true;
+                  }
+                  Element node = factory.createElement("item");
+                  node.setAttribute("key", keyStr);
+                  node.appendChild(factory.createTextNode((String) h.get(keyStr)));
+                  hashNode.appendChild(node);
+              }
+          } catch (Exception e) {
+              errors = true;
+              Element node = factory.createElement("item");
+              node.setAttribute("key", keyStr);
+              node.appendChild(factory.createTextNode(ERROR + " Reading " + keyStr + " threw: " + e.toString()));
+              hashNode.appendChild(node);
+          }
+      } // end of for...
+
+      Element statusNode = factory.createElement("status");
+      statusNode.setAttribute("result", (errors ? "ERROR" : "OK" ));
+      envCheckNode.appendChild(statusNode);
+    }
+    catch (Exception e2)
+    {
+      System.err.println("appendEnvironmentReport threw: " + e2.toString());
+      e2.printStackTrace();
+    }
+  }
+
+  /**
+   * Print out report of .jars found in a classpath.
+   *
+   * Takes the information encoded from a checkPathForJars()
+   * call and dumps it out to our PrintWriter.
+   *
+   * @param container Node to append our report to
+   * @param factory Document providing createElement, etc. services
+   * @param v Map of Maps of .jar file info
+   * @param desc description to print out in header
+   *
+   * @return false if OK, true if any .jars were reported
+   * as having errors
+   * @see #checkPathForJars(String, String[])
+   */
+  protected boolean appendFoundJars(Node container, Document factory,
+        List<Map> v, String desc)
+  {
+
+    if ((null == v) || (v.size() < 1))
+      return false;
+
+    boolean errors = false;
+
+    for (Map<String, String> v1 : v) {
+        for (Map.Entry<String, String> entry : v1.entrySet()) {
+            String keyStr = entry.getKey();
+            try {
+                if (keyStr.startsWith(ERROR)) {
+                    errors = true;
+                }
+                Element node = factory.createElement("foundJar");
+                node.setAttribute("name", keyStr.substring(0, keyStr.indexOf("-")));
+                node.setAttribute("desc", keyStr.substring(keyStr.indexOf("-") + 1));
+                node.appendChild(factory.createTextNode(entry.getValue()));
+                container.appendChild(node);
+            } catch (Exception e) {
+                errors = true;
+                Element node = factory.createElement("foundJar");
+                node.appendChild(factory.createTextNode(ERROR + " Reading " + keyStr + " threw: " + e.toString()));
+                container.appendChild(node);
+            }
+        }
+    }
+    return errors;
+  }
+
+  /**
+   * Fillin hash with info about SystemProperties.
+   *
+   * Logs java.class.path and other likely paths; then attempts
+   * to search those paths for .jar files with Xalan-related classes.
+   *
+   * //@todo NOTE: We don't actually search java.ext.dirs for
+   * //  *.jar files therein! This should be updated
+   *
+   * @param h Map to put information in
+   * @see #jarNames
+   * @see #checkPathForJars(String, String[])
+   */
+  protected void checkSystemProperties(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    // Grab java version for later use
+    try
+    {
+      String javaVersion = SecuritySupport.getSystemProperty("java.version");
+
+      h.put("java.version", javaVersion);
+    }
+    catch (SecurityException se)
+    {
+
+      // For applet context, etc.
+      h.put(
+        "java.version",
+        "WARNING: SecurityException thrown accessing system version properties");
+    }
+
+    // Printout jar files on classpath(s) that may affect operation
+    //  Do this in order
+    try
+    {
+
+      // This is present in all JVM's
+      String cp = SecuritySupport.getSystemProperty("java.class.path");
+
+      h.put("java.class.path", cp);
+
+      List<Map> classpathJars = checkPathForJars(cp, jarNames);
+
+      if (null != classpathJars) {
+          h.put(FOUNDCLASSES + "java.class.path", classpathJars);
+      }
+
+      // Also check for JDK 1.2+ type classpaths
+      String othercp = SecuritySupport.getSystemProperty("sun.boot.class.path");
+
+      if (null != othercp) {
+          h.put("sun.boot.class.path", othercp);
+          classpathJars = checkPathForJars(othercp, jarNames);
+
+          if (null != classpathJars) {
+              h.put(FOUNDCLASSES + "sun.boot.class.path", classpathJars);
+          }
+      }
+
+      //@todo NOTE: We don't actually search java.ext.dirs for
+      //  *.jar files therein! This should be updated
+      othercp = SecuritySupport.getSystemProperty("java.ext.dirs");
+
+      if (null != othercp)
+      {
+        h.put("java.ext.dirs", othercp);
+
+        classpathJars = checkPathForJars(othercp, jarNames);
+
+        if (null != classpathJars)
+          h.put(FOUNDCLASSES + "java.ext.dirs", classpathJars);
+      }
+
+      //@todo also check other System properties' paths?
+      //  v2 = checkPathForJars(System.getProperty("sun.boot.library.path"), jarNames);   // ?? may not be needed
+      //  v3 = checkPathForJars(System.getProperty("java.library.path"), jarNames);   // ?? may not be needed
+    }
+    catch (SecurityException se2)
+    {
+      // For applet context, etc.
+      h.put(
+        "java.class.path",
+        "WARNING: SecurityException thrown accessing system classpath properties");
+    }
+  }
+
+  /**
+   * Cheap-o listing of specified .jars found in the classpath.
+   *
+   * cp should be separated by the usual File.pathSeparator.  We
+   * then do a simplistic search of the path for any requested
+   * .jar filenames, and return a listing of their names and
+   * where (apparently) they came from.
+   *
+   * @param cp classpath to search
+   * @param jars array of .jar base filenames to look for
+   *
+   * @return List of Maps filled with info about found .jars
+   * @see #jarNames
+   * @see #logFoundJars(Map, String)
+   * @see #appendFoundJars(Node, Document, Map, String )
+   * @see #getApparentVersion(String, long)
+   */
+  protected List<Map> checkPathForJars(String cp, String[] jars)
+  {
+
+    if ((null == cp) || (null == jars) || (0 == cp.length())
+            || (0 == jars.length))
+      return null;
+
+    List<Map> v = new ArrayList<>();
+    StringTokenizer st = new StringTokenizer(cp, File.pathSeparator);
+
+    while (st.hasMoreTokens())
+    {
+
+      // Look at each classpath entry for each of our requested jarNames
+      String filename = st.nextToken();
+
+      for (int i = 0; i < jars.length; i++)
+      {
+        if (filename.indexOf(jars[i]) > -1)
+        {
+          File f = new File(filename);
+
+          if (f.exists())
+          {
+
+            // If any requested jarName exists, report on
+            //  the details of that .jar file
+            try {
+                Map<String, String> h = new HashMap<>(2);
+                // Note "-" char is looked for in appendFoundJars
+                h.put(jars[i] + "-path", f.getAbsolutePath());
+
+                // We won't bother reporting on the xalan.jar apparent version
+                // since this requires knowing the jar size of the xalan.jar
+                // before we build it.
+                // For other jars, eg. xml-apis.jar and xercesImpl.jar, we
+                // report the apparent version of the file we've found
+                if (!("xalan.jar".equalsIgnoreCase(jars[i]))) {
+                    h.put(jars[i] + "-apparent.version",
+                            getApparentVersion(jars[i], f.length()));
+                }
+                v.add(h);
+            } catch (Exception e) {
+
+                /* no-op, don't add it  */
+            }
+          } else {
+            Map<String, String> h = new HashMap<>(2);
+            // Note "-" char is looked for in appendFoundJars
+            h.put(jars[i] + "-path", WARNING + " Classpath entry: "
+                    + filename + " does not exist");
+            h.put(jars[i] + "-apparent.version", CLASS_NOTPRESENT);
+            v.add(h);
+          }
+        }
+      }
+    }
+
+    return v;
+  }
+
+  /**
+   * Cheap-o method to determine the product version of a .jar.
+   *
+   * Currently does a lookup into a local table of some recent
+   * shipped Xalan builds to determine where the .jar probably
+   * came from.  Note that if you recompile Xalan or Xerces
+   * yourself this will likely report a potential error, since
+   * we can't certify builds other than the ones we ship.
+   * Only reports against selected posted Xalan-J builds.
+   *
+   * //@todo actually look up version info in manifests
+   *
+   * @param jarName base filename of the .jarfile
+   * @param jarSize size of the .jarfile
+   *
+   * @return String describing where the .jar file probably
+   * came from
+   */
+  protected String getApparentVersion(String jarName, long jarSize)
+  {
+    // If we found a matching size and it's for our
+    //  jar, then return it's description
+    // Lookup in static JARVERSIONS Map
+    String foundSize = JARVERSIONS.get(new Long(jarSize));
+
+    if ((null != foundSize) && (foundSize.startsWith(jarName)))
+    {
+      return foundSize;
+    }
+    else
+    {
+      if ("xerces.jar".equalsIgnoreCase(jarName)
+              || "xercesImpl.jar".equalsIgnoreCase(jarName))
+//              || "xalan.jar".equalsIgnoreCase(jarName))
+      {
+
+        // For xalan.jar and xerces.jar/xercesImpl.jar, which we ship together:
+        // The jar is not from a shipped copy of xalan-j, so
+        //  it's up to the user to ensure that it's compatible
+        return jarName + " " + WARNING + CLASS_PRESENT;
+      }
+      else
+      {
+
+        // Otherwise, it's just a jar we don't have the version info calculated for
+        return jarName + " " + CLASS_PRESENT;
+      }
+    }
+  }
+
+  /**
+   * Report version information about JAXP interfaces.
+   *
+   * Currently distinguishes between JAXP 1.0.1 and JAXP 1.1,
+   * and not found; only tests the interfaces, and does not
+   * check for reference implementation versions.
+   *
+   * @param h Map to put information in
+   */
+  protected void checkJAXPVersion(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    Class clazz = null;
+
+    try
+    {
+      final String JAXP1_CLASS = "javax.xml.stream.XMLStreamConstants";
+
+      clazz = ObjectFactory.findProviderClass(JAXP1_CLASS, true);
+
+      // If we succeeded, we have JAXP 1.4 available
+      h.put(VERSION + "JAXP", "1.4");
+    }
+    catch (Exception e)
+    {
+        h.put(ERROR + VERSION + "JAXP", "1.3");
+        h.put(ERROR, ERROR_FOUND);
+      }
+      }
+
+  /**
+   * Report product version information from Xalan-J.
+   *
+   * Looks for version info in xalan.jar from Xalan-J products.
+   *
+   * @param h Map to put information in
+   */
+  protected void checkProcessorVersion(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    try
+    {
+      final String XALAN1_VERSION_CLASS =
+        "com.sun.org.apache.xalan.internal.xslt.XSLProcessorVersion";
+
+      Class clazz = ObjectFactory.findProviderClass(XALAN1_VERSION_CLASS, true);
+
+      // Found Xalan-J 1.x, grab it's version fields
+      StringBuffer buf = new StringBuffer();
+      Field f = clazz.getField("PRODUCT");
+
+      buf.append(f.get(null));
+      buf.append(';');
+
+      f = clazz.getField("LANGUAGE");
+
+      buf.append(f.get(null));
+      buf.append(';');
+
+      f = clazz.getField("S_VERSION");
+
+      buf.append(f.get(null));
+      buf.append(';');
+      h.put(VERSION + "xalan1", buf.toString());
+    }
+    catch (Exception e1)
+    {
+      h.put(VERSION + "xalan1", CLASS_NOTPRESENT);
+    }
+
+    try
+    {
+      // NOTE: This is the old Xalan 2.0, 2.1, 2.2 version class,
+      //    is being replaced by class below
+      final String XALAN2_VERSION_CLASS =
+        "com.sun.org.apache.xalan.internal.processor.XSLProcessorVersion";
+
+      Class clazz = ObjectFactory.findProviderClass(XALAN2_VERSION_CLASS, true);
+
+      // Found Xalan-J 2.x, grab it's version fields
+      StringBuffer buf = new StringBuffer();
+      Field f = clazz.getField("S_VERSION");
+      buf.append(f.get(null));
+
+      h.put(VERSION + "xalan2x", buf.toString());
+    }
+    catch (Exception e2)
+    {
+      h.put(VERSION + "xalan2x", CLASS_NOTPRESENT);
+    }
+    try
+    {
+      // NOTE: This is the new Xalan 2.2+ version class
+      final String XALAN2_2_VERSION_CLASS =
+        "com.sun.org.apache.xalan.internal.Version";
+      final String XALAN2_2_VERSION_METHOD = "getVersion";
+      final Class noArgs[] = new Class[0];
+
+      Class clazz = ObjectFactory.findProviderClass(XALAN2_2_VERSION_CLASS, true);
+
+      Method method = clazz.getMethod(XALAN2_2_VERSION_METHOD, noArgs);
+      Object returnValue = method.invoke(null, new Object[0]);
+
+      h.put(VERSION + "xalan2_2", (String)returnValue);
+    }
+    catch (Exception e2)
+    {
+      h.put(VERSION + "xalan2_2", CLASS_NOTPRESENT);
+    }
+  }
+
+  /**
+   * Report product version information from common parsers.
+   *
+   * Looks for version info in xerces.jar/xercesImpl.jar/crimson.jar.
+   *
+   * //@todo actually look up version info in crimson manifest
+   *
+   * @param h Map to put information in
+   */
+  protected void checkParserVersion(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    try
+    {
+      final String XERCES1_VERSION_CLASS = "com.sun.org.apache.xerces.internal.framework.Version";
+
+      Class clazz = ObjectFactory.findProviderClass(XERCES1_VERSION_CLASS, true);
+
+      // Found Xerces-J 1.x, grab it's version fields
+      Field f = clazz.getField("fVersion");
+      String parserVersion = (String) f.get(null);
+
+      h.put(VERSION + "xerces1", parserVersion);
+    }
+    catch (Exception e)
+    {
+      h.put(VERSION + "xerces1", CLASS_NOTPRESENT);
+    }
+
+    // Look for xerces1 and xerces2 parsers separately
+    try
+    {
+      final String XERCES2_VERSION_CLASS = "com.sun.org.apache.xerces.internal.impl.Version";
+
+      Class clazz = ObjectFactory.findProviderClass(XERCES2_VERSION_CLASS, true);
+
+      // Found Xerces-J 2.x, grab it's version fields
+      Field f = clazz.getField("fVersion");
+      String parserVersion = (String) f.get(null);
+
+      h.put(VERSION + "xerces2", parserVersion);
+    }
+    catch (Exception e)
+    {
+      h.put(VERSION + "xerces2", CLASS_NOTPRESENT);
+    }
+
+    try
+    {
+      final String CRIMSON_CLASS = "org.apache.crimson.parser.Parser2";
+
+      Class clazz = ObjectFactory.findProviderClass(CRIMSON_CLASS, true);
+
+      //@todo determine specific crimson version
+      h.put(VERSION + "crimson", CLASS_PRESENT);
+    }
+    catch (Exception e)
+    {
+      h.put(VERSION + "crimson", CLASS_NOTPRESENT);
+    }
+  }
+
+  /**
+   * Report product version information from Ant.
+   *
+   * @param h Map to put information in
+   */
+  protected void checkAntVersion(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    try
+    {
+      final String ANT_VERSION_CLASS = "org.apache.tools.ant.Main";
+      final String ANT_VERSION_METHOD = "getAntVersion"; // noArgs
+      final Class noArgs[] = new Class[0];
+
+      Class clazz = ObjectFactory.findProviderClass(ANT_VERSION_CLASS, true);
+
+      Method method = clazz.getMethod(ANT_VERSION_METHOD, noArgs);
+      Object returnValue = method.invoke(null, new Object[0]);
+
+      h.put(VERSION + "ant", (String)returnValue);
+    }
+    catch (Exception e)
+    {
+      h.put(VERSION + "ant", CLASS_NOTPRESENT);
+    }
+  }
+
+  /**
+   * Report version info from DOM interfaces.
+   *
+   * @param h Map to put information in
+   */
+  protected boolean checkDOML3(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    final String DOM_CLASS = "org.w3c.dom.Document";
+    final String DOM_LEVEL3_METHOD = "getDoctype";  // no parameter
+
+    try
+    {
+      Class clazz = ObjectFactory.findProviderClass(DOM_CLASS, true);
+
+      Method method = clazz.getMethod(DOM_LEVEL3_METHOD, (Class<?>[])null);
+
+      // If we succeeded, we have loaded interfaces from a
+      //  level 3 DOM somewhere
+      h.put(VERSION + "DOM", "3.0");
+      return true;
+    }
+    catch (Exception e)
+    {
+      return false;
+    }
+  }
+
+  /**
+   * Report version info from DOM interfaces.
+   *
+   * Currently distinguishes between pre-DOM level 2, the DOM
+   * level 2 working draft, the DOM level 2 final draft,
+   * and not found.
+   *
+   * @param h Map to put information in
+   */
+  protected void checkDOMVersion(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    final String DOM_LEVEL2_CLASS = "org.w3c.dom.Document";
+    final String DOM_LEVEL2_METHOD = "createElementNS";  // String, String
+    final String DOM_LEVEL3_METHOD = "getDoctype";  // no parameter
+    final String DOM_LEVEL2WD_CLASS = "org.w3c.dom.Node";
+    final String DOM_LEVEL2WD_METHOD = "supported";  // String, String
+    final String DOM_LEVEL2FD_CLASS = "org.w3c.dom.Node";
+    final String DOM_LEVEL2FD_METHOD = "isSupported";  // String, String
+    final Class twoStringArgs[] = { java.lang.String.class,
+                                    java.lang.String.class };
+
+    try
+    {
+      Class clazz = ObjectFactory.findProviderClass(DOM_LEVEL2_CLASS, true);
+
+      Method method = clazz.getMethod(DOM_LEVEL2_METHOD, twoStringArgs);
+
+      // If we succeeded, we have loaded interfaces from a
+      //  level 2 DOM somewhere
+      h.put(VERSION + "DOM", "2.0");
+
+      try
+      {
+        // Check for the working draft version, which is
+        //  commonly found, but won't work anymore
+        clazz = ObjectFactory.findProviderClass(DOM_LEVEL2WD_CLASS, true);
+
+        method = clazz.getMethod(DOM_LEVEL2WD_METHOD, twoStringArgs);
+
+        h.put(ERROR + VERSION + "DOM.draftlevel", "2.0wd");
+        h.put(ERROR, ERROR_FOUND);
+      }
+      catch (Exception e2)
+      {
+        try
+        {
+          // Check for the final draft version as well
+          clazz = ObjectFactory.findProviderClass(DOM_LEVEL2FD_CLASS, true);
+
+          method = clazz.getMethod(DOM_LEVEL2FD_METHOD, twoStringArgs);
+
+          h.put(VERSION + "DOM.draftlevel", "2.0fd");
+        }
+        catch (Exception e3)
+        {
+          h.put(ERROR + VERSION + "DOM.draftlevel", "2.0unknown");
+          h.put(ERROR, ERROR_FOUND);
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      h.put(ERROR + VERSION + "DOM",
+            "ERROR attempting to load DOM level 2 class: " + e.toString());
+      h.put(ERROR, ERROR_FOUND);
+    }
+
+    //@todo load an actual DOM implmementation and query it as well
+    //@todo load an actual DOM implmementation and check if
+    //  isNamespaceAware() == true, which is needed to parse
+    //  xsl stylesheet files into a DOM
+  }
+
+  /**
+   * Report version info from SAX interfaces.
+   *
+   * Currently distinguishes between SAX 2, SAX 2.0beta2,
+   * SAX1, and not found.
+   *
+   * @param h Map to put information in
+   */
+  protected void checkSAXVersion(Map<String, Object> h)
+  {
+
+    if (null == h)
+      h = new HashMap<>();
+
+    final String SAX_VERSION1_CLASS = "org.xml.sax.Parser";
+    final String SAX_VERSION1_METHOD = "parse";  // String
+    final String SAX_VERSION2_CLASS = "org.xml.sax.XMLReader";
+    final String SAX_VERSION2_METHOD = "parse";  // String
+    final String SAX_VERSION2BETA_CLASSNF = "org.xml.sax.helpers.AttributesImpl";
+    final String SAX_VERSION2BETA_METHODNF = "setAttributes";  // Attributes
+    final Class oneStringArg[] = { java.lang.String.class };
+    // Note this introduces a minor compile dependency on SAX...
+    final Class attributesArg[] = { org.xml.sax.Attributes.class };
+
+    try
+    {
+      // This method was only added in the final SAX 2.0 release;
+      //  see changes.html "Changes from SAX 2.0beta2 to SAX 2.0prerelease"
+      Class clazz = ObjectFactory.findProviderClass(SAX_VERSION2BETA_CLASSNF, true);
+
+      Method method = clazz.getMethod(SAX_VERSION2BETA_METHODNF, attributesArg);
+
+      // If we succeeded, we have loaded interfaces from a
+      //  real, final SAX version 2.0 somewhere
+      h.put(VERSION + "SAX", "2.0");
+    }
+    catch (Exception e)
+    {
+      // If we didn't find the SAX 2.0 class, look for a 2.0beta2
+      h.put(ERROR + VERSION + "SAX",
+            "ERROR attempting to load SAX version 2 class: " + e.toString());
+      h.put(ERROR, ERROR_FOUND);
+
+      try
+      {
+        Class clazz = ObjectFactory.findProviderClass(SAX_VERSION2_CLASS, true);
+
+        Method method = clazz.getMethod(SAX_VERSION2_METHOD, oneStringArg);
+
+        // If we succeeded, we have loaded interfaces from a
+        //  SAX version 2.0beta2 or earlier; these might work but
+        //  you should really have the final SAX 2.0
+        h.put(VERSION + "SAX-backlevel", "2.0beta2-or-earlier");
+      }
+      catch (Exception e2)
+      {
+        // If we didn't find the SAX 2.0beta2 class, look for a 1.0 one
+        h.put(ERROR + VERSION + "SAX",
+              "ERROR attempting to load SAX version 2 class: " + e.toString());
+        h.put(ERROR, ERROR_FOUND);
+
+        try
+        {
+          Class clazz = ObjectFactory.findProviderClass(SAX_VERSION1_CLASS, true);
+
+          Method method = clazz.getMethod(SAX_VERSION1_METHOD, oneStringArg);
+
+          // If we succeeded, we have loaded interfaces from a
+          //  SAX version 1.0 somewhere; which won't work very
+          //  well for JAXP 1.1 or beyond!
+          h.put(VERSION + "SAX-backlevel", "1.0");
+        }
+        catch (Exception e3)
+        {
+          // If we didn't find the SAX 2.0 class, look for a 1.0 one
+          // Note that either 1.0 or no SAX are both errors
+          h.put(ERROR + VERSION + "SAX-backlevel",
+                "ERROR attempting to load SAX version 1 class: " + e3.toString());
+
+        }
+      }
+    }
+  }
+
+  /**
+   * Manual table of known .jar sizes.
+   * Only includes shipped versions of certain projects.
+   * key=jarsize, value=jarname ' from ' distro name
+   * Note assumption: two jars cannot have the same size!
+   *
+   * @see #getApparentVersion(String, long)
+   */
+  private static final Map<Long, String> JARVERSIONS;
+
+  /**
+   * Static initializer for JARVERSIONS table.
+   * Doing this just once saves time and space.
+   *
+   * @see #getApparentVersion(String, long)
+   */
+  static
+  {
+    Map<Long, String> jarVersions = new HashMap<>();
+    jarVersions.put(new Long(857192), "xalan.jar from xalan-j_1_1");
+    jarVersions.put(new Long(440237), "xalan.jar from xalan-j_1_2");
+    jarVersions.put(new Long(436094), "xalan.jar from xalan-j_1_2_1");
+    jarVersions.put(new Long(426249), "xalan.jar from xalan-j_1_2_2");
+    jarVersions.put(new Long(702536), "xalan.jar from xalan-j_2_0_0");
+    jarVersions.put(new Long(720930), "xalan.jar from xalan-j_2_0_1");
+    jarVersions.put(new Long(732330), "xalan.jar from xalan-j_2_1_0");
+    jarVersions.put(new Long(872241), "xalan.jar from xalan-j_2_2_D10");
+    jarVersions.put(new Long(882739), "xalan.jar from xalan-j_2_2_D11");
+    jarVersions.put(new Long(923866), "xalan.jar from xalan-j_2_2_0");
+    jarVersions.put(new Long(905872), "xalan.jar from xalan-j_2_3_D1");
+    jarVersions.put(new Long(906122), "xalan.jar from xalan-j_2_3_0");
+    jarVersions.put(new Long(906248), "xalan.jar from xalan-j_2_3_1");
+    jarVersions.put(new Long(983377), "xalan.jar from xalan-j_2_4_D1");
+    jarVersions.put(new Long(997276), "xalan.jar from xalan-j_2_4_0");
+    jarVersions.put(new Long(1031036), "xalan.jar from xalan-j_2_4_1");
+    // Stop recording xalan.jar sizes as of Xalan Java 2.5.0
+
+    jarVersions.put(new Long(596540), "xsltc.jar from xalan-j_2_2_0");
+    jarVersions.put(new Long(590247), "xsltc.jar from xalan-j_2_3_D1");
+    jarVersions.put(new Long(589914), "xsltc.jar from xalan-j_2_3_0");
+    jarVersions.put(new Long(589915), "xsltc.jar from xalan-j_2_3_1");
+    jarVersions.put(new Long(1306667), "xsltc.jar from xalan-j_2_4_D1");
+    jarVersions.put(new Long(1328227), "xsltc.jar from xalan-j_2_4_0");
+    jarVersions.put(new Long(1344009), "xsltc.jar from xalan-j_2_4_1");
+    jarVersions.put(new Long(1348361), "xsltc.jar from xalan-j_2_5_D1");
+    // Stop recording xsltc.jar sizes as of Xalan Java 2.5.0
+
+    jarVersions.put(new Long(1268634), "xsltc.jar-bundled from xalan-j_2_3_0");
+
+    jarVersions.put(new Long(100196), "xml-apis.jar from xalan-j_2_2_0 or xalan-j_2_3_D1");
+    jarVersions.put(new Long(108484), "xml-apis.jar from xalan-j_2_3_0, or xalan-j_2_3_1 from xml-commons-1.0.b2");
+    jarVersions.put(new Long(109049), "xml-apis.jar from xalan-j_2_4_0 from xml-commons RIVERCOURT1 branch");
+    jarVersions.put(new Long(113749), "xml-apis.jar from xalan-j_2_4_1 from factoryfinder-build of xml-commons RIVERCOURT1");
+    jarVersions.put(new Long(124704), "xml-apis.jar from tck-jaxp-1_2_0 branch of xml-commons");
+    jarVersions.put(new Long(124724), "xml-apis.jar from tck-jaxp-1_2_0 branch of xml-commons, tag: xml-commons-external_1_2_01");
+    jarVersions.put(new Long(194205), "xml-apis.jar from head branch of xml-commons, tag: xml-commons-external_1_3_02");
+
+    // If the below were more common I would update it to report
+    //  errors better; but this is so old hardly anyone has it
+    jarVersions.put(new Long(424490), "xalan.jar from Xerces Tools releases - ERROR:DO NOT USE!");
+
+    jarVersions.put(new Long(1591855), "xerces.jar from xalan-j_1_1 from xerces-1...");
+    jarVersions.put(new Long(1498679), "xerces.jar from xalan-j_1_2 from xerces-1_2_0.bin");
+    jarVersions.put(new Long(1484896), "xerces.jar from xalan-j_1_2_1 from xerces-1_2_1.bin");
+    jarVersions.put(new Long(804460),  "xerces.jar from xalan-j_1_2_2 from xerces-1_2_2.bin");
+    jarVersions.put(new Long(1499244), "xerces.jar from xalan-j_2_0_0 from xerces-1_2_3.bin");
+    jarVersions.put(new Long(1605266), "xerces.jar from xalan-j_2_0_1 from xerces-1_3_0.bin");
+    jarVersions.put(new Long(904030), "xerces.jar from xalan-j_2_1_0 from xerces-1_4.bin");
+    jarVersions.put(new Long(904030), "xerces.jar from xerces-1_4_0.bin");
+    jarVersions.put(new Long(1802885), "xerces.jar from xerces-1_4_2.bin");
+    jarVersions.put(new Long(1734594), "xerces.jar from Xerces-J-bin.2.0.0.beta3");
+    jarVersions.put(new Long(1808883), "xerces.jar from xalan-j_2_2_D10,D11,D12 or xerces-1_4_3.bin");
+    jarVersions.put(new Long(1812019), "xerces.jar from xalan-j_2_2_0");
+    jarVersions.put(new Long(1720292), "xercesImpl.jar from xalan-j_2_3_D1");
+    jarVersions.put(new Long(1730053), "xercesImpl.jar from xalan-j_2_3_0 or xalan-j_2_3_1 from xerces-2_0_0");
+    jarVersions.put(new Long(1728861), "xercesImpl.jar from xalan-j_2_4_D1 from xerces-2_0_1");
+    jarVersions.put(new Long(972027), "xercesImpl.jar from xalan-j_2_4_0 from xerces-2_1");
+    jarVersions.put(new Long(831587), "xercesImpl.jar from xalan-j_2_4_1 from xerces-2_2");
+    jarVersions.put(new Long(891817), "xercesImpl.jar from xalan-j_2_5_D1 from xerces-2_3");
+    jarVersions.put(new Long(895924), "xercesImpl.jar from xerces-2_4");
+    jarVersions.put(new Long(1010806), "xercesImpl.jar from Xerces-J-bin.2.6.2");
+    jarVersions.put(new Long(1203860), "xercesImpl.jar from Xerces-J-bin.2.7.1");
+
+    jarVersions.put(new Long(37485), "xalanj1compat.jar from xalan-j_2_0_0");
+    jarVersions.put(new Long(38100), "xalanj1compat.jar from xalan-j_2_0_1");
+
+    jarVersions.put(new Long(18779), "xalanservlet.jar from xalan-j_2_0_0");
+    jarVersions.put(new Long(21453), "xalanservlet.jar from xalan-j_2_0_1");
+    jarVersions.put(new Long(24826), "xalanservlet.jar from xalan-j_2_3_1 or xalan-j_2_4_1");
+    jarVersions.put(new Long(24831), "xalanservlet.jar from xalan-j_2_4_1");
+    // Stop recording xalanservlet.jar sizes as of Xalan Java 2.5.0; now a .war file
+
+    // For those who've downloaded JAXP from sun
+    jarVersions.put(new Long(5618), "jaxp.jar from jaxp1.0.1");
+    jarVersions.put(new Long(136133), "parser.jar from jaxp1.0.1");
+    jarVersions.put(new Long(28404), "jaxp.jar from jaxp-1.1");
+    jarVersions.put(new Long(187162), "crimson.jar from jaxp-1.1");
+    jarVersions.put(new Long(801714), "xalan.jar from jaxp-1.1");
+    jarVersions.put(new Long(196399), "crimson.jar from crimson-1.1.1");
+    jarVersions.put(new Long(33323), "jaxp.jar from crimson-1.1.1 or jakarta-ant-1.4.1b1");
+    jarVersions.put(new Long(152717), "crimson.jar from crimson-1.1.2beta2");
+    jarVersions.put(new Long(88143), "xml-apis.jar from crimson-1.1.2beta2");
+    jarVersions.put(new Long(206384), "crimson.jar from crimson-1.1.3 or jakarta-ant-1.4.1b1");
+
+    // jakarta-ant: since many people use ant these days
+    jarVersions.put(new Long(136198), "parser.jar from jakarta-ant-1.3 or 1.2");
+    jarVersions.put(new Long(5537), "jaxp.jar from jakarta-ant-1.3 or 1.2");
+
+    JARVERSIONS = Collections.unmodifiableMap(jarVersions);
+  }
+
+  /** Simple PrintWriter we send output to; defaults to System.out.  */
+  protected PrintWriter outWriter = new PrintWriter(System.out, true);
+
+  /**
+   * Bottleneck output: calls outWriter.println(s).
+   * @param s String to print
+   */
+  protected void logMsg(String s)
+  {
+    outWriter.println(s);
+  }
+}

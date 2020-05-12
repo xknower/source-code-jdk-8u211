@@ -1,93 +1,88 @@
-/*    */ package javax.swing.plaf.basic;
-/*    */ 
-/*    */ import java.awt.Dimension;
-/*    */ import java.awt.Graphics;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.JSeparator;
-/*    */ import javax.swing.JToolBar;
-/*    */ import javax.swing.UIManager;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class BasicToolBarSeparatorUI
-/*    */   extends BasicSeparatorUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 51 */     return new BasicToolBarSeparatorUI();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   protected void installDefaults(JSeparator paramJSeparator) {
-/* 56 */     Dimension dimension = ((JToolBar.Separator)paramJSeparator).getSeparatorSize();
-/*    */     
-/* 58 */     if (dimension == null || dimension instanceof javax.swing.plaf.UIResource) {
-/*    */       
-/* 60 */       JToolBar.Separator separator = (JToolBar.Separator)paramJSeparator;
-/* 61 */       dimension = (Dimension)UIManager.get("ToolBar.separatorSize");
-/* 62 */       if (dimension != null) {
-/* 63 */         if (separator.getOrientation() == 0) {
-/* 64 */           dimension = new Dimension(dimension.height, dimension.width);
-/*    */         }
-/* 66 */         separator.setSeparatorSize(dimension);
-/*    */       } 
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {}
-/*    */ 
-/*    */   
-/*    */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 77 */     Dimension dimension = ((JToolBar.Separator)paramJComponent).getSeparatorSize();
-/*    */     
-/* 79 */     if (dimension != null)
-/*    */     {
-/* 81 */       return dimension.getSize();
-/*    */     }
-/*    */ 
-/*    */     
-/* 85 */     return null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicToolBarSeparatorUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import javax.swing.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import javax.swing.JToolBar;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicSeparatorUI;
+
+
+/**
+ * A Basic L&amp;F implementation of ToolBarSeparatorUI.  This implementation
+ * is a "combined" view/controller.
+ * <p>
+ *
+ * @author Jeff Shapiro
+ */
+
+public class BasicToolBarSeparatorUI extends BasicSeparatorUI
+{
+    public static ComponentUI createUI( JComponent c )
+    {
+        return new BasicToolBarSeparatorUI();
+    }
+
+    protected void installDefaults( JSeparator s )
+    {
+        Dimension size = ( (JToolBar.Separator)s ).getSeparatorSize();
+
+        if ( size == null || size instanceof UIResource )
+        {
+            JToolBar.Separator sep = (JToolBar.Separator)s;
+            size = (Dimension)(UIManager.get("ToolBar.separatorSize"));
+            if (size != null) {
+                if (sep.getOrientation() == JSeparator.HORIZONTAL) {
+                    size = new Dimension(size.height, size.width);
+                }
+                sep.setSeparatorSize(size);
+            }
+        }
+    }
+
+    public void paint( Graphics g, JComponent c )
+    {
+    }
+
+    public Dimension getPreferredSize( JComponent c )
+    {
+        Dimension size = ( (JToolBar.Separator)c ).getSeparatorSize();
+
+        if ( size != null )
+        {
+            return size.getSize();
+        }
+        else
+        {
+            return null;
+        }
+    }
+}

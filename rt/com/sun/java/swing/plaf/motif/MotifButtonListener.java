@@ -1,55 +1,49 @@
-/*    */ package com.sun.java.swing.plaf.motif;
-/*    */ 
-/*    */ import javax.swing.AbstractButton;
-/*    */ import javax.swing.plaf.basic.BasicButtonListener;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MotifButtonListener
-/*    */   extends BasicButtonListener
-/*    */ {
-/*    */   public MotifButtonListener(AbstractButton paramAbstractButton) {
-/* 43 */     super(paramAbstractButton);
-/*    */   }
-/*    */   
-/*    */   protected void checkOpacity(AbstractButton paramAbstractButton) {
-/* 47 */     paramAbstractButton.setOpaque(false);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifButtonListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.java.swing.plaf.motif;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.event.*;
+
+/**
+ * Button Listener
+ * <p>
+ *
+ * @author Rich Schiavi
+ */
+public class MotifButtonListener extends BasicButtonListener {
+    public MotifButtonListener(AbstractButton b ) {
+        super(b);
+    }
+
+    protected void checkOpacity(AbstractButton b) {
+        b.setOpaque( false );
+    }
+}

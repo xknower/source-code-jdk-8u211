@@ -1,48 +1,42 @@
-/*    */ package com.sun.corba.se.spi.orbutil.fsm;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.orbutil.fsm.StateEngineImpl;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class StateEngineFactory
-/*    */ {
-/*    */   public static StateEngine create() {
-/* 40 */     return new StateEngineImpl();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\orbutil\fsm\StateEngineFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.orbutil.fsm;
+
+import com.sun.corba.se.impl.orbutil.fsm.StateEngineImpl ;
+
+/**
+ * Factory for creating the standard state machine implementation.
+ *
+ * @author Ken Cavanaugh
+ */
+public class StateEngineFactory {
+    private StateEngineFactory() {}
+
+    public static StateEngine create()
+    {
+        return new StateEngineImpl() ;
+    }
+}

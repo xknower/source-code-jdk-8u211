@@ -1,82 +1,78 @@
-/*    */ package com.sun.corba.se.impl.copyobject;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.util.Utility;
-/*    */ import com.sun.corba.se.spi.copyobject.ObjectCopier;
-/*    */ import java.io.ByteArrayInputStream;
-/*    */ import java.io.ByteArrayOutputStream;
-/*    */ import java.io.ObjectInputStream;
-/*    */ import java.io.ObjectOutputStream;
-/*    */ import org.omg.CORBA.ORB;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JavaStreamObjectCopierImpl
-/*    */   implements ObjectCopier
-/*    */ {
-/*    */   private ORB orb;
-/*    */   
-/*    */   public JavaStreamObjectCopierImpl(ORB paramORB) {
-/* 51 */     this.orb = paramORB;
-/*    */   }
-/*    */   
-/*    */   public Object copy(Object paramObject) {
-/* 55 */     if (paramObject instanceof java.rmi.Remote)
-/*    */     {
-/*    */       
-/* 58 */       return Utility.autoConnect(paramObject, this.orb, true);
-/*    */     }
-/*    */     
-/*    */     try {
-/* 62 */       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(10000);
-/* 63 */       ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-/* 64 */       objectOutputStream.writeObject(paramObject);
-/*    */       
-/* 66 */       byte[] arrayOfByte = byteArrayOutputStream.toByteArray();
-/* 67 */       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(arrayOfByte);
-/* 68 */       ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
-/*    */       
-/* 70 */       return objectInputStream.readObject();
-/* 71 */     } catch (Exception exception) {
-/* 72 */       System.out.println("Failed with exception:" + exception);
-/* 73 */       return null;
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\copyobject\JavaStreamObjectCopierImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.copyobject ;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import java.io.Serializable;
+import java.rmi.Remote;
+import java.rmi.MarshalException;
+
+import java.io.InputStream ;
+import java.io.OutputStream ;
+import java.io.ByteArrayInputStream ;
+import java.io.ByteArrayOutputStream ;
+import java.io.ObjectInputStream ;
+import java.io.ObjectOutputStream ;
+
+import org.omg.CORBA.ORB ;
+
+import com.sun.corba.se.spi.copyobject.ObjectCopier ;
+import com.sun.corba.se.impl.util.Utility;
+
+public class JavaStreamObjectCopierImpl implements ObjectCopier {
+
+    public JavaStreamObjectCopierImpl( ORB orb )
+    {
+        this.orb = orb ;
+    }
+
+    public Object copy(Object obj) {
+        if (obj instanceof Remote) {
+            // Yes, so make sure it is connected and converted
+            // to a stub (if needed)...
+            return Utility.autoConnect(obj,orb,true);
+        }
+
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream( 10000 ) ;
+            ObjectOutputStream oos = new ObjectOutputStream( os ) ;
+            oos.writeObject( obj ) ;
+
+            byte[] arr = os.toByteArray() ;
+            InputStream is = new ByteArrayInputStream( arr ) ;
+            ObjectInputStream ois = new ObjectInputStream( is ) ;
+
+            return ois.readObject();
+        } catch (Exception exc) {
+            System.out.println( "Failed with exception:" + exc ) ;
+            return null ;
+        }
+    }
+
+    private ORB orb;
+}

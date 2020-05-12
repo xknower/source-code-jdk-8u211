@@ -1,575 +1,571 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MemoryImageSource
-/*     */   implements ImageProducer
-/*     */ {
-/*     */   int width;
-/*     */   int height;
-/*     */   ColorModel model;
-/*     */   Object pixels;
-/*     */   int pixeloffset;
-/*     */   int pixelscan;
-/*     */   Hashtable properties;
-/* 115 */   Vector theConsumers = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean animating;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean fullbuffers;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryImageSource(int paramInt1, int paramInt2, ColorModel paramColorModel, byte[] paramArrayOfbyte, int paramInt3, int paramInt4) {
-/* 134 */     initialize(paramInt1, paramInt2, paramColorModel, paramArrayOfbyte, paramInt3, paramInt4, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryImageSource(int paramInt1, int paramInt2, ColorModel paramColorModel, byte[] paramArrayOfbyte, int paramInt3, int paramInt4, Hashtable<?, ?> paramHashtable) {
-/* 156 */     initialize(paramInt1, paramInt2, paramColorModel, paramArrayOfbyte, paramInt3, paramInt4, paramHashtable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryImageSource(int paramInt1, int paramInt2, ColorModel paramColorModel, int[] paramArrayOfint, int paramInt3, int paramInt4) {
-/* 174 */     initialize(paramInt1, paramInt2, paramColorModel, paramArrayOfint, paramInt3, paramInt4, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryImageSource(int paramInt1, int paramInt2, ColorModel paramColorModel, int[] paramArrayOfint, int paramInt3, int paramInt4, Hashtable<?, ?> paramHashtable) {
-/* 196 */     initialize(paramInt1, paramInt2, paramColorModel, paramArrayOfint, paramInt3, paramInt4, paramHashtable);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void initialize(int paramInt1, int paramInt2, ColorModel paramColorModel, Object paramObject, int paramInt3, int paramInt4, Hashtable<Object, Object> paramHashtable) {
-/* 201 */     this.width = paramInt1;
-/* 202 */     this.height = paramInt2;
-/* 203 */     this.model = paramColorModel;
-/* 204 */     this.pixels = paramObject;
-/* 205 */     this.pixeloffset = paramInt3;
-/* 206 */     this.pixelscan = paramInt4;
-/* 207 */     if (paramHashtable == null) {
-/* 208 */       paramHashtable = new Hashtable<>();
-/*     */     }
-/* 210 */     this.properties = paramHashtable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryImageSource(int paramInt1, int paramInt2, int[] paramArrayOfint, int paramInt3, int paramInt4) {
-/* 227 */     initialize(paramInt1, paramInt2, ColorModel.getRGBdefault(), paramArrayOfint, paramInt3, paramInt4, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryImageSource(int paramInt1, int paramInt2, int[] paramArrayOfint, int paramInt3, int paramInt4, Hashtable<?, ?> paramHashtable) {
-/* 249 */     initialize(paramInt1, paramInt2, ColorModel.getRGBdefault(), paramArrayOfint, paramInt3, paramInt4, paramHashtable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void addConsumer(ImageConsumer paramImageConsumer) {
-/* 262 */     if (this.theConsumers.contains(paramImageConsumer)) {
-/*     */       return;
-/*     */     }
-/* 265 */     this.theConsumers.addElement(paramImageConsumer);
-/*     */     try {
-/* 267 */       initConsumer(paramImageConsumer);
-/* 268 */       sendPixels(paramImageConsumer, 0, 0, this.width, this.height);
-/* 269 */       if (isConsumer(paramImageConsumer)) {
-/* 270 */         paramImageConsumer.imageComplete(this.animating ? 2 : 3);
-/*     */ 
-/*     */         
-/* 273 */         if (!this.animating && isConsumer(paramImageConsumer)) {
-/* 274 */           paramImageConsumer.imageComplete(1);
-/* 275 */           removeConsumer(paramImageConsumer);
-/*     */         } 
-/*     */       } 
-/* 278 */     } catch (Exception exception) {
-/* 279 */       if (isConsumer(paramImageConsumer)) {
-/* 280 */         paramImageConsumer.imageComplete(1);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean isConsumer(ImageConsumer paramImageConsumer) {
-/* 294 */     return this.theConsumers.contains(paramImageConsumer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void removeConsumer(ImageConsumer paramImageConsumer) {
-/* 304 */     this.theConsumers.removeElement(paramImageConsumer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startProduction(ImageConsumer paramImageConsumer) {
-/* 316 */     addConsumer(paramImageConsumer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void requestTopDownLeftRightResend(ImageConsumer paramImageConsumer) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setAnimated(boolean paramBoolean) {
-/* 344 */     this.animating = paramBoolean;
-/* 345 */     if (!this.animating) {
-/* 346 */       Enumeration<ImageConsumer> enumeration = this.theConsumers.elements();
-/* 347 */       while (enumeration.hasMoreElements()) {
-/* 348 */         ImageConsumer imageConsumer = enumeration.nextElement();
-/* 349 */         imageConsumer.imageComplete(3);
-/* 350 */         if (isConsumer(imageConsumer)) {
-/* 351 */           imageConsumer.imageComplete(1);
-/*     */         }
-/*     */       } 
-/* 354 */       this.theConsumers.removeAllElements();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void setFullBufferUpdates(boolean paramBoolean) {
-/* 374 */     if (this.fullbuffers == paramBoolean) {
-/*     */       return;
-/*     */     }
-/* 377 */     this.fullbuffers = paramBoolean;
-/* 378 */     if (this.animating) {
-/* 379 */       Enumeration<ImageConsumer> enumeration = this.theConsumers.elements();
-/* 380 */       while (enumeration.hasMoreElements()) {
-/* 381 */         ImageConsumer imageConsumer = enumeration.nextElement();
-/* 382 */         imageConsumer.setHints(paramBoolean ? 6 : 1);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void newPixels() {
-/* 401 */     newPixels(0, 0, this.width, this.height, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void newPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 425 */     newPixels(paramInt1, paramInt2, paramInt3, paramInt4, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void newPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, boolean paramBoolean) {
-/* 453 */     if (this.animating) {
-/* 454 */       if (this.fullbuffers) {
-/* 455 */         paramInt1 = paramInt2 = 0;
-/* 456 */         paramInt3 = this.width;
-/* 457 */         paramInt4 = this.height;
-/*     */       } else {
-/* 459 */         if (paramInt1 < 0) {
-/* 460 */           paramInt3 += paramInt1;
-/* 461 */           paramInt1 = 0;
-/*     */         } 
-/* 463 */         if (paramInt1 + paramInt3 > this.width) {
-/* 464 */           paramInt3 = this.width - paramInt1;
-/*     */         }
-/* 466 */         if (paramInt2 < 0) {
-/* 467 */           paramInt4 += paramInt2;
-/* 468 */           paramInt2 = 0;
-/*     */         } 
-/* 470 */         if (paramInt2 + paramInt4 > this.height) {
-/* 471 */           paramInt4 = this.height - paramInt2;
-/*     */         }
-/*     */       } 
-/* 474 */       if ((paramInt3 <= 0 || paramInt4 <= 0) && !paramBoolean) {
-/*     */         return;
-/*     */       }
-/* 477 */       Enumeration<ImageConsumer> enumeration = this.theConsumers.elements();
-/* 478 */       while (enumeration.hasMoreElements()) {
-/* 479 */         ImageConsumer imageConsumer = enumeration.nextElement();
-/* 480 */         if (paramInt3 > 0 && paramInt4 > 0) {
-/* 481 */           sendPixels(imageConsumer, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */         }
-/* 483 */         if (paramBoolean && isConsumer(imageConsumer)) {
-/* 484 */           imageConsumer.imageComplete(2);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void newPixels(byte[] paramArrayOfbyte, ColorModel paramColorModel, int paramInt1, int paramInt2) {
-/* 506 */     this.pixels = paramArrayOfbyte;
-/* 507 */     this.model = paramColorModel;
-/* 508 */     this.pixeloffset = paramInt1;
-/* 509 */     this.pixelscan = paramInt2;
-/* 510 */     newPixels();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void newPixels(int[] paramArrayOfint, ColorModel paramColorModel, int paramInt1, int paramInt2) {
-/* 529 */     this.pixels = paramArrayOfint;
-/* 530 */     this.model = paramColorModel;
-/* 531 */     this.pixeloffset = paramInt1;
-/* 532 */     this.pixelscan = paramInt2;
-/* 533 */     newPixels();
-/*     */   }
-/*     */   
-/*     */   private void initConsumer(ImageConsumer paramImageConsumer) {
-/* 537 */     if (isConsumer(paramImageConsumer)) {
-/* 538 */       paramImageConsumer.setDimensions(this.width, this.height);
-/*     */     }
-/* 540 */     if (isConsumer(paramImageConsumer)) {
-/* 541 */       paramImageConsumer.setProperties(this.properties);
-/*     */     }
-/* 543 */     if (isConsumer(paramImageConsumer)) {
-/* 544 */       paramImageConsumer.setColorModel(this.model);
-/*     */     }
-/* 546 */     if (isConsumer(paramImageConsumer)) {
-/* 547 */       paramImageConsumer.setHints(this.animating ? (this.fullbuffers ? 6 : 1) : 30);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void sendPixels(ImageConsumer paramImageConsumer, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 560 */     int i = this.pixeloffset + this.pixelscan * paramInt2 + paramInt1;
-/* 561 */     if (isConsumer(paramImageConsumer))
-/* 562 */       if (this.pixels instanceof byte[]) {
-/* 563 */         paramImageConsumer.setPixels(paramInt1, paramInt2, paramInt3, paramInt4, this.model, (byte[])this.pixels, i, this.pixelscan);
-/*     */       } else {
-/*     */         
-/* 566 */         paramImageConsumer.setPixels(paramInt1, paramInt2, paramInt3, paramInt4, this.model, (int[])this.pixels, i, this.pixelscan);
-/*     */       }  
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\MemoryImageSource.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+import java.awt.image.ImageConsumer;
+import java.awt.image.ImageProducer;
+import java.awt.image.ColorModel;
+import java.util.Hashtable;
+import java.util.Vector;
+import java.util.Enumeration;
+
+/**
+ * This class is an implementation of the ImageProducer interface which
+ * uses an array to produce pixel values for an Image.  Here is an example
+ * which calculates a 100x100 image representing a fade from black to blue
+ * along the X axis and a fade from black to red along the Y axis:
+ * <pre>{@code
+ *
+ *      int w = 100;
+ *      int h = 100;
+ *      int pix[] = new int[w * h];
+ *      int index = 0;
+ *      for (int y = 0; y < h; y++) {
+ *          int red = (y * 255) / (h - 1);
+ *          for (int x = 0; x < w; x++) {
+ *              int blue = (x * 255) / (w - 1);
+ *              pix[index++] = (255 << 24) | (red << 16) | blue;
+ *          }
+ *      }
+ *      Image img = createImage(new MemoryImageSource(w, h, pix, 0, w));
+ *
+ * }</pre>
+ * The MemoryImageSource is also capable of managing a memory image which
+ * varies over time to allow animation or custom rendering.  Here is an
+ * example showing how to set up the animation source and signal changes
+ * in the data (adapted from the MemoryAnimationSourceDemo by Garth Dickie):
+ * <pre>{@code
+ *
+ *      int pixels[];
+ *      MemoryImageSource source;
+ *
+ *      public void init() {
+ *          int width = 50;
+ *          int height = 50;
+ *          int size = width * height;
+ *          pixels = new int[size];
+ *
+ *          int value = getBackground().getRGB();
+ *          for (int i = 0; i < size; i++) {
+ *              pixels[i] = value;
+ *          }
+ *
+ *          source = new MemoryImageSource(width, height, pixels, 0, width);
+ *          source.setAnimated(true);
+ *          image = createImage(source);
+ *      }
+ *
+ *      public void run() {
+ *          Thread me = Thread.currentThread( );
+ *          me.setPriority(Thread.MIN_PRIORITY);
+ *
+ *          while (true) {
+ *              try {
+ *                  Thread.sleep(10);
+ *              } catch( InterruptedException e ) {
+ *                  return;
+ *              }
+ *
+ *              // Modify the values in the pixels array at (x, y, w, h)
+ *
+ *              // Send the new data to the interested ImageConsumers
+ *              source.newPixels(x, y, w, h);
+ *          }
+ *      }
+ *
+ * }</pre>
+ *
+ * @see ImageProducer
+ *
+ * @author      Jim Graham
+ * @author      Animation capabilities inspired by the
+ *              MemoryAnimationSource class written by Garth Dickie
+ */
+public class MemoryImageSource implements ImageProducer {
+    int width;
+    int height;
+    ColorModel model;
+    Object pixels;
+    int pixeloffset;
+    int pixelscan;
+    Hashtable properties;
+    Vector theConsumers = new Vector();
+    boolean animating;
+    boolean fullbuffers;
+
+    /**
+     * Constructs an ImageProducer object which uses an array of bytes
+     * to produce data for an Image object.
+     * @param w the width of the rectangle of pixels
+     * @param h the height of the rectangle of pixels
+     * @param cm the specified <code>ColorModel</code>
+     * @param pix an array of pixels
+     * @param off the offset into the array of where to store the
+     *        first pixel
+     * @param scan the distance from one row of pixels to the next in
+     *        the array
+     * @see java.awt.Component#createImage
+     */
+    public MemoryImageSource(int w, int h, ColorModel cm,
+                             byte[] pix, int off, int scan) {
+        initialize(w, h, cm, (Object) pix, off, scan, null);
+    }
+
+    /**
+     * Constructs an ImageProducer object which uses an array of bytes
+     * to produce data for an Image object.
+     * @param w the width of the rectangle of pixels
+     * @param h the height of the rectangle of pixels
+     * @param cm the specified <code>ColorModel</code>
+     * @param pix an array of pixels
+     * @param off the offset into the array of where to store the
+     *        first pixel
+     * @param scan the distance from one row of pixels to the next in
+     *        the array
+     * @param props a list of properties that the <code>ImageProducer</code>
+     *        uses to process an image
+     * @see java.awt.Component#createImage
+     */
+    public MemoryImageSource(int w, int h, ColorModel cm,
+                             byte[] pix, int off, int scan,
+                             Hashtable<?,?> props)
+    {
+        initialize(w, h, cm, (Object) pix, off, scan, props);
+    }
+
+    /**
+     * Constructs an ImageProducer object which uses an array of integers
+     * to produce data for an Image object.
+     * @param w the width of the rectangle of pixels
+     * @param h the height of the rectangle of pixels
+     * @param cm the specified <code>ColorModel</code>
+     * @param pix an array of pixels
+     * @param off the offset into the array of where to store the
+     *        first pixel
+     * @param scan the distance from one row of pixels to the next in
+     *        the array
+     * @see java.awt.Component#createImage
+     */
+    public MemoryImageSource(int w, int h, ColorModel cm,
+                             int[] pix, int off, int scan) {
+        initialize(w, h, cm, (Object) pix, off, scan, null);
+    }
+
+    /**
+     * Constructs an ImageProducer object which uses an array of integers
+     * to produce data for an Image object.
+     * @param w the width of the rectangle of pixels
+     * @param h the height of the rectangle of pixels
+     * @param cm the specified <code>ColorModel</code>
+     * @param pix an array of pixels
+     * @param off the offset into the array of where to store the
+     *        first pixel
+     * @param scan the distance from one row of pixels to the next in
+     *        the array
+     * @param props a list of properties that the <code>ImageProducer</code>
+     *        uses to process an image
+     * @see java.awt.Component#createImage
+     */
+    public MemoryImageSource(int w, int h, ColorModel cm,
+                             int[] pix, int off, int scan,
+                             Hashtable<?,?> props)
+    {
+        initialize(w, h, cm, (Object) pix, off, scan, props);
+    }
+
+    private void initialize(int w, int h, ColorModel cm,
+                            Object pix, int off, int scan, Hashtable props) {
+        width = w;
+        height = h;
+        model = cm;
+        pixels = pix;
+        pixeloffset = off;
+        pixelscan = scan;
+        if (props == null) {
+            props = new Hashtable();
+        }
+        properties = props;
+    }
+
+    /**
+     * Constructs an ImageProducer object which uses an array of integers
+     * in the default RGB ColorModel to produce data for an Image object.
+     * @param w the width of the rectangle of pixels
+     * @param h the height of the rectangle of pixels
+     * @param pix an array of pixels
+     * @param off the offset into the array of where to store the
+     *        first pixel
+     * @param scan the distance from one row of pixels to the next in
+     *        the array
+     * @see java.awt.Component#createImage
+     * @see ColorModel#getRGBdefault
+     */
+    public MemoryImageSource(int w, int h, int pix[], int off, int scan) {
+        initialize(w, h, ColorModel.getRGBdefault(),
+                   (Object) pix, off, scan, null);
+    }
+
+    /**
+     * Constructs an ImageProducer object which uses an array of integers
+     * in the default RGB ColorModel to produce data for an Image object.
+     * @param w the width of the rectangle of pixels
+     * @param h the height of the rectangle of pixels
+     * @param pix an array of pixels
+     * @param off the offset into the array of where to store the
+     *        first pixel
+     * @param scan the distance from one row of pixels to the next in
+     *        the array
+     * @param props a list of properties that the <code>ImageProducer</code>
+     *        uses to process an image
+     * @see java.awt.Component#createImage
+     * @see ColorModel#getRGBdefault
+     */
+    public MemoryImageSource(int w, int h, int pix[], int off, int scan,
+                             Hashtable<?,?> props)
+    {
+        initialize(w, h, ColorModel.getRGBdefault(),
+                   (Object) pix, off, scan, props);
+    }
+
+    /**
+     * Adds an ImageConsumer to the list of consumers interested in
+     * data for this image.
+     * @param ic the specified <code>ImageConsumer</code>
+     * @throws NullPointerException if the specified
+     *           <code>ImageConsumer</code> is null
+     * @see ImageConsumer
+     */
+    public synchronized void addConsumer(ImageConsumer ic) {
+        if (theConsumers.contains(ic)) {
+            return;
+        }
+        theConsumers.addElement(ic);
+        try {
+            initConsumer(ic);
+            sendPixels(ic, 0, 0, width, height);
+            if (isConsumer(ic)) {
+                ic.imageComplete(animating
+                                 ? ImageConsumer.SINGLEFRAMEDONE
+                                 : ImageConsumer.STATICIMAGEDONE);
+                if (!animating && isConsumer(ic)) {
+                    ic.imageComplete(ImageConsumer.IMAGEERROR);
+                    removeConsumer(ic);
+                }
+            }
+        } catch (Exception e) {
+            if (isConsumer(ic)) {
+                ic.imageComplete(ImageConsumer.IMAGEERROR);
+            }
+        }
+    }
+
+    /**
+     * Determines if an ImageConsumer is on the list of consumers currently
+     * interested in data for this image.
+     * @param ic the specified <code>ImageConsumer</code>
+     * @return <code>true</code> if the <code>ImageConsumer</code>
+     * is on the list; <code>false</code> otherwise.
+     * @see ImageConsumer
+     */
+    public synchronized boolean isConsumer(ImageConsumer ic) {
+        return theConsumers.contains(ic);
+    }
+
+    /**
+     * Removes an ImageConsumer from the list of consumers interested in
+     * data for this image.
+     * @param ic the specified <code>ImageConsumer</code>
+     * @see ImageConsumer
+     */
+    public synchronized void removeConsumer(ImageConsumer ic) {
+        theConsumers.removeElement(ic);
+    }
+
+    /**
+     * Adds an ImageConsumer to the list of consumers interested in
+     * data for this image and immediately starts delivery of the
+     * image data through the ImageConsumer interface.
+     * @param ic the specified <code>ImageConsumer</code>
+     * image data through the ImageConsumer interface.
+     * @see ImageConsumer
+     */
+    public void startProduction(ImageConsumer ic) {
+        addConsumer(ic);
+    }
+
+    /**
+     * Requests that a given ImageConsumer have the image data delivered
+     * one more time in top-down, left-right order.
+     * @param ic the specified <code>ImageConsumer</code>
+     * @see ImageConsumer
+     */
+    public void requestTopDownLeftRightResend(ImageConsumer ic) {
+        // Ignored.  The data is either single frame and already in TDLR
+        // format or it is multi-frame and TDLR resends aren't critical.
+    }
+
+    /**
+     * Changes this memory image into a multi-frame animation or a
+     * single-frame static image depending on the animated parameter.
+     * <p>This method should be called immediately after the
+     * MemoryImageSource is constructed and before an image is
+     * created with it to ensure that all ImageConsumers will
+     * receive the correct multi-frame data.  If an ImageConsumer
+     * is added to this ImageProducer before this flag is set then
+     * that ImageConsumer will see only a snapshot of the pixel
+     * data that was available when it connected.
+     * @param animated <code>true</code> if the image is a
+     *       multi-frame animation
+     */
+    public synchronized void setAnimated(boolean animated) {
+        this.animating = animated;
+        if (!animating) {
+            Enumeration enum_ = theConsumers.elements();
+            while (enum_.hasMoreElements()) {
+                ImageConsumer ic = (ImageConsumer) enum_.nextElement();
+                ic.imageComplete(ImageConsumer.STATICIMAGEDONE);
+                if (isConsumer(ic)) {
+                    ic.imageComplete(ImageConsumer.IMAGEERROR);
+                }
+            }
+            theConsumers.removeAllElements();
+        }
+    }
+
+    /**
+     * Specifies whether this animated memory image should always be
+     * updated by sending the complete buffer of pixels whenever
+     * there is a change.
+     * This flag is ignored if the animation flag is not turned on
+     * through the setAnimated() method.
+     * <p>This method should be called immediately after the
+     * MemoryImageSource is constructed and before an image is
+     * created with it to ensure that all ImageConsumers will
+     * receive the correct pixel delivery hints.
+     * @param fullbuffers <code>true</code> if the complete pixel
+     *             buffer should always
+     * be sent
+     * @see #setAnimated
+     */
+    public synchronized void setFullBufferUpdates(boolean fullbuffers) {
+        if (this.fullbuffers == fullbuffers) {
+            return;
+        }
+        this.fullbuffers = fullbuffers;
+        if (animating) {
+            Enumeration enum_ = theConsumers.elements();
+            while (enum_.hasMoreElements()) {
+                ImageConsumer ic = (ImageConsumer) enum_.nextElement();
+                ic.setHints(fullbuffers
+                            ? (ImageConsumer.TOPDOWNLEFTRIGHT |
+                               ImageConsumer.COMPLETESCANLINES)
+                            : ImageConsumer.RANDOMPIXELORDER);
+            }
+        }
+    }
+
+    /**
+     * Sends a whole new buffer of pixels to any ImageConsumers that
+     * are currently interested in the data for this image and notify
+     * them that an animation frame is complete.
+     * This method only has effect if the animation flag has been
+     * turned on through the setAnimated() method.
+     * @see #newPixels(int, int, int, int, boolean)
+     * @see ImageConsumer
+     * @see #setAnimated
+     */
+    public void newPixels() {
+        newPixels(0, 0, width, height, true);
+    }
+
+    /**
+     * Sends a rectangular region of the buffer of pixels to any
+     * ImageConsumers that are currently interested in the data for
+     * this image and notify them that an animation frame is complete.
+     * This method only has effect if the animation flag has been
+     * turned on through the setAnimated() method.
+     * If the full buffer update flag was turned on with the
+     * setFullBufferUpdates() method then the rectangle parameters
+     * will be ignored and the entire buffer will always be sent.
+     * @param x the x coordinate of the upper left corner of the rectangle
+     * of pixels to be sent
+     * @param y the y coordinate of the upper left corner of the rectangle
+     * of pixels to be sent
+     * @param w the width of the rectangle of pixels to be sent
+     * @param h the height of the rectangle of pixels to be sent
+     * @see #newPixels(int, int, int, int, boolean)
+     * @see ImageConsumer
+     * @see #setAnimated
+     * @see #setFullBufferUpdates
+     */
+    public synchronized void newPixels(int x, int y, int w, int h) {
+        newPixels(x, y, w, h, true);
+    }
+
+    /**
+     * Sends a rectangular region of the buffer of pixels to any
+     * ImageConsumers that are currently interested in the data for
+     * this image.
+     * If the framenotify parameter is true then the consumers are
+     * also notified that an animation frame is complete.
+     * This method only has effect if the animation flag has been
+     * turned on through the setAnimated() method.
+     * If the full buffer update flag was turned on with the
+     * setFullBufferUpdates() method then the rectangle parameters
+     * will be ignored and the entire buffer will always be sent.
+     * @param x the x coordinate of the upper left corner of the rectangle
+     * of pixels to be sent
+     * @param y the y coordinate of the upper left corner of the rectangle
+     * of pixels to be sent
+     * @param w the width of the rectangle of pixels to be sent
+     * @param h the height of the rectangle of pixels to be sent
+     * @param framenotify <code>true</code> if the consumers should be sent a
+     * {@link ImageConsumer#SINGLEFRAMEDONE SINGLEFRAMEDONE} notification
+     * @see ImageConsumer
+     * @see #setAnimated
+     * @see #setFullBufferUpdates
+     */
+    public synchronized void newPixels(int x, int y, int w, int h,
+                                       boolean framenotify) {
+        if (animating) {
+            if (fullbuffers) {
+                x = y = 0;
+                w = width;
+                h = height;
+            } else {
+                if (x < 0) {
+                    w += x;
+                    x = 0;
+                }
+                if (x + w > width) {
+                    w = width - x;
+                }
+                if (y < 0) {
+                    h += y;
+                    y = 0;
+                }
+                if (y + h > height) {
+                    h = height - y;
+                }
+            }
+            if ((w <= 0 || h <= 0) && !framenotify) {
+                return;
+            }
+            Enumeration enum_ = theConsumers.elements();
+            while (enum_.hasMoreElements()) {
+                ImageConsumer ic = (ImageConsumer) enum_.nextElement();
+                if (w > 0 && h > 0) {
+                    sendPixels(ic, x, y, w, h);
+                }
+                if (framenotify && isConsumer(ic)) {
+                    ic.imageComplete(ImageConsumer.SINGLEFRAMEDONE);
+                }
+            }
+        }
+    }
+
+    /**
+     * Changes to a new byte array to hold the pixels for this image.
+     * If the animation flag has been turned on through the setAnimated()
+     * method, then the new pixels will be immediately delivered to any
+     * ImageConsumers that are currently interested in the data for
+     * this image.
+     * @param newpix the new pixel array
+     * @param newmodel the specified <code>ColorModel</code>
+     * @param offset the offset into the array
+     * @param scansize the distance from one row of pixels to the next in
+     * the array
+     * @see #newPixels(int, int, int, int, boolean)
+     * @see #setAnimated
+     */
+    public synchronized void newPixels(byte[] newpix, ColorModel newmodel,
+                                       int offset, int scansize) {
+        this.pixels = newpix;
+        this.model = newmodel;
+        this.pixeloffset = offset;
+        this.pixelscan = scansize;
+        newPixels();
+    }
+
+    /**
+     * Changes to a new int array to hold the pixels for this image.
+     * If the animation flag has been turned on through the setAnimated()
+     * method, then the new pixels will be immediately delivered to any
+     * ImageConsumers that are currently interested in the data for
+     * this image.
+     * @param newpix the new pixel array
+     * @param newmodel the specified <code>ColorModel</code>
+     * @param offset the offset into the array
+     * @param scansize the distance from one row of pixels to the next in
+     * the array
+     * @see #newPixels(int, int, int, int, boolean)
+     * @see #setAnimated
+     */
+    public synchronized void newPixels(int[] newpix, ColorModel newmodel,
+                                       int offset, int scansize) {
+        this.pixels = newpix;
+        this.model = newmodel;
+        this.pixeloffset = offset;
+        this.pixelscan = scansize;
+        newPixels();
+    }
+
+    private void initConsumer(ImageConsumer ic) {
+        if (isConsumer(ic)) {
+            ic.setDimensions(width, height);
+        }
+        if (isConsumer(ic)) {
+            ic.setProperties(properties);
+        }
+        if (isConsumer(ic)) {
+            ic.setColorModel(model);
+        }
+        if (isConsumer(ic)) {
+            ic.setHints(animating
+                        ? (fullbuffers
+                           ? (ImageConsumer.TOPDOWNLEFTRIGHT |
+                              ImageConsumer.COMPLETESCANLINES)
+                           : ImageConsumer.RANDOMPIXELORDER)
+                        : (ImageConsumer.TOPDOWNLEFTRIGHT |
+                           ImageConsumer.COMPLETESCANLINES |
+                           ImageConsumer.SINGLEPASS |
+                           ImageConsumer.SINGLEFRAME));
+        }
+    }
+
+    private void sendPixels(ImageConsumer ic, int x, int y, int w, int h) {
+        int off = pixeloffset + pixelscan * y + x;
+        if (isConsumer(ic)) {
+            if (pixels instanceof byte[]) {
+                ic.setPixels(x, y, w, h, model,
+                             ((byte[]) pixels), off, pixelscan);
+            } else {
+                ic.setPixels(x, y, w, h, model,
+                             ((int[]) pixels), off, pixelscan);
+            }
+        }
+    }
+}

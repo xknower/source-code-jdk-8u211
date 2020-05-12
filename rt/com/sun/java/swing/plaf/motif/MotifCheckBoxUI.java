@@ -1,96 +1,90 @@
-/*    */ package com.sun.java.swing.plaf.motif;
-/*    */ 
-/*    */ import javax.swing.AbstractButton;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.UIManager;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import sun.awt.AppContext;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MotifCheckBoxUI
-/*    */   extends MotifRadioButtonUI
-/*    */ {
-/* 50 */   private static final Object MOTIF_CHECK_BOX_UI_KEY = new Object();
-/*    */ 
-/*    */   
-/*    */   private static final String propertyPrefix = "CheckBox.";
-/*    */ 
-/*    */   
-/*    */   private boolean defaults_initialized = false;
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 61 */     AppContext appContext = AppContext.getAppContext();
-/*    */     
-/* 63 */     MotifCheckBoxUI motifCheckBoxUI = (MotifCheckBoxUI)appContext.get(MOTIF_CHECK_BOX_UI_KEY);
-/* 64 */     if (motifCheckBoxUI == null) {
-/* 65 */       motifCheckBoxUI = new MotifCheckBoxUI();
-/* 66 */       appContext.put(MOTIF_CHECK_BOX_UI_KEY, motifCheckBoxUI);
-/*    */     } 
-/* 68 */     return motifCheckBoxUI;
-/*    */   }
-/*    */   
-/*    */   public String getPropertyPrefix() {
-/* 72 */     return "CheckBox.";
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void installDefaults(AbstractButton paramAbstractButton) {
-/* 79 */     super.installDefaults(paramAbstractButton);
-/* 80 */     if (!this.defaults_initialized) {
-/* 81 */       this.icon = UIManager.getIcon(getPropertyPrefix() + "icon");
-/* 82 */       this.defaults_initialized = true;
-/*    */     } 
-/*    */   }
-/*    */   
-/*    */   protected void uninstallDefaults(AbstractButton paramAbstractButton) {
-/* 87 */     super.uninstallDefaults(paramAbstractButton);
-/* 88 */     this.defaults_initialized = false;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifCheckBoxUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import sun.awt.AppContext;
+
+import javax.swing.*;
+
+import javax.swing.plaf.*;
+
+import java.awt.*;
+
+/**
+ * MotifCheckBox implementation
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Rich Schiavi
+ */
+public class MotifCheckBoxUI extends MotifRadioButtonUI {
+
+    private static final Object MOTIF_CHECK_BOX_UI_KEY = new Object();
+
+    private final static String propertyPrefix = "CheckBox" + ".";
+
+    private boolean defaults_initialized = false;
+
+
+    // ********************************
+    //         Create PLAF
+    // ********************************
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        MotifCheckBoxUI motifCheckBoxUI =
+                (MotifCheckBoxUI) appContext.get(MOTIF_CHECK_BOX_UI_KEY);
+        if (motifCheckBoxUI == null) {
+            motifCheckBoxUI = new MotifCheckBoxUI();
+            appContext.put(MOTIF_CHECK_BOX_UI_KEY, motifCheckBoxUI);
+        }
+        return motifCheckBoxUI;
+    }
+
+    public String getPropertyPrefix() {
+        return propertyPrefix;
+    }
+
+    // ********************************
+    //          Defaults
+    // ********************************
+    public void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            icon = UIManager.getIcon(getPropertyPrefix() + "icon");
+            defaults_initialized = true;
+        }
+    }
+
+    protected void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
+    }
+}

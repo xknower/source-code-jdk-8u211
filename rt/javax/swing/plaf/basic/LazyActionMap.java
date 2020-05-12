@@ -1,170 +1,165 @@
-/*     */ package javax.swing.plaf.basic;
-/*     */ 
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Method;
-/*     */ import javax.swing.Action;
-/*     */ import javax.swing.ActionMap;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ActionMapUIResource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class LazyActionMap
-/*     */   extends ActionMapUIResource
-/*     */ {
-/*     */   private transient Object _loader;
-/*     */   
-/*     */   static void installLazyActionMap(JComponent paramJComponent, Class paramClass, String paramString) {
-/*  60 */     ActionMap actionMap = (ActionMap)UIManager.get(paramString);
-/*  61 */     if (actionMap == null) {
-/*  62 */       actionMap = new LazyActionMap(paramClass);
-/*  63 */       UIManager.getLookAndFeelDefaults().put(paramString, actionMap);
-/*     */     } 
-/*  65 */     SwingUtilities.replaceUIActionMap(paramJComponent, actionMap);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static ActionMap getActionMap(Class paramClass, String paramString) {
-/*  83 */     ActionMap actionMap = (ActionMap)UIManager.get(paramString);
-/*  84 */     if (actionMap == null) {
-/*  85 */       actionMap = new LazyActionMap(paramClass);
-/*  86 */       UIManager.getLookAndFeelDefaults().put(paramString, actionMap);
-/*     */     } 
-/*  88 */     return actionMap;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private LazyActionMap(Class paramClass) {
-/*  93 */     this._loader = paramClass;
-/*     */   }
-/*     */   
-/*     */   public void put(Action paramAction) {
-/*  97 */     put(paramAction.getValue("Name"), paramAction);
-/*     */   }
-/*     */   
-/*     */   public void put(Object paramObject, Action paramAction) {
-/* 101 */     loadIfNecessary();
-/* 102 */     super.put(paramObject, paramAction);
-/*     */   }
-/*     */   
-/*     */   public Action get(Object paramObject) {
-/* 106 */     loadIfNecessary();
-/* 107 */     return super.get(paramObject);
-/*     */   }
-/*     */   
-/*     */   public void remove(Object paramObject) {
-/* 111 */     loadIfNecessary();
-/* 112 */     super.remove(paramObject);
-/*     */   }
-/*     */   
-/*     */   public void clear() {
-/* 116 */     loadIfNecessary();
-/* 117 */     super.clear();
-/*     */   }
-/*     */   
-/*     */   public Object[] keys() {
-/* 121 */     loadIfNecessary();
-/* 122 */     return super.keys();
-/*     */   }
-/*     */   
-/*     */   public int size() {
-/* 126 */     loadIfNecessary();
-/* 127 */     return super.size();
-/*     */   }
-/*     */   
-/*     */   public Object[] allKeys() {
-/* 131 */     loadIfNecessary();
-/* 132 */     return super.allKeys();
-/*     */   }
-/*     */   
-/*     */   public void setParent(ActionMap paramActionMap) {
-/* 136 */     loadIfNecessary();
-/* 137 */     super.setParent(paramActionMap);
-/*     */   }
-/*     */   
-/*     */   private void loadIfNecessary() {
-/* 141 */     if (this._loader != null) {
-/* 142 */       Object object = this._loader;
-/*     */       
-/* 144 */       this._loader = null;
-/* 145 */       Class clazz = (Class)object;
-/*     */       try {
-/* 147 */         Method method = clazz.getDeclaredMethod("loadActionMap", new Class[] { LazyActionMap.class });
-/*     */         
-/* 149 */         method.invoke(clazz, new Object[] { this });
-/* 150 */       } catch (NoSuchMethodException noSuchMethodException) {
-/* 151 */         assert false : "LazyActionMap unable to load actions " + clazz;
-/*     */       }
-/* 153 */       catch (IllegalAccessException illegalAccessException) {
-/* 154 */         assert false : "LazyActionMap unable to load actions " + illegalAccessException;
-/*     */       }
-/* 156 */       catch (InvocationTargetException invocationTargetException) {
-/* 157 */         assert false : "LazyActionMap unable to load actions " + invocationTargetException;
-/*     */       }
-/* 159 */       catch (IllegalArgumentException illegalArgumentException) {
-/* 160 */         assert false : "LazyActionMap unable to load actions " + illegalArgumentException;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\LazyActionMap.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.basic;
+
+import java.lang.reflect.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+
+/**
+ * An ActionMap that populates its contents as necessary. The
+ * contents are populated by invoking the <code>loadActionMap</code>
+ * method on the passed in Object.
+ *
+ * @author Scott Violet
+ */
+class LazyActionMap extends ActionMapUIResource {
+    /**
+     * Object to invoke <code>loadActionMap</code> on. This may be
+     * a Class object.
+     */
+    private transient Object _loader;
+
+    /**
+     * Installs an ActionMap that will be populated by invoking the
+     * <code>loadActionMap</code> method on the specified Class
+     * when necessary.
+     * <p>
+     * This should be used if the ActionMap can be shared.
+     *
+     * @param c JComponent to install the ActionMap on.
+     * @param loaderClass Class object that gets loadActionMap invoked
+     *                    on.
+     * @param defaultsKey Key to use to defaults table to check for
+     *        existing map and what resulting Map will be registered on.
+     */
+    static void installLazyActionMap(JComponent c, Class loaderClass,
+                                     String defaultsKey) {
+        ActionMap map = (ActionMap)UIManager.get(defaultsKey);
+        if (map == null) {
+            map = new LazyActionMap(loaderClass);
+            UIManager.getLookAndFeelDefaults().put(defaultsKey, map);
+        }
+        SwingUtilities.replaceUIActionMap(c, map);
+    }
+
+    /**
+     * Returns an ActionMap that will be populated by invoking the
+     * <code>loadActionMap</code> method on the specified Class
+     * when necessary.
+     * <p>
+     * This should be used if the ActionMap can be shared.
+     *
+     * @param c JComponent to install the ActionMap on.
+     * @param loaderClass Class object that gets loadActionMap invoked
+     *                    on.
+     * @param defaultsKey Key to use to defaults table to check for
+     *        existing map and what resulting Map will be registered on.
+     */
+    static ActionMap getActionMap(Class loaderClass,
+                                  String defaultsKey) {
+        ActionMap map = (ActionMap)UIManager.get(defaultsKey);
+        if (map == null) {
+            map = new LazyActionMap(loaderClass);
+            UIManager.getLookAndFeelDefaults().put(defaultsKey, map);
+        }
+        return map;
+    }
+
+
+    private LazyActionMap(Class loader) {
+        _loader = loader;
+    }
+
+    public void put(Action action) {
+        put(action.getValue(Action.NAME), action);
+    }
+
+    public void put(Object key, Action action) {
+        loadIfNecessary();
+        super.put(key, action);
+    }
+
+    public Action get(Object key) {
+        loadIfNecessary();
+        return super.get(key);
+    }
+
+    public void remove(Object key) {
+        loadIfNecessary();
+        super.remove(key);
+    }
+
+    public void clear() {
+        loadIfNecessary();
+        super.clear();
+    }
+
+    public Object[] keys() {
+        loadIfNecessary();
+        return super.keys();
+    }
+
+    public int size() {
+        loadIfNecessary();
+        return super.size();
+    }
+
+    public Object[] allKeys() {
+        loadIfNecessary();
+        return super.allKeys();
+    }
+
+    public void setParent(ActionMap map) {
+        loadIfNecessary();
+        super.setParent(map);
+    }
+
+    private void loadIfNecessary() {
+        if (_loader != null) {
+            Object loader = _loader;
+
+            _loader = null;
+            Class<?> klass = (Class<?>)loader;
+            try {
+                Method method = klass.getDeclaredMethod("loadActionMap",
+                                      new Class[] { LazyActionMap.class });
+                method.invoke(klass, new Object[] { this });
+            } catch (NoSuchMethodException nsme) {
+                assert false : "LazyActionMap unable to load actions " +
+                        klass;
+            } catch (IllegalAccessException iae) {
+                assert false : "LazyActionMap unable to load actions " +
+                        iae;
+            } catch (InvocationTargetException ite) {
+                assert false : "LazyActionMap unable to load actions " +
+                        ite;
+            } catch (IllegalArgumentException iae) {
+                assert false : "LazyActionMap unable to load actions " +
+                        iae;
+            }
+        }
+    }
+}

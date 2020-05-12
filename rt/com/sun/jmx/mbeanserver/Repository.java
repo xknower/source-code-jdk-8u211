@@ -1,688 +1,678 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ import java.util.concurrent.locks.ReentrantReadWriteLock;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.DynamicMBean;
-/*     */ import javax.management.InstanceAlreadyExistsException;
-/*     */ import javax.management.InstanceNotFoundException;
-/*     */ import javax.management.ObjectName;
-/*     */ import javax.management.QueryExp;
-/*     */ import javax.management.RuntimeOperationsException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Repository
-/*     */ {
-/*     */   private final Map<String, Map<String, NamedObject>> domainTb;
-/*  89 */   private volatile int nbElements = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final String domain;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final ReentrantReadWriteLock lock;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final class ObjectNamePattern
-/*     */   {
-/*     */     private final String[] keys;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final String[] values;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final String properties;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final boolean isPropertyListPattern;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final boolean isPropertyValuePattern;
-/*     */ 
-/*     */     
-/*     */     public final ObjectName pattern;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public ObjectNamePattern(ObjectName param1ObjectName) {
-/* 128 */       this(param1ObjectName.isPropertyListPattern(), param1ObjectName
-/* 129 */           .isPropertyValuePattern(), param1ObjectName
-/* 130 */           .getCanonicalKeyPropertyListString(), param1ObjectName
-/* 131 */           .getKeyPropertyList(), param1ObjectName);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     ObjectNamePattern(boolean param1Boolean1, boolean param1Boolean2, String param1String, Map<String, String> param1Map, ObjectName param1ObjectName) {
-/* 149 */       this.isPropertyListPattern = param1Boolean1;
-/* 150 */       this.isPropertyValuePattern = param1Boolean2;
-/* 151 */       this.properties = param1String;
-/* 152 */       int i = param1Map.size();
-/* 153 */       this.keys = new String[i];
-/* 154 */       this.values = new String[i];
-/* 155 */       byte b = 0;
-/* 156 */       for (Map.Entry<String, String> entry : param1Map.entrySet()) {
-/* 157 */         this.keys[b] = (String)entry.getKey();
-/* 158 */         this.values[b] = (String)entry.getValue();
-/* 159 */         b++;
-/*     */       } 
-/* 161 */       this.pattern = param1ObjectName;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public boolean matchKeys(ObjectName param1ObjectName) {
-/* 177 */       if (this.isPropertyValuePattern && !this.isPropertyListPattern && param1ObjectName
-/*     */         
-/* 179 */         .getKeyPropertyList().size() != this.keys.length) {
-/* 180 */         return false;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 185 */       if (this.isPropertyValuePattern || this.isPropertyListPattern) {
-/* 186 */         for (int i = this.keys.length - 1; i >= 0; i--) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 190 */           String str = param1ObjectName.getKeyProperty(this.keys[i]);
-/*     */ 
-/*     */           
-/* 193 */           if (str == null) return false;
-/*     */ 
-/*     */           
-/* 196 */           if (this.isPropertyValuePattern && this.pattern
-/* 197 */             .isPropertyValuePattern(this.keys[i])) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 201 */             if (!Util.wildmatch(str, this.values[i]))
-/*     */             {
-/*     */               
-/* 204 */               return false;
-/*     */             }
-/* 206 */           } else if (!str.equals(this.values[i])) {
-/* 207 */             return false;
-/*     */           } 
-/* 209 */         }  return true;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 214 */       String str1 = param1ObjectName.getCanonicalKeyPropertyListString();
-/* 215 */       String str2 = this.properties;
-/* 216 */       return str1.equals(str2);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addAllMatching(Map<String, NamedObject> paramMap, Set<NamedObject> paramSet, ObjectNamePattern paramObjectNamePattern) {
-/* 229 */     synchronized (paramMap) {
-/* 230 */       for (NamedObject namedObject : paramMap.values()) {
-/* 231 */         ObjectName objectName = namedObject.getName();
-/*     */         
-/* 233 */         if (paramObjectNamePattern.matchKeys(objectName)) paramSet.add(namedObject);
-/*     */       
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addNewDomMoi(DynamicMBean paramDynamicMBean, String paramString, ObjectName paramObjectName, RegistrationContext paramRegistrationContext) {
-/* 242 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*     */     
-/* 244 */     String str = paramObjectName.getCanonicalKeyPropertyListString();
-/* 245 */     addMoiToTb(paramDynamicMBean, paramObjectName, str, (Map)hashMap, paramRegistrationContext);
-/* 246 */     this.domainTb.put(paramString, hashMap);
-/* 247 */     this.nbElements++;
-/*     */   }
-/*     */   
-/*     */   private void registering(RegistrationContext paramRegistrationContext) {
-/* 251 */     if (paramRegistrationContext == null)
-/*     */       return;  try {
-/* 253 */       paramRegistrationContext.registering();
-/* 254 */     } catch (RuntimeOperationsException runtimeOperationsException) {
-/* 255 */       throw runtimeOperationsException;
-/* 256 */     } catch (RuntimeException runtimeException) {
-/* 257 */       throw new RuntimeOperationsException(runtimeException);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void unregistering(RegistrationContext paramRegistrationContext, ObjectName paramObjectName) {
-/* 262 */     if (paramRegistrationContext == null)
-/*     */       return;  try {
-/* 264 */       paramRegistrationContext.unregistered();
-/* 265 */     } catch (Exception exception) {
-/*     */       
-/* 267 */       JmxProperties.MBEANSERVER_LOGGER.log(Level.FINE, "Unexpected exception while unregistering " + paramObjectName, exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addMoiToTb(DynamicMBean paramDynamicMBean, ObjectName paramObjectName, String paramString, Map<String, NamedObject> paramMap, RegistrationContext paramRegistrationContext) {
-/* 278 */     registering(paramRegistrationContext);
-/* 279 */     paramMap.put(paramString, new NamedObject(paramObjectName, paramDynamicMBean));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private NamedObject retrieveNamedObject(ObjectName paramObjectName) {
-/* 289 */     if (paramObjectName.isPattern()) return null;
-/*     */ 
-/*     */     
-/* 292 */     String str = paramObjectName.getDomain().intern();
-/*     */ 
-/*     */     
-/* 295 */     if (str.length() == 0) {
-/* 296 */       str = this.domain;
-/*     */     }
-/*     */     
-/* 299 */     Map map = this.domainTb.get(str);
-/* 300 */     if (map == null) {
-/* 301 */       return null;
-/*     */     }
-/*     */     
-/* 304 */     return (NamedObject)map.get(paramObjectName.getCanonicalKeyPropertyListString());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Repository(String paramString) {
-/* 319 */     this(paramString, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Repository(String paramString, boolean paramBoolean) {
-/* 326 */     this.lock = new ReentrantReadWriteLock(paramBoolean);
-/*     */     
-/* 328 */     this.domainTb = new HashMap<>(5);
-/*     */     
-/* 330 */     if (paramString != null && paramString.length() != 0) {
-/* 331 */       this.domain = paramString.intern();
-/*     */     } else {
-/* 333 */       this.domain = "DefaultDomain";
-/*     */     } 
-/*     */     
-/* 336 */     this.domainTb.put(this.domain, new HashMap<>());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] getDomains() {
-/*     */     ArrayList arrayList;
-/* 346 */     this.lock.readLock().lock();
-/*     */ 
-/*     */     
-/*     */     try {
-/* 350 */       arrayList = new ArrayList(this.domainTb.size());
-/*     */       
-/* 352 */       for (Map.Entry<String, Map<String, NamedObject>> entry : this.domainTb.entrySet()) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 356 */         Map map = (Map)entry.getValue();
-/* 357 */         if (map != null && map.size() != 0)
-/* 358 */           arrayList.add(entry.getKey()); 
-/*     */       } 
-/*     */     } finally {
-/* 361 */       this.lock.readLock().unlock();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 365 */     return (String[])arrayList.toArray((Object[])new String[arrayList.size()]);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addMBean(DynamicMBean paramDynamicMBean, ObjectName paramObjectName, RegistrationContext paramRegistrationContext) throws InstanceAlreadyExistsException {
-/* 388 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 389 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(), "addMBean", "name = " + paramObjectName);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 394 */     String str = paramObjectName.getDomain().intern();
-/* 395 */     boolean bool = false;
-/*     */ 
-/*     */     
-/* 398 */     if (str.length() == 0) {
-/* 399 */       paramObjectName = Util.newObjectName(this.domain + paramObjectName.toString());
-/*     */     }
-/*     */     
-/* 402 */     if (str == this.domain) {
-/* 403 */       bool = true;
-/* 404 */       str = this.domain;
-/*     */     } else {
-/* 406 */       bool = false;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 410 */     if (paramObjectName.isPattern()) {
-/* 411 */       throw new RuntimeOperationsException(new IllegalArgumentException("Repository: cannot add mbean for pattern name " + paramObjectName
-/*     */             
-/* 413 */             .toString()));
-/*     */     }
-/*     */     
-/* 416 */     this.lock.writeLock().lock();
-/*     */     
-/*     */     try {
-/* 419 */       if (!bool && str
-/* 420 */         .equals("JMImplementation") && this.domainTb
-/* 421 */         .containsKey("JMImplementation")) {
-/* 422 */         throw new RuntimeOperationsException(new IllegalArgumentException("Repository: domain name cannot be JMImplementation"));
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 428 */       Map<String, NamedObject> map = this.domainTb.get(str);
-/* 429 */       if (map == null) {
-/* 430 */         addNewDomMoi(paramDynamicMBean, str, paramObjectName, paramRegistrationContext);
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 434 */       String str1 = paramObjectName.getCanonicalKeyPropertyListString();
-/* 435 */       NamedObject namedObject = (NamedObject)map.get(str1);
-/* 436 */       if (namedObject != null) {
-/* 437 */         throw new InstanceAlreadyExistsException(paramObjectName.toString());
-/*     */       }
-/* 439 */       this.nbElements++;
-/* 440 */       addMoiToTb(paramDynamicMBean, paramObjectName, str1, map, paramRegistrationContext);
-/*     */     
-/*     */     }
-/*     */     finally {
-/*     */       
-/* 445 */       this.lock.writeLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(ObjectName paramObjectName) {
-/* 459 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 460 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(), "contains", " name = " + paramObjectName);
-/*     */     }
-/*     */     
-/* 463 */     this.lock.readLock().lock();
-/*     */     try {
-/* 465 */       return (retrieveNamedObject(paramObjectName) != null);
-/*     */     } finally {
-/* 467 */       this.lock.readLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DynamicMBean retrieve(ObjectName paramObjectName) {
-/* 481 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 482 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(), "retrieve", "name = " + paramObjectName);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 487 */     this.lock.readLock().lock();
-/*     */     try {
-/* 489 */       NamedObject namedObject = retrieveNamedObject(paramObjectName);
-/* 490 */       if (namedObject == null) return null; 
-/* 491 */       return namedObject.getObject();
-/*     */     } finally {
-/* 493 */       this.lock.readLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Set<NamedObject> query(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/*     */     ObjectName objectName;
-/* 513 */     HashSet<NamedObject> hashSet = new HashSet();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 522 */     if (paramObjectName == null || paramObjectName
-/* 523 */       .getCanonicalName().length() == 0 || paramObjectName
-/* 524 */       .equals(ObjectName.WILDCARD))
-/* 525 */     { objectName = ObjectName.WILDCARD; }
-/* 526 */     else { objectName = paramObjectName; }
-/*     */     
-/* 528 */     this.lock.readLock().lock();
-/*     */ 
-/*     */     
-/*     */     try {
-/* 532 */       if (!objectName.isPattern()) {
-/* 533 */         NamedObject namedObject = retrieveNamedObject(objectName);
-/* 534 */         if (namedObject != null) hashSet.add(namedObject); 
-/* 535 */         return hashSet;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 539 */       if (objectName == ObjectName.WILDCARD) {
-/* 540 */         for (Map<String, NamedObject> map : this.domainTb.values()) {
-/* 541 */           hashSet.addAll(map.values());
-/*     */         }
-/* 543 */         return hashSet;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 547 */       String str1 = objectName.getCanonicalKeyPropertyListString();
-/*     */       
-/* 549 */       boolean bool = (str1.length() == 0) ? true : false;
-/* 550 */       ObjectNamePattern objectNamePattern = bool ? null : new ObjectNamePattern(objectName);
-/*     */ 
-/*     */ 
-/*     */       
-/* 554 */       if (objectName.getDomain().length() == 0) {
-/* 555 */         Map<String, NamedObject> map = this.domainTb.get(this.domain);
-/* 556 */         if (bool) {
-/* 557 */           hashSet.addAll(map.values());
-/*     */         } else {
-/* 559 */           addAllMatching(map, hashSet, objectNamePattern);
-/* 560 */         }  return hashSet;
-/*     */       } 
-/*     */       
-/* 563 */       if (!objectName.isDomainPattern()) {
-/* 564 */         Map<String, NamedObject> map = this.domainTb.get(objectName.getDomain());
-/* 565 */         if (map == null) return (Set)Collections.emptySet(); 
-/* 566 */         if (bool) {
-/* 567 */           hashSet.addAll(map.values());
-/*     */         } else {
-/* 569 */           addAllMatching(map, hashSet, objectNamePattern);
-/* 570 */         }  return hashSet;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 574 */       String str2 = objectName.getDomain();
-/* 575 */       for (String str : this.domainTb.keySet()) {
-/* 576 */         if (Util.wildmatch(str, str2)) {
-/* 577 */           Map<String, NamedObject> map = this.domainTb.get(str);
-/* 578 */           if (bool) {
-/* 579 */             hashSet.addAll(map.values()); continue;
-/*     */           } 
-/* 581 */           addAllMatching(map, hashSet, objectNamePattern);
-/*     */         } 
-/*     */       } 
-/* 584 */       return hashSet;
-/*     */     } finally {
-/* 586 */       this.lock.readLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void remove(ObjectName paramObjectName, RegistrationContext paramRegistrationContext) throws InstanceNotFoundException {
-/* 612 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 613 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(), "remove", "name = " + paramObjectName);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 618 */     String str = paramObjectName.getDomain().intern();
-/*     */ 
-/*     */     
-/* 621 */     if (str.length() == 0) str = this.domain;
-/*     */     
-/* 623 */     this.lock.writeLock().lock();
-/*     */     
-/*     */     try {
-/* 626 */       Map map = this.domainTb.get(str);
-/* 627 */       if (map == null) {
-/* 628 */         throw new InstanceNotFoundException(paramObjectName.toString());
-/*     */       }
-/*     */ 
-/*     */       
-/* 632 */       if (map.remove(paramObjectName.getCanonicalKeyPropertyListString()) == null) {
-/* 633 */         throw new InstanceNotFoundException(paramObjectName.toString());
-/*     */       }
-/*     */ 
-/*     */       
-/* 637 */       this.nbElements--;
-/*     */ 
-/*     */       
-/* 640 */       if (map.isEmpty()) {
-/* 641 */         this.domainTb.remove(str);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 647 */         if (str == this.domain) {
-/* 648 */           this.domainTb.put(this.domain, new HashMap<>());
-/*     */         }
-/*     */       } 
-/* 651 */       unregistering(paramRegistrationContext, paramObjectName);
-/*     */     } finally {
-/*     */       
-/* 654 */       this.lock.writeLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Integer getCount() {
-/* 664 */     return Integer.valueOf(this.nbElements);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDefaultDomain() {
-/* 674 */     return this.domain;
-/*     */   }
-/*     */   
-/*     */   public static interface RegistrationContext {
-/*     */     void registering();
-/*     */     
-/*     */     void unregistered();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\Repository.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+import com.sun.jmx.defaults.ServiceName;
+import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
+import java.util.Map;
+import java.util.Set;
+import javax.management.DynamicMBean;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.ObjectName;
+import javax.management.QueryExp;
+import javax.management.RuntimeOperationsException;
+
+/**
+ * This repository does not support persistency.
+ *
+ * @since 1.5
+ */
+public class Repository {
+
+    /**
+     * An interface that allows the caller to get some control
+     * over the registration.
+     * @see #addMBean
+     * @see #remove
+     */
+    public interface RegistrationContext {
+        /**
+         * Called by {@link #addMBean}.
+         * Can throw a RuntimeOperationsException to cancel the
+         * registration.
+         */
+        public void registering();
+
+        /**
+         * Called by {@link #remove}.
+         * Any exception thrown by this method will be ignored.
+         */
+        public void unregistered();
+    }
+
+    // Private fields -------------------------------------------->
+
+    /**
+     * The structure for storing the objects is very basic.
+     * A Hashtable is used for storing the different domains
+     * For each domain, a hashtable contains the instances with
+     * canonical key property list string as key and named object
+     * aggregated from given object name and mbean instance as value.
+     */
+    private final Map<String,Map<String,NamedObject>> domainTb;
+
+    /**
+     * Number of elements contained in the Repository
+     */
+    private volatile int nbElements = 0;
+
+    /**
+     * Domain name of the server the repository is attached to.
+     * It is quicker to store the information in the repository rather
+     * than querying the framework each time the info is required.
+     */
+    private final String domain;
+
+    /**
+     * We use a global reentrant read write lock to protect the repository.
+     * This seems safer and more efficient: we are using Maps of Maps,
+     * Guaranteing consistency while using Concurent objects at each level
+     * may be more difficult.
+     **/
+    private final ReentrantReadWriteLock lock;
+
+    // Private fields <=============================================
+
+    // Private methods --------------------------------------------->
+
+    /* This class is used to match an ObjectName against a pattern. */
+    private final static class ObjectNamePattern {
+        private final String[] keys;
+        private final String[] values;
+        private final String   properties;
+        private final boolean  isPropertyListPattern;
+        private final boolean  isPropertyValuePattern;
+
+        /**
+         * The ObjectName pattern against which ObjectNames are matched.
+         **/
+        public final ObjectName pattern;
+
+        /**
+         * Builds a new ObjectNamePattern object from an ObjectName pattern.
+         * @param pattern The ObjectName pattern under examination.
+         **/
+        public ObjectNamePattern(ObjectName pattern) {
+            this(pattern.isPropertyListPattern(),
+                 pattern.isPropertyValuePattern(),
+                 pattern.getCanonicalKeyPropertyListString(),
+                 pattern.getKeyPropertyList(),
+                 pattern);
+        }
+
+        /**
+         * Builds a new ObjectNamePattern object from an ObjectName pattern
+         * constituents.
+         * @param propertyListPattern pattern.isPropertyListPattern().
+         * @param propertyValuePattern pattern.isPropertyValuePattern().
+         * @param canonicalProps pattern.getCanonicalKeyPropertyListString().
+         * @param keyPropertyList pattern.getKeyPropertyList().
+         * @param pattern The ObjectName pattern under examination.
+         **/
+        ObjectNamePattern(boolean propertyListPattern,
+                          boolean propertyValuePattern,
+                          String canonicalProps,
+                          Map<String,String> keyPropertyList,
+                          ObjectName pattern) {
+            this.isPropertyListPattern = propertyListPattern;
+            this.isPropertyValuePattern = propertyValuePattern;
+            this.properties = canonicalProps;
+            final int len = keyPropertyList.size();
+            this.keys   = new String[len];
+            this.values = new String[len];
+            int i = 0;
+            for (Map.Entry<String,String> entry : keyPropertyList.entrySet()) {
+                keys[i]   = entry.getKey();
+                values[i] = entry.getValue();
+                i++;
+            }
+            this.pattern = pattern;
+        }
+
+        /**
+         * Return true if the given ObjectName matches the ObjectName pattern
+         * for which this object has been built.
+         * WARNING: domain name is not considered here because it is supposed
+         *          not to be wildcard when called. PropertyList is also
+         *          supposed not to be zero-length.
+         * @param name The ObjectName we want to match against the pattern.
+         * @return true if <code>name</code> matches the pattern.
+         **/
+        public boolean matchKeys(ObjectName name) {
+            // If key property value pattern but not key property list
+            // pattern, then the number of key properties must be equal
+            //
+            if (isPropertyValuePattern &&
+                !isPropertyListPattern &&
+                (name.getKeyPropertyList().size() != keys.length))
+                return false;
+
+            // If key property value pattern or key property list pattern,
+            // then every property inside pattern should exist in name
+            //
+            if (isPropertyValuePattern || isPropertyListPattern) {
+                for (int i = keys.length - 1; i >= 0 ; i--) {
+                    // Find value in given object name for key at current
+                    // index in receiver
+                    //
+                    String v = name.getKeyProperty(keys[i]);
+                    // Did we find a value for this key ?
+                    //
+                    if (v == null) return false;
+                    // If this property is ok (same key, same value), go to next
+                    //
+                    if (isPropertyValuePattern &&
+                        pattern.isPropertyValuePattern(keys[i])) {
+                        // wildmatch key property values
+                        // values[i] is the pattern;
+                        // v is the string
+                        if (Util.wildmatch(v,values[i]))
+                            continue;
+                        else
+                            return false;
+                    }
+                    if (v.equals(values[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+
+            // If no pattern, then canonical names must be equal
+            //
+            final String p1 = name.getCanonicalKeyPropertyListString();
+            final String p2 = properties;
+            return (p1.equals(p2));
+        }
+    }
+
+    /**
+     * Add all the matching objects from the given hashtable in the
+     * result set for the given ObjectNamePattern
+     * Do not check whether the domains match (only check for matching
+     * key property lists - see <i>matchKeys()</i>)
+     **/
+    private void addAllMatching(final Map<String,NamedObject> moiTb,
+                                final Set<NamedObject> result,
+                                final ObjectNamePattern pattern) {
+        synchronized (moiTb) {
+            for (NamedObject no : moiTb.values()) {
+                final ObjectName on = no.getName();
+                // if all couples (property, value) are contained
+                if (pattern.matchKeys(on)) result.add(no);
+            }
+        }
+    }
+
+    private void addNewDomMoi(final DynamicMBean object,
+                              final String dom,
+                              final ObjectName name,
+                              final RegistrationContext context) {
+        final Map<String,NamedObject> moiTb =
+            new HashMap<String,NamedObject>();
+        final String key = name.getCanonicalKeyPropertyListString();
+        addMoiToTb(object,name,key,moiTb,context);
+        domainTb.put(dom, moiTb);
+        nbElements++;
+    }
+
+    private void registering(RegistrationContext context) {
+        if (context == null) return;
+        try {
+            context.registering();
+        } catch (RuntimeOperationsException x) {
+            throw x;
+        } catch (RuntimeException x) {
+            throw new RuntimeOperationsException(x);
+        }
+    }
+
+    private void unregistering(RegistrationContext context, ObjectName name) {
+        if (context == null) return;
+        try {
+            context.unregistered();
+        } catch (Exception x) {
+            // shouldn't come here...
+            MBEANSERVER_LOGGER.log(Level.FINE,
+                    "Unexpected exception while unregistering "+name,
+                    x);
+        }
+    }
+
+    private void addMoiToTb(final DynamicMBean object,
+            final ObjectName name,
+            final String key,
+            final Map<String,NamedObject> moiTb,
+            final RegistrationContext context) {
+        registering(context);
+        moiTb.put(key,new NamedObject(name, object));
+    }
+
+    /**
+     * Retrieves the named object contained in repository
+     * from the given objectname.
+     */
+    private NamedObject retrieveNamedObject(ObjectName name) {
+
+        // No patterns inside reposit
+        if (name.isPattern()) return null;
+
+        // Extract the domain name.
+        String dom = name.getDomain().intern();
+
+        // Default domain case
+        if (dom.length() == 0) {
+            dom = domain;
+        }
+
+        Map<String,NamedObject> moiTb = domainTb.get(dom);
+        if (moiTb == null) {
+            return null; // No domain containing registered object names
+        }
+
+        return moiTb.get(name.getCanonicalKeyPropertyListString());
+    }
+
+    // Private methods <=============================================
+
+    // Protected methods --------------------------------------------->
+
+    // Protected methods <=============================================
+
+    // Public methods --------------------------------------------->
+
+    /**
+     * Construct a new repository with the given default domain.
+     */
+    public Repository(String domain) {
+        this(domain,true);
+    }
+
+    /**
+     * Construct a new repository with the given default domain.
+     */
+    public Repository(String domain, boolean fairLock) {
+        lock = new ReentrantReadWriteLock(fairLock);
+
+        domainTb = new HashMap<String,Map<String,NamedObject>>(5);
+
+        if (domain != null && domain.length() != 0)
+            this.domain = domain.intern(); // we use == domain later on...
+        else
+            this.domain = ServiceName.DOMAIN;
+
+        // Creates a new hashtable for the default domain
+        domainTb.put(this.domain, new HashMap<String,NamedObject>());
+    }
+
+    /**
+     * Returns the list of domains in which any MBean is currently
+     * registered.
+     *
+     */
+    public String[] getDomains() {
+
+        lock.readLock().lock();
+        final List<String> result;
+        try {
+            // Temporary list
+            result = new ArrayList<String>(domainTb.size());
+            for (Map.Entry<String,Map<String,NamedObject>> entry :
+                     domainTb.entrySet()) {
+                // Skip domains that are in the table but have no
+                // MBean registered in them
+                // in particular the default domain may be like this
+                Map<String,NamedObject> t = entry.getValue();
+                if (t != null && t.size() != 0)
+                    result.add(entry.getKey());
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+
+        // Make an array from result.
+        return result.toArray(new String[result.size()]);
+    }
+
+    /**
+     * Stores an MBean associated with its object name in the repository.
+     *
+     * @param object  MBean to be stored in the repository.
+     * @param name    MBean object name.
+     * @param context A registration context. If non null, the repository
+     *                will call {@link RegistrationContext#registering()
+     *                context.registering()} from within the repository
+     *                lock, when it has determined that the {@code object}
+     *                can be stored in the repository with that {@code name}.
+     *                If {@link RegistrationContext#registering()
+     *                context.registering()} throws an exception, the
+     *                operation is abandonned, the MBean is not added to the
+     *                repository, and a {@link RuntimeOperationsException}
+     *                is thrown.
+     */
+    public void addMBean(final DynamicMBean object, ObjectName name,
+            final RegistrationContext context)
+        throws InstanceAlreadyExistsException {
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(),
+                    "addMBean", "name = " + name);
+        }
+
+        // Extract the domain name.
+        String dom = name.getDomain().intern();
+        boolean to_default_domain = false;
+
+        // Set domain to default if domain is empty and not already set
+        if (dom.length() == 0)
+            name = Util.newObjectName(domain + name.toString());
+
+        // Do we have default domain ?
+        if (dom == domain) {  // ES: OK (dom & domain are interned)
+            to_default_domain = true;
+            dom = domain;
+        } else {
+            to_default_domain = false;
+        }
+
+        // Validate name for an object
+        if (name.isPattern()) {
+            throw new RuntimeOperationsException(
+             new IllegalArgumentException("Repository: cannot add mbean for " +
+                                          "pattern name " + name.toString()));
+        }
+
+        lock.writeLock().lock();
+        try {
+            // Domain cannot be JMImplementation if entry does not exist
+            if ( !to_default_domain &&
+                    dom.equals("JMImplementation") &&
+                    domainTb.containsKey("JMImplementation")) {
+                throw new RuntimeOperationsException(
+                        new IllegalArgumentException(
+                        "Repository: domain name cannot be JMImplementation"));
+            }
+
+            // If domain does not already exist, add it to the hash table
+            final Map<String,NamedObject> moiTb = domainTb.get(dom);
+            if (moiTb == null) {
+                addNewDomMoi(object, dom, name, context);
+                return;
+            } else {
+                // Add instance if not already present
+                String cstr = name.getCanonicalKeyPropertyListString();
+                NamedObject elmt= moiTb.get(cstr);
+                if (elmt != null) {
+                    throw new InstanceAlreadyExistsException(name.toString());
+                } else {
+                    nbElements++;
+                    addMoiToTb(object,name,cstr,moiTb,context);
+                }
+            }
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Checks whether an MBean of the name specified is already stored in
+     * the repository.
+     *
+     * @param name name of the MBean to find.
+     *
+     * @return  true if the MBean is stored in the repository,
+     *          false otherwise.
+     */
+    public boolean contains(ObjectName name) {
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(),
+                    "contains", " name = " + name);
+        }
+        lock.readLock().lock();
+        try {
+            return (retrieveNamedObject(name) != null);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Retrieves the MBean of the name specified from the repository. The
+     * object name must match exactly.
+     *
+     * @param name name of the MBean to retrieve.
+     *
+     * @return  The retrieved MBean if it is contained in the repository,
+     *          null otherwise.
+     */
+    public DynamicMBean retrieve(ObjectName name) {
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(),
+                    "retrieve", "name = " + name);
+        }
+
+        // Calls internal retrieve method to get the named object
+        lock.readLock().lock();
+        try {
+            NamedObject no = retrieveNamedObject(name);
+            if (no == null) return null;
+            else return no.getObject();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Selects and retrieves the list of MBeans whose names match the specified
+     * object name pattern and which match the specified query expression
+     * (optionally).
+     *
+     * @param pattern The name of the MBean(s) to retrieve - may be a specific
+     * object or a name pattern allowing multiple MBeans to be selected.
+     * @param query query expression to apply when selecting objects - this
+     * parameter will be ignored when the Repository Service does not
+     * support filtering.
+     *
+     * @return  The list of MBeans selected. There may be zero, one or many
+     *          MBeans returned in the set.
+     */
+    public Set<NamedObject> query(ObjectName pattern, QueryExp query) {
+
+        final Set<NamedObject> result = new HashSet<NamedObject>();
+
+        // The following filter cases are considered:
+        // null, "", "*:*" : names in all domains
+        // ":*", ":[key=value],*" : names in defaultDomain
+        // "domain:*", "domain:[key=value],*" : names in the specified domain
+
+        // Surely one of the most frequent cases ... query on the whole world
+        ObjectName name;
+        if (pattern == null ||
+            pattern.getCanonicalName().length() == 0 ||
+            pattern.equals(ObjectName.WILDCARD))
+           name = ObjectName.WILDCARD;
+        else name = pattern;
+
+        lock.readLock().lock();
+        try {
+
+            // If pattern is not a pattern, retrieve this mbean !
+            if (!name.isPattern()) {
+                final NamedObject no = retrieveNamedObject(name);
+                if (no != null) result.add(no);
+                return result;
+            }
+
+            // All names in all domains
+            if (name == ObjectName.WILDCARD) {
+                for (Map<String,NamedObject> moiTb : domainTb.values()) {
+                    result.addAll(moiTb.values());
+                }
+                return result;
+            }
+
+            final String canonical_key_property_list_string =
+                    name.getCanonicalKeyPropertyListString();
+            final boolean allNames =
+                    (canonical_key_property_list_string.length()==0);
+            final ObjectNamePattern namePattern =
+                (allNames?null:new ObjectNamePattern(name));
+
+            // All names in default domain
+            if (name.getDomain().length() == 0) {
+                final Map<String,NamedObject> moiTb = domainTb.get(domain);
+                if (allNames)
+                    result.addAll(moiTb.values());
+                else
+                    addAllMatching(moiTb, result, namePattern);
+                return result;
+            }
+
+            if (!name.isDomainPattern()) {
+                final Map<String,NamedObject> moiTb = domainTb.get(name.getDomain());
+                if (moiTb == null) return Collections.emptySet();
+                if (allNames)
+                    result.addAll(moiTb.values());
+                else
+                    addAllMatching(moiTb, result, namePattern);
+                return result;
+            }
+
+            // Pattern matching in the domain name (*, ?)
+            final String dom2Match = name.getDomain();
+            for (String dom : domainTb.keySet()) {
+                if (Util.wildmatch(dom, dom2Match)) {
+                    final Map<String,NamedObject> moiTb = domainTb.get(dom);
+                    if (allNames)
+                        result.addAll(moiTb.values());
+                    else
+                        addAllMatching(moiTb, result, namePattern);
+                }
+            }
+            return result;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Removes an MBean from the repository.
+     *
+     * @param name name of the MBean to remove.
+     * @param context A registration context. If non null, the repository
+     *                will call {@link RegistrationContext#unregistered()
+     *                context.unregistered()} from within the repository
+     *                lock, just after the mbean associated with
+     *                {@code name} is removed from the repository.
+     *                If {@link RegistrationContext#unregistered()
+     *                context.unregistered()} is not expected to throw any
+     *                exception. If it does, the exception is logged
+     *                and swallowed.
+     *
+     * @exception InstanceNotFoundException The MBean does not exist in
+     *            the repository.
+     */
+    public void remove(final ObjectName name,
+            final RegistrationContext context)
+        throws InstanceNotFoundException {
+
+        // Debugging stuff
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER, Repository.class.getName(),
+                    "remove", "name = " + name);
+        }
+
+        // Extract domain name.
+        String dom= name.getDomain().intern();
+
+        // Default domain case
+        if (dom.length() == 0) dom = domain;
+
+        lock.writeLock().lock();
+        try {
+            // Find the domain subtable
+            final Map<String,NamedObject> moiTb = domainTb.get(dom);
+            if (moiTb == null) {
+                throw new InstanceNotFoundException(name.toString());
+            }
+
+            // Remove the corresponding element
+            if (moiTb.remove(name.getCanonicalKeyPropertyListString())==null) {
+                throw new InstanceNotFoundException(name.toString());
+            }
+
+            // We removed it !
+            nbElements--;
+
+            // No more object for this domain, we remove this domain hashtable
+            if (moiTb.isEmpty()) {
+                domainTb.remove(dom);
+
+                // set a new default domain table (always present)
+                // need to reinstantiate a hashtable because of possible
+                // big buckets array size inside table, never cleared,
+                // thus the new !
+                if (dom == domain) // ES: OK dom and domain are interned.
+                    domainTb.put(domain, new HashMap<String,NamedObject>());
+            }
+
+            unregistering(context,name);
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Gets the number of MBeans stored in the repository.
+     *
+     * @return  Number of MBeans.
+     */
+    public Integer getCount() {
+        return nbElements;
+    }
+
+    /**
+     * Gets the name of the domain currently used by default in the
+     * repository.
+     *
+     * @return  A string giving the name of the default domain name.
+     */
+    public String getDefaultDomain() {
+        return domain;
+    }
+
+    // Public methods <=============================================
+}

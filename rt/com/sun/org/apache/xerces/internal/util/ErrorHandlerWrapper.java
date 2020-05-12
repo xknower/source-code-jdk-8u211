@@ -1,238 +1,232 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
-/*     */ import org.xml.sax.ErrorHandler;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.SAXParseException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ErrorHandlerWrapper
-/*     */   implements XMLErrorHandler
-/*     */ {
-/*     */   protected ErrorHandler fErrorHandler;
-/*     */   
-/*     */   public ErrorHandlerWrapper() {}
-/*     */   
-/*     */   public ErrorHandlerWrapper(ErrorHandler errorHandler) {
-/*  58 */     setErrorHandler(errorHandler);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setErrorHandler(ErrorHandler errorHandler) {
-/*  67 */     this.fErrorHandler = errorHandler;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ErrorHandler getErrorHandler() {
-/*  72 */     return this.fErrorHandler;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void warning(String domain, String key, XMLParseException exception) throws XNIException {
-/*  98 */     if (this.fErrorHandler != null) {
-/*  99 */       SAXParseException saxException = createSAXParseException(exception);
-/*     */       
-/*     */       try {
-/* 102 */         this.fErrorHandler.warning(saxException);
-/*     */       }
-/* 104 */       catch (SAXParseException e) {
-/* 105 */         throw createXMLParseException(e);
-/*     */       }
-/* 107 */       catch (SAXException e) {
-/* 108 */         throw createXNIException(e);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void error(String domain, String key, XMLParseException exception) throws XNIException {
-/* 133 */     if (this.fErrorHandler != null) {
-/* 134 */       SAXParseException saxException = createSAXParseException(exception);
-/*     */       
-/*     */       try {
-/* 137 */         this.fErrorHandler.error(saxException);
-/*     */       }
-/* 139 */       catch (SAXParseException e) {
-/* 140 */         throw createXMLParseException(e);
-/*     */       }
-/* 142 */       catch (SAXException e) {
-/* 143 */         throw createXNIException(e);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void fatalError(String domain, String key, XMLParseException exception) throws XNIException {
-/* 176 */     if (this.fErrorHandler != null) {
-/* 177 */       SAXParseException saxException = createSAXParseException(exception);
-/*     */       
-/*     */       try {
-/* 180 */         this.fErrorHandler.fatalError(saxException);
-/*     */       }
-/* 182 */       catch (SAXParseException e) {
-/* 183 */         throw createXMLParseException(e);
-/*     */       }
-/* 185 */       catch (SAXException e) {
-/* 186 */         throw createXNIException(e);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static SAXParseException createSAXParseException(XMLParseException exception) {
-/* 198 */     return new SAXParseException(exception.getMessage(), exception
-/* 199 */         .getPublicId(), exception
-/* 200 */         .getExpandedSystemId(), exception
-/* 201 */         .getLineNumber(), exception
-/* 202 */         .getColumnNumber(), exception
-/* 203 */         .getException());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected static XMLParseException createXMLParseException(SAXParseException exception) {
-/* 208 */     final String fPublicId = exception.getPublicId();
-/* 209 */     final String fExpandedSystemId = exception.getSystemId();
-/* 210 */     final int fLineNumber = exception.getLineNumber();
-/* 211 */     final int fColumnNumber = exception.getColumnNumber();
-/* 212 */     XMLLocator location = new XMLLocator() {
-/* 213 */         public String getPublicId() { return fPublicId; }
-/* 214 */         public String getExpandedSystemId() { return fExpandedSystemId; }
-/* 215 */         public String getBaseSystemId() { return null; }
-/* 216 */         public String getLiteralSystemId() { return null; }
-/* 217 */         public int getColumnNumber() { return fColumnNumber; }
-/* 218 */         public int getLineNumber() { return fLineNumber; }
-/* 219 */         public int getCharacterOffset() { return -1; }
-/* 220 */         public String getEncoding() { return null; }
-/* 221 */         public String getXMLVersion() { return null; }
-/*     */       };
-/* 223 */     return new XMLParseException(location, exception.getMessage(), exception);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static XNIException createXNIException(SAXException exception) {
-/* 230 */     return new XNIException(exception.getMessage(), exception);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\ErrorHandlerWrapper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+/**
+ * This class wraps a SAX error handler in an XNI error handler.
+ *
+ * @see ErrorHandler
+ *
+ * @author Andy Clark, IBM
+ *
+ */
+public class ErrorHandlerWrapper
+    implements XMLErrorHandler {
+
+    //
+    // Data
+    //
+
+    /** The SAX error handler. */
+    protected ErrorHandler fErrorHandler;
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public ErrorHandlerWrapper() {}
+
+    /** Wraps the specified SAX error handler. */
+    public ErrorHandlerWrapper(ErrorHandler errorHandler) {
+        setErrorHandler(errorHandler);
+    } // <init>(ErrorHandler)
+
+    //
+    // Public methods
+    //
+
+    /** Sets the SAX error handler. */
+    public void setErrorHandler(ErrorHandler errorHandler) {
+        fErrorHandler = errorHandler;
+    } // setErrorHandler(ErrorHandler)
+
+    /** Returns the SAX error handler. */
+    public ErrorHandler getErrorHandler() {
+        return fErrorHandler;
+    } // getErrorHandler():ErrorHandler
+
+    //
+    // XMLErrorHandler methods
+    //
+
+    /**
+     * Reports a warning. Warnings are non-fatal and can be safely ignored
+     * by most applications.
+     *
+     * @param domain    The domain of the warning. The domain can be any
+     *                  string but is suggested to be a valid URI. The
+     *                  domain can be used to conveniently specify a web
+     *                  site location of the relevent specification or
+     *                  document pertaining to this warning.
+     * @param key       The warning key. This key can be any string and
+     *                  is implementation dependent.
+     * @param exception Exception.
+     *
+     * @throws XNIException Thrown to signal that the parser should stop
+     *                      parsing the document.
+     */
+    public void warning(String domain, String key,
+                        XMLParseException exception) throws XNIException {
+
+        if (fErrorHandler != null) {
+                SAXParseException saxException = createSAXParseException(exception);
+
+                try {
+                        fErrorHandler.warning(saxException);
+                }
+                catch (SAXParseException e) {
+                        throw createXMLParseException(e);
+                }
+                catch (SAXException e) {
+                        throw createXNIException(e);
+                }
+        }
+
+    } // warning(String,String,XMLParseException)
+
+    /**
+     * Reports an error. Errors are non-fatal and usually signify that the
+     * document is invalid with respect to its grammar(s).
+     *
+     * @param domain    The domain of the error. The domain can be any
+     *                  string but is suggested to be a valid URI. The
+     *                  domain can be used to conveniently specify a web
+     *                  site location of the relevent specification or
+     *                  document pertaining to this error.
+     * @param key       The error key. This key can be any string and
+     *                  is implementation dependent.
+     * @param exception Exception.
+     *
+     * @throws XNIException Thrown to signal that the parser should stop
+     *                      parsing the document.
+     */
+    public void error(String domain, String key,
+                      XMLParseException exception) throws XNIException {
+
+        if (fErrorHandler != null) {
+                SAXParseException saxException = createSAXParseException(exception);
+
+                try {
+                        fErrorHandler.error(saxException);
+                }
+                catch (SAXParseException e) {
+                        throw createXMLParseException(e);
+                }
+                catch (SAXException e) {
+                        throw createXNIException(e);
+                }
+        }
+
+    } // error(String,String,XMLParseException)
+
+    /**
+     * Report a fatal error. Fatal errors usually occur when the document
+     * is not well-formed and signifies that the parser cannot continue
+     * normal operation.
+     * <p>
+     * <strong>Note:</strong> The error handler should <em>always</em>
+     * throw an <code>XNIException</code> from this method. This exception
+     * can either be the same exception that is passed as a parameter to
+     * the method or a new XNI exception object. If the registered error
+     * handler fails to throw an exception, the continuing operation of
+     * the parser is undetermined.
+     *
+     * @param domain    The domain of the fatal error. The domain can be
+     *                  any string but is suggested to be a valid URI. The
+     *                  domain can be used to conveniently specify a web
+     *                  site location of the relevent specification or
+     *                  document pertaining to this fatal error.
+     * @param key       The fatal error key. This key can be any string
+     *                  and is implementation dependent.
+     * @param exception Exception.
+     *
+     * @throws XNIException Thrown to signal that the parser should stop
+     *                      parsing the document.
+     */
+    public void fatalError(String domain, String key,
+                           XMLParseException exception) throws XNIException {
+
+        if (fErrorHandler != null) {
+                SAXParseException saxException = createSAXParseException(exception);
+
+                try {
+                        fErrorHandler.fatalError(saxException);
+                }
+                catch (SAXParseException e) {
+                        throw createXMLParseException(e);
+                }
+                catch (SAXException e) {
+                        throw createXNIException(e);
+                }
+        }
+
+    } // fatalError(String,String,XMLParseException)
+
+    //
+    // Protected methods
+    //
+
+    /** Creates a SAXParseException from an XMLParseException. */
+    protected static SAXParseException createSAXParseException(XMLParseException exception) {
+        return new SAXParseException(exception.getMessage(),
+                                     exception.getPublicId(),
+                                     exception.getExpandedSystemId(),
+                                     exception.getLineNumber(),
+                                     exception.getColumnNumber(),
+                                     exception.getException());
+    } // createSAXParseException(XMLParseException):SAXParseException
+
+    /** Creates an XMLParseException from a SAXParseException. */
+    protected static XMLParseException createXMLParseException(SAXParseException exception) {
+        final String fPublicId = exception.getPublicId();
+        final String fExpandedSystemId = exception.getSystemId();
+        final int fLineNumber = exception.getLineNumber();
+        final int fColumnNumber = exception.getColumnNumber();
+        XMLLocator location = new XMLLocator() {
+            public String getPublicId() { return fPublicId; }
+            public String getExpandedSystemId() { return fExpandedSystemId; }
+            public String getBaseSystemId() { return null; }
+            public String getLiteralSystemId() { return null; }
+            public int getColumnNumber() { return fColumnNumber; }
+            public int getLineNumber() { return fLineNumber; }
+            public int getCharacterOffset() { return -1; }
+            public String getEncoding() { return null; }
+            public String getXMLVersion() { return null; }
+        };
+        return new XMLParseException(location, exception.getMessage(),exception);
+    } // createXMLParseException(SAXParseException):XMLParseException
+
+    /** Creates an XNIException from a SAXException.
+        NOTE:  care should be taken *not* to call this with a SAXParseException; this will
+        lose information!!! */
+    protected static XNIException createXNIException(SAXException exception) {
+        return new XNIException(exception.getMessage(),exception);
+    } // createXNIException(SAXException):XMLParseException
+} // class ErrorHandlerWrapper

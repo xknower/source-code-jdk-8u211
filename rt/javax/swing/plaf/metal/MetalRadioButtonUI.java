@@ -1,232 +1,226 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicRadioButtonUI;
-/*     */ import javax.swing.text.View;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalRadioButtonUI
-/*     */   extends BasicRadioButtonUI
-/*     */ {
-/*  58 */   private static final Object METAL_RADIO_BUTTON_UI_KEY = new Object();
-/*     */   
-/*     */   protected Color focusColor;
-/*     */   
-/*     */   protected Color selectColor;
-/*     */   
-/*     */   protected Color disabledTextColor;
-/*     */   
-/*     */   private boolean defaults_initialized = false;
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  70 */     AppContext appContext = AppContext.getAppContext();
-/*     */     
-/*  72 */     MetalRadioButtonUI metalRadioButtonUI = (MetalRadioButtonUI)appContext.get(METAL_RADIO_BUTTON_UI_KEY);
-/*  73 */     if (metalRadioButtonUI == null) {
-/*  74 */       metalRadioButtonUI = new MetalRadioButtonUI();
-/*  75 */       appContext.put(METAL_RADIO_BUTTON_UI_KEY, metalRadioButtonUI);
-/*     */     } 
-/*  77 */     return metalRadioButtonUI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installDefaults(AbstractButton paramAbstractButton) {
-/*  84 */     super.installDefaults(paramAbstractButton);
-/*  85 */     if (!this.defaults_initialized) {
-/*  86 */       this.focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
-/*  87 */       this.selectColor = UIManager.getColor(getPropertyPrefix() + "select");
-/*  88 */       this.disabledTextColor = UIManager.getColor(getPropertyPrefix() + "disabledText");
-/*  89 */       this.defaults_initialized = true;
-/*     */     } 
-/*  91 */     LookAndFeel.installProperty(paramAbstractButton, "opaque", Boolean.TRUE);
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults(AbstractButton paramAbstractButton) {
-/*  95 */     super.uninstallDefaults(paramAbstractButton);
-/*  96 */     this.defaults_initialized = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Color getSelectColor() {
-/* 103 */     return this.selectColor;
-/*     */   }
-/*     */   
-/*     */   protected Color getDisabledTextColor() {
-/* 107 */     return this.disabledTextColor;
-/*     */   }
-/*     */   
-/*     */   protected Color getFocusColor() {
-/* 111 */     return this.focusColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 120 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 121 */     ButtonModel buttonModel = abstractButton.getModel();
-/*     */     
-/* 123 */     Dimension dimension = paramJComponent.getSize();
-/*     */     
-/* 125 */     int i = dimension.width;
-/* 126 */     int j = dimension.height;
-/*     */     
-/* 128 */     Font font = paramJComponent.getFont();
-/* 129 */     paramGraphics.setFont(font);
-/* 130 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(paramJComponent, paramGraphics, font);
-/*     */     
-/* 132 */     Rectangle rectangle1 = new Rectangle(dimension);
-/* 133 */     Rectangle rectangle2 = new Rectangle();
-/* 134 */     Rectangle rectangle3 = new Rectangle();
-/*     */     
-/* 136 */     Insets insets = paramJComponent.getInsets();
-/* 137 */     rectangle1.x += insets.left;
-/* 138 */     rectangle1.y += insets.top;
-/* 139 */     rectangle1.width -= insets.right + rectangle1.x;
-/* 140 */     rectangle1.height -= insets.bottom + rectangle1.y;
-/*     */     
-/* 142 */     Icon icon = abstractButton.getIcon();
-/* 143 */     Object object1 = null;
-/* 144 */     Object object2 = null;
-/*     */     
-/* 146 */     String str = SwingUtilities.layoutCompoundLabel(paramJComponent, fontMetrics, abstractButton
-/* 147 */         .getText(), (icon != null) ? icon : getDefaultIcon(), abstractButton
-/* 148 */         .getVerticalAlignment(), abstractButton.getHorizontalAlignment(), abstractButton
-/* 149 */         .getVerticalTextPosition(), abstractButton.getHorizontalTextPosition(), rectangle1, rectangle2, rectangle3, abstractButton
-/* 150 */         .getIconTextGap());
-/*     */ 
-/*     */     
-/* 153 */     if (paramJComponent.isOpaque()) {
-/* 154 */       paramGraphics.setColor(abstractButton.getBackground());
-/* 155 */       paramGraphics.fillRect(0, 0, dimension.width, dimension.height);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 160 */     if (icon != null) {
-/*     */       
-/* 162 */       if (!buttonModel.isEnabled()) {
-/* 163 */         if (buttonModel.isSelected()) {
-/* 164 */           icon = abstractButton.getDisabledSelectedIcon();
-/*     */         } else {
-/* 166 */           icon = abstractButton.getDisabledIcon();
-/*     */         } 
-/* 168 */       } else if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 169 */         icon = abstractButton.getPressedIcon();
-/* 170 */         if (icon == null)
-/*     */         {
-/* 172 */           icon = abstractButton.getSelectedIcon();
-/*     */         }
-/* 174 */       } else if (buttonModel.isSelected()) {
-/* 175 */         if (abstractButton.isRolloverEnabled() && buttonModel.isRollover()) {
-/* 176 */           icon = abstractButton.getRolloverSelectedIcon();
-/* 177 */           if (icon == null) {
-/* 178 */             icon = abstractButton.getSelectedIcon();
-/*     */           }
-/*     */         } else {
-/* 181 */           icon = abstractButton.getSelectedIcon();
-/*     */         } 
-/* 183 */       } else if (abstractButton.isRolloverEnabled() && buttonModel.isRollover()) {
-/* 184 */         icon = abstractButton.getRolloverIcon();
-/*     */       } 
-/*     */       
-/* 187 */       if (icon == null) {
-/* 188 */         icon = abstractButton.getIcon();
-/*     */       }
-/*     */       
-/* 191 */       icon.paintIcon(paramJComponent, paramGraphics, rectangle2.x, rectangle2.y);
-/*     */     } else {
-/*     */       
-/* 194 */       getDefaultIcon().paintIcon(paramJComponent, paramGraphics, rectangle2.x, rectangle2.y);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 199 */     if (str != null) {
-/* 200 */       View view = (View)paramJComponent.getClientProperty("html");
-/* 201 */       if (view != null) {
-/* 202 */         view.paint(paramGraphics, rectangle3);
-/*     */       } else {
-/* 204 */         int k = abstractButton.getDisplayedMnemonicIndex();
-/* 205 */         if (buttonModel.isEnabled()) {
-/*     */           
-/* 207 */           paramGraphics.setColor(abstractButton.getForeground());
-/*     */         } else {
-/*     */           
-/* 210 */           paramGraphics.setColor(getDisabledTextColor());
-/*     */         } 
-/* 212 */         SwingUtilities2.drawStringUnderlineCharAt(paramJComponent, paramGraphics, str, k, rectangle3.x, rectangle3.y + fontMetrics
-/* 213 */             .getAscent());
-/*     */       } 
-/* 215 */       if (abstractButton.hasFocus() && abstractButton.isFocusPainted() && rectangle3.width > 0 && rectangle3.height > 0)
-/*     */       {
-/* 217 */         paintFocus(paramGraphics, rectangle3, dimension);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void paintFocus(Graphics paramGraphics, Rectangle paramRectangle, Dimension paramDimension) {
-/* 223 */     paramGraphics.setColor(getFocusColor());
-/* 224 */     paramGraphics.drawRect(paramRectangle.x - 1, paramRectangle.y - 1, paramRectangle.width + 1, paramRectangle.height + 1);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalRadioButtonUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import sun.swing.SwingUtilities2;
+import sun.awt.AppContext;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import java.io.Serializable;
+import javax.swing.text.View;
+
+
+/**
+ * RadioButtonUI implementation for MetalRadioButtonUI
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Michael C. Albers (Metal modifications)
+ * @author Jeff Dinkins (original BasicRadioButtonCode)
+ */
+public class MetalRadioButtonUI extends BasicRadioButtonUI {
+
+    private static final Object METAL_RADIO_BUTTON_UI_KEY = new Object();
+
+    protected Color focusColor;
+    protected Color selectColor;
+    protected Color disabledTextColor;
+
+    private boolean defaults_initialized = false;
+
+    // ********************************
+    //        Create PlAF
+    // ********************************
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        MetalRadioButtonUI metalRadioButtonUI =
+                (MetalRadioButtonUI) appContext.get(METAL_RADIO_BUTTON_UI_KEY);
+        if (metalRadioButtonUI == null) {
+            metalRadioButtonUI = new MetalRadioButtonUI();
+            appContext.put(METAL_RADIO_BUTTON_UI_KEY, metalRadioButtonUI);
+        }
+        return metalRadioButtonUI;
+    }
+
+    // ********************************
+    //        Install Defaults
+    // ********************************
+    public void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            focusColor = UIManager.getColor(getPropertyPrefix() + "focus");
+            selectColor = UIManager.getColor(getPropertyPrefix() + "select");
+            disabledTextColor = UIManager.getColor(getPropertyPrefix() + "disabledText");
+            defaults_initialized = true;
+        }
+        LookAndFeel.installProperty(b, "opaque", Boolean.TRUE);
+    }
+
+    protected void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
+    }
+
+    // ********************************
+    //         Default Accessors
+    // ********************************
+    protected Color getSelectColor() {
+        return selectColor;
+    }
+
+    protected Color getDisabledTextColor() {
+        return disabledTextColor;
+    }
+
+    protected Color getFocusColor() {
+        return focusColor;
+    }
+
+
+    // ********************************
+    //        Paint Methods
+    // ********************************
+    public synchronized void paint(Graphics g, JComponent c) {
+
+        AbstractButton b = (AbstractButton) c;
+        ButtonModel model = b.getModel();
+
+        Dimension size = c.getSize();
+
+        int w = size.width;
+        int h = size.height;
+
+        Font f = c.getFont();
+        g.setFont(f);
+        FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+
+        Rectangle viewRect = new Rectangle(size);
+        Rectangle iconRect = new Rectangle();
+        Rectangle textRect = new Rectangle();
+
+        Insets i = c.getInsets();
+        viewRect.x += i.left;
+        viewRect.y += i.top;
+        viewRect.width -= (i.right + viewRect.x);
+        viewRect.height -= (i.bottom + viewRect.y);
+
+        Icon altIcon = b.getIcon();
+        Icon selectedIcon = null;
+        Icon disabledIcon = null;
+
+        String text = SwingUtilities.layoutCompoundLabel(
+            c, fm, b.getText(), altIcon != null ? altIcon : getDefaultIcon(),
+            b.getVerticalAlignment(), b.getHorizontalAlignment(),
+            b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
+            viewRect, iconRect, textRect, b.getIconTextGap());
+
+        // fill background
+        if(c.isOpaque()) {
+            g.setColor(b.getBackground());
+            g.fillRect(0,0, size.width, size.height);
+        }
+
+
+        // Paint the radio button
+        if(altIcon != null) {
+
+            if(!model.isEnabled()) {
+                if(model.isSelected()) {
+                   altIcon = b.getDisabledSelectedIcon();
+                } else {
+                   altIcon = b.getDisabledIcon();
+                }
+            } else if(model.isPressed() && model.isArmed()) {
+                altIcon = b.getPressedIcon();
+                if(altIcon == null) {
+                    // Use selected icon
+                    altIcon = b.getSelectedIcon();
+                }
+            } else if(model.isSelected()) {
+                if(b.isRolloverEnabled() && model.isRollover()) {
+                        altIcon = b.getRolloverSelectedIcon();
+                        if (altIcon == null) {
+                                altIcon = b.getSelectedIcon();
+                        }
+                } else {
+                        altIcon = b.getSelectedIcon();
+                }
+            } else if(b.isRolloverEnabled() && model.isRollover()) {
+                altIcon = b.getRolloverIcon();
+            }
+
+            if(altIcon == null) {
+                altIcon = b.getIcon();
+            }
+
+            altIcon.paintIcon(c, g, iconRect.x, iconRect.y);
+
+        } else {
+            getDefaultIcon().paintIcon(c, g, iconRect.x, iconRect.y);
+        }
+
+
+        // Draw the Text
+        if(text != null) {
+            View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+            if (v != null) {
+                v.paint(g, textRect);
+            } else {
+               int mnemIndex = b.getDisplayedMnemonicIndex();
+               if(model.isEnabled()) {
+                   // *** paint the text normally
+                   g.setColor(b.getForeground());
+               } else {
+                   // *** paint the text disabled
+                   g.setColor(getDisabledTextColor());
+               }
+               SwingUtilities2.drawStringUnderlineCharAt(c,g,text,
+                       mnemIndex, textRect.x, textRect.y + fm.getAscent());
+           }
+           if(b.hasFocus() && b.isFocusPainted() &&
+              textRect.width > 0 && textRect.height > 0 ) {
+               paintFocus(g,textRect,size);
+           }
+        }
+    }
+
+    protected void paintFocus(Graphics g, Rectangle t, Dimension d){
+        g.setColor(getFocusColor());
+        g.drawRect(t.x-1, t.y-1, t.width+1, t.height+1);
+    }
+}

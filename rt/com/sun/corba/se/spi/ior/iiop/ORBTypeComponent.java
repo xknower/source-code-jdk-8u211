@@ -1,13 +1,36 @@
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.ior.iiop;
 
-import com.sun.corba.se.spi.ior.TaggedComponent;
+import com.sun.corba.se.spi.ior.TaggedComponent ;
 
-public interface ORBTypeComponent extends TaggedComponent {
-  int getORBType();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\iiop\ORBTypeComponent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * @author Ken Cavanaugh
  */
+public interface ORBTypeComponent extends TaggedComponent
+{
+    public int getORBType() ;
+}

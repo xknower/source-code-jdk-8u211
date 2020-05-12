@@ -1,504 +1,499 @@
-/*     */ package java.awt.font;
-/*     */ 
-/*     */ import java.awt.Font;
-/*     */ import java.awt.Toolkit;
-/*     */ import java.awt.im.InputMethodHighlight;
-/*     */ import java.text.Annotation;
-/*     */ import java.text.AttributedCharacterIterator;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import java.util.Vector;
-/*     */ import sun.font.Decoration;
-/*     */ import sun.font.FontResolver;
-/*     */ import sun.text.CodePointIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class StyledParagraph
-/*     */ {
-/*     */   private int length;
-/*     */   private Decoration decoration;
-/*     */   private Object font;
-/*     */   private Vector<Decoration> decorations;
-/*     */   int[] decorationStarts;
-/*     */   private Vector<Object> fonts;
-/*     */   int[] fontStarts;
-/*  87 */   private static int INITIAL_SIZE = 8;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StyledParagraph(AttributedCharacterIterator paramAttributedCharacterIterator, char[] paramArrayOfchar) {
-/*  97 */     int i = paramAttributedCharacterIterator.getBeginIndex();
-/*  98 */     int j = paramAttributedCharacterIterator.getEndIndex();
-/*  99 */     this.length = j - i;
-/*     */     
-/* 101 */     int k = i;
-/* 102 */     paramAttributedCharacterIterator.first();
-/*     */     
-/*     */     do {
-/* 105 */       int m = paramAttributedCharacterIterator.getRunLimit();
-/* 106 */       int n = k - i;
-/*     */       
-/* 108 */       Map<AttributedCharacterIterator.Attribute, Object> map = paramAttributedCharacterIterator.getAttributes();
-/* 109 */       map = (Map)addInputMethodAttrs(map);
-/* 110 */       Decoration decoration = Decoration.getDecoration(map);
-/* 111 */       addDecoration(decoration, n);
-/*     */       
-/* 113 */       Object object = getGraphicOrFont(map);
-/* 114 */       if (object == null) {
-/* 115 */         addFonts(paramArrayOfchar, map, n, m - i);
-/*     */       } else {
-/*     */         
-/* 118 */         addFont(object, n);
-/*     */       } 
-/*     */       
-/* 121 */       paramAttributedCharacterIterator.setIndex(m);
-/* 122 */       k = m;
-/*     */     }
-/* 124 */     while (k < j);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 129 */     if (this.decorations != null) {
-/* 130 */       this.decorationStarts = addToVector(this, this.length, this.decorations, this.decorationStarts);
-/*     */     }
-/* 132 */     if (this.fonts != null) {
-/* 133 */       this.fontStarts = addToVector(this, this.length, this.fonts, this.fontStarts);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void insertInto(int paramInt1, int[] paramArrayOfint, int paramInt2) {
-/* 143 */     while (paramArrayOfint[--paramInt2] > paramInt1) {
-/* 144 */       paramArrayOfint[paramInt2] = paramArrayOfint[paramInt2] + 1;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static StyledParagraph insertChar(AttributedCharacterIterator paramAttributedCharacterIterator, char[] paramArrayOfchar, int paramInt, StyledParagraph paramStyledParagraph) {
-/* 169 */     char c = paramAttributedCharacterIterator.setIndex(paramInt);
-/* 170 */     int i = Math.max(paramInt - paramAttributedCharacterIterator.getBeginIndex() - 1, 0);
-/*     */ 
-/*     */     
-/* 173 */     Map<? extends AttributedCharacterIterator.Attribute, ?> map = addInputMethodAttrs(paramAttributedCharacterIterator.getAttributes());
-/* 174 */     Decoration decoration = Decoration.getDecoration(map);
-/* 175 */     if (!paramStyledParagraph.getDecorationAt(i).equals(decoration)) {
-/* 176 */       return new StyledParagraph(paramAttributedCharacterIterator, paramArrayOfchar);
-/*     */     }
-/* 178 */     Object object = getGraphicOrFont(map);
-/* 179 */     if (object == null) {
-/* 180 */       FontResolver fontResolver = FontResolver.getInstance();
-/* 181 */       int j = fontResolver.getFontIndex(c);
-/* 182 */       object = fontResolver.getFont(j, map);
-/*     */     } 
-/* 184 */     if (!paramStyledParagraph.getFontOrGraphicAt(i).equals(object)) {
-/* 185 */       return new StyledParagraph(paramAttributedCharacterIterator, paramArrayOfchar);
-/*     */     }
-/*     */ 
-/*     */     
-/* 189 */     paramStyledParagraph.length++;
-/* 190 */     if (paramStyledParagraph.decorations != null) {
-/* 191 */       insertInto(i, paramStyledParagraph.decorationStarts, paramStyledParagraph.decorations
-/*     */           
-/* 193 */           .size());
-/*     */     }
-/* 195 */     if (paramStyledParagraph.fonts != null) {
-/* 196 */       insertInto(i, paramStyledParagraph.fontStarts, paramStyledParagraph.fonts
-/*     */           
-/* 198 */           .size());
-/*     */     }
-/* 200 */     return paramStyledParagraph;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void deleteFrom(int paramInt1, int[] paramArrayOfint, int paramInt2) {
-/* 211 */     while (paramArrayOfint[--paramInt2] > paramInt1) {
-/* 212 */       paramArrayOfint[paramInt2] = paramArrayOfint[paramInt2] - 1;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static StyledParagraph deleteChar(AttributedCharacterIterator paramAttributedCharacterIterator, char[] paramArrayOfchar, int paramInt, StyledParagraph paramStyledParagraph) {
-/* 236 */     paramInt -= paramAttributedCharacterIterator.getBeginIndex();
-/*     */     
-/* 238 */     if (paramStyledParagraph.decorations == null && paramStyledParagraph.fonts == null) {
-/* 239 */       paramStyledParagraph.length--;
-/* 240 */       return paramStyledParagraph;
-/*     */     } 
-/*     */     
-/* 243 */     if (paramStyledParagraph.getRunLimit(paramInt) == paramInt + 1 && (
-/* 244 */       paramInt == 0 || paramStyledParagraph.getRunLimit(paramInt - 1) == paramInt)) {
-/* 245 */       return new StyledParagraph(paramAttributedCharacterIterator, paramArrayOfchar);
-/*     */     }
-/*     */ 
-/*     */     
-/* 249 */     paramStyledParagraph.length--;
-/* 250 */     if (paramStyledParagraph.decorations != null) {
-/* 251 */       deleteFrom(paramInt, paramStyledParagraph.decorationStarts, paramStyledParagraph.decorations
-/*     */           
-/* 253 */           .size());
-/*     */     }
-/* 255 */     if (paramStyledParagraph.fonts != null) {
-/* 256 */       deleteFrom(paramInt, paramStyledParagraph.fontStarts, paramStyledParagraph.fonts
-/*     */           
-/* 258 */           .size());
-/*     */     }
-/* 260 */     return paramStyledParagraph;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getRunLimit(int paramInt) {
-/* 272 */     if (paramInt < 0 || paramInt >= this.length) {
-/* 273 */       throw new IllegalArgumentException("index out of range");
-/*     */     }
-/* 275 */     int i = this.length;
-/* 276 */     if (this.decorations != null) {
-/* 277 */       int k = findRunContaining(paramInt, this.decorationStarts);
-/* 278 */       i = this.decorationStarts[k + 1];
-/*     */     } 
-/* 280 */     int j = this.length;
-/* 281 */     if (this.fonts != null) {
-/* 282 */       int k = findRunContaining(paramInt, this.fontStarts);
-/* 283 */       j = this.fontStarts[k + 1];
-/*     */     } 
-/* 285 */     return Math.min(i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Decoration getDecorationAt(int paramInt) {
-/* 295 */     if (paramInt < 0 || paramInt >= this.length) {
-/* 296 */       throw new IllegalArgumentException("index out of range");
-/*     */     }
-/* 298 */     if (this.decorations == null) {
-/* 299 */       return this.decoration;
-/*     */     }
-/* 301 */     int i = findRunContaining(paramInt, this.decorationStarts);
-/* 302 */     return this.decorations.elementAt(i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getFontOrGraphicAt(int paramInt) {
-/* 314 */     if (paramInt < 0 || paramInt >= this.length) {
-/* 315 */       throw new IllegalArgumentException("index out of range");
-/*     */     }
-/* 317 */     if (this.fonts == null) {
-/* 318 */       return this.font;
-/*     */     }
-/* 320 */     int i = findRunContaining(paramInt, this.fontStarts);
-/* 321 */     return this.fonts.elementAt(i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int findRunContaining(int paramInt, int[] paramArrayOfint) {
-/* 331 */     for (byte b = 1;; b++) {
-/* 332 */       if (paramArrayOfint[b] > paramInt) {
-/* 333 */         return b - 1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int[] addToVector(Object paramObject, int paramInt, Vector<E> paramVector, int[] paramArrayOfint) {
-/* 350 */     if (!paramVector.lastElement().equals(paramObject)) {
-/* 351 */       paramVector.addElement((E)paramObject);
-/* 352 */       int i = paramVector.size();
-/* 353 */       if (paramArrayOfint.length == i) {
-/* 354 */         int[] arrayOfInt = new int[paramArrayOfint.length * 2];
-/* 355 */         System.arraycopy(paramArrayOfint, 0, arrayOfInt, 0, paramArrayOfint.length);
-/* 356 */         paramArrayOfint = arrayOfInt;
-/*     */       } 
-/* 358 */       paramArrayOfint[i - 1] = paramInt;
-/*     */     } 
-/* 360 */     return paramArrayOfint;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addDecoration(Decoration paramDecoration, int paramInt) {
-/* 369 */     if (this.decorations != null) {
-/* 370 */       this.decorationStarts = addToVector(paramDecoration, paramInt, this.decorations, this.decorationStarts);
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/* 375 */     else if (this.decoration == null) {
-/* 376 */       this.decoration = paramDecoration;
-/*     */     
-/*     */     }
-/* 379 */     else if (!this.decoration.equals(paramDecoration)) {
-/* 380 */       this.decorations = new Vector<>(INITIAL_SIZE);
-/* 381 */       this.decorations.addElement(this.decoration);
-/* 382 */       this.decorations.addElement(paramDecoration);
-/* 383 */       this.decorationStarts = new int[INITIAL_SIZE];
-/* 384 */       this.decorationStarts[0] = 0;
-/* 385 */       this.decorationStarts[1] = paramInt;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addFont(Object paramObject, int paramInt) {
-/* 396 */     if (this.fonts != null) {
-/* 397 */       this.fontStarts = addToVector(paramObject, paramInt, this.fonts, this.fontStarts);
-/*     */     }
-/* 399 */     else if (this.font == null) {
-/* 400 */       this.font = paramObject;
-/*     */     
-/*     */     }
-/* 403 */     else if (!this.font.equals(paramObject)) {
-/* 404 */       this.fonts = new Vector(INITIAL_SIZE);
-/* 405 */       this.fonts.addElement(this.font);
-/* 406 */       this.fonts.addElement(paramObject);
-/* 407 */       this.fontStarts = new int[INITIAL_SIZE];
-/* 408 */       this.fontStarts[0] = 0;
-/* 409 */       this.fontStarts[1] = paramInt;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addFonts(char[] paramArrayOfchar, Map<? extends AttributedCharacterIterator.Attribute, ?> paramMap, int paramInt1, int paramInt2) {
-/* 421 */     FontResolver fontResolver = FontResolver.getInstance();
-/* 422 */     CodePointIterator codePointIterator = CodePointIterator.create(paramArrayOfchar, paramInt1, paramInt2); int i;
-/* 423 */     for (i = codePointIterator.charIndex(); i < paramInt2; i = codePointIterator.charIndex()) {
-/* 424 */       int j = fontResolver.nextFontRunIndex(codePointIterator);
-/* 425 */       addFont(fontResolver.getFont(j, paramMap), i);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Map<? extends AttributedCharacterIterator.Attribute, ?> addInputMethodAttrs(Map<? extends AttributedCharacterIterator.Attribute, ?> paramMap) {
-/* 436 */     Object object = paramMap.get(TextAttribute.INPUT_METHOD_HIGHLIGHT);
-/*     */     
-/*     */     try {
-/* 439 */       if (object != null) {
-/* 440 */         if (object instanceof Annotation) {
-/* 441 */           object = ((Annotation)object).getValue();
-/*     */         }
-/*     */ 
-/*     */         
-/* 445 */         InputMethodHighlight inputMethodHighlight = (InputMethodHighlight)object;
-/*     */         
-/* 447 */         Map<TextAttribute, ?> map = null;
-/*     */         try {
-/* 449 */           map = inputMethodHighlight.getStyle();
-/* 450 */         } catch (NoSuchMethodError noSuchMethodError) {}
-/*     */ 
-/*     */         
-/* 453 */         if (map == null) {
-/* 454 */           Toolkit toolkit = Toolkit.getDefaultToolkit();
-/* 455 */           map = toolkit.mapInputMethodHighlight(inputMethodHighlight);
-/*     */         } 
-/*     */         
-/* 458 */         if (map != null)
-/*     */         {
-/* 460 */           HashMap<Object, Object> hashMap = new HashMap<>(5, 0.9F);
-/* 461 */           hashMap.putAll(paramMap);
-/*     */           
-/* 463 */           hashMap.putAll(map);
-/*     */           
-/* 465 */           return (Map)hashMap;
-/*     */         }
-/*     */       
-/*     */       } 
-/* 469 */     } catch (ClassCastException classCastException) {}
-/*     */ 
-/*     */     
-/* 472 */     return paramMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Object getGraphicOrFont(Map<? extends AttributedCharacterIterator.Attribute, ?> paramMap) {
-/* 483 */     Object object = paramMap.get(TextAttribute.CHAR_REPLACEMENT);
-/* 484 */     if (object != null) {
-/* 485 */       return object;
-/*     */     }
-/* 487 */     object = paramMap.get(TextAttribute.FONT);
-/* 488 */     if (object != null) {
-/* 489 */       return object;
-/*     */     }
-/*     */     
-/* 492 */     if (paramMap.get(TextAttribute.FAMILY) != null) {
-/* 493 */       return Font.getFont(paramMap);
-/*     */     }
-/*     */     
-/* 496 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\font\StyledParagraph.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright IBM Corp. 1999,  All rights reserved.
+ */
+package java.awt.font;
+
+import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.im.InputMethodHighlight;
+import java.text.Annotation;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedCharacterIterator.Attribute;
+import java.util.Vector;
+import java.util.HashMap;
+import java.util.Map;
+import sun.font.Decoration;
+import sun.font.FontResolver;
+import sun.text.CodePointIterator;
+
+/**
+ * This class stores Font, GraphicAttribute, and Decoration intervals
+ * on a paragraph of styled text.
+ * <p>
+ * Currently, this class is optimized for a small number of intervals
+ * (preferrably 1).
+ */
+final class StyledParagraph {
+
+    // the length of the paragraph
+    private int length;
+
+    // If there is a single Decoration for the whole paragraph, it
+    // is stored here.  Otherwise this field is ignored.
+
+    private Decoration decoration;
+
+    // If there is a single Font or GraphicAttribute for the whole
+    // paragraph, it is stored here.  Otherwise this field is ignored.
+    private Object font;
+
+    // If there are multiple Decorations in the paragraph, they are
+    // stored in this Vector, in order.  Otherwise this vector and
+    // the decorationStarts array are null.
+    private Vector<Decoration> decorations;
+    // If there are multiple Decorations in the paragraph,
+    // decorationStarts[i] contains the index where decoration i
+    // starts.  For convenience, there is an extra entry at the
+    // end of this array with the length of the paragraph.
+    int[] decorationStarts;
+
+    // If there are multiple Fonts/GraphicAttributes in the paragraph,
+    // they are
+    // stored in this Vector, in order.  Otherwise this vector and
+    // the fontStarts array are null.
+    private Vector<Object> fonts;
+    // If there are multiple Fonts/GraphicAttributes in the paragraph,
+    // fontStarts[i] contains the index where decoration i
+    // starts.  For convenience, there is an extra entry at the
+    // end of this array with the length of the paragraph.
+    int[] fontStarts;
+
+    private static int INITIAL_SIZE = 8;
+
+    /**
+     * Create a new StyledParagraph over the given styled text.
+     * @param aci an iterator over the text
+     * @param chars the characters extracted from aci
+     */
+    public StyledParagraph(AttributedCharacterIterator aci,
+                           char[] chars) {
+
+        int start = aci.getBeginIndex();
+        int end = aci.getEndIndex();
+        length = end - start;
+
+        int index = start;
+        aci.first();
+
+        do {
+            final int nextRunStart = aci.getRunLimit();
+            final int localIndex = index-start;
+
+            Map<? extends Attribute, ?> attributes = aci.getAttributes();
+            attributes = addInputMethodAttrs(attributes);
+            Decoration d = Decoration.getDecoration(attributes);
+            addDecoration(d, localIndex);
+
+            Object f = getGraphicOrFont(attributes);
+            if (f == null) {
+                addFonts(chars, attributes, localIndex, nextRunStart-start);
+            }
+            else {
+                addFont(f, localIndex);
+            }
+
+            aci.setIndex(nextRunStart);
+            index = nextRunStart;
+
+        } while (index < end);
+
+        // Add extra entries to starts arrays with the length
+        // of the paragraph.  'this' is used as a dummy value
+        // in the Vector.
+        if (decorations != null) {
+            decorationStarts = addToVector(this, length, decorations, decorationStarts);
+        }
+        if (fonts != null) {
+            fontStarts = addToVector(this, length, fonts, fontStarts);
+        }
+    }
+
+    /**
+     * Adjust indices in starts to reflect an insertion after pos.
+     * Any index in starts greater than pos will be increased by 1.
+     */
+    private static void insertInto(int pos, int[] starts, int numStarts) {
+
+        while (starts[--numStarts] > pos) {
+            starts[numStarts] += 1;
+        }
+    }
+
+    /**
+     * Return a StyledParagraph reflecting the insertion of a single character
+     * into the text.  This method will attempt to reuse the given paragraph,
+     * but may create a new paragraph.
+     * @param aci an iterator over the text.  The text should be the same as the
+     *     text used to create (or most recently update) oldParagraph, with
+     *     the exception of inserting a single character at insertPos.
+     * @param chars the characters in aci
+     * @param insertPos the index of the new character in aci
+     * @param oldParagraph a StyledParagraph for the text in aci before the
+     *     insertion
+     */
+    public static StyledParagraph insertChar(AttributedCharacterIterator aci,
+                                             char[] chars,
+                                             int insertPos,
+                                             StyledParagraph oldParagraph) {
+
+        // If the styles at insertPos match those at insertPos-1,
+        // oldParagraph will be reused.  Otherwise we create a new
+        // paragraph.
+
+        char ch = aci.setIndex(insertPos);
+        int relativePos = Math.max(insertPos - aci.getBeginIndex() - 1, 0);
+
+        Map<? extends Attribute, ?> attributes =
+            addInputMethodAttrs(aci.getAttributes());
+        Decoration d = Decoration.getDecoration(attributes);
+        if (!oldParagraph.getDecorationAt(relativePos).equals(d)) {
+            return new StyledParagraph(aci, chars);
+        }
+        Object f = getGraphicOrFont(attributes);
+        if (f == null) {
+            FontResolver resolver = FontResolver.getInstance();
+            int fontIndex = resolver.getFontIndex(ch);
+            f = resolver.getFont(fontIndex, attributes);
+        }
+        if (!oldParagraph.getFontOrGraphicAt(relativePos).equals(f)) {
+            return new StyledParagraph(aci, chars);
+        }
+
+        // insert into existing paragraph
+        oldParagraph.length += 1;
+        if (oldParagraph.decorations != null) {
+            insertInto(relativePos,
+                       oldParagraph.decorationStarts,
+                       oldParagraph.decorations.size());
+        }
+        if (oldParagraph.fonts != null) {
+            insertInto(relativePos,
+                       oldParagraph.fontStarts,
+                       oldParagraph.fonts.size());
+        }
+        return oldParagraph;
+    }
+
+    /**
+     * Adjust indices in starts to reflect a deletion after deleteAt.
+     * Any index in starts greater than deleteAt will be increased by 1.
+     * It is the caller's responsibility to make sure that no 0-length
+     * runs result.
+     */
+    private static void deleteFrom(int deleteAt, int[] starts, int numStarts) {
+
+        while (starts[--numStarts] > deleteAt) {
+            starts[numStarts] -= 1;
+        }
+    }
+
+    /**
+     * Return a StyledParagraph reflecting the insertion of a single character
+     * into the text.  This method will attempt to reuse the given paragraph,
+     * but may create a new paragraph.
+     * @param aci an iterator over the text.  The text should be the same as the
+     *     text used to create (or most recently update) oldParagraph, with
+     *     the exception of deleting a single character at deletePos.
+     * @param chars the characters in aci
+     * @param deletePos the index where a character was removed
+     * @param oldParagraph a StyledParagraph for the text in aci before the
+     *     insertion
+     */
+    public static StyledParagraph deleteChar(AttributedCharacterIterator aci,
+                                             char[] chars,
+                                             int deletePos,
+                                             StyledParagraph oldParagraph) {
+
+        // We will reuse oldParagraph unless there was a length-1 run
+        // at deletePos.  We could do more work and check the individual
+        // Font and Decoration runs, but we don't right now...
+        deletePos -= aci.getBeginIndex();
+
+        if (oldParagraph.decorations == null && oldParagraph.fonts == null) {
+            oldParagraph.length -= 1;
+            return oldParagraph;
+        }
+
+        if (oldParagraph.getRunLimit(deletePos) == deletePos+1) {
+            if (deletePos == 0 || oldParagraph.getRunLimit(deletePos-1) == deletePos) {
+                return new StyledParagraph(aci, chars);
+            }
+        }
+
+        oldParagraph.length -= 1;
+        if (oldParagraph.decorations != null) {
+            deleteFrom(deletePos,
+                       oldParagraph.decorationStarts,
+                       oldParagraph.decorations.size());
+        }
+        if (oldParagraph.fonts != null) {
+            deleteFrom(deletePos,
+                       oldParagraph.fontStarts,
+                       oldParagraph.fonts.size());
+        }
+        return oldParagraph;
+    }
+
+    /**
+     * Return the index at which there is a different Font, GraphicAttribute, or
+     * Dcoration than at the given index.
+     * @param index a valid index in the paragraph
+     * @return the first index where there is a change in attributes from
+     *      those at index
+     */
+    public int getRunLimit(int index) {
+
+        if (index < 0 || index >= length) {
+            throw new IllegalArgumentException("index out of range");
+        }
+        int limit1 = length;
+        if (decorations != null) {
+            int run = findRunContaining(index, decorationStarts);
+            limit1 = decorationStarts[run+1];
+        }
+        int limit2 = length;
+        if (fonts != null) {
+            int run = findRunContaining(index, fontStarts);
+            limit2 = fontStarts[run+1];
+        }
+        return Math.min(limit1, limit2);
+    }
+
+    /**
+     * Return the Decoration in effect at the given index.
+     * @param index a valid index in the paragraph
+     * @return the Decoration at index.
+     */
+    public Decoration getDecorationAt(int index) {
+
+        if (index < 0 || index >= length) {
+            throw new IllegalArgumentException("index out of range");
+        }
+        if (decorations == null) {
+            return decoration;
+        }
+        int run = findRunContaining(index, decorationStarts);
+        return decorations.elementAt(run);
+    }
+
+    /**
+     * Return the Font or GraphicAttribute in effect at the given index.
+     * The client must test the type of the return value to determine what
+     * it is.
+     * @param index a valid index in the paragraph
+     * @return the Font or GraphicAttribute at index.
+     */
+    public Object getFontOrGraphicAt(int index) {
+
+        if (index < 0 || index >= length) {
+            throw new IllegalArgumentException("index out of range");
+        }
+        if (fonts == null) {
+            return font;
+        }
+        int run = findRunContaining(index, fontStarts);
+        return fonts.elementAt(run);
+    }
+
+    /**
+     * Return i such that starts[i] &lt;= index &lt; starts[i+1].  starts
+     * must be in increasing order, with at least one element greater
+     * than index.
+     */
+    private static int findRunContaining(int index, int[] starts) {
+
+        for (int i=1; true; i++) {
+            if (starts[i] > index) {
+                return i-1;
+            }
+        }
+    }
+
+    /**
+     * Append the given Object to the given Vector.  Add
+     * the given index to the given starts array.  If the
+     * starts array does not have room for the index, a
+     * new array is created and returned.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static int[] addToVector(Object obj,
+                                     int index,
+                                     Vector v,
+                                     int[] starts) {
+
+        if (!v.lastElement().equals(obj)) {
+            v.addElement(obj);
+            int count = v.size();
+            if (starts.length == count) {
+                int[] temp = new int[starts.length*2];
+                System.arraycopy(starts, 0, temp, 0, starts.length);
+                starts = temp;
+            }
+            starts[count-1] = index;
+        }
+        return starts;
+    }
+
+    /**
+     * Add a new Decoration run with the given Decoration at the
+     * given index.
+     */
+    private void addDecoration(Decoration d, int index) {
+
+        if (decorations != null) {
+            decorationStarts = addToVector(d,
+                                           index,
+                                           decorations,
+                                           decorationStarts);
+        }
+        else if (decoration == null) {
+            decoration = d;
+        }
+        else {
+            if (!decoration.equals(d)) {
+                decorations = new Vector<Decoration>(INITIAL_SIZE);
+                decorations.addElement(decoration);
+                decorations.addElement(d);
+                decorationStarts = new int[INITIAL_SIZE];
+                decorationStarts[0] = 0;
+                decorationStarts[1] = index;
+            }
+        }
+    }
+
+    /**
+     * Add a new Font/GraphicAttribute run with the given object at the
+     * given index.
+     */
+    private void addFont(Object f, int index) {
+
+        if (fonts != null) {
+            fontStarts = addToVector(f, index, fonts, fontStarts);
+        }
+        else if (font == null) {
+            font = f;
+        }
+        else {
+            if (!font.equals(f)) {
+                fonts = new Vector<Object>(INITIAL_SIZE);
+                fonts.addElement(font);
+                fonts.addElement(f);
+                fontStarts = new int[INITIAL_SIZE];
+                fontStarts[0] = 0;
+                fontStarts[1] = index;
+            }
+        }
+    }
+
+    /**
+     * Resolve the given chars into Fonts using FontResolver, then add
+     * font runs for each.
+     */
+    private void addFonts(char[] chars, Map<? extends Attribute, ?> attributes,
+                          int start, int limit) {
+
+        FontResolver resolver = FontResolver.getInstance();
+        CodePointIterator iter = CodePointIterator.create(chars, start, limit);
+        for (int runStart = iter.charIndex(); runStart < limit; runStart = iter.charIndex()) {
+            int fontIndex = resolver.nextFontRunIndex(iter);
+            addFont(resolver.getFont(fontIndex, attributes), runStart);
+        }
+    }
+
+    /**
+     * Return a Map with entries from oldStyles, as well as input
+     * method entries, if any.
+     */
+    static Map<? extends Attribute, ?>
+           addInputMethodAttrs(Map<? extends Attribute, ?> oldStyles) {
+
+        Object value = oldStyles.get(TextAttribute.INPUT_METHOD_HIGHLIGHT);
+
+        try {
+            if (value != null) {
+                if (value instanceof Annotation) {
+                    value = ((Annotation)value).getValue();
+                }
+
+                InputMethodHighlight hl;
+                hl = (InputMethodHighlight) value;
+
+                Map<? extends Attribute, ?> imStyles = null;
+                try {
+                    imStyles = hl.getStyle();
+                } catch (NoSuchMethodError e) {
+                }
+
+                if (imStyles == null) {
+                    Toolkit tk = Toolkit.getDefaultToolkit();
+                    imStyles = tk.mapInputMethodHighlight(hl);
+                }
+
+                if (imStyles != null) {
+                    HashMap<Attribute, Object>
+                        newStyles = new HashMap<>(5, (float)0.9);
+                    newStyles.putAll(oldStyles);
+
+                    newStyles.putAll(imStyles);
+
+                    return newStyles;
+                }
+            }
+        }
+        catch(ClassCastException e) {
+        }
+
+        return oldStyles;
+    }
+
+    /**
+     * Extract a GraphicAttribute or Font from the given attributes.
+     * If attributes does not contain a GraphicAttribute, Font, or
+     * Font family entry this method returns null.
+     */
+    private static Object getGraphicOrFont(
+            Map<? extends Attribute, ?> attributes) {
+
+        Object value = attributes.get(TextAttribute.CHAR_REPLACEMENT);
+        if (value != null) {
+            return value;
+        }
+        value = attributes.get(TextAttribute.FONT);
+        if (value != null) {
+            return value;
+        }
+
+        if (attributes.get(TextAttribute.FAMILY) != null) {
+            return Font.getFont(attributes);
+        }
+        else {
+            return null;
+        }
+    }
+}

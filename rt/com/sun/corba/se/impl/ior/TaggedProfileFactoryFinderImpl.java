@@ -1,57 +1,51 @@
-/*    */ package com.sun.corba.se.impl.ior;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.Identifiable;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import org.omg.CORBA_2_3.portable.InputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class TaggedProfileFactoryFinderImpl
-/*    */   extends IdentifiableFactoryFinderBase
-/*    */ {
-/*    */   public TaggedProfileFactoryFinderImpl(ORB paramORB) {
-/* 44 */     super(paramORB);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Identifiable handleMissingFactory(int paramInt, InputStream paramInputStream) {
-/* 49 */     return new GenericTaggedProfile(paramInt, paramInputStream);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\TaggedProfileFactoryFinderImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior;
+
+import com.sun.corba.se.spi.ior.Identifiable ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.impl.ior.IdentifiableFactoryFinderBase ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+
+/**
+ * @author
+ */
+public class TaggedProfileFactoryFinderImpl extends
+    IdentifiableFactoryFinderBase
+{
+    public TaggedProfileFactoryFinderImpl( ORB orb )
+    {
+        super( orb ) ;
+    }
+
+    public Identifiable handleMissingFactory( int id, InputStream is)
+    {
+        return new GenericTaggedProfile( id, is ) ;
+    }
+}

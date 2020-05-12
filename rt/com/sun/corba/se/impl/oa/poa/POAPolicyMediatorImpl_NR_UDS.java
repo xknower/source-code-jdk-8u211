@@ -1,141 +1,135 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import org.omg.PortableServer.ForwardRequest;
-/*     */ import org.omg.PortableServer.POAPackage.NoServant;
-/*     */ import org.omg.PortableServer.POAPackage.ObjectAlreadyActive;
-/*     */ import org.omg.PortableServer.POAPackage.ObjectNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
-/*     */ import org.omg.PortableServer.POAPackage.ServantNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.WrongPolicy;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ import org.omg.PortableServer.ServantManager;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class POAPolicyMediatorImpl_NR_UDS
-/*     */   extends POAPolicyMediatorBase
-/*     */ {
-/*     */   private Servant defaultServant;
-/*     */   
-/*     */   POAPolicyMediatorImpl_NR_UDS(Policies paramPolicies, POAImpl paramPOAImpl) {
-/*  52 */     super(paramPolicies, paramPOAImpl);
-/*     */ 
-/*     */     
-/*  55 */     if (paramPolicies.retainServants()) {
-/*  56 */       throw paramPOAImpl.invocationWrapper().policyMediatorBadPolicyInFactory();
-/*     */     }
-/*  58 */     if (!paramPolicies.useDefaultServant()) {
-/*  59 */       throw paramPOAImpl.invocationWrapper().policyMediatorBadPolicyInFactory();
-/*     */     }
-/*  61 */     this.defaultServant = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Object internalGetServant(byte[] paramArrayOfbyte, String paramString) throws ForwardRequest {
-/*  67 */     if (this.defaultServant == null) {
-/*  68 */       throw this.poa.invocationWrapper().poaNoDefaultServant();
-/*     */     }
-/*  70 */     return this.defaultServant;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void returnServant() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void etherealizeAll() {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clearAOM() {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServantManager getServantManager() throws WrongPolicy {
-/*  90 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setServantManager(ServantManager paramServantManager) throws WrongPolicy {
-/*  95 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Servant getDefaultServant() throws NoServant, WrongPolicy {
-/* 100 */     if (this.defaultServant == null)
-/* 101 */       throw new NoServant(); 
-/* 102 */     return this.defaultServant;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setDefaultServant(Servant paramServant) throws WrongPolicy {
-/* 107 */     this.defaultServant = paramServant;
-/* 108 */     setDelegate(this.defaultServant, "DefaultServant".getBytes());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void activateObject(byte[] paramArrayOfbyte, Servant paramServant) throws WrongPolicy, ServantAlreadyActive, ObjectAlreadyActive {
-/* 114 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Servant deactivateObject(byte[] paramArrayOfbyte) throws ObjectNotActive, WrongPolicy {
-/* 119 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public byte[] servantToId(Servant paramServant) throws ServantNotActive, WrongPolicy {
-/* 124 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Servant idToServant(byte[] paramArrayOfbyte) throws WrongPolicy, ObjectNotActive {
-/* 130 */     if (this.defaultServant != null) {
-/* 131 */       return this.defaultServant;
-/*     */     }
-/* 133 */     throw new ObjectNotActive();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\POAPolicyMediatorImpl_NR_UDS.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa ;
+
+import java.util.Enumeration ;
+
+import org.omg.PortableServer.Servant ;
+import org.omg.PortableServer.ServantManager ;
+import org.omg.PortableServer.ForwardRequest ;
+import org.omg.PortableServer.POAPackage.WrongPolicy ;
+import org.omg.PortableServer.POAPackage.ObjectNotActive ;
+import org.omg.PortableServer.POAPackage.ServantNotActive ;
+import org.omg.PortableServer.POAPackage.ObjectAlreadyActive ;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive ;
+import org.omg.PortableServer.POAPackage.NoServant ;
+
+import com.sun.corba.se.impl.orbutil.concurrent.SyncUtil ;
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+
+/** Implementation of POAPolicyMediator that provides policy specific
+ * operations on the POA.
+ */
+public class POAPolicyMediatorImpl_NR_UDS extends POAPolicyMediatorBase {
+    private Servant defaultServant ;
+
+    POAPolicyMediatorImpl_NR_UDS( Policies policies, POAImpl poa )
+    {
+        super( policies, poa ) ;
+
+        // assert !policies.retainServants() && policies.useDefaultServant()
+        if (policies.retainServants())
+            throw poa.invocationWrapper().policyMediatorBadPolicyInFactory() ;
+
+        if (!policies.useDefaultServant())
+            throw poa.invocationWrapper().policyMediatorBadPolicyInFactory() ;
+
+        defaultServant = null ;
+    }
+
+    protected java.lang.Object internalGetServant( byte[] id,
+        String operation ) throws ForwardRequest
+    {
+        if (defaultServant == null)
+            throw poa.invocationWrapper().poaNoDefaultServant() ;
+
+        return defaultServant;
+    }
+
+    public void returnServant()
+    {
+        // NO-OP
+    }
+
+    public void etherealizeAll()
+    {
+        // NO-OP
+    }
+
+    public void clearAOM()
+    {
+        // NO-OP
+    }
+
+    public ServantManager getServantManager() throws WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public void setServantManager( ServantManager servantManager ) throws WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public Servant getDefaultServant() throws NoServant, WrongPolicy
+    {
+        if (defaultServant == null)
+            throw new NoServant();
+        return defaultServant;
+    }
+
+    public void setDefaultServant( Servant servant ) throws WrongPolicy
+    {
+        this.defaultServant = servant;
+        setDelegate(defaultServant, "DefaultServant".getBytes());
+    }
+
+    public final void activateObject(byte[] id, Servant servant)
+        throws WrongPolicy, ServantAlreadyActive, ObjectAlreadyActive
+    {
+        throw new WrongPolicy();
+    }
+
+    public Servant deactivateObject( byte[] id ) throws ObjectNotActive, WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public byte[] servantToId( Servant servant ) throws ServantNotActive, WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public Servant idToServant( byte[] id )
+        throws WrongPolicy, ObjectNotActive
+    {
+        if (defaultServant != null)
+            return defaultServant;
+
+        throw new ObjectNotActive() ;
+    }
+}

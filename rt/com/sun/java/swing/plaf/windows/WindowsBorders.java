@@ -1,342 +1,336 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import javax.swing.BorderFactory;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JToolBar;
-/*     */ import javax.swing.SwingConstants;
-/*     */ import javax.swing.UIDefaults;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.AbstractBorder;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ import javax.swing.border.LineBorder;
-/*     */ import javax.swing.plaf.BorderUIResource;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import javax.swing.plaf.basic.BasicBorders;
-/*     */ import javax.swing.plaf.basic.BasicGraphicsUtils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsBorders
-/*     */ {
-/*     */   public static Border getProgressBarBorder() {
-/*  53 */     UIDefaults uIDefaults = UIManager.getLookAndFeelDefaults();
-/*  54 */     return new BorderUIResource.CompoundBorderUIResource(new ProgressBarBorder(uIDefaults
-/*     */           
-/*  56 */           .getColor("ProgressBar.shadow"), uIDefaults
-/*  57 */           .getColor("ProgressBar.highlight")), new EmptyBorder(1, 1, 1, 1));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Border getToolBarBorder() {
-/*  70 */     UIDefaults uIDefaults = UIManager.getLookAndFeelDefaults();
-/*  71 */     return new ToolBarBorder(uIDefaults
-/*  72 */         .getColor("ToolBar.shadow"), uIDefaults
-/*  73 */         .getColor("ToolBar.highlight"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Border getFocusCellHighlightBorder() {
-/*  85 */     return new ComplementDashedBorder();
-/*     */   }
-/*     */   
-/*     */   public static Border getTableHeaderBorder() {
-/*  89 */     UIDefaults uIDefaults = UIManager.getLookAndFeelDefaults();
-/*  90 */     return new BorderUIResource.CompoundBorderUIResource(new BasicBorders.ButtonBorder(uIDefaults
-/*     */           
-/*  92 */           .getColor("Table.shadow"), uIDefaults
-/*  93 */           .getColor("Table.darkShadow"), uIDefaults
-/*  94 */           .getColor("Table.light"), uIDefaults
-/*  95 */           .getColor("Table.highlight")), new BasicBorders.MarginBorder());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Border getInternalFrameBorder() {
-/* 101 */     UIDefaults uIDefaults = UIManager.getLookAndFeelDefaults();
-/* 102 */     return new BorderUIResource.CompoundBorderUIResource(
-/*     */         
-/* 104 */         BorderFactory.createBevelBorder(0, uIDefaults
-/* 105 */           .getColor("InternalFrame.borderColor"), uIDefaults
-/* 106 */           .getColor("InternalFrame.borderHighlight"), uIDefaults
-/* 107 */           .getColor("InternalFrame.borderDarkShadow"), uIDefaults
-/* 108 */           .getColor("InternalFrame.borderShadow")), new InternalFrameLineBorder(uIDefaults
-/*     */           
-/* 110 */           .getColor("InternalFrame.activeBorderColor"), uIDefaults
-/* 111 */           .getColor("InternalFrame.inactiveBorderColor"), uIDefaults
-/* 112 */           .getInt("InternalFrame.borderWidth")));
-/*     */   }
-/*     */   
-/*     */   public static class ProgressBarBorder
-/*     */     extends AbstractBorder
-/*     */     implements UIResource {
-/*     */     protected Color shadow;
-/*     */     protected Color highlight;
-/*     */     
-/*     */     public ProgressBarBorder(Color param1Color1, Color param1Color2) {
-/* 122 */       this.highlight = param1Color2;
-/* 123 */       this.shadow = param1Color1;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 128 */       param1Graphics.setColor(this.shadow);
-/* 129 */       param1Graphics.drawLine(param1Int1, param1Int2, param1Int3 - 1, param1Int2);
-/* 130 */       param1Graphics.drawLine(param1Int1, param1Int2, param1Int1, param1Int4 - 1);
-/* 131 */       param1Graphics.setColor(this.highlight);
-/* 132 */       param1Graphics.drawLine(param1Int1, param1Int4 - 1, param1Int3 - 1, param1Int4 - 1);
-/* 133 */       param1Graphics.drawLine(param1Int3 - 1, param1Int2, param1Int3 - 1, param1Int4 - 1);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 137 */       param1Insets.set(1, 1, 1, 1);
-/* 138 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static class ToolBarBorder
-/*     */     extends AbstractBorder
-/*     */     implements UIResource, SwingConstants
-/*     */   {
-/*     */     protected Color shadow;
-/*     */     
-/*     */     protected Color highlight;
-/*     */     
-/*     */     public ToolBarBorder(Color param1Color1, Color param1Color2) {
-/* 152 */       this.highlight = param1Color2;
-/* 153 */       this.shadow = param1Color1;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 158 */       if (!(param1Component instanceof JToolBar)) {
-/*     */         return;
-/*     */       }
-/* 161 */       param1Graphics.translate(param1Int1, param1Int2);
-/*     */       
-/* 163 */       XPStyle xPStyle = XPStyle.getXP();
-/* 164 */       if (xPStyle != null) {
-/* 165 */         Border border = xPStyle.getBorder(param1Component, TMSchema.Part.TP_TOOLBAR);
-/* 166 */         if (border != null) {
-/* 167 */           border.paintBorder(param1Component, param1Graphics, 0, 0, param1Int3, param1Int4);
-/*     */         }
-/*     */       } 
-/* 170 */       if (((JToolBar)param1Component).isFloatable()) {
-/* 171 */         boolean bool = (((JToolBar)param1Component).getOrientation() == 1) ? true : false;
-/*     */         
-/* 173 */         if (xPStyle != null) {
-/* 174 */           boolean bool1, bool2; int i, j; TMSchema.Part part = bool ? TMSchema.Part.RP_GRIPPERVERT : TMSchema.Part.RP_GRIPPER;
-/* 175 */           XPStyle.Skin skin = xPStyle.getSkin(param1Component, part);
-/*     */           
-/* 177 */           if (bool) {
-/* 178 */             bool1 = false;
-/* 179 */             bool2 = true;
-/* 180 */             i = param1Int3 - 1;
-/* 181 */             j = skin.getHeight();
-/*     */           } else {
-/* 183 */             i = skin.getWidth();
-/* 184 */             j = param1Int4 - 1;
-/* 185 */             bool1 = param1Component.getComponentOrientation().isLeftToRight() ? true : (param1Int3 - i - 2);
-/* 186 */             bool2 = false;
-/*     */           } 
-/* 188 */           skin.paintSkin(param1Graphics, bool1, bool2, i, j, TMSchema.State.NORMAL);
-/*     */ 
-/*     */         
-/*     */         }
-/* 192 */         else if (!bool) {
-/* 193 */           if (param1Component.getComponentOrientation().isLeftToRight()) {
-/* 194 */             param1Graphics.setColor(this.shadow);
-/* 195 */             param1Graphics.drawLine(4, 3, 4, param1Int4 - 4);
-/* 196 */             param1Graphics.drawLine(4, param1Int4 - 4, 2, param1Int4 - 4);
-/*     */             
-/* 198 */             param1Graphics.setColor(this.highlight);
-/* 199 */             param1Graphics.drawLine(2, 3, 3, 3);
-/* 200 */             param1Graphics.drawLine(2, 3, 2, param1Int4 - 5);
-/*     */           } else {
-/* 202 */             param1Graphics.setColor(this.shadow);
-/* 203 */             param1Graphics.drawLine(param1Int3 - 3, 3, param1Int3 - 3, param1Int4 - 4);
-/* 204 */             param1Graphics.drawLine(param1Int3 - 4, param1Int4 - 4, param1Int3 - 4, param1Int4 - 4);
-/*     */             
-/* 206 */             param1Graphics.setColor(this.highlight);
-/* 207 */             param1Graphics.drawLine(param1Int3 - 5, 3, param1Int3 - 4, 3);
-/* 208 */             param1Graphics.drawLine(param1Int3 - 5, 3, param1Int3 - 5, param1Int4 - 5);
-/*     */           } 
-/*     */         } else {
-/* 211 */           param1Graphics.setColor(this.shadow);
-/* 212 */           param1Graphics.drawLine(3, 4, param1Int3 - 4, 4);
-/* 213 */           param1Graphics.drawLine(param1Int3 - 4, 2, param1Int3 - 4, 4);
-/*     */           
-/* 215 */           param1Graphics.setColor(this.highlight);
-/* 216 */           param1Graphics.drawLine(3, 2, param1Int3 - 4, 2);
-/* 217 */           param1Graphics.drawLine(3, 2, 3, 3);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 222 */       param1Graphics.translate(-param1Int1, -param1Int2);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 226 */       param1Insets.set(1, 1, 1, 1);
-/* 227 */       if (!(param1Component instanceof JToolBar)) {
-/* 228 */         return param1Insets;
-/*     */       }
-/* 230 */       if (((JToolBar)param1Component).isFloatable()) {
-/* 231 */         byte b = (XPStyle.getXP() != null) ? 12 : 9;
-/* 232 */         if (((JToolBar)param1Component).getOrientation() == 0) {
-/* 233 */           if (param1Component.getComponentOrientation().isLeftToRight()) {
-/* 234 */             param1Insets.left = b;
-/*     */           } else {
-/* 236 */             param1Insets.right = b;
-/*     */           } 
-/*     */         } else {
-/* 239 */           param1Insets.top = b;
-/*     */         } 
-/*     */       } 
-/* 242 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static class DashedBorder
-/*     */     extends LineBorder
-/*     */     implements UIResource
-/*     */   {
-/*     */     public DashedBorder(Color param1Color) {
-/* 252 */       super(param1Color);
-/*     */     }
-/*     */     
-/*     */     public DashedBorder(Color param1Color, int param1Int) {
-/* 256 */       super(param1Color, param1Int);
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 260 */       Color color = param1Graphics.getColor();
-/*     */ 
-/*     */       
-/* 263 */       param1Graphics.setColor(this.lineColor);
-/* 264 */       for (byte b = 0; b < this.thickness; b++) {
-/* 265 */         BasicGraphicsUtils.drawDashedRect(param1Graphics, param1Int1 + b, param1Int2 + b, param1Int3 - b - b, param1Int4 - b - b);
-/*     */       }
-/* 267 */       param1Graphics.setColor(color);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class ComplementDashedBorder
-/*     */     extends LineBorder
-/*     */     implements UIResource
-/*     */   {
-/*     */     private Color origColor;
-/*     */     private Color paintColor;
-/*     */     
-/*     */     public ComplementDashedBorder() {
-/* 280 */       super(null);
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 284 */       Color color = param1Component.getBackground();
-/*     */       
-/* 286 */       if (this.origColor != color) {
-/* 287 */         this.origColor = color;
-/* 288 */         this.paintColor = new Color(this.origColor.getRGB() ^ 0xFFFFFFFF);
-/*     */       } 
-/*     */       
-/* 291 */       param1Graphics.setColor(this.paintColor);
-/* 292 */       BasicGraphicsUtils.drawDashedRect(param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class InternalFrameLineBorder
-/*     */     extends LineBorder
-/*     */     implements UIResource
-/*     */   {
-/*     */     protected Color activeColor;
-/*     */     
-/*     */     protected Color inactiveColor;
-/*     */ 
-/*     */     
-/*     */     public InternalFrameLineBorder(Color param1Color1, Color param1Color2, int param1Int) {
-/* 308 */       super(param1Color1, param1Int);
-/* 309 */       this.activeColor = param1Color1;
-/* 310 */       this.inactiveColor = param1Color2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 316 */       JInternalFrame jInternalFrame = null;
-/* 317 */       if (param1Component instanceof JInternalFrame) {
-/* 318 */         jInternalFrame = (JInternalFrame)param1Component;
-/* 319 */       } else if (param1Component instanceof JInternalFrame.JDesktopIcon) {
-/* 320 */         jInternalFrame = ((JInternalFrame.JDesktopIcon)param1Component).getInternalFrame();
-/*     */       } else {
-/*     */         return;
-/*     */       } 
-/*     */       
-/* 325 */       if (jInternalFrame.isSelected()) {
-/*     */ 
-/*     */         
-/* 328 */         this.lineColor = this.activeColor;
-/* 329 */         super.paintBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/*     */       } else {
-/* 331 */         this.lineColor = this.inactiveColor;
-/* 332 */         super.paintBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsBorders.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+
+import java.awt.Component;
+import java.awt.Insets;
+import java.awt.Color;
+import java.awt.Graphics;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+/**
+ * Factory object that can vend Borders appropriate for the Windows 95 L & F.
+ * @author Rich Schiavi
+ */
+
+public class WindowsBorders {
+
+    /**
+     * Returns a  border instance for a Windows Progress Bar
+     * @since 1.4
+     */
+    public static Border getProgressBarBorder() {
+        UIDefaults table = UIManager.getLookAndFeelDefaults();
+        Border progressBarBorder = new BorderUIResource.CompoundBorderUIResource(
+                                         new WindowsBorders.ProgressBarBorder(
+                                              table.getColor("ProgressBar.shadow"),
+                                              table.getColor("ProgressBar.highlight")),
+                                              new EmptyBorder(1,1,1,1)
+                                        );
+        return progressBarBorder;
+    }
+
+    /**
+     * Returns a border instance for a Windows ToolBar
+     *
+     * @return a border used for the toolbar
+     * @since 1.4
+     */
+    public static Border getToolBarBorder() {
+        UIDefaults table = UIManager.getLookAndFeelDefaults();
+        Border toolBarBorder = new WindowsBorders.ToolBarBorder(
+                                        table.getColor("ToolBar.shadow"),
+                                        table.getColor("ToolBar.highlight"));
+        return toolBarBorder;
+    }
+
+    /**
+     * Returns an new instance of a border used to indicate which cell item
+     * has focus.
+     *
+     * @return a border to indicate which cell item has focus
+     * @since 1.4
+     */
+    public static Border getFocusCellHighlightBorder() {
+        return new ComplementDashedBorder();
+    }
+
+    public static Border getTableHeaderBorder() {
+        UIDefaults table = UIManager.getLookAndFeelDefaults();
+        Border tableHeaderBorder = new BorderUIResource.CompoundBorderUIResource(
+                           new BasicBorders.ButtonBorder(
+                                           table.getColor("Table.shadow"),
+                                           table.getColor("Table.darkShadow"),
+                                           table.getColor("Table.light"),
+                                           table.getColor("Table.highlight")),
+                                     new BasicBorders.MarginBorder());
+        return tableHeaderBorder;
+    }
+
+    public static Border getInternalFrameBorder() {
+        UIDefaults table = UIManager.getLookAndFeelDefaults();
+        Border internalFrameBorder = new
+            BorderUIResource.CompoundBorderUIResource(
+                BorderFactory.createBevelBorder(BevelBorder.RAISED,
+                    table.getColor("InternalFrame.borderColor"),
+                    table.getColor("InternalFrame.borderHighlight"),
+                    table.getColor("InternalFrame.borderDarkShadow"),
+                    table.getColor("InternalFrame.borderShadow")),
+                new WindowsBorders.InternalFrameLineBorder(
+                    table.getColor("InternalFrame.activeBorderColor"),
+                    table.getColor("InternalFrame.inactiveBorderColor"),
+                    table.getInt("InternalFrame.borderWidth")));
+
+        return internalFrameBorder;
+    }
+
+    public static class ProgressBarBorder extends AbstractBorder implements UIResource {
+        protected Color shadow;
+        protected Color highlight;
+
+        public ProgressBarBorder(Color shadow, Color highlight) {
+            this.highlight = highlight;
+            this.shadow = shadow;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y,
+                                int width, int height) {
+            g.setColor(shadow);
+            g.drawLine(x,y, width-1,y); // draw top
+            g.drawLine(x,y, x,height-1); // draw left
+            g.setColor(highlight);
+            g.drawLine(x,height-1, width-1,height-1); // draw bottom
+            g.drawLine(width-1,y, width-1,height-1); // draw right
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(1,1,1,1);
+            return insets;
+        }
+    }
+
+    /**
+     * A border for the ToolBar. If the ToolBar is floatable then the handle grip is drawn
+     * <p>
+     * @since 1.4
+     */
+    public static class ToolBarBorder extends AbstractBorder implements UIResource, SwingConstants {
+        protected Color shadow;
+        protected Color highlight;
+
+        public ToolBarBorder(Color shadow, Color highlight) {
+            this.highlight = highlight;
+            this.shadow = shadow;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y,
+                                int width, int height) {
+            if (!(c instanceof JToolBar)) {
+                return;
+            }
+            g.translate(x, y);
+
+            XPStyle xp = XPStyle.getXP();
+            if (xp != null) {
+                Border xpBorder = xp.getBorder(c, Part.TP_TOOLBAR);
+                if (xpBorder != null) {
+                    xpBorder.paintBorder(c, g, 0, 0, width, height);
+                }
+            }
+            if (((JToolBar)c).isFloatable()) {
+                boolean vertical = ((JToolBar)c).getOrientation() == VERTICAL;
+
+                if (xp != null) {
+                    Part part = vertical ? Part.RP_GRIPPERVERT : Part.RP_GRIPPER;
+                    Skin skin = xp.getSkin(c, part);
+                    int dx, dy, dw, dh;
+                    if (vertical) {
+                        dx = 0;
+                        dy = 2;
+                        dw = width - 1;
+                        dh = skin.getHeight();
+                    } else {
+                        dw = skin.getWidth();
+                        dh = height - 1;
+                        dx = c.getComponentOrientation().isLeftToRight() ? 2 : (width-dw-2);
+                        dy = 0;
+                    }
+                    skin.paintSkin(g, dx, dy, dw, dh, State.NORMAL);
+
+                } else {
+
+                    if (!vertical) {
+                        if (c.getComponentOrientation().isLeftToRight()) {
+                            g.setColor(shadow);
+                            g.drawLine(4, 3, 4, height - 4);
+                            g.drawLine(4, height - 4, 2, height - 4);
+
+                            g.setColor(highlight);
+                            g.drawLine(2, 3, 3, 3);
+                            g.drawLine(2, 3, 2, height - 5);
+                        } else {
+                            g.setColor(shadow);
+                            g.drawLine(width - 3, 3, width - 3, height - 4);
+                            g.drawLine(width - 4, height - 4, width - 4, height - 4);
+
+                            g.setColor(highlight);
+                            g.drawLine(width - 5, 3, width - 4, 3);
+                            g.drawLine(width - 5, 3, width - 5, height - 5);
+                        }
+                    } else { // Vertical
+                        g.setColor(shadow);
+                        g.drawLine(3, 4, width - 4, 4);
+                        g.drawLine(width - 4, 2, width - 4, 4);
+
+                        g.setColor(highlight);
+                        g.drawLine(3, 2, width - 4, 2);
+                        g.drawLine(3, 2, 3, 3);
+                    }
+                }
+            }
+
+            g.translate(-x, -y);
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(1,1,1,1);
+            if (!(c instanceof JToolBar)) {
+                return insets;
+            }
+            if (((JToolBar)c).isFloatable()) {
+                int gripInset = (XPStyle.getXP() != null) ? 12 : 9;
+                if (((JToolBar)c).getOrientation() == HORIZONTAL) {
+                    if (c.getComponentOrientation().isLeftToRight()) {
+                        insets.left = gripInset;
+                    } else {
+                        insets.right = gripInset;
+                    }
+                } else {
+                    insets.top = gripInset;
+                }
+            }
+            return insets;
+        }
+    }
+
+    /**
+     * This class is an implementation of a dashed border.
+     * @since 1.4
+     */
+    public static class DashedBorder extends LineBorder implements UIResource {
+        public DashedBorder(Color color) {
+            super(color);
+        }
+
+        public DashedBorder(Color color, int thickness)  {
+            super(color, thickness);
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Color oldColor = g.getColor();
+            int i;
+
+            g.setColor(lineColor);
+            for(i = 0; i < thickness; i++)  {
+                BasicGraphicsUtils.drawDashedRect(g, x+i, y+i, width-i-i, height-i-i);
+            }
+            g.setColor(oldColor);
+        }
+    }
+
+    /**
+     * A dashed border that paints itself in the complementary color
+     * of the component's background color.
+     */
+    static class ComplementDashedBorder extends LineBorder implements UIResource {
+        private Color origColor;
+        private Color paintColor;
+
+        public ComplementDashedBorder() {
+            super(null);
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Color color = c.getBackground();
+
+            if (origColor != color) {
+                origColor = color;
+                paintColor = new Color(~origColor.getRGB());
+            }
+
+            g.setColor(paintColor);
+            BasicGraphicsUtils.drawDashedRect(g, x, y, width, height);
+        }
+    }
+
+    /**
+     * This class is an implementation of the InternalFrameLine border.
+     * @since 1.4
+     */
+    public static class InternalFrameLineBorder extends LineBorder implements
+            UIResource {
+        protected Color activeColor;
+        protected Color inactiveColor;
+
+        public InternalFrameLineBorder(Color activeBorderColor,
+                                       Color inactiveBorderColor,
+                                       int thickness) {
+            super(activeBorderColor, thickness);
+            activeColor = activeBorderColor;
+            inactiveColor = inactiveBorderColor;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y,
+                int width, int height) {
+
+            JInternalFrame jif = null;
+            if (c instanceof JInternalFrame) {
+                jif = (JInternalFrame)c;
+            } else if (c instanceof JInternalFrame.JDesktopIcon) {
+                jif = ((JInternalFrame.JDesktopIcon)c).getInternalFrame();
+            } else {
+                return;
+            }
+
+            if (jif.isSelected()) {
+                // Set the line color so the line border gets the correct
+                // color.
+                lineColor = activeColor;
+                super.paintBorder(c, g, x, y, width, height);
+            } else {
+                lineColor = inactiveColor;
+                super.paintBorder(c, g, x, y, width, height);
+            }
+        }
+    }
+}

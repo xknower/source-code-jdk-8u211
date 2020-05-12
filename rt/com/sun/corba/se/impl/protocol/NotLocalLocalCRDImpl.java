@@ -1,66 +1,67 @@
-/*    */ package com.sun.corba.se.impl.protocol;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher;
-/*    */ import org.omg.CORBA.Object;
-/*    */ import org.omg.CORBA.portable.ServantObject;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NotLocalLocalCRDImpl
-/*    */   implements LocalClientRequestDispatcher
-/*    */ {
-/*    */   public boolean useLocalInvocation(Object paramObject) {
-/* 41 */     return false;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public boolean is_local(Object paramObject) {
-/* 46 */     return false;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public ServantObject servant_preinvoke(Object paramObject, String paramString, Class paramClass) {
-/* 56 */     return null;
-/*    */   }
-/*    */   
-/*    */   public void servant_postinvoke(Object paramObject, ServantObject paramServantObject) {}
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\NotLocalLocalCRDImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol;
+
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.portable.ServantObject;
+
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher ;
+
+/**
+ * @author Harold Carr
+ */
+
+public class NotLocalLocalCRDImpl implements LocalClientRequestDispatcher
+{
+    public boolean useLocalInvocation(org.omg.CORBA.Object self)
+    {
+        return false;
+    }
+
+    public boolean is_local(org.omg.CORBA.Object self)
+    {
+        return false;
+    }
+
+    public ServantObject servant_preinvoke(org.omg.CORBA.Object self,
+                                           String operation,
+                                           Class expectedType)
+    {
+        // REVISIT: Rewrite rmic.HelloTest and rmic.LocalStubTest
+        // (which directly call servant_preinvoke)
+        // then revert to exception again.
+        return null;
+        //throw new INTERNAL();
+    }
+
+    public void servant_postinvoke(org.omg.CORBA.Object self,
+                                   ServantObject servant)
+    {
+        //throw new INTERNAL();
+    }
+}
+
+// End of file.

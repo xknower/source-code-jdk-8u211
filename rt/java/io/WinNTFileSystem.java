@@ -1,654 +1,648 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ import java.security.AccessController;
-/*     */ import java.util.Locale;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class WinNTFileSystem
-/*     */   extends FileSystem
-/*     */ {
-/*  45 */   private final char slash = ((String)AccessController.<String>doPrivileged(new GetPropertyAction("file.separator")))
-/*  46 */     .charAt(0);
-/*  47 */   private final char semicolon = ((String)AccessController.<String>doPrivileged(new GetPropertyAction("path.separator")))
-/*  48 */     .charAt(0);
-/*  49 */   private final char altSlash = (this.slash == '\\') ? '/' : '\\';
-/*     */ 
-/*     */   
-/*     */   private boolean isSlash(char paramChar) {
-/*  53 */     return (paramChar == '\\' || paramChar == '/');
-/*     */   }
-/*     */   
-/*     */   private boolean isLetter(char paramChar) {
-/*  57 */     return ((paramChar >= 'a' && paramChar <= 'z') || (paramChar >= 'A' && paramChar <= 'Z'));
-/*     */   }
-/*     */   
-/*     */   private String slashify(String paramString) {
-/*  61 */     if (paramString.length() > 0 && paramString.charAt(0) != this.slash) return this.slash + paramString; 
-/*  62 */     return paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char getSeparator() {
-/*  69 */     return this.slash;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public char getPathSeparator() {
-/*  74 */     return this.semicolon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String normalize(String paramString) {
-/*  82 */     int i = paramString.length();
-/*  83 */     char c1 = this.slash;
-/*  84 */     char c2 = this.altSlash;
-/*  85 */     char c = Character.MIN_VALUE;
-/*  86 */     for (byte b = 0; b < i; b++) {
-/*  87 */       char c3 = paramString.charAt(b);
-/*  88 */       if (c3 == c2)
-/*  89 */         return normalize(paramString, i, (c == c1) ? (b - 1) : b); 
-/*  90 */       if (c3 == c1 && c == c1 && b > 1)
-/*  91 */         return normalize(paramString, i, b - 1); 
-/*  92 */       if (c3 == ':' && b > 1)
-/*  93 */         return normalize(paramString, i, 0); 
-/*  94 */       c = c3;
-/*     */     } 
-/*  96 */     if (c == c1) return normalize(paramString, i, i - 1); 
-/*  97 */     return paramString;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String normalize(String paramString, int paramInt1, int paramInt2) {
-/*     */     int i;
-/* 103 */     if (paramInt1 == 0) return paramString; 
-/* 104 */     if (paramInt2 < 3) paramInt2 = 0;
-/*     */     
-/* 106 */     char c = this.slash;
-/* 107 */     StringBuffer stringBuffer = new StringBuffer(paramInt1);
-/*     */     
-/* 109 */     if (paramInt2 == 0) {
-/*     */       
-/* 111 */       i = normalizePrefix(paramString, paramInt1, stringBuffer);
-/*     */     } else {
-/*     */       
-/* 114 */       i = paramInt2;
-/* 115 */       stringBuffer.append(paramString.substring(0, paramInt2));
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 120 */     while (i < paramInt1) {
-/* 121 */       char c1 = paramString.charAt(i++);
-/* 122 */       if (isSlash(c1)) {
-/* 123 */         for (; i < paramInt1 && isSlash(paramString.charAt(i)); i++);
-/* 124 */         if (i == paramInt1) {
-/*     */           
-/* 126 */           int j = stringBuffer.length();
-/* 127 */           if (j == 2 && stringBuffer.charAt(1) == ':') {
-/*     */             
-/* 129 */             stringBuffer.append(c);
-/*     */             break;
-/*     */           } 
-/* 132 */           if (j == 0) {
-/*     */             
-/* 134 */             stringBuffer.append(c);
-/*     */             break;
-/*     */           } 
-/* 137 */           if (j == 1 && isSlash(stringBuffer.charAt(0)))
-/*     */           {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 145 */             stringBuffer.append(c);
-/*     */           }
-/*     */ 
-/*     */           
-/*     */           break;
-/*     */         } 
-/*     */         
-/* 152 */         stringBuffer.append(c);
-/*     */         continue;
-/*     */       } 
-/* 155 */       stringBuffer.append(c1);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 159 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int normalizePrefix(String paramString, int paramInt, StringBuffer paramStringBuffer) {
-/* 176 */     byte b = 0;
-/* 177 */     for (; b < paramInt && isSlash(paramString.charAt(b)); b++);
-/*     */     char c;
-/* 179 */     if (paramInt - b >= 2 && 
-/* 180 */       isLetter(c = paramString.charAt(b)) && paramString
-/* 181 */       .charAt(b + 1) == ':') {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 186 */       paramStringBuffer.append(c);
-/* 187 */       paramStringBuffer.append(':');
-/* 188 */       b += 2;
-/*     */     } else {
-/* 190 */       b = 0;
-/* 191 */       if (paramInt >= 2 && 
-/* 192 */         isSlash(paramString.charAt(0)) && 
-/* 193 */         isSlash(paramString.charAt(1))) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 199 */         b = 1;
-/* 200 */         paramStringBuffer.append(this.slash);
-/*     */       } 
-/*     */     } 
-/* 203 */     return b;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int prefixLength(String paramString) {
-/* 208 */     char c1 = this.slash;
-/* 209 */     int i = paramString.length();
-/* 210 */     if (i == 0) return 0; 
-/* 211 */     char c2 = paramString.charAt(0);
-/* 212 */     char c = (i > 1) ? paramString.charAt(1) : Character.MIN_VALUE;
-/* 213 */     if (c2 == c1) {
-/* 214 */       if (c == c1) return 2; 
-/* 215 */       return 1;
-/*     */     } 
-/* 217 */     if (isLetter(c2) && c == ':') {
-/* 218 */       if (i > 2 && paramString.charAt(2) == c1)
-/* 219 */         return 3; 
-/* 220 */       return 2;
-/*     */     } 
-/* 222 */     return 0;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String resolve(String paramString1, String paramString2) {
-/* 227 */     int i = paramString1.length();
-/* 228 */     if (i == 0) return paramString2; 
-/* 229 */     int j = paramString2.length();
-/* 230 */     if (j == 0) return paramString1;
-/*     */     
-/* 232 */     String str = paramString2;
-/* 233 */     byte b = 0;
-/* 234 */     int k = i;
-/*     */     
-/* 236 */     if (j > 1 && str.charAt(0) == this.slash) {
-/* 237 */       if (str.charAt(1) == this.slash) {
-/*     */         
-/* 239 */         b = 2;
-/*     */       } else {
-/*     */         
-/* 242 */         b = 1;
-/*     */       } 
-/*     */       
-/* 245 */       if (j == b) {
-/* 246 */         if (paramString1.charAt(i - 1) == this.slash)
-/* 247 */           return paramString1.substring(0, i - 1); 
-/* 248 */         return paramString1;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 252 */     if (paramString1.charAt(i - 1) == this.slash) {
-/* 253 */       k--;
-/*     */     }
-/* 255 */     int m = k + j - b;
-/* 256 */     char[] arrayOfChar = null;
-/* 257 */     if (paramString2.charAt(b) == this.slash) {
-/* 258 */       arrayOfChar = new char[m];
-/* 259 */       paramString1.getChars(0, k, arrayOfChar, 0);
-/* 260 */       paramString2.getChars(b, j, arrayOfChar, k);
-/*     */     } else {
-/* 262 */       arrayOfChar = new char[m + 1];
-/* 263 */       paramString1.getChars(0, k, arrayOfChar, 0);
-/* 264 */       arrayOfChar[k] = this.slash;
-/* 265 */       paramString2.getChars(b, j, arrayOfChar, k + 1);
-/*     */     } 
-/* 267 */     return new String(arrayOfChar);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getDefaultParent() {
-/* 272 */     return "" + this.slash;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String fromURIPath(String paramString) {
-/* 277 */     String str = paramString;
-/* 278 */     if (str.length() > 2 && str.charAt(2) == ':') {
-/*     */       
-/* 280 */       str = str.substring(1);
-/*     */       
-/* 282 */       if (str.length() > 3 && str.endsWith("/"))
-/* 283 */         str = str.substring(0, str.length() - 1); 
-/* 284 */     } else if (str.length() > 1 && str.endsWith("/")) {
-/*     */       
-/* 286 */       str = str.substring(0, str.length() - 1);
-/*     */     } 
-/* 288 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isAbsolute(File paramFile) {
-/* 295 */     int i = paramFile.getPrefixLength();
-/* 296 */     return ((i == 2 && paramFile.getPath().charAt(0) == this.slash) || i == 3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String resolve(File paramFile) {
-/* 302 */     String str = paramFile.getPath();
-/* 303 */     int i = paramFile.getPrefixLength();
-/* 304 */     if (i == 2 && str.charAt(0) == this.slash)
-/* 305 */       return str; 
-/* 306 */     if (i == 3)
-/* 307 */       return str; 
-/* 308 */     if (i == 0)
-/* 309 */       return getUserPath() + slashify(str); 
-/* 310 */     if (i == 1) {
-/* 311 */       String str1 = getUserPath();
-/* 312 */       String str2 = getDrive(str1);
-/* 313 */       if (str2 != null) return str2 + str; 
-/* 314 */       return str1 + str;
-/*     */     } 
-/* 316 */     if (i == 2) {
-/* 317 */       String str1 = getUserPath();
-/* 318 */       String str2 = getDrive(str1);
-/* 319 */       if (str2 != null && str.startsWith(str2))
-/* 320 */         return str1 + slashify(str.substring(2)); 
-/* 321 */       char c = str.charAt(0);
-/* 322 */       String str3 = getDriveDirectory(c);
-/*     */       
-/* 324 */       if (str3 != null) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 328 */         String str4 = c + ':' + str3 + slashify(str.substring(2));
-/* 329 */         SecurityManager securityManager = System.getSecurityManager();
-/*     */         try {
-/* 331 */           if (securityManager != null) securityManager.checkRead(str4); 
-/* 332 */         } catch (SecurityException securityException) {
-/*     */           
-/* 334 */           throw new SecurityException("Cannot resolve path " + str);
-/*     */         } 
-/* 336 */         return str4;
-/*     */       } 
-/* 338 */       return c + ":" + slashify(str.substring(2));
-/*     */     } 
-/* 340 */     throw new InternalError("Unresolvable path: " + str);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getUserPath() {
-/* 346 */     return normalize(System.getProperty("user.dir"));
-/*     */   }
-/*     */   
-/*     */   private String getDrive(String paramString) {
-/* 350 */     int i = prefixLength(paramString);
-/* 351 */     return (i == 3) ? paramString.substring(0, 2) : null;
-/*     */   }
-/*     */   
-/* 354 */   private static String[] driveDirCache = new String[26];
-/*     */   
-/*     */   private static int driveIndex(char paramChar) {
-/* 357 */     if (paramChar >= 'a' && paramChar <= 'z') return paramChar - 97; 
-/* 358 */     if (paramChar >= 'A' && paramChar <= 'Z') return paramChar - 65; 
-/* 359 */     return -1;
-/*     */   }
-/*     */   
-/*     */   private native String getDriveDirectory(int paramInt);
-/*     */   
-/*     */   private String getDriveDirectory(char paramChar) {
-/* 365 */     int i = driveIndex(paramChar);
-/* 366 */     if (i < 0) return null; 
-/* 367 */     String str = driveDirCache[i];
-/* 368 */     if (str != null) return str; 
-/* 369 */     str = getDriveDirectory(i + 1);
-/* 370 */     driveDirCache[i] = str;
-/* 371 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 380 */   private ExpiringCache cache = new ExpiringCache();
-/* 381 */   private ExpiringCache prefixCache = new ExpiringCache();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String canonicalize(String paramString) throws IOException {
-/* 386 */     int i = paramString.length();
-/* 387 */     if (i == 2 && 
-/* 388 */       isLetter(paramString.charAt(0)) && paramString
-/* 389 */       .charAt(1) == ':') {
-/* 390 */       char c = paramString.charAt(0);
-/* 391 */       if (c >= 'A' && c <= 'Z')
-/* 392 */         return paramString; 
-/* 393 */       return "" + (char)(c - 32) + ':';
-/* 394 */     }  if (i == 3 && 
-/* 395 */       isLetter(paramString.charAt(0)) && paramString
-/* 396 */       .charAt(1) == ':' && paramString
-/* 397 */       .charAt(2) == '\\') {
-/* 398 */       char c = paramString.charAt(0);
-/* 399 */       if (c >= 'A' && c <= 'Z')
-/* 400 */         return paramString; 
-/* 401 */       return "" + (char)(c - 32) + ':' + '\\';
-/*     */     } 
-/* 403 */     if (!useCanonCaches) {
-/* 404 */       return canonicalize0(paramString);
-/*     */     }
-/* 406 */     String str = this.cache.get(paramString);
-/* 407 */     if (str == null) {
-/* 408 */       String str1 = null;
-/* 409 */       String str2 = null;
-/* 410 */       if (useCanonPrefixCache) {
-/* 411 */         str1 = parentOrNull(paramString);
-/* 412 */         if (str1 != null) {
-/* 413 */           str2 = this.prefixCache.get(str1);
-/* 414 */           if (str2 != null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 421 */             String str3 = paramString.substring(1 + str1.length());
-/* 422 */             str = canonicalizeWithPrefix(str2, str3);
-/* 423 */             this.cache.put(str1 + File.separatorChar + str3, str);
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 427 */       if (str == null) {
-/* 428 */         str = canonicalize0(paramString);
-/* 429 */         this.cache.put(paramString, str);
-/* 430 */         if (useCanonPrefixCache && str1 != null) {
-/* 431 */           str2 = parentOrNull(str);
-/* 432 */           if (str2 != null) {
-/* 433 */             File file = new File(str);
-/* 434 */             if (file.exists() && !file.isDirectory()) {
-/* 435 */               this.prefixCache.put(str1, str2);
-/*     */             }
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 441 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private native String canonicalize0(String paramString) throws IOException;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String canonicalizeWithPrefix(String paramString1, String paramString2) throws IOException {
-/* 451 */     return canonicalizeWithPrefix0(paramString1, paramString1 + File.separatorChar + paramString2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private native String canonicalizeWithPrefix0(String paramString1, String paramString2) throws IOException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String parentOrNull(String paramString) {
-/* 470 */     if (paramString == null) return null; 
-/* 471 */     char c = File.separatorChar;
-/* 472 */     byte b1 = 47;
-/* 473 */     int i = paramString.length() - 1;
-/* 474 */     int j = i;
-/* 475 */     byte b2 = 0;
-/* 476 */     byte b3 = 0;
-/* 477 */     while (j > 0) {
-/* 478 */       char c1 = paramString.charAt(j);
-/* 479 */       if (c1 == '.') {
-/* 480 */         if (++b2 >= 2)
-/*     */         {
-/* 482 */           return null;
-/*     */         }
-/* 484 */         if (!b3)
-/*     */         {
-/* 486 */           return null; } 
-/*     */       } else {
-/* 488 */         if (c1 == c) {
-/* 489 */           if (b2 == 1 && !b3)
-/*     */           {
-/* 491 */             return null;
-/*     */           }
-/* 493 */           if (j == 0 || j >= i - 1 || paramString
-/*     */             
-/* 495 */             .charAt(j - 1) == c || paramString
-/* 496 */             .charAt(j - 1) == b1)
-/*     */           {
-/*     */             
-/* 499 */             return null;
-/*     */           }
-/* 501 */           return paramString.substring(0, j);
-/* 502 */         }  if (c1 == b1)
-/*     */         {
-/*     */           
-/* 505 */           return null; } 
-/* 506 */         if (c1 == '*' || c1 == '?')
-/*     */         {
-/* 508 */           return null;
-/*     */         }
-/* 510 */         b3++;
-/* 511 */         b2 = 0;
-/*     */       } 
-/* 513 */       j--;
-/*     */     } 
-/* 515 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native int getBooleanAttributes(File paramFile);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native boolean checkAccess(File paramFile, int paramInt);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native long getLastModifiedTime(File paramFile);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native long getLength(File paramFile);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native boolean setPermission(File paramFile, int paramInt, boolean paramBoolean1, boolean paramBoolean2);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native boolean createFileExclusively(String paramString) throws IOException;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native String[] list(File paramFile);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native boolean createDirectory(File paramFile);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native boolean setLastModifiedTime(File paramFile, long paramLong);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public native boolean setReadOnly(File paramFile);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean delete(File paramFile) {
-/* 561 */     this.cache.clear();
-/* 562 */     this.prefixCache.clear();
-/* 563 */     return delete0(paramFile);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private native boolean delete0(File paramFile);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean rename(File paramFile1, File paramFile2) {
-/* 575 */     this.cache.clear();
-/* 576 */     this.prefixCache.clear();
-/* 577 */     return rename0(paramFile1, paramFile2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private native boolean rename0(File paramFile1, File paramFile2);
-/*     */ 
-/*     */   
-/*     */   public File[] listRoots() {
-/* 586 */     int i = listRoots0();
-/* 587 */     byte b1 = 0;
-/* 588 */     for (byte b2 = 0; b2 < 26; b2++) {
-/* 589 */       if ((i >> b2 & 0x1) != 0)
-/* 590 */         if (!access((char)(65 + b2) + ":" + this.slash)) {
-/* 591 */           i &= 1 << b2 ^ 0xFFFFFFFF;
-/*     */         } else {
-/* 593 */           b1++;
-/*     */         }  
-/*     */     } 
-/* 596 */     File[] arrayOfFile = new File[b1];
-/* 597 */     byte b3 = 0;
-/* 598 */     char c = this.slash;
-/* 599 */     for (byte b4 = 0; b4 < 26; b4++) {
-/* 600 */       if ((i >> b4 & 0x1) != 0)
-/* 601 */         arrayOfFile[b3++] = new File((char)(65 + b4) + ":" + c); 
-/*     */     } 
-/* 603 */     return arrayOfFile;
-/*     */   }
-/*     */   
-/*     */   private static native int listRoots0();
-/*     */   
-/*     */   private boolean access(String paramString) {
-/*     */     try {
-/* 610 */       SecurityManager securityManager = System.getSecurityManager();
-/* 611 */       if (securityManager != null) securityManager.checkRead(paramString); 
-/* 612 */       return true;
-/* 613 */     } catch (SecurityException securityException) {
-/* 614 */       return false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getSpace(File paramFile, int paramInt) {
-/* 622 */     if (paramFile.exists()) {
-/* 623 */       return getSpace0(paramFile, paramInt);
-/*     */     }
-/* 625 */     return 0L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private native long getSpace0(File paramFile, int paramInt);
-/*     */ 
-/*     */   
-/*     */   public int compare(File paramFile1, File paramFile2) {
-/* 634 */     return paramFile1.getPath().compareToIgnoreCase(paramFile2.getPath());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode(File paramFile) {
-/* 640 */     return paramFile.getPath().toLowerCase(Locale.ENGLISH).hashCode() ^ 0x12D591;
-/*     */   }
-/*     */   
-/*     */   private static native void initIDs();
-/*     */   
-/*     */   static {
-/* 646 */     initIDs();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\WinNTFileSystem.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+import java.security.AccessController;
+import java.util.Locale;
+import sun.security.action.GetPropertyAction;
+
+/**
+ * Unicode-aware FileSystem for Windows NT/2000.
+ *
+ * @author Konstantin Kladko
+ * @since 1.4
+ */
+class WinNTFileSystem extends FileSystem {
+
+    private final char slash;
+    private final char altSlash;
+    private final char semicolon;
+
+    public WinNTFileSystem() {
+        slash = AccessController.doPrivileged(
+            new GetPropertyAction("file.separator")).charAt(0);
+        semicolon = AccessController.doPrivileged(
+            new GetPropertyAction("path.separator")).charAt(0);
+        altSlash = (this.slash == '\\') ? '/' : '\\';
+    }
+
+    private boolean isSlash(char c) {
+        return (c == '\\') || (c == '/');
+    }
+
+    private boolean isLetter(char c) {
+        return ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
+    }
+
+    private String slashify(String p) {
+        if ((p.length() > 0) && (p.charAt(0) != slash)) return slash + p;
+        else return p;
+    }
+
+    /* -- Normalization and construction -- */
+
+    @Override
+    public char getSeparator() {
+        return slash;
+    }
+
+    @Override
+    public char getPathSeparator() {
+        return semicolon;
+    }
+
+    /* Check that the given pathname is normal.  If not, invoke the real
+       normalizer on the part of the pathname that requires normalization.
+       This way we iterate through the whole pathname string only once. */
+    @Override
+    public String normalize(String path) {
+        int n = path.length();
+        char slash = this.slash;
+        char altSlash = this.altSlash;
+        char prev = 0;
+        for (int i = 0; i < n; i++) {
+            char c = path.charAt(i);
+            if (c == altSlash)
+                return normalize(path, n, (prev == slash) ? i - 1 : i);
+            if ((c == slash) && (prev == slash) && (i > 1))
+                return normalize(path, n, i - 1);
+            if ((c == ':') && (i > 1))
+                return normalize(path, n, 0);
+            prev = c;
+        }
+        if (prev == slash) return normalize(path, n, n - 1);
+        return path;
+    }
+
+    /* Normalize the given pathname, whose length is len, starting at the given
+       offset; everything before this offset is already normal. */
+    private String normalize(String path, int len, int off) {
+        if (len == 0) return path;
+        if (off < 3) off = 0;   /* Avoid fencepost cases with UNC pathnames */
+        int src;
+        char slash = this.slash;
+        StringBuffer sb = new StringBuffer(len);
+
+        if (off == 0) {
+            /* Complete normalization, including prefix */
+            src = normalizePrefix(path, len, sb);
+        } else {
+            /* Partial normalization */
+            src = off;
+            sb.append(path.substring(0, off));
+        }
+
+        /* Remove redundant slashes from the remainder of the path, forcing all
+           slashes into the preferred slash */
+        while (src < len) {
+            char c = path.charAt(src++);
+            if (isSlash(c)) {
+                while ((src < len) && isSlash(path.charAt(src))) src++;
+                if (src == len) {
+                    /* Check for trailing separator */
+                    int sn = sb.length();
+                    if ((sn == 2) && (sb.charAt(1) == ':')) {
+                        /* "z:\\" */
+                        sb.append(slash);
+                        break;
+                    }
+                    if (sn == 0) {
+                        /* "\\" */
+                        sb.append(slash);
+                        break;
+                    }
+                    if ((sn == 1) && (isSlash(sb.charAt(0)))) {
+                        /* "\\\\" is not collapsed to "\\" because "\\\\" marks
+                           the beginning of a UNC pathname.  Even though it is
+                           not, by itself, a valid UNC pathname, we leave it as
+                           is in order to be consistent with the win32 APIs,
+                           which treat this case as an invalid UNC pathname
+                           rather than as an alias for the root directory of
+                           the current drive. */
+                        sb.append(slash);
+                        break;
+                    }
+                    /* Path does not denote a root directory, so do not append
+                       trailing slash */
+                    break;
+                } else {
+                    sb.append(slash);
+                }
+            } else {
+                sb.append(c);
+            }
+        }
+
+        String rv = sb.toString();
+        return rv;
+    }
+
+    /* A normal Win32 pathname contains no duplicate slashes, except possibly
+       for a UNC prefix, and does not end with a slash.  It may be the empty
+       string.  Normalized Win32 pathnames have the convenient property that
+       the length of the prefix almost uniquely identifies the type of the path
+       and whether it is absolute or relative:
+
+           0  relative to both drive and directory
+           1  drive-relative (begins with '\\')
+           2  absolute UNC (if first char is '\\'),
+                else directory-relative (has form "z:foo")
+           3  absolute local pathname (begins with "z:\\")
+     */
+    private int normalizePrefix(String path, int len, StringBuffer sb) {
+        int src = 0;
+        while ((src < len) && isSlash(path.charAt(src))) src++;
+        char c;
+        if ((len - src >= 2)
+            && isLetter(c = path.charAt(src))
+            && path.charAt(src + 1) == ':') {
+            /* Remove leading slashes if followed by drive specifier.
+               This hack is necessary to support file URLs containing drive
+               specifiers (e.g., "file://c:/path").  As a side effect,
+               "/c:/path" can be used as an alternative to "c:/path". */
+            sb.append(c);
+            sb.append(':');
+            src += 2;
+        } else {
+            src = 0;
+            if ((len >= 2)
+                && isSlash(path.charAt(0))
+                && isSlash(path.charAt(1))) {
+                /* UNC pathname: Retain first slash; leave src pointed at
+                   second slash so that further slashes will be collapsed
+                   into the second slash.  The result will be a pathname
+                   beginning with "\\\\" followed (most likely) by a host
+                   name. */
+                src = 1;
+                sb.append(slash);
+            }
+        }
+        return src;
+    }
+
+    @Override
+    public int prefixLength(String path) {
+        char slash = this.slash;
+        int n = path.length();
+        if (n == 0) return 0;
+        char c0 = path.charAt(0);
+        char c1 = (n > 1) ? path.charAt(1) : 0;
+        if (c0 == slash) {
+            if (c1 == slash) return 2;  /* Absolute UNC pathname "\\\\foo" */
+            return 1;                   /* Drive-relative "\\foo" */
+        }
+        if (isLetter(c0) && (c1 == ':')) {
+            if ((n > 2) && (path.charAt(2) == slash))
+                return 3;               /* Absolute local pathname "z:\\foo" */
+            return 2;                   /* Directory-relative "z:foo" */
+        }
+        return 0;                       /* Completely relative */
+    }
+
+    @Override
+    public String resolve(String parent, String child) {
+        int pn = parent.length();
+        if (pn == 0) return child;
+        int cn = child.length();
+        if (cn == 0) return parent;
+
+        String c = child;
+        int childStart = 0;
+        int parentEnd = pn;
+
+        if ((cn > 1) && (c.charAt(0) == slash)) {
+            if (c.charAt(1) == slash) {
+                /* Drop prefix when child is a UNC pathname */
+                childStart = 2;
+            } else {
+                /* Drop prefix when child is drive-relative */
+                childStart = 1;
+
+            }
+            if (cn == childStart) { // Child is double slash
+                if (parent.charAt(pn - 1) == slash)
+                    return parent.substring(0, pn - 1);
+                return parent;
+            }
+        }
+
+        if (parent.charAt(pn - 1) == slash)
+            parentEnd--;
+
+        int strlen = parentEnd + cn - childStart;
+        char[] theChars = null;
+        if (child.charAt(childStart) == slash) {
+            theChars = new char[strlen];
+            parent.getChars(0, parentEnd, theChars, 0);
+            child.getChars(childStart, cn, theChars, parentEnd);
+        } else {
+            theChars = new char[strlen + 1];
+            parent.getChars(0, parentEnd, theChars, 0);
+            theChars[parentEnd] = slash;
+            child.getChars(childStart, cn, theChars, parentEnd + 1);
+        }
+        return new String(theChars);
+    }
+
+    @Override
+    public String getDefaultParent() {
+        return ("" + slash);
+    }
+
+    @Override
+    public String fromURIPath(String path) {
+        String p = path;
+        if ((p.length() > 2) && (p.charAt(2) == ':')) {
+            // "/c:/foo" --> "c:/foo"
+            p = p.substring(1);
+            // "c:/foo/" --> "c:/foo", but "c:/" --> "c:/"
+            if ((p.length() > 3) && p.endsWith("/"))
+                p = p.substring(0, p.length() - 1);
+        } else if ((p.length() > 1) && p.endsWith("/")) {
+            // "/foo/" --> "/foo"
+            p = p.substring(0, p.length() - 1);
+        }
+        return p;
+    }
+
+    /* -- Path operations -- */
+
+    @Override
+    public boolean isAbsolute(File f) {
+        int pl = f.getPrefixLength();
+        return (((pl == 2) && (f.getPath().charAt(0) == slash))
+                || (pl == 3));
+    }
+
+    @Override
+    public String resolve(File f) {
+        String path = f.getPath();
+        int pl = f.getPrefixLength();
+        if ((pl == 2) && (path.charAt(0) == slash))
+            return path;                        /* UNC */
+        if (pl == 3)
+            return path;                        /* Absolute local */
+        if (pl == 0)
+            return getUserPath() + slashify(path); /* Completely relative */
+        if (pl == 1) {                          /* Drive-relative */
+            String up = getUserPath();
+            String ud = getDrive(up);
+            if (ud != null) return ud + path;
+            return up + path;                   /* User dir is a UNC path */
+        }
+        if (pl == 2) {                          /* Directory-relative */
+            String up = getUserPath();
+            String ud = getDrive(up);
+            if ((ud != null) && path.startsWith(ud))
+                return up + slashify(path.substring(2));
+            char drive = path.charAt(0);
+            String dir = getDriveDirectory(drive);
+            String np;
+            if (dir != null) {
+                /* When resolving a directory-relative path that refers to a
+                   drive other than the current drive, insist that the caller
+                   have read permission on the result */
+                String p = drive + (':' + dir + slashify(path.substring(2)));
+                SecurityManager security = System.getSecurityManager();
+                try {
+                    if (security != null) security.checkRead(p);
+                } catch (SecurityException x) {
+                    /* Don't disclose the drive's directory in the exception */
+                    throw new SecurityException("Cannot resolve path " + path);
+                }
+                return p;
+            }
+            return drive + ":" + slashify(path.substring(2)); /* fake it */
+        }
+        throw new InternalError("Unresolvable path: " + path);
+    }
+
+    private String getUserPath() {
+        /* For both compatibility and security,
+           we must look this up every time */
+        return normalize(System.getProperty("user.dir"));
+    }
+
+    private String getDrive(String path) {
+        int pl = prefixLength(path);
+        return (pl == 3) ? path.substring(0, 2) : null;
+    }
+
+    private static String[] driveDirCache = new String[26];
+
+    private static int driveIndex(char d) {
+        if ((d >= 'a') && (d <= 'z')) return d - 'a';
+        if ((d >= 'A') && (d <= 'Z')) return d - 'A';
+        return -1;
+    }
+
+    private native String getDriveDirectory(int drive);
+
+    private String getDriveDirectory(char drive) {
+        int i = driveIndex(drive);
+        if (i < 0) return null;
+        String s = driveDirCache[i];
+        if (s != null) return s;
+        s = getDriveDirectory(i + 1);
+        driveDirCache[i] = s;
+        return s;
+    }
+
+    // Caches for canonicalization results to improve startup performance.
+    // The first cache handles repeated canonicalizations of the same path
+    // name. The prefix cache handles repeated canonicalizations within the
+    // same directory, and must not create results differing from the true
+    // canonicalization algorithm in canonicalize_md.c. For this reason the
+    // prefix cache is conservative and is not used for complex path names.
+    private ExpiringCache cache       = new ExpiringCache();
+    private ExpiringCache prefixCache = new ExpiringCache();
+
+    @Override
+    public String canonicalize(String path) throws IOException {
+        // If path is a drive letter only then skip canonicalization
+        int len = path.length();
+        if ((len == 2) &&
+            (isLetter(path.charAt(0))) &&
+            (path.charAt(1) == ':')) {
+            char c = path.charAt(0);
+            if ((c >= 'A') && (c <= 'Z'))
+                return path;
+            return "" + ((char) (c-32)) + ':';
+        } else if ((len == 3) &&
+                   (isLetter(path.charAt(0))) &&
+                   (path.charAt(1) == ':') &&
+                   (path.charAt(2) == '\\')) {
+            char c = path.charAt(0);
+            if ((c >= 'A') && (c <= 'Z'))
+                return path;
+            return "" + ((char) (c-32)) + ':' + '\\';
+        }
+        if (!useCanonCaches) {
+            return canonicalize0(path);
+        } else {
+            String res = cache.get(path);
+            if (res == null) {
+                String dir = null;
+                String resDir = null;
+                if (useCanonPrefixCache) {
+                    dir = parentOrNull(path);
+                    if (dir != null) {
+                        resDir = prefixCache.get(dir);
+                        if (resDir != null) {
+                            /*
+                             * Hit only in prefix cache; full path is canonical,
+                             * but we need to get the canonical name of the file
+                             * in this directory to get the appropriate
+                             * capitalization
+                             */
+                            String filename = path.substring(1 + dir.length());
+                            res = canonicalizeWithPrefix(resDir, filename);
+                            cache.put(dir + File.separatorChar + filename, res);
+                        }
+                    }
+                }
+                if (res == null) {
+                    res = canonicalize0(path);
+                    cache.put(path, res);
+                    if (useCanonPrefixCache && dir != null) {
+                        resDir = parentOrNull(res);
+                        if (resDir != null) {
+                            File f = new File(res);
+                            if (f.exists() && !f.isDirectory()) {
+                                prefixCache.put(dir, resDir);
+                            }
+                        }
+                    }
+                }
+            }
+            return res;
+        }
+    }
+
+    private native String canonicalize0(String path)
+            throws IOException;
+
+    private String canonicalizeWithPrefix(String canonicalPrefix,
+            String filename) throws IOException
+    {
+        return canonicalizeWithPrefix0(canonicalPrefix,
+                canonicalPrefix + File.separatorChar + filename);
+    }
+
+    // Run the canonicalization operation assuming that the prefix
+    // (everything up to the last filename) is canonical; just gets
+    // the canonical name of the last element of the path
+    private native String canonicalizeWithPrefix0(String canonicalPrefix,
+            String pathWithCanonicalPrefix)
+            throws IOException;
+
+    // Best-effort attempt to get parent of this path; used for
+    // optimization of filename canonicalization. This must return null for
+    // any cases where the code in canonicalize_md.c would throw an
+    // exception or otherwise deal with non-simple pathnames like handling
+    // of "." and "..". It may conservatively return null in other
+    // situations as well. Returning null will cause the underlying
+    // (expensive) canonicalization routine to be called.
+    private static String parentOrNull(String path) {
+        if (path == null) return null;
+        char sep = File.separatorChar;
+        char altSep = '/';
+        int last = path.length() - 1;
+        int idx = last;
+        int adjacentDots = 0;
+        int nonDotCount = 0;
+        while (idx > 0) {
+            char c = path.charAt(idx);
+            if (c == '.') {
+                if (++adjacentDots >= 2) {
+                    // Punt on pathnames containing . and ..
+                    return null;
+                }
+                if (nonDotCount == 0) {
+                    // Punt on pathnames ending in a .
+                    return null;
+                }
+            } else if (c == sep) {
+                if (adjacentDots == 1 && nonDotCount == 0) {
+                    // Punt on pathnames containing . and ..
+                    return null;
+                }
+                if (idx == 0 ||
+                    idx >= last - 1 ||
+                    path.charAt(idx - 1) == sep ||
+                    path.charAt(idx - 1) == altSep) {
+                    // Punt on pathnames containing adjacent slashes
+                    // toward the end
+                    return null;
+                }
+                return path.substring(0, idx);
+            } else if (c == altSep) {
+                // Punt on pathnames containing both backward and
+                // forward slashes
+                return null;
+            } else if (c == '*' || c == '?') {
+                // Punt on pathnames containing wildcards
+                return null;
+            } else {
+                ++nonDotCount;
+                adjacentDots = 0;
+            }
+            --idx;
+        }
+        return null;
+    }
+
+    /* -- Attribute accessors -- */
+
+    @Override
+    public native int getBooleanAttributes(File f);
+
+    @Override
+    public native boolean checkAccess(File f, int access);
+
+    @Override
+    public native long getLastModifiedTime(File f);
+
+    @Override
+    public native long getLength(File f);
+
+    @Override
+    public native boolean setPermission(File f, int access, boolean enable,
+            boolean owneronly);
+
+    /* -- File operations -- */
+
+    @Override
+    public native boolean createFileExclusively(String path)
+            throws IOException;
+
+    @Override
+    public native String[] list(File f);
+
+    @Override
+    public native boolean createDirectory(File f);
+
+    @Override
+    public native boolean setLastModifiedTime(File f, long time);
+
+    @Override
+    public native boolean setReadOnly(File f);
+
+    @Override
+    public boolean delete(File f) {
+        // Keep canonicalization caches in sync after file deletion
+        // and renaming operations. Could be more clever than this
+        // (i.e., only remove/update affected entries) but probably
+        // not worth it since these entries expire after 30 seconds
+        // anyway.
+        cache.clear();
+        prefixCache.clear();
+        return delete0(f);
+    }
+
+    private native boolean delete0(File f);
+
+    @Override
+    public boolean rename(File f1, File f2) {
+        // Keep canonicalization caches in sync after file deletion
+        // and renaming operations. Could be more clever than this
+        // (i.e., only remove/update affected entries) but probably
+        // not worth it since these entries expire after 30 seconds
+        // anyway.
+        cache.clear();
+        prefixCache.clear();
+        return rename0(f1, f2);
+    }
+
+    private native boolean rename0(File f1, File f2);
+
+    /* -- Filesystem interface -- */
+
+    @Override
+    public File[] listRoots() {
+        int ds = listRoots0();
+        int n = 0;
+        for (int i = 0; i < 26; i++) {
+            if (((ds >> i) & 1) != 0) {
+                if (!access((char)('A' + i) + ":" + slash))
+                    ds &= ~(1 << i);
+                else
+                    n++;
+            }
+        }
+        File[] fs = new File[n];
+        int j = 0;
+        char slash = this.slash;
+        for (int i = 0; i < 26; i++) {
+            if (((ds >> i) & 1) != 0)
+                fs[j++] = new File((char)('A' + i) + ":" + slash);
+        }
+        return fs;
+    }
+
+    private static native int listRoots0();
+
+    private boolean access(String path) {
+        try {
+            SecurityManager security = System.getSecurityManager();
+            if (security != null) security.checkRead(path);
+            return true;
+        } catch (SecurityException x) {
+            return false;
+        }
+    }
+
+    /* -- Disk usage -- */
+
+    @Override
+    public long getSpace(File f, int t) {
+        if (f.exists()) {
+            return getSpace0(f, t);
+        }
+        return 0;
+    }
+
+    private native long getSpace0(File f, int t);
+
+    /* -- Basic infrastructure -- */
+
+    @Override
+    public int compare(File f1, File f2) {
+        return f1.getPath().compareToIgnoreCase(f2.getPath());
+    }
+
+    @Override
+    public int hashCode(File f) {
+        /* Could make this more efficient: String.hashCodeIgnoreCase */
+        return f.getPath().toLowerCase(Locale.ENGLISH).hashCode() ^ 1234321;
+    }
+
+    private static native void initIDs();
+
+    static {
+        initIDs();
+    }
+}

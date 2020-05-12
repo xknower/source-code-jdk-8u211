@@ -1,129 +1,123 @@
-/*     */ package com.sun.imageio.plugins.common;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import javax.imageio.stream.ImageOutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BitFile
-/*     */ {
-/*     */   ImageOutputStream output;
-/*     */   byte[] buffer;
-/*     */   int index;
-/*     */   int bitsLeft;
-/*     */   boolean blocks = false;
-/*     */   
-/*     */   public BitFile(ImageOutputStream paramImageOutputStream, boolean paramBoolean) {
-/*  50 */     this.output = paramImageOutputStream;
-/*  51 */     this.blocks = paramBoolean;
-/*  52 */     this.buffer = new byte[256];
-/*  53 */     this.index = 0;
-/*  54 */     this.bitsLeft = 8;
-/*     */   }
-/*     */   
-/*     */   public void flush() throws IOException {
-/*  58 */     int i = this.index + ((this.bitsLeft == 8) ? 0 : 1);
-/*  59 */     if (i > 0) {
-/*  60 */       if (this.blocks) {
-/*  61 */         this.output.write(i);
-/*     */       }
-/*  63 */       this.output.write(this.buffer, 0, i);
-/*  64 */       this.buffer[0] = 0;
-/*  65 */       this.index = 0;
-/*  66 */       this.bitsLeft = 8;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void writeBits(int paramInt1, int paramInt2) throws IOException {
-/*  71 */     int i = 0;
-/*  72 */     char c = 'ÿ';
-/*     */     
-/*     */     do {
-/*  75 */       if ((this.index == 254 && this.bitsLeft == 0) || this.index > 254) {
-/*  76 */         if (this.blocks) {
-/*  77 */           this.output.write(c);
-/*     */         }
-/*     */         
-/*  80 */         this.output.write(this.buffer, 0, c);
-/*     */         
-/*  82 */         this.buffer[0] = 0;
-/*  83 */         this.index = 0;
-/*  84 */         this.bitsLeft = 8;
-/*     */       } 
-/*     */       
-/*  87 */       if (paramInt2 <= this.bitsLeft) {
-/*  88 */         if (this.blocks) {
-/*  89 */           this.buffer[this.index] = (byte)(this.buffer[this.index] | (paramInt1 & (1 << paramInt2) - 1) << 8 - this.bitsLeft);
-/*  90 */           i += paramInt2;
-/*  91 */           this.bitsLeft -= paramInt2;
-/*  92 */           paramInt2 = 0;
-/*     */         } else {
-/*  94 */           this.buffer[this.index] = (byte)(this.buffer[this.index] | (paramInt1 & (1 << paramInt2) - 1) << this.bitsLeft - paramInt2);
-/*  95 */           i += paramInt2;
-/*  96 */           this.bitsLeft -= paramInt2;
-/*  97 */           paramInt2 = 0;
-/*     */         }
-/*     */       
-/* 100 */       } else if (this.blocks) {
-/*     */ 
-/*     */         
-/* 103 */         this.buffer[this.index] = (byte)(this.buffer[this.index] | (paramInt1 & (1 << this.bitsLeft) - 1) << 8 - this.bitsLeft);
-/* 104 */         i += this.bitsLeft;
-/* 105 */         paramInt1 >>= this.bitsLeft;
-/* 106 */         paramInt2 -= this.bitsLeft;
-/* 107 */         this.buffer[++this.index] = 0;
-/* 108 */         this.bitsLeft = 8;
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 113 */         int j = paramInt1 >>> paramInt2 - this.bitsLeft & (1 << this.bitsLeft) - 1;
-/* 114 */         this.buffer[this.index] = (byte)(this.buffer[this.index] | j);
-/* 115 */         paramInt2 -= this.bitsLeft;
-/* 116 */         i += this.bitsLeft;
-/* 117 */         this.buffer[++this.index] = 0;
-/* 118 */         this.bitsLeft = 8;
-/*     */       }
-/*     */     
-/* 121 */     } while (paramInt2 != 0);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\common\BitFile.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.common;
+
+import java.io.IOException;
+import javax.imageio.stream.ImageOutputStream;
+
+/*
+ * Came from GIFEncoder initially.
+ * Modified - to allow for output compressed data without the block counts
+ * which breakup the compressed data stream for GIF.
+ */
+public class BitFile {
+    ImageOutputStream output;
+    byte buffer[];
+    int index;
+    int bitsLeft; // bits left at current index that are avail.
+
+    /** note this also indicates gif format BITFile. **/
+    boolean blocks = false;
+
+    /*
+     * @param output destination for output data
+     * @param blocks GIF LZW requires block counts for output data
+     */
+    public BitFile(ImageOutputStream output, boolean blocks) {
+        this.output = output;
+        this.blocks = blocks;
+        buffer = new byte[256];
+        index = 0;
+        bitsLeft = 8;
+    }
+
+    public void flush() throws IOException {
+        int numBytes = index + (bitsLeft == 8 ? 0 : 1);
+        if (numBytes > 0) {
+            if (blocks) {
+                output.write(numBytes);
+            }
+            output.write(buffer, 0, numBytes);
+            buffer[0] = 0;
+            index = 0;
+            bitsLeft = 8;
+        }
+    }
+
+    public void writeBits(int bits, int numbits) throws IOException {
+        int bitsWritten = 0;
+        int numBytes = 255;  // gif block count
+        do {
+            // This handles the GIF block count stuff
+            if ((index == 254 && bitsLeft == 0) || index > 254) {
+                if (blocks) {
+                    output.write(numBytes);
+                }
+
+                output.write(buffer, 0, numBytes);
+
+                buffer[0] = 0;
+                index = 0;
+                bitsLeft = 8;
+            }
+
+            if (numbits <= bitsLeft) { // bits contents fit in current index byte
+                if (blocks) { // GIF
+                    buffer[index] |= (bits & ((1 << numbits) - 1)) << (8 - bitsLeft);
+                    bitsWritten += numbits;
+                    bitsLeft -= numbits;
+                    numbits = 0;
+                } else {
+                    buffer[index] |= (bits & ((1 << numbits) - 1)) << (bitsLeft - numbits);
+                    bitsWritten += numbits;
+                    bitsLeft -= numbits;
+                    numbits = 0;
+                }
+            } else { // bits overflow from current byte to next.
+                if (blocks) { // GIF
+                    // if bits  > space left in current byte then the lowest order bits
+                    // of code are taken and put in current byte and rest put in next.
+                    buffer[index] |= (bits & ((1 << bitsLeft) - 1)) << (8 - bitsLeft);
+                    bitsWritten += bitsLeft;
+                    bits >>= bitsLeft;
+                    numbits -= bitsLeft;
+                    buffer[++index] = 0;
+                    bitsLeft = 8;
+                } else {
+                    // if bits  > space left in current byte then the highest order bits
+                    // of code are taken and put in current byte and rest put in next.
+                    // at highest order bit location !!
+                    int topbits = (bits >>> (numbits - bitsLeft)) & ((1 << bitsLeft) - 1);
+                    buffer[index] |= topbits;
+                    numbits -= bitsLeft;  // ok this many bits gone off the top
+                    bitsWritten += bitsLeft;
+                    buffer[++index] = 0;  // next index
+                    bitsLeft = 8;
+                }
+            }
+        } while (numbits != 0);
+    }
+}

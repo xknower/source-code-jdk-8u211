@@ -1,176 +1,175 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.FocusEvent;
-/*     */ import javax.swing.KeyStroke;
-/*     */ import javax.swing.plaf.TextUI;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import javax.swing.text.BadLocationException;
-/*     */ import javax.swing.text.Caret;
-/*     */ import javax.swing.text.DefaultCaret;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifTextUI
-/*     */ {
-/*     */   public static Caret createCaret() {
-/*  56 */     return new MotifCaret();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class MotifCaret
-/*     */     extends DefaultCaret
-/*     */     implements UIResource
-/*     */   {
-/*     */     static final int IBeamOverhang = 2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void focusGained(FocusEvent param1FocusEvent) {
-/*  81 */       super.focusGained(param1FocusEvent);
-/*  82 */       getComponent().repaint();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void focusLost(FocusEvent param1FocusEvent) {
-/*  94 */       super.focusLost(param1FocusEvent);
-/*  95 */       getComponent().repaint();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected void damage(Rectangle param1Rectangle) {
-/* 107 */       if (param1Rectangle != null) {
-/* 108 */         this.x = param1Rectangle.x - 2 - 1;
-/* 109 */         this.y = param1Rectangle.y;
-/* 110 */         this.width = param1Rectangle.width + 4 + 3;
-/* 111 */         this.height = param1Rectangle.height;
-/* 112 */         repaint();
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void paint(Graphics param1Graphics) {
-/* 127 */       if (isVisible()) {
-/*     */         try {
-/* 129 */           JTextComponent jTextComponent = getComponent();
-/*     */           
-/* 131 */           Color color = jTextComponent.hasFocus() ? jTextComponent.getCaretColor() : jTextComponent.getDisabledTextColor();
-/* 132 */           TextUI textUI = jTextComponent.getUI();
-/* 133 */           int i = getDot();
-/* 134 */           Rectangle rectangle = textUI.modelToView(jTextComponent, i);
-/* 135 */           int j = rectangle.x - 2;
-/* 136 */           int k = rectangle.x + 2;
-/* 137 */           int m = rectangle.y + 1;
-/* 138 */           int n = rectangle.y + rectangle.height - 2;
-/* 139 */           param1Graphics.setColor(color);
-/* 140 */           param1Graphics.drawLine(rectangle.x, m, rectangle.x, n);
-/* 141 */           param1Graphics.drawLine(j, m, k, m);
-/* 142 */           param1Graphics.drawLine(j, n, k, n);
-/* 143 */         } catch (BadLocationException badLocationException) {}
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 156 */   static final JTextComponent.KeyBinding[] defaultBindings = new JTextComponent.KeyBinding[] { new JTextComponent.KeyBinding(
-/* 157 */         KeyStroke.getKeyStroke(155, 2), "copy-to-clipboard"), new JTextComponent.KeyBinding(
-/*     */ 
-/*     */         
-/* 160 */         KeyStroke.getKeyStroke(155, 1), "paste-from-clipboard"), new JTextComponent.KeyBinding(
-/*     */ 
-/*     */         
-/* 163 */         KeyStroke.getKeyStroke(127, 1), "cut-to-clipboard"), new JTextComponent.KeyBinding(
-/*     */ 
-/*     */         
-/* 166 */         KeyStroke.getKeyStroke(37, 1), "selection-backward"), new JTextComponent.KeyBinding(
-/*     */ 
-/*     */         
-/* 169 */         KeyStroke.getKeyStroke(39, 1), "selection-forward") };
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifTextUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.java.swing.plaf.motif;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.plaf.*;
+
+/**
+ * Provides the look and feel features that are common across
+ * the Motif/CDE text LAF implementations.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author  Timothy Prinzing
+ */
+public class MotifTextUI {
+
+    /**
+     * Creates the object to use for a caret for all of the Motif
+     * text components.  The caret is rendered as an I-beam on Motif.
+     *
+     * @return the caret object
+     */
+    public static Caret createCaret() {
+        return new MotifCaret();
+    }
+
+    /**
+     * The motif caret is rendered as an I beam.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases.  The current serialization support is appropriate
+     * for short term storage or RMI between applications running the same
+     * version of Swing.  A future release of Swing will provide support for
+     * long term persistence.
+     */
+    public static class MotifCaret extends DefaultCaret implements UIResource {
+
+        /**
+         * Called when the component containing the caret gains
+         * focus.  This is implemented to repaint the component
+         * so the focus rectangle will be re-rendered, as well
+         * as providing the superclass behavior.
+         *
+         * @param e the focus event
+         * @see FocusListener#focusGained
+         */
+        public void focusGained(FocusEvent e) {
+            super.focusGained(e);
+            getComponent().repaint();
+        }
+
+        /**
+         * Called when the component containing the caret loses
+         * focus.  This is implemented to set the caret to visibility
+         * to false.
+         *
+         * @param e the focus event
+         * @see FocusListener#focusLost
+         */
+        public void focusLost(FocusEvent e) {
+            super.focusLost(e);
+            getComponent().repaint();
+        }
+
+        /**
+         * Damages the area surrounding the caret to cause
+         * it to be repainted.  If paint() is reimplemented,
+         * this method should also be reimplemented.
+         *
+         * @param r  the current location of the caret, does nothing if null
+         * @see #paint
+         */
+        protected void damage(Rectangle r) {
+            if (r != null) {
+                x = r.x - IBeamOverhang - 1;
+                y = r.y;
+                width = r.width + (2 * IBeamOverhang) + 3;
+                height = r.height;
+                repaint();
+            }
+        }
+
+        /**
+         * Renders the caret as a vertical line.  If this is reimplemented
+         * the damage method should also be reimplemented as it assumes the
+         * shape of the caret is a vertical line.  Does nothing if isVisible()
+         * is false.  The caret color is derived from getCaretColor() if
+         * the component has focus, else from getDisabledTextColor().
+         *
+         * @param g the graphics context
+         * @see #damage
+         */
+        public void paint(Graphics g) {
+            if(isVisible()) {
+                try {
+                    JTextComponent c = getComponent();
+                    Color fg = c.hasFocus() ? c.getCaretColor() :
+                        c.getDisabledTextColor();
+                    TextUI mapper = c.getUI();
+                    int dot = getDot();
+                    Rectangle r = mapper.modelToView(c, dot);
+                    int x0 = r.x - IBeamOverhang;
+                    int x1 = r.x + IBeamOverhang;
+                    int y0 = r.y + 1;
+                    int y1 = r.y + r.height - 2;
+                    g.setColor(fg);
+                    g.drawLine(r.x, y0, r.x, y1);
+                    g.drawLine(x0, y0, x1, y0);
+                    g.drawLine(x0, y1, x1, y1);
+                } catch (BadLocationException e) {
+                    // can't render I guess
+                    //System.err.println("Can't render caret");
+                }
+            }
+        }
+
+        static final int IBeamOverhang = 2;
+    }
+
+    /**
+     * Default bindings all keymaps implementing the Motif feel.
+     */
+    static final JTextComponent.KeyBinding[] defaultBindings = {
+        new JTextComponent.KeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
+                                                                    InputEvent.CTRL_MASK),
+                                             DefaultEditorKit.copyAction),
+        new JTextComponent.KeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
+                                                                    InputEvent.SHIFT_MASK),
+                                             DefaultEditorKit.pasteAction),
+        new JTextComponent.KeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,
+                                                                    InputEvent.SHIFT_MASK),
+                                             DefaultEditorKit.cutAction),
+        new JTextComponent.KeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,
+                                                                    InputEvent.SHIFT_MASK),
+                                             DefaultEditorKit.selectionBackwardAction),
+        new JTextComponent.KeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,
+                                                                    InputEvent.SHIFT_MASK),
+                                             DefaultEditorKit.selectionForwardAction),
+    };
+
+
+}

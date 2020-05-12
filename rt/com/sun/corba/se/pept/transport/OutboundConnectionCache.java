@@ -1,15 +1,41 @@
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
-public interface OutboundConnectionCache extends ConnectionCache {
-  Connection get(ContactInfo paramContactInfo);
-  
-  void put(ContactInfo paramContactInfo, Connection paramConnection);
-  
-  void remove(ContactInfo paramContactInfo);
+/**
+ * @author Harold Carr
+ */
+public interface OutboundConnectionCache
+    extends ConnectionCache
+{
+    public Connection get(ContactInfo contactInfo);
+
+    public void put(ContactInfo contactInfo, Connection connection);
+
+    public void remove(ContactInfo contactInfo);
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\OutboundConnectionCache.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

@@ -1,11 +1,38 @@
-package com.sun.corba.se.spi.copyobject;
-
-public interface ObjectCopier {
-  Object copy(Object paramObject) throws ReflectiveCopyException;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\copyobject\ObjectCopier.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.copyobject ;
+
+/** Provides an interface for a variety of means to copy an arbitrary
+ * object.  Any implementation of this interface must return an exact
+ * copy of obj, preserving all aliasing across all objects reachable
+ * from obj.  ReflectiveCopyException must be thrown if the implementation
+ * cannot copy obj for some reason.  Note that a trivial implementation
+ * of this interface is possible (always return obj), but this is often
+ * not the desired implementation.
+ */
+public interface ObjectCopier {
+    Object copy( Object obj ) throws ReflectiveCopyException ;
+}

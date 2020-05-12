@@ -1,2422 +1,2417 @@
-/*      */ package com.sun.org.apache.xerces.internal.parsers;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.util.EntityResolver2Wrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.EntityResolverWrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.ErrorHandlerWrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.SAXMessageFormatter;
-/*      */ import com.sun.org.apache.xerces.internal.util.Status;
-/*      */ import com.sun.org.apache.xerces.internal.util.SymbolHash;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*      */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
-/*      */ import com.sun.org.apache.xerces.internal.xni.Augmentations;
-/*      */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*      */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
-/*      */ import com.sun.org.apache.xerces.internal.xs.AttributePSVI;
-/*      */ import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
-/*      */ import com.sun.org.apache.xerces.internal.xs.PSVIProvider;
-/*      */ import java.io.IOException;
-/*      */ import java.util.Locale;
-/*      */ import org.xml.sax.AttributeList;
-/*      */ import org.xml.sax.ContentHandler;
-/*      */ import org.xml.sax.DTDHandler;
-/*      */ import org.xml.sax.DocumentHandler;
-/*      */ import org.xml.sax.EntityResolver;
-/*      */ import org.xml.sax.ErrorHandler;
-/*      */ import org.xml.sax.InputSource;
-/*      */ import org.xml.sax.Parser;
-/*      */ import org.xml.sax.SAXException;
-/*      */ import org.xml.sax.SAXNotRecognizedException;
-/*      */ import org.xml.sax.SAXNotSupportedException;
-/*      */ import org.xml.sax.SAXParseException;
-/*      */ import org.xml.sax.XMLReader;
-/*      */ import org.xml.sax.ext.Attributes2;
-/*      */ import org.xml.sax.ext.DeclHandler;
-/*      */ import org.xml.sax.ext.EntityResolver2;
-/*      */ import org.xml.sax.ext.LexicalHandler;
-/*      */ import org.xml.sax.ext.Locator2;
-/*      */ import org.xml.sax.helpers.LocatorImpl;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class AbstractSAXParser
-/*      */   extends AbstractXMLDocumentParser
-/*      */   implements PSVIProvider, Parser, XMLReader
-/*      */ {
-/*      */   protected static final String NAMESPACES = "http://xml.org/sax/features/namespaces";
-/*      */   protected static final String NAMESPACE_PREFIXES = "http://xml.org/sax/features/namespace-prefixes";
-/*      */   protected static final String STRING_INTERNING = "http://xml.org/sax/features/string-interning";
-/*      */   protected static final String ALLOW_UE_AND_NOTATION_EVENTS = "http://xml.org/sax/features/allow-dtd-events-after-endDTD";
-/*  113 */   private static final String[] RECOGNIZED_FEATURES = new String[] { "http://xml.org/sax/features/namespaces", "http://xml.org/sax/features/namespace-prefixes", "http://xml.org/sax/features/string-interning" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String LEXICAL_HANDLER = "http://xml.org/sax/properties/lexical-handler";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String DECLARATION_HANDLER = "http://xml.org/sax/properties/declaration-handler";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final String DOM_NODE = "http://xml.org/sax/properties/dom-node";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final String SECURITY_MANAGER = "http://apache.org/xml/properties/security-manager";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  138 */   private static final String[] RECOGNIZED_PROPERTIES = new String[] { "http://xml.org/sax/properties/lexical-handler", "http://xml.org/sax/properties/declaration-handler", "http://xml.org/sax/properties/dom-node" };
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fNamespaces;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fNamespacePrefixes = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fLexicalHandlerParameterEntities = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fStandalone;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fResolveDTDURIs = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fUseEntityResolver2 = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fXMLNSURIs = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ContentHandler fContentHandler;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected DocumentHandler fDocumentHandler;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected NamespaceContext fNamespaceContext;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected DTDHandler fDTDHandler;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected DeclHandler fDeclHandler;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected LexicalHandler fLexicalHandler;
-/*      */ 
-/*      */ 
-/*      */   
-/*  194 */   protected QName fQName = new QName();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fParseInProgress = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String fVersion;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  209 */   private final AttributesProxy fAttributesProxy = new AttributesProxy();
-/*  210 */   private Augmentations fAugmentations = null;
-/*      */ 
-/*      */   
-/*      */   private static final int BUFFER_SIZE = 20;
-/*      */ 
-/*      */   
-/*  216 */   private char[] fCharBuffer = new char[20];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  221 */   protected SymbolHash fDeclaredAttrs = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected AbstractSAXParser(XMLParserConfiguration config) {
-/*  229 */     super(config);
-/*      */     
-/*  231 */     config.addRecognizedFeatures(RECOGNIZED_FEATURES);
-/*  232 */     config.addRecognizedProperties(RECOGNIZED_PROPERTIES);
-/*      */     
-/*      */     try {
-/*  235 */       config.setFeature("http://xml.org/sax/features/allow-dtd-events-after-endDTD", false);
-/*      */     }
-/*  237 */     catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startDocument(XMLLocator locator, String encoding, NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
-/*  276 */     this.fNamespaceContext = namespaceContext;
-/*      */ 
-/*      */     
-/*      */     try {
-/*  280 */       if (this.fDocumentHandler != null) {
-/*  281 */         if (locator != null) {
-/*  282 */           this.fDocumentHandler.setDocumentLocator(new LocatorProxy(locator));
-/*      */         }
-/*  284 */         this.fDocumentHandler.startDocument();
-/*      */       } 
-/*      */ 
-/*      */       
-/*  288 */       if (this.fContentHandler != null) {
-/*  289 */         if (locator != null) {
-/*  290 */           this.fContentHandler.setDocumentLocator(new LocatorProxy(locator));
-/*      */         }
-/*  292 */         this.fContentHandler.startDocument();
-/*      */       }
-/*      */     
-/*  295 */     } catch (SAXException e) {
-/*  296 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void xmlDecl(String version, String encoding, String standalone, Augmentations augs) throws XNIException {
-/*  318 */     this.fVersion = version;
-/*  319 */     this.fStandalone = "yes".equals(standalone);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void doctypeDecl(String rootElement, String publicId, String systemId, Augmentations augs) throws XNIException {
-/*  337 */     this.fInDTD = true;
-/*      */ 
-/*      */     
-/*      */     try {
-/*  341 */       if (this.fLexicalHandler != null) {
-/*  342 */         this.fLexicalHandler.startDTD(rootElement, publicId, systemId);
-/*      */       }
-/*      */     }
-/*  345 */     catch (SAXException e) {
-/*  346 */       throw new XNIException(e);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  350 */     if (this.fDeclHandler != null) {
-/*  351 */       this.fDeclaredAttrs = new SymbolHash();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startGeneralEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  386 */       if (augs != null && Boolean.TRUE.equals(augs.getItem("ENTITY_SKIPPED"))) {
-/*      */         
-/*  388 */         if (this.fContentHandler != null) {
-/*  389 */           this.fContentHandler.skippedEntity(name);
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*  394 */       else if (this.fLexicalHandler != null) {
-/*  395 */         this.fLexicalHandler.startEntity(name);
-/*      */       }
-/*      */     
-/*      */     }
-/*  399 */     catch (SAXException e) {
-/*  400 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  428 */       if (augs == null || !Boolean.TRUE.equals(augs.getItem("ENTITY_SKIPPED")))
-/*      */       {
-/*  430 */         if (this.fLexicalHandler != null) {
-/*  431 */           this.fLexicalHandler.endEntity(name);
-/*      */         }
-/*      */       }
-/*      */     }
-/*  435 */     catch (SAXException e) {
-/*  436 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  457 */       if (this.fDocumentHandler != null) {
-/*      */ 
-/*      */         
-/*  460 */         this.fAttributesProxy.setAttributes(attributes);
-/*  461 */         this.fDocumentHandler.startElement(element.rawname, this.fAttributesProxy);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  465 */       if (this.fContentHandler != null)
-/*      */       {
-/*  467 */         if (this.fNamespaces) {
-/*      */           
-/*  469 */           startNamespaceMapping();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  477 */           int len = attributes.getLength();
-/*  478 */           if (!this.fNamespacePrefixes) {
-/*  479 */             for (int i = len - 1; i >= 0; i--) {
-/*  480 */               attributes.getName(i, this.fQName);
-/*  481 */               if (this.fQName.prefix == XMLSymbols.PREFIX_XMLNS || this.fQName.rawname == XMLSymbols.PREFIX_XMLNS)
-/*      */               {
-/*      */                 
-/*  484 */                 attributes.removeAttributeAt(i);
-/*      */               }
-/*      */             }
-/*      */           
-/*  488 */           } else if (!this.fXMLNSURIs) {
-/*  489 */             for (int i = len - 1; i >= 0; i--) {
-/*  490 */               attributes.getName(i, this.fQName);
-/*  491 */               if (this.fQName.prefix == XMLSymbols.PREFIX_XMLNS || this.fQName.rawname == XMLSymbols.PREFIX_XMLNS) {
-/*      */ 
-/*      */ 
-/*      */                 
-/*  495 */                 this.fQName.prefix = "";
-/*  496 */                 this.fQName.uri = "";
-/*  497 */                 this.fQName.localpart = "";
-/*  498 */                 attributes.setName(i, this.fQName);
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */         
-/*  504 */         this.fAugmentations = augs;
-/*      */         
-/*  506 */         String uri = (element.uri != null) ? element.uri : "";
-/*  507 */         String localpart = this.fNamespaces ? element.localpart : "";
-/*  508 */         this.fAttributesProxy.setAttributes(attributes);
-/*  509 */         this.fContentHandler.startElement(uri, localpart, element.rawname, this.fAttributesProxy);
-/*      */       }
-/*      */     
-/*      */     }
-/*  513 */     catch (SAXException e) {
-/*  514 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void characters(XMLString text, Augmentations augs) throws XNIException {
-/*  531 */     if (text.length == 0) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  538 */       if (this.fDocumentHandler != null)
-/*      */       {
-/*      */         
-/*  541 */         this.fDocumentHandler.characters(text.ch, text.offset, text.length);
-/*      */       }
-/*      */ 
-/*      */       
-/*  545 */       if (this.fContentHandler != null) {
-/*  546 */         this.fContentHandler.characters(text.ch, text.offset, text.length);
-/*      */       }
-/*      */     }
-/*  549 */     catch (SAXException e) {
-/*  550 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  572 */       if (this.fDocumentHandler != null) {
-/*  573 */         this.fDocumentHandler.ignorableWhitespace(text.ch, text.offset, text.length);
-/*      */       }
-/*      */ 
-/*      */       
-/*  577 */       if (this.fContentHandler != null) {
-/*  578 */         this.fContentHandler.ignorableWhitespace(text.ch, text.offset, text.length);
-/*      */       }
-/*      */     }
-/*  581 */     catch (SAXException e) {
-/*  582 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endElement(QName element, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  600 */       if (this.fDocumentHandler != null) {
-/*  601 */         this.fDocumentHandler.endElement(element.rawname);
-/*      */       }
-/*      */ 
-/*      */       
-/*  605 */       if (this.fContentHandler != null) {
-/*  606 */         this.fAugmentations = augs;
-/*  607 */         String uri = (element.uri != null) ? element.uri : "";
-/*  608 */         String localpart = this.fNamespaces ? element.localpart : "";
-/*  609 */         this.fContentHandler.endElement(uri, localpart, element.rawname);
-/*      */         
-/*  611 */         if (this.fNamespaces) {
-/*  612 */           endNamespaceMapping();
-/*      */         }
-/*      */       }
-/*      */     
-/*  616 */     } catch (SAXException e) {
-/*  617 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startCDATA(Augmentations augs) throws XNIException {
-/*      */     try {
-/*  632 */       if (this.fLexicalHandler != null) {
-/*  633 */         this.fLexicalHandler.startCDATA();
-/*      */       }
-/*      */     }
-/*  636 */     catch (SAXException e) {
-/*  637 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endCDATA(Augmentations augs) throws XNIException {
-/*      */     try {
-/*  652 */       if (this.fLexicalHandler != null) {
-/*  653 */         this.fLexicalHandler.endCDATA();
-/*      */       }
-/*      */     }
-/*  656 */     catch (SAXException e) {
-/*  657 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void comment(XMLString text, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  674 */       if (this.fLexicalHandler != null) {
-/*  675 */         this.fLexicalHandler.comment(text.ch, 0, text.length);
-/*      */       }
-/*      */     }
-/*  678 */     catch (SAXException e) {
-/*  679 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  712 */       if (this.fDocumentHandler != null) {
-/*  713 */         this.fDocumentHandler.processingInstruction(target, data
-/*  714 */             .toString());
-/*      */       }
-/*      */ 
-/*      */       
-/*  718 */       if (this.fContentHandler != null) {
-/*  719 */         this.fContentHandler.processingInstruction(target, data.toString());
-/*      */       }
-/*      */     }
-/*  722 */     catch (SAXException e) {
-/*  723 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endDocument(Augmentations augs) throws XNIException {
-/*      */     try {
-/*  739 */       if (this.fDocumentHandler != null) {
-/*  740 */         this.fDocumentHandler.endDocument();
-/*      */       }
-/*      */ 
-/*      */       
-/*  744 */       if (this.fContentHandler != null) {
-/*  745 */         this.fContentHandler.endDocument();
-/*      */       }
-/*      */     }
-/*  748 */     catch (SAXException e) {
-/*  749 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startExternalSubset(XMLResourceIdentifier identifier, Augmentations augs) throws XNIException {
-/*  768 */     startParameterEntity("[dtd]", (XMLResourceIdentifier)null, (String)null, augs);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endExternalSubset(Augmentations augs) throws XNIException {
-/*  780 */     endParameterEntity("[dtd]", augs);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startParameterEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  815 */       if (augs != null && Boolean.TRUE.equals(augs.getItem("ENTITY_SKIPPED"))) {
-/*      */         
-/*  817 */         if (this.fContentHandler != null) {
-/*  818 */           this.fContentHandler.skippedEntity(name);
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*  823 */       else if (this.fLexicalHandler != null && this.fLexicalHandlerParameterEntities) {
-/*  824 */         this.fLexicalHandler.startEntity(name);
-/*      */       }
-/*      */     
-/*      */     }
-/*  828 */     catch (SAXException e) {
-/*  829 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endParameterEntity(String name, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  858 */       if (augs == null || !Boolean.TRUE.equals(augs.getItem("ENTITY_SKIPPED")))
-/*      */       {
-/*  860 */         if (this.fLexicalHandler != null && this.fLexicalHandlerParameterEntities) {
-/*  861 */           this.fLexicalHandler.endEntity(name);
-/*      */         }
-/*      */       }
-/*      */     }
-/*  865 */     catch (SAXException e) {
-/*  866 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void elementDecl(String name, String contentModel, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  887 */       if (this.fDeclHandler != null) {
-/*  888 */         this.fDeclHandler.elementDecl(name, contentModel);
-/*      */       }
-/*      */     }
-/*  891 */     catch (SAXException e) {
-/*  892 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void attributeDecl(String elementName, String attributeName, String type, String[] enumeration, String defaultType, XMLString defaultValue, XMLString nonNormalizedDefaultValue, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  930 */       if (this.fDeclHandler != null)
-/*      */       {
-/*  932 */         String elemAttr = elementName + "<" + attributeName;
-/*  933 */         if (this.fDeclaredAttrs.get(elemAttr) != null) {
-/*      */           return;
-/*      */         }
-/*      */         
-/*  937 */         this.fDeclaredAttrs.put(elemAttr, Boolean.TRUE);
-/*  938 */         if (type.equals("NOTATION") || type
-/*  939 */           .equals("ENUMERATION")) {
-/*      */           
-/*  941 */           StringBuffer str = new StringBuffer();
-/*  942 */           if (type.equals("NOTATION")) {
-/*  943 */             str.append(type);
-/*  944 */             str.append(" (");
-/*      */           } else {
-/*      */             
-/*  947 */             str.append("(");
-/*      */           } 
-/*  949 */           for (int i = 0; i < enumeration.length; i++) {
-/*  950 */             str.append(enumeration[i]);
-/*  951 */             if (i < enumeration.length - 1) {
-/*  952 */               str.append('|');
-/*      */             }
-/*      */           } 
-/*  955 */           str.append(')');
-/*  956 */           type = str.toString();
-/*      */         } 
-/*  958 */         String value = (defaultValue == null) ? null : defaultValue.toString();
-/*  959 */         this.fDeclHandler.attributeDecl(elementName, attributeName, type, defaultType, value);
-/*      */       }
-/*      */     
-/*      */     }
-/*  963 */     catch (SAXException e) {
-/*  964 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void internalEntityDecl(String name, XMLString text, XMLString nonNormalizedText, Augmentations augs) throws XNIException {
-/*      */     try {
-/*  992 */       if (this.fDeclHandler != null) {
-/*  993 */         this.fDeclHandler.internalEntityDecl(name, text.toString());
-/*      */       }
-/*      */     }
-/*  996 */     catch (SAXException e) {
-/*  997 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void externalEntityDecl(String name, XMLResourceIdentifier identifier, Augmentations augs) throws XNIException {
-/*      */     try {
-/* 1019 */       if (this.fDeclHandler != null) {
-/* 1020 */         String publicId = identifier.getPublicId();
-/*      */         
-/* 1022 */         String systemId = this.fResolveDTDURIs ? identifier.getExpandedSystemId() : identifier.getLiteralSystemId();
-/* 1023 */         this.fDeclHandler.externalEntityDecl(name, publicId, systemId);
-/*      */       }
-/*      */     
-/* 1026 */     } catch (SAXException e) {
-/* 1027 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void unparsedEntityDecl(String name, XMLResourceIdentifier identifier, String notation, Augmentations augs) throws XNIException {
-/*      */     try {
-/* 1050 */       if (this.fDTDHandler != null) {
-/* 1051 */         String publicId = identifier.getPublicId();
-/*      */         
-/* 1053 */         String systemId = this.fResolveDTDURIs ? identifier.getExpandedSystemId() : identifier.getLiteralSystemId();
-/* 1054 */         this.fDTDHandler.unparsedEntityDecl(name, publicId, systemId, notation);
-/*      */       }
-/*      */     
-/* 1057 */     } catch (SAXException e) {
-/* 1058 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void notationDecl(String name, XMLResourceIdentifier identifier, Augmentations augs) throws XNIException {
-/*      */     try {
-/* 1078 */       if (this.fDTDHandler != null) {
-/* 1079 */         String publicId = identifier.getPublicId();
-/*      */         
-/* 1081 */         String systemId = this.fResolveDTDURIs ? identifier.getExpandedSystemId() : identifier.getLiteralSystemId();
-/* 1082 */         this.fDTDHandler.notationDecl(name, publicId, systemId);
-/*      */       }
-/*      */     
-/* 1085 */     } catch (SAXException e) {
-/* 1086 */       throw new XNIException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endDTD(Augmentations augs) throws XNIException {
-/* 1100 */     this.fInDTD = false;
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1104 */       if (this.fLexicalHandler != null) {
-/* 1105 */         this.fLexicalHandler.endDTD();
-/*      */       }
-/*      */     }
-/* 1108 */     catch (SAXException e) {
-/* 1109 */       throw new XNIException(e);
-/*      */     } 
-/* 1111 */     if (this.fDeclaredAttrs != null)
-/*      */     {
-/* 1113 */       this.fDeclaredAttrs.clear();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void parse(String systemId) throws SAXException, IOException {
-/* 1138 */     XMLInputSource source = new XMLInputSource(null, systemId, null);
-/*      */     try {
-/* 1140 */       parse(source);
-/*      */ 
-/*      */     
-/*      */     }
-/* 1144 */     catch (XMLParseException e) {
-/* 1145 */       Exception ex = e.getException();
-/* 1146 */       if (ex == null) {
-/*      */ 
-/*      */         
-/* 1149 */         LocatorImpl locatorImpl = new LocatorImpl() {
-/*      */             public String getXMLVersion() {
-/* 1151 */               return AbstractSAXParser.this.fVersion;
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             public String getEncoding() {
-/* 1159 */               return null;
-/*      */             }
-/*      */           };
-/* 1162 */         locatorImpl.setPublicId(e.getPublicId());
-/* 1163 */         locatorImpl.setSystemId(e.getExpandedSystemId());
-/* 1164 */         locatorImpl.setLineNumber(e.getLineNumber());
-/* 1165 */         locatorImpl.setColumnNumber(e.getColumnNumber());
-/* 1166 */         throw new SAXParseException(e.getMessage(), locatorImpl);
-/*      */       } 
-/* 1168 */       if (ex instanceof SAXException)
-/*      */       {
-/* 1170 */         throw (SAXException)ex;
-/*      */       }
-/* 1172 */       if (ex instanceof IOException) {
-/* 1173 */         throw (IOException)ex;
-/*      */       }
-/* 1175 */       throw new SAXException(ex);
-/*      */     }
-/* 1177 */     catch (XNIException e) {
-/* 1178 */       Exception ex = e.getException();
-/* 1179 */       if (ex == null) {
-/* 1180 */         throw new SAXException(e.getMessage());
-/*      */       }
-/* 1182 */       if (ex instanceof SAXException) {
-/* 1183 */         throw (SAXException)ex;
-/*      */       }
-/* 1185 */       if (ex instanceof IOException) {
-/* 1186 */         throw (IOException)ex;
-/*      */       }
-/* 1188 */       throw new SAXException(ex);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void parse(InputSource inputSource) throws SAXException, IOException {
-/*      */     try {
-/* 1208 */       XMLInputSource xmlInputSource = new XMLInputSource(inputSource.getPublicId(), inputSource.getSystemId(), null);
-/*      */       
-/* 1210 */       xmlInputSource.setByteStream(inputSource.getByteStream());
-/* 1211 */       xmlInputSource.setCharacterStream(inputSource.getCharacterStream());
-/* 1212 */       xmlInputSource.setEncoding(inputSource.getEncoding());
-/* 1213 */       parse(xmlInputSource);
-/*      */ 
-/*      */     
-/*      */     }
-/* 1217 */     catch (XMLParseException e) {
-/* 1218 */       Exception ex = e.getException();
-/* 1219 */       if (ex == null) {
-/*      */ 
-/*      */         
-/* 1222 */         LocatorImpl locatorImpl = new LocatorImpl() {
-/*      */             public String getXMLVersion() {
-/* 1224 */               return AbstractSAXParser.this.fVersion;
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             public String getEncoding() {
-/* 1232 */               return null;
-/*      */             }
-/*      */           };
-/* 1235 */         locatorImpl.setPublicId(e.getPublicId());
-/* 1236 */         locatorImpl.setSystemId(e.getExpandedSystemId());
-/* 1237 */         locatorImpl.setLineNumber(e.getLineNumber());
-/* 1238 */         locatorImpl.setColumnNumber(e.getColumnNumber());
-/* 1239 */         throw new SAXParseException(e.getMessage(), locatorImpl);
-/*      */       } 
-/* 1241 */       if (ex instanceof SAXException)
-/*      */       {
-/* 1243 */         throw (SAXException)ex;
-/*      */       }
-/* 1245 */       if (ex instanceof IOException) {
-/* 1246 */         throw (IOException)ex;
-/*      */       }
-/* 1248 */       throw new SAXException(ex);
-/*      */     }
-/* 1250 */     catch (XNIException e) {
-/* 1251 */       Exception ex = e.getException();
-/* 1252 */       if (ex == null) {
-/* 1253 */         throw new SAXException(e.getMessage());
-/*      */       }
-/* 1255 */       if (ex instanceof SAXException) {
-/* 1256 */         throw (SAXException)ex;
-/*      */       }
-/* 1258 */       if (ex instanceof IOException) {
-/* 1259 */         throw (IOException)ex;
-/*      */       }
-/* 1261 */       throw new SAXException(ex);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEntityResolver(EntityResolver resolver) {
-/*      */     try {
-/* 1276 */       XMLEntityResolver xer = (XMLEntityResolver)this.fConfiguration.getProperty("http://apache.org/xml/properties/internal/entity-resolver");
-/* 1277 */       if (this.fUseEntityResolver2 && resolver instanceof EntityResolver2) {
-/* 1278 */         if (xer instanceof EntityResolver2Wrapper) {
-/* 1279 */           EntityResolver2Wrapper er2w = (EntityResolver2Wrapper)xer;
-/* 1280 */           er2w.setEntityResolver((EntityResolver2)resolver);
-/*      */         } else {
-/*      */           
-/* 1283 */           this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/entity-resolver", new EntityResolver2Wrapper((EntityResolver2)resolver));
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/* 1288 */       else if (xer instanceof EntityResolverWrapper) {
-/* 1289 */         EntityResolverWrapper erw = (EntityResolverWrapper)xer;
-/* 1290 */         erw.setEntityResolver(resolver);
-/*      */       } else {
-/*      */         
-/* 1293 */         this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/entity-resolver", new EntityResolverWrapper(resolver));
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/* 1298 */     catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EntityResolver getEntityResolver() {
-/* 1313 */     EntityResolver entityResolver = null;
-/*      */     
-/*      */     try {
-/* 1316 */       XMLEntityResolver xmlEntityResolver = (XMLEntityResolver)this.fConfiguration.getProperty("http://apache.org/xml/properties/internal/entity-resolver");
-/* 1317 */       if (xmlEntityResolver != null) {
-/* 1318 */         if (xmlEntityResolver instanceof EntityResolverWrapper)
-/*      */         {
-/* 1320 */           entityResolver = ((EntityResolverWrapper)xmlEntityResolver).getEntityResolver();
-/*      */         }
-/* 1322 */         else if (xmlEntityResolver instanceof EntityResolver2Wrapper)
-/*      */         {
-/* 1324 */           entityResolver = ((EntityResolver2Wrapper)xmlEntityResolver).getEntityResolver();
-/*      */         }
-/*      */       
-/*      */       }
-/* 1328 */     } catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */ 
-/*      */     
-/* 1331 */     return entityResolver;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setErrorHandler(ErrorHandler errorHandler) {
-/*      */     try {
-/* 1354 */       XMLErrorHandler xeh = (XMLErrorHandler)this.fConfiguration.getProperty("http://apache.org/xml/properties/internal/error-handler");
-/* 1355 */       if (xeh instanceof ErrorHandlerWrapper) {
-/* 1356 */         ErrorHandlerWrapper ehw = (ErrorHandlerWrapper)xeh;
-/* 1357 */         ehw.setErrorHandler(errorHandler);
-/*      */       } else {
-/*      */         
-/* 1360 */         this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/error-handler", new ErrorHandlerWrapper(errorHandler));
-/*      */       }
-/*      */     
-/*      */     }
-/* 1364 */     catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ErrorHandler getErrorHandler() {
-/* 1379 */     ErrorHandler errorHandler = null;
-/*      */     
-/*      */     try {
-/* 1382 */       XMLErrorHandler xmlErrorHandler = (XMLErrorHandler)this.fConfiguration.getProperty("http://apache.org/xml/properties/internal/error-handler");
-/* 1383 */       if (xmlErrorHandler != null && xmlErrorHandler instanceof ErrorHandlerWrapper)
-/*      */       {
-/* 1385 */         errorHandler = ((ErrorHandlerWrapper)xmlErrorHandler).getErrorHandler();
-/*      */       }
-/*      */     }
-/* 1388 */     catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */ 
-/*      */     
-/* 1391 */     return errorHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLocale(Locale locale) throws SAXException {
-/* 1408 */     this.fConfiguration.setLocale(locale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDTDHandler(DTDHandler dtdHandler) {
-/* 1428 */     this.fDTDHandler = dtdHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDocumentHandler(DocumentHandler documentHandler) {
-/* 1450 */     this.fDocumentHandler = documentHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setContentHandler(ContentHandler contentHandler) {
-/* 1473 */     this.fContentHandler = contentHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ContentHandler getContentHandler() {
-/* 1485 */     return this.fContentHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DTDHandler getDTDHandler() {
-/* 1496 */     return this.fDTDHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFeature(String featureId, boolean state) throws SAXNotRecognizedException, SAXNotSupportedException {
-/*      */     try {
-/* 1521 */       if (featureId.startsWith("http://xml.org/sax/features/")) {
-/* 1522 */         int suffixLength = featureId.length() - "http://xml.org/sax/features/".length();
-/*      */ 
-/*      */         
-/* 1525 */         if (suffixLength == "namespaces".length() && featureId
-/* 1526 */           .endsWith("namespaces")) {
-/* 1527 */           this.fConfiguration.setFeature(featureId, state);
-/* 1528 */           this.fNamespaces = state;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1538 */         if (suffixLength == "namespace-prefixes".length() && featureId
-/* 1539 */           .endsWith("namespace-prefixes")) {
-/* 1540 */           this.fConfiguration.setFeature(featureId, state);
-/* 1541 */           this.fNamespacePrefixes = state;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1549 */         if (suffixLength == "string-interning".length() && featureId
-/* 1550 */           .endsWith("string-interning")) {
-/* 1551 */           if (!state) {
-/* 1552 */             throw new SAXNotSupportedException(
-/* 1553 */                 SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "false-not-supported", new Object[] { featureId }));
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1563 */         if (suffixLength == "lexical-handler/parameter-entities".length() && featureId
-/* 1564 */           .endsWith("lexical-handler/parameter-entities")) {
-/* 1565 */           this.fLexicalHandlerParameterEntities = state;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1573 */         if (suffixLength == "resolve-dtd-uris".length() && featureId
-/* 1574 */           .endsWith("resolve-dtd-uris")) {
-/* 1575 */           this.fResolveDTDURIs = state;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1583 */         if (suffixLength == "unicode-normalization-checking".length() && featureId
-/* 1584 */           .endsWith("unicode-normalization-checking")) {
-/*      */ 
-/*      */           
-/* 1587 */           if (state) {
-/* 1588 */             throw new SAXNotSupportedException(
-/* 1589 */                 SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "true-not-supported", new Object[] { featureId }));
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1599 */         if (suffixLength == "xmlns-uris".length() && featureId
-/* 1600 */           .endsWith("xmlns-uris")) {
-/* 1601 */           this.fXMLNSURIs = state;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1609 */         if (suffixLength == "use-entity-resolver2".length() && featureId
-/* 1610 */           .endsWith("use-entity-resolver2")) {
-/* 1611 */           if (state != this.fUseEntityResolver2) {
-/* 1612 */             this.fUseEntityResolver2 = state;
-/*      */             
-/* 1614 */             setEntityResolver(getEntityResolver());
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1633 */         if ((suffixLength == "is-standalone".length() && featureId
-/* 1634 */           .endsWith("is-standalone")) || (suffixLength == "use-attributes2"
-/* 1635 */           .length() && featureId
-/* 1636 */           .endsWith("use-attributes2")) || (suffixLength == "use-locator2"
-/* 1637 */           .length() && featureId
-/* 1638 */           .endsWith("use-locator2")) || (suffixLength == "xml-1.1"
-/* 1639 */           .length() && featureId
-/* 1640 */           .endsWith("xml-1.1"))) {
-/* 1641 */           throw new SAXNotSupportedException(
-/* 1642 */               SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "feature-read-only", new Object[] { featureId }));
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 1651 */       else if (featureId.equals("http://javax.xml.XMLConstants/feature/secure-processing") && 
-/* 1652 */         state && 
-/* 1653 */         this.fConfiguration.getProperty("http://apache.org/xml/properties/security-manager") == null) {
-/* 1654 */         this.fConfiguration.setProperty("http://apache.org/xml/properties/security-manager", new XMLSecurityManager());
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1663 */       this.fConfiguration.setFeature(featureId, state);
-/*      */     }
-/* 1665 */     catch (XMLConfigurationException e) {
-/* 1666 */       String identifier = e.getIdentifier();
-/* 1667 */       if (e.getType() == Status.NOT_RECOGNIZED) {
-/* 1668 */         throw new SAXNotRecognizedException(
-/* 1669 */             SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "feature-not-recognized", new Object[] { identifier }));
-/*      */       }
-/*      */ 
-/*      */       
-/* 1673 */       throw new SAXNotSupportedException(
-/* 1674 */           SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "feature-not-supported", new Object[] { identifier }));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getFeature(String featureId) throws SAXNotRecognizedException, SAXNotSupportedException {
-/*      */     try {
-/* 1703 */       if (featureId.startsWith("http://xml.org/sax/features/")) {
-/* 1704 */         int suffixLength = featureId.length() - "http://xml.org/sax/features/".length();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1712 */         if (suffixLength == "namespace-prefixes".length() && featureId
-/* 1713 */           .endsWith("namespace-prefixes")) {
-/* 1714 */           boolean state = this.fConfiguration.getFeature(featureId);
-/* 1715 */           return state;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1721 */         if (suffixLength == "string-interning".length() && featureId
-/* 1722 */           .endsWith("string-interning")) {
-/* 1723 */           return true;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1729 */         if (suffixLength == "is-standalone".length() && featureId
-/* 1730 */           .endsWith("is-standalone")) {
-/* 1731 */           return this.fStandalone;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1737 */         if (suffixLength == "xml-1.1".length() && featureId
-/* 1738 */           .endsWith("xml-1.1")) {
-/* 1739 */           return this.fConfiguration instanceof XML11Configurable;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1746 */         if (suffixLength == "lexical-handler/parameter-entities".length() && featureId
-/* 1747 */           .endsWith("lexical-handler/parameter-entities")) {
-/* 1748 */           return this.fLexicalHandlerParameterEntities;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1754 */         if (suffixLength == "resolve-dtd-uris".length() && featureId
-/* 1755 */           .endsWith("resolve-dtd-uris")) {
-/* 1756 */           return this.fResolveDTDURIs;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1763 */         if (suffixLength == "xmlns-uris".length() && featureId
-/* 1764 */           .endsWith("xmlns-uris")) {
-/* 1765 */           return this.fXMLNSURIs;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1772 */         if (suffixLength == "unicode-normalization-checking".length() && featureId
-/* 1773 */           .endsWith("unicode-normalization-checking"))
-/*      */         {
-/*      */           
-/* 1776 */           return false;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1783 */         if (suffixLength == "use-entity-resolver2".length() && featureId
-/* 1784 */           .endsWith("use-entity-resolver2")) {
-/* 1785 */           return this.fUseEntityResolver2;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1795 */         if ((suffixLength == "use-attributes2".length() && featureId
-/* 1796 */           .endsWith("use-attributes2")) || (suffixLength == "use-locator2"
-/* 1797 */           .length() && featureId
-/* 1798 */           .endsWith("use-locator2"))) {
-/* 1799 */           return true;
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1820 */       return this.fConfiguration.getFeature(featureId);
-/*      */     }
-/* 1822 */     catch (XMLConfigurationException e) {
-/* 1823 */       String identifier = e.getIdentifier();
-/* 1824 */       if (e.getType() == Status.NOT_RECOGNIZED) {
-/* 1825 */         throw new SAXNotRecognizedException(
-/* 1826 */             SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "feature-not-recognized", new Object[] { identifier }));
-/*      */       }
-/*      */ 
-/*      */       
-/* 1830 */       throw new SAXNotSupportedException(
-/* 1831 */           SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "feature-not-supported", new Object[] { identifier }));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setProperty(String propertyId, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-/*      */     try {
-/* 1861 */       if (propertyId.startsWith("http://xml.org/sax/properties/")) {
-/* 1862 */         int suffixLength = propertyId.length() - "http://xml.org/sax/properties/".length();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1870 */         if (suffixLength == "lexical-handler".length() && propertyId
-/* 1871 */           .endsWith("lexical-handler")) {
-/*      */           try {
-/* 1873 */             setLexicalHandler((LexicalHandler)value);
-/*      */           }
-/* 1875 */           catch (ClassCastException e) {
-/* 1876 */             throw new SAXNotSupportedException(
-/* 1877 */                 SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "incompatible-class", new Object[] { propertyId, "org.xml.sax.ext.LexicalHandler" }));
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1888 */         if (suffixLength == "declaration-handler".length() && propertyId
-/* 1889 */           .endsWith("declaration-handler")) {
-/*      */           try {
-/* 1891 */             setDeclHandler((DeclHandler)value);
-/*      */           }
-/* 1893 */           catch (ClassCastException e) {
-/* 1894 */             throw new SAXNotSupportedException(
-/* 1895 */                 SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "incompatible-class", new Object[] { propertyId, "org.xml.sax.ext.DeclHandler" }));
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1914 */         if ((suffixLength == "dom-node".length() && propertyId
-/* 1915 */           .endsWith("dom-node")) || (suffixLength == "document-xml-version"
-/* 1916 */           .length() && propertyId
-/* 1917 */           .endsWith("document-xml-version"))) {
-/* 1918 */           throw new SAXNotSupportedException(
-/* 1919 */               SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-read-only", new Object[] { propertyId }));
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1943 */       this.fConfiguration.setProperty(propertyId, value);
-/*      */     }
-/* 1945 */     catch (XMLConfigurationException e) {
-/* 1946 */       String identifier = e.getIdentifier();
-/* 1947 */       if (e.getType() == Status.NOT_RECOGNIZED) {
-/* 1948 */         throw new SAXNotRecognizedException(
-/* 1949 */             SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-not-recognized", new Object[] { identifier }));
-/*      */       }
-/*      */ 
-/*      */       
-/* 1953 */       throw new SAXNotSupportedException(
-/* 1954 */           SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-not-supported", new Object[] { identifier }));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getProperty(String propertyId) throws SAXNotRecognizedException, SAXNotSupportedException {
-/*      */     try {
-/* 1983 */       if (propertyId.startsWith("http://xml.org/sax/properties/")) {
-/* 1984 */         int suffixLength = propertyId.length() - "http://xml.org/sax/properties/".length();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1992 */         if (suffixLength == "document-xml-version".length() && propertyId
-/* 1993 */           .endsWith("document-xml-version")) {
-/* 1994 */           return this.fVersion;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2003 */         if (suffixLength == "lexical-handler".length() && propertyId
-/* 2004 */           .endsWith("lexical-handler")) {
-/* 2005 */           return getLexicalHandler();
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2013 */         if (suffixLength == "declaration-handler".length() && propertyId
-/* 2014 */           .endsWith("declaration-handler")) {
-/* 2015 */           return getDeclHandler();
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2028 */         if (suffixLength == "dom-node".length() && propertyId
-/* 2029 */           .endsWith("dom-node"))
-/*      */         {
-/* 2031 */           throw new SAXNotSupportedException(
-/* 2032 */               SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "dom-node-read-not-supported", null));
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2057 */       return this.fConfiguration.getProperty(propertyId);
-/*      */     }
-/* 2059 */     catch (XMLConfigurationException e) {
-/* 2060 */       String identifier = e.getIdentifier();
-/* 2061 */       if (e.getType() == Status.NOT_RECOGNIZED) {
-/* 2062 */         throw new SAXNotRecognizedException(
-/* 2063 */             SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-not-recognized", new Object[] { identifier }));
-/*      */       }
-/*      */ 
-/*      */       
-/* 2067 */       throw new SAXNotSupportedException(
-/* 2068 */           SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-not-supported", new Object[] { identifier }));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setDeclHandler(DeclHandler handler) throws SAXNotRecognizedException, SAXNotSupportedException {
-/* 2097 */     if (this.fParseInProgress) {
-/* 2098 */       throw new SAXNotSupportedException(
-/* 2099 */           SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-not-parsing-supported", new Object[] { "http://xml.org/sax/properties/declaration-handler" }));
-/*      */     }
-/*      */ 
-/*      */     
-/* 2103 */     this.fDeclHandler = handler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected DeclHandler getDeclHandler() throws SAXNotRecognizedException, SAXNotSupportedException {
-/* 2114 */     return this.fDeclHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setLexicalHandler(LexicalHandler handler) throws SAXNotRecognizedException, SAXNotSupportedException {
-/* 2133 */     if (this.fParseInProgress) {
-/* 2134 */       throw new SAXNotSupportedException(
-/* 2135 */           SAXMessageFormatter.formatMessage(this.fConfiguration.getLocale(), "property-not-parsing-supported", new Object[] { "http://xml.org/sax/properties/lexical-handler" }));
-/*      */     }
-/*      */ 
-/*      */     
-/* 2139 */     this.fLexicalHandler = handler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected LexicalHandler getLexicalHandler() throws SAXNotRecognizedException, SAXNotSupportedException {
-/* 2150 */     return this.fLexicalHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void startNamespaceMapping() throws SAXException {
-/* 2157 */     int count = this.fNamespaceContext.getDeclaredPrefixCount();
-/* 2158 */     if (count > 0) {
-/* 2159 */       String prefix = null;
-/* 2160 */       String uri = null;
-/* 2161 */       for (int i = 0; i < count; i++) {
-/* 2162 */         prefix = this.fNamespaceContext.getDeclaredPrefixAt(i);
-/* 2163 */         uri = this.fNamespaceContext.getURI(prefix);
-/* 2164 */         this.fContentHandler.startPrefixMapping(prefix, (uri == null) ? "" : uri);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void endNamespaceMapping() throws SAXException {
-/* 2174 */     int count = this.fNamespaceContext.getDeclaredPrefixCount();
-/* 2175 */     if (count > 0) {
-/* 2176 */       for (int i = 0; i < count; i++) {
-/* 2177 */         this.fContentHandler.endPrefixMapping(this.fNamespaceContext.getDeclaredPrefixAt(i));
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset() throws XNIException {
-/* 2192 */     super.reset();
-/*      */ 
-/*      */     
-/* 2195 */     this.fInDTD = false;
-/* 2196 */     this.fVersion = "1.0";
-/* 2197 */     this.fStandalone = false;
-/*      */ 
-/*      */     
-/* 2200 */     this.fNamespaces = this.fConfiguration.getFeature("http://xml.org/sax/features/namespaces");
-/* 2201 */     this.fNamespacePrefixes = this.fConfiguration.getFeature("http://xml.org/sax/features/namespace-prefixes");
-/* 2202 */     this.fAugmentations = null;
-/* 2203 */     this.fDeclaredAttrs = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class LocatorProxy
-/*      */     implements Locator2
-/*      */   {
-/*      */     protected XMLLocator fLocator;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public LocatorProxy(XMLLocator locator) {
-/* 2227 */       this.fLocator = locator;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getPublicId() {
-/* 2236 */       return this.fLocator.getPublicId();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public String getSystemId() {
-/* 2241 */       return this.fLocator.getExpandedSystemId();
-/*      */     }
-/*      */     
-/*      */     public int getLineNumber() {
-/* 2245 */       return this.fLocator.getLineNumber();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public int getColumnNumber() {
-/* 2250 */       return this.fLocator.getColumnNumber();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public String getXMLVersion() {
-/* 2255 */       return this.fLocator.getXMLVersion();
-/*      */     }
-/*      */     
-/*      */     public String getEncoding() {
-/* 2259 */       return this.fLocator.getEncoding();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final class AttributesProxy
-/*      */     implements AttributeList, Attributes2
-/*      */   {
-/*      */     protected XMLAttributes fAttributes;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setAttributes(XMLAttributes attributes) {
-/* 2280 */       this.fAttributes = attributes;
-/*      */     }
-/*      */     
-/*      */     public int getLength() {
-/* 2284 */       return this.fAttributes.getLength();
-/*      */     }
-/*      */     
-/*      */     public String getName(int i) {
-/* 2288 */       return this.fAttributes.getQName(i);
-/*      */     }
-/*      */     
-/*      */     public String getQName(int index) {
-/* 2292 */       return this.fAttributes.getQName(index);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getURI(int index) {
-/* 2299 */       String uri = this.fAttributes.getURI(index);
-/* 2300 */       return (uri != null) ? uri : "";
-/*      */     }
-/*      */     
-/*      */     public String getLocalName(int index) {
-/* 2304 */       return this.fAttributes.getLocalName(index);
-/*      */     }
-/*      */     
-/*      */     public String getType(int i) {
-/* 2308 */       return this.fAttributes.getType(i);
-/*      */     }
-/*      */     
-/*      */     public String getType(String name) {
-/* 2312 */       return this.fAttributes.getType(name);
-/*      */     }
-/*      */     
-/*      */     public String getType(String uri, String localName) {
-/* 2316 */       return uri.equals("") ? this.fAttributes.getType(null, localName) : this.fAttributes
-/* 2317 */         .getType(uri, localName);
-/*      */     }
-/*      */     
-/*      */     public String getValue(int i) {
-/* 2321 */       return this.fAttributes.getValue(i);
-/*      */     }
-/*      */     
-/*      */     public String getValue(String name) {
-/* 2325 */       return this.fAttributes.getValue(name);
-/*      */     }
-/*      */     
-/*      */     public String getValue(String uri, String localName) {
-/* 2329 */       return uri.equals("") ? this.fAttributes.getValue(null, localName) : this.fAttributes
-/* 2330 */         .getValue(uri, localName);
-/*      */     }
-/*      */     
-/*      */     public int getIndex(String qName) {
-/* 2334 */       return this.fAttributes.getIndex(qName);
-/*      */     }
-/*      */     
-/*      */     public int getIndex(String uri, String localPart) {
-/* 2338 */       return uri.equals("") ? this.fAttributes.getIndex(null, localPart) : this.fAttributes
-/* 2339 */         .getIndex(uri, localPart);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isDeclared(int index) {
-/* 2345 */       if (index < 0 || index >= this.fAttributes.getLength()) {
-/* 2346 */         throw new ArrayIndexOutOfBoundsException(index);
-/*      */       }
-/* 2348 */       return Boolean.TRUE.equals(this.fAttributes
-/* 2349 */           .getAugmentations(index).getItem("ATTRIBUTE_DECLARED"));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean isDeclared(String qName) {
-/* 2354 */       int index = getIndex(qName);
-/* 2355 */       if (index == -1) {
-/* 2356 */         throw new IllegalArgumentException(qName);
-/*      */       }
-/* 2358 */       return Boolean.TRUE.equals(this.fAttributes
-/* 2359 */           .getAugmentations(index).getItem("ATTRIBUTE_DECLARED"));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean isDeclared(String uri, String localName) {
-/* 2364 */       int index = getIndex(uri, localName);
-/* 2365 */       if (index == -1) {
-/* 2366 */         throw new IllegalArgumentException(localName);
-/*      */       }
-/* 2368 */       return Boolean.TRUE.equals(this.fAttributes
-/* 2369 */           .getAugmentations(index).getItem("ATTRIBUTE_DECLARED"));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean isSpecified(int index) {
-/* 2374 */       if (index < 0 || index >= this.fAttributes.getLength()) {
-/* 2375 */         throw new ArrayIndexOutOfBoundsException(index);
-/*      */       }
-/* 2377 */       return this.fAttributes.isSpecified(index);
-/*      */     }
-/*      */     
-/*      */     public boolean isSpecified(String qName) {
-/* 2381 */       int index = getIndex(qName);
-/* 2382 */       if (index == -1) {
-/* 2383 */         throw new IllegalArgumentException(qName);
-/*      */       }
-/* 2385 */       return this.fAttributes.isSpecified(index);
-/*      */     }
-/*      */     
-/*      */     public boolean isSpecified(String uri, String localName) {
-/* 2389 */       int index = getIndex(uri, localName);
-/* 2390 */       if (index == -1) {
-/* 2391 */         throw new IllegalArgumentException(localName);
-/*      */       }
-/* 2393 */       return this.fAttributes.isSpecified(index);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ElementPSVI getElementPSVI() {
-/* 2402 */     return (this.fAugmentations != null) ? (ElementPSVI)this.fAugmentations.getItem("ELEMENT_PSVI") : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AttributePSVI getAttributePSVI(int index) {
-/* 2408 */     return (AttributePSVI)this.fAttributesProxy.fAttributes.getAugmentations(index).getItem("ATTRIBUTE_PSVI");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AttributePSVI getAttributePSVIByName(String uri, String localname) {
-/* 2414 */     return (AttributePSVI)this.fAttributesProxy.fAttributes.getAugmentations(uri, localname).getItem("ATTRIBUTE_PSVI");
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\parsers\AbstractSAXParser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.parsers;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.util.EntityResolver2Wrapper;
+import com.sun.org.apache.xerces.internal.util.EntityResolverWrapper;
+import com.sun.org.apache.xerces.internal.util.ErrorHandlerWrapper;
+import com.sun.org.apache.xerces.internal.util.SAXMessageFormatter;
+import com.sun.org.apache.xerces.internal.util.Status;
+import com.sun.org.apache.xerces.internal.util.SymbolHash;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.xni.Augmentations;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
+import com.sun.org.apache.xerces.internal.xs.AttributePSVI;
+import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
+import com.sun.org.apache.xerces.internal.xs.PSVIProvider;
+import java.io.IOException;
+import java.util.Locale;
+import javax.xml.XMLConstants;
+import org.xml.sax.AttributeList;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.DocumentHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.Parser;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.ext.Attributes2;
+import org.xml.sax.ext.DeclHandler;
+import org.xml.sax.ext.EntityResolver2;
+import org.xml.sax.ext.LexicalHandler;
+import org.xml.sax.ext.Locator2;
+import org.xml.sax.helpers.LocatorImpl;
+
+/**
+ * This is the base class of all SAX parsers. It implements both the
+ * SAX1 and SAX2 parser functionality, while the actual pipeline is
+ * defined in the parser configuration.
+ *
+ * @author Arnaud Le Hors, IBM
+ * @author Andy Clark, IBM
+ *
+ * @version $Id: AbstractSAXParser.java,v 1.6 2010-11-01 04:40:09 joehw Exp $
+ */
+public abstract class AbstractSAXParser
+    extends AbstractXMLDocumentParser
+    implements PSVIProvider, // PSVI
+              Parser, XMLReader // SAX1, SAX2
+{
+
+    //
+    // Constants
+    //
+
+    // features
+
+    /** Feature identifier: namespaces. */
+    protected static final String NAMESPACES =
+        Constants.SAX_FEATURE_PREFIX + Constants.NAMESPACES_FEATURE;
+
+    /** Feature identifier: namespace prefixes. */
+    protected static final String NAMESPACE_PREFIXES =
+        Constants.SAX_FEATURE_PREFIX + Constants.NAMESPACE_PREFIXES_FEATURE;
+
+    /** Feature id: string interning. */
+    protected static final String STRING_INTERNING =
+        Constants.SAX_FEATURE_PREFIX + Constants.STRING_INTERNING_FEATURE;
+
+    /** Feature identifier: allow notation and unparsed entity events to be sent out of order. */
+    // this is not meant to be a recognized feature, but we need it here to use
+    // if it is already a recognized feature for the pipeline
+    protected static final String ALLOW_UE_AND_NOTATION_EVENTS =
+        Constants.SAX_FEATURE_PREFIX + Constants.ALLOW_DTD_EVENTS_AFTER_ENDDTD_FEATURE;
+
+    /** Recognized features. */
+    private static final String[] RECOGNIZED_FEATURES = {
+        NAMESPACES,
+        NAMESPACE_PREFIXES,
+        STRING_INTERNING,
+    };
+
+    // properties
+
+    /** Property id: lexical handler. */
+    protected static final String LEXICAL_HANDLER =
+        Constants.SAX_PROPERTY_PREFIX + Constants.LEXICAL_HANDLER_PROPERTY;
+
+    /** Property id: declaration handler. */
+    protected static final String DECLARATION_HANDLER =
+        Constants.SAX_PROPERTY_PREFIX + Constants.DECLARATION_HANDLER_PROPERTY;
+
+    /** Property id: DOM node. */
+    protected static final String DOM_NODE =
+        Constants.SAX_PROPERTY_PREFIX + Constants.DOM_NODE_PROPERTY;
+
+    /** Property id: security manager. */
+    private static final String SECURITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
+
+    /** Recognized properties. */
+    private static final String[] RECOGNIZED_PROPERTIES = {
+        LEXICAL_HANDLER,
+        DECLARATION_HANDLER,
+        DOM_NODE,
+    };
+
+    //
+    // Data
+    //
+
+    // features
+
+    /** Namespaces. */
+    protected boolean fNamespaces;
+
+    /** Namespace prefixes. */
+    protected boolean fNamespacePrefixes = false;
+
+    /** Lexical handler parameter entities. */
+    protected boolean fLexicalHandlerParameterEntities = true;
+
+    /** Standalone document declaration. */
+    protected boolean fStandalone;
+
+    /** Resolve DTD URIs. */
+    protected boolean fResolveDTDURIs = true;
+
+    /** Use EntityResolver2. */
+    protected boolean fUseEntityResolver2 = true;
+
+    /**
+     * XMLNS URIs: Namespace declarations in the
+     * http://www.w3.org/2000/xmlns/ namespace.
+     */
+    protected boolean fXMLNSURIs = false;
+
+    // parser handlers
+
+    /** Content handler. */
+    protected ContentHandler fContentHandler;
+
+    /** Document handler. */
+    protected DocumentHandler fDocumentHandler;
+
+    /** Namespace context */
+    protected NamespaceContext fNamespaceContext;
+
+    /** DTD handler. */
+    protected org.xml.sax.DTDHandler fDTDHandler;
+
+    /** Decl handler. */
+    protected DeclHandler fDeclHandler;
+
+    /** Lexical handler. */
+    protected LexicalHandler fLexicalHandler;
+
+    protected QName fQName = new QName();
+
+    // state
+
+    /**
+     * True if a parse is in progress. This state is needed because
+     * some features/properties cannot be set while parsing (e.g.
+     * validation and namespaces).
+     */
+    protected boolean fParseInProgress = false;
+
+    // track the version of the document being parsed
+    protected String fVersion;
+
+    // temp vars
+    private final AttributesProxy fAttributesProxy = new AttributesProxy();
+    private Augmentations fAugmentations = null;
+
+
+    // temporary buffer for sending normalized values
+    // REVISIT: what should be the size of the buffer?
+    private static final int BUFFER_SIZE = 20;
+    private char[] fCharBuffer =  new char[BUFFER_SIZE];
+
+    // allows us to keep track of whether an attribute has
+    // been declared twice, so that we can avoid exposing the
+    // second declaration to any registered DeclHandler
+    protected SymbolHash fDeclaredAttrs = null;
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    protected AbstractSAXParser(XMLParserConfiguration config) {
+        super(config);
+
+        config.addRecognizedFeatures(RECOGNIZED_FEATURES);
+        config.addRecognizedProperties(RECOGNIZED_PROPERTIES);
+
+        try {
+            config.setFeature(ALLOW_UE_AND_NOTATION_EVENTS, false);
+        }
+        catch (XMLConfigurationException e) {
+            // it wasn't a recognized feature, so we don't worry about it
+        }
+    } // <init>(XMLParserConfiguration)
+
+    //
+    // XMLDocumentHandler methods
+    //
+
+    /**
+     * The start of the document.
+     *
+     * @param locator The document locator, or null if the document
+     *                 location cannot be reported during the parsing
+     *                 of this document. However, it is <em>strongly</em>
+     *                 recommended that a locator be supplied that can
+     *                 at least report the system identifier of the
+     *                 document.
+     * @param encoding The auto-detected IANA encoding name of the entity
+     *                 stream. This value will be null in those situations
+     *                 where the entity encoding is not auto-detected (e.g.
+     *                 internal entities or a document entity that is
+     *                 parsed from a java.io.Reader).
+     * @param namespaceContext
+     *                 The namespace context in effect at the
+     *                 start of this document.
+     *                 This object represents the current context.
+     *                 Implementors of this class are responsible
+     *                 for copying the namespace bindings from the
+     *                 the current context (and its parent contexts)
+     *                 if that information is important.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startDocument(XMLLocator locator, String encoding,
+                              NamespaceContext namespaceContext, Augmentations augs)
+        throws XNIException {
+
+        fNamespaceContext = namespaceContext;
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                if (locator != null) {
+                    fDocumentHandler.setDocumentLocator(new LocatorProxy(locator));
+                }
+                fDocumentHandler.startDocument();
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+                if (locator != null) {
+                    fContentHandler.setDocumentLocator(new LocatorProxy(locator));
+                }
+                fContentHandler.startDocument();
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // startDocument(locator,encoding,augs)
+
+    /**
+     * Notifies of the presence of an XMLDecl line in the document. If
+     * present, this method will be called immediately following the
+     * startDocument call.
+     *
+     * @param version    The XML version.
+     * @param encoding   The IANA encoding name of the document, or null if
+     *                   not specified.
+     * @param standalone The standalone value, or null if not specified.
+     * @param augs   Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void xmlDecl(String version, String encoding, String standalone, Augmentations augs)
+        throws XNIException {
+        // the version need only be set once; if
+        // document's XML 1.0|1.1, that's how it'll stay
+        fVersion = version;
+        fStandalone = "yes".equals(standalone);
+    } // xmlDecl(String,String,String)
+
+    /**
+     * Notifies of the presence of the DOCTYPE line in the document.
+     *
+     * @param rootElement The name of the root element.
+     * @param publicId    The public identifier if an external DTD or null
+     *                    if the external DTD is specified using SYSTEM.
+     * @param systemId    The system identifier if an external DTD, null
+     *                    otherwise.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void doctypeDecl(String rootElement,
+                            String publicId, String systemId, Augmentations augs)
+        throws XNIException {
+        fInDTD = true;
+
+        try {
+            // SAX2 extension
+            if (fLexicalHandler != null) {
+                fLexicalHandler.startDTD(rootElement, publicId, systemId);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+        // is there a DeclHandler?
+        if(fDeclHandler != null) {
+            fDeclaredAttrs = new SymbolHash();
+        }
+
+    } // doctypeDecl(String,String,String)
+
+        /**
+     * This method notifies of the start of an entity. The DTD has the
+     * pseudo-name of "[dtd]" parameter entity names start with '%'; and
+     * general entity names are just the entity name.
+     * <p>
+     * <strong>Note:</strong> Since the document is an entity, the handler
+     * will be notified of the start of the document entity by calling the
+     * startEntity method with the entity name "[xml]" <em>before</em> calling
+     * the startDocument method. When exposing entity boundaries through the
+     * SAX API, the document entity is never reported, however.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param name     The name of the entity.
+     * @param identifier The resource identifier.
+     * @param encoding The auto-detected IANA encoding name of the entity
+     *                 stream. This value will be null in those situations
+     *                 where the entity encoding is not auto-detected (e.g.
+     *                 internal parameter entities).
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startGeneralEntity(String name, XMLResourceIdentifier identifier,
+                                   String encoding, Augmentations augs)
+        throws XNIException {
+
+        try {
+            // Only report startEntity if this entity was actually read.
+            if (augs != null && Boolean.TRUE.equals(augs.getItem(Constants.ENTITY_SKIPPED))) {
+                // report skipped entity to content handler
+                if (fContentHandler != null) {
+                    fContentHandler.skippedEntity(name);
+                }
+            }
+            else {
+                // SAX2 extension
+                if (fLexicalHandler != null) {
+                    fLexicalHandler.startEntity(name);
+                }
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // startGeneralEntity(String,String,String,String,String)
+
+    /**
+     * This method notifies the end of an entity. The DTD has the pseudo-name
+     * of "[dtd]" parameter entity names start with '%'; and general entity
+     * names are just the entity name.
+     * <p>
+     * <strong>Note:</strong> Since the document is an entity, the handler
+     * will be notified of the end of the document entity by calling the
+     * endEntity method with the entity name "[xml]" <em>after</em> calling
+     * the endDocument method. When exposing entity boundaries through the
+     * SAX API, the document entity is never reported, however.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param name The name of the entity.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
+
+        try {
+            // Only report endEntity if this entity was actually read.
+            if (augs == null || !Boolean.TRUE.equals(augs.getItem(Constants.ENTITY_SKIPPED))) {
+                // SAX2 extension
+                if (fLexicalHandler != null) {
+                    fLexicalHandler.endEntity(name);
+                }
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // endEntity(String)
+
+     /**
+     * The start of an element. If the document specifies the start element
+     * by using an empty tag, then the startElement method will immediately
+     * be followed by the endElement method, with no intervening methods.
+     *
+     * @param element    The name of the element.
+     * @param attributes The element attributes.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startElement(QName element, XMLAttributes attributes, Augmentations augs)
+        throws XNIException {
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                // REVISIT: should we support schema-normalized-value for SAX1 events
+                //
+                fAttributesProxy.setAttributes(attributes);
+                fDocumentHandler.startElement(element.rawname, fAttributesProxy);
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+
+                if (fNamespaces) {
+                    // send prefix mapping events
+                    startNamespaceMapping();
+
+                    // REVISIT: It should not be necessary to iterate over the attribute
+                    // list when the set of [namespace attributes] is empty for this
+                    // element. This should be computable from the NamespaceContext, but
+                    // since we currently don't report the mappings for the xml prefix
+                    // we cannot use the declared prefix count for the current context
+                    // to skip this section. -- mrglavas
+                    int len = attributes.getLength();
+                    if (!fNamespacePrefixes) {
+                        for (int i = len - 1; i >= 0; --i) {
+                            attributes.getName(i, fQName);
+                            if ((fQName.prefix == XMLSymbols.PREFIX_XMLNS) ||
+                               (fQName.rawname == XMLSymbols.PREFIX_XMLNS)) {
+                                // remove namespace declaration attributes
+                                attributes.removeAttributeAt(i);
+                            }
+                        }
+                    }
+                    else if (!fXMLNSURIs) {
+                        for (int i = len - 1; i >= 0; --i) {
+                            attributes.getName(i, fQName);
+                            if ((fQName.prefix == XMLSymbols.PREFIX_XMLNS) ||
+                               (fQName.rawname == XMLSymbols.PREFIX_XMLNS)) {
+                                // localpart should be empty string as per SAX documentation:
+                                // http://www.saxproject.org/?selected=namespaces
+                                fQName.prefix = "";
+                                fQName.uri = "";
+                                fQName.localpart = "";
+                                attributes.setName(i, fQName);
+                            }
+                        }
+                    }
+                }
+
+                fAugmentations = augs;
+
+                String uri = element.uri != null ? element.uri : "";
+                String localpart = fNamespaces ? element.localpart : "";
+                fAttributesProxy.setAttributes(attributes);
+                fContentHandler.startElement(uri, localpart, element.rawname,
+                                             fAttributesProxy);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // startElement(QName,XMLAttributes)
+
+    /**
+     * Character content.
+     *
+     * @param text The content.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void characters(XMLString text, Augmentations augs) throws XNIException {
+
+        // if type is union (XML Schema) it is possible that we receive
+        // character call with empty data
+        if (text.length == 0) {
+            return;
+        }
+
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                // REVISIT: should we support schema-normalized-value for SAX1 events
+                //
+                fDocumentHandler.characters(text.ch, text.offset, text.length);
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+                fContentHandler.characters(text.ch, text.offset, text.length);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // characters(XMLString)
+
+    /**
+     * Ignorable whitespace. For this method to be called, the document
+     * source must have some way of determining that the text containing
+     * only whitespace characters should be considered ignorable. For
+     * example, the validator can determine if a length of whitespace
+     * characters in the document are ignorable based on the element
+     * content model.
+     *
+     * @param text The ignorable whitespace.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                fDocumentHandler.ignorableWhitespace(text.ch, text.offset, text.length);
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+                fContentHandler.ignorableWhitespace(text.ch, text.offset, text.length);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // ignorableWhitespace(XMLString)
+
+    /**
+     * The end of an element.
+     *
+     * @param element The name of the element.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endElement(QName element, Augmentations augs) throws XNIException {
+
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                fDocumentHandler.endElement(element.rawname);
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+                fAugmentations = augs;
+                String uri = element.uri != null ? element.uri : "";
+                String localpart = fNamespaces ? element.localpart : "";
+                fContentHandler.endElement(uri, localpart,
+                                           element.rawname);
+                if (fNamespaces) {
+                    endNamespaceMapping();
+                }
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // endElement(QName)
+
+        /**
+     * The start of a CDATA section.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startCDATA(Augmentations augs) throws XNIException {
+
+        try {
+            // SAX2 extension
+            if (fLexicalHandler != null) {
+                fLexicalHandler.startCDATA();
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // startCDATA()
+
+    /**
+     * The end of a CDATA section.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endCDATA(Augmentations augs) throws XNIException {
+
+        try {
+            // SAX2 extension
+            if (fLexicalHandler != null) {
+                fLexicalHandler.endCDATA();
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // endCDATA()
+
+    /**
+     * A comment.
+     *
+     * @param text The text in the comment.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by application to signal an error.
+     */
+    public void comment(XMLString text, Augmentations augs) throws XNIException {
+
+        try {
+            // SAX2 extension
+            if (fLexicalHandler != null) {
+                fLexicalHandler.comment(text.ch, 0, text.length);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // comment(XMLString)
+
+    /**
+     * A processing instruction. Processing instructions consist of a
+     * target name and, optionally, text data. The data is only meaningful
+     * to the application.
+     * <p>
+     * Typically, a processing instruction's data will contain a series
+     * of pseudo-attributes. These pseudo-attributes follow the form of
+     * element attributes but are <strong>not</strong> parsed or presented
+     * to the application as anything other than text. The application is
+     * responsible for parsing the data.
+     *
+     * @param target The target.
+     * @param data   The data or null if none specified.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void processingInstruction(String target, XMLString data, Augmentations augs)
+        throws XNIException {
+
+        //
+        // REVISIT - I keep running into SAX apps that expect
+        //   null data to be an empty string, which is contrary
+        //   to the comment for this method in the SAX API.
+        //
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                fDocumentHandler.processingInstruction(target,
+                                                       data.toString());
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+                fContentHandler.processingInstruction(target, data.toString());
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // processingInstruction(String,XMLString)
+
+
+    /**
+     * The end of the document.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endDocument(Augmentations augs) throws XNIException {
+
+        try {
+            // SAX1
+            if (fDocumentHandler != null) {
+                fDocumentHandler.endDocument();
+            }
+
+            // SAX2
+            if (fContentHandler != null) {
+                fContentHandler.endDocument();
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // endDocument()
+
+    //
+    // XMLDTDHandler methods
+    //
+
+    /**
+     * The start of the DTD external subset.
+     *
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startExternalSubset(XMLResourceIdentifier identifier,
+                                    Augmentations augs) throws XNIException {
+        startParameterEntity("[dtd]", null, null, augs);
+    }
+
+    /**
+     * The end of the DTD external subset.
+     *
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endExternalSubset(Augmentations augs) throws XNIException {
+        endParameterEntity("[dtd]", augs);
+    }
+
+    /**
+     * This method notifies of the start of parameter entity. The DTD has the
+     * pseudo-name of "[dtd]" parameter entity names start with '%'; and
+     * general entity names are just the entity name.
+     * <p>
+     * <strong>Note:</strong> Since the document is an entity, the handler
+     * will be notified of the start of the document entity by calling the
+     * startEntity method with the entity name "[xml]" <em>before</em> calling
+     * the startDocument method. When exposing entity boundaries through the
+     * SAX API, the document entity is never reported, however.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param name     The name of the parameter entity.
+     * @param identifier The resource identifier.
+     * @param encoding The auto-detected IANA encoding name of the entity
+     *                 stream. This value will be null in those situations
+     *                 where the entity encoding is not auto-detected (e.g.
+     *                 internal parameter entities).
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startParameterEntity(String name,
+                                     XMLResourceIdentifier identifier,
+                                     String encoding, Augmentations augs)
+        throws XNIException {
+
+        try {
+            // Only report startEntity if this entity was actually read.
+            if (augs != null && Boolean.TRUE.equals(augs.getItem(Constants.ENTITY_SKIPPED))) {
+                // report skipped entity to content handler
+                if (fContentHandler != null) {
+                    fContentHandler.skippedEntity(name);
+                }
+            }
+            else {
+                // SAX2 extension
+                if (fLexicalHandler != null && fLexicalHandlerParameterEntities) {
+                    fLexicalHandler.startEntity(name);
+                }
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // startParameterEntity(String,identifier,String,Augmentation)
+
+    /**
+     * This method notifies the end of an entity. The DTD has the pseudo-name
+     * of "[dtd]" parameter entity names start with '%'; and general entity
+     * names are just the entity name.
+     * <p>
+     * <strong>Note:</strong> Since the document is an entity, the handler
+     * will be notified of the end of the document entity by calling the
+     * endEntity method with the entity name "[xml]" <em>after</em> calling
+     * the endDocument method. When exposing entity boundaries through the
+     * SAX API, the document entity is never reported, however.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param name The name of the parameter entity.
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endParameterEntity(String name, Augmentations augs) throws XNIException {
+
+        try {
+            // Only report endEntity if this entity was actually read.
+            if (augs == null || !Boolean.TRUE.equals(augs.getItem(Constants.ENTITY_SKIPPED))) {
+                // SAX2 extension
+                if (fLexicalHandler != null && fLexicalHandlerParameterEntities) {
+                    fLexicalHandler.endEntity(name);
+                }
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // endEntity(String)
+
+    /**
+     * An element declaration.
+     *
+     * @param name         The name of the element.
+     * @param contentModel The element content model.
+     *
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void elementDecl(String name, String contentModel, Augmentations augs)
+        throws XNIException {
+
+        try {
+            // SAX2 extension
+            if (fDeclHandler != null) {
+                fDeclHandler.elementDecl(name, contentModel);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // elementDecl(String,String, Augmentations)
+
+    /**
+     * An attribute declaration.
+     *
+     * @param elementName   The name of the element that this attribute
+     *                      is associated with.
+     * @param attributeName The name of the attribute.
+     * @param type          The attribute type. This value will be one of
+     *                      the following: "CDATA", "ENTITY", "ENTITIES",
+     *                      "ENUMERATION", "ID", "IDREF", "IDREFS",
+     *                      "NMTOKEN", "NMTOKENS", or "NOTATION".
+     * @param enumeration   If the type has the value "ENUMERATION" or
+     *                      "NOTATION", this array holds the allowed attribute
+     *                      values; otherwise, this array is null.
+     * @param defaultType   The attribute default type. This value will be
+     *                      one of the following: "#FIXED", "#IMPLIED",
+     *                      "#REQUIRED", or null.
+     * @param defaultValue  The attribute default value, or null if no
+     *                      default value is specified.
+     *
+     * @param nonNormalizedDefaultValue  The attribute default value with no normalization
+     *                      performed, or null if no default value is specified.
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void attributeDecl(String elementName, String attributeName,
+                              String type, String[] enumeration,
+                              String defaultType, XMLString defaultValue,
+                              XMLString nonNormalizedDefaultValue, Augmentations augs) throws XNIException {
+
+        try {
+            // SAX2 extension
+            if (fDeclHandler != null) {
+                // used as a key to detect duplicate attribute definitions.
+                String elemAttr = new StringBuffer(elementName).append("<").append(attributeName).toString();
+                if(fDeclaredAttrs.get(elemAttr) != null) {
+                    // we aren't permitted to return duplicate attribute definitions
+                    return;
+                }
+                fDeclaredAttrs.put(elemAttr, Boolean.TRUE);
+                if (type.equals("NOTATION") ||
+                    type.equals("ENUMERATION")) {
+
+                    StringBuffer str = new StringBuffer();
+                    if (type.equals("NOTATION")) {
+                      str.append(type);
+                      str.append(" (");
+                    }
+                    else {
+                      str.append("(");
+                    }
+                    for (int i = 0; i < enumeration.length; i++) {
+                        str.append(enumeration[i]);
+                        if (i < enumeration.length - 1) {
+                            str.append('|');
+                        }
+                    }
+                    str.append(')');
+                    type = str.toString();
+                }
+                String value = (defaultValue==null) ? null : defaultValue.toString();
+                fDeclHandler.attributeDecl(elementName, attributeName,
+                                           type, defaultType, value);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // attributeDecl(String,String,String,String[],String,XMLString, XMLString, Augmentations)
+
+    /**
+     * An internal entity declaration.
+     *
+     * @param name The name of the entity. Parameter entity names start with
+     *             '%', whereas the name of a general entity is just the
+     *             entity name.
+     * @param text The value of the entity.
+     * @param nonNormalizedText The non-normalized value of the entity. This
+     *             value contains the same sequence of characters that was in
+     *             the internal entity declaration, without any entity
+     *             references expanded.
+     *
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void internalEntityDecl(String name, XMLString text,
+                                   XMLString nonNormalizedText,
+                                   Augmentations augs) throws XNIException {
+
+        try {
+            // SAX2 extensions
+            if (fDeclHandler != null) {
+                fDeclHandler.internalEntityDecl(name, text.toString());
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // internalEntityDecl(String,XMLString,XMLString)
+
+    /**
+     * An external entity declaration.
+     *
+     * @param name     The name of the entity. Parameter entity names start
+     *                 with '%', whereas the name of a general entity is just
+     *                 the entity name.
+     * @param identifier    An object containing all location information
+     *                      pertinent to this entity.
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void externalEntityDecl(String name, XMLResourceIdentifier identifier,
+                                   Augmentations augs) throws XNIException {
+        try {
+            // SAX2 extension
+            if (fDeclHandler != null) {
+                String publicId = identifier.getPublicId();
+                String systemId = fResolveDTDURIs ?
+                    identifier.getExpandedSystemId() : identifier.getLiteralSystemId();
+                fDeclHandler.externalEntityDecl(name, publicId, systemId);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // externalEntityDecl(String,,XMLResourceIdentifier, Augmentations)
+
+    /**
+     * An unparsed entity declaration.
+     *
+     * @param name     The name of the entity.
+     * @param identifier    An object containing all location information
+     *                      pertinent to this entity.
+     * @param notation The name of the notation.
+     *
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void unparsedEntityDecl(String name, XMLResourceIdentifier identifier,
+                                   String notation,
+                                   Augmentations augs) throws XNIException {
+        try {
+            // SAX2 extension
+            if (fDTDHandler != null) {
+                String publicId = identifier.getPublicId();
+                String systemId = fResolveDTDURIs ?
+                    identifier.getExpandedSystemId() : identifier.getLiteralSystemId();
+                fDTDHandler.unparsedEntityDecl(name, publicId, systemId, notation);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // unparsedEntityDecl(String,XMLResourceIdentifier, String, Augmentations)
+
+    /**
+     * A notation declaration
+     *
+     * @param name     The name of the notation.
+     * @param identifier    An object containing all location information
+     *                      pertinent to this notation.
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void notationDecl(String name, XMLResourceIdentifier identifier,
+                             Augmentations augs) throws XNIException {
+        try {
+            // SAX1 and SAX2
+            if (fDTDHandler != null) {
+                String publicId = identifier.getPublicId();
+                String systemId = fResolveDTDURIs ?
+                    identifier.getExpandedSystemId() : identifier.getLiteralSystemId();
+                fDTDHandler.notationDecl(name, publicId, systemId);
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+
+    } // notationDecl(String,XMLResourceIdentifier, Augmentations)
+
+    /**
+     * The end of the DTD.
+     *
+     * @param augs Additional information that may include infoset
+     *                      augmentations.
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endDTD(Augmentations augs) throws XNIException {
+        fInDTD = false;
+
+        try {
+            // SAX2 extension
+            if (fLexicalHandler != null) {
+                fLexicalHandler.endDTD();
+            }
+        }
+        catch (SAXException e) {
+            throw new XNIException(e);
+        }
+        if(fDeclaredAttrs != null) {
+            // help out the GC
+            fDeclaredAttrs.clear();
+        }
+
+    } // endDTD()
+
+    //
+    // Parser and XMLReader methods
+    //
+
+    /**
+     * Parses the input source specified by the given system identifier.
+     * <p>
+     * This method is equivalent to the following:
+     * <pre>
+     *     parse(new InputSource(systemId));
+     * </pre>
+     *
+     * @param systemId The system identifier (URI).
+     *
+     * @exception org.xml.sax.SAXException Throws exception on SAX error.
+     * @exception java.io.IOException Throws exception on i/o error.
+     */
+    public void parse(String systemId) throws SAXException, IOException {
+
+        // parse document
+        XMLInputSource source = new XMLInputSource(null, systemId, null);
+        try {
+            parse(source);
+        }
+
+        // wrap XNI exceptions as SAX exceptions
+        catch (XMLParseException e) {
+            Exception ex = e.getException();
+            if (ex == null) {
+                // must be a parser exception; mine it for locator info and throw
+                // a SAXParseException
+                LocatorImpl locatorImpl = new LocatorImpl(){
+                    public String getXMLVersion() {
+                        return fVersion;
+                    }
+                    // since XMLParseExceptions know nothing about encoding,
+                    // we cannot return anything meaningful in this context.
+                    // We *could* consult the LocatorProxy, but the
+                    // application can do this itself if it wishes to possibly
+                    // be mislead.
+                    public String getEncoding() {
+                        return null;
+                    }
+                };
+                locatorImpl.setPublicId(e.getPublicId());
+                locatorImpl.setSystemId(e.getExpandedSystemId());
+                locatorImpl.setLineNumber(e.getLineNumber());
+                locatorImpl.setColumnNumber(e.getColumnNumber());
+                throw new SAXParseException(e.getMessage(), locatorImpl);
+            }
+            if (ex instanceof SAXException) {
+                // why did we create an XMLParseException?
+                throw (SAXException)ex;
+            }
+            if (ex instanceof IOException) {
+                throw (IOException)ex;
+            }
+            throw new SAXException(ex);
+        }
+        catch (XNIException e) {
+            Exception ex = e.getException();
+            if (ex == null) {
+                throw new SAXException(e.getMessage());
+            }
+            if (ex instanceof SAXException) {
+                throw (SAXException)ex;
+            }
+            if (ex instanceof IOException) {
+                throw (IOException)ex;
+            }
+            throw new SAXException(ex);
+        }
+
+    } // parse(String)
+
+    /**
+     * parse
+     *
+     * @param inputSource
+     *
+     * @exception org.xml.sax.SAXException
+     * @exception java.io.IOException
+     */
+    public void parse(InputSource inputSource)
+        throws SAXException, IOException {
+
+        // parse document
+        try {
+            XMLInputSource xmlInputSource =
+                new XMLInputSource(inputSource.getPublicId(),
+                                   inputSource.getSystemId(),
+                                   null);
+            xmlInputSource.setByteStream(inputSource.getByteStream());
+            xmlInputSource.setCharacterStream(inputSource.getCharacterStream());
+            xmlInputSource.setEncoding(inputSource.getEncoding());
+            parse(xmlInputSource);
+        }
+
+        // wrap XNI exceptions as SAX exceptions
+        catch (XMLParseException e) {
+            Exception ex = e.getException();
+            if (ex == null) {
+                // must be a parser exception; mine it for locator info and throw
+                // a SAXParseException
+                LocatorImpl locatorImpl = new LocatorImpl() {
+                    public String getXMLVersion() {
+                        return fVersion;
+                    }
+                    // since XMLParseExceptions know nothing about encoding,
+                    // we cannot return anything meaningful in this context.
+                    // We *could* consult the LocatorProxy, but the
+                    // application can do this itself if it wishes to possibly
+                    // be mislead.
+                    public String getEncoding() {
+                        return null;
+                    }
+                };
+                locatorImpl.setPublicId(e.getPublicId());
+                locatorImpl.setSystemId(e.getExpandedSystemId());
+                locatorImpl.setLineNumber(e.getLineNumber());
+                locatorImpl.setColumnNumber(e.getColumnNumber());
+                throw new SAXParseException(e.getMessage(), locatorImpl);
+            }
+            if (ex instanceof SAXException) {
+                // why did we create an XMLParseException?
+                throw (SAXException)ex;
+            }
+            if (ex instanceof IOException) {
+                throw (IOException)ex;
+            }
+            throw new SAXException(ex);
+        }
+        catch (XNIException e) {
+            Exception ex = e.getException();
+            if (ex == null) {
+                throw new SAXException(e.getMessage());
+            }
+            if (ex instanceof SAXException) {
+                throw (SAXException)ex;
+            }
+            if (ex instanceof IOException) {
+                throw (IOException)ex;
+            }
+            throw new SAXException(ex);
+        }
+
+    } // parse(InputSource)
+
+    /**
+     * Sets the resolver used to resolve external entities. The EntityResolver
+     * interface supports resolution of public and system identifiers.
+     *
+     * @param resolver The new entity resolver. Passing a null value will
+     *                 uninstall the currently installed resolver.
+     */
+    public void setEntityResolver(EntityResolver resolver) {
+
+        try {
+            XMLEntityResolver xer = (XMLEntityResolver) fConfiguration.getProperty(ENTITY_RESOLVER);
+            if (fUseEntityResolver2 && resolver instanceof EntityResolver2) {
+                if (xer instanceof EntityResolver2Wrapper) {
+                    EntityResolver2Wrapper er2w = (EntityResolver2Wrapper) xer;
+                    er2w.setEntityResolver((EntityResolver2) resolver);
+                }
+                else {
+                    fConfiguration.setProperty(ENTITY_RESOLVER,
+                            new EntityResolver2Wrapper((EntityResolver2) resolver));
+                }
+            }
+            else {
+                if (xer instanceof EntityResolverWrapper) {
+                    EntityResolverWrapper erw = (EntityResolverWrapper) xer;
+                    erw.setEntityResolver(resolver);
+                }
+                else {
+                    fConfiguration.setProperty(ENTITY_RESOLVER,
+                            new EntityResolverWrapper(resolver));
+                }
+            }
+        }
+        catch (XMLConfigurationException e) {
+            // do nothing
+        }
+
+    } // setEntityResolver(EntityResolver)
+
+    /**
+     * Return the current entity resolver.
+     *
+     * @return The current entity resolver, or null if none
+     *         has been registered.
+     * @see #setEntityResolver
+     */
+    public EntityResolver getEntityResolver() {
+
+        EntityResolver entityResolver = null;
+        try {
+            XMLEntityResolver xmlEntityResolver =
+                (XMLEntityResolver)fConfiguration.getProperty(ENTITY_RESOLVER);
+            if (xmlEntityResolver != null) {
+                if (xmlEntityResolver instanceof EntityResolverWrapper) {
+                    entityResolver =
+                        ((EntityResolverWrapper) xmlEntityResolver).getEntityResolver();
+                }
+                else if (xmlEntityResolver instanceof EntityResolver2Wrapper) {
+                    entityResolver =
+                        ((EntityResolver2Wrapper) xmlEntityResolver).getEntityResolver();
+                }
+            }
+        }
+        catch (XMLConfigurationException e) {
+            // do nothing
+        }
+        return entityResolver;
+
+    } // getEntityResolver():EntityResolver
+
+    /**
+     * Allow an application to register an error event handler.
+     *
+     * <p>If the application does not register an error handler, all
+     * error events reported by the SAX parser will be silently
+     * ignored; however, normal processing may not continue.  It is
+     * highly recommended that all SAX applications implement an
+     * error handler to avoid unexpected bugs.</p>
+     *
+     * <p>Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.</p>
+     *
+     * @param errorHandler The error handler.
+     * @see #getErrorHandler
+     */
+    public void setErrorHandler(ErrorHandler errorHandler) {
+
+        try {
+            XMLErrorHandler xeh = (XMLErrorHandler) fConfiguration.getProperty(ERROR_HANDLER);
+            if (xeh instanceof ErrorHandlerWrapper) {
+                ErrorHandlerWrapper ehw = (ErrorHandlerWrapper) xeh;
+                ehw.setErrorHandler(errorHandler);
+            }
+            else {
+                fConfiguration.setProperty(ERROR_HANDLER,
+                        new ErrorHandlerWrapper(errorHandler));
+            }
+        }
+        catch (XMLConfigurationException e) {
+            // do nothing
+        }
+
+    } // setErrorHandler(ErrorHandler)
+
+    /**
+     * Return the current error handler.
+     *
+     * @return The current error handler, or null if none
+     *         has been registered.
+     * @see #setErrorHandler
+     */
+    public ErrorHandler getErrorHandler() {
+
+        ErrorHandler errorHandler = null;
+        try {
+            XMLErrorHandler xmlErrorHandler =
+                (XMLErrorHandler)fConfiguration.getProperty(ERROR_HANDLER);
+            if (xmlErrorHandler != null &&
+                xmlErrorHandler instanceof ErrorHandlerWrapper) {
+                errorHandler = ((ErrorHandlerWrapper)xmlErrorHandler).getErrorHandler();
+            }
+        }
+        catch (XMLConfigurationException e) {
+            // do nothing
+        }
+        return errorHandler;
+
+    } // getErrorHandler():ErrorHandler
+
+    /**
+     * Set the locale to use for messages.
+     *
+     * @param locale The locale object to use for localization of messages.
+     *
+     * @exception SAXException An exception thrown if the parser does not
+     *                         support the specified locale.
+     *
+     * @see org.xml.sax.Parser
+     */
+    public void setLocale(Locale locale) throws SAXException {
+        //REVISIT:this methods is not part of SAX2 interfaces, we should throw exception
+        //if any application uses SAX2 and sets locale also. -nb
+        fConfiguration.setLocale(locale);
+
+    } // setLocale(Locale)
+
+    /**
+     * Allow an application to register a DTD event handler.
+     * <p>
+     * If the application does not register a DTD handler, all DTD
+     * events reported by the SAX parser will be silently ignored.
+     * <p>
+     * Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.
+     *
+     * @param dtdHandler The DTD handler.
+     *
+
+     * @see #getDTDHandler
+     */
+    public void setDTDHandler(DTDHandler dtdHandler) {
+        fDTDHandler = dtdHandler;
+    } // setDTDHandler(DTDHandler)
+
+    //
+    // Parser methods
+    //
+
+    /**
+     * Allow an application to register a document event handler.
+     * <p>
+     * If the application does not register a document handler, all
+     * document events reported by the SAX parser will be silently
+     * ignored (this is the default behaviour implemented by
+     * HandlerBase).
+     * <p>
+     * Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.
+     *
+     * @param documentHandler The document handler.
+     */
+    public void setDocumentHandler(DocumentHandler documentHandler) {
+        fDocumentHandler = documentHandler;
+    } // setDocumentHandler(DocumentHandler)
+
+    //
+    // XMLReader methods
+    //
+
+    /**
+     * Allow an application to register a content event handler.
+     * <p>
+     * If the application does not register a content handler, all
+     * content events reported by the SAX parser will be silently
+     * ignored.
+     * <p>
+     * Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.
+     *
+     * @param contentHandler The content handler.
+     *
+     * @see #getContentHandler
+     */
+    public void setContentHandler(ContentHandler contentHandler) {
+        fContentHandler = contentHandler;
+    } // setContentHandler(ContentHandler)
+
+    /**
+     * Return the current content handler.
+     *
+     * @return The current content handler, or null if none
+     *         has been registered.
+     *
+     * @see #setContentHandler
+     */
+    public ContentHandler getContentHandler() {
+        return fContentHandler;
+    } // getContentHandler():ContentHandler
+
+    /**
+     * Return the current DTD handler.
+     *
+     * @return The current DTD handler, or null if none
+     *         has been registered.
+     * @see #setDTDHandler
+     */
+    public DTDHandler getDTDHandler() {
+        return fDTDHandler;
+    } // getDTDHandler():DTDHandler
+
+    /**
+     * Set the state of any feature in a SAX2 parser.  The parser
+     * might not recognize the feature, and if it does recognize
+     * it, it might not be able to fulfill the request.
+     *
+     * @param featureId The unique identifier (URI) of the feature.
+     * @param state The requested state of the feature (true or false).
+     *
+     * @exception SAXNotRecognizedException If the
+     *            requested feature is not known.
+     * @exception SAXNotSupportedException If the
+     *            requested feature is known, but the requested
+     *            state is not supported.
+     */
+    public void setFeature(String featureId, boolean state)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+        try {
+            //
+            // SAX2 Features
+            //
+
+            if (featureId.startsWith(Constants.SAX_FEATURE_PREFIX)) {
+                final int suffixLength = featureId.length() - Constants.SAX_FEATURE_PREFIX.length();
+
+                // http://xml.org/sax/features/namespaces
+                if (suffixLength == Constants.NAMESPACES_FEATURE.length() &&
+                    featureId.endsWith(Constants.NAMESPACES_FEATURE)) {
+                    fConfiguration.setFeature(featureId, state);
+                    fNamespaces = state;
+                    return;
+                }
+
+                // http://xml.org/sax/features/namespace-prefixes
+                //   controls the reporting of raw prefixed names and Namespace
+                //   declarations (xmlns* attributes): when this feature is false
+                //   (the default), raw prefixed names may optionally be reported,
+                //   and xmlns* attributes must not be reported.
+                //
+                if (suffixLength == Constants.NAMESPACE_PREFIXES_FEATURE.length() &&
+                    featureId.endsWith(Constants.NAMESPACE_PREFIXES_FEATURE)) {
+                    fConfiguration.setFeature(featureId, state);
+                    fNamespacePrefixes = state;
+                    return;
+                }
+
+                // http://xml.org/sax/features/string-interning
+                //   controls the use of java.lang.String#intern() for strings
+                //   passed to SAX handlers.
+                //
+                if (suffixLength == Constants.STRING_INTERNING_FEATURE.length() &&
+                    featureId.endsWith(Constants.STRING_INTERNING_FEATURE)) {
+                    if (!state) {
+                        throw new SAXNotSupportedException(
+                            SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                            "false-not-supported", new Object [] {featureId}));
+                    }
+                    return;
+                }
+
+                // http://xml.org/sax/features/lexical-handler/parameter-entities
+                //   controls whether the beginning and end of parameter entities
+                //   will be reported to the LexicalHandler.
+                //
+                if (suffixLength == Constants.LEXICAL_HANDLER_PARAMETER_ENTITIES_FEATURE.length() &&
+                    featureId.endsWith(Constants.LEXICAL_HANDLER_PARAMETER_ENTITIES_FEATURE)) {
+                    fLexicalHandlerParameterEntities = state;
+                    return;
+                }
+
+                // http://xml.org/sax/features/resolve-dtd-uris
+                //   controls whether system identifiers will be absolutized relative to
+                //   their base URIs before reporting.
+                //
+                if (suffixLength == Constants.RESOLVE_DTD_URIS_FEATURE.length() &&
+                    featureId.endsWith(Constants.RESOLVE_DTD_URIS_FEATURE)) {
+                    fResolveDTDURIs = state;
+                    return;
+                }
+
+                // http://xml.org/sax/features/unicode-normalization-checking
+                //   controls whether Unicode normalization checking is performed
+                //   as per Appendix B of the XML 1.1 specification
+                //
+                if (suffixLength == Constants.UNICODE_NORMALIZATION_CHECKING_FEATURE.length() &&
+                    featureId.endsWith(Constants.UNICODE_NORMALIZATION_CHECKING_FEATURE)) {
+                    // REVISIT: Allow this feature to be set once Unicode normalization
+                    // checking is supported -- mrglavas.
+                    if (state) {
+                        throw new SAXNotSupportedException(
+                            SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                            "true-not-supported", new Object [] {featureId}));
+                    }
+                    return;
+                }
+
+                // http://xml.org/sax/features/xmlns-uris
+                //   controls whether the parser reports that namespace declaration
+                //   attributes as being in the namespace: http://www.w3.org/2000/xmlns/
+                //
+                if (suffixLength == Constants.XMLNS_URIS_FEATURE.length() &&
+                    featureId.endsWith(Constants.XMLNS_URIS_FEATURE)) {
+                    fXMLNSURIs = state;
+                    return;
+                }
+
+                // http://xml.org/sax/features/use-entity-resolver2
+                //   controls whether the methods of an object implementing
+                //   org.xml.sax.ext.EntityResolver2 will be used by the parser.
+                //
+                if (suffixLength == Constants.USE_ENTITY_RESOLVER2_FEATURE.length() &&
+                    featureId.endsWith(Constants.USE_ENTITY_RESOLVER2_FEATURE)) {
+                    if (state != fUseEntityResolver2) {
+                        fUseEntityResolver2 = state;
+                        // Refresh EntityResolver wrapper.
+                        setEntityResolver(getEntityResolver());
+                    }
+                    return;
+                }
+
+                //
+                // Read only features.
+                //
+
+                // http://xml.org/sax/features/is-standalone
+                //   reports whether the document specified a standalone document declaration.
+                // http://xml.org/sax/features/use-attributes2
+                //   reports whether Attributes objects passed to startElement also implement
+                //   the org.xml.sax.ext.Attributes2 interface.
+                // http://xml.org/sax/features/use-locator2
+                //   reports whether Locator objects passed to setDocumentLocator also implement
+                //   the org.xml.sax.ext.Locator2 interface.
+                // http://xml.org/sax/features/xml-1.1
+                //   reports whether the parser supports both XML 1.1 and XML 1.0.
+                if ((suffixLength == Constants.IS_STANDALONE_FEATURE.length() &&
+                    featureId.endsWith(Constants.IS_STANDALONE_FEATURE)) ||
+                    (suffixLength == Constants.USE_ATTRIBUTES2_FEATURE.length() &&
+                    featureId.endsWith(Constants.USE_ATTRIBUTES2_FEATURE)) ||
+                    (suffixLength == Constants.USE_LOCATOR2_FEATURE.length() &&
+                    featureId.endsWith(Constants.USE_LOCATOR2_FEATURE)) ||
+                    (suffixLength == Constants.XML_11_FEATURE.length() &&
+                    featureId.endsWith(Constants.XML_11_FEATURE))) {
+                    throw new SAXNotSupportedException(
+                        SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                        "feature-read-only", new Object [] {featureId}));
+                }
+
+
+                //
+                // Drop through and perform default processing
+                //
+            }
+            else if (featureId.equals(XMLConstants.FEATURE_SECURE_PROCESSING)) {
+                if (state) {
+                    if (fConfiguration.getProperty(SECURITY_MANAGER )==null) {
+                        fConfiguration.setProperty(SECURITY_MANAGER, new XMLSecurityManager());
+                    }
+                }
+            }
+
+            //
+            // Default handling
+            //
+
+            fConfiguration.setFeature(featureId, state);
+        }
+        catch (XMLConfigurationException e) {
+            String identifier = e.getIdentifier();
+            if (e.getType() == Status.NOT_RECOGNIZED) {
+                throw new SAXNotRecognizedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "feature-not-recognized", new Object [] {identifier}));
+            }
+            else {
+                throw new SAXNotSupportedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "feature-not-supported", new Object [] {identifier}));
+            }
+        }
+
+    } // setFeature(String,boolean)
+
+    /**
+     * Query the state of a feature.
+     *
+     * Query the current state of any feature in a SAX2 parser.  The
+     * parser might not recognize the feature.
+     *
+     * @param featureId The unique identifier (URI) of the feature
+     *                  being set.
+     * @return The current state of the feature.
+     * @exception org.xml.sax.SAXNotRecognizedException If the
+     *            requested feature is not known.
+     * @exception SAXNotSupportedException If the
+     *            requested feature is known but not supported.
+     */
+    public boolean getFeature(String featureId)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+        try {
+            //
+            // SAX2 Features
+            //
+
+            if (featureId.startsWith(Constants.SAX_FEATURE_PREFIX)) {
+                final int suffixLength = featureId.length() - Constants.SAX_FEATURE_PREFIX.length();
+
+                // http://xml.org/sax/features/namespace-prefixes
+                //   controls the reporting of raw prefixed names and Namespace
+                //   declarations (xmlns* attributes): when this feature is false
+                //   (the default), raw prefixed names may optionally be reported,
+                //   and xmlns* attributes must not be reported.
+                //
+                if (suffixLength == Constants.NAMESPACE_PREFIXES_FEATURE.length() &&
+                    featureId.endsWith(Constants.NAMESPACE_PREFIXES_FEATURE)) {
+                    boolean state = fConfiguration.getFeature(featureId);
+                    return state;
+                }
+                // http://xml.org/sax/features/string-interning
+                //   controls the use of java.lang.String#intern() for strings
+                //   passed to SAX handlers.
+                //
+                if (suffixLength == Constants.STRING_INTERNING_FEATURE.length() &&
+                    featureId.endsWith(Constants.STRING_INTERNING_FEATURE)) {
+                    return true;
+                }
+
+                // http://xml.org/sax/features/is-standalone
+                //   reports whether the document specified a standalone document declaration.
+                //
+                if (suffixLength == Constants.IS_STANDALONE_FEATURE.length() &&
+                    featureId.endsWith(Constants.IS_STANDALONE_FEATURE)) {
+                    return fStandalone;
+                }
+
+                // http://xml.org/sax/features/xml-1.1
+                //   reports whether the parser supports both XML 1.1 and XML 1.0.
+                //
+                if (suffixLength == Constants.XML_11_FEATURE.length() &&
+                    featureId.endsWith(Constants.XML_11_FEATURE)) {
+                    return (fConfiguration instanceof XML11Configurable);
+                }
+
+                // http://xml.org/sax/features/lexical-handler/parameter-entities
+                //   controls whether the beginning and end of parameter entities
+                //   will be reported to the LexicalHandler.
+                //
+                if (suffixLength == Constants.LEXICAL_HANDLER_PARAMETER_ENTITIES_FEATURE.length() &&
+                    featureId.endsWith(Constants.LEXICAL_HANDLER_PARAMETER_ENTITIES_FEATURE)) {
+                    return fLexicalHandlerParameterEntities;
+                }
+
+                // http://xml.org/sax/features/resolve-dtd-uris
+                //   controls whether system identifiers will be absolutized relative to
+                //   their base URIs before reporting.
+                if (suffixLength == Constants.RESOLVE_DTD_URIS_FEATURE.length() &&
+                    featureId.endsWith(Constants.RESOLVE_DTD_URIS_FEATURE)) {
+                    return fResolveDTDURIs;
+                }
+
+                // http://xml.org/sax/features/xmlns-uris
+                //   controls whether the parser reports that namespace declaration
+                //   attributes as being in the namespace: http://www.w3.org/2000/xmlns/
+                //
+                if (suffixLength == Constants.XMLNS_URIS_FEATURE.length() &&
+                    featureId.endsWith(Constants.XMLNS_URIS_FEATURE)) {
+                    return fXMLNSURIs;
+                }
+
+                // http://xml.org/sax/features/unicode-normalization-checking
+                //   controls whether Unicode normalization checking is performed
+                //   as per Appendix B of the XML 1.1 specification
+                //
+                if (suffixLength == Constants.UNICODE_NORMALIZATION_CHECKING_FEATURE.length() &&
+                    featureId.endsWith(Constants.UNICODE_NORMALIZATION_CHECKING_FEATURE)) {
+                    // REVISIT: Allow this feature to be set once Unicode normalization
+                    // checking is supported -- mrglavas.
+                    return false;
+                }
+
+                // http://xml.org/sax/features/use-entity-resolver2
+                //   controls whether the methods of an object implementing
+                //   org.xml.sax.ext.EntityResolver2 will be used by the parser.
+                //
+                if (suffixLength == Constants.USE_ENTITY_RESOLVER2_FEATURE.length() &&
+                    featureId.endsWith(Constants.USE_ENTITY_RESOLVER2_FEATURE)) {
+                    return fUseEntityResolver2;
+                }
+
+                // http://xml.org/sax/features/use-attributes2
+                //   reports whether Attributes objects passed to startElement also implement
+                //   the org.xml.sax.ext.Attributes2 interface.
+                // http://xml.org/sax/features/use-locator2
+                //   reports whether Locator objects passed to setDocumentLocator also implement
+                //   the org.xml.sax.ext.Locator2 interface.
+                //
+                if ((suffixLength == Constants.USE_ATTRIBUTES2_FEATURE.length() &&
+                    featureId.endsWith(Constants.USE_ATTRIBUTES2_FEATURE)) ||
+                    (suffixLength == Constants.USE_LOCATOR2_FEATURE.length() &&
+                    featureId.endsWith(Constants.USE_LOCATOR2_FEATURE))) {
+                    return true;
+                }
+
+
+                //
+                // Drop through and perform default processing
+                //
+            }
+
+            //
+            // Xerces Features
+            //
+
+            /*
+            else if (featureId.startsWith(XERCES_FEATURES_PREFIX)) {
+                //
+                // Drop through and perform default processing
+                //
+            }
+            */
+
+            return fConfiguration.getFeature(featureId);
+        }
+        catch (XMLConfigurationException e) {
+            String identifier = e.getIdentifier();
+            if (e.getType() == Status.NOT_RECOGNIZED) {
+                throw new SAXNotRecognizedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "feature-not-recognized", new Object [] {identifier}));
+            }
+            else {
+                throw new SAXNotSupportedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "feature-not-supported", new Object [] {identifier}));
+            }
+        }
+
+    } // getFeature(String):boolean
+
+    /**
+     * Set the value of any property in a SAX2 parser.  The parser
+     * might not recognize the property, and if it does recognize
+     * it, it might not support the requested value.
+     *
+     * @param propertyId The unique identifier (URI) of the property
+     *                   being set.
+     * @param value The value to which the property is being set.
+     *
+     * @exception SAXNotRecognizedException If the
+     *            requested property is not known.
+     * @exception SAXNotSupportedException If the
+     *            requested property is known, but the requested
+     *            value is not supported.
+     */
+    public void setProperty(String propertyId, Object value)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+        try {
+            //
+            // SAX2 core properties
+            //
+
+            if (propertyId.startsWith(Constants.SAX_PROPERTY_PREFIX)) {
+                final int suffixLength = propertyId.length() - Constants.SAX_PROPERTY_PREFIX.length();
+
+                //
+                // http://xml.org/sax/properties/lexical-handler
+                // Value type: org.xml.sax.ext.LexicalHandler
+                // Access: read/write, pre-parse only
+                //   Set the lexical event handler.
+                //
+                if (suffixLength == Constants.LEXICAL_HANDLER_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.LEXICAL_HANDLER_PROPERTY)) {
+                    try {
+                        setLexicalHandler((LexicalHandler)value);
+                    }
+                    catch (ClassCastException e) {
+                        throw new SAXNotSupportedException(
+                            SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                            "incompatible-class", new Object [] {propertyId, "org.xml.sax.ext.LexicalHandler"}));
+                    }
+                    return;
+                }
+                //
+                // http://xml.org/sax/properties/declaration-handler
+                // Value type: org.xml.sax.ext.DeclHandler
+                // Access: read/write, pre-parse only
+                //   Set the DTD declaration event handler.
+                //
+                if (suffixLength == Constants.DECLARATION_HANDLER_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.DECLARATION_HANDLER_PROPERTY)) {
+                    try {
+                        setDeclHandler((DeclHandler)value);
+                    }
+                    catch (ClassCastException e) {
+                        throw new SAXNotSupportedException(
+                            SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                            "incompatible-class", new Object [] {propertyId, "org.xml.sax.ext.DeclHandler"}));
+                    }
+                    return;
+                }
+                //
+                // http://xml.org/sax/properties/dom-node
+                // Value type: DOM Node
+                // Access: read-only
+                //   Get the DOM node currently being visited, if the SAX parser is
+                //   iterating over a DOM tree.  If the parser recognises and
+                //   supports this property but is not currently visiting a DOM
+                //   node, it should return null (this is a good way to check for
+                //   availability before the parse begins).
+                // http://xml.org/sax/properties/document-xml-version
+                // Value type: java.lang.String
+                // Access: read-only
+                //   The literal string describing the actual XML version of the document.
+                //
+                if ((suffixLength == Constants.DOM_NODE_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.DOM_NODE_PROPERTY)) ||
+                    (suffixLength == Constants.DOCUMENT_XML_VERSION_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.DOCUMENT_XML_VERSION_PROPERTY))) {
+                    throw new SAXNotSupportedException(
+                        SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                        "property-read-only", new Object [] {propertyId}));
+                }
+                //
+                // Drop through and perform default processing
+                //
+            }
+
+            //
+            // Xerces Properties
+            //
+
+            /*
+            else if (propertyId.startsWith(XERCES_PROPERTIES_PREFIX)) {
+                //
+                // Drop through and perform default processing
+                //
+            }
+            */
+
+            //
+            // Perform default processing
+            //
+
+            fConfiguration.setProperty(propertyId, value);
+        }
+        catch (XMLConfigurationException e) {
+            String identifier = e.getIdentifier();
+            if (e.getType() == Status.NOT_RECOGNIZED) {
+                throw new SAXNotRecognizedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "property-not-recognized", new Object [] {identifier}));
+            }
+            else {
+                throw new SAXNotSupportedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "property-not-supported", new Object [] {identifier}));
+            }
+        }
+
+    } // setProperty(String,Object)
+
+    /**
+     * Query the value of a property.
+     *
+     * Return the current value of a property in a SAX2 parser.
+     * The parser might not recognize the property.
+     *
+     * @param propertyId The unique identifier (URI) of the property
+     *                   being set.
+     * @return The current value of the property.
+     * @exception org.xml.sax.SAXNotRecognizedException If the
+     *            requested property is not known.
+     * @exception SAXNotSupportedException If the
+     *            requested property is known but not supported.
+     */
+    public Object getProperty(String propertyId)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+        try {
+            //
+            // SAX2 core properties
+            //
+
+            if (propertyId.startsWith(Constants.SAX_PROPERTY_PREFIX)) {
+                final int suffixLength = propertyId.length() - Constants.SAX_PROPERTY_PREFIX.length();
+
+                //
+                // http://xml.org/sax/properties/document-xml-version
+                // Value type: java.lang.String
+                // Access: read-only
+                //   The literal string describing the actual XML version of the document.
+                //
+                if (suffixLength == Constants.DOCUMENT_XML_VERSION_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.DOCUMENT_XML_VERSION_PROPERTY)) {
+                    return fVersion;
+                }
+
+                //
+                // http://xml.org/sax/properties/lexical-handler
+                // Value type: org.xml.sax.ext.LexicalHandler
+                // Access: read/write, pre-parse only
+                //   Set the lexical event handler.
+                //
+                if (suffixLength == Constants.LEXICAL_HANDLER_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.LEXICAL_HANDLER_PROPERTY)) {
+                    return getLexicalHandler();
+                }
+                //
+                // http://xml.org/sax/properties/declaration-handler
+                // Value type: org.xml.sax.ext.DeclHandler
+                // Access: read/write, pre-parse only
+                //   Set the DTD declaration event handler.
+                //
+                if (suffixLength == Constants.DECLARATION_HANDLER_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.DECLARATION_HANDLER_PROPERTY)) {
+                    return getDeclHandler();
+                }
+
+                //
+                // http://xml.org/sax/properties/dom-node
+                // Value type: DOM Node
+                // Access: read-only
+                //   Get the DOM node currently being visited, if the SAX parser is
+                //   iterating over a DOM tree.  If the parser recognises and
+                //   supports this property but is not currently visiting a DOM
+                //   node, it should return null (this is a good way to check for
+                //   availability before the parse begins).
+                //
+                if (suffixLength == Constants.DOM_NODE_PROPERTY.length() &&
+                    propertyId.endsWith(Constants.DOM_NODE_PROPERTY)) {
+                    // we are not iterating a DOM tree
+                    throw new SAXNotSupportedException(
+                        SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                        "dom-node-read-not-supported", null));
+                }
+
+                //
+                // Drop through and perform default processing
+                //
+            }
+
+            //
+            // Xerces properties
+            //
+
+            /*
+            else if (propertyId.startsWith(XERCES_PROPERTIES_PREFIX)) {
+                //
+                // Drop through and perform default processing
+                //
+            }
+            */
+
+            //
+            // Perform default processing
+            //
+
+            return fConfiguration.getProperty(propertyId);
+        }
+        catch (XMLConfigurationException e) {
+            String identifier = e.getIdentifier();
+            if (e.getType() == Status.NOT_RECOGNIZED) {
+                throw new SAXNotRecognizedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "property-not-recognized", new Object [] {identifier}));
+            }
+            else {
+                throw new SAXNotSupportedException(
+                    SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                    "property-not-supported", new Object [] {identifier}));
+            }
+        }
+
+    } // getProperty(String):Object
+
+    //
+    // Protected methods
+    //
+
+    // SAX2 core properties
+
+    /**
+     * Set the DTD declaration event handler.
+     * <p>
+     * This method is the equivalent to the property:
+     * <pre>
+     * http://xml.org/sax/properties/declaration-handler
+     * </pre>
+     *
+     * @param handler The new handler.
+     *
+     * @see #getDeclHandler
+     * @see #setProperty
+     */
+    protected void setDeclHandler(DeclHandler handler)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+        if (fParseInProgress) {
+            throw new SAXNotSupportedException(
+                SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                "property-not-parsing-supported",
+                new Object [] {"http://xml.org/sax/properties/declaration-handler"}));
+        }
+        fDeclHandler = handler;
+
+    } // setDeclHandler(DeclHandler)
+
+    /**
+     * Returns the DTD declaration event handler.
+     *
+     * @see #setDeclHandler
+     */
+    protected DeclHandler getDeclHandler()
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+        return fDeclHandler;
+    } // getDeclHandler():DeclHandler
+
+    /**
+     * Set the lexical event handler.
+     * <p>
+     * This method is the equivalent to the property:
+     * <pre>
+     * http://xml.org/sax/properties/lexical-handler
+     * </pre>
+     *
+     * @param handler lexical event handler
+     *
+     * @see #getLexicalHandler
+     * @see #setProperty
+     */
+    protected void setLexicalHandler(LexicalHandler handler)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+
+        if (fParseInProgress) {
+            throw new SAXNotSupportedException(
+                SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                "property-not-parsing-supported",
+                new Object [] {"http://xml.org/sax/properties/lexical-handler"}));
+        }
+        fLexicalHandler = handler;
+
+    } // setLexicalHandler(LexicalHandler)
+
+    /**
+     * Returns the lexical handler.
+     *
+     * @see #setLexicalHandler
+     */
+    protected LexicalHandler getLexicalHandler()
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+        return fLexicalHandler;
+    } // getLexicalHandler():LexicalHandler
+
+    /**
+     * Send startPrefixMapping events
+     */
+    protected final void startNamespaceMapping() throws SAXException{
+        int count = fNamespaceContext.getDeclaredPrefixCount();
+        if (count > 0) {
+            String prefix = null;
+            String uri = null;
+            for (int i = 0; i < count; i++) {
+                prefix = fNamespaceContext.getDeclaredPrefixAt(i);
+                uri = fNamespaceContext.getURI(prefix);
+                fContentHandler.startPrefixMapping(prefix,
+                    (uri == null) ? "" : uri);
+            }
+        }
+    }
+
+    /**
+     * Send endPrefixMapping events
+     */
+    protected final void endNamespaceMapping() throws SAXException {
+        int count = fNamespaceContext.getDeclaredPrefixCount();
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                fContentHandler.endPrefixMapping(fNamespaceContext.getDeclaredPrefixAt(i));
+            }
+        }
+    }
+
+    //
+    // XMLDocumentParser methods
+    //
+
+    /**
+     * Reset all components before parsing.
+     *
+     * @throws XNIException Thrown if an error occurs during initialization.
+     */
+    public void reset() throws XNIException {
+        super.reset();
+
+        // reset state
+        fInDTD = false;
+        fVersion = "1.0";
+        fStandalone = false;
+
+        // features
+        fNamespaces = fConfiguration.getFeature(NAMESPACES);
+        fNamespacePrefixes = fConfiguration.getFeature(NAMESPACE_PREFIXES);
+        fAugmentations = null;
+        fDeclaredAttrs = null;
+
+    } // reset()
+
+    //
+    // Classes
+    //
+
+    protected class LocatorProxy
+        implements Locator2 {
+
+        //
+        // Data
+        //
+
+        /** XML locator. */
+        protected XMLLocator fLocator;
+
+        //
+        // Constructors
+        //
+
+        /** Constructs an XML locator proxy. */
+        public LocatorProxy(XMLLocator locator) {
+            fLocator = locator;
+        }
+
+        //
+        // Locator methods
+        //
+
+        /** Public identifier. */
+        public String getPublicId() {
+            return fLocator.getPublicId();
+        }
+
+        /** System identifier. */
+        public String getSystemId() {
+            return fLocator.getExpandedSystemId();
+        }
+        /** Line number. */
+        public int getLineNumber() {
+            return fLocator.getLineNumber();
+        }
+
+        /** Column number. */
+        public int getColumnNumber() {
+            return fLocator.getColumnNumber();
+        }
+
+        // Locator2 methods
+        public String getXMLVersion() {
+            return fLocator.getXMLVersion();
+        }
+
+        public String getEncoding() {
+            return fLocator.getEncoding();
+        }
+
+    } // class LocatorProxy
+
+    protected static final class AttributesProxy
+        implements AttributeList, Attributes2 {
+
+        //
+        // Data
+        //
+
+        /** XML attributes. */
+        protected XMLAttributes fAttributes;
+
+        //
+        // Public methods
+        //
+
+        /** Sets the XML attributes. */
+        public void setAttributes(XMLAttributes attributes) {
+            fAttributes = attributes;
+        } // setAttributes(XMLAttributes)
+
+        public int getLength() {
+            return fAttributes.getLength();
+        }
+
+        public String getName(int i) {
+            return fAttributes.getQName(i);
+        }
+
+        public String getQName(int index) {
+            return fAttributes.getQName(index);
+        }
+
+        public String getURI(int index) {
+            // REVISIT: this hides the fact that internally we use
+            //          null instead of empty string
+            //          SAX requires URI to be a string or an empty string
+            String uri= fAttributes.getURI(index);
+            return uri != null ? uri : "";
+        }
+
+        public String getLocalName(int index) {
+            return fAttributes.getLocalName(index);
+        }
+
+        public String getType(int i) {
+            return fAttributes.getType(i);
+        }
+
+        public String getType(String name) {
+            return fAttributes.getType(name);
+        }
+
+        public String getType(String uri, String localName) {
+            return uri.equals("") ? fAttributes.getType(null, localName) :
+                                    fAttributes.getType(uri, localName);
+        }
+
+        public String getValue(int i) {
+            return fAttributes.getValue(i);
+        }
+
+        public String getValue(String name) {
+            return fAttributes.getValue(name);
+        }
+
+        public String getValue(String uri, String localName) {
+            return uri.equals("") ? fAttributes.getValue(null, localName) :
+                                    fAttributes.getValue(uri, localName);
+        }
+
+        public int getIndex(String qName) {
+            return fAttributes.getIndex(qName);
+        }
+
+        public int getIndex(String uri, String localPart) {
+            return uri.equals("") ? fAttributes.getIndex(null, localPart) :
+                                    fAttributes.getIndex(uri, localPart);
+        }
+
+        // Attributes2 methods
+        // REVISIT: Localize exception messages. -- mrglavas
+        public boolean isDeclared(int index) {
+            if (index < 0 || index >= fAttributes.getLength()) {
+                throw new ArrayIndexOutOfBoundsException(index);
+            }
+            return Boolean.TRUE.equals(
+                fAttributes.getAugmentations(index).getItem(
+                Constants.ATTRIBUTE_DECLARED));
+        }
+
+        public boolean isDeclared(String qName) {
+            int index = getIndex(qName);
+            if (index == -1) {
+                throw new IllegalArgumentException(qName);
+            }
+            return Boolean.TRUE.equals(
+                fAttributes.getAugmentations(index).getItem(
+                Constants.ATTRIBUTE_DECLARED));
+        }
+
+        public boolean isDeclared(String uri, String localName) {
+            int index = getIndex(uri, localName);
+            if (index == -1) {
+                throw new IllegalArgumentException(localName);
+            }
+            return Boolean.TRUE.equals(
+                fAttributes.getAugmentations(index).getItem(
+                Constants.ATTRIBUTE_DECLARED));
+        }
+
+        public boolean isSpecified(int index) {
+            if (index < 0 || index >= fAttributes.getLength()) {
+                throw new ArrayIndexOutOfBoundsException(index);
+            }
+            return fAttributes.isSpecified(index);
+        }
+
+        public boolean isSpecified(String qName) {
+            int index = getIndex(qName);
+            if (index == -1) {
+                throw new IllegalArgumentException(qName);
+            }
+            return fAttributes.isSpecified(index);
+        }
+
+        public boolean isSpecified(String uri, String localName) {
+            int index = getIndex(uri, localName);
+            if (index == -1) {
+                throw new IllegalArgumentException(localName);
+            }
+            return fAttributes.isSpecified(index);
+        }
+
+    } // class AttributesProxy
+
+
+    // PSVIProvider methods
+
+    public ElementPSVI getElementPSVI(){
+        return (fAugmentations != null)?(ElementPSVI)fAugmentations.getItem(Constants.ELEMENT_PSVI):null;
+    }
+
+
+    public AttributePSVI getAttributePSVI(int index){
+
+        return (AttributePSVI)fAttributesProxy.fAttributes.getAugmentations(index).getItem(Constants.ATTRIBUTE_PSVI);
+    }
+
+
+    public AttributePSVI getAttributePSVIByName(String uri,
+                                                String localname){
+        return (AttributePSVI)fAttributesProxy.fAttributes.getAugmentations(uri, localname).getItem(Constants.ATTRIBUTE_PSVI);
+    }
+
+} // class AbstractSAXParser

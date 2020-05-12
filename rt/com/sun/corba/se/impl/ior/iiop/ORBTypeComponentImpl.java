@@ -1,89 +1,83 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponentBase;
-/*    */ import com.sun.corba.se.spi.ior.iiop.ORBTypeComponent;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ORBTypeComponentImpl
-/*    */   extends TaggedComponentBase
-/*    */   implements ORBTypeComponent
-/*    */ {
-/*    */   private int ORBType;
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 46 */     if (!(paramObject instanceof ORBTypeComponentImpl)) {
-/* 47 */       return false;
-/*    */     }
-/* 49 */     ORBTypeComponentImpl oRBTypeComponentImpl = (ORBTypeComponentImpl)paramObject;
-/*    */     
-/* 51 */     return (this.ORBType == oRBTypeComponentImpl.ORBType);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 56 */     return this.ORBType;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 61 */     return "ORBTypeComponentImpl[ORBType=" + this.ORBType + "]";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public ORBTypeComponentImpl(int paramInt) {
-/* 66 */     this.ORBType = paramInt;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getId() {
-/* 71 */     return 0;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getORBType() {
-/* 76 */     return this.ORBType;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void writeContents(OutputStream paramOutputStream) {
-/* 81 */     paramOutputStream.write_ulong(this.ORBType);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\ORBTypeComponentImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.IOP.TAG_ORB_TYPE ;
+
+import com.sun.corba.se.spi.ior.TaggedComponentBase ;
+
+import com.sun.corba.se.spi.ior.iiop.ORBTypeComponent ;
+
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+/**
+ * @author Ken Cavanaugh
+ */
+public class ORBTypeComponentImpl extends TaggedComponentBase
+    implements ORBTypeComponent
+{
+    private int ORBType;
+
+    public boolean equals( Object obj )
+    {
+        if (!(obj instanceof ORBTypeComponentImpl))
+            return false ;
+
+        ORBTypeComponentImpl other = (ORBTypeComponentImpl)obj ;
+
+        return ORBType == other.ORBType ;
+    }
+
+    public int hashCode()
+    {
+        return ORBType ;
+    }
+
+    public String toString()
+    {
+        return "ORBTypeComponentImpl[ORBType=" + ORBType + "]" ;
+    }
+
+    public ORBTypeComponentImpl(int ORBType)
+    {
+        this.ORBType = ORBType ;
+    }
+
+    public int getId()
+    {
+        return TAG_ORB_TYPE.value ; // 0 in CORBA 2.3.1 13.6.3
+    }
+
+    public int getORBType()
+    {
+        return ORBType ;
+    }
+
+    public void writeContents(OutputStream os)
+    {
+        os.write_ulong( ORBType ) ;
+    }
+}

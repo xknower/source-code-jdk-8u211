@@ -1,69 +1,63 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class IllegalFormatPrecisionException
-/*    */   extends IllegalFormatException
-/*    */ {
-/*    */   private static final long serialVersionUID = 18711008L;
-/*    */   private int p;
-/*    */   
-/*    */   public IllegalFormatPrecisionException(int paramInt) {
-/* 48 */     this.p = paramInt;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getPrecision() {
-/* 57 */     return this.p;
-/*    */   }
-/*    */   
-/*    */   public String getMessage() {
-/* 61 */     return Integer.toString(this.p);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\IllegalFormatPrecisionException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * Unchecked exception thrown when the precision is a negative value other than
+ * <tt>-1</tt>, the conversion does not support a precision, or the value is
+ * otherwise unsupported.
+ *
+ * @since 1.5
+ */
+public class IllegalFormatPrecisionException extends IllegalFormatException {
+
+    private static final long serialVersionUID = 18711008L;
+
+    private int p;
+
+    /**
+     * Constructs an instance of this class with the specified precision.
+     *
+     * @param  p
+     *         The precision
+     */
+    public IllegalFormatPrecisionException(int p) {
+        this.p = p;
+    }
+
+    /**
+     * Returns the precision
+     *
+     * @return  The precision
+     */
+    public int getPrecision() {
+        return p;
+    }
+
+    public String getMessage() {
+        return Integer.toString(p);
+    }
+}

@@ -1,184 +1,178 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.util.Queue;
-/*     */ import java.util.concurrent.ConcurrentLinkedQueue;
-/*     */ import javax.swing.JComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthContext
-/*     */ {
-/*  43 */   private static final Queue<SynthContext> queue = new ConcurrentLinkedQueue<>();
-/*     */   
-/*     */   private JComponent component;
-/*     */   private Region region;
-/*     */   private SynthStyle style;
-/*     */   private int state;
-/*     */   
-/*     */   static SynthContext getContext(JComponent paramJComponent, SynthStyle paramSynthStyle, int paramInt) {
-/*  51 */     return getContext(paramJComponent, SynthLookAndFeel.getRegion(paramJComponent), paramSynthStyle, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static SynthContext getContext(JComponent paramJComponent, Region paramRegion, SynthStyle paramSynthStyle, int paramInt) {
-/*  57 */     SynthContext synthContext = queue.poll();
-/*  58 */     if (synthContext == null) {
-/*  59 */       synthContext = new SynthContext();
-/*     */     }
-/*  61 */     synthContext.reset(paramJComponent, paramRegion, paramSynthStyle, paramInt);
-/*  62 */     return synthContext;
-/*     */   }
-/*     */   
-/*     */   static void releaseContext(SynthContext paramSynthContext) {
-/*  66 */     queue.offer(paramSynthContext);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   SynthContext() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext(JComponent paramJComponent, Region paramRegion, SynthStyle paramSynthStyle, int paramInt) {
-/*  85 */     if (paramJComponent == null || paramRegion == null || paramSynthStyle == null) {
-/*  86 */       throw new NullPointerException("You must supply a non-null component, region and style");
-/*     */     }
-/*     */     
-/*  89 */     reset(paramJComponent, paramRegion, paramSynthStyle, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JComponent getComponent() {
-/*  99 */     return this.component;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Region getRegion() {
-/* 108 */     return this.region;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isSubregion() {
-/* 115 */     return getRegion().isSubregion();
-/*     */   }
-/*     */   
-/*     */   void setStyle(SynthStyle paramSynthStyle) {
-/* 119 */     this.style = paramSynthStyle;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthStyle getStyle() {
-/* 128 */     return this.style;
-/*     */   }
-/*     */   
-/*     */   void setComponentState(int paramInt) {
-/* 132 */     this.state = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getComponentState() {
-/* 146 */     return this.state;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void reset(JComponent paramJComponent, Region paramRegion, SynthStyle paramSynthStyle, int paramInt) {
-/* 154 */     this.component = paramJComponent;
-/* 155 */     this.region = paramRegion;
-/* 156 */     this.style = paramSynthStyle;
-/* 157 */     this.state = paramInt;
-/*     */   }
-/*     */   
-/*     */   void dispose() {
-/* 161 */     this.component = null;
-/* 162 */     this.style = null;
-/* 163 */     releaseContext(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   SynthPainter getPainter() {
-/* 171 */     SynthPainter synthPainter = getStyle().getPainter(this);
-/*     */     
-/* 173 */     if (synthPainter != null) {
-/* 174 */       return synthPainter;
-/*     */     }
-/* 176 */     return SynthPainter.NULL_PAINTER;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.synth;
+
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.swing.JComponent;
+
+/**
+ * An immutable transient object containing contextual information about
+ * a <code>Region</code>. A <code>SynthContext</code> should only be
+ * considered valid for the duration
+ * of the method it is passed to. In other words you should not cache
+ * a <code>SynthContext</code> that is passed to you and expect it to
+ * remain valid.
+ *
+ * @since 1.5
+ * @author Scott Violet
+ */
+public class SynthContext {
+    private static final Queue<SynthContext> queue = new ConcurrentLinkedQueue<>();
+
+    private JComponent component;
+    private Region region;
+    private SynthStyle style;
+    private int state;
+
+    static SynthContext getContext(JComponent c, SynthStyle style, int state) {
+        return getContext(c, SynthLookAndFeel.getRegion(c), style, state);
+    }
+
+    static SynthContext getContext(JComponent component,
+                                   Region region, SynthStyle style,
+                                   int state) {
+        SynthContext context = queue.poll();
+        if (context == null) {
+            context = new SynthContext();
+        }
+        context.reset(component, region, style, state);
+        return context;
+    }
+
+    static void releaseContext(SynthContext context) {
+        queue.offer(context);
+    }
+
+    SynthContext() {
+    }
+
+    /**
+     * Creates a SynthContext with the specified values. This is meant
+     * for subclasses and custom UI implementors. You very rarely need to
+     * construct a SynthContext, though some methods will take one.
+     *
+     * @param component JComponent
+     * @param region Identifies the portion of the JComponent
+     * @param style Style associated with the component
+     * @param state State of the component as defined in SynthConstants.
+     * @throws NullPointerException if component, region of style is null.
+     */
+    public SynthContext(JComponent component, Region region, SynthStyle style,
+                        int state) {
+        if (component == null || region == null || style == null) {
+            throw new NullPointerException(
+                "You must supply a non-null component, region and style");
+        }
+        reset(component, region, style, state);
+    }
+
+
+    /**
+     * Returns the hosting component containing the region.
+     *
+     * @return Hosting Component
+     */
+    public JComponent getComponent() {
+        return component;
+    }
+
+    /**
+     * Returns the Region identifying this state.
+     *
+     * @return Region of the hosting component
+     */
+    public Region getRegion() {
+        return region;
+    }
+
+    /**
+     * A convenience method for <code>getRegion().isSubregion()</code>.
+     */
+    boolean isSubregion() {
+        return getRegion().isSubregion();
+    }
+
+    void setStyle(SynthStyle style) {
+        this.style = style;
+    }
+
+    /**
+     * Returns the style associated with this Region.
+     *
+     * @return SynthStyle associated with the region.
+     */
+    public SynthStyle getStyle() {
+        return style;
+    }
+
+    void setComponentState(int state) {
+        this.state = state;
+    }
+
+    /**
+     * Returns the state of the widget, which is a bitmask of the
+     * values defined in <code>SynthConstants</code>. A region will at least
+     * be in one of
+     * <code>ENABLED</code>, <code>MOUSE_OVER</code>, <code>PRESSED</code>
+     * or <code>DISABLED</code>.
+     *
+     * @see SynthConstants
+     * @return State of Component
+     */
+    public int getComponentState() {
+        return state;
+    }
+
+    /**
+     * Resets the state of the Context.
+     */
+    void reset(JComponent component, Region region, SynthStyle style,
+               int state) {
+        this.component = component;
+        this.region = region;
+        this.style = style;
+        this.state = state;
+    }
+
+    void dispose() {
+        this.component = null;
+        this.style = null;
+        releaseContext(this);
+    }
+
+    /**
+     * Convenience method to get the Painter from the current SynthStyle.
+     * This will NEVER return null.
+     */
+    SynthPainter getPainter() {
+        SynthPainter painter = getStyle().getPainter(this);
+
+        if (painter != null) {
+            return painter;
+        }
+        return SynthPainter.NULL_PAINTER;
+    }
+}

@@ -1,38 +1,56 @@
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Translet.java,v 1.2.4.1 2005/08/31 10:46:27 pvedula Exp $
+ */
+
 package com.sun.org.apache.xalan.internal.xsltc;
 
 import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
 import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
 
-public interface Translet {
-  void transform(DOM paramDOM, SerializationHandler paramSerializationHandler) throws TransletException;
-  
-  void transform(DOM paramDOM, SerializationHandler[] paramArrayOfSerializationHandler) throws TransletException;
-  
-  void transform(DOM paramDOM, DTMAxisIterator paramDTMAxisIterator, SerializationHandler paramSerializationHandler) throws TransletException;
-  
-  Object addParameter(String paramString, Object paramObject);
-  
-  void buildKeys(DOM paramDOM, DTMAxisIterator paramDTMAxisIterator, SerializationHandler paramSerializationHandler, int paramInt) throws TransletException;
-  
-  void addAuxiliaryClass(Class paramClass);
-  
-  Class getAuxiliaryClass(String paramString);
-  
-  String[] getNamesArray();
-  
-  String[] getUrisArray();
-  
-  int[] getTypesArray();
-  
-  String[] getNamespaceArray();
-  
-  boolean overrideDefaultParser();
-  
-  void setOverrideDefaultParser(boolean paramBoolean);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\Translet.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
  */
+public interface Translet {
+
+    public void transform(DOM document, SerializationHandler handler)
+        throws TransletException;
+    public void transform(DOM document, SerializationHandler[] handlers)
+        throws TransletException;
+    public void transform(DOM document, DTMAxisIterator iterator,
+                          SerializationHandler handler)
+        throws TransletException;
+
+    public Object addParameter(String name, Object value);
+
+    public void buildKeys(DOM document, DTMAxisIterator iterator,
+                          SerializationHandler handler, int root)
+        throws TransletException;
+    public void addAuxiliaryClass(Class auxClass);
+    public Class getAuxiliaryClass(String className);
+    public String[] getNamesArray();
+    public String[] getUrisArray();
+    public int[]    getTypesArray();
+    public String[] getNamespaceArray();
+    public boolean overrideDefaultParser();
+    public void setOverrideDefaultParser(boolean flag);
+
+}

@@ -1,1292 +1,1233 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.LayoutManager2;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Collections;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.HashSet;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.Set;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class SpringLayout
-/*      */   implements LayoutManager2
-/*      */ {
-/*  188 */   private Map<Component, Constraints> componentConstraints = new HashMap<>();
-/*      */   
-/*  190 */   private Spring cyclicReference = Spring.constant(-2147483648);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<Spring> cyclicSprings;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<Spring> acyclicSprings;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String NORTH = "North";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String SOUTH = "South";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String EAST = "East";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String WEST = "West";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String HORIZONTAL_CENTER = "HorizontalCenter";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String VERTICAL_CENTER = "VerticalCenter";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String BASELINE = "Baseline";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String WIDTH = "Width";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String HEIGHT = "Height";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  250 */   private static String[] ALL_HORIZONTAL = new String[] { "West", "Width", "East", "HorizontalCenter" };
-/*      */   
-/*  252 */   private static String[] ALL_VERTICAL = new String[] { "North", "Height", "South", "VerticalCenter", "Baseline" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class Constraints
-/*      */   {
-/*      */     private Spring x;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring y;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring width;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring height;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring east;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring south;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring horizontalCenter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring verticalCenter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring baseline;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  329 */     private List<String> horizontalHistory = new ArrayList<>(2);
-/*  330 */     private List<String> verticalHistory = new ArrayList<>(2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Component c;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Constraints(Spring param1Spring1, Spring param1Spring2) {
-/*  352 */       setX(param1Spring1);
-/*  353 */       setY(param1Spring2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Constraints(Spring param1Spring1, Spring param1Spring2, Spring param1Spring3, Spring param1Spring4) {
-/*  372 */       setX(param1Spring1);
-/*  373 */       setY(param1Spring2);
-/*  374 */       setWidth(param1Spring3);
-/*  375 */       setHeight(param1Spring4);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Constraints(Component param1Component) {
-/*  395 */       this.c = param1Component;
-/*  396 */       setX(Spring.constant(param1Component.getX()));
-/*  397 */       setY(Spring.constant(param1Component.getY()));
-/*  398 */       setWidth(Spring.width(param1Component));
-/*  399 */       setHeight(Spring.height(param1Component));
-/*      */     }
-/*      */     
-/*      */     private void pushConstraint(String param1String, Spring param1Spring, boolean param1Boolean) {
-/*  403 */       boolean bool = true;
-/*  404 */       List<String> list = param1Boolean ? this.horizontalHistory : this.verticalHistory;
-/*      */       
-/*  406 */       if (list.contains(param1String)) {
-/*  407 */         list.remove(param1String);
-/*  408 */         bool = false;
-/*  409 */       } else if (list.size() == 2 && param1Spring != null) {
-/*  410 */         list.remove(0);
-/*  411 */         bool = false;
-/*      */       } 
-/*  413 */       if (param1Spring != null) {
-/*  414 */         list.add(param1String);
-/*      */       }
-/*  416 */       if (!bool) {
-/*  417 */         String[] arrayOfString = param1Boolean ? SpringLayout.ALL_HORIZONTAL : SpringLayout.ALL_VERTICAL;
-/*  418 */         for (String str : arrayOfString) {
-/*  419 */           if (!list.contains(str)) {
-/*  420 */             setConstraint(str, null);
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     private Spring sum(Spring param1Spring1, Spring param1Spring2) {
-/*  427 */       return (param1Spring1 == null || param1Spring2 == null) ? null : Spring.sum(param1Spring1, param1Spring2);
-/*      */     }
-/*      */     
-/*      */     private Spring difference(Spring param1Spring1, Spring param1Spring2) {
-/*  431 */       return (param1Spring1 == null || param1Spring2 == null) ? null : Spring.difference(param1Spring1, param1Spring2);
-/*      */     }
-/*      */     
-/*      */     private Spring scale(Spring param1Spring, float param1Float) {
-/*  435 */       return (param1Spring == null) ? null : Spring.scale(param1Spring, param1Float);
-/*      */     }
-/*      */     
-/*      */     private int getBaselineFromHeight(int param1Int) {
-/*  439 */       if (param1Int < 0)
-/*      */       {
-/*  441 */         return -this.c.getBaseline((this.c.getPreferredSize()).width, -param1Int);
-/*      */       }
-/*      */       
-/*  444 */       return this.c.getBaseline((this.c.getPreferredSize()).width, param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int getHeightFromBaseLine(int param1Int) {
-/*      */       // Byte code:
-/*      */       //   0: aload_0
-/*      */       //   1: getfield c : Ljava/awt/Component;
-/*      */       //   4: invokevirtual getPreferredSize : ()Ljava/awt/Dimension;
-/*      */       //   7: astore_2
-/*      */       //   8: aload_2
-/*      */       //   9: getfield height : I
-/*      */       //   12: istore_3
-/*      */       //   13: aload_0
-/*      */       //   14: getfield c : Ljava/awt/Component;
-/*      */       //   17: aload_2
-/*      */       //   18: getfield width : I
-/*      */       //   21: iload_3
-/*      */       //   22: invokevirtual getBaseline : (II)I
-/*      */       //   25: istore #4
-/*      */       //   27: iload #4
-/*      */       //   29: iload_1
-/*      */       //   30: if_icmpne -> 35
-/*      */       //   33: iload_3
-/*      */       //   34: ireturn
-/*      */       //   35: getstatic javax/swing/SpringLayout$1.$SwitchMap$java$awt$Component$BaselineResizeBehavior : [I
-/*      */       //   38: aload_0
-/*      */       //   39: getfield c : Ljava/awt/Component;
-/*      */       //   42: invokevirtual getBaselineResizeBehavior : ()Ljava/awt/Component$BaselineResizeBehavior;
-/*      */       //   45: invokevirtual ordinal : ()I
-/*      */       //   48: iaload
-/*      */       //   49: tableswitch default -> 92, 1 -> 76, 2 -> 83, 3 -> 92
-/*      */       //   76: iload_3
-/*      */       //   77: iload_1
-/*      */       //   78: iload #4
-/*      */       //   80: isub
-/*      */       //   81: iadd
-/*      */       //   82: ireturn
-/*      */       //   83: iload_3
-/*      */       //   84: iconst_2
-/*      */       //   85: iload_1
-/*      */       //   86: iload #4
-/*      */       //   88: isub
-/*      */       //   89: imul
-/*      */       //   90: iadd
-/*      */       //   91: ireturn
-/*      */       //   92: ldc -2147483648
-/*      */       //   94: ireturn
-/*      */       // Line number table:
-/*      */       //   Java source line number -> byte code offset
-/*      */       //   #448	-> 0
-/*      */       //   #449	-> 8
-/*      */       //   #450	-> 13
-/*      */       //   #451	-> 27
-/*      */       //   #456	-> 33
-/*      */       //   #459	-> 35
-/*      */       //   #461	-> 76
-/*      */       //   #463	-> 83
-/*      */       //   #470	-> 92
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Spring heightToRelativeBaseline(Spring param1Spring) {
-/*  474 */       return new Spring.SpringMap(param1Spring) {
-/*      */           protected int map(int param2Int) {
-/*  476 */             return SpringLayout.Constraints.this.getBaselineFromHeight(param2Int);
-/*      */           }
-/*      */           
-/*      */           protected int inv(int param2Int) {
-/*  480 */             return SpringLayout.Constraints.this.getHeightFromBaseLine(param2Int);
-/*      */           }
-/*      */         };
-/*      */     }
-/*      */     
-/*      */     private Spring relativeBaselineToHeight(Spring param1Spring) {
-/*  486 */       return new Spring.SpringMap(param1Spring) {
-/*      */           protected int map(int param2Int) {
-/*  488 */             return SpringLayout.Constraints.this.getHeightFromBaseLine(param2Int);
-/*      */           }
-/*      */           
-/*      */           protected int inv(int param2Int) {
-/*  492 */             return SpringLayout.Constraints.this.getBaselineFromHeight(param2Int);
-/*      */           }
-/*      */         };
-/*      */     }
-/*      */     
-/*      */     private boolean defined(List param1List, String param1String1, String param1String2) {
-/*  498 */       return (param1List.contains(param1String1) && param1List.contains(param1String2));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setX(Spring param1Spring) {
-/*  513 */       this.x = param1Spring;
-/*  514 */       pushConstraint("West", param1Spring, true);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Spring getX() {
-/*  527 */       if (this.x == null) {
-/*  528 */         if (defined(this.horizontalHistory, "East", "Width")) {
-/*  529 */           this.x = difference(this.east, this.width);
-/*  530 */         } else if (defined(this.horizontalHistory, "HorizontalCenter", "Width")) {
-/*  531 */           this.x = difference(this.horizontalCenter, scale(this.width, 0.5F));
-/*  532 */         } else if (defined(this.horizontalHistory, "HorizontalCenter", "East")) {
-/*  533 */           this.x = difference(scale(this.horizontalCenter, 2.0F), this.east);
-/*      */         } 
-/*      */       }
-/*  536 */       return this.x;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setY(Spring param1Spring) {
-/*  551 */       this.y = param1Spring;
-/*  552 */       pushConstraint("North", param1Spring, false);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Spring getY() {
-/*  565 */       if (this.y == null) {
-/*  566 */         if (defined(this.verticalHistory, "South", "Height")) {
-/*  567 */           this.y = difference(this.south, this.height);
-/*  568 */         } else if (defined(this.verticalHistory, "VerticalCenter", "Height")) {
-/*  569 */           this.y = difference(this.verticalCenter, scale(this.height, 0.5F));
-/*  570 */         } else if (defined(this.verticalHistory, "VerticalCenter", "South")) {
-/*  571 */           this.y = difference(scale(this.verticalCenter, 2.0F), this.south);
-/*  572 */         } else if (defined(this.verticalHistory, "Baseline", "Height")) {
-/*  573 */           this.y = difference(this.baseline, heightToRelativeBaseline(this.height));
-/*  574 */         } else if (defined(this.verticalHistory, "Baseline", "South")) {
-/*  575 */           this.y = scale(difference(this.baseline, heightToRelativeBaseline(this.south)), 2.0F);
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  582 */       return this.y;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setWidth(Spring param1Spring) {
-/*  596 */       this.width = param1Spring;
-/*  597 */       pushConstraint("Width", param1Spring, true);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Spring getWidth() {
-/*  609 */       if (this.width == null) {
-/*  610 */         if (this.horizontalHistory.contains("East")) {
-/*  611 */           this.width = difference(this.east, getX());
-/*  612 */         } else if (this.horizontalHistory.contains("HorizontalCenter")) {
-/*  613 */           this.width = scale(difference(this.horizontalCenter, getX()), 2.0F);
-/*      */         } 
-/*      */       }
-/*  616 */       return this.width;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setHeight(Spring param1Spring) {
-/*  630 */       this.height = param1Spring;
-/*  631 */       pushConstraint("Height", param1Spring, false);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Spring getHeight() {
-/*  643 */       if (this.height == null) {
-/*  644 */         if (this.verticalHistory.contains("South")) {
-/*  645 */           this.height = difference(this.south, getY());
-/*  646 */         } else if (this.verticalHistory.contains("VerticalCenter")) {
-/*  647 */           this.height = scale(difference(this.verticalCenter, getY()), 2.0F);
-/*  648 */         } else if (this.verticalHistory.contains("Baseline")) {
-/*  649 */           this.height = relativeBaselineToHeight(difference(this.baseline, getY()));
-/*      */         } 
-/*      */       }
-/*  652 */       return this.height;
-/*      */     }
-/*      */     
-/*      */     private void setEast(Spring param1Spring) {
-/*  656 */       this.east = param1Spring;
-/*  657 */       pushConstraint("East", param1Spring, true);
-/*      */     }
-/*      */     
-/*      */     private Spring getEast() {
-/*  661 */       if (this.east == null) {
-/*  662 */         this.east = sum(getX(), getWidth());
-/*      */       }
-/*  664 */       return this.east;
-/*      */     }
-/*      */     
-/*      */     private void setSouth(Spring param1Spring) {
-/*  668 */       this.south = param1Spring;
-/*  669 */       pushConstraint("South", param1Spring, false);
-/*      */     }
-/*      */     
-/*      */     private Spring getSouth() {
-/*  673 */       if (this.south == null) {
-/*  674 */         this.south = sum(getY(), getHeight());
-/*      */       }
-/*  676 */       return this.south;
-/*      */     }
-/*      */     
-/*      */     private Spring getHorizontalCenter() {
-/*  680 */       if (this.horizontalCenter == null) {
-/*  681 */         this.horizontalCenter = sum(getX(), scale(getWidth(), 0.5F));
-/*      */       }
-/*  683 */       return this.horizontalCenter;
-/*      */     }
-/*      */     
-/*      */     private void setHorizontalCenter(Spring param1Spring) {
-/*  687 */       this.horizontalCenter = param1Spring;
-/*  688 */       pushConstraint("HorizontalCenter", param1Spring, true);
-/*      */     }
-/*      */     
-/*      */     private Spring getVerticalCenter() {
-/*  692 */       if (this.verticalCenter == null) {
-/*  693 */         this.verticalCenter = sum(getY(), scale(getHeight(), 0.5F));
-/*      */       }
-/*  695 */       return this.verticalCenter;
-/*      */     }
-/*      */     
-/*      */     private void setVerticalCenter(Spring param1Spring) {
-/*  699 */       this.verticalCenter = param1Spring;
-/*  700 */       pushConstraint("VerticalCenter", param1Spring, false);
-/*      */     }
-/*      */     
-/*      */     private Spring getBaseline() {
-/*  704 */       if (this.baseline == null) {
-/*  705 */         this.baseline = sum(getY(), heightToRelativeBaseline(getHeight()));
-/*      */       }
-/*  707 */       return this.baseline;
-/*      */     }
-/*      */     
-/*      */     private void setBaseline(Spring param1Spring) {
-/*  711 */       this.baseline = param1Spring;
-/*  712 */       pushConstraint("Baseline", param1Spring, false);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setConstraint(String param1String, Spring param1Spring) {
-/*  752 */       param1String = param1String.intern();
-/*  753 */       if (param1String == "West") {
-/*  754 */         setX(param1Spring);
-/*  755 */       } else if (param1String == "North") {
-/*  756 */         setY(param1Spring);
-/*  757 */       } else if (param1String == "East") {
-/*  758 */         setEast(param1Spring);
-/*  759 */       } else if (param1String == "South") {
-/*  760 */         setSouth(param1Spring);
-/*  761 */       } else if (param1String == "HorizontalCenter") {
-/*  762 */         setHorizontalCenter(param1Spring);
-/*  763 */       } else if (param1String == "Width") {
-/*  764 */         setWidth(param1Spring);
-/*  765 */       } else if (param1String == "Height") {
-/*  766 */         setHeight(param1Spring);
-/*  767 */       } else if (param1String == "VerticalCenter") {
-/*  768 */         setVerticalCenter(param1Spring);
-/*  769 */       } else if (param1String == "Baseline") {
-/*  770 */         setBaseline(param1Spring);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Spring getConstraint(String param1String) {
-/*  811 */       param1String = param1String.intern();
-/*  812 */       return (param1String == "West") ? getX() : ((param1String == "North") ? 
-/*  813 */         getY() : ((param1String == "East") ? 
-/*  814 */         getEast() : ((param1String == "South") ? 
-/*  815 */         getSouth() : ((param1String == "Width") ? 
-/*  816 */         getWidth() : ((param1String == "Height") ? 
-/*  817 */         getHeight() : ((param1String == "HorizontalCenter") ? 
-/*  818 */         getHorizontalCenter() : ((param1String == "VerticalCenter") ? 
-/*  819 */         getVerticalCenter() : ((param1String == "Baseline") ? 
-/*  820 */         getBaseline() : null))))))));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     void reset() {
-/*  825 */       Spring[] arrayOfSpring = { this.x, this.y, this.width, this.height, this.east, this.south, this.horizontalCenter, this.verticalCenter, this.baseline };
-/*      */       
-/*  827 */       for (Spring spring : arrayOfSpring) {
-/*  828 */         if (spring != null)
-/*  829 */           spring.setValue(-2147483648); 
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public Constraints() {} }
-/*      */   
-/*      */   private static class SpringProxy extends Spring {
-/*      */     private String edgeName;
-/*      */     private Component c;
-/*      */     private SpringLayout l;
-/*      */     
-/*      */     public SpringProxy(String param1String, Component param1Component, SpringLayout param1SpringLayout) {
-/*  841 */       this.edgeName = param1String;
-/*  842 */       this.c = param1Component;
-/*  843 */       this.l = param1SpringLayout;
-/*      */     }
-/*      */     
-/*      */     private Spring getConstraint() {
-/*  847 */       return this.l.getConstraints(this.c).getConstraint(this.edgeName);
-/*      */     }
-/*      */     
-/*      */     public int getMinimumValue() {
-/*  851 */       return getConstraint().getMinimumValue();
-/*      */     }
-/*      */     
-/*      */     public int getPreferredValue() {
-/*  855 */       return getConstraint().getPreferredValue();
-/*      */     }
-/*      */     
-/*      */     public int getMaximumValue() {
-/*  859 */       return getConstraint().getMaximumValue();
-/*      */     }
-/*      */     
-/*      */     public int getValue() {
-/*  863 */       return getConstraint().getValue();
-/*      */     }
-/*      */     
-/*      */     public void setValue(int param1Int) {
-/*  867 */       getConstraint().setValue(param1Int);
-/*      */     }
-/*      */     
-/*      */     boolean isCyclic(SpringLayout param1SpringLayout) {
-/*  871 */       return param1SpringLayout.isCyclic(getConstraint());
-/*      */     }
-/*      */     
-/*      */     public String toString() {
-/*  875 */       return "SpringProxy for " + this.edgeName + " edge of " + this.c.getName() + ".";
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void resetCyclicStatuses() {
-/*  885 */     this.cyclicSprings = new HashSet<>();
-/*  886 */     this.acyclicSprings = new HashSet<>();
-/*      */   }
-/*      */   
-/*      */   private void setParent(Container paramContainer) {
-/*  890 */     resetCyclicStatuses();
-/*  891 */     Constraints constraints = getConstraints(paramContainer);
-/*      */     
-/*  893 */     constraints.setX(Spring.constant(0));
-/*  894 */     constraints.setY(Spring.constant(0));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  904 */     Spring spring1 = constraints.getWidth();
-/*  905 */     if (spring1 instanceof Spring.WidthSpring && ((Spring.WidthSpring)spring1).c == paramContainer) {
-/*  906 */       constraints.setWidth(Spring.constant(0, 0, 2147483647));
-/*      */     }
-/*  908 */     Spring spring2 = constraints.getHeight();
-/*  909 */     if (spring2 instanceof Spring.HeightSpring && ((Spring.HeightSpring)spring2).c == paramContainer) {
-/*  910 */       constraints.setHeight(Spring.constant(0, 0, 2147483647));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   boolean isCyclic(Spring paramSpring) {
-/*  915 */     if (paramSpring == null) {
-/*  916 */       return false;
-/*      */     }
-/*  918 */     if (this.cyclicSprings.contains(paramSpring)) {
-/*  919 */       return true;
-/*      */     }
-/*  921 */     if (this.acyclicSprings.contains(paramSpring)) {
-/*  922 */       return false;
-/*      */     }
-/*  924 */     this.cyclicSprings.add(paramSpring);
-/*  925 */     boolean bool = paramSpring.isCyclic(this);
-/*  926 */     if (!bool) {
-/*  927 */       this.acyclicSprings.add(paramSpring);
-/*  928 */       this.cyclicSprings.remove(paramSpring);
-/*      */     } else {
-/*      */       
-/*  931 */       System.err.println(paramSpring + " is cyclic. ");
-/*      */     } 
-/*  933 */     return bool;
-/*      */   }
-/*      */   
-/*      */   private Spring abandonCycles(Spring paramSpring) {
-/*  937 */     return isCyclic(paramSpring) ? this.cyclicReference : paramSpring;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addLayoutComponent(String paramString, Component paramComponent) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeLayoutComponent(Component paramComponent) {
-/*  955 */     this.componentConstraints.remove(paramComponent);
-/*      */   }
-/*      */   
-/*      */   private static Dimension addInsets(int paramInt1, int paramInt2, Container paramContainer) {
-/*  959 */     Insets insets = paramContainer.getInsets();
-/*  960 */     return new Dimension(paramInt1 + insets.left + insets.right, paramInt2 + insets.top + insets.bottom);
-/*      */   }
-/*      */   
-/*      */   public Dimension minimumLayoutSize(Container paramContainer) {
-/*  964 */     setParent(paramContainer);
-/*  965 */     Constraints constraints = getConstraints(paramContainer);
-/*  966 */     return addInsets(abandonCycles(constraints.getWidth()).getMinimumValue(), 
-/*  967 */         abandonCycles(constraints.getHeight()).getMinimumValue(), paramContainer);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Dimension preferredLayoutSize(Container paramContainer) {
-/*  972 */     setParent(paramContainer);
-/*  973 */     Constraints constraints = getConstraints(paramContainer);
-/*  974 */     return addInsets(abandonCycles(constraints.getWidth()).getPreferredValue(), 
-/*  975 */         abandonCycles(constraints.getHeight()).getPreferredValue(), paramContainer);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension maximumLayoutSize(Container paramContainer) {
-/*  982 */     setParent(paramContainer);
-/*  983 */     Constraints constraints = getConstraints(paramContainer);
-/*  984 */     return addInsets(abandonCycles(constraints.getWidth()).getMaximumValue(), 
-/*  985 */         abandonCycles(constraints.getHeight()).getMaximumValue(), paramContainer);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addLayoutComponent(Component paramComponent, Object paramObject) {
-/* 1000 */     if (paramObject instanceof Constraints) {
-/* 1001 */       putConstraints(paramComponent, (Constraints)paramObject);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getLayoutAlignmentX(Container paramContainer) {
-/* 1009 */     return 0.5F;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public float getLayoutAlignmentY(Container paramContainer) {
-/* 1016 */     return 0.5F;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void invalidateLayout(Container paramContainer) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putConstraint(String paramString1, Component paramComponent1, int paramInt, String paramString2, Component paramComponent2) {
-/* 1041 */     putConstraint(paramString1, paramComponent1, Spring.constant(paramInt), paramString2, paramComponent2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putConstraint(String paramString1, Component paramComponent1, Spring paramSpring, String paramString2, Component paramComponent2) {
-/* 1075 */     putConstraint(paramString1, paramComponent1, Spring.sum(paramSpring, getConstraint(paramString2, paramComponent2)));
-/*      */   }
-/*      */   
-/*      */   private void putConstraint(String paramString, Component paramComponent, Spring paramSpring) {
-/* 1079 */     if (paramSpring != null) {
-/* 1080 */       getConstraints(paramComponent).setConstraint(paramString, paramSpring);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private Constraints applyDefaults(Component paramComponent, Constraints paramConstraints) {
-/* 1085 */     if (paramConstraints == null) {
-/* 1086 */       paramConstraints = new Constraints();
-/*      */     }
-/* 1088 */     if (paramConstraints.c == null) {
-/* 1089 */       paramConstraints.c = paramComponent;
-/*      */     }
-/* 1091 */     if (paramConstraints.horizontalHistory.size() < 2) {
-/* 1092 */       applyDefaults(paramConstraints, "West", Spring.constant(0), "Width", 
-/* 1093 */           Spring.width(paramComponent), paramConstraints.horizontalHistory);
-/*      */     }
-/* 1095 */     if (paramConstraints.verticalHistory.size() < 2) {
-/* 1096 */       applyDefaults(paramConstraints, "North", Spring.constant(0), "Height", 
-/* 1097 */           Spring.height(paramComponent), paramConstraints.verticalHistory);
-/*      */     }
-/* 1099 */     return paramConstraints;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void applyDefaults(Constraints paramConstraints, String paramString1, Spring paramSpring1, String paramString2, Spring paramSpring2, List<String> paramList) {
-/* 1105 */     if (paramList.size() == 0) {
-/* 1106 */       paramConstraints.setConstraint(paramString1, paramSpring1);
-/* 1107 */       paramConstraints.setConstraint(paramString2, paramSpring2);
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1111 */       if (paramConstraints.getConstraint(paramString2) == null) {
-/* 1112 */         paramConstraints.setConstraint(paramString2, paramSpring2);
-/*      */       } else {
-/*      */         
-/* 1115 */         paramConstraints.setConstraint(paramString1, paramSpring1);
-/*      */       } 
-/*      */       
-/* 1118 */       Collections.rotate(paramList, 1);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void putConstraints(Component paramComponent, Constraints paramConstraints) {
-/* 1123 */     this.componentConstraints.put(paramComponent, applyDefaults(paramComponent, paramConstraints));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Constraints getConstraints(Component paramComponent) {
-/* 1149 */     Constraints constraints = this.componentConstraints.get(paramComponent);
-/* 1150 */     if (constraints == null) {
-/* 1151 */       if (paramComponent instanceof JComponent) {
-/* 1152 */         Object object = ((JComponent)paramComponent).getClientProperty(SpringLayout.class);
-/* 1153 */         if (object instanceof Constraints) {
-/* 1154 */           return applyDefaults(paramComponent, (Constraints)object);
-/*      */         }
-/*      */       } 
-/* 1157 */       constraints = new Constraints();
-/* 1158 */       putConstraints(paramComponent, constraints);
-/*      */     } 
-/* 1160 */     return constraints;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Spring getConstraint(String paramString, Component paramComponent) {
-/* 1201 */     paramString = paramString.intern();
-/* 1202 */     return new SpringProxy(paramString, paramComponent, this);
-/*      */   }
-/*      */   
-/*      */   public void layoutContainer(Container paramContainer) {
-/* 1206 */     setParent(paramContainer);
-/*      */     
-/* 1208 */     int i = paramContainer.getComponentCount();
-/* 1209 */     getConstraints(paramContainer).reset();
-/* 1210 */     for (byte b1 = 0; b1 < i; b1++) {
-/* 1211 */       getConstraints(paramContainer.getComponent(b1)).reset();
-/*      */     }
-/*      */     
-/* 1214 */     Insets insets = paramContainer.getInsets();
-/* 1215 */     Constraints constraints = getConstraints(paramContainer);
-/* 1216 */     abandonCycles(constraints.getX()).setValue(0);
-/* 1217 */     abandonCycles(constraints.getY()).setValue(0);
-/* 1218 */     abandonCycles(constraints.getWidth()).setValue(paramContainer.getWidth() - insets.left - insets.right);
-/*      */     
-/* 1220 */     abandonCycles(constraints.getHeight()).setValue(paramContainer.getHeight() - insets.top - insets.bottom);
-/*      */ 
-/*      */     
-/* 1223 */     for (byte b2 = 0; b2 < i; b2++) {
-/* 1224 */       Component component = paramContainer.getComponent(b2);
-/* 1225 */       Constraints constraints1 = getConstraints(component);
-/* 1226 */       int j = abandonCycles(constraints1.getX()).getValue();
-/* 1227 */       int k = abandonCycles(constraints1.getY()).getValue();
-/* 1228 */       int m = abandonCycles(constraints1.getWidth()).getValue();
-/* 1229 */       int n = abandonCycles(constraints1.getHeight()).getValue();
-/* 1230 */       component.setBounds(insets.left + j, insets.top + k, m, n);
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\SpringLayout.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Insets;
+import java.awt.LayoutManager2;
+import java.awt.Rectangle;
+import java.util.*;
+
+/**
+ * A <code>SpringLayout</code> lays out the children of its associated container
+ * according to a set of constraints.
+ * See <a href="https://docs.oracle.com/javase/tutorial/uiswing/layout/spring.html">How to Use SpringLayout</a>
+ * in <em>The Java Tutorial</em> for examples of using
+ * <code>SpringLayout</code>.
+ *
+ * <p>
+ * Each constraint,
+ * represented by a <code>Spring</code> object,
+ * controls the vertical or horizontal distance
+ * between two component edges.
+ * The edges can belong to
+ * any child of the container,
+ * or to the container itself.
+ * For example,
+ * the allowable width of a component
+ * can be expressed using a constraint
+ * that controls the distance between the west (left) and east (right)
+ * edges of the component.
+ * The allowable <em>y</em> coordinates for a component
+ * can be expressed by constraining the distance between
+ * the north (top) edge of the component
+ * and the north edge of its container.
+ *
+ * <P>
+ * Every child of a <code>SpringLayout</code>-controlled container,
+ * as well as the container itself,
+ * has exactly one set of constraints
+ * associated with it.
+ * These constraints are represented by
+ * a <code>SpringLayout.Constraints</code> object.
+ * By default,
+ * <code>SpringLayout</code> creates constraints
+ * that make their associated component
+ * have the minimum, preferred, and maximum sizes
+ * returned by the component's
+ * {@link java.awt.Component#getMinimumSize},
+ * {@link java.awt.Component#getPreferredSize}, and
+ * {@link java.awt.Component#getMaximumSize}
+ * methods. The <em>x</em> and <em>y</em> positions are initially not
+ * constrained, so that until you constrain them the <code>Component</code>
+ * will be positioned at 0,0 relative to the <code>Insets</code> of the
+ * parent <code>Container</code>.
+ *
+ * <p>
+ * You can change
+ * a component's constraints in several ways.
+ * You can
+ * use one of the
+ * {@link #putConstraint putConstraint}
+ * methods
+ * to establish a spring
+ * linking the edges of two components within the same container.
+ * Or you can get the appropriate <code>SpringLayout.Constraints</code>
+ * object using
+ * {@link #getConstraints getConstraints}
+ * and then modify one or more of its springs.
+ * Or you can get the spring for a particular edge of a component
+ * using {@link #getConstraint getConstraint},
+ * and modify it.
+ * You can also associate
+ * your own <code>SpringLayout.Constraints</code> object
+ * with a component by specifying the constraints object
+ * when you add the component to its container
+ * (using
+ * {@link Container#add(Component, Object)}).
+ *
+ * <p>
+ * The <code>Spring</code> object representing each constraint
+ * has a minimum, preferred, maximum, and current value.
+ * The current value of the spring
+ * is somewhere between the minimum and maximum values,
+ * according to the formula given in the
+ * {@link Spring#sum} method description.
+ * When the minimum, preferred, and maximum values are the same,
+ * the current value is always equal to them;
+ * this inflexible spring is called a <em>strut</em>.
+ * You can create struts using the factory method
+ * {@link Spring#constant(int)}.
+ * The <code>Spring</code> class also provides factory methods
+ * for creating other kinds of springs,
+ * including springs that depend on other springs.
+ *
+ * <p>
+ * In a <code>SpringLayout</code>, the position of each edge is dependent on
+ * the position of just one other edge. If a constraint is subsequently added
+ * to create a new binding for an edge, the previous binding is discarded
+ * and the edge remains dependent on a single edge.
+ * Springs should only be attached
+ * between edges of the container and its immediate children; the behavior
+ * of the <code>SpringLayout</code> when presented with constraints linking
+ * the edges of components from different containers (either internal or
+ * external) is undefined.
+ *
+ * <h3>
+ * SpringLayout vs. Other Layout Managers
+ * </h3>
+ *
+ * <blockquote>
+ * <hr>
+ * <strong>Note:</strong>
+ * Unlike many layout managers,
+ * <code>SpringLayout</code> doesn't automatically set the location of
+ * the components it manages.
+ * If you hand-code a GUI that uses <code>SpringLayout</code>,
+ * remember to initialize component locations by constraining the west/east
+ * and north/south locations.
+ * <p>
+ * Depending on the constraints you use,
+ * you may also need to set the size of the container explicitly.
+ * <hr>
+ * </blockquote>
+ *
+ * <p>
+ * Despite the simplicity of <code>SpringLayout</code>,
+ * it can emulate the behavior of most other layout managers.
+ * For some features,
+ * such as the line breaking provided by <code>FlowLayout</code>,
+ * you'll need to
+ * create a special-purpose subclass of the <code>Spring</code> class.
+ *
+ * <p>
+ * <code>SpringLayout</code> also provides a way to solve
+ * many of the difficult layout
+ * problems that cannot be solved by nesting combinations
+ * of <code>Box</code>es. That said, <code>SpringLayout</code> honors the
+ * <code>LayoutManager2</code> contract correctly and so can be nested with
+ * other layout managers -- a technique that can be preferable to
+ * creating the constraints implied by the other layout managers.
+ * <p>
+ * The asymptotic complexity of the layout operation of a <code>SpringLayout</code>
+ * is linear in the number of constraints (and/or components).
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see Spring
+ * @see SpringLayout.Constraints
+ *
+ * @author      Philip Milne
+ * @author      Scott Violet
+ * @author      Joe Winchester
+ * @since       1.4
+ */
+public class SpringLayout implements LayoutManager2 {
+    private Map<Component, Constraints> componentConstraints = new HashMap<Component, Constraints>();
+
+    private Spring cyclicReference = Spring.constant(Spring.UNSET);
+    private Set<Spring> cyclicSprings;
+    private Set<Spring> acyclicSprings;
+
+
+    /**
+     * Specifies the top edge of a component's bounding rectangle.
+     */
+    public static final String NORTH  = "North";
+
+    /**
+     * Specifies the bottom edge of a component's bounding rectangle.
+     */
+    public static final String SOUTH  = "South";
+
+    /**
+     * Specifies the right edge of a component's bounding rectangle.
+     */
+    public static final String EAST   = "East";
+
+    /**
+     * Specifies the left edge of a component's bounding rectangle.
+     */
+    public static final String WEST   = "West";
+
+    /**
+     * Specifies the horizontal center of a component's bounding rectangle.
+     *
+     * @since 1.6
+     */
+    public static final String HORIZONTAL_CENTER   = "HorizontalCenter";
+
+    /**
+     * Specifies the vertical center of a component's bounding rectangle.
+     *
+     * @since 1.6
+     */
+    public static final String VERTICAL_CENTER   = "VerticalCenter";
+
+    /**
+     * Specifies the baseline of a component.
+     *
+     * @since 1.6
+     */
+    public static final String BASELINE   = "Baseline";
+
+    /**
+     * Specifies the width of a component's bounding rectangle.
+     *
+     * @since 1.6
+     */
+    public static final String WIDTH = "Width";
+
+    /**
+     * Specifies the height of a component's bounding rectangle.
+     *
+     * @since 1.6
+     */
+    public static final String HEIGHT = "Height";
+
+    private static String[] ALL_HORIZONTAL = {WEST, WIDTH, EAST, HORIZONTAL_CENTER};
+
+    private static String[] ALL_VERTICAL = {NORTH, HEIGHT, SOUTH, VERTICAL_CENTER, BASELINE};
+
+    /**
+     * A <code>Constraints</code> object holds the
+     * constraints that govern the way a component's size and position
+     * change in a container controlled by a <code>SpringLayout</code>.
+     * A <code>Constraints</code> object is
+     * like a <code>Rectangle</code>, in that it
+     * has <code>x</code>, <code>y</code>,
+     * <code>width</code>, and <code>height</code> properties.
+     * In the <code>Constraints</code> object, however,
+     * these properties have
+     * <code>Spring</code> values instead of integers.
+     * In addition,
+     * a <code>Constraints</code> object
+     * can be manipulated as four edges
+     * -- north, south, east, and west --
+     * using the <code>constraint</code> property.
+     *
+     * <p>
+     * The following formulas are always true
+     * for a <code>Constraints</code> object (here WEST and <code>x</code> are synonyms, as are and NORTH and <code>y</code>):
+     *
+     * <pre>
+     *               EAST = WEST + WIDTH
+     *              SOUTH = NORTH + HEIGHT
+     *  HORIZONTAL_CENTER = WEST + WIDTH/2
+     *    VERTICAL_CENTER = NORTH + HEIGHT/2
+     *  ABSOLUTE_BASELINE = NORTH + RELATIVE_BASELINE*
+     * </pre>
+     * <p>
+     * For example, if you have specified the WIDTH and WEST (X) location
+     * the EAST is calculated as WEST + WIDTH.  If you instead specified
+     * the WIDTH and EAST locations the WEST (X) location is then calculated
+     * as EAST - WIDTH.
+     * <p>
+     * [RELATIVE_BASELINE is a private constraint that is set automatically when
+     * the SpringLayout.Constraints(Component) constructor is called or when
+     * a constraints object is registered with a SpringLayout object.]
+     * <p>
+     * <b>Note</b>: In this document,
+     * operators represent methods
+     * in the <code>Spring</code> class.
+     * For example, "a + b" is equal to
+     * <code>Spring.sum(a, b)</code>,
+     * and "a - b" is equal to
+     * <code>Spring.sum(a, Spring.minus(b))</code>.
+     * See the
+     * {@link Spring Spring API documentation}
+     * for further details
+     * of spring arithmetic.
+     *
+     * <p>
+     *
+     * Because a <code>Constraints</code> object's properties --
+     * representing its edges, size, and location -- can all be set
+     * independently and yet are interrelated,
+     * a <code>Constraints</code> object can become <em>over-constrained</em>.
+     * For example, if the <code>WEST</code>, <code>WIDTH</code> and
+     * <code>EAST</code> edges are all set, steps must be taken to ensure that
+     * the first of the formulas above holds.  To do this, the
+     * <code>Constraints</code>
+     * object throws away the <em>least recently set</em>
+     * constraint so as to make the formulas hold.
+     * @since 1.4
+     */
+    public static class Constraints {
+       private Spring x;
+       private Spring y;
+       private Spring width;
+       private Spring height;
+       private Spring east;
+       private Spring south;
+        private Spring horizontalCenter;
+        private Spring verticalCenter;
+        private Spring baseline;
+
+        private List<String> horizontalHistory = new ArrayList<String>(2);
+        private List<String> verticalHistory = new ArrayList<String>(2);
+
+        // Used for baseline calculations
+        private Component c;
+
+       /**
+        * Creates an empty <code>Constraints</code> object.
+        */
+       public Constraints() {
+       }
+
+       /**
+        * Creates a <code>Constraints</code> object with the
+        * specified values for its
+        * <code>x</code> and <code>y</code> properties.
+        * The <code>height</code> and <code>width</code> springs
+        * have <code>null</code> values.
+        *
+        * @param x  the spring controlling the component's <em>x</em> value
+        * @param y  the spring controlling the component's <em>y</em> value
+        */
+       public Constraints(Spring x, Spring y) {
+           setX(x);
+           setY(y);
+       }
+
+       /**
+        * Creates a <code>Constraints</code> object with the
+        * specified values for its
+        * <code>x</code>, <code>y</code>, <code>width</code>,
+        * and <code>height</code> properties.
+        * Note: If the <code>SpringLayout</code> class
+        * encounters <code>null</code> values in the
+        * <code>Constraints</code> object of a given component,
+        * it replaces them with suitable defaults.
+        *
+        * @param x  the spring value for the <code>x</code> property
+        * @param y  the spring value for the <code>y</code> property
+        * @param width  the spring value for the <code>width</code> property
+        * @param height  the spring value for the <code>height</code> property
+        */
+       public Constraints(Spring x, Spring y, Spring width, Spring height) {
+           setX(x);
+           setY(y);
+           setWidth(width);
+           setHeight(height);
+       }
+
+        /**
+         * Creates a <code>Constraints</code> object with
+         * suitable <code>x</code>, <code>y</code>, <code>width</code> and
+         * <code>height</code> springs for component, <code>c</code>.
+         * The <code>x</code> and <code>y</code> springs are constant
+         * springs  initialised with the component's location at
+         * the time this method is called. The <code>width</code> and
+         * <code>height</code> springs are special springs, created by
+         * the <code>Spring.width()</code> and <code>Spring.height()</code>
+         * methods, which track the size characteristics of the component
+         * when they change.
+         *
+         * @param c  the component whose characteristics will be reflected by this Constraints object
+         * @throws NullPointerException if <code>c</code> is null.
+         * @since 1.5
+         */
+        public Constraints(Component c) {
+            this.c = c;
+            setX(Spring.constant(c.getX()));
+            setY(Spring.constant(c.getY()));
+            setWidth(Spring.width(c));
+            setHeight(Spring.height(c));
+        }
+
+        private void pushConstraint(String name, Spring value, boolean horizontal) {
+            boolean valid = true;
+            List<String> history = horizontal ? horizontalHistory :
+                                                verticalHistory;
+            if (history.contains(name)) {
+                history.remove(name);
+                valid = false;
+            } else if (history.size() == 2 && value != null) {
+                history.remove(0);
+                valid = false;
+            }
+            if (value != null) {
+                history.add(name);
+            }
+            if (!valid) {
+                String[] all = horizontal ? ALL_HORIZONTAL : ALL_VERTICAL;
+                for (String s : all) {
+                    if (!history.contains(s)) {
+                        setConstraint(s, null);
+                    }
+                }
+            }
+        }
+
+       private Spring sum(Spring s1, Spring s2) {
+           return (s1 == null || s2 == null) ? null : Spring.sum(s1, s2);
+       }
+
+       private Spring difference(Spring s1, Spring s2) {
+           return (s1 == null || s2 == null) ? null : Spring.difference(s1, s2);
+       }
+
+        private Spring scale(Spring s, float factor) {
+            return (s == null) ? null : Spring.scale(s, factor);
+        }
+
+        private int getBaselineFromHeight(int height) {
+            if (height < 0) {
+                // Bad Scott, Bad Scott!
+                return -c.getBaseline(c.getPreferredSize().width,
+                                      -height);
+            }
+            return c.getBaseline(c.getPreferredSize().width, height);
+        }
+
+        private int getHeightFromBaseLine(int baseline) {
+            Dimension prefSize = c.getPreferredSize();
+            int prefHeight = prefSize.height;
+            int prefBaseline = c.getBaseline(prefSize.width, prefHeight);
+            if (prefBaseline == baseline) {
+                // If prefBaseline < 0, then no baseline, assume preferred
+                // height.
+                // If prefBaseline == baseline, then specified baseline
+                // matches preferred baseline, return preferred height
+                return prefHeight;
+            }
+            // Valid baseline
+            switch(c.getBaselineResizeBehavior()) {
+            case CONSTANT_DESCENT:
+                return prefHeight + (baseline - prefBaseline);
+            case CENTER_OFFSET:
+                return prefHeight + 2 * (baseline - prefBaseline);
+            case CONSTANT_ASCENT:
+                // Component baseline and specified baseline will NEVER
+                // match, fall through to default
+            default: // OTHER
+                // No way to map from baseline to height.
+            }
+            return Integer.MIN_VALUE;
+        }
+
+         private Spring heightToRelativeBaseline(Spring s) {
+            return new Spring.SpringMap(s) {
+                 protected int map(int i) {
+                    return getBaselineFromHeight(i);
+                 }
+
+                 protected int inv(int i) {
+                     return getHeightFromBaseLine(i);
+                 }
+            };
+        }
+
+        private Spring relativeBaselineToHeight(Spring s) {
+            return new Spring.SpringMap(s) {
+                protected int map(int i) {
+                    return getHeightFromBaseLine(i);
+                 }
+
+                 protected int inv(int i) {
+                    return getBaselineFromHeight(i);
+                 }
+            };
+        }
+
+        private boolean defined(List history, String s1, String s2) {
+            return history.contains(s1) && history.contains(s2);
+        }
+
+       /**
+        * Sets the <code>x</code> property,
+        * which controls the <code>x</code> value
+        * of a component's location.
+        *
+        * @param x the spring controlling the <code>x</code> value
+        *          of a component's location
+        *
+        * @see #getX
+        * @see SpringLayout.Constraints
+        */
+       public void setX(Spring x) {
+           this.x = x;
+           pushConstraint(WEST, x, true);
+       }
+
+       /**
+        * Returns the value of the <code>x</code> property.
+        *
+        * @return the spring controlling the <code>x</code> value
+        *         of a component's location
+        *
+        * @see #setX
+        * @see SpringLayout.Constraints
+        */
+       public Spring getX() {
+           if (x == null) {
+               if (defined(horizontalHistory, EAST, WIDTH)) {
+                   x = difference(east, width);
+               } else if (defined(horizontalHistory, HORIZONTAL_CENTER, WIDTH)) {
+                   x = difference(horizontalCenter, scale(width, 0.5f));
+               } else if (defined(horizontalHistory, HORIZONTAL_CENTER, EAST)) {
+                   x = difference(scale(horizontalCenter, 2f), east);
+               }
+           }
+           return x;
+       }
+
+       /**
+        * Sets the <code>y</code> property,
+        * which controls the <code>y</code> value
+        * of a component's location.
+        *
+        * @param y the spring controlling the <code>y</code> value
+        *          of a component's location
+        *
+        * @see #getY
+        * @see SpringLayout.Constraints
+        */
+       public void setY(Spring y) {
+           this.y = y;
+           pushConstraint(NORTH, y, false);
+       }
+
+       /**
+        * Returns the value of the <code>y</code> property.
+        *
+        * @return the spring controlling the <code>y</code> value
+        *         of a component's location
+        *
+        * @see #setY
+        * @see SpringLayout.Constraints
+        */
+       public Spring getY() {
+           if (y == null) {
+               if (defined(verticalHistory, SOUTH, HEIGHT)) {
+                   y = difference(south, height);
+               } else if (defined(verticalHistory, VERTICAL_CENTER, HEIGHT)) {
+                   y = difference(verticalCenter, scale(height, 0.5f));
+               } else if (defined(verticalHistory, VERTICAL_CENTER, SOUTH)) {
+                   y = difference(scale(verticalCenter, 2f), south);
+               } else if (defined(verticalHistory, BASELINE, HEIGHT)) {
+                   y = difference(baseline, heightToRelativeBaseline(height));
+               } else if (defined(verticalHistory, BASELINE, SOUTH)) {
+                   y = scale(difference(baseline, heightToRelativeBaseline(south)), 2f);
+/*
+               } else if (defined(verticalHistory, BASELINE, VERTICAL_CENTER)) {
+                   y = scale(difference(baseline, heightToRelativeBaseline(scale(verticalCenter, 2))), 1f/(1-2*0.5f));
+*/
+               }
+           }
+           return y;
+       }
+
+       /**
+        * Sets the <code>width</code> property,
+        * which controls the width of a component.
+        *
+        * @param width the spring controlling the width of this
+        * <code>Constraints</code> object
+        *
+        * @see #getWidth
+        * @see SpringLayout.Constraints
+        */
+       public void setWidth(Spring width) {
+           this.width = width;
+           pushConstraint(WIDTH, width, true);
+       }
+
+       /**
+        * Returns the value of the <code>width</code> property.
+        *
+        * @return the spring controlling the width of a component
+        *
+        * @see #setWidth
+        * @see SpringLayout.Constraints
+        */
+       public Spring getWidth() {
+           if (width == null) {
+               if (horizontalHistory.contains(EAST)) {
+                   width = difference(east, getX());
+               } else if (horizontalHistory.contains(HORIZONTAL_CENTER)) {
+                   width = scale(difference(horizontalCenter, getX()), 2f);
+               }
+           }
+           return width;
+       }
+
+       /**
+        * Sets the <code>height</code> property,
+        * which controls the height of a component.
+        *
+        * @param height the spring controlling the height of this <code>Constraints</code>
+        * object
+        *
+        * @see #getHeight
+        * @see SpringLayout.Constraints
+        */
+       public void setHeight(Spring height) {
+           this.height = height;
+           pushConstraint(HEIGHT, height, false);
+       }
+
+       /**
+        * Returns the value of the <code>height</code> property.
+        *
+        * @return the spring controlling the height of a component
+        *
+        * @see #setHeight
+        * @see SpringLayout.Constraints
+        */
+       public Spring getHeight() {
+           if (height == null) {
+               if (verticalHistory.contains(SOUTH)) {
+                   height = difference(south, getY());
+               } else if (verticalHistory.contains(VERTICAL_CENTER)) {
+                   height = scale(difference(verticalCenter, getY()), 2f);
+               } else if (verticalHistory.contains(BASELINE)) {
+                   height = relativeBaselineToHeight(difference(baseline, getY()));
+               }
+           }
+           return height;
+       }
+
+       private void setEast(Spring east) {
+           this.east = east;
+           pushConstraint(EAST, east, true);
+       }
+
+       private Spring getEast() {
+           if (east == null) {
+               east = sum(getX(), getWidth());
+           }
+           return east;
+       }
+
+       private void setSouth(Spring south) {
+           this.south = south;
+           pushConstraint(SOUTH, south, false);
+       }
+
+       private Spring getSouth() {
+           if (south == null) {
+               south = sum(getY(), getHeight());
+           }
+           return south;
+       }
+
+        private Spring getHorizontalCenter() {
+            if (horizontalCenter == null) {
+                horizontalCenter = sum(getX(), scale(getWidth(), 0.5f));
+            }
+            return horizontalCenter;
+        }
+
+        private void setHorizontalCenter(Spring horizontalCenter) {
+            this.horizontalCenter = horizontalCenter;
+            pushConstraint(HORIZONTAL_CENTER, horizontalCenter, true);
+        }
+
+        private Spring getVerticalCenter() {
+            if (verticalCenter == null) {
+                verticalCenter = sum(getY(), scale(getHeight(), 0.5f));
+            }
+            return verticalCenter;
+        }
+
+        private void setVerticalCenter(Spring verticalCenter) {
+            this.verticalCenter = verticalCenter;
+            pushConstraint(VERTICAL_CENTER, verticalCenter, false);
+        }
+
+        private Spring getBaseline() {
+            if (baseline == null) {
+                baseline = sum(getY(), heightToRelativeBaseline(getHeight()));
+            }
+            return baseline;
+        }
+
+        private void setBaseline(Spring baseline) {
+            this.baseline = baseline;
+            pushConstraint(BASELINE, baseline, false);
+        }
+
+       /**
+        * Sets the spring controlling the specified edge.
+        * The edge must have one of the following values:
+        * <code>SpringLayout.NORTH</code>,
+        * <code>SpringLayout.SOUTH</code>,
+        * <code>SpringLayout.EAST</code>,
+        * <code>SpringLayout.WEST</code>,
+        * <code>SpringLayout.HORIZONTAL_CENTER</code>,
+        * <code>SpringLayout.VERTICAL_CENTER</code>,
+        * <code>SpringLayout.BASELINE</code>,
+        * <code>SpringLayout.WIDTH</code> or
+        * <code>SpringLayout.HEIGHT</code>.
+        * For any other <code>String</code> value passed as the edge,
+        * no action is taken. For a <code>null</code> edge, a
+        * <code>NullPointerException</code> is thrown.
+        * <p>
+        * <b>Note:</b> This method can affect {@code x} and {@code y} values
+        * previously set for this {@code Constraints}.
+        *
+        * @param edgeName the edge to be set
+        * @param s the spring controlling the specified edge
+        *
+        * @throws NullPointerException if <code>edgeName</code> is <code>null</code>
+        *
+        * @see #getConstraint
+        * @see #NORTH
+        * @see #SOUTH
+        * @see #EAST
+        * @see #WEST
+        * @see #HORIZONTAL_CENTER
+        * @see #VERTICAL_CENTER
+        * @see #BASELINE
+        * @see #WIDTH
+        * @see #HEIGHT
+        * @see SpringLayout.Constraints
+        */
+       public void setConstraint(String edgeName, Spring s) {
+           edgeName = edgeName.intern();
+           if (edgeName == WEST) {
+               setX(s);
+           } else if (edgeName == NORTH) {
+               setY(s);
+           } else if (edgeName == EAST) {
+               setEast(s);
+           } else if (edgeName == SOUTH) {
+               setSouth(s);
+           } else if (edgeName == HORIZONTAL_CENTER) {
+               setHorizontalCenter(s);
+           } else if (edgeName == WIDTH) {
+               setWidth(s);
+           } else if (edgeName == HEIGHT) {
+               setHeight(s);
+           } else if (edgeName == VERTICAL_CENTER) {
+               setVerticalCenter(s);
+           } else if (edgeName == BASELINE) {
+               setBaseline(s);
+           }
+       }
+
+       /**
+        * Returns the value of the specified edge, which may be
+        * a derived value, or even <code>null</code>.
+        * The edge must have one of the following values:
+        * <code>SpringLayout.NORTH</code>,
+        * <code>SpringLayout.SOUTH</code>,
+        * <code>SpringLayout.EAST</code>,
+        * <code>SpringLayout.WEST</code>,
+        * <code>SpringLayout.HORIZONTAL_CENTER</code>,
+        * <code>SpringLayout.VERTICAL_CENTER</code>,
+        * <code>SpringLayout.BASELINE</code>,
+        * <code>SpringLayout.WIDTH</code> or
+        * <code>SpringLayout.HEIGHT</code>.
+        * For any other <code>String</code> value passed as the edge,
+        * <code>null</code> will be returned. Throws
+        * <code>NullPointerException</code> for a <code>null</code> edge.
+        *
+        * @param edgeName the edge whose value
+        *                 is to be returned
+        *
+        * @return the spring controlling the specified edge, may be <code>null</code>
+        *
+        * @throws NullPointerException if <code>edgeName</code> is <code>null</code>
+        *
+        * @see #setConstraint
+        * @see #NORTH
+        * @see #SOUTH
+        * @see #EAST
+        * @see #WEST
+        * @see #HORIZONTAL_CENTER
+        * @see #VERTICAL_CENTER
+        * @see #BASELINE
+        * @see #WIDTH
+        * @see #HEIGHT
+        * @see SpringLayout.Constraints
+        */
+       public Spring getConstraint(String edgeName) {
+           edgeName = edgeName.intern();
+           return (edgeName == WEST)  ? getX() :
+                   (edgeName == NORTH) ? getY() :
+                   (edgeName == EAST)  ? getEast() :
+                   (edgeName == SOUTH) ? getSouth() :
+                   (edgeName == WIDTH)  ? getWidth() :
+                   (edgeName == HEIGHT) ? getHeight() :
+                   (edgeName == HORIZONTAL_CENTER) ? getHorizontalCenter() :
+                   (edgeName == VERTICAL_CENTER)  ? getVerticalCenter() :
+                   (edgeName == BASELINE) ? getBaseline() :
+                  null;
+       }
+
+       /*pp*/ void reset() {
+           Spring[] allSprings = {x, y, width, height, east, south,
+               horizontalCenter, verticalCenter, baseline};
+           for (Spring s : allSprings) {
+               if (s != null) {
+                   s.setValue(Spring.UNSET);
+               }
+           }
+       }
+   }
+
+   private static class SpringProxy extends Spring {
+       private String edgeName;
+       private Component c;
+       private SpringLayout l;
+
+       public SpringProxy(String edgeName, Component c, SpringLayout l) {
+           this.edgeName = edgeName;
+           this.c = c;
+           this.l = l;
+       }
+
+       private Spring getConstraint() {
+           return l.getConstraints(c).getConstraint(edgeName);
+       }
+
+       public int getMinimumValue() {
+           return getConstraint().getMinimumValue();
+       }
+
+       public int getPreferredValue() {
+           return getConstraint().getPreferredValue();
+       }
+
+       public int getMaximumValue() {
+           return getConstraint().getMaximumValue();
+       }
+
+       public int getValue() {
+           return getConstraint().getValue();
+       }
+
+       public void setValue(int size) {
+           getConstraint().setValue(size);
+       }
+
+       /*pp*/ boolean isCyclic(SpringLayout l) {
+           return l.isCyclic(getConstraint());
+       }
+
+       public String toString() {
+           return "SpringProxy for " + edgeName + " edge of " + c.getName() + ".";
+       }
+    }
+
+    /**
+     * Constructs a new <code>SpringLayout</code>.
+     */
+    public SpringLayout() {}
+
+    private void resetCyclicStatuses() {
+        cyclicSprings = new HashSet<Spring>();
+        acyclicSprings = new HashSet<Spring>();
+    }
+
+    private void setParent(Container p) {
+        resetCyclicStatuses();
+        Constraints pc = getConstraints(p);
+
+        pc.setX(Spring.constant(0));
+        pc.setY(Spring.constant(0));
+        // The applyDefaults() method automatically adds width and
+        // height springs that delegate their calculations to the
+        // getMinimumSize(), getPreferredSize() and getMaximumSize()
+        // methods of the relevant component. In the case of the
+        // parent this will cause an infinite loop since these
+        // methods, in turn, delegate their calculations to the
+        // layout manager. Check for this case and replace the
+        // the springs that would cause this problem with a
+        // constant springs that supply default values.
+        Spring width = pc.getWidth();
+        if (width instanceof Spring.WidthSpring && ((Spring.WidthSpring)width).c == p) {
+            pc.setWidth(Spring.constant(0, 0, Integer.MAX_VALUE));
+        }
+        Spring height = pc.getHeight();
+        if (height instanceof Spring.HeightSpring && ((Spring.HeightSpring)height).c == p) {
+            pc.setHeight(Spring.constant(0, 0, Integer.MAX_VALUE));
+        }
+    }
+
+    /*pp*/ boolean isCyclic(Spring s) {
+        if (s == null) {
+            return false;
+        }
+        if (cyclicSprings.contains(s)) {
+            return true;
+        }
+        if (acyclicSprings.contains(s)) {
+            return false;
+        }
+        cyclicSprings.add(s);
+        boolean result = s.isCyclic(this);
+        if (!result) {
+            acyclicSprings.add(s);
+            cyclicSprings.remove(s);
+        }
+        else {
+            System.err.println(s + " is cyclic. ");
+        }
+        return result;
+    }
+
+    private Spring abandonCycles(Spring s) {
+        return isCyclic(s) ? cyclicReference : s;
+    }
+
+    // LayoutManager methods.
+
+    /**
+     * Has no effect,
+     * since this layout manager does not
+     * use a per-component string.
+     */
+    public void addLayoutComponent(String name, Component c) {}
+
+    /**
+     * Removes the constraints associated with the specified component.
+     *
+     * @param c the component being removed from the container
+     */
+    public void removeLayoutComponent(Component c) {
+        componentConstraints.remove(c);
+    }
+
+    private static Dimension addInsets(int width, int height, Container p) {
+        Insets i = p.getInsets();
+        return new Dimension(width + i.left + i.right, height + i.top + i.bottom);
+    }
+
+    public Dimension minimumLayoutSize(Container parent) {
+        setParent(parent);
+        Constraints pc = getConstraints(parent);
+        return addInsets(abandonCycles(pc.getWidth()).getMinimumValue(),
+                         abandonCycles(pc.getHeight()).getMinimumValue(),
+                         parent);
+    }
+
+    public Dimension preferredLayoutSize(Container parent) {
+        setParent(parent);
+        Constraints pc = getConstraints(parent);
+        return addInsets(abandonCycles(pc.getWidth()).getPreferredValue(),
+                         abandonCycles(pc.getHeight()).getPreferredValue(),
+                         parent);
+    }
+
+    // LayoutManager2 methods.
+
+    public Dimension maximumLayoutSize(Container parent) {
+        setParent(parent);
+        Constraints pc = getConstraints(parent);
+        return addInsets(abandonCycles(pc.getWidth()).getMaximumValue(),
+                         abandonCycles(pc.getHeight()).getMaximumValue(),
+                         parent);
+    }
+
+    /**
+     * If <code>constraints</code> is an instance of
+     * <code>SpringLayout.Constraints</code>,
+     * associates the constraints with the specified component.
+     * <p>
+     * @param   component the component being added
+     * @param   constraints the component's constraints
+     *
+     * @see SpringLayout.Constraints
+     */
+    public void addLayoutComponent(Component component, Object constraints) {
+        if (constraints instanceof Constraints) {
+            putConstraints(component, (Constraints)constraints);
+        }
+    }
+
+    /**
+     * Returns 0.5f (centered).
+     */
+    public float getLayoutAlignmentX(Container p) {
+        return 0.5f;
+    }
+
+    /**
+     * Returns 0.5f (centered).
+     */
+    public float getLayoutAlignmentY(Container p) {
+        return 0.5f;
+    }
+
+    public void invalidateLayout(Container p) {}
+
+    // End of LayoutManger2 methods
+
+   /**
+     * Links edge <code>e1</code> of component <code>c1</code> to
+     * edge <code>e2</code> of component <code>c2</code>,
+     * with a fixed distance between the edges. This
+     * constraint will cause the assignment
+     * <pre>
+     *     value(e1, c1) = value(e2, c2) + pad</pre>
+     * to take place during all subsequent layout operations.
+     * <p>
+     * @param   e1 the edge of the dependent
+     * @param   c1 the component of the dependent
+     * @param   pad the fixed distance between dependent and anchor
+     * @param   e2 the edge of the anchor
+     * @param   c2 the component of the anchor
+     *
+     * @see #putConstraint(String, Component, Spring, String, Component)
+     */
+    public void putConstraint(String e1, Component c1, int pad, String e2, Component c2) {
+        putConstraint(e1, c1, Spring.constant(pad), e2, c2);
+    }
+
+    /**
+     * Links edge <code>e1</code> of component <code>c1</code> to
+     * edge <code>e2</code> of component <code>c2</code>. As edge
+     * <code>(e2, c2)</code> changes value, edge <code>(e1, c1)</code> will
+     * be calculated by taking the (spring) sum of <code>(e2, c2)</code>
+     * and <code>s</code>.
+     * Each edge must have one of the following values:
+     * <code>SpringLayout.NORTH</code>,
+     * <code>SpringLayout.SOUTH</code>,
+     * <code>SpringLayout.EAST</code>,
+     * <code>SpringLayout.WEST</code>,
+     * <code>SpringLayout.VERTICAL_CENTER</code>,
+     * <code>SpringLayout.HORIZONTAL_CENTER</code> or
+     * <code>SpringLayout.BASELINE</code>.
+     * <p>
+     * @param   e1 the edge of the dependent
+     * @param   c1 the component of the dependent
+     * @param   s the spring linking dependent and anchor
+     * @param   e2 the edge of the anchor
+     * @param   c2 the component of the anchor
+     *
+     * @see #putConstraint(String, Component, int, String, Component)
+     * @see #NORTH
+     * @see #SOUTH
+     * @see #EAST
+     * @see #WEST
+     * @see #VERTICAL_CENTER
+     * @see #HORIZONTAL_CENTER
+     * @see #BASELINE
+     */
+    public void putConstraint(String e1, Component c1, Spring s, String e2, Component c2) {
+        putConstraint(e1, c1, Spring.sum(s, getConstraint(e2, c2)));
+    }
+
+    private void putConstraint(String e, Component c, Spring s) {
+        if (s != null) {
+            getConstraints(c).setConstraint(e, s);
+        }
+     }
+
+    private Constraints applyDefaults(Component c, Constraints constraints) {
+        if (constraints == null) {
+            constraints = new Constraints();
+        }
+        if (constraints.c == null) {
+            constraints.c = c;
+        }
+        if (constraints.horizontalHistory.size() < 2) {
+            applyDefaults(constraints, WEST, Spring.constant(0), WIDTH,
+                          Spring.width(c), constraints.horizontalHistory);
+        }
+        if (constraints.verticalHistory.size() < 2) {
+            applyDefaults(constraints, NORTH, Spring.constant(0), HEIGHT,
+                          Spring.height(c), constraints.verticalHistory);
+        }
+        return constraints;
+    }
+
+    private void applyDefaults(Constraints constraints, String name1,
+                               Spring spring1, String name2, Spring spring2,
+                               List<String> history) {
+        if (history.size() == 0) {
+            constraints.setConstraint(name1, spring1);
+            constraints.setConstraint(name2, spring2);
+        } else {
+            // At this point there must be exactly one constraint defined already.
+            // Check width/height first.
+            if (constraints.getConstraint(name2) == null) {
+                constraints.setConstraint(name2, spring2);
+            } else {
+                // If width/height is already defined, install a default for x/y.
+                constraints.setConstraint(name1, spring1);
+            }
+            // Either way, leave the user's constraint topmost on the stack.
+            Collections.rotate(history, 1);
+        }
+    }
+
+    private void putConstraints(Component component, Constraints constraints) {
+        componentConstraints.put(component, applyDefaults(component, constraints));
+    }
+
+    /**
+     * Returns the constraints for the specified component.
+     * Note that,
+     * unlike the <code>GridBagLayout</code>
+     * <code>getConstraints</code> method,
+     * this method does not clone constraints.
+     * If no constraints
+     * have been associated with this component,
+     * this method
+     * returns a default constraints object positioned at
+     * 0,0 relative to the parent's Insets and its width/height
+     * constrained to the minimum, maximum, and preferred sizes of the
+     * component. The size characteristics
+     * are not frozen at the time this method is called;
+     * instead this method returns a constraints object
+     * whose characteristics track the characteristics
+     * of the component as they change.
+     *
+     * @param       c the component whose constraints will be returned
+     *
+     * @return      the constraints for the specified component
+     */
+    public Constraints getConstraints(Component c) {
+       Constraints result = componentConstraints.get(c);
+       if (result == null) {
+           if (c instanceof javax.swing.JComponent) {
+                Object cp = ((javax.swing.JComponent)c).getClientProperty(SpringLayout.class);
+                if (cp instanceof Constraints) {
+                    return applyDefaults(c, (Constraints)cp);
+                }
+            }
+            result = new Constraints();
+            putConstraints(c, result);
+       }
+       return result;
+    }
+
+    /**
+     * Returns the spring controlling the distance between
+     * the specified edge of
+     * the component and the top or left edge of its parent. This
+     * method, instead of returning the current binding for the
+     * edge, returns a proxy that tracks the characteristics
+     * of the edge even if the edge is subsequently rebound.
+     * Proxies are intended to be used in builder environments
+     * where it is useful to allow the user to define the
+     * constraints for a layout in any order. Proxies do, however,
+     * provide the means to create cyclic dependencies amongst
+     * the constraints of a layout. Such cycles are detected
+     * internally by <code>SpringLayout</code> so that
+     * the layout operation always terminates.
+     *
+     * @param edgeName must be one of
+     * <code>SpringLayout.NORTH</code>,
+     * <code>SpringLayout.SOUTH</code>,
+     * <code>SpringLayout.EAST</code>,
+     * <code>SpringLayout.WEST</code>,
+     * <code>SpringLayout.VERTICAL_CENTER</code>,
+     * <code>SpringLayout.HORIZONTAL_CENTER</code> or
+     * <code>SpringLayout.BASELINE</code>
+     * @param c the component whose edge spring is desired
+     *
+     * @return a proxy for the spring controlling the distance between the
+     *         specified edge and the top or left edge of its parent
+     *
+     * @see #NORTH
+     * @see #SOUTH
+     * @see #EAST
+     * @see #WEST
+     * @see #VERTICAL_CENTER
+     * @see #HORIZONTAL_CENTER
+     * @see #BASELINE
+     */
+    public Spring getConstraint(String edgeName, Component c) {
+        // The interning here is unnecessary; it was added for efficiency.
+        edgeName = edgeName.intern();
+        return new SpringProxy(edgeName, c, this);
+    }
+
+    public void layoutContainer(Container parent) {
+        setParent(parent);
+
+        int n = parent.getComponentCount();
+        getConstraints(parent).reset();
+        for (int i = 0 ; i < n ; i++) {
+            getConstraints(parent.getComponent(i)).reset();
+        }
+
+        Insets insets = parent.getInsets();
+        Constraints pc = getConstraints(parent);
+        abandonCycles(pc.getX()).setValue(0);
+        abandonCycles(pc.getY()).setValue(0);
+        abandonCycles(pc.getWidth()).setValue(parent.getWidth() -
+                                              insets.left - insets.right);
+        abandonCycles(pc.getHeight()).setValue(parent.getHeight() -
+                                               insets.top - insets.bottom);
+
+        for (int i = 0 ; i < n ; i++) {
+            Component c = parent.getComponent(i);
+            Constraints cc = getConstraints(c);
+            int x = abandonCycles(cc.getX()).getValue();
+            int y = abandonCycles(cc.getY()).getValue();
+            int width = abandonCycles(cc.getWidth()).getValue();
+            int height = abandonCycles(cc.getHeight()).getValue();
+            c.setBounds(insets.left + x, insets.top + y, width, height);
+        }
+    }
+}

@@ -1,169 +1,163 @@
-/*     */ package com.sun.org.apache.xpath.internal.objects;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMIterator;
-/*     */ import com.sun.org.apache.xml.internal.utils.WrappedRuntimeException;
-/*     */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*     */ import com.sun.org.apache.xpath.internal.axes.OneStepIterator;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.NodeList;
-/*     */ import org.w3c.dom.traversal.NodeIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XObjectFactory
-/*     */ {
-/*     */   public static XObject create(Object val) {
-/*     */     XObject result;
-/*  50 */     if (val instanceof XObject) {
-/*     */       
-/*  52 */       result = (XObject)val;
-/*     */     }
-/*  54 */     else if (val instanceof String) {
-/*     */       
-/*  56 */       result = new XString((String)val);
-/*     */     }
-/*  58 */     else if (val instanceof Boolean) {
-/*     */       
-/*  60 */       result = new XBoolean((Boolean)val);
-/*     */     }
-/*  62 */     else if (val instanceof Double) {
-/*     */       
-/*  64 */       result = new XNumber((Double)val);
-/*     */     }
-/*     */     else {
-/*     */       
-/*  68 */       result = new XObject(val);
-/*     */     } 
-/*     */     
-/*  71 */     return result;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static XObject create(Object val, XPathContext xctxt) {
-/*     */     XObject result;
-/*  89 */     if (val instanceof XObject) {
-/*     */       
-/*  91 */       result = (XObject)val;
-/*     */     }
-/*  93 */     else if (val instanceof String) {
-/*     */       
-/*  95 */       result = new XString((String)val);
-/*     */     }
-/*  97 */     else if (val instanceof Boolean) {
-/*     */       
-/*  99 */       result = new XBoolean((Boolean)val);
-/*     */     }
-/* 101 */     else if (val instanceof Number) {
-/*     */       
-/* 103 */       result = new XNumber((Number)val);
-/*     */     }
-/* 105 */     else if (val instanceof DTM) {
-/*     */       
-/* 107 */       DTM dtm = (DTM)val;
-/*     */       
-/*     */       try {
-/* 110 */         int dtmRoot = dtm.getDocument();
-/* 111 */         DTMAxisIterator iter = dtm.getAxisIterator(13);
-/* 112 */         iter.setStartNode(dtmRoot);
-/* 113 */         DTMIterator iterator = new OneStepIterator(iter, 13);
-/* 114 */         iterator.setRoot(dtmRoot, xctxt);
-/* 115 */         result = new XNodeSet(iterator);
-/*     */       }
-/* 117 */       catch (Exception ex) {
-/*     */         
-/* 119 */         throw new WrappedRuntimeException(ex);
-/*     */       }
-/*     */     
-/* 122 */     } else if (val instanceof DTMAxisIterator) {
-/*     */       
-/* 124 */       DTMAxisIterator iter = (DTMAxisIterator)val;
-/*     */       
-/*     */       try {
-/* 127 */         DTMIterator iterator = new OneStepIterator(iter, 13);
-/* 128 */         iterator.setRoot(iter.getStartNode(), xctxt);
-/* 129 */         result = new XNodeSet(iterator);
-/*     */       }
-/* 131 */       catch (Exception ex) {
-/*     */         
-/* 133 */         throw new WrappedRuntimeException(ex);
-/*     */       }
-/*     */     
-/* 136 */     } else if (val instanceof DTMIterator) {
-/*     */       
-/* 138 */       result = new XNodeSet((DTMIterator)val);
-/*     */ 
-/*     */     
-/*     */     }
-/* 142 */     else if (val instanceof Node) {
-/*     */       
-/* 144 */       result = new XNodeSetForDOM((Node)val, xctxt);
-/*     */ 
-/*     */     
-/*     */     }
-/* 148 */     else if (val instanceof NodeList) {
-/*     */       
-/* 150 */       result = new XNodeSetForDOM((NodeList)val, xctxt);
-/*     */     }
-/* 152 */     else if (val instanceof NodeIterator) {
-/*     */       
-/* 154 */       result = new XNodeSetForDOM((NodeIterator)val, xctxt);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 158 */       result = new XObject(val);
-/*     */     } 
-/*     */     
-/* 161 */     return result;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\objects\XObjectFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XObjectFactory.java,v 1.1.2.1 2005/08/01 01:29:30 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.objects;
+
+import com.sun.org.apache.xml.internal.dtm.Axis;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.DTMIterator;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.axes.OneStepIterator;
+
+
+public class XObjectFactory
+{
+
+  /**
+   * Create the right XObject based on the type of the object passed.  This
+   * function can not make an XObject that exposes DOM Nodes, NodeLists, and
+   * NodeIterators to the XSLT stylesheet as node-sets.
+   *
+   * @param val The java object which this object will wrap.
+   *
+   * @return the right XObject based on the type of the object passed.
+   */
+  static public XObject create(Object val)
+  {
+
+    XObject result;
+
+    if (val instanceof XObject)
+    {
+      result = (XObject) val;
+    }
+    else if (val instanceof String)
+    {
+      result = new XString((String) val);
+    }
+    else if (val instanceof Boolean)
+    {
+      result = new XBoolean((Boolean)val);
+    }
+    else if (val instanceof Double)
+    {
+      result = new XNumber(((Double) val));
+    }
+    else
+    {
+      result = new XObject(val);
+    }
+
+    return result;
+  }
+
+  /**
+   * Create the right XObject based on the type of the object passed.
+   * This function <emph>can</emph> make an XObject that exposes DOM Nodes, NodeLists, and
+   * NodeIterators to the XSLT stylesheet as node-sets.
+   *
+   * @param val The java object which this object will wrap.
+   * @param xctxt The XPath context.
+   *
+   * @return the right XObject based on the type of the object passed.
+   */
+  static public XObject create(Object val, XPathContext xctxt)
+  {
+
+    XObject result;
+
+    if (val instanceof XObject)
+    {
+      result = (XObject) val;
+    }
+    else if (val instanceof String)
+    {
+      result = new XString((String) val);
+    }
+    else if (val instanceof Boolean)
+    {
+      result = new XBoolean((Boolean)val);
+    }
+    else if (val instanceof Number)
+    {
+      result = new XNumber(((Number) val));
+    }
+    else if (val instanceof DTM)
+    {
+      DTM dtm = (DTM)val;
+      try
+      {
+        int dtmRoot = dtm.getDocument();
+        DTMAxisIterator iter = dtm.getAxisIterator(Axis.SELF);
+        iter.setStartNode(dtmRoot);
+        DTMIterator iterator = new OneStepIterator(iter, Axis.SELF);
+        iterator.setRoot(dtmRoot, xctxt);
+        result = new XNodeSet(iterator);
+      }
+      catch(Exception ex)
+      {
+        throw new com.sun.org.apache.xml.internal.utils.WrappedRuntimeException(ex);
+      }
+    }
+    else if (val instanceof DTMAxisIterator)
+    {
+      DTMAxisIterator iter = (DTMAxisIterator)val;
+      try
+      {
+        DTMIterator iterator = new OneStepIterator(iter, Axis.SELF);
+        iterator.setRoot(iter.getStartNode(), xctxt);
+        result = new XNodeSet(iterator);
+      }
+      catch(Exception ex)
+      {
+        throw new com.sun.org.apache.xml.internal.utils.WrappedRuntimeException(ex);
+      }
+    }
+    else if (val instanceof DTMIterator)
+    {
+      result = new XNodeSet((DTMIterator) val);
+    }
+    // This next three instanceofs are a little worrysome, since a NodeList
+    // might also implement a Node!
+    else if (val instanceof org.w3c.dom.Node)
+    {
+      result = new XNodeSetForDOM((org.w3c.dom.Node)val, xctxt);
+    }
+    // This must come after org.w3c.dom.Node, since many Node implementations
+    // also implement NodeList.
+    else if (val instanceof org.w3c.dom.NodeList)
+    {
+      result = new XNodeSetForDOM((org.w3c.dom.NodeList)val, xctxt);
+    }
+    else if (val instanceof org.w3c.dom.traversal.NodeIterator)
+    {
+      result = new XNodeSetForDOM((org.w3c.dom.traversal.NodeIterator)val, xctxt);
+    }
+    else
+    {
+      result = new XObject(val);
+    }
+
+    return result;
+  }
+}

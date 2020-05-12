@@ -1,74 +1,68 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class DuplicateFormatFlagsException
-/*    */   extends IllegalFormatException
-/*    */ {
-/*    */   private static final long serialVersionUID = 18890531L;
-/*    */   private String flags;
-/*    */   
-/*    */   public DuplicateFormatFlagsException(String paramString) {
-/* 51 */     if (paramString == null)
-/* 52 */       throw new NullPointerException(); 
-/* 53 */     this.flags = paramString;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getFlags() {
-/* 62 */     return this.flags;
-/*    */   }
-/*    */   
-/*    */   public String getMessage() {
-/* 66 */     return String.format("Flags = '%s'", new Object[] { this.flags });
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\DuplicateFormatFlagsException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * Unchecked exception thrown when duplicate flags are provided in the format
+ * specifier.
+ *
+ * <p> Unless otherwise specified, passing a <tt>null</tt> argument to any
+ * method or constructor in this class will cause a {@link
+ * NullPointerException} to be thrown.
+ *
+ * @since 1.5
+ */
+public class DuplicateFormatFlagsException extends IllegalFormatException {
+
+    private static final long serialVersionUID = 18890531L;
+
+    private String flags;
+
+    /**
+     * Constructs an instance of this class with the specified flags.
+     *
+     * @param  f
+     *         The set of format flags which contain a duplicate flag.
+     */
+    public DuplicateFormatFlagsException(String f) {
+        if (f == null)
+            throw new NullPointerException();
+        this.flags = f;
+    }
+
+    /**
+     * Returns the set of flags which contains a duplicate flag.
+     *
+     * @return  The flags
+     */
+    public String getFlags() {
+        return flags;
+    }
+
+    public String getMessage() {
+        return String.format("Flags = '%s'", flags);
+    }
+}

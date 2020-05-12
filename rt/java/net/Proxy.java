@@ -1,177 +1,171 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Proxy
-/*     */ {
-/*     */   private Type type;
-/*     */   private SocketAddress sa;
-/*     */   
-/*     */   public enum Type
-/*     */   {
-/*  49 */     DIRECT,
-/*     */ 
-/*     */ 
-/*     */     
-/*  53 */     HTTP,
-/*     */ 
-/*     */ 
-/*     */     
-/*  57 */     SOCKS;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  72 */   public static final Proxy NO_PROXY = new Proxy();
-/*     */ 
-/*     */   
-/*     */   private Proxy() {
-/*  76 */     this.type = Type.DIRECT;
-/*  77 */     this.sa = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Proxy(Type paramType, SocketAddress paramSocketAddress) {
-/*  94 */     if (paramType == Type.DIRECT || !(paramSocketAddress instanceof InetSocketAddress))
-/*  95 */       throw new IllegalArgumentException("type " + paramType + " is not compatible with address " + paramSocketAddress); 
-/*  96 */     this.type = paramType;
-/*  97 */     this.sa = paramSocketAddress;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type type() {
-/* 106 */     return this.type;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SocketAddress address() {
-/* 117 */     return this.sa;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 129 */     if (type() == Type.DIRECT)
-/* 130 */       return "DIRECT"; 
-/* 131 */     return type() + " @ " + address();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean equals(Object paramObject) {
-/* 149 */     if (paramObject == null || !(paramObject instanceof Proxy))
-/* 150 */       return false; 
-/* 151 */     Proxy proxy = (Proxy)paramObject;
-/* 152 */     if (proxy.type() == type()) {
-/* 153 */       if (address() == null) {
-/* 154 */         return (proxy.address() == null);
-/*     */       }
-/* 156 */       return address().equals(proxy.address());
-/*     */     } 
-/* 158 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int hashCode() {
-/* 167 */     if (address() == null)
-/* 168 */       return type().hashCode(); 
-/* 169 */     return type().hashCode() + address().hashCode();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\Proxy.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+/**
+ * This class represents a proxy setting, typically a type (http, socks) and
+ * a socket address.
+ * A {@code Proxy} is an immutable object.
+ *
+ * @see     java.net.ProxySelector
+ * @author Yingxian Wang
+ * @author Jean-Christophe Collet
+ * @since   1.5
+ */
+public class Proxy {
+
+    /**
+     * Represents the proxy type.
+     *
+     * @since 1.5
+     */
+    public enum Type {
+        /**
+         * Represents a direct connection, or the absence of a proxy.
+         */
+        DIRECT,
+        /**
+         * Represents proxy for high level protocols such as HTTP or FTP.
+         */
+        HTTP,
+        /**
+         * Represents a SOCKS (V4 or V5) proxy.
+         */
+        SOCKS
+    };
+
+    private Type type;
+    private SocketAddress sa;
+
+    /**
+     * A proxy setting that represents a {@code DIRECT} connection,
+     * basically telling the protocol handler not to use any proxying.
+     * Used, for instance, to create sockets bypassing any other global
+     * proxy settings (like SOCKS):
+     * <P>
+     * {@code Socket s = new Socket(Proxy.NO_PROXY);}
+     *
+     */
+    public final static Proxy NO_PROXY = new Proxy();
+
+    // Creates the proxy that represents a {@code DIRECT} connection.
+    private Proxy() {
+        type = Type.DIRECT;
+        sa = null;
+    }
+
+    /**
+     * Creates an entry representing a PROXY connection.
+     * Certain combinations are illegal. For instance, for types Http, and
+     * Socks, a SocketAddress <b>must</b> be provided.
+     * <P>
+     * Use the {@code Proxy.NO_PROXY} constant
+     * for representing a direct connection.
+     *
+     * @param type the {@code Type} of the proxy
+     * @param sa the {@code SocketAddress} for that proxy
+     * @throws IllegalArgumentException when the type and the address are
+     * incompatible
+     */
+    public Proxy(Type type, SocketAddress sa) {
+        if ((type == Type.DIRECT) || !(sa instanceof InetSocketAddress))
+            throw new IllegalArgumentException("type " + type + " is not compatible with address " + sa);
+        this.type = type;
+        this.sa = sa;
+    }
+
+    /**
+     * Returns the proxy type.
+     *
+     * @return a Type representing the proxy type
+     */
+    public Type type() {
+        return type;
+    }
+
+    /**
+     * Returns the socket address of the proxy, or
+     * {@code null} if its a direct connection.
+     *
+     * @return a {@code SocketAddress} representing the socket end
+     *         point of the proxy
+     */
+    public SocketAddress address() {
+        return sa;
+    }
+
+    /**
+     * Constructs a string representation of this Proxy.
+     * This String is constructed by calling toString() on its type
+     * and concatenating " @ " and the toString() result from its address
+     * if its type is not {@code DIRECT}.
+     *
+     * @return  a string representation of this object.
+     */
+    public String toString() {
+        if (type() == Type.DIRECT)
+            return "DIRECT";
+        return type() + " @ " + address();
+    }
+
+        /**
+     * Compares this object against the specified object.
+     * The result is {@code true} if and only if the argument is
+     * not {@code null} and it represents the same proxy as
+     * this object.
+     * <p>
+     * Two instances of {@code Proxy} represent the same
+     * address if both the SocketAddresses and type are equal.
+     *
+     * @param   obj   the object to compare against.
+     * @return  {@code true} if the objects are the same;
+     *          {@code false} otherwise.
+     * @see java.net.InetSocketAddress#equals(java.lang.Object)
+     */
+    public final boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof Proxy))
+            return false;
+        Proxy p = (Proxy) obj;
+        if (p.type() == type()) {
+            if (address() == null) {
+                return (p.address() == null);
+            } else
+                return address().equals(p.address());
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hashcode for this Proxy.
+     *
+     * @return  a hash code value for this Proxy.
+     */
+    public final int hashCode() {
+        if (address() == null)
+            return type().hashCode();
+        return type().hashCode() + address().hashCode();
+    }
+}

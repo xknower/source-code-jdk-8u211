@@ -1,476 +1,470 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.text.AttributedCharacterIterator;
-/*     */ import java.text.DecimalFormat;
-/*     */ import java.text.DecimalFormatSymbols;
-/*     */ import java.text.Format;
-/*     */ import java.text.NumberFormat;
-/*     */ import java.text.ParseException;
-/*     */ import java.util.Map;
-/*     */ import sun.reflect.misc.ReflectUtil;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class NumberFormatter
-/*     */   extends InternationalFormatter
-/*     */ {
-/*     */   private String specialChars;
-/*     */   
-/*     */   public NumberFormatter() {
-/* 104 */     this(NumberFormat.getNumberInstance());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NumberFormatter(NumberFormat paramNumberFormat) {
-/* 113 */     super(paramNumberFormat);
-/* 114 */     setFormat(paramNumberFormat);
-/* 115 */     setAllowsInvalid(true);
-/* 116 */     setCommitsOnValidEdit(false);
-/* 117 */     setOverwriteMode(false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFormat(Format paramFormat) {
-/* 131 */     super.setFormat(paramFormat);
-/*     */     
-/* 133 */     DecimalFormatSymbols decimalFormatSymbols = getDecimalFormatSymbols();
-/*     */     
-/* 135 */     if (decimalFormatSymbols != null) {
-/* 136 */       StringBuilder stringBuilder = new StringBuilder();
-/*     */       
-/* 138 */       stringBuilder.append(decimalFormatSymbols.getCurrencySymbol());
-/* 139 */       stringBuilder.append(decimalFormatSymbols.getDecimalSeparator());
-/* 140 */       stringBuilder.append(decimalFormatSymbols.getGroupingSeparator());
-/* 141 */       stringBuilder.append(decimalFormatSymbols.getInfinity());
-/* 142 */       stringBuilder.append(decimalFormatSymbols.getInternationalCurrencySymbol());
-/* 143 */       stringBuilder.append(decimalFormatSymbols.getMinusSign());
-/* 144 */       stringBuilder.append(decimalFormatSymbols.getMonetaryDecimalSeparator());
-/* 145 */       stringBuilder.append(decimalFormatSymbols.getNaN());
-/* 146 */       stringBuilder.append(decimalFormatSymbols.getPercent());
-/* 147 */       stringBuilder.append('+');
-/* 148 */       this.specialChars = stringBuilder.toString();
-/*     */     } else {
-/*     */       
-/* 151 */       this.specialChars = "";
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Object stringToValue(String paramString, Format paramFormat) throws ParseException {
-/* 160 */     if (paramFormat == null) {
-/* 161 */       return paramString;
-/*     */     }
-/* 163 */     Object object = paramFormat.parseObject(paramString);
-/*     */     
-/* 165 */     return convertValueToValueClass(object, getValueClass());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object convertValueToValueClass(Object paramObject, Class<Integer> paramClass) {
-/* 176 */     if (paramClass != null && paramObject instanceof Number) {
-/* 177 */       Number number = (Number)paramObject;
-/* 178 */       if (paramClass == Integer.class) {
-/* 179 */         return Integer.valueOf(number.intValue());
-/*     */       }
-/* 181 */       if (paramClass == Long.class) {
-/* 182 */         return Long.valueOf(number.longValue());
-/*     */       }
-/* 184 */       if (paramClass == Float.class) {
-/* 185 */         return Float.valueOf(number.floatValue());
-/*     */       }
-/* 187 */       if (paramClass == Double.class) {
-/* 188 */         return Double.valueOf(number.doubleValue());
-/*     */       }
-/* 190 */       if (paramClass == Byte.class) {
-/* 191 */         return Byte.valueOf(number.byteValue());
-/*     */       }
-/* 193 */       if (paramClass == Short.class) {
-/* 194 */         return Short.valueOf(number.shortValue());
-/*     */       }
-/*     */     } 
-/* 197 */     return paramObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private char getPositiveSign() {
-/* 204 */     return '+';
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private char getMinusSign() {
-/* 211 */     DecimalFormatSymbols decimalFormatSymbols = getDecimalFormatSymbols();
-/*     */     
-/* 213 */     if (decimalFormatSymbols != null) {
-/* 214 */       return decimalFormatSymbols.getMinusSign();
-/*     */     }
-/* 216 */     return '-';
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private char getDecimalSeparator() {
-/* 223 */     DecimalFormatSymbols decimalFormatSymbols = getDecimalFormatSymbols();
-/*     */     
-/* 225 */     if (decimalFormatSymbols != null) {
-/* 226 */       return decimalFormatSymbols.getDecimalSeparator();
-/*     */     }
-/* 228 */     return '.';
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private DecimalFormatSymbols getDecimalFormatSymbols() {
-/* 235 */     Format format = getFormat();
-/*     */     
-/* 237 */     if (format instanceof DecimalFormat) {
-/* 238 */       return ((DecimalFormat)format).getDecimalFormatSymbols();
-/*     */     }
-/* 240 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isLegalInsertText(String paramString) {
-/* 250 */     if (getAllowsInvalid()) {
-/* 251 */       return true;
-/*     */     }
-/* 253 */     for (int i = paramString.length() - 1; i >= 0; i--) {
-/* 254 */       char c = paramString.charAt(i);
-/*     */       
-/* 256 */       if (!Character.isDigit(c) && this.specialChars
-/* 257 */         .indexOf(c) == -1) {
-/* 258 */         return false;
-/*     */       }
-/*     */     } 
-/* 261 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isLiteral(Map paramMap) {
-/* 269 */     if (!super.isLiteral(paramMap)) {
-/* 270 */       if (paramMap == null) {
-/* 271 */         return false;
-/*     */       }
-/* 273 */       int i = paramMap.size();
-/*     */       
-/* 275 */       if (paramMap.get(NumberFormat.Field.GROUPING_SEPARATOR) != null) {
-/* 276 */         i--;
-/* 277 */         if (paramMap.get(NumberFormat.Field.INTEGER) != null) {
-/* 278 */           i--;
-/*     */         }
-/*     */       } 
-/* 281 */       if (paramMap.get(NumberFormat.Field.EXPONENT_SYMBOL) != null) {
-/* 282 */         i--;
-/*     */       }
-/* 284 */       if (paramMap.get(NumberFormat.Field.PERCENT) != null) {
-/* 285 */         i--;
-/*     */       }
-/* 287 */       if (paramMap.get(NumberFormat.Field.PERMILLE) != null) {
-/* 288 */         i--;
-/*     */       }
-/* 290 */       if (paramMap.get(NumberFormat.Field.CURRENCY) != null) {
-/* 291 */         i--;
-/*     */       }
-/* 293 */       if (paramMap.get(NumberFormat.Field.SIGN) != null) {
-/* 294 */         i--;
-/*     */       }
-/* 296 */       return (i == 0);
-/*     */     } 
-/* 298 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isNavigatable(int paramInt) {
-/* 307 */     if (!super.isNavigatable(paramInt))
-/*     */     {
-/* 309 */       return (getBufferedChar(paramInt) == getDecimalSeparator());
-/*     */     }
-/* 311 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private NumberFormat.Field getFieldFrom(int paramInt1, int paramInt2) {
-/* 319 */     if (isValidMask()) {
-/* 320 */       int i = getFormattedTextField().getDocument().getLength();
-/* 321 */       AttributedCharacterIterator attributedCharacterIterator = getIterator();
-/*     */       
-/* 323 */       if (paramInt1 >= i) {
-/* 324 */         paramInt1 += paramInt2;
-/*     */       }
-/* 326 */       while (paramInt1 >= 0 && paramInt1 < i) {
-/* 327 */         attributedCharacterIterator.setIndex(paramInt1);
-/*     */         
-/* 329 */         Map<AttributedCharacterIterator.Attribute, Object> map = attributedCharacterIterator.getAttributes();
-/*     */         
-/* 331 */         if (map != null && map.size() > 0) {
-/* 332 */           for (NumberFormat.Field field : map.keySet()) {
-/* 333 */             if (field instanceof NumberFormat.Field) {
-/* 334 */               return field;
-/*     */             }
-/*     */           } 
-/*     */         }
-/* 338 */         paramInt1 += paramInt2;
-/*     */       } 
-/*     */     } 
-/* 341 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void replace(DocumentFilter.FilterBypass paramFilterBypass, int paramInt1, int paramInt2, String paramString, AttributeSet paramAttributeSet) throws BadLocationException {
-/* 350 */     if (!getAllowsInvalid() && paramInt2 == 0 && paramString != null && paramString
-/* 351 */       .length() == 1 && 
-/* 352 */       toggleSignIfNecessary(paramFilterBypass, paramInt1, paramString.charAt(0))) {
-/*     */       return;
-/*     */     }
-/* 355 */     super.replace(paramFilterBypass, paramInt1, paramInt2, paramString, paramAttributeSet);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean toggleSignIfNecessary(DocumentFilter.FilterBypass paramFilterBypass, int paramInt, char paramChar) throws BadLocationException {
-/* 366 */     if (paramChar == getMinusSign() || paramChar == getPositiveSign()) {
-/* 367 */       NumberFormat.Field field = getFieldFrom(paramInt, -1);
-/*     */       
-/*     */       try {
-/*     */         Object object;
-/* 371 */         if (field == null || (field != NumberFormat.Field.EXPONENT && field != NumberFormat.Field.EXPONENT_SYMBOL && field != NumberFormat.Field.EXPONENT_SIGN)) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 375 */           object = toggleSign((paramChar == getPositiveSign()));
-/*     */         }
-/*     */         else {
-/*     */           
-/* 379 */           object = toggleExponentSign(paramInt, paramChar);
-/*     */         } 
-/* 381 */         if (object != null && isValidValue(object, false)) {
-/* 382 */           int i = getLiteralCountTo(paramInt);
-/* 383 */           String str = valueToString(object);
-/*     */           
-/* 385 */           paramFilterBypass.remove(0, paramFilterBypass.getDocument().getLength());
-/* 386 */           paramFilterBypass.insertString(0, str, null);
-/* 387 */           updateValue(object);
-/* 388 */           repositionCursor(getLiteralCountTo(paramInt) - i + paramInt, 1);
-/*     */           
-/* 390 */           return true;
-/*     */         } 
-/* 392 */       } catch (ParseException parseException) {
-/* 393 */         invalidEdit();
-/*     */       } 
-/*     */     } 
-/* 396 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object toggleSign(boolean paramBoolean) throws ParseException {
-/* 404 */     Object object = stringToValue(getFormattedTextField().getText());
-/*     */     
-/* 406 */     if (object != null) {
-/*     */ 
-/*     */       
-/* 409 */       String str = object.toString();
-/*     */       
-/* 411 */       if (str != null && str.length() > 0) {
-/* 412 */         if (paramBoolean) {
-/* 413 */           if (str.charAt(0) == '-') {
-/* 414 */             str = str.substring(1);
-/*     */           }
-/*     */         } else {
-/*     */           
-/* 418 */           if (str.charAt(0) == '+') {
-/* 419 */             str = str.substring(1);
-/*     */           }
-/* 421 */           if (str.length() > 0 && str.charAt(0) != '-') {
-/* 422 */             str = "-" + str;
-/*     */           }
-/*     */         } 
-/* 425 */         if (str != null) {
-/* 426 */           Class<?> clazz = getValueClass();
-/*     */           
-/* 428 */           if (clazz == null) {
-/* 429 */             clazz = object.getClass();
-/*     */           }
-/*     */           try {
-/* 432 */             ReflectUtil.checkPackageAccess(clazz);
-/* 433 */             SwingUtilities2.checkAccess(clazz.getModifiers());
-/* 434 */             Constructor<?> constructor = clazz.getConstructor(new Class[] { String.class });
-/*     */             
-/* 436 */             if (constructor != null) {
-/* 437 */               SwingUtilities2.checkAccess(constructor.getModifiers());
-/* 438 */               return constructor.newInstance(new Object[] { str });
-/*     */             } 
-/* 440 */           } catch (Throwable throwable) {}
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 444 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object toggleExponentSign(int paramInt, char paramChar) throws BadLocationException, ParseException {
-/* 453 */     String str = getFormattedTextField().getText();
-/* 454 */     boolean bool = false;
-/* 455 */     int i = getAttributeStart(NumberFormat.Field.EXPONENT_SIGN);
-/*     */     
-/* 457 */     if (i >= 0) {
-/* 458 */       bool = true;
-/* 459 */       paramInt = i;
-/*     */     } 
-/* 461 */     if (paramChar == getPositiveSign()) {
-/* 462 */       str = getReplaceString(paramInt, bool, (String)null);
-/*     */     } else {
-/*     */       
-/* 465 */       str = getReplaceString(paramInt, bool, new String(new char[] { paramChar }));
-/*     */     } 
-/*     */     
-/* 468 */     return stringToValue(str);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\NumberFormatter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.lang.reflect.*;
+import java.text.*;
+import java.util.*;
+import sun.reflect.misc.ReflectUtil;
+import sun.swing.SwingUtilities2;
+
+/**
+ * <code>NumberFormatter</code> subclasses <code>InternationalFormatter</code>
+ * adding special behavior for numbers. Among the specializations are
+ * (these are only used if the <code>NumberFormatter</code> does not display
+ * invalid numbers, for example, <code>setAllowsInvalid(false)</code>):
+ * <ul>
+ *   <li>Pressing +/- (- is determined from the
+ *       <code>DecimalFormatSymbols</code> associated with the
+ *       <code>DecimalFormat</code>) in any field but the exponent
+ *       field will attempt to change the sign of the number to
+ *       positive/negative.
+ *   <li>Pressing +/- (- is determined from the
+ *       <code>DecimalFormatSymbols</code> associated with the
+ *       <code>DecimalFormat</code>) in the exponent field will
+ *       attempt to change the sign of the exponent to positive/negative.
+ * </ul>
+ * <p>
+ * If you are displaying scientific numbers, you may wish to turn on
+ * overwrite mode, <code>setOverwriteMode(true)</code>. For example:
+ * <pre>
+ * DecimalFormat decimalFormat = new DecimalFormat("0.000E0");
+ * NumberFormatter textFormatter = new NumberFormatter(decimalFormat);
+ * textFormatter.setOverwriteMode(true);
+ * textFormatter.setAllowsInvalid(false);
+ * </pre>
+ * <p>
+ * If you are going to allow the user to enter decimal
+ * values, you should either force the DecimalFormat to contain at least
+ * one decimal (<code>#.0###</code>), or allow the value to be invalid
+ * <code>setAllowsInvalid(true)</code>. Otherwise users may not be able to
+ * input decimal values.
+ * <p>
+ * <code>NumberFormatter</code> provides slightly different behavior to
+ * <code>stringToValue</code> than that of its superclass. If you have
+ * specified a Class for values, {@link #setValueClass}, that is one of
+ * of <code>Integer</code>, <code>Long</code>, <code>Float</code>,
+ * <code>Double</code>, <code>Byte</code> or <code>Short</code> and
+ * the Format's <code>parseObject</code> returns an instance of
+ * <code>Number</code>, the corresponding instance of the value class
+ * will be created using the constructor appropriate for the primitive
+ * type the value class represents. For example:
+ * <code>setValueClass(Integer.class)</code> will cause the resulting
+ * value to be created via
+ * <code>new Integer(((Number)formatter.parseObject(string)).intValue())</code>.
+ * This is typically useful if you
+ * wish to set a min/max value as the various <code>Number</code>
+ * implementations are generally not comparable to each other. This is also
+ * useful if for some reason you need a specific <code>Number</code>
+ * implementation for your values.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @since 1.4
+ */
+public class NumberFormatter extends InternationalFormatter {
+    /** The special characters from the Format instance. */
+    private String specialChars;
+
+    /**
+     * Creates a <code>NumberFormatter</code> with the a default
+     * <code>NumberFormat</code> instance obtained from
+     * <code>NumberFormat.getNumberInstance()</code>.
+     */
+    public NumberFormatter() {
+        this(NumberFormat.getNumberInstance());
+    }
+
+    /**
+     * Creates a NumberFormatter with the specified Format instance.
+     *
+     * @param format Format used to dictate legal values
+     */
+    public NumberFormatter(NumberFormat format) {
+        super(format);
+        setFormat(format);
+        setAllowsInvalid(true);
+        setCommitsOnValidEdit(false);
+        setOverwriteMode(false);
+    }
+
+    /**
+     * Sets the format that dictates the legal values that can be edited
+     * and displayed.
+     * <p>
+     * If you have used the nullary constructor the value of this property
+     * will be determined for the current locale by way of the
+     * <code>NumberFormat.getNumberInstance()</code> method.
+     *
+     * @param format NumberFormat instance used to dictate legal values
+     */
+    public void setFormat(Format format) {
+        super.setFormat(format);
+
+        DecimalFormatSymbols dfs = getDecimalFormatSymbols();
+
+        if (dfs != null) {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(dfs.getCurrencySymbol());
+            sb.append(dfs.getDecimalSeparator());
+            sb.append(dfs.getGroupingSeparator());
+            sb.append(dfs.getInfinity());
+            sb.append(dfs.getInternationalCurrencySymbol());
+            sb.append(dfs.getMinusSign());
+            sb.append(dfs.getMonetaryDecimalSeparator());
+            sb.append(dfs.getNaN());
+            sb.append(dfs.getPercent());
+            sb.append('+');
+            specialChars = sb.toString();
+        }
+        else {
+            specialChars = "";
+        }
+    }
+
+    /**
+     * Invokes <code>parseObject</code> on <code>f</code>, returning
+     * its value.
+     */
+    Object stringToValue(String text, Format f) throws ParseException {
+        if (f == null) {
+            return text;
+        }
+        Object value = f.parseObject(text);
+
+        return convertValueToValueClass(value, getValueClass());
+    }
+
+    /**
+     * Converts the passed in value to the passed in class. This only
+     * works if <code>valueClass</code> is one of <code>Integer</code>,
+     * <code>Long</code>, <code>Float</code>, <code>Double</code>,
+     * <code>Byte</code> or <code>Short</code> and <code>value</code>
+     * is an instanceof <code>Number</code>.
+     */
+    private Object convertValueToValueClass(Object value, Class valueClass) {
+        if (valueClass != null && (value instanceof Number)) {
+            Number numberValue = (Number)value;
+            if (valueClass == Integer.class) {
+                return Integer.valueOf(numberValue.intValue());
+            }
+            else if (valueClass == Long.class) {
+                return Long.valueOf(numberValue.longValue());
+            }
+            else if (valueClass == Float.class) {
+                return Float.valueOf(numberValue.floatValue());
+            }
+            else if (valueClass == Double.class) {
+                return Double.valueOf(numberValue.doubleValue());
+            }
+            else if (valueClass == Byte.class) {
+                return Byte.valueOf(numberValue.byteValue());
+            }
+            else if (valueClass == Short.class) {
+                return Short.valueOf(numberValue.shortValue());
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Returns the character that is used to toggle to positive values.
+     */
+    private char getPositiveSign() {
+        return '+';
+    }
+
+    /**
+     * Returns the character that is used to toggle to negative values.
+     */
+    private char getMinusSign() {
+        DecimalFormatSymbols dfs = getDecimalFormatSymbols();
+
+        if (dfs != null) {
+            return dfs.getMinusSign();
+        }
+        return '-';
+    }
+
+    /**
+     * Returns the character that is used to toggle to negative values.
+     */
+    private char getDecimalSeparator() {
+        DecimalFormatSymbols dfs = getDecimalFormatSymbols();
+
+        if (dfs != null) {
+            return dfs.getDecimalSeparator();
+        }
+        return '.';
+    }
+
+    /**
+     * Returns the DecimalFormatSymbols from the Format instance.
+     */
+    private DecimalFormatSymbols getDecimalFormatSymbols() {
+        Format f = getFormat();
+
+        if (f instanceof DecimalFormat) {
+            return ((DecimalFormat)f).getDecimalFormatSymbols();
+        }
+        return null;
+    }
+
+    /**
+     * Subclassed to return false if <code>text</code> contains in an invalid
+     * character to insert, that is, it is not a digit
+     * (<code>Character.isDigit()</code>) and
+     * not one of the characters defined by the DecimalFormatSymbols.
+     */
+    boolean isLegalInsertText(String text) {
+        if (getAllowsInvalid()) {
+            return true;
+        }
+        for (int counter = text.length() - 1; counter >= 0; counter--) {
+            char aChar = text.charAt(counter);
+
+            if (!Character.isDigit(aChar) &&
+                           specialChars.indexOf(aChar) == -1){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Subclassed to treat the decimal separator, grouping separator,
+     * exponent symbol, percent, permille, currency and sign as literals.
+     */
+    boolean isLiteral(Map attrs) {
+        if (!super.isLiteral(attrs)) {
+            if (attrs == null) {
+                return false;
+            }
+            int size = attrs.size();
+
+            if (attrs.get(NumberFormat.Field.GROUPING_SEPARATOR) != null) {
+                size--;
+                if (attrs.get(NumberFormat.Field.INTEGER) != null) {
+                    size--;
+                }
+            }
+            if (attrs.get(NumberFormat.Field.EXPONENT_SYMBOL) != null) {
+                size--;
+            }
+            if (attrs.get(NumberFormat.Field.PERCENT) != null) {
+                size--;
+            }
+            if (attrs.get(NumberFormat.Field.PERMILLE) != null) {
+                size--;
+            }
+            if (attrs.get(NumberFormat.Field.CURRENCY) != null) {
+                size--;
+            }
+            if (attrs.get(NumberFormat.Field.SIGN) != null) {
+                size--;
+            }
+            return size == 0;
+        }
+        return true;
+    }
+
+    /**
+     * Subclassed to make the decimal separator navigable, as well
+     * as making the character between the integer field and the next
+     * field navigable.
+     */
+    boolean isNavigatable(int index) {
+        if (!super.isNavigatable(index)) {
+            // Don't skip the decimal, it causes wierd behavior
+            return getBufferedChar(index) == getDecimalSeparator();
+        }
+        return true;
+    }
+
+    /**
+     * Returns the first <code>NumberFormat.Field</code> starting
+     * <code>index</code> incrementing by <code>direction</code>.
+     */
+    private NumberFormat.Field getFieldFrom(int index, int direction) {
+        if (isValidMask()) {
+            int max = getFormattedTextField().getDocument().getLength();
+            AttributedCharacterIterator iterator = getIterator();
+
+            if (index >= max) {
+                index += direction;
+            }
+            while (index >= 0 && index < max) {
+                iterator.setIndex(index);
+
+                Map attrs = iterator.getAttributes();
+
+                if (attrs != null && attrs.size() > 0) {
+                    for (Object key : attrs.keySet()) {
+                        if (key instanceof NumberFormat.Field) {
+                            return (NumberFormat.Field)key;
+                        }
+                    }
+                }
+                index += direction;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Overriden to toggle the value if the positive/minus sign
+     * is inserted.
+     */
+    void replace(DocumentFilter.FilterBypass fb, int offset, int length,
+                String string, AttributeSet attr) throws BadLocationException {
+        if (!getAllowsInvalid() && length == 0 && string != null &&
+            string.length() == 1 &&
+            toggleSignIfNecessary(fb, offset, string.charAt(0))) {
+            return;
+        }
+        super.replace(fb, offset, length, string, attr);
+    }
+
+    /**
+     * Will change the sign of the integer or exponent field if
+     * <code>aChar</code> is the positive or minus sign. Returns
+     * true if a sign change was attempted.
+     */
+    private boolean toggleSignIfNecessary(DocumentFilter.FilterBypass fb,
+                                              int offset, char aChar) throws
+                              BadLocationException {
+        if (aChar == getMinusSign() || aChar == getPositiveSign()) {
+            NumberFormat.Field field = getFieldFrom(offset, -1);
+            Object newValue;
+
+            try {
+                if (field == null ||
+                    (field != NumberFormat.Field.EXPONENT &&
+                     field != NumberFormat.Field.EXPONENT_SYMBOL &&
+                     field != NumberFormat.Field.EXPONENT_SIGN)) {
+                    newValue = toggleSign((aChar == getPositiveSign()));
+                }
+                else {
+                    // exponent
+                    newValue = toggleExponentSign(offset, aChar);
+                }
+                if (newValue != null && isValidValue(newValue, false)) {
+                    int lc = getLiteralCountTo(offset);
+                    String string = valueToString(newValue);
+
+                    fb.remove(0, fb.getDocument().getLength());
+                    fb.insertString(0, string, null);
+                    updateValue(newValue);
+                    repositionCursor(getLiteralCountTo(offset) -
+                                     lc + offset, 1);
+                    return true;
+                }
+            } catch (ParseException pe) {
+                invalidEdit();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Invoked to toggle the sign. For this to work the value class
+     * must have a single arg constructor that takes a String.
+     */
+    private Object toggleSign(boolean positive) throws ParseException {
+        Object value = stringToValue(getFormattedTextField().getText());
+
+        if (value != null) {
+            // toString isn't localized, so that using +/- should work
+            // correctly.
+            String string = value.toString();
+
+            if (string != null && string.length() > 0) {
+                if (positive) {
+                    if (string.charAt(0) == '-') {
+                        string = string.substring(1);
+                    }
+                }
+                else {
+                    if (string.charAt(0) == '+') {
+                        string = string.substring(1);
+                    }
+                    if (string.length() > 0 && string.charAt(0) != '-') {
+                        string = "-" + string;
+                    }
+                }
+                if (string != null) {
+                    Class<?> valueClass = getValueClass();
+
+                    if (valueClass == null) {
+                        valueClass = value.getClass();
+                    }
+                    try {
+                        ReflectUtil.checkPackageAccess(valueClass);
+                        SwingUtilities2.checkAccess(valueClass.getModifiers());
+                        Constructor cons = valueClass.getConstructor(
+                                              new Class[] { String.class });
+                        if (cons != null) {
+                            SwingUtilities2.checkAccess(cons.getModifiers());
+                            return cons.newInstance(new Object[]{string});
+                        }
+                    } catch (Throwable ex) { }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Invoked to toggle the sign of the exponent (for scientific
+     * numbers).
+     */
+    private Object toggleExponentSign(int offset, char aChar) throws
+                             BadLocationException, ParseException {
+        String string = getFormattedTextField().getText();
+        int replaceLength = 0;
+        int loc = getAttributeStart(NumberFormat.Field.EXPONENT_SIGN);
+
+        if (loc >= 0) {
+            replaceLength = 1;
+            offset = loc;
+        }
+        if (aChar == getPositiveSign()) {
+            string = getReplaceString(offset, replaceLength, null);
+        }
+        else {
+            string = getReplaceString(offset, replaceLength,
+                                      new String(new char[] { aChar }));
+        }
+        return stringToValue(string);
+    }
+}

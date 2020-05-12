@@ -1,271 +1,265 @@
-/*     */ package com.sun.org.apache.bcel.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.Constants;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Constant;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantClass;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantFieldref;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantInterfaceMethodref;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantMethodref;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantNameAndType;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantPool;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.ConstantString;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Method;
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Utility;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.PrintWriter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ConstantHTML
-/*     */   implements Constants
-/*     */ {
-/*     */   private String class_name;
-/*     */   private String class_package;
-/*     */   private ConstantPool constant_pool;
-/*     */   private PrintWriter file;
-/*     */   private String[] constant_ref;
-/*     */   private Constant[] constants;
-/*     */   private Method[] methods;
-/*     */   
-/*     */   ConstantHTML(String dir, String class_name, String class_package, Method[] methods, ConstantPool constant_pool) throws IOException {
-/*  83 */     this.class_name = class_name;
-/*  84 */     this.class_package = class_package;
-/*  85 */     this.constant_pool = constant_pool;
-/*  86 */     this.methods = methods;
-/*  87 */     this.constants = constant_pool.getConstantPool();
-/*  88 */     this.file = new PrintWriter(new FileOutputStream(dir + class_name + "_cp.html"));
-/*  89 */     this.constant_ref = new String[this.constants.length];
-/*  90 */     this.constant_ref[0] = "&lt;unknown&gt;";
-/*     */     
-/*  92 */     this.file.println("<HTML><BODY BGCOLOR=\"#C0C0C0\"><TABLE BORDER=0>");
-/*     */ 
-/*     */     
-/*  95 */     for (int i = 1; i < this.constants.length; i++) {
-/*  96 */       if (i % 2 == 0) {
-/*  97 */         this.file.print("<TR BGCOLOR=\"#C0C0C0\"><TD>");
-/*     */       } else {
-/*  99 */         this.file.print("<TR BGCOLOR=\"#A0A0A0\"><TD>");
-/*     */       } 
-/* 101 */       if (this.constants[i] != null) {
-/* 102 */         writeConstant(i);
-/*     */       }
-/* 104 */       this.file.print("</TD></TR>\n");
-/*     */     } 
-/*     */     
-/* 107 */     this.file.println("</TABLE></BODY></HTML>");
-/* 108 */     this.file.close();
-/*     */   }
-/*     */   
-/*     */   String referenceConstant(int index) {
-/* 112 */     return this.constant_ref[index]; } private void writeConstant(int index) { int class_index, name_index; String ref, method_name, html_method_name, method_class, short_method_class; ConstantNameAndType c2; String signature, args[], type, ret_type; StringBuffer buf; int i; String arg_types; ConstantFieldref c3; String field_class, short_field_class, field_name; ConstantClass c4; String class_name2, short_class_name; ConstantString c5;
-/*     */     String str;
-/*     */     ConstantNameAndType c6;
-/*     */     int signature_index;
-/* 116 */     byte tag = this.constants[index].getTag();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 121 */     this.file.println("<H4> <A NAME=cp" + index + ">" + index + "</A> " + CONSTANT_NAMES[tag] + "</H4>");
-/*     */ 
-/*     */ 
-/*     */     
-/* 125 */     switch (tag) {
-/*     */       
-/*     */       case 10:
-/*     */       case 11:
-/* 129 */         if (tag == 10) {
-/* 130 */           ConstantMethodref c = (ConstantMethodref)this.constant_pool.getConstant(index, (byte)10);
-/* 131 */           class_index = c.getClassIndex();
-/* 132 */           name_index = c.getNameAndTypeIndex();
-/*     */         } else {
-/*     */           
-/* 135 */           ConstantInterfaceMethodref c1 = (ConstantInterfaceMethodref)this.constant_pool.getConstant(index, (byte)11);
-/* 136 */           class_index = c1.getClassIndex();
-/* 137 */           name_index = c1.getNameAndTypeIndex();
-/*     */         } 
-/*     */ 
-/*     */         
-/* 141 */         method_name = this.constant_pool.constantToString(name_index, (byte)12);
-/* 142 */         html_method_name = Class2HTML.toHTML(method_name);
-/*     */ 
-/*     */         
-/* 145 */         method_class = this.constant_pool.constantToString(class_index, (byte)7);
-/* 146 */         short_method_class = Utility.compactClassName(method_class);
-/* 147 */         short_method_class = Utility.compactClassName(method_class);
-/* 148 */         short_method_class = Utility.compactClassName(short_method_class, this.class_package + ".", true);
-/*     */ 
-/*     */         
-/* 151 */         c2 = (ConstantNameAndType)this.constant_pool.getConstant(name_index, (byte)12);
-/* 152 */         signature = this.constant_pool.constantToString(c2.getSignatureIndex(), (byte)1);
-/*     */         
-/* 154 */         args = Utility.methodSignatureArgumentTypes(signature, false);
-/*     */ 
-/*     */         
-/* 157 */         type = Utility.methodSignatureReturnType(signature, false);
-/* 158 */         ret_type = Class2HTML.referenceType(type);
-/*     */         
-/* 160 */         buf = new StringBuffer("(");
-/* 161 */         for (i = 0; i < args.length; i++) {
-/* 162 */           buf.append(Class2HTML.referenceType(args[i]));
-/* 163 */           if (i < args.length - 1)
-/* 164 */             buf.append(",&nbsp;"); 
-/*     */         } 
-/* 166 */         buf.append(")");
-/*     */         
-/* 168 */         arg_types = buf.toString();
-/*     */         
-/* 170 */         if (method_class.equals(this.class_name)) {
-/* 171 */           ref = "<A HREF=\"" + this.class_name + "_code.html#method" + getMethodNumber(method_name + signature) + "\" TARGET=Code>" + html_method_name + "</A>";
-/*     */         } else {
-/*     */           
-/* 174 */           ref = "<A HREF=\"" + method_class + ".html\" TARGET=_top>" + short_method_class + "</A>." + html_method_name;
-/*     */         } 
-/*     */         
-/* 177 */         this.constant_ref[index] = ret_type + "&nbsp;<A HREF=\"" + this.class_name + "_cp.html#cp" + class_index + "\" TARGET=Constants>" + short_method_class + "</A>.<A HREF=\"" + this.class_name + "_cp.html#cp" + index + "\" TARGET=ConstantPool>" + html_method_name + "</A>&nbsp;" + arg_types;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 182 */         this.file.println("<P><TT>" + ret_type + "&nbsp;" + ref + arg_types + "&nbsp;</TT>\n<UL><LI><A HREF=\"#cp" + class_index + "\">Class index(" + class_index + ")</A>\n<LI><A HREF=\"#cp" + name_index + "\">NameAndType index(" + name_index + ")</A></UL>");
-/*     */         return;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 9:
-/* 189 */         c3 = (ConstantFieldref)this.constant_pool.getConstant(index, (byte)9);
-/* 190 */         class_index = c3.getClassIndex();
-/* 191 */         name_index = c3.getNameAndTypeIndex();
-/*     */ 
-/*     */         
-/* 194 */         field_class = this.constant_pool.constantToString(class_index, (byte)7);
-/* 195 */         short_field_class = Utility.compactClassName(field_class);
-/* 196 */         short_field_class = Utility.compactClassName(short_field_class, this.class_package + ".", true);
-/*     */         
-/* 198 */         field_name = this.constant_pool.constantToString(name_index, (byte)12);
-/*     */         
-/* 200 */         if (field_class.equals(this.class_name)) {
-/* 201 */           ref = "<A HREF=\"" + field_class + "_methods.html#field" + field_name + "\" TARGET=Methods>" + field_name + "</A>";
-/*     */         } else {
-/*     */           
-/* 204 */           ref = "<A HREF=\"" + field_class + ".html\" TARGET=_top>" + short_field_class + "</A>." + field_name + "\n";
-/*     */         } 
-/*     */         
-/* 207 */         this.constant_ref[index] = "<A HREF=\"" + this.class_name + "_cp.html#cp" + class_index + "\" TARGET=Constants>" + short_field_class + "</A>.<A HREF=\"" + this.class_name + "_cp.html#cp" + index + "\" TARGET=ConstantPool>" + field_name + "</A>";
-/*     */ 
-/*     */ 
-/*     */         
-/* 211 */         this.file.println("<P><TT>" + ref + "</TT><BR>\n<UL><LI><A HREF=\"#cp" + class_index + "\">Class(" + class_index + ")</A><BR>\n<LI><A HREF=\"#cp" + name_index + "\">NameAndType(" + name_index + ")</A></UL>");
-/*     */         return;
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 7:
-/* 217 */         c4 = (ConstantClass)this.constant_pool.getConstant(index, (byte)7);
-/* 218 */         name_index = c4.getNameIndex();
-/* 219 */         class_name2 = this.constant_pool.constantToString(index, tag);
-/* 220 */         short_class_name = Utility.compactClassName(class_name2);
-/* 221 */         short_class_name = Utility.compactClassName(short_class_name, this.class_package + ".", true);
-/*     */         
-/* 223 */         ref = "<A HREF=\"" + class_name2 + ".html\" TARGET=_top>" + short_class_name + "</A>";
-/* 224 */         this.constant_ref[index] = "<A HREF=\"" + this.class_name + "_cp.html#cp" + index + "\" TARGET=ConstantPool>" + short_class_name + "</A>";
-/*     */ 
-/*     */         
-/* 227 */         this.file.println("<P><TT>" + ref + "</TT><UL><LI><A HREF=\"#cp" + name_index + "\">Name index(" + name_index + ")</A></UL>\n");
-/*     */         return;
-/*     */ 
-/*     */       
-/*     */       case 8:
-/* 232 */         c5 = (ConstantString)this.constant_pool.getConstant(index, (byte)8);
-/* 233 */         name_index = c5.getStringIndex();
-/*     */         
-/* 235 */         str = Class2HTML.toHTML(this.constant_pool.constantToString(index, tag));
-/*     */         
-/* 237 */         this.file.println("<P><TT>" + str + "</TT><UL><LI><A HREF=\"#cp" + name_index + "\">Name index(" + name_index + ")</A></UL>\n");
-/*     */         return;
-/*     */ 
-/*     */       
-/*     */       case 12:
-/* 242 */         c6 = (ConstantNameAndType)this.constant_pool.getConstant(index, (byte)12);
-/* 243 */         name_index = c6.getNameIndex();
-/* 244 */         signature_index = c6.getSignatureIndex();
-/*     */         
-/* 246 */         this.file.println("<P><TT>" + Class2HTML.toHTML(this.constant_pool.constantToString(index, tag)) + "</TT><UL><LI><A HREF=\"#cp" + name_index + "\">Name index(" + name_index + ")</A>\n<LI><A HREF=\"#cp" + signature_index + "\">Signature index(" + signature_index + ")</A></UL>\n");
-/*     */         return;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 253 */     this.file.println("<P><TT>" + Class2HTML.toHTML(this.constant_pool.constantToString(index, tag)) + "</TT>\n"); }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int getMethodNumber(String str) {
-/* 258 */     for (int i = 0; i < this.methods.length; i++) {
-/* 259 */       String cmp = this.methods[i].getName() + this.methods[i].getSignature();
-/* 260 */       if (cmp.equals(str))
-/* 261 */         return i; 
-/*     */     } 
-/* 263 */     return -1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\interna\\util\ConstantHTML.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+
+package com.sun.org.apache.bcel.internal.util;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+
+import com.sun.org.apache.bcel.internal.classfile.*;
+import java.io.*;
+
+/**
+ * Convert constant pool into HTML file.
+ *
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ *
+ */
+final class ConstantHTML implements com.sun.org.apache.bcel.internal.Constants {
+  private String        class_name;     // name of current class
+  private String        class_package;  // name of package
+  private ConstantPool  constant_pool;  // reference to constant pool
+  private PrintWriter   file;           // file to write to
+  private String[]      constant_ref;   // String to return for cp[i]
+  private Constant[]    constants;      // The constants in the cp
+  private Method[]      methods;
+
+  ConstantHTML(String dir, String class_name, String class_package, Method[] methods,
+               ConstantPool constant_pool) throws IOException
+  {
+    this.class_name     = class_name;
+    this.class_package  = class_package;
+    this.constant_pool  = constant_pool;
+    this.methods        = methods;
+    constants           = constant_pool.getConstantPool();
+    file                = new PrintWriter(new FileOutputStream(dir + class_name + "_cp.html"));
+    constant_ref        = new String[constants.length];
+    constant_ref[0]     = "&lt;unknown&gt;";
+
+    file.println("<HTML><BODY BGCOLOR=\"#C0C0C0\"><TABLE BORDER=0>");
+
+    // Loop through constants, constants[0] is reserved
+    for(int i=1; i < constants.length; i++) {
+      if(i % 2 == 0)
+        file.print("<TR BGCOLOR=\"#C0C0C0\"><TD>");
+      else
+        file.print("<TR BGCOLOR=\"#A0A0A0\"><TD>");
+
+      if(constants[i] != null)
+        writeConstant(i);
+
+      file.print("</TD></TR>\n");
+    }
+
+    file.println("</TABLE></BODY></HTML>");
+    file.close();
+  }
+
+  String referenceConstant(int index) {
+    return constant_ref[index];
+  }
+
+  private void writeConstant(int index) {
+    byte   tag = constants[index].getTag();
+    int    class_index, name_index;
+    String ref;
+
+    // The header is always the same
+    file.println("<H4> <A NAME=cp" + index + ">" + index + "</A> " + CONSTANT_NAMES[tag] + "</H4>");
+
+    /* For every constant type get the needed parameters and print them appropiately
+     */
+    switch(tag) {
+    case CONSTANT_InterfaceMethodref:
+    case CONSTANT_Methodref:
+      // Get class_index and name_and_type_index, depending on type
+      if(tag == CONSTANT_Methodref) {
+        ConstantMethodref c = (ConstantMethodref)constant_pool.getConstant(index, CONSTANT_Methodref);
+        class_index = c.getClassIndex();
+        name_index  = c.getNameAndTypeIndex();
+      }
+      else {
+        ConstantInterfaceMethodref c1 = (ConstantInterfaceMethodref)constant_pool.getConstant(index, CONSTANT_InterfaceMethodref);
+        class_index = c1.getClassIndex();
+        name_index  = c1.getNameAndTypeIndex();
+      }
+
+      // Get method name and its class
+      String method_name        = constant_pool.constantToString(name_index, CONSTANT_NameAndType);
+      String html_method_name = Class2HTML.toHTML(method_name);
+
+      // Partially compacted class name, i.e., / -> .
+      String method_class = constant_pool.constantToString(class_index, CONSTANT_Class);
+      String short_method_class         = Utility.compactClassName(method_class); // I.e., remove java.lang.
+      short_method_class = Utility.compactClassName(method_class); // I.e., remove java.lang.
+      short_method_class = Utility.compactClassName(short_method_class, class_package + ".", true); // Remove class package prefix
+
+      // Get method signature
+      ConstantNameAndType c2 = (ConstantNameAndType)constant_pool.getConstant(name_index, CONSTANT_NameAndType);
+      String signature = constant_pool.constantToString(c2.getSignatureIndex(), CONSTANT_Utf8);
+      // Get array of strings containing the argument types
+      String[] args = Utility.methodSignatureArgumentTypes(signature, false);
+
+      // Get return type string
+      String type = Utility.methodSignatureReturnType(signature, false);
+      String ret_type = Class2HTML.referenceType(type);
+
+      StringBuffer buf = new StringBuffer("(");
+      for(int i=0; i < args.length; i++) {
+        buf.append(Class2HTML.referenceType(args[i]));
+        if(i < args.length - 1)
+          buf.append(",&nbsp;");
+      }
+      buf.append(")");
+
+      String arg_types = buf.toString();
+
+      if(method_class.equals(class_name)) // Method is local to class
+        ref = "<A HREF=\"" + class_name + "_code.html#method" + getMethodNumber(method_name + signature) +
+          "\" TARGET=Code>" + html_method_name + "</A>";
+      else
+        ref = "<A HREF=\"" + method_class + ".html" + "\" TARGET=_top>" + short_method_class +
+          "</A>." + html_method_name;
+
+      constant_ref[index] = ret_type + "&nbsp;<A HREF=\"" + class_name + "_cp.html#cp" + class_index +
+        "\" TARGET=Constants>" +
+        short_method_class + "</A>.<A HREF=\"" + class_name + "_cp.html#cp" +
+        index + "\" TARGET=ConstantPool>" + html_method_name + "</A>&nbsp;" + arg_types;
+
+      file.println("<P><TT>" + ret_type + "&nbsp;" + ref + arg_types + "&nbsp;</TT>\n<UL>" +
+                   "<LI><A HREF=\"#cp" + class_index + "\">Class index(" + class_index +        ")</A>\n" +
+                   "<LI><A HREF=\"#cp" + name_index + "\">NameAndType index(" + name_index + ")</A></UL>");
+      break;
+
+    case CONSTANT_Fieldref:
+      // Get class_index and name_and_type_index
+      ConstantFieldref c3 = (ConstantFieldref)constant_pool.getConstant(index, CONSTANT_Fieldref);
+      class_index = c3.getClassIndex();
+      name_index  = c3.getNameAndTypeIndex();
+
+      // Get method name and its class (compacted)
+      String field_class = constant_pool.constantToString(class_index, CONSTANT_Class);
+      String short_field_class = Utility.compactClassName(field_class); // I.e., remove java.lang.
+      short_field_class = Utility.compactClassName(short_field_class, class_package + ".", true); // Remove class package prefix
+
+      String field_name  = constant_pool.constantToString(name_index, CONSTANT_NameAndType);
+
+      if(field_class.equals(class_name)) // Field is local to class
+        ref = "<A HREF=\"" + field_class + "_methods.html#field" +
+          field_name + "\" TARGET=Methods>" + field_name + "</A>";
+      else
+        ref = "<A HREF=\"" + field_class + ".html\" TARGET=_top>" +
+          short_field_class + "</A>." + field_name + "\n";
+
+      constant_ref[index] = "<A HREF=\"" + class_name + "_cp.html#cp" + class_index +   "\" TARGET=Constants>" +
+        short_field_class + "</A>.<A HREF=\"" + class_name + "_cp.html#cp" +
+        index + "\" TARGET=ConstantPool>" + field_name + "</A>";
+
+      file.println("<P><TT>" + ref + "</TT><BR>\n" + "<UL>" +
+                   "<LI><A HREF=\"#cp" + class_index + "\">Class(" + class_index +      ")</A><BR>\n" +
+                   "<LI><A HREF=\"#cp" + name_index + "\">NameAndType(" + name_index + ")</A></UL>");
+      break;
+
+    case CONSTANT_Class:
+      ConstantClass c4 = (ConstantClass)constant_pool.getConstant(index, CONSTANT_Class);
+      name_index  = c4.getNameIndex();
+      String class_name2  = constant_pool.constantToString(index, tag); // / -> .
+      String short_class_name = Utility.compactClassName(class_name2); // I.e., remove java.lang.
+      short_class_name = Utility.compactClassName(short_class_name, class_package + ".", true); // Remove class package prefix
+
+      ref = "<A HREF=\"" + class_name2 + ".html\" TARGET=_top>" + short_class_name + "</A>";
+      constant_ref[index] = "<A HREF=\"" + class_name + "_cp.html#cp" + index +
+        "\" TARGET=ConstantPool>" + short_class_name + "</A>";
+
+      file.println("<P><TT>" + ref + "</TT><UL>" +
+                   "<LI><A HREF=\"#cp" + name_index + "\">Name index(" + name_index +   ")</A></UL>\n");
+      break;
+
+    case CONSTANT_String:
+      ConstantString c5 = (ConstantString)constant_pool.getConstant(index, CONSTANT_String);
+      name_index = c5.getStringIndex();
+
+      String str = Class2HTML.toHTML(constant_pool.constantToString(index, tag));
+
+      file.println("<P><TT>" + str + "</TT><UL>" +
+                   "<LI><A HREF=\"#cp" + name_index + "\">Name index(" + name_index +   ")</A></UL>\n");
+      break;
+
+    case CONSTANT_NameAndType:
+      ConstantNameAndType c6 = (ConstantNameAndType)constant_pool.getConstant(index, CONSTANT_NameAndType);
+      name_index = c6.getNameIndex();
+      int signature_index = c6.getSignatureIndex();
+
+      file.println("<P><TT>" + Class2HTML.toHTML(constant_pool.constantToString(index, tag)) + "</TT><UL>" +
+                   "<LI><A HREF=\"#cp" + name_index + "\">Name index(" + name_index + ")</A>\n" +
+                   "<LI><A HREF=\"#cp" + signature_index + "\">Signature index(" +
+                   signature_index + ")</A></UL>\n");
+      break;
+
+    default:
+      file.println("<P><TT>" + Class2HTML.toHTML(constant_pool.constantToString(index, tag)) + "</TT>\n");
+    } // switch
+  }
+
+  private final int getMethodNumber(String str) {
+    for(int i=0; i < methods.length; i++) {
+      String cmp = methods[i].getName() + methods[i].getSignature();
+      if(cmp.equals(str))
+        return i;
+    }
+    return -1;
+  }
+}

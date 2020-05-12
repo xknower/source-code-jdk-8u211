@@ -1,54 +1,48 @@
-/*    */ package com.sun.java.swing.plaf.motif;
-/*    */ 
-/*    */ import java.awt.event.MouseAdapter;
-/*    */ import java.awt.event.MouseEvent;
-/*    */ import javax.swing.MenuSelectionManager;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class MotifMenuMouseListener
-/*    */   extends MouseAdapter
-/*    */ {
-/*    */   public void mousePressed(MouseEvent paramMouseEvent) {
-/* 37 */     MenuSelectionManager.defaultManager().processMouseEvent(paramMouseEvent);
-/*    */   }
-/*    */   public void mouseReleased(MouseEvent paramMouseEvent) {
-/* 40 */     MenuSelectionManager.defaultManager().processMouseEvent(paramMouseEvent);
-/*    */   }
-/*    */   public void mouseEntered(MouseEvent paramMouseEvent) {
-/* 43 */     MenuSelectionManager.defaultManager().processMouseEvent(paramMouseEvent);
-/*    */   }
-/*    */   public void mouseExited(MouseEvent paramMouseEvent) {
-/* 46 */     MenuSelectionManager.defaultManager().processMouseEvent(paramMouseEvent);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifMenuMouseListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.java.swing.plaf.motif;
+
+import java.awt.event.*;
+import javax.swing.MenuSelectionManager;
+
+/**
+ * A default MouseListener for menu elements
+ *
+ * @author Arnaud Weber
+ */
+class MotifMenuMouseListener extends MouseAdapter {
+    public void mousePressed(MouseEvent e) {
+        MenuSelectionManager.defaultManager().processMouseEvent(e);
+    }
+    public void mouseReleased(MouseEvent e) {
+        MenuSelectionManager.defaultManager().processMouseEvent(e);
+    }
+    public void mouseEntered(MouseEvent e) {
+        MenuSelectionManager.defaultManager().processMouseEvent(e);
+    }
+    public void mouseExited(MouseEvent e) {
+        MenuSelectionManager.defaultManager().processMouseEvent(e);
+    }
+}

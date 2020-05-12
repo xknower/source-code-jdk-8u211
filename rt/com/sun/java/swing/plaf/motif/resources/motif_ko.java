@@ -1,15 +1,29 @@
-/*   */ package com.sun.java.swing.plaf.motif.resources;
-/*   */ 
-/*   */ import java.util.ListResourceBundle;
-/*   */ 
-/*   */ public final class motif_ko extends ListResourceBundle {
-/*   */   protected final Object[][] getContents() {
-/* 7 */     return new Object[][] { { "FileChooser.acceptAllFileFilter.textAndMnemonic", "*" }, { "FileChooser.cancelButton.textAndMnemonic", "취소" }, { "FileChooser.cancelButtonToolTip.textAndMnemonic", "파일 선택기 대화상자를 중단합니다." }, { "FileChooser.enterFileNameLabel.textAndMnemonic", "파일 이름 입력(&N):" }, { "FileChooser.enterFolderNameLabel.textAndMnemonic", "폴더 이름 입력:" }, { "FileChooser.filesLabel.textAndMnemonic", "파일(&I)" }, { "FileChooser.filterLabel.textAndMnemonic", "필터(&R)" }, { "FileChooser.foldersLabel.textAndMnemonic", "폴더(&L)" }, { "FileChooser.helpButton.textAndMnemonic", "도움말" }, { "FileChooser.helpButtonToolTip.textAndMnemonic", "FileChooser 도움말입니다." }, { "FileChooser.openButton.textAndMnemonic", "확인" }, { "FileChooser.openButtonToolTip.textAndMnemonic", "선택된 파일을 엽니다." }, { "FileChooser.openDialogTitle.textAndMnemonic", "열기" }, { "FileChooser.pathLabel.textAndMnemonic", "경로 또는 폴더 이름 입력(&P):" }, { "FileChooser.saveButton.textAndMnemonic", "저장" }, { "FileChooser.saveButtonToolTip.textAndMnemonic", "선택된 파일을 저장합니다." }, { "FileChooser.saveDialogTitle.textAndMnemonic", "저장" }, { "FileChooser.updateButton.textAndMnemonic", "업데이트" }, { "FileChooser.updateButtonToolTip.textAndMnemonic", "디렉토리 목록을 업데이트합니다." } };
-/*   */   }
-/*   */ }
+package com.sun.java.swing.plaf.motif.resources;
 
+import java.util.ListResourceBundle;
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\resources\motif_ko.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+public final class motif_ko extends ListResourceBundle {
+    protected final Object[][] getContents() {
+        return new Object[][] {
+            { "FileChooser.acceptAllFileFilter.textAndMnemonic", "*" },
+            { "FileChooser.cancelButton.textAndMnemonic", "\uCDE8\uC18C" },
+            { "FileChooser.cancelButtonToolTip.textAndMnemonic", "\uD30C\uC77C \uC120\uD0DD\uAE30 \uB300\uD654\uC0C1\uC790\uB97C \uC911\uB2E8\uD569\uB2C8\uB2E4." },
+            { "FileChooser.enterFileNameLabel.textAndMnemonic", "\uD30C\uC77C \uC774\uB984 \uC785\uB825(&N):" },
+            { "FileChooser.enterFolderNameLabel.textAndMnemonic", "\uD3F4\uB354 \uC774\uB984 \uC785\uB825:" },
+            { "FileChooser.filesLabel.textAndMnemonic", "\uD30C\uC77C(&I)" },
+            { "FileChooser.filterLabel.textAndMnemonic", "\uD544\uD130(&R)" },
+            { "FileChooser.foldersLabel.textAndMnemonic", "\uD3F4\uB354(&L)" },
+            { "FileChooser.helpButton.textAndMnemonic", "\uB3C4\uC6C0\uB9D0" },
+            { "FileChooser.helpButtonToolTip.textAndMnemonic", "FileChooser \uB3C4\uC6C0\uB9D0\uC785\uB2C8\uB2E4." },
+            { "FileChooser.openButton.textAndMnemonic", "\uD655\uC778" },
+            { "FileChooser.openButtonToolTip.textAndMnemonic", "\uC120\uD0DD\uB41C \uD30C\uC77C\uC744 \uC5FD\uB2C8\uB2E4." },
+            { "FileChooser.openDialogTitle.textAndMnemonic", "\uC5F4\uAE30" },
+            { "FileChooser.pathLabel.textAndMnemonic", "\uACBD\uB85C \uB610\uB294 \uD3F4\uB354 \uC774\uB984 \uC785\uB825(&P):" },
+            { "FileChooser.saveButton.textAndMnemonic", "\uC800\uC7A5" },
+            { "FileChooser.saveButtonToolTip.textAndMnemonic", "\uC120\uD0DD\uB41C \uD30C\uC77C\uC744 \uC800\uC7A5\uD569\uB2C8\uB2E4." },
+            { "FileChooser.saveDialogTitle.textAndMnemonic", "\uC800\uC7A5" },
+            { "FileChooser.updateButton.textAndMnemonic", "\uC5C5\uB370\uC774\uD2B8" },
+            { "FileChooser.updateButtonToolTip.textAndMnemonic", "\uB514\uB809\uD1A0\uB9AC \uBAA9\uB85D\uC744 \uC5C5\uB370\uC774\uD2B8\uD569\uB2C8\uB2E4." },
+        };
+    }
+}

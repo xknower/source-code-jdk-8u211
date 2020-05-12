@@ -1,156 +1,150 @@
-/*     */ package javax.management.remote;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.security.Principal;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class JMXPrincipal
-/*     */   implements Principal, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -4184480100214577411L;
-/*     */   private String name;
-/*     */   
-/*     */   public JMXPrincipal(String paramString) {
-/*  70 */     validate(paramString);
-/*  71 */     this.name = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/*  82 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*  93 */     return "JMXPrincipal:  " + this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 111 */     if (paramObject == null) {
-/* 112 */       return false;
-/*     */     }
-/* 114 */     if (this == paramObject) {
-/* 115 */       return true;
-/*     */     }
-/* 117 */     if (!(paramObject instanceof JMXPrincipal))
-/* 118 */       return false; 
-/* 119 */     JMXPrincipal jMXPrincipal = (JMXPrincipal)paramObject;
-/*     */     
-/* 121 */     return getName().equals(jMXPrincipal.getName());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 132 */     return this.name.hashCode();
-/*     */   }
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 136 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 137 */     String str = (String)getField.get("name", (Object)null);
-/*     */     try {
-/* 139 */       validate(str);
-/* 140 */       this.name = str;
-/* 141 */     } catch (NullPointerException nullPointerException) {
-/* 142 */       throw new InvalidObjectException(nullPointerException.getMessage());
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static void validate(String paramString) throws NullPointerException {
-/* 147 */     if (paramString == null)
-/* 148 */       throw new NullPointerException("illegal null input"); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\remote\JMXPrincipal.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.management.remote;
+
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.security.Principal;
+
+/**
+ * <p>The identity of a remote client of the JMX Remote API.</p>
+ *
+ * <p>Principals such as this <code>JMXPrincipal</code>
+ * may be associated with a particular <code>Subject</code>
+ * to augment that <code>Subject</code> with an additional
+ * identity.  Refer to the {@link javax.security.auth.Subject}
+ * class for more information on how to achieve this.
+ * Authorization decisions can then be based upon
+ * the Principals associated with a <code>Subject</code>.
+ *
+ * @see java.security.Principal
+ * @see javax.security.auth.Subject
+ * @since 1.5
+ */
+public class JMXPrincipal implements Principal, Serializable {
+
+    private static final long serialVersionUID = -4184480100214577411L;
+
+    /**
+     * @serial The JMX Remote API name for the identity represented by
+     * this <code>JMXPrincipal</code> object.
+     * @see #getName()
+     */
+    private String name;
+
+    /**
+     * <p>Creates a JMXPrincipal for a given identity.</p>
+     *
+     * @param name the JMX Remote API name for this identity.
+     *
+     * @exception NullPointerException if the <code>name</code> is
+     * <code>null</code>.
+     */
+    public JMXPrincipal(String name) {
+        validate(name);
+        this.name = name;
+    }
+
+    /**
+     * Returns the name of this principal.
+     *
+     * <p>
+     *
+     * @return the name of this <code>JMXPrincipal</code>.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Returns a string representation of this <code>JMXPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return a string representation of this <code>JMXPrincipal</code>.
+     */
+    public String toString() {
+        return("JMXPrincipal:  " + name);
+    }
+
+    /**
+     * Compares the specified Object with this <code>JMXPrincipal</code>
+     * for equality.  Returns true if the given object is also a
+     * <code>JMXPrincipal</code> and the two JMXPrincipals
+     * have the same name.
+     *
+     * <p>
+     *
+     * @param o Object to be compared for equality with this
+     * <code>JMXPrincipal</code>.
+     *
+     * @return true if the specified Object is equal to this
+     * <code>JMXPrincipal</code>.
+     */
+    public boolean equals(Object o) {
+        if (o == null)
+            return false;
+
+        if (this == o)
+            return true;
+
+        if (!(o instanceof JMXPrincipal))
+            return false;
+        JMXPrincipal that = (JMXPrincipal)o;
+
+        return (this.getName().equals(that.getName()));
+    }
+
+    /**
+     * Returns a hash code for this <code>JMXPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return a hash code for this <code>JMXPrincipal</code>.
+     */
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ObjectInputStream.GetField gf = ois.readFields();
+        String principalName = (String)gf.get("name", null);
+        try {
+            validate(principalName);
+            this.name = principalName;
+        } catch (NullPointerException e) {
+            throw new InvalidObjectException(e.getMessage());
+        }
+    }
+
+    private static void validate(String name) throws NullPointerException {
+        if (name == null)
+            throw new NullPointerException("illegal null input");
+    }
+}

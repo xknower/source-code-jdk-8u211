@@ -1,104 +1,98 @@
-/*    */ package com.sun.corba.se.impl.corba;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import org.omg.CORBA.Any;
-/*    */ import org.omg.CORBA.Context;
-/*    */ import org.omg.CORBA.NVList;
-/*    */ import org.omg.CORBA.ORB;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class ContextImpl
-/*    */   extends Context
-/*    */ {
-/*    */   private ORB _orb;
-/*    */   private ORBUtilSystemException wrapper;
-/*    */   
-/*    */   public ContextImpl(ORB paramORB) {
-/* 50 */     this._orb = paramORB;
-/* 51 */     this.wrapper = ORBUtilSystemException.get((ORB)paramORB, "rpc.presentation");
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public ContextImpl(Context paramContext) {
-/* 58 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String context_name() {
-/* 63 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Context parent() {
-/* 68 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Context create_child(String paramString) {
-/* 73 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void set_one_value(String paramString, Any paramAny) {
-/* 78 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void set_values(NVList paramNVList) {
-/* 83 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void delete_values(String paramString) {
-/* 89 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public NVList get_values(String paramString1, int paramInt, String paramString2) {
-/* 96 */     throw this.wrapper.contextNotImplemented();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\corba\ContextImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.corba;
+
+import org.omg.CORBA.Any;
+import org.omg.CORBA.Context;
+import org.omg.CORBA.NO_IMPLEMENT;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.NVList;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public final class ContextImpl extends Context {
+
+    private org.omg.CORBA.ORB _orb;
+    private ORBUtilSystemException wrapper ;
+
+    public ContextImpl(org.omg.CORBA.ORB orb)
+    {
+        _orb = orb;
+        wrapper = ORBUtilSystemException.get(
+            (com.sun.corba.se.spi.orb.ORB)orb,
+            CORBALogDomains.RPC_PRESENTATION ) ;
+    }
+
+    public ContextImpl(Context parent)
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+    public String context_name()
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+    public Context parent()
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+    public Context create_child(String name)
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+    public void set_one_value(String propName, Any propValue)
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+    public void set_values(NVList values)
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+
+    public void delete_values(String propName)
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+
+    public NVList get_values(String startScope,
+                             int opFlags,
+                             String propName)
+    {
+        throw wrapper.contextNotImplemented() ;
+    }
+};

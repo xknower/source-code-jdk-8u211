@@ -1,11 +1,35 @@
+/*
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.java.swing.plaf.windows;
 
-import javax.swing.plaf.basic.BasicSeparatorUI;
+import javax.swing.plaf.basic.*;
 
-public class WindowsSeparatorUI extends BasicSeparatorUI {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsSeparatorUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Windows Separator.
+ * <p>
+ *
  */
+public class WindowsSeparatorUI extends BasicSeparatorUI { }

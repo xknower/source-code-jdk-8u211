@@ -1,2538 +1,2535 @@
-/*      */ package java.io;
-/*      */ 
-/*      */ import java.lang.ref.Reference;
-/*      */ import java.lang.ref.ReferenceQueue;
-/*      */ import java.lang.ref.SoftReference;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.lang.reflect.Constructor;
-/*      */ import java.lang.reflect.Field;
-/*      */ import java.lang.reflect.InvocationTargetException;
-/*      */ import java.lang.reflect.Member;
-/*      */ import java.lang.reflect.Method;
-/*      */ import java.lang.reflect.Proxy;
-/*      */ import java.lang.reflect.UndeclaredThrowableException;
-/*      */ import java.security.AccessControlContext;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.MessageDigest;
-/*      */ import java.security.NoSuchAlgorithmException;
-/*      */ import java.security.Permissions;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.security.ProtectionDomain;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Arrays;
-/*      */ import java.util.Collections;
-/*      */ import java.util.Comparator;
-/*      */ import java.util.HashSet;
-/*      */ import java.util.concurrent.ConcurrentHashMap;
-/*      */ import java.util.concurrent.ConcurrentMap;
-/*      */ import sun.misc.JavaSecurityAccess;
-/*      */ import sun.misc.SharedSecrets;
-/*      */ import sun.misc.Unsafe;
-/*      */ import sun.reflect.CallerSensitive;
-/*      */ import sun.reflect.Reflection;
-/*      */ import sun.reflect.ReflectionFactory;
-/*      */ import sun.reflect.misc.ReflectUtil;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class ObjectStreamClass
-/*      */   implements Serializable
-/*      */ {
-/*   82 */   public static final ObjectStreamField[] NO_FIELDS = new ObjectStreamField[0];
-/*      */   
-/*      */   private static final long serialVersionUID = -6120832682080437368L;
-/*      */   
-/*   86 */   private static final ObjectStreamField[] serialPersistentFields = NO_FIELDS;
-/*      */   
-/*      */   private Class<?> cl;
-/*      */   private String name;
-/*      */   
-/*   91 */   private static boolean disableSerialConstructorChecks = ((Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>()
-/*      */       {
-/*      */         public Boolean run() {
-/*   94 */           String str = "jdk.disableSerialConstructorChecks";
-/*   95 */           return "true".equals(System.getProperty(str)) ? Boolean.TRUE : Boolean.FALSE;
-/*      */         }
-/*   99 */       })).booleanValue();
-/*      */   private volatile Long suid; private boolean isProxy;
-/*      */   private boolean isEnum;
-/*      */   private boolean serializable;
-/*  103 */   private static final ReflectionFactory reflFactory = AccessController.<ReflectionFactory>doPrivileged(new ReflectionFactory.GetReflectionFactoryAction());
-/*      */   private boolean externalizable;
-/*      */   private boolean hasWriteObjectData;
-/*      */   
-/*      */   private static class Caches {
-/*  108 */     static final ConcurrentMap<ObjectStreamClass.WeakClassKey, Reference<?>> localDescs = new ConcurrentHashMap<>();
-/*      */ 
-/*      */ 
-/*      */     
-/*  112 */     static final ConcurrentMap<ObjectStreamClass.FieldReflectorKey, Reference<?>> reflectors = new ConcurrentHashMap<>();
-/*      */ 
-/*      */ 
-/*      */     
-/*  116 */     private static final ReferenceQueue<Class<?>> localDescsQueue = new ReferenceQueue<>();
-/*      */ 
-/*      */     
-/*  119 */     private static final ReferenceQueue<Class<?>> reflectorsQueue = new ReferenceQueue<>();
-/*      */   }
-/*      */   
-/*      */   private boolean hasBlockExternalData = true;
-/*      */   
-/*      */   private ClassNotFoundException resolveEx;
-/*      */   
-/*      */   private ExceptionInfo deserializeEx;
-/*      */   
-/*      */   private ExceptionInfo serializeEx;
-/*      */   
-/*      */   private ExceptionInfo defaultSerializeEx;
-/*      */   
-/*      */   private ObjectStreamField[] fields;
-/*      */   
-/*      */   private int primDataSize;
-/*      */   
-/*      */   private int numObjFields;
-/*      */   
-/*      */   private FieldReflector fieldRefl;
-/*      */   
-/*      */   private volatile ClassDataSlot[] dataLayout;
-/*      */   
-/*      */   private Constructor<?> cons;
-/*      */   private ProtectionDomain[] domains;
-/*      */   private Method writeObjectMethod;
-/*      */   private Method readObjectMethod;
-/*      */   private Method readObjectNoDataMethod;
-/*      */   private Method writeReplaceMethod;
-/*      */   private Method readResolveMethod;
-/*      */   private ObjectStreamClass localDesc;
-/*      */   private ObjectStreamClass superDesc;
-/*      */   private boolean initialized;
-/*      */   
-/*      */   private static class ExceptionInfo
-/*      */   {
-/*      */     private final String className;
-/*      */     private final String message;
-/*      */     
-/*      */     ExceptionInfo(String param1String1, String param1String2) {
-/*  159 */       this.className = param1String1;
-/*  160 */       this.message = param1String2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     InvalidClassException newInvalidClassException() {
-/*  169 */       return new InvalidClassException(this.className, this.message);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*  222 */     initNative();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ObjectStreamClass lookup(Class<?> paramClass) {
-/*  235 */     return lookup(paramClass, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ObjectStreamClass lookupAny(Class<?> paramClass) {
-/*  247 */     return lookup(paramClass, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getName() {
-/*  258 */     return this.name;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public long getSerialVersionUID() {
-/*  271 */     if (this.suid == null) {
-/*  272 */       this.suid = AccessController.<Long>doPrivileged(new PrivilegedAction<Long>()
-/*      */           {
-/*      */             public Long run() {
-/*  275 */               return Long.valueOf(ObjectStreamClass.computeDefaultSUID(ObjectStreamClass.this.cl));
-/*      */             }
-/*      */           });
-/*      */     }
-/*      */     
-/*  280 */     return this.suid.longValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @CallerSensitive
-/*      */   public Class<?> forClass() {
-/*  291 */     if (this.cl == null) {
-/*  292 */       return null;
-/*      */     }
-/*  294 */     requireInitialized();
-/*  295 */     if (System.getSecurityManager() != null) {
-/*  296 */       Class<?> clazz = Reflection.getCallerClass();
-/*  297 */       if (ReflectUtil.needsPackageAccessCheck(clazz.getClassLoader(), this.cl.getClassLoader())) {
-/*  298 */         ReflectUtil.checkPackageAccess(this.cl);
-/*      */       }
-/*      */     } 
-/*  301 */     return this.cl;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectStreamField[] getFields() {
-/*  313 */     return getFields(true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectStreamField getField(String paramString) {
-/*  324 */     return getField(paramString, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/*  331 */     return this.name + ": static final long serialVersionUID = " + 
-/*  332 */       getSerialVersionUID() + "L;";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static ObjectStreamClass lookup(Class<?> paramClass, boolean paramBoolean) {
-/*  344 */     if (!paramBoolean && !Serializable.class.isAssignableFrom(paramClass)) {
-/*  345 */       return null;
-/*      */     }
-/*  347 */     processQueue(Caches.localDescsQueue, (ConcurrentMap)Caches.localDescs);
-/*  348 */     WeakClassKey weakClassKey = new WeakClassKey(paramClass, Caches.localDescsQueue);
-/*  349 */     Reference<Object> reference = (Reference)Caches.localDescs.get(weakClassKey);
-/*  350 */     Object object = null;
-/*  351 */     if (reference != null) {
-/*  352 */       object = reference.get();
-/*      */     }
-/*  354 */     EntryFuture entryFuture = null;
-/*  355 */     if (object == null) {
-/*  356 */       EntryFuture entryFuture1 = new EntryFuture();
-/*  357 */       SoftReference<EntryFuture> softReference = new SoftReference<>(entryFuture1);
-/*      */       do {
-/*  359 */         if (reference != null) {
-/*  360 */           Caches.localDescs.remove(weakClassKey, reference);
-/*      */         }
-/*  362 */         reference = (Reference<Object>)Caches.localDescs.putIfAbsent(weakClassKey, softReference);
-/*  363 */         if (reference == null)
-/*  364 */           continue;  object = reference.get();
-/*      */       }
-/*  366 */       while (reference != null && object == null);
-/*  367 */       if (object == null) {
-/*  368 */         entryFuture = entryFuture1;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  372 */     if (object instanceof ObjectStreamClass) {
-/*  373 */       return (ObjectStreamClass)object;
-/*      */     }
-/*  375 */     if (object instanceof EntryFuture) {
-/*  376 */       entryFuture = (EntryFuture)object;
-/*  377 */       if (entryFuture.getOwner() == Thread.currentThread()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  384 */         object = null;
-/*      */       } else {
-/*  386 */         object = entryFuture.get();
-/*      */       } 
-/*      */     } 
-/*  389 */     if (object == null) {
-/*      */       try {
-/*  391 */         object = new ObjectStreamClass(paramClass);
-/*  392 */       } catch (Throwable throwable) {
-/*  393 */         object = throwable;
-/*      */       } 
-/*  395 */       if (entryFuture.set(object)) {
-/*  396 */         Caches.localDescs.put(weakClassKey, new SoftReference(object));
-/*      */       } else {
-/*      */         
-/*  399 */         object = entryFuture.get();
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  403 */     if (object instanceof ObjectStreamClass)
-/*  404 */       return (ObjectStreamClass)object; 
-/*  405 */     if (object instanceof RuntimeException)
-/*  406 */       throw (RuntimeException)object; 
-/*  407 */     if (object instanceof Error) {
-/*  408 */       throw (Error)object;
-/*      */     }
-/*  410 */     throw new InternalError("unexpected entry: " + object);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class EntryFuture
-/*      */   {
-/*  424 */     private static final Object unset = new Object();
-/*  425 */     private final Thread owner = Thread.currentThread();
-/*  426 */     private Object entry = unset;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     synchronized boolean set(Object param1Object) {
-/*  436 */       if (this.entry != unset) {
-/*  437 */         return false;
-/*      */       }
-/*  439 */       this.entry = param1Object;
-/*  440 */       notifyAll();
-/*  441 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     synchronized Object get() {
-/*  449 */       boolean bool = false;
-/*  450 */       while (this.entry == unset) {
-/*      */         try {
-/*  452 */           wait();
-/*  453 */         } catch (InterruptedException interruptedException) {
-/*  454 */           bool = true;
-/*      */         } 
-/*      */       } 
-/*  457 */       if (bool) {
-/*  458 */         AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*      */             {
-/*      */               public Void run() {
-/*  461 */                 Thread.currentThread().interrupt();
-/*  462 */                 return null;
-/*      */               }
-/*      */             });
-/*      */       }
-/*      */       
-/*  467 */       return this.entry;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Thread getOwner() {
-/*  474 */       return this.owner;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private EntryFuture() {}
-/*      */   }
-/*      */   
-/*      */   private ObjectStreamClass(final Class<?> cl) {
-/*  482 */     this.cl = cl;
-/*  483 */     this.name = cl.getName();
-/*  484 */     this.isProxy = Proxy.isProxyClass(cl);
-/*  485 */     this.isEnum = Enum.class.isAssignableFrom(cl);
-/*  486 */     this.serializable = Serializable.class.isAssignableFrom(cl);
-/*  487 */     this.externalizable = Externalizable.class.isAssignableFrom(cl);
-/*      */     
-/*  489 */     Class<?> clazz = cl.getSuperclass();
-/*  490 */     this.superDesc = (clazz != null) ? lookup(clazz, false) : null;
-/*  491 */     this.localDesc = this;
-/*      */     
-/*  493 */     if (this.serializable) {
-/*  494 */       AccessController.doPrivileged(new PrivilegedAction<Void>() {
-/*      */             public Void run() {
-/*  496 */               if (ObjectStreamClass.this.isEnum) {
-/*  497 */                 ObjectStreamClass.this.suid = Long.valueOf(0L);
-/*  498 */                 ObjectStreamClass.this.fields = ObjectStreamClass.NO_FIELDS;
-/*  499 */                 return null;
-/*      */               } 
-/*  501 */               if (cl.isArray()) {
-/*  502 */                 ObjectStreamClass.this.fields = ObjectStreamClass.NO_FIELDS;
-/*  503 */                 return null;
-/*      */               } 
-/*      */               
-/*  506 */               ObjectStreamClass.this.suid = ObjectStreamClass.getDeclaredSUID(cl);
-/*      */               try {
-/*  508 */                 ObjectStreamClass.this.fields = ObjectStreamClass.getSerialFields(cl);
-/*  509 */                 ObjectStreamClass.this.computeFieldOffsets();
-/*  510 */               } catch (InvalidClassException invalidClassException) {
-/*  511 */                 ObjectStreamClass.this.serializeEx = ObjectStreamClass.this.deserializeEx = new ObjectStreamClass.ExceptionInfo(invalidClassException.classname, invalidClassException
-/*  512 */                     .getMessage());
-/*  513 */                 ObjectStreamClass.this.fields = ObjectStreamClass.NO_FIELDS;
-/*      */               } 
-/*      */               
-/*  516 */               if (ObjectStreamClass.this.externalizable) {
-/*  517 */                 ObjectStreamClass.this.cons = ObjectStreamClass.getExternalizableConstructor(cl);
-/*      */               } else {
-/*  519 */                 ObjectStreamClass.this.cons = ObjectStreamClass.getSerializableConstructor(cl);
-/*  520 */                 ObjectStreamClass.this.writeObjectMethod = ObjectStreamClass.getPrivateMethod(cl, "writeObject", new Class[] { ObjectOutputStream.class }, void.class);
-/*      */ 
-/*      */                 
-/*  523 */                 ObjectStreamClass.this.readObjectMethod = ObjectStreamClass.getPrivateMethod(cl, "readObject", new Class[] { ObjectInputStream.class }, void.class);
-/*      */ 
-/*      */                 
-/*  526 */                 ObjectStreamClass.this.readObjectNoDataMethod = ObjectStreamClass.getPrivateMethod(cl, "readObjectNoData", null, void.class);
-/*      */                 
-/*  528 */                 ObjectStreamClass.this.hasWriteObjectData = (ObjectStreamClass.this.writeObjectMethod != null);
-/*      */               } 
-/*  530 */               ObjectStreamClass.this.domains = ObjectStreamClass.this.getProtectionDomains(ObjectStreamClass.this.cons, cl);
-/*  531 */               ObjectStreamClass.this.writeReplaceMethod = ObjectStreamClass.getInheritableMethod(cl, "writeReplace", null, Object.class);
-/*      */               
-/*  533 */               ObjectStreamClass.this.readResolveMethod = ObjectStreamClass.getInheritableMethod(cl, "readResolve", null, Object.class);
-/*      */               
-/*  535 */               return null;
-/*      */             }
-/*      */           });
-/*      */     } else {
-/*  539 */       this.suid = Long.valueOf(0L);
-/*  540 */       this.fields = NO_FIELDS;
-/*      */     } 
-/*      */     
-/*      */     try {
-/*  544 */       this.fieldRefl = getReflector(this.fields, this);
-/*  545 */     } catch (InvalidClassException invalidClassException) {
-/*      */       
-/*  547 */       throw new InternalError(invalidClassException);
-/*      */     } 
-/*      */     
-/*  550 */     if (this.deserializeEx == null) {
-/*  551 */       if (this.isEnum) {
-/*  552 */         this.deserializeEx = new ExceptionInfo(this.name, "enum type");
-/*  553 */       } else if (this.cons == null) {
-/*  554 */         this.deserializeEx = new ExceptionInfo(this.name, "no valid constructor");
-/*      */       } 
-/*      */     }
-/*  557 */     for (byte b = 0; b < this.fields.length; b++) {
-/*  558 */       if (this.fields[b].getField() == null) {
-/*  559 */         this.defaultSerializeEx = new ExceptionInfo(this.name, "unmatched serializable field(s) declared");
-/*      */       }
-/*      */     } 
-/*      */     
-/*  563 */     this.initialized = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ProtectionDomain noPermissionsDomain() {
-/*  577 */     Permissions permissions = new Permissions();
-/*  578 */     permissions.setReadOnly();
-/*  579 */     return new ProtectionDomain(null, permissions);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ProtectionDomain[] getProtectionDomains(Constructor<?> paramConstructor, Class<?> paramClass) {
-/*  602 */     ProtectionDomain[] arrayOfProtectionDomain = null;
-/*  603 */     if (paramConstructor != null && paramClass.getClassLoader() != null && 
-/*  604 */       System.getSecurityManager() != null) {
-/*  605 */       Class<?> clazz1 = paramClass;
-/*  606 */       Class<?> clazz2 = paramConstructor.getDeclaringClass();
-/*  607 */       HashSet<ProtectionDomain> hashSet = null;
-/*  608 */       while (clazz1 != clazz2) {
-/*  609 */         ProtectionDomain protectionDomain = clazz1.getProtectionDomain();
-/*  610 */         if (protectionDomain != null) {
-/*  611 */           if (hashSet == null) hashSet = new HashSet(); 
-/*  612 */           hashSet.add(protectionDomain);
-/*      */         } 
-/*  614 */         clazz1 = clazz1.getSuperclass();
-/*  615 */         if (clazz1 == null) {
-/*      */ 
-/*      */ 
-/*      */           
-/*  619 */           if (hashSet == null) { hashSet = new HashSet<>(); }
-/*  620 */           else { hashSet.clear(); }
-/*  621 */            hashSet.add(noPermissionsDomain());
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*  625 */       if (hashSet != null) {
-/*  626 */         arrayOfProtectionDomain = hashSet.<ProtectionDomain>toArray(new ProtectionDomain[0]);
-/*      */       }
-/*      */     } 
-/*  629 */     return arrayOfProtectionDomain;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void initProxy(Class<?> paramClass, ClassNotFoundException paramClassNotFoundException, ObjectStreamClass paramObjectStreamClass) throws InvalidClassException {
-/*  640 */     ObjectStreamClass objectStreamClass = null;
-/*  641 */     if (paramClass != null) {
-/*  642 */       objectStreamClass = lookup(paramClass, true);
-/*  643 */       if (!objectStreamClass.isProxy) {
-/*  644 */         throw new InvalidClassException("cannot bind proxy descriptor to a non-proxy class");
-/*      */       }
-/*      */     } 
-/*      */     
-/*  648 */     this.cl = paramClass;
-/*  649 */     this.resolveEx = paramClassNotFoundException;
-/*  650 */     this.superDesc = paramObjectStreamClass;
-/*  651 */     this.isProxy = true;
-/*  652 */     this.serializable = true;
-/*  653 */     this.suid = Long.valueOf(0L);
-/*  654 */     this.fields = NO_FIELDS;
-/*  655 */     if (objectStreamClass != null) {
-/*  656 */       this.localDesc = objectStreamClass;
-/*  657 */       this.name = this.localDesc.name;
-/*  658 */       this.externalizable = this.localDesc.externalizable;
-/*  659 */       this.writeReplaceMethod = this.localDesc.writeReplaceMethod;
-/*  660 */       this.readResolveMethod = this.localDesc.readResolveMethod;
-/*  661 */       this.deserializeEx = this.localDesc.deserializeEx;
-/*  662 */       this.domains = this.localDesc.domains;
-/*  663 */       this.cons = this.localDesc.cons;
-/*      */     } 
-/*  665 */     this.fieldRefl = getReflector(this.fields, this.localDesc);
-/*  666 */     this.initialized = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void initNonProxy(ObjectStreamClass paramObjectStreamClass1, Class<?> paramClass, ClassNotFoundException paramClassNotFoundException, ObjectStreamClass paramObjectStreamClass2) throws InvalidClassException {
-/*  678 */     long l = Long.valueOf(paramObjectStreamClass1.getSerialVersionUID()).longValue();
-/*  679 */     ObjectStreamClass objectStreamClass = null;
-/*  680 */     if (paramClass != null) {
-/*  681 */       objectStreamClass = lookup(paramClass, true);
-/*  682 */       if (objectStreamClass.isProxy) {
-/*  683 */         throw new InvalidClassException("cannot bind non-proxy descriptor to a proxy class");
-/*      */       }
-/*      */       
-/*  686 */       if (paramObjectStreamClass1.isEnum != objectStreamClass.isEnum) {
-/*  687 */         throw new InvalidClassException(paramObjectStreamClass1.isEnum ? "cannot bind enum descriptor to a non-enum class" : "cannot bind non-enum descriptor to an enum class");
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  692 */       if (paramObjectStreamClass1.serializable == objectStreamClass.serializable && 
-/*  693 */         !paramClass.isArray() && l != objectStreamClass
-/*  694 */         .getSerialVersionUID()) {
-/*  695 */         throw new InvalidClassException(objectStreamClass.name, "local class incompatible: stream classdesc serialVersionUID = " + l + ", local class serialVersionUID = " + objectStreamClass
-/*      */ 
-/*      */ 
-/*      */             
-/*  699 */             .getSerialVersionUID());
-/*      */       }
-/*      */       
-/*  702 */       if (!classNamesEqual(paramObjectStreamClass1.name, objectStreamClass.name)) {
-/*  703 */         throw new InvalidClassException(objectStreamClass.name, "local class name incompatible with stream class name \"" + paramObjectStreamClass1.name + "\"");
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  708 */       if (!paramObjectStreamClass1.isEnum) {
-/*  709 */         if (paramObjectStreamClass1.serializable == objectStreamClass.serializable && paramObjectStreamClass1.externalizable != objectStreamClass.externalizable)
-/*      */         {
-/*  711 */           throw new InvalidClassException(objectStreamClass.name, "Serializable incompatible with Externalizable");
-/*      */         }
-/*      */ 
-/*      */         
-/*  715 */         if (paramObjectStreamClass1.serializable != objectStreamClass.serializable || paramObjectStreamClass1.externalizable != objectStreamClass.externalizable || (!paramObjectStreamClass1.serializable && !paramObjectStreamClass1.externalizable))
-/*      */         {
-/*      */           
-/*  718 */           this.deserializeEx = new ExceptionInfo(objectStreamClass.name, "class invalid for deserialization");
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  724 */     this.cl = paramClass;
-/*  725 */     this.resolveEx = paramClassNotFoundException;
-/*  726 */     this.superDesc = paramObjectStreamClass2;
-/*  727 */     this.name = paramObjectStreamClass1.name;
-/*  728 */     this.suid = Long.valueOf(l);
-/*  729 */     this.isProxy = false;
-/*  730 */     this.isEnum = paramObjectStreamClass1.isEnum;
-/*  731 */     this.serializable = paramObjectStreamClass1.serializable;
-/*  732 */     this.externalizable = paramObjectStreamClass1.externalizable;
-/*  733 */     this.hasBlockExternalData = paramObjectStreamClass1.hasBlockExternalData;
-/*  734 */     this.hasWriteObjectData = paramObjectStreamClass1.hasWriteObjectData;
-/*  735 */     this.fields = paramObjectStreamClass1.fields;
-/*  736 */     this.primDataSize = paramObjectStreamClass1.primDataSize;
-/*  737 */     this.numObjFields = paramObjectStreamClass1.numObjFields;
-/*      */     
-/*  739 */     if (objectStreamClass != null) {
-/*  740 */       this.localDesc = objectStreamClass;
-/*  741 */       this.writeObjectMethod = this.localDesc.writeObjectMethod;
-/*  742 */       this.readObjectMethod = this.localDesc.readObjectMethod;
-/*  743 */       this.readObjectNoDataMethod = this.localDesc.readObjectNoDataMethod;
-/*  744 */       this.writeReplaceMethod = this.localDesc.writeReplaceMethod;
-/*  745 */       this.readResolveMethod = this.localDesc.readResolveMethod;
-/*  746 */       if (this.deserializeEx == null) {
-/*  747 */         this.deserializeEx = this.localDesc.deserializeEx;
-/*      */       }
-/*  749 */       this.domains = this.localDesc.domains;
-/*  750 */       this.cons = this.localDesc.cons;
-/*      */     } 
-/*      */     
-/*  753 */     this.fieldRefl = getReflector(this.fields, this.localDesc);
-/*      */     
-/*  755 */     this.fields = this.fieldRefl.getFields();
-/*  756 */     this.initialized = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void readNonProxy(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/*  768 */     this.name = paramObjectInputStream.readUTF();
-/*  769 */     this.suid = Long.valueOf(paramObjectInputStream.readLong());
-/*  770 */     this.isProxy = false;
-/*      */     
-/*  772 */     byte b = paramObjectInputStream.readByte();
-/*  773 */     this.hasWriteObjectData = ((b & 0x1) != 0);
-/*      */     
-/*  775 */     this.hasBlockExternalData = ((b & 0x8) != 0);
-/*      */     
-/*  777 */     this.externalizable = ((b & 0x4) != 0);
-/*      */     
-/*  779 */     boolean bool = ((b & 0x2) != 0) ? true : false;
-/*      */     
-/*  781 */     if (this.externalizable && bool) {
-/*  782 */       throw new InvalidClassException(this.name, "serializable and externalizable flags conflict");
-/*      */     }
-/*      */     
-/*  785 */     this.serializable = (this.externalizable || bool);
-/*  786 */     this.isEnum = ((b & 0x10) != 0);
-/*  787 */     if (this.isEnum && this.suid.longValue() != 0L) {
-/*  788 */       throw new InvalidClassException(this.name, "enum descriptor has non-zero serialVersionUID: " + this.suid);
-/*      */     }
-/*      */ 
-/*      */     
-/*  792 */     short s = paramObjectInputStream.readShort();
-/*  793 */     if (this.isEnum && s != 0) {
-/*  794 */       throw new InvalidClassException(this.name, "enum descriptor has non-zero field count: " + s);
-/*      */     }
-/*      */     
-/*  797 */     this.fields = (s > 0) ? new ObjectStreamField[s] : NO_FIELDS;
-/*      */     
-/*  799 */     for (byte b1 = 0; b1 < s; b1++) {
-/*  800 */       char c = (char)paramObjectInputStream.readByte();
-/*  801 */       String str1 = paramObjectInputStream.readUTF();
-/*      */       
-/*  803 */       String str2 = (c == 'L' || c == '[') ? paramObjectInputStream.readTypeString() : new String(new char[] { c });
-/*      */       try {
-/*  805 */         this.fields[b1] = new ObjectStreamField(str1, str2, false);
-/*  806 */       } catch (RuntimeException runtimeException) {
-/*  807 */         throw (IOException)(new InvalidClassException(this.name, "invalid descriptor for field " + str1))
-/*  808 */           .initCause(runtimeException);
-/*      */       } 
-/*      */     } 
-/*  811 */     computeFieldOffsets();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void writeNonProxy(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/*  818 */     paramObjectOutputStream.writeUTF(this.name);
-/*  819 */     paramObjectOutputStream.writeLong(getSerialVersionUID());
-/*      */     
-/*  821 */     byte b = 0;
-/*  822 */     if (this.externalizable) {
-/*  823 */       b = (byte)(b | 0x4);
-/*  824 */       int i = paramObjectOutputStream.getProtocolVersion();
-/*  825 */       if (i != 1) {
-/*  826 */         b = (byte)(b | 0x8);
-/*      */       }
-/*  828 */     } else if (this.serializable) {
-/*  829 */       b = (byte)(b | 0x2);
-/*      */     } 
-/*  831 */     if (this.hasWriteObjectData) {
-/*  832 */       b = (byte)(b | 0x1);
-/*      */     }
-/*  834 */     if (this.isEnum) {
-/*  835 */       b = (byte)(b | 0x10);
-/*      */     }
-/*  837 */     paramObjectOutputStream.writeByte(b);
-/*      */     
-/*  839 */     paramObjectOutputStream.writeShort(this.fields.length);
-/*  840 */     for (byte b1 = 0; b1 < this.fields.length; b1++) {
-/*  841 */       ObjectStreamField objectStreamField = this.fields[b1];
-/*  842 */       paramObjectOutputStream.writeByte(objectStreamField.getTypeCode());
-/*  843 */       paramObjectOutputStream.writeUTF(objectStreamField.getName());
-/*  844 */       if (!objectStreamField.isPrimitive()) {
-/*  845 */         paramObjectOutputStream.writeTypeString(objectStreamField.getTypeString());
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ClassNotFoundException getResolveException() {
-/*  855 */     return this.resolveEx;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void requireInitialized() {
-/*  862 */     if (!this.initialized) {
-/*  863 */       throw new InternalError("Unexpected call when not initialized");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void checkDeserialize() throws InvalidClassException {
-/*  872 */     requireInitialized();
-/*  873 */     if (this.deserializeEx != null) {
-/*  874 */       throw this.deserializeEx.newInvalidClassException();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void checkSerialize() throws InvalidClassException {
-/*  884 */     requireInitialized();
-/*  885 */     if (this.serializeEx != null) {
-/*  886 */       throw this.serializeEx.newInvalidClassException();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void checkDefaultSerialize() throws InvalidClassException {
-/*  898 */     requireInitialized();
-/*  899 */     if (this.defaultSerializeEx != null) {
-/*  900 */       throw this.defaultSerializeEx.newInvalidClassException();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ObjectStreamClass getSuperDesc() {
-/*  910 */     requireInitialized();
-/*  911 */     return this.superDesc;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ObjectStreamClass getLocalDesc() {
-/*  921 */     requireInitialized();
-/*  922 */     return this.localDesc;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ObjectStreamField[] getFields(boolean paramBoolean) {
-/*  932 */     return paramBoolean ? (ObjectStreamField[])this.fields.clone() : this.fields;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ObjectStreamField getField(String paramString, Class<?> paramClass) {
-/*  942 */     for (byte b = 0; b < this.fields.length; b++) {
-/*  943 */       ObjectStreamField objectStreamField = this.fields[b];
-/*  944 */       if (objectStreamField.getName().equals(paramString)) {
-/*  945 */         if (paramClass == null || (paramClass == Object.class && 
-/*  946 */           !objectStreamField.isPrimitive()))
-/*      */         {
-/*  948 */           return objectStreamField;
-/*      */         }
-/*  950 */         Class<?> clazz = objectStreamField.getType();
-/*  951 */         if (clazz != null && paramClass.isAssignableFrom(clazz)) {
-/*  952 */           return objectStreamField;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*  956 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean isProxy() {
-/*  964 */     requireInitialized();
-/*  965 */     return this.isProxy;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean isEnum() {
-/*  973 */     requireInitialized();
-/*  974 */     return this.isEnum;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean isExternalizable() {
-/*  982 */     requireInitialized();
-/*  983 */     return this.externalizable;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean isSerializable() {
-/*  991 */     requireInitialized();
-/*  992 */     return this.serializable;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasBlockExternalData() {
-/* 1000 */     requireInitialized();
-/* 1001 */     return this.hasBlockExternalData;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasWriteObjectData() {
-/* 1010 */     requireInitialized();
-/* 1011 */     return this.hasWriteObjectData;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean isInstantiable() {
-/* 1022 */     requireInitialized();
-/* 1023 */     return (this.cons != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasWriteObjectMethod() {
-/* 1032 */     requireInitialized();
-/* 1033 */     return (this.writeObjectMethod != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasReadObjectMethod() {
-/* 1042 */     requireInitialized();
-/* 1043 */     return (this.readObjectMethod != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasReadObjectNoDataMethod() {
-/* 1052 */     requireInitialized();
-/* 1053 */     return (this.readObjectNoDataMethod != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasWriteReplaceMethod() {
-/* 1061 */     requireInitialized();
-/* 1062 */     return (this.writeReplaceMethod != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean hasReadResolveMethod() {
-/* 1070 */     requireInitialized();
-/* 1071 */     return (this.readResolveMethod != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Object newInstance() throws InstantiationException, InvocationTargetException, UnsupportedOperationException {
-/* 1087 */     requireInitialized();
-/* 1088 */     if (this.cons != null) {
-/*      */       try {
-/* 1090 */         if (this.domains == null || this.domains.length == 0) {
-/* 1091 */           return this.cons.newInstance(new Object[0]);
-/*      */         }
-/* 1093 */         JavaSecurityAccess javaSecurityAccess = SharedSecrets.getJavaSecurityAccess();
-/* 1094 */         PrivilegedAction<?> privilegedAction = () -> {
-/*      */             try {
-/*      */               return this.cons.newInstance(new Object[0]);
-/* 1097 */             } catch (InstantiationException|InvocationTargetException|IllegalAccessException instantiationException) {
-/*      */               throw new UndeclaredThrowableException(instantiationException);
-/*      */             } 
-/*      */           };
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1104 */           return javaSecurityAccess.doIntersectionPrivilege(privilegedAction, 
-/* 1105 */               AccessController.getContext(), new AccessControlContext(this.domains));
-/*      */         }
-/* 1107 */         catch (UndeclaredThrowableException undeclaredThrowableException) {
-/* 1108 */           Throwable throwable = undeclaredThrowableException.getCause();
-/* 1109 */           if (throwable instanceof InstantiationException)
-/* 1110 */             throw (InstantiationException)throwable; 
-/* 1111 */           if (throwable instanceof InvocationTargetException)
-/* 1112 */             throw (InvocationTargetException)throwable; 
-/* 1113 */           if (throwable instanceof IllegalAccessException) {
-/* 1114 */             throw (IllegalAccessException)throwable;
-/*      */           }
-/* 1116 */           throw undeclaredThrowableException;
-/*      */         }
-/*      */       
-/* 1119 */       } catch (IllegalAccessException illegalAccessException) {
-/*      */         
-/* 1121 */         throw new InternalError(illegalAccessException);
-/*      */       } 
-/*      */     }
-/* 1124 */     throw new UnsupportedOperationException();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void invokeWriteObject(Object paramObject, ObjectOutputStream paramObjectOutputStream) throws IOException, UnsupportedOperationException {
-/* 1137 */     requireInitialized();
-/* 1138 */     if (this.writeObjectMethod != null) {
-/*      */       try {
-/* 1140 */         this.writeObjectMethod.invoke(paramObject, new Object[] { paramObjectOutputStream });
-/* 1141 */       } catch (InvocationTargetException invocationTargetException) {
-/* 1142 */         Throwable throwable = invocationTargetException.getTargetException();
-/* 1143 */         if (throwable instanceof IOException) {
-/* 1144 */           throw (IOException)throwable;
-/*      */         }
-/* 1146 */         throwMiscException(throwable);
-/*      */       }
-/* 1148 */       catch (IllegalAccessException illegalAccessException) {
-/*      */         
-/* 1150 */         throw new InternalError(illegalAccessException);
-/*      */       } 
-/*      */     } else {
-/* 1153 */       throw new UnsupportedOperationException();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void invokeReadObject(Object paramObject, ObjectInputStream paramObjectInputStream) throws ClassNotFoundException, IOException, UnsupportedOperationException {
-/* 1167 */     requireInitialized();
-/* 1168 */     if (this.readObjectMethod != null) {
-/*      */       try {
-/* 1170 */         this.readObjectMethod.invoke(paramObject, new Object[] { paramObjectInputStream });
-/* 1171 */       } catch (InvocationTargetException invocationTargetException) {
-/* 1172 */         Throwable throwable = invocationTargetException.getTargetException();
-/* 1173 */         if (throwable instanceof ClassNotFoundException)
-/* 1174 */           throw (ClassNotFoundException)throwable; 
-/* 1175 */         if (throwable instanceof IOException) {
-/* 1176 */           throw (IOException)throwable;
-/*      */         }
-/* 1178 */         throwMiscException(throwable);
-/*      */       }
-/* 1180 */       catch (IllegalAccessException illegalAccessException) {
-/*      */         
-/* 1182 */         throw new InternalError(illegalAccessException);
-/*      */       } 
-/*      */     } else {
-/* 1185 */       throw new UnsupportedOperationException();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void invokeReadObjectNoData(Object paramObject) throws IOException, UnsupportedOperationException {
-/* 1198 */     requireInitialized();
-/* 1199 */     if (this.readObjectNoDataMethod != null) {
-/*      */       try {
-/* 1201 */         this.readObjectNoDataMethod.invoke(paramObject, (Object[])null);
-/* 1202 */       } catch (InvocationTargetException invocationTargetException) {
-/* 1203 */         Throwable throwable = invocationTargetException.getTargetException();
-/* 1204 */         if (throwable instanceof ObjectStreamException) {
-/* 1205 */           throw (ObjectStreamException)throwable;
-/*      */         }
-/* 1207 */         throwMiscException(throwable);
-/*      */       }
-/* 1209 */       catch (IllegalAccessException illegalAccessException) {
-/*      */         
-/* 1211 */         throw new InternalError(illegalAccessException);
-/*      */       } 
-/*      */     } else {
-/* 1214 */       throw new UnsupportedOperationException();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Object invokeWriteReplace(Object paramObject) throws IOException, UnsupportedOperationException {
-/* 1227 */     requireInitialized();
-/* 1228 */     if (this.writeReplaceMethod != null) {
-/*      */       try {
-/* 1230 */         return this.writeReplaceMethod.invoke(paramObject, (Object[])null);
-/* 1231 */       } catch (InvocationTargetException invocationTargetException) {
-/* 1232 */         Throwable throwable = invocationTargetException.getTargetException();
-/* 1233 */         if (throwable instanceof ObjectStreamException) {
-/* 1234 */           throw (ObjectStreamException)throwable;
-/*      */         }
-/* 1236 */         throwMiscException(throwable);
-/* 1237 */         throw new InternalError(throwable);
-/*      */       }
-/* 1239 */       catch (IllegalAccessException illegalAccessException) {
-/*      */         
-/* 1241 */         throw new InternalError(illegalAccessException);
-/*      */       } 
-/*      */     }
-/* 1244 */     throw new UnsupportedOperationException();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Object invokeReadResolve(Object paramObject) throws IOException, UnsupportedOperationException {
-/* 1257 */     requireInitialized();
-/* 1258 */     if (this.readResolveMethod != null) {
-/*      */       try {
-/* 1260 */         return this.readResolveMethod.invoke(paramObject, (Object[])null);
-/* 1261 */       } catch (InvocationTargetException invocationTargetException) {
-/* 1262 */         Throwable throwable = invocationTargetException.getTargetException();
-/* 1263 */         if (throwable instanceof ObjectStreamException) {
-/* 1264 */           throw (ObjectStreamException)throwable;
-/*      */         }
-/* 1266 */         throwMiscException(throwable);
-/* 1267 */         throw new InternalError(throwable);
-/*      */       }
-/* 1269 */       catch (IllegalAccessException illegalAccessException) {
-/*      */         
-/* 1271 */         throw new InternalError(illegalAccessException);
-/*      */       } 
-/*      */     }
-/* 1274 */     throw new UnsupportedOperationException();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class ClassDataSlot
-/*      */   {
-/*      */     final ObjectStreamClass desc;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final boolean hasData;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     ClassDataSlot(ObjectStreamClass param1ObjectStreamClass, boolean param1Boolean) {
-/* 1292 */       this.desc = param1ObjectStreamClass;
-/* 1293 */       this.hasData = param1Boolean;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ClassDataSlot[] getClassDataLayout() throws InvalidClassException {
-/* 1306 */     if (this.dataLayout == null) {
-/* 1307 */       this.dataLayout = getClassDataLayout0();
-/*      */     }
-/* 1309 */     return this.dataLayout;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ClassDataSlot[] getClassDataLayout0() throws InvalidClassException {
-/* 1315 */     ArrayList<ClassDataSlot> arrayList = new ArrayList();
-/* 1316 */     Class<?> clazz1 = this.cl, clazz2 = this.cl;
-/*      */ 
-/*      */     
-/* 1319 */     while (clazz2 != null && Serializable.class.isAssignableFrom(clazz2)) {
-/* 1320 */       clazz2 = clazz2.getSuperclass();
-/*      */     }
-/*      */     
-/* 1323 */     HashSet<String> hashSet = new HashSet(3);
-/*      */     
-/* 1325 */     for (ObjectStreamClass objectStreamClass = this; objectStreamClass != null; objectStreamClass = objectStreamClass.superDesc) {
-/* 1326 */       if (hashSet.contains(objectStreamClass.name)) {
-/* 1327 */         throw new InvalidClassException("Circular reference.");
-/*      */       }
-/* 1329 */       hashSet.add(objectStreamClass.name);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1333 */       String str = (objectStreamClass.cl != null) ? objectStreamClass.cl.getName() : objectStreamClass.name;
-/* 1334 */       Class<?> clazz4 = null; Class<?> clazz5;
-/* 1335 */       for (clazz5 = clazz1; clazz5 != clazz2; clazz5 = clazz5.getSuperclass()) {
-/* 1336 */         if (str.equals(clazz5.getName())) {
-/* 1337 */           clazz4 = clazz5;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1343 */       if (clazz4 != null) {
-/* 1344 */         for (clazz5 = clazz1; clazz5 != clazz4; clazz5 = clazz5.getSuperclass()) {
-/* 1345 */           arrayList.add(new ClassDataSlot(
-/* 1346 */                 lookup(clazz5, true), false));
-/*      */         }
-/* 1348 */         clazz1 = clazz4.getSuperclass();
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1352 */       arrayList.add(new ClassDataSlot(objectStreamClass.getVariantFor(clazz4), true));
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1356 */     for (Class<?> clazz3 = clazz1; clazz3 != clazz2; clazz3 = clazz3.getSuperclass()) {
-/* 1357 */       arrayList.add(new ClassDataSlot(
-/* 1358 */             lookup(clazz3, true), false));
-/*      */     }
-/*      */ 
-/*      */     
-/* 1362 */     Collections.reverse(arrayList);
-/* 1363 */     return arrayList.<ClassDataSlot>toArray(new ClassDataSlot[arrayList.size()]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getPrimDataSize() {
-/* 1371 */     return this.primDataSize;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getNumObjFields() {
-/* 1379 */     return this.numObjFields;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void getPrimFieldValues(Object paramObject, byte[] paramArrayOfbyte) {
-/* 1389 */     this.fieldRefl.getPrimFieldValues(paramObject, paramArrayOfbyte);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setPrimFieldValues(Object paramObject, byte[] paramArrayOfbyte) {
-/* 1399 */     this.fieldRefl.setPrimFieldValues(paramObject, paramArrayOfbyte);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void getObjFieldValues(Object paramObject, Object[] paramArrayOfObject) {
-/* 1408 */     this.fieldRefl.getObjFieldValues(paramObject, paramArrayOfObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void setObjFieldValues(Object paramObject, Object[] paramArrayOfObject) {
-/* 1417 */     this.fieldRefl.setObjFieldValues(paramObject, paramArrayOfObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void computeFieldOffsets() throws InvalidClassException {
-/* 1426 */     this.primDataSize = 0;
-/* 1427 */     this.numObjFields = 0;
-/* 1428 */     byte b = -1;
-/*      */     
-/* 1430 */     for (byte b1 = 0; b1 < this.fields.length; b1++) {
-/* 1431 */       ObjectStreamField objectStreamField = this.fields[b1];
-/* 1432 */       switch (objectStreamField.getTypeCode()) {
-/*      */         case 'B':
-/*      */         case 'Z':
-/* 1435 */           objectStreamField.setOffset(this.primDataSize++);
-/*      */           break;
-/*      */         
-/*      */         case 'C':
-/*      */         case 'S':
-/* 1440 */           objectStreamField.setOffset(this.primDataSize);
-/* 1441 */           this.primDataSize += 2;
-/*      */           break;
-/*      */         
-/*      */         case 'F':
-/*      */         case 'I':
-/* 1446 */           objectStreamField.setOffset(this.primDataSize);
-/* 1447 */           this.primDataSize += 4;
-/*      */           break;
-/*      */         
-/*      */         case 'D':
-/*      */         case 'J':
-/* 1452 */           objectStreamField.setOffset(this.primDataSize);
-/* 1453 */           this.primDataSize += 8;
-/*      */           break;
-/*      */         
-/*      */         case 'L':
-/*      */         case '[':
-/* 1458 */           objectStreamField.setOffset(this.numObjFields++);
-/* 1459 */           if (b == -1) {
-/* 1460 */             b = b1;
-/*      */           }
-/*      */           break;
-/*      */         
-/*      */         default:
-/* 1465 */           throw new InternalError();
-/*      */       } 
-/*      */     } 
-/* 1468 */     if (b != -1 && b + this.numObjFields != this.fields.length)
-/*      */     {
-/*      */       
-/* 1471 */       throw new InvalidClassException(this.name, "illegal field order");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ObjectStreamClass getVariantFor(Class<?> paramClass) throws InvalidClassException {
-/* 1483 */     if (this.cl == paramClass) {
-/* 1484 */       return this;
-/*      */     }
-/* 1486 */     ObjectStreamClass objectStreamClass = new ObjectStreamClass();
-/* 1487 */     if (this.isProxy) {
-/* 1488 */       objectStreamClass.initProxy(paramClass, null, this.superDesc);
-/*      */     } else {
-/* 1490 */       objectStreamClass.initNonProxy(this, paramClass, null, this.superDesc);
-/*      */     } 
-/* 1492 */     return objectStreamClass;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Constructor<?> getExternalizableConstructor(Class<?> paramClass) {
-/*      */     try {
-/* 1502 */       Constructor<?> constructor = paramClass.getDeclaredConstructor((Class[])null);
-/* 1503 */       constructor.setAccessible(true);
-/* 1504 */       return ((constructor.getModifiers() & 0x1) != 0) ? constructor : null;
-/*      */     }
-/* 1506 */     catch (NoSuchMethodException noSuchMethodException) {
-/* 1507 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean superHasAccessibleConstructor(Class<?> paramClass) {
-/* 1525 */     Class<?> clazz = paramClass.getSuperclass();
-/* 1526 */     assert Serializable.class.isAssignableFrom(paramClass);
-/* 1527 */     assert clazz != null;
-/* 1528 */     if (packageEquals(paramClass, clazz)) {
-/*      */       
-/* 1530 */       for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-/* 1531 */         if ((constructor.getModifiers() & 0x2) == 0) {
-/* 1532 */           return true;
-/*      */         }
-/*      */       } 
-/* 1535 */       return false;
-/*      */     } 
-/*      */     
-/* 1538 */     if ((clazz.getModifiers() & 0x5) == 0) {
-/* 1539 */       return false;
-/*      */     }
-/*      */     
-/* 1542 */     for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-/* 1543 */       if ((constructor.getModifiers() & 0x5) != 0) {
-/* 1544 */         return true;
-/*      */       }
-/*      */     } 
-/* 1547 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Constructor<?> getSerializableConstructor(Class<?> paramClass) {
-/* 1557 */     Class<?> clazz = paramClass;
-/* 1558 */     while (Serializable.class.isAssignableFrom(clazz)) {
-/* 1559 */       Class<?> clazz1 = clazz;
-/* 1560 */       if ((clazz = clazz.getSuperclass()) == null || (!disableSerialConstructorChecks && 
-/* 1561 */         !superHasAccessibleConstructor(clazz1))) {
-/* 1562 */         return null;
-/*      */       }
-/*      */     } 
-/*      */     try {
-/* 1566 */       Constructor<?> constructor = clazz.getDeclaredConstructor((Class[])null);
-/* 1567 */       int i = constructor.getModifiers();
-/* 1568 */       if ((i & 0x2) != 0 || ((i & 0x5) == 0 && 
-/*      */         
-/* 1570 */         !packageEquals(paramClass, clazz)))
-/*      */       {
-/* 1572 */         return null;
-/*      */       }
-/* 1574 */       constructor = reflFactory.newConstructorForSerialization(paramClass, constructor);
-/* 1575 */       constructor.setAccessible(true);
-/* 1576 */       return constructor;
-/* 1577 */     } catch (NoSuchMethodException noSuchMethodException) {
-/* 1578 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Method getInheritableMethod(Class<?> paramClass1, String paramString, Class<?>[] paramArrayOfClass, Class<?> paramClass2) {
-/* 1592 */     Method method = null;
-/* 1593 */     Class<?> clazz = paramClass1;
-/* 1594 */     while (clazz != null) {
-/*      */       try {
-/* 1596 */         method = clazz.getDeclaredMethod(paramString, paramArrayOfClass);
-/*      */         break;
-/* 1598 */       } catch (NoSuchMethodException noSuchMethodException) {
-/* 1599 */         clazz = clazz.getSuperclass();
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1603 */     if (method == null || method.getReturnType() != paramClass2) {
-/* 1604 */       return null;
-/*      */     }
-/* 1606 */     method.setAccessible(true);
-/* 1607 */     int i = method.getModifiers();
-/* 1608 */     if ((i & 0x408) != 0)
-/* 1609 */       return null; 
-/* 1610 */     if ((i & 0x5) != 0)
-/* 1611 */       return method; 
-/* 1612 */     if ((i & 0x2) != 0) {
-/* 1613 */       return (paramClass1 == clazz) ? method : null;
-/*      */     }
-/* 1615 */     return packageEquals(paramClass1, clazz) ? method : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Method getPrivateMethod(Class<?> paramClass1, String paramString, Class<?>[] paramArrayOfClass, Class<?> paramClass2) {
-/*      */     try {
-/* 1629 */       Method method = paramClass1.getDeclaredMethod(paramString, paramArrayOfClass);
-/* 1630 */       method.setAccessible(true);
-/* 1631 */       int i = method.getModifiers();
-/* 1632 */       return (method.getReturnType() == paramClass2 && (i & 0x8) == 0 && (i & 0x2) != 0) ? method : null;
-/*      */     
-/*      */     }
-/* 1635 */     catch (NoSuchMethodException noSuchMethodException) {
-/* 1636 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean packageEquals(Class<?> paramClass1, Class<?> paramClass2) {
-/* 1645 */     return (paramClass1.getClassLoader() == paramClass2.getClassLoader() && 
-/* 1646 */       getPackageName(paramClass1).equals(getPackageName(paramClass2)));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String getPackageName(Class<?> paramClass) {
-/* 1653 */     String str = paramClass.getName();
-/* 1654 */     int i = str.lastIndexOf('[');
-/* 1655 */     if (i >= 0) {
-/* 1656 */       str = str.substring(i + 2);
-/*      */     }
-/* 1658 */     i = str.lastIndexOf('.');
-/* 1659 */     return (i >= 0) ? str.substring(0, i) : "";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean classNamesEqual(String paramString1, String paramString2) {
-/* 1667 */     paramString1 = paramString1.substring(paramString1.lastIndexOf('.') + 1);
-/* 1668 */     paramString2 = paramString2.substring(paramString2.lastIndexOf('.') + 1);
-/* 1669 */     return paramString1.equals(paramString2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String getClassSignature(Class<?> paramClass) {
-/* 1676 */     StringBuilder stringBuilder = new StringBuilder();
-/* 1677 */     while (paramClass.isArray()) {
-/* 1678 */       stringBuilder.append('[');
-/* 1679 */       paramClass = paramClass.getComponentType();
-/*      */     } 
-/* 1681 */     if (paramClass.isPrimitive()) {
-/* 1682 */       if (paramClass == int.class) {
-/* 1683 */         stringBuilder.append('I');
-/* 1684 */       } else if (paramClass == byte.class) {
-/* 1685 */         stringBuilder.append('B');
-/* 1686 */       } else if (paramClass == long.class) {
-/* 1687 */         stringBuilder.append('J');
-/* 1688 */       } else if (paramClass == float.class) {
-/* 1689 */         stringBuilder.append('F');
-/* 1690 */       } else if (paramClass == double.class) {
-/* 1691 */         stringBuilder.append('D');
-/* 1692 */       } else if (paramClass == short.class) {
-/* 1693 */         stringBuilder.append('S');
-/* 1694 */       } else if (paramClass == char.class) {
-/* 1695 */         stringBuilder.append('C');
-/* 1696 */       } else if (paramClass == boolean.class) {
-/* 1697 */         stringBuilder.append('Z');
-/* 1698 */       } else if (paramClass == void.class) {
-/* 1699 */         stringBuilder.append('V');
-/*      */       } else {
-/* 1701 */         throw new InternalError();
-/*      */       } 
-/*      */     } else {
-/* 1704 */       stringBuilder.append('L' + paramClass.getName().replace('.', '/') + ';');
-/*      */     } 
-/* 1706 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String getMethodSignature(Class<?>[] paramArrayOfClass, Class<?> paramClass) {
-/* 1715 */     StringBuilder stringBuilder = new StringBuilder();
-/* 1716 */     stringBuilder.append('(');
-/* 1717 */     for (byte b = 0; b < paramArrayOfClass.length; b++) {
-/* 1718 */       stringBuilder.append(getClassSignature(paramArrayOfClass[b]));
-/*      */     }
-/* 1720 */     stringBuilder.append(')');
-/* 1721 */     stringBuilder.append(getClassSignature(paramClass));
-/* 1722 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void throwMiscException(Throwable paramThrowable) throws IOException {
-/* 1731 */     if (paramThrowable instanceof RuntimeException)
-/* 1732 */       throw (RuntimeException)paramThrowable; 
-/* 1733 */     if (paramThrowable instanceof Error) {
-/* 1734 */       throw (Error)paramThrowable;
-/*      */     }
-/* 1736 */     IOException iOException = new IOException("unexpected exception type");
-/* 1737 */     iOException.initCause(paramThrowable);
-/* 1738 */     throw iOException;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ObjectStreamField[] getSerialFields(Class<?> paramClass) throws InvalidClassException {
-/*      */     ObjectStreamField[] arrayOfObjectStreamField;
-/* 1753 */     if (Serializable.class.isAssignableFrom(paramClass) && 
-/* 1754 */       !Externalizable.class.isAssignableFrom(paramClass) && 
-/* 1755 */       !Proxy.isProxyClass(paramClass) && 
-/* 1756 */       !paramClass.isInterface()) {
-/*      */       
-/* 1758 */       if ((arrayOfObjectStreamField = getDeclaredSerialFields(paramClass)) == null) {
-/* 1759 */         arrayOfObjectStreamField = getDefaultSerialFields(paramClass);
-/*      */       }
-/* 1761 */       Arrays.sort((Object[])arrayOfObjectStreamField);
-/*      */     } else {
-/* 1763 */       arrayOfObjectStreamField = NO_FIELDS;
-/*      */     } 
-/* 1765 */     return arrayOfObjectStreamField;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ObjectStreamField[] getDeclaredSerialFields(Class<?> paramClass) throws InvalidClassException {
-/* 1782 */     ObjectStreamField[] arrayOfObjectStreamField1 = null;
-/*      */     try {
-/* 1784 */       Field field = paramClass.getDeclaredField("serialPersistentFields");
-/* 1785 */       byte b1 = 26;
-/* 1786 */       if ((field.getModifiers() & b1) == b1) {
-/* 1787 */         field.setAccessible(true);
-/* 1788 */         arrayOfObjectStreamField1 = (ObjectStreamField[])field.get((Object)null);
-/*      */       } 
-/* 1790 */     } catch (Exception exception) {}
-/*      */     
-/* 1792 */     if (arrayOfObjectStreamField1 == null)
-/* 1793 */       return null; 
-/* 1794 */     if (arrayOfObjectStreamField1.length == 0) {
-/* 1795 */       return NO_FIELDS;
-/*      */     }
-/*      */     
-/* 1798 */     ObjectStreamField[] arrayOfObjectStreamField2 = new ObjectStreamField[arrayOfObjectStreamField1.length];
-/*      */     
-/* 1800 */     HashSet<String> hashSet = new HashSet(arrayOfObjectStreamField1.length);
-/*      */     
-/* 1802 */     for (byte b = 0; b < arrayOfObjectStreamField1.length; b++) {
-/* 1803 */       ObjectStreamField objectStreamField = arrayOfObjectStreamField1[b];
-/*      */       
-/* 1805 */       String str = objectStreamField.getName();
-/* 1806 */       if (hashSet.contains(str)) {
-/* 1807 */         throw new InvalidClassException("multiple serializable fields named " + str);
-/*      */       }
-/*      */       
-/* 1810 */       hashSet.add(str);
-/*      */       
-/*      */       try {
-/* 1813 */         Field field = paramClass.getDeclaredField(str);
-/* 1814 */         if (field.getType() == objectStreamField.getType() && (field
-/* 1815 */           .getModifiers() & 0x8) == 0)
-/*      */         {
-/* 1817 */           arrayOfObjectStreamField2[b] = new ObjectStreamField(field, objectStreamField
-/* 1818 */               .isUnshared(), true);
-/*      */         }
-/* 1820 */       } catch (NoSuchFieldException noSuchFieldException) {}
-/*      */       
-/* 1822 */       if (arrayOfObjectStreamField2[b] == null) {
-/* 1823 */         arrayOfObjectStreamField2[b] = new ObjectStreamField(str, objectStreamField
-/* 1824 */             .getType(), objectStreamField.isUnshared());
-/*      */       }
-/*      */     } 
-/* 1827 */     return arrayOfObjectStreamField2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ObjectStreamField[] getDefaultSerialFields(Class<?> paramClass) {
-/* 1837 */     Field[] arrayOfField = paramClass.getDeclaredFields();
-/* 1838 */     ArrayList<ObjectStreamField> arrayList = new ArrayList();
-/* 1839 */     char c = '';
-/*      */     int i;
-/* 1841 */     for (i = 0; i < arrayOfField.length; i++) {
-/* 1842 */       if ((arrayOfField[i].getModifiers() & c) == 0) {
-/* 1843 */         arrayList.add(new ObjectStreamField(arrayOfField[i], false, true));
-/*      */       }
-/*      */     } 
-/* 1846 */     i = arrayList.size();
-/* 1847 */     return (i == 0) ? NO_FIELDS : arrayList
-/* 1848 */       .<ObjectStreamField>toArray(new ObjectStreamField[i]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Long getDeclaredSUID(Class<?> paramClass) {
-/*      */     try {
-/* 1857 */       Field field = paramClass.getDeclaredField("serialVersionUID");
-/* 1858 */       byte b = 24;
-/* 1859 */       if ((field.getModifiers() & b) == b) {
-/* 1860 */         field.setAccessible(true);
-/* 1861 */         return Long.valueOf(field.getLong((Object)null));
-/*      */       } 
-/* 1863 */     } catch (Exception exception) {}
-/*      */     
-/* 1865 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static long computeDefaultSUID(Class<?> paramClass) {
-/* 1872 */     if (!Serializable.class.isAssignableFrom(paramClass) || Proxy.isProxyClass(paramClass))
-/*      */     {
-/* 1874 */       return 0L;
-/*      */     }
-/*      */     
-/*      */     try {
-/* 1878 */       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-/* 1879 */       DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-/*      */       
-/* 1881 */       dataOutputStream.writeUTF(paramClass.getName());
-/*      */       
-/* 1883 */       int i = paramClass.getModifiers() & 0x611;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1891 */       Method[] arrayOfMethod = paramClass.getDeclaredMethods();
-/* 1892 */       if ((i & 0x200) != 0) {
-/* 1893 */         i = (arrayOfMethod.length > 0) ? (i | 0x400) : (i & 0xFFFFFBFF);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1897 */       dataOutputStream.writeInt(i);
-/*      */       
-/* 1899 */       if (!paramClass.isArray()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1905 */         Class[] arrayOfClass = paramClass.getInterfaces();
-/* 1906 */         String[] arrayOfString = new String[arrayOfClass.length]; byte b;
-/* 1907 */         for (b = 0; b < arrayOfClass.length; b++) {
-/* 1908 */           arrayOfString[b] = arrayOfClass[b].getName();
-/*      */         }
-/* 1910 */         Arrays.sort((Object[])arrayOfString);
-/* 1911 */         for (b = 0; b < arrayOfString.length; b++) {
-/* 1912 */           dataOutputStream.writeUTF(arrayOfString[b]);
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1916 */       Field[] arrayOfField = paramClass.getDeclaredFields();
-/* 1917 */       MemberSignature[] arrayOfMemberSignature1 = new MemberSignature[arrayOfField.length]; byte b1;
-/* 1918 */       for (b1 = 0; b1 < arrayOfField.length; b1++) {
-/* 1919 */         arrayOfMemberSignature1[b1] = new MemberSignature(arrayOfField[b1]);
-/*      */       }
-/* 1921 */       Arrays.sort(arrayOfMemberSignature1, new Comparator<MemberSignature>() {
-/*      */             public int compare(ObjectStreamClass.MemberSignature param1MemberSignature1, ObjectStreamClass.MemberSignature param1MemberSignature2) {
-/* 1923 */               return param1MemberSignature1.name.compareTo(param1MemberSignature2.name);
-/*      */             }
-/*      */           });
-/* 1926 */       for (b1 = 0; b1 < arrayOfMemberSignature1.length; b1++) {
-/* 1927 */         MemberSignature memberSignature = arrayOfMemberSignature1[b1];
-/* 1928 */         int k = memberSignature.member.getModifiers() & 0xDF;
-/*      */ 
-/*      */ 
-/*      */         
-/* 1932 */         if ((k & 0x2) == 0 || (k & 0x88) == 0) {
-/*      */ 
-/*      */           
-/* 1935 */           dataOutputStream.writeUTF(memberSignature.name);
-/* 1936 */           dataOutputStream.writeInt(k);
-/* 1937 */           dataOutputStream.writeUTF(memberSignature.signature);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1941 */       if (hasStaticInitializer(paramClass)) {
-/* 1942 */         dataOutputStream.writeUTF("<clinit>");
-/* 1943 */         dataOutputStream.writeInt(8);
-/* 1944 */         dataOutputStream.writeUTF("()V");
-/*      */       } 
-/*      */       
-/* 1947 */       Constructor[] arrayOfConstructor = (Constructor[])paramClass.getDeclaredConstructors();
-/* 1948 */       MemberSignature[] arrayOfMemberSignature2 = new MemberSignature[arrayOfConstructor.length]; byte b2;
-/* 1949 */       for (b2 = 0; b2 < arrayOfConstructor.length; b2++) {
-/* 1950 */         arrayOfMemberSignature2[b2] = new MemberSignature(arrayOfConstructor[b2]);
-/*      */       }
-/* 1952 */       Arrays.sort(arrayOfMemberSignature2, new Comparator<MemberSignature>() {
-/*      */             public int compare(ObjectStreamClass.MemberSignature param1MemberSignature1, ObjectStreamClass.MemberSignature param1MemberSignature2) {
-/* 1954 */               return param1MemberSignature1.signature.compareTo(param1MemberSignature2.signature);
-/*      */             }
-/*      */           });
-/* 1957 */       for (b2 = 0; b2 < arrayOfMemberSignature2.length; b2++) {
-/* 1958 */         MemberSignature memberSignature = arrayOfMemberSignature2[b2];
-/* 1959 */         int k = memberSignature.member.getModifiers() & 0xD3F;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1964 */         if ((k & 0x2) == 0) {
-/* 1965 */           dataOutputStream.writeUTF("<init>");
-/* 1966 */           dataOutputStream.writeInt(k);
-/* 1967 */           dataOutputStream.writeUTF(memberSignature.signature.replace('/', '.'));
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1971 */       MemberSignature[] arrayOfMemberSignature3 = new MemberSignature[arrayOfMethod.length]; byte b3;
-/* 1972 */       for (b3 = 0; b3 < arrayOfMethod.length; b3++) {
-/* 1973 */         arrayOfMemberSignature3[b3] = new MemberSignature(arrayOfMethod[b3]);
-/*      */       }
-/* 1975 */       Arrays.sort(arrayOfMemberSignature3, new Comparator<MemberSignature>() {
-/*      */             public int compare(ObjectStreamClass.MemberSignature param1MemberSignature1, ObjectStreamClass.MemberSignature param1MemberSignature2) {
-/* 1977 */               int i = param1MemberSignature1.name.compareTo(param1MemberSignature2.name);
-/* 1978 */               if (i == 0) {
-/* 1979 */                 i = param1MemberSignature1.signature.compareTo(param1MemberSignature2.signature);
-/*      */               }
-/* 1981 */               return i;
-/*      */             }
-/*      */           });
-/* 1984 */       for (b3 = 0; b3 < arrayOfMemberSignature3.length; b3++) {
-/* 1985 */         MemberSignature memberSignature = arrayOfMemberSignature3[b3];
-/* 1986 */         int k = memberSignature.member.getModifiers() & 0xD3F;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1991 */         if ((k & 0x2) == 0) {
-/* 1992 */           dataOutputStream.writeUTF(memberSignature.name);
-/* 1993 */           dataOutputStream.writeInt(k);
-/* 1994 */           dataOutputStream.writeUTF(memberSignature.signature.replace('/', '.'));
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1998 */       dataOutputStream.flush();
-/*      */       
-/* 2000 */       MessageDigest messageDigest = MessageDigest.getInstance("SHA");
-/* 2001 */       byte[] arrayOfByte = messageDigest.digest(byteArrayOutputStream.toByteArray());
-/* 2002 */       long l = 0L;
-/* 2003 */       for (int j = Math.min(arrayOfByte.length, 8) - 1; j >= 0; j--) {
-/* 2004 */         l = l << 8L | (arrayOfByte[j] & 0xFF);
-/*      */       }
-/* 2006 */       return l;
-/* 2007 */     } catch (IOException iOException) {
-/* 2008 */       throw new InternalError(iOException);
-/* 2009 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 2010 */       throw new SecurityException(noSuchAlgorithmException.getMessage());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class MemberSignature
-/*      */   {
-/*      */     public final Member member;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final String name;
-/*      */ 
-/*      */     
-/*      */     public final String signature;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public MemberSignature(Field param1Field) {
-/* 2031 */       this.member = param1Field;
-/* 2032 */       this.name = param1Field.getName();
-/* 2033 */       this.signature = ObjectStreamClass.getClassSignature(param1Field.getType());
-/*      */     }
-/*      */     
-/*      */     public MemberSignature(Constructor<?> param1Constructor) {
-/* 2037 */       this.member = param1Constructor;
-/* 2038 */       this.name = param1Constructor.getName();
-/* 2039 */       this.signature = ObjectStreamClass.getMethodSignature(param1Constructor
-/* 2040 */           .getParameterTypes(), void.class);
-/*      */     }
-/*      */     
-/*      */     public MemberSignature(Method param1Method) {
-/* 2044 */       this.member = param1Method;
-/* 2045 */       this.name = param1Method.getName();
-/* 2046 */       this.signature = ObjectStreamClass.getMethodSignature(param1Method
-/* 2047 */           .getParameterTypes(), param1Method.getReturnType());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class FieldReflector
-/*      */   {
-/* 2058 */     private static final Unsafe unsafe = Unsafe.getUnsafe();
-/*      */ 
-/*      */     
-/*      */     private final ObjectStreamField[] fields;
-/*      */ 
-/*      */     
-/*      */     private final int numPrimFields;
-/*      */ 
-/*      */     
-/*      */     private final long[] readKeys;
-/*      */ 
-/*      */     
-/*      */     private final long[] writeKeys;
-/*      */ 
-/*      */     
-/*      */     private final int[] offsets;
-/*      */ 
-/*      */     
-/*      */     private final char[] typeCodes;
-/*      */ 
-/*      */     
-/*      */     private final Class<?>[] types;
-/*      */ 
-/*      */     
-/*      */     FieldReflector(ObjectStreamField[] param1ArrayOfObjectStreamField) {
-/* 2083 */       this.fields = param1ArrayOfObjectStreamField;
-/* 2084 */       int i = param1ArrayOfObjectStreamField.length;
-/* 2085 */       this.readKeys = new long[i];
-/* 2086 */       this.writeKeys = new long[i];
-/* 2087 */       this.offsets = new int[i];
-/* 2088 */       this.typeCodes = new char[i];
-/* 2089 */       ArrayList<Class<?>> arrayList = new ArrayList();
-/* 2090 */       HashSet<Long> hashSet = new HashSet();
-/*      */ 
-/*      */       
-/* 2093 */       for (byte b = 0; b < i; b++) {
-/* 2094 */         ObjectStreamField objectStreamField = param1ArrayOfObjectStreamField[b];
-/* 2095 */         Field field = objectStreamField.getField();
-/*      */         
-/* 2097 */         long l = (field != null) ? unsafe.objectFieldOffset(field) : -1L;
-/* 2098 */         this.readKeys[b] = l;
-/* 2099 */         this.writeKeys[b] = hashSet.add(Long.valueOf(l)) ? l : -1L;
-/*      */         
-/* 2101 */         this.offsets[b] = objectStreamField.getOffset();
-/* 2102 */         this.typeCodes[b] = objectStreamField.getTypeCode();
-/* 2103 */         if (!objectStreamField.isPrimitive()) {
-/* 2104 */           arrayList.add((field != null) ? field.getType() : null);
-/*      */         }
-/*      */       } 
-/*      */       
-/* 2108 */       this.types = (Class[])arrayList.<Class<?>[]>toArray((Class<?>[][])new Class[arrayList.size()]);
-/* 2109 */       this.numPrimFields = i - this.types.length;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     ObjectStreamField[] getFields() {
-/* 2119 */       return this.fields;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void getPrimFieldValues(Object param1Object, byte[] param1ArrayOfbyte) {
-/* 2128 */       if (param1Object == null) {
-/* 2129 */         throw new NullPointerException();
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2135 */       for (byte b = 0; b < this.numPrimFields; b++) {
-/* 2136 */         long l = this.readKeys[b];
-/* 2137 */         int i = this.offsets[b];
-/* 2138 */         switch (this.typeCodes[b]) {
-/*      */           case 'Z':
-/* 2140 */             Bits.putBoolean(param1ArrayOfbyte, i, unsafe.getBoolean(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           case 'B':
-/* 2144 */             param1ArrayOfbyte[i] = unsafe.getByte(param1Object, l);
-/*      */             break;
-/*      */           
-/*      */           case 'C':
-/* 2148 */             Bits.putChar(param1ArrayOfbyte, i, unsafe.getChar(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           case 'S':
-/* 2152 */             Bits.putShort(param1ArrayOfbyte, i, unsafe.getShort(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           case 'I':
-/* 2156 */             Bits.putInt(param1ArrayOfbyte, i, unsafe.getInt(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           case 'F':
-/* 2160 */             Bits.putFloat(param1ArrayOfbyte, i, unsafe.getFloat(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           case 'J':
-/* 2164 */             Bits.putLong(param1ArrayOfbyte, i, unsafe.getLong(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           case 'D':
-/* 2168 */             Bits.putDouble(param1ArrayOfbyte, i, unsafe.getDouble(param1Object, l));
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 2172 */             throw new InternalError();
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void setPrimFieldValues(Object param1Object, byte[] param1ArrayOfbyte) {
-/* 2183 */       if (param1Object == null) {
-/* 2184 */         throw new NullPointerException();
-/*      */       }
-/* 2186 */       for (byte b = 0; b < this.numPrimFields; b++) {
-/* 2187 */         long l = this.writeKeys[b];
-/* 2188 */         if (l != -1L) {
-/*      */ 
-/*      */           
-/* 2191 */           int i = this.offsets[b];
-/* 2192 */           switch (this.typeCodes[b]) {
-/*      */             case 'Z':
-/* 2194 */               unsafe.putBoolean(param1Object, l, Bits.getBoolean(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             case 'B':
-/* 2198 */               unsafe.putByte(param1Object, l, param1ArrayOfbyte[i]);
-/*      */               break;
-/*      */             
-/*      */             case 'C':
-/* 2202 */               unsafe.putChar(param1Object, l, Bits.getChar(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             case 'S':
-/* 2206 */               unsafe.putShort(param1Object, l, Bits.getShort(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             case 'I':
-/* 2210 */               unsafe.putInt(param1Object, l, Bits.getInt(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             case 'F':
-/* 2214 */               unsafe.putFloat(param1Object, l, Bits.getFloat(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             case 'J':
-/* 2218 */               unsafe.putLong(param1Object, l, Bits.getLong(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             case 'D':
-/* 2222 */               unsafe.putDouble(param1Object, l, Bits.getDouble(param1ArrayOfbyte, i));
-/*      */               break;
-/*      */             
-/*      */             default:
-/* 2226 */               throw new InternalError();
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void getObjFieldValues(Object param1Object, Object[] param1ArrayOfObject) {
-/* 2237 */       if (param1Object == null) {
-/* 2238 */         throw new NullPointerException();
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2244 */       for (int i = this.numPrimFields; i < this.fields.length; i++) {
-/* 2245 */         switch (this.typeCodes[i]) {
-/*      */           case 'L':
-/*      */           case '[':
-/* 2248 */             param1ArrayOfObject[this.offsets[i]] = unsafe.getObject(param1Object, this.readKeys[i]);
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 2252 */             throw new InternalError();
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void setObjFieldValues(Object param1Object, Object[] param1ArrayOfObject) {
-/* 2265 */       if (param1Object == null) {
-/* 2266 */         throw new NullPointerException();
-/*      */       }
-/* 2268 */       for (int i = this.numPrimFields; i < this.fields.length; i++) {
-/* 2269 */         long l = this.writeKeys[i];
-/* 2270 */         if (l != -1L) {
-/*      */           Object object;
-/*      */           
-/* 2273 */           switch (this.typeCodes[i]) {
-/*      */             case 'L':
-/*      */             case '[':
-/* 2276 */               object = param1ArrayOfObject[this.offsets[i]];
-/* 2277 */               if (object != null && 
-/* 2278 */                 !this.types[i - this.numPrimFields].isInstance(object)) {
-/*      */                 
-/* 2280 */                 Field field = this.fields[i].getField();
-/* 2281 */                 throw new ClassCastException("cannot assign instance of " + object
-/*      */                     
-/* 2283 */                     .getClass().getName() + " to field " + field
-/* 2284 */                     .getDeclaringClass().getName() + "." + field
-/* 2285 */                     .getName() + " of type " + field
-/* 2286 */                     .getType().getName() + " in instance of " + param1Object
-/* 2287 */                     .getClass().getName());
-/*      */               } 
-/* 2289 */               unsafe.putObject(param1Object, l, object);
-/*      */               break;
-/*      */             
-/*      */             default:
-/* 2293 */               throw new InternalError();
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static FieldReflector getReflector(ObjectStreamField[] paramArrayOfObjectStreamField, ObjectStreamClass paramObjectStreamClass) throws InvalidClassException {
-/* 2313 */     Class<?> clazz = (paramObjectStreamClass != null && paramArrayOfObjectStreamField.length > 0) ? paramObjectStreamClass.cl : null;
-/*      */     
-/* 2315 */     processQueue(Caches.reflectorsQueue, (ConcurrentMap)Caches.reflectors);
-/*      */     
-/* 2317 */     FieldReflectorKey fieldReflectorKey = new FieldReflectorKey(clazz, paramArrayOfObjectStreamField, Caches.reflectorsQueue);
-/* 2318 */     Reference<Object> reference = (Reference)Caches.reflectors.get(fieldReflectorKey);
-/* 2319 */     Object object = null;
-/* 2320 */     if (reference != null) {
-/* 2321 */       object = reference.get();
-/*      */     }
-/* 2323 */     EntryFuture entryFuture = null;
-/* 2324 */     if (object == null) {
-/* 2325 */       EntryFuture entryFuture1 = new EntryFuture();
-/* 2326 */       SoftReference<EntryFuture> softReference = new SoftReference<>(entryFuture1);
-/*      */       do {
-/* 2328 */         if (reference != null) {
-/* 2329 */           Caches.reflectors.remove(fieldReflectorKey, reference);
-/*      */         }
-/* 2331 */         reference = (Reference<Object>)Caches.reflectors.putIfAbsent(fieldReflectorKey, softReference);
-/* 2332 */         if (reference == null)
-/* 2333 */           continue;  object = reference.get();
-/*      */       }
-/* 2335 */       while (reference != null && object == null);
-/* 2336 */       if (object == null) {
-/* 2337 */         entryFuture = entryFuture1;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 2341 */     if (object instanceof FieldReflector)
-/* 2342 */       return (FieldReflector)object; 
-/* 2343 */     if (object instanceof EntryFuture) {
-/* 2344 */       object = ((EntryFuture)object).get();
-/* 2345 */     } else if (object == null) {
-/*      */       try {
-/* 2347 */         object = new FieldReflector(matchFields(paramArrayOfObjectStreamField, paramObjectStreamClass));
-/* 2348 */       } catch (Throwable throwable) {
-/* 2349 */         object = throwable;
-/*      */       } 
-/* 2351 */       entryFuture.set(object);
-/* 2352 */       Caches.reflectors.put(fieldReflectorKey, new SoftReference(object));
-/*      */     } 
-/*      */     
-/* 2355 */     if (object instanceof FieldReflector)
-/* 2356 */       return (FieldReflector)object; 
-/* 2357 */     if (object instanceof InvalidClassException)
-/* 2358 */       throw (InvalidClassException)object; 
-/* 2359 */     if (object instanceof RuntimeException)
-/* 2360 */       throw (RuntimeException)object; 
-/* 2361 */     if (object instanceof Error) {
-/* 2362 */       throw (Error)object;
-/*      */     }
-/* 2364 */     throw new InternalError("unexpected entry: " + object);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class FieldReflectorKey
-/*      */     extends WeakReference<Class<?>>
-/*      */   {
-/*      */     private final String sigs;
-/*      */ 
-/*      */     
-/*      */     private final int hash;
-/*      */     
-/*      */     private final boolean nullClass;
-/*      */ 
-/*      */     
-/*      */     FieldReflectorKey(Class<?> param1Class, ObjectStreamField[] param1ArrayOfObjectStreamField, ReferenceQueue<Class<?>> param1ReferenceQueue) {
-/* 2381 */       super(param1Class, param1ReferenceQueue);
-/* 2382 */       this.nullClass = (param1Class == null);
-/* 2383 */       StringBuilder stringBuilder = new StringBuilder();
-/* 2384 */       for (byte b = 0; b < param1ArrayOfObjectStreamField.length; b++) {
-/* 2385 */         ObjectStreamField objectStreamField = param1ArrayOfObjectStreamField[b];
-/* 2386 */         stringBuilder.append(objectStreamField.getName()).append(objectStreamField.getSignature());
-/*      */       } 
-/* 2388 */       this.sigs = stringBuilder.toString();
-/* 2389 */       this.hash = System.identityHashCode(param1Class) + this.sigs.hashCode();
-/*      */     }
-/*      */     
-/*      */     public int hashCode() {
-/* 2393 */       return this.hash;
-/*      */     }
-/*      */     
-/*      */     public boolean equals(Object param1Object) {
-/* 2397 */       if (param1Object == this) {
-/* 2398 */         return true;
-/*      */       }
-/*      */       
-/* 2401 */       if (param1Object instanceof FieldReflectorKey) {
-/* 2402 */         FieldReflectorKey fieldReflectorKey = (FieldReflectorKey)param1Object;
-/*      */         Class<?> clazz;
-/* 2404 */         if (this.nullClass ? fieldReflectorKey.nullClass : ((
-/* 2405 */           clazz = get()) != null && clazz == fieldReflectorKey
-/* 2406 */           .get())) if (this.sigs
-/* 2407 */             .equals(fieldReflectorKey.sigs));  return false;
-/*      */       } 
-/* 2409 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ObjectStreamField[] matchFields(ObjectStreamField[] paramArrayOfObjectStreamField, ObjectStreamClass paramObjectStreamClass) throws InvalidClassException {
-/* 2429 */     ObjectStreamField[] arrayOfObjectStreamField1 = (paramObjectStreamClass != null) ? paramObjectStreamClass.fields : NO_FIELDS;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2443 */     ObjectStreamField[] arrayOfObjectStreamField2 = new ObjectStreamField[paramArrayOfObjectStreamField.length];
-/* 2444 */     for (byte b = 0; b < paramArrayOfObjectStreamField.length; b++) {
-/* 2445 */       ObjectStreamField objectStreamField1 = paramArrayOfObjectStreamField[b], objectStreamField2 = null;
-/* 2446 */       for (byte b1 = 0; b1 < arrayOfObjectStreamField1.length; b1++) {
-/* 2447 */         ObjectStreamField objectStreamField = arrayOfObjectStreamField1[b1];
-/* 2448 */         if (objectStreamField1.getName().equals(objectStreamField.getName())) {
-/* 2449 */           if ((objectStreamField1.isPrimitive() || objectStreamField.isPrimitive()) && objectStreamField1
-/* 2450 */             .getTypeCode() != objectStreamField.getTypeCode())
-/*      */           {
-/* 2452 */             throw new InvalidClassException(paramObjectStreamClass.name, "incompatible types for field " + objectStreamField1
-/* 2453 */                 .getName());
-/*      */           }
-/* 2455 */           if (objectStreamField.getField() != null) {
-/*      */             
-/* 2457 */             objectStreamField2 = new ObjectStreamField(objectStreamField.getField(), objectStreamField.isUnshared(), false);
-/*      */           } else {
-/*      */             
-/* 2460 */             objectStreamField2 = new ObjectStreamField(objectStreamField.getName(), objectStreamField.getSignature(), objectStreamField.isUnshared());
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/* 2464 */       if (objectStreamField2 == null)
-/*      */       {
-/* 2466 */         objectStreamField2 = new ObjectStreamField(objectStreamField1.getName(), objectStreamField1.getSignature(), false);
-/*      */       }
-/* 2468 */       objectStreamField2.setOffset(objectStreamField1.getOffset());
-/* 2469 */       arrayOfObjectStreamField2[b] = objectStreamField2;
-/*      */     } 
-/* 2471 */     return arrayOfObjectStreamField2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static void processQueue(ReferenceQueue<Class<?>> paramReferenceQueue, ConcurrentMap<? extends WeakReference<Class<?>>, ?> paramConcurrentMap) {
-/*      */     Reference<? extends Class<?>> reference;
-/* 2483 */     while ((reference = paramReferenceQueue.poll()) != null) {
-/* 2484 */       paramConcurrentMap.remove(reference);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static native void initNative();
-/*      */ 
-/*      */   
-/*      */   ObjectStreamClass() {}
-/*      */ 
-/*      */   
-/*      */   private static native boolean hasStaticInitializer(Class<?> paramClass);
-/*      */ 
-/*      */   
-/*      */   static class WeakClassKey
-/*      */     extends WeakReference<Class<?>>
-/*      */   {
-/*      */     private final int hash;
-/*      */     
-/*      */     WeakClassKey(Class<?> param1Class, ReferenceQueue<Class<?>> param1ReferenceQueue) {
-/* 2504 */       super(param1Class, param1ReferenceQueue);
-/* 2505 */       this.hash = System.identityHashCode(param1Class);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int hashCode() {
-/* 2512 */       return this.hash;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean equals(Object param1Object) {
-/* 2522 */       if (param1Object == this) {
-/* 2523 */         return true;
-/*      */       }
-/*      */       
-/* 2526 */       if (param1Object instanceof WeakClassKey) {
-/* 2527 */         Class<?> clazz = get();
-/* 2528 */         return (clazz != null && clazz == ((WeakClassKey)param1Object)
-/* 2529 */           .get());
-/*      */       } 
-/* 2531 */       return false;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\ObjectStreamClass.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PermissionCollection;
+import java.security.Permissions;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import sun.misc.JavaSecurityAccess;
+import sun.misc.SharedSecrets;
+import sun.misc.Unsafe;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
+import sun.reflect.ReflectionFactory;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * Serialization's descriptor for classes.  It contains the name and
+ * serialVersionUID of the class.  The ObjectStreamClass for a specific class
+ * loaded in this Java VM can be found/created using the lookup method.
+ *
+ * <p>The algorithm to compute the SerialVersionUID is described in
+ * <a href="../../../platform/serialization/spec/class.html#4100">Object
+ * Serialization Specification, Section 4.6, Stream Unique Identifiers</a>.
+ *
+ * @author      Mike Warres
+ * @author      Roger Riggs
+ * @see ObjectStreamField
+ * @see <a href="../../../platform/serialization/spec/class.html">Object Serialization Specification, Section 4, Class Descriptors</a>
+ * @since   JDK1.1
+ */
+public class ObjectStreamClass implements Serializable {
+
+    /** serialPersistentFields value indicating no serializable fields */
+    public static final ObjectStreamField[] NO_FIELDS =
+        new ObjectStreamField[0];
+
+    private static final long serialVersionUID = -6120832682080437368L;
+    private static final ObjectStreamField[] serialPersistentFields =
+        NO_FIELDS;
+
+    /** true if deserialization constructor checking is disabled */
+    private static boolean disableSerialConstructorChecks =
+        AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    String prop = "jdk.disableSerialConstructorChecks";
+                    return "true".equals(System.getProperty(prop))
+                            ? Boolean.TRUE : Boolean.FALSE;
+                }
+            }
+        ).booleanValue();
+
+    /** reflection factory for obtaining serialization constructors */
+    private static final ReflectionFactory reflFactory =
+        AccessController.doPrivileged(
+            new ReflectionFactory.GetReflectionFactoryAction());
+
+    private static class Caches {
+        /** cache mapping local classes -> descriptors */
+        static final ConcurrentMap<WeakClassKey,Reference<?>> localDescs =
+            new ConcurrentHashMap<>();
+
+        /** cache mapping field group/local desc pairs -> field reflectors */
+        static final ConcurrentMap<FieldReflectorKey,Reference<?>> reflectors =
+            new ConcurrentHashMap<>();
+
+        /** queue for WeakReferences to local classes */
+        private static final ReferenceQueue<Class<?>> localDescsQueue =
+            new ReferenceQueue<>();
+        /** queue for WeakReferences to field reflectors keys */
+        private static final ReferenceQueue<Class<?>> reflectorsQueue =
+            new ReferenceQueue<>();
+    }
+
+    /** class associated with this descriptor (if any) */
+    private Class<?> cl;
+    /** name of class represented by this descriptor */
+    private String name;
+    /** serialVersionUID of represented class (null if not computed yet) */
+    private volatile Long suid;
+
+    /** true if represents dynamic proxy class */
+    private boolean isProxy;
+    /** true if represents enum type */
+    private boolean isEnum;
+    /** true if represented class implements Serializable */
+    private boolean serializable;
+    /** true if represented class implements Externalizable */
+    private boolean externalizable;
+    /** true if desc has data written by class-defined writeObject method */
+    private boolean hasWriteObjectData;
+    /**
+     * true if desc has externalizable data written in block data format; this
+     * must be true by default to accommodate ObjectInputStream subclasses which
+     * override readClassDescriptor() to return class descriptors obtained from
+     * ObjectStreamClass.lookup() (see 4461737)
+     */
+    private boolean hasBlockExternalData = true;
+
+    /**
+     * Contains information about InvalidClassException instances to be thrown
+     * when attempting operations on an invalid class. Note that instances of
+     * this class are immutable and are potentially shared among
+     * ObjectStreamClass instances.
+     */
+    private static class ExceptionInfo {
+        private final String className;
+        private final String message;
+
+        ExceptionInfo(String cn, String msg) {
+            className = cn;
+            message = msg;
+        }
+
+        /**
+         * Returns (does not throw) an InvalidClassException instance created
+         * from the information in this object, suitable for being thrown by
+         * the caller.
+         */
+        InvalidClassException newInvalidClassException() {
+            return new InvalidClassException(className, message);
+        }
+    }
+
+    /** exception (if any) thrown while attempting to resolve class */
+    private ClassNotFoundException resolveEx;
+    /** exception (if any) to throw if non-enum deserialization attempted */
+    private ExceptionInfo deserializeEx;
+    /** exception (if any) to throw if non-enum serialization attempted */
+    private ExceptionInfo serializeEx;
+    /** exception (if any) to throw if default serialization attempted */
+    private ExceptionInfo defaultSerializeEx;
+
+    /** serializable fields */
+    private ObjectStreamField[] fields;
+    /** aggregate marshalled size of primitive fields */
+    private int primDataSize;
+    /** number of non-primitive fields */
+    private int numObjFields;
+    /** reflector for setting/getting serializable field values */
+    private FieldReflector fieldRefl;
+    /** data layout of serialized objects described by this class desc */
+    private volatile ClassDataSlot[] dataLayout;
+
+    /** serialization-appropriate constructor, or null if none */
+    private Constructor<?> cons;
+    /** protection domains that need to be checked when calling the constructor */
+    private ProtectionDomain[] domains;
+
+    /** class-defined writeObject method, or null if none */
+    private Method writeObjectMethod;
+    /** class-defined readObject method, or null if none */
+    private Method readObjectMethod;
+    /** class-defined readObjectNoData method, or null if none */
+    private Method readObjectNoDataMethod;
+    /** class-defined writeReplace method, or null if none */
+    private Method writeReplaceMethod;
+    /** class-defined readResolve method, or null if none */
+    private Method readResolveMethod;
+
+    /** local class descriptor for represented class (may point to self) */
+    private ObjectStreamClass localDesc;
+    /** superclass descriptor appearing in stream */
+    private ObjectStreamClass superDesc;
+
+    /** true if, and only if, the object has been correctly initialized */
+    private boolean initialized;
+
+    /**
+     * Initializes native code.
+     */
+    private static native void initNative();
+    static {
+        initNative();
+    }
+
+    /**
+     * Find the descriptor for a class that can be serialized.  Creates an
+     * ObjectStreamClass instance if one does not exist yet for class. Null is
+     * returned if the specified class does not implement java.io.Serializable
+     * or java.io.Externalizable.
+     *
+     * @param   cl class for which to get the descriptor
+     * @return  the class descriptor for the specified class
+     */
+    public static ObjectStreamClass lookup(Class<?> cl) {
+        return lookup(cl, false);
+    }
+
+    /**
+     * Returns the descriptor for any class, regardless of whether it
+     * implements {@link Serializable}.
+     *
+     * @param        cl class for which to get the descriptor
+     * @return       the class descriptor for the specified class
+     * @since 1.6
+     */
+    public static ObjectStreamClass lookupAny(Class<?> cl) {
+        return lookup(cl, true);
+    }
+
+    /**
+     * Returns the name of the class described by this descriptor.
+     * This method returns the name of the class in the format that
+     * is used by the {@link Class#getName} method.
+     *
+     * @return a string representing the name of the class
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return the serialVersionUID for this class.  The serialVersionUID
+     * defines a set of classes all with the same name that have evolved from a
+     * common root class and agree to be serialized and deserialized using a
+     * common format.  NonSerializable classes have a serialVersionUID of 0L.
+     *
+     * @return  the SUID of the class described by this descriptor
+     */
+    public long getSerialVersionUID() {
+        // REMIND: synchronize instead of relying on volatile?
+        if (suid == null) {
+            suid = AccessController.doPrivileged(
+                new PrivilegedAction<Long>() {
+                    public Long run() {
+                        return computeDefaultSUID(cl);
+                    }
+                }
+            );
+        }
+        return suid.longValue();
+    }
+
+    /**
+     * Return the class in the local VM that this version is mapped to.  Null
+     * is returned if there is no corresponding local class.
+     *
+     * @return  the <code>Class</code> instance that this descriptor represents
+     */
+    @CallerSensitive
+    public Class<?> forClass() {
+        if (cl == null) {
+            return null;
+        }
+        requireInitialized();
+        if (System.getSecurityManager() != null) {
+            Class<?> caller = Reflection.getCallerClass();
+            if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), cl.getClassLoader())) {
+                ReflectUtil.checkPackageAccess(cl);
+            }
+        }
+        return cl;
+    }
+
+    /**
+     * Return an array of the fields of this serializable class.
+     *
+     * @return  an array containing an element for each persistent field of
+     *          this class. Returns an array of length zero if there are no
+     *          fields.
+     * @since 1.2
+     */
+    public ObjectStreamField[] getFields() {
+        return getFields(true);
+    }
+
+    /**
+     * Get the field of this class by name.
+     *
+     * @param   name the name of the data field to look for
+     * @return  The ObjectStreamField object of the named field or null if
+     *          there is no such named field.
+     */
+    public ObjectStreamField getField(String name) {
+        return getField(name, null);
+    }
+
+    /**
+     * Return a string describing this ObjectStreamClass.
+     */
+    public String toString() {
+        return name + ": static final long serialVersionUID = " +
+            getSerialVersionUID() + "L;";
+    }
+
+    /**
+     * Looks up and returns class descriptor for given class, or null if class
+     * is non-serializable and "all" is set to false.
+     *
+     * @param   cl class to look up
+     * @param   all if true, return descriptors for all classes; if false, only
+     *          return descriptors for serializable classes
+     */
+    static ObjectStreamClass lookup(Class<?> cl, boolean all) {
+        if (!(all || Serializable.class.isAssignableFrom(cl))) {
+            return null;
+        }
+        processQueue(Caches.localDescsQueue, Caches.localDescs);
+        WeakClassKey key = new WeakClassKey(cl, Caches.localDescsQueue);
+        Reference<?> ref = Caches.localDescs.get(key);
+        Object entry = null;
+        if (ref != null) {
+            entry = ref.get();
+        }
+        EntryFuture future = null;
+        if (entry == null) {
+            EntryFuture newEntry = new EntryFuture();
+            Reference<?> newRef = new SoftReference<>(newEntry);
+            do {
+                if (ref != null) {
+                    Caches.localDescs.remove(key, ref);
+                }
+                ref = Caches.localDescs.putIfAbsent(key, newRef);
+                if (ref != null) {
+                    entry = ref.get();
+                }
+            } while (ref != null && entry == null);
+            if (entry == null) {
+                future = newEntry;
+            }
+        }
+
+        if (entry instanceof ObjectStreamClass) {  // check common case first
+            return (ObjectStreamClass) entry;
+        }
+        if (entry instanceof EntryFuture) {
+            future = (EntryFuture) entry;
+            if (future.getOwner() == Thread.currentThread()) {
+                /*
+                 * Handle nested call situation described by 4803747: waiting
+                 * for future value to be set by a lookup() call further up the
+                 * stack will result in deadlock, so calculate and set the
+                 * future value here instead.
+                 */
+                entry = null;
+            } else {
+                entry = future.get();
+            }
+        }
+        if (entry == null) {
+            try {
+                entry = new ObjectStreamClass(cl);
+            } catch (Throwable th) {
+                entry = th;
+            }
+            if (future.set(entry)) {
+                Caches.localDescs.put(key, new SoftReference<Object>(entry));
+            } else {
+                // nested lookup call already set future
+                entry = future.get();
+            }
+        }
+
+        if (entry instanceof ObjectStreamClass) {
+            return (ObjectStreamClass) entry;
+        } else if (entry instanceof RuntimeException) {
+            throw (RuntimeException) entry;
+        } else if (entry instanceof Error) {
+            throw (Error) entry;
+        } else {
+            throw new InternalError("unexpected entry: " + entry);
+        }
+    }
+
+    /**
+     * Placeholder used in class descriptor and field reflector lookup tables
+     * for an entry in the process of being initialized.  (Internal) callers
+     * which receive an EntryFuture belonging to another thread as the result
+     * of a lookup should call the get() method of the EntryFuture; this will
+     * return the actual entry once it is ready for use and has been set().  To
+     * conserve objects, EntryFutures synchronize on themselves.
+     */
+    private static class EntryFuture {
+
+        private static final Object unset = new Object();
+        private final Thread owner = Thread.currentThread();
+        private Object entry = unset;
+
+        /**
+         * Attempts to set the value contained by this EntryFuture.  If the
+         * EntryFuture's value has not been set already, then the value is
+         * saved, any callers blocked in the get() method are notified, and
+         * true is returned.  If the value has already been set, then no saving
+         * or notification occurs, and false is returned.
+         */
+        synchronized boolean set(Object entry) {
+            if (this.entry != unset) {
+                return false;
+            }
+            this.entry = entry;
+            notifyAll();
+            return true;
+        }
+
+        /**
+         * Returns the value contained by this EntryFuture, blocking if
+         * necessary until a value is set.
+         */
+        synchronized Object get() {
+            boolean interrupted = false;
+            while (entry == unset) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                    interrupted = true;
+                }
+            }
+            if (interrupted) {
+                AccessController.doPrivileged(
+                    new PrivilegedAction<Void>() {
+                        public Void run() {
+                            Thread.currentThread().interrupt();
+                            return null;
+                        }
+                    }
+                );
+            }
+            return entry;
+        }
+
+        /**
+         * Returns the thread that created this EntryFuture.
+         */
+        Thread getOwner() {
+            return owner;
+        }
+    }
+
+    /**
+     * Creates local class descriptor representing given class.
+     */
+    private ObjectStreamClass(final Class<?> cl) {
+        this.cl = cl;
+        name = cl.getName();
+        isProxy = Proxy.isProxyClass(cl);
+        isEnum = Enum.class.isAssignableFrom(cl);
+        serializable = Serializable.class.isAssignableFrom(cl);
+        externalizable = Externalizable.class.isAssignableFrom(cl);
+
+        Class<?> superCl = cl.getSuperclass();
+        superDesc = (superCl != null) ? lookup(superCl, false) : null;
+        localDesc = this;
+
+        if (serializable) {
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
+                    if (isEnum) {
+                        suid = Long.valueOf(0);
+                        fields = NO_FIELDS;
+                        return null;
+                    }
+                    if (cl.isArray()) {
+                        fields = NO_FIELDS;
+                        return null;
+                    }
+
+                    suid = getDeclaredSUID(cl);
+                    try {
+                        fields = getSerialFields(cl);
+                        computeFieldOffsets();
+                    } catch (InvalidClassException e) {
+                        serializeEx = deserializeEx =
+                            new ExceptionInfo(e.classname, e.getMessage());
+                        fields = NO_FIELDS;
+                    }
+
+                    if (externalizable) {
+                        cons = getExternalizableConstructor(cl);
+                    } else {
+                        cons = getSerializableConstructor(cl);
+                        writeObjectMethod = getPrivateMethod(cl, "writeObject",
+                            new Class<?>[] { ObjectOutputStream.class },
+                            Void.TYPE);
+                        readObjectMethod = getPrivateMethod(cl, "readObject",
+                            new Class<?>[] { ObjectInputStream.class },
+                            Void.TYPE);
+                        readObjectNoDataMethod = getPrivateMethod(
+                            cl, "readObjectNoData", null, Void.TYPE);
+                        hasWriteObjectData = (writeObjectMethod != null);
+                    }
+                    domains = getProtectionDomains(cons, cl);
+                    writeReplaceMethod = getInheritableMethod(
+                        cl, "writeReplace", null, Object.class);
+                    readResolveMethod = getInheritableMethod(
+                        cl, "readResolve", null, Object.class);
+                    return null;
+                }
+            });
+        } else {
+            suid = Long.valueOf(0);
+            fields = NO_FIELDS;
+        }
+
+        try {
+            fieldRefl = getReflector(fields, this);
+        } catch (InvalidClassException ex) {
+            // field mismatches impossible when matching local fields vs. self
+            throw new InternalError(ex);
+        }
+
+        if (deserializeEx == null) {
+            if (isEnum) {
+                deserializeEx = new ExceptionInfo(name, "enum type");
+            } else if (cons == null) {
+                deserializeEx = new ExceptionInfo(name, "no valid constructor");
+            }
+        }
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i].getField() == null) {
+                defaultSerializeEx = new ExceptionInfo(
+                    name, "unmatched serializable field(s) declared");
+            }
+        }
+        initialized = true;
+    }
+
+    /**
+     * Creates blank class descriptor which should be initialized via a
+     * subsequent call to initProxy(), initNonProxy() or readNonProxy().
+     */
+    ObjectStreamClass() {
+    }
+
+    /**
+     * Creates a PermissionDomain that grants no permission.
+     */
+    private ProtectionDomain noPermissionsDomain() {
+        PermissionCollection perms = new Permissions();
+        perms.setReadOnly();
+        return new ProtectionDomain(null, perms);
+    }
+
+    /**
+     * Aggregate the ProtectionDomains of all the classes that separate
+     * a concrete class {@code cl} from its ancestor's class declaring
+     * a constructor {@code cons}.
+     *
+     * If {@code cl} is defined by the boot loader, or the constructor
+     * {@code cons} is declared by {@code cl}, or if there is no security
+     * manager, then this method does nothing and {@code null} is returned.
+     *
+     * @param cons A constructor declared by {@code cl} or one of its
+     *             ancestors.
+     * @param cl A concrete class, which is either the class declaring
+     *           the constructor {@code cons}, or a serializable subclass
+     *           of that class.
+     * @return An array of ProtectionDomain representing the set of
+     *         ProtectionDomain that separate the concrete class {@code cl}
+     *         from its ancestor's declaring {@code cons}, or {@code null}.
+     */
+    private ProtectionDomain[] getProtectionDomains(Constructor<?> cons,
+                                                    Class<?> cl) {
+        ProtectionDomain[] domains = null;
+        if (cons != null && cl.getClassLoader() != null
+                && System.getSecurityManager() != null) {
+            Class<?> cls = cl;
+            Class<?> fnscl = cons.getDeclaringClass();
+            Set<ProtectionDomain> pds = null;
+            while (cls != fnscl) {
+                ProtectionDomain pd = cls.getProtectionDomain();
+                if (pd != null) {
+                    if (pds == null) pds = new HashSet<>();
+                    pds.add(pd);
+                }
+                cls = cls.getSuperclass();
+                if (cls == null) {
+                    // that's not supposed to happen
+                    // make a ProtectionDomain with no permission.
+                    // should we throw instead?
+                    if (pds == null) pds = new HashSet<>();
+                    else pds.clear();
+                    pds.add(noPermissionsDomain());
+                    break;
+                }
+            }
+            if (pds != null) {
+                domains = pds.toArray(new ProtectionDomain[0]);
+            }
+        }
+        return domains;
+    }
+
+    /**
+     * Initializes class descriptor representing a proxy class.
+     */
+    void initProxy(Class<?> cl,
+                   ClassNotFoundException resolveEx,
+                   ObjectStreamClass superDesc)
+        throws InvalidClassException
+    {
+        ObjectStreamClass osc = null;
+        if (cl != null) {
+            osc = lookup(cl, true);
+            if (!osc.isProxy) {
+                throw new InvalidClassException(
+                    "cannot bind proxy descriptor to a non-proxy class");
+            }
+        }
+        this.cl = cl;
+        this.resolveEx = resolveEx;
+        this.superDesc = superDesc;
+        isProxy = true;
+        serializable = true;
+        suid = Long.valueOf(0);
+        fields = NO_FIELDS;
+        if (osc != null) {
+            localDesc = osc;
+            name = localDesc.name;
+            externalizable = localDesc.externalizable;
+            writeReplaceMethod = localDesc.writeReplaceMethod;
+            readResolveMethod = localDesc.readResolveMethod;
+            deserializeEx = localDesc.deserializeEx;
+            domains = localDesc.domains;
+            cons = localDesc.cons;
+        }
+        fieldRefl = getReflector(fields, localDesc);
+        initialized = true;
+    }
+
+    /**
+     * Initializes class descriptor representing a non-proxy class.
+     */
+    void initNonProxy(ObjectStreamClass model,
+                      Class<?> cl,
+                      ClassNotFoundException resolveEx,
+                      ObjectStreamClass superDesc)
+        throws InvalidClassException
+    {
+        long suid = Long.valueOf(model.getSerialVersionUID());
+        ObjectStreamClass osc = null;
+        if (cl != null) {
+            osc = lookup(cl, true);
+            if (osc.isProxy) {
+                throw new InvalidClassException(
+                        "cannot bind non-proxy descriptor to a proxy class");
+            }
+            if (model.isEnum != osc.isEnum) {
+                throw new InvalidClassException(model.isEnum ?
+                        "cannot bind enum descriptor to a non-enum class" :
+                        "cannot bind non-enum descriptor to an enum class");
+            }
+
+            if (model.serializable == osc.serializable &&
+                    !cl.isArray() &&
+                    suid != osc.getSerialVersionUID()) {
+                throw new InvalidClassException(osc.name,
+                        "local class incompatible: " +
+                                "stream classdesc serialVersionUID = " + suid +
+                                ", local class serialVersionUID = " +
+                                osc.getSerialVersionUID());
+            }
+
+            if (!classNamesEqual(model.name, osc.name)) {
+                throw new InvalidClassException(osc.name,
+                        "local class name incompatible with stream class " +
+                                "name \"" + model.name + "\"");
+            }
+
+            if (!model.isEnum) {
+                if ((model.serializable == osc.serializable) &&
+                        (model.externalizable != osc.externalizable)) {
+                    throw new InvalidClassException(osc.name,
+                            "Serializable incompatible with Externalizable");
+                }
+
+                if ((model.serializable != osc.serializable) ||
+                        (model.externalizable != osc.externalizable) ||
+                        !(model.serializable || model.externalizable)) {
+                    deserializeEx = new ExceptionInfo(
+                            osc.name, "class invalid for deserialization");
+                }
+            }
+        }
+
+        this.cl = cl;
+        this.resolveEx = resolveEx;
+        this.superDesc = superDesc;
+        name = model.name;
+        this.suid = suid;
+        isProxy = false;
+        isEnum = model.isEnum;
+        serializable = model.serializable;
+        externalizable = model.externalizable;
+        hasBlockExternalData = model.hasBlockExternalData;
+        hasWriteObjectData = model.hasWriteObjectData;
+        fields = model.fields;
+        primDataSize = model.primDataSize;
+        numObjFields = model.numObjFields;
+
+        if (osc != null) {
+            localDesc = osc;
+            writeObjectMethod = localDesc.writeObjectMethod;
+            readObjectMethod = localDesc.readObjectMethod;
+            readObjectNoDataMethod = localDesc.readObjectNoDataMethod;
+            writeReplaceMethod = localDesc.writeReplaceMethod;
+            readResolveMethod = localDesc.readResolveMethod;
+            if (deserializeEx == null) {
+                deserializeEx = localDesc.deserializeEx;
+            }
+            domains = localDesc.domains;
+            cons = localDesc.cons;
+        }
+
+        fieldRefl = getReflector(fields, localDesc);
+        // reassign to matched fields so as to reflect local unshared settings
+        fields = fieldRefl.getFields();
+        initialized = true;
+    }
+
+    /**
+     * Reads non-proxy class descriptor information from given input stream.
+     * The resulting class descriptor is not fully functional; it can only be
+     * used as input to the ObjectInputStream.resolveClass() and
+     * ObjectStreamClass.initNonProxy() methods.
+     */
+    void readNonProxy(ObjectInputStream in)
+        throws IOException, ClassNotFoundException
+    {
+        name = in.readUTF();
+        suid = Long.valueOf(in.readLong());
+        isProxy = false;
+
+        byte flags = in.readByte();
+        hasWriteObjectData =
+            ((flags & ObjectStreamConstants.SC_WRITE_METHOD) != 0);
+        hasBlockExternalData =
+            ((flags & ObjectStreamConstants.SC_BLOCK_DATA) != 0);
+        externalizable =
+            ((flags & ObjectStreamConstants.SC_EXTERNALIZABLE) != 0);
+        boolean sflag =
+            ((flags & ObjectStreamConstants.SC_SERIALIZABLE) != 0);
+        if (externalizable && sflag) {
+            throw new InvalidClassException(
+                name, "serializable and externalizable flags conflict");
+        }
+        serializable = externalizable || sflag;
+        isEnum = ((flags & ObjectStreamConstants.SC_ENUM) != 0);
+        if (isEnum && suid.longValue() != 0L) {
+            throw new InvalidClassException(name,
+                "enum descriptor has non-zero serialVersionUID: " + suid);
+        }
+
+        int numFields = in.readShort();
+        if (isEnum && numFields != 0) {
+            throw new InvalidClassException(name,
+                "enum descriptor has non-zero field count: " + numFields);
+        }
+        fields = (numFields > 0) ?
+            new ObjectStreamField[numFields] : NO_FIELDS;
+        for (int i = 0; i < numFields; i++) {
+            char tcode = (char) in.readByte();
+            String fname = in.readUTF();
+            String signature = ((tcode == 'L') || (tcode == '[')) ?
+                in.readTypeString() : new String(new char[] { tcode });
+            try {
+                fields[i] = new ObjectStreamField(fname, signature, false);
+            } catch (RuntimeException e) {
+                throw (IOException) new InvalidClassException(name,
+                    "invalid descriptor for field " + fname).initCause(e);
+            }
+        }
+        computeFieldOffsets();
+    }
+
+    /**
+     * Writes non-proxy class descriptor information to given output stream.
+     */
+    void writeNonProxy(ObjectOutputStream out) throws IOException {
+        out.writeUTF(name);
+        out.writeLong(getSerialVersionUID());
+
+        byte flags = 0;
+        if (externalizable) {
+            flags |= ObjectStreamConstants.SC_EXTERNALIZABLE;
+            int protocol = out.getProtocolVersion();
+            if (protocol != ObjectStreamConstants.PROTOCOL_VERSION_1) {
+                flags |= ObjectStreamConstants.SC_BLOCK_DATA;
+            }
+        } else if (serializable) {
+            flags |= ObjectStreamConstants.SC_SERIALIZABLE;
+        }
+        if (hasWriteObjectData) {
+            flags |= ObjectStreamConstants.SC_WRITE_METHOD;
+        }
+        if (isEnum) {
+            flags |= ObjectStreamConstants.SC_ENUM;
+        }
+        out.writeByte(flags);
+
+        out.writeShort(fields.length);
+        for (int i = 0; i < fields.length; i++) {
+            ObjectStreamField f = fields[i];
+            out.writeByte(f.getTypeCode());
+            out.writeUTF(f.getName());
+            if (!f.isPrimitive()) {
+                out.writeTypeString(f.getTypeString());
+            }
+        }
+    }
+
+    /**
+     * Returns ClassNotFoundException (if any) thrown while attempting to
+     * resolve local class corresponding to this class descriptor.
+     */
+    ClassNotFoundException getResolveException() {
+        return resolveEx;
+    }
+
+    /**
+     * Throws InternalError if not initialized.
+     */
+    private final void requireInitialized() {
+        if (!initialized)
+            throw new InternalError("Unexpected call when not initialized");
+    }
+
+    /**
+     * Throws an InvalidClassException if object instances referencing this
+     * class descriptor should not be allowed to deserialize.  This method does
+     * not apply to deserialization of enum constants.
+     */
+    void checkDeserialize() throws InvalidClassException {
+        requireInitialized();
+        if (deserializeEx != null) {
+            throw deserializeEx.newInvalidClassException();
+        }
+    }
+
+    /**
+     * Throws an InvalidClassException if objects whose class is represented by
+     * this descriptor should not be allowed to serialize.  This method does
+     * not apply to serialization of enum constants.
+     */
+    void checkSerialize() throws InvalidClassException {
+        requireInitialized();
+        if (serializeEx != null) {
+            throw serializeEx.newInvalidClassException();
+        }
+    }
+
+    /**
+     * Throws an InvalidClassException if objects whose class is represented by
+     * this descriptor should not be permitted to use default serialization
+     * (e.g., if the class declares serializable fields that do not correspond
+     * to actual fields, and hence must use the GetField API).  This method
+     * does not apply to deserialization of enum constants.
+     */
+    void checkDefaultSerialize() throws InvalidClassException {
+        requireInitialized();
+        if (defaultSerializeEx != null) {
+            throw defaultSerializeEx.newInvalidClassException();
+        }
+    }
+
+    /**
+     * Returns superclass descriptor.  Note that on the receiving side, the
+     * superclass descriptor may be bound to a class that is not a superclass
+     * of the subclass descriptor's bound class.
+     */
+    ObjectStreamClass getSuperDesc() {
+        requireInitialized();
+        return superDesc;
+    }
+
+    /**
+     * Returns the "local" class descriptor for the class associated with this
+     * class descriptor (i.e., the result of
+     * ObjectStreamClass.lookup(this.forClass())) or null if there is no class
+     * associated with this descriptor.
+     */
+    ObjectStreamClass getLocalDesc() {
+        requireInitialized();
+        return localDesc;
+    }
+
+    /**
+     * Returns arrays of ObjectStreamFields representing the serializable
+     * fields of the represented class.  If copy is true, a clone of this class
+     * descriptor's field array is returned, otherwise the array itself is
+     * returned.
+     */
+    ObjectStreamField[] getFields(boolean copy) {
+        return copy ? fields.clone() : fields;
+    }
+
+    /**
+     * Looks up a serializable field of the represented class by name and type.
+     * A specified type of null matches all types, Object.class matches all
+     * non-primitive types, and any other non-null type matches assignable
+     * types only.  Returns matching field, or null if no match found.
+     */
+    ObjectStreamField getField(String name, Class<?> type) {
+        for (int i = 0; i < fields.length; i++) {
+            ObjectStreamField f = fields[i];
+            if (f.getName().equals(name)) {
+                if (type == null ||
+                    (type == Object.class && !f.isPrimitive()))
+                {
+                    return f;
+                }
+                Class<?> ftype = f.getType();
+                if (ftype != null && type.isAssignableFrom(ftype)) {
+                    return f;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns true if class descriptor represents a dynamic proxy class, false
+     * otherwise.
+     */
+    boolean isProxy() {
+        requireInitialized();
+        return isProxy;
+    }
+
+    /**
+     * Returns true if class descriptor represents an enum type, false
+     * otherwise.
+     */
+    boolean isEnum() {
+        requireInitialized();
+        return isEnum;
+    }
+
+    /**
+     * Returns true if represented class implements Externalizable, false
+     * otherwise.
+     */
+    boolean isExternalizable() {
+        requireInitialized();
+        return externalizable;
+    }
+
+    /**
+     * Returns true if represented class implements Serializable, false
+     * otherwise.
+     */
+    boolean isSerializable() {
+        requireInitialized();
+        return serializable;
+    }
+
+    /**
+     * Returns true if class descriptor represents externalizable class that
+     * has written its data in 1.2 (block data) format, false otherwise.
+     */
+    boolean hasBlockExternalData() {
+        requireInitialized();
+        return hasBlockExternalData;
+    }
+
+    /**
+     * Returns true if class descriptor represents serializable (but not
+     * externalizable) class which has written its data via a custom
+     * writeObject() method, false otherwise.
+     */
+    boolean hasWriteObjectData() {
+        requireInitialized();
+        return hasWriteObjectData;
+    }
+
+    /**
+     * Returns true if represented class is serializable/externalizable and can
+     * be instantiated by the serialization runtime--i.e., if it is
+     * externalizable and defines a public no-arg constructor, or if it is
+     * non-externalizable and its first non-serializable superclass defines an
+     * accessible no-arg constructor.  Otherwise, returns false.
+     */
+    boolean isInstantiable() {
+        requireInitialized();
+        return (cons != null);
+    }
+
+    /**
+     * Returns true if represented class is serializable (but not
+     * externalizable) and defines a conformant writeObject method.  Otherwise,
+     * returns false.
+     */
+    boolean hasWriteObjectMethod() {
+        requireInitialized();
+        return (writeObjectMethod != null);
+    }
+
+    /**
+     * Returns true if represented class is serializable (but not
+     * externalizable) and defines a conformant readObject method.  Otherwise,
+     * returns false.
+     */
+    boolean hasReadObjectMethod() {
+        requireInitialized();
+        return (readObjectMethod != null);
+    }
+
+    /**
+     * Returns true if represented class is serializable (but not
+     * externalizable) and defines a conformant readObjectNoData method.
+     * Otherwise, returns false.
+     */
+    boolean hasReadObjectNoDataMethod() {
+        requireInitialized();
+        return (readObjectNoDataMethod != null);
+    }
+
+    /**
+     * Returns true if represented class is serializable or externalizable and
+     * defines a conformant writeReplace method.  Otherwise, returns false.
+     */
+    boolean hasWriteReplaceMethod() {
+        requireInitialized();
+        return (writeReplaceMethod != null);
+    }
+
+    /**
+     * Returns true if represented class is serializable or externalizable and
+     * defines a conformant readResolve method.  Otherwise, returns false.
+     */
+    boolean hasReadResolveMethod() {
+        requireInitialized();
+        return (readResolveMethod != null);
+    }
+
+    /**
+     * Creates a new instance of the represented class.  If the class is
+     * externalizable, invokes its public no-arg constructor; otherwise, if the
+     * class is serializable, invokes the no-arg constructor of the first
+     * non-serializable superclass.  Throws UnsupportedOperationException if
+     * this class descriptor is not associated with a class, if the associated
+     * class is non-serializable or if the appropriate no-arg constructor is
+     * inaccessible/unavailable.
+     */
+    Object newInstance()
+        throws InstantiationException, InvocationTargetException,
+               UnsupportedOperationException
+    {
+        requireInitialized();
+        if (cons != null) {
+            try {
+                if (domains == null || domains.length == 0) {
+                    return cons.newInstance();
+                } else {
+                    JavaSecurityAccess jsa = SharedSecrets.getJavaSecurityAccess();
+                    PrivilegedAction<?> pea = () -> {
+                        try {
+                            return cons.newInstance();
+                        } catch (InstantiationException
+                                 | InvocationTargetException
+                                 | IllegalAccessException x) {
+                            throw new UndeclaredThrowableException(x);
+                        }
+                    }; // Can't use PrivilegedExceptionAction with jsa
+                    try {
+                        return jsa.doIntersectionPrivilege(pea,
+                                   AccessController.getContext(),
+                                   new AccessControlContext(domains));
+                    } catch (UndeclaredThrowableException x) {
+                        Throwable cause = x.getCause();
+                        if (cause instanceof InstantiationException)
+                            throw (InstantiationException) cause;
+                        if (cause instanceof InvocationTargetException)
+                            throw (InvocationTargetException) cause;
+                        if (cause instanceof IllegalAccessException)
+                            throw (IllegalAccessException) cause;
+                        // not supposed to happen
+                        throw x;
+                    }
+                }
+            } catch (IllegalAccessException ex) {
+                // should not occur, as access checks have been suppressed
+                throw new InternalError(ex);
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Invokes the writeObject method of the represented serializable class.
+     * Throws UnsupportedOperationException if this class descriptor is not
+     * associated with a class, or if the class is externalizable,
+     * non-serializable or does not define writeObject.
+     */
+    void invokeWriteObject(Object obj, ObjectOutputStream out)
+        throws IOException, UnsupportedOperationException
+    {
+        requireInitialized();
+        if (writeObjectMethod != null) {
+            try {
+                writeObjectMethod.invoke(obj, new Object[]{ out });
+            } catch (InvocationTargetException ex) {
+                Throwable th = ex.getTargetException();
+                if (th instanceof IOException) {
+                    throw (IOException) th;
+                } else {
+                    throwMiscException(th);
+                }
+            } catch (IllegalAccessException ex) {
+                // should not occur, as access checks have been suppressed
+                throw new InternalError(ex);
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Invokes the readObject method of the represented serializable class.
+     * Throws UnsupportedOperationException if this class descriptor is not
+     * associated with a class, or if the class is externalizable,
+     * non-serializable or does not define readObject.
+     */
+    void invokeReadObject(Object obj, ObjectInputStream in)
+        throws ClassNotFoundException, IOException,
+               UnsupportedOperationException
+    {
+        requireInitialized();
+        if (readObjectMethod != null) {
+            try {
+                readObjectMethod.invoke(obj, new Object[]{ in });
+            } catch (InvocationTargetException ex) {
+                Throwable th = ex.getTargetException();
+                if (th instanceof ClassNotFoundException) {
+                    throw (ClassNotFoundException) th;
+                } else if (th instanceof IOException) {
+                    throw (IOException) th;
+                } else {
+                    throwMiscException(th);
+                }
+            } catch (IllegalAccessException ex) {
+                // should not occur, as access checks have been suppressed
+                throw new InternalError(ex);
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Invokes the readObjectNoData method of the represented serializable
+     * class.  Throws UnsupportedOperationException if this class descriptor is
+     * not associated with a class, or if the class is externalizable,
+     * non-serializable or does not define readObjectNoData.
+     */
+    void invokeReadObjectNoData(Object obj)
+        throws IOException, UnsupportedOperationException
+    {
+        requireInitialized();
+        if (readObjectNoDataMethod != null) {
+            try {
+                readObjectNoDataMethod.invoke(obj, (Object[]) null);
+            } catch (InvocationTargetException ex) {
+                Throwable th = ex.getTargetException();
+                if (th instanceof ObjectStreamException) {
+                    throw (ObjectStreamException) th;
+                } else {
+                    throwMiscException(th);
+                }
+            } catch (IllegalAccessException ex) {
+                // should not occur, as access checks have been suppressed
+                throw new InternalError(ex);
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Invokes the writeReplace method of the represented serializable class and
+     * returns the result.  Throws UnsupportedOperationException if this class
+     * descriptor is not associated with a class, or if the class is
+     * non-serializable or does not define writeReplace.
+     */
+    Object invokeWriteReplace(Object obj)
+        throws IOException, UnsupportedOperationException
+    {
+        requireInitialized();
+        if (writeReplaceMethod != null) {
+            try {
+                return writeReplaceMethod.invoke(obj, (Object[]) null);
+            } catch (InvocationTargetException ex) {
+                Throwable th = ex.getTargetException();
+                if (th instanceof ObjectStreamException) {
+                    throw (ObjectStreamException) th;
+                } else {
+                    throwMiscException(th);
+                    throw new InternalError(th);  // never reached
+                }
+            } catch (IllegalAccessException ex) {
+                // should not occur, as access checks have been suppressed
+                throw new InternalError(ex);
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Invokes the readResolve method of the represented serializable class and
+     * returns the result.  Throws UnsupportedOperationException if this class
+     * descriptor is not associated with a class, or if the class is
+     * non-serializable or does not define readResolve.
+     */
+    Object invokeReadResolve(Object obj)
+        throws IOException, UnsupportedOperationException
+    {
+        requireInitialized();
+        if (readResolveMethod != null) {
+            try {
+                return readResolveMethod.invoke(obj, (Object[]) null);
+            } catch (InvocationTargetException ex) {
+                Throwable th = ex.getTargetException();
+                if (th instanceof ObjectStreamException) {
+                    throw (ObjectStreamException) th;
+                } else {
+                    throwMiscException(th);
+                    throw new InternalError(th);  // never reached
+                }
+            } catch (IllegalAccessException ex) {
+                // should not occur, as access checks have been suppressed
+                throw new InternalError(ex);
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Class representing the portion of an object's serialized form allotted
+     * to data described by a given class descriptor.  If "hasData" is false,
+     * the object's serialized form does not contain data associated with the
+     * class descriptor.
+     */
+    static class ClassDataSlot {
+
+        /** class descriptor "occupying" this slot */
+        final ObjectStreamClass desc;
+        /** true if serialized form includes data for this slot's descriptor */
+        final boolean hasData;
+
+        ClassDataSlot(ObjectStreamClass desc, boolean hasData) {
+            this.desc = desc;
+            this.hasData = hasData;
+        }
+    }
+
+    /**
+     * Returns array of ClassDataSlot instances representing the data layout
+     * (including superclass data) for serialized objects described by this
+     * class descriptor.  ClassDataSlots are ordered by inheritance with those
+     * containing "higher" superclasses appearing first.  The final
+     * ClassDataSlot contains a reference to this descriptor.
+     */
+    ClassDataSlot[] getClassDataLayout() throws InvalidClassException {
+        // REMIND: synchronize instead of relying on volatile?
+        if (dataLayout == null) {
+            dataLayout = getClassDataLayout0();
+        }
+        return dataLayout;
+    }
+
+    private ClassDataSlot[] getClassDataLayout0()
+        throws InvalidClassException
+    {
+        ArrayList<ClassDataSlot> slots = new ArrayList<>();
+        Class<?> start = cl, end = cl;
+
+        // locate closest non-serializable superclass
+        while (end != null && Serializable.class.isAssignableFrom(end)) {
+            end = end.getSuperclass();
+        }
+
+        HashSet<String> oscNames = new HashSet<>(3);
+
+        for (ObjectStreamClass d = this; d != null; d = d.superDesc) {
+            if (oscNames.contains(d.name)) {
+                throw new InvalidClassException("Circular reference.");
+            } else {
+                oscNames.add(d.name);
+            }
+
+            // search up inheritance hierarchy for class with matching name
+            String searchName = (d.cl != null) ? d.cl.getName() : d.name;
+            Class<?> match = null;
+            for (Class<?> c = start; c != end; c = c.getSuperclass()) {
+                if (searchName.equals(c.getName())) {
+                    match = c;
+                    break;
+                }
+            }
+
+            // add "no data" slot for each unmatched class below match
+            if (match != null) {
+                for (Class<?> c = start; c != match; c = c.getSuperclass()) {
+                    slots.add(new ClassDataSlot(
+                        ObjectStreamClass.lookup(c, true), false));
+                }
+                start = match.getSuperclass();
+            }
+
+            // record descriptor/class pairing
+            slots.add(new ClassDataSlot(d.getVariantFor(match), true));
+        }
+
+        // add "no data" slot for any leftover unmatched classes
+        for (Class<?> c = start; c != end; c = c.getSuperclass()) {
+            slots.add(new ClassDataSlot(
+                ObjectStreamClass.lookup(c, true), false));
+        }
+
+        // order slots from superclass -> subclass
+        Collections.reverse(slots);
+        return slots.toArray(new ClassDataSlot[slots.size()]);
+    }
+
+    /**
+     * Returns aggregate size (in bytes) of marshalled primitive field values
+     * for represented class.
+     */
+    int getPrimDataSize() {
+        return primDataSize;
+    }
+
+    /**
+     * Returns number of non-primitive serializable fields of represented
+     * class.
+     */
+    int getNumObjFields() {
+        return numObjFields;
+    }
+
+    /**
+     * Fetches the serializable primitive field values of object obj and
+     * marshals them into byte array buf starting at offset 0.  It is the
+     * responsibility of the caller to ensure that obj is of the proper type if
+     * non-null.
+     */
+    void getPrimFieldValues(Object obj, byte[] buf) {
+        fieldRefl.getPrimFieldValues(obj, buf);
+    }
+
+    /**
+     * Sets the serializable primitive fields of object obj using values
+     * unmarshalled from byte array buf starting at offset 0.  It is the
+     * responsibility of the caller to ensure that obj is of the proper type if
+     * non-null.
+     */
+    void setPrimFieldValues(Object obj, byte[] buf) {
+        fieldRefl.setPrimFieldValues(obj, buf);
+    }
+
+    /**
+     * Fetches the serializable object field values of object obj and stores
+     * them in array vals starting at offset 0.  It is the responsibility of
+     * the caller to ensure that obj is of the proper type if non-null.
+     */
+    void getObjFieldValues(Object obj, Object[] vals) {
+        fieldRefl.getObjFieldValues(obj, vals);
+    }
+
+    /**
+     * Sets the serializable object fields of object obj using values from
+     * array vals starting at offset 0.  It is the responsibility of the caller
+     * to ensure that obj is of the proper type if non-null.
+     */
+    void setObjFieldValues(Object obj, Object[] vals) {
+        fieldRefl.setObjFieldValues(obj, vals);
+    }
+
+    /**
+     * Calculates and sets serializable field offsets, as well as primitive
+     * data size and object field count totals.  Throws InvalidClassException
+     * if fields are illegally ordered.
+     */
+    private void computeFieldOffsets() throws InvalidClassException {
+        primDataSize = 0;
+        numObjFields = 0;
+        int firstObjIndex = -1;
+
+        for (int i = 0; i < fields.length; i++) {
+            ObjectStreamField f = fields[i];
+            switch (f.getTypeCode()) {
+                case 'Z':
+                case 'B':
+                    f.setOffset(primDataSize++);
+                    break;
+
+                case 'C':
+                case 'S':
+                    f.setOffset(primDataSize);
+                    primDataSize += 2;
+                    break;
+
+                case 'I':
+                case 'F':
+                    f.setOffset(primDataSize);
+                    primDataSize += 4;
+                    break;
+
+                case 'J':
+                case 'D':
+                    f.setOffset(primDataSize);
+                    primDataSize += 8;
+                    break;
+
+                case '[':
+                case 'L':
+                    f.setOffset(numObjFields++);
+                    if (firstObjIndex == -1) {
+                        firstObjIndex = i;
+                    }
+                    break;
+
+                default:
+                    throw new InternalError();
+            }
+        }
+        if (firstObjIndex != -1 &&
+            firstObjIndex + numObjFields != fields.length)
+        {
+            throw new InvalidClassException(name, "illegal field order");
+        }
+    }
+
+    /**
+     * If given class is the same as the class associated with this class
+     * descriptor, returns reference to this class descriptor.  Otherwise,
+     * returns variant of this class descriptor bound to given class.
+     */
+    private ObjectStreamClass getVariantFor(Class<?> cl)
+        throws InvalidClassException
+    {
+        if (this.cl == cl) {
+            return this;
+        }
+        ObjectStreamClass desc = new ObjectStreamClass();
+        if (isProxy) {
+            desc.initProxy(cl, null, superDesc);
+        } else {
+            desc.initNonProxy(this, cl, null, superDesc);
+        }
+        return desc;
+    }
+
+    /**
+     * Returns public no-arg constructor of given class, or null if none found.
+     * Access checks are disabled on the returned constructor (if any), since
+     * the defining class may still be non-public.
+     */
+    private static Constructor<?> getExternalizableConstructor(Class<?> cl) {
+        try {
+            Constructor<?> cons = cl.getDeclaredConstructor((Class<?>[]) null);
+            cons.setAccessible(true);
+            return ((cons.getModifiers() & Modifier.PUBLIC) != 0) ?
+                cons : null;
+        } catch (NoSuchMethodException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Given a class, determines whether its superclass has
+     * any constructors that are accessible from the class.
+     * This is a special purpose method intended to do access
+     * checking for a serializable class and its superclasses
+     * up to, but not including, the first non-serializable
+     * superclass. This also implies that the superclass is
+     * always non-null, because a serializable class must be a
+     * class (not an interface) and Object is not serializable.
+     *
+     * @param cl the class from which access is checked
+     * @return whether the superclass has a constructor accessible from cl
+     */
+    private static boolean superHasAccessibleConstructor(Class<?> cl) {
+        Class<?> superCl = cl.getSuperclass();
+        assert Serializable.class.isAssignableFrom(cl);
+        assert superCl != null;
+        if (packageEquals(cl, superCl)) {
+            // accessible if any non-private constructor is found
+            for (Constructor<?> ctor : superCl.getDeclaredConstructors()) {
+                if ((ctor.getModifiers() & Modifier.PRIVATE) == 0) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            // sanity check to ensure the parent is protected or public
+            if ((superCl.getModifiers() & (Modifier.PROTECTED | Modifier.PUBLIC)) == 0) {
+                return false;
+            }
+            // accessible if any constructor is protected or public
+            for (Constructor<?> ctor : superCl.getDeclaredConstructors()) {
+                if ((ctor.getModifiers() & (Modifier.PROTECTED | Modifier.PUBLIC)) != 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Returns subclass-accessible no-arg constructor of first non-serializable
+     * superclass, or null if none found.  Access checks are disabled on the
+     * returned constructor (if any).
+     */
+    private static Constructor<?> getSerializableConstructor(Class<?> cl) {
+        Class<?> initCl = cl;
+        while (Serializable.class.isAssignableFrom(initCl)) {
+            Class<?> prev = initCl;
+            if ((initCl = initCl.getSuperclass()) == null ||
+                (!disableSerialConstructorChecks && !superHasAccessibleConstructor(prev))) {
+                return null;
+            }
+        }
+        try {
+            Constructor<?> cons = initCl.getDeclaredConstructor((Class<?>[]) null);
+            int mods = cons.getModifiers();
+            if ((mods & Modifier.PRIVATE) != 0 ||
+                ((mods & (Modifier.PUBLIC | Modifier.PROTECTED)) == 0 &&
+                 !packageEquals(cl, initCl)))
+            {
+                return null;
+            }
+            cons = reflFactory.newConstructorForSerialization(cl, cons);
+            cons.setAccessible(true);
+            return cons;
+        } catch (NoSuchMethodException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns non-static, non-abstract method with given signature provided it
+     * is defined by or accessible (via inheritance) by the given class, or
+     * null if no match found.  Access checks are disabled on the returned
+     * method (if any).
+     */
+    private static Method getInheritableMethod(Class<?> cl, String name,
+                                               Class<?>[] argTypes,
+                                               Class<?> returnType)
+    {
+        Method meth = null;
+        Class<?> defCl = cl;
+        while (defCl != null) {
+            try {
+                meth = defCl.getDeclaredMethod(name, argTypes);
+                break;
+            } catch (NoSuchMethodException ex) {
+                defCl = defCl.getSuperclass();
+            }
+        }
+
+        if ((meth == null) || (meth.getReturnType() != returnType)) {
+            return null;
+        }
+        meth.setAccessible(true);
+        int mods = meth.getModifiers();
+        if ((mods & (Modifier.STATIC | Modifier.ABSTRACT)) != 0) {
+            return null;
+        } else if ((mods & (Modifier.PUBLIC | Modifier.PROTECTED)) != 0) {
+            return meth;
+        } else if ((mods & Modifier.PRIVATE) != 0) {
+            return (cl == defCl) ? meth : null;
+        } else {
+            return packageEquals(cl, defCl) ? meth : null;
+        }
+    }
+
+    /**
+     * Returns non-static private method with given signature defined by given
+     * class, or null if none found.  Access checks are disabled on the
+     * returned method (if any).
+     */
+    private static Method getPrivateMethod(Class<?> cl, String name,
+                                           Class<?>[] argTypes,
+                                           Class<?> returnType)
+    {
+        try {
+            Method meth = cl.getDeclaredMethod(name, argTypes);
+            meth.setAccessible(true);
+            int mods = meth.getModifiers();
+            return ((meth.getReturnType() == returnType) &&
+                    ((mods & Modifier.STATIC) == 0) &&
+                    ((mods & Modifier.PRIVATE) != 0)) ? meth : null;
+        } catch (NoSuchMethodException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns true if classes are defined in the same runtime package, false
+     * otherwise.
+     */
+    private static boolean packageEquals(Class<?> cl1, Class<?> cl2) {
+        return (cl1.getClassLoader() == cl2.getClassLoader() &&
+                getPackageName(cl1).equals(getPackageName(cl2)));
+    }
+
+    /**
+     * Returns package name of given class.
+     */
+    private static String getPackageName(Class<?> cl) {
+        String s = cl.getName();
+        int i = s.lastIndexOf('[');
+        if (i >= 0) {
+            s = s.substring(i + 2);
+        }
+        i = s.lastIndexOf('.');
+        return (i >= 0) ? s.substring(0, i) : "";
+    }
+
+    /**
+     * Compares class names for equality, ignoring package names.  Returns true
+     * if class names equal, false otherwise.
+     */
+    private static boolean classNamesEqual(String name1, String name2) {
+        name1 = name1.substring(name1.lastIndexOf('.') + 1);
+        name2 = name2.substring(name2.lastIndexOf('.') + 1);
+        return name1.equals(name2);
+    }
+
+    /**
+     * Returns JVM type signature for given class.
+     */
+    private static String getClassSignature(Class<?> cl) {
+        StringBuilder sbuf = new StringBuilder();
+        while (cl.isArray()) {
+            sbuf.append('[');
+            cl = cl.getComponentType();
+        }
+        if (cl.isPrimitive()) {
+            if (cl == Integer.TYPE) {
+                sbuf.append('I');
+            } else if (cl == Byte.TYPE) {
+                sbuf.append('B');
+            } else if (cl == Long.TYPE) {
+                sbuf.append('J');
+            } else if (cl == Float.TYPE) {
+                sbuf.append('F');
+            } else if (cl == Double.TYPE) {
+                sbuf.append('D');
+            } else if (cl == Short.TYPE) {
+                sbuf.append('S');
+            } else if (cl == Character.TYPE) {
+                sbuf.append('C');
+            } else if (cl == Boolean.TYPE) {
+                sbuf.append('Z');
+            } else if (cl == Void.TYPE) {
+                sbuf.append('V');
+            } else {
+                throw new InternalError();
+            }
+        } else {
+            sbuf.append('L' + cl.getName().replace('.', '/') + ';');
+        }
+        return sbuf.toString();
+    }
+
+    /**
+     * Returns JVM type signature for given list of parameters and return type.
+     */
+    private static String getMethodSignature(Class<?>[] paramTypes,
+                                             Class<?> retType)
+    {
+        StringBuilder sbuf = new StringBuilder();
+        sbuf.append('(');
+        for (int i = 0; i < paramTypes.length; i++) {
+            sbuf.append(getClassSignature(paramTypes[i]));
+        }
+        sbuf.append(')');
+        sbuf.append(getClassSignature(retType));
+        return sbuf.toString();
+    }
+
+    /**
+     * Convenience method for throwing an exception that is either a
+     * RuntimeException, Error, or of some unexpected type (in which case it is
+     * wrapped inside an IOException).
+     */
+    private static void throwMiscException(Throwable th) throws IOException {
+        if (th instanceof RuntimeException) {
+            throw (RuntimeException) th;
+        } else if (th instanceof Error) {
+            throw (Error) th;
+        } else {
+            IOException ex = new IOException("unexpected exception type");
+            ex.initCause(th);
+            throw ex;
+        }
+    }
+
+    /**
+     * Returns ObjectStreamField array describing the serializable fields of
+     * the given class.  Serializable fields backed by an actual field of the
+     * class are represented by ObjectStreamFields with corresponding non-null
+     * Field objects.  Throws InvalidClassException if the (explicitly
+     * declared) serializable fields are invalid.
+     */
+    private static ObjectStreamField[] getSerialFields(Class<?> cl)
+        throws InvalidClassException
+    {
+        ObjectStreamField[] fields;
+        if (Serializable.class.isAssignableFrom(cl) &&
+            !Externalizable.class.isAssignableFrom(cl) &&
+            !Proxy.isProxyClass(cl) &&
+            !cl.isInterface())
+        {
+            if ((fields = getDeclaredSerialFields(cl)) == null) {
+                fields = getDefaultSerialFields(cl);
+            }
+            Arrays.sort(fields);
+        } else {
+            fields = NO_FIELDS;
+        }
+        return fields;
+    }
+
+    /**
+     * Returns serializable fields of given class as defined explicitly by a
+     * "serialPersistentFields" field, or null if no appropriate
+     * "serialPersistentFields" field is defined.  Serializable fields backed
+     * by an actual field of the class are represented by ObjectStreamFields
+     * with corresponding non-null Field objects.  For compatibility with past
+     * releases, a "serialPersistentFields" field with a null value is
+     * considered equivalent to not declaring "serialPersistentFields".  Throws
+     * InvalidClassException if the declared serializable fields are
+     * invalid--e.g., if multiple fields share the same name.
+     */
+    private static ObjectStreamField[] getDeclaredSerialFields(Class<?> cl)
+        throws InvalidClassException
+    {
+        ObjectStreamField[] serialPersistentFields = null;
+        try {
+            Field f = cl.getDeclaredField("serialPersistentFields");
+            int mask = Modifier.PRIVATE | Modifier.STATIC | Modifier.FINAL;
+            if ((f.getModifiers() & mask) == mask) {
+                f.setAccessible(true);
+                serialPersistentFields = (ObjectStreamField[]) f.get(null);
+            }
+        } catch (Exception ex) {
+        }
+        if (serialPersistentFields == null) {
+            return null;
+        } else if (serialPersistentFields.length == 0) {
+            return NO_FIELDS;
+        }
+
+        ObjectStreamField[] boundFields =
+            new ObjectStreamField[serialPersistentFields.length];
+        Set<String> fieldNames = new HashSet<>(serialPersistentFields.length);
+
+        for (int i = 0; i < serialPersistentFields.length; i++) {
+            ObjectStreamField spf = serialPersistentFields[i];
+
+            String fname = spf.getName();
+            if (fieldNames.contains(fname)) {
+                throw new InvalidClassException(
+                    "multiple serializable fields named " + fname);
+            }
+            fieldNames.add(fname);
+
+            try {
+                Field f = cl.getDeclaredField(fname);
+                if ((f.getType() == spf.getType()) &&
+                    ((f.getModifiers() & Modifier.STATIC) == 0))
+                {
+                    boundFields[i] =
+                        new ObjectStreamField(f, spf.isUnshared(), true);
+                }
+            } catch (NoSuchFieldException ex) {
+            }
+            if (boundFields[i] == null) {
+                boundFields[i] = new ObjectStreamField(
+                    fname, spf.getType(), spf.isUnshared());
+            }
+        }
+        return boundFields;
+    }
+
+    /**
+     * Returns array of ObjectStreamFields corresponding to all non-static
+     * non-transient fields declared by given class.  Each ObjectStreamField
+     * contains a Field object for the field it represents.  If no default
+     * serializable fields exist, NO_FIELDS is returned.
+     */
+    private static ObjectStreamField[] getDefaultSerialFields(Class<?> cl) {
+        Field[] clFields = cl.getDeclaredFields();
+        ArrayList<ObjectStreamField> list = new ArrayList<>();
+        int mask = Modifier.STATIC | Modifier.TRANSIENT;
+
+        for (int i = 0; i < clFields.length; i++) {
+            if ((clFields[i].getModifiers() & mask) == 0) {
+                list.add(new ObjectStreamField(clFields[i], false, true));
+            }
+        }
+        int size = list.size();
+        return (size == 0) ? NO_FIELDS :
+            list.toArray(new ObjectStreamField[size]);
+    }
+
+    /**
+     * Returns explicit serial version UID value declared by given class, or
+     * null if none.
+     */
+    private static Long getDeclaredSUID(Class<?> cl) {
+        try {
+            Field f = cl.getDeclaredField("serialVersionUID");
+            int mask = Modifier.STATIC | Modifier.FINAL;
+            if ((f.getModifiers() & mask) == mask) {
+                f.setAccessible(true);
+                return Long.valueOf(f.getLong(null));
+            }
+        } catch (Exception ex) {
+        }
+        return null;
+    }
+
+    /**
+     * Computes the default serial version UID value for the given class.
+     */
+    private static long computeDefaultSUID(Class<?> cl) {
+        if (!Serializable.class.isAssignableFrom(cl) || Proxy.isProxyClass(cl))
+        {
+            return 0L;
+        }
+
+        try {
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            DataOutputStream dout = new DataOutputStream(bout);
+
+            dout.writeUTF(cl.getName());
+
+            int classMods = cl.getModifiers() &
+                (Modifier.PUBLIC | Modifier.FINAL |
+                 Modifier.INTERFACE | Modifier.ABSTRACT);
+
+            /*
+             * compensate for javac bug in which ABSTRACT bit was set for an
+             * interface only if the interface declared methods
+             */
+            Method[] methods = cl.getDeclaredMethods();
+            if ((classMods & Modifier.INTERFACE) != 0) {
+                classMods = (methods.length > 0) ?
+                    (classMods | Modifier.ABSTRACT) :
+                    (classMods & ~Modifier.ABSTRACT);
+            }
+            dout.writeInt(classMods);
+
+            if (!cl.isArray()) {
+                /*
+                 * compensate for change in 1.2FCS in which
+                 * Class.getInterfaces() was modified to return Cloneable and
+                 * Serializable for array classes.
+                 */
+                Class<?>[] interfaces = cl.getInterfaces();
+                String[] ifaceNames = new String[interfaces.length];
+                for (int i = 0; i < interfaces.length; i++) {
+                    ifaceNames[i] = interfaces[i].getName();
+                }
+                Arrays.sort(ifaceNames);
+                for (int i = 0; i < ifaceNames.length; i++) {
+                    dout.writeUTF(ifaceNames[i]);
+                }
+            }
+
+            Field[] fields = cl.getDeclaredFields();
+            MemberSignature[] fieldSigs = new MemberSignature[fields.length];
+            for (int i = 0; i < fields.length; i++) {
+                fieldSigs[i] = new MemberSignature(fields[i]);
+            }
+            Arrays.sort(fieldSigs, new Comparator<MemberSignature>() {
+                public int compare(MemberSignature ms1, MemberSignature ms2) {
+                    return ms1.name.compareTo(ms2.name);
+                }
+            });
+            for (int i = 0; i < fieldSigs.length; i++) {
+                MemberSignature sig = fieldSigs[i];
+                int mods = sig.member.getModifiers() &
+                    (Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
+                     Modifier.STATIC | Modifier.FINAL | Modifier.VOLATILE |
+                     Modifier.TRANSIENT);
+                if (((mods & Modifier.PRIVATE) == 0) ||
+                    ((mods & (Modifier.STATIC | Modifier.TRANSIENT)) == 0))
+                {
+                    dout.writeUTF(sig.name);
+                    dout.writeInt(mods);
+                    dout.writeUTF(sig.signature);
+                }
+            }
+
+            if (hasStaticInitializer(cl)) {
+                dout.writeUTF("<clinit>");
+                dout.writeInt(Modifier.STATIC);
+                dout.writeUTF("()V");
+            }
+
+            Constructor<?>[] cons = cl.getDeclaredConstructors();
+            MemberSignature[] consSigs = new MemberSignature[cons.length];
+            for (int i = 0; i < cons.length; i++) {
+                consSigs[i] = new MemberSignature(cons[i]);
+            }
+            Arrays.sort(consSigs, new Comparator<MemberSignature>() {
+                public int compare(MemberSignature ms1, MemberSignature ms2) {
+                    return ms1.signature.compareTo(ms2.signature);
+                }
+            });
+            for (int i = 0; i < consSigs.length; i++) {
+                MemberSignature sig = consSigs[i];
+                int mods = sig.member.getModifiers() &
+                    (Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
+                     Modifier.STATIC | Modifier.FINAL |
+                     Modifier.SYNCHRONIZED | Modifier.NATIVE |
+                     Modifier.ABSTRACT | Modifier.STRICT);
+                if ((mods & Modifier.PRIVATE) == 0) {
+                    dout.writeUTF("<init>");
+                    dout.writeInt(mods);
+                    dout.writeUTF(sig.signature.replace('/', '.'));
+                }
+            }
+
+            MemberSignature[] methSigs = new MemberSignature[methods.length];
+            for (int i = 0; i < methods.length; i++) {
+                methSigs[i] = new MemberSignature(methods[i]);
+            }
+            Arrays.sort(methSigs, new Comparator<MemberSignature>() {
+                public int compare(MemberSignature ms1, MemberSignature ms2) {
+                    int comp = ms1.name.compareTo(ms2.name);
+                    if (comp == 0) {
+                        comp = ms1.signature.compareTo(ms2.signature);
+                    }
+                    return comp;
+                }
+            });
+            for (int i = 0; i < methSigs.length; i++) {
+                MemberSignature sig = methSigs[i];
+                int mods = sig.member.getModifiers() &
+                    (Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
+                     Modifier.STATIC | Modifier.FINAL |
+                     Modifier.SYNCHRONIZED | Modifier.NATIVE |
+                     Modifier.ABSTRACT | Modifier.STRICT);
+                if ((mods & Modifier.PRIVATE) == 0) {
+                    dout.writeUTF(sig.name);
+                    dout.writeInt(mods);
+                    dout.writeUTF(sig.signature.replace('/', '.'));
+                }
+            }
+
+            dout.flush();
+
+            MessageDigest md = MessageDigest.getInstance("SHA");
+            byte[] hashBytes = md.digest(bout.toByteArray());
+            long hash = 0;
+            for (int i = Math.min(hashBytes.length, 8) - 1; i >= 0; i--) {
+                hash = (hash << 8) | (hashBytes[i] & 0xFF);
+            }
+            return hash;
+        } catch (IOException ex) {
+            throw new InternalError(ex);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new SecurityException(ex.getMessage());
+        }
+    }
+
+    /**
+     * Returns true if the given class defines a static initializer method,
+     * false otherwise.
+     */
+    private native static boolean hasStaticInitializer(Class<?> cl);
+
+    /**
+     * Class for computing and caching field/constructor/method signatures
+     * during serialVersionUID calculation.
+     */
+    private static class MemberSignature {
+
+        public final Member member;
+        public final String name;
+        public final String signature;
+
+        public MemberSignature(Field field) {
+            member = field;
+            name = field.getName();
+            signature = getClassSignature(field.getType());
+        }
+
+        public MemberSignature(Constructor<?> cons) {
+            member = cons;
+            name = cons.getName();
+            signature = getMethodSignature(
+                cons.getParameterTypes(), Void.TYPE);
+        }
+
+        public MemberSignature(Method meth) {
+            member = meth;
+            name = meth.getName();
+            signature = getMethodSignature(
+                meth.getParameterTypes(), meth.getReturnType());
+        }
+    }
+
+    /**
+     * Class for setting and retrieving serializable field values in batch.
+     */
+    // REMIND: dynamically generate these?
+    private static class FieldReflector {
+
+        /** handle for performing unsafe operations */
+        private static final Unsafe unsafe = Unsafe.getUnsafe();
+
+        /** fields to operate on */
+        private final ObjectStreamField[] fields;
+        /** number of primitive fields */
+        private final int numPrimFields;
+        /** unsafe field keys for reading fields - may contain dupes */
+        private final long[] readKeys;
+        /** unsafe fields keys for writing fields - no dupes */
+        private final long[] writeKeys;
+        /** field data offsets */
+        private final int[] offsets;
+        /** field type codes */
+        private final char[] typeCodes;
+        /** field types */
+        private final Class<?>[] types;
+
+        /**
+         * Constructs FieldReflector capable of setting/getting values from the
+         * subset of fields whose ObjectStreamFields contain non-null
+         * reflective Field objects.  ObjectStreamFields with null Fields are
+         * treated as filler, for which get operations return default values
+         * and set operations discard given values.
+         */
+        FieldReflector(ObjectStreamField[] fields) {
+            this.fields = fields;
+            int nfields = fields.length;
+            readKeys = new long[nfields];
+            writeKeys = new long[nfields];
+            offsets = new int[nfields];
+            typeCodes = new char[nfields];
+            ArrayList<Class<?>> typeList = new ArrayList<>();
+            Set<Long> usedKeys = new HashSet<>();
+
+
+            for (int i = 0; i < nfields; i++) {
+                ObjectStreamField f = fields[i];
+                Field rf = f.getField();
+                long key = (rf != null) ?
+                    unsafe.objectFieldOffset(rf) : Unsafe.INVALID_FIELD_OFFSET;
+                readKeys[i] = key;
+                writeKeys[i] = usedKeys.add(key) ?
+                    key : Unsafe.INVALID_FIELD_OFFSET;
+                offsets[i] = f.getOffset();
+                typeCodes[i] = f.getTypeCode();
+                if (!f.isPrimitive()) {
+                    typeList.add((rf != null) ? rf.getType() : null);
+                }
+            }
+
+            types = typeList.toArray(new Class<?>[typeList.size()]);
+            numPrimFields = nfields - types.length;
+        }
+
+        /**
+         * Returns list of ObjectStreamFields representing fields operated on
+         * by this reflector.  The shared/unshared values and Field objects
+         * contained by ObjectStreamFields in the list reflect their bindings
+         * to locally defined serializable fields.
+         */
+        ObjectStreamField[] getFields() {
+            return fields;
+        }
+
+        /**
+         * Fetches the serializable primitive field values of object obj and
+         * marshals them into byte array buf starting at offset 0.  The caller
+         * is responsible for ensuring that obj is of the proper type.
+         */
+        void getPrimFieldValues(Object obj, byte[] buf) {
+            if (obj == null) {
+                throw new NullPointerException();
+            }
+            /* assuming checkDefaultSerialize() has been called on the class
+             * descriptor this FieldReflector was obtained from, no field keys
+             * in array should be equal to Unsafe.INVALID_FIELD_OFFSET.
+             */
+            for (int i = 0; i < numPrimFields; i++) {
+                long key = readKeys[i];
+                int off = offsets[i];
+                switch (typeCodes[i]) {
+                    case 'Z':
+                        Bits.putBoolean(buf, off, unsafe.getBoolean(obj, key));
+                        break;
+
+                    case 'B':
+                        buf[off] = unsafe.getByte(obj, key);
+                        break;
+
+                    case 'C':
+                        Bits.putChar(buf, off, unsafe.getChar(obj, key));
+                        break;
+
+                    case 'S':
+                        Bits.putShort(buf, off, unsafe.getShort(obj, key));
+                        break;
+
+                    case 'I':
+                        Bits.putInt(buf, off, unsafe.getInt(obj, key));
+                        break;
+
+                    case 'F':
+                        Bits.putFloat(buf, off, unsafe.getFloat(obj, key));
+                        break;
+
+                    case 'J':
+                        Bits.putLong(buf, off, unsafe.getLong(obj, key));
+                        break;
+
+                    case 'D':
+                        Bits.putDouble(buf, off, unsafe.getDouble(obj, key));
+                        break;
+
+                    default:
+                        throw new InternalError();
+                }
+            }
+        }
+
+        /**
+         * Sets the serializable primitive fields of object obj using values
+         * unmarshalled from byte array buf starting at offset 0.  The caller
+         * is responsible for ensuring that obj is of the proper type.
+         */
+        void setPrimFieldValues(Object obj, byte[] buf) {
+            if (obj == null) {
+                throw new NullPointerException();
+            }
+            for (int i = 0; i < numPrimFields; i++) {
+                long key = writeKeys[i];
+                if (key == Unsafe.INVALID_FIELD_OFFSET) {
+                    continue;           // discard value
+                }
+                int off = offsets[i];
+                switch (typeCodes[i]) {
+                    case 'Z':
+                        unsafe.putBoolean(obj, key, Bits.getBoolean(buf, off));
+                        break;
+
+                    case 'B':
+                        unsafe.putByte(obj, key, buf[off]);
+                        break;
+
+                    case 'C':
+                        unsafe.putChar(obj, key, Bits.getChar(buf, off));
+                        break;
+
+                    case 'S':
+                        unsafe.putShort(obj, key, Bits.getShort(buf, off));
+                        break;
+
+                    case 'I':
+                        unsafe.putInt(obj, key, Bits.getInt(buf, off));
+                        break;
+
+                    case 'F':
+                        unsafe.putFloat(obj, key, Bits.getFloat(buf, off));
+                        break;
+
+                    case 'J':
+                        unsafe.putLong(obj, key, Bits.getLong(buf, off));
+                        break;
+
+                    case 'D':
+                        unsafe.putDouble(obj, key, Bits.getDouble(buf, off));
+                        break;
+
+                    default:
+                        throw new InternalError();
+                }
+            }
+        }
+
+        /**
+         * Fetches the serializable object field values of object obj and
+         * stores them in array vals starting at offset 0.  The caller is
+         * responsible for ensuring that obj is of the proper type.
+         */
+        void getObjFieldValues(Object obj, Object[] vals) {
+            if (obj == null) {
+                throw new NullPointerException();
+            }
+            /* assuming checkDefaultSerialize() has been called on the class
+             * descriptor this FieldReflector was obtained from, no field keys
+             * in array should be equal to Unsafe.INVALID_FIELD_OFFSET.
+             */
+            for (int i = numPrimFields; i < fields.length; i++) {
+                switch (typeCodes[i]) {
+                    case 'L':
+                    case '[':
+                        vals[offsets[i]] = unsafe.getObject(obj, readKeys[i]);
+                        break;
+
+                    default:
+                        throw new InternalError();
+                }
+            }
+        }
+
+        /**
+         * Sets the serializable object fields of object obj using values from
+         * array vals starting at offset 0.  The caller is responsible for
+         * ensuring that obj is of the proper type; however, attempts to set a
+         * field with a value of the wrong type will trigger an appropriate
+         * ClassCastException.
+         */
+        void setObjFieldValues(Object obj, Object[] vals) {
+            if (obj == null) {
+                throw new NullPointerException();
+            }
+            for (int i = numPrimFields; i < fields.length; i++) {
+                long key = writeKeys[i];
+                if (key == Unsafe.INVALID_FIELD_OFFSET) {
+                    continue;           // discard value
+                }
+                switch (typeCodes[i]) {
+                    case 'L':
+                    case '[':
+                        Object val = vals[offsets[i]];
+                        if (val != null &&
+                            !types[i - numPrimFields].isInstance(val))
+                        {
+                            Field f = fields[i].getField();
+                            throw new ClassCastException(
+                                "cannot assign instance of " +
+                                val.getClass().getName() + " to field " +
+                                f.getDeclaringClass().getName() + "." +
+                                f.getName() + " of type " +
+                                f.getType().getName() + " in instance of " +
+                                obj.getClass().getName());
+                        }
+                        unsafe.putObject(obj, key, val);
+                        break;
+
+                    default:
+                        throw new InternalError();
+                }
+            }
+        }
+    }
+
+    /**
+     * Matches given set of serializable fields with serializable fields
+     * described by the given local class descriptor, and returns a
+     * FieldReflector instance capable of setting/getting values from the
+     * subset of fields that match (non-matching fields are treated as filler,
+     * for which get operations return default values and set operations
+     * discard given values).  Throws InvalidClassException if unresolvable
+     * type conflicts exist between the two sets of fields.
+     */
+    private static FieldReflector getReflector(ObjectStreamField[] fields,
+                                               ObjectStreamClass localDesc)
+        throws InvalidClassException
+    {
+        // class irrelevant if no fields
+        Class<?> cl = (localDesc != null && fields.length > 0) ?
+            localDesc.cl : null;
+        processQueue(Caches.reflectorsQueue, Caches.reflectors);
+        FieldReflectorKey key = new FieldReflectorKey(cl, fields,
+                                                      Caches.reflectorsQueue);
+        Reference<?> ref = Caches.reflectors.get(key);
+        Object entry = null;
+        if (ref != null) {
+            entry = ref.get();
+        }
+        EntryFuture future = null;
+        if (entry == null) {
+            EntryFuture newEntry = new EntryFuture();
+            Reference<?> newRef = new SoftReference<>(newEntry);
+            do {
+                if (ref != null) {
+                    Caches.reflectors.remove(key, ref);
+                }
+                ref = Caches.reflectors.putIfAbsent(key, newRef);
+                if (ref != null) {
+                    entry = ref.get();
+                }
+            } while (ref != null && entry == null);
+            if (entry == null) {
+                future = newEntry;
+            }
+        }
+
+        if (entry instanceof FieldReflector) {  // check common case first
+            return (FieldReflector) entry;
+        } else if (entry instanceof EntryFuture) {
+            entry = ((EntryFuture) entry).get();
+        } else if (entry == null) {
+            try {
+                entry = new FieldReflector(matchFields(fields, localDesc));
+            } catch (Throwable th) {
+                entry = th;
+            }
+            future.set(entry);
+            Caches.reflectors.put(key, new SoftReference<Object>(entry));
+        }
+
+        if (entry instanceof FieldReflector) {
+            return (FieldReflector) entry;
+        } else if (entry instanceof InvalidClassException) {
+            throw (InvalidClassException) entry;
+        } else if (entry instanceof RuntimeException) {
+            throw (RuntimeException) entry;
+        } else if (entry instanceof Error) {
+            throw (Error) entry;
+        } else {
+            throw new InternalError("unexpected entry: " + entry);
+        }
+    }
+
+    /**
+     * FieldReflector cache lookup key.  Keys are considered equal if they
+     * refer to the same class and equivalent field formats.
+     */
+    private static class FieldReflectorKey extends WeakReference<Class<?>> {
+
+        private final String sigs;
+        private final int hash;
+        private final boolean nullClass;
+
+        FieldReflectorKey(Class<?> cl, ObjectStreamField[] fields,
+                          ReferenceQueue<Class<?>> queue)
+        {
+            super(cl, queue);
+            nullClass = (cl == null);
+            StringBuilder sbuf = new StringBuilder();
+            for (int i = 0; i < fields.length; i++) {
+                ObjectStreamField f = fields[i];
+                sbuf.append(f.getName()).append(f.getSignature());
+            }
+            sigs = sbuf.toString();
+            hash = System.identityHashCode(cl) + sigs.hashCode();
+        }
+
+        public int hashCode() {
+            return hash;
+        }
+
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+
+            if (obj instanceof FieldReflectorKey) {
+                FieldReflectorKey other = (FieldReflectorKey) obj;
+                Class<?> referent;
+                return (nullClass ? other.nullClass
+                                  : ((referent = get()) != null) &&
+                                    (referent == other.get())) &&
+                    sigs.equals(other.sigs);
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Matches given set of serializable fields with serializable fields
+     * obtained from the given local class descriptor (which contain bindings
+     * to reflective Field objects).  Returns list of ObjectStreamFields in
+     * which each ObjectStreamField whose signature matches that of a local
+     * field contains a Field object for that field; unmatched
+     * ObjectStreamFields contain null Field objects.  Shared/unshared settings
+     * of the returned ObjectStreamFields also reflect those of matched local
+     * ObjectStreamFields.  Throws InvalidClassException if unresolvable type
+     * conflicts exist between the two sets of fields.
+     */
+    private static ObjectStreamField[] matchFields(ObjectStreamField[] fields,
+                                                   ObjectStreamClass localDesc)
+        throws InvalidClassException
+    {
+        ObjectStreamField[] localFields = (localDesc != null) ?
+            localDesc.fields : NO_FIELDS;
+
+        /*
+         * Even if fields == localFields, we cannot simply return localFields
+         * here.  In previous implementations of serialization,
+         * ObjectStreamField.getType() returned Object.class if the
+         * ObjectStreamField represented a non-primitive field and belonged to
+         * a non-local class descriptor.  To preserve this (questionable)
+         * behavior, the ObjectStreamField instances returned by matchFields
+         * cannot report non-primitive types other than Object.class; hence
+         * localFields cannot be returned directly.
+         */
+
+        ObjectStreamField[] matches = new ObjectStreamField[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            ObjectStreamField f = fields[i], m = null;
+            for (int j = 0; j < localFields.length; j++) {
+                ObjectStreamField lf = localFields[j];
+                if (f.getName().equals(lf.getName())) {
+                    if ((f.isPrimitive() || lf.isPrimitive()) &&
+                        f.getTypeCode() != lf.getTypeCode())
+                    {
+                        throw new InvalidClassException(localDesc.name,
+                            "incompatible types for field " + f.getName());
+                    }
+                    if (lf.getField() != null) {
+                        m = new ObjectStreamField(
+                            lf.getField(), lf.isUnshared(), false);
+                    } else {
+                        m = new ObjectStreamField(
+                            lf.getName(), lf.getSignature(), lf.isUnshared());
+                    }
+                }
+            }
+            if (m == null) {
+                m = new ObjectStreamField(
+                    f.getName(), f.getSignature(), false);
+            }
+            m.setOffset(f.getOffset());
+            matches[i] = m;
+        }
+        return matches;
+    }
+
+    /**
+     * Removes from the specified map any keys that have been enqueued
+     * on the specified reference queue.
+     */
+    static void processQueue(ReferenceQueue<Class<?>> queue,
+                             ConcurrentMap<? extends
+                             WeakReference<Class<?>>, ?> map)
+    {
+        Reference<? extends Class<?>> ref;
+        while((ref = queue.poll()) != null) {
+            map.remove(ref);
+        }
+    }
+
+    /**
+     *  Weak key for Class objects.
+     *
+     **/
+    static class WeakClassKey extends WeakReference<Class<?>> {
+        /**
+         * saved value of the referent's identity hash code, to maintain
+         * a consistent hash code after the referent has been cleared
+         */
+        private final int hash;
+
+        /**
+         * Create a new WeakClassKey to the given object, registered
+         * with a queue.
+         */
+        WeakClassKey(Class<?> cl, ReferenceQueue<Class<?>> refQueue) {
+            super(cl, refQueue);
+            hash = System.identityHashCode(cl);
+        }
+
+        /**
+         * Returns the identity hash code of the original referent.
+         */
+        public int hashCode() {
+            return hash;
+        }
+
+        /**
+         * Returns true if the given object is this identical
+         * WeakClassKey instance, or, if this object's referent has not
+         * been cleared, if the given object is another WeakClassKey
+         * instance with the identical non-null referent as this one.
+         */
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+
+            if (obj instanceof WeakClassKey) {
+                Object referent = get();
+                return (referent != null) &&
+                       (referent == ((WeakClassKey) obj).get());
+            } else {
+                return false;
+            }
+        }
+    }
+}

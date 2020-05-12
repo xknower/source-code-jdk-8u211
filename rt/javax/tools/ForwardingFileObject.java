@@ -1,126 +1,120 @@
-/*     */ package javax.tools;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.Reader;
-/*     */ import java.io.Writer;
-/*     */ import java.net.URI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ForwardingFileObject<F extends FileObject>
-/*     */   implements FileObject
-/*     */ {
-/*     */   protected final F fileObject;
-/*     */   
-/*     */   protected ForwardingFileObject(F paramF) {
-/*  56 */     paramF.getClass();
-/*  57 */     this.fileObject = paramF;
-/*     */   }
-/*     */   
-/*     */   public URI toUri() {
-/*  61 */     return this.fileObject.toUri();
-/*     */   }
-/*     */   
-/*     */   public String getName() {
-/*  65 */     return this.fileObject.getName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputStream openInputStream() throws IOException {
-/*  74 */     return this.fileObject.openInputStream();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutputStream openOutputStream() throws IOException {
-/*  83 */     return this.fileObject.openOutputStream();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Reader openReader(boolean paramBoolean) throws IOException {
-/*  92 */     return this.fileObject.openReader(paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharSequence getCharContent(boolean paramBoolean) throws IOException {
-/* 101 */     return this.fileObject.getCharContent(paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer openWriter() throws IOException {
-/* 110 */     return this.fileObject.openWriter();
-/*     */   }
-/*     */   
-/*     */   public long getLastModified() {
-/* 114 */     return this.fileObject.getLastModified();
-/*     */   }
-/*     */   
-/*     */   public boolean delete() {
-/* 118 */     return this.fileObject.delete();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\tools\ForwardingFileObject.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.tools;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.URI;
+
+/**
+ * Forwards calls to a given file object.  Subclasses of this class
+ * might override some of these methods and might also provide
+ * additional fields and methods.
+ *
+ * @param <F> the kind of file object forwarded to by this object
+ * @author Peter von der Ah&eacute;
+ * @since 1.6
+ */
+public class ForwardingFileObject<F extends FileObject> implements FileObject {
+
+    /**
+     * The file object which all methods are delegated to.
+     */
+    protected final F fileObject;
+
+    /**
+     * Creates a new instance of ForwardingFileObject.
+     * @param fileObject delegate to this file object
+     */
+    protected ForwardingFileObject(F fileObject) {
+        fileObject.getClass(); // null check
+        this.fileObject = fileObject;
+    }
+
+    public URI toUri() {
+        return fileObject.toUri();
+    }
+
+    public String getName() {
+        return fileObject.getName();
+    }
+
+    /**
+     * @throws IllegalStateException {@inheritDoc}
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws IOException {@inheritDoc}
+     */
+    public InputStream openInputStream() throws IOException {
+        return fileObject.openInputStream();
+    }
+
+    /**
+     * @throws IllegalStateException {@inheritDoc}
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws IOException {@inheritDoc}
+     */
+    public OutputStream openOutputStream() throws IOException {
+        return fileObject.openOutputStream();
+    }
+
+    /**
+     * @throws IllegalStateException {@inheritDoc}
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws IOException {@inheritDoc}
+     */
+    public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
+        return fileObject.openReader(ignoreEncodingErrors);
+    }
+
+    /**
+     * @throws IllegalStateException {@inheritDoc}
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws IOException {@inheritDoc}
+     */
+    public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+        return fileObject.getCharContent(ignoreEncodingErrors);
+    }
+
+    /**
+     * @throws IllegalStateException {@inheritDoc}
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws IOException {@inheritDoc}
+     */
+    public Writer openWriter() throws IOException {
+        return fileObject.openWriter();
+    }
+
+    public long getLastModified() {
+        return fileObject.getLastModified();
+    }
+
+    public boolean delete() {
+        return fileObject.delete();
+    }
+}

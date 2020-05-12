@@ -1,99 +1,93 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*    */ 
-/*    */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*    */ import com.sun.org.apache.bcel.internal.generic.ILOAD;
-/*    */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*    */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*    */ import java.util.Vector;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class LangCall
-/*    */   extends FunctionCall
-/*    */ {
-/*    */   private Expression _lang;
-/*    */   private Type _langType;
-/*    */   
-/*    */   public LangCall(QName fname, Vector arguments) {
-/* 51 */     super(fname, arguments);
-/* 52 */     this._lang = argument(0);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 59 */     this._langType = this._lang.typeCheck(stable);
-/* 60 */     if (!(this._langType instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType)) {
-/* 61 */       this._lang = new CastExpr(this._lang, Type.String);
-/*    */     }
-/* 63 */     return Type.Boolean;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Type getType() {
-/* 70 */     return Type.Boolean;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 79 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 80 */     InstructionList il = methodGen.getInstructionList();
-/*    */     
-/* 82 */     int tst = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "testLanguage", "(Ljava/lang/String;Lcom/sun/org/apache/xalan/internal/xsltc/DOM;I)Z");
-/*    */ 
-/*    */     
-/* 85 */     this._lang.translate(classGen, methodGen);
-/* 86 */     il.append(methodGen.loadDOM());
-/* 87 */     if (classGen instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.FilterGenerator) {
-/* 88 */       il.append(new ILOAD(1));
-/*    */     } else {
-/* 90 */       il.append(methodGen.loadContextNode());
-/* 91 */     }  il.append(new INVOKESTATIC(tst));
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\LangCall.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: LangCall.java,v 1.2.4.1 2005/09/01 15:54:25 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.ILOAD;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.FilterGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Morten Jorgensen
+ */
+final class LangCall extends FunctionCall {
+    private Expression _lang;
+    private Type _langType;
+
+    /**
+     * Get the parameters passed to function:
+     *   lang(string)
+     */
+    public LangCall(QName fname, Vector arguments) {
+        super(fname, arguments);
+        _lang = argument(0);
+    }
+
+    /**
+     *
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        _langType = _lang.typeCheck(stable);
+        if (!(_langType instanceof StringType)) {
+            _lang = new CastExpr(_lang, Type.String);
+        }
+        return Type.Boolean;
+    }
+
+    /**
+     *
+     */
+    public Type getType() {
+        return(Type.Boolean);
+    }
+
+    /**
+     * This method is called when the constructor is compiled in
+     * Stylesheet.compileConstructor() and not as the syntax tree is traversed.
+     */
+    public void translate(ClassGenerator classGen,
+                          MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        final int tst = cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                         "testLanguage",
+                                         "("+STRING_SIG+DOM_INTF_SIG+"I)Z");
+        _lang.translate(classGen,methodGen);
+        il.append(methodGen.loadDOM());
+        if (classGen instanceof FilterGenerator)
+            il.append(new ILOAD(1));
+        else
+            il.append(methodGen.loadContextNode());
+        il.append(new INVOKESTATIC(tst));
+    }
+}

@@ -1,76 +1,71 @@
-/*    */ package com.sun.java.swing.plaf.windows;
-/*    */ 
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicDesktopPaneUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class WindowsDesktopPaneUI
-/*    */   extends BasicDesktopPaneUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 48 */     return new WindowsDesktopPaneUI();
-/*    */   }
-/*    */   
-/*    */   protected void installDesktopManager() {
-/* 52 */     this.desktopManager = this.desktop.getDesktopManager();
-/* 53 */     if (this.desktopManager == null) {
-/* 54 */       this.desktopManager = new WindowsDesktopManager();
-/* 55 */       this.desktop.setDesktopManager(this.desktopManager);
-/*    */     } 
-/*    */   }
-/*    */   
-/*    */   protected void installDefaults() {
-/* 60 */     super.installDefaults();
-/*    */   }
-/*    */   
-/*    */   protected void installKeyboardActions() {
-/* 64 */     super.installKeyboardActions();
-/*    */ 
-/*    */     
-/* 67 */     if (!this.desktop.requestDefaultFocus())
-/* 68 */       this.desktop.requestFocus(); 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsDesktopPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import javax.swing.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.plaf.ComponentUI;
+import java.awt.event.*;
+
+/**
+ * Windows desktop pane.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author David Kloba
+ */
+public class WindowsDesktopPaneUI extends BasicDesktopPaneUI
+{
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsDesktopPaneUI();
+    }
+
+    protected void installDesktopManager() {
+        desktopManager = desktop.getDesktopManager();
+        if(desktopManager == null) {
+            desktopManager = new WindowsDesktopManager();
+            desktop.setDesktopManager(desktopManager);
+        }
+    }
+
+    protected void installDefaults() {
+        super.installDefaults();
+    }
+
+    protected void installKeyboardActions() {
+        super.installKeyboardActions();
+
+        // Request focus if it isn't set.
+        if(!desktop.requestDefaultFocus()) {
+            desktop.requestFocus();
+        }
+    }
+}

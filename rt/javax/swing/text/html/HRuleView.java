@@ -1,467 +1,321 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Shape;
-/*     */ import javax.swing.event.DocumentEvent;
-/*     */ import javax.swing.text.AttributeSet;
-/*     */ import javax.swing.text.BadLocationException;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.Position;
-/*     */ import javax.swing.text.StyleConstants;
-/*     */ import javax.swing.text.View;
-/*     */ import javax.swing.text.ViewFactory;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class HRuleView
-/*     */   extends View
-/*     */ {
-/*     */   private float topMargin;
-/*     */   private float bottomMargin;
-/*     */   private float leftMargin;
-/*     */   private float rightMargin;
-/*     */   private int alignment;
-/*     */   private String noshade;
-/*     */   private int size;
-/*     */   private CSS.LengthValue widthValue;
-/*     */   private static final int SPACE_ABOVE = 3;
-/*     */   private static final int SPACE_BELOW = 3;
-/*     */   private AttributeSet attr;
-/*     */   
-/*     */   public HRuleView(Element paramElement) {
-/*  48 */     super(paramElement);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 311 */     this.alignment = 1;
-/* 312 */     this.noshade = null;
-/* 313 */     this.size = 0;
-/*     */     setPropertiesFromAttributes();
-/*     */   }
-/*     */   
-/*     */   protected void setPropertiesFromAttributes() {
-/*     */     StyleSheet styleSheet = ((HTMLDocument)getDocument()).getStyleSheet();
-/*     */     AttributeSet attributeSet = getElement().getAttributes();
-/*     */     this.attr = styleSheet.getViewAttributes(this);
-/*     */     this.alignment = 1;
-/*     */     this.size = 0;
-/*     */     this.noshade = null;
-/*     */     this.widthValue = null;
-/*     */     if (this.attr != null) {
-/*     */       if (this.attr.getAttribute(StyleConstants.Alignment) != null)
-/*     */         this.alignment = StyleConstants.getAlignment(this.attr); 
-/*     */       this.noshade = (String)attributeSet.getAttribute(HTML.Attribute.NOSHADE);
-/*     */       Object object = attributeSet.getAttribute(HTML.Attribute.SIZE);
-/*     */       if (object != null && object instanceof String)
-/*     */         try {
-/*     */           this.size = Integer.parseInt((String)object);
-/*     */         } catch (NumberFormatException numberFormatException) {
-/*     */           this.size = 1;
-/*     */         }  
-/*     */       object = this.attr.getAttribute(CSS.Attribute.WIDTH);
-/*     */       if (object != null && object instanceof CSS.LengthValue)
-/*     */         this.widthValue = (CSS.LengthValue)object; 
-/*     */       this.topMargin = getLength(CSS.Attribute.MARGIN_TOP, this.attr);
-/*     */       this.bottomMargin = getLength(CSS.Attribute.MARGIN_BOTTOM, this.attr);
-/*     */       this.leftMargin = getLength(CSS.Attribute.MARGIN_LEFT, this.attr);
-/*     */       this.rightMargin = getLength(CSS.Attribute.MARGIN_RIGHT, this.attr);
-/*     */     } else {
-/*     */       this.topMargin = this.bottomMargin = this.leftMargin = this.rightMargin = 0.0F;
-/*     */     } 
-/*     */     this.size = Math.max(2, this.size);
-/*     */   }
-/*     */   
-/*     */   private float getLength(CSS.Attribute paramAttribute, AttributeSet paramAttributeSet) {
-/*     */     CSS.LengthValue lengthValue = (CSS.LengthValue)paramAttributeSet.getAttribute(paramAttribute);
-/*     */     return (lengthValue != null) ? lengthValue.getValue() : 0.0F;
-/*     */   }
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/*     */     Rectangle rectangle = (paramShape instanceof Rectangle) ? (Rectangle)paramShape : paramShape.getBounds();
-/*     */     int i = 0;
-/*     */     int j = rectangle.y + 3 + (int)this.topMargin;
-/*     */     int k = rectangle.width - (int)(this.leftMargin + this.rightMargin);
-/*     */     if (this.widthValue != null)
-/*     */       k = (int)this.widthValue.getValue(k); 
-/*     */     int m = rectangle.height - 6 + (int)this.topMargin + (int)this.bottomMargin;
-/*     */     if (this.size > 0)
-/*     */       m = this.size; 
-/*     */     switch (this.alignment) {
-/*     */       case 1:
-/*     */         i = rectangle.x + rectangle.width / 2 - k / 2;
-/*     */         break;
-/*     */       case 2:
-/*     */         i = rectangle.x + rectangle.width - k - (int)this.rightMargin;
-/*     */         break;
-/*     */       default:
-/*     */         i = rectangle.x + (int)this.leftMargin;
-/*     */         break;
-/*     */     } 
-/*     */     if (this.noshade != null) {
-/*     */       paramGraphics.setColor(Color.black);
-/*     */       paramGraphics.fillRect(i, j, k, m);
-/*     */     } else {
-/*     */       Color color2, color3, color1 = getContainer().getBackground();
-/*     */       if (color1 == null || color1.equals(Color.white)) {
-/*     */         color3 = Color.darkGray;
-/*     */         color2 = Color.lightGray;
-/*     */       } else {
-/*     */         color3 = Color.darkGray;
-/*     */         color2 = Color.white;
-/*     */       } 
-/*     */       paramGraphics.setColor(color2);
-/*     */       paramGraphics.drawLine(i + k - 1, j, i + k - 1, j + m - 1);
-/*     */       paramGraphics.drawLine(i, j + m - 1, i + k - 1, j + m - 1);
-/*     */       paramGraphics.setColor(color3);
-/*     */       paramGraphics.drawLine(i, j, i + k - 1, j);
-/*     */       paramGraphics.drawLine(i, j, i, j + m - 1);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public float getPreferredSpan(int paramInt) {
-/*     */     switch (paramInt) {
-/*     */       case 0:
-/*     */         return 1.0F;
-/*     */       case 1:
-/*     */         if (this.size > 0)
-/*     */           return (this.size + 3 + 3) + this.topMargin + this.bottomMargin; 
-/*     */         if (this.noshade != null)
-/*     */           return 8.0F + this.topMargin + this.bottomMargin; 
-/*     */         return 6.0F + this.topMargin + this.bottomMargin;
-/*     */     } 
-/*     */     throw new IllegalArgumentException("Invalid axis: " + paramInt);
-/*     */   }
-/*     */   
-/*     */   public int getResizeWeight(int paramInt) {
-/*     */     if (paramInt == 0)
-/*     */       return 1; 
-/*     */     if (paramInt == 1)
-/*     */       return 0; 
-/*     */     return 0;
-/*     */   }
-/*     */   
-/*     */   public int getBreakWeight(int paramInt, float paramFloat1, float paramFloat2) {
-/*     */     if (paramInt == 0)
-/*     */       return 3000; 
-/*     */     return 0;
-/*     */   }
-/*     */   
-/*     */   public View breakView(int paramInt1, int paramInt2, float paramFloat1, float paramFloat2) {
-/*     */     return null;
-/*     */   }
-/*     */   
-/*     */   public Shape modelToView(int paramInt, Shape paramShape, Position.Bias paramBias) throws BadLocationException {
-/*     */     int i = getStartOffset();
-/*     */     int j = getEndOffset();
-/*     */     if (paramInt >= i && paramInt <= j) {
-/*     */       Rectangle rectangle = paramShape.getBounds();
-/*     */       if (paramInt == j)
-/*     */         rectangle.x += rectangle.width; 
-/*     */       rectangle.width = 0;
-/*     */       return rectangle;
-/*     */     } 
-/*     */     return null;
-/*     */   }
-/*     */   
-/*     */   public int viewToModel(float paramFloat1, float paramFloat2, Shape paramShape, Position.Bias[] paramArrayOfBias) {
-/*     */     Rectangle rectangle = (Rectangle)paramShape;
-/*     */     if (paramFloat1 < (rectangle.x + rectangle.width / 2)) {
-/*     */       paramArrayOfBias[0] = Position.Bias.Forward;
-/*     */       return getStartOffset();
-/*     */     } 
-/*     */     paramArrayOfBias[0] = Position.Bias.Backward;
-/*     */     return getEndOffset();
-/*     */   }
-/*     */   
-/*     */   public AttributeSet getAttributes() {
-/*     */     return this.attr;
-/*     */   }
-/*     */   
-/*     */   public void changedUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/*     */     super.changedUpdate(paramDocumentEvent, paramShape, paramViewFactory);
-/*     */     int i = paramDocumentEvent.getOffset();
-/*     */     if (i <= getStartOffset() && i + paramDocumentEvent.getLength() >= getEndOffset())
-/*     */       setPropertiesFromAttributes(); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\HRuleView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.awt.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.*;
+import java.util.Enumeration;
+import java.lang.Integer;
+
+/**
+ * A view implementation to display an html horizontal
+ * rule.
+ *
+ * @author  Timothy Prinzing
+ * @author  Sara Swanson
+ */
+class HRuleView extends View  {
+
+    /**
+     * Creates a new view that represents an &lt;hr&gt; element.
+     *
+     * @param elem the element to create a view for
+     */
+    public HRuleView(Element elem) {
+        super(elem);
+        setPropertiesFromAttributes();
+    }
+
+    /**
+     * Update any cached values that come from attributes.
+     */
+    protected void setPropertiesFromAttributes() {
+        StyleSheet sheet = ((HTMLDocument)getDocument()).getStyleSheet();
+        AttributeSet eAttr = getElement().getAttributes();
+        attr = sheet.getViewAttributes(this);
+
+        alignment = StyleConstants.ALIGN_CENTER;
+        size = 0;
+        noshade = null;
+        widthValue = null;
+
+        if (attr != null) {
+            // getAlignment() returns ALIGN_LEFT by default, and HR should
+            // use ALIGN_CENTER by default, so we check if the alignment
+            // attribute is actually defined
+            if (attr.getAttribute(StyleConstants.Alignment) != null) {
+                alignment = StyleConstants.getAlignment(attr);
+            }
+
+            noshade = (String)eAttr.getAttribute(HTML.Attribute.NOSHADE);
+            Object value = eAttr.getAttribute(HTML.Attribute.SIZE);
+            if (value != null && (value instanceof String)) {
+                try {
+                    size = Integer.parseInt((String)value);
+                } catch (NumberFormatException e) {
+                    size = 1;
+                }
+            }
+            value = attr.getAttribute(CSS.Attribute.WIDTH);
+            if (value != null && (value instanceof CSS.LengthValue)) {
+                widthValue = (CSS.LengthValue)value;
+            }
+            topMargin = getLength(CSS.Attribute.MARGIN_TOP, attr);
+            bottomMargin = getLength(CSS.Attribute.MARGIN_BOTTOM, attr);
+            leftMargin = getLength(CSS.Attribute.MARGIN_LEFT, attr);
+            rightMargin = getLength(CSS.Attribute.MARGIN_RIGHT, attr);
+        }
+        else {
+            topMargin = bottomMargin = leftMargin = rightMargin = 0;
+        }
+        size = Math.max(2, size);
+    }
+
+    // This will be removed and centralized at some point, need to unify this
+    // and avoid private classes.
+    private float getLength(CSS.Attribute key, AttributeSet a) {
+        CSS.LengthValue lv = (CSS.LengthValue) a.getAttribute(key);
+        float len = (lv != null) ? lv.getValue() : 0;
+        return len;
+    }
+
+    // --- View methods ---------------------------------------------
+
+    /**
+     * Paints the view.
+     *
+     * @param g the graphics context
+     * @param a the allocation region for the view
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape a) {
+        Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a :
+                          a.getBounds();
+        int x = 0;
+        int y = alloc.y + SPACE_ABOVE + (int)topMargin;
+        int width = alloc.width - (int)(leftMargin + rightMargin);
+        if (widthValue != null) {
+            width = (int)widthValue.getValue((float)width);
+        }
+        int height = alloc.height - (SPACE_ABOVE + SPACE_BELOW +
+                                     (int)topMargin + (int)bottomMargin);
+        if (size > 0)
+                height = size;
+
+        // Align the rule horizontally.
+        switch (alignment) {
+        case StyleConstants.ALIGN_CENTER:
+            x = alloc.x + (alloc.width / 2) - (width / 2);
+            break;
+        case StyleConstants.ALIGN_RIGHT:
+            x = alloc.x + alloc.width - width - (int)rightMargin;
+            break;
+        case StyleConstants.ALIGN_LEFT:
+        default:
+            x = alloc.x + (int)leftMargin;
+            break;
+        }
+
+        // Paint either a shaded rule or a solid line.
+        if (noshade != null) {
+            g.setColor(Color.black);
+            g.fillRect(x, y, width, height);
+        }
+        else {
+            Color bg = getContainer().getBackground();
+            Color bottom, top;
+            if (bg == null || bg.equals(Color.white)) {
+                top = Color.darkGray;
+                bottom = Color.lightGray;
+            }
+            else {
+                top = Color.darkGray;
+                bottom = Color.white;
+            }
+            g.setColor(bottom);
+            g.drawLine(x + width - 1, y, x + width - 1, y + height - 1);
+            g.drawLine(x, y + height - 1, x + width - 1, y + height - 1);
+            g.setColor(top);
+            g.drawLine(x, y, x + width - 1, y);
+            g.drawLine(x, y, x, y + height - 1);
+        }
+
+    }
+
+
+    /**
+     * Calculates the desired shape of the rule... this is
+     * basically the preferred size of the border.
+     *
+     * @param axis may be either X_AXIS or Y_AXIS
+     * @return the desired span
+     * @see View#getPreferredSpan
+     */
+    public float getPreferredSpan(int axis) {
+        switch (axis) {
+        case View.X_AXIS:
+            return 1;
+        case View.Y_AXIS:
+            if (size > 0) {
+                return size + SPACE_ABOVE + SPACE_BELOW + topMargin +
+                    bottomMargin;
+            } else {
+                if (noshade != null) {
+                    return 2 + SPACE_ABOVE + SPACE_BELOW + topMargin +
+                        bottomMargin;
+                } else {
+                    return SPACE_ABOVE + SPACE_BELOW + topMargin +bottomMargin;
+                }
+            }
+        default:
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
+    }
+
+    /**
+     * Gets the resize weight for the axis.
+     * The rule is: rigid vertically and flexible horizontally.
+     *
+     * @param axis may be either X_AXIS or Y_AXIS
+     * @return the weight
+     */
+    public int getResizeWeight(int axis) {
+        if (axis == View.X_AXIS) {
+                return 1;
+        } else if (axis == View.Y_AXIS) {
+                return 0;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Determines how attractive a break opportunity in
+     * this view is.  This is implemented to request a forced break.
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @param pos the potential location of the start of the
+     *   broken view (greater than or equal to zero).
+     *   This may be useful for calculating tab
+     *   positions.
+     * @param len specifies the relative length from <em>pos</em>
+     *   where a potential break is desired. The value must be greater
+     *   than or equal to zero.
+     * @return the weight, which should be a value between
+     *   ForcedBreakWeight and BadBreakWeight.
+     */
+    public int getBreakWeight(int axis, float pos, float len) {
+        if (axis == X_AXIS) {
+            return ForcedBreakWeight;
+        }
+        return BadBreakWeight;
+    }
+
+    public View breakView(int axis, int offset, float pos, float len) {
+        return null;
+    }
+
+    /**
+     * Provides a mapping from the document model coordinate space
+     * to the coordinate space of the view mapped to it.
+     *
+     * @param pos the position to convert
+     * @param a the allocated region to render into
+     * @return the bounding box of the given position
+     * @exception BadLocationException  if the given position does not
+     * represent a valid location in the associated document
+     * @see View#modelToView
+     */
+    public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+        int p0 = getStartOffset();
+        int p1 = getEndOffset();
+        if ((pos >= p0) && (pos <= p1)) {
+            Rectangle r = a.getBounds();
+            if (pos == p1) {
+                r.x += r.width;
+            }
+            r.width = 0;
+            return r;
+        }
+        return null;
+    }
+
+    /**
+     * Provides a mapping from the view coordinate space to the logical
+     * coordinate space of the model.
+     *
+     * @param x the X coordinate
+     * @param y the Y coordinate
+     * @param a the allocated region to render into
+     * @return the location within the model that best represents the
+     *  given point of view
+     * @see View#viewToModel
+     */
+    public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
+        Rectangle alloc = (Rectangle) a;
+        if (x < alloc.x + (alloc.width / 2)) {
+            bias[0] = Position.Bias.Forward;
+            return getStartOffset();
+        }
+        bias[0] = Position.Bias.Backward;
+        return getEndOffset();
+    }
+
+    /**
+     * Fetches the attributes to use when rendering.  This is
+     * implemented to multiplex the attributes specified in the
+     * model with a StyleSheet.
+     */
+    public AttributeSet getAttributes() {
+        return attr;
+    }
+
+    public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
+        super.changedUpdate(changes, a, f);
+        int pos = changes.getOffset();
+        if (pos <= getStartOffset() && (pos + changes.getLength()) >=
+            getEndOffset()) {
+            setPropertiesFromAttributes();
+        }
+    }
+
+    // --- variables ------------------------------------------------
+
+    private float topMargin;
+    private float bottomMargin;
+    private float leftMargin;
+    private float rightMargin;
+    private int alignment = StyleConstants.ALIGN_CENTER;
+    private String noshade = null;
+    private int size = 0;
+    private CSS.LengthValue widthValue;
+
+    private static final int SPACE_ABOVE = 3;
+    private static final int SPACE_BELOW = 3;
+
+    /** View Attributes. */
+    private AttributeSet attr;
+}

@@ -1,313 +1,371 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.security.BasicPermission;
-/*     */ import java.security.Permission;
-/*     */ import java.security.PermissionCollection;
-/*     */ import java.util.StringTokenizer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanServerPermission
-/*     */   extends BasicPermission
-/*     */ {
-/*     */   private static final long serialVersionUID = -5661980843569388590L;
-/*     */   private static final int CREATE = 0;
-/*     */   private static final int FIND = 1;
-/*     */   private static final int NEW = 2;
-/*     */   private static final int RELEASE = 3;
-/*     */   private static final int N_NAMES = 4;
-/*  79 */   private static final String[] names = new String[] { "createMBeanServer", "findMBeanServer", "newMBeanServer", "releaseMBeanServer" };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int CREATE_MASK = 1;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int FIND_MASK = 2;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int NEW_MASK = 4;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int RELEASE_MASK = 8;
-/*     */ 
-/*     */   
-/*     */   private static final int ALL_MASK = 15;
-/*     */ 
-/*     */   
-/* 101 */   private static final String[] canonicalNames = new String[16];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   transient int mask;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerPermission(String paramString) {
-/* 124 */     this(paramString, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerPermission(String paramString1, String paramString2) {
-/* 144 */     super(getCanonicalName(parseMask(paramString1)), paramString2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 151 */     this.mask = parseMask(paramString1);
-/*     */ 
-/*     */     
-/* 154 */     if (paramString2 != null && paramString2.length() > 0) {
-/* 155 */       throw new IllegalArgumentException("MBeanServerPermission actions must be null: " + paramString2);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   MBeanServerPermission(int paramInt) {
-/* 161 */     super(getCanonicalName(paramInt));
-/* 162 */     this.mask = impliedMask(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 167 */     paramObjectInputStream.defaultReadObject();
-/* 168 */     this.mask = parseMask(getName());
-/*     */   }
-/*     */   
-/*     */   static int simplifyMask(int paramInt) {
-/* 172 */     if ((paramInt & 0x1) != 0)
-/* 173 */       paramInt &= 0xFFFFFFFB; 
-/* 174 */     return paramInt;
-/*     */   }
-/*     */   
-/*     */   static int impliedMask(int paramInt) {
-/* 178 */     if ((paramInt & 0x1) != 0)
-/* 179 */       paramInt |= 0x4; 
-/* 180 */     return paramInt;
-/*     */   }
-/*     */   
-/*     */   static String getCanonicalName(int paramInt) {
-/* 184 */     if (paramInt == 15) {
-/* 185 */       return "*";
-/*     */     }
-/* 187 */     paramInt = simplifyMask(paramInt);
-/*     */     
-/* 189 */     synchronized (canonicalNames) {
-/* 190 */       if (canonicalNames[paramInt] == null) {
-/* 191 */         canonicalNames[paramInt] = makeCanonicalName(paramInt);
-/*     */       }
-/*     */     } 
-/* 194 */     return canonicalNames[paramInt];
-/*     */   }
-/*     */   
-/*     */   private static String makeCanonicalName(int paramInt) {
-/* 198 */     StringBuilder stringBuilder = new StringBuilder();
-/* 199 */     for (byte b = 0; b < 4; b++) {
-/* 200 */       if ((paramInt & 1 << b) != 0) {
-/* 201 */         if (stringBuilder.length() > 0)
-/* 202 */           stringBuilder.append(','); 
-/* 203 */         stringBuilder.append(names[b]);
-/*     */       } 
-/*     */     } 
-/* 206 */     return stringBuilder.toString().intern();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int parseMask(String paramString) {
-/* 216 */     if (paramString == null) {
-/* 217 */       throw new NullPointerException("MBeanServerPermission: target name can't be null");
-/*     */     }
-/*     */ 
-/*     */     
-/* 221 */     paramString = paramString.trim();
-/* 222 */     if (paramString.equals("*")) {
-/* 223 */       return 15;
-/*     */     }
-/*     */     
-/* 226 */     if (paramString.indexOf(',') < 0) {
-/* 227 */       return impliedMask(1 << nameIndex(paramString.trim()));
-/*     */     }
-/* 229 */     int i = 0;
-/*     */     
-/* 231 */     StringTokenizer stringTokenizer = new StringTokenizer(paramString, ",");
-/* 232 */     while (stringTokenizer.hasMoreTokens()) {
-/* 233 */       String str = stringTokenizer.nextToken();
-/* 234 */       int j = nameIndex(str.trim());
-/* 235 */       i |= 1 << j;
-/*     */     } 
-/*     */     
-/* 238 */     return impliedMask(i);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static int nameIndex(String paramString) throws IllegalArgumentException {
-/* 243 */     for (byte b = 0; b < 4; b++) {
-/* 244 */       if (names[b].equals(paramString))
-/* 245 */         return b; 
-/*     */     } 
-/* 247 */     String str = "Invalid MBeanServerPermission name: \"" + paramString + "\"";
-/*     */     
-/* 249 */     throw new IllegalArgumentException(str);
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/* 253 */     return this.mask;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean implies(Permission paramPermission) {
-/* 276 */     if (!(paramPermission instanceof MBeanServerPermission)) {
-/* 277 */       return false;
-/*     */     }
-/* 279 */     MBeanServerPermission mBeanServerPermission = (MBeanServerPermission)paramPermission;
-/*     */     
-/* 281 */     return ((this.mask & mBeanServerPermission.mask) == mBeanServerPermission.mask);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 293 */     if (paramObject == this) {
-/* 294 */       return true;
-/*     */     }
-/* 296 */     if (!(paramObject instanceof MBeanServerPermission)) {
-/* 297 */       return false;
-/*     */     }
-/* 299 */     MBeanServerPermission mBeanServerPermission = (MBeanServerPermission)paramObject;
-/*     */     
-/* 301 */     return (this.mask == mBeanServerPermission.mask);
-/*     */   }
-/*     */   
-/*     */   public PermissionCollection newPermissionCollection() {
-/* 305 */     return new MBeanServerPermissionCollection();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\MBeanServerPermission.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.security.BasicPermission;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+/** A Permission to perform actions related to MBeanServers.
+    The <em>name</em> of the permission specifies the operation requested
+    or granted by the permission.  For a granted permission, it can be
+    <code>*</code> to allow all of the MBeanServer operations specified below.
+    Otherwise, for a granted or requested permission, it must be one of the
+    following:
+    <dl>
+    <dt>createMBeanServer</dt>
+    <dd>Create a new MBeanServer object using the method
+    {@link MBeanServerFactory#createMBeanServer()} or
+    {@link MBeanServerFactory#createMBeanServer(java.lang.String)}.
+    <dt>findMBeanServer</dt>
+    <dd>Find an MBeanServer with a given name, or all MBeanServers in this
+    JVM, using the method {@link MBeanServerFactory#findMBeanServer}.
+    <dt>newMBeanServer</dt>
+    <dd>Create a new MBeanServer object without keeping a reference to it,
+    using the method {@link MBeanServerFactory#newMBeanServer()} or
+    {@link MBeanServerFactory#newMBeanServer(java.lang.String)}.
+    <dt>releaseMBeanServer</dt>
+    <dd>Remove the MBeanServerFactory's reference to an MBeanServer,
+    using the method {@link MBeanServerFactory#releaseMBeanServer}.
+    </dl>
+    The <em>name</em> of the permission can also denote a list of one or more
+    comma-separated operations.  Spaces are allowed at the beginning and
+    end of the <em>name</em> and before and after commas.
+    <p>
+    <code>MBeanServerPermission("createMBeanServer")</code> implies
+    <code>MBeanServerPermission("newMBeanServer")</code>.
+ *
+ * @since 1.5
+ */
+public class MBeanServerPermission extends BasicPermission {
+    private static final long serialVersionUID = -5661980843569388590L;
+
+    private final static int
+        CREATE = 0,
+        FIND = 1,
+        NEW = 2,
+        RELEASE = 3,
+        N_NAMES = 4;
+
+    private final static String[] names = {
+        "createMBeanServer",
+        "findMBeanServer",
+        "newMBeanServer",
+        "releaseMBeanServer",
+    };
+
+    private final static int
+        CREATE_MASK = 1<<CREATE,
+        FIND_MASK = 1<<FIND,
+        NEW_MASK = 1<<NEW,
+        RELEASE_MASK = 1<<RELEASE,
+        ALL_MASK = CREATE_MASK|FIND_MASK|NEW_MASK|RELEASE_MASK;
+
+    /*
+     * Map from permission masks to canonical names.  This array is
+     * filled in on demand.
+     *
+     * This isn't very scalable.  If we have more than five or six
+     * permissions, we should consider doing this differently,
+     * e.g. with a Map.
+     */
+    private final static String[] canonicalNames = new String[1 << N_NAMES];
+
+    /*
+     * The target names mask.  This is not private to avoid having to
+     * generate accessor methods for accesses from the collection class.
+     *
+     * This mask includes implied bits.  So if it has CREATE_MASK then
+     * it necessarily has NEW_MASK too.
+     */
+    transient int mask;
+
+    /** <p>Create a new MBeanServerPermission with the given name.</p>
+        <p>This constructor is equivalent to
+        <code>MBeanServerPermission(name,null)</code>.</p>
+        @param name the name of the granted permission.  It must
+        respect the constraints spelt out in the description of the
+        {@link MBeanServerPermission} class.
+        @exception NullPointerException if the name is null.
+        @exception IllegalArgumentException if the name is not
+        <code>*</code> or one of the allowed names or a comma-separated
+        list of the allowed names.
+    */
+    public MBeanServerPermission(String name) {
+        this(name, null);
+    }
+
+    /** <p>Create a new MBeanServerPermission with the given name.</p>
+        @param name the name of the granted permission.  It must
+        respect the constraints spelt out in the description of the
+        {@link MBeanServerPermission} class.
+        @param actions the associated actions.  This parameter is not
+        currently used and must be null or the empty string.
+        @exception NullPointerException if the name is null.
+        @exception IllegalArgumentException if the name is not
+        <code>*</code> or one of the allowed names or a comma-separated
+        list of the allowed names, or if <code>actions</code> is a non-null
+        non-empty string.
+     *
+     * @throws NullPointerException if <code>name</code> is <code>null</code>.
+     * @throws IllegalArgumentException if <code>name</code> is empty or
+     * if arguments are invalid.
+     */
+    public MBeanServerPermission(String name, String actions) {
+        super(getCanonicalName(parseMask(name)), actions);
+
+        /* It's annoying to have to parse the name twice, but since
+           Permission.getName() is final and since we can't access "this"
+           until after the call to the superclass constructor, there
+           isn't any very clean way to do this.  MBeanServerPermission
+           objects aren't constructed very often, luckily.  */
+        mask = parseMask(name);
+
+        /* Check that actions is a null empty string */
+        if (actions != null && actions.length() > 0)
+            throw new IllegalArgumentException("MBeanServerPermission " +
+                                               "actions must be null: " +
+                                               actions);
+    }
+
+    MBeanServerPermission(int mask) {
+        super(getCanonicalName(mask));
+        this.mask = impliedMask(mask);
+    }
+
+    private void readObject(ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        mask = parseMask(getName());
+    }
+
+    static int simplifyMask(int mask) {
+        if ((mask & CREATE_MASK) != 0)
+            mask &= ~NEW_MASK;
+        return mask;
+    }
+
+    static int impliedMask(int mask) {
+        if ((mask & CREATE_MASK) != 0)
+            mask |= NEW_MASK;
+        return mask;
+    }
+
+    static String getCanonicalName(int mask) {
+        if (mask == ALL_MASK)
+            return "*";
+
+        mask = simplifyMask(mask);
+
+        synchronized (canonicalNames) {
+            if (canonicalNames[mask] == null)
+                canonicalNames[mask] = makeCanonicalName(mask);
+        }
+
+        return canonicalNames[mask];
+    }
+
+    private static String makeCanonicalName(int mask) {
+        final StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < N_NAMES; i++) {
+            if ((mask & (1<<i)) != 0) {
+                if (buf.length() > 0)
+                    buf.append(',');
+                buf.append(names[i]);
+            }
+        }
+        return buf.toString().intern();
+        /* intern() avoids duplication when the mask has only
+           one bit, so is equivalent to the string constants
+           we have for the names[] array.  */
+    }
+
+    /* Convert the string into a bitmask, including bits that
+       are implied by the permissions in the string.  */
+    private static int parseMask(String name) {
+        /* Check that target name is a non-null non-empty string */
+        if (name == null) {
+            throw new NullPointerException("MBeanServerPermission: " +
+                                           "target name can't be null");
+        }
+
+        name = name.trim();
+        if (name.equals("*"))
+            return ALL_MASK;
+
+        /* If the name is empty, nameIndex will barf. */
+        if (name.indexOf(',') < 0)
+            return impliedMask(1 << nameIndex(name.trim()));
+
+        int mask = 0;
+
+        StringTokenizer tok = new StringTokenizer(name, ",");
+        while (tok.hasMoreTokens()) {
+            String action = tok.nextToken();
+            int i = nameIndex(action.trim());
+            mask |= (1 << i);
+        }
+
+        return impliedMask(mask);
+    }
+
+    private static int nameIndex(String name)
+            throws IllegalArgumentException {
+        for (int i = 0; i < N_NAMES; i++) {
+            if (names[i].equals(name))
+                return i;
+        }
+        final String msg =
+            "Invalid MBeanServerPermission name: \"" + name + "\"";
+        throw new IllegalArgumentException(msg);
+    }
+
+    public int hashCode() {
+        return mask;
+    }
+
+    /**
+     * <p>Checks if this MBeanServerPermission object "implies" the specified
+     * permission.</p>
+     *
+     * <p>More specifically, this method returns true if:</p>
+     *
+     * <ul>
+     * <li> <i>p</i> is an instance of MBeanServerPermission,</li>
+     * <li> <i>p</i>'s target names are a subset of this object's target
+     * names</li>
+     * </ul>
+     *
+     * <p>The <code>createMBeanServer</code> permission implies the
+     * <code>newMBeanServer</code> permission.</p>
+     *
+     * @param p the permission to check against.
+     * @return true if the specified permission is implied by this object,
+     * false if not.
+     */
+    public boolean implies(Permission p) {
+        if (!(p instanceof MBeanServerPermission))
+            return false;
+
+        MBeanServerPermission that = (MBeanServerPermission) p;
+
+        return ((this.mask & that.mask) == that.mask);
+    }
+
+    /**
+     * Checks two MBeanServerPermission objects for equality. Checks that
+     * <i>obj</i> is an MBeanServerPermission, and represents the same
+     * list of allowable actions as this object.
+     * <P>
+     * @param obj the object we are testing for equality with this object.
+     * @return true if the objects are equal.
+     */
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        if (! (obj instanceof MBeanServerPermission))
+            return false;
+
+        MBeanServerPermission that = (MBeanServerPermission) obj;
+
+        return (this.mask == that.mask);
+    }
+
+    public PermissionCollection newPermissionCollection() {
+        return new MBeanServerPermissionCollection();
+    }
+}
+
+/**
+ * Class returned by {@link MBeanServerPermission#newPermissionCollection()}.
+ *
+ * @serial include
+ */
+
+/*
+ * Since every collection of MBSP can be represented by a single MBSP,
+ * that is what our PermissionCollection does.  We need to define a
+ * PermissionCollection because the one inherited from BasicPermission
+ * doesn't know that createMBeanServer implies newMBeanServer.
+ *
+ * Though the serial form is defined, the TCK does not check it.  We do
+ * not require independent implementations to duplicate it.  Even though
+ * PermissionCollection is Serializable, instances of this class will
+ * hardly ever be serialized, and different implementations do not
+ * typically exchange serialized permission collections.
+ *
+ * If we did require that a particular form be respected here, we would
+ * logically also have to require it for
+ * MBeanPermission.newPermissionCollection, which would preclude an
+ * implementation from defining a PermissionCollection there with an
+ * optimized "implies" method.
+ */
+class MBeanServerPermissionCollection extends PermissionCollection {
+    /** @serial Null if no permissions in collection, otherwise a
+        single permission that is the union of all permissions that
+        have been added.  */
+    private MBeanServerPermission collectionPermission;
+
+    private static final long serialVersionUID = -5661980843569388590L;
+
+    public synchronized void add(Permission permission) {
+        if (!(permission instanceof MBeanServerPermission)) {
+            final String msg =
+                "Permission not an MBeanServerPermission: " + permission;
+            throw new IllegalArgumentException(msg);
+        }
+        if (isReadOnly())
+            throw new SecurityException("Read-only permission collection");
+        MBeanServerPermission mbsp = (MBeanServerPermission) permission;
+        if (collectionPermission == null)
+            collectionPermission = mbsp;
+        else if (!collectionPermission.implies(permission)) {
+            int newmask = collectionPermission.mask | mbsp.mask;
+            collectionPermission = new MBeanServerPermission(newmask);
+        }
+    }
+
+    public synchronized boolean implies(Permission permission) {
+        return (collectionPermission != null &&
+                collectionPermission.implies(permission));
+    }
+
+    public synchronized Enumeration<Permission> elements() {
+        Set<Permission> set;
+        if (collectionPermission == null)
+            set = Collections.emptySet();
+        else
+            set = Collections.singleton((Permission) collectionPermission);
+        return Collections.enumeration(set);
+    }
+}

@@ -1,240 +1,234 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.xml.sax.Attributes;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AttList
-/*     */   implements Attributes
-/*     */ {
-/*     */   NamedNodeMap m_attrs;
-/*     */   int m_lastIndex;
-/*     */   
-/*     */   public AttList(NamedNodeMap attrs) {
-/*  53 */     this.m_attrs = attrs;
-/*  54 */     this.m_lastIndex = this.m_attrs.getLength() - 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/*  65 */     return this.m_attrs.getLength();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getURI(int index) {
-/*  78 */     String ns = DOM2Helper.getNamespaceOfNode(this.m_attrs.item(index));
-/*  79 */     if (null == ns)
-/*  80 */       ns = ""; 
-/*  81 */     return ns;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocalName(int index) {
-/*  94 */     return DOM2Helper.getLocalNameOfNode(this.m_attrs.item(index));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getQName(int i) {
-/* 107 */     return ((Attr)this.m_attrs.item(i)).getName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType(int i) {
-/* 120 */     return "CDATA";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(int i) {
-/* 133 */     return ((Attr)this.m_attrs.item(i)).getValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType(String name) {
-/* 146 */     return "CDATA";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType(String uri, String localName) {
-/* 161 */     return "CDATA";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(String name) {
-/* 174 */     Attr attr = (Attr)this.m_attrs.getNamedItem(name);
-/* 175 */     return (null != attr) ? attr
-/* 176 */       .getValue() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(String uri, String localName) {
-/* 190 */     Node a = this.m_attrs.getNamedItemNS(uri, localName);
-/* 191 */     return (a == null) ? null : a.getNodeValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex(String uri, String localPart) {
-/* 205 */     for (int i = this.m_attrs.getLength() - 1; i >= 0; i--) {
-/*     */       
-/* 207 */       Node a = this.m_attrs.item(i);
-/* 208 */       String u = a.getNamespaceURI();
-/* 209 */       if (((u == null) ? (uri == null) : u.equals(uri)) && a
-/*     */         
-/* 211 */         .getLocalName().equals(localPart))
-/* 212 */         return i; 
-/*     */     } 
-/* 214 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex(String qName) {
-/* 226 */     for (int i = this.m_attrs.getLength() - 1; i >= 0; i--) {
-/*     */       
-/* 228 */       Node a = this.m_attrs.item(i);
-/* 229 */       if (a.getNodeName().equals(qName))
-/* 230 */         return i; 
-/*     */     } 
-/* 232 */     return -1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\AttList.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: AttList.java,v 1.2.4.1 2005/09/15 08:15:35 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+
+import org.xml.sax.Attributes;
+
+/**
+ * Wraps a DOM attribute list in a SAX Attributes.
+ * @xsl.usage internal
+ */
+public class AttList implements Attributes
+{
+
+  /** List of attribute nodes          */
+  NamedNodeMap m_attrs;
+
+  /** Index of last attribute node          */
+  int m_lastIndex;
+
+  // JAXP Uses Xerces without setting the namespace processing to ON!
+  // DOM2Helper m_dh = new DOM2Helper();
+
+  /**
+   * Constructor AttList
+   *
+   * @param attrs List of attributes this will contain
+   */
+  public AttList(NamedNodeMap attrs)
+  {
+    m_attrs = attrs;
+    m_lastIndex = m_attrs.getLength() - 1;
+  }
+
+  /**
+   * Get the number of attribute nodes in the list
+   *
+   *
+   * @return number of attribute nodes
+   */
+  public int getLength()
+  {
+    return m_attrs.getLength();
+  }
+
+  /**
+   * Look up an attribute's Namespace URI by index.
+   *
+   * @param index The attribute index (zero-based).
+   * @return The Namespace URI, or the empty string if none
+   *         is available, or null if the index is out of
+   *         range.
+   */
+  public String getURI(int index)
+  {
+    String ns = DOM2Helper.getNamespaceOfNode(((Attr) m_attrs.item(index)));
+    if(null == ns)
+      ns = "";
+    return ns;
+  }
+
+  /**
+   * Look up an attribute's local name by index.
+   *
+   * @param index The attribute index (zero-based).
+   * @return The local name, or the empty string if Namespace
+   *         processing is not being performed, or null
+   *         if the index is out of range.
+   */
+  public String getLocalName(int index)
+  {
+    return DOM2Helper.getLocalNameOfNode(((Attr) m_attrs.item(index)));
+  }
+
+  /**
+   * Look up an attribute's qualified name by index.
+   *
+   *
+   * @param i The attribute index (zero-based).
+   *
+   * @return The attribute's qualified name
+   */
+  public String getQName(int i)
+  {
+    return ((Attr) m_attrs.item(i)).getName();
+  }
+
+  /**
+   * Get the attribute's node type by index
+   *
+   *
+   * @param i The attribute index (zero-based)
+   *
+   * @return the attribute's node type
+   */
+  public String getType(int i)
+  {
+    return "CDATA";  // for the moment
+  }
+
+  /**
+   * Get the attribute's node value by index
+   *
+   *
+   * @param i The attribute index (zero-based)
+   *
+   * @return the attribute's node value
+   */
+  public String getValue(int i)
+  {
+    return ((Attr) m_attrs.item(i)).getValue();
+  }
+
+  /**
+   * Get the attribute's node type by name
+   *
+   *
+   * @param name Attribute name
+   *
+   * @return the attribute's node type
+   */
+  public String getType(String name)
+  {
+    return "CDATA";  // for the moment
+  }
+
+  /**
+   * Look up an attribute's type by Namespace name.
+   *
+   * @param uri The Namespace URI, or the empty String if the
+   *        name has no Namespace URI.
+   * @param localName The local name of the attribute.
+   * @return The attribute type as a string, or null if the
+   *         attribute is not in the list or if Namespace
+   *         processing is not being performed.
+   */
+  public String getType(String uri, String localName)
+  {
+    return "CDATA";  // for the moment
+  }
+
+  /**
+   * Look up an attribute's value by name.
+   *
+   *
+   * @param name The attribute node's name
+   *
+   * @return The attribute node's value
+   */
+  public String getValue(String name)
+  {
+    Attr attr = ((Attr) m_attrs.getNamedItem(name));
+    return (null != attr)
+          ? attr.getValue() : null;
+  }
+
+  /**
+   * Look up an attribute's value by Namespace name.
+   *
+   * @param uri The Namespace URI, or the empty String if the
+   *        name has no Namespace URI.
+   * @param localName The local name of the attribute.
+   * @return The attribute value as a string, or null if the
+   *         attribute is not in the list.
+   */
+  public String getValue(String uri, String localName)
+  {
+                Node a=m_attrs.getNamedItemNS(uri,localName);
+                return (a==null) ? null : a.getNodeValue();
+  }
+
+  /**
+   * Look up the index of an attribute by Namespace name.
+   *
+   * @param uri The Namespace URI, or the empty string if
+   *        the name has no Namespace URI.
+   * @param localPart The attribute's local name.
+   * @return The index of the attribute, or -1 if it does not
+   *         appear in the list.
+   */
+  public int getIndex(String uri, String localPart)
+  {
+    for(int i=m_attrs.getLength()-1;i>=0;--i)
+    {
+      Node a=m_attrs.item(i);
+      String u=a.getNamespaceURI();
+      if( (u==null ? uri==null : u.equals(uri))
+          &&
+          a.getLocalName().equals(localPart) )
+        return i;
+    }
+    return -1;
+  }
+
+  /**
+   * Look up the index of an attribute by raw XML 1.0 name.
+   *
+   * @param qName The qualified (prefixed) name.
+   * @return The index of the attribute, or -1 if it does not
+   *         appear in the list.
+   */
+  public int getIndex(String qName)
+  {
+    for(int i=m_attrs.getLength()-1;i>=0;--i)
+    {
+      Node a=m_attrs.item(i);
+      if(a.getNodeName().equals(qName) )
+        return i;
+    }
+    return -1;
+  }
+}

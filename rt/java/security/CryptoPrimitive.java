@@ -1,89 +1,83 @@
-/*    */ package java.security;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum CryptoPrimitive
-/*    */ {
-/* 37 */   MESSAGE_DIGEST,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 42 */   SECURE_RANDOM,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 47 */   BLOCK_CIPHER,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 52 */   STREAM_CIPHER,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 57 */   MAC,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 62 */   KEY_WRAP,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 67 */   PUBLIC_KEY_ENCRYPTION,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 72 */   SIGNATURE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 77 */   KEY_ENCAPSULATION,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 82 */   KEY_AGREEMENT;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\CryptoPrimitive.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security;
+
+/**
+ * An enumeration of cryptographic primitives.
+ *
+ * @since 1.7
+ */
+public enum CryptoPrimitive {
+    /**
+     * Hash function
+     */
+    MESSAGE_DIGEST,
+
+    /**
+     * Cryptographic random number generator
+     */
+    SECURE_RANDOM,
+
+    /**
+     * Symmetric primitive: block cipher
+     */
+    BLOCK_CIPHER,
+
+    /**
+     * Symmetric primitive: stream cipher
+     */
+    STREAM_CIPHER,
+
+    /**
+     * Symmetric primitive: message authentication code
+     */
+    MAC,
+
+    /**
+     * Symmetric primitive: key wrap
+     */
+    KEY_WRAP,
+
+    /**
+     * Asymmetric primitive: public key encryption
+     */
+    PUBLIC_KEY_ENCRYPTION,
+
+    /**
+     * Asymmetric primitive: signature scheme
+     */
+    SIGNATURE,
+
+    /**
+     * Asymmetric primitive: key encapsulation mechanism
+     */
+    KEY_ENCAPSULATION,
+
+    /**
+     * Asymmetric primitive: key agreement and key distribution
+     */
+    KEY_AGREEMENT
+}

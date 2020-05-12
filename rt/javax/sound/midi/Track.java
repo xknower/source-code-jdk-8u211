@@ -1,280 +1,275 @@
-/*     */ package javax.sound.midi;
-/*     */ 
-/*     */ import com.sun.media.sound.MidiUtils;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.HashSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Track
-/*     */ {
-/*  69 */   private ArrayList eventsList = new ArrayList();
-/*     */ 
-/*     */   
-/*  72 */   private HashSet set = new HashSet();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private MidiEvent eotEvent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Track() {
-/*  83 */     ImmutableEndOfTrack immutableEndOfTrack = new ImmutableEndOfTrack();
-/*  84 */     this.eotEvent = new MidiEvent(immutableEndOfTrack, 0L);
-/*  85 */     this.eventsList.add(this.eotEvent);
-/*  86 */     this.set.add(this.eotEvent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean add(MidiEvent paramMidiEvent) {
-/* 100 */     if (paramMidiEvent == null) {
-/* 101 */       return false;
-/*     */     }
-/* 103 */     synchronized (this.eventsList) {
-/*     */       
-/* 105 */       if (!this.set.contains(paramMidiEvent)) {
-/* 106 */         int i = this.eventsList.size();
-/*     */ 
-/*     */         
-/* 109 */         MidiEvent midiEvent = null;
-/* 110 */         if (i > 0) {
-/* 111 */           midiEvent = this.eventsList.get(i - 1);
-/*     */         }
-/*     */         
-/* 114 */         if (midiEvent != this.eotEvent) {
-/*     */           
-/* 116 */           if (midiEvent != null) {
-/*     */             
-/* 118 */             this.eotEvent.setTick(midiEvent.getTick());
-/*     */           } else {
-/*     */             
-/* 121 */             this.eotEvent.setTick(0L);
-/*     */           } 
-/*     */ 
-/*     */           
-/* 125 */           this.eventsList.add(this.eotEvent);
-/* 126 */           this.set.add(this.eotEvent);
-/* 127 */           i = this.eventsList.size();
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 132 */         if (MidiUtils.isMetaEndOfTrack(paramMidiEvent.getMessage())) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 138 */           if (paramMidiEvent.getTick() > this.eotEvent.getTick()) {
-/* 139 */             this.eotEvent.setTick(paramMidiEvent.getTick());
-/*     */           }
-/* 141 */           return true;
-/*     */         } 
-/*     */ 
-/*     */         
-/* 145 */         this.set.add(paramMidiEvent);
-/*     */ 
-/*     */ 
-/*     */         
-/* 149 */         int j = i;
-/* 150 */         for (; j > 0 && 
-/* 151 */           paramMidiEvent.getTick() < ((MidiEvent)this.eventsList.get(j - 1)).getTick(); j--);
-/*     */ 
-/*     */ 
-/*     */         
-/* 155 */         if (j == i) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 162 */           this.eventsList.set(i - 1, paramMidiEvent);
-/*     */           
-/* 164 */           if (this.eotEvent.getTick() < paramMidiEvent.getTick()) {
-/* 165 */             this.eotEvent.setTick(paramMidiEvent.getTick());
-/*     */           }
-/*     */           
-/* 168 */           this.eventsList.add(this.eotEvent);
-/*     */         } else {
-/* 170 */           this.eventsList.add(j, paramMidiEvent);
-/*     */         } 
-/* 172 */         return true;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 176 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean remove(MidiEvent paramMidiEvent) {
-/* 198 */     synchronized (this.eventsList) {
-/* 199 */       if (this.set.remove(paramMidiEvent)) {
-/* 200 */         int i = this.eventsList.indexOf(paramMidiEvent);
-/* 201 */         if (i >= 0) {
-/* 202 */           this.eventsList.remove(i);
-/* 203 */           return true;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 207 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MidiEvent get(int paramInt) throws ArrayIndexOutOfBoundsException {
-/*     */     try {
-/* 222 */       synchronized (this.eventsList) {
-/* 223 */         return this.eventsList.get(paramInt);
-/*     */       } 
-/* 225 */     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/* 226 */       throw new ArrayIndexOutOfBoundsException(indexOutOfBoundsException.getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 236 */     synchronized (this.eventsList) {
-/* 237 */       return this.eventsList.size();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long ticks() {
-/* 253 */     long l = 0L;
-/* 254 */     synchronized (this.eventsList) {
-/* 255 */       if (this.eventsList.size() > 0) {
-/* 256 */         l = ((MidiEvent)this.eventsList.get(this.eventsList.size() - 1)).getTick();
-/*     */       }
-/*     */     } 
-/* 259 */     return l;
-/*     */   }
-/*     */   
-/*     */   private static class ImmutableEndOfTrack extends MetaMessage {
-/*     */     private ImmutableEndOfTrack() {
-/* 264 */       super(new byte[3]);
-/* 265 */       this.data[0] = -1;
-/* 266 */       this.data[1] = 47;
-/* 267 */       this.data[2] = 0;
-/*     */     }
-/*     */     
-/*     */     public void setMessage(int param1Int1, byte[] param1ArrayOfbyte, int param1Int2) throws InvalidMidiDataException {
-/* 271 */       throw new InvalidMidiDataException("cannot modify end of track message");
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\sound\midi\Track.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.sound.midi;
+
+import java.util.Vector;
+import java.util.ArrayList;
+import java.util.HashSet;
+import com.sun.media.sound.MidiUtils;
+
+/**
+ * A MIDI track is an independent stream of MIDI events (time-stamped MIDI
+ * data) that can be stored along with other tracks in a standard MIDI file.
+ * The MIDI specification allows only 16 channels of MIDI data, but tracks
+ * are a way to get around this limitation.  A MIDI file can contain any number
+ * of tracks, each containing its own stream of up to 16 channels of MIDI data.
+ * <p>
+ * A <code>Track</code> occupies a middle level in the hierarchy of data played
+ * by a <code>{@link Sequencer}</code>: sequencers play sequences, which contain tracks,
+ * which contain MIDI events.  A sequencer may provide controls that mute
+ * or solo individual tracks.
+ * <p>
+ * The timing information and resolution for a track is controlled by and stored
+ * in the sequence containing the track. A given <code>Track</code>
+ * is considered to belong to the particular <code>{@link Sequence}</code> that
+ * maintains its timing. For this reason, a new (empty) track is created by calling the
+ * <code>{@link Sequence#createTrack}</code> method, rather than by directly invoking a
+ * <code>Track</code> constructor.
+ * <p>
+ * The <code>Track</code> class provides methods to edit the track by adding
+ * or removing <code>MidiEvent</code> objects from it.  These operations keep
+ * the event list in the correct time order.  Methods are also
+ * included to obtain the track's size, in terms of either the number of events
+ * it contains or its duration in ticks.
+ *
+ * @see Sequencer#setTrackMute
+ * @see Sequencer#setTrackSolo
+ *
+ * @author Kara Kytle
+ * @author Florian Bomers
+ */
+public class Track {
+
+    // TODO: use arrays for faster access
+
+    // the list containing the events
+    private ArrayList eventsList = new ArrayList();
+
+    // use a hashset to detect duplicate events in add(MidiEvent)
+    private HashSet set = new HashSet();
+
+    private MidiEvent eotEvent;
+
+
+    /**
+     * Package-private constructor.  Constructs a new, empty Track object,
+     * which initially contains one event, the meta-event End of Track.
+     */
+    Track() {
+        // start with the end of track event
+        MetaMessage eot = new ImmutableEndOfTrack();
+        eotEvent = new MidiEvent(eot, 0);
+        eventsList.add(eotEvent);
+        set.add(eotEvent);
+    }
+
+    /**
+     * Adds a new event to the track.  However, if the event is already
+     * contained in the track, it is not added again.  The list of events
+     * is kept in time order, meaning that this event inserted at the
+     * appropriate place in the list, not necessarily at the end.
+     *
+     * @param event the event to add
+     * @return <code>true</code> if the event did not already exist in the
+     * track and was added, otherwise <code>false</code>
+     */
+    public boolean add(MidiEvent event) {
+        if (event == null) {
+            return false;
+        }
+        synchronized(eventsList) {
+
+            if (!set.contains(event)) {
+                int eventsCount = eventsList.size();
+
+                // get the last event
+                MidiEvent lastEvent = null;
+                if (eventsCount > 0) {
+                    lastEvent = (MidiEvent) eventsList.get(eventsCount - 1);
+                }
+                // sanity check that we have a correct end-of-track
+                if (lastEvent != eotEvent) {
+                    // if there is no eot event, add our immutable instance again
+                    if (lastEvent != null) {
+                        // set eotEvent's tick to the last tick of the track
+                        eotEvent.setTick(lastEvent.getTick());
+                    } else {
+                        // if the events list is empty, just set the tick to 0
+                        eotEvent.setTick(0);
+                    }
+                    // we needn't check for a duplicate of eotEvent in "eventsList",
+                    // since then it would appear in the set.
+                    eventsList.add(eotEvent);
+                    set.add(eotEvent);
+                    eventsCount = eventsList.size();
+                }
+
+                // first see if we are trying to add
+                // and endoftrack event.
+                if (MidiUtils.isMetaEndOfTrack(event.getMessage())) {
+                    // since end of track event is useful
+                    // for delays at the end of a track, we want to keep
+                    // the tick value requested here if it is greater
+                    // than the one on the eot we are maintaining.
+                    // Otherwise, we only want a single eot event, so ignore.
+                    if (event.getTick() > eotEvent.getTick()) {
+                        eotEvent.setTick(event.getTick());
+                    }
+                    return true;
+                }
+
+                // prevent duplicates
+                set.add(event);
+
+                // insert event such that events is sorted in increasing
+                // tick order
+                int i = eventsCount;
+                for ( ; i > 0; i--) {
+                    if (event.getTick() >= ((MidiEvent)eventsList.get(i-1)).getTick()) {
+                        break;
+                    }
+                }
+                if (i == eventsCount) {
+                    // we're adding an event after the
+                    // tick value of our eot, so push the eot out.
+                    // Always add at the end for better performance:
+                    // this saves all the checks and arraycopy when inserting
+
+                    // overwrite eot with new event
+                    eventsList.set(eventsCount - 1, event);
+                    // set new time of eot, if necessary
+                    if (eotEvent.getTick() < event.getTick()) {
+                        eotEvent.setTick(event.getTick());
+                    }
+                    // add eot again at the end
+                    eventsList.add(eotEvent);
+                } else {
+                    eventsList.add(i, event);
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Removes the specified event from the track.
+     * @param event the event to remove
+     * @return <code>true</code> if the event existed in the track and was removed,
+     * otherwise <code>false</code>
+     */
+    public boolean remove(MidiEvent event) {
+
+        // this implementation allows removing the EOT event.
+        // pretty bad, but would probably be too risky to
+        // change behavior now, in case someone does tricks like:
+        //
+        // while (track.size() > 0) track.remove(track.get(track.size() - 1));
+
+        // also, would it make sense to adjust the EOT's time
+        // to the last event, if the last non-EOT event is removed?
+        // Or: document that the ticks() length will not be reduced
+        // by deleting events (unless the EOT event is removed)
+        synchronized(eventsList) {
+            if (set.remove(event)) {
+                int i = eventsList.indexOf(event);
+                if (i >= 0) {
+                    eventsList.remove(i);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Obtains the event at the specified index.
+     * @param index the location of the desired event in the event vector
+     * @throws ArrayIndexOutOfBoundsException  if the
+     * specified index is negative or not less than the current size of
+     * this track.
+     * @see #size
+     * @return the event at the specified index
+     */
+    public MidiEvent get(int index) throws ArrayIndexOutOfBoundsException {
+        try {
+            synchronized(eventsList) {
+                return (MidiEvent)eventsList.get(index);
+            }
+        } catch (IndexOutOfBoundsException ioobe) {
+            throw new ArrayIndexOutOfBoundsException(ioobe.getMessage());
+        }
+    }
+
+
+    /**
+     * Obtains the number of events in this track.
+     * @return the size of the track's event vector
+     */
+    public int size() {
+        synchronized(eventsList) {
+            return eventsList.size();
+        }
+    }
+
+
+    /**
+     * Obtains the length of the track, expressed in MIDI ticks.  (The
+     * duration of a tick in seconds is determined by the timing resolution
+     * of the <code>Sequence</code> containing this track, and also by
+     * the tempo of the music as set by the sequencer.)
+     * @return the duration, in ticks
+     * @see Sequence#Sequence(float, int)
+     * @see Sequencer#setTempoInBPM(float)
+     * @see Sequencer#getTickPosition()
+     */
+    public long ticks() {
+        long ret = 0;
+        synchronized (eventsList) {
+            if (eventsList.size() > 0) {
+                ret = ((MidiEvent)eventsList.get(eventsList.size() - 1)).getTick();
+            }
+        }
+        return ret;
+    }
+
+    private static class ImmutableEndOfTrack extends MetaMessage {
+        private ImmutableEndOfTrack() {
+            super(new byte[3]);
+            data[0] = (byte) META;
+            data[1] = MidiUtils.META_END_OF_TRACK_TYPE;
+            data[2] = 0;
+        }
+
+        public void setMessage(int type, byte[] data, int length) throws InvalidMidiDataException {
+            throw new InvalidMidiDataException("cannot modify end of track message");
+        }
+    }
+
+}

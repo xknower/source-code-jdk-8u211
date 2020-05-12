@@ -1,304 +1,334 @@
-/*     */ package javax.naming.spi;
-/*     */ 
-/*     */ import java.util.Hashtable;
-/*     */ import javax.naming.CannotProceedException;
-/*     */ import javax.naming.CompositeName;
-/*     */ import javax.naming.Context;
-/*     */ import javax.naming.Name;
-/*     */ import javax.naming.NamingEnumeration;
-/*     */ import javax.naming.NamingException;
-/*     */ import javax.naming.directory.Attributes;
-/*     */ import javax.naming.directory.DirContext;
-/*     */ import javax.naming.directory.ModificationItem;
-/*     */ import javax.naming.directory.SearchControls;
-/*     */ import javax.naming.directory.SearchResult;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ContinuationDirContext
-/*     */   extends ContinuationContext
-/*     */   implements DirContext
-/*     */ {
-/*     */   ContinuationDirContext(CannotProceedException paramCannotProceedException, Hashtable<?, ?> paramHashtable) {
-/*  55 */     super(paramCannotProceedException, paramHashtable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected DirContextNamePair getTargetContext(Name paramName) throws NamingException {
-/*  61 */     if (this.cpe.getResolvedObj() == null) {
-/*  62 */       throw (NamingException)this.cpe.fillInStackTrace();
-/*     */     }
-/*  64 */     Context context = NamingManager.getContext(this.cpe.getResolvedObj(), this.cpe
-/*  65 */         .getAltName(), this.cpe
-/*  66 */         .getAltNameCtx(), this.env);
-/*     */     
-/*  68 */     if (context == null) {
-/*  69 */       throw (NamingException)this.cpe.fillInStackTrace();
-/*     */     }
-/*  71 */     if (context instanceof DirContext) {
-/*  72 */       return new DirContextNamePair((DirContext)context, paramName);
-/*     */     }
-/*  74 */     if (context instanceof Resolver) {
-/*  75 */       Resolver resolver = (Resolver)context;
-/*  76 */       ResolveResult resolveResult = resolver.resolveToClass(paramName, (Class)DirContext.class);
-/*     */ 
-/*     */       
-/*  79 */       DirContext dirContext = (DirContext)resolveResult.getResolvedObj();
-/*  80 */       return new DirContextNamePair(dirContext, resolveResult.getRemainingName());
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/*  85 */     Object object = context.lookup(paramName);
-/*  86 */     if (object instanceof DirContext) {
-/*  87 */       return new DirContextNamePair((DirContext)object, new CompositeName());
-/*     */     }
-/*     */ 
-/*     */     
-/*  91 */     throw (NamingException)this.cpe.fillInStackTrace();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected DirContextStringPair getTargetContext(String paramString) throws NamingException {
-/*  97 */     if (this.cpe.getResolvedObj() == null) {
-/*  98 */       throw (NamingException)this.cpe.fillInStackTrace();
-/*     */     }
-/* 100 */     Context context = NamingManager.getContext(this.cpe.getResolvedObj(), this.cpe
-/* 101 */         .getAltName(), this.cpe
-/* 102 */         .getAltNameCtx(), this.env);
-/*     */ 
-/*     */     
-/* 105 */     if (context instanceof DirContext) {
-/* 106 */       return new DirContextStringPair((DirContext)context, paramString);
-/*     */     }
-/* 108 */     if (context instanceof Resolver) {
-/* 109 */       Resolver resolver = (Resolver)context;
-/* 110 */       ResolveResult resolveResult = resolver.resolveToClass(paramString, (Class)DirContext.class);
-/*     */ 
-/*     */       
-/* 113 */       DirContext dirContext = (DirContext)resolveResult.getResolvedObj();
-/* 114 */       Name name = resolveResult.getRemainingName();
-/* 115 */       String str = (name != null) ? name.toString() : "";
-/* 116 */       return new DirContextStringPair(dirContext, str);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 121 */     Object object = context.lookup(paramString);
-/* 122 */     if (object instanceof DirContext) {
-/* 123 */       return new DirContextStringPair((DirContext)object, "");
-/*     */     }
-/*     */     
-/* 126 */     throw (NamingException)this.cpe.fillInStackTrace();
-/*     */   }
-/*     */   
-/*     */   public Attributes getAttributes(String paramString) throws NamingException {
-/* 130 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 131 */     return dirContextStringPair.getDirContext().getAttributes(dirContextStringPair.getString());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(String paramString, String[] paramArrayOfString) throws NamingException {
-/* 136 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 137 */     return dirContextStringPair.getDirContext().getAttributes(dirContextStringPair.getString(), paramArrayOfString);
-/*     */   }
-/*     */   
-/*     */   public Attributes getAttributes(Name paramName) throws NamingException {
-/* 141 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 142 */     return dirContextNamePair.getDirContext().getAttributes(dirContextNamePair.getName());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Attributes getAttributes(Name paramName, String[] paramArrayOfString) throws NamingException {
-/* 147 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 148 */     return dirContextNamePair.getDirContext().getAttributes(dirContextNamePair.getName(), paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void modifyAttributes(Name paramName, int paramInt, Attributes paramAttributes) throws NamingException {
-/* 153 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 154 */     dirContextNamePair.getDirContext().modifyAttributes(dirContextNamePair.getName(), paramInt, paramAttributes);
-/*     */   }
-/*     */   
-/*     */   public void modifyAttributes(String paramString, int paramInt, Attributes paramAttributes) throws NamingException {
-/* 158 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 159 */     dirContextStringPair.getDirContext().modifyAttributes(dirContextStringPair.getString(), paramInt, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void modifyAttributes(Name paramName, ModificationItem[] paramArrayOfModificationItem) throws NamingException {
-/* 164 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 165 */     dirContextNamePair.getDirContext().modifyAttributes(dirContextNamePair.getName(), paramArrayOfModificationItem);
-/*     */   }
-/*     */   
-/*     */   public void modifyAttributes(String paramString, ModificationItem[] paramArrayOfModificationItem) throws NamingException {
-/* 169 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 170 */     dirContextStringPair.getDirContext().modifyAttributes(dirContextStringPair.getString(), paramArrayOfModificationItem);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void bind(Name paramName, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 175 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 176 */     dirContextNamePair.getDirContext().bind(dirContextNamePair.getName(), paramObject, paramAttributes);
-/*     */   }
-/*     */   
-/*     */   public void bind(String paramString, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 180 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 181 */     dirContextStringPair.getDirContext().bind(dirContextStringPair.getString(), paramObject, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void rebind(Name paramName, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 186 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 187 */     dirContextNamePair.getDirContext().rebind(dirContextNamePair.getName(), paramObject, paramAttributes);
-/*     */   }
-/*     */   
-/*     */   public void rebind(String paramString, Object paramObject, Attributes paramAttributes) throws NamingException {
-/* 191 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 192 */     dirContextStringPair.getDirContext().rebind(dirContextStringPair.getString(), paramObject, paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext createSubcontext(Name paramName, Attributes paramAttributes) throws NamingException {
-/* 197 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 198 */     return dirContextNamePair.getDirContext().createSubcontext(dirContextNamePair.getName(), paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext createSubcontext(String paramString, Attributes paramAttributes) throws NamingException {
-/* 203 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 204 */     return dirContextStringPair
-/* 205 */       .getDirContext().createSubcontext(dirContextStringPair.getString(), paramAttributes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, Attributes paramAttributes, String[] paramArrayOfString) throws NamingException {
-/* 212 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 213 */     return dirContextNamePair.getDirContext().search(dirContextNamePair.getName(), paramAttributes, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString, Attributes paramAttributes, String[] paramArrayOfString) throws NamingException {
-/* 221 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 222 */     return dirContextStringPair.getDirContext().search(dirContextStringPair.getString(), paramAttributes, paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, Attributes paramAttributes) throws NamingException {
-/* 230 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 231 */     return dirContextNamePair.getDirContext().search(dirContextNamePair.getName(), paramAttributes);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString, Attributes paramAttributes) throws NamingException {
-/* 236 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 237 */     return dirContextStringPair.getDirContext().search(dirContextStringPair.getString(), paramAttributes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, String paramString, SearchControls paramSearchControls) throws NamingException {
-/* 245 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 246 */     return dirContextNamePair.getDirContext().search(dirContextNamePair.getName(), paramString, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString1, String paramString2, SearchControls paramSearchControls) throws NamingException {
-/* 253 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString1);
-/* 254 */     return dirContextStringPair.getDirContext().search(dirContextStringPair.getString(), paramString2, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(Name paramName, String paramString, Object[] paramArrayOfObject, SearchControls paramSearchControls) throws NamingException {
-/* 262 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 263 */     return dirContextNamePair.getDirContext().search(dirContextNamePair.getName(), paramString, paramArrayOfObject, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamingEnumeration<SearchResult> search(String paramString1, String paramString2, Object[] paramArrayOfObject, SearchControls paramSearchControls) throws NamingException {
-/* 272 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString1);
-/* 273 */     return dirContextStringPair.getDirContext().search(dirContextStringPair.getString(), paramString2, paramArrayOfObject, paramSearchControls);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext getSchema(String paramString) throws NamingException {
-/* 278 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 279 */     return dirContextStringPair.getDirContext().getSchema(dirContextStringPair.getString());
-/*     */   }
-/*     */   
-/*     */   public DirContext getSchema(Name paramName) throws NamingException {
-/* 283 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 284 */     return dirContextNamePair.getDirContext().getSchema(dirContextNamePair.getName());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext getSchemaClassDefinition(String paramString) throws NamingException {
-/* 289 */     DirContextStringPair dirContextStringPair = getTargetContext(paramString);
-/* 290 */     return dirContextStringPair.getDirContext().getSchemaClassDefinition(dirContextStringPair.getString());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DirContext getSchemaClassDefinition(Name paramName) throws NamingException {
-/* 295 */     DirContextNamePair dirContextNamePair = getTargetContext(paramName);
-/* 296 */     return dirContextNamePair.getDirContext().getSchemaClassDefinition(dirContextNamePair.getName());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\naming\spi\ContinuationDirContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.naming.spi;
+
+import java.util.Hashtable;
+
+import javax.naming.Name;
+import javax.naming.NamingEnumeration;
+import javax.naming.CompositeName;
+import javax.naming.NamingException;
+import javax.naming.CannotProceedException;
+import javax.naming.OperationNotSupportedException;
+import javax.naming.Context;
+
+import javax.naming.directory.DirContext;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.directory.ModificationItem;
+
+/**
+  * This class is the continuation context for invoking DirContext methods.
+  *
+  * @author Rosanna Lee
+  * @author Scott Seligman
+  * @since 1.3
+  */
+
+class ContinuationDirContext extends ContinuationContext implements DirContext {
+
+    ContinuationDirContext(CannotProceedException cpe, Hashtable<?,?> env) {
+        super(cpe, env);
+    }
+
+    protected DirContextNamePair getTargetContext(Name name)
+            throws NamingException {
+
+        if (cpe.getResolvedObj() == null)
+            throw (NamingException)cpe.fillInStackTrace();
+
+        Context ctx = NamingManager.getContext(cpe.getResolvedObj(),
+                                               cpe.getAltName(),
+                                               cpe.getAltNameCtx(),
+                                               env);
+        if (ctx == null)
+            throw (NamingException)cpe.fillInStackTrace();
+
+        if (ctx instanceof DirContext)
+            return new DirContextNamePair((DirContext)ctx, name);
+
+        if (ctx instanceof Resolver) {
+            Resolver res = (Resolver)ctx;
+            ResolveResult rr = res.resolveToClass(name, DirContext.class);
+
+            // Reached a DirContext; return result.
+            DirContext dctx = (DirContext)rr.getResolvedObj();
+            return (new DirContextNamePair(dctx, rr.getRemainingName()));
+        }
+
+        // Resolve all the way using lookup().  This may allow the operation
+        // to succeed if it doesn't require the penultimate context.
+        Object ultimate = ctx.lookup(name);
+        if (ultimate instanceof DirContext) {
+            return (new DirContextNamePair((DirContext)ultimate,
+                                          new CompositeName()));
+        }
+
+        throw (NamingException)cpe.fillInStackTrace();
+    }
+
+    protected DirContextStringPair getTargetContext(String name)
+            throws NamingException {
+
+        if (cpe.getResolvedObj() == null)
+            throw (NamingException)cpe.fillInStackTrace();
+
+        Context ctx = NamingManager.getContext(cpe.getResolvedObj(),
+                                               cpe.getAltName(),
+                                               cpe.getAltNameCtx(),
+                                               env);
+
+        if (ctx instanceof DirContext)
+            return new DirContextStringPair((DirContext)ctx, name);
+
+        if (ctx instanceof Resolver) {
+            Resolver res = (Resolver)ctx;
+            ResolveResult rr = res.resolveToClass(name, DirContext.class);
+
+            // Reached a DirContext; return result.
+            DirContext dctx = (DirContext)rr.getResolvedObj();
+            Name tmp = rr.getRemainingName();
+            String remains = (tmp != null) ? tmp.toString() : "";
+            return (new DirContextStringPair(dctx, remains));
+        }
+
+        // Resolve all the way using lookup().  This may allow the operation
+        // to succeed if it doesn't require the penultimate context.
+        Object ultimate = ctx.lookup(name);
+        if (ultimate instanceof DirContext) {
+            return (new DirContextStringPair((DirContext)ultimate, ""));
+        }
+
+        throw (NamingException)cpe.fillInStackTrace();
+    }
+
+    public Attributes getAttributes(String name) throws NamingException {
+        DirContextStringPair res = getTargetContext(name);
+        return res.getDirContext().getAttributes(res.getString());
+    }
+
+    public Attributes getAttributes(String name, String[] attrIds)
+        throws NamingException {
+            DirContextStringPair res = getTargetContext(name);
+            return res.getDirContext().getAttributes(res.getString(), attrIds);
+        }
+
+    public Attributes getAttributes(Name name) throws NamingException {
+        DirContextNamePair res = getTargetContext(name);
+        return res.getDirContext().getAttributes(res.getName());
+    }
+
+    public Attributes getAttributes(Name name, String[] attrIds)
+        throws NamingException {
+            DirContextNamePair res = getTargetContext(name);
+            return res.getDirContext().getAttributes(res.getName(), attrIds);
+        }
+
+    public void modifyAttributes(Name name, int mod_op, Attributes attrs)
+        throws NamingException  {
+            DirContextNamePair res = getTargetContext(name);
+            res.getDirContext().modifyAttributes(res.getName(), mod_op, attrs);
+        }
+    public void modifyAttributes(String name, int mod_op, Attributes attrs)
+        throws NamingException  {
+            DirContextStringPair res = getTargetContext(name);
+            res.getDirContext().modifyAttributes(res.getString(), mod_op, attrs);
+        }
+
+    public void modifyAttributes(Name name, ModificationItem[] mods)
+        throws NamingException  {
+            DirContextNamePair res = getTargetContext(name);
+            res.getDirContext().modifyAttributes(res.getName(), mods);
+        }
+    public void modifyAttributes(String name, ModificationItem[] mods)
+        throws NamingException  {
+            DirContextStringPair res = getTargetContext(name);
+            res.getDirContext().modifyAttributes(res.getString(), mods);
+        }
+
+    public void bind(Name name, Object obj, Attributes attrs)
+        throws NamingException  {
+            DirContextNamePair res = getTargetContext(name);
+            res.getDirContext().bind(res.getName(), obj, attrs);
+        }
+    public void bind(String name, Object obj, Attributes attrs)
+        throws NamingException  {
+            DirContextStringPair res = getTargetContext(name);
+            res.getDirContext().bind(res.getString(), obj, attrs);
+        }
+
+    public void rebind(Name name, Object obj, Attributes attrs)
+                throws NamingException {
+            DirContextNamePair res = getTargetContext(name);
+            res.getDirContext().rebind(res.getName(), obj, attrs);
+        }
+    public void rebind(String name, Object obj, Attributes attrs)
+                throws NamingException {
+            DirContextStringPair res = getTargetContext(name);
+            res.getDirContext().rebind(res.getString(), obj, attrs);
+        }
+
+    public DirContext createSubcontext(Name name, Attributes attrs)
+                throws NamingException  {
+            DirContextNamePair res = getTargetContext(name);
+            return res.getDirContext().createSubcontext(res.getName(), attrs);
+        }
+
+    public DirContext createSubcontext(String name, Attributes attrs)
+                throws NamingException  {
+            DirContextStringPair res = getTargetContext(name);
+            return
+                res.getDirContext().createSubcontext(res.getString(), attrs);
+        }
+
+    public NamingEnumeration<SearchResult> search(Name name,
+                                    Attributes matchingAttributes,
+                                    String[] attributesToReturn)
+        throws NamingException  {
+            DirContextNamePair res = getTargetContext(name);
+            return res.getDirContext().search(res.getName(), matchingAttributes,
+                                             attributesToReturn);
+        }
+
+    public NamingEnumeration<SearchResult> search(String name,
+                                    Attributes matchingAttributes,
+                                    String[] attributesToReturn)
+        throws NamingException  {
+            DirContextStringPair res = getTargetContext(name);
+            return res.getDirContext().search(res.getString(),
+                                             matchingAttributes,
+                                             attributesToReturn);
+        }
+
+    public NamingEnumeration<SearchResult> search(Name name,
+                                    Attributes matchingAttributes)
+        throws NamingException  {
+            DirContextNamePair res = getTargetContext(name);
+            return res.getDirContext().search(res.getName(), matchingAttributes);
+        }
+    public NamingEnumeration<SearchResult> search(String name,
+                                    Attributes matchingAttributes)
+        throws NamingException  {
+            DirContextStringPair res = getTargetContext(name);
+            return res.getDirContext().search(res.getString(),
+                                             matchingAttributes);
+        }
+
+    public NamingEnumeration<SearchResult> search(Name name,
+                                    String filter,
+                                    SearchControls cons)
+        throws NamingException {
+            DirContextNamePair res = getTargetContext(name);
+            return res.getDirContext().search(res.getName(), filter, cons);
+        }
+
+    public NamingEnumeration<SearchResult> search(String name,
+                                    String filter,
+                                    SearchControls cons)
+        throws NamingException {
+            DirContextStringPair res = getTargetContext(name);
+            return res.getDirContext().search(res.getString(), filter, cons);
+        }
+
+    public NamingEnumeration<SearchResult> search(Name name,
+                                    String filterExpr,
+                                    Object[] args,
+                                    SearchControls cons)
+        throws NamingException {
+            DirContextNamePair res = getTargetContext(name);
+            return res.getDirContext().search(res.getName(), filterExpr, args,
+                                             cons);
+        }
+
+    public NamingEnumeration<SearchResult> search(String name,
+                                    String filterExpr,
+                                    Object[] args,
+                                    SearchControls cons)
+        throws NamingException {
+            DirContextStringPair res = getTargetContext(name);
+            return res.getDirContext().search(res.getString(), filterExpr, args,
+                                             cons);
+        }
+
+    public DirContext getSchema(String name) throws NamingException {
+        DirContextStringPair res = getTargetContext(name);
+        return res.getDirContext().getSchema(res.getString());
+    }
+
+    public DirContext getSchema(Name name) throws NamingException  {
+        DirContextNamePair res = getTargetContext(name);
+        return res.getDirContext().getSchema(res.getName());
+    }
+
+    public DirContext getSchemaClassDefinition(String name)
+            throws NamingException  {
+        DirContextStringPair res = getTargetContext(name);
+        return res.getDirContext().getSchemaClassDefinition(res.getString());
+    }
+
+    public DirContext getSchemaClassDefinition(Name name)
+            throws NamingException  {
+        DirContextNamePair res = getTargetContext(name);
+        return res.getDirContext().getSchemaClassDefinition(res.getName());
+    }
+}
+
+class DirContextNamePair {
+        DirContext ctx;
+        Name name;
+
+        DirContextNamePair(DirContext ctx, Name name) {
+            this.ctx = ctx;
+            this.name = name;
+        }
+
+        DirContext getDirContext() {
+            return ctx;
+        }
+
+        Name getName() {
+            return name;
+        }
+}
+
+class DirContextStringPair {
+        DirContext ctx;
+        String str;
+
+        DirContextStringPair(DirContext ctx, String str) {
+            this.ctx = ctx;
+            this.str = str;
+        }
+
+        DirContext getDirContext() {
+            return ctx;
+        }
+
+        String getString() {
+            return str;
+        }
+}

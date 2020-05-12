@@ -1,124 +1,119 @@
-/*     */ package java.util.logging;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.List;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class Logging
-/*     */   implements LoggingMXBean
-/*     */ {
-/*  49 */   private static LogManager logManager = LogManager.getLogManager();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<String> getLoggerNames() {
-/*  58 */     Enumeration<String> enumeration = logManager.getLoggerNames();
-/*  59 */     ArrayList<String> arrayList = new ArrayList();
-/*     */     
-/*  61 */     while (enumeration.hasMoreElements()) {
-/*  62 */       arrayList.add(enumeration.nextElement());
-/*     */     }
-/*  64 */     return arrayList;
-/*     */   }
-/*     */   
-/*  67 */   private static String EMPTY_STRING = "";
-/*     */   public String getLoggerLevel(String paramString) {
-/*  69 */     Logger logger = logManager.getLogger(paramString);
-/*  70 */     if (logger == null) {
-/*  71 */       return null;
-/*     */     }
-/*     */     
-/*  74 */     Level level = logger.getLevel();
-/*  75 */     if (level == null) {
-/*  76 */       return EMPTY_STRING;
-/*     */     }
-/*  78 */     return level.getLevelName();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setLoggerLevel(String paramString1, String paramString2) {
-/*  83 */     if (paramString1 == null) {
-/*  84 */       throw new NullPointerException("loggerName is null");
-/*     */     }
-/*     */     
-/*  87 */     Logger logger = logManager.getLogger(paramString1);
-/*  88 */     if (logger == null) {
-/*  89 */       throw new IllegalArgumentException("Logger " + paramString1 + "does not exist");
-/*     */     }
-/*     */ 
-/*     */     
-/*  93 */     Level level = null;
-/*  94 */     if (paramString2 != null) {
-/*     */       
-/*  96 */       level = Level.findLevel(paramString2);
-/*  97 */       if (level == null) {
-/*  98 */         throw new IllegalArgumentException("Unknown level \"" + paramString2 + "\"");
-/*     */       }
-/*     */     } 
-/*     */     
-/* 102 */     logger.setLevel(level);
-/*     */   }
-/*     */   
-/*     */   public String getParentLoggerName(String paramString) {
-/* 106 */     Logger logger1 = logManager.getLogger(paramString);
-/* 107 */     if (logger1 == null) {
-/* 108 */       return null;
-/*     */     }
-/*     */     
-/* 111 */     Logger logger2 = logger1.getParent();
-/* 112 */     if (logger2 == null)
-/*     */     {
-/* 114 */       return EMPTY_STRING;
-/*     */     }
-/* 116 */     return logger2.getName();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\logging\Logging.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.logging;
+
+import java.util.Enumeration;
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * Logging is the implementation class of LoggingMXBean.
+ *
+ * The <tt>LoggingMXBean</tt> interface provides a standard
+ * method for management access to the individual
+ * {@code Logger} objects available at runtime.
+ *
+ * @author Ron Mann
+ * @author Mandy Chung
+ * @since 1.5
+ *
+ * @see javax.management
+ * @see Logger
+ * @see LogManager
+ */
+class Logging implements LoggingMXBean {
+
+    private static LogManager logManager = LogManager.getLogManager();
+
+    /** Constructor of Logging which is the implementation class
+     *  of LoggingMXBean.
+     */
+    Logging() {
+    }
+
+    public List<String> getLoggerNames() {
+        Enumeration<String> loggers = logManager.getLoggerNames();
+        ArrayList<String> array = new ArrayList<>();
+
+        for (; loggers.hasMoreElements();) {
+            array.add(loggers.nextElement());
+        }
+        return array;
+    }
+
+    private static String EMPTY_STRING = "";
+    public String getLoggerLevel(String loggerName) {
+        Logger l = logManager.getLogger(loggerName);
+        if (l == null) {
+            return null;
+        }
+
+        Level level = l.getLevel();
+        if (level == null) {
+            return EMPTY_STRING;
+        } else {
+            return level.getLevelName();
+        }
+    }
+
+    public void setLoggerLevel(String loggerName, String levelName) {
+        if (loggerName == null) {
+            throw new NullPointerException("loggerName is null");
+        }
+
+        Logger logger = logManager.getLogger(loggerName);
+        if (logger == null) {
+            throw new IllegalArgumentException("Logger " + loggerName +
+                "does not exist");
+        }
+
+        Level level = null;
+        if (levelName != null) {
+            // parse will throw IAE if logLevel is invalid
+            level = Level.findLevel(levelName);
+            if (level == null) {
+                throw new IllegalArgumentException("Unknown level \"" + levelName + "\"");
+            }
+        }
+
+        logger.setLevel(level);
+    }
+
+    public String getParentLoggerName( String loggerName ) {
+        Logger l = logManager.getLogger( loggerName );
+        if (l == null) {
+            return null;
+        }
+
+        Logger p = l.getParent();
+        if (p == null) {
+            // root logger
+            return EMPTY_STRING;
+        } else {
+            return p.getName();
+        }
+    }
+}

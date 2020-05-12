@@ -1,13 +1,52 @@
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
 import java.util.Iterator;
 
-public interface ContactInfoList {
-  Iterator iterator();
+/**
+ * <p> <code>ContactInfoList</code> contains one or more
+ * {@link com.sun.corba.se.pept.transport.ContactInfo ContactInfo}.
+ *
+ * @author Harold Carr
+ */
+public interface ContactInfoList
+{
+    /**
+     * Used to get a
+     * {@link com.sun.corba.se.pept.transport.ContactInfoListIterator
+     * ContactInfoListIterator} to retrieve individual
+     * {@link com.sun.corba.se.pept.transport.ContactInfo ContactInfo}
+     * from the list.
+     *
+     * @return A
+     * {@link com.sun.corba.se.pept.transport.ContactInfoListIterator
+     * ContactInfoListIterator}.
+     */
+    public Iterator iterator();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\ContactInfoList.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

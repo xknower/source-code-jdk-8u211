@@ -1,186 +1,181 @@
-/*     */ package com.sun.org.apache.xpath.internal.patterns;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
-/*     */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*     */ import com.sun.org.apache.xpath.internal.axes.WalkerFactory;
-/*     */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ContextMatchStepPattern
-/*     */   extends StepPattern
-/*     */ {
-/*     */   static final long serialVersionUID = -1888092779313211942L;
-/*     */   
-/*     */   public ContextMatchStepPattern(int axis, int paxis) {
-/*  45 */     super(-1, axis, paxis);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/*  66 */     if (xctxt.getIteratorRoot() == xctxt.getCurrentNode()) {
-/*  67 */       return getStaticScore();
-/*     */     }
-/*  69 */     this; return SCORE_NONE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XObject executeRelativePathPattern(XPathContext xctxt, StepPattern prevStep) throws TransformerException {
-/*  92 */     XObject score = NodeTest.SCORE_NONE;
-/*  93 */     int context = xctxt.getCurrentNode();
-/*  94 */     DTM dtm = xctxt.getDTM(context);
-/*     */     
-/*  96 */     if (null != dtm) {
-/*     */       
-/*  98 */       int predContext = xctxt.getCurrentNode();
-/*     */ 
-/*     */       
-/* 101 */       int axis = this.m_axis;
-/*     */       
-/* 103 */       boolean needToTraverseAttrs = WalkerFactory.isDownwardAxisOfMany(axis);
-/* 104 */       boolean iterRootIsAttr = (dtm.getNodeType(xctxt.getIteratorRoot()) == 2);
-/*     */ 
-/*     */       
-/* 107 */       if (11 == axis && iterRootIsAttr)
-/*     */       {
-/* 109 */         axis = 15;
-/*     */       }
-/*     */       
-/* 112 */       DTMAxisTraverser traverser = dtm.getAxisTraverser(axis);
-/*     */       int relative;
-/* 114 */       for (relative = traverser.first(context); -1 != relative; 
-/* 115 */         relative = traverser.next(context, relative)) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 119 */         try { xctxt.pushCurrentNode(relative);
-/*     */           
-/* 121 */           score = execute(xctxt);
-/*     */           
-/* 123 */           if (score != NodeTest.SCORE_NONE) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 127 */             if (executePredicates(xctxt, dtm, context)) {
-/* 128 */               return score;
-/*     */             }
-/* 130 */             score = NodeTest.SCORE_NONE;
-/*     */           } 
-/*     */           
-/* 133 */           if (needToTraverseAttrs && iterRootIsAttr && 1 == dtm
-/* 134 */             .getNodeType(relative)) {
-/*     */             
-/* 136 */             int xaxis = 2;
-/* 137 */             for (int i = 0; i < 2; i++) {
-/*     */               
-/* 139 */               DTMAxisTraverser atraverser = dtm.getAxisTraverser(xaxis);
-/*     */               
-/* 141 */               int arelative = atraverser.first(relative);
-/* 142 */               for (; -1 != arelative; 
-/* 143 */                 arelative = atraverser.next(relative, arelative)) {
-/*     */ 
-/*     */ 
-/*     */                 
-/* 147 */                 try { xctxt.pushCurrentNode(arelative);
-/*     */                   
-/* 149 */                   score = execute(xctxt);
-/*     */                   
-/* 151 */                   if (score != NodeTest.SCORE_NONE)
-/*     */                   {
-/*     */ 
-/*     */ 
-/*     */                     
-/* 156 */                     if (score != NodeTest.SCORE_NONE) {
-/* 157 */                       return score;
-/*     */                     }
-/*     */                   }
-/*     */ 
-/*     */                   
-/* 162 */                   xctxt.popCurrentNode(); } finally { xctxt.popCurrentNode(); }
-/*     */               
-/*     */               } 
-/* 165 */               xaxis = 9;
-/*     */             } 
-/*     */           } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 172 */           xctxt.popCurrentNode(); } finally { xctxt.popCurrentNode(); }
-/*     */       
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 178 */     return score;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\patterns\ContextMatchStepPattern.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ContextMatchStepPattern.java,v 1.2.4.2 2005/09/15 00:21:15 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.patterns;
+
+import com.sun.org.apache.xml.internal.dtm.Axis;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisTraverser;
+import com.sun.org.apache.xml.internal.dtm.DTMFilter;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.axes.WalkerFactory;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+/**
+ * Special context node pattern matcher.
+ */
+public class ContextMatchStepPattern extends StepPattern
+{
+    static final long serialVersionUID = -1888092779313211942L;
+
+  /**
+   * Construct a ContextMatchStepPattern.
+   *
+   */
+  public ContextMatchStepPattern(int axis, int paxis)
+  {
+    super(DTMFilter.SHOW_ALL, axis, paxis);
+  }
+
+  /**
+   * Execute this pattern step, including predicates.
+   *
+   *
+   * @param xctxt XPath runtime context.
+   *
+   * @return {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NODETEST},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NONE},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NSWILD},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_QNAME}, or
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_OTHER}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt)
+          throws javax.xml.transform.TransformerException
+  {
+
+    if (xctxt.getIteratorRoot() == xctxt.getCurrentNode())
+      return getStaticScore();
+    else
+      return this.SCORE_NONE;
+  }
+
+  /**
+   * Execute the match pattern step relative to another step.
+   *
+   *
+   * @param xctxt The XPath runtime context.
+   * NEEDSDOC @param prevStep
+   *
+   * @return {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NODETEST},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NONE},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_NSWILD},
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_QNAME}, or
+   *         {@link com.sun.org.apache.xpath.internal.patterns.NodeTest#SCORE_OTHER}.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject executeRelativePathPattern(
+          XPathContext xctxt, StepPattern prevStep)
+            throws javax.xml.transform.TransformerException
+  {
+
+    XObject score = NodeTest.SCORE_NONE;
+    int context = xctxt.getCurrentNode();
+    DTM dtm = xctxt.getDTM(context);
+
+    if (null != dtm)
+    {
+      int predContext = xctxt.getCurrentNode();
+      DTMAxisTraverser traverser;
+
+      int axis = m_axis;
+
+      boolean needToTraverseAttrs = WalkerFactory.isDownwardAxisOfMany(axis);
+      boolean iterRootIsAttr = (dtm.getNodeType(xctxt.getIteratorRoot())
+                                 == DTM.ATTRIBUTE_NODE);
+
+      if((Axis.PRECEDING == axis) && iterRootIsAttr)
+      {
+        axis = Axis.PRECEDINGANDANCESTOR;
+      }
+
+      traverser = dtm.getAxisTraverser(axis);
+
+      for (int relative = traverser.first(context); DTM.NULL != relative;
+              relative = traverser.next(context, relative))
+      {
+        try
+        {
+          xctxt.pushCurrentNode(relative);
+
+          score = execute(xctxt);
+
+          if (score != NodeTest.SCORE_NONE)
+          {
+              //score = executePredicates( xctxt, prevStep, SCORE_OTHER,
+              //       predContext, relative);
+              if (executePredicates(xctxt, dtm, context))
+                  return score;
+
+              score = NodeTest.SCORE_NONE;
+          }
+
+          if(needToTraverseAttrs && iterRootIsAttr
+             && (DTM.ELEMENT_NODE == dtm.getNodeType(relative)))
+          {
+            int xaxis = Axis.ATTRIBUTE;
+            for (int i = 0; i < 2; i++)
+            {
+              DTMAxisTraverser atraverser = dtm.getAxisTraverser(xaxis);
+
+              for (int arelative = atraverser.first(relative);
+                      DTM.NULL != arelative;
+                      arelative = atraverser.next(relative, arelative))
+              {
+                try
+                {
+                  xctxt.pushCurrentNode(arelative);
+
+                  score = execute(xctxt);
+
+                  if (score != NodeTest.SCORE_NONE)
+                  {
+                      //score = executePredicates( xctxt, prevStep, SCORE_OTHER,
+                      //       predContext, arelative);
+
+                    if (score != NodeTest.SCORE_NONE)
+                      return score;
+                  }
+                }
+                finally
+                {
+                  xctxt.popCurrentNode();
+                }
+              }
+              xaxis = Axis.NAMESPACE;
+            }
+          }
+
+        }
+        finally
+        {
+          xctxt.popCurrentNode();
+        }
+      }
+
+    }
+
+    return score;
+  }
+
+}

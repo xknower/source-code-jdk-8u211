@@ -1,346 +1,346 @@
-/*     */ package com.sun.jmx.remote.security;
-/*     */ 
-/*     */ import com.sun.jmx.remote.util.ClassLogger;
-/*     */ import com.sun.jmx.remote.util.EnvHelp;
-/*     */ import java.io.IOException;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import javax.management.remote.JMXAuthenticator;
-/*     */ import javax.security.auth.AuthPermission;
-/*     */ import javax.security.auth.Subject;
-/*     */ import javax.security.auth.callback.Callback;
-/*     */ import javax.security.auth.callback.CallbackHandler;
-/*     */ import javax.security.auth.callback.NameCallback;
-/*     */ import javax.security.auth.callback.PasswordCallback;
-/*     */ import javax.security.auth.callback.UnsupportedCallbackException;
-/*     */ import javax.security.auth.login.AppConfigurationEntry;
-/*     */ import javax.security.auth.login.Configuration;
-/*     */ import javax.security.auth.login.LoginContext;
-/*     */ import javax.security.auth.login.LoginException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class JMXPluggableAuthenticator
-/*     */   implements JMXAuthenticator
-/*     */ {
-/*     */   private LoginContext loginContext;
-/*     */   private String username;
-/*     */   private String password;
-/*     */   private static final String LOGIN_CONFIG_PROP = "jmx.remote.x.login.config";
-/*     */   private static final String LOGIN_CONFIG_NAME = "JMXPluggableAuthenticator";
-/*     */   private static final String PASSWORD_FILE_PROP = "jmx.remote.x.password.file";
-/*     */   
-/*     */   public JMXPluggableAuthenticator(Map<?, ?> paramMap) {
-/*  92 */     String str1 = null;
-/*  93 */     String str2 = null;
-/*     */     
-/*  95 */     if (paramMap != null) {
-/*  96 */       str1 = (String)paramMap.get("jmx.remote.x.login.config");
-/*  97 */       str2 = (String)paramMap.get("jmx.remote.x.password.file");
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 102 */       if (str1 != null) {
-/*     */         
-/* 104 */         this.loginContext = new LoginContext(str1, new JMXCallbackHandler());
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */         
-/* 109 */         SecurityManager securityManager = System.getSecurityManager();
-/* 110 */         if (securityManager != null) {
-/* 111 */           securityManager.checkPermission(new AuthPermission("createLoginContext.JMXPluggableAuthenticator"));
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 116 */         final String pf = str2;
-/*     */         try {
-/* 118 */           this.loginContext = AccessController.<LoginContext>doPrivileged(new PrivilegedExceptionAction<LoginContext>()
-/*     */               {
-/*     */                 public LoginContext run() throws LoginException {
-/* 121 */                   return new LoginContext("JMXPluggableAuthenticator", null, new JMXPluggableAuthenticator.JMXCallbackHandler(), new JMXPluggableAuthenticator.FileLoginConfig(pf));
-/*     */                 }
-/*     */               });
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         }
-/* 128 */         catch (PrivilegedActionException privilegedActionException) {
-/* 129 */           throw (LoginException)privilegedActionException.getException();
-/*     */         }
-/*     */       
-/*     */       } 
-/* 133 */     } catch (LoginException loginException) {
-/* 134 */       authenticationFailure("authenticate", loginException);
-/*     */     }
-/* 136 */     catch (SecurityException securityException) {
-/* 137 */       authenticationFailure("authenticate", securityException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Subject authenticate(Object paramObject) {
-/* 160 */     if (!(paramObject instanceof String[])) {
-/*     */       
-/* 162 */       if (paramObject == null) {
-/* 163 */         authenticationFailure("authenticate", "Credentials required");
-/*     */       }
-/*     */ 
-/*     */       
-/* 167 */       String str = "Credentials should be String[] instead of " + paramObject.getClass().getName();
-/* 168 */       authenticationFailure("authenticate", str);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 172 */     String[] arrayOfString = (String[])paramObject;
-/* 173 */     if (arrayOfString.length != 2) {
-/* 174 */       String str = "Credentials should have 2 elements not " + arrayOfString.length;
-/*     */ 
-/*     */       
-/* 177 */       authenticationFailure("authenticate", str);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 182 */     this.username = arrayOfString[0];
-/* 183 */     this.password = arrayOfString[1];
-/* 184 */     if (this.username == null || this.password == null)
-/*     */     {
-/* 186 */       authenticationFailure("authenticate", "Username or password is null");
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 191 */       this.loginContext.login();
-/* 192 */       final Subject subject = this.loginContext.getSubject();
-/* 193 */       AccessController.doPrivileged(new PrivilegedAction<Void>() {
-/*     */             public Void run() {
-/* 195 */               subject.setReadOnly();
-/* 196 */               return null;
-/*     */             }
-/*     */           });
-/*     */       
-/* 200 */       return subject;
-/*     */     }
-/* 202 */     catch (LoginException loginException) {
-/* 203 */       authenticationFailure("authenticate", loginException);
-/*     */       
-/* 205 */       return null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static void authenticationFailure(String paramString1, String paramString2) throws SecurityException {
-/* 210 */     String str = "Authentication failed! " + paramString2;
-/* 211 */     SecurityException securityException = new SecurityException(str);
-/* 212 */     logException(paramString1, str, securityException);
-/* 213 */     throw securityException;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void authenticationFailure(String paramString, Exception paramException) throws SecurityException {
-/*     */     String str;
-/*     */     SecurityException securityException;
-/* 221 */     if (paramException instanceof SecurityException) {
-/* 222 */       str = paramException.getMessage();
-/* 223 */       securityException = (SecurityException)paramException;
-/*     */     } else {
-/* 225 */       str = "Authentication failed! " + paramException.getMessage();
-/* 226 */       SecurityException securityException1 = new SecurityException(str);
-/* 227 */       EnvHelp.initCause(securityException1, paramException);
-/* 228 */       securityException = securityException1;
-/*     */     } 
-/* 230 */     logException(paramString, str, securityException);
-/* 231 */     throw securityException;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void logException(String paramString1, String paramString2, Exception paramException) {
-/* 237 */     if (logger.traceOn()) {
-/* 238 */       logger.trace(paramString1, paramString2);
-/*     */     }
-/* 240 */     if (logger.debugOn()) {
-/* 241 */       logger.debug(paramString1, paramException);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 253 */   private static final ClassLogger logger = new ClassLogger("javax.management.remote.misc", "JMXPluggableAuthenticator");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final class JMXCallbackHandler
-/*     */     implements CallbackHandler
-/*     */   {
-/*     */     private JMXCallbackHandler() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void handle(Callback[] param1ArrayOfCallback) throws IOException, UnsupportedCallbackException {
-/* 270 */       for (byte b = 0; b < param1ArrayOfCallback.length; b++) {
-/* 271 */         if (param1ArrayOfCallback[b] instanceof NameCallback) {
-/* 272 */           ((NameCallback)param1ArrayOfCallback[b]).setName(JMXPluggableAuthenticator.this.username);
-/*     */         }
-/* 274 */         else if (param1ArrayOfCallback[b] instanceof PasswordCallback) {
-/* 275 */           ((PasswordCallback)param1ArrayOfCallback[b])
-/* 276 */             .setPassword(JMXPluggableAuthenticator.this.password.toCharArray());
-/*     */         } else {
-/*     */           
-/* 279 */           throw new UnsupportedCallbackException(param1ArrayOfCallback[b], "Unrecognized Callback");
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class FileLoginConfig
-/*     */     extends Configuration
-/*     */   {
-/*     */     private AppConfigurationEntry[] entries;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 301 */     private static final String FILE_LOGIN_MODULE = FileLoginModule.class
-/* 302 */       .getName();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private static final String PASSWORD_FILE_OPTION = "passwordFile";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public FileLoginConfig(String param1String) {
-/*     */       Map<?, ?> map;
-/* 316 */       if (param1String != null) {
-/* 317 */         map = new HashMap<>(1);
-/* 318 */         map.put("passwordFile", param1String);
-/*     */       } else {
-/* 320 */         map = Collections.emptyMap();
-/*     */       } 
-/*     */       
-/* 323 */       this.entries = new AppConfigurationEntry[] { new AppConfigurationEntry(FILE_LOGIN_MODULE, AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, (Map)map) };
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public AppConfigurationEntry[] getAppConfigurationEntry(String param1String) {
-/* 335 */       return param1String.equals("JMXPluggableAuthenticator") ? this.entries : null;
-/*     */     }
-/*     */     
-/*     */     public void refresh() {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remote\security\JMXPluggableAuthenticator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.security;
+
+import java.io.IOException;
+import java.security.AccessController;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import javax.management.remote.JMXPrincipal;
+import javax.management.remote.JMXAuthenticator;
+import javax.security.auth.AuthPermission;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.*;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import javax.security.auth.spi.LoginModule;
+import com.sun.jmx.remote.util.ClassLogger;
+import com.sun.jmx.remote.util.EnvHelp;
+
+/**
+ * <p>This class represents a
+ * <a href="{@docRoot}/../guide/security/jaas/JAASRefGuide.html">JAAS</a>
+ * based implementation of the {@link JMXAuthenticator} interface.</p>
+ *
+ * <p>Authentication is performed by passing the supplied user's credentials
+ * to one or more authentication mechanisms ({@link LoginModule}) for
+ * verification. An authentication mechanism acquires the user's credentials
+ * by calling {@link NameCallback} and/or {@link PasswordCallback}.
+ * If authentication is successful then an authenticated {@link Subject}
+ * filled in with a {@link Principal} is returned.  Authorization checks
+ * will then be performed based on this <code>Subject</code>.</p>
+ *
+ * <p>By default, a single file-based authentication mechanism
+ * {@link FileLoginModule} is configured (<code>FileLoginConfig</code>).</p>
+ *
+ * <p>To override the default configuration use the
+ * <code>com.sun.management.jmxremote.login.config</code> management property
+ * described in the JRE/lib/management/management.properties file.
+ * Set this property to the name of a JAAS configuration entry and ensure that
+ * the entry is loaded by the installed {@link Configuration}. In addition,
+ * ensure that the authentication mechanisms specified in the entry acquire
+ * the user's credentials by calling {@link NameCallback} and
+ * {@link PasswordCallback} and that they return a {@link Subject} filled-in
+ * with a {@link Principal}, for those users that are successfully
+ * authenticated.</p>
+ */
+public final class JMXPluggableAuthenticator implements JMXAuthenticator {
+
+    /**
+     * Creates an instance of <code>JMXPluggableAuthenticator</code>
+     * and initializes it with a {@link LoginContext}.
+     *
+     * @param env the environment containing configuration properties for the
+     *            authenticator. Can be null, which is equivalent to an empty
+     *            Map.
+     * @exception SecurityException if the authentication mechanism cannot be
+     *            initialized.
+     */
+    public JMXPluggableAuthenticator(Map<?, ?> env) {
+
+        String loginConfigName = null;
+        String passwordFile = null;
+
+        if (env != null) {
+            loginConfigName = (String) env.get(LOGIN_CONFIG_PROP);
+            passwordFile = (String) env.get(PASSWORD_FILE_PROP);
+        }
+
+        try {
+
+            if (loginConfigName != null) {
+                // use the supplied JAAS login configuration
+                loginContext =
+                    new LoginContext(loginConfigName, new JMXCallbackHandler());
+
+            } else {
+                // use the default JAAS login configuration (file-based)
+                SecurityManager sm = System.getSecurityManager();
+                if (sm != null) {
+                    sm.checkPermission(
+                            new AuthPermission("createLoginContext." +
+                                               LOGIN_CONFIG_NAME));
+                }
+
+                final String pf = passwordFile;
+                try {
+                    loginContext = AccessController.doPrivileged(
+                        new PrivilegedExceptionAction<LoginContext>() {
+                            public LoginContext run() throws LoginException {
+                                return new LoginContext(
+                                                LOGIN_CONFIG_NAME,
+                                                null,
+                                                new JMXCallbackHandler(),
+                                                new FileLoginConfig(pf));
+                            }
+                        });
+                } catch (PrivilegedActionException pae) {
+                    throw (LoginException) pae.getException();
+                }
+            }
+
+        } catch (LoginException le) {
+            authenticationFailure("authenticate", le);
+
+        } catch (SecurityException se) {
+            authenticationFailure("authenticate", se);
+        }
+    }
+
+    /**
+     * Authenticate the <code>MBeanServerConnection</code> client
+     * with the given client credentials.
+     *
+     * @param credentials the user-defined credentials to be passed in
+     * to the server in order to authenticate the user before creating
+     * the <code>MBeanServerConnection</code>.  This parameter must
+     * be a two-element <code>String[]</code> containing the client's
+     * username and password in that order.
+     *
+     * @return the authenticated subject containing a
+     * <code>JMXPrincipal(username)</code>.
+     *
+     * @exception SecurityException if the server cannot authenticate the user
+     * with the provided credentials.
+     */
+    public Subject authenticate(Object credentials) {
+        // Verify that credentials is of type String[].
+        //
+        if (!(credentials instanceof String[])) {
+            // Special case for null so we get a more informative message
+            if (credentials == null)
+                authenticationFailure("authenticate", "Credentials required");
+
+            final String message =
+                "Credentials should be String[] instead of " +
+                 credentials.getClass().getName();
+            authenticationFailure("authenticate", message);
+        }
+        // Verify that the array contains two elements.
+        //
+        final String[] aCredentials = (String[]) credentials;
+        if (aCredentials.length != 2) {
+            final String message =
+                "Credentials should have 2 elements not " +
+                aCredentials.length;
+            authenticationFailure("authenticate", message);
+        }
+        // Verify that username exists and the associated
+        // password matches the one supplied by the client.
+        //
+        username = aCredentials[0];
+        password = aCredentials[1];
+        if (username == null || password == null) {
+            final String message = "Username or password is null";
+            authenticationFailure("authenticate", message);
+        }
+
+        // Perform authentication
+        try {
+            loginContext.login();
+            final Subject subject = loginContext.getSubject();
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    public Void run() {
+                        subject.setReadOnly();
+                        return null;
+                    }
+                });
+
+            return subject;
+
+        } catch (LoginException le) {
+            authenticationFailure("authenticate", le);
+        }
+        return null;
+    }
+
+    private static void authenticationFailure(String method, String message)
+        throws SecurityException {
+        final String msg = "Authentication failed! " + message;
+        final SecurityException e = new SecurityException(msg);
+        logException(method, msg, e);
+        throw e;
+    }
+
+    private static void authenticationFailure(String method,
+                                              Exception exception)
+        throws SecurityException {
+        String msg;
+        SecurityException se;
+        if (exception instanceof SecurityException) {
+            msg = exception.getMessage();
+            se = (SecurityException) exception;
+        } else {
+            msg = "Authentication failed! " + exception.getMessage();
+            final SecurityException e = new SecurityException(msg);
+            EnvHelp.initCause(e, exception);
+            se = e;
+        }
+        logException(method, msg, se);
+        throw se;
+    }
+
+    private static void logException(String method,
+                                     String message,
+                                     Exception e) {
+        if (logger.traceOn()) {
+            logger.trace(method, message);
+        }
+        if (logger.debugOn()) {
+            logger.debug(method, e);
+        }
+    }
+
+    private LoginContext loginContext;
+    private String username;
+    private String password;
+    private static final String LOGIN_CONFIG_PROP =
+        "jmx.remote.x.login.config";
+    private static final String LOGIN_CONFIG_NAME = "JMXPluggableAuthenticator";
+    private static final String PASSWORD_FILE_PROP =
+        "jmx.remote.x.password.file";
+    private static final ClassLogger logger =
+        new ClassLogger("javax.management.remote.misc", LOGIN_CONFIG_NAME);
+
+/**
+ * This callback handler supplies the username and password (which was
+ * originally supplied by the JMX user) to the JAAS login module performing
+ * the authentication. No interactive user prompting is required because the
+ * credentials are already available to this class (via its enclosing class).
+ */
+private final class JMXCallbackHandler implements CallbackHandler {
+
+    /**
+     * Sets the username and password in the appropriate Callback object.
+     */
+    public void handle(Callback[] callbacks)
+        throws IOException, UnsupportedCallbackException {
+
+        for (int i = 0; i < callbacks.length; i++) {
+            if (callbacks[i] instanceof NameCallback) {
+                ((NameCallback)callbacks[i]).setName(username);
+
+            } else if (callbacks[i] instanceof PasswordCallback) {
+                ((PasswordCallback)callbacks[i])
+                    .setPassword(password.toCharArray());
+
+            } else {
+                throw new UnsupportedCallbackException
+                    (callbacks[i], "Unrecognized Callback");
+            }
+        }
+    }
+}
+
+/**
+ * This class defines the JAAS configuration for file-based authentication.
+ * It is equivalent to the following textual configuration entry:
+ * <pre>
+ *     JMXPluggableAuthenticator {
+ *         com.sun.jmx.remote.security.FileLoginModule required;
+ *     };
+ * </pre>
+ */
+private static class FileLoginConfig extends Configuration {
+
+    // The JAAS configuration for file-based authentication
+    private AppConfigurationEntry[] entries;
+
+    // The classname of the login module for file-based authentication
+    private static final String FILE_LOGIN_MODULE =
+        FileLoginModule.class.getName();
+
+    // The option that identifies the password file to use
+    private static final String PASSWORD_FILE_OPTION = "passwordFile";
+
+    /**
+     * Creates an instance of <code>FileLoginConfig</code>
+     *
+     * @param passwordFile A filepath that identifies the password file to use.
+     *                     If null then the default password file is used.
+     */
+    public FileLoginConfig(String passwordFile) {
+
+        Map<String, String> options;
+        if (passwordFile != null) {
+            options = new HashMap<String, String>(1);
+            options.put(PASSWORD_FILE_OPTION, passwordFile);
+        } else {
+            options = Collections.emptyMap();
+        }
+
+        entries = new AppConfigurationEntry[] {
+            new AppConfigurationEntry(FILE_LOGIN_MODULE,
+                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+                    options)
+        };
+    }
+
+    /**
+     * Gets the JAAS configuration for file-based authentication
+     */
+    public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
+
+        return name.equals(LOGIN_CONFIG_NAME) ? entries : null;
+    }
+
+    /**
+     * Refreshes the configuration.
+     */
+    public void refresh() {
+        // the configuration is fixed
+    }
+}
+
+}

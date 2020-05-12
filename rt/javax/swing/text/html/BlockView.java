@@ -1,442 +1,443 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Shape;
-/*     */ import javax.swing.SizeRequirements;
-/*     */ import javax.swing.event.DocumentEvent;
-/*     */ import javax.swing.text.AttributeSet;
-/*     */ import javax.swing.text.BoxView;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.View;
-/*     */ import javax.swing.text.ViewFactory;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BlockView
-/*     */   extends BoxView
-/*     */ {
-/*     */   private AttributeSet attr;
-/*     */   private StyleSheet.BoxPainter painter;
-/*     */   private CSS.LengthValue cssWidth;
-/*     */   private CSS.LengthValue cssHeight;
-/*     */   
-/*     */   public BlockView(Element paramElement, int paramInt) {
-/*  51 */     super(paramElement, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setParent(View paramView) {
-/*  72 */     super.setParent(paramView);
-/*  73 */     if (paramView != null) {
-/*  74 */       setPropertiesFromAttributes();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SizeRequirements calculateMajorAxisRequirements(int paramInt, SizeRequirements paramSizeRequirements) {
-/*  86 */     if (paramSizeRequirements == null) {
-/*  87 */       paramSizeRequirements = new SizeRequirements();
-/*     */     }
-/*  89 */     if (!spanSetFromAttributes(paramInt, paramSizeRequirements, this.cssWidth, this.cssHeight)) {
-/*  90 */       paramSizeRequirements = super.calculateMajorAxisRequirements(paramInt, paramSizeRequirements);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/*  95 */       SizeRequirements sizeRequirements = super.calculateMajorAxisRequirements(paramInt, (SizeRequirements)null);
-/*     */ 
-/*     */       
-/*  98 */       int i = (paramInt == 0) ? (getLeftInset() + getRightInset()) : (getTopInset() + getBottomInset());
-/*  99 */       paramSizeRequirements.minimum -= i;
-/* 100 */       paramSizeRequirements.preferred -= i;
-/* 101 */       paramSizeRequirements.maximum -= i;
-/* 102 */       constrainSize(paramInt, paramSizeRequirements, sizeRequirements);
-/*     */     } 
-/* 104 */     return paramSizeRequirements;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SizeRequirements calculateMinorAxisRequirements(int paramInt, SizeRequirements paramSizeRequirements) {
-/* 116 */     if (paramSizeRequirements == null) {
-/* 117 */       paramSizeRequirements = new SizeRequirements();
-/*     */     }
-/*     */     
-/* 120 */     if (!spanSetFromAttributes(paramInt, paramSizeRequirements, this.cssWidth, this.cssHeight)) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 146 */       paramSizeRequirements = super.calculateMinorAxisRequirements(paramInt, paramSizeRequirements);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 151 */       SizeRequirements sizeRequirements = super.calculateMinorAxisRequirements(paramInt, (SizeRequirements)null);
-/*     */ 
-/*     */       
-/* 154 */       int i = (paramInt == 0) ? (getLeftInset() + getRightInset()) : (getTopInset() + getBottomInset());
-/* 155 */       paramSizeRequirements.minimum -= i;
-/* 156 */       paramSizeRequirements.preferred -= i;
-/* 157 */       paramSizeRequirements.maximum -= i;
-/* 158 */       constrainSize(paramInt, paramSizeRequirements, sizeRequirements);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 166 */     if (paramInt == 0) {
-/* 167 */       Object object = getAttributes().getAttribute(CSS.Attribute.TEXT_ALIGN);
-/* 168 */       if (object != null) {
-/* 169 */         String str = object.toString();
-/* 170 */         if (str.equals("center")) {
-/* 171 */           paramSizeRequirements.alignment = 0.5F;
-/* 172 */         } else if (str.equals("right")) {
-/* 173 */           paramSizeRequirements.alignment = 1.0F;
-/*     */         } else {
-/* 175 */           paramSizeRequirements.alignment = 0.0F;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 180 */     return paramSizeRequirements;
-/*     */   }
-/*     */   
-/*     */   boolean isPercentage(int paramInt, AttributeSet paramAttributeSet) {
-/* 184 */     if (paramInt == 0) {
-/* 185 */       if (this.cssWidth != null) {
-/* 186 */         return this.cssWidth.isPercentage();
-/*     */       }
-/*     */     }
-/* 189 */     else if (this.cssHeight != null) {
-/* 190 */       return this.cssHeight.isPercentage();
-/*     */     } 
-/*     */     
-/* 193 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean spanSetFromAttributes(int paramInt, SizeRequirements paramSizeRequirements, CSS.LengthValue paramLengthValue1, CSS.LengthValue paramLengthValue2) {
-/* 205 */     if (paramInt == 0) {
-/* 206 */       if (paramLengthValue1 != null && !paramLengthValue1.isPercentage()) {
-/* 207 */         paramSizeRequirements.minimum = paramSizeRequirements.preferred = paramSizeRequirements.maximum = (int)paramLengthValue1.getValue();
-/* 208 */         return true;
-/*     */       }
-/*     */     
-/* 211 */     } else if (paramLengthValue2 != null && !paramLengthValue2.isPercentage()) {
-/* 212 */       paramSizeRequirements.minimum = paramSizeRequirements.preferred = paramSizeRequirements.maximum = (int)paramLengthValue2.getValue();
-/* 213 */       return true;
-/*     */     } 
-/*     */     
-/* 216 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void layoutMinorAxis(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/* 236 */     int i = getViewCount();
-/* 237 */     CSS.Attribute attribute = (paramInt2 == 0) ? CSS.Attribute.WIDTH : CSS.Attribute.HEIGHT;
-/* 238 */     for (byte b = 0; b < i; b++) {
-/* 239 */       int k; View view = getView(b);
-/* 240 */       int j = (int)view.getMinimumSpan(paramInt2);
-/*     */ 
-/*     */ 
-/*     */       
-/* 244 */       AttributeSet attributeSet = view.getAttributes();
-/* 245 */       CSS.LengthValue lengthValue = (CSS.LengthValue)attributeSet.getAttribute(attribute);
-/* 246 */       if (lengthValue != null && lengthValue.isPercentage()) {
-/*     */         
-/* 248 */         j = Math.max((int)lengthValue.getValue(paramInt1), j);
-/* 249 */         k = j;
-/*     */       } else {
-/* 251 */         k = (int)view.getMaximumSpan(paramInt2);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 255 */       if (k < paramInt1) {
-/*     */         
-/* 257 */         float f = view.getAlignment(paramInt2);
-/* 258 */         paramArrayOfint1[b] = (int)((paramInt1 - k) * f);
-/* 259 */         paramArrayOfint2[b] = k;
-/*     */       } else {
-/*     */         
-/* 262 */         paramArrayOfint1[b] = 0;
-/* 263 */         paramArrayOfint2[b] = Math.max(j, paramInt1);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/* 280 */     Rectangle rectangle = (Rectangle)paramShape;
-/* 281 */     this.painter.paint(paramGraphics, rectangle.x, rectangle.y, rectangle.width, rectangle.height, this);
-/* 282 */     super.paint(paramGraphics, rectangle);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AttributeSet getAttributes() {
-/* 291 */     if (this.attr == null) {
-/* 292 */       StyleSheet styleSheet = getStyleSheet();
-/* 293 */       this.attr = styleSheet.getViewAttributes(this);
-/*     */     } 
-/* 295 */     return this.attr;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getResizeWeight(int paramInt) {
-/* 306 */     switch (paramInt) {
-/*     */       case 0:
-/* 308 */         return 1;
-/*     */       case 1:
-/* 310 */         return 0;
-/*     */     } 
-/* 312 */     throw new IllegalArgumentException("Invalid axis: " + paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getAlignment(int paramInt) {
-/*     */     float f1;
-/*     */     View view;
-/*     */     float f2;
-/* 323 */     switch (paramInt) {
-/*     */       case 0:
-/* 325 */         return 0.0F;
-/*     */       case 1:
-/* 327 */         if (getViewCount() == 0) {
-/* 328 */           return 0.0F;
-/*     */         }
-/* 330 */         f1 = getPreferredSpan(1);
-/* 331 */         view = getView(0);
-/* 332 */         f2 = view.getPreferredSpan(1);
-/* 333 */         return ((int)f1 != 0) ? (f2 * view.getAlignment(1) / f1) : 0.0F;
-/*     */     } 
-/*     */     
-/* 336 */     throw new IllegalArgumentException("Invalid axis: " + paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void changedUpdate(DocumentEvent paramDocumentEvent, Shape paramShape, ViewFactory paramViewFactory) {
-/* 341 */     super.changedUpdate(paramDocumentEvent, paramShape, paramViewFactory);
-/* 342 */     int i = paramDocumentEvent.getOffset();
-/* 343 */     if (i <= getStartOffset() && i + paramDocumentEvent.getLength() >= 
-/* 344 */       getEndOffset()) {
-/* 345 */       setPropertiesFromAttributes();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getPreferredSpan(int paramInt) {
-/* 362 */     return super.getPreferredSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getMinimumSpan(int paramInt) {
-/* 378 */     return super.getMinimumSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getMaximumSpan(int paramInt) {
-/* 394 */     return super.getMaximumSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setPropertiesFromAttributes() {
-/* 403 */     StyleSheet styleSheet = getStyleSheet();
-/* 404 */     this.attr = styleSheet.getViewAttributes(this);
-/*     */ 
-/*     */     
-/* 407 */     this.painter = styleSheet.getBoxPainter(this.attr);
-/* 408 */     if (this.attr != null) {
-/* 409 */       setInsets((short)(int)this.painter.getInset(1, this), 
-/* 410 */           (short)(int)this.painter.getInset(2, this), 
-/* 411 */           (short)(int)this.painter.getInset(3, this), 
-/* 412 */           (short)(int)this.painter.getInset(4, this));
-/*     */     }
-/*     */ 
-/*     */     
-/* 416 */     this.cssWidth = (CSS.LengthValue)this.attr.getAttribute(CSS.Attribute.WIDTH);
-/* 417 */     this.cssHeight = (CSS.LengthValue)this.attr.getAttribute(CSS.Attribute.HEIGHT);
-/*     */   }
-/*     */   
-/*     */   protected StyleSheet getStyleSheet() {
-/* 421 */     HTMLDocument hTMLDocument = (HTMLDocument)getDocument();
-/* 422 */     return hTMLDocument.getStyleSheet();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void constrainSize(int paramInt, SizeRequirements paramSizeRequirements1, SizeRequirements paramSizeRequirements2) {
-/* 431 */     if (paramSizeRequirements2.minimum > paramSizeRequirements1.minimum) {
-/* 432 */       paramSizeRequirements1.minimum = paramSizeRequirements1.preferred = paramSizeRequirements2.minimum;
-/* 433 */       paramSizeRequirements1.maximum = Math.max(paramSizeRequirements1.maximum, paramSizeRequirements2.maximum);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\BlockView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.util.Enumeration;
+import java.awt.*;
+import javax.swing.SizeRequirements;
+import javax.swing.border.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.*;
+
+/**
+ * A view implementation to display a block (as a box)
+ * with CSS specifications.
+ *
+ * @author  Timothy Prinzing
+ */
+public class BlockView extends BoxView  {
+
+    /**
+     * Creates a new view that represents an
+     * html box.  This can be used for a number
+     * of elements.
+     *
+     * @param elem the element to create a view for
+     * @param axis either View.X_AXIS or View.Y_AXIS
+     */
+    public BlockView(Element elem, int axis) {
+        super(elem, axis);
+    }
+
+    /**
+     * Establishes the parent view for this view.  This is
+     * guaranteed to be called before any other methods if the
+     * parent view is functioning properly.
+     * <p>
+     * This is implemented
+     * to forward to the superclass as well as call the
+     * {@link #setPropertiesFromAttributes()}
+     * method to set the paragraph properties from the css
+     * attributes.  The call is made at this time to ensure
+     * the ability to resolve upward through the parents
+     * view attributes.
+     *
+     * @param parent the new parent, or null if the view is
+     *  being removed from a parent it was previously added
+     *  to
+     */
+    public void setParent(View parent) {
+        super.setParent(parent);
+        if (parent != null) {
+            setPropertiesFromAttributes();
+        }
+    }
+
+    /**
+     * Calculate the requirements of the block along the major
+     * axis (i.e. the axis along with it tiles).  This is implemented
+     * to provide the superclass behavior and then adjust it if the
+     * CSS width or height attribute is specified and applicable to
+     * the axis.
+     */
+    protected SizeRequirements calculateMajorAxisRequirements(int axis, SizeRequirements r) {
+        if (r == null) {
+            r = new SizeRequirements();
+        }
+        if (! spanSetFromAttributes(axis, r, cssWidth, cssHeight)) {
+            r = super.calculateMajorAxisRequirements(axis, r);
+        }
+        else {
+            // Offset by the margins so that pref/min/max return the
+            // right value.
+            SizeRequirements parentR = super.calculateMajorAxisRequirements(
+                                      axis, null);
+            int margin = (axis == X_AXIS) ? getLeftInset() + getRightInset() :
+                                            getTopInset() + getBottomInset();
+            r.minimum -= margin;
+            r.preferred -= margin;
+            r.maximum -= margin;
+            constrainSize(axis, r, parentR);
+        }
+        return r;
+    }
+
+    /**
+     * Calculate the requirements of the block along the minor
+     * axis (i.e. the axis orthogonal to the axis along with it tiles).
+     * This is implemented
+     * to provide the superclass behavior and then adjust it if the
+     * CSS width or height attribute is specified and applicable to
+     * the axis.
+     */
+    protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+        if (r == null) {
+            r = new SizeRequirements();
+        }
+
+        if (! spanSetFromAttributes(axis, r, cssWidth, cssHeight)) {
+
+            /*
+             * The requirements were not directly specified by attributes, so
+             * compute the aggregate of the requirements of the children.  The
+             * children that have a percentage value specified will be treated
+             * as completely stretchable since that child is not limited in any
+             * way.
+             */
+/*
+            int min = 0;
+            long pref = 0;
+            int max = 0;
+            int n = getViewCount();
+            for (int i = 0; i < n; i++) {
+                View v = getView(i);
+                min = Math.max((int) v.getMinimumSpan(axis), min);
+                pref = Math.max((int) v.getPreferredSpan(axis), pref);
+                if (
+                max = Math.max((int) v.getMaximumSpan(axis), max);
+
+            }
+            r.preferred = (int) pref;
+            r.minimum = min;
+            r.maximum = max;
+            */
+            r = super.calculateMinorAxisRequirements(axis, r);
+        }
+        else {
+            // Offset by the margins so that pref/min/max return the
+            // right value.
+            SizeRequirements parentR = super.calculateMinorAxisRequirements(
+                                      axis, null);
+            int margin = (axis == X_AXIS) ? getLeftInset() + getRightInset() :
+                                            getTopInset() + getBottomInset();
+            r.minimum -= margin;
+            r.preferred -= margin;
+            r.maximum -= margin;
+            constrainSize(axis, r, parentR);
+        }
+
+        /*
+         * Set the alignment based upon the CSS properties if it is
+         * specified.  For X_AXIS this would be text-align, for
+         * Y_AXIS this would be vertical-align.
+         */
+        if (axis == X_AXIS) {
+            Object o = getAttributes().getAttribute(CSS.Attribute.TEXT_ALIGN);
+            if (o != null) {
+                String align = o.toString();
+                if (align.equals("center")) {
+                    r.alignment = 0.5f;
+                } else if (align.equals("right")) {
+                    r.alignment = 1.0f;
+                } else {
+                    r.alignment = 0.0f;
+                }
+            }
+        }
+        // Y_AXIS TBD
+        return r;
+    }
+
+    boolean isPercentage(int axis, AttributeSet a) {
+        if (axis == X_AXIS) {
+            if (cssWidth != null) {
+                return cssWidth.isPercentage();
+            }
+        } else {
+            if (cssHeight != null) {
+                return cssHeight.isPercentage();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adjust the given requirements to the CSS width or height if
+     * it is specified along the applicable axis.  Return true if the
+     * size is exactly specified, false if the span is not specified
+     * in an attribute or the size specified is a percentage.
+     */
+    static boolean spanSetFromAttributes(int axis, SizeRequirements r,
+                                         CSS.LengthValue cssWidth,
+                                         CSS.LengthValue cssHeight) {
+        if (axis == X_AXIS) {
+            if ((cssWidth != null) && (! cssWidth.isPercentage())) {
+                r.minimum = r.preferred = r.maximum = (int) cssWidth.getValue();
+                return true;
+            }
+        } else {
+            if ((cssHeight != null) && (! cssHeight.isPercentage())) {
+                r.minimum = r.preferred = r.maximum = (int) cssHeight.getValue();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Performs layout for the minor axis of the box (i.e. the
+     * axis orthogonal to the axis that it represents). The results
+     * of the layout (the offset and span for each children) are
+     * placed in the given arrays which represent the allocations to
+     * the children along the minor axis.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children.
+     * @param axis the axis being layed out
+     * @param offsets the offsets from the origin of the view for
+     *  each of the child views; this is a return value and is
+     *  filled in by the implementation of this method
+     * @param spans the span of each child view; this is a return
+     *  value and is filled in by the implementation of this method
+     */
+    protected void layoutMinorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+        int n = getViewCount();
+        Object key = (axis == X_AXIS) ? CSS.Attribute.WIDTH : CSS.Attribute.HEIGHT;
+        for (int i = 0; i < n; i++) {
+            View v = getView(i);
+            int min = (int) v.getMinimumSpan(axis);
+            int max;
+
+            // check for percentage span
+            AttributeSet a = v.getAttributes();
+            CSS.LengthValue lv = (CSS.LengthValue) a.getAttribute(key);
+            if ((lv != null) && lv.isPercentage()) {
+                // bound the span to the percentage specified
+                min = Math.max((int) lv.getValue(targetSpan), min);
+                max = min;
+            } else {
+                max = (int)v.getMaximumSpan(axis);
+            }
+
+            // assign the offset and span for the child
+            if (max < targetSpan) {
+                // can't make the child this wide, align it
+                float align = v.getAlignment(axis);
+                offsets[i] = (int) ((targetSpan - max) * align);
+                spans[i] = max;
+            } else {
+                // make it the target width, or as small as it can get.
+                offsets[i] = 0;
+                spans[i] = Math.max(min, targetSpan);
+            }
+        }
+    }
+
+
+    /**
+     * Renders using the given rendering surface and area on that
+     * surface.  This is implemented to delegate to the css box
+     * painter to paint the border and background prior to the
+     * interior.
+     *
+     * @param g the rendering surface to use
+     * @param allocation the allocated region to render into
+     * @see View#paint
+     */
+    public void paint(Graphics g, Shape allocation) {
+        Rectangle a = (Rectangle) allocation;
+        painter.paint(g, a.x, a.y, a.width, a.height, this);
+        super.paint(g, a);
+    }
+
+    /**
+     * Fetches the attributes to use when rendering.  This is
+     * implemented to multiplex the attributes specified in the
+     * model with a StyleSheet.
+     */
+    public AttributeSet getAttributes() {
+        if (attr == null) {
+            StyleSheet sheet = getStyleSheet();
+            attr = sheet.getViewAttributes(this);
+        }
+        return attr;
+    }
+
+    /**
+     * Gets the resize weight.
+     *
+     * @param axis may be either X_AXIS or Y_AXIS
+     * @return the weight
+     * @exception IllegalArgumentException for an invalid axis
+     */
+    public int getResizeWeight(int axis) {
+        switch (axis) {
+        case View.X_AXIS:
+            return 1;
+        case View.Y_AXIS:
+            return 0;
+        default:
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
+    }
+
+    /**
+     * Gets the alignment.
+     *
+     * @param axis may be either X_AXIS or Y_AXIS
+     * @return the alignment
+     */
+    public float getAlignment(int axis) {
+        switch (axis) {
+        case View.X_AXIS:
+            return 0;
+        case View.Y_AXIS:
+            if (getViewCount() == 0) {
+                return 0;
+            }
+            float span = getPreferredSpan(View.Y_AXIS);
+            View v = getView(0);
+            float above = v.getPreferredSpan(View.Y_AXIS);
+            float a = (((int)span) != 0) ? (above * v.getAlignment(View.Y_AXIS)) / span: 0;
+            return a;
+        default:
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
+    }
+
+    public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
+        super.changedUpdate(changes, a, f);
+        int pos = changes.getOffset();
+        if (pos <= getStartOffset() && (pos + changes.getLength()) >=
+            getEndOffset()) {
+            setPropertiesFromAttributes();
+        }
+    }
+
+    /**
+     * Determines the preferred span for this view along an
+     * axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *           or <code>View.Y_AXIS</code>
+     * @return   the span the view would like to be rendered into &gt;= 0;
+     *           typically the view is told to render into the span
+     *           that is returned, although there is no guarantee;
+     *           the parent may choose to resize or break the view
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getPreferredSpan(int axis) {
+        return super.getPreferredSpan(axis);
+    }
+
+    /**
+     * Determines the minimum span for this view along an
+     * axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *           or <code>View.Y_AXIS</code>
+     * @return  the span the view would like to be rendered into &gt;= 0;
+     *           typically the view is told to render into the span
+     *           that is returned, although there is no guarantee;
+     *           the parent may choose to resize or break the view
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getMinimumSpan(int axis) {
+        return super.getMinimumSpan(axis);
+    }
+
+    /**
+     * Determines the maximum span for this view along an
+     * axis.
+     *
+     * @param axis may be either <code>View.X_AXIS</code>
+     *           or <code>View.Y_AXIS</code>
+     * @return   the span the view would like to be rendered into &gt;= 0;
+     *           typically the view is told to render into the span
+     *           that is returned, although there is no guarantee;
+     *           the parent may choose to resize or break the view
+     * @exception IllegalArgumentException for an invalid axis type
+     */
+    public float getMaximumSpan(int axis) {
+        return super.getMaximumSpan(axis);
+    }
+
+    /**
+     * Update any cached values that come from attributes.
+     */
+    protected void setPropertiesFromAttributes() {
+
+        // update attributes
+        StyleSheet sheet = getStyleSheet();
+        attr = sheet.getViewAttributes(this);
+
+        // Reset the painter
+        painter = sheet.getBoxPainter(attr);
+        if (attr != null) {
+            setInsets((short) painter.getInset(TOP, this),
+                      (short) painter.getInset(LEFT, this),
+                      (short) painter.getInset(BOTTOM, this),
+                      (short) painter.getInset(RIGHT, this));
+        }
+
+        // Get the width/height
+        cssWidth = (CSS.LengthValue) attr.getAttribute(CSS.Attribute.WIDTH);
+        cssHeight = (CSS.LengthValue) attr.getAttribute(CSS.Attribute.HEIGHT);
+    }
+
+    protected StyleSheet getStyleSheet() {
+        HTMLDocument doc = (HTMLDocument) getDocument();
+        return doc.getStyleSheet();
+    }
+
+    /**
+     * Constrains <code>want</code> to fit in the minimum size specified
+     * by <code>min</code>.
+     */
+    private void constrainSize(int axis, SizeRequirements want,
+                               SizeRequirements min) {
+        if (min.minimum > want.minimum) {
+            want.minimum = want.preferred = min.minimum;
+            want.maximum = Math.max(want.maximum, min.maximum);
+        }
+    }
+
+    private AttributeSet attr;
+    private StyleSheet.BoxPainter painter;
+
+    private CSS.LengthValue cssWidth;
+    private CSS.LengthValue cssHeight;
+
+}

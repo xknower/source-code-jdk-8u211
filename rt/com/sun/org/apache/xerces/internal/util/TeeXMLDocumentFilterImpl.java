@@ -1,222 +1,217 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.Augmentations;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentFilter;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TeeXMLDocumentFilterImpl
-/*     */   implements XMLDocumentFilter
-/*     */ {
-/*     */   private XMLDocumentHandler next;
-/*     */   private XMLDocumentHandler side;
-/*     */   private XMLDocumentSource source;
-/*     */   
-/*     */   public XMLDocumentHandler getSide() {
-/* 102 */     return this.side;
-/*     */   }
-/*     */   
-/*     */   public void setSide(XMLDocumentHandler side) {
-/* 106 */     this.side = side;
-/*     */   }
-/*     */   
-/*     */   public XMLDocumentSource getDocumentSource() {
-/* 110 */     return this.source;
-/*     */   }
-/*     */   
-/*     */   public void setDocumentSource(XMLDocumentSource source) {
-/* 114 */     this.source = source;
-/*     */   }
-/*     */   
-/*     */   public XMLDocumentHandler getDocumentHandler() {
-/* 118 */     return this.next;
-/*     */   }
-/*     */   
-/*     */   public void setDocumentHandler(XMLDocumentHandler handler) {
-/* 122 */     this.next = handler;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(XMLString text, Augmentations augs) throws XNIException {
-/* 131 */     this.side.characters(text, augs);
-/* 132 */     this.next.characters(text, augs);
-/*     */   }
-/*     */   
-/*     */   public void comment(XMLString text, Augmentations augs) throws XNIException {
-/* 136 */     this.side.comment(text, augs);
-/* 137 */     this.next.comment(text, augs);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void doctypeDecl(String rootElement, String publicId, String systemId, Augmentations augs) throws XNIException {
-/* 142 */     this.side.doctypeDecl(rootElement, publicId, systemId, augs);
-/* 143 */     this.next.doctypeDecl(rootElement, publicId, systemId, augs);
-/*     */   }
-/*     */   
-/*     */   public void emptyElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/* 147 */     this.side.emptyElement(element, attributes, augs);
-/* 148 */     this.next.emptyElement(element, attributes, augs);
-/*     */   }
-/*     */   
-/*     */   public void endCDATA(Augmentations augs) throws XNIException {
-/* 152 */     this.side.endCDATA(augs);
-/* 153 */     this.next.endCDATA(augs);
-/*     */   }
-/*     */   
-/*     */   public void endDocument(Augmentations augs) throws XNIException {
-/* 157 */     this.side.endDocument(augs);
-/* 158 */     this.next.endDocument(augs);
-/*     */   }
-/*     */   
-/*     */   public void endElement(QName element, Augmentations augs) throws XNIException {
-/* 162 */     this.side.endElement(element, augs);
-/* 163 */     this.next.endElement(element, augs);
-/*     */   }
-/*     */   
-/*     */   public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
-/* 167 */     this.side.endGeneralEntity(name, augs);
-/* 168 */     this.next.endGeneralEntity(name, augs);
-/*     */   }
-/*     */   
-/*     */   public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
-/* 172 */     this.side.ignorableWhitespace(text, augs);
-/* 173 */     this.next.ignorableWhitespace(text, augs);
-/*     */   }
-/*     */   
-/*     */   public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
-/* 177 */     this.side.processingInstruction(target, data, augs);
-/* 178 */     this.next.processingInstruction(target, data, augs);
-/*     */   }
-/*     */   
-/*     */   public void startCDATA(Augmentations augs) throws XNIException {
-/* 182 */     this.side.startCDATA(augs);
-/* 183 */     this.next.startCDATA(augs);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startDocument(XMLLocator locator, String encoding, NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
-/* 192 */     this.side.startDocument(locator, encoding, namespaceContext, augs);
-/* 193 */     this.next.startDocument(locator, encoding, namespaceContext, augs);
-/*     */   }
-/*     */   
-/*     */   public void startElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/* 197 */     this.side.startElement(element, attributes, augs);
-/* 198 */     this.next.startElement(element, attributes, augs);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void startGeneralEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs) throws XNIException {
-/* 203 */     this.side.startGeneralEntity(name, identifier, encoding, augs);
-/* 204 */     this.next.startGeneralEntity(name, identifier, encoding, augs);
-/*     */   }
-/*     */   
-/*     */   public void textDecl(String version, String encoding, Augmentations augs) throws XNIException {
-/* 208 */     this.side.textDecl(version, encoding, augs);
-/* 209 */     this.next.textDecl(version, encoding, augs);
-/*     */   }
-/*     */   
-/*     */   public void xmlDecl(String version, String encoding, String standalone, Augmentations augs) throws XNIException {
-/* 213 */     this.side.xmlDecl(version, encoding, standalone, augs);
-/* 214 */     this.next.xmlDecl(version, encoding, standalone, augs);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\TeeXMLDocumentFilterImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * The Apache Software License, Version 1.1
+ *
+ *
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Xerces" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation and was
+ * originally based on software copyright (c) 1999, International
+ * Business Machines, Inc., http://www.apache.org.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+package com.sun.org.apache.xerces.internal.util;
+
+import com.sun.org.apache.xerces.internal.xni.Augmentations;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
+import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentFilter;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
+
+/**
+ *
+ *
+ * @author
+ *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ */
+public class TeeXMLDocumentFilterImpl implements XMLDocumentFilter {
+    /**
+     * The next component in the pipeline who receives the event.
+     * This component receives events after the "side" handler
+     * receives them.
+     */
+    private XMLDocumentHandler next;
+
+    /**
+     * The component who intercepts events.
+     */
+    private XMLDocumentHandler side;
+
+    /**
+     * The source of the event.
+     */
+    private XMLDocumentSource source;
+
+
+
+    public XMLDocumentHandler getSide() {
+        return side;
+    }
+
+    public void setSide(XMLDocumentHandler side) {
+        this.side = side;
+    }
+
+    public XMLDocumentSource getDocumentSource() {
+        return source;
+    }
+
+    public void setDocumentSource(XMLDocumentSource source) {
+        this.source = source;
+    }
+
+    public XMLDocumentHandler getDocumentHandler() {
+        return next;
+    }
+
+    public void setDocumentHandler(XMLDocumentHandler handler) {
+        next = handler;
+    }
+
+//
+//
+// XMLDocumentHandler implementation
+//
+//
+    public void characters(XMLString text, Augmentations augs) throws XNIException {
+        side.characters(text, augs);
+        next.characters(text, augs);
+    }
+
+    public void comment(XMLString text, Augmentations augs) throws XNIException {
+        side.comment(text, augs);
+        next.comment(text, augs);
+    }
+
+    public void doctypeDecl(String rootElement, String publicId, String systemId, Augmentations augs)
+        throws XNIException {
+        side.doctypeDecl(rootElement, publicId, systemId, augs);
+        next.doctypeDecl(rootElement, publicId, systemId, augs);
+    }
+
+    public void emptyElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
+        side.emptyElement(element, attributes, augs);
+        next.emptyElement(element, attributes, augs);
+    }
+
+    public void endCDATA(Augmentations augs) throws XNIException {
+        side.endCDATA(augs);
+        next.endCDATA(augs);
+    }
+
+    public void endDocument(Augmentations augs) throws XNIException {
+        side.endDocument(augs);
+        next.endDocument(augs);
+    }
+
+    public void endElement(QName element, Augmentations augs) throws XNIException {
+        side.endElement(element, augs);
+        next.endElement(element, augs);
+    }
+
+    public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
+        side.endGeneralEntity(name, augs);
+        next.endGeneralEntity(name, augs);
+    }
+
+    public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
+        side.ignorableWhitespace(text, augs);
+        next.ignorableWhitespace(text, augs);
+    }
+
+    public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
+        side.processingInstruction(target, data, augs);
+        next.processingInstruction(target, data, augs);
+    }
+
+    public void startCDATA(Augmentations augs) throws XNIException {
+        side.startCDATA(augs);
+        next.startCDATA(augs);
+    }
+
+    public void startDocument(
+        XMLLocator locator,
+        String encoding,
+        NamespaceContext namespaceContext,
+        Augmentations augs)
+        throws XNIException {
+        side.startDocument(locator, encoding, namespaceContext, augs);
+        next.startDocument(locator, encoding, namespaceContext, augs);
+    }
+
+    public void startElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
+        side.startElement(element, attributes, augs);
+        next.startElement(element, attributes, augs);
+    }
+
+    public void startGeneralEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs)
+        throws XNIException {
+        side.startGeneralEntity(name, identifier, encoding, augs);
+        next.startGeneralEntity(name, identifier, encoding, augs);
+    }
+
+    public void textDecl(String version, String encoding, Augmentations augs) throws XNIException {
+        side.textDecl(version, encoding, augs);
+        next.textDecl(version, encoding, augs);
+    }
+
+    public void xmlDecl(String version, String encoding, String standalone, Augmentations augs) throws XNIException {
+        side.xmlDecl(version, encoding, standalone, augs);
+        next.xmlDecl(version, encoding, standalone, augs);
+    }
+
+}

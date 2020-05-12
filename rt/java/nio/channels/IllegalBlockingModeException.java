@@ -1,11 +1,51 @@
+/*
+ * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ *
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
 package java.nio.channels;
 
-public class IllegalBlockingModeException extends IllegalStateException {
-  private static final long serialVersionUID = -3335774961855590474L;
-}
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\channels\IllegalBlockingModeException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Unchecked exception thrown when a blocking-mode-specific operation
+ * is invoked upon a channel in the incorrect blocking mode.
+ *
+ * @since 1.4
  */
+
+public class IllegalBlockingModeException
+    extends IllegalStateException
+{
+
+    private static final long serialVersionUID = -3335774961855590474L;
+
+    /**
+     * Constructs an instance of this class.
+     */
+    public IllegalBlockingModeException() { }
+
+}

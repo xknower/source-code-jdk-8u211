@@ -1,288 +1,348 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.io.Serializable;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import sun.swing.DefaultLookup;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DefaultListCellRenderer
-/*     */   extends JLabel
-/*     */   implements ListCellRenderer<Object>, Serializable
-/*     */ {
-/*  83 */   private static final Border SAFE_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
-/*  84 */   private static final Border DEFAULT_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
-/*  85 */   protected static Border noFocusBorder = DEFAULT_NO_FOCUS_BORDER;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DefaultListCellRenderer() {
-/*  93 */     setOpaque(true);
-/*  94 */     setBorder(getNoFocusBorder());
-/*  95 */     setName("List.cellRenderer");
-/*     */   }
-/*     */   
-/*     */   private Border getNoFocusBorder() {
-/*  99 */     Border border = DefaultLookup.getBorder(this, this.ui, "List.cellNoFocusBorder");
-/* 100 */     if (System.getSecurityManager() != null) {
-/* 101 */       if (border != null) return border; 
-/* 102 */       return SAFE_NO_FOCUS_BORDER;
-/*     */     } 
-/* 104 */     if (border != null && (noFocusBorder == null || noFocusBorder == DEFAULT_NO_FOCUS_BORDER))
-/*     */     {
-/*     */       
-/* 107 */       return border;
-/*     */     }
-/* 109 */     return noFocusBorder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getListCellRendererComponent(JList<?> paramJList, Object paramObject, int paramInt, boolean paramBoolean1, boolean paramBoolean2) {
-/* 120 */     setComponentOrientation(paramJList.getComponentOrientation());
-/*     */     
-/* 122 */     Color color1 = null;
-/* 123 */     Color color2 = null;
-/*     */     
-/* 125 */     JList.DropLocation dropLocation = paramJList.getDropLocation();
-/* 126 */     if (dropLocation != null && 
-/* 127 */       !dropLocation.isInsert() && dropLocation
-/* 128 */       .getIndex() == paramInt) {
-/*     */       
-/* 130 */       color1 = DefaultLookup.getColor(this, this.ui, "List.dropCellBackground");
-/* 131 */       color2 = DefaultLookup.getColor(this, this.ui, "List.dropCellForeground");
-/*     */       
-/* 133 */       paramBoolean1 = true;
-/*     */     } 
-/*     */     
-/* 136 */     if (paramBoolean1) {
-/* 137 */       setBackground((color1 == null) ? paramJList.getSelectionBackground() : color1);
-/* 138 */       setForeground((color2 == null) ? paramJList.getSelectionForeground() : color2);
-/*     */     } else {
-/*     */       
-/* 141 */       setBackground(paramJList.getBackground());
-/* 142 */       setForeground(paramJList.getForeground());
-/*     */     } 
-/*     */     
-/* 145 */     if (paramObject instanceof Icon) {
-/* 146 */       setIcon((Icon)paramObject);
-/* 147 */       setText("");
-/*     */     } else {
-/*     */       
-/* 150 */       setIcon((Icon)null);
-/* 151 */       setText((paramObject == null) ? "" : paramObject.toString());
-/*     */     } 
-/*     */     
-/* 154 */     setEnabled(paramJList.isEnabled());
-/* 155 */     setFont(paramJList.getFont());
-/*     */     
-/* 157 */     Border border = null;
-/* 158 */     if (paramBoolean2) {
-/* 159 */       if (paramBoolean1) {
-/* 160 */         border = DefaultLookup.getBorder(this, this.ui, "List.focusSelectedCellHighlightBorder");
-/*     */       }
-/* 162 */       if (border == null) {
-/* 163 */         border = DefaultLookup.getBorder(this, this.ui, "List.focusCellHighlightBorder");
-/*     */       }
-/*     */     } else {
-/* 166 */       border = getNoFocusBorder();
-/*     */     } 
-/* 168 */     setBorder(border);
-/*     */     
-/* 170 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isOpaque() {
-/* 185 */     Color color = getBackground();
-/* 186 */     Container container = getParent();
-/* 187 */     if (container != null) {
-/* 188 */       container = container.getParent();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 193 */     boolean bool = (color != null && container != null && color.equals(container.getBackground()) && container.isOpaque()) ? true : false;
-/* 194 */     return (!bool && super.isOpaque());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void validate() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void invalidate() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void repaint() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void revalidate() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void repaint(long paramLong, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void repaint(Rectangle paramRectangle) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void firePropertyChange(String paramString, Object paramObject1, Object paramObject2) {
-/* 256 */     if (paramString == "text" || ((paramString == "font" || paramString == "foreground") && paramObject1 != paramObject2 && 
-/*     */ 
-/*     */       
-/* 259 */       getClientProperty("html") != null))
-/*     */     {
-/* 261 */       super.firePropertyChange(paramString, paramObject1, paramObject2);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void firePropertyChange(String paramString, byte paramByte1, byte paramByte2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, char paramChar1, char paramChar2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, short paramShort1, short paramShort2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, int paramInt1, int paramInt2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, long paramLong1, long paramLong2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, float paramFloat1, float paramFloat2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, double paramDouble1, double paramDouble2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, boolean paramBoolean1, boolean paramBoolean2) {}
-/*     */   
-/*     */   public static class UIResource extends DefaultListCellRenderer implements UIResource {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DefaultListCellRenderer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.border.*;
+
+import java.awt.Component;
+import java.awt.Color;
+import java.awt.Rectangle;
+
+import java.io.Serializable;
+import sun.swing.DefaultLookup;
+
+
+/**
+ * Renders an item in a list.
+ * <p>
+ * <strong><a name="override">Implementation Note:</a></strong>
+ * This class overrides
+ * <code>invalidate</code>,
+ * <code>validate</code>,
+ * <code>revalidate</code>,
+ * <code>repaint</code>,
+ * <code>isOpaque</code>,
+ * and
+ * <code>firePropertyChange</code>
+ * solely to improve performance.
+ * If not overridden, these frequently called methods would execute code paths
+ * that are unnecessary for the default list cell renderer.
+ * If you write your own renderer,
+ * take care to weigh the benefits and
+ * drawbacks of overriding these methods.
+ *
+ * <p>
+ *
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Philip Milne
+ * @author Hans Muller
+ */
+public class DefaultListCellRenderer extends JLabel
+    implements ListCellRenderer<Object>, Serializable
+{
+
+   /**
+    * An empty <code>Border</code>. This field might not be used. To change the
+    * <code>Border</code> used by this renderer override the
+    * <code>getListCellRendererComponent</code> method and set the border
+    * of the returned component directly.
+    */
+    private static final Border SAFE_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
+    private static final Border DEFAULT_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
+    protected static Border noFocusBorder = DEFAULT_NO_FOCUS_BORDER;
+
+    /**
+     * Constructs a default renderer object for an item
+     * in a list.
+     */
+    public DefaultListCellRenderer() {
+        super();
+        setOpaque(true);
+        setBorder(getNoFocusBorder());
+        setName("List.cellRenderer");
+    }
+
+    private Border getNoFocusBorder() {
+        Border border = DefaultLookup.getBorder(this, ui, "List.cellNoFocusBorder");
+        if (System.getSecurityManager() != null) {
+            if (border != null) return border;
+            return SAFE_NO_FOCUS_BORDER;
+        } else {
+            if (border != null &&
+                    (noFocusBorder == null ||
+                    noFocusBorder == DEFAULT_NO_FOCUS_BORDER)) {
+                return border;
+            }
+            return noFocusBorder;
+        }
+    }
+
+    public Component getListCellRendererComponent(
+        JList<?> list,
+        Object value,
+        int index,
+        boolean isSelected,
+        boolean cellHasFocus)
+    {
+        setComponentOrientation(list.getComponentOrientation());
+
+        Color bg = null;
+        Color fg = null;
+
+        JList.DropLocation dropLocation = list.getDropLocation();
+        if (dropLocation != null
+                && !dropLocation.isInsert()
+                && dropLocation.getIndex() == index) {
+
+            bg = DefaultLookup.getColor(this, ui, "List.dropCellBackground");
+            fg = DefaultLookup.getColor(this, ui, "List.dropCellForeground");
+
+            isSelected = true;
+        }
+
+        if (isSelected) {
+            setBackground(bg == null ? list.getSelectionBackground() : bg);
+            setForeground(fg == null ? list.getSelectionForeground() : fg);
+        }
+        else {
+            setBackground(list.getBackground());
+            setForeground(list.getForeground());
+        }
+
+        if (value instanceof Icon) {
+            setIcon((Icon)value);
+            setText("");
+        }
+        else {
+            setIcon(null);
+            setText((value == null) ? "" : value.toString());
+        }
+
+        setEnabled(list.isEnabled());
+        setFont(list.getFont());
+
+        Border border = null;
+        if (cellHasFocus) {
+            if (isSelected) {
+                border = DefaultLookup.getBorder(this, ui, "List.focusSelectedCellHighlightBorder");
+            }
+            if (border == null) {
+                border = DefaultLookup.getBorder(this, ui, "List.focusCellHighlightBorder");
+            }
+        } else {
+            border = getNoFocusBorder();
+        }
+        setBorder(border);
+
+        return this;
+    }
+
+    /**
+     * Overridden for performance reasons.
+     * See the <a href="#override">Implementation Note</a>
+     * for more information.
+     *
+     * @since 1.5
+     * @return <code>true</code> if the background is completely opaque
+     *         and differs from the JList's background;
+     *         <code>false</code> otherwise
+     */
+    @Override
+    public boolean isOpaque() {
+        Color back = getBackground();
+        Component p = getParent();
+        if (p != null) {
+            p = p.getParent();
+        }
+        // p should now be the JList.
+        boolean colorMatch = (back != null) && (p != null) &&
+            back.equals(p.getBackground()) &&
+                        p.isOpaque();
+        return !colorMatch && super.isOpaque();
+    }
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void validate() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    *
+    * @since 1.5
+    */
+    @Override
+    public void invalidate() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    *
+    * @since 1.5
+    */
+    @Override
+    public void repaint() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void revalidate() {}
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void repaint(long tm, int x, int y, int width, int height) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void repaint(Rectangle r) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        // Strings get interned...
+        if (propertyName == "text"
+                || ((propertyName == "font" || propertyName == "foreground")
+                    && oldValue != newValue
+                    && getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey) != null)) {
+
+            super.firePropertyChange(propertyName, oldValue, newValue);
+        }
+    }
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, char oldValue, char newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, short oldValue, short newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, int oldValue, int newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, long oldValue, long newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, float oldValue, float newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, double oldValue, double newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    @Override
+    public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+
+    /**
+     * A subclass of DefaultListCellRenderer that implements UIResource.
+     * DefaultListCellRenderer doesn't implement UIResource
+     * directly so that applications can safely override the
+     * cellRenderer property with DefaultListCellRenderer subclasses.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public static class UIResource extends DefaultListCellRenderer
+        implements javax.swing.plaf.UIResource
+    {
+    }
+}

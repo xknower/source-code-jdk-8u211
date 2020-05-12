@@ -1,221 +1,217 @@
-/*     */ package com.sun.corba.se.impl.transport;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.pept.transport.Connection;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.transport.CorbaContactInfoList;
-/*     */ import com.sun.corba.se.spi.transport.SocketInfo;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SocketOrChannelContactInfoImpl
-/*     */   extends CorbaContactInfoBase
-/*     */   implements SocketInfo
-/*     */ {
-/*     */   protected boolean isHashCodeCached = false;
-/*     */   protected int cachedHashCode;
-/*     */   protected String socketType;
-/*     */   protected String hostname;
-/*     */   protected int port;
-/*     */   
-/*     */   protected SocketOrChannelContactInfoImpl() {}
-/*     */   
-/*     */   protected SocketOrChannelContactInfoImpl(ORB paramORB, CorbaContactInfoList paramCorbaContactInfoList) {
-/*  65 */     this.orb = paramORB;
-/*  66 */     this.contactInfoList = paramCorbaContactInfoList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SocketOrChannelContactInfoImpl(ORB paramORB, CorbaContactInfoList paramCorbaContactInfoList, String paramString1, String paramString2, int paramInt) {
-/*  76 */     this(paramORB, paramCorbaContactInfoList);
-/*  77 */     this.socketType = paramString1;
-/*  78 */     this.hostname = paramString2;
-/*  79 */     this.port = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SocketOrChannelContactInfoImpl(ORB paramORB, CorbaContactInfoList paramCorbaContactInfoList, IOR paramIOR, short paramShort, String paramString1, String paramString2, int paramInt) {
-/*  92 */     this(paramORB, paramCorbaContactInfoList, paramString1, paramString2, paramInt);
-/*  93 */     this.effectiveTargetIOR = paramIOR;
-/*  94 */     this.addressingDisposition = paramShort;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isConnectionBased() {
-/* 104 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean shouldCacheConnection() {
-/* 109 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getConnectionCacheType() {
-/* 114 */     return "SocketOrChannelConnectionCache";
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Connection createConnection() {
-/* 119 */     return new SocketOrChannelConnectionImpl(this.orb, this, this.socketType, this.hostname, this.port);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMonitoringName() {
-/* 132 */     return "SocketConnections";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType() {
-/* 142 */     return this.socketType;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getHost() {
-/* 147 */     return this.hostname;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getPort() {
-/* 152 */     return this.port;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 162 */     if (!this.isHashCodeCached) {
-/* 163 */       this.cachedHashCode = this.socketType.hashCode() ^ this.hostname.hashCode() ^ this.port;
-/* 164 */       this.isHashCodeCached = true;
-/*     */     } 
-/* 166 */     return this.cachedHashCode;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 171 */     if (paramObject == null)
-/* 172 */       return false; 
-/* 173 */     if (!(paramObject instanceof SocketOrChannelContactInfoImpl)) {
-/* 174 */       return false;
-/*     */     }
-/*     */     
-/* 177 */     SocketOrChannelContactInfoImpl socketOrChannelContactInfoImpl = (SocketOrChannelContactInfoImpl)paramObject;
-/*     */ 
-/*     */     
-/* 180 */     if (this.port != socketOrChannelContactInfoImpl.port) {
-/* 181 */       return false;
-/*     */     }
-/* 183 */     if (!this.hostname.equals(socketOrChannelContactInfoImpl.hostname)) {
-/* 184 */       return false;
-/*     */     }
-/* 186 */     if (this.socketType == null) {
-/* 187 */       if (socketOrChannelContactInfoImpl.socketType != null) {
-/* 188 */         return false;
-/*     */       }
-/* 190 */     } else if (!this.socketType.equals(socketOrChannelContactInfoImpl.socketType)) {
-/* 191 */       return false;
-/*     */     } 
-/* 193 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 198 */     return "SocketOrChannelContactInfoImpl[" + this.socketType + " " + this.hostname + " " + this.port + "]";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void dprint(String paramString) {
-/* 213 */     ORBUtility.dprint("SocketOrChannelContactInfoImpl", paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\transport\SocketOrChannelContactInfoImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.transport;
+
+import com.sun.corba.se.pept.transport.Connection;
+
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.transport.CorbaContactInfoList;
+import com.sun.corba.se.spi.transport.CorbaTransportManager;
+import com.sun.corba.se.spi.transport.SocketInfo;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.transport.CorbaContactInfoBase;
+
+/**
+ * @author Harold Carr
+ */
+public class SocketOrChannelContactInfoImpl
+    extends CorbaContactInfoBase
+    implements SocketInfo
+{
+    protected boolean isHashCodeCached = false;
+    protected int cachedHashCode;
+
+    protected String socketType;
+    protected String hostname;
+    protected int    port;
+
+    // XREVISIT
+    // See SocketOrChannelAcceptorImpl.createMessageMediator
+    // See SocketFactoryContactInfoImpl.constructor()
+    // See SocketOrChannelContactInfoImpl.constructor()
+    protected SocketOrChannelContactInfoImpl()
+    {
+    }
+
+    protected SocketOrChannelContactInfoImpl(
+        ORB orb,
+        CorbaContactInfoList contactInfoList)
+    {
+        this.orb = orb;
+        this.contactInfoList = contactInfoList;
+    }
+
+    public SocketOrChannelContactInfoImpl(
+        ORB orb,
+        CorbaContactInfoList contactInfoList,
+        String socketType,
+        String hostname,
+        int port)
+    {
+        this(orb, contactInfoList);
+        this.socketType = socketType;
+        this.hostname = hostname;
+        this.port     = port;
+    }
+
+    // XREVISIT
+    public SocketOrChannelContactInfoImpl(
+        ORB orb,
+        CorbaContactInfoList contactInfoList,
+        IOR effectiveTargetIOR,
+        short addressingDisposition,
+        String socketType,
+        String hostname,
+        int port)
+    {
+        this(orb, contactInfoList, socketType, hostname, port);
+        this.effectiveTargetIOR = effectiveTargetIOR;
+        this.addressingDisposition = addressingDisposition;
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // pept.transport.ContactInfo
+    //
+
+    public boolean isConnectionBased()
+    {
+        return true;
+    }
+
+    public boolean shouldCacheConnection()
+    {
+        return true;
+    }
+
+    public String getConnectionCacheType()
+    {
+        return CorbaTransportManager.SOCKET_OR_CHANNEL_CONNECTION_CACHE;
+    }
+
+    public Connection createConnection()
+    {
+        Connection connection =
+            new SocketOrChannelConnectionImpl(orb, this,
+                                              socketType, hostname, port);
+        return connection;
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // spi.transport.CorbaContactInfo
+    //
+
+    public String getMonitoringName()
+    {
+        return "SocketConnections";
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // pept.transport.ContactInfo
+    //
+
+    public String getType()
+    {
+        return socketType;
+    }
+
+    public String getHost()
+    {
+        return hostname;
+    }
+
+    public int getPort()
+    {
+        return port;
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // java.lang.Object
+    //
+
+    public int hashCode()
+    {
+        if (! isHashCodeCached) {
+            cachedHashCode = socketType.hashCode() ^ hostname.hashCode() ^ port;
+            isHashCodeCached = true;
+        }
+        return cachedHashCode;
+    }
+
+    public boolean equals(Object obj)
+    {
+        if (obj == null) {
+            return false;
+        } else if (!(obj instanceof SocketOrChannelContactInfoImpl)) {
+            return false;
+        }
+
+        SocketOrChannelContactInfoImpl other =
+            (SocketOrChannelContactInfoImpl) obj;
+
+        if (port != other.port) {
+            return false;
+        }
+        if (!hostname.equals(other.hostname)) {
+            return false;
+        }
+        if (socketType == null) {
+            if (other.socketType != null) {
+                return false;
+            }
+        } else if (!socketType.equals(other.socketType)) {
+            return false;
+        }
+        return true;
+    }
+
+    public String toString()
+    {
+        return
+            "SocketOrChannelContactInfoImpl["
+            + socketType + " "
+            + hostname + " "
+            + port
+            + "]";
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // Implementation
+    //
+
+    protected void dprint(String msg)
+    {
+        ORBUtility.dprint("SocketOrChannelContactInfoImpl", msg);
+    }
+}
+
+// End of file.

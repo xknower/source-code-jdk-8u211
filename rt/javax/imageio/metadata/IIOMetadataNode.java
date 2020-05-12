@@ -1,1134 +1,1132 @@
-/*      */ package javax.imageio.metadata;
-/*      */ 
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.List;
-/*      */ import org.w3c.dom.Attr;
-/*      */ import org.w3c.dom.DOMException;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.Element;
-/*      */ import org.w3c.dom.NamedNodeMap;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ import org.w3c.dom.TypeInfo;
-/*      */ import org.w3c.dom.UserDataHandler;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class IIOMetadataNode
-/*      */   implements Element, NodeList
-/*      */ {
-/*  235 */   private String nodeName = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  241 */   private String nodeValue = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  246 */   private Object userObject = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  252 */   private IIOMetadataNode parent = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  257 */   private int numChildren = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  263 */   private IIOMetadataNode firstChild = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  269 */   private IIOMetadataNode lastChild = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  275 */   private IIOMetadataNode nextSibling = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  281 */   private IIOMetadataNode previousSibling = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  287 */   private List attributes = new ArrayList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOMetadataNode() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOMetadataNode(String paramString) {
-/*  301 */     this.nodeName = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void checkNode(Node paramNode) throws DOMException {
-/*  309 */     if (paramNode == null) {
-/*      */       return;
-/*      */     }
-/*  312 */     if (!(paramNode instanceof IIOMetadataNode)) {
-/*  313 */       throw new IIODOMException((short)4, "Node not an IIOMetadataNode!");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNodeName() {
-/*  326 */     return this.nodeName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNodeValue() {
-/*  335 */     return this.nodeValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setNodeValue(String paramString) {
-/*  342 */     this.nodeValue = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short getNodeType() {
-/*  352 */     return 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getParentNode() {
-/*  369 */     return this.parent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NodeList getChildNodes() {
-/*  380 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getFirstChild() {
-/*  391 */     return this.firstChild;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getLastChild() {
-/*  402 */     return this.lastChild;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getPreviousSibling() {
-/*  413 */     return this.previousSibling;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node getNextSibling() {
-/*  424 */     return this.nextSibling;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NamedNodeMap getAttributes() {
-/*  435 */     return new IIONamedNodeMap(this.attributes);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document getOwnerDocument() {
-/*  445 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node insertBefore(Node paramNode1, Node paramNode2) {
-/*  464 */     if (paramNode1 == null) {
-/*  465 */       throw new IllegalArgumentException("newChild == null!");
-/*      */     }
-/*      */     
-/*  468 */     checkNode(paramNode1);
-/*  469 */     checkNode(paramNode2);
-/*      */     
-/*  471 */     IIOMetadataNode iIOMetadataNode1 = (IIOMetadataNode)paramNode1;
-/*  472 */     IIOMetadataNode iIOMetadataNode2 = (IIOMetadataNode)paramNode2;
-/*      */ 
-/*      */     
-/*  475 */     IIOMetadataNode iIOMetadataNode3 = null;
-/*  476 */     IIOMetadataNode iIOMetadataNode4 = null;
-/*      */     
-/*  478 */     if (paramNode2 == null) {
-/*  479 */       iIOMetadataNode3 = this.lastChild;
-/*  480 */       iIOMetadataNode4 = null;
-/*  481 */       this.lastChild = iIOMetadataNode1;
-/*      */     } else {
-/*  483 */       iIOMetadataNode3 = iIOMetadataNode2.previousSibling;
-/*  484 */       iIOMetadataNode4 = iIOMetadataNode2;
-/*      */     } 
-/*      */     
-/*  487 */     if (iIOMetadataNode3 != null) {
-/*  488 */       iIOMetadataNode3.nextSibling = iIOMetadataNode1;
-/*      */     }
-/*  490 */     if (iIOMetadataNode4 != null) {
-/*  491 */       iIOMetadataNode4.previousSibling = iIOMetadataNode1;
-/*      */     }
-/*      */     
-/*  494 */     iIOMetadataNode1.parent = this;
-/*  495 */     iIOMetadataNode1.previousSibling = iIOMetadataNode3;
-/*  496 */     iIOMetadataNode1.nextSibling = iIOMetadataNode4;
-/*      */ 
-/*      */     
-/*  499 */     if (this.firstChild == iIOMetadataNode2) {
-/*  500 */       this.firstChild = iIOMetadataNode1;
-/*      */     }
-/*      */     
-/*  503 */     this.numChildren++;
-/*  504 */     return iIOMetadataNode1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node replaceChild(Node paramNode1, Node paramNode2) {
-/*  522 */     if (paramNode1 == null) {
-/*  523 */       throw new IllegalArgumentException("newChild == null!");
-/*      */     }
-/*      */     
-/*  526 */     checkNode(paramNode1);
-/*  527 */     checkNode(paramNode2);
-/*      */     
-/*  529 */     IIOMetadataNode iIOMetadataNode1 = (IIOMetadataNode)paramNode1;
-/*  530 */     IIOMetadataNode iIOMetadataNode2 = (IIOMetadataNode)paramNode2;
-/*      */     
-/*  532 */     IIOMetadataNode iIOMetadataNode3 = iIOMetadataNode2.previousSibling;
-/*  533 */     IIOMetadataNode iIOMetadataNode4 = iIOMetadataNode2.nextSibling;
-/*      */     
-/*  535 */     if (iIOMetadataNode3 != null) {
-/*  536 */       iIOMetadataNode3.nextSibling = iIOMetadataNode1;
-/*      */     }
-/*  538 */     if (iIOMetadataNode4 != null) {
-/*  539 */       iIOMetadataNode4.previousSibling = iIOMetadataNode1;
-/*      */     }
-/*      */     
-/*  542 */     iIOMetadataNode1.parent = this;
-/*  543 */     iIOMetadataNode1.previousSibling = iIOMetadataNode3;
-/*  544 */     iIOMetadataNode1.nextSibling = iIOMetadataNode4;
-/*      */     
-/*  546 */     if (this.firstChild == iIOMetadataNode2) {
-/*  547 */       this.firstChild = iIOMetadataNode1;
-/*      */     }
-/*  549 */     if (this.lastChild == iIOMetadataNode2) {
-/*  550 */       this.lastChild = iIOMetadataNode1;
-/*      */     }
-/*      */     
-/*  553 */     iIOMetadataNode2.parent = null;
-/*  554 */     iIOMetadataNode2.previousSibling = null;
-/*  555 */     iIOMetadataNode2.nextSibling = null;
-/*      */     
-/*  557 */     return iIOMetadataNode2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node removeChild(Node paramNode) {
-/*  572 */     if (paramNode == null) {
-/*  573 */       throw new IllegalArgumentException("oldChild == null!");
-/*      */     }
-/*  575 */     checkNode(paramNode);
-/*      */     
-/*  577 */     IIOMetadataNode iIOMetadataNode1 = (IIOMetadataNode)paramNode;
-/*      */     
-/*  579 */     IIOMetadataNode iIOMetadataNode2 = iIOMetadataNode1.previousSibling;
-/*  580 */     IIOMetadataNode iIOMetadataNode3 = iIOMetadataNode1.nextSibling;
-/*      */     
-/*  582 */     if (iIOMetadataNode2 != null) {
-/*  583 */       iIOMetadataNode2.nextSibling = iIOMetadataNode3;
-/*      */     }
-/*  585 */     if (iIOMetadataNode3 != null) {
-/*  586 */       iIOMetadataNode3.previousSibling = iIOMetadataNode2;
-/*      */     }
-/*      */     
-/*  589 */     if (this.firstChild == iIOMetadataNode1) {
-/*  590 */       this.firstChild = iIOMetadataNode3;
-/*      */     }
-/*  592 */     if (this.lastChild == iIOMetadataNode1) {
-/*  593 */       this.lastChild = iIOMetadataNode2;
-/*      */     }
-/*      */     
-/*  596 */     iIOMetadataNode1.parent = null;
-/*  597 */     iIOMetadataNode1.previousSibling = null;
-/*  598 */     iIOMetadataNode1.nextSibling = null;
-/*      */     
-/*  600 */     this.numChildren--;
-/*  601 */     return iIOMetadataNode1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node appendChild(Node paramNode) {
-/*  616 */     if (paramNode == null) {
-/*  617 */       throw new IllegalArgumentException("newChild == null!");
-/*      */     }
-/*  619 */     checkNode(paramNode);
-/*      */ 
-/*      */     
-/*  622 */     return insertBefore(paramNode, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasChildNodes() {
-/*  631 */     return (this.numChildren > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node cloneNode(boolean paramBoolean) {
-/*  649 */     IIOMetadataNode iIOMetadataNode = new IIOMetadataNode(this.nodeName);
-/*  650 */     iIOMetadataNode.setUserObject(getUserObject());
-/*      */ 
-/*      */     
-/*  653 */     if (paramBoolean) {
-/*  654 */       IIOMetadataNode iIOMetadataNode1 = this.firstChild;
-/*  655 */       for (; iIOMetadataNode1 != null; 
-/*  656 */         iIOMetadataNode1 = iIOMetadataNode1.nextSibling) {
-/*  657 */         iIOMetadataNode.appendChild(iIOMetadataNode1.cloneNode(true));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  661 */     return iIOMetadataNode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void normalize() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSupported(String paramString1, String paramString2) {
-/*  681 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNamespaceURI() throws DOMException {
-/*  688 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getPrefix() {
-/*  699 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPrefix(String paramString) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getLocalName() {
-/*  718 */     return this.nodeName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTagName() {
-/*  730 */     return this.nodeName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getAttribute(String paramString) {
-/*  740 */     Attr attr = getAttributeNode(paramString);
-/*  741 */     if (attr == null) {
-/*  742 */       return "";
-/*      */     }
-/*  744 */     return attr.getValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getAttributeNS(String paramString1, String paramString2) {
-/*  753 */     return getAttribute(paramString2);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void setAttribute(String paramString1, String paramString2) {
-/*  758 */     boolean bool = true;
-/*  759 */     char[] arrayOfChar = paramString1.toCharArray();
-/*  760 */     for (byte b = 0; b < arrayOfChar.length; b++) {
-/*  761 */       if (arrayOfChar[b] >= '￾') {
-/*  762 */         bool = false;
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/*  766 */     if (!bool) {
-/*  767 */       throw new IIODOMException((short)5, "Attribute name is illegal!");
-/*      */     }
-/*      */     
-/*  770 */     removeAttribute(paramString1, false);
-/*  771 */     this.attributes.add(new IIOAttr(this, paramString1, paramString2));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAttributeNS(String paramString1, String paramString2, String paramString3) {
-/*  781 */     setAttribute(paramString2, paramString3);
-/*      */   }
-/*      */   
-/*      */   public void removeAttribute(String paramString) {
-/*  785 */     removeAttribute(paramString, true);
-/*      */   }
-/*      */   
-/*      */   private void removeAttribute(String paramString, boolean paramBoolean) {
-/*  789 */     int i = this.attributes.size();
-/*  790 */     for (byte b = 0; b < i; b++) {
-/*  791 */       IIOAttr iIOAttr = this.attributes.get(b);
-/*  792 */       if (paramString.equals(iIOAttr.getName())) {
-/*  793 */         iIOAttr.setOwnerElement(null);
-/*  794 */         this.attributes.remove(b);
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  800 */     if (paramBoolean) {
-/*  801 */       throw new IIODOMException((short)8, "No such attribute!");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeAttributeNS(String paramString1, String paramString2) {
-/*  811 */     removeAttribute(paramString2);
-/*      */   }
-/*      */   
-/*      */   public Attr getAttributeNode(String paramString) {
-/*  815 */     Node node = getAttributes().getNamedItem(paramString);
-/*  816 */     return (Attr)node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr getAttributeNodeNS(String paramString1, String paramString2) {
-/*  826 */     return getAttributeNode(paramString2);
-/*      */   }
-/*      */   public Attr setAttributeNode(Attr paramAttr) throws DOMException {
-/*      */     IIOAttr iIOAttr;
-/*  830 */     Element element = paramAttr.getOwnerElement();
-/*  831 */     if (element != null) {
-/*  832 */       if (element == this) {
-/*  833 */         return null;
-/*      */       }
-/*  835 */       throw new DOMException((short)10, "Attribute is already in use");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  841 */     if (paramAttr instanceof IIOAttr) {
-/*  842 */       iIOAttr = (IIOAttr)paramAttr;
-/*  843 */       iIOAttr.setOwnerElement(this);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  847 */       iIOAttr = new IIOAttr(this, paramAttr.getName(), paramAttr.getValue());
-/*      */     } 
-/*      */     
-/*  850 */     Attr attr = getAttributeNode(iIOAttr.getName());
-/*  851 */     if (attr != null) {
-/*  852 */       removeAttributeNode(attr);
-/*      */     }
-/*      */     
-/*  855 */     this.attributes.add(iIOAttr);
-/*      */     
-/*  857 */     return attr;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Attr setAttributeNodeNS(Attr paramAttr) {
-/*  866 */     return setAttributeNode(paramAttr);
-/*      */   }
-/*      */   
-/*      */   public Attr removeAttributeNode(Attr paramAttr) {
-/*  870 */     removeAttribute(paramAttr.getName());
-/*  871 */     return paramAttr;
-/*      */   }
-/*      */   
-/*      */   public NodeList getElementsByTagName(String paramString) {
-/*  875 */     ArrayList arrayList = new ArrayList();
-/*  876 */     getElementsByTagName(paramString, arrayList);
-/*  877 */     return new IIONodeList(arrayList);
-/*      */   }
-/*      */   
-/*      */   private void getElementsByTagName(String paramString, List<IIOMetadataNode> paramList) {
-/*  881 */     if (this.nodeName.equals(paramString)) {
-/*  882 */       paramList.add(this);
-/*      */     }
-/*      */     
-/*  885 */     Node node = getFirstChild();
-/*  886 */     while (node != null) {
-/*  887 */       ((IIOMetadataNode)node).getElementsByTagName(paramString, paramList);
-/*  888 */       node = node.getNextSibling();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NodeList getElementsByTagNameNS(String paramString1, String paramString2) {
-/*  897 */     return getElementsByTagName(paramString2);
-/*      */   }
-/*      */   
-/*      */   public boolean hasAttributes() {
-/*  901 */     return (this.attributes.size() > 0);
-/*      */   }
-/*      */   
-/*      */   public boolean hasAttribute(String paramString) {
-/*  905 */     return (getAttributeNode(paramString) != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasAttributeNS(String paramString1, String paramString2) {
-/*  913 */     return hasAttribute(paramString2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLength() {
-/*  919 */     return this.numChildren;
-/*      */   }
-/*      */   
-/*      */   public Node item(int paramInt) {
-/*  923 */     if (paramInt < 0) {
-/*  924 */       return null;
-/*      */     }
-/*      */     
-/*  927 */     Node node = getFirstChild();
-/*  928 */     while (node != null && paramInt-- > 0) {
-/*  929 */       node = node.getNextSibling();
-/*      */     }
-/*  931 */     return node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getUserObject() {
-/*  942 */     return this.userObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUserObject(Object paramObject) {
-/*  953 */     this.userObject = paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIdAttribute(String paramString, boolean paramBoolean) throws DOMException {
-/*  966 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIdAttributeNS(String paramString1, String paramString2, boolean paramBoolean) throws DOMException {
-/*  979 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIdAttributeNode(Attr paramAttr, boolean paramBoolean) throws DOMException {
-/*  991 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeInfo getSchemaTypeInfo() throws DOMException {
-/* 1001 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object setUserData(String paramString, Object paramObject, UserDataHandler paramUserDataHandler) throws DOMException {
-/* 1013 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getUserData(String paramString) throws DOMException {
-/* 1023 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getFeature(String paramString1, String paramString2) throws DOMException {
-/* 1034 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSameNode(Node paramNode) throws DOMException {
-/* 1044 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEqualNode(Node paramNode) throws DOMException {
-/* 1054 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String lookupNamespaceURI(String paramString) throws DOMException {
-/* 1064 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isDefaultNamespace(String paramString) throws DOMException {
-/* 1075 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String lookupPrefix(String paramString) throws DOMException {
-/* 1085 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getTextContent() throws DOMException {
-/* 1095 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTextContent(String paramString) throws DOMException {
-/* 1105 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short compareDocumentPosition(Node paramNode) throws DOMException {
-/* 1116 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getBaseURI() throws DOMException {
-/* 1126 */     throw new DOMException((short)9, "Method not supported");
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\metadata\IIOMetadataNode.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.metadata;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.TypeInfo;
+import org.w3c.dom.UserDataHandler;
+
+
+class IIODOMException extends DOMException {
+
+    public IIODOMException(short code, String message) {
+        super(code, message);
+    }
+}
+
+class IIONamedNodeMap implements NamedNodeMap {
+
+    List nodes;
+
+    public IIONamedNodeMap(List nodes) {
+        this.nodes = nodes;
+    }
+
+    public int getLength() {
+        return nodes.size();
+    }
+
+    public Node getNamedItem(String name) {
+        Iterator iter = nodes.iterator();
+        while (iter.hasNext()) {
+            Node node = (Node)iter.next();
+            if (name.equals(node.getNodeName())) {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    public Node item(int index) {
+        Node node = (Node)nodes.get(index);
+        return node;
+    }
+
+    public Node removeNamedItem(java.lang.String name) {
+        throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                               "This NamedNodeMap is read-only!");
+    }
+
+    public Node setNamedItem(Node arg) {
+        throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                               "This NamedNodeMap is read-only!");
+    }
+
+    /**
+     * Equivalent to <code>getNamedItem(localName)</code>.
+     */
+    public Node getNamedItemNS(String namespaceURI, String localName) {
+        return getNamedItem(localName);
+    }
+
+    /**
+     * Equivalent to <code>setNamedItem(arg)</code>.
+     */
+    public Node setNamedItemNS(Node arg) {
+        return setNamedItem(arg);
+    }
+
+    /**
+     * Equivalent to <code>removeNamedItem(localName)</code>.
+     */
+    public Node removeNamedItemNS(String namespaceURI, String localName) {
+        return removeNamedItem(localName);
+    }
+}
+
+class IIONodeList implements NodeList {
+
+    List nodes;
+
+    public IIONodeList(List nodes) {
+        this.nodes = nodes;
+    }
+
+    public int getLength() {
+        return nodes.size();
+    }
+
+    public Node item(int index) {
+        if (index < 0 || index > nodes.size()) {
+            return null;
+        }
+        return (Node)nodes.get(index);
+    }
+}
+
+class IIOAttr extends IIOMetadataNode implements Attr {
+
+    Element owner;
+    String name;
+    String value;
+
+    public IIOAttr(Element owner, String name, String value) {
+        this.owner = owner;
+        this.name = name;
+        this.value = value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getNodeName() {
+        return name;
+    }
+
+    public short getNodeType() {
+        return ATTRIBUTE_NODE;
+    }
+
+    public boolean getSpecified() {
+        return true;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public String getNodeValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public void setNodeValue(String value) {
+        this.value = value;
+    }
+
+    public Element getOwnerElement() {
+        return owner;
+    }
+
+    public void setOwnerElement(Element owner) {
+        this.owner = owner;
+    }
+
+    /** This method is new in the DOM L3 for Attr interface.
+     * Could throw DOMException here, but its probably OK
+     * to always return false. One reason for this, is we have no good
+     * way to document this exception, since this class, IIOAttr,
+     * is not a public class. The rest of the methods that throw
+     * DOMException are publically documented as such on IIOMetadataNode.
+     * @return false
+     */
+    public boolean isId() {
+        return false;
+    }
+
+
+}
+
+/**
+ * A class representing a node in a meta-data tree, which implements
+ * the <a
+ * href="../../../../api/org/w3c/dom/Element.html">
+ * <code>org.w3c.dom.Element</code></a> interface and additionally allows
+ * for the storage of non-textual objects via the
+ * <code>getUserObject</code> and <code>setUserObject</code> methods.
+ *
+ * <p> This class is not intended to be used for general XML
+ * processing. In particular, <code>Element</code> nodes created
+ * within the Image I/O API are not compatible with those created by
+ * Sun's standard implementation of the <code>org.w3.dom</code> API.
+ * In particular, the implementation is tuned for simple uses and may
+ * not perform well for intensive processing.
+ *
+ * <p> Namespaces are ignored in this implementation.  The terms "tag
+ * name" and "node name" are always considered to be synonymous.
+ *
+ * <em>Note:</em>
+ * The DOM Level 3 specification added a number of new methods to the
+ * {@code Node}, {@code Element} and {@code Attr} interfaces that are not
+ * of value to the {@code IIOMetadataNode} implementation or specification.
+ *
+ * Calling such methods on an {@code IIOMetadataNode}, or an {@code Attr}
+ * instance returned from an {@code IIOMetadataNode} will result in a
+ * {@code DOMException} being thrown.
+ *
+ * @see IIOMetadata#getAsTree
+ * @see IIOMetadata#setFromTree
+ * @see IIOMetadata#mergeTree
+ *
+ */
+public class IIOMetadataNode implements Element, NodeList {
+
+    /**
+     * The name of the node as a <code>String</code>.
+     */
+    private String nodeName = null;
+
+    /**
+     * The value of the node as a <code>String</code>.  The Image I/O
+     * API typically does not make use of the node value.
+     */
+    private String nodeValue = null;
+
+    /**
+     * The <code>Object</code> value associated with this node.
+     */
+    private Object userObject = null;
+
+    /**
+     * The parent node of this node, or <code>null</code> if this node
+     * forms the root of its own tree.
+     */
+    private IIOMetadataNode parent = null;
+
+    /**
+     * The number of child nodes.
+     */
+    private int numChildren = 0;
+
+    /**
+     * The first (leftmost) child node of this node, or
+     * <code>null</code> if this node is a leaf node.
+     */
+    private IIOMetadataNode firstChild = null;
+
+    /**
+     * The last (rightmost) child node of this node, or
+     * <code>null</code> if this node is a leaf node.
+     */
+    private IIOMetadataNode lastChild = null;
+
+    /**
+     * The next (right) sibling node of this node, or
+     * <code>null</code> if this node is its parent's last child node.
+     */
+    private IIOMetadataNode nextSibling = null;
+
+    /**
+     * The previous (left) sibling node of this node, or
+     * <code>null</code> if this node is its parent's first child node.
+     */
+    private IIOMetadataNode previousSibling = null;
+
+    /**
+     * A <code>List</code> of <code>IIOAttr</code> nodes representing
+     * attributes.
+     */
+    private List attributes = new ArrayList();
+
+    /**
+     * Constructs an empty <code>IIOMetadataNode</code>.
+     */
+    public IIOMetadataNode() {}
+
+    /**
+     * Constructs an <code>IIOMetadataNode</code> with a given node
+     * name.
+     *
+     * @param nodeName the name of the node, as a <code>String</code>.
+     */
+    public IIOMetadataNode(String nodeName) {
+        this.nodeName = nodeName;
+    }
+
+    /**
+     * Check that the node is either <code>null</code> or an
+     * <code>IIOMetadataNode</code>.
+     */
+    private void checkNode(Node node) throws DOMException {
+        if (node == null) {
+            return;
+        }
+        if (!(node instanceof IIOMetadataNode)) {
+            throw new IIODOMException(DOMException.WRONG_DOCUMENT_ERR,
+                                      "Node not an IIOMetadataNode!");
+        }
+    }
+
+    // Methods from Node
+
+    /**
+     * Returns the node name associated with this node.
+     *
+     * @return the node name, as a <code>String</code>.
+     */
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    /**
+     * Returns the value associated with this node.
+     *
+     * @return the node value, as a <code>String</code>.
+     */
+    public String getNodeValue(){
+        return nodeValue;
+    }
+
+    /**
+     * Sets the <code>String</code> value associated with this node.
+     */
+    public void setNodeValue(String nodeValue) {
+        this.nodeValue = nodeValue;
+    }
+
+    /**
+     * Returns the node type, which is always
+     * <code>ELEMENT_NODE</code>.
+     *
+     * @return the <code>short</code> value <code>ELEMENT_NODE</code>.
+     */
+    public short getNodeType() {
+        return ELEMENT_NODE;
+    }
+
+    /**
+     * Returns the parent of this node.  A <code>null</code> value
+     * indicates that the node is the root of its own tree.  To add a
+     * node to an existing tree, use one of the
+     * <code>insertBefore</code>, <code>replaceChild</code>, or
+     * <code>appendChild</code> methods.
+     *
+     * @return the parent, as a <code>Node</code>.
+     *
+     * @see #insertBefore
+     * @see #replaceChild
+     * @see #appendChild
+     */
+    public Node getParentNode() {
+        return parent;
+    }
+
+    /**
+     * Returns a <code>NodeList</code> that contains all children of this node.
+     * If there are no children, this is a <code>NodeList</code> containing
+     * no nodes.
+     *
+     * @return the children as a <code>NodeList</code>
+     */
+    public NodeList getChildNodes() {
+        return this;
+    }
+
+    /**
+     * Returns the first child of this node, or <code>null</code> if
+     * the node has no children.
+     *
+     * @return the first child, as a <code>Node</code>, or
+     * <code>null</code>
+     */
+    public Node getFirstChild() {
+        return firstChild;
+    }
+
+    /**
+     * Returns the last child of this node, or <code>null</code> if
+     * the node has no children.
+     *
+     * @return the last child, as a <code>Node</code>, or
+     * <code>null</code>.
+     */
+    public Node getLastChild() {
+        return lastChild;
+    }
+
+    /**
+     * Returns the previous sibling of this node, or <code>null</code>
+     * if this node has no previous sibling.
+     *
+     * @return the previous sibling, as a <code>Node</code>, or
+     * <code>null</code>.
+     */
+    public Node getPreviousSibling() {
+        return previousSibling;
+    }
+
+    /**
+     * Returns the next sibling of this node, or <code>null</code> if
+     * the node has no next sibling.
+     *
+     * @return the next sibling, as a <code>Node</code>, or
+     * <code>null</code>.
+     */
+    public Node getNextSibling() {
+        return nextSibling;
+    }
+
+    /**
+     * Returns a <code>NamedNodeMap</code> containing the attributes of
+     * this node.
+     *
+     * @return a <code>NamedNodeMap</code> containing the attributes of
+     * this node.
+     */
+    public NamedNodeMap getAttributes() {
+        return new IIONamedNodeMap(attributes);
+    }
+
+    /**
+     * Returns <code>null</code>, since <code>IIOMetadataNode</code>s
+     * do not belong to any <code>Document</code>.
+     *
+     * @return <code>null</code>.
+     */
+    public Document getOwnerDocument() {
+        return null;
+    }
+
+    /**
+     * Inserts the node <code>newChild</code> before the existing
+     * child node <code>refChild</code>. If <code>refChild</code> is
+     * <code>null</code>, insert <code>newChild</code> at the end of
+     * the list of children.
+     *
+     * @param newChild the <code>Node</code> to insert.
+     * @param refChild the reference <code>Node</code>.
+     *
+     * @return the node being inserted.
+     *
+     * @exception IllegalArgumentException if <code>newChild</code> is
+     * <code>null</code>.
+     */
+    public Node insertBefore(Node newChild,
+                             Node refChild) {
+        if (newChild == null) {
+            throw new IllegalArgumentException("newChild == null!");
+        }
+
+        checkNode(newChild);
+        checkNode(refChild);
+
+        IIOMetadataNode newChildNode = (IIOMetadataNode)newChild;
+        IIOMetadataNode refChildNode = (IIOMetadataNode)refChild;
+
+        // Siblings, can be null.
+        IIOMetadataNode previous = null;
+        IIOMetadataNode next = null;
+
+        if (refChild == null) {
+            previous = this.lastChild;
+            next = null;
+            this.lastChild = newChildNode;
+        } else {
+            previous = refChildNode.previousSibling;
+            next = refChildNode;
+        }
+
+        if (previous != null) {
+            previous.nextSibling = newChildNode;
+        }
+        if (next != null) {
+            next.previousSibling = newChildNode;
+        }
+
+        newChildNode.parent = this;
+        newChildNode.previousSibling = previous;
+        newChildNode.nextSibling = next;
+
+        // N.B.: O.K. if refChild == null
+        if (this.firstChild == refChildNode) {
+            this.firstChild = newChildNode;
+        }
+
+        ++numChildren;
+        return newChildNode;
+    }
+
+    /**
+     * Replaces the child node <code>oldChild</code> with
+     * <code>newChild</code> in the list of children, and returns the
+     * <code>oldChild</code> node.
+     *
+     * @param newChild the <code>Node</code> to insert.
+     * @param oldChild the <code>Node</code> to be replaced.
+     *
+     * @return the node replaced.
+     *
+     * @exception IllegalArgumentException if <code>newChild</code> is
+     * <code>null</code>.
+     */
+    public Node replaceChild(Node newChild,
+                             Node oldChild) {
+        if (newChild == null) {
+            throw new IllegalArgumentException("newChild == null!");
+        }
+
+        checkNode(newChild);
+        checkNode(oldChild);
+
+        IIOMetadataNode newChildNode = (IIOMetadataNode)newChild;
+        IIOMetadataNode oldChildNode = (IIOMetadataNode)oldChild;
+
+        IIOMetadataNode previous = oldChildNode.previousSibling;
+        IIOMetadataNode next = oldChildNode.nextSibling;
+
+        if (previous != null) {
+            previous.nextSibling = newChildNode;
+        }
+        if (next != null) {
+            next.previousSibling = newChildNode;
+        }
+
+        newChildNode.parent = this;
+        newChildNode.previousSibling = previous;
+        newChildNode.nextSibling = next;
+
+        if (firstChild == oldChildNode) {
+            firstChild = newChildNode;
+        }
+        if (lastChild == oldChildNode) {
+            lastChild = newChildNode;
+        }
+
+        oldChildNode.parent = null;
+        oldChildNode.previousSibling = null;
+        oldChildNode.nextSibling = null;
+
+        return oldChildNode;
+    }
+
+    /**
+     * Removes the child node indicated by <code>oldChild</code> from
+     * the list of children, and returns it.
+     *
+     * @param oldChild the <code>Node</code> to be removed.
+     *
+     * @return the node removed.
+     *
+     * @exception IllegalArgumentException if <code>oldChild</code> is
+     * <code>null</code>.
+     */
+    public Node removeChild(Node oldChild) {
+        if (oldChild == null) {
+            throw new IllegalArgumentException("oldChild == null!");
+        }
+        checkNode(oldChild);
+
+        IIOMetadataNode oldChildNode = (IIOMetadataNode)oldChild;
+
+        IIOMetadataNode previous = oldChildNode.previousSibling;
+        IIOMetadataNode next = oldChildNode.nextSibling;
+
+        if (previous != null) {
+            previous.nextSibling = next;
+        }
+        if (next != null) {
+            next.previousSibling = previous;
+        }
+
+        if (this.firstChild == oldChildNode) {
+            this.firstChild = next;
+        }
+        if (this.lastChild == oldChildNode) {
+            this.lastChild = previous;
+        }
+
+        oldChildNode.parent = null;
+        oldChildNode.previousSibling = null;
+        oldChildNode.nextSibling = null;
+
+        --numChildren;
+        return oldChildNode;
+    }
+
+    /**
+     * Adds the node <code>newChild</code> to the end of the list of
+     * children of this node.
+     *
+     * @param newChild the <code>Node</code> to insert.
+     *
+     * @return the node added.
+     *
+     * @exception IllegalArgumentException if <code>newChild</code> is
+     * <code>null</code>.
+     */
+    public Node appendChild(Node newChild) {
+        if (newChild == null) {
+            throw new IllegalArgumentException("newChild == null!");
+        }
+        checkNode(newChild);
+
+        // insertBefore will increment numChildren
+        return insertBefore(newChild, null);
+    }
+
+    /**
+     * Returns <code>true</code> if this node has child nodes.
+     *
+     * @return <code>true</code> if this node has children.
+     */
+    public boolean hasChildNodes() {
+        return numChildren > 0;
+    }
+
+    /**
+     * Returns a duplicate of this node.  The duplicate node has no
+     * parent (<code>getParentNode</code> returns <code>null</code>).
+     * If a shallow clone is being performed (<code>deep</code> is
+     * <code>false</code>), the new node will not have any children or
+     * siblings.  If a deep clone is being performed, the new node
+     * will form the root of a complete cloned subtree.
+     *
+     * @param deep if <code>true</code>, recursively clone the subtree
+     * under the specified node; if <code>false</code>, clone only the
+     * node itself.
+     *
+     * @return the duplicate node.
+     */
+    public Node cloneNode(boolean deep) {
+        IIOMetadataNode newNode = new IIOMetadataNode(this.nodeName);
+        newNode.setUserObject(getUserObject());
+        // Attributes
+
+        if (deep) {
+            for (IIOMetadataNode child = firstChild;
+                 child != null;
+                 child = child.nextSibling) {
+                newNode.appendChild(child.cloneNode(true));
+            }
+        }
+
+        return newNode;
+    }
+
+    /**
+     * Does nothing, since <code>IIOMetadataNode</code>s do not
+     * contain <code>Text</code> children.
+     */
+    public void normalize() {
+    }
+
+    /**
+     * Returns <code>false</code> since DOM features are not
+     * supported.
+     *
+     * @return <code>false</code>.
+     *
+     * @param feature a <code>String</code>, which is ignored.
+     * @param version a <code>String</code>, which is ignored.
+     */
+    public boolean isSupported(String feature, String version) {
+        return false;
+    }
+
+    /**
+     * Returns <code>null</code>, since namespaces are not supported.
+     */
+    public String getNamespaceURI() throws DOMException {
+        return null;
+    }
+
+    /**
+     * Returns <code>null</code>, since namespaces are not supported.
+     *
+     * @return <code>null</code>.
+     *
+     * @see #setPrefix
+     */
+    public String getPrefix() {
+        return null;
+    }
+
+    /**
+     * Does nothing, since namespaces are not supported.
+     *
+     * @param prefix a <code>String</code>, which is ignored.
+     *
+     * @see #getPrefix
+     */
+    public void setPrefix(String prefix) {
+    }
+
+    /**
+     * Equivalent to <code>getNodeName</code>.
+     *
+     * @return the node name, as a <code>String</code>.
+     */
+    public String getLocalName() {
+        return nodeName;
+    }
+
+    // Methods from Element
+
+
+    /**
+     * Equivalent to <code>getNodeName</code>.
+     *
+     * @return the node name, as a <code>String</code>
+     */
+    public String getTagName() {
+        return nodeName;
+    }
+
+    /**
+     * Retrieves an attribute value by name.
+     * @param name The name of the attribute to retrieve.
+     * @return The <code>Attr</code> value as a string, or the empty string
+     * if that attribute does not have a specified or default value.
+     */
+    public String getAttribute(String name) {
+        Attr attr = getAttributeNode(name);
+        if (attr == null) {
+            return "";
+        }
+        return attr.getValue();
+    }
+
+    /**
+     * Equivalent to <code>getAttribute(localName)</code>.
+     *
+     * @see #setAttributeNS
+     */
+    public String getAttributeNS(String namespaceURI, String localName) {
+        return getAttribute(localName);
+    }
+
+    public void setAttribute(String name, String value) {
+        // Name must be valid unicode chars
+        boolean valid = true;
+        char[] chs = name.toCharArray();
+        for (int i=0;i<chs.length;i++) {
+            if (chs[i] >= 0xfffe) {
+                valid = false;
+                break;
+            }
+        }
+        if (!valid) {
+            throw new IIODOMException(DOMException.INVALID_CHARACTER_ERR,
+                                      "Attribute name is illegal!");
+        }
+        removeAttribute(name, false);
+        attributes.add(new IIOAttr(this, name, value));
+    }
+
+    /**
+     * Equivalent to <code>setAttribute(qualifiedName, value)</code>.
+     *
+     * @see #getAttributeNS
+     */
+    public void setAttributeNS(String namespaceURI,
+                               String qualifiedName, String value) {
+        setAttribute(qualifiedName, value);
+    }
+
+    public void removeAttribute(String name) {
+        removeAttribute(name, true);
+    }
+
+    private void removeAttribute(String name, boolean checkPresent) {
+        int numAttributes = attributes.size();
+        for (int i = 0; i < numAttributes; i++) {
+            IIOAttr attr = (IIOAttr)attributes.get(i);
+            if (name.equals(attr.getName())) {
+                attr.setOwnerElement(null);
+                attributes.remove(i);
+                return;
+            }
+        }
+
+        // If we get here, the attribute doesn't exist
+        if (checkPresent) {
+            throw new IIODOMException(DOMException.NOT_FOUND_ERR,
+                                      "No such attribute!");
+        }
+    }
+
+    /**
+     * Equivalent to <code>removeAttribute(localName)</code>.
+     */
+    public void removeAttributeNS(String namespaceURI,
+                                  String localName) {
+        removeAttribute(localName);
+    }
+
+    public Attr getAttributeNode(String name) {
+        Node node = getAttributes().getNamedItem(name);
+        return (Attr)node;
+    }
+
+    /**
+     * Equivalent to <code>getAttributeNode(localName)</code>.
+     *
+     * @see #setAttributeNodeNS
+     */
+   public Attr getAttributeNodeNS(String namespaceURI,
+                                   String localName) {
+        return getAttributeNode(localName);
+    }
+
+    public Attr setAttributeNode(Attr newAttr) throws DOMException {
+        Element owner = newAttr.getOwnerElement();
+        if (owner != null) {
+            if (owner == this) {
+                return null;
+            } else {
+                throw new DOMException(DOMException.INUSE_ATTRIBUTE_ERR,
+                                       "Attribute is already in use");
+            }
+        }
+
+        IIOAttr attr;
+        if (newAttr instanceof IIOAttr) {
+            attr = (IIOAttr)newAttr;
+            attr.setOwnerElement(this);
+        } else {
+            attr = new IIOAttr(this,
+                               newAttr.getName(),
+                               newAttr.getValue());
+        }
+
+        Attr oldAttr = getAttributeNode(attr.getName());
+        if (oldAttr != null) {
+            removeAttributeNode(oldAttr);
+        }
+
+        attributes.add(attr);
+
+        return oldAttr;
+    }
+
+    /**
+     * Equivalent to <code>setAttributeNode(newAttr)</code>.
+     *
+     * @see #getAttributeNodeNS
+     */
+    public Attr setAttributeNodeNS(Attr newAttr) {
+        return setAttributeNode(newAttr);
+    }
+
+    public Attr removeAttributeNode(Attr oldAttr) {
+        removeAttribute(oldAttr.getName());
+        return oldAttr;
+    }
+
+    public NodeList getElementsByTagName(String name) {
+        List l = new ArrayList();
+        getElementsByTagName(name, l);
+        return new IIONodeList(l);
+    }
+
+    private void getElementsByTagName(String name, List l) {
+        if (nodeName.equals(name)) {
+            l.add(this);
+        }
+
+        Node child = getFirstChild();
+        while (child != null) {
+            ((IIOMetadataNode)child).getElementsByTagName(name, l);
+            child = child.getNextSibling();
+        }
+    }
+
+    /**
+     * Equivalent to <code>getElementsByTagName(localName)</code>.
+     */
+    public NodeList getElementsByTagNameNS(String namespaceURI,
+                                           String localName) {
+        return getElementsByTagName(localName);
+    }
+
+    public boolean hasAttributes() {
+        return attributes.size() > 0;
+    }
+
+    public boolean hasAttribute(String name) {
+        return getAttributeNode(name) != null;
+    }
+
+    /**
+     * Equivalent to <code>hasAttribute(localName)</code>.
+     */
+    public boolean hasAttributeNS(String namespaceURI,
+                                  String localName) {
+        return hasAttribute(localName);
+    }
+
+    // Methods from NodeList
+
+    public int getLength() {
+        return numChildren;
+    }
+
+    public Node item(int index) {
+        if (index < 0) {
+            return null;
+        }
+
+        Node child = getFirstChild();
+        while (child != null && index-- > 0) {
+            child = child.getNextSibling();
+        }
+        return child;
+    }
+
+    /**
+     * Returns the <code>Object</code> value associated with this node.
+     *
+     * @return the user <code>Object</code>.
+     *
+     * @see #setUserObject
+     */
+    public Object getUserObject() {
+        return userObject;
+    }
+
+    /**
+     * Sets the value associated with this node.
+     *
+     * @param userObject the user <code>Object</code>.
+     *
+     * @see #getUserObject
+     */
+    public void setUserObject(Object userObject) {
+        this.userObject = userObject;
+    }
+
+    // Start of dummy methods for DOM L3.
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public void setIdAttribute(String name,
+                               boolean isId)
+                               throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public void setIdAttributeNS(String namespaceURI,
+                                 String localName,
+                                 boolean isId)
+                                 throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public void setIdAttributeNode(Attr idAttr,
+                                   boolean isId)
+                                   throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public TypeInfo getSchemaTypeInfo() throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public Object setUserData(String key,
+                              Object data,
+                              UserDataHandler handler) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public Object getUserData(String key) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public Object getFeature(String feature, String version)
+                              throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public boolean isSameNode(Node node) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public boolean isEqualNode(Node node) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public String lookupNamespaceURI(String prefix) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public boolean isDefaultNamespace(String namespaceURI)
+                                               throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public String lookupPrefix(String namespaceURI) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public String getTextContent() throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public void setTextContent(String textContent) throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public short compareDocumentPosition(Node other)
+                                         throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+
+    /**
+     * This DOM Level 3 method is not supported for {@code IIOMetadataNode}
+     * and will throw a {@code DOMException}.
+     * @throws DOMException - always.
+     */
+    public String getBaseURI() throws DOMException {
+        throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
+                               "Method not supported");
+    }
+    //End of dummy methods for DOM L3.
+
+
+}

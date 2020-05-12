@@ -1,83 +1,78 @@
-/*    */ package com.sun.corba.se.impl.corba;
-/*    */ 
-/*    */ import org.omg.CORBA.Any;
-/*    */ import org.omg.CORBA.ORB;
-/*    */ import org.omg.CORBA.TCKind;
-/*    */ import org.omg.CORBA.TypeCode;
-/*    */ import org.omg.CORBA.portable.InputStream;
-/*    */ import org.omg.CORBA.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class AnyImplHelper
-/*    */ {
-/* 38 */   private static String _id = "IDL:omg.org/CORBA/Any:1.0";
-/*    */ 
-/*    */   
-/*    */   public static void insert(Any paramAny1, Any paramAny2) {
-/* 42 */     OutputStream outputStream = paramAny1.create_output_stream();
-/* 43 */     paramAny1.type(type());
-/* 44 */     write(outputStream, paramAny2);
-/* 45 */     paramAny1.read_value(outputStream.create_input_stream(), type());
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static Any extract(Any paramAny) {
-/* 50 */     return read(paramAny.create_input_stream());
-/*    */   }
-/*    */   
-/* 53 */   private static TypeCode __typeCode = null;
-/*    */   
-/*    */   public static synchronized TypeCode type() {
-/* 56 */     if (__typeCode == null)
-/*    */     {
-/* 58 */       __typeCode = ORB.init().get_primitive_tc(TCKind.tk_any);
-/*    */     }
-/* 60 */     return __typeCode;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static String id() {
-/* 65 */     return _id;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static Any read(InputStream paramInputStream) {
-/* 70 */     return paramInputStream.read_any();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static void write(OutputStream paramOutputStream, Any paramAny) {
-/* 75 */     paramOutputStream.write_any(paramAny);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\corba\AnyImplHelper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.corba;
+
+abstract public class AnyImplHelper
+{
+    private static String  _id = "IDL:omg.org/CORBA/Any:1.0";
+
+    public static void insert (org.omg.CORBA.Any a, org.omg.CORBA.Any that)
+    {
+        org.omg.CORBA.portable.OutputStream out = a.create_output_stream ();
+        a.type (type ());
+        write (out, that);
+        a.read_value (out.create_input_stream (), type ());
+    }
+
+    public static org.omg.CORBA.Any extract (org.omg.CORBA.Any a)
+    {
+        return read (a.create_input_stream ());
+    }
+
+    private static org.omg.CORBA.TypeCode __typeCode = null;
+    synchronized public static org.omg.CORBA.TypeCode type ()
+    {
+        if (__typeCode == null)
+            {
+                __typeCode = org.omg.CORBA.ORB.init ().get_primitive_tc (org.omg.CORBA.TCKind.tk_any);
+            }
+        return __typeCode;
+    }
+
+    public static String id ()
+    {
+        return _id;
+    }
+
+    public static org.omg.CORBA.Any read (org.omg.CORBA.portable.InputStream istream)
+    {
+        return istream.read_any ();
+    }
+
+    public static void write (org.omg.CORBA.portable.OutputStream ostream, org.omg.CORBA.Any value)
+    {
+        ostream.write_any (value);
+    }
+
+}

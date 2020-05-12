@@ -1,185 +1,180 @@
-/*     */ package com.sun.corba.se.impl.ior;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.spi.activation.Activator;
-/*     */ import com.sun.corba.se.spi.activation._ActivatorStub;
-/*     */ import com.sun.corba.se.spi.activation._InitialNameServiceStub;
-/*     */ import com.sun.corba.se.spi.activation._LocatorStub;
-/*     */ import com.sun.corba.se.spi.activation._RepositoryStub;
-/*     */ import com.sun.corba.se.spi.activation._ServerManagerStub;
-/*     */ import com.sun.corba.se.spi.activation._ServerStub;
-/*     */ import com.sun.corba.se.spi.ior.IORTypeCheckRegistry;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Set;
-/*     */ import org.omg.CosNaming.BindingIterator;
-/*     */ import org.omg.CosNaming.NamingContext;
-/*     */ import org.omg.CosNaming.NamingContextExt;
-/*     */ import org.omg.CosNaming._BindingIteratorStub;
-/*     */ import org.omg.CosNaming._NamingContextExtStub;
-/*     */ import org.omg.CosNaming._NamingContextStub;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyFactory;
-/*     */ import org.omg.DynamicAny.DynArray;
-/*     */ import org.omg.DynamicAny.DynEnum;
-/*     */ import org.omg.DynamicAny.DynFixed;
-/*     */ import org.omg.DynamicAny.DynSequence;
-/*     */ import org.omg.DynamicAny.DynStruct;
-/*     */ import org.omg.DynamicAny.DynUnion;
-/*     */ import org.omg.DynamicAny.DynValue;
-/*     */ import org.omg.DynamicAny._DynAnyFactoryStub;
-/*     */ import org.omg.DynamicAny._DynAnyStub;
-/*     */ import org.omg.DynamicAny._DynArrayStub;
-/*     */ import org.omg.DynamicAny._DynEnumStub;
-/*     */ import org.omg.DynamicAny._DynFixedStub;
-/*     */ import org.omg.DynamicAny._DynStructStub;
-/*     */ import org.omg.DynamicAny._DynUnionStub;
-/*     */ import org.omg.PortableServer.ServantActivator;
-/*     */ import org.omg.PortableServer.ServantLocator;
-/*     */ import org.omg.PortableServer._ServantActivatorStub;
-/*     */ import org.omg.PortableServer._ServantLocatorStub;
-/*     */ 
-/*     */ public class IORTypeCheckRegistryImpl implements IORTypeCheckRegistry {
-/*  44 */   private static final Set<String> builtinIorTypeNames = initBuiltinIorTypeNames(); private final Set<String> iorTypeNames;
-/*     */   private ORB theOrb;
-/*     */   
-/*     */   public IORTypeCheckRegistryImpl(String paramString, ORB paramORB) {
-/*  48 */     this.theOrb = paramORB;
-/*  49 */     this.iorTypeNames = parseIorClassNameList(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isValidIORType(String paramString) {
-/*  60 */     dprintTransport(".isValidIORType : iorClassName == " + paramString);
-/*  61 */     return validateIorTypeByName(paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private boolean validateIorTypeByName(String paramString) {
-/*  66 */     dprintTransport(".validateIorTypeByName : iorClassName == " + paramString);
-/*     */ 
-/*     */     
-/*  69 */     boolean bool = checkIorTypeNames(paramString);
-/*     */     
-/*  71 */     if (!bool) {
-/*  72 */       bool = checkBuiltinClassNames(paramString);
-/*     */     }
-/*     */     
-/*  75 */     dprintTransport(".validateIorTypeByName : isValidType == " + bool);
-/*  76 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean checkIorTypeNames(String paramString) {
-/*  90 */     return (this.iorTypeNames != null && this.iorTypeNames.contains(paramString));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean checkBuiltinClassNames(String paramString) {
-/*  99 */     return builtinIorTypeNames.contains(paramString);
-/*     */   }
-/*     */   
-/*     */   private Set<String> parseIorClassNameList(String paramString) {
-/* 103 */     Set<?> set = null;
-/* 104 */     if (paramString != null) {
-/* 105 */       String[] arrayOfString = paramString.split(";");
-/* 106 */       set = Collections.unmodifiableSet(new HashSet(
-/* 107 */             Arrays.asList((Object[])arrayOfString)));
-/* 108 */       if (this.theOrb.orbInitDebugFlag) {
-/* 109 */         dprintConfiguredIorTypeNames();
-/*     */       }
-/*     */     } 
-/* 112 */     return (Set)set;
-/*     */   }
-/*     */   
-/*     */   private static Set<String> initBuiltinIorTypeNames() {
-/* 116 */     Set<Class<?>> set = initBuiltInCorbaStubTypes();
-/* 117 */     String[] arrayOfString = new String[set.size()];
-/* 118 */     byte b = 0;
-/* 119 */     for (Class<?> clazz : set) {
-/* 120 */       arrayOfString[b++] = clazz.getName();
-/*     */     }
-/* 122 */     return Collections.unmodifiableSet(new HashSet<>(
-/* 123 */           Arrays.asList(arrayOfString)));
-/*     */   }
-/*     */   
-/*     */   private static Set<Class<?>> initBuiltInCorbaStubTypes() {
-/* 127 */     Class[] arrayOfClass = { Activator.class, _ActivatorStub.class, _InitialNameServiceStub.class, _LocatorStub.class, _RepositoryStub.class, _ServerManagerStub.class, _ServerStub.class, BindingIterator.class, _BindingIteratorStub.class, NamingContextExt.class, _NamingContextExtStub.class, NamingContext.class, _NamingContextStub.class, DynAnyFactory.class, _DynAnyFactoryStub.class, DynAny.class, _DynAnyStub.class, DynArray.class, _DynArrayStub.class, DynEnum.class, _DynEnumStub.class, DynFixed.class, _DynFixedStub.class, DynSequence.class, _DynSequenceStub.class, DynStruct.class, _DynStructStub.class, DynUnion.class, _DynUnionStub.class, _DynValueStub.class, DynValue.class, ServantActivator.class, _ServantActivatorStub.class, ServantLocator.class, _ServantLocatorStub.class };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 163 */     return new HashSet<>(
-/* 164 */         Arrays.asList(arrayOfClass));
-/*     */   }
-/*     */   
-/*     */   private void dprintConfiguredIorTypeNames() {
-/* 168 */     if (this.iorTypeNames != null) {
-/* 169 */       for (String str : this.iorTypeNames) {
-/* 170 */         ORBUtility.dprint(this, ".dprintConfiguredIorTypeNames: " + str);
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void dprintTransport(String paramString) {
-/* 176 */     if (this.theOrb.transportDebugFlag)
-/* 177 */       ORBUtility.dprint(this, paramString); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\IORTypeCheckRegistryImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.spi.ior.IORTypeCheckRegistry;
+import com.sun.corba.se.spi.orb.ORB;
+
+public class IORTypeCheckRegistryImpl implements IORTypeCheckRegistry {
+
+    private final Set<String> iorTypeNames;
+    private static final Set<String> builtinIorTypeNames;
+    private ORB theOrb;
+
+    static {
+        builtinIorTypeNames = initBuiltinIorTypeNames();
+    }
+
+    public IORTypeCheckRegistryImpl(String filterProperties, ORB orb) {
+        theOrb = orb;
+        iorTypeNames = parseIorClassNameList(filterProperties);
+    }
+
+    /*
+     *
+     * A note on the validation flow:
+     * 1. against the filter class name list
+     * 2. against the builtin class name list
+     */
+    @Override
+    public boolean isValidIORType(String iorClassName) {
+        dprintTransport(".isValidIORType : iorClassName == " + iorClassName);
+        return validateIorTypeByName(iorClassName);
+    }
+
+
+    private boolean validateIorTypeByName(String iorClassName) {
+        dprintTransport(".validateIorTypeByName : iorClassName == " + iorClassName);
+        boolean isValidType;
+
+        isValidType = checkIorTypeNames(iorClassName);
+
+        if (!isValidType) {
+            isValidType = checkBuiltinClassNames(iorClassName);
+        }
+
+        dprintTransport(".validateIorTypeByName : isValidType == " + isValidType);
+        return isValidType;
+    }
+
+
+    /*
+     * check if the class name corresponding to an IOR Type name
+     * is in the ior class name list as generated from the filter property.
+     * So if the IOR type is recorded in the registry then allow the creation of the
+     * stub factory and let it resolve and load the class. That is if current
+     * type check deliberation permits.
+     * IOR Type names are configured by the filter property
+     */
+    private boolean checkIorTypeNames(
+            String theIorClassName) {
+        return (iorTypeNames != null) && (iorTypeNames.contains(theIorClassName));
+    }
+
+    /*
+     * Check the IOR interface class name against the set of
+     * class names that correspond to the builtin JDK IDL stub classes.
+     */
+    private boolean checkBuiltinClassNames(
+            String theIorClassName) {
+        return builtinIorTypeNames.contains(theIorClassName);
+    }
+
+    private Set<String> parseIorClassNameList(String filterProperty) {
+        Set<String> _iorTypeNames = null;
+        if (filterProperty != null) {
+            String[] tempIorClassNames = filterProperty.split(";");
+            _iorTypeNames = Collections.unmodifiableSet(new HashSet<>(Arrays
+                    .asList(tempIorClassNames)));
+            if (theOrb.orbInitDebugFlag) {
+                dprintConfiguredIorTypeNames();
+            }
+        }
+        return _iorTypeNames;
+    }
+
+    private static Set<String> initBuiltinIorTypeNames() {
+        Set<Class<?>> builtInCorbaStubTypes = initBuiltInCorbaStubTypes();
+        String[] tempBuiltinIorTypeNames = new String[builtInCorbaStubTypes.size()];
+        int i = 0;
+        for (Class<?> _stubClass : builtInCorbaStubTypes) {
+            tempBuiltinIorTypeNames[i++] = _stubClass.getName();
+        }
+        return Collections.unmodifiableSet(new HashSet<>(Arrays
+                .asList(tempBuiltinIorTypeNames)));
+    }
+
+    private static Set<Class<?>> initBuiltInCorbaStubTypes() {
+        Class<?> tempBuiltinCorbaStubTypes[] = {
+            com.sun.corba.se.spi.activation.Activator.class,
+            com.sun.corba.se.spi.activation._ActivatorStub.class,
+            com.sun.corba.se.spi.activation._InitialNameServiceStub.class,
+            com.sun.corba.se.spi.activation._LocatorStub.class,
+            com.sun.corba.se.spi.activation._RepositoryStub.class,
+            com.sun.corba.se.spi.activation._ServerManagerStub.class,
+            com.sun.corba.se.spi.activation._ServerStub.class,
+            org.omg.CosNaming.BindingIterator.class,
+            org.omg.CosNaming._BindingIteratorStub.class,
+            org.omg.CosNaming.NamingContextExt.class,
+            org.omg.CosNaming._NamingContextExtStub.class,
+            org.omg.CosNaming.NamingContext.class,
+            org.omg.CosNaming._NamingContextStub.class,
+            org.omg.DynamicAny.DynAnyFactory.class,
+            org.omg.DynamicAny._DynAnyFactoryStub.class,
+            org.omg.DynamicAny.DynAny.class,
+            org.omg.DynamicAny._DynAnyStub.class,
+            org.omg.DynamicAny.DynArray.class,
+            org.omg.DynamicAny._DynArrayStub.class,
+            org.omg.DynamicAny.DynEnum.class,
+            org.omg.DynamicAny._DynEnumStub.class,
+            org.omg.DynamicAny.DynFixed.class,
+            org.omg.DynamicAny._DynFixedStub.class,
+            org.omg.DynamicAny.DynSequence.class,
+            org.omg.DynamicAny._DynSequenceStub.class,
+            org.omg.DynamicAny.DynStruct.class,
+            org.omg.DynamicAny._DynStructStub.class,
+            org.omg.DynamicAny.DynUnion.class,
+            org.omg.DynamicAny._DynUnionStub.class,
+            org.omg.DynamicAny._DynValueStub.class,
+            org.omg.DynamicAny.DynValue.class,
+            org.omg.PortableServer.ServantActivator.class,
+            org.omg.PortableServer._ServantActivatorStub.class,
+            org.omg.PortableServer.ServantLocator.class,
+            org.omg.PortableServer._ServantLocatorStub.class};
+        return new HashSet<>(
+                Arrays.asList(tempBuiltinCorbaStubTypes));
+    }
+
+    private void dprintConfiguredIorTypeNames() {
+        if (iorTypeNames != null) {
+            for (String iorTypeName : iorTypeNames) {
+                ORBUtility.dprint(this, ".dprintConfiguredIorTypeNames: " + iorTypeName);
+            }
+        }
+    }
+
+    private void dprintTransport(String msg) {
+        if (theOrb.transportDebugFlag) {
+            ORBUtility.dprint(this, msg);
+        }
+    }
+}

@@ -1,106 +1,100 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*    */ 
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*    */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class UnionIterator
-/*    */   extends MultiValuedNodeHeapIterator
-/*    */ {
-/*    */   private final DOM _dom;
-/*    */   
-/*    */   private final class LookAheadIterator
-/*    */     extends MultiValuedNodeHeapIterator.HeapNode
-/*    */   {
-/*    */     public DTMAxisIterator iterator;
-/*    */     
-/*    */     public LookAheadIterator(DTMAxisIterator iterator) {
-/* 52 */       this.iterator = iterator;
-/*    */     }
-/*    */     
-/*    */     public int step() {
-/* 56 */       this._node = this.iterator.next();
-/* 57 */       return this._node;
-/*    */     }
-/*    */     
-/*    */     public MultiValuedNodeHeapIterator.HeapNode cloneHeapNode() {
-/* 61 */       LookAheadIterator clone = (LookAheadIterator)super.cloneHeapNode();
-/* 62 */       clone.iterator = this.iterator.cloneIterator();
-/* 63 */       return clone;
-/*    */     }
-/*    */     
-/*    */     public void setMark() {
-/* 67 */       super.setMark();
-/* 68 */       this.iterator.setMark();
-/*    */     }
-/*    */     
-/*    */     public void gotoMark() {
-/* 72 */       super.gotoMark();
-/* 73 */       this.iterator.gotoMark();
-/*    */     }
-/*    */     
-/*    */     public boolean isLessThan(MultiValuedNodeHeapIterator.HeapNode heapNode) {
-/* 77 */       LookAheadIterator comparand = (LookAheadIterator)heapNode;
-/* 78 */       return UnionIterator.this._dom.lessThan(this._node, heapNode._node);
-/*    */     }
-/*    */     
-/*    */     public MultiValuedNodeHeapIterator.HeapNode setStartNode(int node) {
-/* 82 */       this.iterator.setStartNode(node);
-/* 83 */       return this;
-/*    */     }
-/*    */     
-/*    */     public MultiValuedNodeHeapIterator.HeapNode reset() {
-/* 87 */       this.iterator.reset();
-/* 88 */       return this;
-/*    */     }
-/*    */   }
-/*    */   
-/*    */   public UnionIterator(DOM dom) {
-/* 93 */     this._dom = dom;
-/*    */   }
-/*    */   
-/*    */   public UnionIterator addIterator(DTMAxisIterator iterator) {
-/* 97 */     addHeapNode(new LookAheadIterator(iterator));
-/* 98 */     return this;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\UnionIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2006 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: UnionIterator.java,v 1.5 2005/09/28 13:48:38 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+
+/**
+ * UnionIterator takes a set of NodeIterators and produces
+ * a merged NodeSet in document order with duplicates removed
+ * The individual iterators are supposed to generate nodes
+ * in document order
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public final class UnionIterator extends MultiValuedNodeHeapIterator {
+    /** wrapper for NodeIterators to support iterator
+        comparison on the value of their next() method
+    */
+    final private DOM _dom;
+
+    private final class LookAheadIterator
+            extends MultiValuedNodeHeapIterator.HeapNode
+    {
+        public DTMAxisIterator iterator;
+
+        public LookAheadIterator(DTMAxisIterator iterator) {
+            super();
+            this.iterator = iterator;
+        }
+
+        public int step() {
+            _node = iterator.next();
+            return _node;
+        }
+
+        public HeapNode cloneHeapNode() {
+            LookAheadIterator clone = (LookAheadIterator) super.cloneHeapNode();
+            clone.iterator = iterator.cloneIterator();
+            return clone;
+        }
+
+        public void setMark() {
+            super.setMark();
+            iterator.setMark();
+        }
+
+        public void gotoMark() {
+            super.gotoMark();
+            iterator.gotoMark();
+        }
+
+        public boolean isLessThan(HeapNode heapNode) {
+            LookAheadIterator comparand = (LookAheadIterator) heapNode;
+            return _dom.lessThan(_node, heapNode._node);
+        }
+
+        public HeapNode setStartNode(int node) {
+            iterator.setStartNode(node);
+            return this;
+        }
+
+        public HeapNode reset() {
+            iterator.reset();
+            return this;
+        }
+    } // end of LookAheadIterator
+
+    public UnionIterator(DOM dom) {
+        _dom = dom;
+    }
+
+    public UnionIterator addIterator(DTMAxisIterator iterator) {
+        addHeapNode(new LookAheadIterator(iterator));
+        return this;
+    }
+}

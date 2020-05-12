@@ -1,11 +1,50 @@
+/*
+ * Copyright (c) 1996, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.security.interfaces;
 
-public interface DSAKey {
-  DSAParams getParams();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\interfaces\DSAKey.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The interface to a DSA public or private key. DSA (Digital Signature
+ * Algorithm) is defined in NIST's FIPS-186.
+ *
+ * @see DSAParams
+ * @see java.security.Key
+ * @see java.security.Signature
+ *
+ * @author Benjamin Renaud
+ * @author Josh Bloch
  */
+public interface DSAKey {
+
+    /**
+     * Returns the DSA-specific key parameters. These parameters are
+     * never secret.
+     *
+     * @return the DSA-specific key parameters.
+     *
+     * @see DSAParams
+     */
+    public DSAParams getParams();
+}

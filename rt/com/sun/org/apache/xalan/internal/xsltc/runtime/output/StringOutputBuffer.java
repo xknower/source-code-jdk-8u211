@@ -1,61 +1,55 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.runtime.output;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class StringOutputBuffer
-/*    */   implements OutputBuffer
-/*    */ {
-/* 34 */   private StringBuffer _buffer = new StringBuffer();
-/*    */ 
-/*    */   
-/*    */   public String close() {
-/* 38 */     return this._buffer.toString();
-/*    */   }
-/*    */   
-/*    */   public OutputBuffer append(String s) {
-/* 42 */     this._buffer.append(s);
-/* 43 */     return this;
-/*    */   }
-/*    */   
-/*    */   public OutputBuffer append(char[] s, int from, int to) {
-/* 47 */     this._buffer.append(s, from, to);
-/* 48 */     return this;
-/*    */   }
-/*    */   
-/*    */   public OutputBuffer append(char ch) {
-/* 52 */     this._buffer.append(ch);
-/* 53 */     return this;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\runtime\output\StringOutputBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringOutputBuffer.java,v 1.2.4.1 2005/09/06 11:36:16 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.runtime.output;
+
+
+/**
+ * @author Santiago Pericas-Geertsen
+ */
+class StringOutputBuffer implements OutputBuffer {
+    private StringBuffer _buffer;
+
+    public StringOutputBuffer() {
+        _buffer = new StringBuffer();
+    }
+
+    public String close() {
+        return _buffer.toString();
+    }
+
+    public OutputBuffer append(String s) {
+        _buffer.append(s);
+        return this;
+    }
+
+    public OutputBuffer append(char[] s, int from, int to) {
+        _buffer.append(s, from, to);
+        return this;
+    }
+
+    public OutputBuffer append(char ch) {
+        _buffer.append(ch);
+        return this;
+    }
+}

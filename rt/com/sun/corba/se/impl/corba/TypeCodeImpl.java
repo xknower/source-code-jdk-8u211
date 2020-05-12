@@ -1,2419 +1,2413 @@
-/*      */ package com.sun.corba.se.impl.corba;
-/*      */ 
-/*      */ import com.sun.corba.se.impl.encoding.CDRInputStream;
-/*      */ import com.sun.corba.se.impl.encoding.CDROutputStream;
-/*      */ import com.sun.corba.se.impl.encoding.TypeCodeInputStream;
-/*      */ import com.sun.corba.se.impl.encoding.TypeCodeOutputStream;
-/*      */ import com.sun.corba.se.impl.encoding.TypeCodeReader;
-/*      */ import com.sun.corba.se.impl.encoding.WrapperInputStream;
-/*      */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*      */ import com.sun.corba.se.spi.orb.ORB;
-/*      */ import java.io.ByteArrayOutputStream;
-/*      */ import java.io.PrintStream;
-/*      */ import java.math.BigDecimal;
-/*      */ import org.omg.CORBA.Any;
-/*      */ import org.omg.CORBA.StructMember;
-/*      */ import org.omg.CORBA.TCKind;
-/*      */ import org.omg.CORBA.TypeCode;
-/*      */ import org.omg.CORBA.TypeCodePackage.BadKind;
-/*      */ import org.omg.CORBA.TypeCodePackage.Bounds;
-/*      */ import org.omg.CORBA.UnionMember;
-/*      */ import org.omg.CORBA.ValueMember;
-/*      */ import org.omg.CORBA.portable.InputStream;
-/*      */ import org.omg.CORBA.portable.OutputStream;
-/*      */ import org.omg.CORBA_2_3.portable.InputStream;
-/*      */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*      */ import sun.corba.OutputStreamFactory;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class TypeCodeImpl
-/*      */   extends TypeCode
-/*      */ {
-/*      */   protected static final int tk_indirect = -1;
-/*      */   private static final int EMPTY = 0;
-/*      */   private static final int SIMPLE = 1;
-/*      */   private static final int COMPLEX = 2;
-/*   91 */   private static final int[] typeTable = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  129 */   static final String[] kindNames = new String[] { "null", "void", "short", "long", "ushort", "ulong", "float", "double", "boolean", "char", "octet", "any", "typecode", "principal", "objref", "struct", "union", "enum", "string", "sequence", "array", "alias", "exception", "longlong", "ulonglong", "longdouble", "wchar", "wstring", "fixed", "value", "valueBox", "native", "abstractInterface" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  165 */   private int _kind = 0;
-/*      */ 
-/*      */   
-/*  168 */   private String _id = "";
-/*  169 */   private String _name = "";
-/*  170 */   private int _memberCount = 0;
-/*  171 */   private String[] _memberNames = null;
-/*  172 */   private TypeCodeImpl[] _memberTypes = null;
-/*  173 */   private AnyImpl[] _unionLabels = null;
-/*  174 */   private TypeCodeImpl _discriminator = null;
-/*  175 */   private int _defaultIndex = -1;
-/*  176 */   private int _length = 0;
-/*  177 */   private TypeCodeImpl _contentType = null;
-/*      */   
-/*  179 */   private short _digits = 0;
-/*  180 */   private short _scale = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  185 */   private short _type_modifier = -1;
-/*      */   
-/*  187 */   private TypeCodeImpl _concrete_base = null;
-/*  188 */   private short[] _memberAccess = null;
-/*      */   
-/*  190 */   private TypeCodeImpl _parent = null;
-/*  191 */   private int _parentOffset = 0;
-/*      */   
-/*  193 */   private TypeCodeImpl _indirectType = null;
-/*      */ 
-/*      */   
-/*  196 */   private byte[] outBuffer = null;
-/*      */ 
-/*      */   
-/*      */   private boolean cachingEnabled = false;
-/*      */ 
-/*      */   
-/*      */   private ORB _orb;
-/*      */ 
-/*      */   
-/*      */   private ORBUtilSystemException wrapper;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB) {
-/*  210 */     this._orb = paramORB;
-/*  211 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.presentation");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  219 */     this(paramORB);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  225 */     if (paramTypeCode instanceof TypeCodeImpl) {
-/*  226 */       TypeCodeImpl typeCodeImpl = (TypeCodeImpl)paramTypeCode;
-/*  227 */       if (typeCodeImpl._kind == -1)
-/*  228 */         throw this.wrapper.badRemoteTypecode(); 
-/*  229 */       if (typeCodeImpl._kind == 19 && typeCodeImpl._contentType == null) {
-/*  230 */         throw this.wrapper.badRemoteTypecode();
-/*      */       }
-/*      */     } 
-/*      */     
-/*  234 */     this._kind = paramTypeCode.kind().value(); 
-/*      */     try { TypeCode typeCode;
-/*      */       byte b1;
-/*      */       byte b2;
-/*  238 */       switch (this._kind) {
-/*      */         case 29:
-/*  240 */           this._type_modifier = paramTypeCode.type_modifier();
-/*      */           
-/*  242 */           typeCode = paramTypeCode.concrete_base_type();
-/*  243 */           if (typeCode != null) {
-/*  244 */             this._concrete_base = convertToNative(this._orb, typeCode);
-/*      */           } else {
-/*  246 */             this._concrete_base = null;
-/*      */           } 
-/*      */ 
-/*      */           
-/*  250 */           this._memberAccess = new short[paramTypeCode.member_count()];
-/*  251 */           for (b2 = 0; b2 < paramTypeCode.member_count(); b2++) {
-/*  252 */             this._memberAccess[b2] = paramTypeCode.member_visibility(b2);
-/*      */           }
-/*      */         
-/*      */         case 15:
-/*      */         case 16:
-/*      */         case 22:
-/*  258 */           this._memberTypes = new TypeCodeImpl[paramTypeCode.member_count()];
-/*  259 */           for (b2 = 0; b2 < paramTypeCode.member_count(); b2++) {
-/*  260 */             this._memberTypes[b2] = convertToNative(this._orb, paramTypeCode.member_type(b2));
-/*  261 */             this._memberTypes[b2].setParent(this);
-/*      */           } 
-/*      */         
-/*      */         case 17:
-/*  265 */           this._memberNames = new String[paramTypeCode.member_count()];
-/*  266 */           for (b2 = 0; b2 < paramTypeCode.member_count(); b2++) {
-/*  267 */             this._memberNames[b2] = paramTypeCode.member_name(b2);
-/*      */           }
-/*      */           
-/*  270 */           this._memberCount = paramTypeCode.member_count();
-/*      */         case 14:
-/*      */         case 21:
-/*      */         case 30:
-/*      */         case 31:
-/*      */         case 32:
-/*  276 */           setId(paramTypeCode.id());
-/*  277 */           this._name = paramTypeCode.name();
-/*      */           break;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  282 */       switch (this._kind) {
-/*      */         case 16:
-/*  284 */           this._discriminator = convertToNative(this._orb, paramTypeCode.discriminator_type());
-/*  285 */           this._defaultIndex = paramTypeCode.default_index();
-/*  286 */           this._unionLabels = new AnyImpl[this._memberCount];
-/*  287 */           for (b1 = 0; b1 < this._memberCount; b1++) {
-/*  288 */             this._unionLabels[b1] = new AnyImpl(this._orb, paramTypeCode.member_label(b1));
-/*      */           }
-/*      */           break;
-/*      */       } 
-/*      */       
-/*  293 */       switch (this._kind) {
-/*      */         case 18:
-/*      */         case 19:
-/*      */         case 20:
-/*      */         case 27:
-/*  298 */           this._length = paramTypeCode.length();
-/*      */           break;
-/*      */       } 
-/*      */       
-/*  302 */       switch (this._kind) {
-/*      */         case 19:
-/*      */         case 20:
-/*      */         case 21:
-/*      */         case 30:
-/*  307 */           this._contentType = convertToNative(this._orb, paramTypeCode.content_type()); break;
-/*      */       }  }
-/*  309 */     catch (Bounds bounds) {  } catch (BadKind badKind) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt) {
-/*  317 */     this(paramORB);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  322 */     this._kind = paramInt;
-/*      */ 
-/*      */     
-/*  325 */     switch (this._kind) {
-/*      */ 
-/*      */       
-/*      */       case 14:
-/*  329 */         setId("IDL:omg.org/CORBA/Object:1.0");
-/*  330 */         this._name = "Object";
-/*      */         break;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 18:
-/*      */       case 27:
-/*  337 */         this._length = 0;
-/*      */         break;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 29:
-/*  343 */         this._concrete_base = null;
-/*      */         break;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, String paramString1, String paramString2, StructMember[] paramArrayOfStructMember) {
-/*  356 */     this(paramORB);
-/*      */     
-/*  358 */     if (paramInt == 15 || paramInt == 22) {
-/*  359 */       this._kind = paramInt;
-/*  360 */       setId(paramString1);
-/*  361 */       this._name = paramString2;
-/*  362 */       this._memberCount = paramArrayOfStructMember.length;
-/*      */       
-/*  364 */       this._memberNames = new String[this._memberCount];
-/*  365 */       this._memberTypes = new TypeCodeImpl[this._memberCount];
-/*      */       
-/*  367 */       for (byte b = 0; b < this._memberCount; b++) {
-/*  368 */         this._memberNames[b] = (paramArrayOfStructMember[b]).name;
-/*  369 */         this._memberTypes[b] = convertToNative(this._orb, (paramArrayOfStructMember[b]).type);
-/*  370 */         this._memberTypes[b].setParent(this);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, String paramString1, String paramString2, TypeCode paramTypeCode, UnionMember[] paramArrayOfUnionMember) {
-/*  383 */     this(paramORB);
-/*      */     
-/*  385 */     if (paramInt == 16) {
-/*  386 */       this._kind = paramInt;
-/*  387 */       setId(paramString1);
-/*  388 */       this._name = paramString2;
-/*  389 */       this._memberCount = paramArrayOfUnionMember.length;
-/*  390 */       this._discriminator = convertToNative(this._orb, paramTypeCode);
-/*      */       
-/*  392 */       this._memberNames = new String[this._memberCount];
-/*  393 */       this._memberTypes = new TypeCodeImpl[this._memberCount];
-/*  394 */       this._unionLabels = new AnyImpl[this._memberCount];
-/*      */       
-/*  396 */       for (byte b = 0; b < this._memberCount; b++) {
-/*  397 */         this._memberNames[b] = (paramArrayOfUnionMember[b]).name;
-/*  398 */         this._memberTypes[b] = convertToNative(this._orb, (paramArrayOfUnionMember[b]).type);
-/*  399 */         this._memberTypes[b].setParent(this);
-/*  400 */         this._unionLabels[b] = new AnyImpl(this._orb, (paramArrayOfUnionMember[b]).label);
-/*      */         
-/*  402 */         if (this._unionLabels[b].type().kind() == TCKind.tk_octet && 
-/*  403 */           this._unionLabels[b].extract_octet() == 0) {
-/*  404 */           this._defaultIndex = b;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, String paramString1, String paramString2, short paramShort, TypeCode paramTypeCode, ValueMember[] paramArrayOfValueMember) {
-/*  420 */     this(paramORB);
-/*      */     
-/*  422 */     if (paramInt == 29) {
-/*  423 */       this._kind = paramInt;
-/*  424 */       setId(paramString1);
-/*  425 */       this._name = paramString2;
-/*  426 */       this._type_modifier = paramShort;
-/*  427 */       if (paramTypeCode != null) {
-/*  428 */         this._concrete_base = convertToNative(this._orb, paramTypeCode);
-/*      */       }
-/*  430 */       this._memberCount = paramArrayOfValueMember.length;
-/*      */       
-/*  432 */       this._memberNames = new String[this._memberCount];
-/*  433 */       this._memberTypes = new TypeCodeImpl[this._memberCount];
-/*  434 */       this._memberAccess = new short[this._memberCount];
-/*      */       
-/*  436 */       for (byte b = 0; b < this._memberCount; b++) {
-/*  437 */         this._memberNames[b] = (paramArrayOfValueMember[b]).name;
-/*  438 */         this._memberTypes[b] = convertToNative(this._orb, (paramArrayOfValueMember[b]).type);
-/*  439 */         this._memberTypes[b].setParent(this);
-/*  440 */         this._memberAccess[b] = (paramArrayOfValueMember[b]).access;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, String paramString1, String paramString2, String[] paramArrayOfString) {
-/*  453 */     this(paramORB);
-/*      */     
-/*  455 */     if (paramInt == 17) {
-/*      */       
-/*  457 */       this._kind = paramInt;
-/*  458 */       setId(paramString1);
-/*  459 */       this._name = paramString2;
-/*  460 */       this._memberCount = paramArrayOfString.length;
-/*      */       
-/*  462 */       this._memberNames = new String[this._memberCount];
-/*      */       
-/*  464 */       for (byte b = 0; b < this._memberCount; b++) {
-/*  465 */         this._memberNames[b] = paramArrayOfString[b];
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, String paramString1, String paramString2, TypeCode paramTypeCode) {
-/*  476 */     this(paramORB);
-/*      */     
-/*  478 */     if (paramInt == 21 || paramInt == 30) {
-/*      */       
-/*  480 */       this._kind = paramInt;
-/*  481 */       setId(paramString1);
-/*  482 */       this._name = paramString2;
-/*  483 */       this._contentType = convertToNative(this._orb, paramTypeCode);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, String paramString1, String paramString2) {
-/*  494 */     this(paramORB);
-/*      */     
-/*  496 */     if (paramInt == 14 || paramInt == 31 || paramInt == 32) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  500 */       this._kind = paramInt;
-/*  501 */       setId(paramString1);
-/*  502 */       this._name = paramString2;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt1, int paramInt2) {
-/*  512 */     this(paramORB);
-/*      */     
-/*  514 */     if (paramInt2 < 0) {
-/*  515 */       throw this.wrapper.negativeBounds();
-/*      */     }
-/*  517 */     if (paramInt1 == 18 || paramInt1 == 27) {
-/*  518 */       this._kind = paramInt1;
-/*  519 */       this._length = paramInt2;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt1, int paramInt2, TypeCode paramTypeCode) {
-/*  529 */     this(paramORB);
-/*      */     
-/*  531 */     if (paramInt1 == 19 || paramInt1 == 20) {
-/*  532 */       this._kind = paramInt1;
-/*  533 */       this._length = paramInt2;
-/*  534 */       this._contentType = convertToNative(this._orb, paramTypeCode);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt1, int paramInt2, int paramInt3) {
-/*  544 */     this(paramORB);
-/*      */     
-/*  546 */     if (paramInt1 == 19) {
-/*  547 */       this._kind = paramInt1;
-/*  548 */       this._length = paramInt2;
-/*  549 */       this._parentOffset = paramInt3;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, String paramString) {
-/*  557 */     this(paramORB);
-/*      */     
-/*  559 */     this._kind = -1;
-/*      */     
-/*  561 */     this._id = paramString;
-/*      */ 
-/*      */     
-/*  564 */     tryIndirectType();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCodeImpl(ORB paramORB, int paramInt, short paramShort1, short paramShort2) {
-/*  573 */     this(paramORB);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  578 */     if (paramInt == 28) {
-/*  579 */       this._kind = paramInt;
-/*  580 */       this._digits = paramShort1;
-/*  581 */       this._scale = paramShort2;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static TypeCodeImpl convertToNative(ORB paramORB, TypeCode paramTypeCode) {
-/*  596 */     if (paramTypeCode instanceof TypeCodeImpl) {
-/*  597 */       return (TypeCodeImpl)paramTypeCode;
-/*      */     }
-/*  599 */     return new TypeCodeImpl(paramORB, paramTypeCode);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static CDROutputStream newOutputStream(ORB paramORB) {
-/*  604 */     return OutputStreamFactory.newTypeCodeOutputStream(paramORB);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private TypeCodeImpl indirectType() {
-/*  613 */     this._indirectType = tryIndirectType();
-/*  614 */     if (this._indirectType == null)
-/*      */     {
-/*  616 */       throw this.wrapper.unresolvedRecursiveTypecode();
-/*      */     }
-/*  618 */     return this._indirectType;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private TypeCodeImpl tryIndirectType() {
-/*  623 */     if (this._indirectType != null) {
-/*  624 */       return this._indirectType;
-/*      */     }
-/*  626 */     setIndirectType(this._orb.getTypeCode(this._id));
-/*      */     
-/*  628 */     return this._indirectType;
-/*      */   }
-/*      */   
-/*      */   private void setIndirectType(TypeCodeImpl paramTypeCodeImpl) {
-/*  632 */     this._indirectType = paramTypeCodeImpl;
-/*  633 */     if (this._indirectType != null) {
-/*      */       try {
-/*  635 */         this._id = this._indirectType.id();
-/*  636 */       } catch (BadKind badKind) {
-/*      */         
-/*  638 */         throw this.wrapper.badkindCannotOccur();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private void setId(String paramString) {
-/*  644 */     this._id = paramString;
-/*  645 */     if (this._orb instanceof TypeCodeFactory) {
-/*  646 */       this._orb.setTypeCode(this._id, this);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void setParent(TypeCodeImpl paramTypeCodeImpl) {
-/*  653 */     this._parent = paramTypeCodeImpl;
-/*      */   }
-/*      */   
-/*      */   private TypeCodeImpl getParentAtLevel(int paramInt) {
-/*  657 */     if (paramInt == 0) {
-/*  658 */       return this;
-/*      */     }
-/*  660 */     if (this._parent == null) {
-/*  661 */       throw this.wrapper.unresolvedRecursiveTypecode();
-/*      */     }
-/*  663 */     return this._parent.getParentAtLevel(paramInt - 1);
-/*      */   }
-/*      */   
-/*      */   private TypeCodeImpl lazy_content_type() {
-/*  667 */     if (this._contentType == null && 
-/*  668 */       this._kind == 19 && this._parentOffset > 0 && this._parent != null) {
-/*      */ 
-/*      */       
-/*  671 */       TypeCodeImpl typeCodeImpl = getParentAtLevel(this._parentOffset);
-/*  672 */       if (typeCodeImpl != null && typeCodeImpl._id != null)
-/*      */       {
-/*      */ 
-/*      */         
-/*  676 */         this._contentType = new TypeCodeImpl(this._orb, typeCodeImpl._id);
-/*      */       }
-/*      */     } 
-/*      */     
-/*  680 */     return this._contentType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private TypeCode realType(TypeCode paramTypeCode) {
-/*  686 */     TypeCode typeCode = paramTypeCode;
-/*      */     
-/*      */     try {
-/*  689 */       while (typeCode.kind().value() == 21) {
-/*  690 */         typeCode = typeCode.content_type();
-/*      */       }
-/*  692 */     } catch (BadKind badKind) {
-/*      */       
-/*  694 */       throw this.wrapper.badkindCannotOccur();
-/*      */     } 
-/*  696 */     return typeCode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean equal(TypeCode paramTypeCode) {
-/*  706 */     if (paramTypeCode == this)
-/*  707 */       return true; 
-/*      */     
-/*      */     try { byte b;
-/*      */       TypeCode typeCode;
-/*  711 */       if (this._kind == -1) {
-/*      */         
-/*  713 */         if (this._id != null && paramTypeCode.id() != null)
-/*  714 */           return this._id.equals(paramTypeCode.id()); 
-/*  715 */         return (this._id == null && paramTypeCode.id() == null);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  719 */       if (this._kind != paramTypeCode.kind().value()) {
-/*  720 */         return false;
-/*      */       }
-/*      */       
-/*  723 */       switch (typeTable[this._kind]) {
-/*      */         
-/*      */         case 0:
-/*  726 */           return true;
-/*      */         
-/*      */         case 1:
-/*  729 */           switch (this._kind) {
-/*      */             
-/*      */             case 18:
-/*      */             case 27:
-/*  733 */               return (this._length == paramTypeCode.length());
-/*      */             
-/*      */             case 28:
-/*  736 */               return (this._digits == paramTypeCode.fixed_digits() && this._scale == paramTypeCode.fixed_scale());
-/*      */           } 
-/*  738 */           return false;
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 2:
-/*  743 */           switch (this._kind) {
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 14:
-/*  748 */               if (this._id.compareTo(paramTypeCode.id()) == 0) {
-/*  749 */                 return true;
-/*      */               }
-/*      */               
-/*  752 */               if (this._id.compareTo(this._orb
-/*  753 */                   .get_primitive_tc(this._kind).id()) == 0)
-/*      */               {
-/*  755 */                 return true;
-/*      */               }
-/*      */               
-/*  758 */               if (paramTypeCode.id().compareTo(this._orb
-/*  759 */                   .get_primitive_tc(this._kind).id()) == 0)
-/*      */               {
-/*  761 */                 return true;
-/*      */               }
-/*      */               
-/*  764 */               return false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 31:
-/*      */             case 32:
-/*  771 */               if (this._id.compareTo(paramTypeCode.id()) != 0) {
-/*  772 */                 return false;
-/*      */               }
-/*      */ 
-/*      */               
-/*  776 */               return true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 15:
-/*      */             case 22:
-/*  783 */               if (this._memberCount != paramTypeCode.member_count()) {
-/*  784 */                 return false;
-/*      */               }
-/*  786 */               if (this._id.compareTo(paramTypeCode.id()) != 0) {
-/*  787 */                 return false;
-/*      */               }
-/*  789 */               for (b = 0; b < this._memberCount; b++) {
-/*  790 */                 if (!this._memberTypes[b].equal(paramTypeCode.member_type(b)))
-/*  791 */                   return false; 
-/*      */               } 
-/*  793 */               return true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 16:
-/*  799 */               if (this._memberCount != paramTypeCode.member_count()) {
-/*  800 */                 return false;
-/*      */               }
-/*  802 */               if (this._id.compareTo(paramTypeCode.id()) != 0) {
-/*  803 */                 return false;
-/*      */               }
-/*  805 */               if (this._defaultIndex != paramTypeCode.default_index()) {
-/*  806 */                 return false;
-/*      */               }
-/*  808 */               if (!this._discriminator.equal(paramTypeCode.discriminator_type())) {
-/*  809 */                 return false;
-/*      */               }
-/*  811 */               for (b = 0; b < this._memberCount; b++) {
-/*  812 */                 if (!this._unionLabels[b].equal(paramTypeCode.member_label(b)))
-/*  813 */                   return false; 
-/*      */               } 
-/*  815 */               for (b = 0; b < this._memberCount; b++) {
-/*  816 */                 if (!this._memberTypes[b].equal(paramTypeCode.member_type(b)))
-/*  817 */                   return false; 
-/*      */               } 
-/*  819 */               return true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 17:
-/*  825 */               if (this._id.compareTo(paramTypeCode.id()) != 0) {
-/*  826 */                 return false;
-/*      */               }
-/*  828 */               if (this._memberCount != paramTypeCode.member_count()) {
-/*  829 */                 return false;
-/*      */               }
-/*  831 */               return true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 19:
-/*      */             case 20:
-/*  838 */               if (this._length != paramTypeCode.length()) {
-/*  839 */                 return false;
-/*      */               }
-/*      */               
-/*  842 */               if (!lazy_content_type().equal(paramTypeCode.content_type())) {
-/*  843 */                 return false;
-/*      */               }
-/*      */               
-/*  846 */               return true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 29:
-/*  852 */               if (this._memberCount != paramTypeCode.member_count()) {
-/*  853 */                 return false;
-/*      */               }
-/*  855 */               if (this._id.compareTo(paramTypeCode.id()) != 0) {
-/*  856 */                 return false;
-/*      */               }
-/*  858 */               for (b = 0; b < this._memberCount; b++) {
-/*  859 */                 if (this._memberAccess[b] != paramTypeCode.member_visibility(b) || 
-/*  860 */                   !this._memberTypes[b].equal(paramTypeCode.member_type(b)))
-/*  861 */                   return false; 
-/*  862 */               }  if (this._type_modifier == paramTypeCode.type_modifier()) {
-/*  863 */                 return false;
-/*      */               }
-/*  865 */               typeCode = paramTypeCode.concrete_base_type();
-/*  866 */               if ((this._concrete_base == null && typeCode != null) || (this._concrete_base != null && typeCode == null) || 
-/*      */                 
-/*  868 */                 !this._concrete_base.equal(typeCode))
-/*      */               {
-/*  870 */                 return false;
-/*      */               }
-/*      */               
-/*  873 */               return true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 21:
-/*      */             case 30:
-/*  880 */               if (this._id.compareTo(paramTypeCode.id()) != 0) {
-/*  881 */                 return false;
-/*      */               }
-/*      */               
-/*  884 */               return this._contentType.equal(paramTypeCode.content_type());
-/*      */           } 
-/*      */           break;
-/*      */       }  }
-/*  888 */     catch (Bounds bounds) {  } catch (BadKind badKind) {}
-/*      */ 
-/*      */     
-/*  891 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equivalent(TypeCode paramTypeCode) {
-/*  899 */     if (paramTypeCode == this) {
-/*  900 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  907 */     TypeCodeImpl typeCodeImpl = (this._kind == -1) ? indirectType() : this;
-/*  908 */     TypeCode typeCode1 = realType(typeCodeImpl);
-/*  909 */     TypeCode typeCode2 = realType(paramTypeCode);
-/*      */ 
-/*      */ 
-/*      */     
-/*  913 */     if (typeCode1.kind().value() != typeCode2.kind().value()) {
-/*  914 */       return false;
-/*      */     }
-/*      */     
-/*  917 */     String str1 = null;
-/*  918 */     String str2 = null;
-/*      */     try {
-/*  920 */       str1 = id();
-/*  921 */       str2 = paramTypeCode.id();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  927 */       if (str1 != null && str2 != null) {
-/*  928 */         return str1.equals(str2);
-/*      */       }
-/*  930 */     } catch (BadKind badKind) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  937 */     int i = typeCode1.kind().value();
-/*      */     try {
-/*  939 */       if (i == 15 || i == 16 || i == 17 || i == 22 || i == 29)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  945 */         if (typeCode1.member_count() != typeCode2.member_count())
-/*  946 */           return false; 
-/*      */       }
-/*  948 */       if (i == 16)
-/*      */       {
-/*  950 */         if (typeCode1.default_index() != typeCode2.default_index())
-/*  951 */           return false; 
-/*      */       }
-/*  953 */       if (i == 18 || i == 27 || i == 19 || i == 20)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */         
-/*  958 */         if (typeCode1.length() != typeCode2.length())
-/*  959 */           return false; 
-/*      */       }
-/*  961 */       if (i == 28)
-/*      */       {
-/*  963 */         if (typeCode1.fixed_digits() != typeCode2.fixed_digits() || typeCode1
-/*  964 */           .fixed_scale() != typeCode2.fixed_scale())
-/*  965 */           return false; 
-/*      */       }
-/*  967 */       if (i == 16) {
-/*      */         
-/*  969 */         for (byte b = 0; b < typeCode1.member_count(); b++) {
-/*  970 */           if (typeCode1.member_label(b) != typeCode2.member_label(b))
-/*  971 */             return false; 
-/*      */         } 
-/*  973 */         if (!typeCode1.discriminator_type().equivalent(typeCode2
-/*  974 */             .discriminator_type()))
-/*  975 */           return false; 
-/*      */       } 
-/*  977 */       if (i == 21 || i == 30 || i == 19 || i == 20)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */         
-/*  982 */         if (!typeCode1.content_type().equivalent(typeCode2.content_type()))
-/*  983 */           return false; 
-/*      */       }
-/*  985 */       if (i == 15 || i == 16 || i == 22 || i == 29)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */         
-/*  990 */         for (byte b = 0; b < typeCode1.member_count(); b++) {
-/*  991 */           if (!typeCode1.member_type(b).equivalent(typeCode2
-/*  992 */               .member_type(b)))
-/*  993 */             return false; 
-/*      */         } 
-/*      */       }
-/*  996 */     } catch (BadKind badKind) {
-/*      */       
-/*  998 */       throw this.wrapper.badkindCannotOccur();
-/*  999 */     } catch (Bounds bounds) {
-/*      */       
-/* 1001 */       throw this.wrapper.boundsCannotOccur();
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1005 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCode get_compact_typecode() {
-/* 1012 */     return this;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public TCKind kind() {
-/* 1017 */     if (this._kind == -1)
-/* 1018 */       return indirectType().kind(); 
-/* 1019 */     return TCKind.from_int(this._kind);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean is_recursive() {
-/* 1026 */     return (this._kind == -1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String id() throws BadKind {
-/* 1032 */     switch (this._kind) {
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case -1:
-/*      */       case 14:
-/*      */       case 15:
-/*      */       case 16:
-/*      */       case 17:
-/*      */       case 21:
-/*      */       case 22:
-/*      */       case 29:
-/*      */       case 30:
-/*      */       case 31:
-/*      */       case 32:
-/* 1047 */         return this._id;
-/*      */     } 
-/*      */     
-/* 1050 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String name() throws BadKind {
-/* 1057 */     switch (this._kind) {
-/*      */       case -1:
-/* 1059 */         return indirectType().name();
-/*      */       case 14:
-/*      */       case 15:
-/*      */       case 16:
-/*      */       case 17:
-/*      */       case 21:
-/*      */       case 22:
-/*      */       case 29:
-/*      */       case 30:
-/*      */       case 31:
-/*      */       case 32:
-/* 1070 */         return this._name;
-/*      */     } 
-/* 1072 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int member_count() throws BadKind {
-/* 1079 */     switch (this._kind) {
-/*      */       case -1:
-/* 1081 */         return indirectType().member_count();
-/*      */       case 15:
-/*      */       case 16:
-/*      */       case 17:
-/*      */       case 22:
-/*      */       case 29:
-/* 1087 */         return this._memberCount;
-/*      */     } 
-/* 1089 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String member_name(int paramInt) throws BadKind, Bounds {
-/* 1096 */     switch (this._kind) {
-/*      */       case -1:
-/* 1098 */         return indirectType().member_name(paramInt);
-/*      */       case 15:
-/*      */       case 16:
-/*      */       case 17:
-/*      */       case 22:
-/*      */       case 29:
-/*      */         try {
-/* 1105 */           return this._memberNames[paramInt];
-/* 1106 */         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-/* 1107 */           throw new Bounds();
-/*      */         } 
-/*      */     } 
-/* 1110 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCode member_type(int paramInt) throws BadKind, Bounds {
-/* 1117 */     switch (this._kind) {
-/*      */       case -1:
-/* 1119 */         return indirectType().member_type(paramInt);
-/*      */       case 15:
-/*      */       case 16:
-/*      */       case 22:
-/*      */       case 29:
-/*      */         try {
-/* 1125 */           return this._memberTypes[paramInt];
-/* 1126 */         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-/* 1127 */           throw new Bounds();
-/*      */         } 
-/*      */     } 
-/* 1130 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Any member_label(int paramInt) throws BadKind, Bounds {
-/* 1137 */     switch (this._kind) {
-/*      */       case -1:
-/* 1139 */         return indirectType().member_label(paramInt);
-/*      */       
-/*      */       case 16:
-/*      */         try {
-/* 1143 */           return new AnyImpl(this._orb, this._unionLabels[paramInt]);
-/* 1144 */         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-/* 1145 */           throw new Bounds();
-/*      */         } 
-/*      */     } 
-/* 1148 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCode discriminator_type() throws BadKind {
-/* 1155 */     switch (this._kind) {
-/*      */       case -1:
-/* 1157 */         return indirectType().discriminator_type();
-/*      */       case 16:
-/* 1159 */         return this._discriminator;
-/*      */     } 
-/* 1161 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int default_index() throws BadKind {
-/* 1168 */     switch (this._kind) {
-/*      */       case -1:
-/* 1170 */         return indirectType().default_index();
-/*      */       case 16:
-/* 1172 */         return this._defaultIndex;
-/*      */     } 
-/* 1174 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int length() throws BadKind {
-/* 1181 */     switch (this._kind) {
-/*      */       case -1:
-/* 1183 */         return indirectType().length();
-/*      */       case 18:
-/*      */       case 19:
-/*      */       case 20:
-/*      */       case 27:
-/* 1188 */         return this._length;
-/*      */     } 
-/* 1190 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TypeCode content_type() throws BadKind {
-/* 1197 */     switch (this._kind) {
-/*      */       case -1:
-/* 1199 */         return indirectType().content_type();
-/*      */       case 19:
-/* 1201 */         return lazy_content_type();
-/*      */       case 20:
-/*      */       case 21:
-/*      */       case 30:
-/* 1205 */         return this._contentType;
-/*      */     } 
-/* 1207 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public short fixed_digits() throws BadKind {
-/* 1212 */     switch (this._kind) {
-/*      */       case 28:
-/* 1214 */         return this._digits;
-/*      */     } 
-/* 1216 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public short fixed_scale() throws BadKind {
-/* 1221 */     switch (this._kind) {
-/*      */       case 28:
-/* 1223 */         return this._scale;
-/*      */     } 
-/* 1225 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short member_visibility(int paramInt) throws BadKind, Bounds {
-/* 1231 */     switch (this._kind) {
-/*      */       case -1:
-/* 1233 */         return indirectType().member_visibility(paramInt);
-/*      */       case 29:
-/*      */         try {
-/* 1236 */           return this._memberAccess[paramInt];
-/* 1237 */         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-/* 1238 */           throw new Bounds();
-/*      */         } 
-/*      */     } 
-/* 1241 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public short type_modifier() throws BadKind {
-/* 1246 */     switch (this._kind) {
-/*      */       case -1:
-/* 1248 */         return indirectType().type_modifier();
-/*      */       case 29:
-/* 1250 */         return this._type_modifier;
-/*      */     } 
-/* 1252 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public TypeCode concrete_base_type() throws BadKind {
-/* 1257 */     switch (this._kind) {
-/*      */       case -1:
-/* 1259 */         return indirectType().concrete_base_type();
-/*      */       case 29:
-/* 1261 */         return this._concrete_base;
-/*      */     } 
-/* 1263 */     throw new BadKind();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void read_value(InputStream paramInputStream) {
-/* 1268 */     if (paramInputStream instanceof TypeCodeReader) {
-/*      */       
-/* 1270 */       if (read_value_kind((TypeCodeReader)paramInputStream))
-/* 1271 */         read_value_body(paramInputStream); 
-/* 1272 */     } else if (paramInputStream instanceof CDRInputStream) {
-/* 1273 */       WrapperInputStream wrapperInputStream = new WrapperInputStream((CDRInputStream)paramInputStream);
-/*      */ 
-/*      */       
-/* 1276 */       if (read_value_kind(wrapperInputStream))
-/* 1277 */         read_value_body(wrapperInputStream); 
-/*      */     } else {
-/* 1279 */       read_value_kind(paramInputStream);
-/* 1280 */       read_value_body(paramInputStream);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void read_value_recursive(TypeCodeInputStream paramTypeCodeInputStream) {
-/* 1286 */     if (paramTypeCodeInputStream instanceof TypeCodeReader) {
-/* 1287 */       if (read_value_kind(paramTypeCodeInputStream))
-/* 1288 */         read_value_body(paramTypeCodeInputStream); 
-/*      */     } else {
-/* 1290 */       read_value_kind(paramTypeCodeInputStream);
-/* 1291 */       read_value_body(paramTypeCodeInputStream);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   boolean read_value_kind(TypeCodeReader paramTypeCodeReader) {
-/* 1297 */     this._kind = paramTypeCodeReader.read_long();
-/*      */ 
-/*      */     
-/* 1300 */     int i = paramTypeCodeReader.getTopLevelPosition() - 4;
-/*      */ 
-/*      */     
-/* 1303 */     if ((this._kind < 0 || this._kind > typeTable.length) && this._kind != -1) {
-/* 1304 */       throw this.wrapper.cannotMarshalBadTckind();
-/*      */     }
-/*      */ 
-/*      */     
-/* 1308 */     if (this._kind == 31) {
-/* 1309 */       throw this.wrapper.cannotMarshalNative();
-/*      */     }
-/*      */ 
-/*      */     
-/* 1313 */     TypeCodeReader typeCodeReader = paramTypeCodeReader.getTopLevelStream();
-/*      */     
-/* 1315 */     if (this._kind == -1) {
-/* 1316 */       int j = paramTypeCodeReader.read_long();
-/* 1317 */       if (j > -4) {
-/* 1318 */         throw this.wrapper.invalidIndirection(new Integer(j));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1323 */       int k = paramTypeCodeReader.getTopLevelPosition();
-/*      */       
-/* 1325 */       int m = k - 4 + j;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1332 */       TypeCodeImpl typeCodeImpl = typeCodeReader.getTypeCodeAtPosition(m);
-/* 1333 */       if (typeCodeImpl == null)
-/* 1334 */         throw this.wrapper.indirectionNotFound(new Integer(m)); 
-/* 1335 */       setIndirectType(typeCodeImpl);
-/* 1336 */       return false;
-/*      */     } 
-/*      */     
-/* 1339 */     typeCodeReader.addTypeCodeAtPosition(this, i);
-/* 1340 */     return true;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void read_value_kind(InputStream paramInputStream) {
-/* 1345 */     this._kind = paramInputStream.read_long();
-/*      */ 
-/*      */     
-/* 1348 */     if ((this._kind < 0 || this._kind > typeTable.length) && this._kind != -1) {
-/* 1349 */       throw this.wrapper.cannotMarshalBadTckind();
-/*      */     }
-/*      */     
-/* 1352 */     if (this._kind == 31) {
-/* 1353 */       throw this.wrapper.cannotMarshalNative();
-/*      */     }
-/* 1355 */     if (this._kind == -1) {
-/* 1356 */       throw this.wrapper.recursiveTypecodeError();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void read_value_body(InputStream paramInputStream) {
-/*      */     TypeCodeInputStream typeCodeInputStream;
-/*      */     byte b;
-/* 1364 */     switch (typeTable[this._kind]) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 1:
-/* 1370 */         switch (this._kind) {
-/*      */           case 18:
-/*      */           case 27:
-/* 1373 */             this._length = paramInputStream.read_long();
-/*      */             break;
-/*      */           case 28:
-/* 1376 */             this._digits = paramInputStream.read_ushort();
-/* 1377 */             this._scale = paramInputStream.read_short();
-/*      */             break;
-/*      */         } 
-/* 1380 */         throw this.wrapper.invalidSimpleTypecode();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 2:
-/* 1386 */         typeCodeInputStream = TypeCodeInputStream.readEncapsulation(paramInputStream, paramInputStream
-/* 1387 */             .orb());
-/*      */         
-/* 1389 */         switch (this._kind) {
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 14:
-/*      */           case 32:
-/* 1395 */             setId(typeCodeInputStream.read_string());
-/*      */             
-/* 1397 */             this._name = typeCodeInputStream.read_string();
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 16:
-/* 1404 */             setId(typeCodeInputStream.read_string());
-/*      */ 
-/*      */             
-/* 1407 */             this._name = typeCodeInputStream.read_string();
-/*      */ 
-/*      */             
-/* 1410 */             this._discriminator = new TypeCodeImpl((ORB)paramInputStream.orb());
-/* 1411 */             this._discriminator.read_value_recursive(typeCodeInputStream);
-/*      */ 
-/*      */             
-/* 1414 */             this._defaultIndex = typeCodeInputStream.read_long();
-/*      */ 
-/*      */             
-/* 1417 */             this._memberCount = typeCodeInputStream.read_long();
-/*      */ 
-/*      */             
-/* 1420 */             this._unionLabels = new AnyImpl[this._memberCount];
-/* 1421 */             this._memberNames = new String[this._memberCount];
-/* 1422 */             this._memberTypes = new TypeCodeImpl[this._memberCount];
-/*      */ 
-/*      */             
-/* 1425 */             for (b = 0; b < this._memberCount; b++) {
-/* 1426 */               this._unionLabels[b] = new AnyImpl((ORB)paramInputStream.orb());
-/* 1427 */               if (b == this._defaultIndex) {
-/*      */                 
-/* 1429 */                 this._unionLabels[b].insert_octet(typeCodeInputStream.read_octet());
-/*      */               } else {
-/* 1431 */                 switch (realType(this._discriminator).kind().value()) {
-/*      */                   case 2:
-/* 1433 */                     this._unionLabels[b].insert_short(typeCodeInputStream.read_short());
-/*      */                     break;
-/*      */                   case 3:
-/* 1436 */                     this._unionLabels[b].insert_long(typeCodeInputStream.read_long());
-/*      */                     break;
-/*      */                   case 4:
-/* 1439 */                     this._unionLabels[b].insert_ushort(typeCodeInputStream.read_short());
-/*      */                     break;
-/*      */                   case 5:
-/* 1442 */                     this._unionLabels[b].insert_ulong(typeCodeInputStream.read_long());
-/*      */                     break;
-/*      */                   case 6:
-/* 1445 */                     this._unionLabels[b].insert_float(typeCodeInputStream.read_float());
-/*      */                     break;
-/*      */                   case 7:
-/* 1448 */                     this._unionLabels[b].insert_double(typeCodeInputStream.read_double());
-/*      */                     break;
-/*      */                   case 8:
-/* 1451 */                     this._unionLabels[b].insert_boolean(typeCodeInputStream.read_boolean());
-/*      */                     break;
-/*      */                   case 9:
-/* 1454 */                     this._unionLabels[b].insert_char(typeCodeInputStream.read_char());
-/*      */                     break;
-/*      */                   case 17:
-/* 1457 */                     this._unionLabels[b].type(this._discriminator);
-/* 1458 */                     this._unionLabels[b].insert_long(typeCodeInputStream.read_long());
-/*      */                     break;
-/*      */                   case 23:
-/* 1461 */                     this._unionLabels[b].insert_longlong(typeCodeInputStream.read_longlong());
-/*      */                     break;
-/*      */                   case 24:
-/* 1464 */                     this._unionLabels[b].insert_ulonglong(typeCodeInputStream.read_longlong());
-/*      */                     break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                   
-/*      */                   case 26:
-/* 1471 */                     this._unionLabels[b].insert_wchar(typeCodeInputStream.read_wchar());
-/*      */                     break;
-/*      */                   default:
-/* 1474 */                     throw this.wrapper.invalidComplexTypecode();
-/*      */                 } 
-/*      */               } 
-/* 1477 */               this._memberNames[b] = typeCodeInputStream.read_string();
-/* 1478 */               this._memberTypes[b] = new TypeCodeImpl((ORB)paramInputStream.orb());
-/* 1479 */               this._memberTypes[b].read_value_recursive(typeCodeInputStream);
-/* 1480 */               this._memberTypes[b].setParent(this);
-/*      */             } 
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 17:
-/* 1488 */             setId(typeCodeInputStream.read_string());
-/*      */ 
-/*      */             
-/* 1491 */             this._name = typeCodeInputStream.read_string();
-/*      */ 
-/*      */             
-/* 1494 */             this._memberCount = typeCodeInputStream.read_long();
-/*      */ 
-/*      */             
-/* 1497 */             this._memberNames = new String[this._memberCount];
-/*      */ 
-/*      */             
-/* 1500 */             for (b = 0; b < this._memberCount; b++) {
-/* 1501 */               this._memberNames[b] = typeCodeInputStream.read_string();
-/*      */             }
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 19:
-/* 1508 */             this._contentType = new TypeCodeImpl((ORB)paramInputStream.orb());
-/* 1509 */             this._contentType.read_value_recursive(typeCodeInputStream);
-/*      */ 
-/*      */             
-/* 1512 */             this._length = typeCodeInputStream.read_long();
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 20:
-/* 1519 */             this._contentType = new TypeCodeImpl((ORB)paramInputStream.orb());
-/* 1520 */             this._contentType.read_value_recursive(typeCodeInputStream);
-/*      */ 
-/*      */             
-/* 1523 */             this._length = typeCodeInputStream.read_long();
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 21:
-/*      */           case 30:
-/* 1531 */             setId(typeCodeInputStream.read_string());
-/*      */ 
-/*      */             
-/* 1534 */             this._name = typeCodeInputStream.read_string();
-/*      */ 
-/*      */             
-/* 1537 */             this._contentType = new TypeCodeImpl((ORB)paramInputStream.orb());
-/* 1538 */             this._contentType.read_value_recursive(typeCodeInputStream);
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 15:
-/*      */           case 22:
-/* 1546 */             setId(typeCodeInputStream.read_string());
-/*      */ 
-/*      */             
-/* 1549 */             this._name = typeCodeInputStream.read_string();
-/*      */ 
-/*      */             
-/* 1552 */             this._memberCount = typeCodeInputStream.read_long();
-/*      */ 
-/*      */             
-/* 1555 */             this._memberNames = new String[this._memberCount];
-/* 1556 */             this._memberTypes = new TypeCodeImpl[this._memberCount];
-/*      */ 
-/*      */             
-/* 1559 */             for (b = 0; b < this._memberCount; b++) {
-/* 1560 */               this._memberNames[b] = typeCodeInputStream.read_string();
-/* 1561 */               this._memberTypes[b] = new TypeCodeImpl((ORB)paramInputStream.orb());
-/*      */ 
-/*      */               
-/* 1564 */               this._memberTypes[b].read_value_recursive(typeCodeInputStream);
-/* 1565 */               this._memberTypes[b].setParent(this);
-/*      */             } 
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 29:
-/* 1573 */             setId(typeCodeInputStream.read_string());
-/*      */ 
-/*      */             
-/* 1576 */             this._name = typeCodeInputStream.read_string();
-/*      */ 
-/*      */             
-/* 1579 */             this._type_modifier = typeCodeInputStream.read_short();
-/*      */ 
-/*      */             
-/* 1582 */             this._concrete_base = new TypeCodeImpl((ORB)paramInputStream.orb());
-/* 1583 */             this._concrete_base.read_value_recursive(typeCodeInputStream);
-/* 1584 */             if (this._concrete_base.kind().value() == 0) {
-/* 1585 */               this._concrete_base = null;
-/*      */             }
-/*      */ 
-/*      */             
-/* 1589 */             this._memberCount = typeCodeInputStream.read_long();
-/*      */ 
-/*      */             
-/* 1592 */             this._memberNames = new String[this._memberCount];
-/* 1593 */             this._memberTypes = new TypeCodeImpl[this._memberCount];
-/* 1594 */             this._memberAccess = new short[this._memberCount];
-/*      */ 
-/*      */             
-/* 1597 */             for (b = 0; b < this._memberCount; b++) {
-/* 1598 */               this._memberNames[b] = typeCodeInputStream.read_string();
-/* 1599 */               this._memberTypes[b] = new TypeCodeImpl((ORB)paramInputStream.orb());
-/*      */ 
-/*      */               
-/* 1602 */               this._memberTypes[b].read_value_recursive(typeCodeInputStream);
-/* 1603 */               this._memberTypes[b].setParent(this);
-/* 1604 */               this._memberAccess[b] = typeCodeInputStream.read_short();
-/*      */             } 
-/*      */             break;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1610 */         throw this.wrapper.invalidTypecodeKindMarshal();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void write_value(OutputStream paramOutputStream) {
-/* 1620 */     if (paramOutputStream instanceof TypeCodeOutputStream) {
-/* 1621 */       write_value((TypeCodeOutputStream)paramOutputStream);
-/*      */     } else {
-/* 1623 */       TypeCodeOutputStream typeCodeOutputStream = null;
-/*      */       
-/* 1625 */       if (this.outBuffer == null) {
-/* 1626 */         typeCodeOutputStream = TypeCodeOutputStream.wrapOutputStream(paramOutputStream);
-/* 1627 */         write_value(typeCodeOutputStream);
-/* 1628 */         if (this.cachingEnabled)
-/*      */         {
-/* 1630 */           this.outBuffer = typeCodeOutputStream.getTypeCodeBuffer();
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1641 */       if (this.cachingEnabled && this.outBuffer != null) {
-/* 1642 */         paramOutputStream.write_long(this._kind);
-/* 1643 */         paramOutputStream.write_octet_array(this.outBuffer, 0, this.outBuffer.length);
-/*      */       } else {
-/*      */         
-/* 1646 */         typeCodeOutputStream.writeRawBuffer(paramOutputStream, this._kind);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public void write_value(TypeCodeOutputStream paramTypeCodeOutputStream) {
-/*      */     TypeCodeOutputStream typeCodeOutputStream2;
-/*      */     byte b;
-/* 1654 */     if (this._kind == 31) {
-/* 1655 */       throw this.wrapper.cannotMarshalNative();
-/*      */     }
-/* 1657 */     TypeCodeOutputStream typeCodeOutputStream1 = paramTypeCodeOutputStream.getTopLevelStream();
-/*      */ 
-/*      */     
-/* 1660 */     if (this._kind == -1) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1665 */       int i = typeCodeOutputStream1.getPositionForID(this._id);
-/* 1666 */       int j = paramTypeCodeOutputStream.getTopLevelPosition();
-/*      */ 
-/*      */ 
-/*      */       
-/* 1670 */       paramTypeCodeOutputStream.writeIndirection(-1, i);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1679 */     paramTypeCodeOutputStream.write_long(this._kind);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1688 */     typeCodeOutputStream1.addIDAtPosition(this._id, paramTypeCodeOutputStream.getTopLevelPosition() - 4);
-/*      */     
-/* 1690 */     switch (typeTable[this._kind]) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 1:
-/* 1696 */         switch (this._kind) {
-/*      */           
-/*      */           case 18:
-/*      */           case 27:
-/* 1700 */             paramTypeCodeOutputStream.write_long(this._length);
-/*      */             break;
-/*      */           case 28:
-/* 1703 */             paramTypeCodeOutputStream.write_ushort(this._digits);
-/* 1704 */             paramTypeCodeOutputStream.write_short(this._scale);
-/*      */             break;
-/*      */         } 
-/*      */         
-/* 1708 */         throw this.wrapper.invalidSimpleTypecode();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 2:
-/* 1715 */         typeCodeOutputStream2 = paramTypeCodeOutputStream.createEncapsulation(paramTypeCodeOutputStream.orb());
-/*      */         
-/* 1717 */         switch (this._kind) {
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 14:
-/*      */           case 32:
-/* 1723 */             typeCodeOutputStream2.write_string(this._id);
-/*      */ 
-/*      */             
-/* 1726 */             typeCodeOutputStream2.write_string(this._name);
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 16:
-/* 1733 */             typeCodeOutputStream2.write_string(this._id);
-/*      */ 
-/*      */             
-/* 1736 */             typeCodeOutputStream2.write_string(this._name);
-/*      */ 
-/*      */             
-/* 1739 */             this._discriminator.write_value(typeCodeOutputStream2);
-/*      */ 
-/*      */             
-/* 1742 */             typeCodeOutputStream2.write_long(this._defaultIndex);
-/*      */ 
-/*      */             
-/* 1745 */             typeCodeOutputStream2.write_long(this._memberCount);
-/*      */ 
-/*      */             
-/* 1748 */             for (b = 0; b < this._memberCount; b++) {
-/*      */ 
-/*      */               
-/* 1751 */               if (b == this._defaultIndex) {
-/* 1752 */                 typeCodeOutputStream2.write_octet(this._unionLabels[b].extract_octet());
-/*      */               } else {
-/*      */                 
-/* 1755 */                 switch (realType(this._discriminator).kind().value()) {
-/*      */                   case 2:
-/* 1757 */                     typeCodeOutputStream2.write_short(this._unionLabels[b].extract_short());
-/*      */                     break;
-/*      */                   case 3:
-/* 1760 */                     typeCodeOutputStream2.write_long(this._unionLabels[b].extract_long());
-/*      */                     break;
-/*      */                   case 4:
-/* 1763 */                     typeCodeOutputStream2.write_short(this._unionLabels[b].extract_ushort());
-/*      */                     break;
-/*      */                   case 5:
-/* 1766 */                     typeCodeOutputStream2.write_long(this._unionLabels[b].extract_ulong());
-/*      */                     break;
-/*      */                   case 6:
-/* 1769 */                     typeCodeOutputStream2.write_float(this._unionLabels[b].extract_float());
-/*      */                     break;
-/*      */                   case 7:
-/* 1772 */                     typeCodeOutputStream2.write_double(this._unionLabels[b].extract_double());
-/*      */                     break;
-/*      */                   case 8:
-/* 1775 */                     typeCodeOutputStream2.write_boolean(this._unionLabels[b].extract_boolean());
-/*      */                     break;
-/*      */                   case 9:
-/* 1778 */                     typeCodeOutputStream2.write_char(this._unionLabels[b].extract_char());
-/*      */                     break;
-/*      */                   case 17:
-/* 1781 */                     typeCodeOutputStream2.write_long(this._unionLabels[b].extract_long());
-/*      */                     break;
-/*      */                   case 23:
-/* 1784 */                     typeCodeOutputStream2.write_longlong(this._unionLabels[b].extract_longlong());
-/*      */                     break;
-/*      */                   case 24:
-/* 1787 */                     typeCodeOutputStream2.write_longlong(this._unionLabels[b].extract_ulonglong());
-/*      */                     break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                   
-/*      */                   case 26:
-/* 1794 */                     typeCodeOutputStream2.write_wchar(this._unionLabels[b].extract_wchar());
-/*      */                     break;
-/*      */                   default:
-/* 1797 */                     throw this.wrapper.invalidComplexTypecode();
-/*      */                 } 
-/*      */               } 
-/* 1800 */               typeCodeOutputStream2.write_string(this._memberNames[b]);
-/* 1801 */               this._memberTypes[b].write_value(typeCodeOutputStream2);
-/*      */             } 
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 17:
-/* 1809 */             typeCodeOutputStream2.write_string(this._id);
-/*      */ 
-/*      */             
-/* 1812 */             typeCodeOutputStream2.write_string(this._name);
-/*      */ 
-/*      */             
-/* 1815 */             typeCodeOutputStream2.write_long(this._memberCount);
-/*      */ 
-/*      */             
-/* 1818 */             for (b = 0; b < this._memberCount; b++) {
-/* 1819 */               typeCodeOutputStream2.write_string(this._memberNames[b]);
-/*      */             }
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 19:
-/* 1826 */             lazy_content_type().write_value(typeCodeOutputStream2);
-/*      */ 
-/*      */             
-/* 1829 */             typeCodeOutputStream2.write_long(this._length);
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 20:
-/* 1836 */             this._contentType.write_value(typeCodeOutputStream2);
-/*      */ 
-/*      */             
-/* 1839 */             typeCodeOutputStream2.write_long(this._length);
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 21:
-/*      */           case 30:
-/* 1847 */             typeCodeOutputStream2.write_string(this._id);
-/*      */ 
-/*      */             
-/* 1850 */             typeCodeOutputStream2.write_string(this._name);
-/*      */ 
-/*      */             
-/* 1853 */             this._contentType.write_value(typeCodeOutputStream2);
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 15:
-/*      */           case 22:
-/* 1861 */             typeCodeOutputStream2.write_string(this._id);
-/*      */ 
-/*      */             
-/* 1864 */             typeCodeOutputStream2.write_string(this._name);
-/*      */ 
-/*      */             
-/* 1867 */             typeCodeOutputStream2.write_long(this._memberCount);
-/*      */ 
-/*      */             
-/* 1870 */             for (b = 0; b < this._memberCount; b++) {
-/* 1871 */               typeCodeOutputStream2.write_string(this._memberNames[b]);
-/*      */ 
-/*      */               
-/* 1874 */               this._memberTypes[b].write_value(typeCodeOutputStream2);
-/*      */             } 
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 29:
-/* 1882 */             typeCodeOutputStream2.write_string(this._id);
-/*      */ 
-/*      */             
-/* 1885 */             typeCodeOutputStream2.write_string(this._name);
-/*      */ 
-/*      */             
-/* 1888 */             typeCodeOutputStream2.write_short(this._type_modifier);
-/*      */ 
-/*      */             
-/* 1891 */             if (this._concrete_base == null) {
-/* 1892 */               this._orb.get_primitive_tc(0).write_value(typeCodeOutputStream2);
-/*      */             } else {
-/* 1894 */               this._concrete_base.write_value(typeCodeOutputStream2);
-/*      */             } 
-/*      */ 
-/*      */             
-/* 1898 */             typeCodeOutputStream2.write_long(this._memberCount);
-/*      */ 
-/*      */             
-/* 1901 */             for (b = 0; b < this._memberCount; b++) {
-/* 1902 */               typeCodeOutputStream2.write_string(this._memberNames[b]);
-/*      */ 
-/*      */               
-/* 1905 */               this._memberTypes[b].write_value(typeCodeOutputStream2);
-/* 1906 */               typeCodeOutputStream2.write_short(this._memberAccess[b]);
-/*      */             } 
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           default:
-/* 1912 */             throw this.wrapper.invalidTypecodeKindMarshal();
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1916 */         typeCodeOutputStream2.writeOctetSequenceTo(paramTypeCodeOutputStream); break;
-/*      */     }  } protected void copy(InputStream paramInputStream, OutputStream paramOutputStream) { String str;
-/*      */     Any any;
-/*      */     byte b;
-/*      */     AnyImpl anyImpl;
-/*      */     int i;
-/*      */     TypeCodeImpl typeCodeImpl;
-/*      */     short s;
-/*      */     int k;
-/*      */     float f;
-/*      */     double d;
-/*      */     boolean bool;
-/*      */     char c2;
-/*      */     int j;
-/*      */     long l;
-/*      */     char c1;
-/* 1932 */     switch (this._kind) {
-/*      */       case 0:
-/*      */       case 1:
-/*      */       case 31:
-/*      */       case 32:
-/*      */         return;
-/*      */ 
-/*      */       
-/*      */       case 2:
-/*      */       case 4:
-/* 1942 */         paramOutputStream.write_short(paramInputStream.read_short());
-/*      */ 
-/*      */       
-/*      */       case 3:
-/*      */       case 5:
-/* 1947 */         paramOutputStream.write_long(paramInputStream.read_long());
-/*      */ 
-/*      */       
-/*      */       case 6:
-/* 1951 */         paramOutputStream.write_float(paramInputStream.read_float());
-/*      */ 
-/*      */       
-/*      */       case 7:
-/* 1955 */         paramOutputStream.write_double(paramInputStream.read_double());
-/*      */ 
-/*      */       
-/*      */       case 23:
-/*      */       case 24:
-/* 1960 */         paramOutputStream.write_longlong(paramInputStream.read_longlong());
-/*      */ 
-/*      */       
-/*      */       case 25:
-/* 1964 */         throw this.wrapper.tkLongDoubleNotSupported();
-/*      */       
-/*      */       case 8:
-/* 1967 */         paramOutputStream.write_boolean(paramInputStream.read_boolean());
-/*      */ 
-/*      */       
-/*      */       case 9:
-/* 1971 */         paramOutputStream.write_char(paramInputStream.read_char());
-/*      */ 
-/*      */       
-/*      */       case 26:
-/* 1975 */         paramOutputStream.write_wchar(paramInputStream.read_wchar());
-/*      */ 
-/*      */       
-/*      */       case 10:
-/* 1979 */         paramOutputStream.write_octet(paramInputStream.read_octet());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 18:
-/* 1985 */         str = paramInputStream.read_string();
-/*      */         
-/* 1987 */         if (this._length != 0 && str.length() > this._length) {
-/* 1988 */           throw this.wrapper.badStringBounds(new Integer(str.length()), new Integer(this._length));
-/*      */         }
-/* 1990 */         paramOutputStream.write_string(str);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 27:
-/* 1997 */         str = paramInputStream.read_wstring();
-/*      */         
-/* 1999 */         if (this._length != 0 && str.length() > this._length) {
-/* 2000 */           throw this.wrapper.badStringBounds(new Integer(str.length()), new Integer(this._length));
-/*      */         }
-/* 2002 */         paramOutputStream.write_wstring(str);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 28:
-/* 2008 */         paramOutputStream.write_ushort(paramInputStream.read_ushort());
-/* 2009 */         paramOutputStream.write_short(paramInputStream.read_short());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 11:
-/* 2016 */         any = ((CDRInputStream)paramInputStream).orb().create_any();
-/* 2017 */         typeCodeImpl = new TypeCodeImpl((ORB)paramOutputStream.orb());
-/* 2018 */         typeCodeImpl.read_value((InputStream)paramInputStream);
-/* 2019 */         typeCodeImpl.write_value((OutputStream)paramOutputStream);
-/* 2020 */         any.read_value(paramInputStream, typeCodeImpl);
-/* 2021 */         any.write_value(paramOutputStream);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 12:
-/* 2027 */         paramOutputStream.write_TypeCode(paramInputStream.read_TypeCode());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 13:
-/* 2033 */         paramOutputStream.write_Principal(paramInputStream.read_Principal());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 14:
-/* 2039 */         paramOutputStream.write_Object(paramInputStream.read_Object());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 22:
-/* 2045 */         paramOutputStream.write_string(paramInputStream.read_string());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 15:
-/*      */       case 29:
-/* 2053 */         for (b = 0; b < this._memberTypes.length; b++) {
-/* 2054 */           this._memberTypes[b].copy(paramInputStream, paramOutputStream);
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 16:
-/* 2079 */         anyImpl = new AnyImpl((ORB)paramInputStream.orb());
-/*      */         
-/* 2081 */         switch (realType(this._discriminator).kind().value()) {
-/*      */           
-/*      */           case 2:
-/* 2084 */             s = paramInputStream.read_short();
-/* 2085 */             anyImpl.insert_short(s);
-/* 2086 */             paramOutputStream.write_short(s);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 3:
-/* 2091 */             k = paramInputStream.read_long();
-/* 2092 */             anyImpl.insert_long(k);
-/* 2093 */             paramOutputStream.write_long(k);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 4:
-/* 2098 */             k = paramInputStream.read_short();
-/* 2099 */             anyImpl.insert_ushort(k);
-/* 2100 */             paramOutputStream.write_short(k);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 5:
-/* 2105 */             k = paramInputStream.read_long();
-/* 2106 */             anyImpl.insert_ulong(k);
-/* 2107 */             paramOutputStream.write_long(k);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 6:
-/* 2112 */             f = paramInputStream.read_float();
-/* 2113 */             anyImpl.insert_float(f);
-/* 2114 */             paramOutputStream.write_float(f);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 7:
-/* 2119 */             d = paramInputStream.read_double();
-/* 2120 */             anyImpl.insert_double(d);
-/* 2121 */             paramOutputStream.write_double(d);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 8:
-/* 2126 */             bool = paramInputStream.read_boolean();
-/* 2127 */             anyImpl.insert_boolean(bool);
-/* 2128 */             paramOutputStream.write_boolean(bool);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 9:
-/* 2133 */             c2 = paramInputStream.read_char();
-/* 2134 */             anyImpl.insert_char(c2);
-/* 2135 */             paramOutputStream.write_char(c2);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 17:
-/* 2140 */             j = paramInputStream.read_long();
-/* 2141 */             anyImpl.type(this._discriminator);
-/* 2142 */             anyImpl.insert_long(j);
-/* 2143 */             paramOutputStream.write_long(j);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 23:
-/* 2148 */             l = paramInputStream.read_longlong();
-/* 2149 */             anyImpl.insert_longlong(l);
-/* 2150 */             paramOutputStream.write_longlong(l);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 24:
-/* 2155 */             l = paramInputStream.read_longlong();
-/* 2156 */             anyImpl.insert_ulonglong(l);
-/* 2157 */             paramOutputStream.write_longlong(l);
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 26:
-/* 2170 */             c1 = paramInputStream.read_wchar();
-/* 2171 */             anyImpl.insert_wchar(c1);
-/* 2172 */             paramOutputStream.write_wchar(c1);
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 2176 */             throw this.wrapper.illegalUnionDiscriminatorType();
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2183 */         for (c1 = Character.MIN_VALUE; c1 < this._unionLabels.length; c1++) {
-/*      */           
-/* 2185 */           if (anyImpl.equal(this._unionLabels[c1])) {
-/* 2186 */             this._memberTypes[c1].copy(paramInputStream, paramOutputStream);
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/* 2191 */         if (c1 == this._unionLabels.length)
-/*      */         {
-/* 2193 */           if (this._defaultIndex != -1)
-/*      */           {
-/* 2195 */             this._memberTypes[this._defaultIndex].copy(paramInputStream, paramOutputStream);
-/*      */           }
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       case 17:
-/* 2201 */         paramOutputStream.write_long(paramInputStream.read_long());
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 19:
-/* 2206 */         i = paramInputStream.read_long();
-/*      */ 
-/*      */         
-/* 2209 */         if (this._length != 0 && i > this._length) {
-/* 2210 */           throw this.wrapper.badSequenceBounds(new Integer(i), new Integer(this._length));
-/*      */         }
-/*      */ 
-/*      */         
-/* 2214 */         paramOutputStream.write_long(i);
-/*      */ 
-/*      */         
-/* 2217 */         lazy_content_type();
-/* 2218 */         for (c1 = Character.MIN_VALUE; c1 < i; c1++) {
-/* 2219 */           this._contentType.copy(paramInputStream, paramOutputStream);
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       case 20:
-/* 2224 */         for (c1 = Character.MIN_VALUE; c1 < this._length; c1++) {
-/* 2225 */           this._contentType.copy(paramInputStream, paramOutputStream);
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       case 21:
-/*      */       case 30:
-/* 2231 */         this._contentType.copy(paramInputStream, paramOutputStream);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case -1:
-/* 2239 */         indirectType().copy(paramInputStream, paramOutputStream);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2243 */     throw this.wrapper.invalidTypecodeKindMarshal(); }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static short digits(BigDecimal paramBigDecimal) {
-/* 2249 */     if (paramBigDecimal == null)
-/* 2250 */       return 0; 
-/* 2251 */     short s = (short)paramBigDecimal.unscaledValue().toString().length();
-/* 2252 */     if (paramBigDecimal.signum() == -1)
-/* 2253 */       s = (short)(s - 1); 
-/* 2254 */     return s;
-/*      */   }
-/*      */   
-/*      */   protected static short scale(BigDecimal paramBigDecimal) {
-/* 2258 */     if (paramBigDecimal == null)
-/* 2259 */       return 0; 
-/* 2260 */     return (short)paramBigDecimal.scale();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int currentUnionMemberIndex(Any paramAny) throws BadKind {
-/* 2269 */     if (this._kind != 16) {
-/* 2270 */       throw new BadKind();
-/*      */     }
-/*      */     
-/* 2273 */     try { for (byte b = 0; b < member_count(); b++) {
-/* 2274 */         if (member_label(b).equal(paramAny)) {
-/* 2275 */           return b;
-/*      */         }
-/*      */       } 
-/* 2278 */       if (this._defaultIndex != -1) {
-/* 2279 */         return this._defaultIndex;
-/*      */       } }
-/* 2281 */     catch (BadKind badKind) {  }
-/* 2282 */     catch (Bounds bounds) {}
-/*      */     
-/* 2284 */     return -1;
-/*      */   }
-/*      */   
-/*      */   public String description() {
-/* 2288 */     return "TypeCodeImpl with kind " + this._kind + " and id " + this._id;
-/*      */   }
-/*      */   
-/*      */   public String toString() {
-/* 2292 */     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(1024);
-/* 2293 */     PrintStream printStream = new PrintStream(byteArrayOutputStream, true);
-/* 2294 */     printStream(printStream);
-/* 2295 */     return super.toString() + " =\n" + byteArrayOutputStream.toString();
-/*      */   }
-/*      */   
-/*      */   public void printStream(PrintStream paramPrintStream) {
-/* 2299 */     printStream(paramPrintStream, 0);
-/*      */   }
-/*      */   private void printStream(PrintStream paramPrintStream, int paramInt) {
-/*      */     byte b;
-/* 2303 */     if (this._kind == -1) {
-/* 2304 */       paramPrintStream.print("indirect " + this._id);
-/*      */       
-/*      */       return;
-/*      */     } 
-/* 2308 */     switch (this._kind) {
-/*      */       case 0:
-/*      */       case 1:
-/*      */       case 2:
-/*      */       case 3:
-/*      */       case 4:
-/*      */       case 5:
-/*      */       case 6:
-/*      */       case 7:
-/*      */       case 8:
-/*      */       case 9:
-/*      */       case 10:
-/*      */       case 11:
-/*      */       case 12:
-/*      */       case 13:
-/*      */       case 14:
-/*      */       case 23:
-/*      */       case 24:
-/*      */       case 25:
-/*      */       case 26:
-/*      */       case 31:
-/* 2329 */         paramPrintStream.print(kindNames[this._kind] + " " + this._name);
-/*      */         return;
-/*      */       
-/*      */       case 15:
-/*      */       case 22:
-/*      */       case 29:
-/* 2335 */         paramPrintStream.println(kindNames[this._kind] + " " + this._name + " = {");
-/* 2336 */         for (b = 0; b < this._memberCount; b++) {
-/*      */           
-/* 2338 */           paramPrintStream.print(indent(paramInt + 1));
-/* 2339 */           if (this._memberTypes[b] != null) {
-/* 2340 */             this._memberTypes[b].printStream(paramPrintStream, paramInt + 1);
-/*      */           } else {
-/* 2342 */             paramPrintStream.print("<unknown type>");
-/* 2343 */           }  paramPrintStream.println(" " + this._memberNames[b] + ";");
-/*      */         } 
-/* 2345 */         paramPrintStream.print(indent(paramInt) + "}");
-/*      */         return;
-/*      */       
-/*      */       case 16:
-/* 2349 */         paramPrintStream.print("union " + this._name + "...");
-/*      */         return;
-/*      */       
-/*      */       case 17:
-/* 2353 */         paramPrintStream.print("enum " + this._name + "...");
-/*      */         return;
-/*      */       
-/*      */       case 18:
-/* 2357 */         if (this._length == 0) {
-/* 2358 */           paramPrintStream.print("unbounded string " + this._name);
-/*      */         } else {
-/* 2360 */           paramPrintStream.print("bounded string(" + this._length + ") " + this._name);
-/*      */         } 
-/*      */         return;
-/*      */       case 19:
-/*      */       case 20:
-/* 2365 */         paramPrintStream.println(kindNames[this._kind] + "[" + this._length + "] " + this._name + " = {");
-/* 2366 */         paramPrintStream.print(indent(paramInt + 1));
-/* 2367 */         if (lazy_content_type() != null) {
-/* 2368 */           lazy_content_type().printStream(paramPrintStream, paramInt + 1);
-/*      */         }
-/* 2370 */         paramPrintStream.println(indent(paramInt) + "}");
-/*      */         return;
-/*      */       
-/*      */       case 21:
-/* 2374 */         paramPrintStream.print("alias " + this._name + " = " + ((this._contentType != null) ? this._contentType._name : "<unresolved>"));
-/*      */         return;
-/*      */ 
-/*      */       
-/*      */       case 27:
-/* 2379 */         paramPrintStream.print("wstring[" + this._length + "] " + this._name);
-/*      */         return;
-/*      */       
-/*      */       case 28:
-/* 2383 */         paramPrintStream.print("fixed(" + this._digits + ", " + this._scale + ") " + this._name);
-/*      */         return;
-/*      */       
-/*      */       case 30:
-/* 2387 */         paramPrintStream.print("valueBox " + this._name + "...");
-/*      */         return;
-/*      */       
-/*      */       case 32:
-/* 2391 */         paramPrintStream.print("abstractInterface " + this._name + "...");
-/*      */         return;
-/*      */     } 
-/*      */     
-/* 2395 */     paramPrintStream.print("<unknown type>");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String indent(int paramInt) {
-/* 2401 */     String str = "";
-/* 2402 */     for (byte b = 0; b < paramInt; b++) {
-/* 2403 */       str = str + "  ";
-/*      */     }
-/* 2405 */     return str;
-/*      */   }
-/*      */   
-/*      */   protected void setCaching(boolean paramBoolean) {
-/* 2409 */     this.cachingEnabled = paramBoolean;
-/* 2410 */     if (!paramBoolean)
-/* 2411 */       this.outBuffer = null; 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\corba\TypeCodeImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.corba;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import org.omg.CORBA.TypeCode ;
+import org.omg.CORBA.StructMember ;
+import org.omg.CORBA.UnionMember ;
+import org.omg.CORBA.ValueMember ;
+import org.omg.CORBA.TCKind ;
+import org.omg.CORBA.Any ;
+import org.omg.CORBA.Principal ;
+import org.omg.CORBA.BAD_TYPECODE ;
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA.BAD_OPERATION ;
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.MARSHAL ;
+import org.omg.CORBA.TypeCodePackage.BadKind ;
+import org.omg.CORBA_2_3.portable.InputStream;
+import org.omg.CORBA_2_3.portable.OutputStream;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
+import com.sun.corba.se.impl.encoding.MarshalInputStream;
+import com.sun.corba.se.impl.encoding.CodeSetConversion;
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+import com.sun.corba.se.impl.encoding.CDROutputStream;
+import com.sun.corba.se.impl.encoding.TypeCodeInputStream;
+import com.sun.corba.se.impl.encoding.TypeCodeOutputStream;
+import com.sun.corba.se.impl.encoding.TypeCodeReader;
+import com.sun.corba.se.impl.encoding.WrapperInputStream;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+
+// no chance of subclasses, so no problems with runtime helper lookup
+public final class TypeCodeImpl extends TypeCode
+{
+    //static final boolean debug = false;
+
+    // the indirection TCKind, needed for recursive typecodes.
+    protected static final int tk_indirect = 0xFFFFFFFF;
+
+    // typecode encodings have three different categories that determine
+    // how the encoding should be done.
+
+    private static final int EMPTY = 0; // no parameters
+    private static final int SIMPLE = 1;        // simple parameters.
+    private static final int COMPLEX = 2; // complex parameters. need to
+    // use CDR encapsulation for
+    // parameters
+
+    // a table storing the encoding category for the various typecodes.
+
+    private static final int typeTable[] = {
+        EMPTY,  // tk_null
+        EMPTY,  // tk_void
+        EMPTY,  // tk_short
+        EMPTY,  // tk_long
+        EMPTY,  // tk_ushort
+        EMPTY,  // tk_ulong
+        EMPTY,  // tk_float
+        EMPTY,  // tk_double
+        EMPTY,  // tk_boolean
+        EMPTY,  // tk_char
+        EMPTY,  // tk_octet
+        EMPTY,  // tk_any
+        EMPTY,  // tk_typecode
+        EMPTY,  // tk_principal
+        COMPLEX,        // tk_objref
+        COMPLEX,        // tk_struct
+        COMPLEX,        // tk_union
+        COMPLEX,        // tk_enum
+        SIMPLE, // tk_string
+        COMPLEX,        // tk_sequence
+        COMPLEX,        // tk_array
+        COMPLEX,        // tk_alias
+        COMPLEX,        // tk_except
+        EMPTY,  // tk_longlong
+        EMPTY,  // tk_ulonglong
+        EMPTY,  // tk_longdouble
+        EMPTY,  // tk_wchar
+        SIMPLE, // tk_wstring
+        SIMPLE, // tk_fixed
+        COMPLEX,        // tk_value
+        COMPLEX,        // tk_value_box
+        COMPLEX,        // tk_native
+        COMPLEX // tk_abstract_interface
+    };
+
+    // Maps TCKind values to names
+    // This is also used in AnyImpl.
+    static final String[] kindNames = {
+        "null",
+        "void",
+        "short",
+        "long",
+        "ushort",
+        "ulong",
+        "float",
+        "double",
+        "boolean",
+        "char",
+        "octet",
+        "any",
+        "typecode",
+        "principal",
+        "objref",
+        "struct",
+        "union",
+        "enum",
+        "string",
+        "sequence",
+        "array",
+        "alias",
+        "exception",
+        "longlong",
+        "ulonglong",
+        "longdouble",
+        "wchar",
+        "wstring",
+        "fixed",
+        "value",
+        "valueBox",
+        "native",
+        "abstractInterface"
+    };
+
+    private int                 _kind           = 0;    // the typecode kind
+
+    // data members for representing the various kinds of typecodes.
+    private String          _id             = "";   // the typecode repository id
+    private String          _name           = "";   // the typecode name
+    private int             _memberCount    = 0;    // member count
+    private String          _memberNames[]  = null; // names of members
+    private TypeCodeImpl    _memberTypes[]  = null; // types of members
+    private AnyImpl         _unionLabels[]  = null; // values of union labels
+    private TypeCodeImpl    _discriminator  = null; // union discriminator type
+    private int             _defaultIndex   = -1;   // union default index
+    private int             _length         = 0;    // string/seq/array length
+    private TypeCodeImpl    _contentType    = null; // seq/array/alias type
+    // fixed
+    private short           _digits         = 0;
+    private short           _scale          = 0;
+    // value type
+    // _REVISIT_ We might want to keep references to the ValueMember classes
+    // passed in at initialization instead of copying the relevant data.
+    // Is the data immutable? What about StructMember, UnionMember etc.?
+    private short           _type_modifier  = -1;   // VM_NONE, VM_CUSTOM,
+    // VM_ABSTRACT, VM_TRUNCATABLE
+    private TypeCodeImpl    _concrete_base  = null; // concrete base type
+    private short           _memberAccess[] = null; // visibility of ValueMember
+    // recursive sequence support
+    private TypeCodeImpl    _parent         = null; // the enclosing type code
+    private int             _parentOffset   = 0;    // the level of enclosure
+    // recursive type code support
+    private TypeCodeImpl    _indirectType   = null;
+
+    // caches the byte buffer written in write_value for quick remarshaling...
+    private byte[] outBuffer                = null;
+    // ... but only if caching is enabled
+    private boolean cachingEnabled          = false;
+
+    // the ORB instance: may be instanceof ORBSingleton or ORB
+    private ORB _orb;
+    private ORBUtilSystemException wrapper ;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Constructors...
+
+    public TypeCodeImpl(ORB orb)
+    {
+        // initialized to tk_null
+        _orb = orb;
+        wrapper = ORBUtilSystemException.get(
+            (com.sun.corba.se.spi.orb.ORB)orb, CORBALogDomains.RPC_PRESENTATION ) ;
+    }
+
+    public TypeCodeImpl(ORB orb, TypeCode tc)
+    // to handle conversion of "remote" typecodes into "native" style.
+    // also see the 'convertToNative(ORB orb, TypeCode tc)' function
+    {
+        this(orb) ;
+
+        // This is a protection against misuse of this constructor.
+        // Should only be used if tc is not an instance of this class!
+        // Otherwise we run into problems with recursive/indirect type codes.
+        // _REVISIT_ We should make this constructor private
+        if (tc instanceof TypeCodeImpl) {
+            TypeCodeImpl tci = (TypeCodeImpl)tc;
+            if (tci._kind == tk_indirect)
+                throw wrapper.badRemoteTypecode() ;
+            if (tci._kind == TCKind._tk_sequence && tci._contentType == null)
+                throw wrapper.badRemoteTypecode() ;
+        }
+
+        // set up kind
+        _kind   = tc.kind().value();
+
+        try {
+            // set up parameters
+            switch (_kind) {
+            case TCKind._tk_value:
+                _type_modifier = tc.type_modifier();
+                // concrete base may be null
+                TypeCode tccb = tc.concrete_base_type();
+                if (tccb != null) {
+                    _concrete_base = convertToNative(_orb, tccb);
+                } else {
+                    _concrete_base = null;
+                }
+                //_memberAccess = tc._memberAccess;
+                // Need to reconstruct _memberAccess using member_count() and member_visibility()
+                _memberAccess = new short[tc.member_count()];
+                for (int i=0; i < tc.member_count(); i++) {
+                    _memberAccess[i] = tc.member_visibility(i);
+                }
+            case TCKind._tk_except:
+            case TCKind._tk_struct:
+            case TCKind._tk_union:
+                // set up member types
+                _memberTypes = new TypeCodeImpl[tc.member_count()];
+                for (int i=0; i < tc.member_count(); i++) {
+                    _memberTypes[i] = convertToNative(_orb, tc.member_type(i));
+                    _memberTypes[i].setParent(this);
+                }
+            case TCKind._tk_enum:
+                // set up member names
+                _memberNames = new String[tc.member_count()];
+                for (int i=0; i < tc.member_count(); i++) {
+                    _memberNames[i] = tc.member_name(i);
+                }
+                // set up member count
+                _memberCount = tc.member_count();
+            case TCKind._tk_objref:
+            case TCKind._tk_alias:
+            case TCKind._tk_value_box:
+            case TCKind._tk_native:
+            case TCKind._tk_abstract_interface:
+                setId(tc.id());
+                _name = tc.name();
+                break;
+            }
+
+            // set up stuff for unions
+            switch (_kind) {
+            case TCKind._tk_union:
+                _discriminator = convertToNative(_orb, tc.discriminator_type());
+                _defaultIndex  = tc.default_index();
+                _unionLabels = new AnyImpl[_memberCount];
+                for (int i=0; i < _memberCount; i++)
+                    _unionLabels[i] = new AnyImpl(_orb, tc.member_label(i));
+                break;
+            }
+
+            // set up length
+            switch (_kind) {
+            case TCKind._tk_string:
+            case TCKind._tk_wstring:
+            case TCKind._tk_sequence:
+            case TCKind._tk_array:
+                _length = tc.length();
+            }
+
+            // set up content type
+            switch (_kind) {
+            case TCKind._tk_sequence:
+            case TCKind._tk_array:
+            case TCKind._tk_alias:
+            case TCKind._tk_value_box:
+                _contentType = convertToNative(_orb, tc.content_type());
+            }
+        } catch (org.omg.CORBA.TypeCodePackage.Bounds e) {} catch (BadKind e) {}
+        // dont have to worry about these since code ensures we dont step
+        // out of bounds.
+    }
+
+    public TypeCodeImpl(ORB orb, int creationKind)
+    // for primitive types
+    {
+        this(orb);
+
+        // private API. dont bother checking that
+        //     (creationKind < 0 || creationKind > typeTable.length)
+
+        _kind = creationKind;
+
+        // do initialization for special cases
+        switch (_kind) {
+        case TCKind._tk_objref:
+            {
+                // this is being used to create typecode for CORBA::Object
+                setId("IDL:omg.org/CORBA/Object:1.0");
+                _name = "Object";
+                break;
+            }
+
+        case TCKind._tk_string:
+        case TCKind._tk_wstring:
+            {
+                _length =0;
+                break;
+            }
+
+        case TCKind._tk_value:
+            {
+                _concrete_base = null;
+                break;
+            }
+        }
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        String id,
+                        String name,
+                        StructMember[] members)
+                        // for structs and exceptions
+    {
+        this(orb);
+
+        if ((creationKind == TCKind._tk_struct) || (creationKind == TCKind._tk_except)) {
+            _kind               = creationKind;
+            setId(id);
+            _name               = name;
+            _memberCount        = members.length;
+
+            _memberNames = new String[_memberCount];
+            _memberTypes = new TypeCodeImpl[_memberCount];
+
+            for (int i = 0 ; i < _memberCount ; i++) {
+                _memberNames[i] = members[i].name;
+                _memberTypes[i] = convertToNative(_orb, members[i].type);
+                _memberTypes[i].setParent(this);
+            }
+        } // else initializes to null
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        String id,
+                        String name,
+                        TypeCode discriminator_type,
+                        UnionMember[] members)
+                        // for unions
+    {
+        this(orb) ;
+
+        if (creationKind == TCKind._tk_union) {
+            _kind               = creationKind;
+            setId(id);
+            _name               = name;
+            _memberCount        = members.length;
+            _discriminator      = convertToNative(_orb, discriminator_type);
+
+            _memberNames = new String[_memberCount];
+            _memberTypes = new TypeCodeImpl[_memberCount];
+            _unionLabels = new AnyImpl[_memberCount];
+
+            for (int i = 0 ; i < _memberCount ; i++) {
+                _memberNames[i] = members[i].name;
+                _memberTypes[i] = convertToNative(_orb, members[i].type);
+                _memberTypes[i].setParent(this);
+                _unionLabels[i] = new AnyImpl(_orb, members[i].label);
+                // check whether this is the default branch.
+                if (_unionLabels[i].type().kind() == TCKind.tk_octet) {
+                    if (_unionLabels[i].extract_octet() == (byte)0) {
+                        _defaultIndex = i;
+                    }
+                }
+            }
+        } // else initializes to null
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        String id,
+                        String name,
+                        short type_modifier,
+                        TypeCode concrete_base,
+                        ValueMember[] members)
+                        // for value types
+    {
+        this(orb) ;
+
+        if (creationKind == TCKind._tk_value) {
+            _kind               = creationKind;
+            setId(id);
+            _name               = name;
+            _type_modifier      = type_modifier;
+            if (concrete_base != null) {
+                _concrete_base = convertToNative(_orb, concrete_base);
+            }
+            _memberCount        = members.length;
+
+            _memberNames = new String[_memberCount];
+            _memberTypes = new TypeCodeImpl[_memberCount];
+            _memberAccess = new short[_memberCount];
+
+            for (int i = 0 ; i < _memberCount ; i++) {
+                _memberNames[i] = members[i].name;
+                _memberTypes[i] = convertToNative(_orb, members[i].type);
+                _memberTypes[i].setParent(this);
+                _memberAccess[i] = members[i].access;
+            }
+        } // else initializes to null
+    }
+
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        String id,
+                        String name,
+                        String[] members)
+                        // for enums
+    {
+        this(orb) ;
+
+        if (creationKind == TCKind._tk_enum)
+            {
+                _kind           = creationKind;
+                setId(id);
+                _name           = name;
+                _memberCount    = members.length;
+
+                _memberNames = new String[_memberCount];
+
+                for (int i = 0 ; i < _memberCount ; i++)
+                    _memberNames[i] = members[i];
+            } // else initializes to null
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        String id,
+                        String name,
+                        TypeCode original_type)
+                        // for aliases and value boxes
+    {
+        this(orb) ;
+
+        if ( creationKind == TCKind._tk_alias || creationKind == TCKind._tk_value_box )
+            {
+                _kind           = creationKind;
+                setId(id);
+                _name           = name;
+                _contentType    = convertToNative(_orb, original_type);
+            }
+        // else initializes to null
+
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        String id,
+                        String name)
+    {
+        this(orb) ;
+
+        if (creationKind == TCKind._tk_objref ||
+            creationKind == TCKind._tk_native ||
+            creationKind == TCKind._tk_abstract_interface)
+            {
+                _kind           = creationKind;
+                setId(id);
+                _name           = name;
+            } // else initializes to null
+    }
+
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        int bound)
+                        // for strings
+    {
+        this(orb) ;
+
+        if (bound < 0)
+            throw wrapper.negativeBounds() ;
+
+        if ((creationKind == TCKind._tk_string) || (creationKind == TCKind._tk_wstring)) {
+            _kind               = creationKind;
+            _length             = bound;
+        } // else initializes to null
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        int bound,
+                        TypeCode element_type)
+                        // for sequences and arrays
+    {
+        this(orb) ;
+
+        if ( creationKind == TCKind._tk_sequence || creationKind == TCKind._tk_array ) {
+            _kind               = creationKind;
+            _length             = bound;
+            _contentType        = convertToNative(_orb, element_type);
+        } // else initializes to null
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        int bound,
+                        int offset)
+                        // for recursive sequences
+    {
+        this(orb) ;
+
+        if (creationKind == TCKind._tk_sequence) {
+            _kind               = creationKind;
+            _length             = bound;
+            _parentOffset       = offset;
+        } // else initializes to null
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        String id)
+                        // for recursive type codes
+    {
+        this(orb) ;
+
+        _kind   = tk_indirect;
+        // This is the type code of the type we stand in for, not our own.
+        _id             = id;
+        // Try to resolve it now. May return null in which case
+        // we try again later (see indirectType()).
+        tryIndirectType();
+    }
+
+    public TypeCodeImpl(ORB orb,
+                        int creationKind,
+                        short digits,
+                        short scale)
+                        // for fixed
+    {
+        this(orb) ;
+
+        //if (digits < 1 || digits > 31)
+        //throw new BAD_TYPECODE();
+
+        if (creationKind == TCKind._tk_fixed) {
+            _kind               = creationKind;
+            _digits             = digits;
+            _scale              = scale;
+        } // else initializes to null
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Other creation functions...
+
+    // Optimization:
+    // If we checked for and returned constant primitive typecodes
+    // here we could reduce object creation and also enable more
+    // efficient typecode comparisons for primitive typecodes.
+    //
+    protected static TypeCodeImpl convertToNative(ORB orb,
+                                                  TypeCode tc)
+    {
+        if (tc instanceof TypeCodeImpl)
+            return (TypeCodeImpl) tc;
+        else
+            return new TypeCodeImpl(orb, tc);
+    }
+
+    public static CDROutputStream newOutputStream(ORB orb) {
+        TypeCodeOutputStream tcos =
+            sun.corba.OutputStreamFactory.newTypeCodeOutputStream(orb);
+        //if (debug) System.out.println("Created TypeCodeOutputStream " + tcos +
+        // " with no parent");
+        return tcos;
+    }
+
+    // Support for indirect/recursive type codes
+
+    private TypeCodeImpl indirectType() {
+        _indirectType = tryIndirectType();
+        if (_indirectType == null) {
+            // Nothing we can do about that.
+            throw wrapper.unresolvedRecursiveTypecode() ;
+        }
+        return _indirectType;
+    }
+
+    private TypeCodeImpl tryIndirectType() {
+        // Assert that _kind == tk_indirect
+        if (_indirectType != null)
+            return _indirectType;
+
+        setIndirectType(_orb.getTypeCode(_id));
+
+        return _indirectType;
+    }
+
+    private void setIndirectType(TypeCodeImpl newType) {
+        _indirectType = newType;
+        if (_indirectType != null) {
+            try {
+                _id = _indirectType.id();
+            } catch (BadKind e) {
+                // can't happen
+                throw wrapper.badkindCannotOccur() ;
+            }
+        }
+    }
+
+    private void setId(String newID) {
+        _id = newID;
+        if (_orb instanceof TypeCodeFactory) {
+            ((TypeCodeFactory)_orb).setTypeCode(_id, this);
+        }
+        // check whether return value != this which would indicate that the
+        // repository id isn't unique.
+    }
+
+    private void setParent(TypeCodeImpl parent) {
+        _parent = parent;
+    }
+
+    private TypeCodeImpl getParentAtLevel(int level) {
+        if (level == 0)
+            return this;
+
+        if (_parent == null)
+            throw wrapper.unresolvedRecursiveTypecode() ;
+
+        return _parent.getParentAtLevel(level - 1);
+    }
+
+    private TypeCodeImpl lazy_content_type() {
+        if (_contentType == null) {
+            if (_kind == TCKind._tk_sequence && _parentOffset > 0 && _parent != null) {
+                // This is an unresolved recursive sequence tc.
+                // Try to resolve it now if the hierarchy is complete.
+                TypeCodeImpl realParent = getParentAtLevel(_parentOffset);
+                if (realParent != null && realParent._id != null) {
+                    // Create a recursive type code object as the content type.
+                    // This is when the recursive sequence typecode morphes
+                    // into a sequence typecode containing a recursive typecode.
+                    _contentType = new TypeCodeImpl((ORB)_orb, realParent._id);
+                }
+            }
+        }
+        return _contentType;
+    }
+
+    // Other private functions
+
+    private TypeCode realType(TypeCode aType) {
+        TypeCode realType = aType;
+        try {
+            // Note: Indirect types are handled in kind() method
+            while (realType.kind().value() == TCKind._tk_alias) {
+                realType = realType.content_type();
+            }
+        } catch (BadKind bad) {
+            // impossible
+            throw wrapper.badkindCannotOccur() ;
+        }
+        return realType;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // TypeCode operations
+
+    public final boolean equal(TypeCode tc)
+    // _REVISIT_ for all optional names/ids, we might want to check that
+    // they are equal in case both are non-nil.
+    {
+        if (tc == this)
+            return true;
+
+        try {
+
+            if (_kind == tk_indirect) {
+                //return indirectType().equal(tc);
+                if (_id != null && tc.id() != null)
+                    return _id.equals(tc.id());
+                return (_id == null && tc.id() == null);
+            }
+
+            // make sure kinds are identical.
+            if (_kind != tc.kind().value()) {
+                return false;
+            }
+
+            switch (typeTable[_kind]) {
+            case EMPTY:
+                // no parameters to check.
+                return true;
+
+            case SIMPLE:
+                switch (_kind) {
+                case TCKind._tk_string:
+                case TCKind._tk_wstring:
+                    // check for bound.
+                    return (_length == tc.length());
+
+                case TCKind._tk_fixed:
+                    return (_digits == tc.fixed_digits() && _scale == tc.fixed_scale());
+                default:
+                    return false;
+                }
+
+            case COMPLEX:
+
+                switch(_kind) {
+
+                case TCKind._tk_objref:
+                    {
+                        // check for logical id.
+                        if (_id.compareTo(tc.id()) == 0) {
+                            return true;
+                        }
+
+                        if (_id.compareTo(
+                            (_orb.get_primitive_tc(_kind)).id()) == 0)
+                        {
+                            return true;
+                        }
+
+                        if (tc.id().compareTo(
+                            (_orb.get_primitive_tc(_kind)).id()) == 0)
+                        {
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                case TCKind._tk_native:
+                case TCKind._tk_abstract_interface:
+                    {
+                        // check for logical id.
+                        if (_id.compareTo(tc.id()) != 0) {
+                            return false;
+
+                        }
+                        // ignore name since its optional.
+                        return true;
+                    }
+
+                case TCKind._tk_struct:
+                case TCKind._tk_except:
+                    {
+                        // check for member count
+                        if (_memberCount != tc.member_count())
+                            return false;
+                        // check for repository id
+                        if (_id.compareTo(tc.id()) != 0)
+                            return false;
+                        // check for member types.
+                        for (int i = 0 ; i < _memberCount ; i++)
+                            if (! _memberTypes[i].equal(tc.member_type(i)))
+                                return false;
+                        // ignore id and names since those are optional.
+                        return true;
+                    }
+
+                case TCKind._tk_union:
+                    {
+                        // check for member count
+                        if (_memberCount != tc.member_count())
+                            return false;
+                        // check for repository id
+                        if (_id.compareTo(tc.id()) != 0)
+                            return false;
+                        // check for default index
+                        if (_defaultIndex != tc.default_index())
+                            return false;
+                        // check for discriminator type
+                        if (!_discriminator.equal(tc.discriminator_type()))
+                            return false;
+                        // check for label types and values
+                        for (int i = 0 ; i < _memberCount ; i++)
+                            if (! _unionLabels[i].equal(tc.member_label(i)))
+                                return false;
+                        // check for branch types
+                        for (int i = 0 ; i < _memberCount ; i++)
+                            if (! _memberTypes[i].equal(tc.member_type(i)))
+                                return false;
+                        // ignore id and names since those are optional.
+                        return true;
+                    }
+
+                case TCKind._tk_enum:
+                    {
+                        // check for repository id
+                        if (_id.compareTo(tc.id()) != 0)
+                            return false;
+                        // check member count
+                        if (_memberCount != tc.member_count())
+                            return false;
+                        // ignore names since those are optional.
+                        return true;
+                    }
+
+                case TCKind._tk_sequence:
+                case TCKind._tk_array:
+                    {
+                        // check bound/length
+                        if (_length != tc.length()) {
+                            return false;
+                        }
+                        // check content type
+                        if (! lazy_content_type().equal(tc.content_type())) {
+                            return false;
+                        }
+                        // ignore id and name since those are optional.
+                        return true;
+                    }
+
+                case TCKind._tk_value:
+                    {
+                        // check for member count
+                        if (_memberCount != tc.member_count())
+                            return false;
+                        // check for repository id
+                        if (_id.compareTo(tc.id()) != 0)
+                            return false;
+                        // check for member types.
+                        for (int i = 0 ; i < _memberCount ; i++)
+                            if (_memberAccess[i] != tc.member_visibility(i) ||
+                                ! _memberTypes[i].equal(tc.member_type(i)))
+                                return false;
+                        if (_type_modifier == tc.type_modifier())
+                            return false;
+                        // concrete_base may be null
+                        TypeCode tccb = tc.concrete_base_type();
+                        if ((_concrete_base == null && tccb != null) ||
+                            (_concrete_base != null && tccb == null) ||
+                            ! _concrete_base.equal(tccb))
+                        {
+                            return false;
+                        }
+                        // ignore id and names since those are optional.
+                        return true;
+                    }
+
+                case TCKind._tk_alias:
+                case TCKind._tk_value_box:
+                    {
+                        // check for repository id
+                        if (_id.compareTo(tc.id()) != 0) {
+                            return false;
+                        }
+                        // check for equality with the true type
+                        return _contentType.equal(tc.content_type());
+                    }
+                }
+            }
+        } catch (org.omg.CORBA.TypeCodePackage.Bounds e) {} catch (BadKind e) {}
+        // dont have to worry about these since the code ensures these dont
+        // arise.
+        return false;
+    }
+
+    /**
+    * The equivalent operation is used by the ORB when determining type equivalence
+    * for values stored in an IDL any.
+    */
+    public boolean equivalent(TypeCode tc) {
+        if (tc == this) {
+            return true;
+        }
+
+        // If the result of the kind operation on either TypeCode is tk_alias, recursively
+        // replace the TypeCode with the result of calling content_type, until the kind
+        // is no longer tk_alias.
+        // Note: Always resolve indirect types first!
+        TypeCode myRealType = (_kind == tk_indirect ? indirectType() : this);
+        myRealType = realType(myRealType);
+        TypeCode otherRealType = realType(tc);
+
+        // If results of the kind operation on each typecode differ,
+        // equivalent returns false.
+        if (myRealType.kind().value() != otherRealType.kind().value()) {
+            return false;
+        }
+
+        String myID = null;
+        String otherID = null;
+        try {
+            myID = this.id();
+            otherID = tc.id();
+            // At this point the id operation is valid for both TypeCodes.
+
+            // Return true if the results of id for both TypeCodes are non-empty strings
+            // and both strings are equal.
+            // If both ids are non-empty but are not equal, then equivalent returns FALSE.
+            if (myID != null && otherID != null) {
+                return (myID.equals(otherID));
+            }
+        } catch (BadKind e) {
+            // id operation is not valid for either or both TypeCodes
+        }
+
+        // If either or both id is an empty string, or the TypeCode kind does not support
+        // the id operation, perform a structural comparison of the TypeCodes.
+
+        int myKind = myRealType.kind().value();
+        try {
+            if (myKind == TCKind._tk_struct ||
+                myKind == TCKind._tk_union ||
+                myKind == TCKind._tk_enum ||
+                myKind == TCKind._tk_except ||
+                myKind == TCKind._tk_value)
+            {
+                if (myRealType.member_count() != otherRealType.member_count())
+                    return false;
+            }
+            if (myKind == TCKind._tk_union)
+            {
+                if (myRealType.default_index() != otherRealType.default_index())
+                    return false;
+            }
+            if (myKind == TCKind._tk_string ||
+                myKind == TCKind._tk_wstring ||
+                myKind == TCKind._tk_sequence ||
+                myKind == TCKind._tk_array)
+            {
+                if (myRealType.length() != otherRealType.length())
+                    return false;
+            }
+            if (myKind == TCKind._tk_fixed)
+            {
+                if (myRealType.fixed_digits() != otherRealType.fixed_digits() ||
+                    myRealType.fixed_scale() != otherRealType.fixed_scale())
+                    return false;
+            }
+            if (myKind == TCKind._tk_union)
+            {
+                for (int i=0; i<myRealType.member_count(); i++) {
+                    if (myRealType.member_label(i) != otherRealType.member_label(i))
+                        return false;
+                }
+                if ( ! myRealType.discriminator_type().equivalent(
+                    otherRealType.discriminator_type()))
+                    return false;
+            }
+            if (myKind == TCKind._tk_alias ||
+                myKind == TCKind._tk_value_box ||
+                myKind == TCKind._tk_sequence ||
+                myKind == TCKind._tk_array)
+            {
+                if ( ! myRealType.content_type().equivalent(otherRealType.content_type()))
+                    return false;
+            }
+            if (myKind == TCKind._tk_struct ||
+                myKind == TCKind._tk_union ||
+                myKind == TCKind._tk_except ||
+                myKind == TCKind._tk_value)
+            {
+                for (int i=0; i<myRealType.member_count(); i++) {
+                    if ( ! myRealType.member_type(i).equivalent(
+                        otherRealType.member_type(i)))
+                        return false;
+                }
+            }
+        } catch (BadKind e) {
+            // impossible if we checked correctly above
+            throw wrapper.badkindCannotOccur() ;
+        } catch (org.omg.CORBA.TypeCodePackage.Bounds e) {
+            // impossible if we checked correctly above
+            throw wrapper.boundsCannotOccur() ;
+        }
+
+        // Structural comparison succeeded!
+        return true;
+    }
+
+    public TypeCode get_compact_typecode() {
+        // _REVISIT_ It isn't clear whether this method should operate on this or a copy.
+        // For now just return this unmodified because the name and member_name fields
+        // aren't used for comparison anyways.
+        return this;
+    }
+
+    public TCKind kind()
+    {
+        if (_kind == tk_indirect)
+            return indirectType().kind();
+        return TCKind.from_int(_kind);
+    }
+
+    public boolean is_recursive()
+    {
+        // Recursive is the only form of indirect type codes right now.
+        // Indirection can also be used for repeated type codes.
+        return (_kind == tk_indirect);
+    }
+
+    public String id()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            //return indirectType().id(); // same as _id
+        case TCKind._tk_except:
+        case TCKind._tk_objref:
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_enum:
+        case TCKind._tk_alias:
+        case TCKind._tk_value:
+        case TCKind._tk_value_box:
+        case TCKind._tk_native:
+        case TCKind._tk_abstract_interface:
+            // exception and objref typecodes must have a repository id.
+            // structs, unions, enums, and aliases may or may not.
+            return _id;
+        default:
+            // all other typecodes throw the BadKind exception.
+            throw new BadKind();
+        }
+    }
+
+    public String name()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().name();
+        case TCKind._tk_except:
+        case TCKind._tk_objref:
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_enum:
+        case TCKind._tk_alias:
+        case TCKind._tk_value:
+        case TCKind._tk_value_box:
+        case TCKind._tk_native:
+        case TCKind._tk_abstract_interface:
+            return _name;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public int member_count()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().member_count();
+        case TCKind._tk_except:
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_enum:
+        case TCKind._tk_value:
+            return _memberCount;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public String member_name(int index)
+        throws BadKind, org.omg.CORBA.TypeCodePackage.Bounds
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().member_name(index);
+        case TCKind._tk_except:
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_enum:
+        case TCKind._tk_value:
+            try {
+                return _memberNames[index];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new org.omg.CORBA.TypeCodePackage.Bounds();
+            }
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public TypeCode member_type(int index)
+        throws BadKind, org.omg.CORBA.TypeCodePackage.Bounds
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().member_type(index);
+        case TCKind._tk_except:
+        case TCKind._tk_struct:
+        case TCKind._tk_union:
+        case TCKind._tk_value:
+            try {
+                return _memberTypes[index];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new org.omg.CORBA.TypeCodePackage.Bounds();
+            }
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public Any member_label(int index)
+        throws BadKind, org.omg.CORBA.TypeCodePackage.Bounds
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().member_label(index);
+        case TCKind._tk_union:
+            try {
+                // _REVISIT_ Why create a new Any for this?
+                return new AnyImpl(_orb, _unionLabels[index]);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new org.omg.CORBA.TypeCodePackage.Bounds();
+            }
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public TypeCode discriminator_type()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().discriminator_type();
+        case TCKind._tk_union:
+            return _discriminator;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public int default_index()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().default_index();
+        case TCKind._tk_union:
+            return _defaultIndex;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public int length()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().length();
+        case TCKind._tk_string:
+        case TCKind._tk_wstring:
+        case TCKind._tk_sequence:
+        case TCKind._tk_array:
+            return _length;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public TypeCode content_type()
+        throws BadKind
+    {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().content_type();
+        case TCKind._tk_sequence:
+            return lazy_content_type();
+        case TCKind._tk_array:
+        case TCKind._tk_alias:
+        case TCKind._tk_value_box:
+            return _contentType;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public short fixed_digits() throws BadKind {
+        switch (_kind) {
+        case TCKind._tk_fixed:
+            return _digits;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public short fixed_scale() throws BadKind {
+        switch (_kind) {
+        case TCKind._tk_fixed:
+            return _scale;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public short member_visibility(int index) throws BadKind,
+        org.omg.CORBA.TypeCodePackage.Bounds {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().member_visibility(index);
+        case TCKind._tk_value:
+            try {
+                return _memberAccess[index];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new org.omg.CORBA.TypeCodePackage.Bounds();
+            }
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public short type_modifier() throws BadKind {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().type_modifier();
+        case TCKind._tk_value:
+            return _type_modifier;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public TypeCode concrete_base_type() throws BadKind {
+        switch (_kind) {
+        case tk_indirect:
+            return indirectType().concrete_base_type();
+        case TCKind._tk_value:
+            return _concrete_base;
+        default:
+            throw new BadKind();
+        }
+    }
+
+    public void read_value(InputStream is) {
+        if (is instanceof TypeCodeReader) {
+            // hardly possible unless caller knows our "private" stream classes.
+            if (read_value_kind((TypeCodeReader)is))
+                read_value_body(is);
+        } else if (is instanceof CDRInputStream) {
+            WrapperInputStream wrapper = new WrapperInputStream((CDRInputStream)is);
+            //if (debug) System.out.println("Created WrapperInputStream " + wrapper +
+            // " with no parent");
+            if (read_value_kind((TypeCodeReader)wrapper))
+                read_value_body(wrapper);
+        } else {
+            read_value_kind(is);
+            read_value_body(is);
+        }
+    }
+
+    private void read_value_recursive(TypeCodeInputStream is) {
+        // don't wrap a CDRInputStream reading "inner" TypeCodes.
+        if (is instanceof TypeCodeReader) {
+            if (read_value_kind((TypeCodeReader)is))
+                read_value_body(is);
+        } else {
+            read_value_kind((InputStream)is);
+            read_value_body(is);
+        }
+    }
+
+    boolean read_value_kind(TypeCodeReader tcis)
+    {
+        _kind = tcis.read_long();
+
+        // Bug fix 5034649: allow for padding that precedes the typecode kind.
+        int myPosition = tcis.getTopLevelPosition()-4;
+
+        // check validity of kind
+        if ((_kind < 0 || _kind > typeTable.length) && _kind != tk_indirect) {
+            throw wrapper.cannotMarshalBadTckind() ;
+        }
+
+        // Don't do any work if this is native
+        if (_kind == TCKind._tk_native)
+            throw wrapper.cannotMarshalNative() ;
+
+        // We have to remember the stream and position for EVERY type code
+        // in case some recursive or indirect type code references it.
+        TypeCodeReader topStream = tcis.getTopLevelStream();
+
+        if (_kind == tk_indirect) {
+            int streamOffset = tcis.read_long();
+            if (streamOffset > -4)
+                throw wrapper.invalidIndirection( new Integer(streamOffset) ) ;
+
+            // The encoding used for indirection is the same as that used for recursive ,
+            // TypeCodes i.e., a 0xffffffff indirection marker followed by a long offset
+            // (in units of octets) from the beginning of the long offset.
+            int topPos = tcis.getTopLevelPosition();
+            // substract 4 to get back to the beginning of the long offset.
+            int indirectTypePosition = topPos - 4 + streamOffset;
+
+            // Now we have to find the referenced type
+            // by its indirectTypePosition within topStream.
+            //if (debug) System.out.println(
+            // "TypeCodeImpl looking up indirection at position topPos " +
+            //topPos + " - 4 + offset " + streamOffset + " = " + indirectTypePosition);
+            TypeCodeImpl type = topStream.getTypeCodeAtPosition(indirectTypePosition);
+            if (type == null)
+                throw wrapper.indirectionNotFound( new Integer(indirectTypePosition) ) ;
+            setIndirectType(type);
+            return false;
+        }
+
+        topStream.addTypeCodeAtPosition(this, myPosition);
+        return true;
+    }
+
+    void read_value_kind(InputStream is) {
+        // unmarshal the kind
+        _kind = is.read_long();
+
+        // check validity of kind
+        if ((_kind < 0 || _kind > typeTable.length) && _kind != tk_indirect) {
+            throw wrapper.cannotMarshalBadTckind() ;
+        }
+        // Don't do any work if this is native
+        if (_kind == TCKind._tk_native)
+            throw wrapper.cannotMarshalNative() ;
+
+        if (_kind == tk_indirect) {
+            throw wrapper.recursiveTypecodeError() ;
+        }
+    }
+
+    void read_value_body(InputStream is) {
+        // start unmarshaling the rest of the typecode, based on the
+        // encoding (empty, simple or complex).
+
+        switch (typeTable[_kind]) {
+        case EMPTY:
+            // nothing to unmarshal
+            break;
+
+        case SIMPLE:
+            switch (_kind) {
+            case TCKind._tk_string:
+            case TCKind._tk_wstring:
+                _length = is.read_long();
+                break;
+            case TCKind._tk_fixed:
+                _digits = is.read_ushort();
+                _scale = is.read_short();
+                break;
+            default:
+                throw wrapper.invalidSimpleTypecode() ;
+            }
+            break;
+
+        case COMPLEX:
+            {
+                TypeCodeInputStream _encap = TypeCodeInputStream.readEncapsulation(is,
+                    is.orb());
+
+                switch(_kind) {
+
+                case TCKind._tk_objref:
+                case TCKind._tk_abstract_interface:
+                    {
+                        // get the repository id
+                        setId(_encap.read_string());
+                        // get the name
+                        _name = _encap.read_string();
+                    }
+                    break;
+
+                case TCKind._tk_union:
+                    {
+                        // get the repository id
+                        setId(_encap.read_string());
+
+                        // get the name
+                        _name = _encap.read_string();
+
+                        // discriminant typecode
+                        _discriminator = new TypeCodeImpl((ORB)is.orb());
+                        _discriminator.read_value_recursive(_encap);
+
+                        // default index
+                        _defaultIndex = _encap.read_long();
+
+                        // get the number of members
+                        _memberCount = _encap.read_long();
+
+                        // create arrays for the label values, names and types of members
+                        _unionLabels = new AnyImpl[_memberCount];
+                        _memberNames = new String[_memberCount];
+                        _memberTypes = new TypeCodeImpl[_memberCount];
+
+                        // read off label values, names and types
+                        for (int i=0; i < _memberCount; i++) {
+                            _unionLabels[i] = new AnyImpl((ORB)is.orb());
+                            if (i == _defaultIndex)
+                                // for the default case, read off the zero octet
+                                _unionLabels[i].insert_octet(_encap.read_octet());
+                            else {
+                                switch (realType(_discriminator).kind().value()) {
+                                case TCKind._tk_short:
+                                    _unionLabels[i].insert_short(_encap.read_short());
+                                    break;
+                                case TCKind._tk_long:
+                                    _unionLabels[i].insert_long(_encap.read_long());
+                                    break;
+                                case TCKind._tk_ushort:
+                                    _unionLabels[i].insert_ushort(_encap.read_short());
+                                    break;
+                                case TCKind._tk_ulong:
+                                    _unionLabels[i].insert_ulong(_encap.read_long());
+                                    break;
+                                case TCKind._tk_float:
+                                    _unionLabels[i].insert_float(_encap.read_float());
+                                    break;
+                                case TCKind._tk_double:
+                                    _unionLabels[i].insert_double(_encap.read_double());
+                                    break;
+                                case TCKind._tk_boolean:
+                                    _unionLabels[i].insert_boolean(_encap.read_boolean());
+                                    break;
+                                case TCKind._tk_char:
+                                    _unionLabels[i].insert_char(_encap.read_char());
+                                    break;
+                                case TCKind._tk_enum:
+                                    _unionLabels[i].type(_discriminator);
+                                    _unionLabels[i].insert_long(_encap.read_long());
+                                    break;
+                                case TCKind._tk_longlong:
+                                    _unionLabels[i].insert_longlong(_encap.read_longlong());
+                                    break;
+                                case TCKind._tk_ulonglong:
+                                    _unionLabels[i].insert_ulonglong(_encap.read_longlong());
+                                    break;
+                                    // _REVISIT_ figure out long double mapping
+                                    // case TCKind.tk_longdouble:
+                                    // _unionLabels[i].insert_longdouble(_encap.getDouble());
+                                    // break;
+                                case TCKind._tk_wchar:
+                                    _unionLabels[i].insert_wchar(_encap.read_wchar());
+                                    break;
+                                default:
+                                    throw wrapper.invalidComplexTypecode() ;
+                                }
+                            }
+                            _memberNames[i] = _encap.read_string();
+                            _memberTypes[i] = new TypeCodeImpl((ORB)is.orb());
+                            _memberTypes[i].read_value_recursive(_encap);
+                            _memberTypes[i].setParent(this);
+                        }
+                    }
+                    break;
+
+                case TCKind._tk_enum:
+                    {
+                        // get the repository id
+                        setId(_encap.read_string());
+
+                        // get the name
+                        _name = _encap.read_string();
+
+                        // get the number of members
+                        _memberCount = _encap.read_long();
+
+                        // create arrays for the identifier names
+                        _memberNames = new String[_memberCount];
+
+                        // read off identifier names
+                        for (int i=0; i < _memberCount; i++)
+                            _memberNames[i] = _encap.read_string();
+                    }
+                    break;
+
+                case TCKind._tk_sequence:
+                    {
+                        // get the type of the sequence
+                        _contentType = new TypeCodeImpl((ORB)is.orb());
+                        _contentType.read_value_recursive(_encap);
+
+                        // get the bound on the length of the sequence
+                        _length = _encap.read_long();
+                    }
+                    break;
+
+                case TCKind._tk_array:
+                    {
+                        // get the type of the array
+                        _contentType = new TypeCodeImpl((ORB)is.orb());
+                        _contentType.read_value_recursive(_encap);
+
+                        // get the length of the array
+                        _length = _encap.read_long();
+                    }
+                    break;
+
+                case TCKind._tk_alias:
+                case TCKind._tk_value_box:
+                    {
+                        // get the repository id
+                        setId(_encap.read_string());
+
+                        // get the name
+                        _name = _encap.read_string();
+
+                        // get the type aliased
+                        _contentType = new TypeCodeImpl((ORB)is.orb());
+                        _contentType.read_value_recursive(_encap);
+                    }
+                    break;
+
+                case TCKind._tk_except:
+                case TCKind._tk_struct:
+                    {
+                        // get the repository id
+                        setId(_encap.read_string());
+
+                        // get the name
+                        _name = _encap.read_string();
+
+                        // get the number of members
+                        _memberCount = _encap.read_long();
+
+                        // create arrays for the names and types of members
+                        _memberNames = new String[_memberCount];
+                        _memberTypes = new TypeCodeImpl[_memberCount];
+
+                        // read off member names and types
+                        for (int i=0; i < _memberCount; i++) {
+                            _memberNames[i] = _encap.read_string();
+                            _memberTypes[i] = new TypeCodeImpl((ORB)is.orb());
+                            //if (debug) System.out.println("TypeCode " + _name +
+                            // " reading member " + _memberNames[i]);
+                            _memberTypes[i].read_value_recursive(_encap);
+                            _memberTypes[i].setParent(this);
+                        }
+                    }
+                    break;
+
+                case TCKind._tk_value:
+                    {
+                        // get the repository id
+                        setId(_encap.read_string());
+
+                        // get the name
+                        _name = _encap.read_string();
+
+                        // get the type modifier
+                        _type_modifier = _encap.read_short();
+
+                        // get the type aliased
+                        _concrete_base = new TypeCodeImpl((ORB)is.orb());
+                        _concrete_base.read_value_recursive(_encap);
+                        if (_concrete_base.kind().value() == TCKind._tk_null) {
+                            _concrete_base = null;
+                        }
+
+                        // get the number of members
+                        _memberCount = _encap.read_long();
+
+                        // create arrays for the names, types and visibility of members
+                        _memberNames = new String[_memberCount];
+                        _memberTypes = new TypeCodeImpl[_memberCount];
+                        _memberAccess = new short[_memberCount];
+
+                        // read off value member visibilities
+                        for (int i=0; i < _memberCount; i++) {
+                            _memberNames[i] = _encap.read_string();
+                            _memberTypes[i] = new TypeCodeImpl((ORB)is.orb());
+                            //if (debug) System.out.println("TypeCode " + _name +
+                            // " reading member " + _memberNames[i]);
+                            _memberTypes[i].read_value_recursive(_encap);
+                            _memberTypes[i].setParent(this);
+                            _memberAccess[i] = _encap.read_short();
+                        }
+                    }
+                    break;
+
+                default:
+                    throw wrapper.invalidTypecodeKindMarshal() ;
+                }
+                break;
+            }
+        }
+    }
+
+    public void write_value(OutputStream os) {
+        // Wrap OutputStream into TypeCodeOutputStream.
+        // This test shouldn't be necessary according to the Java language spec.
+        if (os instanceof TypeCodeOutputStream) {
+            this.write_value((TypeCodeOutputStream)os);
+        } else {
+            TypeCodeOutputStream wrapperOutStream = null;
+
+            if (outBuffer == null) {
+                wrapperOutStream = TypeCodeOutputStream.wrapOutputStream(os);
+                this.write_value(wrapperOutStream);
+                if (cachingEnabled) {
+                    // Cache the buffer for repeated writes
+                    outBuffer = wrapperOutStream.getTypeCodeBuffer();
+                    //if (outBuffer != null)
+                        //System.out.println("Caching outBuffer with length = " +
+                        //outBuffer.length + " for id = " + _id);
+                }
+            } else {
+                //System.out.println("Using cached outBuffer: length = " + outBuffer.length +
+                                   //", id = " + _id);
+            }
+            // Write the first 4 bytes first to trigger alignment.
+            // We know that it is the kind.
+            if (cachingEnabled && outBuffer != null) {
+                os.write_long(_kind);
+                os.write_octet_array(outBuffer, 0, outBuffer.length);
+            } else {
+                //System.out.println("Buffer is empty for " + _id);
+                wrapperOutStream.writeRawBuffer(os, _kind);
+            }
+        }
+    }
+
+    public void write_value(TypeCodeOutputStream tcos) {
+
+        // Don't do any work if this is native
+        if (_kind == TCKind._tk_native)
+            throw wrapper.cannotMarshalNative() ;
+
+        TypeCodeOutputStream topStream = tcos.getTopLevelStream();
+        //if (debug) tcos.printBuffer();
+
+        if (_kind == tk_indirect) {
+            //if (debug) System.out.println("Writing indirection " + _name + "to " + _id);
+            // The encoding used for indirection is the same as that used for recursive ,
+            // TypeCodes i.e., a 0xffffffff indirection marker followed by a long offset
+            // (in units of octets) from the beginning of the long offset.
+            int pos = topStream.getPositionForID(_id);
+            int topPos = tcos.getTopLevelPosition();
+            //if (debug) System.out.println("TypeCodeImpl " + tcos +
+            // " writing indirection " + _id +
+                //" to position " + pos + " at position " + topPos);
+            tcos.writeIndirection(tk_indirect, pos);
+            // All that gets written is _kind and offset.
+            return;
+        }
+
+        // The original approach changed for 5034649
+        // topStream.addIDAtPosition(_id, tcos.getTopLevelPosition());
+
+        // marshal the kind
+        tcos.write_long(_kind);
+
+        //if (debug) System.out.println("Writing " + _name + " with id " + _id);
+        // We have to remember the stream and position for EVERY type code
+        // in case some recursive or indirect type code references it.
+        //
+        // Bug fix 5034649:
+        // Do this AFTER the write of the _kind in case the alignment
+        // for the long changes the position.
+        topStream.addIDAtPosition(_id, tcos.getTopLevelPosition()-4);
+
+        switch (typeTable[_kind]) {
+        case EMPTY:
+            // nothing more to marshal
+            break;
+
+        case SIMPLE:
+            switch (_kind) {
+            case TCKind._tk_string:
+            case TCKind._tk_wstring:
+                // marshal the bound on string length
+                tcos.write_long(_length);
+                break;
+            case TCKind._tk_fixed:
+                tcos.write_ushort(_digits);
+                tcos.write_short(_scale);
+                break;
+            default:
+                // unknown typecode kind
+                throw wrapper.invalidSimpleTypecode() ;
+            }
+            break;
+
+        case COMPLEX:
+            {
+                // create an encapsulation
+                TypeCodeOutputStream _encap = tcos.createEncapsulation(tcos.orb());
+
+                switch(_kind) {
+
+                case TCKind._tk_objref:
+                case TCKind._tk_abstract_interface:
+                    {
+                        // put the repository id
+                        _encap.write_string(_id);
+
+                        // put the name
+                        _encap.write_string(_name);
+                    }
+                    break;
+
+                case TCKind._tk_union:
+                    {
+                        // put the repository id
+                        _encap.write_string(_id);
+
+                        // put the name
+                        _encap.write_string(_name);
+
+                        // discriminant typecode
+                        _discriminator.write_value(_encap);
+
+                        // default index
+                        _encap.write_long(_defaultIndex);
+
+                        // put the number of members
+                        _encap.write_long(_memberCount);
+
+                        // marshal label values, names and types
+                        for (int i=0; i < _memberCount; i++) {
+
+                            // for the default case, marshal the zero octet
+                            if (i == _defaultIndex)
+                                _encap.write_octet(_unionLabels[i].extract_octet());
+
+                            else {
+                                switch (realType(_discriminator).kind().value()) {
+                                case TCKind._tk_short:
+                                    _encap.write_short(_unionLabels[i].extract_short());
+                                    break;
+                                case TCKind._tk_long:
+                                    _encap.write_long(_unionLabels[i].extract_long());
+                                    break;
+                                case TCKind._tk_ushort:
+                                    _encap.write_short(_unionLabels[i].extract_ushort());
+                                    break;
+                                case TCKind._tk_ulong:
+                                    _encap.write_long(_unionLabels[i].extract_ulong());
+                                    break;
+                                case TCKind._tk_float:
+                                    _encap.write_float(_unionLabels[i].extract_float());
+                                    break;
+                                case TCKind._tk_double:
+                                    _encap.write_double(_unionLabels[i].extract_double());
+                                    break;
+                                case TCKind._tk_boolean:
+                                    _encap.write_boolean(_unionLabels[i].extract_boolean());
+                                    break;
+                                case TCKind._tk_char:
+                                    _encap.write_char(_unionLabels[i].extract_char());
+                                    break;
+                                case TCKind._tk_enum:
+                                    _encap.write_long(_unionLabels[i].extract_long());
+                                    break;
+                                case TCKind._tk_longlong:
+                                    _encap.write_longlong(_unionLabels[i].extract_longlong());
+                                    break;
+                                case TCKind._tk_ulonglong:
+                                    _encap.write_longlong(_unionLabels[i].extract_ulonglong());
+                                    break;
+                                    // _REVISIT_ figure out long double mapping
+                                    // case TCKind.tk_longdouble:
+                                    // _encap.putDouble(_unionLabels[i].extract_longdouble());
+                                    // break;
+                                case TCKind._tk_wchar:
+                                    _encap.write_wchar(_unionLabels[i].extract_wchar());
+                                    break;
+                                default:
+                                    throw wrapper.invalidComplexTypecode() ;
+                                }
+                            }
+                            _encap.write_string(_memberNames[i]);
+                            _memberTypes[i].write_value(_encap);
+                        }
+                    }
+                    break;
+
+                case TCKind._tk_enum:
+                    {
+                        // put the repository id
+                        _encap.write_string(_id);
+
+                        // put the name
+                        _encap.write_string(_name);
+
+                        // put the number of members
+                        _encap.write_long(_memberCount);
+
+                        // marshal identifier names
+                        for (int i=0; i < _memberCount; i++)
+                            _encap.write_string(_memberNames[i]);
+                    }
+                    break;
+
+                case TCKind._tk_sequence:
+                    {
+                        // put the type of the sequence
+                        lazy_content_type().write_value(_encap);
+
+                        // put the bound on the length of the sequence
+                        _encap.write_long(_length);
+                    }
+                    break;
+
+                case TCKind._tk_array:
+                    {
+                        // put the type of the array
+                        _contentType.write_value(_encap);
+
+                        // put the length of the array
+                        _encap.write_long(_length);
+                    }
+                    break;
+
+                case TCKind._tk_alias:
+                case TCKind._tk_value_box:
+                    {
+                        // put the repository id
+                        _encap.write_string(_id);
+
+                        // put the name
+                        _encap.write_string(_name);
+
+                        // put the type aliased
+                        _contentType.write_value(_encap);
+                    }
+                    break;
+
+                case TCKind._tk_struct:
+                case TCKind._tk_except:
+                    {
+                        // put the repository id
+                        _encap.write_string(_id);
+
+                        // put the name
+                        _encap.write_string(_name);
+
+                        // put the number of members
+                        _encap.write_long(_memberCount);
+
+                        // marshal member names and types
+                        for (int i=0; i < _memberCount; i++) {
+                            _encap.write_string(_memberNames[i]);
+                            //if (debug) System.out.println("TypeCode " + _name +
+                            // " writing member " + _memberNames[i]);
+                            _memberTypes[i].write_value(_encap);
+                        }
+                    }
+                    break;
+
+                case TCKind._tk_value:
+                    {
+                        // put the repository id
+                        _encap.write_string(_id);
+
+                        // put the name
+                        _encap.write_string(_name);
+
+                        // put the type modifier
+                        _encap.write_short(_type_modifier);
+
+                        // put the type aliased
+                        if (_concrete_base == null) {
+                            _orb.get_primitive_tc(TCKind._tk_null).write_value(_encap);
+                        } else {
+                            _concrete_base.write_value(_encap);
+                        }
+
+                        // put the number of members
+                        _encap.write_long(_memberCount);
+
+                        // marshal member names and types
+                        for (int i=0; i < _memberCount; i++) {
+                            _encap.write_string(_memberNames[i]);
+                            //if (debug) System.out.println("TypeCode " + _name +
+                            // " writing member " + _memberNames[i]);
+                            _memberTypes[i].write_value(_encap);
+                            _encap.write_short(_memberAccess[i]);
+                        }
+                    }
+                    break;
+
+                default:
+                    throw wrapper.invalidTypecodeKindMarshal() ;
+                }
+
+                // marshal the encapsulation
+                _encap.writeOctetSequenceTo(tcos);
+                break;
+            }
+        }
+    }
+
+    /**
+     * This is not a copy of the TypeCodeImpl objects, but instead it
+     * copies the value this type code is representing.
+     * See AnyImpl read_value and write_value for usage.
+     * The state of this TypeCodeImpl instance isn't changed, only used
+     * by the Any to do the correct copy.
+     */
+    protected void copy(org.omg.CORBA.portable.InputStream src,
+        org.omg.CORBA.portable.OutputStream dst)
+    {
+        switch (_kind) {
+
+        case TCKind._tk_null:
+        case TCKind._tk_void:
+        case TCKind._tk_native:
+        case TCKind._tk_abstract_interface:
+            break;
+
+        case TCKind._tk_short:
+        case TCKind._tk_ushort:
+            dst.write_short(src.read_short());
+            break;
+
+        case TCKind._tk_long:
+        case TCKind._tk_ulong:
+            dst.write_long(src.read_long());
+            break;
+
+        case TCKind._tk_float:
+            dst.write_float(src.read_float());
+            break;
+
+        case TCKind._tk_double:
+            dst.write_double(src.read_double());
+            break;
+
+        case TCKind._tk_longlong:
+        case TCKind._tk_ulonglong:
+            dst.write_longlong(src.read_longlong());
+            break;
+
+        case TCKind._tk_longdouble:
+            throw wrapper.tkLongDoubleNotSupported() ;
+
+        case TCKind._tk_boolean:
+            dst.write_boolean(src.read_boolean());
+            break;
+
+        case TCKind._tk_char:
+            dst.write_char(src.read_char());
+            break;
+
+        case TCKind._tk_wchar:
+            dst.write_wchar(src.read_wchar());
+            break;
+
+        case TCKind._tk_octet:
+            dst.write_octet(src.read_octet());
+            break;
+
+        case TCKind._tk_string:
+            {
+                String s;
+                s = src.read_string();
+                // make sure length bound in typecode is not violated
+                if ((_length != 0) && (s.length() > _length))
+                    throw wrapper.badStringBounds( new Integer(s.length()),
+                        new Integer(_length) ) ;
+                dst.write_string(s);
+            }
+            break;
+
+        case TCKind._tk_wstring:
+            {
+                String s;
+                s = src.read_wstring();
+                // make sure length bound in typecode is not violated
+                if ((_length != 0) && (s.length() > _length))
+                    throw wrapper.badStringBounds( new Integer(s.length()),
+                        new Integer(_length) ) ;
+                dst.write_wstring(s);
+            }
+            break;
+
+        case TCKind._tk_fixed:
+            {
+                dst.write_ushort(src.read_ushort());
+                dst.write_short(src.read_short());
+            }
+            break;
+
+        case TCKind._tk_any:
+            {
+                //Any tmp = new AnyImpl(_orb);
+                Any tmp =  ((CDRInputStream)src).orb().create_any();
+                TypeCodeImpl t = new TypeCodeImpl((ORB)dst.orb());
+                t.read_value((org.omg.CORBA_2_3.portable.InputStream)src);
+                t.write_value((org.omg.CORBA_2_3.portable.OutputStream)dst);
+                tmp.read_value(src, t);
+                tmp.write_value(dst);
+                break;
+            }
+
+        case TCKind._tk_TypeCode:
+            {
+                dst.write_TypeCode(src.read_TypeCode());
+                break;
+            }
+
+        case TCKind._tk_Principal:
+            {
+                dst.write_Principal(src.read_Principal());
+                break;
+            }
+
+        case TCKind._tk_objref:
+            {
+                dst.write_Object(src.read_Object());
+                break;
+            }
+
+        case TCKind._tk_except:
+            // Copy repositoryId
+            dst.write_string(src.read_string());
+
+            // Fall into ...
+        // _REVISIT_ what about the inherited members of this values concrete base type?
+        case TCKind._tk_value:
+        case TCKind._tk_struct:
+            {
+                // copy each element, using the corresponding member type
+                for (int i=0; i < _memberTypes.length; i++) {
+                    _memberTypes[i].copy(src, dst);
+                }
+                break;
+            }
+        case TCKind._tk_union:
+    /* _REVISIT_ More generic code?
+            {
+                Any discriminator = new AnyImpl(_orb);
+                discriminator.read_value(src, _discriminator);
+                discriminator.write_value(dst);
+                int labelIndex = currentUnionMemberIndex(discriminator);
+                if (labelIndex == -1) {
+                    // check if label has not been found
+                    if (_defaultIndex == -1)
+                        // throw exception if default was not expected
+                        throw new MARSHAL();
+                    else
+                        // must be of the default branch type
+                        _memberTypes[_defaultIndex].copy(src, dst);
+                } else {
+                    _memberTypes[labelIndex].copy(src, dst);
+                }
+            }
+    */
+            {
+                Any tagValue = new AnyImpl( (ORB)src.orb());
+
+                switch  (realType(_discriminator).kind().value()) {
+                case TCKind._tk_short:
+                    {
+                        short value = src.read_short();
+                        tagValue.insert_short(value);
+                        dst.write_short(value);
+                        break;
+                    }
+                case TCKind._tk_long:
+                    {
+                        int value = src.read_long();
+                        tagValue.insert_long(value);
+                        dst.write_long(value);
+                        break;
+                    }
+                case TCKind._tk_ushort:
+                    {
+                        short value = src.read_short();
+                        tagValue.insert_ushort(value);
+                        dst.write_short(value);
+                        break;
+                    }
+                case TCKind._tk_ulong:
+                    {
+                        int value = src.read_long();
+                        tagValue.insert_ulong(value);
+                        dst.write_long(value);
+                        break;
+                    }
+                case TCKind._tk_float:
+                    {
+                        float value = src.read_float();
+                        tagValue.insert_float(value);
+                        dst.write_float(value);
+                        break;
+                    }
+                case TCKind._tk_double:
+                    {
+                        double value = src.read_double();
+                        tagValue.insert_double(value);
+                        dst.write_double(value);
+                        break;
+                    }
+                case TCKind._tk_boolean:
+                    {
+                        boolean value = src.read_boolean();
+                        tagValue.insert_boolean(value);
+                        dst.write_boolean(value);
+                        break;
+                    }
+                case TCKind._tk_char:
+                    {
+                        char value = src.read_char();
+                        tagValue.insert_char(value);
+                        dst.write_char(value);
+                        break;
+                    }
+                case TCKind._tk_enum:
+                    {
+                        int value = src.read_long();
+                        tagValue.type(_discriminator);
+                        tagValue.insert_long(value);
+                        dst.write_long(value);
+                        break;
+                    }
+                case TCKind._tk_longlong:
+                    {
+                        long value = src.read_longlong();
+                        tagValue.insert_longlong(value);
+                        dst.write_longlong(value);
+                        break;
+                    }
+                case TCKind._tk_ulonglong:
+                    {
+                        long value = src.read_longlong();
+                        tagValue.insert_ulonglong(value);
+                        dst.write_longlong(value);
+                        break;
+                    }
+                    // _REVISIT_ figure out long double mapping
+                    // case TCKind.tk_longdouble:
+                    // {
+                    // double value = src.read_double();
+                    //  tagValue.insert_longdouble(value);
+                    //  dst.putDouble(value);
+                    //  break;
+                    //}
+                case TCKind._tk_wchar:
+                    {
+                        char value = src.read_wchar();
+                        tagValue.insert_wchar(value);
+                        dst.write_wchar(value);
+                        break;
+                    }
+                default:
+                    throw wrapper.illegalUnionDiscriminatorType() ;
+                }
+
+                // using the value of the tag, find out the type of the value
+                // following.
+
+                int labelIndex;
+                for (labelIndex = 0; labelIndex < _unionLabels.length; labelIndex++) {
+                    // use equality over anys
+                    if (tagValue.equal(_unionLabels[labelIndex])) {
+                        _memberTypes[labelIndex].copy(src, dst);
+                        break;
+                    }
+                }
+
+                if (labelIndex == _unionLabels.length) {
+                    // check if label has not been found
+                    if (_defaultIndex != -1)
+                        // must be of the default branch type
+                        _memberTypes[_defaultIndex].copy(src, dst);
+                }
+                break;
+            }
+
+        case TCKind._tk_enum:
+            dst.write_long(src.read_long());
+            break;
+
+        case TCKind._tk_sequence:
+            // get the length of the sequence
+            int seqLength = src.read_long();
+
+            // check for sequence bound violated
+            if ((_length != 0) && (seqLength > _length))
+                throw wrapper.badSequenceBounds( new Integer(seqLength),
+                    new Integer(_length) ) ;
+
+            // write the length of the sequence
+            dst.write_long(seqLength);
+
+            // copy each element of the seq using content type
+            lazy_content_type(); // make sure it's resolved
+            for (int i=0; i < seqLength; i++)
+                _contentType.copy(src, dst);
+            break;
+
+        case TCKind._tk_array:
+            // copy each element of the array using content type
+            for (int i=0; i < _length; i++)
+                _contentType.copy(src, dst);
+            break;
+
+        case TCKind._tk_alias:
+        case TCKind._tk_value_box:
+            // follow the alias
+            _contentType.copy(src, dst);
+            break;
+
+        case tk_indirect:
+            // need to follow offset, get unmarshal typecode from that
+            // offset, and use that to do the copy
+            // Don't need to read type code before using it to do the copy.
+            // It should be fully usable.
+            indirectType().copy(src, dst);
+            break;
+
+        default:
+            throw wrapper.invalidTypecodeKindMarshal() ;
+        }
+    }
+
+
+    static protected short digits(java.math.BigDecimal value) {
+        if (value == null)
+            return 0;
+        short length = (short)value.unscaledValue().toString().length();
+        if (value.signum() == -1)
+            length--;
+        return length;
+    }
+
+    static protected short scale(java.math.BigDecimal value) {
+        if (value == null)
+            return 0;
+        return (short)value.scale();
+    }
+
+    // Utility methods
+
+    // Only for union type. Returns the index of the union member
+    // corresponding to the discriminator. If not found returns the
+    // default index or -1 if there is no default index.
+    int currentUnionMemberIndex(Any discriminatorValue) throws BadKind {
+        if (_kind != TCKind._tk_union)
+            throw new BadKind();
+
+        try {
+            for (int i=0; i<member_count(); i++) {
+                if (member_label(i).equal(discriminatorValue)) {
+                    return i;
+                }
+            }
+            if (_defaultIndex != -1) {
+                return _defaultIndex;
+            }
+        } catch (BadKind bad) {
+        } catch (org.omg.CORBA.TypeCodePackage.Bounds bounds) {
+        }
+        return -1;
+    }
+
+    public String description() {
+        return "TypeCodeImpl with kind " + _kind + " and id " + _id;
+    }
+
+    public String toString() {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream(1024);
+        PrintStream printOut = new PrintStream(byteOut, true);
+        printStream(printOut);
+        return super.toString() + " =\n" + byteOut.toString();
+    }
+
+    public void printStream(PrintStream s) {
+        printStream(s, 0);
+    }
+
+    private void printStream(PrintStream s, int level) {
+        if (_kind == tk_indirect) {
+            s.print("indirect " + _id);
+            return;
+        }
+
+        switch (_kind) {
+            case TCKind._tk_null:
+            case TCKind._tk_void:
+            case TCKind._tk_short:
+            case TCKind._tk_long:
+            case TCKind._tk_ushort:
+            case TCKind._tk_ulong:
+            case TCKind._tk_float:
+            case TCKind._tk_double:
+            case TCKind._tk_boolean:
+            case TCKind._tk_char:
+            case TCKind._tk_octet:
+            case TCKind._tk_any:
+            case TCKind._tk_TypeCode:
+            case TCKind._tk_Principal:
+            case TCKind._tk_objref:
+            case TCKind._tk_longlong:
+            case TCKind._tk_ulonglong:
+            case TCKind._tk_longdouble:
+            case TCKind._tk_wchar:
+            case TCKind._tk_native:
+                s.print(kindNames[_kind] + " " + _name);
+                break;
+
+            case TCKind._tk_struct:
+            case TCKind._tk_except:
+            case TCKind._tk_value:
+                s.println(kindNames[_kind] + " " + _name + " = {");
+                for(int i=0; i<_memberCount; i++) {
+                    // memberName might differ from the name of the member.
+                    s.print(indent(level + 1));
+                    if (_memberTypes[i] != null)
+                        _memberTypes[i].printStream(s, level + 1);
+                    else
+                        s.print("<unknown type>");
+                    s.println(" " + _memberNames[i] + ";");
+                }
+                s.print(indent(level) + "}");
+                break;
+
+            case TCKind._tk_union:
+                s.print("union " + _name + "...");
+                break;
+
+            case TCKind._tk_enum:
+                s.print("enum " + _name + "...");
+                break;
+
+            case TCKind._tk_string:
+                if (_length == 0)
+                    s.print("unbounded string " + _name);
+                else
+                    s.print("bounded string(" + _length + ") " + _name);
+                break;
+
+            case TCKind._tk_sequence:
+            case TCKind._tk_array:
+                s.println(kindNames[_kind] + "[" + _length + "] " + _name + " = {");
+                s.print(indent(level + 1));
+                if (lazy_content_type() != null) {
+                    lazy_content_type().printStream(s, level + 1);
+                }
+                s.println(indent(level) + "}");
+                break;
+
+            case TCKind._tk_alias:
+                s.print("alias " + _name + " = " +
+                    (_contentType != null ? _contentType._name : "<unresolved>"));
+                break;
+
+            case TCKind._tk_wstring:
+                s.print("wstring[" + _length + "] " + _name);
+                break;
+
+            case TCKind._tk_fixed:
+                s.print("fixed(" + _digits + ", " + _scale + ") " + _name);
+                break;
+
+            case TCKind._tk_value_box:
+                s.print("valueBox " + _name + "...");
+                break;
+
+            case TCKind._tk_abstract_interface:
+                s.print("abstractInterface " + _name + "...");
+                break;
+
+            default:
+                s.print("<unknown type>");
+                break;
+        }
+    }
+
+    private String indent(int level) {
+        String indent = "";
+        for(int i=0; i<level; i++) {
+            indent += "  ";
+        }
+        return indent;
+    }
+
+    protected void setCaching(boolean enableCaching) {
+        cachingEnabled = enableCaching;
+        if (enableCaching == false)
+            outBuffer = null;
+    }
+}

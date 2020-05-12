@@ -1,301 +1,297 @@
-/*     */ package javax.swing.border;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BevelBorder
-/*     */   extends AbstractBorder
-/*     */ {
-/*     */   public static final int RAISED = 0;
-/*     */   public static final int LOWERED = 1;
-/*     */   protected int bevelType;
-/*     */   protected Color highlightOuter;
-/*     */   protected Color highlightInner;
-/*     */   protected Color shadowInner;
-/*     */   protected Color shadowOuter;
-/*     */   
-/*     */   public BevelBorder(int paramInt) {
-/*  67 */     this.bevelType = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BevelBorder(int paramInt, Color paramColor1, Color paramColor2) {
-/*  78 */     this(paramInt, paramColor1.brighter(), paramColor1, paramColor2, paramColor2.brighter());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
-/*     */   public BevelBorder(int paramInt, Color paramColor1, Color paramColor2, Color paramColor3, Color paramColor4) {
-/*  95 */     this(paramInt);
-/*  96 */     this.highlightOuter = paramColor1;
-/*  97 */     this.highlightInner = paramColor2;
-/*  98 */     this.shadowOuter = paramColor3;
-/*  99 */     this.shadowInner = paramColor4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 113 */     if (this.bevelType == 0) {
-/* 114 */       paintRaisedBevel(paramComponent, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */     }
-/* 116 */     else if (this.bevelType == 1) {
-/* 117 */       paintLoweredBevel(paramComponent, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/* 127 */     paramInsets.set(2, 2, 2, 2);
-/* 128 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getHighlightOuterColor(Component paramComponent) {
-/* 140 */     Color color = getHighlightOuterColor();
-/* 141 */     return (color != null) ? color : paramComponent
-/* 142 */       .getBackground().brighter().brighter();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getHighlightInnerColor(Component paramComponent) {
-/* 154 */     Color color = getHighlightInnerColor();
-/* 155 */     return (color != null) ? color : paramComponent
-/* 156 */       .getBackground().brighter();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getShadowInnerColor(Component paramComponent) {
-/* 168 */     Color color = getShadowInnerColor();
-/* 169 */     return (color != null) ? color : paramComponent
-/* 170 */       .getBackground().darker();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getShadowOuterColor(Component paramComponent) {
-/* 182 */     Color color = getShadowOuterColor();
-/* 183 */     return (color != null) ? color : paramComponent
-/* 184 */       .getBackground().darker().darker();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getHighlightOuterColor() {
-/* 194 */     return this.highlightOuter;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getHighlightInnerColor() {
-/* 204 */     return this.highlightInner;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getShadowInnerColor() {
-/* 214 */     return this.shadowInner;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getShadowOuterColor() {
-/* 224 */     return this.shadowOuter;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBevelType() {
-/* 231 */     return this.bevelType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isBorderOpaque() {
-/* 237 */     return true;
-/*     */   }
-/*     */   
-/*     */   protected void paintRaisedBevel(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 241 */     Color color = paramGraphics.getColor();
-/* 242 */     int i = paramInt4;
-/* 243 */     int j = paramInt3;
-/*     */     
-/* 245 */     paramGraphics.translate(paramInt1, paramInt2);
-/*     */     
-/* 247 */     paramGraphics.setColor(getHighlightOuterColor(paramComponent));
-/* 248 */     paramGraphics.drawLine(0, 0, 0, i - 2);
-/* 249 */     paramGraphics.drawLine(1, 0, j - 2, 0);
-/*     */     
-/* 251 */     paramGraphics.setColor(getHighlightInnerColor(paramComponent));
-/* 252 */     paramGraphics.drawLine(1, 1, 1, i - 3);
-/* 253 */     paramGraphics.drawLine(2, 1, j - 3, 1);
-/*     */     
-/* 255 */     paramGraphics.setColor(getShadowOuterColor(paramComponent));
-/* 256 */     paramGraphics.drawLine(0, i - 1, j - 1, i - 1);
-/* 257 */     paramGraphics.drawLine(j - 1, 0, j - 1, i - 2);
-/*     */     
-/* 259 */     paramGraphics.setColor(getShadowInnerColor(paramComponent));
-/* 260 */     paramGraphics.drawLine(1, i - 2, j - 2, i - 2);
-/* 261 */     paramGraphics.drawLine(j - 2, 1, j - 2, i - 3);
-/*     */     
-/* 263 */     paramGraphics.translate(-paramInt1, -paramInt2);
-/* 264 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintLoweredBevel(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 270 */     Color color = paramGraphics.getColor();
-/* 271 */     int i = paramInt4;
-/* 272 */     int j = paramInt3;
-/*     */     
-/* 274 */     paramGraphics.translate(paramInt1, paramInt2);
-/*     */     
-/* 276 */     paramGraphics.setColor(getShadowInnerColor(paramComponent));
-/* 277 */     paramGraphics.drawLine(0, 0, 0, i - 1);
-/* 278 */     paramGraphics.drawLine(1, 0, j - 1, 0);
-/*     */     
-/* 280 */     paramGraphics.setColor(getShadowOuterColor(paramComponent));
-/* 281 */     paramGraphics.drawLine(1, 1, 1, i - 2);
-/* 282 */     paramGraphics.drawLine(2, 1, j - 2, 1);
-/*     */     
-/* 284 */     paramGraphics.setColor(getHighlightOuterColor(paramComponent));
-/* 285 */     paramGraphics.drawLine(1, i - 1, j - 1, i - 1);
-/* 286 */     paramGraphics.drawLine(j - 1, 1, j - 1, i - 2);
-/*     */     
-/* 288 */     paramGraphics.setColor(getHighlightInnerColor(paramComponent));
-/* 289 */     paramGraphics.drawLine(2, i - 2, j - 2, i - 2);
-/* 290 */     paramGraphics.drawLine(j - 2, 2, j - 2, i - 3);
-/*     */     
-/* 292 */     paramGraphics.translate(-paramInt1, -paramInt2);
-/* 293 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\border\BevelBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.border;
+
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Color;
+import java.awt.Component;
+import java.beans.ConstructorProperties;
+
+/**
+ * A class which implements a simple two-line bevel border.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author David Kloba
+ */
+public class BevelBorder extends AbstractBorder
+{
+    /** Raised bevel type. */
+    public static final int RAISED  = 0;
+    /** Lowered bevel type. */
+    public static final int LOWERED = 1;
+
+    protected int bevelType;
+    protected Color highlightOuter;
+    protected Color highlightInner;
+    protected Color shadowInner;
+    protected Color shadowOuter;
+
+    /**
+     * Creates a bevel border with the specified type and whose
+     * colors will be derived from the background color of the
+     * component passed into the paintBorder method.
+     * @param bevelType the type of bevel for the border
+     */
+    public BevelBorder(int bevelType) {
+        this.bevelType = bevelType;
+    }
+
+    /**
+     * Creates a bevel border with the specified type, highlight and
+     * shadow colors.
+     * @param bevelType the type of bevel for the border
+     * @param highlight the color to use for the bevel highlight
+     * @param shadow the color to use for the bevel shadow
+     */
+    public BevelBorder(int bevelType, Color highlight, Color shadow) {
+        this(bevelType, highlight.brighter(), highlight, shadow, shadow.brighter());
+    }
+
+    /**
+     * Creates a bevel border with the specified type, highlight and
+     * shadow colors.
+     *
+     * @param bevelType the type of bevel for the border
+     * @param highlightOuterColor the color to use for the bevel outer highlight
+     * @param highlightInnerColor the color to use for the bevel inner highlight
+     * @param shadowOuterColor the color to use for the bevel outer shadow
+     * @param shadowInnerColor the color to use for the bevel inner shadow
+     */
+    @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
+    public BevelBorder(int bevelType, Color highlightOuterColor,
+                       Color highlightInnerColor, Color shadowOuterColor,
+                       Color shadowInnerColor) {
+        this(bevelType);
+        this.highlightOuter = highlightOuterColor;
+        this.highlightInner = highlightInnerColor;
+        this.shadowOuter = shadowOuterColor;
+        this.shadowInner = shadowInnerColor;
+    }
+
+    /**
+     * Paints the border for the specified component with the specified
+     * position and size.
+     * @param c the component for which this border is being painted
+     * @param g the paint graphics
+     * @param x the x position of the painted border
+     * @param y the y position of the painted border
+     * @param width the width of the painted border
+     * @param height the height of the painted border
+     */
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        if (bevelType == RAISED) {
+             paintRaisedBevel(c, g, x, y, width, height);
+
+        } else if (bevelType == LOWERED) {
+             paintLoweredBevel(c, g, x, y, width, height);
+        }
+    }
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
+     * @param c the component for which this border insets value applies
+     * @param insets the object to be reinitialized
+     */
+    public Insets getBorderInsets(Component c, Insets insets) {
+        insets.set(2, 2, 2, 2);
+        return insets;
+    }
+
+    /**
+     * Returns the outer highlight color of the bevel border
+     * when rendered on the specified component.  If no highlight
+     * color was specified at instantiation, the highlight color
+     * is derived from the specified component's background color.
+     * @param c the component for which the highlight may be derived
+     * @since 1.3
+     */
+    public Color getHighlightOuterColor(Component c)   {
+        Color highlight = getHighlightOuterColor();
+        return highlight != null? highlight :
+                                       c.getBackground().brighter().brighter();
+    }
+
+    /**
+     * Returns the inner highlight color of the bevel border
+     * when rendered on the specified component.  If no highlight
+     * color was specified at instantiation, the highlight color
+     * is derived from the specified component's background color.
+     * @param c the component for which the highlight may be derived
+     * @since 1.3
+     */
+    public Color getHighlightInnerColor(Component c)   {
+        Color highlight = getHighlightInnerColor();
+        return highlight != null? highlight :
+                                       c.getBackground().brighter();
+    }
+
+    /**
+     * Returns the inner shadow color of the bevel border
+     * when rendered on the specified component.  If no shadow
+     * color was specified at instantiation, the shadow color
+     * is derived from the specified component's background color.
+     * @param c the component for which the shadow may be derived
+     * @since 1.3
+     */
+    public Color getShadowInnerColor(Component c)      {
+        Color shadow = getShadowInnerColor();
+        return shadow != null? shadow :
+                                    c.getBackground().darker();
+    }
+
+    /**
+     * Returns the outer shadow color of the bevel border
+     * when rendered on the specified component.  If no shadow
+     * color was specified at instantiation, the shadow color
+     * is derived from the specified component's background color.
+     * @param c the component for which the shadow may be derived
+     * @since 1.3
+     */
+    public Color getShadowOuterColor(Component c)      {
+        Color shadow = getShadowOuterColor();
+        return shadow != null? shadow :
+                                    c.getBackground().darker().darker();
+    }
+
+    /**
+     * Returns the outer highlight color of the bevel border.
+     * Will return null if no highlight color was specified
+     * at instantiation.
+     * @since 1.3
+     */
+    public Color getHighlightOuterColor()   {
+        return highlightOuter;
+    }
+
+    /**
+     * Returns the inner highlight color of the bevel border.
+     * Will return null if no highlight color was specified
+     * at instantiation.
+     * @since 1.3
+     */
+    public Color getHighlightInnerColor()   {
+        return highlightInner;
+    }
+
+    /**
+     * Returns the inner shadow color of the bevel border.
+     * Will return null if no shadow color was specified
+     * at instantiation.
+     * @since 1.3
+     */
+    public Color getShadowInnerColor()      {
+        return shadowInner;
+    }
+
+    /**
+     * Returns the outer shadow color of the bevel border.
+     * Will return null if no shadow color was specified
+     * at instantiation.
+     * @since 1.3
+     */
+    public Color getShadowOuterColor()      {
+        return shadowOuter;
+    }
+
+    /**
+     * Returns the type of the bevel border.
+     */
+    public int getBevelType()       {
+        return bevelType;
+    }
+
+    /**
+     * Returns whether or not the border is opaque.
+     */
+    public boolean isBorderOpaque() { return true; }
+
+    protected void paintRaisedBevel(Component c, Graphics g, int x, int y,
+                                    int width, int height)  {
+        Color oldColor = g.getColor();
+        int h = height;
+        int w = width;
+
+        g.translate(x, y);
+
+        g.setColor(getHighlightOuterColor(c));
+        g.drawLine(0, 0, 0, h-2);
+        g.drawLine(1, 0, w-2, 0);
+
+        g.setColor(getHighlightInnerColor(c));
+        g.drawLine(1, 1, 1, h-3);
+        g.drawLine(2, 1, w-3, 1);
+
+        g.setColor(getShadowOuterColor(c));
+        g.drawLine(0, h-1, w-1, h-1);
+        g.drawLine(w-1, 0, w-1, h-2);
+
+        g.setColor(getShadowInnerColor(c));
+        g.drawLine(1, h-2, w-2, h-2);
+        g.drawLine(w-2, 1, w-2, h-3);
+
+        g.translate(-x, -y);
+        g.setColor(oldColor);
+
+    }
+
+    protected void paintLoweredBevel(Component c, Graphics g, int x, int y,
+                                        int width, int height)  {
+        Color oldColor = g.getColor();
+        int h = height;
+        int w = width;
+
+        g.translate(x, y);
+
+        g.setColor(getShadowInnerColor(c));
+        g.drawLine(0, 0, 0, h-1);
+        g.drawLine(1, 0, w-1, 0);
+
+        g.setColor(getShadowOuterColor(c));
+        g.drawLine(1, 1, 1, h-2);
+        g.drawLine(2, 1, w-2, 1);
+
+        g.setColor(getHighlightOuterColor(c));
+        g.drawLine(1, h-1, w-1, h-1);
+        g.drawLine(w-1, 1, w-1, h-2);
+
+        g.setColor(getHighlightInnerColor(c));
+        g.drawLine(2, h-2, w-2, h-2);
+        g.drawLine(w-2, 2, w-2, h-3);
+
+        g.translate(-x, -y);
+        g.setColor(oldColor);
+
+    }
+
+}

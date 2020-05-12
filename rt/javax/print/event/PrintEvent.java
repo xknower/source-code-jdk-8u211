@@ -1,59 +1,54 @@
-/*    */ package javax.print.event;
-/*    */ 
-/*    */ import java.util.EventObject;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class PrintEvent
-/*    */   extends EventObject
-/*    */ {
-/*    */   private static final long serialVersionUID = 2286914924430763847L;
-/*    */   
-/*    */   public PrintEvent(Object paramObject) {
-/* 44 */     super(paramObject);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 51 */     return "PrintEvent on " + getSource().toString();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\print\event\PrintEvent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.print.event;
+
+/**
+ *
+ * Class PrintEvent is the super class of all Print Service API events.
+ */
+
+public class PrintEvent extends java.util.EventObject {
+
+    private static final long serialVersionUID = 2286914924430763847L;
+
+    /**
+     * Constructs a PrintEvent object.
+     * @param source is the source of the event
+     * @throws IllegalArgumentException if <code>source</code> is
+     *         <code>null</code>.
+     */
+    public PrintEvent (Object source) {
+        super(source);
+    }
+
+    /**
+     * @return a message describing the event
+     */
+    public String toString() {
+        return ("PrintEvent on " + getSource().toString());
+    }
+
+}

@@ -1,96 +1,90 @@
-/*    */ package com.sun.org.apache.xpath.internal.functions;
-/*    */ 
-/*    */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XString;
-/*    */ import javax.xml.transform.TransformerException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class FuncTranslate
-/*    */   extends Function3Args
-/*    */ {
-/*    */   static final long serialVersionUID = -1672834340026116482L;
-/*    */   
-/*    */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/* 48 */     String theFirstString = this.m_arg0.execute(xctxt).str();
-/* 49 */     String theSecondString = this.m_arg1.execute(xctxt).str();
-/* 50 */     String theThirdString = this.m_arg2.execute(xctxt).str();
-/* 51 */     int theFirstStringLength = theFirstString.length();
-/* 52 */     int theThirdStringLength = theThirdString.length();
-/*    */ 
-/*    */ 
-/*    */     
-/* 56 */     StringBuffer sbuffer = new StringBuffer();
-/*    */     
-/* 58 */     for (int i = 0; i < theFirstStringLength; i++) {
-/*    */       
-/* 60 */       char theCurrentChar = theFirstString.charAt(i);
-/* 61 */       int theIndex = theSecondString.indexOf(theCurrentChar);
-/*    */       
-/* 63 */       if (theIndex < 0) {
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */         
-/* 68 */         sbuffer.append(theCurrentChar);
-/*    */       }
-/* 70 */       else if (theIndex < theThirdStringLength) {
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */         
-/* 75 */         sbuffer.append(theThirdString.charAt(theIndex));
-/*    */       } 
-/*    */     } 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */     
-/* 88 */     return new XString(sbuffer.toString());
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\functions\FuncTranslate.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: FuncTranslate.java,v 1.2.4.1 2005/09/14 20:18:45 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.functions;
+
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+import com.sun.org.apache.xpath.internal.objects.XString;
+
+/**
+ * Execute the Translate() function.
+ * @xsl.usage advanced
+ */
+public class FuncTranslate extends Function3Args
+{
+    static final long serialVersionUID = -1672834340026116482L;
+
+  /**
+   * Execute the function.  The function must return
+   * a valid object.
+   * @param xctxt The current execution context.
+   * @return A valid XObject.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt) throws javax.xml.transform.TransformerException
+  {
+
+    String theFirstString = m_arg0.execute(xctxt).str();
+    String theSecondString = m_arg1.execute(xctxt).str();
+    String theThirdString = m_arg2.execute(xctxt).str();
+    int theFirstStringLength = theFirstString.length();
+    int theThirdStringLength = theThirdString.length();
+
+    // A vector to contain the new characters.  We'll use it to construct
+    // the result string.
+    StringBuffer sbuffer = new StringBuffer();
+
+    for (int i = 0; i < theFirstStringLength; i++)
+    {
+      char theCurrentChar = theFirstString.charAt(i);
+      int theIndex = theSecondString.indexOf(theCurrentChar);
+
+      if (theIndex < 0)
+      {
+
+        // Didn't find the character in the second string, so it
+        // is not translated.
+        sbuffer.append(theCurrentChar);
+      }
+      else if (theIndex < theThirdStringLength)
+      {
+
+        // OK, there's a corresponding character in the
+        // third string, so do the translation...
+        sbuffer.append(theThirdString.charAt(theIndex));
+      }
+      else
+      {
+
+        // There's no corresponding character in the
+        // third string, since it's shorter than the
+        // second string.  In this case, the character
+        // is removed from the output string, so don't
+        // do anything.
+      }
+    }
+
+    return new XString(sbuffer.toString());
+  }
+}

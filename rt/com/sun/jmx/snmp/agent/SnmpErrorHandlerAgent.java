@@ -1,219 +1,214 @@
-/*     */ package com.sun.jmx.snmp.agent;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import com.sun.jmx.snmp.SnmpStatusException;
-/*     */ import com.sun.jmx.snmp.SnmpVarBind;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.MBeanServer;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpErrorHandlerAgent
-/*     */   extends SnmpMibAgent
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 7751082923508885650L;
-/*     */   
-/*     */   public void init() throws IllegalAccessException {}
-/*     */   
-/*     */   public ObjectName preRegister(MBeanServer paramMBeanServer, ObjectName paramObjectName) throws Exception {
-/*  81 */     return paramObjectName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long[] getRootOid() {
-/*  94 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void get(SnmpMibRequest paramSnmpMibRequest) throws SnmpStatusException {
-/* 108 */     JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpErrorHandlerAgent.class
-/* 109 */         .getName(), "get", "Get in Exception");
-/*     */ 
-/*     */     
-/* 112 */     if (paramSnmpMibRequest.getVersion() == 0) {
-/* 113 */       throw new SnmpStatusException(2);
-/*     */     }
-/* 115 */     Enumeration<SnmpVarBind> enumeration = paramSnmpMibRequest.getElements();
-/* 116 */     while (enumeration.hasMoreElements()) {
-/* 117 */       SnmpVarBind snmpVarBind = enumeration.nextElement();
-/* 118 */       snmpVarBind.setNoSuchObject();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void check(SnmpMibRequest paramSnmpMibRequest) throws SnmpStatusException {
-/* 138 */     JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpErrorHandlerAgent.class
-/* 139 */         .getName(), "check", "Check in Exception");
-/*     */ 
-/*     */     
-/* 142 */     throw new SnmpStatusException(17);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set(SnmpMibRequest paramSnmpMibRequest) throws SnmpStatusException {
-/* 156 */     JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpErrorHandlerAgent.class
-/* 157 */         .getName(), "set", "Set in Exception, CANNOT be called");
-/*     */ 
-/*     */     
-/* 160 */     throw new SnmpStatusException(17);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void getNext(SnmpMibRequest paramSnmpMibRequest) throws SnmpStatusException {
-/* 174 */     JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpErrorHandlerAgent.class
-/* 175 */         .getName(), "getNext", "GetNext in Exception");
-/*     */ 
-/*     */     
-/* 178 */     if (paramSnmpMibRequest.getVersion() == 0) {
-/* 179 */       throw new SnmpStatusException(2);
-/*     */     }
-/* 181 */     Enumeration<SnmpVarBind> enumeration = paramSnmpMibRequest.getElements();
-/* 182 */     while (enumeration.hasMoreElements()) {
-/* 183 */       SnmpVarBind snmpVarBind = enumeration.nextElement();
-/* 184 */       snmpVarBind.setEndOfMibView();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void getBulk(SnmpMibRequest paramSnmpMibRequest, int paramInt1, int paramInt2) throws SnmpStatusException {
-/* 200 */     JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpErrorHandlerAgent.class
-/* 201 */         .getName(), "getBulk", "GetBulk in Exception");
-/*     */ 
-/*     */     
-/* 204 */     if (paramSnmpMibRequest.getVersion() == 0) {
-/* 205 */       throw new SnmpStatusException(5, 0);
-/*     */     }
-/* 207 */     Enumeration<SnmpVarBind> enumeration = paramSnmpMibRequest.getElements();
-/* 208 */     while (enumeration.hasMoreElements()) {
-/* 209 */       SnmpVarBind snmpVarBind = enumeration.nextElement();
-/* 210 */       snmpVarBind.setEndOfMibView();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\agent\SnmpErrorHandlerAgent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.snmp.agent;
+
+import java.io.Serializable;
+import java.util.Enumeration;
+import java.util.logging.Level;
+
+import javax.management.ObjectName;
+import javax.management.MBeanServer;
+
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+import com.sun.jmx.snmp.SnmpStatusException;
+import com.sun.jmx.snmp.SnmpDefinitions;
+import com.sun.jmx.snmp.SnmpVarBind;
+
+/**
+ * A simple MIB agent that implements SNMP calls (get, set, getnext and getbulk) in a way that only errors or exceptions are returned. Every call done on this agent fails. Error handling is done according to the manager's SNMP protocol version.
+ * <P>It is used by <CODE>SnmpAdaptorServer</CODE> for its default agent behavior. When a received Oid doesn't match, this agent is called to fill the result list with errors.</P>
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ *
+ */
+
+public class SnmpErrorHandlerAgent extends SnmpMibAgent
+        implements Serializable {
+    private static final long serialVersionUID = 7751082923508885650L;
+
+    public SnmpErrorHandlerAgent() {}
+
+    /**
+     * Initializes the MIB (with no registration of the MBeans into the
+     * MBean server). Does nothing.
+     *
+     * @exception IllegalAccessException The MIB cannot be initialized.
+     */
+
+    @Override
+    public void init() throws IllegalAccessException {
+    }
+
+    /**
+     * Initializes the MIB but each single MBean representing the MIB
+     * is inserted into the MBean server.
+     *
+     * @param server The MBean server to register the service with.
+     * @param name The object name.
+     *
+     * @return The passed name parameter.
+     *
+     * @exception java.lang.Exception
+     */
+
+    @Override
+    public ObjectName preRegister(MBeanServer server, ObjectName name)
+        throws Exception {
+        return name;
+    }
+
+    /**
+     * Gets the root object identifier of the MIB.
+     * <P>The root object identifier is the object identifier uniquely
+     * identifying the MIB.
+     *
+     * @return The returned oid is null.
+     */
+
+    @Override
+    public long[] getRootOid() {
+        return null;
+    }
+
+    /**
+     * Processes a <CODE>get</CODE> operation. It will throw an exception for V1 requests or it will set exceptions within the list for V2 requests.
+     *
+     * @param inRequest The SnmpMibRequest object holding the list of variable to be retrieved.
+     *
+     * @exception SnmpStatusException An error occurred during the operation.
+     */
+
+    @Override
+    public void get(SnmpMibRequest inRequest) throws SnmpStatusException {
+
+        SNMP_ADAPTOR_LOGGER.logp(Level.FINEST,
+                SnmpErrorHandlerAgent.class.getName(),
+                "get", "Get in Exception");
+
+        if(inRequest.getVersion() == SnmpDefinitions.snmpVersionOne)
+            throw new SnmpStatusException(SnmpStatusException.noSuchName);
+
+        Enumeration<SnmpVarBind> l = inRequest.getElements();
+        while(l.hasMoreElements()) {
+            SnmpVarBind varbind = l.nextElement();
+            varbind.setNoSuchObject();
+        }
+    }
+
+    /**
+     * Checks if a <CODE>set</CODE> operation can be performed.
+     * If the operation can not be performed, the method should emit a
+     * <CODE>SnmpStatusException</CODE>.
+     *
+     * @param inRequest The SnmpMibRequest object holding the list of variables to
+     *            be set. This list is composed of
+     *            <CODE>SnmpVarBind</CODE> objects.
+     *
+     * @exception SnmpStatusException The <CODE>set</CODE> operation
+     *    cannot be performed.
+     */
+
+    @Override
+    public void check(SnmpMibRequest inRequest) throws SnmpStatusException {
+
+        SNMP_ADAPTOR_LOGGER.logp(Level.FINEST,
+                SnmpErrorHandlerAgent.class.getName(),
+                "check", "Check in Exception");
+
+        throw new SnmpStatusException(SnmpDefinitions.snmpRspNotWritable);
+    }
+
+    /**
+     * Processes a <CODE>set</CODE> operation. Should never be called (check previously called having failed).
+     *
+     * @param inRequest The SnmpMibRequest object holding the list of variable to be set.
+     *
+     * @exception SnmpStatusException An error occurred during the operation.
+     */
+
+    @Override
+    public void set(SnmpMibRequest inRequest) throws SnmpStatusException {
+
+        SNMP_ADAPTOR_LOGGER.logp(Level.FINEST,
+                SnmpErrorHandlerAgent.class.getName(),
+                "set", "Set in Exception, CANNOT be called");
+
+        throw new SnmpStatusException(SnmpDefinitions.snmpRspNotWritable);
+    }
+
+    /**
+     * Processes a <CODE>getNext</CODE> operation. It will throw an exception for V1 requests or it will set exceptions within the list for V2 requests..
+     *
+     * @param inRequest The SnmpMibRequest object holding the list of variables to be retrieved.
+     *
+     * @exception SnmpStatusException An error occurred during the operation.
+     */
+
+    @Override
+    public void getNext(SnmpMibRequest inRequest) throws SnmpStatusException {
+
+        SNMP_ADAPTOR_LOGGER.logp(Level.FINEST,
+                SnmpErrorHandlerAgent.class.getName(),
+                "getNext", "GetNext in Exception");
+
+        if(inRequest.getVersion() == SnmpDefinitions.snmpVersionOne)
+            throw new SnmpStatusException(SnmpStatusException.noSuchName);
+
+        Enumeration<SnmpVarBind> l = inRequest.getElements();
+        while(l.hasMoreElements()) {
+            SnmpVarBind varbind = l.nextElement();
+            varbind.setEndOfMibView();
+        }
+    }
+
+    /**
+     * Processes a <CODE>getBulk</CODE> operation. It will throw an exception if the request is a V1 one or it will set exceptions within the list for V2 ones.
+     *
+     * @param inRequest The SnmpMibRequest object holding the list of variable to be retrieved.
+     *
+     * @exception SnmpStatusException An error occurred during the operation.
+     */
+
+    @Override
+    public void getBulk(SnmpMibRequest inRequest, int nonRepeat, int maxRepeat)
+        throws SnmpStatusException {
+
+        SNMP_ADAPTOR_LOGGER.logp(Level.FINEST,
+                SnmpErrorHandlerAgent.class.getName(),
+                "getBulk", "GetBulk in Exception");
+
+        if(inRequest.getVersion() == SnmpDefinitions.snmpVersionOne)
+            throw new SnmpStatusException(SnmpDefinitions.snmpRspGenErr, 0);
+
+        Enumeration<SnmpVarBind> l = inRequest.getElements();
+        while(l.hasMoreElements()) {
+            SnmpVarBind varbind = l.nextElement();
+            varbind.setEndOfMibView();
+        }
+    }
+
+}

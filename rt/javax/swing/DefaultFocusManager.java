@@ -1,155 +1,172 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.FocusTraversalPolicy;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DefaultFocusManager
-/*     */   extends FocusManager
-/*     */ {
-/*  51 */   final FocusTraversalPolicy gluePolicy = new LegacyGlueFocusTraversalPolicy(this);
-/*     */   
-/*  53 */   private final FocusTraversalPolicy layoutPolicy = new LegacyLayoutFocusTraversalPolicy(this);
-/*     */   
-/*  55 */   private final LayoutComparator comparator = new LayoutComparator();
-/*     */ 
-/*     */   
-/*     */   public DefaultFocusManager() {
-/*  59 */     setDefaultFocusTraversalPolicy(this.gluePolicy);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getComponentAfter(Container paramContainer, Component paramComponent) {
-/*  67 */     Container container = paramContainer.isFocusCycleRoot() ? paramContainer : paramContainer.getFocusCycleRootAncestor();
-/*     */ 
-/*     */ 
-/*     */     
-/*  71 */     if (container != null) {
-/*  72 */       FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy();
-/*  73 */       if (focusTraversalPolicy != this.gluePolicy) {
-/*  74 */         return focusTraversalPolicy.getComponentAfter(container, paramComponent);
-/*     */       }
-/*     */       
-/*  77 */       this.comparator.setComponentOrientation(container.getComponentOrientation());
-/*  78 */       return this.layoutPolicy.getComponentAfter(container, paramComponent);
-/*     */     } 
-/*     */     
-/*  81 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getComponentBefore(Container paramContainer, Component paramComponent) {
-/*  89 */     Container container = paramContainer.isFocusCycleRoot() ? paramContainer : paramContainer.getFocusCycleRootAncestor();
-/*     */ 
-/*     */ 
-/*     */     
-/*  93 */     if (container != null) {
-/*  94 */       FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy();
-/*  95 */       if (focusTraversalPolicy != this.gluePolicy) {
-/*  96 */         return focusTraversalPolicy.getComponentBefore(container, paramComponent);
-/*     */       }
-/*     */       
-/*  99 */       this.comparator.setComponentOrientation(container.getComponentOrientation());
-/* 100 */       return this.layoutPolicy.getComponentBefore(container, paramComponent);
-/*     */     } 
-/*     */     
-/* 103 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getFirstComponent(Container paramContainer) {
-/* 109 */     Container container = paramContainer.isFocusCycleRoot() ? paramContainer : paramContainer.getFocusCycleRootAncestor();
-/*     */ 
-/*     */ 
-/*     */     
-/* 113 */     if (container != null) {
-/* 114 */       FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy();
-/* 115 */       if (focusTraversalPolicy != this.gluePolicy) {
-/* 116 */         return focusTraversalPolicy.getFirstComponent(container);
-/*     */       }
-/*     */       
-/* 119 */       this.comparator.setComponentOrientation(container.getComponentOrientation());
-/* 120 */       return this.layoutPolicy.getFirstComponent(container);
-/*     */     } 
-/*     */     
-/* 123 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getLastComponent(Container paramContainer) {
-/* 129 */     Container container = paramContainer.isFocusCycleRoot() ? paramContainer : paramContainer.getFocusCycleRootAncestor();
-/*     */ 
-/*     */ 
-/*     */     
-/* 133 */     if (container != null) {
-/* 134 */       FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy();
-/* 135 */       if (focusTraversalPolicy != this.gluePolicy) {
-/* 136 */         return focusTraversalPolicy.getLastComponent(container);
-/*     */       }
-/*     */       
-/* 139 */       this.comparator.setComponentOrientation(container.getComponentOrientation());
-/* 140 */       return this.layoutPolicy.getLastComponent(container);
-/*     */     } 
-/*     */     
-/* 143 */     return null;
-/*     */   }
-/*     */   
-/*     */   public boolean compareTabOrder(Component paramComponent1, Component paramComponent2) {
-/* 147 */     return (this.comparator.compare(paramComponent1, paramComponent2) < 0);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DefaultFocusManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.util.Comparator;
+
+
+/**
+ * This class has been obsoleted by the 1.4 focus APIs. While client code may
+ * still use this class, developers are strongly encouraged to use
+ * <code>java.awt.KeyboardFocusManager</code> and
+ * <code>java.awt.DefaultKeyboardFocusManager</code> instead.
+ * <p>
+ * Please see
+ * <a href="https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html">
+ * How to Use the Focus Subsystem</a>,
+ * a section in <em>The Java Tutorial</em>, and the
+ * <a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
+ * for more information.
+ *
+ * @author Arnaud Weber
+ * @author David Mendenhall
+ */
+public class DefaultFocusManager extends FocusManager {
+
+    final FocusTraversalPolicy gluePolicy =
+        new LegacyGlueFocusTraversalPolicy(this);
+    private final FocusTraversalPolicy layoutPolicy =
+        new LegacyLayoutFocusTraversalPolicy(this);
+    private final LayoutComparator comparator =
+        new LayoutComparator();
+
+    public DefaultFocusManager() {
+        setDefaultFocusTraversalPolicy(gluePolicy);
+    }
+
+    public Component getComponentAfter(Container aContainer,
+                                       Component aComponent)
+    {
+        Container root = (aContainer.isFocusCycleRoot())
+            ? aContainer
+            : aContainer.getFocusCycleRootAncestor();
+
+        // Support for mixed 1.4/pre-1.4 focus APIs. If a particular root's
+        // traversal policy is non-legacy, then honor it.
+        if (root != null) {
+            FocusTraversalPolicy policy = root.getFocusTraversalPolicy();
+            if (policy != gluePolicy) {
+                return policy.getComponentAfter(root, aComponent);
+            }
+
+            comparator.setComponentOrientation(root.getComponentOrientation());
+            return layoutPolicy.getComponentAfter(root, aComponent);
+        }
+
+        return null;
+    }
+
+    public Component getComponentBefore(Container aContainer,
+                                        Component aComponent)
+    {
+        Container root = (aContainer.isFocusCycleRoot())
+            ? aContainer
+            : aContainer.getFocusCycleRootAncestor();
+
+        // Support for mixed 1.4/pre-1.4 focus APIs. If a particular root's
+        // traversal policy is non-legacy, then honor it.
+        if (root != null) {
+            FocusTraversalPolicy policy = root.getFocusTraversalPolicy();
+            if (policy != gluePolicy) {
+                return policy.getComponentBefore(root, aComponent);
+            }
+
+            comparator.setComponentOrientation(root.getComponentOrientation());
+            return layoutPolicy.getComponentBefore(root, aComponent);
+        }
+
+        return null;
+    }
+
+    public Component getFirstComponent(Container aContainer) {
+        Container root = (aContainer.isFocusCycleRoot())
+            ? aContainer
+            : aContainer.getFocusCycleRootAncestor();
+
+        // Support for mixed 1.4/pre-1.4 focus APIs. If a particular root's
+        // traversal policy is non-legacy, then honor it.
+        if (root != null) {
+            FocusTraversalPolicy policy = root.getFocusTraversalPolicy();
+            if (policy != gluePolicy) {
+                return policy.getFirstComponent(root);
+            }
+
+            comparator.setComponentOrientation(root.getComponentOrientation());
+            return layoutPolicy.getFirstComponent(root);
+        }
+
+        return null;
+    }
+
+    public Component getLastComponent(Container aContainer) {
+        Container root = (aContainer.isFocusCycleRoot())
+            ? aContainer
+            : aContainer.getFocusCycleRootAncestor();
+
+        // Support for mixed 1.4/pre-1.4 focus APIs. If a particular root's
+        // traversal policy is non-legacy, then honor it.
+        if (root != null) {
+            FocusTraversalPolicy policy = root.getFocusTraversalPolicy();
+            if (policy != gluePolicy) {
+                return policy.getLastComponent(root);
+            }
+
+            comparator.setComponentOrientation(root.getComponentOrientation());
+            return layoutPolicy.getLastComponent(root);
+        }
+
+        return null;
+    }
+
+    public boolean compareTabOrder(Component a, Component b) {
+        return (comparator.compare(a, b) < 0);
+    }
+}
+
+final class LegacyLayoutFocusTraversalPolicy
+    extends LayoutFocusTraversalPolicy
+{
+    LegacyLayoutFocusTraversalPolicy(DefaultFocusManager defaultFocusManager) {
+        super(new CompareTabOrderComparator(defaultFocusManager));
+    }
+}
+
+final class CompareTabOrderComparator implements Comparator<Component> {
+    private final DefaultFocusManager defaultFocusManager;
+
+    CompareTabOrderComparator(DefaultFocusManager defaultFocusManager) {
+        this.defaultFocusManager = defaultFocusManager;
+    }
+
+    public int compare(Component o1, Component o2) {
+        if (o1 == o2) {
+            return 0;
+        }
+        return (defaultFocusManager.compareTabOrder(o1, o2)) ? -1 : 1;
+    }
+}

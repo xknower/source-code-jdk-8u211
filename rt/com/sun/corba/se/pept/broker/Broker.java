@@ -1,20 +1,43 @@
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.broker;
 
 import com.sun.corba.se.pept.protocol.ClientInvocationInfo;
 import com.sun.corba.se.pept.transport.TransportManager;
 
-public interface Broker {
-  ClientInvocationInfo createOrIncrementInvocationInfo();
-  
-  ClientInvocationInfo getInvocationInfo();
-  
-  void releaseOrDecrementInvocationInfo();
-  
-  TransportManager getTransportManager();
+/**
+ * @author Harold Carr
+ */
+public interface Broker
+{
+    public ClientInvocationInfo createOrIncrementInvocationInfo();
+    public ClientInvocationInfo getInvocationInfo();
+    public void releaseOrDecrementInvocationInfo();
+
+    public abstract TransportManager getTransportManager();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\broker\Broker.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

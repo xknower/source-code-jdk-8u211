@@ -1,217 +1,211 @@
-/*     */ package com.sun.corba.se.impl.encoding;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.corba.TypeCodeImpl;
-/*     */ import java.io.IOException;
-/*     */ import java.io.Serializable;
-/*     */ import java.math.BigDecimal;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.Context;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.Principal;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WrapperInputStream
-/*     */   extends InputStream
-/*     */   implements TypeCodeReader
-/*     */ {
-/*     */   private CDRInputStream stream;
-/*  70 */   private Map typeMap = null;
-/*  71 */   private int startPos = 0;
-/*     */ 
-/*     */   
-/*     */   public WrapperInputStream(CDRInputStream paramCDRInputStream) {
-/*  75 */     this.stream = paramCDRInputStream;
-/*  76 */     this.startPos = this.stream.getPosition();
-/*     */   }
-/*     */   
-/*  79 */   public int read() throws IOException { return this.stream.read(); } public int read(byte[] paramArrayOfbyte) throws IOException {
-/*  80 */     return this.stream.read(paramArrayOfbyte);
-/*     */   } public int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/*  82 */     return this.stream.read(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */   }
-/*  84 */   public long skip(long paramLong) throws IOException { return this.stream.skip(paramLong); }
-/*  85 */   public int available() throws IOException { return this.stream.available(); }
-/*  86 */   public void close() throws IOException { this.stream.close(); }
-/*  87 */   public void mark(int paramInt) { this.stream.mark(paramInt); }
-/*  88 */   public void reset() { this.stream.reset(); }
-/*  89 */   public boolean markSupported() { return this.stream.markSupported(); }
-/*  90 */   public int getPosition() { return this.stream.getPosition(); }
-/*  91 */   public void consumeEndian() { this.stream.consumeEndian(); }
-/*  92 */   public boolean read_boolean() { return this.stream.read_boolean(); }
-/*  93 */   public char read_char() { return this.stream.read_char(); }
-/*  94 */   public char read_wchar() { return this.stream.read_wchar(); }
-/*  95 */   public byte read_octet() { return this.stream.read_octet(); }
-/*  96 */   public short read_short() { return this.stream.read_short(); }
-/*  97 */   public short read_ushort() { return this.stream.read_ushort(); }
-/*  98 */   public int read_long() { return this.stream.read_long(); }
-/*  99 */   public int read_ulong() { return this.stream.read_ulong(); }
-/* 100 */   public long read_longlong() { return this.stream.read_longlong(); }
-/* 101 */   public long read_ulonglong() { return this.stream.read_ulonglong(); }
-/* 102 */   public float read_float() { return this.stream.read_float(); }
-/* 103 */   public double read_double() { return this.stream.read_double(); }
-/* 104 */   public String read_string() { return this.stream.read_string(); } public String read_wstring() {
-/* 105 */     return this.stream.read_wstring();
-/*     */   }
-/*     */   public void read_boolean_array(boolean[] paramArrayOfboolean, int paramInt1, int paramInt2) {
-/* 108 */     this.stream.read_boolean_array(paramArrayOfboolean, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_char_array(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 111 */     this.stream.read_char_array(paramArrayOfchar, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_wchar_array(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 114 */     this.stream.read_wchar_array(paramArrayOfchar, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_octet_array(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/* 117 */     this.stream.read_octet_array(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_short_array(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/* 120 */     this.stream.read_short_array(paramArrayOfshort, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_ushort_array(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/* 123 */     this.stream.read_ushort_array(paramArrayOfshort, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_long_array(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 126 */     this.stream.read_long_array(paramArrayOfint, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_ulong_array(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 129 */     this.stream.read_ulong_array(paramArrayOfint, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_longlong_array(long[] paramArrayOflong, int paramInt1, int paramInt2) {
-/* 132 */     this.stream.read_longlong_array(paramArrayOflong, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_ulonglong_array(long[] paramArrayOflong, int paramInt1, int paramInt2) {
-/* 135 */     this.stream.read_ulonglong_array(paramArrayOflong, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_float_array(float[] paramArrayOffloat, int paramInt1, int paramInt2) {
-/* 138 */     this.stream.read_float_array(paramArrayOffloat, paramInt1, paramInt2);
-/*     */   }
-/*     */   public void read_double_array(double[] paramArrayOfdouble, int paramInt1, int paramInt2) {
-/* 141 */     this.stream.read_double_array(paramArrayOfdouble, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/* 144 */   public Object read_Object() { return this.stream.read_Object(); }
-/* 145 */   public Serializable read_value() { return this.stream.read_value(); }
-/* 146 */   public TypeCode read_TypeCode() { return this.stream.read_TypeCode(); }
-/* 147 */   public Any read_any() { return this.stream.read_any(); }
-/* 148 */   public Principal read_Principal() { return this.stream.read_Principal(); }
-/* 149 */   public BigDecimal read_fixed() { return this.stream.read_fixed(); } public Context read_Context() {
-/* 150 */     return this.stream.read_Context();
-/*     */   } public ORB orb() {
-/* 152 */     return this.stream.orb();
-/*     */   }
-/*     */   public void addTypeCodeAtPosition(TypeCodeImpl paramTypeCodeImpl, int paramInt) {
-/* 155 */     if (this.typeMap == null)
-/*     */     {
-/* 157 */       this.typeMap = new HashMap<>(16);
-/*     */     }
-/*     */     
-/* 160 */     this.typeMap.put(new Integer(paramInt), paramTypeCodeImpl);
-/*     */   }
-/*     */   
-/*     */   public TypeCodeImpl getTypeCodeAtPosition(int paramInt) {
-/* 164 */     if (this.typeMap == null) {
-/* 165 */       return null;
-/*     */     }
-/*     */     
-/* 168 */     return (TypeCodeImpl)this.typeMap.get(new Integer(paramInt));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEnclosingInputStream(InputStream paramInputStream) {}
-/*     */ 
-/*     */   
-/*     */   public TypeCodeReader getTopLevelStream() {
-/* 177 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTopLevelPosition() {
-/* 184 */     return getPosition() - this.startPos;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void performORBVersionSpecificInit() {
-/* 190 */     this.stream.performORBVersionSpecificInit();
-/*     */   }
-/*     */   
-/*     */   public void resetCodeSetConverters() {
-/* 194 */     this.stream.resetCodeSetConverters();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printTypeMap() {
-/* 200 */     System.out.println("typeMap = {");
-/* 201 */     ArrayList<Comparable> arrayList = new ArrayList(this.typeMap.keySet());
-/* 202 */     Collections.sort(arrayList);
-/* 203 */     Iterator<Comparable> iterator = arrayList.iterator();
-/* 204 */     while (iterator.hasNext()) {
-/* 205 */       Integer integer = (Integer)iterator.next();
-/* 206 */       TypeCodeImpl typeCodeImpl = (TypeCodeImpl)this.typeMap.get(integer);
-/* 207 */       System.out.println("  key = " + integer.intValue() + ", value = " + typeCodeImpl.description());
-/*     */     } 
-/* 209 */     System.out.println("}");
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\WrapperInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.encoding;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import org.omg.CORBA.TypeCode ;
+import org.omg.CORBA.StructMember ;
+import org.omg.CORBA.UnionMember ;
+import org.omg.CORBA.ValueMember ;
+import org.omg.CORBA.TCKind ;
+import org.omg.CORBA.Any ;
+import org.omg.CORBA.Principal ;
+import org.omg.CORBA.BAD_TYPECODE ;
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA.BAD_OPERATION ;
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.MARSHAL ;
+
+import org.omg.CORBA.TypeCodePackage.BadKind ;
+
+import org.omg.CORBA_2_3.portable.InputStream;
+import org.omg.CORBA_2_3.portable.OutputStream;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.impl.corba.TypeCodeImpl;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
+import com.sun.corba.se.impl.encoding.MarshalInputStream;
+import com.sun.corba.se.impl.encoding.CodeSetConversion;
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+import com.sun.corba.se.impl.encoding.CDROutputStream;
+
+public class WrapperInputStream extends org.omg.CORBA_2_3.portable.InputStream implements TypeCodeReader
+{
+    private CDRInputStream stream;
+    private Map typeMap = null;
+    private int startPos = 0;
+
+    public WrapperInputStream(CDRInputStream s) {
+        super();
+        stream = s;
+        startPos = stream.getPosition();
+    }
+
+    public int read() throws IOException { return stream.read(); }
+    public int read(byte b[]) throws IOException { return stream.read(b); }
+    public int read(byte b[], int off, int len) throws IOException {
+        return stream.read(b, off, len);
+    }
+    public long skip(long n) throws IOException { return stream.skip(n); }
+    public int available() throws IOException { return stream.available(); }
+    public void close() throws IOException { stream.close(); }
+    public void mark(int readlimit) { stream.mark(readlimit); }
+    public void reset() { stream.reset(); }
+    public boolean markSupported() { return stream.markSupported(); }
+    public int getPosition() { return stream.getPosition(); }
+    public void consumeEndian() { stream.consumeEndian(); }
+    public boolean read_boolean() { return stream.read_boolean(); }
+    public char read_char() { return stream.read_char(); }
+    public char read_wchar() { return stream.read_wchar(); }
+    public byte read_octet() { return stream.read_octet(); }
+    public short read_short() { return stream.read_short(); }
+    public short read_ushort() { return stream.read_ushort(); }
+    public int read_long() { return stream.read_long(); }
+    public int read_ulong() { return stream.read_ulong(); }
+    public long read_longlong() { return stream.read_longlong(); }
+    public long read_ulonglong() { return stream.read_ulonglong(); }
+    public float read_float() { return stream.read_float(); }
+    public double read_double() { return stream.read_double(); }
+    public String read_string() { return stream.read_string(); }
+    public String read_wstring() { return stream.read_wstring(); }
+
+    public void read_boolean_array(boolean[] value, int offset, int length) {
+        stream.read_boolean_array(value, offset, length);
+    }
+    public void read_char_array(char[] value, int offset, int length) {
+        stream.read_char_array(value, offset, length);
+    }
+    public void read_wchar_array(char[] value, int offset, int length) {
+        stream.read_wchar_array(value, offset, length);
+    }
+    public void read_octet_array(byte[] value, int offset, int length) {
+        stream.read_octet_array(value, offset, length);
+    }
+    public void read_short_array(short[] value, int offset, int length) {
+        stream.read_short_array(value, offset, length);
+    }
+    public void read_ushort_array(short[] value, int offset, int length) {
+        stream.read_ushort_array(value, offset, length);
+    }
+    public void read_long_array(int[] value, int offset, int length) {
+        stream.read_long_array(value, offset, length);
+    }
+    public void read_ulong_array(int[] value, int offset, int length) {
+        stream.read_ulong_array(value, offset, length);
+    }
+    public void read_longlong_array(long[] value, int offset, int length) {
+        stream.read_longlong_array(value, offset, length);
+    }
+    public void read_ulonglong_array(long[] value, int offset, int length) {
+        stream.read_ulonglong_array(value, offset, length);
+    }
+    public void read_float_array(float[] value, int offset, int length) {
+        stream.read_float_array(value, offset, length);
+    }
+    public void read_double_array(double[] value, int offset, int length) {
+        stream.read_double_array(value, offset, length);
+    }
+
+    public org.omg.CORBA.Object read_Object() { return stream.read_Object(); }
+    public java.io.Serializable read_value() {return stream.read_value();}
+    public TypeCode read_TypeCode() { return stream.read_TypeCode(); }
+    public Any read_any() { return stream.read_any(); }
+    public Principal read_Principal() { return stream.read_Principal(); }
+    public java.math.BigDecimal read_fixed() { return stream.read_fixed(); }
+    public org.omg.CORBA.Context read_Context() { return stream.read_Context(); }
+
+    public org.omg.CORBA.ORB orb() { return stream.orb(); }
+
+    public void addTypeCodeAtPosition(TypeCodeImpl tc, int position) {
+        if (typeMap == null) {
+            //if (TypeCodeImpl.debug) System.out.println("Creating typeMap");
+            typeMap = new HashMap(16);
+        }
+        //if (TypeCodeImpl.debug) System.out.println(this + " adding tc " + tc + " at position " + position);
+        typeMap.put(new Integer(position), tc);
+    }
+
+    public TypeCodeImpl getTypeCodeAtPosition(int position) {
+        if (typeMap == null)
+            return null;
+        //if (TypeCodeImpl.debug) System.out.println("Getting tc " + (TypeCodeImpl)typeMap.get(new Integer(position)) +
+            //" at position " + position);
+        return (TypeCodeImpl)typeMap.get(new Integer(position));
+    }
+
+    public void setEnclosingInputStream(InputStream enclosure) {
+        // WrapperInputStream has no enclosure
+    }
+
+    public TypeCodeReader getTopLevelStream() {
+        // WrapperInputStream has no enclosure
+        return this;
+    }
+
+    public int getTopLevelPosition() {
+        //if (TypeCodeImpl.debug) System.out.println("WrapperInputStream.getTopLevelPosition " +
+            //"returning getPosition " + getPosition() + " - startPos " + startPos +
+            //" = " + (getPosition() - startPos));
+        return getPosition() - startPos;
+    }
+
+    public void performORBVersionSpecificInit() {
+        // This is never actually called on a WrapperInputStream, but
+        // exists to satisfy the interface requirement.
+        stream.performORBVersionSpecificInit();
+    }
+
+    public void resetCodeSetConverters() {
+        stream.resetCodeSetConverters();
+    }
+
+    //public void printBuffer() { stream.printBuffer(); }
+
+    public void printTypeMap() {
+        System.out.println("typeMap = {");
+        List sortedKeys = new ArrayList(typeMap.keySet());
+        Collections.sort(sortedKeys);
+        Iterator i = sortedKeys.iterator();
+        while (i.hasNext()) {
+            Integer pos = (Integer)i.next();
+            TypeCodeImpl tci = (TypeCodeImpl)typeMap.get(pos);
+            System.out.println("  key = " + pos.intValue() + ", value = " + tci.description());
+        }
+        System.out.println("}");
+    }
+}

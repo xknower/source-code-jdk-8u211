@@ -1,301 +1,296 @@
-/*     */ package javax.swing.plaf.basic;
-/*     */ 
-/*     */ import java.awt.BorderLayout;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.LayoutManager;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.beans.PropertyVetoException;
-/*     */ import javax.swing.DesktopManager;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JDesktopPane;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JLayeredPane;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.event.MouseInputAdapter;
-/*     */ import javax.swing.event.MouseInputListener;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.DesktopIconUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BasicDesktopIconUI
-/*     */   extends DesktopIconUI
-/*     */ {
-/*     */   protected JInternalFrame.JDesktopIcon desktopIcon;
-/*     */   protected JInternalFrame frame;
-/*     */   protected JComponent iconPane;
-/*     */   MouseInputListener mouseInputListener;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  59 */     return new BasicDesktopIconUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/*  66 */     this.desktopIcon = (JInternalFrame.JDesktopIcon)paramJComponent;
-/*  67 */     this.frame = this.desktopIcon.getInternalFrame();
-/*  68 */     installDefaults();
-/*  69 */     installComponents();
-/*     */ 
-/*     */     
-/*  72 */     JInternalFrame jInternalFrame = this.desktopIcon.getInternalFrame();
-/*  73 */     if (jInternalFrame.isIcon() && jInternalFrame.getParent() == null) {
-/*  74 */       JDesktopPane jDesktopPane = this.desktopIcon.getDesktopPane();
-/*  75 */       if (jDesktopPane != null) {
-/*  76 */         DesktopManager desktopManager = jDesktopPane.getDesktopManager();
-/*  77 */         if (desktopManager instanceof javax.swing.DefaultDesktopManager) {
-/*  78 */           desktopManager.iconifyFrame(jInternalFrame);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/*  83 */     installListeners();
-/*  84 */     JLayeredPane.putLayer(this.desktopIcon, JLayeredPane.getLayer(this.frame));
-/*     */   }
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/*  88 */     uninstallDefaults();
-/*  89 */     uninstallComponents();
-/*     */ 
-/*     */     
-/*  92 */     JInternalFrame jInternalFrame = this.desktopIcon.getInternalFrame();
-/*  93 */     if (jInternalFrame.isIcon()) {
-/*  94 */       JDesktopPane jDesktopPane = this.desktopIcon.getDesktopPane();
-/*  95 */       if (jDesktopPane != null) {
-/*  96 */         DesktopManager desktopManager = jDesktopPane.getDesktopManager();
-/*  97 */         if (desktopManager instanceof javax.swing.DefaultDesktopManager) {
-/*     */           
-/*  99 */           jInternalFrame.putClientProperty("wasIconOnce", (Object)null);
-/*     */           
-/* 101 */           this.desktopIcon.setLocation(-2147483648, 0);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 106 */     uninstallListeners();
-/* 107 */     this.frame = null;
-/* 108 */     this.desktopIcon = null;
-/*     */   }
-/*     */   
-/*     */   protected void installComponents() {
-/* 112 */     this.iconPane = new BasicInternalFrameTitlePane(this.frame);
-/* 113 */     this.desktopIcon.setLayout(new BorderLayout());
-/* 114 */     this.desktopIcon.add(this.iconPane, "Center");
-/*     */   }
-/*     */   
-/*     */   protected void uninstallComponents() {
-/* 118 */     this.desktopIcon.remove(this.iconPane);
-/* 119 */     this.desktopIcon.setLayout((LayoutManager)null);
-/* 120 */     this.iconPane = null;
-/*     */   }
-/*     */   
-/*     */   protected void installListeners() {
-/* 124 */     this.mouseInputListener = createMouseInputListener();
-/* 125 */     this.desktopIcon.addMouseMotionListener(this.mouseInputListener);
-/* 126 */     this.desktopIcon.addMouseListener(this.mouseInputListener);
-/*     */   }
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 130 */     this.desktopIcon.removeMouseMotionListener(this.mouseInputListener);
-/* 131 */     this.desktopIcon.removeMouseListener(this.mouseInputListener);
-/* 132 */     this.mouseInputListener = null;
-/*     */   }
-/*     */   
-/*     */   protected void installDefaults() {
-/* 136 */     LookAndFeel.installBorder(this.desktopIcon, "DesktopIcon.border");
-/* 137 */     LookAndFeel.installProperty(this.desktopIcon, "opaque", Boolean.TRUE);
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 141 */     LookAndFeel.uninstallBorder(this.desktopIcon);
-/*     */   }
-/*     */   
-/*     */   protected MouseInputListener createMouseInputListener() {
-/* 145 */     return new MouseInputHandler();
-/*     */   }
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 149 */     return this.desktopIcon.getLayout().preferredLayoutSize(this.desktopIcon);
-/*     */   }
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 153 */     Dimension dimension = new Dimension(this.iconPane.getMinimumSize());
-/* 154 */     Border border = this.frame.getBorder();
-/*     */     
-/* 156 */     if (border != null) {
-/* 157 */       dimension.height += (border.getBorderInsets(this.frame)).bottom + 
-/* 158 */         (border.getBorderInsets(this.frame)).top;
-/*     */     }
-/* 160 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 170 */     return this.iconPane.getMaximumSize();
-/*     */   }
-/*     */   
-/*     */   public Insets getInsets(JComponent paramJComponent) {
-/* 174 */     JInternalFrame jInternalFrame = this.desktopIcon.getInternalFrame();
-/* 175 */     Border border = jInternalFrame.getBorder();
-/* 176 */     if (border != null) {
-/* 177 */       return border.getBorderInsets(jInternalFrame);
-/*     */     }
-/* 179 */     return new Insets(0, 0, 0, 0);
-/*     */   }
-/*     */   public void deiconize() {
-/*     */     
-/* 183 */     try { this.frame.setIcon(false); } catch (PropertyVetoException propertyVetoException) {}
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public class MouseInputHandler
-/*     */     extends MouseInputAdapter
-/*     */   {
-/*     */     int _x;
-/*     */     
-/*     */     int _y;
-/*     */     
-/*     */     int __x;
-/*     */     
-/*     */     int __y;
-/*     */     
-/*     */     Rectangle startingBounds;
-/*     */     
-/*     */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/* 201 */       this._x = 0;
-/* 202 */       this._y = 0;
-/* 203 */       this.__x = 0;
-/* 204 */       this.__y = 0;
-/* 205 */       this.startingBounds = null;
-/*     */       
-/*     */       JDesktopPane jDesktopPane;
-/* 208 */       if ((jDesktopPane = BasicDesktopIconUI.this.desktopIcon.getDesktopPane()) != null) {
-/* 209 */         DesktopManager desktopManager = jDesktopPane.getDesktopManager();
-/* 210 */         desktopManager.endDraggingFrame(BasicDesktopIconUI.this.desktopIcon);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void mousePressed(MouseEvent param1MouseEvent) {
-/* 216 */       Point point = SwingUtilities.convertPoint((Component)param1MouseEvent.getSource(), param1MouseEvent
-/* 217 */           .getX(), param1MouseEvent.getY(), null);
-/* 218 */       this.__x = param1MouseEvent.getX();
-/* 219 */       this.__y = param1MouseEvent.getY();
-/* 220 */       this._x = point.x;
-/* 221 */       this._y = point.y;
-/* 222 */       this.startingBounds = BasicDesktopIconUI.this.desktopIcon.getBounds();
-/*     */       
-/*     */       JDesktopPane jDesktopPane;
-/* 225 */       if ((jDesktopPane = BasicDesktopIconUI.this.desktopIcon.getDesktopPane()) != null) {
-/* 226 */         DesktopManager desktopManager = jDesktopPane.getDesktopManager();
-/* 227 */         desktopManager.beginDraggingFrame(BasicDesktopIconUI.this.desktopIcon);
-/*     */       } 
-/*     */       
-/* 230 */       try { BasicDesktopIconUI.this.frame.setSelected(true); } catch (PropertyVetoException propertyVetoException) {}
-/* 231 */       if (BasicDesktopIconUI.this.desktopIcon.getParent() instanceof JLayeredPane) {
-/* 232 */         ((JLayeredPane)BasicDesktopIconUI.this.desktopIcon.getParent()).moveToFront(BasicDesktopIconUI.this.desktopIcon);
-/*     */       }
-/*     */       
-/* 235 */       if (param1MouseEvent.getClickCount() > 1 && 
-/* 236 */         BasicDesktopIconUI.this.frame.isIconifiable() && BasicDesktopIconUI.this.frame.isIcon()) {
-/* 237 */         BasicDesktopIconUI.this.deiconize();
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void mouseMoved(MouseEvent param1MouseEvent) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/* 252 */       Point point = SwingUtilities.convertPoint((Component)param1MouseEvent.getSource(), param1MouseEvent
-/* 253 */           .getX(), param1MouseEvent.getY(), null);
-/*     */       
-/* 255 */       Insets insets = BasicDesktopIconUI.this.desktopIcon.getInsets();
-/*     */       
-/* 257 */       int k = ((JComponent)BasicDesktopIconUI.this.desktopIcon.getParent()).getWidth();
-/* 258 */       int m = ((JComponent)BasicDesktopIconUI.this.desktopIcon.getParent()).getHeight();
-/*     */       
-/* 260 */       if (this.startingBounds == null) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 264 */       int i = this.startingBounds.x - this._x - point.x;
-/* 265 */       int j = this.startingBounds.y - this._y - point.y;
-/*     */       
-/* 267 */       if (i + insets.left <= -this.__x)
-/* 268 */         i = -this.__x - insets.left; 
-/* 269 */       if (j + insets.top <= -this.__y)
-/* 270 */         j = -this.__y - insets.top; 
-/* 271 */       if (i + this.__x + insets.right > k)
-/* 272 */         i = k - this.__x - insets.right; 
-/* 273 */       if (j + this.__y + insets.bottom > m) {
-/* 274 */         j = m - this.__y - insets.bottom;
-/*     */       }
-/*     */       JDesktopPane jDesktopPane;
-/* 277 */       if ((jDesktopPane = BasicDesktopIconUI.this.desktopIcon.getDesktopPane()) != null) {
-/* 278 */         DesktopManager desktopManager = jDesktopPane.getDesktopManager();
-/* 279 */         desktopManager.dragFrame(BasicDesktopIconUI.this.desktopIcon, i, j);
-/*     */       } else {
-/* 281 */         moveAndRepaint(BasicDesktopIconUI.this.desktopIcon, i, j, BasicDesktopIconUI.this.desktopIcon
-/* 282 */             .getWidth(), BasicDesktopIconUI.this.desktopIcon.getHeight());
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void moveAndRepaint(JComponent param1JComponent, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 289 */       Rectangle rectangle = param1JComponent.getBounds();
-/* 290 */       param1JComponent.setBounds(param1Int1, param1Int2, param1Int3, param1Int4);
-/* 291 */       SwingUtilities.computeUnion(param1Int1, param1Int2, param1Int3, param1Int4, rectangle);
-/* 292 */       param1JComponent.getParent().repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicDesktopIconUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import java.beans.*;
+
+/**
+ * Basic L&amp;F for a minimized window on a desktop.
+ *
+ * @author David Kloba
+ * @author Steve Wilson
+ * @author Rich Schiavi
+ */
+public class BasicDesktopIconUI extends DesktopIconUI {
+
+    protected JInternalFrame.JDesktopIcon desktopIcon;
+    protected JInternalFrame frame;
+
+    /**
+     * The title pane component used in the desktop icon.
+     *
+     * @since 1.5
+     */
+    protected JComponent iconPane;
+    MouseInputListener mouseInputListener;
+
+
+
+    public static ComponentUI createUI(JComponent c)    {
+        return new BasicDesktopIconUI();
+    }
+
+    public BasicDesktopIconUI() {
+    }
+
+    public void installUI(JComponent c)   {
+        desktopIcon = (JInternalFrame.JDesktopIcon)c;
+        frame = desktopIcon.getInternalFrame();
+        installDefaults();
+        installComponents();
+
+        // Update icon layout if frame is already iconified
+        JInternalFrame f = desktopIcon.getInternalFrame();
+        if (f.isIcon() && f.getParent() == null) {
+            JDesktopPane desktop = desktopIcon.getDesktopPane();
+            if (desktop != null) {
+                DesktopManager desktopManager = desktop.getDesktopManager();
+                if (desktopManager instanceof DefaultDesktopManager) {
+                    desktopManager.iconifyFrame(f);
+                }
+            }
+        }
+
+        installListeners();
+        JLayeredPane.putLayer(desktopIcon, JLayeredPane.getLayer(frame));
+    }
+
+    public void uninstallUI(JComponent c) {
+        uninstallDefaults();
+        uninstallComponents();
+
+        // Force future UI to relayout icon
+        JInternalFrame f = desktopIcon.getInternalFrame();
+        if (f.isIcon()) {
+            JDesktopPane desktop = desktopIcon.getDesktopPane();
+            if (desktop != null) {
+                DesktopManager desktopManager = desktop.getDesktopManager();
+                if (desktopManager instanceof DefaultDesktopManager) {
+                    // This will cause DefaultDesktopManager to layout the icon
+                    f.putClientProperty("wasIconOnce", null);
+                    // Move aside to allow fresh layout of all icons
+                    desktopIcon.setLocation(Integer.MIN_VALUE, 0);
+                }
+            }
+        }
+
+        uninstallListeners();
+        frame = null;
+        desktopIcon = null;
+    }
+
+    protected void installComponents() {
+        iconPane = new BasicInternalFrameTitlePane(frame);
+        desktopIcon.setLayout(new BorderLayout());
+        desktopIcon.add(iconPane, BorderLayout.CENTER);
+    }
+
+    protected void uninstallComponents() {
+        desktopIcon.remove(iconPane);
+        desktopIcon.setLayout(null);
+        iconPane = null;
+    }
+
+    protected void installListeners() {
+        mouseInputListener = createMouseInputListener();
+        desktopIcon.addMouseMotionListener(mouseInputListener);
+        desktopIcon.addMouseListener(mouseInputListener);
+    }
+
+    protected void uninstallListeners() {
+        desktopIcon.removeMouseMotionListener(mouseInputListener);
+        desktopIcon.removeMouseListener(mouseInputListener);
+        mouseInputListener = null;
+    }
+
+    protected void installDefaults() {
+        LookAndFeel.installBorder(desktopIcon, "DesktopIcon.border");
+        LookAndFeel.installProperty(desktopIcon, "opaque", Boolean.TRUE);
+    }
+
+    protected void uninstallDefaults() {
+        LookAndFeel.uninstallBorder(desktopIcon);
+    }
+
+    protected MouseInputListener createMouseInputListener() {
+        return new MouseInputHandler();
+    }
+
+    public Dimension getPreferredSize(JComponent c) {
+        return desktopIcon.getLayout().preferredLayoutSize(desktopIcon);
+    }
+
+    public Dimension getMinimumSize(JComponent c) {
+        Dimension dim = new Dimension(iconPane.getMinimumSize());
+        Border border = frame.getBorder();
+
+        if (border != null) {
+            dim.height += border.getBorderInsets(frame).bottom +
+                          border.getBorderInsets(frame).top;
+        }
+        return dim;
+    }
+
+    /**
+     * Desktop icons can not be resized.  Therefore, we should always
+     * return the minimum size of the desktop icon.
+     *
+     * @see #getMinimumSize
+     */
+    public Dimension getMaximumSize(JComponent c){
+        return iconPane.getMaximumSize();
+    }
+
+    public Insets getInsets(JComponent c) {
+        JInternalFrame iframe = desktopIcon.getInternalFrame();
+        Border border = iframe.getBorder();
+        if(border != null)
+            return border.getBorderInsets(iframe);
+
+        return new Insets(0,0,0,0);
+    }
+
+    public void deiconize() {
+        try { frame.setIcon(false); } catch (PropertyVetoException e2) { }
+    }
+
+    /**
+     * Listens for mouse movements and acts on them.
+     *
+     * This class should be treated as a &quot;protected&quot; inner class.
+     * Instantiate it only within subclasses of {@code BasicDesktopIconUI}.
+     */
+    public class MouseInputHandler extends MouseInputAdapter
+    {
+        // _x & _y are the mousePressed location in absolute coordinate system
+        int _x, _y;
+        // __x & __y are the mousePressed location in source view's coordinate system
+        int __x, __y;
+        Rectangle startingBounds;
+
+        public void mouseReleased(MouseEvent e) {
+            _x = 0;
+            _y = 0;
+            __x = 0;
+            __y = 0;
+            startingBounds = null;
+
+            JDesktopPane d;
+            if((d = desktopIcon.getDesktopPane()) != null) {
+                DesktopManager dm = d.getDesktopManager();
+                dm.endDraggingFrame(desktopIcon);
+            }
+
+        }
+
+        public void mousePressed(MouseEvent e) {
+            Point p = SwingUtilities.convertPoint((Component)e.getSource(),
+                        e.getX(), e.getY(), null);
+            __x = e.getX();
+            __y = e.getY();
+            _x = p.x;
+            _y = p.y;
+            startingBounds = desktopIcon.getBounds();
+
+            JDesktopPane d;
+            if((d = desktopIcon.getDesktopPane()) != null) {
+                DesktopManager dm = d.getDesktopManager();
+                dm.beginDraggingFrame(desktopIcon);
+            }
+
+            try { frame.setSelected(true); } catch (PropertyVetoException e1) { }
+            if(desktopIcon.getParent() instanceof JLayeredPane) {
+                ((JLayeredPane)desktopIcon.getParent()).moveToFront(desktopIcon);
+            }
+
+            if(e.getClickCount() > 1) {
+                if(frame.isIconifiable() && frame.isIcon()) {
+                    deiconize();
+                }
+            }
+
+        }
+
+         public void mouseMoved(MouseEvent e) {}
+
+         public void mouseDragged(MouseEvent e) {
+            Point p;
+            int newX, newY, newW, newH;
+            int deltaX;
+            int deltaY;
+            Dimension min;
+            Dimension max;
+            p = SwingUtilities.convertPoint((Component)e.getSource(),
+                                        e.getX(), e.getY(), null);
+
+                Insets i = desktopIcon.getInsets();
+                int pWidth, pHeight;
+                pWidth = ((JComponent)desktopIcon.getParent()).getWidth();
+                pHeight = ((JComponent)desktopIcon.getParent()).getHeight();
+
+                if (startingBounds == null) {
+                  // (STEVE) Yucky work around for bug ID 4106552
+                    return;
+                }
+                newX = startingBounds.x - (_x - p.x);
+                newY = startingBounds.y - (_y - p.y);
+                // Make sure we stay in-bounds
+                if(newX + i.left <= -__x)
+                    newX = -__x - i.left;
+                if(newY + i.top <= -__y)
+                    newY = -__y - i.top;
+                if(newX + __x + i.right > pWidth)
+                    newX = pWidth - __x - i.right;
+                if(newY + __y + i.bottom > pHeight)
+                    newY =  pHeight - __y - i.bottom;
+
+                JDesktopPane d;
+                if((d = desktopIcon.getDesktopPane()) != null) {
+                    DesktopManager dm = d.getDesktopManager();
+                    dm.dragFrame(desktopIcon, newX, newY);
+                } else {
+                    moveAndRepaint(desktopIcon, newX, newY,
+                                desktopIcon.getWidth(), desktopIcon.getHeight());
+                }
+                return;
+        }
+
+        public void moveAndRepaint(JComponent f, int newX, int newY,
+                                        int newWidth, int newHeight) {
+            Rectangle r = f.getBounds();
+            f.setBounds(newX, newY, newWidth, newHeight);
+            SwingUtilities.computeUnion(newX, newY, newWidth, newHeight, r);
+            f.getParent().repaint(r.x, r.y, r.width, r.height);
+        }
+    }; /// End MotionListener
+
+}

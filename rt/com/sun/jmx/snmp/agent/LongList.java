@@ -1,240 +1,235 @@
-/*     */ package com.sun.jmx.snmp.agent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class LongList
-/*     */ {
-/*  56 */   public static int DEFAULT_CAPACITY = 10;
-/*     */   
-/*  58 */   public static int DEFAULT_INCREMENT = 10;
-/*     */ 
-/*     */   
-/*     */   private final int DELTA;
-/*     */ 
-/*     */   
-/*     */   private int size;
-/*     */ 
-/*     */   
-/*     */   public long[] list;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LongList() {
-/*  72 */     this(DEFAULT_CAPACITY, DEFAULT_INCREMENT);
-/*     */   }
-/*     */   
-/*     */   LongList(int paramInt) {
-/*  76 */     this(paramInt, DEFAULT_INCREMENT);
-/*     */   }
-/*     */   
-/*     */   LongList(int paramInt1, int paramInt2) {
-/*  80 */     this.size = 0;
-/*  81 */     this.DELTA = paramInt2;
-/*  82 */     this.list = allocate(paramInt1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int size() {
-/*  88 */     return this.size;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean add(long paramLong) {
-/*  96 */     if (this.size >= this.list.length)
-/*  97 */       resize(); 
-/*  98 */     this.list[this.size++] = paramLong;
-/*  99 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void add(int paramInt, long paramLong) {
-/* 109 */     if (paramInt > this.size) throw new IndexOutOfBoundsException(); 
-/* 110 */     if (paramInt >= this.list.length) resize(); 
-/* 111 */     if (paramInt == this.size) {
-/* 112 */       this.list[this.size++] = paramLong;
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 116 */     System.arraycopy(this.list, paramInt, this.list, paramInt + 1, this.size - paramInt);
-/* 117 */     this.list[paramInt] = paramLong;
-/* 118 */     this.size++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void add(int paramInt1, long[] paramArrayOflong, int paramInt2, int paramInt3) {
-/* 134 */     if (paramInt3 <= 0)
-/* 135 */       return;  if (paramInt1 > this.size) throw new IndexOutOfBoundsException(); 
-/* 136 */     ensure(this.size + paramInt3);
-/* 137 */     if (paramInt1 < this.size) {
-/* 138 */       System.arraycopy(this.list, paramInt1, this.list, paramInt1 + paramInt3, this.size - paramInt1);
-/*     */     }
-/* 140 */     System.arraycopy(paramArrayOflong, paramInt2, this.list, paramInt1, paramInt3);
-/* 141 */     this.size += paramInt3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long remove(int paramInt1, int paramInt2) {
-/* 149 */     if (paramInt2 < 1 || paramInt1 < 0) return -1L; 
-/* 150 */     if (paramInt1 + paramInt2 > this.size) return -1L;
-/*     */     
-/* 152 */     long l = this.list[paramInt1];
-/* 153 */     int i = this.size;
-/* 154 */     this.size -= paramInt2;
-/*     */     
-/* 156 */     if (paramInt1 == this.size) return l;
-/*     */     
-/* 158 */     System.arraycopy(this.list, paramInt1 + paramInt2, this.list, paramInt1, this.size - paramInt1);
-/*     */     
-/* 160 */     return l;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long remove(int paramInt) {
-/* 169 */     if (paramInt >= this.size) return -1L; 
-/* 170 */     long l = this.list[paramInt];
-/* 171 */     this.list[paramInt] = 0L;
-/* 172 */     if (paramInt == --this.size) return l;
-/*     */     
-/* 174 */     System.arraycopy(this.list, paramInt + 1, this.list, paramInt, this.size - paramInt);
-/*     */     
-/* 176 */     return l;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long[] toArray(long[] paramArrayOflong) {
-/* 186 */     System.arraycopy(this.list, 0, paramArrayOflong, 0, this.size);
-/* 187 */     return paramArrayOflong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final long[] toArray() {
-/* 197 */     return toArray(new long[this.size]);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void resize() {
-/* 206 */     long[] arrayOfLong = allocate(this.list.length + this.DELTA);
-/* 207 */     System.arraycopy(this.list, 0, arrayOfLong, 0, this.size);
-/* 208 */     this.list = arrayOfLong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void ensure(int paramInt) {
-/* 219 */     if (this.list.length < paramInt) {
-/* 220 */       int i = this.list.length + this.DELTA;
-/* 221 */       paramInt = (paramInt < i) ? i : paramInt;
-/* 222 */       long[] arrayOfLong = allocate(paramInt);
-/* 223 */       System.arraycopy(this.list, 0, arrayOfLong, 0, this.size);
-/* 224 */       this.list = arrayOfLong;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final long[] allocate(int paramInt) {
-/* 232 */     return new long[paramInt];
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\agent\LongList.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.snmp.agent;
+
+import java.io.Serializable;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.Vector;
+
+import javax.management.ObjectName;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.NotCompliantMBeanException;
+
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+import com.sun.jmx.snmp.SnmpOid;
+import com.sun.jmx.snmp.SnmpVarBind;
+import com.sun.jmx.snmp.SnmpDefinitions;
+import com.sun.jmx.snmp.SnmpStatusException;
+import com.sun.jmx.snmp.SnmpEngine;
+import com.sun.jmx.snmp.SnmpUnknownModelException;
+import com.sun.jmx.snmp.internal.SnmpAccessControlModel;
+import com.sun.jmx.snmp.internal.SnmpEngineImpl;
+
+/**
+ * This list is used in order to construct the OID during the getnext.
+ * The constructed oid is checked by the checker AcmChecker.
+ */
+final class LongList {
+
+    public static int DEFAULT_CAPACITY = 10;
+
+    public static int DEFAULT_INCREMENT = 10;
+
+
+    private final int DELTA;
+    private int size;
+
+    /**
+     * The list content. Any access to this variable must be protected
+     * by a synchronized block on the LongList object.
+     * Only read-only action should be performed on this object.
+     **/
+    public  long[] list;
+
+    LongList() {
+        this(DEFAULT_CAPACITY,DEFAULT_INCREMENT);
+    }
+
+    LongList(int initialCapacity) {
+        this(initialCapacity,DEFAULT_INCREMENT);
+    }
+
+    LongList(int initialCapacity, int delta) {
+        size = 0;
+        DELTA = delta;
+        list = allocate(initialCapacity);
+    }
+
+    /**
+     * Same behaviour than size() in {@link java.util.List}.
+     **/
+    public final int size() { return size;}
+
+    /**
+     * Same behaviour than add(long o) in {@link java.util.List}.
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final boolean add(final long o) {
+        if (size >= list.length)
+            resize();
+        list[size++]=o;
+        return true;
+    }
+
+    /**
+     * Same behaviour than add(int index, long o) in
+     * {@link java.util.List}.
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final void add(final int index, final long o) {
+        if (index >  size) throw new IndexOutOfBoundsException();
+        if (index >= list.length) resize();
+        if (index == size) {
+            list[size++]=o;
+            return;
+        }
+
+        java.lang.System.arraycopy(list,index,list,index+1,size-index);
+        list[index]=o;
+        size++;
+    }
+
+    /**
+     * Adds <var>count</var> elements to the list.
+     * @param at index at which the elements must be inserted. The
+     *        first element will be inserted at this index.
+     * @param src  An array containing the elements we want to insert.
+     * @param from Index of the first element from <var>src</var> that
+     *        must be inserted.
+     * @param count number of elements to insert.
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final void add(final int at,final long[] src, final int from,
+                          final int count) {
+        if (count <= 0) return;
+        if (at > size) throw new IndexOutOfBoundsException();
+        ensure(size+count);
+        if (at < size) {
+            java.lang.System.arraycopy(list,at,list,at+count,size-at);
+        }
+        java.lang.System.arraycopy(src,from,list,at,count);
+        size+=count;
+    }
+
+    /**
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final long remove(final int from, final int count) {
+        if (count < 1 || from < 0) return -1;
+        if (from+count > size) return -1;
+
+        final long o = list[from];
+        final int oldsize = size;
+        size = size - count;
+
+        if (from == size) return o;
+
+        java.lang.System.arraycopy(list,from+count,list,from,
+                                   size-from);
+        return o;
+    }
+
+    /**
+     * Same behaviour than remove(int index) in {@link java.util.List}.
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final long remove(final int index) {
+        if (index >= size) return -1;
+        final long o = list[index];
+        list[index]=0;
+        if (index == --size) return o;
+
+        java.lang.System.arraycopy(list,index+1,list,index,
+                                   size-index);
+        return o;
+    }
+
+    /**
+     * Same behaviour than the toArray(long[] a) method in
+     * {@link java.util.List}.
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final long[] toArray(long[] a) {
+        java.lang.System.arraycopy(list,0,a,0,size);
+        return a;
+    }
+
+    /**
+     * Same behaviour than the toArray() method in
+     * {@link java.util.List}.
+     * Any access to this method should be protected in a synchronized
+     * block on the LongList object.
+     **/
+    public final long[] toArray() {
+        return toArray(new long[size]);
+    }
+
+    /**
+     * Resize the list. Increase its capacity by DELTA elements.
+     * Any call to this method must be protected by a synchronized
+     * block on this LongList.
+     **/
+    private final void resize() {
+        final long[] newlist = allocate(list.length + DELTA);
+        java.lang.System.arraycopy(list,0,newlist,0,size);
+        list = newlist;
+    }
+
+    /**
+     * Resize the list. Insure that the new length will be at
+     * least equal to <var>length</var>.
+     * @param length new minimal length requested.
+     * Any call to this method must be protected by a synchronized
+     * block on this LongList.
+     **/
+    private final void ensure(int length) {
+        if (list.length < length) {
+            final int min = list.length+DELTA;
+            length=(length<min)?min:length;
+            final long[] newlist = allocate(length);
+            java.lang.System.arraycopy(list,0,newlist,0,size);
+            list = newlist;
+        }
+    }
+
+    /**
+     * Allocate a new array of object of specified length.
+     **/
+    private final long[] allocate(final int length) {
+        return new long[length];
+    }
+
+}

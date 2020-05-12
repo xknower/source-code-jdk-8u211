@@ -1,140 +1,136 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
-/*     */ import org.w3c.dom.DOMError;
-/*     */ import org.w3c.dom.DOMLocator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DOMErrorImpl
-/*     */   implements DOMError
-/*     */ {
-/*  54 */   public short fSeverity = 1;
-/*  55 */   public String fMessage = null;
-/*  56 */   public DOMLocatorImpl fLocator = new DOMLocatorImpl();
-/*  57 */   public Exception fException = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String fType;
-/*     */ 
-/*     */   
-/*     */   public Object fRelatedData;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMErrorImpl() {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMErrorImpl(short severity, XMLParseException exception) {
-/*  73 */     this.fSeverity = severity;
-/*  74 */     this.fException = exception;
-/*  75 */     this.fLocator = createDOMLocator(exception);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getSeverity() {
-/*  84 */     return this.fSeverity;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessage() {
-/*  92 */     return this.fMessage;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMLocator getLocation() {
-/* 100 */     return this.fLocator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private DOMLocatorImpl createDOMLocator(XMLParseException exception) {
-/* 106 */     return new DOMLocatorImpl(exception.getLineNumber(), exception
-/* 107 */         .getColumnNumber(), exception
-/* 108 */         .getCharacterOffset(), exception
-/* 109 */         .getExpandedSystemId());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getRelatedException() {
-/* 119 */     return this.fException;
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/* 123 */     this.fSeverity = 1;
-/* 124 */     this.fException = null;
-/*     */   }
-/*     */   
-/*     */   public String getType() {
-/* 128 */     return this.fType;
-/*     */   }
-/*     */   
-/*     */   public Object getRelatedData() {
-/* 132 */     return this.fRelatedData;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\DOMErrorImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import org.w3c.dom.DOMError;
+import org.w3c.dom.DOMLocator;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
+
+
+/**
+ * <code>DOMErrorImpl</code> is an implementation that describes an error.
+ * <strong>Note:</strong> The error object that describes the error
+ * might be reused by Xerces implementation, across multiple calls to the
+ * handleEvent method on DOMErrorHandler interface.
+ *
+ *
+ * <p>See also the <a href='http://www.w3.org/TR/2001/WD-DOM-Level-3-Core-20010913'>Document Object Model (DOM) Level 3 Core Specification</a>.
+ *
+ * @xerces.internal
+ *
+ * @author Gopal Sharma, SUN Microsystems Inc.
+ * @author Elena Litani, IBM
+ *
+ */
+
+// REVISIT: the implementation of ErrorReporter.
+//          we probably should not pass XMLParseException
+//
+
+public class DOMErrorImpl implements DOMError {
+
+    //
+    // Data
+    //
+
+    public short fSeverity = DOMError.SEVERITY_WARNING;
+    public String fMessage = null;
+    public DOMLocatorImpl fLocator = new DOMLocatorImpl();
+    public Exception fException = null;
+    public String fType;
+    public Object fRelatedData;
+
+
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public DOMErrorImpl () {
+    }
+
+    /** Exctracts information from XMLParserException) */
+    public DOMErrorImpl (short severity, XMLParseException exception) {
+        fSeverity = severity;
+        fException = exception;
+        fLocator = createDOMLocator (exception);
+    }
+
+    /**
+     * The severity of the error, either <code>SEVERITY_WARNING</code>,
+     * <code>SEVERITY_ERROR</code>, or <code>SEVERITY_FATAL_ERROR</code>.
+     */
+
+    public short getSeverity() {
+        return fSeverity;
+    }
+
+    /**
+     * An implementation specific string describing the error that occured.
+     */
+
+    public String getMessage() {
+        return fMessage;
+    }
+
+    /**
+     * The location of the error.
+     */
+
+    public DOMLocator getLocation() {
+        return fLocator;
+    }
+
+    // method to get the DOMLocator Object
+    private DOMLocatorImpl createDOMLocator(XMLParseException exception) {
+        // assuming DOMLocator wants the *expanded*, not the literal, URI of the doc... - neilg
+        return new DOMLocatorImpl(exception.getLineNumber(),
+                                  exception.getColumnNumber(),
+                                  exception.getCharacterOffset(),
+                                  exception.getExpandedSystemId());
+    } // createDOMLocator()
+
+
+    /**
+     * The related platform dependent exception if any.exception is a reserved
+     * word, we need to rename it.Change to "relatedException". (F2F 26 Sep
+     * 2001)
+     */
+    public Object getRelatedException(){
+        return fException;
+    }
+
+    public void reset(){
+        fSeverity = DOMError.SEVERITY_WARNING;
+        fException = null;
+    }
+
+    public String getType(){
+        return fType;
+    }
+
+    public Object getRelatedData(){
+        return fRelatedData;
+    }
+
+
+}// class DOMErrorImpl

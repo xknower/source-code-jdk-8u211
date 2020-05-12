@@ -1,87 +1,81 @@
-/*    */ package com.sun.corba.se.impl.protocol.giopmsgheaders;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*    */ import java.nio.ByteBuffer;
-/*    */ import org.omg.CORBA.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class Message_1_2
-/*    */   extends Message_1_1
-/*    */ {
-/* 33 */   protected int request_id = 0;
-/*    */ 
-/*    */   
-/*    */   Message_1_2() {}
-/*    */ 
-/*    */   
-/*    */   Message_1_2(int paramInt1, GIOPVersion paramGIOPVersion, byte paramByte1, byte paramByte2, int paramInt2) {
-/* 40 */     super(paramInt1, paramGIOPVersion, paramByte1, paramByte2, paramInt2);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void unmarshalRequestID(ByteBuffer paramByteBuffer) {
-/*    */     int i, j, k, m;
-/* 55 */     if (!isLittleEndian()) {
-/* 56 */       i = paramByteBuffer.get(12) << 24 & 0xFF000000;
-/* 57 */       j = paramByteBuffer.get(13) << 16 & 0xFF0000;
-/* 58 */       k = paramByteBuffer.get(14) << 8 & 0xFF00;
-/* 59 */       m = paramByteBuffer.get(15) << 0 & 0xFF;
-/*    */     } else {
-/* 61 */       i = paramByteBuffer.get(15) << 24 & 0xFF000000;
-/* 62 */       j = paramByteBuffer.get(14) << 16 & 0xFF0000;
-/* 63 */       k = paramByteBuffer.get(13) << 8 & 0xFF00;
-/* 64 */       m = paramByteBuffer.get(12) << 0 & 0xFF;
-/*    */     } 
-/*    */     
-/* 67 */     this.request_id = i | j | k | m;
-/*    */   }
-/*    */   
-/*    */   public void write(OutputStream paramOutputStream) {
-/* 71 */     if (this.encodingVersion == 0) {
-/* 72 */       super.write(paramOutputStream);
-/*    */       return;
-/*    */     } 
-/* 75 */     GIOPVersion gIOPVersion = this.GIOP_version;
-/* 76 */     this.GIOP_version = GIOPVersion.getInstance((byte)13, this.encodingVersion);
-/*    */     
-/* 78 */     super.write(paramOutputStream);
-/* 79 */     this.GIOP_version = gIOPVersion;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\giopmsgheaders\Message_1_2.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.protocol.giopmsgheaders;
+
+import java.nio.ByteBuffer;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+
+public class Message_1_2 extends Message_1_1
+{
+    protected int request_id = (int) 0;
+
+    Message_1_2() {}
+
+    Message_1_2(int _magic, GIOPVersion _GIOP_version, byte _flags,
+            byte _message_type, int _message_size) {
+
+        super(_magic,
+              _GIOP_version,
+              _flags,
+              _message_type,
+              _message_size);
+    }
+
+    /**
+     * The byteBuffer is presumed to have contents of the message already
+     * read in.  It must have 12 bytes of space at the beginning for the GIOP header,
+     * but the header doesn't have to be copied in.
+     */
+    public void unmarshalRequestID(ByteBuffer byteBuffer) {
+        int b1, b2, b3, b4;
+
+        if (!isLittleEndian()) {
+            b1 = (byteBuffer.get(GIOPMessageHeaderLength+0) << 24) & 0xFF000000;
+            b2 = (byteBuffer.get(GIOPMessageHeaderLength+1) << 16) & 0x00FF0000;
+            b3 = (byteBuffer.get(GIOPMessageHeaderLength+2) << 8)  & 0x0000FF00;
+            b4 = (byteBuffer.get(GIOPMessageHeaderLength+3) << 0)  & 0x000000FF;
+        } else {
+            b1 = (byteBuffer.get(GIOPMessageHeaderLength+3) << 24) & 0xFF000000;
+            b2 = (byteBuffer.get(GIOPMessageHeaderLength+2) << 16) & 0x00FF0000;
+            b3 = (byteBuffer.get(GIOPMessageHeaderLength+1) << 8)  & 0x0000FF00;
+            b4 = (byteBuffer.get(GIOPMessageHeaderLength+0) << 0)  & 0x000000FF;
+        }
+
+        this.request_id = (b1 | b2 | b3 | b4);
+    }
+
+    public void write(org.omg.CORBA.portable.OutputStream ostream) {
+        if (this.encodingVersion == Message.CDR_ENC_VERSION) {
+            super.write(ostream);
+            return;
+        }
+        GIOPVersion gv = this.GIOP_version; // save
+        this.GIOP_version = GIOPVersion.getInstance((byte)13,
+                                                    this.encodingVersion);
+        super.write(ostream);
+        this.GIOP_version = gv; // restore
+    }
+}

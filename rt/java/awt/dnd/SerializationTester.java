@@ -1,77 +1,73 @@
-/*    */ package java.awt.dnd;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import java.io.ObjectOutputStream;
-/*    */ import java.io.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class SerializationTester
-/*    */ {
-/*    */   private static ObjectOutputStream stream;
-/*    */   
-/*    */   static {
-/*    */     try {
-/* 43 */       stream = new ObjectOutputStream(new OutputStream() {
-/*    */             public void write(int param1Int) {}
-/*    */           });
-/* 46 */     } catch (IOException iOException) {}
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   static boolean test(Object paramObject) {
-/* 51 */     if (!(paramObject instanceof java.io.Serializable)) {
-/* 52 */       return false;
-/*    */     }
-/*    */     
-/*    */     try {
-/* 56 */       stream.writeObject(paramObject);
-/* 57 */     } catch (IOException iOException) {
-/* 58 */       return false;
-/*    */     } finally {
-/*    */ 
-/*    */       
-/*    */       try {
-/*    */         
-/* 64 */         stream.reset();
-/* 65 */       } catch (IOException iOException) {}
-/*    */     } 
-/*    */ 
-/*    */     
-/* 69 */     return true;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\dnd\SerializationTester.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.dnd;
+
+import java.io.OutputStream;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+
+/**
+ * Tests if an object can truly be serialized by serializing it to a null
+ * OutputStream.
+ *
+ * @since 1.4
+ */
+final class SerializationTester {
+    private static ObjectOutputStream stream;
+    static {
+        try {
+            stream = new ObjectOutputStream(new OutputStream() {
+                    public void write(int b) {}
+                });
+        } catch (IOException cannotHappen) {
+        }
+    }
+
+    static boolean test(Object obj) {
+        if (!(obj instanceof Serializable)) {
+            return false;
+        }
+
+        try {
+            stream.writeObject(obj);
+        } catch (IOException e) {
+            return false;
+        } finally {
+            // Fix for 4503661.
+            // Reset the stream so that it doesn't keep a reference to the
+            // written object.
+            try {
+                stream.reset();
+            } catch (IOException e) {
+                // Ignore the exception.
+            }
+        }
+        return true;
+    }
+
+    private SerializationTester() {}
+}

@@ -1,81 +1,76 @@
-/*    */ package javax.swing.plaf.basic;
-/*    */ 
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import sun.awt.AppContext;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class BasicCheckBoxUI
-/*    */   extends BasicRadioButtonUI
-/*    */ {
-/* 54 */   private static final Object BASIC_CHECK_BOX_UI_KEY = new Object();
-/*    */ 
-/*    */   
-/*    */   private static final String propertyPrefix = "CheckBox.";
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 62 */     AppContext appContext = AppContext.getAppContext();
-/*    */     
-/* 64 */     BasicCheckBoxUI basicCheckBoxUI = (BasicCheckBoxUI)appContext.get(BASIC_CHECK_BOX_UI_KEY);
-/* 65 */     if (basicCheckBoxUI == null) {
-/* 66 */       basicCheckBoxUI = new BasicCheckBoxUI();
-/* 67 */       appContext.put(BASIC_CHECK_BOX_UI_KEY, basicCheckBoxUI);
-/*    */     } 
-/* 69 */     return basicCheckBoxUI;
-/*    */   }
-/*    */   
-/*    */   public String getPropertyPrefix() {
-/* 73 */     return "CheckBox.";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicCheckBoxUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import sun.awt.AppContext;
+
+import javax.swing.*;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.plaf.*;
+import java.io.Serializable;
+
+
+/**
+ * CheckboxUI implementation for BasicCheckboxUI
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Jeff Dinkins
+ */
+public class BasicCheckBoxUI extends BasicRadioButtonUI {
+
+    private static final Object BASIC_CHECK_BOX_UI_KEY = new Object();
+
+    private final static String propertyPrefix = "CheckBox" + ".";
+
+    // ********************************
+    //            Create PLAF
+    // ********************************
+    public static ComponentUI createUI(JComponent b) {
+        AppContext appContext = AppContext.getAppContext();
+        BasicCheckBoxUI checkboxUI =
+                (BasicCheckBoxUI) appContext.get(BASIC_CHECK_BOX_UI_KEY);
+        if (checkboxUI == null) {
+            checkboxUI = new BasicCheckBoxUI();
+            appContext.put(BASIC_CHECK_BOX_UI_KEY, checkboxUI);
+        }
+        return checkboxUI;
+    }
+
+    public String getPropertyPrefix() {
+        return propertyPrefix;
+    }
+
+}

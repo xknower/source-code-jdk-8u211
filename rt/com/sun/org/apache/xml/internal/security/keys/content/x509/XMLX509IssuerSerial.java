@@ -1,167 +1,161 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.content.x509;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.RFC2253Parser;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.math.BigInteger;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLX509IssuerSerial
-/*     */   extends SignatureElementProxy
-/*     */   implements XMLX509DataContent
-/*     */ {
-/*  40 */   private static Logger log = Logger.getLogger(XMLX509IssuerSerial.class.getName());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509IssuerSerial(Element paramElement, String paramString) throws XMLSecurityException {
-/*  50 */     super(paramElement, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509IssuerSerial(Document paramDocument, String paramString, BigInteger paramBigInteger) {
-/*  61 */     super(paramDocument);
-/*  62 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*  63 */     addTextElement(paramString, "X509IssuerName");
-/*  64 */     addTextElement(paramBigInteger.toString(), "X509SerialNumber");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509IssuerSerial(Document paramDocument, String paramString1, String paramString2) {
-/*  75 */     this(paramDocument, paramString1, new BigInteger(paramString2));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509IssuerSerial(Document paramDocument, String paramString, int paramInt) {
-/*  86 */     this(paramDocument, paramString, new BigInteger(Integer.toString(paramInt)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509IssuerSerial(Document paramDocument, X509Certificate paramX509Certificate) {
-/*  96 */     this(paramDocument, paramX509Certificate
-/*     */         
-/*  98 */         .getIssuerX500Principal().getName(), paramX509Certificate
-/*  99 */         .getSerialNumber());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getSerialNumber() {
-/* 110 */     String str = getTextFromChildElement("X509SerialNumber", "http://www.w3.org/2000/09/xmldsig#");
-/* 111 */     if (log.isLoggable(Level.FINE)) {
-/* 112 */       log.log(Level.FINE, "X509SerialNumber text: " + str);
-/*     */     }
-/*     */     
-/* 115 */     return new BigInteger(str);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getSerialNumberInteger() {
-/* 124 */     return getSerialNumber().intValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getIssuerName() {
-/* 133 */     return RFC2253Parser.normalize(
-/* 134 */         getTextFromChildElement("X509IssuerName", "http://www.w3.org/2000/09/xmldsig#"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 140 */     if (!(paramObject instanceof XMLX509IssuerSerial)) {
-/* 141 */       return false;
-/*     */     }
-/*     */     
-/* 144 */     XMLX509IssuerSerial xMLX509IssuerSerial = (XMLX509IssuerSerial)paramObject;
-/*     */     
-/* 146 */     return (getSerialNumber().equals(xMLX509IssuerSerial.getSerialNumber()) && 
-/* 147 */       getIssuerName().equals(xMLX509IssuerSerial.getIssuerName()));
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/* 151 */     int i = 17;
-/* 152 */     i = 31 * i + getSerialNumber().hashCode();
-/* 153 */     i = 31 * i + getIssuerName().hashCode();
-/* 154 */     return i;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseLocalName() {
-/* 159 */     return "X509IssuerSerial";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\content\x509\XMLX509IssuerSerial.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.content.x509;
+
+import java.math.BigInteger;
+import java.security.cert.X509Certificate;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.RFC2253Parser;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+public class XMLX509IssuerSerial extends SignatureElementProxy implements XMLX509DataContent {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(XMLX509IssuerSerial.class.getName());
+
+    /**
+     * Constructor XMLX509IssuerSerial
+     *
+     * @param element
+     * @param baseURI
+     * @throws XMLSecurityException
+     */
+    public XMLX509IssuerSerial(Element element, String baseURI) throws XMLSecurityException {
+        super(element, baseURI);
+    }
+
+    /**
+     * Constructor XMLX509IssuerSerial
+     *
+     * @param doc
+     * @param x509IssuerName
+     * @param x509SerialNumber
+     */
+    public XMLX509IssuerSerial(Document doc, String x509IssuerName, BigInteger x509SerialNumber) {
+        super(doc);
+        XMLUtils.addReturnToElement(this.constructionElement);
+        addTextElement(x509IssuerName, Constants._TAG_X509ISSUERNAME);
+        addTextElement(x509SerialNumber.toString(), Constants._TAG_X509SERIALNUMBER);
+    }
+
+    /**
+     * Constructor XMLX509IssuerSerial
+     *
+     * @param doc
+     * @param x509IssuerName
+     * @param x509SerialNumber
+     */
+    public XMLX509IssuerSerial(Document doc, String x509IssuerName, String x509SerialNumber) {
+        this(doc, x509IssuerName, new BigInteger(x509SerialNumber));
+    }
+
+    /**
+     * Constructor XMLX509IssuerSerial
+     *
+     * @param doc
+     * @param x509IssuerName
+     * @param x509SerialNumber
+     */
+    public XMLX509IssuerSerial(Document doc, String x509IssuerName, int x509SerialNumber) {
+        this(doc, x509IssuerName, new BigInteger(Integer.toString(x509SerialNumber)));
+    }
+
+    /**
+     * Constructor XMLX509IssuerSerial
+     *
+     * @param doc
+     * @param x509certificate
+     */
+    public XMLX509IssuerSerial(Document doc, X509Certificate x509certificate) {
+        this(
+            doc,
+            x509certificate.getIssuerX500Principal().getName(),
+            x509certificate.getSerialNumber()
+        );
+    }
+
+    /**
+     * Method getSerialNumber
+     *
+     * @return the serial number
+     */
+    public BigInteger getSerialNumber() {
+        String text =
+            this.getTextFromChildElement(Constants._TAG_X509SERIALNUMBER, Constants.SignatureSpecNS);
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "X509SerialNumber text: " + text);
+        }
+
+        return new BigInteger(text);
+    }
+
+    /**
+     * Method getSerialNumberInteger
+     *
+     * @return the serial number as plain int
+     */
+    public int getSerialNumberInteger() {
+        return this.getSerialNumber().intValue();
+    }
+
+    /**
+     * Method getIssuerName
+     *
+     * @return the issuer name
+     */
+    public String getIssuerName()  {
+        return RFC2253Parser.normalize(
+            this.getTextFromChildElement(Constants._TAG_X509ISSUERNAME, Constants.SignatureSpecNS)
+        );
+    }
+
+    /** @inheritDoc */
+    public boolean equals(Object obj) {
+        if (!(obj instanceof XMLX509IssuerSerial)) {
+            return false;
+        }
+
+        XMLX509IssuerSerial other = (XMLX509IssuerSerial) obj;
+
+        return this.getSerialNumber().equals(other.getSerialNumber())
+            && this.getIssuerName().equals(other.getIssuerName());
+    }
+
+    public int hashCode() {
+        int result = 17;
+        result = 31 * result + getSerialNumber().hashCode();
+        result = 31 * result + getIssuerName().hashCode();
+        return result;
+    }
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_X509ISSUERSERIAL;
+    }
+}

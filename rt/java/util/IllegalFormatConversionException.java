@@ -1,90 +1,84 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class IllegalFormatConversionException
-/*    */   extends IllegalFormatException
-/*    */ {
-/*    */   private static final long serialVersionUID = 17000126L;
-/*    */   private char c;
-/*    */   private Class<?> arg;
-/*    */   
-/*    */   public IllegalFormatConversionException(char paramChar, Class<?> paramClass) {
-/* 56 */     if (paramClass == null)
-/* 57 */       throw new NullPointerException(); 
-/* 58 */     this.c = paramChar;
-/* 59 */     this.arg = paramClass;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public char getConversion() {
-/* 68 */     return this.c;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Class<?> getArgumentClass() {
-/* 77 */     return this.arg;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String getMessage() {
-/* 82 */     return String.format("%c != %s", new Object[] { Character.valueOf(this.c), this.arg.getName() });
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\IllegalFormatConversionException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * Unchecked exception thrown when the argument corresponding to the format
+ * specifier is of an incompatible type.
+ *
+ * <p> Unless otherwise specified, passing a <tt>null</tt> argument to any
+ * method or constructor in this class will cause a {@link
+ * NullPointerException} to be thrown.
+ *
+ * @since 1.5
+ */
+public class IllegalFormatConversionException extends IllegalFormatException {
+
+    private static final long serialVersionUID = 17000126L;
+
+    private char c;
+    private Class<?> arg;
+
+    /**
+     * Constructs an instance of this class with the mismatched conversion and
+     * the corresponding argument class.
+     *
+     * @param  c
+     *         Inapplicable conversion
+     *
+     * @param  arg
+     *         Class of the mismatched argument
+     */
+    public IllegalFormatConversionException(char c, Class<?> arg) {
+        if (arg == null)
+            throw new NullPointerException();
+        this.c = c;
+        this.arg = arg;
+    }
+
+    /**
+     * Returns the inapplicable conversion.
+     *
+     * @return  The inapplicable conversion
+     */
+    public char getConversion() {
+        return c;
+    }
+
+    /**
+     * Returns the class of the mismatched argument.
+     *
+     * @return   The class of the mismatched argument
+     */
+    public Class<?> getArgumentClass() {
+        return arg;
+    }
+
+    // javadoc inherited from Throwable.java
+    public String getMessage() {
+        return String.format("%c != %s", c, arg.getName());
+    }
+}

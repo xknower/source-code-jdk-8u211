@@ -1,126 +1,122 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class QualifiedAttributeValueExp
-/*     */   extends AttributeValueExp
-/*     */ {
-/*     */   private static final long serialVersionUID = 8832517277410933254L;
-/*     */   private String className;
-/*     */   
-/*     */   @Deprecated
-/*     */   public QualifiedAttributeValueExp() {}
-/*     */   
-/*     */   public QualifiedAttributeValueExp(String paramString1, String paramString2) {
-/*  64 */     super(paramString2);
-/*  65 */     this.className = paramString1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getAttrClassName() {
-/*  73 */     return this.className;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp apply(ObjectName paramObjectName) throws BadStringOperationException, BadBinaryOpValueExpException, BadAttributeValueExpException, InvalidApplicationException {
-/*     */     try {
-/*  92 */       MBeanServer mBeanServer = QueryEval.getMBeanServer();
-/*  93 */       String str = mBeanServer.getObjectInstance(paramObjectName).getClassName();
-/*     */       
-/*  95 */       if (str.equals(this.className)) {
-/*  96 */         return super.apply(paramObjectName);
-/*     */       }
-/*  98 */       throw new InvalidApplicationException("Class name is " + str + ", should be " + this.className);
-/*     */     
-/*     */     }
-/* 101 */     catch (Exception exception) {
-/* 102 */       throw new InvalidApplicationException("Qualified attribute: " + exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 115 */     if (this.className != null) {
-/* 116 */       return this.className + "." + super.toString();
-/*     */     }
-/* 118 */     return super.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\QualifiedAttributeValueExp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+/**
+ * <p>Represents attributes used as arguments to relational constraints,
+ * where the attribute must be in an MBean of a specified {@linkplain
+ * MBeanInfo#getClassName() class}. A QualifiedAttributeValueExp may be used
+ * anywhere a ValueExp is required.
+ *
+ * @serial include
+ *
+ * @since 1.5
+ */
+class QualifiedAttributeValueExp extends AttributeValueExp   {
+
+
+    /* Serial version */
+    private static final long serialVersionUID = 8832517277410933254L;
+
+    /**
+     * @serial The attribute class name
+     */
+    private String className;
+
+
+    /**
+     * Basic Constructor.
+     * @deprecated see {@link AttributeValueExp#AttributeValueExp()}
+     */
+    @Deprecated
+    public QualifiedAttributeValueExp() {
+    }
+
+    /**
+     * Creates a new QualifiedAttributeValueExp representing the specified object
+     * attribute, named attr with class name className.
+     */
+    public QualifiedAttributeValueExp(String className, String attr) {
+        super(attr);
+        this.className = className;
+    }
+
+
+    /**
+     * Returns a string representation of the class name of the attribute.
+     */
+    public String getAttrClassName()  {
+        return className;
+    }
+
+    /**
+     * Applies the QualifiedAttributeValueExp to an MBean.
+     *
+     * @param name The name of the MBean on which the QualifiedAttributeValueExp will be applied.
+     *
+     * @return  The ValueExp.
+     *
+     * @exception BadStringOperationException
+     * @exception BadBinaryOpValueExpException
+     * @exception BadAttributeValueExpException
+     * @exception InvalidApplicationException
+     */
+    @Override
+    public ValueExp apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
+        BadAttributeValueExpException, InvalidApplicationException  {
+        try {
+            MBeanServer server = QueryEval.getMBeanServer();
+            String v = server.getObjectInstance(name).getClassName();
+
+            if (v.equals(className)) {
+                return super.apply(name);
+            }
+            throw new InvalidApplicationException("Class name is " + v +
+                                                  ", should be " + className);
+
+        } catch (Exception e) {
+            throw new InvalidApplicationException("Qualified attribute: " + e);
+            /* Can happen if MBean disappears between the time we
+               construct the list of MBeans to query and the time we
+               evaluate the query on this MBean, or if
+               getObjectInstance throws SecurityException.  */
+        }
+    }
+
+    /**
+     * Returns the string representing its value
+     */
+    @Override
+    public String toString()  {
+        if (className != null) {
+            return className + "." + super.toString();
+        } else {
+            return super.toString();
+        }
+    }
+
+}

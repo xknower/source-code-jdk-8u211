@@ -1,69 +1,63 @@
-/*    */ package com.sun.jmx.snmp;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class BerException
-/*    */   extends Exception
-/*    */ {
-/*    */   private static final long serialVersionUID = 494709767137042951L;
-/*    */   public static final int BAD_VERSION = 1;
-/* 47 */   private int errorType = 0;
-/*    */   
-/*    */   public BerException() {
-/* 50 */     this.errorType = 0;
-/*    */   }
-/*    */   
-/*    */   public BerException(int paramInt) {
-/* 54 */     this.errorType = paramInt;
-/*    */   }
-/*    */   
-/*    */   public boolean isInvalidSnmpVersion() {
-/* 58 */     if (this.errorType == 1) {
-/* 59 */       return true;
-/*    */     }
-/* 61 */     return false;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\BerException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp;
+
+
+
+
+
+/**
+ * Exception thrown when a BER encoding/decoding error occurs.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ *
+ * @since 1.5
+ */
+
+public class BerException extends Exception {
+  private static final long serialVersionUID = 494709767137042951L;
+
+  public static final int BAD_VERSION=1;
+
+  private int errorType= 0;
+
+  public BerException() {
+    errorType= 0;
+  }
+
+  public BerException(int x) {
+    errorType= x;
+  }
+
+  public boolean isInvalidSnmpVersion() {
+    if (errorType == BAD_VERSION)
+      return true;
+    else
+      return false;
+  }
+}

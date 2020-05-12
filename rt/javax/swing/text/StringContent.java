@@ -1,494 +1,498 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Vector;
-/*     */ import javax.swing.undo.AbstractUndoableEdit;
-/*     */ import javax.swing.undo.CannotRedoException;
-/*     */ import javax.swing.undo.CannotUndoException;
-/*     */ import javax.swing.undo.UndoableEdit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StringContent
-/*     */   implements AbstractDocument.Content, Serializable
-/*     */ {
-/*     */   public StringContent() {
-/*  59 */     this(10);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringContent(int paramInt) {
-/*  69 */     if (paramInt < 1) {
-/*  70 */       paramInt = 1;
-/*     */     }
-/*  72 */     this.data = new char[paramInt];
-/*  73 */     this.data[0] = '\n';
-/*  74 */     this.count = 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int length() {
-/*  84 */     return this.count;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UndoableEdit insertString(int paramInt, String paramString) throws BadLocationException {
-/*  97 */     if (paramInt >= this.count || paramInt < 0) {
-/*  98 */       throw new BadLocationException("Invalid location", this.count);
-/*     */     }
-/* 100 */     char[] arrayOfChar = paramString.toCharArray();
-/* 101 */     replace(paramInt, 0, arrayOfChar, 0, arrayOfChar.length);
-/* 102 */     if (this.marks != null) {
-/* 103 */       updateMarksForInsert(paramInt, paramString.length());
-/*     */     }
-/* 105 */     return new InsertUndo(paramInt, paramString.length());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UndoableEdit remove(int paramInt1, int paramInt2) throws BadLocationException {
-/* 118 */     if (paramInt1 + paramInt2 >= this.count) {
-/* 119 */       throw new BadLocationException("Invalid range", this.count);
-/*     */     }
-/* 121 */     String str = getString(paramInt1, paramInt2);
-/* 122 */     RemoveUndo removeUndo = new RemoveUndo(paramInt1, str);
-/* 123 */     replace(paramInt1, paramInt2, empty, 0, 0);
-/* 124 */     if (this.marks != null) {
-/* 125 */       updateMarksForRemove(paramInt1, paramInt2);
-/*     */     }
-/* 127 */     return removeUndo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getString(int paramInt1, int paramInt2) throws BadLocationException {
-/* 141 */     if (paramInt1 + paramInt2 > this.count) {
-/* 142 */       throw new BadLocationException("Invalid range", this.count);
-/*     */     }
-/* 144 */     return new String(this.data, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void getChars(int paramInt1, int paramInt2, Segment paramSegment) throws BadLocationException {
-/* 157 */     if (paramInt1 + paramInt2 > this.count) {
-/* 158 */       throw new BadLocationException("Invalid location", this.count);
-/*     */     }
-/* 160 */     paramSegment.array = this.data;
-/* 161 */     paramSegment.offset = paramInt1;
-/* 162 */     paramSegment.count = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Position createPosition(int paramInt) throws BadLocationException {
-/* 176 */     if (this.marks == null) {
-/* 177 */       this.marks = new Vector<>();
-/*     */     }
-/* 179 */     return new StickyPosition(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void replace(int paramInt1, int paramInt2, char[] paramArrayOfchar, int paramInt3, int paramInt4) {
-/* 195 */     int i = paramInt4 - paramInt2;
-/* 196 */     int j = paramInt1 + paramInt2;
-/* 197 */     int k = this.count - j;
-/* 198 */     int m = j + i;
-/* 199 */     if (this.count + i >= this.data.length) {
-/*     */       
-/* 201 */       int n = Math.max(2 * this.data.length, this.count + i);
-/* 202 */       char[] arrayOfChar = new char[n];
-/* 203 */       System.arraycopy(this.data, 0, arrayOfChar, 0, paramInt1);
-/* 204 */       System.arraycopy(paramArrayOfchar, paramInt3, arrayOfChar, paramInt1, paramInt4);
-/* 205 */       System.arraycopy(this.data, j, arrayOfChar, m, k);
-/* 206 */       this.data = arrayOfChar;
-/*     */     } else {
-/*     */       
-/* 209 */       System.arraycopy(this.data, j, this.data, m, k);
-/* 210 */       System.arraycopy(paramArrayOfchar, paramInt3, this.data, paramInt1, paramInt4);
-/*     */     } 
-/* 212 */     this.count += i;
-/*     */   }
-/*     */   
-/*     */   void resize(int paramInt) {
-/* 216 */     char[] arrayOfChar = new char[paramInt];
-/* 217 */     System.arraycopy(this.data, 0, arrayOfChar, 0, Math.min(paramInt, this.count));
-/* 218 */     this.data = arrayOfChar;
-/*     */   }
-/*     */   
-/*     */   synchronized void updateMarksForInsert(int paramInt1, int paramInt2) {
-/* 222 */     if (paramInt1 == 0)
-/*     */     {
-/*     */       
-/* 225 */       paramInt1 = 1;
-/*     */     }
-/* 227 */     int i = this.marks.size();
-/* 228 */     for (byte b = 0; b < i; b++) {
-/* 229 */       PosRec posRec = this.marks.elementAt(b);
-/* 230 */       if (posRec.unused) {
-/*     */         
-/* 232 */         this.marks.removeElementAt(b);
-/* 233 */         b--;
-/* 234 */         i--;
-/* 235 */       } else if (posRec.offset >= paramInt1) {
-/* 236 */         posRec.offset += paramInt2;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   synchronized void updateMarksForRemove(int paramInt1, int paramInt2) {
-/* 242 */     int i = this.marks.size();
-/* 243 */     for (byte b = 0; b < i; b++) {
-/* 244 */       PosRec posRec = this.marks.elementAt(b);
-/* 245 */       if (posRec.unused) {
-/*     */         
-/* 247 */         this.marks.removeElementAt(b);
-/* 248 */         b--;
-/* 249 */         i--;
-/* 250 */       } else if (posRec.offset >= paramInt1 + paramInt2) {
-/* 251 */         posRec.offset -= paramInt2;
-/* 252 */       } else if (posRec.offset >= paramInt1) {
-/* 253 */         posRec.offset = paramInt1;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Vector getPositionsInRange(Vector paramVector, int paramInt1, int paramInt2) {
-/* 275 */     int i = this.marks.size();
-/* 276 */     int j = paramInt1 + paramInt2;
-/* 277 */     Vector<UndoPosRef> vector = (paramVector == null) ? new Vector() : paramVector;
-/* 278 */     for (byte b = 0; b < i; b++) {
-/* 279 */       PosRec posRec = this.marks.elementAt(b);
-/* 280 */       if (posRec.unused) {
-/*     */         
-/* 282 */         this.marks.removeElementAt(b);
-/* 283 */         b--;
-/* 284 */         i--;
-/* 285 */       } else if (posRec.offset >= paramInt1 && posRec.offset <= j) {
-/* 286 */         vector.addElement(new UndoPosRef(posRec));
-/*     */       } 
-/* 288 */     }  return vector;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void updateUndoPositions(Vector<UndoPosRef> paramVector) {
-/* 301 */     for (int i = paramVector.size() - 1; i >= 0; i--) {
-/* 302 */       UndoPosRef undoPosRef = paramVector.elementAt(i);
-/*     */       
-/* 304 */       if (undoPosRef.rec.unused) {
-/* 305 */         paramVector.removeElementAt(i);
-/*     */       } else {
-/*     */         
-/* 308 */         undoPosRef.resetLocation();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/* 312 */   private static final char[] empty = new char[0];
-/*     */   
-/*     */   private char[] data;
-/*     */   
-/*     */   private int count;
-/*     */   
-/*     */   transient Vector<PosRec> marks;
-/*     */ 
-/*     */   
-/*     */   final class PosRec
-/*     */   {
-/*     */     int offset;
-/*     */     boolean unused;
-/*     */     
-/*     */     PosRec(int param1Int) {
-/* 327 */       this.offset = param1Int;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final class StickyPosition
-/*     */     implements Position
-/*     */   {
-/*     */     StringContent.PosRec rec;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     StickyPosition(int param1Int) {
-/* 343 */       this.rec = new StringContent.PosRec(param1Int);
-/* 344 */       StringContent.this.marks.addElement(this.rec);
-/*     */     }
-/*     */     
-/*     */     public int getOffset() {
-/* 348 */       return this.rec.offset;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected void finalize() throws Throwable {
-/* 354 */       this.rec.unused = true;
-/*     */     }
-/*     */     
-/*     */     public String toString() {
-/* 358 */       return Integer.toString(getOffset());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final class UndoPosRef
-/*     */   {
-/*     */     protected int undoLocation;
-/*     */     
-/*     */     protected StringContent.PosRec rec;
-/*     */     
-/*     */     UndoPosRef(StringContent.PosRec param1PosRec) {
-/* 370 */       this.rec = param1PosRec;
-/* 371 */       this.undoLocation = param1PosRec.offset;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected void resetLocation() {
-/* 379 */       this.rec.offset = this.undoLocation;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   class InsertUndo
-/*     */     extends AbstractUndoableEdit
-/*     */   {
-/*     */     protected int offset;
-/*     */     
-/*     */     protected int length;
-/*     */     protected String string;
-/*     */     protected Vector posRefs;
-/*     */     
-/*     */     protected InsertUndo(int param1Int1, int param1Int2) {
-/* 394 */       this.offset = param1Int1;
-/* 395 */       this.length = param1Int2;
-/*     */     }
-/*     */     
-/*     */     public void undo() throws CannotUndoException {
-/* 399 */       super.undo();
-/*     */       try {
-/* 401 */         synchronized (StringContent.this) {
-/*     */           
-/* 403 */           if (StringContent.this.marks != null)
-/* 404 */             this.posRefs = StringContent.this.getPositionsInRange(null, this.offset, this.length); 
-/* 405 */           this.string = StringContent.this.getString(this.offset, this.length);
-/* 406 */           StringContent.this.remove(this.offset, this.length);
-/*     */         } 
-/* 408 */       } catch (BadLocationException badLocationException) {
-/* 409 */         throw new CannotUndoException();
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void redo() throws CannotRedoException {
-/* 414 */       super.redo();
-/*     */       try {
-/* 416 */         synchronized (StringContent.this) {
-/* 417 */           StringContent.this.insertString(this.offset, this.string);
-/* 418 */           this.string = null;
-/*     */           
-/* 420 */           if (this.posRefs != null) {
-/* 421 */             StringContent.this.updateUndoPositions(this.posRefs);
-/* 422 */             this.posRefs = null;
-/*     */           } 
-/*     */         } 
-/* 425 */       } catch (BadLocationException badLocationException) {
-/* 426 */         throw new CannotRedoException();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   class RemoveUndo
-/*     */     extends AbstractUndoableEdit
-/*     */   {
-/*     */     protected int offset;
-/*     */ 
-/*     */     
-/*     */     protected int length;
-/*     */ 
-/*     */     
-/*     */     protected String string;
-/*     */ 
-/*     */     
-/*     */     protected Vector posRefs;
-/*     */ 
-/*     */     
-/*     */     protected RemoveUndo(int param1Int, String param1String) {
-/* 449 */       this.offset = param1Int;
-/* 450 */       this.string = param1String;
-/* 451 */       this.length = param1String.length();
-/* 452 */       if (StringContent.this.marks != null)
-/* 453 */         this.posRefs = StringContent.this.getPositionsInRange(null, param1Int, this.length); 
-/*     */     }
-/*     */     
-/*     */     public void undo() throws CannotUndoException {
-/* 457 */       super.undo();
-/*     */       try {
-/* 459 */         synchronized (StringContent.this) {
-/* 460 */           StringContent.this.insertString(this.offset, this.string);
-/*     */           
-/* 462 */           if (this.posRefs != null) {
-/* 463 */             StringContent.this.updateUndoPositions(this.posRefs);
-/* 464 */             this.posRefs = null;
-/*     */           } 
-/* 466 */           this.string = null;
-/*     */         } 
-/* 468 */       } catch (BadLocationException badLocationException) {
-/* 469 */         throw new CannotUndoException();
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void redo() throws CannotRedoException {
-/* 474 */       super.redo();
-/*     */       try {
-/* 476 */         synchronized (StringContent.this) {
-/* 477 */           this.string = StringContent.this.getString(this.offset, this.length);
-/*     */           
-/* 479 */           if (StringContent.this.marks != null)
-/* 480 */             this.posRefs = StringContent.this.getPositionsInRange(null, this.offset, this.length); 
-/* 481 */           StringContent.this.remove(this.offset, this.length);
-/*     */         } 
-/* 483 */       } catch (BadLocationException badLocationException) {
-/* 484 */         throw new CannotRedoException();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\StringContent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.util.Vector;
+import java.io.Serializable;
+import javax.swing.undo.*;
+import javax.swing.SwingUtilities;
+
+/**
+ * An implementation of the AbstractDocument.Content interface that is
+ * a brute force implementation that is useful for relatively small
+ * documents and/or debugging.  It manages the character content
+ * as a simple character array.  It is also quite inefficient.
+ * <p>
+ * It is generally recommended that the gap buffer or piece table
+ * implementations be used instead.  This buffer does not scale up
+ * to large sizes.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Timothy Prinzing
+ */
+public final class StringContent implements AbstractDocument.Content, Serializable {
+
+    /**
+     * Creates a new StringContent object.  Initial size defaults to 10.
+     */
+    public StringContent() {
+        this(10);
+    }
+
+    /**
+     * Creates a new StringContent object, with the initial
+     * size specified.  If the length is &lt; 1, a size of 1 is used.
+     *
+     * @param initialLength the initial size
+     */
+    public StringContent(int initialLength) {
+        if (initialLength < 1) {
+            initialLength = 1;
+        }
+        data = new char[initialLength];
+        data[0] = '\n';
+        count = 1;
+    }
+
+    /**
+     * Returns the length of the content.
+     *
+     * @return the length &gt;= 1
+     * @see AbstractDocument.Content#length
+     */
+    public int length() {
+        return count;
+    }
+
+    /**
+     * Inserts a string into the content.
+     *
+     * @param where the starting position &gt;= 0 &amp;&amp; &lt; length()
+     * @param str the non-null string to insert
+     * @return an UndoableEdit object for undoing
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#insertString
+     */
+    public UndoableEdit insertString(int where, String str) throws BadLocationException {
+        if (where >= count || where < 0) {
+            throw new BadLocationException("Invalid location", count);
+        }
+        char[] chars = str.toCharArray();
+        replace(where, 0, chars, 0, chars.length);
+        if (marks != null) {
+            updateMarksForInsert(where, str.length());
+        }
+        return new InsertUndo(where, str.length());
+    }
+
+    /**
+     * Removes part of the content.  where + nitems must be &lt; length().
+     *
+     * @param where the starting position &gt;= 0
+     * @param nitems the number of characters to remove &gt;= 0
+     * @return an UndoableEdit object for undoing
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#remove
+     */
+    public UndoableEdit remove(int where, int nitems) throws BadLocationException {
+        if (where + nitems >= count) {
+            throw new BadLocationException("Invalid range", count);
+        }
+        String removedString = getString(where, nitems);
+        UndoableEdit edit = new RemoveUndo(where, removedString);
+        replace(where, nitems, empty, 0, 0);
+        if (marks != null) {
+            updateMarksForRemove(where, nitems);
+        }
+        return edit;
+
+    }
+
+    /**
+     * Retrieves a portion of the content.  where + len must be &lt;= length().
+     *
+     * @param where the starting position &gt;= 0
+     * @param len the length to retrieve &gt;= 0
+     * @return a string representing the content; may be empty
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#getString
+     */
+    public String getString(int where, int len) throws BadLocationException {
+        if (where + len > count) {
+            throw new BadLocationException("Invalid range", count);
+        }
+        return new String(data, where, len);
+    }
+
+    /**
+     * Retrieves a portion of the content.  where + len must be &lt;= length()
+     *
+     * @param where the starting position &gt;= 0
+     * @param len the number of characters to retrieve &gt;= 0
+     * @param chars the Segment object to return the characters in
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#getChars
+     */
+    public void getChars(int where, int len, Segment chars) throws BadLocationException {
+        if (where + len > count) {
+            throw new BadLocationException("Invalid location", count);
+        }
+        chars.array = data;
+        chars.offset = where;
+        chars.count = len;
+    }
+
+    /**
+     * Creates a position within the content that will
+     * track change as the content is mutated.
+     *
+     * @param offset the offset to create a position for &gt;= 0
+     * @return the position
+     * @exception BadLocationException if the specified position is invalid
+     */
+    public Position createPosition(int offset) throws BadLocationException {
+        // some small documents won't have any sticky positions
+        // at all, so the buffer is created lazily.
+        if (marks == null) {
+            marks = new Vector<PosRec>();
+        }
+        return new StickyPosition(offset);
+    }
+
+    // --- local methods ---------------------------------------
+
+    /**
+     * Replaces some of the characters in the array
+     * @param offset  offset into the array to start the replace
+     * @param length  number of characters to remove
+     * @param replArray replacement array
+     * @param replOffset offset into the replacement array
+     * @param replLength number of character to use from the
+     *   replacement array.
+     */
+    void replace(int offset, int length,
+                 char[] replArray, int replOffset, int replLength) {
+        int delta = replLength - length;
+        int src = offset + length;
+        int nmove = count - src;
+        int dest = src + delta;
+        if ((count + delta) >= data.length) {
+            // need to grow the array
+            int newLength = Math.max(2*data.length, count + delta);
+            char[] newData = new char[newLength];
+            System.arraycopy(data, 0, newData, 0, offset);
+            System.arraycopy(replArray, replOffset, newData, offset, replLength);
+            System.arraycopy(data, src, newData, dest, nmove);
+            data = newData;
+        } else {
+            // patch the existing array
+            System.arraycopy(data, src, data, dest, nmove);
+            System.arraycopy(replArray, replOffset, data, offset, replLength);
+        }
+        count = count + delta;
+    }
+
+    void resize(int ncount) {
+        char[] ndata = new char[ncount];
+        System.arraycopy(data, 0, ndata, 0, Math.min(ncount, count));
+        data = ndata;
+    }
+
+    synchronized void updateMarksForInsert(int offset, int length) {
+        if (offset == 0) {
+            // zero is a special case where we update only
+            // marks after it.
+            offset = 1;
+        }
+        int n = marks.size();
+        for (int i = 0; i < n; i++) {
+            PosRec mark = marks.elementAt(i);
+            if (mark.unused) {
+                // this record is no longer used, get rid of it
+                marks.removeElementAt(i);
+                i -= 1;
+                n -= 1;
+            } else if (mark.offset >= offset) {
+                mark.offset += length;
+            }
+        }
+    }
+
+    synchronized void updateMarksForRemove(int offset, int length) {
+        int n = marks.size();
+        for (int i = 0; i < n; i++) {
+            PosRec mark = marks.elementAt(i);
+            if (mark.unused) {
+                // this record is no longer used, get rid of it
+                marks.removeElementAt(i);
+                i -= 1;
+                n -= 1;
+            } else if (mark.offset >= (offset + length)) {
+                mark.offset -= length;
+            } else if (mark.offset >= offset) {
+                mark.offset = offset;
+            }
+        }
+    }
+
+    /**
+     * Returns a Vector containing instances of UndoPosRef for the
+     * Positions in the range
+     * <code>offset</code> to <code>offset</code> + <code>length</code>.
+     * If <code>v</code> is not null the matching Positions are placed in
+     * there. The vector with the resulting Positions are returned.
+     * <p>
+     * This is meant for internal usage, and is generally not of interest
+     * to subclasses.
+     *
+     * @param v the Vector to use, with a new one created on null
+     * @param offset the starting offset &gt;= 0
+     * @param length the length &gt;= 0
+     * @return the set of instances
+     */
+    protected Vector getPositionsInRange(Vector v, int offset,
+                                                      int length) {
+        int n = marks.size();
+        int end = offset + length;
+        Vector placeIn = (v == null) ? new Vector() : v;
+        for (int i = 0; i < n; i++) {
+            PosRec mark = marks.elementAt(i);
+            if (mark.unused) {
+                // this record is no longer used, get rid of it
+                marks.removeElementAt(i);
+                i -= 1;
+                n -= 1;
+            } else if(mark.offset >= offset && mark.offset <= end)
+                placeIn.addElement(new UndoPosRef(mark));
+        }
+        return placeIn;
+    }
+
+    /**
+     * Resets the location for all the UndoPosRef instances
+     * in <code>positions</code>.
+     * <p>
+     * This is meant for internal usage, and is generally not of interest
+     * to subclasses.
+     *
+     * @param positions the positions of the instances
+     */
+    protected void updateUndoPositions(Vector positions) {
+        for(int counter = positions.size() - 1; counter >= 0; counter--) {
+            UndoPosRef ref = (UndoPosRef)positions.elementAt(counter);
+            // Check if the Position is still valid.
+            if(ref.rec.unused) {
+                positions.removeElementAt(counter);
+            }
+            else
+                ref.resetLocation();
+        }
+    }
+
+    private static final char[] empty = new char[0];
+    private char[] data;
+    private int count;
+    transient Vector<PosRec> marks;
+
+    /**
+     * holds the data for a mark... separately from
+     * the real mark so that the real mark can be
+     * collected if there are no more references to
+     * it.... the update table holds only a reference
+     * to this grungy thing.
+     */
+    final class PosRec {
+
+        PosRec(int offset) {
+            this.offset = offset;
+        }
+
+        int offset;
+        boolean unused;
+    }
+
+    /**
+     * This really wants to be a weak reference but
+     * in 1.1 we don't have a 100% pure solution for
+     * this... so this class trys to hack a solution
+     * to causing the marks to be collected.
+     */
+    final class StickyPosition implements Position {
+
+        StickyPosition(int offset) {
+            rec = new PosRec(offset);
+            marks.addElement(rec);
+        }
+
+        public int getOffset() {
+            return rec.offset;
+        }
+
+        protected void finalize() throws Throwable {
+            // schedule the record to be removed later
+            // on another thread.
+            rec.unused = true;
+        }
+
+        public String toString() {
+            return Integer.toString(getOffset());
+        }
+
+        PosRec rec;
+    }
+
+    /**
+     * Used to hold a reference to a Position that is being reset as the
+     * result of removing from the content.
+     */
+    final class UndoPosRef {
+        UndoPosRef(PosRec rec) {
+            this.rec = rec;
+            this.undoLocation = rec.offset;
+        }
+
+        /**
+         * Resets the location of the Position to the offset when the
+         * receiver was instantiated.
+         */
+        protected void resetLocation() {
+            rec.offset = undoLocation;
+        }
+
+        /** Location to reset to when resetLocatino is invoked. */
+        protected int undoLocation;
+        /** Position to reset offset. */
+        protected PosRec rec;
+    }
+
+    /**
+     * UnoableEdit created for inserts.
+     */
+    class InsertUndo extends AbstractUndoableEdit {
+        protected InsertUndo(int offset, int length) {
+            super();
+            this.offset = offset;
+            this.length = length;
+        }
+
+        public void undo() throws CannotUndoException {
+            super.undo();
+            try {
+                synchronized(StringContent.this) {
+                    // Get the Positions in the range being removed.
+                    if(marks != null)
+                        posRefs = getPositionsInRange(null, offset, length);
+                    string = getString(offset, length);
+                    remove(offset, length);
+                }
+            } catch (BadLocationException bl) {
+              throw new CannotUndoException();
+            }
+        }
+
+        public void redo() throws CannotRedoException {
+            super.redo();
+            try {
+                synchronized(StringContent.this) {
+                    insertString(offset, string);
+                    string = null;
+                    // Update the Positions that were in the range removed.
+                    if(posRefs != null) {
+                        updateUndoPositions(posRefs);
+                        posRefs = null;
+                    }
+              }
+            } catch (BadLocationException bl) {
+              throw new CannotRedoException();
+            }
+        }
+
+        // Where the string goes.
+        protected int offset;
+        // Length of the string.
+        protected int length;
+        // The string that was inserted. To cut down on space needed this
+        // will only be valid after an undo.
+        protected String string;
+        // An array of instances of UndoPosRef for the Positions in the
+        // range that was removed, valid after undo.
+        protected Vector posRefs;
+    }
+
+
+    /**
+     * UndoableEdit created for removes.
+     */
+    class RemoveUndo extends AbstractUndoableEdit {
+        protected RemoveUndo(int offset, String string) {
+            super();
+            this.offset = offset;
+            this.string = string;
+            this.length = string.length();
+            if(marks != null)
+                posRefs = getPositionsInRange(null, offset, length);
+        }
+
+        public void undo() throws CannotUndoException {
+            super.undo();
+            try {
+                synchronized(StringContent.this) {
+                    insertString(offset, string);
+                    // Update the Positions that were in the range removed.
+                    if(posRefs != null) {
+                        updateUndoPositions(posRefs);
+                        posRefs = null;
+                    }
+                    string = null;
+                }
+            } catch (BadLocationException bl) {
+              throw new CannotUndoException();
+            }
+        }
+
+        public void redo() throws CannotRedoException {
+            super.redo();
+            try {
+                synchronized(StringContent.this) {
+                    string = getString(offset, length);
+                    // Get the Positions in the range being removed.
+                    if(marks != null)
+                        posRefs = getPositionsInRange(null, offset, length);
+                    remove(offset, length);
+                }
+            } catch (BadLocationException bl) {
+              throw new CannotRedoException();
+            }
+        }
+
+        // Where the string goes.
+        protected int offset;
+        // Length of the string.
+        protected int length;
+        // The string that was inserted. This will be null after an undo.
+        protected String string;
+        // An array of instances of UndoPosRef for the Positions in the
+        // range that was removed, valid before undo.
+        protected Vector posRefs;
+    }
+}

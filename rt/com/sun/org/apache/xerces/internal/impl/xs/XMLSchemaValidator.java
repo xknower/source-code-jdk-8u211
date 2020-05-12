@@ -1,4313 +1,4308 @@
-/*      */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.impl.RevalidationHandler;
-/*      */ import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
-/*      */ import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.DatatypeException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*      */ import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
-/*      */ import com.sun.org.apache.xerces.internal.impl.validation.ValidationState;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.Field;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.FieldActivator;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.IdentityConstraint;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.KeyRef;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.Selector;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.UniqueOrKey;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.ValueStore;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.identity.XPathMatcher;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.models.CMBuilder;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.models.CMNodeFactory;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.models.XSCMValidator;
-/*      */ import com.sun.org.apache.xerces.internal.parsers.XMLParser;
-/*      */ import com.sun.org.apache.xerces.internal.util.AugmentationsImpl;
-/*      */ import com.sun.org.apache.xerces.internal.util.IntStack;
-/*      */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*      */ import com.sun.org.apache.xerces.internal.util.URI;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLAttributesImpl;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLChar;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*      */ import com.sun.org.apache.xerces.internal.xni.Augmentations;
-/*      */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*      */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentFilter;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*      */ import com.sun.org.apache.xerces.internal.xs.ShortList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.StringList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*      */ import java.io.IOException;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Collections;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import java.util.Stack;
-/*      */ import java.util.Vector;
-/*      */ import jdk.xml.internal.JdkXmlUtils;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XMLSchemaValidator
-/*      */   implements XMLComponent, XMLDocumentFilter, FieldActivator, RevalidationHandler
-/*      */ {
-/*      */   private static final boolean DEBUG = false;
-/*      */   protected static final String VALIDATION = "http://xml.org/sax/features/validation";
-/*      */   protected static final String SCHEMA_VALIDATION = "http://apache.org/xml/features/validation/schema";
-/*      */   protected static final String SCHEMA_FULL_CHECKING = "http://apache.org/xml/features/validation/schema-full-checking";
-/*      */   protected static final String DYNAMIC_VALIDATION = "http://apache.org/xml/features/validation/dynamic";
-/*      */   protected static final String NORMALIZE_DATA = "http://apache.org/xml/features/validation/schema/normalized-value";
-/*      */   protected static final String SCHEMA_ELEMENT_DEFAULT = "http://apache.org/xml/features/validation/schema/element-default";
-/*      */   protected static final String SCHEMA_AUGMENT_PSVI = "http://apache.org/xml/features/validation/schema/augment-psvi";
-/*      */   protected static final String ALLOW_JAVA_ENCODINGS = "http://apache.org/xml/features/allow-java-encodings";
-/*      */   protected static final String STANDARD_URI_CONFORMANT_FEATURE = "http://apache.org/xml/features/standard-uri-conformant";
-/*      */   protected static final String GENERATE_SYNTHETIC_ANNOTATIONS = "http://apache.org/xml/features/generate-synthetic-annotations";
-/*      */   protected static final String VALIDATE_ANNOTATIONS = "http://apache.org/xml/features/validate-annotations";
-/*      */   protected static final String HONOUR_ALL_SCHEMALOCATIONS = "http://apache.org/xml/features/honour-all-schemaLocations";
-/*      */   protected static final String USE_GRAMMAR_POOL_ONLY = "http://apache.org/xml/features/internal/validation/schema/use-grammar-pool-only";
-/*      */   protected static final String CONTINUE_AFTER_FATAL_ERROR = "http://apache.org/xml/features/continue-after-fatal-error";
-/*      */   protected static final String PARSER_SETTINGS = "http://apache.org/xml/features/internal/parser-settings";
-/*      */   protected static final String NAMESPACE_GROWTH = "http://apache.org/xml/features/namespace-growth";
-/*      */   protected static final String TOLERATE_DUPLICATES = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*      */   protected static final String REPORT_WHITESPACE = "http://java.sun.com/xml/schema/features/report-ignored-element-content-whitespace";
-/*      */   public static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*      */   public static final String ERROR_REPORTER = "http://apache.org/xml/properties/internal/error-reporter";
-/*      */   public static final String ENTITY_RESOLVER = "http://apache.org/xml/properties/internal/entity-resolver";
-/*      */   public static final String XMLGRAMMAR_POOL = "http://apache.org/xml/properties/internal/grammar-pool";
-/*      */   protected static final String VALIDATION_MANAGER = "http://apache.org/xml/properties/internal/validation-manager";
-/*      */   protected static final String ENTITY_MANAGER = "http://apache.org/xml/properties/internal/entity-manager";
-/*      */   protected static final String SCHEMA_LOCATION = "http://apache.org/xml/properties/schema/external-schemaLocation";
-/*      */   protected static final String SCHEMA_NONS_LOCATION = "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation";
-/*      */   protected static final String JAXP_SCHEMA_SOURCE = "http://java.sun.com/xml/jaxp/properties/schemaSource";
-/*      */   protected static final String JAXP_SCHEMA_LANGUAGE = "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
-/*      */   protected static final String SCHEMA_DV_FACTORY = "http://apache.org/xml/properties/internal/validation/schema/dv-factory";
-/*      */   private static final String XML_SECURITY_PROPERTY_MANAGER = "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager";
-/*      */   protected static final String OVERRIDE_PARSER = "jdk.xml.overrideDefaultParser";
-/*  243 */   private static final String[] RECOGNIZED_FEATURES = new String[] { "http://xml.org/sax/features/validation", "http://apache.org/xml/features/validation/schema", "http://apache.org/xml/features/validation/dynamic", "http://apache.org/xml/features/validation/schema-full-checking", "http://apache.org/xml/features/allow-java-encodings", "http://apache.org/xml/features/continue-after-fatal-error", "http://apache.org/xml/features/standard-uri-conformant", "http://apache.org/xml/features/generate-synthetic-annotations", "http://apache.org/xml/features/validate-annotations", "http://apache.org/xml/features/honour-all-schemaLocations", "http://apache.org/xml/features/internal/validation/schema/use-grammar-pool-only", "http://apache.org/xml/features/namespace-growth", "http://apache.org/xml/features/internal/tolerate-duplicates", "jdk.xml.overrideDefaultParser" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  262 */   private static final Boolean[] FEATURE_DEFAULTS = new Boolean[] { null, null, null, null, null, null, null, null, null, null, null, null, null, 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  281 */       Boolean.valueOf(JdkXmlUtils.OVERRIDE_PARSER_DEFAULT) };
-/*      */ 
-/*      */ 
-/*      */   
-/*  285 */   private static final String[] RECOGNIZED_PROPERTIES = new String[] { "http://apache.org/xml/properties/internal/symbol-table", "http://apache.org/xml/properties/internal/error-reporter", "http://apache.org/xml/properties/internal/entity-resolver", "http://apache.org/xml/properties/internal/validation-manager", "http://apache.org/xml/properties/schema/external-schemaLocation", "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation", "http://java.sun.com/xml/jaxp/properties/schemaSource", "http://java.sun.com/xml/jaxp/properties/schemaLanguage", "http://apache.org/xml/properties/internal/validation/schema/dv-factory", "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  300 */   private static final Object[] PROPERTY_DEFAULTS = new Object[] { null, null, null, null, null, null, null, null, null, null, null, null, null };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final int ID_CONSTRAINT_NUM = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  313 */   protected ElementPSVImpl fCurrentPSVI = new ElementPSVImpl();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  320 */   protected final AugmentationsImpl fAugmentations = new AugmentationsImpl();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  326 */   protected final HashMap fMayMatchFieldMap = new HashMap<>();
-/*      */   
-/*      */   protected XMLString fDefaultValue;
-/*      */   
-/*      */   protected boolean fDynamicValidation = false;
-/*      */   
-/*      */   protected boolean fSchemaDynamicValidation = false;
-/*      */   
-/*      */   protected boolean fDoValidation = false;
-/*      */   
-/*      */   protected boolean fFullChecking = false;
-/*      */   
-/*      */   protected boolean fNormalizeData = true;
-/*      */   
-/*      */   protected boolean fSchemaElementDefault = true;
-/*      */   
-/*      */   protected boolean fAugPSVI = true;
-/*      */   protected boolean fIdConstraint = false;
-/*      */   protected boolean fUseGrammarPoolOnly = false;
-/*      */   protected boolean fNamespaceGrowth = false;
-/*  346 */   private String fSchemaType = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fEntityRef = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fInCDATA = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fSawOnlyWhitespaceInElementContent = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected SymbolTable fSymbolTable;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private XMLLocator fLocator;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final class XSIErrorReporter
-/*      */   {
-/*      */     XMLErrorReporter fErrorReporter;
-/*      */ 
-/*      */ 
-/*      */     
-/*  377 */     Vector fErrors = new Vector();
-/*  378 */     int[] fContext = new int[8];
-/*      */     
-/*      */     int fContextCount;
-/*      */     
-/*      */     public void reset(XMLErrorReporter errorReporter) {
-/*  383 */       this.fErrorReporter = errorReporter;
-/*  384 */       this.fErrors.removeAllElements();
-/*  385 */       this.fContextCount = 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void pushContext() {
-/*  391 */       if (!XMLSchemaValidator.this.fAugPSVI) {
-/*      */         return;
-/*      */       }
-/*      */       
-/*  395 */       if (this.fContextCount == this.fContext.length) {
-/*  396 */         int newSize = this.fContextCount + 8;
-/*  397 */         int[] newArray = new int[newSize];
-/*  398 */         System.arraycopy(this.fContext, 0, newArray, 0, this.fContextCount);
-/*  399 */         this.fContext = newArray;
-/*      */       } 
-/*      */       
-/*  402 */       this.fContext[this.fContextCount++] = this.fErrors.size();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public String[] popContext() {
-/*  407 */       if (!XMLSchemaValidator.this.fAugPSVI) {
-/*  408 */         return null;
-/*      */       }
-/*      */       
-/*  411 */       int contextPos = this.fContext[--this.fContextCount];
-/*      */       
-/*  413 */       int size = this.fErrors.size() - contextPos;
-/*      */       
-/*  415 */       if (size == 0) {
-/*  416 */         return null;
-/*      */       }
-/*  418 */       String[] errors = new String[size];
-/*  419 */       for (int i = 0; i < size; i++) {
-/*  420 */         errors[i] = this.fErrors.elementAt(contextPos + i);
-/*      */       }
-/*      */       
-/*  423 */       this.fErrors.setSize(contextPos);
-/*  424 */       return errors;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String[] mergeContext() {
-/*  431 */       if (!XMLSchemaValidator.this.fAugPSVI) {
-/*  432 */         return null;
-/*      */       }
-/*      */       
-/*  435 */       int contextPos = this.fContext[--this.fContextCount];
-/*      */       
-/*  437 */       int size = this.fErrors.size() - contextPos;
-/*      */       
-/*  439 */       if (size == 0) {
-/*  440 */         return null;
-/*      */       }
-/*  442 */       String[] errors = new String[size];
-/*  443 */       for (int i = 0; i < size; i++) {
-/*  444 */         errors[i] = this.fErrors.elementAt(contextPos + i);
-/*      */       }
-/*      */ 
-/*      */       
-/*  448 */       return errors;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void reportError(String domain, String key, Object[] arguments, short severity) throws XNIException {
-/*  453 */       this.fErrorReporter.reportError(domain, key, arguments, severity);
-/*  454 */       if (XMLSchemaValidator.this.fAugPSVI) {
-/*  455 */         this.fErrors.addElement(key);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void reportError(XMLLocator location, String domain, String key, Object[] arguments, short severity) throws XNIException {
-/*  466 */       this.fErrorReporter.reportError(location, domain, key, arguments, severity);
-/*  467 */       if (XMLSchemaValidator.this.fAugPSVI) {
-/*  468 */         this.fErrors.addElement(key);
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*  474 */   protected final XSIErrorReporter fXSIErrorReporter = new XSIErrorReporter();
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityResolver fEntityResolver;
-/*      */ 
-/*      */   
-/*  480 */   protected ValidationManager fValidationManager = null;
-/*  481 */   protected ValidationState fValidationState = new ValidationState();
-/*      */   
-/*      */   protected XMLGrammarPool fGrammarPool;
-/*      */   
-/*  485 */   protected String fExternalSchemas = null;
-/*  486 */   protected String fExternalNoNamespaceSchema = null;
-/*      */ 
-/*      */   
-/*  489 */   protected Object fJaxpSchemaSource = null;
-/*      */ 
-/*      */   
-/*  492 */   protected final XSDDescription fXSDDescription = new XSDDescription();
-/*  493 */   protected final Map<String, XMLSchemaLoader.LocationArray> fLocationPairs = new HashMap<>();
-/*      */ 
-/*      */   
-/*      */   protected XMLDocumentHandler fDocumentHandler;
-/*      */ 
-/*      */   
-/*      */   protected XMLDocumentSource fDocumentSource;
-/*      */ 
-/*      */   
-/*      */   boolean reportWhitespace = false;
-/*      */ 
-/*      */   
-/*      */   static final int INITIAL_STACK_SIZE = 8;
-/*      */ 
-/*      */   
-/*      */   static final int INC_STACK_SIZE = 8;
-/*      */ 
-/*      */   
-/*      */   private static final boolean DEBUG_NORMALIZATION = false;
-/*      */ 
-/*      */   
-/*      */   public String[] getRecognizedFeatures() {
-/*  515 */     return (String[])RECOGNIZED_FEATURES.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFeature(String featureId, boolean state) throws XMLConfigurationException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getRecognizedProperties() {
-/*  542 */     return (String[])RECOGNIZED_PROPERTIES.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setProperty(String propertyId, Object value) throws XMLConfigurationException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Boolean getFeatureDefault(String featureId) {
-/*  573 */     for (int i = 0; i < RECOGNIZED_FEATURES.length; i++) {
-/*  574 */       if (RECOGNIZED_FEATURES[i].equals(featureId)) {
-/*  575 */         return FEATURE_DEFAULTS[i];
-/*      */       }
-/*      */     } 
-/*  578 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getPropertyDefault(String propertyId) {
-/*  591 */     for (int i = 0; i < RECOGNIZED_PROPERTIES.length; i++) {
-/*  592 */       if (RECOGNIZED_PROPERTIES[i].equals(propertyId)) {
-/*  593 */         return PROPERTY_DEFAULTS[i];
-/*      */       }
-/*      */     } 
-/*  596 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDocumentHandler(XMLDocumentHandler documentHandler) {
-/*  605 */     this.fDocumentHandler = documentHandler;
-/*      */ 
-/*      */     
-/*  608 */     if (documentHandler instanceof XMLParser) {
-/*      */       try {
-/*  610 */         this
-/*  611 */           .reportWhitespace = ((XMLParser)documentHandler).getFeature("http://java.sun.com/xml/schema/features/report-ignored-element-content-whitespace");
-/*      */       }
-/*  613 */       catch (Exception e) {
-/*  614 */         this.reportWhitespace = false;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public XMLDocumentHandler getDocumentHandler() {
-/*  621 */     return this.fDocumentHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDocumentSource(XMLDocumentSource source) {
-/*  630 */     this.fDocumentSource = source;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public XMLDocumentSource getDocumentSource() {
-/*  635 */     return this.fDocumentSource;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startDocument(XMLLocator locator, String encoding, NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
-/*  667 */     this.fValidationState.setNamespaceSupport(namespaceContext);
-/*  668 */     this.fState4XsiType.setNamespaceSupport(namespaceContext);
-/*  669 */     this.fState4ApplyDefault.setNamespaceSupport(namespaceContext);
-/*  670 */     this.fLocator = locator;
-/*      */     
-/*  672 */     handleStartDocument(locator, encoding);
-/*      */     
-/*  674 */     if (this.fDocumentHandler != null) {
-/*  675 */       this.fDocumentHandler.startDocument(locator, encoding, namespaceContext, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void xmlDecl(String version, String encoding, String standalone, Augmentations augs) throws XNIException {
-/*  697 */     if (this.fDocumentHandler != null) {
-/*  698 */       this.fDocumentHandler.xmlDecl(version, encoding, standalone, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void doctypeDecl(String rootElement, String publicId, String systemId, Augmentations augs) throws XNIException {
-/*  723 */     if (this.fDocumentHandler != null) {
-/*  724 */       this.fDocumentHandler.doctypeDecl(rootElement, publicId, systemId, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/*  741 */     Augmentations modifiedAugs = handleStartElement(element, attributes, augs);
-/*      */     
-/*  743 */     if (this.fDocumentHandler != null) {
-/*  744 */       this.fDocumentHandler.startElement(element, attributes, modifiedAugs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void emptyElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/*  761 */     Augmentations modifiedAugs = handleStartElement(element, attributes, augs);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  766 */     this.fDefaultValue = null;
-/*      */ 
-/*      */     
-/*  769 */     if (this.fElementDepth != -2) {
-/*  770 */       modifiedAugs = handleEndElement(element, modifiedAugs);
-/*      */     }
-/*      */     
-/*  773 */     if (this.fDocumentHandler != null) {
-/*  774 */       if (!this.fSchemaElementDefault || this.fDefaultValue == null) {
-/*  775 */         this.fDocumentHandler.emptyElement(element, attributes, modifiedAugs);
-/*      */       } else {
-/*  777 */         this.fDocumentHandler.startElement(element, attributes, modifiedAugs);
-/*  778 */         this.fDocumentHandler.characters(this.fDefaultValue, null);
-/*  779 */         this.fDocumentHandler.endElement(element, modifiedAugs);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void characters(XMLString text, Augmentations augs) throws XNIException {
-/*  793 */     text = handleCharacters(text);
-/*      */     
-/*  795 */     if (this.fSawOnlyWhitespaceInElementContent) {
-/*  796 */       this.fSawOnlyWhitespaceInElementContent = false;
-/*  797 */       if (!this.reportWhitespace) {
-/*  798 */         ignorableWhitespace(text, augs);
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  804 */     if (this.fDocumentHandler != null) {
-/*  805 */       if (this.fNormalizeData && this.fUnionType) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  810 */         if (augs != null)
-/*  811 */           this.fDocumentHandler.characters(this.fEmptyXMLStr, augs); 
-/*      */       } else {
-/*  813 */         this.fDocumentHandler.characters(text, augs);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
-/*  833 */     handleIgnorableWhitespace(text);
-/*      */     
-/*  835 */     if (this.fDocumentHandler != null) {
-/*  836 */       this.fDocumentHandler.ignorableWhitespace(text, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endElement(QName element, Augmentations augs) throws XNIException {
-/*  853 */     this.fDefaultValue = null;
-/*  854 */     Augmentations modifiedAugs = handleEndElement(element, augs);
-/*      */     
-/*  856 */     if (this.fDocumentHandler != null) {
-/*  857 */       if (!this.fSchemaElementDefault || this.fDefaultValue == null) {
-/*  858 */         this.fDocumentHandler.endElement(element, modifiedAugs);
-/*      */       } else {
-/*  860 */         this.fDocumentHandler.characters(this.fDefaultValue, null);
-/*  861 */         this.fDocumentHandler.endElement(element, modifiedAugs);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startCDATA(Augmentations augs) throws XNIException {
-/*  876 */     this.fInCDATA = true;
-/*      */     
-/*  878 */     if (this.fDocumentHandler != null) {
-/*  879 */       this.fDocumentHandler.startCDATA(augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endCDATA(Augmentations augs) throws XNIException {
-/*  894 */     this.fInCDATA = false;
-/*  895 */     if (this.fDocumentHandler != null) {
-/*  896 */       this.fDocumentHandler.endCDATA(augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endDocument(Augmentations augs) throws XNIException {
-/*  910 */     handleEndDocument();
-/*      */ 
-/*      */     
-/*  913 */     if (this.fDocumentHandler != null) {
-/*  914 */       this.fDocumentHandler.endDocument(augs);
-/*      */     }
-/*  916 */     this.fLocator = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean characterData(String data, Augmentations augs) {
-/*  930 */     this.fSawText = (this.fSawText || data.length() > 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  937 */     if (this.fNormalizeData && this.fWhiteSpace != -1 && this.fWhiteSpace != 0) {
-/*      */       
-/*  939 */       normalizeWhitespace(data, (this.fWhiteSpace == 2));
-/*  940 */       this.fBuffer.append(this.fNormalizedStr.ch, this.fNormalizedStr.offset, this.fNormalizedStr.length);
-/*      */     }
-/*  942 */     else if (this.fAppendBuffer) {
-/*  943 */       this.fBuffer.append(data);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  948 */     boolean allWhiteSpace = true;
-/*  949 */     if (this.fCurrentType != null && this.fCurrentType
-/*  950 */       .getTypeCategory() == 15) {
-/*  951 */       XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/*  952 */       if (ctype.fContentType == 2)
-/*      */       {
-/*  954 */         for (int i = 0; i < data.length(); i++) {
-/*  955 */           if (!XMLChar.isSpace(data.charAt(i))) {
-/*  956 */             allWhiteSpace = false;
-/*  957 */             this.fSawCharacters = true;
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       }
-/*      */     } 
-/*  964 */     return allWhiteSpace;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void elementDefault(String data) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startGeneralEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs) throws XNIException {
-/* 1000 */     this.fEntityRef = true;
-/*      */     
-/* 1002 */     if (this.fDocumentHandler != null) {
-/* 1003 */       this.fDocumentHandler.startGeneralEntity(name, identifier, encoding, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void textDecl(String version, String encoding, Augmentations augs) throws XNIException {
-/* 1028 */     if (this.fDocumentHandler != null) {
-/* 1029 */       this.fDocumentHandler.textDecl(version, encoding, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void comment(XMLString text, Augmentations augs) throws XNIException {
-/* 1045 */     if (this.fDocumentHandler != null) {
-/* 1046 */       this.fDocumentHandler.comment(text, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
-/* 1072 */     if (this.fDocumentHandler != null) {
-/* 1073 */       this.fDocumentHandler.processingInstruction(target, data, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
-/* 1093 */     this.fEntityRef = false;
-/* 1094 */     if (this.fDocumentHandler != null) {
-/* 1095 */       this.fDocumentHandler.endGeneralEntity(name, augs);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1113 */   private final XMLString fEmptyXMLStr = new XMLString(null, 0, -1);
-/*      */   
-/*      */   private static final int BUFFER_SIZE = 20;
-/* 1116 */   private final XMLString fNormalizedStr = new XMLString();
-/*      */   
-/*      */   private boolean fFirstChunk = true;
-/*      */   private boolean fTrailing = false;
-/* 1120 */   private short fWhiteSpace = -1;
-/*      */   
-/*      */   private boolean fUnionType = false;
-/*      */   
-/* 1124 */   private final XSGrammarBucket fGrammarBucket = new XSGrammarBucket();
-/* 1125 */   private final SubstitutionGroupHandler fSubGroupHandler = new SubstitutionGroupHandler(this.fGrammarBucket);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1130 */   private final XSSimpleType fQNameDV = (XSSimpleType)SchemaGrammar.SG_SchemaNS
-/* 1131 */     .getGlobalTypeDecl("QName");
-/*      */   
-/* 1133 */   private final CMNodeFactory nodeFactory = new CMNodeFactory();
-/*      */ 
-/*      */   
-/* 1136 */   private final CMBuilder fCMBuilder = new CMBuilder(this.nodeFactory);
-/*      */ 
-/*      */   
-/* 1139 */   private final XMLSchemaLoader fSchemaLoader = new XMLSchemaLoader(this.fXSIErrorReporter.fErrorReporter, this.fGrammarBucket, this.fSubGroupHandler, this.fCMBuilder);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String fValidationRoot;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int fSkipValidationDepth;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int fNFullValidationDepth;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int fNNoneValidationDepth;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int fElementDepth;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean fSubElement;
-/*      */ 
-/*      */ 
-/*      */   
-/* 1168 */   private boolean[] fSubElementStack = new boolean[8];
-/*      */ 
-/*      */   
-/*      */   private XSElementDecl fCurrentElemDecl;
-/*      */ 
-/*      */   
-/* 1174 */   private XSElementDecl[] fElemDeclStack = new XSElementDecl[8];
-/*      */ 
-/*      */   
-/*      */   private boolean fNil;
-/*      */ 
-/*      */   
-/* 1180 */   private boolean[] fNilStack = new boolean[8];
-/*      */ 
-/*      */   
-/*      */   private XSNotationDecl fNotation;
-/*      */ 
-/*      */   
-/* 1186 */   private XSNotationDecl[] fNotationStack = new XSNotationDecl[8];
-/*      */ 
-/*      */   
-/*      */   private XSTypeDefinition fCurrentType;
-/*      */ 
-/*      */   
-/* 1192 */   private XSTypeDefinition[] fTypeStack = new XSTypeDefinition[8];
-/*      */ 
-/*      */   
-/*      */   private XSCMValidator fCurrentCM;
-/*      */ 
-/*      */   
-/* 1198 */   private XSCMValidator[] fCMStack = new XSCMValidator[8];
-/*      */ 
-/*      */   
-/*      */   private int[] fCurrCMState;
-/*      */ 
-/*      */   
-/* 1204 */   private int[][] fCMStateStack = new int[8][];
-/*      */ 
-/*      */   
-/*      */   private boolean fStrictAssess = true;
-/*      */ 
-/*      */   
-/* 1210 */   private boolean[] fStrictAssessStack = new boolean[8];
-/*      */ 
-/*      */   
-/* 1213 */   private final StringBuffer fBuffer = new StringBuffer();
-/*      */ 
-/*      */   
-/*      */   private boolean fAppendBuffer = true;
-/*      */ 
-/*      */   
-/*      */   private boolean fSawText = false;
-/*      */ 
-/*      */   
-/* 1222 */   private boolean[] fSawTextStack = new boolean[8];
-/*      */ 
-/*      */   
-/*      */   private boolean fSawCharacters = false;
-/*      */ 
-/*      */   
-/* 1228 */   private boolean[] fStringContent = new boolean[8];
-/*      */ 
-/*      */   
-/* 1231 */   private final QName fTempQName = new QName();
-/*      */ 
-/*      */   
-/* 1234 */   private ValidatedInfo fValidatedInfo = new ValidatedInfo();
-/*      */ 
-/*      */ 
-/*      */   
-/* 1238 */   private ValidationState fState4XsiType = new ValidationState();
-/*      */ 
-/*      */ 
-/*      */   
-/* 1242 */   private ValidationState fState4ApplyDefault = new ValidationState();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1260 */   protected XPathMatcherStack fMatcherStack = new XPathMatcherStack();
-/*      */ 
-/*      */   
-/* 1263 */   protected ValueStoreCache fValueStoreCache = new ValueStoreCache();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLSchemaValidator() {
-/* 1271 */     this.fState4XsiType.setExtraChecking(false);
-/* 1272 */     this.fState4ApplyDefault.setFacetChecking(false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset(XMLComponentManager componentManager) throws XMLConfigurationException {
-/* 1293 */     this.fIdConstraint = false;
-/*      */     
-/* 1295 */     this.fLocationPairs.clear();
-/*      */ 
-/*      */     
-/* 1298 */     this.fValidationState.resetIDTables();
-/*      */ 
-/*      */     
-/* 1301 */     this.nodeFactory.reset(componentManager);
-/*      */ 
-/*      */     
-/* 1304 */     this.fSchemaLoader.reset(componentManager);
-/*      */ 
-/*      */     
-/* 1307 */     this.fCurrentElemDecl = null;
-/* 1308 */     this.fCurrentCM = null;
-/* 1309 */     this.fCurrCMState = null;
-/* 1310 */     this.fSkipValidationDepth = -1;
-/* 1311 */     this.fNFullValidationDepth = -1;
-/* 1312 */     this.fNNoneValidationDepth = -1;
-/* 1313 */     this.fElementDepth = -1;
-/* 1314 */     this.fSubElement = false;
-/* 1315 */     this.fSchemaDynamicValidation = false;
-/*      */ 
-/*      */     
-/* 1318 */     this.fEntityRef = false;
-/* 1319 */     this.fInCDATA = false;
-/*      */     
-/* 1321 */     this.fMatcherStack.clear();
-/*      */     
-/* 1323 */     if (!this.fMayMatchFieldMap.isEmpty())
-/*      */     {
-/* 1325 */       this.fMayMatchFieldMap.clear();
-/*      */     }
-/*      */ 
-/*      */     
-/* 1329 */     this.fXSIErrorReporter.reset((XMLErrorReporter)componentManager.getProperty("http://apache.org/xml/properties/internal/error-reporter"));
-/*      */     
-/* 1331 */     boolean parser_settings = componentManager.getFeature("http://apache.org/xml/features/internal/parser-settings", true);
-/*      */     
-/* 1333 */     if (!parser_settings) {
-/*      */       
-/* 1335 */       this.fValidationManager.addValidationState(this.fValidationState);
-/*      */       
-/* 1337 */       XMLSchemaLoader.processExternalHints(this.fExternalSchemas, this.fExternalNoNamespaceSchema, this.fLocationPairs, this.fXSIErrorReporter.fErrorReporter);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1347 */     SymbolTable symbolTable = (SymbolTable)componentManager.getProperty("http://apache.org/xml/properties/internal/symbol-table");
-/* 1348 */     if (symbolTable != this.fSymbolTable) {
-/* 1349 */       this.fSymbolTable = symbolTable;
-/*      */     }
-/*      */     
-/* 1352 */     this.fNamespaceGrowth = componentManager.getFeature("http://apache.org/xml/features/namespace-growth", false);
-/* 1353 */     this.fDynamicValidation = componentManager.getFeature("http://apache.org/xml/features/validation/dynamic", false);
-/*      */     
-/* 1355 */     if (this.fDynamicValidation) {
-/* 1356 */       this.fDoValidation = true;
-/*      */     } else {
-/* 1358 */       this.fDoValidation = componentManager.getFeature("http://xml.org/sax/features/validation", false);
-/*      */     } 
-/*      */     
-/* 1361 */     if (this.fDoValidation) {
-/* 1362 */       this.fDoValidation |= componentManager.getFeature("http://apache.org/xml/features/validation/schema", false);
-/*      */     }
-/*      */     
-/* 1365 */     this.fFullChecking = componentManager.getFeature("http://apache.org/xml/features/validation/schema-full-checking", false);
-/* 1366 */     this.fNormalizeData = componentManager.getFeature("http://apache.org/xml/features/validation/schema/normalized-value", false);
-/* 1367 */     this.fSchemaElementDefault = componentManager.getFeature("http://apache.org/xml/features/validation/schema/element-default", false);
-/*      */     
-/* 1369 */     this.fAugPSVI = componentManager.getFeature("http://apache.org/xml/features/validation/schema/augment-psvi", true);
-/*      */     
-/* 1371 */     this
-/* 1372 */       .fSchemaType = (String)componentManager.getProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", null);
-/*      */ 
-/*      */     
-/* 1375 */     this.fUseGrammarPoolOnly = componentManager.getFeature("http://apache.org/xml/features/internal/validation/schema/use-grammar-pool-only", false);
-/*      */     
-/* 1377 */     this.fEntityResolver = (XMLEntityResolver)componentManager.getProperty("http://apache.org/xml/properties/internal/entity-manager");
-/*      */     
-/* 1379 */     this.fValidationManager = (ValidationManager)componentManager.getProperty("http://apache.org/xml/properties/internal/validation-manager");
-/* 1380 */     this.fValidationManager.addValidationState(this.fValidationState);
-/* 1381 */     this.fValidationState.setSymbolTable(this.fSymbolTable);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1386 */       this.fExternalSchemas = (String)componentManager.getProperty("http://apache.org/xml/properties/schema/external-schemaLocation");
-/* 1387 */       this
-/* 1388 */         .fExternalNoNamespaceSchema = (String)componentManager.getProperty("http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation");
-/* 1389 */     } catch (XMLConfigurationException e) {
-/* 1390 */       this.fExternalSchemas = null;
-/* 1391 */       this.fExternalNoNamespaceSchema = null;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1398 */     XMLSchemaLoader.processExternalHints(this.fExternalSchemas, this.fExternalNoNamespaceSchema, this.fLocationPairs, this.fXSIErrorReporter.fErrorReporter);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1404 */     this.fJaxpSchemaSource = componentManager.getProperty("http://java.sun.com/xml/jaxp/properties/schemaSource", null);
-/*      */ 
-/*      */     
-/* 1407 */     this.fGrammarPool = (XMLGrammarPool)componentManager.getProperty("http://apache.org/xml/properties/internal/grammar-pool", null);
-/*      */     
-/* 1409 */     this.fState4XsiType.setSymbolTable(symbolTable);
-/* 1410 */     this.fState4ApplyDefault.setSymbolTable(symbolTable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startValueScopeFor(IdentityConstraint identityConstraint, int initialDepth) {
-/* 1428 */     ValueStoreBase valueStore = this.fValueStoreCache.getValueStoreFor(identityConstraint, initialDepth);
-/* 1429 */     valueStore.startValueScope();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XPathMatcher activateField(Field field, int initialDepth) {
-/* 1441 */     ValueStore valueStore = this.fValueStoreCache.getValueStoreFor(field.getIdentityConstraint(), initialDepth);
-/* 1442 */     setMayMatch(field, Boolean.TRUE);
-/* 1443 */     XPathMatcher matcher = field.createMatcher(this, valueStore);
-/* 1444 */     this.fMatcherStack.addMatcher(matcher);
-/* 1445 */     matcher.startDocumentFragment();
-/* 1446 */     return matcher;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endValueScopeFor(IdentityConstraint identityConstraint, int initialDepth) {
-/* 1457 */     ValueStoreBase valueStore = this.fValueStoreCache.getValueStoreFor(identityConstraint, initialDepth);
-/* 1458 */     valueStore.endValueScope();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMayMatch(Field field, Boolean state) {
-/* 1471 */     this.fMayMatchFieldMap.put(field, state);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Boolean mayMatch(Field field) {
-/* 1481 */     return (Boolean)this.fMayMatchFieldMap.get(field);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void activateSelectorFor(IdentityConstraint ic) {
-/* 1486 */     Selector selector = ic.getSelector();
-/* 1487 */     FieldActivator activator = this;
-/* 1488 */     if (selector == null)
-/*      */       return; 
-/* 1490 */     XPathMatcher matcher = selector.createMatcher(activator, this.fElementDepth);
-/* 1491 */     this.fMatcherStack.addMatcher(matcher);
-/* 1492 */     matcher.startDocumentFragment();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void ensureStackCapacity() {
-/* 1502 */     if (this.fElementDepth == this.fElemDeclStack.length) {
-/* 1503 */       int newSize = this.fElementDepth + 8;
-/* 1504 */       boolean[] newArrayB = new boolean[newSize];
-/* 1505 */       System.arraycopy(this.fSubElementStack, 0, newArrayB, 0, this.fElementDepth);
-/* 1506 */       this.fSubElementStack = newArrayB;
-/*      */       
-/* 1508 */       XSElementDecl[] newArrayE = new XSElementDecl[newSize];
-/* 1509 */       System.arraycopy(this.fElemDeclStack, 0, newArrayE, 0, this.fElementDepth);
-/* 1510 */       this.fElemDeclStack = newArrayE;
-/*      */       
-/* 1512 */       newArrayB = new boolean[newSize];
-/* 1513 */       System.arraycopy(this.fNilStack, 0, newArrayB, 0, this.fElementDepth);
-/* 1514 */       this.fNilStack = newArrayB;
-/*      */       
-/* 1516 */       XSNotationDecl[] newArrayN = new XSNotationDecl[newSize];
-/* 1517 */       System.arraycopy(this.fNotationStack, 0, newArrayN, 0, this.fElementDepth);
-/* 1518 */       this.fNotationStack = newArrayN;
-/*      */       
-/* 1520 */       XSTypeDefinition[] newArrayT = new XSTypeDefinition[newSize];
-/* 1521 */       System.arraycopy(this.fTypeStack, 0, newArrayT, 0, this.fElementDepth);
-/* 1522 */       this.fTypeStack = newArrayT;
-/*      */       
-/* 1524 */       XSCMValidator[] newArrayC = new XSCMValidator[newSize];
-/* 1525 */       System.arraycopy(this.fCMStack, 0, newArrayC, 0, this.fElementDepth);
-/* 1526 */       this.fCMStack = newArrayC;
-/*      */       
-/* 1528 */       newArrayB = new boolean[newSize];
-/* 1529 */       System.arraycopy(this.fSawTextStack, 0, newArrayB, 0, this.fElementDepth);
-/* 1530 */       this.fSawTextStack = newArrayB;
-/*      */       
-/* 1532 */       newArrayB = new boolean[newSize];
-/* 1533 */       System.arraycopy(this.fStringContent, 0, newArrayB, 0, this.fElementDepth);
-/* 1534 */       this.fStringContent = newArrayB;
-/*      */       
-/* 1536 */       newArrayB = new boolean[newSize];
-/* 1537 */       System.arraycopy(this.fStrictAssessStack, 0, newArrayB, 0, this.fElementDepth);
-/* 1538 */       this.fStrictAssessStack = newArrayB;
-/*      */       
-/* 1540 */       int[][] newArrayIA = new int[newSize][];
-/* 1541 */       System.arraycopy(this.fCMStateStack, 0, newArrayIA, 0, this.fElementDepth);
-/* 1542 */       this.fCMStateStack = newArrayIA;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void handleStartDocument(XMLLocator locator, String encoding) {
-/* 1549 */     this.fValueStoreCache.startDocument();
-/* 1550 */     if (this.fAugPSVI) {
-/* 1551 */       this.fCurrentPSVI.fGrammars = null;
-/* 1552 */       this.fCurrentPSVI.fSchemaInformation = null;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   void handleEndDocument() {
-/* 1557 */     this.fValueStoreCache.endDocument();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   XMLString handleCharacters(XMLString text) {
-/* 1564 */     if (this.fSkipValidationDepth >= 0) {
-/* 1565 */       return text;
-/*      */     }
-/* 1567 */     this.fSawText = (this.fSawText || text.length > 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1572 */     if (this.fNormalizeData && this.fWhiteSpace != -1 && this.fWhiteSpace != 0) {
-/*      */       
-/* 1574 */       normalizeWhitespace(text, (this.fWhiteSpace == 2));
-/* 1575 */       text = this.fNormalizedStr;
-/*      */     } 
-/* 1577 */     if (this.fAppendBuffer) {
-/* 1578 */       this.fBuffer.append(text.ch, text.offset, text.length);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1582 */     this.fSawOnlyWhitespaceInElementContent = false;
-/* 1583 */     if (this.fCurrentType != null && this.fCurrentType
-/* 1584 */       .getTypeCategory() == 15) {
-/* 1585 */       XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/* 1586 */       if (ctype.fContentType == 2)
-/*      */       {
-/* 1588 */         for (int i = text.offset; i < text.offset + text.length; i++) {
-/* 1589 */           if (!XMLChar.isSpace(text.ch[i])) {
-/* 1590 */             this.fSawCharacters = true;
-/*      */             break;
-/*      */           } 
-/* 1593 */           this.fSawOnlyWhitespaceInElementContent = !this.fSawCharacters;
-/*      */         } 
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1598 */     return text;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void normalizeWhitespace(XMLString value, boolean collapse) {
-/* 1608 */     boolean skipSpace = collapse;
-/* 1609 */     boolean sawNonWS = false;
-/* 1610 */     boolean leading = false;
-/* 1611 */     boolean trailing = false;
-/*      */     
-/* 1613 */     int size = value.offset + value.length;
-/*      */ 
-/*      */     
-/* 1616 */     if (this.fNormalizedStr.ch == null || this.fNormalizedStr.ch.length < value.length + 1) {
-/* 1617 */       this.fNormalizedStr.ch = new char[value.length + 1];
-/*      */     }
-/*      */     
-/* 1620 */     this.fNormalizedStr.offset = 1;
-/* 1621 */     this.fNormalizedStr.length = 1;
-/*      */     
-/* 1623 */     for (int i = value.offset; i < size; i++) {
-/* 1624 */       char c = value.ch[i];
-/* 1625 */       if (XMLChar.isSpace(c)) {
-/* 1626 */         if (!skipSpace) {
-/*      */           
-/* 1628 */           this.fNormalizedStr.ch[this.fNormalizedStr.length++] = ' ';
-/* 1629 */           skipSpace = collapse;
-/*      */         } 
-/* 1631 */         if (!sawNonWS)
-/*      */         {
-/* 1633 */           leading = true;
-/*      */         }
-/*      */       } else {
-/* 1636 */         this.fNormalizedStr.ch[this.fNormalizedStr.length++] = c;
-/* 1637 */         skipSpace = false;
-/* 1638 */         sawNonWS = true;
-/*      */       } 
-/*      */     } 
-/* 1641 */     if (skipSpace) {
-/* 1642 */       if (this.fNormalizedStr.length > 1) {
-/*      */         
-/* 1644 */         this.fNormalizedStr.length--;
-/* 1645 */         trailing = true;
-/* 1646 */       } else if (leading && !this.fFirstChunk) {
-/*      */ 
-/*      */         
-/* 1649 */         trailing = true;
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1653 */     if (this.fNormalizedStr.length > 1 && 
-/* 1654 */       !this.fFirstChunk && this.fWhiteSpace == 2) {
-/* 1655 */       if (this.fTrailing) {
-/*      */ 
-/*      */         
-/* 1658 */         this.fNormalizedStr.offset = 0;
-/* 1659 */         this.fNormalizedStr.ch[0] = ' ';
-/* 1660 */       } else if (leading) {
-/*      */ 
-/*      */         
-/* 1663 */         this.fNormalizedStr.offset = 0;
-/* 1664 */         this.fNormalizedStr.ch[0] = ' ';
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1670 */     this.fNormalizedStr.length -= this.fNormalizedStr.offset;
-/*      */     
-/* 1672 */     this.fTrailing = trailing;
-/*      */     
-/* 1674 */     if (trailing || sawNonWS)
-/* 1675 */       this.fFirstChunk = false; 
-/*      */   }
-/*      */   
-/*      */   private void normalizeWhitespace(String value, boolean collapse) {
-/* 1679 */     boolean skipSpace = collapse;
-/*      */     
-/* 1681 */     int size = value.length();
-/*      */ 
-/*      */     
-/* 1684 */     if (this.fNormalizedStr.ch == null || this.fNormalizedStr.ch.length < size) {
-/* 1685 */       this.fNormalizedStr.ch = new char[size];
-/*      */     }
-/* 1687 */     this.fNormalizedStr.offset = 0;
-/* 1688 */     this.fNormalizedStr.length = 0;
-/*      */     
-/* 1690 */     for (int i = 0; i < size; i++) {
-/* 1691 */       char c = value.charAt(i);
-/* 1692 */       if (XMLChar.isSpace(c)) {
-/* 1693 */         if (!skipSpace) {
-/*      */           
-/* 1695 */           this.fNormalizedStr.ch[this.fNormalizedStr.length++] = ' ';
-/* 1696 */           skipSpace = collapse;
-/*      */         } 
-/*      */       } else {
-/* 1699 */         this.fNormalizedStr.ch[this.fNormalizedStr.length++] = c;
-/* 1700 */         skipSpace = false;
-/*      */       } 
-/*      */     } 
-/* 1703 */     if (skipSpace && 
-/* 1704 */       this.fNormalizedStr.length != 0)
-/*      */     {
-/* 1706 */       this.fNormalizedStr.length--;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void handleIgnorableWhitespace(XMLString text) {
-/* 1713 */     if (this.fSkipValidationDepth >= 0) {
-/*      */       return;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Augmentations handleStartElement(QName element, XMLAttributes attributes, Augmentations augs) {
-/* 1729 */     if (this.fElementDepth == -1 && this.fValidationManager.isGrammarFound() && 
-/* 1730 */       this.fSchemaType == null)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1735 */       this.fSchemaDynamicValidation = true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1749 */     String sLocation = attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_SCHEMALOCATION);
-/*      */     
-/* 1751 */     String nsLocation = attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1755 */     storeLocations(sLocation, nsLocation);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1759 */     if (this.fSkipValidationDepth >= 0) {
-/* 1760 */       this.fElementDepth++;
-/* 1761 */       if (this.fAugPSVI)
-/* 1762 */         augs = getEmptyAugs(augs); 
-/* 1763 */       return augs;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1768 */     SchemaGrammar sGrammar = findSchemaGrammar((short)5, element.uri, null, element, attributes);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1780 */     Object decl = null;
-/* 1781 */     if (this.fCurrentCM != null) {
-/* 1782 */       decl = this.fCurrentCM.oneTransition(element, this.fCurrCMState, this.fSubGroupHandler);
-/*      */       
-/* 1784 */       if (this.fCurrCMState[0] == -1) {
-/* 1785 */         XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/*      */         
-/*      */         Vector<?> next;
-/* 1788 */         if (ctype.fParticle != null && (
-/* 1789 */           next = this.fCurrentCM.whatCanGoHere(this.fCurrCMState)).size() > 0) {
-/* 1790 */           String expected = expectedStr(next);
-/* 1791 */           reportSchemaError("cvc-complex-type.2.4.a", new Object[] { element.rawname, expected });
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1795 */           reportSchemaError("cvc-complex-type.2.4.d", new Object[] { element.rawname });
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1801 */     if (this.fElementDepth != -1) {
-/* 1802 */       ensureStackCapacity();
-/* 1803 */       this.fSubElementStack[this.fElementDepth] = true;
-/* 1804 */       this.fSubElement = false;
-/* 1805 */       this.fElemDeclStack[this.fElementDepth] = this.fCurrentElemDecl;
-/* 1806 */       this.fNilStack[this.fElementDepth] = this.fNil;
-/* 1807 */       this.fNotationStack[this.fElementDepth] = this.fNotation;
-/* 1808 */       this.fTypeStack[this.fElementDepth] = this.fCurrentType;
-/* 1809 */       this.fStrictAssessStack[this.fElementDepth] = this.fStrictAssess;
-/* 1810 */       this.fCMStack[this.fElementDepth] = this.fCurrentCM;
-/* 1811 */       this.fCMStateStack[this.fElementDepth] = this.fCurrCMState;
-/* 1812 */       this.fSawTextStack[this.fElementDepth] = this.fSawText;
-/* 1813 */       this.fStringContent[this.fElementDepth] = this.fSawCharacters;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1818 */     this.fElementDepth++;
-/* 1819 */     this.fCurrentElemDecl = null;
-/* 1820 */     XSWildcardDecl wildcard = null;
-/* 1821 */     this.fCurrentType = null;
-/* 1822 */     this.fStrictAssess = true;
-/* 1823 */     this.fNil = false;
-/* 1824 */     this.fNotation = null;
-/*      */ 
-/*      */     
-/* 1827 */     this.fBuffer.setLength(0);
-/* 1828 */     this.fSawText = false;
-/* 1829 */     this.fSawCharacters = false;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1833 */     if (decl != null) {
-/* 1834 */       if (decl instanceof XSElementDecl) {
-/* 1835 */         this.fCurrentElemDecl = (XSElementDecl)decl;
-/*      */       } else {
-/* 1837 */         wildcard = (XSWildcardDecl)decl;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 1842 */     if (wildcard != null && wildcard.fProcessContents == 2) {
-/* 1843 */       this.fSkipValidationDepth = this.fElementDepth;
-/* 1844 */       if (this.fAugPSVI)
-/* 1845 */         augs = getEmptyAugs(augs); 
-/* 1846 */       return augs;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1852 */     if (this.fCurrentElemDecl == null && 
-/* 1853 */       sGrammar != null) {
-/* 1854 */       this.fCurrentElemDecl = sGrammar.getGlobalElementDecl(element.localpart);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1858 */     if (this.fCurrentElemDecl != null)
-/*      */     {
-/* 1860 */       this.fCurrentType = this.fCurrentElemDecl.fType;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1864 */     String xsiType = attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_TYPE);
-/*      */ 
-/*      */     
-/* 1867 */     if (this.fCurrentType == null && xsiType == null) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1871 */       if (this.fElementDepth == 0) {
-/*      */ 
-/*      */         
-/* 1874 */         if (this.fDynamicValidation || this.fSchemaDynamicValidation) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1881 */           if (this.fDocumentSource != null) {
-/* 1882 */             this.fDocumentSource.setDocumentHandler(this.fDocumentHandler);
-/* 1883 */             if (this.fDocumentHandler != null) {
-/* 1884 */               this.fDocumentHandler.setDocumentSource(this.fDocumentSource);
-/*      */             }
-/* 1886 */             this.fElementDepth = -2;
-/* 1887 */             return augs;
-/*      */           } 
-/*      */           
-/* 1890 */           this.fSkipValidationDepth = this.fElementDepth;
-/* 1891 */           if (this.fAugPSVI)
-/* 1892 */             augs = getEmptyAugs(augs); 
-/* 1893 */           return augs;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1901 */         this.fXSIErrorReporter.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "cvc-elt.1", new Object[] { element.rawname }, (short)1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 1910 */       else if (wildcard != null && wildcard.fProcessContents == 1) {
-/*      */         
-/* 1912 */         reportSchemaError("cvc-complex-type.2.4.c", new Object[] { element.rawname });
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1917 */       this.fCurrentType = SchemaGrammar.fAnyType;
-/* 1918 */       this.fStrictAssess = false;
-/* 1919 */       this.fNFullValidationDepth = this.fElementDepth;
-/*      */       
-/* 1921 */       this.fAppendBuffer = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1926 */       this.fXSIErrorReporter.pushContext();
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1931 */       this.fXSIErrorReporter.pushContext();
-/*      */ 
-/*      */       
-/* 1934 */       if (xsiType != null) {
-/* 1935 */         XSTypeDefinition oldType = this.fCurrentType;
-/* 1936 */         this.fCurrentType = getAndCheckXsiType(element, xsiType, attributes);
-/*      */         
-/* 1938 */         if (this.fCurrentType == null) {
-/* 1939 */           if (oldType == null) {
-/* 1940 */             this.fCurrentType = SchemaGrammar.fAnyType;
-/*      */           } else {
-/* 1942 */             this.fCurrentType = oldType;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/* 1946 */       this.fNNoneValidationDepth = this.fElementDepth;
-/*      */       
-/* 1948 */       if (this.fCurrentElemDecl != null && this.fCurrentElemDecl
-/* 1949 */         .getConstraintType() == 2) {
-/* 1950 */         this.fAppendBuffer = true;
-/*      */       
-/*      */       }
-/* 1953 */       else if (this.fCurrentType.getTypeCategory() == 16) {
-/* 1954 */         this.fAppendBuffer = true;
-/*      */       } else {
-/*      */         
-/* 1957 */         XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/* 1958 */         this.fAppendBuffer = (ctype.fContentType == 1);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1964 */     if (this.fCurrentElemDecl != null && this.fCurrentElemDecl.getAbstract()) {
-/* 1965 */       reportSchemaError("cvc-elt.2", new Object[] { element.rawname });
-/*      */     }
-/*      */     
-/* 1968 */     if (this.fElementDepth == 0) {
-/* 1969 */       this.fValidationRoot = element.rawname;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1973 */     if (this.fNormalizeData) {
-/*      */       
-/* 1975 */       this.fFirstChunk = true;
-/* 1976 */       this.fTrailing = false;
-/* 1977 */       this.fUnionType = false;
-/* 1978 */       this.fWhiteSpace = -1;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1983 */     if (this.fCurrentType.getTypeCategory() == 15) {
-/* 1984 */       XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/* 1985 */       if (ctype.getAbstract()) {
-/* 1986 */         reportSchemaError("cvc-type.2", new Object[] { element.rawname });
-/*      */       }
-/* 1988 */       if (this.fNormalizeData)
-/*      */       {
-/*      */         
-/* 1991 */         if (ctype.fContentType == 1) {
-/* 1992 */           if (ctype.fXSSimpleType.getVariety() == 3) {
-/* 1993 */             this.fUnionType = true;
-/*      */           } else {
-/*      */             try {
-/* 1996 */               this.fWhiteSpace = ctype.fXSSimpleType.getWhitespace();
-/* 1997 */             } catch (DatatypeException datatypeException) {}
-/*      */           
-/*      */           }
-/*      */ 
-/*      */         
-/*      */         }
-/*      */       }
-/*      */     }
-/* 2005 */     else if (this.fNormalizeData) {
-/*      */       
-/* 2007 */       XSSimpleType dv = (XSSimpleType)this.fCurrentType;
-/* 2008 */       if (dv.getVariety() == 3) {
-/* 2009 */         this.fUnionType = true;
-/*      */       } else {
-/*      */         try {
-/* 2012 */           this.fWhiteSpace = dv.getWhitespace();
-/* 2013 */         } catch (DatatypeException datatypeException) {}
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2020 */     this.fCurrentCM = null;
-/* 2021 */     if (this.fCurrentType.getTypeCategory() == 15) {
-/* 2022 */       this.fCurrentCM = ((XSComplexTypeDecl)this.fCurrentType).getContentModel(this.fCMBuilder);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2026 */     this.fCurrCMState = null;
-/* 2027 */     if (this.fCurrentCM != null) {
-/* 2028 */       this.fCurrCMState = this.fCurrentCM.startContentModel();
-/*      */     }
-/*      */     
-/* 2031 */     String xsiNil = attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_NIL);
-/*      */     
-/* 2033 */     if (xsiNil != null && this.fCurrentElemDecl != null) {
-/* 2034 */       this.fNil = getXsiNil(element, xsiNil);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2038 */     XSAttributeGroupDecl attrGrp = null;
-/* 2039 */     if (this.fCurrentType.getTypeCategory() == 15) {
-/* 2040 */       XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/* 2041 */       attrGrp = ctype.getAttrGrp();
-/*      */     } 
-/*      */     
-/* 2044 */     this.fValueStoreCache.startElement();
-/* 2045 */     this.fMatcherStack.pushContext();
-/* 2046 */     if (this.fCurrentElemDecl != null && this.fCurrentElemDecl.fIDCPos > 0) {
-/* 2047 */       this.fIdConstraint = true;
-/*      */       
-/* 2049 */       this.fValueStoreCache.initValueStoresFor(this.fCurrentElemDecl, this);
-/*      */     } 
-/* 2051 */     processAttributes(element, attributes, attrGrp);
-/*      */ 
-/*      */     
-/* 2054 */     if (attrGrp != null) {
-/* 2055 */       addDefaultAttributes(element, attributes, attrGrp);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2059 */     int count = this.fMatcherStack.getMatcherCount();
-/* 2060 */     for (int i = 0; i < count; i++) {
-/* 2061 */       XPathMatcher matcher = this.fMatcherStack.getMatcherAt(i);
-/* 2062 */       matcher.startElement(element, attributes);
-/*      */     } 
-/*      */     
-/* 2065 */     if (this.fAugPSVI) {
-/* 2066 */       augs = getEmptyAugs(augs);
-/*      */ 
-/*      */       
-/* 2069 */       this.fCurrentPSVI.fValidationContext = this.fValidationRoot;
-/*      */       
-/* 2071 */       this.fCurrentPSVI.fDeclaration = this.fCurrentElemDecl;
-/*      */       
-/* 2073 */       this.fCurrentPSVI.fTypeDecl = this.fCurrentType;
-/*      */       
-/* 2075 */       this.fCurrentPSVI.fNotation = this.fNotation;
-/*      */     } 
-/*      */     
-/* 2078 */     return augs;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Augmentations handleEndElement(QName element, Augmentations augs) {
-/* 2093 */     if (this.fSkipValidationDepth >= 0) {
-/*      */ 
-/*      */       
-/* 2096 */       if (this.fSkipValidationDepth == this.fElementDepth && this.fSkipValidationDepth > 0) {
-/*      */         
-/* 2098 */         this.fNFullValidationDepth = this.fSkipValidationDepth - 1;
-/* 2099 */         this.fSkipValidationDepth = -1;
-/* 2100 */         this.fElementDepth--;
-/* 2101 */         this.fSubElement = this.fSubElementStack[this.fElementDepth];
-/* 2102 */         this.fCurrentElemDecl = this.fElemDeclStack[this.fElementDepth];
-/* 2103 */         this.fNil = this.fNilStack[this.fElementDepth];
-/* 2104 */         this.fNotation = this.fNotationStack[this.fElementDepth];
-/* 2105 */         this.fCurrentType = this.fTypeStack[this.fElementDepth];
-/* 2106 */         this.fCurrentCM = this.fCMStack[this.fElementDepth];
-/* 2107 */         this.fStrictAssess = this.fStrictAssessStack[this.fElementDepth];
-/* 2108 */         this.fCurrCMState = this.fCMStateStack[this.fElementDepth];
-/* 2109 */         this.fSawText = this.fSawTextStack[this.fElementDepth];
-/* 2110 */         this.fSawCharacters = this.fStringContent[this.fElementDepth];
-/*      */       } else {
-/*      */         
-/* 2113 */         this.fElementDepth--;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2121 */       if (this.fElementDepth == -1 && this.fFullChecking) {
-/* 2122 */         XSConstraints.fullSchemaChecking(this.fGrammarBucket, this.fSubGroupHandler, this.fCMBuilder, this.fXSIErrorReporter.fErrorReporter);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2129 */       if (this.fAugPSVI)
-/* 2130 */         augs = getEmptyAugs(augs); 
-/* 2131 */       return augs;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2135 */     processElementContent(element);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2141 */     int oldCount = this.fMatcherStack.getMatcherCount();
-/* 2142 */     for (int i = oldCount - 1; i >= 0; i--) {
-/* 2143 */       XPathMatcher matcher = this.fMatcherStack.getMatcherAt(i);
-/* 2144 */       if (this.fCurrentElemDecl == null) {
-/* 2145 */         matcher.endElement(element, null, false, this.fValidatedInfo.actualValue, this.fValidatedInfo.actualValueType, this.fValidatedInfo.itemValueTypes);
-/*      */       } else {
-/*      */         
-/* 2148 */         matcher.endElement(element, this.fCurrentType, this.fCurrentElemDecl
-/*      */ 
-/*      */             
-/* 2151 */             .getNillable(), (this.fDefaultValue == null) ? this.fValidatedInfo.actualValue : this.fCurrentElemDecl.fDefault.actualValue, (this.fDefaultValue == null) ? this.fValidatedInfo.actualValueType : this.fCurrentElemDecl.fDefault.actualValueType, (this.fDefaultValue == null) ? this.fValidatedInfo.itemValueTypes : this.fCurrentElemDecl.fDefault.itemValueTypes);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2163 */     if (this.fMatcherStack.size() > 0) {
-/* 2164 */       this.fMatcherStack.popContext();
-/*      */     }
-/*      */     
-/* 2167 */     int newCount = this.fMatcherStack.getMatcherCount();
-/*      */     int j;
-/* 2169 */     for (j = oldCount - 1; j >= newCount; j--) {
-/* 2170 */       XPathMatcher matcher = this.fMatcherStack.getMatcherAt(j);
-/*      */       
-/* 2172 */       Selector.Matcher selMatcher = (Selector.Matcher)matcher;
-/*      */       IdentityConstraint id;
-/* 2174 */       if (matcher instanceof Selector.Matcher && (id = selMatcher.getIdentityConstraint()) != null && id
-/* 2175 */         .getCategory() != 2) {
-/* 2176 */         this.fValueStoreCache.transplant(id, selMatcher.getInitialDepth());
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2182 */     for (j = oldCount - 1; j >= newCount; j--) {
-/* 2183 */       XPathMatcher matcher = this.fMatcherStack.getMatcherAt(j);
-/*      */       
-/* 2185 */       Selector.Matcher selMatcher = (Selector.Matcher)matcher;
-/*      */       IdentityConstraint id;
-/* 2187 */       if (matcher instanceof Selector.Matcher && (id = selMatcher.getIdentityConstraint()) != null && id
-/* 2188 */         .getCategory() == 2) {
-/*      */         
-/* 2190 */         ValueStoreBase values = this.fValueStoreCache.getValueStoreFor(id, selMatcher.getInitialDepth());
-/* 2191 */         if (values != null) {
-/* 2192 */           values.endDocumentFragment();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 2196 */     this.fValueStoreCache.endElement();
-/*      */     
-/* 2198 */     SchemaGrammar[] grammars = null;
-/*      */     
-/* 2200 */     if (this.fElementDepth == 0) {
-/*      */       
-/* 2202 */       String invIdRef = this.fValidationState.checkIDRefID();
-/* 2203 */       this.fValidationState.resetIDTables();
-/* 2204 */       if (invIdRef != null) {
-/* 2205 */         reportSchemaError("cvc-id.1", new Object[] { invIdRef });
-/*      */       }
-/*      */       
-/* 2208 */       if (this.fFullChecking) {
-/* 2209 */         XSConstraints.fullSchemaChecking(this.fGrammarBucket, this.fSubGroupHandler, this.fCMBuilder, this.fXSIErrorReporter.fErrorReporter);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2216 */       grammars = this.fGrammarBucket.getGrammars();
-/*      */       
-/* 2218 */       if (this.fGrammarPool != null) {
-/*      */         
-/* 2220 */         for (int k = 0; k < grammars.length; k++) {
-/* 2221 */           grammars[k].setImmutable(true);
-/*      */         }
-/* 2223 */         this.fGrammarPool.cacheGrammars("http://www.w3.org/2001/XMLSchema", (Grammar[])grammars);
-/*      */       } 
-/* 2225 */       augs = endElementPSVI(true, grammars, augs);
-/*      */     } else {
-/* 2227 */       augs = endElementPSVI(false, grammars, augs);
-/*      */ 
-/*      */       
-/* 2230 */       this.fElementDepth--;
-/*      */ 
-/*      */       
-/* 2233 */       this.fSubElement = this.fSubElementStack[this.fElementDepth];
-/* 2234 */       this.fCurrentElemDecl = this.fElemDeclStack[this.fElementDepth];
-/* 2235 */       this.fNil = this.fNilStack[this.fElementDepth];
-/* 2236 */       this.fNotation = this.fNotationStack[this.fElementDepth];
-/* 2237 */       this.fCurrentType = this.fTypeStack[this.fElementDepth];
-/* 2238 */       this.fCurrentCM = this.fCMStack[this.fElementDepth];
-/* 2239 */       this.fStrictAssess = this.fStrictAssessStack[this.fElementDepth];
-/* 2240 */       this.fCurrCMState = this.fCMStateStack[this.fElementDepth];
-/* 2241 */       this.fSawText = this.fSawTextStack[this.fElementDepth];
-/* 2242 */       this.fSawCharacters = this.fStringContent[this.fElementDepth];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2249 */       this.fWhiteSpace = -1;
-/*      */ 
-/*      */       
-/* 2252 */       this.fAppendBuffer = false;
-/*      */       
-/* 2254 */       this.fUnionType = false;
-/*      */     } 
-/*      */     
-/* 2257 */     return augs;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final Augmentations endElementPSVI(boolean root, SchemaGrammar[] grammars, Augmentations augs) {
-/* 2265 */     if (this.fAugPSVI) {
-/* 2266 */       augs = getEmptyAugs(augs);
-/*      */ 
-/*      */       
-/* 2269 */       this.fCurrentPSVI.fDeclaration = this.fCurrentElemDecl;
-/* 2270 */       this.fCurrentPSVI.fTypeDecl = this.fCurrentType;
-/* 2271 */       this.fCurrentPSVI.fNotation = this.fNotation;
-/* 2272 */       this.fCurrentPSVI.fValidationContext = this.fValidationRoot;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2277 */       if (this.fElementDepth > this.fNFullValidationDepth) {
-/* 2278 */         this.fCurrentPSVI.fValidationAttempted = 2;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 2283 */       else if (this.fElementDepth > this.fNNoneValidationDepth) {
-/* 2284 */         this.fCurrentPSVI.fValidationAttempted = 0;
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2288 */         this.fCurrentPSVI.fValidationAttempted = 1;
-/* 2289 */         this.fNFullValidationDepth = this.fNNoneValidationDepth = this.fElementDepth - 1;
-/*      */       } 
-/*      */       
-/* 2292 */       if (this.fDefaultValue != null)
-/* 2293 */         this.fCurrentPSVI.fSpecified = true; 
-/* 2294 */       this.fCurrentPSVI.fNil = this.fNil;
-/* 2295 */       this.fCurrentPSVI.fMemberType = this.fValidatedInfo.memberType;
-/* 2296 */       this.fCurrentPSVI.fNormalizedValue = this.fValidatedInfo.normalizedValue;
-/* 2297 */       this.fCurrentPSVI.fActualValue = this.fValidatedInfo.actualValue;
-/* 2298 */       this.fCurrentPSVI.fActualValueType = this.fValidatedInfo.actualValueType;
-/* 2299 */       this.fCurrentPSVI.fItemValueTypes = this.fValidatedInfo.itemValueTypes;
-/*      */       
-/* 2301 */       if (this.fStrictAssess) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2306 */         String[] errors = this.fXSIErrorReporter.mergeContext();
-/*      */ 
-/*      */         
-/* 2309 */         this.fCurrentPSVI.fErrorCodes = errors;
-/*      */         
-/* 2311 */         this.fCurrentPSVI.fValidity = (errors == null) ? 2 : 1;
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2315 */         this.fCurrentPSVI.fValidity = 0;
-/*      */ 
-/*      */ 
-/*      */         
-/* 2319 */         this.fXSIErrorReporter.popContext();
-/*      */       } 
-/*      */       
-/* 2322 */       if (root) {
-/*      */         
-/* 2324 */         this.fCurrentPSVI.fGrammars = grammars;
-/* 2325 */         this.fCurrentPSVI.fSchemaInformation = null;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2329 */     return augs;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   Augmentations getEmptyAugs(Augmentations augs) {
-/* 2334 */     if (augs == null) {
-/* 2335 */       augs = this.fAugmentations;
-/* 2336 */       augs.removeAllItems();
-/*      */     } 
-/* 2338 */     augs.putItem("ELEMENT_PSVI", this.fCurrentPSVI);
-/* 2339 */     this.fCurrentPSVI.reset();
-/*      */     
-/* 2341 */     return augs;
-/*      */   }
-/*      */   
-/*      */   void storeLocations(String sLocation, String nsLocation) {
-/* 2345 */     if (sLocation != null && 
-/* 2346 */       !XMLSchemaLoader.tokenizeSchemaLocationStr(sLocation, this.fLocationPairs))
-/*      */     {
-/* 2348 */       this.fXSIErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "SchemaLocation", new Object[] { sLocation }, (short)0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2355 */     if (nsLocation != null) {
-/* 2356 */       XMLSchemaLoader.LocationArray la = this.fLocationPairs.get(XMLSymbols.EMPTY_STRING);
-/* 2357 */       if (la == null) {
-/* 2358 */         la = new XMLSchemaLoader.LocationArray();
-/* 2359 */         this.fLocationPairs.put(XMLSymbols.EMPTY_STRING, la);
-/*      */       } 
-/* 2361 */       la.addLocation(nsLocation);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   SchemaGrammar findSchemaGrammar(short contextType, String namespace, QName enclosingElement, QName triggeringComponet, XMLAttributes attributes) {
-/* 2375 */     SchemaGrammar grammar = null;
-/*      */     
-/* 2377 */     grammar = this.fGrammarBucket.getGrammar(namespace);
-/*      */     
-/* 2379 */     if (grammar == null) {
-/* 2380 */       this.fXSDDescription.setNamespace(namespace);
-/*      */       
-/* 2382 */       if (this.fGrammarPool != null) {
-/* 2383 */         grammar = (SchemaGrammar)this.fGrammarPool.retrieveGrammar(this.fXSDDescription);
-/* 2384 */         if (grammar != null)
-/*      */         {
-/*      */           
-/* 2387 */           if (!this.fGrammarBucket.putGrammar(grammar, true, this.fNamespaceGrowth)) {
-/*      */ 
-/*      */             
-/* 2390 */             this.fXSIErrorReporter.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "GrammarConflict", null, (short)0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 2395 */             grammar = null;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 2400 */     if ((grammar == null && !this.fUseGrammarPoolOnly) || this.fNamespaceGrowth) {
-/* 2401 */       this.fXSDDescription.reset();
-/* 2402 */       this.fXSDDescription.fContextType = contextType;
-/* 2403 */       this.fXSDDescription.setNamespace(namespace);
-/* 2404 */       this.fXSDDescription.fEnclosedElementName = enclosingElement;
-/* 2405 */       this.fXSDDescription.fTriggeringComponent = triggeringComponet;
-/* 2406 */       this.fXSDDescription.fAttributes = attributes;
-/* 2407 */       if (this.fLocator != null) {
-/* 2408 */         this.fXSDDescription.setBaseSystemId(this.fLocator.getExpandedSystemId());
-/*      */       }
-/*      */       
-/* 2411 */       Map<String, XMLSchemaLoader.LocationArray> locationPairs = this.fLocationPairs;
-/*      */       
-/* 2413 */       XMLSchemaLoader.LocationArray locationArray = locationPairs.get((namespace == null) ? XMLSymbols.EMPTY_STRING : namespace);
-/* 2414 */       if (locationArray != null) {
-/* 2415 */         String[] temp = locationArray.getLocationArray();
-/* 2416 */         if (temp.length != 0) {
-/* 2417 */           setLocationHints(this.fXSDDescription, temp, grammar);
-/*      */         }
-/*      */       } 
-/*      */       
-/* 2421 */       if (grammar == null || this.fXSDDescription.fLocationHints != null) {
-/* 2422 */         boolean toParseSchema = true;
-/* 2423 */         if (grammar != null)
-/*      */         {
-/* 2425 */           locationPairs = Collections.emptyMap();
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 2431 */           XMLInputSource xis = XMLSchemaLoader.resolveDocument(this.fXSDDescription, locationPairs, this.fEntityResolver);
-/*      */ 
-/*      */ 
-/*      */           
-/* 2435 */           if (grammar != null && this.fNamespaceGrowth) {
-/*      */             
-/*      */             try {
-/*      */               
-/* 2439 */               if (grammar.getDocumentLocations().contains(XMLEntityManager.expandSystemId(xis.getSystemId(), xis.getBaseSystemId(), false))) {
-/* 2440 */                 toParseSchema = false;
-/*      */               }
-/*      */             }
-/* 2443 */             catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException malformedURIException) {}
-/*      */           }
-/*      */           
-/* 2446 */           if (toParseSchema) {
-/* 2447 */             grammar = this.fSchemaLoader.loadSchema(this.fXSDDescription, xis, this.fLocationPairs);
-/*      */           }
-/* 2449 */         } catch (IOException ex) {
-/* 2450 */           String[] locationHints = this.fXSDDescription.getLocationHints();
-/* 2451 */           this.fXSIErrorReporter.fErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", "schema_reference.4", new Object[] { (locationHints != null) ? locationHints[0] : XMLSymbols.EMPTY_STRING }, (short)0);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2460 */     return grammar;
-/*      */   }
-/*      */   
-/*      */   private void setLocationHints(XSDDescription desc, String[] locations, SchemaGrammar grammar) {
-/* 2464 */     int length = locations.length;
-/* 2465 */     if (grammar == null) {
-/* 2466 */       this.fXSDDescription.fLocationHints = new String[length];
-/* 2467 */       System.arraycopy(locations, 0, this.fXSDDescription.fLocationHints, 0, length);
-/*      */     } else {
-/*      */       
-/* 2470 */       setLocationHints(desc, locations, grammar.getDocumentLocations());
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void setLocationHints(XSDDescription desc, String[] locations, StringList docLocations) {
-/* 2475 */     int length = locations.length;
-/* 2476 */     String[] hints = new String[length];
-/* 2477 */     int counter = 0;
-/*      */     
-/* 2479 */     for (int i = 0; i < length; i++) {
-/*      */       try {
-/* 2481 */         String id = XMLEntityManager.expandSystemId(locations[i], desc.getBaseSystemId(), false);
-/* 2482 */         if (!docLocations.contains(id)) {
-/* 2483 */           hints[counter++] = locations[i];
-/*      */         }
-/*      */       }
-/* 2486 */       catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException malformedURIException) {}
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2490 */     if (counter > 0) {
-/* 2491 */       if (counter == length) {
-/* 2492 */         this.fXSDDescription.fLocationHints = hints;
-/*      */       } else {
-/*      */         
-/* 2495 */         this.fXSDDescription.fLocationHints = new String[counter];
-/* 2496 */         System.arraycopy(hints, 0, this.fXSDDescription.fLocationHints, 0, counter);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   XSTypeDefinition getAndCheckXsiType(QName element, String xsiType, XMLAttributes attributes) {
-/* 2509 */     QName typeName = null;
-/*      */     try {
-/* 2511 */       typeName = (QName)this.fQNameDV.validate(xsiType, this.fValidationState, (ValidatedInfo)null);
-/* 2512 */     } catch (InvalidDatatypeValueException e) {
-/* 2513 */       reportSchemaError(e.getKey(), e.getArgs());
-/* 2514 */       reportSchemaError("cvc-elt.4.1", new Object[] { element.rawname, SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_TYPE, xsiType });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2520 */       return null;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2524 */     XSTypeDefinition type = null;
-/*      */     
-/* 2526 */     if (typeName.uri == SchemaSymbols.URI_SCHEMAFORSCHEMA) {
-/* 2527 */       type = SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(typeName.localpart);
-/*      */     }
-/*      */     
-/* 2530 */     if (type == null) {
-/*      */ 
-/*      */       
-/* 2533 */       SchemaGrammar grammar = findSchemaGrammar((short)7, typeName.uri, element, typeName, attributes);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2540 */       if (grammar != null) {
-/* 2541 */         type = grammar.getGlobalTypeDecl(typeName.localpart);
-/*      */       }
-/*      */     } 
-/* 2544 */     if (type == null) {
-/* 2545 */       reportSchemaError("cvc-elt.4.2", new Object[] { element.rawname, xsiType });
-/* 2546 */       return null;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2551 */     if (this.fCurrentType != null) {
-/*      */       
-/* 2553 */       short block = this.fCurrentElemDecl.fBlock;
-/* 2554 */       if (this.fCurrentType.getTypeCategory() == 15)
-/* 2555 */         block = (short)(block | ((XSComplexTypeDecl)this.fCurrentType).fBlock); 
-/* 2556 */       if (!XSConstraints.checkTypeDerivationOk(type, this.fCurrentType, block)) {
-/* 2557 */         reportSchemaError("cvc-elt.4.3", new Object[] { element.rawname, xsiType, this.fCurrentType
-/*      */               
-/* 2559 */               .getName() });
-/*      */       }
-/*      */     } 
-/* 2562 */     return type;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean getXsiNil(QName element, String xsiNil) {
-/* 2569 */     if (this.fCurrentElemDecl != null && !this.fCurrentElemDecl.getNillable()) {
-/* 2570 */       reportSchemaError("cvc-elt.3.1", new Object[] { element.rawname, SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_NIL });
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */ 
-/*      */       
-/* 2579 */       String value = XMLChar.trim(xsiNil);
-/* 2580 */       if (value.equals("true") || value
-/* 2581 */         .equals("1")) {
-/* 2582 */         if (this.fCurrentElemDecl != null && this.fCurrentElemDecl
-/* 2583 */           .getConstraintType() == 2) {
-/* 2584 */           reportSchemaError("cvc-elt.3.2.2", new Object[] { element.rawname, SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_NIL });
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2590 */         return true;
-/*      */       } 
-/*      */     } 
-/* 2593 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void processAttributes(QName element, XMLAttributes attributes, XSAttributeGroupDecl attrGrp) {
-/* 2603 */     String wildcardIDName = null;
-/*      */ 
-/*      */     
-/* 2606 */     int attCount = attributes.getLength();
-/*      */     
-/* 2608 */     Augmentations augs = null;
-/* 2609 */     AttributePSVImpl attrPSVI = null;
-/*      */ 
-/*      */     
-/* 2612 */     boolean isSimple = (this.fCurrentType == null || this.fCurrentType.getTypeCategory() == 16);
-/*      */     
-/* 2614 */     XSObjectList attrUses = null;
-/* 2615 */     int useCount = 0;
-/* 2616 */     XSWildcardDecl attrWildcard = null;
-/* 2617 */     if (!isSimple) {
-/* 2618 */       attrUses = attrGrp.getAttributeUses();
-/* 2619 */       useCount = attrUses.getLength();
-/* 2620 */       attrWildcard = attrGrp.fAttributeWC;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2626 */     int index = 0; while (true) { XSAttributeUseImpl currUse; XSAttributeDecl currDecl; if (index < attCount)
-/*      */       
-/* 2628 */       { attributes.getName(index, this.fTempQName);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2634 */         if (this.fAugPSVI || this.fIdConstraint) {
-/* 2635 */           augs = attributes.getAugmentations(index);
-/* 2636 */           attrPSVI = (AttributePSVImpl)augs.getItem("ATTRIBUTE_PSVI");
-/* 2637 */           if (attrPSVI != null) {
-/* 2638 */             attrPSVI.reset();
-/*      */           } else {
-/* 2640 */             attrPSVI = new AttributePSVImpl();
-/* 2641 */             augs.putItem("ATTRIBUTE_PSVI", attrPSVI);
-/*      */           } 
-/*      */           
-/* 2644 */           attrPSVI.fValidationContext = this.fValidationRoot;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2653 */         if (this.fTempQName.uri == SchemaSymbols.URI_XSI) {
-/* 2654 */           XSAttributeDecl attrDecl = null;
-/* 2655 */           if (this.fTempQName.localpart == SchemaSymbols.XSI_SCHEMALOCATION) {
-/*      */             
-/* 2657 */             attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_SCHEMALOCATION);
-/*      */           }
-/* 2659 */           else if (this.fTempQName.localpart == SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION) {
-/*      */             
-/* 2661 */             attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION);
-/*      */           }
-/* 2663 */           else if (this.fTempQName.localpart == SchemaSymbols.XSI_NIL) {
-/* 2664 */             attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_NIL);
-/* 2665 */           } else if (this.fTempQName.localpart == SchemaSymbols.XSI_TYPE) {
-/* 2666 */             attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_TYPE);
-/* 2667 */           }  if (attrDecl != null) {
-/* 2668 */             processOneAttribute(element, attributes, index, attrDecl, null, attrPSVI);
-/*      */             
-/*      */             continue;
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 2674 */         if (this.fTempQName.rawname == XMLSymbols.PREFIX_XMLNS || this.fTempQName.rawname
-/* 2675 */           .startsWith("xmlns:")) {
-/*      */           continue;
-/*      */         }
-/*      */ 
-/*      */         
-/* 2680 */         if (isSimple) {
-/* 2681 */           reportSchemaError("cvc-type.3.1.1", new Object[] { element.rawname, this.fTempQName.rawname });
-/*      */ 
-/*      */           
-/*      */           continue;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 2688 */         currUse = null;
-/* 2689 */         for (int i = 0; i < useCount; i++) {
-/* 2690 */           XSAttributeUseImpl oneUse = (XSAttributeUseImpl)attrUses.item(i);
-/* 2691 */           if (oneUse.fAttrDecl.fName == this.fTempQName.localpart && oneUse.fAttrDecl.fTargetNamespace == this.fTempQName.uri) {
-/*      */             
-/* 2693 */             currUse = oneUse;
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2703 */         if (currUse == null)
-/*      */         {
-/*      */           
-/* 2706 */           if (attrWildcard == null || !attrWildcard.allowNamespace(this.fTempQName.uri)) {
-/*      */             
-/* 2708 */             reportSchemaError("cvc-complex-type.3.2.2", new Object[] { element.rawname, this.fTempQName.rawname });
-/*      */ 
-/*      */             
-/*      */             continue;
-/*      */           } 
-/*      */         }
-/*      */         
-/* 2715 */         currDecl = null;
-/* 2716 */         if (currUse != null)
-/* 2717 */         { currDecl = currUse.fAttrDecl; }
-/*      */         
-/*      */         else
-/*      */         
-/* 2721 */         { if (attrWildcard.fProcessContents != 2)
-/*      */           
-/*      */           { 
-/*      */ 
-/*      */             
-/* 2726 */             SchemaGrammar grammar = findSchemaGrammar((short)6, this.fTempQName.uri, element, this.fTempQName, attributes);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 2733 */             if (grammar != null) {
-/* 2734 */               currDecl = grammar.getGlobalAttributeDecl(this.fTempQName.localpart);
-/*      */             }
-/*      */ 
-/*      */             
-/* 2738 */             if (currDecl == null)
-/*      */             
-/* 2740 */             { if (attrWildcard.fProcessContents == 1) {
-/* 2741 */                 reportSchemaError("cvc-complex-type.3.2.2", new Object[] { element.rawname, this.fTempQName.rawname });
-/*      */ 
-/*      */               
-/*      */               }
-/*      */               
-/*      */                }
-/*      */             
-/*      */             else
-/*      */             
-/*      */             { 
-/* 2751 */               if (currDecl.fType.getTypeCategory() == 16 && currDecl.fType
-/* 2752 */                 .isIDType()) {
-/* 2753 */                 if (wildcardIDName != null) {
-/* 2754 */                   reportSchemaError("cvc-complex-type.5.1", new Object[] { element.rawname, currDecl.fName, wildcardIDName });
-/*      */                 }
-/*      */                 else {
-/*      */                   
-/* 2758 */                   wildcardIDName = currDecl.fName;
-/*      */                 } 
-/*      */               }
-/*      */ 
-/*      */               
-/* 2763 */               processOneAttribute(element, attributes, index, currDecl, currUse, attrPSVI); }  }  continue; }  } else { break; }  processOneAttribute(element, attributes, index, currDecl, currUse, attrPSVI);
-/*      */       
-/*      */       index++; }
-/*      */     
-/* 2767 */     if (!isSimple && attrGrp.fIDAttrName != null && wildcardIDName != null) {
-/* 2768 */       reportSchemaError("cvc-complex-type.5.2", new Object[] { element.rawname, wildcardIDName, attrGrp.fIDAttrName });
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void processOneAttribute(QName element, XMLAttributes attributes, int index, XSAttributeDecl currDecl, XSAttributeUseImpl currUse, AttributePSVImpl attrPSVI) {
-/* 2783 */     String attrValue = attributes.getValue(index);
-/* 2784 */     this.fXSIErrorReporter.pushContext();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2792 */     XSSimpleType attDV = currDecl.fType;
-/*      */     
-/* 2794 */     Object actualValue = null;
-/*      */     try {
-/* 2796 */       actualValue = attDV.validate(attrValue, this.fValidationState, this.fValidatedInfo);
-/*      */       
-/* 2798 */       if (this.fNormalizeData)
-/* 2799 */         attributes.setValue(index, this.fValidatedInfo.normalizedValue); 
-/* 2800 */       if (attributes instanceof XMLAttributesImpl) {
-/* 2801 */         XMLAttributesImpl attrs = (XMLAttributesImpl)attributes;
-/*      */ 
-/*      */ 
-/*      */         
-/* 2805 */         boolean schemaId = (this.fValidatedInfo.memberType != null) ? this.fValidatedInfo.memberType.isIDType() : attDV.isIDType();
-/* 2806 */         attrs.setSchemaId(index, schemaId);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2810 */       if (attDV.getVariety() == 1 && attDV
-/* 2811 */         .getPrimitiveKind() == 20) {
-/* 2812 */         QName qName = (QName)actualValue;
-/* 2813 */         SchemaGrammar grammar = this.fGrammarBucket.getGrammar(qName.uri);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2821 */         if (grammar != null) {
-/* 2822 */           this.fNotation = grammar.getGlobalNotationDecl(qName.localpart);
-/*      */         }
-/*      */       } 
-/* 2825 */     } catch (InvalidDatatypeValueException idve) {
-/* 2826 */       reportSchemaError(idve.getKey(), idve.getArgs());
-/* 2827 */       reportSchemaError("cvc-attribute.3", new Object[] { element.rawname, this.fTempQName.rawname, attrValue, attDV
-/*      */             
-/* 2829 */             .getName() });
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2834 */     if (actualValue != null && currDecl.getConstraintType() == 2 && (
-/* 2835 */       !isComparable(this.fValidatedInfo, currDecl.fDefault) || !actualValue.equals(currDecl.fDefault.actualValue))) {
-/* 2836 */       reportSchemaError("cvc-attribute.4", new Object[] { element.rawname, this.fTempQName.rawname, attrValue, currDecl.fDefault
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 2842 */             .stringValue() });
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2847 */     if (actualValue != null && currUse != null && currUse.fConstraintType == 2)
-/*      */     {
-/*      */       
-/* 2850 */       if (!isComparable(this.fValidatedInfo, currUse.fDefault) || !actualValue.equals(currUse.fDefault.actualValue)) {
-/* 2851 */         reportSchemaError("cvc-complex-type.3.1", new Object[] { element.rawname, this.fTempQName.rawname, attrValue, currUse.fDefault
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/* 2857 */               .stringValue() });
-/*      */       }
-/*      */     }
-/* 2860 */     if (this.fIdConstraint) {
-/* 2861 */       attrPSVI.fActualValue = actualValue;
-/*      */     }
-/*      */     
-/* 2864 */     if (this.fAugPSVI) {
-/*      */       
-/* 2866 */       attrPSVI.fDeclaration = currDecl;
-/*      */       
-/* 2868 */       attrPSVI.fTypeDecl = attDV;
-/*      */ 
-/*      */       
-/* 2871 */       attrPSVI.fMemberType = this.fValidatedInfo.memberType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2876 */       attrPSVI.fNormalizedValue = this.fValidatedInfo.normalizedValue;
-/* 2877 */       attrPSVI.fActualValue = this.fValidatedInfo.actualValue;
-/* 2878 */       attrPSVI.fActualValueType = this.fValidatedInfo.actualValueType;
-/* 2879 */       attrPSVI.fItemValueTypes = this.fValidatedInfo.itemValueTypes;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2884 */       attrPSVI.fValidationAttempted = 2;
-/*      */       
-/* 2886 */       String[] errors = this.fXSIErrorReporter.mergeContext();
-/*      */       
-/* 2888 */       attrPSVI.fErrorCodes = errors;
-/*      */       
-/* 2890 */       attrPSVI.fValidity = (errors == null) ? 2 : 1;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void addDefaultAttributes(QName element, XMLAttributes attributes, XSAttributeGroupDecl attrGrp) {
-/* 2908 */     XSObjectList attrUses = attrGrp.getAttributeUses();
-/* 2909 */     int useCount = attrUses.getLength();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2917 */     for (int i = 0; i < useCount; i++) {
-/*      */       
-/* 2919 */       XSAttributeUseImpl currUse = (XSAttributeUseImpl)attrUses.item(i);
-/* 2920 */       XSAttributeDecl currDecl = currUse.fAttrDecl;
-/*      */       
-/* 2922 */       short constType = currUse.fConstraintType;
-/* 2923 */       ValidatedInfo defaultValue = currUse.fDefault;
-/* 2924 */       if (constType == 0) {
-/* 2925 */         constType = currDecl.getConstraintType();
-/* 2926 */         defaultValue = currDecl.fDefault;
-/*      */       } 
-/*      */       
-/* 2929 */       boolean isSpecified = (attributes.getValue(currDecl.fTargetNamespace, currDecl.fName) != null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2935 */       if (currUse.fUse == 1 && 
-/* 2936 */         !isSpecified) {
-/* 2937 */         reportSchemaError("cvc-complex-type.4", new Object[] { element.rawname, currDecl.fName });
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2942 */       if (!isSpecified && constType != 0) {
-/* 2943 */         QName attName = new QName(null, currDecl.fName, currDecl.fName, currDecl.fTargetNamespace);
-/*      */         
-/* 2945 */         String normalized = (defaultValue != null) ? defaultValue.stringValue() : "";
-/* 2946 */         int attrIndex = attributes.addAttribute(attName, "CDATA", normalized);
-/* 2947 */         if (attributes instanceof XMLAttributesImpl) {
-/* 2948 */           XMLAttributesImpl attrs = (XMLAttributesImpl)attributes;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2953 */           boolean schemaId = (defaultValue != null && defaultValue.memberType != null) ? defaultValue.memberType.isIDType() : currDecl.fType.isIDType();
-/* 2954 */           attrs.setSchemaId(attrIndex, schemaId);
-/*      */         } 
-/*      */         
-/* 2957 */         if (this.fAugPSVI) {
-/*      */ 
-/*      */           
-/* 2960 */           Augmentations augs = attributes.getAugmentations(attrIndex);
-/* 2961 */           AttributePSVImpl attrPSVI = new AttributePSVImpl();
-/* 2962 */           augs.putItem("ATTRIBUTE_PSVI", attrPSVI);
-/*      */           
-/* 2964 */           attrPSVI.fDeclaration = currDecl;
-/* 2965 */           attrPSVI.fTypeDecl = currDecl.fType;
-/* 2966 */           attrPSVI.fMemberType = defaultValue.memberType;
-/* 2967 */           attrPSVI.fNormalizedValue = normalized;
-/* 2968 */           attrPSVI.fActualValue = defaultValue.actualValue;
-/* 2969 */           attrPSVI.fActualValueType = defaultValue.actualValueType;
-/* 2970 */           attrPSVI.fItemValueTypes = defaultValue.itemValueTypes;
-/* 2971 */           attrPSVI.fValidationContext = this.fValidationRoot;
-/* 2972 */           attrPSVI.fValidity = 2;
-/* 2973 */           attrPSVI.fValidationAttempted = 2;
-/* 2974 */           attrPSVI.fSpecified = true;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void processElementContent(QName element) {
-/* 2988 */     if (this.fCurrentElemDecl != null && this.fCurrentElemDecl.fDefault != null && !this.fSawText && !this.fSubElement && !this.fNil) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2994 */       String strv = this.fCurrentElemDecl.fDefault.stringValue();
-/* 2995 */       int bufLen = strv.length();
-/* 2996 */       if (this.fNormalizedStr.ch == null || this.fNormalizedStr.ch.length < bufLen) {
-/* 2997 */         this.fNormalizedStr.ch = new char[bufLen];
-/*      */       }
-/* 2999 */       strv.getChars(0, bufLen, this.fNormalizedStr.ch, 0);
-/* 3000 */       this.fNormalizedStr.offset = 0;
-/* 3001 */       this.fNormalizedStr.length = bufLen;
-/* 3002 */       this.fDefaultValue = this.fNormalizedStr;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3006 */     this.fValidatedInfo.normalizedValue = null;
-/*      */ 
-/*      */ 
-/*      */     
-/* 3010 */     if (this.fNil && (
-/* 3011 */       this.fSubElement || this.fSawText)) {
-/* 3012 */       reportSchemaError("cvc-elt.3.2.1", new Object[] { element.rawname, SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_NIL });
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3020 */     this.fValidatedInfo.reset();
-/*      */ 
-/*      */ 
-/*      */     
-/* 3024 */     if (this.fCurrentElemDecl != null && this.fCurrentElemDecl
-/* 3025 */       .getConstraintType() != 0 && !this.fSubElement && !this.fSawText && !this.fNil) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3030 */       if (this.fCurrentType != this.fCurrentElemDecl.fType)
-/*      */       {
-/*      */         
-/* 3033 */         if (XSConstraints.ElementDefaultValidImmediate(this.fCurrentType, this.fCurrentElemDecl.fDefault
-/*      */             
-/* 3035 */             .stringValue(), this.fState4XsiType, null) == null)
-/*      */         {
-/*      */ 
-/*      */           
-/* 3039 */           reportSchemaError("cvc-elt.5.1.1", new Object[] { element.rawname, this.fCurrentType
-/*      */ 
-/*      */ 
-/*      */                 
-/* 3043 */                 .getName(), this.fCurrentElemDecl.fDefault
-/* 3044 */                 .stringValue() });
-/*      */         }
-/*      */       }
-/*      */ 
-/*      */       
-/* 3049 */       elementLocallyValidType(element, this.fCurrentElemDecl.fDefault.stringValue());
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/* 3056 */       Object actualValue = elementLocallyValidType(element, this.fBuffer);
-/*      */       
-/* 3058 */       if (this.fCurrentElemDecl != null && this.fCurrentElemDecl
-/* 3059 */         .getConstraintType() == 2 && !this.fNil) {
-/*      */         
-/* 3061 */         String content = this.fBuffer.toString();
-/*      */         
-/* 3063 */         if (this.fSubElement) {
-/* 3064 */           reportSchemaError("cvc-elt.5.2.2.1", new Object[] { element.rawname });
-/*      */         }
-/* 3066 */         if (this.fCurrentType.getTypeCategory() == 15) {
-/* 3067 */           XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/*      */           
-/* 3069 */           if (ctype.fContentType == 3) {
-/*      */             
-/* 3071 */             if (!this.fCurrentElemDecl.fDefault.normalizedValue.equals(content)) {
-/* 3072 */               reportSchemaError("cvc-elt.5.2.2.2.1", new Object[] { element.rawname, content, this.fCurrentElemDecl.fDefault.normalizedValue });
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             }
-/*      */ 
-/*      */           
-/*      */           }
-/* 3080 */           else if (ctype.fContentType == 1 && 
-/* 3081 */             actualValue != null && (!isComparable(this.fValidatedInfo, this.fCurrentElemDecl.fDefault) || 
-/* 3082 */             !actualValue.equals(this.fCurrentElemDecl.fDefault.actualValue))) {
-/* 3083 */             reportSchemaError("cvc-elt.5.2.2.2.2", new Object[] { element.rawname, content, this.fCurrentElemDecl.fDefault
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                   
-/* 3088 */                   .stringValue() });
-/*      */           }
-/*      */         
-/* 3091 */         } else if (this.fCurrentType.getTypeCategory() == 16 && 
-/* 3092 */           actualValue != null && (!isComparable(this.fValidatedInfo, this.fCurrentElemDecl.fDefault) || 
-/* 3093 */           !actualValue.equals(this.fCurrentElemDecl.fDefault.actualValue))) {
-/*      */ 
-/*      */           
-/* 3096 */           reportSchemaError("cvc-elt.5.2.2.2.2", new Object[] { element.rawname, content, this.fCurrentElemDecl.fDefault
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                 
-/* 3101 */                 .stringValue() });
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3107 */     if (this.fDefaultValue == null && this.fNormalizeData && this.fDocumentHandler != null && this.fUnionType) {
-/*      */ 
-/*      */       
-/* 3110 */       String content = this.fValidatedInfo.normalizedValue;
-/* 3111 */       if (content == null) {
-/* 3112 */         content = this.fBuffer.toString();
-/*      */       }
-/* 3114 */       int bufLen = content.length();
-/* 3115 */       if (this.fNormalizedStr.ch == null || this.fNormalizedStr.ch.length < bufLen) {
-/* 3116 */         this.fNormalizedStr.ch = new char[bufLen];
-/*      */       }
-/* 3118 */       content.getChars(0, bufLen, this.fNormalizedStr.ch, 0);
-/* 3119 */       this.fNormalizedStr.offset = 0;
-/* 3120 */       this.fNormalizedStr.length = bufLen;
-/* 3121 */       this.fDocumentHandler.characters(this.fNormalizedStr, null);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   Object elementLocallyValidType(QName element, Object textContent) {
-/* 3126 */     if (this.fCurrentType == null) {
-/* 3127 */       return null;
-/*      */     }
-/* 3129 */     Object retValue = null;
-/*      */ 
-/*      */ 
-/*      */     
-/* 3133 */     if (this.fCurrentType.getTypeCategory() == 16) {
-/*      */       
-/* 3135 */       if (this.fSubElement) {
-/* 3136 */         reportSchemaError("cvc-type.3.1.2", new Object[] { element.rawname });
-/*      */       }
-/* 3138 */       if (!this.fNil) {
-/* 3139 */         XSSimpleType dv = (XSSimpleType)this.fCurrentType;
-/*      */         try {
-/* 3141 */           if (!this.fNormalizeData || this.fUnionType) {
-/* 3142 */             this.fValidationState.setNormalizationRequired(true);
-/*      */           }
-/* 3144 */           retValue = dv.validate(textContent, this.fValidationState, this.fValidatedInfo);
-/* 3145 */         } catch (InvalidDatatypeValueException e) {
-/* 3146 */           reportSchemaError(e.getKey(), e.getArgs());
-/* 3147 */           reportSchemaError("cvc-type.3.1.3", new Object[] { element.rawname, textContent });
-/*      */         }
-/*      */       
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 3154 */       retValue = elementLocallyValidComplexType(element, textContent);
-/*      */     } 
-/*      */     
-/* 3157 */     return retValue;
-/*      */   }
-/*      */   
-/*      */   Object elementLocallyValidComplexType(QName element, Object textContent) {
-/* 3161 */     Object actualValue = null;
-/* 3162 */     XSComplexTypeDecl ctype = (XSComplexTypeDecl)this.fCurrentType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3168 */     if (!this.fNil) {
-/*      */       
-/* 3170 */       if (ctype.fContentType == 0 && (this.fSubElement || this.fSawText)) {
-/*      */         
-/* 3172 */         reportSchemaError("cvc-complex-type.2.1", new Object[] { element.rawname });
-/*      */       
-/*      */       }
-/* 3175 */       else if (ctype.fContentType == 1) {
-/* 3176 */         if (this.fSubElement)
-/* 3177 */           reportSchemaError("cvc-complex-type.2.2", new Object[] { element.rawname }); 
-/* 3178 */         XSSimpleType dv = ctype.fXSSimpleType;
-/*      */         try {
-/* 3180 */           if (!this.fNormalizeData || this.fUnionType) {
-/* 3181 */             this.fValidationState.setNormalizationRequired(true);
-/*      */           }
-/* 3183 */           actualValue = dv.validate(textContent, this.fValidationState, this.fValidatedInfo);
-/* 3184 */         } catch (InvalidDatatypeValueException e) {
-/* 3185 */           reportSchemaError(e.getKey(), e.getArgs());
-/* 3186 */           reportSchemaError("cvc-complex-type.2.2", new Object[] { element.rawname });
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/* 3192 */       else if (ctype.fContentType == 2 && 
-/* 3193 */         this.fSawCharacters) {
-/* 3194 */         reportSchemaError("cvc-complex-type.2.3", new Object[] { element.rawname });
-/*      */       } 
-/*      */ 
-/*      */       
-/* 3198 */       if (ctype.fContentType == 2 || ctype.fContentType == 3)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 3205 */         if (this.fCurrCMState[0] >= 0 && !this.fCurrentCM.endContentModel(this.fCurrCMState)) {
-/* 3206 */           String expected = expectedStr(this.fCurrentCM.whatCanGoHere(this.fCurrCMState));
-/* 3207 */           reportSchemaError("cvc-complex-type.2.4.b", new Object[] { element.rawname, expected });
-/*      */ 
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */ 
-/*      */ 
-/*      */           
-/* 3215 */           ArrayList<String> errors = this.fCurrentCM.checkMinMaxBounds();
-/* 3216 */           if (errors != null) {
-/* 3217 */             for (int i = 0; i < errors.size(); i += 2) {
-/* 3218 */               reportSchemaError(errors
-/* 3219 */                   .get(i), new Object[] { element.rawname, errors
-/* 3220 */                     .get(i + 1) });
-/*      */             } 
-/*      */           }
-/*      */         } 
-/*      */       }
-/*      */     } 
-/* 3226 */     return actualValue;
-/*      */   }
-/*      */   
-/*      */   void reportSchemaError(String key, Object[] arguments) {
-/* 3230 */     if (this.fDoValidation) {
-/* 3231 */       this.fXSIErrorReporter.reportError("http://www.w3.org/TR/xml-schema-1", key, arguments, (short)1);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isComparable(ValidatedInfo info1, ValidatedInfo info2) {
-/* 3240 */     short primitiveType1 = convertToPrimitiveKind(info1.actualValueType);
-/* 3241 */     short primitiveType2 = convertToPrimitiveKind(info2.actualValueType);
-/* 3242 */     if (primitiveType1 != primitiveType2) {
-/* 3243 */       return ((primitiveType1 == 1 && primitiveType2 == 2) || (primitiveType1 == 2 && primitiveType2 == 1));
-/*      */     }
-/*      */     
-/* 3246 */     if (primitiveType1 == 44 || primitiveType1 == 43) {
-/* 3247 */       ShortList typeList1 = info1.itemValueTypes;
-/* 3248 */       ShortList typeList2 = info2.itemValueTypes;
-/* 3249 */       int typeList1Length = (typeList1 != null) ? typeList1.getLength() : 0;
-/* 3250 */       int typeList2Length = (typeList2 != null) ? typeList2.getLength() : 0;
-/* 3251 */       if (typeList1Length != typeList2Length) {
-/* 3252 */         return false;
-/*      */       }
-/* 3254 */       for (int i = 0; i < typeList1Length; ) {
-/* 3255 */         short primitiveItem1 = convertToPrimitiveKind(typeList1.item(i));
-/* 3256 */         short primitiveItem2 = convertToPrimitiveKind(typeList2.item(i));
-/* 3257 */         if (primitiveItem1 == primitiveItem2 || (
-/* 3258 */           primitiveItem1 == 1 && primitiveItem2 == 2) || (primitiveItem1 == 2 && primitiveItem2 == 1)) {
-/*      */           i++;
-/*      */           continue;
-/*      */         } 
-/* 3262 */         return false;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 3266 */     return true;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private short convertToPrimitiveKind(short valueType) {
-/* 3271 */     if (valueType <= 20) {
-/* 3272 */       return valueType;
-/*      */     }
-/*      */     
-/* 3275 */     if (valueType <= 29) {
-/* 3276 */       return 2;
-/*      */     }
-/*      */     
-/* 3279 */     if (valueType <= 42) {
-/* 3280 */       return 4;
-/*      */     }
-/*      */     
-/* 3283 */     return valueType;
-/*      */   }
-/*      */   
-/*      */   private String expectedStr(Vector<E> expected) {
-/* 3287 */     StringBuffer ret = new StringBuffer("{");
-/* 3288 */     int size = expected.size();
-/* 3289 */     for (int i = 0; i < size; i++) {
-/* 3290 */       if (i > 0)
-/* 3291 */         ret.append(", "); 
-/* 3292 */       ret.append(expected.elementAt(i).toString());
-/*      */     } 
-/* 3294 */     ret.append('}');
-/* 3295 */     return ret.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static class XPathMatcherStack
-/*      */   {
-/* 3314 */     protected XPathMatcher[] fMatchers = new XPathMatcher[4];
-/*      */ 
-/*      */     
-/*      */     protected int fMatchersCount;
-/*      */ 
-/*      */     
-/* 3320 */     protected IntStack fContextStack = new IntStack();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void clear() {
-/* 3335 */       for (int i = 0; i < this.fMatchersCount; i++) {
-/* 3336 */         this.fMatchers[i] = null;
-/*      */       }
-/* 3338 */       this.fMatchersCount = 0;
-/* 3339 */       this.fContextStack.clear();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public int size() {
-/* 3344 */       return this.fContextStack.size();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public int getMatcherCount() {
-/* 3349 */       return this.fMatchersCount;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void addMatcher(XPathMatcher matcher) {
-/* 3354 */       ensureMatcherCapacity();
-/* 3355 */       this.fMatchers[this.fMatchersCount++] = matcher;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public XPathMatcher getMatcherAt(int index) {
-/* 3360 */       return this.fMatchers[index];
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void pushContext() {
-/* 3365 */       this.fContextStack.push(this.fMatchersCount);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void popContext() {
-/* 3370 */       this.fMatchersCount = this.fContextStack.pop();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void ensureMatcherCapacity() {
-/* 3379 */       if (this.fMatchersCount == this.fMatchers.length) {
-/* 3380 */         XPathMatcher[] array = new XPathMatcher[this.fMatchers.length * 2];
-/* 3381 */         System.arraycopy(this.fMatchers, 0, array, 0, this.fMatchers.length);
-/* 3382 */         this.fMatchers = array;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract class ValueStoreBase
-/*      */     implements ValueStore
-/*      */   {
-/*      */     protected IdentityConstraint fIdentityConstraint;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3404 */     protected int fFieldCount = 0;
-/* 3405 */     protected Field[] fFields = null;
-/*      */     
-/* 3407 */     protected Object[] fLocalValues = null;
-/* 3408 */     protected short[] fLocalValueTypes = null;
-/* 3409 */     protected ShortList[] fLocalItemValueTypes = null;
-/*      */ 
-/*      */     
-/*      */     protected int fValuesCount;
-/*      */ 
-/*      */     
-/* 3415 */     public final Vector fValues = new Vector();
-/* 3416 */     public XMLSchemaValidator.ShortVector fValueTypes = null;
-/* 3417 */     public Vector fItemValueTypes = null;
-/*      */     
-/*      */     private boolean fUseValueTypeVector = false;
-/* 3420 */     private int fValueTypesLength = 0;
-/* 3421 */     private short fValueType = 0;
-/*      */     
-/*      */     private boolean fUseItemValueTypeVector = false;
-/* 3424 */     private int fItemValueTypesLength = 0;
-/* 3425 */     private ShortList fItemValueType = null;
-/*      */ 
-/*      */     
-/* 3428 */     final StringBuffer fTempBuffer = new StringBuffer();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected ValueStoreBase(IdentityConstraint identityConstraint) {
-/* 3436 */       this.fIdentityConstraint = identityConstraint;
-/* 3437 */       this.fFieldCount = this.fIdentityConstraint.getFieldCount();
-/* 3438 */       this.fFields = new Field[this.fFieldCount];
-/* 3439 */       this.fLocalValues = new Object[this.fFieldCount];
-/* 3440 */       this.fLocalValueTypes = new short[this.fFieldCount];
-/* 3441 */       this.fLocalItemValueTypes = new ShortList[this.fFieldCount];
-/* 3442 */       for (int i = 0; i < this.fFieldCount; i++) {
-/* 3443 */         this.fFields[i] = this.fIdentityConstraint.getFieldAt(i);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void clear() {
-/* 3454 */       this.fValuesCount = 0;
-/* 3455 */       this.fUseValueTypeVector = false;
-/* 3456 */       this.fValueTypesLength = 0;
-/* 3457 */       this.fValueType = 0;
-/* 3458 */       this.fUseItemValueTypeVector = false;
-/* 3459 */       this.fItemValueTypesLength = 0;
-/* 3460 */       this.fItemValueType = null;
-/* 3461 */       this.fValues.setSize(0);
-/* 3462 */       if (this.fValueTypes != null) {
-/* 3463 */         this.fValueTypes.clear();
-/*      */       }
-/* 3465 */       if (this.fItemValueTypes != null) {
-/* 3466 */         this.fItemValueTypes.setSize(0);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void append(ValueStoreBase newVal) {
-/* 3472 */       for (int i = 0; i < newVal.fValues.size(); i++) {
-/* 3473 */         this.fValues.addElement(newVal.fValues.elementAt(i));
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void startValueScope() {
-/* 3479 */       this.fValuesCount = 0;
-/* 3480 */       for (int i = 0; i < this.fFieldCount; i++) {
-/* 3481 */         this.fLocalValues[i] = null;
-/* 3482 */         this.fLocalValueTypes[i] = 0;
-/* 3483 */         this.fLocalItemValueTypes[i] = null;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endValueScope() {
-/* 3490 */       if (this.fValuesCount == 0) {
-/* 3491 */         if (this.fIdentityConstraint.getCategory() == 1) {
-/* 3492 */           String code = "AbsentKeyValue";
-/* 3493 */           String eName = this.fIdentityConstraint.getElementName();
-/* 3494 */           String cName = this.fIdentityConstraint.getIdentityConstraintName();
-/* 3495 */           XMLSchemaValidator.this.reportSchemaError(code, new Object[] { eName, cName });
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3506 */       if (this.fValuesCount != this.fFieldCount) {
-/* 3507 */         if (this.fIdentityConstraint.getCategory() == 1) {
-/* 3508 */           String code = "KeyNotEnoughValues";
-/* 3509 */           UniqueOrKey key = (UniqueOrKey)this.fIdentityConstraint;
-/* 3510 */           String eName = this.fIdentityConstraint.getElementName();
-/* 3511 */           String cName = key.getIdentityConstraintName();
-/* 3512 */           XMLSchemaValidator.this.reportSchemaError(code, new Object[] { eName, cName });
-/*      */         } 
-/*      */         return;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endDocumentFragment() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endDocument() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void reportError(String key, Object[] args) {
-/* 3544 */       XMLSchemaValidator.this.reportSchemaError(key, args);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addValue(Field field, Object actualValue, short valueType, ShortList itemValueType) {
-/*      */       int i;
-/* 3557 */       for (i = this.fFieldCount - 1; i > -1 && 
-/* 3558 */         this.fFields[i] != field; i--);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3563 */       if (i == -1) {
-/* 3564 */         String code = "UnknownField";
-/* 3565 */         String eName = this.fIdentityConstraint.getElementName();
-/* 3566 */         String cName = this.fIdentityConstraint.getIdentityConstraintName();
-/* 3567 */         XMLSchemaValidator.this.reportSchemaError(code, new Object[] { field.toString(), eName, cName });
-/*      */         return;
-/*      */       } 
-/* 3570 */       if (Boolean.TRUE != XMLSchemaValidator.this.mayMatch(field)) {
-/* 3571 */         String code = "FieldMultipleMatch";
-/* 3572 */         String cName = this.fIdentityConstraint.getIdentityConstraintName();
-/* 3573 */         XMLSchemaValidator.this.reportSchemaError(code, new Object[] { field.toString(), cName });
-/*      */       } else {
-/* 3575 */         this.fValuesCount++;
-/*      */       } 
-/* 3577 */       this.fLocalValues[i] = actualValue;
-/* 3578 */       this.fLocalValueTypes[i] = valueType;
-/* 3579 */       this.fLocalItemValueTypes[i] = itemValueType;
-/* 3580 */       if (this.fValuesCount == this.fFieldCount) {
-/* 3581 */         checkDuplicateValues();
-/*      */         
-/* 3583 */         for (i = 0; i < this.fFieldCount; i++) {
-/* 3584 */           this.fValues.addElement(this.fLocalValues[i]);
-/* 3585 */           addValueType(this.fLocalValueTypes[i]);
-/* 3586 */           addItemValueType(this.fLocalItemValueTypes[i]);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean contains() {
-/* 3597 */       int next = 0;
-/* 3598 */       int size = this.fValues.size();
-/* 3599 */       for (int i = 0; i < size; i = next) {
-/* 3600 */         next = i + this.fFieldCount;
-/* 3601 */         int j = 0; while (true) { if (j < this.fFieldCount) {
-/* 3602 */             Object value1 = this.fLocalValues[j];
-/* 3603 */             Object value2 = this.fValues.elementAt(i);
-/* 3604 */             short valueType1 = this.fLocalValueTypes[j];
-/* 3605 */             short valueType2 = getValueTypeAt(i);
-/* 3606 */             if (value1 == null || value2 == null || valueType1 != valueType2 || !value1.equals(value2)) {
-/*      */               break;
-/*      */             }
-/* 3609 */             if (valueType1 == 44 || valueType1 == 43) {
-/* 3610 */               ShortList list1 = this.fLocalItemValueTypes[j];
-/* 3611 */               ShortList list2 = getItemValueTypeAt(i);
-/* 3612 */               if (list1 == null || list2 == null || !list1.equals(list2))
-/*      */                 break; 
-/*      */             } 
-/* 3615 */             i++; j++;
-/*      */             continue;
-/*      */           } 
-/* 3618 */           return true; }
-/*      */       
-/*      */       } 
-/* 3621 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int contains(ValueStoreBase vsb) {
-/* 3631 */       Vector values = vsb.fValues;
-/* 3632 */       int size1 = values.size();
-/* 3633 */       if (this.fFieldCount <= 1) {
-/* 3634 */         for (int i = 0; i < size1; i++) {
-/* 3635 */           short val = vsb.getValueTypeAt(i);
-/* 3636 */           if (!valueTypeContains(val) || !this.fValues.contains(values.elementAt(i))) {
-/* 3637 */             return i;
-/*      */           }
-/* 3639 */           if (val == 44 || val == 43) {
-/* 3640 */             ShortList list1 = vsb.getItemValueTypeAt(i);
-/* 3641 */             if (!itemValueTypeContains(list1)) {
-/* 3642 */               return i;
-/*      */             }
-/*      */           }
-/*      */         
-/*      */         } 
-/*      */       } else {
-/*      */         
-/* 3649 */         int size2 = this.fValues.size();
-/*      */         int i;
-/* 3651 */         for (i = 0; i < size1; i += this.fFieldCount) {
-/*      */           
-/* 3653 */           int j = 0; label52: while (true) { if (j < size2) {
-/* 3654 */               for (int k = 0; k < this.fFieldCount; k++) {
-/* 3655 */                 Object value1 = values.elementAt(i + k);
-/* 3656 */                 Object value2 = this.fValues.elementAt(j + k);
-/* 3657 */                 short valueType1 = vsb.getValueTypeAt(i + k);
-/* 3658 */                 short valueType2 = getValueTypeAt(j + k);
-/* 3659 */                 if (value1 != value2) if (valueType1 == valueType2) { if (value1 != null) { if (!value1.equals(value2))
-/*      */                         continue label52;  } else { continue label52; }  }
-/*      */                   else { continue label52; }
-/* 3662 */                     if (valueType1 == 44 || valueType1 == 43) {
-/* 3663 */                   ShortList list1 = vsb.getItemValueTypeAt(i + k);
-/* 3664 */                   ShortList list2 = getItemValueTypeAt(j + k);
-/* 3665 */                   if (list1 != null) { if (list2 != null) { if (!list1.equals(list2)) { j += this.fFieldCount; continue; }  }
-/*      */                     else { continue label52; }
-/*      */                      }
-/*      */                   else { continue label52; }
-/*      */                 
-/*      */                 } 
-/*      */               }  break;
-/* 3672 */             }  return i; }
-/*      */         
-/*      */         } 
-/* 3675 */       }  return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void checkDuplicateValues() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected String toString(Object[] values) {
-/* 3691 */       int size = values.length;
-/* 3692 */       if (size == 0) {
-/* 3693 */         return "";
-/*      */       }
-/*      */       
-/* 3696 */       this.fTempBuffer.setLength(0);
-/*      */ 
-/*      */       
-/* 3699 */       for (int i = 0; i < size; i++) {
-/* 3700 */         if (i > 0) {
-/* 3701 */           this.fTempBuffer.append(',');
-/*      */         }
-/* 3703 */         this.fTempBuffer.append(values[i]);
-/*      */       } 
-/* 3705 */       return this.fTempBuffer.toString();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected String toString(Vector values, int start, int length) {
-/* 3713 */       if (length == 0) {
-/* 3714 */         return "";
-/*      */       }
-/*      */ 
-/*      */       
-/* 3718 */       if (length == 1) {
-/* 3719 */         return String.valueOf(values.elementAt(start));
-/*      */       }
-/*      */ 
-/*      */       
-/* 3723 */       StringBuffer str = new StringBuffer();
-/* 3724 */       for (int i = 0; i < length; i++) {
-/* 3725 */         if (i > 0) {
-/* 3726 */           str.append(',');
-/*      */         }
-/* 3728 */         str.append(values.elementAt(start + i));
-/*      */       } 
-/* 3730 */       return str.toString();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 3740 */       String s = super.toString();
-/* 3741 */       int index1 = s.lastIndexOf('$');
-/* 3742 */       if (index1 != -1) {
-/* 3743 */         s = s.substring(index1 + 1);
-/*      */       }
-/* 3745 */       int index2 = s.lastIndexOf('.');
-/* 3746 */       if (index2 != -1) {
-/* 3747 */         s = s.substring(index2 + 1);
-/*      */       }
-/* 3749 */       return s + '[' + this.fIdentityConstraint + ']';
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void addValueType(short type) {
-/* 3757 */       if (this.fUseValueTypeVector) {
-/* 3758 */         this.fValueTypes.add(type);
-/*      */       }
-/* 3760 */       else if (this.fValueTypesLength++ == 0) {
-/* 3761 */         this.fValueType = type;
-/*      */       }
-/* 3763 */       else if (this.fValueType != type) {
-/* 3764 */         this.fUseValueTypeVector = true;
-/* 3765 */         if (this.fValueTypes == null) {
-/* 3766 */           this.fValueTypes = new XMLSchemaValidator.ShortVector(this.fValueTypesLength * 2);
-/*      */         }
-/* 3768 */         for (int i = 1; i < this.fValueTypesLength; i++) {
-/* 3769 */           this.fValueTypes.add(this.fValueType);
-/*      */         }
-/* 3771 */         this.fValueTypes.add(type);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     private short getValueTypeAt(int index) {
-/* 3776 */       if (this.fUseValueTypeVector) {
-/* 3777 */         return this.fValueTypes.valueAt(index);
-/*      */       }
-/* 3779 */       return this.fValueType;
-/*      */     }
-/*      */     
-/*      */     private boolean valueTypeContains(short value) {
-/* 3783 */       if (this.fUseValueTypeVector) {
-/* 3784 */         return this.fValueTypes.contains(value);
-/*      */       }
-/* 3786 */       return (this.fValueType == value);
-/*      */     }
-/*      */     
-/*      */     private void addItemValueType(ShortList itemValueType) {
-/* 3790 */       if (this.fUseItemValueTypeVector) {
-/* 3791 */         this.fItemValueTypes.add(itemValueType);
-/*      */       }
-/* 3793 */       else if (this.fItemValueTypesLength++ == 0) {
-/* 3794 */         this.fItemValueType = itemValueType;
-/*      */       }
-/* 3796 */       else if (this.fItemValueType != itemValueType && (this.fItemValueType == null || 
-/* 3797 */         !this.fItemValueType.equals(itemValueType))) {
-/* 3798 */         this.fUseItemValueTypeVector = true;
-/* 3799 */         if (this.fItemValueTypes == null) {
-/* 3800 */           this.fItemValueTypes = new Vector(this.fItemValueTypesLength * 2);
-/*      */         }
-/* 3802 */         for (int i = 1; i < this.fItemValueTypesLength; i++) {
-/* 3803 */           this.fItemValueTypes.add(this.fItemValueType);
-/*      */         }
-/* 3805 */         this.fItemValueTypes.add(itemValueType);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     private ShortList getItemValueTypeAt(int index) {
-/* 3810 */       if (this.fUseItemValueTypeVector) {
-/* 3811 */         return this.fItemValueTypes.elementAt(index);
-/*      */       }
-/* 3813 */       return this.fItemValueType;
-/*      */     }
-/*      */     
-/*      */     private boolean itemValueTypeContains(ShortList value) {
-/* 3817 */       if (this.fUseItemValueTypeVector) {
-/* 3818 */         return this.fItemValueTypes.contains(value);
-/*      */       }
-/* 3820 */       return (this.fItemValueType == value || (this.fItemValueType != null && this.fItemValueType
-/* 3821 */         .equals(value)));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class UniqueValueStore
-/*      */     extends ValueStoreBase
-/*      */   {
-/*      */     public UniqueValueStore(UniqueOrKey unique) {
-/* 3839 */       super(unique);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void checkDuplicateValues() {
-/* 3851 */       if (contains()) {
-/* 3852 */         String code = "DuplicateUnique";
-/* 3853 */         String value = toString(this.fLocalValues);
-/* 3854 */         String eName = this.fIdentityConstraint.getElementName();
-/* 3855 */         String cName = this.fIdentityConstraint.getIdentityConstraintName();
-/* 3856 */         XMLSchemaValidator.this.reportSchemaError(code, new Object[] { value, eName, cName });
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class KeyValueStore
-/*      */     extends ValueStoreBase
-/*      */   {
-/*      */     public KeyValueStore(UniqueOrKey key) {
-/* 3877 */       super(key);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void checkDuplicateValues() {
-/* 3888 */       if (contains()) {
-/* 3889 */         String code = "DuplicateKey";
-/* 3890 */         String value = toString(this.fLocalValues);
-/* 3891 */         String eName = this.fIdentityConstraint.getElementName();
-/* 3892 */         String cName = this.fIdentityConstraint.getIdentityConstraintName();
-/* 3893 */         XMLSchemaValidator.this.reportSchemaError(code, new Object[] { value, eName, cName });
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class KeyRefValueStore
-/*      */     extends ValueStoreBase
-/*      */   {
-/*      */     protected XMLSchemaValidator.ValueStoreBase fKeyValueStore;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public KeyRefValueStore(KeyRef keyRef, XMLSchemaValidator.KeyValueStore keyValueStore) {
-/* 3919 */       super(keyRef);
-/* 3920 */       this.fKeyValueStore = keyValueStore;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endDocumentFragment() {
-/* 3932 */       super.endDocumentFragment();
-/*      */ 
-/*      */ 
-/*      */       
-/* 3936 */       this
-/* 3937 */         .fKeyValueStore = XMLSchemaValidator.this.fValueStoreCache.fGlobalIDConstraintMap.get(((KeyRef)this.fIdentityConstraint)
-/* 3938 */           .getKey());
-/*      */       
-/* 3940 */       if (this.fKeyValueStore == null) {
-/*      */         
-/* 3942 */         String code = "KeyRefOutOfScope";
-/* 3943 */         String value = this.fIdentityConstraint.toString();
-/* 3944 */         XMLSchemaValidator.this.reportSchemaError(code, new Object[] { value });
-/*      */         return;
-/*      */       } 
-/* 3947 */       int errorIndex = this.fKeyValueStore.contains(this);
-/* 3948 */       if (errorIndex != -1) {
-/* 3949 */         String code = "KeyNotFound";
-/* 3950 */         String values = toString(this.fValues, errorIndex, this.fFieldCount);
-/* 3951 */         String element = this.fIdentityConstraint.getElementName();
-/* 3952 */         String name = this.fIdentityConstraint.getName();
-/* 3953 */         XMLSchemaValidator.this.reportSchemaError(code, new Object[] { name, values, element });
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endDocument() {
-/* 3960 */       super.endDocument();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class ValueStoreCache
-/*      */   {
-/* 3979 */     final XMLSchemaValidator.LocalIDKey fLocalId = new XMLSchemaValidator.LocalIDKey();
-/*      */ 
-/*      */ 
-/*      */     
-/* 3983 */     protected final Vector fValueStores = new Vector();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3994 */     protected final Map<XMLSchemaValidator.LocalIDKey, XMLSchemaValidator.ValueStoreBase> fIdentityConstraint2ValueStoreMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 4016 */     protected final Stack<Map<IdentityConstraint, XMLSchemaValidator.ValueStoreBase>> fGlobalMapStack = new Stack<>();
-/*      */     
-/* 4018 */     protected final Map<IdentityConstraint, XMLSchemaValidator.ValueStoreBase> fGlobalIDConstraintMap = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void startDocument() {
-/* 4035 */       this.fValueStores.removeAllElements();
-/* 4036 */       this.fIdentityConstraint2ValueStoreMap.clear();
-/* 4037 */       this.fGlobalIDConstraintMap.clear();
-/* 4038 */       this.fGlobalMapStack.removeAllElements();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void startElement() {
-/* 4045 */       if (this.fGlobalIDConstraintMap.size() > 0) {
-/* 4046 */         this.fGlobalMapStack.push((Map<IdentityConstraint, XMLSchemaValidator.ValueStoreBase>)((HashMap)this.fGlobalIDConstraintMap)
-/* 4047 */             .clone());
-/*      */       } else {
-/* 4049 */         this.fGlobalMapStack.push((Map<IdentityConstraint, XMLSchemaValidator.ValueStoreBase>)null);
-/* 4050 */       }  this.fGlobalIDConstraintMap.clear();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endElement() {
-/* 4057 */       if (this.fGlobalMapStack.isEmpty()) {
-/*      */         return;
-/*      */       }
-/* 4060 */       Map<IdentityConstraint, XMLSchemaValidator.ValueStoreBase> oldMap = this.fGlobalMapStack.pop();
-/*      */       
-/* 4062 */       if (oldMap == null) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 4066 */       for (Map.Entry<IdentityConstraint, XMLSchemaValidator.ValueStoreBase> entry : oldMap.entrySet()) {
-/* 4067 */         IdentityConstraint id = entry.getKey();
-/* 4068 */         XMLSchemaValidator.ValueStoreBase oldVal = entry.getValue();
-/* 4069 */         if (oldVal != null) {
-/* 4070 */           XMLSchemaValidator.ValueStoreBase currVal = this.fGlobalIDConstraintMap.get(id);
-/* 4071 */           if (currVal == null) {
-/* 4072 */             this.fGlobalIDConstraintMap.put(id, oldVal); continue;
-/*      */           } 
-/* 4074 */           if (currVal != oldVal) {
-/* 4075 */             currVal.append(oldVal);
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void initValueStoresFor(XSElementDecl eDecl, FieldActivator activator) {
-/* 4087 */       IdentityConstraint[] icArray = eDecl.fIDConstraints;
-/* 4088 */       int icCount = eDecl.fIDCPos;
-/* 4089 */       for (int i = 0; i < icCount; i++) {
-/* 4090 */         UniqueOrKey unique; XMLSchemaValidator.LocalIDKey toHash; XMLSchemaValidator.UniqueValueStore uniqueValueStore; UniqueOrKey key; XMLSchemaValidator.KeyValueStore keyValueStore; KeyRef keyRef; XMLSchemaValidator.KeyRefValueStore keyRefValueStore; switch (icArray[i].getCategory()) {
-/*      */           
-/*      */           case 3:
-/* 4093 */             unique = (UniqueOrKey)icArray[i];
-/* 4094 */             toHash = new XMLSchemaValidator.LocalIDKey(unique, XMLSchemaValidator.this.fElementDepth);
-/*      */             
-/* 4096 */             uniqueValueStore = (XMLSchemaValidator.UniqueValueStore)this.fIdentityConstraint2ValueStoreMap.get(toHash);
-/* 4097 */             if (uniqueValueStore == null) {
-/* 4098 */               uniqueValueStore = new XMLSchemaValidator.UniqueValueStore(unique);
-/* 4099 */               this.fIdentityConstraint2ValueStoreMap.put(toHash, uniqueValueStore);
-/*      */             } else {
-/* 4101 */               uniqueValueStore.clear();
-/*      */             } 
-/* 4103 */             this.fValueStores.addElement(uniqueValueStore);
-/* 4104 */             XMLSchemaValidator.this.activateSelectorFor(icArray[i]);
-/*      */             break;
-/*      */           
-/*      */           case 1:
-/* 4108 */             key = (UniqueOrKey)icArray[i];
-/* 4109 */             toHash = new XMLSchemaValidator.LocalIDKey(key, XMLSchemaValidator.this.fElementDepth);
-/*      */             
-/* 4111 */             keyValueStore = (XMLSchemaValidator.KeyValueStore)this.fIdentityConstraint2ValueStoreMap.get(toHash);
-/* 4112 */             if (keyValueStore == null) {
-/* 4113 */               keyValueStore = new XMLSchemaValidator.KeyValueStore(key);
-/* 4114 */               this.fIdentityConstraint2ValueStoreMap.put(toHash, keyValueStore);
-/*      */             } else {
-/* 4116 */               keyValueStore.clear();
-/*      */             } 
-/* 4118 */             this.fValueStores.addElement(keyValueStore);
-/* 4119 */             XMLSchemaValidator.this.activateSelectorFor(icArray[i]);
-/*      */             break;
-/*      */           
-/*      */           case 2:
-/* 4123 */             keyRef = (KeyRef)icArray[i];
-/* 4124 */             toHash = new XMLSchemaValidator.LocalIDKey(keyRef, XMLSchemaValidator.this.fElementDepth);
-/*      */             
-/* 4126 */             keyRefValueStore = (XMLSchemaValidator.KeyRefValueStore)this.fIdentityConstraint2ValueStoreMap.get(toHash);
-/* 4127 */             if (keyRefValueStore == null) {
-/* 4128 */               keyRefValueStore = new XMLSchemaValidator.KeyRefValueStore(keyRef, null);
-/* 4129 */               this.fIdentityConstraint2ValueStoreMap.put(toHash, keyRefValueStore);
-/*      */             } else {
-/* 4131 */               keyRefValueStore.clear();
-/*      */             } 
-/* 4133 */             this.fValueStores.addElement(keyRefValueStore);
-/* 4134 */             XMLSchemaValidator.this.activateSelectorFor(icArray[i]);
-/*      */             break;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public XMLSchemaValidator.ValueStoreBase getValueStoreFor(IdentityConstraint id, int initialDepth) {
-/* 4142 */       this.fLocalId.fDepth = initialDepth;
-/* 4143 */       this.fLocalId.fId = id;
-/* 4144 */       return this.fIdentityConstraint2ValueStoreMap.get(this.fLocalId);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public XMLSchemaValidator.ValueStoreBase getGlobalValueStoreFor(IdentityConstraint id) {
-/* 4149 */       return this.fGlobalIDConstraintMap.get(id);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void transplant(IdentityConstraint id, int initialDepth) {
-/* 4157 */       this.fLocalId.fDepth = initialDepth;
-/* 4158 */       this.fLocalId.fId = id;
-/* 4159 */       XMLSchemaValidator.ValueStoreBase newVals = this.fIdentityConstraint2ValueStoreMap.get(this.fLocalId);
-/* 4160 */       if (id.getCategory() == 2)
-/*      */         return; 
-/* 4162 */       XMLSchemaValidator.ValueStoreBase currVals = this.fGlobalIDConstraintMap.get(id);
-/* 4163 */       if (currVals != null) {
-/* 4164 */         currVals.append(newVals);
-/* 4165 */         this.fGlobalIDConstraintMap.put(id, currVals);
-/*      */       } else {
-/* 4167 */         this.fGlobalIDConstraintMap.put(id, newVals);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void endDocument() {
-/* 4174 */       int count = this.fValueStores.size();
-/* 4175 */       for (int i = 0; i < count; i++) {
-/* 4176 */         XMLSchemaValidator.ValueStoreBase valueStore = this.fValueStores.elementAt(i);
-/* 4177 */         valueStore.endDocument();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 4188 */       String s = super.toString();
-/* 4189 */       int index1 = s.lastIndexOf('$');
-/* 4190 */       if (index1 != -1) {
-/* 4191 */         return s.substring(index1 + 1);
-/*      */       }
-/* 4193 */       int index2 = s.lastIndexOf('.');
-/* 4194 */       if (index2 != -1) {
-/* 4195 */         return s.substring(index2 + 1);
-/*      */       }
-/* 4197 */       return s;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected class LocalIDKey
-/*      */   {
-/*      */     public IdentityConstraint fId;
-/*      */     
-/*      */     public int fDepth;
-/*      */ 
-/*      */     
-/*      */     public LocalIDKey() {}
-/*      */ 
-/*      */     
-/*      */     public LocalIDKey(IdentityConstraint id, int depth) {
-/* 4213 */       this.fId = id;
-/* 4214 */       this.fDepth = depth;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public int hashCode() {
-/* 4219 */       return this.fId.hashCode() + this.fDepth;
-/*      */     }
-/*      */     
-/*      */     public boolean equals(Object localIDKey) {
-/* 4223 */       if (localIDKey instanceof LocalIDKey) {
-/* 4224 */         LocalIDKey lIDKey = (LocalIDKey)localIDKey;
-/* 4225 */         return (lIDKey.fId == this.fId && lIDKey.fDepth == this.fDepth);
-/*      */       } 
-/* 4227 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static final class ShortVector
-/*      */   {
-/*      */     private int fLength;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private short[] fData;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ShortVector() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ShortVector(int initialCapacity) {
-/* 4253 */       this.fData = new short[initialCapacity];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int length() {
-/* 4262 */       return this.fLength;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void add(short value) {
-/* 4267 */       ensureCapacity(this.fLength + 1);
-/* 4268 */       this.fData[this.fLength++] = value;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public short valueAt(int position) {
-/* 4273 */       return this.fData[position];
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void clear() {
-/* 4278 */       this.fLength = 0;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean contains(short value) {
-/* 4283 */       for (int i = 0; i < this.fLength; i++) {
-/* 4284 */         if (this.fData[i] == value) {
-/* 4285 */           return true;
-/*      */         }
-/*      */       } 
-/* 4288 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void ensureCapacity(int size) {
-/* 4297 */       if (this.fData == null) {
-/* 4298 */         this.fData = new short[8];
-/*      */       }
-/* 4300 */       else if (this.fData.length <= size) {
-/* 4301 */         short[] newdata = new short[this.fData.length * 2];
-/* 4302 */         System.arraycopy(this.fData, 0, newdata, 0, this.fData.length);
-/* 4303 */         this.fData = newdata;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XMLSchemaValidator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.RevalidationHandler;
+import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
+import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
+import com.sun.org.apache.xerces.internal.impl.dv.DatatypeException;
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
+import com.sun.org.apache.xerces.internal.impl.validation.ValidationState;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.Field;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.FieldActivator;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.IdentityConstraint;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.KeyRef;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.Selector;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.UniqueOrKey;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.ValueStore;
+import com.sun.org.apache.xerces.internal.impl.xs.identity.XPathMatcher;
+import com.sun.org.apache.xerces.internal.impl.xs.models.CMBuilder;
+import com.sun.org.apache.xerces.internal.impl.xs.models.CMNodeFactory;
+import com.sun.org.apache.xerces.internal.impl.xs.models.XSCMValidator;
+import com.sun.org.apache.xerces.internal.parsers.XMLParser;
+import com.sun.org.apache.xerces.internal.util.AugmentationsImpl;
+import com.sun.org.apache.xerces.internal.util.IntStack;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.util.URI.MalformedURIException;
+import com.sun.org.apache.xerces.internal.util.XMLAttributesImpl;
+import com.sun.org.apache.xerces.internal.util.XMLChar;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.xni.Augmentations;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
+import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentFilter;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xs.AttributePSVI;
+import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
+import com.sun.org.apache.xerces.internal.xs.ShortList;
+import com.sun.org.apache.xerces.internal.xs.StringList;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
+import java.util.Vector;
+import jdk.xml.internal.JdkXmlUtils;
+
+/**
+ * The XML Schema validator. The validator implements a document
+ * filter: receiving document events from the scanner; validating
+ * the content and structure; augmenting the InfoSet, if applicable;
+ * and notifying the parser of the information resulting from the
+ * validation process.
+ * <p>
+ * This component requires the following features and properties from the
+ * component manager that uses it:
+ * <ul>
+ *  <li>http://xml.org/sax/features/validation</li>
+ *  <li>http://apache.org/xml/properties/internal/symbol-table</li>
+ *  <li>http://apache.org/xml/properties/internal/error-reporter</li>
+ *  <li>http://apache.org/xml/properties/internal/entity-resolver</li>
+ * </ul>
+ *
+ * @xerces.internal
+ *
+ * @author Sandy Gao IBM
+ * @author Elena Litani IBM
+ * @author Andy Clark IBM
+ * @author Neeraj Bajaj, Sun Microsystems, inc.
+ * @version $Id: XMLSchemaValidator.java,v 1.16 2010-11-01 04:39:55 joehw Exp $
+ */
+public class XMLSchemaValidator
+    implements XMLComponent, XMLDocumentFilter, FieldActivator, RevalidationHandler {
+
+    //
+    // Constants
+    //
+    private static final boolean DEBUG = false;
+
+    // feature identifiers
+
+    /** Feature identifier: validation. */
+    protected static final String VALIDATION =
+        Constants.SAX_FEATURE_PREFIX + Constants.VALIDATION_FEATURE;
+
+    /** Feature identifier: validation. */
+    protected static final String SCHEMA_VALIDATION =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_VALIDATION_FEATURE;
+
+    /** Feature identifier: schema full checking*/
+    protected static final String SCHEMA_FULL_CHECKING =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_FULL_CHECKING;
+
+    /** Feature identifier: dynamic validation. */
+    protected static final String DYNAMIC_VALIDATION =
+        Constants.XERCES_FEATURE_PREFIX + Constants.DYNAMIC_VALIDATION_FEATURE;
+
+    /** Feature identifier: expose schema normalized value */
+    protected static final String NORMALIZE_DATA =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_NORMALIZED_VALUE;
+
+    /** Feature identifier: send element default value via characters() */
+    protected static final String SCHEMA_ELEMENT_DEFAULT =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_ELEMENT_DEFAULT;
+
+    /** Feature identifier: augment PSVI */
+    protected static final String SCHEMA_AUGMENT_PSVI =
+        Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_AUGMENT_PSVI;
+
+    /** Feature identifier: whether to recognize java encoding names */
+    protected static final String ALLOW_JAVA_ENCODINGS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.ALLOW_JAVA_ENCODINGS_FEATURE;
+
+    /** Feature identifier: standard uri conformant feature. */
+    protected static final String STANDARD_URI_CONFORMANT_FEATURE =
+        Constants.XERCES_FEATURE_PREFIX + Constants.STANDARD_URI_CONFORMANT_FEATURE;
+
+    /** Feature: generate synthetic annotations */
+    protected static final String GENERATE_SYNTHETIC_ANNOTATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.GENERATE_SYNTHETIC_ANNOTATIONS_FEATURE;
+
+    /** Feature identifier: validate annotations. */
+    protected static final String VALIDATE_ANNOTATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.VALIDATE_ANNOTATIONS_FEATURE;
+
+    /** Feature identifier: honour all schemaLocations */
+    protected static final String HONOUR_ALL_SCHEMALOCATIONS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.HONOUR_ALL_SCHEMALOCATIONS_FEATURE;
+
+    /** Feature identifier: use grammar pool only */
+    protected static final String USE_GRAMMAR_POOL_ONLY =
+        Constants.XERCES_FEATURE_PREFIX + Constants.USE_GRAMMAR_POOL_ONLY_FEATURE;
+
+    /** Feature identifier: whether to continue parsing a schema after a fatal error is encountered */
+    protected static final String CONTINUE_AFTER_FATAL_ERROR =
+        Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE;
+
+    protected static final String PARSER_SETTINGS =
+            Constants.XERCES_FEATURE_PREFIX + Constants.PARSER_SETTINGS;
+
+    /** Feature identifier: namespace growth */
+    protected static final String NAMESPACE_GROWTH =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NAMESPACE_GROWTH_FEATURE;
+
+    /** Feature identifier: tolerate duplicates */
+    protected static final String TOLERATE_DUPLICATES =
+        Constants.XERCES_FEATURE_PREFIX + Constants.TOLERATE_DUPLICATES_FEATURE;
+
+    protected static final String REPORT_WHITESPACE =
+            Constants.SUN_SCHEMA_FEATURE_PREFIX + Constants.SUN_REPORT_IGNORED_ELEMENT_CONTENT_WHITESPACE;
+
+    // property identifiers
+
+    /** Property identifier: symbol table. */
+    public static final String SYMBOL_TABLE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    /** Property identifier: error reporter. */
+    public static final String ERROR_REPORTER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY;
+
+    /** Property identifier: entity resolver. */
+    public static final String ENTITY_RESOLVER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_RESOLVER_PROPERTY;
+
+    /** Property identifier: grammar pool. */
+    public static final String XMLGRAMMAR_POOL =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
+
+    protected static final String VALIDATION_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.VALIDATION_MANAGER_PROPERTY;
+
+    protected static final String ENTITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
+
+    /** Property identifier: schema location. */
+    protected static final String SCHEMA_LOCATION =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_LOCATION;
+
+    /** Property identifier: no namespace schema location. */
+    protected static final String SCHEMA_NONS_LOCATION =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_NONS_LOCATION;
+
+    /** Property identifier: JAXP schema source. */
+    protected static final String JAXP_SCHEMA_SOURCE =
+        Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_SOURCE;
+
+    /** Property identifier: JAXP schema language. */
+    protected static final String JAXP_SCHEMA_LANGUAGE =
+        Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_LANGUAGE;
+
+    /** Property identifier: Schema DV Factory */
+    protected static final String SCHEMA_DV_FACTORY =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SCHEMA_DV_FACTORY_PROPERTY;
+
+    /** Property identifier: Security property manager. */
+    private static final String XML_SECURITY_PROPERTY_MANAGER =
+            Constants.XML_SECURITY_PROPERTY_MANAGER;
+
+    protected static final String OVERRIDE_PARSER = JdkXmlUtils.OVERRIDE_PARSER;
+
+    // recognized features and properties
+
+    /** Recognized features. */
+    private static final String[] RECOGNIZED_FEATURES =
+        {
+            VALIDATION,
+            SCHEMA_VALIDATION,
+            DYNAMIC_VALIDATION,
+            SCHEMA_FULL_CHECKING,
+            ALLOW_JAVA_ENCODINGS,
+            CONTINUE_AFTER_FATAL_ERROR,
+            STANDARD_URI_CONFORMANT_FEATURE,
+            GENERATE_SYNTHETIC_ANNOTATIONS,
+            VALIDATE_ANNOTATIONS,
+            HONOUR_ALL_SCHEMALOCATIONS,
+            USE_GRAMMAR_POOL_ONLY,
+            NAMESPACE_GROWTH,
+            TOLERATE_DUPLICATES,
+            OVERRIDE_PARSER
+    };
+
+    /** Feature defaults. */
+    private static final Boolean[] FEATURE_DEFAULTS = { null,
+        // NOTE: The following defaults are nulled out on purpose.
+        //       If they are set, then when the XML Schema validator
+        //       is constructed dynamically, these values may override
+        //       those set by the application. This goes against the
+        //       whole purpose of XMLComponent#getFeatureDefault but
+        //       it can't be helped in this case. -Ac
+        null, //Boolean.FALSE,
+        null, //Boolean.FALSE,
+        null, //Boolean.FALSE,
+        null, //Boolean.FALSE,
+        null, //Boolean.FALSE,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        JdkXmlUtils.OVERRIDE_PARSER_DEFAULT
+    };
+
+    /** Recognized properties. */
+    private static final String[] RECOGNIZED_PROPERTIES =
+        {
+            SYMBOL_TABLE,
+            ERROR_REPORTER,
+            ENTITY_RESOLVER,
+            VALIDATION_MANAGER,
+            SCHEMA_LOCATION,
+            SCHEMA_NONS_LOCATION,
+            JAXP_SCHEMA_SOURCE,
+            JAXP_SCHEMA_LANGUAGE,
+            SCHEMA_DV_FACTORY,
+            XML_SECURITY_PROPERTY_MANAGER
+            };
+
+    /** Property defaults. */
+    private static final Object[] PROPERTY_DEFAULTS =
+        { null, null, null, null, null, null, null, null, null, null, null, null, null};
+
+    // this is the number of valuestores of each kind
+    // we expect an element to have.  It's almost
+    // never > 1; so leave it at that.
+    protected static final int ID_CONSTRAINT_NUM = 1;
+
+    //
+    // Data
+    //
+
+    /** current PSVI element info */
+    protected ElementPSVImpl fCurrentPSVI = new ElementPSVImpl();
+
+    // since it is the responsibility of each component to an
+    // Augmentations parameter if one is null, to save ourselves from
+    // having to create this object continually, it is created here.
+    // If it is not present in calls that we're passing on, we *must*
+    // clear this before we introduce it into the pipeline.
+    protected final AugmentationsImpl fAugmentations = new AugmentationsImpl();
+
+    /**
+     * Map which is used to catch instance documents that try
+     * and match a field several times in the same scope.
+     */
+    protected final HashMap fMayMatchFieldMap = new HashMap();
+
+    // this is included for the convenience of handleEndElement
+    protected XMLString fDefaultValue;
+
+    // Validation features
+    protected boolean fDynamicValidation = false;
+    protected boolean fSchemaDynamicValidation = false;
+    protected boolean fDoValidation = false;
+    protected boolean fFullChecking = false;
+    protected boolean fNormalizeData = true;
+    protected boolean fSchemaElementDefault = true;
+    protected boolean fAugPSVI = true;
+    protected boolean fIdConstraint = false;
+    protected boolean fUseGrammarPoolOnly = false;
+
+    // Namespace growth feature
+    protected boolean fNamespaceGrowth = false;
+
+    /** Schema type: None, DTD, Schema */
+    private String fSchemaType = null;
+
+    // to indicate whether we are in the scope of entity reference or CData
+    protected boolean fEntityRef = false;
+    protected boolean fInCDATA = false;
+
+    // Did we see only whitespace in element content?
+    protected boolean fSawOnlyWhitespaceInElementContent = false;
+
+    // properties
+
+    /** Symbol table. */
+    protected SymbolTable fSymbolTable;
+
+    /**
+     * While parsing a document, keep the location of the document.
+     */
+    private XMLLocator fLocator;
+
+    /**
+     * A wrapper of the standard error reporter. We'll store all schema errors
+     * in this wrapper object, so that we can get all errors (error codes) of
+     * a specific element. This is useful for PSVI.
+     */
+    protected final class XSIErrorReporter {
+
+        // the error reporter property
+        XMLErrorReporter fErrorReporter;
+
+        // store error codes; starting position of the errors for each element;
+        // number of element (depth); and whether to record error
+        Vector fErrors = new Vector();
+        int[] fContext = new int[INITIAL_STACK_SIZE];
+        int fContextCount;
+
+        // set the external error reporter, clear errors
+        public void reset(XMLErrorReporter errorReporter) {
+            fErrorReporter = errorReporter;
+            fErrors.removeAllElements();
+            fContextCount = 0;
+        }
+
+        // should be called when starting process an element or an attribute.
+        // store the starting position for the current context
+        public void pushContext() {
+            if (!fAugPSVI) {
+                return;
+            }
+            // resize array if necessary
+            if (fContextCount == fContext.length) {
+                int newSize = fContextCount + INC_STACK_SIZE;
+                int[] newArray = new int[newSize];
+                System.arraycopy(fContext, 0, newArray, 0, fContextCount);
+                fContext = newArray;
+            }
+
+            fContext[fContextCount++] = fErrors.size();
+        }
+
+        // should be called on endElement: get all errors of the current element
+        public String[] popContext() {
+            if (!fAugPSVI) {
+                return null;
+            }
+            // get starting position of the current element
+            int contextPos = fContext[--fContextCount];
+            // number of errors of the current element
+            int size = fErrors.size() - contextPos;
+            // if no errors, return null
+            if (size == 0)
+                return null;
+            // copy errors from the list to an string array
+            String[] errors = new String[size];
+            for (int i = 0; i < size; i++) {
+                errors[i] = (String) fErrors.elementAt(contextPos + i);
+            }
+            // remove errors of the current element
+            fErrors.setSize(contextPos);
+            return errors;
+        }
+
+        // should be called when an attribute is done: get all errors of
+        // this attribute, but leave the errors to the containing element
+        // also called after an element was strictly assessed.
+        public String[] mergeContext() {
+            if (!fAugPSVI) {
+                return null;
+            }
+            // get starting position of the current element
+            int contextPos = fContext[--fContextCount];
+            // number of errors of the current element
+            int size = fErrors.size() - contextPos;
+            // if no errors, return null
+            if (size == 0)
+                return null;
+            // copy errors from the list to an string array
+            String[] errors = new String[size];
+            for (int i = 0; i < size; i++) {
+                errors[i] = (String) fErrors.elementAt(contextPos + i);
+            }
+            // don't resize the vector: leave the errors for this attribute
+            // to the containing element
+            return errors;
+        }
+
+        public void reportError(String domain, String key, Object[] arguments, short severity)
+            throws XNIException {
+            fErrorReporter.reportError(domain, key, arguments, severity);
+            if (fAugPSVI) {
+                fErrors.addElement(key);
+            }
+        } // reportError(String,String,Object[],short)
+
+        public void reportError(
+            XMLLocator location,
+            String domain,
+            String key,
+            Object[] arguments,
+            short severity)
+            throws XNIException {
+            fErrorReporter.reportError(location, domain, key, arguments, severity);
+            if (fAugPSVI) {
+                fErrors.addElement(key);
+            }
+        } // reportError(XMLLocator,String,String,Object[],short)
+    }
+
+    /** Error reporter. */
+    protected final XSIErrorReporter fXSIErrorReporter = new XSIErrorReporter();
+
+    /** Entity resolver */
+    protected XMLEntityResolver fEntityResolver;
+
+    // updated during reset
+    protected ValidationManager fValidationManager = null;
+    protected ValidationState fValidationState = new ValidationState();
+    protected XMLGrammarPool fGrammarPool;
+
+    // schema location property values
+    protected String fExternalSchemas = null;
+    protected String fExternalNoNamespaceSchema = null;
+
+    //JAXP Schema Source property
+    protected Object fJaxpSchemaSource = null;
+
+    /** Schema Grammar Description passed,  to give a chance to application to supply the Grammar */
+    protected final XSDDescription fXSDDescription = new XSDDescription();
+    protected final Map<String, XMLSchemaLoader.LocationArray> fLocationPairs = new HashMap<>();
+
+
+    // handlers
+
+    /** Document handler. */
+    protected XMLDocumentHandler fDocumentHandler;
+
+    protected XMLDocumentSource fDocumentSource;
+
+    boolean reportWhitespace = false;
+
+    //
+    // XMLComponent methods
+    //
+
+    /**
+     * Returns a list of feature identifiers that are recognized by
+     * this component. This method may return null if no features
+     * are recognized by this component.
+     */
+    public String[] getRecognizedFeatures() {
+        return (String[]) (RECOGNIZED_FEATURES.clone());
+    } // getRecognizedFeatures():String[]
+
+    /**
+     * Sets the state of a feature. This method is called by the component
+     * manager any time after reset when a feature changes state.
+     * <p>
+     * <strong>Note:</strong> Components should silently ignore features
+     * that do not affect the operation of the component.
+     *
+     * @param featureId The feature identifier.
+     * @param state     The state of the feature.
+     *
+     * @throws SAXNotRecognizedException The component should not throw
+     *                                   this exception.
+     * @throws SAXNotSupportedException The component should not throw
+     *                                  this exception.
+     */
+    public void setFeature(String featureId, boolean state) throws XMLConfigurationException {
+    } // setFeature(String,boolean)
+
+    /**
+     * Returns a list of property identifiers that are recognized by
+     * this component. This method may return null if no properties
+     * are recognized by this component.
+     */
+    public String[] getRecognizedProperties() {
+        return (String[]) (RECOGNIZED_PROPERTIES.clone());
+    } // getRecognizedProperties():String[]
+
+    /**
+     * Sets the value of a property. This method is called by the component
+     * manager any time after reset when a property changes value.
+     * <p>
+     * <strong>Note:</strong> Components should silently ignore properties
+     * that do not affect the operation of the component.
+     *
+     * @param propertyId The property identifier.
+     * @param value      The value of the property.
+     *
+     * @throws SAXNotRecognizedException The component should not throw
+     *                                   this exception.
+     * @throws SAXNotSupportedException The component should not throw
+     *                                  this exception.
+     */
+    public void setProperty(String propertyId, Object value) throws XMLConfigurationException {
+    } // setProperty(String,Object)
+
+    /**
+     * Returns the default state for a feature, or null if this
+     * component does not want to report a default value for this
+     * feature.
+     *
+     * @param featureId The feature identifier.
+     *
+     * @since Xerces 2.2.0
+     */
+    public Boolean getFeatureDefault(String featureId) {
+        for (int i = 0; i < RECOGNIZED_FEATURES.length; i++) {
+            if (RECOGNIZED_FEATURES[i].equals(featureId)) {
+                return FEATURE_DEFAULTS[i];
+            }
+        }
+        return null;
+    } // getFeatureDefault(String):Boolean
+
+    /**
+     * Returns the default state for a property, or null if this
+     * component does not want to report a default value for this
+     * property.
+     *
+     * @param propertyId The property identifier.
+     *
+     * @since Xerces 2.2.0
+     */
+    public Object getPropertyDefault(String propertyId) {
+        for (int i = 0; i < RECOGNIZED_PROPERTIES.length; i++) {
+            if (RECOGNIZED_PROPERTIES[i].equals(propertyId)) {
+                return PROPERTY_DEFAULTS[i];
+            }
+        }
+        return null;
+    } // getPropertyDefault(String):Object
+
+    //
+    // XMLDocumentSource methods
+    //
+
+    /** Sets the document handler to receive information about the document. */
+    public void setDocumentHandler(XMLDocumentHandler documentHandler) {
+        fDocumentHandler = documentHandler;
+
+        // Init reportWhitespace for this handler
+        if (documentHandler instanceof XMLParser) {
+            try {
+                reportWhitespace =
+                    ((XMLParser) documentHandler).getFeature(REPORT_WHITESPACE);
+            }
+            catch (Exception e) {
+                reportWhitespace = false;
+            }
+        }
+    } // setDocumentHandler(XMLDocumentHandler)
+
+    /** Returns the document handler */
+    public XMLDocumentHandler getDocumentHandler() {
+        return fDocumentHandler;
+    } // setDocumentHandler(XMLDocumentHandler)
+
+    //
+    // XMLDocumentHandler methods
+    //
+
+    /** Sets the document source */
+    public void setDocumentSource(XMLDocumentSource source) {
+        fDocumentSource = source;
+    } // setDocumentSource
+
+    /** Returns the document source */
+    public XMLDocumentSource getDocumentSource() {
+        return fDocumentSource;
+    } // getDocumentSource
+
+    /**
+     * The start of the document.
+     *
+     * @param locator The system identifier of the entity if the entity
+     *                 is external, null otherwise.
+     * @param encoding The auto-detected IANA encoding name of the entity
+     *                 stream. This value will be null in those situations
+     *                 where the entity encoding is not auto-detected (e.g.
+     *                 internal entities or a document entity that is
+     *                 parsed from a java.io.Reader).
+     * @param namespaceContext
+     *                 The namespace context in effect at the
+     *                 start of this document.
+     *                 This object represents the current context.
+     *                 Implementors of this class are responsible
+     *                 for copying the namespace bindings from the
+     *                 the current context (and its parent contexts)
+     *                 if that information is important.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startDocument(
+        XMLLocator locator,
+        String encoding,
+        NamespaceContext namespaceContext,
+        Augmentations augs)
+        throws XNIException {
+
+        fValidationState.setNamespaceSupport(namespaceContext);
+        fState4XsiType.setNamespaceSupport(namespaceContext);
+        fState4ApplyDefault.setNamespaceSupport(namespaceContext);
+        fLocator = locator;
+
+        handleStartDocument(locator, encoding);
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.startDocument(locator, encoding, namespaceContext, augs);
+        }
+
+    } // startDocument(XMLLocator,String)
+
+    /**
+     * Notifies of the presence of an XMLDecl line in the document. If
+     * present, this method will be called immediately following the
+     * startDocument call.
+     *
+     * @param version    The XML version.
+     * @param encoding   The IANA encoding name of the document, or null if
+     *                   not specified.
+     * @param standalone The standalone value, or null if not specified.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void xmlDecl(String version, String encoding, String standalone, Augmentations augs)
+        throws XNIException {
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.xmlDecl(version, encoding, standalone, augs);
+        }
+
+    } // xmlDecl(String,String,String)
+
+    /**
+     * Notifies of the presence of the DOCTYPE line in the document.
+     *
+     * @param rootElement The name of the root element.
+     * @param publicId    The public identifier if an external DTD or null
+     *                    if the external DTD is specified using SYSTEM.
+     * @param systemId    The system identifier if an external DTD, null
+     *                    otherwise.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void doctypeDecl(
+        String rootElement,
+        String publicId,
+        String systemId,
+        Augmentations augs)
+        throws XNIException {
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.doctypeDecl(rootElement, publicId, systemId, augs);
+        }
+
+    } // doctypeDecl(String,String,String)
+
+    /**
+     * The start of an element.
+     *
+     * @param element    The name of the element.
+     * @param attributes The element attributes.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startElement(QName element, XMLAttributes attributes, Augmentations augs)
+        throws XNIException {
+
+        Augmentations modifiedAugs = handleStartElement(element, attributes, augs);
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.startElement(element, attributes, modifiedAugs);
+        }
+
+    } // startElement(QName,XMLAttributes, Augmentations)
+
+    /**
+     * An empty element.
+     *
+     * @param element    The name of the element.
+     * @param attributes The element attributes.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void emptyElement(QName element, XMLAttributes attributes, Augmentations augs)
+        throws XNIException {
+
+        Augmentations modifiedAugs = handleStartElement(element, attributes, augs);
+
+        // in the case where there is a {value constraint}, and the element
+        // doesn't have any text content, change emptyElement call to
+        // start + characters + end
+        fDefaultValue = null;
+        // fElementDepth == -2 indicates that the schema validator was removed
+        // from the pipeline. then we don't need to call handleEndElement.
+        if (fElementDepth != -2)
+            modifiedAugs = handleEndElement(element, modifiedAugs);
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            if (!fSchemaElementDefault || fDefaultValue == null) {
+                fDocumentHandler.emptyElement(element, attributes, modifiedAugs);
+            } else {
+                fDocumentHandler.startElement(element, attributes, modifiedAugs);
+                fDocumentHandler.characters(fDefaultValue, null);
+                fDocumentHandler.endElement(element, modifiedAugs);
+            }
+        }
+    } // emptyElement(QName,XMLAttributes, Augmentations)
+
+    /**
+     * Character content.
+     *
+     * @param text The content.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void characters(XMLString text, Augmentations augs) throws XNIException {
+        text = handleCharacters(text);
+
+        if (fSawOnlyWhitespaceInElementContent) {
+            fSawOnlyWhitespaceInElementContent = false;
+            if (!reportWhitespace) {
+                ignorableWhitespace(text, augs);
+                return;
+            }
+        }
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            if (fNormalizeData && fUnionType) {
+                // for union types we can't normalize data
+                // thus we only need to send augs information if any;
+                // the normalized data for union will be send
+                // after normalization is performed (at the endElement())
+                if (augs != null)
+                    fDocumentHandler.characters(fEmptyXMLStr, augs);
+            } else {
+                fDocumentHandler.characters(text, augs);
+            }
+        }
+
+    } // characters(XMLString)
+
+    /**
+     * Ignorable whitespace. For this method to be called, the document
+     * source must have some way of determining that the text containing
+     * only whitespace characters should be considered ignorable. For
+     * example, the validator can determine if a length of whitespace
+     * characters in the document are ignorable based on the element
+     * content model.
+     *
+     * @param text The ignorable whitespace.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
+        handleIgnorableWhitespace(text);
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.ignorableWhitespace(text, augs);
+        }
+
+    } // ignorableWhitespace(XMLString)
+
+    /**
+     * The end of an element.
+     *
+     * @param element The name of the element.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endElement(QName element, Augmentations augs) throws XNIException {
+
+        // in the case where there is a {value constraint}, and the element
+        // doesn't have any text content, add a characters call.
+        fDefaultValue = null;
+        Augmentations modifiedAugs = handleEndElement(element, augs);
+        // call handlers
+        if (fDocumentHandler != null) {
+            if (!fSchemaElementDefault || fDefaultValue == null) {
+                fDocumentHandler.endElement(element, modifiedAugs);
+            } else {
+                fDocumentHandler.characters(fDefaultValue, null);
+                fDocumentHandler.endElement(element, modifiedAugs);
+            }
+        }
+    } // endElement(QName, Augmentations)
+
+    /**
+    * The start of a CDATA section.
+    *
+    * @param augs     Additional information that may include infoset augmentations
+    *
+    * @throws XNIException Thrown by handler to signal an error.
+    */
+    public void startCDATA(Augmentations augs) throws XNIException {
+
+        // REVISIT: what should we do here if schema normalization is on??
+        fInCDATA = true;
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.startCDATA(augs);
+        }
+
+    } // startCDATA()
+
+    /**
+     * The end of a CDATA section.
+     *
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endCDATA(Augmentations augs) throws XNIException {
+
+        // call handlers
+        fInCDATA = false;
+        if (fDocumentHandler != null) {
+            fDocumentHandler.endCDATA(augs);
+        }
+
+    } // endCDATA()
+
+    /**
+     * The end of the document.
+     *
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void endDocument(Augmentations augs) throws XNIException {
+
+        handleEndDocument();
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.endDocument(augs);
+        }
+        fLocator = null;
+
+    } // endDocument(Augmentations)
+
+    //
+    // DOMRevalidationHandler methods
+    //
+
+
+
+
+
+    public boolean characterData(String data, Augmentations augs) {
+
+        fSawText = fSawText || data.length() > 0;
+
+        // REVISIT: this methods basically duplicates implementation of
+        //          handleCharacters(). We should be able to reuse some code
+
+        // if whitespace == -1 skip normalization, because it is a complexType
+        // or a union type.
+        if (fNormalizeData && fWhiteSpace != -1 && fWhiteSpace != XSSimpleType.WS_PRESERVE) {
+            // normalize data
+            normalizeWhitespace(data, fWhiteSpace == XSSimpleType.WS_COLLAPSE);
+            fBuffer.append(fNormalizedStr.ch, fNormalizedStr.offset, fNormalizedStr.length);
+        } else {
+            if (fAppendBuffer)
+                fBuffer.append(data);
+        }
+
+        // When it's a complex type with element-only content, we need to
+        // find out whether the content contains any non-whitespace character.
+        boolean allWhiteSpace = true;
+        if (fCurrentType != null
+            && fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE) {
+            XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+            if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_ELEMENT) {
+                // data outside of element content
+                for (int i = 0; i < data.length(); i++) {
+                    if (!XMLChar.isSpace(data.charAt(i))) {
+                        allWhiteSpace = false;
+                        fSawCharacters = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return allWhiteSpace;
+    }
+
+    public void elementDefault(String data) {
+        // no-op
+    }
+
+    //
+    // XMLDocumentHandler and XMLDTDHandler methods
+    //
+
+    /**
+     * This method notifies the start of a general entity.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param name     The name of the general entity.
+     * @param identifier The resource identifier.
+     * @param encoding The auto-detected IANA encoding name of the entity
+     *                 stream. This value will be null in those situations
+     *                 where the entity encoding is not auto-detected (e.g.
+     *                 internal entities or a document entity that is
+     *                 parsed from a java.io.Reader).
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @exception XNIException Thrown by handler to signal an error.
+     */
+    public void startGeneralEntity(
+        String name,
+        XMLResourceIdentifier identifier,
+        String encoding,
+        Augmentations augs)
+        throws XNIException {
+
+        // REVISIT: what should happen if normalize_data_ is on??
+        fEntityRef = true;
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.startGeneralEntity(name, identifier, encoding, augs);
+        }
+
+    } // startEntity(String,String,String,String,String)
+
+    /**
+     * Notifies of the presence of a TextDecl line in an entity. If present,
+     * this method will be called immediately following the startEntity call.
+     * <p>
+     * <strong>Note:</strong> This method will never be called for the
+     * document entity; it is only called for external general entities
+     * referenced in document content.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param version  The XML version, or null if not specified.
+     * @param encoding The IANA encoding name of the entity.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void textDecl(String version, String encoding, Augmentations augs) throws XNIException {
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.textDecl(version, encoding, augs);
+        }
+
+    } // textDecl(String,String)
+
+    /**
+     * A comment.
+     *
+     * @param text The text in the comment.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by application to signal an error.
+     */
+    public void comment(XMLString text, Augmentations augs) throws XNIException {
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.comment(text, augs);
+        }
+
+    } // comment(XMLString)
+
+    /**
+     * A processing instruction. Processing instructions consist of a
+     * target name and, optionally, text data. The data is only meaningful
+     * to the application.
+     * <p>
+     * Typically, a processing instruction's data will contain a series
+     * of pseudo-attributes. These pseudo-attributes follow the form of
+     * element attributes but are <strong>not</strong> parsed or presented
+     * to the application as anything other than text. The application is
+     * responsible for parsing the data.
+     *
+     * @param target The target.
+     * @param data   The data or null if none specified.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void processingInstruction(String target, XMLString data, Augmentations augs)
+        throws XNIException {
+
+        // call handlers
+        if (fDocumentHandler != null) {
+            fDocumentHandler.processingInstruction(target, data, augs);
+        }
+
+    } // processingInstruction(String,XMLString)
+
+    /**
+     * This method notifies the end of a general entity.
+     * <p>
+     * <strong>Note:</strong> This method is not called for entity references
+     * appearing as part of attribute values.
+     *
+     * @param name   The name of the entity.
+     * @param augs   Additional information that may include infoset augmentations
+     *
+     * @exception XNIException
+     *                   Thrown by handler to signal an error.
+     */
+    public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
+
+        // call handlers
+        fEntityRef = false;
+        if (fDocumentHandler != null) {
+            fDocumentHandler.endGeneralEntity(name, augs);
+        }
+
+    } // endEntity(String)
+
+    // constants
+
+    static final int INITIAL_STACK_SIZE = 8;
+    static final int INC_STACK_SIZE = 8;
+
+    //
+    // Data
+    //
+
+    // Schema Normalization
+
+    private static final boolean DEBUG_NORMALIZATION = false;
+    // temporary empty string buffer.
+    private final XMLString fEmptyXMLStr = new XMLString(null, 0, -1);
+    // temporary character buffer, and empty string buffer.
+    private static final int BUFFER_SIZE = 20;
+    private final XMLString fNormalizedStr = new XMLString();
+    private boolean fFirstChunk = true;
+    // got first chunk in characters() (SAX)
+    private boolean fTrailing = false; // Previous chunk had a trailing space
+    private short fWhiteSpace = -1; //whiteSpace: preserve/replace/collapse
+    private boolean fUnionType = false;
+
+    /** Schema grammar resolver. */
+    private final XSGrammarBucket fGrammarBucket = new XSGrammarBucket();
+    private final SubstitutionGroupHandler fSubGroupHandler = new SubstitutionGroupHandler(fGrammarBucket);
+
+    /** the DV usd to convert xsi:type to a QName */
+    // REVISIT: in new simple type design, make things in DVs static,
+    //          so that we can QNameDV.getCompiledForm()
+    private final XSSimpleType fQNameDV =
+        (XSSimpleType) SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(SchemaSymbols.ATTVAL_QNAME);
+
+    private final CMNodeFactory nodeFactory = new CMNodeFactory();
+    /** used to build content models */
+    // REVISIT: create decl pool, and pass it to each traversers
+    private final CMBuilder fCMBuilder = new CMBuilder(nodeFactory);
+
+    // Schema grammar loader
+    private final XMLSchemaLoader fSchemaLoader =
+        new XMLSchemaLoader(
+                fXSIErrorReporter.fErrorReporter,
+                fGrammarBucket,
+                fSubGroupHandler,
+                fCMBuilder);
+
+    // state
+
+    /** String representation of the validation root. */
+    // REVISIT: what do we store here? QName, XPATH, some ID? use rawname now.
+    private String fValidationRoot;
+
+    /** Skip validation: anything below this level should be skipped */
+    private int fSkipValidationDepth;
+
+    /** anything above this level has validation_attempted != full */
+    private int fNFullValidationDepth;
+
+    /** anything above this level has validation_attempted != none */
+    private int fNNoneValidationDepth;
+
+    /** Element depth: -2: validator not in pipeline; >= -1 current depth. */
+    private int fElementDepth;
+
+    /** Seen sub elements. */
+    private boolean fSubElement;
+
+    /** Seen sub elements stack. */
+    private boolean[] fSubElementStack = new boolean[INITIAL_STACK_SIZE];
+
+    /** Current element declaration. */
+    private XSElementDecl fCurrentElemDecl;
+
+    /** Element decl stack. */
+    private XSElementDecl[] fElemDeclStack = new XSElementDecl[INITIAL_STACK_SIZE];
+
+    /** nil value of the current element */
+    private boolean fNil;
+
+    /** nil value stack */
+    private boolean[] fNilStack = new boolean[INITIAL_STACK_SIZE];
+
+    /** notation value of the current element */
+    private XSNotationDecl fNotation;
+
+    /** notation stack */
+    private XSNotationDecl[] fNotationStack = new XSNotationDecl[INITIAL_STACK_SIZE];
+
+    /** Current type. */
+    private XSTypeDefinition fCurrentType;
+
+    /** type stack. */
+    private XSTypeDefinition[] fTypeStack = new XSTypeDefinition[INITIAL_STACK_SIZE];
+
+    /** Current content model. */
+    private XSCMValidator fCurrentCM;
+
+    /** Content model stack. */
+    private XSCMValidator[] fCMStack = new XSCMValidator[INITIAL_STACK_SIZE];
+
+    /** the current state of the current content model */
+    private int[] fCurrCMState;
+
+    /** stack to hold content model states */
+    private int[][] fCMStateStack = new int[INITIAL_STACK_SIZE][];
+
+    /** whether the curret element is strictly assessed */
+    private boolean fStrictAssess = true;
+
+    /** strict assess stack */
+    private boolean[] fStrictAssessStack = new boolean[INITIAL_STACK_SIZE];
+
+    /** Temporary string buffers. */
+    private final StringBuffer fBuffer = new StringBuffer();
+
+    /** Whether need to append characters to fBuffer */
+    private boolean fAppendBuffer = true;
+
+    /** Did we see any character data? */
+    private boolean fSawText = false;
+
+    /** stack to record if we saw character data */
+    private boolean[] fSawTextStack = new boolean[INITIAL_STACK_SIZE];
+
+    /** Did we see non-whitespace character data? */
+    private boolean fSawCharacters = false;
+
+    /** Stack to record if we saw character data outside of element content*/
+    private boolean[] fStringContent = new boolean[INITIAL_STACK_SIZE];
+
+    /** temporary qname */
+    private final QName fTempQName = new QName();
+
+    /** temporary validated info */
+    private ValidatedInfo fValidatedInfo = new ValidatedInfo();
+
+    // used to validate default/fixed values against xsi:type
+    // only need to check facets, so we set extraChecking to false (in reset)
+    private ValidationState fState4XsiType = new ValidationState();
+
+    // used to apply default/fixed values
+    // only need to check id/idref/entity, so we set checkFacets to false
+    private ValidationState fState4ApplyDefault = new ValidationState();
+
+    // identity constraint information
+
+    /**
+     * Stack of active XPath matchers for identity constraints. All
+     * active XPath matchers are notified of startElement
+     * and endElement callbacks in order to perform their matches.
+     * <p>
+     * For each element with identity constraints, the selector of
+     * each identity constraint is activated. When the selector matches
+     * its XPath, then all the fields of the identity constraint are
+     * activated.
+     * <p>
+     * <strong>Note:</strong> Once the activation scope is left, the
+     * XPath matchers are automatically removed from the stack of
+     * active matchers and no longer receive callbacks.
+     */
+    protected XPathMatcherStack fMatcherStack = new XPathMatcherStack();
+
+    /** Cache of value stores for identity constraint fields. */
+    protected ValueStoreCache fValueStoreCache = new ValueStoreCache();
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public XMLSchemaValidator() {
+        fState4XsiType.setExtraChecking(false);
+        fState4ApplyDefault.setFacetChecking(false);
+
+    } // <init>()
+
+    /*
+     * Resets the component. The component can query the component manager
+     * about any features and properties that affect the operation of the
+     * component.
+     *
+     * @param componentManager The component manager.
+     *
+     * @throws SAXException Thrown by component on finitialization error.
+     *                      For example, if a feature or property is
+     *                      required for the operation of the component, the
+     *                      component manager may throw a
+     *                      SAXNotRecognizedException or a
+     *                      SAXNotSupportedException.
+     */
+    public void reset(XMLComponentManager componentManager) throws XMLConfigurationException {
+
+
+        fIdConstraint = false;
+        //reset XSDDescription
+        fLocationPairs.clear();
+
+        // cleanup id table
+        fValidationState.resetIDTables();
+
+        //pass the component manager to the factory..
+        nodeFactory.reset(componentManager);
+
+        // reset schema loader
+        fSchemaLoader.reset(componentManager);
+
+        // initialize state
+        fCurrentElemDecl = null;
+        fCurrentCM = null;
+        fCurrCMState = null;
+        fSkipValidationDepth = -1;
+        fNFullValidationDepth = -1;
+        fNNoneValidationDepth = -1;
+        fElementDepth = -1;
+        fSubElement = false;
+        fSchemaDynamicValidation = false;
+
+        // datatype normalization
+        fEntityRef = false;
+        fInCDATA = false;
+
+        fMatcherStack.clear();
+
+        if (!fMayMatchFieldMap.isEmpty()) {
+            // should only clear this if the last schema had identity constraints.
+            fMayMatchFieldMap.clear();
+        }
+
+        // get error reporter
+        fXSIErrorReporter.reset((XMLErrorReporter) componentManager.getProperty(ERROR_REPORTER));
+
+        boolean parser_settings = componentManager.getFeature(PARSER_SETTINGS, true);
+
+        if (!parser_settings){
+            // parser settings have not been changed
+            fValidationManager.addValidationState(fValidationState);
+            // Re-parse external schema location properties.
+            XMLSchemaLoader.processExternalHints(
+                fExternalSchemas,
+                fExternalNoNamespaceSchema,
+                fLocationPairs,
+                fXSIErrorReporter.fErrorReporter);
+            return;
+        }
+
+
+        // get symbol table. if it's a new one, add symbols to it.
+        SymbolTable symbolTable = (SymbolTable) componentManager.getProperty(SYMBOL_TABLE);
+        if (symbolTable != fSymbolTable) {
+            fSymbolTable = symbolTable;
+        }
+
+        fNamespaceGrowth = componentManager.getFeature(NAMESPACE_GROWTH, false);
+        fDynamicValidation = componentManager.getFeature(DYNAMIC_VALIDATION, false);
+
+        if (fDynamicValidation) {
+            fDoValidation = true;
+        } else {
+            fDoValidation = componentManager.getFeature(VALIDATION, false);
+        }
+
+        if (fDoValidation) {
+            fDoValidation |= componentManager.getFeature(XMLSchemaValidator.SCHEMA_VALIDATION, false);
+        }
+
+        fFullChecking = componentManager.getFeature(SCHEMA_FULL_CHECKING, false);
+        fNormalizeData = componentManager.getFeature(NORMALIZE_DATA, false);
+        fSchemaElementDefault = componentManager.getFeature(SCHEMA_ELEMENT_DEFAULT, false);
+
+        fAugPSVI = componentManager.getFeature(SCHEMA_AUGMENT_PSVI, true);
+
+        fSchemaType =
+                (String) componentManager.getProperty(
+                    Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_LANGUAGE, null);
+
+        fUseGrammarPoolOnly = componentManager.getFeature(USE_GRAMMAR_POOL_ONLY, false);
+
+        fEntityResolver = (XMLEntityResolver) componentManager.getProperty(ENTITY_MANAGER);
+
+        fValidationManager = (ValidationManager) componentManager.getProperty(VALIDATION_MANAGER);
+        fValidationManager.addValidationState(fValidationState);
+        fValidationState.setSymbolTable(fSymbolTable);
+
+
+        // get schema location properties
+        try {
+            fExternalSchemas = (String) componentManager.getProperty(SCHEMA_LOCATION);
+            fExternalNoNamespaceSchema =
+                (String) componentManager.getProperty(SCHEMA_NONS_LOCATION);
+        } catch (XMLConfigurationException e) {
+            fExternalSchemas = null;
+            fExternalNoNamespaceSchema = null;
+        }
+
+        // store the external schema locations. they are set when reset is called,
+        // so any other schemaLocation declaration for the same namespace will be
+        // effectively ignored. becuase we choose to take first location hint
+        // available for a particular namespace.
+        XMLSchemaLoader.processExternalHints(
+            fExternalSchemas,
+            fExternalNoNamespaceSchema,
+            fLocationPairs,
+            fXSIErrorReporter.fErrorReporter);
+
+        fJaxpSchemaSource = componentManager.getProperty(JAXP_SCHEMA_SOURCE, null);
+
+        // clear grammars, and put the one for schema namespace there
+        fGrammarPool = (XMLGrammarPool) componentManager.getProperty(XMLGRAMMAR_POOL, null);
+
+        fState4XsiType.setSymbolTable(symbolTable);
+        fState4ApplyDefault.setSymbolTable(symbolTable);
+
+    } // reset(XMLComponentManager)
+
+    //
+    // FieldActivator methods
+    //
+
+    /**
+     * Start the value scope for the specified identity constraint. This
+     * method is called when the selector matches in order to initialize
+     * the value store.
+     *
+     * @param identityConstraint The identity constraint.
+     */
+    public void startValueScopeFor(IdentityConstraint identityConstraint, int initialDepth) {
+
+        ValueStoreBase valueStore =
+            fValueStoreCache.getValueStoreFor(identityConstraint, initialDepth);
+        valueStore.startValueScope();
+
+    } // startValueScopeFor(IdentityConstraint identityConstraint)
+
+    /**
+     * Request to activate the specified field. This method returns the
+     * matcher for the field.
+     *
+     * @param field The field to activate.
+     */
+    public XPathMatcher activateField(Field field, int initialDepth) {
+        ValueStore valueStore =
+            fValueStoreCache.getValueStoreFor(field.getIdentityConstraint(), initialDepth);
+        setMayMatch(field, Boolean.TRUE);
+        XPathMatcher matcher = field.createMatcher(this, valueStore);
+        fMatcherStack.addMatcher(matcher);
+        matcher.startDocumentFragment();
+        return matcher;
+    } // activateField(Field):XPathMatcher
+
+    /**
+     * Ends the value scope for the specified identity constraint.
+     *
+     * @param identityConstraint The identity constraint.
+     */
+    public void endValueScopeFor(IdentityConstraint identityConstraint, int initialDepth) {
+
+        ValueStoreBase valueStore =
+            fValueStoreCache.getValueStoreFor(identityConstraint, initialDepth);
+        valueStore.endValueScope();
+
+    } // endValueScopeFor(IdentityConstraint)
+
+    /**
+     * Sets whether the given field is permitted to match a value.
+     * This should be used to catch instance documents that try
+     * and match a field several times in the same scope.
+     *
+     * @param field The field that may be permitted to be matched.
+     * @param state Boolean indiciating whether the field may be matched.
+     */
+    public void setMayMatch(Field field, Boolean state) {
+        fMayMatchFieldMap.put(field, state);
+    } // setMayMatch(Field, Boolean)
+
+    /**
+     * Returns whether the given field is permitted to match a value.
+     *
+     * @param field The field that may be permitted to be matched.
+     * @return Boolean indicating whether the field may be matched.
+     */
+    public Boolean mayMatch(Field field) {
+        return (Boolean) fMayMatchFieldMap.get(field);
+    } // mayMatch(Field):Boolean
+
+    // a utility method for Identity constraints
+    private void activateSelectorFor(IdentityConstraint ic) {
+        Selector selector = ic.getSelector();
+        FieldActivator activator = this;
+        if (selector == null)
+            return;
+        XPathMatcher matcher = selector.createMatcher(activator, fElementDepth);
+        fMatcherStack.addMatcher(matcher);
+        matcher.startDocumentFragment();
+    }
+
+    //
+    // Protected methods
+    //
+
+    /** ensure element stack capacity */
+    void ensureStackCapacity() {
+
+        if (fElementDepth == fElemDeclStack.length) {
+            int newSize = fElementDepth + INC_STACK_SIZE;
+            boolean[] newArrayB = new boolean[newSize];
+            System.arraycopy(fSubElementStack, 0, newArrayB, 0, fElementDepth);
+            fSubElementStack = newArrayB;
+
+            XSElementDecl[] newArrayE = new XSElementDecl[newSize];
+            System.arraycopy(fElemDeclStack, 0, newArrayE, 0, fElementDepth);
+            fElemDeclStack = newArrayE;
+
+            newArrayB = new boolean[newSize];
+            System.arraycopy(fNilStack, 0, newArrayB, 0, fElementDepth);
+            fNilStack = newArrayB;
+
+            XSNotationDecl[] newArrayN = new XSNotationDecl[newSize];
+            System.arraycopy(fNotationStack, 0, newArrayN, 0, fElementDepth);
+            fNotationStack = newArrayN;
+
+            XSTypeDefinition[] newArrayT = new XSTypeDefinition[newSize];
+            System.arraycopy(fTypeStack, 0, newArrayT, 0, fElementDepth);
+            fTypeStack = newArrayT;
+
+            XSCMValidator[] newArrayC = new XSCMValidator[newSize];
+            System.arraycopy(fCMStack, 0, newArrayC, 0, fElementDepth);
+            fCMStack = newArrayC;
+
+            newArrayB = new boolean[newSize];
+            System.arraycopy(fSawTextStack, 0, newArrayB, 0, fElementDepth);
+            fSawTextStack = newArrayB;
+
+            newArrayB = new boolean[newSize];
+            System.arraycopy(fStringContent, 0, newArrayB, 0, fElementDepth);
+            fStringContent = newArrayB;
+
+            newArrayB = new boolean[newSize];
+            System.arraycopy(fStrictAssessStack, 0, newArrayB, 0, fElementDepth);
+            fStrictAssessStack = newArrayB;
+
+            int[][] newArrayIA = new int[newSize][];
+            System.arraycopy(fCMStateStack, 0, newArrayIA, 0, fElementDepth);
+            fCMStateStack = newArrayIA;
+        }
+
+    } // ensureStackCapacity
+
+    // handle start document
+    void handleStartDocument(XMLLocator locator, String encoding) {
+        fValueStoreCache.startDocument();
+        if (fAugPSVI) {
+            fCurrentPSVI.fGrammars = null;
+            fCurrentPSVI.fSchemaInformation = null;
+        }
+    } // handleStartDocument(XMLLocator,String)
+
+    void handleEndDocument() {
+        fValueStoreCache.endDocument();
+    } // handleEndDocument()
+
+    // handle character contents
+    // returns the normalized string if possible, otherwise the original string
+    XMLString handleCharacters(XMLString text) {
+
+        if (fSkipValidationDepth >= 0)
+            return text;
+
+        fSawText = fSawText || text.length > 0;
+
+        // Note: data in EntityRef and CDATA is normalized as well
+        // if whitespace == -1 skip normalization, because it is a complexType
+        // or a union type.
+        if (fNormalizeData && fWhiteSpace != -1 && fWhiteSpace != XSSimpleType.WS_PRESERVE) {
+            // normalize data
+            normalizeWhitespace(text, fWhiteSpace == XSSimpleType.WS_COLLAPSE);
+            text = fNormalizedStr;
+        }
+        if (fAppendBuffer)
+            fBuffer.append(text.ch, text.offset, text.length);
+
+        // When it's a complex type with element-only content, we need to
+        // find out whether the content contains any non-whitespace character.
+        fSawOnlyWhitespaceInElementContent = false;
+        if (fCurrentType != null
+            && fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE) {
+            XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+            if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_ELEMENT) {
+                // data outside of element content
+                for (int i = text.offset; i < text.offset + text.length; i++) {
+                    if (!XMLChar.isSpace(text.ch[i])) {
+                        fSawCharacters = true;
+                        break;
+                    }
+                    fSawOnlyWhitespaceInElementContent = !fSawCharacters;
+                }
+            }
+        }
+
+        return text;
+    } // handleCharacters(XMLString)
+
+    /**
+     * Normalize whitespace in an XMLString according to the rules defined
+     * in XML Schema specifications.
+     * @param value    The string to normalize.
+     * @param collapse replace or collapse
+     */
+    private void normalizeWhitespace(XMLString value, boolean collapse) {
+        boolean skipSpace = collapse;
+        boolean sawNonWS = false;
+        boolean leading = false;
+        boolean trailing = false;
+        char c;
+        int size = value.offset + value.length;
+
+        // ensure the ch array is big enough
+        if (fNormalizedStr.ch == null || fNormalizedStr.ch.length < value.length + 1) {
+            fNormalizedStr.ch = new char[value.length + 1];
+        }
+        // don't include the leading ' ' for now. might include it later.
+        fNormalizedStr.offset = 1;
+        fNormalizedStr.length = 1;
+
+        for (int i = value.offset; i < size; i++) {
+            c = value.ch[i];
+            if (XMLChar.isSpace(c)) {
+                if (!skipSpace) {
+                    // take the first whitespace as a space and skip the others
+                    fNormalizedStr.ch[fNormalizedStr.length++] = ' ';
+                    skipSpace = collapse;
+                }
+                if (!sawNonWS) {
+                    // this is a leading whitespace, record it
+                    leading = true;
+                }
+            } else {
+                fNormalizedStr.ch[fNormalizedStr.length++] = c;
+                skipSpace = false;
+                sawNonWS = true;
+            }
+        }
+        if (skipSpace) {
+            if (fNormalizedStr.length > 1) {
+                // if we finished on a space trim it but also record it
+                fNormalizedStr.length--;
+                trailing = true;
+            } else if (leading && !fFirstChunk) {
+                // if all we had was whitespace we skipped record it as
+                // trailing whitespace as well
+                trailing = true;
+            }
+        }
+
+        if (fNormalizedStr.length > 1) {
+            if (!fFirstChunk && (fWhiteSpace == XSSimpleType.WS_COLLAPSE)) {
+                if (fTrailing) {
+                    // previous chunk ended on whitespace
+                    // insert whitespace
+                    fNormalizedStr.offset = 0;
+                    fNormalizedStr.ch[0] = ' ';
+                } else if (leading) {
+                    // previous chunk ended on character,
+                    // this chunk starts with whitespace
+                    fNormalizedStr.offset = 0;
+                    fNormalizedStr.ch[0] = ' ';
+                }
+            }
+        }
+
+        // The length includes the leading ' '. Now removing it.
+        fNormalizedStr.length -= fNormalizedStr.offset;
+
+        fTrailing = trailing;
+
+        if (trailing || sawNonWS)
+            fFirstChunk = false;
+    }
+
+    private void normalizeWhitespace(String value, boolean collapse) {
+        boolean skipSpace = collapse;
+        char c;
+        int size = value.length();
+
+        // ensure the ch array is big enough
+        if (fNormalizedStr.ch == null || fNormalizedStr.ch.length < size) {
+            fNormalizedStr.ch = new char[size];
+        }
+        fNormalizedStr.offset = 0;
+        fNormalizedStr.length = 0;
+
+        for (int i = 0; i < size; i++) {
+            c = value.charAt(i);
+            if (XMLChar.isSpace(c)) {
+                if (!skipSpace) {
+                    // take the first whitespace as a space and skip the others
+                    fNormalizedStr.ch[fNormalizedStr.length++] = ' ';
+                    skipSpace = collapse;
+                }
+            } else {
+                fNormalizedStr.ch[fNormalizedStr.length++] = c;
+                skipSpace = false;
+            }
+        }
+        if (skipSpace) {
+            if (fNormalizedStr.length != 0)
+                // if we finished on a space trim it but also record it
+                fNormalizedStr.length--;
+        }
+    }
+
+    // handle ignorable whitespace
+    void handleIgnorableWhitespace(XMLString text) {
+
+        if (fSkipValidationDepth >= 0)
+            return;
+
+        // REVISIT: the same process needs to be performed as handleCharacters.
+        // only it's simpler here: we know all characters are whitespaces.
+
+    } // handleIgnorableWhitespace(XMLString)
+
+    /** Handle element. */
+    Augmentations handleStartElement(QName element, XMLAttributes attributes, Augmentations augs) {
+
+        if (DEBUG) {
+            System.out.println("==>handleStartElement: " + element);
+        }
+
+        // root element
+        if (fElementDepth == -1 && fValidationManager.isGrammarFound()) {
+            if (fSchemaType == null) {
+                // schemaType is not specified
+                // if a DTD grammar is found, we do the same thing as Dynamic:
+                // if a schema grammar is found, validation is performed;
+                // otherwise, skip the whole document.
+                fSchemaDynamicValidation = true;
+            } else {
+                // [1] Either schemaType is DTD, and in this case validate/schema is turned off
+                // [2] Validating against XML Schemas only
+                //   [a] dynamic validation is false: report error if SchemaGrammar is not found
+                //   [b] dynamic validation is true: if grammar is not found ignore.
+            }
+
+        }
+
+        // get xsi:schemaLocation and xsi:noNamespaceSchemaLocation attributes,
+        // parse them to get the grammars
+
+        String sLocation =
+            attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_SCHEMALOCATION);
+        String nsLocation =
+            attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION);
+        //store the location hints..  we need to do it so that we can defer the loading of grammar until
+        //there is a reference to a component from that namespace. To provide location hints to the
+        //application for a namespace
+        storeLocations(sLocation, nsLocation);
+
+        // if we are in the content of "skip", then just skip this element
+        // REVISIT:  is this the correct behaviour for ID constraints?  -NG
+        if (fSkipValidationDepth >= 0) {
+            fElementDepth++;
+            if (fAugPSVI)
+                augs = getEmptyAugs(augs);
+            return augs;
+        }
+
+        //try to find schema grammar by different means..
+        SchemaGrammar sGrammar =
+            findSchemaGrammar(
+                XSDDescription.CONTEXT_ELEMENT,
+                element.uri,
+                null,
+                element,
+                attributes);
+
+        // if we are not skipping this element, and there is a content model,
+        // we try to find the corresponding decl object for this element.
+        // the reason we move this part of code here is to make sure the
+        // error reported here (if any) is stored within the parent element's
+        // context, instead of that of the current element.
+        Object decl = null;
+        if (fCurrentCM != null) {
+            decl = fCurrentCM.oneTransition(element, fCurrCMState, fSubGroupHandler);
+            // it could be an element decl or a wildcard decl
+            if (fCurrCMState[0] == XSCMValidator.FIRST_ERROR) {
+                XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+                //REVISIT: is it the only case we will have particle = null?
+                Vector next;
+                if (ctype.fParticle != null
+                    && (next = fCurrentCM.whatCanGoHere(fCurrCMState)).size() > 0) {
+                    String expected = expectedStr(next);
+                    reportSchemaError(
+                        "cvc-complex-type.2.4.a",
+                        new Object[] { element.rawname, expected });
+                } else {
+                    reportSchemaError("cvc-complex-type.2.4.d", new Object[] { element.rawname });
+                }
+            }
+        }
+
+        // if it's not the root element, we push the current states in the stacks
+        if (fElementDepth != -1) {
+            ensureStackCapacity();
+            fSubElementStack[fElementDepth] = true;
+            fSubElement = false;
+            fElemDeclStack[fElementDepth] = fCurrentElemDecl;
+            fNilStack[fElementDepth] = fNil;
+            fNotationStack[fElementDepth] = fNotation;
+            fTypeStack[fElementDepth] = fCurrentType;
+            fStrictAssessStack[fElementDepth] = fStrictAssess;
+            fCMStack[fElementDepth] = fCurrentCM;
+            fCMStateStack[fElementDepth] = fCurrCMState;
+            fSawTextStack[fElementDepth] = fSawText;
+            fStringContent[fElementDepth] = fSawCharacters;
+        }
+
+        // increase the element depth after we've saved
+        // all states for the parent element
+        fElementDepth++;
+        fCurrentElemDecl = null;
+        XSWildcardDecl wildcard = null;
+        fCurrentType = null;
+        fStrictAssess = true;
+        fNil = false;
+        fNotation = null;
+
+        // and the buffer to hold the value of the element
+        fBuffer.setLength(0);
+        fSawText = false;
+        fSawCharacters = false;
+
+        // check what kind of declaration the "decl" from
+        // oneTransition() maps to
+        if (decl != null) {
+            if (decl instanceof XSElementDecl) {
+                fCurrentElemDecl = (XSElementDecl) decl;
+            } else {
+                wildcard = (XSWildcardDecl) decl;
+            }
+        }
+
+        // if the wildcard is skip, then return
+        if (wildcard != null && wildcard.fProcessContents == XSWildcardDecl.PC_SKIP) {
+            fSkipValidationDepth = fElementDepth;
+            if (fAugPSVI)
+                augs = getEmptyAugs(augs);
+            return augs;
+        }
+
+        // try again to get the element decl:
+        // case 1: find declaration for root element
+        // case 2: find declaration for element from another namespace
+        if (fCurrentElemDecl == null) {
+            if (sGrammar != null) {
+                fCurrentElemDecl = sGrammar.getGlobalElementDecl(element.localpart);
+            }
+        }
+
+        if (fCurrentElemDecl != null) {
+            // then get the type
+            fCurrentType = fCurrentElemDecl.fType;
+        }
+
+        // get type from xsi:type
+        String xsiType = attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_TYPE);
+
+        // if no decl/type found for the current element
+        if (fCurrentType == null && xsiType == null) {
+            // if this is the validation root, report an error, because
+            // we can't find eith decl or type for this element
+            // REVISIT: should we report error, or warning?
+            if (fElementDepth == 0) {
+                // for dynamic validation, skip the whole content,
+                // because no grammar was found.
+                if (fDynamicValidation || fSchemaDynamicValidation) {
+                    // no schema grammar was found, but it's either dynamic
+                    // validation, or another kind of grammar was found (DTD,
+                    // for example). The intended behavior here is to skip
+                    // the whole document. To improve performance, we try to
+                    // remove the validator from the pipeline, since it's not
+                    // supposed to do anything.
+                    if (fDocumentSource != null) {
+                        fDocumentSource.setDocumentHandler(fDocumentHandler);
+                        if (fDocumentHandler != null)
+                            fDocumentHandler.setDocumentSource(fDocumentSource);
+                        // indicate that the validator was removed.
+                        fElementDepth = -2;
+                        return augs;
+                    }
+
+                    fSkipValidationDepth = fElementDepth;
+                    if (fAugPSVI)
+                        augs = getEmptyAugs(augs);
+                    return augs;
+                }
+                // We don't call reportSchemaError here, because the spec
+                // doesn't think it's invalid not to be able to find a
+                // declaration or type definition for an element. Xerces is
+                // reporting it as an error for historical reasons, but in
+                // PSVI, we shouldn't mark this element as invalid because
+                // of this. - SG
+                fXSIErrorReporter.fErrorReporter.reportError(
+                    XSMessageFormatter.SCHEMA_DOMAIN,
+                    "cvc-elt.1",
+                    new Object[] { element.rawname },
+                    XMLErrorReporter.SEVERITY_ERROR);
+            }
+            // if wildcard = strict, report error.
+            // needs to be called before fXSIErrorReporter.pushContext()
+            // so that the error belongs to the parent element.
+            else if (wildcard != null && wildcard.fProcessContents == XSWildcardDecl.PC_STRICT) {
+                // report error, because wilcard = strict
+                reportSchemaError("cvc-complex-type.2.4.c", new Object[] { element.rawname });
+            }
+            // no element decl or type found for this element.
+            // Allowed by the spec, we can choose to either laxly assess this
+            // element, or to skip it. Now we choose lax assessment.
+            fCurrentType = SchemaGrammar.fAnyType;
+            fStrictAssess = false;
+            fNFullValidationDepth = fElementDepth;
+            // any type has mixed content, so we don't need to append buffer
+            fAppendBuffer = false;
+
+            // push error reporter context: record the current position
+            // This has to happen after we process skip contents,
+            // otherwise push and pop won't be correctly paired.
+            fXSIErrorReporter.pushContext();
+        } else {
+            // push error reporter context: record the current position
+            // This has to happen after we process skip contents,
+            // otherwise push and pop won't be correctly paired.
+            fXSIErrorReporter.pushContext();
+
+            // get xsi:type
+            if (xsiType != null) {
+                XSTypeDefinition oldType = fCurrentType;
+                fCurrentType = getAndCheckXsiType(element, xsiType, attributes);
+                // If it fails, use the old type. Use anyType if ther is no old type.
+                if (fCurrentType == null) {
+                    if (oldType == null)
+                        fCurrentType = SchemaGrammar.fAnyType;
+                    else
+                        fCurrentType = oldType;
+                }
+            }
+
+            fNNoneValidationDepth = fElementDepth;
+            // if the element has a fixed value constraint, we need to append
+            if (fCurrentElemDecl != null
+                && fCurrentElemDecl.getConstraintType() == XSConstants.VC_FIXED) {
+                fAppendBuffer = true;
+            }
+            // if the type is simple, we need to append
+            else if (fCurrentType.getTypeCategory() == XSTypeDefinition.SIMPLE_TYPE) {
+                fAppendBuffer = true;
+            } else {
+                // if the type is simple content complex type, we need to append
+                XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+                fAppendBuffer = (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_SIMPLE);
+            }
+        }
+
+        // Element Locally Valid (Element)
+        // 2 Its {abstract} must be false.
+        if (fCurrentElemDecl != null && fCurrentElemDecl.getAbstract())
+            reportSchemaError("cvc-elt.2", new Object[] { element.rawname });
+
+        // make the current element validation root
+        if (fElementDepth == 0) {
+            fValidationRoot = element.rawname;
+        }
+
+        // update normalization flags
+        if (fNormalizeData) {
+            // reset values
+            fFirstChunk = true;
+            fTrailing = false;
+            fUnionType = false;
+            fWhiteSpace = -1;
+        }
+
+        // Element Locally Valid (Type)
+        // 2 Its {abstract} must be false.
+        if (fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE) {
+            XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+            if (ctype.getAbstract()) {
+                reportSchemaError("cvc-type.2", new Object[] { element.rawname });
+            }
+            if (fNormalizeData) {
+                // find out if the content type is simple and if variety is union
+                // to be able to do character normalization
+                if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_SIMPLE) {
+                    if (ctype.fXSSimpleType.getVariety() == XSSimpleType.VARIETY_UNION) {
+                        fUnionType = true;
+                    } else {
+                        try {
+                            fWhiteSpace = ctype.fXSSimpleType.getWhitespace();
+                        } catch (DatatypeException e) {
+                            // do nothing
+                        }
+                    }
+                }
+            }
+        }
+        // normalization: simple type
+        else if (fNormalizeData) {
+            // if !union type
+            XSSimpleType dv = (XSSimpleType) fCurrentType;
+            if (dv.getVariety() == XSSimpleType.VARIETY_UNION) {
+                fUnionType = true;
+            } else {
+                try {
+                    fWhiteSpace = dv.getWhitespace();
+                } catch (DatatypeException e) {
+                    // do nothing
+                }
+            }
+        }
+
+        // then try to get the content model
+        fCurrentCM = null;
+        if (fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE) {
+            fCurrentCM = ((XSComplexTypeDecl) fCurrentType).getContentModel(fCMBuilder);
+        }
+
+        // and get the initial content model state
+        fCurrCMState = null;
+        if (fCurrentCM != null)
+            fCurrCMState = fCurrentCM.startContentModel();
+
+        // get information about xsi:nil
+        String xsiNil = attributes.getValue(SchemaSymbols.URI_XSI, SchemaSymbols.XSI_NIL);
+        // only deal with xsi:nil when there is an element declaration
+        if (xsiNil != null && fCurrentElemDecl != null)
+            fNil = getXsiNil(element, xsiNil);
+
+        // now validate everything related with the attributes
+        // first, get the attribute group
+        XSAttributeGroupDecl attrGrp = null;
+        if (fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE) {
+            XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+            attrGrp = ctype.getAttrGrp();
+        }
+        // activate identity constraints
+        fValueStoreCache.startElement();
+        fMatcherStack.pushContext();
+        if (fCurrentElemDecl != null && fCurrentElemDecl.fIDCPos > 0) {
+            fIdConstraint = true;
+            // initialize when identity constrains are defined for the elem
+            fValueStoreCache.initValueStoresFor(fCurrentElemDecl, this);
+        }
+        processAttributes(element, attributes, attrGrp);
+
+        // add default attributes
+        if (attrGrp != null) {
+            addDefaultAttributes(element, attributes, attrGrp);
+        }
+
+        // call all active identity constraints
+        int count = fMatcherStack.getMatcherCount();
+        for (int i = 0; i < count; i++) {
+            XPathMatcher matcher = fMatcherStack.getMatcherAt(i);
+            matcher.startElement( element, attributes);
+        }
+
+        if (fAugPSVI) {
+            augs = getEmptyAugs(augs);
+
+            // PSVI: add validation context
+            fCurrentPSVI.fValidationContext = fValidationRoot;
+            // PSVI: add element declaration
+            fCurrentPSVI.fDeclaration = fCurrentElemDecl;
+            // PSVI: add element type
+            fCurrentPSVI.fTypeDecl = fCurrentType;
+            // PSVI: add notation attribute
+            fCurrentPSVI.fNotation = fNotation;
+        }
+
+        return augs;
+
+    } // handleStartElement(QName,XMLAttributes,boolean)
+
+    /**
+     *  Handle end element. If there is not text content, and there is a
+     *  {value constraint} on the corresponding element decl, then
+     * set the fDefaultValue XMLString representing the default value.
+     */
+    Augmentations handleEndElement(QName element, Augmentations augs) {
+
+        if (DEBUG) {
+            System.out.println("==>handleEndElement:" + element);
+        }
+        // if we are skipping, return
+        if (fSkipValidationDepth >= 0) {
+            // but if this is the top element that we are skipping,
+            // restore the states.
+            if (fSkipValidationDepth == fElementDepth && fSkipValidationDepth > 0) {
+                // set the partial validation depth to the depth of parent
+                fNFullValidationDepth = fSkipValidationDepth - 1;
+                fSkipValidationDepth = -1;
+                fElementDepth--;
+                fSubElement = fSubElementStack[fElementDepth];
+                fCurrentElemDecl = fElemDeclStack[fElementDepth];
+                fNil = fNilStack[fElementDepth];
+                fNotation = fNotationStack[fElementDepth];
+                fCurrentType = fTypeStack[fElementDepth];
+                fCurrentCM = fCMStack[fElementDepth];
+                fStrictAssess = fStrictAssessStack[fElementDepth];
+                fCurrCMState = fCMStateStack[fElementDepth];
+                fSawText = fSawTextStack[fElementDepth];
+                fSawCharacters = fStringContent[fElementDepth];
+            }
+            else {
+                fElementDepth--;
+            }
+
+            // PSVI: validation attempted:
+            // use default values in psvi item for
+            // validation attempted, validity, and error codes
+
+            // check extra schema constraints on root element
+            if (fElementDepth == -1 && fFullChecking) {
+                XSConstraints.fullSchemaChecking(
+                    fGrammarBucket,
+                    fSubGroupHandler,
+                    fCMBuilder,
+                    fXSIErrorReporter.fErrorReporter);
+            }
+
+            if (fAugPSVI)
+                augs = getEmptyAugs(augs);
+            return augs;
+        }
+
+        // now validate the content of the element
+        processElementContent(element);
+
+        // Element Locally Valid (Element)
+        // 6 The element information item must be valid with respect to each of the {identity-constraint definitions} as per Identity-constraint Satisfied (3.11.4).
+
+        // call matchers and de-activate context
+        int oldCount = fMatcherStack.getMatcherCount();
+        for (int i = oldCount - 1; i >= 0; i--) {
+            XPathMatcher matcher = fMatcherStack.getMatcherAt(i);
+            if (fCurrentElemDecl == null)
+                matcher.endElement(element, null, false, fValidatedInfo.actualValue, fValidatedInfo.actualValueType, fValidatedInfo.itemValueTypes);
+
+            else
+                matcher.endElement(
+                    element,
+                    fCurrentType,
+                    fCurrentElemDecl.getNillable(),
+                    fDefaultValue == null
+                        ? fValidatedInfo.actualValue
+                        : fCurrentElemDecl.fDefault.actualValue,
+                    fDefaultValue == null
+                        ? fValidatedInfo.actualValueType
+                        : fCurrentElemDecl.fDefault.actualValueType,
+                    fDefaultValue == null
+                        ? fValidatedInfo.itemValueTypes
+                        : fCurrentElemDecl.fDefault.itemValueTypes);
+        }
+
+        if (fMatcherStack.size() > 0) {
+            fMatcherStack.popContext();
+        }
+
+        int newCount = fMatcherStack.getMatcherCount();
+        // handle everything *but* keyref's.
+        for (int i = oldCount - 1; i >= newCount; i--) {
+            XPathMatcher matcher = fMatcherStack.getMatcherAt(i);
+            if (matcher instanceof Selector.Matcher) {
+                Selector.Matcher selMatcher = (Selector.Matcher) matcher;
+                IdentityConstraint id;
+                if ((id = selMatcher.getIdentityConstraint()) != null
+                    && id.getCategory() != IdentityConstraint.IC_KEYREF) {
+                    fValueStoreCache.transplant(id, selMatcher.getInitialDepth());
+                }
+            }
+        }
+
+        // now handle keyref's/...
+        for (int i = oldCount - 1; i >= newCount; i--) {
+            XPathMatcher matcher = fMatcherStack.getMatcherAt(i);
+            if (matcher instanceof Selector.Matcher) {
+                Selector.Matcher selMatcher = (Selector.Matcher) matcher;
+                IdentityConstraint id;
+                if ((id = selMatcher.getIdentityConstraint()) != null
+                    && id.getCategory() == IdentityConstraint.IC_KEYREF) {
+                    ValueStoreBase values =
+                        fValueStoreCache.getValueStoreFor(id, selMatcher.getInitialDepth());
+                    if (values != null) // nothing to do if nothing matched!
+                        values.endDocumentFragment();
+                }
+            }
+        }
+        fValueStoreCache.endElement();
+
+        SchemaGrammar[] grammars = null;
+        // have we reached the end tag of the validation root?
+        if (fElementDepth == 0) {
+            // 7 If the element information item is the validation root, it must be valid per Validation Root Valid (ID/IDREF) (3.3.4).
+            String invIdRef = fValidationState.checkIDRefID();
+            fValidationState.resetIDTables();
+            if (invIdRef != null) {
+                reportSchemaError("cvc-id.1", new Object[] { invIdRef });
+            }
+            // check extra schema constraints
+            if (fFullChecking) {
+                XSConstraints.fullSchemaChecking(
+                    fGrammarBucket,
+                    fSubGroupHandler,
+                    fCMBuilder,
+                    fXSIErrorReporter.fErrorReporter);
+            }
+
+            grammars = fGrammarBucket.getGrammars();
+            // return the final set of grammars validator ended up with
+            if (fGrammarPool != null) {
+                // Set grammars as immutable
+                for (int k=0; k < grammars.length; k++) {
+                    grammars[k].setImmutable(true);
+                }
+                fGrammarPool.cacheGrammars(XMLGrammarDescription.XML_SCHEMA, grammars);
+            }
+            augs = endElementPSVI(true, grammars, augs);
+        } else {
+            augs = endElementPSVI(false, grammars, augs);
+
+            // decrease element depth and restore states
+            fElementDepth--;
+
+            // get the states for the parent element.
+            fSubElement = fSubElementStack[fElementDepth];
+            fCurrentElemDecl = fElemDeclStack[fElementDepth];
+            fNil = fNilStack[fElementDepth];
+            fNotation = fNotationStack[fElementDepth];
+            fCurrentType = fTypeStack[fElementDepth];
+            fCurrentCM = fCMStack[fElementDepth];
+            fStrictAssess = fStrictAssessStack[fElementDepth];
+            fCurrCMState = fCMStateStack[fElementDepth];
+            fSawText = fSawTextStack[fElementDepth];
+            fSawCharacters = fStringContent[fElementDepth];
+
+            // We should have a stack for whitespace value, and pop it up here.
+            // But when fWhiteSpace != -1, and we see a sub-element, it must be
+            // an error (at least for Schema 1.0). So for valid documents, the
+            // only value we are going to push/pop in the stack is -1.
+            // Here we just mimic the effect of popping -1. -SG
+            fWhiteSpace = -1;
+            // Same for append buffer. Simple types and elements with fixed
+            // value constraint don't allow sub-elements. -SG
+            fAppendBuffer = false;
+            // same here.
+            fUnionType = false;
+        }
+
+        return augs;
+    } // handleEndElement(QName,boolean)*/
+
+    final Augmentations endElementPSVI(
+        boolean root,
+        SchemaGrammar[] grammars,
+        Augmentations augs) {
+
+        if (fAugPSVI) {
+            augs = getEmptyAugs(augs);
+
+            // the 4 properties sent on startElement calls
+            fCurrentPSVI.fDeclaration = this.fCurrentElemDecl;
+            fCurrentPSVI.fTypeDecl = this.fCurrentType;
+            fCurrentPSVI.fNotation = this.fNotation;
+            fCurrentPSVI.fValidationContext = this.fValidationRoot;
+            // PSVI: validation attempted
+            // nothing below or at the same level has none or partial
+            // (which means this level is strictly assessed, and all chidren
+            // are full), so this one has full
+            if (fElementDepth > fNFullValidationDepth) {
+                fCurrentPSVI.fValidationAttempted = ElementPSVI.VALIDATION_FULL;
+            }
+            // nothing below or at the same level has full or partial
+            // (which means this level is not strictly assessed, and all chidren
+            // are none), so this one has none
+            else if (fElementDepth > fNNoneValidationDepth) {
+                fCurrentPSVI.fValidationAttempted = ElementPSVI.VALIDATION_NONE;
+            }
+            // otherwise partial, and anything above this level will be partial
+            else {
+                fCurrentPSVI.fValidationAttempted = ElementPSVI.VALIDATION_PARTIAL;
+                fNFullValidationDepth = fNNoneValidationDepth = fElementDepth - 1;
+            }
+
+            if (fDefaultValue != null)
+                fCurrentPSVI.fSpecified = true;
+            fCurrentPSVI.fNil = fNil;
+            fCurrentPSVI.fMemberType = fValidatedInfo.memberType;
+            fCurrentPSVI.fNormalizedValue = fValidatedInfo.normalizedValue;
+            fCurrentPSVI.fActualValue = fValidatedInfo.actualValue;
+            fCurrentPSVI.fActualValueType = fValidatedInfo.actualValueType;
+            fCurrentPSVI.fItemValueTypes = fValidatedInfo.itemValueTypes;
+
+            if (fStrictAssess) {
+                // get all errors for the current element, its attribute,
+                // and subelements (if they were strictly assessed).
+                // any error would make this element invalid.
+                // and we merge these errors to the parent element.
+                String[] errors = fXSIErrorReporter.mergeContext();
+
+                // PSVI: error codes
+                fCurrentPSVI.fErrorCodes = errors;
+                // PSVI: validity
+                fCurrentPSVI.fValidity =
+                    (errors == null) ? ElementPSVI.VALIDITY_VALID : ElementPSVI.VALIDITY_INVALID;
+            } else {
+                // PSVI: validity
+                fCurrentPSVI.fValidity = ElementPSVI.VALIDITY_NOTKNOWN;
+                // Discard the current context: ignore any error happened within
+                // the sub-elements/attributes of this element, because those
+                // errors won't affect the validity of the parent elements.
+                fXSIErrorReporter.popContext();
+            }
+
+            if (root) {
+                // store [schema information] in the PSVI
+                fCurrentPSVI.fGrammars = grammars;
+                fCurrentPSVI.fSchemaInformation = null;
+            }
+        }
+
+        return augs;
+
+    }
+
+    Augmentations getEmptyAugs(Augmentations augs) {
+        if (augs == null) {
+            augs = fAugmentations;
+            augs.removeAllItems();
+        }
+        augs.putItem(Constants.ELEMENT_PSVI, fCurrentPSVI);
+        fCurrentPSVI.reset();
+
+        return augs;
+    }
+
+    void storeLocations(String sLocation, String nsLocation) {
+        if (sLocation != null) {
+            if (!XMLSchemaLoader.tokenizeSchemaLocationStr(sLocation, fLocationPairs)) {
+                // error!
+                fXSIErrorReporter.reportError(
+                    XSMessageFormatter.SCHEMA_DOMAIN,
+                    "SchemaLocation",
+                    new Object[] { sLocation },
+                    XMLErrorReporter.SEVERITY_WARNING);
+            }
+        }
+        if (nsLocation != null) {
+            XMLSchemaLoader.LocationArray la = fLocationPairs.get(XMLSymbols.EMPTY_STRING);
+            if (la == null) {
+                la = new XMLSchemaLoader.LocationArray();
+                fLocationPairs.put(XMLSymbols.EMPTY_STRING, la);
+            }
+            la.addLocation(nsLocation);
+        }
+
+    } //storeLocations
+
+    //this is the function where logic of retrieving grammar is written , parser first tries to get the grammar from
+    //the local pool, if not in local pool, it gives chance to application to be able to retrieve the grammar, then it
+    //tries to parse the grammar using location hints from the give namespace.
+    SchemaGrammar findSchemaGrammar(
+        short contextType,
+        String namespace,
+        QName enclosingElement,
+        QName triggeringComponet,
+        XMLAttributes attributes) {
+        SchemaGrammar grammar = null;
+        //get the grammar from local pool...
+        grammar = fGrammarBucket.getGrammar(namespace);
+
+        if (grammar == null) {
+            fXSDDescription.setNamespace(namespace);
+            // give a chance to application to be able to retreive the grammar.
+            if (fGrammarPool != null) {
+                grammar = (SchemaGrammar) fGrammarPool.retrieveGrammar(fXSDDescription);
+                if (grammar != null) {
+                    // put this grammar into the bucket, along with grammars
+                    // imported by it (directly or indirectly)
+                    if (!fGrammarBucket.putGrammar(grammar, true, fNamespaceGrowth)) {
+                        // REVISIT: a conflict between new grammar(s) and grammars
+                        // in the bucket. What to do? A warning? An exception?
+                        fXSIErrorReporter.fErrorReporter.reportError(
+                            XSMessageFormatter.SCHEMA_DOMAIN,
+                            "GrammarConflict",
+                            null,
+                            XMLErrorReporter.SEVERITY_WARNING);
+                        grammar = null;
+                    }
+                }
+            }
+        }
+        if ((grammar == null && !fUseGrammarPoolOnly) || fNamespaceGrowth) {
+            fXSDDescription.reset();
+            fXSDDescription.fContextType = contextType;
+            fXSDDescription.setNamespace(namespace);
+            fXSDDescription.fEnclosedElementName = enclosingElement;
+            fXSDDescription.fTriggeringComponent = triggeringComponet;
+            fXSDDescription.fAttributes = attributes;
+            if (fLocator != null) {
+                fXSDDescription.setBaseSystemId(fLocator.getExpandedSystemId());
+            }
+
+            Map<String, XMLSchemaLoader.LocationArray> locationPairs = fLocationPairs;
+            XMLSchemaLoader.LocationArray locationArray =
+                locationPairs.get(namespace == null ? XMLSymbols.EMPTY_STRING : namespace);
+            if (locationArray != null) {
+                String[] temp = locationArray.getLocationArray();
+                if (temp.length != 0) {
+                    setLocationHints(fXSDDescription, temp, grammar);
+                }
+            }
+
+            if (grammar == null || fXSDDescription.fLocationHints != null) {
+                boolean toParseSchema = true;
+                if (grammar != null) {
+                     // use location hints instead
+                    locationPairs = Collections.emptyMap();
+                }
+
+                // try to parse the grammar using location hints from that namespace..
+                try {
+                    XMLInputSource xis =
+                        XMLSchemaLoader.resolveDocument(
+                            fXSDDescription,
+                            locationPairs,
+                            fEntityResolver);
+                    if (grammar != null && fNamespaceGrowth) {
+                        try {
+                            // if we are dealing with a different schema location, then include the new schema
+                            // into the existing grammar
+                            if (grammar.getDocumentLocations().contains(XMLEntityManager.expandSystemId(xis.getSystemId(), xis.getBaseSystemId(), false))) {
+                                toParseSchema = false;
+                            }
+                        }
+                        catch (MalformedURIException e) {
+                        }
+                    }
+                    if (toParseSchema) {
+                        grammar = fSchemaLoader.loadSchema(fXSDDescription, xis, fLocationPairs);
+                    }
+                } catch (IOException ex) {
+                    final String [] locationHints = fXSDDescription.getLocationHints();
+                    fXSIErrorReporter.fErrorReporter.reportError(
+                        XSMessageFormatter.SCHEMA_DOMAIN,
+                        "schema_reference.4",
+                        new Object[] { locationHints != null ? locationHints[0] : XMLSymbols.EMPTY_STRING },
+                        XMLErrorReporter.SEVERITY_WARNING);
+                }
+            }
+        }
+
+        return grammar;
+
+    } //findSchemaGrammar
+    private void setLocationHints(XSDDescription desc, String[] locations, SchemaGrammar grammar) {
+        int length = locations.length;
+        if (grammar == null) {
+            fXSDDescription.fLocationHints = new String[length];
+            System.arraycopy(locations, 0, fXSDDescription.fLocationHints, 0, length);
+        }
+        else {
+            setLocationHints(desc, locations, grammar.getDocumentLocations());
+        }
+    }
+
+    private void setLocationHints(XSDDescription desc, String[] locations, StringList docLocations) {
+        int length = locations.length;
+        String[] hints = new String[length];
+        int counter = 0;
+
+        for (int i=0; i<length; i++) {
+            try {
+                String id = XMLEntityManager.expandSystemId(locations[i], desc.getBaseSystemId(), false);
+                if (!docLocations.contains(id)) {
+                    hints[counter++] = locations[i];
+                }
+            }
+            catch (MalformedURIException e) {
+            }
+        }
+
+        if (counter > 0) {
+            if (counter == length) {
+                fXSDDescription.fLocationHints = hints;
+            }
+            else {
+                fXSDDescription.fLocationHints = new String[counter];
+                System.arraycopy(hints, 0, fXSDDescription.fLocationHints, 0, counter);
+            }
+        }
+    }
+
+
+    XSTypeDefinition getAndCheckXsiType(QName element, String xsiType, XMLAttributes attributes) {
+        // This method also deals with clause 1.2.1.2 of the constraint
+        // Validation Rule: Schema-Validity Assessment (Element)
+
+        // Element Locally Valid (Element)
+        // 4 If there is an attribute information item among the element information item's [attributes] whose [namespace name] is identical to http://www.w3.org/2001/XMLSchema-instance and whose [local name] is type, then all of the following must be true:
+        // 4.1 The normalized value of that attribute information item must be valid with respect to the built-in QName simple type, as defined by String Valid (3.14.4);
+        QName typeName = null;
+        try {
+            typeName = (QName) fQNameDV.validate(xsiType, fValidationState, null);
+        } catch (InvalidDatatypeValueException e) {
+            reportSchemaError(e.getKey(), e.getArgs());
+            reportSchemaError(
+                "cvc-elt.4.1",
+                new Object[] {
+                    element.rawname,
+                    SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_TYPE,
+                    xsiType });
+            return null;
+        }
+
+        // 4.2 The local name and namespace name (as defined in QName Interpretation (3.15.3)), of the actual value of that attribute information item must resolve to a type definition, as defined in QName resolution (Instance) (3.15.4)
+        XSTypeDefinition type = null;
+        // if the namespace is schema namespace, first try built-in types
+        if (typeName.uri == SchemaSymbols.URI_SCHEMAFORSCHEMA) {
+            type = SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(typeName.localpart);
+        }
+        // if it's not schema built-in types, then try to get a grammar
+        if (type == null) {
+            //try to find schema grammar by different means....
+            SchemaGrammar grammar =
+                findSchemaGrammar(
+                    XSDDescription.CONTEXT_XSITYPE,
+                    typeName.uri,
+                    element,
+                    typeName,
+                    attributes);
+
+            if (grammar != null)
+                type = grammar.getGlobalTypeDecl(typeName.localpart);
+        }
+        // still couldn't find the type, report an error
+        if (type == null) {
+            reportSchemaError("cvc-elt.4.2", new Object[] { element.rawname, xsiType });
+            return null;
+        }
+
+        // if there is no current type, set this one as current.
+        // and we don't need to do extra checking
+        if (fCurrentType != null) {
+            // 4.3 The local type definition must be validly derived from the {type definition} given the union of the {disallowed substitutions} and the {type definition}'s {prohibited substitutions}, as defined in Type Derivation OK (Complex) (3.4.6) (if it is a complex type definition), or given {disallowed substitutions} as defined in Type Derivation OK (Simple) (3.14.6) (if it is a simple type definition).
+            short block = fCurrentElemDecl.fBlock;
+            if (fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE)
+                block |= ((XSComplexTypeDecl) fCurrentType).fBlock;
+            if (!XSConstraints.checkTypeDerivationOk(type, fCurrentType, block))
+                reportSchemaError(
+                    "cvc-elt.4.3",
+                    new Object[] { element.rawname, xsiType, fCurrentType.getName()});
+        }
+
+        return type;
+    } //getAndCheckXsiType
+
+    boolean getXsiNil(QName element, String xsiNil) {
+        // Element Locally Valid (Element)
+        // 3 The appropriate case among the following must be true:
+        // 3.1 If {nillable} is false, then there must be no attribute information item among the element information item's [attributes] whose [namespace name] is identical to http://www.w3.org/2001/XMLSchema-instance and whose [local name] is nil.
+        if (fCurrentElemDecl != null && !fCurrentElemDecl.getNillable()) {
+            reportSchemaError(
+                "cvc-elt.3.1",
+                new Object[] {
+                    element.rawname,
+                    SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_NIL });
+        }
+        // 3.2 If {nillable} is true and there is such an attribute information item and its actual value is true , then all of the following must be true:
+        // 3.2.2 There must be no fixed {value constraint}.
+        else {
+            String value = XMLChar.trim(xsiNil);
+            if (value.equals(SchemaSymbols.ATTVAL_TRUE)
+                || value.equals(SchemaSymbols.ATTVAL_TRUE_1)) {
+                if (fCurrentElemDecl != null
+                    && fCurrentElemDecl.getConstraintType() == XSConstants.VC_FIXED) {
+                    reportSchemaError(
+                        "cvc-elt.3.2.2",
+                        new Object[] {
+                            element.rawname,
+                            SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_NIL });
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void processAttributes(QName element, XMLAttributes attributes, XSAttributeGroupDecl attrGrp) {
+
+        if (DEBUG) {
+            System.out.println("==>processAttributes: " + attributes.getLength());
+        }
+
+        // whether we have seen a Wildcard ID.
+        String wildcardIDName = null;
+
+        // for each present attribute
+        int attCount = attributes.getLength();
+
+        Augmentations augs = null;
+        AttributePSVImpl attrPSVI = null;
+
+        boolean isSimple =
+            fCurrentType == null || fCurrentType.getTypeCategory() == XSTypeDefinition.SIMPLE_TYPE;
+
+        XSObjectList attrUses = null;
+        int useCount = 0;
+        XSWildcardDecl attrWildcard = null;
+        if (!isSimple) {
+            attrUses = attrGrp.getAttributeUses();
+            useCount = attrUses.getLength();
+            attrWildcard = attrGrp.fAttributeWC;
+        }
+
+        // Element Locally Valid (Complex Type)
+        // 3 For each attribute information item in the element information item's [attributes] excepting those whose [namespace name] is identical to http://www.w3.org/2001/XMLSchema-instance and whose [local name] is one of type, nil, schemaLocation or noNamespaceSchemaLocation, the appropriate case among the following must be true:
+        // get the corresponding attribute decl
+        for (int index = 0; index < attCount; index++) {
+
+            attributes.getName(index, fTempQName);
+
+            if (DEBUG) {
+                System.out.println("==>process attribute: " + fTempQName);
+            }
+
+            if (fAugPSVI || fIdConstraint) {
+                augs = attributes.getAugmentations(index);
+                attrPSVI = (AttributePSVImpl) augs.getItem(Constants.ATTRIBUTE_PSVI);
+                if (attrPSVI != null) {
+                    attrPSVI.reset();
+                } else {
+                    attrPSVI = new AttributePSVImpl();
+                    augs.putItem(Constants.ATTRIBUTE_PSVI, attrPSVI);
+                }
+                // PSVI attribute: validation context
+                attrPSVI.fValidationContext = fValidationRoot;
+            }
+
+            // Element Locally Valid (Type)
+            // 3.1.1 The element information item's [attributes] must be empty, excepting those
+            // whose [namespace name] is identical to http://www.w3.org/2001/XMLSchema-instance and
+            // whose [local name] is one of type, nil, schemaLocation or noNamespaceSchemaLocation.
+
+            // for the 4 xsi attributes, get appropriate decl, and validate
+            if (fTempQName.uri == SchemaSymbols.URI_XSI) {
+                XSAttributeDecl attrDecl = null;
+                if (fTempQName.localpart == SchemaSymbols.XSI_SCHEMALOCATION)
+                    attrDecl =
+                        SchemaGrammar.SG_XSI.getGlobalAttributeDecl(
+                            SchemaSymbols.XSI_SCHEMALOCATION);
+                else if (fTempQName.localpart == SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION)
+                    attrDecl =
+                        SchemaGrammar.SG_XSI.getGlobalAttributeDecl(
+                            SchemaSymbols.XSI_NONAMESPACESCHEMALOCATION);
+                else if (fTempQName.localpart == SchemaSymbols.XSI_NIL)
+                    attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_NIL);
+                else if (fTempQName.localpart == SchemaSymbols.XSI_TYPE)
+                    attrDecl = SchemaGrammar.SG_XSI.getGlobalAttributeDecl(SchemaSymbols.XSI_TYPE);
+                if (attrDecl != null) {
+                    processOneAttribute(element, attributes, index, attrDecl, null, attrPSVI);
+                    continue;
+                }
+            }
+
+            // for namespace attributes, no_validation/unknow_validity
+            if (fTempQName.rawname == XMLSymbols.PREFIX_XMLNS
+                || fTempQName.rawname.startsWith("xmlns:")) {
+                continue;
+            }
+
+            // simple type doesn't allow any other attributes
+            if (isSimple) {
+                reportSchemaError(
+                    "cvc-type.3.1.1",
+                    new Object[] { element.rawname, fTempQName.rawname });
+                continue;
+            }
+
+            // it's not xmlns, and not xsi, then we need to find a decl for it
+            XSAttributeUseImpl currUse = null, oneUse;
+            for (int i = 0; i < useCount; i++) {
+                oneUse = (XSAttributeUseImpl) attrUses.item(i);
+                if (oneUse.fAttrDecl.fName == fTempQName.localpart
+                    && oneUse.fAttrDecl.fTargetNamespace == fTempQName.uri) {
+                    currUse = oneUse;
+                    break;
+                }
+            }
+
+            // 3.2 otherwise all of the following must be true:
+            // 3.2.1 There must be an {attribute wildcard}.
+            // 3.2.2 The attribute information item must be valid with respect to it as defined in Item Valid (Wildcard) (3.10.4).
+
+            // if failed, get it from wildcard
+            if (currUse == null) {
+                //if (attrWildcard == null)
+                //    reportSchemaError("cvc-complex-type.3.2.1", new Object[]{element.rawname, fTempQName.rawname});
+                if (attrWildcard == null || !attrWildcard.allowNamespace(fTempQName.uri)) {
+                    // so this attribute is not allowed
+                    reportSchemaError(
+                        "cvc-complex-type.3.2.2",
+                        new Object[] { element.rawname, fTempQName.rawname });
+                    continue;
+                }
+            }
+
+            XSAttributeDecl currDecl = null;
+            if (currUse != null) {
+                currDecl = currUse.fAttrDecl;
+            } else {
+                // which means it matches a wildcard
+                // skip it if processContents is skip
+                if (attrWildcard.fProcessContents == XSWildcardDecl.PC_SKIP)
+                    continue;
+
+                //try to find grammar by different means...
+                SchemaGrammar grammar =
+                    findSchemaGrammar(
+                        XSDDescription.CONTEXT_ATTRIBUTE,
+                        fTempQName.uri,
+                        element,
+                        fTempQName,
+                        attributes);
+
+                if (grammar != null) {
+                    currDecl = grammar.getGlobalAttributeDecl(fTempQName.localpart);
+                }
+
+                // if can't find
+                if (currDecl == null) {
+                    // if strict, report error
+                    if (attrWildcard.fProcessContents == XSWildcardDecl.PC_STRICT) {
+                        reportSchemaError(
+                            "cvc-complex-type.3.2.2",
+                            new Object[] { element.rawname, fTempQName.rawname });
+                    }
+
+                    // then continue to the next attribute
+                    continue;
+                } else {
+                    // 5 Let [Definition:]  the wild IDs be the set of all attribute information item to which clause 3.2 applied and whose validation resulted in a context-determined declaration of mustFind or no context-determined declaration at all, and whose [local name] and [namespace name] resolve (as defined by QName resolution (Instance) (3.15.4)) to an attribute declaration whose {type definition} is or is derived from ID. Then all of the following must be true:
+                    // 5.1 There must be no more than one item in wild IDs.
+                    if (currDecl.fType.getTypeCategory() == XSTypeDefinition.SIMPLE_TYPE
+                        && ((XSSimpleType) currDecl.fType).isIDType()) {
+                        if (wildcardIDName != null) {
+                            reportSchemaError(
+                                "cvc-complex-type.5.1",
+                                new Object[] { element.rawname, currDecl.fName, wildcardIDName });
+                        } else
+                            wildcardIDName = currDecl.fName;
+                    }
+                }
+            }
+
+            processOneAttribute(element, attributes, index, currDecl, currUse, attrPSVI);
+        } // end of for (all attributes)
+
+        // 5.2 If wild IDs is non-empty, there must not be any attribute uses among the {attribute uses} whose {attribute declaration}'s {type definition} is or is derived from ID.
+        if (!isSimple && attrGrp.fIDAttrName != null && wildcardIDName != null) {
+            reportSchemaError(
+                "cvc-complex-type.5.2",
+                new Object[] { element.rawname, wildcardIDName, attrGrp.fIDAttrName });
+        }
+
+    } //processAttributes
+
+    void processOneAttribute(
+        QName element,
+        XMLAttributes attributes,
+        int index,
+        XSAttributeDecl currDecl,
+        XSAttributeUseImpl currUse,
+        AttributePSVImpl attrPSVI) {
+
+        String attrValue = attributes.getValue(index);
+        fXSIErrorReporter.pushContext();
+
+        // Attribute Locally Valid
+        // For an attribute information item to be locally valid with respect to an attribute declaration all of the following must be true:
+        // 1 The declaration must not be absent (see Missing Sub-components (5.3) for how this can fail to be the case).
+        // 2 Its {type definition} must not be absent.
+        // 3 The item's normalized value must be locally valid with respect to that {type definition} as per String Valid (3.14.4).
+        // get simple type
+        XSSimpleType attDV = currDecl.fType;
+
+        Object actualValue = null;
+        try {
+            actualValue = attDV.validate(attrValue, fValidationState, fValidatedInfo);
+            // store the normalized value
+            if (fNormalizeData)
+                attributes.setValue(index, fValidatedInfo.normalizedValue);
+            if (attributes instanceof XMLAttributesImpl) {
+                XMLAttributesImpl attrs = (XMLAttributesImpl) attributes;
+                boolean schemaId =
+                    fValidatedInfo.memberType != null
+                        ? fValidatedInfo.memberType.isIDType()
+                        : attDV.isIDType();
+                attrs.setSchemaId(index, schemaId);
+            }
+
+            // PSVI: element notation
+            if (attDV.getVariety() == XSSimpleType.VARIETY_ATOMIC
+                && attDV.getPrimitiveKind() == XSSimpleType.PRIMITIVE_NOTATION) {
+                QName qName = (QName) actualValue;
+                SchemaGrammar grammar = fGrammarBucket.getGrammar(qName.uri);
+
+                //REVISIT: is it possible for the notation to be in different namespace than the attribute
+                //with which it is associated, CHECK !!  <fof n1:att1 = "n2:notation1" ..>
+                // should we give chance to the application to be able to  retrieve a grammar - nb
+                //REVISIT: what would be the triggering component here.. if it is attribute value that
+                // triggered the loading of grammar ?? -nb
+
+                if (grammar != null) {
+                    fNotation = grammar.getGlobalNotationDecl(qName.localpart);
+                }
+            }
+        } catch (InvalidDatatypeValueException idve) {
+            reportSchemaError(idve.getKey(), idve.getArgs());
+            reportSchemaError(
+                "cvc-attribute.3",
+                new Object[] { element.rawname, fTempQName.rawname, attrValue, attDV.getName()});
+        }
+
+        // get the value constraint from use or decl
+        // 4 The item's actual value must match the value of the {value constraint}, if it is present and fixed.                 // now check the value against the simpleType
+        if (actualValue != null && currDecl.getConstraintType() == XSConstants.VC_FIXED) {
+            if (!isComparable(fValidatedInfo, currDecl.fDefault) || !actualValue.equals(currDecl.fDefault.actualValue)) {
+                reportSchemaError(
+                    "cvc-attribute.4",
+                    new Object[] {
+                        element.rawname,
+                        fTempQName.rawname,
+                        attrValue,
+                        currDecl.fDefault.stringValue()});
+            }
+        }
+
+        // 3.1 If there is among the {attribute uses} an attribute use with an {attribute declaration} whose {name} matches the attribute information item's [local name] and whose {target namespace} is identical to the attribute information item's [namespace name] (where an absent {target namespace} is taken to be identical to a [namespace name] with no value), then the attribute information must be valid with respect to that attribute use as per Attribute Locally Valid (Use) (3.5.4). In this case the {attribute declaration} of that attribute use is the context-determined declaration for the attribute information item with respect to Schema-Validity Assessment (Attribute) (3.2.4) and Assessment Outcome (Attribute) (3.2.5).
+        if (actualValue != null
+            && currUse != null
+            && currUse.fConstraintType == XSConstants.VC_FIXED) {
+            if (!isComparable(fValidatedInfo, currUse.fDefault) || !actualValue.equals(currUse.fDefault.actualValue)) {
+                reportSchemaError(
+                    "cvc-complex-type.3.1",
+                    new Object[] {
+                        element.rawname,
+                        fTempQName.rawname,
+                        attrValue,
+                        currUse.fDefault.stringValue()});
+            }
+        }
+        if (fIdConstraint) {
+            attrPSVI.fActualValue = actualValue;
+        }
+
+        if (fAugPSVI) {
+            // PSVI: attribute declaration
+            attrPSVI.fDeclaration = currDecl;
+            // PSVI: attribute type
+            attrPSVI.fTypeDecl = attDV;
+
+            // PSVI: attribute memberType
+            attrPSVI.fMemberType = fValidatedInfo.memberType;
+            // PSVI: attribute normalized value
+            // NOTE: we always store the normalized value, even if it's invlid,
+            // because it might still be useful to the user. But when the it's
+            // not valid, the normalized value is not trustable.
+            attrPSVI.fNormalizedValue = fValidatedInfo.normalizedValue;
+            attrPSVI.fActualValue = fValidatedInfo.actualValue;
+            attrPSVI.fActualValueType = fValidatedInfo.actualValueType;
+            attrPSVI.fItemValueTypes = fValidatedInfo.itemValueTypes;
+
+
+
+            // PSVI: validation attempted:
+            attrPSVI.fValidationAttempted = AttributePSVI.VALIDATION_FULL;
+
+            String[] errors = fXSIErrorReporter.mergeContext();
+            // PSVI: error codes
+            attrPSVI.fErrorCodes = errors;
+            // PSVI: validity
+            attrPSVI.fValidity =
+                (errors == null) ? AttributePSVI.VALIDITY_VALID : AttributePSVI.VALIDITY_INVALID;
+        }
+    }
+
+    void addDefaultAttributes(
+        QName element,
+        XMLAttributes attributes,
+        XSAttributeGroupDecl attrGrp) {
+        // Check after all specified attrs are scanned
+        // (1) report error for REQUIRED attrs that are missing (V_TAGc)
+        // REVISIT: should we check prohibited attributes?
+        // (2) report error for PROHIBITED attrs that are present (V_TAGc)
+        // (3) add default attrs (FIXED and NOT_FIXED)
+        //
+        if (DEBUG) {
+            System.out.println("==>addDefaultAttributes: " + element);
+        }
+        XSObjectList attrUses = attrGrp.getAttributeUses();
+        int useCount = attrUses.getLength();
+        XSAttributeUseImpl currUse;
+        XSAttributeDecl currDecl;
+        short constType;
+        ValidatedInfo defaultValue;
+        boolean isSpecified;
+        QName attName;
+        // for each attribute use
+        for (int i = 0; i < useCount; i++) {
+
+            currUse = (XSAttributeUseImpl) attrUses.item(i);
+            currDecl = currUse.fAttrDecl;
+            // get value constraint
+            constType = currUse.fConstraintType;
+            defaultValue = currUse.fDefault;
+            if (constType == XSConstants.VC_NONE) {
+                constType = currDecl.getConstraintType();
+                defaultValue = currDecl.fDefault;
+            }
+            // whether this attribute is specified
+            isSpecified = attributes.getValue(currDecl.fTargetNamespace, currDecl.fName) != null;
+
+            // Element Locally Valid (Complex Type)
+            // 4 The {attribute declaration} of each attribute use in the {attribute uses} whose
+            // {required} is true matches one of the attribute information items in the element
+            // information item's [attributes] as per clause 3.1 above.
+            if (currUse.fUse == SchemaSymbols.USE_REQUIRED) {
+                if (!isSpecified)
+                    reportSchemaError(
+                        "cvc-complex-type.4",
+                        new Object[] { element.rawname, currDecl.fName });
+            }
+            // if the attribute is not specified, then apply the value constraint
+            if (!isSpecified && constType != XSConstants.VC_NONE) {
+                attName =
+                    new QName(null, currDecl.fName, currDecl.fName, currDecl.fTargetNamespace);
+                String normalized = (defaultValue != null) ? defaultValue.stringValue() : "";
+                int attrIndex = attributes.addAttribute(attName, "CDATA", normalized);
+                if (attributes instanceof XMLAttributesImpl) {
+                    XMLAttributesImpl attrs = (XMLAttributesImpl) attributes;
+                    boolean schemaId =
+                        defaultValue != null
+                            && defaultValue.memberType != null
+                                ? defaultValue.memberType.isIDType()
+                                : currDecl.fType.isIDType();
+                    attrs.setSchemaId(attrIndex, schemaId);
+                }
+
+                if (fAugPSVI) {
+
+                    // PSVI: attribute is "schema" specified
+                    Augmentations augs = attributes.getAugmentations(attrIndex);
+                    AttributePSVImpl attrPSVI = new AttributePSVImpl();
+                    augs.putItem(Constants.ATTRIBUTE_PSVI, attrPSVI);
+
+                    attrPSVI.fDeclaration = currDecl;
+                    attrPSVI.fTypeDecl = currDecl.fType;
+                    attrPSVI.fMemberType = defaultValue.memberType;
+                    attrPSVI.fNormalizedValue = normalized;
+                    attrPSVI.fActualValue = defaultValue.actualValue;
+                    attrPSVI.fActualValueType = defaultValue.actualValueType;
+                    attrPSVI.fItemValueTypes = defaultValue.itemValueTypes;
+                    attrPSVI.fValidationContext = fValidationRoot;
+                    attrPSVI.fValidity = AttributePSVI.VALIDITY_VALID;
+                    attrPSVI.fValidationAttempted = AttributePSVI.VALIDATION_FULL;
+                    attrPSVI.fSpecified = true;
+                }
+            }
+
+        } // for
+    } // addDefaultAttributes
+
+    /**
+     *  If there is not text content, and there is a
+     *  {value constraint} on the corresponding element decl, then return
+     *  an XMLString representing the default value.
+     */
+    void processElementContent(QName element) {
+        // 1 If the item is ?valid? with respect to an element declaration as per Element Locally Valid (Element) (?3.3.4) and the {value constraint} is present, but clause 3.2 of Element Locally Valid (Element) (?3.3.4) above is not satisfied and the item has no element or character information item [children], then schema. Furthermore, the post-schema-validation infoset has the canonical lexical representation of the {value constraint} value as the item's [schema normalized value] property.
+        if (fCurrentElemDecl != null
+            && fCurrentElemDecl.fDefault != null
+            && !fSawText
+            && !fSubElement
+            && !fNil) {
+
+            String strv = fCurrentElemDecl.fDefault.stringValue();
+            int bufLen = strv.length();
+            if (fNormalizedStr.ch == null || fNormalizedStr.ch.length < bufLen) {
+                fNormalizedStr.ch = new char[bufLen];
+            }
+            strv.getChars(0, bufLen, fNormalizedStr.ch, 0);
+            fNormalizedStr.offset = 0;
+            fNormalizedStr.length = bufLen;
+            fDefaultValue = fNormalizedStr;
+        }
+        // fixed values are handled later, after xsi:type determined.
+
+        fValidatedInfo.normalizedValue = null;
+
+        // Element Locally Valid (Element)
+        // 3.2.1 The element information item must have no character or element information item [children].
+        if (fNil) {
+            if (fSubElement || fSawText) {
+                reportSchemaError(
+                    "cvc-elt.3.2.1",
+                    new Object[] {
+                        element.rawname,
+                        SchemaSymbols.URI_XSI + "," + SchemaSymbols.XSI_NIL });
+            }
+        }
+
+        this.fValidatedInfo.reset();
+
+        // 5 The appropriate case among the following must be true:
+        // 5.1 If the declaration has a {value constraint}, the item has neither element nor character [children] and clause 3.2 has not applied, then all of the following must be true:
+        if (fCurrentElemDecl != null
+            && fCurrentElemDecl.getConstraintType() != XSConstants.VC_NONE
+            && !fSubElement
+            && !fSawText
+            && !fNil) {
+            // 5.1.1 If the actual type definition is a local type definition then the canonical lexical representation of the {value constraint} value must be a valid default for the actual type definition as defined in Element Default Valid (Immediate) (3.3.6).
+            if (fCurrentType != fCurrentElemDecl.fType) {
+                //REVISIT:we should pass ValidatedInfo here.
+                if (XSConstraints
+                    .ElementDefaultValidImmediate(
+                        fCurrentType,
+                        fCurrentElemDecl.fDefault.stringValue(),
+                        fState4XsiType,
+                        null)
+                    == null)
+                    reportSchemaError(
+                        "cvc-elt.5.1.1",
+                        new Object[] {
+                            element.rawname,
+                            fCurrentType.getName(),
+                            fCurrentElemDecl.fDefault.stringValue()});
+            }
+            // 5.1.2 The element information item with the canonical lexical representation of the {value constraint} value used as its normalized value must be valid with respect to the actual type definition as defined by Element Locally Valid (Type) (3.3.4).
+            // REVISIT: don't use toString, but validateActualValue instead
+            //          use the fState4ApplyDefault
+            elementLocallyValidType(element, fCurrentElemDecl.fDefault.stringValue());
+        } else {
+            // The following method call also deal with clause 1.2.2 of the constraint
+            // Validation Rule: Schema-Validity Assessment (Element)
+
+            // 5.2 If the declaration has no {value constraint} or the item has either element or character [children] or clause 3.2 has applied, then all of the following must be true:
+            // 5.2.1 The element information item must be valid with respect to the actual type definition as defined by Element Locally Valid (Type) (3.3.4).
+            Object actualValue = elementLocallyValidType(element, fBuffer);
+            // 5.2.2 If there is a fixed {value constraint} and clause 3.2 has not applied, all of the following must be true:
+            if (fCurrentElemDecl != null
+                && fCurrentElemDecl.getConstraintType() == XSConstants.VC_FIXED
+                && !fNil) {
+                String content = fBuffer.toString();
+                // 5.2.2.1 The element information item must have no element information item [children].
+                if (fSubElement)
+                    reportSchemaError("cvc-elt.5.2.2.1", new Object[] { element.rawname });
+                // 5.2.2.2 The appropriate case among the following must be true:
+                if (fCurrentType.getTypeCategory() == XSTypeDefinition.COMPLEX_TYPE) {
+                    XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+                    // 5.2.2.2.1 If the {content type} of the actual type definition is mixed, then the initial value of the item must match the canonical lexical representation of the {value constraint} value.
+                    if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_MIXED) {
+                        // REVISIT: how to get the initial value, does whiteSpace count?
+                        if (!fCurrentElemDecl.fDefault.normalizedValue.equals(content))
+                            reportSchemaError(
+                                "cvc-elt.5.2.2.2.1",
+                                new Object[] {
+                                    element.rawname,
+                                    content,
+                                    fCurrentElemDecl.fDefault.normalizedValue });
+                    }
+                    // 5.2.2.2.2 If the {content type} of the actual type definition is a simple type definition, then the actual value of the item must match the canonical lexical representation of the {value constraint} value.
+                    else if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_SIMPLE) {
+                        if (actualValue != null && (!isComparable(fValidatedInfo, fCurrentElemDecl.fDefault)
+                                || !actualValue.equals(fCurrentElemDecl.fDefault.actualValue))) {
+                            reportSchemaError(
+                                "cvc-elt.5.2.2.2.2",
+                                new Object[] {
+                                    element.rawname,
+                                    content,
+                                    fCurrentElemDecl.fDefault.stringValue()});
+                        }
+                    }
+                } else if (fCurrentType.getTypeCategory() == XSTypeDefinition.SIMPLE_TYPE) {
+                    if (actualValue != null && (!isComparable(fValidatedInfo, fCurrentElemDecl.fDefault)
+                            || !actualValue.equals(fCurrentElemDecl.fDefault.actualValue))) {
+                        // REVISIT: the spec didn't mention this case: fixed
+                        //          value with simple type
+                        reportSchemaError(
+                            "cvc-elt.5.2.2.2.2",
+                            new Object[] {
+                                element.rawname,
+                                content,
+                                fCurrentElemDecl.fDefault.stringValue()});
+                    }
+                }
+            }
+        }
+
+        if (fDefaultValue == null && fNormalizeData && fDocumentHandler != null && fUnionType) {
+            // for union types we need to send data because we delayed sending
+            // this data when we received it in the characters() call.
+            String content = fValidatedInfo.normalizedValue;
+            if (content == null)
+                content = fBuffer.toString();
+
+            int bufLen = content.length();
+            if (fNormalizedStr.ch == null || fNormalizedStr.ch.length < bufLen) {
+                fNormalizedStr.ch = new char[bufLen];
+            }
+            content.getChars(0, bufLen, fNormalizedStr.ch, 0);
+            fNormalizedStr.offset = 0;
+            fNormalizedStr.length = bufLen;
+            fDocumentHandler.characters(fNormalizedStr, null);
+        }
+    } // processElementContent
+
+    Object elementLocallyValidType(QName element, Object textContent) {
+        if (fCurrentType == null)
+            return null;
+
+        Object retValue = null;
+        // Element Locally Valid (Type)
+        // 3 The appropriate case among the following must be true:
+        // 3.1 If the type definition is a simple type definition, then all of the following must be true:
+        if (fCurrentType.getTypeCategory() == XSTypeDefinition.SIMPLE_TYPE) {
+            // 3.1.2 The element information item must have no element information item [children].
+            if (fSubElement)
+                reportSchemaError("cvc-type.3.1.2", new Object[] { element.rawname });
+            // 3.1.3 If clause 3.2 of Element Locally Valid (Element) (3.3.4) did not apply, then the normalized value must be valid with respect to the type definition as defined by String Valid (3.14.4).
+            if (!fNil) {
+                XSSimpleType dv = (XSSimpleType) fCurrentType;
+                try {
+                    if (!fNormalizeData || fUnionType) {
+                        fValidationState.setNormalizationRequired(true);
+                    }
+                    retValue = dv.validate(textContent, fValidationState, fValidatedInfo);
+                } catch (InvalidDatatypeValueException e) {
+                    reportSchemaError(e.getKey(), e.getArgs());
+                    reportSchemaError(
+                        "cvc-type.3.1.3",
+                        new Object[] { element.rawname, textContent });
+                }
+            }
+        } else {
+            // 3.2 If the type definition is a complex type definition, then the element information item must be valid with respect to the type definition as per Element Locally Valid (Complex Type) (3.4.4);
+            retValue = elementLocallyValidComplexType(element, textContent);
+        }
+
+        return retValue;
+    } // elementLocallyValidType
+
+    Object elementLocallyValidComplexType(QName element, Object textContent) {
+        Object actualValue = null;
+        XSComplexTypeDecl ctype = (XSComplexTypeDecl) fCurrentType;
+
+        // Element Locally Valid (Complex Type)
+        // For an element information item to be locally valid with respect to a complex type definition all of the following must be true:
+        // 1 {abstract} is false.
+        // 2 If clause 3.2 of Element Locally Valid (Element) (3.3.4) did not apply, then the appropriate case among the following must be true:
+        if (!fNil) {
+            // 2.1 If the {content type} is empty, then the element information item has no character or element information item [children].
+            if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_EMPTY
+                && (fSubElement || fSawText)) {
+                reportSchemaError("cvc-complex-type.2.1", new Object[] { element.rawname });
+            }
+            // 2.2 If the {content type} is a simple type definition, then the element information item has no element information item [children], and the normalized value of the element information item is valid with respect to that simple type definition as defined by String Valid (3.14.4).
+            else if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_SIMPLE) {
+                if (fSubElement)
+                    reportSchemaError("cvc-complex-type.2.2", new Object[] { element.rawname });
+                XSSimpleType dv = ctype.fXSSimpleType;
+                try {
+                    if (!fNormalizeData || fUnionType) {
+                        fValidationState.setNormalizationRequired(true);
+                    }
+                    actualValue = dv.validate(textContent, fValidationState, fValidatedInfo);
+                } catch (InvalidDatatypeValueException e) {
+                    reportSchemaError(e.getKey(), e.getArgs());
+                    reportSchemaError("cvc-complex-type.2.2", new Object[] { element.rawname });
+                }
+                // REVISIT: eventually, this method should return the same actualValue as elementLocallyValidType...
+                // obviously it'll return null when the content is complex.
+            }
+            // 2.3 If the {content type} is element-only, then the element information item has no character information item [children] other than those whose [character code] is defined as a white space in [XML 1.0 (Second Edition)].
+            else if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_ELEMENT) {
+                if (fSawCharacters) {
+                    reportSchemaError("cvc-complex-type.2.3", new Object[] { element.rawname });
+                }
+            }
+            // 2.4 If the {content type} is element-only or mixed, then the sequence of the element information item's element information item [children], if any, taken in order, is valid with respect to the {content type}'s particle, as defined in Element Sequence Locally Valid (Particle) (3.9.4).
+            if (ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_ELEMENT
+                || ctype.fContentType == XSComplexTypeDecl.CONTENTTYPE_MIXED) {
+                // if the current state is a valid state, check whether
+                // it's one of the final states.
+                if (DEBUG) {
+                    System.out.println(fCurrCMState);
+                }
+                if (fCurrCMState[0] >= 0 && !fCurrentCM.endContentModel(fCurrCMState)) {
+                    String expected = expectedStr(fCurrentCM.whatCanGoHere(fCurrCMState));
+                    reportSchemaError(
+                        "cvc-complex-type.2.4.b",
+                        new Object[] { element.rawname, expected });
+                } else {
+                    // Constant space algorithm for a{n,m} for n > 1 and m <= unbounded
+                    // After the DFA has completed, check minOccurs and maxOccurs
+                    // for all elements and wildcards in this content model where
+                    // a{n,m} is subsumed to a* or a+
+                    ArrayList errors = fCurrentCM.checkMinMaxBounds();
+                    if (errors != null) {
+                        for (int i = 0; i < errors.size(); i += 2) {
+                            reportSchemaError(
+                                (String) errors.get(i),
+                                new Object[] { element.rawname, errors.get(i + 1) });
+                        }
+                    }
+                }
+             }
+        }
+        return actualValue;
+    } // elementLocallyValidComplexType
+
+    void reportSchemaError(String key, Object[] arguments) {
+        if (fDoValidation)
+            fXSIErrorReporter.reportError(
+                XSMessageFormatter.SCHEMA_DOMAIN,
+                key,
+                arguments,
+                XMLErrorReporter.SEVERITY_ERROR);
+    }
+
+    /** Returns true if the two ValidatedInfo objects can be compared in the same value space. **/
+    private boolean isComparable(ValidatedInfo info1, ValidatedInfo info2) {
+        final short primitiveType1 = convertToPrimitiveKind(info1.actualValueType);
+        final short primitiveType2 = convertToPrimitiveKind(info2.actualValueType);
+        if (primitiveType1 != primitiveType2) {
+            return (primitiveType1 == XSConstants.ANYSIMPLETYPE_DT && primitiveType2 == XSConstants.STRING_DT ||
+                    primitiveType1 == XSConstants.STRING_DT && primitiveType2 == XSConstants.ANYSIMPLETYPE_DT);
+        }
+        else if (primitiveType1 == XSConstants.LIST_DT || primitiveType1 == XSConstants.LISTOFUNION_DT) {
+            final ShortList typeList1 = info1.itemValueTypes;
+            final ShortList typeList2 = info2.itemValueTypes;
+            final int typeList1Length = typeList1 != null ? typeList1.getLength() : 0;
+            final int typeList2Length = typeList2 != null ? typeList2.getLength() : 0;
+            if (typeList1Length != typeList2Length) {
+                return false;
+            }
+            for (int i = 0; i < typeList1Length; ++i) {
+                final short primitiveItem1 = convertToPrimitiveKind(typeList1.item(i));
+                final short primitiveItem2 = convertToPrimitiveKind(typeList2.item(i));
+                if (primitiveItem1 != primitiveItem2) {
+                    if (primitiveItem1 == XSConstants.ANYSIMPLETYPE_DT && primitiveItem2 == XSConstants.STRING_DT ||
+                        primitiveItem1 == XSConstants.STRING_DT && primitiveItem2 == XSConstants.ANYSIMPLETYPE_DT) {
+                        continue;
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private short convertToPrimitiveKind(short valueType) {
+        /** Primitive datatypes. */
+        if (valueType <= XSConstants.NOTATION_DT) {
+            return valueType;
+        }
+        /** Types derived from string. */
+        if (valueType <= XSConstants.ENTITY_DT) {
+            return XSConstants.STRING_DT;
+        }
+        /** Types derived from decimal. */
+        if (valueType <= XSConstants.POSITIVEINTEGER_DT) {
+            return XSConstants.DECIMAL_DT;
+        }
+        /** Other types. */
+        return valueType;
+    }
+
+    private String expectedStr(Vector expected) {
+        StringBuffer ret = new StringBuffer("{");
+        int size = expected.size();
+        for (int i = 0; i < size; i++) {
+            if (i > 0)
+                ret.append(", ");
+            ret.append(expected.elementAt(i).toString());
+        }
+        ret.append('}');
+        return ret.toString();
+    }
+
+    /**********************************/
+
+    // xpath matcher information
+
+    /**
+     * Stack of XPath matchers for identity constraints.
+     *
+     * @author Andy Clark, IBM
+     */
+    protected static class XPathMatcherStack {
+
+        //
+        // Data
+        //
+
+        /** Active matchers. */
+        protected XPathMatcher[] fMatchers = new XPathMatcher[4];
+
+        /** Count of active matchers. */
+        protected int fMatchersCount;
+
+        /** Offset stack for contexts. */
+        protected IntStack fContextStack = new IntStack();
+
+        //
+        // Constructors
+        //
+
+        public XPathMatcherStack() {
+        } // <init>()
+
+        //
+        // Public methods
+        //
+
+        /** Resets the XPath matcher stack. */
+        public void clear() {
+            for (int i = 0; i < fMatchersCount; i++) {
+                fMatchers[i] = null;
+            }
+            fMatchersCount = 0;
+            fContextStack.clear();
+        } // clear()
+
+        /** Returns the size of the stack. */
+        public int size() {
+            return fContextStack.size();
+        } // size():int
+
+        /** Returns the count of XPath matchers. */
+        public int getMatcherCount() {
+            return fMatchersCount;
+        } // getMatcherCount():int
+
+        /** Adds a matcher. */
+        public void addMatcher(XPathMatcher matcher) {
+            ensureMatcherCapacity();
+            fMatchers[fMatchersCount++] = matcher;
+        } // addMatcher(XPathMatcher)
+
+        /** Returns the XPath matcher at the specified index. */
+        public XPathMatcher getMatcherAt(int index) {
+            return fMatchers[index];
+        } // getMatcherAt(index):XPathMatcher
+
+        /** Pushes a new context onto the stack. */
+        public void pushContext() {
+            fContextStack.push(fMatchersCount);
+        } // pushContext()
+
+        /** Pops a context off of the stack. */
+        public void popContext() {
+            fMatchersCount = fContextStack.pop();
+        } // popContext()
+
+        //
+        // Private methods
+        //
+
+        /** Ensures the size of the matchers array. */
+        private void ensureMatcherCapacity() {
+            if (fMatchersCount == fMatchers.length) {
+                XPathMatcher[] array = new XPathMatcher[fMatchers.length * 2];
+                System.arraycopy(fMatchers, 0, array, 0, fMatchers.length);
+                fMatchers = array;
+            }
+        } // ensureMatcherCapacity()
+
+    } // class XPathMatcherStack
+
+    // value store implementations
+
+    /**
+     * Value store implementation base class. There are specific subclasses
+     * for handling unique, key, and keyref.
+     *
+     * @author Andy Clark, IBM
+     */
+    protected abstract class ValueStoreBase implements ValueStore {
+
+        //
+        // Data
+        //
+
+        /** Identity constraint. */
+        protected IdentityConstraint fIdentityConstraint;
+        protected int fFieldCount = 0;
+        protected Field[] fFields = null;
+        /** current data */
+        protected Object[] fLocalValues = null;
+        protected short[] fLocalValueTypes = null;
+        protected ShortList[] fLocalItemValueTypes = null;
+
+        /** Current data value count. */
+        protected int fValuesCount;
+
+        /** global data */
+        public final Vector fValues = new Vector();
+        public ShortVector fValueTypes = null;
+        public Vector fItemValueTypes = null;
+
+        private boolean fUseValueTypeVector = false;
+        private int fValueTypesLength = 0;
+        private short fValueType = 0;
+
+        private boolean fUseItemValueTypeVector = false;
+        private int fItemValueTypesLength = 0;
+        private ShortList fItemValueType = null;
+
+        /** buffer for error messages */
+        final StringBuffer fTempBuffer = new StringBuffer();
+
+        //
+        // Constructors
+        //
+
+        /** Constructs a value store for the specified identity constraint. */
+        protected ValueStoreBase(IdentityConstraint identityConstraint) {
+            fIdentityConstraint = identityConstraint;
+            fFieldCount = fIdentityConstraint.getFieldCount();
+            fFields = new Field[fFieldCount];
+            fLocalValues = new Object[fFieldCount];
+            fLocalValueTypes = new short[fFieldCount];
+            fLocalItemValueTypes = new ShortList[fFieldCount];
+            for (int i = 0; i < fFieldCount; i++) {
+                fFields[i] = fIdentityConstraint.getFieldAt(i);
+            }
+        } // <init>(IdentityConstraint)
+
+        //
+        // Public methods
+        //
+
+        // destroys this ValueStore; useful when, for instance, a
+        // locally-scoped ID constraint is involved.
+        public void clear() {
+            fValuesCount = 0;
+            fUseValueTypeVector = false;
+            fValueTypesLength = 0;
+            fValueType = 0;
+            fUseItemValueTypeVector = false;
+            fItemValueTypesLength = 0;
+            fItemValueType = null;
+            fValues.setSize(0);
+            if (fValueTypes != null) {
+                fValueTypes.clear();
+            }
+            if (fItemValueTypes != null) {
+                fItemValueTypes.setSize(0);
+            }
+        } // end clear():void
+
+        // appends the contents of one ValueStore to those of us.
+        public void append(ValueStoreBase newVal) {
+            for (int i = 0; i < newVal.fValues.size(); i++) {
+                fValues.addElement(newVal.fValues.elementAt(i));
+            }
+        } // append(ValueStoreBase)
+
+        /** Start scope for value store. */
+        public void startValueScope() {
+            fValuesCount = 0;
+            for (int i = 0; i < fFieldCount; i++) {
+                fLocalValues[i] = null;
+                fLocalValueTypes[i] = 0;
+                fLocalItemValueTypes[i] = null;
+            }
+        } // startValueScope()
+
+        /** Ends scope for value store. */
+        public void endValueScope() {
+
+            if (fValuesCount == 0) {
+                if (fIdentityConstraint.getCategory() == IdentityConstraint.IC_KEY) {
+                    String code = "AbsentKeyValue";
+                    String eName = fIdentityConstraint.getElementName();
+                    String cName = fIdentityConstraint.getIdentityConstraintName();
+                    reportSchemaError(code, new Object[] { eName, cName });
+                }
+                return;
+            }
+
+            // Validation Rule: Identity-constraint Satisfied
+            // 4.2 If the {identity-constraint category} is key, then all of the following must be true:
+            // 4.2.1 The target node set and the qualified node set are equal, that is, every member of the
+            // target node set is also a member of the qualified node set and vice versa.
+            //
+            // If the IDC is a key check whether we have all the fields.
+            if (fValuesCount != fFieldCount) {
+                if (fIdentityConstraint.getCategory() == IdentityConstraint.IC_KEY) {
+                    String code = "KeyNotEnoughValues";
+                    UniqueOrKey key = (UniqueOrKey) fIdentityConstraint;
+                    String eName = fIdentityConstraint.getElementName();
+                    String cName = key.getIdentityConstraintName();
+                    reportSchemaError(code, new Object[] { eName, cName });
+                }
+                return;
+            }
+
+        } // endValueScope()
+
+        // This is needed to allow keyref's to look for matched keys
+        // in the correct scope.  Unique and Key may also need to
+        // override this method for purposes of their own.
+        // This method is called whenever the DocumentFragment
+        // of an ID Constraint goes out of scope.
+        public void endDocumentFragment() {
+        } // endDocumentFragment():void
+
+        /**
+         * Signals the end of the document. This is where the specific
+         * instances of value stores can verify the integrity of the
+         * identity constraints.
+         */
+        public void endDocument() {
+        } // endDocument()
+
+        //
+        // ValueStore methods
+        //
+
+        /* reports an error if an element is matched
+         * has nillable true and is matched by a key.
+         */
+
+        public void reportError(String key, Object[] args) {
+            reportSchemaError(key, args);
+        } // reportError(String,Object[])
+
+        /**
+         * Adds the specified value to the value store.
+         *
+         * @param field The field associated to the value. This reference
+         *              is used to ensure that each field only adds a value
+         *              once within a selection scope.
+         * @param actualValue The value to add.
+         */
+        public void addValue(Field field, Object actualValue, short valueType, ShortList itemValueType) {
+            int i;
+            for (i = fFieldCount - 1; i > -1; i--) {
+                if (fFields[i] == field) {
+                    break;
+                }
+            }
+            // do we even know this field?
+            if (i == -1) {
+                String code = "UnknownField";
+                String eName = fIdentityConstraint.getElementName();
+                String cName = fIdentityConstraint.getIdentityConstraintName();
+                reportSchemaError(code, new Object[] { field.toString(), eName, cName });
+                return;
+            }
+            if (Boolean.TRUE != mayMatch(field)) {
+                String code = "FieldMultipleMatch";
+                String cName = fIdentityConstraint.getIdentityConstraintName();
+                reportSchemaError(code, new Object[] { field.toString(), cName });
+            } else {
+                fValuesCount++;
+            }
+            fLocalValues[i] = actualValue;
+            fLocalValueTypes[i] = valueType;
+            fLocalItemValueTypes[i] = itemValueType;
+            if (fValuesCount == fFieldCount) {
+                checkDuplicateValues();
+                // store values
+                for (i = 0; i < fFieldCount; i++) {
+                    fValues.addElement(fLocalValues[i]);
+                    addValueType(fLocalValueTypes[i]);
+                    addItemValueType(fLocalItemValueTypes[i]);
+                }
+            }
+        } // addValue(String,Field)
+
+        /**
+         * Returns true if this value store contains the locally scoped value stores
+         */
+        public boolean contains() {
+            // REVISIT: we can improve performance by using hash codes, instead of
+            // traversing global vector that could be quite large.
+            int next = 0;
+            final int size = fValues.size();
+            LOOP : for (int i = 0; i < size; i = next) {
+                next = i + fFieldCount;
+                for (int j = 0; j < fFieldCount; j++) {
+                    Object value1 = fLocalValues[j];
+                    Object value2 = fValues.elementAt(i);
+                    short valueType1 = fLocalValueTypes[j];
+                    short valueType2 = getValueTypeAt(i);
+                    if (value1 == null || value2 == null || valueType1 != valueType2 || !(value1.equals(value2))) {
+                        continue LOOP;
+                    }
+                    else if(valueType1 == XSConstants.LIST_DT || valueType1 == XSConstants.LISTOFUNION_DT) {
+                        ShortList list1 = fLocalItemValueTypes[j];
+                        ShortList list2 = getItemValueTypeAt(i);
+                        if(list1 == null || list2 == null || !list1.equals(list2))
+                            continue LOOP;
+                    }
+                    i++;
+                }
+                // found it
+                return true;
+            }
+            // didn't find it
+            return false;
+        } // contains():boolean
+
+        /**
+         * Returns -1 if this value store contains the specified
+         * values, otherwise the index of the first field in the
+         * key sequence.
+         */
+        public int contains(ValueStoreBase vsb) {
+
+            final Vector values = vsb.fValues;
+            final int size1 = values.size();
+            if (fFieldCount <= 1) {
+                for (int i = 0; i < size1; ++i) {
+                    short val = vsb.getValueTypeAt(i);
+                    if (!valueTypeContains(val) || !fValues.contains(values.elementAt(i))) {
+                        return i;
+                    }
+                    else if(val == XSConstants.LIST_DT || val == XSConstants.LISTOFUNION_DT) {
+                        ShortList list1 = vsb.getItemValueTypeAt(i);
+                        if (!itemValueTypeContains(list1)) {
+                            return i;
+                        }
+                    }
+                }
+            }
+            /** Handle n-tuples. **/
+            else {
+                final int size2 = fValues.size();
+                /** Iterate over each set of fields. **/
+                OUTER: for (int i = 0; i < size1; i += fFieldCount) {
+                    /** Check whether this set is contained in the value store. **/
+                    INNER: for (int j = 0; j < size2; j += fFieldCount) {
+                        for (int k = 0; k < fFieldCount; ++k) {
+                            final Object value1 = values.elementAt(i+k);
+                            final Object value2 = fValues.elementAt(j+k);
+                            final short valueType1 = vsb.getValueTypeAt(i+k);
+                            final short valueType2 = getValueTypeAt(j+k);
+                            if (value1 != value2 && (valueType1 != valueType2 || value1 == null || !value1.equals(value2))) {
+                                continue INNER;
+                            }
+                            else if(valueType1 == XSConstants.LIST_DT || valueType1 == XSConstants.LISTOFUNION_DT) {
+                                ShortList list1 = vsb.getItemValueTypeAt(i+k);
+                                ShortList list2 = getItemValueTypeAt(j+k);
+                                if (list1 == null || list2 == null || !list1.equals(list2)) {
+                                    continue INNER;
+                                }
+                            }
+                        }
+                        continue OUTER;
+                    }
+                    return i;
+                }
+            }
+            return -1;
+
+        } // contains(Vector):Object
+
+        //
+        // Protected methods
+        //
+
+        protected void checkDuplicateValues() {
+            // no-op
+        } // duplicateValue(Map)
+
+        /** Returns a string of the specified values. */
+        protected String toString(Object[] values) {
+
+            // no values
+            int size = values.length;
+            if (size == 0) {
+                return "";
+            }
+
+            fTempBuffer.setLength(0);
+
+            // construct value string
+            for (int i = 0; i < size; i++) {
+                if (i > 0) {
+                    fTempBuffer.append(',');
+                }
+                fTempBuffer.append(values[i]);
+            }
+            return fTempBuffer.toString();
+
+        } // toString(Object[]):String
+
+        /** Returns a string of the specified values. */
+        protected String toString(Vector values, int start, int length) {
+
+            // no values
+            if (length == 0) {
+                return "";
+            }
+
+            // one value
+            if (length == 1) {
+                return String.valueOf(values.elementAt(start));
+            }
+
+            // construct value string
+            StringBuffer str = new StringBuffer();
+            for (int i = 0; i < length; i++) {
+                if (i > 0) {
+                    str.append(',');
+                }
+                str.append(values.elementAt(start + i));
+            }
+            return str.toString();
+
+        } // toString(Vector,int,int):String
+
+        //
+        // Object methods
+        //
+
+        /** Returns a string representation of this object. */
+        public String toString() {
+            String s = super.toString();
+            int index1 = s.lastIndexOf('$');
+            if (index1 != -1) {
+                s = s.substring(index1 + 1);
+            }
+            int index2 = s.lastIndexOf('.');
+            if (index2 != -1) {
+                s = s.substring(index2 + 1);
+            }
+            return s + '[' + fIdentityConstraint + ']';
+        } // toString():String
+
+        //
+        // Private methods
+        //
+
+        private void addValueType(short type) {
+            if (fUseValueTypeVector) {
+                fValueTypes.add(type);
+            }
+            else if (fValueTypesLength++ == 0) {
+                fValueType = type;
+            }
+            else if (fValueType != type) {
+                fUseValueTypeVector = true;
+                if (fValueTypes == null) {
+                    fValueTypes = new ShortVector(fValueTypesLength * 2);
+                }
+                for (int i = 1; i < fValueTypesLength; ++i) {
+                    fValueTypes.add(fValueType);
+                }
+                fValueTypes.add(type);
+            }
+        }
+
+        private short getValueTypeAt(int index) {
+            if (fUseValueTypeVector) {
+                return fValueTypes.valueAt(index);
+            }
+            return fValueType;
+        }
+
+        private boolean valueTypeContains(short value) {
+            if (fUseValueTypeVector) {
+                return fValueTypes.contains(value);
+            }
+            return fValueType == value;
+        }
+
+        private void addItemValueType(ShortList itemValueType) {
+            if (fUseItemValueTypeVector) {
+                fItemValueTypes.add(itemValueType);
+            }
+            else if (fItemValueTypesLength++ == 0) {
+                fItemValueType = itemValueType;
+            }
+            else if (!(fItemValueType == itemValueType ||
+                    (fItemValueType != null && fItemValueType.equals(itemValueType)))) {
+                fUseItemValueTypeVector = true;
+                if (fItemValueTypes == null) {
+                    fItemValueTypes = new Vector(fItemValueTypesLength * 2);
+                }
+                for (int i = 1; i < fItemValueTypesLength; ++i) {
+                    fItemValueTypes.add(fItemValueType);
+                }
+                fItemValueTypes.add(itemValueType);
+            }
+        }
+
+        private ShortList getItemValueTypeAt(int index) {
+            if (fUseItemValueTypeVector) {
+                return (ShortList) fItemValueTypes.elementAt(index);
+            }
+            return fItemValueType;
+        }
+
+        private boolean itemValueTypeContains(ShortList value) {
+            if (fUseItemValueTypeVector) {
+                return fItemValueTypes.contains(value);
+            }
+            return fItemValueType == value ||
+                (fItemValueType != null && fItemValueType.equals(value));
+        }
+
+    } // class ValueStoreBase
+
+    /**
+     * Unique value store.
+     *
+     * @author Andy Clark, IBM
+     */
+    protected class UniqueValueStore extends ValueStoreBase {
+
+        //
+        // Constructors
+        //
+
+        /** Constructs a unique value store. */
+        public UniqueValueStore(UniqueOrKey unique) {
+            super(unique);
+        } // <init>(Unique)
+
+        //
+        // ValueStoreBase protected methods
+        //
+
+        /**
+         * Called when a duplicate value is added.
+         */
+        protected void checkDuplicateValues() {
+            // is this value as a group duplicated?
+            if (contains()) {
+                String code = "DuplicateUnique";
+                String value = toString(fLocalValues);
+                String eName = fIdentityConstraint.getElementName();
+                String cName = fIdentityConstraint.getIdentityConstraintName();
+                reportSchemaError(code, new Object[] { value, eName, cName });
+            }
+        } // duplicateValue(Map)
+
+    } // class UniqueValueStore
+
+    /**
+     * Key value store.
+     *
+     * @author Andy Clark, IBM
+     */
+    protected class KeyValueStore extends ValueStoreBase {
+
+        // REVISIT: Implement a more efficient storage mechanism. -Ac
+
+        //
+        // Constructors
+        //
+
+        /** Constructs a key value store. */
+        public KeyValueStore(UniqueOrKey key) {
+            super(key);
+        } // <init>(Key)
+
+        //
+        // ValueStoreBase protected methods
+        //
+
+        /**
+         * Called when a duplicate value is added.
+         */
+        protected void checkDuplicateValues() {
+            if (contains()) {
+                String code = "DuplicateKey";
+                String value = toString(fLocalValues);
+                String eName = fIdentityConstraint.getElementName();
+                String cName = fIdentityConstraint.getIdentityConstraintName();
+                reportSchemaError(code, new Object[] { value, eName, cName });
+            }
+        } // duplicateValue(Map)
+
+    } // class KeyValueStore
+
+    /**
+     * Key reference value store.
+     *
+     * @author Andy Clark, IBM
+     */
+    protected class KeyRefValueStore extends ValueStoreBase {
+
+        //
+        // Data
+        //
+
+        /** Key value store. */
+        protected ValueStoreBase fKeyValueStore;
+
+        //
+        // Constructors
+        //
+
+        /** Constructs a key value store. */
+        public KeyRefValueStore(KeyRef keyRef, KeyValueStore keyValueStore) {
+            super(keyRef);
+            fKeyValueStore = keyValueStore;
+        } // <init>(KeyRef)
+
+        //
+        // ValueStoreBase methods
+        //
+
+        // end the value Scope; here's where we have to tie
+        // up keyRef loose ends.
+        public void endDocumentFragment() {
+
+            // do all the necessary management...
+            super.endDocumentFragment();
+
+            // verify references
+            // get the key store corresponding (if it exists):
+            fKeyValueStore =
+                (ValueStoreBase) fValueStoreCache.fGlobalIDConstraintMap.get(
+                    ((KeyRef) fIdentityConstraint).getKey());
+
+            if (fKeyValueStore == null) {
+                // report error
+                String code = "KeyRefOutOfScope";
+                String value = fIdentityConstraint.toString();
+                reportSchemaError(code, new Object[] { value });
+                return;
+            }
+            int errorIndex = fKeyValueStore.contains(this);
+            if (errorIndex != -1) {
+                String code = "KeyNotFound";
+                String values = toString(fValues, errorIndex, fFieldCount);
+                String element = fIdentityConstraint.getElementName();
+                String name = fIdentityConstraint.getName();
+                reportSchemaError(code, new Object[] { name, values, element });
+            }
+
+        } // endDocumentFragment()
+
+        /** End document. */
+        public void endDocument() {
+            super.endDocument();
+
+        } // endDocument()
+
+    } // class KeyRefValueStore
+
+    // value store management
+
+    /**
+     * Value store cache. This class is used to store the values for
+     * identity constraints.
+     *
+     * @author Andy Clark, IBM
+     */
+    protected class ValueStoreCache {
+
+        //
+        // Data
+        //
+        final LocalIDKey fLocalId = new LocalIDKey();
+        // values stores
+
+        /** stores all global Values stores. */
+        protected final Vector fValueStores = new Vector();
+
+        /**
+         * Values stores associated to specific identity constraints.
+         * This map maps IdentityConstraints and
+         * the 0-based element on which their selectors first matched to
+         * a corresponding ValueStore.  This should take care
+         * of all cases, including where ID constraints with
+         * descendant-or-self axes occur on recursively-defined
+         * elements.
+         */
+        protected final Map<LocalIDKey, ValueStoreBase>
+                fIdentityConstraint2ValueStoreMap = new HashMap<>();
+
+        // sketch of algorithm:
+        // - when a constraint is first encountered, its
+        //   values are stored in the (local) fIdentityConstraint2ValueStoreMap;
+        // - Once it is validated (i.e., when it goes out of scope),
+        //   its values are merged into the fGlobalIDConstraintMap;
+        // - as we encounter keyref's, we look at the global table to
+        //    validate them.
+        //
+        // The fGlobalIDMapStack has the following structure:
+        // - validation always occurs against the fGlobalIDConstraintMap
+        // (which comprises all the "eligible" id constraints);
+        // When an endElement is found, this Map is merged with the one
+        // below in the stack.
+        // When a start tag is encountered, we create a new
+        // fGlobalIDConstraintMap.
+        // i.e., the top of the fGlobalIDMapStack always contains
+        // the preceding siblings' eligible id constraints;
+        // the fGlobalIDConstraintMap contains descendants+self.
+        // keyrefs can only match descendants+self.
+        protected final Stack<Map<IdentityConstraint, ValueStoreBase>>
+                fGlobalMapStack = new Stack<>();
+        protected final Map<IdentityConstraint, ValueStoreBase>
+                fGlobalIDConstraintMap = new HashMap<>();
+
+        //
+        // Constructors
+        //
+
+        /** Default constructor. */
+        public ValueStoreCache() {
+        } // <init>()
+
+        //
+        // Public methods
+        //
+
+        /** Resets the identity constraint cache. */
+        public void startDocument() {
+            fValueStores.removeAllElements();
+            fIdentityConstraint2ValueStoreMap.clear();
+            fGlobalIDConstraintMap.clear();
+            fGlobalMapStack.removeAllElements();
+        } // startDocument()
+
+        // startElement:  pushes the current fGlobalIDConstraintMap
+        // onto fGlobalMapStack and clears fGlobalIDConstraint map.
+        public void startElement() {
+            // only clone the hashtable when there are elements
+            if (fGlobalIDConstraintMap.size() > 0)
+                fGlobalMapStack.push((Map<IdentityConstraint, ValueStoreBase>)
+                        ((HashMap)fGlobalIDConstraintMap).clone());
+            else
+                fGlobalMapStack.push(null);
+            fGlobalIDConstraintMap.clear();
+        } // startElement(void)
+
+        /** endElement():  merges contents of fGlobalIDConstraintMap with the
+         * top of fGlobalMapStack into fGlobalIDConstraintMap.
+         */
+        public void endElement() {
+            if (fGlobalMapStack.isEmpty()) {
+                return; // must be an invalid doc!
+            }
+            Map<IdentityConstraint, ValueStoreBase> oldMap = fGlobalMapStack.pop();
+            // return if there is no element
+            if (oldMap == null) {
+                return;
+            }
+
+            for (Map.Entry<IdentityConstraint, ValueStoreBase> entry : oldMap.entrySet()) {
+                IdentityConstraint id = entry.getKey();
+                ValueStoreBase oldVal = entry.getValue();
+                if (oldVal != null) {
+                    ValueStoreBase currVal = fGlobalIDConstraintMap.get(id);
+                    if (currVal == null) {
+                        fGlobalIDConstraintMap.put(id, oldVal);
+                    }
+                    else if (currVal != oldVal) {
+                        currVal.append(oldVal);
+                    }
+                }
+            }
+        } // endElement()
+
+        /**
+         * Initializes the value stores for the specified element
+         * declaration.
+         */
+        public void initValueStoresFor(XSElementDecl eDecl, FieldActivator activator) {
+            // initialize value stores for unique fields
+            IdentityConstraint[] icArray = eDecl.fIDConstraints;
+            int icCount = eDecl.fIDCPos;
+            for (int i = 0; i < icCount; i++) {
+                switch (icArray[i].getCategory()) {
+                    case (IdentityConstraint.IC_UNIQUE) :
+                        // initialize value stores for unique fields
+                        UniqueOrKey unique = (UniqueOrKey) icArray[i];
+                        LocalIDKey toHash = new LocalIDKey(unique, fElementDepth);
+                        UniqueValueStore uniqueValueStore =
+                            (UniqueValueStore) fIdentityConstraint2ValueStoreMap.get(toHash);
+                        if (uniqueValueStore == null) {
+                            uniqueValueStore = new UniqueValueStore(unique);
+                            fIdentityConstraint2ValueStoreMap.put(toHash, uniqueValueStore);
+                        } else {
+                            uniqueValueStore.clear();
+                        }
+                        fValueStores.addElement(uniqueValueStore);
+                        activateSelectorFor(icArray[i]);
+                        break;
+                    case (IdentityConstraint.IC_KEY) :
+                        // initialize value stores for key fields
+                        UniqueOrKey key = (UniqueOrKey) icArray[i];
+                        toHash = new LocalIDKey(key, fElementDepth);
+                        KeyValueStore keyValueStore =
+                            (KeyValueStore) fIdentityConstraint2ValueStoreMap.get(toHash);
+                        if (keyValueStore == null) {
+                            keyValueStore = new KeyValueStore(key);
+                            fIdentityConstraint2ValueStoreMap.put(toHash, keyValueStore);
+                        } else {
+                            keyValueStore.clear();
+                        }
+                        fValueStores.addElement(keyValueStore);
+                        activateSelectorFor(icArray[i]);
+                        break;
+                    case (IdentityConstraint.IC_KEYREF) :
+                        // initialize value stores for keyRef fields
+                        KeyRef keyRef = (KeyRef) icArray[i];
+                        toHash = new LocalIDKey(keyRef, fElementDepth);
+                        KeyRefValueStore keyRefValueStore =
+                            (KeyRefValueStore) fIdentityConstraint2ValueStoreMap.get(toHash);
+                        if (keyRefValueStore == null) {
+                            keyRefValueStore = new KeyRefValueStore(keyRef, null);
+                            fIdentityConstraint2ValueStoreMap.put(toHash, keyRefValueStore);
+                        } else {
+                            keyRefValueStore.clear();
+                        }
+                        fValueStores.addElement(keyRefValueStore);
+                        activateSelectorFor(icArray[i]);
+                        break;
+                }
+            }
+        } // initValueStoresFor(XSElementDecl)
+
+        /** Returns the value store associated to the specified IdentityConstraint. */
+        public ValueStoreBase getValueStoreFor(IdentityConstraint id, int initialDepth) {
+            fLocalId.fDepth = initialDepth;
+            fLocalId.fId = id;
+            return fIdentityConstraint2ValueStoreMap.get(fLocalId);
+        } // getValueStoreFor(IdentityConstraint, int):ValueStoreBase
+
+        /** Returns the global value store associated to the specified IdentityConstraint. */
+        public ValueStoreBase getGlobalValueStoreFor(IdentityConstraint id) {
+            return fGlobalIDConstraintMap.get(id);
+        } // getValueStoreFor(IdentityConstraint):ValueStoreBase
+
+        // This method takes the contents of the (local) ValueStore
+        // associated with id and moves them into the global
+        // map, if id is a <unique> or a <key>.
+        // If it's a <keyRef>, then we leave it for later.
+        public void transplant(IdentityConstraint id, int initialDepth) {
+            fLocalId.fDepth = initialDepth;
+            fLocalId.fId = id;
+            ValueStoreBase newVals = fIdentityConstraint2ValueStoreMap.get(fLocalId);
+            if (id.getCategory() == IdentityConstraint.IC_KEYREF)
+                return;
+            ValueStoreBase currVals = fGlobalIDConstraintMap.get(id);
+            if (currVals != null) {
+                currVals.append(newVals);
+                fGlobalIDConstraintMap.put(id, currVals);
+            } else
+                fGlobalIDConstraintMap.put(id, newVals);
+
+        } // transplant(id)
+
+        /** Check identity constraints. */
+        public void endDocument() {
+
+            int count = fValueStores.size();
+            for (int i = 0; i < count; i++) {
+                ValueStoreBase valueStore = (ValueStoreBase) fValueStores.elementAt(i);
+                valueStore.endDocument();
+            }
+
+        } // endDocument()
+
+        //
+        // Object methods
+        //
+
+        /** Returns a string representation of this object. */
+        public String toString() {
+            String s = super.toString();
+            int index1 = s.lastIndexOf('$');
+            if (index1 != -1) {
+                return s.substring(index1 + 1);
+            }
+            int index2 = s.lastIndexOf('.');
+            if (index2 != -1) {
+                return s.substring(index2 + 1);
+            }
+            return s;
+        } // toString():String
+
+    } // class ValueStoreCache
+
+    // the purpose of this class is to enable IdentityConstraint,int
+    // pairs to be used easily as keys in Maps.
+    protected class LocalIDKey {
+
+        public IdentityConstraint fId;
+        public int fDepth;
+
+        public LocalIDKey() {
+        }
+
+        public LocalIDKey(IdentityConstraint id, int depth) {
+            fId = id;
+            fDepth = depth;
+        } // init(IdentityConstraint, int)
+
+        // object method
+        public int hashCode() {
+            return fId.hashCode() + fDepth;
+        }
+
+        public boolean equals(Object localIDKey) {
+            if (localIDKey instanceof LocalIDKey) {
+                LocalIDKey lIDKey = (LocalIDKey) localIDKey;
+                return (lIDKey.fId == fId && lIDKey.fDepth == fDepth);
+            }
+            return false;
+        }
+    } // class LocalIDKey
+
+    /**
+     * A simple vector for <code>short</code>s.
+     */
+    protected static final class ShortVector {
+
+        //
+        // Data
+        //
+
+        /** Current length. */
+        private int fLength;
+
+        /** Data. */
+        private short[] fData;
+
+        //
+        // Constructors
+        //
+
+        public ShortVector() {}
+
+        public ShortVector(int initialCapacity) {
+            fData = new short[initialCapacity];
+        }
+
+        //
+        // Public methods
+        //
+
+        /** Returns the length of the vector. */
+        public int length() {
+            return fLength;
+        }
+
+        /** Adds the value to the vector. */
+        public void add(short value) {
+            ensureCapacity(fLength + 1);
+            fData[fLength++] = value;
+        }
+
+        /** Returns the short value at the specified position in the vector. */
+        public short valueAt(int position) {
+            return fData[position];
+        }
+
+        /** Clears the vector. */
+        public void clear() {
+            fLength = 0;
+        }
+
+        /** Returns whether the short is contained in the vector. */
+        public boolean contains(short value) {
+            for (int i = 0; i < fLength; ++i) {
+                if (fData[i] == value) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        //
+        // Private methods
+        //
+
+        /** Ensures capacity. */
+        private void ensureCapacity(int size) {
+            if (fData == null) {
+                fData = new short[8];
+            }
+            else if (fData.length <= size) {
+                short[] newdata = new short[fData.length * 2];
+                System.arraycopy(fData, 0, newdata, 0, fData.length);
+                fData = newdata;
+            }
+        }
+    }
+
+} // class SchemaValidator

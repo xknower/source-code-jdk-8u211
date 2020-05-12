@@ -1,1154 +1,1148 @@
-/*      */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*      */ 
-/*      */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*      */ import com.sun.org.apache.bcel.internal.generic.IFEQ;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*      */ import com.sun.org.apache.bcel.internal.generic.InstructionConstants;
-/*      */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*      */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*      */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*      */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*      */ import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodType;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MultiHashtable;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ObjectType;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*      */ import java.lang.reflect.Constructor;
-/*      */ import java.lang.reflect.Method;
-/*      */ import java.lang.reflect.Modifier;
-/*      */ import java.util.Collections;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import java.util.Objects;
-/*      */ import java.util.Vector;
-/*      */ import jdk.xml.internal.JdkXmlFeatures;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ class FunctionCall
-/*      */   extends Expression
-/*      */ {
-/*      */   private QName _fname;
-/*      */   private final Vector _arguments;
-/*   75 */   private static final Vector EMPTY_ARG_LIST = new Vector(0);
-/*      */ 
-/*      */   
-/*      */   protected static final String EXT_XSLTC = "http://xml.apache.org/xalan/xsltc";
-/*      */ 
-/*      */   
-/*      */   protected static final String JAVA_EXT_XSLTC = "http://xml.apache.org/xalan/xsltc/java";
-/*      */ 
-/*      */   
-/*      */   protected static final String EXT_XALAN = "http://xml.apache.org/xalan";
-/*      */ 
-/*      */   
-/*      */   protected static final String JAVA_EXT_XALAN = "http://xml.apache.org/xalan/java";
-/*      */ 
-/*      */   
-/*      */   protected static final String JAVA_EXT_XALAN_OLD = "http://xml.apache.org/xslt/java";
-/*      */ 
-/*      */   
-/*      */   protected static final String EXSLT_COMMON = "http://exslt.org/common";
-/*      */ 
-/*      */   
-/*      */   protected static final String EXSLT_MATH = "http://exslt.org/math";
-/*      */ 
-/*      */   
-/*      */   protected static final String EXSLT_SETS = "http://exslt.org/sets";
-/*      */ 
-/*      */   
-/*      */   protected static final String EXSLT_DATETIME = "http://exslt.org/dates-and-times";
-/*      */ 
-/*      */   
-/*      */   protected static final String EXSLT_STRINGS = "http://exslt.org/strings";
-/*      */ 
-/*      */   
-/*      */   protected static final String XALAN_CLASSPACKAGE_NAMESPACE = "xalan://";
-/*      */   
-/*      */   protected static final int NAMESPACE_FORMAT_JAVA = 0;
-/*      */   
-/*      */   protected static final int NAMESPACE_FORMAT_CLASS = 1;
-/*      */   
-/*      */   protected static final int NAMESPACE_FORMAT_PACKAGE = 2;
-/*      */   
-/*      */   protected static final int NAMESPACE_FORMAT_CLASS_OR_PACKAGE = 3;
-/*      */   
-/*  118 */   private int _namespace_format = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  123 */   Expression _thisArgument = null;
-/*      */ 
-/*      */   
-/*      */   private String _className;
-/*      */   
-/*      */   private Class _clazz;
-/*      */   
-/*      */   private Method _chosenMethod;
-/*      */   
-/*      */   private Constructor _chosenConstructor;
-/*      */   
-/*      */   private MethodType _chosenMethodType;
-/*      */   
-/*      */   private boolean unresolvedExternal;
-/*      */   
-/*      */   private boolean _isExtConstructor = false;
-/*      */   
-/*      */   private boolean _isStatic = false;
-/*      */   
-/*  142 */   private static final MultiHashtable<Type, JavaType> _internal2Java = new MultiHashtable<>();
-/*      */   
-/*      */   private static final Map<Class<?>, Type> JAVA2INTERNAL;
-/*      */   
-/*      */   private static final Map<String, String> EXTENSIONNAMESPACE;
-/*      */   
-/*      */   private static final Map<String, String> EXTENSIONFUNCTION;
-/*      */ 
-/*      */   
-/*      */   static {
-/*      */     Class<?> nodeClass, nodeListClass;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static class JavaType
-/*      */   {
-/*      */     public Class<?> type;
-/*      */     public int distance;
-/*      */     
-/*      */     public JavaType(Class<?> type, int distance) {
-/*  162 */       this.type = type;
-/*  163 */       this.distance = distance;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public int hashCode() {
-/*  168 */       return Objects.hashCode(this.type);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean equals(Object query) {
-/*  173 */       if (query == null) {
-/*  174 */         return false;
-/*      */       }
-/*  176 */       if (query.getClass().isAssignableFrom(JavaType.class)) {
-/*  177 */         return ((JavaType)query).type.equals(this.type);
-/*      */       }
-/*  179 */       return query.equals(this.type);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*      */     try {
-/*  193 */       nodeClass = Class.forName("org.w3c.dom.Node");
-/*  194 */       nodeListClass = Class.forName("org.w3c.dom.NodeList");
-/*      */     }
-/*  196 */     catch (ClassNotFoundException e) {
-/*  197 */       ErrorMsg err = new ErrorMsg("CLASS_NOT_FOUND_ERR", "org.w3c.dom.Node or NodeList");
-/*  198 */       throw new ExceptionInInitializerError(err.toString());
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  204 */     _internal2Java.put(Type.Boolean, new JavaType(boolean.class, 0));
-/*  205 */     _internal2Java.put(Type.Boolean, new JavaType(Boolean.class, 1));
-/*  206 */     _internal2Java.put(Type.Boolean, new JavaType(Object.class, 2));
-/*      */ 
-/*      */ 
-/*      */     
-/*  210 */     _internal2Java.put(Type.Real, new JavaType(double.class, 0));
-/*  211 */     _internal2Java.put(Type.Real, new JavaType(Double.class, 1));
-/*  212 */     _internal2Java.put(Type.Real, new JavaType(float.class, 2));
-/*  213 */     _internal2Java.put(Type.Real, new JavaType(long.class, 3));
-/*  214 */     _internal2Java.put(Type.Real, new JavaType(int.class, 4));
-/*  215 */     _internal2Java.put(Type.Real, new JavaType(short.class, 5));
-/*  216 */     _internal2Java.put(Type.Real, new JavaType(byte.class, 6));
-/*  217 */     _internal2Java.put(Type.Real, new JavaType(char.class, 7));
-/*  218 */     _internal2Java.put(Type.Real, new JavaType(Object.class, 8));
-/*      */ 
-/*      */     
-/*  221 */     _internal2Java.put(Type.Int, new JavaType(double.class, 0));
-/*  222 */     _internal2Java.put(Type.Int, new JavaType(Double.class, 1));
-/*  223 */     _internal2Java.put(Type.Int, new JavaType(float.class, 2));
-/*  224 */     _internal2Java.put(Type.Int, new JavaType(long.class, 3));
-/*  225 */     _internal2Java.put(Type.Int, new JavaType(int.class, 4));
-/*  226 */     _internal2Java.put(Type.Int, new JavaType(short.class, 5));
-/*  227 */     _internal2Java.put(Type.Int, new JavaType(byte.class, 6));
-/*  228 */     _internal2Java.put(Type.Int, new JavaType(char.class, 7));
-/*  229 */     _internal2Java.put(Type.Int, new JavaType(Object.class, 8));
-/*      */ 
-/*      */     
-/*  232 */     _internal2Java.put(Type.String, new JavaType(String.class, 0));
-/*  233 */     _internal2Java.put(Type.String, new JavaType(Object.class, 1));
-/*      */ 
-/*      */     
-/*  236 */     _internal2Java.put(Type.NodeSet, new JavaType(nodeListClass, 0));
-/*  237 */     _internal2Java.put(Type.NodeSet, new JavaType(nodeClass, 1));
-/*  238 */     _internal2Java.put(Type.NodeSet, new JavaType(Object.class, 2));
-/*  239 */     _internal2Java.put(Type.NodeSet, new JavaType(String.class, 3));
-/*      */ 
-/*      */     
-/*  242 */     _internal2Java.put(Type.Node, new JavaType(nodeListClass, 0));
-/*  243 */     _internal2Java.put(Type.Node, new JavaType(nodeClass, 1));
-/*  244 */     _internal2Java.put(Type.Node, new JavaType(Object.class, 2));
-/*  245 */     _internal2Java.put(Type.Node, new JavaType(String.class, 3));
-/*      */ 
-/*      */     
-/*  248 */     _internal2Java.put(Type.ResultTree, new JavaType(nodeListClass, 0));
-/*  249 */     _internal2Java.put(Type.ResultTree, new JavaType(nodeClass, 1));
-/*  250 */     _internal2Java.put(Type.ResultTree, new JavaType(Object.class, 2));
-/*  251 */     _internal2Java.put(Type.ResultTree, new JavaType(String.class, 3));
-/*      */     
-/*  253 */     _internal2Java.put(Type.Reference, new JavaType(Object.class, 0));
-/*      */     
-/*  255 */     _internal2Java.makeUnmodifiable();
-/*      */     
-/*  257 */     Map<Class<?>, Type> java2Internal = new HashMap<>();
-/*  258 */     Map<String, String> extensionNamespaceTable = new HashMap<>();
-/*  259 */     Map<String, String> extensionFunctionTable = new HashMap<>();
-/*      */ 
-/*      */     
-/*  262 */     java2Internal.put(boolean.class, Type.Boolean);
-/*  263 */     java2Internal.put(void.class, Type.Void);
-/*  264 */     java2Internal.put(char.class, Type.Real);
-/*  265 */     java2Internal.put(byte.class, Type.Real);
-/*  266 */     java2Internal.put(short.class, Type.Real);
-/*  267 */     java2Internal.put(int.class, Type.Real);
-/*  268 */     java2Internal.put(long.class, Type.Real);
-/*  269 */     java2Internal.put(float.class, Type.Real);
-/*  270 */     java2Internal.put(double.class, Type.Real);
-/*      */     
-/*  272 */     java2Internal.put(String.class, Type.String);
-/*      */     
-/*  274 */     java2Internal.put(Object.class, Type.Reference);
-/*      */ 
-/*      */     
-/*  277 */     java2Internal.put(nodeListClass, Type.NodeSet);
-/*  278 */     java2Internal.put(nodeClass, Type.NodeSet);
-/*      */ 
-/*      */     
-/*  281 */     extensionNamespaceTable.put("http://xml.apache.org/xalan", "com.sun.org.apache.xalan.internal.lib.Extensions");
-/*  282 */     extensionNamespaceTable.put("http://exslt.org/common", "com.sun.org.apache.xalan.internal.lib.ExsltCommon");
-/*  283 */     extensionNamespaceTable.put("http://exslt.org/math", "com.sun.org.apache.xalan.internal.lib.ExsltMath");
-/*  284 */     extensionNamespaceTable.put("http://exslt.org/sets", "com.sun.org.apache.xalan.internal.lib.ExsltSets");
-/*  285 */     extensionNamespaceTable.put("http://exslt.org/dates-and-times", "com.sun.org.apache.xalan.internal.lib.ExsltDatetime");
-/*  286 */     extensionNamespaceTable.put("http://exslt.org/strings", "com.sun.org.apache.xalan.internal.lib.ExsltStrings");
-/*      */ 
-/*      */     
-/*  289 */     extensionFunctionTable.put("http://exslt.org/common:nodeSet", "nodeset");
-/*  290 */     extensionFunctionTable.put("http://exslt.org/common:objectType", "objectType");
-/*  291 */     extensionFunctionTable.put("http://xml.apache.org/xalan:nodeset", "nodeset");
-/*      */     
-/*  293 */     JAVA2INTERNAL = Collections.unmodifiableMap(java2Internal);
-/*  294 */     EXTENSIONNAMESPACE = Collections.unmodifiableMap(extensionNamespaceTable);
-/*  295 */     EXTENSIONFUNCTION = Collections.unmodifiableMap(extensionFunctionTable);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public FunctionCall(QName fname, Vector arguments) {
-/*  300 */     this._fname = fname;
-/*  301 */     this._arguments = arguments;
-/*  302 */     this._type = null;
-/*      */   }
-/*      */   
-/*      */   public FunctionCall(QName fname) {
-/*  306 */     this(fname, EMPTY_ARG_LIST);
-/*      */   }
-/*      */   
-/*      */   public String getName() {
-/*  310 */     return this._fname.toString();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void setParser(Parser parser) {
-/*  315 */     super.setParser(parser);
-/*  316 */     if (this._arguments != null) {
-/*  317 */       int n = this._arguments.size();
-/*  318 */       for (int i = 0; i < n; i++) {
-/*  319 */         Expression exp = this._arguments.elementAt(i);
-/*  320 */         exp.setParser(parser);
-/*  321 */         exp.setParent(this);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public String getClassNameFromUri(String uri) {
-/*  328 */     String className = EXTENSIONNAMESPACE.get(uri);
-/*      */     
-/*  330 */     if (className != null) {
-/*  331 */       return className;
-/*      */     }
-/*  333 */     if (uri.startsWith("http://xml.apache.org/xalan/xsltc/java")) {
-/*  334 */       int length = "http://xml.apache.org/xalan/xsltc/java".length() + 1;
-/*  335 */       return (uri.length() > length) ? uri.substring(length) : "";
-/*      */     } 
-/*  337 */     if (uri.startsWith("http://xml.apache.org/xalan/java")) {
-/*  338 */       int length = "http://xml.apache.org/xalan/java".length() + 1;
-/*  339 */       return (uri.length() > length) ? uri.substring(length) : "";
-/*      */     } 
-/*  341 */     if (uri.startsWith("http://xml.apache.org/xslt/java")) {
-/*  342 */       int length = "http://xml.apache.org/xslt/java".length() + 1;
-/*  343 */       return (uri.length() > length) ? uri.substring(length) : "";
-/*      */     } 
-/*      */     
-/*  346 */     int index = uri.lastIndexOf('/');
-/*  347 */     return (index > 0) ? uri.substring(index + 1) : uri;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  360 */     if (this._type != null) return this._type;
-/*      */     
-/*  362 */     String namespace = this._fname.getNamespace();
-/*  363 */     String local = this._fname.getLocalPart();
-/*      */     
-/*  365 */     if (isExtension()) {
-/*  366 */       this._fname = new QName(null, null, local);
-/*  367 */       return typeCheckStandard(stable);
-/*      */     } 
-/*  369 */     if (isStandard()) {
-/*  370 */       return typeCheckStandard(stable);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     try {
-/*  375 */       this._className = getClassNameFromUri(namespace);
-/*      */       
-/*  377 */       int pos = local.lastIndexOf('.');
-/*  378 */       if (pos > 0) {
-/*  379 */         this._isStatic = true;
-/*  380 */         if (this._className != null && this._className.length() > 0) {
-/*  381 */           this._namespace_format = 2;
-/*  382 */           this._className += "." + local.substring(0, pos);
-/*      */         } else {
-/*      */           
-/*  385 */           this._namespace_format = 0;
-/*  386 */           this._className = local.substring(0, pos);
-/*      */         } 
-/*      */         
-/*  389 */         this._fname = new QName(namespace, null, local.substring(pos + 1));
-/*      */       } else {
-/*      */         
-/*  392 */         if (this._className != null && this._className.length() > 0) {
-/*      */           try {
-/*  394 */             this._clazz = ObjectFactory.findProviderClass(this._className, true);
-/*  395 */             this._namespace_format = 1;
-/*      */           }
-/*  397 */           catch (ClassNotFoundException e) {
-/*  398 */             this._namespace_format = 2;
-/*      */           } 
-/*      */         } else {
-/*      */           
-/*  402 */           this._namespace_format = 0;
-/*      */         } 
-/*  404 */         if (local.indexOf('-') > 0) {
-/*  405 */           local = replaceDash(local);
-/*      */         }
-/*      */         
-/*  408 */         String extFunction = EXTENSIONFUNCTION.get(namespace + ":" + local);
-/*  409 */         if (extFunction != null) {
-/*  410 */           this._fname = new QName(null, null, extFunction);
-/*  411 */           return typeCheckStandard(stable);
-/*      */         } 
-/*      */         
-/*  414 */         this._fname = new QName(namespace, null, local);
-/*      */       } 
-/*      */       
-/*  417 */       return typeCheckExternal(stable);
-/*      */     }
-/*  419 */     catch (TypeCheckError e) {
-/*  420 */       ErrorMsg errorMsg = e.getErrorMsg();
-/*  421 */       if (errorMsg == null) {
-/*  422 */         String name = this._fname.getLocalPart();
-/*  423 */         errorMsg = new ErrorMsg("METHOD_NOT_FOUND_ERR", name);
-/*      */       } 
-/*  425 */       getParser().reportError(3, errorMsg);
-/*  426 */       return this._type = Type.Void;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Type typeCheckStandard(SymbolTable stable) throws TypeCheckError {
-/*  437 */     this._fname.clearNamespace();
-/*      */     
-/*  439 */     int n = this._arguments.size();
-/*  440 */     Vector argsType = typeCheckArgs(stable);
-/*  441 */     MethodType args = new MethodType(Type.Void, argsType);
-/*      */     
-/*  443 */     MethodType ptype = lookupPrimop(stable, this._fname.getLocalPart(), args);
-/*      */     
-/*  445 */     if (ptype != null) {
-/*  446 */       for (int i = 0; i < n; i++) {
-/*  447 */         Type argType = ptype.argsType().elementAt(i);
-/*  448 */         Expression exp = this._arguments.elementAt(i);
-/*  449 */         if (!argType.identicalTo(exp.getType())) {
-/*      */           try {
-/*  451 */             this._arguments.setElementAt(new CastExpr(exp, argType), i);
-/*      */           }
-/*  453 */           catch (TypeCheckError e) {
-/*  454 */             throw new TypeCheckError(this);
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*  458 */       this._chosenMethodType = ptype;
-/*  459 */       return this._type = ptype.resultType();
-/*      */     } 
-/*  461 */     throw new TypeCheckError(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Type typeCheckConstructor(SymbolTable stable) throws TypeCheckError {
-/*  467 */     Vector<Constructor> constructors = findConstructors();
-/*  468 */     if (constructors == null)
-/*      */     {
-/*  470 */       throw new TypeCheckError("CONSTRUCTOR_NOT_FOUND", this._className);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  475 */     int nConstructors = constructors.size();
-/*  476 */     int nArgs = this._arguments.size();
-/*  477 */     Vector<Type> argsType = typeCheckArgs(stable);
-/*      */ 
-/*      */     
-/*  480 */     int bestConstrDistance = Integer.MAX_VALUE;
-/*  481 */     this._type = null;
-/*  482 */     for (int i = 0; i < nConstructors; i++) {
-/*      */ 
-/*      */       
-/*  485 */       Constructor constructor = constructors.elementAt(i);
-/*  486 */       Class[] paramTypes = constructor.getParameterTypes();
-/*      */ 
-/*      */       
-/*  489 */       int currConstrDistance = 0; int j;
-/*  490 */       for (j = 0; j < nArgs; j++) {
-/*      */         
-/*  492 */         Class<?> extType = paramTypes[j];
-/*  493 */         Type intType = argsType.elementAt(j);
-/*  494 */         JavaType match = _internal2Java.maps(intType, new JavaType(extType, 0));
-/*  495 */         if (match != null) {
-/*  496 */           currConstrDistance += match.distance;
-/*      */         }
-/*  498 */         else if (intType instanceof ObjectType) {
-/*  499 */           ObjectType objectType = (ObjectType)intType;
-/*  500 */           if (objectType.getJavaClass() != extType)
-/*      */           {
-/*  502 */             if (extType.isAssignableFrom(objectType.getJavaClass())) {
-/*  503 */               currConstrDistance++;
-/*      */             } else {
-/*  505 */               currConstrDistance = Integer.MAX_VALUE;
-/*      */               
-/*      */               break;
-/*      */             } 
-/*      */           }
-/*      */         } else {
-/*  511 */           currConstrDistance = Integer.MAX_VALUE;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*  516 */       if (j == nArgs && currConstrDistance < bestConstrDistance) {
-/*  517 */         this._chosenConstructor = constructor;
-/*  518 */         this._isExtConstructor = true;
-/*  519 */         bestConstrDistance = currConstrDistance;
-/*      */         
-/*  521 */         this
-/*  522 */           ._type = (this._clazz != null) ? Type.newObjectType(this._clazz) : Type.newObjectType(this._className);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  526 */     if (this._type != null) {
-/*  527 */       return this._type;
-/*      */     }
-/*      */     
-/*  530 */     throw new TypeCheckError("ARGUMENT_CONVERSION_ERR", getMethodSignature(argsType));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Type typeCheckExternal(SymbolTable stable) throws TypeCheckError {
-/*  542 */     int nArgs = this._arguments.size();
-/*  543 */     String name = this._fname.getLocalPart();
-/*      */ 
-/*      */     
-/*  546 */     if (this._fname.getLocalPart().equals("new")) {
-/*  547 */       return typeCheckConstructor(stable);
-/*      */     }
-/*      */ 
-/*      */     
-/*  551 */     boolean hasThisArgument = false;
-/*      */     
-/*  553 */     if (nArgs == 0) {
-/*  554 */       this._isStatic = true;
-/*      */     }
-/*  556 */     if (!this._isStatic) {
-/*  557 */       if (this._namespace_format == 0 || this._namespace_format == 2)
-/*      */       {
-/*  559 */         hasThisArgument = true;
-/*      */       }
-/*  561 */       Expression firstArg = this._arguments.elementAt(0);
-/*  562 */       Type firstArgType = firstArg.typeCheck(stable);
-/*      */       
-/*  564 */       if (this._namespace_format == 1 && firstArgType instanceof ObjectType && this._clazz != null && this._clazz
-/*      */ 
-/*      */         
-/*  567 */         .isAssignableFrom(((ObjectType)firstArgType).getJavaClass())) {
-/*  568 */         hasThisArgument = true;
-/*      */       }
-/*  570 */       if (hasThisArgument) {
-/*  571 */         this._thisArgument = this._arguments.elementAt(0);
-/*  572 */         this._arguments.remove(0); nArgs--;
-/*  573 */         if (firstArgType instanceof ObjectType) {
-/*  574 */           this._className = ((ObjectType)firstArgType).getJavaClassName();
-/*      */         } else {
-/*      */           
-/*  577 */           throw new TypeCheckError("NO_JAVA_FUNCT_THIS_REF", name);
-/*      */         } 
-/*      */       } 
-/*  580 */     } else if (this._className.length() == 0) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  587 */       Parser parser = getParser();
-/*  588 */       if (parser != null) {
-/*  589 */         reportWarning(this, parser, "FUNCTION_RESOLVE_ERR", this._fname
-/*  590 */             .toString());
-/*      */       }
-/*  592 */       this.unresolvedExternal = true;
-/*  593 */       return this._type = Type.Int;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  597 */     Vector<Method> methods = findMethods();
-/*      */     
-/*  599 */     if (methods == null)
-/*      */     {
-/*  601 */       throw new TypeCheckError("METHOD_NOT_FOUND_ERR", this._className + "." + name);
-/*      */     }
-/*      */     
-/*  604 */     Class<?> extType = null;
-/*  605 */     int nMethods = methods.size();
-/*  606 */     Vector<Type> argsType = typeCheckArgs(stable);
-/*      */ 
-/*      */     
-/*  609 */     int bestMethodDistance = Integer.MAX_VALUE;
-/*  610 */     this._type = null;
-/*  611 */     for (int i = 0; i < nMethods; i++) {
-/*      */       
-/*  613 */       Method method = methods.elementAt(i);
-/*  614 */       Class[] paramTypes = method.getParameterTypes();
-/*      */       
-/*  616 */       int currMethodDistance = 0; int j;
-/*  617 */       for (j = 0; j < nArgs; j++) {
-/*      */         
-/*  619 */         extType = paramTypes[j];
-/*  620 */         Type intType = argsType.elementAt(j);
-/*  621 */         JavaType match = _internal2Java.maps(intType, new JavaType(extType, 0));
-/*  622 */         if (match != null) {
-/*  623 */           currMethodDistance += match.distance;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         }
-/*  630 */         else if (intType instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType) {
-/*  631 */           currMethodDistance++;
-/*      */         }
-/*  633 */         else if (intType instanceof ObjectType) {
-/*  634 */           ObjectType object = (ObjectType)intType;
-/*  635 */           if (extType.getName().equals(object.getJavaClassName())) {
-/*  636 */             currMethodDistance += 0;
-/*  637 */           } else if (extType.isAssignableFrom(object.getJavaClass())) {
-/*  638 */             currMethodDistance++;
-/*      */           } else {
-/*  640 */             currMethodDistance = Integer.MAX_VALUE;
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } else {
-/*  645 */           currMethodDistance = Integer.MAX_VALUE;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  651 */       if (j == nArgs) {
-/*      */         
-/*  653 */         extType = method.getReturnType();
-/*      */         
-/*  655 */         this._type = JAVA2INTERNAL.get(extType);
-/*  656 */         if (this._type == null) {
-/*  657 */           this._type = Type.newObjectType(extType);
-/*      */         }
-/*      */ 
-/*      */         
-/*  661 */         if (this._type != null && currMethodDistance < bestMethodDistance) {
-/*  662 */           this._chosenMethod = method;
-/*  663 */           bestMethodDistance = currMethodDistance;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  670 */     if (this._chosenMethod != null && this._thisArgument == null && 
-/*  671 */       !Modifier.isStatic(this._chosenMethod.getModifiers())) {
-/*  672 */       throw new TypeCheckError("NO_JAVA_FUNCT_THIS_REF", getMethodSignature(argsType));
-/*      */     }
-/*      */     
-/*  675 */     if (this._type != null) {
-/*  676 */       if (this._type == Type.NodeSet) {
-/*  677 */         getXSLTC().setMultiDocument(true);
-/*      */       }
-/*  679 */       return this._type;
-/*      */     } 
-/*      */     
-/*  682 */     throw new TypeCheckError("ARGUMENT_CONVERSION_ERR", getMethodSignature(argsType));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Vector typeCheckArgs(SymbolTable stable) throws TypeCheckError {
-/*  689 */     Vector<Type> result = new Vector();
-/*  690 */     Enumeration<Expression> e = this._arguments.elements();
-/*  691 */     while (e.hasMoreElements()) {
-/*  692 */       Expression exp = e.nextElement();
-/*  693 */       result.addElement(exp.typeCheck(stable));
-/*      */     } 
-/*  695 */     return result;
-/*      */   }
-/*      */   
-/*      */   protected final Expression argument(int i) {
-/*  699 */     return this._arguments.elementAt(i);
-/*      */   }
-/*      */   
-/*      */   protected final Expression argument() {
-/*  703 */     return argument(0);
-/*      */   }
-/*      */   
-/*      */   protected final int argumentCount() {
-/*  707 */     return this._arguments.size();
-/*      */   }
-/*      */   
-/*      */   protected final void setArgument(int i, Expression exp) {
-/*  711 */     this._arguments.setElementAt(exp, i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void translateDesynthesized(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  722 */     Type type = Type.Boolean;
-/*  723 */     if (this._chosenMethodType != null) {
-/*  724 */       type = this._chosenMethodType.resultType();
-/*      */     }
-/*  726 */     InstructionList il = methodGen.getInstructionList();
-/*  727 */     translate(classGen, methodGen);
-/*      */     
-/*  729 */     if (type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType || type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.IntType) {
-/*  730 */       this._falseList.add(il.append(new IFEQ(null)));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  741 */     int n = argumentCount();
-/*  742 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  743 */     InstructionList il = methodGen.getInstructionList();
-/*  744 */     boolean isSecureProcessing = classGen.getParser().getXSLTC().isSecureProcessing();
-/*      */     
-/*  746 */     boolean isExtensionFunctionEnabled = classGen.getParser().getXSLTC().getFeature(JdkXmlFeatures.XmlFeature.ENABLE_EXTENSION_FUNCTION);
-/*      */ 
-/*      */ 
-/*      */     
-/*  750 */     if (isStandard() || isExtension()) {
-/*  751 */       for (int i = 0; i < n; i++) {
-/*  752 */         Expression exp = argument(i);
-/*  753 */         exp.translate(classGen, methodGen);
-/*  754 */         exp.startIterator(classGen, methodGen);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  758 */       String name = this._fname.toString().replace('-', '_') + "F";
-/*  759 */       String args = "";
-/*      */ 
-/*      */       
-/*  762 */       if (name.equals("sumF")) {
-/*  763 */         args = "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;";
-/*  764 */         il.append(methodGen.loadDOM());
-/*      */       }
-/*  766 */       else if (name.equals("normalize_spaceF") && 
-/*  767 */         this._chosenMethodType.toSignature(args)
-/*  768 */         .equals("()Ljava/lang/String;")) {
-/*  769 */         args = "ILcom/sun/org/apache/xalan/internal/xsltc/DOM;";
-/*  770 */         il.append(methodGen.loadContextNode());
-/*  771 */         il.append(methodGen.loadDOM());
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  776 */       int index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", name, this._chosenMethodType
-/*  777 */           .toSignature(args));
-/*  778 */       il.append(new INVOKESTATIC(index));
-/*      */ 
-/*      */     
-/*      */     }
-/*  782 */     else if (this.unresolvedExternal) {
-/*  783 */       int index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "unresolved_externalF", "(Ljava/lang/String;)V");
-/*      */ 
-/*      */       
-/*  786 */       il.append(new PUSH(cpg, this._fname.toString()));
-/*  787 */       il.append(new INVOKESTATIC(index));
-/*      */     }
-/*  789 */     else if (this._isExtConstructor) {
-/*  790 */       if (isSecureProcessing && !isExtensionFunctionEnabled) {
-/*  791 */         translateUnallowedExtension(cpg, il);
-/*      */       }
-/*      */       
-/*  794 */       String clazz = this._chosenConstructor.getDeclaringClass().getName();
-/*  795 */       Class[] paramTypes = this._chosenConstructor.getParameterTypes();
-/*  796 */       LocalVariableGen[] paramTemp = new LocalVariableGen[n];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       int i;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  807 */       for (i = 0; i < n; i++) {
-/*  808 */         Expression exp = argument(i);
-/*  809 */         Type expType = exp.getType();
-/*  810 */         exp.translate(classGen, methodGen);
-/*      */         
-/*  812 */         exp.startIterator(classGen, methodGen);
-/*  813 */         expType.translateTo(classGen, methodGen, paramTypes[i]);
-/*  814 */         paramTemp[i] = methodGen
-/*  815 */           .addLocalVariable("function_call_tmp" + i, expType
-/*  816 */             .toJCType(), null, null);
-/*      */         
-/*  818 */         paramTemp[i].setStart(il
-/*  819 */             .append(expType.STORE(paramTemp[i].getIndex())));
-/*      */       } 
-/*      */ 
-/*      */       
-/*  823 */       il.append(new NEW(cpg.addClass(this._className)));
-/*  824 */       il.append(InstructionConstants.DUP);
-/*      */       
-/*  826 */       for (i = 0; i < n; i++) {
-/*  827 */         Expression arg = argument(i);
-/*  828 */         paramTemp[i].setEnd(il
-/*  829 */             .append(arg.getType().LOAD(paramTemp[i].getIndex())));
-/*      */       } 
-/*      */       
-/*  832 */       StringBuffer buffer = new StringBuffer();
-/*  833 */       buffer.append('(');
-/*  834 */       for (int j = 0; j < paramTypes.length; j++) {
-/*  835 */         buffer.append(getSignature(paramTypes[j]));
-/*      */       }
-/*  837 */       buffer.append(')');
-/*  838 */       buffer.append("V");
-/*      */       
-/*  840 */       int index = cpg.addMethodref(clazz, "<init>", buffer
-/*      */           
-/*  842 */           .toString());
-/*  843 */       il.append(new INVOKESPECIAL(index));
-/*      */ 
-/*      */       
-/*  846 */       Type.Object.translateFrom(classGen, methodGen, this._chosenConstructor
-/*  847 */           .getDeclaringClass());
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/*  852 */       if (isSecureProcessing && !isExtensionFunctionEnabled) {
-/*  853 */         translateUnallowedExtension(cpg, il);
-/*      */       }
-/*  855 */       String clazz = this._chosenMethod.getDeclaringClass().getName();
-/*  856 */       Class[] paramTypes = this._chosenMethod.getParameterTypes();
-/*      */ 
-/*      */       
-/*  859 */       if (this._thisArgument != null) {
-/*  860 */         this._thisArgument.translate(classGen, methodGen);
-/*      */       }
-/*      */       
-/*  863 */       for (int i = 0; i < n; i++) {
-/*  864 */         Expression exp = argument(i);
-/*  865 */         exp.translate(classGen, methodGen);
-/*      */         
-/*  867 */         exp.startIterator(classGen, methodGen);
-/*  868 */         exp.getType().translateTo(classGen, methodGen, paramTypes[i]);
-/*      */       } 
-/*      */       
-/*  871 */       StringBuffer buffer = new StringBuffer();
-/*  872 */       buffer.append('(');
-/*  873 */       for (int j = 0; j < paramTypes.length; j++) {
-/*  874 */         buffer.append(getSignature(paramTypes[j]));
-/*      */       }
-/*  876 */       buffer.append(')');
-/*  877 */       buffer.append(getSignature(this._chosenMethod.getReturnType()));
-/*      */       
-/*  879 */       if (this._thisArgument != null && this._clazz.isInterface()) {
-/*  880 */         int index = cpg.addInterfaceMethodref(clazz, this._fname
-/*  881 */             .getLocalPart(), buffer
-/*  882 */             .toString());
-/*  883 */         il.append(new INVOKEINTERFACE(index, n + 1));
-/*      */       } else {
-/*      */         
-/*  886 */         int index = cpg.addMethodref(clazz, this._fname
-/*  887 */             .getLocalPart(), buffer
-/*  888 */             .toString());
-/*  889 */         il.append((this._thisArgument != null) ? new INVOKEVIRTUAL(index) : new INVOKESTATIC(index));
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  894 */       this._type.translateFrom(classGen, methodGen, this._chosenMethod
-/*  895 */           .getReturnType());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/*  901 */     return "funcall(" + this._fname + ", " + this._arguments + ')';
-/*      */   }
-/*      */   
-/*      */   public boolean isStandard() {
-/*  905 */     String namespace = this._fname.getNamespace();
-/*  906 */     return (namespace == null || namespace.equals(""));
-/*      */   }
-/*      */   
-/*      */   public boolean isExtension() {
-/*  910 */     String namespace = this._fname.getNamespace();
-/*  911 */     return (namespace != null && namespace.equals("http://xml.apache.org/xalan/xsltc"));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Vector findMethods() {
-/*  921 */     Vector<Method> result = null;
-/*  922 */     String namespace = this._fname.getNamespace();
-/*      */     
-/*  924 */     if (this._className != null && this._className.length() > 0) {
-/*  925 */       int nArgs = this._arguments.size();
-/*      */       try {
-/*  927 */         if (this._clazz == null) {
-/*  928 */           boolean isSecureProcessing = getXSLTC().isSecureProcessing();
-/*      */           
-/*  930 */           boolean isExtensionFunctionEnabled = getXSLTC().getFeature(JdkXmlFeatures.XmlFeature.ENABLE_EXTENSION_FUNCTION);
-/*      */ 
-/*      */           
-/*  933 */           if (namespace != null && isSecureProcessing && isExtensionFunctionEnabled && (namespace
-/*      */             
-/*  935 */             .startsWith("http://xml.apache.org/xalan/java") || namespace
-/*  936 */             .startsWith("http://xml.apache.org/xalan/xsltc/java") || namespace
-/*  937 */             .startsWith("http://xml.apache.org/xslt/java") || namespace
-/*  938 */             .startsWith("xalan://"))) {
-/*  939 */             this._clazz = getXSLTC().loadExternalFunction(this._className);
-/*      */           } else {
-/*  941 */             this._clazz = ObjectFactory.findProviderClass(this._className, true);
-/*      */           } 
-/*      */           
-/*  944 */           if (this._clazz == null) {
-/*  945 */             ErrorMsg msg = new ErrorMsg("CLASS_NOT_FOUND_ERR", this._className);
-/*      */             
-/*  947 */             getParser().reportError(3, msg);
-/*      */           } 
-/*      */         } 
-/*      */         
-/*  951 */         String methodName = this._fname.getLocalPart();
-/*  952 */         Method[] methods = this._clazz.getMethods();
-/*      */         
-/*  954 */         for (int i = 0; i < methods.length; i++) {
-/*  955 */           int mods = methods[i].getModifiers();
-/*      */           
-/*  957 */           if (Modifier.isPublic(mods) && methods[i]
-/*  958 */             .getName().equals(methodName) && (methods[i]
-/*  959 */             .getParameterTypes()).length == nArgs)
-/*      */           {
-/*  961 */             if (result == null) {
-/*  962 */               result = new Vector();
-/*      */             }
-/*  964 */             result.addElement(methods[i]);
-/*      */           }
-/*      */         
-/*      */         } 
-/*  968 */       } catch (ClassNotFoundException e) {
-/*  969 */         ErrorMsg msg = new ErrorMsg("CLASS_NOT_FOUND_ERR", this._className);
-/*  970 */         getParser().reportError(3, msg);
-/*      */       } 
-/*      */     } 
-/*  973 */     return result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Vector findConstructors() {
-/*  982 */     Vector<Constructor> result = null;
-/*  983 */     String namespace = this._fname.getNamespace();
-/*      */     
-/*  985 */     int nArgs = this._arguments.size();
-/*      */     try {
-/*  987 */       if (this._clazz == null) {
-/*  988 */         this._clazz = ObjectFactory.findProviderClass(this._className, true);
-/*      */         
-/*  990 */         if (this._clazz == null) {
-/*  991 */           ErrorMsg msg = new ErrorMsg("CLASS_NOT_FOUND_ERR", this._className);
-/*  992 */           getParser().reportError(3, msg);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  996 */       Constructor[] constructors = (Constructor[])this._clazz.getConstructors();
-/*      */       
-/*  998 */       for (int i = 0; i < constructors.length; i++) {
-/*  999 */         int mods = constructors[i].getModifiers();
-/*      */         
-/* 1001 */         if (Modifier.isPublic(mods) && (constructors[i]
-/* 1002 */           .getParameterTypes()).length == nArgs)
-/*      */         {
-/* 1004 */           if (result == null) {
-/* 1005 */             result = new Vector();
-/*      */           }
-/* 1007 */           result.addElement(constructors[i]);
-/*      */         }
-/*      */       
-/*      */       } 
-/* 1011 */     } catch (ClassNotFoundException e) {
-/* 1012 */       ErrorMsg msg = new ErrorMsg("CLASS_NOT_FOUND_ERR", this._className);
-/* 1013 */       getParser().reportError(3, msg);
-/*      */     } 
-/*      */     
-/* 1016 */     return result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final String getSignature(Class<?> clazz) {
-/* 1024 */     if (clazz.isArray()) {
-/* 1025 */       StringBuffer sb = new StringBuffer();
-/* 1026 */       Class<?> cl = clazz;
-/* 1027 */       while (cl.isArray()) {
-/* 1028 */         sb.append("[");
-/* 1029 */         cl = cl.getComponentType();
-/*      */       } 
-/* 1031 */       sb.append(getSignature(cl));
-/* 1032 */       return sb.toString();
-/*      */     } 
-/* 1034 */     if (clazz.isPrimitive()) {
-/* 1035 */       if (clazz == int.class) {
-/* 1036 */         return "I";
-/*      */       }
-/* 1038 */       if (clazz == byte.class) {
-/* 1039 */         return "B";
-/*      */       }
-/* 1041 */       if (clazz == long.class) {
-/* 1042 */         return "J";
-/*      */       }
-/* 1044 */       if (clazz == float.class) {
-/* 1045 */         return "F";
-/*      */       }
-/* 1047 */       if (clazz == double.class) {
-/* 1048 */         return "D";
-/*      */       }
-/* 1050 */       if (clazz == short.class) {
-/* 1051 */         return "S";
-/*      */       }
-/* 1053 */       if (clazz == char.class) {
-/* 1054 */         return "C";
-/*      */       }
-/* 1056 */       if (clazz == boolean.class) {
-/* 1057 */         return "Z";
-/*      */       }
-/* 1059 */       if (clazz == void.class) {
-/* 1060 */         return "V";
-/*      */       }
-/*      */       
-/* 1063 */       String name = clazz.toString();
-/* 1064 */       ErrorMsg err = new ErrorMsg("UNKNOWN_SIG_TYPE_ERR", name);
-/* 1065 */       throw new Error(err.toString());
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1069 */     return "L" + clazz.getName().replace('.', '/') + ';';
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final String getSignature(Method meth) {
-/* 1077 */     StringBuffer sb = new StringBuffer();
-/* 1078 */     sb.append('(');
-/* 1079 */     Class[] params = meth.getParameterTypes();
-/* 1080 */     for (int j = 0; j < params.length; j++) {
-/* 1081 */       sb.append(getSignature(params[j]));
-/*      */     }
-/* 1083 */     return sb.append(')').append(getSignature(meth.getReturnType()))
-/* 1084 */       .toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final String getSignature(Constructor cons) {
-/* 1091 */     StringBuffer sb = new StringBuffer();
-/* 1092 */     sb.append('(');
-/* 1093 */     Class[] params = cons.getParameterTypes();
-/* 1094 */     for (int j = 0; j < params.length; j++) {
-/* 1095 */       sb.append(getSignature(params[j]));
-/*      */     }
-/* 1097 */     return sb.append(")V").toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String getMethodSignature(Vector<Type> argsType) {
-/* 1104 */     StringBuffer buf = new StringBuffer(this._className);
-/* 1105 */     buf.append('.').append(this._fname.getLocalPart()).append('(');
-/*      */     
-/* 1107 */     int nArgs = argsType.size();
-/* 1108 */     for (int i = 0; i < nArgs; i++) {
-/* 1109 */       Type intType = argsType.elementAt(i);
-/* 1110 */       buf.append(intType.toString());
-/* 1111 */       if (i < nArgs - 1) buf.append(", ");
-/*      */     
-/*      */     } 
-/* 1114 */     buf.append(')');
-/* 1115 */     return buf.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static String replaceDash(String name) {
-/* 1125 */     char dash = '-';
-/* 1126 */     StringBuilder buff = new StringBuilder("");
-/* 1127 */     for (int i = 0; i < name.length(); i++) {
-/* 1128 */       if (i > 0 && name.charAt(i - 1) == dash) {
-/* 1129 */         buff.append(Character.toUpperCase(name.charAt(i)));
-/* 1130 */       } else if (name.charAt(i) != dash) {
-/* 1131 */         buff.append(name.charAt(i));
-/*      */       } 
-/* 1133 */     }  return buff.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void translateUnallowedExtension(ConstantPoolGen cpg, InstructionList il) {
-/* 1142 */     int index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "unallowed_extension_functionF", "(Ljava/lang/String;)V");
-/*      */ 
-/*      */     
-/* 1145 */     il.append(new PUSH(cpg, this._fname.toString()));
-/* 1146 */     il.append(new INVOKESTATIC(index));
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\FunctionCall.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: FunctionCall.java,v 1.2.4.1 2005/09/12 10:31:32 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.IFEQ;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionConstants;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.InvokeInstruction;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.IntType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MultiHashtable;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ObjectType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ReferenceType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Vector;
+import jdk.xml.internal.JdkXmlFeatures;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ * @author Todd Miller
+ */
+class FunctionCall extends Expression {
+
+    // Name of this function call
+    private QName  _fname;
+    // Arguments to this function call (might not be any)
+    private final Vector _arguments;
+    // Empty argument list, used for certain functions
+    private final static Vector EMPTY_ARG_LIST = new Vector(0);
+
+    // Valid namespaces for Java function-call extension
+    protected final static String EXT_XSLTC =
+        TRANSLET_URI;
+
+    protected final static String JAVA_EXT_XSLTC =
+        EXT_XSLTC + "/java";
+
+    protected final static String EXT_XALAN =
+        "http://xml.apache.org/xalan";
+
+    protected final static String JAVA_EXT_XALAN =
+        "http://xml.apache.org/xalan/java";
+
+    protected final static String JAVA_EXT_XALAN_OLD =
+        "http://xml.apache.org/xslt/java";
+
+    protected final static String EXSLT_COMMON =
+        "http://exslt.org/common";
+
+    protected final static String EXSLT_MATH =
+        "http://exslt.org/math";
+
+    protected final static String EXSLT_SETS =
+        "http://exslt.org/sets";
+
+    protected final static String EXSLT_DATETIME =
+        "http://exslt.org/dates-and-times";
+
+    protected final static String EXSLT_STRINGS =
+        "http://exslt.org/strings";
+
+    protected final static String XALAN_CLASSPACKAGE_NAMESPACE =
+        "xalan://";
+
+    // Namespace format constants
+    protected final static int NAMESPACE_FORMAT_JAVA = 0;
+    protected final static int NAMESPACE_FORMAT_CLASS = 1;
+    protected final static int NAMESPACE_FORMAT_PACKAGE = 2;
+    protected final static int NAMESPACE_FORMAT_CLASS_OR_PACKAGE = 3;
+
+    // Namespace format
+    private int _namespace_format = NAMESPACE_FORMAT_JAVA;
+
+    /**
+     * Stores reference to object for non-static Java calls
+     */
+    Expression _thisArgument = null;
+
+    // External Java function's class/method/signature
+    private String      _className;
+    private Class       _clazz;
+    private Method      _chosenMethod;
+    private Constructor _chosenConstructor;
+    private MethodType  _chosenMethodType;
+
+    // Encapsulates all unsupported external function calls
+    private boolean    unresolvedExternal;
+
+    // If FunctionCall is a external java constructor
+    private boolean     _isExtConstructor = false;
+
+    // If the java method is static
+    private boolean       _isStatic = false;
+
+    // Legal conversions between internal and Java types.
+    private static final MultiHashtable<Type, JavaType> _internal2Java = new MultiHashtable<>();
+
+    // Legal conversions between Java and internal types.
+    private static final Map<Class<?>, Type> JAVA2INTERNAL;
+
+    // The mappings between EXSLT extension namespaces and implementation classes
+    private static final Map<String, String> EXTENSIONNAMESPACE;
+
+    // Extension functions that are implemented in BasisLibrary
+    private static final Map<String, String> EXTENSIONFUNCTION;
+    /**
+     * inner class to used in internal2Java mappings, contains
+     * the Java type and the distance between the internal type and
+     * the Java type.
+     */
+    static class JavaType {
+        public Class<?>  type;
+        public int distance;
+
+        public JavaType(Class type, int distance){
+            this.type = type;
+            this.distance = distance;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(this.type);
+        }
+
+        @Override
+        public boolean equals(Object query) {
+            if (query == null) {
+                return false;
+            }
+            if (query.getClass().isAssignableFrom(JavaType.class)) {
+                return ((JavaType)query).type.equals(type);
+            } else {
+                return query.equals(type);
+            }
+        }
+    }
+
+    /**
+     * Defines 2 conversion tables:
+     * 1. From internal types to Java types and
+     * 2. From Java types to internal types.
+     * These two tables are used when calling external (Java) functions.
+     */
+    static {
+        final Class<?> nodeClass, nodeListClass;
+        try {
+            nodeClass     = Class.forName("org.w3c.dom.Node");
+            nodeListClass = Class.forName("org.w3c.dom.NodeList");
+        }
+        catch (ClassNotFoundException e) {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.CLASS_NOT_FOUND_ERR,"org.w3c.dom.Node or NodeList");
+            throw new ExceptionInInitializerError(err.toString());
+        }
+
+        // -- Internal to Java --------------------------------------------
+
+        // Type.Boolean -> { boolean(0), Boolean(1), Object(2) }
+        _internal2Java.put(Type.Boolean, new JavaType(Boolean.TYPE, 0));
+        _internal2Java.put(Type.Boolean, new JavaType(Boolean.class, 1));
+        _internal2Java.put(Type.Boolean, new JavaType(Object.class, 2));
+
+        // Type.Real -> { double(0), Double(1), float(2), long(3), int(4),
+        //                short(5), byte(6), char(7), Object(8) }
+        _internal2Java.put(Type.Real, new JavaType(Double.TYPE, 0));
+        _internal2Java.put(Type.Real, new JavaType(Double.class, 1));
+        _internal2Java.put(Type.Real, new JavaType(Float.TYPE, 2));
+        _internal2Java.put(Type.Real, new JavaType(Long.TYPE, 3));
+        _internal2Java.put(Type.Real, new JavaType(Integer.TYPE, 4));
+        _internal2Java.put(Type.Real, new JavaType(Short.TYPE, 5));
+        _internal2Java.put(Type.Real, new JavaType(Byte.TYPE, 6));
+        _internal2Java.put(Type.Real, new JavaType(Character.TYPE, 7));
+        _internal2Java.put(Type.Real, new JavaType(Object.class, 8));
+
+        // Type.Int must be the same as Type.Real
+        _internal2Java.put(Type.Int, new JavaType(Double.TYPE, 0));
+        _internal2Java.put(Type.Int, new JavaType(Double.class, 1));
+        _internal2Java.put(Type.Int, new JavaType(Float.TYPE, 2));
+        _internal2Java.put(Type.Int, new JavaType(Long.TYPE, 3));
+        _internal2Java.put(Type.Int, new JavaType(Integer.TYPE, 4));
+        _internal2Java.put(Type.Int, new JavaType(Short.TYPE, 5));
+        _internal2Java.put(Type.Int, new JavaType(Byte.TYPE, 6));
+        _internal2Java.put(Type.Int, new JavaType(Character.TYPE, 7));
+        _internal2Java.put(Type.Int, new JavaType(Object.class, 8));
+
+        // Type.String -> { String(0), Object(1) }
+        _internal2Java.put(Type.String, new JavaType(String.class, 0));
+        _internal2Java.put(Type.String, new JavaType(Object.class, 1));
+
+        // Type.NodeSet -> { NodeList(0), Node(1), Object(2), String(3) }
+        _internal2Java.put(Type.NodeSet, new JavaType(nodeListClass, 0));
+        _internal2Java.put(Type.NodeSet, new JavaType(nodeClass, 1));
+        _internal2Java.put(Type.NodeSet, new JavaType(Object.class, 2));
+        _internal2Java.put(Type.NodeSet, new JavaType(String.class, 3));
+
+        // Type.Node -> { Node(0), NodeList(1), Object(2), String(3) }
+        _internal2Java.put(Type.Node, new JavaType(nodeListClass, 0));
+        _internal2Java.put(Type.Node, new JavaType(nodeClass, 1));
+        _internal2Java.put(Type.Node, new JavaType(Object.class, 2));
+        _internal2Java.put(Type.Node, new JavaType(String.class, 3));
+
+        // Type.ResultTree -> { NodeList(0), Node(1), Object(2), String(3) }
+        _internal2Java.put(Type.ResultTree, new JavaType(nodeListClass, 0));
+        _internal2Java.put(Type.ResultTree, new JavaType(nodeClass, 1));
+        _internal2Java.put(Type.ResultTree, new JavaType(Object.class, 2));
+        _internal2Java.put(Type.ResultTree, new JavaType(String.class, 3));
+
+        _internal2Java.put(Type.Reference, new JavaType(Object.class, 0));
+
+        _internal2Java.makeUnmodifiable();
+
+        Map<Class<?>, Type> java2Internal = new HashMap<>();
+        Map<String, String> extensionNamespaceTable = new HashMap<>();
+        Map<String, String> extensionFunctionTable = new HashMap<>();
+
+        // Possible conversions between Java and internal types
+        java2Internal.put(Boolean.TYPE, Type.Boolean);
+        java2Internal.put(Void.TYPE, Type.Void);
+        java2Internal.put(Character.TYPE, Type.Real);
+        java2Internal.put(Byte.TYPE, Type.Real);
+        java2Internal.put(Short.TYPE, Type.Real);
+        java2Internal.put(Integer.TYPE, Type.Real);
+        java2Internal.put(Long.TYPE, Type.Real);
+        java2Internal.put(Float.TYPE, Type.Real);
+        java2Internal.put(Double.TYPE, Type.Real);
+
+        java2Internal.put(String.class, Type.String);
+
+        java2Internal.put(Object.class, Type.Reference);
+
+        // Conversions from org.w3c.dom.Node/NodeList to internal NodeSet
+        java2Internal.put(nodeListClass, Type.NodeSet);
+        java2Internal.put(nodeClass, Type.NodeSet);
+
+        // Initialize the extension namespace table
+        extensionNamespaceTable.put(EXT_XALAN, "com.sun.org.apache.xalan.internal.lib.Extensions");
+        extensionNamespaceTable.put(EXSLT_COMMON, "com.sun.org.apache.xalan.internal.lib.ExsltCommon");
+        extensionNamespaceTable.put(EXSLT_MATH, "com.sun.org.apache.xalan.internal.lib.ExsltMath");
+        extensionNamespaceTable.put(EXSLT_SETS, "com.sun.org.apache.xalan.internal.lib.ExsltSets");
+        extensionNamespaceTable.put(EXSLT_DATETIME, "com.sun.org.apache.xalan.internal.lib.ExsltDatetime");
+        extensionNamespaceTable.put(EXSLT_STRINGS, "com.sun.org.apache.xalan.internal.lib.ExsltStrings");
+
+        // Initialize the extension function table
+        extensionFunctionTable.put(EXSLT_COMMON + ":nodeSet", "nodeset");
+        extensionFunctionTable.put(EXSLT_COMMON + ":objectType", "objectType");
+        extensionFunctionTable.put(EXT_XALAN + ":nodeset", "nodeset");
+
+        JAVA2INTERNAL = Collections.unmodifiableMap(java2Internal);
+        EXTENSIONNAMESPACE = Collections.unmodifiableMap(extensionNamespaceTable);
+        EXTENSIONFUNCTION = Collections.unmodifiableMap(extensionFunctionTable);
+
+    }
+
+    public FunctionCall(QName fname, Vector arguments) {
+        _fname = fname;
+        _arguments = arguments;
+        _type = null;
+    }
+
+    public FunctionCall(QName fname) {
+        this(fname, EMPTY_ARG_LIST);
+    }
+
+    public String getName() {
+        return(_fname.toString());
+    }
+
+    @Override
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        if (_arguments != null) {
+            final int n = _arguments.size();
+            for (int i = 0; i < n; i++) {
+                final Expression exp = (Expression)_arguments.elementAt(i);
+                exp.setParser(parser);
+                exp.setParent(this);
+            }
+        }
+    }
+
+    public String getClassNameFromUri(String uri)
+    {
+        String className = EXTENSIONNAMESPACE.get(uri);
+
+        if (className != null)
+            return className;
+        else {
+            if (uri.startsWith(JAVA_EXT_XSLTC)) {
+                int length = JAVA_EXT_XSLTC.length() + 1;
+                return (uri.length() > length) ? uri.substring(length) : EMPTYSTRING;
+            }
+            else if (uri.startsWith(JAVA_EXT_XALAN)) {
+                int length = JAVA_EXT_XALAN.length() + 1;
+                return (uri.length() > length) ? uri.substring(length) : EMPTYSTRING;
+            }
+            else if (uri.startsWith(JAVA_EXT_XALAN_OLD)) {
+                int length = JAVA_EXT_XALAN_OLD.length() + 1;
+                return (uri.length() > length) ? uri.substring(length) : EMPTYSTRING;
+            }
+            else {
+                int index = uri.lastIndexOf('/');
+                return (index > 0) ? uri.substring(index+1) : uri;
+            }
+        }
+    }
+
+    /**
+     * Type check a function call. Since different type conversions apply,
+     * type checking is different for standard and external (Java) functions.
+     */
+    @Override
+    public Type typeCheck(SymbolTable stable)
+        throws TypeCheckError
+    {
+        if (_type != null) return _type;
+
+        final String namespace = _fname.getNamespace();
+        String local = _fname.getLocalPart();
+
+        if (isExtension()) {
+            _fname = new QName(null, null, local);
+            return typeCheckStandard(stable);
+        }
+        else if (isStandard()) {
+            return typeCheckStandard(stable);
+        }
+        // Handle extension functions (they all have a namespace)
+        else {
+            try {
+                _className = getClassNameFromUri(namespace);
+
+                final int pos = local.lastIndexOf('.');
+                if (pos > 0) {
+                    _isStatic = true;
+                    if (_className != null && _className.length() > 0) {
+                        _namespace_format = NAMESPACE_FORMAT_PACKAGE;
+                        _className = _className + "." + local.substring(0, pos);
+                    }
+                    else {
+                        _namespace_format = NAMESPACE_FORMAT_JAVA;
+                        _className = local.substring(0, pos);
+                    }
+
+                    _fname = new QName(namespace, null, local.substring(pos + 1));
+                }
+                else {
+                    if (_className != null && _className.length() > 0) {
+                        try {
+                            _clazz = ObjectFactory.findProviderClass(_className, true);
+                            _namespace_format = NAMESPACE_FORMAT_CLASS;
+                        }
+                        catch (ClassNotFoundException e) {
+                            _namespace_format = NAMESPACE_FORMAT_PACKAGE;
+                        }
+                    }
+                    else
+                        _namespace_format = NAMESPACE_FORMAT_JAVA;
+
+                    if (local.indexOf('-') > 0) {
+                        local = replaceDash(local);
+                    }
+
+                    String extFunction = EXTENSIONFUNCTION.get(namespace + ":" + local);
+                    if (extFunction != null) {
+                        _fname = new QName(null, null, extFunction);
+                        return typeCheckStandard(stable);
+                    }
+                    else
+                        _fname = new QName(namespace, null, local);
+                }
+
+                return typeCheckExternal(stable);
+            }
+            catch (TypeCheckError e) {
+                ErrorMsg errorMsg = e.getErrorMsg();
+                if (errorMsg == null) {
+                    final String name = _fname.getLocalPart();
+                    errorMsg = new ErrorMsg(ErrorMsg.METHOD_NOT_FOUND_ERR, name);
+                }
+                getParser().reportError(ERROR, errorMsg);
+                return _type = Type.Void;
+            }
+          }
+    }
+
+    /**
+     * Type check a call to a standard function. Insert CastExprs when needed.
+     * If as a result of the insertion of a CastExpr a type check error is
+     * thrown, then catch it and re-throw it with a new "this".
+     */
+    public Type typeCheckStandard(SymbolTable stable) throws TypeCheckError {
+        _fname.clearNamespace();        // HACK!!!
+
+        final int n = _arguments.size();
+        final Vector argsType = typeCheckArgs(stable);
+        final MethodType args = new MethodType(Type.Void, argsType);
+        final MethodType ptype =
+            lookupPrimop(stable, _fname.getLocalPart(), args);
+
+        if (ptype != null) {
+            for (int i = 0; i < n; i++) {
+                final Type argType = (Type) ptype.argsType().elementAt(i);
+                final Expression exp = (Expression)_arguments.elementAt(i);
+                if (!argType.identicalTo(exp.getType())) {
+                    try {
+                        _arguments.setElementAt(new CastExpr(exp, argType), i);
+                    }
+                    catch (TypeCheckError e) {
+                        throw new TypeCheckError(this); // invalid conversion
+                    }
+                }
+            }
+            _chosenMethodType = ptype;
+            return _type = ptype.resultType();
+        }
+        throw new TypeCheckError(this);
+    }
+
+
+
+    public Type typeCheckConstructor(SymbolTable stable) throws TypeCheckError{
+        final Vector constructors = findConstructors();
+        if (constructors == null) {
+            // Constructor not found in this class
+            throw new TypeCheckError(ErrorMsg.CONSTRUCTOR_NOT_FOUND,
+                _className);
+
+        }
+
+        final int nConstructors = constructors.size();
+        final int nArgs = _arguments.size();
+        final Vector argsType = typeCheckArgs(stable);
+
+        // Try all constructors
+        int bestConstrDistance = Integer.MAX_VALUE;
+        _type = null;                   // reset
+        for (int j, i = 0; i < nConstructors; i++) {
+            // Check if all parameters to this constructor can be converted
+            final Constructor constructor =
+                (Constructor)constructors.elementAt(i);
+            final Class[] paramTypes = constructor.getParameterTypes();
+
+            Class<?> extType;
+            int currConstrDistance = 0;
+            for (j = 0; j < nArgs; j++) {
+                // Convert from internal (translet) type to external (Java) type
+                extType = paramTypes[j];
+                final Type intType = (Type)argsType.elementAt(j);
+                JavaType match = _internal2Java.maps(intType, new JavaType(extType, 0));
+                if (match != null) {
+                    currConstrDistance += match.distance;
+                }
+                else if (intType instanceof ObjectType) {
+                    ObjectType objectType = (ObjectType)intType;
+                    if (objectType.getJavaClass() == extType)
+                        continue;
+                    else if (extType.isAssignableFrom(objectType.getJavaClass()))
+                        currConstrDistance += 1;
+                    else {
+                        currConstrDistance = Integer.MAX_VALUE;
+                        break;
+                    }
+                }
+                else {
+                    // no mapping available
+                    currConstrDistance = Integer.MAX_VALUE;
+                    break;
+                }
+            }
+
+            if (j == nArgs && currConstrDistance < bestConstrDistance ) {
+                _chosenConstructor = constructor;
+                _isExtConstructor = true;
+                bestConstrDistance = currConstrDistance;
+
+                _type = (_clazz != null) ? Type.newObjectType(_clazz)
+                    : Type.newObjectType(_className);
+            }
+        }
+
+        if (_type != null) {
+            return _type;
+        }
+
+        throw new TypeCheckError(ErrorMsg.ARGUMENT_CONVERSION_ERR, getMethodSignature(argsType));
+    }
+
+
+    /**
+     * Type check a call to an external (Java) method.
+     * The method must be static an public, and a legal type conversion
+     * must exist for all its arguments and its return type.
+     * Every method of name <code>_fname</code> is inspected
+     * as a possible candidate.
+     */
+    public Type typeCheckExternal(SymbolTable stable) throws TypeCheckError {
+        int nArgs = _arguments.size();
+        final String name = _fname.getLocalPart();
+
+        // check if function is a contructor 'new'
+        if (_fname.getLocalPart().equals("new")) {
+            return typeCheckConstructor(stable);
+        }
+        // check if we are calling an instance method
+        else {
+            boolean hasThisArgument = false;
+
+            if (nArgs == 0)
+                _isStatic = true;
+
+            if (!_isStatic) {
+                if (_namespace_format == NAMESPACE_FORMAT_JAVA
+                    || _namespace_format == NAMESPACE_FORMAT_PACKAGE)
+                    hasThisArgument = true;
+
+                Expression firstArg = (Expression)_arguments.elementAt(0);
+                Type firstArgType = (Type)firstArg.typeCheck(stable);
+
+                if (_namespace_format == NAMESPACE_FORMAT_CLASS
+                    && firstArgType instanceof ObjectType
+                    && _clazz != null
+                    && _clazz.isAssignableFrom(((ObjectType)firstArgType).getJavaClass()))
+                    hasThisArgument = true;
+
+                if (hasThisArgument) {
+                    _thisArgument = (Expression) _arguments.elementAt(0);
+                    _arguments.remove(0); nArgs--;
+                    if (firstArgType instanceof ObjectType) {
+                        _className = ((ObjectType) firstArgType).getJavaClassName();
+                    }
+                    else
+                        throw new TypeCheckError(ErrorMsg.NO_JAVA_FUNCT_THIS_REF, name);
+                }
+            }
+            else if (_className.length() == 0) {
+                /*
+                 * Warn user if external function could not be resolved.
+                 * Warning will _NOT_ be issued is the call is properly
+                 * wrapped in an <xsl:if> or <xsl:when> element. For details
+                 * see If.parserContents() and When.parserContents()
+                 */
+                final Parser parser = getParser();
+                if (parser != null) {
+                    reportWarning(this, parser, ErrorMsg.FUNCTION_RESOLVE_ERR,
+                                  _fname.toString());
+                }
+                unresolvedExternal = true;
+                return _type = Type.Int;        // use "Int" as "unknown"
+            }
+        }
+
+        final Vector methods = findMethods();
+
+        if (methods == null) {
+            // Method not found in this class
+            throw new TypeCheckError(ErrorMsg.METHOD_NOT_FOUND_ERR, _className + "." + name);
+        }
+
+        Class extType = null;
+        final int nMethods = methods.size();
+        final Vector argsType = typeCheckArgs(stable);
+
+        // Try all methods to identify the best fit
+        int bestMethodDistance  = Integer.MAX_VALUE;
+        _type = null;                       // reset internal type
+        for (int j, i = 0; i < nMethods; i++) {
+            // Check if all paramteters to this method can be converted
+            final Method method = (Method)methods.elementAt(i);
+            final Class[] paramTypes = method.getParameterTypes();
+
+            int currMethodDistance = 0;
+            for (j = 0; j < nArgs; j++) {
+                // Convert from internal (translet) type to external (Java) type
+                extType = paramTypes[j];
+                final Type intType = (Type)argsType.elementAt(j);
+                JavaType match = _internal2Java.maps(intType, new JavaType(extType, 0));
+                if (match != null) {
+                    currMethodDistance += match.distance;
+                }
+                else {
+                    // no mapping available
+                    //
+                    // Allow a Reference type to match any external (Java) type at
+                    // the moment. The real type checking is performed at runtime.
+                    if (intType instanceof ReferenceType) {
+                       currMethodDistance += 1;
+                    }
+                    else if (intType instanceof ObjectType) {
+                        ObjectType object = (ObjectType)intType;
+                        if (extType.getName().equals(object.getJavaClassName()))
+                            currMethodDistance += 0;
+                        else if (extType.isAssignableFrom(object.getJavaClass()))
+                            currMethodDistance += 1;
+                        else {
+                            currMethodDistance = Integer.MAX_VALUE;
+                            break;
+                        }
+                    }
+                    else {
+                        currMethodDistance = Integer.MAX_VALUE;
+                        break;
+                    }
+                }
+            }
+
+            if (j == nArgs) {
+                  // Check if the return type can be converted
+                  extType = method.getReturnType();
+
+                  _type = JAVA2INTERNAL.get(extType);
+                  if (_type == null) {
+                      _type = Type.newObjectType(extType);
+                  }
+
+                  // Use this method if all parameters & return type match
+                  if (_type != null && currMethodDistance < bestMethodDistance) {
+                      _chosenMethod = method;
+                      bestMethodDistance = currMethodDistance;
+                  }
+            }
+        }
+
+        // It is an error if the chosen method is an instance menthod but we don't
+        // have a this argument.
+        if (_chosenMethod != null && _thisArgument == null &&
+            !Modifier.isStatic(_chosenMethod.getModifiers())) {
+            throw new TypeCheckError(ErrorMsg.NO_JAVA_FUNCT_THIS_REF, getMethodSignature(argsType));
+        }
+
+        if (_type != null) {
+            if (_type == Type.NodeSet) {
+                getXSLTC().setMultiDocument(true);
+            }
+            return _type;
+        }
+
+        throw new TypeCheckError(ErrorMsg.ARGUMENT_CONVERSION_ERR, getMethodSignature(argsType));
+    }
+
+    /**
+     * Type check the actual arguments of this function call.
+     */
+    public Vector typeCheckArgs(SymbolTable stable) throws TypeCheckError {
+        final Vector result = new Vector();
+        final Enumeration e = _arguments.elements();
+        while (e.hasMoreElements()) {
+            final Expression exp = (Expression)e.nextElement();
+            result.addElement(exp.typeCheck(stable));
+        }
+        return result;
+    }
+
+    protected final Expression argument(int i) {
+        return (Expression)_arguments.elementAt(i);
+    }
+
+    protected final Expression argument() {
+        return argument(0);
+    }
+
+    protected final int argumentCount() {
+        return _arguments.size();
+    }
+
+    protected final void setArgument(int i, Expression exp) {
+        _arguments.setElementAt(exp, i);
+    }
+
+    /**
+     * Compile the function call and treat as an expression
+     * Update true/false-lists.
+     */
+    @Override
+    public void translateDesynthesized(ClassGenerator classGen,
+                                       MethodGenerator methodGen)
+    {
+        Type type = Type.Boolean;
+        if (_chosenMethodType != null)
+            type = _chosenMethodType.resultType();
+
+        final InstructionList il = methodGen.getInstructionList();
+        translate(classGen, methodGen);
+
+        if ((type instanceof BooleanType) || (type instanceof IntType)) {
+            _falseList.add(il.append(new IFEQ(null)));
+        }
+    }
+
+
+    /**
+     * Translate a function call. The compiled code will leave the function's
+     * return value on the JVM's stack.
+     */
+    @Override
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final int n = argumentCount();
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        final boolean isSecureProcessing = classGen.getParser().getXSLTC().isSecureProcessing();
+        final boolean isExtensionFunctionEnabled = classGen.getParser().getXSLTC()
+                .getFeature(JdkXmlFeatures.XmlFeature.ENABLE_EXTENSION_FUNCTION);
+        int index;
+
+        // Translate calls to methods in the BasisLibrary
+        if (isStandard() || isExtension()) {
+            for (int i = 0; i < n; i++) {
+                final Expression exp = argument(i);
+                exp.translate(classGen, methodGen);
+                exp.startIterator(classGen, methodGen);
+            }
+
+            // append "F" to the function's name
+            final String name = _fname.toString().replace('-', '_') + "F";
+            String args = Constants.EMPTYSTRING;
+
+            // Special precautions for some method calls
+            if (name.equals("sumF")) {
+                args = DOM_INTF_SIG;
+                il.append(methodGen.loadDOM());
+            }
+            else if (name.equals("normalize_spaceF")) {
+                if (_chosenMethodType.toSignature(args).
+                    equals("()Ljava/lang/String;")) {
+                    args = "I"+DOM_INTF_SIG;
+                    il.append(methodGen.loadContextNode());
+                    il.append(methodGen.loadDOM());
+                }
+            }
+
+            // Invoke the method in the basis library
+            index = cpg.addMethodref(BASIS_LIBRARY_CLASS, name,
+                                     _chosenMethodType.toSignature(args));
+            il.append(new INVOKESTATIC(index));
+        }
+        // Add call to BasisLibrary.unresolved_externalF() to generate
+        // run-time error message for unsupported external functions
+        else if (unresolvedExternal) {
+            index = cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                     "unresolved_externalF",
+                                     "(Ljava/lang/String;)V");
+            il.append(new PUSH(cpg, _fname.toString()));
+            il.append(new INVOKESTATIC(index));
+        }
+        else if (_isExtConstructor) {
+            if (isSecureProcessing && !isExtensionFunctionEnabled)
+                translateUnallowedExtension(cpg, il);
+
+            final String clazz =
+                _chosenConstructor.getDeclaringClass().getName();
+            Class[] paramTypes = _chosenConstructor.getParameterTypes();
+            LocalVariableGen[] paramTemp = new LocalVariableGen[n];
+
+            // Backwards branches are prohibited if an uninitialized object is
+            // on the stack by section 4.9.4 of the JVM Specification, 2nd Ed.
+            // We don't know whether this code might contain backwards branches
+            // so we mustn't create the new object until after we've created
+            // the suspect arguments to its constructor.  Instead we calculate
+            // the values of the arguments to the constructor first, store them
+            // in temporary variables, create the object and reload the
+            // arguments from the temporaries to avoid the problem.
+
+            for (int i = 0; i < n; i++) {
+                final Expression exp = argument(i);
+                Type expType = exp.getType();
+                exp.translate(classGen, methodGen);
+                // Convert the argument to its Java type
+                exp.startIterator(classGen, methodGen);
+                expType.translateTo(classGen, methodGen, paramTypes[i]);
+                paramTemp[i] =
+                    methodGen.addLocalVariable("function_call_tmp"+i,
+                                               expType.toJCType(),
+                                               null, null);
+                paramTemp[i].setStart(
+                        il.append(expType.STORE(paramTemp[i].getIndex())));
+
+            }
+
+            il.append(new NEW(cpg.addClass(_className)));
+            il.append(InstructionConstants.DUP);
+
+            for (int i = 0; i < n; i++) {
+                final Expression arg = argument(i);
+                paramTemp[i].setEnd(
+                        il.append(arg.getType().LOAD(paramTemp[i].getIndex())));
+            }
+
+            final StringBuffer buffer = new StringBuffer();
+            buffer.append('(');
+            for (int i = 0; i < paramTypes.length; i++) {
+                buffer.append(getSignature(paramTypes[i]));
+            }
+            buffer.append(')');
+            buffer.append("V");
+
+            index = cpg.addMethodref(clazz,
+                                     "<init>",
+                                     buffer.toString());
+            il.append(new INVOKESPECIAL(index));
+
+            // Convert the return type back to our internal type
+            (Type.Object).translateFrom(classGen, methodGen,
+                                _chosenConstructor.getDeclaringClass());
+
+        }
+        // Invoke function calls that are handled in separate classes
+        else {
+            if (isSecureProcessing && !isExtensionFunctionEnabled)
+                translateUnallowedExtension(cpg, il);
+
+            final String clazz = _chosenMethod.getDeclaringClass().getName();
+            Class[] paramTypes = _chosenMethod.getParameterTypes();
+
+            // Push "this" if it is an instance method
+            if (_thisArgument != null) {
+                _thisArgument.translate(classGen, methodGen);
+            }
+
+            for (int i = 0; i < n; i++) {
+                final Expression exp = argument(i);
+                exp.translate(classGen, methodGen);
+                // Convert the argument to its Java type
+                exp.startIterator(classGen, methodGen);
+                exp.getType().translateTo(classGen, methodGen, paramTypes[i]);
+            }
+
+            final StringBuffer buffer = new StringBuffer();
+            buffer.append('(');
+            for (int i = 0; i < paramTypes.length; i++) {
+                buffer.append(getSignature(paramTypes[i]));
+            }
+            buffer.append(')');
+            buffer.append(getSignature(_chosenMethod.getReturnType()));
+
+            if (_thisArgument != null && _clazz.isInterface()) {
+                index = cpg.addInterfaceMethodref(clazz,
+                                     _fname.getLocalPart(),
+                                     buffer.toString());
+                il.append(new INVOKEINTERFACE(index, n+1));
+            }
+            else {
+                index = cpg.addMethodref(clazz,
+                                     _fname.getLocalPart(),
+                                     buffer.toString());
+                il.append(_thisArgument != null ? (InvokeInstruction) new INVOKEVIRTUAL(index) :
+                          (InvokeInstruction) new INVOKESTATIC(index));
+            }
+
+            // Convert the return type back to our internal type
+            _type.translateFrom(classGen, methodGen,
+                                _chosenMethod.getReturnType());
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "funcall(" + _fname + ", " + _arguments + ')';
+    }
+
+    public boolean isStandard() {
+        final String namespace = _fname.getNamespace();
+        return (namespace == null) || (namespace.equals(Constants.EMPTYSTRING));
+    }
+
+    public boolean isExtension() {
+        final String namespace = _fname.getNamespace();
+        return (namespace != null) && (namespace.equals(EXT_XSLTC));
+    }
+
+    /**
+     * Returns a vector with all methods named <code>_fname</code>
+     * after stripping its namespace or <code>null</code>
+     * if no such methods exist.
+     */
+    private Vector findMethods() {
+
+          Vector result = null;
+          final String namespace = _fname.getNamespace();
+
+          if (_className != null && _className.length() > 0) {
+            final int nArgs = _arguments.size();
+            try {
+                if (_clazz == null) {
+                    final boolean isSecureProcessing = getXSLTC().isSecureProcessing();
+                    final boolean isExtensionFunctionEnabled = getXSLTC()
+                            .getFeature(JdkXmlFeatures.XmlFeature.ENABLE_EXTENSION_FUNCTION);
+
+                    //Check if FSP and SM - only then proceed with loading
+                    if (namespace != null && isSecureProcessing
+                            && isExtensionFunctionEnabled
+                            && (namespace.startsWith(JAVA_EXT_XALAN)
+                            || namespace.startsWith(JAVA_EXT_XSLTC)
+                            || namespace.startsWith(JAVA_EXT_XALAN_OLD)
+                            || namespace.startsWith(XALAN_CLASSPACKAGE_NAMESPACE))) {
+                        _clazz = getXSLTC().loadExternalFunction(_className);
+                    } else {
+                        _clazz = ObjectFactory.findProviderClass(_className, true);
+                    }
+
+                if (_clazz == null) {
+                  final ErrorMsg msg =
+                        new ErrorMsg(ErrorMsg.CLASS_NOT_FOUND_ERR, _className);
+                  getParser().reportError(Constants.ERROR, msg);
+                }
+              }
+
+              final String methodName = _fname.getLocalPart();
+              final Method[] methods = _clazz.getMethods();
+
+              for (int i = 0; i < methods.length; i++) {
+                final int mods = methods[i].getModifiers();
+                // Is it public and same number of args ?
+                if (Modifier.isPublic(mods)
+                    && methods[i].getName().equals(methodName)
+                    && methods[i].getParameterTypes().length == nArgs)
+                {
+                  if (result == null) {
+                    result = new Vector();
+                  }
+                  result.addElement(methods[i]);
+                }
+              }
+            }
+            catch (ClassNotFoundException e) {
+                  final ErrorMsg msg = new ErrorMsg(ErrorMsg.CLASS_NOT_FOUND_ERR, _className);
+                  getParser().reportError(Constants.ERROR, msg);
+            }
+          }
+          return result;
+    }
+
+    /**
+     * Returns a vector with all constructors named <code>_fname</code>
+     * after stripping its namespace or <code>null</code>
+     * if no such methods exist.
+     */
+    private Vector findConstructors() {
+        Vector result = null;
+        final String namespace = _fname.getNamespace();
+
+        final int nArgs = _arguments.size();
+        try {
+          if (_clazz == null) {
+            _clazz = ObjectFactory.findProviderClass(_className, true);
+
+            if (_clazz == null) {
+              final ErrorMsg msg = new ErrorMsg(ErrorMsg.CLASS_NOT_FOUND_ERR, _className);
+              getParser().reportError(Constants.ERROR, msg);
+            }
+          }
+
+          final Constructor[] constructors = _clazz.getConstructors();
+
+          for (int i = 0; i < constructors.length; i++) {
+              final int mods = constructors[i].getModifiers();
+              // Is it public, static and same number of args ?
+              if (Modifier.isPublic(mods) &&
+                  constructors[i].getParameterTypes().length == nArgs)
+              {
+                if (result == null) {
+                  result = new Vector();
+                }
+                result.addElement(constructors[i]);
+              }
+          }
+        }
+        catch (ClassNotFoundException e) {
+          final ErrorMsg msg = new ErrorMsg(ErrorMsg.CLASS_NOT_FOUND_ERR, _className);
+          getParser().reportError(Constants.ERROR, msg);
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Compute the JVM signature for the class.
+     */
+    static final String getSignature(Class clazz) {
+        if (clazz.isArray()) {
+            final StringBuffer sb = new StringBuffer();
+            Class cl = clazz;
+            while (cl.isArray()) {
+                sb.append("[");
+                cl = cl.getComponentType();
+            }
+            sb.append(getSignature(cl));
+            return sb.toString();
+        }
+        else if (clazz.isPrimitive()) {
+            if (clazz == Integer.TYPE) {
+                return "I";
+            }
+            else if (clazz == Byte.TYPE) {
+                return "B";
+            }
+            else if (clazz == Long.TYPE) {
+                return "J";
+            }
+            else if (clazz == Float.TYPE) {
+                return "F";
+            }
+            else if (clazz == Double.TYPE) {
+                return "D";
+            }
+            else if (clazz == Short.TYPE) {
+                return "S";
+            }
+            else if (clazz == Character.TYPE) {
+                return "C";
+            }
+            else if (clazz == Boolean.TYPE) {
+                return "Z";
+            }
+            else if (clazz == Void.TYPE) {
+                return "V";
+            }
+            else {
+                final String name = clazz.toString();
+                ErrorMsg err = new ErrorMsg(ErrorMsg.UNKNOWN_SIG_TYPE_ERR,name);
+                throw new Error(err.toString());
+            }
+        }
+        else {
+            return "L" + clazz.getName().replace('.', '/') + ';';
+        }
+    }
+
+    /**
+     * Compute the JVM method descriptor for the method.
+     */
+    static final String getSignature(Method meth) {
+        final StringBuffer sb = new StringBuffer();
+        sb.append('(');
+        final Class[] params = meth.getParameterTypes(); // avoid clone
+        for (int j = 0; j < params.length; j++) {
+            sb.append(getSignature(params[j]));
+        }
+        return sb.append(')').append(getSignature(meth.getReturnType()))
+            .toString();
+    }
+
+    /**
+     * Compute the JVM constructor descriptor for the constructor.
+     */
+    static final String getSignature(Constructor cons) {
+        final StringBuffer sb = new StringBuffer();
+        sb.append('(');
+        final Class[] params = cons.getParameterTypes(); // avoid clone
+        for (int j = 0; j < params.length; j++) {
+            sb.append(getSignature(params[j]));
+        }
+        return sb.append(")V").toString();
+    }
+
+    /**
+     * Return the signature of the current method
+     */
+    private String getMethodSignature(Vector argsType) {
+        final StringBuffer buf = new StringBuffer(_className);
+        buf.append('.').append(_fname.getLocalPart()).append('(');
+
+        int nArgs = argsType.size();
+        for (int i = 0; i < nArgs; i++) {
+            final Type intType = (Type)argsType.elementAt(i);
+            buf.append(intType.toString());
+            if (i < nArgs - 1) buf.append(", ");
+        }
+
+        buf.append(')');
+        return buf.toString();
+    }
+
+    /**
+     * To support EXSLT extensions, convert names with dash to allowable Java names:
+     * e.g., convert abc-xyz to abcXyz.
+     * Note: dashes only appear in middle of an EXSLT function or element name.
+     */
+    protected static String replaceDash(String name)
+    {
+        char dash = '-';
+        final StringBuilder buff = new StringBuilder("");
+        for (int i = 0; i < name.length(); i++) {
+        if (i > 0 && name.charAt(i-1) == dash)
+            buff.append(Character.toUpperCase(name.charAt(i)));
+        else if (name.charAt(i) != dash)
+            buff.append(name.charAt(i));
+        }
+        return buff.toString();
+    }
+
+    /**
+     * Translate code to call the BasisLibrary.unallowed_extensionF(String)
+     * method.
+     */
+    private void translateUnallowedExtension(ConstantPoolGen cpg,
+                                             InstructionList il) {
+        int index = cpg.addMethodref(BASIS_LIBRARY_CLASS,
+                                     "unallowed_extension_functionF",
+                                     "(Ljava/lang/String;)V");
+        il.append(new PUSH(cpg, _fname.toString()));
+        il.append(new INVOKESTATIC(index));
+    }
+}

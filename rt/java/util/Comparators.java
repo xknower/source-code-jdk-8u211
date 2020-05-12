@@ -1,104 +1,98 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ import java.io.Serializable;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class Comparators
-/*    */ {
-/*    */   private Comparators() {
-/* 39 */     throw new AssertionError("no instances");
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   enum NaturalOrderComparator
-/*    */     implements Comparator<Comparable<Object>>
-/*    */   {
-/* 48 */     INSTANCE;
-/*    */ 
-/*    */     
-/*    */     public int compare(Comparable<Object> param1Comparable1, Comparable<Object> param1Comparable2) {
-/* 52 */       return param1Comparable1.compareTo(param1Comparable2);
-/*    */     }
-/*    */ 
-/*    */     
-/*    */     public Comparator<Comparable<Object>> reversed() {
-/* 57 */       return Comparator.reverseOrder();
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   static final class NullComparator<T>
-/*    */     implements Comparator<T>, Serializable
-/*    */   {
-/*    */     private static final long serialVersionUID = -7569533591570686392L;
-/*    */     
-/*    */     private final boolean nullFirst;
-/*    */     
-/*    */     private final Comparator<T> real;
-/*    */     
-/*    */     NullComparator(boolean param1Boolean, Comparator<? super T> param1Comparator) {
-/* 72 */       this.nullFirst = param1Boolean;
-/* 73 */       this.real = (Comparator)param1Comparator;
-/*    */     }
-/*    */ 
-/*    */     
-/*    */     public int compare(T param1T1, T param1T2) {
-/* 78 */       if (param1T1 == null)
-/* 79 */         return (param1T2 == null) ? 0 : (this.nullFirst ? -1 : 1); 
-/* 80 */       if (param1T2 == null) {
-/* 81 */         return this.nullFirst ? 1 : -1;
-/*    */       }
-/* 83 */       return (this.real == null) ? 0 : this.real.compare(param1T1, param1T2);
-/*    */     }
-/*    */ 
-/*    */ 
-/*    */     
-/*    */     public Comparator<T> thenComparing(Comparator<? super T> param1Comparator) {
-/* 89 */       Objects.requireNonNull(param1Comparator);
-/* 90 */       return new NullComparator(this.nullFirst, (this.real == null) ? param1Comparator : this.real.thenComparing(param1Comparator));
-/*    */     }
-/*    */ 
-/*    */     
-/*    */     public Comparator<T> reversed() {
-/* 95 */       return new NullComparator(!this.nullFirst, (this.real == null) ? null : this.real.reversed());
-/*    */     }
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\Comparators.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util;
+
+import java.io.Serializable;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+
+/**
+ * Package private supporting class for {@link Comparator}.
+ */
+class Comparators {
+    private Comparators() {
+        throw new AssertionError("no instances");
+    }
+
+    /**
+     * Compares {@link Comparable} objects in natural order.
+     *
+     * @see Comparable
+     */
+    enum NaturalOrderComparator implements Comparator<Comparable<Object>> {
+        INSTANCE;
+
+        @Override
+        public int compare(Comparable<Object> c1, Comparable<Object> c2) {
+            return c1.compareTo(c2);
+        }
+
+        @Override
+        public Comparator<Comparable<Object>> reversed() {
+            return Comparator.reverseOrder();
+        }
+    }
+
+    /**
+     * Null-friendly comparators
+     */
+    final static class NullComparator<T> implements Comparator<T>, Serializable {
+        private static final long serialVersionUID = -7569533591570686392L;
+        private final boolean nullFirst;
+        // if null, non-null Ts are considered equal
+        private final Comparator<T> real;
+
+        @SuppressWarnings("unchecked")
+        NullComparator(boolean nullFirst, Comparator<? super T> real) {
+            this.nullFirst = nullFirst;
+            this.real = (Comparator<T>) real;
+        }
+
+        @Override
+        public int compare(T a, T b) {
+            if (a == null) {
+                return (b == null) ? 0 : (nullFirst ? -1 : 1);
+            } else if (b == null) {
+                return nullFirst ? 1: -1;
+            } else {
+                return (real == null) ? 0 : real.compare(a, b);
+            }
+        }
+
+        @Override
+        public Comparator<T> thenComparing(Comparator<? super T> other) {
+            Objects.requireNonNull(other);
+            return new NullComparator<>(nullFirst, real == null ? other : real.thenComparing(other));
+        }
+
+        @Override
+        public Comparator<T> reversed() {
+            return new NullComparator<>(!nullFirst, real == null ? null : real.reversed());
+        }
+    }
+}

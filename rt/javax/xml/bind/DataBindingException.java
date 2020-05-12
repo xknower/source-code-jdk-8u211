@@ -1,53 +1,47 @@
-/*    */ package javax.xml.bind;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class DataBindingException
-/*    */   extends RuntimeException
-/*    */ {
-/*    */   public DataBindingException(String message, Throwable cause) {
-/* 41 */     super(message, cause);
-/*    */   }
-/*    */   
-/*    */   public DataBindingException(Throwable cause) {
-/* 45 */     super(cause);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\bind\DataBindingException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.bind;
+
+/**
+ * Exception that represents a failure in a JAXB operation.
+ *
+ * <p>
+ * This exception differs from {@link JAXBException} in that
+ * this is an unchecked exception, while <tt>JAXBException</tt>
+ * is a checked exception.
+ *
+ * @see JAXB
+ * @since JAXB2.1
+ */
+public class DataBindingException extends RuntimeException {
+    public DataBindingException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public DataBindingException(Throwable cause) {
+        super(cause);
+    }
+}

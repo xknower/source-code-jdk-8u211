@@ -1,1071 +1,1065 @@
-/*      */ package java.awt;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class JobAttributes
-/*      */   implements Cloneable
-/*      */ {
-/*      */   private int copies;
-/*      */   private DefaultSelectionType defaultSelection;
-/*      */   private DestinationType destination;
-/*      */   private DialogType dialog;
-/*      */   private String fileName;
-/*      */   private int fromPage;
-/*      */   private int maxPage;
-/*      */   private int minPage;
-/*      */   private MultipleDocumentHandlingType multipleDocumentHandling;
-/*      */   private int[][] pageRanges;
-/*      */   private int prFirst;
-/*      */   private int prLast;
-/*      */   private String printer;
-/*      */   private SidesType sides;
-/*      */   private int toPage;
-/*      */   
-/*      */   public static final class DefaultSelectionType
-/*      */     extends AttributeValue
-/*      */   {
-/*      */     private static final int I_ALL = 0;
-/*      */     private static final int I_RANGE = 1;
-/*      */     private static final int I_SELECTION = 2;
-/*   70 */     private static final String[] NAMES = new String[] { "all", "range", "selection" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*   78 */     public static final DefaultSelectionType ALL = new DefaultSelectionType(0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*   84 */     public static final DefaultSelectionType RANGE = new DefaultSelectionType(1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*   90 */     public static final DefaultSelectionType SELECTION = new DefaultSelectionType(2);
-/*      */ 
-/*      */     
-/*      */     private DefaultSelectionType(int param1Int) {
-/*   94 */       super(param1Int, NAMES);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static final class DestinationType
-/*      */     extends AttributeValue
-/*      */   {
-/*      */     private static final int I_FILE = 0;
-/*      */     
-/*      */     private static final int I_PRINTER = 1;
-/*      */     
-/*  106 */     private static final String[] NAMES = new String[] { "file", "printer" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  114 */     public static final DestinationType FILE = new DestinationType(0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  120 */     public static final DestinationType PRINTER = new DestinationType(1);
-/*      */ 
-/*      */     
-/*      */     private DestinationType(int param1Int) {
-/*  124 */       super(param1Int, NAMES);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static final class DialogType
-/*      */     extends AttributeValue
-/*      */   {
-/*      */     private static final int I_COMMON = 0;
-/*      */     
-/*      */     private static final int I_NATIVE = 1;
-/*      */     
-/*      */     private static final int I_NONE = 2;
-/*  137 */     private static final String[] NAMES = new String[] { "common", "native", "none" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  145 */     public static final DialogType COMMON = new DialogType(0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  150 */     public static final DialogType NATIVE = new DialogType(1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  155 */     public static final DialogType NONE = new DialogType(2);
-/*      */     
-/*      */     private DialogType(int param1Int) {
-/*  158 */       super(param1Int, NAMES);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final class MultipleDocumentHandlingType
-/*      */     extends AttributeValue
-/*      */   {
-/*      */     private static final int I_SEPARATE_DOCUMENTS_COLLATED_COPIES = 0;
-/*      */ 
-/*      */     
-/*      */     private static final int I_SEPARATE_DOCUMENTS_UNCOLLATED_COPIES = 1;
-/*      */ 
-/*      */     
-/*  173 */     private static final String[] NAMES = new String[] { "separate-documents-collated-copies", "separate-documents-uncollated-copies" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  183 */     public static final MultipleDocumentHandlingType SEPARATE_DOCUMENTS_COLLATED_COPIES = new MultipleDocumentHandlingType(0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  191 */     public static final MultipleDocumentHandlingType SEPARATE_DOCUMENTS_UNCOLLATED_COPIES = new MultipleDocumentHandlingType(1);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private MultipleDocumentHandlingType(int param1Int) {
-/*  196 */       super(param1Int, NAMES);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static final class SidesType
-/*      */     extends AttributeValue
-/*      */   {
-/*      */     private static final int I_ONE_SIDED = 0;
-/*      */     
-/*      */     private static final int I_TWO_SIDED_LONG_EDGE = 1;
-/*      */     
-/*      */     private static final int I_TWO_SIDED_SHORT_EDGE = 2;
-/*      */     
-/*  210 */     private static final String[] NAMES = new String[] { "one-sided", "two-sided-long-edge", "two-sided-short-edge" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  219 */     public static final SidesType ONE_SIDED = new SidesType(0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  227 */     public static final SidesType TWO_SIDED_LONG_EDGE = new SidesType(1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  236 */     public static final SidesType TWO_SIDED_SHORT_EDGE = new SidesType(2);
-/*      */ 
-/*      */     
-/*      */     private SidesType(int param1Int) {
-/*  240 */       super(param1Int, NAMES);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JobAttributes() {
-/*  273 */     setCopiesToDefault();
-/*  274 */     setDefaultSelection(DefaultSelectionType.ALL);
-/*  275 */     setDestination(DestinationType.PRINTER);
-/*  276 */     setDialog(DialogType.NATIVE);
-/*  277 */     setMaxPage(2147483647);
-/*  278 */     setMinPage(1);
-/*  279 */     setMultipleDocumentHandlingToDefault();
-/*  280 */     setSidesToDefault();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JobAttributes(JobAttributes paramJobAttributes) {
-/*  290 */     set(paramJobAttributes);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JobAttributes(int paramInt1, DefaultSelectionType paramDefaultSelectionType, DestinationType paramDestinationType, DialogType paramDialogType, String paramString1, int paramInt2, int paramInt3, MultipleDocumentHandlingType paramMultipleDocumentHandlingType, int[][] paramArrayOfint, String paramString2, SidesType paramSidesType) {
-/*  340 */     setCopies(paramInt1);
-/*  341 */     setDefaultSelection(paramDefaultSelectionType);
-/*  342 */     setDestination(paramDestinationType);
-/*  343 */     setDialog(paramDialogType);
-/*  344 */     setFileName(paramString1);
-/*  345 */     setMaxPage(paramInt2);
-/*  346 */     setMinPage(paramInt3);
-/*  347 */     setMultipleDocumentHandling(paramMultipleDocumentHandlingType);
-/*  348 */     setPageRanges(paramArrayOfint);
-/*  349 */     setPrinter(paramString2);
-/*  350 */     setSides(paramSidesType);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/*      */     try {
-/*  361 */       return super.clone();
-/*  362 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*      */       
-/*  364 */       throw new InternalError(cloneNotSupportedException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void set(JobAttributes paramJobAttributes) {
-/*  375 */     this.copies = paramJobAttributes.copies;
-/*  376 */     this.defaultSelection = paramJobAttributes.defaultSelection;
-/*  377 */     this.destination = paramJobAttributes.destination;
-/*  378 */     this.dialog = paramJobAttributes.dialog;
-/*  379 */     this.fileName = paramJobAttributes.fileName;
-/*  380 */     this.fromPage = paramJobAttributes.fromPage;
-/*  381 */     this.maxPage = paramJobAttributes.maxPage;
-/*  382 */     this.minPage = paramJobAttributes.minPage;
-/*  383 */     this.multipleDocumentHandling = paramJobAttributes.multipleDocumentHandling;
-/*      */     
-/*  385 */     this.pageRanges = paramJobAttributes.pageRanges;
-/*  386 */     this.prFirst = paramJobAttributes.prFirst;
-/*  387 */     this.prLast = paramJobAttributes.prLast;
-/*  388 */     this.printer = paramJobAttributes.printer;
-/*  389 */     this.sides = paramJobAttributes.sides;
-/*  390 */     this.toPage = paramJobAttributes.toPage;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getCopies() {
-/*  401 */     return this.copies;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCopies(int paramInt) {
-/*  414 */     if (paramInt <= 0) {
-/*  415 */       throw new IllegalArgumentException("Invalid value for attribute copies");
-/*      */     }
-/*      */     
-/*  418 */     this.copies = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCopiesToDefault() {
-/*  426 */     setCopies(1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DefaultSelectionType getDefaultSelection() {
-/*  439 */     return this.defaultSelection;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDefaultSelection(DefaultSelectionType paramDefaultSelectionType) {
-/*  453 */     if (paramDefaultSelectionType == null) {
-/*  454 */       throw new IllegalArgumentException("Invalid value for attribute defaultSelection");
-/*      */     }
-/*      */     
-/*  457 */     this.defaultSelection = paramDefaultSelectionType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DestinationType getDestination() {
-/*  468 */     return this.destination;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDestination(DestinationType paramDestinationType) {
-/*  480 */     if (paramDestinationType == null) {
-/*  481 */       throw new IllegalArgumentException("Invalid value for attribute destination");
-/*      */     }
-/*      */     
-/*  484 */     this.destination = paramDestinationType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DialogType getDialog() {
-/*  502 */     return this.dialog;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDialog(DialogType paramDialogType) {
-/*  521 */     if (paramDialogType == null) {
-/*  522 */       throw new IllegalArgumentException("Invalid value for attribute dialog");
-/*      */     }
-/*      */     
-/*  525 */     this.dialog = paramDialogType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getFileName() {
-/*  535 */     return this.fileName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFileName(String paramString) {
-/*  545 */     this.fileName = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getFromPage() {
-/*  562 */     if (this.fromPage != 0)
-/*  563 */       return this.fromPage; 
-/*  564 */     if (this.toPage != 0)
-/*  565 */       return getMinPage(); 
-/*  566 */     if (this.pageRanges != null) {
-/*  567 */       return this.prFirst;
-/*      */     }
-/*  569 */     return getMinPage();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFromPage(int paramInt) {
-/*  589 */     if (paramInt <= 0 || (this.toPage != 0 && paramInt > this.toPage) || paramInt < this.minPage || paramInt > this.maxPage)
-/*      */     {
-/*      */ 
-/*      */       
-/*  593 */       throw new IllegalArgumentException("Invalid value for attribute fromPage");
-/*      */     }
-/*      */     
-/*  596 */     this.fromPage = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMaxPage() {
-/*  609 */     return this.maxPage;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMaxPage(int paramInt) {
-/*  623 */     if (paramInt <= 0 || paramInt < this.minPage) {
-/*  624 */       throw new IllegalArgumentException("Invalid value for attribute maxPage");
-/*      */     }
-/*      */     
-/*  627 */     this.maxPage = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinPage() {
-/*  640 */     return this.minPage;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMinPage(int paramInt) {
-/*  654 */     if (paramInt <= 0 || paramInt > this.maxPage) {
-/*  655 */       throw new IllegalArgumentException("Invalid value for attribute minPage");
-/*      */     }
-/*      */     
-/*  658 */     this.minPage = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MultipleDocumentHandlingType getMultipleDocumentHandling() {
-/*  671 */     return this.multipleDocumentHandling;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMultipleDocumentHandling(MultipleDocumentHandlingType paramMultipleDocumentHandlingType) {
-/*  687 */     if (paramMultipleDocumentHandlingType == null) {
-/*  688 */       throw new IllegalArgumentException("Invalid value for attribute multipleDocumentHandling");
-/*      */     }
-/*      */     
-/*  691 */     this.multipleDocumentHandling = paramMultipleDocumentHandlingType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMultipleDocumentHandlingToDefault() {
-/*  700 */     setMultipleDocumentHandling(MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int[][] getPageRanges() {
-/*  723 */     if (this.pageRanges != null) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  727 */       int[][] arrayOfInt = new int[this.pageRanges.length][2];
-/*  728 */       for (byte b = 0; b < this.pageRanges.length; b++) {
-/*  729 */         arrayOfInt[b][0] = this.pageRanges[b][0];
-/*  730 */         arrayOfInt[b][1] = this.pageRanges[b][1];
-/*      */       } 
-/*  732 */       return arrayOfInt;
-/*  733 */     }  if (this.fromPage != 0 || this.toPage != 0) {
-/*  734 */       int j = getFromPage();
-/*  735 */       int k = getToPage();
-/*  736 */       return new int[][] { { j, k } };
-/*      */     } 
-/*  738 */     int i = getMinPage();
-/*  739 */     return new int[][] { { i, i } };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPageRanges(int[][] paramArrayOfint) {
-/*  769 */     String str = "Invalid value for attribute pageRanges";
-/*  770 */     int i = 0;
-/*  771 */     int j = 0;
-/*      */     
-/*  773 */     if (paramArrayOfint == null) {
-/*  774 */       throw new IllegalArgumentException(str);
-/*      */     }
-/*      */     
-/*  777 */     for (byte b1 = 0; b1 < paramArrayOfint.length; b1++) {
-/*  778 */       if (paramArrayOfint[b1] == null || (paramArrayOfint[b1]).length != 2 || paramArrayOfint[b1][0] <= j || paramArrayOfint[b1][1] < paramArrayOfint[b1][0])
-/*      */       {
-/*      */ 
-/*      */         
-/*  782 */         throw new IllegalArgumentException(str);
-/*      */       }
-/*  784 */       j = paramArrayOfint[b1][1];
-/*  785 */       if (!i) {
-/*  786 */         i = paramArrayOfint[b1][0];
-/*      */       }
-/*      */     } 
-/*      */     
-/*  790 */     if (i < this.minPage || j > this.maxPage) {
-/*  791 */       throw new IllegalArgumentException(str);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  797 */     int[][] arrayOfInt = new int[paramArrayOfint.length][2];
-/*  798 */     for (byte b2 = 0; b2 < paramArrayOfint.length; b2++) {
-/*  799 */       arrayOfInt[b2][0] = paramArrayOfint[b2][0];
-/*  800 */       arrayOfInt[b2][1] = paramArrayOfint[b2][1];
-/*      */     } 
-/*  802 */     this.pageRanges = arrayOfInt;
-/*  803 */     this.prFirst = i;
-/*  804 */     this.prLast = j;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getPrinter() {
-/*  814 */     return this.printer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPrinter(String paramString) {
-/*  824 */     this.printer = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SidesType getSides() {
-/*  847 */     return this.sides;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSides(SidesType paramSidesType) {
-/*  871 */     if (paramSidesType == null) {
-/*  872 */       throw new IllegalArgumentException("Invalid value for attribute sides");
-/*      */     }
-/*      */     
-/*  875 */     this.sides = paramSidesType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSidesToDefault() {
-/*  884 */     setSides(SidesType.ONE_SIDED);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getToPage() {
-/*  901 */     if (this.toPage != 0)
-/*  902 */       return this.toPage; 
-/*  903 */     if (this.fromPage != 0)
-/*  904 */       return this.fromPage; 
-/*  905 */     if (this.pageRanges != null) {
-/*  906 */       return this.prLast;
-/*      */     }
-/*  908 */     return getMinPage();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setToPage(int paramInt) {
-/*  928 */     if (paramInt <= 0 || (this.fromPage != 0 && paramInt < this.fromPage) || paramInt < this.minPage || paramInt > this.maxPage)
-/*      */     {
-/*      */ 
-/*      */       
-/*  932 */       throw new IllegalArgumentException("Invalid value for attribute toPage");
-/*      */     }
-/*      */     
-/*  935 */     this.toPage = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/*  952 */     if (!(paramObject instanceof JobAttributes)) {
-/*  953 */       return false;
-/*      */     }
-/*  955 */     JobAttributes jobAttributes = (JobAttributes)paramObject;
-/*      */     
-/*  957 */     if (this.fileName == null) {
-/*  958 */       if (jobAttributes.fileName != null) {
-/*  959 */         return false;
-/*      */       }
-/*      */     }
-/*  962 */     else if (!this.fileName.equals(jobAttributes.fileName)) {
-/*  963 */       return false;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  967 */     if (this.pageRanges == null) {
-/*  968 */       if (jobAttributes.pageRanges != null) {
-/*  969 */         return false;
-/*      */       }
-/*      */     } else {
-/*  972 */       if (jobAttributes.pageRanges == null || this.pageRanges.length != jobAttributes.pageRanges.length)
-/*      */       {
-/*  974 */         return false;
-/*      */       }
-/*  976 */       for (byte b = 0; b < this.pageRanges.length; b++) {
-/*  977 */         if (this.pageRanges[b][0] != jobAttributes.pageRanges[b][0] || this.pageRanges[b][1] != jobAttributes.pageRanges[b][1])
-/*      */         {
-/*  979 */           return false;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  984 */     if (this.printer == null) {
-/*  985 */       if (jobAttributes.printer != null) {
-/*  986 */         return false;
-/*      */       }
-/*      */     }
-/*  989 */     else if (!this.printer.equals(jobAttributes.printer)) {
-/*  990 */       return false;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  994 */     return (this.copies == jobAttributes.copies && this.defaultSelection == jobAttributes.defaultSelection && this.destination == jobAttributes.destination && this.dialog == jobAttributes.dialog && this.fromPage == jobAttributes.fromPage && this.maxPage == jobAttributes.maxPage && this.minPage == jobAttributes.minPage && this.multipleDocumentHandling == jobAttributes.multipleDocumentHandling && this.prFirst == jobAttributes.prFirst && this.prLast == jobAttributes.prLast && this.sides == jobAttributes.sides && this.toPage == jobAttributes.toPage);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/* 1014 */     int i = (this.copies + this.fromPage + this.maxPage + this.minPage + this.prFirst + this.prLast + this.toPage) * 31 << 21;
-/*      */     
-/* 1016 */     if (this.pageRanges != null) {
-/* 1017 */       int j = 0;
-/* 1018 */       for (byte b = 0; b < this.pageRanges.length; b++) {
-/* 1019 */         j += this.pageRanges[b][0] + this.pageRanges[b][1];
-/*      */       }
-/* 1021 */       i ^= j * 31 << 11;
-/*      */     } 
-/* 1023 */     if (this.fileName != null) {
-/* 1024 */       i ^= this.fileName.hashCode();
-/*      */     }
-/* 1026 */     if (this.printer != null) {
-/* 1027 */       i ^= this.printer.hashCode();
-/*      */     }
-/* 1029 */     return this.defaultSelection.hashCode() << 6 ^ this.destination
-/* 1030 */       .hashCode() << 5 ^ this.dialog
-/* 1031 */       .hashCode() << 3 ^ this.multipleDocumentHandling
-/* 1032 */       .hashCode() << 2 ^ this.sides
-/* 1033 */       .hashCode() ^ i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 1043 */     int[][] arrayOfInt = getPageRanges();
-/* 1044 */     String str = "[";
-/* 1045 */     boolean bool = true;
-/* 1046 */     for (byte b = 0; b < arrayOfInt.length; b++) {
-/* 1047 */       if (bool) {
-/* 1048 */         bool = false;
-/*      */       } else {
-/* 1050 */         str = str + ",";
-/*      */       } 
-/* 1052 */       str = str + arrayOfInt[b][0] + ":" + arrayOfInt[b][1];
-/*      */     } 
-/* 1054 */     str = str + "]";
-/*      */     
-/* 1056 */     return "copies=" + getCopies() + ",defaultSelection=" + 
-/* 1057 */       getDefaultSelection() + ",destination=" + getDestination() + ",dialog=" + 
-/* 1058 */       getDialog() + ",fileName=" + getFileName() + ",fromPage=" + 
-/* 1059 */       getFromPage() + ",maxPage=" + getMaxPage() + ",minPage=" + 
-/* 1060 */       getMinPage() + ",multiple-document-handling=" + 
-/* 1061 */       getMultipleDocumentHandling() + ",page-ranges=" + str + ",printer=" + 
-/* 1062 */       getPrinter() + ",sides=" + getSides() + ",toPage=" + 
-/* 1063 */       getToPage();
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\JobAttributes.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+/**
+ * A set of attributes which control a print job.
+ * <p>
+ * Instances of this class control the number of copies, default selection,
+ * destination, print dialog, file and printer names, page ranges, multiple
+ * document handling (including collation), and multi-page imposition (such
+ * as duplex) of every print job which uses the instance. Attribute names are
+ * compliant with the Internet Printing Protocol (IPP) 1.1 where possible.
+ * Attribute values are partially compliant where possible.
+ * <p>
+ * To use a method which takes an inner class type, pass a reference to
+ * one of the constant fields of the inner class. Client code cannot create
+ * new instances of the inner class types because none of those classes
+ * has a public constructor. For example, to set the print dialog type to
+ * the cross-platform, pure Java print dialog, use the following code:
+ * <pre>
+ * import java.awt.JobAttributes;
+ *
+ * public class PureJavaPrintDialogExample {
+ *     public void setPureJavaPrintDialog(JobAttributes jobAttributes) {
+ *         jobAttributes.setDialog(JobAttributes.DialogType.COMMON);
+ *     }
+ * }
+ * </pre>
+ * <p>
+ * Every IPP attribute which supports an <i>attributeName</i>-default value
+ * has a corresponding <code>set<i>attributeName</i>ToDefault</code> method.
+ * Default value fields are not provided.
+ *
+ * @author      David Mendenhall
+ * @since 1.3
+ */
+public final class JobAttributes implements Cloneable {
+    /**
+     * A type-safe enumeration of possible default selection states.
+     * @since 1.3
+     */
+    public static final class DefaultSelectionType extends AttributeValue {
+        private static final int I_ALL = 0;
+        private static final int I_RANGE = 1;
+        private static final int I_SELECTION = 2;
+
+        private static final String NAMES[] = {
+            "all", "range", "selection"
+        };
+
+        /**
+         * The <code>DefaultSelectionType</code> instance to use for
+         * specifying that all pages of the job should be printed.
+         */
+        public static final DefaultSelectionType ALL =
+           new DefaultSelectionType(I_ALL);
+        /**
+         * The <code>DefaultSelectionType</code> instance to use for
+         * specifying that a range of pages of the job should be printed.
+         */
+        public static final DefaultSelectionType RANGE =
+           new DefaultSelectionType(I_RANGE);
+        /**
+         * The <code>DefaultSelectionType</code> instance to use for
+         * specifying that the current selection should be printed.
+         */
+        public static final DefaultSelectionType SELECTION =
+           new DefaultSelectionType(I_SELECTION);
+
+        private DefaultSelectionType(int type) {
+            super(type, NAMES);
+        }
+    }
+
+    /**
+     * A type-safe enumeration of possible job destinations.
+     * @since 1.3
+     */
+    public static final class DestinationType extends AttributeValue {
+        private static final int I_FILE = 0;
+        private static final int I_PRINTER = 1;
+
+        private static final String NAMES[] = {
+            "file", "printer"
+        };
+
+        /**
+         * The <code>DestinationType</code> instance to use for
+         * specifying print to file.
+         */
+        public static final DestinationType FILE =
+            new DestinationType(I_FILE);
+        /**
+         * The <code>DestinationType</code> instance to use for
+         * specifying print to printer.
+         */
+        public static final DestinationType PRINTER =
+            new DestinationType(I_PRINTER);
+
+        private DestinationType(int type) {
+            super(type, NAMES);
+        }
+    }
+
+    /**
+     * A type-safe enumeration of possible dialogs to display to the user.
+     * @since 1.3
+     */
+    public static final class DialogType extends AttributeValue {
+        private static final int I_COMMON = 0;
+        private static final int I_NATIVE = 1;
+        private static final int I_NONE = 2;
+
+        private static final String NAMES[] = {
+            "common", "native", "none"
+        };
+
+        /**
+         * The <code>DialogType</code> instance to use for
+         * specifying the cross-platform, pure Java print dialog.
+         */
+        public static final DialogType COMMON = new DialogType(I_COMMON);
+        /**
+         * The <code>DialogType</code> instance to use for
+         * specifying the platform's native print dialog.
+         */
+        public static final DialogType NATIVE = new DialogType(I_NATIVE);
+        /**
+         * The <code>DialogType</code> instance to use for
+         * specifying no print dialog.
+         */
+        public static final DialogType NONE = new DialogType(I_NONE);
+
+        private DialogType(int type) {
+            super(type, NAMES);
+        }
+    }
+
+    /**
+     * A type-safe enumeration of possible multiple copy handling states.
+     * It is used to control how the sheets of multiple copies of a single
+     * document are collated.
+     * @since 1.3
+     */
+    public static final class MultipleDocumentHandlingType extends
+                                                               AttributeValue {
+        private static final int I_SEPARATE_DOCUMENTS_COLLATED_COPIES = 0;
+        private static final int I_SEPARATE_DOCUMENTS_UNCOLLATED_COPIES = 1;
+
+        private static final String NAMES[] = {
+            "separate-documents-collated-copies",
+            "separate-documents-uncollated-copies"
+        };
+
+        /**
+         * The <code>MultipleDocumentHandlingType</code> instance to use for specifying
+         * that the job should be divided into separate, collated copies.
+         */
+        public static final MultipleDocumentHandlingType
+            SEPARATE_DOCUMENTS_COLLATED_COPIES =
+                new MultipleDocumentHandlingType(
+                    I_SEPARATE_DOCUMENTS_COLLATED_COPIES);
+        /**
+         * The <code>MultipleDocumentHandlingType</code> instance to use for specifying
+         * that the job should be divided into separate, uncollated copies.
+         */
+        public static final MultipleDocumentHandlingType
+            SEPARATE_DOCUMENTS_UNCOLLATED_COPIES =
+                new MultipleDocumentHandlingType(
+                    I_SEPARATE_DOCUMENTS_UNCOLLATED_COPIES);
+
+        private MultipleDocumentHandlingType(int type) {
+            super(type, NAMES);
+        }
+    }
+
+    /**
+     * A type-safe enumeration of possible multi-page impositions. These
+     * impositions are in compliance with IPP 1.1.
+     * @since 1.3
+     */
+    public static final class SidesType extends AttributeValue {
+        private static final int I_ONE_SIDED = 0;
+        private static final int I_TWO_SIDED_LONG_EDGE = 1;
+        private static final int I_TWO_SIDED_SHORT_EDGE = 2;
+
+        private static final String NAMES[] = {
+            "one-sided", "two-sided-long-edge", "two-sided-short-edge"
+        };
+
+        /**
+         * The <code>SidesType</code> instance to use for specifying that
+         * consecutive job pages should be printed upon the same side of
+         * consecutive media sheets.
+         */
+        public static final SidesType ONE_SIDED = new SidesType(I_ONE_SIDED);
+        /**
+         * The <code>SidesType</code> instance to use for specifying that
+         * consecutive job pages should be printed upon front and back sides
+         * of consecutive media sheets, such that the orientation of each pair
+         * of pages on the medium would be correct for the reader as if for
+         * binding on the long edge.
+         */
+        public static final SidesType TWO_SIDED_LONG_EDGE =
+            new SidesType(I_TWO_SIDED_LONG_EDGE);
+        /**
+         * The <code>SidesType</code> instance to use for specifying that
+         * consecutive job pages should be printed upon front and back sides
+         * of consecutive media sheets, such that the orientation of each pair
+         * of pages on the medium would be correct for the reader as if for
+         * binding on the short edge.
+         */
+        public static final SidesType TWO_SIDED_SHORT_EDGE =
+            new SidesType(I_TWO_SIDED_SHORT_EDGE);
+
+        private SidesType(int type) {
+            super(type, NAMES);
+        }
+    }
+
+    private int copies;
+    private DefaultSelectionType defaultSelection;
+    private DestinationType destination;
+    private DialogType dialog;
+    private String fileName;
+    private int fromPage;
+    private int maxPage;
+    private int minPage;
+    private MultipleDocumentHandlingType multipleDocumentHandling;
+    private int[][] pageRanges;
+    private int prFirst;
+    private int prLast;
+    private String printer;
+    private SidesType sides;
+    private int toPage;
+
+    /**
+     * Constructs a <code>JobAttributes</code> instance with default
+     * values for every attribute.  The dialog defaults to
+     * <code>DialogType.NATIVE</code>.  Min page defaults to
+     * <code>1</code>.  Max page defaults to <code>Integer.MAX_VALUE</code>.
+     * Destination defaults to <code>DestinationType.PRINTER</code>.
+     * Selection defaults to <code>DefaultSelectionType.ALL</code>.
+     * Number of copies defaults to <code>1</code>. Multiple document handling defaults
+     * to <code>MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES</code>.
+     * Sides defaults to <code>SidesType.ONE_SIDED</code>. File name defaults
+     * to <code>null</code>.
+     */
+    public JobAttributes() {
+        setCopiesToDefault();
+        setDefaultSelection(DefaultSelectionType.ALL);
+        setDestination(DestinationType.PRINTER);
+        setDialog(DialogType.NATIVE);
+        setMaxPage(Integer.MAX_VALUE);
+        setMinPage(1);
+        setMultipleDocumentHandlingToDefault();
+        setSidesToDefault();
+    }
+
+    /**
+     * Constructs a <code>JobAttributes</code> instance which is a copy
+     * of the supplied <code>JobAttributes</code>.
+     *
+     * @param   obj the <code>JobAttributes</code> to copy
+     */
+    public JobAttributes(JobAttributes obj) {
+        set(obj);
+    }
+
+    /**
+     * Constructs a <code>JobAttributes</code> instance with the
+     * specified values for every attribute.
+     *
+     * @param   copies an integer greater than 0
+     * @param   defaultSelection <code>DefaultSelectionType.ALL</code>,
+     *          <code>DefaultSelectionType.RANGE</code>, or
+     *          <code>DefaultSelectionType.SELECTION</code>
+     * @param   destination <code>DesintationType.FILE</code> or
+     *          <code>DesintationType.PRINTER</code>
+     * @param   dialog <code>DialogType.COMMON</code>,
+     *          <code>DialogType.NATIVE</code>, or
+     *          <code>DialogType.NONE</code>
+     * @param   fileName the possibly <code>null</code> file name
+     * @param   maxPage an integer greater than zero and greater than or equal
+     *          to <i>minPage</i>
+     * @param   minPage an integer greater than zero and less than or equal
+     *          to <i>maxPage</i>
+     * @param   multipleDocumentHandling
+     *     <code>MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_COLLATED_COPIES</code> or
+     *     <code>MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES</code>
+     * @param   pageRanges an array of integer arrays of two elements; an array
+     *          is interpreted as a range spanning all pages including and
+     *          between the specified pages; ranges must be in ascending
+     *          order and must not overlap; specified page numbers cannot be
+     *          less than <i>minPage</i> nor greater than <i>maxPage</i>;
+     *          for example:
+     *          <pre>
+     *          (new int[][] { new int[] { 1, 3 }, new int[] { 5, 5 },
+     *                         new int[] { 15, 19 } }),
+     *          </pre>
+     *          specifies pages 1, 2, 3, 5, 15, 16, 17, 18, and 19. Note that
+     *          (<code>new int[][] { new int[] { 1, 1 }, new int[] { 1, 2 } }</code>),
+     *          is an invalid set of page ranges because the two ranges
+     *          overlap
+     * @param   printer the possibly <code>null</code> printer name
+     * @param   sides <code>SidesType.ONE_SIDED</code>,
+     *          <code>SidesType.TWO_SIDED_LONG_EDGE</code>, or
+     *          <code>SidesType.TWO_SIDED_SHORT_EDGE</code>
+     * @throws  IllegalArgumentException if one or more of the above
+     *          conditions is violated
+     */
+    public JobAttributes(int copies, DefaultSelectionType defaultSelection,
+                         DestinationType destination, DialogType dialog,
+                         String fileName, int maxPage, int minPage,
+                         MultipleDocumentHandlingType multipleDocumentHandling,
+                         int[][] pageRanges, String printer, SidesType sides) {
+        setCopies(copies);
+        setDefaultSelection(defaultSelection);
+        setDestination(destination);
+        setDialog(dialog);
+        setFileName(fileName);
+        setMaxPage(maxPage);
+        setMinPage(minPage);
+        setMultipleDocumentHandling(multipleDocumentHandling);
+        setPageRanges(pageRanges);
+        setPrinter(printer);
+        setSides(sides);
+    }
+
+    /**
+     * Creates and returns a copy of this <code>JobAttributes</code>.
+     *
+     * @return  the newly created copy; it is safe to cast this Object into
+     *          a <code>JobAttributes</code>
+     */
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // Since we implement Cloneable, this should never happen
+            throw new InternalError(e);
+        }
+    }
+
+    /**
+     * Sets all of the attributes of this <code>JobAttributes</code> to
+     * the same values as the attributes of obj.
+     *
+     * @param   obj the <code>JobAttributes</code> to copy
+     */
+    public void set(JobAttributes obj) {
+        copies = obj.copies;
+        defaultSelection = obj.defaultSelection;
+        destination = obj.destination;
+        dialog = obj.dialog;
+        fileName = obj.fileName;
+        fromPage = obj.fromPage;
+        maxPage = obj.maxPage;
+        minPage = obj.minPage;
+        multipleDocumentHandling = obj.multipleDocumentHandling;
+        // okay because we never modify the contents of pageRanges
+        pageRanges = obj.pageRanges;
+        prFirst = obj.prFirst;
+        prLast = obj.prLast;
+        printer = obj.printer;
+        sides = obj.sides;
+        toPage = obj.toPage;
+    }
+
+    /**
+     * Returns the number of copies the application should render for jobs
+     * using these attributes. This attribute is updated to the value chosen
+     * by the user.
+     *
+     * @return  an integer greater than 0.
+     */
+    public int getCopies() {
+        return copies;
+    }
+
+    /**
+     * Specifies the number of copies the application should render for jobs
+     * using these attributes. Not specifying this attribute is equivalent to
+     * specifying <code>1</code>.
+     *
+     * @param   copies an integer greater than 0
+     * @throws  IllegalArgumentException if <code>copies</code> is less than
+     *      or equal to 0
+     */
+    public void setCopies(int copies) {
+        if (copies <= 0) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "copies");
+        }
+        this.copies = copies;
+    }
+
+    /**
+     * Sets the number of copies the application should render for jobs using
+     * these attributes to the default. The default number of copies is 1.
+     */
+    public void setCopiesToDefault() {
+        setCopies(1);
+    }
+
+    /**
+     * Specifies whether, for jobs using these attributes, the application
+     * should print all pages, the range specified by the return value of
+     * <code>getPageRanges</code>, or the current selection. This attribute
+     * is updated to the value chosen by the user.
+     *
+     * @return  DefaultSelectionType.ALL, DefaultSelectionType.RANGE, or
+     *          DefaultSelectionType.SELECTION
+     */
+    public DefaultSelectionType getDefaultSelection() {
+        return defaultSelection;
+    }
+
+    /**
+     * Specifies whether, for jobs using these attributes, the application
+     * should print all pages, the range specified by the return value of
+     * <code>getPageRanges</code>, or the current selection. Not specifying
+     * this attribute is equivalent to specifying DefaultSelectionType.ALL.
+     *
+     * @param   defaultSelection DefaultSelectionType.ALL,
+     *          DefaultSelectionType.RANGE, or DefaultSelectionType.SELECTION.
+     * @throws  IllegalArgumentException if defaultSelection is <code>null</code>
+     */
+    public void setDefaultSelection(DefaultSelectionType defaultSelection) {
+        if (defaultSelection == null) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "defaultSelection");
+        }
+        this.defaultSelection = defaultSelection;
+    }
+
+    /**
+     * Specifies whether output will be to a printer or a file for jobs using
+     * these attributes. This attribute is updated to the value chosen by the
+     * user.
+     *
+     * @return  DesintationType.FILE or DesintationType.PRINTER
+     */
+    public DestinationType getDestination() {
+        return destination;
+    }
+
+    /**
+     * Specifies whether output will be to a printer or a file for jobs using
+     * these attributes. Not specifying this attribute is equivalent to
+     * specifying DesintationType.PRINTER.
+     *
+     * @param   destination DesintationType.FILE or DesintationType.PRINTER.
+     * @throws  IllegalArgumentException if destination is null.
+     */
+    public void setDestination(DestinationType destination) {
+        if (destination == null) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "destination");
+        }
+        this.destination = destination;
+    }
+
+    /**
+     * Returns whether, for jobs using these attributes, the user should see
+     * a print dialog in which to modify the print settings, and which type of
+     * print dialog should be displayed. DialogType.COMMON denotes a cross-
+     * platform, pure Java print dialog. DialogType.NATIVE denotes the
+     * platform's native print dialog. If a platform does not support a native
+     * print dialog, the pure Java print dialog is displayed instead.
+     * DialogType.NONE specifies no print dialog (i.e., background printing).
+     * This attribute cannot be modified by, and is not subject to any
+     * limitations of, the implementation or the target printer.
+     *
+     * @return  <code>DialogType.COMMON</code>, <code>DialogType.NATIVE</code>, or
+     *          <code>DialogType.NONE</code>
+     */
+    public DialogType getDialog() {
+        return dialog;
+    }
+
+    /**
+     * Specifies whether, for jobs using these attributes, the user should see
+     * a print dialog in which to modify the print settings, and which type of
+     * print dialog should be displayed. DialogType.COMMON denotes a cross-
+     * platform, pure Java print dialog. DialogType.NATIVE denotes the
+     * platform's native print dialog. If a platform does not support a native
+     * print dialog, the pure Java print dialog is displayed instead.
+     * DialogType.NONE specifies no print dialog (i.e., background printing).
+     * Not specifying this attribute is equivalent to specifying
+     * DialogType.NATIVE.
+     *
+     * @param   dialog DialogType.COMMON, DialogType.NATIVE, or
+     *          DialogType.NONE.
+     * @throws  IllegalArgumentException if dialog is null.
+     */
+    public void setDialog(DialogType dialog) {
+        if (dialog == null) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "dialog");
+        }
+        this.dialog = dialog;
+    }
+
+    /**
+     * Specifies the file name for the output file for jobs using these
+     * attributes. This attribute is updated to the value chosen by the user.
+     *
+     * @return  the possibly <code>null</code> file name
+     */
+    public String getFileName() {
+        return fileName;
+    }
+
+    /**
+     * Specifies the file name for the output file for jobs using these
+     * attributes. Default is platform-dependent and implementation-defined.
+     *
+     * @param   fileName the possibly null file name.
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    /**
+     * Returns, for jobs using these attributes, the first page to be
+     * printed, if a range of pages is to be printed. This attribute is
+     * updated to the value chosen by the user. An application should ignore
+     * this attribute on output, unless the return value of the <code>
+     * getDefaultSelection</code> method is DefaultSelectionType.RANGE. An
+     * application should honor the return value of <code>getPageRanges</code>
+     * over the return value of this method, if possible.
+     *
+     * @return  an integer greater than zero and less than or equal to
+     *          <i>toPage</i> and greater than or equal to <i>minPage</i> and
+     *          less than or equal to <i>maxPage</i>.
+     */
+    public int getFromPage() {
+        if (fromPage != 0) {
+            return fromPage;
+        } else if (toPage != 0) {
+            return getMinPage();
+        } else if (pageRanges != null) {
+            return prFirst;
+        } else {
+            return getMinPage();
+        }
+    }
+
+    /**
+     * Specifies, for jobs using these attributes, the first page to be
+     * printed, if a range of pages is to be printed. If this attribute is not
+     * specified, then the values from the pageRanges attribute are used. If
+     * pageRanges and either or both of fromPage and toPage are specified,
+     * pageRanges takes precedence. Specifying none of pageRanges, fromPage,
+     * or toPage is equivalent to calling
+     * setPageRanges(new int[][] { new int[] { <i>minPage</i> } });
+     *
+     * @param   fromPage an integer greater than zero and less than or equal to
+     *          <i>toPage</i> and greater than or equal to <i>minPage</i> and
+     *          less than or equal to <i>maxPage</i>.
+     * @throws  IllegalArgumentException if one or more of the above
+     *          conditions is violated.
+     */
+    public void setFromPage(int fromPage) {
+        if (fromPage <= 0 ||
+            (toPage != 0 && fromPage > toPage) ||
+            fromPage < minPage ||
+            fromPage > maxPage) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "fromPage");
+        }
+        this.fromPage = fromPage;
+    }
+
+    /**
+     * Specifies the maximum value the user can specify as the last page to
+     * be printed for jobs using these attributes. This attribute cannot be
+     * modified by, and is not subject to any limitations of, the
+     * implementation or the target printer.
+     *
+     * @return  an integer greater than zero and greater than or equal
+     *          to <i>minPage</i>.
+     */
+    public int getMaxPage() {
+        return maxPage;
+    }
+
+    /**
+     * Specifies the maximum value the user can specify as the last page to
+     * be printed for jobs using these attributes. Not specifying this
+     * attribute is equivalent to specifying <code>Integer.MAX_VALUE</code>.
+     *
+     * @param   maxPage an integer greater than zero and greater than or equal
+     *          to <i>minPage</i>
+     * @throws  IllegalArgumentException if one or more of the above
+     *          conditions is violated
+     */
+    public void setMaxPage(int maxPage) {
+        if (maxPage <= 0 || maxPage < minPage) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "maxPage");
+        }
+        this.maxPage = maxPage;
+    }
+
+    /**
+     * Specifies the minimum value the user can specify as the first page to
+     * be printed for jobs using these attributes. This attribute cannot be
+     * modified by, and is not subject to any limitations of, the
+     * implementation or the target printer.
+     *
+     * @return  an integer greater than zero and less than or equal
+     *          to <i>maxPage</i>.
+     */
+    public int getMinPage() {
+        return minPage;
+    }
+
+    /**
+     * Specifies the minimum value the user can specify as the first page to
+     * be printed for jobs using these attributes. Not specifying this
+     * attribute is equivalent to specifying <code>1</code>.
+     *
+     * @param   minPage an integer greater than zero and less than or equal
+     *          to <i>maxPage</i>.
+     * @throws  IllegalArgumentException if one or more of the above
+     *          conditions is violated.
+     */
+    public void setMinPage(int minPage) {
+        if (minPage <= 0 || minPage > maxPage) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "minPage");
+        }
+        this.minPage = minPage;
+    }
+
+    /**
+     * Specifies the handling of multiple copies, including collation, for
+     * jobs using these attributes. This attribute is updated to the value
+     * chosen by the user.
+     *
+     * @return
+     *     MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_COLLATED_COPIES or
+     *     MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES.
+     */
+    public MultipleDocumentHandlingType getMultipleDocumentHandling() {
+        return multipleDocumentHandling;
+    }
+
+    /**
+     * Specifies the handling of multiple copies, including collation, for
+     * jobs using these attributes. Not specifying this attribute is equivalent
+     * to specifying
+     * MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES.
+     *
+     * @param   multipleDocumentHandling
+     *     MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_COLLATED_COPIES or
+     *     MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES.
+     * @throws  IllegalArgumentException if multipleDocumentHandling is null.
+     */
+    public void setMultipleDocumentHandling(MultipleDocumentHandlingType
+                                            multipleDocumentHandling) {
+        if (multipleDocumentHandling == null) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "multipleDocumentHandling");
+        }
+        this.multipleDocumentHandling = multipleDocumentHandling;
+    }
+
+    /**
+     * Sets the handling of multiple copies, including collation, for jobs
+     * using these attributes to the default. The default handling is
+     * MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES.
+     */
+    public void setMultipleDocumentHandlingToDefault() {
+        setMultipleDocumentHandling(
+            MultipleDocumentHandlingType.SEPARATE_DOCUMENTS_UNCOLLATED_COPIES);
+    }
+
+    /**
+     * Specifies, for jobs using these attributes, the ranges of pages to be
+     * printed, if a range of pages is to be printed. All range numbers are
+     * inclusive. This attribute is updated to the value chosen by the user.
+     * An application should ignore this attribute on output, unless the
+     * return value of the <code>getDefaultSelection</code> method is
+     * DefaultSelectionType.RANGE.
+     *
+     * @return  an array of integer arrays of 2 elements. An array
+     *          is interpreted as a range spanning all pages including and
+     *          between the specified pages. Ranges must be in ascending
+     *          order and must not overlap. Specified page numbers cannot be
+     *          less than <i>minPage</i> nor greater than <i>maxPage</i>.
+     *          For example:
+     *          (new int[][] { new int[] { 1, 3 }, new int[] { 5, 5 },
+     *                         new int[] { 15, 19 } }),
+     *          specifies pages 1, 2, 3, 5, 15, 16, 17, 18, and 19.
+     */
+    public int[][] getPageRanges() {
+        if (pageRanges != null) {
+            // Return a copy because otherwise client code could circumvent the
+            // the checks made in setPageRanges by modifying the returned
+            // array.
+            int[][] copy = new int[pageRanges.length][2];
+            for (int i = 0; i < pageRanges.length; i++) {
+                copy[i][0] = pageRanges[i][0];
+                copy[i][1] = pageRanges[i][1];
+            }
+            return copy;
+        } else if (fromPage != 0 || toPage != 0) {
+            int fromPage = getFromPage();
+            int toPage = getToPage();
+            return new int[][] { new int[] { fromPage, toPage } };
+        } else {
+            int minPage = getMinPage();
+            return new int[][] { new int[] { minPage, minPage } };
+        }
+    }
+
+    /**
+     * Specifies, for jobs using these attributes, the ranges of pages to be
+     * printed, if a range of pages is to be printed. All range numbers are
+     * inclusive. If this attribute is not specified, then the values from the
+     * fromPage and toPages attributes are used. If pageRanges and either or
+     * both of fromPage and toPage are specified, pageRanges takes precedence.
+     * Specifying none of pageRanges, fromPage, or toPage is equivalent to
+     * calling setPageRanges(new int[][] { new int[] { <i>minPage</i>,
+     *                                                 <i>minPage</i> } });
+     *
+     * @param   pageRanges an array of integer arrays of 2 elements. An array
+     *          is interpreted as a range spanning all pages including and
+     *          between the specified pages. Ranges must be in ascending
+     *          order and must not overlap. Specified page numbers cannot be
+     *          less than <i>minPage</i> nor greater than <i>maxPage</i>.
+     *          For example:
+     *          (new int[][] { new int[] { 1, 3 }, new int[] { 5, 5 },
+     *                         new int[] { 15, 19 } }),
+     *          specifies pages 1, 2, 3, 5, 15, 16, 17, 18, and 19. Note that
+     *          (new int[][] { new int[] { 1, 1 }, new int[] { 1, 2 } }),
+     *          is an invalid set of page ranges because the two ranges
+     *          overlap.
+     * @throws  IllegalArgumentException if one or more of the above
+     *          conditions is violated.
+     */
+    public void setPageRanges(int[][] pageRanges) {
+        String xcp = "Invalid value for attribute pageRanges";
+        int first = 0;
+        int last = 0;
+
+        if (pageRanges == null) {
+            throw new IllegalArgumentException(xcp);
+        }
+
+        for (int i = 0; i < pageRanges.length; i++) {
+            if (pageRanges[i] == null ||
+                pageRanges[i].length != 2 ||
+                pageRanges[i][0] <= last ||
+                pageRanges[i][1] < pageRanges[i][0]) {
+                    throw new IllegalArgumentException(xcp);
+            }
+            last = pageRanges[i][1];
+            if (first == 0) {
+                first = pageRanges[i][0];
+            }
+        }
+
+        if (first < minPage || last > maxPage) {
+            throw new IllegalArgumentException(xcp);
+        }
+
+        // Store a copy because otherwise client code could circumvent the
+        // the checks made above by holding a reference to the array and
+        // modifying it after calling setPageRanges.
+        int[][] copy = new int[pageRanges.length][2];
+        for (int i = 0; i < pageRanges.length; i++) {
+            copy[i][0] = pageRanges[i][0];
+            copy[i][1] = pageRanges[i][1];
+        }
+        this.pageRanges = copy;
+        this.prFirst = first;
+        this.prLast = last;
+    }
+
+    /**
+     * Returns the destination printer for jobs using these attributes. This
+     * attribute is updated to the value chosen by the user.
+     *
+     * @return  the possibly null printer name.
+     */
+    public String getPrinter() {
+        return printer;
+    }
+
+    /**
+     * Specifies the destination printer for jobs using these attributes.
+     * Default is platform-dependent and implementation-defined.
+     *
+     * @param   printer the possibly null printer name.
+     */
+    public void setPrinter(String printer) {
+        this.printer = printer;
+    }
+
+    /**
+     * Returns how consecutive pages should be imposed upon the sides of the
+     * print medium for jobs using these attributes. SidesType.ONE_SIDED
+     * imposes each consecutive page upon the same side of consecutive media
+     * sheets. This imposition is sometimes called <i>simplex</i>.
+     * SidesType.TWO_SIDED_LONG_EDGE imposes each consecutive pair of pages
+     * upon front and back sides of consecutive media sheets, such that the
+     * orientation of each pair of pages on the medium would be correct for
+     * the reader as if for binding on the long edge. This imposition is
+     * sometimes called <i>duplex</i>. SidesType.TWO_SIDED_SHORT_EDGE imposes
+     * each consecutive pair of pages upon front and back sides of consecutive
+     * media sheets, such that the orientation of each pair of pages on the
+     * medium would be correct for the reader as if for binding on the short
+     * edge. This imposition is sometimes called <i>tumble</i>. This attribute
+     * is updated to the value chosen by the user.
+     *
+     * @return  SidesType.ONE_SIDED, SidesType.TWO_SIDED_LONG_EDGE, or
+     *          SidesType.TWO_SIDED_SHORT_EDGE.
+     */
+    public SidesType getSides() {
+        return sides;
+    }
+
+    /**
+     * Specifies how consecutive pages should be imposed upon the sides of the
+     * print medium for jobs using these attributes. SidesType.ONE_SIDED
+     * imposes each consecutive page upon the same side of consecutive media
+     * sheets. This imposition is sometimes called <i>simplex</i>.
+     * SidesType.TWO_SIDED_LONG_EDGE imposes each consecutive pair of pages
+     * upon front and back sides of consecutive media sheets, such that the
+     * orientation of each pair of pages on the medium would be correct for
+     * the reader as if for binding on the long edge. This imposition is
+     * sometimes called <i>duplex</i>. SidesType.TWO_SIDED_SHORT_EDGE imposes
+     * each consecutive pair of pages upon front and back sides of consecutive
+     * media sheets, such that the orientation of each pair of pages on the
+     * medium would be correct for the reader as if for binding on the short
+     * edge. This imposition is sometimes called <i>tumble</i>. Not specifying
+     * this attribute is equivalent to specifying SidesType.ONE_SIDED.
+     *
+     * @param   sides SidesType.ONE_SIDED, SidesType.TWO_SIDED_LONG_EDGE, or
+     *          SidesType.TWO_SIDED_SHORT_EDGE.
+     * @throws  IllegalArgumentException if sides is null.
+     */
+    public void setSides(SidesType sides) {
+        if (sides == null) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "sides");
+        }
+        this.sides = sides;
+    }
+
+    /**
+     * Sets how consecutive pages should be imposed upon the sides of the
+     * print medium for jobs using these attributes to the default. The
+     * default imposition is SidesType.ONE_SIDED.
+     */
+    public void setSidesToDefault() {
+        setSides(SidesType.ONE_SIDED);
+    }
+
+    /**
+     * Returns, for jobs using these attributes, the last page (inclusive)
+     * to be printed, if a range of pages is to be printed. This attribute is
+     * updated to the value chosen by the user. An application should ignore
+     * this attribute on output, unless the return value of the <code>
+     * getDefaultSelection</code> method is DefaultSelectionType.RANGE. An
+     * application should honor the return value of <code>getPageRanges</code>
+     * over the return value of this method, if possible.
+     *
+     * @return  an integer greater than zero and greater than or equal
+     *          to <i>toPage</i> and greater than or equal to <i>minPage</i>
+     *          and less than or equal to <i>maxPage</i>.
+     */
+    public int getToPage() {
+        if (toPage != 0) {
+            return toPage;
+        } else if (fromPage != 0) {
+            return fromPage;
+        } else if (pageRanges != null) {
+            return prLast;
+        } else {
+            return getMinPage();
+        }
+    }
+
+    /**
+     * Specifies, for jobs using these attributes, the last page (inclusive)
+     * to be printed, if a range of pages is to be printed.
+     * If this attribute is not specified, then the values from the pageRanges
+     * attribute are used. If pageRanges and either or both of fromPage and
+     * toPage are specified, pageRanges takes precedence. Specifying none of
+     * pageRanges, fromPage, or toPage is equivalent to calling
+     * setPageRanges(new int[][] { new int[] { <i>minPage</i> } });
+     *
+     * @param   toPage an integer greater than zero and greater than or equal
+     *          to <i>fromPage</i> and greater than or equal to <i>minPage</i>
+     *          and less than or equal to <i>maxPage</i>.
+     * @throws  IllegalArgumentException if one or more of the above
+     *          conditions is violated.
+     */
+    public void setToPage(int toPage) {
+        if (toPage <= 0 ||
+            (fromPage != 0 && toPage < fromPage) ||
+            toPage < minPage ||
+            toPage > maxPage) {
+            throw new IllegalArgumentException("Invalid value for attribute "+
+                                               "toPage");
+        }
+        this.toPage = toPage;
+    }
+
+    /**
+     * Determines whether two JobAttributes are equal to each other.
+     * <p>
+     * Two JobAttributes are equal if and only if each of their attributes are
+     * equal. Attributes of enumeration type are equal if and only if the
+     * fields refer to the same unique enumeration object. A set of page
+     * ranges is equal if and only if the sets are of equal length, each range
+     * enumerates the same pages, and the ranges are in the same order.
+     *
+     * @param   obj the object whose equality will be checked.
+     * @return  whether obj is equal to this JobAttribute according to the
+     *          above criteria.
+     */
+    public boolean equals(Object obj) {
+        if (!(obj instanceof JobAttributes)) {
+            return false;
+        }
+        JobAttributes rhs = (JobAttributes)obj;
+
+        if (fileName == null) {
+            if (rhs.fileName != null) {
+                return false;
+            }
+        } else {
+            if (!fileName.equals(rhs.fileName)) {
+                return false;
+            }
+        }
+
+        if (pageRanges == null) {
+            if (rhs.pageRanges != null) {
+                return false;
+            }
+        } else {
+            if (rhs.pageRanges == null ||
+                    pageRanges.length != rhs.pageRanges.length) {
+                return false;
+            }
+            for (int i = 0; i < pageRanges.length; i++) {
+                if (pageRanges[i][0] != rhs.pageRanges[i][0] ||
+                    pageRanges[i][1] != rhs.pageRanges[i][1]) {
+                    return false;
+                }
+            }
+        }
+
+        if (printer == null) {
+            if (rhs.printer != null) {
+                return false;
+            }
+        } else {
+            if (!printer.equals(rhs.printer)) {
+                return false;
+            }
+        }
+
+        return (copies == rhs.copies &&
+                defaultSelection == rhs.defaultSelection &&
+                destination == rhs.destination &&
+                dialog == rhs.dialog &&
+                fromPage == rhs.fromPage &&
+                maxPage == rhs.maxPage &&
+                minPage == rhs.minPage &&
+                multipleDocumentHandling == rhs.multipleDocumentHandling &&
+                prFirst == rhs.prFirst &&
+                prLast == rhs.prLast &&
+                sides == rhs.sides &&
+                toPage == rhs.toPage);
+    }
+
+    /**
+     * Returns a hash code value for this JobAttributes.
+     *
+     * @return  the hash code.
+     */
+    public int hashCode() {
+        int rest = ((copies + fromPage + maxPage + minPage + prFirst + prLast +
+                     toPage) * 31) << 21;
+        if (pageRanges != null) {
+            int sum = 0;
+            for (int i = 0; i < pageRanges.length; i++) {
+                sum += pageRanges[i][0] + pageRanges[i][1];
+            }
+            rest ^= (sum * 31) << 11;
+        }
+        if (fileName != null) {
+            rest ^= fileName.hashCode();
+        }
+        if (printer != null) {
+            rest ^= printer.hashCode();
+        }
+        return (defaultSelection.hashCode() << 6 ^
+                destination.hashCode() << 5 ^
+                dialog.hashCode() << 3 ^
+                multipleDocumentHandling.hashCode() << 2 ^
+                sides.hashCode() ^
+                rest);
+    }
+
+    /**
+     * Returns a string representation of this JobAttributes.
+     *
+     * @return  the string representation.
+     */
+    public String toString() {
+        int[][] pageRanges = getPageRanges();
+        String prStr = "[";
+        boolean first = true;
+        for (int i = 0; i < pageRanges.length; i++) {
+            if (first) {
+                first = false;
+            } else {
+                prStr += ",";
+            }
+            prStr += pageRanges[i][0] + ":" + pageRanges[i][1];
+        }
+        prStr += "]";
+
+        return "copies=" + getCopies() + ",defaultSelection=" +
+            getDefaultSelection() + ",destination=" + getDestination() +
+            ",dialog=" + getDialog() + ",fileName=" + getFileName() +
+            ",fromPage=" + getFromPage() + ",maxPage=" + getMaxPage() +
+            ",minPage=" + getMinPage() + ",multiple-document-handling=" +
+            getMultipleDocumentHandling() + ",page-ranges=" + prStr +
+            ",printer=" + getPrinter() + ",sides=" + getSides() + ",toPage=" +
+            getToPage();
+    }
+}

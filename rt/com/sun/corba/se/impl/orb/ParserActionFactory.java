@@ -1,50 +1,44 @@
-/*    */ package com.sun.corba.se.impl.orb;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orb.Operation;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ParserActionFactory
-/*    */ {
-/*    */   public static ParserAction makeNormalAction(String paramString1, Operation paramOperation, String paramString2) {
-/* 36 */     return new NormalParserAction(paramString1, paramOperation, paramString2);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static ParserAction makePrefixAction(String paramString1, Operation paramOperation, String paramString2, Class paramClass) {
-/* 42 */     return new PrefixParserAction(paramString1, paramOperation, paramString2, paramClass);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\ParserActionFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orb ;
+
+import com.sun.corba.se.spi.orb.Operation ;
+
+public class ParserActionFactory{
+    private ParserActionFactory() {}
+
+    public static ParserAction makeNormalAction( String propertyName,
+        Operation operation, String fieldName )
+    {
+        return new NormalParserAction( propertyName, operation, fieldName ) ;
+    }
+
+    public static ParserAction makePrefixAction( String propertyName,
+        Operation operation, String fieldName, Class componentType )
+    {
+        return new PrefixParserAction( propertyName, operation, fieldName, componentType ) ;
+    }
+}

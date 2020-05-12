@@ -1,171 +1,165 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import java.awt.geom.AffineTransform;
-/*     */ import java.awt.geom.Point2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.image.ColorModel;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class LinearGradientPaintContext
-/*     */   extends MultipleGradientPaintContext
-/*     */ {
-/*     */   private float dgdX;
-/*     */   private float dgdY;
-/*     */   private float gc;
-/*     */   
-/*     */   LinearGradientPaintContext(LinearGradientPaint paramLinearGradientPaint, ColorModel paramColorModel, Rectangle paramRectangle, Rectangle2D paramRectangle2D, AffineTransform paramAffineTransform, RenderingHints paramRenderingHints, Point2D paramPoint2D1, Point2D paramPoint2D2, float[] paramArrayOffloat, Color[] paramArrayOfColor, MultipleGradientPaint.CycleMethod paramCycleMethod, MultipleGradientPaint.ColorSpaceType paramColorSpaceType) {
-/*  90 */     super(paramLinearGradientPaint, paramColorModel, paramRectangle, paramRectangle2D, paramAffineTransform, paramRenderingHints, paramArrayOffloat, paramArrayOfColor, paramCycleMethod, paramColorSpaceType);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 103 */     float f1 = (float)paramPoint2D1.getX();
-/* 104 */     float f2 = (float)paramPoint2D1.getY();
-/* 105 */     float f3 = (float)paramPoint2D2.getX();
-/* 106 */     float f4 = (float)paramPoint2D2.getY();
-/*     */     
-/* 108 */     float f5 = f3 - f1;
-/* 109 */     float f6 = f4 - f2;
-/* 110 */     float f7 = f5 * f5 + f6 * f6;
-/*     */ 
-/*     */     
-/* 113 */     float f8 = f5 / f7;
-/* 114 */     float f9 = f6 / f7;
-/*     */ 
-/*     */     
-/* 117 */     this.dgdX = this.a00 * f8 + this.a10 * f9;
-/*     */     
-/* 119 */     this.dgdY = this.a01 * f8 + this.a11 * f9;
-/*     */ 
-/*     */     
-/* 122 */     this.gc = (this.a02 - f1) * f8 + (this.a12 - f2) * f9;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fillRaster(int[] paramArrayOfint, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/* 137 */     float f1 = 0.0F;
-/*     */ 
-/*     */     
-/* 140 */     int i = paramInt1 + paramInt5;
-/*     */ 
-/*     */     
-/* 143 */     float f2 = this.dgdX * paramInt3 + this.gc;
-/*     */     
-/* 145 */     for (byte b = 0; b < paramInt6; b++) {
-/*     */ 
-/*     */       
-/* 148 */       f1 = f2 + this.dgdY * (paramInt4 + b);
-/*     */       
-/* 150 */       while (paramInt1 < i) {
-/*     */         
-/* 152 */         paramArrayOfint[paramInt1++] = indexIntoGradientsArrays(f1);
-/*     */ 
-/*     */         
-/* 155 */         f1 += this.dgdX;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 159 */       paramInt1 += paramInt2;
-/*     */ 
-/*     */       
-/* 162 */       i = paramInt1 + paramInt5;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\LinearGradientPaintContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.awt.MultipleGradientPaint.CycleMethod;
+import java.awt.MultipleGradientPaint.ColorSpaceType;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.ColorModel;
+
+/**
+ * Provides the actual implementation for the LinearGradientPaint.
+ * This is where the pixel processing is done.
+ *
+ * @see java.awt.LinearGradientPaint
+ * @see java.awt.PaintContext
+ * @see java.awt.Paint
+ * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans
+ */
+final class LinearGradientPaintContext extends MultipleGradientPaintContext {
+
+    /**
+     * The following invariants are used to process the gradient value from
+     * a device space coordinate, (X, Y):
+     *     g(X, Y) = dgdX*X + dgdY*Y + gc
+     */
+    private float dgdX, dgdY, gc;
+
+    /**
+     * Constructor for LinearGradientPaintContext.
+     *
+     * @param paint the {@code LinearGradientPaint} from which this context
+     *              is created
+     * @param cm {@code ColorModel} that receives
+     *           the <code>Paint</code> data. This is used only as a hint.
+     * @param deviceBounds the device space bounding box of the
+     *                     graphics primitive being rendered
+     * @param userBounds the user space bounding box of the
+     *                   graphics primitive being rendered
+     * @param t the {@code AffineTransform} from user
+     *          space into device space (gradientTransform should be
+     *          concatenated with this)
+     * @param hints the hints that the context object uses to choose
+     *              between rendering alternatives
+     * @param start gradient start point, in user space
+     * @param end gradient end point, in user space
+     * @param fractions the fractions specifying the gradient distribution
+     * @param colors the gradient colors
+     * @param cycleMethod either NO_CYCLE, REFLECT, or REPEAT
+     * @param colorSpace which colorspace to use for interpolation,
+     *                   either SRGB or LINEAR_RGB
+     */
+    LinearGradientPaintContext(LinearGradientPaint paint,
+                               ColorModel cm,
+                               Rectangle deviceBounds,
+                               Rectangle2D userBounds,
+                               AffineTransform t,
+                               RenderingHints hints,
+                               Point2D start,
+                               Point2D end,
+                               float[] fractions,
+                               Color[] colors,
+                               CycleMethod cycleMethod,
+                               ColorSpaceType colorSpace)
+    {
+        super(paint, cm, deviceBounds, userBounds, t, hints, fractions,
+              colors, cycleMethod, colorSpace);
+
+        // A given point in the raster should take on the same color as its
+        // projection onto the gradient vector.
+        // Thus, we want the projection of the current position vector
+        // onto the gradient vector, then normalized with respect to the
+        // length of the gradient vector, giving a value which can be mapped
+        // into the range 0-1.
+        //    projection =
+        //        currentVector dot gradientVector / length(gradientVector)
+        //    normalized = projection / length(gradientVector)
+
+        float startx = (float)start.getX();
+        float starty = (float)start.getY();
+        float endx = (float)end.getX();
+        float endy = (float)end.getY();
+
+        float dx = endx - startx;  // change in x from start to end
+        float dy = endy - starty;  // change in y from start to end
+        float dSq = dx*dx + dy*dy; // total distance squared
+
+        // avoid repeated calculations by doing these divides once
+        float constX = dx/dSq;
+        float constY = dy/dSq;
+
+        // incremental change along gradient for +x
+        dgdX = a00*constX + a10*constY;
+        // incremental change along gradient for +y
+        dgdY = a01*constX + a11*constY;
+
+        // constant, incorporates the translation components from the matrix
+        gc = (a02-startx)*constX + (a12-starty)*constY;
+    }
+
+    /**
+     * Return a Raster containing the colors generated for the graphics
+     * operation.  This is where the area is filled with colors distributed
+     * linearly.
+     *
+     * @param x,y,w,h the area in device space for which colors are
+     * generated.
+     */
+    protected void fillRaster(int[] pixels, int off, int adjust,
+                              int x, int y, int w, int h)
+    {
+        // current value for row gradients
+        float g = 0;
+
+        // used to end iteration on rows
+        int rowLimit = off + w;
+
+        // constant which can be pulled out of the inner loop
+        float initConst = (dgdX*x) + gc;
+
+        for (int i = 0; i < h; i++) { // for every row
+
+            // initialize current value to be start
+            g = initConst + dgdY*(y+i);
+
+            while (off < rowLimit) { // for every pixel in this row
+                // get the color
+                pixels[off++] = indexIntoGradientsArrays(g);
+
+                // incremental change in g
+                g += dgdX;
+            }
+
+            // change in off from row to row
+            off += adjust;
+
+            //rowlimit is width + offset
+            rowLimit = off + w;
+        }
+    }
+}

@@ -1,2651 +1,2653 @@
-/*      */ package javax.swing.plaf.basic;
-/*      */ 
-/*      */ import java.awt.AWTKeyStroke;
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Cursor;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.LayoutManager;
-/*      */ import java.awt.LayoutManager2;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.awt.datatransfer.DataFlavor;
-/*      */ import java.awt.datatransfer.Transferable;
-/*      */ import java.awt.datatransfer.UnsupportedFlavorException;
-/*      */ import java.awt.event.ActionEvent;
-/*      */ import java.awt.event.MouseEvent;
-/*      */ import java.awt.im.InputContext;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InputStream;
-/*      */ import java.io.Reader;
-/*      */ import java.io.StringBufferInputStream;
-/*      */ import java.io.StringReader;
-/*      */ import java.io.StringWriter;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.HashSet;
-/*      */ import java.util.Hashtable;
-/*      */ import java.util.Set;
-/*      */ import javax.swing.AbstractAction;
-/*      */ import javax.swing.Action;
-/*      */ import javax.swing.ActionMap;
-/*      */ import javax.swing.DropMode;
-/*      */ import javax.swing.InputMap;
-/*      */ import javax.swing.JComponent;
-/*      */ import javax.swing.JEditorPane;
-/*      */ import javax.swing.KeyStroke;
-/*      */ import javax.swing.LookAndFeel;
-/*      */ import javax.swing.SwingUtilities;
-/*      */ import javax.swing.TransferHandler;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.border.Border;
-/*      */ import javax.swing.event.DocumentEvent;
-/*      */ import javax.swing.event.DocumentListener;
-/*      */ import javax.swing.event.MouseInputAdapter;
-/*      */ import javax.swing.plaf.ActionMapUIResource;
-/*      */ import javax.swing.plaf.ComponentInputMapUIResource;
-/*      */ import javax.swing.plaf.InputMapUIResource;
-/*      */ import javax.swing.plaf.TextUI;
-/*      */ import javax.swing.plaf.UIResource;
-/*      */ import javax.swing.text.AbstractDocument;
-/*      */ import javax.swing.text.AttributeSet;
-/*      */ import javax.swing.text.BadLocationException;
-/*      */ import javax.swing.text.Caret;
-/*      */ import javax.swing.text.DefaultCaret;
-/*      */ import javax.swing.text.DefaultEditorKit;
-/*      */ import javax.swing.text.DefaultHighlighter;
-/*      */ import javax.swing.text.Document;
-/*      */ import javax.swing.text.EditorKit;
-/*      */ import javax.swing.text.Element;
-/*      */ import javax.swing.text.Highlighter;
-/*      */ import javax.swing.text.JTextComponent;
-/*      */ import javax.swing.text.Keymap;
-/*      */ import javax.swing.text.Position;
-/*      */ import javax.swing.text.TextAction;
-/*      */ import javax.swing.text.View;
-/*      */ import javax.swing.text.ViewFactory;
-/*      */ import sun.awt.AppContext;
-/*      */ import sun.swing.DefaultLookup;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class BasicTextUI
-/*      */   extends TextUI
-/*      */   implements ViewFactory
-/*      */ {
-/*      */   transient boolean painted = false;
-/*      */   
-/*      */   protected Caret createCaret() {
-/*  121 */     return new BasicCaret();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Highlighter createHighlighter() {
-/*  133 */     return new BasicHighlighter();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String getKeymapName() {
-/*  145 */     String str = getClass().getName();
-/*  146 */     int i = str.lastIndexOf('.');
-/*  147 */     if (i >= 0) {
-/*  148 */       str = str.substring(i + 1, str.length());
-/*      */     }
-/*  150 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Keymap createKeymap() {
-/*  171 */     String str = getKeymapName();
-/*  172 */     Keymap keymap = JTextComponent.getKeymap(str);
-/*  173 */     if (keymap == null) {
-/*  174 */       Keymap keymap1 = JTextComponent.getKeymap("default");
-/*  175 */       keymap = JTextComponent.addKeymap(str, keymap1);
-/*  176 */       String str1 = getPropertyPrefix();
-/*  177 */       Object object = DefaultLookup.get(this.editor, this, str1 + ".keyBindings");
-/*      */       
-/*  179 */       if (object != null && object instanceof JTextComponent.KeyBinding[]) {
-/*  180 */         JTextComponent.KeyBinding[] arrayOfKeyBinding = (JTextComponent.KeyBinding[])object;
-/*  181 */         JTextComponent.loadKeymap(keymap, arrayOfKeyBinding, getComponent().getActions());
-/*      */       } 
-/*      */     } 
-/*  184 */     return keymap;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/*  202 */     if (paramPropertyChangeEvent.getPropertyName().equals("editable") || paramPropertyChangeEvent
-/*  203 */       .getPropertyName().equals("enabled"))
-/*      */     {
-/*  205 */       updateBackground((JTextComponent)paramPropertyChangeEvent.getSource());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateBackground(JTextComponent paramJTextComponent) {
-/*  225 */     if (this instanceof javax.swing.plaf.synth.SynthUI || paramJTextComponent instanceof javax.swing.JTextArea) {
-/*      */       return;
-/*      */     }
-/*  228 */     Color color = paramJTextComponent.getBackground();
-/*  229 */     if (color instanceof UIResource) {
-/*  230 */       String str = getPropertyPrefix();
-/*      */ 
-/*      */       
-/*  233 */       Color color1 = DefaultLookup.getColor(paramJTextComponent, this, str + ".disabledBackground", null);
-/*      */       
-/*  235 */       Color color2 = DefaultLookup.getColor(paramJTextComponent, this, str + ".inactiveBackground", null);
-/*      */       
-/*  237 */       Color color3 = DefaultLookup.getColor(paramJTextComponent, this, str + ".background", null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  258 */       if ((paramJTextComponent instanceof javax.swing.JTextArea || paramJTextComponent instanceof JEditorPane) && color != color1 && color != color2 && color != color3) {
-/*      */         return;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  266 */       Color color4 = null;
-/*  267 */       if (!paramJTextComponent.isEnabled()) {
-/*  268 */         color4 = color1;
-/*      */       }
-/*  270 */       if (color4 == null && !paramJTextComponent.isEditable()) {
-/*  271 */         color4 = color2;
-/*      */       }
-/*  273 */       if (color4 == null) {
-/*  274 */         color4 = color3;
-/*      */       }
-/*  276 */       if (color4 != null && color4 != color) {
-/*  277 */         paramJTextComponent.setBackground(color4);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installDefaults() {
-/*  304 */     String str = getPropertyPrefix();
-/*  305 */     Font font = this.editor.getFont();
-/*  306 */     if (font == null || font instanceof UIResource) {
-/*  307 */       this.editor.setFont(UIManager.getFont(str + ".font"));
-/*      */     }
-/*      */     
-/*  310 */     Color color1 = this.editor.getBackground();
-/*  311 */     if (color1 == null || color1 instanceof UIResource) {
-/*  312 */       this.editor.setBackground(UIManager.getColor(str + ".background"));
-/*      */     }
-/*      */     
-/*  315 */     Color color2 = this.editor.getForeground();
-/*  316 */     if (color2 == null || color2 instanceof UIResource) {
-/*  317 */       this.editor.setForeground(UIManager.getColor(str + ".foreground"));
-/*      */     }
-/*      */     
-/*  320 */     Color color3 = this.editor.getCaretColor();
-/*  321 */     if (color3 == null || color3 instanceof UIResource) {
-/*  322 */       this.editor.setCaretColor(UIManager.getColor(str + ".caretForeground"));
-/*      */     }
-/*      */     
-/*  325 */     Color color4 = this.editor.getSelectionColor();
-/*  326 */     if (color4 == null || color4 instanceof UIResource) {
-/*  327 */       this.editor.setSelectionColor(UIManager.getColor(str + ".selectionBackground"));
-/*      */     }
-/*      */     
-/*  330 */     Color color5 = this.editor.getSelectedTextColor();
-/*  331 */     if (color5 == null || color5 instanceof UIResource) {
-/*  332 */       this.editor.setSelectedTextColor(UIManager.getColor(str + ".selectionForeground"));
-/*      */     }
-/*      */     
-/*  335 */     Color color6 = this.editor.getDisabledTextColor();
-/*  336 */     if (color6 == null || color6 instanceof UIResource) {
-/*  337 */       this.editor.setDisabledTextColor(UIManager.getColor(str + ".inactiveForeground"));
-/*      */     }
-/*      */     
-/*  340 */     Border border = this.editor.getBorder();
-/*  341 */     if (border == null || border instanceof UIResource) {
-/*  342 */       this.editor.setBorder(UIManager.getBorder(str + ".border"));
-/*      */     }
-/*      */     
-/*  345 */     Insets insets = this.editor.getMargin();
-/*  346 */     if (insets == null || insets instanceof UIResource) {
-/*  347 */       this.editor.setMargin(UIManager.getInsets(str + ".margin"));
-/*      */     }
-/*      */     
-/*  350 */     updateCursor();
-/*      */   }
-/*      */   
-/*      */   private void installDefaults2() {
-/*  354 */     this.editor.addMouseListener(this.dragListener);
-/*  355 */     this.editor.addMouseMotionListener(this.dragListener);
-/*      */     
-/*  357 */     String str = getPropertyPrefix();
-/*      */     
-/*  359 */     Caret caret = this.editor.getCaret();
-/*  360 */     if (caret == null || caret instanceof UIResource) {
-/*  361 */       caret = createCaret();
-/*  362 */       this.editor.setCaret(caret);
-/*      */       
-/*  364 */       int i = DefaultLookup.getInt(getComponent(), this, str + ".caretBlinkRate", 500);
-/*  365 */       caret.setBlinkRate(i);
-/*      */     } 
-/*      */     
-/*  368 */     Highlighter highlighter = this.editor.getHighlighter();
-/*  369 */     if (highlighter == null || highlighter instanceof UIResource) {
-/*  370 */       this.editor.setHighlighter(createHighlighter());
-/*      */     }
-/*      */     
-/*  373 */     TransferHandler transferHandler = this.editor.getTransferHandler();
-/*  374 */     if (transferHandler == null || transferHandler instanceof UIResource) {
-/*  375 */       this.editor.setTransferHandler(getTransferHandler());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallDefaults() {
-/*  389 */     this.editor.removeMouseListener(this.dragListener);
-/*  390 */     this.editor.removeMouseMotionListener(this.dragListener);
-/*      */     
-/*  392 */     if (this.editor.getCaretColor() instanceof UIResource) {
-/*  393 */       this.editor.setCaretColor((Color)null);
-/*      */     }
-/*      */     
-/*  396 */     if (this.editor.getSelectionColor() instanceof UIResource) {
-/*  397 */       this.editor.setSelectionColor((Color)null);
-/*      */     }
-/*      */     
-/*  400 */     if (this.editor.getDisabledTextColor() instanceof UIResource) {
-/*  401 */       this.editor.setDisabledTextColor((Color)null);
-/*      */     }
-/*      */     
-/*  404 */     if (this.editor.getSelectedTextColor() instanceof UIResource) {
-/*  405 */       this.editor.setSelectedTextColor((Color)null);
-/*      */     }
-/*      */     
-/*  408 */     if (this.editor.getBorder() instanceof UIResource) {
-/*  409 */       this.editor.setBorder((Border)null);
-/*      */     }
-/*      */     
-/*  412 */     if (this.editor.getMargin() instanceof UIResource) {
-/*  413 */       this.editor.setMargin((Insets)null);
-/*      */     }
-/*      */     
-/*  416 */     if (this.editor.getCaret() instanceof UIResource) {
-/*  417 */       this.editor.setCaret((Caret)null);
-/*      */     }
-/*      */     
-/*  420 */     if (this.editor.getHighlighter() instanceof UIResource) {
-/*  421 */       this.editor.setHighlighter((Highlighter)null);
-/*      */     }
-/*      */     
-/*  424 */     if (this.editor.getTransferHandler() instanceof UIResource) {
-/*  425 */       this.editor.setTransferHandler((TransferHandler)null);
-/*      */     }
-/*      */     
-/*  428 */     if (this.editor.getCursor() instanceof UIResource) {
-/*  429 */       this.editor.setCursor(null);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installListeners() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallListeners() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installKeyboardActions() {
-/*  448 */     this.editor.setKeymap(createKeymap());
-/*      */     
-/*  450 */     InputMap inputMap = getInputMap();
-/*  451 */     if (inputMap != null) {
-/*  452 */       SwingUtilities.replaceUIInputMap(this.editor, 0, inputMap);
-/*      */     }
-/*      */ 
-/*      */     
-/*  456 */     ActionMap actionMap = getActionMap();
-/*  457 */     if (actionMap != null) {
-/*  458 */       SwingUtilities.replaceUIActionMap(this.editor, actionMap);
-/*      */     }
-/*      */     
-/*  461 */     updateFocusAcceleratorBinding(false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   InputMap getInputMap() {
-/*  468 */     InputMapUIResource inputMapUIResource = new InputMapUIResource();
-/*      */ 
-/*      */     
-/*  471 */     InputMap inputMap = (InputMap)DefaultLookup.get(this.editor, this, 
-/*  472 */         getPropertyPrefix() + ".focusInputMap");
-/*  473 */     if (inputMap != null) {
-/*  474 */       inputMapUIResource.setParent(inputMap);
-/*      */     }
-/*  476 */     return inputMapUIResource;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void updateFocusAcceleratorBinding(boolean paramBoolean) {
-/*  484 */     char c = this.editor.getFocusAccelerator();
-/*      */     
-/*  486 */     if (paramBoolean || c != '\000') {
-/*      */       
-/*  488 */       InputMap inputMap = SwingUtilities.getUIInputMap(this.editor, 2);
-/*      */       
-/*  490 */       if (inputMap == null && c != '\000') {
-/*  491 */         inputMap = new ComponentInputMapUIResource(this.editor);
-/*  492 */         SwingUtilities.replaceUIInputMap(this.editor, 2, inputMap);
-/*      */         
-/*  494 */         ActionMap actionMap = getActionMap();
-/*  495 */         SwingUtilities.replaceUIActionMap(this.editor, actionMap);
-/*      */       } 
-/*  497 */       if (inputMap != null) {
-/*  498 */         inputMap.clear();
-/*  499 */         if (c != '\000') {
-/*  500 */           inputMap.put(KeyStroke.getKeyStroke(c, BasicLookAndFeel.getFocusAcceleratorKeyMask()), "requestFocus");
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void updateFocusTraversalKeys() {
-/*  521 */     EditorKit editorKit = getEditorKit(this.editor);
-/*  522 */     if (editorKit != null && editorKit instanceof DefaultEditorKit) {
-/*      */ 
-/*      */       
-/*  525 */       Set<AWTKeyStroke> set1 = this.editor.getFocusTraversalKeys(0);
-/*      */ 
-/*      */       
-/*  528 */       Set<AWTKeyStroke> set2 = this.editor.getFocusTraversalKeys(1);
-/*      */       
-/*  530 */       HashSet<AWTKeyStroke> hashSet1 = new HashSet<>(set1);
-/*      */       
-/*  532 */       HashSet<AWTKeyStroke> hashSet2 = new HashSet<>(set2);
-/*      */       
-/*  534 */       if (this.editor.isEditable()) {
-/*  535 */         hashSet1
-/*  536 */           .remove(KeyStroke.getKeyStroke(9, 0));
-/*  537 */         hashSet2
-/*  538 */           .remove(KeyStroke.getKeyStroke(9, 1));
-/*      */       } else {
-/*      */         
-/*  541 */         hashSet1.add(
-/*  542 */             KeyStroke.getKeyStroke(9, 0));
-/*  543 */         hashSet2
-/*  544 */           .add(
-/*  545 */             KeyStroke.getKeyStroke(9, 1));
-/*      */       } 
-/*  547 */       LookAndFeel.installProperty(this.editor, "focusTraversalKeysForward", hashSet1);
-/*      */ 
-/*      */       
-/*  550 */       LookAndFeel.installProperty(this.editor, "focusTraversalKeysBackward", hashSet2);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateCursor() {
-/*  561 */     if (!this.editor.isCursorSet() || this.editor
-/*  562 */       .getCursor() instanceof UIResource) {
-/*  563 */       BasicCursor basicCursor = this.editor.isEditable() ? textCursor : null;
-/*  564 */       this.editor.setCursor(basicCursor);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   TransferHandler getTransferHandler() {
-/*  573 */     return defaultTransferHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ActionMap getActionMap() {
-/*  580 */     String str = getPropertyPrefix() + ".actionMap";
-/*  581 */     ActionMap actionMap = (ActionMap)UIManager.get(str);
-/*      */     
-/*  583 */     if (actionMap == null) {
-/*  584 */       actionMap = createActionMap();
-/*  585 */       if (actionMap != null) {
-/*  586 */         UIManager.getLookAndFeelDefaults().put(str, actionMap);
-/*      */       }
-/*      */     } 
-/*  589 */     ActionMapUIResource actionMapUIResource = new ActionMapUIResource();
-/*  590 */     actionMapUIResource.put("requestFocus", new FocusAction());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  600 */     if (getEditorKit(this.editor) instanceof DefaultEditorKit && 
-/*  601 */       actionMap != null) {
-/*  602 */       Action action = actionMap.get("insert-break");
-/*  603 */       if (action != null && action instanceof DefaultEditorKit.InsertBreakAction) {
-/*      */         
-/*  605 */         TextActionWrapper textActionWrapper = new TextActionWrapper((TextAction)action);
-/*  606 */         actionMapUIResource.put(textActionWrapper.getValue("Name"), textActionWrapper);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  610 */     if (actionMap != null) {
-/*  611 */       actionMapUIResource.setParent(actionMap);
-/*      */     }
-/*  613 */     return actionMapUIResource;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   ActionMap createActionMap() {
-/*  621 */     ActionMapUIResource actionMapUIResource = new ActionMapUIResource();
-/*  622 */     Action[] arrayOfAction = this.editor.getActions();
-/*      */     
-/*  624 */     int i = arrayOfAction.length;
-/*  625 */     for (byte b = 0; b < i; b++) {
-/*  626 */       Action action = arrayOfAction[b];
-/*  627 */       actionMapUIResource.put(action.getValue("Name"), action);
-/*      */     } 
-/*      */     
-/*  630 */     actionMapUIResource.put(TransferHandler.getCutAction().getValue("Name"), 
-/*  631 */         TransferHandler.getCutAction());
-/*  632 */     actionMapUIResource.put(TransferHandler.getCopyAction().getValue("Name"), 
-/*  633 */         TransferHandler.getCopyAction());
-/*  634 */     actionMapUIResource.put(TransferHandler.getPasteAction().getValue("Name"), 
-/*  635 */         TransferHandler.getPasteAction());
-/*  636 */     return actionMapUIResource;
-/*      */   }
-/*      */   
-/*      */   protected void uninstallKeyboardActions() {
-/*  640 */     this.editor.setKeymap((Keymap)null);
-/*  641 */     SwingUtilities.replaceUIInputMap(this.editor, 2, null);
-/*      */     
-/*  643 */     SwingUtilities.replaceUIActionMap(this.editor, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void paintBackground(Graphics paramGraphics) {
-/*  655 */     paramGraphics.setColor(this.editor.getBackground());
-/*  656 */     paramGraphics.fillRect(0, 0, this.editor.getWidth(), this.editor.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final JTextComponent getComponent() {
-/*  667 */     return this.editor;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void modelChanged() {
-/*  679 */     ViewFactory viewFactory = this.rootView.getViewFactory();
-/*  680 */     Document document = this.editor.getDocument();
-/*  681 */     Element element = document.getDefaultRootElement();
-/*  682 */     setView(viewFactory.create(element));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void setView(View paramView) {
-/*  693 */     this.rootView.setView(paramView);
-/*  694 */     this.painted = false;
-/*  695 */     this.editor.revalidate();
-/*  696 */     this.editor.repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void paintSafely(Graphics paramGraphics) {
-/*  720 */     this.painted = true;
-/*  721 */     Highlighter highlighter = this.editor.getHighlighter();
-/*  722 */     Caret caret = this.editor.getCaret();
-/*      */ 
-/*      */     
-/*  725 */     if (this.editor.isOpaque()) {
-/*  726 */       paintBackground(paramGraphics);
-/*      */     }
-/*      */ 
-/*      */     
-/*  730 */     if (highlighter != null) {
-/*  731 */       highlighter.paint(paramGraphics);
-/*      */     }
-/*      */ 
-/*      */     
-/*  735 */     Rectangle rectangle = getVisibleEditorRect();
-/*  736 */     if (rectangle != null) {
-/*  737 */       this.rootView.paint(paramGraphics, rectangle);
-/*      */     }
-/*      */ 
-/*      */     
-/*  741 */     if (caret != null) {
-/*  742 */       caret.paint(paramGraphics);
-/*      */     }
-/*      */     
-/*  745 */     if (this.dropCaret != null) {
-/*  746 */       this.dropCaret.paint(paramGraphics);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void installUI(JComponent paramJComponent) {
-/*  777 */     if (paramJComponent instanceof JTextComponent) {
-/*  778 */       this.editor = (JTextComponent)paramJComponent;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  783 */       LookAndFeel.installProperty(this.editor, "opaque", Boolean.TRUE);
-/*  784 */       LookAndFeel.installProperty(this.editor, "autoscrolls", Boolean.TRUE);
-/*      */ 
-/*      */       
-/*  787 */       installDefaults();
-/*  788 */       installDefaults2();
-/*      */ 
-/*      */       
-/*  791 */       this.editor.addPropertyChangeListener(this.updateHandler);
-/*  792 */       Document document = this.editor.getDocument();
-/*  793 */       if (document == null) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  797 */         this.editor.setDocument(getEditorKit(this.editor).createDefaultDocument());
-/*      */       } else {
-/*  799 */         document.addDocumentListener(this.updateHandler);
-/*  800 */         modelChanged();
-/*      */       } 
-/*      */ 
-/*      */       
-/*  804 */       installListeners();
-/*  805 */       installKeyboardActions();
-/*      */       
-/*  807 */       LayoutManager layoutManager = this.editor.getLayout();
-/*  808 */       if (layoutManager == null || layoutManager instanceof UIResource)
-/*      */       {
-/*      */         
-/*  811 */         this.editor.setLayout(this.updateHandler);
-/*      */       }
-/*      */       
-/*  814 */       updateBackground(this.editor);
-/*      */     } else {
-/*  816 */       throw new Error("TextUI needs JTextComponent");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void uninstallUI(JComponent paramJComponent) {
-/*  829 */     this.editor.removePropertyChangeListener(this.updateHandler);
-/*  830 */     this.editor.getDocument().removeDocumentListener(this.updateHandler);
-/*      */ 
-/*      */     
-/*  833 */     this.painted = false;
-/*  834 */     uninstallDefaults();
-/*  835 */     this.rootView.setView(null);
-/*  836 */     paramJComponent.removeAll();
-/*  837 */     LayoutManager layoutManager = paramJComponent.getLayout();
-/*  838 */     if (layoutManager instanceof UIResource) {
-/*  839 */       paramJComponent.setLayout((LayoutManager)null);
-/*      */     }
-/*      */ 
-/*      */     
-/*  843 */     uninstallKeyboardActions();
-/*  844 */     uninstallListeners();
-/*      */     
-/*  846 */     this.editor = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/*  860 */     paint(paramGraphics, paramJComponent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/*  875 */     if (this.rootView.getViewCount() > 0 && this.rootView.getView(0) != null) {
-/*  876 */       Document document = this.editor.getDocument();
-/*  877 */       if (document instanceof AbstractDocument) {
-/*  878 */         ((AbstractDocument)document).readLock();
-/*      */       }
-/*      */       try {
-/*  881 */         paintSafely(paramGraphics);
-/*      */       } finally {
-/*  883 */         if (document instanceof AbstractDocument) {
-/*  884 */           ((AbstractDocument)document).readUnlock();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/*  903 */     Document document = this.editor.getDocument();
-/*  904 */     Insets insets = paramJComponent.getInsets();
-/*  905 */     Dimension dimension = paramJComponent.getSize();
-/*      */     
-/*  907 */     if (document instanceof AbstractDocument) {
-/*  908 */       ((AbstractDocument)document).readLock();
-/*      */     }
-/*      */     try {
-/*  911 */       if (dimension.width > insets.left + insets.right && dimension.height > insets.top + insets.bottom) {
-/*  912 */         this.rootView.setSize((dimension.width - insets.left - insets.right), (dimension.height - insets.top - insets.bottom));
-/*      */       }
-/*  914 */       else if (dimension.width == 0 && dimension.height == 0) {
-/*      */ 
-/*      */         
-/*  917 */         this.rootView.setSize(2.14748365E9F, 2.14748365E9F);
-/*      */       } 
-/*  919 */       dimension.width = (int)Math.min((long)this.rootView.getPreferredSpan(0) + insets.left + insets.right, 2147483647L);
-/*      */       
-/*  921 */       dimension.height = (int)Math.min((long)this.rootView.getPreferredSpan(1) + insets.top + insets.bottom, 2147483647L);
-/*      */     } finally {
-/*      */       
-/*  924 */       if (document instanceof AbstractDocument) {
-/*  925 */         ((AbstractDocument)document).readUnlock();
-/*      */       }
-/*      */     } 
-/*  928 */     return dimension;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/*  938 */     Document document = this.editor.getDocument();
-/*  939 */     Insets insets = paramJComponent.getInsets();
-/*  940 */     Dimension dimension = new Dimension();
-/*  941 */     if (document instanceof AbstractDocument) {
-/*  942 */       ((AbstractDocument)document).readLock();
-/*      */     }
-/*      */     try {
-/*  945 */       dimension.width = (int)this.rootView.getMinimumSpan(0) + insets.left + insets.right;
-/*  946 */       dimension.height = (int)this.rootView.getMinimumSpan(1) + insets.top + insets.bottom;
-/*      */     } finally {
-/*  948 */       if (document instanceof AbstractDocument) {
-/*  949 */         ((AbstractDocument)document).readUnlock();
-/*      */       }
-/*      */     } 
-/*  952 */     return dimension;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/*  962 */     Document document = this.editor.getDocument();
-/*  963 */     Insets insets = paramJComponent.getInsets();
-/*  964 */     Dimension dimension = new Dimension();
-/*  965 */     if (document instanceof AbstractDocument) {
-/*  966 */       ((AbstractDocument)document).readLock();
-/*      */     }
-/*      */     try {
-/*  969 */       dimension.width = (int)Math.min((long)this.rootView.getMaximumSpan(0) + insets.left + insets.right, 2147483647L);
-/*      */       
-/*  971 */       dimension.height = (int)Math.min((long)this.rootView.getMaximumSpan(1) + insets.top + insets.bottom, 2147483647L);
-/*      */     } finally {
-/*      */       
-/*  974 */       if (document instanceof AbstractDocument) {
-/*  975 */         ((AbstractDocument)document).readUnlock();
-/*      */       }
-/*      */     } 
-/*  978 */     return dimension;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Rectangle getVisibleEditorRect() {
-/*  995 */     Rectangle rectangle = this.editor.getBounds();
-/*  996 */     if (rectangle.width > 0 && rectangle.height > 0) {
-/*  997 */       rectangle.x = rectangle.y = 0;
-/*  998 */       Insets insets = this.editor.getInsets();
-/*  999 */       rectangle.x += insets.left;
-/* 1000 */       rectangle.y += insets.top;
-/* 1001 */       rectangle.width -= insets.left + insets.right;
-/* 1002 */       rectangle.height -= insets.top + insets.bottom;
-/* 1003 */       return rectangle;
-/*      */     } 
-/* 1005 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Rectangle modelToView(JTextComponent paramJTextComponent, int paramInt) throws BadLocationException {
-/* 1022 */     return modelToView(paramJTextComponent, paramInt, Position.Bias.Forward);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Rectangle modelToView(JTextComponent paramJTextComponent, int paramInt, Position.Bias paramBias) throws BadLocationException {
-/* 1039 */     Document document = this.editor.getDocument();
-/* 1040 */     if (document instanceof AbstractDocument) {
-/* 1041 */       ((AbstractDocument)document).readLock();
-/*      */     }
-/*      */     try {
-/* 1044 */       Rectangle rectangle = getVisibleEditorRect();
-/* 1045 */       if (rectangle != null) {
-/* 1046 */         this.rootView.setSize(rectangle.width, rectangle.height);
-/* 1047 */         Shape shape = this.rootView.modelToView(paramInt, rectangle, paramBias);
-/* 1048 */         if (shape != null) {
-/* 1049 */           return shape.getBounds();
-/*      */         }
-/*      */       } 
-/*      */     } finally {
-/* 1053 */       if (document instanceof AbstractDocument) {
-/* 1054 */         ((AbstractDocument)document).readUnlock();
-/*      */       }
-/*      */     } 
-/* 1057 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int viewToModel(JTextComponent paramJTextComponent, Point paramPoint) {
-/* 1074 */     return viewToModel(paramJTextComponent, paramPoint, discardBias);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int viewToModel(JTextComponent paramJTextComponent, Point paramPoint, Position.Bias[] paramArrayOfBias) {
-/* 1092 */     int i = -1;
-/* 1093 */     Document document = this.editor.getDocument();
-/* 1094 */     if (document instanceof AbstractDocument) {
-/* 1095 */       ((AbstractDocument)document).readLock();
-/*      */     }
-/*      */     try {
-/* 1098 */       Rectangle rectangle = getVisibleEditorRect();
-/* 1099 */       if (rectangle != null) {
-/* 1100 */         this.rootView.setSize(rectangle.width, rectangle.height);
-/* 1101 */         i = this.rootView.viewToModel(paramPoint.x, paramPoint.y, rectangle, paramArrayOfBias);
-/*      */       } 
-/*      */     } finally {
-/* 1104 */       if (document instanceof AbstractDocument) {
-/* 1105 */         ((AbstractDocument)document).readUnlock();
-/*      */       }
-/*      */     } 
-/* 1108 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getNextVisualPositionFrom(JTextComponent paramJTextComponent, int paramInt1, Position.Bias paramBias, int paramInt2, Position.Bias[] paramArrayOfBias) throws BadLocationException {
-/* 1117 */     Document document = this.editor.getDocument();
-/* 1118 */     if (document instanceof AbstractDocument) {
-/* 1119 */       ((AbstractDocument)document).readLock();
-/*      */     }
-/*      */     try {
-/* 1122 */       if (this.painted) {
-/* 1123 */         Rectangle rectangle = getVisibleEditorRect();
-/* 1124 */         if (rectangle != null) {
-/* 1125 */           this.rootView.setSize(rectangle.width, rectangle.height);
-/*      */         }
-/* 1127 */         return this.rootView.getNextVisualPositionFrom(paramInt1, paramBias, rectangle, paramInt2, paramArrayOfBias);
-/*      */       } 
-/*      */     } finally {
-/*      */       
-/* 1131 */       if (document instanceof AbstractDocument) {
-/* 1132 */         ((AbstractDocument)document).readUnlock();
-/*      */       }
-/*      */     } 
-/* 1135 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void damageRange(JTextComponent paramJTextComponent, int paramInt1, int paramInt2) {
-/* 1149 */     damageRange(paramJTextComponent, paramInt1, paramInt2, Position.Bias.Forward, Position.Bias.Backward);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void damageRange(JTextComponent paramJTextComponent, int paramInt1, int paramInt2, Position.Bias paramBias1, Position.Bias paramBias2) {
-/* 1161 */     if (this.painted) {
-/* 1162 */       Rectangle rectangle = getVisibleEditorRect();
-/* 1163 */       if (rectangle != null) {
-/* 1164 */         Document document = paramJTextComponent.getDocument();
-/* 1165 */         if (document instanceof AbstractDocument) {
-/* 1166 */           ((AbstractDocument)document).readLock();
-/*      */         }
-/*      */         
-/* 1169 */         try { this.rootView.setSize(rectangle.width, rectangle.height);
-/* 1170 */           Shape shape = this.rootView.modelToView(paramInt1, paramBias1, paramInt2, paramBias2, rectangle);
-/*      */ 
-/*      */           
-/* 1173 */           Rectangle rectangle1 = (shape instanceof Rectangle) ? (Rectangle)shape : shape.getBounds();
-/* 1174 */           this.editor.repaint(rectangle1.x, rectangle1.y, rectangle1.width, rectangle1.height); }
-/* 1175 */         catch (BadLocationException badLocationException) {  }
-/*      */         finally
-/* 1177 */         { if (document instanceof AbstractDocument) {
-/* 1178 */             ((AbstractDocument)document).readUnlock();
-/*      */           } }
-/*      */       
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EditorKit getEditorKit(JTextComponent paramJTextComponent) {
-/* 1193 */     return defaultKit;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public View getRootView(JTextComponent paramJTextComponent) {
-/* 1215 */     return this.rootView;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getToolTipText(JTextComponent paramJTextComponent, Point paramPoint) {
-/* 1228 */     if (!this.painted) {
-/* 1229 */       return null;
-/*      */     }
-/* 1231 */     Document document = this.editor.getDocument();
-/* 1232 */     String str = null;
-/* 1233 */     Rectangle rectangle = getVisibleEditorRect();
-/*      */     
-/* 1235 */     if (rectangle != null) {
-/* 1236 */       if (document instanceof AbstractDocument) {
-/* 1237 */         ((AbstractDocument)document).readLock();
-/*      */       }
-/*      */       try {
-/* 1240 */         str = this.rootView.getToolTipText(paramPoint.x, paramPoint.y, rectangle);
-/*      */       } finally {
-/* 1242 */         if (document instanceof AbstractDocument) {
-/* 1243 */           ((AbstractDocument)document).readUnlock();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 1247 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public View create(Element paramElement) {
-/* 1263 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public View create(Element paramElement, int paramInt1, int paramInt2) {
-/* 1279 */     return null;
-/*      */   }
-/*      */   
-/*      */   public static class BasicCaret extends DefaultCaret implements UIResource {}
-/*      */   
-/*      */   public static class BasicHighlighter extends DefaultHighlighter implements UIResource {}
-/*      */   
-/*      */   static class BasicCursor extends Cursor implements UIResource {
-/*      */     BasicCursor(int param1Int) {
-/* 1288 */       super(param1Int);
-/*      */     }
-/*      */     
-/*      */     BasicCursor(String param1String) {
-/* 1292 */       super(param1String);
-/*      */     }
-/*      */   }
-/*      */   
-/* 1296 */   private static BasicCursor textCursor = new BasicCursor(2);
-/*      */ 
-/*      */   
-/* 1299 */   private static final EditorKit defaultKit = new DefaultEditorKit();
-/*      */ 
-/*      */   
-/* 1302 */   transient RootView rootView = new RootView();
-/* 1303 */   transient UpdateHandler updateHandler = new UpdateHandler();
-/* 1304 */   private static final TransferHandler defaultTransferHandler = new TextTransferHandler();
-/* 1305 */   private final DragListener dragListener = getDragListener();
-/* 1306 */   private static final Position.Bias[] discardBias = new Position.Bias[1];
-/*      */   transient JTextComponent editor;
-/*      */   private DefaultCaret dropCaret;
-/*      */   
-/*      */   class RootView
-/*      */     extends View
-/*      */   {
-/*      */     private View view;
-/*      */     
-/*      */     RootView() {
-/* 1316 */       super(null);
-/*      */     }
-/*      */     
-/*      */     void setView(View param1View) {
-/* 1320 */       View view = this.view;
-/* 1321 */       this.view = null;
-/* 1322 */       if (view != null)
-/*      */       {
-/*      */         
-/* 1325 */         view.setParent(null);
-/*      */       }
-/* 1327 */       if (param1View != null) {
-/* 1328 */         param1View.setParent(this);
-/*      */       }
-/* 1330 */       this.view = param1View;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet getAttributes() {
-/* 1339 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getPreferredSpan(int param1Int) {
-/* 1352 */       if (this.view != null) {
-/* 1353 */         return this.view.getPreferredSpan(param1Int);
-/*      */       }
-/* 1355 */       return 10.0F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMinimumSpan(int param1Int) {
-/* 1368 */       if (this.view != null) {
-/* 1369 */         return this.view.getMinimumSpan(param1Int);
-/*      */       }
-/* 1371 */       return 10.0F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getMaximumSpan(int param1Int) {
-/* 1384 */       return 2.14748365E9F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void preferenceChanged(View param1View, boolean param1Boolean1, boolean param1Boolean2) {
-/* 1406 */       BasicTextUI.this.editor.revalidate();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getAlignment(int param1Int) {
-/* 1417 */       if (this.view != null) {
-/* 1418 */         return this.view.getAlignment(param1Int);
-/*      */       }
-/* 1420 */       return 0.0F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void paint(Graphics param1Graphics, Shape param1Shape) {
-/* 1430 */       if (this.view != null) {
-/*      */         
-/* 1432 */         Rectangle rectangle = (param1Shape instanceof Rectangle) ? (Rectangle)param1Shape : param1Shape.getBounds();
-/* 1433 */         setSize(rectangle.width, rectangle.height);
-/* 1434 */         this.view.paint(param1Graphics, param1Shape);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setParent(View param1View) {
-/* 1444 */       throw new Error("Can't set parent on root view");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getViewCount() {
-/* 1456 */       return 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public View getView(int param1Int) {
-/* 1466 */       return this.view;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getViewIndex(int param1Int, Position.Bias param1Bias) {
-/* 1480 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Shape getChildAllocation(int param1Int, Shape param1Shape) {
-/* 1496 */       return param1Shape;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Shape modelToView(int param1Int, Shape param1Shape, Position.Bias param1Bias) throws BadLocationException {
-/* 1508 */       if (this.view != null) {
-/* 1509 */         return this.view.modelToView(param1Int, param1Shape, param1Bias);
-/*      */       }
-/* 1511 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Shape modelToView(int param1Int1, Position.Bias param1Bias1, int param1Int2, Position.Bias param1Bias2, Shape param1Shape) throws BadLocationException {
-/* 1534 */       if (this.view != null) {
-/* 1535 */         return this.view.modelToView(param1Int1, param1Bias1, param1Int2, param1Bias2, param1Shape);
-/*      */       }
-/* 1537 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int viewToModel(float param1Float1, float param1Float2, Shape param1Shape, Position.Bias[] param1ArrayOfBias) {
-/* 1551 */       if (this.view != null) {
-/* 1552 */         return this.view.viewToModel(param1Float1, param1Float2, param1Shape, param1ArrayOfBias);
-/*      */       }
-/*      */       
-/* 1555 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getNextVisualPositionFrom(int param1Int1, Position.Bias param1Bias, Shape param1Shape, int param1Int2, Position.Bias[] param1ArrayOfBias) throws BadLocationException {
-/* 1584 */       if (param1Int1 < -1) {
-/* 1585 */         throw new BadLocationException("invalid position", param1Int1);
-/*      */       }
-/* 1587 */       if (this.view != null) {
-/* 1588 */         int i = this.view.getNextVisualPositionFrom(param1Int1, param1Bias, param1Shape, param1Int2, param1ArrayOfBias);
-/*      */         
-/* 1590 */         if (i != -1) {
-/* 1591 */           param1Int1 = i;
-/*      */         } else {
-/*      */           
-/* 1594 */           param1ArrayOfBias[0] = param1Bias;
-/*      */         } 
-/*      */       } 
-/* 1597 */       return param1Int1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void insertUpdate(DocumentEvent param1DocumentEvent, Shape param1Shape, ViewFactory param1ViewFactory) {
-/* 1609 */       if (this.view != null) {
-/* 1610 */         this.view.insertUpdate(param1DocumentEvent, param1Shape, param1ViewFactory);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeUpdate(DocumentEvent param1DocumentEvent, Shape param1Shape, ViewFactory param1ViewFactory) {
-/* 1623 */       if (this.view != null) {
-/* 1624 */         this.view.removeUpdate(param1DocumentEvent, param1Shape, param1ViewFactory);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void changedUpdate(DocumentEvent param1DocumentEvent, Shape param1Shape, ViewFactory param1ViewFactory) {
-/* 1637 */       if (this.view != null) {
-/* 1638 */         this.view.changedUpdate(param1DocumentEvent, param1Shape, param1ViewFactory);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Document getDocument() {
-/* 1648 */       return BasicTextUI.this.editor.getDocument();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getStartOffset() {
-/* 1657 */       if (this.view != null) {
-/* 1658 */         return this.view.getStartOffset();
-/*      */       }
-/* 1660 */       return getElement().getStartOffset();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getEndOffset() {
-/* 1669 */       if (this.view != null) {
-/* 1670 */         return this.view.getEndOffset();
-/*      */       }
-/* 1672 */       return getElement().getEndOffset();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Element getElement() {
-/* 1681 */       if (this.view != null) {
-/* 1682 */         return this.view.getElement();
-/*      */       }
-/* 1684 */       return BasicTextUI.this.editor.getDocument().getDefaultRootElement();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public View breakView(int param1Int, float param1Float, Shape param1Shape) {
-/* 1697 */       throw new Error("Can't break root view");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getResizeWeight(int param1Int) {
-/* 1708 */       if (this.view != null) {
-/* 1709 */         return this.view.getResizeWeight(param1Int);
-/*      */       }
-/* 1711 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setSize(float param1Float1, float param1Float2) {
-/* 1721 */       if (this.view != null) {
-/* 1722 */         this.view.setSize(param1Float1, param1Float2);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Container getContainer() {
-/* 1735 */       return BasicTextUI.this.editor;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ViewFactory getViewFactory() {
-/* 1752 */       EditorKit editorKit = BasicTextUI.this.getEditorKit(BasicTextUI.this.editor);
-/* 1753 */       ViewFactory viewFactory = editorKit.getViewFactory();
-/* 1754 */       if (viewFactory != null) {
-/* 1755 */         return viewFactory;
-/*      */       }
-/* 1757 */       return BasicTextUI.this;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class UpdateHandler
-/*      */     implements PropertyChangeListener, DocumentListener, LayoutManager2, UIResource
-/*      */   {
-/*      */     private Hashtable<Component, Object> constraints;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 1781 */       Object object1 = param1PropertyChangeEvent.getOldValue();
-/* 1782 */       Object object2 = param1PropertyChangeEvent.getNewValue();
-/* 1783 */       String str = param1PropertyChangeEvent.getPropertyName();
-/* 1784 */       if (object1 instanceof Document || object2 instanceof Document) {
-/* 1785 */         if (object1 != null) {
-/* 1786 */           ((Document)object1).removeDocumentListener(this);
-/* 1787 */           this.i18nView = false;
-/*      */         } 
-/* 1789 */         if (object2 != null) {
-/* 1790 */           ((Document)object2).addDocumentListener(this);
-/* 1791 */           if ("document" == str) {
-/* 1792 */             BasicTextUI.this.setView(null);
-/* 1793 */             BasicTextUI.this.propertyChange(param1PropertyChangeEvent);
-/* 1794 */             BasicTextUI.this.modelChanged();
-/*      */             return;
-/*      */           } 
-/*      */         } 
-/* 1798 */         BasicTextUI.this.modelChanged();
-/*      */       } 
-/* 1800 */       if ("focusAccelerator" == str) {
-/* 1801 */         BasicTextUI.this.updateFocusAcceleratorBinding(true);
-/* 1802 */       } else if ("componentOrientation" == str) {
-/*      */ 
-/*      */         
-/* 1805 */         BasicTextUI.this.modelChanged();
-/* 1806 */       } else if ("font" == str) {
-/* 1807 */         BasicTextUI.this.modelChanged();
-/* 1808 */       } else if ("dropLocation" == str) {
-/* 1809 */         dropIndexChanged();
-/* 1810 */       } else if ("editable" == str) {
-/* 1811 */         BasicTextUI.this.updateCursor();
-/* 1812 */         BasicTextUI.this.modelChanged();
-/*      */       } 
-/* 1814 */       BasicTextUI.this.propertyChange(param1PropertyChangeEvent);
-/*      */     }
-/*      */     
-/*      */     private void dropIndexChanged() {
-/* 1818 */       if (BasicTextUI.this.editor.getDropMode() == DropMode.USE_SELECTION) {
-/*      */         return;
-/*      */       }
-/*      */       
-/* 1822 */       JTextComponent.DropLocation dropLocation = BasicTextUI.this.editor.getDropLocation();
-/*      */       
-/* 1824 */       if (dropLocation == null) {
-/* 1825 */         if (BasicTextUI.this.dropCaret != null) {
-/* 1826 */           BasicTextUI.this.dropCaret.deinstall(BasicTextUI.this.editor);
-/* 1827 */           BasicTextUI.this.editor.repaint(BasicTextUI.this.dropCaret);
-/* 1828 */           BasicTextUI.this.dropCaret = null;
-/*      */         } 
-/*      */       } else {
-/* 1831 */         if (BasicTextUI.this.dropCaret == null) {
-/* 1832 */           BasicTextUI.this.dropCaret = new BasicTextUI.BasicCaret();
-/* 1833 */           BasicTextUI.this.dropCaret.install(BasicTextUI.this.editor);
-/* 1834 */           BasicTextUI.this.dropCaret.setVisible(true);
-/*      */         } 
-/*      */         
-/* 1837 */         BasicTextUI.this.dropCaret.setDot(dropLocation.getIndex(), dropLocation
-/* 1838 */             .getBias());
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void insertUpdate(DocumentEvent param1DocumentEvent) {
-/* 1855 */       Document document = param1DocumentEvent.getDocument();
-/* 1856 */       Object object = document.getProperty("i18n");
-/* 1857 */       if (object instanceof Boolean) {
-/* 1858 */         Boolean bool = (Boolean)object;
-/* 1859 */         if (bool.booleanValue() != this.i18nView) {
-/*      */           
-/* 1861 */           this.i18nView = bool.booleanValue();
-/* 1862 */           BasicTextUI.this.modelChanged();
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1868 */       Rectangle rectangle = BasicTextUI.this.painted ? BasicTextUI.this.getVisibleEditorRect() : null;
-/* 1869 */       BasicTextUI.this.rootView.insertUpdate(param1DocumentEvent, rectangle, BasicTextUI.this.rootView.getViewFactory());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void removeUpdate(DocumentEvent param1DocumentEvent) {
-/* 1883 */       Rectangle rectangle = BasicTextUI.this.painted ? BasicTextUI.this.getVisibleEditorRect() : null;
-/* 1884 */       BasicTextUI.this.rootView.removeUpdate(param1DocumentEvent, rectangle, BasicTextUI.this.rootView.getViewFactory());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void changedUpdate(DocumentEvent param1DocumentEvent) {
-/* 1898 */       Rectangle rectangle = BasicTextUI.this.painted ? BasicTextUI.this.getVisibleEditorRect() : null;
-/* 1899 */       BasicTextUI.this.rootView.changedUpdate(param1DocumentEvent, rectangle, BasicTextUI.this.rootView.getViewFactory());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addLayoutComponent(String param1String, Component param1Component) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeLayoutComponent(Component param1Component) {
-/* 1919 */       if (this.constraints != null)
-/*      */       {
-/* 1921 */         this.constraints.remove(param1Component);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Dimension preferredLayoutSize(Container param1Container) {
-/* 1934 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Dimension minimumLayoutSize(Container param1Container) {
-/* 1945 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void layoutContainer(Container param1Container) {
-/* 1962 */       if (this.constraints != null && !this.constraints.isEmpty()) {
-/* 1963 */         Rectangle rectangle = BasicTextUI.this.getVisibleEditorRect();
-/* 1964 */         if (rectangle != null) {
-/* 1965 */           Document document = BasicTextUI.this.editor.getDocument();
-/* 1966 */           if (document instanceof AbstractDocument) {
-/* 1967 */             ((AbstractDocument)document).readLock();
-/*      */           }
-/*      */           try {
-/* 1970 */             BasicTextUI.this.rootView.setSize(rectangle.width, rectangle.height);
-/* 1971 */             Enumeration<Component> enumeration = this.constraints.keys();
-/* 1972 */             while (enumeration.hasMoreElements()) {
-/* 1973 */               Component component = enumeration.nextElement();
-/* 1974 */               View view = (View)this.constraints.get(component);
-/* 1975 */               Shape shape = calculateViewPosition(rectangle, view);
-/* 1976 */               if (shape != null) {
-/*      */                 
-/* 1978 */                 Rectangle rectangle1 = (shape instanceof Rectangle) ? (Rectangle)shape : shape.getBounds();
-/* 1979 */                 component.setBounds(rectangle1);
-/*      */               } 
-/*      */             } 
-/*      */           } finally {
-/* 1983 */             if (document instanceof AbstractDocument) {
-/* 1984 */               ((AbstractDocument)document).readUnlock();
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Shape calculateViewPosition(Shape param1Shape, View param1View) {
-/* 1995 */       int i = param1View.getStartOffset();
-/* 1996 */       View view = null;
-/* 1997 */       for (BasicTextUI.RootView rootView = BasicTextUI.this.rootView; rootView != null && rootView != param1View; view1 = view) {
-/* 1998 */         View view1; int j = rootView.getViewIndex(i, Position.Bias.Forward);
-/* 1999 */         param1Shape = rootView.getChildAllocation(j, param1Shape);
-/* 2000 */         view = rootView.getView(j);
-/*      */       } 
-/* 2002 */       return (view != null) ? param1Shape : null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addLayoutComponent(Component param1Component, Object param1Object) {
-/* 2014 */       if (param1Object instanceof View) {
-/* 2015 */         if (this.constraints == null) {
-/* 2016 */           this.constraints = new Hashtable<>(7);
-/*      */         }
-/* 2018 */         this.constraints.put(param1Component, param1Object);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Dimension maximumLayoutSize(Container param1Container) {
-/* 2030 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getLayoutAlignmentX(Container param1Container) {
-/* 2041 */       return 0.5F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public float getLayoutAlignmentY(Container param1Container) {
-/* 2052 */       return 0.5F;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void invalidateLayout(Container param1Container) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private boolean i18nView = false;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   class TextActionWrapper
-/*      */     extends TextAction
-/*      */   {
-/*      */     TextAction action;
-/*      */ 
-/*      */     
-/*      */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/*      */       this.action.actionPerformed(param1ActionEvent);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public TextActionWrapper(TextAction param1TextAction) {
-/* 2077 */       super((String)param1TextAction.getValue("Name"));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2091 */       this.action = null;
-/*      */       this.action = param1TextAction;
-/*      */     }
-/*      */     
-/*      */     public boolean isEnabled() {
-/*      */       return (BasicTextUI.this.editor == null || BasicTextUI.this.editor.isEditable()) ? this.action.isEnabled() : false;
-/*      */     } }
-/*      */   
-/*      */   class FocusAction extends AbstractAction {
-/*      */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 2101 */       BasicTextUI.this.editor.requestFocus();
-/*      */     }
-/*      */     
-/*      */     public boolean isEnabled() {
-/* 2105 */       return BasicTextUI.this.editor.isEditable();
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static DragListener getDragListener() {
-/* 2110 */     synchronized (DragListener.class) {
-/*      */ 
-/*      */       
-/* 2113 */       DragListener dragListener = (DragListener)AppContext.getAppContext().get(DragListener.class);
-/*      */       
-/* 2115 */       if (dragListener == null) {
-/* 2116 */         dragListener = new DragListener();
-/* 2117 */         AppContext.getAppContext().put(DragListener.class, dragListener);
-/*      */       } 
-/*      */       
-/* 2120 */       return dragListener;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected abstract String getPropertyPrefix();
-/*      */   
-/*      */   static class DragListener
-/*      */     extends MouseInputAdapter
-/*      */     implements DragRecognitionSupport.BeforeDrag
-/*      */   {
-/*      */     private boolean dragStarted;
-/*      */     
-/*      */     public void dragStarting(MouseEvent param1MouseEvent) {
-/* 2134 */       this.dragStarted = true;
-/*      */     }
-/*      */     
-/*      */     public void mousePressed(MouseEvent param1MouseEvent) {
-/* 2138 */       JTextComponent jTextComponent = (JTextComponent)param1MouseEvent.getSource();
-/* 2139 */       if (jTextComponent.getDragEnabled()) {
-/* 2140 */         this.dragStarted = false;
-/* 2141 */         if (isDragPossible(param1MouseEvent) && DragRecognitionSupport.mousePressed(param1MouseEvent)) {
-/* 2142 */           param1MouseEvent.consume();
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/* 2148 */       JTextComponent jTextComponent = (JTextComponent)param1MouseEvent.getSource();
-/* 2149 */       if (jTextComponent.getDragEnabled()) {
-/* 2150 */         if (this.dragStarted) {
-/* 2151 */           param1MouseEvent.consume();
-/*      */         }
-/*      */         
-/* 2154 */         DragRecognitionSupport.mouseReleased(param1MouseEvent);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/* 2159 */       JTextComponent jTextComponent = (JTextComponent)param1MouseEvent.getSource();
-/* 2160 */       if (jTextComponent.getDragEnabled() && (
-/* 2161 */         this.dragStarted || DragRecognitionSupport.mouseDragged(param1MouseEvent, this))) {
-/* 2162 */         param1MouseEvent.consume();
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected boolean isDragPossible(MouseEvent param1MouseEvent) {
-/* 2175 */       JTextComponent jTextComponent = (JTextComponent)param1MouseEvent.getSource();
-/* 2176 */       if (jTextComponent.isEnabled()) {
-/* 2177 */         Caret caret = jTextComponent.getCaret();
-/* 2178 */         int i = caret.getDot();
-/* 2179 */         int j = caret.getMark();
-/* 2180 */         if (i != j) {
-/* 2181 */           Point point = new Point(param1MouseEvent.getX(), param1MouseEvent.getY());
-/* 2182 */           int k = jTextComponent.viewToModel(point);
-/*      */           
-/* 2184 */           int m = Math.min(i, j);
-/* 2185 */           int n = Math.max(i, j);
-/* 2186 */           if (k >= m && k < n) {
-/* 2187 */             return true;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/* 2191 */       return false;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class TextTransferHandler
-/*      */     extends TransferHandler
-/*      */     implements UIResource
-/*      */   {
-/*      */     private JTextComponent exportComp;
-/*      */ 
-/*      */     
-/*      */     private boolean shouldRemove;
-/*      */ 
-/*      */     
-/*      */     private int p0;
-/*      */ 
-/*      */     
-/*      */     private int p1;
-/*      */     
-/*      */     private boolean modeBetween = false;
-/*      */     
-/*      */     private boolean isDrop = false;
-/*      */     
-/* 2216 */     private int dropAction = 2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Position.Bias dropBias;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected DataFlavor getImportFlavor(DataFlavor[] param1ArrayOfDataFlavor, JTextComponent param1JTextComponent) {
-/* 2236 */       DataFlavor dataFlavor1 = null;
-/* 2237 */       DataFlavor dataFlavor2 = null;
-/* 2238 */       DataFlavor dataFlavor3 = null;
-/*      */       
-/* 2240 */       if (param1JTextComponent instanceof JEditorPane) {
-/* 2241 */         for (byte b1 = 0; b1 < param1ArrayOfDataFlavor.length; b1++) {
-/* 2242 */           String str = param1ArrayOfDataFlavor[b1].getMimeType();
-/* 2243 */           if (str.startsWith(((JEditorPane)param1JTextComponent).getEditorKit().getContentType()))
-/* 2244 */             return param1ArrayOfDataFlavor[b1]; 
-/* 2245 */           if (dataFlavor1 == null && str.startsWith("text/plain")) {
-/* 2246 */             dataFlavor1 = param1ArrayOfDataFlavor[b1];
-/* 2247 */           } else if (dataFlavor2 == null && str.startsWith("application/x-java-jvm-local-objectref") && param1ArrayOfDataFlavor[b1]
-/* 2248 */             .getRepresentationClass() == String.class) {
-/* 2249 */             dataFlavor2 = param1ArrayOfDataFlavor[b1];
-/* 2250 */           } else if (dataFlavor3 == null && param1ArrayOfDataFlavor[b1].equals(DataFlavor.stringFlavor)) {
-/* 2251 */             dataFlavor3 = param1ArrayOfDataFlavor[b1];
-/*      */           } 
-/*      */         } 
-/* 2254 */         if (dataFlavor1 != null)
-/* 2255 */           return dataFlavor1; 
-/* 2256 */         if (dataFlavor2 != null)
-/* 2257 */           return dataFlavor2; 
-/* 2258 */         if (dataFlavor3 != null) {
-/* 2259 */           return dataFlavor3;
-/*      */         }
-/* 2261 */         return null;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2265 */       for (byte b = 0; b < param1ArrayOfDataFlavor.length; b++) {
-/* 2266 */         String str = param1ArrayOfDataFlavor[b].getMimeType();
-/* 2267 */         if (str.startsWith("text/plain"))
-/* 2268 */           return param1ArrayOfDataFlavor[b]; 
-/* 2269 */         if (dataFlavor2 == null && str.startsWith("application/x-java-jvm-local-objectref") && param1ArrayOfDataFlavor[b]
-/* 2270 */           .getRepresentationClass() == String.class) {
-/* 2271 */           dataFlavor2 = param1ArrayOfDataFlavor[b];
-/* 2272 */         } else if (dataFlavor3 == null && param1ArrayOfDataFlavor[b].equals(DataFlavor.stringFlavor)) {
-/* 2273 */           dataFlavor3 = param1ArrayOfDataFlavor[b];
-/*      */         } 
-/*      */       } 
-/* 2276 */       if (dataFlavor2 != null)
-/* 2277 */         return dataFlavor2; 
-/* 2278 */       if (dataFlavor3 != null) {
-/* 2279 */         return dataFlavor3;
-/*      */       }
-/* 2281 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void handleReaderImport(Reader param1Reader, JTextComponent param1JTextComponent, boolean param1Boolean) throws BadLocationException, IOException {
-/* 2289 */       if (param1Boolean) {
-/* 2290 */         int i = param1JTextComponent.getSelectionStart();
-/* 2291 */         int j = param1JTextComponent.getSelectionEnd();
-/* 2292 */         int k = j - i;
-/* 2293 */         EditorKit editorKit = param1JTextComponent.getUI().getEditorKit(param1JTextComponent);
-/* 2294 */         Document document = param1JTextComponent.getDocument();
-/* 2295 */         if (k > 0) {
-/* 2296 */           document.remove(i, k);
-/*      */         }
-/* 2298 */         editorKit.read(param1Reader, document, i);
-/*      */       } else {
-/* 2300 */         char[] arrayOfChar = new char[1024];
-/*      */         
-/* 2302 */         boolean bool = false;
-/*      */         
-/* 2304 */         StringBuffer stringBuffer = null;
-/*      */         
-/*      */         int i;
-/*      */         
-/* 2308 */         while ((i = param1Reader.read(arrayOfChar, 0, arrayOfChar.length)) != -1) {
-/* 2309 */           if (stringBuffer == null) {
-/* 2310 */             stringBuffer = new StringBuffer(i);
-/*      */           }
-/* 2312 */           byte b1 = 0;
-/* 2313 */           for (byte b2 = 0; b2 < i; b2++) {
-/* 2314 */             switch (arrayOfChar[b2]) {
-/*      */               case '\r':
-/* 2316 */                 if (bool) {
-/* 2317 */                   if (b2 == 0) {
-/* 2318 */                     stringBuffer.append('\n'); break;
-/*      */                   } 
-/* 2320 */                   arrayOfChar[b2 - 1] = '\n';
-/*      */                   break;
-/*      */                 } 
-/* 2323 */                 bool = true;
-/*      */                 break;
-/*      */               
-/*      */               case '\n':
-/* 2327 */                 if (bool) {
-/* 2328 */                   if (b2 > b1 + 1) {
-/* 2329 */                     stringBuffer.append(arrayOfChar, b1, b2 - b1 - 1);
-/*      */                   }
-/*      */ 
-/*      */                   
-/* 2333 */                   bool = false;
-/* 2334 */                   b1 = b2;
-/*      */                 } 
-/*      */                 break;
-/*      */               default:
-/* 2338 */                 if (bool) {
-/* 2339 */                   if (b2 == 0) {
-/* 2340 */                     stringBuffer.append('\n');
-/*      */                   } else {
-/* 2342 */                     arrayOfChar[b2 - 1] = '\n';
-/*      */                   } 
-/* 2344 */                   bool = false;
-/*      */                 } 
-/*      */                 break;
-/*      */             } 
-/*      */           } 
-/* 2349 */           if (b1 < i) {
-/* 2350 */             if (bool) {
-/* 2351 */               if (b1 < i - 1)
-/* 2352 */                 stringBuffer.append(arrayOfChar, b1, i - b1 - 1); 
-/*      */               continue;
-/*      */             } 
-/* 2355 */             stringBuffer.append(arrayOfChar, b1, i - b1);
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 2359 */         if (bool) {
-/* 2360 */           stringBuffer.append('\n');
-/*      */         }
-/* 2362 */         param1JTextComponent.replaceSelection((stringBuffer != null) ? stringBuffer.toString() : "");
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getSourceActions(JComponent param1JComponent) {
-/* 2381 */       if (param1JComponent instanceof javax.swing.JPasswordField && param1JComponent
-/* 2382 */         .getClientProperty("JPasswordField.cutCopyAllowed") != Boolean.TRUE)
-/*      */       {
-/* 2384 */         return 0;
-/*      */       }
-/*      */       
-/* 2387 */       return ((JTextComponent)param1JComponent).isEditable() ? 3 : 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected Transferable createTransferable(JComponent param1JComponent) {
-/* 2400 */       this.exportComp = (JTextComponent)param1JComponent;
-/* 2401 */       this.shouldRemove = true;
-/* 2402 */       this.p0 = this.exportComp.getSelectionStart();
-/* 2403 */       this.p1 = this.exportComp.getSelectionEnd();
-/* 2404 */       return (this.p0 != this.p1) ? new TextTransferable(this.exportComp, this.p0, this.p1) : null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void exportDone(JComponent param1JComponent, Transferable param1Transferable, int param1Int) {
-/* 2419 */       if (this.shouldRemove && param1Int == 2) {
-/* 2420 */         TextTransferable textTransferable = (TextTransferable)param1Transferable;
-/* 2421 */         textTransferable.removeText();
-/*      */       } 
-/*      */       
-/* 2424 */       this.exportComp = null;
-/*      */     }
-/*      */     
-/*      */     public boolean importData(TransferHandler.TransferSupport param1TransferSupport) {
-/* 2428 */       this.isDrop = param1TransferSupport.isDrop();
-/*      */       
-/* 2430 */       if (this.isDrop) {
-/* 2431 */         this
-/* 2432 */           .modeBetween = (((JTextComponent)param1TransferSupport.getComponent()).getDropMode() == DropMode.INSERT);
-/*      */         
-/* 2434 */         this.dropBias = ((JTextComponent.DropLocation)param1TransferSupport.getDropLocation()).getBias();
-/*      */         
-/* 2436 */         this.dropAction = param1TransferSupport.getDropAction();
-/*      */       } 
-/*      */       
-/*      */       try {
-/* 2440 */         return super.importData(param1TransferSupport);
-/*      */       } finally {
-/* 2442 */         this.isDrop = false;
-/* 2443 */         this.modeBetween = false;
-/* 2444 */         this.dropBias = null;
-/* 2445 */         this.dropAction = 2;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean importData(JComponent param1JComponent, Transferable param1Transferable) {
-/* 2461 */       JTextComponent jTextComponent = (JTextComponent)param1JComponent;
-/*      */ 
-/*      */       
-/* 2464 */       int i = this.modeBetween ? jTextComponent.getDropLocation().getIndex() : jTextComponent.getCaretPosition();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2470 */       if (this.dropAction == 2 && jTextComponent == this.exportComp && i >= this.p0 && i <= this.p1) {
-/* 2471 */         this.shouldRemove = false;
-/* 2472 */         return true;
-/*      */       } 
-/*      */       
-/* 2475 */       boolean bool = false;
-/* 2476 */       DataFlavor dataFlavor = getImportFlavor(param1Transferable.getTransferDataFlavors(), jTextComponent);
-/* 2477 */       if (dataFlavor != null) {
-/*      */         
-/* 2479 */         try { boolean bool1 = false;
-/* 2480 */           if (param1JComponent instanceof JEditorPane) {
-/* 2481 */             JEditorPane jEditorPane = (JEditorPane)param1JComponent;
-/* 2482 */             if (!jEditorPane.getContentType().startsWith("text/plain") && dataFlavor
-/* 2483 */               .getMimeType().startsWith(jEditorPane.getContentType())) {
-/* 2484 */               bool1 = true;
-/*      */             }
-/*      */           } 
-/* 2487 */           InputContext inputContext = jTextComponent.getInputContext();
-/* 2488 */           if (inputContext != null) {
-/* 2489 */             inputContext.endComposition();
-/*      */           }
-/* 2491 */           Reader reader = dataFlavor.getReaderForText(param1Transferable);
-/*      */           
-/* 2493 */           if (this.modeBetween) {
-/* 2494 */             Caret caret = jTextComponent.getCaret();
-/* 2495 */             if (caret instanceof DefaultCaret) {
-/* 2496 */               ((DefaultCaret)caret).setDot(i, this.dropBias);
-/*      */             } else {
-/* 2498 */               jTextComponent.setCaretPosition(i);
-/*      */             } 
-/*      */           } 
-/*      */           
-/* 2502 */           handleReaderImport(reader, jTextComponent, bool1);
-/*      */           
-/* 2504 */           if (this.isDrop) {
-/* 2505 */             jTextComponent.requestFocus();
-/* 2506 */             Caret caret = jTextComponent.getCaret();
-/* 2507 */             if (caret instanceof DefaultCaret) {
-/* 2508 */               int j = caret.getDot();
-/* 2509 */               Position.Bias bias = ((DefaultCaret)caret).getDotBias();
-/*      */               
-/* 2511 */               ((DefaultCaret)caret).setDot(i, this.dropBias);
-/* 2512 */               ((DefaultCaret)caret).moveDot(j, bias);
-/*      */             } else {
-/* 2514 */               jTextComponent.select(i, jTextComponent.getCaretPosition());
-/*      */             } 
-/*      */           } 
-/*      */           
-/* 2518 */           bool = true; }
-/* 2519 */         catch (UnsupportedFlavorException unsupportedFlavorException) {  }
-/* 2520 */         catch (BadLocationException badLocationException) {  }
-/* 2521 */         catch (IOException iOException) {}
-/*      */       }
-/*      */       
-/* 2524 */       return bool;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean canImport(JComponent param1JComponent, DataFlavor[] param1ArrayOfDataFlavor) {
-/* 2538 */       JTextComponent jTextComponent = (JTextComponent)param1JComponent;
-/* 2539 */       if (!jTextComponent.isEditable() || !jTextComponent.isEnabled()) {
-/* 2540 */         return false;
-/*      */       }
-/* 2542 */       return (getImportFlavor(param1ArrayOfDataFlavor, jTextComponent) != null);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     static class TextTransferable
-/*      */       extends BasicTransferable
-/*      */     {
-/*      */       Position p0;
-/*      */       
-/*      */       Position p1;
-/*      */       String mimeType;
-/*      */       String richText;
-/*      */       JTextComponent c;
-/*      */       
-/*      */       TextTransferable(JTextComponent param2JTextComponent, int param2Int1, int param2Int2) {
-/* 2557 */         super(null, null);
-/*      */         
-/* 2559 */         this.c = param2JTextComponent;
-/*      */         
-/* 2561 */         Document document = param2JTextComponent.getDocument();
-/*      */ 
-/*      */         
-/* 2564 */         try { this.p0 = document.createPosition(param2Int1);
-/* 2565 */           this.p1 = document.createPosition(param2Int2);
-/*      */           
-/* 2567 */           this.plainData = param2JTextComponent.getSelectedText();
-/*      */           
-/* 2569 */           if (param2JTextComponent instanceof JEditorPane) {
-/* 2570 */             JEditorPane jEditorPane = (JEditorPane)param2JTextComponent;
-/*      */             
-/* 2572 */             this.mimeType = jEditorPane.getContentType();
-/*      */             
-/* 2574 */             if (this.mimeType.startsWith("text/plain")) {
-/*      */               return;
-/*      */             }
-/*      */             
-/* 2578 */             StringWriter stringWriter = new StringWriter(this.p1.getOffset() - this.p0.getOffset());
-/* 2579 */             jEditorPane.getEditorKit().write(stringWriter, document, this.p0.getOffset(), this.p1.getOffset() - this.p0.getOffset());
-/*      */             
-/* 2581 */             if (this.mimeType.startsWith("text/html")) {
-/* 2582 */               this.htmlData = stringWriter.toString();
-/*      */             } else {
-/* 2584 */               this.richText = stringWriter.toString();
-/*      */             } 
-/*      */           }  }
-/* 2587 */         catch (BadLocationException badLocationException) {  }
-/* 2588 */         catch (IOException iOException) {}
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       void removeText() {
-/* 2593 */         if (this.p0 != null && this.p1 != null && this.p0.getOffset() != this.p1.getOffset()) {
-/*      */           try {
-/* 2595 */             Document document = this.c.getDocument();
-/* 2596 */             document.remove(this.p0.getOffset(), this.p1.getOffset() - this.p0.getOffset());
-/* 2597 */           } catch (BadLocationException badLocationException) {}
-/*      */         }
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       protected DataFlavor[] getRicherFlavors() {
-/* 2609 */         if (this.richText == null) {
-/* 2610 */           return null;
-/*      */         }
-/*      */         
-/*      */         try {
-/* 2614 */           DataFlavor[] arrayOfDataFlavor = new DataFlavor[3];
-/* 2615 */           arrayOfDataFlavor[0] = new DataFlavor(this.mimeType + ";class=java.lang.String");
-/* 2616 */           arrayOfDataFlavor[1] = new DataFlavor(this.mimeType + ";class=java.io.Reader");
-/* 2617 */           arrayOfDataFlavor[2] = new DataFlavor(this.mimeType + ";class=java.io.InputStream;charset=unicode");
-/* 2618 */           return arrayOfDataFlavor;
-/* 2619 */         } catch (ClassNotFoundException classNotFoundException) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 2623 */           return null;
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       protected Object getRicherData(DataFlavor param2DataFlavor) throws UnsupportedFlavorException {
-/* 2630 */         if (this.richText == null) {
-/* 2631 */           return null;
-/*      */         }
-/*      */         
-/* 2634 */         if (String.class.equals(param2DataFlavor.getRepresentationClass()))
-/* 2635 */           return this.richText; 
-/* 2636 */         if (Reader.class.equals(param2DataFlavor.getRepresentationClass()))
-/* 2637 */           return new StringReader(this.richText); 
-/* 2638 */         if (InputStream.class.equals(param2DataFlavor.getRepresentationClass())) {
-/* 2639 */           return new StringBufferInputStream(this.richText);
-/*      */         }
-/* 2641 */         throw new UnsupportedFlavorException(param2DataFlavor);
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicTextUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.basic;
+
+import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.datatransfer.*;
+import java.awt.im.InputContext;
+import java.beans.*;
+import java.io.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.text.*;
+import javax.swing.event.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.UIResource;
+import javax.swing.plaf.synth.SynthUI;
+import sun.swing.DefaultLookup;
+import sun.awt.AppContext;
+import javax.swing.plaf.basic.DragRecognitionSupport.BeforeDrag;
+
+/**
+ * <p>
+ * Basis of a text components look-and-feel.  This provides the
+ * basic editor view and controller services that may be useful
+ * when creating a look-and-feel for an extension of
+ * <code>JTextComponent</code>.
+ * <p>
+ * Most state is held in the associated <code>JTextComponent</code>
+ * as bound properties, and the UI installs default values for the
+ * various properties.  This default will install something for
+ * all of the properties.  Typically, a LAF implementation will
+ * do more however.  At a minimum, a LAF would generally install
+ * key bindings.
+ * <p>
+ * This class also provides some concurrency support if the
+ * <code>Document</code> associated with the JTextComponent is a subclass of
+ * <code>AbstractDocument</code>.  Access to the View (or View hierarchy) is
+ * serialized between any thread mutating the model and the Swing
+ * event thread (which is expected to render, do model/view coordinate
+ * translation, etc).  <em>Any access to the root view should first
+ * acquire a read-lock on the AbstractDocument and release that lock
+ * in a finally block.</em>
+ * <p>
+ * An important method to define is the {@link #getPropertyPrefix} method
+ * which is used as the basis of the keys used to fetch defaults
+ * from the UIManager.  The string should reflect the type of
+ * TextUI (eg. TextField, TextArea, etc) without the particular
+ * LAF part of the name (eg Metal, Motif, etc).
+ * <p>
+ * To build a view of the model, one of the following strategies
+ * can be employed.
+ * <ol>
+ * <li>
+ * One strategy is to simply redefine the
+ * ViewFactory interface in the UI.  By default, this UI itself acts
+ * as the factory for View implementations.  This is useful
+ * for simple factories.  To do this reimplement the
+ * {@link #create} method.
+ * <li>
+ * A common strategy for creating more complex types of documents
+ * is to have the EditorKit implementation return a factory.  Since
+ * the EditorKit ties all of the pieces necessary to maintain a type
+ * of document, the factory is typically an important part of that
+ * and should be produced by the EditorKit implementation.
+ * </ol>
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Timothy Prinzing
+ * @author Shannon Hickey (drag and drop)
+ */
+public abstract class BasicTextUI extends TextUI implements ViewFactory {
+
+    /**
+     * Creates a new UI.
+     */
+    public BasicTextUI() {
+        painted = false;
+    }
+
+    /**
+     * Creates the object to use for a caret.  By default an
+     * instance of BasicCaret is created.  This method
+     * can be redefined to provide something else that implements
+     * the InputPosition interface or a subclass of JCaret.
+     *
+     * @return the caret object
+     */
+    protected Caret createCaret() {
+        return new BasicCaret();
+    }
+
+    /**
+     * Creates the object to use for adding highlights.  By default
+     * an instance of BasicHighlighter is created.  This method
+     * can be redefined to provide something else that implements
+     * the Highlighter interface or a subclass of DefaultHighlighter.
+     *
+     * @return the highlighter
+     */
+    protected Highlighter createHighlighter() {
+        return new BasicHighlighter();
+    }
+
+    /**
+     * Fetches the name of the keymap that will be installed/used
+     * by default for this UI. This is implemented to create a
+     * name based upon the classname.  The name is the the name
+     * of the class with the package prefix removed.
+     *
+     * @return the name
+     */
+    protected String getKeymapName() {
+        String nm = getClass().getName();
+        int index = nm.lastIndexOf('.');
+        if (index >= 0) {
+            nm = nm.substring(index+1, nm.length());
+        }
+        return nm;
+    }
+
+    /**
+     * Creates the keymap to use for the text component, and installs
+     * any necessary bindings into it.  By default, the keymap is
+     * shared between all instances of this type of TextUI. The
+     * keymap has the name defined by the getKeymapName method.  If the
+     * keymap is not found, then DEFAULT_KEYMAP from JTextComponent is used.
+     * <p>
+     * The set of bindings used to create the keymap is fetched
+     * from the UIManager using a key formed by combining the
+     * {@link #getPropertyPrefix} method
+     * and the string <code>.keyBindings</code>.  The type is expected
+     * to be <code>JTextComponent.KeyBinding[]</code>.
+     *
+     * @return the keymap
+     * @see #getKeymapName
+     * @see javax.swing.text.JTextComponent
+     */
+    protected Keymap createKeymap() {
+        String nm = getKeymapName();
+        Keymap map = JTextComponent.getKeymap(nm);
+        if (map == null) {
+            Keymap parent = JTextComponent.getKeymap(JTextComponent.DEFAULT_KEYMAP);
+            map = JTextComponent.addKeymap(nm, parent);
+            String prefix = getPropertyPrefix();
+            Object o = DefaultLookup.get(editor, this,
+                prefix + ".keyBindings");
+            if ((o != null) && (o instanceof JTextComponent.KeyBinding[])) {
+                JTextComponent.KeyBinding[] bindings = (JTextComponent.KeyBinding[]) o;
+                JTextComponent.loadKeymap(map, bindings, getComponent().getActions());
+            }
+        }
+        return map;
+    }
+
+    /**
+     * This method gets called when a bound property is changed
+     * on the associated JTextComponent.  This is a hook
+     * which UI implementations may change to reflect how the
+     * UI displays bound properties of JTextComponent subclasses.
+     * This is implemented to do nothing (i.e. the response to
+     * properties in JTextComponent itself are handled prior
+     * to calling this method).
+     *
+     * This implementation updates the background of the text
+     * component if the editable and/or enabled state changes.
+     *
+     * @param evt the property change event
+     */
+    protected void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals("editable") ||
+                evt.getPropertyName().equals("enabled")) {
+
+            updateBackground((JTextComponent)evt.getSource());
+        }
+    }
+
+    /**
+     * Updates the background of the text component based on whether the
+     * text component is editable and/or enabled.
+     *
+     * @param c the JTextComponent that needs its background color updated
+     */
+    private void updateBackground(JTextComponent c) {
+        // This is a temporary workaround.
+        // This code does not correctly deal with Synth (Synth doesn't use
+        // properties like this), nor does it deal with the situation where
+        // the developer grabs the color from a JLabel and sets it as
+        // the background for a JTextArea in all look and feels. The problem
+        // scenario results if the Color obtained for the Label and TextArea
+        // is ==, which is the case for the windows look and feel.
+        // Until an appropriate solution is found, the code is being
+        // reverted to what it was before the original fix.
+        if (this instanceof SynthUI || (c instanceof JTextArea)) {
+            return;
+        }
+        Color background = c.getBackground();
+        if (background instanceof UIResource) {
+            String prefix = getPropertyPrefix();
+
+            Color disabledBG =
+                DefaultLookup.getColor(c, this, prefix + ".disabledBackground", null);
+            Color inactiveBG =
+                DefaultLookup.getColor(c, this, prefix + ".inactiveBackground", null);
+            Color bg =
+                DefaultLookup.getColor(c, this, prefix + ".background", null);
+
+            /* In an ideal situation, the following check would not be necessary
+             * and we would replace the color any time the previous color was a
+             * UIResouce. However, it turns out that there is existing code that
+             * uses the following inadvisable pattern to turn a text area into
+             * what appears to be a multi-line label:
+             *
+             * JLabel label = new JLabel();
+             * JTextArea area = new JTextArea();
+             * area.setBackground(label.getBackground());
+             * area.setEditable(false);
+             *
+             * JLabel's default background is a UIResource. As such, just
+             * checking for UIResource would have us always changing the
+             * background away from what the developer wanted.
+             *
+             * Therefore, for JTextArea/JEditorPane, we'll additionally check
+             * that the color we're about to replace matches one that was
+             * installed by us from the UIDefaults.
+             */
+            if ((c instanceof JTextArea || c instanceof JEditorPane)
+                    && background != disabledBG
+                    && background != inactiveBG
+                    && background != bg) {
+
+                return;
+            }
+
+            Color newColor = null;
+            if (!c.isEnabled()) {
+                newColor = disabledBG;
+            }
+            if (newColor == null && !c.isEditable()) {
+                newColor = inactiveBG;
+            }
+            if (newColor == null) {
+                newColor = bg;
+            }
+            if (newColor != null && newColor != background) {
+                c.setBackground(newColor);
+            }
+        }
+    }
+
+    /**
+     * Gets the name used as a key to look up properties through the
+     * UIManager.  This is used as a prefix to all the standard
+     * text properties.
+     *
+     * @return the name
+     */
+    protected abstract String getPropertyPrefix();
+
+    /**
+     * Initializes component properties, such as font, foreground,
+     * background, caret color, selection color, selected text color,
+     * disabled text color, and border color.  The font, foreground, and
+     * background properties are only set if their current value is either null
+     * or a UIResource, other properties are set if the current
+     * value is null.
+     *
+     * @see #uninstallDefaults
+     * @see #installUI
+     */
+    protected void installDefaults()
+    {
+        String prefix = getPropertyPrefix();
+        Font f = editor.getFont();
+        if ((f == null) || (f instanceof UIResource)) {
+            editor.setFont(UIManager.getFont(prefix + ".font"));
+        }
+
+        Color bg = editor.getBackground();
+        if ((bg == null) || (bg instanceof UIResource)) {
+            editor.setBackground(UIManager.getColor(prefix + ".background"));
+        }
+
+        Color fg = editor.getForeground();
+        if ((fg == null) || (fg instanceof UIResource)) {
+            editor.setForeground(UIManager.getColor(prefix + ".foreground"));
+        }
+
+        Color color = editor.getCaretColor();
+        if ((color == null) || (color instanceof UIResource)) {
+            editor.setCaretColor(UIManager.getColor(prefix + ".caretForeground"));
+        }
+
+        Color s = editor.getSelectionColor();
+        if ((s == null) || (s instanceof UIResource)) {
+            editor.setSelectionColor(UIManager.getColor(prefix + ".selectionBackground"));
+        }
+
+        Color sfg = editor.getSelectedTextColor();
+        if ((sfg == null) || (sfg instanceof UIResource)) {
+            editor.setSelectedTextColor(UIManager.getColor(prefix + ".selectionForeground"));
+        }
+
+        Color dfg = editor.getDisabledTextColor();
+        if ((dfg == null) || (dfg instanceof UIResource)) {
+            editor.setDisabledTextColor(UIManager.getColor(prefix + ".inactiveForeground"));
+        }
+
+        Border b = editor.getBorder();
+        if ((b == null) || (b instanceof UIResource)) {
+            editor.setBorder(UIManager.getBorder(prefix + ".border"));
+        }
+
+        Insets margin = editor.getMargin();
+        if (margin == null || margin instanceof UIResource) {
+            editor.setMargin(UIManager.getInsets(prefix + ".margin"));
+        }
+
+        updateCursor();
+    }
+
+    private void installDefaults2() {
+        editor.addMouseListener(dragListener);
+        editor.addMouseMotionListener(dragListener);
+
+        String prefix = getPropertyPrefix();
+
+        Caret caret = editor.getCaret();
+        if (caret == null || caret instanceof UIResource) {
+            caret = createCaret();
+            editor.setCaret(caret);
+
+            int rate = DefaultLookup.getInt(getComponent(), this, prefix + ".caretBlinkRate", 500);
+            caret.setBlinkRate(rate);
+        }
+
+        Highlighter highlighter = editor.getHighlighter();
+        if (highlighter == null || highlighter instanceof UIResource) {
+            editor.setHighlighter(createHighlighter());
+        }
+
+        TransferHandler th = editor.getTransferHandler();
+        if (th == null || th instanceof UIResource) {
+            editor.setTransferHandler(getTransferHandler());
+        }
+    }
+
+    /**
+     * Sets the component properties that have not been explicitly overridden
+     * to {@code null}.  A property is considered overridden if its current
+     * value is not a {@code UIResource}.
+     *
+     * @see #installDefaults
+     * @see #uninstallUI
+     */
+    protected void uninstallDefaults()
+    {
+        editor.removeMouseListener(dragListener);
+        editor.removeMouseMotionListener(dragListener);
+
+        if (editor.getCaretColor() instanceof UIResource) {
+            editor.setCaretColor(null);
+        }
+
+        if (editor.getSelectionColor() instanceof UIResource) {
+            editor.setSelectionColor(null);
+        }
+
+        if (editor.getDisabledTextColor() instanceof UIResource) {
+            editor.setDisabledTextColor(null);
+        }
+
+        if (editor.getSelectedTextColor() instanceof UIResource) {
+            editor.setSelectedTextColor(null);
+        }
+
+        if (editor.getBorder() instanceof UIResource) {
+            editor.setBorder(null);
+        }
+
+        if (editor.getMargin() instanceof UIResource) {
+            editor.setMargin(null);
+        }
+
+        if (editor.getCaret() instanceof UIResource) {
+            editor.setCaret(null);
+        }
+
+        if (editor.getHighlighter() instanceof UIResource) {
+            editor.setHighlighter(null);
+        }
+
+        if (editor.getTransferHandler() instanceof UIResource) {
+            editor.setTransferHandler(null);
+        }
+
+        if (editor.getCursor() instanceof UIResource) {
+            editor.setCursor(null);
+        }
+    }
+
+    /**
+     * Installs listeners for the UI.
+     */
+    protected void installListeners() {
+    }
+
+    /**
+     * Uninstalls listeners for the UI.
+     */
+    protected void uninstallListeners() {
+    }
+
+    protected void installKeyboardActions() {
+        // backward compatibility support... keymaps for the UI
+        // are now installed in the more friendly input map.
+        editor.setKeymap(createKeymap());
+
+        InputMap km = getInputMap();
+        if (km != null) {
+            SwingUtilities.replaceUIInputMap(editor, JComponent.WHEN_FOCUSED,
+                                             km);
+        }
+
+        ActionMap map = getActionMap();
+        if (map != null) {
+            SwingUtilities.replaceUIActionMap(editor, map);
+        }
+
+        updateFocusAcceleratorBinding(false);
+    }
+
+    /**
+     * Get the InputMap to use for the UI.
+     */
+    InputMap getInputMap() {
+        InputMap map = new InputMapUIResource();
+
+        InputMap shared =
+            (InputMap)DefaultLookup.get(editor, this,
+            getPropertyPrefix() + ".focusInputMap");
+        if (shared != null) {
+            map.setParent(shared);
+        }
+        return map;
+    }
+
+    /**
+     * Invoked when the focus accelerator changes, this will update the
+     * key bindings as necessary.
+     */
+    void updateFocusAcceleratorBinding(boolean changed) {
+        char accelerator = editor.getFocusAccelerator();
+
+        if (changed || accelerator != '\0') {
+            InputMap km = SwingUtilities.getUIInputMap
+                        (editor, JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+            if (km == null && accelerator != '\0') {
+                km = new ComponentInputMapUIResource(editor);
+                SwingUtilities.replaceUIInputMap(editor, JComponent.
+                                                 WHEN_IN_FOCUSED_WINDOW, km);
+                ActionMap am = getActionMap();
+                SwingUtilities.replaceUIActionMap(editor, am);
+            }
+            if (km != null) {
+                km.clear();
+                if (accelerator != '\0') {
+                    km.put(KeyStroke.getKeyStroke(accelerator, BasicLookAndFeel.getFocusAcceleratorKeyMask()), "requestFocus");
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Invoked when editable property is changed.
+     *
+     * removing 'TAB' and 'SHIFT-TAB' from traversalKeysSet in case
+     * editor is editable
+     * adding 'TAB' and 'SHIFT-TAB' to traversalKeysSet in case
+     * editor is non editable
+     */
+
+    void updateFocusTraversalKeys() {
+        /*
+         * Fix for 4514331 Non-editable JTextArea and similar
+         * should allow Tab to keyboard - accessibility
+         */
+        EditorKit editorKit = getEditorKit(editor);
+        if ( editorKit != null
+             && editorKit instanceof DefaultEditorKit) {
+            Set<AWTKeyStroke> storedForwardTraversalKeys = editor.
+                getFocusTraversalKeys(KeyboardFocusManager.
+                                      FORWARD_TRAVERSAL_KEYS);
+            Set<AWTKeyStroke> storedBackwardTraversalKeys = editor.
+                getFocusTraversalKeys(KeyboardFocusManager.
+                                      BACKWARD_TRAVERSAL_KEYS);
+            Set<AWTKeyStroke> forwardTraversalKeys =
+                new HashSet<AWTKeyStroke>(storedForwardTraversalKeys);
+            Set<AWTKeyStroke> backwardTraversalKeys =
+                new HashSet<AWTKeyStroke>(storedBackwardTraversalKeys);
+            if (editor.isEditable()) {
+                forwardTraversalKeys.
+                    remove(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
+                backwardTraversalKeys.
+                    remove(KeyStroke.getKeyStroke(KeyEvent.VK_TAB,
+                                                  InputEvent.SHIFT_MASK));
+            } else {
+                forwardTraversalKeys.add(KeyStroke.
+                                         getKeyStroke(KeyEvent.VK_TAB, 0));
+                backwardTraversalKeys.
+                    add(KeyStroke.
+                        getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK));
+            }
+            LookAndFeel.installProperty(editor,
+                                        "focusTraversalKeysForward",
+                                         forwardTraversalKeys);
+            LookAndFeel.installProperty(editor,
+                                        "focusTraversalKeysBackward",
+                                         backwardTraversalKeys);
+        }
+
+    }
+
+    /**
+     * As needed updates cursor for the target editor.
+     */
+    private void updateCursor() {
+        if ((! editor.isCursorSet())
+               || editor.getCursor() instanceof UIResource) {
+            Cursor cursor = (editor.isEditable()) ? textCursor : null;
+            editor.setCursor(cursor);
+        }
+    }
+
+    /**
+     * Returns the <code>TransferHandler</code> that will be installed if
+     * their isn't one installed on the <code>JTextComponent</code>.
+     */
+    TransferHandler getTransferHandler() {
+        return defaultTransferHandler;
+    }
+
+    /**
+     * Fetch an action map to use.
+     */
+    ActionMap getActionMap() {
+        String mapName = getPropertyPrefix() + ".actionMap";
+        ActionMap map = (ActionMap)UIManager.get(mapName);
+
+        if (map == null) {
+            map = createActionMap();
+            if (map != null) {
+                UIManager.getLookAndFeelDefaults().put(mapName, map);
+            }
+        }
+        ActionMap componentMap = new ActionMapUIResource();
+        componentMap.put("requestFocus", new FocusAction());
+        /*
+         * fix for bug 4515750
+         * JTextField & non-editable JTextArea bind return key - default btn not accessible
+         *
+         * Wrap the return action so that it is only enabled when the
+         * component is editable. This allows the default button to be
+         * processed when the text component has focus and isn't editable.
+         *
+         */
+        if (getEditorKit(editor) instanceof DefaultEditorKit) {
+            if (map != null) {
+                Object obj = map.get(DefaultEditorKit.insertBreakAction);
+                if (obj != null
+                    && obj instanceof DefaultEditorKit.InsertBreakAction) {
+                    Action action =  new TextActionWrapper((TextAction)obj);
+                    componentMap.put(action.getValue(Action.NAME),action);
+                }
+            }
+        }
+        if (map != null) {
+            componentMap.setParent(map);
+        }
+        return componentMap;
+    }
+
+    /**
+     * Create a default action map.  This is basically the
+     * set of actions found exported by the component.
+     */
+    ActionMap createActionMap() {
+        ActionMap map = new ActionMapUIResource();
+        Action[] actions = editor.getActions();
+        //System.out.println("building map for UI: " + getPropertyPrefix());
+        int n = actions.length;
+        for (int i = 0; i < n; i++) {
+            Action a = actions[i];
+            map.put(a.getValue(Action.NAME), a);
+            //System.out.println("  " + a.getValue(Action.NAME));
+        }
+        map.put(TransferHandler.getCutAction().getValue(Action.NAME),
+                TransferHandler.getCutAction());
+        map.put(TransferHandler.getCopyAction().getValue(Action.NAME),
+                TransferHandler.getCopyAction());
+        map.put(TransferHandler.getPasteAction().getValue(Action.NAME),
+                TransferHandler.getPasteAction());
+        return map;
+    }
+
+    protected void uninstallKeyboardActions() {
+        editor.setKeymap(null);
+        SwingUtilities.replaceUIInputMap(editor, JComponent.
+                                         WHEN_IN_FOCUSED_WINDOW, null);
+        SwingUtilities.replaceUIActionMap(editor, null);
+    }
+
+    /**
+     * Paints a background for the view.  This will only be
+     * called if isOpaque() on the associated component is
+     * true.  The default is to paint the background color
+     * of the component.
+     *
+     * @param g the graphics context
+     */
+    protected void paintBackground(Graphics g) {
+        g.setColor(editor.getBackground());
+        g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
+    }
+
+    /**
+     * Fetches the text component associated with this
+     * UI implementation.  This will be null until
+     * the ui has been installed.
+     *
+     * @return the editor component
+     */
+    protected final JTextComponent getComponent() {
+        return editor;
+    }
+
+    /**
+     * Flags model changes.
+     * This is called whenever the model has changed.
+     * It is implemented to rebuild the view hierarchy
+     * to represent the default root element of the
+     * associated model.
+     */
+    protected void modelChanged() {
+        // create a view hierarchy
+        ViewFactory f = rootView.getViewFactory();
+        Document doc = editor.getDocument();
+        Element elem = doc.getDefaultRootElement();
+        setView(f.create(elem));
+    }
+
+    /**
+     * Sets the current root of the view hierarchy and calls invalidate().
+     * If there were any child components, they will be removed (i.e.
+     * there are assumed to have come from components embedded in views).
+     *
+     * @param v the root view
+     */
+    protected final void setView(View v) {
+        rootView.setView(v);
+        painted = false;
+        editor.revalidate();
+        editor.repaint();
+    }
+
+    /**
+     * Paints the interface safely with a guarantee that
+     * the model won't change from the view of this thread.
+     * This does the following things, rendering from
+     * back to front.
+     * <ol>
+     * <li>
+     * If the component is marked as opaque, the background
+     * is painted in the current background color of the
+     * component.
+     * <li>
+     * The highlights (if any) are painted.
+     * <li>
+     * The view hierarchy is painted.
+     * <li>
+     * The caret is painted.
+     * </ol>
+     *
+     * @param g the graphics context
+     */
+    protected void paintSafely(Graphics g) {
+        painted = true;
+        Highlighter highlighter = editor.getHighlighter();
+        Caret caret = editor.getCaret();
+
+        // paint the background
+        if (editor.isOpaque()) {
+            paintBackground(g);
+        }
+
+        // paint the highlights
+        if (highlighter != null) {
+            highlighter.paint(g);
+        }
+
+        // paint the view hierarchy
+        Rectangle alloc = getVisibleEditorRect();
+        if (alloc != null) {
+            rootView.paint(g, alloc);
+        }
+
+        // paint the caret
+        if (caret != null) {
+            caret.paint(g);
+        }
+
+        if (dropCaret != null) {
+            dropCaret.paint(g);
+        }
+    }
+
+    // --- ComponentUI methods --------------------------------------------
+
+    /**
+     * Installs the UI for a component.  This does the following
+     * things.
+     * <ol>
+     * <li>
+     * Sets the associated component to opaque if the opaque property
+     * has not already been set by the client program. This will cause the
+     * component's background color to be painted.
+     * <li>
+     * Installs the default caret and highlighter into the
+     * associated component. These properties are only set if their
+     * current value is either {@code null} or an instance of
+     * {@link UIResource}.
+     * <li>
+     * Attaches to the editor and model.  If there is no
+     * model, a default one is created.
+     * <li>
+     * Creates the view factory and the view hierarchy used
+     * to represent the model.
+     * </ol>
+     *
+     * @param c the editor component
+     * @see ComponentUI#installUI
+     */
+    public void installUI(JComponent c) {
+        if (c instanceof JTextComponent) {
+            editor = (JTextComponent) c;
+
+            // common case is background painted... this can
+            // easily be changed by subclasses or from outside
+            // of the component.
+            LookAndFeel.installProperty(editor, "opaque", Boolean.TRUE);
+            LookAndFeel.installProperty(editor, "autoscrolls", Boolean.TRUE);
+
+            // install defaults
+            installDefaults();
+            installDefaults2();
+
+            // attach to the model and editor
+            editor.addPropertyChangeListener(updateHandler);
+            Document doc = editor.getDocument();
+            if (doc == null) {
+                // no model, create a default one.  This will
+                // fire a notification to the updateHandler
+                // which takes care of the rest.
+                editor.setDocument(getEditorKit(editor).createDefaultDocument());
+            } else {
+                doc.addDocumentListener(updateHandler);
+                modelChanged();
+            }
+
+            // install keymap
+            installListeners();
+            installKeyboardActions();
+
+            LayoutManager oldLayout = editor.getLayout();
+            if ((oldLayout == null) || (oldLayout instanceof UIResource)) {
+                // by default, use default LayoutManger implementation that
+                // will position the components associated with a View object.
+                editor.setLayout(updateHandler);
+            }
+
+            updateBackground(editor);
+        } else {
+            throw new Error("TextUI needs JTextComponent");
+        }
+    }
+
+    /**
+     * Deinstalls the UI for a component.  This removes the listeners,
+     * uninstalls the highlighter, removes views, and nulls out the keymap.
+     *
+     * @param c the editor component
+     * @see ComponentUI#uninstallUI
+     */
+    public void uninstallUI(JComponent c) {
+        // detach from the model
+        editor.removePropertyChangeListener(updateHandler);
+        editor.getDocument().removeDocumentListener(updateHandler);
+
+        // view part
+        painted = false;
+        uninstallDefaults();
+        rootView.setView(null);
+        c.removeAll();
+        LayoutManager lm = c.getLayout();
+        if (lm instanceof UIResource) {
+            c.setLayout(null);
+        }
+
+        // controller part
+        uninstallKeyboardActions();
+        uninstallListeners();
+
+        editor = null;
+    }
+
+    /**
+     * Superclass paints background in an uncontrollable way
+     * (i.e. one might want an image tiled into the background).
+     * To prevent this from happening twice, this method is
+     * reimplemented to simply paint.
+     * <p>
+     * <em>NOTE:</em> NOTE: Superclass is also not thread-safe in its
+     * rendering of the background, although that is not an issue with the
+     * default rendering.
+     */
+    public void update(Graphics g, JComponent c) {
+        paint(g, c);
+    }
+
+    /**
+     * Paints the interface.  This is routed to the
+     * paintSafely method under the guarantee that
+     * the model won't change from the view of this thread
+     * while it's rendering (if the associated model is
+     * derived from AbstractDocument).  This enables the
+     * model to potentially be updated asynchronously.
+     *
+     * @param g the graphics context
+     * @param c the editor component
+     */
+    public final void paint(Graphics g, JComponent c) {
+        if ((rootView.getViewCount() > 0) && (rootView.getView(0) != null)) {
+            Document doc = editor.getDocument();
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readLock();
+            }
+            try {
+                paintSafely(g);
+            } finally {
+                if (doc instanceof AbstractDocument) {
+                    ((AbstractDocument)doc).readUnlock();
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the preferred size for the editor component.  If the component
+     * has been given a size prior to receiving this request, it will
+     * set the size of the view hierarchy to reflect the size of the component
+     * before requesting the preferred size of the view hierarchy.  This
+     * allows formatted views to format to the current component size before
+     * answering the request.  Other views don't care about currently formatted
+     * size and give the same answer either way.
+     *
+     * @param c the editor component
+     * @return the size
+     */
+    public Dimension getPreferredSize(JComponent c) {
+        Document doc = editor.getDocument();
+        Insets i = c.getInsets();
+        Dimension d = c.getSize();
+
+        if (doc instanceof AbstractDocument) {
+            ((AbstractDocument)doc).readLock();
+        }
+        try {
+            if ((d.width > (i.left + i.right)) && (d.height > (i.top + i.bottom))) {
+                rootView.setSize(d.width - i.left - i.right, d.height - i.top - i.bottom);
+            }
+            else if (d.width == 0 && d.height == 0) {
+                // Probably haven't been layed out yet, force some sort of
+                // initial sizing.
+                rootView.setSize(Integer.MAX_VALUE, Integer.MAX_VALUE);
+            }
+            d.width = (int) Math.min((long) rootView.getPreferredSpan(View.X_AXIS) +
+                                     (long) i.left + (long) i.right, Integer.MAX_VALUE);
+            d.height = (int) Math.min((long) rootView.getPreferredSpan(View.Y_AXIS) +
+                                      (long) i.top + (long) i.bottom, Integer.MAX_VALUE);
+        } finally {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readUnlock();
+            }
+        }
+        return d;
+    }
+
+    /**
+     * Gets the minimum size for the editor component.
+     *
+     * @param c the editor component
+     * @return the size
+     */
+    public Dimension getMinimumSize(JComponent c) {
+        Document doc = editor.getDocument();
+        Insets i = c.getInsets();
+        Dimension d = new Dimension();
+        if (doc instanceof AbstractDocument) {
+            ((AbstractDocument)doc).readLock();
+        }
+        try {
+            d.width = (int) rootView.getMinimumSpan(View.X_AXIS) + i.left + i.right;
+            d.height = (int)  rootView.getMinimumSpan(View.Y_AXIS) + i.top + i.bottom;
+        } finally {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readUnlock();
+            }
+        }
+        return d;
+    }
+
+    /**
+     * Gets the maximum size for the editor component.
+     *
+     * @param c the editor component
+     * @return the size
+     */
+    public Dimension getMaximumSize(JComponent c) {
+        Document doc = editor.getDocument();
+        Insets i = c.getInsets();
+        Dimension d = new Dimension();
+        if (doc instanceof AbstractDocument) {
+            ((AbstractDocument)doc).readLock();
+        }
+        try {
+            d.width = (int) Math.min((long) rootView.getMaximumSpan(View.X_AXIS) +
+                                     (long) i.left + (long) i.right, Integer.MAX_VALUE);
+            d.height = (int) Math.min((long) rootView.getMaximumSpan(View.Y_AXIS) +
+                                      (long) i.top + (long) i.bottom, Integer.MAX_VALUE);
+        } finally {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readUnlock();
+            }
+        }
+        return d;
+    }
+
+    // ---- TextUI methods -------------------------------------------
+
+
+    /**
+     * Gets the allocation to give the root View.  Due
+     * to an unfortunate set of historical events this
+     * method is inappropriately named.  The Rectangle
+     * returned has nothing to do with visibility.
+     * The component must have a non-zero positive size for
+     * this translation to be computed.
+     *
+     * @return the bounding box for the root view
+     */
+    protected Rectangle getVisibleEditorRect() {
+        Rectangle alloc = editor.getBounds();
+        if ((alloc.width > 0) && (alloc.height > 0)) {
+            alloc.x = alloc.y = 0;
+            Insets insets = editor.getInsets();
+            alloc.x += insets.left;
+            alloc.y += insets.top;
+            alloc.width -= insets.left + insets.right;
+            alloc.height -= insets.top + insets.bottom;
+            return alloc;
+        }
+        return null;
+    }
+
+    /**
+     * Converts the given location in the model to a place in
+     * the view coordinate system.
+     * The component must have a non-zero positive size for
+     * this translation to be computed.
+     *
+     * @param tc the text component for which this UI is installed
+     * @param pos the local location in the model to translate &gt;= 0
+     * @return the coordinates as a rectangle, null if the model is not painted
+     * @exception BadLocationException  if the given position does not
+     *   represent a valid location in the associated document
+     * @see TextUI#modelToView
+     */
+    public Rectangle modelToView(JTextComponent tc, int pos) throws BadLocationException {
+        return modelToView(tc, pos, Position.Bias.Forward);
+    }
+
+    /**
+     * Converts the given location in the model to a place in
+     * the view coordinate system.
+     * The component must have a non-zero positive size for
+     * this translation to be computed.
+     *
+     * @param tc the text component for which this UI is installed
+     * @param pos the local location in the model to translate &gt;= 0
+     * @return the coordinates as a rectangle, null if the model is not painted
+     * @exception BadLocationException  if the given position does not
+     *   represent a valid location in the associated document
+     * @see TextUI#modelToView
+     */
+    public Rectangle modelToView(JTextComponent tc, int pos, Position.Bias bias) throws BadLocationException {
+        Document doc = editor.getDocument();
+        if (doc instanceof AbstractDocument) {
+            ((AbstractDocument)doc).readLock();
+        }
+        try {
+            Rectangle alloc = getVisibleEditorRect();
+            if (alloc != null) {
+                rootView.setSize(alloc.width, alloc.height);
+                Shape s = rootView.modelToView(pos, alloc, bias);
+                if (s != null) {
+                  return s.getBounds();
+                }
+            }
+        } finally {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readUnlock();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Converts the given place in the view coordinate system
+     * to the nearest representative location in the model.
+     * The component must have a non-zero positive size for
+     * this translation to be computed.
+     *
+     * @param tc the text component for which this UI is installed
+     * @param pt the location in the view to translate.  This
+     *  should be in the same coordinate system as the mouse events.
+     * @return the offset from the start of the document &gt;= 0,
+     *   -1 if not painted
+     * @see TextUI#viewToModel
+     */
+    public int viewToModel(JTextComponent tc, Point pt) {
+        return viewToModel(tc, pt, discardBias);
+    }
+
+    /**
+     * Converts the given place in the view coordinate system
+     * to the nearest representative location in the model.
+     * The component must have a non-zero positive size for
+     * this translation to be computed.
+     *
+     * @param tc the text component for which this UI is installed
+     * @param pt the location in the view to translate.  This
+     *  should be in the same coordinate system as the mouse events.
+     * @return the offset from the start of the document &gt;= 0,
+     *   -1 if the component doesn't yet have a positive size.
+     * @see TextUI#viewToModel
+     */
+    public int viewToModel(JTextComponent tc, Point pt,
+                           Position.Bias[] biasReturn) {
+        int offs = -1;
+        Document doc = editor.getDocument();
+        if (doc instanceof AbstractDocument) {
+            ((AbstractDocument)doc).readLock();
+        }
+        try {
+            Rectangle alloc = getVisibleEditorRect();
+            if (alloc != null) {
+                rootView.setSize(alloc.width, alloc.height);
+                offs = rootView.viewToModel(pt.x, pt.y, alloc, biasReturn);
+            }
+        } finally {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readUnlock();
+            }
+        }
+        return offs;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getNextVisualPositionFrom(JTextComponent t, int pos,
+                    Position.Bias b, int direction, Position.Bias[] biasRet)
+                    throws BadLocationException{
+        Document doc = editor.getDocument();
+        if (doc instanceof AbstractDocument) {
+            ((AbstractDocument)doc).readLock();
+        }
+        try {
+            if (painted) {
+                Rectangle alloc = getVisibleEditorRect();
+                if (alloc != null) {
+                    rootView.setSize(alloc.width, alloc.height);
+                }
+                return rootView.getNextVisualPositionFrom(pos, b, alloc, direction,
+                                                          biasRet);
+            }
+        } finally {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readUnlock();
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Causes the portion of the view responsible for the
+     * given part of the model to be repainted.  Does nothing if
+     * the view is not currently painted.
+     *
+     * @param tc the text component for which this UI is installed
+     * @param p0 the beginning of the range &gt;= 0
+     * @param p1 the end of the range &gt;= p0
+     * @see TextUI#damageRange
+     */
+    public void damageRange(JTextComponent tc, int p0, int p1) {
+        damageRange(tc, p0, p1, Position.Bias.Forward, Position.Bias.Backward);
+    }
+
+    /**
+     * Causes the portion of the view responsible for the
+     * given part of the model to be repainted.
+     *
+     * @param p0 the beginning of the range &gt;= 0
+     * @param p1 the end of the range &gt;= p0
+     */
+    public void damageRange(JTextComponent t, int p0, int p1,
+                            Position.Bias p0Bias, Position.Bias p1Bias) {
+        if (painted) {
+            Rectangle alloc = getVisibleEditorRect();
+            if (alloc != null) {
+                Document doc = t.getDocument();
+                if (doc instanceof AbstractDocument) {
+                    ((AbstractDocument)doc).readLock();
+                }
+                try {
+                    rootView.setSize(alloc.width, alloc.height);
+                    Shape toDamage = rootView.modelToView(p0, p0Bias,
+                            p1, p1Bias, alloc);
+                    Rectangle rect = (toDamage instanceof Rectangle) ?
+                            (Rectangle)toDamage : toDamage.getBounds();
+                    editor.repaint(rect.x, rect.y, rect.width, rect.height);
+                } catch (BadLocationException e) {
+                } finally {
+                    if (doc instanceof AbstractDocument) {
+                        ((AbstractDocument)doc).readUnlock();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Fetches the EditorKit for the UI.
+     *
+     * @param tc the text component for which this UI is installed
+     * @return the editor capabilities
+     * @see TextUI#getEditorKit
+     */
+    public EditorKit getEditorKit(JTextComponent tc) {
+        return defaultKit;
+    }
+
+    /**
+     * Fetches a View with the allocation of the associated
+     * text component (i.e. the root of the hierarchy) that
+     * can be traversed to determine how the model is being
+     * represented spatially.
+     * <p>
+     * <font color=red><b>NOTE:</b>The View hierarchy can
+     * be traversed from the root view, and other things
+     * can be done as well.  Things done in this way cannot
+     * be protected like simple method calls through the TextUI.
+     * Therefore, proper operation in the presence of concurrency
+     * must be arranged by any logic that calls this method!
+     * </font>
+     *
+     * @param tc the text component for which this UI is installed
+     * @return the view
+     * @see TextUI#getRootView
+     */
+    public View getRootView(JTextComponent tc) {
+        return rootView;
+    }
+
+
+    /**
+     * Returns the string to be used as the tooltip at the passed in location.
+     * This forwards the method onto the root View.
+     *
+     * @see javax.swing.text.JTextComponent#getToolTipText
+     * @see javax.swing.text.View#getToolTipText
+     * @since 1.4
+     */
+    public String getToolTipText(JTextComponent t, Point pt) {
+        if (!painted) {
+            return null;
+        }
+        Document doc = editor.getDocument();
+        String tt = null;
+        Rectangle alloc = getVisibleEditorRect();
+
+        if (alloc != null) {
+            if (doc instanceof AbstractDocument) {
+                ((AbstractDocument)doc).readLock();
+            }
+            try {
+                tt = rootView.getToolTipText(pt.x, pt.y, alloc);
+            } finally {
+                if (doc instanceof AbstractDocument) {
+                    ((AbstractDocument)doc).readUnlock();
+                }
+            }
+        }
+        return tt;
+    }
+
+    // --- ViewFactory methods ------------------------------
+
+    /**
+     * Creates a view for an element.
+     * If a subclass wishes to directly implement the factory
+     * producing the view(s), it should reimplement this
+     * method.  By default it simply returns null indicating
+     * it is unable to represent the element.
+     *
+     * @param elem the element
+     * @return the view
+     */
+    public View create(Element elem) {
+        return null;
+    }
+
+    /**
+     * Creates a view for an element.
+     * If a subclass wishes to directly implement the factory
+     * producing the view(s), it should reimplement this
+     * method.  By default it simply returns null indicating
+     * it is unable to represent the part of the element.
+     *
+     * @param elem the element
+     * @param p0 the starting offset &gt;= 0
+     * @param p1 the ending offset &gt;= p0
+     * @return the view
+     */
+    public View create(Element elem, int p0, int p1) {
+        return null;
+    }
+
+    public static class BasicCaret extends DefaultCaret implements UIResource {}
+
+    public static class BasicHighlighter extends DefaultHighlighter implements UIResource {}
+
+    static class BasicCursor extends Cursor implements UIResource {
+        BasicCursor(int type) {
+            super(type);
+        }
+
+        BasicCursor(String name) {
+            super(name);
+        }
+    }
+
+    private static BasicCursor textCursor = new BasicCursor(Cursor.TEXT_CURSOR);
+    // ----- member variables ---------------------------------------
+
+    private static final EditorKit defaultKit = new DefaultEditorKit();
+    transient JTextComponent editor;
+    transient boolean painted;
+    transient RootView rootView = new RootView();
+    transient UpdateHandler updateHandler = new UpdateHandler();
+    private static final TransferHandler defaultTransferHandler = new TextTransferHandler();
+    private final DragListener dragListener = getDragListener();
+    private static final Position.Bias[] discardBias = new Position.Bias[1];
+    private DefaultCaret dropCaret;
+
+    /**
+     * Root view that acts as a gateway between the component
+     * and the View hierarchy.
+     */
+    class RootView extends View {
+
+        RootView() {
+            super(null);
+        }
+
+        void setView(View v) {
+            View oldView = view;
+            view = null;
+            if (oldView != null) {
+                // get rid of back reference so that the old
+                // hierarchy can be garbage collected.
+                oldView.setParent(null);
+            }
+            if (v != null) {
+                v.setParent(this);
+            }
+            view = v;
+        }
+
+        /**
+         * Fetches the attributes to use when rendering.  At the root
+         * level there are no attributes.  If an attribute is resolved
+         * up the view hierarchy this is the end of the line.
+         */
+        public AttributeSet getAttributes() {
+            return null;
+        }
+
+        /**
+         * Determines the preferred span for this view along an axis.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @return the span the view would like to be rendered into.
+         *         Typically the view is told to render into the span
+         *         that is returned, although there is no guarantee.
+         *         The parent may choose to resize or break the view.
+         */
+        public float getPreferredSpan(int axis) {
+            if (view != null) {
+                return view.getPreferredSpan(axis);
+            }
+            return 10;
+        }
+
+        /**
+         * Determines the minimum span for this view along an axis.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @return the span the view would like to be rendered into.
+         *         Typically the view is told to render into the span
+         *         that is returned, although there is no guarantee.
+         *         The parent may choose to resize or break the view.
+         */
+        public float getMinimumSpan(int axis) {
+            if (view != null) {
+                return view.getMinimumSpan(axis);
+            }
+            return 10;
+        }
+
+        /**
+         * Determines the maximum span for this view along an axis.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @return the span the view would like to be rendered into.
+         *         Typically the view is told to render into the span
+         *         that is returned, although there is no guarantee.
+         *         The parent may choose to resize or break the view.
+         */
+        public float getMaximumSpan(int axis) {
+            return Integer.MAX_VALUE;
+        }
+
+        /**
+         * Specifies that a preference has changed.
+         * Child views can call this on the parent to indicate that
+         * the preference has changed.  The root view routes this to
+         * invalidate on the hosting component.
+         * <p>
+         * This can be called on a different thread from the
+         * event dispatching thread and is basically unsafe to
+         * propagate into the component.  To make this safe,
+         * the operation is transferred over to the event dispatching
+         * thread for completion.  It is a design goal that all view
+         * methods be safe to call without concern for concurrency,
+         * and this behavior helps make that true.
+         *
+         * @param child the child view
+         * @param width true if the width preference has changed
+         * @param height true if the height preference has changed
+         */
+        public void preferenceChanged(View child, boolean width, boolean height) {
+            editor.revalidate();
+        }
+
+        /**
+         * Determines the desired alignment for this view along an axis.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @return the desired alignment, where 0.0 indicates the origin
+         *     and 1.0 the full span away from the origin
+         */
+        public float getAlignment(int axis) {
+            if (view != null) {
+                return view.getAlignment(axis);
+            }
+            return 0;
+        }
+
+        /**
+         * Renders the view.
+         *
+         * @param g the graphics context
+         * @param allocation the region to render into
+         */
+        public void paint(Graphics g, Shape allocation) {
+            if (view != null) {
+                Rectangle alloc = (allocation instanceof Rectangle) ?
+                          (Rectangle)allocation : allocation.getBounds();
+                setSize(alloc.width, alloc.height);
+                view.paint(g, allocation);
+            }
+        }
+
+        /**
+         * Sets the view parent.
+         *
+         * @param parent the parent view
+         */
+        public void setParent(View parent) {
+            throw new Error("Can't set parent on root view");
+        }
+
+        /**
+         * Returns the number of views in this view.  Since
+         * this view simply wraps the root of the view hierarchy
+         * it has exactly one child.
+         *
+         * @return the number of views
+         * @see #getView
+         */
+        public int getViewCount() {
+            return 1;
+        }
+
+        /**
+         * Gets the n-th view in this container.
+         *
+         * @param n the number of the view to get
+         * @return the view
+         */
+        public View getView(int n) {
+            return view;
+        }
+
+        /**
+         * Returns the child view index representing the given position in
+         * the model.  This is implemented to return the index of the only
+         * child.
+         *
+         * @param pos the position &gt;= 0
+         * @return  index of the view representing the given position, or
+         *   -1 if no view represents that position
+         * @since 1.3
+         */
+        public int getViewIndex(int pos, Position.Bias b) {
+            return 0;
+        }
+
+        /**
+         * Fetches the allocation for the given child view.
+         * This enables finding out where various views
+         * are located, without assuming the views store
+         * their location.  This returns the given allocation
+         * since this view simply acts as a gateway between
+         * the view hierarchy and the associated component.
+         *
+         * @param index the index of the child
+         * @param a  the allocation to this view.
+         * @return the allocation to the child
+         */
+        public Shape getChildAllocation(int index, Shape a) {
+            return a;
+        }
+
+        /**
+         * Provides a mapping from the document model coordinate space
+         * to the coordinate space of the view mapped to it.
+         *
+         * @param pos the position to convert
+         * @param a the allocated region to render into
+         * @return the bounding box of the given position
+         */
+        public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+            if (view != null) {
+                return view.modelToView(pos, a, b);
+            }
+            return null;
+        }
+
+        /**
+         * Provides a mapping from the document model coordinate space
+         * to the coordinate space of the view mapped to it.
+         *
+         * @param p0 the position to convert &gt;= 0
+         * @param b0 the bias toward the previous character or the
+         *  next character represented by p0, in case the
+         *  position is a boundary of two views.
+         * @param p1 the position to convert &gt;= 0
+         * @param b1 the bias toward the previous character or the
+         *  next character represented by p1, in case the
+         *  position is a boundary of two views.
+         * @param a the allocated region to render into
+         * @return the bounding box of the given position is returned
+         * @exception BadLocationException  if the given position does
+         *   not represent a valid location in the associated document
+         * @exception IllegalArgumentException for an invalid bias argument
+         * @see View#viewToModel
+         */
+        public Shape modelToView(int p0, Position.Bias b0, int p1, Position.Bias b1, Shape a) throws BadLocationException {
+            if (view != null) {
+                return view.modelToView(p0, b0, p1, b1, a);
+            }
+            return null;
+        }
+
+        /**
+         * Provides a mapping from the view coordinate space to the logical
+         * coordinate space of the model.
+         *
+         * @param x x coordinate of the view location to convert
+         * @param y y coordinate of the view location to convert
+         * @param a the allocated region to render into
+         * @return the location within the model that best represents the
+         *    given point in the view
+         */
+        public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
+            if (view != null) {
+                int retValue = view.viewToModel(x, y, a, bias);
+                return retValue;
+            }
+            return -1;
+        }
+
+        /**
+         * Provides a way to determine the next visually represented model
+         * location that one might place a caret.  Some views may not be visible,
+         * they might not be in the same order found in the model, or they just
+         * might not allow access to some of the locations in the model.
+         * This method enables specifying a position to convert
+         * within the range of &gt;=0.  If the value is -1, a position
+         * will be calculated automatically.  If the value &lt; -1,
+         * the {@code BadLocationException} will be thrown.
+         *
+         * @param pos the position to convert &gt;= 0
+         * @param a the allocated region to render into
+         * @param direction the direction from the current position that can
+         *  be thought of as the arrow keys typically found on a keyboard.
+         *  This may be SwingConstants.WEST, SwingConstants.EAST,
+         *  SwingConstants.NORTH, or SwingConstants.SOUTH.
+         * @return the location within the model that best represents the next
+         *  location visual position.
+         * @exception BadLocationException the given position is not a valid
+         *                                 position within the document
+         * @exception IllegalArgumentException for an invalid direction
+         */
+        public int getNextVisualPositionFrom(int pos, Position.Bias b, Shape a,
+                                             int direction,
+                                             Position.Bias[] biasRet)
+            throws BadLocationException {
+            if (pos < -1) {
+                throw new BadLocationException("invalid position", pos);
+            }
+            if( view != null ) {
+                int nextPos = view.getNextVisualPositionFrom(pos, b, a,
+                                                     direction, biasRet);
+                if(nextPos != -1) {
+                    pos = nextPos;
+                }
+                else {
+                    biasRet[0] = b;
+                }
+            }
+            return pos;
+        }
+
+        /**
+         * Gives notification that something was inserted into the document
+         * in a location that this view is responsible for.
+         *
+         * @param e the change information from the associated document
+         * @param a the current allocation of the view
+         * @param f the factory to use to rebuild if the view has children
+         */
+        public void insertUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+            if (view != null) {
+                view.insertUpdate(e, a, f);
+            }
+        }
+
+        /**
+         * Gives notification that something was removed from the document
+         * in a location that this view is responsible for.
+         *
+         * @param e the change information from the associated document
+         * @param a the current allocation of the view
+         * @param f the factory to use to rebuild if the view has children
+         */
+        public void removeUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+            if (view != null) {
+                view.removeUpdate(e, a, f);
+            }
+        }
+
+        /**
+         * Gives notification from the document that attributes were changed
+         * in a location that this view is responsible for.
+         *
+         * @param e the change information from the associated document
+         * @param a the current allocation of the view
+         * @param f the factory to use to rebuild if the view has children
+         */
+        public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {
+            if (view != null) {
+                view.changedUpdate(e, a, f);
+            }
+        }
+
+        /**
+         * Returns the document model underlying the view.
+         *
+         * @return the model
+         */
+        public Document getDocument() {
+            return editor.getDocument();
+        }
+
+        /**
+         * Returns the starting offset into the model for this view.
+         *
+         * @return the starting offset
+         */
+        public int getStartOffset() {
+            if (view != null) {
+                return view.getStartOffset();
+            }
+            return getElement().getStartOffset();
+        }
+
+        /**
+         * Returns the ending offset into the model for this view.
+         *
+         * @return the ending offset
+         */
+        public int getEndOffset() {
+            if (view != null) {
+                return view.getEndOffset();
+            }
+            return getElement().getEndOffset();
+        }
+
+        /**
+         * Gets the element that this view is mapped to.
+         *
+         * @return the view
+         */
+        public Element getElement() {
+            if (view != null) {
+                return view.getElement();
+            }
+            return editor.getDocument().getDefaultRootElement();
+        }
+
+        /**
+         * Breaks this view on the given axis at the given length.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @param len specifies where a break is desired in the span
+         * @param the current allocation of the view
+         * @return the fragment of the view that represents the given span
+         *   if the view can be broken, otherwise null
+         */
+        public View breakView(int axis, float len, Shape a) {
+            throw new Error("Can't break root view");
+        }
+
+        /**
+         * Determines the resizability of the view along the
+         * given axis.  A value of 0 or less is not resizable.
+         *
+         * @param axis may be either X_AXIS or Y_AXIS
+         * @return the weight
+         */
+        public int getResizeWeight(int axis) {
+            if (view != null) {
+                return view.getResizeWeight(axis);
+            }
+            return 0;
+        }
+
+        /**
+         * Sets the view size.
+         *
+         * @param width the width
+         * @param height the height
+         */
+        public void setSize(float width, float height) {
+            if (view != null) {
+                view.setSize(width, height);
+            }
+        }
+
+        /**
+         * Fetches the container hosting the view.  This is useful for
+         * things like scheduling a repaint, finding out the host
+         * components font, etc.  The default implementation
+         * of this is to forward the query to the parent view.
+         *
+         * @return the container
+         */
+        public Container getContainer() {
+            return editor;
+        }
+
+        /**
+         * Fetches the factory to be used for building the
+         * various view fragments that make up the view that
+         * represents the model.  This is what determines
+         * how the model will be represented.  This is implemented
+         * to fetch the factory provided by the associated
+         * EditorKit unless that is null, in which case this
+         * simply returns the BasicTextUI itself which allows
+         * subclasses to implement a simple factory directly without
+         * creating extra objects.
+         *
+         * @return the factory
+         */
+        public ViewFactory getViewFactory() {
+            EditorKit kit = getEditorKit(editor);
+            ViewFactory f = kit.getViewFactory();
+            if (f != null) {
+                return f;
+            }
+            return BasicTextUI.this;
+        }
+
+        private View view;
+
+    }
+
+    /**
+     * Handles updates from various places.  If the model is changed,
+     * this class unregisters as a listener to the old model and
+     * registers with the new model.  If the document model changes,
+     * the change is forwarded to the root view.  If the focus
+     * accelerator changes, a new keystroke is registered to request
+     * focus.
+     */
+    class UpdateHandler implements PropertyChangeListener, DocumentListener, LayoutManager2, UIResource {
+
+        // --- PropertyChangeListener methods -----------------------
+
+        /**
+         * This method gets called when a bound property is changed.
+         * We are looking for document changes on the editor.
+         */
+        public final void propertyChange(PropertyChangeEvent evt) {
+            Object oldValue = evt.getOldValue();
+            Object newValue = evt.getNewValue();
+            String propertyName = evt.getPropertyName();
+            if ((oldValue instanceof Document) || (newValue instanceof Document)) {
+                if (oldValue != null) {
+                    ((Document)oldValue).removeDocumentListener(this);
+                    i18nView = false;
+                }
+                if (newValue != null) {
+                    ((Document)newValue).addDocumentListener(this);
+                    if ("document" == propertyName) {
+                        setView(null);
+                        BasicTextUI.this.propertyChange(evt);
+                        modelChanged();
+                        return;
+                    }
+                }
+                modelChanged();
+            }
+            if ("focusAccelerator" == propertyName) {
+                updateFocusAcceleratorBinding(true);
+            } else if ("componentOrientation" == propertyName) {
+                // Changes in ComponentOrientation require the views to be
+                // rebuilt.
+                modelChanged();
+            } else if ("font" == propertyName) {
+                modelChanged();
+            } else if ("dropLocation" == propertyName) {
+                dropIndexChanged();
+            } else if ("editable" == propertyName) {
+                updateCursor();
+                modelChanged();
+            }
+            BasicTextUI.this.propertyChange(evt);
+        }
+
+        private void dropIndexChanged() {
+            if (editor.getDropMode() == DropMode.USE_SELECTION) {
+                return;
+            }
+
+            JTextComponent.DropLocation dropLocation = editor.getDropLocation();
+
+            if (dropLocation == null) {
+                if (dropCaret != null) {
+                    dropCaret.deinstall(editor);
+                    editor.repaint(dropCaret);
+                    dropCaret = null;
+                }
+            } else {
+                if (dropCaret == null) {
+                    dropCaret = new BasicCaret();
+                    dropCaret.install(editor);
+                    dropCaret.setVisible(true);
+                }
+
+                dropCaret.setDot(dropLocation.getIndex(),
+                                 dropLocation.getBias());
+            }
+        }
+
+        // --- DocumentListener methods -----------------------
+
+        /**
+         * The insert notification.  Gets sent to the root of the view structure
+         * that represents the portion of the model being represented by the
+         * editor.  The factory is added as an argument to the update so that
+         * the views can update themselves in a dynamic (not hardcoded) way.
+         *
+         * @param e  The change notification from the currently associated
+         *  document.
+         * @see DocumentListener#insertUpdate
+         */
+        public final void insertUpdate(DocumentEvent e) {
+            Document doc = e.getDocument();
+            Object o = doc.getProperty("i18n");
+            if (o instanceof Boolean) {
+                Boolean i18nFlag = (Boolean) o;
+                if (i18nFlag.booleanValue() != i18nView) {
+                    // i18n flag changed, rebuild the view
+                    i18nView = i18nFlag.booleanValue();
+                    modelChanged();
+                    return;
+                }
+            }
+
+            // normal insert update
+            Rectangle alloc = (painted) ? getVisibleEditorRect() : null;
+            rootView.insertUpdate(e, alloc, rootView.getViewFactory());
+        }
+
+        /**
+         * The remove notification.  Gets sent to the root of the view structure
+         * that represents the portion of the model being represented by the
+         * editor.  The factory is added as an argument to the update so that
+         * the views can update themselves in a dynamic (not hardcoded) way.
+         *
+         * @param e  The change notification from the currently associated
+         *  document.
+         * @see DocumentListener#removeUpdate
+         */
+        public final void removeUpdate(DocumentEvent e) {
+            Rectangle alloc = (painted) ? getVisibleEditorRect() : null;
+            rootView.removeUpdate(e, alloc, rootView.getViewFactory());
+        }
+
+        /**
+         * The change notification.  Gets sent to the root of the view structure
+         * that represents the portion of the model being represented by the
+         * editor.  The factory is added as an argument to the update so that
+         * the views can update themselves in a dynamic (not hardcoded) way.
+         *
+         * @param e  The change notification from the currently associated
+         *  document.
+         * @see DocumentListener#changedUpdate(DocumentEvent)
+         */
+        public final void changedUpdate(DocumentEvent e) {
+            Rectangle alloc = (painted) ? getVisibleEditorRect() : null;
+            rootView.changedUpdate(e, alloc, rootView.getViewFactory());
+        }
+
+        // --- LayoutManager2 methods --------------------------------
+
+        /**
+         * Adds the specified component with the specified name to
+         * the layout.
+         * @param name the component name
+         * @param comp the component to be added
+         */
+        public void addLayoutComponent(String name, Component comp) {
+            // not supported
+        }
+
+        /**
+         * Removes the specified component from the layout.
+         * @param comp the component to be removed
+         */
+        public void removeLayoutComponent(Component comp) {
+            if (constraints != null) {
+                // remove the constraint record
+                constraints.remove(comp);
+            }
+        }
+
+        /**
+         * Calculates the preferred size dimensions for the specified
+         * panel given the components in the specified parent container.
+         * @param parent the component to be laid out
+         *
+         * @see #minimumLayoutSize
+         */
+        public Dimension preferredLayoutSize(Container parent) {
+            // should not be called (JComponent uses UI instead)
+            return null;
+        }
+
+        /**
+         * Calculates the minimum size dimensions for the specified
+         * panel given the components in the specified parent container.
+         * @param parent the component to be laid out
+         * @see #preferredLayoutSize
+         */
+        public Dimension minimumLayoutSize(Container parent) {
+            // should not be called (JComponent uses UI instead)
+            return null;
+        }
+
+        /**
+         * Lays out the container in the specified panel.  This is
+         * implemented to position all components that were added
+         * with a View object as a constraint.  The current allocation
+         * of the associated View is used as the location of the
+         * component.
+         * <p>
+         * A read-lock is acquired on the document to prevent the
+         * view tree from being modified while the layout process
+         * is active.
+         *
+         * @param parent the component which needs to be laid out
+         */
+        public void layoutContainer(Container parent) {
+            if ((constraints != null) && (! constraints.isEmpty())) {
+                Rectangle alloc = getVisibleEditorRect();
+                if (alloc != null) {
+                    Document doc = editor.getDocument();
+                    if (doc instanceof AbstractDocument) {
+                        ((AbstractDocument)doc).readLock();
+                    }
+                    try {
+                        rootView.setSize(alloc.width, alloc.height);
+                        Enumeration<Component> components = constraints.keys();
+                        while (components.hasMoreElements()) {
+                            Component comp = components.nextElement();
+                            View v = (View) constraints.get(comp);
+                            Shape ca = calculateViewPosition(alloc, v);
+                            if (ca != null) {
+                                Rectangle compAlloc = (ca instanceof Rectangle) ?
+                                    (Rectangle) ca : ca.getBounds();
+                                comp.setBounds(compAlloc);
+                            }
+                        }
+                    } finally {
+                        if (doc instanceof AbstractDocument) {
+                            ((AbstractDocument)doc).readUnlock();
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Find the Shape representing the given view.
+         */
+        Shape calculateViewPosition(Shape alloc, View v) {
+            int pos = v.getStartOffset();
+            View child = null;
+            for (View parent = rootView; (parent != null) && (parent != v); parent = child) {
+                int index = parent.getViewIndex(pos, Position.Bias.Forward);
+                alloc = parent.getChildAllocation(index, alloc);
+                child = parent.getView(index);
+            }
+            return (child != null) ? alloc : null;
+        }
+
+        /**
+         * Adds the specified component to the layout, using the specified
+         * constraint object.  We only store those components that were added
+         * with a constraint that is of type View.
+         *
+         * @param comp the component to be added
+         * @param constraint  where/how the component is added to the layout.
+         */
+        public void addLayoutComponent(Component comp, Object constraint) {
+            if (constraint instanceof View) {
+                if (constraints == null) {
+                    constraints = new Hashtable<Component, Object>(7);
+                }
+                constraints.put(comp, constraint);
+            }
+        }
+
+        /**
+         * Returns the maximum size of this component.
+         * @see java.awt.Component#getMinimumSize()
+         * @see java.awt.Component#getPreferredSize()
+         * @see LayoutManager
+         */
+        public Dimension maximumLayoutSize(Container target) {
+            // should not be called (JComponent uses UI instead)
+            return null;
+        }
+
+        /**
+         * Returns the alignment along the x axis.  This specifies how
+         * the component would like to be aligned relative to other
+         * components.  The value should be a number between 0 and 1
+         * where 0 represents alignment along the origin, 1 is aligned
+         * the furthest away from the origin, 0.5 is centered, etc.
+         */
+        public float getLayoutAlignmentX(Container target) {
+            return 0.5f;
+        }
+
+        /**
+         * Returns the alignment along the y axis.  This specifies how
+         * the component would like to be aligned relative to other
+         * components.  The value should be a number between 0 and 1
+         * where 0 represents alignment along the origin, 1 is aligned
+         * the furthest away from the origin, 0.5 is centered, etc.
+         */
+        public float getLayoutAlignmentY(Container target) {
+            return 0.5f;
+        }
+
+        /**
+         * Invalidates the layout, indicating that if the layout manager
+         * has cached information it should be discarded.
+         */
+        public void invalidateLayout(Container target) {
+        }
+
+        /**
+         * The "layout constraints" for the LayoutManager2 implementation.
+         * These are View objects for those components that are represented
+         * by a View in the View tree.
+         */
+        private Hashtable<Component, Object> constraints;
+
+        private boolean i18nView = false;
+    }
+
+    /**
+     * Wrapper for text actions to return isEnabled false in case editor is non editable
+     */
+    class TextActionWrapper extends TextAction {
+        public TextActionWrapper(TextAction action) {
+            super((String)action.getValue(Action.NAME));
+            this.action = action;
+        }
+        /**
+         * The operation to perform when this action is triggered.
+         *
+         * @param e the action event
+         */
+        public void actionPerformed(ActionEvent e) {
+            action.actionPerformed(e);
+        }
+        public boolean isEnabled() {
+            return (editor == null || editor.isEditable()) ? action.isEnabled() : false;
+        }
+        TextAction action = null;
+    }
+
+
+    /**
+     * Registered in the ActionMap.
+     */
+    class FocusAction extends AbstractAction {
+
+        public void actionPerformed(ActionEvent e) {
+            editor.requestFocus();
+        }
+
+        public boolean isEnabled() {
+            return editor.isEditable();
+        }
+    }
+
+    private static DragListener getDragListener() {
+        synchronized(DragListener.class) {
+            DragListener listener =
+                (DragListener)AppContext.getAppContext().
+                    get(DragListener.class);
+
+            if (listener == null) {
+                listener = new DragListener();
+                AppContext.getAppContext().put(DragListener.class, listener);
+            }
+
+            return listener;
+        }
+    }
+
+    /**
+     * Listens for mouse events for the purposes of detecting drag gestures.
+     * BasicTextUI will maintain one of these per AppContext.
+     */
+    static class DragListener extends MouseInputAdapter
+                              implements BeforeDrag {
+
+        private boolean dragStarted;
+
+        public void dragStarting(MouseEvent me) {
+            dragStarted = true;
+        }
+
+        public void mousePressed(MouseEvent e) {
+            JTextComponent c = (JTextComponent)e.getSource();
+            if (c.getDragEnabled()) {
+                dragStarted = false;
+                if (isDragPossible(e) && DragRecognitionSupport.mousePressed(e)) {
+                    e.consume();
+                }
+            }
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            JTextComponent c = (JTextComponent)e.getSource();
+            if (c.getDragEnabled()) {
+                if (dragStarted) {
+                    e.consume();
+                }
+
+                DragRecognitionSupport.mouseReleased(e);
+            }
+        }
+
+        public void mouseDragged(MouseEvent e) {
+            JTextComponent c = (JTextComponent)e.getSource();
+            if (c.getDragEnabled()) {
+                if (dragStarted || DragRecognitionSupport.mouseDragged(e, this)) {
+                    e.consume();
+                }
+            }
+        }
+
+        /**
+         * Determines if the following are true:
+         * <ul>
+         * <li>the component is enabled
+         * <li>the press event is located over a selection
+         * </ul>
+         */
+        protected boolean isDragPossible(MouseEvent e) {
+            JTextComponent c = (JTextComponent)e.getSource();
+            if (c.isEnabled()) {
+                Caret caret = c.getCaret();
+                int dot = caret.getDot();
+                int mark = caret.getMark();
+                if (dot != mark) {
+                    Point p = new Point(e.getX(), e.getY());
+                    int pos = c.viewToModel(p);
+
+                    int p0 = Math.min(dot, mark);
+                    int p1 = Math.max(dot, mark);
+                    if ((pos >= p0) && (pos < p1)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    static class TextTransferHandler extends TransferHandler implements UIResource {
+
+        private JTextComponent exportComp;
+        private boolean shouldRemove;
+        private int p0;
+        private int p1;
+
+        /**
+         * Whether or not this is a drop using
+         * <code>DropMode.INSERT</code>.
+         */
+        private boolean modeBetween = false;
+
+        /**
+         * Whether or not this is a drop.
+         */
+        private boolean isDrop = false;
+
+        /**
+         * The drop action.
+         */
+        private int dropAction = MOVE;
+
+        /**
+         * The drop bias.
+         */
+        private Position.Bias dropBias;
+
+        /**
+         * Try to find a flavor that can be used to import a Transferable.
+         * The set of usable flavors are tried in the following order:
+         * <ol>
+         *     <li>First, an attempt is made to find a flavor matching the content type
+         *         of the EditorKit for the component.
+         *     <li>Second, an attempt to find a text/plain flavor is made.
+         *     <li>Third, an attempt to find a flavor representing a String reference
+         *         in the same VM is made.
+         *     <li>Lastly, DataFlavor.stringFlavor is searched for.
+         * </ol>
+         */
+        protected DataFlavor getImportFlavor(DataFlavor[] flavors, JTextComponent c) {
+            DataFlavor plainFlavor = null;
+            DataFlavor refFlavor = null;
+            DataFlavor stringFlavor = null;
+
+            if (c instanceof JEditorPane) {
+                for (int i = 0; i < flavors.length; i++) {
+                    String mime = flavors[i].getMimeType();
+                    if (mime.startsWith(((JEditorPane)c).getEditorKit().getContentType())) {
+                        return flavors[i];
+                    } else if (plainFlavor == null && mime.startsWith("text/plain")) {
+                        plainFlavor = flavors[i];
+                    } else if (refFlavor == null && mime.startsWith("application/x-java-jvm-local-objectref")
+                                                 && flavors[i].getRepresentationClass() == java.lang.String.class) {
+                        refFlavor = flavors[i];
+                    } else if (stringFlavor == null && flavors[i].equals(DataFlavor.stringFlavor)) {
+                        stringFlavor = flavors[i];
+                    }
+                }
+                if (plainFlavor != null) {
+                    return plainFlavor;
+                } else if (refFlavor != null) {
+                    return refFlavor;
+                } else if (stringFlavor != null) {
+                    return stringFlavor;
+                }
+                return null;
+            }
+
+
+            for (int i = 0; i < flavors.length; i++) {
+                String mime = flavors[i].getMimeType();
+                if (mime.startsWith("text/plain")) {
+                    return flavors[i];
+                } else if (refFlavor == null && mime.startsWith("application/x-java-jvm-local-objectref")
+                                             && flavors[i].getRepresentationClass() == java.lang.String.class) {
+                    refFlavor = flavors[i];
+                } else if (stringFlavor == null && flavors[i].equals(DataFlavor.stringFlavor)) {
+                    stringFlavor = flavors[i];
+                }
+            }
+            if (refFlavor != null) {
+                return refFlavor;
+            } else if (stringFlavor != null) {
+                return stringFlavor;
+            }
+            return null;
+        }
+
+        /**
+         * Import the given stream data into the text component.
+         */
+        protected void handleReaderImport(Reader in, JTextComponent c, boolean useRead)
+                                               throws BadLocationException, IOException {
+            if (useRead) {
+                int startPosition = c.getSelectionStart();
+                int endPosition = c.getSelectionEnd();
+                int length = endPosition - startPosition;
+                EditorKit kit = c.getUI().getEditorKit(c);
+                Document doc = c.getDocument();
+                if (length > 0) {
+                    doc.remove(startPosition, length);
+                }
+                kit.read(in, doc, startPosition);
+            } else {
+                char[] buff = new char[1024];
+                int nch;
+                boolean lastWasCR = false;
+                int last;
+                StringBuffer sbuff = null;
+
+                // Read in a block at a time, mapping \r\n to \n, as well as single
+                // \r to \n.
+                while ((nch = in.read(buff, 0, buff.length)) != -1) {
+                    if (sbuff == null) {
+                        sbuff = new StringBuffer(nch);
+                    }
+                    last = 0;
+                    for(int counter = 0; counter < nch; counter++) {
+                        switch(buff[counter]) {
+                        case '\r':
+                            if (lastWasCR) {
+                                if (counter == 0) {
+                                    sbuff.append('\n');
+                                } else {
+                                    buff[counter - 1] = '\n';
+                                }
+                            } else {
+                                lastWasCR = true;
+                            }
+                            break;
+                        case '\n':
+                            if (lastWasCR) {
+                                if (counter > (last + 1)) {
+                                    sbuff.append(buff, last, counter - last - 1);
+                                }
+                                // else nothing to do, can skip \r, next write will
+                                // write \n
+                                lastWasCR = false;
+                                last = counter;
+                            }
+                            break;
+                        default:
+                            if (lastWasCR) {
+                                if (counter == 0) {
+                                    sbuff.append('\n');
+                                } else {
+                                    buff[counter - 1] = '\n';
+                                }
+                                lastWasCR = false;
+                            }
+                            break;
+                        }
+                    }
+                    if (last < nch) {
+                        if (lastWasCR) {
+                            if (last < (nch - 1)) {
+                                sbuff.append(buff, last, nch - last - 1);
+                            }
+                        } else {
+                            sbuff.append(buff, last, nch - last);
+                        }
+                    }
+                }
+                if (lastWasCR) {
+                    sbuff.append('\n');
+                }
+                c.replaceSelection(sbuff != null ? sbuff.toString() : "");
+            }
+        }
+
+        // --- TransferHandler methods ------------------------------------
+
+        /**
+         * This is the type of transfer actions supported by the source.  Some models are
+         * not mutable, so a transfer operation of COPY only should
+         * be advertised in that case.
+         *
+         * @param c  The component holding the data to be transfered.  This
+         *  argument is provided to enable sharing of TransferHandlers by
+         *  multiple components.
+         * @return  This is implemented to return NONE if the component is a JPasswordField
+         *  since exporting data via user gestures is not allowed.  If the text component is
+         *  editable, COPY_OR_MOVE is returned, otherwise just COPY is allowed.
+         */
+        public int getSourceActions(JComponent c) {
+            if (c instanceof JPasswordField &&
+                c.getClientProperty("JPasswordField.cutCopyAllowed") !=
+                Boolean.TRUE) {
+                return NONE;
+            }
+
+            return ((JTextComponent)c).isEditable() ? COPY_OR_MOVE : COPY;
+        }
+
+        /**
+         * Create a Transferable to use as the source for a data transfer.
+         *
+         * @param comp  The component holding the data to be transfered.  This
+         *  argument is provided to enable sharing of TransferHandlers by
+         *  multiple components.
+         * @return  The representation of the data to be transfered.
+         *
+         */
+        protected Transferable createTransferable(JComponent comp) {
+            exportComp = (JTextComponent)comp;
+            shouldRemove = true;
+            p0 = exportComp.getSelectionStart();
+            p1 = exportComp.getSelectionEnd();
+            return (p0 != p1) ? (new TextTransferable(exportComp, p0, p1)) : null;
+        }
+
+        /**
+         * This method is called after data has been exported.  This method should remove
+         * the data that was transfered if the action was MOVE.
+         *
+         * @param source The component that was the source of the data.
+         * @param data   The data that was transferred or possibly null
+         *               if the action is <code>NONE</code>.
+         * @param action The actual action that was performed.
+         */
+        protected void exportDone(JComponent source, Transferable data, int action) {
+            // only remove the text if shouldRemove has not been set to
+            // false by importData and only if the action is a move
+            if (shouldRemove && action == MOVE) {
+                TextTransferable t = (TextTransferable)data;
+                t.removeText();
+            }
+
+            exportComp = null;
+        }
+
+        public boolean importData(TransferSupport support) {
+            isDrop = support.isDrop();
+
+            if (isDrop) {
+                modeBetween =
+                    ((JTextComponent)support.getComponent()).getDropMode() == DropMode.INSERT;
+
+                dropBias = ((JTextComponent.DropLocation)support.getDropLocation()).getBias();
+
+                dropAction = support.getDropAction();
+            }
+
+            try {
+                return super.importData(support);
+            } finally {
+                isDrop = false;
+                modeBetween = false;
+                dropBias = null;
+                dropAction = MOVE;
+            }
+        }
+
+        /**
+         * This method causes a transfer to a component from a clipboard or a
+         * DND drop operation.  The Transferable represents the data to be
+         * imported into the component.
+         *
+         * @param comp  The component to receive the transfer.  This
+         *  argument is provided to enable sharing of TransferHandlers by
+         *  multiple components.
+         * @param t     The data to import
+         * @return  true if the data was inserted into the component, false otherwise.
+         */
+        public boolean importData(JComponent comp, Transferable t) {
+            JTextComponent c = (JTextComponent)comp;
+
+            int pos = modeBetween
+                      ? c.getDropLocation().getIndex() : c.getCaretPosition();
+
+            // if we are importing to the same component that we exported from
+            // then don't actually do anything if the drop location is inside
+            // the drag location and set shouldRemove to false so that exportDone
+            // knows not to remove any data
+            if (dropAction == MOVE && c == exportComp && pos >= p0 && pos <= p1) {
+                shouldRemove = false;
+                return true;
+            }
+
+            boolean imported = false;
+            DataFlavor importFlavor = getImportFlavor(t.getTransferDataFlavors(), c);
+            if (importFlavor != null) {
+                try {
+                    boolean useRead = false;
+                    if (comp instanceof JEditorPane) {
+                        JEditorPane ep = (JEditorPane)comp;
+                        if (!ep.getContentType().startsWith("text/plain") &&
+                                importFlavor.getMimeType().startsWith(ep.getContentType())) {
+                            useRead = true;
+                        }
+                    }
+                    InputContext ic = c.getInputContext();
+                    if (ic != null) {
+                        ic.endComposition();
+                    }
+                    Reader r = importFlavor.getReaderForText(t);
+
+                    if (modeBetween) {
+                        Caret caret = c.getCaret();
+                        if (caret instanceof DefaultCaret) {
+                            ((DefaultCaret)caret).setDot(pos, dropBias);
+                        } else {
+                            c.setCaretPosition(pos);
+                        }
+                    }
+
+                    handleReaderImport(r, c, useRead);
+
+                    if (isDrop) {
+                        c.requestFocus();
+                        Caret caret = c.getCaret();
+                        if (caret instanceof DefaultCaret) {
+                            int newPos = caret.getDot();
+                            Position.Bias newBias = ((DefaultCaret)caret).getDotBias();
+
+                            ((DefaultCaret)caret).setDot(pos, dropBias);
+                            ((DefaultCaret)caret).moveDot(newPos, newBias);
+                        } else {
+                            c.select(pos, c.getCaretPosition());
+                        }
+                    }
+
+                    imported = true;
+                } catch (UnsupportedFlavorException ufe) {
+                } catch (BadLocationException ble) {
+                } catch (IOException ioe) {
+                }
+            }
+            return imported;
+        }
+
+        /**
+         * This method indicates if a component would accept an import of the given
+         * set of data flavors prior to actually attempting to import it.
+         *
+         * @param comp  The component to receive the transfer.  This
+         *  argument is provided to enable sharing of TransferHandlers by
+         *  multiple components.
+         * @param flavors  The data formats available
+         * @return  true if the data can be inserted into the component, false otherwise.
+         */
+        public boolean canImport(JComponent comp, DataFlavor[] flavors) {
+            JTextComponent c = (JTextComponent)comp;
+            if (!(c.isEditable() && c.isEnabled())) {
+                return false;
+            }
+            return (getImportFlavor(flavors, c) != null);
+        }
+
+        /**
+         * A possible implementation of the Transferable interface
+         * for text components.  For a JEditorPane with a rich set
+         * of EditorKit implementations, conversions could be made
+         * giving a wider set of formats.  This is implemented to
+         * offer up only the active content type and text/plain
+         * (if that is not the active format) since that can be
+         * extracted from other formats.
+         */
+        static class TextTransferable extends BasicTransferable {
+
+            TextTransferable(JTextComponent c, int start, int end) {
+                super(null, null);
+
+                this.c = c;
+
+                Document doc = c.getDocument();
+
+                try {
+                    p0 = doc.createPosition(start);
+                    p1 = doc.createPosition(end);
+
+                    plainData = c.getSelectedText();
+
+                    if (c instanceof JEditorPane) {
+                        JEditorPane ep = (JEditorPane)c;
+
+                        mimeType = ep.getContentType();
+
+                        if (mimeType.startsWith("text/plain")) {
+                            return;
+                        }
+
+                        StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
+                        ep.getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
+
+                        if (mimeType.startsWith("text/html")) {
+                            htmlData = sw.toString();
+                        } else {
+                            richText = sw.toString();
+                        }
+                    }
+                } catch (BadLocationException ble) {
+                } catch (IOException ioe) {
+                }
+            }
+
+            void removeText() {
+                if ((p0 != null) && (p1 != null) && (p0.getOffset() != p1.getOffset())) {
+                    try {
+                        Document doc = c.getDocument();
+                        doc.remove(p0.getOffset(), p1.getOffset() - p0.getOffset());
+                    } catch (BadLocationException e) {
+                    }
+                }
+            }
+
+            // ---- EditorKit other than plain or HTML text -----------------------
+
+            /**
+             * If the EditorKit is not for text/plain or text/html, that format
+             * is supported through the "richer flavors" part of BasicTransferable.
+             */
+            protected DataFlavor[] getRicherFlavors() {
+                if (richText == null) {
+                    return null;
+                }
+
+                try {
+                    DataFlavor[] flavors = new DataFlavor[3];
+                    flavors[0] = new DataFlavor(mimeType + ";class=java.lang.String");
+                    flavors[1] = new DataFlavor(mimeType + ";class=java.io.Reader");
+                    flavors[2] = new DataFlavor(mimeType + ";class=java.io.InputStream;charset=unicode");
+                    return flavors;
+                } catch (ClassNotFoundException cle) {
+                    // fall through to unsupported (should not happen)
+                }
+
+                return null;
+            }
+
+            /**
+             * The only richer format supported is the file list flavor
+             */
+            protected Object getRicherData(DataFlavor flavor) throws UnsupportedFlavorException {
+                if (richText == null) {
+                    return null;
+                }
+
+                if (String.class.equals(flavor.getRepresentationClass())) {
+                    return richText;
+                } else if (Reader.class.equals(flavor.getRepresentationClass())) {
+                    return new StringReader(richText);
+                } else if (InputStream.class.equals(flavor.getRepresentationClass())) {
+                    return new StringBufferInputStream(richText);
+                }
+                throw new UnsupportedFlavorException(flavor);
+            }
+
+            Position p0;
+            Position p1;
+            String mimeType;
+            String richText;
+            JTextComponent c;
+        }
+
+    }
+
+}

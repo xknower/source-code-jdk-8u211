@@ -1,731 +1,726 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.io.IOException;
-/*     */ import java.io.Writer;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Hashtable;
-/*     */ import javax.swing.text.AbstractWriter;
-/*     */ import javax.swing.text.AttributeSet;
-/*     */ import javax.swing.text.BadLocationException;
-/*     */ import javax.swing.text.DefaultStyledDocument;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.ElementIterator;
-/*     */ import javax.swing.text.Style;
-/*     */ import javax.swing.text.StyleConstants;
-/*     */ import javax.swing.text.StyleContext;
-/*     */ import javax.swing.text.StyledDocument;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MinimalHTMLWriter
-/*     */   extends AbstractWriter
-/*     */ {
-/*     */   private static final int BOLD = 1;
-/*     */   private static final int ITALIC = 2;
-/*     */   private static final int UNDERLINE = 4;
-/*  81 */   private static final CSS css = new CSS();
-/*     */   
-/*  83 */   private int fontMask = 0;
-/*     */   
-/*  85 */   int startOffset = 0;
-/*  86 */   int endOffset = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private AttributeSet fontAttributes;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Hashtable<String, String> styleNameMapping;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MinimalHTMLWriter(Writer paramWriter, StyledDocument paramStyledDocument) {
-/* 110 */     super(paramWriter, paramStyledDocument);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MinimalHTMLWriter(Writer paramWriter, StyledDocument paramStyledDocument, int paramInt1, int paramInt2) {
-/* 124 */     super(paramWriter, paramStyledDocument, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write() throws IOException, BadLocationException {
-/* 137 */     this.styleNameMapping = new Hashtable<>();
-/* 138 */     writeStartTag("<html>");
-/* 139 */     writeHeader();
-/* 140 */     writeBody();
-/* 141 */     writeEndTag("</html>");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeAttributes(AttributeSet paramAttributeSet) throws IOException {
-/* 158 */     Enumeration<?> enumeration = paramAttributeSet.getAttributeNames();
-/* 159 */     while (enumeration.hasMoreElements()) {
-/* 160 */       Object object = enumeration.nextElement();
-/* 161 */       if (object instanceof StyleConstants.ParagraphConstants || object instanceof StyleConstants.CharacterConstants || object instanceof StyleConstants.FontConstants || object instanceof StyleConstants.ColorConstants) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 165 */         indent();
-/* 166 */         write(object.toString());
-/* 167 */         write(':');
-/* 168 */         write(css
-/* 169 */             .styleConstantsValueToCSSValue((StyleConstants)object, paramAttributeSet.getAttribute(object))
-/* 170 */             .toString());
-/* 171 */         write(';');
-/* 172 */         write('\n');
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void text(Element paramElement) throws IOException, BadLocationException {
-/* 184 */     String str = getText(paramElement);
-/* 185 */     if (str.length() > 0 && str
-/* 186 */       .charAt(str.length() - 1) == '\n') {
-/* 187 */       str = str.substring(0, str.length() - 1);
-/*     */     }
-/* 189 */     if (str.length() > 0) {
-/* 190 */       write(str);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeStartTag(String paramString) throws IOException {
-/* 201 */     indent();
-/* 202 */     write(paramString);
-/* 203 */     write('\n');
-/* 204 */     incrIndent();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeEndTag(String paramString) throws IOException {
-/* 215 */     decrIndent();
-/* 216 */     indent();
-/* 217 */     write(paramString);
-/* 218 */     write('\n');
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeHeader() throws IOException {
-/* 234 */     writeStartTag("<head>");
-/* 235 */     writeStartTag("<style>");
-/* 236 */     writeStartTag("<!--");
-/* 237 */     writeStyles();
-/* 238 */     writeEndTag("-->");
-/* 239 */     writeEndTag("</style>");
-/* 240 */     writeEndTag("</head>");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeStyles() throws IOException {
-/* 257 */     DefaultStyledDocument defaultStyledDocument = (DefaultStyledDocument)getDocument();
-/* 258 */     Enumeration<?> enumeration = defaultStyledDocument.getStyleNames();
-/*     */     
-/* 260 */     while (enumeration.hasMoreElements()) {
-/* 261 */       Style style = defaultStyledDocument.getStyle((String)enumeration.nextElement());
-/*     */ 
-/*     */ 
-/*     */       
-/* 265 */       if (style.getAttributeCount() == 1 && style
-/* 266 */         .isDefined(StyleConstants.NameAttribute)) {
-/*     */         continue;
-/*     */       }
-/* 269 */       indent();
-/* 270 */       write("p." + addStyleName(style.getName()));
-/* 271 */       write(" {\n");
-/* 272 */       incrIndent();
-/* 273 */       writeAttributes(style);
-/* 274 */       decrIndent();
-/* 275 */       indent();
-/* 276 */       write("}\n");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeBody() throws IOException, BadLocationException {
-/* 290 */     ElementIterator elementIterator = getElementIterator();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 297 */     elementIterator.current();
-/*     */ 
-/*     */ 
-/*     */     
-/* 301 */     writeStartTag("<body>");
-/*     */     
-/* 303 */     boolean bool = false;
-/*     */     Element element;
-/* 305 */     while ((element = elementIterator.next()) != null) {
-/* 306 */       if (!inRange(element)) {
-/*     */         continue;
-/*     */       }
-/* 309 */       if (element instanceof javax.swing.text.AbstractDocument.BranchElement) {
-/* 310 */         if (bool) {
-/* 311 */           writeEndParagraph();
-/* 312 */           bool = false;
-/* 313 */           this.fontMask = 0;
-/*     */         } 
-/* 315 */         writeStartParagraph(element); continue;
-/* 316 */       }  if (isText(element)) {
-/* 317 */         writeContent(element, !bool);
-/* 318 */         bool = true; continue;
-/*     */       } 
-/* 320 */       writeLeaf(element);
-/* 321 */       bool = true;
-/*     */     } 
-/*     */     
-/* 324 */     if (bool) {
-/* 325 */       writeEndParagraph();
-/*     */     }
-/* 327 */     writeEndTag("</body>");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeEndParagraph() throws IOException {
-/* 340 */     writeEndMask(this.fontMask);
-/* 341 */     if (inFontTag()) {
-/* 342 */       endSpanTag();
-/*     */     } else {
-/* 344 */       write('\n');
-/*     */     } 
-/* 346 */     writeEndTag("</p>");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeStartParagraph(Element paramElement) throws IOException {
-/* 360 */     AttributeSet attributeSet = paramElement.getAttributes();
-/* 361 */     Object object = attributeSet.getAttribute(StyleConstants.ResolveAttribute);
-/* 362 */     if (object instanceof StyleContext.NamedStyle) {
-/* 363 */       writeStartTag("<p class=" + mapStyleName(((StyleContext.NamedStyle)object).getName()) + ">");
-/*     */     } else {
-/* 365 */       writeStartTag("<p>");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeLeaf(Element paramElement) throws IOException {
-/* 377 */     indent();
-/* 378 */     if (paramElement.getName() == "icon") {
-/* 379 */       writeImage(paramElement);
-/* 380 */     } else if (paramElement.getName() == "component") {
-/* 381 */       writeComponent(paramElement);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeImage(Element paramElement) throws IOException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeComponent(Element paramElement) throws IOException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean isText(Element paramElement) {
-/* 415 */     return (paramElement.getName() == "content");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeContent(Element paramElement, boolean paramBoolean) throws IOException, BadLocationException {
-/* 430 */     AttributeSet attributeSet = paramElement.getAttributes();
-/* 431 */     writeNonHTMLAttributes(attributeSet);
-/* 432 */     if (paramBoolean) {
-/* 433 */       indent();
-/*     */     }
-/* 435 */     writeHTMLTags(attributeSet);
-/* 436 */     text(paramElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeHTMLTags(AttributeSet paramAttributeSet) throws IOException {
-/* 450 */     int i = this.fontMask;
-/* 451 */     setFontMask(paramAttributeSet);
-/*     */     
-/* 453 */     int j = 0;
-/* 454 */     int k = 0;
-/* 455 */     if ((i & 0x1) != 0) {
-/* 456 */       if ((this.fontMask & 0x1) == 0) {
-/* 457 */         j |= 0x1;
-/*     */       }
-/* 459 */     } else if ((this.fontMask & 0x1) != 0) {
-/* 460 */       k |= 0x1;
-/*     */     } 
-/*     */     
-/* 463 */     if ((i & 0x2) != 0) {
-/* 464 */       if ((this.fontMask & 0x2) == 0) {
-/* 465 */         j |= 0x2;
-/*     */       }
-/* 467 */     } else if ((this.fontMask & 0x2) != 0) {
-/* 468 */       k |= 0x2;
-/*     */     } 
-/*     */     
-/* 471 */     if ((i & 0x4) != 0) {
-/* 472 */       if ((this.fontMask & 0x4) == 0) {
-/* 473 */         j |= 0x4;
-/*     */       }
-/* 475 */     } else if ((this.fontMask & 0x4) != 0) {
-/* 476 */       k |= 0x4;
-/*     */     } 
-/* 478 */     writeEndMask(j);
-/* 479 */     writeStartMask(k);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setFontMask(AttributeSet paramAttributeSet) {
-/* 490 */     if (StyleConstants.isBold(paramAttributeSet)) {
-/* 491 */       this.fontMask |= 0x1;
-/*     */     }
-/*     */     
-/* 494 */     if (StyleConstants.isItalic(paramAttributeSet)) {
-/* 495 */       this.fontMask |= 0x2;
-/*     */     }
-/*     */     
-/* 498 */     if (StyleConstants.isUnderline(paramAttributeSet)) {
-/* 499 */       this.fontMask |= 0x4;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeStartMask(int paramInt) throws IOException {
-/* 513 */     if (paramInt != 0) {
-/* 514 */       if ((paramInt & 0x4) != 0) {
-/* 515 */         write("<u>");
-/*     */       }
-/* 517 */       if ((paramInt & 0x2) != 0) {
-/* 518 */         write("<i>");
-/*     */       }
-/* 520 */       if ((paramInt & 0x1) != 0) {
-/* 521 */         write("<b>");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeEndMask(int paramInt) throws IOException {
-/* 533 */     if (paramInt != 0) {
-/* 534 */       if ((paramInt & 0x1) != 0) {
-/* 535 */         write("</b>");
-/*     */       }
-/* 537 */       if ((paramInt & 0x2) != 0) {
-/* 538 */         write("</i>");
-/*     */       }
-/* 540 */       if ((paramInt & 0x4) != 0) {
-/* 541 */         write("</u>");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void writeNonHTMLAttributes(AttributeSet paramAttributeSet) throws IOException {
-/* 560 */     String str1 = "";
-/* 561 */     String str2 = "; ";
-/*     */     
-/* 563 */     if (inFontTag() && this.fontAttributes.isEqual(paramAttributeSet)) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 567 */     boolean bool = true;
-/* 568 */     Color color = (Color)paramAttributeSet.getAttribute(StyleConstants.Foreground);
-/* 569 */     if (color != null) {
-/*     */       
-/* 571 */       str1 = str1 + "color: " + css.styleConstantsValueToCSSValue((StyleConstants)StyleConstants.Foreground, color);
-/*     */       
-/* 573 */       bool = false;
-/*     */     } 
-/* 575 */     Integer integer = (Integer)paramAttributeSet.getAttribute(StyleConstants.FontSize);
-/* 576 */     if (integer != null) {
-/* 577 */       if (!bool) {
-/* 578 */         str1 = str1 + str2;
-/*     */       }
-/* 580 */       str1 = str1 + "font-size: " + integer.intValue() + "pt";
-/* 581 */       bool = false;
-/*     */     } 
-/*     */     
-/* 584 */     String str3 = (String)paramAttributeSet.getAttribute(StyleConstants.FontFamily);
-/* 585 */     if (str3 != null) {
-/* 586 */       if (!bool) {
-/* 587 */         str1 = str1 + str2;
-/*     */       }
-/* 589 */       str1 = str1 + "font-family: " + str3;
-/* 590 */       bool = false;
-/*     */     } 
-/*     */     
-/* 593 */     if (str1.length() > 0) {
-/* 594 */       if (this.fontMask != 0) {
-/* 595 */         writeEndMask(this.fontMask);
-/* 596 */         this.fontMask = 0;
-/*     */       } 
-/* 598 */       startSpanTag(str1);
-/* 599 */       this.fontAttributes = paramAttributeSet;
-/*     */     }
-/* 601 */     else if (this.fontAttributes != null) {
-/* 602 */       writeEndMask(this.fontMask);
-/* 603 */       this.fontMask = 0;
-/* 604 */       endSpanTag();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean inFontTag() {
-/* 613 */     return (this.fontAttributes != null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void endFontTag() throws IOException {
-/* 624 */     write('\n');
-/* 625 */     writeEndTag("</font>");
-/* 626 */     this.fontAttributes = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void startFontTag(String paramString) throws IOException {
-/* 642 */     boolean bool = false;
-/* 643 */     if (inFontTag()) {
-/* 644 */       endFontTag();
-/* 645 */       bool = true;
-/*     */     } 
-/* 647 */     writeStartTag("<font style=\"" + paramString + "\">");
-/* 648 */     if (bool) {
-/* 649 */       indent();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void startSpanTag(String paramString) throws IOException {
-/* 663 */     boolean bool = false;
-/* 664 */     if (inFontTag()) {
-/* 665 */       endSpanTag();
-/* 666 */       bool = true;
-/*     */     } 
-/* 668 */     writeStartTag("<span style=\"" + paramString + "\">");
-/* 669 */     if (bool) {
-/* 670 */       indent();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void endSpanTag() throws IOException {
-/* 680 */     write('\n');
-/* 681 */     writeEndTag("</span>");
-/* 682 */     this.fontAttributes = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String addStyleName(String paramString) {
-/* 691 */     if (this.styleNameMapping == null) {
-/* 692 */       return paramString;
-/*     */     }
-/* 694 */     StringBuilder stringBuilder = null;
-/* 695 */     for (int i = paramString.length() - 1; i >= 0; i--) {
-/* 696 */       if (!isValidCharacter(paramString.charAt(i))) {
-/* 697 */         if (stringBuilder == null) {
-/* 698 */           stringBuilder = new StringBuilder(paramString);
-/*     */         }
-/* 700 */         stringBuilder.setCharAt(i, 'a');
-/*     */       } 
-/*     */     } 
-/* 703 */     String str = (stringBuilder != null) ? stringBuilder.toString() : paramString;
-/* 704 */     while (this.styleNameMapping.get(str) != null) {
-/* 705 */       str = str + 'x';
-/*     */     }
-/* 707 */     this.styleNameMapping.put(paramString, str);
-/* 708 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String mapStyleName(String paramString) {
-/* 715 */     if (this.styleNameMapping == null) {
-/* 716 */       return paramString;
-/*     */     }
-/* 718 */     String str = this.styleNameMapping.get(paramString);
-/* 719 */     return (str == null) ? paramString : str;
-/*     */   }
-/*     */   
-/*     */   private boolean isValidCharacter(char paramChar) {
-/* 723 */     return ((paramChar >= 'a' && paramChar <= 'z') || (paramChar >= 'A' && paramChar <= 'Z'));
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\MinimalHTMLWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text.html;
+
+import java.io.Writer;
+import java.io.IOException;
+import java.util.*;
+import java.awt.Color;
+import javax.swing.text.*;
+
+/**
+ * MinimalHTMLWriter is a fallback writer used by the
+ * HTMLEditorKit to write out HTML for a document that
+ * is a not produced by the EditorKit.
+ *
+ * The format for the document is:
+ * <pre>
+ * &lt;html&gt;
+ *   &lt;head&gt;
+ *     &lt;style&gt;
+ *        &lt;!-- list of named styles
+ *         p.normal {
+ *            font-family: SansSerif;
+ *            margin-height: 0;
+ *            font-size: 14
+ *         }
+ *        --&gt;
+ *      &lt;/style&gt;
+ *   &lt;/head&gt;
+ *   &lt;body&gt;
+ *    &lt;p style=normal&gt;
+ *        <b>Bold, italic, and underline attributes
+ *        of the run are emitted as HTML tags.
+ *        The remaining attributes are emitted as
+ *        part of the style attribute of a &lt;span&gt; tag.
+ *        The syntax is similar to inline styles.</b>
+ *    &lt;/p&gt;
+ *   &lt;/body&gt;
+ * &lt;/html&gt;
+ * </pre>
+ *
+ * @author Sunita Mani
+ */
+
+public class MinimalHTMLWriter extends AbstractWriter {
+
+    /**
+     * These static finals are used to
+     * tweak and query the fontMask about which
+     * of these tags need to be generated or
+     * terminated.
+     */
+    private static final int BOLD = 0x01;
+    private static final int ITALIC = 0x02;
+    private static final int UNDERLINE = 0x04;
+
+    // Used to map StyleConstants to CSS.
+    private static final CSS css = new CSS();
+
+    private int fontMask = 0;
+
+    int startOffset = 0;
+    int endOffset = 0;
+
+    /**
+     * Stores the attributes of the previous run.
+     * Used to compare with the current run's
+     * attributeset.  If identical, then a
+     * &lt;span&gt; tag is not emitted.
+     */
+    private AttributeSet fontAttributes;
+
+    /**
+     * Maps from style name as held by the Document, to the archived
+     * style name (style name written out). These may differ.
+     */
+    private Hashtable<String, String> styleNameMapping;
+
+    /**
+     * Creates a new MinimalHTMLWriter.
+     *
+     * @param w  Writer
+     * @param doc StyledDocument
+     *
+     */
+    public MinimalHTMLWriter(Writer w, StyledDocument doc) {
+        super(w, doc);
+    }
+
+    /**
+     * Creates a new MinimalHTMLWriter.
+     *
+     * @param w  Writer
+     * @param doc StyledDocument
+     * @param pos The location in the document to fetch the
+     *   content.
+     * @param len The amount to write out.
+     *
+     */
+    public MinimalHTMLWriter(Writer w, StyledDocument doc, int pos, int len) {
+        super(w, doc, pos, len);
+    }
+
+    /**
+     * Generates HTML output
+     * from a StyledDocument.
+     *
+     * @exception IOException on any I/O error
+     * @exception BadLocationException if pos represents an invalid
+     *            location within the document.
+     *
+     */
+    public void write() throws IOException, BadLocationException {
+        styleNameMapping = new Hashtable<String, String>();
+        writeStartTag("<html>");
+        writeHeader();
+        writeBody();
+        writeEndTag("</html>");
+    }
+
+
+    /**
+     * Writes out all the attributes for the
+     * following types:
+     *  StyleConstants.ParagraphConstants,
+     *  StyleConstants.CharacterConstants,
+     *  StyleConstants.FontConstants,
+     *  StyleConstants.ColorConstants.
+     * The attribute name and value are separated by a colon.
+     * Each pair is separated by a semicolon.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeAttributes(AttributeSet attr) throws IOException {
+        Enumeration attributeNames = attr.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            Object name = attributeNames.nextElement();
+            if ((name instanceof StyleConstants.ParagraphConstants) ||
+                (name instanceof StyleConstants.CharacterConstants) ||
+                (name instanceof StyleConstants.FontConstants) ||
+                (name instanceof StyleConstants.ColorConstants)) {
+                indent();
+                write(name.toString());
+                write(':');
+                write(css.styleConstantsValueToCSSValue
+                      ((StyleConstants)name, attr.getAttribute(name)).
+                      toString());
+                write(';');
+                write(NEWLINE);
+            }
+        }
+    }
+
+
+    /**
+     * Writes out text.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void text(Element elem) throws IOException, BadLocationException {
+        String contentStr = getText(elem);
+        if ((contentStr.length() > 0) &&
+            (contentStr.charAt(contentStr.length()-1) == NEWLINE)) {
+            contentStr = contentStr.substring(0, contentStr.length()-1);
+        }
+        if (contentStr.length() > 0) {
+            write(contentStr);
+        }
+    }
+
+    /**
+     * Writes out a start tag appropriately
+     * indented.  Also increments the indent level.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeStartTag(String tag) throws IOException {
+        indent();
+        write(tag);
+        write(NEWLINE);
+        incrIndent();
+    }
+
+
+    /**
+     * Writes out an end tag appropriately
+     * indented.  Also decrements the indent level.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeEndTag(String endTag) throws IOException {
+        decrIndent();
+        indent();
+        write(endTag);
+        write(NEWLINE);
+    }
+
+
+    /**
+     * Writes out the &lt;head&gt; and &lt;style&gt;
+     * tags, and then invokes writeStyles() to write
+     * out all the named styles as the content of the
+     * &lt;style&gt; tag.  The content is surrounded by
+     * valid HTML comment markers to ensure that the
+     * document is viewable in applications/browsers
+     * that do not support the tag.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeHeader() throws IOException {
+        writeStartTag("<head>");
+        writeStartTag("<style>");
+        writeStartTag("<!--");
+        writeStyles();
+        writeEndTag("-->");
+        writeEndTag("</style>");
+        writeEndTag("</head>");
+    }
+
+
+
+    /**
+     * Writes out all the named styles as the
+     * content of the &lt;style&gt; tag.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeStyles() throws IOException {
+        /*
+         *  Access to DefaultStyledDocument done to workaround
+         *  a missing API in styled document to access the
+         *  stylenames.
+         */
+        DefaultStyledDocument styledDoc =  ((DefaultStyledDocument)getDocument());
+        Enumeration styleNames = styledDoc.getStyleNames();
+
+        while (styleNames.hasMoreElements()) {
+            Style s = styledDoc.getStyle((String)styleNames.nextElement());
+
+            /** PENDING: Once the name attribute is removed
+                from the list we check check for 0. **/
+            if (s.getAttributeCount() == 1 &&
+                s.isDefined(StyleConstants.NameAttribute)) {
+                continue;
+            }
+            indent();
+            write("p." + addStyleName(s.getName()));
+            write(" {\n");
+            incrIndent();
+            writeAttributes(s);
+            decrIndent();
+            indent();
+            write("}\n");
+        }
+    }
+
+
+    /**
+     * Iterates over the elements in the document
+     * and processes elements based on whether they are
+     * branch elements or leaf elements.  This method specially handles
+     * leaf elements that are text.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeBody() throws IOException, BadLocationException {
+        ElementIterator it = getElementIterator();
+
+        /*
+          This will be a section element for a styled document.
+          We represent this element in HTML as the body tags.
+          Therefore we ignore it.
+         */
+        it.current();
+
+        Element next;
+
+        writeStartTag("<body>");
+
+        boolean inContent = false;
+
+        while((next = it.next()) != null) {
+            if (!inRange(next)) {
+                continue;
+            }
+            if (next instanceof AbstractDocument.BranchElement) {
+                if (inContent) {
+                    writeEndParagraph();
+                    inContent = false;
+                    fontMask = 0;
+                }
+                writeStartParagraph(next);
+            } else if (isText(next)) {
+                writeContent(next, !inContent);
+                inContent = true;
+            } else {
+                writeLeaf(next);
+                inContent = true;
+            }
+        }
+        if (inContent) {
+            writeEndParagraph();
+        }
+        writeEndTag("</body>");
+    }
+
+
+    /**
+     * Emits an end tag for a &lt;p&gt;
+     * tag.  Before writing out the tag, this method ensures
+     * that all other tags that have been opened are
+     * appropriately closed off.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeEndParagraph() throws IOException {
+        writeEndMask(fontMask);
+        if (inFontTag()) {
+            endSpanTag();
+        } else {
+            write(NEWLINE);
+        }
+        writeEndTag("</p>");
+    }
+
+
+    /**
+     * Emits the start tag for a paragraph. If
+     * the paragraph has a named style associated with it,
+     * then this method also generates a class attribute for the
+     * &lt;p&gt; tag and sets its value to be the name of the
+     * style.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeStartParagraph(Element elem) throws IOException {
+        AttributeSet attr = elem.getAttributes();
+        Object resolveAttr = attr.getAttribute(StyleConstants.ResolveAttribute);
+        if (resolveAttr instanceof StyleContext.NamedStyle) {
+            writeStartTag("<p class=" + mapStyleName(((StyleContext.NamedStyle)resolveAttr).getName()) + ">");
+        } else {
+            writeStartTag("<p>");
+        }
+    }
+
+
+    /**
+     * Responsible for writing out other non-text leaf
+     * elements.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeLeaf(Element elem) throws IOException {
+        indent();
+        if (elem.getName() == StyleConstants.IconElementName) {
+            writeImage(elem);
+        } else if (elem.getName() == StyleConstants.ComponentElementName) {
+            writeComponent(elem);
+        }
+    }
+
+
+    /**
+     * Responsible for handling Icon Elements;
+     * deliberately unimplemented.  How to implement this method is
+     * an issue of policy.  For example, if you're generating
+     * an &lt;img&gt; tag, how should you
+     * represent the src attribute (the location of the image)?
+     * In certain cases it could be a URL, in others it could
+     * be read from a stream.
+     *
+     * @param elem element of type StyleConstants.IconElementName
+     */
+    protected void writeImage(Element elem) throws IOException {
+    }
+
+
+    /**
+     * Responsible for handling Component Elements;
+     * deliberately unimplemented.
+     * How this method is implemented is a matter of policy.
+     */
+    protected void writeComponent(Element elem) throws IOException {
+    }
+
+
+    /**
+     * Returns true if the element is a text element.
+     *
+     */
+    protected boolean isText(Element elem) {
+        return (elem.getName() == AbstractDocument.ContentElementName);
+    }
+
+
+    /**
+     * Writes out the attribute set
+     * in an HTML-compliant manner.
+     *
+     * @exception IOException on any I/O error
+     * @exception BadLocationException if pos represents an invalid
+     *            location within the document.
+     */
+    protected void writeContent(Element elem,  boolean needsIndenting)
+        throws IOException, BadLocationException {
+
+        AttributeSet attr = elem.getAttributes();
+        writeNonHTMLAttributes(attr);
+        if (needsIndenting) {
+            indent();
+        }
+        writeHTMLTags(attr);
+        text(elem);
+    }
+
+
+    /**
+     * Generates
+     * bold &lt;b&gt;, italic &lt;i&gt;, and &lt;u&gt; tags for the
+     * text based on its attribute settings.
+     *
+     * @exception IOException on any I/O error
+     */
+
+    protected void writeHTMLTags(AttributeSet attr) throws IOException {
+
+        int oldMask = fontMask;
+        setFontMask(attr);
+
+        int endMask = 0;
+        int startMask = 0;
+        if ((oldMask & BOLD) != 0) {
+            if ((fontMask & BOLD) == 0) {
+                endMask |= BOLD;
+            }
+        } else if ((fontMask & BOLD) != 0) {
+            startMask |= BOLD;
+        }
+
+        if ((oldMask & ITALIC) != 0) {
+            if ((fontMask & ITALIC) == 0) {
+                endMask |= ITALIC;
+            }
+        } else if ((fontMask & ITALIC) != 0) {
+            startMask |= ITALIC;
+        }
+
+        if ((oldMask & UNDERLINE) != 0) {
+            if ((fontMask & UNDERLINE) == 0) {
+                endMask |= UNDERLINE;
+            }
+        } else if ((fontMask & UNDERLINE) != 0) {
+            startMask |= UNDERLINE;
+        }
+        writeEndMask(endMask);
+        writeStartMask(startMask);
+    }
+
+
+    /**
+     * Tweaks the appropriate bits of fontMask
+     * to reflect whether the text is to be displayed in
+     * bold, italic, and/or with an underline.
+     *
+     */
+    private void setFontMask(AttributeSet attr) {
+        if (StyleConstants.isBold(attr)) {
+            fontMask |= BOLD;
+        }
+
+        if (StyleConstants.isItalic(attr)) {
+            fontMask |= ITALIC;
+        }
+
+        if (StyleConstants.isUnderline(attr)) {
+            fontMask |= UNDERLINE;
+        }
+    }
+
+
+
+
+    /**
+     * Writes out start tags &lt;u&gt;, &lt;i&gt;, and &lt;b&gt; based on
+     * the mask settings.
+     *
+     * @exception IOException on any I/O error
+     */
+    private void writeStartMask(int mask) throws IOException  {
+        if (mask != 0) {
+            if ((mask & UNDERLINE) != 0) {
+                write("<u>");
+            }
+            if ((mask & ITALIC) != 0) {
+                write("<i>");
+            }
+            if ((mask & BOLD) != 0) {
+                write("<b>");
+            }
+        }
+    }
+
+    /**
+     * Writes out end tags for &lt;u&gt;, &lt;i&gt;, and &lt;b&gt; based on
+     * the mask settings.
+     *
+     * @exception IOException on any I/O error
+     */
+    private void writeEndMask(int mask) throws IOException {
+        if (mask != 0) {
+            if ((mask & BOLD) != 0) {
+                write("</b>");
+            }
+            if ((mask & ITALIC) != 0) {
+                write("</i>");
+            }
+            if ((mask & UNDERLINE) != 0) {
+                write("</u>");
+            }
+        }
+    }
+
+
+    /**
+     * Writes out the remaining
+     * character-level attributes (attributes other than bold,
+     * italic, and underline) in an HTML-compliant way.  Given that
+     * attributes such as font family and font size have no direct
+     * mapping to HTML tags, a &lt;span&gt; tag is generated and its
+     * style attribute is set to contain the list of remaining
+     * attributes just like inline styles.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void writeNonHTMLAttributes(AttributeSet attr) throws IOException {
+
+        String style = "";
+        String separator = "; ";
+
+        if (inFontTag() && fontAttributes.isEqual(attr)) {
+            return;
+        }
+
+        boolean first = true;
+        Color color = (Color)attr.getAttribute(StyleConstants.Foreground);
+        if (color != null) {
+            style += "color: " + css.styleConstantsValueToCSSValue
+                                    ((StyleConstants)StyleConstants.Foreground,
+                                     color);
+            first = false;
+        }
+        Integer size = (Integer)attr.getAttribute(StyleConstants.FontSize);
+        if (size != null) {
+            if (!first) {
+                style += separator;
+            }
+            style += "font-size: " + size.intValue() + "pt";
+            first = false;
+        }
+
+        String family = (String)attr.getAttribute(StyleConstants.FontFamily);
+        if (family != null) {
+            if (!first) {
+                style += separator;
+            }
+            style += "font-family: " + family;
+            first = false;
+        }
+
+        if (style.length() > 0) {
+            if (fontMask != 0) {
+                writeEndMask(fontMask);
+                fontMask = 0;
+            }
+            startSpanTag(style);
+            fontAttributes = attr;
+        }
+        else if (fontAttributes != null) {
+            writeEndMask(fontMask);
+            fontMask = 0;
+            endSpanTag();
+        }
+    }
+
+
+    /**
+     * Returns true if we are currently in a &lt;font&gt; tag.
+     */
+    protected boolean inFontTag() {
+        return (fontAttributes != null);
+    }
+
+    /**
+     * This is no longer used, instead &lt;span&gt; will be written out.
+     * <p>
+     * Writes out an end tag for the &lt;font&gt; tag.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void endFontTag() throws IOException {
+        write(NEWLINE);
+        writeEndTag("</font>");
+        fontAttributes = null;
+    }
+
+
+    /**
+     * This is no longer used, instead &lt;span&gt; will be written out.
+     * <p>
+     * Writes out a start tag for the &lt;font&gt; tag.
+     * Because font tags cannot be nested,
+     * this method closes out
+     * any enclosing font tag before writing out a
+     * new start tag.
+     *
+     * @exception IOException on any I/O error
+     */
+    protected void startFontTag(String style) throws IOException {
+        boolean callIndent = false;
+        if (inFontTag()) {
+            endFontTag();
+            callIndent = true;
+        }
+        writeStartTag("<font style=\"" + style + "\">");
+        if (callIndent) {
+            indent();
+        }
+    }
+
+    /**
+     * Writes out a start tag for the &lt;font&gt; tag.
+     * Because font tags cannot be nested,
+     * this method closes out
+     * any enclosing font tag before writing out a
+     * new start tag.
+     *
+     * @exception IOException on any I/O error
+     */
+    private void startSpanTag(String style) throws IOException {
+        boolean callIndent = false;
+        if (inFontTag()) {
+            endSpanTag();
+            callIndent = true;
+        }
+        writeStartTag("<span style=\"" + style + "\">");
+        if (callIndent) {
+            indent();
+        }
+    }
+
+    /**
+     * Writes out an end tag for the &lt;span&gt; tag.
+     *
+     * @exception IOException on any I/O error
+     */
+    private void endSpanTag() throws IOException {
+        write(NEWLINE);
+        writeEndTag("</span>");
+        fontAttributes = null;
+    }
+
+    /**
+     * Adds the style named <code>style</code> to the style mapping. This
+     * returns the name that should be used when outputting. CSS does not
+     * allow the full Unicode set to be used as a style name.
+     */
+    private String addStyleName(String style) {
+        if (styleNameMapping == null) {
+            return style;
+        }
+        StringBuilder sb = null;
+        for (int counter = style.length() - 1; counter >= 0; counter--) {
+            if (!isValidCharacter(style.charAt(counter))) {
+                if (sb == null) {
+                    sb = new StringBuilder(style);
+                }
+                sb.setCharAt(counter, 'a');
+            }
+        }
+        String mappedName = (sb != null) ? sb.toString() : style;
+        while (styleNameMapping.get(mappedName) != null) {
+            mappedName = mappedName + 'x';
+        }
+        styleNameMapping.put(style, mappedName);
+        return mappedName;
+    }
+
+    /**
+     * Returns the mapped style name corresponding to <code>style</code>.
+     */
+    private String mapStyleName(String style) {
+        if (styleNameMapping == null) {
+            return style;
+        }
+        String retValue = styleNameMapping.get(style);
+        return (retValue == null) ? style : retValue;
+    }
+
+    private boolean isValidCharacter(char character) {
+        return ((character >= 'a' && character <= 'z') ||
+                (character >= 'A' && character <= 'Z'));
+    }
+}

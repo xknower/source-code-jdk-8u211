@@ -1,304 +1,299 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class GapVector
-/*     */   implements Serializable
-/*     */ {
-/*     */   private Object array;
-/*     */   private int g0;
-/*     */   private int g1;
-/*     */   
-/*     */   public GapVector() {
-/*  51 */     this(10);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public GapVector(int paramInt) {
-/*  61 */     this.array = allocateArray(paramInt);
-/*  62 */     this.g0 = 0;
-/*  63 */     this.g1 = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract Object allocateArray(int paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract int getArrayLength();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final Object getArray() {
-/*  82 */     return this.array;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final int getGapStart() {
-/*  89 */     return this.g0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final int getGapEnd() {
-/*  96 */     return this.g1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void replace(int paramInt1, int paramInt2, Object paramObject, int paramInt3) {
-/* 132 */     boolean bool = false;
-/* 133 */     if (paramInt3 == 0) {
-/* 134 */       close(paramInt1, paramInt2); return;
-/*     */     } 
-/* 136 */     if (paramInt2 > paramInt3) {
-/*     */       
-/* 138 */       close(paramInt1 + paramInt3, paramInt2 - paramInt3);
-/*     */     } else {
-/*     */       
-/* 141 */       int i = paramInt3 - paramInt2;
-/* 142 */       int j = open(paramInt1 + paramInt2, i);
-/* 143 */       System.arraycopy(paramObject, paramInt2, this.array, j, i);
-/* 144 */       paramInt3 = paramInt2;
-/*     */     } 
-/* 146 */     System.arraycopy(paramObject, bool, this.array, paramInt1, paramInt3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void close(int paramInt1, int paramInt2) {
-/* 157 */     if (paramInt2 == 0)
-/*     */       return; 
-/* 159 */     int i = paramInt1 + paramInt2;
-/* 160 */     int j = this.g1 - this.g0 + paramInt2;
-/* 161 */     if (i <= this.g0) {
-/*     */       
-/* 163 */       if (this.g0 != i) {
-/* 164 */         shiftGap(i);
-/*     */       }
-/*     */       
-/* 167 */       shiftGapStartDown(this.g0 - paramInt2);
-/* 168 */     } else if (paramInt1 >= this.g0) {
-/*     */       
-/* 170 */       if (this.g0 != paramInt1) {
-/* 171 */         shiftGap(paramInt1);
-/*     */       }
-/*     */       
-/* 174 */       shiftGapEndUp(this.g0 + j);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 178 */       shiftGapStartDown(paramInt1);
-/* 179 */       shiftGapEndUp(this.g0 + j);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int open(int paramInt1, int paramInt2) {
-/* 190 */     int i = this.g1 - this.g0;
-/* 191 */     if (paramInt2 == 0) {
-/* 192 */       if (paramInt1 > this.g0)
-/* 193 */         paramInt1 += i; 
-/* 194 */       return paramInt1;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 198 */     shiftGap(paramInt1);
-/* 199 */     if (paramInt2 >= i) {
-/*     */       
-/* 201 */       shiftEnd(getArrayLength() - i + paramInt2);
-/* 202 */       i = this.g1 - this.g0;
-/*     */     } 
-/*     */     
-/* 205 */     this.g0 += paramInt2;
-/* 206 */     return paramInt1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void resize(int paramInt) {
-/* 214 */     Object object = allocateArray(paramInt);
-/* 215 */     System.arraycopy(this.array, 0, object, 0, Math.min(paramInt, getArrayLength()));
-/* 216 */     this.array = object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftEnd(int paramInt) {
-/* 224 */     int i = getArrayLength();
-/* 225 */     int j = this.g1;
-/* 226 */     int k = i - j;
-/* 227 */     int m = getNewArraySize(paramInt);
-/* 228 */     int n = m - k;
-/* 229 */     resize(m);
-/* 230 */     this.g1 = n;
-/*     */     
-/* 232 */     if (k != 0)
-/*     */     {
-/* 234 */       System.arraycopy(this.array, j, this.array, n, k);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int getNewArraySize(int paramInt) {
-/* 245 */     return (paramInt + 1) * 2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftGap(int paramInt) {
-/* 255 */     if (paramInt == this.g0) {
-/*     */       return;
-/*     */     }
-/* 258 */     int i = this.g0;
-/* 259 */     int j = paramInt - i;
-/* 260 */     int k = this.g1;
-/* 261 */     int m = k + j;
-/* 262 */     int n = k - i;
-/*     */     
-/* 264 */     this.g0 = paramInt;
-/* 265 */     this.g1 = m;
-/* 266 */     if (j > 0) {
-/*     */       
-/* 268 */       System.arraycopy(this.array, k, this.array, i, j);
-/* 269 */     } else if (j < 0) {
-/*     */       
-/* 271 */       System.arraycopy(this.array, paramInt, this.array, m, -j);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftGapStartDown(int paramInt) {
-/* 284 */     this.g0 = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftGapEndUp(int paramInt) {
-/* 296 */     this.g1 = paramInt;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\GapVector.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.util.Vector;
+import java.io.Serializable;
+import javax.swing.undo.UndoableEdit;
+
+/**
+ * An implementation of a gapped buffer similar to that used by
+ * emacs.  The underlying storage is a java array of some type,
+ * which is known only by the subclass of this class.  The array
+ * has a gap somewhere.  The gap is moved to the location of changes
+ * to take advantage of common behavior where most changes occur
+ * in the same location.  Changes that occur at a gap boundary are
+ * generally cheap and moving the gap is generally cheaper than
+ * moving the array contents directly to accommodate the change.
+ *
+ * @author  Timothy Prinzing
+ * @see GapContent
+ */
+abstract class GapVector implements Serializable {
+
+
+    /**
+     * Creates a new GapVector object.  Initial size defaults to 10.
+     */
+    public GapVector() {
+        this(10);
+    }
+
+    /**
+     * Creates a new GapVector object, with the initial
+     * size specified.
+     *
+     * @param initialLength the initial size
+     */
+    public GapVector(int initialLength) {
+        array = allocateArray(initialLength);
+        g0 = 0;
+        g1 = initialLength;
+    }
+
+    /**
+     * Allocate an array to store items of the type
+     * appropriate (which is determined by the subclass).
+     */
+    protected abstract Object allocateArray(int len);
+
+    /**
+     * Get the length of the allocated array
+     */
+    protected abstract int getArrayLength();
+
+    /**
+     * Access to the array.  The actual type
+     * of the array is known only by the subclass.
+     */
+    protected final Object getArray() {
+        return array;
+    }
+
+    /**
+     * Access to the start of the gap.
+     */
+    protected final int getGapStart() {
+        return g0;
+    }
+
+    /**
+     * Access to the end of the gap.
+     */
+    protected final int getGapEnd() {
+        return g1;
+    }
+
+    // ---- variables -----------------------------------
+
+    /**
+     * The array of items.  The type is determined by the subclass.
+     */
+    private Object array;
+
+    /**
+     * start of gap in the array
+     */
+    private int g0;
+
+    /**
+     * end of gap in the array
+     */
+    private int g1;
+
+
+    // --- gap management -------------------------------
+
+    /**
+     * Replace the given logical position in the storage with
+     * the given new items.  This will move the gap to the area
+     * being changed if the gap is not currently located at the
+     * change location.
+     *
+     * @param position the location to make the replacement.  This
+     *  is not the location in the underlying storage array, but
+     *  the location in the contiguous space being modeled.
+     * @param rmSize the number of items to remove
+     * @param addItems the new items to place in storage.
+     */
+    protected void replace(int position, int rmSize, Object addItems, int addSize) {
+        int addOffset = 0;
+        if (addSize == 0) {
+            close(position, rmSize);
+            return;
+        } else if (rmSize > addSize) {
+            /* Shrink the end. */
+            close(position+addSize, rmSize-addSize);
+        } else {
+            /* Grow the end, do two chunks. */
+            int endSize = addSize - rmSize;
+            int end = open(position + rmSize, endSize);
+            System.arraycopy(addItems, rmSize, array, end, endSize);
+            addSize = rmSize;
+        }
+        System.arraycopy(addItems, addOffset, array, position, addSize);
+    }
+
+    /**
+     * Delete nItems at position.  Squeezes any marks
+     * within the deleted area to position.  This moves
+     * the gap to the best place by minimizing it's
+     * overall movement.  The gap must intersect the
+     * target block.
+     */
+    void close(int position, int nItems) {
+        if (nItems == 0)  return;
+
+        int end = position + nItems;
+        int new_gs = (g1 - g0) + nItems;
+        if (end <= g0) {
+            // Move gap to end of block.
+            if (g0 != end) {
+                shiftGap(end);
+            }
+            // Adjust g0.
+            shiftGapStartDown(g0 - nItems);
+        } else if (position >= g0) {
+            // Move gap to beginning of block.
+            if (g0 != position) {
+                shiftGap(position);
+            }
+            // Adjust g1.
+            shiftGapEndUp(g0 + new_gs);
+        } else {
+            // The gap is properly inside the target block.
+            // No data movement necessary, simply move both gap pointers.
+            shiftGapStartDown(position);
+            shiftGapEndUp(g0 + new_gs);
+        }
+    }
+
+    /**
+     * Make space for the given number of items at the given
+     * location.
+     *
+     * @return the location that the caller should fill in
+     */
+    int open(int position, int nItems) {
+        int gapSize = g1 - g0;
+        if (nItems == 0) {
+            if (position > g0)
+                position += gapSize;
+            return position;
+        }
+
+        // Expand the array if the gap is too small.
+        shiftGap(position);
+        if (nItems >= gapSize) {
+            // Pre-shift the gap, to reduce total movement.
+            shiftEnd(getArrayLength() - gapSize + nItems);
+            gapSize = g1 - g0;
+        }
+
+        g0 = g0 + nItems;
+        return position;
+    }
+
+    /**
+     * resize the underlying storage array to the
+     * given new size
+     */
+    void resize(int nsize) {
+        Object narray = allocateArray(nsize);
+        System.arraycopy(array, 0, narray, 0, Math.min(nsize, getArrayLength()));
+        array = narray;
+    }
+
+    /**
+     * Make the gap bigger, moving any necessary data and updating
+     * the appropriate marks
+     */
+    protected void shiftEnd(int newSize) {
+        int oldSize = getArrayLength();
+        int oldGapEnd = g1;
+        int upperSize = oldSize - oldGapEnd;
+        int arrayLength = getNewArraySize(newSize);
+        int newGapEnd = arrayLength - upperSize;
+        resize(arrayLength);
+        g1 = newGapEnd;
+
+        if (upperSize != 0) {
+            // Copy array items to new end of array.
+            System.arraycopy(array, oldGapEnd, array, newGapEnd, upperSize);
+        }
+    }
+
+    /**
+     * Calculates a new size of the storage array depending on required
+     * capacity.
+     * @param reqSize the size which is necessary for new content
+     * @return the new size of the storage array
+     */
+    int getNewArraySize(int reqSize) {
+        return (reqSize + 1) * 2;
+    }
+
+    /**
+     * Move the start of the gap to a new location,
+     * without changing the size of the gap.  This
+     * moves the data in the array and updates the
+     * marks accordingly.
+     */
+    protected void shiftGap(int newGapStart) {
+        if (newGapStart == g0) {
+            return;
+        }
+        int oldGapStart = g0;
+        int dg = newGapStart - oldGapStart;
+        int oldGapEnd = g1;
+        int newGapEnd = oldGapEnd + dg;
+        int gapSize = oldGapEnd - oldGapStart;
+
+        g0 = newGapStart;
+        g1 = newGapEnd;
+        if (dg > 0) {
+            // Move gap up, move data down.
+            System.arraycopy(array, oldGapEnd, array, oldGapStart, dg);
+        } else if (dg < 0) {
+            // Move gap down, move data up.
+            System.arraycopy(array, newGapStart, array, newGapEnd, -dg);
+        }
+    }
+
+    /**
+     * Adjust the gap end downward.  This doesn't move
+     * any data, but it does update any marks affected
+     * by the boundary change.  All marks from the old
+     * gap start down to the new gap start are squeezed
+     * to the end of the gap (their location has been
+     * removed).
+     */
+    protected void shiftGapStartDown(int newGapStart) {
+        g0 = newGapStart;
+    }
+
+    /**
+     * Adjust the gap end upward.  This doesn't move
+     * any data, but it does update any marks affected
+     * by the boundary change. All marks from the old
+     * gap end up to the new gap end are squeezed
+     * to the end of the gap (their location has been
+     * removed).
+     */
+    protected void shiftGapEndUp(int newGapEnd) {
+        g1 = newGapEnd;
+    }
+
+}

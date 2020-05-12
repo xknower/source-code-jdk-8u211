@@ -1,56 +1,50 @@
-/*    */ package com.sun.jmx.snmp.internal;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SnmpDecryptedPdu
-/*    */ {
-/* 37 */   public byte[] data = null;
-/*    */ 
-/*    */ 
-/*    */   
-/* 41 */   public int dataLength = 0;
-/*    */ 
-/*    */ 
-/*    */   
-/* 45 */   public byte[] contextName = null;
-/*    */ 
-/*    */ 
-/*    */   
-/* 49 */   public byte[] contextEngineId = null;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\internal\SnmpDecryptedPdu.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp.internal;
+/**
+ * Class returned by <CODE>SnmpSecuritySubSystem</CODE> and <CODE>SnmpSecurityModel</CODE>. If privacy is applied, the received pdu must be decrypted. This class contains the field of of a decrypted scoped pdu.
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+
+public class SnmpDecryptedPdu {
+    /**
+     * Decrypted pdu data.
+     */
+    public byte[] data = null;
+    /**
+     * Decrypted pdu data length.
+     */
+    public int dataLength = 0;
+    /**
+     * Decrypted context name.
+     */
+    public byte[] contextName = null;
+    /**
+     * Decrypted context engine Id.
+     */
+    public byte[] contextEngineId = null;
+}

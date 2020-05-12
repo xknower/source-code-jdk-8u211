@@ -1,13 +1,60 @@
+/*
+ * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package java.awt.peer;
 
-public interface LabelPeer extends ComponentPeer {
-  void setText(String paramString);
-  
-  void setAlignment(int paramInt);
-}
+import java.awt.Label;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\peer\LabelPeer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The peer interface for {@link Label}.
+ *
+ * The peer interfaces are intended only for use in porting
+ * the AWT. They are not intended for use by application
+ * developers, and developers should not implement peers
+ * nor invoke any of the peer methods directly on the peer
+ * instances.
  */
+public interface LabelPeer extends ComponentPeer {
+
+    /**
+     * Sets the text to be displayed on the label.
+     *
+     * @param label the text to be displayed on the label
+     *
+     * @see Label#setText
+     */
+    void setText(String label);
+
+    /**
+     * Sets the alignment of the label text.
+     *
+     * @param alignment the alignment of the label text
+     *
+     * @see Label#setAlignment(int)
+     * @see Label#CENTER
+     * @see Label#RIGHT
+     * @see Label#LEFT
+     */
+    void setAlignment(int alignment);
+}

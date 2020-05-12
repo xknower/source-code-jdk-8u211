@@ -1,13 +1,45 @@
+/*
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.lang.model.element;
 
 import java.util.List;
 
-public interface Parameterizable extends Element {
-  List<? extends TypeParameterElement> getTypeParameters();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\lang\model\element\Parameterizable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A mixin interface for an element that has type parameters.
+ *
+ * @author Joseph D. Darcy
+ * @since 1.7
  */
+public interface Parameterizable extends Element {
+    /**
+     * Returns the formal type parameters of the type element in
+     * declaration order.
+     *
+     * @return the formal type parameters, or an empty list
+     * if there are none
+     */
+    List<? extends TypeParameterElement> getTypeParameters();
+}

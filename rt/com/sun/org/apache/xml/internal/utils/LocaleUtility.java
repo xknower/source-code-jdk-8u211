@@ -1,91 +1,88 @@
-/*    */ package com.sun.org.apache.xml.internal.utils;
-/*    */ 
-/*    */ import java.util.Locale;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class LocaleUtility
-/*    */ {
-/*    */   public static final char IETF_SEPARATOR = '-';
-/*    */   public static final String EMPTY_STRING = "";
-/*    */   
-/*    */   public static Locale langToLocale(String lang) {
-/* 42 */     if (lang == null || lang.equals("")) {
-/* 43 */       return Locale.getDefault();
-/*    */     }
-/* 45 */     String language = "";
-/* 46 */     String country = "";
-/* 47 */     String variant = "";
-/*    */     
-/* 49 */     int i1 = lang.indexOf('-');
-/* 50 */     if (i1 < 0) {
-/* 51 */       language = lang;
-/*    */     } else {
-/* 53 */       language = lang.substring(0, i1);
-/* 54 */       i1++;
-/* 55 */       int i2 = lang.indexOf('-', i1);
-/* 56 */       if (i2 < 0) {
-/* 57 */         country = lang.substring(i1);
-/*    */       } else {
-/* 59 */         country = lang.substring(i1, i2);
-/* 60 */         variant = lang.substring(i2 + 1);
-/*    */       } 
-/*    */     } 
-/*    */     
-/* 64 */     if (language.length() == 2) {
-/* 65 */       language = language.toLowerCase();
-/*    */     } else {
-/* 67 */       language = "";
-/*    */     } 
-/*    */     
-/* 70 */     if (country.length() == 2) {
-/* 71 */       country = country.toUpperCase();
-/*    */     } else {
-/* 73 */       country = "";
-/*    */     } 
-/*    */     
-/* 76 */     if (variant.length() > 0 && (language
-/* 77 */       .length() == 2 || country.length() == 2)) {
-/* 78 */       variant = variant.toUpperCase();
-/*    */     } else {
-/* 80 */       variant = "";
-/*    */     } 
-/*    */     
-/* 83 */     return new Locale(language, country, variant);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\LocaleUtility.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+
+
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: LocaleUtility.java,v 1.2.4.1 2005/09/15 08:15:47 suresh_emailid Exp $
+ */
+
+package com.sun.org.apache.xml.internal.utils;
+
+import java.util.Locale;
+
+/**
+ * @author Igor Hersht, igorh@ca.ibm.com
+ */
+public class LocaleUtility {
+    /**
+     * IETF RFC 1766 tag separator
+     */
+    public final static char IETF_SEPARATOR = '-';
+    public final static String EMPTY_STRING = "";
+
+
+ public static Locale langToLocale(String lang) {
+       if((lang == null) || lang.equals(EMPTY_STRING)){ // not specified => getDefault
+            return Locale.getDefault();
+       }
+        String language = EMPTY_STRING;
+        String country =  EMPTY_STRING;
+        String variant =  EMPTY_STRING;
+
+        int i1 = lang.indexOf(IETF_SEPARATOR);
+        if (i1 < 0) {
+            language = lang;
+        } else {
+            language = lang.substring(0, i1);
+            ++i1;
+            int i2 = lang.indexOf(IETF_SEPARATOR, i1);
+            if (i2 < 0) {
+                country = lang.substring(i1);
+            } else {
+                country = lang.substring(i1, i2);
+                variant = lang.substring(i2+1);
+            }
+        }
+
+        if(language.length() == 2){
+           language = language.toLowerCase();
+        }else {
+          language = EMPTY_STRING;
+        }
+
+        if(country.length() == 2){
+           country = country.toUpperCase();
+        }else {
+          country = EMPTY_STRING;
+        }
+
+        if((variant.length() > 0) &&
+        ((language.length() == 2) ||(country.length() == 2))){
+           variant = variant.toUpperCase();
+        }else{
+            variant = EMPTY_STRING;
+        }
+
+        return new Locale(language, country, variant );
+    }
+
+
+
+ }

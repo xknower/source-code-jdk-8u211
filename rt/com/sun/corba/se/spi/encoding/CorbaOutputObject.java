@@ -1,57 +1,53 @@
-/*    */ package com.sun.corba.se.spi.encoding;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.encoding.BufferManagerWrite;
-/*    */ import com.sun.corba.se.impl.encoding.CDROutputStream;
-/*    */ import com.sun.corba.se.pept.encoding.OutputObject;
-/*    */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import com.sun.corba.se.spi.transport.CorbaConnection;
-/*    */ import java.io.IOException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class CorbaOutputObject
-/*    */   extends CDROutputStream
-/*    */   implements OutputObject
-/*    */ {
-/*    */   public CorbaOutputObject(ORB paramORB, GIOPVersion paramGIOPVersion, byte paramByte1, boolean paramBoolean1, BufferManagerWrite paramBufferManagerWrite, byte paramByte2, boolean paramBoolean2) {
-/* 47 */     super(paramORB, paramGIOPVersion, paramByte1, paramBoolean1, paramBufferManagerWrite, paramByte2, paramBoolean2);
-/*    */   }
-/*    */   
-/*    */   public abstract void writeTo(CorbaConnection paramCorbaConnection) throws IOException;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\encoding\CorbaOutputObject.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.encoding ;
+
+import com.sun.corba.se.pept.encoding.OutputObject ;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.transport.CorbaConnection;
+
+import com.sun.corba.se.impl.encoding.CDROutputStream ;
+import com.sun.corba.se.impl.encoding.BufferManagerWrite ;
+
+
+public abstract class CorbaOutputObject
+    extends CDROutputStream
+    implements OutputObject
+{
+    public CorbaOutputObject(
+        ORB orb, GIOPVersion version, byte encodingVersion,
+        boolean littleEndian, BufferManagerWrite bufferManager,
+        byte streamFormatVersion, boolean usePooledByteBuffers)
+    {
+        super(orb, version, encodingVersion, littleEndian, bufferManager,
+              streamFormatVersion, usePooledByteBuffers);
+    }
+
+    public abstract void writeTo(CorbaConnection connection)
+        throws java.io.IOException;
+}

@@ -1,142 +1,136 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import java.util.StringTokenizer;
-/*     */ import java.util.Vector;
-/*     */ import org.w3c.dom.DOMImplementation;
-/*     */ import org.w3c.dom.DOMImplementationList;
-/*     */ import org.w3c.dom.DOMImplementationSource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DOMImplementationSourceImpl
-/*     */   implements DOMImplementationSource
-/*     */ {
-/*     */   public DOMImplementation getDOMImplementation(String features) {
-/*  56 */     DOMImplementation impl = CoreDOMImplementationImpl.getDOMImplementation();
-/*  57 */     if (testImpl(impl, features)) {
-/*  58 */       return impl;
-/*     */     }
-/*     */     
-/*  61 */     impl = DOMImplementationImpl.getDOMImplementation();
-/*  62 */     if (testImpl(impl, features)) {
-/*  63 */       return impl;
-/*     */     }
-/*     */     
-/*  66 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMImplementationList getDOMImplementationList(String features) {
-/*  82 */     DOMImplementation impl = CoreDOMImplementationImpl.getDOMImplementation();
-/*  83 */     Vector<DOMImplementation> implementations = new Vector();
-/*  84 */     if (testImpl(impl, features)) {
-/*  85 */       implementations.addElement(impl);
-/*     */     }
-/*  87 */     impl = DOMImplementationImpl.getDOMImplementation();
-/*  88 */     if (testImpl(impl, features)) {
-/*  89 */       implementations.addElement(impl);
-/*     */     }
-/*     */     
-/*  92 */     return new DOMImplementationListImpl(implementations);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   boolean testImpl(DOMImplementation impl, String features) {
-/*  97 */     StringTokenizer st = new StringTokenizer(features);
-/*  98 */     String feature = null;
-/*  99 */     String version = null;
-/*     */     
-/* 101 */     if (st.hasMoreTokens()) {
-/* 102 */       feature = st.nextToken();
-/*     */     }
-/* 104 */     while (feature != null) {
-/* 105 */       boolean isVersion = false;
-/* 106 */       if (st.hasMoreTokens()) {
-/*     */         
-/* 108 */         version = st.nextToken();
-/* 109 */         char c = version.charAt(0);
-/* 110 */         switch (c) { case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
-/*     */           case '8':
-/*     */           case '9':
-/* 113 */             isVersion = true; break; }
-/*     */       
-/*     */       } else {
-/* 116 */         version = null;
-/*     */       } 
-/* 118 */       if (isVersion) {
-/* 119 */         if (!impl.hasFeature(feature, version)) {
-/* 120 */           return false;
-/*     */         }
-/* 122 */         if (st.hasMoreTokens()) {
-/* 123 */           feature = st.nextToken(); continue;
-/*     */         } 
-/* 125 */         feature = null;
-/*     */         continue;
-/*     */       } 
-/* 128 */       if (!impl.hasFeature(feature, null)) {
-/* 129 */         return false;
-/*     */       }
-/* 131 */       feature = version;
-/*     */     } 
-/*     */     
-/* 134 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\DOMImplementationSourceImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import java.util.StringTokenizer;
+import java.util.Vector;
+import org.w3c.dom.DOMImplementationList;
+import org.w3c.dom.DOMImplementationSource;
+import org.w3c.dom.DOMImplementation;
+import com.sun.org.apache.xerces.internal.dom.DOMImplementationListImpl;
+
+/**
+ * Supply one the right implementation, based upon requested features. Each
+ * implemented <code>DOMImplementationSource</code> object is listed in the
+ * binding-specific list of available sources so that its
+ * <code>DOMImplementation</code> objects are made available.
+ *
+ * <p>See also the <a href='http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#DOMImplementationSource'>Document Object Model (DOM) Level 3 Core Specification</a>.
+ *
+ * @xerces.internal
+ *
+ */
+public class DOMImplementationSourceImpl
+    implements DOMImplementationSource {
+
+    /**
+     * A method to request a DOM implementation.
+     * @param features A string that specifies which features are required.
+     *   This is a space separated list in which each feature is specified
+     *   by its name optionally followed by a space and a version number.
+     *   This is something like: "XML 1.0 Traversal Events 2.0"
+     * @return An implementation that has the desired features, or
+     *   <code>null</code> if this source has none.
+     */
+    public DOMImplementation getDOMImplementation(String features) {
+        // first check whether the CoreDOMImplementation would do
+        DOMImplementation impl =
+            CoreDOMImplementationImpl.getDOMImplementation();
+        if (testImpl(impl, features)) {
+            return impl;
+        }
+        // if not try the DOMImplementation
+        impl = DOMImplementationImpl.getDOMImplementation();
+        if (testImpl(impl, features)) {
+            return impl;
+        }
+
+        return null;
+    }
+
+    /**
+     * A method to request a list of DOM implementations that support the
+     * specified features and versions, as specified in .
+     * @param features A string that specifies which features and versions
+     *   are required. This is a space separated list in which each feature
+     *   is specified by its name optionally followed by a space and a
+     *   version number. This is something like: "XML 3.0 Traversal +Events
+     *   2.0"
+     * @return A list of DOM implementations that support the desired
+     *   features.
+     */
+    public DOMImplementationList getDOMImplementationList(String features) {
+        // first check whether the CoreDOMImplementation would do
+        DOMImplementation impl = CoreDOMImplementationImpl.getDOMImplementation();
+                final Vector implementations = new Vector();
+        if (testImpl(impl, features)) {
+                        implementations.addElement(impl);
+        }
+        impl = DOMImplementationImpl.getDOMImplementation();
+        if (testImpl(impl, features)) {
+                        implementations.addElement(impl);
+        }
+
+        return new DOMImplementationListImpl(implementations);
+    }
+
+    boolean testImpl(DOMImplementation impl, String features) {
+
+        StringTokenizer st = new StringTokenizer(features);
+        String feature = null;
+        String version = null;
+
+        if (st.hasMoreTokens()) {
+           feature = st.nextToken();
+        }
+        while (feature != null) {
+           boolean isVersion = false;
+           if (st.hasMoreTokens()) {
+               char c;
+               version = st.nextToken();
+               c = version.charAt(0);
+               switch (c) {
+               case '0': case '1': case '2': case '3': case '4':
+               case '5': case '6': case '7': case '8': case '9':
+                   isVersion = true;
+               }
+           } else {
+               version = null;
+           }
+           if (isVersion) {
+               if (!impl.hasFeature(feature, version)) {
+                   return false;
+               }
+               if (st.hasMoreTokens()) {
+                   feature = st.nextToken();
+               } else {
+                   feature = null;
+               }
+           } else {
+               if (!impl.hasFeature(feature, null)) {
+                   return false;
+               }
+               feature = version;
+           }
+        }
+        return true;
+    }
+}

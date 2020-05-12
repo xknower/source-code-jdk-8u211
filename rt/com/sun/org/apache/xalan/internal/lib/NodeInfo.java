@@ -1,256 +1,250 @@
-/*     */ package com.sun.org.apache.xalan.internal.lib;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeProxy;
-/*     */ import javax.xml.transform.SourceLocator;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.NodeList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class NodeInfo
-/*     */ {
-/*     */   public static String systemId(ExpressionContext context) {
-/*  52 */     Node contextNode = context.getContextNode();
-/*  53 */     int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
-/*     */     
-/*  55 */     SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/*  57 */     if (locator != null) {
-/*  58 */       return locator.getSystemId();
-/*     */     }
-/*  60 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String systemId(NodeList nodeList) {
-/*  73 */     if (nodeList == null || nodeList.getLength() == 0) {
-/*  74 */       return null;
-/*     */     }
-/*  76 */     Node node = nodeList.item(0);
-/*  77 */     int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
-/*     */     
-/*  79 */     SourceLocator locator = ((DTMNodeProxy)node).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/*  81 */     if (locator != null) {
-/*  82 */       return locator.getSystemId();
-/*     */     }
-/*  84 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String publicId(ExpressionContext context) {
-/*  98 */     Node contextNode = context.getContextNode();
-/*  99 */     int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
-/*     */     
-/* 101 */     SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/* 103 */     if (locator != null) {
-/* 104 */       return locator.getPublicId();
-/*     */     }
-/* 106 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String publicId(NodeList nodeList) {
-/* 121 */     if (nodeList == null || nodeList.getLength() == 0) {
-/* 122 */       return null;
-/*     */     }
-/* 124 */     Node node = nodeList.item(0);
-/* 125 */     int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
-/*     */     
-/* 127 */     SourceLocator locator = ((DTMNodeProxy)node).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/* 129 */     if (locator != null) {
-/* 130 */       return locator.getPublicId();
-/*     */     }
-/* 132 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int lineNumber(ExpressionContext context) {
-/* 151 */     Node contextNode = context.getContextNode();
-/* 152 */     int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
-/*     */     
-/* 154 */     SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/* 156 */     if (locator != null) {
-/* 157 */       return locator.getLineNumber();
-/*     */     }
-/* 159 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int lineNumber(NodeList nodeList) {
-/* 179 */     if (nodeList == null || nodeList.getLength() == 0) {
-/* 180 */       return -1;
-/*     */     }
-/* 182 */     Node node = nodeList.item(0);
-/* 183 */     int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
-/*     */     
-/* 185 */     SourceLocator locator = ((DTMNodeProxy)node).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/* 187 */     if (locator != null) {
-/* 188 */       return locator.getLineNumber();
-/*     */     }
-/* 190 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int columnNumber(ExpressionContext context) {
-/* 209 */     Node contextNode = context.getContextNode();
-/* 210 */     int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
-/*     */     
-/* 212 */     SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/* 214 */     if (locator != null) {
-/* 215 */       return locator.getColumnNumber();
-/*     */     }
-/* 217 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int columnNumber(NodeList nodeList) {
-/* 237 */     if (nodeList == null || nodeList.getLength() == 0) {
-/* 238 */       return -1;
-/*     */     }
-/* 240 */     Node node = nodeList.item(0);
-/* 241 */     int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
-/*     */     
-/* 243 */     SourceLocator locator = ((DTMNodeProxy)node).getDTM().getSourceLocatorFor(nodeHandler);
-/*     */     
-/* 245 */     if (locator != null) {
-/* 246 */       return locator.getColumnNumber();
-/*     */     }
-/* 248 */     return -1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\lib\NodeInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: NodeInfo.java,v 1.2.4.1 2005/09/10 18:54:37 jeffsuttor Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.lib;
+
+import javax.xml.transform.SourceLocator;
+
+import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMNodeProxy;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+/**
+ * <code>NodeInfo</code> defines a set of XSLT extension functions to be
+ * used from stylesheets.
+ *
+ * @author <a href="mailto:ovidiu@cup.hp.com">Ovidiu Predescu</a>
+ * @since May 24, 2001
+ */
+public class NodeInfo
+{
+  /**
+   * <code>systemId</code> returns the system id of the current
+   * context node.
+   *
+   * @param context an <code>ExpressionContext</code> value
+   * @return a <code>String</code> value
+   */
+  public static String systemId(ExpressionContext context)
+  {
+    Node contextNode = context.getContextNode();
+    int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getSystemId();
+    else
+      return null;
+  }
+
+  /**
+   * <code>systemId</code> returns the system id of the node passed as
+   * argument. If a node set is passed as argument, the system id of
+   * the first node in the set is returned.
+   *
+   * @param nodeList a <code>NodeList</code> value
+   * @return a <code>String</code> value
+   */
+  public static String systemId(NodeList nodeList)
+  {
+    if (nodeList == null || nodeList.getLength() == 0)
+      return null;
+
+    Node node = nodeList.item(0);
+    int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)node).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getSystemId();
+    else
+      return null;
+  }
+
+  /**
+   * <code>publicId</code> returns the public identifier of the current
+   * context node.
+   *
+   * Xalan does not currently record this value, and will return null.
+   *
+   * @param context an <code>ExpressionContext</code> value
+   * @return a <code>String</code> value
+   */
+  public static String publicId(ExpressionContext context)
+  {
+    Node contextNode = context.getContextNode();
+    int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getPublicId();
+    else
+      return null;
+  }
+
+  /**
+   * <code>publicId</code> returns the public identifier of the node passed as
+   * argument. If a node set is passed as argument, the public identifier of
+   * the first node in the set is returned.
+   *
+   * Xalan does not currently record this value, and will return null.
+   *
+   * @param nodeList a <code>NodeList</code> value
+   * @return a <code>String</code> value
+   */
+  public static String publicId(NodeList nodeList)
+  {
+    if (nodeList == null || nodeList.getLength() == 0)
+      return null;
+
+    Node node = nodeList.item(0);
+    int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)node).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getPublicId();
+    else
+      return null;
+  }
+
+  /**
+   * <code>lineNumber</code> returns the line number of the current
+   * context node.
+   *
+   * NOTE: Xalan does not normally record location information for each node.
+   * To obtain it, you must set the custom TrAX attribute
+   * "http://xml.apache.org/xalan/features/source_location"
+   * true in the TransformerFactory before generating the Transformer and executing
+   * the stylesheet. Storage cost per node will be noticably increased in this mode.
+   *
+   * @param context an <code>ExpressionContext</code> value
+   * @return an <code>int</code> value. This may be -1 to indicate that the
+   * line number is not known.
+   */
+  public static int lineNumber(ExpressionContext context)
+  {
+    Node contextNode = context.getContextNode();
+    int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getLineNumber();
+    else
+      return -1;
+  }
+
+  /**
+   * <code>lineNumber</code> returns the line number of the node
+   * passed as argument. If a node set is passed as argument, the line
+   * number of the first node in the set is returned.
+   *
+   * NOTE: Xalan does not normally record location information for each node.
+   * To obtain it, you must set the custom TrAX attribute
+   * "http://xml.apache.org/xalan/features/source_location"
+   * true in the TransformerFactory before generating the Transformer and executing
+   * the stylesheet. Storage cost per node will be noticably increased in this mode.
+   *
+   * @param nodeList a <code>NodeList</code> value
+   * @return an <code>int</code> value. This may be -1 to indicate that the
+   * line number is not known.
+   */
+  public static int lineNumber(NodeList nodeList)
+  {
+    if (nodeList == null || nodeList.getLength() == 0)
+      return -1;
+
+    Node node = nodeList.item(0);
+    int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)node).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getLineNumber();
+    else
+      return -1;
+  }
+
+  /**
+   * <code>columnNumber</code> returns the column number of the
+   * current context node.
+   *
+   * NOTE: Xalan does not normally record location information for each node.
+   * To obtain it, you must set the custom TrAX attribute
+   * "http://xml.apache.org/xalan/features/source_location"
+   * true in the TransformerFactory before generating the Transformer and executing
+   * the stylesheet. Storage cost per node will be noticably increased in this mode.
+   *
+   * @param context an <code>ExpressionContext</code> value
+   * @return an <code>int</code> value. This may be -1 to indicate that the
+   * column number is not known.
+   */
+  public static int columnNumber(ExpressionContext context)
+  {
+    Node contextNode = context.getContextNode();
+    int nodeHandler = ((DTMNodeProxy)contextNode).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)contextNode).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getColumnNumber();
+    else
+      return -1;
+  }
+
+  /**
+   * <code>columnNumber</code> returns the column number of the node
+   * passed as argument. If a node set is passed as argument, the line
+   * number of the first node in the set is returned.
+   *
+   * NOTE: Xalan does not normally record location information for each node.
+   * To obtain it, you must set the custom TrAX attribute
+   * "http://xml.apache.org/xalan/features/source_location"
+   * true in the TransformerFactory before generating the Transformer and executing
+   * the stylesheet. Storage cost per node will be noticably increased in this mode.
+   *
+   * @param nodeList a <code>NodeList</code> value
+   * @return an <code>int</code> value. This may be -1 to indicate that the
+   * column number is not known.
+   */
+  public static int columnNumber(NodeList nodeList)
+  {
+    if (nodeList == null || nodeList.getLength() == 0)
+      return -1;
+
+    Node node = nodeList.item(0);
+    int nodeHandler = ((DTMNodeProxy)node).getDTMNodeNumber();
+    SourceLocator locator = ((DTMNodeProxy)node).getDTM()
+      .getSourceLocatorFor(nodeHandler);
+
+    if (locator != null)
+      return locator.getColumnNumber();
+    else
+      return -1;
+  }
+}

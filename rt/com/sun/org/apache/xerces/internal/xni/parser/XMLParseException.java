@@ -1,185 +1,181 @@
-/*     */ package com.sun.org.apache.xerces.internal.xni.parser;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLParseException
-/*     */   extends XNIException
-/*     */ {
-/*     */   static final long serialVersionUID = 1732959359448549967L;
-/*     */   protected String fPublicId;
-/*     */   protected String fLiteralSystemId;
-/*     */   protected String fExpandedSystemId;
-/*     */   protected String fBaseSystemId;
-/*  57 */   protected int fLineNumber = -1;
-/*     */ 
-/*     */   
-/*  60 */   protected int fColumnNumber = -1;
-/*     */ 
-/*     */   
-/*  63 */   protected int fCharacterOffset = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLParseException(XMLLocator locator, String message) {
-/*  71 */     super(message);
-/*  72 */     if (locator != null) {
-/*  73 */       this.fPublicId = locator.getPublicId();
-/*  74 */       this.fLiteralSystemId = locator.getLiteralSystemId();
-/*  75 */       this.fExpandedSystemId = locator.getExpandedSystemId();
-/*  76 */       this.fBaseSystemId = locator.getBaseSystemId();
-/*  77 */       this.fLineNumber = locator.getLineNumber();
-/*  78 */       this.fColumnNumber = locator.getColumnNumber();
-/*  79 */       this.fCharacterOffset = locator.getCharacterOffset();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLParseException(XMLLocator locator, String message, Exception exception) {
-/*  86 */     super(message, exception);
-/*  87 */     if (locator != null) {
-/*  88 */       this.fPublicId = locator.getPublicId();
-/*  89 */       this.fLiteralSystemId = locator.getLiteralSystemId();
-/*  90 */       this.fExpandedSystemId = locator.getExpandedSystemId();
-/*  91 */       this.fBaseSystemId = locator.getBaseSystemId();
-/*  92 */       this.fLineNumber = locator.getLineNumber();
-/*  93 */       this.fColumnNumber = locator.getColumnNumber();
-/*  94 */       this.fCharacterOffset = locator.getCharacterOffset();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPublicId() {
-/* 104 */     return this.fPublicId;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getExpandedSystemId() {
-/* 109 */     return this.fExpandedSystemId;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getLiteralSystemId() {
-/* 114 */     return this.fLiteralSystemId;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseSystemId() {
-/* 119 */     return this.fBaseSystemId;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getLineNumber() {
-/* 124 */     return this.fLineNumber;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getColumnNumber() {
-/* 129 */     return this.fColumnNumber;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getCharacterOffset() {
-/* 134 */     return this.fCharacterOffset;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 144 */     StringBuffer str = new StringBuffer();
-/* 145 */     if (this.fPublicId != null) {
-/* 146 */       str.append(this.fPublicId);
-/*     */     }
-/* 148 */     str.append(':');
-/* 149 */     if (this.fLiteralSystemId != null) {
-/* 150 */       str.append(this.fLiteralSystemId);
-/*     */     }
-/* 152 */     str.append(':');
-/* 153 */     if (this.fExpandedSystemId != null) {
-/* 154 */       str.append(this.fExpandedSystemId);
-/*     */     }
-/* 156 */     str.append(':');
-/* 157 */     if (this.fBaseSystemId != null) {
-/* 158 */       str.append(this.fBaseSystemId);
-/*     */     }
-/* 160 */     str.append(':');
-/* 161 */     str.append(this.fLineNumber);
-/* 162 */     str.append(':');
-/* 163 */     str.append(this.fColumnNumber);
-/* 164 */     str.append(':');
-/* 165 */     str.append(this.fCharacterOffset);
-/* 166 */     str.append(':');
-/* 167 */     String message = getMessage();
-/* 168 */     if (message == null) {
-/* 169 */       Exception exception = getException();
-/* 170 */       if (exception != null) {
-/* 171 */         message = exception.getMessage();
-/*     */       }
-/*     */     } 
-/* 174 */     if (message != null) {
-/* 175 */       str.append(message);
-/*     */     }
-/* 177 */     return str.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\xni\parser\XMLParseException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.xni.parser;
+
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+
+/**
+ * A parsing exception. This exception is different from the standard
+ * XNI exception in that it stores the location in the document (or
+ * its entities) where the exception occurred.
+ *
+ * @author Andy Clark, IBM
+ *
+ */
+public class XMLParseException
+    extends XNIException {
+
+    /** Serialization version. */
+    static final long serialVersionUID = 1732959359448549967L;
+
+    //
+    // Data
+    //
+
+    /** Public identifier. */
+    protected String fPublicId;
+
+    /** literal System identifier. */
+    protected String fLiteralSystemId;
+
+    /** expanded System identifier. */
+    protected String fExpandedSystemId;
+
+    /** Base system identifier. */
+    protected String fBaseSystemId;
+
+    /** Line number. */
+    protected int fLineNumber = -1;
+
+    /** Column number. */
+    protected int fColumnNumber = -1;
+
+    /** Character offset. */
+    protected int fCharacterOffset = -1;
+
+    //
+    // Constructors
+    //
+
+    /** Constructs a parse exception. */
+    public XMLParseException(XMLLocator locator, String message) {
+        super(message);
+        if (locator != null) {
+            fPublicId = locator.getPublicId();
+            fLiteralSystemId = locator.getLiteralSystemId();
+            fExpandedSystemId = locator.getExpandedSystemId();
+            fBaseSystemId = locator.getBaseSystemId();
+            fLineNumber = locator.getLineNumber();
+            fColumnNumber = locator.getColumnNumber();
+            fCharacterOffset = locator.getCharacterOffset();
+        }
+    } // <init>(XMLLocator,String)
+
+    /** Constructs a parse exception. */
+    public XMLParseException(XMLLocator locator,
+                             String message, Exception exception) {
+        super(message, exception);
+        if (locator != null) {
+            fPublicId = locator.getPublicId();
+            fLiteralSystemId = locator.getLiteralSystemId();
+            fExpandedSystemId = locator.getExpandedSystemId();
+            fBaseSystemId = locator.getBaseSystemId();
+            fLineNumber = locator.getLineNumber();
+            fColumnNumber = locator.getColumnNumber();
+            fCharacterOffset = locator.getCharacterOffset();
+        }
+    } // <init>(XMLLocator,String,Exception)
+
+    //
+    // Public methods
+    //
+
+    /** Returns the public identifier. */
+    public String getPublicId() {
+        return fPublicId;
+    } // getPublicId():String
+
+    /** Returns the expanded system identifier. */
+    public String getExpandedSystemId() {
+        return fExpandedSystemId;
+    } // getExpandedSystemId():String
+
+    /** Returns the literal system identifier. */
+    public String getLiteralSystemId() {
+        return fLiteralSystemId;
+    } // getLiteralSystemId():String
+
+    /** Returns the base system identifier. */
+    public String getBaseSystemId() {
+        return fBaseSystemId;
+    } // getBaseSystemId():String
+
+    /** Returns the line number. */
+    public int getLineNumber() {
+        return fLineNumber;
+    } // getLineNumber():int
+
+    /** Returns the row number. */
+    public int getColumnNumber() {
+        return fColumnNumber;
+    } // getRowNumber():int
+
+    /** Returns the character offset. */
+    public int getCharacterOffset() {
+        return fCharacterOffset;
+    } // getCharacterOffset():int
+
+    //
+    // Object methods
+    //
+
+    /** Returns a string representation of this object. */
+    public String toString() {
+
+        StringBuffer str = new StringBuffer();
+        if (fPublicId != null) {
+            str.append(fPublicId);
+        }
+        str.append(':');
+        if (fLiteralSystemId != null) {
+            str.append(fLiteralSystemId);
+        }
+        str.append(':');
+        if (fExpandedSystemId != null) {
+            str.append(fExpandedSystemId);
+        }
+        str.append(':');
+        if (fBaseSystemId != null) {
+            str.append(fBaseSystemId);
+        }
+        str.append(':');
+        str.append(fLineNumber);
+        str.append(':');
+        str.append(fColumnNumber);
+        str.append(':');
+        str.append(fCharacterOffset);
+        str.append(':');
+        String message = getMessage();
+        if (message == null) {
+            Exception exception = getException();
+            if (exception != null) {
+                message = exception.getMessage();
+            }
+        }
+        if (message != null) {
+            str.append(message);
+        }
+        return str.toString();
+
+    } // toString():String
+
+} // XMLParseException

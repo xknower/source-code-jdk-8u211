@@ -1,77 +1,72 @@
-/*    */ package com.sun.corba.se.impl.util;
-/*    */ 
-/*    */ import java.io.File;
-/*    */ import java.io.FileOutputStream;
-/*    */ import java.io.PrintWriter;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ORBProperties
-/*    */ {
-/*    */   public static final String ORB_CLASS = "org.omg.CORBA.ORBClass=com.sun.corba.se.impl.orb.ORBImpl";
-/*    */   public static final String ORB_SINGLETON_CLASS = "org.omg.CORBA.ORBSingletonClass=com.sun.corba.se.impl.orb.ORBSingleton";
-/*    */   
-/*    */   public static void main(String[] paramArrayOfString) {
-/*    */     try {
-/* 49 */       String str = System.getProperty("java.home");
-/* 50 */       File file = new File(str + File.separator + "lib" + File.separator + "orb.properties");
-/*    */ 
-/*    */ 
-/*    */       
-/* 54 */       if (file.exists()) {
-/*    */         return;
-/*    */       }
-/*    */       
-/* 58 */       FileOutputStream fileOutputStream = new FileOutputStream(file);
-/* 59 */       PrintWriter printWriter = new PrintWriter(fileOutputStream);
-/*    */       
-/*    */       try {
-/* 62 */         printWriter.println("org.omg.CORBA.ORBClass=com.sun.corba.se.impl.orb.ORBImpl");
-/* 63 */         printWriter.println("org.omg.CORBA.ORBSingletonClass=com.sun.corba.se.impl.orb.ORBSingleton");
-/*    */       } finally {
-/* 65 */         printWriter.close();
-/* 66 */         fileOutputStream.close();
-/*    */       }
-/*    */     
-/* 69 */     } catch (Exception exception) {}
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\imp\\util\ORBProperties.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.util;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+
+public class ORBProperties {
+
+    public static final String ORB_CLASS =
+        "org.omg.CORBA.ORBClass=com.sun.corba.se.impl.orb.ORBImpl";
+    public static final String ORB_SINGLETON_CLASS =
+        "org.omg.CORBA.ORBSingletonClass=com.sun.corba.se.impl.orb.ORBSingleton";
+
+    public static void main (String[] args) {
+
+        try {
+            // Check if orb.properties exists
+            String javaHome = System.getProperty("java.home");
+            File propFile = new File(javaHome + File.separator
+                                     + "lib" + File.separator
+                                     + "orb.properties");
+
+            if (propFile.exists())
+                return;
+
+            // Write properties to orb.properties
+            FileOutputStream out = new FileOutputStream(propFile);
+            PrintWriter pw = new PrintWriter(out);
+
+            try {
+                pw.println(ORB_CLASS);
+                pw.println(ORB_SINGLETON_CLASS);
+            } finally {
+                pw.close();
+                out.close();
+            }
+
+        } catch (Exception ex) { }
+
+    }
+}

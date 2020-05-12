@@ -1,13 +1,40 @@
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.impl.oa.poa;
 
 import com.sun.corba.se.spi.ior.ObjectKey;
 
-public interface BadServerIdHandler {
-  void handle(ObjectKey paramObjectKey);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\BadServerIdHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The bad server id handler is used to locate persistent objects.
+ * The Locator object registers the BadServerIdHandler with the ORB
+ * and when requests for persistent objects for servers (other than
+ * itself) comes, it throws a ForwardException with the IOR pointing
+ * to the active server.
  */
+public interface BadServerIdHandler
+{
+    void handle(ObjectKey objectKey) ;
+}

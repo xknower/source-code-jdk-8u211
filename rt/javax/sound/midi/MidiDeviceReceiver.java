@@ -1,11 +1,41 @@
+/*
+ * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.sound.midi;
 
-public interface MidiDeviceReceiver extends Receiver {
-  MidiDevice getMidiDevice();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\sound\midi\MidiDeviceReceiver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * <p>{@code MidiDeviceReceiver} is a {@code Receiver} which represents
+ * a MIDI input connector of a {@code MidiDevice}
+ * (see {@link MidiDevice#getReceiver()}).
+ *
+ * @since 1.7
  */
+public interface MidiDeviceReceiver extends Receiver {
+    /**
+     * Obtains a MidiDevice object which is an owner of this Receiver.
+     * @return a MidiDevice object which is an owner of this Receiver
+     */
+    public MidiDevice getMidiDevice();
+}

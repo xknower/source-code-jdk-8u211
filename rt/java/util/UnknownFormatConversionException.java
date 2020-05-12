@@ -1,74 +1,68 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UnknownFormatConversionException
-/*    */   extends IllegalFormatException
-/*    */ {
-/*    */   private static final long serialVersionUID = 19060418L;
-/*    */   private String s;
-/*    */   
-/*    */   public UnknownFormatConversionException(String paramString) {
-/* 50 */     if (paramString == null)
-/* 51 */       throw new NullPointerException(); 
-/* 52 */     this.s = paramString;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getConversion() {
-/* 61 */     return this.s;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String getMessage() {
-/* 66 */     return String.format("Conversion = '%s'", new Object[] { this.s });
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\UnknownFormatConversionException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * Unchecked exception thrown when an unknown conversion is given.
+ *
+ * <p> Unless otherwise specified, passing a <tt>null</tt> argument to
+ * any method or constructor in this class will cause a {@link
+ * NullPointerException} to be thrown.
+ *
+ * @since 1.5
+ */
+public class UnknownFormatConversionException extends IllegalFormatException {
+
+    private static final long serialVersionUID = 19060418L;
+
+    private String s;
+
+    /**
+     * Constructs an instance of this class with the unknown conversion.
+     *
+     * @param  s
+     *         Unknown conversion
+     */
+    public UnknownFormatConversionException(String s) {
+        if (s == null)
+            throw new NullPointerException();
+        this.s = s;
+    }
+
+    /**
+     * Returns the unknown conversion.
+     *
+     * @return  The unknown conversion.
+     */
+    public String getConversion() {
+        return s;
+    }
+
+    // javadoc inherited from Throwable.java
+    public String getMessage() {
+        return String.format("Conversion = '%s'", s);
+    }
+}

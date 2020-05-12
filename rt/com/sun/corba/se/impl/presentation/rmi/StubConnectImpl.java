@@ -1,122 +1,116 @@
-/*     */ package com.sun.corba.se.impl.presentation.rmi;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.corba.CORBAObjectImpl;
-/*     */ import com.sun.corba.se.impl.ior.StubIORImpl;
-/*     */ import com.sun.corba.se.impl.logging.UtilSystemException;
-/*     */ import com.sun.corba.se.impl.util.Utility;
-/*     */ import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
-/*     */ import java.rmi.RemoteException;
-/*     */ import javax.rmi.CORBA.Tie;
-/*     */ import org.omg.CORBA.BAD_INV_ORDER;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.CORBA.portable.Delegate;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class StubConnectImpl
-/*     */ {
-/*  54 */   static UtilSystemException wrapper = UtilSystemException.get("rmiiiop");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static StubIORImpl connect(StubIORImpl paramStubIORImpl, Object paramObject, ObjectImpl paramObjectImpl, ORB paramORB) throws RemoteException {
-/*  66 */     Delegate delegate = null;
-/*     */     
-/*     */     try {
-/*     */       try {
-/*  70 */         delegate = StubAdapter.getDelegate(paramObjectImpl);
-/*     */         
-/*  72 */         if (delegate.orb(paramObjectImpl) != paramORB)
-/*  73 */           throw wrapper.connectWrongOrb(); 
-/*  74 */       } catch (BAD_OPERATION bAD_OPERATION) {
-/*  75 */         if (paramStubIORImpl == null) {
-/*     */           
-/*  77 */           Tie tie = Utility.getAndForgetTie(paramObject);
-/*  78 */           if (tie == null) {
-/*  79 */             throw wrapper.connectNoTie();
-/*     */           }
-/*     */ 
-/*     */           
-/*  83 */           ORB oRB = paramORB;
-/*     */           try {
-/*  85 */             oRB = tie.orb();
-/*  86 */           } catch (BAD_OPERATION bAD_OPERATION1) {
-/*     */             
-/*  88 */             tie.orb(paramORB);
-/*  89 */           } catch (BAD_INV_ORDER bAD_INV_ORDER) {
-/*     */             
-/*  91 */             tie.orb(paramORB);
-/*     */           } 
-/*     */           
-/*  94 */           if (oRB != paramORB) {
-/*  95 */             throw wrapper.connectTieWrongOrb();
-/*     */           }
-/*     */           
-/*  98 */           delegate = StubAdapter.getDelegate(tie);
-/*  99 */           CORBAObjectImpl cORBAObjectImpl = new CORBAObjectImpl();
-/* 100 */           cORBAObjectImpl._set_delegate(delegate);
-/* 101 */           paramStubIORImpl = new StubIORImpl(cORBAObjectImpl);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 105 */           delegate = paramStubIORImpl.getDelegate(paramORB);
-/*     */         } 
-/*     */         
-/* 108 */         StubAdapter.setDelegate(paramObjectImpl, delegate);
-/*     */       } 
-/* 110 */     } catch (SystemException systemException) {
-/* 111 */       throw new RemoteException("CORBA SystemException", systemException);
-/*     */     } 
-/*     */     
-/* 114 */     return paramStubIORImpl;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubConnectImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+import java.rmi.RemoteException;
+
+import javax.rmi.CORBA.Tie;
+
+import org.omg.CORBA.ORB;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.BAD_OPERATION;
+import org.omg.CORBA.BAD_INV_ORDER;
+
+import org.omg.CORBA.portable.ObjectImpl;
+import org.omg.CORBA.portable.Delegate;
+
+import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.util.Utility;
+
+import com.sun.corba.se.impl.ior.StubIORImpl ;
+
+import com.sun.corba.se.impl.logging.UtilSystemException ;
+
+import com.sun.corba.se.impl.corba.CORBAObjectImpl ;
+
+public abstract class StubConnectImpl
+{
+    static UtilSystemException wrapper = UtilSystemException.get(
+        CORBALogDomains.RMIIIOP ) ;
+
+    /** Connect the stub to the orb if necessary.
+    * @param ior The StubIORImpl for this stub (may be null)
+    * @param proxy The externally visible stub seen by the user (may be the same as stub)
+    * @param stub The stub implementation that extends ObjectImpl
+    * @param orb The ORB to which we connect the stub.
+    */
+    public static StubIORImpl connect( StubIORImpl ior, org.omg.CORBA.Object proxy,
+        org.omg.CORBA.portable.ObjectImpl stub, ORB orb ) throws RemoteException
+    {
+        Delegate del = null ;
+
+        try {
+            try {
+                del = StubAdapter.getDelegate( stub );
+
+                if (del.orb(stub) != orb)
+                    throw wrapper.connectWrongOrb() ;
+            } catch (org.omg.CORBA.BAD_OPERATION err) {
+                if (ior == null) {
+                    // No IOR, can we get a Tie for this stub?
+                    Tie tie = (javax.rmi.CORBA.Tie) Utility.getAndForgetTie(proxy);
+                    if (tie == null)
+                        throw wrapper.connectNoTie() ;
+
+                    // Is the tie already connected?  If it is, check that it's
+                    // connected to the same ORB, otherwise connect it.
+                    ORB existingOrb = orb ;
+                    try {
+                        existingOrb = tie.orb();
+                    } catch (BAD_OPERATION exc) {
+                        // Thrown when tie is an ObjectImpl and its delegate is not set.
+                        tie.orb(orb);
+                    } catch (BAD_INV_ORDER exc) {
+                        // Thrown when tie is a Servant and its delegate is not set.
+                        tie.orb(orb);
+                    }
+
+                    if (existingOrb != orb)
+                        throw wrapper.connectTieWrongOrb() ;
+
+                    // Get the delegate for the stub from the tie.
+                    del = StubAdapter.getDelegate( tie ) ;
+                    ObjectImpl objref = new CORBAObjectImpl() ;
+                    objref._set_delegate( del ) ;
+                    ior = new StubIORImpl( objref ) ;
+                } else {
+                    // ior is initialized, so convert ior to an object, extract
+                    // the delegate, and set it on ourself
+                    del = ior.getDelegate( orb ) ;
+                }
+
+                StubAdapter.setDelegate( stub, del ) ;
+            }
+        } catch (SystemException exc) {
+            throw new RemoteException("CORBA SystemException", exc );
+        }
+
+        return ior ;
+    }
+}

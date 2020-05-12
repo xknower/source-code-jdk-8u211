@@ -1,120 +1,114 @@
-/*     */ package java.security.spec;
-/*     */ 
-/*     */ import java.math.BigInteger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ECPoint
-/*     */ {
-/*     */   private final BigInteger x;
-/*     */   private final BigInteger y;
-/*  47 */   public static final ECPoint POINT_INFINITY = new ECPoint();
-/*     */ 
-/*     */   
-/*     */   private ECPoint() {
-/*  51 */     this.x = null;
-/*  52 */     this.y = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ECPoint(BigInteger paramBigInteger1, BigInteger paramBigInteger2) {
-/*  64 */     if (paramBigInteger1 == null || paramBigInteger2 == null) {
-/*  65 */       throw new NullPointerException("affine coordinate x or y is null");
-/*     */     }
-/*  67 */     this.x = paramBigInteger1;
-/*  68 */     this.y = paramBigInteger2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getAffineX() {
-/*  77 */     return this.x;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BigInteger getAffineY() {
-/*  86 */     return this.y;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*  97 */     if (this == paramObject) return true; 
-/*  98 */     if (this == POINT_INFINITY) return false; 
-/*  99 */     if (paramObject instanceof ECPoint) {
-/* 100 */       return (this.x.equals(((ECPoint)paramObject).x) && this.y
-/* 101 */         .equals(((ECPoint)paramObject).y));
-/*     */     }
-/* 103 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 111 */     if (this == POINT_INFINITY) return 0; 
-/* 112 */     return this.x.hashCode() << 5 + this.y.hashCode();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\spec\ECPoint.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.security.spec;
+
+import java.math.BigInteger;
+
+/**
+ * This immutable class represents a point on an elliptic curve (EC)
+ * in affine coordinates. Other coordinate systems can
+ * extend this class to represent this point in other
+ * coordinates.
+ *
+ * @author Valerie Peng
+ *
+ * @since 1.5
+ */
+public class ECPoint {
+
+    private final BigInteger x;
+    private final BigInteger y;
+
+    /**
+     * This defines the point at infinity.
+     */
+    public static final ECPoint POINT_INFINITY = new ECPoint();
+
+    // private constructor for constructing point at infinity
+    private ECPoint() {
+        this.x = null;
+        this.y = null;
+    }
+
+    /**
+     * Creates an ECPoint from the specified affine x-coordinate
+     * {@code x} and affine y-coordinate {@code y}.
+     * @param x the affine x-coordinate.
+     * @param y the affine y-coordinate.
+     * @exception NullPointerException if {@code x} or
+     * {@code y} is null.
+     */
+    public ECPoint(BigInteger x, BigInteger y) {
+        if ((x==null) || (y==null)) {
+            throw new NullPointerException("affine coordinate x or y is null");
+        }
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Returns the affine x-coordinate {@code x}.
+     * Note: POINT_INFINITY has a null affine x-coordinate.
+     * @return the affine x-coordinate.
+     */
+    public BigInteger getAffineX() {
+        return x;
+    }
+
+    /**
+     * Returns the affine y-coordinate {@code y}.
+     * Note: POINT_INFINITY has a null affine y-coordinate.
+     * @return the affine y-coordinate.
+     */
+    public BigInteger getAffineY() {
+        return y;
+    }
+
+    /**
+     * Compares this elliptic curve point for equality with
+     * the specified object.
+     * @param obj the object to be compared.
+     * @return true if {@code obj} is an instance of
+     * ECPoint and the affine coordinates match, false otherwise.
+     */
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (this == POINT_INFINITY) return false;
+        if (obj instanceof ECPoint) {
+            return ((x.equals(((ECPoint)obj).x)) &&
+                    (y.equals(((ECPoint)obj).y)));
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code value for this elliptic curve point.
+     * @return a hash code value.
+     */
+    public int hashCode() {
+        if (this == POINT_INFINITY) return 0;
+        return x.hashCode() << 5 + y.hashCode();
+    }
+}

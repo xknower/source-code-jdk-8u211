@@ -1,874 +1,854 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.Reader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class CSSParser
-/*     */ {
-/*  91 */   private static final char[] charMapping = new char[] { Character.MIN_VALUE, Character.MIN_VALUE, '[', ']', '{', '}', '(', ')', Character.MIN_VALUE };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 137 */   private int[] unitStack = new int[2];
-/* 138 */   private char[] tokenBuffer = new char[80];
-/* 139 */   private StringBuffer unitBuffer = new StringBuffer(); private static final int IDENTIFIER = 1; private static final int BRACKET_OPEN = 2; private static final int BRACKET_CLOSE = 3; private static final int BRACE_OPEN = 4; private static final int BRACE_CLOSE = 5; private static final int PAREN_OPEN = 6;
-/*     */   private static final int PAREN_CLOSE = 7;
-/*     */   private static final int END = -1;
-/*     */   
-/*     */   void parse(Reader paramReader, CSSParserCallback paramCSSParserCallback, boolean paramBoolean) throws IOException {
-/* 144 */     this.callback = paramCSSParserCallback;
-/* 145 */     this.stackCount = this.tokenBufferLength = 0;
-/* 146 */     this.reader = paramReader;
-/* 147 */     this.encounteredRuleSet = false;
-/*     */     try {
-/* 149 */       if (paramBoolean) {
-/* 150 */         parseDeclarationBlock();
-/*     */       } else {
-/*     */         
-/* 153 */         while (getNextStatement());
-/*     */       } 
-/*     */     } finally {
-/* 156 */       paramCSSParserCallback = null;
-/* 157 */       paramReader = null;
-/*     */     } 
-/*     */   }
-/*     */   private boolean didPushChar; private int pushedChar; private int stackCount; private Reader reader; private boolean encounteredRuleSet;
-/*     */   private CSSParserCallback callback;
-/*     */   private int tokenBufferLength;
-/*     */   private boolean readWS;
-/*     */   
-/*     */   private boolean getNextStatement() throws IOException {
-/* 166 */     this.unitBuffer.setLength(0);
-/*     */     
-/* 168 */     int i = nextToken(false);
-/*     */     
-/* 170 */     switch (i) {
-/*     */       case 1:
-/* 172 */         if (this.tokenBufferLength > 0) {
-/* 173 */           if (this.tokenBuffer[0] == '@') {
-/* 174 */             parseAtRule();
-/*     */           } else {
-/*     */             
-/* 177 */             this.encounteredRuleSet = true;
-/* 178 */             parseRuleSet();
-/*     */           } 
-/*     */         }
-/* 181 */         return true;
-/*     */       case 2:
-/*     */       case 4:
-/*     */       case 6:
-/* 185 */         parseTillClosed(i);
-/* 186 */         return true;
-/*     */ 
-/*     */       
-/*     */       case 3:
-/*     */       case 5:
-/*     */       case 7:
-/* 192 */         throw new RuntimeException("Unexpected top level block close");
-/*     */       
-/*     */       case -1:
-/* 195 */         return false;
-/*     */     } 
-/* 197 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parseAtRule() throws IOException {
-/* 205 */     boolean bool1 = false;
-/* 206 */     boolean bool2 = (this.tokenBufferLength == 7 && this.tokenBuffer[0] == '@' && this.tokenBuffer[1] == 'i' && this.tokenBuffer[2] == 'm' && this.tokenBuffer[3] == 'p' && this.tokenBuffer[4] == 'o' && this.tokenBuffer[5] == 'r' && this.tokenBuffer[6] == 't') ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 212 */     this.unitBuffer.setLength(0);
-/* 213 */     while (!bool1) {
-/* 214 */       int j, i = nextToken(';');
-/*     */       
-/* 216 */       switch (i) {
-/*     */         case 1:
-/* 218 */           if (this.tokenBufferLength > 0 && this.tokenBuffer[this.tokenBufferLength - 1] == ';') {
-/*     */             
-/* 220 */             this.tokenBufferLength--;
-/* 221 */             bool1 = true;
-/*     */           } 
-/* 223 */           if (this.tokenBufferLength > 0) {
-/* 224 */             if (this.unitBuffer.length() > 0 && this.readWS) {
-/* 225 */               this.unitBuffer.append(' ');
-/*     */             }
-/* 227 */             this.unitBuffer.append(this.tokenBuffer, 0, this.tokenBufferLength);
-/*     */           } 
-/*     */ 
-/*     */         
-/*     */         case 4:
-/* 232 */           if (this.unitBuffer.length() > 0 && this.readWS) {
-/* 233 */             this.unitBuffer.append(' ');
-/*     */           }
-/* 235 */           this.unitBuffer.append(charMapping[i]);
-/* 236 */           parseTillClosed(i);
-/* 237 */           bool1 = true;
-/*     */ 
-/*     */           
-/* 240 */           j = readWS();
-/* 241 */           if (j != -1 && j != 59) {
-/* 242 */             pushChar(j);
-/*     */           }
-/*     */ 
-/*     */         
-/*     */         case 2:
-/*     */         case 6:
-/* 248 */           this.unitBuffer.append(charMapping[i]);
-/* 249 */           parseTillClosed(i);
-/*     */         case 3:
-/*     */         case 5:
-/*     */         case 7:
-/* 253 */           throw new RuntimeException("Unexpected close in @ rule");
-/*     */         
-/*     */         case -1:
-/* 256 */           bool1 = true;
-/*     */       } 
-/*     */     
-/*     */     } 
-/* 260 */     if (bool2 && !this.encounteredRuleSet) {
-/* 261 */       this.callback.handleImport(this.unitBuffer.toString());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parseRuleSet() throws IOException {
-/* 270 */     if (parseSelectors()) {
-/* 271 */       this.callback.startRule();
-/* 272 */       parseDeclarationBlock();
-/* 273 */       this.callback.endRule();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean parseSelectors() throws IOException {
-/* 285 */     if (this.tokenBufferLength > 0) {
-/* 286 */       this.callback.handleSelector(new String(this.tokenBuffer, 0, this.tokenBufferLength));
-/*     */     }
-/*     */ 
-/*     */     
-/* 290 */     this.unitBuffer.setLength(0); while (true) {
-/*     */       int i;
-/* 292 */       while ((i = nextToken(false)) == 1) {
-/* 293 */         if (this.tokenBufferLength > 0) {
-/* 294 */           this.callback.handleSelector(new String(this.tokenBuffer, 0, this.tokenBufferLength));
-/*     */         }
-/*     */       } 
-/*     */       
-/* 298 */       switch (i) {
-/*     */         case 4:
-/* 300 */           return true;
-/*     */         case 2:
-/*     */         case 6:
-/* 303 */           parseTillClosed(i);
-/*     */ 
-/*     */           
-/* 306 */           this.unitBuffer.setLength(0);
-/*     */         case 3:
-/*     */         case 5:
-/*     */         case 7:
-/* 310 */           throw new RuntimeException("Unexpected block close in selector");
-/*     */         case -1:
-/*     */           break;
-/*     */       } 
-/* 314 */     }  return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parseDeclarationBlock() throws IOException {
-/*     */     while (true) {
-/* 325 */       int i = parseDeclaration();
-/* 326 */       switch (i) { case -1:
-/*     */         case 5:
-/*     */           return;
-/*     */         case 3:
-/*     */         case 7:
-/*     */           break; } 
-/* 332 */     }  throw new RuntimeException("Unexpected close in declaration block");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int parseDeclaration() throws IOException {
-/*     */     int i;
-/* 347 */     if ((i = parseIdentifiers(':', false)) != 1) {
-/* 348 */       return i;
-/*     */     }
-/*     */     
-/* 351 */     for (int j = this.unitBuffer.length() - 1; j >= 0; j--) {
-/* 352 */       this.unitBuffer.setCharAt(j, 
-/* 353 */           Character.toLowerCase(this.unitBuffer.charAt(j)));
-/*     */     }
-/* 355 */     this.callback.handleProperty(this.unitBuffer.toString());
-/*     */     
-/* 357 */     i = parseIdentifiers(';', true);
-/* 358 */     this.callback.handleValue(this.unitBuffer.toString());
-/* 359 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int parseIdentifiers(char paramChar, boolean paramBoolean) throws IOException {
-/*     */     int i;
-/* 372 */     this.unitBuffer.setLength(0); while (true) {
-/*     */       int j;
-/* 374 */       i = nextToken(paramChar);
-/*     */       
-/* 376 */       switch (i) {
-/*     */         case 1:
-/* 378 */           if (this.tokenBufferLength > 0) {
-/* 379 */             if (this.tokenBuffer[this.tokenBufferLength - 1] == paramChar) {
-/* 380 */               if (--this.tokenBufferLength > 0) {
-/* 381 */                 if (this.readWS && this.unitBuffer.length() > 0) {
-/* 382 */                   this.unitBuffer.append(' ');
-/*     */                 }
-/* 384 */                 this.unitBuffer.append(this.tokenBuffer, 0, this.tokenBufferLength);
-/*     */               } 
-/*     */               
-/* 387 */               return 1;
-/*     */             } 
-/* 389 */             if (this.readWS && this.unitBuffer.length() > 0) {
-/* 390 */               this.unitBuffer.append(' ');
-/*     */             }
-/* 392 */             this.unitBuffer.append(this.tokenBuffer, 0, this.tokenBufferLength);
-/*     */           } 
-/*     */ 
-/*     */         
-/*     */         case 2:
-/*     */         case 4:
-/*     */         case 6:
-/* 399 */           j = this.unitBuffer.length();
-/* 400 */           if (paramBoolean) {
-/* 401 */             this.unitBuffer.append(charMapping[i]);
-/*     */           }
-/* 403 */           parseTillClosed(i);
-/* 404 */           if (!paramBoolean) {
-/* 405 */             this.unitBuffer.setLength(j);
-/*     */           }
-/*     */         
-/*     */         case -1:
-/*     */         case 3:
-/*     */         case 5:
-/*     */         case 7:
-/*     */           break;
-/*     */       } 
-/*     */     
-/*     */     } 
-/* 416 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void parseTillClosed(int paramInt) throws IOException {
-/* 427 */     boolean bool = false;
-/*     */     
-/* 429 */     startBlock(paramInt);
-/* 430 */     while (!bool) {
-/* 431 */       int i = nextToken(false);
-/* 432 */       switch (i) {
-/*     */         case 1:
-/* 434 */           if (this.unitBuffer.length() > 0 && this.readWS) {
-/* 435 */             this.unitBuffer.append(' ');
-/*     */           }
-/* 437 */           if (this.tokenBufferLength > 0) {
-/* 438 */             this.unitBuffer.append(this.tokenBuffer, 0, this.tokenBufferLength);
-/*     */           }
-/*     */         case 2:
-/*     */         case 4:
-/*     */         case 6:
-/* 443 */           if (this.unitBuffer.length() > 0 && this.readWS) {
-/* 444 */             this.unitBuffer.append(' ');
-/*     */           }
-/* 446 */           this.unitBuffer.append(charMapping[i]);
-/* 447 */           startBlock(i);
-/*     */         case 3:
-/*     */         case 5:
-/*     */         case 7:
-/* 451 */           if (this.unitBuffer.length() > 0 && this.readWS) {
-/* 452 */             this.unitBuffer.append(' ');
-/*     */           }
-/* 454 */           this.unitBuffer.append(charMapping[i]);
-/* 455 */           endBlock(i);
-/* 456 */           if (!inBlock()) {
-/* 457 */             bool = true;
-/*     */           }
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         case -1:
-/* 463 */           throw new RuntimeException("Unclosed block");
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int nextToken(char paramChar) throws IOException {
-/* 472 */     this.readWS = false;
-/*     */     
-/* 474 */     int i = readWS();
-/*     */     
-/* 476 */     switch (i) {
-/*     */       case 39:
-/* 478 */         readTill('\'');
-/* 479 */         if (this.tokenBufferLength > 0) {
-/* 480 */           this.tokenBufferLength--;
-/*     */         }
-/* 482 */         return 1;
-/*     */       case 34:
-/* 484 */         readTill('"');
-/* 485 */         if (this.tokenBufferLength > 0) {
-/* 486 */           this.tokenBufferLength--;
-/*     */         }
-/* 488 */         return 1;
-/*     */       case 91:
-/* 490 */         return 2;
-/*     */       case 93:
-/* 492 */         return 3;
-/*     */       case 123:
-/* 494 */         return 4;
-/*     */       case 125:
-/* 496 */         return 5;
-/*     */       case 40:
-/* 498 */         return 6;
-/*     */       case 41:
-/* 500 */         return 7;
-/*     */       case -1:
-/* 502 */         return -1;
-/*     */     } 
-/* 504 */     pushChar(i);
-/* 505 */     getIdentifier(paramChar);
-/* 506 */     return 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean getIdentifier(char paramChar) throws IOException {
-/* 518 */     boolean bool1 = false;
-/* 519 */     boolean bool2 = false;
-/* 520 */     byte b = 0;
-/* 521 */     int i = 0;
-/*     */     
-/* 523 */     char c = paramChar;
-/*     */ 
-/*     */ 
-/*     */     
-/* 527 */     int j = 0;
-/*     */     
-/* 529 */     this.tokenBufferLength = 0;
-/* 530 */     while (!bool2) {
-/* 531 */       byte b1; int k = readChar();
-/* 532 */       switch (k) {
-/*     */         case 92:
-/* 534 */           b1 = 1; break;
-/*     */         case 48: case 49: case 50: case 51: case 52: case 53: case 54:
-/*     */         case 55:
-/*     */         case 56:
-/*     */         case 57:
-/* 539 */           b1 = 2;
-/* 540 */           j = k - 48; break;
-/*     */         case 97: case 98: case 99: case 100:
-/*     */         case 101:
-/*     */         case 102:
-/* 544 */           b1 = 2;
-/* 545 */           j = k - 97 + 10; break;
-/*     */         case 65: case 66: case 67: case 68:
-/*     */         case 69:
-/*     */         case 70:
-/* 549 */           b1 = 2;
-/* 550 */           j = k - 65 + 10; break;
-/*     */         case 9: case 10: case 13: case 32: case 34: case 39: case 40: case 41:
-/*     */         case 91:
-/*     */         case 93:
-/*     */         case 123:
-/*     */         case 125:
-/* 556 */           b1 = 3;
-/*     */           break;
-/*     */         
-/*     */         case 47:
-/* 560 */           b1 = 4;
-/*     */           break;
-/*     */ 
-/*     */         
-/*     */         case -1:
-/* 565 */           bool2 = true;
-/* 566 */           b1 = 0;
-/*     */           break;
-/*     */         
-/*     */         default:
-/* 570 */           b1 = 0;
-/*     */           break;
-/*     */       } 
-/* 573 */       if (bool1) {
-/* 574 */         if (b1 == 2) {
-/*     */           
-/* 576 */           i = i * 16 + j;
-/* 577 */           if (++b == 4) {
-/* 578 */             bool1 = false;
-/* 579 */             append((char)i);
-/*     */           } 
-/*     */           
-/*     */           continue;
-/*     */         } 
-/* 584 */         bool1 = false;
-/* 585 */         if (b > 0) {
-/* 586 */           append((char)i);
-/*     */           
-/* 588 */           pushChar(k); continue;
-/*     */         } 
-/* 590 */         if (!bool2) {
-/* 591 */           append((char)k);
-/*     */         }
-/*     */         continue;
-/*     */       } 
-/* 595 */       if (!bool2) {
-/* 596 */         if (b1 == 1) {
-/* 597 */           bool1 = true;
-/* 598 */           i = b = 0; continue;
-/*     */         } 
-/* 600 */         if (b1 == 3) {
-/* 601 */           bool2 = true;
-/* 602 */           pushChar(k); continue;
-/*     */         } 
-/* 604 */         if (b1 == 4) {
-/*     */           
-/* 606 */           k = readChar();
-/* 607 */           if (k == 42) {
-/* 608 */             bool2 = true;
-/* 609 */             readComment();
-/* 610 */             this.readWS = true;
-/*     */             continue;
-/*     */           } 
-/* 613 */           append('/');
-/* 614 */           if (k == -1) {
-/* 615 */             bool2 = true;
-/*     */             continue;
-/*     */           } 
-/* 618 */           pushChar(k);
-/*     */           
-/*     */           continue;
-/*     */         } 
-/*     */         
-/* 623 */         append((char)k);
-/* 624 */         if (k == c) {
-/* 625 */           bool2 = true;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 630 */     return (this.tokenBufferLength > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readTill(char paramChar) throws IOException {
-/* 638 */     boolean bool1 = false;
-/* 639 */     byte b = 0;
-/* 640 */     int i = 0;
-/*     */     
-/* 642 */     boolean bool2 = false;
-/* 643 */     char c = paramChar;
-/*     */ 
-/*     */     
-/* 646 */     int j = 0;
-/*     */     
-/* 648 */     this.tokenBufferLength = 0;
-/* 649 */     while (!bool2) {
-/* 650 */       byte b1; int k = readChar();
-/* 651 */       switch (k) {
-/*     */         case 92:
-/* 653 */           b1 = 1; break;
-/*     */         case 48: case 49: case 50: case 51: case 52: case 53: case 54:
-/*     */         case 55:
-/*     */         case 56:
-/*     */         case 57:
-/* 658 */           b1 = 2;
-/* 659 */           j = k - 48; break;
-/*     */         case 97: case 98: case 99: case 100:
-/*     */         case 101:
-/*     */         case 102:
-/* 663 */           b1 = 2;
-/* 664 */           j = k - 97 + 10; break;
-/*     */         case 65: case 66: case 67: case 68:
-/*     */         case 69:
-/*     */         case 70:
-/* 668 */           b1 = 2;
-/* 669 */           j = k - 65 + 10;
-/*     */           break;
-/*     */ 
-/*     */         
-/*     */         case -1:
-/* 674 */           throw new RuntimeException("Unclosed " + paramChar);
-/*     */         
-/*     */         default:
-/* 677 */           b1 = 0;
-/*     */           break;
-/*     */       } 
-/* 680 */       if (bool1) {
-/* 681 */         if (b1 == 2) {
-/*     */           
-/* 683 */           i = i * 16 + j;
-/* 684 */           if (++b == 4) {
-/* 685 */             bool1 = false;
-/* 686 */             append((char)i);
-/*     */           } 
-/*     */           
-/*     */           continue;
-/*     */         } 
-/* 691 */         if (b > 0) {
-/* 692 */           append((char)i);
-/* 693 */           if (b1 == 1) {
-/* 694 */             bool1 = true;
-/* 695 */             i = b = 0;
-/*     */             continue;
-/*     */           } 
-/* 698 */           if (k == c) {
-/* 699 */             bool2 = true;
-/*     */           }
-/* 701 */           append((char)k);
-/* 702 */           bool1 = false;
-/*     */           
-/*     */           continue;
-/*     */         } 
-/* 706 */         append((char)k);
-/* 707 */         bool1 = false;
-/*     */         
-/*     */         continue;
-/*     */       } 
-/* 711 */       if (b1 == 1) {
-/* 712 */         bool1 = true;
-/* 713 */         i = b = 0;
-/*     */         continue;
-/*     */       } 
-/* 716 */       if (k == c) {
-/* 717 */         bool2 = true;
-/*     */       }
-/* 719 */       append((char)k);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void append(char paramChar) {
-/* 725 */     if (this.tokenBufferLength == this.tokenBuffer.length) {
-/* 726 */       char[] arrayOfChar = new char[this.tokenBuffer.length * 2];
-/* 727 */       System.arraycopy(this.tokenBuffer, 0, arrayOfChar, 0, this.tokenBuffer.length);
-/* 728 */       this.tokenBuffer = arrayOfChar;
-/*     */     } 
-/* 730 */     this.tokenBuffer[this.tokenBufferLength++] = paramChar;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readComment() throws IOException {
-/*     */     while (true) {
-/* 740 */       int i = readChar();
-/* 741 */       switch (i) {
-/*     */         case -1:
-/* 743 */           throw new RuntimeException("Unclosed comment");
-/*     */         case 42:
-/* 745 */           i = readChar();
-/* 746 */           if (i == 47) {
-/*     */             return;
-/*     */           }
-/* 749 */           if (i == -1) {
-/* 750 */             throw new RuntimeException("Unclosed comment");
-/*     */           }
-/*     */           
-/* 753 */           pushChar(i);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void startBlock(int paramInt) {
-/* 766 */     if (this.stackCount == this.unitStack.length) {
-/* 767 */       int[] arrayOfInt = new int[this.stackCount * 2];
-/*     */       
-/* 769 */       System.arraycopy(this.unitStack, 0, arrayOfInt, 0, this.stackCount);
-/* 770 */       this.unitStack = arrayOfInt;
-/*     */     } 
-/* 772 */     this.unitStack[this.stackCount++] = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void endBlock(int paramInt) {
-/*     */     byte b;
-/* 781 */     switch (paramInt) {
-/*     */       case 3:
-/* 783 */         b = 2;
-/*     */         break;
-/*     */       case 5:
-/* 786 */         b = 4;
-/*     */         break;
-/*     */       case 7:
-/* 789 */         b = 6;
-/*     */         break;
-/*     */       
-/*     */       default:
-/* 793 */         b = -1;
-/*     */         break;
-/*     */     } 
-/* 796 */     if (this.stackCount > 0 && this.unitStack[this.stackCount - 1] == b) {
-/* 797 */       this.stackCount--;
-/*     */     }
-/*     */     else {
-/*     */       
-/* 801 */       throw new RuntimeException("Unmatched block");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean inBlock() {
-/* 809 */     return (this.stackCount > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int readWS() throws IOException {
-/*     */     int i;
-/* 817 */     while ((i = readChar()) != -1 && 
-/* 818 */       Character.isWhitespace((char)i)) {
-/* 819 */       this.readWS = true;
-/*     */     }
-/* 821 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int readChar() throws IOException {
-/* 828 */     if (this.didPushChar) {
-/* 829 */       this.didPushChar = false;
-/* 830 */       return this.pushedChar;
-/*     */     } 
-/* 832 */     return this.reader.read();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void pushChar(int paramInt) {
-/* 847 */     if (this.didPushChar)
-/*     */     {
-/* 849 */       throw new RuntimeException("Can not handle look ahead of more than one character");
-/*     */     }
-/* 851 */     this.didPushChar = true;
-/* 852 */     this.pushedChar = paramInt;
-/*     */   }
-/*     */   
-/*     */   static interface CSSParserCallback {
-/*     */     void handleImport(String param1String);
-/*     */     
-/*     */     void handleSelector(String param1String);
-/*     */     
-/*     */     void startRule();
-/*     */     
-/*     */     void handleProperty(String param1String);
-/*     */     
-/*     */     void handleValue(String param1String);
-/*     */     
-/*     */     void endRule();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\CSSParser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.io.*;
+
+/**
+ * A CSS parser. This works by way of a delegate that implements the
+ * CSSParserCallback interface. The delegate is notified of the following
+ * events:
+ * <ul>
+ *   <li>Import statement: <code>handleImport</code>
+ *   <li>Selectors <code>handleSelector</code>. This is invoked for each
+ *       string. For example if the Reader contained p, bar , a {}, the delegate
+ *       would be notified 4 times, for 'p,' 'bar' ',' and 'a'.
+ *   <li>When a rule starts, <code>startRule</code>
+ *   <li>Properties in the rule via the <code>handleProperty</code>. This
+ *       is invoked one per property/value key, eg font size: foo;, would
+ *       cause the delegate to be notified once with a value of 'font size'.
+ *   <li>Values in the rule via the <code>handleValue</code>, this is notified
+ *       for the total value.
+ *   <li>When a rule ends, <code>endRule</code>
+ * </ul>
+ * This will parse much more than CSS 1, and loosely implements the
+ * recommendation for <i>Forward-compatible parsing</i> in section
+ * 7.1 of the CSS spec found at:
+ * <a href=http://www.w3.org/TR/REC-CSS1>http://www.w3.org/TR/REC-CSS1</a>.
+ * If an error results in parsing, a RuntimeException will be thrown.
+ * <p>
+ * This will preserve case. If the callback wishes to treat certain poritions
+ * case insensitively (such as selectors), it should use toLowerCase, or
+ * something similar.
+ *
+ * @author Scott Violet
+ */
+class CSSParser {
+    // Parsing something like the following:
+    // (@rule | ruleset | block)*
+    //
+    // @rule       (block | identifier)*; (block with {} ends @rule)
+    // block       matching [] () {} (that is, [()] is a block, [(){}{[]}]
+    //                                is a block, ()[] is two blocks)
+    // identifier  "*" | '*' | anything but a [](){} and whitespace
+    //
+    // ruleset     selector decblock
+    // selector    (identifier | (block, except block '{}') )*
+    // declblock   declaration* block*
+    // declaration (identifier* stopping when identifier ends with :)
+    //             (identifier* stopping when identifier ends with ;)
+    //
+    // comments /* */ can appear any where, and are stripped.
+
+
+    // identifier - letters, digits, dashes and escaped characters
+    // block starts with { ends with matching }, () [] and {} always occur
+    //   in matching pairs, '' and "" also occur in pairs, except " may be
+
+
+    // Indicates the type of token being parsed.
+    private static final int   IDENTIFIER = 1;
+    private static final int   BRACKET_OPEN = 2;
+    private static final int   BRACKET_CLOSE = 3;
+    private static final int   BRACE_OPEN = 4;
+    private static final int   BRACE_CLOSE = 5;
+    private static final int   PAREN_OPEN = 6;
+    private static final int   PAREN_CLOSE = 7;
+    private static final int   END = -1;
+
+    private static final char[] charMapping = { 0, 0, '[', ']', '{', '}', '(',
+                                               ')', 0};
+
+
+    /** Set to true if one character has been read ahead. */
+    private boolean        didPushChar;
+    /** The read ahead character. */
+    private int            pushedChar;
+    /** Temporary place to hold identifiers. */
+    private StringBuffer   unitBuffer;
+    /** Used to indicate blocks. */
+    private int[]          unitStack;
+    /** Number of valid blocks. */
+    private int            stackCount;
+    /** Holds the incoming CSS rules. */
+    private Reader         reader;
+    /** Set to true when the first non @ rule is encountered. */
+    private boolean        encounteredRuleSet;
+    /** Notified of state. */
+    private CSSParserCallback callback;
+    /** nextToken() inserts the string here. */
+    private char[]         tokenBuffer;
+    /** Current number of chars in tokenBufferLength. */
+    private int            tokenBufferLength;
+    /** Set to true if any whitespace is read. */
+    private boolean        readWS;
+
+
+    // The delegate interface.
+    static interface CSSParserCallback {
+        /** Called when an @import is encountered. */
+        void handleImport(String importString);
+        // There is currently no way to distinguish between '"foo,"' and
+        // 'foo,'. But this generally isn't valid CSS. If it becomes
+        // a problem, handleSelector will have to be told if the string is
+        // quoted.
+        void handleSelector(String selector);
+        void startRule();
+        // Property names are mapped to lower case before being passed to
+        // the delegate.
+        void handleProperty(String property);
+        void handleValue(String value);
+        void endRule();
+    }
+
+    CSSParser() {
+        unitStack = new int[2];
+        tokenBuffer = new char[80];
+        unitBuffer = new StringBuffer();
+    }
+
+    void parse(Reader reader, CSSParserCallback callback,
+               boolean inRule) throws IOException {
+        this.callback = callback;
+        stackCount = tokenBufferLength = 0;
+        this.reader = reader;
+        encounteredRuleSet = false;
+        try {
+            if (inRule) {
+                parseDeclarationBlock();
+            }
+            else {
+                while (getNextStatement());
+            }
+        } finally {
+            callback = null;
+            reader = null;
+        }
+    }
+
+    /**
+     * Gets the next statement, returning false if the end is reached. A
+     * statement is either an @rule, or a ruleset.
+     */
+    private boolean getNextStatement() throws IOException {
+        unitBuffer.setLength(0);
+
+        int token = nextToken((char)0);
+
+        switch (token) {
+        case IDENTIFIER:
+            if (tokenBufferLength > 0) {
+                if (tokenBuffer[0] == '@') {
+                    parseAtRule();
+                }
+                else {
+                    encounteredRuleSet = true;
+                    parseRuleSet();
+                }
+            }
+            return true;
+        case BRACKET_OPEN:
+        case BRACE_OPEN:
+        case PAREN_OPEN:
+            parseTillClosed(token);
+            return true;
+
+        case BRACKET_CLOSE:
+        case BRACE_CLOSE:
+        case PAREN_CLOSE:
+            // Shouldn't happen...
+            throw new RuntimeException("Unexpected top level block close");
+
+        case END:
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Parses an @ rule, stopping at a matching brace pair, or ;.
+     */
+    private void parseAtRule() throws IOException {
+        // PENDING: make this more effecient.
+        boolean        done = false;
+        boolean isImport = (tokenBufferLength == 7 &&
+                            tokenBuffer[0] == '@' && tokenBuffer[1] == 'i' &&
+                            tokenBuffer[2] == 'm' && tokenBuffer[3] == 'p' &&
+                            tokenBuffer[4] == 'o' && tokenBuffer[5] == 'r' &&
+                            tokenBuffer[6] == 't');
+
+        unitBuffer.setLength(0);
+        while (!done) {
+            int       nextToken = nextToken(';');
+
+            switch (nextToken) {
+            case IDENTIFIER:
+                if (tokenBufferLength > 0 &&
+                    tokenBuffer[tokenBufferLength - 1] == ';') {
+                    --tokenBufferLength;
+                    done = true;
+                }
+                if (tokenBufferLength > 0) {
+                    if (unitBuffer.length() > 0 && readWS) {
+                        unitBuffer.append(' ');
+                    }
+                    unitBuffer.append(tokenBuffer, 0, tokenBufferLength);
+                }
+                break;
+
+            case BRACE_OPEN:
+                if (unitBuffer.length() > 0 && readWS) {
+                    unitBuffer.append(' ');
+                }
+                unitBuffer.append(charMapping[nextToken]);
+                parseTillClosed(nextToken);
+                done = true;
+                // Skip a tailing ';', not really to spec.
+                {
+                    int nextChar = readWS();
+                    if (nextChar != -1 && nextChar != ';') {
+                        pushChar(nextChar);
+                    }
+                }
+                break;
+
+            case BRACKET_OPEN: case PAREN_OPEN:
+                unitBuffer.append(charMapping[nextToken]);
+                parseTillClosed(nextToken);
+                break;
+
+            case BRACKET_CLOSE: case BRACE_CLOSE: case PAREN_CLOSE:
+                throw new RuntimeException("Unexpected close in @ rule");
+
+            case END:
+                done = true;
+                break;
+            }
+        }
+        if (isImport && !encounteredRuleSet) {
+            callback.handleImport(unitBuffer.toString());
+        }
+    }
+
+    /**
+     * Parses the next rule set, which is a selector followed by a
+     * declaration block.
+     */
+    private void parseRuleSet() throws IOException {
+        if (parseSelectors()) {
+            callback.startRule();
+            parseDeclarationBlock();
+            callback.endRule();
+        }
+    }
+
+    /**
+     * Parses a set of selectors, returning false if the end of the stream
+     * is reached.
+     */
+    private boolean parseSelectors() throws IOException {
+        // Parse the selectors
+        int       nextToken;
+
+        if (tokenBufferLength > 0) {
+            callback.handleSelector(new String(tokenBuffer, 0,
+                                               tokenBufferLength));
+        }
+
+        unitBuffer.setLength(0);
+        for (;;) {
+            while ((nextToken = nextToken((char)0)) == IDENTIFIER) {
+                if (tokenBufferLength > 0) {
+                    callback.handleSelector(new String(tokenBuffer, 0,
+                                                       tokenBufferLength));
+                }
+            }
+            switch (nextToken) {
+            case BRACE_OPEN:
+                return true;
+
+            case BRACKET_OPEN: case PAREN_OPEN:
+                parseTillClosed(nextToken);
+                // Not too sure about this, how we handle this isn't very
+                // well spec'd.
+                unitBuffer.setLength(0);
+                break;
+
+            case BRACKET_CLOSE: case BRACE_CLOSE: case PAREN_CLOSE:
+                throw new RuntimeException("Unexpected block close in selector");
+
+            case END:
+                // Prematurely hit end.
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Parses a declaration block. Which a number of declarations followed
+     * by a })].
+     */
+    private void parseDeclarationBlock() throws IOException {
+        for (;;) {
+            int token = parseDeclaration();
+            switch (token) {
+            case END: case BRACE_CLOSE:
+                return;
+
+            case BRACKET_CLOSE: case PAREN_CLOSE:
+                // Bail
+                throw new RuntimeException("Unexpected close in declaration block");
+            case IDENTIFIER:
+                break;
+            }
+        }
+    }
+
+    /**
+     * Parses a single declaration, which is an identifier a : and another
+     * identifier. This returns the last token seen.
+     */
+    // identifier+: identifier* ;|}
+    private int parseDeclaration() throws IOException {
+        int    token;
+
+        if ((token = parseIdentifiers(':', false)) != IDENTIFIER) {
+            return token;
+        }
+        // Make the property name to lowercase
+        for (int counter = unitBuffer.length() - 1; counter >= 0; counter--) {
+            unitBuffer.setCharAt(counter, Character.toLowerCase
+                                 (unitBuffer.charAt(counter)));
+        }
+        callback.handleProperty(unitBuffer.toString());
+
+        token = parseIdentifiers(';', true);
+        callback.handleValue(unitBuffer.toString());
+        return token;
+    }
+
+    /**
+     * Parses identifiers until <code>extraChar</code> is encountered,
+     * returning the ending token, which will be IDENTIFIER if extraChar
+     * is found.
+     */
+    private int parseIdentifiers(char extraChar,
+                                 boolean wantsBlocks) throws IOException {
+        int   nextToken;
+        int   ubl;
+
+        unitBuffer.setLength(0);
+        for (;;) {
+            nextToken = nextToken(extraChar);
+
+            switch (nextToken) {
+            case IDENTIFIER:
+                if (tokenBufferLength > 0) {
+                    if (tokenBuffer[tokenBufferLength - 1] == extraChar) {
+                        if (--tokenBufferLength > 0) {
+                            if (readWS && unitBuffer.length() > 0) {
+                                unitBuffer.append(' ');
+                            }
+                            unitBuffer.append(tokenBuffer, 0,
+                                              tokenBufferLength);
+                        }
+                        return IDENTIFIER;
+                    }
+                    if (readWS && unitBuffer.length() > 0) {
+                        unitBuffer.append(' ');
+                    }
+                    unitBuffer.append(tokenBuffer, 0, tokenBufferLength);
+                }
+                break;
+
+            case BRACKET_OPEN:
+            case BRACE_OPEN:
+            case PAREN_OPEN:
+                ubl = unitBuffer.length();
+                if (wantsBlocks) {
+                    unitBuffer.append(charMapping[nextToken]);
+                }
+                parseTillClosed(nextToken);
+                if (!wantsBlocks) {
+                    unitBuffer.setLength(ubl);
+                }
+                break;
+
+            case BRACE_CLOSE:
+                // No need to throw for these two, we return token and
+                // caller can do whatever.
+            case BRACKET_CLOSE:
+            case PAREN_CLOSE:
+            case END:
+                // Hit the end
+                return nextToken;
+            }
+        }
+    }
+
+    /**
+     * Parses till a matching block close is encountered. This is only
+     * appropriate to be called at the top level (no nesting).
+     */
+    private void parseTillClosed(int openToken) throws IOException {
+        int       nextToken;
+        boolean   done = false;
+
+        startBlock(openToken);
+        while (!done) {
+            nextToken = nextToken((char)0);
+            switch (nextToken) {
+            case IDENTIFIER:
+                if (unitBuffer.length() > 0 && readWS) {
+                    unitBuffer.append(' ');
+                }
+                if (tokenBufferLength > 0) {
+                    unitBuffer.append(tokenBuffer, 0, tokenBufferLength);
+                }
+                break;
+
+            case BRACKET_OPEN: case BRACE_OPEN: case PAREN_OPEN:
+                if (unitBuffer.length() > 0 && readWS) {
+                    unitBuffer.append(' ');
+                }
+                unitBuffer.append(charMapping[nextToken]);
+                startBlock(nextToken);
+                break;
+
+            case BRACKET_CLOSE: case BRACE_CLOSE: case PAREN_CLOSE:
+                if (unitBuffer.length() > 0 && readWS) {
+                    unitBuffer.append(' ');
+                }
+                unitBuffer.append(charMapping[nextToken]);
+                endBlock(nextToken);
+                if (!inBlock()) {
+                    done = true;
+                }
+                break;
+
+            case END:
+                // Prematurely hit end.
+                throw new RuntimeException("Unclosed block");
+            }
+        }
+    }
+
+    /**
+     * Fetches the next token.
+     */
+    private int nextToken(char idChar) throws IOException {
+        readWS = false;
+
+        int     nextChar = readWS();
+
+        switch (nextChar) {
+        case '\'':
+            readTill('\'');
+            if (tokenBufferLength > 0) {
+                tokenBufferLength--;
+            }
+            return IDENTIFIER;
+        case '"':
+            readTill('"');
+            if (tokenBufferLength > 0) {
+                tokenBufferLength--;
+            }
+            return IDENTIFIER;
+        case '[':
+            return BRACKET_OPEN;
+        case ']':
+            return BRACKET_CLOSE;
+        case '{':
+            return BRACE_OPEN;
+        case '}':
+            return BRACE_CLOSE;
+        case '(':
+            return PAREN_OPEN;
+        case ')':
+            return PAREN_CLOSE;
+        case -1:
+            return END;
+        default:
+            pushChar(nextChar);
+            getIdentifier(idChar);
+            return IDENTIFIER;
+        }
+    }
+
+    /**
+     * Gets an identifier, returning true if the length of the string is greater than 0,
+     * stopping when <code>stopChar</code>, whitespace, or one of {}()[] is
+     * hit.
+     */
+    // NOTE: this could be combined with readTill, as they contain somewhat
+    // similar functionality.
+    private boolean getIdentifier(char stopChar) throws IOException {
+        boolean lastWasEscape = false;
+        boolean done = false;
+        int escapeCount = 0;
+        int escapeChar = 0;
+        int nextChar;
+        int intStopChar = (int)stopChar;
+        // 1 for '\', 2 for valid escape char [0-9a-fA-F], 3 for
+        // stop character (white space, ()[]{}) 0 otherwise
+        short type;
+        int escapeOffset = 0;
+
+        tokenBufferLength = 0;
+        while (!done) {
+            nextChar = readChar();
+            switch (nextChar) {
+            case '\\':
+                type = 1;
+                break;
+
+            case '0': case '1': case '2': case '3': case '4': case '5':
+            case '6': case '7': case '8': case '9':
+                type = 2;
+                escapeOffset = nextChar - '0';
+                break;
+
+            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                type = 2;
+                escapeOffset = nextChar - 'a' + 10;
+                break;
+
+            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+                type = 2;
+                escapeOffset = nextChar - 'A' + 10;
+                break;
+
+            case '\'': case '"': case '[': case ']': case '{': case '}':
+            case '(': case ')':
+            case ' ': case '\n': case '\t': case '\r':
+                type = 3;
+                break;
+
+            case '/':
+                type = 4;
+                break;
+
+            case -1:
+                // Reached the end
+                done = true;
+                type = 0;
+                break;
+
+            default:
+                type = 0;
+                break;
+            }
+            if (lastWasEscape) {
+                if (type == 2) {
+                    // Continue with escape.
+                    escapeChar = escapeChar * 16 + escapeOffset;
+                    if (++escapeCount == 4) {
+                        lastWasEscape = false;
+                        append((char)escapeChar);
+                    }
+                }
+                else {
+                    // no longer escaped
+                    lastWasEscape = false;
+                    if (escapeCount > 0) {
+                        append((char)escapeChar);
+                        // Make this simpler, reprocess the character.
+                        pushChar(nextChar);
+                    }
+                    else if (!done) {
+                        append((char)nextChar);
+                    }
+                }
+            }
+            else if (!done) {
+                if (type == 1) {
+                    lastWasEscape = true;
+                    escapeChar = escapeCount = 0;
+                }
+                else if (type == 3) {
+                    done = true;
+                    pushChar(nextChar);
+                }
+                else if (type == 4) {
+                    // Potential comment
+                    nextChar = readChar();
+                    if (nextChar == '*') {
+                        done = true;
+                        readComment();
+                        readWS = true;
+                    }
+                    else {
+                        append('/');
+                        if (nextChar == -1) {
+                            done = true;
+                        }
+                        else {
+                            pushChar(nextChar);
+                        }
+                    }
+                }
+                else {
+                    append((char)nextChar);
+                    if (nextChar == intStopChar) {
+                        done = true;
+                    }
+                }
+            }
+        }
+        return (tokenBufferLength > 0);
+    }
+
+    /**
+     * Reads till a <code>stopChar</code> is encountered, escaping characters
+     * as necessary.
+     */
+    private void readTill(char stopChar) throws IOException {
+        boolean lastWasEscape = false;
+        int escapeCount = 0;
+        int escapeChar = 0;
+        int nextChar;
+        boolean done = false;
+        int intStopChar = (int)stopChar;
+        // 1 for '\', 2 for valid escape char [0-9a-fA-F], 0 otherwise
+        short type;
+        int escapeOffset = 0;
+
+        tokenBufferLength = 0;
+        while (!done) {
+            nextChar = readChar();
+            switch (nextChar) {
+            case '\\':
+                type = 1;
+                break;
+
+            case '0': case '1': case '2': case '3': case '4':case '5':
+            case '6': case '7': case '8': case '9':
+                type = 2;
+                escapeOffset = nextChar - '0';
+                break;
+
+            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                type = 2;
+                escapeOffset = nextChar - 'a' + 10;
+                break;
+
+            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+                type = 2;
+                escapeOffset = nextChar - 'A' + 10;
+                break;
+
+            case -1:
+                // Prematurely reached the end!
+                throw new RuntimeException("Unclosed " + stopChar);
+
+            default:
+                type = 0;
+                break;
+            }
+            if (lastWasEscape) {
+                if (type == 2) {
+                    // Continue with escape.
+                    escapeChar = escapeChar * 16 + escapeOffset;
+                    if (++escapeCount == 4) {
+                        lastWasEscape = false;
+                        append((char)escapeChar);
+                    }
+                }
+                else {
+                    // no longer escaped
+                    if (escapeCount > 0) {
+                        append((char)escapeChar);
+                        if (type == 1) {
+                            lastWasEscape = true;
+                            escapeChar = escapeCount = 0;
+                        }
+                        else {
+                            if (nextChar == intStopChar) {
+                                done = true;
+                            }
+                            append((char)nextChar);
+                            lastWasEscape = false;
+                        }
+                    }
+                    else {
+                        append((char)nextChar);
+                        lastWasEscape = false;
+                    }
+                }
+            }
+            else if (type == 1) {
+                lastWasEscape = true;
+                escapeChar = escapeCount = 0;
+            }
+            else {
+                if (nextChar == intStopChar) {
+                    done = true;
+                }
+                append((char)nextChar);
+            }
+        }
+    }
+
+    private void append(char character) {
+        if (tokenBufferLength == tokenBuffer.length) {
+            char[] newBuffer = new char[tokenBuffer.length * 2];
+            System.arraycopy(tokenBuffer, 0, newBuffer, 0, tokenBuffer.length);
+            tokenBuffer = newBuffer;
+        }
+        tokenBuffer[tokenBufferLength++] = character;
+    }
+
+    /**
+     * Parses a comment block.
+     */
+    private void readComment() throws IOException {
+        int nextChar;
+
+        for(;;) {
+            nextChar = readChar();
+            switch (nextChar) {
+            case -1:
+                throw new RuntimeException("Unclosed comment");
+            case '*':
+                nextChar = readChar();
+                if (nextChar == '/') {
+                    return;
+                }
+                else if (nextChar == -1) {
+                    throw new RuntimeException("Unclosed comment");
+                }
+                else {
+                    pushChar(nextChar);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    /**
+     * Called when a block start is encountered ({[.
+     */
+    private void startBlock(int startToken) {
+        if (stackCount == unitStack.length) {
+            int[]     newUS = new int[stackCount * 2];
+
+            System.arraycopy(unitStack, 0, newUS, 0, stackCount);
+            unitStack = newUS;
+        }
+        unitStack[stackCount++] = startToken;
+    }
+
+    /**
+     * Called when an end block is encountered )]}
+     */
+    private void endBlock(int endToken) {
+        int    startToken;
+
+        switch (endToken) {
+        case BRACKET_CLOSE:
+            startToken = BRACKET_OPEN;
+            break;
+        case BRACE_CLOSE:
+            startToken = BRACE_OPEN;
+            break;
+        case PAREN_CLOSE:
+            startToken = PAREN_OPEN;
+            break;
+        default:
+            // Will never happen.
+            startToken = -1;
+            break;
+        }
+        if (stackCount > 0 && unitStack[stackCount - 1] == startToken) {
+            stackCount--;
+        }
+        else {
+            // Invalid state, should do something.
+            throw new RuntimeException("Unmatched block");
+        }
+    }
+
+    /**
+     * @return true if currently in a block.
+     */
+    private boolean inBlock() {
+        return (stackCount > 0);
+    }
+
+    /**
+     * Skips any white space, returning the character after the white space.
+     */
+    private int readWS() throws IOException {
+        int nextChar;
+        while ((nextChar = readChar()) != -1 &&
+               Character.isWhitespace((char)nextChar)) {
+            readWS = true;
+        }
+        return nextChar;
+    }
+
+    /**
+     * Reads a character from the stream.
+     */
+    private int readChar() throws IOException {
+        if (didPushChar) {
+            didPushChar = false;
+            return pushedChar;
+        }
+        return reader.read();
+        // Uncomment the following to do case insensitive parsing.
+        /*
+        if (retValue != -1) {
+            return (int)Character.toLowerCase((char)retValue);
+        }
+        return retValue;
+        */
+    }
+
+    /**
+     * Supports one character look ahead, this will throw if called twice
+     * in a row.
+     */
+    private void pushChar(int tempChar) {
+        if (didPushChar) {
+            // Should never happen.
+            throw new RuntimeException("Can not handle look ahead of more than one character");
+        }
+        didPushChar = true;
+        pushedChar = tempChar;
+    }
+}

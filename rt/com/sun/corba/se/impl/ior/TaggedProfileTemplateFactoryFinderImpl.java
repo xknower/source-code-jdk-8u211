@@ -1,59 +1,53 @@
-/*    */ package com.sun.corba.se.impl.ior;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.Identifiable;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import org.omg.CORBA_2_3.portable.InputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class TaggedProfileTemplateFactoryFinderImpl
-/*    */   extends IdentifiableFactoryFinderBase
-/*    */ {
-/*    */   public TaggedProfileTemplateFactoryFinderImpl(ORB paramORB) {
-/* 46 */     super(paramORB);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Identifiable handleMissingFactory(int paramInt, InputStream paramInputStream) {
-/* 51 */     throw this.wrapper.taggedProfileTemplateFactoryNotFound(new Integer(paramInt));
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\TaggedProfileTemplateFactoryFinderImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior;
+
+import com.sun.corba.se.spi.ior.Identifiable ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.impl.ior.IdentifiableFactoryFinderBase ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+
+import org.omg.CORBA.INTERNAL ;
+
+/**
+ * @author
+ */
+public class TaggedProfileTemplateFactoryFinderImpl extends
+    IdentifiableFactoryFinderBase
+{
+    public TaggedProfileTemplateFactoryFinderImpl( ORB orb )
+    {
+        super( orb ) ;
+    }
+
+    public Identifiable handleMissingFactory( int id, InputStream is)
+    {
+        throw wrapper.taggedProfileTemplateFactoryNotFound( new Integer(id) ) ;
+    }
+}

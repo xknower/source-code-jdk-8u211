@@ -1,302 +1,296 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import sun.awt.EventQueueDelegate;
-/*     */ import sun.awt.SunToolkit;
-/*     */ import sun.awt.dnd.SunDragSourceContextPeer;
-/*     */ import sun.util.logging.PlatformLogger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class EventDispatchThread
-/*     */   extends Thread
-/*     */ {
-/*  59 */   private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.EventDispatchThread");
-/*     */   
-/*     */   private EventQueue theQueue;
-/*     */   
-/*     */   private volatile boolean doDispatch = true;
-/*     */   
-/*     */   private static final int ANY_EVENT = -1;
-/*  66 */   private ArrayList<EventFilter> eventFilters = new ArrayList<>();
-/*     */   
-/*     */   EventDispatchThread(ThreadGroup paramThreadGroup, String paramString, EventQueue paramEventQueue) {
-/*  69 */     super(paramThreadGroup, paramString);
-/*  70 */     setEventQueue(paramEventQueue);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void stopDispatching() {
-/*  77 */     this.doDispatch = false;
-/*     */   }
-/*     */   
-/*     */   public void run() {
-/*     */     try {
-/*  82 */       pumpEvents(new Conditional() {
-/*     */             public boolean evaluate() {
-/*  84 */               return true;
-/*     */             }
-/*     */           });
-/*     */     } finally {
-/*  88 */       getEventQueue().detachDispatchThread(this);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void pumpEvents(Conditional paramConditional) {
-/*  93 */     pumpEvents(-1, paramConditional);
-/*     */   }
-/*     */   
-/*     */   void pumpEventsForHierarchy(Conditional paramConditional, Component paramComponent) {
-/*  97 */     pumpEventsForHierarchy(-1, paramConditional, paramComponent);
-/*     */   }
-/*     */   
-/*     */   void pumpEvents(int paramInt, Conditional paramConditional) {
-/* 101 */     pumpEventsForHierarchy(paramInt, paramConditional, (Component)null);
-/*     */   }
-/*     */   
-/*     */   void pumpEventsForHierarchy(int paramInt, Conditional paramConditional, Component paramComponent) {
-/* 105 */     pumpEventsForFilter(paramInt, paramConditional, new HierarchyEventFilter(paramComponent));
-/*     */   }
-/*     */   
-/*     */   void pumpEventsForFilter(Conditional paramConditional, EventFilter paramEventFilter) {
-/* 109 */     pumpEventsForFilter(-1, paramConditional, paramEventFilter);
-/*     */   }
-/*     */   
-/*     */   void pumpEventsForFilter(int paramInt, Conditional paramConditional, EventFilter paramEventFilter) {
-/* 113 */     addEventFilter(paramEventFilter);
-/* 114 */     this.doDispatch = true;
-/* 115 */     while (this.doDispatch && !isInterrupted() && paramConditional.evaluate()) {
-/* 116 */       pumpOneEventForFilters(paramInt);
-/*     */     }
-/* 118 */     removeEventFilter(paramEventFilter);
-/*     */   }
-/*     */   
-/*     */   void addEventFilter(EventFilter paramEventFilter) {
-/* 122 */     if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/* 123 */       eventLog.finest("adding the event filter: " + paramEventFilter);
-/*     */     }
-/* 125 */     synchronized (this.eventFilters) {
-/* 126 */       if (!this.eventFilters.contains(paramEventFilter)) {
-/* 127 */         if (paramEventFilter instanceof ModalEventFilter) {
-/* 128 */           ModalEventFilter modalEventFilter = (ModalEventFilter)paramEventFilter;
-/* 129 */           byte b = 0;
-/* 130 */           for (b = 0; b < this.eventFilters.size(); b++) {
-/* 131 */             EventFilter eventFilter = this.eventFilters.get(b);
-/* 132 */             if (eventFilter instanceof ModalEventFilter) {
-/* 133 */               ModalEventFilter modalEventFilter1 = (ModalEventFilter)eventFilter;
-/* 134 */               if (modalEventFilter1.compareTo(modalEventFilter) > 0) {
-/*     */                 break;
-/*     */               }
-/*     */             } 
-/*     */           } 
-/* 139 */           this.eventFilters.add(b, paramEventFilter);
-/*     */         } else {
-/* 141 */           this.eventFilters.add(paramEventFilter);
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void removeEventFilter(EventFilter paramEventFilter) {
-/* 148 */     if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/* 149 */       eventLog.finest("removing the event filter: " + paramEventFilter);
-/*     */     }
-/* 151 */     synchronized (this.eventFilters) {
-/* 152 */       this.eventFilters.remove(paramEventFilter);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   boolean filterAndCheckEvent(AWTEvent paramAWTEvent) {
-/* 157 */     boolean bool = true;
-/* 158 */     synchronized (this.eventFilters) {
-/* 159 */       for (int i = this.eventFilters.size() - 1; i >= 0; i--) {
-/* 160 */         EventFilter eventFilter = this.eventFilters.get(i);
-/* 161 */         EventFilter.FilterAction filterAction = eventFilter.acceptEvent(paramAWTEvent);
-/* 162 */         if (filterAction == EventFilter.FilterAction.REJECT) {
-/* 163 */           bool = false; break;
-/*     */         } 
-/* 165 */         if (filterAction == EventFilter.FilterAction.ACCEPT_IMMEDIATELY) {
-/*     */           break;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 170 */     return (bool && SunDragSourceContextPeer.checkEvent(paramAWTEvent));
-/*     */   }
-/*     */   
-/*     */   void pumpOneEventForFilters(int paramInt) {
-/* 174 */     AWTEvent aWTEvent = null;
-/* 175 */     boolean bool = false;
-/*     */     try {
-/* 177 */       EventQueue eventQueue = null;
-/* 178 */       EventQueueDelegate.Delegate delegate = null;
-/*     */       
-/*     */       do {
-/* 181 */         eventQueue = getEventQueue();
-/* 182 */         delegate = EventQueueDelegate.getDelegate();
-/*     */         
-/* 184 */         if (delegate != null && paramInt == -1) {
-/* 185 */           aWTEvent = delegate.getNextEvent(eventQueue);
-/*     */         } else {
-/* 187 */           aWTEvent = (paramInt == -1) ? eventQueue.getNextEvent() : eventQueue.getNextEvent(paramInt);
-/*     */         } 
-/*     */         
-/* 190 */         bool = filterAndCheckEvent(aWTEvent);
-/* 191 */         if (bool)
-/* 192 */           continue;  aWTEvent.consume();
-/*     */       
-/*     */       }
-/* 195 */       while (!bool);
-/*     */       
-/* 197 */       if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/* 198 */         eventLog.finest("Dispatching: " + aWTEvent);
-/*     */       }
-/*     */       
-/* 201 */       Object object = null;
-/* 202 */       if (delegate != null) {
-/* 203 */         object = delegate.beforeDispatch(aWTEvent);
-/*     */       }
-/* 205 */       eventQueue.dispatchEvent(aWTEvent);
-/* 206 */       if (delegate != null) {
-/* 207 */         delegate.afterDispatch(aWTEvent, object);
-/*     */       }
-/*     */     }
-/* 210 */     catch (ThreadDeath threadDeath) {
-/* 211 */       this.doDispatch = false;
-/* 212 */       throw threadDeath;
-/*     */     }
-/* 214 */     catch (InterruptedException interruptedException) {
-/* 215 */       this.doDispatch = false;
-/*     */     
-/*     */     }
-/* 218 */     catch (Throwable throwable) {
-/* 219 */       processException(throwable);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void processException(Throwable paramThrowable) {
-/* 224 */     if (eventLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 225 */       eventLog.fine("Processing exception: " + paramThrowable);
-/*     */     }
-/* 227 */     getUncaughtExceptionHandler().uncaughtException(this, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public synchronized EventQueue getEventQueue() {
-/* 231 */     return this.theQueue;
-/*     */   }
-/*     */   public synchronized void setEventQueue(EventQueue paramEventQueue) {
-/* 234 */     this.theQueue = paramEventQueue;
-/*     */   }
-/*     */   
-/*     */   private static class HierarchyEventFilter implements EventFilter { private Component modalComponent;
-/*     */     
-/*     */     public HierarchyEventFilter(Component param1Component) {
-/* 240 */       this.modalComponent = param1Component;
-/*     */     }
-/*     */     public EventFilter.FilterAction acceptEvent(AWTEvent param1AWTEvent) {
-/* 243 */       if (this.modalComponent != null) {
-/* 244 */         int i = param1AWTEvent.getID();
-/* 245 */         boolean bool1 = (i >= 500 && i <= 507) ? true : false;
-/*     */         
-/* 247 */         boolean bool2 = (i >= 1001 && i <= 1001) ? true : false;
-/*     */         
-/* 249 */         boolean bool3 = (i == 201) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 256 */         if (Component.isInstanceOf(this.modalComponent, "javax.swing.JInternalFrame"))
-/*     */         {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 263 */           return bool3 ? EventFilter.FilterAction.REJECT : EventFilter.FilterAction.ACCEPT;
-/*     */         }
-/* 265 */         if (bool1 || bool2 || bool3) {
-/* 266 */           Object object = param1AWTEvent.getSource();
-/* 267 */           if (object instanceof sun.awt.ModalExclude)
-/*     */           {
-/*     */             
-/* 270 */             return EventFilter.FilterAction.ACCEPT; } 
-/* 271 */           if (object instanceof Component) {
-/* 272 */             Component component = (Component)object;
-/*     */             
-/* 274 */             boolean bool = false;
-/* 275 */             if (this.modalComponent instanceof Container) {
-/* 276 */               while (component != this.modalComponent && component != null) {
-/* 277 */                 if (component instanceof Window && 
-/* 278 */                   SunToolkit.isModalExcluded((Window)component)) {
-/*     */ 
-/*     */                   
-/* 281 */                   bool = true;
-/*     */                   break;
-/*     */                 } 
-/* 284 */                 component = component.getParent();
-/*     */               } 
-/*     */             }
-/* 287 */             if (!bool && component != this.modalComponent) {
-/* 288 */               return EventFilter.FilterAction.REJECT;
-/*     */             }
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 293 */       return EventFilter.FilterAction.ACCEPT;
-/*     */     } }
-/*     */ 
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\EventDispatchThread.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+
+import java.util.ArrayList;
+import sun.util.logging.PlatformLogger;
+
+import sun.awt.dnd.SunDragSourceContextPeer;
+import sun.awt.EventQueueDelegate;
+
+/**
+ * EventDispatchThread is a package-private AWT class which takes
+ * events off the EventQueue and dispatches them to the appropriate
+ * AWT components.
+ *
+ * The Thread starts a "permanent" event pump with a call to
+ * pumpEvents(Conditional) in its run() method. Event handlers can choose to
+ * block this event pump at any time, but should start a new pump (<b>not</b>
+ * a new EventDispatchThread) by again calling pumpEvents(Conditional). This
+ * secondary event pump will exit automatically as soon as the Condtional
+ * evaluate()s to false and an additional Event is pumped and dispatched.
+ *
+ * @author Tom Ball
+ * @author Amy Fowler
+ * @author Fred Ecks
+ * @author David Mendenhall
+ *
+ * @since 1.1
+ */
+class EventDispatchThread extends Thread {
+
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.EventDispatchThread");
+
+    private EventQueue theQueue;
+    private volatile boolean doDispatch = true;
+
+    private static final int ANY_EVENT = -1;
+
+    private ArrayList<EventFilter> eventFilters = new ArrayList<EventFilter>();
+
+    EventDispatchThread(ThreadGroup group, String name, EventQueue queue) {
+        super(group, name);
+        setEventQueue(queue);
+    }
+
+    /*
+     * Must be called on EDT only, that's why no synchronization
+     */
+    public void stopDispatching() {
+        doDispatch = false;
+    }
+
+    public void run() {
+        try {
+            pumpEvents(new Conditional() {
+                public boolean evaluate() {
+                    return true;
+                }
+            });
+        } finally {
+            getEventQueue().detachDispatchThread(this);
+        }
+    }
+
+    void pumpEvents(Conditional cond) {
+        pumpEvents(ANY_EVENT, cond);
+    }
+
+    void pumpEventsForHierarchy(Conditional cond, Component modalComponent) {
+        pumpEventsForHierarchy(ANY_EVENT, cond, modalComponent);
+    }
+
+    void pumpEvents(int id, Conditional cond) {
+        pumpEventsForHierarchy(id, cond, null);
+    }
+
+    void pumpEventsForHierarchy(int id, Conditional cond, Component modalComponent) {
+        pumpEventsForFilter(id, cond, new HierarchyEventFilter(modalComponent));
+    }
+
+    void pumpEventsForFilter(Conditional cond, EventFilter filter) {
+        pumpEventsForFilter(ANY_EVENT, cond, filter);
+    }
+
+    void pumpEventsForFilter(int id, Conditional cond, EventFilter filter) {
+        addEventFilter(filter);
+        doDispatch = true;
+        while (doDispatch && !isInterrupted() && cond.evaluate()) {
+            pumpOneEventForFilters(id);
+        }
+        removeEventFilter(filter);
+    }
+
+    void addEventFilter(EventFilter filter) {
+        if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
+            eventLog.finest("adding the event filter: " + filter);
+        }
+        synchronized (eventFilters) {
+            if (!eventFilters.contains(filter)) {
+                if (filter instanceof ModalEventFilter) {
+                    ModalEventFilter newFilter = (ModalEventFilter)filter;
+                    int k = 0;
+                    for (k = 0; k < eventFilters.size(); k++) {
+                        EventFilter f = eventFilters.get(k);
+                        if (f instanceof ModalEventFilter) {
+                            ModalEventFilter cf = (ModalEventFilter)f;
+                            if (cf.compareTo(newFilter) > 0) {
+                                break;
+                            }
+                        }
+                    }
+                    eventFilters.add(k, filter);
+                } else {
+                    eventFilters.add(filter);
+                }
+            }
+        }
+    }
+
+    void removeEventFilter(EventFilter filter) {
+        if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
+            eventLog.finest("removing the event filter: " + filter);
+        }
+        synchronized (eventFilters) {
+            eventFilters.remove(filter);
+        }
+    }
+
+    boolean filterAndCheckEvent(AWTEvent event) {
+        boolean eventOK = true;
+        synchronized (eventFilters) {
+            for (int i = eventFilters.size() - 1; i >= 0; i--) {
+                EventFilter f = eventFilters.get(i);
+                EventFilter.FilterAction accept = f.acceptEvent(event);
+                if (accept == EventFilter.FilterAction.REJECT) {
+                    eventOK = false;
+                    break;
+                } else if (accept == EventFilter.FilterAction.ACCEPT_IMMEDIATELY) {
+                    break;
+                }
+            }
+        }
+        return eventOK && SunDragSourceContextPeer.checkEvent(event);
+    }
+
+    void pumpOneEventForFilters(int id) {
+        AWTEvent event = null;
+        boolean eventOK = false;
+        try {
+            EventQueue eq = null;
+            EventQueueDelegate.Delegate delegate = null;
+            do {
+                // EventQueue may change during the dispatching
+                eq = getEventQueue();
+                delegate = EventQueueDelegate.getDelegate();
+
+                if (delegate != null && id == ANY_EVENT) {
+                    event = delegate.getNextEvent(eq);
+                } else {
+                    event = (id == ANY_EVENT) ? eq.getNextEvent() : eq.getNextEvent(id);
+                }
+
+                eventOK = filterAndCheckEvent(event);
+                if (!eventOK) {
+                    event.consume();
+                }
+            }
+            while (eventOK == false);
+
+            if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                eventLog.finest("Dispatching: " + event);
+            }
+
+            Object handle = null;
+            if (delegate != null) {
+                handle = delegate.beforeDispatch(event);
+            }
+            eq.dispatchEvent(event);
+            if (delegate != null) {
+                delegate.afterDispatch(event, handle);
+            }
+        }
+        catch (ThreadDeath death) {
+            doDispatch = false;
+            throw death;
+        }
+        catch (InterruptedException interruptedException) {
+            doDispatch = false; // AppContext.dispose() interrupts all
+                                // Threads in the AppContext
+        }
+        catch (Throwable e) {
+            processException(e);
+        }
+    }
+
+    private void processException(Throwable e) {
+        if (eventLog.isLoggable(PlatformLogger.Level.FINE)) {
+            eventLog.fine("Processing exception: " + e);
+        }
+        getUncaughtExceptionHandler().uncaughtException(this, e);
+    }
+
+    public synchronized EventQueue getEventQueue() {
+        return theQueue;
+    }
+    public synchronized void setEventQueue(EventQueue eq) {
+        theQueue = eq;
+    }
+
+    private static class HierarchyEventFilter implements EventFilter {
+        private Component modalComponent;
+        public HierarchyEventFilter(Component modalComponent) {
+            this.modalComponent = modalComponent;
+        }
+        public FilterAction acceptEvent(AWTEvent event) {
+            if (modalComponent != null) {
+                int eventID = event.getID();
+                boolean mouseEvent = (eventID >= MouseEvent.MOUSE_FIRST) &&
+                                     (eventID <= MouseEvent.MOUSE_LAST);
+                boolean actionEvent = (eventID >= ActionEvent.ACTION_FIRST) &&
+                                      (eventID <= ActionEvent.ACTION_LAST);
+                boolean windowClosingEvent = (eventID == WindowEvent.WINDOW_CLOSING);
+                /*
+                 * filter out MouseEvent and ActionEvent that's outside
+                 * the modalComponent hierarchy.
+                 * KeyEvent is handled by using enqueueKeyEvent
+                 * in Dialog.show
+                 */
+                if (Component.isInstanceOf(modalComponent, "javax.swing.JInternalFrame")) {
+                    /*
+                     * Modal internal frames are handled separately. If event is
+                     * for some component from another heavyweight than modalComp,
+                     * it is accepted. If heavyweight is the same - we still accept
+                     * event and perform further filtering in LightweightDispatcher
+                     */
+                    return windowClosingEvent ? FilterAction.REJECT : FilterAction.ACCEPT;
+                }
+                if (mouseEvent || actionEvent || windowClosingEvent) {
+                    Object o = event.getSource();
+                    if (o instanceof sun.awt.ModalExclude) {
+                        // Exclude this object from modality and
+                        // continue to pump it's events.
+                        return FilterAction.ACCEPT;
+                    } else if (o instanceof Component) {
+                        Component c = (Component) o;
+                        // 5.0u3 modal exclusion
+                        boolean modalExcluded = false;
+                        if (modalComponent instanceof Container) {
+                            while (c != modalComponent && c != null) {
+                                if ((c instanceof Window) &&
+                                    (sun.awt.SunToolkit.isModalExcluded((Window)c))) {
+                                    // Exclude this window and all its children from
+                                    //  modality and continue to pump it's events.
+                                    modalExcluded = true;
+                                    break;
+                                }
+                                c = c.getParent();
+                            }
+                        }
+                        if (!modalExcluded && (c != modalComponent)) {
+                            return FilterAction.REJECT;
+                        }
+                    }
+                }
+            }
+            return FilterAction.ACCEPT;
+        }
+    }
+}

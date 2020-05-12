@@ -1,90 +1,84 @@
-/*    */ package java.nio.file.attribute;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum PosixFilePermission
-/*    */ {
-/* 43 */   OWNER_READ,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 48 */   OWNER_WRITE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 53 */   OWNER_EXECUTE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 58 */   GROUP_READ,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 63 */   GROUP_WRITE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 68 */   GROUP_EXECUTE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 73 */   OTHERS_READ,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 78 */   OTHERS_WRITE,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 83 */   OTHERS_EXECUTE;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\attribute\PosixFilePermission.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file.attribute;
+
+/**
+ * Defines the bits for use with the {@link PosixFileAttributes#permissions()
+ * permissions} attribute.
+ *
+ * <p> The {@link PosixFilePermissions} class defines methods for manipulating
+ * set of permissions.
+ *
+ * @since 1.7
+ */
+
+public enum PosixFilePermission {
+
+    /**
+     * Read permission, owner.
+     */
+    OWNER_READ,
+
+    /**
+     * Write permission, owner.
+     */
+    OWNER_WRITE,
+
+    /**
+     * Execute/search permission, owner.
+     */
+    OWNER_EXECUTE,
+
+    /**
+     * Read permission, group.
+     */
+    GROUP_READ,
+
+    /**
+     * Write permission, group.
+     */
+    GROUP_WRITE,
+
+    /**
+     * Execute/search permission, group.
+     */
+    GROUP_EXECUTE,
+
+    /**
+     * Read permission, others.
+     */
+    OTHERS_READ,
+
+    /**
+     * Write permission, others.
+     */
+    OTHERS_WRITE,
+
+    /**
+     * Execute/search permission, others.
+     */
+    OTHERS_EXECUTE;
+}

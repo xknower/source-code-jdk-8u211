@@ -1,178 +1,172 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.keyresolver.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverException;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.security.PrivateKey;
-/*     */ import java.security.PublicKey;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import javax.crypto.SecretKey;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SingleKeyResolver
-/*     */   extends KeyResolverSpi
-/*     */ {
-/*  25 */   private static Logger log = Logger.getLogger(SingleKeyResolver.class.getName());
-/*     */ 
-/*     */   
-/*     */   private String keyName;
-/*     */   
-/*     */   private PublicKey publicKey;
-/*     */   
-/*     */   private PrivateKey privateKey;
-/*     */   
-/*     */   private SecretKey secretKey;
-/*     */ 
-/*     */   
-/*     */   public SingleKeyResolver(String paramString, PublicKey paramPublicKey) {
-/*  38 */     this.keyName = paramString;
-/*  39 */     this.publicKey = paramPublicKey;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SingleKeyResolver(String paramString, PrivateKey paramPrivateKey) {
-/*  48 */     this.keyName = paramString;
-/*  49 */     this.privateKey = paramPrivateKey;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SingleKeyResolver(String paramString, SecretKey paramSecretKey) {
-/*  58 */     this.keyName = paramString;
-/*  59 */     this.secretKey = paramSecretKey;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean engineCanResolve(Element paramElement, String paramString, StorageResolver paramStorageResolver) {
-/*  71 */     return XMLUtils.elementIsInSignatureSpace(paramElement, "KeyName");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PublicKey engineLookupAndResolvePublicKey(Element paramElement, String paramString, StorageResolver paramStorageResolver) throws KeyResolverException {
-/*  86 */     if (log.isLoggable(Level.FINE)) {
-/*  87 */       log.log(Level.FINE, "Can I resolve " + paramElement.getTagName() + "?");
-/*     */     }
-/*     */     
-/*  90 */     if (this.publicKey != null && 
-/*  91 */       XMLUtils.elementIsInSignatureSpace(paramElement, "KeyName")) {
-/*  92 */       String str = paramElement.getFirstChild().getNodeValue();
-/*  93 */       if (this.keyName.equals(str)) {
-/*  94 */         return this.publicKey;
-/*     */       }
-/*     */     } 
-/*     */     
-/*  98 */     log.log(Level.FINE, "I can't");
-/*  99 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public X509Certificate engineLookupResolveX509Certificate(Element paramElement, String paramString, StorageResolver paramStorageResolver) throws KeyResolverException {
-/* 113 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SecretKey engineResolveSecretKey(Element paramElement, String paramString, StorageResolver paramStorageResolver) throws KeyResolverException {
-/* 129 */     if (log.isLoggable(Level.FINE)) {
-/* 130 */       log.log(Level.FINE, "Can I resolve " + paramElement.getTagName() + "?");
-/*     */     }
-/*     */     
-/* 133 */     if (this.secretKey != null && 
-/* 134 */       XMLUtils.elementIsInSignatureSpace(paramElement, "KeyName")) {
-/* 135 */       String str = paramElement.getFirstChild().getNodeValue();
-/* 136 */       if (this.keyName.equals(str)) {
-/* 137 */         return this.secretKey;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 141 */     log.log(Level.FINE, "I can't");
-/* 142 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PrivateKey engineLookupAndResolvePrivateKey(Element paramElement, String paramString, StorageResolver paramStorageResolver) throws KeyResolverException {
-/* 157 */     if (log.isLoggable(Level.FINE)) {
-/* 158 */       log.log(Level.FINE, "Can I resolve " + paramElement.getTagName() + "?");
-/*     */     }
-/*     */     
-/* 161 */     if (this.privateKey != null && 
-/* 162 */       XMLUtils.elementIsInSignatureSpace(paramElement, "KeyName")) {
-/* 163 */       String str = paramElement.getFirstChild().getNodeValue();
-/* 164 */       if (this.keyName.equals(str)) {
-/* 165 */         return this.privateKey;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 169 */     log.log(Level.FINE, "I can't");
-/* 170 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\keyresolver\implementations\SingleKeyResolver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.xml.internal.security.keys.keyresolver.implementations;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import javax.crypto.SecretKey;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverException;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Element;
+
+/**
+ * Resolves a single Key based on the KeyName.
+ */
+public class SingleKeyResolver extends KeyResolverSpi
+{
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(SingleKeyResolver.class.getName());
+
+    private String keyName;
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
+    private SecretKey secretKey;
+
+    /**
+     * Constructor.
+     * @param keyName
+     * @param publicKey
+     */
+    public SingleKeyResolver(String keyName, PublicKey publicKey) {
+        this.keyName = keyName;
+        this.publicKey = publicKey;
+    }
+
+    /**
+     * Constructor.
+     * @param keyName
+     * @param privateKey
+     */
+    public SingleKeyResolver(String keyName, PrivateKey privateKey) {
+        this.keyName = keyName;
+        this.privateKey = privateKey;
+    }
+
+    /**
+     * Constructor.
+     * @param keyName
+     * @param secretKey
+     */
+    public SingleKeyResolver(String keyName, SecretKey secretKey) {
+        this.keyName = keyName;
+        this.secretKey = secretKey;
+    }
+
+    /**
+     * This method returns whether the KeyResolverSpi is able to perform the requested action.
+     *
+     * @param element
+     * @param BaseURI
+     * @param storage
+     * @return whether the KeyResolverSpi is able to perform the requested action.
+     */
+    public boolean engineCanResolve(Element element, String baseURI, StorageResolver storage) {
+        return XMLUtils.elementIsInSignatureSpace(element, Constants._TAG_KEYNAME);
+    }
+
+    /**
+     * Method engineLookupAndResolvePublicKey
+     *
+     * @param element
+     * @param baseURI
+     * @param storage
+     * @return null if no {@link PublicKey} could be obtained
+     * @throws KeyResolverException
+     */
+    public PublicKey engineLookupAndResolvePublicKey(
+        Element element, String baseURI, StorageResolver storage
+    ) throws KeyResolverException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+        }
+
+        if (publicKey != null
+            && XMLUtils.elementIsInSignatureSpace(element, Constants._TAG_KEYNAME)) {
+            String name = element.getFirstChild().getNodeValue();
+            if (keyName.equals(name)) {
+                return publicKey;
+            }
+        }
+
+        log.log(java.util.logging.Level.FINE, "I can't");
+        return null;
+    }
+
+    /**
+     * Method engineResolveX509Certificate
+     * @inheritDoc
+     * @param element
+     * @param baseURI
+     * @param storage
+     * @throws KeyResolverException
+     */
+    public X509Certificate engineLookupResolveX509Certificate(
+        Element element, String baseURI, StorageResolver storage
+    ) throws KeyResolverException {
+        return null;
+    }
+
+    /**
+     * Method engineResolveSecretKey
+     *
+     * @param element
+     * @param baseURI
+     * @param storage
+     * @return resolved SecretKey key or null if no {@link SecretKey} could be obtained
+     *
+     * @throws KeyResolverException
+     */
+    public SecretKey engineResolveSecretKey(
+        Element element, String baseURI, StorageResolver storage
+    ) throws KeyResolverException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+        }
+
+        if (secretKey != null
+            && XMLUtils.elementIsInSignatureSpace(element, Constants._TAG_KEYNAME)) {
+            String name = element.getFirstChild().getNodeValue();
+            if (keyName.equals(name)) {
+                return secretKey;
+            }
+        }
+
+        log.log(java.util.logging.Level.FINE, "I can't");
+        return null;
+    }
+
+    /**
+     * Method engineResolvePrivateKey
+     * @inheritDoc
+     * @param element
+     * @param baseURI
+     * @param storage
+     * @return resolved PrivateKey key or null if no {@link PrivateKey} could be obtained
+     * @throws KeyResolverException
+     */
+    public PrivateKey engineLookupAndResolvePrivateKey(
+        Element element, String baseURI, StorageResolver storage
+    ) throws KeyResolverException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+        }
+
+        if (privateKey != null
+            && XMLUtils.elementIsInSignatureSpace(element, Constants._TAG_KEYNAME)) {
+            String name = element.getFirstChild().getNodeValue();
+            if (keyName.equals(name)) {
+                return privateKey;
+            }
+        }
+
+        log.log(java.util.logging.Level.FINE, "I can't");
+        return null;
+    }
+}

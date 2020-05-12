@@ -1,81 +1,76 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*    */ 
-/*    */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*    */ import java.util.Vector;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class StringCall
-/*    */   extends FunctionCall
-/*    */ {
-/*    */   public StringCall(QName fname, Vector arguments) {
-/* 41 */     super(fname, arguments);
-/*    */   }
-/*    */   
-/*    */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 45 */     int argc = argumentCount();
-/* 46 */     if (argc > 1) {
-/* 47 */       ErrorMsg err = new ErrorMsg("ILLEGAL_ARG_ERR", this);
-/* 48 */       throw new TypeCheckError(err);
-/*    */     } 
-/*    */     
-/* 51 */     if (argc > 0) {
-/* 52 */       argument().typeCheck(stable);
-/*    */     }
-/* 54 */     return this._type = Type.String;
-/*    */   }
-/*    */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*    */     Type targ;
-/* 58 */     InstructionList il = methodGen.getInstructionList();
-/*    */ 
-/*    */     
-/* 61 */     if (argumentCount() == 0) {
-/* 62 */       il.append(methodGen.loadContextNode());
-/* 63 */       targ = Type.Node;
-/*    */     } else {
-/*    */       
-/* 66 */       Expression arg = argument();
-/* 67 */       arg.translate(classGen, methodGen);
-/* 68 */       arg.startIterator(classGen, methodGen);
-/* 69 */       targ = arg.getType();
-/*    */     } 
-/*    */     
-/* 72 */     if (!targ.identicalTo(Type.String))
-/* 73 */       targ.translateTo(classGen, methodGen, Type.String); 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\StringCall.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringCall.java,v 1.2.4.1 2005/09/05 09:08:15 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+final class StringCall extends FunctionCall {
+    public StringCall(QName fname, Vector arguments) {
+        super(fname, arguments);
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        final int argc = argumentCount();
+        if (argc > 1) {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.ILLEGAL_ARG_ERR, this);
+            throw new TypeCheckError(err);
+        }
+
+        if (argc > 0) {
+            argument().typeCheck(stable);
+        }
+        return _type = Type.String;
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final InstructionList il = methodGen.getInstructionList();
+        Type targ;
+
+        if (argumentCount() == 0) {
+            il.append(methodGen.loadContextNode());
+            targ = Type.Node;
+        }
+        else {
+            final Expression arg = argument();
+            arg.translate(classGen, methodGen);
+            arg.startIterator(classGen, methodGen);
+            targ = arg.getType();
+        }
+
+        if (!targ.identicalTo(Type.String)) {
+            targ.translateTo(classGen, methodGen, Type.String);
+        }
+    }
+}

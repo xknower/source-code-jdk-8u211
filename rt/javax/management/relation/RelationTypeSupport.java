@@ -1,492 +1,486 @@
-/*     */ package javax.management.relation;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import com.sun.jmx.mbeanserver.GetPropertyAction;
-/*     */ import com.sun.jmx.mbeanserver.Util;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.ObjectStreamField;
-/*     */ import java.security.AccessController;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class RelationTypeSupport
-/*     */   implements RelationType
-/*     */ {
-/*     */   private static final long oldSerialVersionUID = -8179019472410837190L;
-/*     */   private static final long newSerialVersionUID = 4611072955724144607L;
-/*  82 */   private static final ObjectStreamField[] oldSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("myTypeName", String.class), new ObjectStreamField("myRoleName2InfoMap", HashMap.class), new ObjectStreamField("myIsInRelServFlg", boolean.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  90 */   private static final ObjectStreamField[] newSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("typeName", String.class), new ObjectStreamField("roleName2InfoMap", Map.class), new ObjectStreamField("isInRelationService", boolean.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final ObjectStreamField[] serialPersistentFields;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean compat = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/* 110 */       GetPropertyAction getPropertyAction = new GetPropertyAction("jmx.serial.form");
-/* 111 */       String str = AccessController.<String>doPrivileged(getPropertyAction);
-/* 112 */       compat = (str != null && str.equals("1.0"));
-/* 113 */     } catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 116 */     if (compat) {
-/* 117 */       serialPersistentFields = oldSerialPersistentFields;
-/* 118 */       serialVersionUID = -8179019472410837190L;
-/*     */     } else {
-/* 120 */       serialPersistentFields = newSerialPersistentFields;
-/* 121 */       serialVersionUID = 4611072955724144607L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 134 */   private String typeName = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 140 */   private Map<String, RoleInfo> roleName2InfoMap = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isInRelationService = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RelationTypeSupport(String paramString, RoleInfo[] paramArrayOfRoleInfo) throws IllegalArgumentException, InvalidRelationTypeException {
-/* 171 */     if (paramString == null || paramArrayOfRoleInfo == null) {
-/* 172 */       String str = "Invalid parameter.";
-/* 173 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 176 */     JmxProperties.RELATION_LOGGER.entering(RelationTypeSupport.class.getName(), "RelationTypeSupport", paramString);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 181 */     initMembers(paramString, paramArrayOfRoleInfo);
-/*     */     
-/* 183 */     JmxProperties.RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(), "RelationTypeSupport");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected RelationTypeSupport(String paramString) {
-/* 197 */     if (paramString == null) {
-/* 198 */       String str = "Invalid parameter.";
-/* 199 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 202 */     JmxProperties.RELATION_LOGGER.entering(RelationTypeSupport.class.getName(), "RelationTypeSupport", paramString);
-/*     */ 
-/*     */     
-/* 205 */     this.typeName = paramString;
-/*     */     
-/* 207 */     JmxProperties.RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(), "RelationTypeSupport");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getRelationTypeName() {
-/* 222 */     return this.typeName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public List<RoleInfo> getRoleInfos() {
-/* 229 */     return new ArrayList<>(this.roleName2InfoMap.values());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RoleInfo getRoleInfo(String paramString) throws IllegalArgumentException, RoleInfoNotFoundException {
-/* 249 */     if (paramString == null) {
-/* 250 */       String str = "Invalid parameter.";
-/* 251 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 254 */     JmxProperties.RELATION_LOGGER.entering(RelationTypeSupport.class.getName(), "getRoleInfo", paramString);
-/*     */ 
-/*     */ 
-/*     */     
-/* 258 */     RoleInfo roleInfo = this.roleName2InfoMap.get(paramString);
-/*     */     
-/* 260 */     if (roleInfo == null) {
-/* 261 */       StringBuilder stringBuilder = new StringBuilder();
-/* 262 */       String str = "No role info for role ";
-/* 263 */       stringBuilder.append(str);
-/* 264 */       stringBuilder.append(paramString);
-/* 265 */       throw new RoleInfoNotFoundException(stringBuilder.toString());
-/*     */     } 
-/*     */     
-/* 268 */     JmxProperties.RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(), "getRoleInfo");
-/*     */     
-/* 270 */     return roleInfo;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void addRoleInfo(RoleInfo paramRoleInfo) throws IllegalArgumentException, InvalidRelationTypeException {
-/* 295 */     if (paramRoleInfo == null) {
-/* 296 */       String str1 = "Invalid parameter.";
-/* 297 */       throw new IllegalArgumentException(str1);
-/*     */     } 
-/*     */     
-/* 300 */     JmxProperties.RELATION_LOGGER.entering(RelationTypeSupport.class.getName(), "addRoleInfo", paramRoleInfo);
-/*     */ 
-/*     */     
-/* 303 */     if (this.isInRelationService) {
-/*     */       
-/* 305 */       String str1 = "Relation type cannot be updated as it is declared in the Relation Service.";
-/* 306 */       throw new RuntimeException(str1);
-/*     */     } 
-/*     */     
-/* 309 */     String str = paramRoleInfo.getName();
-/*     */ 
-/*     */     
-/* 312 */     if (this.roleName2InfoMap.containsKey(str)) {
-/* 313 */       StringBuilder stringBuilder = new StringBuilder();
-/* 314 */       String str1 = "Two role infos provided for role ";
-/* 315 */       stringBuilder.append(str1);
-/* 316 */       stringBuilder.append(str);
-/* 317 */       throw new InvalidRelationTypeException(stringBuilder.toString());
-/*     */     } 
-/*     */     
-/* 320 */     this.roleName2InfoMap.put(str, new RoleInfo(paramRoleInfo));
-/*     */     
-/* 322 */     JmxProperties.RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(), "addRoleInfo");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setRelationServiceFlag(boolean paramBoolean) {
-/* 330 */     this.isInRelationService = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void initMembers(String paramString, RoleInfo[] paramArrayOfRoleInfo) throws IllegalArgumentException, InvalidRelationTypeException {
-/* 349 */     if (paramString == null || paramArrayOfRoleInfo == null) {
-/* 350 */       String str = "Invalid parameter.";
-/* 351 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 354 */     JmxProperties.RELATION_LOGGER.entering(RelationTypeSupport.class.getName(), "initMembers", paramString);
-/*     */ 
-/*     */     
-/* 357 */     this.typeName = paramString;
-/*     */ 
-/*     */ 
-/*     */     
-/* 361 */     checkRoleInfos(paramArrayOfRoleInfo);
-/*     */     
-/* 363 */     for (byte b = 0; b < paramArrayOfRoleInfo.length; b++) {
-/* 364 */       RoleInfo roleInfo = paramArrayOfRoleInfo[b];
-/* 365 */       this.roleName2InfoMap.put(roleInfo.getName(), new RoleInfo(roleInfo));
-/*     */     } 
-/*     */ 
-/*     */     
-/* 369 */     JmxProperties.RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(), "initMembers");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void checkRoleInfos(RoleInfo[] paramArrayOfRoleInfo) throws IllegalArgumentException, InvalidRelationTypeException {
-/* 390 */     if (paramArrayOfRoleInfo == null) {
-/* 391 */       String str = "Invalid parameter.";
-/* 392 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 395 */     if (paramArrayOfRoleInfo.length == 0) {
-/*     */       
-/* 397 */       String str = "No role info provided.";
-/* 398 */       throw new InvalidRelationTypeException(str);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 402 */     HashSet<String> hashSet = new HashSet();
-/*     */     
-/* 404 */     for (byte b = 0; b < paramArrayOfRoleInfo.length; b++) {
-/* 405 */       RoleInfo roleInfo = paramArrayOfRoleInfo[b];
-/*     */       
-/* 407 */       if (roleInfo == null) {
-/* 408 */         String str1 = "Null role info provided.";
-/* 409 */         throw new InvalidRelationTypeException(str1);
-/*     */       } 
-/*     */       
-/* 412 */       String str = roleInfo.getName();
-/*     */ 
-/*     */       
-/* 415 */       if (hashSet.contains(str)) {
-/* 416 */         StringBuilder stringBuilder = new StringBuilder();
-/* 417 */         String str1 = "Two role infos provided for role ";
-/* 418 */         stringBuilder.append(str1);
-/* 419 */         stringBuilder.append(str);
-/* 420 */         throw new InvalidRelationTypeException(stringBuilder.toString());
-/*     */       } 
-/* 422 */       hashSet.add(str);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 434 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 438 */       ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 439 */       this.typeName = (String)getField.get("myTypeName", (Object)null);
-/* 440 */       if (getField.defaulted("myTypeName"))
-/*     */       {
-/* 442 */         throw new NullPointerException("myTypeName");
-/*     */       }
-/* 444 */       this.roleName2InfoMap = Util.<Map<String, RoleInfo>>cast(getField.get("myRoleName2InfoMap", (Object)null));
-/* 445 */       if (getField.defaulted("myRoleName2InfoMap"))
-/*     */       {
-/* 447 */         throw new NullPointerException("myRoleName2InfoMap");
-/*     */       }
-/* 449 */       this.isInRelationService = getField.get("myIsInRelServFlg", false);
-/* 450 */       if (getField.defaulted("myIsInRelServFlg"))
-/*     */       {
-/* 452 */         throw new NullPointerException("myIsInRelServFlg");
-/*     */       
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 459 */       paramObjectInputStream.defaultReadObject();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 469 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 473 */       ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 474 */       putField.put("myTypeName", this.typeName);
-/* 475 */       putField.put("myRoleName2InfoMap", this.roleName2InfoMap);
-/* 476 */       putField.put("myIsInRelServFlg", this.isInRelationService);
-/* 477 */       paramObjectOutputStream.writeFields();
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 483 */       paramObjectOutputStream.defaultWriteObject();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\relation\RelationTypeSupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.relation;
+
+import static com.sun.jmx.defaults.JmxProperties.RELATION_LOGGER;
+import static com.sun.jmx.mbeanserver.Util.cast;
+import com.sun.jmx.mbeanserver.GetPropertyAction;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+
+import java.security.AccessController;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+
+/**
+ * A RelationTypeSupport object implements the RelationType interface.
+ * <P>It represents a relation type, providing role information for each role
+ * expected to be supported in every relation of that type.
+ *
+ * <P>A relation type includes a relation type name and a list of
+ * role infos (represented by RoleInfo objects).
+ *
+ * <P>A relation type has to be declared in the Relation Service:
+ * <P>- either using the createRelationType() method, where a RelationTypeSupport
+ * object will be created and kept in the Relation Service
+ * <P>- either using the addRelationType() method where the user has to create
+ * an object implementing the RelationType interface, and this object will be
+ * used as representing a relation type in the Relation Service.
+ *
+ * <p>The <b>serialVersionUID</b> of this class is <code>4611072955724144607L</code>.
+ *
+ * @since 1.5
+ */
+@SuppressWarnings("serial")  // serialVersionUID not constant
+public class RelationTypeSupport implements RelationType {
+
+    // Serialization compatibility stuff:
+    // Two serial forms are supported in this class. The selected form depends
+    // on system property "jmx.serial.form":
+    //  - "1.0" for JMX 1.0
+    //  - any other value for JMX 1.1 and higher
+    //
+    // Serial version for old serial form
+    private static final long oldSerialVersionUID = -8179019472410837190L;
+    //
+    // Serial version for new serial form
+    private static final long newSerialVersionUID = 4611072955724144607L;
+    //
+    // Serializable fields in old serial form
+    private static final ObjectStreamField[] oldSerialPersistentFields =
+    {
+      new ObjectStreamField("myTypeName", String.class),
+      new ObjectStreamField("myRoleName2InfoMap", HashMap.class),
+      new ObjectStreamField("myIsInRelServFlg", boolean.class)
+    };
+    //
+    // Serializable fields in new serial form
+    private static final ObjectStreamField[] newSerialPersistentFields =
+    {
+      new ObjectStreamField("typeName", String.class),
+      new ObjectStreamField("roleName2InfoMap", Map.class),
+      new ObjectStreamField("isInRelationService", boolean.class)
+    };
+    //
+    // Actual serial version and serial form
+    private static final long serialVersionUID;
+    /**
+     * @serialField typeName String Relation type name
+     * @serialField roleName2InfoMap Map {@link Map} holding the mapping:
+     *              &lt;role name ({@link String})&gt; -&gt; &lt;role info ({@link RoleInfo} object)&gt;
+     * @serialField isInRelationService boolean Flag specifying whether the relation type has been declared in the
+     *              Relation Service (so can no longer be updated)
+     */
+    private static final ObjectStreamField[] serialPersistentFields;
+    private static boolean compat = false;
+    static {
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK : Too bad, no compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
+    }
+    //
+    // END Serialization compatibility stuff
+
+    //
+    // Private members
+    //
+
+    /**
+     * @serial Relation type name
+     */
+    private String typeName = null;
+
+    /**
+     * @serial {@link Map} holding the mapping:
+     *           &lt;role name ({@link String})&gt; -&gt; &lt;role info ({@link RoleInfo} object)&gt;
+     */
+    private Map<String,RoleInfo> roleName2InfoMap =
+        new HashMap<String,RoleInfo>();
+
+    /**
+     * @serial Flag specifying whether the relation type has been declared in the
+     *         Relation Service (so can no longer be updated)
+     */
+    private boolean isInRelationService = false;
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructor where all role definitions are dynamically created and
+     * passed as parameter.
+     *
+     * @param relationTypeName  Name of relation type
+     * @param roleInfoArray  List of role definitions (RoleInfo objects)
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception InvalidRelationTypeException  if:
+     * <P>- the same name has been used for two different roles
+     * <P>- no role info provided
+     * <P>- one null role info provided
+     */
+    public RelationTypeSupport(String relationTypeName,
+                            RoleInfo[] roleInfoArray)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (relationTypeName == null || roleInfoArray == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationTypeSupport.class.getName(),
+                "RelationTypeSupport", relationTypeName);
+
+        // Can throw InvalidRelationTypeException, ClassNotFoundException
+        // and NotCompliantMBeanException
+        initMembers(relationTypeName, roleInfoArray);
+
+        RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(),
+                "RelationTypeSupport");
+        return;
+    }
+
+    /**
+     * Constructor to be used for subclasses.
+     *
+     * @param relationTypeName  Name of relation type.
+     *
+     * @exception IllegalArgumentException  if null parameter.
+     */
+    protected RelationTypeSupport(String relationTypeName)
+    {
+        if (relationTypeName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationTypeSupport.class.getName(),
+                "RelationTypeSupport", relationTypeName);
+
+        typeName = relationTypeName;
+
+        RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(),
+                "RelationTypeSupport");
+        return;
+    }
+
+    //
+    // Accessors
+    //
+
+    /**
+     * Returns the relation type name.
+     *
+     * @return the relation type name.
+     */
+    public String getRelationTypeName() {
+        return typeName;
+    }
+
+    /**
+     * Returns the list of role definitions (ArrayList of RoleInfo objects).
+     */
+    public List<RoleInfo> getRoleInfos() {
+        return new ArrayList<RoleInfo>(roleName2InfoMap.values());
+    }
+
+    /**
+     * Returns the role info (RoleInfo object) for the given role info name
+     * (null if not found).
+     *
+     * @param roleInfoName  role info name
+     *
+     * @return RoleInfo object providing role definition
+     * does not exist
+     *
+     * @exception IllegalArgumentException  if null parameter
+     * @exception RoleInfoNotFoundException  if no role info with that name in
+     * relation type.
+     */
+    public RoleInfo getRoleInfo(String roleInfoName)
+        throws IllegalArgumentException,
+               RoleInfoNotFoundException {
+
+        if (roleInfoName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationTypeSupport.class.getName(),
+                "getRoleInfo", roleInfoName);
+
+        // No null RoleInfo allowed, so use get()
+        RoleInfo result = roleName2InfoMap.get(roleInfoName);
+
+        if (result == null) {
+            StringBuilder excMsgStrB = new StringBuilder();
+            String excMsg = "No role info for role ";
+            excMsgStrB.append(excMsg);
+            excMsgStrB.append(roleInfoName);
+            throw new RoleInfoNotFoundException(excMsgStrB.toString());
+        }
+
+        RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(),
+                "getRoleInfo");
+        return result;
+    }
+
+    //
+    // Misc
+    //
+
+    /**
+     * Add a role info.
+     * This method of course should not be used after the creation of the
+     * relation type, because updating it would invalidate that the relations
+     * created associated to that type still conform to it.
+     * Can throw a RuntimeException if trying to update a relation type
+     * declared in the Relation Service.
+     *
+     * @param roleInfo  role info to be added.
+     *
+     * @exception IllegalArgumentException  if null parameter.
+     * @exception InvalidRelationTypeException  if there is already a role
+     *  info in current relation type with the same name.
+     */
+    protected void addRoleInfo(RoleInfo roleInfo)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (roleInfo == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationTypeSupport.class.getName(),
+                "addRoleInfo", roleInfo);
+
+        if (isInRelationService) {
+            // Trying to update a declared relation type
+            String excMsg = "Relation type cannot be updated as it is declared in the Relation Service.";
+            throw new RuntimeException(excMsg);
+        }
+
+        String roleName = roleInfo.getName();
+
+        // Checks if the role info has already been described
+        if (roleName2InfoMap.containsKey(roleName)) {
+            StringBuilder excMsgStrB = new StringBuilder();
+            String excMsg = "Two role infos provided for role ";
+            excMsgStrB.append(excMsg);
+            excMsgStrB.append(roleName);
+            throw new InvalidRelationTypeException(excMsgStrB.toString());
+        }
+
+        roleName2InfoMap.put(roleName, new RoleInfo(roleInfo));
+
+        RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(),
+                "addRoleInfo");
+        return;
+    }
+
+    // Sets the internal flag to specify that the relation type has been
+    // declared in the Relation Service
+    void setRelationServiceFlag(boolean flag) {
+        isInRelationService = flag;
+        return;
+    }
+
+    // Initializes the members, i.e. type name and role info list.
+    //
+    // -param relationTypeName  Name of relation type
+    // -param roleInfoArray  List of role definitions (RoleInfo objects)
+    //
+    // -exception IllegalArgumentException  if null parameter
+    // -exception InvalidRelationTypeException  If:
+    //  - the same name has been used for two different roles
+    //  - no role info provided
+    //  - one null role info provided
+    private void initMembers(String relationTypeName,
+                             RoleInfo[] roleInfoArray)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (relationTypeName == null || roleInfoArray == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(RelationTypeSupport.class.getName(),
+                "initMembers", relationTypeName);
+
+        typeName = relationTypeName;
+
+        // Verifies role infos before setting them
+        // Can throw InvalidRelationTypeException
+        checkRoleInfos(roleInfoArray);
+
+        for (int i = 0; i < roleInfoArray.length; i++) {
+            RoleInfo currRoleInfo = roleInfoArray[i];
+            roleName2InfoMap.put(currRoleInfo.getName(),
+                                 new RoleInfo(currRoleInfo));
+        }
+
+        RELATION_LOGGER.exiting(RelationTypeSupport.class.getName(),
+                "initMembers");
+        return;
+    }
+
+    // Checks the given RoleInfo array to verify that:
+    // - the array is not empty
+    // - it does not contain a null element
+    // - a given role name is used only for one RoleInfo
+    //
+    // -param roleInfoArray  array to be checked
+    //
+    // -exception IllegalArgumentException
+    // -exception InvalidRelationTypeException  If:
+    //  - the same name has been used for two different roles
+    //  - no role info provided
+    //  - one null role info provided
+    static void checkRoleInfos(RoleInfo[] roleInfoArray)
+        throws IllegalArgumentException,
+               InvalidRelationTypeException {
+
+        if (roleInfoArray == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        if (roleInfoArray.length == 0) {
+            // No role info provided
+            String excMsg = "No role info provided.";
+            throw new InvalidRelationTypeException(excMsg);
+        }
+
+
+        Set<String> roleNames = new HashSet<String>();
+
+        for (int i = 0; i < roleInfoArray.length; i++) {
+            RoleInfo currRoleInfo = roleInfoArray[i];
+
+            if (currRoleInfo == null) {
+                String excMsg = "Null role info provided.";
+                throw new InvalidRelationTypeException(excMsg);
+            }
+
+            String roleName = currRoleInfo.getName();
+
+            // Checks if the role info has already been described
+            if (roleNames.contains(roleName)) {
+                StringBuilder excMsgStrB = new StringBuilder();
+                String excMsg = "Two role infos provided for role ";
+                excMsgStrB.append(excMsg);
+                excMsgStrB.append(roleName);
+                throw new InvalidRelationTypeException(excMsgStrB.toString());
+            }
+            roleNames.add(roleName);
+        }
+
+        return;
+    }
+
+
+    /**
+     * Deserializes a {@link RelationTypeSupport} from an {@link ObjectInputStream}.
+     */
+    private void readObject(ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+      if (compat)
+      {
+        // Read an object serialized in the old serial form
+        //
+        ObjectInputStream.GetField fields = in.readFields();
+        typeName = (String) fields.get("myTypeName", null);
+        if (fields.defaulted("myTypeName"))
+        {
+          throw new NullPointerException("myTypeName");
+        }
+        roleName2InfoMap = cast(fields.get("myRoleName2InfoMap", null));
+        if (fields.defaulted("myRoleName2InfoMap"))
+        {
+          throw new NullPointerException("myRoleName2InfoMap");
+        }
+        isInRelationService = fields.get("myIsInRelServFlg", false);
+        if (fields.defaulted("myIsInRelServFlg"))
+        {
+          throw new NullPointerException("myIsInRelServFlg");
+        }
+      }
+      else
+      {
+        // Read an object serialized in the new serial form
+        //
+        in.defaultReadObject();
+      }
+    }
+
+
+    /**
+     * Serializes a {@link RelationTypeSupport} to an {@link ObjectOutputStream}.
+     */
+    private void writeObject(ObjectOutputStream out)
+            throws IOException {
+      if (compat)
+      {
+        // Serializes this instance in the old serial form
+        //
+        ObjectOutputStream.PutField fields = out.putFields();
+        fields.put("myTypeName", typeName);
+        fields.put("myRoleName2InfoMap", roleName2InfoMap);
+        fields.put("myIsInRelServFlg", isInRelationService);
+        out.writeFields();
+      }
+      else
+      {
+        // Serializes this instance in the new serial form
+        //
+        out.defaultWriteObject();
+      }
+    }
+}

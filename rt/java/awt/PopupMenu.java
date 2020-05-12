@@ -1,245 +1,241 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import java.awt.peer.PopupMenuPeer;
-/*     */ import javax.accessibility.AccessibleContext;
-/*     */ import javax.accessibility.AccessibleRole;
-/*     */ import sun.awt.AWTAccessor;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PopupMenu
-/*     */   extends Menu
-/*     */ {
-/*     */   private static final String base = "popup";
-/*  49 */   static int nameCounter = 0;
-/*     */   transient boolean isTrayIconPopup = false;
-/*     */   private static final long serialVersionUID = -4620452533522760060L;
-/*     */   
-/*     */   static {
-/*  54 */     AWTAccessor.setPopupMenuAccessor(new AWTAccessor.PopupMenuAccessor()
-/*     */         {
-/*     */           public boolean isTrayIconPopup(PopupMenu param1PopupMenu) {
-/*  57 */             return param1PopupMenu.isTrayIconPopup;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PopupMenu() throws HeadlessException {
-/*  74 */     this("");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PopupMenu(String paramString) throws HeadlessException {
-/*  87 */     super(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MenuContainer getParent() {
-/*  94 */     if (this.isTrayIconPopup) {
-/*  95 */       return null;
-/*     */     }
-/*  97 */     return super.getParent();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String constructComponentName() {
-/* 105 */     synchronized (PopupMenu.class) {
-/* 106 */       return "popup" + nameCounter++;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addNotify() {
-/* 116 */     synchronized (getTreeLock()) {
-/*     */ 
-/*     */       
-/* 119 */       if (this.parent != null && !(this.parent instanceof Component)) {
-/* 120 */         super.addNotify();
-/*     */       } else {
-/*     */         
-/* 123 */         if (this.peer == null)
-/* 124 */           this.peer = Toolkit.getDefaultToolkit().createPopupMenu(this); 
-/* 125 */         int i = getItemCount();
-/* 126 */         for (byte b = 0; b < i; b++) {
-/* 127 */           MenuItem menuItem = getItem(b);
-/* 128 */           menuItem.parent = this;
-/* 129 */           menuItem.addNotify();
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void show(Component paramComponent, int paramInt1, int paramInt2) {
-/* 158 */     MenuContainer menuContainer = this.parent;
-/* 159 */     if (menuContainer == null) {
-/* 160 */       throw new NullPointerException("parent is null");
-/*     */     }
-/* 162 */     if (!(menuContainer instanceof Component)) {
-/* 163 */       throw new IllegalArgumentException("PopupMenus with non-Component parents cannot be shown");
-/*     */     }
-/*     */     
-/* 166 */     Component component = (Component)menuContainer;
-/*     */ 
-/*     */ 
-/*     */     
-/* 170 */     if (component != paramComponent) {
-/* 171 */       if (component instanceof Container) {
-/* 172 */         if (!((Container)component).isAncestorOf(paramComponent)) {
-/* 173 */           throw new IllegalArgumentException("origin not in parent's hierarchy");
-/*     */         }
-/*     */       } else {
-/* 176 */         throw new IllegalArgumentException("origin not in parent's hierarchy");
-/*     */       } 
-/*     */     }
-/* 179 */     if (component.getPeer() == null || !component.isShowing()) {
-/* 180 */       throw new RuntimeException("parent not showing on screen");
-/*     */     }
-/* 182 */     if (this.peer == null) {
-/* 183 */       addNotify();
-/*     */     }
-/* 185 */     synchronized (getTreeLock()) {
-/* 186 */       if (this.peer != null) {
-/* 187 */         ((PopupMenuPeer)this.peer).show(new Event(paramComponent, 0L, 501, paramInt1, paramInt2, 0, 0));
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessibleContext getAccessibleContext() {
-/* 207 */     if (this.accessibleContext == null) {
-/* 208 */       this.accessibleContext = new AccessibleAWTPopupMenu();
-/*     */     }
-/* 210 */     return this.accessibleContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected class AccessibleAWTPopupMenu
-/*     */     extends Menu.AccessibleAWTMenu
-/*     */   {
-/*     */     private static final long serialVersionUID = -4282044795947239955L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public AccessibleRole getAccessibleRole() {
-/* 236 */       return AccessibleRole.POPUP_MENU;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\PopupMenu.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.awt.peer.PopupMenuPeer;
+import javax.accessibility.*;
+
+
+import sun.awt.AWTAccessor;
+
+/**
+ * A class that implements a menu which can be dynamically popped up
+ * at a specified position within a component.
+ * <p>
+ * As the inheritance hierarchy implies, a <code>PopupMenu</code>
+ *  can be used anywhere a <code>Menu</code> can be used.
+ * However, if you use a <code>PopupMenu</code> like a <code>Menu</code>
+ * (e.g., you add it to a <code>MenuBar</code>), then you <b>cannot</b>
+ * call <code>show</code> on that <code>PopupMenu</code>.
+ *
+ * @author      Amy Fowler
+ */
+public class PopupMenu extends Menu {
+
+    private static final String base = "popup";
+    static int nameCounter = 0;
+
+    transient boolean isTrayIconPopup = false;
+
+    static {
+        AWTAccessor.setPopupMenuAccessor(
+            new AWTAccessor.PopupMenuAccessor() {
+                public boolean isTrayIconPopup(PopupMenu popupMenu) {
+                    return popupMenu.isTrayIconPopup;
+                }
+            });
+    }
+
+    /*
+     * JDK 1.1 serialVersionUID
+     */
+    private static final long serialVersionUID = -4620452533522760060L;
+
+    /**
+     * Creates a new popup menu with an empty name.
+     * @exception HeadlessException if GraphicsEnvironment.isHeadless()
+     * returns true.
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public PopupMenu() throws HeadlessException {
+        this("");
+    }
+
+    /**
+     * Creates a new popup menu with the specified name.
+     *
+     * @param label a non-<code>null</code> string specifying
+     *                the popup menu's label
+     * @exception HeadlessException if GraphicsEnvironment.isHeadless()
+     * returns true.
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public PopupMenu(String label) throws HeadlessException {
+        super(label);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public MenuContainer getParent() {
+        if (isTrayIconPopup) {
+            return null;
+        }
+        return super.getParent();
+    }
+
+    /**
+     * Constructs a name for this <code>MenuComponent</code>.
+     * Called by <code>getName</code> when the name is <code>null</code>.
+     */
+    String constructComponentName() {
+        synchronized (PopupMenu.class) {
+            return base + nameCounter++;
+        }
+    }
+
+    /**
+     * Creates the popup menu's peer.
+     * The peer allows us to change the appearance of the popup menu without
+     * changing any of the popup menu's functionality.
+     */
+    public void addNotify() {
+        synchronized (getTreeLock()) {
+            // If our parent is not a Component, then this PopupMenu is
+            // really just a plain, old Menu.
+            if (parent != null && !(parent instanceof Component)) {
+                super.addNotify();
+            }
+            else {
+                if (peer == null)
+                    peer = Toolkit.getDefaultToolkit().createPopupMenu(this);
+                int nitems = getItemCount();
+                for (int i = 0 ; i < nitems ; i++) {
+                    MenuItem mi = getItem(i);
+                    mi.parent = this;
+                    mi.addNotify();
+                }
+            }
+        }
+    }
+
+   /**
+     * Shows the popup menu at the x, y position relative to an origin
+     * component.
+     * The origin component must be contained within the component
+     * hierarchy of the popup menu's parent.  Both the origin and the parent
+     * must be showing on the screen for this method to be valid.
+     * <p>
+     * If this <code>PopupMenu</code> is being used as a <code>Menu</code>
+     * (i.e., it has a non-<code>Component</code> parent),
+     * then you cannot call this method on the <code>PopupMenu</code>.
+     *
+     * @param origin the component which defines the coordinate space
+     * @param x the x coordinate position to popup the menu
+     * @param y the y coordinate position to popup the menu
+     * @exception NullPointerException  if the parent is <code>null</code>
+     * @exception IllegalArgumentException  if this <code>PopupMenu</code>
+     *                has a non-<code>Component</code> parent
+     * @exception IllegalArgumentException if the origin is not in the
+     *                parent's hierarchy
+     * @exception RuntimeException if the parent is not showing on screen
+     */
+    public void show(Component origin, int x, int y) {
+        // Use localParent for thread safety.
+        MenuContainer localParent = parent;
+        if (localParent == null) {
+            throw new NullPointerException("parent is null");
+        }
+        if (!(localParent instanceof Component)) {
+            throw new IllegalArgumentException(
+                "PopupMenus with non-Component parents cannot be shown");
+        }
+        Component compParent = (Component)localParent;
+        //Fixed 6278745: Incorrect exception throwing in PopupMenu.show() method
+        //Exception was not thrown if compParent was not equal to origin and
+        //was not Container
+        if (compParent != origin) {
+            if (compParent instanceof Container) {
+                if (!((Container)compParent).isAncestorOf(origin)) {
+                    throw new IllegalArgumentException("origin not in parent's hierarchy");
+                }
+            } else {
+                throw new IllegalArgumentException("origin not in parent's hierarchy");
+            }
+        }
+        if (compParent.getPeer() == null || !compParent.isShowing()) {
+            throw new RuntimeException("parent not showing on screen");
+        }
+        if (peer == null) {
+            addNotify();
+        }
+        synchronized (getTreeLock()) {
+            if (peer != null) {
+                ((PopupMenuPeer)peer).show(
+                    new Event(origin, 0, Event.MOUSE_DOWN, x, y, 0, 0));
+            }
+        }
+    }
+
+
+/////////////////
+// Accessibility support
+////////////////
+
+    /**
+     * Gets the <code>AccessibleContext</code> associated with this
+     * <code>PopupMenu</code>.
+     *
+     * @return the <code>AccessibleContext</code> of this
+     *                <code>PopupMenu</code>
+     * @since 1.3
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleAWTPopupMenu();
+        }
+        return accessibleContext;
+    }
+
+    /**
+     * Inner class of PopupMenu used to provide default support for
+     * accessibility.  This class is not meant to be used directly by
+     * application developers, but is instead meant only to be
+     * subclassed by menu component developers.
+     * <p>
+     * The class used to obtain the accessible role for this object.
+     * @since 1.3
+     */
+    protected class AccessibleAWTPopupMenu extends AccessibleAWTMenu
+    {
+        /*
+         * JDK 1.3 serialVersionUID
+         */
+        private static final long serialVersionUID = -4282044795947239955L;
+
+        /**
+         * Get the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of the
+         * object
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.POPUP_MENU;
+        }
+
+    } // class AccessibleAWTPopupMenu
+
+}

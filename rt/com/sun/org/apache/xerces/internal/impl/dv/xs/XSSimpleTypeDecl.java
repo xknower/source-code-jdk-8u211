@@ -1,3403 +1,3398 @@
-/*      */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.DatatypeException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeFacetException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.XSFacets;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xpath.regex.RegularExpression;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.util.ShortListImpl;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.util.StringListImpl;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLChar;
-/*      */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*      */ import com.sun.org.apache.xerces.internal.xs.ShortList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.StringList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSAnnotation;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSFacet;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSMultiValueFacet;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSObject;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
-/*      */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*      */ import com.sun.org.apache.xerces.internal.xs.datatypes.ObjectList;
-/*      */ import java.util.AbstractList;
-/*      */ import java.util.Locale;
-/*      */ import java.util.StringTokenizer;
-/*      */ import java.util.Vector;
-/*      */ import org.w3c.dom.TypeInfo;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XSSimpleTypeDecl
-/*      */   implements XSSimpleType, TypeInfo
-/*      */ {
-/*      */   protected static final short DV_STRING = 1;
-/*      */   protected static final short DV_BOOLEAN = 2;
-/*      */   protected static final short DV_DECIMAL = 3;
-/*      */   protected static final short DV_FLOAT = 4;
-/*      */   protected static final short DV_DOUBLE = 5;
-/*      */   protected static final short DV_DURATION = 6;
-/*      */   protected static final short DV_DATETIME = 7;
-/*      */   protected static final short DV_TIME = 8;
-/*      */   protected static final short DV_DATE = 9;
-/*      */   protected static final short DV_GYEARMONTH = 10;
-/*      */   protected static final short DV_GYEAR = 11;
-/*      */   protected static final short DV_GMONTHDAY = 12;
-/*      */   protected static final short DV_GDAY = 13;
-/*      */   protected static final short DV_GMONTH = 14;
-/*      */   protected static final short DV_HEXBINARY = 15;
-/*      */   protected static final short DV_BASE64BINARY = 16;
-/*      */   protected static final short DV_ANYURI = 17;
-/*      */   protected static final short DV_QNAME = 18;
-/*      */   protected static final short DV_PRECISIONDECIMAL = 19;
-/*      */   protected static final short DV_NOTATION = 20;
-/*      */   protected static final short DV_ANYSIMPLETYPE = 0;
-/*      */   protected static final short DV_ID = 21;
-/*      */   protected static final short DV_IDREF = 22;
-/*      */   protected static final short DV_ENTITY = 23;
-/*      */   protected static final short DV_INTEGER = 24;
-/*      */   protected static final short DV_LIST = 25;
-/*      */   protected static final short DV_UNION = 26;
-/*      */   protected static final short DV_YEARMONTHDURATION = 27;
-/*      */   protected static final short DV_DAYTIMEDURATION = 28;
-/*      */   protected static final short DV_ANYATOMICTYPE = 29;
-/*   99 */   private static final TypeValidator[] gDVs = new TypeValidator[] { new AnySimpleDV(), new StringDV(), new BooleanDV(), new DecimalDV(), new FloatDV(), new DoubleDV(), new DurationDV(), new DateTimeDV(), new TimeDV(), new DateDV(), new YearMonthDV(), new YearDV(), new MonthDayDV(), new DayDV(), new MonthDV(), new HexBinaryDV(), new Base64BinaryDV(), new AnyURIDV(), new QNameDV(), new PrecisionDecimalDV(), new QNameDV(), new IDDV(), new IDREFDV(), new EntityDV(), new IntegerDV(), new ListDV(), new UnionDV(), new YearMonthDurationDV(), new DayTimeDurationDV(), new AnyAtomicDV() };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short NORMALIZE_NONE = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short NORMALIZE_TRIM = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short NORMALIZE_FULL = 2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  135 */   static final short[] fDVNormalizeType = new short[] { 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 1, 1, 0 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short SPECIAL_PATTERN_NONE = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short SPECIAL_PATTERN_NMTOKEN = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short SPECIAL_PATTERN_NAME = 2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final short SPECIAL_PATTERN_NCNAME = 3;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  173 */   static final String[] SPECIAL_PATTERN_STRING = new String[] { "NONE", "NMTOKEN", "Name", "NCName" };
-/*      */ 
-/*      */ 
-/*      */   
-/*  177 */   static final String[] WS_FACET_STRING = new String[] { "preserve", "replace", "collapse" };
-/*      */   
-/*      */   static final String URI_SCHEMAFORSCHEMA = "http://www.w3.org/2001/XMLSchema";
-/*      */   
-/*      */   static final String ANY_TYPE = "anyType";
-/*      */   
-/*      */   public static final short YEARMONTHDURATION_DT = 46;
-/*      */   
-/*      */   public static final short DAYTIMEDURATION_DT = 47;
-/*      */   
-/*      */   public static final short PRECISIONDECIMAL_DT = 48;
-/*      */   
-/*      */   public static final short ANYATOMICTYPE_DT = 49;
-/*      */   
-/*      */   static final int DERIVATION_ANY = 0;
-/*      */   static final int DERIVATION_RESTRICTION = 1;
-/*      */   static final int DERIVATION_EXTENSION = 2;
-/*      */   static final int DERIVATION_UNION = 4;
-/*      */   static final int DERIVATION_LIST = 8;
-/*      */   
-/*  197 */   static final ValidationContext fEmptyContext = new ValidationContext() {
-/*      */       public boolean needFacetChecking() {
-/*  199 */         return true;
-/*      */       }
-/*      */       public boolean needExtraChecking() {
-/*  202 */         return false;
-/*      */       }
-/*      */       public boolean needToNormalize() {
-/*  205 */         return true;
-/*      */       }
-/*      */       public boolean useNamespaces() {
-/*  208 */         return true;
-/*      */       }
-/*      */       public boolean isEntityDeclared(String name) {
-/*  211 */         return false;
-/*      */       }
-/*      */       public boolean isEntityUnparsed(String name) {
-/*  214 */         return false;
-/*      */       }
-/*      */       public boolean isIdDeclared(String name) {
-/*  217 */         return false;
-/*      */       }
-/*      */       public void addId(String name) {}
-/*      */       
-/*      */       public void addIdRef(String name) {}
-/*      */       
-/*      */       public String getSymbol(String symbol) {
-/*  224 */         return symbol.intern();
-/*      */       }
-/*      */       public String getURI(String prefix) {
-/*  227 */         return null;
-/*      */       }
-/*      */       public Locale getLocale() {
-/*  230 */         return Locale.getDefault();
-/*      */       }
-/*      */     };
-/*      */   
-/*      */   protected static TypeValidator[] getGDVs() {
-/*  235 */     return (TypeValidator[])gDVs.clone();
-/*      */   }
-/*  237 */   private TypeValidator[] fDVs = gDVs;
-/*      */   protected void setDVs(TypeValidator[] dvs) {
-/*  239 */     this.fDVs = dvs;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private boolean fIsImmutable = false;
-/*      */   
-/*      */   private XSSimpleTypeDecl fItemType;
-/*      */   
-/*      */   private XSSimpleTypeDecl[] fMemberTypes;
-/*      */   
-/*      */   private short fBuiltInKind;
-/*      */   
-/*      */   private String fTypeName;
-/*      */   
-/*      */   private String fTargetNamespace;
-/*  254 */   private short fFinalSet = 0;
-/*      */   private XSSimpleTypeDecl fBase;
-/*  256 */   private short fVariety = -1;
-/*  257 */   private short fValidationDV = -1;
-/*      */   
-/*  259 */   private short fFacetsDefined = 0;
-/*  260 */   private short fFixedFacet = 0;
-/*      */ 
-/*      */   
-/*  263 */   private short fWhiteSpace = 0;
-/*  264 */   private int fLength = -1;
-/*  265 */   private int fMinLength = -1;
-/*  266 */   private int fMaxLength = -1;
-/*  267 */   private int fTotalDigits = -1;
-/*  268 */   private int fFractionDigits = -1;
-/*      */   
-/*      */   private Vector fPattern;
-/*      */   
-/*      */   private Vector fPatternStr;
-/*      */   
-/*      */   private Vector fEnumeration;
-/*      */   
-/*      */   private short[] fEnumerationType;
-/*      */   
-/*      */   private ShortList[] fEnumerationItemType;
-/*      */   
-/*      */   private ShortList fEnumerationTypeList;
-/*      */   
-/*      */   private ObjectList fEnumerationItemTypeList;
-/*      */   
-/*      */   private StringList fLexicalPattern;
-/*      */   private StringList fLexicalEnumeration;
-/*      */   private ObjectList fActualEnumeration;
-/*      */   private Object fMaxInclusive;
-/*      */   private Object fMaxExclusive;
-/*      */   private Object fMinExclusive;
-/*      */   private Object fMinInclusive;
-/*      */   public XSAnnotation lengthAnnotation;
-/*      */   public XSAnnotation minLengthAnnotation;
-/*      */   public XSAnnotation maxLengthAnnotation;
-/*      */   public XSAnnotation whiteSpaceAnnotation;
-/*      */   public XSAnnotation totalDigitsAnnotation;
-/*      */   public XSAnnotation fractionDigitsAnnotation;
-/*      */   public XSObjectListImpl patternAnnotations;
-/*      */   public XSObjectList enumerationAnnotations;
-/*      */   public XSAnnotation maxInclusiveAnnotation;
-/*      */   public XSAnnotation maxExclusiveAnnotation;
-/*      */   public XSAnnotation minInclusiveAnnotation;
-/*      */   public XSAnnotation minExclusiveAnnotation;
-/*      */   private XSObjectListImpl fFacets;
-/*      */   private XSObjectListImpl fMultiValueFacets;
-/*  305 */   private XSObjectList fAnnotations = null;
-/*      */   
-/*  307 */   private short fPatternType = 0;
-/*      */   
-/*      */   private short fOrdered;
-/*      */   
-/*      */   private boolean fFinite;
-/*      */   
-/*      */   private boolean fBounded;
-/*      */   
-/*      */   private boolean fNumeric;
-/*      */   
-/*  317 */   private XSNamespaceItem fNamespaceItem = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XSSimpleTypeDecl(XSSimpleTypeDecl base, String name, String uri, short finalSet, boolean isImmutable, XSObjectList annotations, short builtInKind) {
-/*  356 */     this(base, name, uri, finalSet, isImmutable, annotations);
-/*      */     
-/*  358 */     this.fBuiltInKind = builtInKind;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XSSimpleTypeDecl setRestrictionValues(XSSimpleTypeDecl base, String name, String uri, short finalSet, XSObjectList annotations) {
-/*  483 */     if (this.fIsImmutable) return null; 
-/*  484 */     this.fBase = base;
-/*  485 */     this.fAnonymous = false;
-/*  486 */     this.fTypeName = name;
-/*  487 */     this.fTargetNamespace = uri;
-/*  488 */     this.fFinalSet = finalSet;
-/*  489 */     this.fAnnotations = annotations;
-/*      */     
-/*  491 */     this.fVariety = this.fBase.fVariety;
-/*  492 */     this.fValidationDV = this.fBase.fValidationDV;
-/*  493 */     switch (this.fVariety) {
-/*      */ 
-/*      */       
-/*      */       case 2:
-/*  497 */         this.fItemType = this.fBase.fItemType;
-/*      */         break;
-/*      */       case 3:
-/*  500 */         this.fMemberTypes = this.fBase.fMemberTypes;
-/*      */         break;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  506 */     this.fLength = this.fBase.fLength;
-/*  507 */     this.fMinLength = this.fBase.fMinLength;
-/*  508 */     this.fMaxLength = this.fBase.fMaxLength;
-/*  509 */     this.fPattern = this.fBase.fPattern;
-/*  510 */     this.fPatternStr = this.fBase.fPatternStr;
-/*  511 */     this.fEnumeration = this.fBase.fEnumeration;
-/*  512 */     this.fEnumerationType = this.fBase.fEnumerationType;
-/*  513 */     this.fEnumerationItemType = this.fBase.fEnumerationItemType;
-/*  514 */     this.fWhiteSpace = this.fBase.fWhiteSpace;
-/*  515 */     this.fMaxExclusive = this.fBase.fMaxExclusive;
-/*  516 */     this.fMaxInclusive = this.fBase.fMaxInclusive;
-/*  517 */     this.fMinExclusive = this.fBase.fMinExclusive;
-/*  518 */     this.fMinInclusive = this.fBase.fMinInclusive;
-/*  519 */     this.fTotalDigits = this.fBase.fTotalDigits;
-/*  520 */     this.fFractionDigits = this.fBase.fFractionDigits;
-/*  521 */     this.fPatternType = this.fBase.fPatternType;
-/*  522 */     this.fFixedFacet = this.fBase.fFixedFacet;
-/*  523 */     this.fFacetsDefined = this.fBase.fFacetsDefined;
-/*      */ 
-/*      */     
-/*  526 */     calcFundamentalFacets();
-/*      */ 
-/*      */     
-/*  529 */     this.fBuiltInKind = base.fBuiltInKind;
-/*      */     
-/*  531 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XSSimpleTypeDecl setListValues(String name, String uri, short finalSet, XSSimpleTypeDecl itemType, XSObjectList annotations) {
-/*  538 */     if (this.fIsImmutable) return null; 
-/*  539 */     this.fBase = fAnySimpleType;
-/*  540 */     this.fAnonymous = false;
-/*  541 */     this.fTypeName = name;
-/*  542 */     this.fTargetNamespace = uri;
-/*  543 */     this.fFinalSet = finalSet;
-/*  544 */     this.fAnnotations = annotations;
-/*      */     
-/*  546 */     this.fVariety = 2;
-/*  547 */     this.fItemType = itemType;
-/*  548 */     this.fValidationDV = 25;
-/*  549 */     this.fFacetsDefined = 16;
-/*  550 */     this.fFixedFacet = 16;
-/*  551 */     this.fWhiteSpace = 2;
-/*      */ 
-/*      */     
-/*  554 */     calcFundamentalFacets();
-/*      */ 
-/*      */     
-/*  557 */     this.fBuiltInKind = 44;
-/*      */     
-/*  559 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XSSimpleTypeDecl setUnionValues(String name, String uri, short finalSet, XSSimpleTypeDecl[] memberTypes, XSObjectList annotations) {
-/*  566 */     if (this.fIsImmutable) return null; 
-/*  567 */     this.fBase = fAnySimpleType;
-/*  568 */     this.fAnonymous = false;
-/*  569 */     this.fTypeName = name;
-/*  570 */     this.fTargetNamespace = uri;
-/*  571 */     this.fFinalSet = finalSet;
-/*  572 */     this.fAnnotations = annotations;
-/*      */     
-/*  574 */     this.fVariety = 3;
-/*  575 */     this.fMemberTypes = memberTypes;
-/*  576 */     this.fValidationDV = 26;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  581 */     this.fFacetsDefined = 16;
-/*  582 */     this.fWhiteSpace = 2;
-/*      */ 
-/*      */     
-/*  585 */     calcFundamentalFacets();
-/*      */ 
-/*      */     
-/*  588 */     this.fBuiltInKind = 45;
-/*      */     
-/*  590 */     return this;
-/*      */   }
-/*      */   
-/*      */   public short getType() {
-/*  594 */     return 3;
-/*      */   }
-/*      */   
-/*      */   public short getTypeCategory() {
-/*  598 */     return 16;
-/*      */   }
-/*      */   
-/*      */   public String getName() {
-/*  602 */     return getAnonymous() ? null : this.fTypeName;
-/*      */   }
-/*      */   
-/*      */   public String getTypeName() {
-/*  606 */     return this.fTypeName;
-/*      */   }
-/*      */   
-/*      */   public String getNamespace() {
-/*  610 */     return this.fTargetNamespace;
-/*      */   }
-/*      */   
-/*      */   public short getFinal() {
-/*  614 */     return this.fFinalSet;
-/*      */   }
-/*      */   
-/*      */   public boolean isFinal(short derivation) {
-/*  618 */     return ((this.fFinalSet & derivation) != 0);
-/*      */   }
-/*      */   
-/*      */   public XSTypeDefinition getBaseType() {
-/*  622 */     return this.fBase;
-/*      */   }
-/*      */   
-/*      */   public boolean getAnonymous() {
-/*  626 */     return (this.fAnonymous || this.fTypeName == null);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public short getVariety() {
-/*  631 */     return (this.fValidationDV == 0) ? 0 : this.fVariety;
-/*      */   }
-/*      */   public boolean isIDType() {
-/*      */     int i;
-/*  635 */     switch (this.fVariety) {
-/*      */       case 1:
-/*  637 */         return (this.fValidationDV == 21);
-/*      */       case 2:
-/*  639 */         return this.fItemType.isIDType();
-/*      */       case 3:
-/*  641 */         for (i = 0; i < this.fMemberTypes.length; i++) {
-/*  642 */           if (this.fMemberTypes[i].isIDType())
-/*  643 */             return true; 
-/*      */         }  break;
-/*      */     } 
-/*  646 */     return false;
-/*      */   }
-/*      */   
-/*      */   public short getWhitespace() throws DatatypeException {
-/*  650 */     if (this.fVariety == 3) {
-/*  651 */       throw new DatatypeException("dt-whitespace", new Object[] { this.fTypeName });
-/*      */     }
-/*  653 */     return this.fWhiteSpace;
-/*      */   }
-/*      */   
-/*      */   public short getPrimitiveKind() {
-/*  657 */     if (this.fVariety == 1 && this.fValidationDV != 0) {
-/*  658 */       if (this.fValidationDV == 21 || this.fValidationDV == 22 || this.fValidationDV == 23) {
-/*  659 */         return 1;
-/*      */       }
-/*  661 */       if (this.fValidationDV == 24) {
-/*  662 */         return 3;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  668 */       return this.fValidationDV;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  673 */     return 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short getBuiltInKind() {
-/*  683 */     return this.fBuiltInKind;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSSimpleTypeDefinition getPrimitiveType() {
-/*  692 */     if (this.fVariety == 1 && this.fValidationDV != 0) {
-/*  693 */       XSSimpleTypeDecl pri = this;
-/*      */       
-/*  695 */       while (pri.fBase != fAnySimpleType)
-/*  696 */         pri = pri.fBase; 
-/*  697 */       return pri;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  701 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSSimpleTypeDefinition getItemType() {
-/*  711 */     if (this.fVariety == 2) {
-/*  712 */       return this.fItemType;
-/*      */     }
-/*      */ 
-/*      */     
-/*  716 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSObjectList getMemberTypes() {
-/*  726 */     if (this.fVariety == 3) {
-/*  727 */       return new XSObjectListImpl((XSObject[])this.fMemberTypes, this.fMemberTypes.length);
-/*      */     }
-/*      */     
-/*  730 */     return XSObjectListImpl.EMPTY_LIST;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void applyFacets(XSFacets facets, short presentFacet, short fixedFacet, ValidationContext context) throws InvalidDatatypeFacetException {
-/*  739 */     if (context == null) {
-/*  740 */       context = fEmptyContext;
-/*      */     }
-/*  742 */     applyFacets(facets, presentFacet, fixedFacet, (short)0, context);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void applyFacets1(XSFacets facets, short presentFacet, short fixedFacet) {
-/*      */     try {
-/*  751 */       applyFacets(facets, presentFacet, fixedFacet, (short)0, fDummyContext);
-/*  752 */     } catch (InvalidDatatypeFacetException e) {
-/*      */       
-/*  754 */       throw new RuntimeException("internal error");
-/*      */     } 
-/*      */     
-/*  757 */     this.fIsImmutable = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void applyFacets1(XSFacets facets, short presentFacet, short fixedFacet, short patternType) {
-/*      */     try {
-/*  766 */       applyFacets(facets, presentFacet, fixedFacet, patternType, fDummyContext);
-/*  767 */     } catch (InvalidDatatypeFacetException e) {
-/*      */       
-/*  769 */       throw new RuntimeException("internal error");
-/*      */     } 
-/*      */     
-/*  772 */     this.fIsImmutable = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void applyFacets(XSFacets facets, short presentFacet, short fixedFacet, short patternType, ValidationContext context) throws InvalidDatatypeFacetException {
-/*  782 */     if (this.fIsImmutable)
-/*  783 */       return;  ValidatedInfo tempInfo = new ValidatedInfo();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  792 */     this.fFacetsDefined = 0;
-/*  793 */     this.fFixedFacet = 0;
-/*      */     
-/*  795 */     int result = 0;
-/*      */ 
-/*      */     
-/*  798 */     short allowedFacet = this.fDVs[this.fValidationDV].getAllowedFacets();
-/*      */ 
-/*      */     
-/*  801 */     if ((presentFacet & 0x1) != 0) {
-/*  802 */       if ((allowedFacet & 0x1) == 0) {
-/*  803 */         reportError("cos-applicable-facets", new Object[] { "length", this.fTypeName });
-/*      */       } else {
-/*  805 */         this.fLength = facets.length;
-/*  806 */         this.lengthAnnotation = facets.lengthAnnotation;
-/*  807 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x1);
-/*  808 */         if ((fixedFacet & 0x1) != 0) {
-/*  809 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x1);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*  813 */     if ((presentFacet & 0x2) != 0) {
-/*  814 */       if ((allowedFacet & 0x2) == 0) {
-/*  815 */         reportError("cos-applicable-facets", new Object[] { "minLength", this.fTypeName });
-/*      */       } else {
-/*  817 */         this.fMinLength = facets.minLength;
-/*  818 */         this.minLengthAnnotation = facets.minLengthAnnotation;
-/*  819 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x2);
-/*  820 */         if ((fixedFacet & 0x2) != 0) {
-/*  821 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x2);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*  825 */     if ((presentFacet & 0x4) != 0) {
-/*  826 */       if ((allowedFacet & 0x4) == 0) {
-/*  827 */         reportError("cos-applicable-facets", new Object[] { "maxLength", this.fTypeName });
-/*      */       } else {
-/*  829 */         this.fMaxLength = facets.maxLength;
-/*  830 */         this.maxLengthAnnotation = facets.maxLengthAnnotation;
-/*  831 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x4);
-/*  832 */         if ((fixedFacet & 0x4) != 0) {
-/*  833 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x4);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*  837 */     if ((presentFacet & 0x8) != 0) {
-/*  838 */       if ((allowedFacet & 0x8) == 0) {
-/*  839 */         reportError("cos-applicable-facets", new Object[] { "pattern", this.fTypeName });
-/*      */       } else {
-/*  841 */         this.patternAnnotations = facets.patternAnnotations;
-/*  842 */         RegularExpression regex = null;
-/*      */         try {
-/*  844 */           regex = new RegularExpression(facets.pattern, "X", context.getLocale());
-/*  845 */         } catch (Exception e) {
-/*  846 */           reportError("InvalidRegex", new Object[] { facets.pattern, e.getLocalizedMessage() });
-/*      */         } 
-/*  848 */         if (regex != null) {
-/*  849 */           this.fPattern = new Vector();
-/*  850 */           this.fPattern.addElement(regex);
-/*  851 */           this.fPatternStr = new Vector();
-/*  852 */           this.fPatternStr.addElement(facets.pattern);
-/*  853 */           this.fFacetsDefined = (short)(this.fFacetsDefined | 0x8);
-/*  854 */           if ((fixedFacet & 0x8) != 0) {
-/*  855 */             this.fFixedFacet = (short)(this.fFixedFacet | 0x8);
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */     
-/*  861 */     if ((presentFacet & 0x10) != 0) {
-/*  862 */       if ((allowedFacet & 0x10) == 0) {
-/*  863 */         reportError("cos-applicable-facets", new Object[] { "whiteSpace", this.fTypeName });
-/*      */       } else {
-/*  865 */         this.fWhiteSpace = facets.whiteSpace;
-/*  866 */         this.whiteSpaceAnnotation = facets.whiteSpaceAnnotation;
-/*  867 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x10);
-/*  868 */         if ((fixedFacet & 0x10) != 0) {
-/*  869 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x10);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*  873 */     if ((presentFacet & 0x800) != 0) {
-/*  874 */       if ((allowedFacet & 0x800) == 0) {
-/*  875 */         reportError("cos-applicable-facets", new Object[] { "enumeration", this.fTypeName });
-/*      */       } else {
-/*  877 */         this.fEnumeration = new Vector();
-/*  878 */         Vector<String> enumVals = facets.enumeration;
-/*  879 */         this.fEnumerationType = new short[enumVals.size()];
-/*  880 */         this.fEnumerationItemType = new ShortList[enumVals.size()];
-/*  881 */         Vector<NamespaceContext> enumNSDecls = facets.enumNSDecls;
-/*  882 */         ValidationContextImpl ctx = new ValidationContextImpl(context);
-/*  883 */         this.enumerationAnnotations = facets.enumAnnotations;
-/*  884 */         for (int i = 0; i < enumVals.size(); i++) {
-/*  885 */           if (enumNSDecls != null)
-/*  886 */             ctx.setNSContext(enumNSDecls.elementAt(i)); 
-/*      */           try {
-/*  888 */             ValidatedInfo info = getActualEnumValue(enumVals.elementAt(i), ctx, tempInfo);
-/*      */             
-/*  890 */             this.fEnumeration.addElement(info.actualValue);
-/*  891 */             this.fEnumerationType[i] = info.actualValueType;
-/*  892 */             this.fEnumerationItemType[i] = info.itemValueTypes;
-/*  893 */           } catch (InvalidDatatypeValueException ide) {
-/*  894 */             reportError("enumeration-valid-restriction", new Object[] { enumVals.elementAt(i), getBaseType().getName() });
-/*      */           } 
-/*      */         } 
-/*  897 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x800);
-/*  898 */         if ((fixedFacet & 0x800) != 0) {
-/*  899 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x800);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/*  904 */     if ((presentFacet & 0x20) != 0) {
-/*  905 */       if ((allowedFacet & 0x20) == 0) {
-/*  906 */         reportError("cos-applicable-facets", new Object[] { "maxInclusive", this.fTypeName });
-/*      */       } else {
-/*  908 */         this.maxInclusiveAnnotation = facets.maxInclusiveAnnotation;
-/*      */         try {
-/*  910 */           this.fMaxInclusive = this.fBase.getActualValue(facets.maxInclusive, context, tempInfo, true);
-/*  911 */           this.fFacetsDefined = (short)(this.fFacetsDefined | 0x20);
-/*  912 */           if ((fixedFacet & 0x20) != 0)
-/*  913 */             this.fFixedFacet = (short)(this.fFixedFacet | 0x20); 
-/*  914 */         } catch (InvalidDatatypeValueException ide) {
-/*  915 */           reportError(ide.getKey(), ide.getArgs());
-/*  916 */           reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.maxInclusive, "maxInclusive", this.fBase
-/*  917 */                 .getName() });
-/*      */         } 
-/*      */ 
-/*      */         
-/*  921 */         if ((this.fBase.fFacetsDefined & 0x20) != 0 && (
-/*  922 */           this.fBase.fFixedFacet & 0x20) != 0 && 
-/*  923 */           this.fDVs[this.fValidationDV].compare(this.fMaxInclusive, this.fBase.fMaxInclusive) != 0) {
-/*  924 */           reportError("FixedFacetValue", new Object[] { "maxInclusive", this.fMaxInclusive, this.fBase.fMaxInclusive, this.fTypeName });
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         try {
-/*  929 */           this.fBase.validate(context, tempInfo);
-/*  930 */         } catch (InvalidDatatypeValueException ide) {
-/*  931 */           reportError(ide.getKey(), ide.getArgs());
-/*  932 */           reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.maxInclusive, "maxInclusive", this.fBase
-/*  933 */                 .getName() });
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*  939 */     boolean needCheckBase = true;
-/*  940 */     if ((presentFacet & 0x40) != 0) {
-/*  941 */       if ((allowedFacet & 0x40) == 0) {
-/*  942 */         reportError("cos-applicable-facets", new Object[] { "maxExclusive", this.fTypeName });
-/*      */       } else {
-/*  944 */         this.maxExclusiveAnnotation = facets.maxExclusiveAnnotation;
-/*      */         try {
-/*  946 */           this.fMaxExclusive = this.fBase.getActualValue(facets.maxExclusive, context, tempInfo, true);
-/*  947 */           this.fFacetsDefined = (short)(this.fFacetsDefined | 0x40);
-/*  948 */           if ((fixedFacet & 0x40) != 0)
-/*  949 */             this.fFixedFacet = (short)(this.fFixedFacet | 0x40); 
-/*  950 */         } catch (InvalidDatatypeValueException ide) {
-/*  951 */           reportError(ide.getKey(), ide.getArgs());
-/*  952 */           reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.maxExclusive, "maxExclusive", this.fBase
-/*  953 */                 .getName() });
-/*      */         } 
-/*      */ 
-/*      */         
-/*  957 */         if ((this.fBase.fFacetsDefined & 0x40) != 0) {
-/*  958 */           result = this.fDVs[this.fValidationDV].compare(this.fMaxExclusive, this.fBase.fMaxExclusive);
-/*  959 */           if ((this.fBase.fFixedFacet & 0x40) != 0 && result != 0) {
-/*  960 */             reportError("FixedFacetValue", new Object[] { "maxExclusive", facets.maxExclusive, this.fBase.fMaxExclusive, this.fTypeName });
-/*      */           }
-/*  962 */           if (result == 0) {
-/*  963 */             needCheckBase = false;
-/*      */           }
-/*      */         } 
-/*      */         
-/*  967 */         if (needCheckBase) {
-/*      */           try {
-/*  969 */             this.fBase.validate(context, tempInfo);
-/*  970 */           } catch (InvalidDatatypeValueException ide) {
-/*  971 */             reportError(ide.getKey(), ide.getArgs());
-/*  972 */             reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.maxExclusive, "maxExclusive", this.fBase
-/*  973 */                   .getName() });
-/*      */           
-/*      */           }
-/*      */         
-/*      */         }
-/*  978 */         else if ((this.fBase.fFacetsDefined & 0x20) != 0 && 
-/*  979 */           this.fDVs[this.fValidationDV].compare(this.fMaxExclusive, this.fBase.fMaxInclusive) > 0) {
-/*  980 */           reportError("maxExclusive-valid-restriction.2", new Object[] { facets.maxExclusive, this.fBase.fMaxInclusive });
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*  986 */     needCheckBase = true;
-/*  987 */     if ((presentFacet & 0x80) != 0) {
-/*  988 */       if ((allowedFacet & 0x80) == 0) {
-/*  989 */         reportError("cos-applicable-facets", new Object[] { "minExclusive", this.fTypeName });
-/*      */       } else {
-/*  991 */         this.minExclusiveAnnotation = facets.minExclusiveAnnotation;
-/*      */         try {
-/*  993 */           this.fMinExclusive = this.fBase.getActualValue(facets.minExclusive, context, tempInfo, true);
-/*  994 */           this.fFacetsDefined = (short)(this.fFacetsDefined | 0x80);
-/*  995 */           if ((fixedFacet & 0x80) != 0)
-/*  996 */             this.fFixedFacet = (short)(this.fFixedFacet | 0x80); 
-/*  997 */         } catch (InvalidDatatypeValueException ide) {
-/*  998 */           reportError(ide.getKey(), ide.getArgs());
-/*  999 */           reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.minExclusive, "minExclusive", this.fBase
-/* 1000 */                 .getName() });
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1004 */         if ((this.fBase.fFacetsDefined & 0x80) != 0) {
-/* 1005 */           result = this.fDVs[this.fValidationDV].compare(this.fMinExclusive, this.fBase.fMinExclusive);
-/* 1006 */           if ((this.fBase.fFixedFacet & 0x80) != 0 && result != 0) {
-/* 1007 */             reportError("FixedFacetValue", new Object[] { "minExclusive", facets.minExclusive, this.fBase.fMinExclusive, this.fTypeName });
-/*      */           }
-/* 1009 */           if (result == 0) {
-/* 1010 */             needCheckBase = false;
-/*      */           }
-/*      */         } 
-/*      */         
-/* 1014 */         if (needCheckBase) {
-/*      */           try {
-/* 1016 */             this.fBase.validate(context, tempInfo);
-/* 1017 */           } catch (InvalidDatatypeValueException ide) {
-/* 1018 */             reportError(ide.getKey(), ide.getArgs());
-/* 1019 */             reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.minExclusive, "minExclusive", this.fBase
-/* 1020 */                   .getName() });
-/*      */           
-/*      */           }
-/*      */         
-/*      */         }
-/* 1025 */         else if ((this.fBase.fFacetsDefined & 0x100) != 0 && 
-/* 1026 */           this.fDVs[this.fValidationDV].compare(this.fMinExclusive, this.fBase.fMinInclusive) < 0) {
-/* 1027 */           reportError("minExclusive-valid-restriction.3", new Object[] { facets.minExclusive, this.fBase.fMinInclusive });
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 1033 */     if ((presentFacet & 0x100) != 0) {
-/* 1034 */       if ((allowedFacet & 0x100) == 0) {
-/* 1035 */         reportError("cos-applicable-facets", new Object[] { "minInclusive", this.fTypeName });
-/*      */       } else {
-/* 1037 */         this.minInclusiveAnnotation = facets.minInclusiveAnnotation;
-/*      */         try {
-/* 1039 */           this.fMinInclusive = this.fBase.getActualValue(facets.minInclusive, context, tempInfo, true);
-/* 1040 */           this.fFacetsDefined = (short)(this.fFacetsDefined | 0x100);
-/* 1041 */           if ((fixedFacet & 0x100) != 0)
-/* 1042 */             this.fFixedFacet = (short)(this.fFixedFacet | 0x100); 
-/* 1043 */         } catch (InvalidDatatypeValueException ide) {
-/* 1044 */           reportError(ide.getKey(), ide.getArgs());
-/* 1045 */           reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.minInclusive, "minInclusive", this.fBase
-/* 1046 */                 .getName() });
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1050 */         if ((this.fBase.fFacetsDefined & 0x100) != 0 && (
-/* 1051 */           this.fBase.fFixedFacet & 0x100) != 0 && 
-/* 1052 */           this.fDVs[this.fValidationDV].compare(this.fMinInclusive, this.fBase.fMinInclusive) != 0) {
-/* 1053 */           reportError("FixedFacetValue", new Object[] { "minInclusive", facets.minInclusive, this.fBase.fMinInclusive, this.fTypeName });
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1058 */           this.fBase.validate(context, tempInfo);
-/* 1059 */         } catch (InvalidDatatypeValueException ide) {
-/* 1060 */           reportError(ide.getKey(), ide.getArgs());
-/* 1061 */           reportError("FacetValueFromBase", new Object[] { this.fTypeName, facets.minInclusive, "minInclusive", this.fBase
-/* 1062 */                 .getName() });
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 1068 */     if ((presentFacet & 0x200) != 0) {
-/* 1069 */       if ((allowedFacet & 0x200) == 0) {
-/* 1070 */         reportError("cos-applicable-facets", new Object[] { "totalDigits", this.fTypeName });
-/*      */       } else {
-/* 1072 */         this.totalDigitsAnnotation = facets.totalDigitsAnnotation;
-/* 1073 */         this.fTotalDigits = facets.totalDigits;
-/* 1074 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x200);
-/* 1075 */         if ((fixedFacet & 0x200) != 0) {
-/* 1076 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x200);
-/*      */         }
-/*      */       } 
-/*      */     }
-/* 1080 */     if ((presentFacet & 0x400) != 0) {
-/* 1081 */       if ((allowedFacet & 0x400) == 0) {
-/* 1082 */         reportError("cos-applicable-facets", new Object[] { "fractionDigits", this.fTypeName });
-/*      */       } else {
-/* 1084 */         this.fFractionDigits = facets.fractionDigits;
-/* 1085 */         this.fractionDigitsAnnotation = facets.fractionDigitsAnnotation;
-/* 1086 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x400);
-/* 1087 */         if ((fixedFacet & 0x400) != 0) {
-/* 1088 */           this.fFixedFacet = (short)(this.fFixedFacet | 0x400);
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1093 */     if (patternType != 0) {
-/* 1094 */       this.fPatternType = patternType;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1098 */     if (this.fFacetsDefined != 0) {
-/*      */ 
-/*      */       
-/* 1101 */       if ((this.fFacetsDefined & 0x2) != 0 && (this.fFacetsDefined & 0x4) != 0)
-/*      */       {
-/* 1103 */         if (this.fMinLength > this.fMaxLength) {
-/* 1104 */           reportError("minLength-less-than-equal-to-maxLength", new Object[] { Integer.toString(this.fMinLength), Integer.toString(this.fMaxLength), this.fTypeName });
-/*      */         }
-/*      */       }
-/*      */       
-/* 1108 */       if ((this.fFacetsDefined & 0x40) != 0 && (this.fFacetsDefined & 0x20) != 0) {
-/* 1109 */         reportError("maxInclusive-maxExclusive", new Object[] { this.fMaxInclusive, this.fMaxExclusive, this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */       
-/* 1113 */       if ((this.fFacetsDefined & 0x80) != 0 && (this.fFacetsDefined & 0x100) != 0) {
-/* 1114 */         reportError("minInclusive-minExclusive", new Object[] { this.fMinInclusive, this.fMinExclusive, this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */       
-/* 1118 */       if ((this.fFacetsDefined & 0x20) != 0 && (this.fFacetsDefined & 0x100) != 0) {
-/* 1119 */         result = this.fDVs[this.fValidationDV].compare(this.fMinInclusive, this.fMaxInclusive);
-/* 1120 */         if (result != -1 && result != 0) {
-/* 1121 */           reportError("minInclusive-less-than-equal-to-maxInclusive", new Object[] { this.fMinInclusive, this.fMaxInclusive, this.fTypeName });
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1125 */       if ((this.fFacetsDefined & 0x40) != 0 && (this.fFacetsDefined & 0x80) != 0) {
-/* 1126 */         result = this.fDVs[this.fValidationDV].compare(this.fMinExclusive, this.fMaxExclusive);
-/* 1127 */         if (result != -1 && result != 0) {
-/* 1128 */           reportError("minExclusive-less-than-equal-to-maxExclusive", new Object[] { this.fMinExclusive, this.fMaxExclusive, this.fTypeName });
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1132 */       if ((this.fFacetsDefined & 0x20) != 0 && (this.fFacetsDefined & 0x80) != 0 && 
-/* 1133 */         this.fDVs[this.fValidationDV].compare(this.fMinExclusive, this.fMaxInclusive) != -1) {
-/* 1134 */         reportError("minExclusive-less-than-maxInclusive", new Object[] { this.fMinExclusive, this.fMaxInclusive, this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */       
-/* 1138 */       if ((this.fFacetsDefined & 0x40) != 0 && (this.fFacetsDefined & 0x100) != 0 && 
-/* 1139 */         this.fDVs[this.fValidationDV].compare(this.fMinInclusive, this.fMaxExclusive) != -1) {
-/* 1140 */         reportError("minInclusive-less-than-maxExclusive", new Object[] { this.fMinInclusive, this.fMaxExclusive, this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */       
-/* 1144 */       if ((this.fFacetsDefined & 0x400) != 0 && (this.fFacetsDefined & 0x200) != 0)
-/*      */       {
-/* 1146 */         if (this.fFractionDigits > this.fTotalDigits) {
-/* 1147 */           reportError("fractionDigits-totalDigits", new Object[] { Integer.toString(this.fFractionDigits), Integer.toString(this.fTotalDigits), this.fTypeName });
-/*      */         }
-/*      */       }
-/*      */ 
-/*      */       
-/* 1152 */       if ((this.fFacetsDefined & 0x1) != 0) {
-/* 1153 */         if ((this.fBase.fFacetsDefined & 0x2) != 0 && this.fLength < this.fBase.fMinLength)
-/*      */         {
-/*      */           
-/* 1156 */           reportError("length-minLength-maxLength.1.1", new Object[] { this.fTypeName, Integer.toString(this.fLength), Integer.toString(this.fBase.fMinLength) });
-/*      */         }
-/* 1158 */         if ((this.fBase.fFacetsDefined & 0x4) != 0 && this.fLength > this.fBase.fMaxLength)
-/*      */         {
-/*      */           
-/* 1161 */           reportError("length-minLength-maxLength.2.1", new Object[] { this.fTypeName, Integer.toString(this.fLength), Integer.toString(this.fBase.fMaxLength) });
-/*      */         }
-/* 1163 */         if ((this.fBase.fFacetsDefined & 0x1) != 0)
-/*      */         {
-/* 1165 */           if (this.fLength != this.fBase.fLength) {
-/* 1166 */             reportError("length-valid-restriction", new Object[] { Integer.toString(this.fLength), Integer.toString(this.fBase.fLength), this.fTypeName });
-/*      */           }
-/*      */         }
-/*      */       } 
-/*      */       
-/* 1171 */       if ((this.fBase.fFacetsDefined & 0x1) != 0 || (this.fFacetsDefined & 0x1) != 0) {
-/* 1172 */         if ((this.fFacetsDefined & 0x2) != 0) {
-/* 1173 */           if (this.fBase.fLength < this.fMinLength)
-/*      */           {
-/* 1175 */             reportError("length-minLength-maxLength.1.1", new Object[] { this.fTypeName, Integer.toString(this.fBase.fLength), Integer.toString(this.fMinLength) });
-/*      */           }
-/* 1177 */           if ((this.fBase.fFacetsDefined & 0x2) == 0) {
-/* 1178 */             reportError("length-minLength-maxLength.1.2.a", new Object[] { this.fTypeName });
-/*      */           }
-/* 1180 */           if (this.fMinLength != this.fBase.fMinLength) {
-/* 1181 */             reportError("length-minLength-maxLength.1.2.b", new Object[] { this.fTypeName, Integer.toString(this.fMinLength), Integer.toString(this.fBase.fMinLength) });
-/*      */           }
-/*      */         } 
-/* 1184 */         if ((this.fFacetsDefined & 0x4) != 0) {
-/* 1185 */           if (this.fBase.fLength > this.fMaxLength)
-/*      */           {
-/* 1187 */             reportError("length-minLength-maxLength.2.1", new Object[] { this.fTypeName, Integer.toString(this.fBase.fLength), Integer.toString(this.fMaxLength) });
-/*      */           }
-/* 1189 */           if ((this.fBase.fFacetsDefined & 0x4) == 0) {
-/* 1190 */             reportError("length-minLength-maxLength.2.2.a", new Object[] { this.fTypeName });
-/*      */           }
-/* 1192 */           if (this.fMaxLength != this.fBase.fMaxLength) {
-/* 1193 */             reportError("length-minLength-maxLength.2.2.b", new Object[] { this.fTypeName, Integer.toString(this.fMaxLength), Integer.toString(this.fBase.fBase.fMaxLength) });
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1199 */       if ((this.fFacetsDefined & 0x2) != 0) {
-/* 1200 */         if ((this.fBase.fFacetsDefined & 0x4) != 0) {
-/* 1201 */           if (this.fMinLength > this.fBase.fMaxLength) {
-/* 1202 */             reportError("minLength-less-than-equal-to-maxLength", new Object[] { Integer.toString(this.fMinLength), Integer.toString(this.fBase.fMaxLength), this.fTypeName });
-/*      */           }
-/*      */         }
-/* 1205 */         else if ((this.fBase.fFacetsDefined & 0x2) != 0) {
-/* 1206 */           if ((this.fBase.fFixedFacet & 0x2) != 0 && this.fMinLength != this.fBase.fMinLength) {
-/* 1207 */             reportError("FixedFacetValue", new Object[] { "minLength", Integer.toString(this.fMinLength), Integer.toString(this.fBase.fMinLength), this.fTypeName });
-/*      */           }
-/*      */ 
-/*      */           
-/* 1211 */           if (this.fMinLength < this.fBase.fMinLength) {
-/* 1212 */             reportError("minLength-valid-restriction", new Object[] { Integer.toString(this.fMinLength), Integer.toString(this.fBase.fMinLength), this.fTypeName });
-/*      */           }
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1219 */       if ((this.fFacetsDefined & 0x4) != 0 && (this.fBase.fFacetsDefined & 0x2) != 0 && 
-/* 1220 */         this.fMaxLength < this.fBase.fMinLength) {
-/* 1221 */         reportError("minLength-less-than-equal-to-maxLength", new Object[] { Integer.toString(this.fBase.fMinLength), Integer.toString(this.fMaxLength) });
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1226 */       if ((this.fFacetsDefined & 0x4) != 0 && (
-/* 1227 */         this.fBase.fFacetsDefined & 0x4) != 0) {
-/* 1228 */         if ((this.fBase.fFixedFacet & 0x4) != 0 && this.fMaxLength != this.fBase.fMaxLength) {
-/* 1229 */           reportError("FixedFacetValue", new Object[] { "maxLength", Integer.toString(this.fMaxLength), Integer.toString(this.fBase.fMaxLength), this.fTypeName });
-/*      */         }
-/* 1231 */         if (this.fMaxLength > this.fBase.fMaxLength) {
-/* 1232 */           reportError("maxLength-valid-restriction", new Object[] { Integer.toString(this.fMaxLength), Integer.toString(this.fBase.fMaxLength), this.fTypeName });
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1370 */       if ((this.fFacetsDefined & 0x200) != 0 && (
-/* 1371 */         this.fBase.fFacetsDefined & 0x200) != 0) {
-/* 1372 */         if ((this.fBase.fFixedFacet & 0x200) != 0 && this.fTotalDigits != this.fBase.fTotalDigits) {
-/* 1373 */           reportError("FixedFacetValue", new Object[] { "totalDigits", Integer.toString(this.fTotalDigits), Integer.toString(this.fBase.fTotalDigits), this.fTypeName });
-/*      */         }
-/* 1375 */         if (this.fTotalDigits > this.fBase.fTotalDigits) {
-/* 1376 */           reportError("totalDigits-valid-restriction", new Object[] { Integer.toString(this.fTotalDigits), Integer.toString(this.fBase.fTotalDigits), this.fTypeName });
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1382 */       if ((this.fFacetsDefined & 0x400) != 0 && (
-/* 1383 */         this.fBase.fFacetsDefined & 0x200) != 0 && 
-/* 1384 */         this.fFractionDigits > this.fBase.fTotalDigits) {
-/* 1385 */         reportError("fractionDigits-totalDigits", new Object[] { Integer.toString(this.fFractionDigits), Integer.toString(this.fTotalDigits), this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1391 */       if ((this.fFacetsDefined & 0x400) != 0) {
-/* 1392 */         if ((this.fBase.fFacetsDefined & 0x400) != 0) {
-/* 1393 */           if (((this.fBase.fFixedFacet & 0x400) != 0 && this.fFractionDigits != this.fBase.fFractionDigits) || (this.fValidationDV == 24 && this.fFractionDigits != 0))
-/*      */           {
-/* 1395 */             reportError("FixedFacetValue", new Object[] { "fractionDigits", Integer.toString(this.fFractionDigits), Integer.toString(this.fBase.fFractionDigits), this.fTypeName });
-/*      */           }
-/* 1397 */           if (this.fFractionDigits > this.fBase.fFractionDigits) {
-/* 1398 */             reportError("fractionDigits-valid-restriction", new Object[] { Integer.toString(this.fFractionDigits), Integer.toString(this.fBase.fFractionDigits), this.fTypeName });
-/*      */           }
-/*      */         }
-/* 1401 */         else if (this.fValidationDV == 24 && this.fFractionDigits != 0) {
-/* 1402 */           reportError("FixedFacetValue", new Object[] { "fractionDigits", Integer.toString(this.fFractionDigits), "0", this.fTypeName });
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1410 */       if ((this.fFacetsDefined & 0x10) != 0 && (this.fBase.fFacetsDefined & 0x10) != 0) {
-/* 1411 */         if ((this.fBase.fFixedFacet & 0x10) != 0 && this.fWhiteSpace != this.fBase.fWhiteSpace) {
-/* 1412 */           reportError("FixedFacetValue", new Object[] { "whiteSpace", whiteSpaceValue(this.fWhiteSpace), whiteSpaceValue(this.fBase.fWhiteSpace), this.fTypeName });
-/*      */         }
-/*      */         
-/* 1415 */         if (this.fWhiteSpace == 0 && this.fBase.fWhiteSpace == 2) {
-/* 1416 */           reportError("whiteSpace-valid-restriction.1", new Object[] { this.fTypeName, "preserve" });
-/*      */         }
-/* 1418 */         if (this.fWhiteSpace == 1 && this.fBase.fWhiteSpace == 2) {
-/* 1419 */           reportError("whiteSpace-valid-restriction.1", new Object[] { this.fTypeName, "replace" });
-/*      */         }
-/* 1421 */         if (this.fWhiteSpace == 0 && this.fBase.fWhiteSpace == 1) {
-/* 1422 */           reportError("whiteSpace-valid-restriction.2", new Object[] { this.fTypeName });
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1430 */     if ((this.fFacetsDefined & 0x1) == 0 && (this.fBase.fFacetsDefined & 0x1) != 0) {
-/* 1431 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x1);
-/* 1432 */       this.fLength = this.fBase.fLength;
-/* 1433 */       this.lengthAnnotation = this.fBase.lengthAnnotation;
-/*      */     } 
-/*      */     
-/* 1436 */     if ((this.fFacetsDefined & 0x2) == 0 && (this.fBase.fFacetsDefined & 0x2) != 0) {
-/* 1437 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x2);
-/* 1438 */       this.fMinLength = this.fBase.fMinLength;
-/* 1439 */       this.minLengthAnnotation = this.fBase.minLengthAnnotation;
-/*      */     } 
-/*      */     
-/* 1442 */     if ((this.fFacetsDefined & 0x4) == 0 && (this.fBase.fFacetsDefined & 0x4) != 0) {
-/* 1443 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x4);
-/* 1444 */       this.fMaxLength = this.fBase.fMaxLength;
-/* 1445 */       this.maxLengthAnnotation = this.fBase.maxLengthAnnotation;
-/*      */     } 
-/*      */     
-/* 1448 */     if ((this.fBase.fFacetsDefined & 0x8) != 0) {
-/* 1449 */       if ((this.fFacetsDefined & 0x8) == 0) {
-/* 1450 */         this.fFacetsDefined = (short)(this.fFacetsDefined | 0x8);
-/* 1451 */         this.fPattern = this.fBase.fPattern;
-/* 1452 */         this.fPatternStr = this.fBase.fPatternStr;
-/* 1453 */         this.patternAnnotations = this.fBase.patternAnnotations;
-/*      */       } else {
-/*      */         int i;
-/* 1456 */         for (i = this.fBase.fPattern.size() - 1; i >= 0; i--) {
-/* 1457 */           this.fPattern.addElement(this.fBase.fPattern.elementAt(i));
-/* 1458 */           this.fPatternStr.addElement(this.fBase.fPatternStr.elementAt(i));
-/*      */         } 
-/* 1460 */         if (this.fBase.patternAnnotations != null) {
-/* 1461 */           if (this.patternAnnotations != null) {
-/* 1462 */             for (i = this.fBase.patternAnnotations.getLength() - 1; i >= 0; i--) {
-/* 1463 */               this.patternAnnotations.addXSObject(this.fBase.patternAnnotations.item(i));
-/*      */             }
-/*      */           } else {
-/*      */             
-/* 1467 */             this.patternAnnotations = this.fBase.patternAnnotations;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1473 */     if ((this.fFacetsDefined & 0x10) == 0 && (this.fBase.fFacetsDefined & 0x10) != 0) {
-/* 1474 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x10);
-/* 1475 */       this.fWhiteSpace = this.fBase.fWhiteSpace;
-/* 1476 */       this.whiteSpaceAnnotation = this.fBase.whiteSpaceAnnotation;
-/*      */     } 
-/*      */     
-/* 1479 */     if ((this.fFacetsDefined & 0x800) == 0 && (this.fBase.fFacetsDefined & 0x800) != 0) {
-/* 1480 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x800);
-/* 1481 */       this.fEnumeration = this.fBase.fEnumeration;
-/* 1482 */       this.enumerationAnnotations = this.fBase.enumerationAnnotations;
-/*      */     } 
-/*      */     
-/* 1485 */     if ((this.fBase.fFacetsDefined & 0x40) != 0 && (this.fFacetsDefined & 0x40) == 0 && (this.fFacetsDefined & 0x20) == 0) {
-/*      */       
-/* 1487 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x40);
-/* 1488 */       this.fMaxExclusive = this.fBase.fMaxExclusive;
-/* 1489 */       this.maxExclusiveAnnotation = this.fBase.maxExclusiveAnnotation;
-/*      */     } 
-/*      */     
-/* 1492 */     if ((this.fBase.fFacetsDefined & 0x20) != 0 && (this.fFacetsDefined & 0x40) == 0 && (this.fFacetsDefined & 0x20) == 0) {
-/*      */       
-/* 1494 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x20);
-/* 1495 */       this.fMaxInclusive = this.fBase.fMaxInclusive;
-/* 1496 */       this.maxInclusiveAnnotation = this.fBase.maxInclusiveAnnotation;
-/*      */     } 
-/*      */     
-/* 1499 */     if ((this.fBase.fFacetsDefined & 0x80) != 0 && (this.fFacetsDefined & 0x80) == 0 && (this.fFacetsDefined & 0x100) == 0) {
-/*      */       
-/* 1501 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x80);
-/* 1502 */       this.fMinExclusive = this.fBase.fMinExclusive;
-/* 1503 */       this.minExclusiveAnnotation = this.fBase.minExclusiveAnnotation;
-/*      */     } 
-/*      */     
-/* 1506 */     if ((this.fBase.fFacetsDefined & 0x100) != 0 && (this.fFacetsDefined & 0x80) == 0 && (this.fFacetsDefined & 0x100) == 0) {
-/*      */       
-/* 1508 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x100);
-/* 1509 */       this.fMinInclusive = this.fBase.fMinInclusive;
-/* 1510 */       this.minInclusiveAnnotation = this.fBase.minInclusiveAnnotation;
-/*      */     } 
-/*      */     
-/* 1513 */     if ((this.fBase.fFacetsDefined & 0x200) != 0 && (this.fFacetsDefined & 0x200) == 0) {
-/*      */       
-/* 1515 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x200);
-/* 1516 */       this.fTotalDigits = this.fBase.fTotalDigits;
-/* 1517 */       this.totalDigitsAnnotation = this.fBase.totalDigitsAnnotation;
-/*      */     } 
-/*      */     
-/* 1520 */     if ((this.fBase.fFacetsDefined & 0x400) != 0 && (this.fFacetsDefined & 0x400) == 0) {
-/*      */       
-/* 1522 */       this.fFacetsDefined = (short)(this.fFacetsDefined | 0x400);
-/* 1523 */       this.fFractionDigits = this.fBase.fFractionDigits;
-/* 1524 */       this.fractionDigitsAnnotation = this.fBase.fractionDigitsAnnotation;
-/*      */     } 
-/*      */     
-/* 1527 */     if (this.fPatternType == 0 && this.fBase.fPatternType != 0) {
-/* 1528 */       this.fPatternType = this.fBase.fPatternType;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1532 */     this.fFixedFacet = (short)(this.fFixedFacet | this.fBase.fFixedFacet);
-/*      */ 
-/*      */     
-/* 1535 */     calcFundamentalFacets();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object validate(String content, ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
-/* 1544 */     if (context == null) {
-/* 1545 */       context = fEmptyContext;
-/*      */     }
-/* 1547 */     if (validatedInfo == null) {
-/* 1548 */       validatedInfo = new ValidatedInfo();
-/*      */     } else {
-/* 1550 */       validatedInfo.memberType = null;
-/*      */     } 
-/*      */     
-/* 1553 */     boolean needNormalize = (context == null || context.needToNormalize());
-/* 1554 */     Object ob = getActualValue(content, context, validatedInfo, needNormalize);
-/*      */     
-/* 1556 */     validate(context, validatedInfo);
-/*      */     
-/* 1558 */     return ob;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ValidatedInfo getActualEnumValue(String lexical, ValidationContext ctx, ValidatedInfo info) throws InvalidDatatypeValueException {
-/* 1564 */     return this.fBase.validateWithInfo(lexical, ctx, info);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ValidatedInfo validateWithInfo(String content, ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
-/* 1572 */     if (context == null) {
-/* 1573 */       context = fEmptyContext;
-/*      */     }
-/* 1575 */     if (validatedInfo == null) {
-/* 1576 */       validatedInfo = new ValidatedInfo();
-/*      */     } else {
-/* 1578 */       validatedInfo.memberType = null;
-/*      */     } 
-/*      */     
-/* 1581 */     boolean needNormalize = (context == null || context.needToNormalize());
-/* 1582 */     getActualValue(content, context, validatedInfo, needNormalize);
-/*      */     
-/* 1584 */     validate(context, validatedInfo);
-/*      */     
-/* 1586 */     return validatedInfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object validate(Object content, ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
-/* 1595 */     if (context == null) {
-/* 1596 */       context = fEmptyContext;
-/*      */     }
-/* 1598 */     if (validatedInfo == null) {
-/* 1599 */       validatedInfo = new ValidatedInfo();
-/*      */     } else {
-/* 1601 */       validatedInfo.memberType = null;
-/*      */     } 
-/*      */     
-/* 1604 */     boolean needNormalize = (context == null || context.needToNormalize());
-/* 1605 */     Object ob = getActualValue(content, context, validatedInfo, needNormalize);
-/*      */     
-/* 1607 */     validate(context, validatedInfo);
-/*      */     
-/* 1609 */     return ob;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void validate(ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
-/* 1622 */     if (context == null) {
-/* 1623 */       context = fEmptyContext;
-/*      */     }
-/*      */     
-/* 1626 */     if (context.needFacetChecking() && this.fFacetsDefined != 0 && this.fFacetsDefined != 16)
-/*      */     {
-/* 1628 */       checkFacets(validatedInfo);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1632 */     if (context.needExtraChecking()) {
-/* 1633 */       checkExtraRules(context, validatedInfo);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void checkFacets(ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
-/* 1640 */     Object ob = validatedInfo.actualValue;
-/* 1641 */     String content = validatedInfo.normalizedValue;
-/* 1642 */     short type = validatedInfo.actualValueType;
-/* 1643 */     ShortList itemType = validatedInfo.itemValueTypes;
-/*      */ 
-/*      */     
-/* 1646 */     if (this.fValidationDV != 18 && this.fValidationDV != 20) {
-/* 1647 */       int length = this.fDVs[this.fValidationDV].getDataLength(ob);
-/*      */ 
-/*      */       
-/* 1650 */       if ((this.fFacetsDefined & 0x4) != 0 && 
-/* 1651 */         length > this.fMaxLength) {
-/* 1652 */         throw new InvalidDatatypeValueException("cvc-maxLength-valid", new Object[] { content, 
-/* 1653 */               Integer.toString(length), Integer.toString(this.fMaxLength), this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1658 */       if ((this.fFacetsDefined & 0x2) != 0 && 
-/* 1659 */         length < this.fMinLength) {
-/* 1660 */         throw new InvalidDatatypeValueException("cvc-minLength-valid", new Object[] { content, 
-/* 1661 */               Integer.toString(length), Integer.toString(this.fMinLength), this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1666 */       if ((this.fFacetsDefined & 0x1) != 0 && 
-/* 1667 */         length != this.fLength) {
-/* 1668 */         throw new InvalidDatatypeValueException("cvc-length-valid", new Object[] { content, 
-/* 1669 */               Integer.toString(length), Integer.toString(this.fLength), this.fTypeName });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1675 */     if ((this.fFacetsDefined & 0x800) != 0) {
-/* 1676 */       boolean present = false;
-/* 1677 */       int enumSize = this.fEnumeration.size();
-/* 1678 */       short primitiveType1 = convertToPrimitiveKind(type);
-/* 1679 */       for (int i = 0; i < enumSize; i++) {
-/* 1680 */         short primitiveType2 = convertToPrimitiveKind(this.fEnumerationType[i]);
-/* 1681 */         if ((primitiveType1 == primitiveType2 || (primitiveType1 == 1 && primitiveType2 == 2) || (primitiveType1 == 2 && primitiveType2 == 1)) && this.fEnumeration
-/*      */ 
-/*      */           
-/* 1684 */           .elementAt(i).equals(ob)) {
-/* 1685 */           if (primitiveType1 == 44 || primitiveType1 == 43) {
-/* 1686 */             ShortList enumItemType = this.fEnumerationItemType[i];
-/* 1687 */             int typeList1Length = (itemType != null) ? itemType.getLength() : 0;
-/* 1688 */             int typeList2Length = (enumItemType != null) ? enumItemType.getLength() : 0;
-/* 1689 */             if (typeList1Length == typeList2Length) {
-/*      */               int j;
-/* 1691 */               for (j = 0; j < typeList1Length; ) {
-/* 1692 */                 short primitiveItem1 = convertToPrimitiveKind(itemType.item(j));
-/* 1693 */                 short primitiveItem2 = convertToPrimitiveKind(enumItemType.item(j));
-/* 1694 */                 if (primitiveItem1 == primitiveItem2 || (
-/* 1695 */                   primitiveItem1 == 1 && primitiveItem2 == 2) || (primitiveItem1 == 2 && primitiveItem2 == 1)) {
-/*      */                   j++;
-/*      */                 }
-/*      */               } 
-/*      */ 
-/*      */ 
-/*      */               
-/* 1702 */               if (j == typeList1Length) {
-/* 1703 */                 present = true;
-/*      */                 
-/*      */                 break;
-/*      */               } 
-/*      */             } 
-/*      */           } else {
-/* 1709 */             present = true;
-/*      */             break;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/* 1714 */       if (!present) {
-/* 1715 */         throw new InvalidDatatypeValueException("cvc-enumeration-valid", new Object[] { content, this.fEnumeration
-/* 1716 */               .toString() });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1721 */     if ((this.fFacetsDefined & 0x400) != 0) {
-/* 1722 */       int scale = this.fDVs[this.fValidationDV].getFractionDigits(ob);
-/* 1723 */       if (scale > this.fFractionDigits) {
-/* 1724 */         throw new InvalidDatatypeValueException("cvc-fractionDigits-valid", new Object[] { content, 
-/* 1725 */               Integer.toString(scale), Integer.toString(this.fFractionDigits) });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1730 */     if ((this.fFacetsDefined & 0x200) != 0) {
-/* 1731 */       int totalDigits = this.fDVs[this.fValidationDV].getTotalDigits(ob);
-/* 1732 */       if (totalDigits > this.fTotalDigits) {
-/* 1733 */         throw new InvalidDatatypeValueException("cvc-totalDigits-valid", new Object[] { content, 
-/* 1734 */               Integer.toString(totalDigits), Integer.toString(this.fTotalDigits) });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1741 */     if ((this.fFacetsDefined & 0x20) != 0) {
-/* 1742 */       int compare = this.fDVs[this.fValidationDV].compare(ob, this.fMaxInclusive);
-/* 1743 */       if (compare != -1 && compare != 0) {
-/* 1744 */         throw new InvalidDatatypeValueException("cvc-maxInclusive-valid", new Object[] { content, this.fMaxInclusive, this.fTypeName });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1750 */     if ((this.fFacetsDefined & 0x40) != 0) {
-/* 1751 */       int compare = this.fDVs[this.fValidationDV].compare(ob, this.fMaxExclusive);
-/* 1752 */       if (compare != -1) {
-/* 1753 */         throw new InvalidDatatypeValueException("cvc-maxExclusive-valid", new Object[] { content, this.fMaxExclusive, this.fTypeName });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1759 */     if ((this.fFacetsDefined & 0x100) != 0) {
-/* 1760 */       int compare = this.fDVs[this.fValidationDV].compare(ob, this.fMinInclusive);
-/* 1761 */       if (compare != 1 && compare != 0) {
-/* 1762 */         throw new InvalidDatatypeValueException("cvc-minInclusive-valid", new Object[] { content, this.fMinInclusive, this.fTypeName });
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1768 */     if ((this.fFacetsDefined & 0x80) != 0) {
-/* 1769 */       int compare = this.fDVs[this.fValidationDV].compare(ob, this.fMinExclusive);
-/* 1770 */       if (compare != 1) {
-/* 1771 */         throw new InvalidDatatypeValueException("cvc-minExclusive-valid", new Object[] { content, this.fMinExclusive, this.fTypeName });
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void checkExtraRules(ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
-/* 1780 */     Object ob = validatedInfo.actualValue;
-/*      */     
-/* 1782 */     if (this.fVariety == 1) {
-/*      */       
-/* 1784 */       this.fDVs[this.fValidationDV].checkExtraRules(ob, context);
-/*      */     }
-/* 1786 */     else if (this.fVariety == 2) {
-/*      */       
-/* 1788 */       ListDV.ListData values = (ListDV.ListData)ob;
-/* 1789 */       XSSimpleType memberType = validatedInfo.memberType;
-/* 1790 */       int len = values.getLength();
-/*      */       try {
-/* 1792 */         if (this.fItemType.fVariety == 3) {
-/* 1793 */           XSSimpleTypeDecl[] memberTypes = (XSSimpleTypeDecl[])validatedInfo.memberTypes;
-/* 1794 */           for (int i = len - 1; i >= 0; i--) {
-/* 1795 */             validatedInfo.actualValue = values.item(i);
-/* 1796 */             validatedInfo.memberType = memberTypes[i];
-/* 1797 */             this.fItemType.checkExtraRules(context, validatedInfo);
-/*      */           } 
-/*      */         } else {
-/* 1800 */           for (int i = len - 1; i >= 0; i--) {
-/* 1801 */             validatedInfo.actualValue = values.item(i);
-/* 1802 */             this.fItemType.checkExtraRules(context, validatedInfo);
-/*      */           } 
-/*      */         } 
-/*      */       } finally {
-/*      */         
-/* 1807 */         validatedInfo.actualValue = values;
-/* 1808 */         validatedInfo.memberType = memberType;
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 1813 */       ((XSSimpleTypeDecl)validatedInfo.memberType).checkExtraRules(context, validatedInfo);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Object getActualValue(Object content, ValidationContext context, ValidatedInfo validatedInfo, boolean needNormalize) throws InvalidDatatypeValueException {
-/*      */     String nvalue;
-/* 1825 */     if (needNormalize) {
-/* 1826 */       nvalue = normalize(content, this.fWhiteSpace);
-/*      */     } else {
-/* 1828 */       nvalue = content.toString();
-/*      */     } 
-/* 1830 */     if ((this.fFacetsDefined & 0x8) != 0) {
-/* 1831 */       if (this.fPattern.size() == 0 && nvalue.length() > 0) {
-/* 1832 */         throw new InvalidDatatypeValueException("cvc-pattern-valid", new Object[] { content, "(empty string)", this.fTypeName });
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1838 */       for (int idx = this.fPattern.size() - 1; idx >= 0; idx--) {
-/* 1839 */         RegularExpression regex = this.fPattern.elementAt(idx);
-/* 1840 */         if (!regex.matches(nvalue)) {
-/* 1841 */           throw new InvalidDatatypeValueException("cvc-pattern-valid", new Object[] { content, this.fPatternStr
-/*      */                 
-/* 1843 */                 .elementAt(idx), this.fTypeName });
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1849 */     if (this.fVariety == 1) {
-/*      */ 
-/*      */       
-/* 1852 */       if (this.fPatternType != 0) {
-/*      */         
-/* 1854 */         boolean seenErr = false;
-/* 1855 */         if (this.fPatternType == 1) {
-/*      */           
-/* 1857 */           seenErr = !XMLChar.isValidNmtoken(nvalue);
-/*      */         }
-/* 1859 */         else if (this.fPatternType == 2) {
-/*      */           
-/* 1861 */           seenErr = !XMLChar.isValidName(nvalue);
-/*      */         }
-/* 1863 */         else if (this.fPatternType == 3) {
-/*      */           
-/* 1865 */           seenErr = !XMLChar.isValidNCName(nvalue);
-/*      */         } 
-/* 1867 */         if (seenErr) {
-/* 1868 */           throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[] { nvalue, SPECIAL_PATTERN_STRING[this.fPatternType] });
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1873 */       validatedInfo.normalizedValue = nvalue;
-/* 1874 */       Object avalue = this.fDVs[this.fValidationDV].getActualValue(nvalue, context);
-/* 1875 */       validatedInfo.actualValue = avalue;
-/* 1876 */       validatedInfo.actualValueType = this.fBuiltInKind;
-/*      */       
-/* 1878 */       return avalue;
-/*      */     } 
-/* 1880 */     if (this.fVariety == 2) {
-/*      */       
-/* 1882 */       StringTokenizer parsedList = new StringTokenizer(nvalue, " ");
-/* 1883 */       int countOfTokens = parsedList.countTokens();
-/* 1884 */       Object[] avalue = new Object[countOfTokens];
-/* 1885 */       boolean isUnion = (this.fItemType.getVariety() == 3);
-/* 1886 */       short[] itemTypes = new short[isUnion ? countOfTokens : 1];
-/* 1887 */       if (!isUnion)
-/* 1888 */         itemTypes[0] = this.fItemType.fBuiltInKind; 
-/* 1889 */       XSSimpleTypeDecl[] memberTypes = new XSSimpleTypeDecl[countOfTokens];
-/* 1890 */       for (int k = 0; k < countOfTokens; k++) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1897 */         avalue[k] = this.fItemType.getActualValue(parsedList.nextToken(), context, validatedInfo, false);
-/* 1898 */         if (context.needFacetChecking() && this.fItemType.fFacetsDefined != 0 && this.fItemType.fFacetsDefined != 16)
-/*      */         {
-/* 1900 */           this.fItemType.checkFacets(validatedInfo);
-/*      */         }
-/* 1902 */         memberTypes[k] = (XSSimpleTypeDecl)validatedInfo.memberType;
-/* 1903 */         if (isUnion) {
-/* 1904 */           itemTypes[k] = (memberTypes[k]).fBuiltInKind;
-/*      */         }
-/*      */       } 
-/* 1907 */       ListDV.ListData v = new ListDV.ListData(avalue);
-/* 1908 */       validatedInfo.actualValue = v;
-/* 1909 */       validatedInfo.actualValueType = isUnion ? 43 : 44;
-/* 1910 */       validatedInfo.memberType = null;
-/* 1911 */       validatedInfo.memberTypes = (XSSimpleType[])memberTypes;
-/* 1912 */       validatedInfo.itemValueTypes = new ShortListImpl(itemTypes, itemTypes.length);
-/* 1913 */       validatedInfo.normalizedValue = nvalue;
-/*      */       
-/* 1915 */       return v;
-/*      */     } 
-/*      */     
-/* 1918 */     Object _content = (this.fMemberTypes.length > 1 && content != null) ? content.toString() : content;
-/* 1919 */     for (int i = 0; i < this.fMemberTypes.length; i++) {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1927 */         Object aValue = this.fMemberTypes[i].getActualValue(_content, context, validatedInfo, true);
-/* 1928 */         if (context.needFacetChecking() && (this.fMemberTypes[i]).fFacetsDefined != 0 && (this.fMemberTypes[i]).fFacetsDefined != 16)
-/*      */         {
-/* 1930 */           this.fMemberTypes[i].checkFacets(validatedInfo);
-/*      */         }
-/* 1932 */         validatedInfo.memberType = this.fMemberTypes[i];
-/* 1933 */         return aValue;
-/* 1934 */       } catch (InvalidDatatypeValueException invalidDatatypeValueException) {}
-/*      */     } 
-/*      */     
-/* 1937 */     StringBuffer typesBuffer = new StringBuffer();
-/*      */     
-/* 1939 */     for (int j = 0; j < this.fMemberTypes.length; j++) {
-/* 1940 */       if (j != 0)
-/* 1941 */         typesBuffer.append(" | "); 
-/* 1942 */       XSSimpleTypeDecl decl = this.fMemberTypes[j];
-/* 1943 */       if (decl.fTargetNamespace != null) {
-/* 1944 */         typesBuffer.append('{');
-/* 1945 */         typesBuffer.append(decl.fTargetNamespace);
-/* 1946 */         typesBuffer.append('}');
-/*      */       } 
-/* 1948 */       typesBuffer.append(decl.fTypeName);
-/* 1949 */       if (decl.fEnumeration != null) {
-/* 1950 */         Vector v = decl.fEnumeration;
-/* 1951 */         typesBuffer.append(" : [");
-/* 1952 */         for (int k = 0; k < v.size(); k++) {
-/* 1953 */           if (k != 0)
-/* 1954 */             typesBuffer.append(','); 
-/* 1955 */           typesBuffer.append(v.elementAt(k));
-/*      */         } 
-/* 1957 */         typesBuffer.append(']');
-/*      */       } 
-/*      */     } 
-/* 1960 */     throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.3", new Object[] { content, this.fTypeName, typesBuffer
-/* 1961 */           .toString() });
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEqual(Object value1, Object value2) {
-/* 1967 */     if (value1 == null) {
-/* 1968 */       return false;
-/*      */     }
-/* 1970 */     return value1.equals(value2);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean isIdentical(Object value1, Object value2) {
-/* 1975 */     if (value1 == null) {
-/* 1976 */       return false;
-/*      */     }
-/* 1978 */     return this.fDVs[this.fValidationDV].isIdentical(value1, value2);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public static String normalize(String content, short ws) {
-/* 1983 */     int len = (content == null) ? 0 : content.length();
-/* 1984 */     if (len == 0 || ws == 0) {
-/* 1985 */       return content;
-/*      */     }
-/* 1987 */     StringBuffer sb = new StringBuffer();
-/* 1988 */     if (ws == 1) {
-/*      */ 
-/*      */       
-/* 1991 */       for (int i = 0; i < len; i++) {
-/* 1992 */         char ch = content.charAt(i);
-/* 1993 */         if (ch != '\t' && ch != '\n' && ch != '\r') {
-/* 1994 */           sb.append(ch);
-/*      */         } else {
-/* 1996 */           sb.append(' ');
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/*      */       
-/* 2001 */       boolean isLeading = true;
-/*      */       
-/* 2003 */       for (int i = 0; i < len; i++) {
-/* 2004 */         char ch = content.charAt(i);
-/*      */         
-/* 2006 */         if (ch != '\t' && ch != '\n' && ch != '\r' && ch != ' ') {
-/* 2007 */           sb.append(ch);
-/* 2008 */           isLeading = false;
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2012 */           for (; i < len - 1; i++) {
-/* 2013 */             ch = content.charAt(i + 1);
-/* 2014 */             if (ch != '\t' && ch != '\n' && ch != '\r' && ch != ' ') {
-/*      */               break;
-/*      */             }
-/*      */           } 
-/* 2018 */           if (i < len - 1 && !isLeading) {
-/* 2019 */             sb.append(' ');
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 2024 */     return sb.toString();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected String normalize(Object content, short ws) {
-/* 2029 */     if (content == null) {
-/* 2030 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2035 */     if ((this.fFacetsDefined & 0x8) == 0) {
-/* 2036 */       short norm_type = fDVNormalizeType[this.fValidationDV];
-/* 2037 */       if (norm_type == 0) {
-/* 2038 */         return content.toString();
-/*      */       }
-/* 2040 */       if (norm_type == 1) {
-/* 2041 */         return XMLChar.trim(content.toString());
-/*      */       }
-/*      */     } 
-/*      */     
-/* 2045 */     if (!(content instanceof StringBuffer)) {
-/* 2046 */       String strContent = content.toString();
-/* 2047 */       return normalize(strContent, ws);
-/*      */     } 
-/*      */     
-/* 2050 */     StringBuffer sb = (StringBuffer)content;
-/* 2051 */     int len = sb.length();
-/* 2052 */     if (len == 0)
-/* 2053 */       return ""; 
-/* 2054 */     if (ws == 0) {
-/* 2055 */       return sb.toString();
-/*      */     }
-/* 2057 */     if (ws == 1) {
-/*      */ 
-/*      */       
-/* 2060 */       for (int i = 0; i < len; i++) {
-/* 2061 */         char ch = sb.charAt(i);
-/* 2062 */         if (ch == '\t' || ch == '\n' || ch == '\r') {
-/* 2063 */           sb.setCharAt(i, ' ');
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/* 2067 */       int j = 0;
-/* 2068 */       boolean isLeading = true;
-/*      */       
-/* 2070 */       for (int i = 0; i < len; i++) {
-/* 2071 */         char ch = sb.charAt(i);
-/*      */         
-/* 2073 */         if (ch != '\t' && ch != '\n' && ch != '\r' && ch != ' ') {
-/* 2074 */           sb.setCharAt(j++, ch);
-/* 2075 */           isLeading = false;
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2079 */           for (; i < len - 1; i++) {
-/* 2080 */             ch = sb.charAt(i + 1);
-/* 2081 */             if (ch != '\t' && ch != '\n' && ch != '\r' && ch != ' ') {
-/*      */               break;
-/*      */             }
-/*      */           } 
-/* 2085 */           if (i < len - 1 && !isLeading)
-/* 2086 */             sb.setCharAt(j++, ' '); 
-/*      */         } 
-/*      */       } 
-/* 2089 */       sb.setLength(j);
-/*      */     } 
-/*      */     
-/* 2092 */     return sb.toString();
-/*      */   }
-/*      */   
-/*      */   void reportError(String key, Object[] args) throws InvalidDatatypeFacetException {
-/* 2096 */     throw new InvalidDatatypeFacetException(key, args);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private String whiteSpaceValue(short ws) {
-/* 2101 */     return WS_FACET_STRING[ws];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short getOrdered() {
-/* 2108 */     return this.fOrdered;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getBounded() {
-/* 2115 */     return this.fBounded;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getFinite() {
-/* 2122 */     return this.fFinite;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getNumeric() {
-/* 2129 */     return this.fNumeric;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isDefinedFacet(short facetName) {
-/* 2139 */     if (this.fValidationDV == 0 || this.fValidationDV == 29)
-/*      */     {
-/* 2141 */       return false;
-/*      */     }
-/* 2143 */     if ((this.fFacetsDefined & facetName) != 0) {
-/* 2144 */       return true;
-/*      */     }
-/* 2146 */     if (this.fPatternType != 0) {
-/* 2147 */       return (facetName == 8);
-/*      */     }
-/* 2149 */     if (this.fValidationDV == 24) {
-/* 2150 */       return (facetName == 8 || facetName == 1024);
-/*      */     }
-/* 2152 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short getDefinedFacets() {
-/* 2160 */     if (this.fValidationDV == 0 || this.fValidationDV == 29)
-/*      */     {
-/* 2162 */       return 0;
-/*      */     }
-/* 2164 */     if (this.fPatternType != 0) {
-/* 2165 */       return (short)(this.fFacetsDefined | 0x8);
-/*      */     }
-/* 2167 */     if (this.fValidationDV == 24) {
-/* 2168 */       return (short)(this.fFacetsDefined | 0x8 | 0x400);
-/*      */     }
-/* 2170 */     return this.fFacetsDefined;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isFixedFacet(short facetName) {
-/* 2180 */     if ((this.fFixedFacet & facetName) != 0)
-/* 2181 */       return true; 
-/* 2182 */     if (this.fValidationDV == 24)
-/* 2183 */       return (facetName == 1024); 
-/* 2184 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public short getFixedFacets() {
-/* 2191 */     if (this.fValidationDV == 24)
-/* 2192 */       return (short)(this.fFixedFacet | 0x400); 
-/* 2193 */     return this.fFixedFacet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getLexicalFacetValue(short facetName) {
-/* 2209 */     switch (facetName) {
-/*      */       case 1:
-/* 2211 */         return (this.fLength == -1) ? null : Integer.toString(this.fLength);
-/*      */       case 2:
-/* 2213 */         return (this.fMinLength == -1) ? null : Integer.toString(this.fMinLength);
-/*      */       case 4:
-/* 2215 */         return (this.fMaxLength == -1) ? null : Integer.toString(this.fMaxLength);
-/*      */       case 16:
-/* 2217 */         if (this.fValidationDV == 0 || this.fValidationDV == 29)
-/*      */         {
-/* 2219 */           return null;
-/*      */         }
-/* 2221 */         return WS_FACET_STRING[this.fWhiteSpace];
-/*      */       case 32:
-/* 2223 */         return (this.fMaxInclusive == null) ? null : this.fMaxInclusive.toString();
-/*      */       case 64:
-/* 2225 */         return (this.fMaxExclusive == null) ? null : this.fMaxExclusive.toString();
-/*      */       case 128:
-/* 2227 */         return (this.fMinExclusive == null) ? null : this.fMinExclusive.toString();
-/*      */       case 256:
-/* 2229 */         return (this.fMinInclusive == null) ? null : this.fMinInclusive.toString();
-/*      */       case 512:
-/* 2231 */         return (this.fTotalDigits == -1) ? null : Integer.toString(this.fTotalDigits);
-/*      */       case 1024:
-/* 2233 */         if (this.fValidationDV == 24) {
-/* 2234 */           return "0";
-/*      */         }
-/* 2236 */         return (this.fFractionDigits == -1) ? null : Integer.toString(this.fFractionDigits);
-/*      */     } 
-/* 2238 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public StringList getLexicalEnumeration() {
-/* 2246 */     if (this.fLexicalEnumeration == null) {
-/* 2247 */       if (this.fEnumeration == null)
-/* 2248 */         return StringListImpl.EMPTY_LIST; 
-/* 2249 */       int size = this.fEnumeration.size();
-/* 2250 */       String[] strs = new String[size];
-/* 2251 */       for (int i = 0; i < size; i++)
-/* 2252 */         strs[i] = this.fEnumeration.elementAt(i).toString(); 
-/* 2253 */       this.fLexicalEnumeration = new StringListImpl(strs, size);
-/*      */     } 
-/* 2255 */     return this.fLexicalEnumeration;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectList getActualEnumeration() {
-/* 2263 */     if (this.fActualEnumeration == null) {
-/* 2264 */       this.fActualEnumeration = new AbstractObjectList() {
-/*      */           public int getLength() {
-/* 2266 */             return (XSSimpleTypeDecl.this.fEnumeration != null) ? XSSimpleTypeDecl.this.fEnumeration.size() : 0;
-/*      */           }
-/*      */           public boolean contains(Object item) {
-/* 2269 */             return (XSSimpleTypeDecl.this.fEnumeration != null && XSSimpleTypeDecl.this.fEnumeration.contains(item));
-/*      */           }
-/*      */           public Object item(int index) {
-/* 2272 */             if (index < 0 || index >= getLength()) {
-/* 2273 */               return null;
-/*      */             }
-/* 2275 */             return XSSimpleTypeDecl.this.fEnumeration.elementAt(index);
-/*      */           }
-/*      */         };
-/*      */     }
-/* 2279 */     return this.fActualEnumeration;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectList getEnumerationItemTypeList() {
-/* 2287 */     if (this.fEnumerationItemTypeList == null) {
-/* 2288 */       if (this.fEnumerationItemType == null)
-/* 2289 */         return null; 
-/* 2290 */       this.fEnumerationItemTypeList = new AbstractObjectList() {
-/*      */           public int getLength() {
-/* 2292 */             return (XSSimpleTypeDecl.this.fEnumerationItemType != null) ? XSSimpleTypeDecl.this.fEnumerationItemType.length : 0;
-/*      */           }
-/*      */           public boolean contains(Object item) {
-/* 2295 */             if (XSSimpleTypeDecl.this.fEnumerationItemType == null || !(item instanceof ShortList))
-/* 2296 */               return false; 
-/* 2297 */             for (int i = 0; i < XSSimpleTypeDecl.this.fEnumerationItemType.length; i++) {
-/* 2298 */               if (XSSimpleTypeDecl.this.fEnumerationItemType[i] == item)
-/* 2299 */                 return true; 
-/* 2300 */             }  return false;
-/*      */           }
-/*      */           public Object item(int index) {
-/* 2303 */             if (index < 0 || index >= getLength()) {
-/* 2304 */               return null;
-/*      */             }
-/* 2306 */             return XSSimpleTypeDecl.this.fEnumerationItemType[index];
-/*      */           }
-/*      */         };
-/*      */     } 
-/* 2310 */     return this.fEnumerationItemTypeList;
-/*      */   }
-/*      */   
-/*      */   public ShortList getEnumerationTypeList() {
-/* 2314 */     if (this.fEnumerationTypeList == null) {
-/* 2315 */       if (this.fEnumerationType == null) {
-/* 2316 */         return ShortListImpl.EMPTY_LIST;
-/*      */       }
-/* 2318 */       this.fEnumerationTypeList = new ShortListImpl(this.fEnumerationType, this.fEnumerationType.length);
-/*      */     } 
-/* 2320 */     return this.fEnumerationTypeList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public StringList getLexicalPattern() {
-/* 2328 */     if (this.fPatternType == 0 && this.fValidationDV != 24 && this.fPatternStr == null)
-/* 2329 */       return StringListImpl.EMPTY_LIST; 
-/* 2330 */     if (this.fLexicalPattern == null) {
-/* 2331 */       String[] strs; int size = (this.fPatternStr == null) ? 0 : this.fPatternStr.size();
-/*      */       
-/* 2333 */       if (this.fPatternType == 1) {
-/* 2334 */         strs = new String[size + 1];
-/* 2335 */         strs[size] = "\\c+";
-/*      */       }
-/* 2337 */       else if (this.fPatternType == 2) {
-/* 2338 */         strs = new String[size + 1];
-/* 2339 */         strs[size] = "\\i\\c*";
-/*      */       }
-/* 2341 */       else if (this.fPatternType == 3) {
-/* 2342 */         strs = new String[size + 2];
-/* 2343 */         strs[size] = "\\i\\c*";
-/* 2344 */         strs[size + 1] = "[\\i-[:]][\\c-[:]]*";
-/*      */       }
-/* 2346 */       else if (this.fValidationDV == 24) {
-/* 2347 */         strs = new String[size + 1];
-/* 2348 */         strs[size] = "[\\-+]?[0-9]+";
-/*      */       } else {
-/*      */         
-/* 2351 */         strs = new String[size];
-/*      */       } 
-/* 2353 */       for (int i = 0; i < size; i++)
-/* 2354 */         strs[i] = this.fPatternStr.elementAt(i); 
-/* 2355 */       this.fLexicalPattern = new StringListImpl(strs, strs.length);
-/*      */     } 
-/* 2357 */     return this.fLexicalPattern;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSObjectList getAnnotations() {
-/* 2365 */     return (this.fAnnotations != null) ? this.fAnnotations : XSObjectListImpl.EMPTY_LIST;
-/*      */   }
-/*      */   
-/*      */   private void calcFundamentalFacets() {
-/* 2369 */     setOrdered();
-/* 2370 */     setNumeric();
-/* 2371 */     setBounded();
-/* 2372 */     setCardinality();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void setOrdered() {
-/* 2378 */     if (this.fVariety == 1) {
-/* 2379 */       this.fOrdered = this.fBase.fOrdered;
-/*      */ 
-/*      */     
-/*      */     }
-/* 2383 */     else if (this.fVariety == 2) {
-/* 2384 */       this.fOrdered = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/* 2390 */     else if (this.fVariety == 3) {
-/* 2391 */       int length = this.fMemberTypes.length;
-/*      */       
-/* 2393 */       if (length == 0) {
-/* 2394 */         this.fOrdered = 1;
-/*      */         
-/*      */         return;
-/*      */       } 
-/* 2398 */       short ancestorId = getPrimitiveDV((this.fMemberTypes[0]).fValidationDV);
-/* 2399 */       boolean commonAnc = (ancestorId != 0);
-/* 2400 */       boolean allFalse = ((this.fMemberTypes[0]).fOrdered == 0);
-/*      */ 
-/*      */       
-/* 2403 */       for (int i = 1; i < this.fMemberTypes.length && (commonAnc || allFalse); i++) {
-/* 2404 */         if (commonAnc)
-/* 2405 */           commonAnc = (ancestorId == getPrimitiveDV((this.fMemberTypes[i]).fValidationDV)); 
-/* 2406 */         if (allFalse)
-/* 2407 */           allFalse = ((this.fMemberTypes[i]).fOrdered == 0); 
-/*      */       } 
-/* 2409 */       if (commonAnc) {
-/*      */ 
-/*      */         
-/* 2412 */         this.fOrdered = (this.fMemberTypes[0]).fOrdered;
-/* 2413 */       } else if (allFalse) {
-/* 2414 */         this.fOrdered = 0;
-/*      */       } else {
-/* 2416 */         this.fOrdered = 1;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void setNumeric() {
-/* 2423 */     if (this.fVariety == 1) {
-/* 2424 */       this.fNumeric = this.fBase.fNumeric;
-/*      */     }
-/* 2426 */     else if (this.fVariety == 2) {
-/* 2427 */       this.fNumeric = false;
-/*      */     }
-/* 2429 */     else if (this.fVariety == 3) {
-/* 2430 */       XSSimpleTypeDecl[] arrayOfXSSimpleTypeDecl = this.fMemberTypes;
-/* 2431 */       for (int i = 0; i < arrayOfXSSimpleTypeDecl.length; i++) {
-/* 2432 */         if (!arrayOfXSSimpleTypeDecl[i].getNumeric()) {
-/* 2433 */           this.fNumeric = false;
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/* 2437 */       this.fNumeric = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void setBounded() {
-/* 2443 */     if (this.fVariety == 1) {
-/* 2444 */       if (((this.fFacetsDefined & 0x100) != 0 || (this.fFacetsDefined & 0x80) != 0) && ((this.fFacetsDefined & 0x20) != 0 || (this.fFacetsDefined & 0x40) != 0)) {
-/*      */         
-/* 2446 */         this.fBounded = true;
-/*      */       } else {
-/*      */         
-/* 2449 */         this.fBounded = false;
-/*      */       }
-/*      */     
-/* 2452 */     } else if (this.fVariety == 2) {
-/* 2453 */       if ((this.fFacetsDefined & 0x1) != 0 || ((this.fFacetsDefined & 0x2) != 0 && (this.fFacetsDefined & 0x4) != 0)) {
-/*      */         
-/* 2455 */         this.fBounded = true;
-/*      */       } else {
-/*      */         
-/* 2458 */         this.fBounded = false;
-/*      */       }
-/*      */     
-/*      */     }
-/* 2462 */     else if (this.fVariety == 3) {
-/*      */       
-/* 2464 */       XSSimpleTypeDecl[] memberTypes = this.fMemberTypes;
-/* 2465 */       short ancestorId = 0;
-/*      */       
-/* 2467 */       if (memberTypes.length > 0) {
-/* 2468 */         ancestorId = getPrimitiveDV((memberTypes[0]).fValidationDV);
-/*      */       }
-/*      */       
-/* 2471 */       for (int i = 0; i < memberTypes.length; i++) {
-/* 2472 */         if (!memberTypes[i].getBounded() || ancestorId != getPrimitiveDV((memberTypes[i]).fValidationDV)) {
-/* 2473 */           this.fBounded = false;
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/* 2477 */       this.fBounded = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private boolean specialCardinalityCheck() {
-/* 2483 */     if (this.fBase.fValidationDV == 9 || this.fBase.fValidationDV == 10 || this.fBase.fValidationDV == 11 || this.fBase.fValidationDV == 12 || this.fBase.fValidationDV == 13 || this.fBase.fValidationDV == 14)
-/*      */     {
-/*      */       
-/* 2486 */       return true;
-/*      */     }
-/* 2488 */     return false;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void setCardinality() {
-/* 2493 */     if (this.fVariety == 1) {
-/* 2494 */       if (this.fBase.fFinite) {
-/* 2495 */         this.fFinite = true;
-/*      */       
-/*      */       }
-/* 2498 */       else if ((this.fFacetsDefined & 0x1) != 0 || (this.fFacetsDefined & 0x4) != 0 || (this.fFacetsDefined & 0x200) != 0) {
-/*      */         
-/* 2500 */         this.fFinite = true;
-/*      */       }
-/* 2502 */       else if (((this.fFacetsDefined & 0x100) != 0 || (this.fFacetsDefined & 0x80) != 0) && ((this.fFacetsDefined & 0x20) != 0 || (this.fFacetsDefined & 0x40) != 0)) {
-/*      */         
-/* 2504 */         if ((this.fFacetsDefined & 0x400) != 0 || specialCardinalityCheck()) {
-/* 2505 */           this.fFinite = true;
-/*      */         } else {
-/*      */           
-/* 2508 */           this.fFinite = false;
-/*      */         } 
-/*      */       } else {
-/*      */         
-/* 2512 */         this.fFinite = false;
-/*      */       }
-/*      */     
-/*      */     }
-/* 2516 */     else if (this.fVariety == 2) {
-/* 2517 */       if ((this.fFacetsDefined & 0x1) != 0 || ((this.fFacetsDefined & 0x2) != 0 && (this.fFacetsDefined & 0x4) != 0)) {
-/*      */         
-/* 2519 */         this.fFinite = true;
-/*      */       } else {
-/*      */         
-/* 2522 */         this.fFinite = false;
-/*      */       }
-/*      */     
-/*      */     }
-/* 2526 */     else if (this.fVariety == 3) {
-/* 2527 */       XSSimpleTypeDecl[] arrayOfXSSimpleTypeDecl = this.fMemberTypes;
-/* 2528 */       for (int i = 0; i < arrayOfXSSimpleTypeDecl.length; i++) {
-/* 2529 */         if (!arrayOfXSSimpleTypeDecl[i].getFinite()) {
-/* 2530 */           this.fFinite = false;
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/* 2534 */       this.fFinite = true;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private short getPrimitiveDV(short validationDV) {
-/* 2541 */     if (validationDV == 21 || validationDV == 22 || validationDV == 23) {
-/* 2542 */       return 1;
-/*      */     }
-/* 2544 */     if (validationDV == 24) {
-/* 2545 */       return 3;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2551 */     return validationDV;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean derivedFromType(XSTypeDefinition ancestor, short derivation) {
-/* 2560 */     if (ancestor == null) {
-/* 2561 */       return false;
-/*      */     }
-/*      */     
-/* 2564 */     while (ancestor instanceof XSSimpleTypeDelegate) {
-/* 2565 */       ancestor = ((XSSimpleTypeDelegate)ancestor).type;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2569 */     if (ancestor.getBaseType() == ancestor) {
-/* 2570 */       return true;
-/*      */     }
-/*      */     
-/* 2573 */     XSTypeDefinition type = this;
-/* 2574 */     while (type != ancestor && type != fAnySimpleType)
-/*      */     {
-/* 2576 */       type = type.getBaseType();
-/*      */     }
-/* 2578 */     return (type == ancestor);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean derivedFrom(String ancestorNS, String ancestorName, short derivation) {
-/* 2585 */     if (ancestorName == null) {
-/* 2586 */       return false;
-/*      */     }
-/* 2588 */     if ("http://www.w3.org/2001/XMLSchema".equals(ancestorNS) && "anyType"
-/* 2589 */       .equals(ancestorName)) {
-/* 2590 */       return true;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2594 */     XSTypeDefinition type = this;
-/* 2595 */     while ((!ancestorName.equals(type.getName()) || ((ancestorNS != null || type
-/* 2596 */       .getNamespace() != null) && (ancestorNS == null || 
-/* 2597 */       !ancestorNS.equals(type.getNamespace())))) && type != fAnySimpleType)
-/*      */     {
-/* 2599 */       type = type.getBaseType();
-/*      */     }
-/*      */     
-/* 2602 */     return (type != fAnySimpleType);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isDOMDerivedFrom(String ancestorNS, String ancestorName, int derivationMethod) {
-/* 2622 */     if (ancestorName == null) {
-/* 2623 */       return false;
-/*      */     }
-/*      */     
-/* 2626 */     if (SchemaSymbols.URI_SCHEMAFORSCHEMA.equals(ancestorNS) && "anyType"
-/* 2627 */       .equals(ancestorName) && ((derivationMethod & 0x1) != 0 || derivationMethod == 0))
-/*      */     {
-/*      */       
-/* 2630 */       return true;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2634 */     if ((derivationMethod & 0x1) != 0 && 
-/* 2635 */       isDerivedByRestriction(ancestorNS, ancestorName, this)) {
-/* 2636 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2641 */     if ((derivationMethod & 0x8) != 0 && 
-/* 2642 */       isDerivedByList(ancestorNS, ancestorName, this)) {
-/* 2643 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2648 */     if ((derivationMethod & 0x4) != 0 && 
-/* 2649 */       isDerivedByUnion(ancestorNS, ancestorName, this)) {
-/* 2650 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2655 */     if ((derivationMethod & 0x2) != 0 && (derivationMethod & 0x1) == 0 && (derivationMethod & 0x8) == 0 && (derivationMethod & 0x4) == 0)
-/*      */     {
-/*      */ 
-/*      */       
-/* 2659 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2665 */     if ((derivationMethod & 0x2) == 0 && (derivationMethod & 0x1) == 0 && (derivationMethod & 0x8) == 0 && (derivationMethod & 0x4) == 0)
-/*      */     {
-/*      */ 
-/*      */       
-/* 2669 */       return isDerivedByAny(ancestorNS, ancestorName, this);
-/*      */     }
-/*      */     
-/* 2672 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isDerivedByAny(String ancestorNS, String ancestorName, XSTypeDefinition type) {
-/* 2692 */     boolean derivedFrom = false;
-/* 2693 */     XSTypeDefinition oldType = null;
-/*      */     
-/* 2695 */     while (type != null && type != oldType) {
-/*      */ 
-/*      */       
-/* 2698 */       if (ancestorName.equals(type.getName()) && ((ancestorNS == null && type
-/* 2699 */         .getNamespace() == null) || (ancestorNS != null && ancestorNS
-/* 2700 */         .equals(type.getNamespace())))) {
-/* 2701 */         derivedFrom = true;
-/*      */         
-/*      */         break;
-/*      */       } 
-/*      */       
-/* 2706 */       if (isDerivedByRestriction(ancestorNS, ancestorName, type))
-/* 2707 */         return true; 
-/* 2708 */       if (isDerivedByList(ancestorNS, ancestorName, type))
-/* 2709 */         return true; 
-/* 2710 */       if (isDerivedByUnion(ancestorNS, ancestorName, type)) {
-/* 2711 */         return true;
-/*      */       }
-/* 2713 */       oldType = type;
-/*      */       
-/* 2715 */       if (((XSSimpleTypeDecl)type).getVariety() == 0 || ((XSSimpleTypeDecl)type)
-/* 2716 */         .getVariety() == 1) {
-/* 2717 */         type = type.getBaseType(); continue;
-/* 2718 */       }  if (((XSSimpleTypeDecl)type).getVariety() == 3) {
-/* 2719 */         int i = 0; if (i < ((XSSimpleTypeDecl)type).getMemberTypes().getLength())
-/* 2720 */           return isDerivedByAny(ancestorNS, ancestorName, (XSTypeDefinition)((XSSimpleTypeDecl)type)
-/*      */               
-/* 2722 */               .getMemberTypes().item(i));  continue;
-/*      */       } 
-/* 2724 */       if (((XSSimpleTypeDecl)type).getVariety() == 2) {
-/* 2725 */         type = ((XSSimpleTypeDecl)type).getItemType();
-/*      */       }
-/*      */     } 
-/*      */     
-/* 2729 */     return derivedFrom;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isDerivedByRestriction(String ancestorNS, String ancestorName, XSTypeDefinition type) {
-/* 2748 */     XSTypeDefinition oldType = null;
-/* 2749 */     while (type != null && type != oldType) {
-/* 2750 */       if (ancestorName.equals(type.getName()) && ((ancestorNS != null && ancestorNS
-/* 2751 */         .equals(type.getNamespace())) || (type
-/* 2752 */         .getNamespace() == null && ancestorNS == null)))
-/*      */       {
-/* 2754 */         return true;
-/*      */       }
-/* 2756 */       oldType = type;
-/* 2757 */       type = type.getBaseType();
-/*      */     } 
-/*      */     
-/* 2760 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isDerivedByList(String ancestorNS, String ancestorName, XSTypeDefinition type) {
-/* 2778 */     if (type != null && ((XSSimpleTypeDefinition)type).getVariety() == 2) {
-/*      */ 
-/*      */       
-/* 2781 */       XSTypeDefinition itemType = ((XSSimpleTypeDefinition)type).getItemType();
-/*      */ 
-/*      */       
-/* 2784 */       if (itemType != null)
-/*      */       {
-/*      */         
-/* 2787 */         if (isDerivedByRestriction(ancestorNS, ancestorName, itemType)) {
-/* 2788 */           return true;
-/*      */         }
-/*      */       }
-/*      */     } 
-/* 2792 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isDerivedByUnion(String ancestorNS, String ancestorName, XSTypeDefinition type) {
-/* 2811 */     if (type != null && ((XSSimpleTypeDefinition)type).getVariety() == 3) {
-/*      */ 
-/*      */       
-/* 2814 */       XSObjectList memberTypes = ((XSSimpleTypeDefinition)type).getMemberTypes();
-/*      */       
-/* 2816 */       for (int i = 0; i < memberTypes.getLength(); i++) {
-/*      */         
-/* 2818 */         if (memberTypes.item(i) != null)
-/*      */         {
-/* 2820 */           if (isDerivedByRestriction(ancestorNS, ancestorName, (XSSimpleTypeDefinition)memberTypes.item(i))) {
-/* 2821 */             return true;
-/*      */           }
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 2826 */     return false;
-/*      */   }
-/*      */ 
-/*      */   
-/* 2830 */   static final XSSimpleTypeDecl fAnySimpleType = new XSSimpleTypeDecl(null, "anySimpleType", (short)0, (short)0, false, true, false, true, (short)1);
-/*      */   
-/* 2832 */   static final XSSimpleTypeDecl fAnyAtomicType = new XSSimpleTypeDecl(fAnySimpleType, "anyAtomicType", (short)29, (short)0, false, true, false, true, (short)49);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 2837 */   static final ValidationContext fDummyContext = new ValidationContext() {
-/*      */       public boolean needFacetChecking() {
-/* 2839 */         return true;
-/*      */       }
-/*      */       
-/*      */       public boolean needExtraChecking() {
-/* 2843 */         return false;
-/*      */       }
-/*      */       public boolean needToNormalize() {
-/* 2846 */         return false;
-/*      */       }
-/*      */       public boolean useNamespaces() {
-/* 2849 */         return true;
-/*      */       }
-/*      */       
-/*      */       public boolean isEntityDeclared(String name) {
-/* 2853 */         return false;
-/*      */       }
-/*      */       
-/*      */       public boolean isEntityUnparsed(String name) {
-/* 2857 */         return false;
-/*      */       }
-/*      */       
-/*      */       public boolean isIdDeclared(String name) {
-/* 2861 */         return false;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void addId(String name) {}
-/*      */ 
-/*      */       
-/*      */       public void addIdRef(String name) {}
-/*      */       
-/*      */       public String getSymbol(String symbol) {
-/* 2871 */         return symbol.intern();
-/*      */       }
-/*      */       
-/*      */       public String getURI(String prefix) {
-/* 2875 */         return null;
-/*      */       }
-/*      */       
-/*      */       public Locale getLocale() {
-/* 2879 */         return Locale.getDefault();
-/*      */       }
-/*      */     };
-/*      */   private boolean fAnonymous;
-/* 2883 */   public XSSimpleTypeDecl() { this.fAnonymous = false; } protected XSSimpleTypeDecl(XSSimpleTypeDecl base, String name, short validateDV, short ordered, boolean bounded, boolean finite, boolean numeric, boolean isImmutable, short builtInKind) { this.fAnonymous = false; this.fIsImmutable = isImmutable; this.fBase = base; this.fTypeName = name; this.fTargetNamespace = "http://www.w3.org/2001/XMLSchema"; this.fVariety = 1; this.fValidationDV = validateDV; this.fFacetsDefined = 16; if (validateDV == 0 || validateDV == 29 || validateDV == 1) { this.fWhiteSpace = 0; } else { this.fWhiteSpace = 2; this.fFixedFacet = 16; }  this.fOrdered = ordered; this.fBounded = bounded; this.fFinite = finite; this.fNumeric = numeric; this.fAnnotations = null; this.fBuiltInKind = builtInKind; } protected XSSimpleTypeDecl(XSSimpleTypeDecl base, String name, String uri, short finalSet, boolean isImmutable, XSObjectList annotations) { this.fAnonymous = false; this.fBase = base; this.fTypeName = name; this.fTargetNamespace = uri; this.fFinalSet = finalSet; this.fAnnotations = annotations; this.fVariety = this.fBase.fVariety; this.fValidationDV = this.fBase.fValidationDV; switch (this.fVariety) { case 2: this.fItemType = this.fBase.fItemType; break;case 3: this.fMemberTypes = this.fBase.fMemberTypes; break; }  this.fLength = this.fBase.fLength; this.fMinLength = this.fBase.fMinLength; this.fMaxLength = this.fBase.fMaxLength; this.fPattern = this.fBase.fPattern; this.fPatternStr = this.fBase.fPatternStr; this.fEnumeration = this.fBase.fEnumeration; this.fEnumerationType = this.fBase.fEnumerationType; this.fEnumerationItemType = this.fBase.fEnumerationItemType; this.fWhiteSpace = this.fBase.fWhiteSpace; this.fMaxExclusive = this.fBase.fMaxExclusive; this.fMaxInclusive = this.fBase.fMaxInclusive; this.fMinExclusive = this.fBase.fMinExclusive; this.fMinInclusive = this.fBase.fMinInclusive; this.fTotalDigits = this.fBase.fTotalDigits; this.fFractionDigits = this.fBase.fFractionDigits; this.fPatternType = this.fBase.fPatternType; this.fFixedFacet = this.fBase.fFixedFacet; this.fFacetsDefined = this.fBase.fFacetsDefined; this.lengthAnnotation = this.fBase.lengthAnnotation; this.minLengthAnnotation = this.fBase.minLengthAnnotation; this.maxLengthAnnotation = this.fBase.maxLengthAnnotation; this.patternAnnotations = this.fBase.patternAnnotations; this.enumerationAnnotations = this.fBase.enumerationAnnotations; this.whiteSpaceAnnotation = this.fBase.whiteSpaceAnnotation; this.maxExclusiveAnnotation = this.fBase.maxExclusiveAnnotation; this.maxInclusiveAnnotation = this.fBase.maxInclusiveAnnotation; this.minExclusiveAnnotation = this.fBase.minExclusiveAnnotation; this.minInclusiveAnnotation = this.fBase.minInclusiveAnnotation; this.totalDigitsAnnotation = this.fBase.totalDigitsAnnotation; this.fractionDigitsAnnotation = this.fBase.fractionDigitsAnnotation; calcFundamentalFacets(); this.fIsImmutable = isImmutable; this.fBuiltInKind = base.fBuiltInKind; } protected XSSimpleTypeDecl(String name, String uri, short finalSet, XSSimpleTypeDecl itemType, boolean isImmutable, XSObjectList annotations) { this.fAnonymous = false; this.fBase = fAnySimpleType; this.fTypeName = name; this.fTargetNamespace = uri; this.fFinalSet = finalSet; this.fAnnotations = annotations; this.fVariety = 2; this.fItemType = itemType; this.fValidationDV = 25; this.fFacetsDefined = 16; this.fFixedFacet = 16; this.fWhiteSpace = 2; calcFundamentalFacets(); this.fIsImmutable = isImmutable; this.fBuiltInKind = 44; } protected XSSimpleTypeDecl(String name, String uri, short finalSet, XSSimpleTypeDecl[] memberTypes, XSObjectList annotations) { this.fAnonymous = false; this.fBase = fAnySimpleType; this.fTypeName = name;
-/*      */     this.fTargetNamespace = uri;
-/*      */     this.fFinalSet = finalSet;
-/*      */     this.fAnnotations = annotations;
-/*      */     this.fVariety = 3;
-/*      */     this.fMemberTypes = memberTypes;
-/*      */     this.fValidationDV = 26;
-/*      */     this.fFacetsDefined = 16;
-/*      */     this.fWhiteSpace = 2;
-/*      */     calcFundamentalFacets();
-/*      */     this.fIsImmutable = false;
-/* 2894 */     this.fBuiltInKind = 45; } static final class ValidationContextImpl implements ValidationContext { final ValidationContext fExternal; NamespaceContext fNSContext; ValidationContextImpl(ValidationContext external) { this.fExternal = external; }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void setNSContext(NamespaceContext nsContext) {
-/* 2899 */       this.fNSContext = nsContext;
-/*      */     }
-/*      */     
-/*      */     public boolean needFacetChecking() {
-/* 2903 */       return this.fExternal.needFacetChecking();
-/*      */     }
-/*      */     
-/*      */     public boolean needExtraChecking() {
-/* 2907 */       return this.fExternal.needExtraChecking();
-/*      */     }
-/*      */     public boolean needToNormalize() {
-/* 2910 */       return this.fExternal.needToNormalize();
-/*      */     }
-/*      */     
-/*      */     public boolean useNamespaces() {
-/* 2914 */       return true;
-/*      */     }
-/*      */     
-/*      */     public boolean isEntityDeclared(String name) {
-/* 2918 */       return this.fExternal.isEntityDeclared(name);
-/*      */     }
-/*      */     
-/*      */     public boolean isEntityUnparsed(String name) {
-/* 2922 */       return this.fExternal.isEntityUnparsed(name);
-/*      */     }
-/*      */     
-/*      */     public boolean isIdDeclared(String name) {
-/* 2926 */       return this.fExternal.isIdDeclared(name);
-/*      */     }
-/*      */     
-/*      */     public void addId(String name) {
-/* 2930 */       this.fExternal.addId(name);
-/*      */     }
-/*      */     
-/*      */     public void addIdRef(String name) {
-/* 2934 */       this.fExternal.addIdRef(name);
-/*      */     }
-/*      */     
-/*      */     public String getSymbol(String symbol) {
-/* 2938 */       return this.fExternal.getSymbol(symbol);
-/*      */     }
-/*      */     
-/*      */     public String getURI(String prefix) {
-/* 2942 */       if (this.fNSContext == null) {
-/* 2943 */         return this.fExternal.getURI(prefix);
-/*      */       }
-/*      */       
-/* 2946 */       return this.fNSContext.getURI(prefix);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public Locale getLocale() {
-/* 2951 */       return this.fExternal.getLocale();
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset() {
-/* 2958 */     if (this.fIsImmutable)
-/* 2959 */       return;  this.fItemType = null;
-/* 2960 */     this.fMemberTypes = null;
-/*      */     
-/* 2962 */     this.fTypeName = null;
-/* 2963 */     this.fTargetNamespace = null;
-/* 2964 */     this.fFinalSet = 0;
-/* 2965 */     this.fBase = null;
-/* 2966 */     this.fVariety = -1;
-/* 2967 */     this.fValidationDV = -1;
-/*      */     
-/* 2969 */     this.fFacetsDefined = 0;
-/* 2970 */     this.fFixedFacet = 0;
-/*      */ 
-/*      */     
-/* 2973 */     this.fWhiteSpace = 0;
-/* 2974 */     this.fLength = -1;
-/* 2975 */     this.fMinLength = -1;
-/* 2976 */     this.fMaxLength = -1;
-/* 2977 */     this.fTotalDigits = -1;
-/* 2978 */     this.fFractionDigits = -1;
-/* 2979 */     this.fPattern = null;
-/* 2980 */     this.fPatternStr = null;
-/* 2981 */     this.fEnumeration = null;
-/* 2982 */     this.fEnumerationType = null;
-/* 2983 */     this.fEnumerationItemType = null;
-/* 2984 */     this.fLexicalPattern = null;
-/* 2985 */     this.fLexicalEnumeration = null;
-/* 2986 */     this.fMaxInclusive = null;
-/* 2987 */     this.fMaxExclusive = null;
-/* 2988 */     this.fMinExclusive = null;
-/* 2989 */     this.fMinInclusive = null;
-/* 2990 */     this.lengthAnnotation = null;
-/* 2991 */     this.minLengthAnnotation = null;
-/* 2992 */     this.maxLengthAnnotation = null;
-/* 2993 */     this.whiteSpaceAnnotation = null;
-/* 2994 */     this.totalDigitsAnnotation = null;
-/* 2995 */     this.fractionDigitsAnnotation = null;
-/* 2996 */     this.patternAnnotations = null;
-/* 2997 */     this.enumerationAnnotations = null;
-/* 2998 */     this.maxInclusiveAnnotation = null;
-/* 2999 */     this.maxExclusiveAnnotation = null;
-/* 3000 */     this.minInclusiveAnnotation = null;
-/* 3001 */     this.minExclusiveAnnotation = null;
-/*      */     
-/* 3003 */     this.fPatternType = 0;
-/* 3004 */     this.fAnnotations = null;
-/* 3005 */     this.fFacets = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSNamespaceItem getNamespaceItem() {
-/* 3014 */     return this.fNamespaceItem;
-/*      */   }
-/*      */   
-/*      */   public void setNamespaceItem(XSNamespaceItem namespaceItem) {
-/* 3018 */     this.fNamespaceItem = namespaceItem;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 3025 */     return this.fTargetNamespace + "," + this.fTypeName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSObjectList getFacets() {
-/* 3035 */     if (this.fFacets == null && (this.fFacetsDefined != 0 || this.fValidationDV == 24)) {
-/*      */ 
-/*      */       
-/* 3038 */       XSFacetImpl[] facets = new XSFacetImpl[10];
-/* 3039 */       int count = 0;
-/* 3040 */       if ((this.fFacetsDefined & 0x10) != 0 && this.fValidationDV != 0 && this.fValidationDV != 29) {
-/*      */ 
-/*      */         
-/* 3043 */         facets[count] = new XSFacetImpl((short)16, WS_FACET_STRING[this.fWhiteSpace], ((this.fFixedFacet & 0x10) != 0), this.whiteSpaceAnnotation);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 3049 */         count++;
-/*      */       } 
-/* 3051 */       if (this.fLength != -1) {
-/* 3052 */         facets[count] = new XSFacetImpl((short)1, 
-/*      */ 
-/*      */             
-/* 3055 */             Integer.toString(this.fLength), ((this.fFixedFacet & 0x1) != 0), this.lengthAnnotation);
-/*      */ 
-/*      */         
-/* 3058 */         count++;
-/*      */       } 
-/* 3060 */       if (this.fMinLength != -1) {
-/* 3061 */         facets[count] = new XSFacetImpl((short)2, 
-/*      */ 
-/*      */             
-/* 3064 */             Integer.toString(this.fMinLength), ((this.fFixedFacet & 0x2) != 0), this.minLengthAnnotation);
-/*      */ 
-/*      */         
-/* 3067 */         count++;
-/*      */       } 
-/* 3069 */       if (this.fMaxLength != -1) {
-/* 3070 */         facets[count] = new XSFacetImpl((short)4, 
-/*      */ 
-/*      */             
-/* 3073 */             Integer.toString(this.fMaxLength), ((this.fFixedFacet & 0x4) != 0), this.maxLengthAnnotation);
-/*      */ 
-/*      */         
-/* 3076 */         count++;
-/*      */       } 
-/* 3078 */       if (this.fTotalDigits != -1) {
-/* 3079 */         facets[count] = new XSFacetImpl((short)512, 
-/*      */ 
-/*      */             
-/* 3082 */             Integer.toString(this.fTotalDigits), ((this.fFixedFacet & 0x200) != 0), this.totalDigitsAnnotation);
-/*      */ 
-/*      */         
-/* 3085 */         count++;
-/*      */       } 
-/* 3087 */       if (this.fValidationDV == 24) {
-/* 3088 */         facets[count] = new XSFacetImpl((short)1024, "0", true, this.fractionDigitsAnnotation);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 3094 */         count++;
-/*      */       }
-/* 3096 */       else if (this.fFractionDigits != -1) {
-/* 3097 */         facets[count] = new XSFacetImpl((short)1024, 
-/*      */ 
-/*      */             
-/* 3100 */             Integer.toString(this.fFractionDigits), ((this.fFixedFacet & 0x400) != 0), this.fractionDigitsAnnotation);
-/*      */ 
-/*      */         
-/* 3103 */         count++;
-/*      */       } 
-/* 3105 */       if (this.fMaxInclusive != null) {
-/* 3106 */         facets[count] = new XSFacetImpl((short)32, this.fMaxInclusive
-/*      */ 
-/*      */             
-/* 3109 */             .toString(), ((this.fFixedFacet & 0x20) != 0), this.maxInclusiveAnnotation);
-/*      */ 
-/*      */         
-/* 3112 */         count++;
-/*      */       } 
-/* 3114 */       if (this.fMaxExclusive != null) {
-/* 3115 */         facets[count] = new XSFacetImpl((short)64, this.fMaxExclusive
-/*      */ 
-/*      */             
-/* 3118 */             .toString(), ((this.fFixedFacet & 0x40) != 0), this.maxExclusiveAnnotation);
-/*      */ 
-/*      */         
-/* 3121 */         count++;
-/*      */       } 
-/* 3123 */       if (this.fMinExclusive != null) {
-/* 3124 */         facets[count] = new XSFacetImpl((short)128, this.fMinExclusive
-/*      */ 
-/*      */             
-/* 3127 */             .toString(), ((this.fFixedFacet & 0x80) != 0), this.minExclusiveAnnotation);
-/*      */ 
-/*      */         
-/* 3130 */         count++;
-/*      */       } 
-/* 3132 */       if (this.fMinInclusive != null) {
-/* 3133 */         facets[count] = new XSFacetImpl((short)256, this.fMinInclusive
-/*      */ 
-/*      */             
-/* 3136 */             .toString(), ((this.fFixedFacet & 0x100) != 0), this.minInclusiveAnnotation);
-/*      */ 
-/*      */         
-/* 3139 */         count++;
-/*      */       } 
-/* 3141 */       this.fFacets = (count > 0) ? new XSObjectListImpl((XSObject[])facets, count) : XSObjectListImpl.EMPTY_LIST;
-/*      */     } 
-/* 3143 */     return (this.fFacets != null) ? this.fFacets : XSObjectListImpl.EMPTY_LIST;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSObjectList getMultiValueFacets() {
-/* 3151 */     if (this.fMultiValueFacets == null && ((this.fFacetsDefined & 0x800) != 0 || (this.fFacetsDefined & 0x8) != 0 || this.fPatternType != 0 || this.fValidationDV == 24)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3157 */       XSMVFacetImpl[] facets = new XSMVFacetImpl[2];
-/* 3158 */       int count = 0;
-/* 3159 */       if ((this.fFacetsDefined & 0x8) != 0 || this.fPatternType != 0 || this.fValidationDV == 24) {
-/*      */ 
-/*      */         
-/* 3162 */         facets[count] = new XSMVFacetImpl((short)8, 
-/*      */ 
-/*      */             
-/* 3165 */             getLexicalPattern(), this.patternAnnotations);
-/*      */         
-/* 3167 */         count++;
-/*      */       } 
-/* 3169 */       if (this.fEnumeration != null) {
-/* 3170 */         facets[count] = new XSMVFacetImpl((short)2048, 
-/*      */ 
-/*      */             
-/* 3173 */             getLexicalEnumeration(), this.enumerationAnnotations);
-/*      */         
-/* 3175 */         count++;
-/*      */       } 
-/* 3177 */       this.fMultiValueFacets = new XSObjectListImpl((XSObject[])facets, count);
-/*      */     } 
-/* 3179 */     return (this.fMultiValueFacets != null) ? this.fMultiValueFacets : XSObjectListImpl.EMPTY_LIST;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Object getMinInclusiveValue() {
-/* 3184 */     return this.fMinInclusive;
-/*      */   }
-/*      */   
-/*      */   public Object getMinExclusiveValue() {
-/* 3188 */     return this.fMinExclusive;
-/*      */   }
-/*      */   
-/*      */   public Object getMaxInclusiveValue() {
-/* 3192 */     return this.fMaxInclusive;
-/*      */   }
-/*      */   
-/*      */   public Object getMaxExclusiveValue() {
-/* 3196 */     return this.fMaxExclusive;
-/*      */   }
-/*      */   
-/*      */   public void setAnonymous(boolean anon) {
-/* 3200 */     this.fAnonymous = anon;
-/*      */   }
-/*      */   
-/*      */   private static final class XSFacetImpl implements XSFacet {
-/*      */     final short kind;
-/*      */     final String value;
-/*      */     final boolean fixed;
-/*      */     final XSObjectList annotations;
-/*      */     
-/*      */     public XSFacetImpl(short kind, String value, boolean fixed, XSAnnotation annotation) {
-/* 3210 */       this.kind = kind;
-/* 3211 */       this.value = value;
-/* 3212 */       this.fixed = fixed;
-/*      */       
-/* 3214 */       if (annotation != null) {
-/* 3215 */         this.annotations = new XSObjectListImpl();
-/* 3216 */         ((XSObjectListImpl)this.annotations).addXSObject(annotation);
-/*      */       } else {
-/*      */         
-/* 3219 */         this.annotations = XSObjectListImpl.EMPTY_LIST;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XSAnnotation getAnnotation() {
-/* 3232 */       return (XSAnnotation)this.annotations.item(0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XSObjectList getAnnotations() {
-/* 3244 */       return this.annotations;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public short getFacetKind() {
-/* 3251 */       return this.kind;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getLexicalFacetValue() {
-/* 3258 */       return this.value;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean getFixed() {
-/* 3265 */       return this.fixed;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 3272 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getNamespace() {
-/* 3279 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XSNamespaceItem getNamespaceItem() {
-/* 3287 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public short getType() {
-/* 3294 */       return 13;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static final class XSMVFacetImpl
-/*      */     implements XSMultiValueFacet {
-/*      */     final short kind;
-/*      */     final XSObjectList annotations;
-/*      */     final StringList values;
-/*      */     
-/*      */     public XSMVFacetImpl(short kind, StringList values, XSObjectList annotations) {
-/* 3305 */       this.kind = kind;
-/* 3306 */       this.values = values;
-/* 3307 */       this.annotations = (annotations != null) ? annotations : XSObjectListImpl.EMPTY_LIST;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public short getFacetKind() {
-/* 3314 */       return this.kind;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XSObjectList getAnnotations() {
-/* 3321 */       return this.annotations;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public StringList getLexicalFacetValues() {
-/* 3328 */       return this.values;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getName() {
-/* 3335 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getNamespace() {
-/* 3342 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public XSNamespaceItem getNamespaceItem() {
-/* 3350 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public short getType() {
-/* 3357 */       return 14;
-/*      */     } }
-/*      */   
-/*      */   private static abstract class AbstractObjectList extends AbstractList implements ObjectList { private AbstractObjectList() {}
-/*      */     
-/*      */     public Object get(int index) {
-/* 3363 */       if (index >= 0 && index < getLength()) {
-/* 3364 */         return item(index);
-/*      */       }
-/* 3366 */       throw new IndexOutOfBoundsException("Index: " + index);
-/*      */     }
-/*      */     public int size() {
-/* 3369 */       return getLength();
-/*      */     } }
-/*      */ 
-/*      */   
-/*      */   public String getTypeNamespace() {
-/* 3374 */     return getNamespace();
-/*      */   }
-/*      */   
-/*      */   public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg, int derivationMethod) {
-/* 3378 */     return isDOMDerivedFrom(typeNamespaceArg, typeNameArg, derivationMethod);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private short convertToPrimitiveKind(short valueType) {
-/* 3383 */     if (valueType <= 20) {
-/* 3384 */       return valueType;
-/*      */     }
-/*      */     
-/* 3387 */     if (valueType <= 29) {
-/* 3388 */       return 2;
-/*      */     }
-/*      */     
-/* 3391 */     if (valueType <= 42) {
-/* 3392 */       return 4;
-/*      */     }
-/*      */     
-/* 3395 */     return valueType;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\XSSimpleTypeDecl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import java.util.AbstractList;
+import java.util.Locale;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.dv.DatatypeException;
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeFacetException;
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
+import com.sun.org.apache.xerces.internal.impl.dv.XSFacets;
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.RegularExpression;
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException;
+import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
+import com.sun.org.apache.xerces.internal.impl.xs.util.ShortListImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.util.StringListImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.util.XMLChar;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xs.ShortList;
+import com.sun.org.apache.xerces.internal.xs.StringList;
+import com.sun.org.apache.xerces.internal.xs.XSAnnotation;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSFacet;
+import com.sun.org.apache.xerces.internal.xs.XSMultiValueFacet;
+import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
+import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
+import com.sun.org.apache.xerces.internal.xs.datatypes.ObjectList;
+import org.w3c.dom.TypeInfo;
+
+/**
+ * @xerces.internal
+ *
+ * @author Sandy Gao, IBM
+ * @author Neeraj Bajaj, Sun Microsystems, inc.
+ *
+ * @version $Id: XSSimpleTypeDecl.java 3029 2011-04-24 17:50:18Z joehw $
+ */
+public class XSSimpleTypeDecl implements XSSimpleType, TypeInfo {
+
+    protected static final short DV_STRING        = PRIMITIVE_STRING;
+    protected static final short DV_BOOLEAN       = PRIMITIVE_BOOLEAN;
+    protected static final short DV_DECIMAL       = PRIMITIVE_DECIMAL;
+    protected static final short DV_FLOAT         = PRIMITIVE_FLOAT;
+    protected static final short DV_DOUBLE        = PRIMITIVE_DOUBLE;
+    protected static final short DV_DURATION      = PRIMITIVE_DURATION;
+    protected static final short DV_DATETIME      = PRIMITIVE_DATETIME;
+    protected static final short DV_TIME          = PRIMITIVE_TIME;
+    protected static final short DV_DATE          = PRIMITIVE_DATE;
+    protected static final short DV_GYEARMONTH    = PRIMITIVE_GYEARMONTH;
+    protected static final short DV_GYEAR         = PRIMITIVE_GYEAR;
+    protected static final short DV_GMONTHDAY     = PRIMITIVE_GMONTHDAY;
+    protected static final short DV_GDAY          = PRIMITIVE_GDAY;
+    protected static final short DV_GMONTH        = PRIMITIVE_GMONTH;
+    protected static final short DV_HEXBINARY     = PRIMITIVE_HEXBINARY;
+    protected static final short DV_BASE64BINARY  = PRIMITIVE_BASE64BINARY;
+    protected static final short DV_ANYURI        = PRIMITIVE_ANYURI;
+    protected static final short DV_QNAME         = PRIMITIVE_QNAME;
+    protected static final short DV_PRECISIONDECIMAL = PRIMITIVE_PRECISIONDECIMAL;
+    protected static final short DV_NOTATION      = PRIMITIVE_NOTATION;
+
+    protected static final short DV_ANYSIMPLETYPE = 0;
+    protected static final short DV_ID            = DV_NOTATION + 1;
+    protected static final short DV_IDREF         = DV_NOTATION + 2;
+    protected static final short DV_ENTITY        = DV_NOTATION + 3;
+    protected static final short DV_INTEGER       = DV_NOTATION + 4;
+    protected static final short DV_LIST          = DV_NOTATION + 5;
+    protected static final short DV_UNION         = DV_NOTATION + 6;
+    protected static final short DV_YEARMONTHDURATION = DV_NOTATION + 7;
+    protected static final short DV_DAYTIMEDURATION     = DV_NOTATION + 8;
+    protected static final short DV_ANYATOMICTYPE = DV_NOTATION + 9;
+
+    private static final TypeValidator[] gDVs = {
+        new AnySimpleDV(),
+        new StringDV(),
+        new BooleanDV(),
+        new DecimalDV(),
+        new FloatDV(),
+        new DoubleDV(),
+        new DurationDV(),
+        new DateTimeDV(),
+        new TimeDV(),
+        new DateDV(),
+        new YearMonthDV(),
+        new YearDV(),
+        new MonthDayDV(),
+        new DayDV(),
+        new MonthDV(),
+        new HexBinaryDV(),
+        new Base64BinaryDV(),
+        new AnyURIDV(),
+        new QNameDV(),
+        new PrecisionDecimalDV(), // XML Schema 1.1 type
+        new QNameDV(),   // notation use the same one as qname
+        new IDDV(),
+        new IDREFDV(),
+        new EntityDV(),
+        new IntegerDV(),
+        new ListDV(),
+        new UnionDV(),
+        new YearMonthDurationDV(), // XML Schema 1.1 type
+        new DayTimeDurationDV(), // XML Schema 1.1 type
+        new AnyAtomicDV() // XML Schema 1.1 type
+    };
+
+    static final short NORMALIZE_NONE = 0;
+    static final short NORMALIZE_TRIM = 1;
+    static final short NORMALIZE_FULL = 2;
+    static final short[] fDVNormalizeType = {
+        NORMALIZE_NONE, //AnySimpleDV(),
+        NORMALIZE_FULL, //StringDV(),
+        NORMALIZE_TRIM, //BooleanDV(),
+        NORMALIZE_TRIM, //DecimalDV(),
+        NORMALIZE_TRIM, //FloatDV(),
+        NORMALIZE_TRIM, //DoubleDV(),
+        NORMALIZE_TRIM, //DurationDV(),
+        NORMALIZE_TRIM, //DateTimeDV(),
+        NORMALIZE_TRIM, //TimeDV(),
+        NORMALIZE_TRIM, //DateDV(),
+        NORMALIZE_TRIM, //YearMonthDV(),
+        NORMALIZE_TRIM, //YearDV(),
+        NORMALIZE_TRIM, //MonthDayDV(),
+        NORMALIZE_TRIM, //DayDV(),
+        NORMALIZE_TRIM, //MonthDV(),
+        NORMALIZE_TRIM, //HexBinaryDV(),
+        NORMALIZE_NONE, //Base64BinaryDV(),  // Base64 know how to deal with spaces
+        NORMALIZE_TRIM, //AnyURIDV(),
+        NORMALIZE_TRIM, //QNameDV(),
+        NORMALIZE_TRIM, //PrecisionDecimalDV() (Schema 1.1)
+        NORMALIZE_TRIM, //QNameDV(),   // notation
+        NORMALIZE_TRIM, //IDDV(),
+        NORMALIZE_TRIM, //IDREFDV(),
+        NORMALIZE_TRIM, //EntityDV(),
+        NORMALIZE_TRIM, //IntegerDV(),
+        NORMALIZE_FULL, //ListDV(),
+        NORMALIZE_NONE, //UnionDV(),
+        NORMALIZE_TRIM, //YearMonthDurationDV() (Schema 1.1)
+        NORMALIZE_TRIM, //DayTimeDurationDV() (Schema 1.1)
+        NORMALIZE_NONE, //AnyAtomicDV() (Schema 1.1)
+    };
+
+    static final short SPECIAL_PATTERN_NONE     = 0;
+    static final short SPECIAL_PATTERN_NMTOKEN  = 1;
+    static final short SPECIAL_PATTERN_NAME     = 2;
+    static final short SPECIAL_PATTERN_NCNAME   = 3;
+
+    static final String[] SPECIAL_PATTERN_STRING   = {
+        "NONE", "NMTOKEN", "Name", "NCName"
+    };
+
+    static final String[] WS_FACET_STRING = {
+        "preserve", "replace", "collapse"
+    };
+
+    static final String URI_SCHEMAFORSCHEMA = "http://www.w3.org/2001/XMLSchema";
+    static final String ANY_TYPE = "anyType";
+
+    // XML Schema 1.1 type constants
+    public static final short YEARMONTHDURATION_DT      = 46;
+    public static final short DAYTIMEDURATION_DT        = 47;
+    public static final short PRECISIONDECIMAL_DT       = 48;
+    public static final short ANYATOMICTYPE_DT          = 49;
+
+    // DOM Level 3 TypeInfo Derivation Method constants
+    static final int DERIVATION_ANY = 0;
+    static final int DERIVATION_RESTRICTION = 1;
+    static final int DERIVATION_EXTENSION = 2;
+    static final int DERIVATION_UNION = 4;
+    static final int DERIVATION_LIST = 8;
+
+    static final ValidationContext fEmptyContext = new ValidationContext() {
+        public boolean needFacetChecking() {
+            return true;
+        }
+        public boolean needExtraChecking() {
+            return false;
+        }
+        public boolean needToNormalize() {
+            return true;
+        }
+        public boolean useNamespaces () {
+            return true;
+        }
+        public boolean isEntityDeclared (String name) {
+            return false;
+        }
+        public boolean isEntityUnparsed (String name) {
+            return false;
+        }
+        public boolean isIdDeclared (String name) {
+            return false;
+        }
+        public void addId(String name) {
+        }
+        public void addIdRef(String name) {
+        }
+        public String getSymbol (String symbol) {
+            return symbol.intern();
+        }
+        public String getURI(String prefix) {
+            return null;
+        }
+        public Locale getLocale() {
+            return Locale.getDefault();
+        }
+    };
+
+    protected static TypeValidator[] getGDVs() {
+        return (TypeValidator[])gDVs.clone();
+    }
+    private TypeValidator[] fDVs = gDVs;
+    protected void setDVs(TypeValidator[] dvs) {
+        fDVs = dvs;
+    }
+
+    // this will be true if this is a static XSSimpleTypeDecl
+    // and hence must remain immutable (i.e., applyFacets
+    // may not be permitted to have any effect).
+    private boolean fIsImmutable = false;
+
+    private XSSimpleTypeDecl fItemType;
+    private XSSimpleTypeDecl[] fMemberTypes;
+    // The most specific built-in type kind.
+    private short fBuiltInKind;
+
+    private String fTypeName;
+    private String fTargetNamespace;
+    private short fFinalSet = 0;
+    private XSSimpleTypeDecl fBase;
+    private short fVariety = -1;
+    private short fValidationDV = -1;
+
+    private short fFacetsDefined = 0;
+    private short fFixedFacet = 0;
+
+    //for constraining facets
+    private short fWhiteSpace = 0;
+    private int fLength = -1;
+    private int fMinLength = -1;
+    private int fMaxLength = -1;
+    private int fTotalDigits = -1;
+    private int fFractionDigits = -1;
+    private Vector fPattern;
+    private Vector fPatternStr;
+    private Vector fEnumeration;
+    private short[] fEnumerationType;
+    private ShortList[] fEnumerationItemType;   // used in case fenumerationType value is LIST or LISTOFUNION
+    private ShortList fEnumerationTypeList;
+    private ObjectList fEnumerationItemTypeList;
+    private StringList fLexicalPattern;
+    private StringList fLexicalEnumeration;
+    private ObjectList fActualEnumeration;
+    private Object fMaxInclusive;
+    private Object fMaxExclusive;
+    private Object fMinExclusive;
+    private Object fMinInclusive;
+
+    // annotations for constraining facets
+    public XSAnnotation lengthAnnotation;
+    public XSAnnotation minLengthAnnotation;
+    public XSAnnotation maxLengthAnnotation;
+    public XSAnnotation whiteSpaceAnnotation;
+    public XSAnnotation totalDigitsAnnotation;
+    public XSAnnotation fractionDigitsAnnotation;
+    public XSObjectListImpl patternAnnotations;
+    public XSObjectList enumerationAnnotations;
+    public XSAnnotation maxInclusiveAnnotation;
+    public XSAnnotation maxExclusiveAnnotation;
+    public XSAnnotation minInclusiveAnnotation;
+    public XSAnnotation minExclusiveAnnotation;
+
+    // facets as objects
+    private XSObjectListImpl fFacets;
+
+    // enumeration and pattern facets
+    private XSObjectListImpl fMultiValueFacets;
+
+    // simpleType annotations
+    private XSObjectList fAnnotations = null;
+
+    private short fPatternType = SPECIAL_PATTERN_NONE;
+
+    // for fundamental facets
+    private short fOrdered;
+    private boolean fFinite;
+    private boolean fBounded;
+    private boolean fNumeric;
+
+    // The namespace schema information item corresponding to the target namespace
+    // of the simple type definition, if it is globally declared; or null otherwise.
+    private XSNamespaceItem fNamespaceItem = null;
+
+    // default constructor
+    public XSSimpleTypeDecl(){}
+
+    //Create a new built-in primitive types (and id/idref/entity/integer/yearMonthDuration)
+    protected XSSimpleTypeDecl(XSSimpleTypeDecl base, String name, short validateDV,
+            short ordered, boolean bounded, boolean finite,
+            boolean numeric, boolean isImmutable, short builtInKind) {
+        fIsImmutable = isImmutable;
+        fBase = base;
+        fTypeName = name;
+        fTargetNamespace = URI_SCHEMAFORSCHEMA;
+        // To simplify the code for anySimpleType, we treat it as an atomic type
+        fVariety = VARIETY_ATOMIC;
+        fValidationDV = validateDV;
+        fFacetsDefined = FACET_WHITESPACE;
+        if (validateDV == DV_ANYSIMPLETYPE ||
+            validateDV == DV_ANYATOMICTYPE ||
+            validateDV == DV_STRING) {
+            fWhiteSpace = WS_PRESERVE;
+        }
+        else {
+            fWhiteSpace = WS_COLLAPSE;
+            fFixedFacet = FACET_WHITESPACE;
+        }
+        this.fOrdered = ordered;
+        this.fBounded = bounded;
+        this.fFinite = finite;
+        this.fNumeric = numeric;
+        fAnnotations = null;
+
+        // Specify the build in kind for this primitive type
+        fBuiltInKind = builtInKind;
+    }
+
+    //Create a new simple type for restriction for built-in types
+    protected XSSimpleTypeDecl(XSSimpleTypeDecl base, String name, String uri, short finalSet, boolean isImmutable,
+            XSObjectList annotations, short builtInKind) {
+        this(base, name, uri, finalSet, isImmutable, annotations);
+        // Specify the build in kind for this built-in type
+        fBuiltInKind = builtInKind;
+    }
+
+    //Create a new simple type for restriction.
+    protected XSSimpleTypeDecl(XSSimpleTypeDecl base, String name, String uri, short finalSet, boolean isImmutable,
+            XSObjectList annotations) {
+        fBase = base;
+        fTypeName = name;
+        fTargetNamespace = uri;
+        fFinalSet = finalSet;
+        fAnnotations = annotations;
+
+        fVariety = fBase.fVariety;
+        fValidationDV = fBase.fValidationDV;
+        switch (fVariety) {
+            case VARIETY_ATOMIC:
+                break;
+            case VARIETY_LIST:
+                fItemType = fBase.fItemType;
+                break;
+            case VARIETY_UNION:
+                fMemberTypes = fBase.fMemberTypes;
+                break;
+        }
+
+        // always inherit facets from the base.
+        // in case a type is created, but applyFacets is not called
+        fLength = fBase.fLength;
+        fMinLength = fBase.fMinLength;
+        fMaxLength = fBase.fMaxLength;
+        fPattern = fBase.fPattern;
+        fPatternStr = fBase.fPatternStr;
+        fEnumeration = fBase.fEnumeration;
+        fEnumerationType = fBase.fEnumerationType;
+        fEnumerationItemType = fBase.fEnumerationItemType;
+        fWhiteSpace = fBase.fWhiteSpace;
+        fMaxExclusive = fBase.fMaxExclusive;
+        fMaxInclusive = fBase.fMaxInclusive;
+        fMinExclusive = fBase.fMinExclusive;
+        fMinInclusive = fBase.fMinInclusive;
+        fTotalDigits = fBase.fTotalDigits;
+        fFractionDigits = fBase.fFractionDigits;
+        fPatternType = fBase.fPatternType;
+        fFixedFacet = fBase.fFixedFacet;
+        fFacetsDefined = fBase.fFacetsDefined;
+
+        // always inherit facet annotations in case applyFacets is not called.
+        lengthAnnotation = fBase.lengthAnnotation;
+        minLengthAnnotation = fBase.minLengthAnnotation;
+        maxLengthAnnotation = fBase.maxLengthAnnotation;
+        patternAnnotations = fBase.patternAnnotations;
+        enumerationAnnotations = fBase.enumerationAnnotations;
+        whiteSpaceAnnotation = fBase.whiteSpaceAnnotation;
+        maxExclusiveAnnotation = fBase.maxExclusiveAnnotation;
+        maxInclusiveAnnotation = fBase.maxInclusiveAnnotation;
+        minExclusiveAnnotation = fBase.minExclusiveAnnotation;
+        minInclusiveAnnotation = fBase.minInclusiveAnnotation;
+        totalDigitsAnnotation = fBase.totalDigitsAnnotation;
+        fractionDigitsAnnotation = fBase.fractionDigitsAnnotation;
+
+        //we also set fundamental facets information in case applyFacets is not called.
+        calcFundamentalFacets();
+        fIsImmutable = isImmutable;
+
+        // Inherit from the base type
+        fBuiltInKind = base.fBuiltInKind;
+    }
+
+    //Create a new simple type for list.
+    protected XSSimpleTypeDecl(String name, String uri, short finalSet, XSSimpleTypeDecl itemType, boolean isImmutable,
+            XSObjectList annotations) {
+        fBase = fAnySimpleType;
+        fTypeName = name;
+        fTargetNamespace = uri;
+        fFinalSet = finalSet;
+        fAnnotations = annotations;
+
+        fVariety = VARIETY_LIST;
+        fItemType = (XSSimpleTypeDecl)itemType;
+        fValidationDV = DV_LIST;
+        fFacetsDefined = FACET_WHITESPACE;
+        fFixedFacet = FACET_WHITESPACE;
+        fWhiteSpace = WS_COLLAPSE;
+
+        //setting fundamental facets
+        calcFundamentalFacets();
+        fIsImmutable = isImmutable;
+
+        // Values of this type are lists
+        fBuiltInKind = XSConstants.LIST_DT;
+    }
+
+    //Create a new simple type for union.
+    protected XSSimpleTypeDecl(String name, String uri, short finalSet, XSSimpleTypeDecl[] memberTypes,
+            XSObjectList annotations) {
+        fBase = fAnySimpleType;
+        fTypeName = name;
+        fTargetNamespace = uri;
+        fFinalSet = finalSet;
+        fAnnotations = annotations;
+
+        fVariety = VARIETY_UNION;
+        fMemberTypes = memberTypes;
+        fValidationDV = DV_UNION;
+        // even for union, we set whitespace to something
+        // this will never be used, but we can use fFacetsDefined to check
+        // whether applyFacets() is allwwed: it's not allowed
+        // if fFacetsDefined != 0
+        fFacetsDefined = FACET_WHITESPACE;
+        fWhiteSpace = WS_COLLAPSE;
+
+        //setting fundamental facets
+        calcFundamentalFacets();
+        // none of the schema-defined types are unions, so just set
+        // fIsImmutable to false.
+        fIsImmutable = false;
+
+        // No value can be of this type, so it's unavailable.
+        fBuiltInKind = XSConstants.UNAVAILABLE_DT;
+    }
+
+    //set values for restriction.
+    protected XSSimpleTypeDecl setRestrictionValues(XSSimpleTypeDecl base, String name, String uri, short finalSet,
+            XSObjectList annotations) {
+        //decline to do anything if the object is immutable.
+        if(fIsImmutable) return null;
+        fBase = base;
+        fAnonymous = false;
+        fTypeName = name;
+        fTargetNamespace = uri;
+        fFinalSet = finalSet;
+        fAnnotations = annotations;
+
+        fVariety = fBase.fVariety;
+        fValidationDV = fBase.fValidationDV;
+        switch (fVariety) {
+            case VARIETY_ATOMIC:
+                break;
+            case VARIETY_LIST:
+                fItemType = fBase.fItemType;
+                break;
+            case VARIETY_UNION:
+                fMemberTypes = fBase.fMemberTypes;
+                break;
+        }
+
+        // always inherit facets from the base.
+        // in case a type is created, but applyFacets is not called
+        fLength = fBase.fLength;
+        fMinLength = fBase.fMinLength;
+        fMaxLength = fBase.fMaxLength;
+        fPattern = fBase.fPattern;
+        fPatternStr = fBase.fPatternStr;
+        fEnumeration = fBase.fEnumeration;
+        fEnumerationType = fBase.fEnumerationType;
+        fEnumerationItemType = fBase.fEnumerationItemType;
+        fWhiteSpace = fBase.fWhiteSpace;
+        fMaxExclusive = fBase.fMaxExclusive;
+        fMaxInclusive = fBase.fMaxInclusive;
+        fMinExclusive = fBase.fMinExclusive;
+        fMinInclusive = fBase.fMinInclusive;
+        fTotalDigits = fBase.fTotalDigits;
+        fFractionDigits = fBase.fFractionDigits;
+        fPatternType = fBase.fPatternType;
+        fFixedFacet = fBase.fFixedFacet;
+        fFacetsDefined = fBase.fFacetsDefined;
+
+        //we also set fundamental facets information in case applyFacets is not called.
+        calcFundamentalFacets();
+
+        // Inherit from the base type
+        fBuiltInKind = base.fBuiltInKind;
+
+        return this;
+    }
+
+    //set values for list.
+    protected XSSimpleTypeDecl setListValues(String name, String uri, short finalSet, XSSimpleTypeDecl itemType,
+            XSObjectList annotations) {
+        //decline to do anything if the object is immutable.
+        if(fIsImmutable) return null;
+        fBase = fAnySimpleType;
+        fAnonymous = false;
+        fTypeName = name;
+        fTargetNamespace = uri;
+        fFinalSet = finalSet;
+        fAnnotations = annotations;
+
+        fVariety = VARIETY_LIST;
+        fItemType = (XSSimpleTypeDecl)itemType;
+        fValidationDV = DV_LIST;
+        fFacetsDefined = FACET_WHITESPACE;
+        fFixedFacet = FACET_WHITESPACE;
+        fWhiteSpace = WS_COLLAPSE;
+
+        //setting fundamental facets
+        calcFundamentalFacets();
+
+        // Values of this type are lists
+        fBuiltInKind = XSConstants.LIST_DT;
+
+        return this;
+    }
+
+    //set values for union.
+    protected XSSimpleTypeDecl setUnionValues(String name, String uri, short finalSet, XSSimpleTypeDecl[] memberTypes,
+            XSObjectList annotations) {
+        //decline to do anything if the object is immutable.
+        if(fIsImmutable) return null;
+        fBase = fAnySimpleType;
+        fAnonymous = false;
+        fTypeName = name;
+        fTargetNamespace = uri;
+        fFinalSet = finalSet;
+        fAnnotations = annotations;
+
+        fVariety = VARIETY_UNION;
+        fMemberTypes = memberTypes;
+        fValidationDV = DV_UNION;
+        // even for union, we set whitespace to something
+        // this will never be used, but we can use fFacetsDefined to check
+        // whether applyFacets() is allwwed: it's not allowed
+        // if fFacetsDefined != 0
+        fFacetsDefined = FACET_WHITESPACE;
+        fWhiteSpace = WS_COLLAPSE;
+
+        //setting fundamental facets
+        calcFundamentalFacets();
+
+        // No value can be of this type, so it's unavailable.
+        fBuiltInKind = XSConstants.UNAVAILABLE_DT;
+
+        return this;
+    }
+
+    public short getType () {
+        return XSConstants.TYPE_DEFINITION;
+    }
+
+    public short getTypeCategory () {
+        return SIMPLE_TYPE;
+    }
+
+    public String getName() {
+        return getAnonymous()?null:fTypeName;
+    }
+
+    public String getTypeName() {
+        return fTypeName;
+    }
+
+    public String getNamespace() {
+        return fTargetNamespace;
+    }
+
+    public short getFinal(){
+        return fFinalSet;
+    }
+
+    public boolean isFinal(short derivation) {
+        return (fFinalSet & derivation) != 0;
+    }
+
+    public XSTypeDefinition getBaseType(){
+        return fBase;
+    }
+
+    public boolean getAnonymous() {
+        return fAnonymous || (fTypeName == null);
+    }
+
+    public short getVariety(){
+        // for anySimpleType, return absent variaty
+        return fValidationDV == DV_ANYSIMPLETYPE ? VARIETY_ABSENT : fVariety;
+    }
+
+    public boolean isIDType(){
+        switch (fVariety) {
+            case VARIETY_ATOMIC:
+                return fValidationDV == DV_ID;
+            case VARIETY_LIST:
+                return fItemType.isIDType();
+            case VARIETY_UNION:
+                for (int i = 0; i < fMemberTypes.length; i++) {
+                    if (fMemberTypes[i].isIDType())
+                        return true;
+                }
+        }
+        return false;
+    }
+
+    public short getWhitespace() throws DatatypeException{
+        if (fVariety == VARIETY_UNION) {
+            throw new DatatypeException("dt-whitespace", new Object[]{fTypeName});
+        }
+        return fWhiteSpace;
+    }
+
+    public short getPrimitiveKind() {
+        if (fVariety == VARIETY_ATOMIC && fValidationDV != DV_ANYSIMPLETYPE) {
+            if (fValidationDV == DV_ID || fValidationDV == DV_IDREF || fValidationDV == DV_ENTITY) {
+                return DV_STRING;
+            }
+            else if (fValidationDV == DV_INTEGER) {
+                return DV_DECIMAL;
+            }
+            else if (Constants.SCHEMA_1_1_SUPPORT && (fValidationDV == DV_YEARMONTHDURATION || fValidationDV == DV_DAYTIMEDURATION)) {
+                return DV_DURATION;
+            }
+            else {
+                return fValidationDV;
+            }
+        }
+        else {
+            // REVISIT: error situation. runtime exception?
+            return (short)0;
+        }
+    }
+
+    /**
+     * Returns the closest built-in type category this type represents or
+     * derived from. For example, if this simple type is a built-in derived
+     * type integer the <code>INTEGER_DV</code> is returned.
+     */
+    public short getBuiltInKind() {
+        return this.fBuiltInKind;
+    }
+
+    /**
+     * If variety is <code>atomic</code> the primitive type definition (a
+     * built-in primitive datatype definition or the simple ur-type
+     * definition) is available, otherwise <code>null</code>.
+     */
+    public XSSimpleTypeDefinition getPrimitiveType() {
+        if (fVariety == VARIETY_ATOMIC && fValidationDV != DV_ANYSIMPLETYPE) {
+            XSSimpleTypeDecl pri = this;
+            // recursively get base, until we reach anySimpleType
+            while (pri.fBase != fAnySimpleType)
+                pri = pri.fBase;
+            return pri;
+        }
+        else {
+            // REVISIT: error situation. runtime exception?
+            return null;
+        }
+    }
+
+    /**
+     * If variety is <code>list</code> the item type definition (an atomic or
+     * union simple type definition) is available, otherwise
+     * <code>null</code>.
+     */
+    public XSSimpleTypeDefinition getItemType() {
+        if (fVariety == VARIETY_LIST) {
+            return fItemType;
+        }
+        else {
+            // REVISIT: error situation. runtime exception?
+            return null;
+        }
+    }
+
+    /**
+     * If variety is <code>union</code> the list of member type definitions (a
+     * non-empty sequence of simple type definitions) is available,
+     * otherwise an empty <code>XSObjectList</code>.
+     */
+    public XSObjectList getMemberTypes() {
+        if (fVariety == VARIETY_UNION) {
+            return new XSObjectListImpl(fMemberTypes, fMemberTypes.length);
+        }
+        else {
+            return XSObjectListImpl.EMPTY_LIST;
+        }
+    }
+
+    /**
+     * If <restriction> is chosen
+     */
+    public void applyFacets(XSFacets facets, short presentFacet, short fixedFacet, ValidationContext context)
+    throws InvalidDatatypeFacetException {
+        if (context == null) {
+            context = fEmptyContext;
+        }
+        applyFacets(facets, presentFacet, fixedFacet, SPECIAL_PATTERN_NONE, context);
+    }
+
+    /**
+     * built-in derived types by restriction
+     */
+    void applyFacets1(XSFacets facets, short presentFacet, short fixedFacet) {
+
+        try {
+            applyFacets(facets, presentFacet, fixedFacet, SPECIAL_PATTERN_NONE, fDummyContext);
+        } catch (InvalidDatatypeFacetException e) {
+            // should never gets here, internel error
+            throw new RuntimeException("internal error");
+        }
+        // we've now applied facets; so lock this object:
+        fIsImmutable = true;
+    }
+
+    /**
+     * built-in derived types by restriction
+     */
+    void applyFacets1(XSFacets facets, short presentFacet, short fixedFacet, short patternType) {
+
+        try {
+            applyFacets(facets, presentFacet, fixedFacet, patternType, fDummyContext);
+        } catch (InvalidDatatypeFacetException e) {
+            // should never gets here, internel error
+            throw new RuntimeException("internal error");
+        }
+        // we've now applied facets; so lock this object:
+        fIsImmutable = true;
+    }
+
+    /**
+     * If <restriction> is chosen, or built-in derived types by restriction
+     */
+    void applyFacets(XSFacets facets, short presentFacet, short fixedFacet, short patternType, ValidationContext context)
+    throws InvalidDatatypeFacetException {
+
+        // if the object is immutable, should not apply facets...
+        if(fIsImmutable) return;
+        ValidatedInfo tempInfo = new ValidatedInfo();
+
+        // clear facets. because we always inherit facets in the constructor
+        // REVISIT: in fact, we don't need to clear them.
+        // we can convert 5 string values (4 bounds + 1 enum) to actual values,
+        // store them somewhere, then do facet checking at once, instead of
+        // going through the following steps. (lots of checking are redundant:
+        // for example, ((presentFacet & FACET_XXX) != 0))
+
+        fFacetsDefined = 0;
+        fFixedFacet = 0;
+
+        int result = 0 ;
+
+        // step 1: parse present facets
+        short allowedFacet = fDVs[fValidationDV].getAllowedFacets();
+
+        // length
+        if ((presentFacet & FACET_LENGTH) != 0) {
+            if ((allowedFacet & FACET_LENGTH) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"length", fTypeName});
+            } else {
+                fLength = facets.length;
+                lengthAnnotation = facets.lengthAnnotation;
+                fFacetsDefined |= FACET_LENGTH;
+                if ((fixedFacet & FACET_LENGTH) != 0)
+                    fFixedFacet |= FACET_LENGTH;
+            }
+        }
+        // minLength
+        if ((presentFacet & FACET_MINLENGTH) != 0) {
+            if ((allowedFacet & FACET_MINLENGTH) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"minLength", fTypeName});
+            } else {
+                fMinLength = facets.minLength;
+                minLengthAnnotation = facets.minLengthAnnotation;
+                fFacetsDefined |= FACET_MINLENGTH;
+                if ((fixedFacet & FACET_MINLENGTH) != 0)
+                    fFixedFacet |= FACET_MINLENGTH;
+            }
+        }
+        // maxLength
+        if ((presentFacet & FACET_MAXLENGTH) != 0) {
+            if ((allowedFacet & FACET_MAXLENGTH) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"maxLength", fTypeName});
+            } else {
+                fMaxLength = facets.maxLength;
+                maxLengthAnnotation = facets.maxLengthAnnotation;
+                fFacetsDefined |= FACET_MAXLENGTH;
+                if ((fixedFacet & FACET_MAXLENGTH) != 0)
+                    fFixedFacet |= FACET_MAXLENGTH;
+            }
+        }
+        // pattern
+        if ((presentFacet & FACET_PATTERN) != 0) {
+            if ((allowedFacet & FACET_PATTERN) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"pattern", fTypeName});
+            } else {
+                patternAnnotations = facets.patternAnnotations;
+                RegularExpression regex = null;
+                try {
+                    regex = new RegularExpression(facets.pattern, "X", context.getLocale());
+                } catch (Exception e) {
+                    reportError("InvalidRegex", new Object[]{facets.pattern, e.getLocalizedMessage()});
+                }
+                if (regex != null) {
+                    fPattern = new Vector();
+                    fPattern.addElement(regex);
+                    fPatternStr = new Vector();
+                    fPatternStr.addElement(facets.pattern);
+                    fFacetsDefined |= FACET_PATTERN;
+                    if ((fixedFacet & FACET_PATTERN) != 0)
+                        fFixedFacet |= FACET_PATTERN;
+                }
+            }
+        }
+
+        // whiteSpace
+        if ((presentFacet & FACET_WHITESPACE) != 0) {
+            if ((allowedFacet & FACET_WHITESPACE) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"whiteSpace", fTypeName});
+            } else {
+                fWhiteSpace = facets.whiteSpace;
+                whiteSpaceAnnotation = facets.whiteSpaceAnnotation;
+                fFacetsDefined |= FACET_WHITESPACE;
+                if ((fixedFacet & FACET_WHITESPACE) != 0)
+                    fFixedFacet |= FACET_WHITESPACE;
+            }
+        }
+        // enumeration
+        if ((presentFacet & FACET_ENUMERATION) != 0) {
+            if ((allowedFacet & FACET_ENUMERATION) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"enumeration", fTypeName});
+            } else {
+                fEnumeration = new Vector();
+                Vector enumVals = facets.enumeration;
+                fEnumerationType = new short[enumVals.size()];
+                fEnumerationItemType = new ShortList[enumVals.size()];
+                Vector enumNSDecls = facets.enumNSDecls;
+                ValidationContextImpl ctx = new ValidationContextImpl(context);
+                enumerationAnnotations = facets.enumAnnotations;
+                for (int i = 0; i < enumVals.size(); i++) {
+                    if (enumNSDecls != null)
+                        ctx.setNSContext((NamespaceContext)enumNSDecls.elementAt(i));
+                    try {
+                        ValidatedInfo info = getActualEnumValue((String)enumVals.elementAt(i), ctx, tempInfo);
+                        // check 4.3.5.c0 must: enumeration values from the value space of base
+                        fEnumeration.addElement(info.actualValue);
+                        fEnumerationType[i] = info.actualValueType;
+                        fEnumerationItemType[i] = info.itemValueTypes;
+                    } catch (InvalidDatatypeValueException ide) {
+                        reportError("enumeration-valid-restriction", new Object[]{enumVals.elementAt(i), this.getBaseType().getName()});
+                    }
+                }
+                fFacetsDefined |= FACET_ENUMERATION;
+                if ((fixedFacet & FACET_ENUMERATION) != 0)
+                    fFixedFacet |= FACET_ENUMERATION;
+            }
+        }
+
+        // maxInclusive
+        if ((presentFacet & FACET_MAXINCLUSIVE) != 0) {
+            if ((allowedFacet & FACET_MAXINCLUSIVE) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"maxInclusive", fTypeName});
+            } else {
+                maxInclusiveAnnotation = facets.maxInclusiveAnnotation;
+                try {
+                    fMaxInclusive = fBase.getActualValue(facets.maxInclusive, context, tempInfo, true);
+                    fFacetsDefined |= FACET_MAXINCLUSIVE;
+                    if ((fixedFacet & FACET_MAXINCLUSIVE) != 0)
+                        fFixedFacet |= FACET_MAXINCLUSIVE;
+                } catch (InvalidDatatypeValueException ide) {
+                    reportError(ide.getKey(), ide.getArgs());
+                    reportError("FacetValueFromBase", new Object[]{fTypeName, facets.maxInclusive,
+                            "maxInclusive", fBase.getName()});
+                }
+
+                // check against fixed value in base
+                if (((fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                    if ((fBase.fFixedFacet & FACET_MAXINCLUSIVE) != 0) {
+                        if (fDVs[fValidationDV].compare(fMaxInclusive, fBase.fMaxInclusive) != 0)
+                            reportError( "FixedFacetValue", new Object[]{"maxInclusive", fMaxInclusive, fBase.fMaxInclusive, fTypeName});
+                    }
+                }
+                // maxInclusive from base
+                try {
+                    fBase.validate(context, tempInfo);
+                } catch (InvalidDatatypeValueException ide) {
+                    reportError(ide.getKey(), ide.getArgs());
+                    reportError("FacetValueFromBase", new Object[]{fTypeName, facets.maxInclusive,
+                            "maxInclusive", fBase.getName()});
+                }
+            }
+        }
+
+        // maxExclusive
+        boolean needCheckBase = true;
+        if ((presentFacet & FACET_MAXEXCLUSIVE) != 0) {
+            if ((allowedFacet & FACET_MAXEXCLUSIVE) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"maxExclusive", fTypeName});
+            } else {
+                maxExclusiveAnnotation = facets.maxExclusiveAnnotation;
+                try {
+                    fMaxExclusive = fBase.getActualValue(facets.maxExclusive, context, tempInfo, true);
+                    fFacetsDefined |= FACET_MAXEXCLUSIVE;
+                    if ((fixedFacet & FACET_MAXEXCLUSIVE) != 0)
+                        fFixedFacet |= FACET_MAXEXCLUSIVE;
+                } catch (InvalidDatatypeValueException ide) {
+                    reportError(ide.getKey(), ide.getArgs());
+                    reportError("FacetValueFromBase", new Object[]{fTypeName, facets.maxExclusive,
+                            "maxExclusive", fBase.getName()});
+                }
+
+                // check against fixed value in base
+                if (((fBase.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0)) {
+                    result = fDVs[fValidationDV].compare(fMaxExclusive, fBase.fMaxExclusive);
+                    if ((fBase.fFixedFacet & FACET_MAXEXCLUSIVE) != 0 && result != 0) {
+                        reportError( "FixedFacetValue", new Object[]{"maxExclusive", facets.maxExclusive, fBase.fMaxExclusive, fTypeName});
+                    }
+                    if (result == 0) {
+                        needCheckBase = false;
+                    }
+                }
+                // maxExclusive from base
+                if (needCheckBase) {
+                    try {
+                        fBase.validate(context, tempInfo);
+                    } catch (InvalidDatatypeValueException ide) {
+                        reportError(ide.getKey(), ide.getArgs());
+                        reportError("FacetValueFromBase", new Object[]{fTypeName, facets.maxExclusive,
+                                "maxExclusive", fBase.getName()});
+                    }
+                }
+                // If maxExclusive == base.maxExclusive, then we only need to check
+                // maxExclusive <= base.maxInclusive
+                else if (((fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                    if (fDVs[fValidationDV].compare(fMaxExclusive, fBase.fMaxInclusive) > 0) {
+                        reportError( "maxExclusive-valid-restriction.2", new Object[]{facets.maxExclusive, fBase.fMaxInclusive});
+                    }
+                }
+            }
+        }
+        // minExclusive
+        needCheckBase = true;
+        if ((presentFacet & FACET_MINEXCLUSIVE) != 0) {
+            if ((allowedFacet & FACET_MINEXCLUSIVE) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"minExclusive", fTypeName});
+            } else {
+                minExclusiveAnnotation = facets.minExclusiveAnnotation;
+                try {
+                    fMinExclusive = fBase.getActualValue(facets.minExclusive, context, tempInfo, true);
+                    fFacetsDefined |= FACET_MINEXCLUSIVE;
+                    if ((fixedFacet & FACET_MINEXCLUSIVE) != 0)
+                        fFixedFacet |= FACET_MINEXCLUSIVE;
+                } catch (InvalidDatatypeValueException ide) {
+                    reportError(ide.getKey(), ide.getArgs());
+                    reportError("FacetValueFromBase", new Object[]{fTypeName, facets.minExclusive,
+                            "minExclusive", fBase.getName()});
+                }
+
+                // check against fixed value in base
+                if (((fBase.fFacetsDefined & FACET_MINEXCLUSIVE) != 0)) {
+                    result = fDVs[fValidationDV].compare(fMinExclusive, fBase.fMinExclusive);
+                    if ((fBase.fFixedFacet & FACET_MINEXCLUSIVE) != 0 && result != 0) {
+                        reportError( "FixedFacetValue", new Object[]{"minExclusive", facets.minExclusive, fBase.fMinExclusive, fTypeName});
+                    }
+                    if (result == 0) {
+                        needCheckBase = false;
+                    }
+                }
+                // minExclusive from base
+                if (needCheckBase) {
+                    try {
+                        fBase.validate(context, tempInfo);
+                    } catch (InvalidDatatypeValueException ide) {
+                        reportError(ide.getKey(), ide.getArgs());
+                        reportError("FacetValueFromBase", new Object[]{fTypeName, facets.minExclusive,
+                                "minExclusive", fBase.getName()});
+                    }
+                }
+                // If minExclusive == base.minExclusive, then we only need to check
+                // minExclusive >= base.minInclusive
+                else if (((fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                    if (fDVs[fValidationDV].compare(fMinExclusive, fBase.fMinInclusive) < 0) {
+                        reportError( "minExclusive-valid-restriction.3", new Object[]{facets.minExclusive, fBase.fMinInclusive});
+                    }
+                }
+            }
+        }
+        // minInclusive
+        if ((presentFacet & FACET_MININCLUSIVE) != 0) {
+            if ((allowedFacet & FACET_MININCLUSIVE) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"minInclusive", fTypeName});
+            } else {
+                minInclusiveAnnotation = facets.minInclusiveAnnotation;
+                try {
+                    fMinInclusive = fBase.getActualValue(facets.minInclusive, context, tempInfo, true);
+                    fFacetsDefined |= FACET_MININCLUSIVE;
+                    if ((fixedFacet & FACET_MININCLUSIVE) != 0)
+                        fFixedFacet |= FACET_MININCLUSIVE;
+                } catch (InvalidDatatypeValueException ide) {
+                    reportError(ide.getKey(), ide.getArgs());
+                    reportError("FacetValueFromBase", new Object[]{fTypeName, facets.minInclusive,
+                            "minInclusive", fBase.getName()});
+                }
+
+                // check against fixed value in base
+                if (((fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                    if ((fBase.fFixedFacet & FACET_MININCLUSIVE) != 0) {
+                        if (fDVs[fValidationDV].compare(fMinInclusive, fBase.fMinInclusive) != 0)
+                            reportError( "FixedFacetValue", new Object[]{"minInclusive", facets.minInclusive, fBase.fMinInclusive, fTypeName});
+                    }
+                }
+                // minInclusive from base
+                try {
+                    fBase.validate(context, tempInfo);
+                } catch (InvalidDatatypeValueException ide) {
+                    reportError(ide.getKey(), ide.getArgs());
+                    reportError("FacetValueFromBase", new Object[]{fTypeName, facets.minInclusive,
+                            "minInclusive", fBase.getName()});
+                }
+            }
+        }
+
+        // totalDigits
+        if ((presentFacet & FACET_TOTALDIGITS) != 0) {
+            if ((allowedFacet & FACET_TOTALDIGITS) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"totalDigits", fTypeName});
+            } else {
+                totalDigitsAnnotation = facets.totalDigitsAnnotation;
+                fTotalDigits = facets.totalDigits;
+                fFacetsDefined |= FACET_TOTALDIGITS;
+                if ((fixedFacet & FACET_TOTALDIGITS) != 0)
+                    fFixedFacet |= FACET_TOTALDIGITS;
+            }
+        }
+        // fractionDigits
+        if ((presentFacet & FACET_FRACTIONDIGITS) != 0) {
+            if ((allowedFacet & FACET_FRACTIONDIGITS) == 0) {
+                reportError("cos-applicable-facets", new Object[]{"fractionDigits", fTypeName});
+            } else {
+                fFractionDigits = facets.fractionDigits;
+                fractionDigitsAnnotation = facets.fractionDigitsAnnotation;
+                fFacetsDefined |= FACET_FRACTIONDIGITS;
+                if ((fixedFacet & FACET_FRACTIONDIGITS) != 0)
+                    fFixedFacet |= FACET_FRACTIONDIGITS;
+            }
+        }
+
+        // token type: internal use, so do less checking
+        if (patternType != SPECIAL_PATTERN_NONE) {
+            fPatternType = patternType;
+        }
+
+        // step 2: check facets against each other: length, bounds
+        if(fFacetsDefined != 0) {
+
+            // check 4.3.2.c1 must: minLength <= maxLength
+            if(((fFacetsDefined & FACET_MINLENGTH ) != 0 ) && ((fFacetsDefined & FACET_MAXLENGTH) != 0))
+            {
+                if(fMinLength > fMaxLength)
+                    reportError("minLength-less-than-equal-to-maxLength", new Object[]{Integer.toString(fMinLength), Integer.toString(fMaxLength), fTypeName});
+            }
+
+            // check 4.3.8.c1 error: maxInclusive + maxExclusive
+            if (((fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) && ((fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                reportError( "maxInclusive-maxExclusive", new Object[]{fMaxInclusive, fMaxExclusive, fTypeName});
+            }
+
+            // check 4.3.9.c1 error: minInclusive + minExclusive
+            if (((fFacetsDefined & FACET_MINEXCLUSIVE) != 0) && ((fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                reportError("minInclusive-minExclusive", new Object[]{fMinInclusive, fMinExclusive, fTypeName});
+            }
+
+            // check 4.3.7.c1 must: minInclusive <= maxInclusive
+            if (((fFacetsDefined &  FACET_MAXINCLUSIVE) != 0) && ((fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                result = fDVs[fValidationDV].compare(fMinInclusive, fMaxInclusive);
+                if (result != -1 && result != 0)
+                    reportError("minInclusive-less-than-equal-to-maxInclusive", new Object[]{fMinInclusive, fMaxInclusive, fTypeName});
+            }
+
+            // check 4.3.8.c2 must: minExclusive <= maxExclusive ??? minExclusive < maxExclusive
+            if (((fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) && ((fFacetsDefined & FACET_MINEXCLUSIVE) != 0)) {
+                result = fDVs[fValidationDV].compare(fMinExclusive, fMaxExclusive);
+                if (result != -1 && result != 0)
+                    reportError( "minExclusive-less-than-equal-to-maxExclusive", new Object[]{fMinExclusive, fMaxExclusive, fTypeName});
+            }
+
+            // check 4.3.9.c2 must: minExclusive < maxInclusive
+            if (((fFacetsDefined & FACET_MAXINCLUSIVE) != 0) && ((fFacetsDefined & FACET_MINEXCLUSIVE) != 0)) {
+                if (fDVs[fValidationDV].compare(fMinExclusive, fMaxInclusive) != -1)
+                    reportError( "minExclusive-less-than-maxInclusive", new Object[]{fMinExclusive, fMaxInclusive, fTypeName});
+            }
+
+            // check 4.3.10.c1 must: minInclusive < maxExclusive
+            if (((fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) && ((fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                if (fDVs[fValidationDV].compare(fMinInclusive, fMaxExclusive) != -1)
+                    reportError( "minInclusive-less-than-maxExclusive", new Object[]{fMinInclusive, fMaxExclusive, fTypeName});
+            }
+
+            // check 4.3.12.c1 must: fractionDigits <= totalDigits
+            if (((fFacetsDefined & FACET_FRACTIONDIGITS) != 0) &&
+                    ((fFacetsDefined & FACET_TOTALDIGITS) != 0)) {
+                if (fFractionDigits > fTotalDigits)
+                    reportError( "fractionDigits-totalDigits", new Object[]{Integer.toString(fFractionDigits), Integer.toString(fTotalDigits), fTypeName});
+            }
+
+            // step 3: check facets against base
+            // check 4.3.1.c1 error: length & (fBase.maxLength | fBase.minLength)
+            if((fFacetsDefined & FACET_LENGTH) != 0 ){
+                if ((fBase.fFacetsDefined & FACET_MINLENGTH) != 0 &&
+                        fLength < fBase.fMinLength) {
+                    // length, fBase.minLength and fBase.maxLength defined
+                    reportError("length-minLength-maxLength.1.1", new Object[]{fTypeName, Integer.toString(fLength), Integer.toString(fBase.fMinLength)});
+                }
+                if ((fBase.fFacetsDefined & FACET_MAXLENGTH) != 0 &&
+                        fLength > fBase.fMaxLength) {
+                    // length and fBase.maxLength defined
+                    reportError("length-minLength-maxLength.2.1", new Object[]{fTypeName, Integer.toString(fLength), Integer.toString(fBase.fMaxLength)});
+                }
+                if ( (fBase.fFacetsDefined & FACET_LENGTH) != 0 ) {
+                    // check 4.3.1.c2 error: length != fBase.length
+                    if ( fLength != fBase.fLength )
+                        reportError( "length-valid-restriction", new Object[]{Integer.toString(fLength), Integer.toString(fBase.fLength), fTypeName});
+                }
+            }
+
+            // check 4.3.1.c1 error: fBase.length & (maxLength | minLength)
+            if((fBase.fFacetsDefined & FACET_LENGTH) != 0 || (fFacetsDefined & FACET_LENGTH) != 0){
+                if ((fFacetsDefined & FACET_MINLENGTH) != 0){
+                    if (fBase.fLength < fMinLength) {
+                        // fBase.length, minLength and maxLength defined
+                        reportError("length-minLength-maxLength.1.1", new Object[]{fTypeName, Integer.toString(fBase.fLength), Integer.toString(fMinLength)});
+                    }
+                    if ((fBase.fFacetsDefined & FACET_MINLENGTH) == 0){
+                        reportError("length-minLength-maxLength.1.2.a", new Object[]{fTypeName});
+                    }
+                    if (fMinLength != fBase.fMinLength){
+                        reportError("length-minLength-maxLength.1.2.b", new Object[]{fTypeName, Integer.toString(fMinLength), Integer.toString(fBase.fMinLength)});
+                    }
+                }
+                if ((fFacetsDefined & FACET_MAXLENGTH) != 0){
+                    if (fBase.fLength > fMaxLength) {
+                        // fBase.length, minLength and maxLength defined
+                        reportError("length-minLength-maxLength.2.1", new Object[]{fTypeName, Integer.toString(fBase.fLength), Integer.toString(fMaxLength)});
+                    }
+                    if ((fBase.fFacetsDefined & FACET_MAXLENGTH) == 0){
+                        reportError("length-minLength-maxLength.2.2.a", new Object[]{fTypeName});
+                    }
+                    if (fMaxLength != fBase.fMaxLength){
+                        reportError("length-minLength-maxLength.2.2.b", new Object[]{fTypeName, Integer.toString(fMaxLength), Integer.toString(fBase.fBase.fMaxLength)});
+                    }
+                }
+            }
+
+            // check 4.3.2.c1 must: minLength <= fBase.maxLength
+            if ( ((fFacetsDefined & FACET_MINLENGTH ) != 0 ) ) {
+                if ( (fBase.fFacetsDefined & FACET_MAXLENGTH ) != 0 ) {
+                    if ( fMinLength > fBase.fMaxLength ) {
+                        reportError("minLength-less-than-equal-to-maxLength", new Object[]{Integer.toString(fMinLength), Integer.toString(fBase.fMaxLength), fTypeName});
+                    }
+                }
+                else if ( (fBase.fFacetsDefined & FACET_MINLENGTH) != 0 ) {
+                    if ( (fBase.fFixedFacet & FACET_MINLENGTH) != 0 && fMinLength != fBase.fMinLength ) {
+                        reportError( "FixedFacetValue", new Object[]{"minLength", Integer.toString(fMinLength), Integer.toString(fBase.fMinLength), fTypeName});
+                    }
+
+                    // check 4.3.2.c2 error: minLength < fBase.minLength
+                    if ( fMinLength < fBase.fMinLength ) {
+                        reportError( "minLength-valid-restriction", new Object[]{Integer.toString(fMinLength), Integer.toString(fBase.fMinLength), fTypeName});
+                    }
+                }
+            }
+
+
+            // check 4.3.2.c1 must: maxLength < fBase.minLength
+            if ( ((fFacetsDefined & FACET_MAXLENGTH ) != 0 ) && ((fBase.fFacetsDefined & FACET_MINLENGTH ) != 0 )) {
+                if ( fMaxLength < fBase.fMinLength) {
+                    reportError("minLength-less-than-equal-to-maxLength", new Object[]{Integer.toString(fBase.fMinLength), Integer.toString(fMaxLength)});
+                }
+            }
+
+            // check 4.3.3.c1 error: maxLength > fBase.maxLength
+            if ( (fFacetsDefined & FACET_MAXLENGTH) != 0 ) {
+                if ( (fBase.fFacetsDefined & FACET_MAXLENGTH) != 0 ){
+                    if(( (fBase.fFixedFacet & FACET_MAXLENGTH) != 0 )&& fMaxLength != fBase.fMaxLength ) {
+                        reportError( "FixedFacetValue", new Object[]{"maxLength", Integer.toString(fMaxLength), Integer.toString(fBase.fMaxLength), fTypeName});
+                    }
+                    if ( fMaxLength > fBase.fMaxLength ) {
+                        reportError( "maxLength-valid-restriction", new Object[]{Integer.toString(fMaxLength), Integer.toString(fBase.fMaxLength), fTypeName});
+                    }
+                }
+            }
+
+            /*          // check 4.3.7.c2 error:
+                         // maxInclusive > fBase.maxInclusive
+                          // maxInclusive >= fBase.maxExclusive
+                           // maxInclusive < fBase.minInclusive
+                            // maxInclusive <= fBase.minExclusive
+
+                             if (((fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                             if (((fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                             result = fDVs[fValidationDV].compare(fMaxInclusive, fBase.fMaxInclusive);
+                             if ((fBase.fFixedFacet & FACET_MAXINCLUSIVE) != 0 && result != 0) {
+                             reportError( "FixedFacetValue", new Object[]{"maxInclusive", fMaxInclusive, fBase.fMaxInclusive, fTypeName});
+                             }
+                             if (result != -1 && result != 0) {
+                             reportError( "maxInclusive-valid-restriction.1", new Object[]{fMaxInclusive, fBase.fMaxInclusive, fTypeName});
+                             }
+                             }
+                             if (((fBase.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) &&
+                             fDVs[fValidationDV].compare(fMaxInclusive, fBase.fMaxExclusive) != -1){
+                             reportError( "maxInclusive-valid-restriction.1", new Object[]{fMaxInclusive, fBase.fMaxExclusive, fTypeName});
+                             }
+
+                             if ((( fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                             result = fDVs[fValidationDV].compare(fMaxInclusive, fBase.fMinInclusive);
+                             if (result != 1 && result != 0) {
+                             reportError( "maxInclusive-valid-restriction.1", new Object[]{fMaxInclusive, fBase.fMinInclusive, fTypeName});
+                             }
+                             }
+
+                             if ((( fBase.fFacetsDefined & FACET_MINEXCLUSIVE) != 0) &&
+                             fDVs[fValidationDV].compare(fMaxInclusive, fBase.fMinExclusive ) != 1)
+                             reportError( "maxInclusive-valid-restriction.1", new Object[]{fMaxInclusive, fBase.fMinExclusive, fTypeName});
+                             }
+
+                             // check 4.3.8.c3 error:
+                              // maxExclusive > fBase.maxExclusive
+                               // maxExclusive > fBase.maxInclusive
+                                // maxExclusive <= fBase.minInclusive
+                                 // maxExclusive <= fBase.minExclusive
+                                  if (((fFacetsDefined & FACET_MAXEXCLUSIVE) != 0)) {
+                                  if ((( fBase.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0)) {
+                                  result= fDVs[fValidationDV].compare(fMaxExclusive, fBase.fMaxExclusive);
+                                  if ((fBase.fFixedFacet & FACET_MAXEXCLUSIVE) != 0 &&  result != 0) {
+                                  reportError( "FixedFacetValue", new Object[]{"maxExclusive", fMaxExclusive, fBase.fMaxExclusive, fTypeName});
+                                  }
+                                  if (result != -1 && result != 0) {
+                                  reportError( "maxExclusive-valid-restriction.1", new Object[]{fMaxExclusive, fBase.fMaxExclusive, fTypeName});
+                                  }
+                                  }
+
+                                  if ((( fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                                  result= fDVs[fValidationDV].compare(fMaxExclusive, fBase.fMaxInclusive);
+                                  if (result != -1 && result != 0) {
+                                  reportError( "maxExclusive-valid-restriction.2", new Object[]{fMaxExclusive, fBase.fMaxInclusive, fTypeName});
+                                  }
+                                  }
+
+                                  if ((( fBase.fFacetsDefined & FACET_MINEXCLUSIVE) != 0) &&
+                                  fDVs[fValidationDV].compare(fMaxExclusive, fBase.fMinExclusive ) != 1)
+                                  reportError( "maxExclusive-valid-restriction.3", new Object[]{fMaxExclusive, fBase.fMinExclusive, fTypeName});
+
+                                  if ((( fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0) &&
+                                  fDVs[fValidationDV].compare(fMaxExclusive, fBase.fMinInclusive) != 1)
+                                  reportError( "maxExclusive-valid-restriction.4", new Object[]{fMaxExclusive, fBase.fMinInclusive, fTypeName});
+                                  }
+
+                                  // check 4.3.9.c3 error:
+                                   // minExclusive < fBase.minExclusive
+                                    // minExclusive > fBase.maxInclusive
+                                     // minExclusive < fBase.minInclusive
+                                      // minExclusive >= fBase.maxExclusive
+                                       if (((fFacetsDefined & FACET_MINEXCLUSIVE) != 0)) {
+                                       if ((( fBase.fFacetsDefined & FACET_MINEXCLUSIVE) != 0)) {
+                                       result= fDVs[fValidationDV].compare(fMinExclusive, fBase.fMinExclusive);
+                                       if ((fBase.fFixedFacet & FACET_MINEXCLUSIVE) != 0 && result != 0) {
+                                       reportError( "FixedFacetValue", new Object[]{"minExclusive", fMinExclusive, fBase.fMinExclusive, fTypeName});
+                                       }
+                                       if (result != 1 && result != 0) {
+                                       reportError( "minExclusive-valid-restriction.1", new Object[]{fMinExclusive, fBase.fMinExclusive, fTypeName});
+                                       }
+                                       }
+
+                                       if ((( fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                                       result=fDVs[fValidationDV].compare(fMinExclusive, fBase.fMaxInclusive);
+
+                                       if (result != -1 && result != 0) {
+                                       reportError( "minExclusive-valid-restriction.2", new Object[]{fMinExclusive, fBase.fMaxInclusive, fTypeName});
+                                       }
+                                       }
+
+                                       if ((( fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                                       result = fDVs[fValidationDV].compare(fMinExclusive, fBase.fMinInclusive);
+
+                                       if (result != 1 && result != 0) {
+                                       reportError( "minExclusive-valid-restriction.3", new Object[]{fMinExclusive, fBase.fMinInclusive, fTypeName});
+                                       }
+                                       }
+
+                                       if ((( fBase.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) &&
+                                       fDVs[fValidationDV].compare(fMinExclusive, fBase.fMaxExclusive) != -1)
+                                       reportError( "minExclusive-valid-restriction.4", new Object[]{fMinExclusive, fBase.fMaxExclusive, fTypeName});
+                                       }
+
+                                       // check 4.3.10.c2 error:
+                                        // minInclusive < fBase.minInclusive
+                                         // minInclusive > fBase.maxInclusive
+                                          // minInclusive <= fBase.minExclusive
+                                           // minInclusive >= fBase.maxExclusive
+                                            if (((fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                                            if (((fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+                                            result = fDVs[fValidationDV].compare(fMinInclusive, fBase.fMinInclusive);
+
+                                            if ((fBase.fFixedFacet & FACET_MININCLUSIVE) != 0 && result != 0) {
+                                            reportError( "FixedFacetValue", new Object[]{"minInclusive", fMinInclusive, fBase.fMinInclusive, fTypeName});
+                                            }
+                                            if (result != 1 && result != 0) {
+                                            reportError( "minInclusive-valid-restriction.1", new Object[]{fMinInclusive, fBase.fMinInclusive, fTypeName});
+                                            }
+                                            }
+                                            if ((( fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+                                            result=fDVs[fValidationDV].compare(fMinInclusive, fBase.fMaxInclusive);
+                                            if (result != -1 && result != 0) {
+                                            reportError( "minInclusive-valid-restriction.2", new Object[]{fMinInclusive, fBase.fMaxInclusive, fTypeName});
+                                            }
+                                            }
+                                            if ((( fBase.fFacetsDefined & FACET_MINEXCLUSIVE) != 0) &&
+                                            fDVs[fValidationDV].compare(fMinInclusive, fBase.fMinExclusive ) != 1)
+                                            reportError( "minInclusive-valid-restriction.3", new Object[]{fMinInclusive, fBase.fMinExclusive, fTypeName});
+                                            if ((( fBase.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) &&
+                                            fDVs[fValidationDV].compare(fMinInclusive, fBase.fMaxExclusive) != -1)
+                                            reportError( "minInclusive-valid-restriction.4", new Object[]{fMinInclusive, fBase.fMaxExclusive, fTypeName});
+                                            }
+             */
+            // check 4.3.11.c1 error: totalDigits > fBase.totalDigits
+            if (((fFacetsDefined & FACET_TOTALDIGITS) != 0)) {
+                if ((( fBase.fFacetsDefined & FACET_TOTALDIGITS) != 0)) {
+                    if ((fBase.fFixedFacet & FACET_TOTALDIGITS) != 0 && fTotalDigits != fBase.fTotalDigits) {
+                        reportError("FixedFacetValue", new Object[]{"totalDigits", Integer.toString(fTotalDigits), Integer.toString(fBase.fTotalDigits), fTypeName});
+                    }
+                    if (fTotalDigits > fBase.fTotalDigits) {
+                        reportError( "totalDigits-valid-restriction", new Object[]{Integer.toString(fTotalDigits), Integer.toString(fBase.fTotalDigits), fTypeName});
+                    }
+                }
+            }
+
+            // check 4.3.12.c1 must: fractionDigits <= base.totalDigits
+            if ((fFacetsDefined & FACET_FRACTIONDIGITS) != 0) {
+                if ((fBase.fFacetsDefined & FACET_TOTALDIGITS) != 0) {
+                    if (fFractionDigits > fBase.fTotalDigits)
+                        reportError( "fractionDigits-totalDigits", new Object[]{Integer.toString(fFractionDigits), Integer.toString(fTotalDigits), fTypeName});
+                }
+            }
+
+            // check 4.3.12.c2 error: fractionDigits > fBase.fractionDigits
+            // check fixed value for fractionDigits
+            if (((fFacetsDefined & FACET_FRACTIONDIGITS) != 0)) {
+                if ((( fBase.fFacetsDefined & FACET_FRACTIONDIGITS) != 0)) {
+                    if (((fBase.fFixedFacet & FACET_FRACTIONDIGITS) != 0 && fFractionDigits != fBase.fFractionDigits) ||
+                            (fValidationDV == DV_INTEGER && fFractionDigits != 0)) {
+                        reportError("FixedFacetValue", new Object[]{"fractionDigits", Integer.toString(fFractionDigits), Integer.toString(fBase.fFractionDigits), fTypeName});
+                    }
+                    if (fFractionDigits > fBase.fFractionDigits) {
+                        reportError( "fractionDigits-valid-restriction", new Object[]{Integer.toString(fFractionDigits), Integer.toString(fBase.fFractionDigits), fTypeName});
+                    }
+                }
+                else if (fValidationDV == DV_INTEGER && fFractionDigits != 0) {
+                    reportError("FixedFacetValue", new Object[]{"fractionDigits", Integer.toString(fFractionDigits), "0", fTypeName});
+                }
+            }
+
+            // check 4.3.6.c1 error:
+            // (whiteSpace = preserve || whiteSpace = replace) && fBase.whiteSpace = collapese or
+            // whiteSpace = preserve && fBase.whiteSpace = replace
+
+            if ( (fFacetsDefined & FACET_WHITESPACE) != 0 && (fBase.fFacetsDefined & FACET_WHITESPACE) != 0 ){
+                if ( (fBase.fFixedFacet & FACET_WHITESPACE) != 0 &&  fWhiteSpace != fBase.fWhiteSpace ) {
+                    reportError( "FixedFacetValue", new Object[]{"whiteSpace", whiteSpaceValue(fWhiteSpace), whiteSpaceValue(fBase.fWhiteSpace), fTypeName});
+                }
+
+                if ( fWhiteSpace == WS_PRESERVE &&  fBase.fWhiteSpace == WS_COLLAPSE ){
+                    reportError( "whiteSpace-valid-restriction.1", new Object[]{fTypeName, "preserve"});
+                }
+                if ( fWhiteSpace == WS_REPLACE &&  fBase.fWhiteSpace == WS_COLLAPSE ){
+                    reportError( "whiteSpace-valid-restriction.1", new Object[]{fTypeName, "replace"});
+                }
+                if ( fWhiteSpace == WS_PRESERVE &&  fBase.fWhiteSpace == WS_REPLACE ){
+                    reportError( "whiteSpace-valid-restriction.2", new Object[]{fTypeName});
+                }
+            }
+        }//fFacetsDefined != null
+
+        // step 4: inherit other facets from base (including fTokeyType)
+
+        // inherit length
+        if ( (fFacetsDefined & FACET_LENGTH) == 0  && (fBase.fFacetsDefined & FACET_LENGTH) != 0 ) {
+            fFacetsDefined |= FACET_LENGTH;
+            fLength = fBase.fLength;
+            lengthAnnotation = fBase.lengthAnnotation;
+        }
+        // inherit minLength
+        if ( (fFacetsDefined & FACET_MINLENGTH) == 0 && (fBase.fFacetsDefined & FACET_MINLENGTH) != 0 ) {
+            fFacetsDefined |= FACET_MINLENGTH;
+            fMinLength = fBase.fMinLength;
+            minLengthAnnotation = fBase.minLengthAnnotation;
+        }
+        // inherit maxLength
+        if ((fFacetsDefined & FACET_MAXLENGTH) == 0 &&  (fBase.fFacetsDefined & FACET_MAXLENGTH) != 0 ) {
+            fFacetsDefined |= FACET_MAXLENGTH;
+            fMaxLength = fBase.fMaxLength;
+            maxLengthAnnotation = fBase.maxLengthAnnotation;
+        }
+        // inherit pattern
+        if ( (fBase.fFacetsDefined & FACET_PATTERN) != 0 ) {
+            if ((fFacetsDefined & FACET_PATTERN) == 0) {
+                fFacetsDefined |= FACET_PATTERN;
+                fPattern = fBase.fPattern;
+                fPatternStr = fBase.fPatternStr;
+                patternAnnotations = fBase.patternAnnotations;
+            }
+            else {
+                for (int i = fBase.fPattern.size()-1; i >= 0; --i) {
+                    fPattern.addElement(fBase.fPattern.elementAt(i));
+                    fPatternStr.addElement(fBase.fPatternStr.elementAt(i));
+                }
+                if (fBase.patternAnnotations != null) {
+                    if (patternAnnotations != null) {
+                        for (int i = fBase.patternAnnotations.getLength()-1; i >= 0; --i) {
+                            patternAnnotations.addXSObject(fBase.patternAnnotations.item(i));
+                        }
+                    }
+                    else {
+                        patternAnnotations = fBase.patternAnnotations;
+                    }
+                }
+            }
+        }
+        // inherit whiteSpace
+        if ( (fFacetsDefined & FACET_WHITESPACE) == 0 &&  (fBase.fFacetsDefined & FACET_WHITESPACE) != 0 ) {
+            fFacetsDefined |= FACET_WHITESPACE;
+            fWhiteSpace = fBase.fWhiteSpace;
+            whiteSpaceAnnotation = fBase.whiteSpaceAnnotation;
+        }
+        // inherit enumeration
+        if ((fFacetsDefined & FACET_ENUMERATION) == 0 && (fBase.fFacetsDefined & FACET_ENUMERATION) != 0) {
+            fFacetsDefined |= FACET_ENUMERATION;
+            fEnumeration = fBase.fEnumeration;
+            enumerationAnnotations = fBase.enumerationAnnotations;
+        }
+        // inherit maxExclusive
+        if ((( fBase.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) &&
+                !((fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) && !((fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+            fFacetsDefined |= FACET_MAXEXCLUSIVE;
+            fMaxExclusive = fBase.fMaxExclusive;
+            maxExclusiveAnnotation = fBase.maxExclusiveAnnotation;
+        }
+        // inherit maxInclusive
+        if ((( fBase.fFacetsDefined & FACET_MAXINCLUSIVE) != 0) &&
+                !((fFacetsDefined & FACET_MAXEXCLUSIVE) != 0) && !((fFacetsDefined & FACET_MAXINCLUSIVE) != 0)) {
+            fFacetsDefined |= FACET_MAXINCLUSIVE;
+            fMaxInclusive = fBase.fMaxInclusive;
+            maxInclusiveAnnotation = fBase.maxInclusiveAnnotation;
+        }
+        // inherit minExclusive
+        if ((( fBase.fFacetsDefined & FACET_MINEXCLUSIVE) != 0) &&
+                !((fFacetsDefined & FACET_MINEXCLUSIVE) != 0) && !((fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+            fFacetsDefined |= FACET_MINEXCLUSIVE;
+            fMinExclusive = fBase.fMinExclusive;
+            minExclusiveAnnotation = fBase.minExclusiveAnnotation;
+        }
+        // inherit minExclusive
+        if ((( fBase.fFacetsDefined & FACET_MININCLUSIVE) != 0) &&
+                !((fFacetsDefined & FACET_MINEXCLUSIVE) != 0) && !((fFacetsDefined & FACET_MININCLUSIVE) != 0)) {
+            fFacetsDefined |= FACET_MININCLUSIVE;
+            fMinInclusive = fBase.fMinInclusive;
+            minInclusiveAnnotation = fBase.minInclusiveAnnotation;
+        }
+        // inherit totalDigits
+        if ((( fBase.fFacetsDefined & FACET_TOTALDIGITS) != 0) &&
+                !((fFacetsDefined & FACET_TOTALDIGITS) != 0)) {
+            fFacetsDefined |= FACET_TOTALDIGITS;
+            fTotalDigits = fBase.fTotalDigits;
+            totalDigitsAnnotation = fBase.totalDigitsAnnotation;
+        }
+        // inherit fractionDigits
+        if ((( fBase.fFacetsDefined & FACET_FRACTIONDIGITS) != 0)
+                && !((fFacetsDefined & FACET_FRACTIONDIGITS) != 0)) {
+            fFacetsDefined |= FACET_FRACTIONDIGITS;
+            fFractionDigits = fBase.fFractionDigits;
+            fractionDigitsAnnotation = fBase.fractionDigitsAnnotation;
+        }
+        //inherit tokeytype
+        if ((fPatternType == SPECIAL_PATTERN_NONE ) && (fBase.fPatternType != SPECIAL_PATTERN_NONE)) {
+            fPatternType = fBase.fPatternType ;
+        }
+
+        // step 5: mark fixed values
+        fFixedFacet |= fBase.fFixedFacet;
+
+        //step 6: setting fundamental facets
+        calcFundamentalFacets();
+
+    } //applyFacets()
+
+    /**
+     * validate a value, and return the compiled form
+     */
+    public Object validate(String content, ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
+
+        if (context == null)
+            context = fEmptyContext;
+
+        if (validatedInfo == null)
+            validatedInfo = new ValidatedInfo();
+        else
+            validatedInfo.memberType = null;
+
+        // first normalize string value, and convert it to actual value
+        boolean needNormalize = context==null||context.needToNormalize();
+        Object ob = getActualValue(content, context, validatedInfo, needNormalize);
+
+        validate(context, validatedInfo);
+
+        return ob;
+
+    }
+
+    protected ValidatedInfo getActualEnumValue(String lexical, ValidationContext ctx, ValidatedInfo info)
+    throws InvalidDatatypeValueException {
+        return fBase.validateWithInfo(lexical, ctx, info);
+    }
+
+    /**
+     * validate a value, and return the compiled form
+     */
+    public ValidatedInfo validateWithInfo(String content, ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
+
+        if (context == null)
+            context = fEmptyContext;
+
+        if (validatedInfo == null)
+            validatedInfo = new ValidatedInfo();
+        else
+            validatedInfo.memberType = null;
+
+        // first normalize string value, and convert it to actual value
+        boolean needNormalize = context==null||context.needToNormalize();
+        getActualValue(content, context, validatedInfo, needNormalize);
+
+        validate(context, validatedInfo);
+
+        return validatedInfo;
+
+    }
+
+    /**
+     * validate a value, and return the compiled form
+     */
+    public Object validate(Object content, ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
+
+        if (context == null)
+            context = fEmptyContext;
+
+        if (validatedInfo == null)
+            validatedInfo = new ValidatedInfo();
+        else
+            validatedInfo.memberType = null;
+
+        // first normalize string value, and convert it to actual value
+        boolean needNormalize = context==null||context.needToNormalize();
+        Object ob = getActualValue(content, context, validatedInfo, needNormalize);
+
+        validate(context, validatedInfo);
+
+        return ob;
+
+    }
+
+    /**
+     * validate an actual value against this DV
+     *
+     * @param context       the validation context
+     * @param validatedInfo used to provide the actual value and member types
+     */
+    public void validate(ValidationContext context, ValidatedInfo validatedInfo)
+        throws InvalidDatatypeValueException {
+
+        if (context == null)
+            context = fEmptyContext;
+
+        // then validate the actual value against the facets
+        if (context.needFacetChecking() &&
+                (fFacetsDefined != 0 && fFacetsDefined != FACET_WHITESPACE)) {
+            checkFacets(validatedInfo);
+        }
+
+        // now check extra rules: for ID/IDREF/ENTITY
+        if (context.needExtraChecking()) {
+            checkExtraRules(context, validatedInfo);
+        }
+
+    }
+
+    private void checkFacets(ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
+
+        Object ob = validatedInfo.actualValue;
+        String content = validatedInfo.normalizedValue;
+        short type = validatedInfo.actualValueType;
+        ShortList itemType = validatedInfo.itemValueTypes;
+
+        // For QName and NOTATION types, we don't check length facets
+        if (fValidationDV != DV_QNAME && fValidationDV != DV_NOTATION) {
+            int length = fDVs[fValidationDV].getDataLength(ob);
+
+            // maxLength
+            if ( (fFacetsDefined & FACET_MAXLENGTH) != 0 ) {
+                if ( length > fMaxLength ) {
+                    throw new InvalidDatatypeValueException("cvc-maxLength-valid",
+                            new Object[]{content, Integer.toString(length), Integer.toString(fMaxLength), fTypeName});
+                }
+            }
+
+            //minLength
+            if ( (fFacetsDefined & FACET_MINLENGTH) != 0 ) {
+                if ( length < fMinLength ) {
+                    throw new InvalidDatatypeValueException("cvc-minLength-valid",
+                            new Object[]{content, Integer.toString(length), Integer.toString(fMinLength), fTypeName});
+                }
+            }
+
+            //length
+            if ( (fFacetsDefined & FACET_LENGTH) != 0 ) {
+                if ( length != fLength ) {
+                    throw new InvalidDatatypeValueException("cvc-length-valid",
+                            new Object[]{content, Integer.toString(length), Integer.toString(fLength), fTypeName});
+                }
+            }
+        }
+
+        //enumeration
+        if ( ((fFacetsDefined & FACET_ENUMERATION) != 0 ) ) {
+            boolean present = false;
+            final int enumSize = fEnumeration.size();
+            final short primitiveType1 = convertToPrimitiveKind(type);
+            for (int i = 0; i < enumSize; i++) {
+                final short primitiveType2 = convertToPrimitiveKind(fEnumerationType[i]);
+                if ((primitiveType1 == primitiveType2 ||
+                        primitiveType1 == XSConstants.ANYSIMPLETYPE_DT && primitiveType2 == XSConstants.STRING_DT ||
+                        primitiveType1 == XSConstants.STRING_DT && primitiveType2 == XSConstants.ANYSIMPLETYPE_DT)
+                        && fEnumeration.elementAt(i).equals(ob)) {
+                    if (primitiveType1 == XSConstants.LIST_DT || primitiveType1 == XSConstants.LISTOFUNION_DT) {
+                        ShortList enumItemType = fEnumerationItemType[i];
+                        final int typeList1Length = itemType != null ? itemType.getLength() : 0;
+                        final int typeList2Length = enumItemType != null ? enumItemType.getLength() : 0;
+                        if (typeList1Length == typeList2Length) {
+                            int j;
+                            for (j = 0; j < typeList1Length; ++j) {
+                                final short primitiveItem1 = convertToPrimitiveKind(itemType.item(j));
+                                final short primitiveItem2 = convertToPrimitiveKind(enumItemType.item(j));
+                                if (primitiveItem1 != primitiveItem2) {
+                                    if (primitiveItem1 == XSConstants.ANYSIMPLETYPE_DT && primitiveItem2 == XSConstants.STRING_DT ||
+                                            primitiveItem1 == XSConstants.STRING_DT && primitiveItem2 == XSConstants.ANYSIMPLETYPE_DT) {
+                                        continue;
+                                    }
+                                    break;
+                                }
+                            }
+                            if (j == typeList1Length) {
+                                present = true;
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        present = true;
+                        break;
+                    }
+                }
+            }
+            if(!present){
+                throw new InvalidDatatypeValueException("cvc-enumeration-valid",
+                        new Object [] {content, fEnumeration.toString()});
+            }
+        }
+
+        //fractionDigits
+        if ((fFacetsDefined & FACET_FRACTIONDIGITS) != 0) {
+            int scale = fDVs[fValidationDV].getFractionDigits(ob);
+            if (scale > fFractionDigits) {
+                throw new InvalidDatatypeValueException("cvc-fractionDigits-valid",
+                        new Object[] {content, Integer.toString(scale), Integer.toString(fFractionDigits)});
+            }
+        }
+
+        //totalDigits
+        if ((fFacetsDefined & FACET_TOTALDIGITS)!=0) {
+            int totalDigits = fDVs[fValidationDV].getTotalDigits(ob);
+            if (totalDigits > fTotalDigits) {
+                throw new InvalidDatatypeValueException("cvc-totalDigits-valid",
+                        new Object[] {content, Integer.toString(totalDigits), Integer.toString(fTotalDigits)});
+            }
+        }
+
+        int compare;
+
+        //maxinclusive
+        if ( (fFacetsDefined & FACET_MAXINCLUSIVE) != 0 ) {
+            compare = fDVs[fValidationDV].compare(ob, fMaxInclusive);
+            if (compare != -1 && compare != 0) {
+                throw new InvalidDatatypeValueException("cvc-maxInclusive-valid",
+                        new Object[] {content, fMaxInclusive, fTypeName});
+            }
+        }
+
+        //maxExclusive
+        if ( (fFacetsDefined & FACET_MAXEXCLUSIVE) != 0 ) {
+            compare = fDVs[fValidationDV].compare(ob, fMaxExclusive );
+            if (compare != -1) {
+                throw new InvalidDatatypeValueException("cvc-maxExclusive-valid",
+                        new Object[] {content, fMaxExclusive, fTypeName});
+            }
+        }
+
+        //minInclusive
+        if ( (fFacetsDefined & FACET_MININCLUSIVE) != 0 ) {
+            compare = fDVs[fValidationDV].compare(ob, fMinInclusive);
+            if (compare != 1 && compare != 0) {
+                throw new InvalidDatatypeValueException("cvc-minInclusive-valid",
+                        new Object[] {content, fMinInclusive, fTypeName});
+            }
+        }
+
+        //minExclusive
+        if ( (fFacetsDefined & FACET_MINEXCLUSIVE) != 0 ) {
+            compare = fDVs[fValidationDV].compare(ob, fMinExclusive);
+            if (compare != 1) {
+                throw new InvalidDatatypeValueException("cvc-minExclusive-valid",
+                        new Object[] {content, fMinExclusive, fTypeName});
+            }
+        }
+
+    }
+
+    private void checkExtraRules(ValidationContext context, ValidatedInfo validatedInfo) throws InvalidDatatypeValueException {
+
+        Object ob = validatedInfo.actualValue;
+
+        if (fVariety == VARIETY_ATOMIC) {
+
+            fDVs[fValidationDV].checkExtraRules(ob, context);
+
+        } else if (fVariety == VARIETY_LIST) {
+
+            ListDV.ListData values = (ListDV.ListData)ob;
+            XSSimpleType memberType = validatedInfo.memberType;
+            int len = values.getLength();
+            try {
+                if (fItemType.fVariety == VARIETY_UNION) {
+                    XSSimpleTypeDecl[] memberTypes = (XSSimpleTypeDecl[])validatedInfo.memberTypes;
+                    for (int i = len-1; i >= 0; i--) {
+                        validatedInfo.actualValue = values.item(i);
+                        validatedInfo.memberType = memberTypes[i];
+                        fItemType.checkExtraRules(context, validatedInfo);
+                    }
+                } else { // (fVariety == VARIETY_ATOMIC)
+                    for (int i = len-1; i >= 0; i--) {
+                        validatedInfo.actualValue = values.item(i);
+                        fItemType.checkExtraRules(context, validatedInfo);
+                    }
+                }
+            }
+            finally {
+                validatedInfo.actualValue = values;
+                validatedInfo.memberType = memberType;
+            }
+
+        } else { // (fVariety == VARIETY_UNION)
+
+            ((XSSimpleTypeDecl)validatedInfo.memberType).checkExtraRules(context, validatedInfo);
+
+        }
+
+    }// checkExtraRules()
+
+    //we can still return object for internal use.
+    private Object getActualValue(Object content, ValidationContext context,
+            ValidatedInfo validatedInfo, boolean needNormalize)
+    throws InvalidDatatypeValueException{
+
+        String nvalue;
+        if (needNormalize) {
+            nvalue = normalize(content, fWhiteSpace);
+        } else {
+            nvalue = content.toString();
+        }
+        if ( (fFacetsDefined & FACET_PATTERN ) != 0 ) {
+            if (fPattern.size()==0 && nvalue.length()>0) {
+                        throw new InvalidDatatypeValueException("cvc-pattern-valid",
+                                new Object[]{content,
+                                "(empty string)",
+                                fTypeName});
+            }
+            RegularExpression regex;
+            for (int idx = fPattern.size()-1; idx >= 0; idx--) {
+                regex = (RegularExpression)fPattern.elementAt(idx);
+                if (!regex.matches(nvalue)){
+                    throw new InvalidDatatypeValueException("cvc-pattern-valid",
+                            new Object[]{content,
+                            fPatternStr.elementAt(idx),
+                            fTypeName});
+                }
+            }
+        }
+
+        if (fVariety == VARIETY_ATOMIC) {
+
+            // validate special kinds of token, in place of old pattern matching
+            if (fPatternType != SPECIAL_PATTERN_NONE) {
+
+                boolean seenErr = false;
+                if (fPatternType == SPECIAL_PATTERN_NMTOKEN) {
+                    // PATTERN "\\c+"
+                    seenErr = !XMLChar.isValidNmtoken(nvalue);
+                }
+                else if (fPatternType == SPECIAL_PATTERN_NAME) {
+                    // PATTERN "\\i\\c*"
+                    seenErr = !XMLChar.isValidName(nvalue);
+                }
+                else if (fPatternType == SPECIAL_PATTERN_NCNAME) {
+                    // PATTERN "[\\i-[:]][\\c-[:]]*"
+                    seenErr = !XMLChar.isValidNCName(nvalue);
+                }
+                if (seenErr) {
+                    throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1",
+                            new Object[]{nvalue, SPECIAL_PATTERN_STRING[fPatternType]});
+                }
+            }
+
+            validatedInfo.normalizedValue = nvalue;
+            Object avalue = fDVs[fValidationDV].getActualValue(nvalue, context);
+            validatedInfo.actualValue = avalue;
+            validatedInfo.actualValueType = fBuiltInKind;
+
+            return avalue;
+
+        } else if (fVariety == VARIETY_LIST) {
+
+            StringTokenizer parsedList = new StringTokenizer(nvalue, " ");
+            int countOfTokens = parsedList.countTokens() ;
+            Object[] avalue = new Object[countOfTokens];
+            boolean isUnion = fItemType.getVariety() == VARIETY_UNION;
+            short[] itemTypes = new short[isUnion ? countOfTokens : 1];
+            if (!isUnion)
+                itemTypes[0] = fItemType.fBuiltInKind;
+            XSSimpleTypeDecl[] memberTypes = new XSSimpleTypeDecl[countOfTokens];
+            for(int i = 0 ; i < countOfTokens ; i ++){
+                // we can't call fItemType.validate(), otherwise checkExtraRules()
+                // will be called twice: once in fItemType.validate, once in
+                // validate method of this type.
+                // so we take two steps to get the actual value:
+                // 1. fItemType.getActualValue()
+                // 2. fItemType.chekcFacets()
+                avalue[i] = fItemType.getActualValue(parsedList.nextToken(), context, validatedInfo, false);
+                if (context.needFacetChecking() &&
+                        (fItemType.fFacetsDefined != 0 && fItemType.fFacetsDefined != FACET_WHITESPACE)) {
+                    fItemType.checkFacets(validatedInfo);
+                }
+                memberTypes[i] = (XSSimpleTypeDecl)validatedInfo.memberType;
+                if (isUnion)
+                    itemTypes[i] = memberTypes[i].fBuiltInKind;
+            }
+
+            ListDV.ListData v = new ListDV.ListData(avalue);
+            validatedInfo.actualValue = v;
+            validatedInfo.actualValueType = isUnion ? XSConstants.LISTOFUNION_DT : XSConstants.LIST_DT;
+            validatedInfo.memberType = null;
+            validatedInfo.memberTypes = memberTypes;
+            validatedInfo.itemValueTypes = new ShortListImpl(itemTypes, itemTypes.length);
+            validatedInfo.normalizedValue = nvalue;
+
+            return v;
+
+        } else { // (fVariety == VARIETY_UNION)
+            final Object _content = (fMemberTypes.length > 1 && content != null) ? content.toString() : content;
+            for (int i = 0; i < fMemberTypes.length; i++) {
+                try {
+                    // we can't call fMemberType[i].validate(), otherwise checkExtraRules()
+                    // will be called twice: once in fMemberType[i].validate, once in
+                    // validate method of this type.
+                    // so we take two steps to get the actual value:
+                    // 1. fMemberType[i].getActualValue()
+                    // 2. fMemberType[i].chekcFacets()
+                    Object aValue = fMemberTypes[i].getActualValue(_content, context, validatedInfo, true);
+                    if (context.needFacetChecking() &&
+                            (fMemberTypes[i].fFacetsDefined != 0 && fMemberTypes[i].fFacetsDefined != FACET_WHITESPACE)) {
+                        fMemberTypes[i].checkFacets(validatedInfo);
+                    }
+                    validatedInfo.memberType = fMemberTypes[i];
+                    return aValue;
+                } catch(InvalidDatatypeValueException invalidValue) {
+                }
+            }
+            StringBuffer typesBuffer = new StringBuffer();
+            XSSimpleTypeDecl decl;
+            for(int i = 0;i < fMemberTypes.length; i++) {
+                if(i != 0)
+                    typesBuffer.append(" | ");
+                decl = fMemberTypes[i];
+                if(decl.fTargetNamespace != null) {
+                    typesBuffer.append('{');
+                    typesBuffer.append(decl.fTargetNamespace);
+                    typesBuffer.append('}');
+                }
+                typesBuffer.append(decl.fTypeName);
+                if(decl.fEnumeration != null) {
+                    Vector v = decl.fEnumeration;
+                    typesBuffer.append(" : [");
+                    for(int j = 0;j < v.size(); j++) {
+                        if(j != 0)
+                            typesBuffer.append(',');
+                        typesBuffer.append(v.elementAt(j));
+                    }
+                    typesBuffer.append(']');
+                }
+            }
+            throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.3",
+                    new Object[]{content, fTypeName, typesBuffer.toString()});
+        }
+
+    }//getActualValue()
+
+    public boolean isEqual(Object value1, Object value2) {
+        if (value1 == null) {
+            return false;
+        }
+        return value1.equals(value2);
+    }//isEqual()
+
+    // determine whether the two values are identical
+    public boolean isIdentical (Object value1, Object value2) {
+        if (value1 == null) {
+            return false;
+        }
+        return fDVs[fValidationDV].isIdentical(value1, value2);
+    }//isIdentical()
+
+    // normalize the string according to the whiteSpace facet
+    public static String normalize(String content, short ws) {
+        int len = content == null ? 0 : content.length();
+        if (len == 0 || ws == WS_PRESERVE)
+            return content;
+
+        StringBuffer sb = new StringBuffer();
+        if (ws == WS_REPLACE) {
+            char ch;
+            // when it's replace, just replace #x9, #xa, #xd by #x20
+            for (int i = 0; i < len; i++) {
+                ch = content.charAt(i);
+                if (ch != 0x9 && ch != 0xa && ch != 0xd)
+                    sb.append(ch);
+                else
+                    sb.append((char)0x20);
+            }
+        } else {
+            char ch;
+            int i;
+            boolean isLeading = true;
+            // when it's collapse
+            for (i = 0; i < len; i++) {
+                ch = content.charAt(i);
+                // append real characters, so we passed leading ws
+                if (ch != 0x9 && ch != 0xa && ch != 0xd && ch != 0x20) {
+                    sb.append(ch);
+                    isLeading = false;
+                }
+                else {
+                    // for whitespaces, we skip all following ws
+                    for (; i < len-1; i++) {
+                        ch = content.charAt(i+1);
+                        if (ch != 0x9 && ch != 0xa && ch != 0xd && ch != 0x20)
+                            break;
+                    }
+                    // if it's not a leading or tailing ws, then append a space
+                    if (i < len - 1 && !isLeading)
+                        sb.append((char)0x20);
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
+    // normalize the string according to the whiteSpace facet
+    protected String normalize(Object content, short ws) {
+        if (content == null)
+            return null;
+
+        // If pattern is not defined, we can skip some of the normalization.
+        // Otherwise we have to normalize the data for correct result of
+        // pattern validation.
+        if ( (fFacetsDefined & FACET_PATTERN ) == 0 ) {
+            short norm_type = fDVNormalizeType[fValidationDV];
+            if (norm_type == NORMALIZE_NONE) {
+                return content.toString();
+            }
+            else if (norm_type == NORMALIZE_TRIM) {
+                return XMLChar.trim(content.toString());
+            }
+        }
+
+        if (!(content instanceof StringBuffer)) {
+            String strContent = content.toString();
+            return normalize(strContent, ws);
+        }
+
+        StringBuffer sb = (StringBuffer)content;
+        int len = sb.length();
+        if (len == 0)
+            return "";
+        if (ws == WS_PRESERVE)
+            return sb.toString();
+
+        if (ws == WS_REPLACE) {
+            char ch;
+            // when it's replace, just replace #x9, #xa, #xd by #x20
+            for (int i = 0; i < len; i++) {
+                ch = sb.charAt(i);
+                if (ch == 0x9 || ch == 0xa || ch == 0xd)
+                    sb.setCharAt(i, (char)0x20);
+            }
+        } else {
+            char ch;
+            int i, j = 0;
+            boolean isLeading = true;
+            // when it's collapse
+            for (i = 0; i < len; i++) {
+                ch = sb.charAt(i);
+                // append real characters, so we passed leading ws
+                if (ch != 0x9 && ch != 0xa && ch != 0xd && ch != 0x20) {
+                    sb.setCharAt(j++, ch);
+                    isLeading = false;
+                }
+                else {
+                    // for whitespaces, we skip all following ws
+                    for (; i < len-1; i++) {
+                        ch = sb.charAt(i+1);
+                        if (ch != 0x9 && ch != 0xa && ch != 0xd && ch != 0x20)
+                            break;
+                    }
+                    // if it's not a leading or tailing ws, then append a space
+                    if (i < len - 1 && !isLeading)
+                        sb.setCharAt(j++, (char)0x20);
+                }
+            }
+            sb.setLength(j);
+        }
+
+        return sb.toString();
+    }
+
+    void reportError(String key, Object[] args) throws InvalidDatatypeFacetException {
+        throw new InvalidDatatypeFacetException(key, args);
+    }
+
+
+    private String whiteSpaceValue(short ws){
+        return WS_FACET_STRING[ws];
+    }
+
+    /**
+     *  Fundamental Facet: ordered.
+     */
+    public short getOrdered() {
+        return fOrdered;
+    }
+
+    /**
+     * Fundamental Facet: bounded.
+     */
+    public boolean getBounded(){
+        return fBounded;
+    }
+
+    /**
+     * Fundamental Facet: cardinality.
+     */
+    public boolean getFinite(){
+        return fFinite;
+    }
+
+    /**
+     * Fundamental Facet: numeric.
+     */
+    public boolean getNumeric(){
+        return fNumeric;
+    }
+
+    /**
+     * Convenience method. [Facets]: check whether a facet is defined on this
+     * type.
+     * @param facetName  The name of the facet.
+     * @return  True if the facet is defined, false otherwise.
+     */
+    public boolean isDefinedFacet(short facetName) {
+        if (fValidationDV == DV_ANYSIMPLETYPE ||
+            fValidationDV == DV_ANYATOMICTYPE) {
+            return false;
+        }
+        if ((fFacetsDefined & facetName) != 0) {
+            return true;
+        }
+        if (fPatternType != SPECIAL_PATTERN_NONE) {
+            return facetName == FACET_PATTERN;
+        }
+        if (fValidationDV == DV_INTEGER) {
+            return facetName == FACET_PATTERN || facetName == FACET_FRACTIONDIGITS;
+        }
+        return false;
+    }
+
+    /**
+     * [facets]: all facets defined on this type. The value is a bit
+     * combination of FACET_XXX constants of all defined facets.
+     */
+    public short getDefinedFacets() {
+        if (fValidationDV == DV_ANYSIMPLETYPE ||
+            fValidationDV == DV_ANYATOMICTYPE) {
+            return FACET_NONE;
+        }
+        if (fPatternType != SPECIAL_PATTERN_NONE) {
+            return (short)(fFacetsDefined | FACET_PATTERN);
+        }
+        if (fValidationDV == DV_INTEGER) {
+            return (short)(fFacetsDefined | FACET_PATTERN | FACET_FRACTIONDIGITS);
+        }
+        return fFacetsDefined;
+    }
+
+    /**
+     * Convenience method. [Facets]: check whether a facet is defined and
+     * fixed on this type.
+     * @param facetName  The name of the facet.
+     * @return  True if the facet is fixed, false otherwise.
+     */
+    public boolean isFixedFacet(short facetName) {
+        if ((fFixedFacet & facetName) != 0)
+            return true;
+        if (fValidationDV == DV_INTEGER)
+            return facetName == FACET_FRACTIONDIGITS;
+        return false;
+    }
+
+    /**
+     * [facets]: all defined facets for this type which are fixed.
+     */
+    public short getFixedFacets() {
+        if (fValidationDV == DV_INTEGER)
+            return (short)(fFixedFacet | FACET_FRACTIONDIGITS);
+        return fFixedFacet;
+    }
+
+    /**
+     * Convenience method. Returns a value of a single constraining facet for
+     * this simple type definition. This method must not be used to retrieve
+     * values for <code>enumeration</code> and <code>pattern</code> facets.
+     * @param facetName The name of the facet, i.e.
+     *   <code>FACET_LENGTH, FACET_TOTALDIGITS </code> (see
+     *   <code>XSConstants</code>). To retrieve the value for a pattern or
+     *   an enumeration, see <code>enumeration</code> and
+     *   <code>pattern</code>.
+     * @return A value of the facet specified in <code>facetName</code> for
+     *   this simple type definition or <code>null</code>.
+     */
+    public String getLexicalFacetValue(short facetName) {
+        switch (facetName) {
+            case FACET_LENGTH:
+                return (fLength == -1)?null:Integer.toString(fLength);
+            case FACET_MINLENGTH:
+                return (fMinLength == -1)?null:Integer.toString(fMinLength);
+            case FACET_MAXLENGTH:
+                return (fMaxLength == -1)?null:Integer.toString(fMaxLength);
+            case FACET_WHITESPACE:
+                if (fValidationDV == DV_ANYSIMPLETYPE ||
+                    fValidationDV == DV_ANYATOMICTYPE) {
+                    return null;
+                }
+                return WS_FACET_STRING[fWhiteSpace];
+            case FACET_MAXINCLUSIVE:
+                return (fMaxInclusive == null)?null:fMaxInclusive.toString();
+            case FACET_MAXEXCLUSIVE:
+                return (fMaxExclusive == null)?null:fMaxExclusive.toString();
+            case FACET_MINEXCLUSIVE:
+                return (fMinExclusive == null)?null:fMinExclusive.toString();
+            case FACET_MININCLUSIVE:
+                return (fMinInclusive == null)?null:fMinInclusive.toString();
+            case FACET_TOTALDIGITS:
+                return (fTotalDigits == -1)?null:Integer.toString(fTotalDigits);
+            case FACET_FRACTIONDIGITS:
+                if (fValidationDV == DV_INTEGER) {
+                    return "0";
+                }
+                return (fFractionDigits == -1)?null:Integer.toString(fFractionDigits);
+        }
+        return null;
+    }
+
+    /**
+     * A list of enumeration values if it exists, otherwise an empty
+     * <code>StringList</code>.
+     */
+    public StringList getLexicalEnumeration() {
+        if (fLexicalEnumeration == null){
+            if (fEnumeration == null)
+                return StringListImpl.EMPTY_LIST;
+            int size = fEnumeration.size();
+            String[] strs = new String[size];
+            for (int i = 0; i < size; i++)
+                strs[i] = fEnumeration.elementAt(i).toString();
+            fLexicalEnumeration = new StringListImpl(strs, size);
+        }
+        return fLexicalEnumeration;
+    }
+
+    /**
+     * A list of actual enumeration values if it exists, otherwise an empty
+     * <code>ObjectList</code>.
+     */
+    public ObjectList getActualEnumeration() {
+        if (fActualEnumeration == null) {
+            fActualEnumeration = new AbstractObjectList() {
+                public int getLength() {
+                    return (fEnumeration != null) ? fEnumeration.size() : 0;
+                }
+                public boolean contains(Object item) {
+                    return (fEnumeration != null && fEnumeration.contains(item));
+                }
+                public Object item(int index) {
+                    if (index < 0 || index >= getLength()) {
+                        return null;
+                    }
+                    return fEnumeration.elementAt(index);
+                }
+            };
+        }
+        return fActualEnumeration;
+    }
+
+    /**
+     * A list of enumeration type values (as a list of ShortList objects) if it exists, otherwise returns
+     * null
+     */
+    public ObjectList getEnumerationItemTypeList() {
+        if (fEnumerationItemTypeList == null) {
+            if(fEnumerationItemType == null)
+                return null;
+            fEnumerationItemTypeList = new AbstractObjectList() {
+                public int getLength() {
+                    return (fEnumerationItemType != null) ? fEnumerationItemType.length : 0;
+                }
+                public boolean contains(Object item) {
+                    if(fEnumerationItemType == null || !(item instanceof ShortList))
+                        return false;
+                    for(int i = 0;i < fEnumerationItemType.length; i++)
+                        if(fEnumerationItemType[i] == item)
+                            return true;
+                    return false;
+                }
+                public Object item(int index) {
+                    if (index < 0 || index >= getLength()) {
+                        return null;
+                    }
+                    return fEnumerationItemType[index];
+                }
+            };
+        }
+        return fEnumerationItemTypeList;
+    }
+
+    public ShortList getEnumerationTypeList() {
+        if (fEnumerationTypeList == null) {
+            if (fEnumerationType == null) {
+                return ShortListImpl.EMPTY_LIST;
+            }
+            fEnumerationTypeList = new ShortListImpl (fEnumerationType, fEnumerationType.length);
+        }
+        return fEnumerationTypeList;
+    }
+
+    /**
+     * A list of pattern values if it exists, otherwise an empty
+     * <code>StringList</code>.
+     */
+    public StringList getLexicalPattern() {
+        if (fPatternType == SPECIAL_PATTERN_NONE && fValidationDV != DV_INTEGER && fPatternStr == null)
+            return StringListImpl.EMPTY_LIST;
+        if (fLexicalPattern == null){
+            int size = fPatternStr == null ? 0 : fPatternStr.size();
+            String[] strs;
+            if (fPatternType == SPECIAL_PATTERN_NMTOKEN) {
+                strs = new String[size+1];
+                strs[size] = "\\c+";
+            }
+            else if (fPatternType == SPECIAL_PATTERN_NAME) {
+                strs = new String[size+1];
+                strs[size] = "\\i\\c*";
+            }
+            else if (fPatternType == SPECIAL_PATTERN_NCNAME) {
+                strs = new String[size+2];
+                strs[size] = "\\i\\c*";
+                strs[size+1] = "[\\i-[:]][\\c-[:]]*";
+            }
+            else if (fValidationDV == DV_INTEGER) {
+                strs = new String[size+1];
+                strs[size] = "[\\-+]?[0-9]+";
+            }
+            else {
+                strs = new String[size];
+            }
+            for (int i = 0; i < size; i++)
+                strs[i] = (String)fPatternStr.elementAt(i);
+            fLexicalPattern = new StringListImpl(strs, strs.length);
+        }
+        return fLexicalPattern;
+    }
+
+    /**
+     * [annotations]: a set of annotations for this simple type component if
+     * it exists, otherwise an empty <code>XSObjectList</code>.
+     */
+    public XSObjectList getAnnotations() {
+        return (fAnnotations != null) ? fAnnotations : XSObjectListImpl.EMPTY_LIST;
+    }
+
+    private void calcFundamentalFacets() {
+        setOrdered();
+        setNumeric();
+        setBounded();
+        setCardinality();
+    }
+
+    private void setOrdered(){
+
+        // When {variety} is atomic, {value} is inherited from {value} of {base type definition}. For all "primitive" types {value} is as specified in the table in Fundamental Facets (C.1).
+        if(fVariety == VARIETY_ATOMIC){
+            this.fOrdered = fBase.fOrdered;
+        }
+
+        // When {variety} is list, {value} is false.
+        else if(fVariety == VARIETY_LIST){
+            this.fOrdered = ORDERED_FALSE;
+        }
+
+        // When {variety} is union, the {value} is partial unless one of the following:
+        // 1. If every member of {member type definitions} is derived from a common ancestor other than the simple ur-type, then {value} is the same as that ancestor's ordered facet.
+        // 2. If every member of {member type definitions} has a {value} of false for the ordered facet, then {value} is false.
+        else if(fVariety == VARIETY_UNION){
+            int length = fMemberTypes.length;
+            // REVISIT: is the length possible to be 0?
+            if (length == 0) {
+                this.fOrdered = ORDERED_PARTIAL;
+                return;
+            }
+            // we need to process the first member type before entering the loop
+            short ancestorId = getPrimitiveDV(fMemberTypes[0].fValidationDV);
+            boolean commonAnc = ancestorId != DV_ANYSIMPLETYPE;
+            boolean allFalse = fMemberTypes[0].fOrdered == ORDERED_FALSE;
+            // for the other member types, check whether the value is false
+            // and whether they have the same ancestor as the first one
+            for (int i = 1; i < fMemberTypes.length && (commonAnc || allFalse); i++) {
+                if (commonAnc)
+                    commonAnc = ancestorId == getPrimitiveDV(fMemberTypes[i].fValidationDV);
+                if (allFalse)
+                    allFalse = fMemberTypes[i].fOrdered == ORDERED_FALSE;
+            }
+            if (commonAnc) {
+                // REVISIT: all member types should have the same ordered value
+                //          just use the first one. Can we assume this?
+                this.fOrdered = fMemberTypes[0].fOrdered;
+            } else if (allFalse) {
+                this.fOrdered = ORDERED_FALSE;
+            } else {
+                this.fOrdered = ORDERED_PARTIAL;
+            }
+        }
+
+    }//setOrdered
+
+    private void setNumeric(){
+        if(fVariety == VARIETY_ATOMIC){
+            this.fNumeric = fBase.fNumeric;
+        }
+        else if(fVariety == VARIETY_LIST){
+            this.fNumeric = false;
+        }
+        else if(fVariety == VARIETY_UNION){
+            XSSimpleType[] memberTypes = fMemberTypes;
+            for(int i = 0 ; i < memberTypes.length ; i++){
+                if(!memberTypes[i].getNumeric() ){
+                    this.fNumeric = false;
+                    return;
+                }
+            }
+            this.fNumeric = true;
+        }
+
+    }//setNumeric
+
+    private void setBounded(){
+        if(fVariety == VARIETY_ATOMIC){
+            if( (((this.fFacetsDefined & FACET_MININCLUSIVE) != 0)  || ((this.fFacetsDefined & FACET_MINEXCLUSIVE) != 0))
+                    &&  (((this.fFacetsDefined & FACET_MAXINCLUSIVE) != 0)  || ((this.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0)) ){
+                this.fBounded = true;
+            }
+            else{
+                this.fBounded = false;
+            }
+        }
+        else if(fVariety == VARIETY_LIST){
+            if( ((this.fFacetsDefined & FACET_LENGTH) != 0 ) || ( ((this.fFacetsDefined & FACET_MINLENGTH) != 0 )
+                    &&  ((this.fFacetsDefined & FACET_MAXLENGTH) != 0 )) ){
+                this.fBounded = true;
+            }
+            else{
+                this.fBounded = false;
+            }
+
+        }
+        else if(fVariety == VARIETY_UNION){
+
+            XSSimpleTypeDecl [] memberTypes = this.fMemberTypes;
+            short ancestorId = 0 ;
+
+            if(memberTypes.length > 0){
+                ancestorId = getPrimitiveDV(memberTypes[0].fValidationDV);
+            }
+
+            for(int i = 0 ; i < memberTypes.length ; i++){
+                if(!memberTypes[i].getBounded() || (ancestorId != getPrimitiveDV(memberTypes[i].fValidationDV)) ){
+                    this.fBounded = false;
+                    return;
+                }
+            }
+            this.fBounded = true;
+        }
+
+    }//setBounded
+
+    private boolean specialCardinalityCheck(){
+        if( (fBase.fValidationDV == XSSimpleTypeDecl.DV_DATE) || (fBase.fValidationDV == XSSimpleTypeDecl.DV_GYEARMONTH)
+                || (fBase.fValidationDV == XSSimpleTypeDecl.DV_GYEAR) || (fBase.fValidationDV == XSSimpleTypeDecl.DV_GMONTHDAY)
+                || (fBase.fValidationDV == XSSimpleTypeDecl.DV_GDAY) || (fBase.fValidationDV == XSSimpleTypeDecl.DV_GMONTH) ){
+            return true;
+        }
+        return false;
+
+    } //specialCardinalityCheck()
+
+    private void setCardinality(){
+        if(fVariety == VARIETY_ATOMIC){
+            if(fBase.fFinite){
+                this.fFinite = true;
+            }
+            else {// (!fBase.fFinite)
+                if ( ((this.fFacetsDefined & FACET_LENGTH) != 0 ) || ((this.fFacetsDefined & FACET_MAXLENGTH) != 0 )
+                        || ((this.fFacetsDefined & FACET_TOTALDIGITS) != 0 ) ){
+                    this.fFinite = true;
+                }
+                else if( (((this.fFacetsDefined & FACET_MININCLUSIVE) != 0 ) || ((this.fFacetsDefined & FACET_MINEXCLUSIVE) != 0 ))
+                        && (((this.fFacetsDefined & FACET_MAXINCLUSIVE) != 0 ) || ((this.fFacetsDefined & FACET_MAXEXCLUSIVE) != 0 )) ){
+                    if( ((this.fFacetsDefined & FACET_FRACTIONDIGITS) != 0 ) || specialCardinalityCheck()){
+                        this.fFinite = true;
+                    }
+                    else{
+                        this.fFinite = false;
+                    }
+                }
+                else{
+                    this.fFinite = false;
+                }
+            }
+        }
+        else if(fVariety == VARIETY_LIST){
+            if( ((this.fFacetsDefined & FACET_LENGTH) != 0 ) || ( ((this.fFacetsDefined & FACET_MINLENGTH) != 0 )
+                    && ((this.fFacetsDefined & FACET_MAXLENGTH) != 0 )) ){
+                this.fFinite = true;
+            }
+            else{
+                this.fFinite = false;
+            }
+
+        }
+        else if(fVariety == VARIETY_UNION){
+            XSSimpleType [] memberTypes = fMemberTypes;
+            for(int i = 0 ; i < memberTypes.length ; i++){
+                if(!(memberTypes[i].getFinite()) ){
+                    this.fFinite = false;
+                    return;
+                }
+            }
+            this.fFinite = true;
+        }
+
+    }//setCardinality
+
+    private short getPrimitiveDV(short validationDV){
+
+        if (validationDV == DV_ID || validationDV == DV_IDREF || validationDV == DV_ENTITY){
+            return DV_STRING;
+        }
+        else if (validationDV == DV_INTEGER) {
+            return DV_DECIMAL;
+        }
+        else if (Constants.SCHEMA_1_1_SUPPORT && (validationDV == DV_YEARMONTHDURATION || validationDV == DV_DAYTIMEDURATION)) {
+            return DV_DURATION;
+        }
+        else {
+            return validationDV;
+        }
+
+    }//getPrimitiveDV()
+
+    public boolean derivedFromType(XSTypeDefinition ancestor, short derivation) {
+        // REVISIT: implement according to derivation
+
+        // ancestor is null, return false
+        if (ancestor == null) {
+            return false;
+        }
+        // extract the actual XSTypeDefinition if the given ancestor is a delegate.
+        while (ancestor instanceof XSSimpleTypeDelegate) {
+            ancestor = ((XSSimpleTypeDelegate) ancestor).type;
+        }
+        // ancestor is anyType, return true
+        // anyType is the only type whose base type is itself
+        if (ancestor.getBaseType() == ancestor) {
+            return true;
+        }
+        // recursively get base, and compare it with ancestor
+        XSTypeDefinition type = this;
+        while (type != ancestor &&                      // compare with ancestor
+                type != fAnySimpleType) {  // reached anySimpleType
+            type = type.getBaseType();
+        }
+        return type == ancestor;
+    }
+
+    public boolean derivedFrom(String ancestorNS, String ancestorName, short derivation) {
+        // REVISIT: implement according to derivation
+
+        // ancestor is null, retur false
+        if (ancestorName == null)
+            return false;
+        // ancestor is anyType, return true
+        if (URI_SCHEMAFORSCHEMA.equals(ancestorNS) &&
+                ANY_TYPE.equals(ancestorName)) {
+            return true;
+        }
+
+        // recursively get base, and compare it with ancestor
+        XSTypeDefinition type = this;
+        while (!(ancestorName.equals(type.getName()) &&
+                ((ancestorNS == null && type.getNamespace() == null) ||
+                        (ancestorNS != null && ancestorNS.equals(type.getNamespace())))) &&   // compare with ancestor
+                        type != fAnySimpleType) {  // reached anySimpleType
+            type = (XSTypeDefinition)type.getBaseType();
+        }
+
+        return type != fAnySimpleType;
+    }
+
+    /**
+     * Checks if a type is derived from another by restriction, given the name
+     * and namespace. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param derivationMethod
+     *            The derivation method
+     *
+     * @return boolean True if the ancestor type is derived from the reference type by the specifiied derivation method.
+     */
+    public boolean isDOMDerivedFrom(String ancestorNS, String ancestorName, int derivationMethod) {
+
+        // ancestor is null, return false
+        if (ancestorName == null)
+            return false;
+
+        // ancestor is anyType, return true
+        if (SchemaSymbols.URI_SCHEMAFORSCHEMA.equals(ancestorNS)
+                && SchemaSymbols.ATTVAL_ANYTYPE.equals(ancestorName)
+                && (((derivationMethod  & DERIVATION_RESTRICTION) != 0)
+                        || (derivationMethod  == DERIVATION_ANY))) {
+            return true;
+        }
+
+        // restriction
+        if ((derivationMethod & DERIVATION_RESTRICTION) != 0) {
+            if (isDerivedByRestriction(ancestorNS, ancestorName, this)) {
+                return true;
+            }
+        }
+
+        // list
+        if ((derivationMethod & DERIVATION_LIST) != 0) {
+            if (isDerivedByList(ancestorNS, ancestorName, this)) {
+                return true;
+            }
+        }
+
+        // union
+        if ((derivationMethod & DERIVATION_UNION) != 0) {
+            if (isDerivedByUnion(ancestorNS, ancestorName, this)) {
+                return true;
+            }
+        }
+
+        // extension
+        if (((derivationMethod & DERIVATION_EXTENSION) != 0)
+                && (((derivationMethod & DERIVATION_RESTRICTION) == 0)
+                        && ((derivationMethod & DERIVATION_LIST) == 0)
+                        && ((derivationMethod & DERIVATION_UNION) == 0))) {
+            return false;
+        }
+
+        // If the value of the parameter is 0 i.e. no bit (corresponding to
+        // restriction, list, extension or union) is set to 1 for the
+        // derivationMethod parameter.
+        if (((derivationMethod & DERIVATION_EXTENSION) == 0)
+                && (((derivationMethod & DERIVATION_RESTRICTION) == 0)
+                        && ((derivationMethod & DERIVATION_LIST) == 0)
+                        && ((derivationMethod & DERIVATION_UNION) == 0))) {
+            return isDerivedByAny(ancestorNS, ancestorName, this);
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Checks if a type is derived from another by any combination of restriction, list ir union. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by restriciton for the reference type
+     */
+    private boolean isDerivedByAny(String ancestorNS, String ancestorName,
+            XSTypeDefinition type) {
+
+        boolean derivedFrom = false;
+        XSTypeDefinition oldType = null;
+        // for each base, item or member type
+        while (type != null && type != oldType)  {
+
+            // If the ancestor type is reached or is the same as this type.
+            if ((ancestorName.equals(type.getName()))
+                    && ((ancestorNS == null && type.getNamespace() == null)
+                            || (ancestorNS != null && ancestorNS.equals(type.getNamespace())))) {
+                derivedFrom = true;
+                break;
+            }
+
+            // check if derived by restriction or list or union
+            if (isDerivedByRestriction(ancestorNS, ancestorName, type)) {
+                return true;
+            } else if (isDerivedByList(ancestorNS, ancestorName, type)) {
+                return true;
+            } else  if (isDerivedByUnion(ancestorNS, ancestorName, type)) {
+                return true;
+            }
+            oldType = type;
+            // get the base, item or member type depending on the variety
+            if (((XSSimpleTypeDecl) type).getVariety() == VARIETY_ABSENT
+                    || ((XSSimpleTypeDecl) type).getVariety() == VARIETY_ATOMIC) {
+                type = type.getBaseType();
+            } else if (((XSSimpleTypeDecl) type).getVariety() == VARIETY_UNION) {
+                for (int i = 0; i < ((XSSimpleTypeDecl) type).getMemberTypes().getLength(); i++) {
+                    return isDerivedByAny(ancestorNS, ancestorName,
+                            (XSTypeDefinition) ((XSSimpleTypeDecl) type)
+                            .getMemberTypes().item(i));
+                }
+            } else if (((XSSimpleTypeDecl) type).getVariety() == VARIETY_LIST) {
+                type = ((XSSimpleTypeDecl) type).getItemType();
+            }
+        }
+
+        return derivedFrom;
+    }
+
+    /**
+     * DOM Level 3
+     * Checks if a type is derived from another by restriction. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by restriciton for the
+     *         reference type
+     */
+    private boolean isDerivedByRestriction (String ancestorNS, String ancestorName, XSTypeDefinition type) {
+        XSTypeDefinition oldType = null;
+        while (type != null && type != oldType) {
+            if ((ancestorName.equals(type.getName()))
+                    && ((ancestorNS != null && ancestorNS.equals(type.getNamespace()))
+                            || (type.getNamespace() == null && ancestorNS == null))) {
+
+                return true;
+            }
+            oldType = type;
+            type = type.getBaseType();
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a type is derived from another by list. See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by list for the reference type
+     */
+    private boolean isDerivedByList (String ancestorNS, String ancestorName, XSTypeDefinition type) {
+        // If the variety is union
+        if (type !=null && ((XSSimpleTypeDefinition)type).getVariety() == VARIETY_LIST) {
+
+            // get the {item type}
+            XSTypeDefinition itemType = ((XSSimpleTypeDefinition)type).getItemType();
+
+            // T2 is the {item type definition}
+            if (itemType != null) {
+
+                // T2 is derived from the other type definition by DERIVATION_RESTRICTION
+                if (isDerivedByRestriction(ancestorNS, ancestorName, itemType)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a type is derived from another by union.  See:
+     * http://www.w3.org/TR/2004/REC-DOM-Level-3-Core-20040407/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *            The namspace of the ancestor type declaration
+     * @param ancestorName
+     *            The name of the ancestor type declaration
+     * @param type
+     *            The reference type definition
+     *
+     * @return boolean True if the type is derived by union for the reference type
+     */
+    private boolean isDerivedByUnion (String ancestorNS, String ancestorName, XSTypeDefinition type) {
+
+        // If the variety is union
+        if (type !=null && ((XSSimpleTypeDefinition)type).getVariety() == VARIETY_UNION) {
+
+            // get member types
+            XSObjectList memberTypes = ((XSSimpleTypeDefinition)type).getMemberTypes();
+
+            for (int i = 0; i < memberTypes.getLength(); i++) {
+                // One of the {member type definitions} is T2.
+                if (memberTypes.item(i) != null) {
+                    // T2 is derived from the other type definition by DERIVATION_RESTRICTION
+                    if (isDerivedByRestriction(ancestorNS, ancestorName,(XSSimpleTypeDefinition)memberTypes.item(i))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
+    static final XSSimpleTypeDecl fAnySimpleType = new XSSimpleTypeDecl(null, "anySimpleType", DV_ANYSIMPLETYPE, ORDERED_FALSE, false, true, false, true, XSConstants.ANYSIMPLETYPE_DT);
+
+    static final XSSimpleTypeDecl fAnyAtomicType = new XSSimpleTypeDecl(fAnySimpleType, "anyAtomicType", DV_ANYATOMICTYPE, ORDERED_FALSE, false, true, false, true, XSSimpleTypeDecl.ANYATOMICTYPE_DT);
+
+    /**
+     * Validation context used to validate facet values.
+     */
+    static final ValidationContext fDummyContext = new ValidationContext() {
+        public boolean needFacetChecking() {
+            return true;
+        }
+
+        public boolean needExtraChecking() {
+            return false;
+        }
+        public boolean needToNormalize() {
+            return false;
+        }
+        public boolean useNamespaces() {
+            return true;
+        }
+
+        public boolean isEntityDeclared(String name) {
+            return false;
+        }
+
+        public boolean isEntityUnparsed(String name) {
+            return false;
+        }
+
+        public boolean isIdDeclared(String name) {
+            return false;
+        }
+
+        public void addId(String name) {
+        }
+
+        public void addIdRef(String name) {
+        }
+
+        public String getSymbol (String symbol) {
+            return symbol.intern();
+        }
+
+        public String getURI(String prefix) {
+            return null;
+        }
+
+        public Locale getLocale() {
+            return Locale.getDefault();
+        }
+    };
+
+    private boolean fAnonymous = false;
+
+    /**
+     * A wrapper of ValidationContext, to provide a way of switching to a
+     * different Namespace declaration context.
+     */
+    static final class ValidationContextImpl implements ValidationContext {
+
+        final ValidationContext fExternal;
+
+        ValidationContextImpl(ValidationContext external) {
+            fExternal = external;
+        }
+
+        NamespaceContext fNSContext;
+        void setNSContext(NamespaceContext nsContext) {
+            fNSContext = nsContext;
+        }
+
+        public boolean needFacetChecking() {
+            return fExternal.needFacetChecking();
+        }
+
+        public boolean needExtraChecking() {
+            return fExternal.needExtraChecking();
+        }
+        public boolean needToNormalize() {
+            return fExternal.needToNormalize();
+        }
+        // schema validation is predicated upon namespaces
+        public boolean useNamespaces() {
+            return true;
+        }
+
+        public boolean isEntityDeclared (String name) {
+            return fExternal.isEntityDeclared(name);
+        }
+
+        public boolean isEntityUnparsed (String name) {
+            return fExternal.isEntityUnparsed(name);
+        }
+
+        public boolean isIdDeclared (String name) {
+            return fExternal.isIdDeclared(name);
+        }
+
+        public void addId(String name) {
+            fExternal.addId(name);
+        }
+
+        public void addIdRef(String name) {
+            fExternal.addIdRef(name);
+        }
+
+        public String getSymbol (String symbol) {
+            return fExternal.getSymbol(symbol);
+        }
+
+        public String getURI(String prefix) {
+            if (fNSContext == null) {
+                return fExternal.getURI(prefix);
+            }
+            else {
+                return fNSContext.getURI(prefix);
+            }
+        }
+
+        public Locale getLocale() {
+            return fExternal.getLocale();
+        }
+    }
+
+    public void reset(){
+
+        // if it's immutable, can't be reset:
+        if (fIsImmutable) return;
+        fItemType = null;
+        fMemberTypes = null;
+
+        fTypeName = null;
+        fTargetNamespace = null;
+        fFinalSet = 0;
+        fBase = null;
+        fVariety = -1;
+        fValidationDV = -1;
+
+        fFacetsDefined = 0;
+        fFixedFacet = 0;
+
+        //for constraining facets
+        fWhiteSpace = 0;
+        fLength = -1;
+        fMinLength = -1;
+        fMaxLength = -1;
+        fTotalDigits = -1;
+        fFractionDigits = -1;
+        fPattern = null;
+        fPatternStr = null;
+        fEnumeration = null;
+        fEnumerationType = null;
+        fEnumerationItemType = null;
+        fLexicalPattern = null;
+        fLexicalEnumeration = null;
+        fMaxInclusive = null;
+        fMaxExclusive = null;
+        fMinExclusive = null;
+        fMinInclusive = null;
+        lengthAnnotation = null;
+        minLengthAnnotation = null;
+        maxLengthAnnotation = null;
+        whiteSpaceAnnotation = null;
+        totalDigitsAnnotation = null;
+        fractionDigitsAnnotation = null;
+        patternAnnotations = null;
+        enumerationAnnotations = null;
+        maxInclusiveAnnotation = null;
+        maxExclusiveAnnotation = null;
+        minInclusiveAnnotation = null;
+        minExclusiveAnnotation = null;
+
+        fPatternType = SPECIAL_PATTERN_NONE;
+        fAnnotations = null;
+        fFacets = null;
+
+        // REVISIT: reset for fundamental facets
+    }
+
+    /**
+     * @see com.sun.org.apache.xerces.internal.xs.XSObject#getNamespaceItem()
+     */
+    public XSNamespaceItem getNamespaceItem() {
+        return fNamespaceItem;
+    }
+
+    public void setNamespaceItem(XSNamespaceItem namespaceItem) {
+        fNamespaceItem = namespaceItem;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        return this.fTargetNamespace+"," +this.fTypeName;
+    }
+
+    /**
+     *  A list of constraining facets if it exists, otherwise an empty
+     * <code>XSObjectList</code>. Note: This method must not be used to
+     * retrieve values for <code>enumeration</code> and <code>pattern</code>
+     * facets.
+     */
+    public XSObjectList getFacets() {
+        if (fFacets == null &&
+                (fFacetsDefined != 0 || fValidationDV == DV_INTEGER)) {
+
+            XSFacetImpl[] facets = new XSFacetImpl[10];
+            int count = 0;
+            if ((fFacetsDefined & FACET_WHITESPACE) != 0 &&
+                fValidationDV != DV_ANYSIMPLETYPE &&
+                fValidationDV != DV_ANYATOMICTYPE) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_WHITESPACE,
+                            WS_FACET_STRING[fWhiteSpace],
+                            (fFixedFacet & FACET_WHITESPACE) != 0,
+                            whiteSpaceAnnotation);
+                count++;
+            }
+            if (fLength != -1) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_LENGTH,
+                            Integer.toString(fLength),
+                            (fFixedFacet & FACET_LENGTH) != 0,
+                            lengthAnnotation);
+                count++;
+            }
+            if (fMinLength != -1) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_MINLENGTH,
+                            Integer.toString(fMinLength),
+                            (fFixedFacet & FACET_MINLENGTH) != 0,
+                            minLengthAnnotation);
+                count++;
+            }
+            if (fMaxLength != -1) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_MAXLENGTH,
+                            Integer.toString(fMaxLength),
+                            (fFixedFacet & FACET_MAXLENGTH) != 0,
+                            maxLengthAnnotation);
+                count++;
+            }
+            if (fTotalDigits != -1) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_TOTALDIGITS,
+                            Integer.toString(fTotalDigits),
+                            (fFixedFacet & FACET_TOTALDIGITS) != 0,
+                            totalDigitsAnnotation);
+                count++;
+            }
+            if (fValidationDV == DV_INTEGER) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_FRACTIONDIGITS,
+                            "0",
+                            true,
+                            fractionDigitsAnnotation);
+                count++;
+            }
+            else if (fFractionDigits != -1) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_FRACTIONDIGITS,
+                            Integer.toString(fFractionDigits),
+                            (fFixedFacet & FACET_FRACTIONDIGITS) != 0,
+                            fractionDigitsAnnotation);
+                count++;
+            }
+            if (fMaxInclusive != null) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_MAXINCLUSIVE,
+                            fMaxInclusive.toString(),
+                            (fFixedFacet & FACET_MAXINCLUSIVE) != 0,
+                            maxInclusiveAnnotation);
+                count++;
+            }
+            if (fMaxExclusive != null) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_MAXEXCLUSIVE,
+                            fMaxExclusive.toString(),
+                            (fFixedFacet & FACET_MAXEXCLUSIVE) != 0,
+                            maxExclusiveAnnotation);
+                count++;
+            }
+            if (fMinExclusive != null) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_MINEXCLUSIVE,
+                            fMinExclusive.toString(),
+                            (fFixedFacet & FACET_MINEXCLUSIVE) != 0,
+                            minExclusiveAnnotation);
+                count++;
+            }
+            if (fMinInclusive != null) {
+                facets[count] =
+                    new XSFacetImpl(
+                            FACET_MININCLUSIVE,
+                            fMinInclusive.toString(),
+                            (fFixedFacet & FACET_MININCLUSIVE) != 0,
+                            minInclusiveAnnotation);
+                count++;
+            }
+            fFacets = (count > 0) ? new XSObjectListImpl(facets, count) : XSObjectListImpl.EMPTY_LIST;
+        }
+        return (fFacets != null) ? fFacets : XSObjectListImpl.EMPTY_LIST;
+    }
+
+    /**
+     *  A list of enumeration and pattern constraining facets if it exists,
+     * otherwise an empty <code>XSObjectList</code>.
+     */
+    public XSObjectList getMultiValueFacets() {
+        if (fMultiValueFacets == null &&
+                ((fFacetsDefined & FACET_ENUMERATION) != 0 ||
+                        (fFacetsDefined & FACET_PATTERN) != 0 ||
+                        fPatternType != SPECIAL_PATTERN_NONE ||
+                        fValidationDV == DV_INTEGER)) {
+
+            XSMVFacetImpl[] facets = new XSMVFacetImpl[2];
+            int count = 0;
+            if ((fFacetsDefined & FACET_PATTERN) != 0 ||
+                    fPatternType != SPECIAL_PATTERN_NONE ||
+                    fValidationDV == DV_INTEGER) {
+                facets[count] =
+                    new XSMVFacetImpl(
+                            FACET_PATTERN,
+                            this.getLexicalPattern(),
+                            patternAnnotations);
+                count++;
+            }
+            if (fEnumeration != null) {
+                facets[count] =
+                    new XSMVFacetImpl(
+                            FACET_ENUMERATION,
+                            this.getLexicalEnumeration(),
+                            enumerationAnnotations);
+                count++;
+            }
+            fMultiValueFacets = new XSObjectListImpl(facets, count);
+        }
+        return (fMultiValueFacets != null) ?
+                fMultiValueFacets : XSObjectListImpl.EMPTY_LIST;
+    }
+
+    public Object getMinInclusiveValue() {
+        return fMinInclusive;
+    }
+
+    public Object getMinExclusiveValue() {
+        return fMinExclusive;
+    }
+
+    public Object getMaxInclusiveValue() {
+        return fMaxInclusive;
+    }
+
+    public Object getMaxExclusiveValue() {
+        return fMaxExclusive;
+    }
+
+    public void setAnonymous(boolean anon) {
+        fAnonymous = anon;
+    }
+
+    private static final class XSFacetImpl implements XSFacet {
+        final short kind;
+        final String value;
+        final boolean fixed;
+        final XSObjectList annotations;
+
+        public XSFacetImpl(short kind, String value, boolean fixed, XSAnnotation annotation) {
+            this.kind = kind;
+            this.value = value;
+            this.fixed = fixed;
+
+            if (annotation != null) {
+                this.annotations = new XSObjectListImpl();
+                ((XSObjectListImpl)this.annotations).addXSObject(annotation);
+            }
+            else {
+                this.annotations =  XSObjectListImpl.EMPTY_LIST;
+            }
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see com.sun.org.apache.xerces.internal.xs.XSFacet#getAnnotation()
+         */
+        /**
+         * Optional. Annotation.
+         */
+        public XSAnnotation getAnnotation() {
+            return (XSAnnotation) annotations.item(0);
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see com.sun.org.apache.xerces.internal.xs.XSFacet#getAnnotations()
+         */
+        /**
+         * Optional. Annotations.
+         */
+        public XSObjectList getAnnotations() {
+            return annotations;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSFacet#getFacetKind()
+         */
+        public short getFacetKind() {
+            return kind;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSFacet#getLexicalFacetValue()
+         */
+        public String getLexicalFacetValue() {
+            return value;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSFacet#isFixed()
+         */
+        public boolean getFixed() {
+            return fixed;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getName()
+         */
+        public String getName() {
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getNamespace()
+         */
+        public String getNamespace() {
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getNamespaceItem()
+         */
+        public XSNamespaceItem getNamespaceItem() {
+            // REVISIT: implement
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getType()
+         */
+        public short getType() {
+            return XSConstants.FACET;
+        }
+
+    }
+
+    private static final class XSMVFacetImpl implements XSMultiValueFacet {
+        final short kind;
+        final XSObjectList annotations;
+        final StringList values;
+
+        public XSMVFacetImpl(short kind, StringList values, XSObjectList annotations) {
+            this.kind = kind;
+            this.values = values;
+            this.annotations = (annotations != null) ? annotations : XSObjectListImpl.EMPTY_LIST;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSFacet#getFacetKind()
+         */
+        public short getFacetKind() {
+            return kind;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSMultiValueFacet#getAnnotations()
+         */
+        public XSObjectList getAnnotations() {
+            return annotations;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSMultiValueFacet#getLexicalFacetValues()
+         */
+        public StringList getLexicalFacetValues() {
+            return values;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getName()
+         */
+        public String getName() {
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getNamespace()
+         */
+        public String getNamespace() {
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getNamespaceItem()
+         */
+        public XSNamespaceItem getNamespaceItem() {
+            // REVISIT: implement
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.sun.org.apache.xerces.internal.xs.XSObject#getType()
+         */
+        public short getType() {
+            return XSConstants.MULTIVALUE_FACET;
+        }
+    }
+
+    private static abstract class AbstractObjectList extends AbstractList implements ObjectList {
+        public Object get(int index) {
+            if (index >= 0 && index < getLength()) {
+                return item(index);
+            }
+            throw new IndexOutOfBoundsException("Index: " + index);
+        }
+        public int size() {
+            return getLength();
+        }
+    }
+
+    public String getTypeNamespace() {
+        return getNamespace();
+    }
+
+    public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg, int derivationMethod) {
+        return isDOMDerivedFrom(typeNamespaceArg, typeNameArg, derivationMethod);
+    }
+
+    private short convertToPrimitiveKind(short valueType) {
+        /** Primitive datatypes. */
+        if (valueType <= XSConstants.NOTATION_DT) {
+            return valueType;
+        }
+        /** Types derived from string. */
+        if (valueType <= XSConstants.ENTITY_DT) {
+            return XSConstants.STRING_DT;
+        }
+        /** Types derived from decimal. */
+        if (valueType <= XSConstants.POSITIVEINTEGER_DT) {
+            return XSConstants.DECIMAL_DT;
+        }
+        /** Other types. */
+        return valueType;
+    }
+
+} // class XSSimpleTypeDecl

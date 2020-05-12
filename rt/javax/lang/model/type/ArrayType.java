@@ -1,11 +1,47 @@
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.lang.model.type;
 
-public interface ArrayType extends ReferenceType {
-  TypeMirror getComponentType();
-}
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\lang\model\type\ArrayType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Represents an array type.
+ * A multidimensional array type is represented as an array type
+ * whose component type is also an array type.
+ *
+ * @author Joseph D. Darcy
+ * @author Scott Seligman
+ * @author Peter von der Ah&eacute;
+ * @since 1.6
  */
+public interface ArrayType extends ReferenceType {
+
+    /**
+     * Returns the component type of this array type.
+     *
+     * @return the component type of this array type
+     */
+    TypeMirror getComponentType();
+}

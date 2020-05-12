@@ -1,218 +1,212 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.validation;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Locale;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ValidationState
-/*     */   implements ValidationContext
-/*     */ {
-/*     */   private boolean fExtraChecking = true;
-/*     */   private boolean fFacetChecking = true;
-/*     */   private boolean fNormalize = true;
-/*     */   private boolean fNamespaces = true;
-/*  49 */   private EntityState fEntityState = null;
-/*  50 */   private NamespaceContext fNamespaceContext = null;
-/*  51 */   private SymbolTable fSymbolTable = null;
-/*  52 */   private Locale fLocale = null;
-/*     */ 
-/*     */   
-/*     */   private ArrayList<String> fIdList;
-/*     */   
-/*     */   private ArrayList<String> fIdRefList;
-/*     */ 
-/*     */   
-/*     */   public void setExtraChecking(boolean newValue) {
-/*  61 */     this.fExtraChecking = newValue;
-/*     */   }
-/*     */   
-/*     */   public void setFacetChecking(boolean newValue) {
-/*  65 */     this.fFacetChecking = newValue;
-/*     */   }
-/*     */   
-/*     */   public void setNormalizationRequired(boolean newValue) {
-/*  69 */     this.fNormalize = newValue;
-/*     */   }
-/*     */   
-/*     */   public void setUsingNamespaces(boolean newValue) {
-/*  73 */     this.fNamespaces = newValue;
-/*     */   }
-/*     */   
-/*     */   public void setEntityState(EntityState state) {
-/*  77 */     this.fEntityState = state;
-/*     */   }
-/*     */   
-/*     */   public void setNamespaceSupport(NamespaceContext namespace) {
-/*  81 */     this.fNamespaceContext = namespace;
-/*     */   }
-/*     */   
-/*     */   public void setSymbolTable(SymbolTable sTable) {
-/*  85 */     this.fSymbolTable = sTable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String checkIDRefID() {
-/*  93 */     if (this.fIdList == null && 
-/*  94 */       this.fIdRefList != null) {
-/*  95 */       return this.fIdRefList.get(0);
-/*     */     }
-/*     */ 
-/*     */     
-/*  99 */     if (this.fIdRefList != null)
-/*     */     {
-/* 101 */       for (int i = 0; i < this.fIdRefList.size(); i++) {
-/* 102 */         String key = this.fIdRefList.get(i);
-/* 103 */         if (!this.fIdList.contains(key)) {
-/* 104 */           return key;
-/*     */         }
-/*     */       } 
-/*     */     }
-/* 108 */     return null;
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/* 112 */     this.fExtraChecking = true;
-/* 113 */     this.fFacetChecking = true;
-/* 114 */     this.fNamespaces = true;
-/* 115 */     this.fIdList = null;
-/* 116 */     this.fIdRefList = null;
-/* 117 */     this.fEntityState = null;
-/* 118 */     this.fNamespaceContext = null;
-/* 119 */     this.fSymbolTable = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void resetIDTables() {
-/* 129 */     this.fIdList = null;
-/* 130 */     this.fIdRefList = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean needExtraChecking() {
-/* 139 */     return this.fExtraChecking;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean needFacetChecking() {
-/* 144 */     return this.fFacetChecking;
-/*     */   }
-/*     */   
-/*     */   public boolean needToNormalize() {
-/* 148 */     return this.fNormalize;
-/*     */   }
-/*     */   
-/*     */   public boolean useNamespaces() {
-/* 152 */     return this.fNamespaces;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isEntityDeclared(String name) {
-/* 157 */     if (this.fEntityState != null) {
-/* 158 */       return this.fEntityState.isEntityDeclared(getSymbol(name));
-/*     */     }
-/* 160 */     return false;
-/*     */   }
-/*     */   public boolean isEntityUnparsed(String name) {
-/* 163 */     if (this.fEntityState != null) {
-/* 164 */       return this.fEntityState.isEntityUnparsed(getSymbol(name));
-/*     */     }
-/* 166 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isIdDeclared(String name) {
-/* 171 */     if (this.fIdList == null) return false; 
-/* 172 */     return this.fIdList.contains(name);
-/*     */   }
-/*     */   public void addId(String name) {
-/* 175 */     if (this.fIdList == null) this.fIdList = new ArrayList<>(); 
-/* 176 */     this.fIdList.add(name);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void addIdRef(String name) {
-/* 181 */     if (this.fIdRefList == null) this.fIdRefList = new ArrayList<>(); 
-/* 182 */     this.fIdRefList.add(name);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getSymbol(String symbol) {
-/* 187 */     if (this.fSymbolTable != null) {
-/* 188 */       return this.fSymbolTable.addSymbol(symbol);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 193 */     return symbol.intern();
-/*     */   }
-/*     */   
-/*     */   public String getURI(String prefix) {
-/* 197 */     if (this.fNamespaceContext != null) {
-/* 198 */       return this.fNamespaceContext.getURI(prefix);
-/*     */     }
-/* 200 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocale(Locale locale) {
-/* 206 */     this.fLocale = locale;
-/*     */   }
-/*     */   
-/*     */   public Locale getLocale() {
-/* 210 */     return this.fLocale;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\validation\ValidationState.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.validation;
+
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
+
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import java.util.ArrayList;
+import java.util.Locale;
+
+/**
+ * Implementation of ValidationContext inteface. Used to establish an
+ * environment for simple type validation.
+ *
+ * @xerces.internal
+ *
+ * @author Elena Litani, IBM
+ * @version $Id: ValidationState.java,v 1.7 2010-11-01 04:39:53 joehw Exp $
+ */
+public class ValidationState implements ValidationContext {
+
+    //
+    // private data
+    //
+    private boolean fExtraChecking              = true;
+    private boolean fFacetChecking              = true;
+    private boolean fNormalize                  = true;
+    private boolean fNamespaces                 = true;
+
+    private EntityState fEntityState            = null;
+    private NamespaceContext fNamespaceContext  = null;
+    private SymbolTable fSymbolTable            = null;
+    private Locale fLocale                      = null;
+
+    private ArrayList<String> fIdList;
+    private ArrayList<String> fIdRefList;
+
+    //
+    // public methods
+    //
+    public void setExtraChecking(boolean newValue) {
+        fExtraChecking = newValue;
+    }
+
+    public void setFacetChecking(boolean newValue) {
+        fFacetChecking = newValue;
+    }
+
+    public void setNormalizationRequired (boolean newValue) {
+          fNormalize = newValue;
+    }
+
+    public void setUsingNamespaces (boolean newValue) {
+          fNamespaces = newValue;
+    }
+
+    public void setEntityState(EntityState state) {
+        fEntityState = state;
+    }
+
+    public void setNamespaceSupport(NamespaceContext namespace) {
+        fNamespaceContext = namespace;
+    }
+
+    public void setSymbolTable(SymbolTable sTable) {
+        fSymbolTable = sTable;
+    }
+
+    /**
+     * return null if all IDREF values have a corresponding ID value;
+     * otherwise return the first IDREF value without a matching ID value.
+     */
+    public String checkIDRefID () {
+        if (fIdList == null) {
+            if (fIdRefList != null) {
+                return fIdRefList.get(0);
+            }
+        }
+
+        if (fIdRefList != null) {
+            String key;
+            for (int i = 0; i < fIdRefList.size(); i++) {
+                key = fIdRefList.get(i);
+                if (!fIdList.contains(key)) {
+                      return key;
+                }
+            }
+        }
+        return null;
+    }
+
+    public void reset () {
+        fExtraChecking = true;
+        fFacetChecking = true;
+        fNamespaces = true;
+        fIdList = null;
+        fIdRefList = null;
+        fEntityState = null;
+        fNamespaceContext = null;
+        fSymbolTable = null;
+    }
+
+    /**
+     * The same validation state can be used to validate more than one (schema)
+     * validation roots. Entity/Namespace/Symbol are shared, but each validation
+     * root needs its own id/idref tables. So we need this method to reset only
+     * the two tables.
+     */
+    public void resetIDTables() {
+        fIdList = null;
+        fIdRefList = null;
+    }
+
+    //
+    // implementation of ValidationContext methods
+    //
+
+    // whether to do extra id/idref/entity checking
+    public boolean needExtraChecking() {
+        return fExtraChecking;
+    }
+
+    // whether to validate against facets
+    public boolean needFacetChecking() {
+        return fFacetChecking;
+    }
+
+    public boolean needToNormalize (){
+        return fNormalize;
+    }
+
+    public boolean useNamespaces() {
+        return fNamespaces;
+    }
+
+    // entity
+    public boolean isEntityDeclared (String name) {
+        if (fEntityState !=null) {
+            return fEntityState.isEntityDeclared(getSymbol(name));
+        }
+        return false;
+    }
+    public boolean isEntityUnparsed (String name) {
+        if (fEntityState !=null) {
+            return fEntityState.isEntityUnparsed(getSymbol(name));
+        }
+        return false;
+    }
+
+    // id
+    public boolean isIdDeclared(String name) {
+        if (fIdList == null) return false;
+        return fIdList.contains(name);
+    }
+    public void addId(String name) {
+        if (fIdList == null) fIdList = new ArrayList();
+        fIdList.add(name);
+    }
+
+    // idref
+    public void addIdRef(String name) {
+        if (fIdRefList == null) fIdRefList = new ArrayList();
+        fIdRefList.add(name);
+    }
+    // get symbols
+
+    public String getSymbol (String symbol) {
+        if (fSymbolTable != null)
+            return fSymbolTable.addSymbol(symbol);
+        // if there is no symbol table, we return java-internalized string,
+        // because symbol table strings are also java-internalzied.
+        // this guarantees that the returned string from this method can be
+        // compared by reference with other symbol table string. -SG
+        return symbol.intern();
+    }
+    // qname, notation
+    public String getURI(String prefix) {
+        if (fNamespaceContext !=null) {
+            return fNamespaceContext.getURI(prefix);
+        }
+        return null;
+    }
+
+    // Locale
+
+    public void setLocale(Locale locale) {
+        fLocale = locale;
+    }
+
+    public Locale getLocale() {
+        return fLocale;
+    }
+}

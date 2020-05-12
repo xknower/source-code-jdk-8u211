@@ -1,362 +1,364 @@
-/*     */ package com.sun.org.apache.xml.internal.serialize;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.StringWriter;
-/*     */ import java.io.Writer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Printer
-/*     */ {
-/*     */   protected final OutputFormat _format;
-/*     */   protected Writer _writer;
-/*     */   protected StringWriter _dtdWriter;
-/*     */   protected Writer _docWriter;
-/*     */   protected IOException _exception;
-/*     */   private static final int BufferSize = 4096;
-/*  95 */   private final char[] _buffer = new char[4096];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 101 */   private int _pos = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Printer(Writer writer, OutputFormat format) {
-/* 106 */     this._writer = writer;
-/* 107 */     this._format = format;
-/* 108 */     this._exception = null;
-/* 109 */     this._dtdWriter = null;
-/* 110 */     this._docWriter = null;
-/* 111 */     this._pos = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IOException getException() {
-/* 117 */     return this._exception;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void enterDTD() throws IOException {
-/* 134 */     if (this._dtdWriter == null) {
-/* 135 */       flushLine(false);
-/*     */       
-/* 137 */       this._dtdWriter = new StringWriter();
-/* 138 */       this._docWriter = this._writer;
-/* 139 */       this._writer = this._dtdWriter;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String leaveDTD() throws IOException {
-/* 153 */     if (this._writer == this._dtdWriter) {
-/* 154 */       flushLine(false);
-/*     */       
-/* 156 */       this._writer = this._docWriter;
-/* 157 */       return this._dtdWriter.toString();
-/*     */     } 
-/* 159 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printText(String text) throws IOException {
-/*     */     try {
-/* 167 */       int length = text.length();
-/* 168 */       for (int i = 0; i < length; i++) {
-/* 169 */         if (this._pos == 4096) {
-/* 170 */           this._writer.write(this._buffer);
-/* 171 */           this._pos = 0;
-/*     */         } 
-/* 173 */         this._buffer[this._pos] = text.charAt(i);
-/* 174 */         this._pos++;
-/*     */       } 
-/* 176 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 179 */       if (this._exception == null)
-/* 180 */         this._exception = except; 
-/* 181 */       throw except;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printText(StringBuffer text) throws IOException {
-/*     */     try {
-/* 190 */       int length = text.length();
-/* 191 */       for (int i = 0; i < length; i++) {
-/* 192 */         if (this._pos == 4096) {
-/* 193 */           this._writer.write(this._buffer);
-/* 194 */           this._pos = 0;
-/*     */         } 
-/* 196 */         this._buffer[this._pos] = text.charAt(i);
-/* 197 */         this._pos++;
-/*     */       } 
-/* 199 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 202 */       if (this._exception == null)
-/* 203 */         this._exception = except; 
-/* 204 */       throw except;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printText(char[] chars, int start, int length) throws IOException {
-/*     */     try {
-/* 213 */       while (length-- > 0) {
-/* 214 */         if (this._pos == 4096) {
-/* 215 */           this._writer.write(this._buffer);
-/* 216 */           this._pos = 0;
-/*     */         } 
-/* 218 */         this._buffer[this._pos] = chars[start];
-/* 219 */         start++;
-/* 220 */         this._pos++;
-/*     */       } 
-/* 222 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 225 */       if (this._exception == null)
-/* 226 */         this._exception = except; 
-/* 227 */       throw except;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printText(char ch) throws IOException {
-/*     */     try {
-/* 236 */       if (this._pos == 4096) {
-/* 237 */         this._writer.write(this._buffer);
-/* 238 */         this._pos = 0;
-/*     */       } 
-/* 240 */       this._buffer[this._pos] = ch;
-/* 241 */       this._pos++;
-/* 242 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 245 */       if (this._exception == null)
-/* 246 */         this._exception = except; 
-/* 247 */       throw except;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printSpace() throws IOException {
-/*     */     try {
-/* 256 */       if (this._pos == 4096) {
-/* 257 */         this._writer.write(this._buffer);
-/* 258 */         this._pos = 0;
-/*     */       } 
-/* 260 */       this._buffer[this._pos] = ' ';
-/* 261 */       this._pos++;
-/* 262 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 265 */       if (this._exception == null)
-/* 266 */         this._exception = except; 
-/* 267 */       throw except;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void breakLine() throws IOException {
-/*     */     try {
-/* 276 */       if (this._pos == 4096) {
-/* 277 */         this._writer.write(this._buffer);
-/* 278 */         this._pos = 0;
-/*     */       } 
-/* 280 */       this._buffer[this._pos] = '\n';
-/* 281 */       this._pos++;
-/* 282 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 285 */       if (this._exception == null)
-/* 286 */         this._exception = except; 
-/* 287 */       throw except;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void breakLine(boolean preserveSpace) throws IOException {
-/* 295 */     breakLine();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void flushLine(boolean preserveSpace) throws IOException {
-/*     */     try {
-/* 304 */       this._writer.write(this._buffer, 0, this._pos);
-/* 305 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 308 */       if (this._exception == null)
-/* 309 */         this._exception = except; 
-/*     */     } 
-/* 311 */     this._pos = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void flush() throws IOException {
-/*     */     try {
-/* 323 */       this._writer.write(this._buffer, 0, this._pos);
-/* 324 */       this._writer.flush();
-/* 325 */     } catch (IOException except) {
-/*     */ 
-/*     */       
-/* 328 */       if (this._exception == null)
-/* 329 */         this._exception = except; 
-/* 330 */       throw except;
-/*     */     } 
-/* 332 */     this._pos = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void indent() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unindent() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getNextIndent() {
-/* 350 */     return 0;
-/*     */   }
-/*     */   
-/*     */   public void setNextIndent(int indent) {}
-/*     */   
-/*     */   public void setThisIndent(int indent) {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serialize\Printer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+// Sep 14, 2000:
+//  Fixed serializer to report IO exception directly, instead at
+//  the end of document processing.
+//  Reported by Patrick Higgins <phiggins@transzap.com>
+
+
+package com.sun.org.apache.xml.internal.serialize;
+
+
+import java.io.Writer;
+import java.io.StringWriter;
+import java.io.IOException;
+
+
+/**
+ * The printer is responsible for sending text to the output stream
+ * or writer. This class performs direct writing for efficiency.
+ * {@link IndentPrinter} supports indentation and line wrapping by
+ * extending this class.
+ *
+ * @author <a href="mailto:arkin@intalio.com">Assaf Arkin</a>
+ */
+public class Printer
+{
+
+
+    /**
+     * The output format associated with this serializer. This will never
+     * be a null reference. If no format was passed to the constructor,
+     * the default one for this document type will be used. The format
+     * object is never changed by the serializer.
+     */
+    protected final OutputFormat _format;
+
+
+    /**
+     * The writer to which the document is written.
+     */
+    protected Writer             _writer;
+
+
+    /**
+     * The DTD writer. When we switch to DTD mode, all output is
+     * accumulated in this DTD writer. When we switch out of it,
+     * the output is obtained as a string. Must not be reset to
+     * null until we're done with the document.
+     */
+    protected StringWriter       _dtdWriter;
+
+
+    /**
+     * Holds a reference to the document writer while we are
+     * in DTD mode.
+     */
+    protected Writer          _docWriter;
+
+
+    /**
+     * Holds the exception thrown by the serializer.  Exceptions do not cause
+     * the serializer to quit, but are held and one is thrown at the end.
+     */
+    protected IOException     _exception;
+
+
+    /**
+     * The size of the output buffer.
+     */
+    private static final int BufferSize = 4096;
+
+
+    /**
+     * Output buffer.
+     */
+    private final char[]  _buffer = new char[ BufferSize ];
+
+
+    /**
+     * Position within the output buffer.
+     */
+    private int           _pos = 0;
+
+
+    public Printer( Writer writer, OutputFormat format)
+    {
+        _writer = writer;
+        _format = format;
+        _exception = null;
+        _dtdWriter = null;
+        _docWriter = null;
+        _pos = 0;
+    }
+
+
+    public IOException getException()
+    {
+        return _exception;
+    }
+
+
+    /**
+     * Called by any of the DTD handlers to enter DTD mode.
+     * Once entered, all output will be accumulated in a string
+     * that can be printed as part of the document's DTD.
+     * This method may be called any number of time but will only
+     * have affect the first time it's called. To exist DTD state
+     * and get the accumulated DTD, call {@link #leaveDTD}.
+     */
+    public void enterDTD()
+        throws IOException
+    {
+        // Can only enter DTD state once. Once we're out of DTD
+        // state, can no longer re-enter it.
+        if ( _dtdWriter == null ) {
+            flushLine( false );
+
+                        _dtdWriter = new StringWriter();
+            _docWriter = _writer;
+            _writer = _dtdWriter;
+        }
+    }
+
+
+    /**
+     * Called by the root element to leave DTD mode and if any
+     * DTD parts were printer, will return a string with their
+     * textual content.
+     */
+    public String leaveDTD()
+        throws IOException
+    {
+        // Only works if we're going out of DTD mode.
+        if ( _writer == _dtdWriter ) {
+            flushLine( false );
+
+                        _writer = _docWriter;
+            return _dtdWriter.toString();
+        } else
+            return null;
+    }
+
+
+    public void printText( String text )
+        throws IOException
+    {
+        try {
+            int length = text.length();
+            for ( int i = 0 ; i < length ; ++i ) {
+                if ( _pos == BufferSize ) {
+                    _writer.write( _buffer );
+                    _pos = 0;
+                }
+                _buffer[ _pos ] = text.charAt( i );
+                ++_pos;
+            }
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+    }
+
+
+    public void printText( StringBuffer text )
+        throws IOException
+    {
+        try {
+            int length = text.length();
+            for ( int i = 0 ; i < length ; ++i ) {
+                if ( _pos == BufferSize ) {
+                    _writer.write( _buffer );
+                    _pos = 0;
+                }
+                _buffer[ _pos ] = text.charAt( i );
+                ++_pos;
+            }
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+    }
+
+
+    public void printText( char[] chars, int start, int length )
+        throws IOException
+    {
+        try {
+            while ( length-- > 0 ) {
+                if ( _pos == BufferSize ) {
+                    _writer.write( _buffer );
+                    _pos = 0;
+                }
+                _buffer[ _pos ] = chars[ start ];
+                ++start;
+                ++_pos;
+            }
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+    }
+
+
+    public void printText( char ch )
+        throws IOException
+    {
+        try {
+            if ( _pos == BufferSize ) {
+                _writer.write( _buffer );
+                _pos = 0;
+            }
+            _buffer[ _pos ] = ch;
+            ++_pos;
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+    }
+
+
+    public void printSpace()
+        throws IOException
+    {
+        try {
+            if ( _pos == BufferSize ) {
+                _writer.write( _buffer );
+                _pos = 0;
+            }
+            _buffer[ _pos ] = ' ';
+            ++_pos;
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+    }
+
+
+    public void breakLine()
+        throws IOException
+    {
+        try {
+            if ( _pos == BufferSize ) {
+                _writer.write( _buffer );
+                _pos = 0;
+            }
+            _buffer[ _pos ] = '\n';
+            ++_pos;
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+    }
+
+
+    public void breakLine( boolean preserveSpace )
+        throws IOException
+    {
+        breakLine();
+    }
+
+
+    public void flushLine( boolean preserveSpace )
+        throws IOException
+    {
+        // Write anything left in the buffer into the writer.
+        try {
+            _writer.write( _buffer, 0, _pos );
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+        }
+        _pos = 0;
+    }
+
+
+    /**
+     * Flush the output stream. Must be called when done printing
+     * the document, otherwise some text might be buffered.
+     */
+    public void flush()
+        throws IOException
+    {
+        try {
+            _writer.write( _buffer, 0, _pos );
+            _writer.flush();
+        } catch ( IOException except ) {
+            // We don't throw an exception, but hold it
+            // until the end of the document.
+            if ( _exception == null )
+                _exception = except;
+            throw except;
+        }
+        _pos = 0;
+    }
+
+
+    public void indent()
+    {
+        // NOOP
+    }
+
+
+    public void unindent()
+    {
+        // NOOP
+    }
+
+
+    public int getNextIndent()
+    {
+        return 0;
+    }
+
+
+    public void setNextIndent( int indent )
+    {
+    }
+
+
+    public void setThisIndent( int indent )
+    {
+    }
+
+
+}

@@ -1,237 +1,236 @@
-/*     */ package com.sun.corba.se.impl.naming.cosnaming;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.NamingSystemException;
-/*     */ import com.sun.corba.se.impl.orbutil.CorbaResourceUtil;
-/*     */ import com.sun.corba.se.org.omg.CORBA.ORB;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.Properties;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TransientNameServer
-/*     */ {
-/*     */   private static boolean debug = false;
-/*  63 */   static NamingSystemException wrapper = NamingSystemException.get("naming");
-/*     */ 
-/*     */   
-/*     */   public static void trace(String paramString) {
-/*  67 */     if (debug) {
-/*  68 */       System.out.println(paramString);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static void initDebug(String[] paramArrayOfString) {
-/*  74 */     if (debug) {
-/*     */       return;
-/*     */     }
-/*  77 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/*  78 */       if (paramArrayOfString[b].equalsIgnoreCase("-debug")) {
-/*  79 */         debug = true; return;
-/*     */       } 
-/*     */     } 
-/*  82 */     debug = false;
-/*     */   }
-/*     */   
-/*     */   private static Object initializeRootNamingContext(ORB paramORB) {
-/*  86 */     Object object = null;
-/*     */     try {
-/*  88 */       ORB oRB = (ORB)paramORB;
-/*     */ 
-/*     */       
-/*  91 */       TransientNameService transientNameService = new TransientNameService(oRB);
-/*  92 */       return transientNameService.initialNamingContext();
-/*  93 */     } catch (SystemException systemException) {
-/*  94 */       throw wrapper.transNsCannotCreateInitialNcSys(systemException);
-/*  95 */     } catch (Exception exception) {
-/*  96 */       throw wrapper.transNsCannotCreateInitialNc(exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void main(String[] paramArrayOfString) {
-/* 107 */     initDebug(paramArrayOfString);
-/*     */     
-/* 109 */     boolean bool1 = false;
-/* 110 */     boolean bool2 = false;
-/*     */ 
-/*     */     
-/* 113 */     int i = 0;
-/*     */     try {
-/* 115 */       trace("Transient name server started with args " + paramArrayOfString);
-/*     */ 
-/*     */       
-/* 118 */       Properties properties = System.getProperties();
-/*     */       
-/* 120 */       properties.put("com.sun.CORBA.POA.ORBServerId", "1000000");
-/* 121 */       properties.put("org.omg.CORBA.ORBClass", "com.sun.corba.se.impl.orb.ORBImpl");
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 126 */         String str1 = System.getProperty("org.omg.CORBA.ORBInitialPort");
-/* 127 */         if (str1 != null && str1.length() > 0) {
-/* 128 */           i = Integer.parseInt(str1);
-/*     */           
-/* 130 */           if (i == 0) {
-/* 131 */             bool2 = true;
-/* 132 */             throw wrapper.transientNameServerBadPort();
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 136 */         String str2 = System.getProperty("org.omg.CORBA.ORBInitialHost");
-/* 137 */         if (str2 != null) {
-/* 138 */           bool1 = true;
-/* 139 */           throw wrapper.transientNameServerBadHost();
-/*     */         } 
-/* 141 */       } catch (NumberFormatException numberFormatException) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 146 */       for (byte b = 0; b < paramArrayOfString.length; b++) {
-/*     */         
-/* 148 */         if (paramArrayOfString[b].equals("-ORBInitialPort") && b < paramArrayOfString.length - 1) {
-/*     */           
-/* 150 */           i = Integer.parseInt(paramArrayOfString[b + 1]);
-/*     */           
-/* 152 */           if (i == 0) {
-/* 153 */             bool2 = true;
-/* 154 */             throw wrapper.transientNameServerBadPort();
-/*     */           } 
-/*     */         } 
-/* 157 */         if (paramArrayOfString[b].equals("-ORBInitialHost")) {
-/* 158 */           bool1 = true;
-/* 159 */           throw wrapper.transientNameServerBadHost();
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 165 */       if (i == 0) {
-/* 166 */         i = 900;
-/* 167 */         properties.put("org.omg.CORBA.ORBInitialPort", 
-/* 168 */             Integer.toString(i));
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 173 */       properties.put("com.sun.CORBA.POA.ORBPersistentServerPort", 
-/* 174 */           Integer.toString(i));
-/*     */       
-/* 176 */       ORB oRB = ORB.init(paramArrayOfString, properties);
-/* 177 */       trace("ORB object returned from init: " + oRB);
-/*     */       
-/* 179 */       Object object = initializeRootNamingContext(oRB);
-/* 180 */       ((ORB)oRB).register_initial_reference("NamingService", object);
-/*     */ 
-/*     */       
-/* 183 */       String str = null;
-/*     */       
-/* 185 */       if (object != null) {
-/* 186 */         str = oRB.object_to_string(object);
-/*     */       } else {
-/* 188 */         NamingUtils.errprint(CorbaResourceUtil.getText("tnameserv.exception", i));
-/*     */         
-/* 190 */         NamingUtils.errprint(CorbaResourceUtil.getText("tnameserv.usage"));
-/*     */         
-/* 192 */         System.exit(1);
-/*     */       } 
-/*     */       
-/* 195 */       trace("name service created");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 201 */       System.out.println(CorbaResourceUtil.getText("tnameserv.hs1", str));
-/*     */       
-/* 203 */       System.out.println(CorbaResourceUtil.getText("tnameserv.hs2", i));
-/*     */       
-/* 205 */       System.out.println(CorbaResourceUtil.getText("tnameserv.hs3"));
-/*     */ 
-/*     */       
-/* 208 */       Object object1 = new Object();
-/* 209 */       synchronized (object1) { object1.wait(); } 
-/* 210 */     } catch (Exception exception) {
-/* 211 */       if (bool1) {
-/*     */ 
-/*     */         
-/* 214 */         NamingUtils.errprint(CorbaResourceUtil.getText("tnameserv.invalidhostoption"));
-/*     */       }
-/* 216 */       else if (bool2) {
-/*     */ 
-/*     */         
-/* 219 */         NamingUtils.errprint(CorbaResourceUtil.getText("tnameserv.orbinitialport0"));
-/*     */       } else {
-/*     */         
-/* 222 */         NamingUtils.errprint(CorbaResourceUtil.getText("tnameserv.exception", i));
-/*     */         
-/* 224 */         NamingUtils.errprint(CorbaResourceUtil.getText("tnameserv.usage"));
-/*     */       } 
-/*     */ 
-/*     */       
-/* 228 */       exception.printStackTrace();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\cosnaming\TransientNameServer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.naming.cosnaming;
+
+import java.util.Properties;
+import java.net.InetAddress;
+
+import org.omg.CORBA.ORB;
+
+import org.omg.CosNaming.NamingContext;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+import com.sun.corba.se.impl.naming.cosnaming.TransientNameService;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.CorbaResourceUtil;
+import com.sun.corba.se.impl.logging.NamingSystemException;
+
+/**
+ * Class TransientNameServer is a standalone application which
+ * implements a transient name service. It uses the TransientNameService
+ * class for the name service implementation, and the BootstrapServer
+ * for implementing bootstrapping, i.e., to get the initial NamingContext.
+ * <p>
+ * The BootstrapServer uses a Properties object specify the initial service
+ * object references supported; such as Properties object is created containing
+ * only a "NameService" entry together with the stringified object reference
+ * for the initial NamingContext. The BootstrapServer's listening port
+ * is set by first checking the supplied arguments to the name server
+ * (-ORBInitialPort), and if not set, defaults to the standard port number.
+ * The BootstrapServer is created supplying the Properties object, using no
+ * external File object for storage, and the derived initial port number.
+ * @see TransientNameService
+ * @see BootstrapServer
+ */
+public class TransientNameServer
+{
+    static private boolean debug = false ;
+    static NamingSystemException wrapper = NamingSystemException.get(
+        CORBALogDomains.NAMING ) ;
+
+    static public void trace( String msg ) {
+        if (debug)
+            System.out.println( msg ) ;
+    }
+
+    static public void initDebug( String[] args ) {
+        // If debug was compiled to be true for testing purposes,
+        // don't change it.
+        if (debug)
+            return ;
+
+        for (int ctr=0; ctr<args.length; ctr++)
+            if (args[ctr].equalsIgnoreCase( "-debug" )) {
+                debug = true ;
+            return ;
+        }
+        debug = false ;
+    }
+
+    private static org.omg.CORBA.Object initializeRootNamingContext( ORB orb ) {
+        org.omg.CORBA.Object rootContext = null;
+        try {
+            com.sun.corba.se.spi.orb.ORB coreORB =
+                (com.sun.corba.se.spi.orb.ORB)orb ;
+
+            TransientNameService tns = new TransientNameService(coreORB );
+            return tns.initialNamingContext();
+        } catch (org.omg.CORBA.SystemException e) {
+            throw wrapper.transNsCannotCreateInitialNcSys( e ) ;
+        } catch (Exception e) {
+            throw wrapper.transNsCannotCreateInitialNc( e ) ;
+        }
+    }
+
+    /**
+     * Main startup routine. It instantiates a TransientNameService
+     * object and a BootstrapServer object, and then allows invocations to
+     * happen.
+     * @param args an array of strings representing the startup arguments.
+     */
+    public static void main(String args[]) {
+        initDebug( args ) ;
+
+        boolean invalidHostOption = false;
+        boolean orbInitialPort0 = false;
+
+        // Determine the initial bootstrap port to use
+        int initialPort = 0;
+        try {
+            trace( "Transient name server started with args " + args ) ;
+
+            // Create an ORB object
+            Properties props = System.getProperties() ;
+
+            props.put( ORBConstants.SERVER_ID_PROPERTY, ORBConstants.NAME_SERVICE_SERVER_ID ) ;
+            props.put( "org.omg.CORBA.ORBClass",
+                "com.sun.corba.se.impl.orb.ORBImpl" );
+
+            try {
+                // Try environment
+                String ips = System.getProperty( ORBConstants.INITIAL_PORT_PROPERTY ) ;
+                if (ips != null && ips.length() > 0 ) {
+                    initialPort = java.lang.Integer.parseInt(ips);
+                    // -Dorg.omg.CORBA.ORBInitialPort=0 is invalid
+                    if( initialPort == 0 ) {
+                        orbInitialPort0 = true;
+                        throw wrapper.transientNameServerBadPort() ;
+                    }
+                }
+                String hostName =
+                    System.getProperty( ORBConstants.INITIAL_HOST_PROPERTY ) ;
+                if( hostName != null ) {
+                    invalidHostOption = true;
+                    throw wrapper.transientNameServerBadHost() ;
+                }
+            } catch (java.lang.NumberFormatException e) {
+                // do nothing
+            }
+
+            // Let arguments override
+            for (int i=0;i<args.length;i++) {
+                // Was the initial port specified?
+                if (args[i].equals("-ORBInitialPort") &&
+                    i < args.length-1) {
+                    initialPort = java.lang.Integer.parseInt(args[i+1]);
+                    // -ORBInitialPort 0 is invalid
+                    if( initialPort == 0 ) {
+                        orbInitialPort0 = true;
+                        throw wrapper.transientNameServerBadPort() ;
+                    }
+                }
+                if (args[i].equals("-ORBInitialHost" ) ) {
+                    invalidHostOption = true;
+                    throw wrapper.transientNameServerBadHost() ;
+                }
+            }
+
+            // If initialPort is not set, then we need to set the Default
+            // Initial Port Property for the ORB
+            if( initialPort == 0 ) {
+                initialPort = ORBConstants.DEFAULT_INITIAL_PORT;
+                props.put( ORBConstants.INITIAL_PORT_PROPERTY,
+                    java.lang.Integer.toString(initialPort) );
+            }
+
+            // Set -ORBInitialPort = Persistent Server Port so that ORBImpl
+            // will start Boot Strap.
+            props.put( ORBConstants.PERSISTENT_SERVER_PORT_PROPERTY,
+               java.lang.Integer.toString(initialPort) );
+
+            org.omg.CORBA.ORB corb = ORB.init( args, props ) ;
+            trace( "ORB object returned from init: " + corb ) ;
+
+            org.omg.CORBA.Object ns = initializeRootNamingContext( corb ) ;
+            ((com.sun.corba.se.org.omg.CORBA.ORB)corb).register_initial_reference(
+                "NamingService", ns ) ;
+
+            String stringifiedIOR = null;
+
+            if( ns != null ) {
+                stringifiedIOR = corb.object_to_string(ns) ;
+            } else {
+                 NamingUtils.errprint(CorbaResourceUtil.getText(
+                     "tnameserv.exception", initialPort));
+                 NamingUtils.errprint(CorbaResourceUtil.getText(
+                     "tnameserv.usage"));
+                System.exit( 1 );
+            }
+
+            trace( "name service created" ) ;
+
+            // This is used for handshaking by the IBM test framework!
+            // Do not modify, unless another synchronization protocol is
+            // used to replace this hack!
+
+            System.out.println(CorbaResourceUtil.getText(
+                "tnameserv.hs1", stringifiedIOR));
+            System.out.println(CorbaResourceUtil.getText(
+                "tnameserv.hs2", initialPort));
+            System.out.println(CorbaResourceUtil.getText("tnameserv.hs3"));
+
+            // Serve objects.
+            java.lang.Object sync = new java.lang.Object();
+            synchronized (sync) {sync.wait();}
+        } catch (Exception e) {
+            if( invalidHostOption ) {
+                // Let the User Know that -ORBInitialHost is not valid for
+                // tnameserver
+                NamingUtils.errprint( CorbaResourceUtil.getText(
+                    "tnameserv.invalidhostoption" ) );
+            } else if( orbInitialPort0 ) {
+                // Let the User Know that -ORBInitialPort 0 is not valid for
+                // tnameserver
+                NamingUtils.errprint( CorbaResourceUtil.getText(
+                    "tnameserv.orbinitialport0" ));
+            } else {
+                NamingUtils.errprint(CorbaResourceUtil.getText(
+                    "tnameserv.exception", initialPort));
+                NamingUtils.errprint(CorbaResourceUtil.getText(
+                    "tnameserv.usage"));
+            }
+
+            e.printStackTrace() ;
+        }
+    }
+
+    /**
+     * Private constructor since no object of this type should be instantiated.
+     */
+    private TransientNameServer() {}
+}

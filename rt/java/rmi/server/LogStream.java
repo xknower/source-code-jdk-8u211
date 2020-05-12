@@ -1,279 +1,272 @@
-/*     */ package java.rmi.server;
-/*     */ 
-/*     */ import java.io.ByteArrayOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.OutputStreamWriter;
-/*     */ import java.io.PrintStream;
-/*     */ import java.util.Date;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import java.util.logging.LoggingPermission;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ @Deprecated
-/*     */ public class LogStream
-/*     */   extends PrintStream
-/*     */ {
-/*  42 */   private static Map<String, LogStream> known = new HashMap<>(5);
-/*     */   
-/*  44 */   private static PrintStream defaultStream = System.err;
-/*     */ 
-/*     */   
-/*     */   private String name;
-/*     */ 
-/*     */   
-/*     */   private OutputStream logOut;
-/*     */ 
-/*     */   
-/*     */   private OutputStreamWriter logWriter;
-/*     */ 
-/*     */   
-/*  56 */   private StringBuffer buffer = new StringBuffer();
-/*     */ 
-/*     */   
-/*     */   private ByteArrayOutputStream bufOut;
-/*     */ 
-/*     */   
-/*     */   public static final int SILENT = 0;
-/*     */ 
-/*     */   
-/*     */   public static final int BRIEF = 10;
-/*     */ 
-/*     */   
-/*     */   public static final int VERBOSE = 20;
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   private LogStream(String paramString, OutputStream paramOutputStream) {
-/*  73 */     super(new ByteArrayOutputStream());
-/*  74 */     this.bufOut = (ByteArrayOutputStream)this.out;
-/*     */     
-/*  76 */     this.name = paramString;
-/*  77 */     setOutputStream(paramOutputStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public static LogStream log(String paramString) {
-/*     */     LogStream logStream;
-/*  92 */     synchronized (known) {
-/*  93 */       logStream = known.get(paramString);
-/*  94 */       if (logStream == null) {
-/*  95 */         logStream = new LogStream(paramString, defaultStream);
-/*     */       }
-/*  97 */       known.put(paramString, logStream);
-/*     */     } 
-/*  99 */     return logStream;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public static synchronized PrintStream getDefaultStream() {
-/* 111 */     return defaultStream;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public static synchronized void setDefaultStream(PrintStream paramPrintStream) {
-/* 123 */     SecurityManager securityManager = System.getSecurityManager();
-/*     */     
-/* 125 */     if (securityManager != null) {
-/* 126 */       securityManager.checkPermission(new LoggingPermission("control", null));
-/*     */     }
-/*     */ 
-/*     */     
-/* 130 */     defaultStream = paramPrintStream;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public synchronized OutputStream getOutputStream() {
-/* 143 */     return this.logOut;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public synchronized void setOutputStream(OutputStream paramOutputStream) {
-/* 156 */     this.logOut = paramOutputStream;
-/*     */ 
-/*     */     
-/* 159 */     this.logWriter = new OutputStreamWriter(this.logOut);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public void write(int paramInt) {
-/* 173 */     if (paramInt == 10) {
-/*     */       
-/* 175 */       synchronized (this) {
-/* 176 */         synchronized (this.logOut) {
-/*     */           
-/* 178 */           this.buffer.setLength(0);
-/* 179 */           this.buffer.append((new Date())
-/* 180 */               .toString());
-/* 181 */           this.buffer.append(':');
-/* 182 */           this.buffer.append(this.name);
-/* 183 */           this.buffer.append(':');
-/* 184 */           this.buffer.append(Thread.currentThread().getName());
-/* 185 */           this.buffer.append(':');
-/*     */ 
-/*     */           
-/*     */           try {
-/* 189 */             this.logWriter.write(this.buffer.toString());
-/* 190 */             this.logWriter.flush();
-/*     */ 
-/*     */ 
-/*     */             
-/* 194 */             this.bufOut.writeTo(this.logOut);
-/* 195 */             this.logOut.write(paramInt);
-/* 196 */             this.logOut.flush();
-/* 197 */           } catch (IOException iOException) {
-/* 198 */             setError();
-/*     */           } finally {
-/* 200 */             this.bufOut.reset();
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 206 */       super.write(paramInt);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/* 217 */     if (paramInt2 < 0)
-/* 218 */       throw new ArrayIndexOutOfBoundsException(paramInt2); 
-/* 219 */     for (byte b = 0; b < paramInt2; b++) {
-/* 220 */       write(paramArrayOfbyte[paramInt1 + b]);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public String toString() {
-/* 232 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public static int parseLevel(String paramString) {
-/* 253 */     if (paramString == null || paramString.length() < 1) {
-/* 254 */       return -1;
-/*     */     }
-/*     */     try {
-/* 257 */       return Integer.parseInt(paramString);
-/* 258 */     } catch (NumberFormatException numberFormatException) {
-/*     */       
-/* 260 */       if (paramString.length() < 1) {
-/* 261 */         return -1;
-/*     */       }
-/* 263 */       if ("SILENT".startsWith(paramString.toUpperCase()))
-/* 264 */         return 0; 
-/* 265 */       if ("BRIEF".startsWith(paramString.toUpperCase()))
-/* 266 */         return 10; 
-/* 267 */       if ("VERBOSE".startsWith(paramString.toUpperCase())) {
-/* 268 */         return 20;
-/*     */       }
-/* 270 */       return -1;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\rmi\server\LogStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.rmi.server;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * <code>LogStream</code> provides a mechanism for logging errors that are
+ * of possible interest to those monitoring a system.
+ *
+ * @author  Ann Wollrath (lots of code stolen from Ken Arnold)
+ * @since   JDK1.1
+ * @deprecated no replacement
+ */
+@Deprecated
+public class LogStream extends PrintStream {
+
+    /** table mapping known log names to log stream objects */
+    private static Map<String,LogStream> known = new HashMap<>(5);
+    /** default output stream for new logs */
+    private static PrintStream  defaultStream = System.err;
+
+    /** log name for this log */
+    private String name;
+
+    /** stream where output of this log is sent to */
+    private OutputStream logOut;
+
+    /** string writer for writing message prefixes to log stream */
+    private OutputStreamWriter logWriter;
+
+    /** string buffer used for constructing log message prefixes */
+    private StringBuffer buffer = new StringBuffer();
+
+    /** stream used for buffering lines */
+    private ByteArrayOutputStream bufOut;
+
+    /**
+     * Create a new LogStream object.  Since this only constructor is
+     * private, users must have a LogStream created through the "log"
+     * method.
+     * @param name string identifying messages from this log
+     * @out output stream that log messages will be sent to
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    private LogStream(String name, OutputStream out)
+    {
+        super(new ByteArrayOutputStream());
+        bufOut = (ByteArrayOutputStream) super.out;
+
+        this.name = name;
+        setOutputStream(out);
+    }
+
+    /**
+     * Return the LogStream identified by the given name.  If
+     * a log corresponding to "name" does not exist, a log using
+     * the default stream is created.
+     * @param name name identifying the desired LogStream
+     * @return log associated with given name
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public static LogStream log(String name) {
+        LogStream stream;
+        synchronized (known) {
+            stream = known.get(name);
+            if (stream == null) {
+                stream = new LogStream(name, defaultStream);
+            }
+            known.put(name, stream);
+        }
+        return stream;
+    }
+
+    /**
+     * Return the current default stream for new logs.
+     * @return default log stream
+     * @see #setDefaultStream
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public static synchronized PrintStream getDefaultStream() {
+        return defaultStream;
+    }
+
+    /**
+     * Set the default stream for new logs.
+     * @param newDefault new default log stream
+     * @see #getDefaultStream
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public static synchronized void setDefaultStream(PrintStream newDefault) {
+        SecurityManager sm = System.getSecurityManager();
+
+        if (sm != null) {
+            sm.checkPermission(
+                new java.util.logging.LoggingPermission("control", null));
+        }
+
+        defaultStream = newDefault;
+    }
+
+    /**
+     * Return the current stream to which output from this log is sent.
+     * @return output stream for this log
+     * @see #setOutputStream
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public synchronized OutputStream getOutputStream()
+    {
+        return logOut;
+    }
+
+    /**
+     * Set the stream to which output from this log is sent.
+     * @param out new output stream for this log
+     * @see #getOutputStream
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public synchronized void setOutputStream(OutputStream out)
+    {
+        logOut = out;
+        // Maintain an OutputStreamWriter with default CharToByteConvertor
+        // (just like new PrintStream) for writing log message prefixes.
+        logWriter = new OutputStreamWriter(logOut);
+    }
+
+    /**
+     * Write a byte of data to the stream.  If it is not a newline, then
+     * the byte is appended to the internal buffer.  If it is a newline,
+     * then the currently buffered line is sent to the log's output
+     * stream, prefixed with the appropriate logging information.
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public void write(int b)
+    {
+        if (b == '\n') {
+            // synchronize on "this" first to avoid potential deadlock
+            synchronized (this) {
+                synchronized (logOut) {
+                    // construct prefix for log messages:
+                    buffer.setLength(0);;
+                    buffer.append(              // date/time stamp...
+                        (new Date()).toString());
+                    buffer.append(':');
+                    buffer.append(name);        // ...log name...
+                    buffer.append(':');
+                    buffer.append(Thread.currentThread().getName());
+                    buffer.append(':'); // ...and thread name
+
+                    try {
+                        // write prefix through to underlying byte stream
+                        logWriter.write(buffer.toString());
+                        logWriter.flush();
+
+                        // finally, write the already converted bytes of
+                        // the log message
+                        bufOut.writeTo(logOut);
+                        logOut.write(b);
+                        logOut.flush();
+                    } catch (IOException e) {
+                        setError();
+                    } finally {
+                        bufOut.reset();
+                    }
+                }
+            }
+        }
+        else
+            super.write(b);
+    }
+
+    /**
+     * Write a subarray of bytes.  Pass each through write byte method.
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public void write(byte b[], int off, int len)
+    {
+        if (len < 0)
+            throw new ArrayIndexOutOfBoundsException(len);
+        for (int i = 0; i < len; ++ i)
+            write(b[off + i]);
+    }
+
+    /**
+     * Return log name as string representation.
+     * @return log name
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public String toString()
+    {
+        return name;
+    }
+
+    /** log level constant (no logging). */
+    public static final int SILENT  = 0;
+    /** log level constant (brief logging). */
+    public static final int BRIEF   = 10;
+    /** log level constant (verbose logging). */
+    public static final int VERBOSE = 20;
+
+    /**
+     * Convert a string name of a logging level to its internal
+     * integer representation.
+     * @param s name of logging level (e.g., 'SILENT', 'BRIEF', 'VERBOSE')
+     * @return corresponding integer log level
+     * @since JDK1.1
+     * @deprecated no replacement
+     */
+    @Deprecated
+    public static int parseLevel(String s)
+    {
+        if ((s == null) || (s.length() < 1))
+            return -1;
+
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+        }
+        if (s.length() < 1)
+            return -1;
+
+        if ("SILENT".startsWith(s.toUpperCase()))
+            return SILENT;
+        else if ("BRIEF".startsWith(s.toUpperCase()))
+            return BRIEF;
+        else if ("VERBOSE".startsWith(s.toUpperCase()))
+            return VERBOSE;
+
+        return -1;
+    }
+}

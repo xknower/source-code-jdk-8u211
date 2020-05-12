@@ -1,218 +1,215 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*     */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*     */ import com.sun.org.apache.xerces.internal.xs.ShortList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSAnnotation;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSAttributeDeclaration;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSComplexTypeDefinition;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XSAttributeDecl
-/*     */   implements XSAttributeDeclaration
-/*     */ {
-/*     */   public static final short SCOPE_ABSENT = 0;
-/*     */   public static final short SCOPE_GLOBAL = 1;
-/*     */   public static final short SCOPE_LOCAL = 2;
-/*  54 */   String fName = null;
-/*     */   
-/*  56 */   String fTargetNamespace = null;
-/*     */   
-/*  58 */   XSSimpleType fType = null;
-/*  59 */   public QName fUnresolvedTypeName = null;
-/*     */   
-/*  61 */   short fConstraintType = 0;
-/*     */   
-/*  63 */   short fScope = 0;
-/*     */   
-/*  65 */   XSComplexTypeDecl fEnclosingCT = null;
-/*     */   
-/*  67 */   XSObjectList fAnnotations = null;
-/*     */   
-/*  69 */   ValidatedInfo fDefault = null;
-/*     */ 
-/*     */   
-/*  72 */   private XSNamespaceItem fNamespaceItem = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValues(String name, String targetNamespace, XSSimpleType simpleType, short constraintType, short scope, ValidatedInfo valInfo, XSComplexTypeDecl enclosingCT, XSObjectList annotations) {
-/*  78 */     this.fName = name;
-/*  79 */     this.fTargetNamespace = targetNamespace;
-/*  80 */     this.fType = simpleType;
-/*  81 */     this.fConstraintType = constraintType;
-/*  82 */     this.fScope = scope;
-/*  83 */     this.fDefault = valInfo;
-/*  84 */     this.fEnclosingCT = enclosingCT;
-/*  85 */     this.fAnnotations = annotations;
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/*  89 */     this.fName = null;
-/*  90 */     this.fTargetNamespace = null;
-/*  91 */     this.fType = null;
-/*  92 */     this.fUnresolvedTypeName = null;
-/*  93 */     this.fConstraintType = 0;
-/*  94 */     this.fScope = 0;
-/*  95 */     this.fDefault = null;
-/*  96 */     this.fAnnotations = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getType() {
-/* 103 */     return 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/* 111 */     return this.fName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespace() {
-/* 120 */     return this.fTargetNamespace;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSSimpleTypeDefinition getTypeDefinition() {
-/* 127 */     return this.fType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getScope() {
-/* 138 */     return this.fScope;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSComplexTypeDefinition getEnclosingCTDefinition() {
-/* 147 */     return this.fEnclosingCT;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getConstraintType() {
-/* 154 */     return this.fConstraintType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getConstraintValue() {
-/* 163 */     return (getConstraintType() == 0) ? null : this.fDefault
-/*     */       
-/* 165 */       .stringValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSAnnotation getAnnotation() {
-/* 172 */     return (this.fAnnotations != null) ? (XSAnnotation)this.fAnnotations.item(0) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSObjectList getAnnotations() {
-/* 179 */     return (this.fAnnotations != null) ? this.fAnnotations : XSObjectListImpl.EMPTY_LIST;
-/*     */   }
-/*     */   
-/*     */   public ValidatedInfo getValInfo() {
-/* 183 */     return this.fDefault;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSNamespaceItem getNamespaceItem() {
-/* 190 */     return this.fNamespaceItem;
-/*     */   }
-/*     */   
-/*     */   void setNamespaceItem(XSNamespaceItem namespaceItem) {
-/* 194 */     this.fNamespaceItem = namespaceItem;
-/*     */   }
-/*     */   
-/*     */   public Object getActualVC() {
-/* 198 */     return (getConstraintType() == 0) ? null : this.fDefault.actualValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getActualVCType() {
-/* 204 */     return (getConstraintType() == 0) ? 45 : this.fDefault.actualValueType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortList getItemValueTypes() {
-/* 210 */     return (getConstraintType() == 0) ? null : this.fDefault.itemValueTypes;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XSAttributeDecl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xs.ShortList;
+import com.sun.org.apache.xerces.internal.xs.XSAnnotation;
+import com.sun.org.apache.xerces.internal.xs.XSAttributeDeclaration;
+import com.sun.org.apache.xerces.internal.xs.XSComplexTypeDefinition;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
+
+/**
+ * The XML representation for an attribute declaration
+ * schema component is an <attribute> element information item
+ *
+ * @xerces.internal
+ *
+ * @author Elena Litani, IBM
+ * @author Sandy Gao, IBM
+ * @version $Id: XSAttributeDecl.java,v 1.7 2010-11-01 04:39:55 joehw Exp $
+ */
+public class XSAttributeDecl implements XSAttributeDeclaration {
+
+    // scopes
+    public final static short     SCOPE_ABSENT        = 0;
+    public final static short     SCOPE_GLOBAL        = 1;
+    public final static short     SCOPE_LOCAL         = 2;
+
+    // the name of the attribute
+    String fName = null;
+    // the target namespace of the attribute
+    String fTargetNamespace = null;
+    // the simple type of the attribute
+    XSSimpleType fType = null;
+    public QName fUnresolvedTypeName = null;
+    // value constraint type: default, fixed or !specified
+    short fConstraintType = XSConstants.VC_NONE;
+    // scope
+    short fScope = XSConstants.SCOPE_ABSENT;
+    // enclosing complex type, when the scope is local
+    XSComplexTypeDecl fEnclosingCT = null;
+    // optional annotations
+    XSObjectList fAnnotations = null;
+    // value constraint value
+    ValidatedInfo fDefault = null;
+    // The namespace schema information item corresponding to the target namespace
+    // of the attribute declaration, if it is globally declared; or null otherwise.
+    private XSNamespaceItem fNamespaceItem = null;
+
+    public void setValues(String name, String targetNamespace,
+            XSSimpleType simpleType, short constraintType, short scope,
+            ValidatedInfo valInfo, XSComplexTypeDecl enclosingCT,
+            XSObjectList annotations) {
+        fName = name;
+        fTargetNamespace = targetNamespace;
+        fType = simpleType;
+        fConstraintType = constraintType;
+        fScope = scope;
+        fDefault = valInfo;
+        fEnclosingCT = enclosingCT;
+        fAnnotations = annotations;
+    }
+
+    public void reset(){
+        fName = null;
+        fTargetNamespace = null;
+        fType = null;
+        fUnresolvedTypeName = null;
+        fConstraintType = XSConstants.VC_NONE;
+        fScope = XSConstants.SCOPE_ABSENT;
+        fDefault = null;
+        fAnnotations = null;
+    }
+
+    /**
+     * Get the type of the object, i.e ELEMENT_DECLARATION.
+     */
+    public short getType() {
+        return XSConstants.ATTRIBUTE_DECLARATION;
+    }
+
+    /**
+     * The <code>name</code> of this <code>XSObject</code> depending on the
+     * <code>XSObject</code> type.
+     */
+    public String getName() {
+        return fName;
+    }
+
+    /**
+     * The namespace URI of this node, or <code>null</code> if it is
+     * unspecified.  defines how a namespace URI is attached to schema
+     * components.
+     */
+    public String getNamespace() {
+        return fTargetNamespace;
+    }
+
+    /**
+     * A simple type definition
+     */
+    public XSSimpleTypeDefinition getTypeDefinition() {
+        return fType;
+    }
+
+    /**
+     * Optional. Either global or a complex type definition (
+     * <code>ctDefinition</code>). This property is absent in the case of
+     * declarations within attribute group definitions: their scope will be
+     * determined when they are used in the construction of complex type
+     * definitions.
+     */
+    public short getScope() {
+        return fScope;
+    }
+
+    /**
+     * Locally scoped declarations are available for use only within the
+     * complex type definition identified by the <code>scope</code>
+     * property.
+     */
+    public XSComplexTypeDefinition getEnclosingCTDefinition() {
+        return fEnclosingCT;
+    }
+
+    /**
+     * Value constraint: one of default, fixed.
+     */
+    public short getConstraintType() {
+        return fConstraintType;
+    }
+
+    /**
+     * Value constraint: The actual value (with respect to the {type
+     * definition}) Should we return Object instead of DOMString?
+     */
+    public String getConstraintValue() {
+        // REVISIT: SCAPI: what's the proper representation
+        return getConstraintType() == XSConstants.VC_NONE ?
+               null :
+               fDefault.stringValue();
+    }
+
+    /**
+     * Optional. Annotation.
+     */
+    public XSAnnotation getAnnotation() {
+        return (fAnnotations != null) ? (XSAnnotation) fAnnotations.item(0) : null;
+    }
+
+    /**
+     * Optional. Annotations.
+     */
+    public XSObjectList getAnnotations() {
+        return (fAnnotations != null) ? fAnnotations : XSObjectListImpl.EMPTY_LIST;
+    }
+
+    public ValidatedInfo getValInfo() {
+        return fDefault;
+    }
+
+    /**
+     * @see org.apache.xerces.xs.XSObject#getNamespaceItem()
+     */
+    public XSNamespaceItem getNamespaceItem() {
+        return fNamespaceItem;
+    }
+
+    void setNamespaceItem(XSNamespaceItem namespaceItem) {
+        fNamespaceItem = namespaceItem;
+    }
+
+    public Object getActualVC() {
+        return getConstraintType() == XSConstants.VC_NONE ?
+               null :
+               fDefault.actualValue;
+    }
+
+    public short getActualVCType() {
+        return getConstraintType() == XSConstants.VC_NONE ?
+               XSConstants.UNAVAILABLE_DT :
+               fDefault.actualValueType;
+    }
+
+    public ShortList getItemValueTypes() {
+        return getConstraintType() == XSConstants.VC_NONE ?
+               null :
+               fDefault.itemValueTypes;
+    }
+
+} // class XSAttributeDecl

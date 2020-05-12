@@ -1,81 +1,76 @@
-/*    */ package com.sun.org.apache.xerces.internal.util;
-/*    */ 
-/*    */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*    */ import org.w3c.dom.Node;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class DOMInputSource
-/*    */   extends XMLInputSource
-/*    */ {
-/*    */   private Node fNode;
-/*    */   
-/*    */   public DOMInputSource() {
-/* 35 */     this(null);
-/*    */   }
-/*    */   
-/*    */   public DOMInputSource(Node node) {
-/* 39 */     super(null, getSystemIdFromNode(node), null);
-/* 40 */     this.fNode = node;
-/*    */   }
-/*    */   
-/*    */   public DOMInputSource(Node node, String systemId) {
-/* 44 */     super(null, systemId, null);
-/* 45 */     this.fNode = node;
-/*    */   }
-/*    */   
-/*    */   public Node getNode() {
-/* 49 */     return this.fNode;
-/*    */   }
-/*    */   
-/*    */   public void setNode(Node node) {
-/* 53 */     this.fNode = node;
-/*    */   }
-/*    */   
-/*    */   private static String getSystemIdFromNode(Node node) {
-/* 57 */     if (node != null) {
-/*    */       try {
-/* 59 */         return node.getBaseURI();
-/*    */ 
-/*    */ 
-/*    */       
-/*    */       }
-/* 64 */       catch (NoSuchMethodError e) {
-/* 65 */         return null;
-/*    */ 
-/*    */       
-/*    */       }
-/* 69 */       catch (Exception e) {
-/* 70 */         return null;
-/*    */       } 
-/*    */     }
-/* 73 */     return null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\DOMInputSource.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import org.w3c.dom.Node;
+
+/**
+ * <p>An <code>XMLInputSource</code> analogue to <code>javax.xml.transform.dom.DOMSource</code>.</p>
+ *
+ */
+public final class DOMInputSource extends XMLInputSource {
+
+    private Node fNode;
+
+    public DOMInputSource() {
+        this(null);
+    }
+
+    public DOMInputSource(Node node) {
+        super(null, getSystemIdFromNode(node), null);
+        fNode = node;
+    }
+
+    public DOMInputSource(Node node, String systemId) {
+        super(null, systemId, null);
+        fNode = node;
+    }
+
+    public Node getNode() {
+        return fNode;
+    }
+
+    public void setNode(Node node) {
+        fNode = node;
+    }
+
+    private static String getSystemIdFromNode(Node node) {
+        if (node != null) {
+            try {
+                return node.getBaseURI();
+            }
+            // If the DOM implementation is DOM Level 2
+            // then a NoSuchMethodError will be thrown.
+            // Just ignore it.
+            catch (NoSuchMethodError e) {
+                return null;
+            }
+            // There was a failure for some other reason
+            // Ignore it as well.
+            catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+} // DOMInputSource

@@ -1,20 +1,54 @@
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.annotation.processing;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
+import static java.lang.annotation.RetentionPolicy.*;
+import static java.lang.annotation.ElementType.*;
 
-@Documented
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SupportedOptions {
-  String[] value();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\annotation\processing\SupportedOptions.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * An annotation used to indicate what options an annotation processor
+ * supports.  The {@link Processor#getSupportedOptions} method can
+ * construct its result from the value of this annotation, as done by
+ * {@link AbstractProcessor#getSupportedOptions}.  Only {@linkplain
+ * Processor#getSupportedOptions strings conforming to the
+ * grammar} should be used as values.
+ *
+ * @author Joseph D. Darcy
+ * @author Scott Seligman
+ * @author Peter von der Ah&eacute;
+ * @since 1.6
  */
+@Documented
+@Target(TYPE)
+@Retention(RUNTIME)
+public @interface SupportedOptions {
+    /**
+     * Returns the supported options.
+     * @return the supported options
+     */
+    String [] value();
+}

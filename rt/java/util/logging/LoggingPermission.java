@@ -1,83 +1,78 @@
-/*    */ package java.util.logging;
-/*    */ 
-/*    */ import java.security.BasicPermission;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class LoggingPermission
-/*    */   extends BasicPermission
-/*    */ {
-/*    */   private static final long serialVersionUID = 63564341580231582L;
-/*    */   
-/*    */   public LoggingPermission(String paramString1, String paramString2) throws IllegalArgumentException {
-/* 70 */     super(paramString1);
-/* 71 */     if (!paramString1.equals("control")) {
-/* 72 */       throw new IllegalArgumentException("name: " + paramString1);
-/*    */     }
-/* 74 */     if (paramString2 != null && paramString2.length() > 0)
-/* 75 */       throw new IllegalArgumentException("actions: " + paramString2); 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\logging\LoggingPermission.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package java.util.logging;
+
+import java.security.*;
+
+/**
+ * The permission which the SecurityManager will check when code
+ * that is running with a SecurityManager calls one of the logging
+ * control methods (such as Logger.setLevel).
+ * <p>
+ * Currently there is only one named LoggingPermission.  This is "control"
+ * and it grants the ability to control the logging configuration, for
+ * example by adding or removing Handlers, by adding or removing Filters,
+ * or by changing logging levels.
+ * <p>
+ * Programmers do not normally create LoggingPermission objects directly.
+ * Instead they are created by the security policy code based on reading
+ * the security policy file.
+ *
+ *
+ * @since 1.4
+ * @see java.security.BasicPermission
+ * @see java.security.Permission
+ * @see java.security.Permissions
+ * @see java.security.PermissionCollection
+ * @see java.lang.SecurityManager
+ *
+ */
+
+public final class LoggingPermission extends java.security.BasicPermission {
+
+    private static final long serialVersionUID = 63564341580231582L;
+
+    /**
+     * Creates a new LoggingPermission object.
+     *
+     * @param name Permission name.  Must be "control".
+     * @param actions Must be either null or the empty string.
+     *
+     * @throws NullPointerException if <code>name</code> is <code>null</code>.
+     * @throws IllegalArgumentException if <code>name</code> is empty or if
+     * arguments are invalid.
+     */
+    public LoggingPermission(String name, String actions) throws IllegalArgumentException {
+        super(name);
+        if (!name.equals("control")) {
+            throw new IllegalArgumentException("name: " + name);
+        }
+        if (actions != null && actions.length() > 0) {
+            throw new IllegalArgumentException("actions: " + actions);
+        }
+    }
+}

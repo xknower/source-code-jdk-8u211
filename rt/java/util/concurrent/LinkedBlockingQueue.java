@@ -1,1129 +1,1044 @@
-/*      */ package java.util.concurrent;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.lang.reflect.Array;
-/*      */ import java.util.AbstractQueue;
-/*      */ import java.util.Collection;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.NoSuchElementException;
-/*      */ import java.util.Spliterator;
-/*      */ import java.util.Spliterators;
-/*      */ import java.util.concurrent.atomic.AtomicInteger;
-/*      */ import java.util.concurrent.locks.Condition;
-/*      */ import java.util.concurrent.locks.ReentrantLock;
-/*      */ import java.util.function.Consumer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class LinkedBlockingQueue<E>
-/*      */   extends AbstractQueue<E>
-/*      */   implements BlockingQueue<E>, Serializable
-/*      */ {
-/*      */   private static final long serialVersionUID = -6903933977591709194L;
-/*      */   private final int capacity;
-/*      */   
-/*      */   static class Node<E>
-/*      */   {
-/*      */     E item;
-/*      */     Node<E> next;
-/*      */     
-/*      */     Node(E param1E) {
-/*  133 */       this.item = param1E;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  140 */   private final AtomicInteger count = new AtomicInteger();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   transient Node<E> head;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient Node<E> last;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  155 */   private final ReentrantLock takeLock = new ReentrantLock();
-/*      */ 
-/*      */   
-/*  158 */   private final Condition notEmpty = this.takeLock.newCondition();
-/*      */ 
-/*      */   
-/*  161 */   private final ReentrantLock putLock = new ReentrantLock();
-/*      */ 
-/*      */   
-/*  164 */   private final Condition notFull = this.putLock.newCondition();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void signalNotEmpty() {
-/*  171 */     ReentrantLock reentrantLock = this.takeLock;
-/*  172 */     reentrantLock.lock();
-/*      */     try {
-/*  174 */       this.notEmpty.signal();
-/*      */     } finally {
-/*  176 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void signalNotFull() {
-/*  184 */     ReentrantLock reentrantLock = this.putLock;
-/*  185 */     reentrantLock.lock();
-/*      */     try {
-/*  187 */       this.notFull.signal();
-/*      */     } finally {
-/*  189 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void enqueue(Node<E> paramNode) {
-/*  201 */     this.last = this.last.next = paramNode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E dequeue() {
-/*  212 */     Node<E> node1 = this.head;
-/*  213 */     Node<E> node2 = node1.next;
-/*  214 */     node1.next = node1;
-/*  215 */     this.head = node2;
-/*  216 */     E e = node2.item;
-/*  217 */     node2.item = null;
-/*  218 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void fullyLock() {
-/*  225 */     this.putLock.lock();
-/*  226 */     this.takeLock.lock();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void fullyUnlock() {
-/*  233 */     this.takeLock.unlock();
-/*  234 */     this.putLock.unlock();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedBlockingQueue() {
-/*  250 */     this(2147483647);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedBlockingQueue(int paramInt) {
-/*  261 */     if (paramInt <= 0) throw new IllegalArgumentException(); 
-/*  262 */     this.capacity = paramInt;
-/*  263 */     this.last = this.head = new Node<>(null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedBlockingQueue(Collection<? extends E> paramCollection) {
-/*      */     // Byte code:
-/*      */     //   0: aload_0
-/*      */     //   1: ldc 2147483647
-/*      */     //   3: invokespecial <init> : (I)V
-/*      */     //   6: aload_0
-/*      */     //   7: getfield putLock : Ljava/util/concurrent/locks/ReentrantLock;
-/*      */     //   10: astore_2
-/*      */     //   11: aload_2
-/*      */     //   12: invokevirtual lock : ()V
-/*      */     //   15: iconst_0
-/*      */     //   16: istore_3
-/*      */     //   17: aload_1
-/*      */     //   18: invokeinterface iterator : ()Ljava/util/Iterator;
-/*      */     //   23: astore #4
-/*      */     //   25: aload #4
-/*      */     //   27: invokeinterface hasNext : ()Z
-/*      */     //   32: ifeq -> 94
-/*      */     //   35: aload #4
-/*      */     //   37: invokeinterface next : ()Ljava/lang/Object;
-/*      */     //   42: astore #5
-/*      */     //   44: aload #5
-/*      */     //   46: ifnonnull -> 57
-/*      */     //   49: new java/lang/NullPointerException
-/*      */     //   52: dup
-/*      */     //   53: invokespecial <init> : ()V
-/*      */     //   56: athrow
-/*      */     //   57: iload_3
-/*      */     //   58: aload_0
-/*      */     //   59: getfield capacity : I
-/*      */     //   62: if_icmpne -> 75
-/*      */     //   65: new java/lang/IllegalStateException
-/*      */     //   68: dup
-/*      */     //   69: ldc 'Queue full'
-/*      */     //   71: invokespecial <init> : (Ljava/lang/String;)V
-/*      */     //   74: athrow
-/*      */     //   75: aload_0
-/*      */     //   76: new java/util/concurrent/LinkedBlockingQueue$Node
-/*      */     //   79: dup
-/*      */     //   80: aload #5
-/*      */     //   82: invokespecial <init> : (Ljava/lang/Object;)V
-/*      */     //   85: invokespecial enqueue : (Ljava/util/concurrent/LinkedBlockingQueue$Node;)V
-/*      */     //   88: iinc #3, 1
-/*      */     //   91: goto -> 25
-/*      */     //   94: aload_0
-/*      */     //   95: getfield count : Ljava/util/concurrent/atomic/AtomicInteger;
-/*      */     //   98: iload_3
-/*      */     //   99: invokevirtual set : (I)V
-/*      */     //   102: aload_2
-/*      */     //   103: invokevirtual unlock : ()V
-/*      */     //   106: goto -> 118
-/*      */     //   109: astore #6
-/*      */     //   111: aload_2
-/*      */     //   112: invokevirtual unlock : ()V
-/*      */     //   115: aload #6
-/*      */     //   117: athrow
-/*      */     //   118: return
-/*      */     // Line number table:
-/*      */     //   Java source line number -> byte code offset
-/*      */     //   #277	-> 0
-/*      */     //   #278	-> 6
-/*      */     //   #279	-> 11
-/*      */     //   #281	-> 15
-/*      */     //   #282	-> 17
-/*      */     //   #283	-> 44
-/*      */     //   #284	-> 49
-/*      */     //   #285	-> 57
-/*      */     //   #286	-> 65
-/*      */     //   #287	-> 75
-/*      */     //   #288	-> 88
-/*      */     //   #289	-> 91
-/*      */     //   #290	-> 94
-/*      */     //   #292	-> 102
-/*      */     //   #293	-> 106
-/*      */     //   #292	-> 109
-/*      */     //   #293	-> 115
-/*      */     //   #294	-> 118
-/*      */     // Exception table:
-/*      */     //   from	to	target	type
-/*      */     //   15	102	109	finally
-/*      */     //   109	111	109	finally
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/*  304 */     return this.count.get();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int remainingCapacity() {
-/*  321 */     return this.capacity - this.count.get();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void put(E paramE) throws InterruptedException {
-/*  332 */     if (paramE == null) throw new NullPointerException();
-/*      */ 
-/*      */     
-/*  335 */     int i = -1;
-/*  336 */     Node<E> node = new Node<>(paramE);
-/*  337 */     ReentrantLock reentrantLock = this.putLock;
-/*  338 */     AtomicInteger atomicInteger = this.count;
-/*  339 */     reentrantLock.lockInterruptibly();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  349 */       while (atomicInteger.get() == this.capacity) {
-/*  350 */         this.notFull.await();
-/*      */       }
-/*  352 */       enqueue(node);
-/*  353 */       i = atomicInteger.getAndIncrement();
-/*  354 */       if (i + 1 < this.capacity)
-/*  355 */         this.notFull.signal(); 
-/*      */     } finally {
-/*  357 */       reentrantLock.unlock();
-/*      */     } 
-/*  359 */     if (i == 0) {
-/*  360 */       signalNotEmpty();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  375 */     if (paramE == null) throw new NullPointerException(); 
-/*  376 */     long l = paramTimeUnit.toNanos(paramLong);
-/*  377 */     int i = -1;
-/*  378 */     ReentrantLock reentrantLock = this.putLock;
-/*  379 */     AtomicInteger atomicInteger = this.count;
-/*  380 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*  382 */       while (atomicInteger.get() == this.capacity) {
-/*  383 */         if (l <= 0L)
-/*  384 */           return false; 
-/*  385 */         l = this.notFull.awaitNanos(l);
-/*      */       } 
-/*  387 */       enqueue(new Node<>(paramE));
-/*  388 */       i = atomicInteger.getAndIncrement();
-/*  389 */       if (i + 1 < this.capacity)
-/*  390 */         this.notFull.signal(); 
-/*      */     } finally {
-/*  392 */       reentrantLock.unlock();
-/*      */     } 
-/*  394 */     if (i == 0)
-/*  395 */       signalNotEmpty(); 
-/*  396 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE) {
-/*  411 */     if (paramE == null) throw new NullPointerException(); 
-/*  412 */     AtomicInteger atomicInteger = this.count;
-/*  413 */     if (atomicInteger.get() == this.capacity)
-/*  414 */       return false; 
-/*  415 */     int i = -1;
-/*  416 */     Node<E> node = new Node<>(paramE);
-/*  417 */     ReentrantLock reentrantLock = this.putLock;
-/*  418 */     reentrantLock.lock();
-/*      */     try {
-/*  420 */       if (atomicInteger.get() < this.capacity) {
-/*  421 */         enqueue(node);
-/*  422 */         i = atomicInteger.getAndIncrement();
-/*  423 */         if (i + 1 < this.capacity)
-/*  424 */           this.notFull.signal(); 
-/*      */       } 
-/*      */     } finally {
-/*  427 */       reentrantLock.unlock();
-/*      */     } 
-/*  429 */     if (i == 0)
-/*  430 */       signalNotEmpty(); 
-/*  431 */     return (i >= 0);
-/*      */   }
-/*      */   
-/*      */   public E take() throws InterruptedException {
-/*      */     E e;
-/*  436 */     int i = -1;
-/*  437 */     AtomicInteger atomicInteger = this.count;
-/*  438 */     ReentrantLock reentrantLock = this.takeLock;
-/*  439 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*  441 */       while (atomicInteger.get() == 0) {
-/*  442 */         this.notEmpty.await();
-/*      */       }
-/*  444 */       e = dequeue();
-/*  445 */       i = atomicInteger.getAndDecrement();
-/*  446 */       if (i > 1)
-/*  447 */         this.notEmpty.signal(); 
-/*      */     } finally {
-/*  449 */       reentrantLock.unlock();
-/*      */     } 
-/*  451 */     if (i == this.capacity)
-/*  452 */       signalNotFull(); 
-/*  453 */     return e;
-/*      */   }
-/*      */   
-/*      */   public E poll(long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/*  457 */     E e = null;
-/*  458 */     int i = -1;
-/*  459 */     long l = paramTimeUnit.toNanos(paramLong);
-/*  460 */     AtomicInteger atomicInteger = this.count;
-/*  461 */     ReentrantLock reentrantLock = this.takeLock;
-/*  462 */     reentrantLock.lockInterruptibly();
-/*      */     try {
-/*  464 */       while (atomicInteger.get() == 0) {
-/*  465 */         if (l <= 0L)
-/*  466 */           return null; 
-/*  467 */         l = this.notEmpty.awaitNanos(l);
-/*      */       } 
-/*  469 */       e = dequeue();
-/*  470 */       i = atomicInteger.getAndDecrement();
-/*  471 */       if (i > 1)
-/*  472 */         this.notEmpty.signal(); 
-/*      */     } finally {
-/*  474 */       reentrantLock.unlock();
-/*      */     } 
-/*  476 */     if (i == this.capacity)
-/*  477 */       signalNotFull(); 
-/*  478 */     return e;
-/*      */   }
-/*      */   
-/*      */   public E poll() {
-/*  482 */     AtomicInteger atomicInteger = this.count;
-/*  483 */     if (atomicInteger.get() == 0)
-/*  484 */       return null; 
-/*  485 */     E e = null;
-/*  486 */     int i = -1;
-/*  487 */     ReentrantLock reentrantLock = this.takeLock;
-/*  488 */     reentrantLock.lock();
-/*      */     try {
-/*  490 */       if (atomicInteger.get() > 0) {
-/*  491 */         e = dequeue();
-/*  492 */         i = atomicInteger.getAndDecrement();
-/*  493 */         if (i > 1)
-/*  494 */           this.notEmpty.signal(); 
-/*      */       } 
-/*      */     } finally {
-/*  497 */       reentrantLock.unlock();
-/*      */     } 
-/*  499 */     if (i == this.capacity)
-/*  500 */       signalNotFull(); 
-/*  501 */     return e;
-/*      */   }
-/*      */   
-/*      */   public E peek() {
-/*  505 */     if (this.count.get() == 0)
-/*  506 */       return null; 
-/*  507 */     ReentrantLock reentrantLock = this.takeLock;
-/*  508 */     reentrantLock.lock();
-/*      */     try {
-/*  510 */       Node<E> node = this.head.next;
-/*  511 */       if (node == null) {
-/*  512 */         return null;
-/*      */       }
-/*  514 */       return node.item;
-/*      */     } finally {
-/*  516 */       reentrantLock.unlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void unlink(Node<E> paramNode1, Node<E> paramNode2) {
-/*  527 */     paramNode1.item = null;
-/*  528 */     paramNode2.next = paramNode1.next;
-/*  529 */     if (this.last == paramNode1)
-/*  530 */       this.last = paramNode2; 
-/*  531 */     if (this.count.getAndDecrement() == this.capacity) {
-/*  532 */       this.notFull.signal();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean remove(Object paramObject) {
-/*  547 */     if (paramObject == null) return false; 
-/*  548 */     fullyLock();
-/*      */     try {
-/*  550 */       Node<E> node1 = this.head, node2 = node1.next;
-/*  551 */       for (; node2 != null; 
-/*  552 */         node1 = node2, node2 = node2.next) {
-/*  553 */         if (paramObject.equals(node2.item)) {
-/*  554 */           unlink(node2, node1);
-/*  555 */           return true;
-/*      */         } 
-/*      */       } 
-/*  558 */       return false;
-/*      */     } finally {
-/*  560 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Object paramObject) {
-/*  573 */     if (paramObject == null) return false; 
-/*  574 */     fullyLock();
-/*      */     try {
-/*  576 */       for (Node<E> node = this.head.next; node != null; node = node.next) {
-/*  577 */         if (paramObject.equals(node.item))
-/*  578 */           return true; 
-/*  579 */       }  return false;
-/*      */     } finally {
-/*  581 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] toArray() {
-/*  599 */     fullyLock();
-/*      */     try {
-/*  601 */       int i = this.count.get();
-/*  602 */       Object[] arrayOfObject = new Object[i];
-/*  603 */       byte b = 0;
-/*  604 */       for (Node<E> node = this.head.next; node != null; node = node.next)
-/*  605 */         arrayOfObject[b++] = node.item; 
-/*  606 */       return arrayOfObject;
-/*      */     } finally {
-/*  608 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public <T> T[] toArray(T[] paramArrayOfT) {
-/*  649 */     fullyLock();
-/*      */     try {
-/*  651 */       int i = this.count.get();
-/*  652 */       if (paramArrayOfT.length < i)
-/*      */       {
-/*  654 */         paramArrayOfT = (T[])Array.newInstance(paramArrayOfT.getClass().getComponentType(), i);
-/*      */       }
-/*  656 */       byte b = 0;
-/*  657 */       for (Node<E> node = this.head.next; node != null; node = node.next)
-/*  658 */         paramArrayOfT[b++] = (T)node.item; 
-/*  659 */       if (paramArrayOfT.length > b)
-/*  660 */         paramArrayOfT[b] = null; 
-/*  661 */       return paramArrayOfT;
-/*      */     } finally {
-/*  663 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public String toString() {
-/*  668 */     fullyLock();
-/*      */     try {
-/*  670 */       Node<E> node = this.head.next;
-/*  671 */       if (node == null) {
-/*  672 */         return "[]";
-/*      */       }
-/*  674 */       StringBuilder stringBuilder = new StringBuilder();
-/*  675 */       stringBuilder.append('[');
-/*      */       while (true) {
-/*  677 */         E e = node.item;
-/*  678 */         stringBuilder.append((e == this) ? "(this Collection)" : e);
-/*  679 */         node = node.next;
-/*  680 */         if (node == null)
-/*  681 */           return stringBuilder.append(']').toString(); 
-/*  682 */         stringBuilder.append(',').append(' ');
-/*      */       } 
-/*      */     } finally {
-/*  685 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  694 */     fullyLock(); try {
-/*      */       Node<E> node1;
-/*  696 */       for (Node<E> node2 = this.head; (node1 = node2.next) != null; node2 = node1) {
-/*  697 */         node2.next = node2;
-/*  698 */         node1.item = null;
-/*      */       } 
-/*  700 */       this.head = this.last;
-/*      */       
-/*  702 */       if (this.count.getAndSet(0) == this.capacity)
-/*  703 */         this.notFull.signal(); 
-/*      */     } finally {
-/*  705 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int drainTo(Collection<? super E> paramCollection) {
-/*  716 */     return drainTo(paramCollection, 2147483647);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int drainTo(Collection<? super E> paramCollection, int paramInt) {
-/*  726 */     if (paramCollection == null)
-/*  727 */       throw new NullPointerException(); 
-/*  728 */     if (paramCollection == this)
-/*  729 */       throw new IllegalArgumentException(); 
-/*  730 */     if (paramInt <= 0)
-/*  731 */       return 0; 
-/*  732 */     boolean bool = false;
-/*  733 */     ReentrantLock reentrantLock = this.takeLock;
-/*  734 */     reentrantLock.lock();
-/*      */     try {
-/*  736 */       int i = Math.min(paramInt, this.count.get());
-/*      */       
-/*  738 */       Node<E> node = this.head;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     finally {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  759 */       reentrantLock.unlock();
-/*  760 */       if (bool) {
-/*  761 */         signalNotFull();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Iterator<E> iterator() {
-/*  775 */     return new Itr();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class Itr
-/*      */     implements Iterator<E>
-/*      */   {
-/*      */     private LinkedBlockingQueue.Node<E> current;
-/*      */     
-/*      */     private LinkedBlockingQueue.Node<E> lastRet;
-/*      */     
-/*      */     private E currentElement;
-/*      */ 
-/*      */     
-/*      */     Itr() {
-/*  790 */       LinkedBlockingQueue.this.fullyLock();
-/*      */       try {
-/*  792 */         this.current = LinkedBlockingQueue.this.head.next;
-/*  793 */         if (this.current != null)
-/*  794 */           this.currentElement = this.current.item; 
-/*      */       } finally {
-/*  796 */         LinkedBlockingQueue.this.fullyUnlock();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public boolean hasNext() {
-/*  801 */       return (this.current != null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private LinkedBlockingQueue.Node<E> nextNode(LinkedBlockingQueue.Node<E> param1Node) {
-/*      */       while (true) {
-/*  813 */         LinkedBlockingQueue.Node<E> node = param1Node.next;
-/*  814 */         if (node == param1Node)
-/*  815 */           return LinkedBlockingQueue.this.head.next; 
-/*  816 */         if (node == null || node.item != null)
-/*  817 */           return node; 
-/*  818 */         param1Node = node;
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public E next() {
-/*  823 */       LinkedBlockingQueue.this.fullyLock();
-/*      */       try {
-/*  825 */         if (this.current == null)
-/*  826 */           throw new NoSuchElementException(); 
-/*  827 */         E e = this.currentElement;
-/*  828 */         this.lastRet = this.current;
-/*  829 */         this.current = nextNode(this.current);
-/*  830 */         this.currentElement = (this.current == null) ? null : this.current.item;
-/*  831 */         return e;
-/*      */       } finally {
-/*  833 */         LinkedBlockingQueue.this.fullyUnlock();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void remove() {
-/*  838 */       if (this.lastRet == null)
-/*  839 */         throw new IllegalStateException(); 
-/*  840 */       LinkedBlockingQueue.this.fullyLock();
-/*      */       try {
-/*  842 */         LinkedBlockingQueue.Node<E> node1 = this.lastRet;
-/*  843 */         this.lastRet = null;
-/*  844 */         LinkedBlockingQueue.Node<E> node2 = LinkedBlockingQueue.this.head, node3 = node2.next;
-/*  845 */         for (; node3 != null; 
-/*  846 */           node2 = node3, node3 = node3.next) {
-/*  847 */           if (node3 == node1) {
-/*  848 */             LinkedBlockingQueue.this.unlink(node3, node2);
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       } finally {
-/*  853 */         LinkedBlockingQueue.this.fullyUnlock();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class LBQSpliterator<E> implements Spliterator<E> {
-/*      */     static final int MAX_BATCH = 33554432;
-/*      */     final LinkedBlockingQueue<E> queue;
-/*      */     LinkedBlockingQueue.Node<E> current;
-/*      */     int batch;
-/*      */     boolean exhausted;
-/*      */     long est;
-/*      */     
-/*      */     LBQSpliterator(LinkedBlockingQueue<E> param1LinkedBlockingQueue) {
-/*  867 */       this.queue = param1LinkedBlockingQueue;
-/*  868 */       this.est = param1LinkedBlockingQueue.size();
-/*      */     }
-/*      */     public long estimateSize() {
-/*  871 */       return this.est;
-/*      */     }
-/*      */     
-/*      */     public Spliterator<E> trySplit() {
-/*  875 */       LinkedBlockingQueue<E> linkedBlockingQueue = this.queue;
-/*  876 */       int i = this.batch;
-/*  877 */       byte b = (i <= 0) ? 1 : ((i >= 33554432) ? 33554432 : (i + 1)); LinkedBlockingQueue.Node<E> node;
-/*  878 */       if (!this.exhausted && ((node = this.current) != null || (node = linkedBlockingQueue.head.next) != null) && node.next != null) {
-/*      */ 
-/*      */         
-/*  881 */         Object[] arrayOfObject = new Object[b];
-/*  882 */         byte b1 = 0;
-/*  883 */         LinkedBlockingQueue.Node<E> node1 = this.current;
-/*  884 */         linkedBlockingQueue.fullyLock();
-/*      */         try {
-/*  886 */           if (node1 != null || (node1 = linkedBlockingQueue.head.next) != null) {
-/*      */             do {
-/*  888 */               arrayOfObject[b1] = node1.item; if (node1.item == null)
-/*  889 */                 continue;  b1++;
-/*  890 */             } while ((node1 = node1.next) != null && b1 < b);
-/*      */           }
-/*      */         } finally {
-/*  893 */           linkedBlockingQueue.fullyUnlock();
-/*      */         } 
-/*  895 */         if ((this.current = node1) == null) {
-/*  896 */           this.est = 0L;
-/*  897 */           this.exhausted = true;
-/*      */         }
-/*  899 */         else if ((this.est -= b1) < 0L) {
-/*  900 */           this.est = 0L;
-/*  901 */         }  if (b1 > 0) {
-/*  902 */           this.batch = b1;
-/*  903 */           return 
-/*  904 */             Spliterators.spliterator(arrayOfObject, 0, b1, 4368);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  908 */       return null;
-/*      */     }
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/*  912 */       if (param1Consumer == null) throw new NullPointerException(); 
-/*  913 */       LinkedBlockingQueue<E> linkedBlockingQueue = this.queue;
-/*  914 */       if (!this.exhausted) {
-/*  915 */         this.exhausted = true;
-/*  916 */         LinkedBlockingQueue.Node<E> node = this.current; do {
-/*      */           E e;
-/*  918 */           Object object = null;
-/*  919 */           linkedBlockingQueue.fullyLock();
-/*      */           try {
-/*  921 */             if (node == null)
-/*  922 */               node = linkedBlockingQueue.head.next; 
-/*  923 */             while (node != null) {
-/*  924 */               e = node.item;
-/*  925 */               node = node.next;
-/*  926 */               if (e != null)
-/*      */                 break; 
-/*      */             } 
-/*      */           } finally {
-/*  930 */             linkedBlockingQueue.fullyUnlock();
-/*      */           } 
-/*  932 */           if (e == null)
-/*  933 */             continue;  param1Consumer.accept(e);
-/*  934 */         } while (node != null);
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super E> param1Consumer) {
-/*  939 */       if (param1Consumer == null) throw new NullPointerException(); 
-/*  940 */       LinkedBlockingQueue<E> linkedBlockingQueue = this.queue;
-/*  941 */       if (!this.exhausted) {
-/*  942 */         E e; Object object = null;
-/*  943 */         linkedBlockingQueue.fullyLock();
-/*      */         try {
-/*  945 */           if (this.current == null)
-/*  946 */             this.current = linkedBlockingQueue.head.next; 
-/*  947 */           while (this.current != null) {
-/*  948 */             e = this.current.item;
-/*  949 */             this.current = this.current.next;
-/*  950 */             if (e != null)
-/*      */               break; 
-/*      */           } 
-/*      */         } finally {
-/*  954 */           linkedBlockingQueue.fullyUnlock();
-/*      */         } 
-/*  956 */         if (this.current == null)
-/*  957 */           this.exhausted = true; 
-/*  958 */         if (e != null) {
-/*  959 */           param1Consumer.accept(e);
-/*  960 */           return true;
-/*      */         } 
-/*      */       } 
-/*  963 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/*  967 */       return 4368;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Spliterator<E> spliterator() {
-/*  989 */     return new LBQSpliterator<>(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1004 */     fullyLock();
-/*      */     
-/*      */     try {
-/* 1007 */       paramObjectOutputStream.defaultWriteObject();
-/*      */ 
-/*      */       
-/* 1010 */       for (Node<E> node = this.head.next; node != null; node = node.next) {
-/* 1011 */         paramObjectOutputStream.writeObject(node.item);
-/*      */       }
-/*      */       
-/* 1014 */       paramObjectOutputStream.writeObject(null);
-/*      */     } finally {
-/* 1016 */       fullyUnlock();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1030 */     paramObjectInputStream.defaultReadObject();
-/*      */     
-/* 1032 */     this.count.set(0);
-/* 1033 */     this.last = this.head = new Node<>(null);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     while (true) {
-/* 1038 */       Object object = paramObjectInputStream.readObject();
-/* 1039 */       if (object == null)
-/*      */         break; 
-/* 1041 */       add((E)object);
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\LinkedBlockingQueue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.AbstractQueue;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+
+/**
+ * An optionally-bounded {@linkplain BlockingQueue blocking queue} based on
+ * linked nodes.
+ * This queue orders elements FIFO (first-in-first-out).
+ * The <em>head</em> of the queue is that element that has been on the
+ * queue the longest time.
+ * The <em>tail</em> of the queue is that element that has been on the
+ * queue the shortest time. New elements
+ * are inserted at the tail of the queue, and the queue retrieval
+ * operations obtain elements at the head of the queue.
+ * Linked queues typically have higher throughput than array-based queues but
+ * less predictable performance in most concurrent applications.
+ *
+ * <p>The optional capacity bound constructor argument serves as a
+ * way to prevent excessive queue expansion. The capacity, if unspecified,
+ * is equal to {@link Integer#MAX_VALUE}.  Linked nodes are
+ * dynamically created upon each insertion unless this would bring the
+ * queue above capacity.
+ *
+ * <p>This class and its iterator implement all of the
+ * <em>optional</em> methods of the {@link Collection} and {@link
+ * Iterator} interfaces.
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @since 1.5
+ * @author Doug Lea
+ * @param <E> the type of elements held in this collection
+ */
+public class LinkedBlockingQueue<E> extends AbstractQueue<E>
+        implements BlockingQueue<E>, java.io.Serializable {
+    private static final long serialVersionUID = -6903933977591709194L;
+
+    /*
+     * A variant of the "two lock queue" algorithm.  The putLock gates
+     * entry to put (and offer), and has an associated condition for
+     * waiting puts.  Similarly for the takeLock.  The "count" field
+     * that they both rely on is maintained as an atomic to avoid
+     * needing to get both locks in most cases. Also, to minimize need
+     * for puts to get takeLock and vice-versa, cascading notifies are
+     * used. When a put notices that it has enabled at least one take,
+     * it signals taker. That taker in turn signals others if more
+     * items have been entered since the signal. And symmetrically for
+     * takes signalling puts. Operations such as remove(Object) and
+     * iterators acquire both locks.
+     *
+     * Visibility between writers and readers is provided as follows:
+     *
+     * Whenever an element is enqueued, the putLock is acquired and
+     * count updated.  A subsequent reader guarantees visibility to the
+     * enqueued Node by either acquiring the putLock (via fullyLock)
+     * or by acquiring the takeLock, and then reading n = count.get();
+     * this gives visibility to the first n items.
+     *
+     * To implement weakly consistent iterators, it appears we need to
+     * keep all Nodes GC-reachable from a predecessor dequeued Node.
+     * That would cause two problems:
+     * - allow a rogue Iterator to cause unbounded memory retention
+     * - cause cross-generational linking of old Nodes to new Nodes if
+     *   a Node was tenured while live, which generational GCs have a
+     *   hard time dealing with, causing repeated major collections.
+     * However, only non-deleted Nodes need to be reachable from
+     * dequeued Nodes, and reachability does not necessarily have to
+     * be of the kind understood by the GC.  We use the trick of
+     * linking a Node that has just been dequeued to itself.  Such a
+     * self-link implicitly means to advance to head.next.
+     */
+
+    /**
+     * Linked list node class
+     */
+    static class Node<E> {
+        E item;
+
+        /**
+         * One of:
+         * - the real successor Node
+         * - this Node, meaning the successor is head.next
+         * - null, meaning there is no successor (this is the last node)
+         */
+        Node<E> next;
+
+        Node(E x) { item = x; }
+    }
+
+    /** The capacity bound, or Integer.MAX_VALUE if none */
+    private final int capacity;
+
+    /** Current number of elements */
+    private final AtomicInteger count = new AtomicInteger();
+
+    /**
+     * Head of linked list.
+     * Invariant: head.item == null
+     */
+    transient Node<E> head;
+
+    /**
+     * Tail of linked list.
+     * Invariant: last.next == null
+     */
+    private transient Node<E> last;
+
+    /** Lock held by take, poll, etc */
+    private final ReentrantLock takeLock = new ReentrantLock();
+
+    /** Wait queue for waiting takes */
+    private final Condition notEmpty = takeLock.newCondition();
+
+    /** Lock held by put, offer, etc */
+    private final ReentrantLock putLock = new ReentrantLock();
+
+    /** Wait queue for waiting puts */
+    private final Condition notFull = putLock.newCondition();
+
+    /**
+     * Signals a waiting take. Called only from put/offer (which do not
+     * otherwise ordinarily lock takeLock.)
+     */
+    private void signalNotEmpty() {
+        final ReentrantLock takeLock = this.takeLock;
+        takeLock.lock();
+        try {
+            notEmpty.signal();
+        } finally {
+            takeLock.unlock();
+        }
+    }
+
+    /**
+     * Signals a waiting put. Called only from take/poll.
+     */
+    private void signalNotFull() {
+        final ReentrantLock putLock = this.putLock;
+        putLock.lock();
+        try {
+            notFull.signal();
+        } finally {
+            putLock.unlock();
+        }
+    }
+
+    /**
+     * Links node at end of queue.
+     *
+     * @param node the node
+     */
+    private void enqueue(Node<E> node) {
+        // assert putLock.isHeldByCurrentThread();
+        // assert last.next == null;
+        last = last.next = node;
+    }
+
+    /**
+     * Removes a node from head of queue.
+     *
+     * @return the node
+     */
+    private E dequeue() {
+        // assert takeLock.isHeldByCurrentThread();
+        // assert head.item == null;
+        Node<E> h = head;
+        Node<E> first = h.next;
+        h.next = h; // help GC
+        head = first;
+        E x = first.item;
+        first.item = null;
+        return x;
+    }
+
+    /**
+     * Locks to prevent both puts and takes.
+     */
+    void fullyLock() {
+        putLock.lock();
+        takeLock.lock();
+    }
+
+    /**
+     * Unlocks to allow both puts and takes.
+     */
+    void fullyUnlock() {
+        takeLock.unlock();
+        putLock.unlock();
+    }
+
+//     /**
+//      * Tells whether both locks are held by current thread.
+//      */
+//     boolean isFullyLocked() {
+//         return (putLock.isHeldByCurrentThread() &&
+//                 takeLock.isHeldByCurrentThread());
+//     }
+
+    /**
+     * Creates a {@code LinkedBlockingQueue} with a capacity of
+     * {@link Integer#MAX_VALUE}.
+     */
+    public LinkedBlockingQueue() {
+        this(Integer.MAX_VALUE);
+    }
+
+    /**
+     * Creates a {@code LinkedBlockingQueue} with the given (fixed) capacity.
+     *
+     * @param capacity the capacity of this queue
+     * @throws IllegalArgumentException if {@code capacity} is not greater
+     *         than zero
+     */
+    public LinkedBlockingQueue(int capacity) {
+        if (capacity <= 0) throw new IllegalArgumentException();
+        this.capacity = capacity;
+        last = head = new Node<E>(null);
+    }
+
+    /**
+     * Creates a {@code LinkedBlockingQueue} with a capacity of
+     * {@link Integer#MAX_VALUE}, initially containing the elements of the
+     * given collection,
+     * added in traversal order of the collection's iterator.
+     *
+     * @param c the collection of elements to initially contain
+     * @throws NullPointerException if the specified collection or any
+     *         of its elements are null
+     */
+    public LinkedBlockingQueue(Collection<? extends E> c) {
+        this(Integer.MAX_VALUE);
+        final ReentrantLock putLock = this.putLock;
+        putLock.lock(); // Never contended, but necessary for visibility
+        try {
+            int n = 0;
+            for (E e : c) {
+                if (e == null)
+                    throw new NullPointerException();
+                if (n == capacity)
+                    throw new IllegalStateException("Queue full");
+                enqueue(new Node<E>(e));
+                ++n;
+            }
+            count.set(n);
+        } finally {
+            putLock.unlock();
+        }
+    }
+
+    // this doc comment is overridden to remove the reference to collections
+    // greater in size than Integer.MAX_VALUE
+    /**
+     * Returns the number of elements in this queue.
+     *
+     * @return the number of elements in this queue
+     */
+    public int size() {
+        return count.get();
+    }
+
+    // this doc comment is a modified copy of the inherited doc comment,
+    // without the reference to unlimited queues.
+    /**
+     * Returns the number of additional elements that this queue can ideally
+     * (in the absence of memory or resource constraints) accept without
+     * blocking. This is always equal to the initial capacity of this queue
+     * less the current {@code size} of this queue.
+     *
+     * <p>Note that you <em>cannot</em> always tell if an attempt to insert
+     * an element will succeed by inspecting {@code remainingCapacity}
+     * because it may be the case that another thread is about to
+     * insert or remove an element.
+     */
+    public int remainingCapacity() {
+        return capacity - count.get();
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue, waiting if
+     * necessary for space to become available.
+     *
+     * @throws InterruptedException {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public void put(E e) throws InterruptedException {
+        if (e == null) throw new NullPointerException();
+        // Note: convention in all put/take/etc is to preset local var
+        // holding count negative to indicate failure unless set.
+        int c = -1;
+        Node<E> node = new Node<E>(e);
+        final ReentrantLock putLock = this.putLock;
+        final AtomicInteger count = this.count;
+        putLock.lockInterruptibly();
+        try {
+            /*
+             * Note that count is used in wait guard even though it is
+             * not protected by lock. This works because count can
+             * only decrease at this point (all other puts are shut
+             * out by lock), and we (or some other waiting put) are
+             * signalled if it ever changes from capacity. Similarly
+             * for all other uses of count in other wait guards.
+             */
+            while (count.get() == capacity) {
+                notFull.await();
+            }
+            enqueue(node);
+            c = count.getAndIncrement();
+            if (c + 1 < capacity)
+                notFull.signal();
+        } finally {
+            putLock.unlock();
+        }
+        if (c == 0)
+            signalNotEmpty();
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue, waiting if
+     * necessary up to the specified wait time for space to become available.
+     *
+     * @return {@code true} if successful, or {@code false} if
+     *         the specified waiting time elapses before space is available
+     * @throws InterruptedException {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean offer(E e, long timeout, TimeUnit unit)
+        throws InterruptedException {
+
+        if (e == null) throw new NullPointerException();
+        long nanos = unit.toNanos(timeout);
+        int c = -1;
+        final ReentrantLock putLock = this.putLock;
+        final AtomicInteger count = this.count;
+        putLock.lockInterruptibly();
+        try {
+            while (count.get() == capacity) {
+                if (nanos <= 0)
+                    return false;
+                nanos = notFull.awaitNanos(nanos);
+            }
+            enqueue(new Node<E>(e));
+            c = count.getAndIncrement();
+            if (c + 1 < capacity)
+                notFull.signal();
+        } finally {
+            putLock.unlock();
+        }
+        if (c == 0)
+            signalNotEmpty();
+        return true;
+    }
+
+    /**
+     * Inserts the specified element at the tail of this queue if it is
+     * possible to do so immediately without exceeding the queue's capacity,
+     * returning {@code true} upon success and {@code false} if this queue
+     * is full.
+     * When using a capacity-restricted queue, this method is generally
+     * preferable to method {@link BlockingQueue#add add}, which can fail to
+     * insert an element only by throwing an exception.
+     *
+     * @throws NullPointerException if the specified element is null
+     */
+    public boolean offer(E e) {
+        if (e == null) throw new NullPointerException();
+        final AtomicInteger count = this.count;
+        if (count.get() == capacity)
+            return false;
+        int c = -1;
+        Node<E> node = new Node<E>(e);
+        final ReentrantLock putLock = this.putLock;
+        putLock.lock();
+        try {
+            if (count.get() < capacity) {
+                enqueue(node);
+                c = count.getAndIncrement();
+                if (c + 1 < capacity)
+                    notFull.signal();
+            }
+        } finally {
+            putLock.unlock();
+        }
+        if (c == 0)
+            signalNotEmpty();
+        return c >= 0;
+    }
+
+    public E take() throws InterruptedException {
+        E x;
+        int c = -1;
+        final AtomicInteger count = this.count;
+        final ReentrantLock takeLock = this.takeLock;
+        takeLock.lockInterruptibly();
+        try {
+            while (count.get() == 0) {
+                notEmpty.await();
+            }
+            x = dequeue();
+            c = count.getAndDecrement();
+            if (c > 1)
+                notEmpty.signal();
+        } finally {
+            takeLock.unlock();
+        }
+        if (c == capacity)
+            signalNotFull();
+        return x;
+    }
+
+    public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+        E x = null;
+        int c = -1;
+        long nanos = unit.toNanos(timeout);
+        final AtomicInteger count = this.count;
+        final ReentrantLock takeLock = this.takeLock;
+        takeLock.lockInterruptibly();
+        try {
+            while (count.get() == 0) {
+                if (nanos <= 0)
+                    return null;
+                nanos = notEmpty.awaitNanos(nanos);
+            }
+            x = dequeue();
+            c = count.getAndDecrement();
+            if (c > 1)
+                notEmpty.signal();
+        } finally {
+            takeLock.unlock();
+        }
+        if (c == capacity)
+            signalNotFull();
+        return x;
+    }
+
+    public E poll() {
+        final AtomicInteger count = this.count;
+        if (count.get() == 0)
+            return null;
+        E x = null;
+        int c = -1;
+        final ReentrantLock takeLock = this.takeLock;
+        takeLock.lock();
+        try {
+            if (count.get() > 0) {
+                x = dequeue();
+                c = count.getAndDecrement();
+                if (c > 1)
+                    notEmpty.signal();
+            }
+        } finally {
+            takeLock.unlock();
+        }
+        if (c == capacity)
+            signalNotFull();
+        return x;
+    }
+
+    public E peek() {
+        if (count.get() == 0)
+            return null;
+        final ReentrantLock takeLock = this.takeLock;
+        takeLock.lock();
+        try {
+            Node<E> first = head.next;
+            if (first == null)
+                return null;
+            else
+                return first.item;
+        } finally {
+            takeLock.unlock();
+        }
+    }
+
+    /**
+     * Unlinks interior Node p with predecessor trail.
+     */
+    void unlink(Node<E> p, Node<E> trail) {
+        // assert isFullyLocked();
+        // p.next is not changed, to allow iterators that are
+        // traversing p to maintain their weak-consistency guarantee.
+        p.item = null;
+        trail.next = p.next;
+        if (last == p)
+            last = trail;
+        if (count.getAndDecrement() == capacity)
+            notFull.signal();
+    }
+
+    /**
+     * Removes a single instance of the specified element from this queue,
+     * if it is present.  More formally, removes an element {@code e} such
+     * that {@code o.equals(e)}, if this queue contains one or more such
+     * elements.
+     * Returns {@code true} if this queue contained the specified element
+     * (or equivalently, if this queue changed as a result of the call).
+     *
+     * @param o element to be removed from this queue, if present
+     * @return {@code true} if this queue changed as a result of the call
+     */
+    public boolean remove(Object o) {
+        if (o == null) return false;
+        fullyLock();
+        try {
+            for (Node<E> trail = head, p = trail.next;
+                 p != null;
+                 trail = p, p = p.next) {
+                if (o.equals(p.item)) {
+                    unlink(p, trail);
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    /**
+     * Returns {@code true} if this queue contains the specified element.
+     * More formally, returns {@code true} if and only if this queue contains
+     * at least one element {@code e} such that {@code o.equals(e)}.
+     *
+     * @param o object to be checked for containment in this queue
+     * @return {@code true} if this queue contains the specified element
+     */
+    public boolean contains(Object o) {
+        if (o == null) return false;
+        fullyLock();
+        try {
+            for (Node<E> p = head.next; p != null; p = p.next)
+                if (o.equals(p.item))
+                    return true;
+            return false;
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    /**
+     * Returns an array containing all of the elements in this queue, in
+     * proper sequence.
+     *
+     * <p>The returned array will be "safe" in that no references to it are
+     * maintained by this queue.  (In other words, this method must allocate
+     * a new array).  The caller is thus free to modify the returned array.
+     *
+     * <p>This method acts as bridge between array-based and collection-based
+     * APIs.
+     *
+     * @return an array containing all of the elements in this queue
+     */
+    public Object[] toArray() {
+        fullyLock();
+        try {
+            int size = count.get();
+            Object[] a = new Object[size];
+            int k = 0;
+            for (Node<E> p = head.next; p != null; p = p.next)
+                a[k++] = p.item;
+            return a;
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    /**
+     * Returns an array containing all of the elements in this queue, in
+     * proper sequence; the runtime type of the returned array is that of
+     * the specified array.  If the queue fits in the specified array, it
+     * is returned therein.  Otherwise, a new array is allocated with the
+     * runtime type of the specified array and the size of this queue.
+     *
+     * <p>If this queue fits in the specified array with room to spare
+     * (i.e., the array has more elements than this queue), the element in
+     * the array immediately following the end of the queue is set to
+     * {@code null}.
+     *
+     * <p>Like the {@link #toArray()} method, this method acts as bridge between
+     * array-based and collection-based APIs.  Further, this method allows
+     * precise control over the runtime type of the output array, and may,
+     * under certain circumstances, be used to save allocation costs.
+     *
+     * <p>Suppose {@code x} is a queue known to contain only strings.
+     * The following code can be used to dump the queue into a newly
+     * allocated array of {@code String}:
+     *
+     *  <pre> {@code String[] y = x.toArray(new String[0]);}</pre>
+     *
+     * Note that {@code toArray(new Object[0])} is identical in function to
+     * {@code toArray()}.
+     *
+     * @param a the array into which the elements of the queue are to
+     *          be stored, if it is big enough; otherwise, a new array of the
+     *          same runtime type is allocated for this purpose
+     * @return an array containing all of the elements in this queue
+     * @throws ArrayStoreException if the runtime type of the specified array
+     *         is not a supertype of the runtime type of every element in
+     *         this queue
+     * @throws NullPointerException if the specified array is null
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(T[] a) {
+        fullyLock();
+        try {
+            int size = count.get();
+            if (a.length < size)
+                a = (T[])java.lang.reflect.Array.newInstance
+                    (a.getClass().getComponentType(), size);
+
+            int k = 0;
+            for (Node<E> p = head.next; p != null; p = p.next)
+                a[k++] = (T)p.item;
+            if (a.length > k)
+                a[k] = null;
+            return a;
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    public String toString() {
+        fullyLock();
+        try {
+            Node<E> p = head.next;
+            if (p == null)
+                return "[]";
+
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            for (;;) {
+                E e = p.item;
+                sb.append(e == this ? "(this Collection)" : e);
+                p = p.next;
+                if (p == null)
+                    return sb.append(']').toString();
+                sb.append(',').append(' ');
+            }
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    /**
+     * Atomically removes all of the elements from this queue.
+     * The queue will be empty after this call returns.
+     */
+    public void clear() {
+        fullyLock();
+        try {
+            for (Node<E> p, h = head; (p = h.next) != null; h = p) {
+                h.next = h;
+                p.item = null;
+            }
+            head = last;
+            // assert head.item == null && head.next == null;
+            if (count.getAndSet(0) == capacity)
+                notFull.signal();
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    /**
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @throws IllegalArgumentException      {@inheritDoc}
+     */
+    public int drainTo(Collection<? super E> c) {
+        return drainTo(c, Integer.MAX_VALUE);
+    }
+
+    /**
+     * @throws UnsupportedOperationException {@inheritDoc}
+     * @throws ClassCastException            {@inheritDoc}
+     * @throws NullPointerException          {@inheritDoc}
+     * @throws IllegalArgumentException      {@inheritDoc}
+     */
+    public int drainTo(Collection<? super E> c, int maxElements) {
+        if (c == null)
+            throw new NullPointerException();
+        if (c == this)
+            throw new IllegalArgumentException();
+        if (maxElements <= 0)
+            return 0;
+        boolean signalNotFull = false;
+        final ReentrantLock takeLock = this.takeLock;
+        takeLock.lock();
+        try {
+            int n = Math.min(maxElements, count.get());
+            // count.get provides visibility to first n Nodes
+            Node<E> h = head;
+            int i = 0;
+            try {
+                while (i < n) {
+                    Node<E> p = h.next;
+                    c.add(p.item);
+                    p.item = null;
+                    h.next = h;
+                    h = p;
+                    ++i;
+                }
+                return n;
+            } finally {
+                // Restore invariants even if c.add() threw
+                if (i > 0) {
+                    // assert h.item == null;
+                    head = h;
+                    signalNotFull = (count.getAndAdd(-i) == capacity);
+                }
+            }
+        } finally {
+            takeLock.unlock();
+            if (signalNotFull)
+                signalNotFull();
+        }
+    }
+
+    /**
+     * Returns an iterator over the elements in this queue in proper sequence.
+     * The elements will be returned in order from first (head) to last (tail).
+     *
+     * <p>The returned iterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * @return an iterator over the elements in this queue in proper sequence
+     */
+    public Iterator<E> iterator() {
+        return new Itr();
+    }
+
+    private class Itr implements Iterator<E> {
+        /*
+         * Basic weakly-consistent iterator.  At all times hold the next
+         * item to hand out so that if hasNext() reports true, we will
+         * still have it to return even if lost race with a take etc.
+         */
+
+        private Node<E> current;
+        private Node<E> lastRet;
+        private E currentElement;
+
+        Itr() {
+            fullyLock();
+            try {
+                current = head.next;
+                if (current != null)
+                    currentElement = current.item;
+            } finally {
+                fullyUnlock();
+            }
+        }
+
+        public boolean hasNext() {
+            return current != null;
+        }
+
+        /**
+         * Returns the next live successor of p, or null if no such.
+         *
+         * Unlike other traversal methods, iterators need to handle both:
+         * - dequeued nodes (p.next == p)
+         * - (possibly multiple) interior removed nodes (p.item == null)
+         */
+        private Node<E> nextNode(Node<E> p) {
+            for (;;) {
+                Node<E> s = p.next;
+                if (s == p)
+                    return head.next;
+                if (s == null || s.item != null)
+                    return s;
+                p = s;
+            }
+        }
+
+        public E next() {
+            fullyLock();
+            try {
+                if (current == null)
+                    throw new NoSuchElementException();
+                E x = currentElement;
+                lastRet = current;
+                current = nextNode(current);
+                currentElement = (current == null) ? null : current.item;
+                return x;
+            } finally {
+                fullyUnlock();
+            }
+        }
+
+        public void remove() {
+            if (lastRet == null)
+                throw new IllegalStateException();
+            fullyLock();
+            try {
+                Node<E> node = lastRet;
+                lastRet = null;
+                for (Node<E> trail = head, p = trail.next;
+                     p != null;
+                     trail = p, p = p.next) {
+                    if (p == node) {
+                        unlink(p, trail);
+                        break;
+                    }
+                }
+            } finally {
+                fullyUnlock();
+            }
+        }
+    }
+
+    /** A customized variant of Spliterators.IteratorSpliterator */
+    static final class LBQSpliterator<E> implements Spliterator<E> {
+        static final int MAX_BATCH = 1 << 25;  // max batch array size;
+        final LinkedBlockingQueue<E> queue;
+        Node<E> current;    // current node; null until initialized
+        int batch;          // batch size for splits
+        boolean exhausted;  // true when no more nodes
+        long est;           // size estimate
+        LBQSpliterator(LinkedBlockingQueue<E> queue) {
+            this.queue = queue;
+            this.est = queue.size();
+        }
+
+        public long estimateSize() { return est; }
+
+        public Spliterator<E> trySplit() {
+            Node<E> h;
+            final LinkedBlockingQueue<E> q = this.queue;
+            int b = batch;
+            int n = (b <= 0) ? 1 : (b >= MAX_BATCH) ? MAX_BATCH : b + 1;
+            if (!exhausted &&
+                ((h = current) != null || (h = q.head.next) != null) &&
+                h.next != null) {
+                Object[] a = new Object[n];
+                int i = 0;
+                Node<E> p = current;
+                q.fullyLock();
+                try {
+                    if (p != null || (p = q.head.next) != null) {
+                        do {
+                            if ((a[i] = p.item) != null)
+                                ++i;
+                        } while ((p = p.next) != null && i < n);
+                    }
+                } finally {
+                    q.fullyUnlock();
+                }
+                if ((current = p) == null) {
+                    est = 0L;
+                    exhausted = true;
+                }
+                else if ((est -= i) < 0L)
+                    est = 0L;
+                if (i > 0) {
+                    batch = i;
+                    return Spliterators.spliterator
+                        (a, 0, i, Spliterator.ORDERED | Spliterator.NONNULL |
+                         Spliterator.CONCURRENT);
+                }
+            }
+            return null;
+        }
+
+        public void forEachRemaining(Consumer<? super E> action) {
+            if (action == null) throw new NullPointerException();
+            final LinkedBlockingQueue<E> q = this.queue;
+            if (!exhausted) {
+                exhausted = true;
+                Node<E> p = current;
+                do {
+                    E e = null;
+                    q.fullyLock();
+                    try {
+                        if (p == null)
+                            p = q.head.next;
+                        while (p != null) {
+                            e = p.item;
+                            p = p.next;
+                            if (e != null)
+                                break;
+                        }
+                    } finally {
+                        q.fullyUnlock();
+                    }
+                    if (e != null)
+                        action.accept(e);
+                } while (p != null);
+            }
+        }
+
+        public boolean tryAdvance(Consumer<? super E> action) {
+            if (action == null) throw new NullPointerException();
+            final LinkedBlockingQueue<E> q = this.queue;
+            if (!exhausted) {
+                E e = null;
+                q.fullyLock();
+                try {
+                    if (current == null)
+                        current = q.head.next;
+                    while (current != null) {
+                        e = current.item;
+                        current = current.next;
+                        if (e != null)
+                            break;
+                    }
+                } finally {
+                    q.fullyUnlock();
+                }
+                if (current == null)
+                    exhausted = true;
+                if (e != null) {
+                    action.accept(e);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.NONNULL |
+                Spliterator.CONCURRENT;
+        }
+    }
+
+    /**
+     * Returns a {@link Spliterator} over the elements in this queue.
+     *
+     * <p>The returned spliterator is
+     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+     *
+     * <p>The {@code Spliterator} reports {@link Spliterator#CONCURRENT},
+     * {@link Spliterator#ORDERED}, and {@link Spliterator#NONNULL}.
+     *
+     * @implNote
+     * The {@code Spliterator} implements {@code trySplit} to permit limited
+     * parallelism.
+     *
+     * @return a {@code Spliterator} over the elements in this queue
+     * @since 1.8
+     */
+    public Spliterator<E> spliterator() {
+        return new LBQSpliterator<E>(this);
+    }
+
+    /**
+     * Saves this queue to a stream (that is, serializes it).
+     *
+     * @param s the stream
+     * @throws java.io.IOException if an I/O error occurs
+     * @serialData The capacity is emitted (int), followed by all of
+     * its elements (each an {@code Object}) in the proper order,
+     * followed by a null
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+
+        fullyLock();
+        try {
+            // Write out any hidden stuff, plus capacity
+            s.defaultWriteObject();
+
+            // Write out all elements in the proper order.
+            for (Node<E> p = head.next; p != null; p = p.next)
+                s.writeObject(p.item);
+
+            // Use trailing null as sentinel
+            s.writeObject(null);
+        } finally {
+            fullyUnlock();
+        }
+    }
+
+    /**
+     * Reconstitutes this queue from a stream (that is, deserializes it).
+     * @param s the stream
+     * @throws ClassNotFoundException if the class of a serialized object
+     *         could not be found
+     * @throws java.io.IOException if an I/O error occurs
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        // Read in capacity, and any hidden stuff
+        s.defaultReadObject();
+
+        count.set(0);
+        last = head = new Node<E>(null);
+
+        // Read in all elements and place in queue
+        for (;;) {
+            @SuppressWarnings("unchecked")
+            E item = (E)s.readObject();
+            if (item == null)
+                break;
+            add(item);
+        }
+    }
+}

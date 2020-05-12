@@ -1,169 +1,163 @@
-/*     */ package javax.xml.soap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SOAPException
-/*     */   extends Exception
-/*     */ {
-/*     */   private Throwable cause;
-/*     */   
-/*     */   public SOAPException() {
-/*  52 */     this.cause = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SOAPException(String reason) {
-/*  62 */     super(reason);
-/*  63 */     this.cause = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SOAPException(String reason, Throwable cause) {
-/*  77 */     super(reason);
-/*  78 */     initCause(cause);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SOAPException(Throwable cause) {
-/*  86 */     super(cause.toString());
-/*  87 */     initCause(cause);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessage() {
-/* 105 */     String message = super.getMessage();
-/* 106 */     if (message == null && this.cause != null) {
-/* 107 */       return this.cause.getMessage();
-/*     */     }
-/* 109 */     return message;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getCause() {
-/* 123 */     return this.cause;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Throwable initCause(Throwable cause) {
-/* 153 */     if (this.cause != null) {
-/* 154 */       throw new IllegalStateException("Can't override cause");
-/*     */     }
-/* 156 */     if (cause == this) {
-/* 157 */       throw new IllegalArgumentException("Self-causation not permitted");
-/*     */     }
-/* 159 */     this.cause = cause;
-/*     */     
-/* 161 */     return this;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\soap\SOAPException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.soap;
+
+/**
+ * An exception that signals that a SOAP exception has occurred. A
+ * <code>SOAPException</code> object may contain a <code>String</code>
+ * that gives the reason for the exception, an embedded
+ * <code>Throwable</code> object, or both. This class provides methods
+ * for retrieving reason messages and for retrieving the embedded
+ * <code>Throwable</code> object.
+ *
+ * <P> Typical reasons for throwing a <code>SOAPException</code>
+ * object are problems such as difficulty setting a header, not being
+ * able to send a message, and not being able to get a connection with
+ * the provider.  Reasons for embedding a <code>Throwable</code>
+ * object include problems such as input/output errors or a parsing
+ * problem, such as an error in parsing a header.
+ */
+public class SOAPException extends Exception {
+    private Throwable cause;
+
+    /**
+     * Constructs a <code>SOAPException</code> object with no
+     * reason or embedded <code>Throwable</code> object.
+     */
+    public SOAPException() {
+        super();
+        this.cause = null;
+    }
+
+    /**
+     * Constructs a <code>SOAPException</code> object with the given
+     * <code>String</code> as the reason for the exception being thrown.
+     *
+     * @param reason a description of what caused the exception
+     */
+    public SOAPException(String reason) {
+        super(reason);
+        this.cause = null;
+    }
+
+    /**
+     * Constructs a <code>SOAPException</code> object with the given
+     * <code>String</code> as the reason for the exception being thrown
+     * and the given <code>Throwable</code> object as an embedded
+     * exception.
+     *
+     * @param reason a description of what caused the exception
+     * @param cause a <code>Throwable</code> object that is to
+     *        be embedded in this <code>SOAPException</code> object
+     */
+    public SOAPException(String reason, Throwable cause) {
+        super(reason);
+        initCause(cause);
+    }
+
+    /**
+     * Constructs a <code>SOAPException</code> object initialized
+     * with the given <code>Throwable</code> object.
+     */
+    public SOAPException(Throwable cause) {
+        super(cause.toString());
+        initCause(cause);
+    }
+
+    /**
+     * Returns the detail message for this <code>SOAPException</code>
+     * object.
+     * <P>
+     * If there is an embedded <code>Throwable</code> object, and if the
+     * <code>SOAPException</code> object has no detail message of its
+     * own, this method will return the detail message from the embedded
+     * <code>Throwable</code> object.
+     *
+     * @return the error or warning message for this
+     *         <code>SOAPException</code> or, if it has none, the
+     *         message of the embedded <code>Throwable</code> object,
+     *         if there is one
+     */
+    public String getMessage() {
+        String message = super.getMessage();
+        if (message == null && cause != null) {
+            return cause.getMessage();
+        } else {
+            return message;
+        }
+    }
+
+    /**
+     * Returns the <code>Throwable</code> object embedded in this
+     * <code>SOAPException</code> if there is one. Otherwise, this method
+     * returns <code>null</code>.
+     *
+     * @return the embedded <code>Throwable</code> object or <code>null</code>
+     *         if there is none
+     */
+
+    public Throwable getCause() {
+        return cause;
+    }
+
+    /**
+     * Initializes the <code>cause</code> field of this <code>SOAPException</code>
+     * object with the given <code>Throwable</code> object.
+     * <P>
+     * This method can be called at most once.  It is generally called from
+     * within the constructor or immediately after the constructor has
+     * returned a new <code>SOAPException</code> object.
+     * If this <code>SOAPException</code> object was created with the
+     * constructor {@link #SOAPException(Throwable)} or
+     * {@link #SOAPException(String,Throwable)}, meaning that its
+     * <code>cause</code> field already has a value, this method cannot be
+     * called even once.
+     *
+     * @param  cause the <code>Throwable</code> object that caused this
+     *         <code>SOAPException</code> object to be thrown.  The value of this
+     *         parameter is saved for later retrieval by the
+     *         {@link #getCause()} method.  A <tt>null</tt> value is
+     *         permitted and indicates that the cause is nonexistent or
+     *         unknown.
+     * @return  a reference to this <code>SOAPException</code> instance
+     * @throws IllegalArgumentException if <code>cause</code> is this
+     *         <code>Throwable</code> object.  (A <code>Throwable</code> object
+     *         cannot be its own cause.)
+     * @throws IllegalStateException if the cause for this <code>SOAPException</code> object
+     *         has already been initialized
+     */
+    public synchronized Throwable initCause(Throwable cause) {
+        if (this.cause != null) {
+            throw new IllegalStateException("Can't override cause");
+        }
+        if (cause == this) {
+            throw new IllegalArgumentException("Self-causation not permitted");
+        }
+        this.cause = cause;
+
+        return this;
+    }
+}

@@ -1,85 +1,79 @@
-/*    */ package javax.security.auth.callback;
-/*    */ 
-/*    */ import java.io.Serializable;
-/*    */ import java.util.Locale;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class LanguageCallback
-/*    */   implements Callback, Serializable
-/*    */ {
-/*    */   private static final long serialVersionUID = 2019050433478903213L;
-/*    */   private Locale locale;
-/*    */   
-/*    */   public void setLocale(Locale paramLocale) {
-/* 63 */     this.locale = paramLocale;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Locale getLocale() {
-/* 77 */     return this.locale;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\security\auth\callback\LanguageCallback.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.security.auth.callback;
+
+import java.util.Locale;
+
+/**
+ * <p> Underlying security services instantiate and pass a
+ * {@code LanguageCallback} to the {@code handle}
+ * method of a {@code CallbackHandler} to retrieve the {@code Locale}
+ * used for localizing text.
+ *
+ * @see javax.security.auth.callback.CallbackHandler
+ */
+public class LanguageCallback implements Callback, java.io.Serializable {
+
+    private static final long serialVersionUID = 2019050433478903213L;
+
+    /**
+     * @serial
+     * @since 1.4
+     */
+    private Locale locale;
+
+    /**
+     * Construct a {@code LanguageCallback}.
+     */
+    public LanguageCallback() { }
+
+    /**
+     * Set the retrieved {@code Locale}.
+     *
+     * <p>
+     *
+     * @param locale the retrieved {@code Locale}.
+     *
+     * @see #getLocale
+     */
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
+    /**
+     * Get the retrieved {@code Locale}.
+     *
+     * <p>
+     *
+     * @return the retrieved {@code Locale}, or null
+     *          if no {@code Locale} could be retrieved.
+     *
+     * @see #setLocale
+     */
+    public Locale getLocale() {
+        return locale;
+    }
+}

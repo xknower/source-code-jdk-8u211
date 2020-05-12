@@ -1,1608 +1,1602 @@
-/*      */ package javax.swing.tree;
-/*      */ 
-/*      */ import java.awt.Rectangle;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.Hashtable;
-/*      */ import java.util.NoSuchElementException;
-/*      */ import java.util.Stack;
-/*      */ import javax.swing.event.TreeModelEvent;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class FixedHeightLayoutCache
-/*      */   extends AbstractLayoutCache
-/*      */ {
-/*      */   private FHTreeStateNode root;
-/*      */   private int rowCount;
-/*      */   private Rectangle boundsBuffer;
-/*      */   private Hashtable<TreePath, FHTreeStateNode> treePathMapping;
-/*      */   private SearchInfo info;
-/*      */   private Stack<Stack<TreePath>> tempStacks;
-/*      */   
-/*      */   public FixedHeightLayoutCache() {
-/*   80 */     this.tempStacks = new Stack<>();
-/*   81 */     this.boundsBuffer = new Rectangle();
-/*   82 */     this.treePathMapping = new Hashtable<>();
-/*   83 */     this.info = new SearchInfo();
-/*   84 */     setRowHeight(1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setModel(TreeModel paramTreeModel) {
-/*   93 */     super.setModel(paramTreeModel);
-/*   94 */     rebuild(false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRootVisible(boolean paramBoolean) {
-/*  105 */     if (isRootVisible() != paramBoolean) {
-/*  106 */       super.setRootVisible(paramBoolean);
-/*  107 */       if (this.root != null) {
-/*  108 */         if (paramBoolean) {
-/*  109 */           this.rowCount++;
-/*  110 */           this.root.adjustRowBy(1);
-/*      */         } else {
-/*      */           
-/*  113 */           this.rowCount--;
-/*  114 */           this.root.adjustRowBy(-1);
-/*      */         } 
-/*  116 */         visibleNodesChanged();
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRowHeight(int paramInt) {
-/*  128 */     if (paramInt <= 0)
-/*  129 */       throw new IllegalArgumentException("FixedHeightLayoutCache only supports row heights greater than 0"); 
-/*  130 */     if (getRowHeight() != paramInt) {
-/*  131 */       super.setRowHeight(paramInt);
-/*  132 */       visibleNodesChanged();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getRowCount() {
-/*  140 */     return this.rowCount;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void invalidatePathBounds(TreePath paramTreePath) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void invalidateSizes() {
-/*  158 */     visibleNodesChanged();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isExpanded(TreePath paramTreePath) {
-/*  165 */     if (paramTreePath != null) {
-/*  166 */       FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */       
-/*  168 */       return (fHTreeStateNode != null && fHTreeStateNode.isExpanded());
-/*      */     } 
-/*  170 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Rectangle getBounds(TreePath paramTreePath, Rectangle paramRectangle) {
-/*  181 */     if (paramTreePath == null) {
-/*  182 */       return null;
-/*      */     }
-/*  184 */     FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */     
-/*  186 */     if (fHTreeStateNode != null) {
-/*  187 */       return getBounds(fHTreeStateNode, -1, paramRectangle);
-/*      */     }
-/*      */     
-/*  190 */     TreePath treePath = paramTreePath.getParentPath();
-/*      */     
-/*  192 */     fHTreeStateNode = getNodeForPath(treePath, true, false);
-/*  193 */     if (fHTreeStateNode != null && fHTreeStateNode.isExpanded()) {
-/*      */       
-/*  195 */       int i = this.treeModel.getIndexOfChild(treePath.getLastPathComponent(), paramTreePath
-/*  196 */           .getLastPathComponent());
-/*      */       
-/*  198 */       if (i != -1)
-/*  199 */         return getBounds(fHTreeStateNode, i, paramRectangle); 
-/*      */     } 
-/*  201 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TreePath getPathForRow(int paramInt) {
-/*  209 */     if (paramInt >= 0 && paramInt < getRowCount() && 
-/*  210 */       this.root.getPathForRow(paramInt, getRowCount(), this.info)) {
-/*  211 */       return this.info.getPath();
-/*      */     }
-/*      */     
-/*  214 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getRowForPath(TreePath paramTreePath) {
-/*  223 */     if (paramTreePath == null || this.root == null) {
-/*  224 */       return -1;
-/*      */     }
-/*  226 */     FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */     
-/*  228 */     if (fHTreeStateNode != null) {
-/*  229 */       return fHTreeStateNode.getRow();
-/*      */     }
-/*  231 */     TreePath treePath = paramTreePath.getParentPath();
-/*      */     
-/*  233 */     fHTreeStateNode = getNodeForPath(treePath, true, false);
-/*  234 */     if (fHTreeStateNode != null && fHTreeStateNode.isExpanded()) {
-/*  235 */       return fHTreeStateNode.getRowToModelIndex(this.treeModel
-/*  236 */           .getIndexOfChild(treePath.getLastPathComponent(), paramTreePath
-/*  237 */             .getLastPathComponent()));
-/*      */     }
-/*  239 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TreePath getPathClosestTo(int paramInt1, int paramInt2) {
-/*  250 */     if (getRowCount() == 0) {
-/*  251 */       return null;
-/*      */     }
-/*  253 */     int i = getRowContainingYLocation(paramInt2);
-/*      */     
-/*  255 */     return getPathForRow(i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getVisibleChildCount(TreePath paramTreePath) {
-/*  262 */     FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */     
-/*  264 */     if (fHTreeStateNode == null)
-/*  265 */       return 0; 
-/*  266 */     return fHTreeStateNode.getTotalChildCount();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Enumeration<TreePath> getVisiblePathsFrom(TreePath paramTreePath) {
-/*  275 */     if (paramTreePath == null) {
-/*  276 */       return null;
-/*      */     }
-/*  278 */     FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */     
-/*  280 */     if (fHTreeStateNode != null) {
-/*  281 */       return new VisibleFHTreeStateNodeEnumeration(fHTreeStateNode);
-/*      */     }
-/*  283 */     TreePath treePath = paramTreePath.getParentPath();
-/*      */     
-/*  285 */     fHTreeStateNode = getNodeForPath(treePath, true, false);
-/*  286 */     if (fHTreeStateNode != null && fHTreeStateNode.isExpanded()) {
-/*  287 */       return new VisibleFHTreeStateNodeEnumeration(fHTreeStateNode, this.treeModel
-/*  288 */           .getIndexOfChild(treePath.getLastPathComponent(), paramTreePath
-/*  289 */             .getLastPathComponent()));
-/*      */     }
-/*  291 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setExpandedState(TreePath paramTreePath, boolean paramBoolean) {
-/*  299 */     if (paramBoolean) {
-/*  300 */       ensurePathIsExpanded(paramTreePath, true);
-/*  301 */     } else if (paramTreePath != null) {
-/*  302 */       TreePath treePath = paramTreePath.getParentPath();
-/*      */ 
-/*      */       
-/*  305 */       if (treePath != null) {
-/*  306 */         FHTreeStateNode fHTreeStateNode1 = getNodeForPath(treePath, false, true);
-/*      */         
-/*  308 */         if (fHTreeStateNode1 != null) {
-/*  309 */           fHTreeStateNode1.makeVisible();
-/*      */         }
-/*      */       } 
-/*  312 */       FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */ 
-/*      */       
-/*  315 */       if (fHTreeStateNode != null) {
-/*  316 */         fHTreeStateNode.collapse(true);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getExpandedState(TreePath paramTreePath) {
-/*  324 */     FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, true, false);
-/*      */     
-/*  326 */     return (fHTreeStateNode != null) ? ((fHTreeStateNode.isVisible() && fHTreeStateNode.isExpanded())) : false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void treeNodesChanged(TreeModelEvent paramTreeModelEvent) {
-/*  347 */     if (paramTreeModelEvent != null) {
-/*      */ 
-/*      */       
-/*  350 */       FHTreeStateNode fHTreeStateNode = getNodeForPath(SwingUtilities2.getTreePath(paramTreeModelEvent, getModel()), false, false);
-/*      */ 
-/*      */       
-/*  353 */       int[] arrayOfInt = paramTreeModelEvent.getChildIndices();
-/*      */ 
-/*      */ 
-/*      */       
-/*  357 */       if (fHTreeStateNode != null) {
-/*  358 */         int i; if (arrayOfInt != null && (i = arrayOfInt.length) > 0) {
-/*      */           
-/*  360 */           Object object = fHTreeStateNode.getUserObject();
-/*      */           
-/*  362 */           for (byte b = 0; b < i; b++) {
-/*      */             
-/*  364 */             FHTreeStateNode fHTreeStateNode1 = fHTreeStateNode.getChildAtModelIndex(arrayOfInt[b]);
-/*      */             
-/*  366 */             if (fHTreeStateNode1 != null) {
-/*  367 */               fHTreeStateNode1.setUserObject(this.treeModel.getChild(object, arrayOfInt[b]));
-/*      */             }
-/*      */           } 
-/*      */           
-/*  371 */           if (fHTreeStateNode.isVisible() && fHTreeStateNode.isExpanded()) {
-/*  372 */             visibleNodesChanged();
-/*      */           }
-/*      */         }
-/*  375 */         else if (fHTreeStateNode == this.root && fHTreeStateNode.isVisible() && fHTreeStateNode
-/*  376 */           .isExpanded()) {
-/*  377 */           visibleNodesChanged();
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void treeNodesInserted(TreeModelEvent paramTreeModelEvent) {
-/*  391 */     if (paramTreeModelEvent != null) {
-/*      */ 
-/*      */       
-/*  394 */       FHTreeStateNode fHTreeStateNode = getNodeForPath(SwingUtilities2.getTreePath(paramTreeModelEvent, getModel()), false, false);
-/*      */ 
-/*      */       
-/*  397 */       int[] arrayOfInt = paramTreeModelEvent.getChildIndices();
-/*      */       
-/*      */       int i;
-/*      */       
-/*  401 */       if (fHTreeStateNode != null && arrayOfInt != null && (i = arrayOfInt.length) > 0) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  405 */         boolean bool = (fHTreeStateNode.isVisible() && fHTreeStateNode.isExpanded()) ? true : false;
-/*      */         
-/*  407 */         for (byte b = 0; b < i; b++) {
-/*  408 */           fHTreeStateNode
-/*  409 */             .childInsertedAtModelIndex(arrayOfInt[b], bool);
-/*      */         }
-/*  411 */         if (bool && this.treeSelectionModel != null)
-/*  412 */           this.treeSelectionModel.resetRowSelection(); 
-/*  413 */         if (fHTreeStateNode.isVisible()) {
-/*  414 */           visibleNodesChanged();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void treeNodesRemoved(TreeModelEvent paramTreeModelEvent) {
-/*  430 */     if (paramTreeModelEvent != null) {
-/*      */ 
-/*      */       
-/*  433 */       TreePath treePath = SwingUtilities2.getTreePath(paramTreeModelEvent, getModel());
-/*      */       
-/*  435 */       FHTreeStateNode fHTreeStateNode = getNodeForPath(treePath, false, false);
-/*      */       
-/*  437 */       int[] arrayOfInt = paramTreeModelEvent.getChildIndices();
-/*      */       
-/*      */       int i;
-/*  440 */       if (fHTreeStateNode != null && arrayOfInt != null && (i = arrayOfInt.length) > 0) {
-/*      */         
-/*  442 */         Object[] arrayOfObject = paramTreeModelEvent.getChildren();
-/*      */ 
-/*      */         
-/*  445 */         boolean bool = (fHTreeStateNode.isVisible() && fHTreeStateNode.isExpanded()) ? true : false;
-/*      */         
-/*  447 */         for (int j = i - 1; j >= 0; j--) {
-/*  448 */           fHTreeStateNode
-/*  449 */             .removeChildAtModelIndex(arrayOfInt[j], bool);
-/*      */         }
-/*  451 */         if (bool) {
-/*  452 */           if (this.treeSelectionModel != null)
-/*  453 */             this.treeSelectionModel.resetRowSelection(); 
-/*  454 */           if (this.treeModel.getChildCount(fHTreeStateNode
-/*  455 */               .getUserObject()) == 0 && fHTreeStateNode
-/*  456 */             .isLeaf())
-/*      */           {
-/*  458 */             fHTreeStateNode.collapse(false);
-/*      */           }
-/*  460 */           visibleNodesChanged();
-/*      */         }
-/*  462 */         else if (fHTreeStateNode.isVisible()) {
-/*  463 */           visibleNodesChanged();
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void treeStructureChanged(TreeModelEvent paramTreeModelEvent) {
-/*  478 */     if (paramTreeModelEvent != null) {
-/*  479 */       TreePath treePath = SwingUtilities2.getTreePath(paramTreeModelEvent, getModel());
-/*      */       
-/*  481 */       FHTreeStateNode fHTreeStateNode = getNodeForPath(treePath, false, false);
-/*      */ 
-/*      */ 
-/*      */       
-/*  485 */       if (fHTreeStateNode == this.root || (fHTreeStateNode == null && ((treePath == null && this.treeModel != null && this.treeModel
-/*      */ 
-/*      */         
-/*  488 */         .getRoot() == null) || (treePath != null && treePath
-/*  489 */         .getPathCount() <= 1)))) {
-/*  490 */         rebuild(true);
-/*      */       }
-/*  492 */       else if (fHTreeStateNode != null) {
-/*      */ 
-/*      */         
-/*  495 */         FHTreeStateNode fHTreeStateNode1 = (FHTreeStateNode)fHTreeStateNode.getParent();
-/*      */         
-/*  497 */         boolean bool1 = fHTreeStateNode.isExpanded();
-/*  498 */         boolean bool2 = fHTreeStateNode.isVisible();
-/*      */         
-/*  500 */         int i = fHTreeStateNode1.getIndex(fHTreeStateNode);
-/*  501 */         fHTreeStateNode.collapse(false);
-/*  502 */         fHTreeStateNode1.remove(i);
-/*      */         
-/*  504 */         if (bool2 && bool1) {
-/*  505 */           int j = fHTreeStateNode.getRow();
-/*  506 */           fHTreeStateNode1.resetChildrenRowsFrom(j, i, fHTreeStateNode
-/*  507 */               .getChildIndex());
-/*  508 */           fHTreeStateNode = getNodeForPath(treePath, false, true);
-/*  509 */           fHTreeStateNode.expand();
-/*      */         } 
-/*  511 */         if (this.treeSelectionModel != null && bool2 && bool1)
-/*  512 */           this.treeSelectionModel.resetRowSelection(); 
-/*  513 */         if (bool2) {
-/*  514 */           visibleNodesChanged();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void visibleNodesChanged() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Rectangle getBounds(FHTreeStateNode paramFHTreeStateNode, int paramInt, Rectangle paramRectangle) {
-/*      */     boolean bool;
-/*      */     int i, j;
-/*      */     Object object;
-/*  539 */     if (paramInt == -1) {
-/*      */       
-/*  541 */       j = paramFHTreeStateNode.getRow();
-/*  542 */       object = paramFHTreeStateNode.getUserObject();
-/*  543 */       bool = paramFHTreeStateNode.isExpanded();
-/*  544 */       i = paramFHTreeStateNode.getLevel();
-/*      */     } else {
-/*      */       
-/*  547 */       j = paramFHTreeStateNode.getRowToModelIndex(paramInt);
-/*  548 */       object = this.treeModel.getChild(paramFHTreeStateNode.getUserObject(), paramInt);
-/*  549 */       bool = false;
-/*  550 */       i = paramFHTreeStateNode.getLevel() + 1;
-/*      */     } 
-/*      */     
-/*  553 */     Rectangle rectangle = getNodeDimensions(object, j, i, bool, this.boundsBuffer);
-/*      */ 
-/*      */     
-/*  556 */     if (rectangle == null) {
-/*  557 */       return null;
-/*      */     }
-/*  559 */     if (paramRectangle == null) {
-/*  560 */       paramRectangle = new Rectangle();
-/*      */     }
-/*  562 */     paramRectangle.x = rectangle.x;
-/*  563 */     paramRectangle.height = getRowHeight();
-/*  564 */     paramRectangle.y = j * paramRectangle.height;
-/*  565 */     paramRectangle.width = rectangle.width;
-/*  566 */     return paramRectangle;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void adjustRowCountBy(int paramInt) {
-/*  574 */     this.rowCount += paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addMapping(FHTreeStateNode paramFHTreeStateNode) {
-/*  581 */     this.treePathMapping.put(paramFHTreeStateNode.getTreePath(), paramFHTreeStateNode);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void removeMapping(FHTreeStateNode paramFHTreeStateNode) {
-/*  588 */     this.treePathMapping.remove(paramFHTreeStateNode.getTreePath());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private FHTreeStateNode getMapping(TreePath paramTreePath) {
-/*  596 */     return this.treePathMapping.get(paramTreePath);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void rebuild(boolean paramBoolean) {
-/*  605 */     this.treePathMapping.clear(); Object object;
-/*  606 */     if (this.treeModel != null && (object = this.treeModel.getRoot()) != null) {
-/*  607 */       this.root = createNodeForValue(object, 0);
-/*  608 */       this.root.path = new TreePath(object);
-/*  609 */       addMapping(this.root);
-/*  610 */       if (isRootVisible()) {
-/*  611 */         this.rowCount = 1;
-/*  612 */         this.root.row = 0;
-/*      */       } else {
-/*      */         
-/*  615 */         this.rowCount = 0;
-/*  616 */         this.root.row = -1;
-/*      */       } 
-/*  618 */       this.root.expand();
-/*      */     } else {
-/*      */       
-/*  621 */       this.root = null;
-/*  622 */       this.rowCount = 0;
-/*      */     } 
-/*  624 */     if (paramBoolean && this.treeSelectionModel != null) {
-/*  625 */       this.treeSelectionModel.clearSelection();
-/*      */     }
-/*  627 */     visibleNodesChanged();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int getRowContainingYLocation(int paramInt) {
-/*  636 */     if (getRowCount() == 0)
-/*  637 */       return -1; 
-/*  638 */     return Math.max(0, Math.min(getRowCount() - 1, paramInt / 
-/*  639 */           getRowHeight()));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean ensurePathIsExpanded(TreePath paramTreePath, boolean paramBoolean) {
-/*  650 */     if (paramTreePath != null) {
-/*      */       
-/*  652 */       if (this.treeModel.isLeaf(paramTreePath.getLastPathComponent())) {
-/*  653 */         paramTreePath = paramTreePath.getParentPath();
-/*  654 */         paramBoolean = true;
-/*      */       } 
-/*  656 */       if (paramTreePath != null) {
-/*  657 */         FHTreeStateNode fHTreeStateNode = getNodeForPath(paramTreePath, false, true);
-/*      */ 
-/*      */         
-/*  660 */         if (fHTreeStateNode != null) {
-/*  661 */           fHTreeStateNode.makeVisible();
-/*  662 */           if (paramBoolean)
-/*  663 */             fHTreeStateNode.expand(); 
-/*  664 */           return true;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*  668 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private FHTreeStateNode createNodeForValue(Object paramObject, int paramInt) {
-/*  675 */     return new FHTreeStateNode(paramObject, paramInt, -1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private FHTreeStateNode getNodeForPath(TreePath paramTreePath, boolean paramBoolean1, boolean paramBoolean2) {
-/*  686 */     if (paramTreePath != null) {
-/*      */       Stack<TreePath> stack;
-/*      */       
-/*  689 */       FHTreeStateNode fHTreeStateNode = getMapping(paramTreePath);
-/*  690 */       if (fHTreeStateNode != null) {
-/*  691 */         if (paramBoolean1 && !fHTreeStateNode.isVisible())
-/*  692 */           return null; 
-/*  693 */         return fHTreeStateNode;
-/*      */       } 
-/*  695 */       if (paramBoolean1) {
-/*  696 */         return null;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  701 */       if (this.tempStacks.size() == 0) {
-/*  702 */         stack = new Stack();
-/*      */       } else {
-/*      */         
-/*  705 */         stack = this.tempStacks.pop();
-/*      */       } 
-/*      */       
-/*      */       try {
-/*  709 */         stack.push(paramTreePath);
-/*  710 */         paramTreePath = paramTreePath.getParentPath();
-/*  711 */         fHTreeStateNode = null;
-/*  712 */         while (paramTreePath != null) {
-/*  713 */           fHTreeStateNode = getMapping(paramTreePath);
-/*  714 */           if (fHTreeStateNode != null) {
-/*      */ 
-/*      */             
-/*  717 */             while (fHTreeStateNode != null && stack.size() > 0) {
-/*  718 */               paramTreePath = stack.pop();
-/*  719 */               fHTreeStateNode = fHTreeStateNode.createChildFor(paramTreePath
-/*  720 */                   .getLastPathComponent());
-/*      */             } 
-/*  722 */             return fHTreeStateNode;
-/*      */           } 
-/*  724 */           stack.push(paramTreePath);
-/*  725 */           paramTreePath = paramTreePath.getParentPath();
-/*      */         } 
-/*      */       } finally {
-/*      */         
-/*  729 */         stack.removeAllElements();
-/*  730 */         this.tempStacks.push(stack);
-/*      */       } 
-/*      */       
-/*  733 */       return null;
-/*      */     } 
-/*  735 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private class FHTreeStateNode
-/*      */     extends DefaultMutableTreeNode
-/*      */   {
-/*      */     protected boolean isExpanded;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int childIndex;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int childCount;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int row;
-/*      */ 
-/*      */     
-/*      */     protected TreePath path;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public FHTreeStateNode(Object param1Object, int param1Int1, int param1Int2) {
-/*  764 */       super(param1Object);
-/*  765 */       this.childIndex = param1Int1;
-/*  766 */       this.row = param1Int2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setParent(MutableTreeNode param1MutableTreeNode) {
-/*  778 */       super.setParent(param1MutableTreeNode);
-/*  779 */       if (param1MutableTreeNode != null) {
-/*  780 */         this
-/*  781 */           .path = ((FHTreeStateNode)param1MutableTreeNode).getTreePath().pathByAddingChild(getUserObject());
-/*  782 */         FixedHeightLayoutCache.this.addMapping(this);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void remove(int param1Int) {
-/*  791 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getChildAt(param1Int);
-/*      */       
-/*  793 */       fHTreeStateNode.removeFromMapping();
-/*  794 */       super.remove(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setUserObject(Object param1Object) {
-/*  801 */       super.setUserObject(param1Object);
-/*  802 */       if (this.path != null) {
-/*  803 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/*      */         
-/*  805 */         if (fHTreeStateNode != null) {
-/*  806 */           resetChildrenPaths(fHTreeStateNode.getTreePath());
-/*      */         } else {
-/*  808 */           resetChildrenPaths((TreePath)null);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getChildIndex() {
-/*  819 */       return this.childIndex;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TreePath getTreePath() {
-/*  826 */       return this.path;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public FHTreeStateNode getChildAtModelIndex(int param1Int) {
-/*  836 */       for (int i = getChildCount() - 1; i >= 0; i--) {
-/*  837 */         if (((FHTreeStateNode)getChildAt(i)).childIndex == param1Int)
-/*  838 */           return (FHTreeStateNode)getChildAt(i); 
-/*  839 */       }  return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isVisible() {
-/*  847 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/*      */       
-/*  849 */       if (fHTreeStateNode == null)
-/*  850 */         return true; 
-/*  851 */       return (fHTreeStateNode.isExpanded() && fHTreeStateNode.isVisible());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getRow() {
-/*  858 */       return this.row;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getRowToModelIndex(int param1Int) {
-/*  867 */       int i = getRow() + 1;
-/*  868 */       int j = i;
-/*      */ 
-/*      */       
-/*  871 */       byte b = 0; int k = getChildCount();
-/*  872 */       for (; b < k; b++) {
-/*  873 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getChildAt(b);
-/*  874 */         if (fHTreeStateNode.childIndex >= param1Int) {
-/*  875 */           if (fHTreeStateNode.childIndex == param1Int)
-/*  876 */             return fHTreeStateNode.row; 
-/*  877 */           if (b == 0)
-/*  878 */             return getRow() + 1 + param1Int; 
-/*  879 */           return fHTreeStateNode.row - fHTreeStateNode.childIndex - param1Int;
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  883 */       return getRow() + 1 + getTotalChildCount() - this.childCount - param1Int;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getTotalChildCount() {
-/*  892 */       if (isExpanded()) {
-/*  893 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/*      */         
-/*      */         int i;
-/*  896 */         if (fHTreeStateNode != null && (i = fHTreeStateNode.getIndex(this)) + 1 < fHTreeStateNode
-/*  897 */           .getChildCount()) {
-/*      */ 
-/*      */ 
-/*      */           
-/*  901 */           FHTreeStateNode fHTreeStateNode1 = (FHTreeStateNode)fHTreeStateNode.getChildAt(i + 1);
-/*      */           
-/*  903 */           return fHTreeStateNode1.row - this.row - fHTreeStateNode1.childIndex - this.childIndex;
-/*      */         } 
-/*      */ 
-/*      */         
-/*  907 */         int j = this.childCount;
-/*      */         
-/*  909 */         for (int k = getChildCount() - 1; k >= 0; 
-/*  910 */           k--) {
-/*  911 */           j += ((FHTreeStateNode)getChildAt(k))
-/*  912 */             .getTotalChildCount();
-/*      */         }
-/*  914 */         return j;
-/*      */       } 
-/*      */       
-/*  917 */       return 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isExpanded() {
-/*  924 */       return this.isExpanded;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getVisibleLevel() {
-/*  931 */       if (FixedHeightLayoutCache.this.isRootVisible()) {
-/*  932 */         return getLevel();
-/*      */       }
-/*  934 */       return getLevel() - 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void resetChildrenPaths(TreePath param1TreePath) {
-/*  942 */       FixedHeightLayoutCache.this.removeMapping(this);
-/*  943 */       if (param1TreePath == null) {
-/*  944 */         this.path = new TreePath(getUserObject());
-/*      */       } else {
-/*  946 */         this.path = param1TreePath.pathByAddingChild(getUserObject());
-/*  947 */       }  FixedHeightLayoutCache.this.addMapping(this);
-/*  948 */       for (int i = getChildCount() - 1; i >= 0; i--) {
-/*  949 */         ((FHTreeStateNode)getChildAt(i))
-/*  950 */           .resetChildrenPaths(this.path);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void removeFromMapping() {
-/*  958 */       if (this.path != null) {
-/*  959 */         FixedHeightLayoutCache.this.removeMapping(this);
-/*  960 */         for (int i = getChildCount() - 1; i >= 0; i--) {
-/*  961 */           ((FHTreeStateNode)getChildAt(i)).removeFromMapping();
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected FHTreeStateNode createChildFor(Object param1Object) {
-/*      */       byte b;
-/*  972 */       int i = FixedHeightLayoutCache.this.treeModel.getIndexOfChild(getUserObject(), param1Object);
-/*      */       
-/*  974 */       if (i < 0) {
-/*  975 */         return null;
-/*      */       }
-/*      */       
-/*  978 */       FHTreeStateNode fHTreeStateNode = FixedHeightLayoutCache.this.createNodeForValue(param1Object, i);
-/*      */ 
-/*      */ 
-/*      */       
-/*  982 */       if (isVisible()) {
-/*  983 */         b = getRowToModelIndex(i);
-/*      */       } else {
-/*      */         
-/*  986 */         b = -1;
-/*      */       } 
-/*  988 */       fHTreeStateNode.row = b;
-/*  989 */       byte b1 = 0; int j = getChildCount();
-/*  990 */       for (; b1 < j; b1++) {
-/*  991 */         FHTreeStateNode fHTreeStateNode1 = (FHTreeStateNode)getChildAt(b1);
-/*  992 */         if (fHTreeStateNode1.childIndex > i) {
-/*  993 */           insert(fHTreeStateNode, b1);
-/*  994 */           return fHTreeStateNode;
-/*      */         } 
-/*      */       } 
-/*  997 */       add(fHTreeStateNode);
-/*  998 */       return fHTreeStateNode;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void adjustRowBy(int param1Int) {
-/* 1006 */       this.row += param1Int;
-/* 1007 */       if (this.isExpanded) {
-/* 1008 */         for (int i = getChildCount() - 1; i >= 0; 
-/* 1009 */           i--) {
-/* 1010 */           ((FHTreeStateNode)getChildAt(i)).adjustRowBy(param1Int);
-/*      */         }
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void adjustRowBy(int param1Int1, int param1Int2) {
-/* 1022 */       if (this.isExpanded)
-/*      */       {
-/* 1024 */         for (int i = getChildCount() - 1; i >= param1Int2; 
-/* 1025 */           i--) {
-/* 1026 */           ((FHTreeStateNode)getChildAt(i)).adjustRowBy(param1Int1);
-/*      */         }
-/*      */       }
-/* 1029 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/*      */       
-/* 1031 */       if (fHTreeStateNode != null) {
-/* 1032 */         fHTreeStateNode.adjustRowBy(param1Int1, fHTreeStateNode.getIndex(this) + 1);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void didExpand() {
-/* 1041 */       int i = setRowAndChildren(this.row);
-/* 1042 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/* 1043 */       int j = i - this.row - 1;
-/*      */       
-/* 1045 */       if (fHTreeStateNode != null) {
-/* 1046 */         fHTreeStateNode.adjustRowBy(j, fHTreeStateNode.getIndex(this) + 1);
-/*      */       }
-/* 1048 */       FixedHeightLayoutCache.this.adjustRowCountBy(j);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int setRowAndChildren(int param1Int) {
-/* 1057 */       this.row = param1Int;
-/*      */       
-/* 1059 */       if (!isExpanded()) {
-/* 1060 */         return this.row + 1;
-/*      */       }
-/* 1062 */       int i = this.row + 1;
-/* 1063 */       int j = 0;
-/*      */       
-/* 1065 */       int k = getChildCount();
-/*      */       
-/* 1067 */       for (byte b = 0; b < k; b++) {
-/* 1068 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getChildAt(b);
-/* 1069 */         i += fHTreeStateNode.childIndex - j;
-/* 1070 */         j = fHTreeStateNode.childIndex + 1;
-/* 1071 */         if (fHTreeStateNode.isExpanded) {
-/* 1072 */           i = fHTreeStateNode.setRowAndChildren(i);
-/*      */         } else {
-/*      */           
-/* 1075 */           fHTreeStateNode.row = i++;
-/*      */         } 
-/*      */       } 
-/* 1078 */       return i + this.childCount - j;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void resetChildrenRowsFrom(int param1Int1, int param1Int2, int param1Int3) {
-/* 1095 */       int i = param1Int1;
-/* 1096 */       int j = param1Int3;
-/*      */       
-/* 1098 */       int k = getChildCount();
-/*      */       
-/* 1100 */       for (int m = param1Int2; m < k; m++) {
-/* 1101 */         FHTreeStateNode fHTreeStateNode1 = (FHTreeStateNode)getChildAt(m);
-/* 1102 */         i += fHTreeStateNode1.childIndex - j;
-/* 1103 */         j = fHTreeStateNode1.childIndex + 1;
-/* 1104 */         if (fHTreeStateNode1.isExpanded) {
-/* 1105 */           i = fHTreeStateNode1.setRowAndChildren(i);
-/*      */         } else {
-/*      */           
-/* 1108 */           fHTreeStateNode1.row = i++;
-/*      */         } 
-/*      */       } 
-/* 1111 */       i += this.childCount - j;
-/* 1112 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/* 1113 */       if (fHTreeStateNode != null) {
-/* 1114 */         fHTreeStateNode.resetChildrenRowsFrom(i, fHTreeStateNode.getIndex(this) + 1, this.childIndex + 1);
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1118 */         FixedHeightLayoutCache.this.rowCount = i;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void makeVisible() {
-/* 1127 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/*      */       
-/* 1129 */       if (fHTreeStateNode != null) {
-/* 1130 */         fHTreeStateNode.expandParentAndReceiver();
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void expandParentAndReceiver() {
-/* 1138 */       FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getParent();
-/*      */       
-/* 1140 */       if (fHTreeStateNode != null)
-/* 1141 */         fHTreeStateNode.expandParentAndReceiver(); 
-/* 1142 */       expand();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void expand() {
-/* 1149 */       if (!this.isExpanded && !isLeaf()) {
-/* 1150 */         boolean bool = isVisible();
-/*      */         
-/* 1152 */         this.isExpanded = true;
-/* 1153 */         this.childCount = FixedHeightLayoutCache.this.treeModel.getChildCount(getUserObject());
-/*      */         
-/* 1155 */         if (bool) {
-/* 1156 */           didExpand();
-/*      */         }
-/*      */ 
-/*      */         
-/* 1160 */         if (bool && FixedHeightLayoutCache.this.treeSelectionModel != null) {
-/* 1161 */           FixedHeightLayoutCache.this.treeSelectionModel.resetRowSelection();
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void collapse(boolean param1Boolean) {
-/* 1171 */       if (this.isExpanded) {
-/* 1172 */         if (isVisible() && param1Boolean) {
-/* 1173 */           int i = getTotalChildCount();
-/*      */           
-/* 1175 */           this.isExpanded = false;
-/* 1176 */           FixedHeightLayoutCache.this.adjustRowCountBy(-i);
-/*      */ 
-/*      */           
-/* 1179 */           adjustRowBy(-i, 0);
-/*      */         } else {
-/*      */           
-/* 1182 */           this.isExpanded = false;
-/*      */         } 
-/* 1184 */         if (param1Boolean && isVisible() && FixedHeightLayoutCache.this.treeSelectionModel != null) {
-/* 1185 */           FixedHeightLayoutCache.this.treeSelectionModel.resetRowSelection();
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isLeaf() {
-/* 1193 */       TreeModel treeModel = FixedHeightLayoutCache.this.getModel();
-/*      */       
-/* 1195 */       return (treeModel != null) ? treeModel.isLeaf(getUserObject()) : true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void addNode(FHTreeStateNode param1FHTreeStateNode) {
-/* 1204 */       boolean bool = false;
-/* 1205 */       int i = param1FHTreeStateNode.getChildIndex();
-/*      */       
-/* 1207 */       int j = 0, k = getChildCount();
-/* 1208 */       for (; j < k; j++) {
-/* 1209 */         if (((FHTreeStateNode)getChildAt(j)).getChildIndex() > i) {
-/*      */           
-/* 1211 */           bool = true;
-/* 1212 */           insert(param1FHTreeStateNode, j);
-/* 1213 */           j = k;
-/*      */         } 
-/*      */       } 
-/* 1216 */       if (!bool) {
-/* 1217 */         add(param1FHTreeStateNode);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void removeChildAtModelIndex(int param1Int, boolean param1Boolean) {
-/* 1227 */       FHTreeStateNode fHTreeStateNode = getChildAtModelIndex(param1Int);
-/*      */       
-/* 1229 */       if (fHTreeStateNode != null) {
-/* 1230 */         int i = fHTreeStateNode.getRow();
-/* 1231 */         int j = getIndex(fHTreeStateNode);
-/*      */         
-/* 1233 */         fHTreeStateNode.collapse(false);
-/* 1234 */         remove(j);
-/* 1235 */         adjustChildIndexs(j, -1);
-/* 1236 */         this.childCount--;
-/* 1237 */         if (param1Boolean)
-/*      */         {
-/* 1239 */           resetChildrenRowsFrom(i, j, param1Int);
-/*      */         }
-/*      */       } else {
-/*      */         
-/* 1243 */         int i = getChildCount();
-/*      */ 
-/*      */         
-/* 1246 */         for (byte b = 0; b < i; b++) {
-/* 1247 */           FHTreeStateNode fHTreeStateNode1 = (FHTreeStateNode)getChildAt(b);
-/* 1248 */           if (fHTreeStateNode1.childIndex >= param1Int) {
-/* 1249 */             if (param1Boolean) {
-/* 1250 */               adjustRowBy(-1, b);
-/* 1251 */               FixedHeightLayoutCache.this.adjustRowCountBy(-1);
-/*      */             } 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1256 */             for (; b < i; b++) {
-/* 1257 */               ((FHTreeStateNode)getChildAt(b)).childIndex--;
-/*      */             }
-/* 1259 */             this.childCount--;
-/*      */             
-/*      */             return;
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 1265 */         if (param1Boolean) {
-/* 1266 */           adjustRowBy(-1, i);
-/* 1267 */           FixedHeightLayoutCache.this.adjustRowCountBy(-1);
-/*      */         } 
-/* 1269 */         this.childCount--;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void adjustChildIndexs(int param1Int1, int param1Int2) {
-/* 1278 */       int i = param1Int1, j = getChildCount();
-/* 1279 */       for (; i < j; i++) {
-/* 1280 */         ((FHTreeStateNode)getChildAt(i)).childIndex += param1Int2;
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void childInsertedAtModelIndex(int param1Int, boolean param1Boolean) {
-/* 1292 */       int i = getChildCount();
-/*      */       
-/* 1294 */       for (byte b = 0; b < i; b++) {
-/* 1295 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getChildAt(b);
-/* 1296 */         if (fHTreeStateNode.childIndex >= param1Int) {
-/* 1297 */           if (param1Boolean) {
-/* 1298 */             adjustRowBy(1, b);
-/* 1299 */             FixedHeightLayoutCache.this.adjustRowCountBy(1);
-/*      */           } 
-/*      */ 
-/*      */           
-/* 1303 */           for (; b < i; b++)
-/* 1304 */             ((FHTreeStateNode)getChildAt(b)).childIndex++; 
-/* 1305 */           this.childCount++;
-/*      */           
-/*      */           return;
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1311 */       if (param1Boolean) {
-/* 1312 */         adjustRowBy(1, i);
-/* 1313 */         FixedHeightLayoutCache.this.adjustRowCountBy(1);
-/*      */       } 
-/* 1315 */       this.childCount++;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected boolean getPathForRow(int param1Int1, int param1Int2, FixedHeightLayoutCache.SearchInfo param1SearchInfo) {
-/* 1327 */       if (this.row == param1Int1) {
-/* 1328 */         param1SearchInfo.node = this;
-/* 1329 */         param1SearchInfo.isNodeParentNode = false;
-/* 1330 */         param1SearchInfo.childIndex = this.childIndex;
-/* 1331 */         return true;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1335 */       FHTreeStateNode fHTreeStateNode = null;
-/*      */       
-/* 1337 */       int i = 0, j = getChildCount();
-/* 1338 */       for (; i < j; i++) {
-/* 1339 */         FHTreeStateNode fHTreeStateNode1 = (FHTreeStateNode)getChildAt(i);
-/* 1340 */         if (fHTreeStateNode1.row > param1Int1) {
-/* 1341 */           if (i == 0) {
-/*      */             
-/* 1343 */             param1SearchInfo.node = this;
-/* 1344 */             param1SearchInfo.isNodeParentNode = true;
-/* 1345 */             param1SearchInfo.childIndex = param1Int1 - this.row - 1;
-/* 1346 */             return true;
-/*      */           } 
-/*      */ 
-/*      */           
-/* 1350 */           int k = 1 + fHTreeStateNode1.row - fHTreeStateNode1.childIndex - fHTreeStateNode.childIndex;
-/*      */ 
-/*      */           
-/* 1353 */           if (param1Int1 < k) {
-/* 1354 */             return fHTreeStateNode.getPathForRow(param1Int1, k, param1SearchInfo);
-/*      */           }
-/*      */ 
-/*      */           
-/* 1358 */           param1SearchInfo.node = this;
-/* 1359 */           param1SearchInfo.isNodeParentNode = true;
-/* 1360 */           param1SearchInfo.childIndex = param1Int1 - k + fHTreeStateNode.childIndex + 1;
-/*      */           
-/* 1362 */           return true;
-/*      */         } 
-/*      */         
-/* 1365 */         fHTreeStateNode = fHTreeStateNode1;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1370 */       if (fHTreeStateNode != null) {
-/* 1371 */         i = param1Int2 - this.childCount - fHTreeStateNode.childIndex + 1;
-/*      */ 
-/*      */         
-/* 1374 */         if (param1Int1 < i) {
-/* 1375 */           return fHTreeStateNode.getPathForRow(param1Int1, i, param1SearchInfo);
-/*      */         }
-/*      */         
-/* 1378 */         param1SearchInfo.node = this;
-/* 1379 */         param1SearchInfo.isNodeParentNode = true;
-/* 1380 */         param1SearchInfo.childIndex = param1Int1 - i + fHTreeStateNode.childIndex + 1;
-/*      */         
-/* 1382 */         return true;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1386 */       i = param1Int1 - this.row - 1;
-/*      */       
-/* 1388 */       if (i >= this.childCount) {
-/* 1389 */         return false;
-/*      */       }
-/* 1391 */       param1SearchInfo.node = this;
-/* 1392 */       param1SearchInfo.isNodeParentNode = true;
-/* 1393 */       param1SearchInfo.childIndex = i;
-/* 1394 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int getCountTo(int param1Int) {
-/* 1404 */       int i = param1Int + 1;
-/*      */       
-/* 1406 */       int j = 0, k = getChildCount();
-/* 1407 */       for (; j < k; j++) {
-/* 1408 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getChildAt(j);
-/* 1409 */         if (fHTreeStateNode.childIndex >= param1Int) {
-/* 1410 */           j = k;
-/*      */         } else {
-/* 1412 */           i += fHTreeStateNode.getTotalChildCount();
-/*      */         } 
-/* 1414 */       }  if (this.parent != null)
-/* 1415 */         return i + ((FHTreeStateNode)getParent())
-/* 1416 */           .getCountTo(this.childIndex); 
-/* 1417 */       if (!FixedHeightLayoutCache.this.isRootVisible())
-/* 1418 */         return i - 1; 
-/* 1419 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int getNumExpandedChildrenTo(int param1Int) {
-/* 1430 */       int i = param1Int;
-/*      */       
-/* 1432 */       byte b = 0; int j = getChildCount();
-/* 1433 */       for (; b < j; b++) {
-/* 1434 */         FHTreeStateNode fHTreeStateNode = (FHTreeStateNode)getChildAt(b);
-/* 1435 */         if (fHTreeStateNode.childIndex >= param1Int) {
-/* 1436 */           return i;
-/*      */         }
-/* 1438 */         i += fHTreeStateNode.getTotalChildCount();
-/*      */       } 
-/*      */       
-/* 1441 */       return i;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     protected void didAdjustTree() {}
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class SearchInfo
-/*      */   {
-/*      */     protected FixedHeightLayoutCache.FHTreeStateNode node;
-/*      */     
-/*      */     protected boolean isNodeParentNode;
-/*      */     
-/*      */     protected int childIndex;
-/*      */ 
-/*      */     
-/*      */     private SearchInfo() {}
-/*      */ 
-/*      */     
-/*      */     protected TreePath getPath() {
-/* 1462 */       if (this.node == null) {
-/* 1463 */         return null;
-/*      */       }
-/* 1465 */       if (this.isNodeParentNode) {
-/* 1466 */         return this.node.getTreePath().pathByAddingChild(FixedHeightLayoutCache.this.treeModel
-/* 1467 */             .getChild(this.node.getUserObject(), this.childIndex));
-/*      */       }
-/* 1469 */       return this.node.path;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private class VisibleFHTreeStateNodeEnumeration
-/*      */     implements Enumeration<TreePath>
-/*      */   {
-/*      */     protected FixedHeightLayoutCache.FHTreeStateNode parent;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int nextIndex;
-/*      */ 
-/*      */     
-/*      */     protected int childCount;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected VisibleFHTreeStateNodeEnumeration(FixedHeightLayoutCache.FHTreeStateNode param1FHTreeStateNode) {
-/* 1491 */       this(param1FHTreeStateNode, -1);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     protected VisibleFHTreeStateNodeEnumeration(FixedHeightLayoutCache.FHTreeStateNode param1FHTreeStateNode, int param1Int) {
-/* 1496 */       this.parent = param1FHTreeStateNode;
-/* 1497 */       this.nextIndex = param1Int;
-/* 1498 */       this.childCount = FixedHeightLayoutCache.this.treeModel.getChildCount(this.parent
-/* 1499 */           .getUserObject());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean hasMoreElements() {
-/* 1506 */       return (this.parent != null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TreePath nextElement() {
-/*      */       TreePath treePath;
-/* 1513 */       if (!hasMoreElements()) {
-/* 1514 */         throw new NoSuchElementException("No more visible paths");
-/*      */       }
-/*      */ 
-/*      */       
-/* 1518 */       if (this.nextIndex == -1) {
-/* 1519 */         treePath = this.parent.getTreePath();
-/*      */       } else {
-/* 1521 */         FixedHeightLayoutCache.FHTreeStateNode fHTreeStateNode = this.parent.getChildAtModelIndex(this.nextIndex);
-/*      */         
-/* 1523 */         if (fHTreeStateNode == null) {
-/*      */           
-/* 1525 */           treePath = this.parent.getTreePath().pathByAddingChild(FixedHeightLayoutCache.this.treeModel.getChild(this.parent.getUserObject(), this.nextIndex));
-/*      */         } else {
-/*      */           
-/* 1528 */           treePath = fHTreeStateNode.getTreePath();
-/*      */         } 
-/* 1530 */       }  updateNextObject();
-/* 1531 */       return treePath;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void updateNextObject() {
-/* 1539 */       if (!updateNextIndex()) {
-/* 1540 */         findNextValidParent();
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected boolean findNextValidParent() {
-/* 1549 */       if (this.parent == FixedHeightLayoutCache.this.root) {
-/*      */         
-/* 1551 */         this.parent = null;
-/* 1552 */         return false;
-/*      */       } 
-/* 1554 */       while (this.parent != null) {
-/*      */         
-/* 1556 */         FixedHeightLayoutCache.FHTreeStateNode fHTreeStateNode = (FixedHeightLayoutCache.FHTreeStateNode)this.parent.getParent();
-/*      */         
-/* 1558 */         if (fHTreeStateNode != null) {
-/* 1559 */           this.nextIndex = this.parent.childIndex;
-/* 1560 */           this.parent = fHTreeStateNode;
-/* 1561 */           this
-/* 1562 */             .childCount = FixedHeightLayoutCache.this.treeModel.getChildCount(this.parent.getUserObject());
-/* 1563 */           if (updateNextIndex())
-/* 1564 */             return true; 
-/*      */           continue;
-/*      */         } 
-/* 1567 */         this.parent = null;
-/*      */       } 
-/* 1569 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected boolean updateNextIndex() {
-/* 1579 */       if (this.nextIndex == -1 && !this.parent.isExpanded()) {
-/* 1580 */         return false;
-/*      */       }
-/*      */ 
-/*      */       
-/* 1584 */       if (this.childCount == 0) {
-/* 1585 */         return false;
-/*      */       }
-/*      */       
-/* 1588 */       if (++this.nextIndex >= this.childCount) {
-/* 1589 */         return false;
-/*      */       }
-/*      */       
-/* 1592 */       FixedHeightLayoutCache.FHTreeStateNode fHTreeStateNode = this.parent.getChildAtModelIndex(this.nextIndex);
-/*      */       
-/* 1594 */       if (fHTreeStateNode != null && fHTreeStateNode.isExpanded()) {
-/* 1595 */         this.parent = fHTreeStateNode;
-/* 1596 */         this.nextIndex = -1;
-/* 1597 */         this.childCount = FixedHeightLayoutCache.this.treeModel.getChildCount(fHTreeStateNode.getUserObject());
-/*      */       } 
-/* 1599 */       return true;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\tree\FixedHeightLayoutCache.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.tree;
+
+import javax.swing.event.TreeModelEvent;
+import java.awt.Rectangle;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.NoSuchElementException;
+import java.util.Stack;
+
+import sun.swing.SwingUtilities2;
+
+/**
+ * NOTE: This will become more open in a future release.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Scott Violet
+ */
+
+public class FixedHeightLayoutCache extends AbstractLayoutCache {
+    /** Root node. */
+    private FHTreeStateNode    root;
+
+    /** Number of rows currently visible. */
+    private int                rowCount;
+
+    /**
+     * Used in getting sizes for nodes to avoid creating a new Rectangle
+     * every time a size is needed.
+     */
+    private Rectangle          boundsBuffer;
+
+    /**
+     * Maps from TreePath to a FHTreeStateNode.
+     */
+    private Hashtable<TreePath, FHTreeStateNode> treePathMapping;
+
+    /**
+     * Used for getting path/row information.
+     */
+    private SearchInfo         info;
+
+    private Stack<Stack<TreePath>> tempStacks;
+
+
+    public FixedHeightLayoutCache() {
+        super();
+        tempStacks = new Stack<Stack<TreePath>>();
+        boundsBuffer = new Rectangle();
+        treePathMapping = new Hashtable<TreePath, FHTreeStateNode>();
+        info = new SearchInfo();
+        setRowHeight(1);
+    }
+
+    /**
+     * Sets the TreeModel that will provide the data.
+     *
+     * @param newModel the TreeModel that is to provide the data
+     */
+    public void setModel(TreeModel newModel) {
+        super.setModel(newModel);
+        rebuild(false);
+    }
+
+    /**
+     * Determines whether or not the root node from
+     * the TreeModel is visible.
+     *
+     * @param rootVisible true if the root node of the tree is to be displayed
+     * @see #rootVisible
+     */
+    public void setRootVisible(boolean rootVisible) {
+        if(isRootVisible() != rootVisible) {
+            super.setRootVisible(rootVisible);
+            if(root != null) {
+                if(rootVisible) {
+                    rowCount++;
+                    root.adjustRowBy(1);
+                }
+                else {
+                    rowCount--;
+                    root.adjustRowBy(-1);
+                }
+                visibleNodesChanged();
+            }
+        }
+    }
+
+    /**
+     * Sets the height of each cell. If rowHeight is less than or equal to
+     * 0 this will throw an IllegalArgumentException.
+     *
+     * @param rowHeight the height of each cell, in pixels
+     */
+    public void setRowHeight(int rowHeight) {
+        if(rowHeight <= 0)
+            throw new IllegalArgumentException("FixedHeightLayoutCache only supports row heights greater than 0");
+        if(getRowHeight() != rowHeight) {
+            super.setRowHeight(rowHeight);
+            visibleNodesChanged();
+        }
+    }
+
+    /**
+     * Returns the number of visible rows.
+     */
+    public int getRowCount() {
+        return rowCount;
+    }
+
+    /**
+     * Does nothing, FixedHeightLayoutCache doesn't cache width, and that
+     * is all that could change.
+     */
+    public void invalidatePathBounds(TreePath path) {
+    }
+
+
+    /**
+     * Informs the TreeState that it needs to recalculate all the sizes
+     * it is referencing.
+     */
+    public void invalidateSizes() {
+        // Nothing to do here, rowHeight still same, which is all
+        // this is interested in, visible region may have changed though.
+        visibleNodesChanged();
+    }
+
+    /**
+      * Returns true if the value identified by row is currently expanded.
+      */
+    public boolean isExpanded(TreePath path) {
+        if(path != null) {
+            FHTreeStateNode     lastNode = getNodeForPath(path, true, false);
+
+            return (lastNode != null && lastNode.isExpanded());
+        }
+        return false;
+    }
+
+    /**
+     * Returns a rectangle giving the bounds needed to draw path.
+     *
+     * @param path     a TreePath specifying a node
+     * @param placeIn  a Rectangle object giving the available space
+     * @return a Rectangle object specifying the space to be used
+     */
+    public Rectangle getBounds(TreePath path, Rectangle placeIn) {
+        if(path == null)
+            return null;
+
+        FHTreeStateNode      node = getNodeForPath(path, true, false);
+
+        if(node != null)
+            return getBounds(node, -1, placeIn);
+
+        // node hasn't been created yet.
+        TreePath       parentPath = path.getParentPath();
+
+        node = getNodeForPath(parentPath, true, false);
+        if (node != null && node.isExpanded()) {
+            int              childIndex = treeModel.getIndexOfChild
+                                 (parentPath.getLastPathComponent(),
+                                  path.getLastPathComponent());
+
+            if(childIndex != -1)
+                return getBounds(node, childIndex, placeIn);
+        }
+        return null;
+    }
+
+    /**
+      * Returns the path for passed in row.  If row is not visible
+      * null is returned.
+      */
+    public TreePath getPathForRow(int row) {
+        if(row >= 0 && row < getRowCount()) {
+            if(root.getPathForRow(row, getRowCount(), info)) {
+                return info.getPath();
+            }
+        }
+        return null;
+    }
+
+    /**
+      * Returns the row that the last item identified in path is visible
+      * at.  Will return -1 if any of the elements in path are not
+      * currently visible.
+      */
+    public int getRowForPath(TreePath path) {
+        if(path == null || root == null)
+            return -1;
+
+        FHTreeStateNode         node = getNodeForPath(path, true, false);
+
+        if(node != null)
+            return node.getRow();
+
+        TreePath       parentPath = path.getParentPath();
+
+        node = getNodeForPath(parentPath, true, false);
+        if(node != null && node.isExpanded()) {
+            return node.getRowToModelIndex(treeModel.getIndexOfChild
+                                           (parentPath.getLastPathComponent(),
+                                            path.getLastPathComponent()));
+        }
+        return -1;
+    }
+
+    /**
+      * Returns the path to the node that is closest to x,y.  If
+      * there is nothing currently visible this will return null, otherwise
+      * it'll always return a valid path.  If you need to test if the
+      * returned object is exactly at x, y you should get the bounds for
+      * the returned path and test x, y against that.
+      */
+    public TreePath getPathClosestTo(int x, int y) {
+        if(getRowCount() == 0)
+            return null;
+
+        int                row = getRowContainingYLocation(y);
+
+        return getPathForRow(row);
+    }
+
+    /**
+     * Returns the number of visible children for row.
+     */
+    public int getVisibleChildCount(TreePath path) {
+        FHTreeStateNode         node = getNodeForPath(path, true, false);
+
+        if(node == null)
+            return 0;
+        return node.getTotalChildCount();
+    }
+
+    /**
+     * Returns an Enumerator that increments over the visible paths
+     * starting at the passed in location. The ordering of the enumeration
+     * is based on how the paths are displayed.
+     */
+    public Enumeration<TreePath> getVisiblePathsFrom(TreePath path) {
+        if(path == null)
+            return null;
+
+        FHTreeStateNode         node = getNodeForPath(path, true, false);
+
+        if(node != null) {
+            return new VisibleFHTreeStateNodeEnumeration(node);
+        }
+        TreePath            parentPath = path.getParentPath();
+
+        node = getNodeForPath(parentPath, true, false);
+        if(node != null && node.isExpanded()) {
+            return new VisibleFHTreeStateNodeEnumeration(node,
+                  treeModel.getIndexOfChild(parentPath.getLastPathComponent(),
+                                            path.getLastPathComponent()));
+        }
+        return null;
+    }
+
+    /**
+     * Marks the path <code>path</code> expanded state to
+     * <code>isExpanded</code>.
+     */
+    public void setExpandedState(TreePath path, boolean isExpanded) {
+        if(isExpanded)
+            ensurePathIsExpanded(path, true);
+        else if(path != null) {
+            TreePath              parentPath = path.getParentPath();
+
+            // YECK! Make the parent expanded.
+            if(parentPath != null) {
+                FHTreeStateNode     parentNode = getNodeForPath(parentPath,
+                                                                false, true);
+                if(parentNode != null)
+                    parentNode.makeVisible();
+            }
+            // And collapse the child.
+            FHTreeStateNode         childNode = getNodeForPath(path, true,
+                                                               false);
+
+            if(childNode != null)
+                childNode.collapse(true);
+        }
+    }
+
+    /**
+     * Returns true if the path is expanded, and visible.
+     */
+    public boolean getExpandedState(TreePath path) {
+        FHTreeStateNode       node = getNodeForPath(path, true, false);
+
+        return (node != null) ? (node.isVisible() && node.isExpanded()) :
+                                 false;
+    }
+
+    //
+    // TreeModelListener methods
+    //
+
+    /**
+     * <p>Invoked after a node (or a set of siblings) has changed in some
+     * way. The node(s) have not changed locations in the tree or
+     * altered their children arrays, but other attributes have
+     * changed and may affect presentation. Example: the name of a
+     * file has changed, but it is in the same location in the file
+     * system.</p>
+     *
+     * <p>e.path() returns the path the parent of the changed node(s).</p>
+     *
+     * <p>e.childIndices() returns the index(es) of the changed node(s).</p>
+     */
+    public void treeNodesChanged(TreeModelEvent e) {
+        if(e != null) {
+            int                 changedIndexs[];
+            FHTreeStateNode     changedParent = getNodeForPath
+                                  (SwingUtilities2.getTreePath(e, getModel()), false, false);
+            int                 maxCounter;
+
+            changedIndexs = e.getChildIndices();
+            /* Only need to update the children if the node has been
+               expanded once. */
+            // PENDING(scott): make sure childIndexs is sorted!
+            if (changedParent != null) {
+                if (changedIndexs != null &&
+                    (maxCounter = changedIndexs.length) > 0) {
+                    Object       parentValue = changedParent.getUserObject();
+
+                    for(int counter = 0; counter < maxCounter; counter++) {
+                        FHTreeStateNode    child = changedParent.
+                                 getChildAtModelIndex(changedIndexs[counter]);
+
+                        if(child != null) {
+                            child.setUserObject(treeModel.getChild(parentValue,
+                                                     changedIndexs[counter]));
+                        }
+                    }
+                    if(changedParent.isVisible() && changedParent.isExpanded())
+                        visibleNodesChanged();
+                }
+                // Null for root indicates it changed.
+                else if (changedParent == root && changedParent.isVisible() &&
+                         changedParent.isExpanded()) {
+                    visibleNodesChanged();
+                }
+            }
+        }
+    }
+
+    /**
+     * <p>Invoked after nodes have been inserted into the tree.</p>
+     *
+     * <p>e.path() returns the parent of the new nodes
+     * <p>e.childIndices() returns the indices of the new nodes in
+     * ascending order.
+     */
+    public void treeNodesInserted(TreeModelEvent e) {
+        if(e != null) {
+            int                 changedIndexs[];
+            FHTreeStateNode     changedParent = getNodeForPath
+                                  (SwingUtilities2.getTreePath(e, getModel()), false, false);
+            int                 maxCounter;
+
+            changedIndexs = e.getChildIndices();
+            /* Only need to update the children if the node has been
+               expanded once. */
+            // PENDING(scott): make sure childIndexs is sorted!
+            if(changedParent != null && changedIndexs != null &&
+               (maxCounter = changedIndexs.length) > 0) {
+                boolean          isVisible =
+                    (changedParent.isVisible() &&
+                     changedParent.isExpanded());
+
+                for(int counter = 0; counter < maxCounter; counter++) {
+                    changedParent.childInsertedAtModelIndex
+                        (changedIndexs[counter], isVisible);
+                }
+                if(isVisible && treeSelectionModel != null)
+                    treeSelectionModel.resetRowSelection();
+                if(changedParent.isVisible())
+                    this.visibleNodesChanged();
+            }
+        }
+    }
+
+    /**
+     * <p>Invoked after nodes have been removed from the tree.  Note that
+     * if a subtree is removed from the tree, this method may only be
+     * invoked once for the root of the removed subtree, not once for
+     * each individual set of siblings removed.</p>
+     *
+     * <p>e.path() returns the former parent of the deleted nodes.</p>
+     *
+     * <p>e.childIndices() returns the indices the nodes had before they were deleted in ascending order.</p>
+     */
+    public void treeNodesRemoved(TreeModelEvent e) {
+        if(e != null) {
+            int                  changedIndexs[];
+            int                  maxCounter;
+            TreePath             parentPath = SwingUtilities2.getTreePath(e, getModel());
+            FHTreeStateNode      changedParentNode = getNodeForPath
+                                       (parentPath, false, false);
+
+            changedIndexs = e.getChildIndices();
+            // PENDING(scott): make sure that changedIndexs are sorted in
+            // ascending order.
+            if(changedParentNode != null && changedIndexs != null &&
+               (maxCounter = changedIndexs.length) > 0) {
+                Object[]           children = e.getChildren();
+                boolean            isVisible =
+                    (changedParentNode.isVisible() &&
+                     changedParentNode.isExpanded());
+
+                for(int counter = maxCounter - 1; counter >= 0; counter--) {
+                    changedParentNode.removeChildAtModelIndex
+                                     (changedIndexs[counter], isVisible);
+                }
+                if(isVisible) {
+                    if(treeSelectionModel != null)
+                        treeSelectionModel.resetRowSelection();
+                    if (treeModel.getChildCount(changedParentNode.
+                                                getUserObject()) == 0 &&
+                                  changedParentNode.isLeaf()) {
+                        // Node has become a leaf, collapse it.
+                        changedParentNode.collapse(false);
+                    }
+                    visibleNodesChanged();
+                }
+                else if(changedParentNode.isVisible())
+                    visibleNodesChanged();
+            }
+        }
+    }
+
+    /**
+     * <p>Invoked after the tree has drastically changed structure from a
+     * given node down.  If the path returned by e.getPath() is of length
+     * one and the first element does not identify the current root node
+     * the first element should become the new root of the tree.
+     *
+     * <p>e.path() holds the path to the node.</p>
+     * <p>e.childIndices() returns null.</p>
+     */
+    public void treeStructureChanged(TreeModelEvent e) {
+        if(e != null) {
+            TreePath          changedPath = SwingUtilities2.getTreePath(e, getModel());
+            FHTreeStateNode   changedNode = getNodeForPath
+                                                (changedPath, false, false);
+
+            // Check if root has changed, either to a null root, or
+            // to an entirely new root.
+            if (changedNode == root ||
+                (changedNode == null &&
+                 ((changedPath == null && treeModel != null &&
+                   treeModel.getRoot() == null) ||
+                  (changedPath != null && changedPath.getPathCount() <= 1)))) {
+                rebuild(true);
+            }
+            else if(changedNode != null) {
+                boolean             wasExpanded, wasVisible;
+                FHTreeStateNode     parent = (FHTreeStateNode)
+                                              changedNode.getParent();
+
+                wasExpanded = changedNode.isExpanded();
+                wasVisible = changedNode.isVisible();
+
+                int index = parent.getIndex(changedNode);
+                changedNode.collapse(false);
+                parent.remove(index);
+
+                if(wasVisible && wasExpanded) {
+                    int row = changedNode.getRow();
+                    parent.resetChildrenRowsFrom(row, index,
+                                                 changedNode.getChildIndex());
+                    changedNode = getNodeForPath(changedPath, false, true);
+                    changedNode.expand();
+                }
+                if(treeSelectionModel != null && wasVisible && wasExpanded)
+                    treeSelectionModel.resetRowSelection();
+                if(wasVisible)
+                    this.visibleNodesChanged();
+            }
+        }
+    }
+
+
+    //
+    // Local methods
+    //
+
+    private void visibleNodesChanged() {
+    }
+
+    /**
+     * Returns the bounds for the given node. If <code>childIndex</code>
+     * is -1, the bounds of <code>parent</code> are returned, otherwise
+     * the bounds of the node at <code>childIndex</code> are returned.
+     */
+    private Rectangle getBounds(FHTreeStateNode parent, int childIndex,
+                                  Rectangle placeIn) {
+        boolean              expanded;
+        int                  level;
+        int                  row;
+        Object               value;
+
+        if(childIndex == -1) {
+            // Getting bounds for parent
+            row = parent.getRow();
+            value = parent.getUserObject();
+            expanded = parent.isExpanded();
+            level = parent.getLevel();
+        }
+        else {
+            row = parent.getRowToModelIndex(childIndex);
+            value = treeModel.getChild(parent.getUserObject(), childIndex);
+            expanded = false;
+            level = parent.getLevel() + 1;
+        }
+
+        Rectangle      bounds = getNodeDimensions(value, row, level,
+                                                  expanded, boundsBuffer);
+        // No node dimensions, bail.
+        if(bounds == null)
+            return null;
+
+        if(placeIn == null)
+            placeIn = new Rectangle();
+
+        placeIn.x = bounds.x;
+        placeIn.height = getRowHeight();
+        placeIn.y = row * placeIn.height;
+        placeIn.width = bounds.width;
+        return placeIn;
+    }
+
+    /**
+     * Adjust the large row count of the AbstractTreeUI the receiver was
+     * created with.
+     */
+    private void adjustRowCountBy(int changeAmount) {
+        rowCount += changeAmount;
+    }
+
+    /**
+     * Adds a mapping for node.
+     */
+    private void addMapping(FHTreeStateNode node) {
+        treePathMapping.put(node.getTreePath(), node);
+    }
+
+    /**
+     * Removes the mapping for a previously added node.
+     */
+    private void removeMapping(FHTreeStateNode node) {
+        treePathMapping.remove(node.getTreePath());
+    }
+
+    /**
+     * Returns the node previously added for <code>path</code>. This may
+     * return null, if you to create a node use getNodeForPath.
+     */
+    private FHTreeStateNode getMapping(TreePath path) {
+        return treePathMapping.get(path);
+    }
+
+    /**
+     * Sent to completely rebuild the visible tree. All nodes are collapsed.
+     */
+    private void rebuild(boolean clearSelection) {
+        Object            rootUO;
+
+        treePathMapping.clear();
+        if(treeModel != null && (rootUO = treeModel.getRoot()) != null) {
+            root = createNodeForValue(rootUO, 0);
+            root.path = new TreePath(rootUO);
+            addMapping(root);
+            if(isRootVisible()) {
+                rowCount = 1;
+                root.row = 0;
+            }
+            else {
+                rowCount = 0;
+                root.row = -1;
+            }
+            root.expand();
+        }
+        else {
+            root = null;
+            rowCount = 0;
+        }
+        if(clearSelection && treeSelectionModel != null) {
+            treeSelectionModel.clearSelection();
+        }
+        this.visibleNodesChanged();
+    }
+
+    /**
+      * Returns the index of the row containing location.  If there
+      * are no rows, -1 is returned.  If location is beyond the last
+      * row index, the last row index is returned.
+      */
+    private int getRowContainingYLocation(int location) {
+        if(getRowCount() == 0)
+            return -1;
+        return Math.max(0, Math.min(getRowCount() - 1,
+                                    location / getRowHeight()));
+    }
+
+    /**
+     * Ensures that all the path components in path are expanded, accept
+     * for the last component which will only be expanded if expandLast
+     * is true.
+     * Returns true if succesful in finding the path.
+     */
+    private boolean ensurePathIsExpanded(TreePath aPath,
+                                           boolean expandLast) {
+        if(aPath != null) {
+            // Make sure the last entry isn't a leaf.
+            if(treeModel.isLeaf(aPath.getLastPathComponent())) {
+                aPath = aPath.getParentPath();
+                expandLast = true;
+            }
+            if(aPath != null) {
+                FHTreeStateNode     lastNode = getNodeForPath(aPath, false,
+                                                              true);
+
+                if(lastNode != null) {
+                    lastNode.makeVisible();
+                    if(expandLast)
+                        lastNode.expand();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates and returns an instance of FHTreeStateNode.
+     */
+    private FHTreeStateNode createNodeForValue(Object value,int childIndex) {
+        return new FHTreeStateNode(value, childIndex, -1);
+    }
+
+    /**
+     * Messages getTreeNodeForPage(path, onlyIfVisible, shouldCreate,
+     * path.length) as long as path is non-null and the length is {@literal >} 0.
+     * Otherwise returns null.
+     */
+    private FHTreeStateNode getNodeForPath(TreePath path,
+                                             boolean onlyIfVisible,
+                                             boolean shouldCreate) {
+        if(path != null) {
+            FHTreeStateNode      node;
+
+            node = getMapping(path);
+            if(node != null) {
+                if(onlyIfVisible && !node.isVisible())
+                    return null;
+                return node;
+            }
+            if(onlyIfVisible)
+                return null;
+
+            // Check all the parent paths, until a match is found.
+            Stack<TreePath> paths;
+
+            if(tempStacks.size() == 0) {
+                paths = new Stack<TreePath>();
+            }
+            else {
+                paths = tempStacks.pop();
+            }
+
+            try {
+                paths.push(path);
+                path = path.getParentPath();
+                node = null;
+                while(path != null) {
+                    node = getMapping(path);
+                    if(node != null) {
+                        // Found a match, create entries for all paths in
+                        // paths.
+                        while(node != null && paths.size() > 0) {
+                            path = paths.pop();
+                            node = node.createChildFor(path.
+                                                       getLastPathComponent());
+                        }
+                        return node;
+                    }
+                    paths.push(path);
+                    path = path.getParentPath();
+                }
+            }
+            finally {
+                paths.removeAllElements();
+                tempStacks.push(paths);
+            }
+            // If we get here it means they share a different root!
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * FHTreeStateNode is used to track what has been expanded.
+     * FHTreeStateNode differs from VariableHeightTreeState.TreeStateNode
+     * in that it is highly model intensive. That is almost all queries to a
+     * FHTreeStateNode result in the TreeModel being queried. And it
+     * obviously does not support variable sized row heights.
+     */
+    private class FHTreeStateNode extends DefaultMutableTreeNode {
+        /** Is this node expanded? */
+        protected boolean         isExpanded;
+
+        /** Index of this node from the model. */
+        protected int             childIndex;
+
+        /** Child count of the receiver. */
+        protected int             childCount;
+
+        /** Row of the receiver. This is only valid if the row is expanded.
+         */
+        protected int             row;
+
+        /** Path of this node. */
+        protected TreePath        path;
+
+
+        public FHTreeStateNode(Object userObject, int childIndex, int row) {
+            super(userObject);
+            this.childIndex = childIndex;
+            this.row = row;
+        }
+
+        //
+        // Overriden DefaultMutableTreeNode methods
+        //
+
+        /**
+         * Messaged when this node is added somewhere, resets the path
+         * and adds a mapping from path to this node.
+         */
+        public void setParent(MutableTreeNode parent) {
+            super.setParent(parent);
+            if(parent != null) {
+                path = ((FHTreeStateNode)parent).getTreePath().
+                            pathByAddingChild(getUserObject());
+                addMapping(this);
+            }
+        }
+
+        /**
+         * Messaged when this node is removed from its parent, this messages
+         * <code>removedFromMapping</code> to remove all the children.
+         */
+        public void remove(int childIndex) {
+            FHTreeStateNode     node = (FHTreeStateNode)getChildAt(childIndex);
+
+            node.removeFromMapping();
+            super.remove(childIndex);
+        }
+
+        /**
+         * Messaged to set the user object. This resets the path.
+         */
+        public void setUserObject(Object o) {
+            super.setUserObject(o);
+            if(path != null) {
+                FHTreeStateNode      parent = (FHTreeStateNode)getParent();
+
+                if(parent != null)
+                    resetChildrenPaths(parent.getTreePath());
+                else
+                    resetChildrenPaths(null);
+            }
+        }
+
+        //
+        //
+
+        /**
+         * Returns the index of the receiver in the model.
+         */
+        public int getChildIndex() {
+            return childIndex;
+        }
+
+        /**
+         * Returns the <code>TreePath</code> of the receiver.
+         */
+        public TreePath getTreePath() {
+            return path;
+        }
+
+        /**
+         * Returns the child for the passed in model index, this will
+         * return <code>null</code> if the child for <code>index</code>
+         * has not yet been created (expanded).
+         */
+        public FHTreeStateNode getChildAtModelIndex(int index) {
+            // PENDING: Make this a binary search!
+            for(int counter = getChildCount() - 1; counter >= 0; counter--)
+                if(((FHTreeStateNode)getChildAt(counter)).childIndex == index)
+                    return (FHTreeStateNode)getChildAt(counter);
+            return null;
+        }
+
+        /**
+         * Returns true if this node is visible. This is determined by
+         * asking all the parents if they are expanded.
+         */
+        public boolean isVisible() {
+            FHTreeStateNode         parent = (FHTreeStateNode)getParent();
+
+            if(parent == null)
+                return true;
+            return (parent.isExpanded() && parent.isVisible());
+        }
+
+        /**
+         * Returns the row of the receiver.
+         */
+        public int getRow() {
+            return row;
+        }
+
+        /**
+         * Returns the row of the child with a model index of
+         * <code>index</code>.
+         */
+        public int getRowToModelIndex(int index) {
+            FHTreeStateNode      child;
+            int                  lastRow = getRow() + 1;
+            int                  retValue = lastRow;
+
+            // This too could be a binary search!
+            for(int counter = 0, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                child = (FHTreeStateNode)getChildAt(counter);
+                if(child.childIndex >= index) {
+                    if(child.childIndex == index)
+                        return child.row;
+                    if(counter == 0)
+                        return getRow() + 1 + index;
+                    return child.row - (child.childIndex - index);
+                }
+            }
+            // YECK!
+            return getRow() + 1 + getTotalChildCount() -
+                             (childCount - index);
+        }
+
+        /**
+         * Returns the number of children in the receiver by descending all
+         * expanded nodes and messaging them with getTotalChildCount.
+         */
+        public int getTotalChildCount() {
+            if(isExpanded()) {
+                FHTreeStateNode      parent = (FHTreeStateNode)getParent();
+                int                  pIndex;
+
+                if(parent != null && (pIndex = parent.getIndex(this)) + 1 <
+                   parent.getChildCount()) {
+                    // This node has a created sibling, to calc total
+                    // child count directly from that!
+                    FHTreeStateNode  nextSibling = (FHTreeStateNode)parent.
+                                           getChildAt(pIndex + 1);
+
+                    return nextSibling.row - row -
+                           (nextSibling.childIndex - childIndex);
+                }
+                else {
+                    int retCount = childCount;
+
+                    for(int counter = getChildCount() - 1; counter >= 0;
+                        counter--) {
+                        retCount += ((FHTreeStateNode)getChildAt(counter))
+                                                  .getTotalChildCount();
+                    }
+                    return retCount;
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Returns true if this node is expanded.
+         */
+        public boolean isExpanded() {
+            return isExpanded;
+        }
+
+        /**
+         * The highest visible nodes have a depth of 0.
+         */
+        public int getVisibleLevel() {
+            if (isRootVisible()) {
+                return getLevel();
+            } else {
+                return getLevel() - 1;
+            }
+        }
+
+        /**
+         * Recreates the receivers path, and all its children's paths.
+         */
+        protected void resetChildrenPaths(TreePath parentPath) {
+            removeMapping(this);
+            if(parentPath == null)
+                path = new TreePath(getUserObject());
+            else
+                path = parentPath.pathByAddingChild(getUserObject());
+            addMapping(this);
+            for(int counter = getChildCount() - 1; counter >= 0; counter--)
+                ((FHTreeStateNode)getChildAt(counter)).
+                               resetChildrenPaths(path);
+        }
+
+        /**
+         * Removes the receiver, and all its children, from the mapping
+         * table.
+         */
+        protected void removeFromMapping() {
+            if(path != null) {
+                removeMapping(this);
+                for(int counter = getChildCount() - 1; counter >= 0; counter--)
+                    ((FHTreeStateNode)getChildAt(counter)).removeFromMapping();
+            }
+        }
+
+        /**
+         * Creates a new node to represent <code>userObject</code>.
+         * This does NOT check to ensure there isn't already a child node
+         * to manage <code>userObject</code>.
+         */
+        protected FHTreeStateNode createChildFor(Object userObject) {
+            int      newChildIndex = treeModel.getIndexOfChild
+                                     (getUserObject(), userObject);
+
+            if(newChildIndex < 0)
+                return null;
+
+            FHTreeStateNode     aNode;
+            FHTreeStateNode     child = createNodeForValue(userObject,
+                                                           newChildIndex);
+            int                 childRow;
+
+            if(isVisible()) {
+                childRow = getRowToModelIndex(newChildIndex);
+            }
+            else {
+                childRow = -1;
+            }
+            child.row = childRow;
+            for(int counter = 0, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                aNode = (FHTreeStateNode)getChildAt(counter);
+                if(aNode.childIndex > newChildIndex) {
+                    insert(child, counter);
+                    return child;
+                }
+            }
+            add(child);
+            return child;
+        }
+
+        /**
+         * Adjusts the receiver, and all its children rows by
+         * <code>amount</code>.
+         */
+        protected void adjustRowBy(int amount) {
+            row += amount;
+            if(isExpanded) {
+                for(int counter = getChildCount() - 1; counter >= 0;
+                    counter--)
+                    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);
+            }
+        }
+
+        /**
+         * Adjusts this node, its child, and its parent starting at
+         * an index of <code>index</code> index is the index of the child
+         * to start adjusting from, which is not necessarily the model
+         * index.
+         */
+        protected void adjustRowBy(int amount, int startIndex) {
+            // Could check isVisible, but probably isn't worth it.
+            if(isExpanded) {
+                // children following startIndex.
+                for(int counter = getChildCount() - 1; counter >= startIndex;
+                    counter--)
+                    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);
+            }
+            // Parent
+            FHTreeStateNode        parent = (FHTreeStateNode)getParent();
+
+            if(parent != null) {
+                parent.adjustRowBy(amount, parent.getIndex(this) + 1);
+            }
+        }
+
+        /**
+         * Messaged when the node has expanded. This updates all of
+         * the receivers children rows, as well as the total row count.
+         */
+        protected void didExpand() {
+            int               nextRow = setRowAndChildren(row);
+            FHTreeStateNode   parent = (FHTreeStateNode)getParent();
+            int               childRowCount = nextRow - row - 1;
+
+            if(parent != null) {
+                parent.adjustRowBy(childRowCount, parent.getIndex(this) + 1);
+            }
+            adjustRowCountBy(childRowCount);
+        }
+
+        /**
+         * Sets the receivers row to <code>nextRow</code> and recursively
+         * updates all the children of the receivers rows. The index the
+         * next row is to be placed as is returned.
+         */
+        protected int setRowAndChildren(int nextRow) {
+            row = nextRow;
+
+            if(!isExpanded())
+                return row + 1;
+
+            int              lastRow = row + 1;
+            int              lastModelIndex = 0;
+            FHTreeStateNode  child;
+            int              maxCounter = getChildCount();
+
+            for(int counter = 0; counter < maxCounter; counter++) {
+                child = (FHTreeStateNode)getChildAt(counter);
+                lastRow += (child.childIndex - lastModelIndex);
+                lastModelIndex = child.childIndex + 1;
+                if(child.isExpanded) {
+                    lastRow = child.setRowAndChildren(lastRow);
+                }
+                else {
+                    child.row = lastRow++;
+                }
+            }
+            return lastRow + childCount - lastModelIndex;
+        }
+
+        /**
+         * Resets the receivers children's rows. Starting with the child
+         * at <code>childIndex</code> (and <code>modelIndex</code>) to
+         * <code>newRow</code>. This uses <code>setRowAndChildren</code>
+         * to recursively descend children, and uses
+         * <code>resetRowSelection</code> to ascend parents.
+         */
+        // This can be rather expensive, but is needed for the collapse
+        // case this is resulting from a remove (although I could fix
+        // that by having instances of FHTreeStateNode hold a ref to
+        // the number of children). I prefer this though, making determing
+        // the row of a particular node fast is very nice!
+        protected void resetChildrenRowsFrom(int newRow, int childIndex,
+                                            int modelIndex) {
+            int              lastRow = newRow;
+            int              lastModelIndex = modelIndex;
+            FHTreeStateNode  node;
+            int              maxCounter = getChildCount();
+
+            for(int counter = childIndex; counter < maxCounter; counter++) {
+                node = (FHTreeStateNode)getChildAt(counter);
+                lastRow += (node.childIndex - lastModelIndex);
+                lastModelIndex = node.childIndex + 1;
+                if(node.isExpanded) {
+                    lastRow = node.setRowAndChildren(lastRow);
+                }
+                else {
+                    node.row = lastRow++;
+                }
+            }
+            lastRow += childCount - lastModelIndex;
+            node = (FHTreeStateNode)getParent();
+            if(node != null) {
+                node.resetChildrenRowsFrom(lastRow, node.getIndex(this) + 1,
+                                           this.childIndex + 1);
+            }
+            else { // This is the root, reset total ROWCOUNT!
+                rowCount = lastRow;
+            }
+        }
+
+        /**
+         * Makes the receiver visible, but invoking
+         * <code>expandParentAndReceiver</code> on the superclass.
+         */
+        protected void makeVisible() {
+            FHTreeStateNode       parent = (FHTreeStateNode)getParent();
+
+            if(parent != null)
+                parent.expandParentAndReceiver();
+        }
+
+        /**
+         * Invokes <code>expandParentAndReceiver</code> on the parent,
+         * and expands the receiver.
+         */
+        protected void expandParentAndReceiver() {
+            FHTreeStateNode       parent = (FHTreeStateNode)getParent();
+
+            if(parent != null)
+                parent.expandParentAndReceiver();
+            expand();
+        }
+
+        /**
+         * Expands the receiver.
+         */
+        protected void expand() {
+            if(!isExpanded && !isLeaf()) {
+                boolean            visible = isVisible();
+
+                isExpanded = true;
+                childCount = treeModel.getChildCount(getUserObject());
+
+                if(visible) {
+                    didExpand();
+                }
+
+                // Update the selection model.
+                if(visible && treeSelectionModel != null) {
+                    treeSelectionModel.resetRowSelection();
+                }
+            }
+        }
+
+        /**
+         * Collapses the receiver. If <code>adjustRows</code> is true,
+         * the rows of nodes after the receiver are adjusted.
+         */
+        protected void collapse(boolean adjustRows) {
+            if(isExpanded) {
+                if(isVisible() && adjustRows) {
+                    int              childCount = getTotalChildCount();
+
+                    isExpanded = false;
+                    adjustRowCountBy(-childCount);
+                    // We can do this because adjustRowBy won't descend
+                    // the children.
+                    adjustRowBy(-childCount, 0);
+                }
+                else
+                    isExpanded = false;
+
+                if(adjustRows && isVisible() && treeSelectionModel != null)
+                    treeSelectionModel.resetRowSelection();
+            }
+        }
+
+        /**
+         * Returns true if the receiver is a leaf.
+         */
+        public boolean isLeaf() {
+            TreeModel model = getModel();
+
+            return (model != null) ? model.isLeaf(this.getUserObject()) :
+                   true;
+        }
+
+        /**
+         * Adds newChild to this nodes children at the appropriate location.
+         * The location is determined from the childIndex of newChild.
+         */
+        protected void addNode(FHTreeStateNode newChild) {
+            boolean         added = false;
+            int             childIndex = newChild.getChildIndex();
+
+            for(int counter = 0, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                if(((FHTreeStateNode)getChildAt(counter)).getChildIndex() >
+                   childIndex) {
+                    added = true;
+                    insert(newChild, counter);
+                    counter = maxCounter;
+                }
+            }
+            if(!added)
+                add(newChild);
+        }
+
+        /**
+         * Removes the child at <code>modelIndex</code>.
+         * <code>isChildVisible</code> should be true if the receiver
+         * is visible and expanded.
+         */
+        protected void removeChildAtModelIndex(int modelIndex,
+                                               boolean isChildVisible) {
+            FHTreeStateNode     childNode = getChildAtModelIndex(modelIndex);
+
+            if(childNode != null) {
+                int          row = childNode.getRow();
+                int          index = getIndex(childNode);
+
+                childNode.collapse(false);
+                remove(index);
+                adjustChildIndexs(index, -1);
+                childCount--;
+                if(isChildVisible) {
+                    // Adjust the rows.
+                    resetChildrenRowsFrom(row, index, modelIndex);
+                }
+            }
+            else {
+                int                  maxCounter = getChildCount();
+                FHTreeStateNode      aChild;
+
+                for(int counter = 0; counter < maxCounter; counter++) {
+                    aChild = (FHTreeStateNode)getChildAt(counter);
+                    if(aChild.childIndex >= modelIndex) {
+                        if(isChildVisible) {
+                            adjustRowBy(-1, counter);
+                            adjustRowCountBy(-1);
+                        }
+                        // Since matched and children are always sorted by
+                        // index, no need to continue testing with the
+                        // above.
+                        for(; counter < maxCounter; counter++)
+                            ((FHTreeStateNode)getChildAt(counter)).
+                                              childIndex--;
+                        childCount--;
+                        return;
+                    }
+                }
+                // No children to adjust, but it was a child, so we still need
+                // to adjust nodes after this one.
+                if(isChildVisible) {
+                    adjustRowBy(-1, maxCounter);
+                    adjustRowCountBy(-1);
+                }
+                childCount--;
+            }
+        }
+
+        /**
+         * Adjusts the child indexs of the receivers children by
+         * <code>amount</code>, starting at <code>index</code>.
+         */
+        protected void adjustChildIndexs(int index, int amount) {
+            for(int counter = index, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                ((FHTreeStateNode)getChildAt(counter)).childIndex += amount;
+            }
+        }
+
+        /**
+         * Messaged when a child has been inserted at index. For all the
+         * children that have a childIndex &ge; index their index is incremented
+         * by one.
+         */
+        protected void childInsertedAtModelIndex(int index,
+                                               boolean isExpandedAndVisible) {
+            FHTreeStateNode                aChild;
+            int                            maxCounter = getChildCount();
+
+            for(int counter = 0; counter < maxCounter; counter++) {
+                aChild = (FHTreeStateNode)getChildAt(counter);
+                if(aChild.childIndex >= index) {
+                    if(isExpandedAndVisible) {
+                        adjustRowBy(1, counter);
+                        adjustRowCountBy(1);
+                    }
+                    /* Since matched and children are always sorted by
+                       index, no need to continue testing with the above. */
+                    for(; counter < maxCounter; counter++)
+                        ((FHTreeStateNode)getChildAt(counter)).childIndex++;
+                    childCount++;
+                    return;
+                }
+            }
+            // No children to adjust, but it was a child, so we still need
+            // to adjust nodes after this one.
+            if(isExpandedAndVisible) {
+                adjustRowBy(1, maxCounter);
+                adjustRowCountBy(1);
+            }
+            childCount++;
+        }
+
+        /**
+         * Returns true if there is a row for <code>row</code>.
+         * <code>nextRow</code> gives the bounds of the receiver.
+         * Information about the found row is returned in <code>info</code>.
+         * This should be invoked on root with <code>nextRow</code> set
+         * to <code>getRowCount</code>().
+         */
+        protected boolean getPathForRow(int row, int nextRow,
+                                        SearchInfo info) {
+            if(this.row == row) {
+                info.node = this;
+                info.isNodeParentNode = false;
+                info.childIndex = childIndex;
+                return true;
+            }
+
+            FHTreeStateNode            child;
+            FHTreeStateNode            lastChild = null;
+
+            for(int counter = 0, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                child = (FHTreeStateNode)getChildAt(counter);
+                if(child.row > row) {
+                    if(counter == 0) {
+                        // No node exists for it, and is first.
+                        info.node = this;
+                        info.isNodeParentNode = true;
+                        info.childIndex = row - this.row - 1;
+                        return true;
+                    }
+                    else {
+                        // May have been in last child's bounds.
+                        int          lastChildEndRow = 1 + child.row -
+                                     (child.childIndex - lastChild.childIndex);
+
+                        if(row < lastChildEndRow) {
+                            return lastChild.getPathForRow(row,
+                                                       lastChildEndRow, info);
+                        }
+                        // Between last child and child, but not in last child
+                        info.node = this;
+                        info.isNodeParentNode = true;
+                        info.childIndex = row - lastChildEndRow +
+                                                lastChild.childIndex + 1;
+                        return true;
+                    }
+                }
+                lastChild = child;
+            }
+
+            // Not in children, but we should have it, offset from
+            // nextRow.
+            if(lastChild != null) {
+                int        lastChildEndRow = nextRow -
+                                  (childCount - lastChild.childIndex) + 1;
+
+                if(row < lastChildEndRow) {
+                    return lastChild.getPathForRow(row, lastChildEndRow, info);
+                }
+                // Between last child and child, but not in last child
+                info.node = this;
+                info.isNodeParentNode = true;
+                info.childIndex = row - lastChildEndRow +
+                                             lastChild.childIndex + 1;
+                return true;
+            }
+            else {
+                // No children.
+                int         retChildIndex = row - this.row - 1;
+
+                if(retChildIndex >= childCount) {
+                    return false;
+                }
+                info.node = this;
+                info.isNodeParentNode = true;
+                info.childIndex = retChildIndex;
+                return true;
+            }
+        }
+
+        /**
+         * Asks all the children of the receiver for their totalChildCount
+         * and returns this value (plus stopIndex).
+         */
+        protected int getCountTo(int stopIndex) {
+            FHTreeStateNode    aChild;
+            int                retCount = stopIndex + 1;
+
+            for(int counter = 0, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                aChild = (FHTreeStateNode)getChildAt(counter);
+                if(aChild.childIndex >= stopIndex)
+                    counter = maxCounter;
+                else
+                    retCount += aChild.getTotalChildCount();
+            }
+            if(parent != null)
+                return retCount + ((FHTreeStateNode)getParent())
+                                   .getCountTo(childIndex);
+            if(!isRootVisible())
+                return (retCount - 1);
+            return retCount;
+        }
+
+        /**
+         * Returns the number of children that are expanded to
+         * <code>stopIndex</code>. This does not include the number
+         * of children that the child at <code>stopIndex</code> might
+         * have.
+         */
+        protected int getNumExpandedChildrenTo(int stopIndex) {
+            FHTreeStateNode    aChild;
+            int                retCount = stopIndex;
+
+            for(int counter = 0, maxCounter = getChildCount();
+                counter < maxCounter; counter++) {
+                aChild = (FHTreeStateNode)getChildAt(counter);
+                if(aChild.childIndex >= stopIndex)
+                    return retCount;
+                else {
+                    retCount += aChild.getTotalChildCount();
+                }
+            }
+            return retCount;
+        }
+
+        /**
+         * Messaged when this node either expands or collapses.
+         */
+        protected void didAdjustTree() {
+        }
+
+    } // FixedHeightLayoutCache.FHTreeStateNode
+
+
+    /**
+     * Used as a placeholder when getting the path in FHTreeStateNodes.
+     */
+    private class SearchInfo {
+        protected FHTreeStateNode   node;
+        protected boolean           isNodeParentNode;
+        protected int               childIndex;
+
+        protected TreePath getPath() {
+            if(node == null)
+                return null;
+
+            if(isNodeParentNode)
+                return node.getTreePath().pathByAddingChild(treeModel.getChild
+                                            (node.getUserObject(),
+                                             childIndex));
+            return node.path;
+        }
+    } // FixedHeightLayoutCache.SearchInfo
+
+
+    /**
+     * An enumerator to iterate through visible nodes.
+     */
+    // This is very similar to
+    // VariableHeightTreeState.VisibleTreeStateNodeEnumeration
+    private class VisibleFHTreeStateNodeEnumeration
+        implements Enumeration<TreePath>
+    {
+        /** Parent thats children are being enumerated. */
+        protected FHTreeStateNode     parent;
+        /** Index of next child. An index of -1 signifies parent should be
+         * visibled next. */
+        protected int                 nextIndex;
+        /** Number of children in parent. */
+        protected int                 childCount;
+
+        protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode node) {
+            this(node, -1);
+        }
+
+        protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode parent,
+                                                    int startIndex) {
+            this.parent = parent;
+            this.nextIndex = startIndex;
+            this.childCount = treeModel.getChildCount(this.parent.
+                                                      getUserObject());
+        }
+
+        /**
+         * @return true if more visible nodes.
+         */
+        public boolean hasMoreElements() {
+            return (parent != null);
+        }
+
+        /**
+         * @return next visible TreePath.
+         */
+        public TreePath nextElement() {
+            if(!hasMoreElements())
+                throw new NoSuchElementException("No more visible paths");
+
+            TreePath                retObject;
+
+            if(nextIndex == -1)
+                retObject = parent.getTreePath();
+            else {
+                FHTreeStateNode  node = parent.getChildAtModelIndex(nextIndex);
+
+                if(node == null)
+                    retObject = parent.getTreePath().pathByAddingChild
+                                  (treeModel.getChild(parent.getUserObject(),
+                                                      nextIndex));
+                else
+                    retObject = node.getTreePath();
+            }
+            updateNextObject();
+            return retObject;
+        }
+
+        /**
+         * Determines the next object by invoking <code>updateNextIndex</code>
+         * and if not succesful <code>findNextValidParent</code>.
+         */
+        protected void updateNextObject() {
+            if(!updateNextIndex()) {
+                findNextValidParent();
+            }
+        }
+
+        /**
+         * Finds the next valid parent, this should be called when nextIndex
+         * is beyond the number of children of the current parent.
+         */
+        protected boolean findNextValidParent() {
+            if(parent == root) {
+                // mark as invalid!
+                parent = null;
+                return false;
+            }
+            while(parent != null) {
+                FHTreeStateNode      newParent = (FHTreeStateNode)parent.
+                                                  getParent();
+
+                if(newParent != null) {
+                    nextIndex = parent.childIndex;
+                    parent = newParent;
+                    childCount = treeModel.getChildCount
+                                            (parent.getUserObject());
+                    if(updateNextIndex())
+                        return true;
+                }
+                else
+                    parent = null;
+            }
+            return false;
+        }
+
+        /**
+         * Updates <code>nextIndex</code> returning false if it is beyond
+         * the number of children of parent.
+         */
+        protected boolean updateNextIndex() {
+            // nextIndex == -1 identifies receiver, make sure is expanded
+            // before descend.
+            if(nextIndex == -1 && !parent.isExpanded()) {
+                return false;
+            }
+
+            // Check that it can have kids
+            if(childCount == 0) {
+                return false;
+            }
+            // Make sure next index not beyond child count.
+            else if(++nextIndex >= childCount) {
+                return false;
+            }
+
+            FHTreeStateNode    child = parent.getChildAtModelIndex(nextIndex);
+
+            if(child != null && child.isExpanded()) {
+                parent = child;
+                nextIndex = -1;
+                childCount = treeModel.getChildCount(child.getUserObject());
+            }
+            return true;
+        }
+    } // FixedHeightLayoutCache.VisibleFHTreeStateNodeEnumeration
+}

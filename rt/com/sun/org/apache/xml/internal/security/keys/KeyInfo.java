@@ -1,1293 +1,1287 @@
-/*      */ package com.sun.org.apache.xml.internal.security.keys;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.security.encryption.EncryptedKey;
-/*      */ import com.sun.org.apache.xml.internal.security.encryption.XMLCipher;
-/*      */ import com.sun.org.apache.xml.internal.security.encryption.XMLEncryptionException;
-/*      */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.DEREncodedKeyValue;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.KeyInfoReference;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.KeyName;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.KeyValue;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.MgmtData;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.PGPData;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.RetrievalMethod;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.SPKIData;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.X509Data;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.DSAKeyValue;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.RSAKeyValue;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolver;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverException;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
-/*      */ import com.sun.org.apache.xml.internal.security.transforms.Transforms;
-/*      */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*      */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*      */ import java.security.PrivateKey;
-/*      */ import java.security.PublicKey;
-/*      */ import java.security.cert.X509Certificate;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Collections;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.List;
-/*      */ import java.util.logging.Level;
-/*      */ import java.util.logging.Logger;
-/*      */ import javax.crypto.SecretKey;
-/*      */ import org.w3c.dom.Attr;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.Element;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class KeyInfo
-/*      */   extends SignatureElementProxy
-/*      */ {
-/*   99 */   private static Logger log = Logger.getLogger(KeyInfo.class.getName());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  105 */   private List<X509Data> x509Datas = null;
-/*  106 */   private List<EncryptedKey> encryptedKeys = null;
-/*      */   private static final List<StorageResolver> nullList;
-/*      */   
-/*      */   static {
-/*  110 */     ArrayList<? extends StorageResolver> arrayList = new ArrayList(1);
-/*  111 */     arrayList.add(null);
-/*  112 */     nullList = Collections.unmodifiableList(arrayList);
-/*      */   }
-/*      */ 
-/*      */   
-/*  116 */   private List<StorageResolver> storageResolvers = nullList;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  121 */   private List<KeyResolverSpi> internalKeyResolvers = new ArrayList<>();
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean secureValidation;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyInfo(Document paramDocument) {
-/*  130 */     super(paramDocument);
-/*      */     
-/*  132 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyInfo(Element paramElement, String paramString) throws XMLSecurityException {
-/*  143 */     super(paramElement, paramString);
-/*      */     
-/*  145 */     Attr attr = paramElement.getAttributeNodeNS((String)null, "Id");
-/*  146 */     if (attr != null) {
-/*  147 */       paramElement.setIdAttributeNode(attr, true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSecureValidation(boolean paramBoolean) {
-/*  155 */     this.secureValidation = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setId(String paramString) {
-/*  164 */     if (paramString != null) {
-/*  165 */       this.constructionElement.setAttributeNS((String)null, "Id", paramString);
-/*  166 */       this.constructionElement.setIdAttributeNS((String)null, "Id", true);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getId() {
-/*  176 */     return this.constructionElement.getAttributeNS((String)null, "Id");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addKeyName(String paramString) {
-/*  185 */     add(new KeyName(this.doc, paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(KeyName paramKeyName) {
-/*  194 */     this.constructionElement.appendChild(paramKeyName.getElement());
-/*  195 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addKeyValue(PublicKey paramPublicKey) {
-/*  204 */     add(new KeyValue(this.doc, paramPublicKey));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addKeyValue(Element paramElement) {
-/*  213 */     add(new KeyValue(this.doc, paramElement));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(DSAKeyValue paramDSAKeyValue) {
-/*  222 */     add(new KeyValue(this.doc, paramDSAKeyValue));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(RSAKeyValue paramRSAKeyValue) {
-/*  231 */     add(new KeyValue(this.doc, paramRSAKeyValue));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(PublicKey paramPublicKey) {
-/*  240 */     add(new KeyValue(this.doc, paramPublicKey));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(KeyValue paramKeyValue) {
-/*  249 */     this.constructionElement.appendChild(paramKeyValue.getElement());
-/*  250 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addMgmtData(String paramString) {
-/*  259 */     add(new MgmtData(this.doc, paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(MgmtData paramMgmtData) {
-/*  268 */     this.constructionElement.appendChild(paramMgmtData.getElement());
-/*  269 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(PGPData paramPGPData) {
-/*  278 */     this.constructionElement.appendChild(paramPGPData.getElement());
-/*  279 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addRetrievalMethod(String paramString1, Transforms paramTransforms, String paramString2) {
-/*  290 */     add(new RetrievalMethod(this.doc, paramString1, paramTransforms, paramString2));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(RetrievalMethod paramRetrievalMethod) {
-/*  299 */     this.constructionElement.appendChild(paramRetrievalMethod.getElement());
-/*  300 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(SPKIData paramSPKIData) {
-/*  309 */     this.constructionElement.appendChild(paramSPKIData.getElement());
-/*  310 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(X509Data paramX509Data) {
-/*  319 */     if (this.x509Datas == null) {
-/*  320 */       this.x509Datas = new ArrayList<>();
-/*      */     }
-/*  322 */     this.x509Datas.add(paramX509Data);
-/*  323 */     this.constructionElement.appendChild(paramX509Data.getElement());
-/*  324 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(EncryptedKey paramEncryptedKey) throws XMLEncryptionException {
-/*  335 */     if (this.encryptedKeys == null) {
-/*  336 */       this.encryptedKeys = new ArrayList<>();
-/*      */     }
-/*  338 */     this.encryptedKeys.add(paramEncryptedKey);
-/*  339 */     XMLCipher xMLCipher = XMLCipher.getInstance();
-/*  340 */     this.constructionElement.appendChild(xMLCipher.martial(paramEncryptedKey));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addDEREncodedKeyValue(PublicKey paramPublicKey) throws XMLSecurityException {
-/*  350 */     add(new DEREncodedKeyValue(this.doc, paramPublicKey));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(DEREncodedKeyValue paramDEREncodedKeyValue) {
-/*  359 */     this.constructionElement.appendChild(paramDEREncodedKeyValue.getElement());
-/*  360 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addKeyInfoReference(String paramString) throws XMLSecurityException {
-/*  370 */     add(new KeyInfoReference(this.doc, paramString));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(KeyInfoReference paramKeyInfoReference) {
-/*  379 */     this.constructionElement.appendChild(paramKeyInfoReference.getElement());
-/*  380 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addUnknownElement(Element paramElement) {
-/*  389 */     this.constructionElement.appendChild(paramElement);
-/*  390 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthKeyName() {
-/*  399 */     return length("http://www.w3.org/2000/09/xmldsig#", "KeyName");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthKeyValue() {
-/*  408 */     return length("http://www.w3.org/2000/09/xmldsig#", "KeyValue");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthMgmtData() {
-/*  417 */     return length("http://www.w3.org/2000/09/xmldsig#", "MgmtData");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthPGPData() {
-/*  426 */     return length("http://www.w3.org/2000/09/xmldsig#", "PGPData");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthRetrievalMethod() {
-/*  435 */     return length("http://www.w3.org/2000/09/xmldsig#", "RetrievalMethod");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthSPKIData() {
-/*  444 */     return length("http://www.w3.org/2000/09/xmldsig#", "SPKIData");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthX509Data() {
-/*  453 */     if (this.x509Datas != null) {
-/*  454 */       return this.x509Datas.size();
-/*      */     }
-/*  456 */     return length("http://www.w3.org/2000/09/xmldsig#", "X509Data");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthDEREncodedKeyValue() {
-/*  465 */     return length("http://www.w3.org/2009/xmldsig11#", "DEREncodedKeyValue");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthKeyInfoReference() {
-/*  474 */     return length("http://www.w3.org/2009/xmldsig11#", "KeyInfoReference");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lengthUnknownElement() {
-/*  483 */     byte b1 = 0;
-/*  484 */     NodeList nodeList = this.constructionElement.getChildNodes();
-/*      */     
-/*  486 */     for (byte b2 = 0; b2 < nodeList.getLength(); b2++) {
-/*  487 */       Node node = nodeList.item(b2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  493 */       if (node.getNodeType() == 1 && node
-/*  494 */         .getNamespaceURI().equals("http://www.w3.org/2000/09/xmldsig#")) {
-/*  495 */         b1++;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  499 */     return b1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyName itemKeyName(int paramInt) throws XMLSecurityException {
-/*  511 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  512 */         .getFirstChild(), "KeyName", paramInt);
-/*      */     
-/*  514 */     if (element != null) {
-/*  515 */       return new KeyName(element, this.baseURI);
-/*      */     }
-/*  517 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyValue itemKeyValue(int paramInt) throws XMLSecurityException {
-/*  529 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  530 */         .getFirstChild(), "KeyValue", paramInt);
-/*      */     
-/*  532 */     if (element != null) {
-/*  533 */       return new KeyValue(element, this.baseURI);
-/*      */     }
-/*  535 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MgmtData itemMgmtData(int paramInt) throws XMLSecurityException {
-/*  547 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  548 */         .getFirstChild(), "MgmtData", paramInt);
-/*      */     
-/*  550 */     if (element != null) {
-/*  551 */       return new MgmtData(element, this.baseURI);
-/*      */     }
-/*  553 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PGPData itemPGPData(int paramInt) throws XMLSecurityException {
-/*  565 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  566 */         .getFirstChild(), "PGPData", paramInt);
-/*      */     
-/*  568 */     if (element != null) {
-/*  569 */       return new PGPData(element, this.baseURI);
-/*      */     }
-/*  571 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RetrievalMethod itemRetrievalMethod(int paramInt) throws XMLSecurityException {
-/*  583 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  584 */         .getFirstChild(), "RetrievalMethod", paramInt);
-/*      */     
-/*  586 */     if (element != null) {
-/*  587 */       return new RetrievalMethod(element, this.baseURI);
-/*      */     }
-/*  589 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SPKIData itemSPKIData(int paramInt) throws XMLSecurityException {
-/*  601 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  602 */         .getFirstChild(), "SPKIData", paramInt);
-/*      */     
-/*  604 */     if (element != null) {
-/*  605 */       return new SPKIData(element, this.baseURI);
-/*      */     }
-/*  607 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public X509Data itemX509Data(int paramInt) throws XMLSecurityException {
-/*  618 */     if (this.x509Datas != null) {
-/*  619 */       return this.x509Datas.get(paramInt);
-/*      */     }
-/*      */     
-/*  622 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/*  623 */         .getFirstChild(), "X509Data", paramInt);
-/*      */     
-/*  625 */     if (element != null) {
-/*  626 */       return new X509Data(element, this.baseURI);
-/*      */     }
-/*  628 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey itemEncryptedKey(int paramInt) throws XMLSecurityException {
-/*  639 */     if (this.encryptedKeys != null) {
-/*  640 */       return this.encryptedKeys.get(paramInt);
-/*      */     }
-/*      */     
-/*  643 */     Element element = XMLUtils.selectXencNode(this.constructionElement
-/*  644 */         .getFirstChild(), "EncryptedKey", paramInt);
-/*      */     
-/*  646 */     if (element != null) {
-/*  647 */       XMLCipher xMLCipher = XMLCipher.getInstance();
-/*  648 */       xMLCipher.init(4, null);
-/*  649 */       return xMLCipher.loadEncryptedKey(element);
-/*      */     } 
-/*  651 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DEREncodedKeyValue itemDEREncodedKeyValue(int paramInt) throws XMLSecurityException {
-/*  663 */     Element element = XMLUtils.selectDs11Node(this.constructionElement
-/*  664 */         .getFirstChild(), "DEREncodedKeyValue", paramInt);
-/*      */     
-/*  666 */     if (element != null) {
-/*  667 */       return new DEREncodedKeyValue(element, this.baseURI);
-/*      */     }
-/*  669 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public KeyInfoReference itemKeyInfoReference(int paramInt) throws XMLSecurityException {
-/*  681 */     Element element = XMLUtils.selectDs11Node(this.constructionElement
-/*  682 */         .getFirstChild(), "KeyInfoReference", paramInt);
-/*      */     
-/*  684 */     if (element != null) {
-/*  685 */       return new KeyInfoReference(element, this.baseURI);
-/*      */     }
-/*  687 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element itemUnknownElement(int paramInt) {
-/*  697 */     NodeList nodeList = this.constructionElement.getChildNodes();
-/*  698 */     byte b1 = 0;
-/*      */     
-/*  700 */     for (byte b2 = 0; b2 < nodeList.getLength(); b2++) {
-/*  701 */       Node node = nodeList.item(b2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  709 */       b1++;
-/*      */       
-/*  711 */       if (node.getNodeType() == 1 && node.getNamespaceURI().equals("http://www.w3.org/2000/09/xmldsig#") && b1 == paramInt) {
-/*  712 */         return (Element)node;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  717 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEmpty() {
-/*  726 */     return (this.constructionElement.getFirstChild() == null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsKeyName() {
-/*  735 */     return (lengthKeyName() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsKeyValue() {
-/*  744 */     return (lengthKeyValue() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsMgmtData() {
-/*  753 */     return (lengthMgmtData() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsPGPData() {
-/*  762 */     return (lengthPGPData() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsRetrievalMethod() {
-/*  771 */     return (lengthRetrievalMethod() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsSPKIData() {
-/*  780 */     return (lengthSPKIData() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsUnknownElement() {
-/*  789 */     return (lengthUnknownElement() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsX509Data() {
-/*  798 */     return (lengthX509Data() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsDEREncodedKeyValue() {
-/*  807 */     return (lengthDEREncodedKeyValue() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsKeyInfoReference() {
-/*  816 */     return (lengthKeyInfoReference() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PublicKey getPublicKey() throws KeyResolverException {
-/*  826 */     PublicKey publicKey = getPublicKeyFromInternalResolvers();
-/*      */     
-/*  828 */     if (publicKey != null) {
-/*  829 */       if (log.isLoggable(Level.FINE)) {
-/*  830 */         log.log(Level.FINE, "I could find a key using the per-KeyInfo key resolvers");
-/*      */       }
-/*      */       
-/*  833 */       return publicKey;
-/*      */     } 
-/*  835 */     if (log.isLoggable(Level.FINE)) {
-/*  836 */       log.log(Level.FINE, "I couldn't find a key using the per-KeyInfo key resolvers");
-/*      */     }
-/*      */     
-/*  839 */     publicKey = getPublicKeyFromStaticResolvers();
-/*      */     
-/*  841 */     if (publicKey != null) {
-/*  842 */       if (log.isLoggable(Level.FINE)) {
-/*  843 */         log.log(Level.FINE, "I could find a key using the system-wide key resolvers");
-/*      */       }
-/*      */       
-/*  846 */       return publicKey;
-/*      */     } 
-/*  848 */     if (log.isLoggable(Level.FINE)) {
-/*  849 */       log.log(Level.FINE, "I couldn't find a key using the system-wide key resolvers");
-/*      */     }
-/*      */     
-/*  852 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   PublicKey getPublicKeyFromStaticResolvers() throws KeyResolverException {
-/*  862 */     Iterator<KeyResolverSpi> iterator = KeyResolver.iterator();
-/*  863 */     while (iterator.hasNext()) {
-/*  864 */       KeyResolverSpi keyResolverSpi = iterator.next();
-/*  865 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/*  866 */       Node node = this.constructionElement.getFirstChild();
-/*  867 */       String str = getBaseURI();
-/*  868 */       while (node != null) {
-/*  869 */         if (node.getNodeType() == 1) {
-/*  870 */           for (StorageResolver storageResolver : this.storageResolvers) {
-/*      */             
-/*  872 */             PublicKey publicKey = keyResolverSpi.engineLookupAndResolvePublicKey((Element)node, str, storageResolver);
-/*      */ 
-/*      */ 
-/*      */             
-/*  876 */             if (publicKey != null) {
-/*  877 */               return publicKey;
-/*      */             }
-/*      */           } 
-/*      */         }
-/*  881 */         node = node.getNextSibling();
-/*      */       } 
-/*      */     } 
-/*  884 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   PublicKey getPublicKeyFromInternalResolvers() throws KeyResolverException {
-/*  894 */     for (KeyResolverSpi keyResolverSpi : this.internalKeyResolvers) {
-/*  895 */       if (log.isLoggable(Level.FINE)) {
-/*  896 */         log.log(Level.FINE, "Try " + keyResolverSpi.getClass().getName());
-/*      */       }
-/*  898 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/*  899 */       Node node = this.constructionElement.getFirstChild();
-/*  900 */       String str = getBaseURI();
-/*  901 */       while (node != null) {
-/*  902 */         if (node.getNodeType() == 1) {
-/*  903 */           for (StorageResolver storageResolver : this.storageResolvers) {
-/*      */             
-/*  905 */             PublicKey publicKey = keyResolverSpi.engineLookupAndResolvePublicKey((Element)node, str, storageResolver);
-/*      */ 
-/*      */ 
-/*      */             
-/*  909 */             if (publicKey != null) {
-/*  910 */               return publicKey;
-/*      */             }
-/*      */           } 
-/*      */         }
-/*  914 */         node = node.getNextSibling();
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  918 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public X509Certificate getX509Certificate() throws KeyResolverException {
-/*  929 */     X509Certificate x509Certificate = getX509CertificateFromInternalResolvers();
-/*      */     
-/*  931 */     if (x509Certificate != null) {
-/*  932 */       if (log.isLoggable(Level.FINE)) {
-/*  933 */         log.log(Level.FINE, "I could find a X509Certificate using the per-KeyInfo key resolvers");
-/*      */       }
-/*      */       
-/*  936 */       return x509Certificate;
-/*      */     } 
-/*  938 */     if (log.isLoggable(Level.FINE)) {
-/*  939 */       log.log(Level.FINE, "I couldn't find a X509Certificate using the per-KeyInfo key resolvers");
-/*      */     }
-/*      */ 
-/*      */     
-/*  943 */     x509Certificate = getX509CertificateFromStaticResolvers();
-/*      */     
-/*  945 */     if (x509Certificate != null) {
-/*  946 */       if (log.isLoggable(Level.FINE)) {
-/*  947 */         log.log(Level.FINE, "I could find a X509Certificate using the system-wide key resolvers");
-/*      */       }
-/*      */       
-/*  950 */       return x509Certificate;
-/*      */     } 
-/*  952 */     if (log.isLoggable(Level.FINE)) {
-/*  953 */       log.log(Level.FINE, "I couldn't find a X509Certificate using the system-wide key resolvers");
-/*      */     }
-/*      */     
-/*  956 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   X509Certificate getX509CertificateFromStaticResolvers() throws KeyResolverException {
-/*  969 */     if (log.isLoggable(Level.FINE)) {
-/*  970 */       log.log(Level.FINE, "Start getX509CertificateFromStaticResolvers() with " + 
-/*  971 */           KeyResolver.length() + " resolvers");
-/*      */     }
-/*      */ 
-/*      */     
-/*  975 */     String str = getBaseURI();
-/*  976 */     Iterator<KeyResolverSpi> iterator = KeyResolver.iterator();
-/*  977 */     while (iterator.hasNext()) {
-/*  978 */       KeyResolverSpi keyResolverSpi = iterator.next();
-/*  979 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/*  980 */       X509Certificate x509Certificate = applyCurrentResolver(str, keyResolverSpi);
-/*  981 */       if (x509Certificate != null) {
-/*  982 */         return x509Certificate;
-/*      */       }
-/*      */     } 
-/*  985 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private X509Certificate applyCurrentResolver(String paramString, KeyResolverSpi paramKeyResolverSpi) throws KeyResolverException {
-/*  991 */     Node node = this.constructionElement.getFirstChild();
-/*  992 */     while (node != null) {
-/*  993 */       if (node.getNodeType() == 1) {
-/*  994 */         for (StorageResolver storageResolver : this.storageResolvers) {
-/*      */           
-/*  996 */           X509Certificate x509Certificate = paramKeyResolverSpi.engineLookupResolveX509Certificate((Element)node, paramString, storageResolver);
-/*      */ 
-/*      */ 
-/*      */           
-/* 1000 */           if (x509Certificate != null) {
-/* 1001 */             return x509Certificate;
-/*      */           }
-/*      */         } 
-/*      */       }
-/* 1005 */       node = node.getNextSibling();
-/*      */     } 
-/* 1007 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   X509Certificate getX509CertificateFromInternalResolvers() throws KeyResolverException {
-/* 1018 */     if (log.isLoggable(Level.FINE)) {
-/* 1019 */       log.log(Level.FINE, "Start getX509CertificateFromInternalResolvers() with " + 
-/*      */           
-/* 1021 */           lengthInternalKeyResolver() + " resolvers");
-/*      */     }
-/*      */     
-/* 1024 */     String str = getBaseURI();
-/* 1025 */     for (KeyResolverSpi keyResolverSpi : this.internalKeyResolvers) {
-/* 1026 */       if (log.isLoggable(Level.FINE)) {
-/* 1027 */         log.log(Level.FINE, "Try " + keyResolverSpi.getClass().getName());
-/*      */       }
-/* 1029 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/* 1030 */       X509Certificate x509Certificate = applyCurrentResolver(str, keyResolverSpi);
-/* 1031 */       if (x509Certificate != null) {
-/* 1032 */         return x509Certificate;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1036 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SecretKey getSecretKey() throws KeyResolverException {
-/* 1045 */     SecretKey secretKey = getSecretKeyFromInternalResolvers();
-/*      */     
-/* 1047 */     if (secretKey != null) {
-/* 1048 */       if (log.isLoggable(Level.FINE)) {
-/* 1049 */         log.log(Level.FINE, "I could find a secret key using the per-KeyInfo key resolvers");
-/*      */       }
-/*      */       
-/* 1052 */       return secretKey;
-/*      */     } 
-/* 1054 */     if (log.isLoggable(Level.FINE)) {
-/* 1055 */       log.log(Level.FINE, "I couldn't find a secret key using the per-KeyInfo key resolvers");
-/*      */     }
-/*      */     
-/* 1058 */     secretKey = getSecretKeyFromStaticResolvers();
-/*      */     
-/* 1060 */     if (secretKey != null) {
-/* 1061 */       if (log.isLoggable(Level.FINE)) {
-/* 1062 */         log.log(Level.FINE, "I could find a secret key using the system-wide key resolvers");
-/*      */       }
-/*      */       
-/* 1065 */       return secretKey;
-/*      */     } 
-/* 1067 */     if (log.isLoggable(Level.FINE)) {
-/* 1068 */       log.log(Level.FINE, "I couldn't find a secret key using the system-wide key resolvers");
-/*      */     }
-/*      */     
-/* 1071 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   SecretKey getSecretKeyFromStaticResolvers() throws KeyResolverException {
-/* 1081 */     Iterator<KeyResolverSpi> iterator = KeyResolver.iterator();
-/* 1082 */     while (iterator.hasNext()) {
-/* 1083 */       KeyResolverSpi keyResolverSpi = iterator.next();
-/* 1084 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/*      */       
-/* 1086 */       Node node = this.constructionElement.getFirstChild();
-/* 1087 */       String str = getBaseURI();
-/* 1088 */       while (node != null) {
-/* 1089 */         if (node.getNodeType() == 1) {
-/* 1090 */           for (StorageResolver storageResolver : this.storageResolvers) {
-/*      */             
-/* 1092 */             SecretKey secretKey = keyResolverSpi.engineLookupAndResolveSecretKey((Element)node, str, storageResolver);
-/*      */ 
-/*      */ 
-/*      */             
-/* 1096 */             if (secretKey != null) {
-/* 1097 */               return secretKey;
-/*      */             }
-/*      */           } 
-/*      */         }
-/* 1101 */         node = node.getNextSibling();
-/*      */       } 
-/*      */     } 
-/* 1104 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   SecretKey getSecretKeyFromInternalResolvers() throws KeyResolverException {
-/* 1115 */     for (KeyResolverSpi keyResolverSpi : this.internalKeyResolvers) {
-/* 1116 */       if (log.isLoggable(Level.FINE)) {
-/* 1117 */         log.log(Level.FINE, "Try " + keyResolverSpi.getClass().getName());
-/*      */       }
-/* 1119 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/* 1120 */       Node node = this.constructionElement.getFirstChild();
-/* 1121 */       String str = getBaseURI();
-/* 1122 */       while (node != null) {
-/* 1123 */         if (node.getNodeType() == 1) {
-/* 1124 */           for (StorageResolver storageResolver : this.storageResolvers) {
-/*      */             
-/* 1126 */             SecretKey secretKey = keyResolverSpi.engineLookupAndResolveSecretKey((Element)node, str, storageResolver);
-/*      */ 
-/*      */ 
-/*      */             
-/* 1130 */             if (secretKey != null) {
-/* 1131 */               return secretKey;
-/*      */             }
-/*      */           } 
-/*      */         }
-/* 1135 */         node = node.getNextSibling();
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1139 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PrivateKey getPrivateKey() throws KeyResolverException {
-/* 1148 */     PrivateKey privateKey = getPrivateKeyFromInternalResolvers();
-/*      */     
-/* 1150 */     if (privateKey != null) {
-/* 1151 */       if (log.isLoggable(Level.FINE)) {
-/* 1152 */         log.log(Level.FINE, "I could find a private key using the per-KeyInfo key resolvers");
-/*      */       }
-/* 1154 */       return privateKey;
-/*      */     } 
-/* 1156 */     if (log.isLoggable(Level.FINE)) {
-/* 1157 */       log.log(Level.FINE, "I couldn't find a secret key using the per-KeyInfo key resolvers");
-/*      */     }
-/*      */     
-/* 1160 */     privateKey = getPrivateKeyFromStaticResolvers();
-/* 1161 */     if (privateKey != null) {
-/* 1162 */       if (log.isLoggable(Level.FINE)) {
-/* 1163 */         log.log(Level.FINE, "I could find a private key using the system-wide key resolvers");
-/*      */       }
-/* 1165 */       return privateKey;
-/*      */     } 
-/* 1167 */     if (log.isLoggable(Level.FINE)) {
-/* 1168 */       log.log(Level.FINE, "I couldn't find a private key using the system-wide key resolvers");
-/*      */     }
-/*      */     
-/* 1171 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   PrivateKey getPrivateKeyFromStaticResolvers() throws KeyResolverException {
-/* 1181 */     Iterator<KeyResolverSpi> iterator = KeyResolver.iterator();
-/* 1182 */     while (iterator.hasNext()) {
-/* 1183 */       KeyResolverSpi keyResolverSpi = iterator.next();
-/* 1184 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/*      */       
-/* 1186 */       Node node = this.constructionElement.getFirstChild();
-/* 1187 */       String str = getBaseURI();
-/* 1188 */       while (node != null) {
-/* 1189 */         if (node.getNodeType() == 1) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1193 */           PrivateKey privateKey = keyResolverSpi.engineLookupAndResolvePrivateKey((Element)node, str, null);
-/*      */ 
-/*      */ 
-/*      */           
-/* 1197 */           if (privateKey != null) {
-/* 1198 */             return privateKey;
-/*      */           }
-/*      */         } 
-/* 1201 */         node = node.getNextSibling();
-/*      */       } 
-/*      */     } 
-/* 1204 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   PrivateKey getPrivateKeyFromInternalResolvers() throws KeyResolverException {
-/* 1214 */     for (KeyResolverSpi keyResolverSpi : this.internalKeyResolvers) {
-/* 1215 */       if (log.isLoggable(Level.FINE)) {
-/* 1216 */         log.log(Level.FINE, "Try " + keyResolverSpi.getClass().getName());
-/*      */       }
-/* 1218 */       keyResolverSpi.setSecureValidation(this.secureValidation);
-/* 1219 */       Node node = this.constructionElement.getFirstChild();
-/* 1220 */       String str = getBaseURI();
-/* 1221 */       while (node != null) {
-/* 1222 */         if (node.getNodeType() == 1) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1226 */           PrivateKey privateKey = keyResolverSpi.engineLookupAndResolvePrivateKey((Element)node, str, null);
-/*      */ 
-/*      */ 
-/*      */           
-/* 1230 */           if (privateKey != null) {
-/* 1231 */             return privateKey;
-/*      */           }
-/*      */         } 
-/* 1234 */         node = node.getNextSibling();
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1238 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void registerInternalKeyResolver(KeyResolverSpi paramKeyResolverSpi) {
-/* 1248 */     this.internalKeyResolvers.add(paramKeyResolverSpi);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int lengthInternalKeyResolver() {
-/* 1256 */     return this.internalKeyResolvers.size();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   KeyResolverSpi itemInternalKeyResolver(int paramInt) {
-/* 1266 */     return this.internalKeyResolvers.get(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addStorageResolver(StorageResolver paramStorageResolver) {
-/* 1275 */     if (this.storageResolvers == nullList)
-/*      */     {
-/* 1277 */       this.storageResolvers = new ArrayList<>();
-/*      */     }
-/* 1279 */     this.storageResolvers.add(paramStorageResolver);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getBaseLocalName() {
-/* 1285 */     return "KeyInfo";
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\KeyInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.crypto.SecretKey;
+
+import com.sun.org.apache.xml.internal.security.encryption.EncryptedKey;
+import com.sun.org.apache.xml.internal.security.encryption.XMLCipher;
+import com.sun.org.apache.xml.internal.security.encryption.XMLEncryptionException;
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.keys.content.DEREncodedKeyValue;
+import com.sun.org.apache.xml.internal.security.keys.content.KeyInfoReference;
+import com.sun.org.apache.xml.internal.security.keys.content.KeyName;
+import com.sun.org.apache.xml.internal.security.keys.content.KeyValue;
+import com.sun.org.apache.xml.internal.security.keys.content.MgmtData;
+import com.sun.org.apache.xml.internal.security.keys.content.PGPData;
+import com.sun.org.apache.xml.internal.security.keys.content.RetrievalMethod;
+import com.sun.org.apache.xml.internal.security.keys.content.SPKIData;
+import com.sun.org.apache.xml.internal.security.keys.content.X509Data;
+import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.DSAKeyValue;
+import com.sun.org.apache.xml.internal.security.keys.content.keyvalues.RSAKeyValue;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolver;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverException;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver;
+import com.sun.org.apache.xml.internal.security.transforms.Transforms;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.EncryptionConstants;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+/**
+ * This class stand for KeyInfo Element that may contain keys, names,
+ * certificates and other public key management information,
+ * such as in-band key distribution or key agreement data.
+ * <BR />
+ * KeyInfo Element has two basic functions:
+ * One is KeyResolve for getting the public key in signature validation processing.
+ * the other one is toElement for getting the element in signature generation processing.
+ * <BR />
+ * The <CODE>lengthXXX()</CODE> methods provide access to the internal Key
+ * objects:
+ * <UL>
+ * <LI>If the <CODE>KeyInfo</CODE> was constructed from an Element
+ * (Signature verification), the <CODE>lengthXXX()</CODE> methods searches
+ * for child elements of <CODE>ds:KeyInfo</CODE> for known types. </LI>
+ * <LI>If the <CODE>KeyInfo</CODE> was constructed from scratch (during
+ * Signature generation), the <CODE>lengthXXX()</CODE> methods return the number
+ * of <CODE>XXXs</CODE> objects already passed to the KeyInfo</LI>
+ * </UL>
+ * <BR />
+ * The <CODE>addXXX()</CODE> methods are used for adding Objects of the
+ * appropriate type to the <CODE>KeyInfo</CODE>. This is used during signature
+ * generation.
+ * <BR />
+ * The <CODE>itemXXX(int i)</CODE> methods return the i'th object of the
+ * corresponding type.
+ * <BR />
+ * The <CODE>containsXXX()</CODE> methods return <I>whether</I> the KeyInfo
+ * contains the corresponding type.
+ *
+ */
+public class KeyInfo extends SignatureElementProxy {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(KeyInfo.class.getName());
+
+    // We need at least one StorageResolver otherwise
+    // the KeyResolvers would not be called.
+    // The default StorageResolver is null.
+
+    private List<X509Data> x509Datas = null;
+    private List<EncryptedKey> encryptedKeys = null;
+
+    private static final List<StorageResolver> nullList;
+    static {
+        List<StorageResolver> list = new ArrayList<StorageResolver>(1);
+        list.add(null);
+        nullList = java.util.Collections.unmodifiableList(list);
+    }
+
+    /** Field storageResolvers */
+    private List<StorageResolver> storageResolvers = nullList;
+
+    /**
+     * Stores the individual (per-KeyInfo) {@link KeyResolverSpi}s
+     */
+    private List<KeyResolverSpi> internalKeyResolvers = new ArrayList<KeyResolverSpi>();
+
+    private boolean secureValidation;
+
+    /**
+     * Constructor KeyInfo
+     * @param doc
+     */
+    public KeyInfo(Document doc) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Constructor KeyInfo
+     *
+     * @param element
+     * @param baseURI
+     * @throws XMLSecurityException
+     */
+    public KeyInfo(Element element, String baseURI) throws XMLSecurityException {
+        super(element, baseURI);
+
+        Attr attr = element.getAttributeNodeNS(null, "Id");
+        if (attr != null) {
+            element.setIdAttributeNode(attr, true);
+        }
+    }
+
+    /**
+     * Set whether secure processing is enabled or not. The default is false.
+     */
+    public void setSecureValidation(boolean secureValidation) {
+        this.secureValidation = secureValidation;
+    }
+
+    /**
+     * Sets the <code>Id</code> attribute
+     *
+     * @param Id ID
+     */
+    public void setId(String id) {
+        if (id != null) {
+            this.constructionElement.setAttributeNS(null, Constants._ATT_ID, id);
+            this.constructionElement.setIdAttributeNS(null, Constants._ATT_ID, true);
+        }
+    }
+
+    /**
+     * Returns the <code>Id</code> attribute
+     *
+     * @return the <code>Id</code> attribute
+     */
+    public String getId() {
+        return this.constructionElement.getAttributeNS(null, Constants._ATT_ID);
+    }
+
+    /**
+     * Method addKeyName
+     *
+     * @param keynameString
+     */
+    public void addKeyName(String keynameString) {
+        this.add(new KeyName(this.doc, keynameString));
+    }
+
+    /**
+     * Method add
+     *
+     * @param keyname
+     */
+    public void add(KeyName keyname) {
+        this.constructionElement.appendChild(keyname.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addKeyValue
+     *
+     * @param pk
+     */
+    public void addKeyValue(PublicKey pk) {
+        this.add(new KeyValue(this.doc, pk));
+    }
+
+    /**
+     * Method addKeyValue
+     *
+     * @param unknownKeyValueElement
+     */
+    public void addKeyValue(Element unknownKeyValueElement) {
+        this.add(new KeyValue(this.doc, unknownKeyValueElement));
+    }
+
+    /**
+     * Method add
+     *
+     * @param dsakeyvalue
+     */
+    public void add(DSAKeyValue dsakeyvalue) {
+        this.add(new KeyValue(this.doc, dsakeyvalue));
+    }
+
+    /**
+     * Method add
+     *
+     * @param rsakeyvalue
+     */
+    public void add(RSAKeyValue rsakeyvalue) {
+        this.add(new KeyValue(this.doc, rsakeyvalue));
+    }
+
+    /**
+     * Method add
+     *
+     * @param pk
+     */
+    public void add(PublicKey pk) {
+        this.add(new KeyValue(this.doc, pk));
+    }
+
+    /**
+     * Method add
+     *
+     * @param keyvalue
+     */
+    public void add(KeyValue keyvalue) {
+        this.constructionElement.appendChild(keyvalue.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addMgmtData
+     *
+     * @param mgmtdata
+     */
+    public void addMgmtData(String mgmtdata) {
+        this.add(new MgmtData(this.doc, mgmtdata));
+    }
+
+    /**
+     * Method add
+     *
+     * @param mgmtdata
+     */
+    public void add(MgmtData mgmtdata) {
+        this.constructionElement.appendChild(mgmtdata.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addPGPData
+     *
+     * @param pgpdata
+     */
+    public void add(PGPData pgpdata) {
+        this.constructionElement.appendChild(pgpdata.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addRetrievalMethod
+     *
+     * @param uri
+     * @param transforms
+     * @param Type
+     */
+    public void addRetrievalMethod(String uri, Transforms transforms, String Type) {
+        this.add(new RetrievalMethod(this.doc, uri, transforms, Type));
+    }
+
+    /**
+     * Method add
+     *
+     * @param retrievalmethod
+     */
+    public void add(RetrievalMethod retrievalmethod) {
+        this.constructionElement.appendChild(retrievalmethod.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method add
+     *
+     * @param spkidata
+     */
+    public void add(SPKIData spkidata) {
+        this.constructionElement.appendChild(spkidata.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addX509Data
+     *
+     * @param x509data
+     */
+    public void add(X509Data x509data) {
+        if (x509Datas == null) {
+            x509Datas = new ArrayList<X509Data>();
+        }
+        x509Datas.add(x509data);
+        this.constructionElement.appendChild(x509data.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addEncryptedKey
+     *
+     * @param encryptedKey
+     * @throws XMLEncryptionException
+     */
+
+    public void add(EncryptedKey encryptedKey) throws XMLEncryptionException {
+        if (encryptedKeys == null) {
+            encryptedKeys = new ArrayList<EncryptedKey>();
+        }
+        encryptedKeys.add(encryptedKey);
+        XMLCipher cipher = XMLCipher.getInstance();
+        this.constructionElement.appendChild(cipher.martial(encryptedKey));
+    }
+
+    /**
+     * Method addDEREncodedKeyValue
+     *
+     * @param pk
+     * @throws XMLSecurityException
+     */
+    public void addDEREncodedKeyValue(PublicKey pk) throws XMLSecurityException {
+        this.add(new DEREncodedKeyValue(this.doc, pk));
+    }
+
+    /**
+     * Method add
+     *
+     * @param derEncodedKeyValue
+     */
+    public void add(DEREncodedKeyValue derEncodedKeyValue) {
+        this.constructionElement.appendChild(derEncodedKeyValue.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addKeyInfoReference
+     *
+     * @param URI
+     * @throws XMLSecurityException
+     */
+    public void addKeyInfoReference(String URI) throws XMLSecurityException {
+        this.add(new KeyInfoReference(this.doc, URI));
+    }
+
+    /**
+     * Method add
+     *
+     * @param keyInfoReference
+     */
+    public void add(KeyInfoReference keyInfoReference) {
+        this.constructionElement.appendChild(keyInfoReference.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addUnknownElement
+     *
+     * @param element
+     */
+    public void addUnknownElement(Element element) {
+        this.constructionElement.appendChild(element);
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method lengthKeyName
+     *
+     * @return the number of the KeyName tags
+     */
+    public int lengthKeyName() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_KEYNAME);
+    }
+
+    /**
+     * Method lengthKeyValue
+     *
+     *@return the number of the KeyValue tags
+     */
+    public int lengthKeyValue() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_KEYVALUE);
+    }
+
+    /**
+     * Method lengthMgmtData
+     *
+     *@return the number of the MgmtData tags
+     */
+    public int lengthMgmtData() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_MGMTDATA);
+    }
+
+    /**
+     * Method lengthPGPData
+     *
+     *@return the number of the PGPDat. tags
+     */
+    public int lengthPGPData() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_PGPDATA);
+    }
+
+    /**
+     * Method lengthRetrievalMethod
+     *
+     *@return the number of the RetrievalMethod tags
+     */
+    public int lengthRetrievalMethod() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_RETRIEVALMETHOD);
+    }
+
+    /**
+     * Method lengthSPKIData
+     *
+     *@return the number of the SPKIData tags
+     */
+    public int lengthSPKIData() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_SPKIDATA);
+    }
+
+    /**
+     * Method lengthX509Data
+     *
+     *@return the number of the X509Data tags
+     */
+    public int lengthX509Data() {
+        if (x509Datas != null) {
+            return x509Datas.size();
+        }
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_X509DATA);
+    }
+
+    /**
+     * Method lengthDEREncodedKeyValue
+     *
+     *@return the number of the DEREncodedKeyValue tags
+     */
+    public int lengthDEREncodedKeyValue() {
+        return this.length(Constants.SignatureSpec11NS, Constants._TAG_DERENCODEDKEYVALUE);
+    }
+
+    /**
+     * Method lengthKeyInfoReference
+     *
+     *@return the number of the KeyInfoReference tags
+     */
+    public int lengthKeyInfoReference() {
+        return this.length(Constants.SignatureSpec11NS, Constants._TAG_KEYINFOREFERENCE);
+    }
+
+    /**
+     * Method lengthUnknownElement
+     * NOTE possibly buggy.
+     * @return the number of the UnknownElement tags
+     */
+    public int lengthUnknownElement() {
+        int res = 0;
+        NodeList nl = this.constructionElement.getChildNodes();
+
+        for (int i = 0; i < nl.getLength(); i++) {
+            Node current = nl.item(i);
+
+            /**
+             * $todo$ using this method, we don't see unknown Elements
+             *  from Signature NS; revisit
+             */
+            if ((current.getNodeType() == Node.ELEMENT_NODE)
+                && current.getNamespaceURI().equals(Constants.SignatureSpecNS)) {
+                res++;
+            }
+        }
+
+        return res;
+    }
+
+    /**
+     * Method itemKeyName
+     *
+     * @param i
+     * @return the asked KeyName element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public KeyName itemKeyName(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_KEYNAME, i);
+
+        if (e != null) {
+            return new KeyName(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemKeyValue
+     *
+     * @param i
+     * @return the asked KeyValue element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public KeyValue itemKeyValue(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_KEYVALUE, i);
+
+        if (e != null) {
+            return new KeyValue(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemMgmtData
+     *
+     * @param i
+     * @return the asked MgmtData element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public MgmtData itemMgmtData(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_MGMTDATA, i);
+
+        if (e != null) {
+            return new MgmtData(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemPGPData
+     *
+     * @param i
+     * @return the asked PGPData element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public PGPData itemPGPData(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_PGPDATA, i);
+
+        if (e != null) {
+            return new PGPData(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemRetrievalMethod
+     *
+     * @param i
+     *@return the asked RetrievalMethod element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public RetrievalMethod itemRetrievalMethod(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_RETRIEVALMETHOD, i);
+
+        if (e != null) {
+            return new RetrievalMethod(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemSPKIData
+     *
+     * @param i
+     * @return the asked SPKIData element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public SPKIData itemSPKIData(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_SPKIDATA, i);
+
+        if (e != null) {
+            return new SPKIData(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemX509Data
+     *
+     * @param i
+     * @return the asked X509Data element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public X509Data itemX509Data(int i) throws XMLSecurityException {
+        if (x509Datas != null) {
+            return x509Datas.get(i);
+        }
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509DATA, i);
+
+        if (e != null) {
+            return new X509Data(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemEncryptedKey
+     *
+     * @param i
+     * @return the asked EncryptedKey element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public EncryptedKey itemEncryptedKey(int i) throws XMLSecurityException {
+        if (encryptedKeys != null) {
+            return encryptedKeys.get(i);
+        }
+        Element e =
+            XMLUtils.selectXencNode(
+                this.constructionElement.getFirstChild(), EncryptionConstants._TAG_ENCRYPTEDKEY, i);
+
+        if (e != null) {
+            XMLCipher cipher = XMLCipher.getInstance();
+            cipher.init(XMLCipher.UNWRAP_MODE, null);
+            return cipher.loadEncryptedKey(e);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemDEREncodedKeyValue
+     *
+     * @param i
+     * @return the asked DEREncodedKeyValue element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public DEREncodedKeyValue itemDEREncodedKeyValue(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDs11Node(
+                this.constructionElement.getFirstChild(), Constants._TAG_DERENCODEDKEYVALUE, i);
+
+        if (e != null) {
+            return new DEREncodedKeyValue(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemKeyInfoReference
+     *
+     * @param i
+     * @return the asked KeyInfoReference element, null if the index is too big
+     * @throws XMLSecurityException
+     */
+    public KeyInfoReference itemKeyInfoReference(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDs11Node(
+                this.constructionElement.getFirstChild(), Constants._TAG_KEYINFOREFERENCE, i);
+
+        if (e != null) {
+            return new KeyInfoReference(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemUnknownElement
+     *
+     * @param i index
+     * @return the element number of the unknown elements
+     */
+    public Element itemUnknownElement(int i) {
+        NodeList nl = this.constructionElement.getChildNodes();
+        int res = 0;
+
+        for (int j = 0; j < nl.getLength(); j++) {
+            Node current = nl.item(j);
+
+            /**
+             * $todo$ using this method, we don't see unknown Elements
+             *  from Signature NS; revisit
+             */
+            if ((current.getNodeType() == Node.ELEMENT_NODE)
+                && current.getNamespaceURI().equals(Constants.SignatureSpecNS)) {
+                res++;
+
+                if (res == i) {
+                    return (Element) current;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Method isEmpty
+     *
+     * @return true if the element has no descendants.
+     */
+    public boolean isEmpty() {
+        return this.constructionElement.getFirstChild() == null;
+    }
+
+    /**
+     * Method containsKeyName
+     *
+     * @return If the KeyInfo contains a KeyName node
+     */
+    public boolean containsKeyName() {
+        return this.lengthKeyName() > 0;
+    }
+
+    /**
+     * Method containsKeyValue
+     *
+     * @return If the KeyInfo contains a KeyValue node
+     */
+    public boolean containsKeyValue() {
+        return this.lengthKeyValue() > 0;
+    }
+
+    /**
+     * Method containsMgmtData
+     *
+     * @return If the KeyInfo contains a MgmtData node
+     */
+    public boolean containsMgmtData() {
+        return this.lengthMgmtData() > 0;
+    }
+
+    /**
+     * Method containsPGPData
+     *
+     * @return If the KeyInfo contains a PGPData node
+     */
+    public boolean containsPGPData() {
+        return this.lengthPGPData() > 0;
+    }
+
+    /**
+     * Method containsRetrievalMethod
+     *
+     * @return If the KeyInfo contains a RetrievalMethod node
+     */
+    public boolean containsRetrievalMethod() {
+        return this.lengthRetrievalMethod() > 0;
+    }
+
+    /**
+     * Method containsSPKIData
+     *
+     * @return If the KeyInfo contains a SPKIData node
+     */
+    public boolean containsSPKIData() {
+        return this.lengthSPKIData() > 0;
+    }
+
+    /**
+     * Method containsUnknownElement
+     *
+     * @return If the KeyInfo contains a UnknownElement node
+     */
+    public boolean containsUnknownElement() {
+        return this.lengthUnknownElement() > 0;
+    }
+
+    /**
+     * Method containsX509Data
+     *
+     * @return If the KeyInfo contains a X509Data node
+     */
+    public boolean containsX509Data() {
+        return this.lengthX509Data() > 0;
+    }
+
+    /**
+     * Method containsDEREncodedKeyValue
+     *
+     * @return If the KeyInfo contains a DEREncodedKeyValue node
+     */
+    public boolean containsDEREncodedKeyValue() {
+        return this.lengthDEREncodedKeyValue() > 0;
+    }
+
+    /**
+     * Method containsKeyInfoReference
+     *
+     * @return If the KeyInfo contains a KeyInfoReference node
+     */
+    public boolean containsKeyInfoReference() {
+        return this.lengthKeyInfoReference() > 0;
+    }
+
+    /**
+     * This method returns the public key.
+     *
+     * @return If the KeyInfo contains a PublicKey node
+     * @throws KeyResolverException
+     */
+    public PublicKey getPublicKey() throws KeyResolverException {
+        PublicKey pk = this.getPublicKeyFromInternalResolvers();
+
+        if (pk != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a key using the per-KeyInfo key resolvers");
+            }
+
+            return pk;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a key using the per-KeyInfo key resolvers");
+        }
+
+        pk = this.getPublicKeyFromStaticResolvers();
+
+        if (pk != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a key using the system-wide key resolvers");
+            }
+
+            return pk;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a key using the system-wide key resolvers");
+        }
+
+        return null;
+    }
+
+    /**
+     * Searches the library wide KeyResolvers for public keys
+     *
+     * @return The public key contained in this Node.
+     * @throws KeyResolverException
+     */
+    PublicKey getPublicKeyFromStaticResolvers() throws KeyResolverException {
+        Iterator<KeyResolverSpi> it = KeyResolver.iterator();
+        while (it.hasNext()) {
+            KeyResolverSpi keyResolver = it.next();
+            keyResolver.setSecureValidation(secureValidation);
+            Node currentChild = this.constructionElement.getFirstChild();
+            String uri = this.getBaseURI();
+            while (currentChild != null) {
+                if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                    for (StorageResolver storage : storageResolvers) {
+                        PublicKey pk =
+                            keyResolver.engineLookupAndResolvePublicKey(
+                                (Element) currentChild, uri, storage
+                            );
+
+                        if (pk != null) {
+                            return pk;
+                        }
+                    }
+                }
+                currentChild = currentChild.getNextSibling();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Searches the per-KeyInfo KeyResolvers for public keys
+     *
+     * @return The public key contained in this Node.
+     * @throws KeyResolverException
+     */
+    PublicKey getPublicKeyFromInternalResolvers() throws KeyResolverException {
+        for (KeyResolverSpi keyResolver : internalKeyResolvers) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+            }
+            keyResolver.setSecureValidation(secureValidation);
+            Node currentChild = this.constructionElement.getFirstChild();
+            String uri = this.getBaseURI();
+            while (currentChild != null)      {
+                if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                    for (StorageResolver storage : storageResolvers) {
+                        PublicKey pk =
+                            keyResolver.engineLookupAndResolvePublicKey(
+                                (Element) currentChild, uri, storage
+                            );
+
+                        if (pk != null) {
+                            return pk;
+                        }
+                    }
+                }
+                currentChild = currentChild.getNextSibling();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Method getX509Certificate
+     *
+     * @return The certificate contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    public X509Certificate getX509Certificate() throws KeyResolverException {
+        // First search using the individual resolvers from the user
+        X509Certificate cert = this.getX509CertificateFromInternalResolvers();
+
+        if (cert != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a X509Certificate using the per-KeyInfo key resolvers");
+            }
+
+            return cert;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a X509Certificate using the per-KeyInfo key resolvers");
+        }
+
+        // Then use the system-wide Resolvers
+        cert = this.getX509CertificateFromStaticResolvers();
+
+        if (cert != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a X509Certificate using the system-wide key resolvers");
+            }
+
+            return cert;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a X509Certificate using the system-wide key resolvers");
+        }
+
+        return null;
+    }
+
+    /**
+     * This method uses each System-wide {@link KeyResolver} to search the
+     * child elements. Each combination of {@link KeyResolver} and child element
+     * is checked against all {@link StorageResolver}s.
+     *
+     * @return The certificate contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    X509Certificate getX509CertificateFromStaticResolvers()
+        throws KeyResolverException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE,
+                "Start getX509CertificateFromStaticResolvers() with " + KeyResolver.length()
+                + " resolvers"
+            );
+        }
+        String uri = this.getBaseURI();
+        Iterator<KeyResolverSpi> it = KeyResolver.iterator();
+        while (it.hasNext()) {
+            KeyResolverSpi keyResolver = it.next();
+            keyResolver.setSecureValidation(secureValidation);
+            X509Certificate cert = applyCurrentResolver(uri, keyResolver);
+            if (cert != null) {
+                return cert;
+            }
+        }
+        return null;
+    }
+
+    private X509Certificate applyCurrentResolver(
+        String uri, KeyResolverSpi keyResolver
+    ) throws KeyResolverException {
+        Node currentChild = this.constructionElement.getFirstChild();
+        while (currentChild != null)      {
+            if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                for (StorageResolver storage : storageResolvers) {
+                    X509Certificate cert =
+                        keyResolver.engineLookupResolveX509Certificate(
+                            (Element) currentChild, uri, storage
+                        );
+
+                    if (cert != null) {
+                        return cert;
+                    }
+                }
+            }
+            currentChild = currentChild.getNextSibling();
+        }
+        return null;
+    }
+
+    /**
+     * Method getX509CertificateFromInternalResolvers
+     *
+     * @return The certificate contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    X509Certificate getX509CertificateFromInternalResolvers()
+        throws KeyResolverException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE,
+                "Start getX509CertificateFromInternalResolvers() with "
+                + this.lengthInternalKeyResolver() + " resolvers"
+            );
+        }
+        String uri = this.getBaseURI();
+        for (KeyResolverSpi keyResolver : internalKeyResolvers) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+            }
+            keyResolver.setSecureValidation(secureValidation);
+            X509Certificate cert = applyCurrentResolver(uri, keyResolver);
+            if (cert != null) {
+                return cert;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * This method returns a secret (symmetric) key. This is for XML Encryption.
+     * @return the secret key contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    public SecretKey getSecretKey() throws KeyResolverException {
+        SecretKey sk = this.getSecretKeyFromInternalResolvers();
+
+        if (sk != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a secret key using the per-KeyInfo key resolvers");
+            }
+
+            return sk;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a secret key using the per-KeyInfo key resolvers");
+        }
+
+        sk = this.getSecretKeyFromStaticResolvers();
+
+        if (sk != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a secret key using the system-wide key resolvers");
+            }
+
+            return sk;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a secret key using the system-wide key resolvers");
+        }
+
+        return null;
+    }
+
+    /**
+     * Searches the library wide KeyResolvers for Secret keys
+     *
+     * @return the secret key contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    SecretKey getSecretKeyFromStaticResolvers() throws KeyResolverException {
+        Iterator<KeyResolverSpi> it = KeyResolver.iterator();
+        while (it.hasNext()) {
+            KeyResolverSpi keyResolver = it.next();
+            keyResolver.setSecureValidation(secureValidation);
+
+            Node currentChild = this.constructionElement.getFirstChild();
+            String uri = this.getBaseURI();
+            while (currentChild != null)      {
+                if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                    for (StorageResolver storage : storageResolvers) {
+                        SecretKey sk =
+                            keyResolver.engineLookupAndResolveSecretKey(
+                                (Element) currentChild, uri, storage
+                            );
+
+                        if (sk != null) {
+                            return sk;
+                        }
+                    }
+                }
+                currentChild = currentChild.getNextSibling();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Searches the per-KeyInfo KeyResolvers for secret keys
+     *
+     * @return the secret key contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+
+    SecretKey getSecretKeyFromInternalResolvers() throws KeyResolverException {
+        for (KeyResolverSpi keyResolver : internalKeyResolvers) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+            }
+            keyResolver.setSecureValidation(secureValidation);
+            Node currentChild = this.constructionElement.getFirstChild();
+            String uri = this.getBaseURI();
+            while (currentChild != null)      {
+                if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                    for (StorageResolver storage : storageResolvers) {
+                        SecretKey sk =
+                            keyResolver.engineLookupAndResolveSecretKey(
+                                (Element) currentChild, uri, storage
+                            );
+
+                        if (sk != null) {
+                            return sk;
+                        }
+                    }
+                }
+                currentChild = currentChild.getNextSibling();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * This method returns a private key. This is for Key Transport in XML Encryption.
+     * @return the private key contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    public PrivateKey getPrivateKey() throws KeyResolverException {
+        PrivateKey pk = this.getPrivateKeyFromInternalResolvers();
+
+        if (pk != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a private key using the per-KeyInfo key resolvers");
+            }
+            return pk;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a secret key using the per-KeyInfo key resolvers");
+        }
+
+        pk = this.getPrivateKeyFromStaticResolvers();
+        if (pk != null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I could find a private key using the system-wide key resolvers");
+            }
+            return pk;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "I couldn't find a private key using the system-wide key resolvers");
+        }
+
+        return null;
+    }
+
+    /**
+     * Searches the library wide KeyResolvers for Private keys
+     *
+     * @return the private key contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    PrivateKey getPrivateKeyFromStaticResolvers() throws KeyResolverException {
+        Iterator<KeyResolverSpi> it = KeyResolver.iterator();
+        while (it.hasNext()) {
+            KeyResolverSpi keyResolver = it.next();
+            keyResolver.setSecureValidation(secureValidation);
+
+            Node currentChild = this.constructionElement.getFirstChild();
+            String uri = this.getBaseURI();
+            while (currentChild != null)      {
+                if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                    // not using StorageResolvers at the moment
+                    // since they cannot return private keys
+                    PrivateKey pk =
+                        keyResolver.engineLookupAndResolvePrivateKey(
+                            (Element) currentChild, uri, null
+                        );
+
+                    if (pk != null) {
+                        return pk;
+                    }
+                }
+                currentChild = currentChild.getNextSibling();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Searches the per-KeyInfo KeyResolvers for private keys
+     *
+     * @return the private key contained in this KeyInfo
+     * @throws KeyResolverException
+     */
+    PrivateKey getPrivateKeyFromInternalResolvers() throws KeyResolverException {
+        for (KeyResolverSpi keyResolver : internalKeyResolvers) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Try " + keyResolver.getClass().getName());
+            }
+            keyResolver.setSecureValidation(secureValidation);
+            Node currentChild = this.constructionElement.getFirstChild();
+            String uri = this.getBaseURI();
+            while (currentChild != null) {
+                if (currentChild.getNodeType() == Node.ELEMENT_NODE) {
+                    // not using StorageResolvers at the moment
+                    // since they cannot return private keys
+                    PrivateKey pk =
+                        keyResolver.engineLookupAndResolvePrivateKey(
+                            (Element) currentChild, uri, null
+                        );
+
+                    if (pk != null) {
+                        return pk;
+                    }
+                }
+                currentChild = currentChild.getNextSibling();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * This method is used to add a custom {@link KeyResolverSpi} to a KeyInfo
+     * object.
+     *
+     * @param realKeyResolver
+     */
+    public void registerInternalKeyResolver(KeyResolverSpi realKeyResolver) {
+        this.internalKeyResolvers.add(realKeyResolver);
+    }
+
+    /**
+     * Method lengthInternalKeyResolver
+     * @return the length of the key
+     */
+    int lengthInternalKeyResolver() {
+        return this.internalKeyResolvers.size();
+    }
+
+    /**
+     * Method itemInternalKeyResolver
+     *
+     * @param i the index
+     * @return the KeyResolverSpi for the index.
+     */
+    KeyResolverSpi itemInternalKeyResolver(int i) {
+        return this.internalKeyResolvers.get(i);
+    }
+
+    /**
+     * Method addStorageResolver
+     *
+     * @param storageResolver
+     */
+    public void addStorageResolver(StorageResolver storageResolver) {
+        if (storageResolvers == nullList) {
+            // Replace the default null StorageResolver
+            storageResolvers = new ArrayList<StorageResolver>();
+        }
+        this.storageResolvers.add(storageResolver);
+    }
+
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_KEYINFO;
+    }
+}

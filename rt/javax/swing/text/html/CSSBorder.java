@@ -1,446 +1,436 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Polygon;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import javax.swing.border.AbstractBorder;
-/*     */ import javax.swing.text.AttributeSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class CSSBorder
-/*     */   extends AbstractBorder
-/*     */ {
-/*     */   static final int COLOR = 0;
-/*     */   static final int STYLE = 1;
-/*     */   static final int WIDTH = 2;
-/*     */   static final int TOP = 0;
-/*     */   static final int RIGHT = 1;
-/*     */   static final int BOTTOM = 2;
-/*     */   static final int LEFT = 3;
-/*  62 */   static final CSS.Attribute[][] ATTRIBUTES = new CSS.Attribute[][] { { CSS.Attribute.BORDER_TOP_COLOR, CSS.Attribute.BORDER_RIGHT_COLOR, CSS.Attribute.BORDER_BOTTOM_COLOR, CSS.Attribute.BORDER_LEFT_COLOR }, { CSS.Attribute.BORDER_TOP_STYLE, CSS.Attribute.BORDER_RIGHT_STYLE, CSS.Attribute.BORDER_BOTTOM_STYLE, CSS.Attribute.BORDER_LEFT_STYLE }, { CSS.Attribute.BORDER_TOP_WIDTH, CSS.Attribute.BORDER_RIGHT_WIDTH, CSS.Attribute.BORDER_BOTTOM_WIDTH, CSS.Attribute.BORDER_LEFT_WIDTH } };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  72 */   static final CSS.CssValue[] PARSERS = new CSS.CssValue[] { new CSS.ColorValue(), new CSS.BorderStyle(), new CSS.BorderWidthValue(null, 0) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  77 */   static final Object[] DEFAULTS = new Object[] { CSS.Attribute.BORDER_COLOR, PARSERS[1]
-/*     */       
-/*  79 */       .parseCssValue(CSS.Attribute.BORDER_STYLE.getDefaultValue()), PARSERS[2]
-/*  80 */       .parseCssValue(CSS.Attribute.BORDER_WIDTH.getDefaultValue()) };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final AttributeSet attrs;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   CSSBorder(AttributeSet paramAttributeSet) {
-/*  90 */     this.attrs = paramAttributeSet;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Color getBorderColor(int paramInt) {
-/*     */     CSS.ColorValue colorValue;
-/*  97 */     Object object = this.attrs.getAttribute(ATTRIBUTES[0][paramInt]);
-/*     */     
-/*  99 */     if (object instanceof CSS.ColorValue) {
-/* 100 */       colorValue = (CSS.ColorValue)object;
-/*     */     }
-/*     */     else {
-/*     */       
-/* 104 */       colorValue = (CSS.ColorValue)this.attrs.getAttribute(CSS.Attribute.COLOR);
-/* 105 */       if (colorValue == null) {
-/* 106 */         colorValue = (CSS.ColorValue)PARSERS[0].parseCssValue(CSS.Attribute.COLOR
-/* 107 */             .getDefaultValue());
-/*     */       }
-/*     */     } 
-/* 110 */     return colorValue.getValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getBorderWidth(int paramInt) {
-/* 117 */     int i = 0;
-/* 118 */     CSS.BorderStyle borderStyle = (CSS.BorderStyle)this.attrs.getAttribute(ATTRIBUTES[1][paramInt]);
-/*     */     
-/* 120 */     if (borderStyle != null && borderStyle.getValue() != CSS.Value.NONE) {
-/*     */ 
-/*     */       
-/* 123 */       CSS.LengthValue lengthValue = (CSS.LengthValue)this.attrs.getAttribute(ATTRIBUTES[2][paramInt]);
-/*     */       
-/* 125 */       if (lengthValue == null) {
-/* 126 */         lengthValue = (CSS.LengthValue)DEFAULTS[2];
-/*     */       }
-/* 128 */       i = (int)lengthValue.getValue(true);
-/*     */     } 
-/* 130 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int[] getWidths() {
-/* 137 */     int[] arrayOfInt = new int[4];
-/* 138 */     for (byte b = 0; b < arrayOfInt.length; b++) {
-/* 139 */       arrayOfInt[b] = getBorderWidth(b);
-/*     */     }
-/* 141 */     return arrayOfInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private CSS.Value getBorderStyle(int paramInt) {
-/* 149 */     CSS.BorderStyle borderStyle = (CSS.BorderStyle)this.attrs.getAttribute(ATTRIBUTES[1][paramInt]);
-/* 150 */     if (borderStyle == null) {
-/* 151 */       borderStyle = (CSS.BorderStyle)DEFAULTS[1];
-/*     */     }
-/* 153 */     return borderStyle.getValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Polygon getBorderShape(int paramInt) {
-/* 161 */     Polygon polygon = null;
-/* 162 */     int[] arrayOfInt = getWidths();
-/* 163 */     if (arrayOfInt[paramInt] != 0) {
-/* 164 */       polygon = new Polygon(new int[4], new int[4], 0);
-/* 165 */       polygon.addPoint(0, 0);
-/* 166 */       polygon.addPoint(-arrayOfInt[(paramInt + 3) % 4], -arrayOfInt[paramInt]);
-/* 167 */       polygon.addPoint(arrayOfInt[(paramInt + 1) % 4], -arrayOfInt[paramInt]);
-/* 168 */       polygon.addPoint(0, 0);
-/*     */     } 
-/* 170 */     return polygon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private BorderPainter getBorderPainter(int paramInt) {
-/* 177 */     CSS.Value value = getBorderStyle(paramInt);
-/* 178 */     return borderPainters.get(value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Color getAdjustedColor(Color paramColor, double paramDouble) {
-/* 188 */     double d1 = 1.0D - Math.min(Math.abs(paramDouble), 1.0D);
-/* 189 */     double d2 = (paramDouble > 0.0D) ? (255.0D * (1.0D - d1)) : 0.0D;
-/* 190 */     return new Color((int)(paramColor.getRed() * d1 + d2), 
-/* 191 */         (int)(paramColor.getGreen() * d1 + d2), 
-/* 192 */         (int)(paramColor.getBlue() * d1 + d2));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/* 199 */     int[] arrayOfInt = getWidths();
-/* 200 */     paramInsets.set(arrayOfInt[0], arrayOfInt[3], arrayOfInt[2], arrayOfInt[1]);
-/* 201 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 206 */     if (!(paramGraphics instanceof Graphics2D)) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 210 */     Graphics2D graphics2D = (Graphics2D)paramGraphics.create();
-/*     */     
-/* 212 */     int[] arrayOfInt = getWidths();
-/*     */ 
-/*     */     
-/* 215 */     int i = paramInt1 + arrayOfInt[3];
-/* 216 */     int j = paramInt2 + arrayOfInt[0];
-/* 217 */     int k = paramInt3 - arrayOfInt[1] + arrayOfInt[3];
-/* 218 */     int m = paramInt4 - arrayOfInt[0] + arrayOfInt[2];
-/*     */ 
-/*     */     
-/* 221 */     int[][] arrayOfInt1 = { { i, j }, { i + k, j }, { i + k, j + m }, { i, j + m } };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 229 */     for (byte b = 0; b < 4; b++) {
-/* 230 */       CSS.Value value = getBorderStyle(b);
-/* 231 */       Polygon polygon = getBorderShape(b);
-/* 232 */       if (value != CSS.Value.NONE && polygon != null) {
-/* 233 */         int n = (b % 2 == 0) ? k : m;
-/*     */ 
-/*     */         
-/* 236 */         polygon.xpoints[2] = polygon.xpoints[2] + n;
-/* 237 */         polygon.xpoints[3] = polygon.xpoints[3] + n;
-/* 238 */         Color color = getBorderColor(b);
-/* 239 */         BorderPainter borderPainter = getBorderPainter(b);
-/*     */         
-/* 241 */         double d = b * Math.PI / 2.0D;
-/* 242 */         graphics2D.setClip(paramGraphics.getClip());
-/* 243 */         graphics2D.translate(arrayOfInt1[b][0], arrayOfInt1[b][1]);
-/* 244 */         graphics2D.rotate(d);
-/* 245 */         graphics2D.clip(polygon);
-/* 246 */         borderPainter.paint(polygon, graphics2D, color, b);
-/* 247 */         graphics2D.rotate(-d);
-/* 248 */         graphics2D.translate(-arrayOfInt1[b][0], -arrayOfInt1[b][1]);
-/*     */       } 
-/*     */     } 
-/* 251 */     graphics2D.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class NullPainter
-/*     */     implements BorderPainter
-/*     */   {
-/*     */     public void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class SolidPainter
-/*     */     implements BorderPainter
-/*     */   {
-/*     */     public void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int) {
-/* 283 */       param1Graphics.setColor(param1Color);
-/* 284 */       param1Graphics.fillPolygon(param1Polygon);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StrokePainter
-/*     */     implements BorderPainter
-/*     */   {
-/*     */     void paintStrokes(Rectangle param1Rectangle, Graphics param1Graphics, int param1Int, int[] param1ArrayOfint, Color[] param1ArrayOfColor) {
-/* 298 */       boolean bool = (param1Int == 0) ? true : false;
-/* 299 */       int i = 0;
-/* 300 */       int j = bool ? param1Rectangle.width : param1Rectangle.height;
-/* 301 */       while (i < j) {
-/* 302 */         for (byte b = 0; b < param1ArrayOfint.length && 
-/* 303 */           i < j; b++) {
-/*     */ 
-/*     */           
-/* 306 */           int k = param1ArrayOfint[b];
-/* 307 */           Color color = param1ArrayOfColor[b];
-/* 308 */           if (color != null) {
-/* 309 */             int m = param1Rectangle.x + (bool ? i : 0);
-/* 310 */             int n = param1Rectangle.y + (bool ? 0 : i);
-/* 311 */             int i1 = bool ? k : param1Rectangle.width;
-/* 312 */             int i2 = bool ? param1Rectangle.height : k;
-/* 313 */             param1Graphics.setColor(color);
-/* 314 */             param1Graphics.fillRect(m, n, i1, i2);
-/*     */           } 
-/* 316 */           i += k;
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class DoublePainter
-/*     */     extends StrokePainter
-/*     */   {
-/*     */     public void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int) {
-/* 327 */       Rectangle rectangle = param1Polygon.getBounds();
-/* 328 */       int i = Math.max(rectangle.height / 3, 1);
-/* 329 */       int[] arrayOfInt = { i, i };
-/* 330 */       Color[] arrayOfColor = { param1Color, null };
-/* 331 */       paintStrokes(rectangle, param1Graphics, 1, arrayOfInt, arrayOfColor);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class DottedDashedPainter
-/*     */     extends StrokePainter
-/*     */   {
-/*     */     final int factor;
-/*     */     
-/*     */     DottedDashedPainter(int param1Int) {
-/* 342 */       this.factor = param1Int;
-/*     */     }
-/*     */     
-/*     */     public void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int) {
-/* 346 */       Rectangle rectangle = param1Polygon.getBounds();
-/* 347 */       int i = rectangle.height * this.factor;
-/* 348 */       int[] arrayOfInt = { i, i };
-/* 349 */       Color[] arrayOfColor = { param1Color, null };
-/* 350 */       paintStrokes(rectangle, param1Graphics, 0, arrayOfInt, arrayOfColor);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class ShadowLightPainter
-/*     */     extends StrokePainter
-/*     */   {
-/*     */     static Color getShadowColor(Color param1Color) {
-/* 362 */       return CSSBorder.getAdjustedColor(param1Color, -0.3D);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     static Color getLightColor(Color param1Color) {
-/* 369 */       return CSSBorder.getAdjustedColor(param1Color, 0.7D);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class GrooveRidgePainter
-/*     */     extends ShadowLightPainter
-/*     */   {
-/*     */     final CSS.Value type;
-/*     */     
-/*     */     GrooveRidgePainter(CSS.Value param1Value) {
-/* 380 */       this.type = param1Value;
-/*     */     }
-/*     */     
-/*     */     public void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int) {
-/* 384 */       Rectangle rectangle = param1Polygon.getBounds();
-/* 385 */       int i = Math.max(rectangle.height / 2, 1);
-/* 386 */       int[] arrayOfInt = { i, i };
-/* 387 */       (new Color[2])[0] = 
-/*     */         
-/* 389 */         getShadowColor(param1Color); (new Color[2])[1] = getLightColor(param1Color); (new Color[2])[0] = 
-/* 390 */         getLightColor(param1Color); (new Color[2])[1] = getShadowColor(param1Color); Color[] arrayOfColor = ((((param1Int + 1) % 4 < 2) ? true : false) == ((this.type == CSS.Value.GROOVE) ? true : false)) ? new Color[2] : new Color[2];
-/* 391 */       paintStrokes(rectangle, param1Graphics, 1, arrayOfInt, arrayOfColor);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class InsetOutsetPainter
-/*     */     extends ShadowLightPainter
-/*     */   {
-/*     */     CSS.Value type;
-/*     */     
-/*     */     InsetOutsetPainter(CSS.Value param1Value) {
-/* 402 */       this.type = param1Value;
-/*     */     }
-/*     */     
-/*     */     public void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int) {
-/* 406 */       param1Graphics.setColor(((((param1Int + 1) % 4 < 2) ? true : false) == ((this.type == CSS.Value.INSET) ? true : false)) ? 
-/* 407 */           getShadowColor(param1Color) : getLightColor(param1Color));
-/* 408 */       param1Graphics.fillPolygon(param1Polygon);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void registerBorderPainter(CSS.Value paramValue, BorderPainter paramBorderPainter) {
-/* 416 */     borderPainters.put(paramValue, paramBorderPainter);
-/*     */   }
-/*     */ 
-/*     */   
-/* 420 */   static Map<CSS.Value, BorderPainter> borderPainters = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/* 425 */     registerBorderPainter(CSS.Value.NONE, new NullPainter());
-/* 426 */     registerBorderPainter(CSS.Value.HIDDEN, new NullPainter());
-/* 427 */     registerBorderPainter(CSS.Value.SOLID, new SolidPainter());
-/* 428 */     registerBorderPainter(CSS.Value.DOUBLE, new DoublePainter());
-/* 429 */     registerBorderPainter(CSS.Value.DOTTED, new DottedDashedPainter(1));
-/* 430 */     registerBorderPainter(CSS.Value.DASHED, new DottedDashedPainter(3));
-/* 431 */     registerBorderPainter(CSS.Value.GROOVE, new GrooveRidgePainter(CSS.Value.GROOVE));
-/* 432 */     registerBorderPainter(CSS.Value.RIDGE, new GrooveRidgePainter(CSS.Value.RIDGE));
-/* 433 */     registerBorderPainter(CSS.Value.INSET, new InsetOutsetPainter(CSS.Value.INSET));
-/* 434 */     registerBorderPainter(CSS.Value.OUTSET, new InsetOutsetPainter(CSS.Value.OUTSET));
-/*     */   }
-/*     */   
-/*     */   static interface BorderPainter {
-/*     */     void paint(Polygon param1Polygon, Graphics param1Graphics, Color param1Color, int param1Int);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\CSSBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.util.HashMap;
+import java.util.Map;
+import javax.swing.border.AbstractBorder;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.View;
+import javax.swing.text.html.CSS.Attribute;
+import javax.swing.text.html.CSS.BorderStyle;
+import javax.swing.text.html.CSS.BorderWidthValue;
+import javax.swing.text.html.CSS.ColorValue;
+import javax.swing.text.html.CSS.CssValue;
+import javax.swing.text.html.CSS.LengthValue;
+import javax.swing.text.html.CSS.Value;
+
+/**
+ * CSS-style borders for HTML elements.
+ *
+ * @author Sergey Groznyh
+ */
+class CSSBorder extends AbstractBorder {
+
+    /** Indices for the attribute groups.  */
+    final static int COLOR = 0, STYLE = 1, WIDTH = 2;
+
+    /** Indices for the box sides within the attribute group.  */
+    final static int TOP = 0, RIGHT = 1, BOTTOM = 2, LEFT = 3;
+
+    /** The attribute groups.  */
+    final static Attribute[][] ATTRIBUTES = {
+        { Attribute.BORDER_TOP_COLOR, Attribute.BORDER_RIGHT_COLOR,
+          Attribute.BORDER_BOTTOM_COLOR, Attribute.BORDER_LEFT_COLOR, },
+        { Attribute.BORDER_TOP_STYLE, Attribute.BORDER_RIGHT_STYLE,
+          Attribute.BORDER_BOTTOM_STYLE, Attribute.BORDER_LEFT_STYLE, },
+        { Attribute.BORDER_TOP_WIDTH, Attribute.BORDER_RIGHT_WIDTH,
+          Attribute.BORDER_BOTTOM_WIDTH, Attribute.BORDER_LEFT_WIDTH, },
+    };
+
+    /** Parsers for the border properties.  */
+    final static CssValue PARSERS[] = {
+        new ColorValue(), new BorderStyle(), new BorderWidthValue(null, 0),
+    };
+
+    /** Default values for the border properties.  */
+    final static Object[] DEFAULTS = {
+        Attribute.BORDER_COLOR, // marker: value will be computed on request
+        PARSERS[1].parseCssValue(Attribute.BORDER_STYLE.getDefaultValue()),
+        PARSERS[2].parseCssValue(Attribute.BORDER_WIDTH.getDefaultValue()),
+    };
+
+    /** Attribute set containing border properties.  */
+    final AttributeSet attrs;
+
+    /**
+     * Initialize the attribute set.
+     */
+    CSSBorder(AttributeSet attrs) {
+        this.attrs = attrs;
+    }
+
+    /**
+     * Return the border color for the given side.
+     */
+    private Color getBorderColor(int side) {
+        Object o = attrs.getAttribute(ATTRIBUTES[COLOR][side]);
+        ColorValue cv;
+        if (o instanceof ColorValue) {
+            cv = (ColorValue) o;
+        } else {
+            // Marker for the default value.  Use 'color' property value as the
+            // computed value of the 'border-color' property (CSS2 8.5.2)
+            cv = (ColorValue) attrs.getAttribute(Attribute.COLOR);
+            if (cv == null) {
+                cv = (ColorValue) PARSERS[COLOR].parseCssValue(
+                                            Attribute.COLOR.getDefaultValue());
+            }
+        }
+        return cv.getValue();
+    }
+
+    /**
+     * Return the border width for the given side.
+     */
+    private int getBorderWidth(int side) {
+        int width = 0;
+        BorderStyle bs = (BorderStyle) attrs.getAttribute(
+                                                    ATTRIBUTES[STYLE][side]);
+        if ((bs != null) && (bs.getValue() != Value.NONE)) {
+            // The 'border-style' value of "none" forces the computed value
+            // of 'border-width' to be 0 (CSS2 8.5.3)
+            LengthValue bw = (LengthValue) attrs.getAttribute(
+                                                    ATTRIBUTES[WIDTH][side]);
+            if (bw == null) {
+                bw = (LengthValue) DEFAULTS[WIDTH];
+            }
+            width = (int) bw.getValue(true);
+        }
+        return width;
+    }
+
+    /**
+     * Return an array of border widths in the TOP, RIGHT, BOTTOM, LEFT order.
+     */
+    private int[] getWidths() {
+        int[] widths = new int[4];
+        for (int i = 0; i < widths.length; i++) {
+            widths[i] = getBorderWidth(i);
+        }
+        return widths;
+    }
+
+    /**
+     * Return the border style for the given side.
+     */
+    private Value getBorderStyle(int side) {
+        BorderStyle style =
+                    (BorderStyle) attrs.getAttribute(ATTRIBUTES[STYLE][side]);
+        if (style == null) {
+            style = (BorderStyle) DEFAULTS[STYLE];
+        }
+        return style.getValue();
+    }
+
+    /**
+     * Return border shape for {@code side} as if the border has zero interior
+     * length.  Shape start is at (0,0); points are added clockwise.
+     */
+    private Polygon getBorderShape(int side) {
+        Polygon shape = null;
+        int[] widths = getWidths();
+        if (widths[side] != 0) {
+            shape = new Polygon(new int[4], new int[4], 0);
+            shape.addPoint(0, 0);
+            shape.addPoint(-widths[(side + 3) % 4], -widths[side]);
+            shape.addPoint(widths[(side + 1) % 4], -widths[side]);
+            shape.addPoint(0, 0);
+        }
+        return shape;
+    }
+
+    /**
+     * Return the border painter appropriate for the given side.
+     */
+    private BorderPainter getBorderPainter(int side) {
+        Value style = getBorderStyle(side);
+        return borderPainters.get(style);
+    }
+
+    /**
+     * Return the color with brightness adjusted by the specified factor.
+     *
+     * The factor values are between 0.0 (no change) and 1.0 (turn into white).
+     * Negative factor values decrease brigthness (ie, 1.0 turns into black).
+     */
+    static Color getAdjustedColor(Color c, double factor) {
+        double f = 1 - Math.min(Math.abs(factor), 1);
+        double inc = (factor > 0 ? 255 * (1 - f) : 0);
+        return new Color((int) (c.getRed() * f + inc),
+                         (int) (c.getGreen() * f + inc),
+                         (int) (c.getBlue() * f + inc));
+    }
+
+
+    /* The javax.swing.border.Border methods.  */
+
+    public Insets getBorderInsets(Component c, Insets insets) {
+        int[] widths = getWidths();
+        insets.set(widths[TOP], widths[LEFT], widths[BOTTOM], widths[RIGHT]);
+        return insets;
+    }
+
+    public void paintBorder(Component c, Graphics g,
+                                        int x, int y, int width, int height) {
+        if (!(g instanceof Graphics2D)) {
+            return;
+        }
+
+        Graphics2D g2 = (Graphics2D) g.create();
+
+        int[] widths = getWidths();
+
+        // Position and size of the border interior.
+        int intX = x + widths[LEFT];
+        int intY = y + widths[TOP];
+        int intWidth = width - (widths[RIGHT] + widths[LEFT]);
+        int intHeight = height - (widths[TOP] + widths[BOTTOM]);
+
+        // Coordinates of the interior corners, from NW clockwise.
+        int[][] intCorners = {
+            { intX, intY },
+            { intX + intWidth, intY },
+            { intX + intWidth, intY + intHeight },
+            { intX, intY + intHeight, },
+        };
+
+        // Draw the borders for all sides.
+        for (int i = 0; i < 4; i++) {
+            Value style = getBorderStyle(i);
+            Polygon shape = getBorderShape(i);
+            if ((style != Value.NONE) && (shape != null)) {
+                int sideLength = (i % 2 == 0 ? intWidth : intHeight);
+
+                // "stretch" the border shape by the interior area dimension
+                shape.xpoints[2] += sideLength;
+                shape.xpoints[3] += sideLength;
+                Color color = getBorderColor(i);
+                BorderPainter painter = getBorderPainter(i);
+
+                double angle = i * Math.PI / 2;
+                g2.setClip(g.getClip()); // Restore initial clip
+                g2.translate(intCorners[i][0], intCorners[i][1]);
+                g2.rotate(angle);
+                g2.clip(shape);
+                painter.paint(shape, g2, color, i);
+                g2.rotate(-angle);
+                g2.translate(-intCorners[i][0], -intCorners[i][1]);
+            }
+        }
+        g2.dispose();
+    }
+
+
+    /* Border painters.  */
+
+    interface BorderPainter {
+        /**
+         * The painter should paint the border as if it were at the top and the
+         * coordinates of the NW corner of the interior area is (0, 0).  The
+         * caller is responsible for the appropriate affine transformations.
+         *
+         * Clip is set by the caller to the exact border shape so it's safe to
+         * simply draw into the shape's bounding rectangle.
+         */
+        void paint(Polygon shape, Graphics g, Color color, int side);
+    }
+
+    /**
+     * Painter for the "none" and "hidden" CSS border styles.
+     */
+    static class NullPainter implements BorderPainter {
+        public void paint(Polygon shape, Graphics g, Color color, int side) {
+            // Do nothing.
+        }
+    }
+
+    /**
+     * Painter for the "solid" CSS border style.
+     */
+    static class SolidPainter implements BorderPainter {
+        public void paint(Polygon shape, Graphics g, Color color, int side) {
+            g.setColor(color);
+            g.fillPolygon(shape);
+        }
+    }
+
+    /**
+     * Defines a method for painting strokes in the specified direction using
+     * the given length and color patterns.
+     */
+    abstract static class StrokePainter implements BorderPainter {
+        /**
+         * Paint strokes repeatedly using the given length and color patterns.
+         */
+        void paintStrokes(Rectangle r, Graphics g, int axis,
+                                int[] lengthPattern, Color[] colorPattern) {
+            boolean xAxis = (axis == View.X_AXIS);
+            int start = 0;
+            int end = (xAxis ? r.width : r.height);
+            while (start < end) {
+                for (int i = 0; i < lengthPattern.length; i++) {
+                    if (start >= end) {
+                        break;
+                    }
+                    int length = lengthPattern[i];
+                    Color c = colorPattern[i];
+                    if (c != null) {
+                        int x = r.x + (xAxis ? start : 0);
+                        int y = r.y + (xAxis ? 0 : start);
+                        int width = xAxis ? length : r.width;
+                        int height = xAxis ? r.height : length;
+                        g.setColor(c);
+                        g.fillRect(x, y, width, height);
+                    }
+                    start += length;
+                }
+            }
+        }
+    }
+
+    /**
+     * Painter for the "double" CSS border style.
+     */
+    static class DoublePainter extends StrokePainter {
+        public void paint(Polygon shape, Graphics g, Color color, int side) {
+            Rectangle r = shape.getBounds();
+            int length = Math.max(r.height / 3, 1);
+            int[] lengthPattern = { length, length };
+            Color[] colorPattern = { color, null };
+            paintStrokes(r, g, View.Y_AXIS, lengthPattern, colorPattern);
+        }
+    }
+
+    /**
+     * Painter for the "dotted" and "dashed" CSS border styles.
+     */
+    static class DottedDashedPainter extends StrokePainter {
+        final int factor;
+
+        DottedDashedPainter(int factor) {
+            this.factor = factor;
+        }
+
+        public void paint(Polygon shape, Graphics g, Color color, int side) {
+            Rectangle r = shape.getBounds();
+            int length = r.height * factor;
+            int[] lengthPattern = { length, length };
+            Color[] colorPattern = { color, null };
+            paintStrokes(r, g, View.X_AXIS, lengthPattern, colorPattern);
+        }
+    }
+
+    /**
+     * Painter that defines colors for "shadow" and "light" border sides.
+     */
+    abstract static class ShadowLightPainter extends StrokePainter {
+        /**
+         * Return the "shadow" border side color.
+         */
+        static Color getShadowColor(Color c) {
+            return CSSBorder.getAdjustedColor(c, -0.3);
+        }
+
+        /**
+         * Return the "light" border side color.
+         */
+        static Color getLightColor(Color c) {
+            return CSSBorder.getAdjustedColor(c, 0.7);
+        }
+    }
+
+    /**
+     * Painter for the "groove" and "ridge" CSS border styles.
+     */
+    static class GrooveRidgePainter extends ShadowLightPainter {
+        final Value type;
+
+        GrooveRidgePainter(Value type) {
+            this.type = type;
+        }
+
+        public void paint(Polygon shape, Graphics g, Color color, int side) {
+            Rectangle r = shape.getBounds();
+            int length = Math.max(r.height / 2, 1);
+            int[] lengthPattern = { length, length };
+            Color[] colorPattern =
+                             ((side + 1) % 4 < 2) == (type == Value.GROOVE) ?
+                new Color[] { getShadowColor(color), getLightColor(color) } :
+                new Color[] { getLightColor(color), getShadowColor(color) };
+            paintStrokes(r, g, View.Y_AXIS, lengthPattern, colorPattern);
+        }
+    }
+
+    /**
+     * Painter for the "inset" and "outset" CSS border styles.
+     */
+    static class InsetOutsetPainter extends ShadowLightPainter {
+        Value type;
+
+        InsetOutsetPainter(Value type) {
+            this.type = type;
+        }
+
+        public void paint(Polygon shape, Graphics g, Color color, int side) {
+            g.setColor(((side + 1) % 4 < 2) == (type == Value.INSET) ?
+                                getShadowColor(color) : getLightColor(color));
+            g.fillPolygon(shape);
+        }
+    }
+
+    /**
+     * Add the specified painter to the painters map.
+     */
+    static void registerBorderPainter(Value style, BorderPainter painter) {
+        borderPainters.put(style, painter);
+    }
+
+    /** Map the border style values to the border painter objects.  */
+    static Map<Value, BorderPainter> borderPainters =
+                                        new HashMap<Value, BorderPainter>();
+
+    /* Initialize the border painters map with the pre-defined values.  */
+    static {
+        registerBorderPainter(Value.NONE, new NullPainter());
+        registerBorderPainter(Value.HIDDEN, new NullPainter());
+        registerBorderPainter(Value.SOLID, new SolidPainter());
+        registerBorderPainter(Value.DOUBLE, new DoublePainter());
+        registerBorderPainter(Value.DOTTED, new DottedDashedPainter(1));
+        registerBorderPainter(Value.DASHED, new DottedDashedPainter(3));
+        registerBorderPainter(Value.GROOVE, new GrooveRidgePainter(Value.GROOVE));
+        registerBorderPainter(Value.RIDGE, new GrooveRidgePainter(Value.RIDGE));
+        registerBorderPainter(Value.INSET, new InsetOutsetPainter(Value.INSET));
+        registerBorderPainter(Value.OUTSET, new InsetOutsetPainter(Value.OUTSET));
+    }
+}

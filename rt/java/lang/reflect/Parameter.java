@@ -1,354 +1,349 @@
-/*     */ package java.lang.reflect;
-/*     */ 
-/*     */ import java.lang.annotation.Annotation;
-/*     */ import java.lang.reflect.AnnotatedElement;
-/*     */ import java.lang.reflect.AnnotatedType;
-/*     */ import java.lang.reflect.Executable;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ import java.lang.reflect.Parameter;
-/*     */ import java.lang.reflect.Type;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import java.util.Objects;
-/*     */ import sun.reflect.annotation.AnnotationSupport;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class Parameter
-/*     */   implements AnnotatedElement
-/*     */ {
-/*     */   private final String name;
-/*     */   private final int modifiers;
-/*     */   private final Executable executable;
-/*     */   private final int index;
-/*     */   private volatile transient Type parameterTypeCache;
-/*     */   private volatile transient Class<?> parameterClassCache;
-/*     */   private transient Map<Class<? extends Annotation>, Annotation> declaredAnnotations;
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*     */     if (paramObject instanceof Parameter) {
-/*     */       Parameter parameter = (Parameter)paramObject;
-/*     */       return (parameter.executable.equals(this.executable) && parameter.index == this.index);
-/*     */     } 
-/*     */     return false;
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/*     */     return this.executable.hashCode() ^ this.index;
-/*     */   }
-/*     */   
-/*     */   public boolean isNamePresent() {
-/*     */     return (this.executable.hasRealParameterData() && this.name != null);
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/*     */     StringBuilder stringBuilder = new StringBuilder();
-/*     */     Type type = getParameterizedType();
-/*     */     String str = type.getTypeName();
-/*     */     stringBuilder.append(Modifier.toString(getModifiers()));
-/*     */     if (0 != this.modifiers)
-/*     */       stringBuilder.append(' '); 
-/*     */     if (isVarArgs()) {
-/*     */       stringBuilder.append(str.replaceFirst("\\[\\]$", "..."));
-/*     */     } else {
-/*     */       stringBuilder.append(str);
-/*     */     } 
-/*     */     stringBuilder.append(' ');
-/*     */     stringBuilder.append(getName());
-/*     */     return stringBuilder.toString();
-/*     */   }
-/*     */   
-/*     */   Parameter(String paramString, int paramInt1, Executable paramExecutable, int paramInt2) {
-/* 208 */     this.parameterTypeCache = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 240 */     this.parameterClassCache = null;
-/*     */     this.name = paramString;
-/*     */     this.modifiers = paramInt1;
-/*     */     this.executable = paramExecutable;
-/*     */     this.index = paramInt2;
-/*     */   }
-/*     */   public Executable getDeclaringExecutable() { return this.executable; } public int getModifiers() { return this.modifiers; } public String getName() {
-/*     */     if (this.name == null || this.name.equals(""))
-/*     */       return "arg" + this.index; 
-/*     */     return this.name;
-/*     */   } public boolean isImplicit() {
-/* 251 */     return Modifier.isMandated(getModifiers());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String getRealName() {
-/*     */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isSynthetic() {
-/* 265 */     return Modifier.isSynthetic(getModifiers());
-/*     */   }
-/*     */   public Type getParameterizedType() {
-/*     */     Type type = this.parameterTypeCache;
-/*     */     if (null == type) {
-/*     */       type = this.executable.getAllGenericParameterTypes()[this.index];
-/*     */       this.parameterTypeCache = type;
-/*     */     } 
-/*     */     return type;
-/*     */   }
-/*     */   
-/* 276 */   public boolean isVarArgs() { return (this.executable.isVarArgs() && this.index == this.executable
-/* 277 */       .getParameterCount() - 1); }
-/*     */    public Class<?> getType() {
-/*     */     Class<?> clazz = this.parameterClassCache;
-/*     */     if (null == clazz) {
-/*     */       clazz = this.executable.getParameterTypes()[this.index];
-/*     */       this.parameterClassCache = clazz;
-/*     */     } 
-/*     */     return clazz;
-/*     */   } public <T extends Annotation> T getAnnotation(Class<T> paramClass) {
-/* 286 */     Objects.requireNonNull(paramClass);
-/* 287 */     return paramClass.cast(declaredAnnotations().get(paramClass));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public AnnotatedType getAnnotatedType() {
-/*     */     return this.executable.getAnnotatedParameterTypes()[this.index];
-/*     */   }
-/*     */   
-/*     */   public <T extends Annotation> T[] getAnnotationsByType(Class<T> paramClass) {
-/* 296 */     Objects.requireNonNull(paramClass);
-/*     */     
-/* 298 */     return AnnotationSupport.getDirectlyAndIndirectlyPresent(declaredAnnotations(), paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Annotation[] getDeclaredAnnotations() {
-/* 305 */     return this.executable.getParameterAnnotations()[this.index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T extends Annotation> T getDeclaredAnnotation(Class<T> paramClass) {
-/* 315 */     return getAnnotation(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T extends Annotation> T[] getDeclaredAnnotationsByType(Class<T> paramClass) {
-/* 326 */     return getAnnotationsByType(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Annotation[] getAnnotations() {
-/* 333 */     return getDeclaredAnnotations();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized Map<Class<? extends Annotation>, Annotation> declaredAnnotations() {
-/* 339 */     if (null == this.declaredAnnotations) {
-/* 340 */       this.declaredAnnotations = new HashMap<>();
-/*     */       
-/* 342 */       Annotation[] arrayOfAnnotation = getDeclaredAnnotations();
-/* 343 */       for (byte b = 0; b < arrayOfAnnotation.length; b++)
-/* 344 */         this.declaredAnnotations.put(arrayOfAnnotation[b].annotationType(), arrayOfAnnotation[b]); 
-/*     */     } 
-/* 346 */     return this.declaredAnnotations;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\reflect\Parameter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.lang.reflect;
+
+import java.lang.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import sun.reflect.annotation.AnnotationSupport;
+
+/**
+ * Information about method parameters.
+ *
+ * A {@code Parameter} provides information about method parameters,
+ * including its name and modifiers.  It also provides an alternate
+ * means of obtaining attributes for the parameter.
+ *
+ * @since 1.8
+ */
+public final class Parameter implements AnnotatedElement {
+
+    private final String name;
+    private final int modifiers;
+    private final Executable executable;
+    private final int index;
+
+    /**
+     * Package-private constructor for {@code Parameter}.
+     *
+     * If method parameter data is present in the classfile, then the
+     * JVM creates {@code Parameter} objects directly.  If it is
+     * absent, however, then {@code Executable} uses this constructor
+     * to synthesize them.
+     *
+     * @param name The name of the parameter.
+     * @param modifiers The modifier flags for the parameter.
+     * @param executable The executable which defines this parameter.
+     * @param index The index of the parameter.
+     */
+    Parameter(String name,
+              int modifiers,
+              Executable executable,
+              int index) {
+        this.name = name;
+        this.modifiers = modifiers;
+        this.executable = executable;
+        this.index = index;
+    }
+
+    /**
+     * Compares based on the executable and the index.
+     *
+     * @param obj The object to compare.
+     * @return Whether or not this is equal to the argument.
+     */
+    public boolean equals(Object obj) {
+        if(obj instanceof Parameter) {
+            Parameter other = (Parameter)obj;
+            return (other.executable.equals(executable) &&
+                    other.index == index);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code based on the executable's hash code and the
+     * index.
+     *
+     * @return A hash code based on the executable's hash code.
+     */
+    public int hashCode() {
+        return executable.hashCode() ^ index;
+    }
+
+    /**
+     * Returns true if the parameter has a name according to the class
+     * file; returns false otherwise. Whether a parameter has a name
+     * is determined by the {@literal MethodParameters} attribute of
+     * the method which declares the parameter.
+     *
+     * @return true if and only if the parameter has a name according
+     * to the class file.
+     */
+    public boolean isNamePresent() {
+        return executable.hasRealParameterData() && name != null;
+    }
+
+    /**
+     * Returns a string describing this parameter.  The format is the
+     * modifiers for the parameter, if any, in canonical order as
+     * recommended by <cite>The Java&trade; Language
+     * Specification</cite>, followed by the fully- qualified type of
+     * the parameter (excluding the last [] if the parameter is
+     * variable arity), followed by "..." if the parameter is variable
+     * arity, followed by a space, followed by the name of the
+     * parameter.
+     *
+     * @return A string representation of the parameter and associated
+     * information.
+     */
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        final Type type = getParameterizedType();
+        final String typename = type.getTypeName();
+
+        sb.append(Modifier.toString(getModifiers()));
+
+        if(0 != modifiers)
+            sb.append(' ');
+
+        if(isVarArgs())
+            sb.append(typename.replaceFirst("\\[\\]$", "..."));
+        else
+            sb.append(typename);
+
+        sb.append(' ');
+        sb.append(getName());
+
+        return sb.toString();
+    }
+
+    /**
+     * Return the {@code Executable} which declares this parameter.
+     *
+     * @return The {@code Executable} declaring this parameter.
+     */
+    public Executable getDeclaringExecutable() {
+        return executable;
+    }
+
+    /**
+     * Get the modifier flags for this the parameter represented by
+     * this {@code Parameter} object.
+     *
+     * @return The modifier flags for this parameter.
+     */
+    public int getModifiers() {
+        return modifiers;
+    }
+
+    /**
+     * Returns the name of the parameter.  If the parameter's name is
+     * {@linkplain #isNamePresent() present}, then this method returns
+     * the name provided by the class file. Otherwise, this method
+     * synthesizes a name of the form argN, where N is the index of
+     * the parameter in the descriptor of the method which declares
+     * the parameter.
+     *
+     * @return The name of the parameter, either provided by the class
+     *         file or synthesized if the class file does not provide
+     *         a name.
+     */
+    public String getName() {
+        // Note: empty strings as paramete names are now outlawed.
+        // The .equals("") is for compatibility with current JVM
+        // behavior.  It may be removed at some point.
+        if(name == null || name.equals(""))
+            return "arg" + index;
+        else
+            return name;
+    }
+
+    // Package-private accessor to the real name field.
+    String getRealName() {
+        return name;
+    }
+
+    /**
+     * Returns a {@code Type} object that identifies the parameterized
+     * type for the parameter represented by this {@code Parameter}
+     * object.
+     *
+     * @return a {@code Type} object identifying the parameterized
+     * type of the parameter represented by this object
+     */
+    public Type getParameterizedType() {
+        Type tmp = parameterTypeCache;
+        if (null == tmp) {
+            tmp = executable.getAllGenericParameterTypes()[index];
+            parameterTypeCache = tmp;
+        }
+
+        return tmp;
+    }
+
+    private transient volatile Type parameterTypeCache = null;
+
+    /**
+     * Returns a {@code Class} object that identifies the
+     * declared type for the parameter represented by this
+     * {@code Parameter} object.
+     *
+     * @return a {@code Class} object identifying the declared
+     * type of the parameter represented by this object
+     */
+    public Class<?> getType() {
+        Class<?> tmp = parameterClassCache;
+        if (null == tmp) {
+            tmp = executable.getParameterTypes()[index];
+            parameterClassCache = tmp;
+        }
+        return tmp;
+    }
+
+    /**
+     * Returns an AnnotatedType object that represents the use of a type to
+     * specify the type of the formal parameter represented by this Parameter.
+     *
+     * @return an {@code AnnotatedType} object representing the use of a type
+     *         to specify the type of the formal parameter represented by this
+     *         Parameter
+     */
+    public AnnotatedType getAnnotatedType() {
+        // no caching for now
+        return executable.getAnnotatedParameterTypes()[index];
+    }
+
+    private transient volatile Class<?> parameterClassCache = null;
+
+    /**
+     * Returns {@code true} if this parameter is implicitly declared
+     * in source code; returns {@code false} otherwise.
+     *
+     * @return true if and only if this parameter is implicitly
+     * declared as defined by <cite>The Java&trade; Language
+     * Specification</cite>.
+     */
+    public boolean isImplicit() {
+        return Modifier.isMandated(getModifiers());
+    }
+
+    /**
+     * Returns {@code true} if this parameter is neither implicitly
+     * nor explicitly declared in source code; returns {@code false}
+     * otherwise.
+     *
+     * @jls 13.1 The Form of a Binary
+     * @return true if and only if this parameter is a synthetic
+     * construct as defined by
+     * <cite>The Java&trade; Language Specification</cite>.
+     */
+    public boolean isSynthetic() {
+        return Modifier.isSynthetic(getModifiers());
+    }
+
+    /**
+     * Returns {@code true} if this parameter represents a variable
+     * argument list; returns {@code false} otherwise.
+     *
+     * @return {@code true} if an only if this parameter represents a
+     * variable argument list.
+     */
+    public boolean isVarArgs() {
+        return executable.isVarArgs() &&
+            index == executable.getParameterCount() - 1;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        Objects.requireNonNull(annotationClass);
+        return annotationClass.cast(declaredAnnotations().get(annotationClass));
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
+    @Override
+    public <T extends Annotation> T[] getAnnotationsByType(Class<T> annotationClass) {
+        Objects.requireNonNull(annotationClass);
+
+        return AnnotationSupport.getDirectlyAndIndirectlyPresent(declaredAnnotations(), annotationClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Annotation[] getDeclaredAnnotations() {
+        return executable.getParameterAnnotations()[index];
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public <T extends Annotation> T getDeclaredAnnotation(Class<T> annotationClass) {
+        // Only annotations on classes are inherited, for all other
+        // objects getDeclaredAnnotation is the same as
+        // getAnnotation.
+        return getAnnotation(annotationClass);
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    @Override
+    public <T extends Annotation> T[] getDeclaredAnnotationsByType(Class<T> annotationClass) {
+        // Only annotations on classes are inherited, for all other
+        // objects getDeclaredAnnotations is the same as
+        // getAnnotations.
+        return getAnnotationsByType(annotationClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Annotation[] getAnnotations() {
+        return getDeclaredAnnotations();
+    }
+
+    private transient Map<Class<? extends Annotation>, Annotation> declaredAnnotations;
+
+    private synchronized Map<Class<? extends Annotation>, Annotation> declaredAnnotations() {
+        if(null == declaredAnnotations) {
+            declaredAnnotations =
+                new HashMap<Class<? extends Annotation>, Annotation>();
+            Annotation[] ann = getDeclaredAnnotations();
+            for(int i = 0; i < ann.length; i++)
+                declaredAnnotations.put(ann[i].annotationType(), ann[i]);
+        }
+        return declaredAnnotations;
+   }
+
+}

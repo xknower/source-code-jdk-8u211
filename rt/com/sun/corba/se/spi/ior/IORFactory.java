@@ -1,15 +1,45 @@
-package com.sun.corba.se.spi.ior;
-
-import com.sun.corba.se.spi.orb.ORB;
-
-public interface IORFactory extends Writeable, MakeImmutable {
-  IOR makeIOR(ORB paramORB, String paramString, ObjectId paramObjectId);
-  
-  boolean isEquivalent(IORFactory paramIORFactory);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\IORFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.ior ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+/** An IORFactory provides the capability of creating IORs.  It contains
+ * some collection of TaggedProfileTemplates, which can be iterated over
+ * for portable interceptors.
+ */
+public interface IORFactory extends Writeable, MakeImmutable {
+    /** Construct an IOR containing the given ORB, typeid, and ObjectId.
+     * The same ObjectId will be used for all TaggedProfileTemplates in
+     * the IORFactory.
+     */
+    IOR makeIOR( ORB orb, String typeid, ObjectId oid ) ;
+
+    /** Return true iff this.makeIOR(orb,typeid,oid).isEquivalent(
+     * other.makeIOR(orb,typeid,oid) for all orb, typeid, and oid.
+     */
+    boolean isEquivalent( IORFactory other ) ;
+}

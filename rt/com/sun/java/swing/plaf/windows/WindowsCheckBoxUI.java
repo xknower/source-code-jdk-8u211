@@ -1,100 +1,95 @@
-/*    */ package com.sun.java.swing.plaf.windows;
-/*    */ 
-/*    */ import javax.swing.AbstractButton;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.UIManager;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import sun.awt.AppContext;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class WindowsCheckBoxUI
-/*    */   extends WindowsRadioButtonUI
-/*    */ {
-/* 54 */   private static final Object WINDOWS_CHECK_BOX_UI_KEY = new Object();
-/*    */ 
-/*    */   
-/*    */   private static final String propertyPrefix = "CheckBox.";
-/*    */ 
-/*    */   
-/*    */   private boolean defaults_initialized = false;
-/*    */ 
-/*    */   
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 64 */     AppContext appContext = AppContext.getAppContext();
-/*    */     
-/* 66 */     WindowsCheckBoxUI windowsCheckBoxUI = (WindowsCheckBoxUI)appContext.get(WINDOWS_CHECK_BOX_UI_KEY);
-/* 67 */     if (windowsCheckBoxUI == null) {
-/* 68 */       windowsCheckBoxUI = new WindowsCheckBoxUI();
-/* 69 */       appContext.put(WINDOWS_CHECK_BOX_UI_KEY, windowsCheckBoxUI);
-/*    */     } 
-/* 71 */     return windowsCheckBoxUI;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String getPropertyPrefix() {
-/* 76 */     return "CheckBox.";
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void installDefaults(AbstractButton paramAbstractButton) {
-/* 83 */     super.installDefaults(paramAbstractButton);
-/* 84 */     if (!this.defaults_initialized) {
-/* 85 */       this.icon = UIManager.getIcon(getPropertyPrefix() + "icon");
-/* 86 */       this.defaults_initialized = true;
-/*    */     } 
-/*    */   }
-/*    */   
-/*    */   public void uninstallDefaults(AbstractButton paramAbstractButton) {
-/* 91 */     super.uninstallDefaults(paramAbstractButton);
-/* 92 */     this.defaults_initialized = false;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsCheckBoxUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import sun.awt.AppContext;
+
+import javax.swing.plaf.basic.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+
+import java.awt.*;
+
+/**
+ * Windows check box.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Jeff Dinkins
+ */
+public class WindowsCheckBoxUI extends WindowsRadioButtonUI
+{
+    // NOTE: MetalCheckBoxUI inherts from MetalRadioButtonUI instead
+    // of BasicCheckBoxUI because we want to pick up all the
+    // painting changes made in MetalRadioButtonUI.
+
+    private static final Object WINDOWS_CHECK_BOX_UI_KEY = new Object();
+
+    private final static String propertyPrefix = "CheckBox" + ".";
+
+    private boolean defaults_initialized = false;
+
+    // ********************************
+    //          Create PLAF
+    // ********************************
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        WindowsCheckBoxUI windowsCheckBoxUI =
+                (WindowsCheckBoxUI) appContext.get(WINDOWS_CHECK_BOX_UI_KEY);
+        if (windowsCheckBoxUI == null) {
+            windowsCheckBoxUI = new WindowsCheckBoxUI();
+            appContext.put(WINDOWS_CHECK_BOX_UI_KEY, windowsCheckBoxUI);
+        }
+        return windowsCheckBoxUI;
+    }
+
+
+    public String getPropertyPrefix() {
+        return propertyPrefix;
+    }
+
+    // ********************************
+    //          Defaults
+    // ********************************
+    public void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            icon = UIManager.getIcon(getPropertyPrefix() + "icon");
+            defaults_initialized = true;
+        }
+    }
+
+    public void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
+    }
+
+}

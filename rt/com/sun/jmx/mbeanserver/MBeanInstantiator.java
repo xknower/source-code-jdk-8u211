@@ -1,791 +1,786 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ import java.security.AccessControlContext;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.Permissions;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.ProtectionDomain;
-/*     */ import java.util.Map;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.InstanceNotFoundException;
-/*     */ import javax.management.MBeanException;
-/*     */ import javax.management.MBeanPermission;
-/*     */ import javax.management.NotCompliantMBeanException;
-/*     */ import javax.management.ObjectName;
-/*     */ import javax.management.OperationsException;
-/*     */ import javax.management.ReflectionException;
-/*     */ import javax.management.RuntimeErrorException;
-/*     */ import javax.management.RuntimeMBeanException;
-/*     */ import javax.management.RuntimeOperationsException;
-/*     */ import sun.reflect.misc.ConstructorUtil;
-/*     */ import sun.reflect.misc.ReflectUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanInstantiator
-/*     */ {
-/*     */   private final ModifiableClassLoaderRepository clr;
-/*     */   
-/*     */   MBeanInstantiator(ModifiableClassLoaderRepository paramModifiableClassLoaderRepository) {
-/*  71 */     this.clr = paramModifiableClassLoaderRepository;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void testCreation(Class<?> paramClass) throws NotCompliantMBeanException {
-/*  81 */     Introspector.testCreation(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> findClassWithDefaultLoaderRepository(String paramString) throws ReflectionException {
-/*     */     Class<?> clazz;
-/*  92 */     if (paramString == null) {
-/*  93 */       throw new RuntimeOperationsException(new IllegalArgumentException("The class name cannot be null"), "Exception occurred during object instantiation");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  98 */     ReflectUtil.checkPackageAccess(paramString);
-/*     */     try {
-/* 100 */       if (this.clr == null) throw new ClassNotFoundException(paramString); 
-/* 101 */       clazz = this.clr.loadClass(paramString);
-/*     */     }
-/* 103 */     catch (ClassNotFoundException classNotFoundException) {
-/* 104 */       throw new ReflectionException(classNotFoundException, "The MBean class could not be loaded by the default loader repository");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 108 */     return clazz;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> findClass(String paramString, ClassLoader paramClassLoader) throws ReflectionException {
-/* 119 */     return loadClass(paramString, paramClassLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> findClass(String paramString, ObjectName paramObjectName) throws ReflectionException, InstanceNotFoundException {
-/* 129 */     if (paramObjectName == null) {
-/* 130 */       throw new RuntimeOperationsException(new IllegalArgumentException(), "Null loader passed in parameter");
-/*     */     }
-/*     */ 
-/*     */     
-/* 134 */     ClassLoader classLoader = null;
-/* 135 */     synchronized (this) {
-/* 136 */       classLoader = getClassLoader(paramObjectName);
-/*     */     } 
-/* 138 */     if (classLoader == null) {
-/* 139 */       throw new InstanceNotFoundException("The loader named " + paramObjectName + " is not registered in the MBeanServer");
-/*     */     }
-/*     */     
-/* 142 */     return findClass(paramString, classLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?>[] findSignatureClasses(String[] paramArrayOfString, ClassLoader paramClassLoader) throws ReflectionException {
-/* 154 */     if (paramArrayOfString == null) return null; 
-/* 155 */     ClassLoader classLoader = paramClassLoader;
-/* 156 */     int i = paramArrayOfString.length;
-/* 157 */     Class[] arrayOfClass = new Class[i];
-/*     */     
-/* 159 */     if (i == 0) return arrayOfClass; 
-/*     */     try {
-/* 161 */       for (byte b = 0; b < i; b++) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 166 */         Class clazz = primitiveClasses.get(paramArrayOfString[b]);
-/* 167 */         if (clazz != null) {
-/* 168 */           arrayOfClass[b] = clazz;
-/*     */         }
-/*     */         else {
-/*     */           
-/* 172 */           ReflectUtil.checkPackageAccess(paramArrayOfString[b]);
-/*     */ 
-/*     */ 
-/*     */           
-/* 176 */           if (classLoader != null)
-/*     */           
-/*     */           { 
-/*     */             
-/* 180 */             arrayOfClass[b] = Class.forName(paramArrayOfString[b], false, classLoader); }
-/*     */           
-/*     */           else
-/*     */           
-/* 184 */           { arrayOfClass[b] = findClass(paramArrayOfString[b], 
-/* 185 */                 getClass().getClassLoader()); } 
-/*     */         } 
-/*     */       } 
-/* 188 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 189 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
-/* 190 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINEST, MBeanInstantiator.class
-/* 191 */             .getName(), "findSignatureClasses", "The parameter class could not be found", classNotFoundException);
-/*     */       }
-/*     */ 
-/*     */       
-/* 195 */       throw new ReflectionException(classNotFoundException, "The parameter class could not be found");
-/*     */     }
-/* 197 */     catch (RuntimeException runtimeException) {
-/* 198 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
-/* 199 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINEST, MBeanInstantiator.class
-/* 200 */             .getName(), "findSignatureClasses", "Unexpected exception", runtimeException);
-/*     */       }
-/*     */ 
-/*     */       
-/* 204 */       throw runtimeException;
-/*     */     } 
-/* 206 */     return arrayOfClass;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(Class<?> paramClass) throws ReflectionException, MBeanException {
-/*     */     Object object;
-/* 217 */     checkMBeanPermission(paramClass, (String)null, (ObjectName)null, "instantiate");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 223 */     Constructor<?> constructor = findConstructor(paramClass, null);
-/* 224 */     if (constructor == null) {
-/* 225 */       throw new ReflectionException(new NoSuchMethodException("No such constructor"));
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 230 */       ReflectUtil.checkPackageAccess(paramClass);
-/* 231 */       ensureClassAccess(paramClass);
-/* 232 */       object = constructor.newInstance(new Object[0]);
-/* 233 */     } catch (InvocationTargetException invocationTargetException) {
-/*     */       
-/* 235 */       Throwable throwable = invocationTargetException.getTargetException();
-/* 236 */       if (throwable instanceof RuntimeException) {
-/* 237 */         throw new RuntimeMBeanException((RuntimeException)throwable, "RuntimeException thrown in the MBean's empty constructor");
-/*     */       }
-/* 239 */       if (throwable instanceof Error) {
-/* 240 */         throw new RuntimeErrorException((Error)throwable, "Error thrown in the MBean's empty constructor");
-/*     */       }
-/*     */       
-/* 243 */       throw new MBeanException((Exception)throwable, "Exception thrown in the MBean's empty constructor");
-/*     */     
-/*     */     }
-/* 246 */     catch (NoSuchMethodError noSuchMethodError) {
-/* 247 */       throw new ReflectionException(new NoSuchMethodException("No constructor"), "No such constructor");
-/*     */     
-/*     */     }
-/* 250 */     catch (InstantiationException instantiationException) {
-/* 251 */       throw new ReflectionException(instantiationException, "Exception thrown trying to invoke the MBean's empty constructor");
-/*     */     }
-/* 253 */     catch (IllegalAccessException illegalAccessException) {
-/* 254 */       throw new ReflectionException(illegalAccessException, "Exception thrown trying to invoke the MBean's empty constructor");
-/*     */     }
-/* 256 */     catch (IllegalArgumentException illegalArgumentException) {
-/* 257 */       throw new ReflectionException(illegalArgumentException, "Exception thrown trying to invoke the MBean's empty constructor");
-/*     */     } 
-/*     */     
-/* 260 */     return object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(Class<?> paramClass, Object[] paramArrayOfObject, String[] paramArrayOfString, ClassLoader paramClassLoader) throws ReflectionException, MBeanException {
-/*     */     Class<?>[] arrayOfClass;
-/*     */     Object object;
-/* 275 */     checkMBeanPermission(paramClass, (String)null, (ObjectName)null, "instantiate");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 285 */       ClassLoader classLoader = paramClass.getClassLoader();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 290 */       arrayOfClass = (paramArrayOfString == null) ? null : findSignatureClasses(paramArrayOfString, classLoader);
-/*     */     
-/*     */     }
-/* 293 */     catch (IllegalArgumentException illegalArgumentException) {
-/* 294 */       throw new ReflectionException(illegalArgumentException, "The constructor parameter classes could not be loaded");
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 299 */     Constructor<?> constructor = findConstructor(paramClass, arrayOfClass);
-/*     */     
-/* 301 */     if (constructor == null) {
-/* 302 */       throw new ReflectionException(new NoSuchMethodException("No such constructor"));
-/*     */     }
-/*     */     
-/*     */     try {
-/* 306 */       ReflectUtil.checkPackageAccess(paramClass);
-/* 307 */       ensureClassAccess(paramClass);
-/* 308 */       object = constructor.newInstance(paramArrayOfObject);
-/*     */     }
-/* 310 */     catch (NoSuchMethodError noSuchMethodError) {
-/* 311 */       throw new ReflectionException(new NoSuchMethodException("No such constructor found"), "No such constructor");
-/*     */ 
-/*     */     
-/*     */     }
-/* 315 */     catch (InstantiationException instantiationException) {
-/* 316 */       throw new ReflectionException(instantiationException, "Exception thrown trying to invoke the MBean's constructor");
-/*     */     
-/*     */     }
-/* 319 */     catch (IllegalAccessException illegalAccessException) {
-/* 320 */       throw new ReflectionException(illegalAccessException, "Exception thrown trying to invoke the MBean's constructor");
-/*     */     
-/*     */     }
-/* 323 */     catch (InvocationTargetException invocationTargetException) {
-/*     */       
-/* 325 */       Throwable throwable = invocationTargetException.getTargetException();
-/* 326 */       if (throwable instanceof RuntimeException) {
-/* 327 */         throw new RuntimeMBeanException((RuntimeException)throwable, "RuntimeException thrown in the MBean's constructor");
-/*     */       }
-/* 329 */       if (throwable instanceof Error) {
-/* 330 */         throw new RuntimeErrorException((Error)throwable, "Error thrown in the MBean's constructor");
-/*     */       }
-/*     */       
-/* 333 */       throw new MBeanException((Exception)throwable, "Exception thrown in the MBean's constructor");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 337 */     return object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInputStream deserialize(ClassLoader paramClassLoader, byte[] paramArrayOfbyte) throws OperationsException {
-/*     */     ObjectInputStreamWithLoader objectInputStreamWithLoader;
-/* 355 */     if (paramArrayOfbyte == null) {
-/* 356 */       throw new RuntimeOperationsException(new IllegalArgumentException(), "Null data passed in parameter");
-/*     */     }
-/*     */     
-/* 359 */     if (paramArrayOfbyte.length == 0) {
-/* 360 */       throw new RuntimeOperationsException(new IllegalArgumentException(), "Empty data passed in parameter");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 368 */     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(paramArrayOfbyte);
-/*     */     try {
-/* 370 */       objectInputStreamWithLoader = new ObjectInputStreamWithLoader(byteArrayInputStream, paramClassLoader);
-/* 371 */     } catch (IOException iOException) {
-/* 372 */       throw new OperationsException("An IOException occurred trying to de-serialize the data");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 376 */     return objectInputStreamWithLoader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectInputStream deserialize(String paramString, ObjectName paramObjectName, byte[] paramArrayOfbyte, ClassLoader paramClassLoader) throws InstanceNotFoundException, OperationsException, ReflectionException {
-/*     */     Class<?> clazz;
-/*     */     ObjectInputStreamWithLoader objectInputStreamWithLoader;
-/* 412 */     if (paramArrayOfbyte == null) {
-/* 413 */       throw new RuntimeOperationsException(new IllegalArgumentException(), "Null data passed in parameter");
-/*     */     }
-/*     */     
-/* 416 */     if (paramArrayOfbyte.length == 0) {
-/* 417 */       throw new RuntimeOperationsException(new IllegalArgumentException(), "Empty data passed in parameter");
-/*     */     }
-/*     */     
-/* 420 */     if (paramString == null) {
-/* 421 */       throw new RuntimeOperationsException(new IllegalArgumentException(), "Null className passed in parameter");
-/*     */     }
-/*     */ 
-/*     */     
-/* 425 */     ReflectUtil.checkPackageAccess(paramString);
-/*     */     
-/* 427 */     if (paramObjectName == null) {
-/*     */       
-/* 429 */       clazz = findClass(paramString, paramClassLoader);
-/*     */     } else {
-/*     */ 
-/*     */       
-/*     */       try {
-/* 434 */         ClassLoader classLoader = null;
-/*     */         
-/* 436 */         classLoader = getClassLoader(paramObjectName);
-/* 437 */         if (classLoader == null)
-/* 438 */           throw new ClassNotFoundException(paramString); 
-/* 439 */         clazz = Class.forName(paramString, false, classLoader);
-/*     */       }
-/* 441 */       catch (ClassNotFoundException classNotFoundException) {
-/* 442 */         throw new ReflectionException(classNotFoundException, "The MBean class could not be loaded by the " + paramObjectName
-/*     */             
-/* 444 */             .toString() + " class loader");
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 452 */     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(paramArrayOfbyte);
-/*     */     
-/*     */     try {
-/* 455 */       objectInputStreamWithLoader = new ObjectInputStreamWithLoader(byteArrayInputStream, clazz.getClassLoader());
-/* 456 */     } catch (IOException iOException) {
-/* 457 */       throw new OperationsException("An IOException occurred trying to de-serialize the data");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 461 */     return objectInputStreamWithLoader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString) throws ReflectionException, MBeanException {
-/* 491 */     return instantiate(paramString, (Object[])null, (String[])null, (ClassLoader)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString, ObjectName paramObjectName, ClassLoader paramClassLoader) throws ReflectionException, MBeanException, InstanceNotFoundException {
-/* 527 */     return instantiate(paramString, paramObjectName, (Object[])null, (String[])null, paramClassLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString, Object[] paramArrayOfObject, String[] paramArrayOfString, ClassLoader paramClassLoader) throws ReflectionException, MBeanException {
-/* 565 */     Class<?> clazz = findClassWithDefaultLoaderRepository(paramString);
-/* 566 */     return instantiate(clazz, paramArrayOfObject, paramArrayOfString, paramClassLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object instantiate(String paramString, ObjectName paramObjectName, Object[] paramArrayOfObject, String[] paramArrayOfString, ClassLoader paramClassLoader) throws ReflectionException, MBeanException, InstanceNotFoundException {
-/*     */     Class<?> clazz;
-/* 615 */     if (paramObjectName == null) {
-/* 616 */       clazz = findClass(paramString, paramClassLoader);
-/*     */     } else {
-/* 618 */       clazz = findClass(paramString, paramObjectName);
-/*     */     } 
-/* 620 */     return instantiate(clazz, paramArrayOfObject, paramArrayOfString, paramClassLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ModifiableClassLoaderRepository getClassLoaderRepository() {
-/* 628 */     checkMBeanPermission((String)null, (String)null, (ObjectName)null, "getClassLoaderRepository");
-/* 629 */     return this.clr;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Class<?> loadClass(String paramString, ClassLoader paramClassLoader) throws ReflectionException {
-/*     */     Class<?> clazz;
-/* 639 */     if (paramString == null) {
-/* 640 */       throw new RuntimeOperationsException(new IllegalArgumentException("The class name cannot be null"), "Exception occurred during object instantiation");
-/*     */     }
-/*     */ 
-/*     */     
-/* 644 */     ReflectUtil.checkPackageAccess(paramString);
-/*     */     try {
-/* 646 */       if (paramClassLoader == null)
-/* 647 */         paramClassLoader = MBeanInstantiator.class.getClassLoader(); 
-/* 648 */       if (paramClassLoader != null) {
-/* 649 */         clazz = Class.forName(paramString, false, paramClassLoader);
-/*     */       } else {
-/* 651 */         clazz = Class.forName(paramString);
-/*     */       } 
-/* 653 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 654 */       throw new ReflectionException(classNotFoundException, "The MBean class could not be loaded");
-/*     */     } 
-/*     */     
-/* 657 */     return clazz;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Class<?>[] loadSignatureClasses(String[] paramArrayOfString, ClassLoader paramClassLoader) throws ReflectionException {
-/* 670 */     if (paramArrayOfString == null) return null;
-/*     */     
-/* 672 */     ClassLoader classLoader = (paramClassLoader == null) ? MBeanInstantiator.class.getClassLoader() : paramClassLoader;
-/* 673 */     int i = paramArrayOfString.length;
-/* 674 */     Class[] arrayOfClass = new Class[i];
-/*     */     
-/* 676 */     if (i == 0) return arrayOfClass; 
-/*     */     try {
-/* 678 */       for (byte b = 0; b < i; b++) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 683 */         Class clazz = primitiveClasses.get(paramArrayOfString[b]);
-/* 684 */         if (clazz != null)
-/* 685 */         { arrayOfClass[b] = clazz;
-/*     */ 
-/*     */           
-/*     */            }
-/*     */         
-/*     */         else
-/*     */         
-/*     */         { 
-/*     */ 
-/*     */           
-/* 695 */           ReflectUtil.checkPackageAccess(paramArrayOfString[b]);
-/* 696 */           arrayOfClass[b] = Class.forName(paramArrayOfString[b], false, classLoader); } 
-/*     */       } 
-/* 698 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 699 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
-/* 700 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINEST, MBeanInstantiator.class
-/* 701 */             .getName(), "findSignatureClasses", "The parameter class could not be found", classNotFoundException);
-/*     */       }
-/*     */ 
-/*     */       
-/* 705 */       throw new ReflectionException(classNotFoundException, "The parameter class could not be found");
-/*     */     }
-/* 707 */     catch (RuntimeException runtimeException) {
-/* 708 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
-/* 709 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINEST, MBeanInstantiator.class
-/* 710 */             .getName(), "findSignatureClasses", "Unexpected exception", runtimeException);
-/*     */       }
-/*     */ 
-/*     */       
-/* 714 */       throw runtimeException;
-/*     */     } 
-/* 716 */     return arrayOfClass;
-/*     */   }
-/*     */   
-/*     */   private Constructor<?> findConstructor(Class<?> paramClass, Class<?>[] paramArrayOfClass) {
-/*     */     try {
-/* 721 */       return ConstructorUtil.getConstructor(paramClass, paramArrayOfClass);
-/* 722 */     } catch (Exception exception) {
-/* 723 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/* 728 */   private static final Map<String, Class<?>> primitiveClasses = Util.newMap();
-/*     */   static {
-/* 730 */     for (Class<?> clazz : new Class[] { byte.class, short.class, int.class, long.class, float.class, double.class, char.class, boolean.class
-/*     */       })
-/*     */     {
-/* 733 */       primitiveClasses.put(clazz.getName(), clazz);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void checkMBeanPermission(Class<?> paramClass, String paramString1, ObjectName paramObjectName, String paramString2) {
-/* 740 */     if (paramClass != null) {
-/* 741 */       checkMBeanPermission(paramClass.getName(), paramString1, paramObjectName, paramString2);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void checkMBeanPermission(String paramString1, String paramString2, ObjectName paramObjectName, String paramString3) throws SecurityException {
-/* 750 */     SecurityManager securityManager = System.getSecurityManager();
-/* 751 */     if (securityManager != null) {
-/* 752 */       MBeanPermission mBeanPermission = new MBeanPermission(paramString1, paramString2, paramObjectName, paramString3);
-/*     */ 
-/*     */ 
-/*     */       
-/* 756 */       securityManager.checkPermission(mBeanPermission);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void ensureClassAccess(Class paramClass) throws IllegalAccessException {
-/* 763 */     int i = paramClass.getModifiers();
-/* 764 */     if (!Modifier.isPublic(i)) {
-/* 765 */       throw new IllegalAccessException("Class is not public and can't be instantiated");
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private ClassLoader getClassLoader(final ObjectName name) {
-/* 770 */     if (this.clr == null) {
-/* 771 */       return null;
-/*     */     }
-/*     */     
-/* 774 */     Permissions permissions = new Permissions();
-/* 775 */     permissions.add(new MBeanPermission("*", null, name, "getClassLoader"));
-/* 776 */     ProtectionDomain protectionDomain = new ProtectionDomain(null, permissions);
-/* 777 */     ProtectionDomain[] arrayOfProtectionDomain = { protectionDomain };
-/* 778 */     AccessControlContext accessControlContext = new AccessControlContext(arrayOfProtectionDomain);
-/* 779 */     return AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>() {
-/*     */           public ClassLoader run() {
-/* 781 */             return MBeanInstantiator.this.clr.getClassLoader(name);
-/*     */           }
-/*     */         },  accessControlContext);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\MBeanInstantiator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+
+import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.Permissions;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.util.Map;
+import java.util.logging.Level;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanPermission;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+import javax.management.OperationsException;
+import javax.management.ReflectionException;
+import javax.management.RuntimeErrorException;
+import javax.management.RuntimeMBeanException;
+import javax.management.RuntimeOperationsException;
+import sun.reflect.misc.ConstructorUtil;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * Implements the MBeanInstantiator interface. Provides methods for
+ * instantiating objects, finding the class given its name and using
+ * different class loaders, deserializing objects in the context of a
+ * given class loader.
+ *
+ * @since 1.5
+ */
+public class MBeanInstantiator {
+    private final ModifiableClassLoaderRepository clr;
+    //    private MetaData meta = null;
+
+    MBeanInstantiator(ModifiableClassLoaderRepository clr) {
+        this.clr = clr;
+    }
+
+
+    /**
+     * This methods tests if the MBean class makes it possible to
+     * instantiate an MBean of this class in the MBeanServer.
+     * e.g. it must have a public constructor, be a concrete class...
+     */
+    public void testCreation(Class<?> c) throws NotCompliantMBeanException {
+        Introspector.testCreation(c);
+    }
+
+    /**
+     * Loads the class with the specified name using this object's
+     * Default Loader Repository.
+     **/
+    public Class<?> findClassWithDefaultLoaderRepository(String className)
+        throws ReflectionException {
+
+        Class<?> theClass;
+        if (className == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("The class name cannot be null"),
+                             "Exception occurred during object instantiation");
+        }
+
+        ReflectUtil.checkPackageAccess(className);
+        try {
+            if (clr == null) throw new ClassNotFoundException(className);
+            theClass = clr.loadClass(className);
+        }
+        catch (ClassNotFoundException ee) {
+            throw new ReflectionException(ee,
+       "The MBean class could not be loaded by the default loader repository");
+        }
+
+        return theClass;
+    }
+
+
+    /**
+     * Gets the class for the specified class name using the MBean
+     * Interceptor's classloader
+     */
+    public Class<?> findClass(String className, ClassLoader loader)
+        throws ReflectionException {
+
+        return loadClass(className,loader);
+    }
+
+    /**
+     * Gets the class for the specified class name using the specified
+     * class loader
+     */
+    public Class<?> findClass(String className, ObjectName aLoader)
+        throws ReflectionException, InstanceNotFoundException  {
+
+        if (aLoader == null)
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException(), "Null loader passed in parameter");
+
+        // Retrieve the class loader from the repository
+        ClassLoader loader = null;
+        synchronized (this) {
+            loader = getClassLoader(aLoader);
+        }
+        if (loader == null) {
+            throw new InstanceNotFoundException("The loader named " +
+                       aLoader + " is not registered in the MBeanServer");
+        }
+        return findClass(className,loader);
+    }
+
+
+    /**
+     * Return an array of Class corresponding to the given signature, using
+     * the specified class loader.
+     */
+    public Class<?>[] findSignatureClasses(String signature[],
+                                           ClassLoader loader)
+        throws ReflectionException {
+
+        if (signature == null) return null;
+        final ClassLoader aLoader = loader;
+        final int length= signature.length;
+        final Class<?> tab[]=new Class<?>[length];
+
+        if (length == 0) return tab;
+        try {
+            for (int i= 0; i < length; i++) {
+                // Start handling primitive types (int. boolean and so
+                // forth)
+                //
+
+                final Class<?> primCla = primitiveClasses.get(signature[i]);
+                if (primCla != null) {
+                    tab[i] = primCla;
+                    continue;
+                }
+
+                ReflectUtil.checkPackageAccess(signature[i]);
+                // Ok we do not have a primitive type ! We need to build
+                // the signature of the method
+                //
+                if (aLoader != null) {
+                    // We need to load the class through the class
+                    // loader of the target object.
+                    //
+                    tab[i] = Class.forName(signature[i], false, aLoader);
+                } else {
+                    // Load through the default class loader
+                    //
+                    tab[i] = findClass(signature[i],
+                                       this.getClass().getClassLoader());
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
+                MBEANSERVER_LOGGER.logp(Level.FINEST,
+                        MBeanInstantiator.class.getName(),
+                        "findSignatureClasses",
+                        "The parameter class could not be found", e);
+            }
+            throw new ReflectionException(e,
+                      "The parameter class could not be found");
+        } catch (RuntimeException e) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
+                MBEANSERVER_LOGGER.logp(Level.FINEST,
+                        MBeanInstantiator.class.getName(),
+                        "findSignatureClasses",
+                        "Unexpected exception", e);
+            }
+            throw e;
+        }
+        return tab;
+    }
+
+
+    /**
+     * Instantiates an object given its class, using its empty constructor.
+     * The call returns a reference to the newly created object.
+     */
+    public Object instantiate(Class<?> theClass)
+        throws ReflectionException, MBeanException {
+
+        checkMBeanPermission(theClass, null, null, "instantiate");
+
+        Object moi;
+
+        // ------------------------------
+        // ------------------------------
+        Constructor<?> cons = findConstructor(theClass, null);
+        if (cons == null) {
+            throw new ReflectionException(new
+                NoSuchMethodException("No such constructor"));
+        }
+        // Instantiate the new object
+        try {
+            ReflectUtil.checkPackageAccess(theClass);
+            ensureClassAccess(theClass);
+            moi= cons.newInstance();
+        } catch (InvocationTargetException e) {
+            // Wrap the exception.
+            Throwable t = e.getTargetException();
+            if (t instanceof RuntimeException) {
+                throw new RuntimeMBeanException((RuntimeException)t,
+                   "RuntimeException thrown in the MBean's empty constructor");
+            } else if (t instanceof Error) {
+                throw new RuntimeErrorException((Error) t,
+                   "Error thrown in the MBean's empty constructor");
+            } else {
+                throw new MBeanException((Exception) t,
+                   "Exception thrown in the MBean's empty constructor");
+            }
+        } catch (NoSuchMethodError error) {
+            throw new ReflectionException(new
+                NoSuchMethodException("No constructor"),
+                                          "No such constructor");
+        } catch (InstantiationException e) {
+            throw new ReflectionException(e,
+            "Exception thrown trying to invoke the MBean's empty constructor");
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e,
+            "Exception thrown trying to invoke the MBean's empty constructor");
+        } catch (IllegalArgumentException e) {
+            throw new ReflectionException(e,
+            "Exception thrown trying to invoke the MBean's empty constructor");
+        }
+        return moi;
+
+    }
+
+
+
+   /**
+     * Instantiates an object given its class, the parameters and
+     * signature of its constructor The call returns a reference to
+     * the newly created object.
+     */
+    public Object instantiate(Class<?> theClass, Object params[],
+                              String signature[], ClassLoader loader)
+        throws ReflectionException, MBeanException {
+
+        checkMBeanPermission(theClass, null, null, "instantiate");
+
+        // Instantiate the new object
+        // ------------------------------
+        // ------------------------------
+        final Class<?>[] tab;
+        Object moi;
+        try {
+            // Build the signature of the method
+            //
+            ClassLoader aLoader= theClass.getClassLoader();
+            // Build the signature of the method
+            //
+            tab =
+                ((signature == null)?null:
+                 findSignatureClasses(signature,aLoader));
+        }
+        // Exception IllegalArgumentException raised in Jdk1.1.8
+        catch (IllegalArgumentException e) {
+            throw new ReflectionException(e,
+                    "The constructor parameter classes could not be loaded");
+        }
+
+        // Query the metadata service to get the right constructor
+        Constructor<?> cons = findConstructor(theClass, tab);
+
+        if (cons == null) {
+            throw new ReflectionException(new
+                NoSuchMethodException("No such constructor"));
+        }
+        try {
+            ReflectUtil.checkPackageAccess(theClass);
+            ensureClassAccess(theClass);
+            moi = cons.newInstance(params);
+        }
+        catch (NoSuchMethodError error) {
+            throw new ReflectionException(new
+                NoSuchMethodException("No such constructor found"),
+                                          "No such constructor" );
+        }
+        catch (InstantiationException e) {
+            throw new ReflectionException(e,
+                "Exception thrown trying to invoke the MBean's constructor");
+        }
+        catch (IllegalAccessException e) {
+            throw new ReflectionException(e,
+                "Exception thrown trying to invoke the MBean's constructor");
+        }
+        catch (InvocationTargetException e) {
+            // Wrap the exception.
+            Throwable th = e.getTargetException();
+            if (th instanceof RuntimeException) {
+                throw new RuntimeMBeanException((RuntimeException)th,
+                      "RuntimeException thrown in the MBean's constructor");
+            } else if (th instanceof Error) {
+                throw new RuntimeErrorException((Error) th,
+                      "Error thrown in the MBean's constructor");
+            } else {
+                throw new MBeanException((Exception) th,
+                      "Exception thrown in the MBean's constructor");
+            }
+        }
+        return moi;
+    }
+
+    /**
+     * De-serializes a byte array in the context of a classloader.
+     *
+     * @param loader the classloader to use for de-serialization
+     * @param data The byte array to be de-sererialized.
+     *
+     * @return  The de-serialized object stream.
+     *
+     * @exception OperationsException Any of the usual Input/Output related
+     * exceptions.
+     */
+    public ObjectInputStream deserialize(ClassLoader loader, byte[] data)
+        throws OperationsException {
+
+        // Check parameter validity
+        if (data == null) {
+            throw new  RuntimeOperationsException(new
+                IllegalArgumentException(), "Null data passed in parameter");
+        }
+        if (data.length == 0) {
+            throw new  RuntimeOperationsException(new
+                IllegalArgumentException(), "Empty data passed in parameter");
+        }
+
+        // Object deserialization
+        ByteArrayInputStream bIn;
+        ObjectInputStream    objIn;
+
+        bIn   = new ByteArrayInputStream(data);
+        try {
+            objIn = new ObjectInputStreamWithLoader(bIn,loader);
+        } catch (IOException e) {
+            throw new OperationsException(
+                     "An IOException occurred trying to de-serialize the data");
+        }
+
+        return objIn;
+    }
+
+    /**
+     * De-serializes a byte array in the context of a given MBean class loader.
+     * <P>The class loader is the one that loaded the class with name
+     * "className".
+     * <P>The name of the class loader to be used for loading the specified
+     * class is specified. If null, a default one has to be provided (for a
+     * MBean Server, its own class loader will be used).
+     *
+     * @param className The name of the class whose class loader should
+     *  be used for the de-serialization.
+     * @param data The byte array to be de-sererialized.
+     * @param loaderName The name of the class loader to be used for loading
+     * the specified class. If null, a default one has to be provided (for a
+     * MBean Server, its own class loader will be used).
+     *
+     * @return  The de-serialized object stream.
+     *
+     * @exception InstanceNotFoundException The specified class loader MBean is
+     * not found.
+     * @exception OperationsException Any of the usual Input/Output related
+     * exceptions.
+     * @exception ReflectionException The specified class could not be loaded
+     * by the specified class loader.
+     */
+    public ObjectInputStream deserialize(String className,
+                                         ObjectName loaderName,
+                                         byte[] data,
+                                         ClassLoader loader)
+        throws InstanceNotFoundException,
+               OperationsException,
+               ReflectionException  {
+
+        // Check parameter validity
+        if (data == null) {
+            throw new  RuntimeOperationsException(new
+                IllegalArgumentException(), "Null data passed in parameter");
+        }
+        if (data.length == 0) {
+            throw new  RuntimeOperationsException(new
+                IllegalArgumentException(), "Empty data passed in parameter");
+        }
+        if (className == null) {
+            throw new  RuntimeOperationsException(new
+             IllegalArgumentException(), "Null className passed in parameter");
+        }
+
+        ReflectUtil.checkPackageAccess(className);
+        Class<?> theClass;
+        if (loaderName == null) {
+            // Load the class using the agent class loader
+            theClass = findClass(className, loader);
+
+        } else {
+            // Get the class loader MBean
+            try {
+                ClassLoader instance = null;
+
+                instance = getClassLoader(loaderName);
+                if (instance == null)
+                    throw new ClassNotFoundException(className);
+                theClass = Class.forName(className, false, instance);
+            }
+            catch (ClassNotFoundException e) {
+                throw new ReflectionException(e,
+                               "The MBean class could not be loaded by the " +
+                               loaderName.toString() + " class loader");
+            }
+        }
+
+        // Object deserialization
+        ByteArrayInputStream bIn;
+        ObjectInputStream    objIn;
+
+        bIn   = new ByteArrayInputStream(data);
+        try {
+            objIn = new ObjectInputStreamWithLoader(bIn,
+                                           theClass.getClassLoader());
+        } catch (IOException e) {
+            throw new OperationsException(
+                    "An IOException occurred trying to de-serialize the data");
+        }
+
+        return objIn;
+    }
+
+
+    /**
+     * Instantiates an object using the list of all class loaders registered
+     * in the MBean Interceptor
+     * (using its {@link javax.management.loading.ClassLoaderRepository}).
+     * <P>The object's class should have a public constructor.
+     * <P>It returns a reference to the newly created object.
+     * <P>The newly created object is not registered in the MBean Interceptor.
+     *
+     * @param className The class name of the object to be instantiated.
+     *
+     * @return The newly instantiated object.
+     *
+     * @exception ReflectionException Wraps a
+     * <CODE>java.lang.ClassNotFoundException</CODE> or the
+     * <CODE>java.lang.Exception</CODE> that occurred when trying to invoke the
+     * object's constructor.
+     * @exception MBeanException The constructor of the object has thrown an
+     * exception
+     * @exception RuntimeOperationsException Wraps a
+     * <CODE>java.lang.IllegalArgumentException</CODE>: the className passed in
+     * parameter is null.
+     */
+    public Object instantiate(String className)
+        throws ReflectionException,
+        MBeanException {
+
+        return instantiate(className, (Object[]) null, (String[]) null, null);
+    }
+
+
+
+    /**
+     * Instantiates an object using the class Loader specified by its
+     * <CODE>ObjectName</CODE>.
+     * <P>If the loader name is null, a default one has to be provided (for a
+     * MBean Server, the ClassLoader that loaded it will be used).
+     * <P>The object's class should have a public constructor.
+     * <P>It returns a reference to the newly created object.
+     * <P>The newly created object is not registered in the MBean Interceptor.
+     *
+     * @param className The class name of the MBean to be instantiated.
+     * @param loaderName The object name of the class loader to be used.
+     *
+     * @return The newly instantiated object.
+     *
+     * @exception ReflectionException Wraps a
+     * <CODE>java.lang.ClassNotFoundException</CODE> or the
+     * <CODE>java.lang.Exception</CODE> that occurred when trying to invoke the
+     * object's constructor.
+     * @exception MBeanException The constructor of the object has thrown an
+     * exception.
+     * @exception InstanceNotFoundException The specified class loader is not
+     * registered in the MBeanServerInterceptor.
+     * @exception RuntimeOperationsException Wraps a
+     * <CODE>java.lang.IllegalArgumentException</CODE>: the className passed in
+     * parameter is null.
+     */
+    public Object instantiate(String className, ObjectName loaderName,
+                              ClassLoader loader)
+        throws ReflectionException, MBeanException,
+               InstanceNotFoundException {
+
+        return instantiate(className, loaderName, (Object[]) null,
+                           (String[]) null, loader);
+    }
+
+
+    /**
+     * Instantiates an object using the list of all class loaders registered
+     * in the MBean server
+     * (using its {@link javax.management.loading.ClassLoaderRepository}).
+     * <P>The object's class should have a public constructor.
+     * <P>The call returns a reference to the newly created object.
+     * <P>The newly created object is not registered in the MBean Interceptor.
+     *
+     * @param className The class name of the object to be instantiated.
+     * @param params An array containing the parameters of the constructor to
+     * be invoked.
+     * @param signature An array containing the signature of the constructor to
+     * be invoked.
+     *
+     * @return The newly instantiated object.
+     *
+     * @exception ReflectionException Wraps a
+     * <CODE>java.lang.ClassNotFoundException</CODE> or the
+     * <CODE>java.lang.Exception</CODE> that occurred when trying to invoke the
+     * object's constructor.
+     * @exception MBeanException The constructor of the object has thrown an
+     * exception
+     * @exception RuntimeOperationsException Wraps a
+     * <CODE>java.lang.IllegalArgumentException</CODE>: the className passed in
+     * parameter is null.
+     */
+    public Object instantiate(String className,
+                              Object params[],
+                              String signature[],
+                              ClassLoader loader)
+        throws ReflectionException,
+        MBeanException {
+
+        Class<?> theClass = findClassWithDefaultLoaderRepository(className);
+        return instantiate(theClass, params, signature, loader);
+    }
+
+
+
+    /**
+     * Instantiates an object. The class loader to be used is identified by its
+     * object name.
+     * <P>If the object name of the loader is null, a default has to be
+     * provided (for example, for a MBean Server, the ClassLoader that loaded
+     * it will be used).
+     * <P>The object's class should have a public constructor.
+     * <P>The call returns a reference to the newly created object.
+     * <P>The newly created object is not registered in the MBean server.
+     *
+     * @param className The class name of the object to be instantiated.
+     * @param params An array containing the parameters of the constructor to
+     * be invoked.
+     * @param signature An array containing the signature of the constructor to
+     * be invoked.
+     * @param loaderName The object name of the class loader to be used.
+     *
+     * @return The newly instantiated object.
+     *
+     * @exception ReflectionException Wraps a
+     * <CODE>java.lang.ClassNotFoundException</CODE> or the
+     * <CODE>java.lang.Exception</CODE> that occurred when trying to invoke the
+     * object's constructor.
+     * @exception MBeanException The constructor of the object has thrown an
+     * exception
+     * @exception InstanceNotFoundException The specified class loader is not
+     * registered in the MBean Interceptor.
+     * @exception RuntimeOperationsException Wraps a
+     * <CODE>java.lang.IllegalArgumentException</CODE>: the className passed in
+     * parameter is null.
+     */
+    public Object instantiate(String className,
+                              ObjectName loaderName,
+                              Object params[],
+                              String signature[],
+                              ClassLoader loader)
+        throws ReflectionException,
+               MBeanException,
+        InstanceNotFoundException {
+
+        // ------------------------------
+        // ------------------------------
+        Class<?> theClass;
+
+        if (loaderName == null) {
+            theClass = findClass(className, loader);
+        } else {
+            theClass = findClass(className, loaderName);
+        }
+        return instantiate(theClass, params, signature, loader);
+    }
+
+
+    /**
+     * Return the Default Loader Repository used by this instantiator object.
+     **/
+    public ModifiableClassLoaderRepository getClassLoaderRepository() {
+        checkMBeanPermission((String)null, null, null, "getClassLoaderRepository");
+        return clr;
+    }
+
+    /**
+     * Load a class with the specified loader, or with this object
+     * class loader if the specified loader is null.
+     **/
+    static Class<?> loadClass(String className, ClassLoader loader)
+        throws ReflectionException {
+        Class<?> theClass;
+        if (className == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("The class name cannot be null"),
+                              "Exception occurred during object instantiation");
+        }
+        ReflectUtil.checkPackageAccess(className);
+        try {
+            if (loader == null)
+                loader = MBeanInstantiator.class.getClassLoader();
+            if (loader != null) {
+                theClass = Class.forName(className, false, loader);
+            } else {
+                theClass = Class.forName(className);
+            }
+        } catch (ClassNotFoundException e) {
+            throw new ReflectionException(e,
+            "The MBean class could not be loaded");
+        }
+        return theClass;
+    }
+
+
+
+    /**
+     * Load the classes specified in the signature with the given loader,
+     * or with this object class loader.
+     **/
+    static Class<?>[] loadSignatureClasses(String signature[],
+                                           ClassLoader loader)
+        throws  ReflectionException {
+
+        if (signature == null) return null;
+        final ClassLoader aLoader =
+           (loader==null?MBeanInstantiator.class.getClassLoader():loader);
+        final int length= signature.length;
+        final Class<?> tab[]=new Class<?>[length];
+
+        if (length == 0) return tab;
+        try {
+            for (int i= 0; i < length; i++) {
+                // Start handling primitive types (int. boolean and so
+                // forth)
+                //
+
+                final Class<?> primCla = primitiveClasses.get(signature[i]);
+                if (primCla != null) {
+                    tab[i] = primCla;
+                    continue;
+                }
+
+                // Ok we do not have a primitive type ! We need to build
+                // the signature of the method
+                //
+                // We need to load the class through the class
+                // loader of the target object.
+                //
+                ReflectUtil.checkPackageAccess(signature[i]);
+                tab[i] = Class.forName(signature[i], false, aLoader);
+            }
+        } catch (ClassNotFoundException e) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
+                MBEANSERVER_LOGGER.logp(Level.FINEST,
+                        MBeanInstantiator.class.getName(),
+                        "findSignatureClasses",
+                        "The parameter class could not be found", e);
+            }
+            throw new ReflectionException(e,
+                      "The parameter class could not be found");
+        } catch (RuntimeException e) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
+                MBEANSERVER_LOGGER.logp(Level.FINEST,
+                        MBeanInstantiator.class.getName(),
+                        "findSignatureClasses",
+                        "Unexpected exception", e);
+            }
+            throw e;
+        }
+        return tab;
+    }
+
+    private Constructor<?> findConstructor(Class<?> c, Class<?>[] params) {
+        try {
+            return ConstructorUtil.getConstructor(c, params);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+    private static final Map<String, Class<?>> primitiveClasses = Util.newMap();
+    static {
+        for (Class<?> c : new Class<?>[] {byte.class, short.class, int.class,
+                                          long.class, float.class, double.class,
+                                          char.class, boolean.class})
+            primitiveClasses.put(c.getName(), c);
+    }
+
+    private static void checkMBeanPermission(Class<?> clazz,
+                                             String member,
+                                             ObjectName objectName,
+                                             String actions) {
+        if (clazz != null) {
+            checkMBeanPermission(clazz.getName(), member, objectName, actions);
+        }
+    }
+
+    private static void checkMBeanPermission(String classname,
+                                             String member,
+                                             ObjectName objectName,
+                                             String actions)
+        throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            Permission perm = new MBeanPermission(classname,
+                                                  member,
+                                                  objectName,
+                                                  actions);
+            sm.checkPermission(perm);
+        }
+    }
+
+    private static void ensureClassAccess(Class clazz)
+            throws IllegalAccessException
+    {
+        int mod = clazz.getModifiers();
+        if (!Modifier.isPublic(mod)) {
+            throw new IllegalAccessException("Class is not public and can't be instantiated");
+        }
+    }
+
+    private ClassLoader getClassLoader(final ObjectName name) {
+        if(clr == null){
+            return null;
+        }
+        // Restrict to getClassLoader permission only
+        Permissions permissions = new Permissions();
+        permissions.add(new MBeanPermission("*", null, name, "getClassLoader"));
+        ProtectionDomain protectionDomain = new ProtectionDomain(null, permissions);
+        ProtectionDomain[] domains = {protectionDomain};
+        AccessControlContext ctx = new AccessControlContext(domains);
+        ClassLoader loader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+            public ClassLoader run() {
+                return clr.getClassLoader(name);
+            }
+        }, ctx);
+        return loader;
+    }
+}

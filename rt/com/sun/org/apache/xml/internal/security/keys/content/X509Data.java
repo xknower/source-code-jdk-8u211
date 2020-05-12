@@ -1,545 +1,539 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.content;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509CRL;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509Certificate;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509Digest;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509IssuerSerial;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509SKI;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509SubjectName;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.math.BigInteger;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class X509Data
-/*     */   extends SignatureElementProxy
-/*     */   implements KeyInfoContent
-/*     */ {
-/*  46 */   private static Logger log = Logger.getLogger(X509Data.class.getName());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public X509Data(Document paramDocument) {
-/*  54 */     super(paramDocument);
-/*     */     
-/*  56 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public X509Data(Element paramElement, String paramString) throws XMLSecurityException {
-/*  67 */     super(paramElement, paramString);
-/*     */     
-/*  69 */     Node node = this.constructionElement.getFirstChild();
-/*  70 */     while (node != null) {
-/*  71 */       if (node.getNodeType() != 1) {
-/*  72 */         node = node.getNextSibling();
-/*     */         
-/*     */         continue;
-/*     */       } 
-/*     */       return;
-/*     */     } 
-/*  78 */     Object[] arrayOfObject = { "Elements", "X509Data" };
-/*  79 */     throw new XMLSecurityException("xml.WrongContent", arrayOfObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addIssuerSerial(String paramString, BigInteger paramBigInteger) {
-/*  89 */     add(new XMLX509IssuerSerial(this.doc, paramString, paramBigInteger));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addIssuerSerial(String paramString1, String paramString2) {
-/*  99 */     add(new XMLX509IssuerSerial(this.doc, paramString1, paramString2));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addIssuerSerial(String paramString, int paramInt) {
-/* 109 */     add(new XMLX509IssuerSerial(this.doc, paramString, paramInt));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(XMLX509IssuerSerial paramXMLX509IssuerSerial) {
-/* 119 */     this.constructionElement.appendChild(paramXMLX509IssuerSerial.getElement());
-/* 120 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addSKI(byte[] paramArrayOfbyte) {
-/* 129 */     add(new XMLX509SKI(this.doc, paramArrayOfbyte));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addSKI(X509Certificate paramX509Certificate) throws XMLSecurityException {
-/* 140 */     add(new XMLX509SKI(this.doc, paramX509Certificate));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(XMLX509SKI paramXMLX509SKI) {
-/* 149 */     this.constructionElement.appendChild(paramXMLX509SKI.getElement());
-/* 150 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addSubjectName(String paramString) {
-/* 159 */     add(new XMLX509SubjectName(this.doc, paramString));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addSubjectName(X509Certificate paramX509Certificate) {
-/* 168 */     add(new XMLX509SubjectName(this.doc, paramX509Certificate));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(XMLX509SubjectName paramXMLX509SubjectName) {
-/* 177 */     this.constructionElement.appendChild(paramXMLX509SubjectName.getElement());
-/* 178 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addCertificate(X509Certificate paramX509Certificate) throws XMLSecurityException {
-/* 189 */     add(new XMLX509Certificate(this.doc, paramX509Certificate));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addCertificate(byte[] paramArrayOfbyte) {
-/* 198 */     add(new XMLX509Certificate(this.doc, paramArrayOfbyte));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(XMLX509Certificate paramXMLX509Certificate) {
-/* 207 */     this.constructionElement.appendChild(paramXMLX509Certificate.getElement());
-/* 208 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addCRL(byte[] paramArrayOfbyte) {
-/* 217 */     add(new XMLX509CRL(this.doc, paramArrayOfbyte));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(XMLX509CRL paramXMLX509CRL) {
-/* 226 */     this.constructionElement.appendChild(paramXMLX509CRL.getElement());
-/* 227 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addDigest(X509Certificate paramX509Certificate, String paramString) throws XMLSecurityException {
-/* 239 */     add(new XMLX509Digest(this.doc, paramX509Certificate, paramString));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addDigest(byte[] paramArrayOfbyte, String paramString) {
-/* 249 */     add(new XMLX509Digest(this.doc, paramArrayOfbyte, paramString));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void add(XMLX509Digest paramXMLX509Digest) {
-/* 258 */     this.constructionElement.appendChild(paramXMLX509Digest.getElement());
-/* 259 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addUnknownElement(Element paramElement) {
-/* 268 */     this.constructionElement.appendChild(paramElement);
-/* 269 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthIssuerSerial() {
-/* 278 */     return length("http://www.w3.org/2000/09/xmldsig#", "X509IssuerSerial");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthSKI() {
-/* 287 */     return length("http://www.w3.org/2000/09/xmldsig#", "X509SKI");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthSubjectName() {
-/* 296 */     return length("http://www.w3.org/2000/09/xmldsig#", "X509SubjectName");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthCertificate() {
-/* 305 */     return length("http://www.w3.org/2000/09/xmldsig#", "X509Certificate");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthCRL() {
-/* 314 */     return length("http://www.w3.org/2000/09/xmldsig#", "X509CRL");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthDigest() {
-/* 323 */     return length("http://www.w3.org/2009/xmldsig11#", "X509Digest");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int lengthUnknownElement() {
-/* 332 */     byte b = 0;
-/* 333 */     Node node = this.constructionElement.getFirstChild();
-/* 334 */     while (node != null) {
-/* 335 */       if (node.getNodeType() == 1 && 
-/* 336 */         !node.getNamespaceURI().equals("http://www.w3.org/2000/09/xmldsig#")) {
-/* 337 */         b++;
-/*     */       }
-/* 339 */       node = node.getNextSibling();
-/*     */     } 
-/*     */     
-/* 342 */     return b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509IssuerSerial itemIssuerSerial(int paramInt) throws XMLSecurityException {
-/* 354 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/* 355 */         .getFirstChild(), "X509IssuerSerial", paramInt);
-/*     */     
-/* 357 */     if (element != null) {
-/* 358 */       return new XMLX509IssuerSerial(element, this.baseURI);
-/*     */     }
-/* 360 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509SKI itemSKI(int paramInt) throws XMLSecurityException {
-/* 373 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/* 374 */         .getFirstChild(), "X509SKI", paramInt);
-/*     */     
-/* 376 */     if (element != null) {
-/* 377 */       return new XMLX509SKI(element, this.baseURI);
-/*     */     }
-/* 379 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509SubjectName itemSubjectName(int paramInt) throws XMLSecurityException {
-/* 392 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/* 393 */         .getFirstChild(), "X509SubjectName", paramInt);
-/*     */     
-/* 395 */     if (element != null) {
-/* 396 */       return new XMLX509SubjectName(element, this.baseURI);
-/*     */     }
-/* 398 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509Certificate itemCertificate(int paramInt) throws XMLSecurityException {
-/* 411 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/* 412 */         .getFirstChild(), "X509Certificate", paramInt);
-/*     */     
-/* 414 */     if (element != null) {
-/* 415 */       return new XMLX509Certificate(element, this.baseURI);
-/*     */     }
-/* 417 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509CRL itemCRL(int paramInt) throws XMLSecurityException {
-/* 430 */     Element element = XMLUtils.selectDsNode(this.constructionElement
-/* 431 */         .getFirstChild(), "X509CRL", paramInt);
-/*     */     
-/* 433 */     if (element != null) {
-/* 434 */       return new XMLX509CRL(element, this.baseURI);
-/*     */     }
-/* 436 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLX509Digest itemDigest(int paramInt) throws XMLSecurityException {
-/* 449 */     Element element = XMLUtils.selectDs11Node(this.constructionElement
-/* 450 */         .getFirstChild(), "X509Digest", paramInt);
-/*     */     
-/* 452 */     if (element != null) {
-/* 453 */       return new XMLX509Digest(element, this.baseURI);
-/*     */     }
-/* 455 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Element itemUnknownElement(int paramInt) {
-/* 466 */     if (log.isLoggable(Level.FINE)) {
-/* 467 */       log.log(Level.FINE, "itemUnknownElement not implemented:" + paramInt);
-/*     */     }
-/* 469 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsIssuerSerial() {
-/* 478 */     return (lengthIssuerSerial() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsSKI() {
-/* 487 */     return (lengthSKI() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsSubjectName() {
-/* 496 */     return (lengthSubjectName() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsCertificate() {
-/* 505 */     return (lengthCertificate() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsDigest() {
-/* 514 */     return (lengthDigest() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsCRL() {
-/* 523 */     return (lengthCRL() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean containsUnknownElement() {
-/* 532 */     return (lengthUnknownElement() > 0);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseLocalName() {
-/* 537 */     return "X509Data";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\content\X509Data.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.content;
+
+import java.math.BigInteger;
+import java.security.cert.X509Certificate;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509CRL;
+import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509Certificate;
+import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509Digest;
+import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509IssuerSerial;
+import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509SKI;
+import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509SubjectName;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+public class X509Data extends SignatureElementProxy implements KeyInfoContent {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(X509Data.class.getName());
+
+    /**
+     * Constructor X509Data
+     *
+     * @param doc
+     */
+    public X509Data(Document doc) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Constructor X509Data
+     *
+     * @param element
+     * @param baseURI
+     * @throws XMLSecurityException
+     */
+    public X509Data(Element element, String baseURI) throws XMLSecurityException {
+        super(element, baseURI);
+
+        Node sibling = this.constructionElement.getFirstChild();
+        while (sibling != null) {
+            if (sibling.getNodeType() != Node.ELEMENT_NODE) {
+                sibling = sibling.getNextSibling();
+                continue;
+            }
+            return;
+        }
+        /* No Elements found */
+        Object exArgs[] = { "Elements", Constants._TAG_X509DATA };
+        throw new XMLSecurityException("xml.WrongContent", exArgs);
+    }
+
+    /**
+     * Method addIssuerSerial
+     *
+     * @param X509IssuerName
+     * @param X509SerialNumber
+     */
+    public void addIssuerSerial(String X509IssuerName, BigInteger X509SerialNumber) {
+        this.add(new XMLX509IssuerSerial(this.doc, X509IssuerName, X509SerialNumber));
+    }
+
+    /**
+     * Method addIssuerSerial
+     *
+     * @param X509IssuerName
+     * @param X509SerialNumber
+     */
+    public void addIssuerSerial(String X509IssuerName, String X509SerialNumber) {
+        this.add(new XMLX509IssuerSerial(this.doc, X509IssuerName, X509SerialNumber));
+    }
+
+    /**
+     * Method addIssuerSerial
+     *
+     * @param X509IssuerName
+     * @param X509SerialNumber
+     */
+    public void addIssuerSerial(String X509IssuerName, int X509SerialNumber) {
+        this.add(new XMLX509IssuerSerial(this.doc, X509IssuerName, X509SerialNumber));
+    }
+
+    /**
+     * Method add
+     *
+     * @param xmlX509IssuerSerial
+     */
+    public void add(XMLX509IssuerSerial xmlX509IssuerSerial) {
+
+        this.constructionElement.appendChild(xmlX509IssuerSerial.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addSKI
+     *
+     * @param skiBytes
+     */
+    public void addSKI(byte[] skiBytes) {
+        this.add(new XMLX509SKI(this.doc, skiBytes));
+    }
+
+    /**
+     * Method addSKI
+     *
+     * @param x509certificate
+     * @throws XMLSecurityException
+     */
+    public void addSKI(X509Certificate x509certificate)
+        throws XMLSecurityException {
+        this.add(new XMLX509SKI(this.doc, x509certificate));
+    }
+
+    /**
+     * Method add
+     *
+     * @param xmlX509SKI
+     */
+    public void add(XMLX509SKI xmlX509SKI) {
+        this.constructionElement.appendChild(xmlX509SKI.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addSubjectName
+     *
+     * @param subjectName
+     */
+    public void addSubjectName(String subjectName) {
+        this.add(new XMLX509SubjectName(this.doc, subjectName));
+    }
+
+    /**
+     * Method addSubjectName
+     *
+     * @param x509certificate
+     */
+    public void addSubjectName(X509Certificate x509certificate) {
+        this.add(new XMLX509SubjectName(this.doc, x509certificate));
+    }
+
+    /**
+     * Method add
+     *
+     * @param xmlX509SubjectName
+     */
+    public void add(XMLX509SubjectName xmlX509SubjectName) {
+        this.constructionElement.appendChild(xmlX509SubjectName.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addCertificate
+     *
+     * @param x509certificate
+     * @throws XMLSecurityException
+     */
+    public void addCertificate(X509Certificate x509certificate)
+        throws XMLSecurityException {
+        this.add(new XMLX509Certificate(this.doc, x509certificate));
+    }
+
+    /**
+     * Method addCertificate
+     *
+     * @param x509certificateBytes
+     */
+    public void addCertificate(byte[] x509certificateBytes) {
+        this.add(new XMLX509Certificate(this.doc, x509certificateBytes));
+    }
+
+    /**
+     * Method add
+     *
+     * @param xmlX509Certificate
+     */
+    public void add(XMLX509Certificate xmlX509Certificate) {
+        this.constructionElement.appendChild(xmlX509Certificate.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addCRL
+     *
+     * @param crlBytes
+     */
+    public void addCRL(byte[] crlBytes) {
+        this.add(new XMLX509CRL(this.doc, crlBytes));
+    }
+
+    /**
+     * Method add
+     *
+     * @param xmlX509CRL
+     */
+    public void add(XMLX509CRL xmlX509CRL) {
+        this.constructionElement.appendChild(xmlX509CRL.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addDigest
+     *
+     * @param x509certificate
+     * @param algorithmURI
+     * @throws XMLSecurityException
+     */
+    public void addDigest(X509Certificate x509certificate, String algorithmURI)
+        throws XMLSecurityException {
+        this.add(new XMLX509Digest(this.doc, x509certificate, algorithmURI));
+    }
+
+    /**
+     * Method addDigest
+     *
+     * @param x509CertificateDigestByes
+     * @param algorithmURI
+     */
+    public void addDigest(byte[] x509certificateDigestBytes, String algorithmURI) {
+        this.add(new XMLX509Digest(this.doc, x509certificateDigestBytes, algorithmURI));
+    }
+
+    /**
+     * Method add
+     *
+     * @param XMLX509Digest
+     */
+    public void add(XMLX509Digest xmlX509Digest) {
+        this.constructionElement.appendChild(xmlX509Digest.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method addUnknownElement
+     *
+     * @param element
+     */
+    public void addUnknownElement(Element element) {
+        this.constructionElement.appendChild(element);
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Method lengthIssuerSerial
+     *
+     * @return the number of IssuerSerial elements in this X509Data
+     */
+    public int lengthIssuerSerial() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_X509ISSUERSERIAL);
+    }
+
+    /**
+     * Method lengthSKI
+     *
+     * @return the number of SKI elements in this X509Data
+     */
+    public int lengthSKI() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_X509SKI);
+    }
+
+    /**
+     * Method lengthSubjectName
+     *
+     * @return the number of SubjectName elements in this X509Data
+     */
+    public int lengthSubjectName() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_X509SUBJECTNAME);
+    }
+
+    /**
+     * Method lengthCertificate
+     *
+     * @return the number of Certificate elements in this X509Data
+     */
+    public int lengthCertificate() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_X509CERTIFICATE);
+    }
+
+    /**
+     * Method lengthCRL
+     *
+     * @return the number of CRL elements in this X509Data
+     */
+    public int lengthCRL() {
+        return this.length(Constants.SignatureSpecNS, Constants._TAG_X509CRL);
+    }
+
+    /**
+     * Method lengthDigest
+     *
+     * @return the number of X509Digest elements in this X509Data
+     */
+    public int lengthDigest() {
+        return this.length(Constants.SignatureSpec11NS, Constants._TAG_X509DIGEST);
+    }
+
+    /**
+     * Method lengthUnknownElement
+     *
+     * @return the number of UnknownElement elements in this X509Data
+     */
+    public int lengthUnknownElement() {
+        int result = 0;
+        Node n = this.constructionElement.getFirstChild();
+        while (n != null){
+            if ((n.getNodeType() == Node.ELEMENT_NODE)
+                && !n.getNamespaceURI().equals(Constants.SignatureSpecNS)) {
+                result++;
+            }
+            n = n.getNextSibling();
+        }
+
+        return result;
+    }
+
+    /**
+     * Method itemIssuerSerial
+     *
+     * @param i
+     * @return the X509IssuerSerial, null if not present
+     * @throws XMLSecurityException
+     */
+    public XMLX509IssuerSerial itemIssuerSerial(int i) throws XMLSecurityException {
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509ISSUERSERIAL, i);
+
+        if (e != null) {
+            return new XMLX509IssuerSerial(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemSKI
+     *
+     * @param i
+     * @return the X509SKI, null if not present
+     * @throws XMLSecurityException
+     */
+    public XMLX509SKI itemSKI(int i) throws XMLSecurityException {
+
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509SKI, i);
+
+        if (e != null) {
+            return new XMLX509SKI(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemSubjectName
+     *
+     * @param i
+     * @return the X509SubjectName, null if not present
+     * @throws XMLSecurityException
+     */
+    public XMLX509SubjectName itemSubjectName(int i) throws XMLSecurityException {
+
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509SUBJECTNAME, i);
+
+        if (e != null) {
+            return new XMLX509SubjectName(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemCertificate
+     *
+     * @param i
+     * @return the X509Certifacte, null if not present
+     * @throws XMLSecurityException
+     */
+    public XMLX509Certificate itemCertificate(int i) throws XMLSecurityException {
+
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509CERTIFICATE, i);
+
+        if (e != null) {
+            return new XMLX509Certificate(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemCRL
+     *
+     * @param i
+     * @return the X509CRL, null if not present
+     * @throws XMLSecurityException
+     */
+    public XMLX509CRL itemCRL(int i) throws XMLSecurityException {
+
+        Element e =
+            XMLUtils.selectDsNode(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509CRL, i);
+
+        if (e != null) {
+            return new XMLX509CRL(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemDigest
+     *
+     * @param i
+     * @return the X509Digest, null if not present
+     * @throws XMLSecurityException
+     */
+    public XMLX509Digest itemDigest(int i) throws XMLSecurityException {
+
+        Element e =
+            XMLUtils.selectDs11Node(
+                this.constructionElement.getFirstChild(), Constants._TAG_X509DIGEST, i);
+
+        if (e != null) {
+            return new XMLX509Digest(e, this.baseURI);
+        }
+        return null;
+    }
+
+    /**
+     * Method itemUnknownElement
+     *
+     * @param i
+     * @return the Unknown Element at i
+     * TODO implement
+     **/
+    public Element itemUnknownElement(int i) {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "itemUnknownElement not implemented:" + i);
+        }
+        return null;
+    }
+
+    /**
+     * Method containsIssuerSerial
+     *
+     * @return true if this X509Data contains a IssuerSerial
+     */
+    public boolean containsIssuerSerial() {
+        return this.lengthIssuerSerial() > 0;
+    }
+
+    /**
+     * Method containsSKI
+     *
+     * @return true if this X509Data contains a SKI
+     */
+    public boolean containsSKI() {
+        return this.lengthSKI() > 0;
+    }
+
+    /**
+     * Method containsSubjectName
+     *
+     * @return true if this X509Data contains a SubjectName
+     */
+    public boolean containsSubjectName() {
+        return this.lengthSubjectName() > 0;
+    }
+
+    /**
+     * Method containsCertificate
+     *
+     * @return true if this X509Data contains a Certificate
+     */
+    public boolean containsCertificate() {
+        return this.lengthCertificate() > 0;
+    }
+
+    /**
+     * Method containsDigest
+     *
+     * @return true if this X509Data contains an X509Digest
+     */
+    public boolean containsDigest() {
+        return this.lengthDigest() > 0;
+    }
+
+    /**
+     * Method containsCRL
+     *
+     * @return true if this X509Data contains a CRL
+     */
+    public boolean containsCRL() {
+        return this.lengthCRL() > 0;
+    }
+
+    /**
+     * Method containsUnknownElement
+     *
+     * @return true if this X509Data contains an UnknownElement
+     */
+    public boolean containsUnknownElement() {
+        return this.lengthUnknownElement() > 0;
+    }
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_X509DATA;
+    }
+}

@@ -1,311 +1,306 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicTabbedPaneUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifTabbedPaneUI
-/*     */   extends BasicTabbedPaneUI
-/*     */ {
-/*     */   protected Color unselectedTabBackground;
-/*     */   protected Color unselectedTabForeground;
-/*     */   protected Color unselectedTabShadow;
-/*     */   protected Color unselectedTabHighlight;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  63 */     return new MotifTabbedPaneUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  71 */     super.installDefaults();
-/*     */     
-/*  73 */     this.unselectedTabBackground = UIManager.getColor("TabbedPane.unselectedTabBackground");
-/*  74 */     this.unselectedTabForeground = UIManager.getColor("TabbedPane.unselectedTabForeground");
-/*  75 */     this.unselectedTabShadow = UIManager.getColor("TabbedPane.unselectedTabShadow");
-/*  76 */     this.unselectedTabHighlight = UIManager.getColor("TabbedPane.unselectedTabHighlight");
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/*  80 */     super.uninstallDefaults();
-/*     */     
-/*  82 */     this.unselectedTabBackground = null;
-/*  83 */     this.unselectedTabForeground = null;
-/*  84 */     this.unselectedTabShadow = null;
-/*  85 */     this.unselectedTabHighlight = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintContentBorderTopEdge(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/*  94 */     Rectangle rectangle = (paramInt2 < 0) ? null : getTabBounds(paramInt2, this.calcRect);
-/*  95 */     paramGraphics.setColor(this.lightHighlight);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 100 */     if (paramInt1 != 1 || paramInt2 < 0 || rectangle.x < paramInt3 || rectangle.x > paramInt3 + paramInt5) {
-/*     */       
-/* 102 */       paramGraphics.drawLine(paramInt3, paramInt4, paramInt3 + paramInt5 - 2, paramInt4);
-/*     */     } else {
-/*     */       
-/* 105 */       paramGraphics.drawLine(paramInt3, paramInt4, rectangle.x - 1, paramInt4);
-/* 106 */       if (rectangle.x + rectangle.width < paramInt3 + paramInt5 - 2) {
-/* 107 */         paramGraphics.drawLine(rectangle.x + rectangle.width, paramInt4, paramInt3 + paramInt5 - 2, paramInt4);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintContentBorderBottomEdge(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/* 117 */     Rectangle rectangle = (paramInt2 < 0) ? null : getTabBounds(paramInt2, this.calcRect);
-/* 118 */     paramGraphics.setColor(this.shadow);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 123 */     if (paramInt1 != 3 || paramInt2 < 0 || rectangle.x < paramInt3 || rectangle.x > paramInt3 + paramInt5) {
-/*     */       
-/* 125 */       paramGraphics.drawLine(paramInt3 + 1, paramInt4 + paramInt6 - 1, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 1);
-/*     */     } else {
-/*     */       
-/* 128 */       paramGraphics.drawLine(paramInt3 + 1, paramInt4 + paramInt6 - 1, rectangle.x - 1, paramInt4 + paramInt6 - 1);
-/* 129 */       if (rectangle.x + rectangle.width < paramInt3 + paramInt5 - 2) {
-/* 130 */         paramGraphics.drawLine(rectangle.x + rectangle.width, paramInt4 + paramInt6 - 1, paramInt3 + paramInt5 - 2, paramInt4 + paramInt6 - 1);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintContentBorderRightEdge(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6) {
-/* 139 */     Rectangle rectangle = (paramInt2 < 0) ? null : getTabBounds(paramInt2, this.calcRect);
-/* 140 */     paramGraphics.setColor(this.shadow);
-/*     */ 
-/*     */ 
-/*     */     
-/* 144 */     if (paramInt1 != 4 || paramInt2 < 0 || rectangle.y < paramInt4 || rectangle.y > paramInt4 + paramInt6) {
-/*     */       
-/* 146 */       paramGraphics.drawLine(paramInt3 + paramInt5 - 1, paramInt4 + 1, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 1);
-/*     */     } else {
-/*     */       
-/* 149 */       paramGraphics.drawLine(paramInt3 + paramInt5 - 1, paramInt4 + 1, paramInt3 + paramInt5 - 1, rectangle.y - 1);
-/* 150 */       if (rectangle.y + rectangle.height < paramInt4 + paramInt6 - 2) {
-/* 151 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 1, rectangle.y + rectangle.height, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 2);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintTabBackground(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, boolean paramBoolean) {
-/* 161 */     paramGraphics.setColor(paramBoolean ? this.tabPane.getBackgroundAt(paramInt2) : this.unselectedTabBackground);
-/* 162 */     switch (paramInt1) {
-/*     */       case 2:
-/* 164 */         paramGraphics.fillRect(paramInt3 + 1, paramInt4 + 1, paramInt5 - 1, paramInt6 - 2);
-/*     */         return;
-/*     */       case 4:
-/* 167 */         paramGraphics.fillRect(paramInt3, paramInt4 + 1, paramInt5 - 1, paramInt6 - 2);
-/*     */         return;
-/*     */       case 3:
-/* 170 */         paramGraphics.fillRect(paramInt3 + 1, paramInt4, paramInt5 - 2, paramInt6 - 3);
-/* 171 */         paramGraphics.drawLine(paramInt3 + 2, paramInt4 + paramInt6 - 3, paramInt3 + paramInt5 - 3, paramInt4 + paramInt6 - 3);
-/* 172 */         paramGraphics.drawLine(paramInt3 + 3, paramInt4 + paramInt6 - 2, paramInt3 + paramInt5 - 4, paramInt4 + paramInt6 - 2);
-/*     */         return;
-/*     */     } 
-/*     */     
-/* 176 */     paramGraphics.fillRect(paramInt3 + 1, paramInt4 + 3, paramInt5 - 2, paramInt6 - 3);
-/* 177 */     paramGraphics.drawLine(paramInt3 + 2, paramInt4 + 2, paramInt3 + paramInt5 - 3, paramInt4 + 2);
-/* 178 */     paramGraphics.drawLine(paramInt3 + 3, paramInt4 + 1, paramInt3 + paramInt5 - 4, paramInt4 + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintTabBorder(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, boolean paramBoolean) {
-/* 187 */     paramGraphics.setColor(paramBoolean ? this.lightHighlight : this.unselectedTabHighlight);
-/*     */     
-/* 189 */     switch (paramInt1) {
-/*     */       case 2:
-/* 191 */         paramGraphics.drawLine(paramInt3, paramInt4 + 2, paramInt3, paramInt4 + paramInt6 - 3);
-/* 192 */         paramGraphics.drawLine(paramInt3 + 1, paramInt4 + 1, paramInt3 + 1, paramInt4 + 2);
-/* 193 */         paramGraphics.drawLine(paramInt3 + 2, paramInt4, paramInt3 + 2, paramInt4 + 1);
-/* 194 */         paramGraphics.drawLine(paramInt3 + 3, paramInt4, paramInt3 + paramInt5 - 1, paramInt4);
-/* 195 */         paramGraphics.setColor(paramBoolean ? this.shadow : this.unselectedTabShadow);
-/* 196 */         paramGraphics.drawLine(paramInt3 + 1, paramInt4 + paramInt6 - 3, paramInt3 + 1, paramInt4 + paramInt6 - 2);
-/* 197 */         paramGraphics.drawLine(paramInt3 + 2, paramInt4 + paramInt6 - 2, paramInt3 + 2, paramInt4 + paramInt6 - 1);
-/* 198 */         paramGraphics.drawLine(paramInt3 + 3, paramInt4 + paramInt6 - 1, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 1);
-/*     */         return;
-/*     */       case 4:
-/* 201 */         paramGraphics.drawLine(paramInt3, paramInt4, paramInt3 + paramInt5 - 3, paramInt4);
-/* 202 */         paramGraphics.setColor(paramBoolean ? this.shadow : this.unselectedTabShadow);
-/* 203 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 3, paramInt4, paramInt3 + paramInt5 - 3, paramInt4 + 1);
-/* 204 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 2, paramInt4 + 1, paramInt3 + paramInt5 - 2, paramInt4 + 2);
-/* 205 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 1, paramInt4 + 2, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 3);
-/* 206 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 2, paramInt4 + paramInt6 - 3, paramInt3 + paramInt5 - 2, paramInt4 + paramInt6 - 2);
-/* 207 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 3, paramInt4 + paramInt6 - 2, paramInt3 + paramInt5 - 3, paramInt4 + paramInt6 - 1);
-/* 208 */         paramGraphics.drawLine(paramInt3, paramInt4 + paramInt6 - 1, paramInt3 + paramInt5 - 3, paramInt4 + paramInt6 - 1);
-/*     */         return;
-/*     */       case 3:
-/* 211 */         paramGraphics.drawLine(paramInt3, paramInt4, paramInt3, paramInt4 + paramInt6 - 3);
-/* 212 */         paramGraphics.drawLine(paramInt3 + 1, paramInt4 + paramInt6 - 3, paramInt3 + 1, paramInt4 + paramInt6 - 2);
-/* 213 */         paramGraphics.drawLine(paramInt3 + 2, paramInt4 + paramInt6 - 2, paramInt3 + 2, paramInt4 + paramInt6 - 1);
-/* 214 */         paramGraphics.setColor(paramBoolean ? this.shadow : this.unselectedTabShadow);
-/* 215 */         paramGraphics.drawLine(paramInt3 + 3, paramInt4 + paramInt6 - 1, paramInt3 + paramInt5 - 4, paramInt4 + paramInt6 - 1);
-/* 216 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 3, paramInt4 + paramInt6 - 2, paramInt3 + paramInt5 - 3, paramInt4 + paramInt6 - 1);
-/* 217 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 2, paramInt4 + paramInt6 - 3, paramInt3 + paramInt5 - 2, paramInt4 + paramInt6 - 2);
-/* 218 */         paramGraphics.drawLine(paramInt3 + paramInt5 - 1, paramInt4, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 3);
-/*     */         return;
-/*     */     } 
-/*     */     
-/* 222 */     paramGraphics.drawLine(paramInt3, paramInt4 + 2, paramInt3, paramInt4 + paramInt6 - 1);
-/* 223 */     paramGraphics.drawLine(paramInt3 + 1, paramInt4 + 1, paramInt3 + 1, paramInt4 + 2);
-/* 224 */     paramGraphics.drawLine(paramInt3 + 2, paramInt4, paramInt3 + 2, paramInt4 + 1);
-/* 225 */     paramGraphics.drawLine(paramInt3 + 3, paramInt4, paramInt3 + paramInt5 - 4, paramInt4);
-/* 226 */     paramGraphics.setColor(paramBoolean ? this.shadow : this.unselectedTabShadow);
-/* 227 */     paramGraphics.drawLine(paramInt3 + paramInt5 - 3, paramInt4, paramInt3 + paramInt5 - 3, paramInt4 + 1);
-/* 228 */     paramGraphics.drawLine(paramInt3 + paramInt5 - 2, paramInt4 + 1, paramInt3 + paramInt5 - 2, paramInt4 + 2);
-/* 229 */     paramGraphics.drawLine(paramInt3 + paramInt5 - 1, paramInt4 + 2, paramInt3 + paramInt5 - 1, paramInt4 + paramInt6 - 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintFocusIndicator(Graphics paramGraphics, int paramInt1, Rectangle[] paramArrayOfRectangle, int paramInt2, Rectangle paramRectangle1, Rectangle paramRectangle2, boolean paramBoolean) {
-/* 238 */     Rectangle rectangle = paramArrayOfRectangle[paramInt2];
-/* 239 */     if (this.tabPane.hasFocus() && paramBoolean) {
-/*     */       int i, j, k, m;
-/* 241 */       paramGraphics.setColor(this.focus);
-/* 242 */       switch (paramInt1) {
-/*     */         case 2:
-/* 244 */           i = rectangle.x + 3;
-/* 245 */           j = rectangle.y + 3;
-/* 246 */           k = rectangle.width - 6;
-/* 247 */           m = rectangle.height - 7;
-/*     */           break;
-/*     */         case 4:
-/* 250 */           i = rectangle.x + 2;
-/* 251 */           j = rectangle.y + 3;
-/* 252 */           k = rectangle.width - 6;
-/* 253 */           m = rectangle.height - 7;
-/*     */           break;
-/*     */         case 3:
-/* 256 */           i = rectangle.x + 3;
-/* 257 */           j = rectangle.y + 2;
-/* 258 */           k = rectangle.width - 7;
-/* 259 */           m = rectangle.height - 6;
-/*     */           break;
-/*     */         
-/*     */         default:
-/* 263 */           i = rectangle.x + 3;
-/* 264 */           j = rectangle.y + 3;
-/* 265 */           k = rectangle.width - 7;
-/* 266 */           m = rectangle.height - 6; break;
-/*     */       } 
-/* 268 */       paramGraphics.drawRect(i, j, k, m);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected int getTabRunIndent(int paramInt1, int paramInt2) {
-/* 273 */     return paramInt2 * 3;
-/*     */   }
-/*     */   
-/*     */   protected int getTabRunOverlay(int paramInt) {
-/* 277 */     this
-/*     */       
-/* 279 */       .tabRunOverlay = (paramInt == 2 || paramInt == 4) ? (int)Math.round(this.maxTabWidth * 0.1D) : (int)Math.round(this.maxTabHeight * 0.22D);
-/*     */ 
-/*     */ 
-/*     */     
-/* 283 */     switch (paramInt) {
-/*     */       case 2:
-/* 285 */         if (this.tabRunOverlay > this.tabInsets.right - 2)
-/* 286 */           this.tabRunOverlay = this.tabInsets.right - 2; 
-/*     */         break;
-/*     */       case 4:
-/* 289 */         if (this.tabRunOverlay > this.tabInsets.left - 2)
-/* 290 */           this.tabRunOverlay = this.tabInsets.left - 2; 
-/*     */         break;
-/*     */       case 1:
-/* 293 */         if (this.tabRunOverlay > this.tabInsets.bottom - 2)
-/* 294 */           this.tabRunOverlay = this.tabInsets.bottom - 2; 
-/*     */         break;
-/*     */       case 3:
-/* 297 */         if (this.tabRunOverlay > this.tabInsets.top - 2) {
-/* 298 */           this.tabRunOverlay = this.tabInsets.top - 2;
-/*     */         }
-/*     */         break;
-/*     */     } 
-/*     */     
-/* 303 */     return this.tabRunOverlay;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifTabbedPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
+import java.io.Serializable;
+
+/**
+ * A Motif L&F implementation of TabbedPaneUI.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Amy Fowler
+ * @author Philip Milne
+ */
+public class MotifTabbedPaneUI extends BasicTabbedPaneUI
+{
+
+// Instance variables initialized at installation
+
+    protected Color unselectedTabBackground;
+    protected Color unselectedTabForeground;
+    protected Color unselectedTabShadow;
+    protected Color unselectedTabHighlight;
+
+
+// UI creation
+
+    public static ComponentUI createUI(JComponent tabbedPane) {
+        return new MotifTabbedPaneUI();
+    }
+
+
+// UI Installation/De-installation
+
+
+    protected void installDefaults() {
+        super.installDefaults();
+
+        unselectedTabBackground = UIManager.getColor("TabbedPane.unselectedTabBackground");
+        unselectedTabForeground = UIManager.getColor("TabbedPane.unselectedTabForeground");
+        unselectedTabShadow = UIManager.getColor("TabbedPane.unselectedTabShadow");
+        unselectedTabHighlight = UIManager.getColor("TabbedPane.unselectedTabHighlight");
+    }
+
+    protected void uninstallDefaults() {
+        super.uninstallDefaults();
+
+        unselectedTabBackground = null;
+        unselectedTabForeground = null;
+        unselectedTabShadow = null;
+        unselectedTabHighlight = null;
+    }
+
+// UI Rendering
+
+   protected void paintContentBorderTopEdge(Graphics g, int tabPlacement,
+                                            int selectedIndex,
+                                            int x, int y, int w, int h) {
+        Rectangle selRect = selectedIndex < 0? null :
+                               getTabBounds(selectedIndex, calcRect);
+        g.setColor(lightHighlight);
+
+        // Draw unbroken line if tabs are not on TOP, OR
+        // selected tab is not visible (SCROLL_TAB_LAYOUT)
+        //
+        if (tabPlacement != TOP || selectedIndex < 0 ||
+            (selRect.x < x || selRect.x > x + w)) {
+            g.drawLine(x, y, x+w-2, y);
+        } else {
+            // Break line to show visual connection to selected tab
+            g.drawLine(x, y, selRect.x - 1, y);
+            if (selRect.x + selRect.width < x + w - 2) {
+                g.drawLine(selRect.x + selRect.width, y,
+                           x+w-2, y);
+            }
+        }
+    }
+
+    protected void paintContentBorderBottomEdge(Graphics g, int tabPlacement,
+                                               int selectedIndex,
+                                               int x, int y, int w, int h) {
+        Rectangle selRect = selectedIndex < 0? null :
+                               getTabBounds(selectedIndex, calcRect);
+        g.setColor(shadow);
+
+        // Draw unbroken line if tabs are not on BOTTOM, OR
+        // selected tab is not visible (SCROLL_TAB_LAYOUT)
+        //
+        if (tabPlacement != BOTTOM || selectedIndex < 0 ||
+             (selRect.x < x || selRect.x > x + w)) {
+            g.drawLine(x+1, y+h-1, x+w-1, y+h-1);
+        } else {
+            // Break line to show visual connection to selected tab
+            g.drawLine(x+1, y+h-1, selRect.x - 1, y+h-1);
+            if (selRect.x + selRect.width < x + w - 2) {
+                g.drawLine(selRect.x + selRect.width, y+h-1, x+w-2, y+h-1);
+            }
+        }
+    }
+
+    protected void paintContentBorderRightEdge(Graphics g, int tabPlacement,
+                                               int selectedIndex,
+                                               int x, int y, int w, int h) {
+        Rectangle selRect = selectedIndex < 0? null :
+                               getTabBounds(selectedIndex, calcRect);
+        g.setColor(shadow);
+        // Draw unbroken line if tabs are not on RIGHT, OR
+        // selected tab is not visible (SCROLL_TAB_LAYOUT)
+        //
+        if (tabPlacement != RIGHT || selectedIndex < 0 ||
+             (selRect.y < y || selRect.y > y + h)) {
+            g.drawLine(x+w-1, y+1, x+w-1, y+h-1);
+        } else {
+            // Break line to show visual connection to selected tab
+            g.drawLine(x+w-1, y+1, x+w-1, selRect.y - 1);
+            if (selRect.y + selRect.height < y + h - 2 ) {
+                g.drawLine(x+w-1, selRect.y + selRect.height,
+                           x+w-1, y+h-2);
+            }
+        }
+    }
+
+    protected void paintTabBackground(Graphics g,
+                                      int tabPlacement, int tabIndex,
+                                      int x, int y, int w, int h,
+                                      boolean isSelected ) {
+        g.setColor(isSelected? tabPane.getBackgroundAt(tabIndex) : unselectedTabBackground);
+        switch(tabPlacement) {
+          case LEFT:
+              g.fillRect(x+1, y+1, w-1, h-2);
+              break;
+          case RIGHT:
+              g.fillRect(x, y+1, w-1, h-2);
+              break;
+          case BOTTOM:
+              g.fillRect(x+1, y, w-2, h-3);
+              g.drawLine(x+2, y+h-3, x+w-3, y+h-3);
+              g.drawLine(x+3, y+h-2, x+w-4, y+h-2);
+              break;
+          case TOP:
+          default:
+              g.fillRect(x+1, y+3, w-2, h-3);
+              g.drawLine(x+2, y+2, x+w-3, y+2);
+              g.drawLine(x+3, y+1, x+w-4, y+1);
+        }
+
+    }
+
+    protected void paintTabBorder(Graphics g,
+                                  int tabPlacement, int tabIndex,
+                                  int x, int y, int w, int h,
+                                  boolean isSelected) {
+        g.setColor(isSelected? lightHighlight : unselectedTabHighlight);
+
+        switch(tabPlacement) {
+          case LEFT:
+              g.drawLine(x, y+2, x, y+h-3);
+              g.drawLine(x+1, y+1, x+1, y+2);
+              g.drawLine(x+2, y, x+2, y+1);
+              g.drawLine(x+3, y, x+w-1, y);
+              g.setColor(isSelected? shadow : unselectedTabShadow);
+              g.drawLine(x+1, y+h-3, x+1, y+h-2);
+              g.drawLine(x+2, y+h-2, x+2, y+h-1);
+              g.drawLine(x+3, y+h-1, x+w-1, y+h-1);
+              break;
+          case RIGHT:
+              g.drawLine(x, y, x+w-3, y);
+              g.setColor(isSelected? shadow : unselectedTabShadow);
+              g.drawLine(x+w-3, y, x+w-3, y+1);
+              g.drawLine(x+w-2, y+1, x+w-2, y+2);
+              g.drawLine(x+w-1, y+2, x+w-1, y+h-3);
+              g.drawLine(x+w-2, y+h-3, x+w-2, y+h-2);
+              g.drawLine(x+w-3, y+h-2, x+w-3, y+h-1);
+              g.drawLine(x, y+h-1, x+w-3, y+h-1);
+              break;
+          case BOTTOM:
+              g.drawLine(x, y, x, y+h-3);
+              g.drawLine(x+1, y+h-3, x+1, y+h-2);
+              g.drawLine(x+2, y+h-2, x+2, y+h-1);
+              g.setColor(isSelected? shadow : unselectedTabShadow);
+              g.drawLine(x+3, y+h-1, x+w-4, y+h-1);
+              g.drawLine(x+w-3, y+h-2, x+w-3, y+h-1);
+              g.drawLine(x+w-2, y+h-3, x+w-2, y+h-2);
+              g.drawLine(x+w-1, y, x+w-1, y+h-3);
+              break;
+          case TOP:
+          default:
+              g.drawLine(x, y+2, x, y+h-1);
+              g.drawLine(x+1, y+1, x+1, y+2);
+              g.drawLine(x+2, y, x+2, y+1);
+              g.drawLine(x+3, y, x+w-4, y);
+              g.setColor(isSelected? shadow : unselectedTabShadow);
+              g.drawLine(x+w-3, y, x+w-3, y+1);
+              g.drawLine(x+w-2, y+1, x+w-2, y+2);
+              g.drawLine(x+w-1, y+2, x+w-1, y+h-1);
+        }
+
+    }
+
+    protected void paintFocusIndicator(Graphics g, int tabPlacement,
+                                       Rectangle[] rects, int tabIndex,
+                                       Rectangle iconRect, Rectangle textRect,
+                                       boolean isSelected) {
+        Rectangle tabRect = rects[tabIndex];
+        if (tabPane.hasFocus() && isSelected) {
+            int x, y, w, h;
+            g.setColor(focus);
+            switch(tabPlacement) {
+              case LEFT:
+                  x = tabRect.x + 3;
+                  y = tabRect.y + 3;
+                  w = tabRect.width - 6;
+                  h = tabRect.height - 7;
+                  break;
+              case RIGHT:
+                  x = tabRect.x + 2;
+                  y = tabRect.y + 3;
+                  w = tabRect.width - 6;
+                  h = tabRect.height - 7;
+                  break;
+              case BOTTOM:
+                  x = tabRect.x + 3;
+                  y = tabRect.y + 2;
+                  w = tabRect.width - 7;
+                  h = tabRect.height - 6;
+                  break;
+              case TOP:
+              default:
+                  x = tabRect.x + 3;
+                  y = tabRect.y + 3;
+                  w = tabRect.width - 7;
+                  h = tabRect.height - 6;
+            }
+            g.drawRect(x, y, w, h);
+        }
+    }
+
+    protected int getTabRunIndent(int tabPlacement, int run) {
+        return run*3;
+    }
+
+    protected int getTabRunOverlay(int tabPlacement) {
+        tabRunOverlay = (tabPlacement == LEFT || tabPlacement == RIGHT)?
+            (int)Math.round((float)maxTabWidth * .10) :
+            (int)Math.round((float)maxTabHeight * .22);
+
+        // Ensure that runover lay is not more than insets
+        // 2 pixel offset is set from insets to each run
+        switch(tabPlacement) {
+        case LEFT:
+                if( tabRunOverlay > tabInsets.right - 2 )
+                    tabRunOverlay = tabInsets.right - 2 ;
+                break;
+        case RIGHT:
+                if( tabRunOverlay > tabInsets.left - 2 )
+                    tabRunOverlay = tabInsets.left - 2 ;
+                break;
+        case TOP:
+                if( tabRunOverlay > tabInsets.bottom - 2 )
+                    tabRunOverlay = tabInsets.bottom - 2 ;
+                break;
+        case BOTTOM:
+                if( tabRunOverlay > tabInsets.top - 2 )
+                    tabRunOverlay = tabInsets.top - 2 ;
+                break;
+
+        }
+
+        return tabRunOverlay;
+    }
+
+}

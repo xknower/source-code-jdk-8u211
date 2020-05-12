@@ -1,471 +1,465 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GETFIELD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Instruction;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.FlowList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ResultTreeType
-/*     */   extends Type
-/*     */ {
-/*     */   private final String _methodName;
-/*     */   
-/*     */   protected ResultTreeType() {
-/*  52 */     this._methodName = null;
-/*     */   }
-/*     */   
-/*     */   public ResultTreeType(String methodName) {
-/*  56 */     this._methodName = methodName;
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/*  60 */     return "result-tree";
-/*     */   }
-/*     */   
-/*     */   public boolean identicalTo(Type other) {
-/*  64 */     return other instanceof ResultTreeType;
-/*     */   }
-/*     */   
-/*     */   public String toSignature() {
-/*  68 */     return "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;";
-/*     */   }
-/*     */   
-/*     */   public Type toJCType() {
-/*  72 */     return Util.getJCRefType(toSignature());
-/*     */   }
-/*     */   
-/*     */   public String getMethodName() {
-/*  76 */     return this._methodName;
-/*     */   }
-/*     */   
-/*     */   public boolean implementedAsMethod() {
-/*  80 */     return (this._methodName != null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, Type type) {
-/*  95 */     if (type == Type.String) {
-/*  96 */       translateTo(classGen, methodGen, (StringType)type);
-/*     */     }
-/*  98 */     else if (type == Type.Boolean) {
-/*  99 */       translateTo(classGen, methodGen, (BooleanType)type);
-/*     */     }
-/* 101 */     else if (type == Type.Real) {
-/* 102 */       translateTo(classGen, methodGen, (RealType)type);
-/*     */     }
-/* 104 */     else if (type == Type.NodeSet) {
-/* 105 */       translateTo(classGen, methodGen, (NodeSetType)type);
-/*     */     }
-/* 107 */     else if (type == Type.Reference) {
-/* 108 */       translateTo(classGen, methodGen, (ReferenceType)type);
-/*     */     }
-/* 110 */     else if (type == Type.Object) {
-/* 111 */       translateTo(classGen, methodGen, (ObjectType)type);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 115 */       ErrorMsg err = new ErrorMsg("DATA_CONVERSION_ERR", toString(), type.toString());
-/* 116 */       classGen.getParser().reportError(2, err);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, BooleanType type) {
-/* 133 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 134 */     InstructionList il = methodGen.getInstructionList();
-/* 135 */     il.append(POP);
-/* 136 */     il.append(ICONST_1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, StringType type) {
-/* 149 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 150 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 152 */     if (this._methodName == null) {
-/* 153 */       int index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getStringValue", "()Ljava/lang/String;");
-/*     */ 
-/*     */       
-/* 156 */       il.append(new INVOKEINTERFACE(index, 1));
-/*     */     } else {
-/*     */       
-/* 159 */       String className = classGen.getClassName();
-/* 160 */       int current = methodGen.getLocalIndex("current");
-/*     */ 
-/*     */       
-/* 163 */       il.append(classGen.loadTranslet());
-/* 164 */       if (classGen.isExternal()) {
-/* 165 */         il.append(new CHECKCAST(cpg.addClass(className)));
-/*     */       }
-/* 167 */       il.append(DUP);
-/* 168 */       il.append(new GETFIELD(cpg.addFieldref(className, "_dom", "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;")));
-/*     */ 
-/*     */ 
-/*     */       
-/* 172 */       int index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.StringValueHandler", "<init>", "()V");
-/* 173 */       il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.runtime.StringValueHandler")));
-/* 174 */       il.append(DUP);
-/* 175 */       il.append(DUP);
-/* 176 */       il.append(new INVOKESPECIAL(index));
-/*     */ 
-/*     */ 
-/*     */       
-/* 180 */       LocalVariableGen handler = methodGen.addLocalVariable("rt_to_string_handler", 
-/* 181 */           Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/runtime/StringValueHandler;"), null, null);
-/*     */       
-/* 183 */       handler.setStart(il.append(new ASTORE(handler.getIndex())));
-/*     */ 
-/*     */       
-/* 186 */       index = cpg.addMethodref(className, this._methodName, "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;)V");
-/*     */       
-/* 188 */       il.append(new INVOKEVIRTUAL(index));
-/*     */ 
-/*     */       
-/* 191 */       handler.setEnd(il.append(new ALOAD(handler.getIndex())));
-/* 192 */       index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.StringValueHandler", "getValue", "()Ljava/lang/String;");
-/*     */ 
-/*     */       
-/* 195 */       il.append(new INVOKEVIRTUAL(index));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, RealType type) {
-/* 210 */     translateTo(classGen, methodGen, Type.String);
-/* 211 */     Type.String.translateTo(classGen, methodGen, Type.Real);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, ReferenceType type) {
-/* 225 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 226 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 228 */     if (this._methodName == null) {
-/* 229 */       il.append(NOP);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 233 */       String className = classGen.getClassName();
-/* 234 */       int current = methodGen.getLocalIndex("current");
-/*     */ 
-/*     */       
-/* 237 */       il.append(classGen.loadTranslet());
-/* 238 */       if (classGen.isExternal()) {
-/* 239 */         il.append(new CHECKCAST(cpg.addClass(className)));
-/*     */       }
-/* 241 */       il.append(methodGen.loadDOM());
-/*     */ 
-/*     */       
-/* 244 */       il.append(methodGen.loadDOM());
-/* 245 */       int index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getResultTreeFrag", "(IZ)Lcom/sun/org/apache/xalan/internal/xsltc/DOM;");
-/*     */ 
-/*     */       
-/* 248 */       il.append(new PUSH(cpg, 32));
-/* 249 */       il.append(new PUSH(cpg, false));
-/* 250 */       il.append(new INVOKEINTERFACE(index, 3));
-/* 251 */       il.append(DUP);
-/*     */ 
-/*     */       
-/* 254 */       LocalVariableGen newDom = methodGen.addLocalVariable("rt_to_reference_dom", 
-/* 255 */           Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;"), null, null);
-/*     */       
-/* 257 */       il.append(new CHECKCAST(cpg.addClass("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;")));
-/* 258 */       newDom.setStart(il.append(new ASTORE(newDom.getIndex())));
-/*     */ 
-/*     */       
-/* 261 */       index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getOutputDomBuilder", "()Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;");
-/*     */ 
-/*     */ 
-/*     */       
-/* 265 */       il.append(new INVOKEINTERFACE(index, 1));
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 270 */       il.append(DUP);
-/* 271 */       il.append(DUP);
-/*     */ 
-/*     */ 
-/*     */       
-/* 275 */       LocalVariableGen domBuilder = methodGen.addLocalVariable("rt_to_reference_handler", 
-/* 276 */           Util.getJCRefType("Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;"), null, null);
-/*     */       
-/* 278 */       domBuilder.setStart(il.append(new ASTORE(domBuilder.getIndex())));
-/*     */ 
-/*     */       
-/* 281 */       index = cpg.addInterfaceMethodref("com.sun.org.apache.xml.internal.serializer.SerializationHandler", "startDocument", "()V");
-/*     */       
-/* 283 */       il.append(new INVOKEINTERFACE(index, 1));
-/*     */ 
-/*     */       
-/* 286 */       index = cpg.addMethodref(className, this._methodName, "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 292 */       il.append(new INVOKEVIRTUAL(index));
-/*     */ 
-/*     */       
-/* 295 */       domBuilder.setEnd(il.append(new ALOAD(domBuilder.getIndex())));
-/* 296 */       index = cpg.addInterfaceMethodref("com.sun.org.apache.xml.internal.serializer.SerializationHandler", "endDocument", "()V");
-/*     */       
-/* 298 */       il.append(new INVOKEINTERFACE(index, 1));
-/*     */ 
-/*     */       
-/* 301 */       newDom.setEnd(il.append(new ALOAD(newDom.getIndex())));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, NodeSetType type) {
-/* 320 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 321 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */     
-/* 324 */     il.append(DUP);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 329 */     il.append(classGen.loadTranslet());
-/* 330 */     il.append(new GETFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "namesArray", "[Ljava/lang/String;")));
-/*     */ 
-/*     */     
-/* 333 */     il.append(classGen.loadTranslet());
-/* 334 */     il.append(new GETFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "urisArray", "[Ljava/lang/String;")));
-/*     */ 
-/*     */     
-/* 337 */     il.append(classGen.loadTranslet());
-/* 338 */     il.append(new GETFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "typesArray", "[I")));
-/*     */ 
-/*     */     
-/* 341 */     il.append(classGen.loadTranslet());
-/* 342 */     il.append(new GETFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "namespaceArray", "[Ljava/lang/String;")));
-/*     */ 
-/*     */ 
-/*     */     
-/* 346 */     int mapping = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "setupMapping", "([Ljava/lang/String;[Ljava/lang/String;[I[Ljava/lang/String;)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 352 */     il.append(new INVOKEINTERFACE(mapping, 5));
-/* 353 */     il.append(DUP);
-/*     */ 
-/*     */     
-/* 356 */     int iter = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getIterator", "()Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */     
-/* 359 */     il.append(new INVOKEINTERFACE(iter, 1));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, ObjectType type) {
-/* 369 */     methodGen.getInstructionList().append(NOP);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FlowList translateToDesynthesized(ClassGenerator classGen, MethodGenerator methodGen, BooleanType type) {
-/* 385 */     InstructionList il = methodGen.getInstructionList();
-/* 386 */     translateTo(classGen, methodGen, Type.Boolean);
-/* 387 */     return new FlowList(il.append(new IFEQ(null)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateTo(ClassGenerator classGen, MethodGenerator methodGen, Class clazz) {
-/* 404 */     String className = clazz.getName();
-/* 405 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 406 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 408 */     if (className.equals("org.w3c.dom.Node")) {
-/* 409 */       translateTo(classGen, methodGen, Type.NodeSet);
-/* 410 */       int index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "makeNode", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;)Lorg/w3c/dom/Node;");
-/*     */ 
-/*     */       
-/* 413 */       il.append(new INVOKEINTERFACE(index, 2));
-/*     */     }
-/* 415 */     else if (className.equals("org.w3c.dom.NodeList")) {
-/* 416 */       translateTo(classGen, methodGen, Type.NodeSet);
-/* 417 */       int index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "makeNodeList", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;)Lorg/w3c/dom/NodeList;");
-/*     */ 
-/*     */       
-/* 420 */       il.append(new INVOKEINTERFACE(index, 2));
-/*     */     }
-/* 422 */     else if (className.equals("java.lang.Object")) {
-/* 423 */       il.append(NOP);
-/*     */     }
-/* 425 */     else if (className.equals("java.lang.String")) {
-/* 426 */       translateTo(classGen, methodGen, Type.String);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 430 */       ErrorMsg err = new ErrorMsg("DATA_CONVERSION_ERR", toString(), className);
-/* 431 */       classGen.getParser().reportError(2, err);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateBox(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 440 */     translateTo(classGen, methodGen, Type.Reference);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateUnBox(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 448 */     methodGen.getInstructionList().append(NOP);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getClassName() {
-/* 455 */     return "com.sun.org.apache.xalan.internal.xsltc.DOM";
-/*     */   }
-/*     */   
-/*     */   public Instruction LOAD(int slot) {
-/* 459 */     return new ALOAD(slot);
-/*     */   }
-/*     */   
-/*     */   public Instruction STORE(int slot) {
-/* 463 */     return new ASTORE(slot);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\ResultTreeType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ResultTreeType.java,v 1.2.4.1 2005/09/05 11:30:01 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
+import com.sun.org.apache.bcel.internal.generic.IFEQ;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.Instruction;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.FlowList;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+public final class ResultTreeType extends Type {
+    private final String _methodName;
+
+    protected ResultTreeType() {
+        _methodName = null;
+    }
+
+    public ResultTreeType(String methodName) {
+        _methodName = methodName;
+    }
+
+    public String toString() {
+        return "result-tree";
+    }
+
+    public boolean identicalTo(Type other) {
+        return (other instanceof ResultTreeType);
+    }
+
+    public String toSignature() {
+        return DOM_INTF_SIG;
+    }
+
+    public com.sun.org.apache.bcel.internal.generic.Type toJCType() {
+        return Util.getJCRefType(toSignature());
+    }
+
+    public String getMethodName() {
+        return _methodName;
+    }
+
+    public boolean implementedAsMethod() {
+        return _methodName != null;
+    }
+
+    /**
+     * Translates a result tree to object of internal type <code>type</code>.
+     * The translation to int is undefined since result trees
+     * are always converted to reals in arithmetic expressions.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of the type to translate the result tree to
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            Type type) {
+        if (type == Type.String) {
+            translateTo(classGen, methodGen, (StringType)type);
+        }
+        else if (type == Type.Boolean) {
+            translateTo(classGen, methodGen, (BooleanType)type);
+        }
+        else if (type == Type.Real) {
+            translateTo(classGen, methodGen, (RealType)type);
+        }
+        else if (type == Type.NodeSet) {
+            translateTo(classGen, methodGen, (NodeSetType)type);
+        }
+        else if (type == Type.Reference) {
+            translateTo(classGen, methodGen, (ReferenceType)type);
+        }
+        else if (type == Type.Object) {
+            translateTo(classGen, methodGen, (ObjectType) type);
+        }
+        else {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.DATA_CONVERSION_ERR,
+                                        toString(), type.toString());
+            classGen.getParser().reportError(Constants.FATAL, err);
+        }
+    }
+
+    /**
+     * Expects an result tree on the stack and pushes a boolean.
+     * Translates a result tree to a boolean by first converting it to string.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of BooleanType (any)
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            BooleanType type) {
+        // A result tree is always 'true' when converted to a boolean value,
+        // since the tree always has at least one node (the root).
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        il.append(POP);      // don't need the DOM reference
+        il.append(ICONST_1); // push 'true' on the stack
+    }
+
+    /**
+     * Expects an result tree on the stack and pushes a string.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of StringType (any)
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            StringType type) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (_methodName == null) {
+            int index = cpg.addInterfaceMethodref(DOM_INTF,
+                                                  "getStringValue",
+                                                  "()"+STRING_SIG);
+            il.append(new INVOKEINTERFACE(index, 1));
+        }
+        else {
+            final String className = classGen.getClassName();
+            final int current = methodGen.getLocalIndex("current");
+
+            // Push required parameters
+            il.append(classGen.loadTranslet());
+            if (classGen.isExternal()) {
+                il.append(new CHECKCAST(cpg.addClass(className)));
+            }
+            il.append(DUP);
+            il.append(new GETFIELD(cpg.addFieldref(className, "_dom",
+                                                   DOM_INTF_SIG)));
+
+            // Create a new instance of a StringValueHandler
+            int index = cpg.addMethodref(STRING_VALUE_HANDLER, "<init>", "()V");
+            il.append(new NEW(cpg.addClass(STRING_VALUE_HANDLER)));
+            il.append(DUP);
+            il.append(DUP);
+            il.append(new INVOKESPECIAL(index));
+
+            // Store new Handler into a local variable
+            final LocalVariableGen handler =
+                methodGen.addLocalVariable("rt_to_string_handler",
+                                           Util.getJCRefType(STRING_VALUE_HANDLER_SIG),
+                                           null, null);
+            handler.setStart(il.append(new ASTORE(handler.getIndex())));
+
+            // Call the method that implements this result tree
+            index = cpg.addMethodref(className, _methodName,
+                                     "("+DOM_INTF_SIG+TRANSLET_OUTPUT_SIG+")V");
+            il.append(new INVOKEVIRTUAL(index));
+
+            // Restore new handler and call getValue()
+            handler.setEnd(il.append(new ALOAD(handler.getIndex())));
+            index = cpg.addMethodref(STRING_VALUE_HANDLER,
+                                     "getValue",
+                                     "()" + STRING_SIG);
+            il.append(new INVOKEVIRTUAL(index));
+        }
+    }
+
+    /**
+     * Expects an result tree on the stack and pushes a real.
+     * Translates a result tree into a real by first converting it to string.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of RealType (any)
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            RealType type) {
+        translateTo(classGen, methodGen, Type.String);
+        Type.String.translateTo(classGen, methodGen, Type.Real);
+    }
+
+    /**
+     * Expects a result tree on the stack and pushes a boxed result tree.
+     * Result trees are already boxed so the translation is just a NOP.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of ReferenceType (any)
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            ReferenceType type) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (_methodName == null) {
+            il.append(NOP);
+        }
+        else {
+            LocalVariableGen domBuilder, newDom;
+            final String className = classGen.getClassName();
+            final int current = methodGen.getLocalIndex("current");
+
+            // Push required parameters
+            il.append(classGen.loadTranslet());
+            if (classGen.isExternal()) {
+                il.append(new CHECKCAST(cpg.addClass(className)));
+            }
+            il.append(methodGen.loadDOM());
+
+            // Create new instance of DOM class (with RTF_INITIAL_SIZE nodes)
+            il.append(methodGen.loadDOM());
+            int index = cpg.addInterfaceMethodref(DOM_INTF,
+                                 "getResultTreeFrag",
+                                 "(IZ)" + DOM_INTF_SIG);
+            il.append(new PUSH(cpg, RTF_INITIAL_SIZE));
+            il.append(new PUSH(cpg, false));
+            il.append(new INVOKEINTERFACE(index,3));
+            il.append(DUP);
+
+            // Store new DOM into a local variable
+            newDom = methodGen.addLocalVariable("rt_to_reference_dom",
+                                                Util.getJCRefType(DOM_INTF_SIG),
+                                                null, null);
+            il.append(new CHECKCAST(cpg.addClass(DOM_INTF_SIG)));
+            newDom.setStart(il.append(new ASTORE(newDom.getIndex())));
+
+            // Overwrite old handler with DOM handler
+            index = cpg.addInterfaceMethodref(DOM_INTF,
+                                 "getOutputDomBuilder",
+                                 "()" + TRANSLET_OUTPUT_SIG);
+
+            il.append(new INVOKEINTERFACE(index,1));
+            //index = cpg.addMethodref(DOM_IMPL,
+                //                   "getOutputDomBuilder",
+                //                   "()" + TRANSLET_OUTPUT_SIG);
+            //il.append(new INVOKEVIRTUAL(index));
+            il.append(DUP);
+            il.append(DUP);
+
+            // Store DOM handler in a local in order to call endDocument()
+            domBuilder =
+                methodGen.addLocalVariable("rt_to_reference_handler",
+                                           Util.getJCRefType(TRANSLET_OUTPUT_SIG),
+                                           null, null);
+            domBuilder.setStart(il.append(new ASTORE(domBuilder.getIndex())));
+
+            // Call startDocument on the new handler
+            index = cpg.addInterfaceMethodref(TRANSLET_OUTPUT_INTERFACE,
+                                              "startDocument", "()V");
+            il.append(new INVOKEINTERFACE(index, 1));
+
+            // Call the method that implements this result tree
+            index = cpg.addMethodref(className,
+                                     _methodName,
+                                     "("
+                                     + DOM_INTF_SIG
+                                     + TRANSLET_OUTPUT_SIG
+                                     +")V");
+            il.append(new INVOKEVIRTUAL(index));
+
+            // Call endDocument on the DOM handler
+            domBuilder.setEnd(il.append(new ALOAD(domBuilder.getIndex())));
+            index = cpg.addInterfaceMethodref(TRANSLET_OUTPUT_INTERFACE,
+                                              "endDocument", "()V");
+            il.append(new INVOKEINTERFACE(index, 1));
+
+            // Push the new DOM on the stack
+            newDom.setEnd(il.append(new ALOAD(newDom.getIndex())));
+        }
+    }
+
+    /**
+     * Expects a result tree on the stack and pushes a node-set (iterator).
+     * Note that the produced iterator is an iterator for the DOM that
+     * contains the result tree, and not the DOM that is currently in use.
+     * This conversion here will therefore not directly work with elements
+     * such as <xsl:apply-templates> and <xsl:for-each> without the DOM
+     * parameter/variable being updates as well.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of NodeSetType (any)
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            NodeSetType type) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Put an extra copy of the result tree (DOM) on the stack
+        il.append(DUP);
+
+        // DOM adapters containing a result tree are not initialised with
+        // translet-type to DOM-type mapping. This must be done now for
+        // XPath expressions and patterns to work for the iterator we create.
+        il.append(classGen.loadTranslet()); // get names array
+        il.append(new GETFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               NAMES_INDEX,
+                                               NAMES_INDEX_SIG)));
+        il.append(classGen.loadTranslet()); // get uris array
+        il.append(new GETFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               URIS_INDEX,
+                                               URIS_INDEX_SIG)));
+        il.append(classGen.loadTranslet()); // get types array
+        il.append(new GETFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               TYPES_INDEX,
+                                               TYPES_INDEX_SIG)));
+        il.append(classGen.loadTranslet()); // get namespaces array
+        il.append(new GETFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               NAMESPACE_INDEX,
+                                               NAMESPACE_INDEX_SIG)));
+        // Pass the type mappings to the DOM adapter
+        final int mapping = cpg.addInterfaceMethodref(DOM_INTF,
+                                                      "setupMapping",
+                                                      "(["+STRING_SIG+
+                                                      "["+STRING_SIG+
+                                                      "[I" +
+                                                      "["+STRING_SIG+")V");
+        il.append(new INVOKEINTERFACE(mapping, 5));
+        il.append(DUP);
+
+        // Create an iterator for the root node of the DOM adapter
+        final int iter = cpg.addInterfaceMethodref(DOM_INTF,
+                                                   "getIterator",
+                                                   "()"+NODE_ITERATOR_SIG);
+        il.append(new INVOKEINTERFACE(iter, 1));
+    }
+
+    /**
+     * Subsume result tree into ObjectType.
+     *
+     * @see     com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            ObjectType type) {
+        methodGen.getInstructionList().append(NOP);
+    }
+
+    /**
+     * Translates a result tree into a non-synthesized boolean.
+     * It does not push a 0 or a 1 but instead returns branchhandle list
+     * to be appended to the false list.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param type An instance of BooleanType (any)
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateToDesynthesized
+     */
+    public FlowList translateToDesynthesized(ClassGenerator classGen,
+                                             MethodGenerator methodGen,
+                                             BooleanType type) {
+        final InstructionList il = methodGen.getInstructionList();
+        translateTo(classGen, methodGen, Type.Boolean);
+        return new FlowList(il.append(new IFEQ(null)));
+    }
+
+    /**
+     * Translates a result tree to a Java type denoted by <code>clazz</code>.
+     * Expects a result tree on the stack and pushes an object
+     * of the appropriate type after coercion. Result trees are translated
+     * to W3C Node or W3C NodeList and the translation is done
+     * via node-set type.
+     *
+     * @param classGen A BCEL class generator
+     * @param methodGen A BCEL method generator
+     * @param clazz An reference to the Class to translate to
+     * @see com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type#translateTo
+     */
+    public void translateTo(ClassGenerator classGen, MethodGenerator methodGen,
+                            Class clazz) {
+        final String className = clazz.getName();
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (className.equals("org.w3c.dom.Node")) {
+            translateTo(classGen, methodGen, Type.NodeSet);
+            int index = cpg.addInterfaceMethodref(DOM_INTF,
+                                                  MAKE_NODE,
+                                                  MAKE_NODE_SIG2);
+            il.append(new INVOKEINTERFACE(index, 2));
+        }
+        else if (className.equals("org.w3c.dom.NodeList")) {
+            translateTo(classGen, methodGen, Type.NodeSet);
+            int index = cpg.addInterfaceMethodref(DOM_INTF,
+                                                  MAKE_NODE_LIST,
+                                                  MAKE_NODE_LIST_SIG2);
+            il.append(new INVOKEINTERFACE(index, 2));
+        }
+        else if (className.equals("java.lang.Object")) {
+            il.append(NOP);
+        }
+        else if (className.equals("java.lang.String")) {
+            translateTo(classGen, methodGen, Type.String);
+        }
+        else {
+            ErrorMsg err = new ErrorMsg(ErrorMsg.DATA_CONVERSION_ERR,
+                                        toString(), className);
+            classGen.getParser().reportError(Constants.FATAL, err);
+        }
+    }
+
+    /**
+     * Translates an object of this type to its boxed representation.
+     */
+    public void translateBox(ClassGenerator classGen,
+                             MethodGenerator methodGen) {
+        translateTo(classGen, methodGen, Type.Reference);
+    }
+
+    /**
+     * Translates an object of this type to its unboxed representation.
+     */
+    public void translateUnBox(ClassGenerator classGen,
+                               MethodGenerator methodGen) {
+        methodGen.getInstructionList().append(NOP);
+    }
+
+    /**
+     * Returns the class name of an internal type's external representation.
+     */
+    public String getClassName() {
+        return(DOM_INTF);
+    }
+
+    public Instruction LOAD(int slot) {
+        return new ALOAD(slot);
+    }
+
+    public Instruction STORE(int slot) {
+        return new ASTORE(slot);
+    }
+}

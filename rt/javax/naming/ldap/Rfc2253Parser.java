@@ -1,259 +1,253 @@
-/*     */ package javax.naming.ldap;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.List;
-/*     */ import javax.naming.InvalidNameException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Rfc2253Parser
-/*     */ {
-/*     */   private final String name;
-/*     */   private final char[] chars;
-/*     */   private final int len;
-/*  41 */   private int cur = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Rfc2253Parser(String paramString) {
-/*  47 */     this.name = paramString;
-/*  48 */     this.len = paramString.length();
-/*  49 */     this.chars = paramString.toCharArray();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   List<Rdn> parseDn() throws InvalidNameException {
-/*  58 */     this.cur = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  63 */     ArrayList<Rdn> arrayList = new ArrayList(this.len / 3 + 10);
-/*     */ 
-/*     */     
-/*  66 */     if (this.len == 0) {
-/*  67 */       return arrayList;
-/*     */     }
-/*     */     
-/*  70 */     arrayList.add(doParse(new Rdn()));
-/*  71 */     while (this.cur < this.len) {
-/*  72 */       if (this.chars[this.cur] == ',' || this.chars[this.cur] == ';') {
-/*  73 */         this.cur++;
-/*  74 */         arrayList.add(0, doParse(new Rdn())); continue;
-/*     */       } 
-/*  76 */       throw new InvalidNameException("Invalid name: " + this.name);
-/*     */     } 
-/*     */     
-/*  79 */     return arrayList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Rdn parseRdn() throws InvalidNameException {
-/*  86 */     return parseRdn(new Rdn());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Rdn parseRdn(Rdn paramRdn) throws InvalidNameException {
-/*  93 */     paramRdn = doParse(paramRdn);
-/*  94 */     if (this.cur < this.len) {
-/*  95 */       throw new InvalidNameException("Invalid RDN: " + this.name);
-/*     */     }
-/*  97 */     return paramRdn;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Rdn doParse(Rdn paramRdn) throws InvalidNameException {
-/* 106 */     while (this.cur < this.len) {
-/* 107 */       consumeWhitespace();
-/* 108 */       String str1 = parseAttrType();
-/* 109 */       consumeWhitespace();
-/* 110 */       if (this.cur >= this.len || this.chars[this.cur] != '=') {
-/* 111 */         throw new InvalidNameException("Invalid name: " + this.name);
-/*     */       }
-/* 113 */       this.cur++;
-/* 114 */       consumeWhitespace();
-/* 115 */       String str2 = parseAttrValue();
-/* 116 */       consumeWhitespace();
-/*     */       
-/* 118 */       paramRdn.put(str1, Rdn.unescapeValue(str2));
-/* 119 */       if (this.cur >= this.len || this.chars[this.cur] != '+') {
-/*     */         break;
-/*     */       }
-/* 122 */       this.cur++;
-/*     */     } 
-/* 124 */     paramRdn.sort();
-/* 125 */     return paramRdn;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String parseAttrType() throws InvalidNameException {
-/* 137 */     int i = this.cur;
-/* 138 */     while (this.cur < this.len) {
-/* 139 */       char c = this.chars[this.cur];
-/* 140 */       if (Character.isLetterOrDigit(c) || c == '.' || c == '-' || c == ' ')
-/*     */       {
-/*     */ 
-/*     */         
-/* 144 */         this.cur++;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 150 */     while (this.cur > i && this.chars[this.cur - 1] == ' ') {
-/* 151 */       this.cur--;
-/*     */     }
-/*     */     
-/* 154 */     if (i == this.cur) {
-/* 155 */       throw new InvalidNameException("Invalid name: " + this.name);
-/*     */     }
-/* 157 */     return new String(this.chars, i, this.cur - i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String parseAttrValue() throws InvalidNameException {
-/* 166 */     if (this.cur < this.len && this.chars[this.cur] == '#')
-/* 167 */       return parseBinaryAttrValue(); 
-/* 168 */     if (this.cur < this.len && this.chars[this.cur] == '"') {
-/* 169 */       return parseQuotedAttrValue();
-/*     */     }
-/* 171 */     return parseStringAttrValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String parseBinaryAttrValue() throws InvalidNameException {
-/* 176 */     int i = this.cur;
-/* 177 */     this.cur++;
-/* 178 */     while (this.cur < this.len && 
-/* 179 */       Character.isLetterOrDigit(this.chars[this.cur])) {
-/* 180 */       this.cur++;
-/*     */     }
-/* 182 */     return new String(this.chars, i, this.cur - i);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String parseQuotedAttrValue() throws InvalidNameException {
-/* 187 */     int i = this.cur;
-/* 188 */     this.cur++;
-/*     */     
-/* 190 */     while (this.cur < this.len && this.chars[this.cur] != '"') {
-/* 191 */       if (this.chars[this.cur] == '\\') {
-/* 192 */         this.cur++;
-/*     */       }
-/* 194 */       this.cur++;
-/*     */     } 
-/* 196 */     if (this.cur >= this.len) {
-/* 197 */       throw new InvalidNameException("Invalid name: " + this.name);
-/*     */     }
-/* 199 */     this.cur++;
-/*     */     
-/* 201 */     return new String(this.chars, i, this.cur - i);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String parseStringAttrValue() throws InvalidNameException {
-/* 206 */     int i = this.cur;
-/* 207 */     int j = -1;
-/*     */     
-/* 209 */     while (this.cur < this.len && !atTerminator()) {
-/* 210 */       if (this.chars[this.cur] == '\\')
-/*     */       {
-/* 212 */         j = ++this.cur;
-/*     */       }
-/* 214 */       this.cur++;
-/*     */     } 
-/* 216 */     if (this.cur > this.len) {
-/* 217 */       throw new InvalidNameException("Invalid name: " + this.name);
-/*     */     }
-/*     */     
-/*     */     int k;
-/*     */     
-/* 222 */     for (k = this.cur; k > i && 
-/* 223 */       isWhitespace(this.chars[k - 1]) && j != k - 1; k--);
-/*     */ 
-/*     */ 
-/*     */     
-/* 227 */     return new String(this.chars, i, k - i);
-/*     */   }
-/*     */   
-/*     */   private void consumeWhitespace() {
-/* 231 */     while (this.cur < this.len && isWhitespace(this.chars[this.cur])) {
-/* 232 */       this.cur++;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean atTerminator() {
-/* 241 */     return (this.cur < this.len && (this.chars[this.cur] == ',' || this.chars[this.cur] == ';' || this.chars[this.cur] == '+'));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isWhitespace(char paramChar) {
-/* 251 */     return (paramChar == ' ' || paramChar == '\r');
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\naming\ldap\Rfc2253Parser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.naming.ldap;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import javax.naming.InvalidNameException;
+
+/*
+ * RFC2253Parser implements a recursive descent parser for a single DN.
+ */
+final class Rfc2253Parser {
+
+        private final String name;      // DN being parsed
+        private final char[] chars;     // characters in LDAP name being parsed
+        private final int len;  // length of "chars"
+        private int cur = 0;    // index of first unconsumed char in "chars"
+
+        /*
+         * Given an LDAP DN in string form, returns a parser for it.
+         */
+        Rfc2253Parser(String name) {
+            this.name = name;
+            len = name.length();
+            chars = name.toCharArray();
+        }
+
+        /*
+         * Parses the DN, returning a List of its RDNs.
+         */
+        // public List<Rdn> getDN() throws InvalidNameException {
+
+        List<Rdn> parseDn() throws InvalidNameException {
+            cur = 0;
+
+            // ArrayList<Rdn> rdns =
+            //  new ArrayList<Rdn>(len / 3 + 10);  // leave room for growth
+
+            ArrayList<Rdn> rdns =
+                new ArrayList<>(len / 3 + 10);  // leave room for growth
+
+            if (len == 0) {
+                return rdns;
+            }
+
+            rdns.add(doParse(new Rdn()));
+            while (cur < len) {
+                if (chars[cur] == ',' || chars[cur] == ';') {
+                    ++cur;
+                    rdns.add(0, doParse(new Rdn()));
+                } else {
+                    throw new InvalidNameException("Invalid name: " + name);
+                }
+            }
+            return rdns;
+        }
+
+        /*
+         * Parses the DN, if it is known to contain a single RDN.
+         */
+        Rdn parseRdn() throws InvalidNameException {
+            return parseRdn(new Rdn());
+        }
+
+        /*
+         * Parses the DN, if it is known to contain a single RDN.
+         */
+        Rdn parseRdn(Rdn rdn) throws InvalidNameException {
+            rdn = doParse(rdn);
+            if (cur < len) {
+                throw new InvalidNameException("Invalid RDN: " + name);
+            }
+            return rdn;
+        }
+
+        /*
+         * Parses the next RDN and returns it.  Throws an exception if
+         * none is found.  Leading and trailing whitespace is consumed.
+         */
+         private Rdn doParse(Rdn rdn) throws InvalidNameException {
+
+            while (cur < len) {
+                consumeWhitespace();
+                String attrType = parseAttrType();
+                consumeWhitespace();
+                if (cur >= len || chars[cur] != '=') {
+                    throw new InvalidNameException("Invalid name: " + name);
+                }
+                ++cur;          // consume '='
+                consumeWhitespace();
+                String value = parseAttrValue();
+                consumeWhitespace();
+
+                rdn.put(attrType, Rdn.unescapeValue(value));
+                if (cur >= len || chars[cur] != '+') {
+                    break;
+                }
+                ++cur;          // consume '+'
+            }
+            rdn.sort();
+            return rdn;
+        }
+
+        /*
+         * Returns the attribute type that begins at the next unconsumed
+         * char.  No leading whitespace is expected.
+         * This routine is more generous than RFC 2253.  It accepts
+         * attribute types composed of any nonempty combination of Unicode
+         * letters, Unicode digits, '.', '-', and internal space characters.
+         */
+        private String parseAttrType() throws InvalidNameException {
+
+            final int beg = cur;
+            while (cur < len) {
+                char c = chars[cur];
+                if (Character.isLetterOrDigit(c) ||
+                        c == '.' ||
+                        c == '-' ||
+                        c == ' ') {
+                    ++cur;
+                } else {
+                    break;
+                }
+            }
+            // Back out any trailing spaces.
+            while ((cur > beg) && (chars[cur - 1] == ' ')) {
+                --cur;
+            }
+
+            if (beg == cur) {
+                throw new InvalidNameException("Invalid name: " + name);
+            }
+            return new String(chars, beg, cur - beg);
+        }
+
+        /*
+         * Returns the attribute value that begins at the next unconsumed
+         * char.  No leading whitespace is expected.
+         */
+        private String parseAttrValue() throws InvalidNameException {
+
+            if (cur < len && chars[cur] == '#') {
+                return parseBinaryAttrValue();
+            } else if (cur < len && chars[cur] == '"') {
+                return parseQuotedAttrValue();
+            } else {
+                return parseStringAttrValue();
+            }
+        }
+
+        private String parseBinaryAttrValue() throws InvalidNameException {
+            final int beg = cur;
+            ++cur;                      // consume '#'
+            while ((cur < len) &&
+                    Character.isLetterOrDigit(chars[cur])) {
+                ++cur;
+            }
+            return new String(chars, beg, cur - beg);
+        }
+
+        private String parseQuotedAttrValue() throws InvalidNameException {
+
+            final int beg = cur;
+            ++cur;                      // consume '"'
+
+            while ((cur < len) && chars[cur] != '"') {
+                if (chars[cur] == '\\') {
+                    ++cur;              // consume backslash, then what follows
+                }
+                ++cur;
+            }
+            if (cur >= len) {   // no closing quote
+                throw new InvalidNameException("Invalid name: " + name);
+            }
+            ++cur;      // consume closing quote
+
+            return new String(chars, beg, cur - beg);
+        }
+
+        private String parseStringAttrValue() throws InvalidNameException {
+
+            final int beg = cur;
+            int esc = -1;       // index of the most recently escaped character
+
+            while ((cur < len) && !atTerminator()) {
+                if (chars[cur] == '\\') {
+                    ++cur;              // consume backslash, then what follows
+                    esc = cur;
+                }
+                ++cur;
+            }
+            if (cur > len) {            // 'twas backslash followed by nothing
+                throw new InvalidNameException("Invalid name: " + name);
+            }
+
+            // Trim off (unescaped) trailing whitespace.
+            int end;
+            for (end = cur; end > beg; end--) {
+                if (!isWhitespace(chars[end - 1]) || (esc == end - 1)) {
+                    break;
+                }
+            }
+            return new String(chars, beg, end - beg);
+        }
+
+        private void consumeWhitespace() {
+            while ((cur < len) && isWhitespace(chars[cur])) {
+                ++cur;
+            }
+        }
+
+        /*
+         * Returns true if next unconsumed character is one that terminates
+         * a string attribute value.
+         */
+        private boolean atTerminator() {
+            return (cur < len &&
+                    (chars[cur] == ',' ||
+                        chars[cur] == ';' ||
+                        chars[cur] == '+'));
+        }
+
+        /*
+         * Best guess as to what RFC 2253 means by "whitespace".
+         */
+        private static boolean isWhitespace(char c) {
+            return (c == ' ' || c == '\r');
+        }
+    }

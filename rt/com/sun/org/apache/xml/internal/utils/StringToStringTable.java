@@ -1,250 +1,244 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StringToStringTable
-/*     */ {
-/*     */   private int m_blocksize;
-/*     */   private String[] m_map;
-/*  40 */   private int m_firstFree = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int m_mapSize;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringToStringTable() {
-/*  52 */     this.m_blocksize = 16;
-/*  53 */     this.m_mapSize = this.m_blocksize;
-/*  54 */     this.m_map = new String[this.m_blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringToStringTable(int blocksize) {
-/*  65 */     this.m_blocksize = blocksize;
-/*  66 */     this.m_mapSize = blocksize;
-/*  67 */     this.m_map = new String[blocksize];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getLength() {
-/*  77 */     return this.m_firstFree;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void put(String key, String value) {
-/*  91 */     if (this.m_firstFree + 2 >= this.m_mapSize) {
-/*     */       
-/*  93 */       this.m_mapSize += this.m_blocksize;
-/*     */       
-/*  95 */       String[] newMap = new String[this.m_mapSize];
-/*     */       
-/*  97 */       System.arraycopy(this.m_map, 0, newMap, 0, this.m_firstFree + 1);
-/*     */       
-/*  99 */       this.m_map = newMap;
-/*     */     } 
-/*     */     
-/* 102 */     this.m_map[this.m_firstFree] = key;
-/*     */     
-/* 104 */     this.m_firstFree++;
-/*     */     
-/* 106 */     this.m_map[this.m_firstFree] = value;
-/*     */     
-/* 108 */     this.m_firstFree++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String get(String key) {
-/* 121 */     for (int i = 0; i < this.m_firstFree; i += 2) {
-/*     */       
-/* 123 */       if (this.m_map[i].equals(key)) {
-/* 124 */         return this.m_map[i + 1];
-/*     */       }
-/*     */     } 
-/* 127 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void remove(String key) {
-/* 138 */     for (int i = 0; i < this.m_firstFree; i += 2) {
-/*     */       
-/* 140 */       if (this.m_map[i].equals(key)) {
-/*     */         
-/* 142 */         if (i + 2 < this.m_firstFree) {
-/* 143 */           System.arraycopy(this.m_map, i + 2, this.m_map, i, this.m_firstFree - i + 2);
-/*     */         }
-/* 145 */         this.m_firstFree -= 2;
-/* 146 */         this.m_map[this.m_firstFree] = null;
-/* 147 */         this.m_map[this.m_firstFree + 1] = null;
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String getIgnoreCase(String key) {
-/* 164 */     if (null == key) {
-/* 165 */       return null;
-/*     */     }
-/* 167 */     for (int i = 0; i < this.m_firstFree; i += 2) {
-/*     */       
-/* 169 */       if (this.m_map[i].equalsIgnoreCase(key)) {
-/* 170 */         return this.m_map[i + 1];
-/*     */       }
-/*     */     } 
-/* 173 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String getByValue(String val) {
-/* 186 */     for (int i = 1; i < this.m_firstFree; i += 2) {
-/*     */       
-/* 188 */       if (this.m_map[i].equals(val)) {
-/* 189 */         return this.m_map[i - 1];
-/*     */       }
-/*     */     } 
-/* 192 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String elementAt(int i) {
-/* 204 */     return this.m_map[i];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean contains(String key) {
-/* 217 */     for (int i = 0; i < this.m_firstFree; i += 2) {
-/*     */       
-/* 219 */       if (this.m_map[i].equals(key)) {
-/* 220 */         return true;
-/*     */       }
-/*     */     } 
-/* 223 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean containsValue(String val) {
-/* 236 */     for (int i = 1; i < this.m_firstFree; i += 2) {
-/*     */       
-/* 238 */       if (this.m_map[i].equals(val)) {
-/* 239 */         return true;
-/*     */       }
-/*     */     } 
-/* 242 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\StringToStringTable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringToStringTable.java,v 1.2.4.1 2005/09/15 08:15:56 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+/**
+ * A very simple lookup table that stores a list of strings, the even
+ * number strings being keys, and the odd number strings being values.
+ * @xsl.usage internal
+ */
+public class StringToStringTable
+{
+
+  /** Size of blocks to allocate          */
+  private int m_blocksize;
+
+  /** Array of strings this contains          */
+  private String m_map[];
+
+  /** Number of strings this contains           */
+  private int m_firstFree = 0;
+
+  /** Size of this table           */
+  private int m_mapSize;
+
+  /**
+   * Default constructor.  Note that the default
+   * block size is very small, for small lists.
+   */
+  public StringToStringTable()
+  {
+
+    m_blocksize = 16;
+    m_mapSize = m_blocksize;
+    m_map = new String[m_blocksize];
+  }
+
+  /**
+   * Construct a StringToStringTable, using the given block size.
+   *
+   * @param blocksize Size of blocks to allocate
+   */
+  public StringToStringTable(int blocksize)
+  {
+
+    m_blocksize = blocksize;
+    m_mapSize = blocksize;
+    m_map = new String[blocksize];
+  }
+
+  /**
+   * Get the length of the list.
+   *
+   * @return Number of strings in the list
+   */
+  public final int getLength()
+  {
+    return m_firstFree;
+  }
+
+  /**
+   * Append a string onto the vector.
+   * The strings go to the even locations in the array
+   * and the values in the odd.
+   *
+   * @param key String to add to the list
+   * @param value Value of the string
+   */
+  public final void put(String key, String value)
+  {
+
+    if ((m_firstFree + 2) >= m_mapSize)
+    {
+      m_mapSize += m_blocksize;
+
+      String newMap[] = new String[m_mapSize];
+
+      System.arraycopy(m_map, 0, newMap, 0, m_firstFree + 1);
+
+      m_map = newMap;
+    }
+
+    m_map[m_firstFree] = key;
+
+    m_firstFree++;
+
+    m_map[m_firstFree] = value;
+
+    m_firstFree++;
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param key String to look up
+   *
+   * @return return the value of the string or null if not found.
+   */
+  public final String get(String key)
+  {
+
+    for (int i = 0; i < m_firstFree; i += 2)
+    {
+      if (m_map[i].equals(key))
+        return m_map[i + 1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Remove the given string and its value from this table.
+   *
+   * @param key String to remove from the table
+   */
+  public final void remove(String key)
+  {
+
+    for (int i = 0; i < m_firstFree; i += 2)
+    {
+      if (m_map[i].equals(key))
+      {
+        if ((i + 2) < m_firstFree)
+          System.arraycopy(m_map, i + 2, m_map, i, m_firstFree - (i + 2));
+
+        m_firstFree -= 2;
+        m_map[m_firstFree] = null;
+        m_map[m_firstFree + 1] = null;
+
+        break;
+      }
+    }
+  }
+
+  /**
+   * Tell if the table contains the given string. Ignore case
+   *
+   * @param key String to look up
+   *
+   * @return The value of the string or null if not found
+   */
+  public final String getIgnoreCase(String key)
+  {
+
+    if (null == key)
+      return null;
+
+    for (int i = 0; i < m_firstFree; i += 2)
+    {
+      if (m_map[i].equalsIgnoreCase(key))
+        return m_map[i + 1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Tell if the table contains the given string in the value.
+   *
+   * @param val Value of the string to look up
+   *
+   * @return the string associated with the given value or null if not found
+   */
+  public final String getByValue(String val)
+  {
+
+    for (int i = 1; i < m_firstFree; i += 2)
+    {
+      if (m_map[i].equals(val))
+        return m_map[i - 1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the nth element.
+   *
+   * @param i index of the string to look up.
+   *
+   * @return The string at the given index.
+   */
+  public final String elementAt(int i)
+  {
+    return m_map[i];
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param key String to look up
+   *
+   * @return True if the given string is in this table
+   */
+  public final boolean contains(String key)
+  {
+
+    for (int i = 0; i < m_firstFree; i += 2)
+    {
+      if (m_map[i].equals(key))
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Tell if the table contains the given string.
+   *
+   * @param val value to look up
+   *
+   * @return True if the given value is in the table.
+   */
+  public final boolean containsValue(String val)
+  {
+
+    for (int i = 1; i < m_firstFree; i += 2)
+    {
+      if (m_map[i].equals(val))
+        return true;
+    }
+
+    return false;
+  }
+}

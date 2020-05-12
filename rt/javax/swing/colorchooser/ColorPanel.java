@@ -1,225 +1,220 @@
-/*     */ package javax.swing.colorchooser;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.ContainerOrderFocusTraversalPolicy;
-/*     */ import java.awt.GridBagConstraints;
-/*     */ import java.awt.GridBagLayout;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.ActionListener;
-/*     */ import javax.swing.ButtonGroup;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JLabel;
-/*     */ import javax.swing.JPanel;
-/*     */ import javax.swing.JRadioButton;
-/*     */ import javax.swing.JSpinner;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ColorPanel
-/*     */   extends JPanel
-/*     */   implements ActionListener
-/*     */ {
-/*  44 */   private final SlidingSpinner[] spinners = new SlidingSpinner[5];
-/*  45 */   private final float[] values = new float[this.spinners.length];
-/*     */   
-/*     */   private final ColorModel model;
-/*     */   private Color color;
-/*  49 */   private int x = 1;
-/*  50 */   private int y = 2;
-/*     */   private int z;
-/*     */   
-/*     */   ColorPanel(ColorModel paramColorModel) {
-/*  54 */     super(new GridBagLayout());
-/*     */     
-/*  56 */     GridBagConstraints gridBagConstraints = new GridBagConstraints();
-/*  57 */     gridBagConstraints.fill = 2;
-/*     */     
-/*  59 */     gridBagConstraints.gridx = 1;
-/*  60 */     ButtonGroup buttonGroup = new ButtonGroup();
-/*  61 */     EmptyBorder emptyBorder = null;
-/*  62 */     for (byte b = 0; b < this.spinners.length; b++) {
-/*  63 */       if (b < 3) {
-/*  64 */         JRadioButton jRadioButton = new JRadioButton();
-/*  65 */         if (b == 0) {
-/*  66 */           Insets insets = jRadioButton.getInsets();
-/*  67 */           insets.left = (jRadioButton.getPreferredSize()).width;
-/*  68 */           emptyBorder = new EmptyBorder(insets);
-/*  69 */           jRadioButton.setSelected(true);
-/*  70 */           gridBagConstraints.insets.top = 5;
-/*     */         } 
-/*  72 */         add(jRadioButton, gridBagConstraints);
-/*  73 */         buttonGroup.add(jRadioButton);
-/*  74 */         jRadioButton.setActionCommand(Integer.toString(b));
-/*  75 */         jRadioButton.addActionListener(this);
-/*  76 */         this.spinners[b] = new SlidingSpinner(this, jRadioButton);
-/*     */       } else {
-/*     */         
-/*  79 */         JLabel jLabel = new JLabel();
-/*  80 */         add(jLabel, gridBagConstraints);
-/*  81 */         jLabel.setBorder(emptyBorder);
-/*  82 */         jLabel.setFocusable(false);
-/*  83 */         this.spinners[b] = new SlidingSpinner(this, jLabel);
-/*     */       } 
-/*     */     } 
-/*  86 */     gridBagConstraints.gridx = 2;
-/*  87 */     gridBagConstraints.weightx = 1.0D;
-/*  88 */     gridBagConstraints.insets.top = 0;
-/*  89 */     gridBagConstraints.insets.left = 5;
-/*  90 */     for (SlidingSpinner slidingSpinner : this.spinners) {
-/*  91 */       add(slidingSpinner.getSlider(), gridBagConstraints);
-/*  92 */       gridBagConstraints.insets.top = 5;
-/*     */     } 
-/*  94 */     gridBagConstraints.gridx = 3;
-/*  95 */     gridBagConstraints.weightx = 0.0D;
-/*  96 */     gridBagConstraints.insets.top = 0;
-/*  97 */     for (SlidingSpinner slidingSpinner : this.spinners) {
-/*  98 */       add(slidingSpinner.getSpinner(), gridBagConstraints);
-/*  99 */       gridBagConstraints.insets.top = 5;
-/*     */     } 
-/* 101 */     setFocusTraversalPolicy(new ContainerOrderFocusTraversalPolicy());
-/* 102 */     setFocusTraversalPolicyProvider(true);
-/* 103 */     setFocusable(false);
-/*     */     
-/* 105 */     this.model = paramColorModel;
-/*     */   }
-/*     */   
-/*     */   public void actionPerformed(ActionEvent paramActionEvent) {
-/*     */     try {
-/* 110 */       this.z = Integer.parseInt(paramActionEvent.getActionCommand());
-/* 111 */       this.y = (this.z != 2) ? 2 : 1;
-/* 112 */       this.x = (this.z != 0) ? 0 : 1;
-/* 113 */       getParent().repaint();
-/*     */     }
-/* 115 */     catch (NumberFormatException numberFormatException) {}
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void buildPanel() {
-/* 120 */     int i = this.model.getCount();
-/* 121 */     this.spinners[4].setVisible((i > 4));
-/* 122 */     for (byte b = 0; b < i; b++) {
-/* 123 */       String str = this.model.getLabel(this, b);
-/* 124 */       JComponent jComponent = this.spinners[b].getLabel();
-/* 125 */       if (jComponent instanceof JRadioButton) {
-/* 126 */         JRadioButton jRadioButton = (JRadioButton)jComponent;
-/* 127 */         jRadioButton.setText(str);
-/* 128 */         jRadioButton.getAccessibleContext().setAccessibleDescription(str);
-/*     */       }
-/* 130 */       else if (jComponent instanceof JLabel) {
-/* 131 */         JLabel jLabel = (JLabel)jComponent;
-/* 132 */         jLabel.setText(str);
-/*     */       } 
-/* 134 */       this.spinners[b].setRange(this.model.getMinimum(b), this.model.getMaximum(b));
-/* 135 */       this.spinners[b].setValue(this.values[b]);
-/* 136 */       this.spinners[b].getSlider().getAccessibleContext().setAccessibleName(str);
-/* 137 */       this.spinners[b].getSpinner().getAccessibleContext().setAccessibleName(str);
-/* 138 */       JSpinner.DefaultEditor defaultEditor = (JSpinner.DefaultEditor)this.spinners[b].getSpinner().getEditor();
-/* 139 */       defaultEditor.getTextField().getAccessibleContext().setAccessibleName(str);
-/* 140 */       this.spinners[b].getSlider().getAccessibleContext().setAccessibleDescription(str);
-/* 141 */       this.spinners[b].getSpinner().getAccessibleContext().setAccessibleDescription(str);
-/* 142 */       defaultEditor.getTextField().getAccessibleContext().setAccessibleDescription(str);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void colorChanged() {
-/* 147 */     this.color = new Color(getColor(0), true);
-/* 148 */     Container container = getParent();
-/* 149 */     if (container instanceof ColorChooserPanel) {
-/* 150 */       ColorChooserPanel colorChooserPanel = (ColorChooserPanel)container;
-/* 151 */       colorChooserPanel.setSelectedColor(this.color);
-/* 152 */       colorChooserPanel.repaint();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   float getValueX() {
-/* 157 */     return this.spinners[this.x].getValue();
-/*     */   }
-/*     */   
-/*     */   float getValueY() {
-/* 161 */     return 1.0F - this.spinners[this.y].getValue();
-/*     */   }
-/*     */   
-/*     */   float getValueZ() {
-/* 165 */     return 1.0F - this.spinners[this.z].getValue();
-/*     */   }
-/*     */   
-/*     */   void setValue(float paramFloat) {
-/* 169 */     this.spinners[this.z].setValue(1.0F - paramFloat);
-/* 170 */     colorChanged();
-/*     */   }
-/*     */   
-/*     */   void setValue(float paramFloat1, float paramFloat2) {
-/* 174 */     this.spinners[this.x].setValue(paramFloat1);
-/* 175 */     this.spinners[this.y].setValue(1.0F - paramFloat2);
-/* 176 */     colorChanged();
-/*     */   }
-/*     */   
-/*     */   int getColor(float paramFloat) {
-/* 180 */     setDefaultValue(this.x);
-/* 181 */     setDefaultValue(this.y);
-/* 182 */     this.values[this.z] = 1.0F - paramFloat;
-/* 183 */     return getColor(3);
-/*     */   }
-/*     */   
-/*     */   int getColor(float paramFloat1, float paramFloat2) {
-/* 187 */     this.values[this.x] = paramFloat1;
-/* 188 */     this.values[this.y] = 1.0F - paramFloat2;
-/* 189 */     setValue(this.z);
-/* 190 */     return getColor(3);
-/*     */   }
-/*     */   
-/*     */   void setColor(Color paramColor) {
-/* 194 */     if (!paramColor.equals(this.color)) {
-/* 195 */       this.color = paramColor;
-/* 196 */       this.model.setColor(paramColor.getRGB(), this.values);
-/* 197 */       for (byte b = 0; b < this.model.getCount(); b++) {
-/* 198 */         this.spinners[b].setValue(this.values[b]);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private int getColor(int paramInt) {
-/* 204 */     while (paramInt < this.model.getCount()) {
-/* 205 */       setValue(paramInt++);
-/*     */     }
-/* 207 */     return this.model.getColor(this.values);
-/*     */   }
-/*     */   
-/*     */   private void setValue(int paramInt) {
-/* 211 */     this.values[paramInt] = this.spinners[paramInt].getValue();
-/*     */   }
-/*     */   
-/*     */   private void setDefaultValue(int paramInt) {
-/* 215 */     float f = this.model.getDefault(paramInt);
-/* 216 */     this.values[paramInt] = (f < 0.0F) ? this.spinners[paramInt]
-/* 217 */       .getValue() : f;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\colorchooser\ColorPanel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.colorchooser;
+
+import java.awt.Color;
+import java.awt.ContainerOrderFocusTraversalPolicy;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.ButtonGroup;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JSpinner.DefaultEditor;
+
+final class ColorPanel extends JPanel implements ActionListener {
+
+    private final SlidingSpinner[] spinners = new SlidingSpinner[5];
+    private final float[] values = new float[this.spinners.length];
+
+    private final ColorModel model;
+    private Color color;
+    private int x = 1;
+    private int y = 2;
+    private int z;
+
+    ColorPanel(ColorModel model) {
+        super(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 1;
+        ButtonGroup group = new ButtonGroup();
+        EmptyBorder border = null;
+        for (int i = 0; i < this.spinners.length; i++) {
+            if (i < 3) {
+                JRadioButton button = new JRadioButton();
+                if (i == 0) {
+                    Insets insets = button.getInsets();
+                    insets.left = button.getPreferredSize().width;
+                    border = new EmptyBorder(insets);
+                    button.setSelected(true);
+                    gbc.insets.top = 5;
+                }
+                add(button, gbc);
+                group.add(button);
+                button.setActionCommand(Integer.toString(i));
+                button.addActionListener(this);
+                this.spinners[i] = new SlidingSpinner(this, button);
+            }
+            else {
+                JLabel label = new JLabel();
+                add(label, gbc);
+                label.setBorder(border);
+                label.setFocusable(false);
+                this.spinners[i] = new SlidingSpinner(this, label);
+            }
+        }
+        gbc.gridx = 2;
+        gbc.weightx = 1.0;
+        gbc.insets.top = 0;
+        gbc.insets.left = 5;
+        for (SlidingSpinner spinner : this.spinners) {
+            add(spinner.getSlider(), gbc);
+            gbc.insets.top = 5;
+        }
+        gbc.gridx = 3;
+        gbc.weightx = 0.0;
+        gbc.insets.top = 0;
+        for (SlidingSpinner spinner : this.spinners) {
+            add(spinner.getSpinner(), gbc);
+            gbc.insets.top = 5;
+        }
+        setFocusTraversalPolicy(new ContainerOrderFocusTraversalPolicy());
+        setFocusTraversalPolicyProvider(true);
+        setFocusable(false);
+
+        this.model = model;
+    }
+
+    public void actionPerformed(ActionEvent event) {
+        try {
+            this.z = Integer.parseInt(event.getActionCommand());
+            this.y = (this.z != 2) ? 2 : 1;
+            this.x = (this.z != 0) ? 0 : 1;
+            getParent().repaint();
+        }
+        catch (NumberFormatException exception) {
+        }
+    }
+
+    void buildPanel() {
+        int count = this.model.getCount();
+        this.spinners[4].setVisible(count > 4);
+        for (int i = 0; i < count; i++) {
+            String text = this.model.getLabel(this, i);
+            Object object = this.spinners[i].getLabel();
+            if (object instanceof JRadioButton) {
+                JRadioButton button = (JRadioButton) object;
+                button.setText(text);
+                button.getAccessibleContext().setAccessibleDescription(text);
+            }
+            else if (object instanceof JLabel) {
+                JLabel label = (JLabel) object;
+                label.setText(text);
+            }
+            this.spinners[i].setRange(this.model.getMinimum(i), this.model.getMaximum(i));
+            this.spinners[i].setValue(this.values[i]);
+            this.spinners[i].getSlider().getAccessibleContext().setAccessibleName(text);
+            this.spinners[i].getSpinner().getAccessibleContext().setAccessibleName(text);
+            DefaultEditor editor = (DefaultEditor) this.spinners[i].getSpinner().getEditor();
+            editor.getTextField().getAccessibleContext().setAccessibleName(text);
+            this.spinners[i].getSlider().getAccessibleContext().setAccessibleDescription(text);
+            this.spinners[i].getSpinner().getAccessibleContext().setAccessibleDescription(text);
+            editor.getTextField().getAccessibleContext().setAccessibleDescription(text);
+        }
+    }
+
+    void colorChanged() {
+        this.color = new Color(getColor(0), true);
+        Object parent = getParent();
+        if (parent instanceof ColorChooserPanel) {
+            ColorChooserPanel chooser = (ColorChooserPanel) parent;
+            chooser.setSelectedColor(this.color);
+            chooser.repaint();
+        }
+    }
+
+    float getValueX() {
+        return this.spinners[this.x].getValue();
+    }
+
+    float getValueY() {
+        return 1.0f - this.spinners[this.y].getValue();
+    }
+
+    float getValueZ() {
+        return 1.0f - this.spinners[this.z].getValue();
+    }
+
+    void setValue(float z) {
+        this.spinners[this.z].setValue(1.0f - z);
+        colorChanged();
+    }
+
+    void setValue(float x, float y) {
+        this.spinners[this.x].setValue(x);
+        this.spinners[this.y].setValue(1.0f - y);
+        colorChanged();
+    }
+
+    int getColor(float z) {
+        setDefaultValue(this.x);
+        setDefaultValue(this.y);
+        this.values[this.z] = 1.0f - z;
+        return getColor(3);
+    }
+
+    int getColor(float x, float y) {
+        this.values[this.x] = x;
+        this.values[this.y] = 1.0f - y;
+        setValue(this.z);
+        return getColor(3);
+    }
+
+    void setColor(Color color) {
+        if (!color.equals(this.color)) {
+            this.color = color;
+            this.model.setColor(color.getRGB(), this.values);
+            for (int i = 0; i < this.model.getCount(); i++) {
+                this.spinners[i].setValue(this.values[i]);
+            }
+        }
+    }
+
+    private int getColor(int index) {
+        while (index < this.model.getCount()) {
+            setValue(index++);
+        }
+        return this.model.getColor(this.values);
+    }
+
+    private void setValue(int index) {
+        this.values[index] = this.spinners[index].getValue();
+    }
+
+    private void setDefaultValue(int index) {
+        float value = this.model.getDefault(index);
+        this.values[index] = (value < 0.0f)
+                ? this.spinners[index].getValue()
+                : value;
+    }
+}

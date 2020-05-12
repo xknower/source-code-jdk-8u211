@@ -1,230 +1,224 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO_W;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodType;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class Expression
-/*     */   extends SyntaxTreeNode
-/*     */ {
-/*     */   protected Type _type;
-/*  59 */   protected FlowList _trueList = new FlowList();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  64 */   protected FlowList _falseList = new FlowList();
-/*     */   
-/*     */   public Type getType() {
-/*  67 */     return this._type;
-/*     */   }
-/*     */   
-/*     */   public abstract String toString();
-/*     */   
-/*     */   public boolean hasPositionCall() {
-/*  73 */     return false;
-/*     */   }
-/*     */   
-/*     */   public boolean hasLastCall() {
-/*  77 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object evaluateAtCompileTime() {
-/*  86 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  93 */     return typeCheckContents(stable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 101 */     ErrorMsg msg = new ErrorMsg("NOT_IMPLEMENTED_ERR", getClass(), this);
-/* 102 */     getParser().reportError(2, msg);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final InstructionList compile(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 111 */     InstructionList save = methodGen.getInstructionList(); InstructionList result;
-/* 112 */     methodGen.setInstructionList(result = new InstructionList());
-/* 113 */     translate(classGen, methodGen);
-/* 114 */     methodGen.setInstructionList(save);
-/* 115 */     return result;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translateDesynthesized(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 123 */     translate(classGen, methodGen);
-/* 124 */     if (this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType) {
-/* 125 */       desynthesize(classGen, methodGen);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startIterator(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 136 */     if (!(this._type instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType)) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 141 */     Expression expr = this;
-/* 142 */     if (expr instanceof CastExpr) {
-/* 143 */       expr = ((CastExpr)expr).getExpr();
-/*     */     }
-/* 145 */     if (!(expr instanceof VariableRefBase)) {
-/* 146 */       InstructionList il = methodGen.getInstructionList();
-/* 147 */       il.append(methodGen.loadContextNode());
-/* 148 */       il.append(methodGen.setStartNode());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void synthesize(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 158 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 159 */     InstructionList il = methodGen.getInstructionList();
-/* 160 */     this._trueList.backPatch(il.append(ICONST_1));
-/* 161 */     BranchHandle truec = il.append(new GOTO_W(null));
-/* 162 */     this._falseList.backPatch(il.append(ICONST_0));
-/* 163 */     truec.setTarget(il.append(NOP));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void desynthesize(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 168 */     InstructionList il = methodGen.getInstructionList();
-/* 169 */     this._falseList.add(il.append(new IFEQ(null)));
-/*     */   }
-/*     */   
-/*     */   public FlowList getFalseList() {
-/* 173 */     return this._falseList;
-/*     */   }
-/*     */   
-/*     */   public FlowList getTrueList() {
-/* 177 */     return this._trueList;
-/*     */   }
-/*     */   
-/*     */   public void backPatchFalseList(InstructionHandle ih) {
-/* 181 */     this._falseList.backPatch(ih);
-/*     */   }
-/*     */   
-/*     */   public void backPatchTrueList(InstructionHandle ih) {
-/* 185 */     this._trueList.backPatch(ih);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MethodType lookupPrimop(SymbolTable stable, String op, MethodType ctype) {
-/* 197 */     MethodType result = null;
-/* 198 */     Vector<MethodType> primop = stable.lookupPrimop(op);
-/* 199 */     if (primop != null) {
-/* 200 */       int n = primop.size();
-/* 201 */       int minDistance = Integer.MAX_VALUE;
-/* 202 */       for (int i = 0; i < n; i++) {
-/* 203 */         MethodType ptype = primop.elementAt(i);
-/*     */         
-/* 205 */         if (ptype.argsCount() == ctype.argsCount()) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 210 */           if (result == null) {
-/* 211 */             result = ptype;
-/*     */           }
-/*     */ 
-/*     */           
-/* 215 */           int distance = ctype.distanceTo(ptype);
-/* 216 */           if (distance < minDistance) {
-/* 217 */             minDistance = distance;
-/* 218 */             result = ptype;
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 222 */     }  return result;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\Expression.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Expression.java,v 1.2.4.1 2005/09/01 14:17:51 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GOTO_W;
+import com.sun.org.apache.bcel.internal.generic.IFEQ;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeSetType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ */
+abstract class Expression extends SyntaxTreeNode {
+    /**
+     * The type of this expression. It is set after calling
+     * <code>typeCheck()</code>.
+     */
+    protected Type _type;
+
+    /**
+     * Instruction handles that comprise the true list.
+     */
+    protected FlowList _trueList = new FlowList();
+
+    /**
+     * Instruction handles that comprise the false list.
+     */
+    protected FlowList _falseList = new FlowList();
+
+    public Type getType() {
+        return _type;
+    }
+
+    public abstract String toString();
+
+    public boolean hasPositionCall() {
+        return false;           // default should be 'false' for StepPattern
+    }
+
+    public boolean hasLastCall() {
+        return false;
+    }
+
+    /**
+     * Returns an object representing the compile-time evaluation
+     * of an expression. We are only using this for function-available
+     * and element-available at this time.
+     */
+    public Object evaluateAtCompileTime() {
+        return null;
+    }
+
+    /**
+     * Type check all the children of this node.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        return typeCheckContents(stable);
+    }
+
+    /**
+     * Translate this node into JVM bytecodes.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        ErrorMsg msg = new ErrorMsg(ErrorMsg.NOT_IMPLEMENTED_ERR,
+                                    getClass(), this);
+        getParser().reportError(FATAL, msg);
+    }
+
+    /**
+     * Translate this node into a fresh instruction list.
+     * The original instruction list is saved and restored.
+     */
+    public final InstructionList compile(ClassGenerator classGen,
+                                         MethodGenerator methodGen) {
+        final InstructionList result, save = methodGen.getInstructionList();
+        methodGen.setInstructionList(result = new InstructionList());
+        translate(classGen, methodGen);
+        methodGen.setInstructionList(save);
+        return result;
+    }
+
+    /**
+     * Redefined by expressions of type boolean that use flow lists.
+     */
+    public void translateDesynthesized(ClassGenerator classGen,
+                                       MethodGenerator methodGen) {
+        translate(classGen, methodGen);
+        if (_type instanceof BooleanType) {
+            desynthesize(classGen, methodGen);
+        }
+    }
+
+    /**
+     * If this expression is of type node-set and it is not a variable
+     * reference, then call setStartNode() passing the context node.
+     */
+    public void startIterator(ClassGenerator classGen,
+                                   MethodGenerator methodGen) {
+        // Ignore if type is not node-set
+        if (_type instanceof NodeSetType == false) {
+            return;
+        }
+
+        // setStartNode() should not be called if expr is a variable ref
+        Expression expr = this;
+        if (expr instanceof CastExpr) {
+            expr = ((CastExpr) expr).getExpr();
+        }
+        if (expr instanceof VariableRefBase == false) {
+            final InstructionList il = methodGen.getInstructionList();
+            il.append(methodGen.loadContextNode());
+            il.append(methodGen.setStartNode());
+        }
+    }
+
+    /**
+     * Synthesize a boolean expression, i.e., either push a 0 or 1 onto the
+     * operand stack for the next statement to succeed. Returns the handle
+     * of the instruction to be backpatched.
+     */
+    public void synthesize(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        _trueList.backPatch(il.append(ICONST_1));
+        final BranchHandle truec = il.append(new GOTO_W(null));
+        _falseList.backPatch(il.append(ICONST_0));
+        truec.setTarget(il.append(NOP));
+    }
+
+    public void desynthesize(ClassGenerator classGen,
+                             MethodGenerator methodGen) {
+        final InstructionList il = methodGen.getInstructionList();
+        _falseList.add(il.append(new IFEQ(null)));
+    }
+
+    public FlowList getFalseList() {
+        return _falseList;
+    }
+
+    public FlowList getTrueList() {
+        return _trueList;
+    }
+
+    public void backPatchFalseList(InstructionHandle ih) {
+        _falseList.backPatch(ih);
+    }
+
+    public void backPatchTrueList(InstructionHandle ih) {
+        _trueList.backPatch(ih);
+    }
+
+    /**
+     * Search for a primop in the symbol table that matches the method type
+     * <code>ctype</code>. Two methods match if they have the same arity.
+     * If a primop is overloaded then the "closest match" is returned. The
+     * first entry in the vector of primops that has the right arity is
+     * considered to be the default one.
+     */
+    public MethodType lookupPrimop(SymbolTable stable, String op,
+                                   MethodType ctype) {
+        MethodType result = null;
+        final Vector primop = stable.lookupPrimop(op);
+        if (primop != null) {
+            final int n = primop.size();
+            int minDistance = Integer.MAX_VALUE;
+            for (int i = 0; i < n; i++) {
+                final MethodType ptype = (MethodType) primop.elementAt(i);
+                // Skip if different arity
+                if (ptype.argsCount() != ctype.argsCount()) {
+                    continue;
+                }
+
+                // The first method with the right arity is the default
+                if (result == null) {
+                    result = ptype;             // default method
+                }
+
+                // Check if better than last one found
+                final int distance = ctype.distanceTo(ptype);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    result = ptype;
+                }
+            }
+        }
+        return result;
+    }
+}

@@ -1,534 +1,539 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.AWTError;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.ComponentOrientation;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.LayoutManager2;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ import java.io.PrintStream;
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BoxLayout
-/*     */   implements LayoutManager2, Serializable
-/*     */ {
-/*     */   public static final int X_AXIS = 0;
-/*     */   public static final int Y_AXIS = 1;
-/*     */   public static final int LINE_AXIS = 2;
-/*     */   public static final int PAGE_AXIS = 3;
-/*     */   private int axis;
-/*     */   private Container target;
-/*     */   private transient SizeRequirements[] xChildren;
-/*     */   private transient SizeRequirements[] yChildren;
-/*     */   private transient SizeRequirements xTotal;
-/*     */   private transient SizeRequirements yTotal;
-/*     */   private transient PrintStream dbg;
-/*     */   
-/*     */   @ConstructorProperties({"target", "axis"})
-/*     */   public BoxLayout(Container paramContainer, int paramInt) {
-/* 180 */     if (paramInt != 0 && paramInt != 1 && paramInt != 2 && paramInt != 3)
-/*     */     {
-/* 182 */       throw new AWTError("Invalid axis");
-/*     */     }
-/* 184 */     this.axis = paramInt;
-/* 185 */     this.target = paramContainer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   BoxLayout(Container paramContainer, int paramInt, PrintStream paramPrintStream) {
-/* 203 */     this(paramContainer, paramInt);
-/* 204 */     this.dbg = paramPrintStream;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Container getTarget() {
-/* 215 */     return this.target;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getAxis() {
-/* 231 */     return this.axis;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void invalidateLayout(Container paramContainer) {
-/* 249 */     checkContainer(paramContainer);
-/* 250 */     this.xChildren = null;
-/* 251 */     this.yChildren = null;
-/* 252 */     this.xTotal = null;
-/* 253 */     this.yTotal = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addLayoutComponent(String paramString, Component paramComponent) {
-/* 263 */     invalidateLayout(paramComponent.getParent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeLayoutComponent(Component paramComponent) {
-/* 272 */     invalidateLayout(paramComponent.getParent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addLayoutComponent(Component paramComponent, Object paramObject) {
-/* 282 */     invalidateLayout(paramComponent.getParent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension preferredLayoutSize(Container paramContainer) {
-/*     */     Dimension dimension;
-/* 299 */     synchronized (this) {
-/* 300 */       checkContainer(paramContainer);
-/* 301 */       checkRequests();
-/* 302 */       dimension = new Dimension(this.xTotal.preferred, this.yTotal.preferred);
-/*     */     } 
-/*     */     
-/* 305 */     Insets insets = paramContainer.getInsets();
-/* 306 */     dimension.width = (int)Math.min(dimension.width + insets.left + insets.right, 2147483647L);
-/* 307 */     dimension.height = (int)Math.min(dimension.height + insets.top + insets.bottom, 2147483647L);
-/* 308 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension minimumLayoutSize(Container paramContainer) {
-/*     */     Dimension dimension;
-/* 324 */     synchronized (this) {
-/* 325 */       checkContainer(paramContainer);
-/* 326 */       checkRequests();
-/* 327 */       dimension = new Dimension(this.xTotal.minimum, this.yTotal.minimum);
-/*     */     } 
-/*     */     
-/* 330 */     Insets insets = paramContainer.getInsets();
-/* 331 */     dimension.width = (int)Math.min(dimension.width + insets.left + insets.right, 2147483647L);
-/* 332 */     dimension.height = (int)Math.min(dimension.height + insets.top + insets.bottom, 2147483647L);
-/* 333 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension maximumLayoutSize(Container paramContainer) {
-/*     */     Dimension dimension;
-/* 349 */     synchronized (this) {
-/* 350 */       checkContainer(paramContainer);
-/* 351 */       checkRequests();
-/* 352 */       dimension = new Dimension(this.xTotal.maximum, this.yTotal.maximum);
-/*     */     } 
-/*     */     
-/* 355 */     Insets insets = paramContainer.getInsets();
-/* 356 */     dimension.width = (int)Math.min(dimension.width + insets.left + insets.right, 2147483647L);
-/* 357 */     dimension.height = (int)Math.min(dimension.height + insets.top + insets.bottom, 2147483647L);
-/* 358 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized float getLayoutAlignmentX(Container paramContainer) {
-/* 373 */     checkContainer(paramContainer);
-/* 374 */     checkRequests();
-/* 375 */     return this.xTotal.alignment;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized float getLayoutAlignmentY(Container paramContainer) {
-/* 390 */     checkContainer(paramContainer);
-/* 391 */     checkRequests();
-/* 392 */     return this.yTotal.alignment;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void layoutContainer(Container paramContainer) {
-/* 405 */     checkContainer(paramContainer);
-/* 406 */     int i = paramContainer.getComponentCount();
-/* 407 */     int[] arrayOfInt1 = new int[i];
-/* 408 */     int[] arrayOfInt2 = new int[i];
-/* 409 */     int[] arrayOfInt3 = new int[i];
-/* 410 */     int[] arrayOfInt4 = new int[i];
-/*     */     
-/* 412 */     Dimension dimension = paramContainer.getSize();
-/* 413 */     Insets insets = paramContainer.getInsets();
-/* 414 */     dimension.width -= insets.left + insets.right;
-/* 415 */     dimension.height -= insets.top + insets.bottom;
-/*     */ 
-/*     */     
-/* 418 */     ComponentOrientation componentOrientation = paramContainer.getComponentOrientation();
-/* 419 */     int j = resolveAxis(this.axis, componentOrientation);
-/* 420 */     boolean bool = (j != this.axis) ? componentOrientation.isLeftToRight() : true;
-/*     */ 
-/*     */ 
-/*     */     
-/* 424 */     synchronized (this) {
-/* 425 */       checkRequests();
-/*     */       
-/* 427 */       if (j == 0) {
-/* 428 */         SizeRequirements.calculateTiledPositions(dimension.width, this.xTotal, this.xChildren, arrayOfInt1, arrayOfInt2, bool);
-/*     */ 
-/*     */         
-/* 431 */         SizeRequirements.calculateAlignedPositions(dimension.height, this.yTotal, this.yChildren, arrayOfInt3, arrayOfInt4);
-/*     */       }
-/*     */       else {
-/*     */         
-/* 435 */         SizeRequirements.calculateAlignedPositions(dimension.width, this.xTotal, this.xChildren, arrayOfInt1, arrayOfInt2, bool);
-/*     */ 
-/*     */         
-/* 438 */         SizeRequirements.calculateTiledPositions(dimension.height, this.yTotal, this.yChildren, arrayOfInt3, arrayOfInt4);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     byte b;
-/*     */     
-/* 445 */     for (b = 0; b < i; b++) {
-/* 446 */       Component component = paramContainer.getComponent(b);
-/* 447 */       component.setBounds((int)Math.min(insets.left + arrayOfInt1[b], 2147483647L), 
-/* 448 */           (int)Math.min(insets.top + arrayOfInt3[b], 2147483647L), arrayOfInt2[b], arrayOfInt4[b]);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 452 */     if (this.dbg != null) {
-/* 453 */       for (b = 0; b < i; b++) {
-/* 454 */         Component component = paramContainer.getComponent(b);
-/* 455 */         this.dbg.println(component.toString());
-/* 456 */         this.dbg.println("X: " + this.xChildren[b]);
-/* 457 */         this.dbg.println("Y: " + this.yChildren[b]);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void checkContainer(Container paramContainer) {
-/* 464 */     if (this.target != paramContainer) {
-/* 465 */       throw new AWTError("BoxLayout can't be shared");
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   void checkRequests() {
-/* 470 */     if (this.xChildren == null || this.yChildren == null) {
-/*     */ 
-/*     */       
-/* 473 */       int i = this.target.getComponentCount();
-/* 474 */       this.xChildren = new SizeRequirements[i];
-/* 475 */       this.yChildren = new SizeRequirements[i]; int j;
-/* 476 */       for (j = 0; j < i; j++) {
-/* 477 */         Component component = this.target.getComponent(j);
-/* 478 */         if (!component.isVisible()) {
-/* 479 */           this.xChildren[j] = new SizeRequirements(0, 0, 0, component.getAlignmentX());
-/* 480 */           this.yChildren[j] = new SizeRequirements(0, 0, 0, component.getAlignmentY());
-/*     */         } else {
-/*     */           
-/* 483 */           Dimension dimension1 = component.getMinimumSize();
-/* 484 */           Dimension dimension2 = component.getPreferredSize();
-/* 485 */           Dimension dimension3 = component.getMaximumSize();
-/* 486 */           this.xChildren[j] = new SizeRequirements(dimension1.width, dimension2.width, dimension3.width, component
-/*     */               
-/* 488 */               .getAlignmentX());
-/* 489 */           this.yChildren[j] = new SizeRequirements(dimension1.height, dimension2.height, dimension3.height, component
-/*     */               
-/* 491 */               .getAlignmentY());
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 495 */       j = resolveAxis(this.axis, this.target.getComponentOrientation());
-/*     */       
-/* 497 */       if (j == 0) {
-/* 498 */         this.xTotal = SizeRequirements.getTiledSizeRequirements(this.xChildren);
-/* 499 */         this.yTotal = SizeRequirements.getAlignedSizeRequirements(this.yChildren);
-/*     */       } else {
-/* 501 */         this.xTotal = SizeRequirements.getAlignedSizeRequirements(this.xChildren);
-/* 502 */         this.yTotal = SizeRequirements.getTiledSizeRequirements(this.yChildren);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int resolveAxis(int paramInt, ComponentOrientation paramComponentOrientation) {
-/*     */     int i;
-/* 519 */     if (paramInt == 2) {
-/* 520 */       i = paramComponentOrientation.isHorizontal() ? 0 : 1;
-/* 521 */     } else if (paramInt == 3) {
-/* 522 */       i = paramComponentOrientation.isHorizontal() ? 1 : 0;
-/*     */     } else {
-/* 524 */       i = paramInt;
-/*     */     } 
-/* 526 */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\BoxLayout.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.swing;
+
+import java.awt.*;
+import java.beans.ConstructorProperties;
+import java.io.Serializable;
+import java.io.PrintStream;
+
+/**
+ * A layout manager that allows multiple components to be laid out either
+ * vertically or horizontally. The components will not wrap so, for
+ * example, a vertical arrangement of components will stay vertically
+ * arranged when the frame is resized.
+ * <TABLE STYLE="FLOAT:RIGHT" BORDER="0" SUMMARY="layout">
+ *    <TR>
+ *      <TD ALIGN="CENTER">
+ *         <P STYLE="TEXT-ALIGN:CENTER"><IMG SRC="doc-files/BoxLayout-1.gif"
+ *          alt="The following text describes this graphic."
+ *          WIDTH="191" HEIGHT="201" STYLE="FLOAT:BOTTOM; BORDER:0">
+ *      </TD>
+ *    </TR>
+ * </TABLE>
+ * <p>
+ * Nesting multiple panels with different combinations of horizontal and
+ * vertical gives an effect similar to GridBagLayout, without the
+ * complexity. The diagram shows two panels arranged horizontally, each
+ * of which contains 3 components arranged vertically.
+ *
+ * <p> The BoxLayout manager is constructed with an axis parameter that
+ * specifies the type of layout that will be done. There are four choices:
+ *
+ * <blockquote><b><tt>X_AXIS</tt></b> - Components are laid out horizontally
+ * from left to right.</blockquote>
+ *
+ * <blockquote><b><tt>Y_AXIS</tt></b> - Components are laid out vertically
+ * from top to bottom.</blockquote>
+ *
+ * <blockquote><b><tt>LINE_AXIS</tt></b> - Components are laid out the way
+ * words are laid out in a line, based on the container's
+ * <tt>ComponentOrientation</tt> property. If the container's
+ * <tt>ComponentOrientation</tt> is horizontal then components are laid out
+ * horizontally, otherwise they are laid out vertically.  For horizontal
+ * orientations, if the container's <tt>ComponentOrientation</tt> is left to
+ * right then components are laid out left to right, otherwise they are laid
+ * out right to left. For vertical orientations components are always laid out
+ * from top to bottom.</blockquote>
+ *
+ * <blockquote><b><tt>PAGE_AXIS</tt></b> - Components are laid out the way
+ * text lines are laid out on a page, based on the container's
+ * <tt>ComponentOrientation</tt> property. If the container's
+ * <tt>ComponentOrientation</tt> is horizontal then components are laid out
+ * vertically, otherwise they are laid out horizontally.  For horizontal
+ * orientations, if the container's <tt>ComponentOrientation</tt> is left to
+ * right then components are laid out left to right, otherwise they are laid
+ * out right to left.&nbsp; For vertical orientations components are always
+ * laid out from top to bottom.</blockquote>
+ * <p>
+ * For all directions, components are arranged in the same order as they were
+ * added to the container.
+ * <p>
+ * BoxLayout attempts to arrange components
+ * at their preferred widths (for horizontal layout)
+ * or heights (for vertical layout).
+ * For a horizontal layout,
+ * if not all the components are the same height,
+ * BoxLayout attempts to make all the components
+ * as high as the highest component.
+ * If that's not possible for a particular component,
+ * then BoxLayout aligns that component vertically,
+ * according to the component's Y alignment.
+ * By default, a component has a Y alignment of 0.5,
+ * which means that the vertical center of the component
+ * should have the same Y coordinate as
+ * the vertical centers of other components with 0.5 Y alignment.
+ * <p>
+ * Similarly, for a vertical layout,
+ * BoxLayout attempts to make all components in the column
+ * as wide as the widest component.
+ * If that fails, it aligns them horizontally
+ * according to their X alignments.  For <code>PAGE_AXIS</code> layout,
+ * horizontal alignment is done based on the leading edge of the component.
+ * In other words, an X alignment value of 0.0 means the left edge of a
+ * component if the container's <code>ComponentOrientation</code> is left to
+ * right and it means the right edge of the component otherwise.
+ * <p>
+ * Instead of using BoxLayout directly, many programs use the Box class.
+ * The Box class is a lightweight container that uses a BoxLayout.
+ * It also provides handy methods to help you use BoxLayout well.
+ * Adding components to multiple nested boxes is a powerful way to get
+ * the arrangement you want.
+ * <p>
+ * For further information and examples see
+ * <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/layout/box.html">How to Use BoxLayout</a>,
+ * a section in <em>The Java Tutorial.</em>
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see Box
+ * @see java.awt.ComponentOrientation
+ * @see JComponent#getAlignmentX
+ * @see JComponent#getAlignmentY
+ *
+ * @author   Timothy Prinzing
+ */
+@SuppressWarnings("serial")
+public class BoxLayout implements LayoutManager2, Serializable {
+
+    /**
+     * Specifies that components should be laid out left to right.
+     */
+    public static final int X_AXIS = 0;
+
+    /**
+     * Specifies that components should be laid out top to bottom.
+     */
+    public static final int Y_AXIS = 1;
+
+    /**
+     * Specifies that components should be laid out in the direction of
+     * a line of text as determined by the target container's
+     * <code>ComponentOrientation</code> property.
+     */
+    public static final int LINE_AXIS = 2;
+
+    /**
+     * Specifies that components should be laid out in the direction that
+     * lines flow across a page as determined by the target container's
+     * <code>ComponentOrientation</code> property.
+     */
+    public static final int PAGE_AXIS = 3;
+
+    /**
+     * Creates a layout manager that will lay out components along the
+     * given axis.
+     *
+     * @param target  the container that needs to be laid out
+     * @param axis  the axis to lay out components along. Can be one of:
+     *              <code>BoxLayout.X_AXIS</code>,
+     *              <code>BoxLayout.Y_AXIS</code>,
+     *              <code>BoxLayout.LINE_AXIS</code> or
+     *              <code>BoxLayout.PAGE_AXIS</code>
+     *
+     * @exception AWTError  if the value of <code>axis</code> is invalid
+     */
+    @ConstructorProperties({"target", "axis"})
+    public BoxLayout(Container target, int axis) {
+        if (axis != X_AXIS && axis != Y_AXIS &&
+            axis != LINE_AXIS && axis != PAGE_AXIS) {
+            throw new AWTError("Invalid axis");
+        }
+        this.axis = axis;
+        this.target = target;
+    }
+
+    /**
+     * Constructs a BoxLayout that
+     * produces debugging messages.
+     *
+     * @param target  the container that needs to be laid out
+     * @param axis  the axis to lay out components along. Can be one of:
+     *              <code>BoxLayout.X_AXIS</code>,
+     *              <code>BoxLayout.Y_AXIS</code>,
+     *              <code>BoxLayout.LINE_AXIS</code> or
+     *              <code>BoxLayout.PAGE_AXIS</code>
+     *
+     * @param dbg  the stream to which debugging messages should be sent,
+     *   null if none
+     */
+    BoxLayout(Container target, int axis, PrintStream dbg) {
+        this(target, axis);
+        this.dbg = dbg;
+    }
+
+    /**
+     * Returns the container that uses this layout manager.
+     *
+     * @return the container that uses this layout manager
+     *
+     * @since 1.6
+     */
+    public final Container getTarget() {
+        return this.target;
+    }
+
+    /**
+     * Returns the axis that was used to lay out components.
+     * Returns one of:
+     * <code>BoxLayout.X_AXIS</code>,
+     * <code>BoxLayout.Y_AXIS</code>,
+     * <code>BoxLayout.LINE_AXIS</code> or
+     * <code>BoxLayout.PAGE_AXIS</code>
+     *
+     * @return the axis that was used to lay out components
+     *
+     * @since 1.6
+     */
+    public final int getAxis() {
+        return this.axis;
+    }
+
+    /**
+     * Indicates that a child has changed its layout related information,
+     * and thus any cached calculations should be flushed.
+     * <p>
+     * This method is called by AWT when the invalidate method is called
+     * on the Container.  Since the invalidate method may be called
+     * asynchronously to the event thread, this method may be called
+     * asynchronously.
+     *
+     * @param target  the affected container
+     *
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     */
+    public synchronized void invalidateLayout(Container target) {
+        checkContainer(target);
+        xChildren = null;
+        yChildren = null;
+        xTotal = null;
+        yTotal = null;
+    }
+
+    /**
+     * Not used by this class.
+     *
+     * @param name the name of the component
+     * @param comp the component
+     */
+    public void addLayoutComponent(String name, Component comp) {
+        invalidateLayout(comp.getParent());
+    }
+
+    /**
+     * Not used by this class.
+     *
+     * @param comp the component
+     */
+    public void removeLayoutComponent(Component comp) {
+        invalidateLayout(comp.getParent());
+    }
+
+    /**
+     * Not used by this class.
+     *
+     * @param comp the component
+     * @param constraints constraints
+     */
+    public void addLayoutComponent(Component comp, Object constraints) {
+        invalidateLayout(comp.getParent());
+    }
+
+    /**
+     * Returns the preferred dimensions for this layout, given the components
+     * in the specified target container.
+     *
+     * @param target  the container that needs to be laid out
+     * @return the dimensions &gt;= 0 &amp;&amp; &lt;= Integer.MAX_VALUE
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     * @see Container
+     * @see #minimumLayoutSize
+     * @see #maximumLayoutSize
+     */
+    public Dimension preferredLayoutSize(Container target) {
+        Dimension size;
+        synchronized(this) {
+            checkContainer(target);
+            checkRequests();
+            size = new Dimension(xTotal.preferred, yTotal.preferred);
+        }
+
+        Insets insets = target.getInsets();
+        size.width = (int) Math.min((long) size.width + (long) insets.left + (long) insets.right, Integer.MAX_VALUE);
+        size.height = (int) Math.min((long) size.height + (long) insets.top + (long) insets.bottom, Integer.MAX_VALUE);
+        return size;
+    }
+
+    /**
+     * Returns the minimum dimensions needed to lay out the components
+     * contained in the specified target container.
+     *
+     * @param target  the container that needs to be laid out
+     * @return the dimensions &gt;= 0 &amp;&amp; &lt;= Integer.MAX_VALUE
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     * @see #preferredLayoutSize
+     * @see #maximumLayoutSize
+     */
+    public Dimension minimumLayoutSize(Container target) {
+        Dimension size;
+        synchronized(this) {
+            checkContainer(target);
+            checkRequests();
+            size = new Dimension(xTotal.minimum, yTotal.minimum);
+        }
+
+        Insets insets = target.getInsets();
+        size.width = (int) Math.min((long) size.width + (long) insets.left + (long) insets.right, Integer.MAX_VALUE);
+        size.height = (int) Math.min((long) size.height + (long) insets.top + (long) insets.bottom, Integer.MAX_VALUE);
+        return size;
+    }
+
+    /**
+     * Returns the maximum dimensions the target container can use
+     * to lay out the components it contains.
+     *
+     * @param target  the container that needs to be laid out
+     * @return the dimensions &gt;= 0 &amp;&amp; &lt;= Integer.MAX_VALUE
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     * @see #preferredLayoutSize
+     * @see #minimumLayoutSize
+     */
+    public Dimension maximumLayoutSize(Container target) {
+        Dimension size;
+        synchronized(this) {
+            checkContainer(target);
+            checkRequests();
+            size = new Dimension(xTotal.maximum, yTotal.maximum);
+        }
+
+        Insets insets = target.getInsets();
+        size.width = (int) Math.min((long) size.width + (long) insets.left + (long) insets.right, Integer.MAX_VALUE);
+        size.height = (int) Math.min((long) size.height + (long) insets.top + (long) insets.bottom, Integer.MAX_VALUE);
+        return size;
+    }
+
+    /**
+     * Returns the alignment along the X axis for the container.
+     * If the box is horizontal, the default
+     * alignment will be returned. Otherwise, the alignment needed
+     * to place the children along the X axis will be returned.
+     *
+     * @param target  the container
+     * @return the alignment &gt;= 0.0f &amp;&amp; &lt;= 1.0f
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     */
+    public synchronized float getLayoutAlignmentX(Container target) {
+        checkContainer(target);
+        checkRequests();
+        return xTotal.alignment;
+    }
+
+    /**
+     * Returns the alignment along the Y axis for the container.
+     * If the box is vertical, the default
+     * alignment will be returned. Otherwise, the alignment needed
+     * to place the children along the Y axis will be returned.
+     *
+     * @param target  the container
+     * @return the alignment &gt;= 0.0f &amp;&amp; &lt;= 1.0f
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     */
+    public synchronized float getLayoutAlignmentY(Container target) {
+        checkContainer(target);
+        checkRequests();
+        return yTotal.alignment;
+    }
+
+    /**
+     * Called by the AWT <!-- XXX CHECK! --> when the specified container
+     * needs to be laid out.
+     *
+     * @param target  the container to lay out
+     *
+     * @exception AWTError  if the target isn't the container specified to the
+     *                      BoxLayout constructor
+     */
+    public void layoutContainer(Container target) {
+        checkContainer(target);
+        int nChildren = target.getComponentCount();
+        int[] xOffsets = new int[nChildren];
+        int[] xSpans = new int[nChildren];
+        int[] yOffsets = new int[nChildren];
+        int[] ySpans = new int[nChildren];
+
+        Dimension alloc = target.getSize();
+        Insets in = target.getInsets();
+        alloc.width -= in.left + in.right;
+        alloc.height -= in.top + in.bottom;
+
+        // Resolve axis to an absolute value (either X_AXIS or Y_AXIS)
+        ComponentOrientation o = target.getComponentOrientation();
+        int absoluteAxis = resolveAxis( axis, o );
+        boolean ltr = (absoluteAxis != axis) ? o.isLeftToRight() : true;
+
+
+        // determine the child placements
+        synchronized(this) {
+            checkRequests();
+
+            if (absoluteAxis == X_AXIS) {
+                SizeRequirements.calculateTiledPositions(alloc.width, xTotal,
+                                                         xChildren, xOffsets,
+                                                         xSpans, ltr);
+                SizeRequirements.calculateAlignedPositions(alloc.height, yTotal,
+                                                           yChildren, yOffsets,
+                                                           ySpans);
+            } else {
+                SizeRequirements.calculateAlignedPositions(alloc.width, xTotal,
+                                                           xChildren, xOffsets,
+                                                           xSpans, ltr);
+                SizeRequirements.calculateTiledPositions(alloc.height, yTotal,
+                                                         yChildren, yOffsets,
+                                                         ySpans);
+            }
+        }
+
+        // flush changes to the container
+        for (int i = 0; i < nChildren; i++) {
+            Component c = target.getComponent(i);
+            c.setBounds((int) Math.min((long) in.left + (long) xOffsets[i], Integer.MAX_VALUE),
+                        (int) Math.min((long) in.top + (long) yOffsets[i], Integer.MAX_VALUE),
+                        xSpans[i], ySpans[i]);
+
+        }
+        if (dbg != null) {
+            for (int i = 0; i < nChildren; i++) {
+                Component c = target.getComponent(i);
+                dbg.println(c.toString());
+                dbg.println("X: " + xChildren[i]);
+                dbg.println("Y: " + yChildren[i]);
+            }
+        }
+
+    }
+
+    void checkContainer(Container target) {
+        if (this.target != target) {
+            throw new AWTError("BoxLayout can't be shared");
+        }
+    }
+
+    void checkRequests() {
+        if (xChildren == null || yChildren == null) {
+            // The requests have been invalidated... recalculate
+            // the request information.
+            int n = target.getComponentCount();
+            xChildren = new SizeRequirements[n];
+            yChildren = new SizeRequirements[n];
+            for (int i = 0; i < n; i++) {
+                Component c = target.getComponent(i);
+                if (!c.isVisible()) {
+                    xChildren[i] = new SizeRequirements(0,0,0, c.getAlignmentX());
+                    yChildren[i] = new SizeRequirements(0,0,0, c.getAlignmentY());
+                    continue;
+                }
+                Dimension min = c.getMinimumSize();
+                Dimension typ = c.getPreferredSize();
+                Dimension max = c.getMaximumSize();
+                xChildren[i] = new SizeRequirements(min.width, typ.width,
+                                                    max.width,
+                                                    c.getAlignmentX());
+                yChildren[i] = new SizeRequirements(min.height, typ.height,
+                                                    max.height,
+                                                    c.getAlignmentY());
+            }
+
+            // Resolve axis to an absolute value (either X_AXIS or Y_AXIS)
+            int absoluteAxis = resolveAxis(axis,target.getComponentOrientation());
+
+            if (absoluteAxis == X_AXIS) {
+                xTotal = SizeRequirements.getTiledSizeRequirements(xChildren);
+                yTotal = SizeRequirements.getAlignedSizeRequirements(yChildren);
+            } else {
+                xTotal = SizeRequirements.getAlignedSizeRequirements(xChildren);
+                yTotal = SizeRequirements.getTiledSizeRequirements(yChildren);
+            }
+        }
+    }
+
+    /**
+     * Given one of the 4 axis values, resolve it to an absolute axis.
+     * The relative axis values, PAGE_AXIS and LINE_AXIS are converted
+     * to their absolute couterpart given the target's ComponentOrientation
+     * value.  The absolute axes, X_AXIS and Y_AXIS are returned unmodified.
+     *
+     * @param axis the axis to resolve
+     * @param o the ComponentOrientation to resolve against
+     * @return the resolved axis
+     */
+    private int resolveAxis( int axis, ComponentOrientation o ) {
+        int absoluteAxis;
+        if( axis == LINE_AXIS ) {
+            absoluteAxis = o.isHorizontal() ? X_AXIS : Y_AXIS;
+        } else if( axis == PAGE_AXIS ) {
+            absoluteAxis = o.isHorizontal() ? Y_AXIS : X_AXIS;
+        } else {
+            absoluteAxis = axis;
+        }
+        return absoluteAxis;
+   }
+
+
+    private int axis;
+    private Container target;
+
+    private transient SizeRequirements[] xChildren;
+    private transient SizeRequirements[] yChildren;
+    private transient SizeRequirements xTotal;
+    private transient SizeRequirements yTotal;
+
+    private transient PrintStream dbg;
+}

@@ -1,234 +1,229 @@
-/*     */ package com.sun.org.apache.bcel.internal.generic;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.util.ByteSequence;
-/*     */ import java.io.DataOutputStream;
-/*     */ import java.io.IOException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class LocalVariableInstruction
-/*     */   extends Instruction
-/*     */   implements TypedInstruction, IndexedInstruction
-/*     */ {
-/*  72 */   protected int n = -1;
-/*  73 */   private short c_tag = -1;
-/*  74 */   private short canon_tag = -1;
-/*     */   private final boolean wide() {
-/*  76 */     return (this.n > 255);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LocalVariableInstruction(short canon_tag, short c_tag) {
-/*  85 */     this.canon_tag = canon_tag;
-/*  86 */     this.c_tag = c_tag;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LocalVariableInstruction() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected LocalVariableInstruction(short opcode, short c_tag, int n) {
-/* 102 */     super(opcode, (short)2);
-/*     */     
-/* 104 */     this.c_tag = c_tag;
-/* 105 */     this.canon_tag = opcode;
-/*     */     
-/* 107 */     setIndex(n);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void dump(DataOutputStream out) throws IOException {
-/* 115 */     if (wide()) {
-/* 116 */       out.writeByte(196);
-/*     */     }
-/* 118 */     out.writeByte(this.opcode);
-/*     */     
-/* 120 */     if (this.length > 1) {
-/* 121 */       if (wide()) {
-/* 122 */         out.writeShort(this.n);
-/*     */       } else {
-/* 124 */         out.writeByte(this.n);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString(boolean verbose) {
-/* 138 */     if ((this.opcode >= 26 && this.opcode <= 45) || (this.opcode >= 59 && this.opcode <= 78))
-/*     */     {
-/*     */ 
-/*     */       
-/* 142 */       return super.toString(verbose);
-/*     */     }
-/* 144 */     return super.toString(verbose) + " " + this.n;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void initFromFile(ByteSequence bytes, boolean wide) throws IOException {
-/* 154 */     if (wide) {
-/* 155 */       this.n = bytes.readUnsignedShort();
-/* 156 */       this.length = 4;
-/* 157 */     } else if ((this.opcode >= 21 && this.opcode <= 25) || (this.opcode >= 54 && this.opcode <= 58)) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 161 */       this.n = bytes.readUnsignedByte();
-/* 162 */       this.length = 2;
-/* 163 */     } else if (this.opcode <= 45) {
-/* 164 */       this.n = (this.opcode - 26) % 4;
-/* 165 */       this.length = 1;
-/*     */     } else {
-/* 167 */       this.n = (this.opcode - 59) % 4;
-/* 168 */       this.length = 1;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getIndex() {
-/* 175 */     return this.n;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setIndex(int n) {
-/* 181 */     if (n < 0 || n > 65535) {
-/* 182 */       throw new ClassGenException("Illegal value: " + n);
-/*     */     }
-/* 184 */     this.n = n;
-/*     */     
-/* 186 */     if (n >= 0 && n <= 3) {
-/* 187 */       this.opcode = (short)(this.c_tag + n);
-/* 188 */       this.length = 1;
-/*     */     } else {
-/* 190 */       this.opcode = this.canon_tag;
-/*     */       
-/* 192 */       if (wide()) {
-/* 193 */         this.length = 4;
-/*     */       } else {
-/* 195 */         this.length = 2;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public short getCanonicalTag() {
-/* 202 */     return this.canon_tag;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type getType(ConstantPoolGen cp) {
-/* 214 */     switch (this.canon_tag) { case 21:
-/*     */       case 54:
-/* 216 */         return Type.INT;
-/*     */       case 22: case 55:
-/* 218 */         return Type.LONG;
-/*     */       case 24: case 57:
-/* 220 */         return Type.DOUBLE;
-/*     */       case 23: case 56:
-/* 222 */         return Type.FLOAT;
-/*     */       case 25: case 58:
-/* 224 */         return Type.OBJECT; }
-/*     */     
-/* 226 */     throw new ClassGenException("Oops: unknown case in switch" + this.canon_tag);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\internal\generic\LocalVariableInstruction.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.generic;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+import java.io.*;
+import com.sun.org.apache.bcel.internal.util.ByteSequence;
+import com.sun.org.apache.bcel.internal.classfile.Utility;
+import com.sun.org.apache.bcel.internal.Constants;
+
+/**
+ * Abstract super class for instructions dealing with local variables.
+ *
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ */
+public abstract class LocalVariableInstruction extends Instruction
+  implements TypedInstruction, IndexedInstruction {
+  protected int     n         = -1; // index of referenced variable
+  private short     c_tag     = -1; // compact version, such as ILOAD_0
+  private short     canon_tag = -1; // canonical tag such as ILOAD
+
+  private final boolean wide() { return n > Constants.MAX_BYTE; }
+
+  /**
+   * Empty constructor needed for the Class.newInstance() statement in
+   * Instruction.readInstruction(). Not to be used otherwise.
+   * tag and length are defined in readInstruction and initFromFile, respectively.
+   */
+  LocalVariableInstruction(short canon_tag, short c_tag) {
+    super();
+    this.canon_tag = canon_tag;
+    this.c_tag     = c_tag;
+  }
+
+  /**
+   * Empty constructor needed for the Class.newInstance() statement in
+   * Instruction.readInstruction(). Also used by IINC()!
+   */
+  LocalVariableInstruction() {
+  }
+
+  /**
+   * @param opcode Instruction opcode
+   * @param c_tag Instruction number for compact version, ALOAD_0, e.g.
+   * @param n local variable index (unsigned short)
+   */
+  protected LocalVariableInstruction(short opcode, short c_tag, int n) {
+    super(opcode, (short)2);
+
+    this.c_tag = c_tag;
+    canon_tag  = opcode;
+
+    setIndex(n);
+  }
+
+  /**
+   * Dump instruction as byte code to stream out.
+   * @param out Output stream
+   */
+  public void dump(DataOutputStream out) throws IOException {
+    if(wide()) // Need WIDE prefix ?
+      out.writeByte(Constants.WIDE);
+
+    out.writeByte(opcode);
+
+    if(length > 1) { // Otherwise ILOAD_n, instruction, e.g.
+      if(wide())
+        out.writeShort(n);
+      else
+        out.writeByte(n);
+    }
+  }
+
+  /**
+   * Long output format:
+   *
+   * &lt;name of opcode&gt; "["&lt;opcode number&gt;"]"
+   * "("&lt;length of instruction&gt;")" "&lt;"&lt; local variable index&gt;"&gt;"
+   *
+   * @param verbose long/short format switch
+   * @return mnemonic for instruction
+   */
+  public String toString(boolean verbose) {
+    if(((opcode >= Constants.ILOAD_0) &&
+        (opcode <= Constants.ALOAD_3)) ||
+       ((opcode >= Constants.ISTORE_0) &&
+        (opcode <= Constants.ASTORE_3)))
+      return super.toString(verbose);
+    else
+      return super.toString(verbose) + " " + n;
+  }
+
+  /**
+   * Read needed data (e.g. index) from file.
+   * PRE: (ILOAD <= tag <= ALOAD_3) || (ISTORE <= tag <= ASTORE_3)
+   */
+  protected void initFromFile(ByteSequence bytes, boolean wide)
+    throws IOException
+  {
+    if(wide) {
+      n         = bytes.readUnsignedShort();
+      length    = 4;
+    } else if(((opcode >= Constants.ILOAD) &&
+               (opcode <= Constants.ALOAD)) ||
+              ((opcode >= Constants.ISTORE) &&
+               (opcode <= Constants.ASTORE))) {
+      n      = bytes.readUnsignedByte();
+      length = 2;
+    } else if(opcode <= Constants.ALOAD_3) { // compact load instruction such as ILOAD_2
+      n      = (opcode - Constants.ILOAD_0) % 4;
+      length = 1;
+    } else { // Assert ISTORE_0 <= tag <= ASTORE_3
+      n      = (opcode - Constants.ISTORE_0) % 4;
+      length = 1;
+    }
+ }
+
+  /**
+   * @return local variable index  referred by this instruction.
+   */
+  public final int getIndex() { return n; }
+
+  /**
+   * Set the local variable index
+   */
+  public void setIndex(int n) {
+    if((n < 0) || (n > Constants.MAX_SHORT))
+      throw new ClassGenException("Illegal value: " + n);
+
+    this.n = n;
+
+    if(n >= 0 && n <= 3) { // Use more compact instruction xLOAD_n
+      opcode = (short)(c_tag + n);
+      length = 1;
+    } else {
+      opcode = canon_tag;
+
+      if(wide()) // Need WIDE prefix ?
+        length = 4;
+      else
+        length = 2;
+    }
+  }
+
+  /** @return canonical tag for instruction, e.g., ALOAD for ALOAD_0
+   */
+  public short getCanonicalTag() {
+    return canon_tag;
+  }
+
+  /**
+   * Returns the type associated with the instruction -
+   * in case of ALOAD or ASTORE Type.OBJECT is returned.
+   * This is just a bit incorrect, because ALOAD and ASTORE
+   * may work on every ReferenceType (including Type.NULL) and
+   * ASTORE may even work on a ReturnaddressType .
+   * @return type associated with the instruction
+   */
+  public Type getType(ConstantPoolGen cp) {
+    switch(canon_tag) {
+    case Constants.ILOAD: case Constants.ISTORE:
+      return Type.INT;
+    case Constants.LLOAD: case Constants.LSTORE:
+      return Type.LONG;
+    case Constants.DLOAD: case Constants.DSTORE:
+      return Type.DOUBLE;
+    case Constants.FLOAD: case Constants.FSTORE:
+      return Type.FLOAT;
+    case Constants.ALOAD: case Constants.ASTORE:
+      return Type.OBJECT;
+
+    default: throw new ClassGenException("Oops: unknown case in switch" + canon_tag);
+    }
+  }
+}

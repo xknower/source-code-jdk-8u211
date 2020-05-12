@@ -1,96 +1,90 @@
-/*    */ package javax.swing.plaf.synth;
-/*    */ 
-/*    */ import java.awt.Insets;
-/*    */ import java.awt.Rectangle;
-/*    */ import javax.swing.JComboBox;
-/*    */ import javax.swing.plaf.ComboBoxUI;
-/*    */ import javax.swing.plaf.basic.BasicComboPopup;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class SynthComboPopup
-/*    */   extends BasicComboPopup
-/*    */ {
-/*    */   public SynthComboPopup(JComboBox paramJComboBox) {
-/* 41 */     super(paramJComboBox);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected void configureList() {
-/* 53 */     this.list.setFont(this.comboBox.getFont());
-/* 54 */     this.list.setCellRenderer(this.comboBox.getRenderer());
-/* 55 */     this.list.setFocusable(false);
-/* 56 */     this.list.setSelectionMode(0);
-/* 57 */     int i = this.comboBox.getSelectedIndex();
-/* 58 */     if (i == -1) {
-/* 59 */       this.list.clearSelection();
-/*    */     } else {
-/*    */       
-/* 62 */       this.list.setSelectedIndex(i);
-/* 63 */       this.list.ensureIndexIsVisible(i);
-/*    */     } 
-/* 65 */     installListListeners();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected Rectangle computePopupBounds(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 76 */     ComboBoxUI comboBoxUI = this.comboBox.getUI();
-/* 77 */     if (comboBoxUI instanceof SynthComboBoxUI) {
-/* 78 */       SynthComboBoxUI synthComboBoxUI = (SynthComboBoxUI)comboBoxUI;
-/* 79 */       if (synthComboBoxUI.popupInsets != null) {
-/* 80 */         Insets insets = synthComboBoxUI.popupInsets;
-/* 81 */         return super.computePopupBounds(paramInt1 + insets.left, paramInt2 + insets.top, paramInt3 - insets.left - insets.right, paramInt4 - insets.top - insets.bottom);
-/*    */       } 
-/*    */     } 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */     
-/* 88 */     return super.computePopupBounds(paramInt1, paramInt2, paramInt3, paramInt4);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthComboPopup.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.*;
+import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import java.awt.*;
+
+
+/**
+ * Synth's ComboPopup.
+ *
+ * @author Scott Violet
+ */
+class SynthComboPopup extends BasicComboPopup {
+    public SynthComboPopup( JComboBox combo ) {
+        super(combo);
+    }
+
+    /**
+     * Configures the list which is used to hold the combo box items in the
+     * popup. This method is called when the UI class
+     * is created.
+     *
+     * @see #createList
+     */
+    @Override
+    protected void configureList() {
+        list.setFont( comboBox.getFont() );
+        list.setCellRenderer( comboBox.getRenderer() );
+        list.setFocusable( false );
+        list.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
+        int selectedIndex = comboBox.getSelectedIndex();
+        if ( selectedIndex == -1 ) {
+            list.clearSelection();
+        }
+        else {
+            list.setSelectedIndex( selectedIndex );
+            list.ensureIndexIsVisible( selectedIndex );
+        }
+        installListListeners();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * Overridden to take into account any popup insets specified in
+     * SynthComboBoxUI
+     */
+    @Override
+    protected Rectangle computePopupBounds(int px, int py, int pw, int ph) {
+        ComboBoxUI ui = comboBox.getUI();
+        if (ui instanceof SynthComboBoxUI) {
+            SynthComboBoxUI sui = (SynthComboBoxUI) ui;
+            if (sui.popupInsets != null) {
+                Insets i = sui.popupInsets;
+                return super.computePopupBounds(
+                        px + i.left,
+                        py + i.top,
+                        pw - i.left - i.right,
+                        ph - i.top - i.bottom);
+            }
+        }
+        return super.computePopupBounds(px, py, pw, ph);
+    }
+}

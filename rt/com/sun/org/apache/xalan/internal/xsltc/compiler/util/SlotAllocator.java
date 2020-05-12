@@ -1,108 +1,102 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class SlotAllocator
-/*     */ {
-/*     */   private int _firstAvailableSlot;
-/*  35 */   private int _size = 8;
-/*  36 */   private int _free = 0;
-/*  37 */   private int[] _slotsTaken = new int[this._size];
-/*     */   
-/*     */   public void initialize(LocalVariableGen[] vars) {
-/*  40 */     int length = vars.length;
-/*  41 */     int slot = 0;
-/*     */     
-/*  43 */     for (int i = 0; i < length; i++) {
-/*  44 */       int size = vars[i].getType().getSize();
-/*  45 */       int index = vars[i].getIndex();
-/*  46 */       slot = Math.max(slot, index + size);
-/*     */     } 
-/*  48 */     this._firstAvailableSlot = slot;
-/*     */   }
-/*     */   
-/*     */   public int allocateSlot(Type type) {
-/*  52 */     int size = type.getSize();
-/*  53 */     int limit = this._free;
-/*  54 */     int slot = this._firstAvailableSlot, where = 0;
-/*     */     
-/*  56 */     if (this._free + size > this._size) {
-/*  57 */       int[] array = new int[this._size *= 2];
-/*  58 */       for (int i = 0; i < limit; i++)
-/*  59 */         array[i] = this._slotsTaken[i]; 
-/*  60 */       this._slotsTaken = array;
-/*     */     } 
-/*     */     
-/*  63 */     while (where < limit) {
-/*  64 */       if (slot + size <= this._slotsTaken[where]) {
-/*     */         
-/*  66 */         for (int i = limit - 1; i >= where; i--) {
-/*  67 */           this._slotsTaken[i + size] = this._slotsTaken[i];
-/*     */         }
-/*     */         break;
-/*     */       } 
-/*  71 */       slot = this._slotsTaken[where++] + 1;
-/*     */     } 
-/*     */ 
-/*     */     
-/*  75 */     for (int j = 0; j < size; j++) {
-/*  76 */       this._slotsTaken[where + j] = slot + j;
-/*     */     }
-/*  78 */     this._free += size;
-/*  79 */     return slot;
-/*     */   }
-/*     */   
-/*     */   public void releaseSlot(LocalVariableGen lvg) {
-/*  83 */     int size = lvg.getType().getSize();
-/*  84 */     int slot = lvg.getIndex();
-/*  85 */     int limit = this._free;
-/*     */     
-/*  87 */     for (int i = 0; i < limit; i++) {
-/*  88 */       if (this._slotsTaken[i] == slot) {
-/*  89 */         int j = i + size;
-/*  90 */         while (j < limit) {
-/*  91 */           this._slotsTaken[i++] = this._slotsTaken[j++];
-/*     */         }
-/*  93 */         this._free -= size;
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/*  97 */     String state = "Variable slot allocation error(size=" + size + ", slot=" + slot + ", limit=" + limit + ")";
-/*     */     
-/*  99 */     ErrorMsg err = new ErrorMsg("INTERNAL_ERR", state);
-/* 100 */     throw new Error(err.toString());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\SlotAllocator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: SlotAllocator.java,v 1.2.4.1 2005/09/05 11:32:51 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.Type;
+
+/**
+ * @author Jacek Ambroziak
+ */
+final class SlotAllocator {
+
+    private int   _firstAvailableSlot;
+    private int   _size = 8;
+    private int   _free = 0;
+    private int[] _slotsTaken = new int[_size];
+
+    public void initialize(LocalVariableGen[] vars) {
+        final int length = vars.length;
+        int slot = 0, size, index;
+
+        for (int i = 0; i < length; i++) {
+            size  = vars[i].getType().getSize();
+            index = vars[i].getIndex();
+            slot  = Math.max(slot, index + size);
+        }
+        _firstAvailableSlot = slot;
+    }
+
+    public int allocateSlot(Type type) {
+        final int size = type.getSize();
+        final int limit = _free;
+        int slot = _firstAvailableSlot, where = 0;
+
+        if (_free + size > _size) {
+            final int[] array = new int[_size *= 2];
+            for (int j = 0; j < limit; j++)
+                array[j] = _slotsTaken[j];
+            _slotsTaken = array;
+        }
+
+        while (where < limit) {
+            if (slot + size <= _slotsTaken[where]) {
+                // insert
+                for (int j = limit - 1; j >= where; j--)
+                    _slotsTaken[j + size] = _slotsTaken[j];
+                break;
+            }
+            else {
+                slot = _slotsTaken[where++] + 1;
+            }
+        }
+
+        for (int j = 0; j < size; j++)
+            _slotsTaken[where + j] = slot + j;
+
+        _free += size;
+        return slot;
+    }
+
+    public void releaseSlot(LocalVariableGen lvg) {
+        final int size = lvg.getType().getSize();
+        final int slot = lvg.getIndex();
+        final int limit = _free;
+
+        for (int i = 0; i < limit; i++) {
+            if (_slotsTaken[i] == slot) {
+                int j = i + size;
+                while (j < limit) {
+                    _slotsTaken[i++] = _slotsTaken[j++];
+                }
+                _free -= size;
+                return;
+            }
+        }
+        String state = "Variable slot allocation error"+
+                       "(size="+size+", slot="+slot+", limit="+limit+")";
+        ErrorMsg err = new ErrorMsg(ErrorMsg.INTERNAL_ERR, state);
+        throw new Error(err.toString());
+    }
+}

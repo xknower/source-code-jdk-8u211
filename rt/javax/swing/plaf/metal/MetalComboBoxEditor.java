@@ -1,127 +1,139 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import javax.swing.JTextField;
-/*     */ import javax.swing.border.AbstractBorder;
-/*     */ import javax.swing.plaf.basic.BasicComboBoxEditor;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalComboBoxEditor
-/*     */   extends BasicComboBoxEditor
-/*     */ {
-/*     */   public MetalComboBoxEditor() {
-/*  55 */     this.editor = new JTextField("", 9)
-/*     */       {
-/*     */         public void setText(String param1String) {
-/*  58 */           if (getText().equals(param1String)) {
-/*     */             return;
-/*     */           }
-/*  61 */           super.setText(param1String);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         public Dimension getPreferredSize() {
-/*  67 */           Dimension dimension = super.getPreferredSize();
-/*  68 */           dimension.height += 4;
-/*  69 */           return dimension;
-/*     */         }
-/*     */         public Dimension getMinimumSize() {
-/*  72 */           Dimension dimension = super.getMinimumSize();
-/*  73 */           dimension.height += 4;
-/*  74 */           return dimension;
-/*     */         }
-/*     */       };
-/*     */     
-/*  78 */     this.editor.setBorder(new EditorBorder());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  86 */   protected static Insets editorBorderInsets = new Insets(2, 2, 2, 0);
-/*     */   
-/*     */   class EditorBorder extends AbstractBorder {
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  90 */       param1Graphics.translate(param1Int1, param1Int2);
-/*     */       
-/*  92 */       if (MetalLookAndFeel.usingOcean()) {
-/*  93 */         param1Graphics.setColor(MetalLookAndFeel.getControlDarkShadow());
-/*  94 */         param1Graphics.drawRect(0, 0, param1Int3, param1Int4 - 1);
-/*  95 */         param1Graphics.setColor(MetalLookAndFeel.getControlShadow());
-/*  96 */         param1Graphics.drawRect(1, 1, param1Int3 - 2, param1Int4 - 3);
-/*     */       } else {
-/*     */         
-/*  99 */         param1Graphics.setColor(MetalLookAndFeel.getControlDarkShadow());
-/* 100 */         param1Graphics.drawLine(0, 0, param1Int3 - 1, 0);
-/* 101 */         param1Graphics.drawLine(0, 0, 0, param1Int4 - 2);
-/* 102 */         param1Graphics.drawLine(0, param1Int4 - 2, param1Int3 - 1, param1Int4 - 2);
-/* 103 */         param1Graphics.setColor(MetalLookAndFeel.getControlHighlight());
-/* 104 */         param1Graphics.drawLine(1, 1, param1Int3 - 1, 1);
-/* 105 */         param1Graphics.drawLine(1, 1, 1, param1Int4 - 1);
-/* 106 */         param1Graphics.drawLine(1, param1Int4 - 1, param1Int3 - 1, param1Int4 - 1);
-/* 107 */         param1Graphics.setColor(MetalLookAndFeel.getControl());
-/* 108 */         param1Graphics.drawLine(1, param1Int4 - 2, 1, param1Int4 - 2);
-/*     */       } 
-/*     */       
-/* 111 */       param1Graphics.translate(-param1Int1, -param1Int2);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 115 */       param1Insets.set(2, 2, 2, 0);
-/* 116 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static class UIResource extends MetalComboBoxEditor implements javax.swing.plaf.UIResource {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalComboBoxEditor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import java.io.Serializable;
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.plaf.basic.BasicComboBoxEditor;
+
+/**
+ * The default editor for Metal editable combo boxes
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Steve Wilson
+ */
+public class MetalComboBoxEditor extends BasicComboBoxEditor {
+
+    public MetalComboBoxEditor() {
+        super();
+        //editor.removeFocusListener(this);
+        editor = new JTextField("",9) {
+                // workaround for 4530952
+                public void setText(String s) {
+                    if (getText().equals(s)) {
+                        return;
+                    }
+                    super.setText(s);
+                }
+            // The preferred and minimum sizes are overriden and padded by
+            // 4 to keep the size as it previously was.  Refer to bugs
+            // 4775789 and 4517214 for details.
+            public Dimension getPreferredSize() {
+                Dimension pref = super.getPreferredSize();
+                pref.height += 4;
+                return pref;
+            }
+            public Dimension getMinimumSize() {
+                Dimension min = super.getMinimumSize();
+                min.height += 4;
+                return min;
+            }
+            };
+
+        editor.setBorder( new EditorBorder() );
+        //editor.addFocusListener(this);
+    }
+
+   /**
+    * The default editor border <code>Insets</code>. This field
+    * might not be used.
+    */
+    protected static Insets editorBorderInsets = new Insets( 2, 2, 2, 0 );
+
+    class EditorBorder extends AbstractBorder {
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+            g.translate( x, y );
+
+            if (MetalLookAndFeel.usingOcean()) {
+                g.setColor(MetalLookAndFeel.getControlDarkShadow());
+                g.drawRect(0, 0, w, h - 1);
+                g.setColor(MetalLookAndFeel.getControlShadow());
+                g.drawRect(1, 1, w - 2, h - 3);
+            }
+            else {
+                g.setColor( MetalLookAndFeel.getControlDarkShadow() );
+                g.drawLine( 0, 0, w-1, 0 );
+                g.drawLine( 0, 0, 0, h-2 );
+                g.drawLine( 0, h-2, w-1, h-2 );
+                g.setColor( MetalLookAndFeel.getControlHighlight() );
+                g.drawLine( 1, 1, w-1, 1 );
+                g.drawLine( 1, 1, 1, h-1 );
+                g.drawLine( 1, h-1, w-1, h-1 );
+                g.setColor( MetalLookAndFeel.getControl() );
+                g.drawLine( 1, h-2, 1, h-2 );
+            }
+
+            g.translate( -x, -y );
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(2, 2, 2, 0);
+            return insets;
+        }
+    }
+
+
+    /**
+     * A subclass of BasicComboBoxEditor that implements UIResource.
+     * BasicComboBoxEditor doesn't implement UIResource
+     * directly so that applications can safely override the
+     * cellRenderer property with BasicListCellRenderer subclasses.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public static class UIResource extends MetalComboBoxEditor
+    implements javax.swing.plaf.UIResource {
+    }
+}

@@ -1,823 +1,711 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.res.XMLMessages;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Stack;
-/*     */ import java.util.StringTokenizer;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class QName
-/*     */   implements Serializable
-/*     */ {
-/*     */   static final long serialVersionUID = 467434581652829920L;
-/*     */   protected String _localName;
-/*     */   protected String _namespaceURI;
-/*     */   protected String _prefix;
-/*     */   public static final String S_XMLNAMESPACEURI = "http://www.w3.org/XML/1998/namespace";
-/*     */   private int m_hashCode;
-/*     */   
-/*     */   public QName() {}
-/*     */   
-/*     */   public QName(String namespaceURI, String localName) {
-/*  95 */     this(namespaceURI, localName, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String namespaceURI, String localName, boolean validate) {
-/* 112 */     if (localName == null) {
-/* 113 */       throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_NULL", null));
-/*     */     }
-/*     */     
-/* 116 */     if (validate)
-/*     */     {
-/* 118 */       if (!XML11Char.isXML11ValidNCName(localName))
-/*     */       {
-/* 120 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_INVALID", null));
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */     
-/* 125 */     this._namespaceURI = namespaceURI;
-/* 126 */     this._localName = localName;
-/* 127 */     this.m_hashCode = toString().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String namespaceURI, String prefix, String localName) {
-/* 141 */     this(namespaceURI, prefix, localName, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String namespaceURI, String prefix, String localName, boolean validate) {
-/* 159 */     if (localName == null) {
-/* 160 */       throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_NULL", null));
-/*     */     }
-/*     */     
-/* 163 */     if (validate) {
-/*     */       
-/* 165 */       if (!XML11Char.isXML11ValidNCName(localName))
-/*     */       {
-/* 167 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_INVALID", null));
-/*     */       }
-/*     */ 
-/*     */       
-/* 171 */       if (null != prefix && !XML11Char.isXML11ValidNCName(prefix))
-/*     */       {
-/* 173 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_PREFIX_INVALID", null));
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 178 */     this._namespaceURI = namespaceURI;
-/* 179 */     this._prefix = prefix;
-/* 180 */     this._localName = localName;
-/* 181 */     this.m_hashCode = toString().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String localName) {
-/* 193 */     this(localName, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String localName, boolean validate) {
-/* 209 */     if (localName == null) {
-/* 210 */       throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_NULL", null));
-/*     */     }
-/*     */     
-/* 213 */     if (validate)
-/*     */     {
-/* 215 */       if (!XML11Char.isXML11ValidNCName(localName))
-/*     */       {
-/* 217 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_INVALID", null));
-/*     */       }
-/*     */     }
-/*     */     
-/* 221 */     this._namespaceURI = null;
-/* 222 */     this._localName = localName;
-/* 223 */     this.m_hashCode = toString().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String qname, Stack namespaces) {
-/* 236 */     this(qname, namespaces, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String qname, Stack<NameSpace> namespaces, boolean validate) {
-/* 252 */     String namespace = null;
-/* 253 */     String prefix = null;
-/* 254 */     int indexOfNSSep = qname.indexOf(':');
-/*     */     
-/* 256 */     if (indexOfNSSep > 0) {
-/*     */       
-/* 258 */       prefix = qname.substring(0, indexOfNSSep);
-/*     */       
-/* 260 */       if (prefix.equals("xml")) {
-/*     */         
-/* 262 */         namespace = "http://www.w3.org/XML/1998/namespace";
-/*     */       } else {
-/*     */         
-/* 265 */         if (prefix.equals("xmlns")) {
-/*     */           return;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 271 */         int depth = namespaces.size();
-/*     */         
-/* 273 */         for (int i = depth - 1; i >= 0; i--) {
-/*     */           
-/* 275 */           NameSpace ns = namespaces.elementAt(i);
-/*     */           
-/* 277 */           while (null != ns) {
-/*     */             
-/* 279 */             if (null != ns.m_prefix && prefix.equals(ns.m_prefix)) {
-/*     */               
-/* 281 */               namespace = ns.m_uri;
-/* 282 */               i = -1;
-/*     */               
-/*     */               break;
-/*     */             } 
-/*     */             
-/* 287 */             ns = ns.m_next;
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 292 */       if (null == namespace)
-/*     */       {
-/* 294 */         throw new RuntimeException(
-/* 295 */             XMLMessages.createXMLMessage("ER_PREFIX_MUST_RESOLVE", new Object[] { prefix }));
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 301 */     this
-/* 302 */       ._localName = (indexOfNSSep < 0) ? qname : qname.substring(indexOfNSSep + 1);
-/*     */     
-/* 304 */     if (validate)
-/*     */     {
-/* 306 */       if (this._localName == null || !XML11Char.isXML11ValidNCName(this._localName))
-/*     */       {
-/* 308 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_INVALID", null));
-/*     */       }
-/*     */     }
-/*     */     
-/* 312 */     this._namespaceURI = namespace;
-/* 313 */     this._prefix = prefix;
-/* 314 */     this.m_hashCode = toString().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String qname, Element namespaceContext, PrefixResolver resolver) {
-/* 329 */     this(qname, namespaceContext, resolver, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String qname, Element namespaceContext, PrefixResolver resolver, boolean validate) {
-/* 347 */     this._namespaceURI = null;
-/*     */     
-/* 349 */     int indexOfNSSep = qname.indexOf(':');
-/*     */     
-/* 351 */     if (indexOfNSSep > 0)
-/*     */     {
-/* 353 */       if (null != namespaceContext) {
-/*     */         
-/* 355 */         String prefix = qname.substring(0, indexOfNSSep);
-/*     */         
-/* 357 */         this._prefix = prefix;
-/*     */         
-/* 359 */         if (prefix.equals("xml")) {
-/*     */           
-/* 361 */           this._namespaceURI = "http://www.w3.org/XML/1998/namespace";
-/*     */         }
-/*     */         else {
-/*     */           
-/* 365 */           if (prefix.equals("xmlns")) {
-/*     */             return;
-/*     */           }
-/*     */ 
-/*     */ 
-/*     */           
-/* 371 */           this._namespaceURI = resolver.getNamespaceForPrefix(prefix, namespaceContext);
-/*     */         } 
-/*     */ 
-/*     */         
-/* 375 */         if (null == this._namespaceURI)
-/*     */         {
-/* 377 */           throw new RuntimeException(
-/* 378 */               XMLMessages.createXMLMessage("ER_PREFIX_MUST_RESOLVE", new Object[] { prefix }));
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 390 */     this
-/* 391 */       ._localName = (indexOfNSSep < 0) ? qname : qname.substring(indexOfNSSep + 1);
-/*     */     
-/* 393 */     if (validate)
-/*     */     {
-/* 395 */       if (this._localName == null || !XML11Char.isXML11ValidNCName(this._localName))
-/*     */       {
-/* 397 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_INVALID", null));
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */     
-/* 402 */     this.m_hashCode = toString().hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String qname, PrefixResolver resolver) {
-/* 416 */     this(qname, resolver, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName(String qname, PrefixResolver resolver, boolean validate) {
-/* 432 */     String prefix = null;
-/* 433 */     this._namespaceURI = null;
-/*     */     
-/* 435 */     int indexOfNSSep = qname.indexOf(':');
-/*     */     
-/* 437 */     if (indexOfNSSep > 0) {
-/*     */       
-/* 439 */       prefix = qname.substring(0, indexOfNSSep);
-/*     */       
-/* 441 */       if (prefix.equals("xml")) {
-/*     */         
-/* 443 */         this._namespaceURI = "http://www.w3.org/XML/1998/namespace";
-/*     */       }
-/*     */       else {
-/*     */         
-/* 447 */         this._namespaceURI = resolver.getNamespaceForPrefix(prefix);
-/*     */       } 
-/*     */       
-/* 450 */       if (null == this._namespaceURI)
-/*     */       {
-/* 452 */         throw new RuntimeException(
-/* 453 */             XMLMessages.createXMLMessage("ER_PREFIX_MUST_RESOLVE", new Object[] { prefix }));
-/*     */       }
-/*     */ 
-/*     */       
-/* 457 */       this._localName = qname.substring(indexOfNSSep + 1);
-/*     */     } else {
-/* 459 */       if (indexOfNSSep == 0)
-/*     */       {
-/* 461 */         throw new RuntimeException(
-/* 462 */             XMLMessages.createXMLMessage("ER_NAME_CANT_START_WITH_COLON", null));
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 468 */       this._localName = qname;
-/*     */     } 
-/*     */     
-/* 471 */     if (validate)
-/*     */     {
-/* 473 */       if (this._localName == null || !XML11Char.isXML11ValidNCName(this._localName))
-/*     */       {
-/* 475 */         throw new IllegalArgumentException(XMLMessages.createXMLMessage("ER_ARG_LOCALNAME_INVALID", null));
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 481 */     this.m_hashCode = toString().hashCode();
-/* 482 */     this._prefix = prefix;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespaceURI() {
-/* 493 */     return this._namespaceURI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPrefix() {
-/* 504 */     return this._prefix;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocalName() {
-/* 514 */     return this._localName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 527 */     return (this._prefix != null) ? (this._prefix + ":" + this._localName) : ((this._namespaceURI != null) ? ("{" + this._namespaceURI + "}" + this._localName) : this._localName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toNamespacedString() {
-/* 543 */     return (this._namespaceURI != null) ? ("{" + this._namespaceURI + "}" + this._localName) : this._localName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespace() {
-/* 555 */     return getNamespaceURI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocalPart() {
-/* 565 */     return getLocalName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 575 */     return this.m_hashCode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(String ns, String localPart) {
-/*     */     // Byte code:
-/*     */     //   0: aload_0
-/*     */     //   1: invokevirtual getNamespaceURI : ()Ljava/lang/String;
-/*     */     //   4: astore_3
-/*     */     //   5: aload_0
-/*     */     //   6: invokevirtual getLocalName : ()Ljava/lang/String;
-/*     */     //   9: aload_2
-/*     */     //   10: invokevirtual equals : (Ljava/lang/Object;)Z
-/*     */     //   13: ifeq -> 51
-/*     */     //   16: aconst_null
-/*     */     //   17: aload_3
-/*     */     //   18: if_acmpeq -> 37
-/*     */     //   21: aconst_null
-/*     */     //   22: aload_1
-/*     */     //   23: if_acmpeq -> 37
-/*     */     //   26: aload_3
-/*     */     //   27: aload_1
-/*     */     //   28: invokevirtual equals : (Ljava/lang/Object;)Z
-/*     */     //   31: ifeq -> 51
-/*     */     //   34: goto -> 47
-/*     */     //   37: aconst_null
-/*     */     //   38: aload_3
-/*     */     //   39: if_acmpne -> 51
-/*     */     //   42: aconst_null
-/*     */     //   43: aload_1
-/*     */     //   44: if_acmpne -> 51
-/*     */     //   47: iconst_1
-/*     */     //   48: goto -> 52
-/*     */     //   51: iconst_0
-/*     */     //   52: ireturn
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #591	-> 0
-/*     */     //   #593	-> 5
-/*     */     //   #595	-> 28
-/*     */     //   #593	-> 52
-/*     */     // Local variable table:
-/*     */     //   start	length	slot	name	descriptor
-/*     */     //   0	53	0	this	Lcom/sun/org/apache/xml/internal/utils/QName;
-/*     */     //   0	53	1	ns	Ljava/lang/String;
-/*     */     //   0	53	2	localPart	Ljava/lang/String;
-/*     */     //   5	48	3	thisnamespace	Ljava/lang/String;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object object) {
-/*     */     // Byte code:
-/*     */     //   0: aload_1
-/*     */     //   1: aload_0
-/*     */     //   2: if_acmpne -> 7
-/*     */     //   5: iconst_1
-/*     */     //   6: ireturn
-/*     */     //   7: aload_1
-/*     */     //   8: instanceof com/sun/org/apache/xml/internal/utils/QName
-/*     */     //   11: ifeq -> 84
-/*     */     //   14: aload_1
-/*     */     //   15: checkcast com/sun/org/apache/xml/internal/utils/QName
-/*     */     //   18: astore_2
-/*     */     //   19: aload_0
-/*     */     //   20: invokevirtual getNamespaceURI : ()Ljava/lang/String;
-/*     */     //   23: astore_3
-/*     */     //   24: aload_2
-/*     */     //   25: invokevirtual getNamespaceURI : ()Ljava/lang/String;
-/*     */     //   28: astore #4
-/*     */     //   30: aload_0
-/*     */     //   31: invokevirtual getLocalName : ()Ljava/lang/String;
-/*     */     //   34: aload_2
-/*     */     //   35: invokevirtual getLocalName : ()Ljava/lang/String;
-/*     */     //   38: invokevirtual equals : (Ljava/lang/Object;)Z
-/*     */     //   41: ifeq -> 82
-/*     */     //   44: aconst_null
-/*     */     //   45: aload_3
-/*     */     //   46: if_acmpeq -> 67
-/*     */     //   49: aconst_null
-/*     */     //   50: aload #4
-/*     */     //   52: if_acmpeq -> 67
-/*     */     //   55: aload_3
-/*     */     //   56: aload #4
-/*     */     //   58: invokevirtual equals : (Ljava/lang/Object;)Z
-/*     */     //   61: ifeq -> 82
-/*     */     //   64: goto -> 78
-/*     */     //   67: aconst_null
-/*     */     //   68: aload_3
-/*     */     //   69: if_acmpne -> 82
-/*     */     //   72: aconst_null
-/*     */     //   73: aload #4
-/*     */     //   75: if_acmpne -> 82
-/*     */     //   78: iconst_1
-/*     */     //   79: goto -> 83
-/*     */     //   82: iconst_0
-/*     */     //   83: ireturn
-/*     */     //   84: iconst_0
-/*     */     //   85: ireturn
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #609	-> 0
-/*     */     //   #610	-> 5
-/*     */     //   #612	-> 7
-/*     */     //   #613	-> 14
-/*     */     //   #614	-> 19
-/*     */     //   #615	-> 24
-/*     */     //   #617	-> 30
-/*     */     //   #619	-> 58
-/*     */     //   #617	-> 83
-/*     */     //   #623	-> 84
-/*     */     // Local variable table:
-/*     */     //   start	length	slot	name	descriptor
-/*     */     //   19	65	2	qname	Lcom/sun/org/apache/xml/internal/utils/QName;
-/*     */     //   24	60	3	thisnamespace	Ljava/lang/String;
-/*     */     //   30	54	4	thatnamespace	Ljava/lang/String;
-/*     */     //   0	86	0	this	Lcom/sun/org/apache/xml/internal/utils/QName;
-/*     */     //   0	86	1	object	Ljava/lang/Object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static QName getQNameFromString(String name) {
-/*     */     QName qname;
-/* 637 */     StringTokenizer tokenizer = new StringTokenizer(name, "{}", false);
-/*     */     
-/* 639 */     String s1 = tokenizer.nextToken();
-/* 640 */     String s2 = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : null;
-/*     */     
-/* 642 */     if (null == s2) {
-/* 643 */       qname = new QName(null, s1);
-/*     */     } else {
-/* 645 */       qname = new QName(s1, s2);
-/*     */     } 
-/* 647 */     return qname;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isXMLNSDecl(String attRawName) {
-/* 661 */     return (attRawName.startsWith("xmlns") && (attRawName
-/* 662 */       .equals("xmlns") || attRawName
-/* 663 */       .startsWith("xmlns:")));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getPrefixFromXMLNSDecl(String attRawName) {
-/* 677 */     int index = attRawName.indexOf(':');
-/*     */     
-/* 679 */     return (index >= 0) ? attRawName.substring(index + 1) : "";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getLocalPart(String qname) {
-/* 692 */     int index = qname.indexOf(':');
-/*     */     
-/* 694 */     return (index < 0) ? qname : qname.substring(index + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getPrefixPart(String qname) {
-/* 707 */     int index = qname.indexOf(':');
-/*     */     
-/* 709 */     return (index >= 0) ? qname.substring(0, index) : "";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\QName.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: QName.java,v 1.2.4.1 2005/09/15 08:15:52 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+import java.util.Stack;
+import java.util.StringTokenizer;
+
+import com.sun.org.apache.xml.internal.res.XMLErrorResources;
+import com.sun.org.apache.xml.internal.res.XMLMessages;
+
+import org.w3c.dom.Element;
+
+/**
+ * Class to represent a qualified name: "The name of an internal XSLT object,
+ * specifically a named template (see [7 Named Templates]), a mode (see [6.7 Modes]),
+ * an attribute set (see [8.1.4 Named Attribute Sets]), a key (see [14.2 Keys]),
+ * a locale (see [14.3 Number Formatting]), a variable or a parameter (see
+ * [12 Variables and Parameters]) is specified as a QName. If it has a prefix,
+ * then the prefix is expanded into a URI reference using the namespace declarations
+ * in effect on the attribute in which the name occurs. The expanded name
+ * consisting of the local part of the name and the possibly null URI reference
+ * is used as the name of the object. The default namespace is not used for
+ * unprefixed names."
+ * @xsl.usage general
+ */
+public class QName implements java.io.Serializable
+{
+    static final long serialVersionUID = 467434581652829920L;
+
+  /**
+   * The local name.
+   * @serial
+   */
+  protected String _localName;
+
+  /**
+   * The namespace URI.
+   * @serial
+   */
+  protected String _namespaceURI;
+
+  /**
+   * The namespace prefix.
+   * @serial
+   */
+  protected String _prefix;
+
+  /**
+   * The XML namespace.
+   */
+  public static final String S_XMLNAMESPACEURI =
+    "http://www.w3.org/XML/1998/namespace";
+
+  /**
+   * The cached hashcode, which is calculated at construction time.
+   * @serial
+   */
+  private int m_hashCode;
+
+  /**
+   * Constructs an empty QName.
+   * 20001019: Try making this public, to support Serializable? -- JKESS
+   */
+  public QName(){}
+
+  /**
+   * Constructs a new QName with the specified namespace URI and
+   * local name.
+   *
+   * @param namespaceURI The namespace URI if known, or null
+   * @param localName The local name
+   */
+  public QName(String namespaceURI, String localName)
+  {
+    this(namespaceURI, localName, false);
+  }
+
+  /**
+   * Constructs a new QName with the specified namespace URI and
+   * local name.
+   *
+   * @param namespaceURI The namespace URI if known, or null
+   * @param localName The local name
+   * @param validate If true the new QName will be validated and an IllegalArgumentException will
+   *                 be thrown if it is invalid.
+   */
+  public QName(String namespaceURI, String localName, boolean validate)
+  {
+
+    // This check was already here.  So, for now, I will not add it to the validation
+    // that is done when the validate parameter is true.
+    if (localName == null)
+      throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_NULL, null)); //"Argument 'localName' is null");
+
+    if (validate)
+    {
+        if (!XML11Char.isXML11ValidNCName(localName))
+        {
+            throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_INVALID,null )); //"Argument 'localName' not a valid NCName");
+        }
+    }
+
+    _namespaceURI = namespaceURI;
+    _localName = localName;
+    m_hashCode = toString().hashCode();
+  }
+
+  /**
+   * Constructs a new QName with the specified namespace URI, prefix
+   * and local name.
+   *
+   * @param namespaceURI The namespace URI if known, or null
+   * @param prefix The namespace prefix is known, or null
+   * @param localName The local name
+   *
+   */
+  public QName(String namespaceURI, String prefix, String localName)
+  {
+     this(namespaceURI, prefix, localName, false);
+  }
+
+ /**
+   * Constructs a new QName with the specified namespace URI, prefix
+   * and local name.
+   *
+   * @param namespaceURI The namespace URI if known, or null
+   * @param prefix The namespace prefix is known, or null
+   * @param localName The local name
+   * @param validate If true the new QName will be validated and an IllegalArgumentException will
+   *                 be thrown if it is invalid.
+   */
+  public QName(String namespaceURI, String prefix, String localName, boolean validate)
+  {
+
+    // This check was already here.  So, for now, I will not add it to the validation
+    // that is done when the validate parameter is true.
+    if (localName == null)
+      throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_NULL, null)); //"Argument 'localName' is null");
+
+    if (validate)
+    {
+        if (!XML11Char.isXML11ValidNCName(localName))
+        {
+            throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_INVALID,null )); //"Argument 'localName' not a valid NCName");
+        }
+
+        if ((null != prefix) && (!XML11Char.isXML11ValidNCName(prefix)))
+        {
+            throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_PREFIX_INVALID,null )); //"Argument 'prefix' not a valid NCName");
+        }
+
+    }
+    _namespaceURI = namespaceURI;
+    _prefix = prefix;
+    _localName = localName;
+    m_hashCode = toString().hashCode();
+  }
+
+  /**
+   * Construct a QName from a string, without namespace resolution.  Good
+   * for a few odd cases.
+   *
+   * @param localName Local part of qualified name
+   *
+   */
+  public QName(String localName)
+  {
+    this(localName, false);
+  }
+
+  /**
+   * Construct a QName from a string, without namespace resolution.  Good
+   * for a few odd cases.
+   *
+   * @param localName Local part of qualified name
+   * @param validate If true the new QName will be validated and an IllegalArgumentException will
+   *                 be thrown if it is invalid.
+   */
+  public QName(String localName, boolean validate)
+  {
+
+    // This check was already here.  So, for now, I will not add it to the validation
+    // that is done when the validate parameter is true.
+    if (localName == null)
+      throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_NULL, null)); //"Argument 'localName' is null");
+
+    if (validate)
+    {
+        if (!XML11Char.isXML11ValidNCName(localName))
+        {
+            throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_INVALID,null )); //"Argument 'localName' not a valid NCName");
+        }
+    }
+    _namespaceURI = null;
+    _localName = localName;
+    m_hashCode = toString().hashCode();
+  }
+
+  /**
+   * Construct a QName from a string, resolving the prefix
+   * using the given namespace stack. The default namespace is
+   * not resolved.
+   *
+   * @param qname Qualified name to resolve
+   * @param namespaces Namespace stack to use to resolve namespace
+   */
+  public QName(String qname, Stack namespaces)
+  {
+    this(qname, namespaces, false);
+  }
+
+  /**
+   * Construct a QName from a string, resolving the prefix
+   * using the given namespace stack. The default namespace is
+   * not resolved.
+   *
+   * @param qname Qualified name to resolve
+   * @param namespaces Namespace stack to use to resolve namespace
+   * @param validate If true the new QName will be validated and an IllegalArgumentException will
+   *                 be thrown if it is invalid.
+   */
+  public QName(String qname, Stack namespaces, boolean validate)
+  {
+
+    String namespace = null;
+    String prefix = null;
+    int indexOfNSSep = qname.indexOf(':');
+
+    if (indexOfNSSep > 0)
+    {
+      prefix = qname.substring(0, indexOfNSSep);
+
+      if (prefix.equals("xml"))
+      {
+        namespace = S_XMLNAMESPACEURI;
+      }
+      // Do we want this?
+      else if (prefix.equals("xmlns"))
+      {
+        return;
+      }
+      else
+      {
+        int depth = namespaces.size();
+
+        for (int i = depth - 1; i >= 0; i--)
+        {
+          NameSpace ns = (NameSpace) namespaces.elementAt(i);
+
+          while (null != ns)
+          {
+            if ((null != ns.m_prefix) && prefix.equals(ns.m_prefix))
+            {
+              namespace = ns.m_uri;
+              i = -1;
+
+              break;
+            }
+
+            ns = ns.m_next;
+          }
+        }
+      }
+
+      if (null == namespace)
+      {
+        throw new RuntimeException(
+          XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_PREFIX_MUST_RESOLVE,
+            new Object[]{ prefix }));  //"Prefix must resolve to a namespace: "+prefix);
+      }
+    }
+
+    _localName = (indexOfNSSep < 0)
+                 ? qname : qname.substring(indexOfNSSep + 1);
+
+    if (validate)
+    {
+        if ((_localName == null) || (!XML11Char.isXML11ValidNCName(_localName)))
+        {
+           throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_INVALID,null )); //"Argument 'localName' not a valid NCName");
+        }
+    }
+    _namespaceURI = namespace;
+    _prefix = prefix;
+    m_hashCode = toString().hashCode();
+  }
+
+  /**
+   * Construct a QName from a string, resolving the prefix
+   * using the given namespace context and prefix resolver.
+   * The default namespace is not resolved.
+   *
+   * @param qname Qualified name to resolve
+   * @param namespaceContext Namespace Context to use
+   * @param resolver Prefix resolver for this context
+   */
+  public QName(String qname, Element namespaceContext,
+               PrefixResolver resolver)
+  {
+      this(qname, namespaceContext, resolver, false);
+  }
+
+  /**
+   * Construct a QName from a string, resolving the prefix
+   * using the given namespace context and prefix resolver.
+   * The default namespace is not resolved.
+   *
+   * @param qname Qualified name to resolve
+   * @param namespaceContext Namespace Context to use
+   * @param resolver Prefix resolver for this context
+   * @param validate If true the new QName will be validated and an IllegalArgumentException will
+   *                 be thrown if it is invalid.
+   */
+  public QName(String qname, Element namespaceContext,
+               PrefixResolver resolver, boolean validate)
+  {
+
+    _namespaceURI = null;
+
+    int indexOfNSSep = qname.indexOf(':');
+
+    if (indexOfNSSep > 0)
+    {
+      if (null != namespaceContext)
+      {
+        String prefix = qname.substring(0, indexOfNSSep);
+
+        _prefix = prefix;
+
+        if (prefix.equals("xml"))
+        {
+          _namespaceURI = S_XMLNAMESPACEURI;
+        }
+
+        // Do we want this?
+        else if (prefix.equals("xmlns"))
+        {
+          return;
+        }
+        else
+        {
+          _namespaceURI = resolver.getNamespaceForPrefix(prefix,
+                  namespaceContext);
+        }
+
+        if (null == _namespaceURI)
+        {
+          throw new RuntimeException(
+            XMLMessages.createXMLMessage(
+              XMLErrorResources.ER_PREFIX_MUST_RESOLVE,
+              new Object[]{ prefix }));  //"Prefix must resolve to a namespace: "+prefix);
+        }
+      }
+      else
+      {
+
+        // TODO: error or warning...
+      }
+    }
+
+    _localName = (indexOfNSSep < 0)
+                 ? qname : qname.substring(indexOfNSSep + 1);
+
+    if (validate)
+    {
+        if ((_localName == null) || (!XML11Char.isXML11ValidNCName(_localName)))
+        {
+           throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_INVALID,null )); //"Argument 'localName' not a valid NCName");
+        }
+    }
+
+    m_hashCode = toString().hashCode();
+  }
+
+
+  /**
+   * Construct a QName from a string, resolving the prefix
+   * using the given namespace stack. The default namespace is
+   * not resolved.
+   *
+   * @param qname Qualified name to resolve
+   * @param resolver Prefix resolver for this context
+   */
+  public QName(String qname, PrefixResolver resolver)
+  {
+    this(qname, resolver, false);
+  }
+
+  /**
+   * Construct a QName from a string, resolving the prefix
+   * using the given namespace stack. The default namespace is
+   * not resolved.
+   *
+   * @param qname Qualified name to resolve
+   * @param resolver Prefix resolver for this context
+   * @param validate If true the new QName will be validated and an IllegalArgumentException will
+   *                 be thrown if it is invalid.
+   */
+  public QName(String qname, PrefixResolver resolver, boolean validate)
+  {
+
+        String prefix = null;
+    _namespaceURI = null;
+
+    int indexOfNSSep = qname.indexOf(':');
+
+    if (indexOfNSSep > 0)
+    {
+      prefix = qname.substring(0, indexOfNSSep);
+
+      if (prefix.equals("xml"))
+      {
+        _namespaceURI = S_XMLNAMESPACEURI;
+      }
+      else
+      {
+        _namespaceURI = resolver.getNamespaceForPrefix(prefix);
+      }
+
+      if (null == _namespaceURI)
+      {
+        throw new RuntimeException(
+          XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_PREFIX_MUST_RESOLVE,
+            new Object[]{ prefix }));  //"Prefix must resolve to a namespace: "+prefix);
+      }
+      _localName = qname.substring(indexOfNSSep + 1);
+    }
+    else if (indexOfNSSep == 0)
+    {
+      throw new RuntimeException(
+         XMLMessages.createXMLMessage(
+           XMLErrorResources.ER_NAME_CANT_START_WITH_COLON,
+           null));
+    }
+    else
+    {
+      _localName = qname;
+    }
+
+    if (validate)
+    {
+        if ((_localName == null) || (!XML11Char.isXML11ValidNCName(_localName)))
+        {
+           throw new IllegalArgumentException(XMLMessages.createXMLMessage(
+            XMLErrorResources.ER_ARG_LOCALNAME_INVALID,null )); //"Argument 'localName' not a valid NCName");
+        }
+    }
+
+
+    m_hashCode = toString().hashCode();
+    _prefix = prefix;
+  }
+
+  /**
+   * Returns the namespace URI. Returns null if the namespace URI
+   * is not known.
+   *
+   * @return The namespace URI, or null
+   */
+  public String getNamespaceURI()
+  {
+    return _namespaceURI;
+  }
+
+  /**
+   * Returns the namespace prefix. Returns null if the namespace
+   * prefix is not known.
+   *
+   * @return The namespace prefix, or null
+   */
+  public String getPrefix()
+  {
+    return _prefix;
+  }
+
+  /**
+   * Returns the local part of the qualified name.
+   *
+   * @return The local part of the qualified name
+   */
+  public String getLocalName()
+  {
+    return _localName;
+  }
+
+  /**
+   * Return the string representation of the qualified name, using the
+   * prefix if available, or the '{ns}foo' notation if not. Performs
+   * string concatenation, so beware of performance issues.
+   *
+   * @return the string representation of the namespace
+   */
+  public String toString()
+  {
+
+    return _prefix != null
+           ? (_prefix + ":" + _localName)
+           : (_namespaceURI != null
+              ? ("{"+_namespaceURI + "}" + _localName) : _localName);
+  }
+
+  /**
+   * Return the string representation of the qualified name using the
+   * the '{ns}foo' notation. Performs
+   * string concatenation, so beware of performance issues.
+   *
+   * @return the string representation of the namespace
+   */
+  public String toNamespacedString()
+  {
+
+    return (_namespaceURI != null
+              ? ("{"+_namespaceURI + "}" + _localName) : _localName);
+  }
+
+
+  /**
+   * Get the namespace of the qualified name.
+   *
+   * @return the namespace URI of the qualified name
+   */
+  public String getNamespace()
+  {
+    return getNamespaceURI();
+  }
+
+  /**
+   * Get the local part of the qualified name.
+   *
+   * @return the local part of the qualified name
+   */
+  public String getLocalPart()
+  {
+    return getLocalName();
+  }
+
+  /**
+   * Return the cached hashcode of the qualified name.
+   *
+   * @return the cached hashcode of the qualified name
+   */
+  public int hashCode()
+  {
+    return m_hashCode;
+  }
+
+  /**
+   * Override equals and agree that we're equal if
+   * the passed object is a string and it matches
+   * the name of the arg.
+   *
+   * @param ns Namespace URI to compare to
+   * @param localPart Local part of qualified name to compare to
+   *
+   * @return True if the local name and uri match
+   */
+  public boolean equals(String ns, String localPart)
+  {
+
+    String thisnamespace = getNamespaceURI();
+
+    return getLocalName().equals(localPart)
+           && (((null != thisnamespace) && (null != ns))
+               ? thisnamespace.equals(ns)
+               : ((null == thisnamespace) && (null == ns)));
+  }
+
+  /**
+   * Override equals and agree that we're equal if
+   * the passed object is a QName and it matches
+   * the name of the arg.
+   *
+   * @return True if the qualified names are equal
+   */
+  public boolean equals(Object object)
+  {
+
+    if (object == this)
+      return true;
+
+    if (object instanceof QName) {
+      QName qname = (QName) object;
+      String thisnamespace = getNamespaceURI();
+      String thatnamespace = qname.getNamespaceURI();
+
+      return getLocalName().equals(qname.getLocalName())
+             && (((null != thisnamespace) && (null != thatnamespace))
+                 ? thisnamespace.equals(thatnamespace)
+                 : ((null == thisnamespace) && (null == thatnamespace)));
+    }
+    else
+      return false;
+  }
+
+  /**
+   * Given a string, create and return a QName object
+   *
+   *
+   * @param name String to use to create QName
+   *
+   * @return a QName object
+   */
+  public static QName getQNameFromString(String name)
+  {
+
+    StringTokenizer tokenizer = new StringTokenizer(name, "{}", false);
+    QName qname;
+    String s1 = tokenizer.nextToken();
+    String s2 = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : null;
+
+    if (null == s2)
+      qname = new QName(null, s1);
+    else
+      qname = new QName(s1, s2);
+
+    return qname;
+  }
+
+  /**
+   * This function tells if a raw attribute name is a
+   * xmlns attribute.
+   *
+   * @param attRawName Raw name of attribute
+   *
+   * @return True if the attribute starts with or is equal to xmlns
+   */
+  public static boolean isXMLNSDecl(String attRawName)
+  {
+
+    return (attRawName.startsWith("xmlns")
+            && (attRawName.equals("xmlns")
+                || attRawName.startsWith("xmlns:")));
+  }
+
+  /**
+   * This function tells if a raw attribute name is a
+   * xmlns attribute.
+   *
+   * @param attRawName Raw name of attribute
+   *
+   * @return Prefix of attribute
+   */
+  public static String getPrefixFromXMLNSDecl(String attRawName)
+  {
+
+    int index = attRawName.indexOf(':');
+
+    return (index >= 0) ? attRawName.substring(index + 1) : "";
+  }
+
+  /**
+   * Returns the local name of the given node.
+   *
+   * @param qname Input name
+   *
+   * @return Local part of the name if prefixed, or the given name if not
+   */
+  public static String getLocalPart(String qname)
+  {
+
+    int index = qname.indexOf(':');
+
+    return (index < 0) ? qname : qname.substring(index + 1);
+  }
+
+  /**
+   * Returns the local name of the given node.
+   *
+   * @param qname Input name
+   *
+   * @return Prefix of name or empty string if none there
+   */
+  public static String getPrefixPart(String qname)
+  {
+
+    int index = qname.indexOf(':');
+
+    return (index >= 0) ? qname.substring(0, index) : "";
+  }
+}

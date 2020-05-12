@@ -1,15 +1,45 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.event;
 
+import javax.swing.event.ChangeEvent;
 import java.util.EventListener;
 
-public interface CellEditorListener extends EventListener {
-  void editingStopped(ChangeEvent paramChangeEvent);
-  
-  void editingCanceled(ChangeEvent paramChangeEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\CellEditorListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * CellEditorListener defines the interface for an object that listens
+ * to changes in a CellEditor
+ *
+ * @author Alan Chung
  */
+
+public interface CellEditorListener extends java.util.EventListener {
+
+    /** This tells the listeners the editor has ended editing */
+    public void editingStopped(ChangeEvent e);
+
+    /** This tells the listeners the editor has canceled editing */
+    public void editingCanceled(ChangeEvent e);
+}

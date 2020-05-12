@@ -1,214 +1,208 @@
-/*     */ package com.sun.corba.se.impl.ior;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ByteBuffer
-/*     */ {
-/*     */   protected byte[] elementData;
-/*     */   protected int elementCount;
-/*     */   protected int capacityIncrement;
-/*     */   
-/*     */   public ByteBuffer(int paramInt1, int paramInt2) {
-/*  70 */     if (paramInt1 < 0) {
-/*  71 */       throw new IllegalArgumentException("Illegal Capacity: " + paramInt1);
-/*     */     }
-/*  73 */     this.elementData = new byte[paramInt1];
-/*  74 */     this.capacityIncrement = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer(int paramInt) {
-/*  86 */     this(paramInt, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer() {
-/*  95 */     this(200);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void trimToSize() {
-/* 107 */     int i = this.elementData.length;
-/* 108 */     if (this.elementCount < i) {
-/* 109 */       byte[] arrayOfByte = this.elementData;
-/* 110 */       this.elementData = new byte[this.elementCount];
-/* 111 */       System.arraycopy(arrayOfByte, 0, this.elementData, 0, this.elementCount);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void ensureCapacityHelper(int paramInt) {
-/* 124 */     int i = this.elementData.length;
-/* 125 */     if (paramInt > i) {
-/* 126 */       byte[] arrayOfByte = this.elementData;
-/* 127 */       int j = (this.capacityIncrement > 0) ? (i + this.capacityIncrement) : (i * 2);
-/*     */       
-/* 129 */       if (j < paramInt) {
-/* 130 */         j = paramInt;
-/*     */       }
-/* 132 */       this.elementData = new byte[j];
-/* 133 */       System.arraycopy(arrayOfByte, 0, this.elementData, 0, this.elementCount);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int capacity() {
-/* 145 */     return this.elementData.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 154 */     return this.elementCount;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isEmpty() {
-/* 165 */     return (this.elementCount == 0);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void append(byte paramByte) {
-/* 170 */     ensureCapacityHelper(this.elementCount + 1);
-/* 171 */     this.elementData[this.elementCount++] = paramByte;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void append(int paramInt) {
-/* 176 */     ensureCapacityHelper(this.elementCount + 4);
-/* 177 */     doAppend(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void doAppend(int paramInt) {
-/* 182 */     int i = paramInt;
-/* 183 */     for (byte b = 0; b < 4; b++) {
-/* 184 */       this.elementData[this.elementCount + b] = (byte)(i & 0xFF);
-/* 185 */       i >>= 8;
-/*     */     } 
-/* 187 */     this.elementCount += 4;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void append(String paramString) {
-/* 192 */     byte[] arrayOfByte = paramString.getBytes();
-/* 193 */     ensureCapacityHelper(this.elementCount + arrayOfByte.length + 4);
-/* 194 */     doAppend(arrayOfByte.length);
-/* 195 */     System.arraycopy(arrayOfByte, 0, this.elementData, this.elementCount, arrayOfByte.length);
-/* 196 */     this.elementCount += arrayOfByte.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] toArray() {
-/* 206 */     return this.elementData;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\ByteBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior ;
+
+
+public class ByteBuffer {
+    /**
+     * The array buffer into which the components of the ByteBuffer are
+     * stored. The capacity of the ByteBuffer is the length of this array buffer,
+     * and is at least large enough to contain all the ByteBuffer's elements.<p>
+     *
+     * Any array elements following the last element in the ByteBuffer are 0.
+     */
+    protected byte elementData[];
+
+    /**
+     * The number of valid components in this <tt>ByteBuffer</tt> object.
+     * Components <tt>elementData[0]</tt> through
+     * <tt>elementData[elementCount-1]</tt> are the actual items.
+     *
+     * @serial
+     */
+    protected int elementCount;
+
+    /**
+     * The amount by which the capacity of the ByteBuffer is automatically
+     * incremented when its size becomes greater than its capacity.  If
+     * the capacity increment is less than or equal to zero, the capacity
+     * of the ByteBuffer is doubled each time it needs to grow.
+     *
+     * @serial
+     */
+    protected int capacityIncrement;
+
+    /**
+     * Constructs an empty ByteBuffer with the specified initial capacity and
+     * capacity increment.
+     *
+     * @param   initialCapacity     the initial capacity of the ByteBuffer.
+     * @param   capacityIncrement   the amount by which the capacity is
+     *                              increased when the ByteBuffer overflows.
+     * @exception IllegalArgumentException if the specified initial capacity
+     *               is negative
+     */
+    public ByteBuffer(int initialCapacity, int capacityIncrement) {
+        super();
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        this.elementData = new byte[initialCapacity];
+        this.capacityIncrement = capacityIncrement;
+    }
+
+    /**
+     * Constructs an empty ByteBuffer with the specified initial capacity and
+     * with its capacity increment equal to zero.
+     *
+     * @param   initialCapacity   the initial capacity of the ByteBuffer.
+     * @exception IllegalArgumentException if the specified initial capacity
+     *               is negative
+     */
+    public ByteBuffer(int initialCapacity) {
+        this(initialCapacity, 0);
+    }
+
+    /**
+     * Constructs an empty ByteBuffer so that its internal data array
+     * has size <tt>10</tt> and its standard capacity increment is
+     * zero.
+     */
+    public ByteBuffer() {
+        this(200);
+    }
+
+    /**
+     * Trims the capacity of this ByteBuffer to be the ByteBuffer's current
+     * size. If the capacity of this cector is larger than its current
+     * size, then the capacity is changed to equal the size by replacing
+     * its internal data array, kept in the field <tt>elementData</tt>,
+     * with a smaller one. An application can use this operation to
+     * minimize the storage of a ByteBuffer.
+     */
+    public void trimToSize() {
+        int oldCapacity = elementData.length;
+        if (elementCount < oldCapacity) {
+            byte oldData[] = elementData;
+            elementData = new byte[elementCount];
+            System.arraycopy(oldData, 0, elementData, 0, elementCount);
+        }
+    }
+
+    /**
+     * This implements the unsynchronized semantics of ensureCapacity.
+     * Synchronized methods in this class can internally call this
+     * method for ensuring capacity without incurring the cost of an
+     * extra synchronization.
+     *
+     * @see java.util.ByteBuffer#ensureCapacity(int)
+     */
+    private void ensureCapacityHelper(int minCapacity) {
+        int oldCapacity = elementData.length;
+        if (minCapacity > oldCapacity) {
+            byte oldData[] = elementData;
+            int newCapacity = (capacityIncrement > 0) ?
+                (oldCapacity + capacityIncrement) : (oldCapacity * 2);
+            if (newCapacity < minCapacity) {
+                newCapacity = minCapacity;
+            }
+            elementData = new byte[newCapacity];
+            System.arraycopy(oldData, 0, elementData, 0, elementCount);
+        }
+    }
+
+    /**
+     * Returns the current capacity of this ByteBuffer.
+     *
+     * @return  the current capacity (the length of its internal
+     *          data arary, kept in the field <tt>elementData</tt>
+     *          of this ByteBuffer.
+     */
+    public int capacity() {
+        return elementData.length;
+    }
+
+    /**
+     * Returns the number of components in this ByteBuffer.
+     *
+     * @return  the number of components in this ByteBuffer.
+     */
+    public int size() {
+        return elementCount;
+    }
+
+    /**
+     * Tests if this ByteBuffer has no components.
+     *
+     * @return  <code>true</code> if and only if this ByteBuffer has
+     *          no components, that is, its size is zero;
+     *          <code>false</code> otherwise.
+     */
+    public boolean isEmpty() {
+        return elementCount == 0;
+    }
+
+    public void append(byte value)
+    {
+        ensureCapacityHelper(elementCount + 1);
+        elementData[elementCount++] = value;
+    }
+
+    public void append( int value )
+    {
+        ensureCapacityHelper(elementCount + 4);
+        doAppend( value ) ;
+    }
+
+    private void doAppend( int value )
+    {
+        int current = value ;
+        for (int ctr=0; ctr<4; ctr++) {
+            elementData[elementCount+ctr] = (byte)(current & 255) ;
+            current = current >> 8 ;
+        }
+        elementCount += 4 ;
+    }
+
+    public void append( String value )
+    {
+        byte[] data = value.getBytes() ;
+        ensureCapacityHelper( elementCount + data.length + 4 ) ;
+        doAppend( data.length ) ;
+        System.arraycopy( data, 0, elementData, elementCount, data.length ) ;
+        elementCount += data.length ;
+    }
+
+    /**
+     * Returns an array containing all of the elements in this ByteBuffer
+     * in the correct order.
+     *
+     * @since 1.2
+     */
+    public byte[] toArray() {
+        return elementData ;
+    }
+}

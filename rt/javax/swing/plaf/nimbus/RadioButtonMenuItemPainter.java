@@ -1,173 +1,171 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.geom.Ellipse2D;
-/*     */ import java.awt.geom.Path2D;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.geom.RoundRectangle2D;
-/*     */ import javax.swing.JComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class RadioButtonMenuItemPainter
-/*     */   extends AbstractRegionPainter
-/*     */ {
-/*     */   static final int BACKGROUND_DISABLED = 1;
-/*     */   static final int BACKGROUND_ENABLED = 2;
-/*     */   static final int BACKGROUND_MOUSEOVER = 3;
-/*     */   static final int BACKGROUND_SELECTED_MOUSEOVER = 4;
-/*     */   static final int CHECKICON_DISABLED_SELECTED = 5;
-/*     */   static final int CHECKICON_ENABLED_SELECTED = 6;
-/*     */   static final int CHECKICON_SELECTED_MOUSEOVER = 7;
-/*     */   static final int ICON_DISABLED = 8;
-/*     */   static final int ICON_ENABLED = 9;
-/*     */   static final int ICON_MOUSEOVER = 10;
-/*     */   private int state;
-/*     */   private AbstractRegionPainter.PaintContext ctx;
-/*  55 */   private Path2D path = new Path2D.Float();
-/*  56 */   private Rectangle2D rect = new Rectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*  57 */   private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-/*  58 */   private Ellipse2D ellipse = new Ellipse2D.Float(0.0F, 0.0F, 0.0F, 0.0F);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  63 */   private Color color1 = decodeColor("nimbusSelection", 0.0F, 0.0F, 0.0F, 0);
-/*  64 */   private Color color2 = decodeColor("nimbusBlueGrey", 0.0F, -0.08983666F, -0.17647058F, 0);
-/*  65 */   private Color color3 = decodeColor("nimbusBlueGrey", 0.055555582F, -0.09663743F, -0.4627451F, 0);
-/*  66 */   private Color color4 = decodeColor("nimbusBlueGrey", 0.0F, -0.110526316F, 0.25490195F, 0);
-/*     */ 
-/*     */   
-/*     */   private Object[] componentColors;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RadioButtonMenuItemPainter(AbstractRegionPainter.PaintContext paramPaintContext, int paramInt) {
-/*  74 */     this.state = paramInt;
-/*  75 */     this.ctx = paramPaintContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void doPaint(Graphics2D paramGraphics2D, JComponent paramJComponent, int paramInt1, int paramInt2, Object[] paramArrayOfObject) {
-/*  81 */     this.componentColors = paramArrayOfObject;
-/*     */ 
-/*     */     
-/*  84 */     switch (this.state) { case 3:
-/*  85 */         paintBackgroundMouseOver(paramGraphics2D); break;
-/*  86 */       case 4: paintBackgroundSelectedAndMouseOver(paramGraphics2D); break;
-/*  87 */       case 5: paintcheckIconDisabledAndSelected(paramGraphics2D); break;
-/*  88 */       case 6: paintcheckIconEnabledAndSelected(paramGraphics2D); break;
-/*  89 */       case 7: paintcheckIconSelectedAndMouseOver(paramGraphics2D);
-/*     */         break; }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final AbstractRegionPainter.PaintContext getPaintContext() {
-/*  98 */     return this.ctx;
-/*     */   }
-/*     */   
-/*     */   private void paintBackgroundMouseOver(Graphics2D paramGraphics2D) {
-/* 102 */     this.rect = decodeRect1();
-/* 103 */     paramGraphics2D.setPaint(this.color1);
-/* 104 */     paramGraphics2D.fill(this.rect);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintBackgroundSelectedAndMouseOver(Graphics2D paramGraphics2D) {
-/* 109 */     this.rect = decodeRect1();
-/* 110 */     paramGraphics2D.setPaint(this.color1);
-/* 111 */     paramGraphics2D.fill(this.rect);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintcheckIconDisabledAndSelected(Graphics2D paramGraphics2D) {
-/* 116 */     this.path = decodePath1();
-/* 117 */     paramGraphics2D.setPaint(this.color2);
-/* 118 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintcheckIconEnabledAndSelected(Graphics2D paramGraphics2D) {
-/* 123 */     this.path = decodePath2();
-/* 124 */     paramGraphics2D.setPaint(this.color3);
-/* 125 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintcheckIconSelectedAndMouseOver(Graphics2D paramGraphics2D) {
-/* 130 */     this.path = decodePath2();
-/* 131 */     paramGraphics2D.setPaint(this.color4);
-/* 132 */     paramGraphics2D.fill(this.path);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Rectangle2D decodeRect1() {
-/* 139 */     this.rect.setRect(decodeX(1.0F), 
-/* 140 */         decodeY(1.0F), (
-/* 141 */         decodeX(2.0F) - decodeX(1.0F)), (
-/* 142 */         decodeY(2.0F) - decodeY(1.0F)));
-/* 143 */     return this.rect;
-/*     */   }
-/*     */   
-/*     */   private Path2D decodePath1() {
-/* 147 */     this.path.reset();
-/* 148 */     this.path.moveTo(decodeX(0.0F), decodeY(2.097561F));
-/* 149 */     this.path.lineTo(decodeX(0.90975606F), decodeY(0.20243903F));
-/* 150 */     this.path.lineTo(decodeX(3.0F), decodeY(2.102439F));
-/* 151 */     this.path.lineTo(decodeX(0.90731704F), decodeY(3.0F));
-/* 152 */     this.path.lineTo(decodeX(0.0F), decodeY(2.097561F));
-/* 153 */     this.path.closePath();
-/* 154 */     return this.path;
-/*     */   }
-/*     */   
-/*     */   private Path2D decodePath2() {
-/* 158 */     this.path.reset();
-/* 159 */     this.path.moveTo(decodeX(0.0024390244F), decodeY(2.097561F));
-/* 160 */     this.path.lineTo(decodeX(0.90975606F), decodeY(0.20243903F));
-/* 161 */     this.path.lineTo(decodeX(3.0F), decodeY(2.102439F));
-/* 162 */     this.path.lineTo(decodeX(0.90731704F), decodeY(3.0F));
-/* 163 */     this.path.lineTo(decodeX(0.0024390244F), decodeY(2.097561F));
-/* 164 */     this.path.closePath();
-/* 165 */     return this.path;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\RadioButtonMenuItemPainter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.*;
+import java.awt.geom.*;
+import java.awt.image.*;
+import javax.swing.*;
+import javax.swing.Painter;
+
+
+final class RadioButtonMenuItemPainter extends AbstractRegionPainter {
+    //package private integers representing the available states that
+    //this painter will paint. These are used when creating a new instance
+    //of RadioButtonMenuItemPainter to determine which region/state is being painted
+    //by that instance.
+    static final int BACKGROUND_DISABLED = 1;
+    static final int BACKGROUND_ENABLED = 2;
+    static final int BACKGROUND_MOUSEOVER = 3;
+    static final int BACKGROUND_SELECTED_MOUSEOVER = 4;
+    static final int CHECKICON_DISABLED_SELECTED = 5;
+    static final int CHECKICON_ENABLED_SELECTED = 6;
+    static final int CHECKICON_SELECTED_MOUSEOVER = 7;
+    static final int ICON_DISABLED = 8;
+    static final int ICON_ENABLED = 9;
+    static final int ICON_MOUSEOVER = 10;
+
+
+    private int state; //refers to one of the static final ints above
+    private PaintContext ctx;
+
+    //the following 4 variables are reused during the painting code of the layers
+    private Path2D path = new Path2D.Float();
+    private Rectangle2D rect = new Rectangle2D.Float(0, 0, 0, 0);
+    private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0, 0, 0, 0, 0, 0);
+    private Ellipse2D ellipse = new Ellipse2D.Float(0, 0, 0, 0);
+
+    //All Colors used for painting are stored here. Ideally, only those colors being used
+    //by a particular instance of RadioButtonMenuItemPainter would be created. For the moment at least,
+    //however, all are created for each instance.
+    private Color color1 = decodeColor("nimbusSelection", 0.0f, 0.0f, 0.0f, 0);
+    private Color color2 = decodeColor("nimbusBlueGrey", 0.0f, -0.08983666f, -0.17647058f, 0);
+    private Color color3 = decodeColor("nimbusBlueGrey", 0.055555582f, -0.09663743f, -0.4627451f, 0);
+    private Color color4 = decodeColor("nimbusBlueGrey", 0.0f, -0.110526316f, 0.25490195f, 0);
+
+
+    //Array of current component colors, updated in each paint call
+    private Object[] componentColors;
+
+    public RadioButtonMenuItemPainter(PaintContext ctx, int state) {
+        super();
+        this.state = state;
+        this.ctx = ctx;
+    }
+
+    @Override
+    protected void doPaint(Graphics2D g, JComponent c, int width, int height, Object[] extendedCacheKeys) {
+        //populate componentColors array with colors calculated in getExtendedCacheKeys call
+        componentColors = extendedCacheKeys;
+        //generate this entire method. Each state/bg/fg/border combo that has
+        //been painted gets its own KEY and paint method.
+        switch(state) {
+            case BACKGROUND_MOUSEOVER: paintBackgroundMouseOver(g); break;
+            case BACKGROUND_SELECTED_MOUSEOVER: paintBackgroundSelectedAndMouseOver(g); break;
+            case CHECKICON_DISABLED_SELECTED: paintcheckIconDisabledAndSelected(g); break;
+            case CHECKICON_ENABLED_SELECTED: paintcheckIconEnabledAndSelected(g); break;
+            case CHECKICON_SELECTED_MOUSEOVER: paintcheckIconSelectedAndMouseOver(g); break;
+
+        }
+    }
+        
+
+
+    @Override
+    protected final PaintContext getPaintContext() {
+        return ctx;
+    }
+
+    private void paintBackgroundMouseOver(Graphics2D g) {
+        rect = decodeRect1();
+        g.setPaint(color1);
+        g.fill(rect);
+
+    }
+
+    private void paintBackgroundSelectedAndMouseOver(Graphics2D g) {
+        rect = decodeRect1();
+        g.setPaint(color1);
+        g.fill(rect);
+
+    }
+
+    private void paintcheckIconDisabledAndSelected(Graphics2D g) {
+        path = decodePath1();
+        g.setPaint(color2);
+        g.fill(path);
+
+    }
+
+    private void paintcheckIconEnabledAndSelected(Graphics2D g) {
+        path = decodePath2();
+        g.setPaint(color3);
+        g.fill(path);
+
+    }
+
+    private void paintcheckIconSelectedAndMouseOver(Graphics2D g) {
+        path = decodePath2();
+        g.setPaint(color4);
+        g.fill(path);
+
+    }
+
+
+
+    private Rectangle2D decodeRect1() {
+            rect.setRect(decodeX(1.0f), //x
+                         decodeY(1.0f), //y
+                         decodeX(2.0f) - decodeX(1.0f), //width
+                         decodeY(2.0f) - decodeY(1.0f)); //height
+        return rect;
+    }
+
+    private Path2D decodePath1() {
+        path.reset();
+        path.moveTo(decodeX(0.0f), decodeY(2.097561f));
+        path.lineTo(decodeX(0.90975606f), decodeY(0.20243903f));
+        path.lineTo(decodeX(3.0f), decodeY(2.102439f));
+        path.lineTo(decodeX(0.90731704f), decodeY(3.0f));
+        path.lineTo(decodeX(0.0f), decodeY(2.097561f));
+        path.closePath();
+        return path;
+    }
+
+    private Path2D decodePath2() {
+        path.reset();
+        path.moveTo(decodeX(0.0024390244f), decodeY(2.097561f));
+        path.lineTo(decodeX(0.90975606f), decodeY(0.20243903f));
+        path.lineTo(decodeX(3.0f), decodeY(2.102439f));
+        path.lineTo(decodeX(0.90731704f), decodeY(3.0f));
+        path.lineTo(decodeX(0.0024390244f), decodeY(2.097561f));
+        path.closePath();
+        return path;
+    }
+
+
+
+
+}

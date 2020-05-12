@@ -1,11 +1,51 @@
+/*
+ * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ *
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
 package java.nio.channels;
 
-public class UnresolvedAddressException extends IllegalArgumentException {
-  private static final long serialVersionUID = 6136959093620794148L;
-}
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\channels\UnresolvedAddressException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Unchecked exception thrown when an attempt is made to invoke a network
+ * operation upon an unresolved socket address.
+ *
+ * @since 1.4
  */
+
+public class UnresolvedAddressException
+    extends IllegalArgumentException
+{
+
+    private static final long serialVersionUID = 6136959093620794148L;
+
+    /**
+     * Constructs an instance of this class.
+     */
+    public UnresolvedAddressException() { }
+
+}

@@ -1,71 +1,66 @@
-/*    */ package com.sun.corba.se.impl.orb;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orb.DataCollector;
-/*    */ import java.applet.Applet;
-/*    */ import java.net.URL;
-/*    */ import java.util.Properties;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class DataCollectorFactory
-/*    */ {
-/*    */   public static DataCollector create(Applet paramApplet, Properties paramProperties, String paramString) {
-/* 40 */     String str = paramString;
-/*    */     
-/* 42 */     if (paramApplet != null) {
-/* 43 */       URL uRL = paramApplet.getCodeBase();
-/*    */       
-/* 45 */       if (uRL != null) {
-/* 46 */         str = uRL.getHost();
-/*    */       }
-/*    */     } 
-/* 49 */     return new AppletDataCollector(paramApplet, paramProperties, paramString, str);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static DataCollector create(String[] paramArrayOfString, Properties paramProperties, String paramString) {
-/* 56 */     return new NormalDataCollector(paramArrayOfString, paramProperties, paramString, paramString);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static DataCollector create(Properties paramProperties, String paramString) {
-/* 63 */     return new PropertyOnlyDataCollector(paramProperties, paramString, paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\DataCollectorFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orb ;
+
+import java.applet.Applet ;
+import java.util.Properties ;
+import java.net.URL ;
+
+import com.sun.corba.se.spi.orb.DataCollector ;
+
+public abstract class DataCollectorFactory {
+    private DataCollectorFactory() {}
+
+    public static DataCollector create( Applet app, Properties props,
+        String localHostName )
+    {
+        String appletHost = localHostName ;
+
+        if (app != null) {
+            URL appletCodeBase = app.getCodeBase() ;
+
+            if (appletCodeBase != null)
+                appletHost = appletCodeBase.getHost() ;
+        }
+
+        return new AppletDataCollector( app, props, localHostName,
+            appletHost ) ;
+    }
+
+    public static DataCollector create( String[] args, Properties props,
+        String localHostName )
+    {
+        return new NormalDataCollector( args, props, localHostName,
+            localHostName ) ;
+    }
+
+    public static DataCollector create( Properties props,
+        String localHostName )
+    {
+        return new PropertyOnlyDataCollector( props, localHostName,
+            localHostName ) ;
+    }
+}

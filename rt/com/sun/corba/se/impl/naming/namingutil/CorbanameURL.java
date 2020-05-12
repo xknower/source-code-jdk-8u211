@@ -1,126 +1,121 @@
-/*     */ package com.sun.corba.se.impl.naming.namingutil;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.NamingSystemException;
-/*     */ import java.util.ArrayList;
-/*     */ import org.omg.CORBA.BAD_PARAM;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CorbanameURL
-/*     */   extends INSURLBase
-/*     */ {
-/*  41 */   private static NamingSystemException wrapper = NamingSystemException.get("naming");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CorbanameURL(String paramString) {
-/*  49 */     String str1 = paramString;
-/*     */ 
-/*     */     
-/*     */     try {
-/*  53 */       str1 = Utility.cleanEscapes(str1);
-/*  54 */     } catch (Exception exception) {
-/*  55 */       badAddress(exception);
-/*     */     } 
-/*     */     
-/*  58 */     int i = str1.indexOf('#');
-/*  59 */     String str2 = null;
-/*  60 */     if (i != -1) {
-/*     */ 
-/*     */ 
-/*     */       
-/*  64 */       str2 = "corbaloc:" + str1.substring(0, i) + "/";
-/*     */     }
-/*     */     else {
-/*     */       
-/*  68 */       str2 = "corbaloc:" + str1.substring(0, str1.length());
-/*     */ 
-/*     */       
-/*  71 */       if (str2.endsWith("/") != true) {
-/*  72 */         str2 = str2 + "/";
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/*  79 */       INSURL iNSURL = INSURLHandler.getINSURLHandler().parseURL(str2);
-/*  80 */       copyINSURL(iNSURL);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  85 */       if (i > -1 && i < paramString
-/*  86 */         .length() - 1) {
-/*     */         
-/*  88 */         int j = i + 1;
-/*  89 */         String str = str1.substring(j);
-/*  90 */         this.theStringifiedName = str;
-/*     */       } 
-/*  92 */     } catch (Exception exception) {
-/*  93 */       badAddress(exception);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void badAddress(Throwable paramThrowable) throws BAD_PARAM {
-/* 103 */     throw wrapper.insBadAddress(paramThrowable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void copyINSURL(INSURL paramINSURL) {
-/* 111 */     this.rirFlag = paramINSURL.getRIRFlag();
-/* 112 */     this.theEndpointInfo = (ArrayList)paramINSURL.getEndpointInfo();
-/* 113 */     this.theKeyString = paramINSURL.getKeyString();
-/* 114 */     this.theStringifiedName = paramINSURL.getStringifiedName();
-/*     */   }
-/*     */   
-/*     */   public boolean isCorbanameURL() {
-/* 118 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\namingutil\CorbanameURL.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.naming.namingutil;
+
+import com.sun.corba.se.impl.logging.NamingSystemException;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+/**
+ *  The corbaname: URL definitions from the -ORBInitDef and -ORBDefaultInitDef's
+ *  will be stored in this object. This object is capable of storing CorbaLoc
+ *  profiles as defined in the CorbaName grammer.
+ *
+ *  @Author Hemanth
+ */
+public class CorbanameURL extends INSURLBase
+{
+    private static NamingSystemException wrapper =
+        NamingSystemException.get( CORBALogDomains.NAMING ) ;
+
+    /**
+     * This constructor takes a corbaname: url with 'corbaname:' prefix stripped
+     * and initializes all the variables accordingly. If there are any parsing
+     * errors then BAD_PARAM exception is raised.
+     */
+    public CorbanameURL( String aURL ) {
+        String url = aURL;
+
+        // First Clean the URL Escapes if there are any
+        try {
+            url = Utility.cleanEscapes( url );
+        } catch( Exception e ) {
+            badAddress( e );
+        }
+
+        int delimiterIndex = url.indexOf( '#' );
+        String corbalocString = null;
+        if( delimiterIndex != -1 ) {
+                // Append corbaloc: for Grammar check, Get the string between
+                // corbaname: and # which forms the corbaloc string
+                corbalocString = "corbaloc:" +
+                    url.substring( 0, delimiterIndex ) + "/";
+        } else {
+            // Build a corbaloc string to check the grammar.
+            // 10 is the length of corbaname:
+            corbalocString = "corbaloc:" + url.substring( 0, url.length() );
+            // If the string doesnot end with a / then add one to end the
+            // URL correctly
+            if( corbalocString.endsWith( "/" ) != true ) {
+                corbalocString = corbalocString + "/";
+            }
+        }
+        try {
+            // Check the corbaloc grammar and set the returned corbaloc
+            // object to the CorbaName Object
+            INSURL insURL =
+                INSURLHandler.getINSURLHandler().parseURL( corbalocString );
+            copyINSURL( insURL );
+            // String after '#' is the Stringified name used to resolve
+            // the Object reference from the rootnaming context. If
+            // the String is null then the Root Naming context is passed
+            // back
+            if((delimiterIndex > -1) &&
+               (delimiterIndex < (aURL.length() - 1)))
+            {
+                int start = delimiterIndex + 1 ;
+                String result = url.substring(start) ;
+                theStringifiedName = result ;
+            }
+        } catch( Exception e ) {
+            badAddress( e );
+        }
+    }
+
+    /**
+     * A Utility method to throw BAD_PARAM exception.
+     */
+    private void badAddress( java.lang.Throwable e )
+        throws org.omg.CORBA.BAD_PARAM
+    {
+        throw wrapper.insBadAddress( e ) ;
+    }
+
+    /**
+     * A Utility method to copy all the variables from CorbalocURL object to
+     * this instance.
+     */
+    private void copyINSURL( INSURL url ) {
+        rirFlag = url.getRIRFlag( );
+        theEndpointInfo = (java.util.ArrayList) url.getEndpointInfo( );
+        theKeyString = url.getKeyString( );
+        theStringifiedName = url.getStringifiedName( );
+    }
+
+    public boolean isCorbanameURL( ) {
+        return true;
+    }
+
+}

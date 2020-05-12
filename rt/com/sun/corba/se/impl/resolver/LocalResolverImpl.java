@@ -1,58 +1,52 @@
-/*    */ package com.sun.corba.se.impl.resolver;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orbutil.closure.Closure;
-/*    */ import com.sun.corba.se.spi.resolver.LocalResolver;
-/*    */ import java.util.HashMap;
-/*    */ import java.util.Map;
-/*    */ import java.util.Set;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class LocalResolverImpl
-/*    */   implements LocalResolver
-/*    */ {
-/* 32 */   Map nameToClosure = new HashMap<>();
-/*    */ 
-/*    */   
-/*    */   public synchronized Object resolve(String paramString) {
-/* 36 */     Closure closure = (Closure)this.nameToClosure.get(paramString);
-/* 37 */     if (closure == null) {
-/* 38 */       return null;
-/*    */     }
-/* 40 */     return (Object)closure.evaluate();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public synchronized Set list() {
-/* 45 */     return this.nameToClosure.keySet();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public synchronized void register(String paramString, Closure paramClosure) {
-/* 50 */     this.nameToClosure.put(paramString, paramClosure);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\resolver\LocalResolverImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.resolver ;
+
+import com.sun.corba.se.spi.resolver.LocalResolver ;
+import com.sun.corba.se.spi.orbutil.closure.Closure ;
+
+public class LocalResolverImpl implements LocalResolver {
+    java.util.Map nameToClosure = new java.util.HashMap() ;
+
+    public synchronized org.omg.CORBA.Object resolve( String name )
+    {
+        Closure cl = (Closure)nameToClosure.get( name ) ;
+        if (cl == null)
+            return null ;
+
+        return (org.omg.CORBA.Object)(cl.evaluate()) ;
+    }
+
+    public synchronized java.util.Set list()
+    {
+        return nameToClosure.keySet() ;
+    }
+
+    public synchronized void register( String name, Closure closure )
+    {
+        nameToClosure.put( name, closure ) ;
+    }
+}

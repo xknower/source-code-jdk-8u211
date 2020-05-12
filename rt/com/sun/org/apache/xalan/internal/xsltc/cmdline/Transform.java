@@ -1,298 +1,292 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.cmdline;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.TransletException;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.DOMWSFilter;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.output.TransletOutputHandlerFactory;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMWSFilter;
-/*     */ import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.UnknownHostException;
-/*     */ import java.util.Vector;
-/*     */ import javax.xml.parsers.SAXParser;
-/*     */ import javax.xml.parsers.SAXParserFactory;
-/*     */ import javax.xml.transform.sax.SAXSource;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.XMLReader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class Transform
-/*     */ {
-/*     */   private SerializationHandler _handler;
-/*     */   private String _fileName;
-/*     */   private String _className;
-/*     */   private String _jarFileSrc;
-/*     */   private boolean _isJarFileSpecified = false;
-/*  64 */   private Vector _params = null;
-/*     */   private boolean _uri;
-/*     */   private boolean _debug;
-/*     */   private int _iterations;
-/*     */   
-/*     */   public Transform(String className, String fileName, boolean uri, boolean debug, int iterations) {
-/*  70 */     this._fileName = fileName;
-/*  71 */     this._className = className;
-/*  72 */     this._uri = uri;
-/*  73 */     this._debug = debug;
-/*  74 */     this._iterations = iterations;
-/*     */   }
-/*     */   
-/*  77 */   public String getFileName() { return this._fileName; } public String getClassName() {
-/*  78 */     return this._className;
-/*     */   }
-/*     */   public void setParameters(Vector params) {
-/*  81 */     this._params = params;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setJarFileInputSrc(boolean flag, String jarFile) {
-/*  90 */     this._isJarFileSpecified = flag;
-/*     */     
-/*  92 */     this._jarFileSrc = jarFile;
-/*     */   }
-/*     */   private void doTransform() {
-/*     */     try {
-/*     */       DTMWSFilter wsfilter;
-/*  97 */       Class<?> clazz = ObjectFactory.findProviderClass(this._className, true);
-/*  98 */       AbstractTranslet translet = (AbstractTranslet)clazz.newInstance();
-/*  99 */       translet.postInitialization();
-/*     */ 
-/*     */       
-/* 102 */       SAXParserFactory factory = SAXParserFactory.newInstance();
-/*     */       try {
-/* 104 */         factory.setFeature("http://xml.org/sax/features/namespaces", true);
-/*     */       }
-/* 106 */       catch (Exception e) {
-/* 107 */         factory.setNamespaceAware(true);
-/*     */       } 
-/* 109 */       SAXParser parser = factory.newSAXParser();
-/* 110 */       XMLReader reader = parser.getXMLReader();
-/*     */ 
-/*     */ 
-/*     */       
-/* 114 */       XSLTCDTMManager dtmManager = XSLTCDTMManager.createNewDTMManagerInstance();
-/*     */ 
-/*     */       
-/* 117 */       if (translet != null && translet instanceof com.sun.org.apache.xalan.internal.xsltc.StripFilter) {
-/* 118 */         wsfilter = new DOMWSFilter(translet);
-/*     */       } else {
-/* 120 */         wsfilter = null;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 124 */       DOMEnhancedForDTM dom = (DOMEnhancedForDTM)dtmManager.getDTM(new SAXSource(reader, new InputSource(this._fileName)), false, wsfilter, true, false, translet
-/*     */           
-/* 126 */           .hasIdCall());
-/*     */       
-/* 128 */       dom.setDocumentURI(this._fileName);
-/* 129 */       translet.prepassDocument(dom);
-/*     */ 
-/*     */       
-/* 132 */       int n = this._params.size();
-/* 133 */       for (int i = 0; i < n; i++) {
-/* 134 */         Parameter param = this._params.elementAt(i);
-/* 135 */         translet.addParameter(param._name, param._value);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 140 */       TransletOutputHandlerFactory tohFactory = TransletOutputHandlerFactory.newInstance();
-/* 141 */       tohFactory.setOutputType(0);
-/* 142 */       tohFactory.setEncoding(translet._encoding);
-/* 143 */       tohFactory.setOutputMethod(translet._method);
-/*     */       
-/* 145 */       if (this._iterations == -1) {
-/* 146 */         translet.transform(dom, tohFactory.getSerializationHandler());
-/*     */       }
-/* 148 */       else if (this._iterations > 0) {
-/* 149 */         long mm = System.currentTimeMillis();
-/* 150 */         for (int j = 0; j < this._iterations; j++) {
-/* 151 */           translet.transform(dom, tohFactory
-/* 152 */               .getSerializationHandler());
-/*     */         }
-/* 154 */         mm = System.currentTimeMillis() - mm;
-/*     */         
-/* 156 */         System.err.println("\n<!--");
-/* 157 */         System.err.println("  transform  = " + (mm / this._iterations) + " ms");
-/*     */ 
-/*     */         
-/* 160 */         System.err.println("  throughput = " + (1000.0D / mm / this._iterations) + " tps");
-/*     */ 
-/*     */ 
-/*     */         
-/* 164 */         System.err.println("-->");
-/*     */       }
-/*     */     
-/* 167 */     } catch (TransletException e) {
-/* 168 */       if (this._debug) e.printStackTrace(); 
-/* 169 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + e
-/* 170 */           .getMessage());
-/*     */     }
-/* 172 */     catch (RuntimeException e) {
-/* 173 */       if (this._debug) e.printStackTrace(); 
-/* 174 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + e
-/* 175 */           .getMessage());
-/*     */     }
-/* 177 */     catch (FileNotFoundException e) {
-/* 178 */       if (this._debug) e.printStackTrace(); 
-/* 179 */       ErrorMsg err = new ErrorMsg("FILE_NOT_FOUND_ERR", this._fileName);
-/* 180 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + err
-/* 181 */           .toString());
-/*     */     }
-/* 183 */     catch (MalformedURLException e) {
-/* 184 */       if (this._debug) e.printStackTrace(); 
-/* 185 */       ErrorMsg err = new ErrorMsg("INVALID_URI_ERR", this._fileName);
-/* 186 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + err
-/* 187 */           .toString());
-/*     */     }
-/* 189 */     catch (ClassNotFoundException e) {
-/* 190 */       if (this._debug) e.printStackTrace(); 
-/* 191 */       ErrorMsg err = new ErrorMsg("CLASS_NOT_FOUND_ERR", this._className);
-/* 192 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + err
-/* 193 */           .toString());
-/*     */     }
-/* 195 */     catch (UnknownHostException e) {
-/* 196 */       if (this._debug) e.printStackTrace(); 
-/* 197 */       ErrorMsg err = new ErrorMsg("INVALID_URI_ERR", this._fileName);
-/* 198 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + err
-/* 199 */           .toString());
-/*     */     }
-/* 201 */     catch (SAXException e) {
-/* 202 */       Exception ex = e.getException();
-/* 203 */       if (this._debug) {
-/* 204 */         if (ex != null) ex.printStackTrace(); 
-/* 205 */         e.printStackTrace();
-/*     */       } 
-/* 207 */       System.err.print(new ErrorMsg("RUNTIME_ERROR_KEY"));
-/* 208 */       if (ex != null) {
-/* 209 */         System.err.println(ex.getMessage());
-/*     */       } else {
-/* 211 */         System.err.println(e.getMessage());
-/*     */       } 
-/* 213 */     } catch (Exception e) {
-/* 214 */       if (this._debug) e.printStackTrace(); 
-/* 215 */       System.err.println(new ErrorMsg("RUNTIME_ERROR_KEY") + e
-/* 216 */           .getMessage());
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public static void printUsage() {
-/* 221 */     System.err.println(new ErrorMsg("TRANSFORM_USAGE_STR"));
-/*     */   }
-/*     */   
-/*     */   public static void main(String[] args) {
-/*     */     try {
-/* 226 */       if (args.length > 0) {
-/*     */         
-/* 228 */         int iterations = -1;
-/* 229 */         boolean uri = false, debug = false;
-/* 230 */         boolean isJarFileSpecified = false;
-/* 231 */         String jarFile = null;
-/*     */         
-/*     */         int i;
-/* 234 */         for (i = 0; i < args.length && args[i].charAt(0) == '-'; i++) {
-/* 235 */           if (args[i].equals("-u")) {
-/* 236 */             uri = true;
-/*     */           }
-/* 238 */           else if (args[i].equals("-x")) {
-/* 239 */             debug = true;
-/*     */           }
-/* 241 */           else if (args[i].equals("-j")) {
-/* 242 */             isJarFileSpecified = true;
-/* 243 */             jarFile = args[++i];
-/*     */           }
-/* 245 */           else if (args[i].equals("-n")) {
-/*     */             try {
-/* 247 */               iterations = Integer.parseInt(args[++i]);
-/*     */             }
-/* 249 */             catch (NumberFormatException numberFormatException) {}
-/*     */           
-/*     */           }
-/*     */           else {
-/*     */             
-/* 254 */             printUsage();
-/*     */           } 
-/*     */         } 
-/*     */ 
-/*     */         
-/* 259 */         if (args.length - i < 2) printUsage();
-/*     */ 
-/*     */         
-/* 262 */         Transform handler = new Transform(args[i + 1], args[i], uri, debug, iterations);
-/*     */         
-/* 264 */         handler.setJarFileInputSrc(isJarFileSpecified, jarFile);
-/*     */ 
-/*     */         
-/* 267 */         Vector<Parameter> params = new Vector();
-/* 268 */         for (i += 2; i < args.length; i++) {
-/* 269 */           int equal = args[i].indexOf('=');
-/* 270 */           if (equal > 0) {
-/* 271 */             String name = args[i].substring(0, equal);
-/* 272 */             String value = args[i].substring(equal + 1);
-/* 273 */             params.addElement(new Parameter(name, value));
-/*     */           } else {
-/*     */             
-/* 276 */             printUsage();
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 280 */         if (i == args.length) {
-/* 281 */           handler.setParameters(params);
-/* 282 */           handler.doTransform();
-/*     */         } 
-/*     */       } else {
-/* 285 */         printUsage();
-/*     */       }
-/*     */     
-/* 288 */     } catch (Exception e) {
-/* 289 */       e.printStackTrace();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\cmdline\Transform.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Transform.java,v 1.2.4.1 2005/09/12 09:07:33 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.cmdline;
+
+import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
+import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
+import com.sun.org.apache.xalan.internal.xsltc.StripFilter;
+import com.sun.org.apache.xalan.internal.xsltc.TransletException;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.dom.DOMWSFilter;
+import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Constants;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.output.TransletOutputHandlerFactory;
+import com.sun.org.apache.xml.internal.dtm.DTMWSFilter;
+import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
+import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.Vector;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.sax.SAXSource;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author G. Todd Miller
+ * @author Morten Jorgensen
+ */
+final public class Transform {
+
+    private SerializationHandler _handler;
+
+    private String  _fileName;
+    private String  _className;
+    private String  _jarFileSrc;
+    private boolean _isJarFileSpecified = false;
+    private Vector  _params = null;
+    private boolean _uri, _debug;
+    private int     _iterations;
+
+    public Transform(String className, String fileName,
+                     boolean uri, boolean debug, int iterations) {
+        _fileName = fileName;
+        _className = className;
+        _uri = uri;
+        _debug = debug;
+        _iterations = iterations;
+  }
+
+   public String getFileName(){return _fileName;}
+   public String getClassName(){return _className;}
+
+    public void setParameters(Vector params) {
+        _params = params;
+    }
+
+    private void setJarFileInputSrc(boolean flag,  String jarFile) {
+        // TODO: at this time we do not do anything with this
+        // information, attempts to add the jarfile to the CLASSPATH
+        // were successful via System.setProperty, but the effects
+        // were not visible to the running JVM. For now we add jarfile
+        // to CLASSPATH in the wrapper script that calls this program.
+        _isJarFileSpecified = flag;
+        // TODO verify jarFile exists...
+        _jarFileSrc = jarFile;
+    }
+
+    private void doTransform() {
+        try {
+            final Class clazz = ObjectFactory.findProviderClass(_className, true);
+            final AbstractTranslet translet = (AbstractTranslet)clazz.newInstance();
+            translet.postInitialization();
+
+            // Create a SAX parser and get the XMLReader object it uses
+            final SAXParserFactory factory = SAXParserFactory.newInstance();
+            try {
+                factory.setFeature(Constants.NAMESPACE_FEATURE,true);
+            }
+            catch (Exception e) {
+                factory.setNamespaceAware(true);
+            }
+            final SAXParser parser = factory.newSAXParser();
+            final XMLReader reader = parser.getXMLReader();
+
+            // Set the DOM's DOM builder as the XMLReader's SAX2 content handler
+            XSLTCDTMManager dtmManager =
+                XSLTCDTMManager.createNewDTMManagerInstance();
+
+            DTMWSFilter wsfilter;
+            if (translet != null && translet instanceof StripFilter) {
+                wsfilter = new DOMWSFilter(translet);
+            } else {
+                wsfilter = null;
+            }
+
+            final DOMEnhancedForDTM dom =
+                   (DOMEnhancedForDTM)dtmManager.getDTM(
+                            new SAXSource(reader, new InputSource(_fileName)),
+                            false, wsfilter, true, false, translet.hasIdCall());
+
+            dom.setDocumentURI(_fileName);
+            translet.prepassDocument(dom);
+
+            // Pass global parameters
+            int n = _params.size();
+            for (int i = 0; i < n; i++) {
+                Parameter param = (Parameter) _params.elementAt(i);
+                translet.addParameter(param._name, param._value);
+            }
+
+            // Transform the document
+            TransletOutputHandlerFactory tohFactory =
+                TransletOutputHandlerFactory.newInstance();
+            tohFactory.setOutputType(TransletOutputHandlerFactory.STREAM);
+            tohFactory.setEncoding(translet._encoding);
+            tohFactory.setOutputMethod(translet._method);
+
+            if (_iterations == -1) {
+                translet.transform(dom, tohFactory.getSerializationHandler());
+            }
+            else if (_iterations > 0) {
+                long mm = System.currentTimeMillis();
+                for (int i = 0; i < _iterations; i++) {
+                    translet.transform(dom,
+                                       tohFactory.getSerializationHandler());
+                }
+                mm = System.currentTimeMillis() - mm;
+
+                System.err.println("\n<!--");
+                System.err.println("  transform  = "
+                                   + (((double) mm) / ((double) _iterations))
+                                   + " ms");
+                System.err.println("  throughput = "
+                                   + (1000.0 / (((double) mm)
+                                                 / ((double) _iterations)))
+                                   + " tps");
+                System.err.println("-->");
+            }
+        }
+        catch (TransletException e) {
+            if (_debug) e.printStackTrace();
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                   e.getMessage());
+        }
+        catch (RuntimeException e) {
+            if (_debug) e.printStackTrace();
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                               e.getMessage());
+        }
+        catch (FileNotFoundException e) {
+            if (_debug) e.printStackTrace();
+            ErrorMsg err = new ErrorMsg(ErrorMsg.FILE_NOT_FOUND_ERR, _fileName);
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                               err.toString());
+        }
+        catch (MalformedURLException e) {
+            if (_debug) e.printStackTrace();
+            ErrorMsg err = new ErrorMsg(ErrorMsg.INVALID_URI_ERR, _fileName);
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                               err.toString());
+        }
+        catch (ClassNotFoundException e) {
+            if (_debug) e.printStackTrace();
+            ErrorMsg err= new ErrorMsg(ErrorMsg.CLASS_NOT_FOUND_ERR,_className);
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                               err.toString());
+        }
+        catch (UnknownHostException e) {
+            if (_debug) e.printStackTrace();
+            ErrorMsg err = new ErrorMsg(ErrorMsg.INVALID_URI_ERR, _fileName);
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                               err.toString());
+        }
+        catch (SAXException e) {
+            Exception ex = e.getException();
+            if (_debug) {
+                if (ex != null) ex.printStackTrace();
+                e.printStackTrace();
+            }
+            System.err.print(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY));
+            if (ex != null)
+                System.err.println(ex.getMessage());
+            else
+                System.err.println(e.getMessage());
+        }
+        catch (Exception e) {
+            if (_debug) e.printStackTrace();
+            System.err.println(new ErrorMsg(ErrorMsg.RUNTIME_ERROR_KEY)+
+                               e.getMessage());
+        }
+    }
+
+    public static void printUsage() {
+        System.err.println(new ErrorMsg(ErrorMsg.TRANSFORM_USAGE_STR));
+    }
+
+    public static void main(String[] args) {
+        try {
+            if (args.length > 0) {
+                int i;
+                int iterations = -1;
+                boolean uri = false, debug = false;
+                boolean isJarFileSpecified = false;
+                String  jarFile = null;
+
+                // Parse options starting with '-'
+                for (i = 0; i < args.length && args[i].charAt(0) == '-'; i++) {
+                    if (args[i].equals("-u")) {
+                        uri = true;
+                    }
+                    else if (args[i].equals("-x")) {
+                        debug = true;
+                    }
+                    else if (args[i].equals("-j")) {
+                        isJarFileSpecified = true;
+                        jarFile = args[++i];
+                    }
+                    else if (args[i].equals("-n")) {
+                        try {
+                            iterations = Integer.parseInt(args[++i]);
+                        }
+                        catch (NumberFormatException e) {
+                            // ignore
+                        }
+                    }
+                    else {
+                        printUsage();
+                    }
+                }
+
+                // Enough arguments left ?
+                if (args.length - i < 2) printUsage();
+
+                // Get document file and class name
+                Transform handler = new Transform(args[i+1], args[i], uri,
+                    debug, iterations);
+                handler.setJarFileInputSrc(isJarFileSpecified,  jarFile);
+
+                // Parse stylesheet parameters
+                Vector params = new Vector();
+                for (i += 2; i < args.length; i++) {
+                    final int equal = args[i].indexOf('=');
+                    if (equal > 0) {
+                        final String name  = args[i].substring(0, equal);
+                        final String value = args[i].substring(equal+1);
+                        params.addElement(new Parameter(name, value));
+                    }
+                    else {
+                        printUsage();
+                    }
+                }
+
+                if (i == args.length) {
+                    handler.setParameters(params);
+                    handler.doTransform();
+                }
+            } else {
+                printUsage();
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

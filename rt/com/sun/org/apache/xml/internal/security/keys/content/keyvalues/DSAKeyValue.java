@@ -1,137 +1,131 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.content.keyvalues;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.I18n;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.math.BigInteger;
-/*     */ import java.security.Key;
-/*     */ import java.security.KeyFactory;
-/*     */ import java.security.NoSuchAlgorithmException;
-/*     */ import java.security.PublicKey;
-/*     */ import java.security.interfaces.DSAPublicKey;
-/*     */ import java.security.spec.DSAPublicKeySpec;
-/*     */ import java.security.spec.InvalidKeySpecException;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DSAKeyValue
-/*     */   extends SignatureElementProxy
-/*     */   implements KeyValueContent
-/*     */ {
-/*     */   public DSAKeyValue(Element paramElement, String paramString) throws XMLSecurityException {
-/*  52 */     super(paramElement, paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DSAKeyValue(Document paramDocument, BigInteger paramBigInteger1, BigInteger paramBigInteger2, BigInteger paramBigInteger3, BigInteger paramBigInteger4) {
-/*  65 */     super(paramDocument);
-/*     */     
-/*  67 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*  68 */     addBigIntegerElement(paramBigInteger1, "P");
-/*  69 */     addBigIntegerElement(paramBigInteger2, "Q");
-/*  70 */     addBigIntegerElement(paramBigInteger3, "G");
-/*  71 */     addBigIntegerElement(paramBigInteger4, "Y");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DSAKeyValue(Document paramDocument, Key paramKey) throws IllegalArgumentException {
-/*  82 */     super(paramDocument);
-/*     */     
-/*  84 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */     
-/*  86 */     if (paramKey instanceof DSAPublicKey) {
-/*  87 */       addBigIntegerElement(((DSAPublicKey)paramKey).getParams().getP(), "P");
-/*  88 */       addBigIntegerElement(((DSAPublicKey)paramKey).getParams().getQ(), "Q");
-/*  89 */       addBigIntegerElement(((DSAPublicKey)paramKey).getParams().getG(), "G");
-/*  90 */       addBigIntegerElement(((DSAPublicKey)paramKey).getY(), "Y");
-/*     */     } else {
-/*  92 */       Object[] arrayOfObject = { "DSAKeyValue", paramKey.getClass().getName() };
-/*     */       
-/*  94 */       throw new IllegalArgumentException(I18n.translate("KeyValue.IllegalArgument", arrayOfObject));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PublicKey getPublicKey() throws XMLSecurityException {
-/*     */     try {
-/* 112 */       DSAPublicKeySpec dSAPublicKeySpec = new DSAPublicKeySpec(getBigIntegerFromChildElement("Y", "http://www.w3.org/2000/09/xmldsig#"), getBigIntegerFromChildElement("P", "http://www.w3.org/2000/09/xmldsig#"), getBigIntegerFromChildElement("Q", "http://www.w3.org/2000/09/xmldsig#"), getBigIntegerFromChildElement("G", "http://www.w3.org/2000/09/xmldsig#"));
-/*     */ 
-/*     */ 
-/*     */       
-/* 116 */       KeyFactory keyFactory = KeyFactory.getInstance("DSA");
-/* 117 */       return keyFactory.generatePublic(dSAPublicKeySpec);
-/*     */     
-/*     */     }
-/* 120 */     catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 121 */       throw new XMLSecurityException("empty", noSuchAlgorithmException);
-/* 122 */     } catch (InvalidKeySpecException invalidKeySpecException) {
-/* 123 */       throw new XMLSecurityException("empty", invalidKeySpecException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseLocalName() {
-/* 129 */     return "DSAKeyValue";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\content\keyvalues\DSAKeyValue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.content.keyvalues;
+
+import java.math.BigInteger;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.interfaces.DSAPublicKey;
+import java.security.spec.DSAPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.I18n;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+public class DSAKeyValue extends SignatureElementProxy implements KeyValueContent {
+
+    /**
+     * Constructor DSAKeyValue
+     *
+     * @param element
+     * @param baseURI
+     * @throws XMLSecurityException
+     */
+    public DSAKeyValue(Element element, String baseURI) throws XMLSecurityException {
+        super(element, baseURI);
+    }
+
+    /**
+     * Constructor DSAKeyValue
+     *
+     * @param doc
+     * @param P
+     * @param Q
+     * @param G
+     * @param Y
+     */
+    public DSAKeyValue(Document doc, BigInteger P, BigInteger Q, BigInteger G, BigInteger Y) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+        this.addBigIntegerElement(P, Constants._TAG_P);
+        this.addBigIntegerElement(Q, Constants._TAG_Q);
+        this.addBigIntegerElement(G, Constants._TAG_G);
+        this.addBigIntegerElement(Y, Constants._TAG_Y);
+    }
+
+    /**
+     * Constructor DSAKeyValue
+     *
+     * @param doc
+     * @param key
+     * @throws IllegalArgumentException
+     */
+    public DSAKeyValue(Document doc, Key key) throws IllegalArgumentException {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+
+        if (key instanceof java.security.interfaces.DSAPublicKey) {
+            this.addBigIntegerElement(((DSAPublicKey) key).getParams().getP(), Constants._TAG_P);
+            this.addBigIntegerElement(((DSAPublicKey) key).getParams().getQ(), Constants._TAG_Q);
+            this.addBigIntegerElement(((DSAPublicKey) key).getParams().getG(), Constants._TAG_G);
+            this.addBigIntegerElement(((DSAPublicKey) key).getY(), Constants._TAG_Y);
+        } else {
+            Object exArgs[] = { Constants._TAG_DSAKEYVALUE, key.getClass().getName() };
+
+            throw new IllegalArgumentException(I18n.translate("KeyValue.IllegalArgument", exArgs));
+        }
+    }
+
+    /** @inheritDoc */
+    public PublicKey getPublicKey() throws XMLSecurityException {
+        try {
+            DSAPublicKeySpec pkspec =
+                new DSAPublicKeySpec(
+                    this.getBigIntegerFromChildElement(
+                        Constants._TAG_Y, Constants.SignatureSpecNS
+                    ),
+                    this.getBigIntegerFromChildElement(
+                        Constants._TAG_P, Constants.SignatureSpecNS
+                    ),
+                    this.getBigIntegerFromChildElement(
+                        Constants._TAG_Q, Constants.SignatureSpecNS
+                    ),
+                    this.getBigIntegerFromChildElement(
+                        Constants._TAG_G, Constants.SignatureSpecNS
+                    )
+                );
+            KeyFactory dsaFactory = KeyFactory.getInstance("DSA");
+            PublicKey pk = dsaFactory.generatePublic(pkspec);
+
+            return pk;
+        } catch (NoSuchAlgorithmException ex) {
+            throw new XMLSecurityException("empty", ex);
+        } catch (InvalidKeySpecException ex) {
+            throw new XMLSecurityException("empty", ex);
+        }
+    }
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_DSAKEYVALUE;
+    }
+}

@@ -1,2604 +1,2600 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.BorderLayout;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Dialog;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Frame;
-/*      */ import java.awt.HeadlessException;
-/*      */ import java.awt.KeyboardFocusManager;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Window;
-/*      */ import java.awt.event.ComponentAdapter;
-/*      */ import java.awt.event.ComponentEvent;
-/*      */ import java.awt.event.WindowAdapter;
-/*      */ import java.awt.event.WindowEvent;
-/*      */ import java.awt.event.WindowListener;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.beans.PropertyVetoException;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.lang.reflect.InvocationTargetException;
-/*      */ import java.lang.reflect.Method;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.Vector;
-/*      */ import javax.accessibility.Accessible;
-/*      */ import javax.accessibility.AccessibleContext;
-/*      */ import javax.accessibility.AccessibleRole;
-/*      */ import javax.swing.event.InternalFrameAdapter;
-/*      */ import javax.swing.event.InternalFrameEvent;
-/*      */ import javax.swing.plaf.OptionPaneUI;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class JOptionPane
-/*      */   extends JComponent
-/*      */   implements Accessible
-/*      */ {
-/*      */   private static final String uiClassID = "OptionPaneUI";
-/*  324 */   public static final Object UNINITIALIZED_VALUE = "uninitializedValue";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final int DEFAULT_OPTION = -1;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final int YES_NO_OPTION = 0;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final int YES_NO_CANCEL_OPTION = 1;
-/*      */ 
-/*      */   
-/*      */   public static final int OK_CANCEL_OPTION = 2;
-/*      */ 
-/*      */   
-/*      */   public static final int YES_OPTION = 0;
-/*      */ 
-/*      */   
-/*      */   public static final int NO_OPTION = 1;
-/*      */ 
-/*      */   
-/*      */   public static final int CANCEL_OPTION = 2;
-/*      */ 
-/*      */   
-/*      */   public static final int OK_OPTION = 0;
-/*      */ 
-/*      */   
-/*      */   public static final int CLOSED_OPTION = -1;
-/*      */ 
-/*      */   
-/*      */   public static final int ERROR_MESSAGE = 0;
-/*      */ 
-/*      */   
-/*      */   public static final int INFORMATION_MESSAGE = 1;
-/*      */ 
-/*      */   
-/*      */   public static final int WARNING_MESSAGE = 2;
-/*      */ 
-/*      */   
-/*      */   public static final int QUESTION_MESSAGE = 3;
-/*      */ 
-/*      */   
-/*      */   public static final int PLAIN_MESSAGE = -1;
-/*      */ 
-/*      */   
-/*      */   public static final String ICON_PROPERTY = "icon";
-/*      */ 
-/*      */   
-/*      */   public static final String MESSAGE_PROPERTY = "message";
-/*      */ 
-/*      */   
-/*      */   public static final String VALUE_PROPERTY = "value";
-/*      */ 
-/*      */   
-/*      */   public static final String OPTIONS_PROPERTY = "options";
-/*      */ 
-/*      */   
-/*      */   public static final String INITIAL_VALUE_PROPERTY = "initialValue";
-/*      */ 
-/*      */   
-/*      */   public static final String MESSAGE_TYPE_PROPERTY = "messageType";
-/*      */ 
-/*      */   
-/*      */   public static final String OPTION_TYPE_PROPERTY = "optionType";
-/*      */ 
-/*      */   
-/*      */   public static final String SELECTION_VALUES_PROPERTY = "selectionValues";
-/*      */ 
-/*      */   
-/*      */   public static final String INITIAL_SELECTION_VALUE_PROPERTY = "initialSelectionValue";
-/*      */ 
-/*      */   
-/*      */   public static final String INPUT_VALUE_PROPERTY = "inputValue";
-/*      */ 
-/*      */   
-/*      */   public static final String WANTS_INPUT_PROPERTY = "wantsInput";
-/*      */ 
-/*      */   
-/*      */   protected transient Icon icon;
-/*      */ 
-/*      */   
-/*      */   protected transient Object message;
-/*      */ 
-/*      */   
-/*      */   protected transient Object[] options;
-/*      */ 
-/*      */   
-/*      */   protected transient Object initialValue;
-/*      */ 
-/*      */   
-/*      */   protected int messageType;
-/*      */ 
-/*      */   
-/*      */   protected int optionType;
-/*      */ 
-/*      */   
-/*      */   protected transient Object value;
-/*      */ 
-/*      */   
-/*      */   protected transient Object[] selectionValues;
-/*      */ 
-/*      */   
-/*      */   protected transient Object inputValue;
-/*      */ 
-/*      */   
-/*      */   protected transient Object initialSelectionValue;
-/*      */ 
-/*      */   
-/*      */   protected boolean wantsInput;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInputDialog(Object paramObject) throws HeadlessException {
-/*  440 */     return showInputDialog((Component)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInputDialog(Object paramObject1, Object paramObject2) {
-/*  455 */     return showInputDialog((Component)null, paramObject1, paramObject2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInputDialog(Component paramComponent, Object paramObject) throws HeadlessException {
-/*  474 */     return showInputDialog(paramComponent, paramObject, UIManager.getString("OptionPane.inputDialogTitle", paramComponent), 3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInputDialog(Component paramComponent, Object paramObject1, Object paramObject2) {
-/*  494 */     return (String)showInputDialog(paramComponent, paramObject1, 
-/*  495 */         UIManager.getString("OptionPane.inputDialogTitle", paramComponent), 3, (Icon)null, (Object[])null, paramObject2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInputDialog(Component paramComponent, Object paramObject, String paramString, int paramInt) throws HeadlessException {
-/*  524 */     return (String)showInputDialog(paramComponent, paramObject, paramString, paramInt, (Icon)null, (Object[])null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Object showInputDialog(Component paramComponent, Object paramObject1, String paramString, int paramInt, Icon paramIcon, Object[] paramArrayOfObject, Object paramObject2) throws HeadlessException {
-/*  568 */     JOptionPane jOptionPane = new JOptionPane(paramObject1, paramInt, 2, paramIcon, null, null);
-/*      */ 
-/*      */ 
-/*      */     
-/*  572 */     jOptionPane.setWantsInput(true);
-/*  573 */     jOptionPane.setSelectionValues(paramArrayOfObject);
-/*  574 */     jOptionPane.setInitialSelectionValue(paramObject2);
-/*  575 */     jOptionPane.setComponentOrientation(((paramComponent == null) ? 
-/*  576 */         getRootFrame() : paramComponent).getComponentOrientation());
-/*      */     
-/*  578 */     int i = styleFromMessageType(paramInt);
-/*  579 */     JDialog jDialog = jOptionPane.createDialog(paramComponent, paramString, i);
-/*      */     
-/*  581 */     jOptionPane.selectInitialValue();
-/*  582 */     jDialog.show();
-/*  583 */     jDialog.dispose();
-/*      */     
-/*  585 */     Object object = jOptionPane.getInputValue();
-/*      */     
-/*  587 */     if (object == UNINITIALIZED_VALUE) {
-/*  588 */       return null;
-/*      */     }
-/*  590 */     return object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void showMessageDialog(Component paramComponent, Object paramObject) throws HeadlessException {
-/*  608 */     showMessageDialog(paramComponent, paramObject, UIManager.getString("OptionPane.messageDialogTitle", paramComponent), 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void showMessageDialog(Component paramComponent, Object paramObject, String paramString, int paramInt) throws HeadlessException {
-/*  637 */     showMessageDialog(paramComponent, paramObject, paramString, paramInt, (Icon)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void showMessageDialog(Component paramComponent, Object paramObject, String paramString, int paramInt, Icon paramIcon) throws HeadlessException {
-/*  666 */     showOptionDialog(paramComponent, paramObject, paramString, -1, paramInt, paramIcon, (Object[])null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showConfirmDialog(Component paramComponent, Object paramObject) throws HeadlessException {
-/*  689 */     return showConfirmDialog(paramComponent, paramObject, 
-/*  690 */         UIManager.getString("OptionPane.titleText"), 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showConfirmDialog(Component paramComponent, Object paramObject, String paramString, int paramInt) throws HeadlessException {
-/*  718 */     return showConfirmDialog(paramComponent, paramObject, paramString, paramInt, 3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showConfirmDialog(Component paramComponent, Object paramObject, String paramString, int paramInt1, int paramInt2) throws HeadlessException {
-/*  757 */     return showConfirmDialog(paramComponent, paramObject, paramString, paramInt1, paramInt2, (Icon)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showConfirmDialog(Component paramComponent, Object paramObject, String paramString, int paramInt1, int paramInt2, Icon paramIcon) throws HeadlessException {
-/*  795 */     return showOptionDialog(paramComponent, paramObject, paramString, paramInt1, paramInt2, paramIcon, (Object[])null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showOptionDialog(Component paramComponent, Object paramObject1, String paramString, int paramInt1, int paramInt2, Icon paramIcon, Object[] paramArrayOfObject, Object paramObject2) throws HeadlessException {
-/*  857 */     JOptionPane jOptionPane = new JOptionPane(paramObject1, paramInt2, paramInt1, paramIcon, paramArrayOfObject, paramObject2);
-/*      */ 
-/*      */ 
-/*      */     
-/*  861 */     jOptionPane.setInitialValue(paramObject2);
-/*  862 */     jOptionPane.setComponentOrientation(((paramComponent == null) ? 
-/*  863 */         getRootFrame() : paramComponent).getComponentOrientation());
-/*      */     
-/*  865 */     int i = styleFromMessageType(paramInt2);
-/*  866 */     JDialog jDialog = jOptionPane.createDialog(paramComponent, paramString, i);
-/*      */     
-/*  868 */     jOptionPane.selectInitialValue();
-/*  869 */     jDialog.show();
-/*  870 */     jDialog.dispose();
-/*      */     
-/*  872 */     Object object = jOptionPane.getValue();
-/*      */     
-/*  874 */     if (object == null)
-/*  875 */       return -1; 
-/*  876 */     if (paramArrayOfObject == null) {
-/*  877 */       if (object instanceof Integer)
-/*  878 */         return ((Integer)object).intValue(); 
-/*  879 */       return -1;
-/*      */     } 
-/*  881 */     byte b = 0; int j = paramArrayOfObject.length;
-/*  882 */     for (; b < j; b++) {
-/*  883 */       if (paramArrayOfObject[b].equals(object))
-/*  884 */         return b; 
-/*      */     } 
-/*  886 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JDialog createDialog(Component paramComponent, String paramString) throws HeadlessException {
-/*  917 */     int i = styleFromMessageType(getMessageType());
-/*  918 */     return createDialog(paramComponent, paramString, i);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JDialog createDialog(String paramString) throws HeadlessException {
-/*  944 */     int i = styleFromMessageType(getMessageType());
-/*  945 */     JDialog jDialog = new JDialog((Dialog)null, paramString, true);
-/*  946 */     initDialog(jDialog, i, (Component)null);
-/*  947 */     return jDialog;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private JDialog createDialog(Component paramComponent, String paramString, int paramInt) throws HeadlessException {
-/*      */     JDialog jDialog;
-/*  956 */     Window window = getWindowForComponent(paramComponent);
-/*  957 */     if (window instanceof Frame) {
-/*  958 */       jDialog = new JDialog((Frame)window, paramString, true);
-/*      */     } else {
-/*  960 */       jDialog = new JDialog((Dialog)window, paramString, true);
-/*      */     } 
-/*  962 */     if (window instanceof SwingUtilities.SharedOwnerFrame) {
-/*      */       
-/*  964 */       WindowListener windowListener = SwingUtilities.getSharedOwnerFrameShutdownListener();
-/*  965 */       jDialog.addWindowListener(windowListener);
-/*      */     } 
-/*  967 */     initDialog(jDialog, paramInt, paramComponent);
-/*  968 */     return jDialog;
-/*      */   }
-/*      */   
-/*      */   private void initDialog(final JDialog dialog, int paramInt, Component paramComponent) {
-/*  972 */     dialog.setComponentOrientation(getComponentOrientation());
-/*  973 */     Container container = dialog.getContentPane();
-/*      */     
-/*  975 */     container.setLayout(new BorderLayout());
-/*  976 */     container.add(this, "Center");
-/*  977 */     dialog.setResizable(false);
-/*  978 */     if (JDialog.isDefaultLookAndFeelDecorated()) {
-/*      */       
-/*  980 */       boolean bool = UIManager.getLookAndFeel().getSupportsWindowDecorations();
-/*  981 */       if (bool) {
-/*  982 */         dialog.setUndecorated(true);
-/*  983 */         getRootPane().setWindowDecorationStyle(paramInt);
-/*      */       } 
-/*      */     } 
-/*  986 */     dialog.pack();
-/*  987 */     dialog.setLocationRelativeTo(paramComponent);
-/*      */     
-/*  989 */     final PropertyChangeListener listener = new PropertyChangeListener()
-/*      */       {
-/*      */         
-/*      */         public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent)
-/*      */         {
-/*  994 */           if (dialog.isVisible() && param1PropertyChangeEvent.getSource() == JOptionPane.this && param1PropertyChangeEvent
-/*  995 */             .getPropertyName().equals("value") && param1PropertyChangeEvent
-/*  996 */             .getNewValue() != null && param1PropertyChangeEvent
-/*  997 */             .getNewValue() != JOptionPane.UNINITIALIZED_VALUE) {
-/*  998 */             dialog.setVisible(false);
-/*      */           }
-/*      */         }
-/*      */       };
-/*      */     
-/* 1003 */     WindowAdapter windowAdapter = new WindowAdapter() { private boolean gotFocus = false;
-/*      */         
-/*      */         public void windowClosing(WindowEvent param1WindowEvent) {
-/* 1006 */           JOptionPane.this.setValue((Object)null);
-/*      */         }
-/*      */         
-/*      */         public void windowClosed(WindowEvent param1WindowEvent) {
-/* 1010 */           JOptionPane.this.removePropertyChangeListener(listener);
-/* 1011 */           dialog.getContentPane().removeAll();
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public void windowGainedFocus(WindowEvent param1WindowEvent) {
-/* 1016 */           if (!this.gotFocus) {
-/* 1017 */             JOptionPane.this.selectInitialValue();
-/* 1018 */             this.gotFocus = true;
-/*      */           } 
-/*      */         } }
-/*      */       ;
-/* 1022 */     dialog.addWindowListener(windowAdapter);
-/* 1023 */     dialog.addWindowFocusListener(windowAdapter);
-/* 1024 */     dialog.addComponentListener(new ComponentAdapter()
-/*      */         {
-/*      */           public void componentShown(ComponentEvent param1ComponentEvent) {
-/* 1027 */             JOptionPane.this.setValue(JOptionPane.UNINITIALIZED_VALUE);
-/*      */           }
-/*      */         });
-/*      */     
-/* 1031 */     addPropertyChangeListener(propertyChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void showInternalMessageDialog(Component paramComponent, Object paramObject) {
-/* 1047 */     showInternalMessageDialog(paramComponent, paramObject, 
-/* 1048 */         UIManager.getString("OptionPane.messageDialogTitle", paramComponent), 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void showInternalMessageDialog(Component paramComponent, Object paramObject, String paramString, int paramInt) {
-/* 1073 */     showInternalMessageDialog(paramComponent, paramObject, paramString, paramInt, (Icon)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void showInternalMessageDialog(Component paramComponent, Object paramObject, String paramString, int paramInt, Icon paramIcon) {
-/* 1099 */     showInternalOptionDialog(paramComponent, paramObject, paramString, -1, paramInt, paramIcon, (Object[])null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showInternalConfirmDialog(Component paramComponent, Object paramObject) {
-/* 1116 */     return showInternalConfirmDialog(paramComponent, paramObject, 
-/* 1117 */         UIManager.getString("OptionPane.titleText"), 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showInternalConfirmDialog(Component paramComponent, Object paramObject, String paramString, int paramInt) {
-/* 1144 */     return showInternalConfirmDialog(paramComponent, paramObject, paramString, paramInt, 3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showInternalConfirmDialog(Component paramComponent, Object paramObject, String paramString, int paramInt1, int paramInt2) {
-/* 1181 */     return showInternalConfirmDialog(paramComponent, paramObject, paramString, paramInt1, paramInt2, (Icon)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showInternalConfirmDialog(Component paramComponent, Object paramObject, String paramString, int paramInt1, int paramInt2, Icon paramIcon) {
-/* 1220 */     return showInternalOptionDialog(paramComponent, paramObject, paramString, paramInt1, paramInt2, paramIcon, (Object[])null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int showInternalOptionDialog(Component paramComponent, Object paramObject1, String paramString, int paramInt1, int paramInt2, Icon paramIcon, Object[] paramArrayOfObject, Object paramObject2) {
-/* 1276 */     JOptionPane jOptionPane = new JOptionPane(paramObject1, paramInt2, paramInt1, paramIcon, paramArrayOfObject, paramObject2);
-/*      */     
-/* 1278 */     jOptionPane.putClientProperty(ClientPropertyKey.PopupFactory_FORCE_HEAVYWEIGHT_POPUP, Boolean.TRUE);
-/*      */ 
-/*      */     
-/* 1281 */     Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-/*      */     
-/* 1283 */     jOptionPane.setInitialValue(paramObject2);
-/*      */ 
-/*      */     
-/* 1286 */     JInternalFrame jInternalFrame = jOptionPane.createInternalFrame(paramComponent, paramString);
-/* 1287 */     jOptionPane.selectInitialValue();
-/* 1288 */     jInternalFrame.setVisible(true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1298 */     if (jInternalFrame.isVisible() && !jInternalFrame.isShowing()) {
-/* 1299 */       Container container = jInternalFrame.getParent();
-/* 1300 */       while (container != null) {
-/* 1301 */         if (!container.isVisible()) {
-/* 1302 */           container.setVisible(true);
-/*      */         }
-/* 1304 */         container = container.getParent();
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1310 */     try { Method method = AccessController.<Method>doPrivileged(new ModalPrivilegedAction(Container.class, "startLWModal"));
-/*      */       
-/* 1312 */       if (method != null) {
-/* 1313 */         method.invoke(jInternalFrame, (Object[])null);
-/*      */       } }
-/* 1315 */     catch (IllegalAccessException illegalAccessException) {  }
-/* 1316 */     catch (IllegalArgumentException illegalArgumentException) {  }
-/* 1317 */     catch (InvocationTargetException invocationTargetException) {}
-/*      */ 
-/*      */     
-/* 1320 */     if (paramComponent instanceof JInternalFrame) {
-/*      */       try {
-/* 1322 */         ((JInternalFrame)paramComponent).setSelected(true);
-/* 1323 */       } catch (PropertyVetoException propertyVetoException) {}
-/*      */     }
-/*      */ 
-/*      */     
-/* 1327 */     Object object = jOptionPane.getValue();
-/*      */     
-/* 1329 */     if (component != null && component.isShowing()) {
-/* 1330 */       component.requestFocus();
-/*      */     }
-/* 1332 */     if (object == null) {
-/* 1333 */       return -1;
-/*      */     }
-/* 1335 */     if (paramArrayOfObject == null) {
-/* 1336 */       if (object instanceof Integer) {
-/* 1337 */         return ((Integer)object).intValue();
-/*      */       }
-/* 1339 */       return -1;
-/*      */     } 
-/* 1341 */     byte b = 0; int i = paramArrayOfObject.length;
-/* 1342 */     for (; b < i; b++) {
-/* 1343 */       if (paramArrayOfObject[b].equals(object)) {
-/* 1344 */         return b;
-/*      */       }
-/*      */     } 
-/* 1347 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInternalInputDialog(Component paramComponent, Object paramObject) {
-/* 1362 */     return showInternalInputDialog(paramComponent, paramObject, 
-/* 1363 */         UIManager.getString("OptionPane.inputDialogTitle", paramComponent), 3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String showInternalInputDialog(Component paramComponent, Object paramObject, String paramString, int paramInt) {
-/* 1382 */     return (String)showInternalInputDialog(paramComponent, paramObject, paramString, paramInt, (Icon)null, (Object[])null, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Object showInternalInputDialog(Component paramComponent, Object paramObject1, String paramString, int paramInt, Icon paramIcon, Object[] paramArrayOfObject, Object paramObject2) {
-/* 1418 */     JOptionPane jOptionPane = new JOptionPane(paramObject1, paramInt, 2, paramIcon, null, null);
-/*      */     
-/* 1420 */     jOptionPane.putClientProperty(ClientPropertyKey.PopupFactory_FORCE_HEAVYWEIGHT_POPUP, Boolean.TRUE);
-/*      */ 
-/*      */     
-/* 1423 */     Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-/*      */     
-/* 1425 */     jOptionPane.setWantsInput(true);
-/* 1426 */     jOptionPane.setSelectionValues(paramArrayOfObject);
-/* 1427 */     jOptionPane.setInitialSelectionValue(paramObject2);
-/*      */ 
-/*      */     
-/* 1430 */     JInternalFrame jInternalFrame = jOptionPane.createInternalFrame(paramComponent, paramString);
-/*      */     
-/* 1432 */     jOptionPane.selectInitialValue();
-/* 1433 */     jInternalFrame.setVisible(true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1443 */     if (jInternalFrame.isVisible() && !jInternalFrame.isShowing()) {
-/* 1444 */       Container container = jInternalFrame.getParent();
-/* 1445 */       while (container != null) {
-/* 1446 */         if (!container.isVisible()) {
-/* 1447 */           container.setVisible(true);
-/*      */         }
-/* 1449 */         container = container.getParent();
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1455 */     try { Method method = AccessController.<Method>doPrivileged(new ModalPrivilegedAction(Container.class, "startLWModal"));
-/*      */       
-/* 1457 */       if (method != null) {
-/* 1458 */         method.invoke(jInternalFrame, (Object[])null);
-/*      */       } }
-/* 1460 */     catch (IllegalAccessException illegalAccessException) {  }
-/* 1461 */     catch (IllegalArgumentException illegalArgumentException) {  }
-/* 1462 */     catch (InvocationTargetException invocationTargetException) {}
-/*      */ 
-/*      */     
-/* 1465 */     if (paramComponent instanceof JInternalFrame) {
-/*      */       try {
-/* 1467 */         ((JInternalFrame)paramComponent).setSelected(true);
-/* 1468 */       } catch (PropertyVetoException propertyVetoException) {}
-/*      */     }
-/*      */ 
-/*      */     
-/* 1472 */     if (component != null && component.isShowing()) {
-/* 1473 */       component.requestFocus();
-/*      */     }
-/* 1475 */     Object object = jOptionPane.getInputValue();
-/*      */     
-/* 1477 */     if (object == UNINITIALIZED_VALUE) {
-/* 1478 */       return null;
-/*      */     }
-/* 1480 */     return object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JInternalFrame createInternalFrame(Component paramComponent, String paramString) {
-/* 1506 */     JDesktopPane jDesktopPane = getDesktopPaneForComponent(paramComponent);
-/*      */     Container container;
-/* 1508 */     if (jDesktopPane == null && (paramComponent == null || (
-/* 1509 */       container = paramComponent.getParent()) == null)) {
-/* 1510 */       throw new RuntimeException("JOptionPane: parentComponent does not have a valid parent");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1515 */     final JInternalFrame iFrame = new JInternalFrame(paramString, false, true, false, false);
-/*      */ 
-/*      */     
-/* 1518 */     jInternalFrame.putClientProperty("JInternalFrame.frameType", "optionDialog");
-/* 1519 */     jInternalFrame.putClientProperty("JInternalFrame.messageType", 
-/* 1520 */         Integer.valueOf(getMessageType()));
-/*      */     
-/* 1522 */     jInternalFrame.addInternalFrameListener(new InternalFrameAdapter() {
-/*      */           public void internalFrameClosing(InternalFrameEvent param1InternalFrameEvent) {
-/* 1524 */             if (JOptionPane.this.getValue() == JOptionPane.UNINITIALIZED_VALUE) {
-/* 1525 */               JOptionPane.this.setValue((Object)null);
-/*      */             }
-/*      */           }
-/*      */         });
-/* 1529 */     addPropertyChangeListener(new PropertyChangeListener()
-/*      */         {
-/*      */           
-/*      */           public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent)
-/*      */           {
-/* 1534 */             if (iFrame.isVisible() && param1PropertyChangeEvent
-/* 1535 */               .getSource() == JOptionPane.this && param1PropertyChangeEvent
-/* 1536 */               .getPropertyName().equals("value")) {
-/*      */ 
-/*      */               
-/* 1539 */               try { Method method = AccessController.<Method>doPrivileged(new JOptionPane.ModalPrivilegedAction(Container.class, "stopLWModal"));
-/*      */ 
-/*      */                 
-/* 1542 */                 if (method != null) {
-/* 1543 */                   method.invoke(iFrame, (Object[])null);
-/*      */                 } }
-/* 1545 */               catch (IllegalAccessException illegalAccessException) {  }
-/* 1546 */               catch (IllegalArgumentException illegalArgumentException) {  }
-/* 1547 */               catch (InvocationTargetException invocationTargetException) {}
-/*      */ 
-/*      */               
-/*      */               try {
-/* 1551 */                 iFrame.setClosed(true);
-/*      */               }
-/* 1553 */               catch (PropertyVetoException propertyVetoException) {}
-/*      */ 
-/*      */               
-/* 1556 */               iFrame.setVisible(false);
-/*      */             } 
-/*      */           }
-/*      */         });
-/* 1560 */     jInternalFrame.getContentPane().add(this, "Center");
-/* 1561 */     if (container instanceof JDesktopPane) {
-/* 1562 */       container.add(jInternalFrame, JLayeredPane.MODAL_LAYER);
-/*      */     } else {
-/* 1564 */       container.add(jInternalFrame, "Center");
-/*      */     } 
-/* 1566 */     Dimension dimension1 = jInternalFrame.getPreferredSize();
-/* 1567 */     Dimension dimension2 = container.getSize();
-/* 1568 */     Dimension dimension3 = paramComponent.getSize();
-/*      */     
-/* 1570 */     jInternalFrame.setBounds((dimension2.width - dimension1.width) / 2, (dimension2.height - dimension1.height) / 2, dimension1.width, dimension1.height);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1575 */     Point point = SwingUtilities.convertPoint(paramComponent, 0, 0, container);
-/* 1576 */     int i = (dimension3.width - dimension1.width) / 2 + point.x;
-/* 1577 */     int j = (dimension3.height - dimension1.height) / 2 + point.y;
-/*      */ 
-/*      */     
-/* 1580 */     int k = i + dimension1.width - dimension2.width;
-/* 1581 */     int m = j + dimension1.height - dimension2.height;
-/* 1582 */     i = Math.max((k > 0) ? (i - k) : i, 0);
-/* 1583 */     j = Math.max((m > 0) ? (j - m) : j, 0);
-/* 1584 */     jInternalFrame.setBounds(i, j, dimension1.width, dimension1.height);
-/*      */     
-/* 1586 */     container.validate();
-/*      */     try {
-/* 1588 */       jInternalFrame.setSelected(true);
-/* 1589 */     } catch (PropertyVetoException propertyVetoException) {}
-/*      */     
-/* 1591 */     return jInternalFrame;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Frame getFrameForComponent(Component paramComponent) throws HeadlessException {
-/* 1611 */     if (paramComponent == null)
-/* 1612 */       return getRootFrame(); 
-/* 1613 */     if (paramComponent instanceof Frame)
-/* 1614 */       return (Frame)paramComponent; 
-/* 1615 */     return getFrameForComponent(paramComponent.getParent());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static Window getWindowForComponent(Component paramComponent) throws HeadlessException {
-/* 1636 */     if (paramComponent == null)
-/* 1637 */       return getRootFrame(); 
-/* 1638 */     if (paramComponent instanceof Frame || paramComponent instanceof Dialog)
-/* 1639 */       return (Window)paramComponent; 
-/* 1640 */     return getWindowForComponent(paramComponent.getParent());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static JDesktopPane getDesktopPaneForComponent(Component paramComponent) {
-/* 1655 */     if (paramComponent == null)
-/* 1656 */       return null; 
-/* 1657 */     if (paramComponent instanceof JDesktopPane)
-/* 1658 */       return (JDesktopPane)paramComponent; 
-/* 1659 */     return getDesktopPaneForComponent(paramComponent.getParent());
-/*      */   }
-/*      */   
-/* 1662 */   private static final Object sharedFrameKey = JOptionPane.class;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setRootFrame(Frame paramFrame) {
-/* 1674 */     if (paramFrame != null) {
-/* 1675 */       SwingUtilities.appContextPut(sharedFrameKey, paramFrame);
-/*      */     } else {
-/* 1677 */       SwingUtilities.appContextRemove(sharedFrameKey);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static Frame getRootFrame() throws HeadlessException {
-/* 1694 */     Frame frame = (Frame)SwingUtilities.appContextGet(sharedFrameKey);
-/* 1695 */     if (frame == null) {
-/* 1696 */       frame = SwingUtilities.getSharedOwnerFrame();
-/* 1697 */       SwingUtilities.appContextPut(sharedFrameKey, frame);
-/*      */     } 
-/* 1699 */     return frame;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane() {
-/* 1706 */     this("JOptionPane message");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane(Object paramObject) {
-/* 1718 */     this(paramObject, -1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane(Object paramObject, int paramInt) {
-/* 1734 */     this(paramObject, paramInt, -1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane(Object paramObject, int paramInt1, int paramInt2) {
-/* 1754 */     this(paramObject, paramInt1, paramInt2, (Icon)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane(Object paramObject, int paramInt1, int paramInt2, Icon paramIcon) {
-/* 1776 */     this(paramObject, paramInt1, paramInt2, paramIcon, (Object[])null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane(Object paramObject, int paramInt1, int paramInt2, Icon paramIcon, Object[] paramArrayOfObject) {
-/* 1808 */     this(paramObject, paramInt1, paramInt2, paramIcon, paramArrayOfObject, (Object)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public JOptionPane(Object paramObject1, int paramInt1, int paramInt2, Icon paramIcon, Object[] paramArrayOfObject, Object paramObject2) {
-/* 1837 */     this.message = paramObject1;
-/* 1838 */     this.options = paramArrayOfObject;
-/* 1839 */     this.initialValue = paramObject2;
-/* 1840 */     this.icon = paramIcon;
-/* 1841 */     setMessageType(paramInt1);
-/* 1842 */     setOptionType(paramInt2);
-/* 1843 */     this.value = UNINITIALIZED_VALUE;
-/* 1844 */     this.inputValue = UNINITIALIZED_VALUE;
-/* 1845 */     updateUI();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUI(OptionPaneUI paramOptionPaneUI) {
-/* 1859 */     if (this.ui != paramOptionPaneUI) {
-/* 1860 */       setUI(paramOptionPaneUI);
-/* 1861 */       invalidate();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OptionPaneUI getUI() {
-/* 1871 */     return (OptionPaneUI)this.ui;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateUI() {
-/* 1882 */     setUI((OptionPaneUI)UIManager.getUI(this));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getUIClassID() {
-/* 1895 */     return "OptionPaneUI";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMessage(Object paramObject) {
-/* 1910 */     Object object = this.message;
-/*      */     
-/* 1912 */     this.message = paramObject;
-/* 1913 */     firePropertyChange("message", object, this.message);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getMessage() {
-/* 1923 */     return this.message;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIcon(Icon paramIcon) {
-/* 1938 */     Icon icon = this.icon;
-/*      */     
-/* 1940 */     this.icon = paramIcon;
-/* 1941 */     firePropertyChange("icon", icon, this.icon);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getIcon() {
-/* 1951 */     return this.icon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setValue(Object paramObject) {
-/* 1965 */     Object object = this.value;
-/*      */     
-/* 1967 */     this.value = paramObject;
-/* 1968 */     firePropertyChange("value", object, this.value);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getValue() {
-/* 1986 */     return this.value;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOptions(Object[] paramArrayOfObject) {
-/* 2005 */     Object[] arrayOfObject = this.options;
-/*      */     
-/* 2007 */     this.options = paramArrayOfObject;
-/* 2008 */     firePropertyChange("options", arrayOfObject, this.options);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] getOptions() {
-/* 2018 */     if (this.options != null) {
-/* 2019 */       int i = this.options.length;
-/* 2020 */       Object[] arrayOfObject = new Object[i];
-/*      */       
-/* 2022 */       System.arraycopy(this.options, 0, arrayOfObject, 0, i);
-/* 2023 */       return arrayOfObject;
-/*      */     } 
-/* 2025 */     return this.options;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setInitialValue(Object paramObject) {
-/* 2043 */     Object object = this.initialValue;
-/*      */     
-/* 2045 */     this.initialValue = paramObject;
-/* 2046 */     firePropertyChange("initialValue", object, this.initialValue);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getInitialValue() {
-/* 2057 */     return this.initialValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMessageType(int paramInt) {
-/* 2079 */     if (paramInt != 0 && paramInt != 1 && paramInt != 2 && paramInt != 3 && paramInt != -1)
-/*      */     {
-/*      */       
-/* 2082 */       throw new RuntimeException("JOptionPane: type must be one of JOptionPane.ERROR_MESSAGE, JOptionPane.INFORMATION_MESSAGE, JOptionPane.WARNING_MESSAGE, JOptionPane.QUESTION_MESSAGE or JOptionPane.PLAIN_MESSAGE");
-/*      */     }
-/* 2084 */     int i = this.messageType;
-/*      */     
-/* 2086 */     this.messageType = paramInt;
-/* 2087 */     firePropertyChange("messageType", i, this.messageType);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMessageType() {
-/* 2098 */     return this.messageType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOptionType(int paramInt) {
-/* 2121 */     if (paramInt != -1 && paramInt != 0 && paramInt != 1 && paramInt != 2)
-/*      */     {
-/* 2123 */       throw new RuntimeException("JOptionPane: option type must be one of JOptionPane.DEFAULT_OPTION, JOptionPane.YES_NO_OPTION, JOptionPane.YES_NO_CANCEL_OPTION or JOptionPane.OK_CANCEL_OPTION");
-/*      */     }
-/* 2125 */     int i = this.optionType;
-/*      */     
-/* 2127 */     this.optionType = paramInt;
-/* 2128 */     firePropertyChange("optionType", i, this.optionType);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getOptionType() {
-/* 2139 */     return this.optionType;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectionValues(Object[] paramArrayOfObject) {
-/* 2165 */     Object[] arrayOfObject = this.selectionValues;
-/*      */     
-/* 2167 */     this.selectionValues = paramArrayOfObject;
-/* 2168 */     firePropertyChange("selectionValues", arrayOfObject, paramArrayOfObject);
-/* 2169 */     if (this.selectionValues != null) {
-/* 2170 */       setWantsInput(true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] getSelectionValues() {
-/* 2180 */     return this.selectionValues;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setInitialSelectionValue(Object paramObject) {
-/* 2194 */     Object object = this.initialSelectionValue;
-/*      */     
-/* 2196 */     this.initialSelectionValue = paramObject;
-/* 2197 */     firePropertyChange("initialSelectionValue", object, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getInitialSelectionValue() {
-/* 2209 */     return this.initialSelectionValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setInputValue(Object paramObject) {
-/* 2232 */     Object object = this.inputValue;
-/*      */     
-/* 2234 */     this.inputValue = paramObject;
-/* 2235 */     firePropertyChange("inputValue", object, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getInputValue() {
-/* 2251 */     return this.inputValue;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMaxCharactersPerLineCount() {
-/* 2263 */     return Integer.MAX_VALUE;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setWantsInput(boolean paramBoolean) {
-/* 2286 */     boolean bool = this.wantsInput;
-/*      */     
-/* 2288 */     this.wantsInput = paramBoolean;
-/* 2289 */     firePropertyChange("wantsInput", bool, paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getWantsInput() {
-/* 2299 */     return this.wantsInput;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void selectInitialValue() {
-/* 2309 */     OptionPaneUI optionPaneUI = getUI();
-/* 2310 */     if (optionPaneUI != null) {
-/* 2311 */       optionPaneUI.selectInitialValue(this);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static int styleFromMessageType(int paramInt) {
-/* 2317 */     switch (paramInt) {
-/*      */       case 0:
-/* 2319 */         return 4;
-/*      */       case 3:
-/* 2321 */         return 7;
-/*      */       case 2:
-/* 2323 */         return 8;
-/*      */       case 1:
-/* 2325 */         return 3;
-/*      */     } 
-/*      */     
-/* 2328 */     return 2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 2334 */     Vector<String> vector = new Vector();
-/*      */     
-/* 2336 */     paramObjectOutputStream.defaultWriteObject();
-/*      */     
-/* 2338 */     if (this.icon != null && this.icon instanceof java.io.Serializable) {
-/* 2339 */       vector.addElement("icon");
-/* 2340 */       vector.addElement(this.icon);
-/*      */     } 
-/*      */     
-/* 2343 */     if (this.message != null && this.message instanceof java.io.Serializable) {
-/* 2344 */       vector.addElement("message");
-/* 2345 */       vector.addElement(this.message);
-/*      */     } 
-/*      */     
-/* 2348 */     if (this.options != null) {
-/* 2349 */       Vector<Object> vector1 = new Vector();
-/*      */       
-/* 2351 */       int i = 0, j = this.options.length;
-/* 2352 */       for (; i < j; i++) {
-/* 2353 */         if (this.options[i] instanceof java.io.Serializable)
-/* 2354 */           vector1.addElement(this.options[i]); 
-/* 2355 */       }  if (vector1.size() > 0) {
-/* 2356 */         i = vector1.size();
-/* 2357 */         Object[] arrayOfObject = new Object[i];
-/*      */         
-/* 2359 */         vector1.copyInto(arrayOfObject);
-/* 2360 */         vector.addElement("options");
-/* 2361 */         vector.addElement(arrayOfObject);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2365 */     if (this.initialValue != null && this.initialValue instanceof java.io.Serializable) {
-/* 2366 */       vector.addElement("initialValue");
-/* 2367 */       vector.addElement(this.initialValue);
-/*      */     } 
-/*      */     
-/* 2370 */     if (this.value != null && this.value instanceof java.io.Serializable) {
-/* 2371 */       vector.addElement("value");
-/* 2372 */       vector.addElement(this.value);
-/*      */     } 
-/*      */     
-/* 2375 */     if (this.selectionValues != null) {
-/* 2376 */       boolean bool = true;
-/*      */       
-/* 2378 */       byte b = 0; int i = this.selectionValues.length;
-/* 2379 */       for (; b < i; b++) {
-/* 2380 */         if (this.selectionValues[b] != null && !(this.selectionValues[b] instanceof java.io.Serializable)) {
-/*      */           
-/* 2382 */           bool = false;
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/* 2386 */       if (bool) {
-/* 2387 */         vector.addElement("selectionValues");
-/* 2388 */         vector.addElement(this.selectionValues);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2392 */     if (this.inputValue != null && this.inputValue instanceof java.io.Serializable) {
-/* 2393 */       vector.addElement("inputValue");
-/* 2394 */       vector.addElement(this.inputValue);
-/*      */     } 
-/*      */     
-/* 2397 */     if (this.initialSelectionValue != null && this.initialSelectionValue instanceof java.io.Serializable) {
-/*      */       
-/* 2399 */       vector.addElement("initialSelectionValue");
-/* 2400 */       vector.addElement(this.initialSelectionValue);
-/*      */     } 
-/* 2402 */     paramObjectOutputStream.writeObject(vector);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 2407 */     paramObjectInputStream.defaultReadObject();
-/*      */     
-/* 2409 */     Vector<E> vector = (Vector)paramObjectInputStream.readObject();
-/* 2410 */     byte b = 0;
-/* 2411 */     int i = vector.size();
-/*      */     
-/* 2413 */     if (b < i && vector.elementAt(b)
-/* 2414 */       .equals("icon")) {
-/* 2415 */       this.icon = (Icon)vector.elementAt(++b);
-/* 2416 */       b++;
-/*      */     } 
-/* 2418 */     if (b < i && vector.elementAt(b)
-/* 2419 */       .equals("message")) {
-/* 2420 */       this.message = vector.elementAt(++b);
-/* 2421 */       b++;
-/*      */     } 
-/* 2423 */     if (b < i && vector.elementAt(b)
-/* 2424 */       .equals("options")) {
-/* 2425 */       this.options = (Object[])vector.elementAt(++b);
-/* 2426 */       b++;
-/*      */     } 
-/* 2428 */     if (b < i && vector.elementAt(b)
-/* 2429 */       .equals("initialValue")) {
-/* 2430 */       this.initialValue = vector.elementAt(++b);
-/* 2431 */       b++;
-/*      */     } 
-/* 2433 */     if (b < i && vector.elementAt(b)
-/* 2434 */       .equals("value")) {
-/* 2435 */       this.value = vector.elementAt(++b);
-/* 2436 */       b++;
-/*      */     } 
-/* 2438 */     if (b < i && vector.elementAt(b)
-/* 2439 */       .equals("selectionValues")) {
-/* 2440 */       this.selectionValues = (Object[])vector.elementAt(++b);
-/* 2441 */       b++;
-/*      */     } 
-/* 2443 */     if (b < i && vector.elementAt(b)
-/* 2444 */       .equals("inputValue")) {
-/* 2445 */       this.inputValue = vector.elementAt(++b);
-/* 2446 */       b++;
-/*      */     } 
-/* 2448 */     if (b < i && vector.elementAt(b)
-/* 2449 */       .equals("initialSelectionValue")) {
-/* 2450 */       this.initialSelectionValue = vector.elementAt(++b);
-/* 2451 */       b++;
-/*      */     } 
-/* 2453 */     if (getUIClassID().equals("OptionPaneUI")) {
-/* 2454 */       byte b1 = JComponent.getWriteObjCounter(this);
-/* 2455 */       b1 = (byte)(b1 - 1); JComponent.setWriteObjCounter(this, b1);
-/* 2456 */       if (b1 == 0 && this.ui != null) {
-/* 2457 */         this.ui.installUI(this);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String paramString() {
-/* 2475 */     String str4, str5, str1 = (this.icon != null) ? this.icon.toString() : "";
-/*      */     
-/* 2477 */     String str2 = (this.initialValue != null) ? this.initialValue.toString() : "";
-/*      */     
-/* 2479 */     String str3 = (this.message != null) ? this.message.toString() : "";
-/*      */     
-/* 2481 */     if (this.messageType == 0)
-/* 2482 */     { str4 = "ERROR_MESSAGE"; }
-/* 2483 */     else if (this.messageType == 1)
-/* 2484 */     { str4 = "INFORMATION_MESSAGE"; }
-/* 2485 */     else if (this.messageType == 2)
-/* 2486 */     { str4 = "WARNING_MESSAGE"; }
-/* 2487 */     else if (this.messageType == 3)
-/* 2488 */     { str4 = "QUESTION_MESSAGE"; }
-/* 2489 */     else if (this.messageType == -1)
-/* 2490 */     { str4 = "PLAIN_MESSAGE"; }
-/* 2491 */     else { str4 = ""; }
-/*      */     
-/* 2493 */     if (this.optionType == -1)
-/* 2494 */     { str5 = "DEFAULT_OPTION"; }
-/* 2495 */     else if (this.optionType == 0)
-/* 2496 */     { str5 = "YES_NO_OPTION"; }
-/* 2497 */     else if (this.optionType == 1)
-/* 2498 */     { str5 = "YES_NO_CANCEL_OPTION"; }
-/* 2499 */     else if (this.optionType == 2)
-/* 2500 */     { str5 = "OK_CANCEL_OPTION"; }
-/* 2501 */     else { str5 = ""; }
-/* 2502 */      String str6 = this.wantsInput ? "true" : "false";
-/*      */ 
-/*      */     
-/* 2505 */     return super.paramString() + ",icon=" + str1 + ",initialValue=" + str2 + ",message=" + str3 + ",messageType=" + str4 + ",optionType=" + str5 + ",wantsInput=" + str6;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class ModalPrivilegedAction
-/*      */     implements PrivilegedAction<Method>
-/*      */   {
-/*      */     private Class<?> clazz;
-/*      */ 
-/*      */     
-/*      */     private String methodName;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ModalPrivilegedAction(Class<?> param1Class, String param1String) {
-/* 2522 */       this.clazz = param1Class;
-/* 2523 */       this.methodName = param1String;
-/*      */     }
-/*      */     
-/*      */     public Method run() {
-/* 2527 */       Method method = null;
-/*      */       try {
-/* 2529 */         method = this.clazz.getDeclaredMethod(this.methodName, (Class[])null);
-/* 2530 */       } catch (NoSuchMethodException noSuchMethodException) {}
-/*      */       
-/* 2532 */       if (method != null) {
-/* 2533 */         method.setAccessible(true);
-/*      */       }
-/* 2535 */       return method;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AccessibleContext getAccessibleContext() {
-/* 2558 */     if (this.accessibleContext == null) {
-/* 2559 */       this.accessibleContext = new AccessibleJOptionPane();
-/*      */     }
-/* 2561 */     return this.accessibleContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class AccessibleJOptionPane
-/*      */     extends JComponent.AccessibleJComponent
-/*      */   {
-/*      */     public AccessibleRole getAccessibleRole() {
-/* 2588 */       switch (JOptionPane.this.messageType) {
-/*      */         case 0:
-/*      */         case 1:
-/*      */         case 2:
-/* 2592 */           return AccessibleRole.ALERT;
-/*      */       } 
-/*      */       
-/* 2595 */       return AccessibleRole.OPTION_PANE;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\JOptionPane.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.KeyboardFocusManager;
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.HeadlessException;
+import java.awt.Window;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Vector;
+import javax.swing.plaf.OptionPaneUI;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.event.InternalFrameAdapter;
+import javax.accessibility.*;
+import static javax.swing.ClientPropertyKey.PopupFactory_FORCE_HEAVYWEIGHT_POPUP;
+
+/**
+ * <code>JOptionPane</code> makes it easy to pop up a standard dialog box that
+ * prompts users for a value or informs them of something.
+ * For information about using <code>JOptionPane</code>, see
+ * <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/dialog.html">How to Make Dialogs</a>,
+ * a section in <em>The Java Tutorial</em>.
+ *
+ * <p>
+ *
+ * While the <code>JOptionPane</code>
+ * class may appear complex because of the large number of methods, almost
+ * all uses of this class are one-line calls to one of the static
+ * <code>showXxxDialog</code> methods shown below:
+ * <blockquote>
+ *
+ *
+ * <table border=1 summary="Common JOptionPane method names and their descriptions">
+ * <tr>
+ *    <th>Method Name</th>
+ *    <th>Description</th>
+ * </tr>
+ * <tr>
+ *    <td>showConfirmDialog</td>
+ *    <td>Asks a confirming question, like yes/no/cancel.</td>
+ * </tr>
+ * <tr>
+ *    <td>showInputDialog</td>
+ *    <td>Prompt for some input.</td>
+ * </tr>
+ * <tr>
+ *   <td>showMessageDialog</td>
+ *   <td>Tell the user about something that has happened.</td>
+ * </tr>
+ * <tr>
+ *   <td>showOptionDialog</td>
+ *   <td>The Grand Unification of the above three.</td>
+ * </tr>
+ * </table>
+ *
+ * </blockquote>
+ * Each of these methods also comes in a <code>showInternalXXX</code>
+ * flavor, which uses an internal frame to hold the dialog box (see
+ * {@link JInternalFrame}).
+ * Multiple convenience methods have also been defined -- overloaded
+ * versions of the basic methods that use different parameter lists.
+ * <p>
+ * All dialogs are modal. Each <code>showXxxDialog</code> method blocks
+ * the caller until the user's interaction is complete.
+ *
+ * <table cellspacing=6 cellpadding=4 border=0 style="float:right" summary="layout">
+ * <tr>
+ *  <td style="background-color:#FFe0d0" rowspan=2>icon</td>
+ *  <td style="background-color:#FFe0d0">message</td>
+ * </tr>
+ * <tr>
+ *  <td style="background-color:#FFe0d0">input value</td>
+ * </tr>
+ * <tr>
+ *   <td style="background-color:#FFe0d0" colspan=2>option buttons</td>
+ * </tr>
+ * </table>
+ *
+ * The basic appearance of one of these dialog boxes is generally
+ * similar to the picture at the right, although the various
+ * look-and-feels are
+ * ultimately responsible for the final result.  In particular, the
+ * look-and-feels will adjust the layout to accommodate the option pane's
+ * <code>ComponentOrientation</code> property.
+ * <br style="clear:all">
+ * <p>
+ * <b>Parameters:</b><br>
+ * The parameters to these methods follow consistent patterns:
+ * <blockquote>
+ * <dl compact>
+ * <dt>parentComponent<dd>
+ * Defines the <code>Component</code> that is to be the parent of this
+ * dialog box.
+ * It is used in two ways: the <code>Frame</code> that contains
+ * it is used as the <code>Frame</code>
+ * parent for the dialog box, and its screen coordinates are used in
+ * the placement of the dialog box. In general, the dialog box is placed
+ * just below the component. This parameter may be <code>null</code>,
+ * in which case a default <code>Frame</code> is used as the parent,
+ * and the dialog will be
+ * centered on the screen (depending on the {@literal L&F}).
+ * <dt><a name=message>message</a><dd>
+ * A descriptive message to be placed in the dialog box.
+ * In the most common usage, message is just a <code>String</code> or
+ * <code>String</code> constant.
+ * However, the type of this parameter is actually <code>Object</code>. Its
+ * interpretation depends on its type:
+ * <dl compact>
+ * <dt>Object[]<dd>An array of objects is interpreted as a series of
+ *                 messages (one per object) arranged in a vertical stack.
+ *                 The interpretation is recursive -- each object in the
+ *                 array is interpreted according to its type.
+ * <dt>Component<dd>The <code>Component</code> is displayed in the dialog.
+ * <dt>Icon<dd>The <code>Icon</code> is wrapped in a <code>JLabel</code>
+ *               and displayed in the dialog.
+ * <dt>others<dd>The object is converted to a <code>String</code> by calling
+ *               its <code>toString</code> method. The result is wrapped in a
+ *               <code>JLabel</code> and displayed.
+ * </dl>
+ * <dt>messageType<dd>Defines the style of the message. The Look and Feel
+ * manager may lay out the dialog differently depending on this value, and
+ * will often provide a default icon. The possible values are:
+ * <ul>
+ * <li><code>ERROR_MESSAGE</code>
+ * <li><code>INFORMATION_MESSAGE</code>
+ * <li><code>WARNING_MESSAGE</code>
+ * <li><code>QUESTION_MESSAGE</code>
+ * <li><code>PLAIN_MESSAGE</code>
+ * </ul>
+ * <dt>optionType<dd>Defines the set of option buttons that appear at
+ * the bottom of the dialog box:
+ * <ul>
+ * <li><code>DEFAULT_OPTION</code>
+ * <li><code>YES_NO_OPTION</code>
+ * <li><code>YES_NO_CANCEL_OPTION</code>
+ * <li><code>OK_CANCEL_OPTION</code>
+ * </ul>
+ * You aren't limited to this set of option buttons.  You can provide any
+ * buttons you want using the options parameter.
+ * <dt>options<dd>A more detailed description of the set of option buttons
+ * that will appear at the bottom of the dialog box.
+ * The usual value for the options parameter is an array of
+ * <code>String</code>s. But
+ * the parameter type is an array of <code>Objects</code>.
+ * A button is created for each object depending on its type:
+ * <dl compact>
+ * <dt>Component<dd>The component is added to the button row directly.
+ * <dt>Icon<dd>A <code>JButton</code> is created with this as its label.
+ * <dt>other<dd>The <code>Object</code> is converted to a string using its
+ *              <code>toString</code> method and the result is used to
+ *              label a <code>JButton</code>.
+ * </dl>
+ * <dt>icon<dd>A decorative icon to be placed in the dialog box. A default
+ * value for this is determined by the <code>messageType</code> parameter.
+ * <dt>title<dd>The title for the dialog box.
+ * <dt>initialValue<dd>The default selection (input value).
+ * </dl>
+ * </blockquote>
+ * <p>
+ * When the selection is changed, <code>setValue</code> is invoked,
+ * which generates a <code>PropertyChangeEvent</code>.
+ * <p>
+ * If a <code>JOptionPane</code> has configured to all input
+ * <code>setWantsInput</code>
+ * the bound property <code>JOptionPane.INPUT_VALUE_PROPERTY</code>
+ *  can also be listened
+ * to, to determine when the user has input or selected a value.
+ * <p>
+ * When one of the <code>showXxxDialog</code> methods returns an integer,
+ * the possible values are:
+ * <ul>
+ * <li><code>YES_OPTION</code>
+ * <li><code>NO_OPTION</code>
+ * <li><code>CANCEL_OPTION</code>
+ * <li><code>OK_OPTION</code>
+ * <li><code>CLOSED_OPTION</code>
+ * </ul>
+ * <b>Examples:</b>
+ * <dl>
+ * <dt>Show an error dialog that displays the message, 'alert':
+ * <dd><code>
+ * JOptionPane.showMessageDialog(null, "alert", "alert", JOptionPane.ERROR_MESSAGE);
+ * </code>
+ * <dt>Show an internal information dialog with the message, 'information':
+ * <dd><pre>
+ * JOptionPane.showInternalMessageDialog(frame, "information",
+ *             "information", JOptionPane.INFORMATION_MESSAGE);
+ * </pre>
+ * <dt>Show an information panel with the options yes/no and message 'choose one':
+ * <dd><pre>JOptionPane.showConfirmDialog(null,
+ *             "choose one", "choose one", JOptionPane.YES_NO_OPTION);
+ * </pre>
+ * <dt>Show an internal information dialog with the options yes/no/cancel and
+ * message 'please choose one' and title information:
+ * <dd><pre>JOptionPane.showInternalConfirmDialog(frame,
+ *             "please choose one", "information",
+ *             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+ * </pre>
+ * <dt>Show a warning dialog with the options OK, CANCEL, title 'Warning', and
+ * message 'Click OK to continue':
+ * <dd><pre>
+ * Object[] options = { "OK", "CANCEL" };
+ * JOptionPane.showOptionDialog(null, "Click OK to continue", "Warning",
+ *             JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
+ *             null, options, options[0]);
+ * </pre>
+ * <dt>Show a dialog asking the user to type in a String:
+ * <dd><code>
+ * String inputValue = JOptionPane.showInputDialog("Please input a value");
+ * </code>
+ * <dt>Show a dialog asking the user to select a String:
+ * <dd><pre>
+ * Object[] possibleValues = { "First", "Second", "Third" };<br>
+ * Object selectedValue = JOptionPane.showInputDialog(null,
+ *             "Choose one", "Input",
+ *             JOptionPane.INFORMATION_MESSAGE, null,
+ *             possibleValues, possibleValues[0]);
+ * </pre><p>
+ * </dl>
+ * <b>Direct Use:</b><br>
+ * To create and use an <code>JOptionPane</code> directly, the
+ * standard pattern is roughly as follows:
+ * <pre>
+ *     JOptionPane pane = new JOptionPane(<i>arguments</i>);
+ *     pane.set<i>.Xxxx(...); // Configure</i>
+ *     JDialog dialog = pane.createDialog(<i>parentComponent, title</i>);
+ *     dialog.show();
+ *     Object selectedValue = pane.getValue();
+ *     if(selectedValue == null)
+ *       return CLOSED_OPTION;
+ *     <i>//If there is <b>not</b> an array of option buttons:</i>
+ *     if(options == null) {
+ *       if(selectedValue instanceof Integer)
+ *          return ((Integer)selectedValue).intValue();
+ *       return CLOSED_OPTION;
+ *     }
+ *     <i>//If there is an array of option buttons:</i>
+ *     for(int counter = 0, maxCounter = options.length;
+ *        counter &lt; maxCounter; counter++) {
+ *        if(options[counter].equals(selectedValue))
+ *        return counter;
+ *     }
+ *     return CLOSED_OPTION;
+ * </pre>
+ * <p>
+ * <strong>Warning:</strong> Swing is not thread safe. For more
+ * information see <a
+ * href="package-summary.html#threading">Swing's Threading
+ * Policy</a>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see JInternalFrame
+ *
+ * @beaninfo
+ *      attribute: isContainer true
+ *    description: A component which implements standard dialog box controls.
+ *
+ * @author James Gosling
+ * @author Scott Violet
+ */
+public class JOptionPane extends JComponent implements Accessible
+{
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    private static final String uiClassID = "OptionPaneUI";
+
+    /**
+     * Indicates that the user has not yet selected a value.
+     */
+    public static final Object      UNINITIALIZED_VALUE = "uninitializedValue";
+
+    //
+    // Option types
+    //
+
+    /**
+     * Type meaning Look and Feel should not supply any options -- only
+     * use the options from the <code>JOptionPane</code>.
+     */
+    public static final int         DEFAULT_OPTION = -1;
+    /** Type used for <code>showConfirmDialog</code>. */
+    public static final int         YES_NO_OPTION = 0;
+    /** Type used for <code>showConfirmDialog</code>. */
+    public static final int         YES_NO_CANCEL_OPTION = 1;
+    /** Type used for <code>showConfirmDialog</code>. */
+    public static final int         OK_CANCEL_OPTION = 2;
+
+    //
+    // Return values.
+    //
+    /** Return value from class method if YES is chosen. */
+    public static final int         YES_OPTION = 0;
+    /** Return value from class method if NO is chosen. */
+    public static final int         NO_OPTION = 1;
+    /** Return value from class method if CANCEL is chosen. */
+    public static final int         CANCEL_OPTION = 2;
+    /** Return value form class method if OK is chosen. */
+    public static final int         OK_OPTION = 0;
+    /** Return value from class method if user closes window without selecting
+     * anything, more than likely this should be treated as either a
+     * <code>CANCEL_OPTION</code> or <code>NO_OPTION</code>. */
+    public static final int         CLOSED_OPTION = -1;
+
+    //
+    // Message types. Used by the UI to determine what icon to display,
+    // and possibly what behavior to give based on the type.
+    //
+    /** Used for error messages. */
+    public static final int  ERROR_MESSAGE = 0;
+    /** Used for information messages. */
+    public static final int  INFORMATION_MESSAGE = 1;
+    /** Used for warning messages. */
+    public static final int  WARNING_MESSAGE = 2;
+    /** Used for questions. */
+    public static final int  QUESTION_MESSAGE = 3;
+    /** No icon is used. */
+    public static final int   PLAIN_MESSAGE = -1;
+
+    /** Bound property name for <code>icon</code>. */
+    public static final String      ICON_PROPERTY = "icon";
+    /** Bound property name for <code>message</code>. */
+    public static final String      MESSAGE_PROPERTY = "message";
+    /** Bound property name for <code>value</code>. */
+    public static final String      VALUE_PROPERTY = "value";
+    /** Bound property name for <code>option</code>. */
+    public static final String      OPTIONS_PROPERTY = "options";
+    /** Bound property name for <code>initialValue</code>. */
+    public static final String      INITIAL_VALUE_PROPERTY = "initialValue";
+    /** Bound property name for <code>type</code>. */
+    public static final String      MESSAGE_TYPE_PROPERTY = "messageType";
+    /** Bound property name for <code>optionType</code>. */
+    public static final String      OPTION_TYPE_PROPERTY = "optionType";
+    /** Bound property name for <code>selectionValues</code>. */
+    public static final String      SELECTION_VALUES_PROPERTY = "selectionValues";
+    /** Bound property name for <code>initialSelectionValue</code>. */
+    public static final String      INITIAL_SELECTION_VALUE_PROPERTY = "initialSelectionValue";
+    /** Bound property name for <code>inputValue</code>. */
+    public static final String      INPUT_VALUE_PROPERTY = "inputValue";
+    /** Bound property name for <code>wantsInput</code>. */
+    public static final String      WANTS_INPUT_PROPERTY = "wantsInput";
+
+    /** Icon used in pane. */
+    transient protected Icon                  icon;
+    /** Message to display. */
+    transient protected Object                message;
+    /** Options to display to the user. */
+    transient protected Object[]              options;
+    /** Value that should be initially selected in <code>options</code>. */
+    transient protected Object                initialValue;
+    /** Message type. */
+    protected int                   messageType;
+    /**
+     * Option type, one of <code>DEFAULT_OPTION</code>,
+     * <code>YES_NO_OPTION</code>,
+     * <code>YES_NO_CANCEL_OPTION</code> or
+     * <code>OK_CANCEL_OPTION</code>.
+     */
+    protected int                   optionType;
+    /** Currently selected value, will be a valid option, or
+     * <code>UNINITIALIZED_VALUE</code> or <code>null</code>. */
+    transient protected Object                value;
+    /** Array of values the user can choose from. Look and feel will
+     * provide the UI component to choose this from. */
+    protected transient Object[]              selectionValues;
+    /** Value the user has input. */
+    protected transient Object                inputValue;
+    /** Initial value to select in <code>selectionValues</code>. */
+    protected transient Object                initialSelectionValue;
+    /** If true, a UI widget will be provided to the user to get input. */
+    protected boolean                         wantsInput;
+
+
+    /**
+     * Shows a question-message dialog requesting input from the user. The
+     * dialog uses the default frame, which usually means it is centered on
+     * the screen.
+     *
+     * @param message the <code>Object</code> to display
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static String showInputDialog(Object message)
+        throws HeadlessException {
+        return showInputDialog(null, message);
+    }
+
+    /**
+     * Shows a question-message dialog requesting input from the user, with
+     * the input value initialized to <code>initialSelectionValue</code>. The
+     * dialog uses the default frame, which usually means it is centered on
+     * the screen.
+     *
+     * @param message the <code>Object</code> to display
+     * @param initialSelectionValue the value used to initialize the input
+     *                 field
+     * @since 1.4
+     */
+    public static String showInputDialog(Object message, Object initialSelectionValue) {
+        return showInputDialog(null, message, initialSelectionValue);
+    }
+
+    /**
+     * Shows a question-message dialog requesting input from the user
+     * parented to <code>parentComponent</code>.
+     * The dialog is displayed on top of the <code>Component</code>'s
+     * frame, and is usually positioned below the <code>Component</code>.
+     *
+     * @param parentComponent  the parent <code>Component</code> for the
+     *          dialog
+     * @param message  the <code>Object</code> to display
+     * @exception HeadlessException if
+     *    <code>GraphicsEnvironment.isHeadless</code> returns
+     *    <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static String showInputDialog(Component parentComponent,
+        Object message) throws HeadlessException {
+        return showInputDialog(parentComponent, message, UIManager.getString(
+            "OptionPane.inputDialogTitle", parentComponent), QUESTION_MESSAGE);
+    }
+
+    /**
+     * Shows a question-message dialog requesting input from the user and
+     * parented to <code>parentComponent</code>. The input value will be
+     * initialized to <code>initialSelectionValue</code>.
+     * The dialog is displayed on top of the <code>Component</code>'s
+     * frame, and is usually positioned below the <code>Component</code>.
+     *
+     * @param parentComponent  the parent <code>Component</code> for the
+     *          dialog
+     * @param message the <code>Object</code> to display
+     * @param initialSelectionValue the value used to initialize the input
+     *                 field
+     * @since 1.4
+     */
+    public static String showInputDialog(Component parentComponent, Object message,
+                                         Object initialSelectionValue) {
+        return (String)showInputDialog(parentComponent, message,
+                      UIManager.getString("OptionPane.inputDialogTitle",
+                      parentComponent), QUESTION_MESSAGE, null, null,
+                      initialSelectionValue);
+    }
+
+    /**
+     * Shows a dialog requesting input from the user parented to
+     * <code>parentComponent</code> with the dialog having the title
+     * <code>title</code> and message type <code>messageType</code>.
+     *
+     * @param parentComponent  the parent <code>Component</code> for the
+     *                  dialog
+     * @param message  the <code>Object</code> to display
+     * @param title    the <code>String</code> to display in the dialog
+     *                  title bar
+     * @param messageType the type of message that is to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static String showInputDialog(Component parentComponent,
+        Object message, String title, int messageType)
+        throws HeadlessException {
+        return (String)showInputDialog(parentComponent, message, title,
+                                       messageType, null, null, null);
+    }
+
+    /**
+     * Prompts the user for input in a blocking dialog where the
+     * initial selection, possible selections, and all other options can
+     * be specified. The user will able to choose from
+     * <code>selectionValues</code>, where <code>null</code> implies the
+     * user can input
+     * whatever they wish, usually by means of a <code>JTextField</code>.
+     * <code>initialSelectionValue</code> is the initial value to prompt
+     * the user with. It is up to the UI to decide how best to represent
+     * the <code>selectionValues</code>, but usually a
+     * <code>JComboBox</code>, <code>JList</code>, or
+     * <code>JTextField</code> will be used.
+     *
+     * @param parentComponent  the parent <code>Component</code> for the
+     *                  dialog
+     * @param message  the <code>Object</code> to display
+     * @param title    the <code>String</code> to display in the
+     *                  dialog title bar
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param icon     the <code>Icon</code> image to display
+     * @param selectionValues an array of <code>Object</code>s that
+     *                  gives the possible selections
+     * @param initialSelectionValue the value used to initialize the input
+     *                 field
+     * @return user's input, or <code>null</code> meaning the user
+     *                  canceled the input
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static Object showInputDialog(Component parentComponent,
+        Object message, String title, int messageType, Icon icon,
+        Object[] selectionValues, Object initialSelectionValue)
+        throws HeadlessException {
+        JOptionPane    pane = new JOptionPane(message, messageType,
+                                              OK_CANCEL_OPTION, icon,
+                                              null, null);
+
+        pane.setWantsInput(true);
+        pane.setSelectionValues(selectionValues);
+        pane.setInitialSelectionValue(initialSelectionValue);
+        pane.setComponentOrientation(((parentComponent == null) ?
+            getRootFrame() : parentComponent).getComponentOrientation());
+
+        int style = styleFromMessageType(messageType);
+        JDialog dialog = pane.createDialog(parentComponent, title, style);
+
+        pane.selectInitialValue();
+        dialog.show();
+        dialog.dispose();
+
+        Object value = pane.getInputValue();
+
+        if (value == UNINITIALIZED_VALUE) {
+            return null;
+        }
+        return value;
+    }
+
+    /**
+     * Brings up an information-message dialog titled "Message".
+     *
+     * @param parentComponent determines the <code>Frame</code> in
+     *          which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static void showMessageDialog(Component parentComponent,
+        Object message) throws HeadlessException {
+        showMessageDialog(parentComponent, message, UIManager.getString(
+                    "OptionPane.messageDialogTitle", parentComponent),
+                    INFORMATION_MESSAGE);
+    }
+
+    /**
+     * Brings up a dialog that displays a message using a default
+     * icon determined by the <code>messageType</code> parameter.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static void showMessageDialog(Component parentComponent,
+        Object message, String title, int messageType)
+        throws HeadlessException {
+        showMessageDialog(parentComponent, message, title, messageType, null);
+    }
+
+    /**
+     * Brings up a dialog displaying a message, specifying all parameters.
+     *
+     * @param parentComponent determines the <code>Frame</code> in which the
+     *                  dialog is displayed; if <code>null</code>,
+     *                  or if the <code>parentComponent</code> has no
+     *                  <code>Frame</code>, a
+     *                  default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param icon      an icon to display in the dialog that helps the user
+     *                  identify the kind of message that is being displayed
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static void showMessageDialog(Component parentComponent,
+        Object message, String title, int messageType, Icon icon)
+        throws HeadlessException {
+        showOptionDialog(parentComponent, message, title, DEFAULT_OPTION,
+                         messageType, icon, null, null);
+    }
+
+    /**
+     * Brings up a dialog with the options <i>Yes</i>,
+     * <i>No</i> and <i>Cancel</i>; with the
+     * title, <b>Select an Option</b>.
+     *
+     * @param parentComponent determines the <code>Frame</code> in which the
+     *                  dialog is displayed; if <code>null</code>,
+     *                  or if the <code>parentComponent</code> has no
+     *                  <code>Frame</code>, a
+     *                  default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @return an integer indicating the option selected by the user
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static int showConfirmDialog(Component parentComponent,
+        Object message) throws HeadlessException {
+        return showConfirmDialog(parentComponent, message,
+                                 UIManager.getString("OptionPane.titleText"),
+                                 YES_NO_CANCEL_OPTION);
+    }
+
+    /**
+     * Brings up a dialog where the number of choices is determined
+     * by the <code>optionType</code> parameter.
+     *
+     * @param parentComponent determines the <code>Frame</code> in which the
+     *                  dialog is displayed; if <code>null</code>,
+     *                  or if the <code>parentComponent</code> has no
+     *                  <code>Frame</code>, a
+     *                  default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param optionType an int designating the options available on the dialog:
+     *                  <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  or <code>OK_CANCEL_OPTION</code>
+     * @return an int indicating the option selected by the user
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static int showConfirmDialog(Component parentComponent,
+        Object message, String title, int optionType)
+        throws HeadlessException {
+        return showConfirmDialog(parentComponent, message, title, optionType,
+                                 QUESTION_MESSAGE);
+    }
+
+    /**
+     * Brings up a dialog where the number of choices is determined
+     * by the <code>optionType</code> parameter, where the
+     * <code>messageType</code>
+     * parameter determines the icon to display.
+     * The <code>messageType</code> parameter is primarily used to supply
+     * a default icon from the Look and Feel.
+     *
+     * @param parentComponent determines the <code>Frame</code> in
+     *                  which the dialog is displayed; if <code>null</code>,
+     *                  or if the <code>parentComponent</code> has no
+     *                  <code>Frame</code>, a
+     *                  default <code>Frame</code> is used.
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param optionType an integer designating the options available
+     *                   on the dialog: <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  or <code>OK_CANCEL_OPTION</code>
+     * @param messageType an integer designating the kind of message this is;
+     *                  primarily used to determine the icon from the pluggable
+     *                  Look and Feel: <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @return an integer indicating the option selected by the user
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static int showConfirmDialog(Component parentComponent,
+        Object message, String title, int optionType, int messageType)
+        throws HeadlessException {
+        return showConfirmDialog(parentComponent, message, title, optionType,
+                                messageType, null);
+    }
+
+    /**
+     * Brings up a dialog with a specified icon, where the number of
+     * choices is determined by the <code>optionType</code> parameter.
+     * The <code>messageType</code> parameter is primarily used to supply
+     * a default icon from the look and feel.
+     *
+     * @param parentComponent determines the <code>Frame</code> in which the
+     *                  dialog is displayed; if <code>null</code>,
+     *                  or if the <code>parentComponent</code> has no
+     *                  <code>Frame</code>, a
+     *                  default <code>Frame</code> is used
+     * @param message   the Object to display
+     * @param title     the title string for the dialog
+     * @param optionType an int designating the options available on the dialog:
+     *                  <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  or <code>OK_CANCEL_OPTION</code>
+     * @param messageType an int designating the kind of message this is,
+     *                  primarily used to determine the icon from the pluggable
+     *                  Look and Feel: <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param icon      the icon to display in the dialog
+     * @return an int indicating the option selected by the user
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static int showConfirmDialog(Component parentComponent,
+        Object message, String title, int optionType,
+        int messageType, Icon icon) throws HeadlessException {
+        return showOptionDialog(parentComponent, message, title, optionType,
+                                messageType, icon, null, null);
+    }
+
+    /**
+     * Brings up a dialog with a specified icon, where the initial
+     * choice is determined by the <code>initialValue</code> parameter and
+     * the number of choices is determined by the <code>optionType</code>
+     * parameter.
+     * <p>
+     * If <code>optionType</code> is <code>YES_NO_OPTION</code>,
+     * or <code>YES_NO_CANCEL_OPTION</code>
+     * and the <code>options</code> parameter is <code>null</code>,
+     * then the options are
+     * supplied by the look and feel.
+     * <p>
+     * The <code>messageType</code> parameter is primarily used to supply
+     * a default icon from the look and feel.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *                  in which the dialog is displayed;  if
+     *                  <code>null</code>, or if the
+     *                  <code>parentComponent</code> has no
+     *                  <code>Frame</code>, a
+     *                  default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param optionType an integer designating the options available on the
+     *                  dialog: <code>DEFAULT_OPTION</code>,
+     *                  <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  or <code>OK_CANCEL_OPTION</code>
+     * @param messageType an integer designating the kind of message this is,
+     *                  primarily used to determine the icon from the
+     *                  pluggable Look and Feel: <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param icon      the icon to display in the dialog
+     * @param options   an array of objects indicating the possible choices
+     *                  the user can make; if the objects are components, they
+     *                  are rendered properly; non-<code>String</code>
+     *                  objects are
+     *                  rendered using their <code>toString</code> methods;
+     *                  if this parameter is <code>null</code>,
+     *                  the options are determined by the Look and Feel
+     * @param initialValue the object that represents the default selection
+     *                  for the dialog; only meaningful if <code>options</code>
+     *                  is used; can be <code>null</code>
+     * @return an integer indicating the option chosen by the user,
+     *                  or <code>CLOSED_OPTION</code> if the user closed
+     *                  the dialog
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static int showOptionDialog(Component parentComponent,
+        Object message, String title, int optionType, int messageType,
+        Icon icon, Object[] options, Object initialValue)
+        throws HeadlessException {
+        JOptionPane             pane = new JOptionPane(message, messageType,
+                                                       optionType, icon,
+                                                       options, initialValue);
+
+        pane.setInitialValue(initialValue);
+        pane.setComponentOrientation(((parentComponent == null) ?
+            getRootFrame() : parentComponent).getComponentOrientation());
+
+        int style = styleFromMessageType(messageType);
+        JDialog dialog = pane.createDialog(parentComponent, title, style);
+
+        pane.selectInitialValue();
+        dialog.show();
+        dialog.dispose();
+
+        Object        selectedValue = pane.getValue();
+
+        if(selectedValue == null)
+            return CLOSED_OPTION;
+        if(options == null) {
+            if(selectedValue instanceof Integer)
+                return ((Integer)selectedValue).intValue();
+            return CLOSED_OPTION;
+        }
+        for(int counter = 0, maxCounter = options.length;
+            counter < maxCounter; counter++) {
+            if(options[counter].equals(selectedValue))
+                return counter;
+        }
+        return CLOSED_OPTION;
+    }
+
+    /**
+     * Creates and returns a new <code>JDialog</code> wrapping
+     * <code>this</code> centered on the <code>parentComponent</code>
+     * in the <code>parentComponent</code>'s frame.
+     * <code>title</code> is the title of the returned dialog.
+     * The returned <code>JDialog</code> will not be resizable by the
+     * user, however programs can invoke <code>setResizable</code> on
+     * the <code>JDialog</code> instance to change this property.
+     * The returned <code>JDialog</code> will be set up such that
+     * once it is closed, or the user clicks on one of the buttons,
+     * the optionpane's value property will be set accordingly and
+     * the dialog will be closed.  Each time the dialog is made visible,
+     * it will reset the option pane's value property to
+     * <code>JOptionPane.UNINITIALIZED_VALUE</code> to ensure the
+     * user's subsequent action closes the dialog properly.
+     *
+     * @param parentComponent determines the frame in which the dialog
+     *          is displayed; if the <code>parentComponent</code> has
+     *          no <code>Frame</code>, a default <code>Frame</code> is used
+     * @param title     the title string for the dialog
+     * @return a new <code>JDialog</code> containing this instance
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public JDialog createDialog(Component parentComponent, String title)
+        throws HeadlessException {
+        int style = styleFromMessageType(getMessageType());
+        return createDialog(parentComponent, title, style);
+    }
+
+    /**
+     * Creates and returns a new parentless <code>JDialog</code>
+     * with the specified title.
+     * The returned <code>JDialog</code> will not be resizable by the
+     * user, however programs can invoke <code>setResizable</code> on
+     * the <code>JDialog</code> instance to change this property.
+     * The returned <code>JDialog</code> will be set up such that
+     * once it is closed, or the user clicks on one of the buttons,
+     * the optionpane's value property will be set accordingly and
+     * the dialog will be closed.  Each time the dialog is made visible,
+     * it will reset the option pane's value property to
+     * <code>JOptionPane.UNINITIALIZED_VALUE</code> to ensure the
+     * user's subsequent action closes the dialog properly.
+     *
+     * @param title     the title string for the dialog
+     * @return a new <code>JDialog</code> containing this instance
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     * @since 1.6
+     */
+    public JDialog createDialog(String title) throws HeadlessException {
+        int style = styleFromMessageType(getMessageType());
+        JDialog dialog = new JDialog((Dialog) null, title, true);
+        initDialog(dialog, style, null);
+        return dialog;
+    }
+
+    private JDialog createDialog(Component parentComponent, String title,
+            int style)
+            throws HeadlessException {
+
+        final JDialog dialog;
+
+        Window window = JOptionPane.getWindowForComponent(parentComponent);
+        if (window instanceof Frame) {
+            dialog = new JDialog((Frame)window, title, true);
+        } else {
+            dialog = new JDialog((Dialog)window, title, true);
+        }
+        if (window instanceof SwingUtilities.SharedOwnerFrame) {
+            WindowListener ownerShutdownListener =
+                    SwingUtilities.getSharedOwnerFrameShutdownListener();
+            dialog.addWindowListener(ownerShutdownListener);
+        }
+        initDialog(dialog, style, parentComponent);
+        return dialog;
+    }
+
+    private void initDialog(final JDialog dialog, int style, Component parentComponent) {
+        dialog.setComponentOrientation(this.getComponentOrientation());
+        Container contentPane = dialog.getContentPane();
+
+        contentPane.setLayout(new BorderLayout());
+        contentPane.add(this, BorderLayout.CENTER);
+        dialog.setResizable(false);
+        if (JDialog.isDefaultLookAndFeelDecorated()) {
+            boolean supportsWindowDecorations =
+              UIManager.getLookAndFeel().getSupportsWindowDecorations();
+            if (supportsWindowDecorations) {
+                dialog.setUndecorated(true);
+                getRootPane().setWindowDecorationStyle(style);
+            }
+        }
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentComponent);
+
+        final PropertyChangeListener listener = new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                // Let the defaultCloseOperation handle the closing
+                // if the user closed the window without selecting a button
+                // (newValue = null in that case).  Otherwise, close the dialog.
+                if (dialog.isVisible() && event.getSource() == JOptionPane.this &&
+                        (event.getPropertyName().equals(VALUE_PROPERTY)) &&
+                        event.getNewValue() != null &&
+                        event.getNewValue() != JOptionPane.UNINITIALIZED_VALUE) {
+                    dialog.setVisible(false);
+                }
+            }
+        };
+
+        WindowAdapter adapter = new WindowAdapter() {
+            private boolean gotFocus = false;
+            public void windowClosing(WindowEvent we) {
+                setValue(null);
+            }
+
+            public void windowClosed(WindowEvent e) {
+                removePropertyChangeListener(listener);
+                dialog.getContentPane().removeAll();
+            }
+
+            public void windowGainedFocus(WindowEvent we) {
+                // Once window gets focus, set initial focus
+                if (!gotFocus) {
+                    selectInitialValue();
+                    gotFocus = true;
+                }
+            }
+        };
+        dialog.addWindowListener(adapter);
+        dialog.addWindowFocusListener(adapter);
+        dialog.addComponentListener(new ComponentAdapter() {
+            public void componentShown(ComponentEvent ce) {
+                // reset value to ensure closing works properly
+                setValue(JOptionPane.UNINITIALIZED_VALUE);
+            }
+        });
+
+        addPropertyChangeListener(listener);
+    }
+
+
+    /**
+     * Brings up an internal confirmation dialog panel. The dialog
+     * is a information-message dialog titled "Message".
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the object to display
+     */
+    public static void showInternalMessageDialog(Component parentComponent,
+                                                 Object message) {
+        showInternalMessageDialog(parentComponent, message, UIManager.
+                                 getString("OptionPane.messageDialogTitle",
+                                 parentComponent), INFORMATION_MESSAGE);
+    }
+
+    /**
+     * Brings up an internal dialog panel that displays a message
+     * using a default icon determined by the <code>messageType</code>
+     * parameter.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     */
+    public static void showInternalMessageDialog(Component parentComponent,
+                                                 Object message, String title,
+                                                 int messageType) {
+        showInternalMessageDialog(parentComponent, message, title, messageType,null);
+    }
+
+    /**
+     * Brings up an internal dialog panel displaying a message,
+     * specifying all parameters.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @param title     the title string for the dialog
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param icon      an icon to display in the dialog that helps the user
+     *                  identify the kind of message that is being displayed
+     */
+    public static void showInternalMessageDialog(Component parentComponent,
+                                         Object message,
+                                         String title, int messageType,
+                                         Icon icon){
+        showInternalOptionDialog(parentComponent, message, title, DEFAULT_OPTION,
+                                 messageType, icon, null, null);
+    }
+
+    /**
+     * Brings up an internal dialog panel with the options <i>Yes</i>, <i>No</i>
+     * and <i>Cancel</i>; with the title, <b>Select an Option</b>.
+     *
+     * @param parentComponent determines the <code>Frame</code> in
+     *          which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the <code>Object</code> to display
+     * @return an integer indicating the option selected by the user
+     */
+    public static int showInternalConfirmDialog(Component parentComponent,
+                                                Object message) {
+        return showInternalConfirmDialog(parentComponent, message,
+                                 UIManager.getString("OptionPane.titleText"),
+                                 YES_NO_CANCEL_OPTION);
+    }
+
+    /**
+     * Brings up a internal dialog panel where the number of choices
+     * is determined by the <code>optionType</code> parameter.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the object to display in the dialog; a
+     *          <code>Component</code> object is rendered as a
+     *          <code>Component</code>; a <code>String</code>
+     *          object is rendered as a string; other objects
+     *          are converted to a <code>String</code> using the
+     *          <code>toString</code> method
+     * @param title     the title string for the dialog
+     * @param optionType an integer designating the options
+     *          available on the dialog: <code>YES_NO_OPTION</code>,
+     *          or <code>YES_NO_CANCEL_OPTION</code>
+     * @return an integer indicating the option selected by the user
+     */
+    public static int showInternalConfirmDialog(Component parentComponent,
+                                                Object message, String title,
+                                                int optionType) {
+        return showInternalConfirmDialog(parentComponent, message, title, optionType,
+                                         QUESTION_MESSAGE);
+    }
+
+    /**
+     * Brings up an internal dialog panel where the number of choices
+     * is determined by the <code>optionType</code> parameter, where
+     * the <code>messageType</code> parameter determines the icon to display.
+     * The <code>messageType</code> parameter is primarily used to supply
+     * a default icon from the Look and Feel.
+     *
+     * @param parentComponent determines the <code>Frame</code> in
+     *          which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the object to display in the dialog; a
+     *          <code>Component</code> object is rendered as a
+     *          <code>Component</code>; a <code>String</code>
+     *          object is rendered as a string; other objects are
+     *          converted to a <code>String</code> using the
+     *          <code>toString</code> method
+     * @param title     the title string for the dialog
+     * @param optionType an integer designating the options
+     *          available on the dialog:
+     *          <code>YES_NO_OPTION</code>, or <code>YES_NO_CANCEL_OPTION</code>
+     * @param messageType an integer designating the kind of message this is,
+     *          primarily used to determine the icon from the
+     *          pluggable Look and Feel: <code>ERROR_MESSAGE</code>,
+     *          <code>INFORMATION_MESSAGE</code>,
+     *          <code>WARNING_MESSAGE</code>, <code>QUESTION_MESSAGE</code>,
+     *          or <code>PLAIN_MESSAGE</code>
+     * @return an integer indicating the option selected by the user
+     */
+    public static int showInternalConfirmDialog(Component parentComponent,
+                                        Object message,
+                                        String title, int optionType,
+                                        int messageType) {
+        return showInternalConfirmDialog(parentComponent, message, title, optionType,
+                                         messageType, null);
+    }
+
+    /**
+     * Brings up an internal dialog panel with a specified icon, where
+     * the number of choices is determined by the <code>optionType</code>
+     * parameter.
+     * The <code>messageType</code> parameter is primarily used to supply
+     * a default icon from the look and feel.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the parentComponent has no Frame, a
+     *          default <code>Frame</code> is used
+     * @param message   the object to display in the dialog; a
+     *          <code>Component</code> object is rendered as a
+     *          <code>Component</code>; a <code>String</code>
+     *          object is rendered as a string; other objects are
+     *          converted to a <code>String</code> using the
+     *          <code>toString</code> method
+     * @param title     the title string for the dialog
+     * @param optionType an integer designating the options available
+     *          on the dialog:
+     *          <code>YES_NO_OPTION</code>, or
+     *          <code>YES_NO_CANCEL_OPTION</code>.
+     * @param messageType an integer designating the kind of message this is,
+     *          primarily used to determine the icon from the pluggable
+     *          Look and Feel: <code>ERROR_MESSAGE</code>,
+     *          <code>INFORMATION_MESSAGE</code>,
+     *          <code>WARNING_MESSAGE</code>, <code>QUESTION_MESSAGE</code>,
+     *          or <code>PLAIN_MESSAGE</code>
+     * @param icon      the icon to display in the dialog
+     * @return an integer indicating the option selected by the user
+     */
+    public static int showInternalConfirmDialog(Component parentComponent,
+                                        Object message,
+                                        String title, int optionType,
+                                        int messageType, Icon icon) {
+        return showInternalOptionDialog(parentComponent, message, title, optionType,
+                                        messageType, icon, null, null);
+    }
+
+    /**
+     * Brings up an internal dialog panel with a specified icon, where
+     * the initial choice is determined by the <code>initialValue</code>
+     * parameter and the number of choices is determined by the
+     * <code>optionType</code> parameter.
+     * <p>
+     * If <code>optionType</code> is <code>YES_NO_OPTION</code>, or
+     * <code>YES_NO_CANCEL_OPTION</code>
+     * and the <code>options</code> parameter is <code>null</code>,
+     * then the options are supplied by the Look and Feel.
+     * <p>
+     * The <code>messageType</code> parameter is primarily used to supply
+     * a default icon from the look and feel.
+     *
+     * @param parentComponent determines the <code>Frame</code>
+     *          in which the dialog is displayed; if <code>null</code>,
+     *          or if the <code>parentComponent</code> has no
+     *          <code>Frame</code>, a default <code>Frame</code> is used
+     * @param message   the object to display in the dialog; a
+     *          <code>Component</code> object is rendered as a
+     *          <code>Component</code>; a <code>String</code>
+     *          object is rendered as a string. Other objects are
+     *          converted to a <code>String</code> using the
+     *          <code>toString</code> method
+     * @param title     the title string for the dialog
+     * @param optionType an integer designating the options available
+     *          on the dialog: <code>YES_NO_OPTION</code>,
+     *          or <code>YES_NO_CANCEL_OPTION</code>
+     * @param messageType an integer designating the kind of message this is;
+     *          primarily used to determine the icon from the
+     *          pluggable Look and Feel: <code>ERROR_MESSAGE</code>,
+     *          <code>INFORMATION_MESSAGE</code>,
+     *          <code>WARNING_MESSAGE</code>, <code>QUESTION_MESSAGE</code>,
+     *          or <code>PLAIN_MESSAGE</code>
+     * @param icon      the icon to display in the dialog
+     * @param options   an array of objects indicating the possible choices
+     *          the user can make; if the objects are components, they
+     *          are rendered properly; non-<code>String</code>
+     *          objects are rendered using their <code>toString</code>
+     *          methods; if this parameter is <code>null</code>,
+     *          the options are determined by the Look and Feel
+     * @param initialValue the object that represents the default selection
+     *          for the dialog; only meaningful if <code>options</code>
+     *          is used; can be <code>null</code>
+     * @return an integer indicating the option chosen by the user,
+     *          or <code>CLOSED_OPTION</code> if the user closed the Dialog
+     */
+    public static int showInternalOptionDialog(Component parentComponent,
+                                       Object message,
+                                       String title, int optionType,
+                                       int messageType, Icon icon,
+                                       Object[] options, Object initialValue) {
+        JOptionPane pane = new JOptionPane(message, messageType,
+                optionType, icon, options, initialValue);
+        pane.putClientProperty(PopupFactory_FORCE_HEAVYWEIGHT_POPUP,
+                Boolean.TRUE);
+        Component fo = KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                getFocusOwner();
+
+        pane.setInitialValue(initialValue);
+
+        JInternalFrame dialog =
+            pane.createInternalFrame(parentComponent, title);
+        pane.selectInitialValue();
+        dialog.setVisible(true);
+
+        /* Since all input will be blocked until this dialog is dismissed,
+         * make sure its parent containers are visible first (this component
+         * is tested below).  This is necessary for JApplets, because
+         * because an applet normally isn't made visible until after its
+         * start() method returns -- if this method is called from start(),
+         * the applet will appear to hang while an invisible modal frame
+         * waits for input.
+         */
+        if (dialog.isVisible() && !dialog.isShowing()) {
+            Container parent = dialog.getParent();
+            while (parent != null) {
+                if (parent.isVisible() == false) {
+                    parent.setVisible(true);
+                }
+                parent = parent.getParent();
+            }
+        }
+
+        // Use reflection to get Container.startLWModal.
+        try {
+            Method method = AccessController.doPrivileged(new ModalPrivilegedAction(
+                    Container.class, "startLWModal"));
+            if (method != null) {
+                method.invoke(dialog, (Object[])null);
+            }
+        } catch (IllegalAccessException ex) {
+        } catch (IllegalArgumentException ex) {
+        } catch (InvocationTargetException ex) {
+        }
+
+        if (parentComponent instanceof JInternalFrame) {
+            try {
+                ((JInternalFrame)parentComponent).setSelected(true);
+            } catch (java.beans.PropertyVetoException e) {
+            }
+        }
+
+        Object selectedValue = pane.getValue();
+
+        if (fo != null && fo.isShowing()) {
+            fo.requestFocus();
+        }
+        if (selectedValue == null) {
+            return CLOSED_OPTION;
+        }
+        if (options == null) {
+            if (selectedValue instanceof Integer) {
+                return ((Integer)selectedValue).intValue();
+            }
+            return CLOSED_OPTION;
+        }
+        for(int counter = 0, maxCounter = options.length;
+            counter < maxCounter; counter++) {
+            if (options[counter].equals(selectedValue)) {
+                return counter;
+            }
+        }
+        return CLOSED_OPTION;
+    }
+
+    /**
+     * Shows an internal question-message dialog requesting input from
+     * the user parented to <code>parentComponent</code>. The dialog
+     * is displayed in the <code>Component</code>'s frame,
+     * and is usually positioned below the <code>Component</code>.
+     *
+     * @param parentComponent  the parent <code>Component</code>
+     *          for the dialog
+     * @param message  the <code>Object</code> to display
+     */
+    public static String showInternalInputDialog(Component parentComponent,
+                                                 Object message) {
+        return showInternalInputDialog(parentComponent, message, UIManager.
+               getString("OptionPane.inputDialogTitle", parentComponent),
+               QUESTION_MESSAGE);
+    }
+
+    /**
+     * Shows an internal dialog requesting input from the user parented
+     * to <code>parentComponent</code> with the dialog having the title
+     * <code>title</code> and message type <code>messageType</code>.
+     *
+     * @param parentComponent the parent <code>Component</code> for the dialog
+     * @param message  the <code>Object</code> to display
+     * @param title    the <code>String</code> to display in the
+     *          dialog title bar
+     * @param messageType the type of message that is to be displayed:
+     *                    ERROR_MESSAGE, INFORMATION_MESSAGE, WARNING_MESSAGE,
+     *                    QUESTION_MESSAGE, or PLAIN_MESSAGE
+     */
+    public static String showInternalInputDialog(Component parentComponent,
+                             Object message, String title, int messageType) {
+        return (String)showInternalInputDialog(parentComponent, message, title,
+                                       messageType, null, null, null);
+    }
+
+    /**
+     * Prompts the user for input in a blocking internal dialog where
+     * the initial selection, possible selections, and all other
+     * options can be specified. The user will able to choose from
+     * <code>selectionValues</code>, where <code>null</code>
+     * implies the user can input
+     * whatever they wish, usually by means of a <code>JTextField</code>.
+     * <code>initialSelectionValue</code> is the initial value to prompt
+     * the user with. It is up to the UI to decide how best to represent
+     * the <code>selectionValues</code>, but usually a
+     * <code>JComboBox</code>, <code>JList</code>, or
+     * <code>JTextField</code> will be used.
+     *
+     * @param parentComponent the parent <code>Component</code> for the dialog
+     * @param message  the <code>Object</code> to display
+     * @param title    the <code>String</code> to display in the dialog
+     *          title bar
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>, <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>, or <code>PLAIN_MESSAGE</code>
+     * @param icon     the <code>Icon</code> image to display
+     * @param selectionValues an array of <code>Objects</code> that
+     *                  gives the possible selections
+     * @param initialSelectionValue the value used to initialize the input
+     *                  field
+     * @return user's input, or <code>null</code> meaning the user
+     *          canceled the input
+     */
+    public static Object showInternalInputDialog(Component parentComponent,
+            Object message, String title, int messageType, Icon icon,
+            Object[] selectionValues, Object initialSelectionValue) {
+        JOptionPane pane = new JOptionPane(message, messageType,
+                OK_CANCEL_OPTION, icon, null, null);
+        pane.putClientProperty(PopupFactory_FORCE_HEAVYWEIGHT_POPUP,
+                Boolean.TRUE);
+        Component fo = KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                getFocusOwner();
+
+        pane.setWantsInput(true);
+        pane.setSelectionValues(selectionValues);
+        pane.setInitialSelectionValue(initialSelectionValue);
+
+        JInternalFrame dialog =
+            pane.createInternalFrame(parentComponent, title);
+
+        pane.selectInitialValue();
+        dialog.setVisible(true);
+
+        /* Since all input will be blocked until this dialog is dismissed,
+         * make sure its parent containers are visible first (this component
+         * is tested below).  This is necessary for JApplets, because
+         * because an applet normally isn't made visible until after its
+         * start() method returns -- if this method is called from start(),
+         * the applet will appear to hang while an invisible modal frame
+         * waits for input.
+         */
+        if (dialog.isVisible() && !dialog.isShowing()) {
+            Container parent = dialog.getParent();
+            while (parent != null) {
+                if (parent.isVisible() == false) {
+                    parent.setVisible(true);
+                }
+                parent = parent.getParent();
+            }
+        }
+
+        // Use reflection to get Container.startLWModal.
+        try {
+            Method method = AccessController.doPrivileged(new ModalPrivilegedAction(
+                    Container.class, "startLWModal"));
+            if (method != null) {
+                method.invoke(dialog, (Object[])null);
+            }
+        } catch (IllegalAccessException ex) {
+        } catch (IllegalArgumentException ex) {
+        } catch (InvocationTargetException ex) {
+        }
+
+        if (parentComponent instanceof JInternalFrame) {
+            try {
+                ((JInternalFrame)parentComponent).setSelected(true);
+            } catch (java.beans.PropertyVetoException e) {
+            }
+        }
+
+        if (fo != null && fo.isShowing()) {
+            fo.requestFocus();
+        }
+        Object value = pane.getInputValue();
+
+        if (value == UNINITIALIZED_VALUE) {
+            return null;
+        }
+        return value;
+    }
+
+    /**
+     * Creates and returns an instance of <code>JInternalFrame</code>.
+     * The internal frame is created with the specified title,
+     * and wrapping the <code>JOptionPane</code>.
+     * The returned <code>JInternalFrame</code> is
+     * added to the <code>JDesktopPane</code> ancestor of
+     * <code>parentComponent</code>, or components
+     * parent if one its ancestors isn't a <code>JDesktopPane</code>,
+     * or if <code>parentComponent</code>
+     * doesn't have a parent then a <code>RuntimeException</code> is thrown.
+     *
+     * @param parentComponent  the parent <code>Component</code> for
+     *          the internal frame
+     * @param title    the <code>String</code> to display in the
+     *          frame's title bar
+     * @return a <code>JInternalFrame</code> containing a
+     *          <code>JOptionPane</code>
+     * @exception RuntimeException if <code>parentComponent</code> does
+     *          not have a valid parent
+     */
+    public JInternalFrame createInternalFrame(Component parentComponent,
+                                 String title) {
+        Container parent =
+                JOptionPane.getDesktopPaneForComponent(parentComponent);
+
+        if (parent == null && (parentComponent == null ||
+                (parent = parentComponent.getParent()) == null)) {
+            throw new RuntimeException("JOptionPane: parentComponent does " +
+                    "not have a valid parent");
+        }
+
+        // Option dialogs should be closable only
+        final JInternalFrame  iFrame = new JInternalFrame(title, false, true,
+                                                           false, false);
+
+        iFrame.putClientProperty("JInternalFrame.frameType", "optionDialog");
+        iFrame.putClientProperty("JInternalFrame.messageType",
+                                 Integer.valueOf(getMessageType()));
+
+        iFrame.addInternalFrameListener(new InternalFrameAdapter() {
+            public void internalFrameClosing(InternalFrameEvent e) {
+                if (getValue() == UNINITIALIZED_VALUE) {
+                    setValue(null);
+                }
+            }
+        });
+        addPropertyChangeListener(new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                // Let the defaultCloseOperation handle the closing
+                // if the user closed the iframe without selecting a button
+                // (newValue = null in that case).  Otherwise, close the dialog.
+                if (iFrame.isVisible() &&
+                        event.getSource() == JOptionPane.this &&
+                        event.getPropertyName().equals(VALUE_PROPERTY)) {
+                // Use reflection to get Container.stopLWModal().
+                try {
+                    Method method = AccessController.doPrivileged(
+                        new ModalPrivilegedAction(
+                            Container.class, "stopLWModal"));
+                    if (method != null) {
+                        method.invoke(iFrame, (Object[])null);
+                    }
+                } catch (IllegalAccessException ex) {
+                } catch (IllegalArgumentException ex) {
+                } catch (InvocationTargetException ex) {
+                }
+
+                try {
+                    iFrame.setClosed(true);
+                }
+                catch (java.beans.PropertyVetoException e) {
+                }
+
+                iFrame.setVisible(false);
+                }
+            }
+        });
+        iFrame.getContentPane().add(this, BorderLayout.CENTER);
+        if (parent instanceof JDesktopPane) {
+            parent.add(iFrame, JLayeredPane.MODAL_LAYER);
+        } else {
+            parent.add(iFrame, BorderLayout.CENTER);
+        }
+        Dimension iFrameSize = iFrame.getPreferredSize();
+        Dimension rootSize = parent.getSize();
+        Dimension parentSize = parentComponent.getSize();
+
+        iFrame.setBounds((rootSize.width - iFrameSize.width) / 2,
+                         (rootSize.height - iFrameSize.height) / 2,
+                         iFrameSize.width, iFrameSize.height);
+        // We want dialog centered relative to its parent component
+        Point iFrameCoord =
+          SwingUtilities.convertPoint(parentComponent, 0, 0, parent);
+        int x = (parentSize.width - iFrameSize.width) / 2 + iFrameCoord.x;
+        int y = (parentSize.height - iFrameSize.height) / 2 + iFrameCoord.y;
+
+        // If possible, dialog should be fully visible
+        int ovrx = x + iFrameSize.width - rootSize.width;
+        int ovry = y + iFrameSize.height - rootSize.height;
+        x = Math.max((ovrx > 0? x - ovrx: x), 0);
+        y = Math.max((ovry > 0? y - ovry: y), 0);
+        iFrame.setBounds(x, y, iFrameSize.width, iFrameSize.height);
+
+        parent.validate();
+        try {
+            iFrame.setSelected(true);
+        } catch (java.beans.PropertyVetoException e) {}
+
+        return iFrame;
+    }
+
+    /**
+     * Returns the specified component's <code>Frame</code>.
+     *
+     * @param parentComponent the <code>Component</code> to check for a
+     *          <code>Frame</code>
+     * @return the <code>Frame</code> that contains the component,
+     *          or <code>getRootFrame</code>
+     *          if the component is <code>null</code>,
+     *          or does not have a valid <code>Frame</code> parent
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see #getRootFrame
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static Frame getFrameForComponent(Component parentComponent)
+        throws HeadlessException {
+        if (parentComponent == null)
+            return getRootFrame();
+        if (parentComponent instanceof Frame)
+            return (Frame)parentComponent;
+        return JOptionPane.getFrameForComponent(parentComponent.getParent());
+    }
+
+    /**
+     * Returns the specified component's toplevel <code>Frame</code> or
+     * <code>Dialog</code>.
+     *
+     * @param parentComponent the <code>Component</code> to check for a
+     *          <code>Frame</code> or <code>Dialog</code>
+     * @return the <code>Frame</code> or <code>Dialog</code> that
+     *          contains the component, or the default
+     *          frame if the component is <code>null</code>,
+     *          or does not have a valid
+     *          <code>Frame</code> or <code>Dialog</code> parent
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    static Window getWindowForComponent(Component parentComponent)
+        throws HeadlessException {
+        if (parentComponent == null)
+            return getRootFrame();
+        if (parentComponent instanceof Frame || parentComponent instanceof Dialog)
+            return (Window)parentComponent;
+        return JOptionPane.getWindowForComponent(parentComponent.getParent());
+    }
+
+
+    /**
+     * Returns the specified component's desktop pane.
+     *
+     * @param parentComponent the <code>Component</code> to check for a
+     *          desktop
+     * @return the <code>JDesktopPane</code> that contains the component,
+     *          or <code>null</code> if the component is <code>null</code>
+     *          or does not have an ancestor that is a
+     *          <code>JInternalFrame</code>
+     */
+    public static JDesktopPane getDesktopPaneForComponent(Component parentComponent) {
+        if(parentComponent == null)
+            return null;
+        if(parentComponent instanceof JDesktopPane)
+            return (JDesktopPane)parentComponent;
+        return getDesktopPaneForComponent(parentComponent.getParent());
+    }
+
+    private static final Object sharedFrameKey = JOptionPane.class;
+
+    /**
+     * Sets the frame to use for class methods in which a frame is
+     * not provided.
+     * <p>
+     * <strong>Note:</strong>
+     * It is recommended that rather than using this method you supply a valid parent.
+     *
+     * @param newRootFrame the default <code>Frame</code> to use
+     */
+    public static void setRootFrame(Frame newRootFrame) {
+        if (newRootFrame != null) {
+            SwingUtilities.appContextPut(sharedFrameKey, newRootFrame);
+        } else {
+            SwingUtilities.appContextRemove(sharedFrameKey);
+        }
+    }
+
+    /**
+     * Returns the <code>Frame</code> to use for the class methods in
+     * which a frame is not provided.
+     *
+     * @return the default <code>Frame</code> to use
+     * @exception HeadlessException if
+     *   <code>GraphicsEnvironment.isHeadless</code> returns
+     *   <code>true</code>
+     * @see #setRootFrame
+     * @see java.awt.GraphicsEnvironment#isHeadless
+     */
+    public static Frame getRootFrame() throws HeadlessException {
+        Frame sharedFrame =
+            (Frame)SwingUtilities.appContextGet(sharedFrameKey);
+        if (sharedFrame == null) {
+            sharedFrame = SwingUtilities.getSharedOwnerFrame();
+            SwingUtilities.appContextPut(sharedFrameKey, sharedFrame);
+        }
+        return sharedFrame;
+    }
+
+    /**
+     * Creates a <code>JOptionPane</code> with a test message.
+     */
+    public JOptionPane() {
+        this("JOptionPane message");
+    }
+
+    /**
+     * Creates a instance of <code>JOptionPane</code> to display a
+     * message using the
+     * plain-message message type and the default options delivered by
+     * the UI.
+     *
+     * @param message the <code>Object</code> to display
+     */
+    public JOptionPane(Object message) {
+        this(message, PLAIN_MESSAGE);
+    }
+
+    /**
+     * Creates an instance of <code>JOptionPane</code> to display a message
+     * with the specified message type and the default options,
+     *
+     * @param message the <code>Object</code> to display
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     */
+    public JOptionPane(Object message, int messageType) {
+        this(message, messageType, DEFAULT_OPTION);
+    }
+
+    /**
+     * Creates an instance of <code>JOptionPane</code> to display a message
+     * with the specified message type and options.
+     *
+     * @param message the <code>Object</code> to display
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param optionType the options to display in the pane:
+     *                  <code>DEFAULT_OPTION</code>, <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  <code>OK_CANCEL_OPTION</code>
+     */
+    public JOptionPane(Object message, int messageType, int optionType) {
+        this(message, messageType, optionType, null);
+    }
+
+    /**
+     * Creates an instance of <code>JOptionPane</code> to display a message
+     * with the specified message type, options, and icon.
+     *
+     * @param message the <code>Object</code> to display
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param optionType the options to display in the pane:
+     *                  <code>DEFAULT_OPTION</code>, <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  <code>OK_CANCEL_OPTION</code>
+     * @param icon the <code>Icon</code> image to display
+     */
+    public JOptionPane(Object message, int messageType, int optionType,
+                       Icon icon) {
+        this(message, messageType, optionType, icon, null);
+    }
+
+    /**
+     * Creates an instance of <code>JOptionPane</code> to display a message
+     * with the specified message type, icon, and options.
+     * None of the options is initially selected.
+     * <p>
+     * The options objects should contain either instances of
+     * <code>Component</code>s, (which are added directly) or
+     * <code>Strings</code> (which are wrapped in a <code>JButton</code>).
+     * If you provide <code>Component</code>s, you must ensure that when the
+     * <code>Component</code> is clicked it messages <code>setValue</code>
+     * in the created <code>JOptionPane</code>.
+     *
+     * @param message the <code>Object</code> to display
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param optionType the options to display in the pane:
+     *                  <code>DEFAULT_OPTION</code>,
+     *                  <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  <code>OK_CANCEL_OPTION</code>
+     * @param icon the <code>Icon</code> image to display
+     * @param options  the choices the user can select
+     */
+    public JOptionPane(Object message, int messageType, int optionType,
+                       Icon icon, Object[] options) {
+        this(message, messageType, optionType, icon, options, null);
+    }
+
+    /**
+     * Creates an instance of <code>JOptionPane</code> to display a message
+     * with the specified message type, icon, and options, with the
+     * initially-selected option specified.
+     *
+     * @param message the <code>Object</code> to display
+     * @param messageType the type of message to be displayed:
+     *                  <code>ERROR_MESSAGE</code>,
+     *                  <code>INFORMATION_MESSAGE</code>,
+     *                  <code>WARNING_MESSAGE</code>,
+     *                  <code>QUESTION_MESSAGE</code>,
+     *                  or <code>PLAIN_MESSAGE</code>
+     * @param optionType the options to display in the pane:
+     *                  <code>DEFAULT_OPTION</code>,
+     *                  <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  <code>OK_CANCEL_OPTION</code>
+     * @param icon the Icon image to display
+     * @param options  the choices the user can select
+     * @param initialValue the choice that is initially selected; if
+     *                  <code>null</code>, then nothing will be initially selected;
+     *                  only meaningful if <code>options</code> is used
+     */
+    public JOptionPane(Object message, int messageType, int optionType,
+                       Icon icon, Object[] options, Object initialValue) {
+
+        this.message = message;
+        this.options = options;
+        this.initialValue = initialValue;
+        this.icon = icon;
+        setMessageType(messageType);
+        setOptionType(optionType);
+        value = UNINITIALIZED_VALUE;
+        inputValue = UNINITIALIZED_VALUE;
+        updateUI();
+    }
+
+    /**
+     * Sets the UI object which implements the {@literal L&F} for this component.
+     *
+     * @param ui  the <code>OptionPaneUI</code> {@literal L&F} object
+     * @see UIDefaults#getUI
+     * @beaninfo
+     *       bound: true
+     *      hidden: true
+     * description: The UI object that implements the optionpane's LookAndFeel
+     */
+    public void setUI(OptionPaneUI ui) {
+        if (this.ui != ui) {
+            super.setUI(ui);
+            invalidate();
+        }
+    }
+
+    /**
+     * Returns the UI object which implements the {@literal L&F} for this component.
+     *
+     * @return the <code>OptionPaneUI</code> object
+     */
+    public OptionPaneUI getUI() {
+        return (OptionPaneUI)ui;
+    }
+
+    /**
+     * Notification from the <code>UIManager</code> that the {@literal L&F} has changed.
+     * Replaces the current UI object with the latest version from the
+     * <code>UIManager</code>.
+     *
+     * @see JComponent#updateUI
+     */
+    public void updateUI() {
+        setUI((OptionPaneUI)UIManager.getUI(this));
+    }
+
+
+    /**
+     * Returns the name of the UI class that implements the
+     * {@literal L&F} for this component.
+     *
+     * @return the string "OptionPaneUI"
+     * @see JComponent#getUIClassID
+     * @see UIDefaults#getUI
+     */
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
+
+    /**
+     * Sets the option pane's message-object.
+     * @param newMessage the <code>Object</code> to display
+     * @see #getMessage
+     *
+     * @beaninfo
+     *   preferred: true
+     *   bound: true
+     * description: The optionpane's message object.
+     */
+    public void setMessage(Object newMessage) {
+        Object           oldMessage = message;
+
+        message = newMessage;
+        firePropertyChange(MESSAGE_PROPERTY, oldMessage, message);
+    }
+
+    /**
+     * Returns the message-object this pane displays.
+     * @see #setMessage
+     *
+     * @return the <code>Object</code> that is displayed
+     */
+    public Object getMessage() {
+        return message;
+    }
+
+    /**
+     * Sets the icon to display. If non-<code>null</code>, the look and feel
+     * does not provide an icon.
+     * @param newIcon the <code>Icon</code> to display
+     *
+     * @see #getIcon
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: The option pane's type icon.
+     */
+    public void setIcon(Icon newIcon) {
+        Object              oldIcon = icon;
+
+        icon = newIcon;
+        firePropertyChange(ICON_PROPERTY, oldIcon, icon);
+    }
+
+    /**
+     * Returns the icon this pane displays.
+     * @return the <code>Icon</code> that is displayed
+     *
+     * @see #setIcon
+     */
+    public Icon getIcon() {
+        return icon;
+    }
+
+    /**
+     * Sets the value the user has chosen.
+     * @param newValue  the chosen value
+     *
+     * @see #getValue
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: The option pane's value object.
+     */
+    public void setValue(Object newValue) {
+        Object               oldValue = value;
+
+        value = newValue;
+        firePropertyChange(VALUE_PROPERTY, oldValue, value);
+    }
+
+    /**
+     * Returns the value the user has selected. <code>UNINITIALIZED_VALUE</code>
+     * implies the user has not yet made a choice, <code>null</code> means the
+     * user closed the window with out choosing anything. Otherwise
+     * the returned value will be one of the options defined in this
+     * object.
+     *
+     * @return the <code>Object</code> chosen by the user,
+     *         <code>UNINITIALIZED_VALUE</code>
+     *         if the user has not yet made a choice, or <code>null</code> if
+     *         the user closed the window without making a choice
+     *
+     * @see #setValue
+     */
+    public Object getValue() {
+        return value;
+    }
+
+    /**
+     * Sets the options this pane displays. If an element in
+     * <code>newOptions</code> is a <code>Component</code>
+     * it is added directly to the pane,
+     * otherwise a button is created for the element.
+     *
+     * @param newOptions an array of <code>Objects</code> that create the
+     *          buttons the user can click on, or arbitrary
+     *          <code>Components</code> to add to the pane
+     *
+     * @see #getOptions
+     * @beaninfo
+     *       bound: true
+     * description: The option pane's options objects.
+     */
+    public void setOptions(Object[] newOptions) {
+        Object[]           oldOptions = options;
+
+        options = newOptions;
+        firePropertyChange(OPTIONS_PROPERTY, oldOptions, options);
+    }
+
+    /**
+     * Returns the choices the user can make.
+     * @return the array of <code>Objects</code> that give the user's choices
+     *
+     * @see #setOptions
+     */
+    public Object[] getOptions() {
+        if(options != null) {
+            int             optionCount = options.length;
+            Object[]        retOptions = new Object[optionCount];
+
+            System.arraycopy(options, 0, retOptions, 0, optionCount);
+            return retOptions;
+        }
+        return options;
+    }
+
+    /**
+     * Sets the initial value that is to be enabled -- the
+     * <code>Component</code>
+     * that has the focus when the pane is initially displayed.
+     *
+     * @param newInitialValue the <code>Object</code> that gets the initial
+     *                         keyboard focus
+     *
+     * @see #getInitialValue
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: The option pane's initial value object.
+     */
+    public void setInitialValue(Object newInitialValue) {
+        Object            oldIV = initialValue;
+
+        initialValue = newInitialValue;
+        firePropertyChange(INITIAL_VALUE_PROPERTY, oldIV, initialValue);
+    }
+
+    /**
+     * Returns the initial value.
+     *
+     * @return the <code>Object</code> that gets the initial keyboard focus
+     *
+     * @see #setInitialValue
+     */
+    public Object getInitialValue() {
+        return initialValue;
+    }
+
+    /**
+     * Sets the option pane's message type.
+     * The message type is used by the Look and Feel to determine the
+     * icon to display (if not supplied) as well as potentially how to
+     * lay out the <code>parentComponent</code>.
+     * @param newType an integer specifying the kind of message to display:
+     *                <code>ERROR_MESSAGE</code>, <code>INFORMATION_MESSAGE</code>,
+     *                <code>WARNING_MESSAGE</code>,
+     *                <code>QUESTION_MESSAGE</code>, or <code>PLAIN_MESSAGE</code>
+     * @exception RuntimeException if <code>newType</code> is not one of the
+     *          legal values listed above
+
+     * @see #getMessageType
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: The option pane's message type.
+     */
+    public void setMessageType(int newType) {
+        if(newType != ERROR_MESSAGE && newType != INFORMATION_MESSAGE &&
+           newType != WARNING_MESSAGE && newType != QUESTION_MESSAGE &&
+           newType != PLAIN_MESSAGE)
+            throw new RuntimeException("JOptionPane: type must be one of JOptionPane.ERROR_MESSAGE, JOptionPane.INFORMATION_MESSAGE, JOptionPane.WARNING_MESSAGE, JOptionPane.QUESTION_MESSAGE or JOptionPane.PLAIN_MESSAGE");
+
+        int           oldType = messageType;
+
+        messageType = newType;
+        firePropertyChange(MESSAGE_TYPE_PROPERTY, oldType, messageType);
+    }
+
+    /**
+     * Returns the message type.
+     *
+     * @return an integer specifying the message type
+     *
+     * @see #setMessageType
+     */
+    public int getMessageType() {
+        return messageType;
+    }
+
+    /**
+     * Sets the options to display.
+     * The option type is used by the Look and Feel to
+     * determine what buttons to show (unless options are supplied).
+     * @param newType an integer specifying the options the {@literal L&F} is to display:
+     *                  <code>DEFAULT_OPTION</code>,
+     *                  <code>YES_NO_OPTION</code>,
+     *                  <code>YES_NO_CANCEL_OPTION</code>,
+     *                  or <code>OK_CANCEL_OPTION</code>
+     * @exception RuntimeException if <code>newType</code> is not one of
+     *          the legal values listed above
+     *
+     * @see #getOptionType
+     * @see #setOptions
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: The option pane's option type.
+      */
+    public void setOptionType(int newType) {
+        if(newType != DEFAULT_OPTION && newType != YES_NO_OPTION &&
+           newType != YES_NO_CANCEL_OPTION && newType != OK_CANCEL_OPTION)
+            throw new RuntimeException("JOptionPane: option type must be one of JOptionPane.DEFAULT_OPTION, JOptionPane.YES_NO_OPTION, JOptionPane.YES_NO_CANCEL_OPTION or JOptionPane.OK_CANCEL_OPTION");
+
+        int            oldType = optionType;
+
+        optionType = newType;
+        firePropertyChange(OPTION_TYPE_PROPERTY, oldType, optionType);
+    }
+
+    /**
+     * Returns the type of options that are displayed.
+     *
+     * @return an integer specifying the user-selectable options
+     *
+     * @see #setOptionType
+     */
+    public int getOptionType() {
+        return optionType;
+    }
+
+    /**
+     * Sets the input selection values for a pane that provides the user
+     * with a list of items to choose from. (The UI provides a widget
+     * for choosing one of the values.)  A <code>null</code> value
+     * implies the user can input whatever they wish, usually by means
+     * of a <code>JTextField</code>.
+     * <p>
+     * Sets <code>wantsInput</code> to true. Use
+     * <code>setInitialSelectionValue</code> to specify the initially-chosen
+     * value. After the pane as been enabled, <code>inputValue</code> is
+     * set to the value the user has selected.
+     * @param newValues an array of <code>Objects</code> the user to be
+     *                  displayed
+     *                  (usually in a list or combo-box) from which
+     *                  the user can make a selection
+     * @see #setWantsInput
+     * @see #setInitialSelectionValue
+     * @see #getSelectionValues
+     * @beaninfo
+     *       bound: true
+     * description: The option pane's selection values.
+     */
+    public void setSelectionValues(Object[] newValues) {
+        Object[]           oldValues = selectionValues;
+
+        selectionValues = newValues;
+        firePropertyChange(SELECTION_VALUES_PROPERTY, oldValues, newValues);
+        if(selectionValues != null)
+            setWantsInput(true);
+    }
+
+    /**
+     * Returns the input selection values.
+     *
+     * @return the array of <code>Objects</code> the user can select
+     * @see #setSelectionValues
+     */
+    public Object[] getSelectionValues() {
+        return selectionValues;
+    }
+
+    /**
+     * Sets the input value that is initially displayed as selected to the user.
+     * Only used if <code>wantsInput</code> is true.
+     * @param newValue the initially selected value
+     * @see #setSelectionValues
+     * @see #getInitialSelectionValue
+     * @beaninfo
+     *       bound: true
+     * description: The option pane's initial selection value object.
+     */
+    public void setInitialSelectionValue(Object newValue) {
+        Object          oldValue = initialSelectionValue;
+
+        initialSelectionValue = newValue;
+        firePropertyChange(INITIAL_SELECTION_VALUE_PROPERTY, oldValue,
+                           newValue);
+    }
+
+    /**
+     * Returns the input value that is displayed as initially selected to the user.
+     *
+     * @return the initially selected value
+     * @see #setInitialSelectionValue
+     * @see #setSelectionValues
+     */
+    public Object getInitialSelectionValue() {
+        return initialSelectionValue;
+    }
+
+    /**
+     * Sets the input value that was selected or input by the user.
+     * Only used if <code>wantsInput</code> is true.  Note that this method
+     * is invoked internally by the option pane (in response to user action)
+     * and should generally not be called by client programs.  To set the
+     * input value initially displayed as selected to the user, use
+     * <code>setInitialSelectionValue</code>.
+     *
+     * @param newValue the <code>Object</code> used to set the
+     *          value that the user specified (usually in a text field)
+     * @see #setSelectionValues
+     * @see #setInitialSelectionValue
+     * @see #setWantsInput
+     * @see #getInputValue
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: The option pane's input value object.
+     */
+    public void setInputValue(Object newValue) {
+        Object              oldValue = inputValue;
+
+        inputValue = newValue;
+        firePropertyChange(INPUT_VALUE_PROPERTY, oldValue, newValue);
+    }
+
+    /**
+     * Returns the value the user has input, if <code>wantsInput</code>
+     * is true.
+     *
+     * @return the <code>Object</code> the user specified,
+     *          if it was one of the objects, or a
+     *          <code>String</code> if it was a value typed into a
+     *          field
+     * @see #setSelectionValues
+     * @see #setWantsInput
+     * @see #setInputValue
+     */
+    public Object getInputValue() {
+        return inputValue;
+    }
+
+    /**
+     * Returns the maximum number of characters to place on a line in a
+     * message. Default is to return <code>Integer.MAX_VALUE</code>.
+     * The value can be
+     * changed by overriding this method in a subclass.
+     *
+     * @return an integer giving the maximum number of characters on a line
+     */
+    public int getMaxCharactersPerLineCount() {
+        return Integer.MAX_VALUE;
+    }
+
+    /**
+     * Sets the <code>wantsInput</code> property.
+     * If <code>newValue</code> is true, an input component
+     * (such as a text field or combo box) whose parent is
+     * <code>parentComponent</code> is provided to
+     * allow the user to input a value. If <code>getSelectionValues</code>
+     * returns a non-<code>null</code> array, the input value is one of the
+     * objects in that array. Otherwise the input value is whatever
+     * the user inputs.
+     * <p>
+     * This is a bound property.
+     *
+     * @see #setSelectionValues
+     * @see #setInputValue
+     * @beaninfo
+     *   preferred: true
+     *       bound: true
+     * description: Flag which allows the user to input a value.
+     */
+    public void setWantsInput(boolean newValue) {
+        boolean            oldValue = wantsInput;
+
+        wantsInput = newValue;
+        firePropertyChange(WANTS_INPUT_PROPERTY, oldValue, newValue);
+    }
+
+    /**
+     * Returns the value of the <code>wantsInput</code> property.
+     *
+     * @return true if an input component will be provided
+     * @see #setWantsInput
+     */
+    public boolean getWantsInput() {
+        return wantsInput;
+    }
+
+    /**
+     * Requests that the initial value be selected, which will set
+     * focus to the initial value. This method
+     * should be invoked after the window containing the option pane
+     * is made visible.
+     */
+    public void selectInitialValue() {
+        OptionPaneUI         ui = getUI();
+        if (ui != null) {
+            ui.selectInitialValue(this);
+        }
+    }
+
+
+    private static int styleFromMessageType(int messageType) {
+        switch (messageType) {
+        case ERROR_MESSAGE:
+            return JRootPane.ERROR_DIALOG;
+        case QUESTION_MESSAGE:
+            return JRootPane.QUESTION_DIALOG;
+        case WARNING_MESSAGE:
+            return JRootPane.WARNING_DIALOG;
+        case INFORMATION_MESSAGE:
+            return JRootPane.INFORMATION_DIALOG;
+        case PLAIN_MESSAGE:
+        default:
+            return JRootPane.PLAIN_DIALOG;
+        }
+    }
+
+    // Serialization support.
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        Vector<Object> values = new Vector<Object>();
+
+        s.defaultWriteObject();
+        // Save the icon, if its Serializable.
+        if(icon != null && icon instanceof Serializable) {
+            values.addElement("icon");
+            values.addElement(icon);
+        }
+        // Save the message, if its Serializable.
+        if(message != null && message instanceof Serializable) {
+            values.addElement("message");
+            values.addElement(message);
+        }
+        // Save the treeModel, if its Serializable.
+        if(options != null) {
+            Vector<Object> serOptions = new Vector<Object>();
+
+            for(int counter = 0, maxCounter = options.length;
+                counter < maxCounter; counter++)
+                if(options[counter] instanceof Serializable)
+                    serOptions.addElement(options[counter]);
+            if(serOptions.size() > 0) {
+                int             optionCount = serOptions.size();
+                Object[]        arrayOptions = new Object[optionCount];
+
+                serOptions.copyInto(arrayOptions);
+                values.addElement("options");
+                values.addElement(arrayOptions);
+            }
+        }
+        // Save the initialValue, if its Serializable.
+        if(initialValue != null && initialValue instanceof Serializable) {
+            values.addElement("initialValue");
+            values.addElement(initialValue);
+        }
+        // Save the value, if its Serializable.
+        if(value != null && value instanceof Serializable) {
+            values.addElement("value");
+            values.addElement(value);
+        }
+        // Save the selectionValues, if its Serializable.
+        if(selectionValues != null) {
+            boolean            serialize = true;
+
+            for(int counter = 0, maxCounter = selectionValues.length;
+                counter < maxCounter; counter++) {
+                if(selectionValues[counter] != null &&
+                   !(selectionValues[counter] instanceof Serializable)) {
+                    serialize = false;
+                    break;
+                }
+            }
+            if(serialize) {
+                values.addElement("selectionValues");
+                values.addElement(selectionValues);
+            }
+        }
+        // Save the inputValue, if its Serializable.
+        if(inputValue != null && inputValue instanceof Serializable) {
+            values.addElement("inputValue");
+            values.addElement(inputValue);
+        }
+        // Save the initialSelectionValue, if its Serializable.
+        if(initialSelectionValue != null &&
+           initialSelectionValue instanceof Serializable) {
+            values.addElement("initialSelectionValue");
+            values.addElement(initialSelectionValue);
+        }
+        s.writeObject(values);
+    }
+
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+
+        Vector          values = (Vector)s.readObject();
+        int             indexCounter = 0;
+        int             maxCounter = values.size();
+
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("icon")) {
+            icon = (Icon)values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("message")) {
+            message = values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("options")) {
+            options = (Object[])values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("initialValue")) {
+            initialValue = values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("value")) {
+            value = values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("selectionValues")) {
+            selectionValues = (Object[])values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("inputValue")) {
+            inputValue = values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if(indexCounter < maxCounter && values.elementAt(indexCounter).
+           equals("initialSelectionValue")) {
+            initialSelectionValue = values.elementAt(++indexCounter);
+            indexCounter++;
+        }
+        if (getUIClassID().equals(uiClassID)) {
+            byte count = JComponent.getWriteObjCounter(this);
+            JComponent.setWriteObjCounter(this, --count);
+            if (count == 0 && ui != null) {
+                ui.installUI(this);
+            }
+        }
+    }
+
+
+    /**
+     * Returns a string representation of this <code>JOptionPane</code>.
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this <code>JOptionPane</code>
+     */
+    protected String paramString() {
+        String iconString = (icon != null ?
+                             icon.toString() : "");
+        String initialValueString = (initialValue != null ?
+                                     initialValue.toString() : "");
+        String messageString = (message != null ?
+                                message.toString() : "");
+        String messageTypeString;
+        if (messageType == ERROR_MESSAGE) {
+            messageTypeString = "ERROR_MESSAGE";
+        } else if (messageType == INFORMATION_MESSAGE) {
+            messageTypeString = "INFORMATION_MESSAGE";
+        } else if (messageType == WARNING_MESSAGE) {
+            messageTypeString = "WARNING_MESSAGE";
+        } else if (messageType == QUESTION_MESSAGE) {
+            messageTypeString = "QUESTION_MESSAGE";
+        } else if (messageType == PLAIN_MESSAGE)  {
+            messageTypeString = "PLAIN_MESSAGE";
+        } else messageTypeString = "";
+        String optionTypeString;
+        if (optionType == DEFAULT_OPTION) {
+            optionTypeString = "DEFAULT_OPTION";
+        } else if (optionType == YES_NO_OPTION) {
+            optionTypeString = "YES_NO_OPTION";
+        } else if (optionType == YES_NO_CANCEL_OPTION) {
+            optionTypeString = "YES_NO_CANCEL_OPTION";
+        } else if (optionType == OK_CANCEL_OPTION) {
+            optionTypeString = "OK_CANCEL_OPTION";
+        } else optionTypeString = "";
+        String wantsInputString = (wantsInput ?
+                                   "true" : "false");
+
+        return super.paramString() +
+        ",icon=" + iconString +
+        ",initialValue=" + initialValueString +
+        ",message=" + messageString +
+        ",messageType=" + messageTypeString +
+        ",optionType=" + optionTypeString +
+        ",wantsInput=" + wantsInputString;
+    }
+
+    /**
+     * Retrieves a method from the provided class and makes it accessible.
+     */
+    private static class ModalPrivilegedAction implements PrivilegedAction<Method> {
+        private Class<?> clazz;
+        private String methodName;
+
+        public ModalPrivilegedAction(Class<?> clazz, String methodName) {
+            this.clazz = clazz;
+            this.methodName = methodName;
+        }
+
+        public Method run() {
+            Method method = null;
+            try {
+                method = clazz.getDeclaredMethod(methodName, (Class[])null);
+            } catch (NoSuchMethodException ex) {
+            }
+            if (method != null) {
+                method.setAccessible(true);
+            }
+            return method;
+        }
+    }
+
+
+
+///////////////////
+// Accessibility support
+///////////////////
+
+    /**
+     * Returns the <code>AccessibleContext</code> associated with this JOptionPane.
+     * For option panes, the <code>AccessibleContext</code> takes the form of an
+     * <code>AccessibleJOptionPane</code>.
+     * A new <code>AccessibleJOptionPane</code> instance is created if necessary.
+     *
+     * @return an AccessibleJOptionPane that serves as the
+     *         AccessibleContext of this AccessibleJOptionPane
+     * @beaninfo
+     *       expert: true
+     *  description: The AccessibleContext associated with this option pane
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJOptionPane();
+        }
+        return accessibleContext;
+    }
+
+    /**
+     * This class implements accessibility support for the
+     * <code>JOptionPane</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to option pane user-interface
+     * elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class AccessibleJOptionPane extends AccessibleJComponent {
+
+        /**
+         * Get the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of the object
+         * @see AccessibleRole
+         */
+        public AccessibleRole getAccessibleRole() {
+            switch (messageType) {
+            case ERROR_MESSAGE:
+            case INFORMATION_MESSAGE:
+            case WARNING_MESSAGE:
+                return AccessibleRole.ALERT;
+
+            default:
+                return AccessibleRole.OPTION_PANE;
+            }
+        }
+
+    } // inner class AccessibleJOptionPane
+}

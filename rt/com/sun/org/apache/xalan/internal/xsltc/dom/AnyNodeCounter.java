@@ -1,137 +1,131 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.Translet;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class AnyNodeCounter
-/*     */   extends NodeCounter
-/*     */ {
-/*     */   public AnyNodeCounter(Translet translet, DOM document, DTMAxisIterator iterator) {
-/*  37 */     super(translet, document, iterator);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AnyNodeCounter(Translet translet, DOM document, DTMAxisIterator iterator, boolean hasFrom) {
-/*  44 */     super(translet, document, iterator, hasFrom);
-/*     */   }
-/*     */   
-/*     */   public NodeCounter setStartNode(int node) {
-/*  48 */     this._node = node;
-/*  49 */     this._nodeType = this._document.getExpandedTypeID(node);
-/*  50 */     return this;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getCounter() {
-/*  55 */     if (this._value != -2.147483648E9D) {
-/*     */       
-/*  57 */       if (this._value == 0.0D) return "0"; 
-/*  58 */       if (Double.isNaN(this._value)) return "NaN"; 
-/*  59 */       if (this._value < 0.0D && Double.isInfinite(this._value)) return "-Infinity"; 
-/*  60 */       if (Double.isInfinite(this._value)) return "Infinity"; 
-/*  61 */       return formatNumbers((int)this._value);
-/*     */     } 
-/*     */     
-/*  64 */     int next = this._node;
-/*  65 */     int root = this._document.getDocument();
-/*  66 */     int result = 0;
-/*  67 */     while (next >= root && !matchesFrom(next)) {
-/*  68 */       if (matchesCount(next)) {
-/*  69 */         result++;
-/*     */       }
-/*  71 */       next--;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  84 */     return formatNumbers(result);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static NodeCounter getDefaultNodeCounter(Translet translet, DOM document, DTMAxisIterator iterator) {
-/*  90 */     return new DefaultAnyNodeCounter(translet, document, iterator);
-/*     */   }
-/*     */   
-/*     */   static class DefaultAnyNodeCounter
-/*     */     extends AnyNodeCounter {
-/*     */     public DefaultAnyNodeCounter(Translet translet, DOM document, DTMAxisIterator iterator) {
-/*  96 */       super(translet, document, iterator);
-/*     */     }
-/*     */     
-/*     */     public String getCounter() {
-/*     */       int result;
-/* 101 */       if (this._value != -2.147483648E9D) {
-/*     */         
-/* 103 */         if (this._value == 0.0D) return "0"; 
-/* 104 */         if (Double.isNaN(this._value)) return "NaN"; 
-/* 105 */         if (this._value < 0.0D && Double.isInfinite(this._value)) return "-Infinity"; 
-/* 106 */         if (Double.isInfinite(this._value)) return "Infinity"; 
-/* 107 */         result = (int)this._value;
-/*     */       } else {
-/*     */         
-/* 110 */         int next = this._node;
-/* 111 */         result = 0;
-/* 112 */         int ntype = this._document.getExpandedTypeID(this._node);
-/* 113 */         int root = this._document.getDocument();
-/* 114 */         while (next >= 0) {
-/* 115 */           if (ntype == this._document.getExpandedTypeID(next)) {
-/* 116 */             result++;
-/*     */           }
-/*     */ 
-/*     */           
-/* 120 */           if (next == root) {
-/*     */             break;
-/*     */           }
-/*     */           
-/* 124 */           next--;
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 128 */       return formatNumbers(result);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\AnyNodeCounter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: AnyNodeCounter.java,v 1.2.4.1 2005/09/06 05:54:53 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.Translet;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public abstract class AnyNodeCounter extends NodeCounter {
+    public AnyNodeCounter(Translet translet,
+                          DOM document, DTMAxisIterator iterator) {
+        super(translet, document, iterator);
+    }
+
+    public AnyNodeCounter(Translet translet,
+                          DOM document,
+                          DTMAxisIterator iterator,
+                          boolean hasFrom) {
+        super(translet, document, iterator, hasFrom);
+    }
+
+    public NodeCounter setStartNode(int node) {
+        _node = node;
+        _nodeType = _document.getExpandedTypeID(node);
+        return this;
+    }
+
+    public String getCounter() {
+        int result;
+        if (_value != Integer.MIN_VALUE) {
+            //See Errata E24
+            if (_value == 0) return "0";
+            else if (Double.isNaN(_value)) return "NaN";
+            else if (_value < 0 && Double.isInfinite(_value)) return "-Infinity";
+            else if (Double.isInfinite(_value)) return "Infinity";
+            else return formatNumbers((int)_value);
+        }
+        else {
+            int next = _node;
+            final int root = _document.getDocument();
+            result = 0;
+            while (next >= root && !matchesFrom(next)) {
+                if (matchesCount(next)) {
+                    ++result;
+                }
+                next--;
+//%HZ%:  Is this the best way of finding the root?  Is it better to check
+//%HZ%:  parent(next)?
+                /*
+                if (next == root) {
+                    break;
+                }
+                else {
+                    --next;
+                }
+                */
+            }
+        }
+        return formatNumbers(result);
+    }
+
+    public static NodeCounter getDefaultNodeCounter(Translet translet,
+                                                    DOM document,
+                                                    DTMAxisIterator iterator) {
+        return new DefaultAnyNodeCounter(translet, document, iterator);
+    }
+
+    static class DefaultAnyNodeCounter extends AnyNodeCounter {
+        public DefaultAnyNodeCounter(Translet translet,
+                                     DOM document, DTMAxisIterator iterator) {
+            super(translet, document, iterator);
+        }
+
+        public String getCounter() {
+            int result;
+            if (_value != Integer.MIN_VALUE) {
+                    //See Errata E24
+                    if (_value == 0) return "0";
+                    else if (Double.isNaN(_value)) return "NaN";
+                    else if (_value < 0 && Double.isInfinite(_value)) return "-Infinity";
+                    else if (Double.isInfinite(_value)) return "Infinity";
+                    else result = (int) _value;
+            }
+            else {
+                int next = _node;
+                result = 0;
+                final int ntype = _document.getExpandedTypeID(_node);
+                final int root = _document.getDocument();
+                while (next >= 0) {
+                    if (ntype == _document.getExpandedTypeID(next)) {
+                        result++;
+                    }
+//%HZ%:  Is this the best way of finding the root?  Is it better to check
+//%HZ%:  parent(next)?
+                    if (next == root) {
+                        break;
+                    }
+                    else {
+                        --next;
+                    }
+                }
+            }
+            return formatNumbers(result);
+        }
+    }
+}

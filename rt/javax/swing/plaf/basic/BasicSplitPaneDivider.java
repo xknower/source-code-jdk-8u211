@@ -1,1096 +1,1090 @@
-/*      */ package javax.swing.plaf.basic;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Cursor;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.LayoutManager;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.event.ActionEvent;
-/*      */ import java.awt.event.ActionListener;
-/*      */ import java.awt.event.MouseAdapter;
-/*      */ import java.awt.event.MouseEvent;
-/*      */ import java.awt.event.MouseMotionListener;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import javax.swing.JButton;
-/*      */ import javax.swing.JSplitPane;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.border.Border;
-/*      */ import sun.swing.DefaultLookup;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class BasicSplitPaneDivider
-/*      */   extends Container
-/*      */   implements PropertyChangeListener
-/*      */ {
-/*      */   protected static final int ONE_TOUCH_SIZE = 6;
-/*      */   protected static final int ONE_TOUCH_OFFSET = 2;
-/*      */   protected DragController dragger;
-/*      */   protected BasicSplitPaneUI splitPaneUI;
-/*   85 */   protected int dividerSize = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Component hiddenDivider;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JSplitPane splitPane;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected MouseHandler mouseHandler;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int orientation;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JButton leftButton;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JButton rightButton;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Border border;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean mouseOver;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int oneTouchSize;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int oneTouchOffset;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean centerOneTouchButtons;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BasicSplitPaneDivider(BasicSplitPaneUI paramBasicSplitPaneUI) {
-/*  142 */     this.oneTouchSize = DefaultLookup.getInt(paramBasicSplitPaneUI.getSplitPane(), paramBasicSplitPaneUI, "SplitPane.oneTouchButtonSize", 6);
-/*      */     
-/*  144 */     this.oneTouchOffset = DefaultLookup.getInt(paramBasicSplitPaneUI.getSplitPane(), paramBasicSplitPaneUI, "SplitPane.oneTouchButtonOffset", 2);
-/*      */     
-/*  146 */     this.centerOneTouchButtons = DefaultLookup.getBoolean(paramBasicSplitPaneUI.getSplitPane(), paramBasicSplitPaneUI, "SplitPane.centerOneTouchButtons", true);
-/*      */     
-/*  148 */     setLayout(new DividerLayout());
-/*  149 */     setBasicSplitPaneUI(paramBasicSplitPaneUI);
-/*  150 */     this.orientation = this.splitPane.getOrientation();
-/*  151 */     setCursor((this.orientation == 1) ? 
-/*  152 */         Cursor.getPredefinedCursor(11) : 
-/*  153 */         Cursor.getPredefinedCursor(9));
-/*  154 */     setBackground(UIManager.getColor("SplitPane.background"));
-/*      */   }
-/*      */   
-/*      */   private void revalidateSplitPane() {
-/*  158 */     invalidate();
-/*  159 */     if (this.splitPane != null) {
-/*  160 */       this.splitPane.revalidate();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBasicSplitPaneUI(BasicSplitPaneUI paramBasicSplitPaneUI) {
-/*  168 */     if (this.splitPane != null) {
-/*  169 */       this.splitPane.removePropertyChangeListener(this);
-/*  170 */       if (this.mouseHandler != null) {
-/*  171 */         this.splitPane.removeMouseListener(this.mouseHandler);
-/*  172 */         this.splitPane.removeMouseMotionListener(this.mouseHandler);
-/*  173 */         removeMouseListener(this.mouseHandler);
-/*  174 */         removeMouseMotionListener(this.mouseHandler);
-/*  175 */         this.mouseHandler = null;
-/*      */       } 
-/*      */     } 
-/*  178 */     this.splitPaneUI = paramBasicSplitPaneUI;
-/*  179 */     if (paramBasicSplitPaneUI != null) {
-/*  180 */       this.splitPane = paramBasicSplitPaneUI.getSplitPane();
-/*  181 */       if (this.splitPane != null) {
-/*  182 */         if (this.mouseHandler == null) this.mouseHandler = new MouseHandler(); 
-/*  183 */         this.splitPane.addMouseListener(this.mouseHandler);
-/*  184 */         this.splitPane.addMouseMotionListener(this.mouseHandler);
-/*  185 */         addMouseListener(this.mouseHandler);
-/*  186 */         addMouseMotionListener(this.mouseHandler);
-/*  187 */         this.splitPane.addPropertyChangeListener(this);
-/*  188 */         if (this.splitPane.isOneTouchExpandable()) {
-/*  189 */           oneTouchExpandableChanged();
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/*      */       
-/*  194 */       this.splitPane = null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BasicSplitPaneUI getBasicSplitPaneUI() {
-/*  204 */     return this.splitPaneUI;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDividerSize(int paramInt) {
-/*  214 */     this.dividerSize = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getDividerSize() {
-/*  223 */     return this.dividerSize;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBorder(Border paramBorder) {
-/*  232 */     Border border = this.border;
-/*      */     
-/*  234 */     this.border = paramBorder;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Border getBorder() {
-/*  246 */     return this.border;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Insets getInsets() {
-/*  257 */     Border border = getBorder();
-/*      */     
-/*  259 */     if (border != null) {
-/*  260 */       return border.getBorderInsets(this);
-/*      */     }
-/*  262 */     return super.getInsets();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setMouseOver(boolean paramBoolean) {
-/*  272 */     this.mouseOver = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isMouseOver() {
-/*  282 */     return this.mouseOver;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getPreferredSize() {
-/*  293 */     if (this.orientation == 1) {
-/*  294 */       return new Dimension(getDividerSize(), 1);
-/*      */     }
-/*  296 */     return new Dimension(1, getDividerSize());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getMinimumSize() {
-/*  303 */     return getPreferredSize();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/*  312 */     if (paramPropertyChangeEvent.getSource() == this.splitPane) {
-/*  313 */       if (paramPropertyChangeEvent.getPropertyName() == "orientation") {
-/*  314 */         this.orientation = this.splitPane.getOrientation();
-/*  315 */         setCursor((this.orientation == 1) ? 
-/*  316 */             Cursor.getPredefinedCursor(11) : 
-/*  317 */             Cursor.getPredefinedCursor(9));
-/*  318 */         revalidateSplitPane();
-/*      */       }
-/*  320 */       else if (paramPropertyChangeEvent.getPropertyName() == "oneTouchExpandable") {
-/*      */         
-/*  322 */         oneTouchExpandableChanged();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void paint(Graphics paramGraphics) {
-/*  332 */     super.paint(paramGraphics);
-/*      */ 
-/*      */     
-/*  335 */     Border border = getBorder();
-/*      */     
-/*  337 */     if (border != null) {
-/*  338 */       Dimension dimension = getSize();
-/*      */       
-/*  340 */       border.paintBorder(this, paramGraphics, 0, 0, dimension.width, dimension.height);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void oneTouchExpandableChanged() {
-/*  352 */     if (!DefaultLookup.getBoolean(this.splitPane, this.splitPaneUI, "SplitPane.supportsOneTouchButtons", true)) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */     
-/*  357 */     if (this.splitPane.isOneTouchExpandable() && this.leftButton == null && this.rightButton == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  362 */       this.leftButton = createLeftOneTouchButton();
-/*  363 */       if (this.leftButton != null) {
-/*  364 */         this.leftButton.addActionListener(new OneTouchActionHandler(true));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  369 */       this.rightButton = createRightOneTouchButton();
-/*  370 */       if (this.rightButton != null) {
-/*  371 */         this.rightButton.addActionListener(new OneTouchActionHandler(false));
-/*      */       }
-/*      */       
-/*  374 */       if (this.leftButton != null && this.rightButton != null) {
-/*  375 */         add(this.leftButton);
-/*  376 */         add(this.rightButton);
-/*      */       } 
-/*      */     } 
-/*  379 */     revalidateSplitPane();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JButton createLeftOneTouchButton() {
-/*  388 */     JButton jButton = new JButton() {
-/*      */         public void setBorder(Border param1Border) {}
-/*      */         
-/*      */         public void paint(Graphics param1Graphics) {
-/*  392 */           if (BasicSplitPaneDivider.this.splitPane != null) {
-/*  393 */             int[] arrayOfInt1 = new int[3];
-/*  394 */             int[] arrayOfInt2 = new int[3];
-/*      */ 
-/*      */ 
-/*      */             
-/*  398 */             param1Graphics.setColor(getBackground());
-/*  399 */             param1Graphics.fillRect(0, 0, getWidth(), 
-/*  400 */                 getHeight());
-/*      */ 
-/*      */             
-/*  403 */             param1Graphics.setColor(Color.black);
-/*  404 */             if (BasicSplitPaneDivider.this.orientation == 0) {
-/*  405 */               int i = Math.min(getHeight(), BasicSplitPaneDivider.this.oneTouchSize);
-/*  406 */               arrayOfInt1[0] = i;
-/*  407 */               arrayOfInt1[1] = 0;
-/*  408 */               arrayOfInt1[2] = i << 1;
-/*  409 */               arrayOfInt2[0] = 0;
-/*  410 */               arrayOfInt2[2] = i; arrayOfInt2[1] = i;
-/*  411 */               param1Graphics.drawPolygon(arrayOfInt1, arrayOfInt2, 3);
-/*      */             }
-/*      */             else {
-/*      */               
-/*  415 */               int i = Math.min(getWidth(), BasicSplitPaneDivider.this.oneTouchSize);
-/*  416 */               arrayOfInt1[2] = i; arrayOfInt1[0] = i;
-/*  417 */               arrayOfInt1[1] = 0;
-/*  418 */               arrayOfInt2[0] = 0;
-/*  419 */               arrayOfInt2[1] = i;
-/*  420 */               arrayOfInt2[2] = i << 1;
-/*      */             } 
-/*  422 */             param1Graphics.fillPolygon(arrayOfInt1, arrayOfInt2, 3);
-/*      */           } 
-/*      */         }
-/*      */         
-/*      */         public boolean isFocusTraversable() {
-/*  427 */           return false;
-/*      */         }
-/*      */       };
-/*  430 */     jButton.setMinimumSize(new Dimension(this.oneTouchSize, this.oneTouchSize));
-/*  431 */     jButton.setCursor(Cursor.getPredefinedCursor(0));
-/*  432 */     jButton.setFocusPainted(false);
-/*  433 */     jButton.setBorderPainted(false);
-/*  434 */     jButton.setRequestFocusEnabled(false);
-/*  435 */     return jButton;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JButton createRightOneTouchButton() {
-/*  444 */     JButton jButton = new JButton() {
-/*      */         public void setBorder(Border param1Border) {}
-/*      */         
-/*      */         public void paint(Graphics param1Graphics) {
-/*  448 */           if (BasicSplitPaneDivider.this.splitPane != null) {
-/*  449 */             int[] arrayOfInt1 = new int[3];
-/*  450 */             int[] arrayOfInt2 = new int[3];
-/*      */ 
-/*      */ 
-/*      */             
-/*  454 */             param1Graphics.setColor(getBackground());
-/*  455 */             param1Graphics.fillRect(0, 0, getWidth(), 
-/*  456 */                 getHeight());
-/*      */ 
-/*      */             
-/*  459 */             if (BasicSplitPaneDivider.this.orientation == 0) {
-/*  460 */               int i = Math.min(getHeight(), BasicSplitPaneDivider.this.oneTouchSize);
-/*  461 */               arrayOfInt1[0] = i;
-/*  462 */               arrayOfInt1[1] = i << 1;
-/*  463 */               arrayOfInt1[2] = 0;
-/*  464 */               arrayOfInt2[0] = i;
-/*  465 */               arrayOfInt2[2] = 0; arrayOfInt2[1] = 0;
-/*      */             } else {
-/*      */               
-/*  468 */               int i = Math.min(getWidth(), BasicSplitPaneDivider.this.oneTouchSize);
-/*  469 */               arrayOfInt1[2] = 0; arrayOfInt1[0] = 0;
-/*  470 */               arrayOfInt1[1] = i;
-/*  471 */               arrayOfInt2[0] = 0;
-/*  472 */               arrayOfInt2[1] = i;
-/*  473 */               arrayOfInt2[2] = i << 1;
-/*      */             } 
-/*  475 */             param1Graphics.setColor(Color.black);
-/*  476 */             param1Graphics.fillPolygon(arrayOfInt1, arrayOfInt2, 3);
-/*      */           } 
-/*      */         }
-/*      */         
-/*      */         public boolean isFocusTraversable() {
-/*  481 */           return false;
-/*      */         }
-/*      */       };
-/*  484 */     jButton.setMinimumSize(new Dimension(this.oneTouchSize, this.oneTouchSize));
-/*  485 */     jButton.setCursor(Cursor.getPredefinedCursor(0));
-/*  486 */     jButton.setFocusPainted(false);
-/*  487 */     jButton.setBorderPainted(false);
-/*  488 */     jButton.setRequestFocusEnabled(false);
-/*  489 */     return jButton;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void prepareForDragging() {
-/*  498 */     this.splitPaneUI.startDragging();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void dragDividerTo(int paramInt) {
-/*  507 */     this.splitPaneUI.dragDividerTo(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void finishDraggingTo(int paramInt) {
-/*  516 */     this.splitPaneUI.finishDraggingTo(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class MouseHandler
-/*      */     extends MouseAdapter
-/*      */     implements MouseMotionListener
-/*      */   {
-/*      */     public void mousePressed(MouseEvent param1MouseEvent) {
-/*  534 */       if ((param1MouseEvent.getSource() == BasicSplitPaneDivider.this || param1MouseEvent
-/*  535 */         .getSource() == BasicSplitPaneDivider.this.splitPane) && BasicSplitPaneDivider.this.dragger == null && BasicSplitPaneDivider.this.splitPane
-/*  536 */         .isEnabled()) {
-/*      */         
-/*  538 */         Component component = BasicSplitPaneDivider.this.splitPaneUI.getNonContinuousLayoutDivider();
-/*      */         
-/*  540 */         if (BasicSplitPaneDivider.this.hiddenDivider != component) {
-/*  541 */           if (BasicSplitPaneDivider.this.hiddenDivider != null) {
-/*  542 */             BasicSplitPaneDivider.this.hiddenDivider.removeMouseListener(this);
-/*  543 */             BasicSplitPaneDivider.this.hiddenDivider.removeMouseMotionListener(this);
-/*      */           } 
-/*  545 */           BasicSplitPaneDivider.this.hiddenDivider = component;
-/*  546 */           if (BasicSplitPaneDivider.this.hiddenDivider != null) {
-/*  547 */             BasicSplitPaneDivider.this.hiddenDivider.addMouseMotionListener(this);
-/*  548 */             BasicSplitPaneDivider.this.hiddenDivider.addMouseListener(this);
-/*      */           } 
-/*      */         } 
-/*  551 */         if (BasicSplitPaneDivider.this.splitPane.getLeftComponent() != null && BasicSplitPaneDivider.this.splitPane
-/*  552 */           .getRightComponent() != null) {
-/*  553 */           if (BasicSplitPaneDivider.this.orientation == 1) {
-/*  554 */             BasicSplitPaneDivider.this.dragger = new BasicSplitPaneDivider.DragController(param1MouseEvent);
-/*      */           } else {
-/*      */             
-/*  557 */             BasicSplitPaneDivider.this.dragger = new BasicSplitPaneDivider.VerticalDragController(param1MouseEvent);
-/*      */           } 
-/*  559 */           if (!BasicSplitPaneDivider.this.dragger.isValid()) {
-/*  560 */             BasicSplitPaneDivider.this.dragger = null;
-/*      */           } else {
-/*      */             
-/*  563 */             BasicSplitPaneDivider.this.prepareForDragging();
-/*  564 */             BasicSplitPaneDivider.this.dragger.continueDrag(param1MouseEvent);
-/*      */           } 
-/*      */         } 
-/*  567 */         param1MouseEvent.consume();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/*  576 */       if (BasicSplitPaneDivider.this.dragger != null) {
-/*  577 */         if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this.splitPane) {
-/*  578 */           BasicSplitPaneDivider.this.dragger.completeDrag(param1MouseEvent.getX(), param1MouseEvent.getY());
-/*      */         }
-/*  580 */         else if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) {
-/*  581 */           Point point = BasicSplitPaneDivider.this.getLocation();
-/*      */           
-/*  583 */           BasicSplitPaneDivider.this.dragger.completeDrag(param1MouseEvent.getX() + point.x, param1MouseEvent
-/*  584 */               .getY() + point.y);
-/*      */         }
-/*  586 */         else if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this.hiddenDivider) {
-/*  587 */           Point point = BasicSplitPaneDivider.this.hiddenDivider.getLocation();
-/*  588 */           int i = param1MouseEvent.getX() + point.x;
-/*  589 */           int j = param1MouseEvent.getY() + point.y;
-/*      */           
-/*  591 */           BasicSplitPaneDivider.this.dragger.completeDrag(i, j);
-/*      */         } 
-/*  593 */         BasicSplitPaneDivider.this.dragger = null;
-/*  594 */         param1MouseEvent.consume();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseDragged(MouseEvent param1MouseEvent) {
-/*  607 */       if (BasicSplitPaneDivider.this.dragger != null) {
-/*  608 */         if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this.splitPane) {
-/*  609 */           BasicSplitPaneDivider.this.dragger.continueDrag(param1MouseEvent.getX(), param1MouseEvent.getY());
-/*      */         }
-/*  611 */         else if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) {
-/*  612 */           Point point = BasicSplitPaneDivider.this.getLocation();
-/*      */           
-/*  614 */           BasicSplitPaneDivider.this.dragger.continueDrag(param1MouseEvent.getX() + point.x, param1MouseEvent
-/*  615 */               .getY() + point.y);
-/*      */         }
-/*  617 */         else if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this.hiddenDivider) {
-/*  618 */           Point point = BasicSplitPaneDivider.this.hiddenDivider.getLocation();
-/*  619 */           int i = param1MouseEvent.getX() + point.x;
-/*  620 */           int j = param1MouseEvent.getY() + point.y;
-/*      */           
-/*  622 */           BasicSplitPaneDivider.this.dragger.continueDrag(i, j);
-/*      */         } 
-/*  624 */         param1MouseEvent.consume();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseMoved(MouseEvent param1MouseEvent) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseEntered(MouseEvent param1MouseEvent) {
-/*  642 */       if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) {
-/*  643 */         BasicSplitPaneDivider.this.setMouseOver(true);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void mouseExited(MouseEvent param1MouseEvent) {
-/*  654 */       if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) {
-/*  655 */         BasicSplitPaneDivider.this.setMouseOver(false);
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class DragController
-/*      */   {
-/*      */     int initialX;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int maxX;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int minX;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int offset;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected DragController(MouseEvent param1MouseEvent) {
-/*  697 */       JSplitPane jSplitPane = BasicSplitPaneDivider.this.splitPaneUI.getSplitPane();
-/*  698 */       Component component1 = jSplitPane.getLeftComponent();
-/*  699 */       Component component2 = jSplitPane.getRightComponent();
-/*      */       
-/*  701 */       this.initialX = (BasicSplitPaneDivider.this.getLocation()).x;
-/*  702 */       if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) {
-/*  703 */         this.offset = param1MouseEvent.getX();
-/*      */       } else {
-/*      */         
-/*  706 */         this.offset = param1MouseEvent.getX() - this.initialX;
-/*      */       } 
-/*  708 */       if (component1 == null || component2 == null || this.offset < -1 || this.offset >= 
-/*  709 */         (BasicSplitPaneDivider.this.getSize()).width) {
-/*      */         
-/*  711 */         this.maxX = -1;
-/*      */       } else {
-/*      */         
-/*  714 */         Insets insets = jSplitPane.getInsets();
-/*      */         
-/*  716 */         if (component1.isVisible()) {
-/*  717 */           this.minX = (component1.getMinimumSize()).width;
-/*  718 */           if (insets != null) {
-/*  719 */             this.minX += insets.left;
-/*      */           }
-/*      */         } else {
-/*      */           
-/*  723 */           this.minX = 0;
-/*      */         } 
-/*  725 */         if (component2.isVisible()) {
-/*  726 */           byte b = (insets != null) ? insets.right : 0;
-/*  727 */           this.maxX = Math.max(0, (jSplitPane.getSize()).width - 
-/*  728 */               (BasicSplitPaneDivider.this.getSize()).width + b - 
-/*  729 */               (component2.getMinimumSize()).width);
-/*      */         } else {
-/*      */           
-/*  732 */           byte b = (insets != null) ? insets.right : 0;
-/*  733 */           this.maxX = Math.max(0, (jSplitPane.getSize()).width - 
-/*  734 */               (BasicSplitPaneDivider.this.getSize()).width + b);
-/*      */         } 
-/*  736 */         if (this.maxX < this.minX) this.minX = this.maxX = 0;
-/*      */       
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected boolean isValid() {
-/*  745 */       return (this.maxX > 0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int positionForMouseEvent(MouseEvent param1MouseEvent) {
-/*  755 */       int i = (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) ? (param1MouseEvent.getX() + (BasicSplitPaneDivider.this.getLocation()).x) : param1MouseEvent.getX();
-/*      */       
-/*  757 */       i = Math.min(this.maxX, Math.max(this.minX, i - this.offset));
-/*  758 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int getNeededLocation(int param1Int1, int param1Int2) {
-/*  769 */       return Math.min(this.maxX, Math.max(this.minX, param1Int1 - this.offset));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void continueDrag(int param1Int1, int param1Int2) {
-/*  775 */       BasicSplitPaneDivider.this.dragDividerTo(getNeededLocation(param1Int1, param1Int2));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void continueDrag(MouseEvent param1MouseEvent) {
-/*  784 */       BasicSplitPaneDivider.this.dragDividerTo(positionForMouseEvent(param1MouseEvent));
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     protected void completeDrag(int param1Int1, int param1Int2) {
-/*  789 */       BasicSplitPaneDivider.this.finishDraggingTo(getNeededLocation(param1Int1, param1Int2));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected void completeDrag(MouseEvent param1MouseEvent) {
-/*  798 */       BasicSplitPaneDivider.this.finishDraggingTo(positionForMouseEvent(param1MouseEvent));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class VerticalDragController
-/*      */     extends DragController
-/*      */   {
-/*      */     protected VerticalDragController(MouseEvent param1MouseEvent) {
-/*  815 */       super(param1MouseEvent);
-/*  816 */       JSplitPane jSplitPane = BasicSplitPaneDivider.this.splitPaneUI.getSplitPane();
-/*  817 */       Component component1 = jSplitPane.getLeftComponent();
-/*  818 */       Component component2 = jSplitPane.getRightComponent();
-/*      */       
-/*  820 */       this.initialX = (BasicSplitPaneDivider.this.getLocation()).y;
-/*  821 */       if (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) {
-/*  822 */         this.offset = param1MouseEvent.getY();
-/*      */       } else {
-/*      */         
-/*  825 */         this.offset = param1MouseEvent.getY() - this.initialX;
-/*      */       } 
-/*  827 */       if (component1 == null || component2 == null || this.offset < -1 || this.offset > 
-/*  828 */         (BasicSplitPaneDivider.this.getSize()).height) {
-/*      */         
-/*  830 */         this.maxX = -1;
-/*      */       } else {
-/*      */         
-/*  833 */         Insets insets = jSplitPane.getInsets();
-/*      */         
-/*  835 */         if (component1.isVisible()) {
-/*  836 */           this.minX = (component1.getMinimumSize()).height;
-/*  837 */           if (insets != null) {
-/*  838 */             this.minX += insets.top;
-/*      */           }
-/*      */         } else {
-/*      */           
-/*  842 */           this.minX = 0;
-/*      */         } 
-/*  844 */         if (component2.isVisible()) {
-/*  845 */           byte b = (insets != null) ? insets.bottom : 0;
-/*      */           
-/*  847 */           this.maxX = Math.max(0, (jSplitPane.getSize()).height - 
-/*  848 */               (BasicSplitPaneDivider.this.getSize()).height + b - 
-/*  849 */               (component2.getMinimumSize()).height);
-/*      */         } else {
-/*      */           
-/*  852 */           byte b = (insets != null) ? insets.bottom : 0;
-/*      */           
-/*  854 */           this.maxX = Math.max(0, (jSplitPane.getSize()).height - 
-/*  855 */               (BasicSplitPaneDivider.this.getSize()).height + b);
-/*      */         } 
-/*  857 */         if (this.maxX < this.minX) this.minX = this.maxX = 0;
-/*      */       
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int getNeededLocation(int param1Int1, int param1Int2) {
-/*  869 */       return Math.min(this.maxX, Math.max(this.minX, param1Int2 - this.offset));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int positionForMouseEvent(MouseEvent param1MouseEvent) {
-/*  880 */       int i = (param1MouseEvent.getSource() == BasicSplitPaneDivider.this) ? (param1MouseEvent.getY() + (BasicSplitPaneDivider.this.getLocation()).y) : param1MouseEvent.getY();
-/*      */ 
-/*      */       
-/*  883 */       i = Math.min(this.maxX, Math.max(this.minX, i - this.offset));
-/*  884 */       return i;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class DividerLayout
-/*      */     implements LayoutManager
-/*      */   {
-/*      */     public void layoutContainer(Container param1Container) {
-/*  898 */       if (BasicSplitPaneDivider.this.leftButton != null && BasicSplitPaneDivider.this.rightButton != null && param1Container == BasicSplitPaneDivider.this)
-/*      */       {
-/*  900 */         if (BasicSplitPaneDivider.this.splitPane.isOneTouchExpandable()) {
-/*  901 */           Insets insets = BasicSplitPaneDivider.this.getInsets();
-/*      */           
-/*  903 */           if (BasicSplitPaneDivider.this.orientation == 0) {
-/*  904 */             byte b = (insets != null) ? insets.left : 0;
-/*  905 */             int i = BasicSplitPaneDivider.this.getHeight();
-/*      */             
-/*  907 */             if (insets != null) {
-/*  908 */               i -= insets.top + insets.bottom;
-/*  909 */               i = Math.max(i, 0);
-/*      */             } 
-/*  911 */             i = Math.min(i, BasicSplitPaneDivider.this.oneTouchSize);
-/*      */             
-/*  913 */             int j = ((param1Container.getSize()).height - i) / 2;
-/*      */             
-/*  915 */             if (!BasicSplitPaneDivider.this.centerOneTouchButtons) {
-/*  916 */               j = (insets != null) ? insets.top : 0;
-/*  917 */               b = 0;
-/*      */             } 
-/*  919 */             BasicSplitPaneDivider.this.leftButton.setBounds(b + BasicSplitPaneDivider.this.oneTouchOffset, j, i * 2, i);
-/*      */             
-/*  921 */             BasicSplitPaneDivider.this.rightButton.setBounds(b + BasicSplitPaneDivider.this.oneTouchOffset + BasicSplitPaneDivider.this
-/*  922 */                 .oneTouchSize * 2, j, i * 2, i);
-/*      */           }
-/*      */           else {
-/*      */             
-/*  926 */             byte b = (insets != null) ? insets.top : 0;
-/*  927 */             int i = BasicSplitPaneDivider.this.getWidth();
-/*      */             
-/*  929 */             if (insets != null) {
-/*  930 */               i -= insets.left + insets.right;
-/*  931 */               i = Math.max(i, 0);
-/*      */             } 
-/*  933 */             i = Math.min(i, BasicSplitPaneDivider.this.oneTouchSize);
-/*      */             
-/*  935 */             int j = ((param1Container.getSize()).width - i) / 2;
-/*      */             
-/*  937 */             if (!BasicSplitPaneDivider.this.centerOneTouchButtons) {
-/*  938 */               j = (insets != null) ? insets.left : 0;
-/*  939 */               b = 0;
-/*      */             } 
-/*      */             
-/*  942 */             BasicSplitPaneDivider.this.leftButton.setBounds(j, b + BasicSplitPaneDivider.this.oneTouchOffset, i, i * 2);
-/*      */             
-/*  944 */             BasicSplitPaneDivider.this.rightButton.setBounds(j, b + BasicSplitPaneDivider.this.oneTouchOffset + BasicSplitPaneDivider.this
-/*  945 */                 .oneTouchSize * 2, i, i * 2);
-/*      */           }
-/*      */         
-/*      */         } else {
-/*      */           
-/*  950 */           BasicSplitPaneDivider.this.leftButton.setBounds(-5, -5, 1, 1);
-/*  951 */           BasicSplitPaneDivider.this.rightButton.setBounds(-5, -5, 1, 1);
-/*      */         } 
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Dimension minimumLayoutSize(Container param1Container) {
-/*  961 */       if (param1Container != BasicSplitPaneDivider.this || BasicSplitPaneDivider.this.splitPane == null) {
-/*  962 */         return new Dimension(0, 0);
-/*      */       }
-/*  964 */       Dimension dimension = null;
-/*      */       
-/*  966 */       if (BasicSplitPaneDivider.this.splitPane.isOneTouchExpandable() && BasicSplitPaneDivider.this.leftButton != null) {
-/*  967 */         dimension = BasicSplitPaneDivider.this.leftButton.getMinimumSize();
-/*      */       }
-/*      */       
-/*  970 */       Insets insets = BasicSplitPaneDivider.this.getInsets();
-/*  971 */       int i = BasicSplitPaneDivider.this.getDividerSize();
-/*  972 */       int j = i;
-/*      */       
-/*  974 */       if (BasicSplitPaneDivider.this.orientation == 0) {
-/*  975 */         if (dimension != null) {
-/*  976 */           int k = dimension.height;
-/*  977 */           if (insets != null) {
-/*  978 */             k += insets.top + insets.bottom;
-/*      */           }
-/*  980 */           j = Math.max(j, k);
-/*      */         } 
-/*  982 */         i = 1;
-/*      */       } else {
-/*      */         
-/*  985 */         if (dimension != null) {
-/*  986 */           int k = dimension.width;
-/*  987 */           if (insets != null) {
-/*  988 */             k += insets.left + insets.right;
-/*      */           }
-/*  990 */           i = Math.max(i, k);
-/*      */         } 
-/*  992 */         j = 1;
-/*      */       } 
-/*  994 */       return new Dimension(i, j);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public Dimension preferredLayoutSize(Container param1Container) {
-/*  999 */       return minimumLayoutSize(param1Container);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeLayoutComponent(Component param1Component) {}
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addLayoutComponent(String param1String, Component param1Component) {}
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class OneTouchActionHandler
-/*      */     implements ActionListener
-/*      */   {
-/*      */     private boolean toMinimum;
-/*      */ 
-/*      */     
-/*      */     OneTouchActionHandler(boolean param1Boolean) {
-/* 1019 */       this.toMinimum = param1Boolean;
-/*      */     }
-/*      */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/*      */       int k;
-/* 1023 */       Insets insets = BasicSplitPaneDivider.this.splitPane.getInsets();
-/* 1024 */       int i = BasicSplitPaneDivider.this.splitPane.getLastDividerLocation();
-/* 1025 */       int j = BasicSplitPaneDivider.this.splitPaneUI.getDividerLocation(BasicSplitPaneDivider.this.splitPane);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1030 */       if (this.toMinimum) {
-/* 1031 */         if (BasicSplitPaneDivider.this.orientation == 0) {
-/* 1032 */           if (j >= BasicSplitPaneDivider.this.splitPane.getHeight() - insets.bottom - BasicSplitPaneDivider.this
-/* 1033 */             .getHeight()) {
-/* 1034 */             int m = BasicSplitPaneDivider.this.splitPane.getMaximumDividerLocation();
-/* 1035 */             k = Math.min(i, m);
-/* 1036 */             BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(false);
-/*      */           } else {
-/*      */             
-/* 1039 */             k = insets.top;
-/* 1040 */             BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(true);
-/*      */           }
-/*      */         
-/*      */         }
-/* 1044 */         else if (j >= BasicSplitPaneDivider.this.splitPane.getWidth() - insets.right - BasicSplitPaneDivider.this
-/* 1045 */           .getWidth()) {
-/* 1046 */           int m = BasicSplitPaneDivider.this.splitPane.getMaximumDividerLocation();
-/* 1047 */           k = Math.min(i, m);
-/* 1048 */           BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(false);
-/*      */         } else {
-/*      */           
-/* 1051 */           k = insets.left;
-/* 1052 */           BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(true);
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/* 1057 */       else if (BasicSplitPaneDivider.this.orientation == 0) {
-/* 1058 */         if (j == insets.top) {
-/* 1059 */           int m = BasicSplitPaneDivider.this.splitPane.getMaximumDividerLocation();
-/* 1060 */           k = Math.min(i, m);
-/* 1061 */           BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(false);
-/*      */         } else {
-/*      */           
-/* 1064 */           k = BasicSplitPaneDivider.this.splitPane.getHeight() - BasicSplitPaneDivider.this.getHeight() - insets.top;
-/*      */           
-/* 1066 */           BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(true);
-/*      */         }
-/*      */       
-/*      */       }
-/* 1070 */       else if (j == insets.left) {
-/* 1071 */         int m = BasicSplitPaneDivider.this.splitPane.getMaximumDividerLocation();
-/* 1072 */         k = Math.min(i, m);
-/* 1073 */         BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(false);
-/*      */       } else {
-/*      */         
-/* 1076 */         k = BasicSplitPaneDivider.this.splitPane.getWidth() - BasicSplitPaneDivider.this.getWidth() - insets.left;
-/*      */         
-/* 1078 */         BasicSplitPaneDivider.this.splitPaneUI.setKeepHidden(true);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1082 */       if (j != k) {
-/* 1083 */         BasicSplitPaneDivider.this.splitPane.setDividerLocation(k);
-/*      */ 
-/*      */         
-/* 1086 */         BasicSplitPaneDivider.this.splitPane.setLastDividerLocation(j);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicSplitPaneDivider.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+
+package javax.swing.plaf.basic;
+
+
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.border.Border;
+import java.beans.*;
+import sun.swing.DefaultLookup;
+
+
+
+/**
+ * Divider used by BasicSplitPaneUI. Subclassers may wish to override
+ * paint to do something more interesting.
+ * The border effect is drawn in BasicSplitPaneUI, so if you don't like
+ * that border, reset it there.
+ * To conditionally drag from certain areas subclass mousePressed and
+ * call super when you wish the dragging to begin.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Scott Violet
+ */
+public class BasicSplitPaneDivider extends Container
+    implements PropertyChangeListener
+{
+    /**
+     * Width or height of the divider based on orientation
+     * BasicSplitPaneUI adds two to this.
+     */
+    protected static final int ONE_TOUCH_SIZE = 6;
+    protected static final int ONE_TOUCH_OFFSET = 2;
+
+    /**
+     * Handles mouse dragging message to do the actual dragging.
+     */
+    protected DragController dragger;
+
+    /**
+     * UI this instance was created from.
+     */
+    protected BasicSplitPaneUI splitPaneUI;
+
+    /**
+     * Size of the divider.
+     */
+    protected int dividerSize = 0; // default - SET TO 0???
+
+    /**
+     * Divider that is used for noncontinuous layout mode.
+     */
+    protected Component hiddenDivider;
+
+    /**
+     * JSplitPane the receiver is contained in.
+     */
+    protected JSplitPane splitPane;
+
+    /**
+     * Handles mouse events from both this class, and the split pane.
+     * Mouse events are handled for the splitpane since you want to be able
+     * to drag when clicking on the border of the divider, which is not
+     * drawn by the divider.
+     */
+    protected MouseHandler mouseHandler;
+
+    /**
+     * Orientation of the JSplitPane.
+     */
+    protected int orientation;
+
+    /**
+     * Button for quickly toggling the left component.
+     */
+    protected JButton leftButton;
+
+    /**
+     * Button for quickly toggling the right component.
+     */
+    protected JButton rightButton;
+
+    /** Border. */
+    private Border border;
+
+    /**
+     * Is the mouse over the divider?
+     */
+    private boolean mouseOver;
+
+    private int oneTouchSize;
+    private int oneTouchOffset;
+
+    /**
+     * If true the one touch buttons are centered on the divider.
+     */
+    private boolean centerOneTouchButtons;
+
+
+    /**
+     * Creates an instance of BasicSplitPaneDivider. Registers this
+     * instance for mouse events and mouse dragged events.
+     */
+    public BasicSplitPaneDivider(BasicSplitPaneUI ui) {
+        oneTouchSize = DefaultLookup.getInt(ui.getSplitPane(), ui,
+                "SplitPane.oneTouchButtonSize", ONE_TOUCH_SIZE);
+        oneTouchOffset = DefaultLookup.getInt(ui.getSplitPane(), ui,
+                "SplitPane.oneTouchButtonOffset", ONE_TOUCH_OFFSET);
+        centerOneTouchButtons = DefaultLookup.getBoolean(ui.getSplitPane(),
+                 ui, "SplitPane.centerOneTouchButtons", true);
+        setLayout(new DividerLayout());
+        setBasicSplitPaneUI(ui);
+        orientation = splitPane.getOrientation();
+        setCursor((orientation == JSplitPane.HORIZONTAL_SPLIT) ?
+                  Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR) :
+                  Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+        setBackground(UIManager.getColor("SplitPane.background"));
+    }
+
+    private void revalidateSplitPane() {
+        invalidate();
+        if (splitPane != null) {
+            splitPane.revalidate();
+        }
+    }
+
+    /**
+     * Sets the SplitPaneUI that is using the receiver.
+     */
+    public void setBasicSplitPaneUI(BasicSplitPaneUI newUI) {
+        if (splitPane != null) {
+            splitPane.removePropertyChangeListener(this);
+           if (mouseHandler != null) {
+               splitPane.removeMouseListener(mouseHandler);
+               splitPane.removeMouseMotionListener(mouseHandler);
+               removeMouseListener(mouseHandler);
+               removeMouseMotionListener(mouseHandler);
+               mouseHandler = null;
+           }
+        }
+        splitPaneUI = newUI;
+        if (newUI != null) {
+            splitPane = newUI.getSplitPane();
+            if (splitPane != null) {
+                if (mouseHandler == null) mouseHandler = new MouseHandler();
+                splitPane.addMouseListener(mouseHandler);
+                splitPane.addMouseMotionListener(mouseHandler);
+                addMouseListener(mouseHandler);
+                addMouseMotionListener(mouseHandler);
+                splitPane.addPropertyChangeListener(this);
+                if (splitPane.isOneTouchExpandable()) {
+                    oneTouchExpandableChanged();
+                }
+            }
+        }
+        else {
+            splitPane = null;
+        }
+    }
+
+
+    /**
+     * Returns the <code>SplitPaneUI</code> the receiver is currently
+     * in.
+     */
+    public BasicSplitPaneUI getBasicSplitPaneUI() {
+        return splitPaneUI;
+    }
+
+
+    /**
+     * Sets the size of the divider to <code>newSize</code>. That is
+     * the width if the splitpane is <code>HORIZONTAL_SPLIT</code>, or
+     * the height of <code>VERTICAL_SPLIT</code>.
+     */
+    public void setDividerSize(int newSize) {
+        dividerSize = newSize;
+    }
+
+
+    /**
+     * Returns the size of the divider, that is the width if the splitpane
+     * is HORIZONTAL_SPLIT, or the height of VERTICAL_SPLIT.
+     */
+    public int getDividerSize() {
+        return dividerSize;
+    }
+
+
+    /**
+     * Sets the border of this component.
+     * @since 1.3
+     */
+    public void setBorder(Border border) {
+        Border         oldBorder = this.border;
+
+        this.border = border;
+    }
+
+    /**
+     * Returns the border of this component or null if no border is
+     * currently set.
+     *
+     * @return the border object for this component
+     * @see #setBorder
+     * @since 1.3
+     */
+    public Border getBorder() {
+        return border;
+    }
+
+    /**
+     * If a border has been set on this component, returns the
+     * border's insets, else calls super.getInsets.
+     *
+     * @return the value of the insets property.
+     * @see #setBorder
+     */
+    public Insets getInsets() {
+        Border    border = getBorder();
+
+        if (border != null) {
+            return border.getBorderInsets(this);
+        }
+        return super.getInsets();
+    }
+
+    /**
+     * Sets whether or not the mouse is currently over the divider.
+     *
+     * @param mouseOver whether or not the mouse is currently over the divider
+     * @since 1.5
+     */
+    protected void setMouseOver(boolean mouseOver) {
+        this.mouseOver = mouseOver;
+    }
+
+    /**
+     * Returns whether or not the mouse is currently over the divider
+     *
+     * @return whether or not the mouse is currently over the divider
+     * @since 1.5
+     */
+    public boolean isMouseOver() {
+        return mouseOver;
+    }
+
+    /**
+     * Returns dividerSize x dividerSize
+     */
+    public Dimension getPreferredSize() {
+        // Ideally this would return the size from the layout manager,
+        // but that could result in the layed out size being different from
+        // the dividerSize, which may break developers as well as
+        // BasicSplitPaneUI.
+        if (orientation == JSplitPane.HORIZONTAL_SPLIT) {
+            return new Dimension(getDividerSize(), 1);
+        }
+        return new Dimension(1, getDividerSize());
+    }
+
+    /**
+     * Returns dividerSize x dividerSize
+     */
+    public Dimension getMinimumSize() {
+        return getPreferredSize();
+    }
+
+
+    /**
+     * Property change event, presumably from the JSplitPane, will message
+     * updateOrientation if necessary.
+     */
+    public void propertyChange(PropertyChangeEvent e) {
+        if (e.getSource() == splitPane) {
+            if (e.getPropertyName() == JSplitPane.ORIENTATION_PROPERTY) {
+                orientation = splitPane.getOrientation();
+                setCursor((orientation == JSplitPane.HORIZONTAL_SPLIT) ?
+                          Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR) :
+                          Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+                revalidateSplitPane();
+            }
+            else if (e.getPropertyName() == JSplitPane.
+                      ONE_TOUCH_EXPANDABLE_PROPERTY) {
+                oneTouchExpandableChanged();
+            }
+        }
+    }
+
+
+    /**
+     * Paints the divider.
+     */
+    public void paint(Graphics g) {
+      super.paint(g);
+
+      // Paint the border.
+      Border   border = getBorder();
+
+      if (border != null) {
+          Dimension     size = getSize();
+
+          border.paintBorder(this, g, 0, 0, size.width, size.height);
+      }
+    }
+
+
+    /**
+     * Messaged when the oneTouchExpandable value of the JSplitPane the
+     * receiver is contained in changes. Will create the
+     * <code>leftButton</code> and <code>rightButton</code> if they
+     * are null. invalidates the receiver as well.
+     */
+    protected void oneTouchExpandableChanged() {
+        if (!DefaultLookup.getBoolean(splitPane, splitPaneUI,
+                           "SplitPane.supportsOneTouchButtons", true)) {
+            // Look and feel doesn't want to support one touch buttons, bail.
+            return;
+        }
+        if (splitPane.isOneTouchExpandable() &&
+            leftButton == null &&
+            rightButton == null) {
+            /* Create the left button and add an action listener to
+               expand/collapse it. */
+            leftButton = createLeftOneTouchButton();
+            if (leftButton != null)
+                leftButton.addActionListener(new OneTouchActionHandler(true));
+
+
+            /* Create the right button and add an action listener to
+               expand/collapse it. */
+            rightButton = createRightOneTouchButton();
+            if (rightButton != null)
+                rightButton.addActionListener(new OneTouchActionHandler
+                    (false));
+
+            if (leftButton != null && rightButton != null) {
+                add(leftButton);
+                add(rightButton);
+            }
+        }
+        revalidateSplitPane();
+    }
+
+
+    /**
+     * Creates and return an instance of JButton that can be used to
+     * collapse the left component in the split pane.
+     */
+    protected JButton createLeftOneTouchButton() {
+        JButton b = new JButton() {
+            public void setBorder(Border b) {
+            }
+            public void paint(Graphics g) {
+                if (splitPane != null) {
+                    int[]   xs = new int[3];
+                    int[]   ys = new int[3];
+                    int     blockSize;
+
+                    // Fill the background first ...
+                    g.setColor(this.getBackground());
+                    g.fillRect(0, 0, this.getWidth(),
+                               this.getHeight());
+
+                    // ... then draw the arrow.
+                    g.setColor(Color.black);
+                    if (orientation == JSplitPane.VERTICAL_SPLIT) {
+                        blockSize = Math.min(getHeight(), oneTouchSize);
+                        xs[0] = blockSize;
+                        xs[1] = 0;
+                        xs[2] = blockSize << 1;
+                        ys[0] = 0;
+                        ys[1] = ys[2] = blockSize;
+                        g.drawPolygon(xs, ys, 3); // Little trick to make the
+                                                  // arrows of equal size
+                    }
+                    else {
+                        blockSize = Math.min(getWidth(), oneTouchSize);
+                        xs[0] = xs[2] = blockSize;
+                        xs[1] = 0;
+                        ys[0] = 0;
+                        ys[1] = blockSize;
+                        ys[2] = blockSize << 1;
+                    }
+                    g.fillPolygon(xs, ys, 3);
+                }
+            }
+            // Don't want the button to participate in focus traversable.
+            public boolean isFocusTraversable() {
+                return false;
+            }
+        };
+        b.setMinimumSize(new Dimension(oneTouchSize, oneTouchSize));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        b.setFocusPainted(false);
+        b.setBorderPainted(false);
+        b.setRequestFocusEnabled(false);
+        return b;
+    }
+
+
+    /**
+     * Creates and return an instance of JButton that can be used to
+     * collapse the right component in the split pane.
+     */
+    protected JButton createRightOneTouchButton() {
+        JButton b = new JButton() {
+            public void setBorder(Border border) {
+            }
+            public void paint(Graphics g) {
+                if (splitPane != null) {
+                    int[]          xs = new int[3];
+                    int[]          ys = new int[3];
+                    int            blockSize;
+
+                    // Fill the background first ...
+                    g.setColor(this.getBackground());
+                    g.fillRect(0, 0, this.getWidth(),
+                               this.getHeight());
+
+                    // ... then draw the arrow.
+                    if (orientation == JSplitPane.VERTICAL_SPLIT) {
+                        blockSize = Math.min(getHeight(), oneTouchSize);
+                        xs[0] = blockSize;
+                        xs[1] = blockSize << 1;
+                        xs[2] = 0;
+                        ys[0] = blockSize;
+                        ys[1] = ys[2] = 0;
+                    }
+                    else {
+                        blockSize = Math.min(getWidth(), oneTouchSize);
+                        xs[0] = xs[2] = 0;
+                        xs[1] = blockSize;
+                        ys[0] = 0;
+                        ys[1] = blockSize;
+                        ys[2] = blockSize << 1;
+                    }
+                    g.setColor(Color.black);
+                    g.fillPolygon(xs, ys, 3);
+                }
+            }
+            // Don't want the button to participate in focus traversable.
+            public boolean isFocusTraversable() {
+                return false;
+            }
+        };
+        b.setMinimumSize(new Dimension(oneTouchSize, oneTouchSize));
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        b.setFocusPainted(false);
+        b.setBorderPainted(false);
+        b.setRequestFocusEnabled(false);
+        return b;
+    }
+
+
+    /**
+     * Message to prepare for dragging. This messages the BasicSplitPaneUI
+     * with startDragging.
+     */
+    protected void prepareForDragging() {
+        splitPaneUI.startDragging();
+    }
+
+
+    /**
+     * Messages the BasicSplitPaneUI with dragDividerTo that this instance
+     * is contained in.
+     */
+    protected void dragDividerTo(int location) {
+        splitPaneUI.dragDividerTo(location);
+    }
+
+
+    /**
+     * Messages the BasicSplitPaneUI with finishDraggingTo that this instance
+     * is contained in.
+     */
+    protected void finishDraggingTo(int location) {
+        splitPaneUI.finishDraggingTo(location);
+    }
+
+
+    /**
+     * MouseHandler is responsible for converting mouse events
+     * (released, dragged...) into the appropriate DragController
+     * methods.
+     *
+     */
+    protected class MouseHandler extends MouseAdapter
+            implements MouseMotionListener
+    {
+        /**
+         * Starts the dragging session by creating the appropriate instance
+         * of DragController.
+         */
+        public void mousePressed(MouseEvent e) {
+            if ((e.getSource() == BasicSplitPaneDivider.this ||
+                 e.getSource() == splitPane) &&
+                dragger == null &&splitPane.isEnabled()) {
+                Component            newHiddenDivider = splitPaneUI.
+                                     getNonContinuousLayoutDivider();
+
+                if (hiddenDivider != newHiddenDivider) {
+                    if (hiddenDivider != null) {
+                        hiddenDivider.removeMouseListener(this);
+                        hiddenDivider.removeMouseMotionListener(this);
+                    }
+                    hiddenDivider = newHiddenDivider;
+                    if (hiddenDivider != null) {
+                        hiddenDivider.addMouseMotionListener(this);
+                        hiddenDivider.addMouseListener(this);
+                    }
+                }
+                if (splitPane.getLeftComponent() != null &&
+                    splitPane.getRightComponent() != null) {
+                    if (orientation == JSplitPane.HORIZONTAL_SPLIT) {
+                        dragger = new DragController(e);
+                    }
+                    else {
+                        dragger = new VerticalDragController(e);
+                    }
+                    if (!dragger.isValid()) {
+                        dragger = null;
+                    }
+                    else {
+                        prepareForDragging();
+                        dragger.continueDrag(e);
+                    }
+                }
+                e.consume();
+            }
+        }
+
+
+        /**
+         * If dragger is not null it is messaged with completeDrag.
+         */
+        public void mouseReleased(MouseEvent e) {
+            if (dragger != null) {
+                if (e.getSource() == splitPane) {
+                    dragger.completeDrag(e.getX(), e.getY());
+                }
+                else if (e.getSource() == BasicSplitPaneDivider.this) {
+                    Point   ourLoc = getLocation();
+
+                    dragger.completeDrag(e.getX() + ourLoc.x,
+                                         e.getY() + ourLoc.y);
+                }
+                else if (e.getSource() == hiddenDivider) {
+                    Point   hDividerLoc = hiddenDivider.getLocation();
+                    int     ourX = e.getX() + hDividerLoc.x;
+                    int     ourY = e.getY() + hDividerLoc.y;
+
+                    dragger.completeDrag(ourX, ourY);
+                }
+                dragger = null;
+                e.consume();
+            }
+        }
+
+
+        //
+        // MouseMotionListener
+        //
+
+        /**
+         * If dragger is not null it is messaged with continueDrag.
+         */
+        public void mouseDragged(MouseEvent e) {
+            if (dragger != null) {
+                if (e.getSource() == splitPane) {
+                    dragger.continueDrag(e.getX(), e.getY());
+                }
+                else if (e.getSource() == BasicSplitPaneDivider.this) {
+                    Point   ourLoc = getLocation();
+
+                    dragger.continueDrag(e.getX() + ourLoc.x,
+                                         e.getY() + ourLoc.y);
+                }
+                else if (e.getSource() == hiddenDivider) {
+                    Point   hDividerLoc = hiddenDivider.getLocation();
+                    int     ourX = e.getX() + hDividerLoc.x;
+                    int     ourY = e.getY() + hDividerLoc.y;
+
+                    dragger.continueDrag(ourX, ourY);
+                }
+                e.consume();
+            }
+        }
+
+
+        /**
+         *  Resets the cursor based on the orientation.
+         */
+        public void mouseMoved(MouseEvent e) {
+        }
+
+        /**
+         * Invoked when the mouse enters a component.
+         *
+         * @param e MouseEvent describing the details of the enter event.
+         * @since 1.5
+         */
+        public void mouseEntered(MouseEvent e) {
+            if (e.getSource() == BasicSplitPaneDivider.this) {
+                setMouseOver(true);
+            }
+        }
+
+        /**
+         * Invoked when the mouse exits a component.
+         *
+         * @param e MouseEvent describing the details of the exit event.
+         * @since 1.5
+         */
+        public void mouseExited(MouseEvent e) {
+            if (e.getSource() == BasicSplitPaneDivider.this) {
+                setMouseOver(false);
+            }
+        }
+    }
+
+
+    /**
+     * Handles the events during a dragging session for a
+     * HORIZONTAL_SPLIT oriented split pane. This continually
+     * messages <code>dragDividerTo</code> and then when done messages
+     * <code>finishDraggingTo</code>. When an instance is created it should be
+     * messaged with <code>isValid</code> to insure that dragging can happen
+     * (dragging won't be allowed if the two views can not be resized).
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class DragController
+    {
+        /**
+         * Initial location of the divider.
+         */
+        int initialX;
+
+        /**
+         * Maximum and minimum positions to drag to.
+         */
+        int maxX, minX;
+
+        /**
+         * Initial location the mouse down happened at.
+         */
+        int offset;
+
+
+        protected DragController(MouseEvent e) {
+            JSplitPane  splitPane = splitPaneUI.getSplitPane();
+            Component   leftC = splitPane.getLeftComponent();
+            Component   rightC = splitPane.getRightComponent();
+
+            initialX = getLocation().x;
+            if (e.getSource() == BasicSplitPaneDivider.this) {
+                offset = e.getX();
+            }
+            else { // splitPane
+                offset = e.getX() - initialX;
+            }
+            if (leftC == null || rightC == null || offset < -1 ||
+                offset >= getSize().width) {
+                // Don't allow dragging.
+                maxX = -1;
+            }
+            else {
+                Insets      insets = splitPane.getInsets();
+
+                if (leftC.isVisible()) {
+                    minX = leftC.getMinimumSize().width;
+                    if (insets != null) {
+                        minX += insets.left;
+                    }
+                }
+                else {
+                    minX = 0;
+                }
+                if (rightC.isVisible()) {
+                    int right = (insets != null) ? insets.right : 0;
+                    maxX = Math.max(0, splitPane.getSize().width -
+                                    (getSize().width + right) -
+                                    rightC.getMinimumSize().width);
+                }
+                else {
+                    int right = (insets != null) ? insets.right : 0;
+                    maxX = Math.max(0, splitPane.getSize().width -
+                                    (getSize().width + right));
+                }
+                if (maxX < minX) minX = maxX = 0;
+            }
+        }
+
+
+        /**
+         * Returns true if the dragging session is valid.
+         */
+        protected boolean isValid() {
+            return (maxX > 0);
+        }
+
+
+        /**
+         * Returns the new position to put the divider at based on
+         * the passed in MouseEvent.
+         */
+        protected int positionForMouseEvent(MouseEvent e) {
+            int newX = (e.getSource() == BasicSplitPaneDivider.this) ?
+                        (e.getX() + getLocation().x) : e.getX();
+
+            newX = Math.min(maxX, Math.max(minX, newX - offset));
+            return newX;
+        }
+
+
+        /**
+         * Returns the x argument, since this is used for horizontal
+         * splits.
+         */
+        protected int getNeededLocation(int x, int y) {
+            int newX;
+
+            newX = Math.min(maxX, Math.max(minX, x - offset));
+            return newX;
+        }
+
+
+        protected void continueDrag(int newX, int newY) {
+            dragDividerTo(getNeededLocation(newX, newY));
+        }
+
+
+        /**
+         * Messages dragDividerTo with the new location for the mouse
+         * event.
+         */
+        protected void continueDrag(MouseEvent e) {
+            dragDividerTo(positionForMouseEvent(e));
+        }
+
+
+        protected void completeDrag(int x, int y) {
+            finishDraggingTo(getNeededLocation(x, y));
+        }
+
+
+        /**
+         * Messages finishDraggingTo with the new location for the mouse
+         * event.
+         */
+        protected void completeDrag(MouseEvent e) {
+            finishDraggingTo(positionForMouseEvent(e));
+        }
+    } // End of BasicSplitPaneDivider.DragController
+
+
+    /**
+     * Handles the events during a dragging session for a
+     * VERTICAL_SPLIT oriented split pane. This continually
+     * messages <code>dragDividerTo</code> and then when done messages
+     * <code>finishDraggingTo</code>. When an instance is created it should be
+     * messaged with <code>isValid</code> to insure that dragging can happen
+     * (dragging won't be allowed if the two views can not be resized).
+     */
+    protected class VerticalDragController extends DragController
+    {
+        /* DragControllers ivars are now in terms of y, not x. */
+        protected VerticalDragController(MouseEvent e) {
+            super(e);
+            JSplitPane splitPane = splitPaneUI.getSplitPane();
+            Component  leftC = splitPane.getLeftComponent();
+            Component  rightC = splitPane.getRightComponent();
+
+            initialX = getLocation().y;
+            if (e.getSource() == BasicSplitPaneDivider.this) {
+                offset = e.getY();
+            }
+            else {
+                offset = e.getY() - initialX;
+            }
+            if (leftC == null || rightC == null || offset < -1 ||
+                offset > getSize().height) {
+                // Don't allow dragging.
+                maxX = -1;
+            }
+            else {
+                Insets     insets = splitPane.getInsets();
+
+                if (leftC.isVisible()) {
+                    minX = leftC.getMinimumSize().height;
+                    if (insets != null) {
+                        minX += insets.top;
+                    }
+                }
+                else {
+                    minX = 0;
+                }
+                if (rightC.isVisible()) {
+                    int    bottom = (insets != null) ? insets.bottom : 0;
+
+                    maxX = Math.max(0, splitPane.getSize().height -
+                                    (getSize().height + bottom) -
+                                    rightC.getMinimumSize().height);
+                }
+                else {
+                    int    bottom = (insets != null) ? insets.bottom : 0;
+
+                    maxX = Math.max(0, splitPane.getSize().height -
+                                    (getSize().height + bottom));
+                }
+                if (maxX < minX) minX = maxX = 0;
+            }
+        }
+
+
+        /**
+         * Returns the y argument, since this is used for vertical
+         * splits.
+         */
+        protected int getNeededLocation(int x, int y) {
+            int newY;
+
+            newY = Math.min(maxX, Math.max(minX, y - offset));
+            return newY;
+        }
+
+
+        /**
+         * Returns the new position to put the divider at based on
+         * the passed in MouseEvent.
+         */
+        protected int positionForMouseEvent(MouseEvent e) {
+            int newY = (e.getSource() == BasicSplitPaneDivider.this) ?
+                        (e.getY() + getLocation().y) : e.getY();
+
+
+            newY = Math.min(maxX, Math.max(minX, newY - offset));
+            return newY;
+        }
+    } // End of BasicSplitPaneDividier.VerticalDragController
+
+
+    /**
+     * Used to layout a <code>BasicSplitPaneDivider</code>.
+     * Layout for the divider
+     * involves appropriately moving the left/right buttons around.
+     *
+     */
+    protected class DividerLayout implements LayoutManager
+    {
+        public void layoutContainer(Container c) {
+            if (leftButton != null && rightButton != null &&
+                c == BasicSplitPaneDivider.this) {
+                if (splitPane.isOneTouchExpandable()) {
+                    Insets insets = getInsets();
+
+                    if (orientation == JSplitPane.VERTICAL_SPLIT) {
+                        int extraX = (insets != null) ? insets.left : 0;
+                        int blockSize = getHeight();
+
+                        if (insets != null) {
+                            blockSize -= (insets.top + insets.bottom);
+                            blockSize = Math.max(blockSize, 0);
+                        }
+                        blockSize = Math.min(blockSize, oneTouchSize);
+
+                        int y = (c.getSize().height - blockSize) / 2;
+
+                        if (!centerOneTouchButtons) {
+                            y = (insets != null) ? insets.top : 0;
+                            extraX = 0;
+                        }
+                        leftButton.setBounds(extraX + oneTouchOffset, y,
+                                             blockSize * 2, blockSize);
+                        rightButton.setBounds(extraX + oneTouchOffset +
+                                              oneTouchSize * 2, y,
+                                              blockSize * 2, blockSize);
+                    }
+                    else {
+                        int extraY = (insets != null) ? insets.top : 0;
+                        int blockSize = getWidth();
+
+                        if (insets != null) {
+                            blockSize -= (insets.left + insets.right);
+                            blockSize = Math.max(blockSize, 0);
+                        }
+                        blockSize = Math.min(blockSize, oneTouchSize);
+
+                        int x = (c.getSize().width - blockSize) / 2;
+
+                        if (!centerOneTouchButtons) {
+                            x = (insets != null) ? insets.left : 0;
+                            extraY = 0;
+                        }
+
+                        leftButton.setBounds(x, extraY + oneTouchOffset,
+                                             blockSize, blockSize * 2);
+                        rightButton.setBounds(x, extraY + oneTouchOffset +
+                                              oneTouchSize * 2, blockSize,
+                                              blockSize * 2);
+                    }
+                }
+                else {
+                    leftButton.setBounds(-5, -5, 1, 1);
+                    rightButton.setBounds(-5, -5, 1, 1);
+                }
+            }
+        }
+
+
+        public Dimension minimumLayoutSize(Container c) {
+            // NOTE: This isn't really used, refer to
+            // BasicSplitPaneDivider.getPreferredSize for the reason.
+            // I leave it in hopes of having this used at some point.
+            if (c != BasicSplitPaneDivider.this || splitPane == null) {
+                return new Dimension(0,0);
+            }
+            Dimension buttonMinSize = null;
+
+            if (splitPane.isOneTouchExpandable() && leftButton != null) {
+                buttonMinSize = leftButton.getMinimumSize();
+            }
+
+            Insets insets = getInsets();
+            int width = getDividerSize();
+            int height = width;
+
+            if (orientation == JSplitPane.VERTICAL_SPLIT) {
+                if (buttonMinSize != null) {
+                    int size = buttonMinSize.height;
+                    if (insets != null) {
+                        size += insets.top + insets.bottom;
+                    }
+                    height = Math.max(height, size);
+                }
+                width = 1;
+            }
+            else {
+                if (buttonMinSize != null) {
+                    int size = buttonMinSize.width;
+                    if (insets != null) {
+                        size += insets.left + insets.right;
+                    }
+                    width = Math.max(width, size);
+                }
+                height = 1;
+            }
+            return new Dimension(width, height);
+        }
+
+
+        public Dimension preferredLayoutSize(Container c) {
+            return minimumLayoutSize(c);
+        }
+
+
+        public void removeLayoutComponent(Component c) {}
+
+        public void addLayoutComponent(String string, Component c) {}
+    } // End of class BasicSplitPaneDivider.DividerLayout
+
+
+    /**
+     * Listeners installed on the one touch expandable buttons.
+     */
+    private class OneTouchActionHandler implements ActionListener {
+        /** True indicates the resize should go the minimum (top or left)
+         * vs false which indicates the resize should go to the maximum.
+         */
+        private boolean toMinimum;
+
+        OneTouchActionHandler(boolean toMinimum) {
+            this.toMinimum = toMinimum;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            Insets  insets = splitPane.getInsets();
+            int     lastLoc = splitPane.getLastDividerLocation();
+            int     currentLoc = splitPaneUI.getDividerLocation(splitPane);
+            int     newLoc;
+
+            // We use the location from the UI directly, as the location the
+            // JSplitPane itself maintains is not necessarly correct.
+            if (toMinimum) {
+                if (orientation == JSplitPane.VERTICAL_SPLIT) {
+                    if (currentLoc >= (splitPane.getHeight() -
+                                       insets.bottom - getHeight())) {
+                        int maxLoc = splitPane.getMaximumDividerLocation();
+                        newLoc = Math.min(lastLoc, maxLoc);
+                        splitPaneUI.setKeepHidden(false);
+                    }
+                    else {
+                        newLoc = insets.top;
+                        splitPaneUI.setKeepHidden(true);
+                    }
+                }
+                else {
+                    if (currentLoc >= (splitPane.getWidth() -
+                                       insets.right - getWidth())) {
+                        int maxLoc = splitPane.getMaximumDividerLocation();
+                        newLoc = Math.min(lastLoc, maxLoc);
+                        splitPaneUI.setKeepHidden(false);
+                    }
+                    else {
+                        newLoc = insets.left;
+                        splitPaneUI.setKeepHidden(true);
+                    }
+                }
+            }
+            else {
+                if (orientation == JSplitPane.VERTICAL_SPLIT) {
+                    if (currentLoc == insets.top) {
+                        int maxLoc = splitPane.getMaximumDividerLocation();
+                        newLoc = Math.min(lastLoc, maxLoc);
+                        splitPaneUI.setKeepHidden(false);
+                    }
+                    else {
+                        newLoc = splitPane.getHeight() - getHeight() -
+                                 insets.top;
+                        splitPaneUI.setKeepHidden(true);
+                    }
+                }
+                else {
+                    if (currentLoc == insets.left) {
+                        int maxLoc = splitPane.getMaximumDividerLocation();
+                        newLoc = Math.min(lastLoc, maxLoc);
+                        splitPaneUI.setKeepHidden(false);
+                    }
+                    else {
+                        newLoc = splitPane.getWidth() - getWidth() -
+                                 insets.left;
+                        splitPaneUI.setKeepHidden(true);
+                    }
+                }
+            }
+            if (currentLoc != newLoc) {
+                splitPane.setDividerLocation(newLoc);
+                // We do this in case the dividers notion of the location
+                // differs from the real location.
+                splitPane.setLastDividerLocation(currentLoc);
+            }
+        }
+    } // End of class BasicSplitPaneDivider.LeftActionListener
+}

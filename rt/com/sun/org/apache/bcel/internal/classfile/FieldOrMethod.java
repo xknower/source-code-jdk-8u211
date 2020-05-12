@@ -1,232 +1,226 @@
-/*     */ package com.sun.org.apache.bcel.internal.classfile;
-/*     */ 
-/*     */ import java.io.DataInputStream;
-/*     */ import java.io.DataOutputStream;
-/*     */ import java.io.IOException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class FieldOrMethod
-/*     */   extends AccessFlags
-/*     */   implements Cloneable, Node
-/*     */ {
-/*     */   protected int name_index;
-/*     */   protected int signature_index;
-/*     */   protected int attributes_count;
-/*     */   protected Attribute[] attributes;
-/*     */   protected ConstantPool constant_pool;
-/*     */   
-/*     */   FieldOrMethod() {}
-/*     */   
-/*     */   protected FieldOrMethod(FieldOrMethod c) {
-/*  82 */     this(c.getAccessFlags(), c.getNameIndex(), c.getSignatureIndex(), c
-/*  83 */         .getAttributes(), c.getConstantPool());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FieldOrMethod(DataInputStream file, ConstantPool constant_pool) throws IOException, ClassFormatException {
-/*  95 */     this(file.readUnsignedShort(), file.readUnsignedShort(), file
-/*  96 */         .readUnsignedShort(), (Attribute[])null, constant_pool);
-/*     */     
-/*  98 */     this.attributes_count = file.readUnsignedShort();
-/*  99 */     this.attributes = new Attribute[this.attributes_count];
-/* 100 */     for (int i = 0; i < this.attributes_count; i++) {
-/* 101 */       this.attributes[i] = Attribute.readAttribute(file, constant_pool);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FieldOrMethod(int access_flags, int name_index, int signature_index, Attribute[] attributes, ConstantPool constant_pool) {
-/* 114 */     this.access_flags = access_flags;
-/* 115 */     this.name_index = name_index;
-/* 116 */     this.signature_index = signature_index;
-/* 117 */     this.constant_pool = constant_pool;
-/*     */     
-/* 119 */     setAttributes(attributes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void dump(DataOutputStream file) throws IOException {
-/* 130 */     file.writeShort(this.access_flags);
-/* 131 */     file.writeShort(this.name_index);
-/* 132 */     file.writeShort(this.signature_index);
-/* 133 */     file.writeShort(this.attributes_count);
-/*     */     
-/* 135 */     for (int i = 0; i < this.attributes_count; i++) {
-/* 136 */       this.attributes[i].dump(file);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Attribute[] getAttributes() {
-/* 142 */     return this.attributes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setAttributes(Attribute[] attributes) {
-/* 148 */     this.attributes = attributes;
-/* 149 */     this.attributes_count = (attributes == null) ? 0 : attributes.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final ConstantPool getConstantPool() {
-/* 155 */     return this.constant_pool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setConstantPool(ConstantPool constant_pool) {
-/* 161 */     this.constant_pool = constant_pool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getNameIndex() {
-/* 167 */     return this.name_index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setNameIndex(int name_index) {
-/* 173 */     this.name_index = name_index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int getSignatureIndex() {
-/* 179 */     return this.signature_index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setSignatureIndex(int signature_index) {
-/* 185 */     this.signature_index = signature_index;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String getName() {
-/* 193 */     ConstantUtf8 c = (ConstantUtf8)this.constant_pool.getConstant(this.name_index, (byte)1);
-/*     */     
-/* 195 */     return c.getBytes();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final String getSignature() {
-/* 203 */     ConstantUtf8 c = (ConstantUtf8)this.constant_pool.getConstant(this.signature_index, (byte)1);
-/*     */     
-/* 205 */     return c.getBytes();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FieldOrMethod copy_(ConstantPool constant_pool) {
-/* 212 */     FieldOrMethod c = null;
-/*     */     
-/*     */     try {
-/* 215 */       c = (FieldOrMethod)clone();
-/* 216 */     } catch (CloneNotSupportedException cloneNotSupportedException) {}
-/*     */     
-/* 218 */     c.constant_pool = constant_pool;
-/* 219 */     c.attributes = new Attribute[this.attributes_count];
-/*     */     
-/* 221 */     for (int i = 0; i < this.attributes_count; i++) {
-/* 222 */       c.attributes[i] = this.attributes[i].copy(constant_pool);
-/*     */     }
-/* 224 */     return c;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\internal\classfile\FieldOrMethod.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.classfile;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+import  com.sun.org.apache.bcel.internal.Constants;
+import java.io.*;
+
+/**
+ * Abstract super class for fields and methods.
+ *
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ */
+public abstract class FieldOrMethod extends AccessFlags implements Cloneable, Node {
+  protected int          name_index;      // Points to field name in constant pool
+  protected int          signature_index; // Points to encoded signature
+  protected int          attributes_count;// No. of attributes
+  protected Attribute[]  attributes;      // Collection of attributes
+  protected ConstantPool constant_pool;
+
+  FieldOrMethod() {}
+
+  /**
+   * Initialize from another object. Note that both objects use the same
+   * references (shallow copy). Use clone() for a physical copy.
+   */
+  protected FieldOrMethod(FieldOrMethod c) {
+    this(c.getAccessFlags(), c.getNameIndex(), c.getSignatureIndex(),
+         c.getAttributes(), c.getConstantPool());
+  }
+
+  /**
+   * Construct object from file stream.
+   * @param file Input stream
+   * @throws IOException
+   * @throws ClassFormatException
+   */
+  protected FieldOrMethod(DataInputStream file, ConstantPool constant_pool)
+    throws IOException, ClassFormatException
+  {
+    this(file.readUnsignedShort(), file.readUnsignedShort(),
+         file.readUnsignedShort(), null, constant_pool);
+
+    attributes_count = file.readUnsignedShort();
+    attributes       = new Attribute[attributes_count];
+    for(int i=0; i < attributes_count; i++)
+      attributes[i] = Attribute.readAttribute(file, constant_pool);
+  }
+
+  /**
+   * @param access_flags Access rights of method
+   * @param name_index Points to field name in constant pool
+   * @param signature_index Points to encoded signature
+   * @param attributes Collection of attributes
+   * @param constant_pool Array of constants
+   */
+  protected FieldOrMethod(int access_flags, int name_index, int signature_index,
+                          Attribute[] attributes, ConstantPool constant_pool)
+  {
+    this.access_flags    = access_flags;
+    this.name_index      = name_index;
+    this.signature_index = signature_index;
+    this.constant_pool   = constant_pool;
+
+    setAttributes(attributes);
+  }
+
+  /**
+   * Dump object to file stream on binary format.
+   *
+   * @param file Output file stream
+   * @throws IOException
+   */
+  public final void dump(DataOutputStream file) throws IOException
+  {
+    file.writeShort(access_flags);
+    file.writeShort(name_index);
+    file.writeShort(signature_index);
+    file.writeShort(attributes_count);
+
+    for(int i=0; i < attributes_count; i++)
+      attributes[i].dump(file);
+  }
+
+  /**
+   * @return Collection of object attributes.
+   */
+  public final Attribute[] getAttributes() { return attributes; }
+
+  /**
+   * @param attributes Collection of object attributes.
+   */
+  public final void setAttributes(Attribute[] attributes) {
+    this.attributes  = attributes;
+    attributes_count = (attributes == null)? 0 : attributes.length;
+  }
+
+  /**
+   * @return Constant pool used by this object.
+   */
+  public final ConstantPool getConstantPool() { return constant_pool; }
+
+  /**
+   * @param constant_pool Constant pool to be used for this object.
+   */
+  public final void setConstantPool(ConstantPool constant_pool) {
+    this.constant_pool = constant_pool;
+  }
+
+  /**
+   * @return Index in constant pool of object's name.
+   */
+  public final int getNameIndex() { return name_index; }
+
+  /**
+   * @param name_index Index in constant pool of object's name.
+   */
+  public final void setNameIndex(int name_index) {
+    this.name_index = name_index;
+  }
+
+  /**
+   * @return Index in constant pool of field signature.
+   */
+  public final int getSignatureIndex() { return signature_index; }
+
+  /**
+   * @param signature_index Index in constant pool of field signature.
+   */
+  public final void setSignatureIndex(int signature_index) {
+    this.signature_index = signature_index;
+  }
+
+  /**
+   * @return Name of object, i.e., method name or field name
+   */
+  public final String getName() {
+    ConstantUtf8  c;
+    c = (ConstantUtf8)constant_pool.getConstant(name_index,
+                                                Constants.CONSTANT_Utf8);
+    return c.getBytes();
+  }
+
+  /**
+   * @return String representation of object's type signature (java style)
+   */
+  public final String getSignature() {
+    ConstantUtf8  c;
+    c = (ConstantUtf8)constant_pool.getConstant(signature_index,
+                                                Constants.CONSTANT_Utf8);
+    return c.getBytes();
+  }
+
+  /**
+   * @return deep copy of this field
+   */
+  protected FieldOrMethod copy_(ConstantPool constant_pool) {
+    FieldOrMethod c = null;
+
+    try {
+      c = (FieldOrMethod)clone();
+    } catch(CloneNotSupportedException e) {}
+
+    c.constant_pool    = constant_pool;
+    c.attributes       = new Attribute[attributes_count];
+
+    for(int i=0; i < attributes_count; i++)
+      c.attributes[i] = attributes[i].copy(constant_pool);
+
+    return c;
+  }
+}

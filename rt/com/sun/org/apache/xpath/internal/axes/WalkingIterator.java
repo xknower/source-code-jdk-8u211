@@ -1,370 +1,365 @@
-/*     */ package com.sun.org.apache.xpath.internal.axes;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.utils.PrefixResolver;
-/*     */ import com.sun.org.apache.xpath.internal.Expression;
-/*     */ import com.sun.org.apache.xpath.internal.ExpressionOwner;
-/*     */ import com.sun.org.apache.xpath.internal.VariableStack;
-/*     */ import com.sun.org.apache.xpath.internal.XPathVisitor;
-/*     */ import com.sun.org.apache.xpath.internal.compiler.Compiler;
-/*     */ import com.sun.org.apache.xpath.internal.compiler.OpMap;
-/*     */ import java.util.Vector;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WalkingIterator
-/*     */   extends LocPathIterator
-/*     */   implements ExpressionOwner
-/*     */ {
-/*     */   static final long serialVersionUID = 9110225941815665906L;
-/*     */   protected AxesWalker m_lastUsedWalker;
-/*     */   protected AxesWalker m_firstWalker;
-/*     */   
-/*     */   WalkingIterator(Compiler compiler, int opPos, int analysis, boolean shouldLoadWalkers) throws TransformerException {
-/*  60 */     super(compiler, opPos, analysis, shouldLoadWalkers);
-/*     */     
-/*  62 */     int firstStepPos = OpMap.getFirstChildPos(opPos);
-/*     */     
-/*  64 */     if (shouldLoadWalkers) {
-/*     */       
-/*  66 */       this.m_firstWalker = WalkerFactory.loadWalkers(this, compiler, firstStepPos, 0);
-/*  67 */       this.m_lastUsedWalker = this.m_firstWalker;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public WalkingIterator(PrefixResolver nscontext) {
-/*  80 */     super(nscontext);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAnalysisBits() {
-/*  90 */     int bits = 0;
-/*  91 */     if (null != this.m_firstWalker) {
-/*     */       
-/*  93 */       AxesWalker walker = this.m_firstWalker;
-/*     */       
-/*  95 */       while (null != walker) {
-/*     */         
-/*  97 */         int bit = walker.getAnalysisBits();
-/*  98 */         bits |= bit;
-/*  99 */         walker = walker.getNextWalker();
-/*     */       } 
-/*     */     } 
-/* 102 */     return bits;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() throws CloneNotSupportedException {
-/* 116 */     WalkingIterator clone = (WalkingIterator)super.clone();
-/*     */ 
-/*     */ 
-/*     */     
-/* 120 */     if (null != this.m_firstWalker)
-/*     */     {
-/* 122 */       clone.m_firstWalker = this.m_firstWalker.cloneDeep(clone, (Vector)null);
-/*     */     }
-/*     */     
-/* 125 */     return clone;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 134 */     super.reset();
-/*     */     
-/* 136 */     if (null != this.m_firstWalker) {
-/*     */       
-/* 138 */       this.m_lastUsedWalker = this.m_firstWalker;
-/*     */       
-/* 140 */       this.m_firstWalker.setRoot(this.m_context);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRoot(int context, Object environment) {
-/* 155 */     super.setRoot(context, environment);
-/*     */     
-/* 157 */     if (null != this.m_firstWalker) {
-/*     */       
-/* 159 */       this.m_firstWalker.setRoot(context);
-/* 160 */       this.m_lastUsedWalker = this.m_firstWalker;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int nextNode() {
-/* 173 */     if (this.m_foundLast) {
-/* 174 */       return -1;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 184 */     if (-1 == this.m_stackFrame)
-/*     */     {
-/* 186 */       return returnNextNode(this.m_firstWalker.nextNode());
-/*     */     }
-/*     */ 
-/*     */     
-/* 190 */     VariableStack vars = this.m_execContext.getVarStack();
-/*     */ 
-/*     */     
-/* 193 */     int savedStart = vars.getStackFrame();
-/*     */     
-/* 195 */     vars.setStackFrame(this.m_stackFrame);
-/*     */     
-/* 197 */     int n = returnNextNode(this.m_firstWalker.nextNode());
-/*     */ 
-/*     */     
-/* 200 */     vars.setStackFrame(savedStart);
-/*     */     
-/* 202 */     return n;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final AxesWalker getFirstWalker() {
-/* 216 */     return this.m_firstWalker;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setFirstWalker(AxesWalker walker) {
-/* 227 */     this.m_firstWalker = walker;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setLastUsedWalker(AxesWalker walker) {
-/* 239 */     this.m_lastUsedWalker = walker;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final AxesWalker getLastUsedWalker() {
-/* 250 */     return this.m_lastUsedWalker;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void detach() {
-/* 262 */     if (this.m_allowDetach) {
-/*     */       
-/* 264 */       AxesWalker walker = this.m_firstWalker;
-/* 265 */       while (null != walker) {
-/*     */         
-/* 267 */         walker.detach();
-/* 268 */         walker = walker.getNextWalker();
-/*     */       } 
-/*     */       
-/* 271 */       this.m_lastUsedWalker = null;
-/*     */ 
-/*     */       
-/* 274 */       super.detach();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void fixupVariables(Vector vars, int globalsSize) {
-/* 290 */     this.m_predicateIndex = -1;
-/*     */     
-/* 292 */     AxesWalker walker = this.m_firstWalker;
-/*     */     
-/* 294 */     while (null != walker) {
-/*     */       
-/* 296 */       walker.fixupVariables(vars, globalsSize);
-/* 297 */       walker = walker.getNextWalker();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void callVisitors(ExpressionOwner owner, XPathVisitor visitor) {
-/* 306 */     if (visitor.visitLocationPath(owner, this))
-/*     */     {
-/* 308 */       if (null != this.m_firstWalker)
-/*     */       {
-/* 310 */         this.m_firstWalker.callVisitors(this, visitor);
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Expression getExpression() {
-/* 329 */     return this.m_firstWalker;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setExpression(Expression exp) {
-/* 337 */     exp.exprSetParent(this);
-/* 338 */     this.m_firstWalker = (AxesWalker)exp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean deepEquals(Expression expr) {
-/* 346 */     if (!super.deepEquals(expr)) {
-/* 347 */       return false;
-/*     */     }
-/* 349 */     AxesWalker walker1 = this.m_firstWalker;
-/* 350 */     AxesWalker walker2 = ((WalkingIterator)expr).m_firstWalker;
-/* 351 */     while (null != walker1 && null != walker2) {
-/*     */       
-/* 353 */       if (!walker1.deepEquals(walker2))
-/* 354 */         return false; 
-/* 355 */       walker1 = walker1.getNextWalker();
-/* 356 */       walker2 = walker2.getNextWalker();
-/*     */     } 
-/*     */     
-/* 359 */     if (null != walker1 || null != walker2) {
-/* 360 */       return false;
-/*     */     }
-/* 362 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\axes\WalkingIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: WalkingIterator.java,v 1.2.4.2 2005/09/14 19:45:19 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.axes;
+
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.utils.PrefixResolver;
+import com.sun.org.apache.xpath.internal.Expression;
+import com.sun.org.apache.xpath.internal.ExpressionOwner;
+import com.sun.org.apache.xpath.internal.VariableStack;
+import com.sun.org.apache.xpath.internal.XPathVisitor;
+import com.sun.org.apache.xpath.internal.compiler.Compiler;
+import com.sun.org.apache.xpath.internal.compiler.OpMap;
+
+/**
+ * Location path iterator that uses Walkers.
+ */
+
+public class WalkingIterator extends LocPathIterator implements ExpressionOwner
+{
+    static final long serialVersionUID = 9110225941815665906L;
+  /**
+   * Create a WalkingIterator iterator, including creation
+   * of step walkers from the opcode list, and call back
+   * into the Compiler to create predicate expressions.
+   *
+   * @param compiler The Compiler which is creating
+   * this expression.
+   * @param opPos The position of this iterator in the
+   * opcode list from the compiler.
+   * @param shouldLoadWalkers True if walkers should be
+   * loaded, or false if this is a derived iterator and
+   * it doesn't wish to load child walkers.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  WalkingIterator(
+          Compiler compiler, int opPos, int analysis, boolean shouldLoadWalkers)
+            throws javax.xml.transform.TransformerException
+  {
+    super(compiler, opPos, analysis, shouldLoadWalkers);
+
+    int firstStepPos = OpMap.getFirstChildPos(opPos);
+
+    if (shouldLoadWalkers)
+    {
+      m_firstWalker = WalkerFactory.loadWalkers(this, compiler, firstStepPos, 0);
+      m_lastUsedWalker = m_firstWalker;
+    }
+  }
+
+  /**
+   * Create a WalkingIterator object.
+   *
+   * @param nscontext The namespace context for this iterator,
+   * should be OK if null.
+   */
+  public WalkingIterator(PrefixResolver nscontext)
+  {
+
+    super(nscontext);
+  }
+
+
+  /**
+   * Get the analysis bits for this walker, as defined in the WalkerFactory.
+   * @return One of WalkerFactory#BIT_DESCENDANT, etc.
+   */
+  public int getAnalysisBits()
+  {
+    int bits = 0;
+    if (null != m_firstWalker)
+    {
+      AxesWalker walker = m_firstWalker;
+
+      while (null != walker)
+      {
+        int bit = walker.getAnalysisBits();
+        bits |= bit;
+        walker = walker.getNextWalker();
+      }
+    }
+    return bits;
+  }
+
+  /**
+   * Get a cloned WalkingIterator that holds the same
+   * position as this iterator.
+   *
+   * @return A clone of this iterator that holds the same node position.
+   *
+   * @throws CloneNotSupportedException
+   */
+  public Object clone() throws CloneNotSupportedException
+  {
+
+    WalkingIterator clone = (WalkingIterator) super.clone();
+
+    //    clone.m_varStackPos = this.m_varStackPos;
+    //    clone.m_varStackContext = this.m_varStackContext;
+    if (null != m_firstWalker)
+    {
+      clone.m_firstWalker = m_firstWalker.cloneDeep(clone, null);
+    }
+
+    return clone;
+  }
+
+  /**
+   * Reset the iterator.
+   */
+  public void reset()
+  {
+
+    super.reset();
+
+    if (null != m_firstWalker)
+    {
+      m_lastUsedWalker = m_firstWalker;
+
+      m_firstWalker.setRoot(m_context);
+    }
+
+  }
+
+  /**
+   * Initialize the context values for this expression
+   * after it is cloned.
+   *
+   * @param context The XPath runtime context for this
+   * transformation.
+   */
+  public void setRoot(int context, Object environment)
+  {
+
+    super.setRoot(context, environment);
+
+    if(null != m_firstWalker)
+    {
+      m_firstWalker.setRoot(context);
+      m_lastUsedWalker = m_firstWalker;
+    }
+  }
+
+  /**
+   *  Returns the next node in the set and advances the position of the
+   * iterator in the set. After a NodeIterator is created, the first call
+   * to nextNode() returns the first node in the set.
+   * @return  The next <code>Node</code> in the set being iterated over, or
+   *   <code>null</code> if there are no more members in that set.
+   */
+  public int nextNode()
+  {
+        if(m_foundLast)
+                return DTM.NULL;
+
+    // If the variable stack position is not -1, we'll have to
+    // set our position in the variable stack, so our variable access
+    // will be correct.  Iterators that are at the top level of the
+    // expression need to reset the variable stack, while iterators
+    // in predicates do not need to, and should not, since their execution
+    // may be much later than top-level iterators.
+    // m_varStackPos is set in setRoot, which is called
+    // from the execute method.
+    if (-1 == m_stackFrame)
+    {
+      return returnNextNode(m_firstWalker.nextNode());
+    }
+    else
+    {
+      VariableStack vars = m_execContext.getVarStack();
+
+      // These three statements need to be combined into one operation.
+      int savedStart = vars.getStackFrame();
+
+      vars.setStackFrame(m_stackFrame);
+
+      int n = returnNextNode(m_firstWalker.nextNode());
+
+      // These two statements need to be combined into one operation.
+      vars.setStackFrame(savedStart);
+
+      return n;
+    }
+  }
+
+
+  /**
+   * Get the head of the walker list.
+   *
+   * @return The head of the walker list, or null
+   * if this iterator does not implement walkers.
+   * @xsl.usage advanced
+   */
+  public final AxesWalker getFirstWalker()
+  {
+    return m_firstWalker;
+  }
+
+  /**
+   * Set the head of the walker list.
+   *
+   * @param walker Should be a valid AxesWalker.
+   * @xsl.usage advanced
+   */
+  public final void setFirstWalker(AxesWalker walker)
+  {
+    m_firstWalker = walker;
+  }
+
+
+  /**
+   * Set the last used walker.
+   *
+   * @param walker The last used walker, or null.
+   * @xsl.usage advanced
+   */
+  public final void setLastUsedWalker(AxesWalker walker)
+  {
+    m_lastUsedWalker = walker;
+  }
+
+  /**
+   * Get the last used walker.
+   *
+   * @return The last used walker, or null.
+   * @xsl.usage advanced
+   */
+  public final AxesWalker getLastUsedWalker()
+  {
+    return m_lastUsedWalker;
+  }
+
+  /**
+   *  Detaches the iterator from the set which it iterated over, releasing
+   * any computational resources and placing the iterator in the INVALID
+   * state. After<code>detach</code> has been invoked, calls to
+   * <code>nextNode</code> or<code>previousNode</code> will raise the
+   * exception INVALID_STATE_ERR.
+   */
+  public void detach()
+  {
+    if(m_allowDetach)
+    {
+                AxesWalker walker = m_firstWalker;
+            while (null != walker)
+            {
+              walker.detach();
+              walker = walker.getNextWalker();
+            }
+
+            m_lastUsedWalker = null;
+
+            // Always call the superclass detach last!
+            super.detach();
+    }
+  }
+
+  /**
+   * This function is used to fixup variables from QNames to stack frame
+   * indexes at stylesheet build time.
+   * @param vars List of QNames that correspond to variables.  This list
+   * should be searched backwards for the first qualified name that
+   * corresponds to the variable reference qname.  The position of the
+   * QName in the vector from the start of the vector will be its position
+   * in the stack frame (but variables above the globalsTop value will need
+   * to be offset to the current stack frame).
+   */
+  public void fixupVariables(java.util.Vector vars, int globalsSize)
+  {
+    m_predicateIndex = -1;
+
+    AxesWalker walker = m_firstWalker;
+
+    while (null != walker)
+    {
+      walker.fixupVariables(vars, globalsSize);
+      walker = walker.getNextWalker();
+    }
+  }
+
+  /**
+   * @see com.sun.org.apache.xpath.internal.XPathVisitable#callVisitors(ExpressionOwner, XPathVisitor)
+   */
+  public void callVisitors(ExpressionOwner owner, XPathVisitor visitor)
+  {
+                if(visitor.visitLocationPath(owner, this))
+                {
+                        if(null != m_firstWalker)
+                        {
+                                m_firstWalker.callVisitors(this, visitor);
+                        }
+                }
+  }
+
+
+  /** The last used step walker in the walker list.
+   *  @serial */
+  protected AxesWalker m_lastUsedWalker;
+
+  /** The head of the step walker list.
+   *  @serial */
+  protected AxesWalker m_firstWalker;
+
+  /**
+   * @see ExpressionOwner#getExpression()
+   */
+  public Expression getExpression()
+  {
+    return m_firstWalker;
+  }
+
+  /**
+   * @see ExpressionOwner#setExpression(Expression)
+   */
+  public void setExpression(Expression exp)
+  {
+        exp.exprSetParent(this);
+        m_firstWalker = (AxesWalker)exp;
+  }
+
+    /**
+     * @see Expression#deepEquals(Expression)
+     */
+    public boolean deepEquals(Expression expr)
+    {
+      if (!super.deepEquals(expr))
+                return false;
+
+      AxesWalker walker1 = m_firstWalker;
+      AxesWalker walker2 = ((WalkingIterator)expr).m_firstWalker;
+      while ((null != walker1) && (null != walker2))
+      {
+        if(!walker1.deepEquals(walker2))
+                return false;
+        walker1 = walker1.getNextWalker();
+        walker2 = walker2.getNextWalker();
+      }
+
+      if((null != walker1) || (null != walker2))
+        return false;
+
+      return true;
+    }
+
+}

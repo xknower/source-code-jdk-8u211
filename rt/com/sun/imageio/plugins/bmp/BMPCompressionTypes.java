@@ -1,53 +1,47 @@
-/*    */ package com.sun.imageio.plugins.bmp;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class BMPCompressionTypes
-/*    */ {
-/* 30 */   private static final String[] compressionTypeNames = new String[] { "BI_RGB", "BI_RLE8", "BI_RLE4", "BI_BITFIELDS", "BI_JPEG", "BI_PNG" };
-/*    */ 
-/*    */   
-/*    */   static int getType(String paramString) {
-/* 34 */     for (byte b = 0; b < compressionTypeNames.length; b++) {
-/* 35 */       if (compressionTypeNames[b].equals(paramString))
-/* 36 */         return b; 
-/* 37 */     }  return 0;
-/*    */   }
-/*    */   
-/*    */   static String getName(int paramInt) {
-/* 41 */     return compressionTypeNames[paramInt];
-/*    */   }
-/*    */   
-/*    */   public static String[] getCompressionTypes() {
-/* 45 */     return (String[])compressionTypeNames.clone();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\bmp\BMPCompressionTypes.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.bmp;
+
+public class BMPCompressionTypes {
+
+    private static final String[] compressionTypeNames =
+        {"BI_RGB", "BI_RLE8", "BI_RLE4", "BI_BITFIELDS", "BI_JPEG", "BI_PNG"};
+
+    static int getType(String typeString) {
+        for (int i = 0; i < compressionTypeNames.length; i++)
+            if (compressionTypeNames[i].equals(typeString))
+                return i;
+        return 0;
+    }
+
+    static String getName(int type) {
+        return compressionTypeNames[type];
+    }
+
+    public static String[] getCompressionTypes() {
+        return compressionTypeNames.clone();
+    }
+}

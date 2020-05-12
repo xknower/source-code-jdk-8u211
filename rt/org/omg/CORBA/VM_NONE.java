@@ -1,11 +1,44 @@
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package org.omg.CORBA;
 
-public interface VM_NONE {
-  public static final short value = 0;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\VM_NONE.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Defines the code used to represent the one of the values of a value type
+ * in a typecode.
+ *
+ * @author OMG
+ * @see org.omg.CORBA.TypeCode
+ * @since   JDK1.2
  */
+
+
+public interface VM_NONE {
+    /**
+     * The value representing the value type in a typecode as per
+     * CORBA 2.3 spec.
+     */
+    final short value = (short) (0L);
+}

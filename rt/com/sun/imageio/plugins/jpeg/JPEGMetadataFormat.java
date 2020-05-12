@@ -1,162 +1,157 @@
-/*     */ package com.sun.imageio.plugins.jpeg;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import javax.imageio.ImageTypeSpecifier;
-/*     */ import javax.imageio.metadata.IIOMetadataFormatImpl;
-/*     */ import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
-/*     */ import javax.imageio.plugins.jpeg.JPEGQTable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class JPEGMetadataFormat
-/*     */   extends IIOMetadataFormatImpl
-/*     */ {
-/*     */   private static final int MAX_JPEG_DATA_SIZE = 65533;
-/*  41 */   String resourceBaseName = getClass().getName() + "Resources";
-/*     */   
-/*     */   JPEGMetadataFormat(String paramString, int paramInt) {
-/*  44 */     super(paramString, paramInt);
-/*  45 */     setResourceBaseName(this.resourceBaseName);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void addStreamElements(String paramString) {
-/*  50 */     addElement("dqt", paramString, 1, 4);
-/*     */     
-/*  52 */     addElement("dqtable", "dqt", 0);
-/*     */     
-/*  54 */     addAttribute("dqtable", "elementPrecision", 2, false, "0");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  59 */     ArrayList<String> arrayList1 = new ArrayList();
-/*  60 */     arrayList1.add("0");
-/*  61 */     arrayList1.add("1");
-/*  62 */     arrayList1.add("2");
-/*  63 */     arrayList1.add("3");
-/*  64 */     addAttribute("dqtable", "qtableId", 2, true, (String)null, arrayList1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  70 */     addObjectValue("dqtable", JPEGQTable.class, true, (JPEGQTable)null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  75 */     addElement("dht", paramString, 1, 4);
-/*  76 */     addElement("dhtable", "dht", 0);
-/*  77 */     ArrayList<String> arrayList2 = new ArrayList();
-/*  78 */     arrayList2.add("0");
-/*  79 */     arrayList2.add("1");
-/*  80 */     addAttribute("dhtable", "class", 2, true, (String)null, arrayList2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  86 */     addAttribute("dhtable", "htableId", 2, true, (String)null, arrayList1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  92 */     addObjectValue("dhtable", JPEGHuffmanTable.class, true, (JPEGHuffmanTable)null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  98 */     addElement("dri", paramString, 0);
-/*  99 */     addAttribute("dri", "interval", 2, true, null, "0", "65535", true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 107 */     addElement("com", paramString, 0);
-/* 108 */     addAttribute("com", "comment", 0, false, null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 113 */     addObjectValue("com", byte[].class, 1, 65533);
-/*     */     
-/* 115 */     addElement("unknown", paramString, 0);
-/* 116 */     addAttribute("unknown", "MarkerTag", 2, true, null, "0", "255", true, true);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 123 */     addObjectValue("unknown", byte[].class, 1, 65533);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean canNodeAppear(String paramString, ImageTypeSpecifier paramImageTypeSpecifier) {
-/* 129 */     if (isInSubtree(paramString, getRootName())) {
-/* 130 */       return true;
-/*     */     }
-/* 132 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean isInSubtree(String paramString1, String paramString2) {
-/* 145 */     if (paramString1.equals(paramString2)) {
-/* 146 */       return true;
-/*     */     }
-/* 148 */     String[] arrayOfString = getChildNames(paramString1);
-/* 149 */     for (byte b = 0; b < arrayOfString.length; b++) {
-/* 150 */       if (isInSubtree(paramString1, arrayOfString[b])) {
-/* 151 */         return true;
-/*     */       }
-/*     */     } 
-/* 154 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\JPEGMetadataFormat.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.plugins.jpeg.JPEGQTable;
+import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
+
+import java.util.List;
+import java.util.ArrayList;
+
+abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
+    // 2-byte length reduces max to 65533
+    private static final int MAX_JPEG_DATA_SIZE = 65533;
+
+    String resourceBaseName = this.getClass().getName() + "Resources";
+
+    JPEGMetadataFormat(String formatName, int childPolicy) {
+        super(formatName, childPolicy);
+        setResourceBaseName(resourceBaseName);
+    }
+
+    // Format shared between image and stream formats
+    void addStreamElements(String parentName) {
+        addElement("dqt", parentName, 1, 4);
+
+        addElement("dqtable", "dqt", CHILD_POLICY_EMPTY);
+
+        addAttribute("dqtable",
+                     "elementPrecision",
+                     DATATYPE_INTEGER,
+                     false,
+                     "0");
+        List tabids = new ArrayList();
+        tabids.add("0");
+        tabids.add("1");
+        tabids.add("2");
+        tabids.add("3");
+        addAttribute("dqtable",
+                     "qtableId",
+                     DATATYPE_INTEGER,
+                     true,
+                     null,
+                     tabids);
+        addObjectValue("dqtable",
+                       JPEGQTable.class,
+                       true,
+                       null);
+
+        addElement("dht", parentName, 1, 4);
+        addElement("dhtable", "dht", CHILD_POLICY_EMPTY);
+        List classes = new ArrayList();
+        classes.add("0");
+        classes.add("1");
+        addAttribute("dhtable",
+                     "class",
+                     DATATYPE_INTEGER,
+                     true,
+                     null,
+                     classes);
+        addAttribute("dhtable",
+                     "htableId",
+                     DATATYPE_INTEGER,
+                     true,
+                     null,
+                     tabids);
+        addObjectValue("dhtable",
+                       JPEGHuffmanTable.class,
+                       true,
+                       null);
+
+
+        addElement("dri", parentName, CHILD_POLICY_EMPTY);
+        addAttribute("dri",
+                     "interval",
+                     DATATYPE_INTEGER,
+                     true,
+                     null,
+                     "0", "65535",
+                     true, true);
+
+        addElement("com", parentName, CHILD_POLICY_EMPTY);
+        addAttribute("com",
+                     "comment",
+                     DATATYPE_STRING,
+                     false,
+                     null);
+        addObjectValue("com", byte[].class, 1, MAX_JPEG_DATA_SIZE);
+
+        addElement("unknown", parentName, CHILD_POLICY_EMPTY);
+        addAttribute("unknown",
+                     "MarkerTag",
+                     DATATYPE_INTEGER,
+                     true,
+                     null,
+                     "0", "255",
+                     true, true);
+        addObjectValue("unknown", byte[].class, 1, MAX_JPEG_DATA_SIZE);
+    }
+
+    public boolean canNodeAppear(String elementName,
+                                 ImageTypeSpecifier imageType) {
+        // Just check if it appears in the format
+        if (isInSubtree(elementName, getRootName())){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns <code>true</code> if the named element occurs in the
+     * subtree of the format starting with the node named by
+     * <code>subtreeName</code>, including the node
+     * itself.  <code>subtreeName</code> may be any node in
+     * the format.  If it is not, an
+     * <code>IllegalArgumentException</code> is thrown.
+     */
+    protected boolean isInSubtree(String elementName,
+                                  String subtreeName) {
+        if (elementName.equals(subtreeName)) {
+            return true;
+        }
+        String [] children = getChildNames(elementName);
+        for (int i=0; i < children.length; i++) {
+            if (isInSubtree(elementName, children[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+}

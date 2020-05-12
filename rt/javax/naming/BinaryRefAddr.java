@@ -1,184 +1,183 @@
-/*     */ package javax.naming;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BinaryRefAddr
-/*     */   extends RefAddr
-/*     */ {
-/*  70 */   private byte[] buf = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID = -3415254970957330361L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BinaryRefAddr(String paramString, byte[] paramArrayOfbyte) {
-/*  81 */     this(paramString, paramArrayOfbyte, 0, paramArrayOfbyte.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BinaryRefAddr(String paramString, byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/*  97 */     super(paramString);
-/*  98 */     this.buf = new byte[paramInt2];
-/*  99 */     System.arraycopy(paramArrayOfbyte, paramInt1, this.buf, 0, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getContent() {
-/* 112 */     return this.buf;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 124 */     if (paramObject != null && paramObject instanceof BinaryRefAddr) {
-/* 125 */       BinaryRefAddr binaryRefAddr = (BinaryRefAddr)paramObject;
-/* 126 */       if (this.addrType.compareTo(binaryRefAddr.addrType) == 0) {
-/* 127 */         if (this.buf == null && binaryRefAddr.buf == null)
-/* 128 */           return true; 
-/* 129 */         if (this.buf == null || binaryRefAddr.buf == null || this.buf.length != binaryRefAddr.buf.length)
-/*     */         {
-/* 131 */           return false; } 
-/* 132 */         for (byte b = 0; b < this.buf.length; b++) {
-/* 133 */           if (this.buf[b] != binaryRefAddr.buf[b])
-/* 134 */             return false; 
-/* 135 */         }  return true;
-/*     */       } 
-/*     */     } 
-/* 138 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 151 */     int i = this.addrType.hashCode();
-/* 152 */     for (byte b = 0; b < this.buf.length; b++) {
-/* 153 */       i += this.buf[b];
-/*     */     }
-/* 155 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 168 */     StringBuffer stringBuffer = new StringBuffer("Address Type: " + this.addrType + "\n");
-/*     */     
-/* 170 */     stringBuffer.append("AddressContents: ");
-/* 171 */     for (byte b = 0; b < this.buf.length && b < 32; b++) {
-/* 172 */       stringBuffer.append(Integer.toHexString(this.buf[b]) + " ");
-/*     */     }
-/* 174 */     if (this.buf.length >= 32)
-/* 175 */       stringBuffer.append(" ...\n"); 
-/* 176 */     return stringBuffer.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\naming\BinaryRefAddr.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.naming;
+
+/**
+  * This class represents the binary form of the address of
+  * a communications end-point.
+  *<p>
+  * A BinaryRefAddr consists of a type that describes the communication mechanism
+  * and an opaque buffer containing the address description
+  * specific to that communication mechanism. The format and interpretation of
+  * the address type and the contents of the opaque buffer are based on
+  * the agreement of three parties: the client that uses the address,
+  * the object/server that can be reached using the address,
+  * and the administrator or program that creates the address.
+  *<p>
+  * An example of a binary reference address is an BER X.500 presentation address.
+  * Another example of a binary reference address is a serialized form of
+  * a service's object handle.
+  *<p>
+  * A binary reference address is immutable in the sense that its fields
+  * once created, cannot be replaced. However, it is possible to access
+  * the byte array used to hold the opaque buffer. Programs are strongly
+  * recommended against changing this byte array. Changes to this
+  * byte array need to be explicitly synchronized.
+  *
+  * @author Rosanna Lee
+  * @author Scott Seligman
+  *
+  * @see RefAddr
+  * @see StringRefAddr
+  * @since 1.3
+  */
+
+  /*
+  * The serialized form of a BinaryRefAddr object consists of its type
+  * name String and a byte array containing its "contents".
+  */
+
+public class BinaryRefAddr extends RefAddr {
+    /**
+     * Contains the bytes of the address.
+     * This field is initialized by the constructor and returned
+     * using getAddressBytes() and getAddressContents().
+     * @serial
+     */
+    private byte[] buf = null;
+
+    /**
+      * Constructs a new instance of BinaryRefAddr using its address type and a byte
+      * array for contents.
+      *
+      * @param addrType A non-null string describing the type of the address.
+      * @param src      The non-null contents of the address as a byte array.
+      *                 The contents of src is copied into the new BinaryRefAddr.
+      */
+    public BinaryRefAddr(String addrType, byte[] src) {
+        this(addrType, src, 0, src.length);
+    }
+
+    /**
+      * Constructs a new instance of BinaryRefAddr using its address type and
+      * a region of a byte array for contents.
+      *
+      * @param addrType A non-null string describing the type of the address.
+      * @param src      The non-null contents of the address as a byte array.
+      *                 The contents of src is copied into the new BinaryRefAddr.
+      * @param offset   The starting index in src to get the bytes.
+      *                 {@code 0 <= offset <= src.length}.
+      * @param count    The number of bytes to extract from src.
+      *                 {@code 0 <= count <= src.length-offset}.
+      */
+    public BinaryRefAddr(String addrType, byte[] src, int offset, int count) {
+        super(addrType);
+        buf = new byte[count];
+        System.arraycopy(src, offset, buf, 0, count);
+    }
+
+    /**
+      * Retrieves the contents of this address as an Object.
+      * The result is a byte array.
+      * Changes to this array will affect this BinaryRefAddr's contents.
+      * Programs are recommended against changing this array's contents
+      * and to lock the buffer if they need to change it.
+      *
+      * @return The non-null buffer containing this address's contents.
+      */
+    public Object getContent() {
+        return buf;
+    }
+
+
+    /**
+      * Determines whether obj is equal to this address.  It is equal if
+      * it contains the same address type and their contents are byte-wise
+      * equivalent.
+      * @param obj      The possibly null object to check.
+      * @return true if the object is equal; false otherwise.
+      */
+    public boolean equals(Object obj) {
+        if ((obj != null) && (obj instanceof BinaryRefAddr)) {
+            BinaryRefAddr target = (BinaryRefAddr)obj;
+            if (addrType.compareTo(target.addrType) == 0) {
+                if (buf == null && target.buf == null)
+                    return true;
+                if (buf == null || target.buf == null ||
+                    buf.length != target.buf.length)
+                    return false;
+                for (int i = 0; i < buf.length; i++)
+                    if (buf[i] != target.buf[i])
+                        return false;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+      * Computes the hash code of this address using its address type and contents.
+      * Two BinaryRefAddrs have the same hash code if they have
+      * the same address type and the same contents.
+      * It is also possible for different BinaryRefAddrs to have
+      * the same hash code.
+      *
+      * @return The hash code of this address as an int.
+      */
+    public int hashCode() {
+        int hash = addrType.hashCode();
+        for (int i = 0; i < buf.length; i++) {
+            hash += buf[i];     // %%% improve later
+        }
+        return hash;
+    }
+
+    /**
+      * Generates the string representation of this address.
+      * The string consists of the address's type and contents with labels.
+      * The first 32 bytes of contents are displayed (in hexadecimal).
+      * If there are more than 32 bytes, "..." is used to indicate more.
+      * This string is meant to used for debugging purposes and not
+      * meant to be interpreted programmatically.
+      * @return The non-null string representation of this address.
+      */
+    public String toString(){
+        StringBuffer str = new StringBuffer("Address Type: " + addrType + "\n");
+
+        str.append("AddressContents: ");
+        for (int i = 0; i<buf.length && i < 32; i++) {
+            str.append(Integer.toHexString(buf[i]) +" ");
+        }
+        if (buf.length >= 32)
+            str.append(" ...\n");
+        return (str.toString());
+    }
+
+    /**
+     * Use serialVersionUID from JNDI 1.1.1 for interoperability
+     */
+    private static final long serialVersionUID = -3415254970957330361L;
+}

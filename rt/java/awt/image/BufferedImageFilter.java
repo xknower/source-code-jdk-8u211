@@ -1,420 +1,417 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ import java.awt.Point;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BufferedImageFilter
-/*     */   extends ImageFilter
-/*     */   implements Cloneable
-/*     */ {
-/*     */   BufferedImageOp bufferedImageOp;
-/*     */   ColorModel model;
-/*     */   int width;
-/*     */   int height;
-/*     */   byte[] bytePixels;
-/*     */   int[] intPixels;
-/*     */   
-/*     */   public BufferedImageFilter(BufferedImageOp paramBufferedImageOp) {
-/*  63 */     if (paramBufferedImageOp == null) {
-/*  64 */       throw new NullPointerException("Operation cannot be null");
-/*     */     }
-/*  66 */     this.bufferedImageOp = paramBufferedImageOp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedImageOp getBufferedImageOp() {
-/*  74 */     return this.bufferedImageOp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDimensions(int paramInt1, int paramInt2) {
-/*  96 */     if (paramInt1 <= 0 || paramInt2 <= 0) {
-/*  97 */       imageComplete(3);
-/*     */       return;
-/*     */     } 
-/* 100 */     this.width = paramInt1;
-/* 101 */     this.height = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setColorModel(ColorModel paramColorModel) {
-/* 125 */     this.model = paramColorModel;
-/*     */   }
-/*     */   
-/*     */   private void convertToRGB() {
-/* 129 */     int i = this.width * this.height;
-/* 130 */     int[] arrayOfInt = new int[i];
-/* 131 */     if (this.bytePixels != null) {
-/* 132 */       for (byte b = 0; b < i; b++) {
-/* 133 */         arrayOfInt[b] = this.model.getRGB(this.bytePixels[b] & 0xFF);
-/*     */       }
-/* 135 */     } else if (this.intPixels != null) {
-/* 136 */       for (byte b = 0; b < i; b++) {
-/* 137 */         arrayOfInt[b] = this.model.getRGB(this.intPixels[b]);
-/*     */       }
-/*     */     } 
-/* 140 */     this.bytePixels = null;
-/* 141 */     this.intPixels = arrayOfInt;
-/* 142 */     this.model = ColorModel.getRGBdefault();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, byte[] paramArrayOfbyte, int paramInt5, int paramInt6) {
-/* 165 */     if (paramInt3 < 0 || paramInt4 < 0) {
-/* 166 */       throw new IllegalArgumentException("Width (" + paramInt3 + ") and height (" + paramInt4 + ") must be > 0");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 171 */     if (paramInt3 == 0 || paramInt4 == 0) {
-/*     */       return;
-/*     */     }
-/* 174 */     if (paramInt2 < 0) {
-/* 175 */       int j = -paramInt2;
-/* 176 */       if (j >= paramInt4) {
-/*     */         return;
-/*     */       }
-/* 179 */       paramInt5 += paramInt6 * j;
-/* 180 */       paramInt2 += j;
-/* 181 */       paramInt4 -= j;
-/*     */     } 
-/* 183 */     if (paramInt2 + paramInt4 > this.height) {
-/* 184 */       paramInt4 = this.height - paramInt2;
-/* 185 */       if (paramInt4 <= 0) {
-/*     */         return;
-/*     */       }
-/*     */     } 
-/* 189 */     if (paramInt1 < 0) {
-/* 190 */       int j = -paramInt1;
-/* 191 */       if (j >= paramInt3) {
-/*     */         return;
-/*     */       }
-/* 194 */       paramInt5 += j;
-/* 195 */       paramInt1 += j;
-/* 196 */       paramInt3 -= j;
-/*     */     } 
-/* 198 */     if (paramInt1 + paramInt3 > this.width) {
-/* 199 */       paramInt3 = this.width - paramInt1;
-/* 200 */       if (paramInt3 <= 0) {
-/*     */         return;
-/*     */       }
-/*     */     } 
-/* 204 */     int i = paramInt2 * this.width + paramInt1;
-/* 205 */     if (this.intPixels == null) {
-/* 206 */       if (this.bytePixels == null) {
-/* 207 */         this.bytePixels = new byte[this.width * this.height];
-/* 208 */         this.model = paramColorModel;
-/* 209 */       } else if (this.model != paramColorModel) {
-/* 210 */         convertToRGB();
-/*     */       } 
-/* 212 */       if (this.bytePixels != null) {
-/* 213 */         for (int j = paramInt4; j > 0; j--) {
-/* 214 */           System.arraycopy(paramArrayOfbyte, paramInt5, this.bytePixels, i, paramInt3);
-/* 215 */           paramInt5 += paramInt6;
-/* 216 */           i += this.width;
-/*     */         } 
-/*     */       }
-/*     */     } 
-/* 220 */     if (this.intPixels != null) {
-/* 221 */       int j = this.width - paramInt3;
-/* 222 */       int k = paramInt6 - paramInt3;
-/* 223 */       for (int m = paramInt4; m > 0; m--) {
-/* 224 */         for (int n = paramInt3; n > 0; n--) {
-/* 225 */           this.intPixels[i++] = paramColorModel.getRGB(paramArrayOfbyte[paramInt5++] & 0xFF);
-/*     */         }
-/* 227 */         paramInt5 += k;
-/* 228 */         i += j;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, int[] paramArrayOfint, int paramInt5, int paramInt6) {
-/* 252 */     if (paramInt3 < 0 || paramInt4 < 0) {
-/* 253 */       throw new IllegalArgumentException("Width (" + paramInt3 + ") and height (" + paramInt4 + ") must be > 0");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 258 */     if (paramInt3 == 0 || paramInt4 == 0) {
-/*     */       return;
-/*     */     }
-/* 261 */     if (paramInt2 < 0) {
-/* 262 */       int j = -paramInt2;
-/* 263 */       if (j >= paramInt4) {
-/*     */         return;
-/*     */       }
-/* 266 */       paramInt5 += paramInt6 * j;
-/* 267 */       paramInt2 += j;
-/* 268 */       paramInt4 -= j;
-/*     */     } 
-/* 270 */     if (paramInt2 + paramInt4 > this.height) {
-/* 271 */       paramInt4 = this.height - paramInt2;
-/* 272 */       if (paramInt4 <= 0) {
-/*     */         return;
-/*     */       }
-/*     */     } 
-/* 276 */     if (paramInt1 < 0) {
-/* 277 */       int j = -paramInt1;
-/* 278 */       if (j >= paramInt3) {
-/*     */         return;
-/*     */       }
-/* 281 */       paramInt5 += j;
-/* 282 */       paramInt1 += j;
-/* 283 */       paramInt3 -= j;
-/*     */     } 
-/* 285 */     if (paramInt1 + paramInt3 > this.width) {
-/* 286 */       paramInt3 = this.width - paramInt1;
-/* 287 */       if (paramInt3 <= 0) {
-/*     */         return;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 292 */     if (this.intPixels == null) {
-/* 293 */       if (this.bytePixels == null) {
-/* 294 */         this.intPixels = new int[this.width * this.height];
-/* 295 */         this.model = paramColorModel;
-/*     */       } else {
-/* 297 */         convertToRGB();
-/*     */       } 
-/*     */     }
-/* 300 */     int i = paramInt2 * this.width + paramInt1;
-/* 301 */     if (this.model == paramColorModel) {
-/* 302 */       for (int j = paramInt4; j > 0; j--) {
-/* 303 */         System.arraycopy(paramArrayOfint, paramInt5, this.intPixels, i, paramInt3);
-/* 304 */         paramInt5 += paramInt6;
-/* 305 */         i += this.width;
-/*     */       } 
-/*     */     } else {
-/* 308 */       if (this.model != ColorModel.getRGBdefault()) {
-/* 309 */         convertToRGB();
-/*     */       }
-/* 311 */       int j = this.width - paramInt3;
-/* 312 */       int k = paramInt6 - paramInt3;
-/* 313 */       for (int m = paramInt4; m > 0; m--) {
-/* 314 */         for (int n = paramInt3; n > 0; n--) {
-/* 315 */           this.intPixels[i++] = paramColorModel.getRGB(paramArrayOfint[paramInt5++]);
-/*     */         }
-/* 317 */         paramInt5 += k;
-/* 318 */         i += j;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void imageComplete(int paramInt) {
-/*     */     WritableRaster writableRaster1;
-/*     */     BufferedImage bufferedImage;
-/*     */     WritableRaster writableRaster2;
-/*     */     ColorModel colorModel;
-/*     */     int i, j;
-/* 341 */     switch (paramInt) {
-/*     */       
-/*     */       case 1:
-/*     */       case 4:
-/* 345 */         this.model = null;
-/* 346 */         this.width = -1;
-/* 347 */         this.height = -1;
-/* 348 */         this.intPixels = null;
-/* 349 */         this.bytePixels = null;
-/*     */         break;
-/*     */       
-/*     */       case 2:
-/*     */       case 3:
-/* 354 */         if (this.width <= 0 || this.height <= 0)
-/* 355 */           break;  if (this.model instanceof DirectColorModel) {
-/* 356 */           if (this.intPixels == null)
-/* 357 */             break;  writableRaster1 = createDCMraster();
-/*     */         }
-/* 359 */         else if (this.model instanceof IndexColorModel) {
-/* 360 */           int[] arrayOfInt = { 0 };
-/* 361 */           if (this.bytePixels == null)
-/* 362 */             break;  DataBufferByte dataBufferByte = new DataBufferByte(this.bytePixels, this.width * this.height);
-/*     */           
-/* 364 */           writableRaster1 = Raster.createInterleavedRaster(dataBufferByte, this.width, this.height, this.width, 1, arrayOfInt, (Point)null);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 368 */           convertToRGB();
-/* 369 */           if (this.intPixels == null)
-/* 370 */             break;  writableRaster1 = createDCMraster();
-/*     */         } 
-/*     */         
-/* 373 */         bufferedImage = new BufferedImage(this.model, writableRaster1, this.model.isAlphaPremultiplied(), null);
-/*     */         
-/* 375 */         bufferedImage = this.bufferedImageOp.filter(bufferedImage, null);
-/* 376 */         writableRaster2 = bufferedImage.getRaster();
-/* 377 */         colorModel = bufferedImage.getColorModel();
-/* 378 */         i = writableRaster2.getWidth();
-/* 379 */         j = writableRaster2.getHeight();
-/* 380 */         this.consumer.setDimensions(i, j);
-/* 381 */         this.consumer.setColorModel(colorModel);
-/* 382 */         if (colorModel instanceof DirectColorModel) {
-/* 383 */           DataBufferInt dataBufferInt = (DataBufferInt)writableRaster2.getDataBuffer();
-/* 384 */           this.consumer.setPixels(0, 0, i, j, colorModel, dataBufferInt
-/* 385 */               .getData(), 0, i); break;
-/*     */         } 
-/* 387 */         if (colorModel instanceof IndexColorModel) {
-/* 388 */           DataBufferByte dataBufferByte = (DataBufferByte)writableRaster2.getDataBuffer();
-/* 389 */           this.consumer.setPixels(0, 0, i, j, colorModel, dataBufferByte
-/* 390 */               .getData(), 0, i);
-/*     */           break;
-/*     */         } 
-/* 393 */         throw new InternalError("Unknown color model " + colorModel);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 397 */     this.consumer.imageComplete(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private final WritableRaster createDCMraster() {
-/* 402 */     DirectColorModel directColorModel = (DirectColorModel)this.model;
-/* 403 */     boolean bool = this.model.hasAlpha();
-/* 404 */     int[] arrayOfInt = new int[3 + (bool ? 1 : 0)];
-/* 405 */     arrayOfInt[0] = directColorModel.getRedMask();
-/* 406 */     arrayOfInt[1] = directColorModel.getGreenMask();
-/* 407 */     arrayOfInt[2] = directColorModel.getBlueMask();
-/* 408 */     if (bool) {
-/* 409 */       arrayOfInt[3] = directColorModel.getAlphaMask();
-/*     */     }
-/* 411 */     DataBufferInt dataBufferInt = new DataBufferInt(this.intPixels, this.width * this.height);
-/* 412 */     return Raster.createPackedRaster(dataBufferInt, this.width, this.height, this.width, arrayOfInt, (Point)null);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\BufferedImageFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+import java.util.Hashtable;
+import java.awt.image.ImageConsumer;
+import java.awt.image.ImageFilter;
+
+/**
+ * The <code>BufferedImageFilter</code> class subclasses an
+ * <code>ImageFilter</code> to provide a simple means of
+ * using a single-source/single-destination image operator
+ * ({@link BufferedImageOp}) to filter a <code>BufferedImage</code>
+ * in the Image Producer/Consumer/Observer
+ * paradigm. Examples of these image operators are: {@link ConvolveOp},
+ * {@link AffineTransformOp} and {@link LookupOp}.
+ *
+ * @see ImageFilter
+ * @see BufferedImage
+ * @see BufferedImageOp
+ */
+
+public class BufferedImageFilter extends ImageFilter implements Cloneable {
+    BufferedImageOp bufferedImageOp;
+    ColorModel model;
+    int width;
+    int height;
+    byte[] bytePixels;
+    int[] intPixels;
+
+    /**
+     * Constructs a <code>BufferedImageFilter</code> with the
+     * specified single-source/single-destination operator.
+     * @param op the specified <code>BufferedImageOp</code> to
+     *           use to filter a <code>BufferedImage</code>
+     * @throws NullPointerException if op is null
+     */
+    public BufferedImageFilter (BufferedImageOp op) {
+        super();
+        if (op == null) {
+            throw new NullPointerException("Operation cannot be null");
+        }
+        bufferedImageOp = op;
+    }
+
+    /**
+     * Returns the <code>BufferedImageOp</code>.
+     * @return the operator of this <code>BufferedImageFilter</code>.
+     */
+    public BufferedImageOp getBufferedImageOp() {
+        return bufferedImageOp;
+    }
+
+    /**
+     * Filters the information provided in the
+     * {@link ImageConsumer#setDimensions(int, int) setDimensions } method
+     * of the {@link ImageConsumer} interface.
+     * <p>
+     * Note: This method is intended to be called by the
+     * {@link ImageProducer} of the <code>Image</code> whose pixels are
+     * being filtered. Developers using this class to retrieve pixels from
+     * an image should avoid calling this method directly since that
+     * operation could result in problems with retrieving the requested
+     * pixels.
+     * <p>
+     * @param width the width to which to set the width of this
+     *        <code>BufferedImageFilter</code>
+     * @param height the height to which to set the height of this
+     *        <code>BufferedImageFilter</code>
+     * @see ImageConsumer#setDimensions
+     */
+    public void setDimensions(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            imageComplete(STATICIMAGEDONE);
+            return;
+        }
+        this.width  = width;
+        this.height = height;
+    }
+
+    /**
+     * Filters the information provided in the
+     * {@link ImageConsumer#setColorModel(ColorModel) setColorModel} method
+     * of the <code>ImageConsumer</code> interface.
+     * <p>
+     * If <code>model</code> is <code>null</code>, this
+     * method clears the current <code>ColorModel</code> of this
+     * <code>BufferedImageFilter</code>.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code>
+     * whose pixels are being filtered.  Developers using this
+     * class to retrieve pixels from an image
+     * should avoid calling this method directly since that
+     * operation could result in problems with retrieving the
+     * requested pixels.
+     * @param model the {@link ColorModel} to which to set the
+     *        <code>ColorModel</code> of this <code>BufferedImageFilter</code>
+     * @see ImageConsumer#setColorModel
+     */
+    public void setColorModel(ColorModel model) {
+        this.model = model;
+    }
+
+    private void convertToRGB() {
+        int size = width * height;
+        int newpixels[] = new int[size];
+        if (bytePixels != null) {
+            for (int i = 0; i < size; i++) {
+                newpixels[i] = this.model.getRGB(bytePixels[i] & 0xff);
+            }
+        } else if (intPixels != null) {
+            for (int i = 0; i < size; i++) {
+                newpixels[i] = this.model.getRGB(intPixels[i]);
+            }
+        }
+        bytePixels = null;
+        intPixels = newpixels;
+        this.model = ColorModel.getRGBdefault();
+    }
+
+    /**
+     * Filters the information provided in the <code>setPixels</code>
+     * method of the <code>ImageConsumer</code> interface which takes
+     * an array of bytes.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered.  Developers using
+     * this class to retrieve pixels from an image should avoid calling
+     * this method directly since that operation could result in problems
+     * with retrieving the requested pixels.
+     * @throws IllegalArgumentException if width or height are less than
+     * zero.
+     * @see ImageConsumer#setPixels(int, int, int, int, ColorModel, byte[],
+                                    int, int)
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, byte pixels[], int off,
+                          int scansize) {
+        // Fix 4184230
+        if (w < 0 || h < 0) {
+            throw new IllegalArgumentException("Width ("+w+
+                                                ") and height ("+h+
+                                                ") must be > 0");
+        }
+        // Nothing to do
+        if (w == 0 || h == 0) {
+            return;
+        }
+        if (y < 0) {
+            int diff = -y;
+            if (diff >= h) {
+                return;
+            }
+            off += scansize * diff;
+            y += diff;
+            h -= diff;
+        }
+        if (y + h > height) {
+            h = height - y;
+            if (h <= 0) {
+                return;
+            }
+        }
+        if (x < 0) {
+            int diff = -x;
+            if (diff >= w) {
+                return;
+            }
+            off += diff;
+            x += diff;
+            w -= diff;
+        }
+        if (x + w > width) {
+            w = width - x;
+            if (w <= 0) {
+                return;
+            }
+        }
+        int dstPtr = y*width + x;
+        if (intPixels == null) {
+            if (bytePixels == null) {
+                bytePixels = new byte[width*height];
+                this.model = model;
+            } else if (this.model != model) {
+                convertToRGB();
+            }
+            if (bytePixels != null) {
+                for (int sh = h; sh > 0; sh--) {
+                    System.arraycopy(pixels, off, bytePixels, dstPtr, w);
+                    off += scansize;
+                    dstPtr += width;
+                }
+            }
+        }
+        if (intPixels != null) {
+            int dstRem = width - w;
+            int srcRem = scansize - w;
+            for (int sh = h; sh > 0; sh--) {
+                for (int sw = w; sw > 0; sw--) {
+                    intPixels[dstPtr++] = model.getRGB(pixels[off++]&0xff);
+                }
+                off    += srcRem;
+                dstPtr += dstRem;
+            }
+        }
+    }
+    /**
+     * Filters the information provided in the <code>setPixels</code>
+     * method of the <code>ImageConsumer</code> interface which takes
+     * an array of integers.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose
+     * pixels are being filtered.  Developers using this class to
+     * retrieve pixels from an image should avoid calling this method
+     * directly since that operation could result in problems
+     * with retrieving the requested pixels.
+     * @throws IllegalArgumentException if width or height are less than
+     * zero.
+     * @see ImageConsumer#setPixels(int, int, int, int, ColorModel, int[],
+                                    int, int)
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, int pixels[], int off,
+                          int scansize) {
+        // Fix 4184230
+        if (w < 0 || h < 0) {
+            throw new IllegalArgumentException("Width ("+w+
+                                                ") and height ("+h+
+                                                ") must be > 0");
+        }
+        // Nothing to do
+        if (w == 0 || h == 0) {
+            return;
+        }
+        if (y < 0) {
+            int diff = -y;
+            if (diff >= h) {
+                return;
+            }
+            off += scansize * diff;
+            y += diff;
+            h -= diff;
+        }
+        if (y + h > height) {
+            h = height - y;
+            if (h <= 0) {
+                return;
+            }
+        }
+        if (x < 0) {
+            int diff = -x;
+            if (diff >= w) {
+                return;
+            }
+            off += diff;
+            x += diff;
+            w -= diff;
+        }
+        if (x + w > width) {
+            w = width - x;
+            if (w <= 0) {
+                return;
+            }
+        }
+
+        if (intPixels == null) {
+            if (bytePixels == null) {
+                intPixels = new int[width * height];
+                this.model = model;
+            } else {
+                convertToRGB();
+            }
+        }
+        int dstPtr = y*width + x;
+        if (this.model == model) {
+            for (int sh = h; sh > 0; sh--) {
+                System.arraycopy(pixels, off, intPixels, dstPtr, w);
+                off += scansize;
+                dstPtr += width;
+            }
+        } else {
+            if (this.model != ColorModel.getRGBdefault()) {
+                convertToRGB();
+            }
+            int dstRem = width - w;
+            int srcRem = scansize - w;
+            for (int sh = h; sh > 0; sh--) {
+                for (int sw = w; sw > 0; sw--) {
+                    intPixels[dstPtr++] = model.getRGB(pixels[off++]);
+                }
+                off += srcRem;
+                dstPtr += dstRem;
+            }
+        }
+    }
+
+    /**
+     * Filters the information provided in the <code>imageComplete</code>
+     * method of the <code>ImageConsumer</code> interface.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered.  Developers using
+     * this class to retrieve pixels from an image should avoid calling
+     * this method directly since that operation could result in problems
+     * with retrieving the requested pixels.
+     * @param status the status of image loading
+     * @throws ImagingOpException if there was a problem calling the filter
+     * method of the <code>BufferedImageOp</code> associated with this
+     * instance.
+     * @see ImageConsumer#imageComplete
+     */
+    public void imageComplete(int status) {
+        WritableRaster wr;
+        switch(status) {
+        case IMAGEERROR:
+        case IMAGEABORTED:
+            // reinitialize the params
+            model  = null;
+            width  = -1;
+            height = -1;
+            intPixels  = null;
+            bytePixels = null;
+            break;
+
+        case SINGLEFRAMEDONE:
+        case STATICIMAGEDONE:
+            if (width <= 0 || height <= 0) break;
+            if (model instanceof DirectColorModel) {
+                if (intPixels == null) break;
+                wr = createDCMraster();
+            }
+            else if (model instanceof IndexColorModel) {
+                int[] bandOffsets = {0};
+                if (bytePixels == null) break;
+                DataBufferByte db = new DataBufferByte(bytePixels,
+                                                       width*height);
+                wr = Raster.createInterleavedRaster(db, width, height, width,
+                                                    1, bandOffsets, null);
+            }
+            else {
+                convertToRGB();
+                if (intPixels == null) break;
+                wr = createDCMraster();
+            }
+            BufferedImage bi = new BufferedImage(model, wr,
+                                                 model.isAlphaPremultiplied(),
+                                                 null);
+            bi = bufferedImageOp.filter(bi, null);
+            WritableRaster r = bi.getRaster();
+            ColorModel cm = bi.getColorModel();
+            int w = r.getWidth();
+            int h = r.getHeight();
+            consumer.setDimensions(w, h);
+            consumer.setColorModel(cm);
+            if (cm instanceof DirectColorModel) {
+                DataBufferInt db = (DataBufferInt) r.getDataBuffer();
+                consumer.setPixels(0, 0, w, h,
+                                   cm, db.getData(), 0, w);
+            }
+            else if (cm instanceof IndexColorModel) {
+                DataBufferByte db = (DataBufferByte) r.getDataBuffer();
+                consumer.setPixels(0, 0, w, h,
+                                   cm, db.getData(), 0, w);
+            }
+            else {
+                throw new InternalError("Unknown color model "+cm);
+            }
+            break;
+        }
+        consumer.imageComplete(status);
+    }
+
+    private final WritableRaster createDCMraster() {
+        WritableRaster wr;
+        DirectColorModel dcm = (DirectColorModel) model;
+        boolean hasAlpha = model.hasAlpha();
+        int[] bandMasks = new int[3+(hasAlpha ? 1 : 0)];
+        bandMasks[0] = dcm.getRedMask();
+        bandMasks[1] = dcm.getGreenMask();
+        bandMasks[2] = dcm.getBlueMask();
+        if (hasAlpha) {
+            bandMasks[3] = dcm.getAlphaMask();
+        }
+        DataBufferInt db = new DataBufferInt(intPixels, width*height);
+        wr = Raster.createPackedRaster(db, width, height, width,
+                                       bandMasks, null);
+        return wr;
+    }
+
+}

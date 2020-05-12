@@ -1,947 +1,941 @@
-/*     */ package java.util;
-/*     */ 
-/*     */ import java.lang.reflect.Array;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class TimSort<T>
-/*     */ {
-/*     */   private static final int MIN_MERGE = 32;
-/*     */   private final T[] a;
-/*     */   private final Comparator<? super T> c;
-/*     */   private static final int MIN_GALLOP = 7;
-/* 103 */   private int minGallop = 7;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int INITIAL_TMP_STORAGE_LENGTH = 256;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private T[] tmp;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int tmpBase;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int tmpLen;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 133 */   private int stackSize = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int[] runBase;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int[] runLen;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private TimSort(T[] paramArrayOfT1, Comparator<? super T> paramComparator, T[] paramArrayOfT2, int paramInt1, int paramInt2) {
-/* 147 */     this.a = paramArrayOfT1;
-/* 148 */     this.c = paramComparator;
-/*     */ 
-/*     */     
-/* 151 */     int i = paramArrayOfT1.length;
-/* 152 */     byte b1 = (i < 512) ? (i >>> 1) : 256;
-/*     */     
-/* 154 */     if (paramArrayOfT2 == null || paramInt2 < b1 || paramInt1 + b1 > paramArrayOfT2.length) {
-/*     */ 
-/*     */       
-/* 157 */       Object[] arrayOfObject = (Object[])Array.newInstance(paramArrayOfT1.getClass().getComponentType(), b1);
-/* 158 */       this.tmp = (T[])arrayOfObject;
-/* 159 */       this.tmpBase = 0;
-/* 160 */       this.tmpLen = b1;
-/*     */     } else {
-/*     */       
-/* 163 */       this.tmp = paramArrayOfT2;
-/* 164 */       this.tmpBase = paramInt1;
-/* 165 */       this.tmpLen = paramInt2;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 182 */     byte b2 = (i < 120) ? 5 : ((i < 1542) ? 10 : ((i < 119151) ? 24 : 49));
-/*     */ 
-/*     */     
-/* 185 */     this.runBase = new int[b2];
-/* 186 */     this.runLen = new int[b2];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static <T> void sort(T[] paramArrayOfT1, int paramInt1, int paramInt2, Comparator<? super T> paramComparator, T[] paramArrayOfT2, int paramInt3, int paramInt4) {
-/* 212 */     assert paramComparator != null && paramArrayOfT1 != null && paramInt1 >= 0 && paramInt1 <= paramInt2 && paramInt2 <= paramArrayOfT1.length;
-/*     */     
-/* 214 */     int i = paramInt2 - paramInt1;
-/* 215 */     if (i < 2) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 219 */     if (i < 32) {
-/* 220 */       int k = countRunAndMakeAscending(paramArrayOfT1, paramInt1, paramInt2, paramComparator);
-/* 221 */       binarySort(paramArrayOfT1, paramInt1, paramInt2, paramInt1 + k, paramComparator);
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 230 */     TimSort<T> timSort = new TimSort<>(paramArrayOfT1, paramComparator, paramArrayOfT2, paramInt3, paramInt4);
-/* 231 */     int j = minRunLength(i);
-/*     */     
-/*     */     do {
-/* 234 */       int k = countRunAndMakeAscending(paramArrayOfT1, paramInt1, paramInt2, paramComparator);
-/*     */ 
-/*     */       
-/* 237 */       if (k < j) {
-/* 238 */         int m = (i <= j) ? i : j;
-/* 239 */         binarySort(paramArrayOfT1, paramInt1, paramInt1 + m, paramInt1 + k, paramComparator);
-/* 240 */         k = m;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 244 */       timSort.pushRun(paramInt1, k);
-/* 245 */       timSort.mergeCollapse();
-/*     */ 
-/*     */       
-/* 248 */       paramInt1 += k;
-/* 249 */       i -= k;
-/* 250 */     } while (i != 0);
-/*     */ 
-/*     */     
-/* 253 */     assert paramInt1 == paramInt2;
-/* 254 */     timSort.mergeForceCollapse();
-/* 255 */     assert timSort.stackSize == 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static <T> void binarySort(T[] paramArrayOfT, int paramInt1, int paramInt2, int paramInt3, Comparator<? super T> paramComparator) {
-/* 279 */     assert paramInt1 <= paramInt3 && paramInt3 <= paramInt2;
-/* 280 */     if (paramInt3 == paramInt1)
-/* 281 */       paramInt3++; 
-/* 282 */     for (; paramInt3 < paramInt2; paramInt3++) {
-/* 283 */       T t = paramArrayOfT[paramInt3];
-/*     */ 
-/*     */       
-/* 286 */       int i = paramInt1;
-/* 287 */       int j = paramInt3;
-/* 288 */       assert i <= j;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 294 */       while (i < j) {
-/* 295 */         int m = i + j >>> 1;
-/* 296 */         if (paramComparator.compare(t, paramArrayOfT[m]) < 0) {
-/* 297 */           j = m; continue;
-/*     */         } 
-/* 299 */         i = m + 1;
-/*     */       } 
-/* 301 */       assert i == j;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 310 */       int k = paramInt3 - i;
-/*     */       
-/* 312 */       switch (k) { case 2:
-/* 313 */           paramArrayOfT[i + 2] = paramArrayOfT[i + 1];
-/* 314 */         case 1: paramArrayOfT[i + 1] = paramArrayOfT[i]; break;
-/*     */         default:
-/* 316 */           System.arraycopy(paramArrayOfT, i, paramArrayOfT, i + 1, k); break; }
-/*     */       
-/* 318 */       paramArrayOfT[i] = t;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static <T> int countRunAndMakeAscending(T[] paramArrayOfT, int paramInt1, int paramInt2, Comparator<? super T> paramComparator) {
-/* 349 */     assert paramInt1 < paramInt2;
-/* 350 */     int i = paramInt1 + 1;
-/* 351 */     if (i == paramInt2) {
-/* 352 */       return 1;
-/*     */     }
-/*     */     
-/* 355 */     if (paramComparator.compare(paramArrayOfT[i++], paramArrayOfT[paramInt1]) < 0) {
-/* 356 */       while (i < paramInt2 && paramComparator.compare(paramArrayOfT[i], paramArrayOfT[i - 1]) < 0)
-/* 357 */         i++; 
-/* 358 */       reverseRange((Object[])paramArrayOfT, paramInt1, i);
-/*     */     } else {
-/* 360 */       while (i < paramInt2 && paramComparator.compare(paramArrayOfT[i], paramArrayOfT[i - 1]) >= 0) {
-/* 361 */         i++;
-/*     */       }
-/*     */     } 
-/* 364 */     return i - paramInt1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void reverseRange(Object[] paramArrayOfObject, int paramInt1, int paramInt2) {
-/* 375 */     paramInt2--;
-/* 376 */     while (paramInt1 < paramInt2) {
-/* 377 */       Object object = paramArrayOfObject[paramInt1];
-/* 378 */       paramArrayOfObject[paramInt1++] = paramArrayOfObject[paramInt2];
-/* 379 */       paramArrayOfObject[paramInt2--] = object;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int minRunLength(int paramInt) {
-/* 401 */     assert paramInt >= 0;
-/* 402 */     int i = 0;
-/* 403 */     while (paramInt >= 32) {
-/* 404 */       i |= paramInt & 0x1;
-/* 405 */       paramInt >>= 1;
-/*     */     } 
-/* 407 */     return paramInt + i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void pushRun(int paramInt1, int paramInt2) {
-/* 417 */     this.runBase[this.stackSize] = paramInt1;
-/* 418 */     this.runLen[this.stackSize] = paramInt2;
-/* 419 */     this.stackSize++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void mergeCollapse() {
-/* 434 */     while (this.stackSize > 1) {
-/* 435 */       int i = this.stackSize - 2;
-/* 436 */       if (i > 0 && this.runLen[i - 1] <= this.runLen[i] + this.runLen[i + 1]) {
-/* 437 */         if (this.runLen[i - 1] < this.runLen[i + 1])
-/* 438 */           i--; 
-/* 439 */         mergeAt(i); continue;
-/* 440 */       }  if (this.runLen[i] <= this.runLen[i + 1]) {
-/* 441 */         mergeAt(i);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void mergeForceCollapse() {
-/* 453 */     while (this.stackSize > 1) {
-/* 454 */       int i = this.stackSize - 2;
-/* 455 */       if (i > 0 && this.runLen[i - 1] < this.runLen[i + 1])
-/* 456 */         i--; 
-/* 457 */       mergeAt(i);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void mergeAt(int paramInt) {
-/* 469 */     assert this.stackSize >= 2;
-/* 470 */     assert paramInt >= 0;
-/* 471 */     assert paramInt == this.stackSize - 2 || paramInt == this.stackSize - 3;
-/*     */     
-/* 473 */     int i = this.runBase[paramInt];
-/* 474 */     int j = this.runLen[paramInt];
-/* 475 */     int k = this.runBase[paramInt + 1];
-/* 476 */     int m = this.runLen[paramInt + 1];
-/* 477 */     assert j > 0 && m > 0;
-/* 478 */     assert i + j == k;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 485 */     this.runLen[paramInt] = j + m;
-/* 486 */     if (paramInt == this.stackSize - 3) {
-/* 487 */       this.runBase[paramInt + 1] = this.runBase[paramInt + 2];
-/* 488 */       this.runLen[paramInt + 1] = this.runLen[paramInt + 2];
-/*     */     } 
-/* 490 */     this.stackSize--;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 496 */     int n = gallopRight(this.a[k], this.a, i, j, 0, this.c);
-/* 497 */     assert n >= 0;
-/* 498 */     i += n;
-/* 499 */     j -= n;
-/* 500 */     if (j == 0) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 507 */     m = gallopLeft(this.a[i + j - 1], this.a, k, m, m - 1, this.c);
-/* 508 */     assert m >= 0;
-/* 509 */     if (m == 0) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 513 */     if (j <= m) {
-/* 514 */       mergeLo(i, j, k, m);
-/*     */     } else {
-/* 516 */       mergeHi(i, j, k, m);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static <T> int gallopLeft(T paramT, T[] paramArrayOfT, int paramInt1, int paramInt2, int paramInt3, Comparator<? super T> paramComparator) {
-/* 539 */     assert paramInt2 > 0 && paramInt3 >= 0 && paramInt3 < paramInt2;
-/* 540 */     int i = 0;
-/* 541 */     int j = 1;
-/* 542 */     if (paramComparator.compare(paramT, paramArrayOfT[paramInt1 + paramInt3]) > 0) {
-/*     */       
-/* 544 */       int k = paramInt2 - paramInt3;
-/* 545 */       while (j < k && paramComparator.compare(paramT, paramArrayOfT[paramInt1 + paramInt3 + j]) > 0) {
-/* 546 */         i = j;
-/* 547 */         j = (j << 1) + 1;
-/* 548 */         if (j <= 0)
-/* 549 */           j = k; 
-/*     */       } 
-/* 551 */       if (j > k) {
-/* 552 */         j = k;
-/*     */       }
-/*     */       
-/* 555 */       i += paramInt3;
-/* 556 */       j += paramInt3;
-/*     */     } else {
-/*     */       
-/* 559 */       int k = paramInt3 + 1;
-/* 560 */       while (j < k && paramComparator.compare(paramT, paramArrayOfT[paramInt1 + paramInt3 - j]) <= 0) {
-/* 561 */         i = j;
-/* 562 */         j = (j << 1) + 1;
-/* 563 */         if (j <= 0)
-/* 564 */           j = k; 
-/*     */       } 
-/* 566 */       if (j > k) {
-/* 567 */         j = k;
-/*     */       }
-/*     */       
-/* 570 */       int m = i;
-/* 571 */       i = paramInt3 - j;
-/* 572 */       j = paramInt3 - m;
-/*     */     } 
-/* 574 */     assert -1 <= i && i < j && j <= paramInt2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 581 */     i++;
-/* 582 */     while (i < j) {
-/* 583 */       int k = i + (j - i >>> 1);
-/*     */       
-/* 585 */       if (paramComparator.compare(paramT, paramArrayOfT[paramInt1 + k]) > 0) {
-/* 586 */         i = k + 1; continue;
-/*     */       } 
-/* 588 */       j = k;
-/*     */     } 
-/* 590 */     assert i == j;
-/* 591 */     return j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static <T> int gallopRight(T paramT, T[] paramArrayOfT, int paramInt1, int paramInt2, int paramInt3, Comparator<? super T> paramComparator) {
-/* 609 */     assert paramInt2 > 0 && paramInt3 >= 0 && paramInt3 < paramInt2;
-/*     */     
-/* 611 */     int i = 1;
-/* 612 */     int j = 0;
-/* 613 */     if (paramComparator.compare(paramT, paramArrayOfT[paramInt1 + paramInt3]) < 0) {
-/*     */       
-/* 615 */       int k = paramInt3 + 1;
-/* 616 */       while (i < k && paramComparator.compare(paramT, paramArrayOfT[paramInt1 + paramInt3 - i]) < 0) {
-/* 617 */         j = i;
-/* 618 */         i = (i << 1) + 1;
-/* 619 */         if (i <= 0)
-/* 620 */           i = k; 
-/*     */       } 
-/* 622 */       if (i > k) {
-/* 623 */         i = k;
-/*     */       }
-/*     */       
-/* 626 */       int m = j;
-/* 627 */       j = paramInt3 - i;
-/* 628 */       i = paramInt3 - m;
-/*     */     } else {
-/*     */       
-/* 631 */       int k = paramInt2 - paramInt3;
-/* 632 */       while (i < k && paramComparator.compare(paramT, paramArrayOfT[paramInt1 + paramInt3 + i]) >= 0) {
-/* 633 */         j = i;
-/* 634 */         i = (i << 1) + 1;
-/* 635 */         if (i <= 0)
-/* 636 */           i = k; 
-/*     */       } 
-/* 638 */       if (i > k) {
-/* 639 */         i = k;
-/*     */       }
-/*     */       
-/* 642 */       j += paramInt3;
-/* 643 */       i += paramInt3;
-/*     */     } 
-/* 645 */     assert -1 <= j && j < i && i <= paramInt2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 652 */     j++;
-/* 653 */     while (j < i) {
-/* 654 */       int k = j + (i - j >>> 1);
-/*     */       
-/* 656 */       if (paramComparator.compare(paramT, paramArrayOfT[paramInt1 + k]) < 0) {
-/* 657 */         i = k; continue;
-/*     */       } 
-/* 659 */       j = k + 1;
-/*     */     } 
-/* 661 */     assert j == i;
-/* 662 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void mergeLo(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 682 */     assert paramInt2 > 0 && paramInt4 > 0 && paramInt1 + paramInt2 == paramInt3;
-/*     */ 
-/*     */     
-/* 685 */     T[] arrayOfT1 = this.a;
-/* 686 */     T[] arrayOfT2 = ensureCapacity(paramInt2);
-/* 687 */     int i = this.tmpBase;
-/* 688 */     int j = paramInt3;
-/* 689 */     int k = paramInt1;
-/* 690 */     System.arraycopy(arrayOfT1, paramInt1, arrayOfT2, i, paramInt2);
-/*     */ 
-/*     */     
-/* 693 */     arrayOfT1[k++] = arrayOfT1[j++];
-/* 694 */     if (--paramInt4 == 0) {
-/* 695 */       System.arraycopy(arrayOfT2, i, arrayOfT1, k, paramInt2);
-/*     */       return;
-/*     */     } 
-/* 698 */     if (paramInt2 == 1) {
-/* 699 */       System.arraycopy(arrayOfT1, j, arrayOfT1, k, paramInt4);
-/* 700 */       arrayOfT1[k + paramInt4] = arrayOfT2[i];
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 704 */     Comparator<? super T> comparator = this.c;
-/* 705 */     int m = this.minGallop;
-/*     */     
-/*     */     while (true) {
-/* 708 */       int n = 0;
-/* 709 */       int i1 = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       while (true) {
-/* 716 */         assert paramInt2 > 1 && paramInt4 > 0;
-/* 717 */         if (comparator.compare(arrayOfT1[j], arrayOfT2[i]) < 0) {
-/* 718 */           arrayOfT1[k++] = arrayOfT1[j++];
-/* 719 */           i1++;
-/* 720 */           n = 0;
-/* 721 */           if (--paramInt4 == 0)
-/*     */             break; 
-/*     */         } else {
-/* 724 */           arrayOfT1[k++] = arrayOfT2[i++];
-/* 725 */           n++;
-/* 726 */           i1 = 0;
-/* 727 */           if (--paramInt2 == 1)
-/*     */             break; 
-/*     */         } 
-/* 730 */         if ((n | i1) >= m)
-/*     */         
-/*     */         { 
-/*     */           
-/*     */           label79: while (true)
-/*     */           
-/*     */           { 
-/*     */             
-/* 738 */             assert paramInt2 > 1 && paramInt4 > 0;
-/* 739 */             n = gallopRight(arrayOfT1[j], arrayOfT2, i, paramInt2, 0, comparator);
-/* 740 */             if (n != 0) {
-/* 741 */               System.arraycopy(arrayOfT2, i, arrayOfT1, k, n);
-/* 742 */               k += n;
-/* 743 */               i += n;
-/* 744 */               paramInt2 -= n;
-/* 745 */               if (paramInt2 <= 1)
-/*     */                 break; 
-/*     */             } 
-/* 748 */             arrayOfT1[k++] = arrayOfT1[j++];
-/* 749 */             if (--paramInt4 == 0) {
-/*     */               break;
-/*     */             }
-/* 752 */             i1 = gallopLeft(arrayOfT2[i], arrayOfT1, j, paramInt4, 0, comparator);
-/* 753 */             if (i1 != 0) {
-/* 754 */               System.arraycopy(arrayOfT1, j, arrayOfT1, k, i1);
-/* 755 */               k += i1;
-/* 756 */               j += i1;
-/* 757 */               paramInt4 -= i1;
-/* 758 */               if (paramInt4 == 0)
-/*     */                 break; 
-/*     */             } 
-/* 761 */             arrayOfT1[k++] = arrayOfT2[i++];
-/* 762 */             if (--paramInt2 == 1)
-/*     */               break; 
-/* 764 */             m--;
-/* 765 */             if ((((n >= 7) ? 1 : 0) | ((i1 >= 7) ? 1 : 0)) == 0)
-/* 766 */             { if (m < 0)
-/* 767 */               { m = 0;
-/* 768 */                 m += 2; continue; }  break label79; }  }  break; } 
-/*     */       }  break;
-/* 770 */     }  this.minGallop = (m < 1) ? 1 : m;
-/*     */     
-/* 772 */     if (paramInt2 == 1)
-/* 773 */     { assert paramInt4 > 0;
-/* 774 */       System.arraycopy(arrayOfT1, j, arrayOfT1, k, paramInt4);
-/* 775 */       arrayOfT1[k + paramInt4] = arrayOfT2[i]; }
-/* 776 */     else { if (paramInt2 == 0) {
-/* 777 */         throw new IllegalArgumentException("Comparison method violates its general contract!");
-/*     */       }
-/*     */       
-/* 780 */       assert paramInt4 == 0;
-/* 781 */       assert paramInt2 > 1;
-/* 782 */       System.arraycopy(arrayOfT2, i, arrayOfT1, k, paramInt2); }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void mergeHi(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 798 */     assert paramInt2 > 0 && paramInt4 > 0 && paramInt1 + paramInt2 == paramInt3;
-/*     */ 
-/*     */     
-/* 801 */     T[] arrayOfT1 = this.a;
-/* 802 */     T[] arrayOfT2 = ensureCapacity(paramInt4);
-/* 803 */     int i = this.tmpBase;
-/* 804 */     System.arraycopy(arrayOfT1, paramInt3, arrayOfT2, i, paramInt4);
-/*     */     
-/* 806 */     int j = paramInt1 + paramInt2 - 1;
-/* 807 */     int k = i + paramInt4 - 1;
-/* 808 */     int m = paramInt3 + paramInt4 - 1;
-/*     */ 
-/*     */     
-/* 811 */     arrayOfT1[m--] = arrayOfT1[j--];
-/* 812 */     if (--paramInt2 == 0) {
-/* 813 */       System.arraycopy(arrayOfT2, i, arrayOfT1, m - paramInt4 - 1, paramInt4);
-/*     */       return;
-/*     */     } 
-/* 816 */     if (paramInt4 == 1) {
-/* 817 */       m -= paramInt2;
-/* 818 */       j -= paramInt2;
-/* 819 */       System.arraycopy(arrayOfT1, j + 1, arrayOfT1, m + 1, paramInt2);
-/* 820 */       arrayOfT1[m] = arrayOfT2[k];
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 824 */     Comparator<? super T> comparator = this.c;
-/* 825 */     int n = this.minGallop;
-/*     */     
-/*     */     while (true) {
-/* 828 */       int i1 = 0;
-/* 829 */       int i2 = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       while (true) {
-/* 836 */         assert paramInt2 > 0 && paramInt4 > 1;
-/* 837 */         if (comparator.compare(arrayOfT2[k], arrayOfT1[j]) < 0) {
-/* 838 */           arrayOfT1[m--] = arrayOfT1[j--];
-/* 839 */           i1++;
-/* 840 */           i2 = 0;
-/* 841 */           if (--paramInt2 == 0)
-/*     */             break; 
-/*     */         } else {
-/* 844 */           arrayOfT1[m--] = arrayOfT2[k--];
-/* 845 */           i2++;
-/* 846 */           i1 = 0;
-/* 847 */           if (--paramInt4 == 1)
-/*     */             break; 
-/*     */         } 
-/* 850 */         if ((i1 | i2) >= n)
-/*     */         
-/*     */         { 
-/*     */           
-/*     */           label79: while (true)
-/*     */           
-/*     */           { 
-/*     */             
-/* 858 */             assert paramInt2 > 0 && paramInt4 > 1;
-/* 859 */             i1 = paramInt2 - gallopRight(arrayOfT2[k], arrayOfT1, paramInt1, paramInt2, paramInt2 - 1, comparator);
-/* 860 */             if (i1 != 0) {
-/* 861 */               m -= i1;
-/* 862 */               j -= i1;
-/* 863 */               paramInt2 -= i1;
-/* 864 */               System.arraycopy(arrayOfT1, j + 1, arrayOfT1, m + 1, i1);
-/* 865 */               if (paramInt2 == 0)
-/*     */                 break; 
-/*     */             } 
-/* 868 */             arrayOfT1[m--] = arrayOfT2[k--];
-/* 869 */             if (--paramInt4 == 1) {
-/*     */               break;
-/*     */             }
-/* 872 */             i2 = paramInt4 - gallopLeft(arrayOfT1[j], arrayOfT2, i, paramInt4, paramInt4 - 1, comparator);
-/* 873 */             if (i2 != 0) {
-/* 874 */               m -= i2;
-/* 875 */               k -= i2;
-/* 876 */               paramInt4 -= i2;
-/* 877 */               System.arraycopy(arrayOfT2, k + 1, arrayOfT1, m + 1, i2);
-/* 878 */               if (paramInt4 <= 1)
-/*     */                 break; 
-/*     */             } 
-/* 881 */             arrayOfT1[m--] = arrayOfT1[j--];
-/* 882 */             if (--paramInt2 == 0)
-/*     */               break; 
-/* 884 */             n--;
-/* 885 */             if ((((i1 >= 7) ? 1 : 0) | ((i2 >= 7) ? 1 : 0)) == 0)
-/* 886 */             { if (n < 0)
-/* 887 */               { n = 0;
-/* 888 */                 n += 2; continue; }  break label79; }  }  break; } 
-/*     */       }  break;
-/* 890 */     }  this.minGallop = (n < 1) ? 1 : n;
-/*     */     
-/* 892 */     if (paramInt4 == 1)
-/* 893 */     { assert paramInt2 > 0;
-/* 894 */       m -= paramInt2;
-/* 895 */       j -= paramInt2;
-/* 896 */       System.arraycopy(arrayOfT1, j + 1, arrayOfT1, m + 1, paramInt2);
-/* 897 */       arrayOfT1[m] = arrayOfT2[k]; }
-/* 898 */     else { if (paramInt4 == 0) {
-/* 899 */         throw new IllegalArgumentException("Comparison method violates its general contract!");
-/*     */       }
-/*     */       
-/* 902 */       assert paramInt2 == 0;
-/* 903 */       assert paramInt4 > 0;
-/* 904 */       System.arraycopy(arrayOfT2, i, arrayOfT1, m - paramInt4 - 1, paramInt4); }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private T[] ensureCapacity(int paramInt) {
-/* 917 */     if (this.tmpLen < paramInt) {
-/*     */       
-/* 919 */       int i = paramInt;
-/* 920 */       i |= i >> 1;
-/* 921 */       i |= i >> 2;
-/* 922 */       i |= i >> 4;
-/* 923 */       i |= i >> 8;
-/* 924 */       i |= i >> 16;
-/* 925 */       i++;
-/*     */       
-/* 927 */       if (i < 0) {
-/* 928 */         i = paramInt;
-/*     */       } else {
-/* 930 */         i = Math.min(i, this.a.length >>> 1);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 934 */       Object[] arrayOfObject = (Object[])Array.newInstance(this.a.getClass().getComponentType(), i);
-/* 935 */       this.tmp = (T[])arrayOfObject;
-/* 936 */       this.tmpLen = i;
-/* 937 */       this.tmpBase = 0;
-/*     */     } 
-/* 939 */     return this.tmp;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\TimSort.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2009 Google Inc.  All Rights Reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * A stable, adaptive, iterative mergesort that requires far fewer than
+ * n lg(n) comparisons when running on partially sorted arrays, while
+ * offering performance comparable to a traditional mergesort when run
+ * on random arrays.  Like all proper mergesorts, this sort is stable and
+ * runs O(n log n) time (worst case).  In the worst case, this sort requires
+ * temporary storage space for n/2 object references; in the best case,
+ * it requires only a small constant amount of space.
+ *
+ * This implementation was adapted from Tim Peters's list sort for
+ * Python, which is described in detail here:
+ *
+ *   http://svn.python.org/projects/python/trunk/Objects/listsort.txt
+ *
+ * Tim's C code may be found here:
+ *
+ *   http://svn.python.org/projects/python/trunk/Objects/listobject.c
+ *
+ * The underlying techniques are described in this paper (and may have
+ * even earlier origins):
+ *
+ *  "Optimistic Sorting and Information Theoretic Complexity"
+ *  Peter McIlroy
+ *  SODA (Fourth Annual ACM-SIAM Symposium on Discrete Algorithms),
+ *  pp 467-474, Austin, Texas, 25-27 January 1993.
+ *
+ * While the API to this class consists solely of static methods, it is
+ * (privately) instantiable; a TimSort instance holds the state of an ongoing
+ * sort, assuming the input array is large enough to warrant the full-blown
+ * TimSort. Small arrays are sorted in place, using a binary insertion sort.
+ *
+ * @author Josh Bloch
+ */
+class TimSort<T> {
+    /**
+     * This is the minimum sized sequence that will be merged.  Shorter
+     * sequences will be lengthened by calling binarySort.  If the entire
+     * array is less than this length, no merges will be performed.
+     *
+     * This constant should be a power of two.  It was 64 in Tim Peter's C
+     * implementation, but 32 was empirically determined to work better in
+     * this implementation.  In the unlikely event that you set this constant
+     * to be a number that's not a power of two, you'll need to change the
+     * {@link #minRunLength} computation.
+     *
+     * If you decrease this constant, you must change the stackLen
+     * computation in the TimSort constructor, or you risk an
+     * ArrayOutOfBounds exception.  See listsort.txt for a discussion
+     * of the minimum stack length required as a function of the length
+     * of the array being sorted and the minimum merge sequence length.
+     */
+    private static final int MIN_MERGE = 32;
+
+    /**
+     * The array being sorted.
+     */
+    private final T[] a;
+
+    /**
+     * The comparator for this sort.
+     */
+    private final Comparator<? super T> c;
+
+    /**
+     * When we get into galloping mode, we stay there until both runs win less
+     * often than MIN_GALLOP consecutive times.
+     */
+    private static final int  MIN_GALLOP = 7;
+
+    /**
+     * This controls when we get *into* galloping mode.  It is initialized
+     * to MIN_GALLOP.  The mergeLo and mergeHi methods nudge it higher for
+     * random data, and lower for highly structured data.
+     */
+    private int minGallop = MIN_GALLOP;
+
+    /**
+     * Maximum initial size of tmp array, which is used for merging.  The array
+     * can grow to accommodate demand.
+     *
+     * Unlike Tim's original C version, we do not allocate this much storage
+     * when sorting smaller arrays.  This change was required for performance.
+     */
+    private static final int INITIAL_TMP_STORAGE_LENGTH = 256;
+
+    /**
+     * Temp storage for merges. A workspace array may optionally be
+     * provided in constructor, and if so will be used as long as it
+     * is big enough.
+     */
+    private T[] tmp;
+    private int tmpBase; // base of tmp array slice
+    private int tmpLen;  // length of tmp array slice
+
+    /**
+     * A stack of pending runs yet to be merged.  Run i starts at
+     * address base[i] and extends for len[i] elements.  It's always
+     * true (so long as the indices are in bounds) that:
+     *
+     *     runBase[i] + runLen[i] == runBase[i + 1]
+     *
+     * so we could cut the storage for this, but it's a minor amount,
+     * and keeping all the info explicit simplifies the code.
+     */
+    private int stackSize = 0;  // Number of pending runs on stack
+    private final int[] runBase;
+    private final int[] runLen;
+
+    /**
+     * Creates a TimSort instance to maintain the state of an ongoing sort.
+     *
+     * @param a the array to be sorted
+     * @param c the comparator to determine the order of the sort
+     * @param work a workspace array (slice)
+     * @param workBase origin of usable space in work array
+     * @param workLen usable size of work array
+     */
+    private TimSort(T[] a, Comparator<? super T> c, T[] work, int workBase, int workLen) {
+        this.a = a;
+        this.c = c;
+
+        // Allocate temp storage (which may be increased later if necessary)
+        int len = a.length;
+        int tlen = (len < 2 * INITIAL_TMP_STORAGE_LENGTH) ?
+            len >>> 1 : INITIAL_TMP_STORAGE_LENGTH;
+        if (work == null || workLen < tlen || workBase + tlen > work.length) {
+            @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+            T[] newArray = (T[])java.lang.reflect.Array.newInstance
+                (a.getClass().getComponentType(), tlen);
+            tmp = newArray;
+            tmpBase = 0;
+            tmpLen = tlen;
+        }
+        else {
+            tmp = work;
+            tmpBase = workBase;
+            tmpLen = workLen;
+        }
+
+        /*
+         * Allocate runs-to-be-merged stack (which cannot be expanded).  The
+         * stack length requirements are described in listsort.txt.  The C
+         * version always uses the same stack length (85), but this was
+         * measured to be too expensive when sorting "mid-sized" arrays (e.g.,
+         * 100 elements) in Java.  Therefore, we use smaller (but sufficiently
+         * large) stack lengths for smaller arrays.  The "magic numbers" in the
+         * computation below must be changed if MIN_MERGE is decreased.  See
+         * the MIN_MERGE declaration above for more information.
+         * The maximum value of 49 allows for an array up to length
+         * Integer.MAX_VALUE-4, if array is filled by the worst case stack size
+         * increasing scenario. More explanations are given in section 4 of:
+         * http://envisage-project.eu/wp-content/uploads/2015/02/sorting.pdf
+         */
+        int stackLen = (len <    120  ?  5 :
+                        len <   1542  ? 10 :
+                        len < 119151  ? 24 : 49);
+        runBase = new int[stackLen];
+        runLen = new int[stackLen];
+    }
+
+    /*
+     * The next method (package private and static) constitutes the
+     * entire API of this class.
+     */
+
+    /**
+     * Sorts the given range, using the given workspace array slice
+     * for temp storage when possible. This method is designed to be
+     * invoked from public methods (in class Arrays) after performing
+     * any necessary array bounds checks and expanding parameters into
+     * the required forms.
+     *
+     * @param a the array to be sorted
+     * @param lo the index of the first element, inclusive, to be sorted
+     * @param hi the index of the last element, exclusive, to be sorted
+     * @param c the comparator to use
+     * @param work a workspace array (slice)
+     * @param workBase origin of usable space in work array
+     * @param workLen usable size of work array
+     * @since 1.8
+     */
+    static <T> void sort(T[] a, int lo, int hi, Comparator<? super T> c,
+                         T[] work, int workBase, int workLen) {
+        assert c != null && a != null && lo >= 0 && lo <= hi && hi <= a.length;
+
+        int nRemaining  = hi - lo;
+        if (nRemaining < 2)
+            return;  // Arrays of size 0 and 1 are always sorted
+
+        // If array is small, do a "mini-TimSort" with no merges
+        if (nRemaining < MIN_MERGE) {
+            int initRunLen = countRunAndMakeAscending(a, lo, hi, c);
+            binarySort(a, lo, hi, lo + initRunLen, c);
+            return;
+        }
+
+        /**
+         * March over the array once, left to right, finding natural runs,
+         * extending short natural runs to minRun elements, and merging runs
+         * to maintain stack invariant.
+         */
+        TimSort<T> ts = new TimSort<>(a, c, work, workBase, workLen);
+        int minRun = minRunLength(nRemaining);
+        do {
+            // Identify next run
+            int runLen = countRunAndMakeAscending(a, lo, hi, c);
+
+            // If run is short, extend to min(minRun, nRemaining)
+            if (runLen < minRun) {
+                int force = nRemaining <= minRun ? nRemaining : minRun;
+                binarySort(a, lo, lo + force, lo + runLen, c);
+                runLen = force;
+            }
+
+            // Push run onto pending-run stack, and maybe merge
+            ts.pushRun(lo, runLen);
+            ts.mergeCollapse();
+
+            // Advance to find next run
+            lo += runLen;
+            nRemaining -= runLen;
+        } while (nRemaining != 0);
+
+        // Merge all remaining runs to complete sort
+        assert lo == hi;
+        ts.mergeForceCollapse();
+        assert ts.stackSize == 1;
+    }
+
+    /**
+     * Sorts the specified portion of the specified array using a binary
+     * insertion sort.  This is the best method for sorting small numbers
+     * of elements.  It requires O(n log n) compares, but O(n^2) data
+     * movement (worst case).
+     *
+     * If the initial part of the specified range is already sorted,
+     * this method can take advantage of it: the method assumes that the
+     * elements from index {@code lo}, inclusive, to {@code start},
+     * exclusive are already sorted.
+     *
+     * @param a the array in which a range is to be sorted
+     * @param lo the index of the first element in the range to be sorted
+     * @param hi the index after the last element in the range to be sorted
+     * @param start the index of the first element in the range that is
+     *        not already known to be sorted ({@code lo <= start <= hi})
+     * @param c comparator to used for the sort
+     */
+    @SuppressWarnings("fallthrough")
+    private static <T> void binarySort(T[] a, int lo, int hi, int start,
+                                       Comparator<? super T> c) {
+        assert lo <= start && start <= hi;
+        if (start == lo)
+            start++;
+        for ( ; start < hi; start++) {
+            T pivot = a[start];
+
+            // Set left (and right) to the index where a[start] (pivot) belongs
+            int left = lo;
+            int right = start;
+            assert left <= right;
+            /*
+             * Invariants:
+             *   pivot >= all in [lo, left).
+             *   pivot <  all in [right, start).
+             */
+            while (left < right) {
+                int mid = (left + right) >>> 1;
+                if (c.compare(pivot, a[mid]) < 0)
+                    right = mid;
+                else
+                    left = mid + 1;
+            }
+            assert left == right;
+
+            /*
+             * The invariants still hold: pivot >= all in [lo, left) and
+             * pivot < all in [left, start), so pivot belongs at left.  Note
+             * that if there are elements equal to pivot, left points to the
+             * first slot after them -- that's why this sort is stable.
+             * Slide elements over to make room for pivot.
+             */
+            int n = start - left;  // The number of elements to move
+            // Switch is just an optimization for arraycopy in default case
+            switch (n) {
+                case 2:  a[left + 2] = a[left + 1];
+                case 1:  a[left + 1] = a[left];
+                         break;
+                default: System.arraycopy(a, left, a, left + 1, n);
+            }
+            a[left] = pivot;
+        }
+    }
+
+    /**
+     * Returns the length of the run beginning at the specified position in
+     * the specified array and reverses the run if it is descending (ensuring
+     * that the run will always be ascending when the method returns).
+     *
+     * A run is the longest ascending sequence with:
+     *
+     *    a[lo] <= a[lo + 1] <= a[lo + 2] <= ...
+     *
+     * or the longest descending sequence with:
+     *
+     *    a[lo] >  a[lo + 1] >  a[lo + 2] >  ...
+     *
+     * For its intended use in a stable mergesort, the strictness of the
+     * definition of "descending" is needed so that the call can safely
+     * reverse a descending sequence without violating stability.
+     *
+     * @param a the array in which a run is to be counted and possibly reversed
+     * @param lo index of the first element in the run
+     * @param hi index after the last element that may be contained in the run.
+              It is required that {@code lo < hi}.
+     * @param c the comparator to used for the sort
+     * @return  the length of the run beginning at the specified position in
+     *          the specified array
+     */
+    private static <T> int countRunAndMakeAscending(T[] a, int lo, int hi,
+                                                    Comparator<? super T> c) {
+        assert lo < hi;
+        int runHi = lo + 1;
+        if (runHi == hi)
+            return 1;
+
+        // Find end of run, and reverse range if descending
+        if (c.compare(a[runHi++], a[lo]) < 0) { // Descending
+            while (runHi < hi && c.compare(a[runHi], a[runHi - 1]) < 0)
+                runHi++;
+            reverseRange(a, lo, runHi);
+        } else {                              // Ascending
+            while (runHi < hi && c.compare(a[runHi], a[runHi - 1]) >= 0)
+                runHi++;
+        }
+
+        return runHi - lo;
+    }
+
+    /**
+     * Reverse the specified range of the specified array.
+     *
+     * @param a the array in which a range is to be reversed
+     * @param lo the index of the first element in the range to be reversed
+     * @param hi the index after the last element in the range to be reversed
+     */
+    private static void reverseRange(Object[] a, int lo, int hi) {
+        hi--;
+        while (lo < hi) {
+            Object t = a[lo];
+            a[lo++] = a[hi];
+            a[hi--] = t;
+        }
+    }
+
+    /**
+     * Returns the minimum acceptable run length for an array of the specified
+     * length. Natural runs shorter than this will be extended with
+     * {@link #binarySort}.
+     *
+     * Roughly speaking, the computation is:
+     *
+     *  If n < MIN_MERGE, return n (it's too small to bother with fancy stuff).
+     *  Else if n is an exact power of 2, return MIN_MERGE/2.
+     *  Else return an int k, MIN_MERGE/2 <= k <= MIN_MERGE, such that n/k
+     *   is close to, but strictly less than, an exact power of 2.
+     *
+     * For the rationale, see listsort.txt.
+     *
+     * @param n the length of the array to be sorted
+     * @return the length of the minimum run to be merged
+     */
+    private static int minRunLength(int n) {
+        assert n >= 0;
+        int r = 0;      // Becomes 1 if any 1 bits are shifted off
+        while (n >= MIN_MERGE) {
+            r |= (n & 1);
+            n >>= 1;
+        }
+        return n + r;
+    }
+
+    /**
+     * Pushes the specified run onto the pending-run stack.
+     *
+     * @param runBase index of the first element in the run
+     * @param runLen  the number of elements in the run
+     */
+    private void pushRun(int runBase, int runLen) {
+        this.runBase[stackSize] = runBase;
+        this.runLen[stackSize] = runLen;
+        stackSize++;
+    }
+
+    /**
+     * Examines the stack of runs waiting to be merged and merges adjacent runs
+     * until the stack invariants are reestablished:
+     *
+     *     1. runLen[i - 3] > runLen[i - 2] + runLen[i - 1]
+     *     2. runLen[i - 2] > runLen[i - 1]
+     *
+     * This method is called each time a new run is pushed onto the stack,
+     * so the invariants are guaranteed to hold for i < stackSize upon
+     * entry to the method.
+     */
+    private void mergeCollapse() {
+        while (stackSize > 1) {
+            int n = stackSize - 2;
+            if (n > 0 && runLen[n-1] <= runLen[n] + runLen[n+1]) {
+                if (runLen[n - 1] < runLen[n + 1])
+                    n--;
+                mergeAt(n);
+            } else if (runLen[n] <= runLen[n + 1]) {
+                mergeAt(n);
+            } else {
+                break; // Invariant is established
+            }
+        }
+    }
+
+    /**
+     * Merges all runs on the stack until only one remains.  This method is
+     * called once, to complete the sort.
+     */
+    private void mergeForceCollapse() {
+        while (stackSize > 1) {
+            int n = stackSize - 2;
+            if (n > 0 && runLen[n - 1] < runLen[n + 1])
+                n--;
+            mergeAt(n);
+        }
+    }
+
+    /**
+     * Merges the two runs at stack indices i and i+1.  Run i must be
+     * the penultimate or antepenultimate run on the stack.  In other words,
+     * i must be equal to stackSize-2 or stackSize-3.
+     *
+     * @param i stack index of the first of the two runs to merge
+     */
+    private void mergeAt(int i) {
+        assert stackSize >= 2;
+        assert i >= 0;
+        assert i == stackSize - 2 || i == stackSize - 3;
+
+        int base1 = runBase[i];
+        int len1 = runLen[i];
+        int base2 = runBase[i + 1];
+        int len2 = runLen[i + 1];
+        assert len1 > 0 && len2 > 0;
+        assert base1 + len1 == base2;
+
+        /*
+         * Record the length of the combined runs; if i is the 3rd-last
+         * run now, also slide over the last run (which isn't involved
+         * in this merge).  The current run (i+1) goes away in any case.
+         */
+        runLen[i] = len1 + len2;
+        if (i == stackSize - 3) {
+            runBase[i + 1] = runBase[i + 2];
+            runLen[i + 1] = runLen[i + 2];
+        }
+        stackSize--;
+
+        /*
+         * Find where the first element of run2 goes in run1. Prior elements
+         * in run1 can be ignored (because they're already in place).
+         */
+        int k = gallopRight(a[base2], a, base1, len1, 0, c);
+        assert k >= 0;
+        base1 += k;
+        len1 -= k;
+        if (len1 == 0)
+            return;
+
+        /*
+         * Find where the last element of run1 goes in run2. Subsequent elements
+         * in run2 can be ignored (because they're already in place).
+         */
+        len2 = gallopLeft(a[base1 + len1 - 1], a, base2, len2, len2 - 1, c);
+        assert len2 >= 0;
+        if (len2 == 0)
+            return;
+
+        // Merge remaining runs, using tmp array with min(len1, len2) elements
+        if (len1 <= len2)
+            mergeLo(base1, len1, base2, len2);
+        else
+            mergeHi(base1, len1, base2, len2);
+    }
+
+    /**
+     * Locates the position at which to insert the specified key into the
+     * specified sorted range; if the range contains an element equal to key,
+     * returns the index of the leftmost equal element.
+     *
+     * @param key the key whose insertion point to search for
+     * @param a the array in which to search
+     * @param base the index of the first element in the range
+     * @param len the length of the range; must be > 0
+     * @param hint the index at which to begin the search, 0 <= hint < n.
+     *     The closer hint is to the result, the faster this method will run.
+     * @param c the comparator used to order the range, and to search
+     * @return the int k,  0 <= k <= n such that a[b + k - 1] < key <= a[b + k],
+     *    pretending that a[b - 1] is minus infinity and a[b + n] is infinity.
+     *    In other words, key belongs at index b + k; or in other words,
+     *    the first k elements of a should precede key, and the last n - k
+     *    should follow it.
+     */
+    private static <T> int gallopLeft(T key, T[] a, int base, int len, int hint,
+                                      Comparator<? super T> c) {
+        assert len > 0 && hint >= 0 && hint < len;
+        int lastOfs = 0;
+        int ofs = 1;
+        if (c.compare(key, a[base + hint]) > 0) {
+            // Gallop right until a[base+hint+lastOfs] < key <= a[base+hint+ofs]
+            int maxOfs = len - hint;
+            while (ofs < maxOfs && c.compare(key, a[base + hint + ofs]) > 0) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0)   // int overflow
+                    ofs = maxOfs;
+            }
+            if (ofs > maxOfs)
+                ofs = maxOfs;
+
+            // Make offsets relative to base
+            lastOfs += hint;
+            ofs += hint;
+        } else { // key <= a[base + hint]
+            // Gallop left until a[base+hint-ofs] < key <= a[base+hint-lastOfs]
+            final int maxOfs = hint + 1;
+            while (ofs < maxOfs && c.compare(key, a[base + hint - ofs]) <= 0) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0)   // int overflow
+                    ofs = maxOfs;
+            }
+            if (ofs > maxOfs)
+                ofs = maxOfs;
+
+            // Make offsets relative to base
+            int tmp = lastOfs;
+            lastOfs = hint - ofs;
+            ofs = hint - tmp;
+        }
+        assert -1 <= lastOfs && lastOfs < ofs && ofs <= len;
+
+        /*
+         * Now a[base+lastOfs] < key <= a[base+ofs], so key belongs somewhere
+         * to the right of lastOfs but no farther right than ofs.  Do a binary
+         * search, with invariant a[base + lastOfs - 1] < key <= a[base + ofs].
+         */
+        lastOfs++;
+        while (lastOfs < ofs) {
+            int m = lastOfs + ((ofs - lastOfs) >>> 1);
+
+            if (c.compare(key, a[base + m]) > 0)
+                lastOfs = m + 1;  // a[base + m] < key
+            else
+                ofs = m;          // key <= a[base + m]
+        }
+        assert lastOfs == ofs;    // so a[base + ofs - 1] < key <= a[base + ofs]
+        return ofs;
+    }
+
+    /**
+     * Like gallopLeft, except that if the range contains an element equal to
+     * key, gallopRight returns the index after the rightmost equal element.
+     *
+     * @param key the key whose insertion point to search for
+     * @param a the array in which to search
+     * @param base the index of the first element in the range
+     * @param len the length of the range; must be > 0
+     * @param hint the index at which to begin the search, 0 <= hint < n.
+     *     The closer hint is to the result, the faster this method will run.
+     * @param c the comparator used to order the range, and to search
+     * @return the int k,  0 <= k <= n such that a[b + k - 1] <= key < a[b + k]
+     */
+    private static <T> int gallopRight(T key, T[] a, int base, int len,
+                                       int hint, Comparator<? super T> c) {
+        assert len > 0 && hint >= 0 && hint < len;
+
+        int ofs = 1;
+        int lastOfs = 0;
+        if (c.compare(key, a[base + hint]) < 0) {
+            // Gallop left until a[b+hint - ofs] <= key < a[b+hint - lastOfs]
+            int maxOfs = hint + 1;
+            while (ofs < maxOfs && c.compare(key, a[base + hint - ofs]) < 0) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0)   // int overflow
+                    ofs = maxOfs;
+            }
+            if (ofs > maxOfs)
+                ofs = maxOfs;
+
+            // Make offsets relative to b
+            int tmp = lastOfs;
+            lastOfs = hint - ofs;
+            ofs = hint - tmp;
+        } else { // a[b + hint] <= key
+            // Gallop right until a[b+hint + lastOfs] <= key < a[b+hint + ofs]
+            int maxOfs = len - hint;
+            while (ofs < maxOfs && c.compare(key, a[base + hint + ofs]) >= 0) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0)   // int overflow
+                    ofs = maxOfs;
+            }
+            if (ofs > maxOfs)
+                ofs = maxOfs;
+
+            // Make offsets relative to b
+            lastOfs += hint;
+            ofs += hint;
+        }
+        assert -1 <= lastOfs && lastOfs < ofs && ofs <= len;
+
+        /*
+         * Now a[b + lastOfs] <= key < a[b + ofs], so key belongs somewhere to
+         * the right of lastOfs but no farther right than ofs.  Do a binary
+         * search, with invariant a[b + lastOfs - 1] <= key < a[b + ofs].
+         */
+        lastOfs++;
+        while (lastOfs < ofs) {
+            int m = lastOfs + ((ofs - lastOfs) >>> 1);
+
+            if (c.compare(key, a[base + m]) < 0)
+                ofs = m;          // key < a[b + m]
+            else
+                lastOfs = m + 1;  // a[b + m] <= key
+        }
+        assert lastOfs == ofs;    // so a[b + ofs - 1] <= key < a[b + ofs]
+        return ofs;
+    }
+
+    /**
+     * Merges two adjacent runs in place, in a stable fashion.  The first
+     * element of the first run must be greater than the first element of the
+     * second run (a[base1] > a[base2]), and the last element of the first run
+     * (a[base1 + len1-1]) must be greater than all elements of the second run.
+     *
+     * For performance, this method should be called only when len1 <= len2;
+     * its twin, mergeHi should be called if len1 >= len2.  (Either method
+     * may be called if len1 == len2.)
+     *
+     * @param base1 index of first element in first run to be merged
+     * @param len1  length of first run to be merged (must be > 0)
+     * @param base2 index of first element in second run to be merged
+     *        (must be aBase + aLen)
+     * @param len2  length of second run to be merged (must be > 0)
+     */
+    private void mergeLo(int base1, int len1, int base2, int len2) {
+        assert len1 > 0 && len2 > 0 && base1 + len1 == base2;
+
+        // Copy first run into temp array
+        T[] a = this.a; // For performance
+        T[] tmp = ensureCapacity(len1);
+        int cursor1 = tmpBase; // Indexes into tmp array
+        int cursor2 = base2;   // Indexes int a
+        int dest = base1;      // Indexes int a
+        System.arraycopy(a, base1, tmp, cursor1, len1);
+
+        // Move first element of second run and deal with degenerate cases
+        a[dest++] = a[cursor2++];
+        if (--len2 == 0) {
+            System.arraycopy(tmp, cursor1, a, dest, len1);
+            return;
+        }
+        if (len1 == 1) {
+            System.arraycopy(a, cursor2, a, dest, len2);
+            a[dest + len2] = tmp[cursor1]; // Last elt of run 1 to end of merge
+            return;
+        }
+
+        Comparator<? super T> c = this.c;  // Use local variable for performance
+        int minGallop = this.minGallop;    //  "    "       "     "      "
+    outer:
+        while (true) {
+            int count1 = 0; // Number of times in a row that first run won
+            int count2 = 0; // Number of times in a row that second run won
+
+            /*
+             * Do the straightforward thing until (if ever) one run starts
+             * winning consistently.
+             */
+            do {
+                assert len1 > 1 && len2 > 0;
+                if (c.compare(a[cursor2], tmp[cursor1]) < 0) {
+                    a[dest++] = a[cursor2++];
+                    count2++;
+                    count1 = 0;
+                    if (--len2 == 0)
+                        break outer;
+                } else {
+                    a[dest++] = tmp[cursor1++];
+                    count1++;
+                    count2 = 0;
+                    if (--len1 == 1)
+                        break outer;
+                }
+            } while ((count1 | count2) < minGallop);
+
+            /*
+             * One run is winning so consistently that galloping may be a
+             * huge win. So try that, and continue galloping until (if ever)
+             * neither run appears to be winning consistently anymore.
+             */
+            do {
+                assert len1 > 1 && len2 > 0;
+                count1 = gallopRight(a[cursor2], tmp, cursor1, len1, 0, c);
+                if (count1 != 0) {
+                    System.arraycopy(tmp, cursor1, a, dest, count1);
+                    dest += count1;
+                    cursor1 += count1;
+                    len1 -= count1;
+                    if (len1 <= 1) // len1 == 1 || len1 == 0
+                        break outer;
+                }
+                a[dest++] = a[cursor2++];
+                if (--len2 == 0)
+                    break outer;
+
+                count2 = gallopLeft(tmp[cursor1], a, cursor2, len2, 0, c);
+                if (count2 != 0) {
+                    System.arraycopy(a, cursor2, a, dest, count2);
+                    dest += count2;
+                    cursor2 += count2;
+                    len2 -= count2;
+                    if (len2 == 0)
+                        break outer;
+                }
+                a[dest++] = tmp[cursor1++];
+                if (--len1 == 1)
+                    break outer;
+                minGallop--;
+            } while (count1 >= MIN_GALLOP | count2 >= MIN_GALLOP);
+            if (minGallop < 0)
+                minGallop = 0;
+            minGallop += 2;  // Penalize for leaving gallop mode
+        }  // End of "outer" loop
+        this.minGallop = minGallop < 1 ? 1 : minGallop;  // Write back to field
+
+        if (len1 == 1) {
+            assert len2 > 0;
+            System.arraycopy(a, cursor2, a, dest, len2);
+            a[dest + len2] = tmp[cursor1]; //  Last elt of run 1 to end of merge
+        } else if (len1 == 0) {
+            throw new IllegalArgumentException(
+                "Comparison method violates its general contract!");
+        } else {
+            assert len2 == 0;
+            assert len1 > 1;
+            System.arraycopy(tmp, cursor1, a, dest, len1);
+        }
+    }
+
+    /**
+     * Like mergeLo, except that this method should be called only if
+     * len1 >= len2; mergeLo should be called if len1 <= len2.  (Either method
+     * may be called if len1 == len2.)
+     *
+     * @param base1 index of first element in first run to be merged
+     * @param len1  length of first run to be merged (must be > 0)
+     * @param base2 index of first element in second run to be merged
+     *        (must be aBase + aLen)
+     * @param len2  length of second run to be merged (must be > 0)
+     */
+    private void mergeHi(int base1, int len1, int base2, int len2) {
+        assert len1 > 0 && len2 > 0 && base1 + len1 == base2;
+
+        // Copy second run into temp array
+        T[] a = this.a; // For performance
+        T[] tmp = ensureCapacity(len2);
+        int tmpBase = this.tmpBase;
+        System.arraycopy(a, base2, tmp, tmpBase, len2);
+
+        int cursor1 = base1 + len1 - 1;  // Indexes into a
+        int cursor2 = tmpBase + len2 - 1; // Indexes into tmp array
+        int dest = base2 + len2 - 1;     // Indexes into a
+
+        // Move last element of first run and deal with degenerate cases
+        a[dest--] = a[cursor1--];
+        if (--len1 == 0) {
+            System.arraycopy(tmp, tmpBase, a, dest - (len2 - 1), len2);
+            return;
+        }
+        if (len2 == 1) {
+            dest -= len1;
+            cursor1 -= len1;
+            System.arraycopy(a, cursor1 + 1, a, dest + 1, len1);
+            a[dest] = tmp[cursor2];
+            return;
+        }
+
+        Comparator<? super T> c = this.c;  // Use local variable for performance
+        int minGallop = this.minGallop;    //  "    "       "     "      "
+    outer:
+        while (true) {
+            int count1 = 0; // Number of times in a row that first run won
+            int count2 = 0; // Number of times in a row that second run won
+
+            /*
+             * Do the straightforward thing until (if ever) one run
+             * appears to win consistently.
+             */
+            do {
+                assert len1 > 0 && len2 > 1;
+                if (c.compare(tmp[cursor2], a[cursor1]) < 0) {
+                    a[dest--] = a[cursor1--];
+                    count1++;
+                    count2 = 0;
+                    if (--len1 == 0)
+                        break outer;
+                } else {
+                    a[dest--] = tmp[cursor2--];
+                    count2++;
+                    count1 = 0;
+                    if (--len2 == 1)
+                        break outer;
+                }
+            } while ((count1 | count2) < minGallop);
+
+            /*
+             * One run is winning so consistently that galloping may be a
+             * huge win. So try that, and continue galloping until (if ever)
+             * neither run appears to be winning consistently anymore.
+             */
+            do {
+                assert len1 > 0 && len2 > 1;
+                count1 = len1 - gallopRight(tmp[cursor2], a, base1, len1, len1 - 1, c);
+                if (count1 != 0) {
+                    dest -= count1;
+                    cursor1 -= count1;
+                    len1 -= count1;
+                    System.arraycopy(a, cursor1 + 1, a, dest + 1, count1);
+                    if (len1 == 0)
+                        break outer;
+                }
+                a[dest--] = tmp[cursor2--];
+                if (--len2 == 1)
+                    break outer;
+
+                count2 = len2 - gallopLeft(a[cursor1], tmp, tmpBase, len2, len2 - 1, c);
+                if (count2 != 0) {
+                    dest -= count2;
+                    cursor2 -= count2;
+                    len2 -= count2;
+                    System.arraycopy(tmp, cursor2 + 1, a, dest + 1, count2);
+                    if (len2 <= 1)  // len2 == 1 || len2 == 0
+                        break outer;
+                }
+                a[dest--] = a[cursor1--];
+                if (--len1 == 0)
+                    break outer;
+                minGallop--;
+            } while (count1 >= MIN_GALLOP | count2 >= MIN_GALLOP);
+            if (minGallop < 0)
+                minGallop = 0;
+            minGallop += 2;  // Penalize for leaving gallop mode
+        }  // End of "outer" loop
+        this.minGallop = minGallop < 1 ? 1 : minGallop;  // Write back to field
+
+        if (len2 == 1) {
+            assert len1 > 0;
+            dest -= len1;
+            cursor1 -= len1;
+            System.arraycopy(a, cursor1 + 1, a, dest + 1, len1);
+            a[dest] = tmp[cursor2];  // Move first elt of run2 to front of merge
+        } else if (len2 == 0) {
+            throw new IllegalArgumentException(
+                "Comparison method violates its general contract!");
+        } else {
+            assert len1 == 0;
+            assert len2 > 0;
+            System.arraycopy(tmp, tmpBase, a, dest - (len2 - 1), len2);
+        }
+    }
+
+    /**
+     * Ensures that the external array tmp has at least the specified
+     * number of elements, increasing its size if necessary.  The size
+     * increases exponentially to ensure amortized linear time complexity.
+     *
+     * @param minCapacity the minimum required capacity of the tmp array
+     * @return tmp, whether or not it grew
+     */
+    private T[] ensureCapacity(int minCapacity) {
+        if (tmpLen < minCapacity) {
+            // Compute smallest power of 2 > minCapacity
+            int newSize = minCapacity;
+            newSize |= newSize >> 1;
+            newSize |= newSize >> 2;
+            newSize |= newSize >> 4;
+            newSize |= newSize >> 8;
+            newSize |= newSize >> 16;
+            newSize++;
+
+            if (newSize < 0) // Not bloody likely!
+                newSize = minCapacity;
+            else
+                newSize = Math.min(newSize, a.length >>> 1);
+
+            @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+            T[] newArray = (T[])java.lang.reflect.Array.newInstance
+                (a.getClass().getComponentType(), newSize);
+            tmp = newArray;
+            tmpLen = newSize;
+            tmpBase = 0;
+        }
+        return tmp;
+    }
+}

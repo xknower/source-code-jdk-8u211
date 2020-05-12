@@ -1,18 +1,62 @@
+/*
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.xml.bind.annotation.adapters;
 
-import java.lang.annotation.ElementType;
+import static java.lang.annotation.ElementType.PACKAGE;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PACKAGE})
-public @interface XmlJavaTypeAdapters {
-  XmlJavaTypeAdapter[] value();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\bind\annotation\adapters\XmlJavaTypeAdapters.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * <p>
+ * A container for multiple @{@link XmlJavaTypeAdapter} annotations.
+ *
+ * <p> Multiple annotations of the same type are not allowed on a program
+ * element. This annotation therefore serves as a container annotation
+ * for multiple &#64;XmlJavaTypeAdapter as follows:
+ *
+ * <pre>
+ * &#64;XmlJavaTypeAdapters ({ @XmlJavaTypeAdapter(...),@XmlJavaTypeAdapter(...) })
+ * </pre>
+ *
+ * <p>The <tt>@XmlJavaTypeAdapters</tt> annnotation is useful for
+ * defining {@link XmlJavaTypeAdapter} annotations for different types
+ * at the package level.
+ *
+ * <p>See "Package Specification" in javax.xml.bind.package javadoc for
+ * additional common information.</p>
+ *
+ * @author <ul><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li></ul>
+ * @see XmlJavaTypeAdapter
+ * @since JAXB2.0
  */
+@Retention(RUNTIME) @Target({PACKAGE})
+public @interface XmlJavaTypeAdapters {
+    /**
+     * Collection of @{@link XmlJavaTypeAdapter} annotations
+     */
+    XmlJavaTypeAdapter[] value();
+}

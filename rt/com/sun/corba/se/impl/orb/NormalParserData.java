@@ -1,58 +1,52 @@
-/*    */ package com.sun.corba.se.impl.orb;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orb.Operation;
-/*    */ import com.sun.corba.se.spi.orb.PropertyParser;
-/*    */ import java.util.Properties;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NormalParserData
-/*    */   extends ParserDataBase
-/*    */ {
-/*    */   private String testData;
-/*    */   
-/*    */   public NormalParserData(String paramString1, Operation paramOperation, String paramString2, Object paramObject1, Object paramObject2, String paramString3) {
-/* 40 */     super(paramString1, paramOperation, paramString2, paramObject1, paramObject2);
-/* 41 */     this.testData = paramString3;
-/*    */   }
-/*    */   
-/*    */   public void addToParser(PropertyParser paramPropertyParser) {
-/* 45 */     paramPropertyParser.add(getPropertyName(), getOperation(), getFieldName());
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void addToProperties(Properties paramProperties) {
-/* 50 */     paramProperties.setProperty(getPropertyName(), this.testData);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\NormalParserData.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orb ;
+
+import java.util.Properties ;
+
+import com.sun.corba.se.spi.orb.Operation ;
+import com.sun.corba.se.spi.orb.PropertyParser ;
+
+public class NormalParserData extends ParserDataBase {
+    private String testData ;
+
+    public NormalParserData( String  propertyName,
+        Operation operation, String fieldName, Object defaultValue,
+        Object testValue, String testData )
+    {
+        super( propertyName, operation, fieldName, defaultValue, testValue ) ;
+        this.testData = testData ;
+    }
+    public void addToParser( PropertyParser parser )
+    {
+        parser.add( getPropertyName(), getOperation(), getFieldName() ) ;
+    }
+
+    public void addToProperties( Properties props )
+    {
+        props.setProperty( getPropertyName(), testData ) ;
+    }
+}

@@ -1,208 +1,202 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.javax.rmi.CORBA.Util;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import org.omg.PortableServer.POAPackage.ObjectAlreadyActive;
-/*     */ import org.omg.PortableServer.POAPackage.ObjectNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
-/*     */ import org.omg.PortableServer.POAPackage.ServantNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.WrongPolicy;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class POAPolicyMediatorBase_R
-/*     */   extends POAPolicyMediatorBase
-/*     */ {
-/*     */   protected ActiveObjectMap activeObjectMap;
-/*     */   
-/*     */   POAPolicyMediatorBase_R(Policies paramPolicies, POAImpl paramPOAImpl) {
-/*  50 */     super(paramPolicies, paramPOAImpl);
-/*     */ 
-/*     */     
-/*  53 */     if (!paramPolicies.retainServants()) {
-/*  54 */       throw paramPOAImpl.invocationWrapper().policyMediatorBadPolicyInFactory();
-/*     */     }
-/*  56 */     this.activeObjectMap = ActiveObjectMap.create(paramPOAImpl, !this.isUnique);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void returnServant() {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clearAOM() {
-/*  66 */     this.activeObjectMap.clear();
-/*  67 */     this.activeObjectMap = null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Servant internalKeyToServant(ActiveObjectMap.Key paramKey) {
-/*  72 */     AOMEntry aOMEntry = this.activeObjectMap.get(paramKey);
-/*  73 */     if (aOMEntry == null) {
-/*  74 */       return null;
-/*     */     }
-/*  76 */     return this.activeObjectMap.getServant(aOMEntry);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Servant internalIdToServant(byte[] paramArrayOfbyte) {
-/*  81 */     ActiveObjectMap.Key key = new ActiveObjectMap.Key(paramArrayOfbyte);
-/*  82 */     return internalKeyToServant(key);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void activateServant(ActiveObjectMap.Key paramKey, AOMEntry paramAOMEntry, Servant paramServant) {
-/*  87 */     setDelegate(paramServant, paramKey.id);
-/*     */     
-/*  89 */     if (this.orb.shutdownDebugFlag) {
-/*  90 */       System.out.println("Activating object " + paramServant + " with POA " + this.poa);
-/*     */     }
-/*     */ 
-/*     */     
-/*  94 */     this.activeObjectMap.putServant(paramServant, paramAOMEntry);
-/*     */     
-/*  96 */     if (Util.isInstanceDefined()) {
-/*  97 */       POAManagerImpl pOAManagerImpl = (POAManagerImpl)this.poa.the_POAManager();
-/*  98 */       POAFactory pOAFactory = pOAManagerImpl.getFactory();
-/*  99 */       pOAFactory.registerPOAForServant(this.poa, paramServant);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void activateObject(byte[] paramArrayOfbyte, Servant paramServant) throws WrongPolicy, ServantAlreadyActive, ObjectAlreadyActive {
-/* 106 */     if (this.isUnique && this.activeObjectMap.contains(paramServant))
-/* 107 */       throw new ServantAlreadyActive(); 
-/* 108 */     ActiveObjectMap.Key key = new ActiveObjectMap.Key(paramArrayOfbyte);
-/*     */     
-/* 110 */     AOMEntry aOMEntry = this.activeObjectMap.get(key);
-/*     */ 
-/*     */     
-/* 113 */     aOMEntry.activateObject();
-/* 114 */     activateServant(key, aOMEntry, paramServant);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Servant deactivateObject(byte[] paramArrayOfbyte) throws ObjectNotActive, WrongPolicy {
-/* 120 */     ActiveObjectMap.Key key = new ActiveObjectMap.Key(paramArrayOfbyte);
-/* 121 */     return deactivateObject(key);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void deactivateHelper(ActiveObjectMap.Key paramKey, AOMEntry paramAOMEntry, Servant paramServant) throws ObjectNotActive, WrongPolicy {
-/* 130 */     this.activeObjectMap.remove(paramKey);
-/*     */     
-/* 132 */     if (Util.isInstanceDefined()) {
-/* 133 */       POAManagerImpl pOAManagerImpl = (POAManagerImpl)this.poa.the_POAManager();
-/* 134 */       POAFactory pOAFactory = pOAManagerImpl.getFactory();
-/* 135 */       pOAFactory.unregisterPOAForServant(this.poa, paramServant);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Servant deactivateObject(ActiveObjectMap.Key paramKey) throws ObjectNotActive, WrongPolicy {
-/* 142 */     if (this.orb.poaDebugFlag) {
-/* 143 */       ORBUtility.dprint(this, "Calling deactivateObject for key " + paramKey);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 148 */       AOMEntry aOMEntry = this.activeObjectMap.get(paramKey);
-/* 149 */       if (aOMEntry == null) {
-/* 150 */         throw new ObjectNotActive();
-/*     */       }
-/* 152 */       Servant servant = this.activeObjectMap.getServant(aOMEntry);
-/* 153 */       if (servant == null) {
-/* 154 */         throw new ObjectNotActive();
-/*     */       }
-/* 156 */       if (this.orb.poaDebugFlag) {
-/* 157 */         System.out.println("Deactivating object " + servant + " with POA " + this.poa);
-/*     */       }
-/*     */       
-/* 160 */       deactivateHelper(paramKey, aOMEntry, servant);
-/*     */       
-/* 162 */       return servant;
-/*     */     } finally {
-/* 164 */       if (this.orb.poaDebugFlag) {
-/* 165 */         ORBUtility.dprint(this, "Exiting deactivateObject");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte[] servantToId(Servant paramServant) throws ServantNotActive, WrongPolicy {
-/* 175 */     if (!this.isUnique && !this.isImplicit) {
-/* 176 */       throw new WrongPolicy();
-/*     */     }
-/* 178 */     if (this.isUnique) {
-/* 179 */       ActiveObjectMap.Key key = this.activeObjectMap.getKey(paramServant);
-/* 180 */       if (key != null) {
-/* 181 */         return key.id;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 186 */     if (this.isImplicit) {
-/*     */       try {
-/* 188 */         byte[] arrayOfByte = newSystemId();
-/* 189 */         activateObject(arrayOfByte, paramServant);
-/* 190 */         return arrayOfByte;
-/* 191 */       } catch (ObjectAlreadyActive objectAlreadyActive) {
-/*     */         
-/* 193 */         throw this.poa.invocationWrapper().servantToIdOaa(objectAlreadyActive);
-/* 194 */       } catch (ServantAlreadyActive servantAlreadyActive) {
-/* 195 */         throw this.poa.invocationWrapper().servantToIdSaa(servantAlreadyActive);
-/* 196 */       } catch (WrongPolicy wrongPolicy) {
-/* 197 */         throw this.poa.invocationWrapper().servantToIdWp(wrongPolicy);
-/*     */       } 
-/*     */     }
-/* 200 */     throw new ServantNotActive();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\POAPolicyMediatorBase_R.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa ;
+
+import org.omg.PortableServer.Servant ;
+
+import org.omg.PortableServer.POAPackage.WrongPolicy ;
+import org.omg.PortableServer.POAPackage.ServantNotActive ;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive ;
+import org.omg.PortableServer.POAPackage.ObjectNotActive ;
+import org.omg.PortableServer.POAPackage.ObjectAlreadyActive ;
+
+import com.sun.corba.se.impl.orbutil.concurrent.SyncUtil ;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+
+import com.sun.corba.se.impl.javax.rmi.CORBA.Util ;
+
+import com.sun.corba.se.impl.oa.NullServantImpl ;
+
+public abstract class POAPolicyMediatorBase_R extends POAPolicyMediatorBase {
+    protected ActiveObjectMap activeObjectMap ;
+
+    POAPolicyMediatorBase_R( Policies policies, POAImpl poa )
+    {
+        super( policies, poa ) ;
+
+        // assert policies.retainServants() && policies.useActiveObjectMapOnly()
+        if (!policies.retainServants())
+            throw poa.invocationWrapper().policyMediatorBadPolicyInFactory() ;
+
+        activeObjectMap = ActiveObjectMap.create(poa, !isUnique);
+    }
+
+    public void returnServant()
+    {
+        // NO-OP
+    }
+
+    public void clearAOM()
+    {
+        activeObjectMap.clear() ;
+        activeObjectMap = null ;
+    }
+
+    protected Servant internalKeyToServant( ActiveObjectMap.Key key )
+    {
+        AOMEntry entry = activeObjectMap.get(key);
+        if (entry == null)
+            return null ;
+
+        return activeObjectMap.getServant( entry ) ;
+    }
+
+    protected Servant internalIdToServant( byte[] id )
+    {
+        ActiveObjectMap.Key key = new ActiveObjectMap.Key( id ) ;
+        return internalKeyToServant( key ) ;
+    }
+
+    protected void activateServant( ActiveObjectMap.Key key, AOMEntry entry, Servant servant )
+    {
+        setDelegate(servant, key.id );
+
+        if (orb.shutdownDebugFlag) {
+            System.out.println("Activating object " + servant +
+                " with POA " + poa);
+        }
+
+        activeObjectMap.putServant( servant, entry ) ;
+
+        if (Util.isInstanceDefined()) {
+            POAManagerImpl pm = (POAManagerImpl)poa.the_POAManager() ;
+            POAFactory factory = pm.getFactory() ;
+            factory.registerPOAForServant(poa, servant);
+        }
+    }
+
+    public final void activateObject(byte[] id, Servant servant)
+        throws WrongPolicy, ServantAlreadyActive, ObjectAlreadyActive
+    {
+        if (isUnique && activeObjectMap.contains(servant))
+            throw new ServantAlreadyActive();
+        ActiveObjectMap.Key key = new ActiveObjectMap.Key( id ) ;
+
+        AOMEntry entry = activeObjectMap.get( key ) ;
+
+        // Check for an ObjectAlreadyActive error
+        entry.activateObject() ;
+        activateServant( key, entry, servant ) ;
+    }
+
+    public Servant deactivateObject( byte[] id )
+        throws ObjectNotActive, WrongPolicy
+    {
+        ActiveObjectMap.Key key = new ActiveObjectMap.Key( id ) ;
+        return deactivateObject( key ) ;
+    }
+
+    protected void deactivateHelper( ActiveObjectMap.Key key, AOMEntry entry,
+        Servant s ) throws ObjectNotActive, WrongPolicy
+    {
+        // Default does nothing, but the USE_SERVANT_MANAGER case
+        // must handle etherealization
+
+        activeObjectMap.remove(key);
+
+        if (Util.isInstanceDefined()) {
+            POAManagerImpl pm = (POAManagerImpl)poa.the_POAManager() ;
+            POAFactory factory = pm.getFactory() ;
+            factory.unregisterPOAForServant(poa, s);
+        }
+    }
+
+    public Servant deactivateObject( ActiveObjectMap.Key key )
+        throws ObjectNotActive, WrongPolicy
+    {
+        if (orb.poaDebugFlag) {
+            ORBUtility.dprint( this,
+                "Calling deactivateObject for key " + key ) ;
+        }
+
+        try {
+            AOMEntry entry = activeObjectMap.get(key);
+            if (entry == null)
+                throw new ObjectNotActive();
+
+            Servant s = activeObjectMap.getServant( entry ) ;
+            if (s == null)
+                throw new ObjectNotActive();
+
+            if (orb.poaDebugFlag) {
+                System.out.println("Deactivating object " + s + " with POA " + poa);
+            }
+
+            deactivateHelper( key, entry, s ) ;
+
+            return s ;
+        } finally {
+            if (orb.poaDebugFlag) {
+                ORBUtility.dprint( this,
+                    "Exiting deactivateObject" ) ;
+            }
+        }
+    }
+
+    public byte[] servantToId( Servant servant ) throws ServantNotActive, WrongPolicy
+    {
+        // XXX needs to handle call from an invocation on this POA
+
+        if (!isUnique && !isImplicit)
+            throw new WrongPolicy();
+
+        if (isUnique) {
+            ActiveObjectMap.Key key = activeObjectMap.getKey(servant);
+            if (key != null)
+                return key.id ;
+        }
+
+        // assert !isUnique || (servant not in activateObjectMap)
+
+        if (isImplicit)
+            try {
+                byte[] id = newSystemId() ;
+                activateObject( id, servant ) ;
+                return id ;
+            } catch (ObjectAlreadyActive oaa) {
+                // This can't occur here, since id is always brand new.
+                throw poa.invocationWrapper().servantToIdOaa( oaa ) ;
+            } catch (ServantAlreadyActive s) {
+                throw poa.invocationWrapper().servantToIdSaa( s ) ;
+            } catch (WrongPolicy w) {
+                throw poa.invocationWrapper().servantToIdWp( w ) ;
+            }
+
+        throw new ServantNotActive();
+    }
+}

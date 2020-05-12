@@ -1,53 +1,47 @@
-/*    */ package com.sun.jmx.snmp;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SnmpUnknownAccContrModelException
-/*    */   extends SnmpUnknownModelException
-/*    */ {
-/*    */   private static final long serialVersionUID = -8831186713954487538L;
-/*    */   
-/*    */   public SnmpUnknownAccContrModelException(String paramString) {
-/* 45 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpUnknownAccContrModelException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp;
+
+import com.sun.jmx.snmp.SnmpUnknownModelException;
+
+/**
+ * This exception is thrown when an
+ * <CODE>SnmpAccessControlSubSystem</CODE> doesn't know the passed ID.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+public class SnmpUnknownAccContrModelException extends SnmpUnknownModelException {
+    private static final long serialVersionUID = -8831186713954487538L;
+
+    /**
+     * Constructor.
+     * @param msg The exception msg to display.
+     */
+    public SnmpUnknownAccContrModelException(String msg) {
+        super(msg);
+    }
+}

@@ -1,731 +1,725 @@
-/*     */ package java.awt.image.renderable;
-/*     */ 
-/*     */ import java.awt.image.RenderedImage;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ParameterBlock
-/*     */   implements Cloneable, Serializable
-/*     */ {
-/*  97 */   protected Vector<Object> sources = new Vector();
-/*     */ 
-/*     */   
-/* 100 */   protected Vector<Object> parameters = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock(Vector<Object> paramVector) {
-/* 111 */     setSources(paramVector);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock(Vector<Object> paramVector1, Vector<Object> paramVector2) {
-/* 124 */     setSources(paramVector1);
-/* 125 */     setParameters(paramVector2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object shallowClone() {
-/*     */     try {
-/* 137 */       return super.clone();
-/* 138 */     } catch (Exception exception) {
-/*     */       
-/* 140 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     ParameterBlock parameterBlock;
-/*     */     try {
-/* 158 */       parameterBlock = (ParameterBlock)super.clone();
-/* 159 */     } catch (Exception exception) {
-/*     */       
-/* 161 */       return null;
-/*     */     } 
-/*     */     
-/* 164 */     if (this.sources != null) {
-/* 165 */       parameterBlock.setSources((Vector<Object>)this.sources.clone());
-/*     */     }
-/* 167 */     if (this.parameters != null) {
-/* 168 */       parameterBlock.setParameters((Vector<Object>)this.parameters.clone());
-/*     */     }
-/* 170 */     return parameterBlock;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock addSource(Object paramObject) {
-/* 183 */     this.sources.addElement(paramObject);
-/* 184 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getSource(int paramInt) {
-/* 198 */     return this.sources.elementAt(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock setSource(Object paramObject, int paramInt) {
-/* 215 */     int i = this.sources.size();
-/* 216 */     int j = paramInt + 1;
-/* 217 */     if (i < j) {
-/* 218 */       this.sources.setSize(j);
-/*     */     }
-/* 220 */     this.sources.setElementAt(paramObject, paramInt);
-/* 221 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RenderedImage getRenderedSource(int paramInt) {
-/* 235 */     return (RenderedImage)this.sources.elementAt(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public RenderableImage getRenderableSource(int paramInt) {
-/* 249 */     return (RenderableImage)this.sources.elementAt(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getNumSources() {
-/* 258 */     return this.sources.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Vector<Object> getSources() {
-/* 267 */     return this.sources;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSources(Vector<Object> paramVector) {
-/* 276 */     this.sources = paramVector;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void removeSources() {
-/* 281 */     this.sources = new Vector();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getNumParameters() {
-/* 290 */     return this.parameters.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Vector<Object> getParameters() {
-/* 299 */     return this.parameters;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setParameters(Vector<Object> paramVector) {
-/* 309 */     this.parameters = paramVector;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void removeParameters() {
-/* 314 */     this.parameters = new Vector();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(Object paramObject) {
-/* 325 */     this.parameters.addElement(paramObject);
-/* 326 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(byte paramByte) {
-/* 337 */     return add(new Byte(paramByte));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(char paramChar) {
-/* 348 */     return add(new Character(paramChar));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(short paramShort) {
-/* 359 */     return add(new Short(paramShort));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(int paramInt) {
-/* 370 */     return add(new Integer(paramInt));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(long paramLong) {
-/* 381 */     return add(new Long(paramLong));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(float paramFloat) {
-/* 392 */     return add(new Float(paramFloat));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock add(double paramDouble) {
-/* 403 */     return add(new Double(paramDouble));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(Object paramObject, int paramInt) {
-/* 419 */     int i = this.parameters.size();
-/* 420 */     int j = paramInt + 1;
-/* 421 */     if (i < j) {
-/* 422 */       this.parameters.setSize(j);
-/*     */     }
-/* 424 */     this.parameters.setElementAt(paramObject, paramInt);
-/* 425 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(byte paramByte, int paramInt) {
-/* 441 */     return set(new Byte(paramByte), paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(char paramChar, int paramInt) {
-/* 457 */     return set(new Character(paramChar), paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(short paramShort, int paramInt) {
-/* 473 */     return set(new Short(paramShort), paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(int paramInt1, int paramInt2) {
-/* 489 */     return set(new Integer(paramInt1), paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(long paramLong, int paramInt) {
-/* 505 */     return set(new Long(paramLong), paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(float paramFloat, int paramInt) {
-/* 521 */     return set(new Float(paramFloat), paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ParameterBlock set(double paramDouble, int paramInt) {
-/* 537 */     return set(new Double(paramDouble), paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getObjectParameter(int paramInt) {
-/* 549 */     return this.parameters.elementAt(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte getByteParameter(int paramInt) {
-/* 569 */     return ((Byte)this.parameters.elementAt(paramInt)).byteValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char getCharParameter(int paramInt) {
-/* 589 */     return ((Character)this.parameters.elementAt(paramInt)).charValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getShortParameter(int paramInt) {
-/* 609 */     return ((Short)this.parameters.elementAt(paramInt)).shortValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIntParameter(int paramInt) {
-/* 629 */     return ((Integer)this.parameters.elementAt(paramInt)).intValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long getLongParameter(int paramInt) {
-/* 649 */     return ((Long)this.parameters.elementAt(paramInt)).longValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getFloatParameter(int paramInt) {
-/* 669 */     return ((Float)this.parameters.elementAt(paramInt)).floatValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double getDoubleParameter(int paramInt) {
-/* 689 */     return ((Double)this.parameters.elementAt(paramInt)).doubleValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class[] getParamClasses() {
-/* 698 */     int i = getNumParameters();
-/* 699 */     Class[] arrayOfClass = new Class[i];
-/*     */ 
-/*     */     
-/* 702 */     for (byte b = 0; b < i; b++) {
-/* 703 */       Object object = getObjectParameter(b);
-/* 704 */       if (object instanceof Byte) {
-/* 705 */         arrayOfClass[b] = byte.class;
-/* 706 */       } else if (object instanceof Character) {
-/* 707 */         arrayOfClass[b] = char.class;
-/* 708 */       } else if (object instanceof Short) {
-/* 709 */         arrayOfClass[b] = short.class;
-/* 710 */       } else if (object instanceof Integer) {
-/* 711 */         arrayOfClass[b] = int.class;
-/* 712 */       } else if (object instanceof Long) {
-/* 713 */         arrayOfClass[b] = long.class;
-/* 714 */       } else if (object instanceof Float) {
-/* 715 */         arrayOfClass[b] = float.class;
-/* 716 */       } else if (object instanceof Double) {
-/* 717 */         arrayOfClass[b] = double.class;
-/*     */       } else {
-/* 719 */         arrayOfClass[b] = object.getClass();
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 723 */     return arrayOfClass;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\renderable\ParameterBlock.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image.renderable;
+import java.awt.image.RenderedImage;
+import java.io.Serializable;
+import java.util.Vector;
+
+/**
+ * A <code>ParameterBlock</code> encapsulates all the information about sources and
+ * parameters (Objects) required by a RenderableImageOp, or other
+ * classes that process images.
+ *
+ * <p> Although it is possible to place arbitrary objects in the
+ * source Vector, users of this class may impose semantic constraints
+ * such as requiring all sources to be RenderedImages or
+ * RenderableImage.  <code>ParameterBlock</code> itself is merely a container and
+ * performs no checking on source or parameter types.
+ *
+ * <p> All parameters in a <code>ParameterBlock</code> are objects; convenience
+ * add and set methods are available that take arguments of base type and
+ * construct the appropriate subclass of Number (such as
+ * Integer or Float).  Corresponding get methods perform a
+ * downward cast and have return values of base type; an exception
+ * will be thrown if the stored values do not have the correct type.
+ * There is no way to distinguish between the results of
+ * "short s; add(s)" and "add(new Short(s))".
+ *
+ * <p> Note that the get and set methods operate on references.
+ * Therefore, one must be careful not to share references between
+ * <code>ParameterBlock</code>s when this is inappropriate.  For example, to create
+ * a new <code>ParameterBlock</code> that is equal to an old one except for an
+ * added source, one might be tempted to write:
+ *
+ * <pre>
+ * ParameterBlock addSource(ParameterBlock pb, RenderableImage im) {
+ *     ParameterBlock pb1 = new ParameterBlock(pb.getSources());
+ *     pb1.addSource(im);
+ *     return pb1;
+ * }
+ * </pre>
+ *
+ * <p> This code will have the side effect of altering the original
+ * <code>ParameterBlock</code>, since the getSources operation returned a reference
+ * to its source Vector.  Both pb and pb1 share their source Vector,
+ * and a change in either is visible to both.
+ *
+ * <p> A correct way to write the addSource function is to clone
+ * the source Vector:
+ *
+ * <pre>
+ * ParameterBlock addSource (ParameterBlock pb, RenderableImage im) {
+ *     ParameterBlock pb1 = new ParameterBlock(pb.getSources().clone());
+ *     pb1.addSource(im);
+ *     return pb1;
+ * }
+ * </pre>
+ *
+ * <p> The clone method of <code>ParameterBlock</code> has been defined to
+ * perform a clone of both the source and parameter Vectors for
+ * this reason.  A standard, shallow clone is available as
+ * shallowClone.
+ *
+ * <p> The addSource, setSource, add, and set methods are
+ * defined to return 'this' after adding their argument.  This allows
+ * use of syntax like:
+ *
+ * <pre>
+ * ParameterBlock pb = new ParameterBlock();
+ * op = new RenderableImageOp("operation", pb.add(arg1).add(arg2));
+ * </pre>
+ * */
+public class ParameterBlock implements Cloneable, Serializable {
+    /** A Vector of sources, stored as arbitrary Objects. */
+    protected Vector<Object> sources = new Vector<Object>();
+
+    /** A Vector of non-source parameters, stored as arbitrary Objects. */
+    protected Vector<Object> parameters = new Vector<Object>();
+
+    /** A dummy constructor. */
+    public ParameterBlock() {}
+
+    /**
+     * Constructs a <code>ParameterBlock</code> with a given Vector
+     * of sources.
+     * @param sources a <code>Vector</code> of source images
+     */
+    public ParameterBlock(Vector<Object> sources) {
+        setSources(sources);
+    }
+
+    /**
+     * Constructs a <code>ParameterBlock</code> with a given Vector of sources and
+     * Vector of parameters.
+     * @param sources a <code>Vector</code> of source images
+     * @param parameters a <code>Vector</code> of parameters to be used in the
+     *        rendering operation
+     */
+    public ParameterBlock(Vector<Object> sources,
+                          Vector<Object> parameters)
+    {
+        setSources(sources);
+        setParameters(parameters);
+    }
+
+    /**
+     * Creates a shallow copy of a <code>ParameterBlock</code>.  The source and
+     * parameter Vectors are copied by reference -- additions or
+     * changes will be visible to both versions.
+     *
+     * @return an Object clone of the <code>ParameterBlock</code>.
+     */
+    public Object shallowClone() {
+        try {
+            return super.clone();
+        } catch (Exception e) {
+            // We can't be here since we implement Cloneable.
+            return null;
+        }
+    }
+
+    /**
+     * Creates a copy of a <code>ParameterBlock</code>.  The source and parameter
+     * Vectors are cloned, but the actual sources and parameters are
+     * copied by reference.  This allows modifications to the order
+     * and number of sources and parameters in the clone to be invisible
+     * to the original <code>ParameterBlock</code>.  Changes to the shared sources or
+     * parameters themselves will still be visible.
+     *
+     * @return an Object clone of the <code>ParameterBlock</code>.
+     */
+    public Object clone() {
+        ParameterBlock theClone;
+
+        try {
+            theClone = (ParameterBlock) super.clone();
+        } catch (Exception e) {
+            // We can't be here since we implement Cloneable.
+            return null;
+        }
+
+        if (sources != null) {
+            theClone.setSources((Vector)sources.clone());
+        }
+        if (parameters != null) {
+            theClone.setParameters((Vector)parameters.clone());
+        }
+        return (Object) theClone;
+    }
+
+    /**
+     * Adds an image to end of the list of sources.  The image is
+     * stored as an object in order to allow new node types in the
+     * future.
+     *
+     * @param source an image object to be stored in the source list.
+     * @return a new <code>ParameterBlock</code> containing the specified
+     *         <code>source</code>.
+     */
+    public ParameterBlock addSource(Object source) {
+        sources.addElement(source);
+        return this;
+    }
+
+    /**
+     * Returns a source as a general Object.  The caller must cast it into
+     * an appropriate type.
+     *
+     * @param index the index of the source to be returned.
+     * @return an <code>Object</code> that represents the source located
+     *         at the specified index in the <code>sources</code>
+     *         <code>Vector</code>.
+     * @see #setSource(Object, int)
+     */
+    public Object getSource(int index) {
+        return sources.elementAt(index);
+    }
+
+    /**
+     * Replaces an entry in the list of source with a new source.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param source the specified source image
+     * @param index the index into the <code>sources</code>
+     *              <code>Vector</code> at which to
+     *              insert the specified <code>source</code>
+     * @return a new <code>ParameterBlock</code> that contains the
+     *         specified <code>source</code> at the specified
+     *         <code>index</code>.
+     * @see #getSource(int)
+     */
+    public ParameterBlock setSource(Object source, int index) {
+        int oldSize = sources.size();
+        int newSize = index + 1;
+        if (oldSize < newSize) {
+            sources.setSize(newSize);
+        }
+        sources.setElementAt(source, index);
+        return this;
+    }
+
+    /**
+     * Returns a source as a <code>RenderedImage</code>.  This method is
+     * a convenience method.
+     * An exception will be thrown if the source is not a RenderedImage.
+     *
+     * @param index the index of the source to be returned
+     * @return a <code>RenderedImage</code> that represents the source
+     *         image that is at the specified index in the
+     *         <code>sources</code> <code>Vector</code>.
+     */
+    public RenderedImage getRenderedSource(int index) {
+        return (RenderedImage) sources.elementAt(index);
+    }
+
+    /**
+     * Returns a source as a RenderableImage.  This method is a
+     * convenience method.
+     * An exception will be thrown if the sources is not a RenderableImage.
+     *
+     * @param index the index of the source to be returned
+     * @return a <code>RenderableImage</code> that represents the source
+     *         image that is at the specified index in the
+     *         <code>sources</code> <code>Vector</code>.
+     */
+    public RenderableImage getRenderableSource(int index) {
+        return (RenderableImage) sources.elementAt(index);
+    }
+
+    /**
+     * Returns the number of source images.
+     * @return the number of source images in the <code>sources</code>
+     *         <code>Vector</code>.
+     */
+    public int getNumSources() {
+        return sources.size();
+    }
+
+    /**
+     * Returns the entire Vector of sources.
+     * @return the <code>sources</code> <code>Vector</code>.
+     * @see #setSources(Vector)
+     */
+    public Vector<Object> getSources() {
+        return sources;
+    }
+
+    /**
+     * Sets the entire Vector of sources to a given Vector.
+     * @param sources the <code>Vector</code> of source images
+     * @see #getSources
+     */
+    public void setSources(Vector<Object> sources) {
+        this.sources = sources;
+    }
+
+    /** Clears the list of source images. */
+    public void removeSources() {
+        sources = new Vector();
+    }
+
+    /**
+     * Returns the number of parameters (not including source images).
+     * @return the number of parameters in the <code>parameters</code>
+     *         <code>Vector</code>.
+     */
+    public int getNumParameters() {
+        return parameters.size();
+    }
+
+    /**
+     * Returns the entire Vector of parameters.
+     * @return the <code>parameters</code> <code>Vector</code>.
+     * @see #setParameters(Vector)
+     */
+    public Vector<Object> getParameters() {
+        return parameters;
+    }
+
+    /**
+     * Sets the entire Vector of parameters to a given Vector.
+     * @param parameters the specified <code>Vector</code> of
+     *        parameters
+     * @see #getParameters
+     */
+    public void setParameters(Vector<Object> parameters) {
+        this.parameters = parameters;
+    }
+
+    /** Clears the list of parameters. */
+    public void removeParameters() {
+        parameters = new Vector();
+    }
+
+    /**
+     * Adds an object to the list of parameters.
+     * @param obj the <code>Object</code> to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(Object obj) {
+        parameters.addElement(obj);
+        return this;
+    }
+
+    /**
+     * Adds a Byte to the list of parameters.
+     * @param b the byte to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(byte b) {
+        return add(new Byte(b));
+    }
+
+    /**
+     * Adds a Character to the list of parameters.
+     * @param c the char to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(char c) {
+        return add(new Character(c));
+    }
+
+    /**
+     * Adds a Short to the list of parameters.
+     * @param s the short to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(short s) {
+        return add(new Short(s));
+    }
+
+    /**
+     * Adds a Integer to the list of parameters.
+     * @param i the int to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(int i) {
+        return add(new Integer(i));
+    }
+
+    /**
+     * Adds a Long to the list of parameters.
+     * @param l the long to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(long l) {
+        return add(new Long(l));
+    }
+
+    /**
+     * Adds a Float to the list of parameters.
+     * @param f the float to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(float f) {
+        return add(new Float(f));
+    }
+
+    /**
+     * Adds a Double to the list of parameters.
+     * @param d the double to add to the
+     *            <code>parameters</code> <code>Vector</code>
+     * @return a new <code>ParameterBlock</code> containing
+     *         the specified parameter.
+     */
+    public ParameterBlock add(double d) {
+        return add(new Double(d));
+    }
+
+    /**
+     * Replaces an Object in the list of parameters.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param obj the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(Object obj, int index) {
+        int oldSize = parameters.size();
+        int newSize = index + 1;
+        if (oldSize < newSize) {
+            parameters.setSize(newSize);
+        }
+        parameters.setElementAt(obj, index);
+        return this;
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with a Byte.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param b the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(byte b, int index) {
+        return set(new Byte(b), index);
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with a Character.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param c the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(char c, int index) {
+        return set(new Character(c), index);
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with a Short.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param s the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(short s, int index) {
+        return set(new Short(s), index);
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with an Integer.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param i the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(int i, int index) {
+        return set(new Integer(i), index);
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with a Long.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param l the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(long l, int index) {
+        return set(new Long(l), index);
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with a Float.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param f the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(float f, int index) {
+        return set(new Float(f), index);
+    }
+
+    /**
+     * Replaces an Object in the list of parameters with a Double.
+     * If the index lies beyond the current source list,
+     * the list is extended with nulls as needed.
+     * @param d the parameter that replaces the
+     *        parameter at the specified index in the
+     *        <code>parameters</code> <code>Vector</code>
+     * @param index the index of the parameter to be
+     *        replaced with the specified parameter
+     * @return a new <code>ParameterBlock</code> containing
+     *        the specified parameter.
+     */
+    public ParameterBlock set(double d, int index) {
+        return set(new Double(d), index);
+    }
+
+    /**
+     * Gets a parameter as an object.
+     * @param index the index of the parameter to get
+     * @return an <code>Object</code> representing the
+     *         the parameter at the specified index
+     *         into the <code>parameters</code>
+     *         <code>Vector</code>.
+     */
+    public Object getObjectParameter(int index) {
+        return parameters.elementAt(index);
+    }
+
+    /**
+     * A convenience method to return a parameter as a byte.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not a <code>Byte</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>byte</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Byte</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public byte getByteParameter(int index) {
+        return ((Byte)parameters.elementAt(index)).byteValue();
+    }
+
+    /**
+     * A convenience method to return a parameter as a char.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not a <code>Character</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>char</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Character</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public char getCharParameter(int index) {
+        return ((Character)parameters.elementAt(index)).charValue();
+    }
+
+    /**
+     * A convenience method to return a parameter as a short.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not a <code>Short</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>short</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Short</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public short getShortParameter(int index) {
+        return ((Short)parameters.elementAt(index)).shortValue();
+    }
+
+    /**
+     * A convenience method to return a parameter as an int.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not an <code>Integer</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>int</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Integer</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public int getIntParameter(int index) {
+        return ((Integer)parameters.elementAt(index)).intValue();
+    }
+
+    /**
+     * A convenience method to return a parameter as a long.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not a <code>Long</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>long</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Long</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public long getLongParameter(int index) {
+        return ((Long)parameters.elementAt(index)).longValue();
+    }
+
+    /**
+     * A convenience method to return a parameter as a float.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not a <code>Float</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>float</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Float</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public float getFloatParameter(int index) {
+        return ((Float)parameters.elementAt(index)).floatValue();
+    }
+
+    /**
+     * A convenience method to return a parameter as a double.  An
+     * exception is thrown if the parameter is
+     * <code>null</code> or not a <code>Double</code>.
+     *
+     * @param index the index of the parameter to be returned.
+     * @return the parameter at the specified index
+     *         as a <code>double</code> value.
+     * @throws ClassCastException if the parameter at the
+     *         specified index is not a <code>Double</code>
+     * @throws NullPointerException if the parameter at the specified
+     *         index is <code>null</code>
+     * @throws ArrayIndexOutOfBoundsException if <code>index</code>
+     *         is negative or not less than the current size of this
+     *         <code>ParameterBlock</code> object
+     */
+    public double getDoubleParameter(int index) {
+        return ((Double)parameters.elementAt(index)).doubleValue();
+    }
+
+    /**
+     * Returns an array of Class objects describing the types
+     * of the parameters.
+     * @return an array of <code>Class</code> objects.
+     */
+    public Class [] getParamClasses() {
+        int numParams = getNumParameters();
+        Class [] classes = new Class[numParams];
+        int i;
+
+        for (i = 0; i < numParams; i++) {
+            Object obj = getObjectParameter(i);
+            if (obj instanceof Byte) {
+              classes[i] = byte.class;
+            } else if (obj instanceof Character) {
+              classes[i] = char.class;
+            } else if (obj instanceof Short) {
+              classes[i] = short.class;
+            } else if (obj instanceof Integer) {
+              classes[i] = int.class;
+            } else if (obj instanceof Long) {
+              classes[i] = long.class;
+            } else if (obj instanceof Float) {
+              classes[i] = float.class;
+            } else if (obj instanceof Double) {
+              classes[i] = double.class;
+            } else {
+              classes[i] = obj.getClass();
+            }
+        }
+
+        return classes;
+    }
+}

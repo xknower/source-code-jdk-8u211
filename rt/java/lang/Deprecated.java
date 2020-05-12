@@ -1,18 +1,45 @@
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.lang;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
 
+/**
+ * A program element annotated &#64;Deprecated is one that programmers
+ * are discouraged from using, typically because it is dangerous,
+ * or because a better alternative exists.  Compilers warn when a
+ * deprecated program element is used or overridden in non-deprecated code.
+ *
+ * @author  Neal Gafter
+ * @since 1.5
+ * @jls 9.6.3.6 @Deprecated
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD, ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE})
-public @interface Deprecated {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\Deprecated.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+@Target(value={CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE, PARAMETER, TYPE})
+public @interface Deprecated {
+}

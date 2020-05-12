@@ -1,148 +1,143 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class InQueryExp
-/*     */   extends QueryEval
-/*     */   implements QueryExp
-/*     */ {
-/*     */   private static final long serialVersionUID = -5801329450358952434L;
-/*     */   private ValueExp val;
-/*     */   private ValueExp[] valueList;
-/*     */   
-/*     */   public InQueryExp() {}
-/*     */   
-/*     */   public InQueryExp(ValueExp paramValueExp, ValueExp[] paramArrayOfValueExp) {
-/*  63 */     this.val = paramValueExp;
-/*  64 */     this.valueList = paramArrayOfValueExp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp getCheckedValue() {
-/*  72 */     return this.val;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp[] getExplicitValues() {
-/*  79 */     return this.valueList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean apply(ObjectName paramObjectName) throws BadStringOperationException, BadBinaryOpValueExpException, BadAttributeValueExpException, InvalidApplicationException {
-/*  97 */     if (this.valueList != null) {
-/*  98 */       ValueExp valueExp = this.val.apply(paramObjectName);
-/*  99 */       boolean bool = valueExp instanceof NumericValueExp;
-/*     */       
-/* 101 */       for (ValueExp valueExp1 : this.valueList) {
-/* 102 */         valueExp1 = valueExp1.apply(paramObjectName);
-/* 103 */         if (bool) {
-/* 104 */           if (((NumericValueExp)valueExp1).doubleValue() == ((NumericValueExp)valueExp)
-/* 105 */             .doubleValue()) {
-/* 106 */             return true;
-/*     */           }
-/*     */         }
-/* 109 */         else if (((StringValueExp)valueExp1).getValue().equals(((StringValueExp)valueExp)
-/* 110 */             .getValue())) {
-/* 111 */           return true;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 116 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 123 */     return this.val + " in (" + generateValueList() + ")";
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String generateValueList() {
-/* 128 */     if (this.valueList == null || this.valueList.length == 0) {
-/* 129 */       return "";
-/*     */     }
-/*     */ 
-/*     */     
-/* 133 */     StringBuilder stringBuilder = new StringBuilder(this.valueList[0].toString());
-/*     */     
-/* 135 */     for (byte b = 1; b < this.valueList.length; b++) {
-/* 136 */       stringBuilder.append(", ");
-/* 137 */       stringBuilder.append(this.valueList[b]);
-/*     */     } 
-/*     */     
-/* 140 */     return stringBuilder.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\InQueryExp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+/**
+ * This class is used by the query-building mechanism to represent binary
+ * operations.
+ * @serial include
+ *
+ * @since 1.5
+ */
+class InQueryExp extends QueryEval implements QueryExp {
+
+    /* Serial version */
+    private static final long serialVersionUID = -5801329450358952434L;
+
+    /**
+     * @serial The {@link ValueExp} to be found
+     */
+    private ValueExp val;
+
+    /**
+     * @serial The array of {@link ValueExp} to be searched
+     */
+    private ValueExp[]  valueList;
+
+
+    /**
+     * Basic Constructor.
+     */
+    public InQueryExp() {
+    }
+
+    /**
+     * Creates a new InQueryExp with the specified ValueExp to be found in
+     * a specified array of ValueExp.
+     */
+    public InQueryExp(ValueExp v1, ValueExp items[]) {
+        val       = v1;
+        valueList = items;
+    }
+
+
+    /**
+     * Returns the checked value of the query.
+     */
+    public ValueExp getCheckedValue()  {
+        return val;
+    }
+
+    /**
+     * Returns the array of values of the query.
+     */
+    public ValueExp[] getExplicitValues()  {
+        return valueList;
+    }
+
+    /**
+     * Applies the InQueryExp on a MBean.
+     *
+     * @param name The name of the MBean on which the InQueryExp will be applied.
+     *
+     * @return  True if the query was successfully applied to the MBean, false otherwise.
+     *
+     * @exception BadStringOperationException
+     * @exception BadBinaryOpValueExpException
+     * @exception BadAttributeValueExpException
+     * @exception InvalidApplicationException
+     */
+    public boolean apply(ObjectName name)
+    throws BadStringOperationException, BadBinaryOpValueExpException,
+        BadAttributeValueExpException, InvalidApplicationException  {
+        if (valueList != null) {
+            ValueExp v      = val.apply(name);
+            boolean numeric = v instanceof NumericValueExp;
+
+            for (ValueExp element : valueList) {
+                element = element.apply(name);
+                if (numeric) {
+                    if (((NumericValueExp) element).doubleValue() ==
+                        ((NumericValueExp) v).doubleValue()) {
+                        return true;
+                    }
+                } else {
+                    if (((StringValueExp) element).getValue().equals(
+                        ((StringValueExp) v).getValue())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the string representing the object.
+     */
+    public String toString()  {
+        return val + " in (" + generateValueList() + ")";
+    }
+
+
+    private String generateValueList() {
+        if (valueList == null || valueList.length == 0) {
+            return "";
+        }
+
+        final StringBuilder result =
+                new StringBuilder(valueList[0].toString());
+
+        for (int i = 1; i < valueList.length; i++) {
+            result.append(", ");
+            result.append(valueList[i]);
+        }
+
+        return result.toString();
+    }
+
+ }

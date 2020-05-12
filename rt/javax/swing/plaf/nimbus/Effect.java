@@ -1,139 +1,133 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.image.BufferedImage;
-/*     */ import java.lang.ref.SoftReference;
-/*     */ import sun.awt.AppContext;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class Effect
-/*     */ {
-/*     */   abstract EffectType getEffectType();
-/*     */   
-/*     */   abstract float getOpacity();
-/*     */   
-/*     */   abstract BufferedImage applyEffect(BufferedImage paramBufferedImage1, BufferedImage paramBufferedImage2, int paramInt1, int paramInt2);
-/*     */   
-/*     */   enum EffectType
-/*     */   {
-/*  39 */     UNDER, BLENDED, OVER;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static ArrayCache getArrayCache() {
-/*  79 */     ArrayCache arrayCache = (ArrayCache)AppContext.getAppContext().get(ArrayCache.class);
-/*  80 */     if (arrayCache == null) {
-/*  81 */       arrayCache = new ArrayCache();
-/*  82 */       AppContext.getAppContext().put(ArrayCache.class, arrayCache);
-/*     */     } 
-/*  84 */     return arrayCache;
-/*     */   }
-/*     */   
-/*     */   protected static class ArrayCache {
-/*  88 */     private SoftReference<int[]> tmpIntArray = null;
-/*  89 */     private SoftReference<byte[]> tmpByteArray1 = null;
-/*  90 */     private SoftReference<byte[]> tmpByteArray2 = null;
-/*  91 */     private SoftReference<byte[]> tmpByteArray3 = null;
-/*     */     
-/*     */     protected int[] getTmpIntArray(int param1Int) {
-/*     */       int[] arrayOfInt;
-/*  95 */       if (this.tmpIntArray == null || (arrayOfInt = this.tmpIntArray.get()) == null || arrayOfInt.length < param1Int) {
-/*     */         
-/*  97 */         arrayOfInt = new int[param1Int];
-/*  98 */         this.tmpIntArray = (SoftReference)new SoftReference<>(arrayOfInt);
-/*     */       } 
-/* 100 */       return arrayOfInt;
-/*     */     }
-/*     */     
-/*     */     protected byte[] getTmpByteArray1(int param1Int) {
-/*     */       byte[] arrayOfByte;
-/* 105 */       if (this.tmpByteArray1 == null || (arrayOfByte = this.tmpByteArray1.get()) == null || arrayOfByte.length < param1Int) {
-/*     */         
-/* 107 */         arrayOfByte = new byte[param1Int];
-/* 108 */         this.tmpByteArray1 = (SoftReference)new SoftReference<>(arrayOfByte);
-/*     */       } 
-/* 110 */       return arrayOfByte;
-/*     */     }
-/*     */     
-/*     */     protected byte[] getTmpByteArray2(int param1Int) {
-/*     */       byte[] arrayOfByte;
-/* 115 */       if (this.tmpByteArray2 == null || (arrayOfByte = this.tmpByteArray2.get()) == null || arrayOfByte.length < param1Int) {
-/*     */         
-/* 117 */         arrayOfByte = new byte[param1Int];
-/* 118 */         this.tmpByteArray2 = (SoftReference)new SoftReference<>(arrayOfByte);
-/*     */       } 
-/* 120 */       return arrayOfByte;
-/*     */     }
-/*     */     
-/*     */     protected byte[] getTmpByteArray3(int param1Int) {
-/*     */       byte[] arrayOfByte;
-/* 125 */       if (this.tmpByteArray3 == null || (arrayOfByte = this.tmpByteArray3.get()) == null || arrayOfByte.length < param1Int) {
-/*     */         
-/* 127 */         arrayOfByte = new byte[param1Int];
-/* 128 */         this.tmpByteArray3 = (SoftReference)new SoftReference<>(arrayOfByte);
-/*     */       } 
-/* 130 */       return arrayOfByte;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\Effect.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import sun.awt.AppContext;
+
+import java.awt.image.BufferedImage;
+import java.lang.ref.SoftReference;
+
+/**
+ * Effect
+ *
+ * @author Created by Jasper Potts (Jun 18, 2007)
+ */
+abstract class Effect {
+    enum EffectType {
+        UNDER, BLENDED, OVER
+    }
+
+    // =================================================================================================================
+    // Abstract Methods
+
+    /**
+     * Get the type of this effect, one of UNDER,BLENDED,OVER. UNDER means the result of apply effect should be painted
+     * under the src image. BLENDED means the result of apply sffect contains a modified src image so just it should be
+     * painted. OVER means the result of apply effect should be painted over the src image.
+     *
+     * @return The effect type
+     */
+    abstract EffectType getEffectType();
+
+    /**
+     * Get the opacity to use to paint the result effected image if the EffectType is UNDER or OVER.
+     *
+     * @return The opactity for the effect, 0.0f -> 1.0f
+     */
+    abstract float getOpacity();
+
+    /**
+     * Apply the effect to the src image generating the result . The result image may or may not contain the source
+     * image depending on what the effect type is.
+     *
+     * @param src The source image for applying the effect to
+     * @param dst The dstination image to paint effect result into. If this is null then a new image will be created
+     * @param w   The width of the src image to apply effect to, this allow the src and dst buffers to be bigger than
+     *            the area the need effect applied to it
+     * @param h   The height of the src image to apply effect to, this allow the src and dst buffers to be bigger than
+     *            the area the need effect applied to it
+     * @return The result of appl
+     */
+    abstract BufferedImage applyEffect(BufferedImage src, BufferedImage dst, int w, int h);
+
+    // =================================================================================================================
+    // Static data cache
+
+    protected static ArrayCache getArrayCache() {
+        ArrayCache cache = (ArrayCache)AppContext.getAppContext().get(ArrayCache.class);
+        if (cache == null){
+            cache = new ArrayCache();
+            AppContext.getAppContext().put(ArrayCache.class,cache);
+        }
+        return cache;
+    }
+
+    protected static class ArrayCache {
+        private SoftReference<int[]> tmpIntArray = null;
+        private SoftReference<byte[]> tmpByteArray1 = null;
+        private SoftReference<byte[]> tmpByteArray2 = null;
+        private SoftReference<byte[]> tmpByteArray3 = null;
+
+        protected int[] getTmpIntArray(int size) {
+            int[] tmp;
+            if (tmpIntArray == null || (tmp = tmpIntArray.get()) == null || tmp.length < size) {
+                // create new array
+                tmp = new int[size];
+                tmpIntArray = new SoftReference<int[]>(tmp);
+            }
+            return tmp;
+        }
+
+        protected byte[] getTmpByteArray1(int size) {
+            byte[] tmp;
+            if (tmpByteArray1 == null || (tmp = tmpByteArray1.get()) == null || tmp.length < size) {
+                // create new array
+                tmp = new byte[size];
+                tmpByteArray1 = new SoftReference<byte[]>(tmp);
+            }
+            return tmp;
+        }
+
+        protected byte[] getTmpByteArray2(int size) {
+            byte[] tmp;
+            if (tmpByteArray2 == null || (tmp = tmpByteArray2.get()) == null || tmp.length < size) {
+                // create new array
+                tmp = new byte[size];
+                tmpByteArray2 = new SoftReference<byte[]>(tmp);
+            }
+            return tmp;
+        }
+
+        protected byte[] getTmpByteArray3(int size) {
+            byte[] tmp;
+            if (tmpByteArray3 == null || (tmp = tmpByteArray3.get()) == null || tmp.length < size) {
+                // create new array
+                tmp = new byte[size];
+                tmpByteArray3 = new SoftReference<byte[]>(tmp);
+            }
+            return tmp;
+        }
+    }
+}

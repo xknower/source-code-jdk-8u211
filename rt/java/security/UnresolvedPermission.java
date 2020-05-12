@@ -1,611 +1,607 @@
-/*     */ package java.security;
-/*     */ 
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.security.cert.CertificateEncodingException;
-/*     */ import java.security.cert.CertificateException;
-/*     */ import java.security.cert.CertificateFactory;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Hashtable;
-/*     */ import sun.misc.IOUtils;
-/*     */ import sun.security.util.Debug;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class UnresolvedPermission
-/*     */   extends Permission
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -4821973115467008846L;
-/* 113 */   private static final Debug debug = Debug.getInstance("policy,access", "UnresolvedPermission");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String type;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String name;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String actions;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private transient Certificate[] certs;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public UnresolvedPermission(String paramString1, String paramString2, String paramString3, Certificate[] paramArrayOfCertificate) {
-/* 161 */     super(paramString1);
-/*     */     
-/* 163 */     if (paramString1 == null) {
-/* 164 */       throw new NullPointerException("type can't be null");
-/*     */     }
-/* 166 */     this.type = paramString1;
-/* 167 */     this.name = paramString2;
-/* 168 */     this.actions = paramString3;
-/* 169 */     if (paramArrayOfCertificate != null) {
-/*     */       byte b;
-/* 171 */       for (b = 0; b < paramArrayOfCertificate.length; b++) {
-/* 172 */         if (!(paramArrayOfCertificate[b] instanceof X509Certificate)) {
-/*     */ 
-/*     */           
-/* 175 */           this.certs = (Certificate[])paramArrayOfCertificate.clone();
-/*     */           
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/* 180 */       if (this.certs == null) {
-/*     */ 
-/*     */         
-/* 183 */         b = 0;
-/* 184 */         byte b1 = 0;
-/* 185 */         while (b < paramArrayOfCertificate.length) {
-/* 186 */           b1++;
-/* 187 */           while (b + 1 < paramArrayOfCertificate.length && ((X509Certificate)paramArrayOfCertificate[b])
-/* 188 */             .getIssuerDN().equals(((X509Certificate)paramArrayOfCertificate[b + 1])
-/* 189 */               .getSubjectDN())) {
-/* 190 */             b++;
-/*     */           }
-/* 192 */           b++;
-/*     */         } 
-/* 194 */         if (b1 == paramArrayOfCertificate.length)
-/*     */         {
-/*     */           
-/* 197 */           this.certs = (Certificate[])paramArrayOfCertificate.clone();
-/*     */         }
-/*     */         
-/* 200 */         if (this.certs == null) {
-/*     */           
-/* 202 */           ArrayList<Certificate> arrayList = new ArrayList();
-/*     */           
-/* 204 */           b = 0;
-/* 205 */           while (b < paramArrayOfCertificate.length) {
-/* 206 */             arrayList.add(paramArrayOfCertificate[b]);
-/* 207 */             while (b + 1 < paramArrayOfCertificate.length && ((X509Certificate)paramArrayOfCertificate[b])
-/* 208 */               .getIssuerDN().equals(((X509Certificate)paramArrayOfCertificate[b + 1])
-/* 209 */                 .getSubjectDN())) {
-/* 210 */               b++;
-/*     */             }
-/* 212 */             b++;
-/*     */           } 
-/* 214 */           this
-/* 215 */             .certs = new Certificate[arrayList.size()];
-/* 216 */           arrayList.toArray(this.certs);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/* 223 */   private static final Class[] PARAMS0 = new Class[0];
-/* 224 */   private static final Class[] PARAMS1 = new Class[] { String.class };
-/* 225 */   private static final Class[] PARAMS2 = new Class[] { String.class, String.class };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Permission resolve(Permission paramPermission, Certificate[] paramArrayOfCertificate) {
-/* 232 */     if (this.certs != null) {
-/*     */       
-/* 234 */       if (paramArrayOfCertificate == null) {
-/* 235 */         return null;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 240 */       for (byte b = 0; b < this.certs.length; b++) {
-/* 241 */         boolean bool = false;
-/* 242 */         for (byte b1 = 0; b1 < paramArrayOfCertificate.length; b1++) {
-/* 243 */           if (this.certs[b].equals(paramArrayOfCertificate[b1])) {
-/* 244 */             bool = true;
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 248 */         if (!bool) return null; 
-/*     */       } 
-/*     */     } 
-/*     */     try {
-/* 252 */       Class<?> clazz = paramPermission.getClass();
-/*     */       
-/* 254 */       if (this.name == null && this.actions == null) {
-/*     */         try {
-/* 256 */           Constructor<?> constructor1 = clazz.getConstructor(PARAMS0);
-/* 257 */           return (Permission)constructor1.newInstance(new Object[0]);
-/* 258 */         } catch (NoSuchMethodException noSuchMethodException) {
-/*     */           try {
-/* 260 */             Constructor<?> constructor1 = clazz.getConstructor(PARAMS1);
-/* 261 */             return (Permission)constructor1.newInstance(new Object[] { this.name });
-/*     */           }
-/* 263 */           catch (NoSuchMethodException noSuchMethodException1) {
-/* 264 */             Constructor<?> constructor1 = clazz.getConstructor(PARAMS2);
-/* 265 */             return (Permission)constructor1.newInstance(new Object[] { this.name, this.actions });
-/*     */           } 
-/*     */         } 
-/*     */       }
-/*     */       
-/* 270 */       if (this.name != null && this.actions == null) {
-/*     */         try {
-/* 272 */           Constructor<?> constructor1 = clazz.getConstructor(PARAMS1);
-/* 273 */           return (Permission)constructor1.newInstance(new Object[] { this.name });
-/*     */         }
-/* 275 */         catch (NoSuchMethodException noSuchMethodException) {
-/* 276 */           Constructor<?> constructor1 = clazz.getConstructor(PARAMS2);
-/* 277 */           return (Permission)constructor1.newInstance(new Object[] { this.name, this.actions });
-/*     */         } 
-/*     */       }
-/*     */       
-/* 281 */       Constructor<?> constructor = clazz.getConstructor(PARAMS2);
-/* 282 */       return (Permission)constructor.newInstance(new Object[] { this.name, this.actions });
-/*     */ 
-/*     */     
-/*     */     }
-/* 286 */     catch (NoSuchMethodException noSuchMethodException) {
-/* 287 */       if (debug != null) {
-/* 288 */         debug.println("NoSuchMethodException:\n  could not find proper constructor for " + this.type);
-/*     */         
-/* 290 */         noSuchMethodException.printStackTrace();
-/*     */       } 
-/* 292 */       return null;
-/* 293 */     } catch (Exception exception) {
-/* 294 */       if (debug != null) {
-/* 295 */         debug.println("unable to instantiate " + this.name);
-/* 296 */         exception.printStackTrace();
-/*     */       } 
-/* 298 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean implies(Permission paramPermission) {
-/* 312 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 332 */     if (paramObject == this) {
-/* 333 */       return true;
-/*     */     }
-/* 335 */     if (!(paramObject instanceof UnresolvedPermission))
-/* 336 */       return false; 
-/* 337 */     UnresolvedPermission unresolvedPermission = (UnresolvedPermission)paramObject;
-/*     */ 
-/*     */     
-/* 340 */     if (!this.type.equals(unresolvedPermission.type)) {
-/* 341 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/* 345 */     if (this.name == null) {
-/* 346 */       if (unresolvedPermission.name != null) {
-/* 347 */         return false;
-/*     */       }
-/* 349 */     } else if (!this.name.equals(unresolvedPermission.name)) {
-/* 350 */       return false;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 354 */     if (this.actions == null) {
-/* 355 */       if (unresolvedPermission.actions != null) {
-/* 356 */         return false;
-/*     */       }
-/*     */     }
-/* 359 */     else if (!this.actions.equals(unresolvedPermission.actions)) {
-/* 360 */       return false;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 365 */     if ((this.certs == null && unresolvedPermission.certs != null) || (this.certs != null && unresolvedPermission.certs == null) || (this.certs != null && unresolvedPermission.certs != null && this.certs.length != unresolvedPermission.certs.length))
-/*     */     {
-/*     */ 
-/*     */       
-/* 369 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     byte b;
-/*     */     
-/* 375 */     for (b = 0; this.certs != null && b < this.certs.length; b++) {
-/* 376 */       boolean bool = false;
-/* 377 */       for (byte b1 = 0; b1 < unresolvedPermission.certs.length; b1++) {
-/* 378 */         if (this.certs[b].equals(unresolvedPermission.certs[b1])) {
-/* 379 */           bool = true;
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/* 383 */       if (!bool) return false;
-/*     */     
-/*     */     } 
-/* 386 */     for (b = 0; unresolvedPermission.certs != null && b < unresolvedPermission.certs.length; b++) {
-/* 387 */       boolean bool = false;
-/* 388 */       for (byte b1 = 0; b1 < this.certs.length; b1++) {
-/* 389 */         if (unresolvedPermission.certs[b].equals(this.certs[b1])) {
-/* 390 */           bool = true;
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/* 394 */       if (!bool) return false; 
-/*     */     } 
-/* 396 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 406 */     int i = this.type.hashCode();
-/* 407 */     if (this.name != null)
-/* 408 */       i ^= this.name.hashCode(); 
-/* 409 */     if (this.actions != null)
-/* 410 */       i ^= this.actions.hashCode(); 
-/* 411 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getActions() {
-/* 426 */     return "";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getUnresolvedType() {
-/* 439 */     return this.type;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getUnresolvedName() {
-/* 453 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getUnresolvedActions() {
-/* 467 */     return this.actions;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Certificate[] getUnresolvedCerts() {
-/* 481 */     return (this.certs == null) ? null : (Certificate[])this.certs.clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 492 */     return "(unresolved " + this.type + " " + this.name + " " + this.actions + ")";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PermissionCollection newPermissionCollection() {
-/* 504 */     return new UnresolvedPermissionCollection();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 526 */     paramObjectOutputStream.defaultWriteObject();
-/*     */     
-/* 528 */     if (this.certs == null || this.certs.length == 0) {
-/* 529 */       paramObjectOutputStream.writeInt(0);
-/*     */     } else {
-/*     */       
-/* 532 */       paramObjectOutputStream.writeInt(this.certs.length);
-/*     */       
-/* 534 */       for (byte b = 0; b < this.certs.length; b++) {
-/* 535 */         Certificate certificate = this.certs[b];
-/*     */         try {
-/* 537 */           paramObjectOutputStream.writeUTF(certificate.getType());
-/* 538 */           byte[] arrayOfByte = certificate.getEncoded();
-/* 539 */           paramObjectOutputStream.writeInt(arrayOfByte.length);
-/* 540 */           paramObjectOutputStream.write(arrayOfByte);
-/* 541 */         } catch (CertificateEncodingException certificateEncodingException) {
-/* 542 */           throw new IOException(certificateEncodingException.getMessage());
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 555 */     Hashtable<Object, Object> hashtable = null;
-/* 556 */     ArrayList<Certificate> arrayList = null;
-/*     */     
-/* 558 */     paramObjectInputStream.defaultReadObject();
-/*     */     
-/* 560 */     if (this.type == null) {
-/* 561 */       throw new NullPointerException("type can't be null");
-/*     */     }
-/*     */     
-/* 564 */     int i = paramObjectInputStream.readInt();
-/* 565 */     if (i > 0) {
-/*     */ 
-/*     */       
-/* 568 */       hashtable = new Hashtable<>(3);
-/* 569 */       arrayList = new ArrayList((i > 20) ? 20 : i);
-/* 570 */     } else if (i < 0) {
-/* 571 */       throw new IOException("size cannot be negative");
-/*     */     } 
-/*     */     
-/* 574 */     for (byte b = 0; b < i; b++) {
-/*     */       CertificateFactory certificateFactory;
-/*     */       
-/* 577 */       String str = paramObjectInputStream.readUTF();
-/* 578 */       if (hashtable.containsKey(str)) {
-/*     */         
-/* 580 */         certificateFactory = (CertificateFactory)hashtable.get(str);
-/*     */       } else {
-/*     */         
-/*     */         try {
-/* 584 */           certificateFactory = CertificateFactory.getInstance(str);
-/* 585 */         } catch (CertificateException certificateException) {
-/* 586 */           throw new ClassNotFoundException("Certificate factory for " + str + " not found");
-/*     */         } 
-/*     */ 
-/*     */         
-/* 590 */         hashtable.put(str, certificateFactory);
-/*     */       } 
-/*     */       
-/* 593 */       byte[] arrayOfByte = IOUtils.readNBytes(paramObjectInputStream, paramObjectInputStream.readInt());
-/* 594 */       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(arrayOfByte);
-/*     */       try {
-/* 596 */         arrayList.add(certificateFactory.generateCertificate(byteArrayInputStream));
-/* 597 */       } catch (CertificateException certificateException) {
-/* 598 */         throw new IOException(certificateException.getMessage());
-/*     */       } 
-/* 600 */       byteArrayInputStream.close();
-/*     */     } 
-/* 602 */     if (arrayList != null)
-/* 603 */       this.certs = arrayList.<Certificate>toArray(new Certificate[i]); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\UnresolvedPermission.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security;
+
+import sun.misc.IOUtils;
+
+import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.lang.reflect.*;
+import java.security.cert.*;
+import java.util.List;
+
+/**
+ * The UnresolvedPermission class is used to hold Permissions that
+ * were "unresolved" when the Policy was initialized.
+ * An unresolved permission is one whose actual Permission class
+ * does not yet exist at the time the Policy is initialized (see below).
+ *
+ * <p>The policy for a Java runtime (specifying
+ * which permissions are available for code from various principals)
+ * is represented by a Policy object.
+ * Whenever a Policy is initialized or refreshed, Permission objects of
+ * appropriate classes are created for all permissions
+ * allowed by the Policy.
+ *
+ * <p>Many permission class types
+ * referenced by the policy configuration are ones that exist
+ * locally (i.e., ones that can be found on CLASSPATH).
+ * Objects for such permissions can be instantiated during
+ * Policy initialization. For example, it is always possible
+ * to instantiate a java.io.FilePermission, since the
+ * FilePermission class is found on the CLASSPATH.
+ *
+ * <p>Other permission classes may not yet exist during Policy
+ * initialization. For example, a referenced permission class may
+ * be in a JAR file that will later be loaded.
+ * For each such class, an UnresolvedPermission is instantiated.
+ * Thus, an UnresolvedPermission is essentially a "placeholder"
+ * containing information about the permission.
+ *
+ * <p>Later, when code calls AccessController.checkPermission
+ * on a permission of a type that was previously unresolved,
+ * but whose class has since been loaded, previously-unresolved
+ * permissions of that type are "resolved". That is,
+ * for each such UnresolvedPermission, a new object of
+ * the appropriate class type is instantiated, based on the
+ * information in the UnresolvedPermission.
+ *
+ * <p> To instantiate the new class, UnresolvedPermission assumes
+ * the class provides a zero, one, and/or two-argument constructor.
+ * The zero-argument constructor would be used to instantiate
+ * a permission without a name and without actions.
+ * A one-arg constructor is assumed to take a {@code String}
+ * name as input, and a two-arg constructor is assumed to take a
+ * {@code String} name and {@code String} actions
+ * as input.  UnresolvedPermission may invoke a
+ * constructor with a {@code null} name and/or actions.
+ * If an appropriate permission constructor is not available,
+ * the UnresolvedPermission is ignored and the relevant permission
+ * will not be granted to executing code.
+ *
+ * <p> The newly created permission object replaces the
+ * UnresolvedPermission, which is removed.
+ *
+ * <p> Note that the {@code getName} method for an
+ * {@code UnresolvedPermission} returns the
+ * {@code type} (class name) for the underlying permission
+ * that has not been resolved.
+ *
+ * @see java.security.Permission
+ * @see java.security.Permissions
+ * @see java.security.PermissionCollection
+ * @see java.security.Policy
+ *
+ *
+ * @author Roland Schemers
+ */
+
+public final class UnresolvedPermission extends Permission
+implements java.io.Serializable
+{
+
+    private static final long serialVersionUID = -4821973115467008846L;
+
+    private static final sun.security.util.Debug debug =
+        sun.security.util.Debug.getInstance
+        ("policy,access", "UnresolvedPermission");
+
+    /**
+     * The class name of the Permission class that will be
+     * created when this unresolved permission is resolved.
+     *
+     * @serial
+     */
+    private String type;
+
+    /**
+     * The permission name.
+     *
+     * @serial
+     */
+    private String name;
+
+    /**
+     * The actions of the permission.
+     *
+     * @serial
+     */
+    private String actions;
+
+    private transient java.security.cert.Certificate certs[];
+
+    /**
+     * Creates a new UnresolvedPermission containing the permission
+     * information needed later to actually create a Permission of the
+     * specified class, when the permission is resolved.
+     *
+     * @param type the class name of the Permission class that will be
+     * created when this unresolved permission is resolved.
+     * @param name the name of the permission.
+     * @param actions the actions of the permission.
+     * @param certs the certificates the permission's class was signed with.
+     * This is a list of certificate chains, where each chain is composed of a
+     * signer certificate and optionally its supporting certificate chain.
+     * Each chain is ordered bottom-to-top (i.e., with the signer certificate
+     * first and the (root) certificate authority last). The signer
+     * certificates are copied from the array. Subsequent changes to
+     * the array will not affect this UnsolvedPermission.
+     */
+    public UnresolvedPermission(String type,
+                                String name,
+                                String actions,
+                                java.security.cert.Certificate certs[])
+    {
+        super(type);
+
+        if (type == null)
+                throw new NullPointerException("type can't be null");
+
+        this.type = type;
+        this.name = name;
+        this.actions = actions;
+        if (certs != null) {
+            // Extract the signer certs from the list of certificates.
+            for (int i=0; i<certs.length; i++) {
+                if (!(certs[i] instanceof X509Certificate)) {
+                    // there is no concept of signer certs, so we store the
+                    // entire cert array
+                    this.certs = certs.clone();
+                    break;
+                }
+            }
+
+            if (this.certs == null) {
+                // Go through the list of certs and see if all the certs are
+                // signer certs.
+                int i = 0;
+                int count = 0;
+                while (i < certs.length) {
+                    count++;
+                    while (((i+1) < certs.length) &&
+                           ((X509Certificate)certs[i]).getIssuerDN().equals(
+                               ((X509Certificate)certs[i+1]).getSubjectDN())) {
+                        i++;
+                    }
+                    i++;
+                }
+                if (count == certs.length) {
+                    // All the certs are signer certs, so we store the entire
+                    // array
+                    this.certs = certs.clone();
+                }
+
+                if (this.certs == null) {
+                    // extract the signer certs
+                    ArrayList<java.security.cert.Certificate> signerCerts =
+                        new ArrayList<>();
+                    i = 0;
+                    while (i < certs.length) {
+                        signerCerts.add(certs[i]);
+                        while (((i+1) < certs.length) &&
+                            ((X509Certificate)certs[i]).getIssuerDN().equals(
+                              ((X509Certificate)certs[i+1]).getSubjectDN())) {
+                            i++;
+                        }
+                        i++;
+                    }
+                    this.certs =
+                        new java.security.cert.Certificate[signerCerts.size()];
+                    signerCerts.toArray(this.certs);
+                }
+            }
+        }
+    }
+
+
+    private static final Class[] PARAMS0 = { };
+    private static final Class[] PARAMS1 = { String.class };
+    private static final Class[] PARAMS2 = { String.class, String.class };
+
+    /**
+     * try and resolve this permission using the class loader of the permission
+     * that was passed in.
+     */
+    Permission resolve(Permission p, java.security.cert.Certificate certs[]) {
+        if (this.certs != null) {
+            // if p wasn't signed, we don't have a match
+            if (certs == null) {
+                return null;
+            }
+
+            // all certs in this.certs must be present in certs
+            boolean match;
+            for (int i = 0; i < this.certs.length; i++) {
+                match = false;
+                for (int j = 0; j < certs.length; j++) {
+                    if (this.certs[i].equals(certs[j])) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) return null;
+            }
+        }
+        try {
+            Class<?> pc = p.getClass();
+
+            if (name == null && actions == null) {
+                try {
+                    Constructor<?> c = pc.getConstructor(PARAMS0);
+                    return (Permission)c.newInstance(new Object[] {});
+                } catch (NoSuchMethodException ne) {
+                    try {
+                        Constructor<?> c = pc.getConstructor(PARAMS1);
+                        return (Permission) c.newInstance(
+                              new Object[] { name});
+                    } catch (NoSuchMethodException ne1) {
+                        Constructor<?> c = pc.getConstructor(PARAMS2);
+                        return (Permission) c.newInstance(
+                              new Object[] { name, actions });
+                    }
+                }
+            } else {
+                if (name != null && actions == null) {
+                    try {
+                        Constructor<?> c = pc.getConstructor(PARAMS1);
+                        return (Permission) c.newInstance(
+                              new Object[] { name});
+                    } catch (NoSuchMethodException ne) {
+                        Constructor<?> c = pc.getConstructor(PARAMS2);
+                        return (Permission) c.newInstance(
+                              new Object[] { name, actions });
+                    }
+                } else {
+                    Constructor<?> c = pc.getConstructor(PARAMS2);
+                    return (Permission) c.newInstance(
+                          new Object[] { name, actions });
+                }
+            }
+        } catch (NoSuchMethodException nsme) {
+            if (debug != null ) {
+                debug.println("NoSuchMethodException:\n  could not find " +
+                        "proper constructor for " + type);
+                nsme.printStackTrace();
+            }
+            return null;
+        } catch (Exception e) {
+            if (debug != null ) {
+                debug.println("unable to instantiate " + name);
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    /**
+     * This method always returns false for unresolved permissions.
+     * That is, an UnresolvedPermission is never considered to
+     * imply another permission.
+     *
+     * @param p the permission to check against.
+     *
+     * @return false.
+     */
+    public boolean implies(Permission p) {
+        return false;
+    }
+
+    /**
+     * Checks two UnresolvedPermission objects for equality.
+     * Checks that <i>obj</i> is an UnresolvedPermission, and has
+     * the same type (class) name, permission name, actions, and
+     * certificates as this object.
+     *
+     * <p> To determine certificate equality, this method only compares
+     * actual signer certificates.  Supporting certificate chains
+     * are not taken into consideration by this method.
+     *
+     * @param obj the object we are testing for equality with this object.
+     *
+     * @return true if obj is an UnresolvedPermission, and has the same
+     * type (class) name, permission name, actions, and
+     * certificates as this object.
+     */
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        if (! (obj instanceof UnresolvedPermission))
+            return false;
+        UnresolvedPermission that = (UnresolvedPermission) obj;
+
+        // check type
+        if (!this.type.equals(that.type)) {
+            return false;
+        }
+
+        // check name
+        if (this.name == null) {
+            if (that.name != null) {
+                return false;
+            }
+        } else if (!this.name.equals(that.name)) {
+            return false;
+        }
+
+        // check actions
+        if (this.actions == null) {
+            if (that.actions != null) {
+                return false;
+            }
+        } else {
+            if (!this.actions.equals(that.actions)) {
+                return false;
+            }
+        }
+
+        // check certs
+        if ((this.certs == null && that.certs != null) ||
+            (this.certs != null && that.certs == null) ||
+            (this.certs != null && that.certs != null &&
+                this.certs.length != that.certs.length)) {
+            return false;
+        }
+
+        int i,j;
+        boolean match;
+
+        for (i = 0; this.certs != null && i < this.certs.length; i++) {
+            match = false;
+            for (j = 0; j < that.certs.length; j++) {
+                if (this.certs[i].equals(that.certs[j])) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) return false;
+        }
+
+        for (i = 0; that.certs != null && i < that.certs.length; i++) {
+            match = false;
+            for (j = 0; j < this.certs.length; j++) {
+                if (that.certs[i].equals(this.certs[j])) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the hash code value for this object.
+     *
+     * @return a hash code value for this object.
+     */
+
+    public int hashCode() {
+        int hash = type.hashCode();
+        if (name != null)
+            hash ^= name.hashCode();
+        if (actions != null)
+            hash ^= actions.hashCode();
+        return hash;
+    }
+
+    /**
+     * Returns the canonical string representation of the actions,
+     * which currently is the empty string "", since there are no actions for
+     * an UnresolvedPermission. That is, the actions for the
+     * permission that will be created when this UnresolvedPermission
+     * is resolved may be non-null, but an UnresolvedPermission
+     * itself is never considered to have any actions.
+     *
+     * @return the empty string "".
+     */
+    public String getActions()
+    {
+        return "";
+    }
+
+    /**
+     * Get the type (class name) of the underlying permission that
+     * has not been resolved.
+     *
+     * @return the type (class name) of the underlying permission that
+     *  has not been resolved
+     *
+     * @since 1.5
+     */
+    public String getUnresolvedType() {
+        return type;
+    }
+
+    /**
+     * Get the target name of the underlying permission that
+     * has not been resolved.
+     *
+     * @return the target name of the underlying permission that
+     *          has not been resolved, or {@code null},
+     *          if there is no target name
+     *
+     * @since 1.5
+     */
+    public String getUnresolvedName() {
+        return name;
+    }
+
+    /**
+     * Get the actions for the underlying permission that
+     * has not been resolved.
+     *
+     * @return the actions for the underlying permission that
+     *          has not been resolved, or {@code null}
+     *          if there are no actions
+     *
+     * @since 1.5
+     */
+    public String getUnresolvedActions() {
+        return actions;
+    }
+
+    /**
+     * Get the signer certificates (without any supporting chain)
+     * for the underlying permission that has not been resolved.
+     *
+     * @return the signer certificates for the underlying permission that
+     * has not been resolved, or null, if there are no signer certificates.
+     * Returns a new array each time this method is called.
+     *
+     * @since 1.5
+     */
+    public java.security.cert.Certificate[] getUnresolvedCerts() {
+        return (certs == null) ? null : certs.clone();
+    }
+
+    /**
+     * Returns a string describing this UnresolvedPermission.  The convention
+     * is to specify the class name, the permission name, and the actions, in
+     * the following format: '(unresolved "ClassName" "name" "actions")'.
+     *
+     * @return information about this UnresolvedPermission.
+     */
+    public String toString() {
+        return "(unresolved " + type + " " + name + " " + actions + ")";
+    }
+
+    /**
+     * Returns a new PermissionCollection object for storing
+     * UnresolvedPermission  objects.
+     * <p>
+     * @return a new PermissionCollection object suitable for
+     * storing UnresolvedPermissions.
+     */
+
+    public PermissionCollection newPermissionCollection() {
+        return new UnresolvedPermissionCollection();
+    }
+
+    /**
+     * Writes this object out to a stream (i.e., serializes it).
+     *
+     * @serialData An initial {@code String} denoting the
+     * {@code type} is followed by a {@code String} denoting the
+     * {@code name} is followed by a {@code String} denoting the
+     * {@code actions} is followed by an {@code int} indicating the
+     * number of certificates to follow
+     * (a value of "zero" denotes that there are no certificates associated
+     * with this object).
+     * Each certificate is written out starting with a {@code String}
+     * denoting the certificate type, followed by an
+     * {@code int} specifying the length of the certificate encoding,
+     * followed by the certificate encoding itself which is written out as an
+     * array of bytes.
+     */
+    private void writeObject(java.io.ObjectOutputStream oos)
+        throws IOException
+    {
+        oos.defaultWriteObject();
+
+        if (certs==null || certs.length==0) {
+            oos.writeInt(0);
+        } else {
+            // write out the total number of certs
+            oos.writeInt(certs.length);
+            // write out each cert, including its type
+            for (int i=0; i < certs.length; i++) {
+                java.security.cert.Certificate cert = certs[i];
+                try {
+                    oos.writeUTF(cert.getType());
+                    byte[] encoded = cert.getEncoded();
+                    oos.writeInt(encoded.length);
+                    oos.write(encoded);
+                } catch (CertificateEncodingException cee) {
+                    throw new IOException(cee.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Restores this object from a stream (i.e., deserializes it).
+     */
+    private void readObject(java.io.ObjectInputStream ois)
+        throws IOException, ClassNotFoundException
+    {
+        CertificateFactory cf;
+        Hashtable<String, CertificateFactory> cfs = null;
+        List<Certificate> certList = null;
+
+        ois.defaultReadObject();
+
+        if (type == null)
+                throw new NullPointerException("type can't be null");
+
+        // process any new-style certs in the stream (if present)
+        int size = ois.readInt();
+        if (size > 0) {
+            // we know of 3 different cert types: X.509, PGP, SDSI, which
+            // could all be present in the stream at the same time
+            cfs = new Hashtable<>(3);
+            certList = new ArrayList<>(size > 20 ? 20 : size);
+        } else if (size < 0) {
+            throw new IOException("size cannot be negative");
+        }
+
+        for (int i=0; i<size; i++) {
+            // read the certificate type, and instantiate a certificate
+            // factory of that type (reuse existing factory if possible)
+            String certType = ois.readUTF();
+            if (cfs.containsKey(certType)) {
+                // reuse certificate factory
+                cf = cfs.get(certType);
+            } else {
+                // create new certificate factory
+                try {
+                    cf = CertificateFactory.getInstance(certType);
+                } catch (CertificateException ce) {
+                    throw new ClassNotFoundException
+                        ("Certificate factory for "+certType+" not found");
+                }
+                // store the certificate factory so we can reuse it later
+                cfs.put(certType, cf);
+            }
+            // parse the certificate
+            byte[] encoded = IOUtils.readNBytes(ois, ois.readInt());
+            ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
+            try {
+                certList.add(cf.generateCertificate(bais));
+            } catch (CertificateException ce) {
+                throw new IOException(ce.getMessage());
+            }
+            bais.close();
+        }
+        if (certList != null) {
+            this.certs = certList.toArray(
+                    new java.security.cert.Certificate[size]);
+        }
+    }
+}

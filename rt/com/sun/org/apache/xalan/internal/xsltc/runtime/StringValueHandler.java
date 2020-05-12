@@ -1,133 +1,127 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.runtime;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.serializer.EmptySerializer;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StringValueHandler
-/*     */   extends EmptySerializer
-/*     */ {
-/*  37 */   private StringBuilder _buffer = new StringBuilder();
-/*  38 */   private String _str = null;
-/*     */   private static final String EMPTY_STR = "";
-/*     */   private boolean m_escaping = false;
-/*  41 */   private int _nestedLevel = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(char[] ch, int off, int len) throws SAXException {
-/*  46 */     if (this._nestedLevel > 0) {
-/*     */       return;
-/*     */     }
-/*  49 */     if (this._str != null) {
-/*  50 */       this._buffer.append(this._str);
-/*  51 */       this._str = null;
-/*     */     } 
-/*  53 */     this._buffer.append(ch, off, len);
-/*     */   }
-/*     */   
-/*     */   public String getValue() {
-/*  57 */     if (this._buffer.length() != 0) {
-/*  58 */       String str = this._buffer.toString();
-/*  59 */       this._buffer.setLength(0);
-/*  60 */       return str;
-/*     */     } 
-/*     */     
-/*  63 */     String result = this._str;
-/*  64 */     this._str = null;
-/*  65 */     return (result != null) ? result : "";
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void characters(String characters) throws SAXException {
-/*  70 */     if (this._nestedLevel > 0) {
-/*     */       return;
-/*     */     }
-/*  73 */     if (this._str == null && this._buffer.length() == 0) {
-/*  74 */       this._str = characters;
-/*     */     } else {
-/*     */       
-/*  77 */       if (this._str != null) {
-/*  78 */         this._buffer.append(this._str);
-/*  79 */         this._str = null;
-/*     */       } 
-/*     */       
-/*  82 */       this._buffer.append(characters);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void startElement(String qname) throws SAXException {
-/*  87 */     this._nestedLevel++;
-/*     */   }
-/*     */   
-/*     */   public void endElement(String qname) throws SAXException {
-/*  91 */     this._nestedLevel--;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean setEscaping(boolean bool) {
-/*  97 */     boolean oldEscaping = this.m_escaping;
-/*  98 */     this.m_escaping = bool;
-/*     */     
-/* 100 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValueOfPI() {
-/* 108 */     String value = getValue();
-/*     */     
-/* 110 */     if (value.indexOf("?>") > 0) {
-/* 111 */       int n = value.length();
-/* 112 */       StringBuilder valueOfPI = new StringBuilder();
-/*     */       
-/* 114 */       for (int i = 0; i < n; ) {
-/* 115 */         char ch = value.charAt(i++);
-/* 116 */         if (ch == '?' && value.charAt(i) == '>') {
-/* 117 */           valueOfPI.append("? >"); i++;
-/*     */           continue;
-/*     */         } 
-/* 120 */         valueOfPI.append(ch);
-/*     */       } 
-/*     */       
-/* 123 */       return valueOfPI.toString();
-/*     */     } 
-/* 125 */     return value;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\runtime\StringValueHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StringValueHandler.java,v 1.2.4.1 2005/09/06 11:33:25 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.runtime;
+
+import org.xml.sax.SAXException;
+
+import com.sun.org.apache.xml.internal.serializer.EmptySerializer;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+public final class StringValueHandler extends EmptySerializer {
+
+    private StringBuilder _buffer = new StringBuilder();
+    private String _str = null;
+    private static final String EMPTY_STR = "";
+    private boolean m_escaping = false;
+    private int _nestedLevel = 0;
+
+    public void characters(char[] ch, int off, int len)
+        throws SAXException
+    {
+        if (_nestedLevel > 0)
+            return;
+
+        if (_str != null) {
+            _buffer.append(_str);
+            _str = null;
+        }
+        _buffer.append(ch, off, len);
+    }
+
+    public String getValue() {
+        if (_buffer.length() != 0) {
+            String result = _buffer.toString();
+            _buffer.setLength(0);
+            return result;
+        }
+        else {
+            String result = _str;
+            _str = null;
+            return (result != null) ? result : EMPTY_STR;
+        }
+    }
+
+    public void characters(String characters) throws SAXException {
+        if (_nestedLevel > 0)
+            return;
+
+        if (_str == null && _buffer.length() == 0) {
+            _str = characters;
+        }
+        else {
+            if (_str != null) {
+                _buffer.append(_str);
+                _str = null;
+            }
+
+            _buffer.append(characters);
+        }
+    }
+
+    public void startElement(String qname) throws SAXException {
+        _nestedLevel++;
+    }
+
+    public void endElement(String qname) throws SAXException {
+        _nestedLevel--;
+    }
+
+    // Override the setEscaping method just to indicate that this class is
+    // aware that that method might be called.
+    public boolean setEscaping(boolean bool) {
+        boolean oldEscaping = m_escaping;
+        m_escaping = bool;
+
+        return bool;
+    }
+
+    /**
+     * The value of a PI must not contain the substring "?>". Should
+     * that substring be present, replace it by "? >".
+     */
+    public String getValueOfPI() {
+        final String value = getValue();
+
+        if (value.indexOf("?>") > 0) {
+            final int n = value.length();
+            final StringBuilder valueOfPI = new StringBuilder();
+
+            for (int i = 0; i < n;) {
+                final char ch = value.charAt(i++);
+                if (ch == '?' && value.charAt(i) == '>') {
+                    valueOfPI.append("? >"); i++;
+                }
+                else {
+                    valueOfPI.append(ch);
+                }
+            }
+            return valueOfPI.toString();
+        }
+        return value;
+    }
+}

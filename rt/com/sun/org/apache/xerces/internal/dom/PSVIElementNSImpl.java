@@ -1,302 +1,296 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
-/*     */ import com.sun.org.apache.xerces.internal.xs.ShortList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.StringList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSElementDeclaration;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSModel;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSNotationDeclaration;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*     */ import java.io.IOException;
-/*     */ import java.io.NotSerializableException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PSVIElementNSImpl
-/*     */   extends ElementNSImpl
-/*     */   implements ElementPSVI
-/*     */ {
-/*     */   static final long serialVersionUID = 6815489624636016068L;
-/*     */   protected XSElementDeclaration fDeclaration;
-/*     */   protected XSTypeDefinition fTypeDecl;
-/*     */   protected boolean fNil;
-/*     */   protected boolean fSpecified;
-/*     */   protected String fNormalizedValue;
-/*     */   protected Object fActualValue;
-/*     */   protected short fActualValueType;
-/*     */   protected ShortList fItemValueTypes;
-/*     */   protected XSNotationDeclaration fNotation;
-/*     */   protected XSSimpleTypeDefinition fMemberType;
-/*     */   protected short fValidationAttempted;
-/*     */   protected short fValidity;
-/*     */   protected StringList fErrorCodes;
-/*     */   protected String fValidationContext;
-/*     */   protected XSModel fSchemaInformation;
-/*     */   
-/*     */   public PSVIElementNSImpl(CoreDocumentImpl ownerDocument, String namespaceURI, String qualifiedName, String localName) {
-/*  50 */     super(ownerDocument, namespaceURI, qualifiedName, localName);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  62 */     this.fDeclaration = null;
-/*     */ 
-/*     */     
-/*  65 */     this.fTypeDecl = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  70 */     this.fNil = false;
-/*     */ 
-/*     */ 
-/*     */     
-/*  74 */     this.fSpecified = true;
-/*     */ 
-/*     */     
-/*  77 */     this.fNormalizedValue = null;
-/*     */ 
-/*     */     
-/*  80 */     this.fActualValue = null;
-/*     */ 
-/*     */     
-/*  83 */     this.fActualValueType = 45;
-/*     */ 
-/*     */     
-/*  86 */     this.fItemValueTypes = null;
-/*     */ 
-/*     */     
-/*  89 */     this.fNotation = null;
-/*     */ 
-/*     */     
-/*  92 */     this.fMemberType = null;
-/*     */ 
-/*     */     
-/*  95 */     this.fValidationAttempted = 0;
-/*     */ 
-/*     */     
-/*  98 */     this.fValidity = 0;
-/*     */ 
-/*     */     
-/* 101 */     this.fErrorCodes = null;
-/*     */ 
-/*     */     
-/* 104 */     this.fValidationContext = null;
-/*     */ 
-/*     */     
-/* 107 */     this.fSchemaInformation = null; } public PSVIElementNSImpl(CoreDocumentImpl ownerDocument, String namespaceURI, String qualifiedName) { super(ownerDocument, namespaceURI, qualifiedName); this.fDeclaration = null; this.fTypeDecl = null; this.fNil = false; this.fSpecified = true; this.fNormalizedValue = null; this.fActualValue = null; this.fActualValueType = 45; this.fItemValueTypes = null; this.fNotation = null; this.fMemberType = null; this.fValidationAttempted = 0; this.fValidity = 0; this.fErrorCodes = null; this.fValidationContext = null; this.fSchemaInformation = null; }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSchemaDefault() {
-/* 120 */     return (this.fDeclaration == null) ? null : this.fDeclaration.getConstraintValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSchemaNormalizedValue() {
-/* 131 */     return this.fNormalizedValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getIsSchemaSpecified() {
-/* 140 */     return this.fSpecified;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getValidationAttempted() {
-/* 150 */     return this.fValidationAttempted;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getValidity() {
-/* 161 */     return this.fValidity;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StringList getErrorCodes() {
-/* 171 */     return this.fErrorCodes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValidationContext() {
-/* 177 */     return this.fValidationContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getNil() {
-/* 186 */     return this.fNil;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSNotationDeclaration getNotation() {
-/* 195 */     return this.fNotation;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSTypeDefinition getTypeDefinition() {
-/* 204 */     return this.fTypeDecl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSSimpleTypeDefinition getMemberTypeDefinition() {
-/* 217 */     return this.fMemberType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSElementDeclaration getElementDeclaration() {
-/* 227 */     return this.fDeclaration;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSModel getSchemaInformation() {
-/* 237 */     return this.fSchemaInformation;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPSVI(ElementPSVI elem) {
-/* 246 */     this.fDeclaration = elem.getElementDeclaration();
-/* 247 */     this.fNotation = elem.getNotation();
-/* 248 */     this.fValidationContext = elem.getValidationContext();
-/* 249 */     this.fTypeDecl = elem.getTypeDefinition();
-/* 250 */     this.fSchemaInformation = elem.getSchemaInformation();
-/* 251 */     this.fValidity = elem.getValidity();
-/* 252 */     this.fValidationAttempted = elem.getValidationAttempted();
-/* 253 */     this.fErrorCodes = elem.getErrorCodes();
-/* 254 */     this.fNormalizedValue = elem.getSchemaNormalizedValue();
-/* 255 */     this.fActualValue = elem.getActualNormalizedValue();
-/* 256 */     this.fActualValueType = elem.getActualNormalizedValueType();
-/* 257 */     this.fItemValueTypes = elem.getItemValueTypes();
-/* 258 */     this.fMemberType = elem.getMemberTypeDefinition();
-/* 259 */     this.fSpecified = elem.getIsSchemaSpecified();
-/* 260 */     this.fNil = elem.getNil();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getActualNormalizedValue() {
-/* 267 */     return this.fActualValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getActualNormalizedValueType() {
-/* 274 */     return this.fActualValueType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortList getItemValueTypes() {
-/* 281 */     return this.fItemValueTypes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream out) throws IOException {
-/* 289 */     throw new NotSerializableException(getClass().getName());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-/* 294 */     throw new NotSerializableException(getClass().getName());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\PSVIElementNSImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2002-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
+import com.sun.org.apache.xerces.internal.xs.*;
+
+/**
+ * Element namespace implementation; stores PSVI element items.
+ *
+ * @xerces.internal
+ *
+ * @author Sandy Gao, IBM
+ *
+ * @version $Id: PSVIElementNSImpl.java,v 1.6 2010/08/20 18:51:54 joehw Exp $
+ */
+public class PSVIElementNSImpl extends ElementNSImpl implements ElementPSVI {
+
+    /** Serialization version. */
+    static final long serialVersionUID = 6815489624636016068L;
+
+    /**
+     * Construct an element node.
+     */
+    public PSVIElementNSImpl(CoreDocumentImpl ownerDocument, String namespaceURI,
+                             String qualifiedName, String localName) {
+        super(ownerDocument, namespaceURI, qualifiedName, localName);
+    }
+
+    /**
+     * Construct an element node.
+     */
+    public PSVIElementNSImpl(CoreDocumentImpl ownerDocument, String namespaceURI,
+                             String qualifiedName) {
+        super(ownerDocument, namespaceURI, qualifiedName);
+    }
+
+    /** element declaration */
+    protected XSElementDeclaration fDeclaration = null;
+
+    /** type of element, could be xsi:type */
+    protected XSTypeDefinition fTypeDecl = null;
+
+    /** true if clause 3.2 of Element Locally Valid (Element) (3.3.4)
+      * is satisfied, otherwise false
+      */
+    protected boolean fNil = false;
+
+    /** false if the element value was provided by the schema; true otherwise.
+     */
+    protected boolean fSpecified = true;
+
+    /** schema normalized value property */
+    protected String fNormalizedValue = null;
+
+    /** schema actual value */
+    protected Object fActualValue = null;
+
+    /** schema actual value type */
+    protected short fActualValueType = XSConstants.UNAVAILABLE_DT;
+
+    /** actual value types if the value is a list */
+    protected ShortList fItemValueTypes = null;
+
+    /** http://www.w3.org/TR/xmlschema-1/#e-notation*/
+    protected XSNotationDeclaration fNotation = null;
+
+    /** member type definition against which element was validated */
+    protected XSSimpleTypeDefinition fMemberType = null;
+
+    /** validation attempted: none, partial, full */
+    protected short fValidationAttempted = ElementPSVI.VALIDATION_NONE;
+
+    /** validity: valid, invalid, unknown */
+    protected short fValidity = ElementPSVI.VALIDITY_NOTKNOWN;
+
+    /** error codes */
+    protected StringList fErrorCodes = null;
+
+    /** validation context: could be QName or XPath expression*/
+    protected String fValidationContext = null;
+
+    /** the schema information property */
+    protected XSModel fSchemaInformation = null;
+
+    //
+    // ElementPSVI methods
+    //
+
+    /**
+     * [schema default]
+     *
+     * @return The canonical lexical representation of the declaration's {value constraint} value.
+     * @see <a href="http://www.w3.org/TR/xmlschema-1/#e-schema_default>XML Schema Part 1: Structures [schema default]</a>
+     */
+    public String getSchemaDefault() {
+        return fDeclaration == null ? null : fDeclaration.getConstraintValue();
+    }
+
+    /**
+     * [schema normalized value]
+     *
+     *
+     * @see <a href="http://www.w3.org/TR/xmlschema-1/#e-schema_normalized_value>XML Schema Part 1: Structures [schema normalized value]</a>
+     * @return the normalized value of this item after validation
+     */
+    public String getSchemaNormalizedValue() {
+        return fNormalizedValue;
+    }
+
+    /**
+     * [schema specified]
+     * @see <a href="http://www.w3.org/TR/xmlschema-1/#e-schema_specified">XML Schema Part 1: Structures [schema specified]</a>
+     * @return false value was specified in schema, true value comes from the infoset
+     */
+    public boolean getIsSchemaSpecified() {
+        return fSpecified;
+    }
+
+    /**
+     * Determines the extent to which the document has been validated
+     *
+     * @return return the [validation attempted] property. The possible values are
+     *         NO_VALIDATION, PARTIAL_VALIDATION and FULL_VALIDATION
+     */
+    public short getValidationAttempted() {
+        return fValidationAttempted;
+    }
+
+    /**
+     * Determine the validity of the node with respect
+     * to the validation being attempted
+     *
+     * @return return the [validity] property. Possible values are:
+     *         UNKNOWN_VALIDITY, INVALID_VALIDITY, VALID_VALIDITY
+     */
+    public short getValidity() {
+        return fValidity;
+    }
+
+    /**
+     * A list of error codes generated from validation attempts.
+     * Need to find all the possible subclause reports that need reporting
+     *
+     * @return Array of error codes
+     */
+    public StringList getErrorCodes() {
+        return fErrorCodes;
+    }
+
+
+    // This is the only information we can provide in a pipeline.
+    public String getValidationContext() {
+        return fValidationContext;
+    }
+
+    /**
+     * [nil]
+     * @see <a href="http://www.w3.org/TR/xmlschema-1/#e-nil>XML Schema Part 1: Structures [nil]</a>
+     * @return true if clause 3.2 of Element Locally Valid (Element) (3.3.4) above is satisfied, otherwise false
+     */
+    public boolean getNil() {
+        return fNil;
+    }
+
+    /**
+     * [notation]
+     * @see <a href="http://www.w3.org/TR/xmlschema-1/#e-notation>XML Schema Part 1: Structures [notation]</a>
+     * @return The notation declaration.
+     */
+    public XSNotationDeclaration getNotation() {
+        return fNotation;
+    }
+
+    /**
+     * An item isomorphic to the type definition used to validate this element.
+     *
+     * @return  a type declaration
+     */
+    public XSTypeDefinition getTypeDefinition() {
+        return fTypeDecl;
+    }
+
+    /**
+     * If and only if that type definition is a simple type definition
+     * with {variety} union, or a complex type definition whose {content type}
+     * is a simple thype definition with {variety} union, then an item isomorphic
+     * to that member of the union's {member type definitions} which actually
+     * validated the element item's normalized value.
+     *
+     * @return  a simple type declaration
+     */
+    public XSSimpleTypeDefinition getMemberTypeDefinition() {
+        return fMemberType;
+    }
+
+    /**
+     * An item isomorphic to the element declaration used to validate
+     * this element.
+     *
+     * @return  an element declaration
+     */
+    public XSElementDeclaration getElementDeclaration() {
+        return fDeclaration;
+    }
+
+    /**
+     * [schema information]
+     * @see <a href="http://www.w3.org/TR/xmlschema-1/#e-schema_information">XML Schema Part 1: Structures [schema information]</a>
+     * @return The schema information property if it's the validation root,
+     *         null otherwise.
+     */
+    public XSModel getSchemaInformation() {
+        return fSchemaInformation;
+    }
+
+    /**
+     * Copy PSVI properties from another psvi item.
+     *
+     * @param attr  the source of attribute PSVI items
+     */
+    public void setPSVI(ElementPSVI elem) {
+        this.fDeclaration = elem.getElementDeclaration();
+        this.fNotation = elem.getNotation();
+        this.fValidationContext = elem.getValidationContext();
+        this.fTypeDecl = elem.getTypeDefinition();
+        this.fSchemaInformation = elem.getSchemaInformation();
+        this.fValidity = elem.getValidity();
+        this.fValidationAttempted = elem.getValidationAttempted();
+        this.fErrorCodes = elem.getErrorCodes();
+        this.fNormalizedValue = elem.getSchemaNormalizedValue();
+        this.fActualValue = elem.getActualNormalizedValue();
+        this.fActualValueType = elem.getActualNormalizedValueType();
+        this.fItemValueTypes = elem.getItemValueTypes();
+        this.fMemberType = elem.getMemberTypeDefinition();
+        this.fSpecified = elem.getIsSchemaSpecified();
+        this.fNil = elem.getNil();
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.ItemPSVI#getActualNormalizedValue()
+     */
+    public Object getActualNormalizedValue() {
+        return this.fActualValue;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.ItemPSVI#getActualNormalizedValueType()
+     */
+    public short getActualNormalizedValueType() {
+        return this.fActualValueType;
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.xs.ItemPSVI#getItemValueTypes()
+     */
+    public ShortList getItemValueTypes() {
+        return this.fItemValueTypes;
+    }
+
+    // REVISIT: Forbid serialization of PSVI DOM until
+    // we support object serialization of grammars -- mrglavas
+
+    private void writeObject(ObjectOutputStream out)
+        throws IOException {
+        throw new NotSerializableException(getClass().getName());
+    }
+
+    private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException {
+        throw new NotSerializableException(getClass().getName());
+    }
+}

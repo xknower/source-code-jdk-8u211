@@ -1,701 +1,695 @@
-/*     */ package javax.xml.bind;
-/*     */ 
-/*     */ import java.math.BigDecimal;
-/*     */ import java.math.BigInteger;
-/*     */ import java.util.Calendar;
-/*     */ import javax.xml.namespace.NamespaceContext;
-/*     */ import javax.xml.namespace.QName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class DatatypeConverter
-/*     */ {
-/*  97 */   private static volatile DatatypeConverterInterface theConverter = null;
-/*     */   
-/*  99 */   private static final JAXBPermission SET_DATATYPE_CONVERTER_PERMISSION = new JAXBPermission("setDatatypeConverter");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setDatatypeConverter(DatatypeConverterInterface converter) {
-/* 128 */     if (converter == null)
-/* 129 */       throw new IllegalArgumentException(
-/* 130 */           Messages.format("DatatypeConverter.ConverterMustNotBeNull")); 
-/* 131 */     if (theConverter == null) {
-/* 132 */       SecurityManager sm = System.getSecurityManager();
-/* 133 */       if (sm != null)
-/* 134 */         sm.checkPermission(SET_DATATYPE_CONVERTER_PERMISSION); 
-/* 135 */       theConverter = converter;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static synchronized void initConverter() {
-/* 140 */     theConverter = new DatatypeConverterImpl();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String parseString(String lexicalXSDString) {
-/* 153 */     if (theConverter == null) initConverter(); 
-/* 154 */     return theConverter.parseString(lexicalXSDString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static BigInteger parseInteger(String lexicalXSDInteger) {
-/* 168 */     if (theConverter == null) initConverter(); 
-/* 169 */     return theConverter.parseInteger(lexicalXSDInteger);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int parseInt(String lexicalXSDInt) {
-/* 183 */     if (theConverter == null) initConverter(); 
-/* 184 */     return theConverter.parseInt(lexicalXSDInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static long parseLong(String lexicalXSDLong) {
-/* 198 */     if (theConverter == null) initConverter(); 
-/* 199 */     return theConverter.parseLong(lexicalXSDLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static short parseShort(String lexicalXSDShort) {
-/* 213 */     if (theConverter == null) initConverter(); 
-/* 214 */     return theConverter.parseShort(lexicalXSDShort);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static BigDecimal parseDecimal(String lexicalXSDDecimal) {
-/* 228 */     if (theConverter == null) initConverter(); 
-/* 229 */     return theConverter.parseDecimal(lexicalXSDDecimal);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static float parseFloat(String lexicalXSDFloat) {
-/* 243 */     if (theConverter == null) initConverter(); 
-/* 244 */     return theConverter.parseFloat(lexicalXSDFloat);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static double parseDouble(String lexicalXSDDouble) {
-/* 258 */     if (theConverter == null) initConverter(); 
-/* 259 */     return theConverter.parseDouble(lexicalXSDDouble);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean parseBoolean(String lexicalXSDBoolean) {
-/* 273 */     if (theConverter == null) initConverter(); 
-/* 274 */     return theConverter.parseBoolean(lexicalXSDBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte parseByte(String lexicalXSDByte) {
-/* 288 */     if (theConverter == null) initConverter(); 
-/* 289 */     return theConverter.parseByte(lexicalXSDByte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static QName parseQName(String lexicalXSDQName, NamespaceContext nsc) {
-/* 311 */     if (theConverter == null) initConverter(); 
-/* 312 */     return theConverter.parseQName(lexicalXSDQName, nsc);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Calendar parseDateTime(String lexicalXSDDateTime) {
-/* 326 */     if (theConverter == null) initConverter(); 
-/* 327 */     return theConverter.parseDateTime(lexicalXSDDateTime);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte[] parseBase64Binary(String lexicalXSDBase64Binary) {
-/* 341 */     if (theConverter == null) initConverter(); 
-/* 342 */     return theConverter.parseBase64Binary(lexicalXSDBase64Binary);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte[] parseHexBinary(String lexicalXSDHexBinary) {
-/* 356 */     if (theConverter == null) initConverter(); 
-/* 357 */     return theConverter.parseHexBinary(lexicalXSDHexBinary);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static long parseUnsignedInt(String lexicalXSDUnsignedInt) {
-/* 371 */     if (theConverter == null) initConverter(); 
-/* 372 */     return theConverter.parseUnsignedInt(lexicalXSDUnsignedInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int parseUnsignedShort(String lexicalXSDUnsignedShort) {
-/* 386 */     if (theConverter == null) initConverter(); 
-/* 387 */     return theConverter.parseUnsignedShort(lexicalXSDUnsignedShort);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Calendar parseTime(String lexicalXSDTime) {
-/* 401 */     if (theConverter == null) initConverter(); 
-/* 402 */     return theConverter.parseTime(lexicalXSDTime);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Calendar parseDate(String lexicalXSDDate) {
-/* 415 */     if (theConverter == null) initConverter(); 
-/* 416 */     return theConverter.parseDate(lexicalXSDDate);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String parseAnySimpleType(String lexicalXSDAnySimpleType) {
-/* 431 */     if (theConverter == null) initConverter(); 
-/* 432 */     return theConverter.parseAnySimpleType(lexicalXSDAnySimpleType);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printString(String val) {
-/* 446 */     if (theConverter == null) initConverter(); 
-/* 447 */     return theConverter.printString(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printInteger(BigInteger val) {
-/* 460 */     if (theConverter == null) initConverter(); 
-/* 461 */     return theConverter.printInteger(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printInt(int val) {
-/* 473 */     if (theConverter == null) initConverter(); 
-/* 474 */     return theConverter.printInt(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printLong(long val) {
-/* 486 */     if (theConverter == null) initConverter(); 
-/* 487 */     return theConverter.printLong(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printShort(short val) {
-/* 499 */     if (theConverter == null) initConverter(); 
-/* 500 */     return theConverter.printShort(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printDecimal(BigDecimal val) {
-/* 513 */     if (theConverter == null) initConverter(); 
-/* 514 */     return theConverter.printDecimal(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printFloat(float val) {
-/* 526 */     if (theConverter == null) initConverter(); 
-/* 527 */     return theConverter.printFloat(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printDouble(double val) {
-/* 539 */     if (theConverter == null) initConverter(); 
-/* 540 */     return theConverter.printDouble(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printBoolean(boolean val) {
-/* 552 */     if (theConverter == null) initConverter(); 
-/* 553 */     return theConverter.printBoolean(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printByte(byte val) {
-/* 565 */     if (theConverter == null) initConverter(); 
-/* 566 */     return theConverter.printByte(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printQName(QName val, NamespaceContext nsc) {
-/* 583 */     if (theConverter == null) initConverter(); 
-/* 584 */     return theConverter.printQName(val, nsc);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printDateTime(Calendar val) {
-/* 597 */     if (theConverter == null) initConverter(); 
-/* 598 */     return theConverter.printDateTime(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printBase64Binary(byte[] val) {
-/* 611 */     if (theConverter == null) initConverter(); 
-/* 612 */     return theConverter.printBase64Binary(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printHexBinary(byte[] val) {
-/* 625 */     if (theConverter == null) initConverter(); 
-/* 626 */     return theConverter.printHexBinary(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printUnsignedInt(long val) {
-/* 638 */     if (theConverter == null) initConverter(); 
-/* 639 */     return theConverter.printUnsignedInt(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printUnsignedShort(int val) {
-/* 651 */     if (theConverter == null) initConverter(); 
-/* 652 */     return theConverter.printUnsignedShort(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printTime(Calendar val) {
-/* 665 */     if (theConverter == null) initConverter(); 
-/* 666 */     return theConverter.printTime(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printDate(Calendar val) {
-/* 679 */     if (theConverter == null) initConverter(); 
-/* 680 */     return theConverter.printDate(val);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String printAnySimpleType(String val) {
-/* 692 */     if (theConverter == null) initConverter(); 
-/* 693 */     return theConverter.printAnySimpleType(val);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\bind\DatatypeConverter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.bind;
+
+import javax.xml.namespace.NamespaceContext;
+
+/**
+ * <p>
+ * The javaType binding declaration can be used to customize the binding of
+ * an XML schema datatype to a Java datatype. Customizations can involve
+ * writing a parse and print method for parsing and printing lexical
+ * representations of a XML schema datatype respectively. However, writing
+ * parse and print methods requires knowledge of the lexical representations (
+ * <a href="http://www.w3.org/TR/xmlschema-2/"> XML Schema Part2: Datatypes
+ * specification </a>) and hence may be difficult to write.
+ * </p>
+ * <p>
+ * This class makes it easier to write parse and print methods. It defines
+ * static parse and print methods that provide access to a JAXB provider's
+ * implementation of parse and print methods. These methods are invoked by
+ * custom parse and print methods. For example, the binding of xsd:dateTime
+ * to a long can be customized using parse and print methods as follows:
+ * <blockquote>
+ *    <pre>
+ *    // Customized parse method
+ *    public long myParseCal( String dateTimeString ) {
+ *        java.util.Calendar cal = DatatypeConverter.parseDateTime(dateTimeString);
+ *        long longval = convert_calendar_to_long(cal); //application specific
+ *        return longval;
+ *    }
+ *
+ *    // Customized print method
+ *    public String myPrintCal( Long longval ) {
+ *        java.util.Calendar cal = convert_long_to_calendar(longval) ; //application specific
+ *        String dateTimeString = DatatypeConverter.printDateTime(cal);
+ *        return dateTimeString;
+ *    }
+ *    </pre>
+ * </blockquote>
+ * <p>
+ * There is a static parse and print method corresponding to each parse and
+ * print method respectively in the {@link DatatypeConverterInterface
+ * DatatypeConverterInterface}.
+ * <p>
+ * The static methods defined in the class can also be used to specify
+ * a parse or a print method in a javaType binding declaration.
+ * </p>
+ * <p>
+ * JAXB Providers are required to call the
+ * {@link #setDatatypeConverter(DatatypeConverterInterface)
+ * setDatatypeConverter} api at some point before the first marshal or unmarshal
+ * operation (perhaps during the call to JAXBContext.newInstance).  This step is
+ * necessary to configure the converter that should be used to perform the
+ * print and parse functionality.
+ * </p>
+ *
+ * <p>
+ * A print method for a XML schema datatype can output any lexical
+ * representation that is valid with respect to the XML schema datatype.
+ * If an error is encountered during conversion, then an IllegalArgumentException,
+ * or a subclass of IllegalArgumentException must be thrown by the method.
+ * </p>
+ *
+ * @author <ul><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li><li>Joe Fialli, Sun Microsystems Inc.</li><li>Kohsuke Kawaguchi, Sun Microsystems, Inc.</li><li>Ryan Shoemaker,Sun Microsystems Inc.</li></ul>
+ * @see DatatypeConverterInterface
+ * @see ParseConversionEvent
+ * @see PrintConversionEvent
+ * @since JAXB1.0
+ */
+
+final public class DatatypeConverter {
+
+    // delegate to this instance of DatatypeConverter
+    private static volatile DatatypeConverterInterface theConverter = null;
+
+    private final static JAXBPermission SET_DATATYPE_CONVERTER_PERMISSION =
+                           new JAXBPermission("setDatatypeConverter");
+
+    private DatatypeConverter() {
+        // private constructor
+    }
+
+    /**
+     * This method is for JAXB provider use only.
+     * <p>
+     * JAXB Providers are required to call this method at some point before
+     * allowing any of the JAXB client marshal or unmarshal operations to
+     * occur.  This is necessary to configure the datatype converter that
+     * should be used to perform the print and parse conversions.
+     *
+     * <p>
+     * Calling this api repeatedly will have no effect - the
+     * DatatypeConverterInterface instance passed into the first invocation is
+     * the one that will be used from then on.
+     *
+     * @param converter an instance of a class that implements the
+     * DatatypeConverterInterface class - this parameter must not be null.
+     * @throws IllegalArgumentException if the parameter is null
+     * @throws SecurityException
+     *      If the {@link SecurityManager} in charge denies the access to
+     *      set the datatype converter.
+     * @see JAXBPermission
+     */
+    public static void setDatatypeConverter( DatatypeConverterInterface converter ) {
+        if( converter == null ) {
+            throw new IllegalArgumentException(
+                Messages.format( Messages.CONVERTER_MUST_NOT_BE_NULL ) );
+        } else if( theConverter == null ) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null)
+                sm.checkPermission(SET_DATATYPE_CONVERTER_PERMISSION);
+            theConverter = converter;
+        }
+    }
+
+    private static synchronized void initConverter() {
+        theConverter = new DatatypeConverterImpl();
+    }
+
+    /**
+     * <p>
+     * Convert the lexical XSD string argument into a String value.
+     * @param lexicalXSDString
+     *     A string containing a lexical representation of
+     *     xsd:string.
+     * @return
+     *     A String value represented by the string argument.
+     */
+    public static String parseString( String lexicalXSDString ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseString( lexicalXSDString );
+    }
+
+    /**
+     * <p>
+     * Convert the string argument into a BigInteger value.
+     * @param lexicalXSDInteger
+     *     A string containing a lexical representation of
+     *     xsd:integer.
+     * @return
+     *     A BigInteger value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDInteger</code> is not a valid string representation of a {@link java.math.BigInteger} value.
+     */
+    public static java.math.BigInteger parseInteger( String lexicalXSDInteger ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseInteger( lexicalXSDInteger );
+    }
+
+    /**
+     * <p>
+     * Convert the string argument into an int value.
+     * @param lexicalXSDInt
+     *     A string containing a lexical representation of
+     *     xsd:int.
+     * @return
+     *     A int value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDInt</code> is not a valid string representation of an <code>int</code> value.
+     */
+    public static int parseInt( String lexicalXSDInt ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseInt( lexicalXSDInt );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a long value.
+     * @param lexicalXSDLong
+     *     A string containing lexical representation of
+     *     xsd:long.
+     * @return
+     *     A long value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDLong</code> is not a valid string representation of a <code>long</code> value.
+     */
+    public static long parseLong( String lexicalXSDLong ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseLong( lexicalXSDLong );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a short value.
+     * @param lexicalXSDShort
+     *     A string containing lexical representation of
+     *     xsd:short.
+     * @return
+     *     A short value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDShort</code> is not a valid string representation of a <code>short</code> value.
+     */
+    public static short parseShort( String lexicalXSDShort ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseShort( lexicalXSDShort );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a BigDecimal value.
+     * @param lexicalXSDDecimal
+     *     A string containing lexical representation of
+     *     xsd:decimal.
+     * @return
+     *     A BigDecimal value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDDecimal</code> is not a valid string representation of {@link java.math.BigDecimal}.
+     */
+    public static java.math.BigDecimal parseDecimal( String lexicalXSDDecimal ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseDecimal( lexicalXSDDecimal );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a float value.
+     * @param lexicalXSDFloat
+     *     A string containing lexical representation of
+     *     xsd:float.
+     * @return
+     *     A float value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDFloat</code> is not a valid string representation of a <code>float</code> value.
+     */
+    public static float parseFloat( String lexicalXSDFloat ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseFloat( lexicalXSDFloat );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a double value.
+     * @param lexicalXSDDouble
+     *     A string containing lexical representation of
+     *     xsd:double.
+     * @return
+     *     A double value represented by the string argument.
+     * @throws NumberFormatException <code>lexicalXSDDouble</code> is not a valid string representation of a <code>double</code> value.
+     */
+    public static double parseDouble( String lexicalXSDDouble ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseDouble( lexicalXSDDouble );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a boolean value.
+     * @param lexicalXSDBoolean
+     *     A string containing lexical representation of
+     *     xsd:boolean.
+     * @return
+     *     A boolean value represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:boolean.
+     */
+    public static boolean parseBoolean( String lexicalXSDBoolean ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseBoolean( lexicalXSDBoolean );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a byte value.
+     * @param lexicalXSDByte
+     *     A string containing lexical representation of
+     *     xsd:byte.
+     * @return
+     *     A byte value represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:byte.
+     */
+    public static byte parseByte( String lexicalXSDByte ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseByte( lexicalXSDByte );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a byte value.
+     *
+     * <p>
+     * String parameter <tt>lexicalXSDQname</tt> must conform to lexical value space specifed at
+     * <a href="http://www.w3.org/TR/xmlschema-2/#QName">XML Schema Part 2:Datatypes specification:QNames</a>
+     *
+     * @param lexicalXSDQName
+     *     A string containing lexical representation of xsd:QName.
+     * @param nsc
+     *     A namespace context for interpreting a prefix within a QName.
+     * @return
+     *     A QName value represented by the string argument.
+     * @throws IllegalArgumentException  if string parameter does not conform to XML Schema Part 2 specification or
+     *      if namespace prefix of <tt>lexicalXSDQname</tt> is not bound to a URI in NamespaceContext <tt>nsc</tt>.
+     */
+    public static javax.xml.namespace.QName parseQName( String lexicalXSDQName,
+                                                    NamespaceContext nsc) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseQName( lexicalXSDQName, nsc );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a Calendar value.
+     * @param lexicalXSDDateTime
+     *     A string containing lexical representation of
+     *     xsd:datetime.
+     * @return
+     *     A Calendar object represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:dateTime.
+     */
+    public static java.util.Calendar parseDateTime( String lexicalXSDDateTime ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseDateTime( lexicalXSDDateTime );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into an array of bytes.
+     * @param lexicalXSDBase64Binary
+     *     A string containing lexical representation
+     *     of xsd:base64Binary.
+     * @return
+     *     An array of bytes represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:base64Binary
+     */
+    public static byte[] parseBase64Binary( String lexicalXSDBase64Binary ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseBase64Binary( lexicalXSDBase64Binary );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into an array of bytes.
+     * @param lexicalXSDHexBinary
+     *     A string containing lexical representation of
+     *     xsd:hexBinary.
+     * @return
+     *     An array of bytes represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:hexBinary.
+     */
+   public static byte[] parseHexBinary( String lexicalXSDHexBinary ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseHexBinary( lexicalXSDHexBinary );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a long value.
+     * @param lexicalXSDUnsignedInt
+     *     A string containing lexical representation
+     *     of xsd:unsignedInt.
+     * @return
+     *     A long value represented by the string argument.
+     * @throws NumberFormatException if string parameter can not be parsed into a <tt>long</tt> value.
+     */
+    public static long parseUnsignedInt( String lexicalXSDUnsignedInt ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseUnsignedInt( lexicalXSDUnsignedInt );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into an int value.
+     * @param lexicalXSDUnsignedShort
+     *     A string containing lexical
+     *     representation of xsd:unsignedShort.
+     * @return
+     *     An int value represented by the string argument.
+     * @throws NumberFormatException if string parameter can not be parsed into an <tt>int</tt> value.
+     */
+    public static int   parseUnsignedShort( String lexicalXSDUnsignedShort ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseUnsignedShort( lexicalXSDUnsignedShort );
+    }
+
+    /**
+     * <p>
+     * Converts the string argument into a Calendar value.
+     * @param lexicalXSDTime
+     *     A string containing lexical representation of
+     *     xsd:time.
+     * @return
+     *     A Calendar value represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:Time.
+     */
+    public static java.util.Calendar parseTime( String lexicalXSDTime ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseTime( lexicalXSDTime );
+    }
+    /**
+     * <p>
+     * Converts the string argument into a Calendar value.
+     * @param lexicalXSDDate
+     *      A string containing lexical representation of
+     *     xsd:Date.
+     * @return
+     *     A Calendar value represented by the string argument.
+     * @throws IllegalArgumentException if string parameter does not conform to lexical value space defined in XML Schema Part 2: Datatypes for xsd:Date.
+     */
+    public static java.util.Calendar parseDate( String lexicalXSDDate ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseDate( lexicalXSDDate );
+    }
+
+    /**
+     * <p>
+     * Return a string containing the lexical representation of the
+     * simple type.
+     * @param lexicalXSDAnySimpleType
+     *     A string containing lexical
+     *     representation of the simple type.
+     * @return
+     *     A string containing the lexical representation of the
+     *     simple type.
+     */
+    public static String parseAnySimpleType( String lexicalXSDAnySimpleType ) {
+        if (theConverter == null) initConverter();
+        return theConverter.parseAnySimpleType( lexicalXSDAnySimpleType );
+    }
+    /**
+     * <p>
+     * Converts the string argument into a string.
+     * @param val
+     *     A string value.
+     * @return
+     *     A string containing a lexical representation of xsd:string.
+     */
+     // also indicate the print methods produce a lexical
+     // representation for given Java datatypes.
+
+    public static String printString( String val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printString( val );
+    }
+
+    /**
+     * <p>
+     * Converts a BigInteger value into a string.
+     * @param val
+     *     A BigInteger value
+     * @return
+     *     A string containing a lexical representation of xsd:integer
+     * @throws IllegalArgumentException <tt>val</tt> is null.
+     */
+    public static String printInteger( java.math.BigInteger val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printInteger( val );
+    }
+
+    /**
+     * <p>
+     * Converts an int value into a string.
+     * @param val
+     *     An int value
+     * @return
+     *     A string containing a lexical representation of xsd:int
+     */
+    public static String printInt( int val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printInt( val );
+    }
+
+    /**
+     * <p>
+     * Converts A long value into a string.
+     * @param val
+     *     A long value
+     * @return
+     *     A string containing a lexical representation of xsd:long
+     */
+    public static String printLong( long val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printLong( val );
+    }
+
+    /**
+     * <p>
+     * Converts a short value into a string.
+     * @param val
+     *     A short value
+     * @return
+     *     A string containing a lexical representation of xsd:short
+     */
+    public static String printShort( short val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printShort( val );
+    }
+
+    /**
+     * <p>
+     * Converts a BigDecimal value into a string.
+     * @param val
+     *     A BigDecimal value
+     * @return
+     *     A string containing a lexical representation of xsd:decimal
+     * @throws IllegalArgumentException <tt>val</tt> is null.
+     */
+    public static String printDecimal( java.math.BigDecimal val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printDecimal( val );
+    }
+
+    /**
+     * <p>
+     * Converts a float value into a string.
+     * @param val
+     *     A float value
+     * @return
+     *     A string containing a lexical representation of xsd:float
+     */
+    public static String printFloat( float val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printFloat( val );
+    }
+
+    /**
+     * <p>
+     * Converts a double value into a string.
+     * @param val
+     *     A double value
+     * @return
+     *     A string containing a lexical representation of xsd:double
+     */
+    public static String printDouble( double val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printDouble( val );
+    }
+
+    /**
+     * <p>
+     * Converts a boolean value into a string.
+     * @param val
+     *     A boolean value
+     * @return
+     *     A string containing a lexical representation of xsd:boolean
+     */
+    public static String printBoolean( boolean val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printBoolean( val );
+    }
+
+    /**
+     * <p>
+     * Converts a byte value into a string.
+     * @param val
+     *     A byte value
+     * @return
+     *     A string containing a lexical representation of xsd:byte
+     */
+    public static String printByte( byte val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printByte( val );
+    }
+
+    /**
+     * <p>
+     * Converts a QName instance into a string.
+     * @param val
+     *     A QName value
+     * @param nsc
+     *     A namespace context for interpreting a prefix within a QName.
+     * @return
+     *     A string containing a lexical representation of QName
+     * @throws IllegalArgumentException if <tt>val</tt> is null or
+     * if <tt>nsc</tt> is non-null or <tt>nsc.getPrefix(nsprefixFromVal)</tt> is null.
+     */
+    public static String printQName( javax.xml.namespace.QName val,
+                                     NamespaceContext nsc ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printQName( val, nsc );
+    }
+
+    /**
+     * <p>
+     * Converts a Calendar value into a string.
+     * @param val
+     *     A Calendar value
+     * @return
+     *     A string containing a lexical representation of xsd:dateTime
+     * @throws IllegalArgumentException if <tt>val</tt> is null.
+     */
+    public static String printDateTime( java.util.Calendar val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printDateTime( val );
+    }
+
+    /**
+     * <p>
+     * Converts an array of bytes into a string.
+     * @param val
+     *     An array of bytes
+     * @return
+     *     A string containing a lexical representation of xsd:base64Binary
+     * @throws IllegalArgumentException if <tt>val</tt> is null.
+     */
+    public static String printBase64Binary( byte[] val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printBase64Binary( val );
+    }
+
+    /**
+     * <p>
+     * Converts an array of bytes into a string.
+     * @param val
+     *     An array of bytes
+     * @return
+     *     A string containing a lexical representation of xsd:hexBinary
+     * @throws IllegalArgumentException if <tt>val</tt> is null.
+     */
+    public static String printHexBinary( byte[] val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printHexBinary( val );
+    }
+
+    /**
+     * <p>
+     * Converts a long value into a string.
+     * @param val
+     *     A long value
+     * @return
+     *     A string containing a lexical representation of xsd:unsignedInt
+     */
+    public static String printUnsignedInt( long val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printUnsignedInt( val );
+    }
+
+    /**
+     * <p>
+     * Converts an int value into a string.
+     * @param val
+     *     An int value
+     * @return
+     *     A string containing a lexical representation of xsd:unsignedShort
+     */
+    public static String printUnsignedShort( int val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printUnsignedShort( val );
+    }
+
+    /**
+     * <p>
+     * Converts a Calendar value into a string.
+     * @param val
+     *     A Calendar value
+     * @return
+     *     A string containing a lexical representation of xsd:time
+     * @throws IllegalArgumentException if <tt>val</tt> is null.
+     */
+    public static String printTime( java.util.Calendar val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printTime( val );
+    }
+
+    /**
+     * <p>
+     * Converts a Calendar value into a string.
+     * @param val
+     *     A Calendar value
+     * @return
+     *     A string containing a lexical representation of xsd:date
+     * @throws IllegalArgumentException if <tt>val</tt> is null.
+     */
+    public static String printDate( java.util.Calendar val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printDate( val );
+    }
+
+    /**
+     * <p>
+     * Converts a string value into a string.
+     * @param val
+     *     A string value
+     * @return
+     *     A string containing a lexical representation of xsd:AnySimpleType
+     */
+    public static String printAnySimpleType( String val ) {
+        if (theConverter == null) initConverter();
+        return theConverter.printAnySimpleType( val );
+    }
+}

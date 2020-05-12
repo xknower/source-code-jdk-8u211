@@ -1,237 +1,231 @@
-/*     */ package com.sun.corba.se.impl.encoding;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.impl.protocol.giopmsgheaders.FragmentMessage;
-/*     */ import com.sun.corba.se.impl.protocol.giopmsgheaders.MessageBase;
-/*     */ import com.sun.corba.se.pept.encoding.OutputObject;
-/*     */ import com.sun.corba.se.pept.transport.ByteBufferPool;
-/*     */ import com.sun.corba.se.pept.transport.Connection;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.Iterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BufferManagerWriteCollect
-/*     */   extends BufferManagerWrite
-/*     */ {
-/*  51 */   private BufferQueue queue = new BufferQueue();
-/*     */   
-/*     */   private boolean sentFragment = false;
-/*     */   
-/*     */   private boolean debug = false;
-/*     */ 
-/*     */   
-/*     */   BufferManagerWriteCollect(ORB paramORB) {
-/*  59 */     super(paramORB);
-/*  60 */     if (paramORB != null)
-/*  61 */       this.debug = paramORB.transportDebugFlag; 
-/*     */   }
-/*     */   
-/*     */   public boolean sentFragment() {
-/*  65 */     return this.sentFragment;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBufferSize() {
-/*  73 */     return this.orb.getORBData().getGIOPFragmentSize();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void overflow(ByteBufferWithInfo paramByteBufferWithInfo) {
-/*  81 */     MessageBase.setFlag(paramByteBufferWithInfo.byteBuffer, 2);
-/*     */ 
-/*     */     
-/*  84 */     this.queue.enqueue(paramByteBufferWithInfo);
-/*     */ 
-/*     */     
-/*  87 */     ByteBufferWithInfo byteBufferWithInfo = new ByteBufferWithInfo(this.orb, this);
-/*  88 */     byteBufferWithInfo.fragmented = true;
-/*     */ 
-/*     */     
-/*  91 */     ((CDROutputObject)this.outputObject).setByteBufferWithInfo(byteBufferWithInfo);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 101 */     FragmentMessage fragmentMessage = ((CDROutputObject)this.outputObject).getMessageHeader().createFragmentMessage();
-/*     */     
-/* 103 */     fragmentMessage.write((CDROutputObject)this.outputObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void sendMessage() {
-/* 110 */     this.queue.enqueue(((CDROutputObject)this.outputObject).getByteBufferWithInfo());
-/*     */     
-/* 112 */     Iterator<ByteBufferWithInfo> iterator = iterator();
-/*     */ 
-/*     */ 
-/*     */     
-/* 116 */     Connection connection = ((OutputObject)this.outputObject).getMessageMediator().getConnection();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 124 */     connection.writeLock();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 130 */       ByteBufferPool byteBufferPool = this.orb.getByteBufferPool();
-/*     */       
-/* 132 */       while (iterator.hasNext()) {
-/*     */         
-/* 134 */         ByteBufferWithInfo byteBufferWithInfo = iterator.next();
-/* 135 */         ((CDROutputObject)this.outputObject).setByteBufferWithInfo(byteBufferWithInfo);
-/*     */         
-/* 137 */         connection.sendWithoutLock((CDROutputObject)this.outputObject);
-/*     */         
-/* 139 */         this.sentFragment = true;
-/*     */ 
-/*     */ 
-/*     */         
-/* 143 */         if (this.debug) {
-/*     */ 
-/*     */           
-/* 146 */           int i = System.identityHashCode(byteBufferWithInfo.byteBuffer);
-/* 147 */           StringBuffer stringBuffer = new StringBuffer(80);
-/* 148 */           stringBuffer.append("sendMessage() - releasing ByteBuffer id (");
-/* 149 */           stringBuffer.append(i).append(") to ByteBufferPool.");
-/* 150 */           String str = stringBuffer.toString();
-/* 151 */           dprint(str);
-/*     */         } 
-/* 153 */         byteBufferPool.releaseByteBuffer(byteBufferWithInfo.byteBuffer);
-/* 154 */         byteBufferWithInfo.byteBuffer = null;
-/* 155 */         byteBufferWithInfo = null;
-/*     */       } 
-/*     */       
-/* 158 */       this.sentFullMessage = true;
-/*     */     }
-/*     */     finally {
-/*     */       
-/* 162 */       connection.writeUnlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() {
-/* 178 */     Iterator<ByteBufferWithInfo> iterator = iterator();
-/*     */     
-/* 180 */     ByteBufferPool byteBufferPool = this.orb.getByteBufferPool();
-/*     */     
-/* 182 */     while (iterator.hasNext()) {
-/*     */       
-/* 184 */       ByteBufferWithInfo byteBufferWithInfo = iterator.next();
-/* 185 */       if (byteBufferWithInfo != null && byteBufferWithInfo.byteBuffer != null) {
-/*     */         
-/* 187 */         if (this.debug) {
-/*     */ 
-/*     */           
-/* 190 */           int i = System.identityHashCode(byteBufferWithInfo.byteBuffer);
-/* 191 */           StringBuffer stringBuffer = new StringBuffer(80);
-/* 192 */           stringBuffer.append("close() - releasing ByteBuffer id (");
-/* 193 */           stringBuffer.append(i).append(") to ByteBufferPool.");
-/* 194 */           String str = stringBuffer.toString();
-/* 195 */           dprint(str);
-/*     */         } 
-/* 197 */         byteBufferPool.releaseByteBuffer(byteBufferWithInfo.byteBuffer);
-/* 198 */         byteBufferWithInfo.byteBuffer = null;
-/* 199 */         byteBufferWithInfo = null;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void dprint(String paramString) {
-/* 206 */     ORBUtility.dprint("BufferManagerWriteCollect", paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Iterator iterator() {
-/* 211 */     return new BufferManagerWriteCollectIterator();
-/*     */   }
-/*     */   
-/*     */   private class BufferManagerWriteCollectIterator implements Iterator {
-/*     */     private BufferManagerWriteCollectIterator() {}
-/*     */     
-/*     */     public boolean hasNext() {
-/* 218 */       return (BufferManagerWriteCollect.this.queue.size() != 0);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Object next() {
-/* 223 */       return BufferManagerWriteCollect.this.queue.dequeue();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void remove() {
-/* 228 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\BufferManagerWriteCollect.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.encoding;
+
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.LinkedList;
+
+import com.sun.corba.se.impl.encoding.BufferQueue;
+import com.sun.corba.se.impl.encoding.BufferManagerWrite;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+import com.sun.corba.se.impl.encoding.ByteBufferWithInfo;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.MessageBase;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.FragmentMessage;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.impl.encoding.CDROutputObject;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.pept.transport.Connection;
+import com.sun.corba.se.pept.transport.ByteBufferPool;
+import com.sun.corba.se.pept.encoding.OutputObject;
+
+/**
+ * Collect buffer manager.
+ */
+public class BufferManagerWriteCollect extends BufferManagerWrite
+{
+    private BufferQueue queue = new BufferQueue();
+
+    private boolean sentFragment = false;
+    private boolean debug = false;
+
+
+    BufferManagerWriteCollect(ORB orb)
+    {
+        super(orb);
+         if (orb != null)
+            debug = orb.transportDebugFlag;
+    }
+
+    public boolean sentFragment() {
+        return sentFragment;
+    }
+
+    /**
+     * Returns the correct buffer size for this type of
+     * buffer manager as set in the ORB.
+     */
+    public int getBufferSize() {
+        return orb.getORBData().getGIOPFragmentSize();
+    }
+
+    // Set the fragment's "more fragments" bit to true, put it in the
+    // queue, and allocate a new bbwi.
+    public void overflow (ByteBufferWithInfo bbwi)
+    {
+        // Set the fragment's moreFragments field to true
+        MessageBase.setFlag(bbwi.byteBuffer, Message.MORE_FRAGMENTS_BIT);
+
+        // Enqueue the previous fragment
+        queue.enqueue(bbwi);
+
+        // Create a new bbwi
+        ByteBufferWithInfo newBbwi = new ByteBufferWithInfo(orb, this);
+        newBbwi.fragmented = true;
+
+        // XREVISIT - Downcast
+        ((CDROutputObject)outputObject).setByteBufferWithInfo(newBbwi);
+
+        // Now we must marshal in the fragment header/GIOP header
+
+        // REVISIT - we can optimize this by not creating the fragment message
+        // each time.
+
+        // XREVISIT - Downcast
+        FragmentMessage header =
+              ((CDROutputObject)outputObject).getMessageHeader()
+                                             .createFragmentMessage();
+
+        header.write((CDROutputObject)outputObject);
+    }
+
+    // Send all fragments
+    public void sendMessage ()
+    {
+        // Enqueue the last fragment
+        queue.enqueue(((CDROutputObject)outputObject).getByteBufferWithInfo());
+
+        Iterator bufs = iterator();
+
+        Connection conn =
+                          ((OutputObject)outputObject).getMessageMediator().
+                                                       getConnection();
+
+        // With the collect strategy, we must lock the connection
+        // while fragments are being sent.  This is so that there are
+        // no interleved fragments in GIOP 1.1.
+        //
+        // Note that this thread must not call writeLock again in any
+        // of its send methods!
+        conn.writeLock();
+
+        try {
+
+            // Get a reference to ByteBufferPool so that the ByteBufferWithInfo
+            // ByteBuffer can be released to the ByteBufferPool
+            ByteBufferPool byteBufferPool = orb.getByteBufferPool();
+
+            while (bufs.hasNext()) {
+
+                ByteBufferWithInfo bbwi = (ByteBufferWithInfo)bufs.next();
+                ((CDROutputObject)outputObject).setByteBufferWithInfo(bbwi);
+
+                conn.sendWithoutLock(((CDROutputObject)outputObject));
+
+                sentFragment = true;
+
+                // Release ByteBufferWithInfo's ByteBuffer back to the pool
+                // of ByteBuffers.
+                if (debug)
+                {
+                    // print address of ByteBuffer being released
+                    int bbAddress = System.identityHashCode(bbwi.byteBuffer);
+                    StringBuffer sb = new StringBuffer(80);
+                    sb.append("sendMessage() - releasing ByteBuffer id (");
+                    sb.append(bbAddress).append(") to ByteBufferPool.");
+                    String msg = sb.toString();
+                    dprint(msg);
+                }
+                byteBufferPool.releaseByteBuffer(bbwi.byteBuffer);
+                bbwi.byteBuffer = null;
+                bbwi = null;
+            }
+
+            sentFullMessage = true;
+
+        } finally {
+
+            conn.writeUnlock();
+        }
+    }
+
+    /**
+     * Close the BufferManagerWrite - do any outstanding cleanup.
+     *
+     * For a BufferManagerWriteGrow any queued ByteBufferWithInfo must
+     * have its ByteBuffer released to the ByteBufferPool.
+     */
+    public void close()
+    {
+        // iterate thru queue and release any ByteBufferWithInfo's
+        // ByteBuffer that may be remaining on the queue to the
+        // ByteBufferPool.
+
+        Iterator bufs = iterator();
+
+        ByteBufferPool byteBufferPool = orb.getByteBufferPool();
+
+        while (bufs.hasNext())
+        {
+            ByteBufferWithInfo bbwi = (ByteBufferWithInfo)bufs.next();
+            if (bbwi != null && bbwi.byteBuffer != null)
+            {
+                if (debug)
+                {
+                    // print address of ByteBuffer being released
+                    int bbAddress = System.identityHashCode(bbwi.byteBuffer);
+                    StringBuffer sb = new StringBuffer(80);
+                    sb.append("close() - releasing ByteBuffer id (");
+                    sb.append(bbAddress).append(") to ByteBufferPool.");
+                    String msg = sb.toString();
+                    dprint(msg);
+                }
+                 byteBufferPool.releaseByteBuffer(bbwi.byteBuffer);
+                 bbwi.byteBuffer = null;
+                 bbwi = null;
+            }
+        }
+    }
+
+    private void dprint(String msg)
+    {
+        ORBUtility.dprint("BufferManagerWriteCollect", msg);
+    }
+
+    private Iterator iterator ()
+    {
+        return new BufferManagerWriteCollectIterator();
+    }
+
+    private class BufferManagerWriteCollectIterator implements Iterator
+    {
+        public boolean hasNext ()
+        {
+            return queue.size() != 0;
+        }
+
+        public Object next ()
+        {
+            return queue.dequeue();
+        }
+
+        public void remove ()
+        {
+            throw new UnsupportedOperationException();
+        }
+    }
+}

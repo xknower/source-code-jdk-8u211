@@ -1,237 +1,232 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.HashMap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class InputMap
-/*     */   implements Serializable
-/*     */ {
-/*     */   private transient ArrayTable arrayTable;
-/*     */   private InputMap parent;
-/*     */   
-/*     */   public void setParent(InputMap paramInputMap) {
-/*  75 */     this.parent = paramInputMap;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputMap getParent() {
-/*  85 */     return this.parent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void put(KeyStroke paramKeyStroke, Object paramObject) {
-/*  94 */     if (paramKeyStroke == null) {
-/*     */       return;
-/*     */     }
-/*  97 */     if (paramObject == null) {
-/*  98 */       remove(paramKeyStroke);
-/*     */     } else {
-/*     */       
-/* 101 */       if (this.arrayTable == null) {
-/* 102 */         this.arrayTable = new ArrayTable();
-/*     */       }
-/* 104 */       this.arrayTable.put(paramKeyStroke, paramObject);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get(KeyStroke paramKeyStroke) {
-/* 113 */     if (this.arrayTable == null) {
-/* 114 */       InputMap inputMap = getParent();
-/*     */       
-/* 116 */       if (inputMap != null) {
-/* 117 */         return inputMap.get(paramKeyStroke);
-/*     */       }
-/* 119 */       return null;
-/*     */     } 
-/* 121 */     Object object = this.arrayTable.get(paramKeyStroke);
-/*     */     
-/* 123 */     if (object == null) {
-/* 124 */       InputMap inputMap = getParent();
-/*     */       
-/* 126 */       if (inputMap != null) {
-/* 127 */         return inputMap.get(paramKeyStroke);
-/*     */       }
-/*     */     } 
-/* 130 */     return object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void remove(KeyStroke paramKeyStroke) {
-/* 138 */     if (this.arrayTable != null) {
-/* 139 */       this.arrayTable.remove(paramKeyStroke);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/* 147 */     if (this.arrayTable != null) {
-/* 148 */       this.arrayTable.clear();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyStroke[] keys() {
-/* 156 */     if (this.arrayTable == null) {
-/* 157 */       return null;
-/*     */     }
-/* 159 */     KeyStroke[] arrayOfKeyStroke = new KeyStroke[this.arrayTable.size()];
-/* 160 */     this.arrayTable.getKeys((Object[])arrayOfKeyStroke);
-/* 161 */     return arrayOfKeyStroke;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 168 */     if (this.arrayTable == null) {
-/* 169 */       return 0;
-/*     */     }
-/* 171 */     return this.arrayTable.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyStroke[] allKeys() {
-/* 180 */     int i = size();
-/* 181 */     InputMap inputMap = getParent();
-/*     */     
-/* 183 */     if (i == 0) {
-/* 184 */       if (inputMap != null) {
-/* 185 */         return inputMap.allKeys();
-/*     */       }
-/* 187 */       return keys();
-/*     */     } 
-/* 189 */     if (inputMap == null) {
-/* 190 */       return keys();
-/*     */     }
-/* 192 */     KeyStroke[] arrayOfKeyStroke1 = keys();
-/* 193 */     KeyStroke[] arrayOfKeyStroke2 = inputMap.allKeys();
-/*     */     
-/* 195 */     if (arrayOfKeyStroke2 == null) {
-/* 196 */       return arrayOfKeyStroke1;
-/*     */     }
-/* 198 */     if (arrayOfKeyStroke1 == null)
-/*     */     {
-/*     */       
-/* 201 */       return arrayOfKeyStroke2;
-/*     */     }
-/*     */     
-/* 204 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*     */     
-/*     */     int j;
-/* 207 */     for (j = arrayOfKeyStroke1.length - 1; j >= 0; j--) {
-/* 208 */       hashMap.put(arrayOfKeyStroke1[j], arrayOfKeyStroke1[j]);
-/*     */     }
-/* 210 */     for (j = arrayOfKeyStroke2.length - 1; j >= 0; j--) {
-/* 211 */       hashMap.put(arrayOfKeyStroke2[j], arrayOfKeyStroke2[j]);
-/*     */     }
-/*     */     
-/* 214 */     KeyStroke[] arrayOfKeyStroke3 = new KeyStroke[hashMap.size()];
-/*     */     
-/* 216 */     return (KeyStroke[])hashMap.keySet().toArray((Object[])arrayOfKeyStroke3);
-/*     */   }
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 220 */     paramObjectOutputStream.defaultWriteObject();
-/*     */     
-/* 222 */     ArrayTable.writeArrayTable(paramObjectOutputStream, this.arrayTable);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws ClassNotFoundException, IOException {
-/* 227 */     paramObjectInputStream.defaultReadObject();
-/* 228 */     for (int i = paramObjectInputStream.readInt() - 1; i >= 0; i--)
-/* 229 */       put((KeyStroke)paramObjectInputStream.readObject(), paramObjectInputStream.readObject()); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\InputMap.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Set;
+
+/**
+ * <code>InputMap</code> provides a binding between an input event
+ * (currently only <code>KeyStroke</code>s are used)
+ * and an <code>Object</code>. <code>InputMap</code>s
+ * are usually used with an <code>ActionMap</code>,
+ * to determine an <code>Action</code> to perform
+ * when a key is pressed.
+ * An <code>InputMap</code> can have a parent
+ * that is searched for bindings not defined in the <code>InputMap</code>.
+ * <p>As with <code>ActionMap</code> if you create a cycle, eg:
+ * <pre>
+ *   InputMap am = new InputMap();
+ *   InputMap bm = new InputMap():
+ *   am.setParent(bm);
+ *   bm.setParent(am);
+ * </pre>
+ * some of the methods will cause a StackOverflowError to be thrown.
+ *
+ * @author Scott Violet
+ * @since 1.3
+ */
+@SuppressWarnings("serial")
+public class InputMap implements Serializable {
+    /** Handles the mapping between KeyStroke and Action name. */
+    private transient ArrayTable     arrayTable;
+    /** Parent that handles any bindings we don't contain. */
+    private InputMap                                parent;
+
+
+    /**
+     * Creates an <code>InputMap</code> with no parent and no mappings.
+     */
+    public InputMap() {
+    }
+
+    /**
+     * Sets this <code>InputMap</code>'s parent.
+     *
+     * @param map  the <code>InputMap</code> that is the parent of this one
+     */
+    public void setParent(InputMap map) {
+        this.parent = map;
+    }
+
+    /**
+     * Gets this <code>InputMap</code>'s parent.
+     *
+     * @return map  the <code>InputMap</code> that is the parent of this one,
+     *              or null if this <code>InputMap</code> has no parent
+     */
+    public InputMap getParent() {
+        return parent;
+    }
+
+    /**
+     * Adds a binding for <code>keyStroke</code> to <code>actionMapKey</code>.
+     * If <code>actionMapKey</code> is null, this removes the current binding
+     * for <code>keyStroke</code>.
+     */
+    public void put(KeyStroke keyStroke, Object actionMapKey) {
+        if (keyStroke == null) {
+            return;
+        }
+        if (actionMapKey == null) {
+            remove(keyStroke);
+        }
+        else {
+            if (arrayTable == null) {
+                arrayTable = new ArrayTable();
+            }
+            arrayTable.put(keyStroke, actionMapKey);
+        }
+    }
+
+    /**
+     * Returns the binding for <code>keyStroke</code>, messaging the
+     * parent <code>InputMap</code> if the binding is not locally defined.
+     */
+    public Object get(KeyStroke keyStroke) {
+        if (arrayTable == null) {
+            InputMap    parent = getParent();
+
+            if (parent != null) {
+                return parent.get(keyStroke);
+            }
+            return null;
+        }
+        Object value = arrayTable.get(keyStroke);
+
+        if (value == null) {
+            InputMap    parent = getParent();
+
+            if (parent != null) {
+                return parent.get(keyStroke);
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Removes the binding for <code>key</code> from this
+     * <code>InputMap</code>.
+     */
+    public void remove(KeyStroke key) {
+        if (arrayTable != null) {
+            arrayTable.remove(key);
+        }
+    }
+
+    /**
+     * Removes all the mappings from this <code>InputMap</code>.
+     */
+    public void clear() {
+        if (arrayTable != null) {
+            arrayTable.clear();
+        }
+    }
+
+    /**
+     * Returns the <code>KeyStroke</code>s that are bound in this <code>InputMap</code>.
+     */
+    public KeyStroke[] keys() {
+        if (arrayTable == null) {
+            return null;
+        }
+        KeyStroke[] keys = new KeyStroke[arrayTable.size()];
+        arrayTable.getKeys(keys);
+        return keys;
+    }
+
+    /**
+     * Returns the number of <code>KeyStroke</code> bindings.
+     */
+    public int size() {
+        if (arrayTable == null) {
+            return 0;
+        }
+        return arrayTable.size();
+    }
+
+    /**
+     * Returns an array of the <code>KeyStroke</code>s defined in this
+     * <code>InputMap</code> and its parent. This differs from <code>keys()</code> in that
+     * this method includes the keys defined in the parent.
+     */
+    public KeyStroke[] allKeys() {
+        int             count = size();
+        InputMap        parent = getParent();
+
+        if (count == 0) {
+            if (parent != null) {
+                return parent.allKeys();
+            }
+            return keys();
+        }
+        if (parent == null) {
+            return keys();
+        }
+        KeyStroke[]    keys = keys();
+        KeyStroke[]    pKeys =  parent.allKeys();
+
+        if (pKeys == null) {
+            return keys;
+        }
+        if (keys == null) {
+            // Should only happen if size() != keys.length, which should only
+            // happen if mutated from multiple threads (or a bogus subclass).
+            return pKeys;
+        }
+
+        HashMap<KeyStroke, KeyStroke> keyMap = new HashMap<KeyStroke, KeyStroke>();
+        int            counter;
+
+        for (counter = keys.length - 1; counter >= 0; counter--) {
+            keyMap.put(keys[counter], keys[counter]);
+        }
+        for (counter = pKeys.length - 1; counter >= 0; counter--) {
+            keyMap.put(pKeys[counter], pKeys[counter]);
+        }
+
+        KeyStroke[]    allKeys = new KeyStroke[keyMap.size()];
+
+        return keyMap.keySet().toArray(allKeys);
+    }
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+
+        ArrayTable.writeArrayTable(s, arrayTable);
+    }
+
+    private void readObject(ObjectInputStream s) throws ClassNotFoundException,
+                                                 IOException {
+        s.defaultReadObject();
+        for (int counter = s.readInt() - 1; counter >= 0; counter--) {
+            put((KeyStroke)s.readObject(), s.readObject());
+        }
+    }
+}

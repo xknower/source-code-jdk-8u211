@@ -1,77 +1,71 @@
-/*    */ package java.util.jar;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import java.net.URL;
-/*    */ import java.security.CodeSource;
-/*    */ import java.util.Enumeration;
-/*    */ import java.util.List;
-/*    */ import sun.misc.JavaUtilJarAccess;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class JavaUtilJarAccessImpl
-/*    */   implements JavaUtilJarAccess
-/*    */ {
-/*    */   public boolean jarFileHasClassPathAttribute(JarFile paramJarFile) throws IOException {
-/* 37 */     return paramJarFile.hasClassPathAttribute();
-/*    */   }
-/*    */   
-/*    */   public CodeSource[] getCodeSources(JarFile paramJarFile, URL paramURL) {
-/* 41 */     return paramJarFile.getCodeSources(paramURL);
-/*    */   }
-/*    */   
-/*    */   public CodeSource getCodeSource(JarFile paramJarFile, URL paramURL, String paramString) {
-/* 45 */     return paramJarFile.getCodeSource(paramURL, paramString);
-/*    */   }
-/*    */   
-/*    */   public Enumeration<String> entryNames(JarFile paramJarFile, CodeSource[] paramArrayOfCodeSource) {
-/* 49 */     return paramJarFile.entryNames(paramArrayOfCodeSource);
-/*    */   }
-/*    */   
-/*    */   public Enumeration<JarEntry> entries2(JarFile paramJarFile) {
-/* 53 */     return paramJarFile.entries2();
-/*    */   }
-/*    */   
-/*    */   public void setEagerValidation(JarFile paramJarFile, boolean paramBoolean) {
-/* 57 */     paramJarFile.setEagerValidation(paramBoolean);
-/*    */   }
-/*    */   
-/*    */   public List<Object> getManifestDigests(JarFile paramJarFile) {
-/* 61 */     return paramJarFile.getManifestDigests();
-/*    */   }
-/*    */   
-/*    */   public Attributes getTrustedAttributes(Manifest paramManifest, String paramString) {
-/* 65 */     return paramManifest.getTrustedAttributes(paramString);
-/*    */   }
-/*    */   
-/*    */   public void ensureInitialization(JarFile paramJarFile) {
-/* 69 */     paramJarFile.ensureInitialization();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\jar\JavaUtilJarAccessImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.jar;
+
+import java.io.IOException;
+import java.net.URL;
+import java.security.CodeSource;
+import java.util.Enumeration;
+import java.util.List;
+import sun.misc.JavaUtilJarAccess;
+
+class JavaUtilJarAccessImpl implements JavaUtilJarAccess {
+    public boolean jarFileHasClassPathAttribute(JarFile jar) throws IOException {
+        return jar.hasClassPathAttribute();
+    }
+
+    public CodeSource[] getCodeSources(JarFile jar, URL url) {
+        return jar.getCodeSources(url);
+    }
+
+    public CodeSource getCodeSource(JarFile jar, URL url, String name) {
+        return jar.getCodeSource(url, name);
+    }
+
+    public Enumeration<String> entryNames(JarFile jar, CodeSource[] cs) {
+        return jar.entryNames(cs);
+    }
+
+    public Enumeration<JarEntry> entries2(JarFile jar) {
+        return jar.entries2();
+    }
+
+    public void setEagerValidation(JarFile jar, boolean eager) {
+        jar.setEagerValidation(eager);
+    }
+
+    public List<Object> getManifestDigests(JarFile jar) {
+        return jar.getManifestDigests();
+    }
+
+    public Attributes getTrustedAttributes(Manifest man, String name) {
+        return man.getTrustedAttributes(name);
+    }
+
+    public void ensureInitialization(JarFile jar) {
+        jar.ensureInitialization();
+    }
+}

@@ -1,128 +1,122 @@
-/*     */ package javax.management.loading;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectStreamClass;
-/*     */ import java.io.StreamCorruptedException;
-/*     */ import java.lang.reflect.Array;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class MLetObjectInputStream
-/*     */   extends ObjectInputStream
-/*     */ {
-/*     */   private MLet loader;
-/*     */   
-/*     */   public MLetObjectInputStream(InputStream paramInputStream, MLet paramMLet) throws IOException, StreamCorruptedException {
-/*  51 */     super(paramInputStream);
-/*  52 */     if (paramMLet == null) {
-/*  53 */       throw new IllegalArgumentException("Illegal null argument to MLetObjectInputStream");
-/*     */     }
-/*  55 */     this.loader = paramMLet;
-/*     */   }
-/*     */   
-/*     */   private Class<?> primitiveType(char paramChar) {
-/*  59 */     switch (paramChar) {
-/*     */       case 'B':
-/*  61 */         return byte.class;
-/*     */       
-/*     */       case 'C':
-/*  64 */         return char.class;
-/*     */       
-/*     */       case 'D':
-/*  67 */         return double.class;
-/*     */       
-/*     */       case 'F':
-/*  70 */         return float.class;
-/*     */       
-/*     */       case 'I':
-/*  73 */         return int.class;
-/*     */       
-/*     */       case 'J':
-/*  76 */         return long.class;
-/*     */       
-/*     */       case 'S':
-/*  79 */         return short.class;
-/*     */       
-/*     */       case 'Z':
-/*  82 */         return boolean.class;
-/*     */     } 
-/*  84 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Class<?> resolveClass(ObjectStreamClass paramObjectStreamClass) throws IOException, ClassNotFoundException {
-/*  94 */     String str = paramObjectStreamClass.getName();
-/*  95 */     if (str.startsWith("[")) {
-/*     */       Class<?> clazz; byte b1;
-/*  97 */       for (b1 = 1; str.charAt(b1) == '['; b1++);
-/*     */       
-/*  99 */       if (str.charAt(b1) == 'L') {
-/* 100 */         clazz = this.loader.loadClass(str.substring(b1 + 1, str.length() - 1));
-/*     */       } else {
-/* 102 */         if (str.length() != b1 + 1)
-/* 103 */           throw new ClassNotFoundException(str); 
-/* 104 */         clazz = primitiveType(str.charAt(b1));
-/*     */       } 
-/* 106 */       int[] arrayOfInt = new int[b1];
-/* 107 */       for (byte b2 = 0; b2 < b1; b2++) {
-/* 108 */         arrayOfInt[b2] = 0;
-/*     */       }
-/* 110 */       return Array.newInstance(clazz, arrayOfInt).getClass();
-/*     */     } 
-/* 112 */     return this.loader.loadClass(str);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ClassLoader getClassLoader() {
-/* 120 */     return this.loader;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\loading\MLetObjectInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.loading;
+
+
+// java import
+
+import java.io.*;
+import java.lang.reflect.Array;
+
+
+/**
+ * This subclass of ObjectInputStream delegates loading of classes to
+ * an existing MLetClassLoader.
+ *
+ * @since 1.5
+ */
+class MLetObjectInputStream extends ObjectInputStream {
+
+    private MLet loader;
+
+    /**
+     * Loader must be non-null;
+     */
+    public MLetObjectInputStream(InputStream in, MLet loader)
+        throws IOException, StreamCorruptedException {
+
+        super(in);
+        if (loader == null) {
+            throw new IllegalArgumentException("Illegal null argument to MLetObjectInputStream");
+        }
+        this.loader = loader;
+    }
+
+    private Class<?> primitiveType(char c) {
+        switch(c) {
+        case 'B':
+            return Byte.TYPE;
+
+        case 'C':
+            return Character.TYPE;
+
+        case 'D':
+            return Double.TYPE;
+
+        case 'F':
+            return Float.TYPE;
+
+        case 'I':
+            return Integer.TYPE;
+
+        case 'J':
+            return Long.TYPE;
+
+        case 'S':
+            return Short.TYPE;
+
+        case 'Z':
+            return Boolean.TYPE;
+        }
+        return null;
+    }
+
+    /**
+     * Use the given ClassLoader rather than using the system class
+     */
+    @Override
+    protected Class<?> resolveClass(ObjectStreamClass objectstreamclass)
+        throws IOException, ClassNotFoundException {
+
+        String s = objectstreamclass.getName();
+        if (s.startsWith("[")) {
+            int i;
+            for (i = 1; s.charAt(i) == '['; i++);
+            Class<?> class1;
+            if (s.charAt(i) == 'L') {
+                class1 = loader.loadClass(s.substring(i + 1, s.length() - 1));
+            } else {
+                if (s.length() != i + 1)
+                    throw new ClassNotFoundException(s);
+                class1 = primitiveType(s.charAt(i));
+            }
+            int ai[] = new int[i];
+            for (int j = 0; j < i; j++)
+                ai[j] = 0;
+
+            return Array.newInstance(class1, ai).getClass();
+        } else {
+            return loader.loadClass(s);
+        }
+    }
+
+    /**
+     * Returns the ClassLoader being used
+     */
+    public ClassLoader getClassLoader() {
+        return loader;
+    }
+}

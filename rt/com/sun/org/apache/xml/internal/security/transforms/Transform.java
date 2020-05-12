@@ -1,381 +1,376 @@
-/*     */ package com.sun.org.apache.xml.internal.security.transforms;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
-/*     */ import com.sun.org.apache.xml.internal.security.c14n.InvalidCanonicalizerException;
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.AlgorithmAlreadyRegisteredException;
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformBase64Decode;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14N;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14N11;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14N11_WithComments;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14NExclusive;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14NExclusiveWithComments;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14NWithComments;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformEnvelopedSignature;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformXPath;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformXPath2Filter;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformXSLT;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.HelperNodeList;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.JavaUtils;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.util.Map;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import javax.xml.parsers.ParserConfigurationException;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.NodeList;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class Transform
-/*     */   extends SignatureElementProxy
-/*     */ {
-/*  74 */   private static Logger log = Logger.getLogger(Transform.class.getName());
-/*     */ 
-/*     */   
-/*  77 */   private static Map<String, Class<? extends TransformSpi>> transformSpiHash = new ConcurrentHashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final TransformSpi transformSpi;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Transform(Document paramDocument, String paramString) throws InvalidTransformException {
-/*  93 */     this(paramDocument, paramString, (NodeList)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Transform(Document paramDocument, String paramString, Element paramElement) throws InvalidTransformException {
-/* 109 */     super(paramDocument);
-/* 110 */     HelperNodeList helperNodeList = null;
-/*     */     
-/* 112 */     if (paramElement != null) {
-/* 113 */       helperNodeList = new HelperNodeList();
-/*     */       
-/* 115 */       XMLUtils.addReturnToElement(paramDocument, helperNodeList);
-/* 116 */       helperNodeList.appendChild(paramElement);
-/* 117 */       XMLUtils.addReturnToElement(paramDocument, helperNodeList);
-/*     */     } 
-/*     */     
-/* 120 */     this.transformSpi = initializeTransform(paramString, helperNodeList);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Transform(Document paramDocument, String paramString, NodeList paramNodeList) throws InvalidTransformException {
-/* 134 */     super(paramDocument);
-/* 135 */     this.transformSpi = initializeTransform(paramString, paramNodeList);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Transform(Element paramElement, String paramString) throws InvalidTransformException, TransformationException, XMLSecurityException {
-/* 147 */     super(paramElement, paramString);
-/*     */ 
-/*     */     
-/* 150 */     String str = paramElement.getAttributeNS((String)null, "Algorithm");
-/*     */     
-/* 152 */     if (str == null || str.length() == 0) {
-/* 153 */       Object[] arrayOfObject = { "Algorithm", "Transform" };
-/* 154 */       throw new TransformationException("xml.WrongContent", arrayOfObject);
-/*     */     } 
-/*     */     
-/* 157 */     Class<TransformSpi> clazz = (Class)transformSpiHash.get(str);
-/* 158 */     if (clazz == null) {
-/* 159 */       Object[] arrayOfObject = { str };
-/* 160 */       throw new InvalidTransformException("signature.Transform.UnknownTransform", arrayOfObject);
-/*     */     } 
-/*     */     try {
-/* 163 */       this.transformSpi = clazz.newInstance();
-/* 164 */     } catch (InstantiationException instantiationException) {
-/* 165 */       Object[] arrayOfObject = { str };
-/* 166 */       throw new InvalidTransformException("signature.Transform.UnknownTransform", arrayOfObject, instantiationException);
-/*     */     
-/*     */     }
-/* 169 */     catch (IllegalAccessException illegalAccessException) {
-/* 170 */       Object[] arrayOfObject = { str };
-/* 171 */       throw new InvalidTransformException("signature.Transform.UnknownTransform", arrayOfObject, illegalAccessException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void register(String paramString1, String paramString2) throws AlgorithmAlreadyRegisteredException, ClassNotFoundException, InvalidTransformException {
-/* 192 */     JavaUtils.checkRegisterPermission();
-/*     */     
-/* 194 */     Class clazz = transformSpiHash.get(paramString1);
-/* 195 */     if (clazz != null) {
-/* 196 */       Object[] arrayOfObject = { paramString1, clazz };
-/* 197 */       throw new AlgorithmAlreadyRegisteredException("algorithm.alreadyRegistered", arrayOfObject);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 201 */     Class<?> clazz1 = ClassLoaderUtils.loadClass(paramString2, Transform.class);
-/* 202 */     transformSpiHash.put(paramString1, clazz1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void register(String paramString, Class<? extends TransformSpi> paramClass) throws AlgorithmAlreadyRegisteredException {
-/* 218 */     JavaUtils.checkRegisterPermission();
-/*     */     
-/* 220 */     Class clazz = transformSpiHash.get(paramString);
-/* 221 */     if (clazz != null) {
-/* 222 */       Object[] arrayOfObject = { paramString, clazz };
-/* 223 */       throw new AlgorithmAlreadyRegisteredException("algorithm.alreadyRegistered", arrayOfObject);
-/*     */     } 
-/* 225 */     transformSpiHash.put(paramString, paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void registerDefaultAlgorithms() {
-/* 232 */     transformSpiHash.put("http://www.w3.org/2000/09/xmldsig#base64", TransformBase64Decode.class);
-/*     */ 
-/*     */     
-/* 235 */     transformSpiHash.put("http://www.w3.org/TR/2001/REC-xml-c14n-20010315", TransformC14N.class);
-/*     */ 
-/*     */     
-/* 238 */     transformSpiHash.put("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments", TransformC14NWithComments.class);
-/*     */ 
-/*     */     
-/* 241 */     transformSpiHash.put("http://www.w3.org/2006/12/xml-c14n11", TransformC14N11.class);
-/*     */ 
-/*     */     
-/* 244 */     transformSpiHash.put("http://www.w3.org/2006/12/xml-c14n11#WithComments", TransformC14N11_WithComments.class);
-/*     */ 
-/*     */     
-/* 247 */     transformSpiHash.put("http://www.w3.org/2001/10/xml-exc-c14n#", TransformC14NExclusive.class);
-/*     */ 
-/*     */     
-/* 250 */     transformSpiHash.put("http://www.w3.org/2001/10/xml-exc-c14n#WithComments", TransformC14NExclusiveWithComments.class);
-/*     */ 
-/*     */     
-/* 253 */     transformSpiHash.put("http://www.w3.org/TR/1999/REC-xpath-19991116", TransformXPath.class);
-/*     */ 
-/*     */     
-/* 256 */     transformSpiHash.put("http://www.w3.org/2000/09/xmldsig#enveloped-signature", TransformEnvelopedSignature.class);
-/*     */ 
-/*     */     
-/* 259 */     transformSpiHash.put("http://www.w3.org/TR/1999/REC-xslt-19991116", TransformXSLT.class);
-/*     */ 
-/*     */     
-/* 262 */     transformSpiHash.put("http://www.w3.org/2002/06/xmldsig-filter2", TransformXPath2Filter.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getURI() {
-/* 273 */     return this.constructionElement.getAttributeNS((String)null, "Algorithm");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureInput performTransform(XMLSignatureInput paramXMLSignatureInput) throws IOException, CanonicalizationException, InvalidCanonicalizerException, TransformationException {
-/* 291 */     return performTransform(paramXMLSignatureInput, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureInput performTransform(XMLSignatureInput paramXMLSignatureInput, OutputStream paramOutputStream) throws IOException, CanonicalizationException, InvalidCanonicalizerException, TransformationException {
-/* 311 */     XMLSignatureInput xMLSignatureInput = null;
-/*     */     
-/*     */     try {
-/* 314 */       xMLSignatureInput = this.transformSpi.enginePerformTransform(paramXMLSignatureInput, paramOutputStream, this);
-/* 315 */     } catch (ParserConfigurationException parserConfigurationException) {
-/* 316 */       Object[] arrayOfObject = { getURI(), "ParserConfigurationException" };
-/* 317 */       throw new CanonicalizationException("signature.Transform.ErrorDuringTransform", arrayOfObject, parserConfigurationException);
-/*     */     }
-/* 319 */     catch (SAXException sAXException) {
-/* 320 */       Object[] arrayOfObject = { getURI(), "SAXException" };
-/* 321 */       throw new CanonicalizationException("signature.Transform.ErrorDuringTransform", arrayOfObject, sAXException);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 325 */     return xMLSignatureInput;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseLocalName() {
-/* 330 */     return "Transform";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private TransformSpi initializeTransform(String paramString, NodeList paramNodeList) throws InvalidTransformException {
-/* 339 */     this.constructionElement.setAttributeNS((String)null, "Algorithm", paramString);
-/*     */     
-/* 341 */     Class<TransformSpi> clazz = (Class)transformSpiHash.get(paramString);
-/* 342 */     if (clazz == null) {
-/* 343 */       Object[] arrayOfObject = { paramString };
-/* 344 */       throw new InvalidTransformException("signature.Transform.UnknownTransform", arrayOfObject);
-/*     */     } 
-/* 346 */     TransformSpi transformSpi = null;
-/*     */     try {
-/* 348 */       transformSpi = clazz.newInstance();
-/* 349 */     } catch (InstantiationException instantiationException) {
-/* 350 */       Object[] arrayOfObject = { paramString };
-/* 351 */       throw new InvalidTransformException("signature.Transform.UnknownTransform", arrayOfObject, instantiationException);
-/*     */     
-/*     */     }
-/* 354 */     catch (IllegalAccessException illegalAccessException) {
-/* 355 */       Object[] arrayOfObject = { paramString };
-/* 356 */       throw new InvalidTransformException("signature.Transform.UnknownTransform", arrayOfObject, illegalAccessException);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 361 */     if (log.isLoggable(Level.FINE)) {
-/* 362 */       log.log(Level.FINE, "Create URI \"" + paramString + "\" class \"" + transformSpi
-/* 363 */           .getClass() + "\"");
-/* 364 */       log.log(Level.FINE, "The NodeList is " + paramNodeList);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 368 */     if (paramNodeList != null) {
-/* 369 */       for (byte b = 0; b < paramNodeList.getLength(); b++) {
-/* 370 */         this.constructionElement.appendChild(paramNodeList.item(b).cloneNode(true));
-/*     */       }
-/*     */     }
-/* 373 */     return transformSpi;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\transforms\Transform.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.transforms;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import javax.xml.parsers.ParserConfigurationException;
+
+import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
+import com.sun.org.apache.xml.internal.security.c14n.InvalidCanonicalizerException;
+import com.sun.org.apache.xml.internal.security.exceptions.AlgorithmAlreadyRegisteredException;
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformBase64Decode;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14N;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14N11;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14N11_WithComments;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14NExclusive;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14NExclusiveWithComments;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformC14NWithComments;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformEnvelopedSignature;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformXPath;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformXPath2Filter;
+import com.sun.org.apache.xml.internal.security.transforms.implementations.TransformXSLT;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.HelperNodeList;
+import com.sun.org.apache.xml.internal.security.utils.JavaUtils;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+/**
+ * Implements the behaviour of the <code>ds:Transform</code> element.
+ *
+ * This <code>Transform</code>(Factory) class acts as the Factory and Proxy of
+ * the implementing class that supports the functionality of <a
+ * href=http://www.w3.org/TR/xmldsig-core/#sec-TransformAlg>a Transform
+ * algorithm</a>.
+ * Implements the Factory and Proxy pattern for ds:Transform algorithms.
+ *
+ * @author Christian Geuer-Pollmann
+ * @see Transforms
+ * @see TransformSpi
+ */
+public final class Transform extends SignatureElementProxy {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(Transform.class.getName());
+
+    /** All available Transform classes are registered here */
+    private static Map<String, Class<? extends TransformSpi>> transformSpiHash =
+        new ConcurrentHashMap<String, Class<? extends TransformSpi>>();
+
+    private final TransformSpi transformSpi;
+
+    /**
+     * Generates a Transform object that implements the specified
+     * <code>Transform algorithm</code> URI.
+     *
+     * @param doc the proxy {@link Document}
+     * @param algorithmURI <code>Transform algorithm</code> URI representation,
+     * such as specified in
+     * <a href=http://www.w3.org/TR/xmldsig-core/#sec-TransformAlg>Transform algorithm </a>
+     * @throws InvalidTransformException
+     */
+    public Transform(Document doc, String algorithmURI) throws InvalidTransformException {
+        this(doc, algorithmURI, (NodeList)null);
+    }
+
+    /**
+     * Generates a Transform object that implements the specified
+     * <code>Transform algorithm</code> URI.
+     *
+     * @param algorithmURI <code>Transform algorithm</code> URI representation,
+     * such as specified in
+     * <a href=http://www.w3.org/TR/xmldsig-core/#sec-TransformAlg>Transform algorithm </a>
+     * @param contextChild the child element of <code>Transform</code> element
+     * @param doc the proxy {@link Document}
+     * @throws InvalidTransformException
+     */
+    public Transform(Document doc, String algorithmURI, Element contextChild)
+        throws InvalidTransformException {
+        super(doc);
+        HelperNodeList contextNodes = null;
+
+        if (contextChild != null) {
+            contextNodes = new HelperNodeList();
+
+            XMLUtils.addReturnToElement(doc, contextNodes);
+            contextNodes.appendChild(contextChild);
+            XMLUtils.addReturnToElement(doc, contextNodes);
+        }
+
+        transformSpi = initializeTransform(algorithmURI, contextNodes);
+    }
+
+    /**
+     * Constructs {@link Transform}
+     *
+     * @param doc the {@link Document} in which <code>Transform</code> will be
+     * placed
+     * @param algorithmURI URI representation of <code>Transform algorithm</code>
+     * @param contextNodes the child node list of <code>Transform</code> element
+     * @throws InvalidTransformException
+     */
+    public Transform(Document doc, String algorithmURI, NodeList contextNodes)
+        throws InvalidTransformException {
+        super(doc);
+        transformSpi = initializeTransform(algorithmURI, contextNodes);
+    }
+
+    /**
+     * @param element <code>ds:Transform</code> element
+     * @param BaseURI the URI of the resource where the XML instance was stored
+     * @throws InvalidTransformException
+     * @throws TransformationException
+     * @throws XMLSecurityException
+     */
+    public Transform(Element element, String BaseURI)
+        throws InvalidTransformException, TransformationException, XMLSecurityException {
+        super(element, BaseURI);
+
+        // retrieve Algorithm Attribute from ds:Transform
+        String algorithmURI = element.getAttributeNS(null, Constants._ATT_ALGORITHM);
+
+        if (algorithmURI == null || algorithmURI.length() == 0) {
+            Object exArgs[] = { Constants._ATT_ALGORITHM, Constants._TAG_TRANSFORM };
+            throw new TransformationException("xml.WrongContent", exArgs);
+        }
+
+        Class<? extends TransformSpi> transformSpiClass = transformSpiHash.get(algorithmURI);
+        if (transformSpiClass == null) {
+            Object exArgs[] = { algorithmURI };
+            throw new InvalidTransformException("signature.Transform.UnknownTransform", exArgs);
+        }
+        try {
+            transformSpi = transformSpiClass.newInstance();
+        } catch (InstantiationException ex) {
+            Object exArgs[] = { algorithmURI };
+            throw new InvalidTransformException(
+                "signature.Transform.UnknownTransform", exArgs, ex
+            );
+        } catch (IllegalAccessException ex) {
+            Object exArgs[] = { algorithmURI };
+            throw new InvalidTransformException(
+                "signature.Transform.UnknownTransform", exArgs, ex
+            );
+        }
+    }
+
+    /**
+     * Registers implementing class of the Transform algorithm with algorithmURI
+     *
+     * @param algorithmURI algorithmURI URI representation of <code>Transform algorithm</code>
+     * @param implementingClass <code>implementingClass</code> the implementing
+     * class of {@link TransformSpi}
+     * @throws AlgorithmAlreadyRegisteredException if specified algorithmURI
+     * is already registered
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to register the transform
+     */
+    @SuppressWarnings("unchecked")
+    public static void register(String algorithmURI, String implementingClass)
+        throws AlgorithmAlreadyRegisteredException, ClassNotFoundException,
+            InvalidTransformException {
+        JavaUtils.checkRegisterPermission();
+        // are we already registered?
+        Class<? extends TransformSpi> transformSpi = transformSpiHash.get(algorithmURI);
+        if (transformSpi != null) {
+            Object exArgs[] = { algorithmURI, transformSpi };
+            throw new AlgorithmAlreadyRegisteredException("algorithm.alreadyRegistered", exArgs);
+        }
+        Class<? extends TransformSpi> transformSpiClass =
+            (Class<? extends TransformSpi>)
+                ClassLoaderUtils.loadClass(implementingClass, Transform.class);
+        transformSpiHash.put(algorithmURI, transformSpiClass);
+    }
+
+    /**
+     * Registers implementing class of the Transform algorithm with algorithmURI
+     *
+     * @param algorithmURI algorithmURI URI representation of <code>Transform algorithm</code>
+     * @param implementingClass <code>implementingClass</code> the implementing
+     * class of {@link TransformSpi}
+     * @throws AlgorithmAlreadyRegisteredException if specified algorithmURI
+     * is already registered
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to register the transform
+     */
+    public static void register(String algorithmURI, Class<? extends TransformSpi> implementingClass)
+        throws AlgorithmAlreadyRegisteredException {
+        JavaUtils.checkRegisterPermission();
+        // are we already registered?
+        Class<? extends TransformSpi> transformSpi = transformSpiHash.get(algorithmURI);
+        if (transformSpi != null) {
+            Object exArgs[] = { algorithmURI, transformSpi };
+            throw new AlgorithmAlreadyRegisteredException("algorithm.alreadyRegistered", exArgs);
+        }
+        transformSpiHash.put(algorithmURI, implementingClass);
+    }
+
+    /**
+     * This method registers the default algorithms.
+     */
+    public static void registerDefaultAlgorithms() {
+        transformSpiHash.put(
+            Transforms.TRANSFORM_BASE64_DECODE, TransformBase64Decode.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_C14N_OMIT_COMMENTS, TransformC14N.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_C14N_WITH_COMMENTS, TransformC14NWithComments.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_C14N11_OMIT_COMMENTS, TransformC14N11.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_C14N11_WITH_COMMENTS, TransformC14N11_WithComments.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_C14N_EXCL_OMIT_COMMENTS, TransformC14NExclusive.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_C14N_EXCL_WITH_COMMENTS, TransformC14NExclusiveWithComments.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_XPATH, TransformXPath.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_ENVELOPED_SIGNATURE, TransformEnvelopedSignature.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_XSLT, TransformXSLT.class
+        );
+        transformSpiHash.put(
+            Transforms.TRANSFORM_XPATH2FILTER, TransformXPath2Filter.class
+        );
+    }
+
+    /**
+     * Returns the URI representation of Transformation algorithm
+     *
+     * @return the URI representation of Transformation algorithm
+     */
+    public String getURI() {
+        return this.constructionElement.getAttributeNS(null, Constants._ATT_ALGORITHM);
+    }
+
+    /**
+     * Transforms the input, and generates {@link XMLSignatureInput} as output.
+     *
+     * @param input input {@link XMLSignatureInput} which can supplied Octet
+     * Stream and NodeSet as Input of Transformation
+     * @return the {@link XMLSignatureInput} class as the result of
+     * transformation
+     * @throws CanonicalizationException
+     * @throws IOException
+     * @throws InvalidCanonicalizerException
+     * @throws TransformationException
+     */
+    public XMLSignatureInput performTransform(XMLSignatureInput input)
+        throws IOException, CanonicalizationException,
+               InvalidCanonicalizerException, TransformationException {
+        return performTransform(input, null);
+    }
+
+    /**
+     * Transforms the input, and generates {@link XMLSignatureInput} as output.
+     *
+     * @param input input {@link XMLSignatureInput} which can supplied Octect
+     * Stream and NodeSet as Input of Transformation
+     * @param os where to output the result of the last transformation
+     * @return the {@link XMLSignatureInput} class as the result of
+     * transformation
+     * @throws CanonicalizationException
+     * @throws IOException
+     * @throws InvalidCanonicalizerException
+     * @throws TransformationException
+     */
+    public XMLSignatureInput performTransform(
+        XMLSignatureInput input, OutputStream os
+    ) throws IOException, CanonicalizationException,
+        InvalidCanonicalizerException, TransformationException {
+        XMLSignatureInput result = null;
+
+        try {
+            result = transformSpi.enginePerformTransform(input, os, this);
+        } catch (ParserConfigurationException ex) {
+            Object exArgs[] = { this.getURI(), "ParserConfigurationException" };
+            throw new CanonicalizationException(
+                "signature.Transform.ErrorDuringTransform", exArgs, ex);
+        } catch (SAXException ex) {
+            Object exArgs[] = { this.getURI(), "SAXException" };
+            throw new CanonicalizationException(
+                "signature.Transform.ErrorDuringTransform", exArgs, ex);
+        }
+
+        return result;
+    }
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_TRANSFORM;
+    }
+
+    /**
+     * Initialize the transform object.
+     */
+    private TransformSpi initializeTransform(String algorithmURI, NodeList contextNodes)
+        throws InvalidTransformException {
+
+        this.constructionElement.setAttributeNS(null, Constants._ATT_ALGORITHM, algorithmURI);
+
+        Class<? extends TransformSpi> transformSpiClass = transformSpiHash.get(algorithmURI);
+        if (transformSpiClass == null) {
+            Object exArgs[] = { algorithmURI };
+            throw new InvalidTransformException("signature.Transform.UnknownTransform", exArgs);
+        }
+        TransformSpi newTransformSpi = null;
+        try {
+            newTransformSpi = transformSpiClass.newInstance();
+        } catch (InstantiationException ex) {
+            Object exArgs[] = { algorithmURI };
+            throw new InvalidTransformException(
+                "signature.Transform.UnknownTransform", exArgs, ex
+            );
+        } catch (IllegalAccessException ex) {
+            Object exArgs[] = { algorithmURI };
+            throw new InvalidTransformException(
+                "signature.Transform.UnknownTransform", exArgs, ex
+            );
+        }
+
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
+                      + newTransformSpi.getClass() + "\"");
+            log.log(java.util.logging.Level.FINE, "The NodeList is " + contextNodes);
+        }
+
+        // give it to the current document
+        if (contextNodes != null) {
+            for (int i = 0; i < contextNodes.getLength(); i++) {
+                this.constructionElement.appendChild(contextNodes.item(i).cloneNode(true));
+            }
+        }
+        return newTransformSpi;
+    }
+
+}

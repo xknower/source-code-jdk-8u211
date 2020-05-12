@@ -1,57 +1,52 @@
-/*    */ package com.sun.corba.se.impl.oa.poa;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ abstract class POAPolicyMediatorFactory
-/*    */ {
-/*    */   static POAPolicyMediator create(Policies paramPolicies, POAImpl paramPOAImpl) {
-/* 34 */     if (paramPolicies.retainServants()) {
-/* 35 */       if (paramPolicies.useActiveMapOnly())
-/* 36 */         return new POAPolicyMediatorImpl_R_AOM(paramPolicies, paramPOAImpl); 
-/* 37 */       if (paramPolicies.useDefaultServant())
-/* 38 */         return new POAPolicyMediatorImpl_R_UDS(paramPolicies, paramPOAImpl); 
-/* 39 */       if (paramPolicies.useServantManager()) {
-/* 40 */         return new POAPolicyMediatorImpl_R_USM(paramPolicies, paramPOAImpl);
-/*    */       }
-/* 42 */       throw paramPOAImpl.invocationWrapper().pmfCreateRetain();
-/*    */     } 
-/* 44 */     if (paramPolicies.useDefaultServant())
-/* 45 */       return new POAPolicyMediatorImpl_NR_UDS(paramPolicies, paramPOAImpl); 
-/* 46 */     if (paramPolicies.useServantManager()) {
-/* 47 */       return new POAPolicyMediatorImpl_NR_USM(paramPolicies, paramPOAImpl);
-/*    */     }
-/* 49 */     throw paramPOAImpl.invocationWrapper().pmfCreateNonRetain();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\POAPolicyMediatorFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa ;
+
+abstract class POAPolicyMediatorFactory {
+    // create an appropriate policy mediator based on the policies.
+    // Note that the policies object has already been validated before
+    // this call, so it can only contain valid combinations of POA policies.
+    static POAPolicyMediator create( Policies policies, POAImpl poa )
+    {
+        if (policies.retainServants()) {
+            if (policies.useActiveMapOnly())
+                return new POAPolicyMediatorImpl_R_AOM( policies, poa ) ;
+            else if (policies.useDefaultServant())
+                return new POAPolicyMediatorImpl_R_UDS( policies, poa ) ;
+            else if (policies.useServantManager())
+                return new POAPolicyMediatorImpl_R_USM( policies, poa ) ;
+            else
+                throw poa.invocationWrapper().pmfCreateRetain() ;
+        } else {
+            if (policies.useDefaultServant())
+                return new POAPolicyMediatorImpl_NR_UDS( policies, poa ) ;
+            else if (policies.useServantManager())
+                return new POAPolicyMediatorImpl_NR_USM( policies, poa ) ;
+            else
+                throw poa.invocationWrapper().pmfCreateNonRetain() ;
+        }
+    }
+}

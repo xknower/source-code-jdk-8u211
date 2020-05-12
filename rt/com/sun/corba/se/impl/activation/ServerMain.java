@@ -1,324 +1,383 @@
-/*     */ package com.sun.corba.se.impl.activation;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.activation.Activator;
-/*     */ import com.sun.corba.se.spi.activation.ActivatorHelper;
-/*     */ import java.io.File;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.PrintStream;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ import java.util.Date;
-/*     */ import java.util.Properties;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServerMain
-/*     */ {
-/*     */   public static final int OK = 0;
-/*     */   public static final int MAIN_CLASS_NOT_FOUND = 1;
-/*     */   public static final int NO_MAIN_METHOD = 2;
-/*     */   public static final int APPLICATION_ERROR = 3;
-/*     */   public static final int UNKNOWN_ERROR = 4;
-/*     */   public static final int NO_SERVER_ID = 5;
-/*     */   public static final int REGISTRATION_FAILED = 6;
-/*     */   private static final boolean debug = false;
-/*     */   
-/*     */   public static String printResult(int paramInt) {
-/*  65 */     switch (paramInt) { case 0:
-/*  66 */         return "Server terminated normally";
-/*  67 */       case 1: return "main class not found";
-/*  68 */       case 2: return "no main method";
-/*  69 */       case 3: return "application error";
-/*  70 */       case 5: return "server ID not defined";
-/*  71 */       case 6: return "server registration failed"; }
-/*  72 */      return "unknown error";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void redirectIOStreams() {
-/*     */     try {
-/*  84 */       String str1 = System.getProperty("com.sun.CORBA.activation.DbDir") + System.getProperty("file.separator") + "logs" + System.getProperty("file.separator");
-/*     */       
-/*  86 */       File file = new File(str1);
-/*  87 */       String str2 = System.getProperty("com.sun.CORBA.POA.ORBServerId");
-/*     */ 
-/*     */       
-/*  90 */       FileOutputStream fileOutputStream1 = new FileOutputStream(str1 + str2 + ".out", true);
-/*     */       
-/*  92 */       FileOutputStream fileOutputStream2 = new FileOutputStream(str1 + str2 + ".err", true);
-/*     */ 
-/*     */       
-/*  95 */       PrintStream printStream1 = new PrintStream(fileOutputStream1, true);
-/*  96 */       PrintStream printStream2 = new PrintStream(fileOutputStream2, true);
-/*     */       
-/*  98 */       System.setOut(printStream1);
-/*  99 */       System.setErr(printStream2);
-/*     */       
-/* 101 */       logInformation("Server started");
-/*     */     }
-/* 103 */     catch (Exception exception) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void writeLogMessage(PrintStream paramPrintStream, String paramString) {
-/* 110 */     Date date = new Date();
-/* 111 */     paramPrintStream.print("[" + date.toString() + "] " + paramString + "\n");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void logInformation(String paramString) {
-/* 118 */     writeLogMessage(System.out, "        " + paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void logError(String paramString) {
-/* 125 */     writeLogMessage(System.out, "ERROR:  " + paramString);
-/* 126 */     writeLogMessage(System.err, "ERROR:  " + paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void logTerminal(String paramString, int paramInt) {
-/* 136 */     if (paramInt == 0) {
-/* 137 */       writeLogMessage(System.out, "        " + paramString);
-/*     */     } else {
-/* 139 */       writeLogMessage(System.out, "FATAL:  " + 
-/* 140 */           printResult(paramInt) + ": " + paramString);
-/*     */       
-/* 142 */       writeLogMessage(System.err, "FATAL:  " + 
-/* 143 */           printResult(paramInt) + ": " + paramString);
-/*     */     } 
-/*     */     
-/* 146 */     System.exit(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Method getMainMethod(Class paramClass) {
-/* 151 */     Class[] arrayOfClass = { String[].class };
-/* 152 */     Method method = null;
-/*     */     
-/*     */     try {
-/* 155 */       method = paramClass.getDeclaredMethod("main", arrayOfClass);
-/* 156 */     } catch (Exception exception) {
-/* 157 */       logTerminal(exception.getMessage(), 2);
-/*     */     } 
-/*     */     
-/* 160 */     if (!isPublicStaticVoid(method)) {
-/* 161 */       logTerminal("", 2);
-/*     */     }
-/* 163 */     return method;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isPublicStaticVoid(Method paramMethod) {
-/* 169 */     int i = paramMethod.getModifiers();
-/* 170 */     if (!Modifier.isPublic(i) || !Modifier.isStatic(i)) {
-/* 171 */       logError(paramMethod.getName() + " is not public static");
-/* 172 */       return false;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 176 */     if ((paramMethod.getExceptionTypes()).length != 0) {
-/* 177 */       logError(paramMethod.getName() + " declares exceptions");
-/* 178 */       return false;
-/*     */     } 
-/*     */     
-/* 181 */     if (!paramMethod.getReturnType().equals(void.class)) {
-/* 182 */       logError(paramMethod.getName() + " does not have a void return type");
-/* 183 */       return false;
-/*     */     } 
-/*     */     
-/* 186 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Method getNamedMethod(Class paramClass, String paramString) {
-/* 191 */     Class[] arrayOfClass = { ORB.class };
-/* 192 */     Method method = null;
-/*     */     
-/*     */     try {
-/* 195 */       method = paramClass.getDeclaredMethod(paramString, arrayOfClass);
-/* 196 */     } catch (Exception exception) {
-/* 197 */       return null;
-/*     */     } 
-/*     */     
-/* 200 */     if (!isPublicStaticVoid(method)) {
-/* 201 */       return null;
-/*     */     }
-/* 203 */     return method;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void run(String[] paramArrayOfString) {
-/*     */     try {
-/* 209 */       redirectIOStreams();
-/*     */       
-/* 211 */       String str = System.getProperty("com.sun.CORBA.POA.ORBServerName");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 217 */       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-/*     */       
-/* 219 */       if (classLoader == null) {
-/* 220 */         classLoader = ClassLoader.getSystemClassLoader();
-/*     */       }
-/*     */       
-/* 223 */       Class<?> clazz = null;
-/*     */ 
-/*     */       
-/*     */       try {
-/* 227 */         clazz = Class.forName(str);
-/* 228 */       } catch (ClassNotFoundException classNotFoundException) {
-/*     */         
-/* 230 */         clazz = Class.forName(str, true, classLoader);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 237 */       Method method = getMainMethod(clazz);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 244 */       boolean bool = Boolean.getBoolean("com.sun.CORBA.activation.ORBServerVerify");
-/*     */       
-/* 246 */       if (bool) {
-/* 247 */         if (method == null) {
-/* 248 */           logTerminal("", 2);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 252 */           logTerminal("", 0);
-/*     */         } 
-/*     */       }
-/*     */ 
-/*     */       
-/* 257 */       registerCallback(clazz);
-/*     */ 
-/*     */       
-/* 260 */       Object[] arrayOfObject = new Object[1];
-/* 261 */       arrayOfObject[0] = paramArrayOfString;
-/* 262 */       method.invoke(null, arrayOfObject);
-/*     */     }
-/* 264 */     catch (ClassNotFoundException classNotFoundException) {
-/* 265 */       logTerminal("ClassNotFound exception: " + classNotFoundException.getMessage(), 1);
-/*     */     }
-/* 267 */     catch (Exception exception) {
-/* 268 */       logTerminal("Exception: " + exception.getMessage(), 3);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static void main(String[] paramArrayOfString) {
-/* 274 */     ServerMain serverMain = new ServerMain();
-/* 275 */     serverMain.run(paramArrayOfString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getServerId() {
-/* 282 */     Integer integer = Integer.getInteger("com.sun.CORBA.POA.ORBServerId");
-/*     */     
-/* 284 */     if (integer == null) {
-/* 285 */       logTerminal("", 5);
-/*     */     }
-/* 287 */     return integer.intValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void registerCallback(Class paramClass) {
-/* 292 */     Method method1 = getNamedMethod(paramClass, "install");
-/* 293 */     Method method2 = getNamedMethod(paramClass, "uninstall");
-/* 294 */     Method method3 = getNamedMethod(paramClass, "shutdown");
-/*     */     
-/* 296 */     Properties properties = new Properties();
-/* 297 */     properties.put("org.omg.CORBA.ORBClass", "com.sun.corba.se.impl.orb.ORBImpl");
-/*     */ 
-/*     */ 
-/*     */     
-/* 301 */     properties.put("com.sun.CORBA.POA.ORBActivated", "false");
-/* 302 */     String[] arrayOfString = null;
-/* 303 */     ORB oRB = ORB.init(arrayOfString, properties);
-/*     */     
-/* 305 */     ServerCallback serverCallback = new ServerCallback(oRB, method1, method2, method3);
-/*     */ 
-/*     */     
-/* 308 */     int i = getServerId();
-/*     */     
-/*     */     try {
-/* 311 */       Activator activator = ActivatorHelper.narrow(oRB
-/* 312 */           .resolve_initial_references("ServerActivator"));
-/* 313 */       activator.active(i, serverCallback);
-/* 314 */     } catch (Exception exception) {
-/* 315 */       logTerminal("exception " + exception.getMessage(), 6);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\activation\ServerMain.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.activation;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.io.*;
+import java.util.Date;
+import java.util.Properties ;
+
+import org.omg.CORBA.ORB ;
+import com.sun.corba.se.spi.activation.Activator ;
+import com.sun.corba.se.spi.activation.ActivatorHelper ;
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+
+/**
+ * @author      Ken Cavanaugh
+ * @since       JDK1.2
+ */
+public class ServerMain
+{
+    /* TODO:
+    * 1.  Rewrite all uses of ORB properties to use constants from someplace.
+    *     The strings are scattered between here, the ORB classes, and
+    *     ServerTableEntry.
+    * 2.  Consider a more general log facility.
+    * 3.  Remove ServerCallback from POAORB.
+    * 4.  Needs to be merged with Harold's changes to support SSL.
+    * 5.  Logs need to be internationalized.
+    */
+
+    public final static int OK = 0;
+    public final static int MAIN_CLASS_NOT_FOUND = 1;
+    public final static int NO_MAIN_METHOD = 2;
+    public final static int APPLICATION_ERROR = 3;
+    public final static int UNKNOWN_ERROR = 4;
+    public final static int NO_SERVER_ID = 5 ;
+    public final static int REGISTRATION_FAILED = 6;
+
+    public static String printResult( int result )
+    {
+        switch (result) {
+            case OK :                   return "Server terminated normally" ;
+            case MAIN_CLASS_NOT_FOUND : return "main class not found" ;
+            case NO_MAIN_METHOD :       return "no main method" ;
+            case APPLICATION_ERROR :    return "application error" ;
+            case NO_SERVER_ID :         return "server ID not defined" ;
+            case REGISTRATION_FAILED:   return "server registration failed" ;
+            default :                   return "unknown error" ;
+        }
+    }
+
+    private void redirectIOStreams()
+    {
+        // redirect out and err streams
+        try {
+            String logDirName =
+                System.getProperty( ORBConstants.DB_DIR_PROPERTY ) +
+                System.getProperty("file.separator") +
+                ORBConstants.SERVER_LOG_DIR +
+                System.getProperty("file.separator");
+
+            File logDir = new File(logDirName);
+            String server = System.getProperty(
+                ORBConstants.SERVER_ID_PROPERTY ) ;
+
+            FileOutputStream foutStream =
+                new FileOutputStream(logDirName + server+".out", true);
+            FileOutputStream ferrStream =
+                new FileOutputStream(logDirName + server+".err", true);
+
+            PrintStream pSout = new PrintStream(foutStream, true);
+            PrintStream pSerr = new PrintStream(ferrStream, true);
+
+            System.setOut(pSout);
+            System.setErr(pSerr);
+
+            logInformation( "Server started" ) ;
+
+        } catch (Exception ex) {}
+    }
+
+    /** Write a time-stamped message to the indicated PrintStream.
+    */
+    private static void writeLogMessage( PrintStream pstream, String msg )
+    {
+        Date date = new Date();
+        pstream.print( "[" + date.toString() + "] " + msg + "\n");
+    }
+
+    /** Write information to standard out only.
+    */
+    public static void logInformation( String msg )
+    {
+        writeLogMessage( System.out, "        " + msg ) ;
+    }
+
+    /** Write error message to standard out and standard err.
+    */
+    public static void logError( String msg )
+    {
+        writeLogMessage( System.out, "ERROR:  " + msg ) ;
+        writeLogMessage( System.err, "ERROR:  " + msg ) ;
+    }
+
+    /** Write final message to log(s) and then terminate by calling
+    * System.exit( code ).  If code == OK, write a normal termination
+    * message to standard out, otherwise write an abnormal termination
+    * message to standard out and standard error.
+    */
+    public static void logTerminal( String msg, int code )
+    {
+        if (code == 0) {
+            writeLogMessage( System.out, "        " + msg ) ;
+        } else {
+            writeLogMessage( System.out, "FATAL:  " +
+                printResult( code ) + ": " + msg ) ;
+
+            writeLogMessage( System.err, "FATAL:  " +
+                printResult( code ) + ": " + msg ) ;
+        }
+
+        System.exit( code ) ;
+    }
+
+    private Method getMainMethod( Class serverClass )
+    {
+        Class argTypes[] = new Class[] { String[].class } ;
+        Method method = null ;
+
+        try {
+            method = serverClass.getDeclaredMethod( "main", argTypes ) ;
+        } catch (Exception exc) {
+            logTerminal( exc.getMessage(), NO_MAIN_METHOD ) ;
+        }
+
+        if (!isPublicStaticVoid( method ))
+            logTerminal( "", NO_MAIN_METHOD ) ;
+
+        return method ;
+    }
+
+    private boolean isPublicStaticVoid( Method method )
+    {
+        // check modifiers: public static
+        int modifiers =  method.getModifiers ();
+        if (!Modifier.isPublic (modifiers) || !Modifier.isStatic (modifiers)) {
+            logError( method.getName() + " is not public static" ) ;
+            return false ;
+        }
+
+        // check return type and exceptions
+        if (method.getExceptionTypes ().length != 0) {
+            logError( method.getName() + " declares exceptions" ) ;
+            return false ;
+        }
+
+        if (!method.getReturnType().equals (Void.TYPE)) {
+            logError( method.getName() + " does not have a void return type" ) ;
+            return false ;
+        }
+
+        return true ;
+    }
+
+    private Method getNamedMethod( Class serverClass, String methodName )
+    {
+        Class argTypes[] = new Class[] { org.omg.CORBA.ORB.class } ;
+        Method method = null ;
+
+        try {
+            method = serverClass.getDeclaredMethod( methodName, argTypes ) ;
+        } catch (Exception exc) {
+            return null ;
+        }
+
+        if (!isPublicStaticVoid( method ))
+            return null ;
+
+        return method ;
+    }
+
+    private void run(String[] args)
+    {
+        try {
+            redirectIOStreams() ;
+
+            String serverClassName = System.getProperty(
+                ORBConstants.SERVER_NAME_PROPERTY ) ;
+
+            // determine the class loader to be used for loading the class
+            // since ServerMain is going to be in JDK and we need to have this
+            // class to load application classes, this is required here.
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
+            if (cl == null)
+                cl = ClassLoader.getSystemClassLoader();
+
+            // determine the main class
+            Class serverClass = null;
+
+            try {
+                // determine the main class, try loading with current class loader
+                serverClass = Class.forName( serverClassName ) ;
+            } catch (ClassNotFoundException ex) {
+                // eat the exception and try to load using SystemClassLoader
+                serverClass = Class.forName( serverClassName, true, cl);
+            }
+
+            if (debug)
+                System.out.println("class " + serverClassName + " found");
+
+            // get the main method
+            Method mainMethod = getMainMethod( serverClass ) ;
+
+            // This piece of code is required, to verify the server definition
+            // without launching it.
+
+            // verify the server
+
+            boolean serverVerifyFlag = Boolean.getBoolean(
+                ORBConstants.SERVER_DEF_VERIFY_PROPERTY) ;
+            if (serverVerifyFlag) {
+                if (mainMethod == null)
+                    logTerminal("", NO_MAIN_METHOD);
+                else {
+                    if (debug)
+                        System.out.println("Valid Server");
+                    logTerminal("", OK);
+                }
+            }
+
+
+            registerCallback( serverClass ) ;
+
+            // build args to the main and call it
+            Object params [] = new Object [1];
+            params[0] = args;
+            mainMethod.invoke(null, params);
+
+        } catch (ClassNotFoundException e) {
+            logTerminal("ClassNotFound exception: " + e.getMessage(),
+                MAIN_CLASS_NOT_FOUND);
+        } catch (Exception e) {
+            logTerminal("Exception: " + e.getMessage(),
+                APPLICATION_ERROR);
+        }
+    }
+
+    public static void main(String[] args) {
+        ServerMain server = new ServerMain();
+        server.run(args);
+    }
+
+    private static final boolean debug = false;
+
+    private int getServerId()
+    {
+        Integer serverId = Integer.getInteger( ORBConstants.SERVER_ID_PROPERTY ) ;
+
+        if (serverId == null)
+            logTerminal( "", NO_SERVER_ID ) ;
+
+        return serverId.intValue() ;
+    }
+
+    private void registerCallback( Class serverClass )
+    {
+        Method installMethod = getNamedMethod( serverClass, "install" ) ;
+        Method uninstallMethod = getNamedMethod( serverClass, "uninstall" ) ;
+        Method shutdownMethod = getNamedMethod( serverClass, "shutdown" ) ;
+
+        Properties props = new Properties() ;
+        props.put( "org.omg.CORBA.ORBClass",
+            "com.sun.corba.se.impl.orb.ORBImpl" ) ;
+        // NOTE: Very important to pass this property, otherwise the
+        // Persistent Server registration will be unsucessfull.
+        props.put( ORBConstants.ACTIVATED_PROPERTY, "false" );
+        String args[] = null ;
+        ORB orb = ORB.init( args, props ) ;
+
+        ServerCallback serverObj = new ServerCallback( orb,
+            installMethod, uninstallMethod, shutdownMethod ) ;
+
+        int serverId = getServerId() ;
+
+        try {
+            Activator activator = ActivatorHelper.narrow(
+                orb.resolve_initial_references( ORBConstants.SERVER_ACTIVATOR_NAME ));
+            activator.active(serverId, serverObj);
+        } catch (Exception ex) {
+            logTerminal( "exception " + ex.getMessage(),
+                REGISTRATION_FAILED ) ;
+        }
+    }
+}
+
+class ServerCallback extends
+    com.sun.corba.se.spi.activation._ServerImplBase
+{
+    private ORB orb;
+    private transient Method installMethod ;
+    private transient Method uninstallMethod ;
+    private transient Method shutdownMethod ;
+    private Object methodArgs[] ;
+
+    ServerCallback(ORB orb, Method installMethod, Method uninstallMethod,
+        Method shutdownMethod )
+    {
+        this.orb = orb;
+        this.installMethod = installMethod ;
+        this.uninstallMethod = uninstallMethod ;
+        this.shutdownMethod = shutdownMethod ;
+
+        orb.connect( this ) ;
+
+        methodArgs = new Object[] { orb } ;
+    }
+
+    private void invokeMethod( Method method )
+    {
+        if (method != null)
+            try {
+                method.invoke( null, methodArgs ) ;
+            } catch (Exception exc) {
+                ServerMain.logError( "could not invoke " + method.getName() +
+                    " method: " + exc.getMessage() ) ;
+            }
+    }
+
+    // shutdown the ORB and wait for completion
+    public void shutdown()
+    {
+        ServerMain.logInformation( "Shutdown starting" ) ;
+
+        invokeMethod( shutdownMethod ) ;
+
+        orb.shutdown(true);
+
+        ServerMain.logTerminal( "Shutdown completed", ServerMain.OK ) ;
+    }
+
+    public void install()
+    {
+        ServerMain.logInformation( "Install starting" ) ;
+
+        invokeMethod( installMethod ) ;
+
+        ServerMain.logInformation( "Install completed" ) ;
+    }
+
+    public void uninstall()
+    {
+        ServerMain.logInformation( "uninstall starting" ) ;
+
+        invokeMethod( uninstallMethod ) ;
+
+        ServerMain.logInformation( "uninstall completed" ) ;
+    }
+}

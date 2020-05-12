@@ -1,172 +1,166 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class DupFilterIterator
-/*     */   extends DTMAxisIteratorBase
-/*     */ {
-/*     */   private DTMAxisIterator _source;
-/*  48 */   private IntegerArray _nodes = new IntegerArray();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  53 */   private int _current = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  58 */   private int _nodesSize = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  63 */   private int _lastNext = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  68 */   private int _markedLastNext = -1;
-/*     */   
-/*     */   public DupFilterIterator(DTMAxisIterator source) {
-/*  71 */     this._source = source;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  77 */     if (source instanceof KeyIndex) {
-/*  78 */       setStartNode(0);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DTMAxisIterator setStartNode(int node) {
-/*  88 */     if (this._isRestartable) {
-/*     */ 
-/*     */       
-/*  91 */       boolean sourceIsKeyIndex = this._source instanceof KeyIndex;
-/*     */       
-/*  93 */       if (sourceIsKeyIndex && this._startNode == 0)
-/*     */       {
-/*  95 */         return this;
-/*     */       }
-/*     */       
-/*  98 */       if (node != this._startNode) {
-/*  99 */         this._source.setStartNode(this._startNode = node);
-/*     */         
-/* 101 */         this._nodes.clear();
-/* 102 */         while ((node = this._source.next()) != -1) {
-/* 103 */           this._nodes.add(node);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 108 */         if (!sourceIsKeyIndex) {
-/* 109 */           this._nodes.sort();
-/*     */         }
-/* 111 */         this._nodesSize = this._nodes.cardinality();
-/* 112 */         this._current = 0;
-/* 113 */         this._lastNext = -1;
-/* 114 */         resetPosition();
-/*     */       } 
-/*     */     } 
-/* 117 */     return this;
-/*     */   }
-/*     */   
-/*     */   public int next() {
-/* 121 */     while (this._current < this._nodesSize) {
-/* 122 */       int next = this._nodes.at(this._current++);
-/* 123 */       if (next != this._lastNext) {
-/* 124 */         return returnNode(this._lastNext = next);
-/*     */       }
-/*     */     } 
-/* 127 */     return -1;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DTMAxisIterator cloneIterator() {
-/*     */     try {
-/* 133 */       DupFilterIterator clone = (DupFilterIterator)clone();
-/* 134 */       clone._nodes = (IntegerArray)this._nodes.clone();
-/* 135 */       clone._source = this._source.cloneIterator();
-/* 136 */       clone._isRestartable = false;
-/* 137 */       return clone.reset();
-/*     */     }
-/* 139 */     catch (CloneNotSupportedException e) {
-/* 140 */       BasisLibrary.runTimeError("ITERATOR_CLONE_ERR", e
-/* 141 */           .toString());
-/* 142 */       return null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void setRestartable(boolean isRestartable) {
-/* 147 */     this._isRestartable = isRestartable;
-/* 148 */     this._source.setRestartable(isRestartable);
-/*     */   }
-/*     */   
-/*     */   public void setMark() {
-/* 152 */     this._markedNode = this._current;
-/* 153 */     this._markedLastNext = this._lastNext;
-/*     */   }
-/*     */   
-/*     */   public void gotoMark() {
-/* 157 */     this._current = this._markedNode;
-/* 158 */     this._lastNext = this._markedLastNext;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator reset() {
-/* 162 */     this._current = 0;
-/* 163 */     this._lastNext = -1;
-/* 164 */     return resetPosition();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\DupFilterIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: DupFilterIterator.java,v 1.2.4.1 2005/09/06 06:16:11 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+import com.sun.org.apache.xalan.internal.xsltc.util.IntegerArray;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMDefaultBase;
+
+/**
+ * Removes duplicates and sorts a source iterator. The nodes from the
+ * source are collected in an array upon calling setStartNode(). This
+ * array is later sorted and duplicates are ignored in next().
+ * @author G. Todd Miller
+ */
+public final class DupFilterIterator extends DTMAxisIteratorBase {
+
+    /**
+     * Reference to source iterator.
+     */
+    private DTMAxisIterator _source;
+
+    /**
+     * Array to cache all nodes from source.
+     */
+    private IntegerArray _nodes = new IntegerArray();
+
+    /**
+     * Index in _nodes array to current node.
+     */
+    private int _current = 0;
+
+    /**
+     * Cardinality of _nodes array.
+     */
+    private int _nodesSize = 0;
+
+    /**
+     * Last value returned by next().
+     */
+    private int _lastNext = END;
+
+    /**
+     * Temporary variable to store _lastNext.
+     */
+    private int _markedLastNext = END;
+
+    public DupFilterIterator(DTMAxisIterator source) {
+        _source = source;
+// System.out.println("DFI source = " + source + " this = " + this);
+
+        // Cache contents of id() or key() index right away. Necessary for
+        // union expressions containing multiple calls to the same index, and
+        // correct as well since start-node is irrelevant for id()/key() exrp.
+        if (source instanceof KeyIndex) {
+            setStartNode(DTMDefaultBase.ROOTNODE);
+        }
+    }
+
+    /**
+     * Set the start node for this iterator
+     * @param node The start node
+     * @return A reference to this node iterator
+     */
+    public DTMAxisIterator setStartNode(int node) {
+        if (_isRestartable) {
+            // KeyIndex iterators are always relative to the root node, so there
+            // is never any point in re-reading the iterator (and we SHOULD NOT).
+            boolean sourceIsKeyIndex = _source instanceof KeyIndex;
+
+            if (sourceIsKeyIndex
+                    && _startNode == DTMDefaultBase.ROOTNODE) {
+                return this;
+            }
+
+            if (node != _startNode) {
+                _source.setStartNode(_startNode = node);
+
+                _nodes.clear();
+                while ((node = _source.next()) != END) {
+                    _nodes.add(node);
+                }
+
+                // Nodes produced by KeyIndex are known to be in document order.
+                // Take advantage of it.
+                if (!sourceIsKeyIndex) {
+                    _nodes.sort();
+                }
+                _nodesSize = _nodes.cardinality();
+                _current = 0;
+                _lastNext = END;
+                resetPosition();
+            }
+        }
+        return this;
+    }
+
+    public int next() {
+        while (_current < _nodesSize) {
+            final int next = _nodes.at(_current++);
+            if (next != _lastNext) {
+                return returnNode(_lastNext = next);
+            }
+        }
+        return END;
+    }
+
+    public DTMAxisIterator cloneIterator() {
+        try {
+            final DupFilterIterator clone =
+                (DupFilterIterator) super.clone();
+            clone._nodes = (IntegerArray) _nodes.clone();
+            clone._source = _source.cloneIterator();
+            clone._isRestartable = false;
+            return clone.reset();
+        }
+        catch (CloneNotSupportedException e) {
+            BasisLibrary.runTimeError(BasisLibrary.ITERATOR_CLONE_ERR,
+                                      e.toString());
+            return null;
+        }
+    }
+
+    public void setRestartable(boolean isRestartable) {
+        _isRestartable = isRestartable;
+        _source.setRestartable(isRestartable);
+    }
+
+    public void setMark() {
+        _markedNode = _current;
+        _markedLastNext = _lastNext;    // Bugzilla 25924
+    }
+
+    public void gotoMark() {
+        _current = _markedNode;
+        _lastNext = _markedLastNext;    // Bugzilla 25924
+    }
+
+    public DTMAxisIterator reset() {
+        _current = 0;
+        _lastNext = END;
+        return resetPosition();
+    }
+}

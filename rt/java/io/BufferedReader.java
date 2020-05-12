@@ -1,598 +1,593 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ import java.util.Iterator;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.Spliterators;
-/*     */ import java.util.stream.Stream;
-/*     */ import java.util.stream.StreamSupport;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BufferedReader
-/*     */   extends Reader
-/*     */ {
-/*     */   private Reader in;
-/*     */   private char[] cb;
-/*     */   private int nChars;
-/*     */   private int nextChar;
-/*     */   private static final int INVALIDATED = -2;
-/*     */   private static final int UNMARKED = -1;
-/*  79 */   private int markedChar = -1;
-/*  80 */   private int readAheadLimit = 0;
-/*     */ 
-/*     */   
-/*     */   private boolean skipLF = false;
-/*     */ 
-/*     */   
-/*     */   private boolean markedSkipLF = false;
-/*     */   
-/*  88 */   private static int defaultCharBufferSize = 8192;
-/*  89 */   private static int defaultExpectedLineLength = 80;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedReader(Reader paramReader, int paramInt) {
-/* 101 */     super(paramReader);
-/* 102 */     if (paramInt <= 0)
-/* 103 */       throw new IllegalArgumentException("Buffer size <= 0"); 
-/* 104 */     this.in = paramReader;
-/* 105 */     this.cb = new char[paramInt];
-/* 106 */     this.nextChar = this.nChars = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedReader(Reader paramReader) {
-/* 116 */     this(paramReader, defaultCharBufferSize);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void ensureOpen() throws IOException {
-/* 121 */     if (this.in == null) {
-/* 122 */       throw new IOException("Stream closed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void fill() throws IOException {
-/*     */     int i;
-/* 130 */     if (this.markedChar <= -1) {
-/*     */       
-/* 132 */       i = 0;
-/*     */     } else {
-/*     */       
-/* 135 */       int j = this.nextChar - this.markedChar;
-/* 136 */       if (j >= this.readAheadLimit) {
-/*     */         
-/* 138 */         this.markedChar = -2;
-/* 139 */         this.readAheadLimit = 0;
-/* 140 */         i = 0;
-/*     */       } else {
-/* 142 */         if (this.readAheadLimit <= this.cb.length) {
-/*     */           
-/* 144 */           System.arraycopy(this.cb, this.markedChar, this.cb, 0, j);
-/* 145 */           this.markedChar = 0;
-/* 146 */           i = j;
-/*     */         } else {
-/*     */           
-/* 149 */           char[] arrayOfChar = new char[this.readAheadLimit];
-/* 150 */           System.arraycopy(this.cb, this.markedChar, arrayOfChar, 0, j);
-/* 151 */           this.cb = arrayOfChar;
-/* 152 */           this.markedChar = 0;
-/* 153 */           i = j;
-/*     */         } 
-/* 155 */         this.nextChar = this.nChars = j;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     while (true) {
-/* 161 */       int j = this.in.read(this.cb, i, this.cb.length - i);
-/* 162 */       if (j != 0) {
-/* 163 */         if (j > 0) {
-/* 164 */           this.nChars = i + j;
-/* 165 */           this.nextChar = i;
-/*     */         } 
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read() throws IOException {
-/* 178 */     synchronized (this.lock) {
-/* 179 */       ensureOpen();
-/*     */       while (true) {
-/* 181 */         if (this.nextChar >= this.nChars) {
-/* 182 */           fill();
-/* 183 */           if (this.nextChar >= this.nChars)
-/* 184 */             return -1; 
-/*     */         } 
-/* 186 */         if (this.skipLF) {
-/* 187 */           this.skipLF = false;
-/* 188 */           if (this.cb[this.nextChar] == '\n') {
-/* 189 */             this.nextChar++; continue;
-/*     */           } 
-/*     */         }  break;
-/*     */       } 
-/* 193 */       return this.cb[this.nextChar++];
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int read1(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 203 */     if (this.nextChar >= this.nChars) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 209 */       if (paramInt2 >= this.cb.length && this.markedChar <= -1 && !this.skipLF) {
-/* 210 */         return this.in.read(paramArrayOfchar, paramInt1, paramInt2);
-/*     */       }
-/* 212 */       fill();
-/*     */     } 
-/* 214 */     if (this.nextChar >= this.nChars) return -1; 
-/* 215 */     if (this.skipLF) {
-/* 216 */       this.skipLF = false;
-/* 217 */       if (this.cb[this.nextChar] == '\n') {
-/* 218 */         this.nextChar++;
-/* 219 */         if (this.nextChar >= this.nChars)
-/* 220 */           fill(); 
-/* 221 */         if (this.nextChar >= this.nChars)
-/* 222 */           return -1; 
-/*     */       } 
-/*     */     } 
-/* 225 */     int i = Math.min(paramInt2, this.nChars - this.nextChar);
-/* 226 */     System.arraycopy(this.cb, this.nextChar, paramArrayOfchar, paramInt1, i);
-/* 227 */     this.nextChar += i;
-/* 228 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 277 */     synchronized (this.lock) {
-/* 278 */       ensureOpen();
-/* 279 */       if (paramInt1 < 0 || paramInt1 > paramArrayOfchar.length || paramInt2 < 0 || paramInt1 + paramInt2 > paramArrayOfchar.length || paramInt1 + paramInt2 < 0)
-/*     */       {
-/* 281 */         throw new IndexOutOfBoundsException(); } 
-/* 282 */       if (paramInt2 == 0) {
-/* 283 */         return 0;
-/*     */       }
-/*     */       
-/* 286 */       int i = read1(paramArrayOfchar, paramInt1, paramInt2);
-/* 287 */       if (i <= 0) return i; 
-/* 288 */       while (i < paramInt2 && this.in.ready()) {
-/* 289 */         int j = read1(paramArrayOfchar, paramInt1 + i, paramInt2 - i);
-/* 290 */         if (j <= 0)
-/* 291 */           break;  i += j;
-/*     */       } 
-/* 293 */       return i;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String readLine(boolean paramBoolean) throws IOException {
-/* 313 */     StringBuffer stringBuffer = null;
-/*     */ 
-/*     */     
-/* 316 */     synchronized (this.lock) {
-/* 317 */       ensureOpen();
-/* 318 */       boolean bool = (paramBoolean || this.skipLF) ? true : false;
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       while (true) {
-/* 323 */         if (this.nextChar >= this.nChars)
-/* 324 */           fill(); 
-/* 325 */         if (this.nextChar >= this.nChars) {
-/* 326 */           if (stringBuffer != null && stringBuffer.length() > 0) {
-/* 327 */             return stringBuffer.toString();
-/*     */           }
-/* 329 */           return null;
-/*     */         } 
-/* 331 */         boolean bool1 = false;
-/* 332 */         char c = Character.MIN_VALUE;
-/*     */ 
-/*     */ 
-/*     */         
-/* 336 */         if (bool && this.cb[this.nextChar] == '\n')
-/* 337 */           this.nextChar++; 
-/* 338 */         this.skipLF = false;
-/* 339 */         bool = false;
-/*     */         
-/*     */         int j;
-/* 342 */         for (j = this.nextChar; j < this.nChars; j++) {
-/* 343 */           c = this.cb[j];
-/* 344 */           if (c == '\n' || c == '\r') {
-/* 345 */             bool1 = true;
-/*     */             
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 350 */         int i = this.nextChar;
-/* 351 */         this.nextChar = j;
-/*     */         
-/* 353 */         if (bool1) {
-/*     */           String str;
-/* 355 */           if (stringBuffer == null) {
-/* 356 */             str = new String(this.cb, i, j - i);
-/*     */           } else {
-/* 358 */             stringBuffer.append(this.cb, i, j - i);
-/* 359 */             str = stringBuffer.toString();
-/*     */           } 
-/* 361 */           this.nextChar++;
-/* 362 */           if (c == '\r') {
-/* 363 */             this.skipLF = true;
-/*     */           }
-/* 365 */           return str;
-/*     */         } 
-/*     */         
-/* 368 */         if (stringBuffer == null)
-/* 369 */           stringBuffer = new StringBuffer(defaultExpectedLineLength); 
-/* 370 */         stringBuffer.append(this.cb, i, j - i);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String readLine() throws IOException {
-/* 389 */     return readLine(false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long skip(long paramLong) throws IOException {
-/* 403 */     if (paramLong < 0L) {
-/* 404 */       throw new IllegalArgumentException("skip value is negative");
-/*     */     }
-/* 406 */     synchronized (this.lock) {
-/* 407 */       ensureOpen();
-/* 408 */       long l = paramLong;
-/* 409 */       while (l > 0L) {
-/* 410 */         if (this.nextChar >= this.nChars)
-/* 411 */           fill(); 
-/* 412 */         if (this.nextChar >= this.nChars)
-/*     */           break; 
-/* 414 */         if (this.skipLF) {
-/* 415 */           this.skipLF = false;
-/* 416 */           if (this.cb[this.nextChar] == '\n') {
-/* 417 */             this.nextChar++;
-/*     */           }
-/*     */         } 
-/* 420 */         long l1 = (this.nChars - this.nextChar);
-/* 421 */         if (l <= l1) {
-/* 422 */           this.nextChar = (int)(this.nextChar + l);
-/* 423 */           l = 0L;
-/*     */           
-/*     */           break;
-/*     */         } 
-/* 427 */         l -= l1;
-/* 428 */         this.nextChar = this.nChars;
-/*     */       } 
-/*     */       
-/* 431 */       return paramLong - l;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean ready() throws IOException {
-/* 443 */     synchronized (this.lock) {
-/* 444 */       ensureOpen();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 450 */       if (this.skipLF) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 454 */         if (this.nextChar >= this.nChars && this.in.ready()) {
-/* 455 */           fill();
-/*     */         }
-/* 457 */         if (this.nextChar < this.nChars) {
-/* 458 */           if (this.cb[this.nextChar] == '\n')
-/* 459 */             this.nextChar++; 
-/* 460 */           this.skipLF = false;
-/*     */         } 
-/*     */       } 
-/* 463 */       return (this.nextChar < this.nChars || this.in.ready());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean markSupported() {
-/* 471 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void mark(int paramInt) throws IOException {
-/* 491 */     if (paramInt < 0) {
-/* 492 */       throw new IllegalArgumentException("Read-ahead limit < 0");
-/*     */     }
-/* 494 */     synchronized (this.lock) {
-/* 495 */       ensureOpen();
-/* 496 */       this.readAheadLimit = paramInt;
-/* 497 */       this.markedChar = this.nextChar;
-/* 498 */       this.markedSkipLF = this.skipLF;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() throws IOException {
-/* 509 */     synchronized (this.lock) {
-/* 510 */       ensureOpen();
-/* 511 */       if (this.markedChar < 0) {
-/* 512 */         throw new IOException((this.markedChar == -2) ? "Mark invalid" : "Stream not marked");
-/*     */       }
-/*     */       
-/* 515 */       this.nextChar = this.markedChar;
-/* 516 */       this.skipLF = this.markedSkipLF;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void close() throws IOException {
-/* 521 */     synchronized (this.lock) {
-/* 522 */       if (this.in == null)
-/*     */         return; 
-/*     */       try {
-/* 525 */         this.in.close();
-/*     */       } finally {
-/* 527 */         this.in = null;
-/* 528 */         this.cb = null;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Stream<String> lines() {
-/* 562 */     Iterator<String> iterator = new Iterator<String>() {
-/* 563 */         String nextLine = null;
-/*     */ 
-/*     */         
-/*     */         public boolean hasNext() {
-/* 567 */           if (this.nextLine != null) {
-/* 568 */             return true;
-/*     */           }
-/*     */           try {
-/* 571 */             this.nextLine = BufferedReader.this.readLine();
-/* 572 */             return (this.nextLine != null);
-/* 573 */           } catch (IOException iOException) {
-/* 574 */             throw new UncheckedIOException(iOException);
-/*     */           } 
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         public String next() {
-/* 581 */           if (this.nextLine != null || hasNext()) {
-/* 582 */             String str = this.nextLine;
-/* 583 */             this.nextLine = null;
-/* 584 */             return str;
-/*     */           } 
-/* 586 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       };
-/*     */     
-/* 590 */     return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 272), false);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\BufferedReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+/**
+ * Reads text from a character-input stream, buffering characters so as to
+ * provide for the efficient reading of characters, arrays, and lines.
+ *
+ * <p> The buffer size may be specified, or the default size may be used.  The
+ * default is large enough for most purposes.
+ *
+ * <p> In general, each read request made of a Reader causes a corresponding
+ * read request to be made of the underlying character or byte stream.  It is
+ * therefore advisable to wrap a BufferedReader around any Reader whose read()
+ * operations may be costly, such as FileReaders and InputStreamReaders.  For
+ * example,
+ *
+ * <pre>
+ * BufferedReader in
+ *   = new BufferedReader(new FileReader("foo.in"));
+ * </pre>
+ *
+ * will buffer the input from the specified file.  Without buffering, each
+ * invocation of read() or readLine() could cause bytes to be read from the
+ * file, converted into characters, and then returned, which can be very
+ * inefficient.
+ *
+ * <p> Programs that use DataInputStreams for textual input can be localized by
+ * replacing each DataInputStream with an appropriate BufferedReader.
+ *
+ * @see FileReader
+ * @see InputStreamReader
+ * @see java.nio.file.Files#newBufferedReader
+ *
+ * @author      Mark Reinhold
+ * @since       JDK1.1
+ */
+
+public class BufferedReader extends Reader {
+
+    private Reader in;
+
+    private char cb[];
+    private int nChars, nextChar;
+
+    private static final int INVALIDATED = -2;
+    private static final int UNMARKED = -1;
+    private int markedChar = UNMARKED;
+    private int readAheadLimit = 0; /* Valid only when markedChar > 0 */
+
+    /** If the next character is a line feed, skip it */
+    private boolean skipLF = false;
+
+    /** The skipLF flag when the mark was set */
+    private boolean markedSkipLF = false;
+
+    private static int defaultCharBufferSize = 8192;
+    private static int defaultExpectedLineLength = 80;
+
+    /**
+     * Creates a buffering character-input stream that uses an input buffer of
+     * the specified size.
+     *
+     * @param  in   A Reader
+     * @param  sz   Input-buffer size
+     *
+     * @exception  IllegalArgumentException  If {@code sz <= 0}
+     */
+    public BufferedReader(Reader in, int sz) {
+        super(in);
+        if (sz <= 0)
+            throw new IllegalArgumentException("Buffer size <= 0");
+        this.in = in;
+        cb = new char[sz];
+        nextChar = nChars = 0;
+    }
+
+    /**
+     * Creates a buffering character-input stream that uses a default-sized
+     * input buffer.
+     *
+     * @param  in   A Reader
+     */
+    public BufferedReader(Reader in) {
+        this(in, defaultCharBufferSize);
+    }
+
+    /** Checks to make sure that the stream has not been closed */
+    private void ensureOpen() throws IOException {
+        if (in == null)
+            throw new IOException("Stream closed");
+    }
+
+    /**
+     * Fills the input buffer, taking the mark into account if it is valid.
+     */
+    private void fill() throws IOException {
+        int dst;
+        if (markedChar <= UNMARKED) {
+            /* No mark */
+            dst = 0;
+        } else {
+            /* Marked */
+            int delta = nextChar - markedChar;
+            if (delta >= readAheadLimit) {
+                /* Gone past read-ahead limit: Invalidate mark */
+                markedChar = INVALIDATED;
+                readAheadLimit = 0;
+                dst = 0;
+            } else {
+                if (readAheadLimit <= cb.length) {
+                    /* Shuffle in the current buffer */
+                    System.arraycopy(cb, markedChar, cb, 0, delta);
+                    markedChar = 0;
+                    dst = delta;
+                } else {
+                    /* Reallocate buffer to accommodate read-ahead limit */
+                    char ncb[] = new char[readAheadLimit];
+                    System.arraycopy(cb, markedChar, ncb, 0, delta);
+                    cb = ncb;
+                    markedChar = 0;
+                    dst = delta;
+                }
+                nextChar = nChars = delta;
+            }
+        }
+
+        int n;
+        do {
+            n = in.read(cb, dst, cb.length - dst);
+        } while (n == 0);
+        if (n > 0) {
+            nChars = dst + n;
+            nextChar = dst;
+        }
+    }
+
+    /**
+     * Reads a single character.
+     *
+     * @return The character read, as an integer in the range
+     *         0 to 65535 (<tt>0x00-0xffff</tt>), or -1 if the
+     *         end of the stream has been reached
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            for (;;) {
+                if (nextChar >= nChars) {
+                    fill();
+                    if (nextChar >= nChars)
+                        return -1;
+                }
+                if (skipLF) {
+                    skipLF = false;
+                    if (cb[nextChar] == '\n') {
+                        nextChar++;
+                        continue;
+                    }
+                }
+                return cb[nextChar++];
+            }
+        }
+    }
+
+    /**
+     * Reads characters into a portion of an array, reading from the underlying
+     * stream if necessary.
+     */
+    private int read1(char[] cbuf, int off, int len) throws IOException {
+        if (nextChar >= nChars) {
+            /* If the requested length is at least as large as the buffer, and
+               if there is no mark/reset activity, and if line feeds are not
+               being skipped, do not bother to copy the characters into the
+               local buffer.  In this way buffered streams will cascade
+               harmlessly. */
+            if (len >= cb.length && markedChar <= UNMARKED && !skipLF) {
+                return in.read(cbuf, off, len);
+            }
+            fill();
+        }
+        if (nextChar >= nChars) return -1;
+        if (skipLF) {
+            skipLF = false;
+            if (cb[nextChar] == '\n') {
+                nextChar++;
+                if (nextChar >= nChars)
+                    fill();
+                if (nextChar >= nChars)
+                    return -1;
+            }
+        }
+        int n = Math.min(len, nChars - nextChar);
+        System.arraycopy(cb, nextChar, cbuf, off, n);
+        nextChar += n;
+        return n;
+    }
+
+    /**
+     * Reads characters into a portion of an array.
+     *
+     * <p> This method implements the general contract of the corresponding
+     * <code>{@link Reader#read(char[], int, int) read}</code> method of the
+     * <code>{@link Reader}</code> class.  As an additional convenience, it
+     * attempts to read as many characters as possible by repeatedly invoking
+     * the <code>read</code> method of the underlying stream.  This iterated
+     * <code>read</code> continues until one of the following conditions becomes
+     * true: <ul>
+     *
+     *   <li> The specified number of characters have been read,
+     *
+     *   <li> The <code>read</code> method of the underlying stream returns
+     *   <code>-1</code>, indicating end-of-file, or
+     *
+     *   <li> The <code>ready</code> method of the underlying stream
+     *   returns <code>false</code>, indicating that further input requests
+     *   would block.
+     *
+     * </ul> If the first <code>read</code> on the underlying stream returns
+     * <code>-1</code> to indicate end-of-file then this method returns
+     * <code>-1</code>.  Otherwise this method returns the number of characters
+     * actually read.
+     *
+     * <p> Subclasses of this class are encouraged, but not required, to
+     * attempt to read as many characters as possible in the same fashion.
+     *
+     * <p> Ordinarily this method takes characters from this stream's character
+     * buffer, filling it from the underlying stream as necessary.  If,
+     * however, the buffer is empty, the mark is not valid, and the requested
+     * length is at least as large as the buffer, then this method will read
+     * characters directly from the underlying stream into the given array.
+     * Thus redundant <code>BufferedReader</code>s will not copy data
+     * unnecessarily.
+     *
+     * @param      cbuf  Destination buffer
+     * @param      off   Offset at which to start storing characters
+     * @param      len   Maximum number of characters to read
+     *
+     * @return     The number of characters read, or -1 if the end of the
+     *             stream has been reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read(char cbuf[], int off, int len) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if ((off < 0) || (off > cbuf.length) || (len < 0) ||
+                ((off + len) > cbuf.length) || ((off + len) < 0)) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
+
+            int n = read1(cbuf, off, len);
+            if (n <= 0) return n;
+            while ((n < len) && in.ready()) {
+                int n1 = read1(cbuf, off + n, len - n);
+                if (n1 <= 0) break;
+                n += n1;
+            }
+            return n;
+        }
+    }
+
+    /**
+     * Reads a line of text.  A line is considered to be terminated by any one
+     * of a line feed ('\n'), a carriage return ('\r'), or a carriage return
+     * followed immediately by a linefeed.
+     *
+     * @param      ignoreLF  If true, the next '\n' will be skipped
+     *
+     * @return     A String containing the contents of the line, not including
+     *             any line-termination characters, or null if the end of the
+     *             stream has been reached
+     *
+     * @see        java.io.LineNumberReader#readLine()
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    String readLine(boolean ignoreLF) throws IOException {
+        StringBuffer s = null;
+        int startChar;
+
+        synchronized (lock) {
+            ensureOpen();
+            boolean omitLF = ignoreLF || skipLF;
+
+        bufferLoop:
+            for (;;) {
+
+                if (nextChar >= nChars)
+                    fill();
+                if (nextChar >= nChars) { /* EOF */
+                    if (s != null && s.length() > 0)
+                        return s.toString();
+                    else
+                        return null;
+                }
+                boolean eol = false;
+                char c = 0;
+                int i;
+
+                /* Skip a leftover '\n', if necessary */
+                if (omitLF && (cb[nextChar] == '\n'))
+                    nextChar++;
+                skipLF = false;
+                omitLF = false;
+
+            charLoop:
+                for (i = nextChar; i < nChars; i++) {
+                    c = cb[i];
+                    if ((c == '\n') || (c == '\r')) {
+                        eol = true;
+                        break charLoop;
+                    }
+                }
+
+                startChar = nextChar;
+                nextChar = i;
+
+                if (eol) {
+                    String str;
+                    if (s == null) {
+                        str = new String(cb, startChar, i - startChar);
+                    } else {
+                        s.append(cb, startChar, i - startChar);
+                        str = s.toString();
+                    }
+                    nextChar++;
+                    if (c == '\r') {
+                        skipLF = true;
+                    }
+                    return str;
+                }
+
+                if (s == null)
+                    s = new StringBuffer(defaultExpectedLineLength);
+                s.append(cb, startChar, i - startChar);
+            }
+        }
+    }
+
+    /**
+     * Reads a line of text.  A line is considered to be terminated by any one
+     * of a line feed ('\n'), a carriage return ('\r'), or a carriage return
+     * followed immediately by a linefeed.
+     *
+     * @return     A String containing the contents of the line, not including
+     *             any line-termination characters, or null if the end of the
+     *             stream has been reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     *
+     * @see java.nio.file.Files#readAllLines
+     */
+    public String readLine() throws IOException {
+        return readLine(false);
+    }
+
+    /**
+     * Skips characters.
+     *
+     * @param  n  The number of characters to skip
+     *
+     * @return    The number of characters actually skipped
+     *
+     * @exception  IllegalArgumentException  If <code>n</code> is negative.
+     * @exception  IOException  If an I/O error occurs
+     */
+    public long skip(long n) throws IOException {
+        if (n < 0L) {
+            throw new IllegalArgumentException("skip value is negative");
+        }
+        synchronized (lock) {
+            ensureOpen();
+            long r = n;
+            while (r > 0) {
+                if (nextChar >= nChars)
+                    fill();
+                if (nextChar >= nChars) /* EOF */
+                    break;
+                if (skipLF) {
+                    skipLF = false;
+                    if (cb[nextChar] == '\n') {
+                        nextChar++;
+                    }
+                }
+                long d = nChars - nextChar;
+                if (r <= d) {
+                    nextChar += r;
+                    r = 0;
+                    break;
+                }
+                else {
+                    r -= d;
+                    nextChar = nChars;
+                }
+            }
+            return n - r;
+        }
+    }
+
+    /**
+     * Tells whether this stream is ready to be read.  A buffered character
+     * stream is ready if the buffer is not empty, or if the underlying
+     * character stream is ready.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public boolean ready() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+
+            /*
+             * If newline needs to be skipped and the next char to be read
+             * is a newline character, then just skip it right away.
+             */
+            if (skipLF) {
+                /* Note that in.ready() will return true if and only if the next
+                 * read on the stream will not block.
+                 */
+                if (nextChar >= nChars && in.ready()) {
+                    fill();
+                }
+                if (nextChar < nChars) {
+                    if (cb[nextChar] == '\n')
+                        nextChar++;
+                    skipLF = false;
+                }
+            }
+            return (nextChar < nChars) || in.ready();
+        }
+    }
+
+    /**
+     * Tells whether this stream supports the mark() operation, which it does.
+     */
+    public boolean markSupported() {
+        return true;
+    }
+
+    /**
+     * Marks the present position in the stream.  Subsequent calls to reset()
+     * will attempt to reposition the stream to this point.
+     *
+     * @param readAheadLimit   Limit on the number of characters that may be
+     *                         read while still preserving the mark. An attempt
+     *                         to reset the stream after reading characters
+     *                         up to this limit or beyond may fail.
+     *                         A limit value larger than the size of the input
+     *                         buffer will cause a new buffer to be allocated
+     *                         whose size is no smaller than limit.
+     *                         Therefore large values should be used with care.
+     *
+     * @exception  IllegalArgumentException  If {@code readAheadLimit < 0}
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void mark(int readAheadLimit) throws IOException {
+        if (readAheadLimit < 0) {
+            throw new IllegalArgumentException("Read-ahead limit < 0");
+        }
+        synchronized (lock) {
+            ensureOpen();
+            this.readAheadLimit = readAheadLimit;
+            markedChar = nextChar;
+            markedSkipLF = skipLF;
+        }
+    }
+
+    /**
+     * Resets the stream to the most recent mark.
+     *
+     * @exception  IOException  If the stream has never been marked,
+     *                          or if the mark has been invalidated
+     */
+    public void reset() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (markedChar < 0)
+                throw new IOException((markedChar == INVALIDATED)
+                                      ? "Mark invalid"
+                                      : "Stream not marked");
+            nextChar = markedChar;
+            skipLF = markedSkipLF;
+        }
+    }
+
+    public void close() throws IOException {
+        synchronized (lock) {
+            if (in == null)
+                return;
+            try {
+                in.close();
+            } finally {
+                in = null;
+                cb = null;
+            }
+        }
+    }
+
+    /**
+     * Returns a {@code Stream}, the elements of which are lines read from
+     * this {@code BufferedReader}.  The {@link Stream} is lazily populated,
+     * i.e., read only occurs during the
+     * <a href="../util/stream/package-summary.html#StreamOps">terminal
+     * stream operation</a>.
+     *
+     * <p> The reader must not be operated on during the execution of the
+     * terminal stream operation. Otherwise, the result of the terminal stream
+     * operation is undefined.
+     *
+     * <p> After execution of the terminal stream operation there are no
+     * guarantees that the reader will be at a specific position from which to
+     * read the next character or line.
+     *
+     * <p> If an {@link IOException} is thrown when accessing the underlying
+     * {@code BufferedReader}, it is wrapped in an {@link
+     * UncheckedIOException} which will be thrown from the {@code Stream}
+     * method that caused the read to take place. This method will return a
+     * Stream if invoked on a BufferedReader that is closed. Any operation on
+     * that stream that requires reading from the BufferedReader after it is
+     * closed, will cause an UncheckedIOException to be thrown.
+     *
+     * @return a {@code Stream<String>} providing the lines of text
+     *         described by this {@code BufferedReader}
+     *
+     * @since 1.8
+     */
+    public Stream<String> lines() {
+        Iterator<String> iter = new Iterator<String>() {
+            String nextLine = null;
+
+            @Override
+            public boolean hasNext() {
+                if (nextLine != null) {
+                    return true;
+                } else {
+                    try {
+                        nextLine = readLine();
+                        return (nextLine != null);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+            }
+
+            @Override
+            public String next() {
+                if (nextLine != null || hasNext()) {
+                    String line = nextLine;
+                    nextLine = null;
+                    return line;
+                } else {
+                    throw new NoSuchElementException();
+                }
+            }
+        };
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+                iter, Spliterator.ORDERED | Spliterator.NONNULL), false);
+    }
+}

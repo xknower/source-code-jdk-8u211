@@ -1,327 +1,322 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.util.StringTokenizer;
-/*     */ import javax.swing.SizeRequirements;
-/*     */ import javax.swing.text.AttributeSet;
-/*     */ import javax.swing.text.BoxView;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.View;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class FrameSetView
-/*     */   extends BoxView
-/*     */ {
-/*     */   String[] children;
-/*     */   int[] percentChildren;
-/*     */   int[] absoluteChildren;
-/*     */   int[] relativeChildren;
-/*     */   int percentTotals;
-/*     */   int absoluteTotals;
-/*     */   int relativeTotals;
-/*     */   
-/*     */   public FrameSetView(Element paramElement, int paramInt) {
-/*  62 */     super(paramElement, paramInt);
-/*  63 */     this.children = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String[] parseRowColSpec(HTML.Attribute paramAttribute) {
-/*  74 */     AttributeSet attributeSet = getElement().getAttributes();
-/*  75 */     String str = "*";
-/*  76 */     if (attributeSet != null && 
-/*  77 */       attributeSet.getAttribute(paramAttribute) != null) {
-/*  78 */       str = (String)attributeSet.getAttribute(paramAttribute);
-/*     */     }
-/*     */ 
-/*     */     
-/*  82 */     StringTokenizer stringTokenizer = new StringTokenizer(str, ",");
-/*  83 */     int i = stringTokenizer.countTokens();
-/*  84 */     int j = getViewCount();
-/*  85 */     String[] arrayOfString = new String[Math.max(i, j)];
-/*  86 */     byte b = 0;
-/*  87 */     for (; b < i; b++) {
-/*  88 */       arrayOfString[b] = stringTokenizer.nextToken().trim();
-/*     */ 
-/*     */ 
-/*     */       
-/*  92 */       if (arrayOfString[b].equals("100%")) {
-/*  93 */         arrayOfString[b] = "*";
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/*  98 */     for (; b < arrayOfString.length; b++) {
-/*  99 */       arrayOfString[b] = "*";
-/*     */     }
-/* 101 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void init() {
-/* 111 */     if (getAxis() == 1) {
-/* 112 */       this.children = parseRowColSpec(HTML.Attribute.ROWS);
-/*     */     } else {
-/* 114 */       this.children = parseRowColSpec(HTML.Attribute.COLS);
-/*     */     } 
-/* 116 */     this.percentChildren = new int[this.children.length];
-/* 117 */     this.relativeChildren = new int[this.children.length];
-/* 118 */     this.absoluteChildren = new int[this.children.length];
-/*     */     byte b;
-/* 120 */     for (b = 0; b < this.children.length; b++) {
-/* 121 */       this.percentChildren[b] = -1;
-/* 122 */       this.relativeChildren[b] = -1;
-/* 123 */       this.absoluteChildren[b] = -1;
-/*     */       
-/* 125 */       if (this.children[b].endsWith("*")) {
-/* 126 */         if (this.children[b].length() > 1) {
-/* 127 */           this.relativeChildren[b] = 
-/* 128 */             Integer.parseInt(this.children[b].substring(0, this.children[b]
-/* 129 */                 .length() - 1));
-/* 130 */           this.relativeTotals += this.relativeChildren[b];
-/*     */         } else {
-/* 132 */           this.relativeChildren[b] = 1;
-/* 133 */           this.relativeTotals++;
-/*     */         } 
-/* 135 */       } else if (this.children[b].indexOf('%') != -1) {
-/* 136 */         this.percentChildren[b] = parseDigits(this.children[b]);
-/* 137 */         this.percentTotals += this.percentChildren[b];
-/*     */       } else {
-/* 139 */         this.absoluteChildren[b] = Integer.parseInt(this.children[b]);
-/*     */       } 
-/*     */     } 
-/* 142 */     if (this.percentTotals > 100) {
-/* 143 */       for (b = 0; b < this.percentChildren.length; b++) {
-/* 144 */         if (this.percentChildren[b] > 0) {
-/* 145 */           this.percentChildren[b] = this.percentChildren[b] * 100 / this.percentTotals;
-/*     */         }
-/*     */       } 
-/*     */       
-/* 149 */       this.percentTotals = 100;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void layoutMajorAxis(int paramInt1, int paramInt2, int[] paramArrayOfint1, int[] paramArrayOfint2) {
-/* 172 */     if (this.children == null) {
-/* 173 */       init();
-/*     */     }
-/* 175 */     SizeRequirements.calculateTiledPositions(paramInt1, null, 
-/* 176 */         getChildRequests(paramInt1, paramInt2), paramArrayOfint1, paramArrayOfint2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SizeRequirements[] getChildRequests(int paramInt1, int paramInt2) {
-/* 183 */     int[] arrayOfInt = new int[this.children.length];
-/*     */     
-/* 185 */     spread(paramInt1, arrayOfInt);
-/* 186 */     int i = getViewCount();
-/* 187 */     SizeRequirements[] arrayOfSizeRequirements = new SizeRequirements[i];
-/* 188 */     for (byte b1 = 0, b2 = 0; b1 < i; b1++) {
-/* 189 */       View view = getView(b1);
-/* 190 */       if (view instanceof FrameView || view instanceof FrameSetView) {
-/* 191 */         arrayOfSizeRequirements[b1] = new SizeRequirements((int)view.getMinimumSpan(paramInt2), arrayOfInt[b2], 
-/*     */             
-/* 193 */             (int)view.getMaximumSpan(paramInt2), 0.5F);
-/*     */         
-/* 195 */         b2++;
-/*     */       } else {
-/* 197 */         int j = (int)view.getMinimumSpan(paramInt2);
-/* 198 */         int k = (int)view.getPreferredSpan(paramInt2);
-/* 199 */         int m = (int)view.getMaximumSpan(paramInt2);
-/* 200 */         float f = view.getAlignment(paramInt2);
-/* 201 */         arrayOfSizeRequirements[b1] = new SizeRequirements(j, k, m, f);
-/*     */       } 
-/*     */     } 
-/* 204 */     return arrayOfSizeRequirements;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void spread(int paramInt, int[] paramArrayOfint) {
-/* 216 */     if (paramInt == 0) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 220 */     int i = 0;
-/* 221 */     int j = paramInt;
-/*     */ 
-/*     */     
-/*     */     byte b;
-/*     */     
-/* 226 */     for (b = 0; b < paramArrayOfint.length; b++) {
-/* 227 */       if (this.absoluteChildren[b] > 0) {
-/* 228 */         paramArrayOfint[b] = this.absoluteChildren[b];
-/* 229 */         j -= paramArrayOfint[b];
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 235 */     i = j;
-/* 236 */     for (b = 0; b < paramArrayOfint.length; b++) {
-/* 237 */       if (this.percentChildren[b] > 0 && i > 0) {
-/* 238 */         paramArrayOfint[b] = this.percentChildren[b] * i / 100;
-/* 239 */         j -= paramArrayOfint[b];
-/* 240 */       } else if (this.percentChildren[b] > 0 && i <= 0) {
-/* 241 */         paramArrayOfint[b] = paramInt / paramArrayOfint.length;
-/* 242 */         j -= paramArrayOfint[b];
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 247 */     if (j > 0 && this.relativeTotals > 0) {
-/* 248 */       for (b = 0; b < paramArrayOfint.length; b++) {
-/* 249 */         if (this.relativeChildren[b] > 0) {
-/* 250 */           paramArrayOfint[b] = j * this.relativeChildren[b] / this.relativeTotals;
-/*     */         }
-/*     */       }
-/*     */     
-/* 254 */     } else if (j > 0) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 273 */       float f = (paramInt - j);
-/* 274 */       float[] arrayOfFloat = new float[paramArrayOfint.length];
-/* 275 */       j = paramInt; byte b1;
-/* 276 */       for (b1 = 0; b1 < paramArrayOfint.length; b1++) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 281 */         arrayOfFloat[b1] = paramArrayOfint[b1] / f * 100.0F;
-/* 282 */         paramArrayOfint[b1] = (int)(paramInt * arrayOfFloat[b1] / 100.0F);
-/* 283 */         j -= paramArrayOfint[b1];
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 290 */       b1 = 0;
-/* 291 */       while (j != 0) {
-/* 292 */         if (j < 0) {
-/* 293 */           paramArrayOfint[b1++] = paramArrayOfint[b1++] - 1;
-/* 294 */           j++;
-/*     */         } else {
-/*     */           
-/* 297 */           paramArrayOfint[b1++] = paramArrayOfint[b1++] + 1;
-/* 298 */           j--;
-/*     */         } 
-/*     */ 
-/*     */         
-/* 302 */         if (b1 == paramArrayOfint.length) b1 = 0;
-/*     */       
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int parseDigits(String paramString) {
-/* 312 */     int i = 0;
-/* 313 */     for (byte b = 0; b < paramString.length(); b++) {
-/* 314 */       char c = paramString.charAt(b);
-/* 315 */       if (Character.isDigit(c)) {
-/* 316 */         i = i * 10 + Character.digit(c, 10);
-/*     */       }
-/*     */     } 
-/* 319 */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\FrameSetView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.awt.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.event.*;
+
+/**
+ * Implements a FrameSetView, intended to support the HTML
+ * &lt;FRAMESET&gt; tag.  Supports the ROWS and COLS attributes.
+ *
+ * @author  Sunita Mani
+ *
+ *          Credit also to the hotjava browser engineers that
+ *          worked on making the allocation of space algorithms
+ *          conform to the HTML 4.0 standard and also be netscape
+ *          compatible.
+ *
+ */
+
+class FrameSetView extends javax.swing.text.BoxView {
+
+    String[] children;
+    int[] percentChildren;
+    int[] absoluteChildren;
+    int[] relativeChildren;
+    int percentTotals;
+    int absoluteTotals;
+    int relativeTotals;
+
+    /**
+     * Constructs a FrameSetView for the given element.
+     *
+     * @param elem the element that this view is responsible for
+     */
+    public FrameSetView(Element elem, int axis) {
+        super(elem, axis);
+        children = null;
+    }
+
+    /**
+     * Parses the ROW or COL attributes and returns
+     * an array of strings that represent the space
+     * distribution.
+     *
+     */
+    private String[] parseRowColSpec(HTML.Attribute key) {
+
+        AttributeSet attributes = getElement().getAttributes();
+        String spec = "*";
+        if (attributes != null) {
+            if (attributes.getAttribute(key) != null) {
+                spec = (String)attributes.getAttribute(key);
+            }
+        }
+
+        StringTokenizer tokenizer = new StringTokenizer(spec, ",");
+        int nTokens = tokenizer.countTokens();
+        int n = getViewCount();
+        String[] items = new String[Math.max(nTokens, n)];
+        int i = 0;
+        for (; i < nTokens; i++) {
+            items[i] = tokenizer.nextToken().trim();
+            // As per the spec, 100% is the same as *
+            // hence the mapping.
+            //
+            if (items[i].equals("100%")) {
+                items[i] = "*";
+            }
+        }
+        // extend spec if we have more children than specified
+        // in ROWS or COLS attribute
+        for (; i < items.length; i++) {
+            items[i] = "*";
+        }
+        return items;
+    }
+
+
+    /**
+     * Initializes a number of internal state variables
+     * that store information about space allocation
+     * for the frames contained within the frameset.
+     */
+    private void init() {
+        if (getAxis() == View.Y_AXIS) {
+            children = parseRowColSpec(HTML.Attribute.ROWS);
+        } else {
+            children = parseRowColSpec(HTML.Attribute.COLS);
+        }
+        percentChildren = new int[children.length];
+        relativeChildren = new int[children.length];
+        absoluteChildren = new int[children.length];
+
+        for (int i = 0; i < children.length; i++) {
+            percentChildren[i] = -1;
+            relativeChildren[i] = -1;
+            absoluteChildren[i] = -1;
+
+            if (children[i].endsWith("*")) {
+                if (children[i].length() > 1) {
+                    relativeChildren[i] =
+                        Integer.parseInt(children[i].substring(
+                            0, children[i].length()-1));
+                    relativeTotals += relativeChildren[i];
+                } else {
+                    relativeChildren[i] = 1;
+                    relativeTotals += 1;
+                }
+            } else if (children[i].indexOf('%') != -1) {
+                percentChildren[i] = parseDigits(children[i]);
+                percentTotals += percentChildren[i];
+            } else {
+                absoluteChildren[i] = Integer.parseInt(children[i]);
+            }
+        }
+        if (percentTotals > 100) {
+            for (int i = 0; i < percentChildren.length; i++) {
+                if (percentChildren[i] > 0) {
+                    percentChildren[i] =
+                        (percentChildren[i] * 100) / percentTotals;
+                }
+            }
+            percentTotals = 100;
+        }
+    }
+
+    /**
+     * Perform layout for the major axis of the box (i.e. the
+     * axis that it represents).  The results of the layout should
+     * be placed in the given arrays which represent the allocations
+     * to the children along the major axis.
+     *
+     * @param targetSpan the total span given to the view, which
+     *  would be used to layout the children
+     * @param axis the axis being layed out
+     * @param offsets the offsets from the origin of the view for
+     *  each of the child views; this is a return value and is
+     *  filled in by the implementation of this method
+     * @param spans the span of each child view; this is a return
+     *  value and is filled in by the implementation of this method
+     * @return the offset and span for each child view in the
+     *  offsets and spans parameters
+     */
+    protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets,
+                                   int[] spans) {
+        if (children == null) {
+            init();
+        }
+        SizeRequirements.calculateTiledPositions(targetSpan, null,
+                                                 getChildRequests(targetSpan,
+                                                                  axis),
+                                                 offsets, spans);
+    }
+
+    protected SizeRequirements[] getChildRequests(int targetSpan, int axis) {
+
+        int span[] = new int[children.length];
+
+        spread(targetSpan, span);
+        int n = getViewCount();
+        SizeRequirements[] reqs = new SizeRequirements[n];
+        for (int i = 0, sIndex = 0; i < n; i++) {
+            View v = getView(i);
+            if ((v instanceof FrameView) || (v instanceof FrameSetView)) {
+                reqs[i] = new SizeRequirements((int) v.getMinimumSpan(axis),
+                                               span[sIndex],
+                                               (int) v.getMaximumSpan(axis),
+                                               0.5f);
+                sIndex++;
+            } else {
+                int min = (int) v.getMinimumSpan(axis);
+                int pref = (int) v.getPreferredSpan(axis);
+                int max = (int) v.getMaximumSpan(axis);
+                float a = v.getAlignment(axis);
+                reqs[i] = new SizeRequirements(min, pref, max, a);
+            }
+        }
+        return reqs;
+    }
+
+
+    /**
+     * This method is responsible for returning in span[] the
+     * span for each child view along the major axis.  it
+     * computes this based on the information that extracted
+     * from the value of the ROW/COL attribute.
+     */
+    private void spread(int targetSpan, int span[]) {
+
+        if (targetSpan == 0) {
+            return;
+        }
+
+        int tempSpace = 0;
+        int remainingSpace = targetSpan;
+
+        // allocate the absolute's first, they have
+        // precedence
+        //
+        for (int i = 0; i < span.length; i++) {
+            if (absoluteChildren[i] > 0) {
+                span[i] = absoluteChildren[i];
+                remainingSpace -= span[i];
+            }
+        }
+
+        // then deal with percents.
+        //
+        tempSpace = remainingSpace;
+        for (int i = 0; i < span.length; i++) {
+            if (percentChildren[i] > 0 && tempSpace > 0) {
+                span[i] = (percentChildren[i] * tempSpace) / 100;
+                remainingSpace -= span[i];
+            } else if (percentChildren[i] > 0 && tempSpace <= 0) {
+                span[i] = targetSpan / span.length;
+                remainingSpace -= span[i];
+            }
+        }
+
+        // allocate remainingSpace to relative
+        if (remainingSpace > 0 && relativeTotals > 0) {
+            for (int i = 0; i < span.length; i++) {
+                if (relativeChildren[i] > 0) {
+                    span[i] = (remainingSpace *
+                                relativeChildren[i]) / relativeTotals;
+                }
+            }
+        } else if (remainingSpace > 0) {
+            // There are no relative columns and the space has been
+            // under- or overallocated.  In this case, turn all the
+            // percentage and pixel specified columns to percentage
+            // columns based on the ratio of their pixel count to the
+            // total "virtual" size. (In the case of percentage columns,
+            // the pixel count would equal the specified percentage
+            // of the screen size.
+
+            // This action is in accordance with the HTML
+            // 4.0 spec (see section 8.3, the end of the discussion of
+            // the FRAMESET tag).  The precedence of percentage and pixel
+            // specified columns is unclear (spec seems to indicate that
+            // they share priority, however, unspecified what happens when
+            // overallocation occurs.)
+
+            // addendum is that we behave similar to netscape in that specified
+            // widths have precedance over percentage widths...
+
+            float vTotal = (float)(targetSpan - remainingSpace);
+            float[] tempPercents = new float[span.length];
+            remainingSpace = targetSpan;
+            for (int i = 0; i < span.length; i++) {
+                // ok we know what our total space is, and we know how large each
+                // column should be relative to each other... therefore we can use
+                // that relative information to deduce their percentages of a whole
+                // and then scale them appropriately for the correct size
+                tempPercents[i] = ((float)span[i] / vTotal) * 100.00f;
+                span[i] = (int) ( ((float)targetSpan * tempPercents[i]) / 100.00f);
+                remainingSpace -= span[i];
+            }
+
+
+            // this is for just in case there is something left over.. if there is we just
+            // add it one pixel at a time to the frames in order.. We shouldn't really ever get
+            // here and if we do it shouldn't be with more than 1 pixel, maybe two.
+            int i = 0;
+            while (remainingSpace != 0) {
+                if (remainingSpace < 0) {
+                    span[i++]--;
+                    remainingSpace++;
+                }
+                else {
+                    span[i++]++;
+                    remainingSpace--;
+                }
+
+                // just in case there are more pixels than frames...should never happen..
+                if (i == span.length)i = 0;
+            }
+        }
+    }
+
+    /*
+     * Users have been known to type things like "%25" and "25 %".  Deal
+     * with it.
+     */
+    private int parseDigits(String mixedStr) {
+        int result = 0;
+        for (int i = 0; i < mixedStr.length(); i++) {
+            char ch = mixedStr.charAt(i);
+            if (Character.isDigit(ch)) {
+                result = (result * 10) + Character.digit(ch, 10);
+            }
+        }
+        return result;
+    }
+
+}

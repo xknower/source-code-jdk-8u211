@@ -1,259 +1,253 @@
-/*     */ package javax.imageio.spi;
-/*     */ 
-/*     */ import com.sun.imageio.plugins.bmp.BMPImageReaderSpi;
-/*     */ import com.sun.imageio.plugins.bmp.BMPImageWriterSpi;
-/*     */ import com.sun.imageio.plugins.gif.GIFImageReaderSpi;
-/*     */ import com.sun.imageio.plugins.gif.GIFImageWriterSpi;
-/*     */ import com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi;
-/*     */ import com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi;
-/*     */ import com.sun.imageio.plugins.png.PNGImageReaderSpi;
-/*     */ import com.sun.imageio.plugins.png.PNGImageWriterSpi;
-/*     */ import com.sun.imageio.plugins.wbmp.WBMPImageReaderSpi;
-/*     */ import com.sun.imageio.plugins.wbmp.WBMPImageWriterSpi;
-/*     */ import com.sun.imageio.spi.FileImageInputStreamSpi;
-/*     */ import com.sun.imageio.spi.FileImageOutputStreamSpi;
-/*     */ import com.sun.imageio.spi.InputStreamImageInputStreamSpi;
-/*     */ import com.sun.imageio.spi.OutputStreamImageOutputStreamSpi;
-/*     */ import com.sun.imageio.spi.RAFImageInputStreamSpi;
-/*     */ import com.sun.imageio.spi.RAFImageOutputStreamSpi;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.ServiceConfigurationError;
-/*     */ import java.util.ServiceLoader;
-/*     */ import java.util.Vector;
-/*     */ import sun.awt.AppContext;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class IIORegistry
-/*     */   extends ServiceRegistry
-/*     */ {
-/* 118 */   private static final Vector initialCategories = new Vector(5);
-/*     */   
-/*     */   static {
-/* 121 */     initialCategories.add(ImageReaderSpi.class);
-/* 122 */     initialCategories.add(ImageWriterSpi.class);
-/* 123 */     initialCategories.add(ImageTranscoderSpi.class);
-/* 124 */     initialCategories.add(ImageInputStreamSpi.class);
-/* 125 */     initialCategories.add(ImageOutputStreamSpi.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private IIORegistry() {
-/* 136 */     super(initialCategories.iterator());
-/* 137 */     registerStandardSpis();
-/* 138 */     registerApplicationClasspathSpis();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static IIORegistry getDefaultInstance() {
-/* 154 */     AppContext appContext = AppContext.getAppContext();
-/*     */     
-/* 156 */     IIORegistry iIORegistry = (IIORegistry)appContext.get(IIORegistry.class);
-/* 157 */     if (iIORegistry == null) {
-/*     */       
-/* 159 */       iIORegistry = new IIORegistry();
-/* 160 */       appContext.put(IIORegistry.class, iIORegistry);
-/*     */     } 
-/* 162 */     return iIORegistry;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void registerStandardSpis() {
-/* 167 */     registerServiceProvider(new GIFImageReaderSpi());
-/* 168 */     registerServiceProvider(new GIFImageWriterSpi());
-/* 169 */     registerServiceProvider(new BMPImageReaderSpi());
-/* 170 */     registerServiceProvider(new BMPImageWriterSpi());
-/* 171 */     registerServiceProvider(new WBMPImageReaderSpi());
-/* 172 */     registerServiceProvider(new WBMPImageWriterSpi());
-/* 173 */     registerServiceProvider(new PNGImageReaderSpi());
-/* 174 */     registerServiceProvider(new PNGImageWriterSpi());
-/* 175 */     registerServiceProvider(new JPEGImageReaderSpi());
-/* 176 */     registerServiceProvider(new JPEGImageWriterSpi());
-/* 177 */     registerServiceProvider(new FileImageInputStreamSpi());
-/* 178 */     registerServiceProvider(new FileImageOutputStreamSpi());
-/* 179 */     registerServiceProvider(new InputStreamImageInputStreamSpi());
-/* 180 */     registerServiceProvider(new OutputStreamImageOutputStreamSpi());
-/* 181 */     registerServiceProvider(new RAFImageInputStreamSpi());
-/* 182 */     registerServiceProvider(new RAFImageOutputStreamSpi());
-/*     */     
-/* 184 */     registerInstalledProviders();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void registerApplicationClasspathSpis() {
-/* 199 */     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-/*     */     
-/* 201 */     Iterator<Class<?>> iterator = getCategories();
-/* 202 */     while (iterator.hasNext()) {
-/* 203 */       Class<?> clazz = iterator.next();
-/*     */       
-/* 205 */       Iterator<IIOServiceProvider> iterator1 = ServiceLoader.load(clazz, classLoader).iterator();
-/* 206 */       while (iterator1.hasNext()) {
-/*     */ 
-/*     */         
-/*     */         try {
-/* 210 */           IIOServiceProvider iIOServiceProvider = iterator1.next();
-/* 211 */           registerServiceProvider(iIOServiceProvider);
-/* 212 */         } catch (ServiceConfigurationError serviceConfigurationError) {
-/* 213 */           if (System.getSecurityManager() != null) {
-/*     */ 
-/*     */             
-/* 216 */             serviceConfigurationError.printStackTrace();
-/*     */             
-/*     */             continue;
-/*     */           } 
-/* 220 */           throw serviceConfigurationError;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void registerInstalledProviders() {
-/* 237 */     PrivilegedAction<?> privilegedAction = new PrivilegedAction()
-/*     */       {
-/*     */         public Object run() {
-/* 240 */           Iterator<Class<?>> iterator = IIORegistry.this.getCategories();
-/* 241 */           while (iterator.hasNext()) {
-/* 242 */             Class<?> clazz = iterator.next();
-/* 243 */             for (IIOServiceProvider iIOServiceProvider : ServiceLoader.loadInstalled(clazz)) {
-/* 244 */               IIORegistry.this.registerServiceProvider(iIOServiceProvider);
-/*     */             }
-/*     */           } 
-/* 247 */           return this;
-/*     */         }
-/*     */       };
-/*     */     
-/* 251 */     AccessController.doPrivileged(privilegedAction);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\spi\IIORegistry.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.spi;
+
+import java.security.PrivilegedAction;
+import java.security.AccessController;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Vector;
+import com.sun.imageio.spi.FileImageInputStreamSpi;
+import com.sun.imageio.spi.FileImageOutputStreamSpi;
+import com.sun.imageio.spi.InputStreamImageInputStreamSpi;
+import com.sun.imageio.spi.OutputStreamImageOutputStreamSpi;
+import com.sun.imageio.spi.RAFImageInputStreamSpi;
+import com.sun.imageio.spi.RAFImageOutputStreamSpi;
+import com.sun.imageio.plugins.gif.GIFImageReaderSpi;
+import com.sun.imageio.plugins.gif.GIFImageWriterSpi;
+import com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi;
+import com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi;
+import com.sun.imageio.plugins.png.PNGImageReaderSpi;
+import com.sun.imageio.plugins.png.PNGImageWriterSpi;
+import com.sun.imageio.plugins.bmp.BMPImageReaderSpi;
+import com.sun.imageio.plugins.bmp.BMPImageWriterSpi;
+import com.sun.imageio.plugins.wbmp.WBMPImageReaderSpi;
+import com.sun.imageio.plugins.wbmp.WBMPImageWriterSpi;
+import sun.awt.AppContext;
+import java.util.ServiceLoader;
+import java.util.ServiceConfigurationError;
+
+/**
+ * A registry for service provider instances.  Service provider
+ * classes may be detected at run time by means of meta-information in
+ * the JAR files containing them.  The intent is that it be relatively
+ * inexpensive to load and inspect all available service provider
+ * classes.  These classes may them be used to locate and instantiate
+ * more heavyweight classes that will perform actual work, in this
+ * case instances of <code>ImageReader</code>,
+ * <code>ImageWriter</code>, <code>ImageTranscoder</code>,
+ * <code>ImageInputStream</code>, and <code>ImageOutputStream</code>.
+ *
+ * <p> Service providers found on the system classpath (typically
+ * the <code>lib/ext</code> directory in the Java
+ * installation directory) are automatically loaded as soon as this class is
+ * instantiated.
+ *
+ * <p> When the <code>registerApplicationClasspathSpis</code> method
+ * is called, service provider instances declared in the
+ * meta-information section of JAR files on the application class path
+ * are loaded.  To declare a service provider, a <code>services</code>
+ * subdirectory is placed within the <code>META-INF</code> directory
+ * that is present in every JAR file.  This directory contains a file
+ * for each service provider interface that has one or more
+ * implementation classes present in the JAR file.  For example, if
+ * the JAR file contained a class named
+ * <code>com.mycompany.imageio.MyFormatReaderSpi</code> which
+ * implements the <code>ImageReaderSpi</code> interface, the JAR file
+ * would contain a file named:
+ *
+ * <pre>
+ * META-INF/services/javax.imageio.spi.ImageReaderSpi
+ * </pre>
+ *
+ * containing the line:
+ *
+ * <pre>
+ * com.mycompany.imageio.MyFormatReaderSpi
+ * </pre>
+ *
+ * <p> The service provider classes are intended to be lightweight
+ * and quick to load.  Implementations of these interfaces
+ * should avoid complex dependencies on other classes and on
+ * native code.
+ *
+ * <p> It is also possible to manually add service providers not found
+ * automatically, as well as to remove those that are using the
+ * interfaces of the <code>ServiceRegistry</code> class.  Thus
+ * the application may customize the contents of the registry as it
+ * sees fit.
+ *
+ * <p> For more details on declaring service providers, and the JAR
+ * format in general, see the <a
+ * href="{@docRoot}/../technotes/guides/jar/jar.html">
+ * JAR File Specification</a>.
+ *
+ */
+public final class IIORegistry extends ServiceRegistry {
+
+    /**
+     * A <code>Vector</code> containing the valid IIO registry
+     * categories (superinterfaces) to be used in the constructor.
+     */
+    private static final Vector initialCategories = new Vector(5);
+
+    static {
+        initialCategories.add(ImageReaderSpi.class);
+        initialCategories.add(ImageWriterSpi.class);
+        initialCategories.add(ImageTranscoderSpi.class);
+        initialCategories.add(ImageInputStreamSpi.class);
+        initialCategories.add(ImageOutputStreamSpi.class);
+    }
+
+    /**
+     * Set up the valid service provider categories and automatically
+     * register all available service providers.
+     *
+     * <p> The constructor is private in order to prevent creation of
+     * additional instances.
+     */
+    private IIORegistry() {
+        super(initialCategories.iterator());
+        registerStandardSpis();
+        registerApplicationClasspathSpis();
+    }
+
+    /**
+     * Returns the default <code>IIORegistry</code> instance used by
+     * the Image I/O API.  This instance should be used for all
+     * registry functions.
+     *
+     * <p> Each <code>ThreadGroup</code> will receive its own
+     * instance; this allows different <code>Applet</code>s in the
+     * same browser (for example) to each have their own registry.
+     *
+     * @return the default registry for the current
+     * <code>ThreadGroup</code>.
+     */
+    public static IIORegistry getDefaultInstance() {
+        AppContext context = AppContext.getAppContext();
+        IIORegistry registry =
+            (IIORegistry)context.get(IIORegistry.class);
+        if (registry == null) {
+            // Create an instance for this AppContext
+            registry = new IIORegistry();
+            context.put(IIORegistry.class, registry);
+        }
+        return registry;
+    }
+
+    private void registerStandardSpis() {
+        // Hardwire standard SPIs
+        registerServiceProvider(new GIFImageReaderSpi());
+        registerServiceProvider(new GIFImageWriterSpi());
+        registerServiceProvider(new BMPImageReaderSpi());
+        registerServiceProvider(new BMPImageWriterSpi());
+        registerServiceProvider(new WBMPImageReaderSpi());
+        registerServiceProvider(new WBMPImageWriterSpi());
+        registerServiceProvider(new PNGImageReaderSpi());
+        registerServiceProvider(new PNGImageWriterSpi());
+        registerServiceProvider(new JPEGImageReaderSpi());
+        registerServiceProvider(new JPEGImageWriterSpi());
+        registerServiceProvider(new FileImageInputStreamSpi());
+        registerServiceProvider(new FileImageOutputStreamSpi());
+        registerServiceProvider(new InputStreamImageInputStreamSpi());
+        registerServiceProvider(new OutputStreamImageOutputStreamSpi());
+        registerServiceProvider(new RAFImageInputStreamSpi());
+        registerServiceProvider(new RAFImageOutputStreamSpi());
+
+        registerInstalledProviders();
+    }
+
+    /**
+     * Registers all available service providers found on the
+     * application class path, using the default
+     * <code>ClassLoader</code>.  This method is typically invoked by
+     * the <code>ImageIO.scanForPlugins</code> method.
+     *
+     * @see javax.imageio.ImageIO#scanForPlugins
+     * @see ClassLoader#getResources
+     */
+    public void registerApplicationClasspathSpis() {
+        // FIX: load only from application classpath
+
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+
+        Iterator categories = getCategories();
+        while (categories.hasNext()) {
+            Class<IIOServiceProvider> c = (Class)categories.next();
+            Iterator<IIOServiceProvider> riter =
+                    ServiceLoader.load(c, loader).iterator();
+            while (riter.hasNext()) {
+                try {
+                    // Note that the next() call is required to be inside
+                    // the try/catch block; see 6342404.
+                    IIOServiceProvider r = riter.next();
+                    registerServiceProvider(r);
+                } catch (ServiceConfigurationError err) {
+                    if (System.getSecurityManager() != null) {
+                        // In the applet case, we will catch the  error so
+                        // registration of other plugins can  proceed
+                        err.printStackTrace();
+                    } else {
+                        // In the application case, we will  throw the
+                        // error to indicate app/system  misconfiguration
+                        throw err;
+                    }
+                }
+            }
+        }
+    }
+
+    private void registerInstalledProviders() {
+        /*
+          We need to load installed providers from the
+          system classpath (typically the <code>lib/ext</code>
+          directory in in the Java installation directory)
+          in the privileged mode in order to
+          be able read corresponding jar files even if
+          file read capability is restricted (like the
+          applet context case).
+         */
+        PrivilegedAction doRegistration =
+            new PrivilegedAction() {
+                public Object run() {
+                    Iterator categories = getCategories();
+                    while (categories.hasNext()) {
+                        Class<IIOServiceProvider> c = (Class)categories.next();
+                        for (IIOServiceProvider p : ServiceLoader.loadInstalled(c)) {
+                            registerServiceProvider(p);
+                        }
+                    }
+                    return this;
+                }
+            };
+
+        AccessController.doPrivileged(doRegistration);
+    }
+}

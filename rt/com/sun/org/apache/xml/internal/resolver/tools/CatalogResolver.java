@@ -1,351 +1,345 @@
-/*     */ package com.sun.org.apache.xml.internal.resolver.tools;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.resolver.Catalog;
-/*     */ import com.sun.org.apache.xml.internal.resolver.CatalogManager;
-/*     */ import com.sun.org.apache.xml.internal.resolver.helpers.FileURL;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.URL;
-/*     */ import javax.xml.parsers.ParserConfigurationException;
-/*     */ import javax.xml.parsers.SAXParserFactory;
-/*     */ import javax.xml.transform.Source;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ import javax.xml.transform.URIResolver;
-/*     */ import javax.xml.transform.sax.SAXSource;
-/*     */ import jdk.xml.internal.JdkXmlUtils;
-/*     */ import org.xml.sax.EntityResolver;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.XMLReader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CatalogResolver
-/*     */   implements EntityResolver, URIResolver
-/*     */ {
-/*     */   public boolean namespaceAware = true;
-/*     */   public boolean validating = false;
-/*  79 */   private Catalog catalog = null;
-/*     */ 
-/*     */   
-/*  82 */   private CatalogManager catalogManager = CatalogManager.getStaticManager();
-/*     */ 
-/*     */   
-/*     */   public CatalogResolver() {
-/*  86 */     initializeCatalogs(false);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public CatalogResolver(boolean privateCatalog) {
-/*  91 */     initializeCatalogs(privateCatalog);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public CatalogResolver(CatalogManager manager) {
-/*  96 */     this.catalogManager = manager;
-/*  97 */     initializeCatalogs(!this.catalogManager.getUseStaticCatalog());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void initializeCatalogs(boolean privateCatalog) {
-/* 102 */     this.catalog = this.catalogManager.getCatalog();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Catalog getCatalog() {
-/* 107 */     return this.catalog;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getResolvedEntity(String publicId, String systemId) {
-/* 131 */     String resolved = null;
-/*     */     
-/* 133 */     if (this.catalog == null) {
-/* 134 */       this.catalogManager.debug.message(1, "Catalog resolution attempted with null catalog; ignored");
-/* 135 */       return null;
-/*     */     } 
-/*     */     
-/* 138 */     if (systemId != null) {
-/*     */       try {
-/* 140 */         resolved = this.catalog.resolveSystem(systemId);
-/* 141 */       } catch (MalformedURLException me) {
-/* 142 */         this.catalogManager.debug.message(1, "Malformed URL exception trying to resolve", publicId);
-/*     */         
-/* 144 */         resolved = null;
-/* 145 */       } catch (IOException ie) {
-/* 146 */         this.catalogManager.debug.message(1, "I/O exception trying to resolve", publicId);
-/* 147 */         resolved = null;
-/*     */       } 
-/*     */     }
-/*     */     
-/* 151 */     if (resolved == null) {
-/* 152 */       if (publicId != null) {
-/*     */         try {
-/* 154 */           resolved = this.catalog.resolvePublic(publicId, systemId);
-/* 155 */         } catch (MalformedURLException me) {
-/* 156 */           this.catalogManager.debug.message(1, "Malformed URL exception trying to resolve", publicId);
-/*     */         }
-/* 158 */         catch (IOException ie) {
-/* 159 */           this.catalogManager.debug.message(1, "I/O exception trying to resolve", publicId);
-/*     */         } 
-/*     */       }
-/*     */       
-/* 163 */       if (resolved != null) {
-/* 164 */         this.catalogManager.debug.message(2, "Resolved public", publicId, resolved);
-/*     */       }
-/*     */     } else {
-/* 167 */       this.catalogManager.debug.message(2, "Resolved system", systemId, resolved);
-/*     */     } 
-/*     */     
-/* 170 */     return resolved;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputSource resolveEntity(String publicId, String systemId) {
-/* 201 */     String resolved = getResolvedEntity(publicId, systemId);
-/*     */     
-/* 203 */     if (resolved != null) {
-/*     */       try {
-/* 205 */         InputSource iSource = new InputSource(resolved);
-/* 206 */         iSource.setPublicId(publicId);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 219 */         URL url = new URL(resolved);
-/* 220 */         InputStream iStream = url.openStream();
-/* 221 */         iSource.setByteStream(iStream);
-/*     */         
-/* 223 */         return iSource;
-/* 224 */       } catch (Exception e) {
-/* 225 */         this.catalogManager.debug.message(1, "Failed to create InputSource", resolved);
-/* 226 */         return null;
-/*     */       } 
-/*     */     }
-/*     */     
-/* 230 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Source resolve(String href, String base) throws TransformerException {
-/* 237 */     String uri = href;
-/* 238 */     String fragment = null;
-/* 239 */     int hashPos = href.indexOf("#");
-/* 240 */     if (hashPos >= 0) {
-/* 241 */       uri = href.substring(0, hashPos);
-/* 242 */       fragment = href.substring(hashPos + 1);
-/*     */     } 
-/*     */     
-/* 245 */     String result = null;
-/*     */     
-/*     */     try {
-/* 248 */       result = this.catalog.resolveURI(href);
-/* 249 */     } catch (Exception exception) {}
-/*     */ 
-/*     */ 
-/*     */     
-/* 253 */     if (result == null) {
-/*     */       try {
-/* 255 */         URL url = null;
-/*     */         
-/* 257 */         if (base == null) {
-/* 258 */           url = new URL(uri);
-/* 259 */           result = url.toString();
-/*     */         } else {
-/* 261 */           URL baseURL = new URL(base);
-/* 262 */           url = (href.length() == 0) ? baseURL : new URL(baseURL, uri);
-/* 263 */           result = url.toString();
-/*     */         } 
-/* 265 */       } catch (MalformedURLException mue) {
-/*     */         
-/* 267 */         String absBase = makeAbsolute(base);
-/* 268 */         if (!absBase.equals(base))
-/*     */         {
-/* 270 */           return resolve(href, absBase);
-/*     */         }
-/* 272 */         throw new TransformerException("Malformed URL " + href + "(base " + base + ")", mue);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 279 */     this.catalogManager.debug.message(2, "Resolved URI", href, result);
-/*     */     
-/* 281 */     SAXSource source = new SAXSource();
-/* 282 */     source.setInputSource(new InputSource(result));
-/* 283 */     setEntityResolver(source);
-/* 284 */     return source;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setEntityResolver(SAXSource source) throws TransformerException {
-/* 309 */     XMLReader reader = source.getXMLReader();
-/* 310 */     if (reader == null) {
-/* 311 */       SAXParserFactory spf = JdkXmlUtils.getSAXFactory(this.catalogManager.overrideDefaultParser());
-/*     */       try {
-/* 313 */         reader = spf.newSAXParser().getXMLReader();
-/*     */       }
-/* 315 */       catch (ParserConfigurationException ex) {
-/* 316 */         throw new TransformerException(ex);
-/*     */       }
-/* 318 */       catch (SAXException ex) {
-/* 319 */         throw new TransformerException(ex);
-/*     */       } 
-/*     */     } 
-/* 322 */     reader.setEntityResolver(this);
-/* 323 */     source.setXMLReader(reader);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String makeAbsolute(String uri) {
-/* 328 */     if (uri == null) {
-/* 329 */       uri = "";
-/*     */     }
-/*     */     
-/*     */     try {
-/* 333 */       URL url = new URL(uri);
-/* 334 */       return url.toString();
-/* 335 */     } catch (MalformedURLException mue) {
-/*     */       try {
-/* 337 */         URL fileURL = FileURL.makeURL(uri);
-/* 338 */         return fileURL.toString();
-/* 339 */       } catch (MalformedURLException mue2) {
-/*     */         
-/* 341 */         return uri;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\resolver\tools\CatalogResolver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ */
+// CatalogResolver.java - A SAX EntityResolver/JAXP URI Resolver
+
+/*
+ * Copyright 2001-2004 The Apache Software Foundation or its licensors,
+ * as applicable.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xml.internal.resolver.tools;
+
+import com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.MalformedURLException;
+
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.InputSource;
+import org.xml.sax.EntityResolver;
+
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.Source;
+import javax.xml.transform.URIResolver;
+import javax.xml.transform.TransformerException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+
+import com.sun.org.apache.xml.internal.resolver.Catalog;
+import com.sun.org.apache.xml.internal.resolver.CatalogManager;
+import com.sun.org.apache.xml.internal.resolver.helpers.FileURL;
+import jdk.xml.internal.JdkXmlUtils;
+
+/**
+ * A SAX EntityResolver/JAXP URIResolver that uses catalogs.
+ *
+ * <p>This class implements both a SAX EntityResolver and a JAXP URIResolver.
+ * </p>
+ *
+ * <p>This resolver understands OASIS TR9401 catalogs, XCatalogs, and the
+ * current working draft of the OASIS Entity Resolution Technical
+ * Committee specification.</p>
+ *
+ * @see Catalog
+ * @see org.xml.sax.EntityResolver
+ * @see javax.xml.transform.URIResolver
+ *
+ * @author Norman Walsh
+ * <a href="mailto:Norman.Walsh@Sun.COM">Norman.Walsh@Sun.COM</a>
+ *
+ * @version 1.0
+ */
+public class CatalogResolver implements EntityResolver, URIResolver {
+  /** Make the parser Namespace aware? */
+  public boolean namespaceAware = true;
+
+  /** Make the parser validating? */
+  public boolean validating = false;
+
+  /** The underlying catalog */
+  private Catalog catalog = null;
+
+  /** The catalog manager */
+  private CatalogManager catalogManager = CatalogManager.getStaticManager();
+
+  /** Constructor */
+  public CatalogResolver() {
+    initializeCatalogs(false);
+  }
+
+  /** Constructor */
+  public CatalogResolver(boolean privateCatalog) {
+    initializeCatalogs(privateCatalog);
+  }
+
+  /** Constructor */
+  public CatalogResolver(CatalogManager manager) {
+    catalogManager = manager;
+    initializeCatalogs(!catalogManager.getUseStaticCatalog());
+  }
+
+  /** Initialize catalog */
+  private void initializeCatalogs(boolean privateCatalog) {
+    catalog = catalogManager.getCatalog();
+  }
+
+  /** Return the underlying catalog */
+  public Catalog getCatalog() {
+    return catalog;
+  }
+
+  /**
+   * Implements the guts of the <code>resolveEntity</code> method
+   * for the SAX interface.
+   *
+   * <p>Presented with an optional public identifier and a system
+   * identifier, this function attempts to locate a mapping in the
+   * catalogs.</p>
+   *
+   * <p>If such a mapping is found, it is returned.  If no mapping is
+   * found, null is returned.</p>
+   *
+   * @param publicId  The public identifier for the entity in question.
+   * This may be null.
+   *
+   * @param systemId  The system identifier for the entity in question.
+   * XML requires a system identifier on all external entities, so this
+   * value is always specified.
+   *
+   * @return The resolved identifier (a URI reference).
+   */
+  public String getResolvedEntity (String publicId, String systemId) {
+    String resolved = null;
+
+    if (catalog == null) {
+      catalogManager.debug.message(1, "Catalog resolution attempted with null catalog; ignored");
+      return null;
+    }
+
+    if (systemId != null) {
+      try {
+        resolved = catalog.resolveSystem(systemId);
+      } catch (MalformedURLException me) {
+        catalogManager.debug.message(1, "Malformed URL exception trying to resolve",
+                      publicId);
+        resolved = null;
+      } catch (IOException ie) {
+        catalogManager.debug.message(1, "I/O exception trying to resolve", publicId);
+        resolved = null;
+      }
+    }
+
+    if (resolved == null) {
+      if (publicId != null) {
+        try {
+          resolved = catalog.resolvePublic(publicId, systemId);
+        } catch (MalformedURLException me) {
+          catalogManager.debug.message(1, "Malformed URL exception trying to resolve",
+                        publicId);
+        } catch (IOException ie) {
+          catalogManager.debug.message(1, "I/O exception trying to resolve", publicId);
+        }
+      }
+
+      if (resolved != null) {
+        catalogManager.debug.message(2, "Resolved public", publicId, resolved);
+      }
+    } else {
+      catalogManager.debug.message(2, "Resolved system", systemId, resolved);
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Implements the <code>resolveEntity</code> method
+   * for the SAX interface.
+   *
+   * <p>Presented with an optional public identifier and a system
+   * identifier, this function attempts to locate a mapping in the
+   * catalogs.</p>
+   *
+   * <p>If such a mapping is found, the resolver attempts to open
+   * the mapped value as an InputSource and return it. Exceptions are
+   * ignored and null is returned if the mapped value cannot be opened
+   * as an input source.</p>
+   *
+   * <p>If no mapping is found (or an error occurs attempting to open
+   * the mapped value as an input source), null is returned and the system
+   * will use the specified system identifier as if no entityResolver
+   * was specified.</p>
+   *
+   * @param publicId  The public identifier for the entity in question.
+   * This may be null.
+   *
+   * @param systemId  The system identifier for the entity in question.
+   * XML requires a system identifier on all external entities, so this
+   * value is always specified.
+   *
+   * @return An InputSource for the mapped identifier, or null.
+   */
+  public InputSource resolveEntity (String publicId, String systemId) {
+    String resolved = getResolvedEntity(publicId, systemId);
+
+    if (resolved != null) {
+      try {
+        InputSource iSource = new InputSource(resolved);
+        iSource.setPublicId(publicId);
+
+        // Ideally this method would not attempt to open the
+        // InputStream, but there is a bug (in Xerces, at least)
+        // that causes the parser to mistakenly open the wrong
+        // system identifier if the returned InputSource does
+        // not have a byteStream.
+        //
+        // It could be argued that we still shouldn't do this here,
+        // but since the purpose of calling the entityResolver is
+        // almost certainly to open the input stream, it seems to
+        // do little harm.
+        //
+        URL url = new URL(resolved);
+        InputStream iStream = url.openStream();
+        iSource.setByteStream(iStream);
+
+        return iSource;
+      } catch (Exception e) {
+        catalogManager.debug.message(1, "Failed to create InputSource", resolved);
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /** JAXP URIResolver API */
+  public Source resolve(String href, String base)
+    throws TransformerException {
+
+    String uri = href;
+    String fragment = null;
+    int hashPos = href.indexOf("#");
+    if (hashPos >= 0) {
+      uri = href.substring(0, hashPos);
+      fragment = href.substring(hashPos+1);
+    }
+
+    String result = null;
+
+    try {
+      result = catalog.resolveURI(href);
+    } catch (Exception e) {
+      // nop;
+    }
+
+    if (result == null) {
+      try {
+        URL url = null;
+
+        if (base==null) {
+          url = new URL(uri);
+          result = url.toString();
+        } else {
+          URL baseURL = new URL(base);
+          url = (href.length()==0 ? baseURL : new URL(baseURL, uri));
+          result = url.toString();
+        }
+      } catch (java.net.MalformedURLException mue) {
+        // try to make an absolute URI from the current base
+        String absBase = makeAbsolute(base);
+        if (!absBase.equals(base)) {
+          // don't bother if the absBase isn't different!
+          return resolve(href, absBase);
+        } else {
+          throw new TransformerException("Malformed URL "
+                                         + href + "(base " + base + ")",
+                                         mue);
+        }
+      }
+    }
+
+    catalogManager.debug.message(2, "Resolved URI", href, result);
+
+    SAXSource source = new SAXSource();
+    source.setInputSource(new InputSource(result));
+    setEntityResolver(source);
+    return source;
+  }
+
+  /**
+   * <p>Establish an entityResolver for newly resolved URIs.</p>
+   *
+   * <p>This is called from the URIResolver to set an EntityResolver
+   * on the SAX parser to be used for new XML documents that are
+   * encountered as a result of the document() function, xsl:import,
+   * or xsl:include.  This is done because the XSLT processor calls
+   * out to the SAXParserFactory itself to create a new SAXParser to
+   * parse the new document.  The new parser does not automatically
+   * inherit the EntityResolver of the original (although arguably
+   * it should).  See below:</p>
+   *
+   * <tt>"If an application wants to set the ErrorHandler or
+   * EntityResolver for an XMLReader used during a transformation,
+   * it should use a URIResolver to return the SAXSource which
+   * provides (with getXMLReader) a reference to the XMLReader"</tt>
+   *
+   * <p>...quoted from page 118 of the Java API for XML
+   * Processing 1.1 specification</p>
+   *
+   */
+  private void setEntityResolver(SAXSource source) throws TransformerException {
+    XMLReader reader = source.getXMLReader();
+    if (reader == null) {
+      SAXParserFactory spf = JdkXmlUtils.getSAXFactory(catalogManager.overrideDefaultParser());
+      try {
+        reader = spf.newSAXParser().getXMLReader();
+      }
+      catch (ParserConfigurationException ex) {
+        throw new TransformerException(ex);
+      }
+      catch (SAXException ex) {
+        throw new TransformerException(ex);
+      }
+    }
+    reader.setEntityResolver(this);
+    source.setXMLReader(reader);
+  }
+
+  /** Attempt to construct an absolute URI */
+  private String makeAbsolute(String uri) {
+    if (uri == null) {
+      uri = "";
+    }
+
+    try {
+      URL url = new URL(uri);
+      return url.toString();
+    } catch (MalformedURLException mue) {
+      try {
+        URL fileURL = FileURL.makeURL(uri);
+        return fileURL.toString();
+      } catch (MalformedURLException mue2) {
+        // bail
+        return uri;
+      }
+    }
+  }
+}

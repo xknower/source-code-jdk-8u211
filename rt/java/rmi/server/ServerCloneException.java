@@ -1,118 +1,112 @@
-/*     */ package java.rmi.server;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServerCloneException
-/*     */   extends CloneNotSupportedException
-/*     */ {
-/*     */   public Exception detail;
-/*     */   private static final long serialVersionUID = 6617456357664815945L;
-/*     */   
-/*     */   public ServerCloneException(String paramString) {
-/*  70 */     super(paramString);
-/*  71 */     initCause(null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServerCloneException(String paramString, Exception paramException) {
-/*  82 */     super(paramString);
-/*  83 */     initCause(null);
-/*  84 */     this.detail = paramException;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessage() {
-/*  94 */     if (this.detail == null) {
-/*  95 */       return super.getMessage();
-/*     */     }
-/*  97 */     return super.getMessage() + "; nested exception is: \n\t" + this.detail
-/*     */       
-/*  99 */       .toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getCause() {
-/* 110 */     return this.detail;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\rmi\server\ServerCloneException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.rmi.server;
+
+/**
+ * A <code>ServerCloneException</code> is thrown if a remote exception occurs
+ * during the cloning of a <code>UnicastRemoteObject</code>.
+ *
+ * <p>As of release 1.4, this exception has been retrofitted to conform to
+ * the general purpose exception-chaining mechanism.  The "nested exception"
+ * that may be provided at construction time and accessed via the public
+ * {@link #detail} field is now known as the <i>cause</i>, and may be
+ * accessed via the {@link Throwable#getCause()} method, as well as
+ * the aforementioned "legacy field."
+ *
+ * <p>Invoking the method {@link Throwable#initCause(Throwable)} on an
+ * instance of <code>ServerCloneException</code> always throws {@link
+ * IllegalStateException}.
+ *
+ * @author  Ann Wollrath
+ * @since   JDK1.1
+ * @see     java.rmi.server.UnicastRemoteObject#clone()
+ */
+public class ServerCloneException extends CloneNotSupportedException {
+
+    /**
+     * The cause of the exception.
+     *
+     * <p>This field predates the general-purpose exception chaining facility.
+     * The {@link Throwable#getCause()} method is now the preferred means of
+     * obtaining this information.
+     *
+     * @serial
+     */
+    public Exception detail;
+
+    /* indicate compatibility with JDK 1.1.x version of class */
+    private static final long serialVersionUID = 6617456357664815945L;
+
+    /**
+     * Constructs a <code>ServerCloneException</code> with the specified
+     * detail message.
+     *
+     * @param s the detail message.
+     */
+    public ServerCloneException(String s) {
+        super(s);
+        initCause(null);  // Disallow subsequent initCause
+    }
+
+    /**
+     * Constructs a <code>ServerCloneException</code> with the specified
+     * detail message and cause.
+     *
+     * @param s the detail message.
+     * @param cause the cause
+     */
+    public ServerCloneException(String s, Exception cause) {
+        super(s);
+        initCause(null);  // Disallow subsequent initCause
+        detail = cause;
+    }
+
+    /**
+     * Returns the detail message, including the message from the cause, if
+     * any, of this exception.
+     *
+     * @return the detail message
+     */
+    public String getMessage() {
+        if (detail == null)
+            return super.getMessage();
+        else
+            return super.getMessage() +
+                "; nested exception is: \n\t" +
+                detail.toString();
+    }
+
+    /**
+     * Returns the cause of this exception.  This method returns the value
+     * of the {@link #detail} field.
+     *
+     * @return  the cause, which may be <tt>null</tt>.
+     * @since   1.4
+     */
+    public Throwable getCause() {
+        return detail;
+    }
+}

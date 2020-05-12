@@ -1,33 +1,60 @@
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.protocol;
 
+import com.sun.corba.se.pept.protocol.MessageMediator;
+import com.sun.corba.se.pept.protocol.ClientRequestDispatcher;
 import java.util.Iterator;
 
-public interface ClientInvocationInfo {
-  Iterator getContactInfoListIterator();
-  
-  void setContactInfoListIterator(Iterator paramIterator);
-  
-  boolean isRetryInvocation();
-  
-  void setIsRetryInvocation(boolean paramBoolean);
-  
-  int getEntryCount();
-  
-  void incrementEntryCount();
-  
-  void decrementEntryCount();
-  
-  void setClientRequestDispatcher(ClientRequestDispatcher paramClientRequestDispatcher);
-  
-  ClientRequestDispatcher getClientRequestDispatcher();
-  
-  void setMessageMediator(MessageMediator paramMessageMediator);
-  
-  MessageMediator getMessageMediator();
+/**
+ * @author Harold Carr
+ */
+public interface ClientInvocationInfo
+{
+    public Iterator getContactInfoListIterator();
+
+    public void setContactInfoListIterator(Iterator contactInfoListIterator);
+
+    public boolean isRetryInvocation();
+
+    public void setIsRetryInvocation(boolean isRetryInvocation);
+
+    public int getEntryCount();
+
+    public void incrementEntryCount();
+
+    public void decrementEntryCount();
+
+    public void setClientRequestDispatcher(ClientRequestDispatcher clientRequestDispatcher);
+
+    public ClientRequestDispatcher getClientRequestDispatcher();
+
+    public void setMessageMediator(MessageMediator messageMediator);
+
+    public MessageMediator getMessageMediator();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\protocol\ClientInvocationInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

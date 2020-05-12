@@ -1,9 +1,37 @@
+/*
+ * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.management.loading;
 
-public interface PrivateClassLoader {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\loading\PrivateClassLoader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Marker interface indicating that a ClassLoader should not be added
+ * to the {@link ClassLoaderRepository}.  When a ClassLoader is
+ * registered as an MBean in the MBean server, it is added to the
+ * MBean server's ClassLoaderRepository unless it implements this
+ * interface.
+ *
+ * @since 1.5
  */
+public interface PrivateClassLoader {}

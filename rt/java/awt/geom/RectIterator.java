@@ -1,162 +1,156 @@
-/*     */ package java.awt.geom;
-/*     */ 
-/*     */ import java.util.NoSuchElementException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class RectIterator
-/*     */   implements PathIterator
-/*     */ {
-/*     */   double x;
-/*     */   double y;
-/*     */   double w;
-/*     */   double h;
-/*     */   AffineTransform affine;
-/*     */   int index;
-/*     */   
-/*     */   RectIterator(Rectangle2D paramRectangle2D, AffineTransform paramAffineTransform) {
-/*  42 */     this.x = paramRectangle2D.getX();
-/*  43 */     this.y = paramRectangle2D.getY();
-/*  44 */     this.w = paramRectangle2D.getWidth();
-/*  45 */     this.h = paramRectangle2D.getHeight();
-/*  46 */     this.affine = paramAffineTransform;
-/*  47 */     if (this.w < 0.0D || this.h < 0.0D) {
-/*  48 */       this.index = 6;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getWindingRule() {
-/*  59 */     return 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDone() {
-/*  67 */     return (this.index > 5);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void next() {
-/*  76 */     this.index++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int currentSegment(float[] paramArrayOffloat) {
-/*  98 */     if (isDone()) {
-/*  99 */       throw new NoSuchElementException("rect iterator out of bounds");
-/*     */     }
-/* 101 */     if (this.index == 5) {
-/* 102 */       return 4;
-/*     */     }
-/* 104 */     paramArrayOffloat[0] = (float)this.x;
-/* 105 */     paramArrayOffloat[1] = (float)this.y;
-/* 106 */     if (this.index == 1 || this.index == 2) {
-/* 107 */       paramArrayOffloat[0] = paramArrayOffloat[0] + (float)this.w;
-/*     */     }
-/* 109 */     if (this.index == 2 || this.index == 3) {
-/* 110 */       paramArrayOffloat[1] = paramArrayOffloat[1] + (float)this.h;
-/*     */     }
-/* 112 */     if (this.affine != null) {
-/* 113 */       this.affine.transform(paramArrayOffloat, 0, paramArrayOffloat, 0, 1);
-/*     */     }
-/* 115 */     return (this.index == 0) ? 0 : 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int currentSegment(double[] paramArrayOfdouble) {
-/* 137 */     if (isDone()) {
-/* 138 */       throw new NoSuchElementException("rect iterator out of bounds");
-/*     */     }
-/* 140 */     if (this.index == 5) {
-/* 141 */       return 4;
-/*     */     }
-/* 143 */     paramArrayOfdouble[0] = this.x;
-/* 144 */     paramArrayOfdouble[1] = this.y;
-/* 145 */     if (this.index == 1 || this.index == 2) {
-/* 146 */       paramArrayOfdouble[0] = paramArrayOfdouble[0] + this.w;
-/*     */     }
-/* 148 */     if (this.index == 2 || this.index == 3) {
-/* 149 */       paramArrayOfdouble[1] = paramArrayOfdouble[1] + this.h;
-/*     */     }
-/* 151 */     if (this.affine != null) {
-/* 152 */       this.affine.transform(paramArrayOfdouble, 0, paramArrayOfdouble, 0, 1);
-/*     */     }
-/* 154 */     return (this.index == 0) ? 0 : 1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\RectIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+import java.util.*;
+
+/**
+ * A utility class to iterate over the path segments of a rectangle
+ * through the PathIterator interface.
+ *
+ * @author      Jim Graham
+ */
+class RectIterator implements PathIterator {
+    double x, y, w, h;
+    AffineTransform affine;
+    int index;
+
+    RectIterator(Rectangle2D r, AffineTransform at) {
+        this.x = r.getX();
+        this.y = r.getY();
+        this.w = r.getWidth();
+        this.h = r.getHeight();
+        this.affine = at;
+        if (w < 0 || h < 0) {
+            index = 6;
+        }
+    }
+
+    /**
+     * Return the winding rule for determining the insideness of the
+     * path.
+     * @see #WIND_EVEN_ODD
+     * @see #WIND_NON_ZERO
+     */
+    public int getWindingRule() {
+        return WIND_NON_ZERO;
+    }
+
+    /**
+     * Tests if there are more points to read.
+     * @return true if there are more points to read
+     */
+    public boolean isDone() {
+        return index > 5;
+    }
+
+    /**
+     * Moves the iterator to the next segment of the path forwards
+     * along the primary direction of traversal as long as there are
+     * more points in that direction.
+     */
+    public void next() {
+        index++;
+    }
+
+    /**
+     * Returns the coordinates and type of the current path segment in
+     * the iteration.
+     * The return value is the path segment type:
+     * SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE.
+     * A float array of length 6 must be passed in and may be used to
+     * store the coordinates of the point(s).
+     * Each point is stored as a pair of float x,y coordinates.
+     * SEG_MOVETO and SEG_LINETO types will return one point,
+     * SEG_QUADTO will return two points,
+     * SEG_CUBICTO will return 3 points
+     * and SEG_CLOSE will not return any points.
+     * @see #SEG_MOVETO
+     * @see #SEG_LINETO
+     * @see #SEG_QUADTO
+     * @see #SEG_CUBICTO
+     * @see #SEG_CLOSE
+     */
+    public int currentSegment(float[] coords) {
+        if (isDone()) {
+            throw new NoSuchElementException("rect iterator out of bounds");
+        }
+        if (index == 5) {
+            return SEG_CLOSE;
+        }
+        coords[0] = (float) x;
+        coords[1] = (float) y;
+        if (index == 1 || index == 2) {
+            coords[0] += (float) w;
+        }
+        if (index == 2 || index == 3) {
+            coords[1] += (float) h;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, 1);
+        }
+        return (index == 0 ? SEG_MOVETO : SEG_LINETO);
+    }
+
+    /**
+     * Returns the coordinates and type of the current path segment in
+     * the iteration.
+     * The return value is the path segment type:
+     * SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE.
+     * A double array of length 6 must be passed in and may be used to
+     * store the coordinates of the point(s).
+     * Each point is stored as a pair of double x,y coordinates.
+     * SEG_MOVETO and SEG_LINETO types will return one point,
+     * SEG_QUADTO will return two points,
+     * SEG_CUBICTO will return 3 points
+     * and SEG_CLOSE will not return any points.
+     * @see #SEG_MOVETO
+     * @see #SEG_LINETO
+     * @see #SEG_QUADTO
+     * @see #SEG_CUBICTO
+     * @see #SEG_CLOSE
+     */
+    public int currentSegment(double[] coords) {
+        if (isDone()) {
+            throw new NoSuchElementException("rect iterator out of bounds");
+        }
+        if (index == 5) {
+            return SEG_CLOSE;
+        }
+        coords[0] = x;
+        coords[1] = y;
+        if (index == 1 || index == 2) {
+            coords[0] += w;
+        }
+        if (index == 2 || index == 3) {
+            coords[1] += h;
+        }
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, 1);
+        }
+        return (index == 0 ? SEG_MOVETO : SEG_LINETO);
+    }
+}

@@ -1,91 +1,90 @@
-/*    */ package com.sun.org.apache.xml.internal.security.utils;
-/*    */ 
-/*    */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*    */ import org.w3c.dom.Element;
-/*    */ import org.w3c.dom.Node;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ @Deprecated
-/*    */ public abstract class ElementCheckerImpl
-/*    */   implements ElementChecker
-/*    */ {
-/*    */   public boolean isNamespaceElement(Node paramNode, String paramString1, String paramString2) {
-/* 34 */     if (paramNode == null || paramString2 != paramNode
-/* 35 */       .getNamespaceURI() || !paramNode.getLocalName().equals(paramString1)) {
-/* 36 */       return false;
-/*    */     }
-/*    */     
-/* 39 */     return true;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static class InternedNsChecker
-/*    */     extends ElementCheckerImpl
-/*    */   {
-/*    */     public void guaranteeThatElementInCorrectSpace(ElementProxy param1ElementProxy, Element param1Element) throws XMLSecurityException {
-/* 48 */       String str1 = param1ElementProxy.getBaseLocalName();
-/* 49 */       String str2 = param1ElementProxy.getBaseNamespace();
-/*    */       
-/* 51 */       String str3 = param1Element.getLocalName();
-/* 52 */       String str4 = param1Element.getNamespaceURI();
-/* 53 */       if (str2 != str4 || 
-/* 54 */         !str1.equals(str3)) {
-/* 55 */         Object[] arrayOfObject = { str4 + ":" + str3, str2 + ":" + str1 };
-/*    */         
-/* 57 */         throw new XMLSecurityException("xml.WrongElement", arrayOfObject);
-/*    */       } 
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static class FullChecker
-/*    */     extends ElementCheckerImpl
-/*    */   {
-/*    */     public void guaranteeThatElementInCorrectSpace(ElementProxy param1ElementProxy, Element param1Element) throws XMLSecurityException {
-/* 68 */       String str1 = param1ElementProxy.getBaseLocalName();
-/* 69 */       String str2 = param1ElementProxy.getBaseNamespace();
-/*    */       
-/* 71 */       String str3 = param1Element.getLocalName();
-/* 72 */       String str4 = param1Element.getNamespaceURI();
-/* 73 */       if (!str2.equals(str4) || 
-/* 74 */         !str1.equals(str3)) {
-/* 75 */         Object[] arrayOfObject = { str4 + ":" + str3, str2 + ":" + str1 };
-/*    */         
-/* 77 */         throw new XMLSecurityException("xml.WrongElement", arrayOfObject);
-/*    */       } 
-/*    */     }
-/*    */   }
-/*    */   
-/*    */   public static class EmptyChecker extends ElementCheckerImpl {
-/*    */     public void guaranteeThatElementInCorrectSpace(ElementProxy param1ElementProxy, Element param1Element) throws XMLSecurityException {}
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\ElementCheckerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+/**@deprecated*/
+@Deprecated
+public abstract class ElementCheckerImpl implements ElementChecker {
+
+    public boolean isNamespaceElement(Node el, String type, String ns) {
+        if ((el == null) ||
+            ns != el.getNamespaceURI() || !el.getLocalName().equals(type)){
+            return false;
+        }
+
+        return true;
+    }
+
+    /** A checker for DOM that interns NS */
+    public static class InternedNsChecker extends ElementCheckerImpl {
+        public void guaranteeThatElementInCorrectSpace(
+            ElementProxy expected, Element actual
+        ) throws XMLSecurityException {
+
+            String expectedLocalname = expected.getBaseLocalName();
+            String expectedNamespace = expected.getBaseNamespace();
+
+            String localnameIS = actual.getLocalName();
+            String namespaceIS = actual.getNamespaceURI();
+            if ((expectedNamespace != namespaceIS) ||
+                !expectedLocalname.equals(localnameIS)) {
+                Object exArgs[] = { namespaceIS + ":" + localnameIS,
+                                    expectedNamespace + ":" + expectedLocalname};
+                throw new XMLSecurityException("xml.WrongElement", exArgs);
+            }
+        }
+    }
+
+    /** A checker for DOM that interns NS */
+    public static class FullChecker extends ElementCheckerImpl {
+
+        public void guaranteeThatElementInCorrectSpace(
+            ElementProxy expected, Element actual
+        ) throws XMLSecurityException {
+            String expectedLocalname = expected.getBaseLocalName();
+            String expectedNamespace = expected.getBaseNamespace();
+
+            String localnameIS = actual.getLocalName();
+            String namespaceIS = actual.getNamespaceURI();
+            if ((!expectedNamespace.equals(namespaceIS)) ||
+                !expectedLocalname.equals(localnameIS) ) {
+                Object exArgs[] = { namespaceIS + ":" + localnameIS,
+                                    expectedNamespace + ":" + expectedLocalname};
+                throw new XMLSecurityException("xml.WrongElement", exArgs);
+            }
+        }
+    }
+
+    /** An empty checker if schema checking is used */
+    public static class EmptyChecker extends ElementCheckerImpl {
+        public void guaranteeThatElementInCorrectSpace(
+            ElementProxy expected, Element actual
+        ) throws XMLSecurityException {
+            // empty
+        }
+    }
+}

@@ -1,242 +1,236 @@
-/*     */ package javax.xml.soap;
-/*     */ 
-/*     */ import java.io.BufferedReader;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.InputStreamReader;
-/*     */ import java.util.Properties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class FactoryFinder
-/*     */ {
-/*     */   private static Object newInstance(String className, ClassLoader classLoader) throws SOAPException {
-/*     */     try {
-/*  46 */       Class spiClass = safeLoadClass(className, classLoader);
-/*  47 */       return spiClass.newInstance();
-/*     */     }
-/*  49 */     catch (ClassNotFoundException x) {
-/*  50 */       throw new SOAPException("Provider " + className + " not found", x);
-/*  51 */     } catch (Exception x) {
-/*  52 */       throw new SOAPException("Provider " + className + " could not be instantiated: " + x, x);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Object find(String factoryId) throws SOAPException {
-/*  72 */     return find(factoryId, null, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Object find(String factoryId, String fallbackClassName) throws SOAPException {
-/*  98 */     return find(factoryId, fallbackClassName, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Object find(String factoryId, String defaultClassName, boolean tryFallback) throws SOAPException {
-/*     */     ClassLoader classLoader;
-/*     */     try {
-/* 129 */       classLoader = Thread.currentThread().getContextClassLoader();
-/* 130 */     } catch (Exception x) {
-/* 131 */       throw new SOAPException(x.toString(), x);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 137 */       String systemProp = System.getProperty(factoryId);
-/* 138 */       if (systemProp != null) {
-/* 139 */         return newInstance(systemProp, classLoader);
-/*     */       }
-/* 141 */     } catch (SecurityException securityException) {}
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 146 */       String javah = System.getProperty("java.home");
-/* 147 */       String configFile = javah + File.separator + "lib" + File.separator + "jaxm.properties";
-/*     */       
-/* 149 */       File f = new File(configFile);
-/* 150 */       if (f.exists()) {
-/* 151 */         Properties props = new Properties();
-/* 152 */         props.load(new FileInputStream(f));
-/* 153 */         String factoryClassName = props.getProperty(factoryId);
-/* 154 */         return newInstance(factoryClassName, classLoader);
-/*     */       } 
-/* 156 */     } catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 159 */     String serviceId = "META-INF/services/" + factoryId;
-/*     */     
-/*     */     try {
-/* 162 */       InputStream is = null;
-/* 163 */       if (classLoader == null) {
-/* 164 */         is = ClassLoader.getSystemResourceAsStream(serviceId);
-/*     */       } else {
-/* 166 */         is = classLoader.getResourceAsStream(serviceId);
-/*     */       } 
-/*     */       
-/* 169 */       if (is != null) {
-/* 170 */         BufferedReader rd = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-/*     */ 
-/*     */         
-/* 173 */         String factoryClassName = rd.readLine();
-/* 174 */         rd.close();
-/*     */         
-/* 176 */         if (factoryClassName != null && 
-/* 177 */           !"".equals(factoryClassName)) {
-/* 178 */           return newInstance(factoryClassName, classLoader);
-/*     */         }
-/*     */       } 
-/* 181 */     } catch (Exception exception) {}
-/*     */ 
-/*     */ 
-/*     */     
-/* 185 */     if (!tryFallback) {
-/* 186 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/* 190 */     if (defaultClassName == null) {
-/* 191 */       throw new SOAPException("Provider for " + factoryId + " cannot be found", null);
-/*     */     }
-/*     */     
-/* 194 */     return newInstance(defaultClassName, classLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Class safeLoadClass(String className, ClassLoader classLoader) throws ClassNotFoundException {
-/*     */     try {
-/* 208 */       SecurityManager s = System.getSecurityManager();
-/* 209 */       if (s != null) {
-/* 210 */         int i = className.lastIndexOf('.');
-/* 211 */         if (i != -1) {
-/* 212 */           s.checkPackageAccess(className.substring(0, i));
-/*     */         }
-/*     */       } 
-/*     */       
-/* 216 */       if (classLoader == null) {
-/* 217 */         return Class.forName(className);
-/*     */       }
-/* 219 */       return classLoader.loadClass(className);
-/* 220 */     } catch (SecurityException se) {
-/*     */ 
-/*     */       
-/* 223 */       if (isDefaultImplementation(className)) {
-/* 224 */         return Class.forName(className);
-/*     */       }
-/* 226 */       throw se;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static boolean isDefaultImplementation(String className) {
-/* 231 */     return ("com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl".equals(className) || "com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPFactory1_1Impl"
-/* 232 */       .equals(className) || "com.sun.xml.internal.messaging.saaj.client.p2p.HttpSOAPConnectionFactory"
-/* 233 */       .equals(className) || "com.sun.xml.internal.messaging.saaj.soap.SAAJMetaFactoryImpl"
-/* 234 */       .equals(className));
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\soap\FactoryFinder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.soap;
+
+import java.io.*;
+import java.util.Properties;
+
+
+class FactoryFinder {
+
+    /**
+     * Creates an instance of the specified class using the specified
+     * <code>ClassLoader</code> object.
+     *
+     * @exception SOAPException if the given class could not be found
+     *            or could not be instantiated
+     */
+    private static Object newInstance(String className,
+                                      ClassLoader classLoader)
+            throws SOAPException
+    {
+        try {
+            Class spiClass = safeLoadClass(className, classLoader);
+            return spiClass.newInstance();
+
+        } catch (ClassNotFoundException x) {
+            throw new SOAPException("Provider " + className + " not found", x);
+        } catch (Exception x) {
+            throw new SOAPException("Provider " + className + " could not be instantiated: " + x, x);
+        }
+    }
+
+    /**
+     * Finds the implementation <code>Class</code> object for the given
+     * factory name, or null if that fails.
+     * <P>
+     * This method is package private so that this code can be shared.
+     *
+     * @return the <code>Class</code> object of the specified message factory;
+     *         or <code>null</code>
+     *
+     * @param factoryId             the name of the factory to find, which is
+     *                              a system property
+     * @exception SOAPException if there is a SOAP error
+     */
+    static Object find(String factoryId)
+            throws SOAPException
+    {
+        return find(factoryId, null, false);
+    }
+
+    /**
+     * Finds the implementation <code>Class</code> object for the given
+     * factory name, or if that fails, finds the <code>Class</code> object
+     * for the given fallback class name. The arguments supplied must be
+     * used in order. If using the first argument is successful, the second
+     * one will not be used.
+     * <P>
+     * This method is package private so that this code can be shared.
+     *
+     * @return the <code>Class</code> object of the specified message factory;
+     *         may be <code>null</code>
+     *
+     * @param factoryId             the name of the factory to find, which is
+     *                              a system property
+     * @param fallbackClassName     the implementation class name, which is
+     *                              to be used only if nothing else
+     *                              is found; <code>null</code> to indicate that
+     *                              there is no fallback class name
+     * @exception SOAPException if there is a SOAP error
+     */
+    static Object find(String factoryId, String fallbackClassName)
+            throws SOAPException
+    {
+        return find(factoryId, fallbackClassName, true);
+    }
+
+    /**
+     * Finds the implementation <code>Class</code> object for the given
+     * factory name, or if that fails, finds the <code>Class</code> object
+     * for the given default class name, but only if <code>tryFallback</code>
+     * is <code>true</code>.  The arguments supplied must be used in order
+     * If using the first argument is successful, the second one will not
+     * be used.  Note the default class name may be needed even if fallback
+     * is not to be attempted, so certain error conditions can be handled.
+     * <P>
+     * This method is package private so that this code can be shared.
+     *
+     * @return the <code>Class</code> object of the specified message factory;
+     *         may not be <code>null</code>
+     *
+     * @param factoryId             the name of the factory to find, which is
+     *                              a system property
+     * @param defaultClassName      the implementation class name, which is
+     *                              to be used only if nothing else
+     *                              is found; <code>null</code> to indicate
+     *                              that there is no default class name
+     * @param tryFallback           whether to try the default class as a
+     *                              fallback
+     * @exception SOAPException if there is a SOAP error
+     */
+    static Object find(String factoryId, String defaultClassName,
+                       boolean tryFallback) throws SOAPException {
+        ClassLoader classLoader;
+        try {
+            classLoader = Thread.currentThread().getContextClassLoader();
+        } catch (Exception x) {
+            throw new SOAPException(x.toString(), x);
+        }
+
+        // Use the system property first
+        try {
+            String systemProp =
+                    System.getProperty( factoryId );
+            if( systemProp!=null) {
+                return newInstance(systemProp, classLoader);
+            }
+        } catch (SecurityException se) {
+        }
+
+        // try to read from $java.home/lib/jaxm.properties
+        try {
+            String javah=System.getProperty( "java.home" );
+            String configFile = javah + File.separator +
+                    "lib" + File.separator + "jaxm.properties";
+            File f=new File( configFile );
+            if( f.exists()) {
+                Properties props=new Properties();
+                props.load( new FileInputStream(f));
+                String factoryClassName = props.getProperty(factoryId);
+                return newInstance(factoryClassName, classLoader);
+            }
+        } catch(Exception ex ) {
+        }
+
+        String serviceId = "META-INF/services/" + factoryId;
+        // try to find services in CLASSPATH
+        try {
+            InputStream is=null;
+            if (classLoader == null) {
+                is=ClassLoader.getSystemResourceAsStream(serviceId);
+            } else {
+                is=classLoader.getResourceAsStream(serviceId);
+            }
+
+            if( is!=null ) {
+                BufferedReader rd =
+                        new BufferedReader(new InputStreamReader(is, "UTF-8"));
+
+                String factoryClassName = rd.readLine();
+                rd.close();
+
+                if (factoryClassName != null &&
+                        ! "".equals(factoryClassName)) {
+                    return newInstance(factoryClassName, classLoader);
+                }
+            }
+        } catch( Exception ex ) {
+        }
+
+        // If not found and fallback should not be tried, return a null result.
+        if (!tryFallback)
+            return null;
+
+        // We didn't find the class through the usual means so try the default
+        // (built in) factory if specified.
+        if (defaultClassName == null) {
+            throw new SOAPException(
+                    "Provider for " + factoryId + " cannot be found", null);
+        }
+        return newInstance(defaultClassName, classLoader);
+    }
+
+    /**
+     * Loads the class, provided that the calling thread has an access to the
+     * class being loaded. If this is the specified default factory class and it
+     * is restricted by package.access we get a SecurityException and can do a
+     * Class.forName() on it so it will be loaded by the bootstrap class loader.
+     */
+    private static Class safeLoadClass(String className,
+                                       ClassLoader classLoader)
+            throws ClassNotFoundException {
+        try {
+            // make sure that the current thread has an access to the package of the given name.
+            SecurityManager s = System.getSecurityManager();
+            if (s != null) {
+                int i = className.lastIndexOf('.');
+                if (i != -1) {
+                    s.checkPackageAccess(className.substring(0, i));
+                }
+            }
+
+            if (classLoader == null)
+                return Class.forName(className);
+            else
+                return classLoader.loadClass(className);
+        } catch (SecurityException se) {
+            // (only) default implementation can be loaded
+            // using bootstrap class loader:
+            if (isDefaultImplementation(className))
+                return Class.forName(className);
+
+            throw se;
+        }
+    }
+
+    private static boolean isDefaultImplementation(String className) {
+        return MessageFactory.DEFAULT_MESSAGE_FACTORY.equals(className) ||
+                SOAPFactory.DEFAULT_SOAP_FACTORY.equals(className) ||
+                SOAPConnectionFactory.DEFAULT_SOAP_CONNECTION_FACTORY.equals(className) ||
+                SAAJMetaFactory.DEFAULT_META_FACTORY_CLASS.equals(className);
+    }
+}

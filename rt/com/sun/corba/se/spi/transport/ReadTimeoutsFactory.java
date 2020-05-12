@@ -1,11 +1,36 @@
-package com.sun.corba.se.spi.transport;
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+package com.sun.corba.se.spi.transport ;
+
+import com.sun.corba.se.spi.transport.ReadTimeouts;
 
 public interface ReadTimeoutsFactory {
-  ReadTimeouts create(int paramInt1, int paramInt2, int paramInt3, int paramInt4);
+   // create transport read timeouts
+   public ReadTimeouts create(int initial_wait_time,
+                              int max_wait_time,
+                              int max_giop_hdr_wait_time,
+                              int backoff_percent_factor);
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\transport\ReadTimeoutsFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

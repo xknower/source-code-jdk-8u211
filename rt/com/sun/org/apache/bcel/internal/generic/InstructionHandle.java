@@ -1,293 +1,287 @@
-/*     */ package com.sun.org.apache.bcel.internal.generic;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Utility;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Collection;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.HashSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class InstructionHandle
-/*     */   implements Serializable
-/*     */ {
-/*     */   InstructionHandle next;
-/*     */   InstructionHandle prev;
-/*     */   Instruction instruction;
-/*  86 */   protected int i_position = -1;
-/*     */   private HashSet targeters;
-/*     */   private HashMap attributes;
-/*     */   
-/*  90 */   public final InstructionHandle getNext() { return this.next; }
-/*  91 */   public final InstructionHandle getPrev() { return this.prev; } public final Instruction getInstruction() {
-/*  92 */     return this.instruction;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInstruction(Instruction i) {
-/*  99 */     if (i == null) {
-/* 100 */       throw new ClassGenException("Assigning null to handle");
-/*     */     }
-/* 102 */     if (getClass() != BranchHandle.class && i instanceof BranchInstruction) {
-/* 103 */       throw new ClassGenException("Assigning branch instruction " + i + " to plain handle");
-/*     */     }
-/* 105 */     if (this.instruction != null) {
-/* 106 */       this.instruction.dispose();
-/*     */     }
-/* 108 */     this.instruction = i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Instruction swapInstruction(Instruction i) {
-/* 117 */     Instruction oldInstruction = this.instruction;
-/* 118 */     this.instruction = i;
-/* 119 */     return oldInstruction;
-/*     */   }
-/*     */   
-/*     */   protected InstructionHandle(Instruction i) {
-/* 123 */     setInstruction(i);
-/*     */   }
-/*     */   
-/* 126 */   private static InstructionHandle ih_list = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final InstructionHandle getInstructionHandle(Instruction i) {
-/* 131 */     if (ih_list == null) {
-/* 132 */       return new InstructionHandle(i);
-/*     */     }
-/* 134 */     InstructionHandle ih = ih_list;
-/* 135 */     ih_list = ih.next;
-/*     */     
-/* 137 */     ih.setInstruction(i);
-/*     */     
-/* 139 */     return ih;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int updatePosition(int offset, int max_offset) {
-/* 154 */     this.i_position += offset;
-/* 155 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getPosition() {
-/* 162 */     return this.i_position;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void setPosition(int pos) {
-/* 167 */     this.i_position = pos;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void addHandle() {
-/* 172 */     this.next = ih_list;
-/* 173 */     ih_list = this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void dispose() {
-/* 180 */     this.next = this.prev = null;
-/* 181 */     this.instruction.dispose();
-/* 182 */     this.instruction = null;
-/* 183 */     this.i_position = -1;
-/* 184 */     this.attributes = null;
-/* 185 */     removeAllTargeters();
-/* 186 */     addHandle();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeAllTargeters() {
-/* 192 */     if (this.targeters != null) {
-/* 193 */       this.targeters.clear();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeTargeter(InstructionTargeter t) {
-/* 200 */     this.targeters.remove(t);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addTargeter(InstructionTargeter t) {
-/* 207 */     if (this.targeters == null) {
-/* 208 */       this.targeters = new HashSet();
-/*     */     }
-/*     */     
-/* 211 */     this.targeters.add(t);
-/*     */   }
-/*     */   
-/*     */   public boolean hasTargeters() {
-/* 215 */     return (this.targeters != null && this.targeters.size() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InstructionTargeter[] getTargeters() {
-/* 222 */     if (!hasTargeters()) {
-/* 223 */       return null;
-/*     */     }
-/* 225 */     InstructionTargeter[] t = new InstructionTargeter[this.targeters.size()];
-/* 226 */     this.targeters.toArray((Object[])t);
-/* 227 */     return t;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString(boolean verbose) {
-/* 233 */     return Utility.format(this.i_position, 4, false, ' ') + ": " + this.instruction.toString(verbose);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 239 */     return toString(true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAttribute(Object key, Object attr) {
-/* 248 */     if (this.attributes == null) {
-/* 249 */       this.attributes = new HashMap<>(3);
-/*     */     }
-/* 251 */     this.attributes.put(key, attr);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeAttribute(Object key) {
-/* 259 */     if (this.attributes != null) {
-/* 260 */       this.attributes.remove(key);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getAttribute(Object key) {
-/* 268 */     if (this.attributes != null) {
-/* 269 */       return this.attributes.get(key);
-/*     */     }
-/* 271 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Collection getAttributes() {
-/* 277 */     return this.attributes.values();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void accept(Visitor v) {
-/* 285 */     this.instruction.accept(v);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\bcel\internal\generic\InstructionHandle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+package com.sun.org.apache.bcel.internal.generic;
+
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" and
+ *    "Apache BCEL" must not be used to endorse or promote products
+ *    derived from this software without prior written permission. For
+ *    written permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    "Apache BCEL", nor may "Apache" appear in their name, without
+ *    prior written permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+
+import com.sun.org.apache.bcel.internal.classfile.Utility;
+import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashMap;
+
+/**
+ * Instances of this class give users a handle to the instructions contained in
+ * an InstructionList. Instruction objects may be used more than once within a
+ * list, this is useful because it saves memory and may be much faster.
+ *
+ * Within an InstructionList an InstructionHandle object is wrapped
+ * around all instructions, i.e., it implements a cell in a
+ * doubly-linked list. From the outside only the next and the
+ * previous instruction (handle) are accessible. One
+ * can traverse the list via an Enumeration returned by
+ * InstructionList.elements().
+ *
+ * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @see Instruction
+ * @see BranchHandle
+ * @see InstructionList
+ */
+public class InstructionHandle implements java.io.Serializable {
+  InstructionHandle next, prev;  // Will be set from the outside
+  Instruction       instruction;
+  protected int     i_position = -1; // byte code offset of instruction
+  private HashSet   targeters;
+  private HashMap   attributes;
+
+  public final InstructionHandle getNext()        { return next; }
+  public final InstructionHandle getPrev()        { return prev; }
+  public final Instruction       getInstruction() { return instruction; }
+
+  /**
+   * Replace current instruction contained in this handle.
+   * Old instruction is disposed using Instruction.dispose().
+   */
+  public void setInstruction(Instruction i) { // Overridden in BranchHandle
+    if(i == null)
+      throw new ClassGenException("Assigning null to handle");
+
+    if((this.getClass() != BranchHandle.class) && (i instanceof BranchInstruction))
+      throw new ClassGenException("Assigning branch instruction " + i + " to plain handle");
+
+    if(instruction != null)
+      instruction.dispose();
+
+    instruction = i;
+  }
+
+  /**
+   * Temporarily swap the current instruction, without disturbing
+   * anything. Meant to be used by a debugger, implementing
+   * breakpoints. Current instruction is returned.
+   */
+  public Instruction swapInstruction(Instruction i) {
+    Instruction oldInstruction = instruction;
+    instruction = i;
+    return oldInstruction;
+  }
+
+  /*private*/ protected InstructionHandle(Instruction i) {
+    setInstruction(i);
+  }
+
+  private static InstructionHandle ih_list = null; // List of reusable handles
+
+  /** Factory method.
+   */
+  static final InstructionHandle getInstructionHandle(Instruction i) {
+    if(ih_list == null)
+      return new InstructionHandle(i);
+    else {
+      InstructionHandle ih = ih_list;
+      ih_list = ih.next;
+
+      ih.setInstruction(i);
+
+      return ih;
+    }
+  }
+
+  /**
+   * Called by InstructionList.setPositions when setting the position for every
+   * instruction. In the presence of variable length instructions `setPositions()'
+   * performs multiple passes over the instruction list to calculate the
+   * correct (byte) positions and offsets by calling this function.
+   *
+   * @param offset additional offset caused by preceding (variable length) instructions
+   * @param max_offset the maximum offset that may be caused by these instructions
+   * @return additional offset caused by possible change of this instruction's length
+   */
+  protected int updatePosition(int offset, int max_offset) {
+    i_position += offset;
+    return 0;
+  }
+
+  /** @return the position, i.e., the byte code offset of the contained
+   * instruction. This is accurate only after
+   * InstructionList.setPositions() has been called.
+   */
+  public int getPosition() { return i_position; }
+
+  /** Set the position, i.e., the byte code offset of the contained
+   * instruction.
+   */
+  void setPosition(int pos) { i_position = pos; }
+
+  /** Overridden in BranchHandle
+   */
+  protected void addHandle() {
+    next    = ih_list;
+    ih_list = this;
+  }
+
+  /**
+   * Delete contents, i.e., remove user access and make handle reusable.
+   */
+  void dispose() {
+    next = prev = null;
+    instruction.dispose();
+    instruction = null;
+    i_position = -1;
+    attributes = null;
+    removeAllTargeters();
+    addHandle();
+  }
+
+  /** Remove all targeters, if any.
+   */
+  public void removeAllTargeters() {
+    if(targeters != null)
+      targeters.clear();
+  }
+
+  /**
+   * Denote this handle isn't referenced anymore by t.
+   */
+  public void removeTargeter(InstructionTargeter t) {
+    targeters.remove(t);
+  }
+
+  /**
+   * Denote this handle is being referenced by t.
+   */
+  public void addTargeter(InstructionTargeter t) {
+    if(targeters == null)
+      targeters = new HashSet();
+
+    //if(!targeters.contains(t))
+    targeters.add(t);
+  }
+
+  public boolean hasTargeters() {
+    return (targeters != null) && (targeters.size() > 0);
+  }
+
+  /**
+   * @return null, if there are no targeters
+   */
+  public InstructionTargeter[] getTargeters() {
+    if(!hasTargeters())
+      return null;
+
+    InstructionTargeter[] t = new InstructionTargeter[targeters.size()];
+    targeters.toArray(t);
+    return t;
+  }
+
+  /** @return a (verbose) string representation of the contained instruction.
+   */
+  public String toString(boolean verbose) {
+    return Utility.format(i_position, 4, false, ' ') + ": " + instruction.toString(verbose);
+  }
+
+  /** @return a string representation of the contained instruction.
+   */
+  public String toString() {
+    return toString(true);
+  }
+
+  /** Add an attribute to an instruction handle.
+   *
+   * @param key the key object to store/retrieve the attribute
+   * @param attr the attribute to associate with this handle
+   */
+  public void addAttribute(Object key, Object attr) {
+    if(attributes == null)
+      attributes = new HashMap(3);
+
+    attributes.put(key, attr);
+  }
+
+  /** Delete an attribute of an instruction handle.
+   *
+   * @param key the key object to retrieve the attribute
+   */
+  public void removeAttribute(Object key) {
+    if(attributes != null)
+      attributes.remove(key);
+  }
+
+  /** Get attribute of an instruction handle.
+   *
+   * @param key the key object to store/retrieve the attribute
+   */
+  public Object getAttribute(Object key) {
+    if(attributes != null)
+      return attributes.get(key);
+
+    return null;
+  }
+
+  /** @return all attributes associated with this handle
+   */
+  public Collection getAttributes() {
+    return attributes.values();
+  }
+
+  /** Convenience method, simply calls accept() on the contained instruction.
+   *
+   * @param v Visitor object
+   */
+  public void accept(Visitor v) {
+    instruction.accept(v);
+  }
+}

@@ -1,271 +1,267 @@
-/*     */ package com.sun.corba.se.impl.encoding;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.OMGSystemException;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
-/*     */ import com.sun.corba.se.pept.encoding.InputObject;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.transport.CorbaConnection;
-/*     */ import com.sun.org.omg.SendingContext.CodeBase;
-/*     */ import java.nio.ByteBuffer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CDRInputObject
-/*     */   extends CDRInputStream
-/*     */   implements InputObject
-/*     */ {
-/*     */   private CorbaConnection corbaConnection;
-/*     */   private Message header;
-/*     */   private boolean unmarshaledHeader;
-/*     */   private ORB orb;
-/*     */   private ORBUtilSystemException wrapper;
-/*     */   private OMGSystemException omgWrapper;
-/*     */   
-/*     */   public CDRInputObject(ORB paramORB, CorbaConnection paramCorbaConnection, ByteBuffer paramByteBuffer, Message paramMessage) {
-/*  74 */     super(paramORB, paramByteBuffer, paramMessage.getSize(), paramMessage.isLittleEndian(), paramMessage
-/*  75 */         .getGIOPVersion(), paramMessage.getEncodingVersion(), 
-/*  76 */         BufferManagerFactory.newBufferManagerRead(paramMessage
-/*  77 */           .getGIOPVersion(), paramMessage
-/*  78 */           .getEncodingVersion(), paramORB));
-/*     */ 
-/*     */     
-/*  81 */     this.corbaConnection = paramCorbaConnection;
-/*  82 */     this.orb = paramORB;
-/*  83 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.encoding");
-/*     */     
-/*  85 */     this.omgWrapper = OMGSystemException.get(paramORB, "rpc.encoding");
-/*     */ 
-/*     */     
-/*  88 */     if (paramORB.transportDebugFlag) {
-/*  89 */       dprint(".CDRInputObject constructor:");
-/*     */     }
-/*     */     
-/*  92 */     getBufferManager().init(paramMessage);
-/*     */     
-/*  94 */     this.header = paramMessage;
-/*     */     
-/*  96 */     this.unmarshaledHeader = false;
-/*     */     
-/*  98 */     setIndex(12);
-/*     */     
-/* 100 */     setBufferLength(paramMessage.getSize());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final CorbaConnection getConnection() {
-/* 109 */     return this.corbaConnection;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Message getMessageHeader() {
-/* 118 */     return this.header;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unmarshalHeader() {
-/* 131 */     if (!this.unmarshaledHeader) {
-/*     */       try {
-/* 133 */         if (((ORB)orb()).transportDebugFlag) {
-/* 134 */           dprint(".unmarshalHeader->: " + getMessageHeader());
-/*     */         }
-/* 136 */         getMessageHeader().read(this);
-/* 137 */         this.unmarshaledHeader = true;
-/* 138 */       } catch (RuntimeException runtimeException) {
-/* 139 */         if (((ORB)orb()).transportDebugFlag) {
-/* 140 */           dprint(".unmarshalHeader: !!ERROR!!: " + 
-/* 141 */               getMessageHeader() + ": " + runtimeException);
-/*     */         }
-/*     */         
-/* 144 */         throw runtimeException;
-/*     */       } finally {
-/* 146 */         if (((ORB)orb()).transportDebugFlag) {
-/* 147 */           dprint(".unmarshalHeader<-: " + getMessageHeader());
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean unmarshaledHeader() {
-/* 155 */     return this.unmarshaledHeader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected CodeSetConversion.BTCConverter createCharBTCConverter() {
-/* 168 */     CodeSetComponentInfo.CodeSetContext codeSetContext = getCodeSets();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 173 */     if (codeSetContext == null) {
-/* 174 */       return super.createCharBTCConverter();
-/*     */     }
-/*     */     
-/* 177 */     OSFCodeSetRegistry.Entry entry = OSFCodeSetRegistry.lookupEntry(codeSetContext.getCharCodeSet());
-/*     */     
-/* 179 */     if (entry == null) {
-/* 180 */       throw this.wrapper.unknownCodeset(entry);
-/*     */     }
-/* 182 */     return CodeSetConversion.impl().getBTCConverter(entry, isLittleEndian());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected CodeSetConversion.BTCConverter createWCharBTCConverter() {
-/* 187 */     CodeSetComponentInfo.CodeSetContext codeSetContext = getCodeSets();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 192 */     if (codeSetContext == null) {
-/* 193 */       if (getConnection().isServer()) {
-/* 194 */         throw this.omgWrapper.noClientWcharCodesetCtx();
-/*     */       }
-/* 196 */       throw this.omgWrapper.noServerWcharCodesetCmp();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 200 */     OSFCodeSetRegistry.Entry entry = OSFCodeSetRegistry.lookupEntry(codeSetContext.getWCharCodeSet());
-/*     */     
-/* 202 */     if (entry == null) {
-/* 203 */       throw this.wrapper.unknownCodeset(entry);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 213 */     if (entry == OSFCodeSetRegistry.UTF_16 && 
-/* 214 */       getGIOPVersion().equals(GIOPVersion.V1_2)) {
-/* 215 */       return CodeSetConversion.impl().getBTCConverter(entry, false);
-/*     */     }
-/*     */     
-/* 218 */     return CodeSetConversion.impl().getBTCConverter(entry, isLittleEndian());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private CodeSetComponentInfo.CodeSetContext getCodeSets() {
-/* 227 */     if (getConnection() == null) {
-/* 228 */       return CodeSetComponentInfo.LOCAL_CODE_SETS;
-/*     */     }
-/* 230 */     return getConnection().getCodeSetContext();
-/*     */   }
-/*     */   
-/*     */   public final CodeBase getCodeBase() {
-/* 234 */     if (getConnection() == null) {
-/* 235 */       return null;
-/*     */     }
-/* 237 */     return getConnection().getCodeBase();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CDRInputStream dup() {
-/* 257 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void dprint(String paramString) {
-/* 263 */     ORBUtility.dprint("CDRInputObject", paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\CDRInputObject.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.encoding;
+
+import java.nio.ByteBuffer;
+
+import com.sun.org.omg.SendingContext.CodeBase;
+
+import com.sun.corba.se.pept.encoding.InputObject;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.spi.transport.CorbaConnection;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+
+import com.sun.corba.se.impl.encoding.BufferManagerFactory;
+import com.sun.corba.se.impl.encoding.CodeSetComponentInfo;
+import com.sun.corba.se.impl.encoding.CodeSetConversion;
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.logging.OMGSystemException;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+
+/**
+ * @author Harold Carr
+ */
+public class CDRInputObject extends CDRInputStream
+    implements
+        InputObject
+{
+    private CorbaConnection corbaConnection;
+    private Message header;
+    private boolean unmarshaledHeader;
+    private ORB orb ;
+    private ORBUtilSystemException wrapper ;
+    private OMGSystemException omgWrapper ;
+
+    public CDRInputObject(ORB orb,
+                          CorbaConnection corbaConnection,
+                          ByteBuffer byteBuffer,
+                          Message header)
+    {
+        super(orb, byteBuffer, header.getSize(), header.isLittleEndian(),
+              header.getGIOPVersion(), header.getEncodingVersion(),
+              BufferManagerFactory.newBufferManagerRead(
+                                          header.getGIOPVersion(),
+                                          header.getEncodingVersion(),
+                                          orb));
+
+        this.corbaConnection = corbaConnection;
+        this.orb = orb ;
+        this.wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_ENCODING ) ;
+        this.omgWrapper = OMGSystemException.get( orb,
+            CORBALogDomains.RPC_ENCODING ) ;
+
+        if (orb.transportDebugFlag) {
+            dprint(".CDRInputObject constructor:");
+        }
+
+        getBufferManager().init(header);
+
+        this.header = header;
+
+        unmarshaledHeader = false;
+
+        setIndex(Message.GIOPMessageHeaderLength);
+
+        setBufferLength(header.getSize());
+    }
+
+    // REVISIT - think about this some more.
+    // This connection normally is accessed from the message mediator.
+    // However, giop input needs to get code set info from the connetion
+    // *before* the message mediator is available.
+    public final CorbaConnection getConnection()
+    {
+        return corbaConnection;
+    }
+
+    // XREVISIT - Should the header be kept in the stream or the
+    // message mediator?  Or should we not have a header and
+    // have the information stored in the message mediator
+    // directly?
+    public Message getMessageHeader()
+    {
+        return header;
+    }
+
+    /**
+     * Unmarshal the extended GIOP header
+     * NOTE: May be fragmented, so should not be called by the ReaderThread.
+     * See CorbaResponseWaitingRoomImpl.waitForResponse.  It is done
+     * there in the client thread.
+     */
+    public void unmarshalHeader()
+    {
+        // Unmarshal the extended GIOP message from the buffer.
+
+        if (!unmarshaledHeader) {
+            try {
+                if (((ORB)orb()).transportDebugFlag) {
+                    dprint(".unmarshalHeader->: " + getMessageHeader());
+                }
+                getMessageHeader().read(this);
+                unmarshaledHeader= true;
+            } catch (RuntimeException e) {
+                if (((ORB)orb()).transportDebugFlag) {
+                    dprint(".unmarshalHeader: !!ERROR!!: "
+                           + getMessageHeader()
+                           + ": " + e);
+                }
+                throw e;
+            } finally {
+                if (((ORB)orb()).transportDebugFlag) {
+                    dprint(".unmarshalHeader<-: " + getMessageHeader());
+                }
+            }
+        }
+    }
+
+    public final boolean unmarshaledHeader()
+    {
+        return unmarshaledHeader;
+    }
+
+    /**
+     * Override the default CDR factory behavior to get the
+     * negotiated code sets from the connection.
+     *
+     * These are only called once per message, the first time needed.
+     *
+     * In the local case, there is no Connection, so use the
+     * local code sets.
+     */
+    protected CodeSetConversion.BTCConverter createCharBTCConverter() {
+        CodeSetComponentInfo.CodeSetContext codesets = getCodeSets();
+
+        // If the connection doesn't have its negotiated
+        // code sets by now, fall back on the defaults defined
+        // in CDRInputStream.
+        if (codesets == null)
+            return super.createCharBTCConverter();
+
+        OSFCodeSetRegistry.Entry charSet
+            = OSFCodeSetRegistry.lookupEntry(codesets.getCharCodeSet());
+
+        if (charSet == null)
+            throw wrapper.unknownCodeset( charSet ) ;
+
+        return CodeSetConversion.impl().getBTCConverter(charSet, isLittleEndian());
+    }
+
+    protected CodeSetConversion.BTCConverter createWCharBTCConverter() {
+
+        CodeSetComponentInfo.CodeSetContext codesets = getCodeSets();
+
+        // If the connection doesn't have its negotiated
+        // code sets by now, we have to throw an exception.
+        // See CORBA formal 00-11-03 13.9.2.6.
+        if (codesets == null) {
+            if (getConnection().isServer())
+                throw omgWrapper.noClientWcharCodesetCtx() ;
+            else
+                throw omgWrapper.noServerWcharCodesetCmp() ;
+        }
+
+        OSFCodeSetRegistry.Entry wcharSet
+            = OSFCodeSetRegistry.lookupEntry(codesets.getWCharCodeSet());
+
+        if (wcharSet == null)
+            throw wrapper.unknownCodeset( wcharSet ) ;
+
+        // For GIOP 1.2 and UTF-16, use big endian if there is no byte
+        // order marker.  (See issue 3405b)
+        //
+        // For GIOP 1.1 and UTF-16, use the byte order the stream if
+        // there isn't (and there shouldn't be) a byte order marker.
+        //
+        // GIOP 1.0 doesn't have wchars.  If we're talking to a legacy ORB,
+        // we do what our old ORBs did.
+        if (wcharSet == OSFCodeSetRegistry.UTF_16) {
+            if (getGIOPVersion().equals(GIOPVersion.V1_2))
+                return CodeSetConversion.impl().getBTCConverter(wcharSet, false);
+        }
+
+        return CodeSetConversion.impl().getBTCConverter(wcharSet, isLittleEndian());
+    }
+
+    // If we're local and don't have a Connection, use the
+    // local code sets, otherwise get them from the connection.
+    // If the connection doesn't have negotiated code sets
+    // yet, then we use ISO8859-1 for char/string and wchar/wstring
+    // are illegal.
+    private CodeSetComponentInfo.CodeSetContext getCodeSets() {
+        if (getConnection() == null)
+            return CodeSetComponentInfo.LOCAL_CODE_SETS;
+        else
+            return getConnection().getCodeSetContext();
+    }
+
+    public final CodeBase getCodeBase() {
+        if (getConnection() == null)
+            return null;
+        else
+            return getConnection().getCodeBase();
+    }
+
+    // -----------------------------------------------------------
+    // Below this point are commented out methods with features
+    // from the old stream.  We must find ways to address
+    // these issues in the future.
+    // -----------------------------------------------------------
+
+    // XREVISIT
+//     private XIIOPInputStream(XIIOPInputStream stream) {
+//         super(stream);
+
+//         this.conn = stream.conn;
+//         this.msg = stream.msg;
+//         this.unmarshaledHeader = stream.unmarshaledHeader;
+//     }
+
+    public CDRInputStream dup() {
+        // XREVISIT
+        return null;
+        // return new XIIOPInputStream(this);
+    }
+
+    protected void dprint(String msg)
+    {
+        ORBUtility.dprint("CDRInputObject", msg);
+    }
+}
+
+// End of file.

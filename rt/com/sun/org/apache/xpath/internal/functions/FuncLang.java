@@ -1,90 +1,84 @@
-/*    */ package com.sun.org.apache.xpath.internal.functions;
-/*    */ 
-/*    */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*    */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XBoolean;
-/*    */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*    */ import javax.xml.transform.TransformerException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class FuncLang
-/*    */   extends FunctionOneArg
-/*    */ {
-/*    */   static final long serialVersionUID = -7868705139354872185L;
-/*    */   
-/*    */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/* 49 */     String lang = this.m_arg0.execute(xctxt).str();
-/* 50 */     int parent = xctxt.getCurrentNode();
-/* 51 */     boolean isLang = false;
-/* 52 */     DTM dtm = xctxt.getDTM(parent);
-/*    */     
-/* 54 */     while (-1 != parent) {
-/*    */       
-/* 56 */       if (1 == dtm.getNodeType(parent)) {
-/*    */         
-/* 58 */         int langAttr = dtm.getAttributeNode(parent, "http://www.w3.org/XML/1998/namespace", "lang");
-/*    */         
-/* 60 */         if (-1 != langAttr) {
-/*    */           
-/* 62 */           String langVal = dtm.getNodeValue(langAttr);
-/*    */           
-/* 64 */           if (langVal.toLowerCase().startsWith(lang.toLowerCase())) {
-/*    */             
-/* 66 */             int valLen = lang.length();
-/*    */             
-/* 68 */             if (langVal.length() == valLen || langVal
-/* 69 */               .charAt(valLen) == '-')
-/*    */             {
-/* 71 */               isLang = true;
-/*    */             }
-/*    */           } 
-/*    */           
-/*    */           break;
-/*    */         } 
-/*    */       } 
-/*    */       
-/* 79 */       parent = dtm.getParent(parent);
-/*    */     } 
-/*    */     
-/* 82 */     return isLang ? XBoolean.S_TRUE : XBoolean.S_FALSE;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\functions\FuncLang.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: FuncLang.java,v 1.2.4.1 2005/09/14 20:18:44 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.functions;
+
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.objects.XBoolean;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+
+/**
+ * Execute the Lang() function.
+ * @xsl.usage advanced
+ */
+public class FuncLang extends FunctionOneArg
+{
+    static final long serialVersionUID = -7868705139354872185L;
+
+  /**
+   * Execute the function.  The function must return
+   * a valid object.
+   * @param xctxt The current execution context.
+   * @return A valid XObject.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt) throws javax.xml.transform.TransformerException
+  {
+
+    String lang = m_arg0.execute(xctxt).str();
+    int parent = xctxt.getCurrentNode();
+    boolean isLang = false;
+    DTM dtm = xctxt.getDTM(parent);
+
+    while (DTM.NULL != parent)
+    {
+      if (DTM.ELEMENT_NODE == dtm.getNodeType(parent))
+      {
+        int langAttr = dtm.getAttributeNode(parent, "http://www.w3.org/XML/1998/namespace", "lang");
+
+        if (DTM.NULL != langAttr)
+        {
+          String langVal = dtm.getNodeValue(langAttr);
+          // %OPT%
+          if (langVal.toLowerCase().startsWith(lang.toLowerCase()))
+          {
+            int valLen = lang.length();
+
+            if ((langVal.length() == valLen)
+                    || (langVal.charAt(valLen) == '-'))
+            {
+              isLang = true;
+            }
+          }
+
+          break;
+        }
+      }
+
+      parent = dtm.getParent(parent);
+    }
+
+    return isLang ? XBoolean.S_TRUE : XBoolean.S_FALSE;
+  }
+}

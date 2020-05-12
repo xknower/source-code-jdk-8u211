@@ -1,11 +1,48 @@
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package javax.swing.table;
 
-public abstract class TableStringConverter {
-  public abstract String toString(TableModel paramTableModel, int paramInt1, int paramInt2);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\table\TableStringConverter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * TableStringConverter is used to convert objects from the model into
+ * strings.  This is useful in filtering and searching when the model returns
+ * objects that do not have meaningful <code>toString</code> implementations.
+ *
+ * @since 1.6
  */
+public abstract class TableStringConverter {
+    /**
+     * Returns the string representation of the value at the specified
+     * location.
+     *
+     * @param model the <code>TableModel</code> to fetch the value from
+     * @param row the row the string is being requested for
+     * @param column the column the string is being requested for
+     * @return the string representation.  This should never return null.
+     * @throws NullPointerException if <code>model</code> is null
+     * @throws IndexOutOfBoundsException if the arguments are outside the
+     *         bounds of the model
+     */
+    public abstract String toString(TableModel model, int row, int column);
+}

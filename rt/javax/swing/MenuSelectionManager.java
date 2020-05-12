@@ -1,523 +1,517 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.KeyEvent;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.util.Vector;
-/*     */ import javax.swing.event.ChangeEvent;
-/*     */ import javax.swing.event.ChangeListener;
-/*     */ import javax.swing.event.EventListenerList;
-/*     */ import sun.awt.AWTAccessor;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MenuSelectionManager
-/*     */ {
-/*  43 */   private Vector<MenuElement> selection = new Vector<>();
-/*     */   
-/*     */   private static final boolean TRACE = false;
-/*     */   
-/*     */   private static final boolean VERBOSE = false;
-/*     */   
-/*     */   private static final boolean DEBUG = false;
-/*  50 */   private static final StringBuilder MENU_SELECTION_MANAGER_KEY = new StringBuilder("javax.swing.MenuSelectionManager");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static MenuSelectionManager defaultManager() {
-/*  59 */     synchronized (MENU_SELECTION_MANAGER_KEY) {
-/*  60 */       AppContext appContext = AppContext.getAppContext();
-/*  61 */       MenuSelectionManager menuSelectionManager = (MenuSelectionManager)appContext.get(MENU_SELECTION_MANAGER_KEY);
-/*     */       
-/*  63 */       if (menuSelectionManager == null) {
-/*  64 */         menuSelectionManager = new MenuSelectionManager();
-/*  65 */         appContext.put(MENU_SELECTION_MANAGER_KEY, menuSelectionManager);
-/*     */ 
-/*     */         
-/*  68 */         Object object = appContext.get(SwingUtilities2.MENU_SELECTION_MANAGER_LISTENER_KEY);
-/*  69 */         if (object != null && object instanceof ChangeListener) {
-/*  70 */           menuSelectionManager.addChangeListener((ChangeListener)object);
-/*     */         }
-/*     */       } 
-/*     */       
-/*  74 */       return menuSelectionManager;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  83 */   protected transient ChangeEvent changeEvent = null;
-/*  84 */   protected EventListenerList listenerList = new EventListenerList();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSelectedPath(MenuElement[] paramArrayOfMenuElement) {
-/*  99 */     int k = this.selection.size();
-/* 100 */     byte b = 0;
-/*     */     
-/* 102 */     if (paramArrayOfMenuElement == null) {
-/* 103 */       paramArrayOfMenuElement = new MenuElement[0];
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     int i, j;
-/*     */ 
-/*     */     
-/* 111 */     for (i = 0, j = paramArrayOfMenuElement.length; i < j && 
-/* 112 */       i < k && this.selection.elementAt(i) == paramArrayOfMenuElement[i]; i++) {
-/* 113 */       b++;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 118 */     for (i = k - 1; i >= b; i--) {
-/* 119 */       MenuElement menuElement = this.selection.elementAt(i);
-/* 120 */       this.selection.removeElementAt(i);
-/* 121 */       menuElement.menuSelectionChanged(false);
-/*     */     } 
-/*     */     
-/* 124 */     for (i = b, j = paramArrayOfMenuElement.length; i < j; i++) {
-/* 125 */       if (paramArrayOfMenuElement[i] != null) {
-/* 126 */         this.selection.addElement(paramArrayOfMenuElement[i]);
-/* 127 */         paramArrayOfMenuElement[i].menuSelectionChanged(true);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 131 */     fireStateChanged();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MenuElement[] getSelectedPath() {
-/* 140 */     MenuElement[] arrayOfMenuElement = new MenuElement[this.selection.size()]; byte b;
-/*     */     int i;
-/* 142 */     for (b = 0, i = this.selection.size(); b < i; b++)
-/* 143 */       arrayOfMenuElement[b] = this.selection.elementAt(b); 
-/* 144 */     return arrayOfMenuElement;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clearSelectedPath() {
-/* 152 */     if (this.selection.size() > 0) {
-/* 153 */       setSelectedPath(null);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addChangeListener(ChangeListener paramChangeListener) {
-/* 163 */     this.listenerList.add(ChangeListener.class, paramChangeListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeChangeListener(ChangeListener paramChangeListener) {
-/* 172 */     this.listenerList.remove(ChangeListener.class, paramChangeListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ChangeListener[] getChangeListeners() {
-/* 184 */     return this.listenerList.<ChangeListener>getListeners(ChangeListener.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fireStateChanged() {
-/* 196 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*     */ 
-/*     */     
-/* 199 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 200 */       if (arrayOfObject[i] == ChangeListener.class) {
-/*     */         
-/* 202 */         if (this.changeEvent == null)
-/* 203 */           this.changeEvent = new ChangeEvent(this); 
-/* 204 */         ((ChangeListener)arrayOfObject[i + 1]).stateChanged(this.changeEvent);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void processMouseEvent(MouseEvent paramMouseEvent) {
-/* 227 */     Point point = paramMouseEvent.getPoint();
-/*     */     
-/* 229 */     Component component = paramMouseEvent.getComponent();
-/*     */     
-/* 231 */     if (component != null && !component.isShowing()) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 237 */     int n = paramMouseEvent.getID();
-/* 238 */     int i1 = paramMouseEvent.getModifiers();
-/*     */     
-/* 240 */     if ((n == 504 || n == 505) && (i1 & 0x1C) != 0) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 247 */     if (component != null) {
-/* 248 */       SwingUtilities.convertPointToScreen(point, component);
-/*     */     }
-/*     */     
-/* 251 */     int i = point.x;
-/* 252 */     int j = point.y;
-/*     */     
-/* 254 */     Vector<MenuElement> vector = (Vector)this.selection.clone();
-/* 255 */     int m = vector.size();
-/* 256 */     boolean bool = false;
-/* 257 */     for (int k = m - 1; k >= 0 && !bool; k--) {
-/* 258 */       MenuElement menuElement = vector.elementAt(k);
-/* 259 */       MenuElement[] arrayOfMenuElement1 = menuElement.getSubElements();
-/*     */       
-/* 261 */       MenuElement[] arrayOfMenuElement2 = null; byte b; int i2;
-/* 262 */       for (b = 0, i2 = arrayOfMenuElement1.length; b < i2 && !bool; b++) {
-/* 263 */         if (arrayOfMenuElement1[b] != null) {
-/*     */           
-/* 265 */           Component component1 = arrayOfMenuElement1[b].getComponent();
-/* 266 */           if (component1.isShowing()) {
-/*     */             int i3, i4;
-/* 268 */             if (component1 instanceof JComponent) {
-/* 269 */               i3 = component1.getWidth();
-/* 270 */               i4 = component1.getHeight();
-/*     */             } else {
-/* 272 */               Rectangle rectangle = component1.getBounds();
-/* 273 */               i3 = rectangle.width;
-/* 274 */               i4 = rectangle.height;
-/*     */             } 
-/* 276 */             point.x = i;
-/* 277 */             point.y = j;
-/* 278 */             SwingUtilities.convertPointFromScreen(point, component1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 283 */             if (point.x >= 0 && point.x < i3 && point.y >= 0 && point.y < i4) {
-/*     */ 
-/*     */               
-/* 286 */               if (arrayOfMenuElement2 == null) {
-/* 287 */                 arrayOfMenuElement2 = new MenuElement[k + 2];
-/* 288 */                 for (byte b1 = 0; b1 <= k; b1++)
-/* 289 */                   arrayOfMenuElement2[b1] = vector.elementAt(b1); 
-/*     */               } 
-/* 291 */               arrayOfMenuElement2[k + 1] = arrayOfMenuElement1[b];
-/* 292 */               MenuElement[] arrayOfMenuElement = getSelectedPath();
-/*     */ 
-/*     */               
-/* 295 */               if (arrayOfMenuElement[arrayOfMenuElement.length - 1] != arrayOfMenuElement2[k + 1] && (arrayOfMenuElement.length < 2 || arrayOfMenuElement[arrayOfMenuElement.length - 2] != arrayOfMenuElement2[k + 1])) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */                 
-/* 300 */                 Component component2 = arrayOfMenuElement[arrayOfMenuElement.length - 1].getComponent();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */                 
-/* 308 */                 MouseEvent mouseEvent1 = new MouseEvent(component2, 505, paramMouseEvent.getWhen(), paramMouseEvent.getModifiers(), point.x, point.y, paramMouseEvent.getXOnScreen(), paramMouseEvent.getYOnScreen(), paramMouseEvent.getClickCount(), paramMouseEvent.isPopupTrigger(), 0);
-/*     */                 
-/* 310 */                 AWTAccessor.MouseEventAccessor mouseEventAccessor1 = AWTAccessor.getMouseEventAccessor();
-/* 311 */                 mouseEventAccessor1.setCausedByTouchEvent(mouseEvent1, mouseEventAccessor1
-/* 312 */                     .isCausedByTouchEvent(paramMouseEvent));
-/* 313 */                 arrayOfMenuElement[arrayOfMenuElement.length - 1]
-/* 314 */                   .processMouseEvent(mouseEvent1, arrayOfMenuElement2, this);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */                 
-/* 323 */                 MouseEvent mouseEvent2 = new MouseEvent(component1, 504, paramMouseEvent.getWhen(), paramMouseEvent.getModifiers(), point.x, point.y, paramMouseEvent.getXOnScreen(), paramMouseEvent.getYOnScreen(), paramMouseEvent.getClickCount(), paramMouseEvent.isPopupTrigger(), 0);
-/*     */                 
-/* 325 */                 mouseEventAccessor1.setCausedByTouchEvent(mouseEvent2, mouseEventAccessor1
-/* 326 */                     .isCausedByTouchEvent(paramMouseEvent));
-/* 327 */                 arrayOfMenuElement1[b].processMouseEvent(mouseEvent2, arrayOfMenuElement2, this);
-/*     */               } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */               
-/* 334 */               MouseEvent mouseEvent = new MouseEvent(component1, paramMouseEvent.getID(), paramMouseEvent.getWhen(), paramMouseEvent.getModifiers(), point.x, point.y, paramMouseEvent.getXOnScreen(), paramMouseEvent.getYOnScreen(), paramMouseEvent.getClickCount(), paramMouseEvent.isPopupTrigger(), 0);
-/*     */               
-/* 336 */               AWTAccessor.MouseEventAccessor mouseEventAccessor = AWTAccessor.getMouseEventAccessor();
-/* 337 */               mouseEventAccessor.setCausedByTouchEvent(mouseEvent, mouseEventAccessor
-/* 338 */                   .isCausedByTouchEvent(paramMouseEvent));
-/* 339 */               arrayOfMenuElement1[b].processMouseEvent(mouseEvent, arrayOfMenuElement2, this);
-/* 340 */               bool = true;
-/* 341 */               paramMouseEvent.consume();
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   } private void printMenuElementArray(MenuElement[] paramArrayOfMenuElement) {
-/* 348 */     printMenuElementArray(paramArrayOfMenuElement, false);
-/*     */   }
-/*     */   
-/*     */   private void printMenuElementArray(MenuElement[] paramArrayOfMenuElement, boolean paramBoolean) {
-/* 352 */     System.out.println("Path is("); byte b;
-/*     */     int i;
-/* 354 */     for (b = 0, i = paramArrayOfMenuElement.length; b < i; b++) {
-/* 355 */       for (byte b1 = 0; b1 <= b; b1++)
-/* 356 */         System.out.print("  "); 
-/* 357 */       MenuElement menuElement = paramArrayOfMenuElement[b];
-/* 358 */       if (menuElement instanceof JMenuItem) {
-/* 359 */         System.out.println(((JMenuItem)menuElement).getText() + ", ");
-/* 360 */       } else if (menuElement instanceof JMenuBar) {
-/* 361 */         System.out.println("JMenuBar, ");
-/* 362 */       } else if (menuElement instanceof JPopupMenu) {
-/* 363 */         System.out.println("JPopupMenu, ");
-/* 364 */       } else if (menuElement == null) {
-/* 365 */         System.out.println("NULL , ");
-/*     */       } else {
-/* 367 */         System.out.println("" + menuElement + ", ");
-/*     */       } 
-/*     */     } 
-/* 370 */     System.out.println(")");
-/*     */     
-/* 372 */     if (paramBoolean == true) {
-/* 373 */       Thread.dumpStack();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component componentForPoint(Component paramComponent, Point paramPoint) {
-/* 390 */     Point point = paramPoint;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 400 */     SwingUtilities.convertPointToScreen(point, paramComponent);
-/*     */     
-/* 402 */     int i = point.x;
-/* 403 */     int j = point.y;
-/*     */     
-/* 405 */     Vector<MenuElement> vector = (Vector)this.selection.clone();
-/* 406 */     int m = vector.size();
-/* 407 */     for (int k = m - 1; k >= 0; k--) {
-/* 408 */       MenuElement menuElement = vector.elementAt(k);
-/* 409 */       MenuElement[] arrayOfMenuElement = menuElement.getSubElements(); byte b;
-/*     */       int n;
-/* 411 */       for (b = 0, n = arrayOfMenuElement.length; b < n; b++) {
-/* 412 */         if (arrayOfMenuElement[b] != null) {
-/*     */           
-/* 414 */           Component component = arrayOfMenuElement[b].getComponent();
-/* 415 */           if (component.isShowing()) {
-/*     */             int i1, i2;
-/* 417 */             if (component instanceof JComponent) {
-/* 418 */               i1 = component.getWidth();
-/* 419 */               i2 = component.getHeight();
-/*     */             } else {
-/* 421 */               Rectangle rectangle = component.getBounds();
-/* 422 */               i1 = rectangle.width;
-/* 423 */               i2 = rectangle.height;
-/*     */             } 
-/* 425 */             point.x = i;
-/* 426 */             point.y = j;
-/* 427 */             SwingUtilities.convertPointFromScreen(point, component);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 432 */             if (point.x >= 0 && point.x < i1 && point.y >= 0 && point.y < i2)
-/* 433 */               return component; 
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 437 */     }  return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void processKeyEvent(KeyEvent paramKeyEvent) {
-/* 447 */     MenuElement[] arrayOfMenuElement1 = new MenuElement[0];
-/* 448 */     arrayOfMenuElement1 = this.selection.<MenuElement>toArray(arrayOfMenuElement1);
-/* 449 */     int i = arrayOfMenuElement1.length;
-/*     */ 
-/*     */     
-/* 452 */     if (i < 1) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 456 */     for (int j = i - 1; j >= 0; j--) {
-/* 457 */       MenuElement menuElement = arrayOfMenuElement1[j];
-/* 458 */       MenuElement[] arrayOfMenuElement4 = menuElement.getSubElements();
-/* 459 */       MenuElement[] arrayOfMenuElement3 = null;
-/*     */       
-/* 461 */       for (byte b = 0; b < arrayOfMenuElement4.length; b++) {
-/* 462 */         if (arrayOfMenuElement4[b] != null && arrayOfMenuElement4[b].getComponent().isShowing() && arrayOfMenuElement4[b]
-/* 463 */           .getComponent().isEnabled()) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 467 */           if (arrayOfMenuElement3 == null) {
-/* 468 */             arrayOfMenuElement3 = new MenuElement[j + 2];
-/* 469 */             System.arraycopy(arrayOfMenuElement1, 0, arrayOfMenuElement3, 0, j + 1);
-/*     */           } 
-/* 471 */           arrayOfMenuElement3[j + 1] = arrayOfMenuElement4[b];
-/* 472 */           arrayOfMenuElement4[b].processKeyEvent(paramKeyEvent, arrayOfMenuElement3, this);
-/* 473 */           if (paramKeyEvent.isConsumed()) {
-/*     */             return;
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 480 */     MenuElement[] arrayOfMenuElement2 = new MenuElement[1];
-/* 481 */     arrayOfMenuElement2[0] = arrayOfMenuElement1[0];
-/* 482 */     arrayOfMenuElement2[0].processKeyEvent(paramKeyEvent, arrayOfMenuElement2, this);
-/* 483 */     if (paramKeyEvent.isConsumed()) {
-/*     */       return;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isComponentPartOfCurrentMenu(Component paramComponent) {
-/* 492 */     if (this.selection.size() > 0) {
-/* 493 */       MenuElement menuElement = this.selection.elementAt(0);
-/* 494 */       return isComponentPartOfCurrentMenu(menuElement, paramComponent);
-/*     */     } 
-/* 496 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isComponentPartOfCurrentMenu(MenuElement paramMenuElement, Component paramComponent) {
-/* 503 */     if (paramMenuElement == null) {
-/* 504 */       return false;
-/*     */     }
-/* 506 */     if (paramMenuElement.getComponent() == paramComponent) {
-/* 507 */       return true;
-/*     */     }
-/* 509 */     MenuElement[] arrayOfMenuElement = paramMenuElement.getSubElements(); byte b; int i;
-/* 510 */     for (b = 0, i = arrayOfMenuElement.length; b < i; b++) {
-/* 511 */       if (isComponentPartOfCurrentMenu(arrayOfMenuElement[b], paramComponent)) {
-/* 512 */         return true;
-/*     */       }
-/*     */     } 
-/* 515 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\MenuSelectionManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.*;
+import java.util.*;
+import java.awt.event.*;
+import javax.swing.event.*;
+
+import sun.awt.AppContext;
+import sun.awt.AWTAccessor;
+import sun.awt.AWTAccessor.MouseEventAccessor;
+import sun.swing.SwingUtilities2;
+
+/**
+ * A MenuSelectionManager owns the selection in menu hierarchy.
+ *
+ * @author Arnaud Weber
+ */
+public class MenuSelectionManager {
+    private Vector<MenuElement> selection = new Vector<MenuElement>();
+
+    /* diagnostic aids -- should be false for production builds. */
+    private static final boolean TRACE =   false; // trace creates and disposes
+    private static final boolean VERBOSE = false; // show reuse hits/misses
+    private static final boolean DEBUG =   false;  // show bad params, misc.
+
+    private static final StringBuilder MENU_SELECTION_MANAGER_KEY =
+                       new StringBuilder("javax.swing.MenuSelectionManager");
+
+    /**
+     * Returns the default menu selection manager.
+     *
+     * @return a MenuSelectionManager object
+     */
+    public static MenuSelectionManager defaultManager() {
+        synchronized (MENU_SELECTION_MANAGER_KEY) {
+            AppContext context = AppContext.getAppContext();
+            MenuSelectionManager msm = (MenuSelectionManager)context.get(
+                                                 MENU_SELECTION_MANAGER_KEY);
+            if (msm == null) {
+                msm = new MenuSelectionManager();
+                context.put(MENU_SELECTION_MANAGER_KEY, msm);
+
+                // installing additional listener if found in the AppContext
+                Object o = context.get(SwingUtilities2.MENU_SELECTION_MANAGER_LISTENER_KEY);
+                if (o != null && o instanceof ChangeListener) {
+                    msm.addChangeListener((ChangeListener) o);
+                }
+            }
+
+            return msm;
+        }
+    }
+
+    /**
+     * Only one ChangeEvent is needed per button model instance since the
+     * event's only state is the source property.  The source of events
+     * generated is always "this".
+     */
+    protected transient ChangeEvent changeEvent = null;
+    protected EventListenerList listenerList = new EventListenerList();
+
+    /**
+     * Changes the selection in the menu hierarchy.  The elements
+     * in the array are sorted in order from the root menu
+     * element to the currently selected menu element.
+     * <p>
+     * Note that this method is public but is used by the look and
+     * feel engine and should not be called by client applications.
+     *
+     * @param path  an array of <code>MenuElement</code> objects specifying
+     *        the selected path
+     */
+    public void setSelectedPath(MenuElement[] path) {
+        int i,c;
+        int currentSelectionCount = selection.size();
+        int firstDifference = 0;
+
+        if(path == null) {
+            path = new MenuElement[0];
+        }
+
+        if (DEBUG) {
+            System.out.print("Previous:  "); printMenuElementArray(getSelectedPath());
+            System.out.print("New:  "); printMenuElementArray(path);
+        }
+
+        for(i=0,c=path.length;i<c;i++) {
+            if (i < currentSelectionCount && selection.elementAt(i) == path[i])
+                firstDifference++;
+            else
+                break;
+        }
+
+        for(i=currentSelectionCount - 1 ; i >= firstDifference ; i--) {
+            MenuElement me = selection.elementAt(i);
+            selection.removeElementAt(i);
+            me.menuSelectionChanged(false);
+        }
+
+        for(i = firstDifference, c = path.length ; i < c ; i++) {
+            if (path[i] != null) {
+                selection.addElement(path[i]);
+                path[i].menuSelectionChanged(true);
+            }
+        }
+
+        fireStateChanged();
+    }
+
+    /**
+     * Returns the path to the currently selected menu item
+     *
+     * @return an array of MenuElement objects representing the selected path
+     */
+    public MenuElement[] getSelectedPath() {
+        MenuElement res[] = new MenuElement[selection.size()];
+        int i,c;
+        for(i=0,c=selection.size();i<c;i++)
+            res[i] = selection.elementAt(i);
+        return res;
+    }
+
+    /**
+     * Tell the menu selection to close and unselect all the menu components. Call this method
+     * when a choice has been made
+     */
+    public void clearSelectedPath() {
+        if (selection.size() > 0) {
+            setSelectedPath(null);
+        }
+    }
+
+    /**
+     * Adds a ChangeListener to the button.
+     *
+     * @param l the listener to add
+     */
+    public void addChangeListener(ChangeListener l) {
+        listenerList.add(ChangeListener.class, l);
+    }
+
+    /**
+     * Removes a ChangeListener from the button.
+     *
+     * @param l the listener to remove
+     */
+    public void removeChangeListener(ChangeListener l) {
+        listenerList.remove(ChangeListener.class, l);
+    }
+
+    /**
+     * Returns an array of all the <code>ChangeListener</code>s added
+     * to this MenuSelectionManager with addChangeListener().
+     *
+     * @return all of the <code>ChangeListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ChangeListener[] getChangeListeners() {
+        return listenerList.getListeners(ChangeListener.class);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is created lazily.
+     *
+     * @see EventListenerList
+     */
+    protected void fireStateChanged() {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ChangeListener.class) {
+                // Lazily create the event:
+                if (changeEvent == null)
+                    changeEvent = new ChangeEvent(this);
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
+
+    /**
+     * When a MenuElement receives an event from a MouseListener, it should never process the event
+     * directly. Instead all MenuElements should call this method with the event.
+     *
+     * @param event  a MouseEvent object
+     */
+    public void processMouseEvent(MouseEvent event) {
+        int screenX,screenY;
+        Point p;
+        int i,c,j,d;
+        Component mc;
+        Rectangle r2;
+        int cWidth,cHeight;
+        MenuElement menuElement;
+        MenuElement subElements[];
+        MenuElement path[];
+        Vector<MenuElement> tmp;
+        int selectionSize;
+        p = event.getPoint();
+
+        Component source = event.getComponent();
+
+        if ((source != null) && !source.isShowing()) {
+            // This can happen if a mouseReleased removes the
+            // containing component -- bug 4146684
+            return;
+        }
+
+        int type = event.getID();
+        int modifiers = event.getModifiers();
+        // 4188027: drag enter/exit added in JDK 1.1.7A, JDK1.2
+        if ((type==MouseEvent.MOUSE_ENTERED||
+             type==MouseEvent.MOUSE_EXITED)
+            && ((modifiers & (InputEvent.BUTTON1_MASK |
+                              InputEvent.BUTTON2_MASK | InputEvent.BUTTON3_MASK)) !=0 )) {
+            return;
+        }
+
+        if (source != null) {
+            SwingUtilities.convertPointToScreen(p, source);
+        }
+
+        screenX = p.x;
+        screenY = p.y;
+
+        tmp = (Vector<MenuElement>)selection.clone();
+        selectionSize = tmp.size();
+        boolean success = false;
+        for (i=selectionSize - 1;i >= 0 && success == false; i--) {
+            menuElement = (MenuElement) tmp.elementAt(i);
+            subElements = menuElement.getSubElements();
+
+            path = null;
+            for (j = 0, d = subElements.length;j < d && success == false; j++) {
+                if (subElements[j] == null)
+                    continue;
+                mc = subElements[j].getComponent();
+                if(!mc.isShowing())
+                    continue;
+                if(mc instanceof JComponent) {
+                    cWidth  = mc.getWidth();
+                    cHeight = mc.getHeight();
+                } else {
+                    r2 = mc.getBounds();
+                    cWidth  = r2.width;
+                    cHeight = r2.height;
+                }
+                p.x = screenX;
+                p.y = screenY;
+                SwingUtilities.convertPointFromScreen(p,mc);
+
+                /** Send the event to visible menu element if menu element currently in
+                 *  the selected path or contains the event location
+                 */
+                if(
+                   (p.x >= 0 && p.x < cWidth && p.y >= 0 && p.y < cHeight)) {
+                    int k;
+                    if(path == null) {
+                        path = new MenuElement[i+2];
+                        for(k=0;k<=i;k++)
+                            path[k] = (MenuElement)tmp.elementAt(k);
+                    }
+                    path[i+1] = subElements[j];
+                    MenuElement currentSelection[] = getSelectedPath();
+
+                    // Enter/exit detection -- needs tuning...
+                    if (currentSelection[currentSelection.length-1] !=
+                        path[i+1] &&
+                        (currentSelection.length < 2 ||
+                         currentSelection[currentSelection.length-2] !=
+                         path[i+1])) {
+                        Component oldMC = currentSelection[currentSelection.length-1].getComponent();
+
+                        MouseEvent exitEvent = new MouseEvent(oldMC, MouseEvent.MOUSE_EXITED,
+                                                              event.getWhen(),
+                                                              event.getModifiers(), p.x, p.y,
+                                                              event.getXOnScreen(),
+                                                              event.getYOnScreen(),
+                                                              event.getClickCount(),
+                                                              event.isPopupTrigger(),
+                                                              MouseEvent.NOBUTTON);
+                        MouseEventAccessor meAccessor = AWTAccessor.getMouseEventAccessor();
+                        meAccessor.setCausedByTouchEvent(exitEvent,
+                            meAccessor.isCausedByTouchEvent(event));
+                        currentSelection[currentSelection.length-1].
+                            processMouseEvent(exitEvent, path, this);
+
+                        MouseEvent enterEvent = new MouseEvent(mc,
+                                                               MouseEvent.MOUSE_ENTERED,
+                                                               event.getWhen(),
+                                                               event.getModifiers(), p.x, p.y,
+                                                               event.getXOnScreen(),
+                                                               event.getYOnScreen(),
+                                                               event.getClickCount(),
+                                                               event.isPopupTrigger(),
+                                                               MouseEvent.NOBUTTON);
+                        meAccessor.setCausedByTouchEvent(enterEvent,
+                            meAccessor.isCausedByTouchEvent(event));
+                        subElements[j].processMouseEvent(enterEvent, path, this);
+                    }
+                    MouseEvent mouseEvent = new MouseEvent(mc, event.getID(),event. getWhen(),
+                                                           event.getModifiers(), p.x, p.y,
+                                                           event.getXOnScreen(),
+                                                           event.getYOnScreen(),
+                                                           event.getClickCount(),
+                                                           event.isPopupTrigger(),
+                                                           MouseEvent.NOBUTTON);
+                    MouseEventAccessor meAccessor = AWTAccessor.getMouseEventAccessor();
+                    meAccessor.setCausedByTouchEvent(mouseEvent,
+                        meAccessor.isCausedByTouchEvent(event));
+                    subElements[j].processMouseEvent(mouseEvent, path, this);
+                    success = true;
+                    event.consume();
+                }
+            }
+        }
+    }
+
+    private void printMenuElementArray(MenuElement path[]) {
+        printMenuElementArray(path, false);
+    }
+
+    private void printMenuElementArray(MenuElement path[], boolean dumpStack) {
+        System.out.println("Path is(");
+        int i, j;
+        for(i=0,j=path.length; i<j ;i++){
+            for (int k=0; k<=i; k++)
+                System.out.print("  ");
+            MenuElement me = path[i];
+            if(me instanceof JMenuItem) {
+                System.out.println(((JMenuItem)me).getText() + ", ");
+            } else if (me instanceof JMenuBar) {
+                System.out.println("JMenuBar, ");
+            } else if(me instanceof JPopupMenu) {
+                System.out.println("JPopupMenu, ");
+            } else if (me == null) {
+                System.out.println("NULL , ");
+            } else {
+                System.out.println("" + me + ", ");
+            }
+        }
+        System.out.println(")");
+
+        if (dumpStack == true)
+            Thread.dumpStack();
+    }
+
+    /**
+     * Returns the component in the currently selected path
+     * which contains sourcePoint.
+     *
+     * @param source The component in whose coordinate space sourcePoint
+     *        is given
+     * @param sourcePoint The point which is being tested
+     * @return The component in the currently selected path which
+     *         contains sourcePoint (relative to the source component's
+     *         coordinate space.  If sourcePoint is not inside a component
+     *         on the currently selected path, null is returned.
+     */
+    public Component componentForPoint(Component source, Point sourcePoint) {
+        int screenX,screenY;
+        Point p = sourcePoint;
+        int i,c,j,d;
+        Component mc;
+        Rectangle r2;
+        int cWidth,cHeight;
+        MenuElement menuElement;
+        MenuElement subElements[];
+        Vector<MenuElement> tmp;
+        int selectionSize;
+
+        SwingUtilities.convertPointToScreen(p,source);
+
+        screenX = p.x;
+        screenY = p.y;
+
+        tmp = (Vector<MenuElement>)selection.clone();
+        selectionSize = tmp.size();
+        for(i=selectionSize - 1 ; i >= 0 ; i--) {
+            menuElement = (MenuElement) tmp.elementAt(i);
+            subElements = menuElement.getSubElements();
+
+            for(j = 0, d = subElements.length ; j < d ; j++) {
+                if (subElements[j] == null)
+                    continue;
+                mc = subElements[j].getComponent();
+                if(!mc.isShowing())
+                    continue;
+                if(mc instanceof JComponent) {
+                    cWidth  = mc.getWidth();
+                    cHeight = mc.getHeight();
+                } else {
+                    r2 = mc.getBounds();
+                    cWidth  = r2.width;
+                    cHeight = r2.height;
+                }
+                p.x = screenX;
+                p.y = screenY;
+                SwingUtilities.convertPointFromScreen(p,mc);
+
+                /** Return the deepest component on the selection
+                 *  path in whose bounds the event's point occurs
+                 */
+                if (p.x >= 0 && p.x < cWidth && p.y >= 0 && p.y < cHeight) {
+                    return mc;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * When a MenuElement receives an event from a KeyListener, it should never process the event
+     * directly. Instead all MenuElements should call this method with the event.
+     *
+     * @param e  a KeyEvent object
+     */
+    public void processKeyEvent(KeyEvent e) {
+        MenuElement[] sel2 = new MenuElement[0];
+        sel2 = selection.toArray(sel2);
+        int selSize = sel2.length;
+        MenuElement[] path;
+
+        if (selSize < 1) {
+            return;
+        }
+
+        for (int i=selSize-1; i>=0; i--) {
+            MenuElement elem = sel2[i];
+            MenuElement[] subs = elem.getSubElements();
+            path = null;
+
+            for (int j=0; j<subs.length; j++) {
+                if (subs[j] == null || !subs[j].getComponent().isShowing()
+                    || !subs[j].getComponent().isEnabled()) {
+                    continue;
+                }
+
+                if(path == null) {
+                    path = new MenuElement[i+2];
+                    System.arraycopy(sel2, 0, path, 0, i+1);
+                    }
+                path[i+1] = subs[j];
+                subs[j].processKeyEvent(e, path, this);
+                if (e.isConsumed()) {
+                    return;
+            }
+        }
+    }
+
+        // finally dispatch event to the first component in path
+        path = new MenuElement[1];
+        path[0] = sel2[0];
+        path[0].processKeyEvent(e, path, this);
+        if (e.isConsumed()) {
+            return;
+        }
+    }
+
+    /**
+     * Return true if c is part of the currently used menu
+     */
+    public boolean isComponentPartOfCurrentMenu(Component c) {
+        if(selection.size() > 0) {
+            MenuElement me = selection.elementAt(0);
+            return isComponentPartOfCurrentMenu(me,c);
+        } else
+            return false;
+    }
+
+    private boolean isComponentPartOfCurrentMenu(MenuElement root,Component c) {
+        MenuElement children[];
+        int i,d;
+
+        if (root == null)
+            return false;
+
+        if(root.getComponent() == c)
+            return true;
+        else {
+            children = root.getSubElements();
+            for(i=0,d=children.length;i<d;i++) {
+                if(isComponentPartOfCurrentMenu(children[i],c))
+                    return true;
+            }
+        }
+        return false;
+    }
+}

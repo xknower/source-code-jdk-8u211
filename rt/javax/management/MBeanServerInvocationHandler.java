@@ -1,499 +1,497 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ import com.sun.jmx.mbeanserver.MXBeanProxy;
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.lang.reflect.InvocationHandler;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Proxy;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.WeakHashMap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanServerInvocationHandler
-/*     */   implements InvocationHandler
-/*     */ {
-/*     */   public MBeanServerInvocationHandler(MBeanServerConnection paramMBeanServerConnection, ObjectName paramObjectName) {
-/* 114 */     this(paramMBeanServerConnection, paramObjectName, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerInvocationHandler(MBeanServerConnection paramMBeanServerConnection, ObjectName paramObjectName, boolean paramBoolean) {
-/* 141 */     if (paramMBeanServerConnection == null) {
-/* 142 */       throw new IllegalArgumentException("Null connection");
-/*     */     }
-/* 144 */     if (Proxy.isProxyClass(paramMBeanServerConnection.getClass()) && 
-/* 145 */       MBeanServerInvocationHandler.class.isAssignableFrom(
-/* 146 */         Proxy.getInvocationHandler(paramMBeanServerConnection).getClass())) {
-/* 147 */       throw new IllegalArgumentException("Wrapping MBeanServerInvocationHandler");
-/*     */     }
-/*     */     
-/* 150 */     if (paramObjectName == null) {
-/* 151 */       throw new IllegalArgumentException("Null object name");
-/*     */     }
-/* 153 */     this.connection = paramMBeanServerConnection;
-/* 154 */     this.objectName = paramObjectName;
-/* 155 */     this.isMXBean = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerConnection getMBeanServerConnection() {
-/* 167 */     return this.connection;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectName getObjectName() {
-/* 179 */     return this.objectName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isMXBean() {
-/* 191 */     return this.isMXBean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static <T> T newProxyInstance(MBeanServerConnection paramMBeanServerConnection, ObjectName paramObjectName, Class<T> paramClass, boolean paramBoolean) {
-/* 240 */     return JMX.newMBeanProxy(paramMBeanServerConnection, paramObjectName, paramClass, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Object invoke(Object paramObject, Method paramMethod, Object[] paramArrayOfObject) throws Throwable {
-/* 245 */     Class<?> clazz = paramMethod.getDeclaringClass();
-/*     */     
-/* 247 */     if (clazz.equals(NotificationBroadcaster.class) || clazz
-/* 248 */       .equals(NotificationEmitter.class)) {
-/* 249 */       return invokeBroadcasterMethod(paramObject, paramMethod, paramArrayOfObject);
-/*     */     }
-/*     */     
-/* 252 */     if (shouldDoLocally(paramObject, paramMethod)) {
-/* 253 */       return doLocally(paramObject, paramMethod, paramArrayOfObject);
-/*     */     }
-/*     */     try {
-/* 256 */       if (isMXBean()) {
-/* 257 */         MXBeanProxy mXBeanProxy = findMXBeanProxy(clazz);
-/* 258 */         return mXBeanProxy.invoke(this.connection, this.objectName, paramMethod, paramArrayOfObject);
-/*     */       } 
-/* 260 */       String str = paramMethod.getName();
-/* 261 */       Class[] arrayOfClass = paramMethod.getParameterTypes();
-/* 262 */       Class<?> clazz1 = paramMethod.getReturnType();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 267 */       boolean bool = (paramArrayOfObject == null) ? false : paramArrayOfObject.length;
-/*     */       
-/* 269 */       if (str.startsWith("get") && str
-/* 270 */         .length() > 3 && !bool && 
-/*     */         
-/* 272 */         !clazz1.equals(void.class)) {
-/* 273 */         return this.connection.getAttribute(this.objectName, str
-/* 274 */             .substring(3));
-/*     */       }
-/*     */       
-/* 277 */       if (str.startsWith("is") && str
-/* 278 */         .length() > 2 && !bool && (clazz1
-/*     */         
-/* 280 */         .equals(boolean.class) || clazz1
-/* 281 */         .equals(Boolean.class))) {
-/* 282 */         return this.connection.getAttribute(this.objectName, str
-/* 283 */             .substring(2));
-/*     */       }
-/*     */       
-/* 286 */       if (str.startsWith("set") && str
-/* 287 */         .length() > 3 && bool == true && clazz1
-/*     */         
-/* 289 */         .equals(void.class)) {
-/* 290 */         Attribute attribute = new Attribute(str.substring(3), paramArrayOfObject[0]);
-/* 291 */         this.connection.setAttribute(this.objectName, attribute);
-/* 292 */         return null;
-/*     */       } 
-/*     */       
-/* 295 */       String[] arrayOfString = new String[arrayOfClass.length];
-/* 296 */       for (byte b = 0; b < arrayOfClass.length; b++)
-/* 297 */         arrayOfString[b] = arrayOfClass[b].getName(); 
-/* 298 */       return this.connection.invoke(this.objectName, str, paramArrayOfObject, arrayOfString);
-/*     */     
-/*     */     }
-/* 301 */     catch (MBeanException mBeanException) {
-/* 302 */       throw mBeanException.getTargetException();
-/* 303 */     } catch (RuntimeMBeanException runtimeMBeanException) {
-/* 304 */       throw runtimeMBeanException.getTargetException();
-/* 305 */     } catch (RuntimeErrorException runtimeErrorException) {
-/* 306 */       throw runtimeErrorException.getTargetError();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static MXBeanProxy findMXBeanProxy(Class<?> paramClass) {
-/* 323 */     synchronized (mxbeanProxies) {
-/*     */       
-/* 325 */       WeakReference<MXBeanProxy> weakReference = mxbeanProxies.get(paramClass);
-/* 326 */       MXBeanProxy mXBeanProxy = (weakReference == null) ? null : weakReference.get();
-/* 327 */       if (mXBeanProxy == null) {
-/*     */         try {
-/* 329 */           mXBeanProxy = new MXBeanProxy(paramClass);
-/* 330 */         } catch (IllegalArgumentException illegalArgumentException1) {
-/*     */           
-/* 332 */           String str = "Cannot make MXBean proxy for " + paramClass.getName() + ": " + illegalArgumentException1.getMessage();
-/*     */           
-/* 334 */           IllegalArgumentException illegalArgumentException2 = new IllegalArgumentException(str, illegalArgumentException1.getCause());
-/* 335 */           illegalArgumentException2.setStackTrace(illegalArgumentException1.getStackTrace());
-/* 336 */           throw illegalArgumentException2;
-/*     */         } 
-/* 338 */         mxbeanProxies.put(paramClass, new WeakReference<>(mXBeanProxy));
-/*     */       } 
-/*     */       
-/* 341 */       return mXBeanProxy;
-/*     */     } 
-/*     */   }
-/*     */   
-/* 345 */   private static final WeakHashMap<Class<?>, WeakReference<MXBeanProxy>> mxbeanProxies = new WeakHashMap<>();
-/*     */   private final MBeanServerConnection connection;
-/*     */   
-/*     */   private Object invokeBroadcasterMethod(Object paramObject, Method paramMethod, Object[] paramArrayOfObject) throws Exception {
-/* 349 */     String str = paramMethod.getName();
-/* 350 */     boolean bool = (paramArrayOfObject == null) ? false : paramArrayOfObject.length;
-/*     */     
-/* 352 */     if (str.equals("addNotificationListener")) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 357 */       if (bool != 3) {
-/* 358 */         String str1 = "Bad arg count to addNotificationListener: " + bool;
-/*     */         
-/* 360 */         throw new IllegalArgumentException(str1);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 365 */       NotificationListener notificationListener = (NotificationListener)paramArrayOfObject[0];
-/* 366 */       NotificationFilter notificationFilter = (NotificationFilter)paramArrayOfObject[1];
-/* 367 */       Object object = paramArrayOfObject[2];
-/* 368 */       this.connection.addNotificationListener(this.objectName, notificationListener, notificationFilter, object);
-/*     */ 
-/*     */ 
-/*     */       
-/* 372 */       return null;
-/*     */     } 
-/* 374 */     if (str.equals("removeNotificationListener")) {
-/*     */       NotificationFilter notificationFilter;
-/*     */       
-/*     */       Object object;
-/* 378 */       NotificationListener notificationListener = (NotificationListener)paramArrayOfObject[0];
-/*     */       
-/* 380 */       switch (bool) {
-/*     */         case true:
-/* 382 */           this.connection.removeNotificationListener(this.objectName, notificationListener);
-/* 383 */           return null;
-/*     */         
-/*     */         case true:
-/* 386 */           notificationFilter = (NotificationFilter)paramArrayOfObject[1];
-/* 387 */           object = paramArrayOfObject[2];
-/* 388 */           this.connection.removeNotificationListener(this.objectName, notificationListener, notificationFilter, object);
-/*     */ 
-/*     */ 
-/*     */           
-/* 392 */           return null;
-/*     */       } 
-/*     */       
-/* 395 */       String str1 = "Bad arg count to removeNotificationListener: " + bool;
-/*     */       
-/* 397 */       throw new IllegalArgumentException(str1);
-/*     */     } 
-/*     */     
-/* 400 */     if (str.equals("getNotificationInfo")) {
-/*     */       
-/* 402 */       if (paramArrayOfObject != null) {
-/* 403 */         throw new IllegalArgumentException("getNotificationInfo has args");
-/*     */       }
-/*     */ 
-/*     */       
-/* 407 */       MBeanInfo mBeanInfo = this.connection.getMBeanInfo(this.objectName);
-/* 408 */       return mBeanInfo.getNotifications();
-/*     */     } 
-/*     */     
-/* 411 */     throw new IllegalArgumentException("Bad method name: " + str);
-/*     */   }
-/*     */   
-/*     */   private final ObjectName objectName;
-/*     */   
-/*     */   private boolean shouldDoLocally(Object paramObject, Method paramMethod) {
-/* 417 */     String str = paramMethod.getName();
-/* 418 */     if ((str.equals("hashCode") || str.equals("toString")) && (paramMethod
-/* 419 */       .getParameterTypes()).length == 0 && 
-/* 420 */       isLocal(paramObject, paramMethod))
-/* 421 */       return true; 
-/* 422 */     if (str.equals("equals") && 
-/* 423 */       Arrays.equals((Object[])paramMethod.getParameterTypes(), (Object[])new Class[] { Object.class
-/*     */         
-/* 425 */         }) && isLocal(paramObject, paramMethod))
-/* 426 */       return true; 
-/* 427 */     if (str.equals("finalize") && (paramMethod
-/* 428 */       .getParameterTypes()).length == 0) {
-/* 429 */       return true;
-/*     */     }
-/* 431 */     return false;
-/*     */   }
-/*     */   private final boolean isMXBean;
-/*     */   private Object doLocally(Object paramObject, Method paramMethod, Object[] paramArrayOfObject) {
-/* 435 */     String str = paramMethod.getName();
-/*     */     
-/* 437 */     if (str.equals("equals")) {
-/*     */       
-/* 439 */       if (this == paramArrayOfObject[0]) {
-/* 440 */         return Boolean.valueOf(true);
-/*     */       }
-/*     */       
-/* 443 */       if (!(paramArrayOfObject[0] instanceof Proxy)) {
-/* 444 */         return Boolean.valueOf(false);
-/*     */       }
-/*     */ 
-/*     */       
-/* 448 */       InvocationHandler invocationHandler = Proxy.getInvocationHandler(paramArrayOfObject[0]);
-/*     */       
-/* 450 */       if (invocationHandler == null || !(invocationHandler instanceof MBeanServerInvocationHandler))
-/*     */       {
-/* 452 */         return Boolean.valueOf(false);
-/*     */       }
-/*     */       
-/* 455 */       MBeanServerInvocationHandler mBeanServerInvocationHandler = (MBeanServerInvocationHandler)invocationHandler;
-/*     */ 
-/*     */       
-/* 458 */       return Boolean.valueOf((this.connection.equals(mBeanServerInvocationHandler.connection) && this.objectName
-/* 459 */           .equals(mBeanServerInvocationHandler.objectName) && paramObject
-/* 460 */           .getClass().equals(paramArrayOfObject[0].getClass())));
-/* 461 */     }  if (str.equals("toString")) {
-/* 462 */       return (isMXBean() ? "MX" : "M") + "BeanProxy(" + this.connection + "[" + this.objectName + "])";
-/*     */     }
-/* 464 */     if (str.equals("hashCode"))
-/* 465 */       return Integer.valueOf(this.objectName.hashCode() + this.connection.hashCode()); 
-/* 466 */     if (str.equals("finalize"))
-/*     */     {
-/* 468 */       return null;
-/*     */     }
-/*     */     
-/* 471 */     throw new RuntimeException("Unexpected method name: " + str);
-/*     */   }
-/*     */   
-/*     */   private static boolean isLocal(Object paramObject, Method paramMethod) {
-/* 475 */     Class[] arrayOfClass1 = paramObject.getClass().getInterfaces();
-/* 476 */     if (arrayOfClass1 == null) {
-/* 477 */       return true;
-/*     */     }
-/*     */     
-/* 480 */     String str = paramMethod.getName();
-/* 481 */     Class[] arrayOfClass2 = paramMethod.getParameterTypes();
-/* 482 */     for (Class clazz : arrayOfClass1) {
-/*     */       try {
-/* 484 */         clazz.getMethod(str, arrayOfClass2);
-/* 485 */         return false;
-/* 486 */       } catch (NoSuchMethodException noSuchMethodException) {}
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 491 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\MBeanServerInvocationHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+import com.sun.jmx.mbeanserver.MXBeanProxy;
+
+import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.WeakHashMap;
+
+/**
+ * <p>{@link InvocationHandler} that forwards methods in an MBean's
+ * management interface through the MBean server to the MBean.</p>
+ *
+ * <p>Given an {@link MBeanServerConnection}, the {@link ObjectName}
+ * of an MBean within that MBean server, and a Java interface
+ * <code>Intf</code> that describes the management interface of the
+ * MBean using the patterns for a Standard MBean or an MXBean, this
+ * class can be used to construct a proxy for the MBean.  The proxy
+ * implements the interface <code>Intf</code> such that all of its
+ * methods are forwarded through the MBean server to the MBean.</p>
+ *
+ * <p>If the {@code InvocationHandler} is for an MXBean, then the parameters of
+ * a method are converted from the type declared in the MXBean
+ * interface into the corresponding mapped type, and the return value
+ * is converted from the mapped type into the declared type.  For
+ * example, with the method<br>
+
+ * {@code public List<String> reverse(List<String> list);}<br>
+
+ * and given that the mapped type for {@code List<String>} is {@code
+ * String[]}, a call to {@code proxy.reverse(someList)} will convert
+ * {@code someList} from a {@code List<String>} to a {@code String[]},
+ * call the MBean operation {@code reverse}, then convert the returned
+ * {@code String[]} into a {@code List<String>}.</p>
+ *
+ * <p>The method Object.toString(), Object.hashCode(), or
+ * Object.equals(Object), when invoked on a proxy using this
+ * invocation handler, is forwarded to the MBean server as a method on
+ * the proxied MBean only if it appears in one of the proxy's
+ * interfaces.  For a proxy created with {@link
+ * JMX#newMBeanProxy(MBeanServerConnection, ObjectName, Class)
+ * JMX.newMBeanProxy} or {@link
+ * JMX#newMXBeanProxy(MBeanServerConnection, ObjectName, Class)
+ * JMX.newMXBeanProxy}, this means that the method must appear in the
+ * Standard MBean or MXBean interface.  Otherwise these methods have
+ * the following behavior:
+ * <ul>
+ * <li>toString() returns a string representation of the proxy
+ * <li>hashCode() returns a hash code for the proxy such
+ * that two equal proxies have the same hash code
+ * <li>equals(Object)
+ * returns true if and only if the Object argument is of the same
+ * proxy class as this proxy, with an MBeanServerInvocationHandler
+ * that has the same MBeanServerConnection and ObjectName; if one
+ * of the {@code MBeanServerInvocationHandler}s was constructed with
+ * a {@code Class} argument then the other must have been constructed
+ * with the same {@code Class} for {@code equals} to return true.
+ * </ul>
+ *
+ * @since 1.5
+ */
+public class MBeanServerInvocationHandler implements InvocationHandler {
+    /**
+     * <p>Invocation handler that forwards methods through an MBean
+     * server to a Standard MBean.  This constructor may be called
+     * instead of relying on {@link
+     * JMX#newMBeanProxy(MBeanServerConnection, ObjectName, Class)
+     * JMX.newMBeanProxy}, for instance if you need to supply a
+     * different {@link ClassLoader} to {@link Proxy#newProxyInstance
+     * Proxy.newProxyInstance}.</p>
+     *
+     * <p>This constructor is not appropriate for an MXBean.  Use
+     * {@link #MBeanServerInvocationHandler(MBeanServerConnection,
+     * ObjectName, boolean)} for that.  This constructor is equivalent
+     * to {@code new MBeanServerInvocationHandler(connection,
+     * objectName, false)}.</p>
+     *
+     * @param connection the MBean server connection through which all
+     * methods of a proxy using this handler will be forwarded.
+     *
+     * @param objectName the name of the MBean within the MBean server
+     * to which methods will be forwarded.
+     */
+    public MBeanServerInvocationHandler(MBeanServerConnection connection,
+                                        ObjectName objectName) {
+
+        this(connection, objectName, false);
+    }
+
+    /**
+     * <p>Invocation handler that can forward methods through an MBean
+     * server to a Standard MBean or MXBean.  This constructor may be called
+     * instead of relying on {@link
+     * JMX#newMXBeanProxy(MBeanServerConnection, ObjectName, Class)
+     * JMX.newMXBeanProxy}, for instance if you need to supply a
+     * different {@link ClassLoader} to {@link Proxy#newProxyInstance
+     * Proxy.newProxyInstance}.</p>
+     *
+     * @param connection the MBean server connection through which all
+     * methods of a proxy using this handler will be forwarded.
+     *
+     * @param objectName the name of the MBean within the MBean server
+     * to which methods will be forwarded.
+     *
+     * @param isMXBean if true, the proxy is for an {@link MXBean}, and
+     * appropriate mappings will be applied to method parameters and return
+     * values.
+     *
+     * @since 1.6
+     */
+    public MBeanServerInvocationHandler(MBeanServerConnection connection,
+                                        ObjectName objectName,
+                                        boolean isMXBean) {
+        if (connection == null) {
+            throw new IllegalArgumentException("Null connection");
+        }
+        if (Proxy.isProxyClass(connection.getClass())) {
+            if (MBeanServerInvocationHandler.class.isAssignableFrom(
+                    Proxy.getInvocationHandler(connection).getClass())) {
+                throw new IllegalArgumentException("Wrapping MBeanServerInvocationHandler");
+            }
+        }
+        if (objectName == null) {
+            throw new IllegalArgumentException("Null object name");
+        }
+        this.connection = connection;
+        this.objectName = objectName;
+        this.isMXBean = isMXBean;
+    }
+
+    /**
+     * <p>The MBean server connection through which the methods of
+     * a proxy using this handler are forwarded.</p>
+     *
+     * @return the MBean server connection.
+     *
+     * @since 1.6
+     */
+    public MBeanServerConnection getMBeanServerConnection() {
+        return connection;
+    }
+
+    /**
+     * <p>The name of the MBean within the MBean server to which methods
+     * are forwarded.
+     *
+     * @return the object name.
+     *
+     * @since 1.6
+     */
+    public ObjectName getObjectName() {
+        return objectName;
+    }
+
+    /**
+     * <p>If true, the proxy is for an MXBean, and appropriate mappings
+     * are applied to method parameters and return values.
+     *
+     * @return whether the proxy is for an MXBean.
+     *
+     * @since 1.6
+     */
+    public boolean isMXBean() {
+        return isMXBean;
+    }
+
+    /**
+     * <p>Return a proxy that implements the given interface by
+     * forwarding its methods through the given MBean server to the
+     * named MBean.  As of 1.6, the methods {@link
+     * JMX#newMBeanProxy(MBeanServerConnection, ObjectName, Class)} and
+     * {@link JMX#newMBeanProxy(MBeanServerConnection, ObjectName, Class,
+     * boolean)} are preferred to this method.</p>
+     *
+     * <p>This method is equivalent to {@link Proxy#newProxyInstance
+     * Proxy.newProxyInstance}<code>(interfaceClass.getClassLoader(),
+     * interfaces, handler)</code>.  Here <code>handler</code> is the
+     * result of {@link #MBeanServerInvocationHandler new
+     * MBeanServerInvocationHandler(connection, objectName)}, and
+     * <code>interfaces</code> is an array that has one element if
+     * <code>notificationBroadcaster</code> is false and two if it is
+     * true.  The first element of <code>interfaces</code> is
+     * <code>interfaceClass</code> and the second, if present, is
+     * <code>NotificationEmitter.class</code>.
+     *
+     * @param connection the MBean server to forward to.
+     * @param objectName the name of the MBean within
+     * <code>connection</code> to forward to.
+     * @param interfaceClass the management interface that the MBean
+     * exports, which will also be implemented by the returned proxy.
+     * @param notificationBroadcaster make the returned proxy
+     * implement {@link NotificationEmitter} by forwarding its methods
+     * via <code>connection</code>. A call to {@link
+     * NotificationBroadcaster#addNotificationListener} on the proxy will
+     * result in a call to {@link
+     * MBeanServerConnection#addNotificationListener(ObjectName,
+     * NotificationListener, NotificationFilter, Object)}, and likewise
+     * for the other methods of {@link NotificationBroadcaster} and {@link
+     * NotificationEmitter}.
+     *
+     * @param <T> allows the compiler to know that if the {@code
+     * interfaceClass} parameter is {@code MyMBean.class}, for example,
+     * then the return type is {@code MyMBean}.
+     *
+     * @return the new proxy instance.
+     *
+     * @see JMX#newMBeanProxy(MBeanServerConnection, ObjectName, Class, boolean)
+     */
+    public static <T> T newProxyInstance(MBeanServerConnection connection,
+                                         ObjectName objectName,
+                                         Class<T> interfaceClass,
+                                         boolean notificationBroadcaster) {
+        return JMX.newMBeanProxy(connection, objectName, interfaceClass, notificationBroadcaster);
+    }
+
+    public Object invoke(Object proxy, Method method, Object[] args)
+            throws Throwable {
+        final Class<?> methodClass = method.getDeclaringClass();
+
+        if (methodClass.equals(NotificationBroadcaster.class)
+            || methodClass.equals(NotificationEmitter.class))
+            return invokeBroadcasterMethod(proxy, method, args);
+
+        // local or not: equals, toString, hashCode
+        if (shouldDoLocally(proxy, method))
+            return doLocally(proxy, method, args);
+
+        try {
+            if (isMXBean()) {
+                MXBeanProxy p = findMXBeanProxy(methodClass);
+                return p.invoke(connection, objectName, method, args);
+            } else {
+                final String methodName = method.getName();
+                final Class<?>[] paramTypes = method.getParameterTypes();
+                final Class<?> returnType = method.getReturnType();
+
+                /* Inexplicably, InvocationHandler specifies that args is null
+                   when the method takes no arguments rather than a
+                   zero-length array.  */
+                final int nargs = (args == null) ? 0 : args.length;
+
+                if (methodName.startsWith("get")
+                    && methodName.length() > 3
+                    && nargs == 0
+                    && !returnType.equals(Void.TYPE)) {
+                    return connection.getAttribute(objectName,
+                        methodName.substring(3));
+                }
+
+                if (methodName.startsWith("is")
+                    && methodName.length() > 2
+                    && nargs == 0
+                    && (returnType.equals(Boolean.TYPE)
+                    || returnType.equals(Boolean.class))) {
+                    return connection.getAttribute(objectName,
+                        methodName.substring(2));
+                }
+
+                if (methodName.startsWith("set")
+                    && methodName.length() > 3
+                    && nargs == 1
+                    && returnType.equals(Void.TYPE)) {
+                    Attribute attr = new Attribute(methodName.substring(3), args[0]);
+                    connection.setAttribute(objectName, attr);
+                    return null;
+                }
+
+                final String[] signature = new String[paramTypes.length];
+                for (int i = 0; i < paramTypes.length; i++)
+                    signature[i] = paramTypes[i].getName();
+                return connection.invoke(objectName, methodName,
+                                         args, signature);
+            }
+        } catch (MBeanException e) {
+            throw e.getTargetException();
+        } catch (RuntimeMBeanException re) {
+            throw re.getTargetException();
+        } catch (RuntimeErrorException rre) {
+            throw rre.getTargetError();
+        }
+        /* The invoke may fail because it can't get to the MBean, with
+           one of the these exceptions declared by
+           MBeanServerConnection.invoke:
+           - RemoteException: can't talk to MBeanServer;
+           - InstanceNotFoundException: objectName is not registered;
+           - ReflectionException: objectName is registered but does not
+             have the method being invoked.
+           In all of these cases, the exception will be wrapped by the
+           proxy mechanism in an UndeclaredThrowableException unless
+           it happens to be declared in the "throws" clause of the
+           method being invoked on the proxy.
+         */
+    }
+
+    private static MXBeanProxy findMXBeanProxy(Class<?> mxbeanInterface) {
+        synchronized (mxbeanProxies) {
+            WeakReference<MXBeanProxy> proxyRef =
+                    mxbeanProxies.get(mxbeanInterface);
+            MXBeanProxy p = (proxyRef == null) ? null : proxyRef.get();
+            if (p == null) {
+                try {
+                    p = new MXBeanProxy(mxbeanInterface);
+                } catch (IllegalArgumentException e) {
+                    String msg = "Cannot make MXBean proxy for " +
+                            mxbeanInterface.getName() + ": " + e.getMessage();
+                    IllegalArgumentException iae =
+                            new IllegalArgumentException(msg, e.getCause());
+                    iae.setStackTrace(e.getStackTrace());
+                    throw iae;
+                }
+                mxbeanProxies.put(mxbeanInterface,
+                                  new WeakReference<MXBeanProxy>(p));
+            }
+            return p;
+        }
+    }
+    private static final WeakHashMap<Class<?>, WeakReference<MXBeanProxy>>
+            mxbeanProxies = new WeakHashMap<Class<?>, WeakReference<MXBeanProxy>>();
+
+    private Object invokeBroadcasterMethod(Object proxy, Method method,
+                                           Object[] args) throws Exception {
+        final String methodName = method.getName();
+        final int nargs = (args == null) ? 0 : args.length;
+
+        if (methodName.equals("addNotificationListener")) {
+            /* The various throws of IllegalArgumentException here
+               should not happen, since we know what the methods in
+               NotificationBroadcaster and NotificationEmitter
+               are.  */
+            if (nargs != 3) {
+                final String msg =
+                    "Bad arg count to addNotificationListener: " + nargs;
+                throw new IllegalArgumentException(msg);
+            }
+            /* Other inconsistencies will produce ClassCastException
+               below.  */
+
+            NotificationListener listener = (NotificationListener) args[0];
+            NotificationFilter filter = (NotificationFilter) args[1];
+            Object handback = args[2];
+            connection.addNotificationListener(objectName,
+                                               listener,
+                                               filter,
+                                               handback);
+            return null;
+
+        } else if (methodName.equals("removeNotificationListener")) {
+
+            /* NullPointerException if method with no args, but that
+               shouldn't happen because removeNL does have args.  */
+            NotificationListener listener = (NotificationListener) args[0];
+
+            switch (nargs) {
+            case 1:
+                connection.removeNotificationListener(objectName, listener);
+                return null;
+
+            case 3:
+                NotificationFilter filter = (NotificationFilter) args[1];
+                Object handback = args[2];
+                connection.removeNotificationListener(objectName,
+                                                      listener,
+                                                      filter,
+                                                      handback);
+                return null;
+
+            default:
+                final String msg =
+                    "Bad arg count to removeNotificationListener: " + nargs;
+                throw new IllegalArgumentException(msg);
+            }
+
+        } else if (methodName.equals("getNotificationInfo")) {
+
+            if (args != null) {
+                throw new IllegalArgumentException("getNotificationInfo has " +
+                                                   "args");
+            }
+
+            MBeanInfo info = connection.getMBeanInfo(objectName);
+            return info.getNotifications();
+
+        } else {
+            throw new IllegalArgumentException("Bad method name: " +
+                                               methodName);
+        }
+    }
+
+    private boolean shouldDoLocally(Object proxy, Method method) {
+        final String methodName = method.getName();
+        if ((methodName.equals("hashCode") || methodName.equals("toString"))
+            && method.getParameterTypes().length == 0
+            && isLocal(proxy, method))
+            return true;
+        if (methodName.equals("equals")
+            && Arrays.equals(method.getParameterTypes(),
+                             new Class<?>[] {Object.class})
+            && isLocal(proxy, method))
+            return true;
+        if (methodName.equals("finalize")
+            && method.getParameterTypes().length == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    private Object doLocally(Object proxy, Method method, Object[] args) {
+        final String methodName = method.getName();
+
+        if (methodName.equals("equals")) {
+
+            if (this == args[0]) {
+                return true;
+            }
+
+            if (!(args[0] instanceof Proxy)) {
+                return false;
+            }
+
+            final InvocationHandler ihandler =
+                Proxy.getInvocationHandler(args[0]);
+
+            if (ihandler == null ||
+                !(ihandler instanceof MBeanServerInvocationHandler)) {
+                return false;
+            }
+
+            final MBeanServerInvocationHandler handler =
+                (MBeanServerInvocationHandler)ihandler;
+
+            return connection.equals(handler.connection) &&
+                objectName.equals(handler.objectName) &&
+                proxy.getClass().equals(args[0].getClass());
+        } else if (methodName.equals("toString")) {
+            return (isMXBean() ? "MX" : "M") + "BeanProxy(" +
+                connection + "[" + objectName + "])";
+        } else if (methodName.equals("hashCode")) {
+            return objectName.hashCode()+connection.hashCode();
+        } else if (methodName.equals("finalize")) {
+            // ignore the finalizer invocation via proxy
+            return null;
+        }
+
+        throw new RuntimeException("Unexpected method name: " + methodName);
+    }
+
+    private static boolean isLocal(Object proxy, Method method) {
+        final Class<?>[] interfaces = proxy.getClass().getInterfaces();
+        if(interfaces == null) {
+            return true;
+        }
+
+        final String methodName = method.getName();
+        final Class<?>[] params = method.getParameterTypes();
+        for (Class<?> intf : interfaces) {
+            try {
+                intf.getMethod(methodName, params);
+                return false; // found method in one of our interfaces
+            } catch (NoSuchMethodException nsme) {
+                // OK.
+            }
+        }
+
+        return true;  // did not find in any interface
+    }
+
+    private final MBeanServerConnection connection;
+    private final ObjectName objectName;
+    private final boolean isMXBean;
+}

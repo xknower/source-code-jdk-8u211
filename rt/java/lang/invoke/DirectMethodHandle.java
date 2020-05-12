@@ -1,740 +1,734 @@
-/*     */ package java.lang.invoke;
-/*     */ 
-/*     */ import java.lang.invoke.BoundMethodHandle;
-/*     */ import java.lang.invoke.DirectMethodHandle;
-/*     */ import java.lang.invoke.ForceInline;
-/*     */ import java.lang.invoke.InvokerBytecodeGenerator;
-/*     */ import java.lang.invoke.Invokers;
-/*     */ import java.lang.invoke.LambdaForm;
-/*     */ import java.lang.invoke.MemberName;
-/*     */ import java.lang.invoke.MethodHandle;
-/*     */ import java.lang.invoke.MethodHandleImpl;
-/*     */ import java.lang.invoke.MethodHandleNatives;
-/*     */ import java.lang.invoke.MethodHandleStatics;
-/*     */ import java.lang.invoke.MethodType;
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.util.Arrays;
-/*     */ import sun.invoke.util.ValueConversions;
-/*     */ import sun.invoke.util.VerifyAccess;
-/*     */ import sun.invoke.util.VerifyType;
-/*     */ import sun.invoke.util.Wrapper;
-/*     */ import sun.misc.Unsafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class DirectMethodHandle
-/*     */   extends MethodHandle
-/*     */ {
-/*     */   final MemberName member;
-/*     */   
-/*     */   private DirectMethodHandle(MethodType paramMethodType, LambdaForm paramLambdaForm, MemberName paramMemberName) {
-/*  52 */     super(paramMethodType, paramLambdaForm);
-/*  53 */     if (!paramMemberName.isResolved()) throw new InternalError();
-/*     */     
-/*  55 */     if (paramMemberName.getDeclaringClass().isInterface() && paramMemberName
-/*  56 */       .isMethod() && !paramMemberName.isAbstract()) {
-/*     */       
-/*  58 */       MemberName memberName = new MemberName(Object.class, paramMemberName.getName(), paramMemberName.getMethodType(), paramMemberName.getReferenceKind());
-/*  59 */       memberName = MemberName.getFactory().resolveOrNull(memberName.getReferenceKind(), memberName, null);
-/*  60 */       if (memberName != null && memberName.isPublic()) {
-/*  61 */         assert paramMemberName.getReferenceKind() == memberName.getReferenceKind();
-/*  62 */         paramMemberName = memberName;
-/*     */       } 
-/*     */     } 
-/*     */     
-/*  66 */     this.member = paramMemberName;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static DirectMethodHandle make(byte paramByte, Class<?> paramClass, MemberName paramMemberName) {
-/*  71 */     MethodType methodType = paramMemberName.getMethodOrFieldType();
-/*  72 */     if (!paramMemberName.isStatic()) {
-/*  73 */       if (!paramMemberName.getDeclaringClass().isAssignableFrom(paramClass) || paramMemberName.isConstructor())
-/*  74 */         throw new InternalError(paramMemberName.toString()); 
-/*  75 */       methodType = methodType.insertParameterTypes(0, new Class[] { paramClass });
-/*     */     } 
-/*  77 */     if (!paramMemberName.isField()) {
-/*  78 */       switch (paramByte) {
-/*     */         case 7:
-/*  80 */           paramMemberName = paramMemberName.asSpecial();
-/*  81 */           lambdaForm1 = preparedLambdaForm(paramMemberName);
-/*  82 */           return new Special(methodType, lambdaForm1, paramMemberName);
-/*     */         
-/*     */         case 9:
-/*  85 */           lambdaForm1 = preparedLambdaForm(paramMemberName);
-/*  86 */           return new Interface(methodType, lambdaForm1, paramMemberName, paramClass);
-/*     */       } 
-/*     */       
-/*  89 */       LambdaForm lambdaForm1 = preparedLambdaForm(paramMemberName);
-/*  90 */       return new DirectMethodHandle(methodType, lambdaForm1, paramMemberName);
-/*     */     } 
-/*     */ 
-/*     */     
-/*  94 */     LambdaForm lambdaForm = preparedFieldLambdaForm(paramMemberName);
-/*  95 */     if (paramMemberName.isStatic()) {
-/*  96 */       long l1 = MethodHandleNatives.staticFieldOffset(paramMemberName);
-/*  97 */       Object object = MethodHandleNatives.staticFieldBase(paramMemberName);
-/*  98 */       return new StaticAccessor(methodType, lambdaForm, paramMemberName, object, l1);
-/*     */     } 
-/* 100 */     long l = MethodHandleNatives.objectFieldOffset(paramMemberName);
-/* 101 */     assert l == (int)l;
-/* 102 */     return new Accessor(methodType, lambdaForm, paramMemberName, (int)l);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static DirectMethodHandle make(Class<?> paramClass, MemberName paramMemberName) {
-/* 107 */     byte b = paramMemberName.getReferenceKind();
-/* 108 */     if (b == 7)
-/* 109 */       b = 5; 
-/* 110 */     return make(b, paramClass, paramMemberName);
-/*     */   }
-/*     */   static DirectMethodHandle make(MemberName paramMemberName) {
-/* 113 */     if (paramMemberName.isConstructor())
-/* 114 */       return makeAllocator(paramMemberName); 
-/* 115 */     return make(paramMemberName.getDeclaringClass(), paramMemberName);
-/*     */   }
-/*     */   static DirectMethodHandle make(Method paramMethod) {
-/* 118 */     return make(paramMethod.getDeclaringClass(), new MemberName(paramMethod));
-/*     */   }
-/*     */   static DirectMethodHandle make(Field paramField) {
-/* 121 */     return make(paramField.getDeclaringClass(), new MemberName(paramField));
-/*     */   }
-/*     */   private static DirectMethodHandle makeAllocator(MemberName paramMemberName) {
-/* 124 */     assert paramMemberName.isConstructor() && paramMemberName.getName().equals("<init>");
-/* 125 */     Class<?> clazz = paramMemberName.getDeclaringClass();
-/* 126 */     paramMemberName = paramMemberName.asConstructor();
-/* 127 */     assert paramMemberName.isConstructor() && paramMemberName.getReferenceKind() == 8 : paramMemberName;
-/* 128 */     MethodType methodType = paramMemberName.getMethodType().changeReturnType(clazz);
-/* 129 */     LambdaForm lambdaForm = preparedLambdaForm(paramMemberName);
-/* 130 */     MemberName memberName = paramMemberName.asSpecial();
-/* 131 */     assert memberName.getMethodType().returnType() == void.class;
-/* 132 */     return new Constructor(methodType, lambdaForm, paramMemberName, memberName, clazz);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   BoundMethodHandle rebind() {
-/* 137 */     return BoundMethodHandle.makeReinvoker(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   MethodHandle copyWith(MethodType paramMethodType, LambdaForm paramLambdaForm) {
-/* 142 */     assert getClass() == DirectMethodHandle.class;
-/* 143 */     return new DirectMethodHandle(paramMethodType, paramLambdaForm, this.member);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   String internalProperties() {
-/* 148 */     return "\n& DMH.MN=" + internalMemberName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ForceInline
-/*     */   MemberName internalMemberName() {
-/* 155 */     return this.member;
-/*     */   }
-/*     */   
-/* 158 */   private static final MemberName.Factory IMPL_NAMES = MemberName.getFactory();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static LambdaForm preparedLambdaForm(MemberName paramMemberName) {
-/*     */     byte b;
-/* 166 */     assert paramMemberName.isInvocable() : paramMemberName;
-/* 167 */     MethodType methodType = paramMemberName.getInvocationType().basicType();
-/* 168 */     assert !paramMemberName.isMethodHandleInvoke() : paramMemberName;
-/*     */     
-/* 170 */     switch (paramMemberName.getReferenceKind()) { case 5:
-/* 171 */         b = 0; break;
-/* 172 */       case 6: b = 1; break;
-/* 173 */       case 7: b = 2; break;
-/* 174 */       case 9: b = 4; break;
-/* 175 */       case 8: b = 3; break;
-/* 176 */       default: throw new InternalError(paramMemberName.toString()); }
-/*     */     
-/* 178 */     if (b == 1 && shouldBeInitialized(paramMemberName)) {
-/*     */       
-/* 180 */       preparedLambdaForm(methodType, b);
-/* 181 */       b = 5;
-/*     */     } 
-/* 183 */     LambdaForm lambdaForm = preparedLambdaForm(methodType, b);
-/* 184 */     maybeCompile(lambdaForm, paramMemberName);
-/* 185 */     assert lambdaForm.methodType().dropParameterTypes(0, 1)
-/* 186 */       .equals(paramMemberName.getInvocationType().basicType()) : 
-/* 187 */       Arrays.asList((T[])new Object[] { paramMemberName, paramMemberName.getInvocationType().basicType(), lambdaForm, lambdaForm.methodType() });
-/* 188 */     return lambdaForm;
-/*     */   }
-/*     */   
-/*     */   private static LambdaForm preparedLambdaForm(MethodType paramMethodType, int paramInt) {
-/* 192 */     LambdaForm lambdaForm = paramMethodType.form().cachedLambdaForm(paramInt);
-/* 193 */     if (lambdaForm != null) return lambdaForm; 
-/* 194 */     lambdaForm = makePreparedLambdaForm(paramMethodType, paramInt);
-/* 195 */     return paramMethodType.form().setCachedLambdaForm(paramInt, lambdaForm);
-/*     */   }
-/*     */   private static LambdaForm makePreparedLambdaForm(MethodType paramMethodType, int paramInt) {
-/*     */     String str1;
-/* 199 */     boolean bool1 = (paramInt == 5) ? true : false;
-/* 200 */     boolean bool2 = (paramInt == 3) ? true : false;
-/* 201 */     boolean bool3 = (paramInt == 4) ? true : false;
-/*     */     
-/* 203 */     switch (paramInt) { case 0:
-/* 204 */         str1 = "linkToVirtual"; str2 = "DMH.invokeVirtual"; break;
-/* 205 */       case 1: str1 = "linkToStatic"; str2 = "DMH.invokeStatic"; break;
-/* 206 */       case 5: str1 = "linkToStatic"; str2 = "DMH.invokeStaticInit"; break;
-/* 207 */       case 2: str1 = "linkToSpecial"; str2 = "DMH.invokeSpecial"; break;
-/* 208 */       case 4: str1 = "linkToInterface"; str2 = "DMH.invokeInterface"; break;
-/* 209 */       case 3: str1 = "linkToSpecial"; str2 = "DMH.newInvokeSpecial"; break;
-/* 210 */       default: throw new InternalError("which=" + paramInt); }
-/*     */     
-/* 212 */     MethodType methodType = paramMethodType.appendParameterTypes(new Class[] { MemberName.class });
-/* 213 */     if (bool2)
-/*     */     {
-/*     */       
-/* 216 */       methodType = methodType.insertParameterTypes(0, new Class[] { Object.class }).changeReturnType(void.class); } 
-/* 217 */     MemberName memberName = new MemberName(MethodHandle.class, str1, methodType, (byte)6);
-/*     */     try {
-/* 219 */       memberName = IMPL_NAMES.resolveOrFail((byte)6, memberName, null, NoSuchMethodException.class);
-/* 220 */     } catch (ReflectiveOperationException reflectiveOperationException) {
-/* 221 */       throw MethodHandleStatics.newInternalError(reflectiveOperationException);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 225 */     int i = 1 + paramMethodType.parameterCount();
-/* 226 */     int j = i;
-/* 227 */     boolean bool4 = bool2 ? j++ : true;
-/* 228 */     int k = j++;
-/* 229 */     boolean bool5 = bool3 ? j++ : true;
-/* 230 */     int m = j++;
-/* 231 */     LambdaForm.Name[] arrayOfName = LambdaForm.arguments(j - i, paramMethodType.invokerType());
-/* 232 */     assert arrayOfName.length == j;
-/* 233 */     if (bool2) {
-/*     */       
-/* 235 */       arrayOfName[bool4] = new LambdaForm.Name(Lazy.NF_allocateInstance, new Object[] { arrayOfName[0] });
-/* 236 */       arrayOfName[k] = new LambdaForm.Name(Lazy.NF_constructorMethod, new Object[] { arrayOfName[0] });
-/* 237 */     } else if (bool1) {
-/* 238 */       arrayOfName[k] = new LambdaForm.Name(Lazy.NF_internalMemberNameEnsureInit, new Object[] { arrayOfName[0] });
-/*     */     } else {
-/* 240 */       arrayOfName[k] = new LambdaForm.Name(Lazy.NF_internalMemberName, new Object[] { arrayOfName[0] });
-/*     */     } 
-/* 242 */     assert findDirectMethodHandle(arrayOfName[k]) == arrayOfName[0];
-/* 243 */     Object[] arrayOfObject = Arrays.copyOfRange(arrayOfName, 1, k + 1, Object[].class);
-/* 244 */     if (bool3) {
-/* 245 */       arrayOfName[bool5] = new LambdaForm.Name(Lazy.NF_checkReceiver, new Object[] { arrayOfName[0], arrayOfName[1] });
-/* 246 */       arrayOfObject[0] = arrayOfName[bool5];
-/*     */     } 
-/* 248 */     assert arrayOfObject[arrayOfObject.length - 1] == arrayOfName[k];
-/* 249 */     byte b = -2;
-/* 250 */     if (bool2) {
-/* 251 */       assert arrayOfObject[arrayOfObject.length - 2] == arrayOfName[bool4];
-/* 252 */       System.arraycopy(arrayOfObject, 0, arrayOfObject, 1, arrayOfObject.length - 2);
-/* 253 */       arrayOfObject[0] = arrayOfName[bool4];
-/* 254 */       b = bool4;
-/*     */     } 
-/* 256 */     arrayOfName[m] = new LambdaForm.Name(memberName, arrayOfObject);
-/* 257 */     String str2 = str2 + "_" + LambdaForm.shortenSignature(LambdaForm.basicTypeSignature(paramMethodType));
-/* 258 */     LambdaForm lambdaForm = new LambdaForm(str2, i, arrayOfName, b);
-/*     */     
-/* 260 */     lambdaForm.compileToBytecode();
-/* 261 */     return lambdaForm;
-/*     */   }
-/*     */   
-/*     */   static Object findDirectMethodHandle(LambdaForm.Name paramName) {
-/* 265 */     if (paramName.function == Lazy.NF_internalMemberName || paramName.function == Lazy.NF_internalMemberNameEnsureInit || paramName.function == Lazy.NF_constructorMethod) {
-/*     */ 
-/*     */       
-/* 268 */       assert paramName.arguments.length == 1;
-/* 269 */       return paramName.arguments[0];
-/*     */     } 
-/* 271 */     return null;
-/*     */   }
-/*     */   
-/*     */   private static void maybeCompile(LambdaForm paramLambdaForm, MemberName paramMemberName) {
-/* 275 */     if (VerifyAccess.isSamePackage(paramMemberName.getDeclaringClass(), MethodHandle.class))
-/*     */     {
-/* 277 */       paramLambdaForm.compileToBytecode();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   @ForceInline
-/*     */   static Object internalMemberName(Object paramObject) {
-/* 283 */     return ((DirectMethodHandle)paramObject).member;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Object internalMemberNameEnsureInit(Object paramObject) {
-/* 290 */     DirectMethodHandle directMethodHandle = (DirectMethodHandle)paramObject;
-/* 291 */     directMethodHandle.ensureInitialized();
-/* 292 */     return directMethodHandle.member;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static boolean shouldBeInitialized(MemberName paramMemberName) {
-/* 297 */     switch (paramMemberName.getReferenceKind()) {
-/*     */       case 2:
-/*     */       case 4:
-/*     */       case 6:
-/*     */       case 8:
-/*     */         break;
-/*     */       
-/*     */       default:
-/* 305 */         return false;
-/*     */     } 
-/* 307 */     Class<?> clazz = paramMemberName.getDeclaringClass();
-/* 308 */     if (clazz == ValueConversions.class || clazz == MethodHandleImpl.class || clazz == Invokers.class)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */       
-/* 313 */       return false;
-/*     */     }
-/* 315 */     if (VerifyAccess.isSamePackage(MethodHandle.class, clazz) || 
-/* 316 */       VerifyAccess.isSamePackage(ValueConversions.class, clazz)) {
-/*     */ 
-/*     */       
-/* 319 */       if (MethodHandleStatics.UNSAFE.shouldBeInitialized(clazz)) {
-/* 320 */         MethodHandleStatics.UNSAFE.ensureClassInitialized(clazz);
-/*     */       }
-/* 322 */       return false;
-/*     */     } 
-/* 324 */     return MethodHandleStatics.UNSAFE.shouldBeInitialized(clazz);
-/*     */   }
-/*     */   
-/*     */   private static class EnsureInitialized
-/*     */     extends ClassValue<WeakReference<Thread>> {
-/*     */     protected WeakReference<Thread> computeValue(Class<?> param1Class) {
-/* 330 */       MethodHandleStatics.UNSAFE.ensureClassInitialized(param1Class);
-/* 331 */       if (MethodHandleStatics.UNSAFE.shouldBeInitialized(param1Class))
-/*     */       {
-/*     */         
-/* 334 */         return new WeakReference<>(Thread.currentThread()); } 
-/* 335 */       return null;
-/*     */     }
-/* 337 */     static final EnsureInitialized INSTANCE = new EnsureInitialized();
-/*     */   }
-/*     */   
-/*     */   private void ensureInitialized() {
-/* 341 */     if (checkInitialized(this.member))
-/*     */     {
-/* 343 */       if (this.member.isField()) {
-/* 344 */         updateForm(preparedFieldLambdaForm(this.member));
-/*     */       } else {
-/* 346 */         updateForm(preparedLambdaForm(this.member));
-/*     */       }  } 
-/*     */   }
-/*     */   private static boolean checkInitialized(MemberName paramMemberName) {
-/* 350 */     Class<?> clazz = paramMemberName.getDeclaringClass();
-/* 351 */     WeakReference<Thread> weakReference = EnsureInitialized.INSTANCE.get(clazz);
-/* 352 */     if (weakReference == null) {
-/* 353 */       return true;
-/*     */     }
-/* 355 */     Thread thread = weakReference.get();
-/*     */     
-/* 357 */     if (thread == Thread.currentThread()) {
-/*     */       
-/* 359 */       if (MethodHandleStatics.UNSAFE.shouldBeInitialized(clazz))
-/*     */       {
-/* 361 */         return false;
-/*     */       }
-/*     */     } else {
-/* 364 */       MethodHandleStatics.UNSAFE.ensureClassInitialized(clazz);
-/*     */     } 
-/* 366 */     assert !MethodHandleStatics.UNSAFE.shouldBeInitialized(clazz);
-/*     */     
-/* 368 */     EnsureInitialized.INSTANCE.remove(clazz);
-/* 369 */     return true;
-/*     */   }
-/*     */   
-/*     */   static void ensureInitialized(Object paramObject) {
-/* 373 */     ((DirectMethodHandle)paramObject).ensureInitialized();
-/*     */   }
-/*     */   
-/*     */   static class Special
-/*     */     extends DirectMethodHandle {
-/*     */     private Special(MethodType param1MethodType, LambdaForm param1LambdaForm, MemberName param1MemberName) {
-/* 379 */       super(param1MethodType, param1LambdaForm, param1MemberName);
-/*     */     }
-/*     */     
-/*     */     boolean isInvokeSpecial() {
-/* 383 */       return true;
-/*     */     }
-/*     */     
-/*     */     MethodHandle copyWith(MethodType param1MethodType, LambdaForm param1LambdaForm) {
-/* 387 */       return new Special(param1MethodType, param1LambdaForm, this.member);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   static class Interface extends DirectMethodHandle {
-/*     */     private final Class<?> refc;
-/*     */     
-/*     */     private Interface(MethodType param1MethodType, LambdaForm param1LambdaForm, MemberName param1MemberName, Class<?> param1Class) {
-/* 395 */       super(param1MethodType, param1LambdaForm, param1MemberName);
-/* 396 */       assert param1Class.isInterface() : param1Class;
-/* 397 */       this.refc = param1Class;
-/*     */     }
-/*     */     
-/*     */     MethodHandle copyWith(MethodType param1MethodType, LambdaForm param1LambdaForm) {
-/* 401 */       return new Interface(param1MethodType, param1LambdaForm, this.member, this.refc);
-/*     */     }
-/*     */     
-/*     */     Object checkReceiver(Object param1Object) {
-/* 405 */       if (!this.refc.isInstance(param1Object)) {
-/* 406 */         String str = String.format("Class %s does not implement the requested interface %s", new Object[] { param1Object
-/* 407 */               .getClass().getName(), this.refc.getName() });
-/* 408 */         throw new IncompatibleClassChangeError(str);
-/*     */       } 
-/* 410 */       return param1Object;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   static class Constructor
-/*     */     extends DirectMethodHandle
-/*     */   {
-/*     */     final MemberName initMethod;
-/*     */     final Class<?> instanceClass;
-/*     */     
-/*     */     private Constructor(MethodType param1MethodType, LambdaForm param1LambdaForm, MemberName param1MemberName1, MemberName param1MemberName2, Class<?> param1Class) {
-/* 421 */       super(param1MethodType, param1LambdaForm, param1MemberName1);
-/* 422 */       this.initMethod = param1MemberName2;
-/* 423 */       this.instanceClass = param1Class;
-/* 424 */       assert param1MemberName2.isResolved();
-/*     */     }
-/*     */     
-/*     */     MethodHandle copyWith(MethodType param1MethodType, LambdaForm param1LambdaForm) {
-/* 428 */       return new Constructor(param1MethodType, param1LambdaForm, this.member, this.initMethod, this.instanceClass);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   static Object constructorMethod(Object paramObject) {
-/* 433 */     Constructor constructor = (Constructor)paramObject;
-/* 434 */     return constructor.initMethod;
-/*     */   }
-/*     */   
-/*     */   static Object allocateInstance(Object paramObject) throws InstantiationException {
-/* 438 */     Constructor constructor = (Constructor)paramObject;
-/* 439 */     return MethodHandleStatics.UNSAFE.allocateInstance(constructor.instanceClass);
-/*     */   }
-/*     */   
-/*     */   static class Accessor
-/*     */     extends DirectMethodHandle {
-/*     */     final Class<?> fieldType;
-/*     */     final int fieldOffset;
-/*     */     
-/*     */     private Accessor(MethodType param1MethodType, LambdaForm param1LambdaForm, MemberName param1MemberName, int param1Int) {
-/* 448 */       super(param1MethodType, param1LambdaForm, param1MemberName);
-/* 449 */       this.fieldType = param1MemberName.getFieldType();
-/* 450 */       this.fieldOffset = param1Int;
-/*     */     }
-/*     */     
-/*     */     Object checkCast(Object param1Object) {
-/* 454 */       return this.fieldType.cast(param1Object);
-/*     */     }
-/*     */     
-/*     */     MethodHandle copyWith(MethodType param1MethodType, LambdaForm param1LambdaForm) {
-/* 458 */       return new Accessor(param1MethodType, param1LambdaForm, this.member, this.fieldOffset);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ForceInline
-/*     */   static long fieldOffset(Object paramObject) {
-/* 466 */     return ((Accessor)paramObject).fieldOffset;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ForceInline
-/*     */   static Object checkBase(Object paramObject) {
-/* 478 */     paramObject.getClass();
-/* 479 */     return paramObject;
-/*     */   }
-/*     */   
-/*     */   static class StaticAccessor
-/*     */     extends DirectMethodHandle
-/*     */   {
-/*     */     private final Class<?> fieldType;
-/*     */     private final Object staticBase;
-/*     */     private final long staticOffset;
-/*     */     
-/*     */     private StaticAccessor(MethodType param1MethodType, LambdaForm param1LambdaForm, MemberName param1MemberName, Object param1Object, long param1Long) {
-/* 490 */       super(param1MethodType, param1LambdaForm, param1MemberName);
-/* 491 */       this.fieldType = param1MemberName.getFieldType();
-/* 492 */       this.staticBase = param1Object;
-/* 493 */       this.staticOffset = param1Long;
-/*     */     }
-/*     */     
-/*     */     Object checkCast(Object param1Object) {
-/* 497 */       return this.fieldType.cast(param1Object);
-/*     */     }
-/*     */     
-/*     */     MethodHandle copyWith(MethodType param1MethodType, LambdaForm param1LambdaForm) {
-/* 501 */       return new StaticAccessor(param1MethodType, param1LambdaForm, this.member, this.staticBase, this.staticOffset);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   @ForceInline
-/*     */   static Object nullCheck(Object paramObject) {
-/* 507 */     paramObject.getClass();
-/* 508 */     return paramObject;
-/*     */   }
-/*     */   
-/*     */   @ForceInline
-/*     */   static Object staticBase(Object paramObject) {
-/* 513 */     return ((StaticAccessor)paramObject).staticBase;
-/*     */   }
-/*     */   
-/*     */   @ForceInline
-/*     */   static long staticOffset(Object paramObject) {
-/* 518 */     return ((StaticAccessor)paramObject).staticOffset;
-/*     */   }
-/*     */   
-/*     */   @ForceInline
-/*     */   static Object checkCast(Object paramObject1, Object paramObject2) {
-/* 523 */     return ((DirectMethodHandle)paramObject1).checkCast(paramObject2);
-/*     */   }
-/*     */   
-/*     */   Object checkCast(Object paramObject) {
-/* 527 */     return this.member.getReturnType().cast(paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/* 532 */   private static byte AF_GETFIELD = 0;
-/* 533 */   private static byte AF_PUTFIELD = 1;
-/* 534 */   private static byte AF_GETSTATIC = 2;
-/* 535 */   private static byte AF_PUTSTATIC = 3;
-/* 536 */   private static byte AF_GETSTATIC_INIT = 4;
-/* 537 */   private static byte AF_PUTSTATIC_INIT = 5;
-/* 538 */   private static byte AF_LIMIT = 6;
-/*     */ 
-/*     */ 
-/*     */   
-/* 542 */   private static int FT_LAST_WRAPPER = (Wrapper.values()).length - 1;
-/* 543 */   private static int FT_UNCHECKED_REF = Wrapper.OBJECT.ordinal();
-/* 544 */   private static int FT_CHECKED_REF = FT_LAST_WRAPPER + 1;
-/* 545 */   private static int FT_LIMIT = FT_LAST_WRAPPER + 2;
-/*     */   private static int afIndex(byte paramByte, boolean paramBoolean, int paramInt) {
-/* 547 */     return paramByte * FT_LIMIT * 2 + (paramBoolean ? FT_LIMIT : 0) + paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/* 552 */   private static final LambdaForm[] ACCESSOR_FORMS = new LambdaForm[afIndex(AF_LIMIT, false, 0)];
-/*     */   private static int ftypeKind(Class<?> paramClass) {
-/* 554 */     if (paramClass.isPrimitive())
-/* 555 */       return Wrapper.forPrimitiveType(paramClass).ordinal(); 
-/* 556 */     if (VerifyType.isNullReferenceConversion(Object.class, paramClass)) {
-/* 557 */       return FT_UNCHECKED_REF;
-/*     */     }
-/* 559 */     return FT_CHECKED_REF;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static LambdaForm preparedFieldLambdaForm(MemberName paramMemberName) {
-/*     */     byte b;
-/* 568 */     Class<?> clazz = paramMemberName.getFieldType();
-/* 569 */     boolean bool = paramMemberName.isVolatile();
-/*     */     
-/* 571 */     switch (paramMemberName.getReferenceKind()) { case 1:
-/* 572 */         b = AF_GETFIELD; break;
-/* 573 */       case 3: b = AF_PUTFIELD; break;
-/* 574 */       case 2: b = AF_GETSTATIC; break;
-/* 575 */       case 4: b = AF_PUTSTATIC; break;
-/* 576 */       default: throw new InternalError(paramMemberName.toString()); }
-/*     */     
-/* 578 */     if (shouldBeInitialized(paramMemberName)) {
-/*     */       
-/* 580 */       preparedFieldLambdaForm(b, bool, clazz);
-/* 581 */       assert AF_GETSTATIC_INIT - AF_GETSTATIC == AF_PUTSTATIC_INIT - AF_PUTSTATIC;
-/*     */       
-/* 583 */       b = (byte)(b + AF_GETSTATIC_INIT - AF_GETSTATIC);
-/*     */     } 
-/* 585 */     LambdaForm lambdaForm = preparedFieldLambdaForm(b, bool, clazz);
-/* 586 */     maybeCompile(lambdaForm, paramMemberName);
-/* 587 */     assert lambdaForm.methodType().dropParameterTypes(0, 1)
-/* 588 */       .equals(paramMemberName.getInvocationType().basicType()) : 
-/* 589 */       Arrays.asList((T[])new Object[] { paramMemberName, paramMemberName.getInvocationType().basicType(), lambdaForm, lambdaForm.methodType() });
-/* 590 */     return lambdaForm;
-/*     */   }
-/*     */   private static LambdaForm preparedFieldLambdaForm(byte paramByte, boolean paramBoolean, Class<?> paramClass) {
-/* 593 */     int i = afIndex(paramByte, paramBoolean, ftypeKind(paramClass));
-/* 594 */     LambdaForm lambdaForm = ACCESSOR_FORMS[i];
-/* 595 */     if (lambdaForm != null) return lambdaForm; 
-/* 596 */     lambdaForm = makePreparedFieldLambdaForm(paramByte, paramBoolean, ftypeKind(paramClass));
-/* 597 */     ACCESSOR_FORMS[i] = lambdaForm;
-/* 598 */     return lambdaForm;
-/*     */   }
-/*     */   private static LambdaForm makePreparedFieldLambdaForm(byte paramByte, boolean paramBoolean, int paramInt) {
-/*     */     MethodType methodType1;
-/* 602 */     boolean bool1 = ((paramByte & 0x1) == (AF_GETFIELD & 0x1)) ? true : false;
-/* 603 */     boolean bool2 = (paramByte >= AF_GETSTATIC) ? true : false;
-/* 604 */     boolean bool3 = (paramByte >= AF_GETSTATIC_INIT) ? true : false;
-/* 605 */     boolean bool4 = (paramInt == FT_CHECKED_REF) ? true : false;
-/* 606 */     Wrapper wrapper = bool4 ? Wrapper.OBJECT : Wrapper.values()[paramInt];
-/* 607 */     Class<?> clazz = wrapper.primitiveType();
-/* 608 */     assert ftypeKind(bool4 ? String.class : clazz) == paramInt;
-/* 609 */     String str1 = wrapper.primitiveSimpleName();
-/* 610 */     String str2 = Character.toUpperCase(str1.charAt(0)) + str1.substring(1);
-/* 611 */     if (paramBoolean) str2 = str2 + "Volatile"; 
-/* 612 */     String str3 = bool1 ? "get" : "put";
-/* 613 */     String str4 = str3 + str2;
-/*     */     
-/* 615 */     if (bool1) {
-/* 616 */       methodType1 = MethodType.methodType(clazz, Object.class, new Class[] { long.class });
-/*     */     } else {
-/* 618 */       methodType1 = MethodType.methodType(void.class, Object.class, new Class[] { long.class, clazz });
-/* 619 */     }  MemberName memberName = new MemberName(Unsafe.class, str4, methodType1, (byte)5);
-/*     */     try {
-/* 621 */       memberName = IMPL_NAMES.resolveOrFail((byte)5, memberName, null, NoSuchMethodException.class);
-/* 622 */     } catch (ReflectiveOperationException reflectiveOperationException) {
-/* 623 */       throw MethodHandleStatics.newInternalError(reflectiveOperationException);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 628 */     if (bool1) {
-/* 629 */       methodType2 = MethodType.methodType(clazz);
-/*     */     } else {
-/* 631 */       methodType2 = MethodType.methodType(void.class, clazz);
-/* 632 */     }  MethodType methodType2 = methodType2.basicType();
-/* 633 */     if (!bool2) {
-/* 634 */       methodType2 = methodType2.insertParameterTypes(0, new Class[] { Object.class });
-/*     */     }
-/*     */     
-/* 637 */     int i = 1 + methodType2.parameterCount();
-/*     */     
-/* 639 */     boolean bool5 = bool2 ? true : true;
-/*     */     
-/* 641 */     boolean bool6 = bool1 ? true : (i - 1);
-/* 642 */     int j = i;
-/* 643 */     boolean bool7 = bool2 ? j++ : true;
-/* 644 */     int k = j++;
-/* 645 */     boolean bool8 = bool5 ? j++ : true;
-/* 646 */     boolean bool9 = bool3 ? j++ : true;
-/* 647 */     boolean bool10 = (bool4 && !bool1) ? j++ : true;
-/* 648 */     int m = j++;
-/* 649 */     boolean bool11 = (bool4 && bool1) ? j++ : true;
-/* 650 */     int n = j - 1;
-/* 651 */     LambdaForm.Name[] arrayOfName = LambdaForm.arguments(j - i, methodType2.invokerType());
-/* 652 */     if (bool3)
-/* 653 */       arrayOfName[bool9] = new LambdaForm.Name(Lazy.NF_ensureInitialized, new Object[] { arrayOfName[0] }); 
-/* 654 */     if (bool4 && !bool1)
-/* 655 */       arrayOfName[bool10] = new LambdaForm.Name(Lazy.NF_checkCast, new Object[] { arrayOfName[0], arrayOfName[bool6] }); 
-/* 656 */     Object[] arrayOfObject = new Object[1 + methodType1.parameterCount()];
-/* 657 */     assert arrayOfObject.length == (bool1 ? 3 : 4);
-/* 658 */     arrayOfObject[0] = MethodHandleStatics.UNSAFE;
-/* 659 */     if (bool2) {
-/* 660 */       arrayOfName[bool7] = new LambdaForm.Name(Lazy.NF_staticBase, new Object[] { arrayOfName[0] }); arrayOfObject[1] = new LambdaForm.Name(Lazy.NF_staticBase, new Object[] { arrayOfName[0] });
-/* 661 */       arrayOfName[k] = new LambdaForm.Name(Lazy.NF_staticOffset, new Object[] { arrayOfName[0] }); arrayOfObject[2] = new LambdaForm.Name(Lazy.NF_staticOffset, new Object[] { arrayOfName[0] });
-/*     */     } else {
-/* 663 */       arrayOfName[bool8] = new LambdaForm.Name(Lazy.NF_checkBase, new Object[] { arrayOfName[bool5] }); arrayOfObject[1] = new LambdaForm.Name(Lazy.NF_checkBase, new Object[] { arrayOfName[bool5] });
-/* 664 */       arrayOfName[k] = new LambdaForm.Name(Lazy.NF_fieldOffset, new Object[] { arrayOfName[0] }); arrayOfObject[2] = new LambdaForm.Name(Lazy.NF_fieldOffset, new Object[] { arrayOfName[0] });
-/*     */     } 
-/* 666 */     if (!bool1) {
-/* 667 */       arrayOfObject[3] = bool4 ? arrayOfName[bool10] : arrayOfName[bool6];
-/*     */     }
-/* 669 */     for (Object object : arrayOfObject) assert object != null; 
-/* 670 */     arrayOfName[m] = new LambdaForm.Name(memberName, arrayOfObject);
-/* 671 */     if (bool4 && bool1)
-/* 672 */       arrayOfName[bool11] = new LambdaForm.Name(Lazy.NF_checkCast, new Object[] { arrayOfName[0], arrayOfName[m] }); 
-/* 673 */     for (LambdaForm.Name name : arrayOfName) assert name != null; 
-/* 674 */     String str5 = bool2 ? "Static" : "Field";
-/* 675 */     String str6 = str4 + str5;
-/* 676 */     if (bool4) str6 = str6 + "Cast"; 
-/* 677 */     if (bool3) str6 = str6 + "Init"; 
-/* 678 */     return new LambdaForm(str6, i, arrayOfName, n);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class Lazy
-/*     */   {
-/*     */     static final LambdaForm.NamedFunction NF_internalMemberName;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_internalMemberNameEnsureInit;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_ensureInitialized;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_fieldOffset;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_checkBase;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_staticBase;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_staticOffset;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_checkCast;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_allocateInstance;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_constructorMethod;
-/*     */ 
-/*     */     
-/*     */     static final LambdaForm.NamedFunction NF_checkReceiver;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     static {
-/*     */       try {
-/* 722 */         LambdaForm.NamedFunction[] arrayOfNamedFunction = { NF_internalMemberName = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("internalMemberName", new Class[] { Object.class })), NF_internalMemberNameEnsureInit = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("internalMemberNameEnsureInit", new Class[] { Object.class })), NF_ensureInitialized = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("ensureInitialized", new Class[] { Object.class })), NF_fieldOffset = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("fieldOffset", new Class[] { Object.class })), NF_checkBase = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("checkBase", new Class[] { Object.class })), NF_staticBase = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("staticBase", new Class[] { Object.class })), NF_staticOffset = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("staticOffset", new Class[] { Object.class })), NF_checkCast = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("checkCast", new Class[] { Object.class, Object.class })), NF_allocateInstance = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("allocateInstance", new Class[] { Object.class })), NF_constructorMethod = new LambdaForm.NamedFunction(DirectMethodHandle.class.getDeclaredMethod("constructorMethod", new Class[] { Object.class })), NF_checkReceiver = new LambdaForm.NamedFunction(new MemberName(DirectMethodHandle.Interface.class.getDeclaredMethod("checkReceiver", new Class[] { Object.class }))) };
-/*     */         
-/* 724 */         for (LambdaForm.NamedFunction namedFunction : arrayOfNamedFunction) {
-/*     */           
-/* 726 */           assert InvokerBytecodeGenerator.isStaticallyInvocable(namedFunction.member) : namedFunction;
-/* 727 */           namedFunction.resolve();
-/*     */         } 
-/* 729 */       } catch (ReflectiveOperationException reflectiveOperationException) {
-/* 730 */         throw MethodHandleStatics.newInternalError(reflectiveOperationException);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\invoke\DirectMethodHandle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.invoke;
+
+import sun.misc.Unsafe;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import sun.invoke.util.VerifyAccess;
+import static java.lang.invoke.MethodHandleNatives.Constants.*;
+import static java.lang.invoke.LambdaForm.*;
+import static java.lang.invoke.MethodTypeForm.*;
+import static java.lang.invoke.MethodHandleStatics.*;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
+import sun.invoke.util.ValueConversions;
+import sun.invoke.util.VerifyType;
+import sun.invoke.util.Wrapper;
+
+/**
+ * The flavor of method handle which implements a constant reference
+ * to a class member.
+ * @author jrose
+ */
+class DirectMethodHandle extends MethodHandle {
+    final MemberName member;
+
+    // Constructors and factory methods in this class *must* be package scoped or private.
+    private DirectMethodHandle(MethodType mtype, LambdaForm form, MemberName member) {
+        super(mtype, form);
+        if (!member.isResolved())  throw new InternalError();
+
+        if (member.getDeclaringClass().isInterface() &&
+                member.isMethod() && !member.isAbstract()) {
+            // Check for corner case: invokeinterface of Object method
+            MemberName m = new MemberName(Object.class, member.getName(), member.getMethodType(), member.getReferenceKind());
+            m = MemberName.getFactory().resolveOrNull(m.getReferenceKind(), m, null);
+            if (m != null && m.isPublic()) {
+                assert(member.getReferenceKind() == m.getReferenceKind());  // else this.form is wrong
+                member = m;
+            }
+        }
+
+        this.member = member;
+    }
+
+    // Factory methods:
+    static DirectMethodHandle make(byte refKind, Class<?> receiver, MemberName member) {
+        MethodType mtype = member.getMethodOrFieldType();
+        if (!member.isStatic()) {
+            if (!member.getDeclaringClass().isAssignableFrom(receiver) || member.isConstructor())
+                throw new InternalError(member.toString());
+            mtype = mtype.insertParameterTypes(0, receiver);
+        }
+        if (!member.isField()) {
+            switch (refKind) {
+                case REF_invokeSpecial: {
+                    member = member.asSpecial();
+                    LambdaForm lform = preparedLambdaForm(member);
+                    return new Special(mtype, lform, member);
+                }
+                case REF_invokeInterface: {
+                    LambdaForm lform = preparedLambdaForm(member);
+                    return new Interface(mtype, lform, member, receiver);
+                }
+                default: {
+                    LambdaForm lform = preparedLambdaForm(member);
+                    return new DirectMethodHandle(mtype, lform, member);
+                }
+            }
+        } else {
+            LambdaForm lform = preparedFieldLambdaForm(member);
+            if (member.isStatic()) {
+                long offset = MethodHandleNatives.staticFieldOffset(member);
+                Object base = MethodHandleNatives.staticFieldBase(member);
+                return new StaticAccessor(mtype, lform, member, base, offset);
+            } else {
+                long offset = MethodHandleNatives.objectFieldOffset(member);
+                assert(offset == (int)offset);
+                return new Accessor(mtype, lform, member, (int)offset);
+            }
+        }
+    }
+    static DirectMethodHandle make(Class<?> receiver, MemberName member) {
+        byte refKind = member.getReferenceKind();
+        if (refKind == REF_invokeSpecial)
+            refKind =  REF_invokeVirtual;
+        return make(refKind, receiver, member);
+    }
+    static DirectMethodHandle make(MemberName member) {
+        if (member.isConstructor())
+            return makeAllocator(member);
+        return make(member.getDeclaringClass(), member);
+    }
+    static DirectMethodHandle make(Method method) {
+        return make(method.getDeclaringClass(), new MemberName(method));
+    }
+    static DirectMethodHandle make(Field field) {
+        return make(field.getDeclaringClass(), new MemberName(field));
+    }
+    private static DirectMethodHandle makeAllocator(MemberName ctor) {
+        assert(ctor.isConstructor() && ctor.getName().equals("<init>"));
+        Class<?> instanceClass = ctor.getDeclaringClass();
+        ctor = ctor.asConstructor();
+        assert(ctor.isConstructor() && ctor.getReferenceKind() == REF_newInvokeSpecial) : ctor;
+        MethodType mtype = ctor.getMethodType().changeReturnType(instanceClass);
+        LambdaForm lform = preparedLambdaForm(ctor);
+        MemberName init = ctor.asSpecial();
+        assert(init.getMethodType().returnType() == void.class);
+        return new Constructor(mtype, lform, ctor, init, instanceClass);
+    }
+
+    @Override
+    BoundMethodHandle rebind() {
+        return BoundMethodHandle.makeReinvoker(this);
+    }
+
+    @Override
+    MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+        assert(this.getClass() == DirectMethodHandle.class);  // must override in subclasses
+        return new DirectMethodHandle(mt, lf, member);
+    }
+
+    @Override
+    String internalProperties() {
+        return "\n& DMH.MN="+internalMemberName();
+    }
+
+    //// Implementation methods.
+    @Override
+    @ForceInline
+    MemberName internalMemberName() {
+        return member;
+    }
+
+    private static final MemberName.Factory IMPL_NAMES = MemberName.getFactory();
+
+    /**
+     * Create a LF which can invoke the given method.
+     * Cache and share this structure among all methods with
+     * the same basicType and refKind.
+     */
+    private static LambdaForm preparedLambdaForm(MemberName m) {
+        assert(m.isInvocable()) : m;  // call preparedFieldLambdaForm instead
+        MethodType mtype = m.getInvocationType().basicType();
+        assert(!m.isMethodHandleInvoke()) : m;
+        int which;
+        switch (m.getReferenceKind()) {
+        case REF_invokeVirtual:    which = LF_INVVIRTUAL;    break;
+        case REF_invokeStatic:     which = LF_INVSTATIC;     break;
+        case REF_invokeSpecial:    which = LF_INVSPECIAL;    break;
+        case REF_invokeInterface:  which = LF_INVINTERFACE;  break;
+        case REF_newInvokeSpecial: which = LF_NEWINVSPECIAL; break;
+        default:  throw new InternalError(m.toString());
+        }
+        if (which == LF_INVSTATIC && shouldBeInitialized(m)) {
+            // precompute the barrier-free version:
+            preparedLambdaForm(mtype, which);
+            which = LF_INVSTATIC_INIT;
+        }
+        LambdaForm lform = preparedLambdaForm(mtype, which);
+        maybeCompile(lform, m);
+        assert(lform.methodType().dropParameterTypes(0, 1)
+                .equals(m.getInvocationType().basicType()))
+                : Arrays.asList(m, m.getInvocationType().basicType(), lform, lform.methodType());
+        return lform;
+    }
+
+    private static LambdaForm preparedLambdaForm(MethodType mtype, int which) {
+        LambdaForm lform = mtype.form().cachedLambdaForm(which);
+        if (lform != null)  return lform;
+        lform = makePreparedLambdaForm(mtype, which);
+        return mtype.form().setCachedLambdaForm(which, lform);
+    }
+
+    private static LambdaForm makePreparedLambdaForm(MethodType mtype, int which) {
+        boolean needsInit = (which == LF_INVSTATIC_INIT);
+        boolean doesAlloc = (which == LF_NEWINVSPECIAL);
+        boolean needsReceiverCheck = (which == LF_INVINTERFACE);
+        String linkerName, lambdaName;
+        switch (which) {
+        case LF_INVVIRTUAL:    linkerName = "linkToVirtual";    lambdaName = "DMH.invokeVirtual";    break;
+        case LF_INVSTATIC:     linkerName = "linkToStatic";     lambdaName = "DMH.invokeStatic";     break;
+        case LF_INVSTATIC_INIT:linkerName = "linkToStatic";     lambdaName = "DMH.invokeStaticInit"; break;
+        case LF_INVSPECIAL:    linkerName = "linkToSpecial";    lambdaName = "DMH.invokeSpecial";    break;
+        case LF_INVINTERFACE:  linkerName = "linkToInterface";  lambdaName = "DMH.invokeInterface";  break;
+        case LF_NEWINVSPECIAL: linkerName = "linkToSpecial";    lambdaName = "DMH.newInvokeSpecial"; break;
+        default:  throw new InternalError("which="+which);
+        }
+        MethodType mtypeWithArg = mtype.appendParameterTypes(MemberName.class);
+        if (doesAlloc)
+            mtypeWithArg = mtypeWithArg
+                    .insertParameterTypes(0, Object.class)  // insert newly allocated obj
+                    .changeReturnType(void.class);          // <init> returns void
+        MemberName linker = new MemberName(MethodHandle.class, linkerName, mtypeWithArg, REF_invokeStatic);
+        try {
+            linker = IMPL_NAMES.resolveOrFail(REF_invokeStatic, linker, null, NoSuchMethodException.class);
+        } catch (ReflectiveOperationException ex) {
+            throw newInternalError(ex);
+        }
+        final int DMH_THIS    = 0;
+        final int ARG_BASE    = 1;
+        final int ARG_LIMIT   = ARG_BASE + mtype.parameterCount();
+        int nameCursor = ARG_LIMIT;
+        final int NEW_OBJ     = (doesAlloc ? nameCursor++ : -1);
+        final int GET_MEMBER  = nameCursor++;
+        final int CHECK_RECEIVER = (needsReceiverCheck ? nameCursor++ : -1);
+        final int LINKER_CALL = nameCursor++;
+        Name[] names = arguments(nameCursor - ARG_LIMIT, mtype.invokerType());
+        assert(names.length == nameCursor);
+        if (doesAlloc) {
+            // names = { argx,y,z,... new C, init method }
+            names[NEW_OBJ] = new Name(Lazy.NF_allocateInstance, names[DMH_THIS]);
+            names[GET_MEMBER] = new Name(Lazy.NF_constructorMethod, names[DMH_THIS]);
+        } else if (needsInit) {
+            names[GET_MEMBER] = new Name(Lazy.NF_internalMemberNameEnsureInit, names[DMH_THIS]);
+        } else {
+            names[GET_MEMBER] = new Name(Lazy.NF_internalMemberName, names[DMH_THIS]);
+        }
+        assert(findDirectMethodHandle(names[GET_MEMBER]) == names[DMH_THIS]);
+        Object[] outArgs = Arrays.copyOfRange(names, ARG_BASE, GET_MEMBER+1, Object[].class);
+        if (needsReceiverCheck) {
+            names[CHECK_RECEIVER] = new Name(Lazy.NF_checkReceiver, names[DMH_THIS], names[ARG_BASE]);
+            outArgs[0] = names[CHECK_RECEIVER];
+        }
+        assert(outArgs[outArgs.length-1] == names[GET_MEMBER]);  // look, shifted args!
+        int result = LAST_RESULT;
+        if (doesAlloc) {
+            assert(outArgs[outArgs.length-2] == names[NEW_OBJ]);  // got to move this one
+            System.arraycopy(outArgs, 0, outArgs, 1, outArgs.length-2);
+            outArgs[0] = names[NEW_OBJ];
+            result = NEW_OBJ;
+        }
+        names[LINKER_CALL] = new Name(linker, outArgs);
+        lambdaName += "_" + shortenSignature(basicTypeSignature(mtype));
+        LambdaForm lform = new LambdaForm(lambdaName, ARG_LIMIT, names, result);
+        // This is a tricky bit of code.  Don't send it through the LF interpreter.
+        lform.compileToBytecode();
+        return lform;
+    }
+
+    static Object findDirectMethodHandle(Name name) {
+        if (name.function == Lazy.NF_internalMemberName ||
+            name.function == Lazy.NF_internalMemberNameEnsureInit ||
+            name.function == Lazy.NF_constructorMethod) {
+            assert(name.arguments.length == 1);
+            return name.arguments[0];
+        }
+        return null;
+    }
+
+    private static void maybeCompile(LambdaForm lform, MemberName m) {
+        if (VerifyAccess.isSamePackage(m.getDeclaringClass(), MethodHandle.class))
+            // Help along bootstrapping...
+            lform.compileToBytecode();
+    }
+
+    /** Static wrapper for DirectMethodHandle.internalMemberName. */
+    @ForceInline
+    /*non-public*/ static Object internalMemberName(Object mh) {
+        return ((DirectMethodHandle)mh).member;
+    }
+
+    /** Static wrapper for DirectMethodHandle.internalMemberName.
+     * This one also forces initialization.
+     */
+    /*non-public*/ static Object internalMemberNameEnsureInit(Object mh) {
+        DirectMethodHandle dmh = (DirectMethodHandle)mh;
+        dmh.ensureInitialized();
+        return dmh.member;
+    }
+
+    /*non-public*/ static
+    boolean shouldBeInitialized(MemberName member) {
+        switch (member.getReferenceKind()) {
+        case REF_invokeStatic:
+        case REF_getStatic:
+        case REF_putStatic:
+        case REF_newInvokeSpecial:
+            break;
+        default:
+            // No need to initialize the class on this kind of member.
+            return false;
+        }
+        Class<?> cls = member.getDeclaringClass();
+        if (cls == ValueConversions.class ||
+            cls == MethodHandleImpl.class ||
+            cls == Invokers.class) {
+            // These guys have lots of <clinit> DMH creation but we know
+            // the MHs will not be used until the system is booted.
+            return false;
+        }
+        if (VerifyAccess.isSamePackage(MethodHandle.class, cls) ||
+            VerifyAccess.isSamePackage(ValueConversions.class, cls)) {
+            // It is a system class.  It is probably in the process of
+            // being initialized, but we will help it along just to be safe.
+            if (UNSAFE.shouldBeInitialized(cls)) {
+                UNSAFE.ensureClassInitialized(cls);
+            }
+            return false;
+        }
+        return UNSAFE.shouldBeInitialized(cls);
+    }
+
+    private static class EnsureInitialized extends ClassValue<WeakReference<Thread>> {
+        @Override
+        protected WeakReference<Thread> computeValue(Class<?> type) {
+            UNSAFE.ensureClassInitialized(type);
+            if (UNSAFE.shouldBeInitialized(type))
+                // If the previous call didn't block, this can happen.
+                // We are executing inside <clinit>.
+                return new WeakReference<>(Thread.currentThread());
+            return null;
+        }
+        static final EnsureInitialized INSTANCE = new EnsureInitialized();
+    }
+
+    private void ensureInitialized() {
+        if (checkInitialized(member)) {
+            // The coast is clear.  Delete the <clinit> barrier.
+            if (member.isField())
+                updateForm(preparedFieldLambdaForm(member));
+            else
+                updateForm(preparedLambdaForm(member));
+        }
+    }
+    private static boolean checkInitialized(MemberName member) {
+        Class<?> defc = member.getDeclaringClass();
+        WeakReference<Thread> ref = EnsureInitialized.INSTANCE.get(defc);
+        if (ref == null) {
+            return true;  // the final state
+        }
+        Thread clinitThread = ref.get();
+        // Somebody may still be running defc.<clinit>.
+        if (clinitThread == Thread.currentThread()) {
+            // If anybody is running defc.<clinit>, it is this thread.
+            if (UNSAFE.shouldBeInitialized(defc))
+                // Yes, we are running it; keep the barrier for now.
+                return false;
+        } else {
+            // We are in a random thread.  Block.
+            UNSAFE.ensureClassInitialized(defc);
+        }
+        assert(!UNSAFE.shouldBeInitialized(defc));
+        // put it into the final state
+        EnsureInitialized.INSTANCE.remove(defc);
+        return true;
+    }
+
+    /*non-public*/ static void ensureInitialized(Object mh) {
+        ((DirectMethodHandle)mh).ensureInitialized();
+    }
+
+    /** This subclass represents invokespecial instructions. */
+    static class Special extends DirectMethodHandle {
+        private Special(MethodType mtype, LambdaForm form, MemberName member) {
+            super(mtype, form, member);
+        }
+        @Override
+        boolean isInvokeSpecial() {
+            return true;
+        }
+        @Override
+        MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+            return new Special(mt, lf, member);
+        }
+    }
+
+    /** This subclass represents invokeinterface instructions. */
+    static class Interface extends DirectMethodHandle {
+        private final Class<?> refc;
+        private Interface(MethodType mtype, LambdaForm form, MemberName member, Class<?> refc) {
+            super(mtype, form, member);
+            assert refc.isInterface() : refc;
+            this.refc = refc;
+        }
+        @Override
+        MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+            return new Interface(mt, lf, member, refc);
+        }
+
+        Object checkReceiver(Object recv) {
+            if (!refc.isInstance(recv)) {
+                String msg = String.format("Class %s does not implement the requested interface %s",
+                        recv.getClass().getName(), refc.getName());
+                throw new IncompatibleClassChangeError(msg);
+            }
+            return recv;
+        }
+    }
+
+    /** This subclass handles constructor references. */
+    static class Constructor extends DirectMethodHandle {
+        final MemberName initMethod;
+        final Class<?>   instanceClass;
+
+        private Constructor(MethodType mtype, LambdaForm form, MemberName constructor,
+                            MemberName initMethod, Class<?> instanceClass) {
+            super(mtype, form, constructor);
+            this.initMethod = initMethod;
+            this.instanceClass = instanceClass;
+            assert(initMethod.isResolved());
+        }
+        @Override
+        MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+            return new Constructor(mt, lf, member, initMethod, instanceClass);
+        }
+    }
+
+    /*non-public*/ static Object constructorMethod(Object mh) {
+        Constructor dmh = (Constructor)mh;
+        return dmh.initMethod;
+    }
+
+    /*non-public*/ static Object allocateInstance(Object mh) throws InstantiationException {
+        Constructor dmh = (Constructor)mh;
+        return UNSAFE.allocateInstance(dmh.instanceClass);
+    }
+
+    /** This subclass handles non-static field references. */
+    static class Accessor extends DirectMethodHandle {
+        final Class<?> fieldType;
+        final int      fieldOffset;
+        private Accessor(MethodType mtype, LambdaForm form, MemberName member,
+                         int fieldOffset) {
+            super(mtype, form, member);
+            this.fieldType   = member.getFieldType();
+            this.fieldOffset = fieldOffset;
+        }
+
+        @Override Object checkCast(Object obj) {
+            return fieldType.cast(obj);
+        }
+        @Override
+        MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+            return new Accessor(mt, lf, member, fieldOffset);
+        }
+    }
+
+    @ForceInline
+    /*non-public*/ static long fieldOffset(Object accessorObj) {
+        // Note: We return a long because that is what Unsafe.getObject likes.
+        // We store a plain int because it is more compact.
+        return ((Accessor)accessorObj).fieldOffset;
+    }
+
+    @ForceInline
+    /*non-public*/ static Object checkBase(Object obj) {
+        // Note that the object's class has already been verified,
+        // since the parameter type of the Accessor method handle
+        // is either member.getDeclaringClass or a subclass.
+        // This was verified in DirectMethodHandle.make.
+        // Therefore, the only remaining check is for null.
+        // Since this check is *not* guaranteed by Unsafe.getInt
+        // and its siblings, we need to make an explicit one here.
+        obj.getClass();  // maybe throw NPE
+        return obj;
+    }
+
+    /** This subclass handles static field references. */
+    static class StaticAccessor extends DirectMethodHandle {
+        final private Class<?> fieldType;
+        final private Object   staticBase;
+        final private long     staticOffset;
+
+        private StaticAccessor(MethodType mtype, LambdaForm form, MemberName member,
+                               Object staticBase, long staticOffset) {
+            super(mtype, form, member);
+            this.fieldType    = member.getFieldType();
+            this.staticBase   = staticBase;
+            this.staticOffset = staticOffset;
+        }
+
+        @Override Object checkCast(Object obj) {
+            return fieldType.cast(obj);
+        }
+        @Override
+        MethodHandle copyWith(MethodType mt, LambdaForm lf) {
+            return new StaticAccessor(mt, lf, member, staticBase, staticOffset);
+        }
+    }
+
+    @ForceInline
+    /*non-public*/ static Object nullCheck(Object obj) {
+        obj.getClass();
+        return obj;
+    }
+
+    @ForceInline
+    /*non-public*/ static Object staticBase(Object accessorObj) {
+        return ((StaticAccessor)accessorObj).staticBase;
+    }
+
+    @ForceInline
+    /*non-public*/ static long staticOffset(Object accessorObj) {
+        return ((StaticAccessor)accessorObj).staticOffset;
+    }
+
+    @ForceInline
+    /*non-public*/ static Object checkCast(Object mh, Object obj) {
+        return ((DirectMethodHandle) mh).checkCast(obj);
+    }
+
+    Object checkCast(Object obj) {
+        return member.getReturnType().cast(obj);
+    }
+
+    // Caching machinery for field accessors:
+    private static byte
+            AF_GETFIELD        = 0,
+            AF_PUTFIELD        = 1,
+            AF_GETSTATIC       = 2,
+            AF_PUTSTATIC       = 3,
+            AF_GETSTATIC_INIT  = 4,
+            AF_PUTSTATIC_INIT  = 5,
+            AF_LIMIT           = 6;
+    // Enumerate the different field kinds using Wrapper,
+    // with an extra case added for checked references.
+    private static int
+            FT_LAST_WRAPPER    = Wrapper.values().length-1,
+            FT_UNCHECKED_REF   = Wrapper.OBJECT.ordinal(),
+            FT_CHECKED_REF     = FT_LAST_WRAPPER+1,
+            FT_LIMIT           = FT_LAST_WRAPPER+2;
+    private static int afIndex(byte formOp, boolean isVolatile, int ftypeKind) {
+        return ((formOp * FT_LIMIT * 2)
+                + (isVolatile ? FT_LIMIT : 0)
+                + ftypeKind);
+    }
+    private static final LambdaForm[] ACCESSOR_FORMS
+            = new LambdaForm[afIndex(AF_LIMIT, false, 0)];
+    private static int ftypeKind(Class<?> ftype) {
+        if (ftype.isPrimitive())
+            return Wrapper.forPrimitiveType(ftype).ordinal();
+        else if (VerifyType.isNullReferenceConversion(Object.class, ftype))
+            return FT_UNCHECKED_REF;
+        else
+            return FT_CHECKED_REF;
+    }
+
+    /**
+     * Create a LF which can access the given field.
+     * Cache and share this structure among all fields with
+     * the same basicType and refKind.
+     */
+    private static LambdaForm preparedFieldLambdaForm(MemberName m) {
+        Class<?> ftype = m.getFieldType();
+        boolean isVolatile = m.isVolatile();
+        byte formOp;
+        switch (m.getReferenceKind()) {
+        case REF_getField:      formOp = AF_GETFIELD;    break;
+        case REF_putField:      formOp = AF_PUTFIELD;    break;
+        case REF_getStatic:     formOp = AF_GETSTATIC;   break;
+        case REF_putStatic:     formOp = AF_PUTSTATIC;   break;
+        default:  throw new InternalError(m.toString());
+        }
+        if (shouldBeInitialized(m)) {
+            // precompute the barrier-free version:
+            preparedFieldLambdaForm(formOp, isVolatile, ftype);
+            assert((AF_GETSTATIC_INIT - AF_GETSTATIC) ==
+                   (AF_PUTSTATIC_INIT - AF_PUTSTATIC));
+            formOp += (AF_GETSTATIC_INIT - AF_GETSTATIC);
+        }
+        LambdaForm lform = preparedFieldLambdaForm(formOp, isVolatile, ftype);
+        maybeCompile(lform, m);
+        assert(lform.methodType().dropParameterTypes(0, 1)
+                .equals(m.getInvocationType().basicType()))
+                : Arrays.asList(m, m.getInvocationType().basicType(), lform, lform.methodType());
+        return lform;
+    }
+    private static LambdaForm preparedFieldLambdaForm(byte formOp, boolean isVolatile, Class<?> ftype) {
+        int afIndex = afIndex(formOp, isVolatile, ftypeKind(ftype));
+        LambdaForm lform = ACCESSOR_FORMS[afIndex];
+        if (lform != null)  return lform;
+        lform = makePreparedFieldLambdaForm(formOp, isVolatile, ftypeKind(ftype));
+        ACCESSOR_FORMS[afIndex] = lform;  // don't bother with a CAS
+        return lform;
+    }
+
+    private static LambdaForm makePreparedFieldLambdaForm(byte formOp, boolean isVolatile, int ftypeKind) {
+        boolean isGetter  = (formOp & 1) == (AF_GETFIELD & 1);
+        boolean isStatic  = (formOp >= AF_GETSTATIC);
+        boolean needsInit = (formOp >= AF_GETSTATIC_INIT);
+        boolean needsCast = (ftypeKind == FT_CHECKED_REF);
+        Wrapper fw = (needsCast ? Wrapper.OBJECT : Wrapper.values()[ftypeKind]);
+        Class<?> ft = fw.primitiveType();
+        assert(ftypeKind(needsCast ? String.class : ft) == ftypeKind);
+        String tname  = fw.primitiveSimpleName();
+        String ctname = Character.toUpperCase(tname.charAt(0)) + tname.substring(1);
+        if (isVolatile)  ctname += "Volatile";
+        String getOrPut = (isGetter ? "get" : "put");
+        String linkerName = (getOrPut + ctname);  // getObject, putIntVolatile, etc.
+        MethodType linkerType;
+        if (isGetter)
+            linkerType = MethodType.methodType(ft, Object.class, long.class);
+        else
+            linkerType = MethodType.methodType(void.class, Object.class, long.class, ft);
+        MemberName linker = new MemberName(Unsafe.class, linkerName, linkerType, REF_invokeVirtual);
+        try {
+            linker = IMPL_NAMES.resolveOrFail(REF_invokeVirtual, linker, null, NoSuchMethodException.class);
+        } catch (ReflectiveOperationException ex) {
+            throw newInternalError(ex);
+        }
+
+        // What is the external type of the lambda form?
+        MethodType mtype;
+        if (isGetter)
+            mtype = MethodType.methodType(ft);
+        else
+            mtype = MethodType.methodType(void.class, ft);
+        mtype = mtype.basicType();  // erase short to int, etc.
+        if (!isStatic)
+            mtype = mtype.insertParameterTypes(0, Object.class);
+        final int DMH_THIS  = 0;
+        final int ARG_BASE  = 1;
+        final int ARG_LIMIT = ARG_BASE + mtype.parameterCount();
+        // if this is for non-static access, the base pointer is stored at this index:
+        final int OBJ_BASE  = isStatic ? -1 : ARG_BASE;
+        // if this is for write access, the value to be written is stored at this index:
+        final int SET_VALUE  = isGetter ? -1 : ARG_LIMIT - 1;
+        int nameCursor = ARG_LIMIT;
+        final int F_HOLDER  = (isStatic ? nameCursor++ : -1);  // static base if any
+        final int F_OFFSET  = nameCursor++;  // Either static offset or field offset.
+        final int OBJ_CHECK = (OBJ_BASE >= 0 ? nameCursor++ : -1);
+        final int INIT_BAR  = (needsInit ? nameCursor++ : -1);
+        final int PRE_CAST  = (needsCast && !isGetter ? nameCursor++ : -1);
+        final int LINKER_CALL = nameCursor++;
+        final int POST_CAST = (needsCast && isGetter ? nameCursor++ : -1);
+        final int RESULT    = nameCursor-1;  // either the call or the cast
+        Name[] names = arguments(nameCursor - ARG_LIMIT, mtype.invokerType());
+        if (needsInit)
+            names[INIT_BAR] = new Name(Lazy.NF_ensureInitialized, names[DMH_THIS]);
+        if (needsCast && !isGetter)
+            names[PRE_CAST] = new Name(Lazy.NF_checkCast, names[DMH_THIS], names[SET_VALUE]);
+        Object[] outArgs = new Object[1 + linkerType.parameterCount()];
+        assert(outArgs.length == (isGetter ? 3 : 4));
+        outArgs[0] = UNSAFE;
+        if (isStatic) {
+            outArgs[1] = names[F_HOLDER]  = new Name(Lazy.NF_staticBase, names[DMH_THIS]);
+            outArgs[2] = names[F_OFFSET]  = new Name(Lazy.NF_staticOffset, names[DMH_THIS]);
+        } else {
+            outArgs[1] = names[OBJ_CHECK] = new Name(Lazy.NF_checkBase, names[OBJ_BASE]);
+            outArgs[2] = names[F_OFFSET]  = new Name(Lazy.NF_fieldOffset, names[DMH_THIS]);
+        }
+        if (!isGetter) {
+            outArgs[3] = (needsCast ? names[PRE_CAST] : names[SET_VALUE]);
+        }
+        for (Object a : outArgs)  assert(a != null);
+        names[LINKER_CALL] = new Name(linker, outArgs);
+        if (needsCast && isGetter)
+            names[POST_CAST] = new Name(Lazy.NF_checkCast, names[DMH_THIS], names[LINKER_CALL]);
+        for (Name n : names)  assert(n != null);
+        String fieldOrStatic = (isStatic ? "Static" : "Field");
+        String lambdaName = (linkerName + fieldOrStatic);  // significant only for debugging
+        if (needsCast)  lambdaName += "Cast";
+        if (needsInit)  lambdaName += "Init";
+        return new LambdaForm(lambdaName, ARG_LIMIT, names, RESULT);
+    }
+
+    /**
+     * Pre-initialized NamedFunctions for bootstrapping purposes.
+     * Factored in an inner class to delay initialization until first usage.
+     */
+    private static class Lazy {
+        static final NamedFunction
+                NF_internalMemberName,
+                NF_internalMemberNameEnsureInit,
+                NF_ensureInitialized,
+                NF_fieldOffset,
+                NF_checkBase,
+                NF_staticBase,
+                NF_staticOffset,
+                NF_checkCast,
+                NF_allocateInstance,
+                NF_constructorMethod,
+                NF_checkReceiver;
+        static {
+            try {
+                NamedFunction nfs[] = {
+                        NF_internalMemberName = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("internalMemberName", Object.class)),
+                        NF_internalMemberNameEnsureInit = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("internalMemberNameEnsureInit", Object.class)),
+                        NF_ensureInitialized = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("ensureInitialized", Object.class)),
+                        NF_fieldOffset = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("fieldOffset", Object.class)),
+                        NF_checkBase = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("checkBase", Object.class)),
+                        NF_staticBase = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("staticBase", Object.class)),
+                        NF_staticOffset = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("staticOffset", Object.class)),
+                        NF_checkCast = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("checkCast", Object.class, Object.class)),
+                        NF_allocateInstance = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("allocateInstance", Object.class)),
+                        NF_constructorMethod = new NamedFunction(DirectMethodHandle.class
+                                .getDeclaredMethod("constructorMethod", Object.class)),
+                        NF_checkReceiver = new NamedFunction(new MemberName(Interface.class
+                                .getDeclaredMethod("checkReceiver", Object.class)))
+                };
+                for (NamedFunction nf : nfs) {
+                    // Each nf must be statically invocable or we get tied up in our bootstraps.
+                    assert(InvokerBytecodeGenerator.isStaticallyInvocable(nf.member)) : nf;
+                    nf.resolve();
+                }
+            } catch (ReflectiveOperationException ex) {
+                throw newInternalError(ex);
+            }
+        }
+    }
+}

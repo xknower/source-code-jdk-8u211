@@ -1,75 +1,70 @@
-/*    */ package java.nio.charset;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MalformedInputException
-/*    */   extends CharacterCodingException
-/*    */ {
-/*    */   private static final long serialVersionUID = -3438823399834806194L;
-/*    */   private int inputLength;
-/*    */   
-/*    */   public MalformedInputException(int paramInt) {
-/* 51 */     this.inputLength = paramInt;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getInputLength() {
-/* 59 */     return this.inputLength;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getMessage() {
-/* 67 */     return "Input length = " + this.inputLength;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\charset\MalformedInputException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.charset;
+
+
+/**
+ * Checked exception thrown when an input byte sequence is not legal for given
+ * charset, or an input character sequence is not a legal sixteen-bit Unicode
+ * sequence.
+ *
+ * @since 1.4
+ */
+
+public class MalformedInputException
+    extends CharacterCodingException
+{
+
+    private static final long serialVersionUID = -3438823399834806194L;
+
+    private int inputLength;
+
+    /**
+     * Constructs an {@code MalformedInputException} with the given
+     * length.
+     * @param inputLength the length of the input
+     */
+    public MalformedInputException(int inputLength) {
+        this.inputLength = inputLength;
+    }
+
+    /**
+     * Returns the length of the input.
+     * @return the length of the input
+     */
+    public int getInputLength() {
+        return inputLength;
+    }
+
+    /**
+     * Returns the message.
+     * @return the message
+     */
+    public String getMessage() {
+        return "Input length = " + inputLength;
+    }
+
+}

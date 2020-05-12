@@ -1,85 +1,80 @@
-/*    */ package com.sun.corba.se.impl.orbutil;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ import java.io.OutputStream;
-/*    */ import java.io.StringWriter;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class HexOutputStream
-/*    */   extends OutputStream
-/*    */ {
-/* 41 */   private static final char[] hex = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private StringWriter writer;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public HexOutputStream(StringWriter paramStringWriter) {
-/* 54 */     this.writer = paramStringWriter;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public synchronized void write(int paramInt) throws IOException {
-/* 65 */     this.writer.write(hex[paramInt >> 4 & 0xF]);
-/* 66 */     this.writer.write(hex[paramInt >> 0 & 0xF]);
-/*    */   }
-/*    */   
-/*    */   public synchronized void write(byte[] paramArrayOfbyte) throws IOException {
-/* 70 */     write(paramArrayOfbyte, 0, paramArrayOfbyte.length);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public synchronized void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 76 */     for (byte b = 0; b < paramInt2; b++)
-/* 77 */       write(paramArrayOfbyte[paramInt1 + b]); 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\HexOutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil;
+
+import java.io.StringWriter;
+import java.io.OutputStream;
+import java.io.IOException;
+
+/**
+ * Writes each input byte as a 2 byte hexidecimal output pair making it
+ * possible to turn arbitrary binary data into an ASCII format.
+ * The high 4 bits of the byte is translated into the first byte.
+ *
+ * @author      Jeff Nisewanger
+ */
+public class HexOutputStream extends OutputStream
+{
+    static private final char hex[] = {
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+
+    private StringWriter writer;
+
+    /**
+     * Creates a new HexOutputStream.
+     * @param w The underlying StringWriter.
+     */
+    public
+        HexOutputStream(StringWriter w) {
+        writer = w;
+    }
+
+
+    /**
+     * Writes a byte. Will block until the byte is actually
+     * written.
+     * param b The byte to write out.
+     * @exception java.io.IOException I/O error occurred.
+     */
+    public synchronized void write(int b) throws IOException {
+        writer.write(hex[((b >> 4) & 0xF)]);
+        writer.write(hex[((b >> 0) & 0xF)]);
+    }
+
+    public synchronized void write(byte[] b) throws IOException {
+        write(b, 0, b.length);
+    }
+
+    public synchronized void write(byte[] b, int off, int len)
+        throws IOException
+    {
+        for(int i=0; i < len; i++) {
+            write(b[off + i]);
+        }
+    }
+}

@@ -1,560 +1,543 @@
-/*     */ package com.sun.corba.se.impl.activation;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ActivationSystemException;
-/*     */ import com.sun.corba.se.spi.activation.EndPointInfo;
-/*     */ import com.sun.corba.se.spi.activation.InvalidORBid;
-/*     */ import com.sun.corba.se.spi.activation.ORBAlreadyRegistered;
-/*     */ import com.sun.corba.se.spi.activation.ORBPortInfo;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
-/*     */ import com.sun.corba.se.spi.activation.Server;
-/*     */ import com.sun.corba.se.spi.activation.ServerHeldDown;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServerTableEntry
-/*     */ {
-/*     */   private static final int DE_ACTIVATED = 0;
-/*     */   private static final int ACTIVATING = 1;
-/*     */   private static final int ACTIVATED = 2;
-/*     */   private static final int RUNNING = 3;
-/*     */   private static final int HELD_DOWN = 4;
-/*     */   private static final long waitTime = 2000L;
-/*     */   private static final int ActivationRetryMax = 5;
-/*     */   private int state;
-/*     */   private int serverId;
-/*     */   private HashMap orbAndPortInfo;
-/*     */   private Server serverObj;
-/*     */   private ServerDef serverDef;
-/*     */   private Process process;
-/*     */   
-/*     */   private String printState() {
-/*  65 */     String str = "UNKNOWN";
-/*     */     
-/*  67 */     switch (this.state) { case 0:
-/*  68 */         str = "DE_ACTIVATED"; break;
-/*  69 */       case 1: str = "ACTIVATING  "; break;
-/*  70 */       case 2: str = "ACTIVATED   "; break;
-/*  71 */       case 3: str = "RUNNING     "; break;
-/*  72 */       case 4: str = "HELD_DOWN   ";
-/*     */         break; }
-/*     */ 
-/*     */     
-/*  76 */     return str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  89 */   private int activateRetryCount = 0;
-/*     */   private String activationCmd;
-/*     */   private ActivationSystemException wrapper;
-/*     */   
-/*     */   public String toString() {
-/*  94 */     return "ServerTableEntry[state=" + printState() + " serverId=" + this.serverId + " activateRetryCount=" + this.activateRetryCount + "]";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 103 */   private static String javaHome = System.getProperty("java.home");
-/* 104 */   private static String classPath = System.getProperty("java.class.path");
-/* 105 */   private static String fileSep = System.getProperty("file.separator");
-/* 106 */   private static String pathSep = System.getProperty("path.separator");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean debug;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int verify() {
-/*     */     try {
-/* 170 */       if (this.debug) {
-/* 171 */         System.out.println("Server being verified w/" + this.activationCmd);
-/*     */       }
-/* 173 */       this.process = Runtime.getRuntime().exec(this.activationCmd);
-/* 174 */       int i = this.process.waitFor();
-/* 175 */       if (this.debug)
-/* 176 */         printDebug("verify", "returns " + ServerMain.printResult(i)); 
-/* 177 */       return i;
-/* 178 */     } catch (Exception exception) {
-/* 179 */       if (this.debug) {
-/* 180 */         printDebug("verify", "returns unknown error because of exception " + exception);
-/*     */       }
-/* 182 */       return 4;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void printDebug(String paramString1, String paramString2) {
-/* 188 */     System.out.println("ServerTableEntry: method  =" + paramString1);
-/* 189 */     System.out.println("ServerTableEntry: server  =" + this.serverId);
-/* 190 */     System.out.println("ServerTableEntry: state   =" + printState());
-/* 191 */     System.out.println("ServerTableEntry: message =" + paramString2);
-/* 192 */     System.out.println();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   synchronized void activate() throws SystemException {
-/* 197 */     this.state = 2;
-/*     */     
-/*     */     try {
-/* 200 */       if (this.debug)
-/* 201 */         printDebug("activate", "activating server"); 
-/* 202 */       this.process = Runtime.getRuntime().exec(this.activationCmd);
-/* 203 */     } catch (Exception exception) {
-/* 204 */       deActivate();
-/* 205 */       if (this.debug)
-/* 206 */         printDebug("activate", "throwing premature process exit"); 
-/* 207 */       throw this.wrapper.unableToStartProcess();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   synchronized void register(Server paramServer) {
-/* 213 */     if (this.state == 2) {
-/*     */       
-/* 215 */       this.serverObj = paramServer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 220 */       if (this.debug) {
-/* 221 */         printDebug("register", "process registered back");
-/*     */       }
-/*     */     } else {
-/*     */       
-/* 225 */       if (this.debug)
-/* 226 */         printDebug("register", "throwing premature process exit"); 
-/* 227 */       throw this.wrapper.serverNotExpectedToRegister();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void registerPorts(String paramString, EndPointInfo[] paramArrayOfEndPointInfo) throws ORBAlreadyRegistered {
-/* 236 */     if (this.orbAndPortInfo.containsKey(paramString)) {
-/* 237 */       throw new ORBAlreadyRegistered(paramString);
-/*     */     }
-/*     */ 
-/*     */     
-/* 241 */     int i = paramArrayOfEndPointInfo.length;
-/* 242 */     EndPointInfo[] arrayOfEndPointInfo = new EndPointInfo[i];
-/*     */     
-/* 244 */     for (byte b = 0; b < i; b++) {
-/* 245 */       arrayOfEndPointInfo[b] = new EndPointInfo((paramArrayOfEndPointInfo[b]).endpointType, (paramArrayOfEndPointInfo[b]).port);
-/* 246 */       if (this.debug) {
-/* 247 */         System.out.println("registering type: " + (arrayOfEndPointInfo[b]).endpointType + "  port  " + (arrayOfEndPointInfo[b]).port);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 252 */     this.orbAndPortInfo.put(paramString, arrayOfEndPointInfo);
-/* 253 */     if (this.state == 2) {
-/* 254 */       this.state = 3;
-/* 255 */       notifyAll();
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 260 */     if (this.debug) {
-/* 261 */       printDebug("registerPorts", "process registered Ports");
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   void install() {
-/* 266 */     Server server = null;
-/* 267 */     synchronized (this) {
-/* 268 */       if (this.state == 3) {
-/* 269 */         server = this.serverObj;
-/*     */       } else {
-/* 271 */         throw this.wrapper.serverNotRunning();
-/*     */       } 
-/* 273 */     }  if (server != null) {
-/* 274 */       server.install();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void uninstall() {
-/* 281 */     Server server = null;
-/* 282 */     Process process = null;
-/*     */     
-/* 284 */     synchronized (this) {
-/* 285 */       server = this.serverObj;
-/* 286 */       process = this.process;
-/*     */       
-/* 288 */       if (this.state == 3) {
-/*     */         
-/* 290 */         deActivate();
-/*     */       } else {
-/*     */         
-/* 293 */         throw this.wrapper.serverNotRunning();
-/*     */       } 
-/*     */     } 
-/*     */     try {
-/* 297 */       if (server != null) {
-/* 298 */         server.shutdown();
-/* 299 */         server.uninstall();
-/*     */       } 
-/*     */       
-/* 302 */       if (process != null) {
-/* 303 */         process.destroy();
-/*     */       }
-/* 305 */     } catch (Exception exception) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void holdDown() {
-/* 312 */     this.state = 4;
-/*     */     
-/* 314 */     if (this.debug) {
-/* 315 */       printDebug("holdDown", "server held down");
-/*     */     }
-/* 317 */     notifyAll();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   synchronized void deActivate() {
-/* 322 */     this.state = 0;
-/*     */     
-/* 324 */     if (this.debug) {
-/* 325 */       printDebug("deActivate", "server deactivated");
-/*     */     }
-/* 327 */     notifyAll();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void checkProcessHealth() {
-/* 334 */     if (this.state == 3) {
-/*     */       try {
-/* 336 */         int i = this.process.exitValue();
-/* 337 */       } catch (IllegalThreadStateException illegalThreadStateException) {
-/*     */         return;
-/*     */       } 
-/* 340 */       synchronized (this) {
-/*     */         
-/* 342 */         this.orbAndPortInfo.clear();
-/*     */ 
-/*     */         
-/* 345 */         deActivate();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   synchronized boolean isValid() {
-/* 352 */     if (this.state == 1 || this.state == 4) {
-/* 353 */       if (this.debug) {
-/* 354 */         printDebug("isValid", "returns true");
-/*     */       }
-/* 356 */       return true;
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 360 */       int i = this.process.exitValue();
-/* 361 */     } catch (IllegalThreadStateException illegalThreadStateException) {
-/* 362 */       return true;
-/*     */     } 
-/*     */     
-/* 365 */     if (this.state == 2) {
-/* 366 */       if (this.activateRetryCount < 5) {
-/* 367 */         if (this.debug)
-/* 368 */           printDebug("isValid", "reactivating server"); 
-/* 369 */         this.activateRetryCount++;
-/* 370 */         activate();
-/* 371 */         return true;
-/*     */       } 
-/*     */       
-/* 374 */       if (this.debug) {
-/* 375 */         printDebug("isValid", "holding server down");
-/*     */       }
-/* 377 */       holdDown();
-/* 378 */       return true;
-/*     */     } 
-/*     */     
-/* 381 */     deActivate();
-/* 382 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   synchronized ORBPortInfo[] lookup(String paramString) throws ServerHeldDown {
-/* 387 */     while (this.state == 1 || this.state == 2) {
-/*     */       
-/* 389 */       try { wait(2000L);
-/* 390 */         if (!isValid())
-/* 391 */           break;  } catch (Exception exception) {}
-/*     */     } 
-/* 393 */     ORBPortInfo[] arrayOfORBPortInfo = null;
-/*     */     
-/* 395 */     if (this.state == 3) {
-/* 396 */       arrayOfORBPortInfo = new ORBPortInfo[this.orbAndPortInfo.size()];
-/* 397 */       Iterator<String> iterator = this.orbAndPortInfo.keySet().iterator();
-/*     */       
-/*     */       try {
-/* 400 */         byte b = 0;
-/*     */ 
-/*     */         
-/* 403 */         while (iterator.hasNext()) {
-/* 404 */           String str = iterator.next();
-/*     */           
-/* 406 */           EndPointInfo[] arrayOfEndPointInfo = (EndPointInfo[])this.orbAndPortInfo.get(str);
-/* 407 */           int i = -1;
-/*     */           
-/* 409 */           for (byte b1 = 0; b1 < arrayOfEndPointInfo.length; b1++) {
-/* 410 */             if (this.debug) {
-/* 411 */               System.out.println("lookup num-ports " + arrayOfEndPointInfo.length + "   " + (arrayOfEndPointInfo[b1]).endpointType + "   " + (arrayOfEndPointInfo[b1]).port);
-/*     */             }
-/*     */             
-/* 414 */             if ((arrayOfEndPointInfo[b1]).endpointType.equals(paramString)) {
-/* 415 */               i = (arrayOfEndPointInfo[b1]).port;
-/*     */               break;
-/*     */             } 
-/*     */           } 
-/* 419 */           arrayOfORBPortInfo[b] = new ORBPortInfo(str, i);
-/* 420 */           b++;
-/*     */         } 
-/* 422 */       } catch (NoSuchElementException noSuchElementException) {}
-/*     */ 
-/*     */       
-/* 425 */       return arrayOfORBPortInfo;
-/*     */     } 
-/*     */     
-/* 428 */     if (this.debug) {
-/* 429 */       printDebug("lookup", "throwing server held down error");
-/*     */     }
-/* 431 */     throw new ServerHeldDown(this.serverId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized EndPointInfo[] lookupForORB(String paramString) throws ServerHeldDown, InvalidORBid {
-/* 437 */     while (this.state == 1 || this.state == 2) {
-/*     */       
-/* 439 */       try { wait(2000L);
-/* 440 */         if (!isValid())
-/* 441 */           break;  } catch (Exception exception) {}
-/*     */     } 
-/* 443 */     EndPointInfo[] arrayOfEndPointInfo = null;
-/*     */     
-/* 445 */     if (this.state == 3) {
-/*     */ 
-/*     */       
-/*     */       try {
-/*     */         
-/* 450 */         EndPointInfo[] arrayOfEndPointInfo1 = (EndPointInfo[])this.orbAndPortInfo.get(paramString);
-/*     */         
-/* 452 */         arrayOfEndPointInfo = new EndPointInfo[arrayOfEndPointInfo1.length];
-/*     */         
-/* 454 */         for (byte b = 0; b < arrayOfEndPointInfo1.length; b++) {
-/* 455 */           if (this.debug) {
-/* 456 */             System.out.println("lookup num-ports " + arrayOfEndPointInfo1.length + "   " + (arrayOfEndPointInfo1[b]).endpointType + "   " + (arrayOfEndPointInfo1[b]).port);
-/*     */           }
-/*     */           
-/* 459 */           arrayOfEndPointInfo[b] = new EndPointInfo((arrayOfEndPointInfo1[b]).endpointType, (arrayOfEndPointInfo1[b]).port);
-/*     */         } 
-/* 461 */       } catch (NoSuchElementException noSuchElementException) {
-/*     */         
-/* 463 */         throw new InvalidORBid();
-/*     */       } 
-/* 465 */       return arrayOfEndPointInfo;
-/*     */     } 
-/*     */     
-/* 468 */     if (this.debug) {
-/* 469 */       printDebug("lookup", "throwing server held down error");
-/*     */     }
-/* 471 */     throw new ServerHeldDown(this.serverId);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   synchronized String[] getORBList() {
-/* 476 */     String[] arrayOfString = new String[this.orbAndPortInfo.size()];
-/* 477 */     Iterator<String> iterator = this.orbAndPortInfo.keySet().iterator();
-/*     */     
-/*     */     try {
-/* 480 */       byte b = 0;
-/* 481 */       while (iterator.hasNext()) {
-/* 482 */         String str = iterator.next();
-/* 483 */         arrayOfString[b++] = str;
-/*     */       } 
-/* 485 */     } catch (NoSuchElementException noSuchElementException) {}
-/*     */ 
-/*     */     
-/* 488 */     return arrayOfString;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   int getServerId() {
-/* 493 */     return this.serverId;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   boolean isActive() {
-/* 498 */     return (this.state == 3 || this.state == 2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void destroy() {
-/* 504 */     Server server = null;
-/* 505 */     Process process = null;
-/*     */     
-/* 507 */     synchronized (this) {
-/* 508 */       server = this.serverObj;
-/* 509 */       process = this.process;
-/*     */       
-/* 511 */       deActivate();
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 515 */       if (server != null) {
-/* 516 */         server.shutdown();
-/*     */       }
-/* 518 */       if (this.debug)
-/* 519 */         printDebug("destroy", "server shutdown successfully"); 
-/* 520 */     } catch (Exception exception) {
-/* 521 */       if (this.debug) {
-/* 522 */         printDebug("destroy", "server shutdown threw exception" + exception);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 528 */       if (process != null) {
-/* 529 */         process.destroy();
-/*     */       }
-/* 531 */       if (this.debug)
-/* 532 */         printDebug("destroy", "process destroyed successfully"); 
-/* 533 */     } catch (Exception exception) {
-/* 534 */       if (this.debug) {
-/* 535 */         printDebug("destroy", "process destroy threw exception" + exception);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   ServerTableEntry(ActivationSystemException paramActivationSystemException, int paramInt1, ServerDef paramServerDef, int paramInt2, String paramString, boolean paramBoolean1, boolean paramBoolean2) {
-/* 542 */     this.debug = false;
-/*     */     this.wrapper = paramActivationSystemException;
-/*     */     this.serverId = paramInt1;
-/*     */     this.serverDef = paramServerDef;
-/*     */     this.debug = paramBoolean2;
-/*     */     this.orbAndPortInfo = new HashMap<>(255);
-/*     */     this.activateRetryCount = 0;
-/*     */     this.state = 1;
-/*     */     this.activationCmd = javaHome + fileSep + "bin" + fileSep + "java " + paramServerDef.serverVmArgs + " -Dioser=" + System.getProperty("ioser") + " -D" + "org.omg.CORBA.ORBInitialPort" + "=" + paramInt2 + " -D" + "com.sun.CORBA.activation.DbDir" + "=" + paramString + " -D" + "com.sun.CORBA.POA.ORBActivated" + "=true -D" + "com.sun.CORBA.POA.ORBServerId" + "=" + paramInt1 + " -D" + "com.sun.CORBA.POA.ORBServerName" + "=" + paramServerDef.serverName + " " + (paramBoolean1 ? "-Dcom.sun.CORBA.activation.ORBServerVerify=true " : "") + "-classpath " + classPath + ((paramServerDef.serverClassPath.equals("") == true) ? "" : pathSep) + paramServerDef.serverClassPath + " com.sun.corba.se.impl.activation.ServerMain " + paramServerDef.serverArgs + (paramBoolean2 ? " -debug" : "");
-/*     */     if (paramBoolean2)
-/*     */       System.out.println("ServerTableEntry constructed with activation command " + this.activationCmd); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\activation\ServerTableEntry.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.activation;
+
+/**
+ *
+ * @author      Anita Jindal
+ * @since       JDK1.2
+ */
+
+import org.omg.CORBA.CompletionStatus;
+
+import com.sun.corba.se.spi.activation.Server;
+import com.sun.corba.se.spi.activation.EndPointInfo;
+import com.sun.corba.se.spi.activation.ORBAlreadyRegistered;
+import com.sun.corba.se.spi.activation.ORBPortInfo;
+import com.sun.corba.se.spi.activation.InvalidORBid;
+import com.sun.corba.se.spi.activation.ServerHeldDown;
+import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
+import com.sun.corba.se.spi.activation.IIOP_CLEAR_TEXT;
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.logging.ActivationSystemException ;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class ServerTableEntry
+{
+
+    private final static int DE_ACTIVATED = 0;
+    private final static int ACTIVATING   = 1;
+    private final static int ACTIVATED    = 2;
+    private final static int RUNNING      = 3;
+    private final static int HELD_DOWN    = 4;
+
+
+    private String printState()
+    {
+        String str = "UNKNOWN";
+
+        switch (state) {
+        case (DE_ACTIVATED) : str = "DE_ACTIVATED"; break;
+        case (ACTIVATING  ) : str = "ACTIVATING  "; break;
+        case (ACTIVATED   ) : str = "ACTIVATED   "; break;
+        case (RUNNING     ) : str = "RUNNING     "; break;
+        case (HELD_DOWN   ) : str = "HELD_DOWN   "; break;
+        default: break;
+        }
+
+        return str;
+    }
+
+    private final static long waitTime    = 2000;
+    private static final int ActivationRetryMax = 5;
+
+    // state of each entry
+    private int state;
+    private int serverId;
+    private HashMap orbAndPortInfo;
+    private Server serverObj;
+    private ServerDef serverDef;
+    private Process process;
+    private int activateRetryCount=0;
+    private String activationCmd;
+    private ActivationSystemException wrapper ;
+    public String toString()
+    {
+        return "ServerTableEntry[" + "state=" + printState() +
+            " serverId=" + serverId +
+            " activateRetryCount=" + activateRetryCount + "]" ;
+    }
+
+    // get the string needed to make the activation command
+    private static String javaHome, classPath, fileSep, pathSep;
+
+    static {
+        javaHome  = System.getProperty("java.home");
+        classPath = System.getProperty("java.class.path");
+        fileSep   = System.getProperty("file.separator");
+        pathSep   = System.getProperty("path.separator");
+    }
+
+    ServerTableEntry( ActivationSystemException wrapper,
+        int serverId, ServerDef serverDef, int initialPort,
+        String dbDirName, boolean verify, boolean debug )
+    {
+        this.wrapper = wrapper ;
+        this.serverId = serverId;
+        this.serverDef = serverDef;
+        this.debug = debug ;
+        // create a HashMap with capacity 255
+        // Since all methods are synchronized, we don't need any
+        // additional synchronization mechanisms
+        orbAndPortInfo = new HashMap(255);
+
+        activateRetryCount = 0;
+        state = ACTIVATING;
+
+        // compute the activation command
+        activationCmd =
+
+            // add path to the java vm
+            javaHome + fileSep + "bin" + fileSep + "java " +
+
+            // add any arguments to the server Java VM
+            serverDef.serverVmArgs + " " +
+
+            // add ORB properties
+            "-Dioser=" + System.getProperty( "ioser" ) + " " +
+            "-D" + ORBConstants.INITIAL_PORT_PROPERTY   + "=" + initialPort + " " +
+            "-D" + ORBConstants.DB_DIR_PROPERTY         + "=" + dbDirName + " " +
+            "-D" + ORBConstants.ACTIVATED_PROPERTY      + "=true " +
+            "-D" + ORBConstants.SERVER_ID_PROPERTY      + "=" + serverId + " " +
+            "-D" + ORBConstants.SERVER_NAME_PROPERTY    + "=" + serverDef.serverName + " " +
+            // we need to pass in the verify flag, so that the server is not
+            // launched, when we try to validate its definition during registration
+            // into the RepositoryImpl
+
+            (verify ? "-D" + ORBConstants.SERVER_DEF_VERIFY_PROPERTY + "=true ": "") +
+
+            // add classpath to the server
+            "-classpath " + classPath +
+            (serverDef.serverClassPath.equals("") == true ? "" : pathSep) +
+            serverDef.serverClassPath +
+
+            // add server class name and arguments
+            " com.sun.corba.se.impl.activation.ServerMain " + serverDef.serverArgs
+
+            // Add the debug flag, if any
+            + (debug ? " -debug" : "") ;
+
+        if (debug) System.out.println(
+                                      "ServerTableEntry constructed with activation command " +
+                                      activationCmd);
+    }
+
+    /**
+     * Verify whether the server definition is valid.
+     */
+    public int verify()
+    {
+        try {
+
+            if (debug)
+                System.out.println("Server being verified w/" + activationCmd);
+
+            process = Runtime.getRuntime().exec(activationCmd);
+            int result = process.waitFor();
+            if (debug)
+                printDebug( "verify", "returns " + ServerMain.printResult( result ) ) ;
+            return result ;
+        } catch (Exception e) {
+            if (debug)
+                printDebug( "verify", "returns unknown error because of exception " +
+                            e ) ;
+            return ServerMain.UNKNOWN_ERROR;
+        }
+    }
+
+    private void printDebug(String method, String msg)
+    {
+        System.out.println("ServerTableEntry: method  =" + method);
+        System.out.println("ServerTableEntry: server  =" + serverId);
+        System.out.println("ServerTableEntry: state   =" + printState());
+        System.out.println("ServerTableEntry: message =" + msg);
+        System.out.println();
+    }
+
+    synchronized void activate() throws org.omg.CORBA.SystemException
+    {
+        state = ACTIVATED;
+
+        try {
+            if (debug)
+                printDebug("activate", "activating server");
+            process = Runtime.getRuntime().exec(activationCmd);
+        } catch (Exception e) {
+            deActivate();
+            if (debug)
+                printDebug("activate", "throwing premature process exit");
+            throw wrapper.unableToStartProcess() ;
+        }
+    }
+
+    synchronized void register(Server server)
+    {
+        if (state == ACTIVATED) {
+
+            serverObj = server;
+
+            //state = RUNNING;
+            //notifyAll();
+
+            if (debug)
+                printDebug("register", "process registered back");
+
+        } else {
+
+            if (debug)
+                printDebug("register", "throwing premature process exit");
+            throw wrapper.serverNotExpectedToRegister() ;
+        }
+    }
+
+    synchronized void registerPorts( String orbId, EndPointInfo [] endpointList)
+        throws ORBAlreadyRegistered
+    {
+
+        // find if the ORB is already registered, then throw an exception
+        if (orbAndPortInfo.containsKey(orbId)) {
+            throw new ORBAlreadyRegistered(orbId);
+        }
+
+        // store all listener ports and their types
+        int numListenerPorts = endpointList.length;
+        EndPointInfo [] serverListenerPorts = new EndPointInfo[numListenerPorts];
+
+        for (int i = 0; i < numListenerPorts; i++) {
+            serverListenerPorts[i] = new EndPointInfo (endpointList[i].endpointType, endpointList[i].port);
+        if (debug)
+            System.out.println("registering type: " + serverListenerPorts[i].endpointType  +  "  port  " + serverListenerPorts[i].port);
+        }
+
+        // put this set of listener ports in the HashMap associated
+        // with the orbId
+        orbAndPortInfo.put(orbId, serverListenerPorts);
+        if (state == ACTIVATED) {
+            state = RUNNING;
+            notifyAll();
+        }
+        // _REVISIT_, If the state is not equal to ACTIVATED then it is a bug
+        // need to log that error, once the Logging framework is in place
+        // for rip-int.
+        if (debug)
+            printDebug("registerPorts", "process registered Ports");
+    }
+
+    void install()
+    {
+        Server localServerObj = null;
+        synchronized ( this ) {
+            if (state == RUNNING)
+                localServerObj = serverObj;
+            else
+                throw wrapper.serverNotRunning() ;
+        }
+        if (localServerObj != null) {
+            localServerObj.install() ;
+        }
+
+    }
+
+    void uninstall()
+    {
+        Server localServerObj = null;
+        Process localProcess = null;
+
+        synchronized (this) {
+            localServerObj = serverObj;
+            localProcess = process;
+
+            if (state == RUNNING) {
+
+                deActivate();
+
+            } else {
+                throw wrapper.serverNotRunning() ;
+            }
+        }
+        try {
+            if (localServerObj != null) {
+                localServerObj.shutdown(); // shutdown the server
+                localServerObj.uninstall() ; // call the uninstall
+            }
+
+            if (localProcess != null) {
+                localProcess.destroy();
+            }
+        } catch (Exception ex) {
+            // what kind of exception should be thrown
+        }
+    }
+
+    synchronized void holdDown()
+    {
+        state = HELD_DOWN;
+
+        if (debug)
+            printDebug( "holdDown", "server held down" ) ;
+
+        notifyAll();
+    }
+
+    synchronized void deActivate()
+    {
+        state = DE_ACTIVATED;
+
+        if (debug)
+            printDebug( "deActivate", "server deactivated" ) ;
+
+        notifyAll();
+    }
+
+    synchronized void checkProcessHealth( ) {
+        // If the State in the ServerTableEntry is RUNNING and the
+        // Process was shut down abnormally, The method will change the
+        // server state as De-Activated.
+        if( state == RUNNING ) {
+            try {
+                int exitVal = process.exitValue();
+            } catch (IllegalThreadStateException e1) {
+                return;
+            }
+            synchronized ( this ) {
+                // Clear the PortInformation as it is old
+                orbAndPortInfo.clear();
+                // Move the state to De-Activated, So that the next
+                // call to this server will re-activate.
+                deActivate();
+            }
+        }
+    }
+
+    synchronized boolean isValid()
+    {
+        if ((state == ACTIVATING) || (state == HELD_DOWN)) {
+            if (debug)
+                printDebug( "isValid", "returns true" ) ;
+
+            return true;
+        }
+
+        try {
+            int exitVal = process.exitValue();
+        } catch (IllegalThreadStateException e1) {
+            return true;
+        }
+
+        if (state == ACTIVATED) {
+            if (activateRetryCount < ActivationRetryMax) {
+                if (debug)
+                    printDebug("isValid", "reactivating server");
+                activateRetryCount++;
+                activate();
+                return true;
+            }
+
+            if (debug)
+                printDebug("isValid", "holding server down");
+
+            holdDown();
+            return true;
+        }
+
+        deActivate();
+        return false;
+    }
+
+    synchronized ORBPortInfo[] lookup(String endpointType) throws ServerHeldDown
+    {
+        while ((state == ACTIVATING) || (state == ACTIVATED)) {
+            try {
+                wait(waitTime);
+                if (!isValid()) break;
+            } catch(Exception e) {}
+        }
+        ORBPortInfo[] orbAndPortList = null;
+
+        if (state == RUNNING) {
+            orbAndPortList = new ORBPortInfo[orbAndPortInfo.size()];
+            Iterator setORBids = orbAndPortInfo.keySet().iterator();
+
+            try {
+                int numElements = 0;
+                int i;
+                int port;
+                while (setORBids.hasNext()) {
+                    String orbId = (String) setORBids.next();
+                    // get an entry corresponding to orbId
+                    EndPointInfo [] serverListenerPorts = (EndPointInfo []) orbAndPortInfo.get(orbId);
+                    port = -1;
+                    // return the port corresponding to the endpointType
+                    for (i = 0; i < serverListenerPorts.length; i++) {
+                        if (debug)
+                            System.out.println("lookup num-ports " + serverListenerPorts.length + "   " +
+                                serverListenerPorts[i].endpointType + "   " +
+                                serverListenerPorts[i].port );
+                        if ((serverListenerPorts[i].endpointType).equals(endpointType)) {
+                            port = serverListenerPorts[i].port;
+                            break;
+                        }
+                    }
+                    orbAndPortList[numElements] = new ORBPortInfo(orbId, port);
+                    numElements++;
+                }
+            } catch (NoSuchElementException e) {
+                // have everything in the table
+            }
+            return orbAndPortList;
+        }
+
+        if (debug)
+            printDebug("lookup", "throwing server held down error");
+
+        throw new ServerHeldDown( serverId ) ;
+    }
+
+    synchronized EndPointInfo[] lookupForORB(String orbId)
+        throws ServerHeldDown, InvalidORBid
+    {
+        while ((state == ACTIVATING) || (state == ACTIVATED)) {
+            try {
+                wait(waitTime);
+                if (!isValid()) break;
+            } catch(Exception e) {}
+        }
+        EndPointInfo[] portList = null;
+
+        if (state == RUNNING) {
+
+            try {
+
+                // get an entry corresponding to orbId
+                EndPointInfo [] serverListenerPorts = (EndPointInfo []) orbAndPortInfo.get(orbId);
+
+                portList = new EndPointInfo[serverListenerPorts.length];
+                // return the port corresponding to the endpointType
+                for (int i = 0; i < serverListenerPorts.length; i++) {
+                   if (debug)
+                      System.out.println("lookup num-ports " + serverListenerPorts.length + "   "
+                             + serverListenerPorts[i].endpointType + "   " +
+                             serverListenerPorts[i].port );
+                   portList[i] = new EndPointInfo(serverListenerPorts[i].endpointType, serverListenerPorts[i].port);
+                }
+            } catch (NoSuchElementException e) {
+                // no element in HashMap corresponding to ORBid found
+                throw new InvalidORBid();
+            }
+            return portList;
+        }
+
+        if (debug)
+            printDebug("lookup", "throwing server held down error");
+
+        throw new ServerHeldDown( serverId ) ;
+    }
+
+    synchronized String[] getORBList()
+    {
+        String [] orbList = new String[orbAndPortInfo.size()];
+        Iterator setORBids = orbAndPortInfo.keySet().iterator();
+
+        try {
+            int numElements = 0;
+            while (setORBids.hasNext()) {
+                String orbId = (String) setORBids.next();
+                orbList[numElements++] = orbId ;
+            }
+        } catch (NoSuchElementException e) {
+            // have everything in the table
+        }
+        return orbList;
+    }
+
+    int getServerId()
+    {
+        return serverId;
+    }
+
+    boolean isActive()
+    {
+        return (state == RUNNING) || (state == ACTIVATED);
+    }
+
+    synchronized void destroy()
+    {
+
+        Server localServerObj = null;
+        Process localProcess = null;
+
+        synchronized (this) {
+            localServerObj = serverObj;
+            localProcess = process;
+
+            deActivate();
+        }
+
+        try {
+            if (localServerObj != null)
+                localServerObj.shutdown();
+
+            if (debug)
+                printDebug( "destroy", "server shutdown successfully" ) ;
+        } catch (Exception ex) {
+            if (debug)
+                printDebug( "destroy",
+                            "server shutdown threw exception" + ex ) ;
+            // ex.printStackTrace();
+        }
+
+        try {
+            if (localProcess != null)
+                localProcess.destroy();
+
+            if (debug)
+                printDebug( "destroy", "process destroyed successfully" ) ;
+        } catch (Exception ex) {
+            if (debug)
+                printDebug( "destroy",
+                            "process destroy threw exception" + ex ) ;
+
+            // ex.printStackTrace();
+        }
+    }
+
+    private boolean debug = false;
+}

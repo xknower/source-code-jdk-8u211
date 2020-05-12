@@ -1,97 +1,112 @@
-/*    */ package com.sun.org.apache.xml.internal.utils;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NSInfo
-/*    */ {
-/*    */   public String m_namespace;
-/*    */   public boolean m_hasXMLNSAttrs;
-/*    */   public boolean m_hasProcessedNS;
-/*    */   public int m_ancestorHasXMLNSAttrs;
-/*    */   public static final int ANCESTORXMLNSUNPROCESSED = 0;
-/*    */   public static final int ANCESTORHASXMLNS = 1;
-/*    */   public static final int ANCESTORNOXMLNS = 2;
-/*    */   
-/*    */   public NSInfo(boolean hasProcessedNS, boolean hasXMLNSAttrs) {
-/* 46 */     this.m_hasProcessedNS = hasProcessedNS;
-/* 47 */     this.m_hasXMLNSAttrs = hasXMLNSAttrs;
-/* 48 */     this.m_namespace = null;
-/* 49 */     this.m_ancestorHasXMLNSAttrs = 0;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public NSInfo(boolean hasProcessedNS, boolean hasXMLNSAttrs, int ancestorHasXMLNSAttrs) {
-/* 69 */     this.m_hasProcessedNS = hasProcessedNS;
-/* 70 */     this.m_hasXMLNSAttrs = hasXMLNSAttrs;
-/* 71 */     this.m_ancestorHasXMLNSAttrs = ancestorHasXMLNSAttrs;
-/* 72 */     this.m_namespace = null;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public NSInfo(String namespace, boolean hasXMLNSAttrs) {
-/* 86 */     this.m_hasProcessedNS = true;
-/* 87 */     this.m_hasXMLNSAttrs = hasXMLNSAttrs;
-/* 88 */     this.m_namespace = namespace;
-/* 89 */     this.m_ancestorHasXMLNSAttrs = 0;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\NSInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: NSInfo.java,v 1.2.4.1 2005/09/15 08:15:48 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+/**
+ * This class holds information about the namespace info
+ * of a node.  It is used to optimize namespace lookup in
+ * a generic DOM.
+ * @xsl.usage internal
+ */
+public class NSInfo
+{
+
+  /**
+   * Constructor NSInfo
+   *
+   *
+   * @param hasProcessedNS Flag indicating whether namespaces
+   * have been processed for this node
+   * @param hasXMLNSAttrs Flag indicating whether this node
+   * has XMLNS attributes.
+   */
+  public NSInfo(boolean hasProcessedNS, boolean hasXMLNSAttrs)
+  {
+
+    m_hasProcessedNS = hasProcessedNS;
+    m_hasXMLNSAttrs = hasXMLNSAttrs;
+    m_namespace = null;
+    m_ancestorHasXMLNSAttrs = ANCESTORXMLNSUNPROCESSED;
+  }
+
+  // Unused at the moment
+
+  /**
+   * Constructor NSInfo
+   *
+   *
+   * @param hasProcessedNS Flag indicating whether namespaces
+   * have been processed for this node
+   * @param hasXMLNSAttrs Flag indicating whether this node
+   * has XMLNS attributes.
+   * @param ancestorHasXMLNSAttrs Flag indicating whether one of this node's
+   * ancestor has XMLNS attributes.
+   */
+  public NSInfo(boolean hasProcessedNS, boolean hasXMLNSAttrs,
+                int ancestorHasXMLNSAttrs)
+  {
+
+    m_hasProcessedNS = hasProcessedNS;
+    m_hasXMLNSAttrs = hasXMLNSAttrs;
+    m_ancestorHasXMLNSAttrs = ancestorHasXMLNSAttrs;
+    m_namespace = null;
+  }
+
+  /**
+   * Constructor NSInfo
+   *
+   *
+   * @param namespace The namespace URI
+   * @param hasXMLNSAttrs Flag indicating whether this node
+   * has XMLNS attributes.
+   */
+  public NSInfo(String namespace, boolean hasXMLNSAttrs)
+  {
+
+    m_hasProcessedNS = true;
+    m_hasXMLNSAttrs = hasXMLNSAttrs;
+    m_namespace = namespace;
+    m_ancestorHasXMLNSAttrs = ANCESTORXMLNSUNPROCESSED;
+  }
+
+  /** The namespace URI          */
+  public String m_namespace;
+
+  /** Flag indicating whether this node has an XMLNS attribute          */
+  public boolean m_hasXMLNSAttrs;
+
+  /** Flag indicating whether namespaces have been processed for this node */
+  public boolean m_hasProcessedNS;
+
+  /** Flag indicating whether one of this node's ancestor has an XMLNS attribute          */
+  public int m_ancestorHasXMLNSAttrs;
+
+  /** Constant for ancestors XMLNS atributes not processed          */
+  public static final int ANCESTORXMLNSUNPROCESSED = 0;
+
+  /** Constant indicating an ancestor has an XMLNS attribute           */
+  public static final int ANCESTORHASXMLNS = 1;
+
+  /** Constant indicating ancestors don't have an XMLNS attribute           */
+  public static final int ANCESTORNOXMLNS = 2;
+}

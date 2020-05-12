@@ -1,76 +1,70 @@
-/*    */ package com.sun.corba.se.impl.orbutil.graph;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NodeData
-/*    */ {
-/*    */   private boolean visited;
-/*    */   private boolean root;
-/*    */   
-/*    */   public NodeData() {
-/* 37 */     clear();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void clear() {
-/* 42 */     this.visited = false;
-/* 43 */     this.root = true;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   boolean isVisited() {
-/* 51 */     return this.visited;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void visited() {
-/* 56 */     this.visited = true;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   boolean isRoot() {
-/* 63 */     return this.root;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   void notRoot() {
-/* 68 */     this.root = false;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\graph\NodeData.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil.graph ;
+
+/** Data about a node in a graph.
+ */
+public class NodeData
+{
+    private boolean visited ;
+    private boolean root ;
+
+    public NodeData()
+    {
+        clear() ;
+    }
+
+    public void clear()
+    {
+        this.visited = false ;
+        this.root = true ;
+    }
+
+    /** Return whether this node has been visited in a traversal.
+     * Note that we only support a single traversal at a time.
+     */
+    boolean isVisited()
+    {
+        return visited ;
+    }
+
+    void visited()
+    {
+        visited = true ;
+    }
+
+    /** Return whether this node is a root.
+     */
+    boolean isRoot()
+    {
+        return root ;
+    }
+
+    void notRoot()
+    {
+        root = false ;
+    }
+}

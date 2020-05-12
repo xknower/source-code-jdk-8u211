@@ -1,479 +1,321 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PlainDocument
-/*     */   extends AbstractDocument
-/*     */ {
-/*     */   public static final String tabSizeAttribute = "tabSize";
-/*     */   public static final String lineLimitAttribute = "lineLimit";
-/*     */   private AbstractDocument.AbstractElement defaultRoot;
-/*     */   private Vector<Element> added;
-/*     */   private Vector<Element> removed;
-/*     */   private transient Segment s;
-/*     */   
-/*     */   public PlainDocument() {
-/*  80 */     this(new GapContent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PlainDocument(AbstractDocument.Content paramContent) {
-/*  90 */     super(paramContent);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 318 */     this.added = new Vector<>();
-/* 319 */     this.removed = new Vector<>();
-/*     */     putProperty("tabSize", Integer.valueOf(8));
-/*     */     this.defaultRoot = createDefaultRoot();
-/*     */   }
-/*     */   
-/*     */   public void insertString(int paramInt, String paramString, AttributeSet paramAttributeSet) throws BadLocationException {
-/*     */     Object object = getProperty("filterNewlines");
-/*     */     if (object instanceof Boolean && object.equals(Boolean.TRUE) && paramString != null && paramString.indexOf('\n') >= 0) {
-/*     */       StringBuilder stringBuilder = new StringBuilder(paramString);
-/*     */       int i = stringBuilder.length();
-/*     */       for (byte b = 0; b < i; b++) {
-/*     */         if (stringBuilder.charAt(b) == '\n')
-/*     */           stringBuilder.setCharAt(b, ' '); 
-/*     */       } 
-/*     */       paramString = stringBuilder.toString();
-/*     */     } 
-/*     */     super.insertString(paramInt, paramString, paramAttributeSet);
-/*     */   }
-/*     */   
-/*     */   public Element getDefaultRootElement() {
-/*     */     return this.defaultRoot;
-/*     */   }
-/*     */   
-/*     */   protected AbstractDocument.AbstractElement createDefaultRoot() {
-/*     */     AbstractDocument.BranchElement branchElement = (AbstractDocument.BranchElement)createBranchElement(null, null);
-/*     */     Element element = createLeafElement(branchElement, null, 0, 1);
-/*     */     Element[] arrayOfElement = new Element[1];
-/*     */     arrayOfElement[0] = element;
-/*     */     branchElement.replace(0, 0, arrayOfElement);
-/*     */     return branchElement;
-/*     */   }
-/*     */   
-/*     */   public Element getParagraphElement(int paramInt) {
-/*     */     Element element = getDefaultRootElement();
-/*     */     return element.getElement(element.getElementIndex(paramInt));
-/*     */   }
-/*     */   
-/*     */   protected void insertUpdate(AbstractDocument.DefaultDocumentEvent paramDefaultDocumentEvent, AttributeSet paramAttributeSet) {
-/*     */     this.removed.removeAllElements();
-/*     */     this.added.removeAllElements();
-/*     */     AbstractDocument.BranchElement branchElement = (AbstractDocument.BranchElement)getDefaultRootElement();
-/*     */     int i = paramDefaultDocumentEvent.getOffset();
-/*     */     int j = paramDefaultDocumentEvent.getLength();
-/*     */     if (i > 0) {
-/*     */       i--;
-/*     */       j++;
-/*     */     } 
-/*     */     int k = branchElement.getElementIndex(i);
-/*     */     Element element = branchElement.getElement(k);
-/*     */     int m = element.getStartOffset();
-/*     */     int n = element.getEndOffset();
-/*     */     int i1 = m;
-/*     */     try {
-/*     */       if (this.s == null)
-/*     */         this.s = new Segment(); 
-/*     */       getContent().getChars(i, j, this.s);
-/*     */       boolean bool = false;
-/*     */       for (byte b = 0; b < j; b++) {
-/*     */         char c = this.s.array[this.s.offset + b];
-/*     */         if (c == '\n') {
-/*     */           int i2 = i + b + 1;
-/*     */           this.added.addElement(createLeafElement(branchElement, null, i1, i2));
-/*     */           i1 = i2;
-/*     */           bool = true;
-/*     */         } 
-/*     */       } 
-/*     */       if (bool) {
-/*     */         this.removed.addElement(element);
-/*     */         if (i + j == n && i1 != n && k + 1 < branchElement.getElementCount()) {
-/*     */           Element element1 = branchElement.getElement(k + 1);
-/*     */           this.removed.addElement(element1);
-/*     */           n = element1.getEndOffset();
-/*     */         } 
-/*     */         if (i1 < n)
-/*     */           this.added.addElement(createLeafElement(branchElement, null, i1, n)); 
-/*     */         Element[] arrayOfElement1 = new Element[this.added.size()];
-/*     */         this.added.copyInto((Object[])arrayOfElement1);
-/*     */         Element[] arrayOfElement2 = new Element[this.removed.size()];
-/*     */         this.removed.copyInto((Object[])arrayOfElement2);
-/*     */         AbstractDocument.ElementEdit elementEdit = new AbstractDocument.ElementEdit(branchElement, k, arrayOfElement2, arrayOfElement1);
-/*     */         paramDefaultDocumentEvent.addEdit(elementEdit);
-/*     */         branchElement.replace(k, arrayOfElement2.length, arrayOfElement1);
-/*     */       } 
-/*     */       if (Utilities.isComposedTextAttributeDefined(paramAttributeSet))
-/*     */         insertComposedTextUpdate(paramDefaultDocumentEvent, paramAttributeSet); 
-/*     */     } catch (BadLocationException badLocationException) {
-/*     */       throw new Error("Internal error: " + badLocationException.toString());
-/*     */     } 
-/*     */     super.insertUpdate(paramDefaultDocumentEvent, paramAttributeSet);
-/*     */   }
-/*     */   
-/*     */   protected void removeUpdate(AbstractDocument.DefaultDocumentEvent paramDefaultDocumentEvent) {
-/*     */     this.removed.removeAllElements();
-/*     */     AbstractDocument.BranchElement branchElement = (AbstractDocument.BranchElement)getDefaultRootElement();
-/*     */     int i = paramDefaultDocumentEvent.getOffset();
-/*     */     int j = paramDefaultDocumentEvent.getLength();
-/*     */     int k = branchElement.getElementIndex(i);
-/*     */     int m = branchElement.getElementIndex(i + j);
-/*     */     if (k != m) {
-/*     */       int n;
-/*     */       for (n = k; n <= m; n++)
-/*     */         this.removed.addElement(branchElement.getElement(n)); 
-/*     */       n = branchElement.getElement(k).getStartOffset();
-/*     */       int i1 = branchElement.getElement(m).getEndOffset();
-/*     */       Element[] arrayOfElement1 = new Element[1];
-/*     */       arrayOfElement1[0] = createLeafElement(branchElement, null, n, i1);
-/*     */       Element[] arrayOfElement2 = new Element[this.removed.size()];
-/*     */       this.removed.copyInto((Object[])arrayOfElement2);
-/*     */       AbstractDocument.ElementEdit elementEdit = new AbstractDocument.ElementEdit(branchElement, k, arrayOfElement2, arrayOfElement1);
-/*     */       paramDefaultDocumentEvent.addEdit(elementEdit);
-/*     */       branchElement.replace(k, arrayOfElement2.length, arrayOfElement1);
-/*     */     } else {
-/*     */       Element element = branchElement.getElement(k);
-/*     */       if (!element.isLeaf()) {
-/*     */         Element element1 = element.getElement(element.getElementIndex(i));
-/*     */         if (Utilities.isComposedTextElement(element1)) {
-/*     */           Element[] arrayOfElement1 = new Element[1];
-/*     */           arrayOfElement1[0] = createLeafElement(branchElement, null, element.getStartOffset(), element.getEndOffset());
-/*     */           Element[] arrayOfElement2 = new Element[1];
-/*     */           arrayOfElement2[0] = element;
-/*     */           AbstractDocument.ElementEdit elementEdit = new AbstractDocument.ElementEdit(branchElement, k, arrayOfElement2, arrayOfElement1);
-/*     */           paramDefaultDocumentEvent.addEdit(elementEdit);
-/*     */           branchElement.replace(k, 1, arrayOfElement1);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     super.removeUpdate(paramDefaultDocumentEvent);
-/*     */   }
-/*     */   
-/*     */   private void insertComposedTextUpdate(AbstractDocument.DefaultDocumentEvent paramDefaultDocumentEvent, AttributeSet paramAttributeSet) {
-/*     */     this.added.removeAllElements();
-/*     */     AbstractDocument.BranchElement branchElement = (AbstractDocument.BranchElement)getDefaultRootElement();
-/*     */     int i = paramDefaultDocumentEvent.getOffset();
-/*     */     int j = paramDefaultDocumentEvent.getLength();
-/*     */     int k = branchElement.getElementIndex(i);
-/*     */     Element element = branchElement.getElement(k);
-/*     */     int m = element.getStartOffset();
-/*     */     int n = element.getEndOffset();
-/*     */     AbstractDocument.BranchElement[] arrayOfBranchElement = new AbstractDocument.BranchElement[1];
-/*     */     arrayOfBranchElement[0] = (AbstractDocument.BranchElement)createBranchElement(branchElement, null);
-/*     */     Element[] arrayOfElement1 = new Element[1];
-/*     */     arrayOfElement1[0] = element;
-/*     */     if (m != i)
-/*     */       this.added.addElement(createLeafElement(arrayOfBranchElement[0], null, m, i)); 
-/*     */     this.added.addElement(createLeafElement(arrayOfBranchElement[0], paramAttributeSet, i, i + j));
-/*     */     if (n != i + j)
-/*     */       this.added.addElement(createLeafElement(arrayOfBranchElement[0], null, i + j, n)); 
-/*     */     Element[] arrayOfElement2 = new Element[this.added.size()];
-/*     */     this.added.copyInto((Object[])arrayOfElement2);
-/*     */     AbstractDocument.ElementEdit elementEdit = new AbstractDocument.ElementEdit(branchElement, k, arrayOfElement1, (Element[])arrayOfBranchElement);
-/*     */     paramDefaultDocumentEvent.addEdit(elementEdit);
-/*     */     arrayOfBranchElement[0].replace(0, 0, arrayOfElement2);
-/*     */     branchElement.replace(k, 1, (Element[])arrayOfBranchElement);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\PlainDocument.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.util.Vector;
+
+/**
+ * A plain document that maintains no character attributes.  The
+ * default element structure for this document is a map of the lines in
+ * the text.  The Element returned by getDefaultRootElement is
+ * a map of the lines, and each child element represents a line.
+ * This model does not maintain any character level attributes,
+ * but each line can be tagged with an arbitrary set of attributes.
+ * Line to offset, and offset to line translations can be quickly
+ * performed using the default root element.  The structure information
+ * of the DocumentEvent's fired by edits will indicate the line
+ * structure changes.
+ * <p>
+ * The default content storage management is performed by a
+ * gapped buffer implementation (GapContent).  It supports
+ * editing reasonably large documents with good efficiency when
+ * the edits are contiguous or clustered, as is typical.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Timothy Prinzing
+ * @see     Document
+ * @see     AbstractDocument
+ */
+public class PlainDocument extends AbstractDocument {
+
+    /**
+     * Name of the attribute that specifies the tab
+     * size for tabs contained in the content.  The
+     * type for the value is Integer.
+     */
+    public static final String tabSizeAttribute = "tabSize";
+
+    /**
+     * Name of the attribute that specifies the maximum
+     * length of a line, if there is a maximum length.
+     * The type for the value is Integer.
+     */
+    public static final String lineLimitAttribute = "lineLimit";
+
+    /**
+     * Constructs a plain text document.  A default model using
+     * <code>GapContent</code> is constructed and set.
+     */
+    public PlainDocument() {
+        this(new GapContent());
+    }
+
+    /**
+     * Constructs a plain text document.  A default root element is created,
+     * and the tab size set to 8.
+     *
+     * @param c  the container for the content
+     */
+    public PlainDocument(Content c) {
+        super(c);
+        putProperty(tabSizeAttribute, Integer.valueOf(8));
+        defaultRoot = createDefaultRoot();
+    }
+
+    /**
+     * Inserts some content into the document.
+     * Inserting content causes a write lock to be held while the
+     * actual changes are taking place, followed by notification
+     * to the observers on the thread that grabbed the write lock.
+     * <p>
+     * This method is thread safe, although most Swing methods
+     * are not. Please see
+     * <A HREF="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/index.html">Concurrency
+     * in Swing</A> for more information.
+     *
+     * @param offs the starting offset &gt;= 0
+     * @param str the string to insert; does nothing with null/empty strings
+     * @param a the attributes for the inserted content
+     * @exception BadLocationException  the given insert position is not a valid
+     *   position within the document
+     * @see Document#insertString
+     */
+    public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+        // fields don't want to have multiple lines.  We may provide a field-specific
+        // model in the future in which case the filtering logic here will no longer
+        // be needed.
+        Object filterNewlines = getProperty("filterNewlines");
+        if ((filterNewlines instanceof Boolean) && filterNewlines.equals(Boolean.TRUE)) {
+            if ((str != null) && (str.indexOf('\n') >= 0)) {
+                StringBuilder filtered = new StringBuilder(str);
+                int n = filtered.length();
+                for (int i = 0; i < n; i++) {
+                    if (filtered.charAt(i) == '\n') {
+                        filtered.setCharAt(i, ' ');
+                    }
+                }
+                str = filtered.toString();
+            }
+        }
+        super.insertString(offs, str, a);
+    }
+
+    /**
+     * Gets the default root element for the document model.
+     *
+     * @return the root
+     * @see Document#getDefaultRootElement
+     */
+    public Element getDefaultRootElement() {
+        return defaultRoot;
+    }
+
+    /**
+     * Creates the root element to be used to represent the
+     * default document structure.
+     *
+     * @return the element base
+     */
+    protected AbstractElement createDefaultRoot() {
+        BranchElement map = (BranchElement) createBranchElement(null, null);
+        Element line = createLeafElement(map, null, 0, 1);
+        Element[] lines = new Element[1];
+        lines[0] = line;
+        map.replace(0, 0, lines);
+        return map;
+    }
+
+    /**
+     * Get the paragraph element containing the given position.  Since this
+     * document only models lines, it returns the line instead.
+     */
+    public Element getParagraphElement(int pos){
+        Element lineMap = getDefaultRootElement();
+        return lineMap.getElement( lineMap.getElementIndex( pos ) );
+    }
+
+    /**
+     * Updates document structure as a result of text insertion.  This
+     * will happen within a write lock.  Since this document simply
+     * maps out lines, we refresh the line map.
+     *
+     * @param chng the change event describing the dit
+     * @param attr the set of attributes for the inserted text
+     */
+    protected void insertUpdate(DefaultDocumentEvent chng, AttributeSet attr) {
+        removed.removeAllElements();
+        added.removeAllElements();
+        BranchElement lineMap = (BranchElement) getDefaultRootElement();
+        int offset = chng.getOffset();
+        int length = chng.getLength();
+        if (offset > 0) {
+          offset -= 1;
+          length += 1;
+        }
+        int index = lineMap.getElementIndex(offset);
+        Element rmCandidate = lineMap.getElement(index);
+        int rmOffs0 = rmCandidate.getStartOffset();
+        int rmOffs1 = rmCandidate.getEndOffset();
+        int lastOffset = rmOffs0;
+        try {
+            if (s == null) {
+                s = new Segment();
+            }
+            getContent().getChars(offset, length, s);
+            boolean hasBreaks = false;
+            for (int i = 0; i < length; i++) {
+                char c = s.array[s.offset + i];
+                if (c == '\n') {
+                    int breakOffset = offset + i + 1;
+                    added.addElement(createLeafElement(lineMap, null, lastOffset, breakOffset));
+                    lastOffset = breakOffset;
+                    hasBreaks = true;
+                }
+            }
+            if (hasBreaks) {
+                removed.addElement(rmCandidate);
+                if ((offset + length == rmOffs1) && (lastOffset != rmOffs1) &&
+                    ((index+1) < lineMap.getElementCount())) {
+                    Element e = lineMap.getElement(index+1);
+                    removed.addElement(e);
+                    rmOffs1 = e.getEndOffset();
+                }
+                if (lastOffset < rmOffs1) {
+                    added.addElement(createLeafElement(lineMap, null, lastOffset, rmOffs1));
+                }
+
+                Element[] aelems = new Element[added.size()];
+                added.copyInto(aelems);
+                Element[] relems = new Element[removed.size()];
+                removed.copyInto(relems);
+                ElementEdit ee = new ElementEdit(lineMap, index, relems, aelems);
+                chng.addEdit(ee);
+                lineMap.replace(index, relems.length, aelems);
+            }
+            if (Utilities.isComposedTextAttributeDefined(attr)) {
+                insertComposedTextUpdate(chng, attr);
+            }
+        } catch (BadLocationException e) {
+            throw new Error("Internal error: " + e.toString());
+        }
+        super.insertUpdate(chng, attr);
+    }
+
+    /**
+     * Updates any document structure as a result of text removal.
+     * This will happen within a write lock. Since the structure
+     * represents a line map, this just checks to see if the
+     * removal spans lines.  If it does, the two lines outside
+     * of the removal area are joined together.
+     *
+     * @param chng the change event describing the edit
+     */
+    protected void removeUpdate(DefaultDocumentEvent chng) {
+        removed.removeAllElements();
+        BranchElement map = (BranchElement) getDefaultRootElement();
+        int offset = chng.getOffset();
+        int length = chng.getLength();
+        int line0 = map.getElementIndex(offset);
+        int line1 = map.getElementIndex(offset + length);
+        if (line0 != line1) {
+            // a line was removed
+            for (int i = line0; i <= line1; i++) {
+                removed.addElement(map.getElement(i));
+            }
+            int p0 = map.getElement(line0).getStartOffset();
+            int p1 = map.getElement(line1).getEndOffset();
+            Element[] aelems = new Element[1];
+            aelems[0] = createLeafElement(map, null, p0, p1);
+            Element[] relems = new Element[removed.size()];
+            removed.copyInto(relems);
+            ElementEdit ee = new ElementEdit(map, line0, relems, aelems);
+            chng.addEdit(ee);
+            map.replace(line0, relems.length, aelems);
+        } else {
+            //Check for the composed text element
+            Element line = map.getElement(line0);
+            if (!line.isLeaf()) {
+                Element leaf = line.getElement(line.getElementIndex(offset));
+                if (Utilities.isComposedTextElement(leaf)) {
+                    Element[] aelem = new Element[1];
+                    aelem[0] = createLeafElement(map, null,
+                        line.getStartOffset(), line.getEndOffset());
+                    Element[] relem = new Element[1];
+                    relem[0] = line;
+                    ElementEdit ee = new ElementEdit(map, line0, relem, aelem);
+                    chng.addEdit(ee);
+                    map.replace(line0, 1, aelem);
+                }
+            }
+        }
+        super.removeUpdate(chng);
+    }
+
+    //
+    // Inserts the composed text of an input method. The line element
+    // where the composed text is inserted into becomes an branch element
+    // which contains leaf elements of the composed text and the text
+    // backing store.
+    //
+    private void insertComposedTextUpdate(DefaultDocumentEvent chng, AttributeSet attr) {
+        added.removeAllElements();
+        BranchElement lineMap = (BranchElement) getDefaultRootElement();
+        int offset = chng.getOffset();
+        int length = chng.getLength();
+        int index = lineMap.getElementIndex(offset);
+        Element elem = lineMap.getElement(index);
+        int elemStart = elem.getStartOffset();
+        int elemEnd = elem.getEndOffset();
+        BranchElement[] abelem = new BranchElement[1];
+        abelem[0] = (BranchElement) createBranchElement(lineMap, null);
+        Element[] relem = new Element[1];
+        relem[0] = elem;
+        if (elemStart != offset)
+            added.addElement(createLeafElement(abelem[0], null, elemStart, offset));
+        added.addElement(createLeafElement(abelem[0], attr, offset, offset+length));
+        if (elemEnd != offset+length)
+            added.addElement(createLeafElement(abelem[0], null, offset+length, elemEnd));
+        Element[] alelem = new Element[added.size()];
+        added.copyInto(alelem);
+        ElementEdit ee = new ElementEdit(lineMap, index, relem, abelem);
+        chng.addEdit(ee);
+
+        abelem[0].replace(0, 0, alelem);
+        lineMap.replace(index, 1, abelem);
+    }
+
+    private AbstractElement defaultRoot;
+    private Vector<Element> added = new Vector<Element>();
+    private Vector<Element> removed = new Vector<Element>();
+    private transient Segment s;
+}

@@ -1,285 +1,175 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.util.Map;
-/*     */ import javax.management.Attribute;
-/*     */ import javax.management.MBeanServerConnection;
-/*     */ import javax.management.NotCompliantMBeanException;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MXBeanProxy
-/*     */ {
-/*     */   private final Map<Method, Handler> handlerMap;
-/*     */   
-/*     */   public MXBeanProxy(Class<?> paramClass) {
-/*     */     MBeanAnalyzer<ConvertingMethod> mBeanAnalyzer;
-/* 174 */     this.handlerMap = Util.newMap();
-/*     */     if (paramClass == null)
-/*     */       throw new IllegalArgumentException("Null parameter"); 
-/*     */     try {
-/*     */       mBeanAnalyzer = MXBeanIntrospector.getInstance().getAnalyzer(paramClass);
-/*     */     } catch (NotCompliantMBeanException notCompliantMBeanException) {
-/*     */       throw new IllegalArgumentException(notCompliantMBeanException);
-/*     */     } 
-/*     */     mBeanAnalyzer.visit(new Visitor());
-/*     */   }
-/*     */   
-/*     */   private class Visitor implements MBeanAnalyzer.MBeanVisitor<ConvertingMethod> {
-/*     */     private Visitor() {}
-/*     */     
-/*     */     public void visitAttribute(String param1String, ConvertingMethod param1ConvertingMethod1, ConvertingMethod param1ConvertingMethod2) {
-/*     */       if (param1ConvertingMethod1 != null) {
-/*     */         param1ConvertingMethod1.checkCallToOpen();
-/*     */         Method method = param1ConvertingMethod1.getMethod();
-/*     */         MXBeanProxy.this.handlerMap.put(method, new MXBeanProxy.GetHandler(param1String, param1ConvertingMethod1));
-/*     */       } 
-/*     */       if (param1ConvertingMethod2 != null) {
-/*     */         Method method = param1ConvertingMethod2.getMethod();
-/*     */         MXBeanProxy.this.handlerMap.put(method, new MXBeanProxy.SetHandler(param1String, param1ConvertingMethod2));
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void visitOperation(String param1String, ConvertingMethod param1ConvertingMethod) {
-/*     */       param1ConvertingMethod.checkCallToOpen();
-/*     */       Method method = param1ConvertingMethod.getMethod();
-/*     */       String[] arrayOfString = param1ConvertingMethod.getOpenSignature();
-/*     */       MXBeanProxy.this.handlerMap.put(method, new MXBeanProxy.InvokeHandler(param1String, arrayOfString, param1ConvertingMethod));
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static abstract class Handler {
-/*     */     private final String name;
-/*     */     private final ConvertingMethod convertingMethod;
-/*     */     
-/*     */     Handler(String param1String, ConvertingMethod param1ConvertingMethod) {
-/*     */       this.name = param1String;
-/*     */       this.convertingMethod = param1ConvertingMethod;
-/*     */     }
-/*     */     
-/*     */     String getName() {
-/*     */       return this.name;
-/*     */     }
-/*     */     
-/*     */     ConvertingMethod getConvertingMethod() {
-/*     */       return this.convertingMethod;
-/*     */     }
-/*     */     
-/*     */     abstract Object invoke(MBeanServerConnection param1MBeanServerConnection, ObjectName param1ObjectName, Object[] param1ArrayOfObject) throws Exception;
-/*     */   }
-/*     */   
-/*     */   private static class GetHandler extends Handler {
-/*     */     GetHandler(String param1String, ConvertingMethod param1ConvertingMethod) {
-/*     */       super(param1String, param1ConvertingMethod);
-/*     */     }
-/*     */     
-/*     */     Object invoke(MBeanServerConnection param1MBeanServerConnection, ObjectName param1ObjectName, Object[] param1ArrayOfObject) throws Exception {
-/*     */       assert param1ArrayOfObject == null || param1ArrayOfObject.length == 0;
-/*     */       return param1MBeanServerConnection.getAttribute(param1ObjectName, getName());
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class SetHandler extends Handler {
-/*     */     SetHandler(String param1String, ConvertingMethod param1ConvertingMethod) {
-/*     */       super(param1String, param1ConvertingMethod);
-/*     */     }
-/*     */     
-/*     */     Object invoke(MBeanServerConnection param1MBeanServerConnection, ObjectName param1ObjectName, Object[] param1ArrayOfObject) throws Exception {
-/*     */       assert param1ArrayOfObject.length == 1;
-/*     */       Attribute attribute = new Attribute(getName(), param1ArrayOfObject[0]);
-/*     */       param1MBeanServerConnection.setAttribute(param1ObjectName, attribute);
-/*     */       return null;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class InvokeHandler extends Handler {
-/*     */     private final String[] signature;
-/*     */     
-/*     */     InvokeHandler(String param1String, String[] param1ArrayOfString, ConvertingMethod param1ConvertingMethod) {
-/*     */       super(param1String, param1ConvertingMethod);
-/*     */       this.signature = param1ArrayOfString;
-/*     */     }
-/*     */     
-/*     */     Object invoke(MBeanServerConnection param1MBeanServerConnection, ObjectName param1ObjectName, Object[] param1ArrayOfObject) throws Exception {
-/*     */       return param1MBeanServerConnection.invoke(param1ObjectName, getName(), param1ArrayOfObject, this.signature);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public Object invoke(MBeanServerConnection paramMBeanServerConnection, ObjectName paramObjectName, Method paramMethod, Object[] paramArrayOfObject) throws Throwable {
-/*     */     Handler handler = this.handlerMap.get(paramMethod);
-/*     */     ConvertingMethod convertingMethod = handler.getConvertingMethod();
-/*     */     MXBeanLookup mXBeanLookup1 = MXBeanLookup.lookupFor(paramMBeanServerConnection);
-/*     */     MXBeanLookup mXBeanLookup2 = MXBeanLookup.getLookup();
-/*     */     try {
-/*     */       MXBeanLookup.setLookup(mXBeanLookup1);
-/*     */       Object[] arrayOfObject = convertingMethod.toOpenParameters(mXBeanLookup1, paramArrayOfObject);
-/*     */       Object object = handler.invoke(paramMBeanServerConnection, paramObjectName, arrayOfObject);
-/*     */       return convertingMethod.fromOpenReturnValue(mXBeanLookup1, object);
-/*     */     } finally {
-/*     */       MXBeanLookup.setLookup(mXBeanLookup2);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\MXBeanProxy.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+import static com.sun.jmx.mbeanserver.Util.*;
+
+import java.lang.reflect.Method;
+import java.util.Map;
+
+import javax.management.Attribute;
+import javax.management.MBeanServerConnection;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
+/**
+   <p>Helper class for an {@link InvocationHandler} that forwards methods from an
+   MXBean interface to a named
+   MXBean in an MBean Server and handles translation between the
+   arbitrary Java types in the interface and the Open Types used
+   by the MXBean.</p>
+
+   @since 1.6
+*/
+public class MXBeanProxy {
+    public MXBeanProxy(Class<?> mxbeanInterface) {
+
+        if (mxbeanInterface == null)
+            throw new IllegalArgumentException("Null parameter");
+
+        final MBeanAnalyzer<ConvertingMethod> analyzer;
+        try {
+            analyzer =
+                MXBeanIntrospector.getInstance().getAnalyzer(mxbeanInterface);
+        } catch (NotCompliantMBeanException e) {
+            throw new IllegalArgumentException(e);
+        }
+        analyzer.visit(new Visitor());
+    }
+
+    private class Visitor
+            implements MBeanAnalyzer.MBeanVisitor<ConvertingMethod> {
+        public void visitAttribute(String attributeName,
+                                   ConvertingMethod getter,
+                                   ConvertingMethod setter) {
+            if (getter != null) {
+                getter.checkCallToOpen();
+                Method getterMethod = getter.getMethod();
+                handlerMap.put(getterMethod,
+                               new GetHandler(attributeName, getter));
+            }
+            if (setter != null) {
+                // return type is void, no need for checkCallToOpen
+                Method setterMethod = setter.getMethod();
+                handlerMap.put(setterMethod,
+                               new SetHandler(attributeName, setter));
+            }
+        }
+
+        public void visitOperation(String operationName,
+                                   ConvertingMethod operation) {
+            operation.checkCallToOpen();
+            Method operationMethod = operation.getMethod();
+            String[] sig = operation.getOpenSignature();
+            handlerMap.put(operationMethod,
+                           new InvokeHandler(operationName, sig, operation));
+        }
+    }
+
+    private static abstract class Handler {
+        Handler(String name, ConvertingMethod cm) {
+            this.name = name;
+            this.convertingMethod = cm;
+        }
+
+        String getName() {
+            return name;
+        }
+
+        ConvertingMethod getConvertingMethod() {
+            return convertingMethod;
+        }
+
+        abstract Object invoke(MBeanServerConnection mbsc,
+                               ObjectName name, Object[] args) throws Exception;
+
+        private final String name;
+        private final ConvertingMethod convertingMethod;
+    }
+
+    private static class GetHandler extends Handler {
+        GetHandler(String attributeName, ConvertingMethod cm) {
+            super(attributeName, cm);
+        }
+
+        @Override
+        Object invoke(MBeanServerConnection mbsc, ObjectName name, Object[] args)
+                throws Exception {
+            assert(args == null || args.length == 0);
+            return mbsc.getAttribute(name, getName());
+        }
+    }
+
+    private static class SetHandler extends Handler {
+        SetHandler(String attributeName, ConvertingMethod cm) {
+            super(attributeName, cm);
+        }
+
+        @Override
+        Object invoke(MBeanServerConnection mbsc, ObjectName name, Object[] args)
+                throws Exception {
+            assert(args.length == 1);
+            Attribute attr = new Attribute(getName(), args[0]);
+            mbsc.setAttribute(name, attr);
+            return null;
+        }
+    }
+
+    private static class InvokeHandler extends Handler {
+        InvokeHandler(String operationName, String[] signature,
+                      ConvertingMethod cm) {
+            super(operationName, cm);
+            this.signature = signature;
+        }
+
+        Object invoke(MBeanServerConnection mbsc, ObjectName name, Object[] args)
+                throws Exception {
+            return mbsc.invoke(name, getName(), args, signature);
+        }
+
+        private final String[] signature;
+    }
+
+    public Object invoke(MBeanServerConnection mbsc, ObjectName name,
+                         Method method, Object[] args)
+            throws Throwable {
+
+        Handler handler = handlerMap.get(method);
+        ConvertingMethod cm = handler.getConvertingMethod();
+        MXBeanLookup lookup = MXBeanLookup.lookupFor(mbsc);
+        MXBeanLookup oldLookup = MXBeanLookup.getLookup();
+        try {
+            MXBeanLookup.setLookup(lookup);
+            Object[] openArgs = cm.toOpenParameters(lookup, args);
+            Object result = handler.invoke(mbsc, name, openArgs);
+            return cm.fromOpenReturnValue(lookup, result);
+        } finally {
+            MXBeanLookup.setLookup(oldLookup);
+        }
+    }
+
+    private final Map<Method, Handler> handlerMap = newMap();
+}

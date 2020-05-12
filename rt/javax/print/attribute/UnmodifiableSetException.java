@@ -1,57 +1,51 @@
-/*    */ package javax.print.attribute;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UnmodifiableSetException
-/*    */   extends RuntimeException
-/*    */ {
-/*    */   public UnmodifiableSetException() {}
-/*    */   
-/*    */   public UnmodifiableSetException(String paramString) {
-/* 49 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\print\attribute\UnmodifiableSetException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.print.attribute;
+
+/**
+ * Thrown to indicate that the requested operation cannot be performed
+ * because the set is unmodifiable.
+ *
+ * @author  Phil Race
+ * @since   1.4
+ */
+public class UnmodifiableSetException extends RuntimeException {
+    /**
+     * Constructs an UnsupportedOperationException with no detail message.
+     */
+    public UnmodifiableSetException() {
+    }
+
+    /**
+     * Constructs an UnmodifiableSetException with the specified
+     * detail message.
+     *
+     * @param message the detail message
+     */
+    public UnmodifiableSetException(String message) {
+        super(message);
+    }
+}

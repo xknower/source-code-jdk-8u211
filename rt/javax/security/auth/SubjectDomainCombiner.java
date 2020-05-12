@@ -1,589 +1,583 @@
-/*     */ package javax.security.auth;
-/*     */ 
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.CodeSource;
-/*     */ import java.security.DomainCombiner;
-/*     */ import java.security.Permission;
-/*     */ import java.security.PermissionCollection;
-/*     */ import java.security.Permissions;
-/*     */ import java.security.Principal;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.ProtectionDomain;
-/*     */ import java.security.Security;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Set;
-/*     */ import java.util.WeakHashMap;
-/*     */ import sun.misc.JavaSecurityProtectionDomainAccess;
-/*     */ import sun.misc.SharedSecrets;
-/*     */ import sun.security.util.Debug;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SubjectDomainCombiner
-/*     */   implements DomainCombiner
-/*     */ {
-/*     */   private Subject subject;
-/*  52 */   private WeakKeyValueMap<ProtectionDomain, ProtectionDomain> cachedPDs = new WeakKeyValueMap<>();
-/*     */   
-/*     */   private Set<Principal> principalSet;
-/*     */   
-/*     */   private Principal[] principals;
-/*     */   
-/*  58 */   private static final Debug debug = Debug.getInstance("combiner", "\t[SubjectDomainCombiner]");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  64 */   private static final boolean useJavaxPolicy = Policy.isCustomPolicySet(debug);
-/*     */ 
-/*     */   
-/*  67 */   private static final boolean allowCaching = (useJavaxPolicy && 
-/*  68 */     cachePolicy());
-/*     */ 
-/*     */   
-/*  71 */   private static final JavaSecurityProtectionDomainAccess pdAccess = SharedSecrets.getJavaSecurityProtectionDomainAccess();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SubjectDomainCombiner(Subject paramSubject) {
-/*  83 */     this.subject = paramSubject;
-/*     */     
-/*  85 */     if (paramSubject.isReadOnly()) {
-/*  86 */       this.principalSet = paramSubject.getPrincipals();
-/*  87 */       this
-/*  88 */         .principals = this.principalSet.<Principal>toArray(new Principal[this.principalSet.size()]);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Subject getSubject() {
-/* 108 */     SecurityManager securityManager = System.getSecurityManager();
-/* 109 */     if (securityManager != null) {
-/* 110 */       securityManager.checkPermission(new AuthPermission("getSubjectFromDomainCombiner"));
-/*     */     }
-/*     */     
-/* 113 */     return this.subject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ProtectionDomain[] combine(ProtectionDomain[] paramArrayOfProtectionDomain1, ProtectionDomain[] paramArrayOfProtectionDomain2) {
-/* 164 */     if (debug != null) {
-/* 165 */       if (this.subject == null) {
-/* 166 */         debug.println("null subject");
-/*     */       } else {
-/* 168 */         final Subject s = this.subject;
-/*     */         
-/* 170 */         AccessController.doPrivileged(new PrivilegedAction<Void>() {
-/*     */               public Void run() {
-/* 172 */                 SubjectDomainCombiner.debug.println(s.toString());
-/* 173 */                 return null;
-/*     */               }
-/*     */             });
-/*     */       } 
-/* 177 */       printInputDomains(paramArrayOfProtectionDomain1, paramArrayOfProtectionDomain2);
-/*     */     } 
-/*     */     
-/* 180 */     if (paramArrayOfProtectionDomain1 == null || paramArrayOfProtectionDomain1.length == 0)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 190 */       return paramArrayOfProtectionDomain2;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 198 */     paramArrayOfProtectionDomain1 = optimize(paramArrayOfProtectionDomain1);
-/* 199 */     if (debug != null) {
-/* 200 */       debug.println("after optimize");
-/* 201 */       printInputDomains(paramArrayOfProtectionDomain1, paramArrayOfProtectionDomain2);
-/*     */     } 
-/*     */     
-/* 204 */     if (paramArrayOfProtectionDomain1 == null && paramArrayOfProtectionDomain2 == null) {
-/* 205 */       return null;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 210 */     if (useJavaxPolicy) {
-/* 211 */       return combineJavaxPolicy(paramArrayOfProtectionDomain1, paramArrayOfProtectionDomain2);
-/*     */     }
-/*     */     
-/* 214 */     byte b1 = (paramArrayOfProtectionDomain1 == null) ? 0 : paramArrayOfProtectionDomain1.length;
-/* 215 */     byte b2 = (paramArrayOfProtectionDomain2 == null) ? 0 : paramArrayOfProtectionDomain2.length;
-/*     */ 
-/*     */ 
-/*     */     
-/* 219 */     ProtectionDomain[] arrayOfProtectionDomain = new ProtectionDomain[b1 + b2];
-/*     */     
-/* 221 */     boolean bool = true;
-/* 222 */     synchronized (this.cachedPDs) {
-/* 223 */       if (!this.subject.isReadOnly() && 
-/* 224 */         !this.subject.getPrincipals().equals(this.principalSet)) {
-/*     */ 
-/*     */         
-/* 227 */         Set<Principal> set = this.subject.getPrincipals();
-/* 228 */         synchronized (set) {
-/* 229 */           this.principalSet = new HashSet<>(set);
-/*     */         } 
-/* 231 */         this
-/* 232 */           .principals = this.principalSet.<Principal>toArray(new Principal[this.principalSet.size()]);
-/* 233 */         this.cachedPDs.clear();
-/*     */         
-/* 235 */         if (debug != null) {
-/* 236 */           debug.println("Subject mutated - clearing cache");
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 241 */       for (byte b = 0; b < b1; b++) {
-/* 242 */         ProtectionDomain protectionDomain2 = paramArrayOfProtectionDomain1[b];
-/*     */         
-/* 244 */         ProtectionDomain protectionDomain1 = this.cachedPDs.getValue(protectionDomain2);
-/*     */         
-/* 246 */         if (protectionDomain1 == null) {
-/* 247 */           if (pdAccess.getStaticPermissionsField(protectionDomain2)) {
-/*     */ 
-/*     */             
-/* 250 */             protectionDomain1 = new ProtectionDomain(protectionDomain2.getCodeSource(), protectionDomain2.getPermissions());
-/*     */           }
-/*     */           else {
-/*     */             
-/* 254 */             protectionDomain1 = new ProtectionDomain(protectionDomain2.getCodeSource(), protectionDomain2.getPermissions(), protectionDomain2.getClassLoader(), this.principals);
-/*     */           } 
-/*     */           
-/* 257 */           this.cachedPDs.putValue(protectionDomain2, protectionDomain1);
-/*     */         } else {
-/* 259 */           bool = false;
-/*     */         } 
-/* 261 */         arrayOfProtectionDomain[b] = protectionDomain1;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 265 */     if (debug != null) {
-/* 266 */       debug.println("updated current: ");
-/* 267 */       for (byte b = 0; b < b1; b++) {
-/* 268 */         debug.println("\tupdated[" + b + "] = " + 
-/* 269 */             printDomain(arrayOfProtectionDomain[b]));
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 274 */     if (b2 > 0) {
-/* 275 */       System.arraycopy(paramArrayOfProtectionDomain2, 0, arrayOfProtectionDomain, b1, b2);
-/*     */ 
-/*     */       
-/* 278 */       if (!bool) {
-/* 279 */         arrayOfProtectionDomain = optimize(arrayOfProtectionDomain);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 285 */     if (debug != null) {
-/* 286 */       if (arrayOfProtectionDomain == null || arrayOfProtectionDomain.length == 0) {
-/* 287 */         debug.println("returning null");
-/*     */       } else {
-/* 289 */         debug.println("combinedDomains: ");
-/* 290 */         for (byte b = 0; b < arrayOfProtectionDomain.length; b++) {
-/* 291 */           debug.println("newDomain " + b + ": " + 
-/* 292 */               printDomain(arrayOfProtectionDomain[b]));
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 298 */     if (arrayOfProtectionDomain == null || arrayOfProtectionDomain.length == 0) {
-/* 299 */       return null;
-/*     */     }
-/* 301 */     return arrayOfProtectionDomain;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ProtectionDomain[] combineJavaxPolicy(ProtectionDomain[] paramArrayOfProtectionDomain1, ProtectionDomain[] paramArrayOfProtectionDomain2) {
-/* 312 */     if (!allowCaching)
-/*     */     {
-/* 314 */       AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*     */           {
-/*     */             public Void run()
-/*     */             {
-/* 318 */               Policy.getPolicy().refresh();
-/* 319 */               return null;
-/*     */             }
-/*     */           });
-/*     */     }
-/*     */ 
-/*     */     
-/* 325 */     byte b1 = (paramArrayOfProtectionDomain1 == null) ? 0 : paramArrayOfProtectionDomain1.length;
-/* 326 */     byte b2 = (paramArrayOfProtectionDomain2 == null) ? 0 : paramArrayOfProtectionDomain2.length;
-/*     */ 
-/*     */ 
-/*     */     
-/* 330 */     ProtectionDomain[] arrayOfProtectionDomain = new ProtectionDomain[b1 + b2];
-/*     */     
-/* 332 */     synchronized (this.cachedPDs) {
-/* 333 */       if (!this.subject.isReadOnly() && 
-/* 334 */         !this.subject.getPrincipals().equals(this.principalSet)) {
-/*     */ 
-/*     */         
-/* 337 */         Set<Principal> set = this.subject.getPrincipals();
-/* 338 */         synchronized (set) {
-/* 339 */           this.principalSet = new HashSet<>(set);
-/*     */         } 
-/* 341 */         this
-/* 342 */           .principals = this.principalSet.<Principal>toArray(new Principal[this.principalSet.size()]);
-/* 343 */         this.cachedPDs.clear();
-/*     */         
-/* 345 */         if (debug != null) {
-/* 346 */           debug.println("Subject mutated - clearing cache");
-/*     */         }
-/*     */       } 
-/*     */       
-/* 350 */       for (byte b = 0; b < b1; b++) {
-/* 351 */         ProtectionDomain protectionDomain1 = paramArrayOfProtectionDomain1[b];
-/* 352 */         ProtectionDomain protectionDomain2 = this.cachedPDs.getValue(protectionDomain1);
-/*     */         
-/* 354 */         if (protectionDomain2 == null) {
-/* 355 */           if (pdAccess.getStaticPermissionsField(protectionDomain1)) {
-/*     */ 
-/*     */             
-/* 358 */             protectionDomain2 = new ProtectionDomain(protectionDomain1.getCodeSource(), protectionDomain1.getPermissions());
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           }
-/*     */           else {
-/*     */ 
-/*     */ 
-/*     */             
-/* 367 */             Permissions permissions = new Permissions();
-/* 368 */             PermissionCollection permissionCollection1 = protectionDomain1.getPermissions();
-/*     */             
-/* 370 */             if (permissionCollection1 != null) {
-/* 371 */               synchronized (permissionCollection1) {
-/* 372 */                 Enumeration<Permission> enumeration = permissionCollection1.elements();
-/* 373 */                 while (enumeration.hasMoreElements()) {
-/*     */                   
-/* 375 */                   Permission permission = enumeration.nextElement();
-/* 376 */                   permissions.add(permission);
-/*     */                 } 
-/*     */               } 
-/*     */             }
-/*     */ 
-/*     */             
-/* 382 */             final CodeSource finalCs = protectionDomain1.getCodeSource();
-/* 383 */             final Subject finalS = this.subject;
-/*     */ 
-/*     */             
-/* 386 */             PermissionCollection permissionCollection2 = AccessController.<PermissionCollection>doPrivileged(new PrivilegedAction<PermissionCollection>()
-/*     */                 {
-/*     */                   public PermissionCollection run() {
-/* 389 */                     return 
-/* 390 */                       Policy.getPolicy()
-/* 391 */                       .getPermissions(finalS, finalCs);
-/*     */                   }
-/*     */                 });
-/*     */ 
-/*     */ 
-/*     */             
-/* 397 */             synchronized (permissionCollection2) {
-/* 398 */               Enumeration<Permission> enumeration = permissionCollection2.elements();
-/* 399 */               while (enumeration.hasMoreElements()) {
-/* 400 */                 Permission permission = enumeration.nextElement();
-/* 401 */                 if (!permissions.implies(permission)) {
-/* 402 */                   permissions.add(permission);
-/* 403 */                   if (debug != null) {
-/* 404 */                     debug.println("Adding perm " + permission + "\n");
-/*     */                   }
-/*     */                 } 
-/*     */               } 
-/*     */             } 
-/*     */             
-/* 410 */             protectionDomain2 = new ProtectionDomain(codeSource, permissions, protectionDomain1.getClassLoader(), this.principals);
-/*     */           } 
-/* 412 */           if (allowCaching)
-/* 413 */             this.cachedPDs.putValue(protectionDomain1, protectionDomain2); 
-/*     */         } 
-/* 415 */         arrayOfProtectionDomain[b] = protectionDomain2;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 419 */     if (debug != null) {
-/* 420 */       debug.println("updated current: ");
-/* 421 */       for (byte b = 0; b < b1; b++) {
-/* 422 */         debug.println("\tupdated[" + b + "] = " + arrayOfProtectionDomain[b]);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 427 */     if (b2 > 0) {
-/* 428 */       System.arraycopy(paramArrayOfProtectionDomain2, 0, arrayOfProtectionDomain, b1, b2);
-/*     */     }
-/*     */     
-/* 431 */     if (debug != null) {
-/* 432 */       if (arrayOfProtectionDomain == null || arrayOfProtectionDomain.length == 0) {
-/* 433 */         debug.println("returning null");
-/*     */       } else {
-/* 435 */         debug.println("combinedDomains: ");
-/* 436 */         for (byte b = 0; b < arrayOfProtectionDomain.length; b++) {
-/* 437 */           debug.println("newDomain " + b + ": " + arrayOfProtectionDomain[b]
-/* 438 */               .toString());
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 444 */     if (arrayOfProtectionDomain == null || arrayOfProtectionDomain.length == 0) {
-/* 445 */       return null;
-/*     */     }
-/* 447 */     return arrayOfProtectionDomain;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static ProtectionDomain[] optimize(ProtectionDomain[] paramArrayOfProtectionDomain) {
-/* 452 */     if (paramArrayOfProtectionDomain == null || paramArrayOfProtectionDomain.length == 0) {
-/* 453 */       return null;
-/*     */     }
-/* 455 */     ProtectionDomain[] arrayOfProtectionDomain = new ProtectionDomain[paramArrayOfProtectionDomain.length];
-/*     */     
-/* 457 */     byte b1 = 0;
-/* 458 */     for (byte b2 = 0; b2 < paramArrayOfProtectionDomain.length; b2++) {
-/*     */       ProtectionDomain protectionDomain;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 467 */       if ((protectionDomain = paramArrayOfProtectionDomain[b2]) != null) {
-/*     */ 
-/*     */         
-/* 470 */         boolean bool = false;
-/* 471 */         for (byte b = 0; b < b1 && !bool; b++) {
-/* 472 */           bool = (arrayOfProtectionDomain[b] == protectionDomain) ? true : false;
-/*     */         }
-/* 474 */         if (!bool) {
-/* 475 */           arrayOfProtectionDomain[b1++] = protectionDomain;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 481 */     if (b1 > 0 && b1 < paramArrayOfProtectionDomain.length) {
-/* 482 */       ProtectionDomain[] arrayOfProtectionDomain1 = new ProtectionDomain[b1];
-/* 483 */       System.arraycopy(arrayOfProtectionDomain, 0, arrayOfProtectionDomain1, 0, arrayOfProtectionDomain1.length);
-/* 484 */       arrayOfProtectionDomain = arrayOfProtectionDomain1;
-/*     */     } 
-/*     */     
-/* 487 */     return (b1 == 0 || arrayOfProtectionDomain.length == 0) ? null : arrayOfProtectionDomain;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static boolean cachePolicy() {
-/* 492 */     String str = AccessController.<String>doPrivileged(new PrivilegedAction<String>() {
-/*     */           public String run() {
-/* 494 */             return Security.getProperty("cache.auth.policy");
-/*     */           }
-/*     */         });
-/* 497 */     if (str != null) {
-/* 498 */       return Boolean.parseBoolean(str);
-/*     */     }
-/*     */ 
-/*     */     
-/* 502 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static void printInputDomains(ProtectionDomain[] paramArrayOfProtectionDomain1, ProtectionDomain[] paramArrayOfProtectionDomain2) {
-/* 507 */     if (paramArrayOfProtectionDomain1 == null || paramArrayOfProtectionDomain1.length == 0) {
-/* 508 */       debug.println("currentDomains null or 0 length");
-/*     */     } else {
-/* 510 */       for (byte b = 0; paramArrayOfProtectionDomain1 != null && b < paramArrayOfProtectionDomain1.length; 
-/* 511 */         b++) {
-/* 512 */         if (paramArrayOfProtectionDomain1[b] == null) {
-/* 513 */           debug.println("currentDomain " + b + ": SystemDomain");
-/*     */         } else {
-/* 515 */           debug.println("currentDomain " + b + ": " + 
-/* 516 */               printDomain(paramArrayOfProtectionDomain1[b]));
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 521 */     if (paramArrayOfProtectionDomain2 == null || paramArrayOfProtectionDomain2.length == 0) {
-/* 522 */       debug.println("assignedDomains null or 0 length");
-/*     */     } else {
-/* 524 */       debug.println("assignedDomains = ");
-/* 525 */       for (byte b = 0; paramArrayOfProtectionDomain2 != null && b < paramArrayOfProtectionDomain2.length; 
-/* 526 */         b++) {
-/* 527 */         if (paramArrayOfProtectionDomain2[b] == null) {
-/* 528 */           debug.println("assignedDomain " + b + ": SystemDomain");
-/*     */         } else {
-/* 530 */           debug.println("assignedDomain " + b + ": " + 
-/* 531 */               printDomain(paramArrayOfProtectionDomain2[b]));
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static String printDomain(final ProtectionDomain pd) {
-/* 538 */     if (pd == null) {
-/* 539 */       return "null";
-/*     */     }
-/* 541 */     return AccessController.<String>doPrivileged(new PrivilegedAction<String>() {
-/*     */           public String run() {
-/* 543 */             return pd.toString();
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class WeakKeyValueMap<K, V>
-/*     */     extends WeakHashMap<K, WeakReference<V>>
-/*     */   {
-/*     */     private WeakKeyValueMap() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public V getValue(K param1K) {
-/* 568 */       WeakReference<V> weakReference = (WeakReference)get(param1K);
-/* 569 */       if (weakReference != null) {
-/* 570 */         return weakReference.get();
-/*     */       }
-/* 572 */       return null;
-/*     */     }
-/*     */     
-/*     */     public V putValue(K param1K, V param1V) {
-/* 576 */       WeakReference<V> weakReference = (WeakReference)put(param1K, (V)new WeakReference<>(param1V));
-/* 577 */       if (weakReference != null) {
-/* 578 */         return weakReference.get();
-/*     */       }
-/* 580 */       return null;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\security\auth\SubjectDomainCombiner.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.security.auth;
+
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.Permissions;
+import java.security.PermissionCollection;
+import java.security.Policy;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.security.Security;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.lang.ref.WeakReference;
+import sun.misc.SharedSecrets;
+import sun.misc.JavaSecurityProtectionDomainAccess;
+
+/**
+ * A {@code SubjectDomainCombiner} updates ProtectionDomains
+ * with Principals from the {@code Subject} associated with this
+ * {@code SubjectDomainCombiner}.
+ *
+ */
+public class SubjectDomainCombiner implements java.security.DomainCombiner {
+
+    private Subject subject;
+    private WeakKeyValueMap<ProtectionDomain, ProtectionDomain> cachedPDs =
+                new WeakKeyValueMap<>();
+    private Set<Principal> principalSet;
+    private Principal[] principals;
+
+    private static final sun.security.util.Debug debug =
+        sun.security.util.Debug.getInstance("combiner",
+                                        "\t[SubjectDomainCombiner]");
+
+    @SuppressWarnings("deprecation")
+    // Note: check only at classloading time, not dynamically during combine()
+    private static final boolean useJavaxPolicy =
+        javax.security.auth.Policy.isCustomPolicySet(debug);
+
+    // Relevant only when useJavaxPolicy is true
+    private static final boolean allowCaching =
+                                        (useJavaxPolicy && cachePolicy());
+
+    private static final JavaSecurityProtectionDomainAccess pdAccess =
+        SharedSecrets.getJavaSecurityProtectionDomainAccess();
+
+    /**
+     * Associate the provided {@code Subject} with this
+     * {@code SubjectDomainCombiner}.
+     *
+     * <p>
+     *
+     * @param subject the {@code Subject} to be associated with
+     *          with this {@code SubjectDomainCombiner}.
+     */
+    public SubjectDomainCombiner(Subject subject) {
+        this.subject = subject;
+
+        if (subject.isReadOnly()) {
+            principalSet = subject.getPrincipals();
+            principals = principalSet.toArray
+                        (new Principal[principalSet.size()]);
+        }
+    }
+
+    /**
+     * Get the {@code Subject} associated with this
+     * {@code SubjectDomainCombiner}.
+     *
+     * <p>
+     *
+     * @return the {@code Subject} associated with this
+     *          {@code SubjectDomainCombiner}, or {@code null}
+     *          if no {@code Subject} is associated with this
+     *          {@code SubjectDomainCombiner}.
+     *
+     * @exception SecurityException if the caller does not have permission
+     *          to get the {@code Subject} associated with this
+     *          {@code SubjectDomainCombiner}.
+     */
+    public Subject getSubject() {
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new AuthPermission
+                ("getSubjectFromDomainCombiner"));
+        }
+        return subject;
+    }
+
+    /**
+     * Update the relevant ProtectionDomains with the Principals
+     * from the {@code Subject} associated with this
+     * {@code SubjectDomainCombiner}.
+     *
+     * <p> A new {@code ProtectionDomain} instance is created
+     * for each {@code ProtectionDomain} in the
+     * <i>currentDomains</i> array.  Each new {@code ProtectionDomain}
+     * instance is created using the {@code CodeSource},
+     * {@code Permission}s and {@code ClassLoader}
+     * from the corresponding {@code ProtectionDomain} in
+     * <i>currentDomains</i>, as well as with the Principals from
+     * the {@code Subject} associated with this
+     * {@code SubjectDomainCombiner}.
+     *
+     * <p> All of the newly instantiated ProtectionDomains are
+     * combined into a new array.  The ProtectionDomains from the
+     * <i>assignedDomains</i> array are appended to this new array,
+     * and the result is returned.
+     *
+     * <p> Note that optimizations such as the removal of duplicate
+     * ProtectionDomains may have occurred.
+     * In addition, caching of ProtectionDomains may be permitted.
+     *
+     * <p>
+     *
+     * @param currentDomains the ProtectionDomains associated with the
+     *          current execution Thread, up to the most recent
+     *          privileged {@code ProtectionDomain}.
+     *          The ProtectionDomains are are listed in order of execution,
+     *          with the most recently executing {@code ProtectionDomain}
+     *          residing at the beginning of the array. This parameter may
+     *          be {@code null} if the current execution Thread
+     *          has no associated ProtectionDomains.<p>
+     *
+     * @param assignedDomains the ProtectionDomains inherited from the
+     *          parent Thread, or the ProtectionDomains from the
+     *          privileged <i>context</i>, if a call to
+     *          AccessController.doPrivileged(..., <i>context</i>)
+     *          had occurred  This parameter may be {@code null}
+     *          if there were no ProtectionDomains inherited from the
+     *          parent Thread, or from the privileged <i>context</i>.
+     *
+     * @return a new array consisting of the updated ProtectionDomains,
+     *          or {@code null}.
+     */
+    public ProtectionDomain[] combine(ProtectionDomain[] currentDomains,
+                                ProtectionDomain[] assignedDomains) {
+        if (debug != null) {
+            if (subject == null) {
+                debug.println("null subject");
+            } else {
+                final Subject s = subject;
+                AccessController.doPrivileged
+                    (new java.security.PrivilegedAction<Void>() {
+                    public Void run() {
+                        debug.println(s.toString());
+                        return null;
+                    }
+                });
+            }
+            printInputDomains(currentDomains, assignedDomains);
+        }
+
+        if (currentDomains == null || currentDomains.length == 0) {
+            // No need to optimize assignedDomains because it should
+            // have been previously optimized (when it was set).
+
+            // Note that we are returning a direct reference
+            // to the input array - since ACC does not clone
+            // the arrays when it calls combiner.combine,
+            // multiple ACC instances may share the same
+            // array instance in this case
+
+            return assignedDomains;
+        }
+
+        // optimize currentDomains
+        //
+        // No need to optimize assignedDomains because it should
+        // have been previously optimized (when it was set).
+
+        currentDomains = optimize(currentDomains);
+        if (debug != null) {
+            debug.println("after optimize");
+            printInputDomains(currentDomains, assignedDomains);
+        }
+
+        if (currentDomains == null && assignedDomains == null) {
+            return null;
+        }
+
+        // maintain backwards compatibility for developers who provide
+        // their own custom javax.security.auth.Policy implementations
+        if (useJavaxPolicy) {
+            return combineJavaxPolicy(currentDomains, assignedDomains);
+        }
+
+        int cLen = (currentDomains == null ? 0 : currentDomains.length);
+        int aLen = (assignedDomains == null ? 0 : assignedDomains.length);
+
+        // the ProtectionDomains for the new AccessControlContext
+        // that we will return
+        ProtectionDomain[] newDomains = new ProtectionDomain[cLen + aLen];
+
+        boolean allNew = true;
+        synchronized(cachedPDs) {
+            if (!subject.isReadOnly() &&
+                !subject.getPrincipals().equals(principalSet)) {
+
+                // if the Subject was mutated, clear the PD cache
+                Set<Principal> newSet = subject.getPrincipals();
+                synchronized(newSet) {
+                    principalSet = new java.util.HashSet<Principal>(newSet);
+                }
+                principals = principalSet.toArray
+                        (new Principal[principalSet.size()]);
+                cachedPDs.clear();
+
+                if (debug != null) {
+                    debug.println("Subject mutated - clearing cache");
+                }
+            }
+
+            ProtectionDomain subjectPd;
+            for (int i = 0; i < cLen; i++) {
+                ProtectionDomain pd = currentDomains[i];
+
+                subjectPd = cachedPDs.getValue(pd);
+
+                if (subjectPd == null) {
+                    if (pdAccess.getStaticPermissionsField(pd)) {
+                        // Need to keep static ProtectionDomain objects static
+                        subjectPd = new ProtectionDomain(pd.getCodeSource(),
+                                                pd.getPermissions());
+                    } else {
+                        subjectPd = new ProtectionDomain(pd.getCodeSource(),
+                                                pd.getPermissions(),
+                                                pd.getClassLoader(),
+                                                principals);
+                    }
+                    cachedPDs.putValue(pd, subjectPd);
+                } else {
+                    allNew = false;
+                }
+                newDomains[i] = subjectPd;
+            }
+        }
+
+        if (debug != null) {
+            debug.println("updated current: ");
+            for (int i = 0; i < cLen; i++) {
+                debug.println("\tupdated[" + i + "] = " +
+                                printDomain(newDomains[i]));
+            }
+        }
+
+        // now add on the assigned domains
+        if (aLen > 0) {
+            System.arraycopy(assignedDomains, 0, newDomains, cLen, aLen);
+
+            // optimize the result (cached PDs might exist in assignedDomains)
+            if (!allNew) {
+                newDomains = optimize(newDomains);
+            }
+        }
+
+        // if aLen == 0 || allNew, no need to further optimize newDomains
+
+        if (debug != null) {
+            if (newDomains == null || newDomains.length == 0) {
+                debug.println("returning null");
+            } else {
+                debug.println("combinedDomains: ");
+                for (int i = 0; i < newDomains.length; i++) {
+                    debug.println("newDomain " + i + ": " +
+                                  printDomain(newDomains[i]));
+                }
+            }
+        }
+
+        // return the new ProtectionDomains
+        if (newDomains == null || newDomains.length == 0) {
+            return null;
+        } else {
+            return newDomains;
+        }
+    }
+
+    /**
+     * Use the javax.security.auth.Policy implementation
+     */
+    private ProtectionDomain[] combineJavaxPolicy(
+        ProtectionDomain[] currentDomains,
+        ProtectionDomain[] assignedDomains) {
+
+        if (!allowCaching) {
+            java.security.AccessController.doPrivileged
+                (new PrivilegedAction<Void>() {
+                    @SuppressWarnings("deprecation")
+                    public Void run() {
+                        // Call refresh only caching is disallowed
+                        javax.security.auth.Policy.getPolicy().refresh();
+                        return null;
+                    }
+                });
+        }
+
+
+        int cLen = (currentDomains == null ? 0 : currentDomains.length);
+        int aLen = (assignedDomains == null ? 0 : assignedDomains.length);
+
+        // the ProtectionDomains for the new AccessControlContext
+        // that we will return
+        ProtectionDomain[] newDomains = new ProtectionDomain[cLen + aLen];
+
+        synchronized(cachedPDs) {
+            if (!subject.isReadOnly() &&
+                !subject.getPrincipals().equals(principalSet)) {
+
+                // if the Subject was mutated, clear the PD cache
+                Set<Principal> newSet = subject.getPrincipals();
+                synchronized(newSet) {
+                    principalSet = new java.util.HashSet<Principal>(newSet);
+                }
+                principals = principalSet.toArray
+                        (new Principal[principalSet.size()]);
+                cachedPDs.clear();
+
+                if (debug != null) {
+                    debug.println("Subject mutated - clearing cache");
+                }
+            }
+
+            for (int i = 0; i < cLen; i++) {
+                ProtectionDomain pd = currentDomains[i];
+                ProtectionDomain subjectPd = cachedPDs.getValue(pd);
+
+                if (subjectPd == null) {
+                    if (pdAccess.getStaticPermissionsField(pd)) {
+                        // keep static ProtectionDomain objects static
+                        subjectPd = new ProtectionDomain(pd.getCodeSource(),
+                                                pd.getPermissions());
+                    } else {
+                        // XXX
+                        // we must first add the original permissions.
+                        // that way when we later add the new JAAS permissions,
+                        // any unresolved JAAS-related permissions will
+                        // automatically get resolved.
+
+                        // get the original perms
+                        Permissions perms = new Permissions();
+                        PermissionCollection coll = pd.getPermissions();
+                        java.util.Enumeration<Permission> e;
+                        if (coll != null) {
+                            synchronized (coll) {
+                                e = coll.elements();
+                                while (e.hasMoreElements()) {
+                                    Permission newPerm =
+                                        e.nextElement();
+                                    perms.add(newPerm);
+                                }
+                            }
+                        }
+
+                        // get perms from the policy
+                        final java.security.CodeSource finalCs = pd.getCodeSource();
+                        final Subject finalS = subject;
+                        PermissionCollection newPerms =
+                            java.security.AccessController.doPrivileged
+                            (new PrivilegedAction<PermissionCollection>() {
+                            @SuppressWarnings("deprecation")
+                            public PermissionCollection run() {
+                                return
+                                    javax.security.auth.Policy.getPolicy().getPermissions
+                                    (finalS, finalCs);
+                            }
+                        });
+
+                        // add the newly granted perms,
+                        // avoiding duplicates
+                        synchronized (newPerms) {
+                            e = newPerms.elements();
+                            while (e.hasMoreElements()) {
+                                Permission newPerm = e.nextElement();
+                                if (!perms.implies(newPerm)) {
+                                    perms.add(newPerm);
+                                    if (debug != null)
+                                        debug.println (
+                                            "Adding perm " + newPerm + "\n");
+                                }
+                            }
+                        }
+                        subjectPd = new ProtectionDomain
+                            (finalCs, perms, pd.getClassLoader(), principals);
+                    }
+                    if (allowCaching)
+                        cachedPDs.putValue(pd, subjectPd);
+                }
+                newDomains[i] = subjectPd;
+            }
+        }
+
+        if (debug != null) {
+            debug.println("updated current: ");
+            for (int i = 0; i < cLen; i++) {
+                debug.println("\tupdated[" + i + "] = " + newDomains[i]);
+            }
+        }
+
+        // now add on the assigned domains
+        if (aLen > 0) {
+            System.arraycopy(assignedDomains, 0, newDomains, cLen, aLen);
+        }
+
+        if (debug != null) {
+            if (newDomains == null || newDomains.length == 0) {
+                debug.println("returning null");
+            } else {
+                debug.println("combinedDomains: ");
+                for (int i = 0; i < newDomains.length; i++) {
+                    debug.println("newDomain " + i + ": " +
+                        newDomains[i].toString());
+                }
+            }
+        }
+
+        // return the new ProtectionDomains
+        if (newDomains == null || newDomains.length == 0) {
+            return null;
+        } else {
+            return newDomains;
+        }
+    }
+
+    private static ProtectionDomain[] optimize(ProtectionDomain[] domains) {
+        if (domains == null || domains.length == 0)
+            return null;
+
+        ProtectionDomain[] optimized = new ProtectionDomain[domains.length];
+        ProtectionDomain pd;
+        int num = 0;
+        for (int i = 0; i < domains.length; i++) {
+
+            // skip domains with AllPermission
+            // XXX
+            //
+            //  if (domains[i].implies(ALL_PERMISSION))
+            //  continue;
+
+            // skip System Domains
+            if ((pd = domains[i]) != null) {
+
+                // remove duplicates
+                boolean found = false;
+                for (int j = 0; j < num && !found; j++) {
+                    found = (optimized[j] == pd);
+                }
+                if (!found) {
+                    optimized[num++] = pd;
+                }
+            }
+        }
+
+        // resize the array if necessary
+        if (num > 0 && num < domains.length) {
+            ProtectionDomain[] downSize = new ProtectionDomain[num];
+            System.arraycopy(optimized, 0, downSize, 0, downSize.length);
+            optimized = downSize;
+        }
+
+        return ((num == 0 || optimized.length == 0) ? null : optimized);
+    }
+
+    private static boolean cachePolicy() {
+        String s = AccessController.doPrivileged
+            (new PrivilegedAction<String>() {
+            public String run() {
+                return Security.getProperty("cache.auth.policy");
+            }
+        });
+        if (s != null) {
+            return Boolean.parseBoolean(s);
+        }
+
+        // cache by default
+        return true;
+    }
+
+    private static void printInputDomains(ProtectionDomain[] currentDomains,
+                                ProtectionDomain[] assignedDomains) {
+        if (currentDomains == null || currentDomains.length == 0) {
+            debug.println("currentDomains null or 0 length");
+        } else {
+            for (int i = 0; currentDomains != null &&
+                        i < currentDomains.length; i++) {
+                if (currentDomains[i] == null) {
+                    debug.println("currentDomain " + i + ": SystemDomain");
+                } else {
+                    debug.println("currentDomain " + i + ": " +
+                                printDomain(currentDomains[i]));
+                }
+            }
+        }
+
+        if (assignedDomains == null || assignedDomains.length == 0) {
+            debug.println("assignedDomains null or 0 length");
+        } else {
+            debug.println("assignedDomains = ");
+            for (int i = 0; assignedDomains != null &&
+                        i < assignedDomains.length; i++) {
+                if (assignedDomains[i] == null) {
+                    debug.println("assignedDomain " + i + ": SystemDomain");
+                } else {
+                    debug.println("assignedDomain " + i + ": " +
+                                printDomain(assignedDomains[i]));
+                }
+            }
+        }
+    }
+
+    private static String printDomain(final ProtectionDomain pd) {
+        if (pd == null) {
+            return "null";
+        }
+        return AccessController.doPrivileged(new PrivilegedAction<String>() {
+            public String run() {
+                return pd.toString();
+            }
+        });
+    }
+
+    /**
+     * A HashMap that has weak keys and values.
+     *
+     * Key objects in this map are the "current" ProtectionDomain instances
+     * received via the combine method.  Each "current" PD is mapped to a
+     * new PD instance that holds both the contents of the "current" PD,
+     * as well as the principals from the Subject associated with this combiner.
+     *
+     * The newly created "principal-based" PD values must be stored as
+     * WeakReferences since they contain strong references to the
+     * corresponding key object (the "current" non-principal-based PD),
+     * which will prevent the key from being GC'd.  Specifically,
+     * a "principal-based" PD contains strong references to the CodeSource,
+     * signer certs, PermissionCollection and ClassLoader objects
+     * in the "current PD".
+     */
+    private static class WeakKeyValueMap<K,V> extends
+                                        WeakHashMap<K,WeakReference<V>> {
+
+        public V getValue(K key) {
+            WeakReference<V> wr = super.get(key);
+            if (wr != null) {
+                return wr.get();
+            }
+            return null;
+        }
+
+        public V putValue(K key, V value) {
+            WeakReference<V> wr = super.put(key, new WeakReference<V>(value));
+            if (wr != null) {
+                return wr.get();
+            }
+            return null;
+        }
+    }
+}

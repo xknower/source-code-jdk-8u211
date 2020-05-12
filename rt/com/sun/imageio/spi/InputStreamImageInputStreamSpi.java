@@ -1,82 +1,77 @@
-/*    */ package com.sun.imageio.spi;
-/*    */ 
-/*    */ import java.io.File;
-/*    */ import java.io.IOException;
-/*    */ import java.io.InputStream;
-/*    */ import java.util.Locale;
-/*    */ import javax.imageio.spi.ImageInputStreamSpi;
-/*    */ import javax.imageio.stream.FileCacheImageInputStream;
-/*    */ import javax.imageio.stream.ImageInputStream;
-/*    */ import javax.imageio.stream.MemoryCacheImageInputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class InputStreamImageInputStreamSpi
-/*    */   extends ImageInputStreamSpi
-/*    */ {
-/*    */   private static final String vendorName = "Oracle Corporation";
-/*    */   private static final String version = "1.0";
-/* 43 */   private static final Class inputClass = InputStream.class;
-/*    */   
-/*    */   public InputStreamImageInputStreamSpi() {
-/* 46 */     super("Oracle Corporation", "1.0", inputClass);
-/*    */   }
-/*    */   
-/*    */   public String getDescription(Locale paramLocale) {
-/* 50 */     return "Service provider that instantiates a FileCacheImageInputStream or MemoryCacheImageInputStream from an InputStream";
-/*    */   }
-/*    */   
-/*    */   public boolean canUseCacheFile() {
-/* 54 */     return true;
-/*    */   }
-/*    */   
-/*    */   public boolean needsCacheFile() {
-/* 58 */     return false;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public ImageInputStream createInputStreamInstance(Object paramObject, boolean paramBoolean, File paramFile) throws IOException {
-/* 65 */     if (paramObject instanceof InputStream) {
-/* 66 */       InputStream inputStream = (InputStream)paramObject;
-/*    */       
-/* 68 */       if (paramBoolean) {
-/* 69 */         return new FileCacheImageInputStream(inputStream, paramFile);
-/*    */       }
-/* 71 */       return new MemoryCacheImageInputStream(inputStream);
-/*    */     } 
-/*    */     
-/* 74 */     throw new IllegalArgumentException();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\spi\InputStreamImageInputStreamSpi.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.spi;
+
+import java.io.File;
+import java.io.InputStream;
+import java.io.IOException;
+import java.util.Locale;
+import javax.imageio.spi.ImageInputStreamSpi;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.FileCacheImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
+
+public class InputStreamImageInputStreamSpi extends ImageInputStreamSpi {
+
+    private static final String vendorName = "Oracle Corporation";
+
+    private static final String version = "1.0";
+
+    private static final Class inputClass = InputStream.class;
+
+    public InputStreamImageInputStreamSpi() {
+        super(vendorName, version, inputClass);
+    }
+
+    public String getDescription(Locale locale) {
+        return "Service provider that instantiates a FileCacheImageInputStream or MemoryCacheImageInputStream from an InputStream";
+    }
+
+    public boolean canUseCacheFile() {
+        return true;
+    }
+
+    public boolean needsCacheFile() {
+        return false;
+    }
+
+    public ImageInputStream createInputStreamInstance(Object input,
+                                                      boolean useCache,
+                                                      File cacheDir)
+        throws IOException {
+        if (input instanceof InputStream) {
+            InputStream is = (InputStream)input;
+
+            if (useCache) {
+                return new FileCacheImageInputStream(is, cacheDir);
+            } else {
+                return new MemoryCacheImageInputStream(is);
+            }
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+}

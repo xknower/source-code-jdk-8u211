@@ -1,12 +1,50 @@
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package java.util.function;
 
+/**
+ * Represents a function that accepts a double-valued argument and produces a
+ * result.  This is the {@code double}-consuming primitive specialization for
+ * {@link Function}.
+ *
+ * <p>This is a <a href="package-summary.html">functional interface</a>
+ * whose functional method is {@link #apply(double)}.
+ *
+ * @param <R> the type of the result of the function
+ *
+ * @see Function
+ * @since 1.8
+ */
 @FunctionalInterface
 public interface DoubleFunction<R> {
-  R apply(double paramDouble);
+
+    /**
+     * Applies this function to the given argument.
+     *
+     * @param value the function argument
+     * @return the function result
+     */
+    R apply(double value);
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\function\DoubleFunction.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

@@ -1,57 +1,51 @@
-/*    */ package org.omg.CORBA.DynAnyPackage;
-/*    */ 
-/*    */ import org.omg.CORBA.UserException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class Invalid
-/*    */   extends UserException
-/*    */ {
-/*    */   public Invalid() {}
-/*    */   
-/*    */   public Invalid(String paramString) {
-/* 49 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\DynAnyPackage\Invalid.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package org.omg.CORBA.DynAnyPackage;
+
+/**
+ * Invalid is thrown by dynamic any operations when a bad
+ * <code>DynAny</code> or <code>Any</code> is passed as a parameter.
+ */
+public final class Invalid
+    extends org.omg.CORBA.UserException {
+
+    /**
+     * Constructs an <code>Invalid</code> object.
+     */
+    public Invalid() {
+        super();
+    }
+
+    /**
+     * Constructs an <code>Invalid</code> object.
+     * @param reason a <code>String</code> giving more information
+     * regarding the bad parameter passed to a dynamic any operation.
+     */
+    public Invalid(String reason) {
+        super(reason);
+    }
+}

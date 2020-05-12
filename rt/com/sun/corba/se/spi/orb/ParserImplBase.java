@@ -1,144 +1,136 @@
-/*     */ package com.sun.corba.se.spi.orb;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import java.util.Properties;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class ParserImplBase
-/*     */ {
-/*     */   private ORBUtilSystemException wrapper;
-/*     */   
-/*     */   protected void complete() {}
-/*     */   
-/*     */   public ParserImplBase() {
-/*  65 */     this.wrapper = ORBUtilSystemException.get("orb.lifecycle");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void init(DataCollector paramDataCollector) {
-/*  71 */     PropertyParser propertyParser = makeParser();
-/*  72 */     paramDataCollector.setParser(propertyParser);
-/*  73 */     Properties properties = paramDataCollector.getProperties();
-/*  74 */     Map map = propertyParser.parse(properties);
-/*  75 */     setFields(map);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Field getAnyField(String paramString) {
-/*  80 */     Field field = null;
-/*     */     
-/*     */     try {
-/*  83 */       Class<?> clazz = getClass();
-/*  84 */       field = clazz.getDeclaredField(paramString);
-/*  85 */       while (field == null) {
-/*  86 */         clazz = clazz.getSuperclass();
-/*  87 */         if (clazz == null) {
-/*     */           break;
-/*     */         }
-/*  90 */         field = clazz.getDeclaredField(paramString);
-/*     */       } 
-/*  92 */     } catch (Exception exception) {
-/*  93 */       throw this.wrapper.fieldNotFound(exception, paramString);
-/*     */     } 
-/*     */     
-/*  96 */     if (field == null) {
-/*  97 */       throw this.wrapper.fieldNotFound(paramString);
-/*     */     }
-/*  99 */     return field;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void setFields(Map paramMap) {
-/* 104 */     Set set = paramMap.entrySet();
-/* 105 */     Iterator<Map.Entry> iterator = set.iterator();
-/* 106 */     while (iterator.hasNext()) {
-/* 107 */       Map.Entry entry = iterator.next();
-/* 108 */       final String name = (String)entry.getKey();
-/* 109 */       final Object value = entry.getValue();
-/*     */       
-/*     */       try {
-/* 112 */         AccessController.doPrivileged(new PrivilegedExceptionAction()
-/*     */             {
-/*     */               
-/*     */               public Object run() throws IllegalAccessException, IllegalArgumentException
-/*     */               {
-/* 117 */                 Field field = ParserImplBase.this.getAnyField(name);
-/* 118 */                 field.setAccessible(true);
-/* 119 */                 field.set(ParserImplBase.this, value);
-/* 120 */                 return null;
-/*     */               }
-/*     */             });
-/*     */       }
-/* 124 */       catch (PrivilegedActionException privilegedActionException) {
-/*     */ 
-/*     */         
-/* 127 */         throw this.wrapper.errorSettingField(privilegedActionException.getCause(), str, object
-/* 128 */             .toString());
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 134 */     complete();
-/*     */   }
-/*     */   
-/*     */   protected abstract PropertyParser makeParser();
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\orb\ParserImplBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.spi.orb ;
+
+import java.util.Map ;
+import java.util.Set ;
+import java.util.Iterator ;
+import java.util.Properties ;
+
+import java.security.PrivilegedExceptionAction ;
+import java.security.PrivilegedActionException ;
+import java.security.AccessController ;
+
+import java.lang.reflect.Field ;
+
+import org.omg.CORBA.INTERNAL ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+import com.sun.corba.se.impl.orbutil.ObjectUtility ;
+
+// XXX This could probably be further extended by using more reflection and
+// a dynamic proxy that satisfies the interfaces that are inherited by the
+// more derived class.  Do we want to go that far?
+public abstract class ParserImplBase {
+    private ORBUtilSystemException wrapper ;
+
+    protected abstract PropertyParser makeParser() ;
+
+    /** Override this method if there is some needed initialization
+    * that takes place after argument parsing.  It is always called
+    * at the end of setFields.
+    */
+    protected void complete()
+    {
+    }
+
+    public ParserImplBase()
+    {
+        // Do nothing in this case: no parsing takes place
+        wrapper = ORBUtilSystemException.get(
+            CORBALogDomains.ORB_LIFECYCLE ) ;
+    }
+
+    public void init( DataCollector coll )
+    {
+        PropertyParser parser = makeParser() ;
+        coll.setParser( parser ) ;
+        Properties props = coll.getProperties() ;
+        Map map = parser.parse( props ) ;
+        setFields( map ) ;
+    }
+
+    private Field getAnyField( String name )
+    {
+        Field result = null ;
+
+        try {
+            Class cls = this.getClass() ;
+            result = cls.getDeclaredField( name ) ;
+            while (result == null) {
+                cls = cls.getSuperclass() ;
+                if (cls == null)
+                    break ;
+
+                result = cls.getDeclaredField( name ) ;
+            }
+        } catch (Exception exc) {
+            throw wrapper.fieldNotFound( exc, name ) ;
+        }
+
+        if (result == null)
+            throw wrapper.fieldNotFound( name ) ;
+
+        return result ;
+    }
+
+    protected void setFields( Map map )
+    {
+        Set entries = map.entrySet() ;
+        Iterator iter = entries.iterator() ;
+        while (iter.hasNext()) {
+            java.util.Map.Entry entry = (java.util.Map.Entry)(iter.next()) ;
+            final String name = (String)(entry.getKey()) ;
+            final Object value = entry.getValue() ;
+
+            try {
+                AccessController.doPrivileged(
+                    new PrivilegedExceptionAction() {
+                        public Object run() throws IllegalAccessException,
+                            IllegalArgumentException
+                        {
+                            Field field = getAnyField( name ) ;
+                            field.setAccessible( true ) ;
+                            field.set( ParserImplBase.this, value ) ;
+                            return null ;
+                        }
+                    }
+                ) ;
+            } catch (PrivilegedActionException exc) {
+                // Since exc wraps the actual exception, use exc.getCause()
+                // instead of exc.
+                throw wrapper.errorSettingField( exc.getCause(), name,
+                    value.toString() ) ;
+            }
+        }
+
+        // Make sure that any extra initialization takes place after all the
+        // fields are set from the map.
+        complete() ;
+    }
+}

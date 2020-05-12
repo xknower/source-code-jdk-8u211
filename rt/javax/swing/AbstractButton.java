@@ -1,3114 +1,3108 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Graphics;
-/*      */ import java.awt.Image;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.ItemSelectable;
-/*      */ import java.awt.LayoutManager;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.awt.event.ActionEvent;
-/*      */ import java.awt.event.ActionListener;
-/*      */ import java.awt.event.ItemEvent;
-/*      */ import java.awt.event.ItemListener;
-/*      */ import java.awt.geom.Rectangle2D;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.beans.Transient;
-/*      */ import java.io.Serializable;
-/*      */ import java.text.BreakIterator;
-/*      */ import java.util.Enumeration;
-/*      */ import javax.accessibility.Accessible;
-/*      */ import javax.accessibility.AccessibleAction;
-/*      */ import javax.accessibility.AccessibleContext;
-/*      */ import javax.accessibility.AccessibleExtendedComponent;
-/*      */ import javax.accessibility.AccessibleIcon;
-/*      */ import javax.accessibility.AccessibleKeyBinding;
-/*      */ import javax.accessibility.AccessibleRelation;
-/*      */ import javax.accessibility.AccessibleRelationSet;
-/*      */ import javax.accessibility.AccessibleState;
-/*      */ import javax.accessibility.AccessibleStateSet;
-/*      */ import javax.accessibility.AccessibleText;
-/*      */ import javax.accessibility.AccessibleValue;
-/*      */ import javax.swing.event.ChangeEvent;
-/*      */ import javax.swing.event.ChangeListener;
-/*      */ import javax.swing.plaf.ButtonUI;
-/*      */ import javax.swing.text.AttributeSet;
-/*      */ import javax.swing.text.BadLocationException;
-/*      */ import javax.swing.text.Document;
-/*      */ import javax.swing.text.Element;
-/*      */ import javax.swing.text.Position;
-/*      */ import javax.swing.text.StyledDocument;
-/*      */ import javax.swing.text.View;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class AbstractButton
-/*      */   extends JComponent
-/*      */   implements ItemSelectable, SwingConstants
-/*      */ {
-/*      */   public static final String MODEL_CHANGED_PROPERTY = "model";
-/*      */   public static final String TEXT_CHANGED_PROPERTY = "text";
-/*      */   public static final String MNEMONIC_CHANGED_PROPERTY = "mnemonic";
-/*      */   public static final String MARGIN_CHANGED_PROPERTY = "margin";
-/*      */   public static final String VERTICAL_ALIGNMENT_CHANGED_PROPERTY = "verticalAlignment";
-/*      */   public static final String HORIZONTAL_ALIGNMENT_CHANGED_PROPERTY = "horizontalAlignment";
-/*      */   public static final String VERTICAL_TEXT_POSITION_CHANGED_PROPERTY = "verticalTextPosition";
-/*      */   public static final String HORIZONTAL_TEXT_POSITION_CHANGED_PROPERTY = "horizontalTextPosition";
-/*      */   public static final String BORDER_PAINTED_CHANGED_PROPERTY = "borderPainted";
-/*      */   public static final String FOCUS_PAINTED_CHANGED_PROPERTY = "focusPainted";
-/*      */   public static final String ROLLOVER_ENABLED_CHANGED_PROPERTY = "rolloverEnabled";
-/*      */   public static final String CONTENT_AREA_FILLED_CHANGED_PROPERTY = "contentAreaFilled";
-/*      */   public static final String ICON_CHANGED_PROPERTY = "icon";
-/*      */   public static final String PRESSED_ICON_CHANGED_PROPERTY = "pressedIcon";
-/*      */   public static final String SELECTED_ICON_CHANGED_PROPERTY = "selectedIcon";
-/*      */   public static final String ROLLOVER_ICON_CHANGED_PROPERTY = "rolloverIcon";
-/*      */   public static final String ROLLOVER_SELECTED_ICON_CHANGED_PROPERTY = "rolloverSelectedIcon";
-/*      */   public static final String DISABLED_ICON_CHANGED_PROPERTY = "disabledIcon";
-/*      */   public static final String DISABLED_SELECTED_ICON_CHANGED_PROPERTY = "disabledSelectedIcon";
-/*  161 */   protected ButtonModel model = null;
-/*      */   
-/*  163 */   private String text = "";
-/*  164 */   private Insets margin = null;
-/*  165 */   private Insets defaultMargin = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*  169 */   private Icon defaultIcon = null;
-/*  170 */   private Icon pressedIcon = null;
-/*  171 */   private Icon disabledIcon = null;
-/*      */   
-/*  173 */   private Icon selectedIcon = null;
-/*  174 */   private Icon disabledSelectedIcon = null;
-/*      */   
-/*  176 */   private Icon rolloverIcon = null;
-/*  177 */   private Icon rolloverSelectedIcon = null;
-/*      */   
-/*      */   private boolean paintBorder = true;
-/*      */   
-/*      */   private boolean paintFocus = true;
-/*      */   
-/*      */   private boolean rolloverEnabled = false;
-/*      */   
-/*      */   private boolean contentAreaFilled = true;
-/*  186 */   private int verticalAlignment = 0;
-/*  187 */   private int horizontalAlignment = 0;
-/*      */   
-/*  189 */   private int verticalTextPosition = 0;
-/*  190 */   private int horizontalTextPosition = 11;
-/*      */   
-/*  192 */   private int iconTextGap = 4;
-/*      */   
-/*      */   private int mnemonic;
-/*  195 */   private int mnemonicIndex = -1;
-/*      */   
-/*  197 */   private long multiClickThreshhold = 0L;
-/*      */ 
-/*      */   
-/*      */   private boolean borderPaintedSet = false;
-/*      */ 
-/*      */   
-/*      */   private boolean rolloverEnabledSet = false;
-/*      */ 
-/*      */   
-/*      */   private boolean iconTextGapSet = false;
-/*      */ 
-/*      */   
-/*      */   private boolean contentAreaFilledSet = false;
-/*      */ 
-/*      */   
-/*      */   private boolean setLayout = false;
-/*      */ 
-/*      */   
-/*      */   boolean defaultCapable = true;
-/*      */   
-/*      */   private Handler handler;
-/*      */   
-/*  219 */   protected ChangeListener changeListener = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*  223 */   protected ActionListener actionListener = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*  227 */   protected ItemListener itemListener = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected transient ChangeEvent changeEvent;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean hideActionText = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Action action;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private PropertyChangeListener actionPropertyChangeListener;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setHideActionText(boolean paramBoolean) {
-/*  259 */     if (paramBoolean != this.hideActionText) {
-/*  260 */       this.hideActionText = paramBoolean;
-/*  261 */       if (getAction() != null) {
-/*  262 */         setTextFromAction(getAction(), false);
-/*      */       }
-/*  264 */       firePropertyChange("hideActionText", !paramBoolean, paramBoolean);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getHideActionText() {
-/*  281 */     return this.hideActionText;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getText() {
-/*  290 */     return this.text;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setText(String paramString) {
-/*  304 */     String str = this.text;
-/*  305 */     this.text = paramString;
-/*  306 */     firePropertyChange("text", str, paramString);
-/*  307 */     updateDisplayedMnemonicIndex(paramString, getMnemonic());
-/*      */     
-/*  309 */     if (this.accessibleContext != null) {
-/*  310 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", str, paramString);
-/*      */     }
-/*      */ 
-/*      */     
-/*  314 */     if (paramString == null || str == null || !paramString.equals(str)) {
-/*  315 */       revalidate();
-/*  316 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSelected() {
-/*  327 */     return this.model.isSelected();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelected(boolean paramBoolean) {
-/*  338 */     boolean bool = isSelected();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  348 */     this.model.setSelected(paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void doClick() {
-/*  356 */     doClick(68);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void doClick(int paramInt) {
-/*  368 */     Dimension dimension = getSize();
-/*  369 */     this.model.setArmed(true);
-/*  370 */     this.model.setPressed(true);
-/*  371 */     paintImmediately(new Rectangle(0, 0, dimension.width, dimension.height));
-/*      */     try {
-/*  373 */       Thread.currentThread(); Thread.sleep(paramInt);
-/*  374 */     } catch (InterruptedException interruptedException) {}
-/*      */     
-/*  376 */     this.model.setPressed(false);
-/*  377 */     this.model.setArmed(false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMargin(Insets paramInsets) {
-/*  399 */     if (paramInsets instanceof javax.swing.plaf.UIResource) {
-/*  400 */       this.defaultMargin = paramInsets;
-/*  401 */     } else if (this.margin instanceof javax.swing.plaf.UIResource) {
-/*  402 */       this.defaultMargin = this.margin;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  407 */     if (paramInsets == null && this.defaultMargin != null) {
-/*  408 */       paramInsets = this.defaultMargin;
-/*      */     }
-/*      */     
-/*  411 */     Insets insets = this.margin;
-/*  412 */     this.margin = paramInsets;
-/*  413 */     firePropertyChange("margin", insets, paramInsets);
-/*  414 */     if (insets == null || !insets.equals(paramInsets)) {
-/*  415 */       revalidate();
-/*  416 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Insets getMargin() {
-/*  429 */     return (this.margin == null) ? null : (Insets)this.margin.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getIcon() {
-/*  438 */     return this.defaultIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIcon(Icon paramIcon) {
-/*  455 */     Icon icon = this.defaultIcon;
-/*  456 */     this.defaultIcon = paramIcon;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  463 */     if (paramIcon != icon && this.disabledIcon instanceof javax.swing.plaf.UIResource) {
-/*  464 */       this.disabledIcon = null;
-/*      */     }
-/*      */     
-/*  467 */     firePropertyChange("icon", icon, paramIcon);
-/*  468 */     if (this.accessibleContext != null) {
-/*  469 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  473 */     if (paramIcon != icon) {
-/*  474 */       if (paramIcon == null || icon == null || paramIcon
-/*  475 */         .getIconWidth() != icon.getIconWidth() || paramIcon
-/*  476 */         .getIconHeight() != icon.getIconHeight()) {
-/*  477 */         revalidate();
-/*      */       }
-/*  479 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getPressedIcon() {
-/*  489 */     return this.pressedIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPressedIcon(Icon paramIcon) {
-/*  502 */     Icon icon = this.pressedIcon;
-/*  503 */     this.pressedIcon = paramIcon;
-/*  504 */     firePropertyChange("pressedIcon", icon, paramIcon);
-/*  505 */     if (this.accessibleContext != null) {
-/*  506 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  510 */     if (paramIcon != icon && 
-/*  511 */       getModel().isPressed()) {
-/*  512 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getSelectedIcon() {
-/*  523 */     return this.selectedIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectedIcon(Icon paramIcon) {
-/*  536 */     Icon icon = this.selectedIcon;
-/*  537 */     this.selectedIcon = paramIcon;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  544 */     if (paramIcon != icon && this.disabledSelectedIcon instanceof javax.swing.plaf.UIResource)
-/*      */     {
-/*      */       
-/*  547 */       this.disabledSelectedIcon = null;
-/*      */     }
-/*      */     
-/*  550 */     firePropertyChange("selectedIcon", icon, paramIcon);
-/*  551 */     if (this.accessibleContext != null) {
-/*  552 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  556 */     if (paramIcon != icon && 
-/*  557 */       isSelected()) {
-/*  558 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getRolloverIcon() {
-/*  569 */     return this.rolloverIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRolloverIcon(Icon paramIcon) {
-/*  582 */     Icon icon = this.rolloverIcon;
-/*  583 */     this.rolloverIcon = paramIcon;
-/*  584 */     firePropertyChange("rolloverIcon", icon, paramIcon);
-/*  585 */     if (this.accessibleContext != null) {
-/*  586 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  590 */     setRolloverEnabled(true);
-/*  591 */     if (paramIcon != icon)
-/*      */     {
-/*      */       
-/*  594 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getRolloverSelectedIcon() {
-/*  605 */     return this.rolloverSelectedIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRolloverSelectedIcon(Icon paramIcon) {
-/*  619 */     Icon icon = this.rolloverSelectedIcon;
-/*  620 */     this.rolloverSelectedIcon = paramIcon;
-/*  621 */     firePropertyChange("rolloverSelectedIcon", icon, paramIcon);
-/*  622 */     if (this.accessibleContext != null) {
-/*  623 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  627 */     setRolloverEnabled(true);
-/*  628 */     if (paramIcon != icon)
-/*      */     {
-/*      */       
-/*  631 */       if (isSelected()) {
-/*  632 */         repaint();
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Transient
-/*      */   public Icon getDisabledIcon() {
-/*  652 */     if (this.disabledIcon == null) {
-/*  653 */       this.disabledIcon = UIManager.getLookAndFeel().getDisabledIcon(this, getIcon());
-/*  654 */       if (this.disabledIcon != null) {
-/*  655 */         firePropertyChange("disabledIcon", (Object)null, this.disabledIcon);
-/*      */       }
-/*      */     } 
-/*  658 */     return this.disabledIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDisabledIcon(Icon paramIcon) {
-/*  671 */     Icon icon = this.disabledIcon;
-/*  672 */     this.disabledIcon = paramIcon;
-/*  673 */     firePropertyChange("disabledIcon", icon, paramIcon);
-/*  674 */     if (this.accessibleContext != null) {
-/*  675 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  679 */     if (paramIcon != icon && 
-/*  680 */       !isEnabled()) {
-/*  681 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getDisabledSelectedIcon() {
-/*  702 */     if (this.disabledSelectedIcon == null) {
-/*  703 */       if (this.selectedIcon != null) {
-/*  704 */         this
-/*  705 */           .disabledSelectedIcon = UIManager.getLookAndFeel().getDisabledSelectedIcon(this, getSelectedIcon());
-/*      */       } else {
-/*  707 */         return getDisabledIcon();
-/*      */       } 
-/*      */     }
-/*  710 */     return this.disabledSelectedIcon;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDisabledSelectedIcon(Icon paramIcon) {
-/*  724 */     Icon icon = this.disabledSelectedIcon;
-/*  725 */     this.disabledSelectedIcon = paramIcon;
-/*  726 */     firePropertyChange("disabledSelectedIcon", icon, paramIcon);
-/*  727 */     if (this.accessibleContext != null) {
-/*  728 */       this.accessibleContext.firePropertyChange("AccessibleVisibleData", icon, paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/*  732 */     if (paramIcon != icon) {
-/*  733 */       if (paramIcon == null || icon == null || paramIcon
-/*  734 */         .getIconWidth() != icon.getIconWidth() || paramIcon
-/*  735 */         .getIconHeight() != icon.getIconHeight()) {
-/*  736 */         revalidate();
-/*      */       }
-/*  738 */       if (!isEnabled() && isSelected()) {
-/*  739 */         repaint();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getVerticalAlignment() {
-/*  756 */     return this.verticalAlignment;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setVerticalAlignment(int paramInt) {
-/*  778 */     if (paramInt == this.verticalAlignment)
-/*  779 */       return;  int i = this.verticalAlignment;
-/*  780 */     this.verticalAlignment = checkVerticalKey(paramInt, "verticalAlignment");
-/*  781 */     firePropertyChange("verticalAlignment", i, this.verticalAlignment); repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getHorizontalAlignment() {
-/*  800 */     return this.horizontalAlignment;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setHorizontalAlignment(int paramInt) {
-/*  829 */     if (paramInt == this.horizontalAlignment)
-/*  830 */       return;  int i = this.horizontalAlignment;
-/*  831 */     this.horizontalAlignment = checkHorizontalKey(paramInt, "horizontalAlignment");
-/*      */     
-/*  833 */     firePropertyChange("horizontalAlignment", i, this.horizontalAlignment);
-/*      */     
-/*  835 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getVerticalTextPosition() {
-/*  850 */     return this.verticalTextPosition;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setVerticalTextPosition(int paramInt) {
-/*  870 */     if (paramInt == this.verticalTextPosition)
-/*  871 */       return;  int i = this.verticalTextPosition;
-/*  872 */     this.verticalTextPosition = checkVerticalKey(paramInt, "verticalTextPosition");
-/*  873 */     firePropertyChange("verticalTextPosition", i, this.verticalTextPosition);
-/*  874 */     revalidate();
-/*  875 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getHorizontalTextPosition() {
-/*  891 */     return this.horizontalTextPosition;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setHorizontalTextPosition(int paramInt) {
-/*  917 */     if (paramInt == this.horizontalTextPosition)
-/*  918 */       return;  int i = this.horizontalTextPosition;
-/*  919 */     this.horizontalTextPosition = checkHorizontalKey(paramInt, "horizontalTextPosition");
-/*      */     
-/*  921 */     firePropertyChange("horizontalTextPosition", i, this.horizontalTextPosition);
-/*      */ 
-/*      */     
-/*  924 */     revalidate();
-/*  925 */     repaint();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getIconTextGap() {
-/*  938 */     return this.iconTextGap;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setIconTextGap(int paramInt) {
-/*  958 */     int i = this.iconTextGap;
-/*  959 */     this.iconTextGap = paramInt;
-/*  960 */     this.iconTextGapSet = true;
-/*  961 */     firePropertyChange("iconTextGap", i, paramInt);
-/*  962 */     if (paramInt != i) {
-/*  963 */       revalidate();
-/*  964 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int checkHorizontalKey(int paramInt, String paramString) {
-/*  991 */     if (paramInt == 2 || paramInt == 0 || paramInt == 4 || paramInt == 10 || paramInt == 11)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */       
-/*  996 */       return paramInt;
-/*      */     }
-/*  998 */     throw new IllegalArgumentException(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int checkVerticalKey(int paramInt, String paramString) {
-/* 1020 */     if (paramInt == 1 || paramInt == 0 || paramInt == 3) {
-/* 1021 */       return paramInt;
-/*      */     }
-/* 1023 */     throw new IllegalArgumentException(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNotify() {
-/* 1033 */     super.removeNotify();
-/* 1034 */     if (isRolloverEnabled()) {
-/* 1035 */       getModel().setRollover(false);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setActionCommand(String paramString) {
-/* 1044 */     getModel().setActionCommand(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getActionCommand() {
-/* 1052 */     String str = getModel().getActionCommand();
-/* 1053 */     if (str == null) {
-/* 1054 */       str = getText();
-/*      */     }
-/* 1056 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAction(Action paramAction) {
-/* 1101 */     Action action = getAction();
-/* 1102 */     if (this.action == null || !this.action.equals(paramAction)) {
-/* 1103 */       this.action = paramAction;
-/* 1104 */       if (action != null) {
-/* 1105 */         removeActionListener(action);
-/* 1106 */         action.removePropertyChangeListener(this.actionPropertyChangeListener);
-/* 1107 */         this.actionPropertyChangeListener = null;
-/*      */       } 
-/* 1109 */       configurePropertiesFromAction(this.action);
-/* 1110 */       if (this.action != null) {
-/*      */         
-/* 1112 */         if (!isListener(ActionListener.class, this.action)) {
-/* 1113 */           addActionListener(this.action);
-/*      */         }
-/*      */         
-/* 1116 */         this.actionPropertyChangeListener = createActionPropertyChangeListener(this.action);
-/* 1117 */         this.action.addPropertyChangeListener(this.actionPropertyChangeListener);
-/*      */       } 
-/* 1119 */       firePropertyChange("action", action, this.action);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private boolean isListener(Class paramClass, ActionListener paramActionListener) {
-/* 1124 */     boolean bool = false;
-/* 1125 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/* 1126 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 1127 */       if (arrayOfObject[i] == paramClass && arrayOfObject[i + 1] == paramActionListener) {
-/* 1128 */         bool = true;
-/*      */       }
-/*      */     } 
-/* 1131 */     return bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Action getAction() {
-/* 1146 */     return this.action;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void configurePropertiesFromAction(Action paramAction) {
-/* 1162 */     setMnemonicFromAction(paramAction);
-/* 1163 */     setTextFromAction(paramAction, false);
-/* 1164 */     AbstractAction.setToolTipTextFromAction(this, paramAction);
-/* 1165 */     setIconFromAction(paramAction);
-/* 1166 */     setActionCommandFromAction(paramAction);
-/* 1167 */     AbstractAction.setEnabledFromAction(this, paramAction);
-/* 1168 */     if (AbstractAction.hasSelectedKey(paramAction) && 
-/* 1169 */       shouldUpdateSelectedStateFromAction()) {
-/* 1170 */       setSelectedFromAction(paramAction);
-/*      */     }
-/* 1172 */     setDisplayedMnemonicIndexFromAction(paramAction, false);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void clientPropertyChanged(Object paramObject1, Object paramObject2, Object paramObject3) {
-/* 1177 */     if (paramObject1 == "hideActionText") {
-/*      */       
-/* 1179 */       boolean bool = (paramObject3 instanceof Boolean) ? ((Boolean)paramObject3).booleanValue() : false;
-/* 1180 */       if (getHideActionText() != bool) {
-/* 1181 */         setHideActionText(bool);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean shouldUpdateSelectedStateFromAction() {
-/* 1192 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void actionPropertyChanged(Action paramAction, String paramString) {
-/* 1215 */     if (paramString == "Name") {
-/* 1216 */       setTextFromAction(paramAction, true);
-/* 1217 */     } else if (paramString == "enabled") {
-/* 1218 */       AbstractAction.setEnabledFromAction(this, paramAction);
-/* 1219 */     } else if (paramString == "ShortDescription") {
-/* 1220 */       AbstractAction.setToolTipTextFromAction(this, paramAction);
-/* 1221 */     } else if (paramString == "SmallIcon") {
-/* 1222 */       smallIconChanged(paramAction);
-/* 1223 */     } else if (paramString == "MnemonicKey") {
-/* 1224 */       setMnemonicFromAction(paramAction);
-/* 1225 */     } else if (paramString == "ActionCommandKey") {
-/* 1226 */       setActionCommandFromAction(paramAction);
-/* 1227 */     } else if (paramString == "SwingSelectedKey" && 
-/* 1228 */       AbstractAction.hasSelectedKey(paramAction) && 
-/* 1229 */       shouldUpdateSelectedStateFromAction()) {
-/* 1230 */       setSelectedFromAction(paramAction);
-/* 1231 */     } else if (paramString == "SwingDisplayedMnemonicIndexKey") {
-/* 1232 */       setDisplayedMnemonicIndexFromAction(paramAction, true);
-/* 1233 */     } else if (paramString == "SwingLargeIconKey") {
-/* 1234 */       largeIconChanged(paramAction);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void setDisplayedMnemonicIndexFromAction(Action paramAction, boolean paramBoolean) {
-/* 1241 */     Integer integer = (paramAction == null) ? null : (Integer)paramAction.getValue("SwingDisplayedMnemonicIndexKey");
-/* 1242 */     if (paramBoolean || integer != null) {
-/*      */       int i;
-/* 1244 */       if (integer == null) {
-/* 1245 */         i = -1;
-/*      */       } else {
-/* 1247 */         i = integer.intValue();
-/* 1248 */         String str = getText();
-/* 1249 */         if (str == null || i >= str.length()) {
-/* 1250 */           i = -1;
-/*      */         }
-/*      */       } 
-/* 1253 */       setDisplayedMnemonicIndex(i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void setMnemonicFromAction(Action paramAction) {
-/* 1259 */     Integer integer = (paramAction == null) ? null : (Integer)paramAction.getValue("MnemonicKey");
-/* 1260 */     setMnemonic((integer == null) ? 0 : integer.intValue());
-/*      */   }
-/*      */   
-/*      */   private void setTextFromAction(Action paramAction, boolean paramBoolean) {
-/* 1264 */     boolean bool = getHideActionText();
-/* 1265 */     if (!paramBoolean) {
-/* 1266 */       setText((paramAction != null && !bool) ? (String)paramAction
-/* 1267 */           .getValue("Name") : null);
-/*      */     }
-/* 1269 */     else if (!bool) {
-/* 1270 */       setText((String)paramAction.getValue("Name"));
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   void setIconFromAction(Action paramAction) {
-/* 1275 */     Icon icon = null;
-/* 1276 */     if (paramAction != null) {
-/* 1277 */       icon = (Icon)paramAction.getValue("SwingLargeIconKey");
-/* 1278 */       if (icon == null) {
-/* 1279 */         icon = (Icon)paramAction.getValue("SmallIcon");
-/*      */       }
-/*      */     } 
-/* 1282 */     setIcon(icon);
-/*      */   }
-/*      */   
-/*      */   void smallIconChanged(Action paramAction) {
-/* 1286 */     if (paramAction.getValue("SwingLargeIconKey") == null) {
-/* 1287 */       setIconFromAction(paramAction);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   void largeIconChanged(Action paramAction) {
-/* 1292 */     setIconFromAction(paramAction);
-/*      */   }
-/*      */   
-/*      */   private void setActionCommandFromAction(Action paramAction) {
-/* 1296 */     setActionCommand((paramAction != null) ? (String)paramAction
-/* 1297 */         .getValue("ActionCommandKey") : null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void setSelectedFromAction(Action paramAction) {
-/* 1309 */     boolean bool = false;
-/* 1310 */     if (paramAction != null) {
-/* 1311 */       bool = AbstractAction.isSelected(paramAction);
-/*      */     }
-/* 1313 */     if (bool != isSelected()) {
-/*      */ 
-/*      */       
-/* 1316 */       setSelected(bool);
-/*      */       
-/* 1318 */       if (!bool && isSelected() && 
-/* 1319 */         getModel() instanceof DefaultButtonModel) {
-/* 1320 */         ButtonGroup buttonGroup = ((DefaultButtonModel)getModel()).getGroup();
-/* 1321 */         if (buttonGroup != null) {
-/* 1322 */           buttonGroup.clearSelection();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected PropertyChangeListener createActionPropertyChangeListener(Action paramAction) {
-/* 1344 */     return createActionPropertyChangeListener0(paramAction);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   PropertyChangeListener createActionPropertyChangeListener0(Action paramAction) {
-/* 1349 */     return new ButtonActionPropertyChangeListener(this, paramAction);
-/*      */   }
-/*      */   
-/*      */   private static class ButtonActionPropertyChangeListener
-/*      */     extends ActionPropertyChangeListener<AbstractButton>
-/*      */   {
-/*      */     ButtonActionPropertyChangeListener(AbstractButton param1AbstractButton, Action param1Action) {
-/* 1356 */       super(param1AbstractButton, param1Action);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     protected void actionPropertyChanged(AbstractButton param1AbstractButton, Action param1Action, PropertyChangeEvent param1PropertyChangeEvent) {
-/* 1361 */       if (AbstractAction.shouldReconfigure(param1PropertyChangeEvent)) {
-/* 1362 */         param1AbstractButton.configurePropertiesFromAction(param1Action);
-/*      */       } else {
-/* 1364 */         param1AbstractButton.actionPropertyChanged(param1Action, param1PropertyChangeEvent.getPropertyName());
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isBorderPainted() {
-/* 1376 */     return this.paintBorder;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBorderPainted(boolean paramBoolean) {
-/* 1398 */     boolean bool = this.paintBorder;
-/* 1399 */     this.paintBorder = paramBoolean;
-/* 1400 */     this.borderPaintedSet = true;
-/* 1401 */     firePropertyChange("borderPainted", bool, this.paintBorder);
-/* 1402 */     if (paramBoolean != bool) {
-/* 1403 */       revalidate();
-/* 1404 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void paintBorder(Graphics paramGraphics) {
-/* 1417 */     if (isBorderPainted()) {
-/* 1418 */       super.paintBorder(paramGraphics);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isFocusPainted() {
-/* 1429 */     return this.paintFocus;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFocusPainted(boolean paramBoolean) {
-/* 1448 */     boolean bool = this.paintFocus;
-/* 1449 */     this.paintFocus = paramBoolean;
-/* 1450 */     firePropertyChange("focusPainted", bool, this.paintFocus);
-/* 1451 */     if (paramBoolean != bool && isFocusOwner()) {
-/* 1452 */       revalidate();
-/* 1453 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isContentAreaFilled() {
-/* 1464 */     return this.contentAreaFilled;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setContentAreaFilled(boolean paramBoolean) {
-/* 1492 */     boolean bool = this.contentAreaFilled;
-/* 1493 */     this.contentAreaFilled = paramBoolean;
-/* 1494 */     this.contentAreaFilledSet = true;
-/* 1495 */     firePropertyChange("contentAreaFilled", bool, this.contentAreaFilled);
-/* 1496 */     if (paramBoolean != bool) {
-/* 1497 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isRolloverEnabled() {
-/* 1508 */     return this.rolloverEnabled;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRolloverEnabled(boolean paramBoolean) {
-/* 1527 */     boolean bool = this.rolloverEnabled;
-/* 1528 */     this.rolloverEnabled = paramBoolean;
-/* 1529 */     this.rolloverEnabledSet = true;
-/* 1530 */     firePropertyChange("rolloverEnabled", bool, this.rolloverEnabled);
-/* 1531 */     if (paramBoolean != bool) {
-/* 1532 */       repaint();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMnemonic() {
-/* 1541 */     return this.mnemonic;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMnemonic(int paramInt) {
-/* 1575 */     int i = getMnemonic();
-/* 1576 */     this.model.setMnemonic(paramInt);
-/* 1577 */     updateMnemonicProperties();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMnemonic(char paramChar) {
-/* 1594 */     char c = paramChar;
-/* 1595 */     if (c >= 'a' && c <= 'z')
-/* 1596 */       c -= ' '; 
-/* 1597 */     setMnemonic(c);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDisplayedMnemonicIndex(int paramInt) throws IllegalArgumentException {
-/* 1630 */     int i = this.mnemonicIndex;
-/* 1631 */     if (paramInt == -1) {
-/* 1632 */       this.mnemonicIndex = -1;
-/*      */     } else {
-/* 1634 */       String str = getText();
-/* 1635 */       byte b = (str == null) ? 0 : str.length();
-/* 1636 */       if (paramInt < -1 || paramInt >= b) {
-/* 1637 */         throw new IllegalArgumentException("index == " + paramInt);
-/*      */       }
-/*      */     } 
-/* 1640 */     this.mnemonicIndex = paramInt;
-/* 1641 */     firePropertyChange("displayedMnemonicIndex", i, paramInt);
-/* 1642 */     if (paramInt != i) {
-/* 1643 */       revalidate();
-/* 1644 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getDisplayedMnemonicIndex() {
-/* 1657 */     return this.mnemonicIndex;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateDisplayedMnemonicIndex(String paramString, int paramInt) {
-/* 1667 */     setDisplayedMnemonicIndex(
-/* 1668 */         SwingUtilities.findDisplayedMnemonicIndex(paramString, paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateMnemonicProperties() {
-/* 1677 */     int i = this.model.getMnemonic();
-/* 1678 */     if (this.mnemonic != i) {
-/* 1679 */       int j = this.mnemonic;
-/* 1680 */       this.mnemonic = i;
-/* 1681 */       firePropertyChange("mnemonic", j, this.mnemonic);
-/*      */       
-/* 1683 */       updateDisplayedMnemonicIndex(getText(), this.mnemonic);
-/* 1684 */       revalidate();
-/* 1685 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMultiClickThreshhold(long paramLong) {
-/* 1709 */     if (paramLong < 0L) {
-/* 1710 */       throw new IllegalArgumentException("threshhold must be >= 0");
-/*      */     }
-/* 1712 */     this.multiClickThreshhold = paramLong;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public long getMultiClickThreshhold() {
-/* 1726 */     return this.multiClickThreshhold;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ButtonModel getModel() {
-/* 1735 */     return this.model;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setModel(ButtonModel paramButtonModel) {
-/* 1748 */     ButtonModel buttonModel = getModel();
-/*      */     
-/* 1750 */     if (buttonModel != null) {
-/* 1751 */       buttonModel.removeChangeListener(this.changeListener);
-/* 1752 */       buttonModel.removeActionListener(this.actionListener);
-/* 1753 */       buttonModel.removeItemListener(this.itemListener);
-/* 1754 */       this.changeListener = null;
-/* 1755 */       this.actionListener = null;
-/* 1756 */       this.itemListener = null;
-/*      */     } 
-/*      */     
-/* 1759 */     this.model = paramButtonModel;
-/*      */     
-/* 1761 */     if (paramButtonModel != null) {
-/* 1762 */       this.changeListener = createChangeListener();
-/* 1763 */       this.actionListener = createActionListener();
-/* 1764 */       this.itemListener = createItemListener();
-/* 1765 */       paramButtonModel.addChangeListener(this.changeListener);
-/* 1766 */       paramButtonModel.addActionListener(this.actionListener);
-/* 1767 */       paramButtonModel.addItemListener(this.itemListener);
-/*      */       
-/* 1769 */       updateMnemonicProperties();
-/*      */ 
-/*      */ 
-/*      */       
-/* 1773 */       super.setEnabled(paramButtonModel.isEnabled());
-/*      */     } else {
-/*      */       
-/* 1776 */       this.mnemonic = 0;
-/*      */     } 
-/*      */     
-/* 1779 */     updateDisplayedMnemonicIndex(getText(), this.mnemonic);
-/*      */     
-/* 1781 */     firePropertyChange("model", buttonModel, paramButtonModel);
-/* 1782 */     if (paramButtonModel != buttonModel) {
-/* 1783 */       revalidate();
-/* 1784 */       repaint();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ButtonUI getUI() {
-/* 1795 */     return (ButtonUI)this.ui;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUI(ButtonUI paramButtonUI) {
-/* 1810 */     setUI(paramButtonUI);
-/*      */     
-/* 1812 */     if (this.disabledIcon instanceof javax.swing.plaf.UIResource) {
-/* 1813 */       setDisabledIcon((Icon)null);
-/*      */     }
-/* 1815 */     if (this.disabledSelectedIcon instanceof javax.swing.plaf.UIResource) {
-/* 1816 */       setDisabledSelectedIcon((Icon)null);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void updateUI() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addImpl(Component paramComponent, Object paramObject, int paramInt) {
-/* 1853 */     if (!this.setLayout) {
-/* 1854 */       setLayout(new OverlayLayout(this));
-/*      */     }
-/* 1856 */     super.addImpl(paramComponent, paramObject, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setLayout(LayoutManager paramLayoutManager) {
-/* 1868 */     this.setLayout = true;
-/* 1869 */     super.setLayout(paramLayoutManager);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addChangeListener(ChangeListener paramChangeListener) {
-/* 1877 */     this.listenerList.add(ChangeListener.class, paramChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeChangeListener(ChangeListener paramChangeListener) {
-/* 1885 */     this.listenerList.remove(ChangeListener.class, paramChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ChangeListener[] getChangeListeners() {
-/* 1897 */     return this.listenerList.<ChangeListener>getListeners(ChangeListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireStateChanged() {
-/* 1908 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */ 
-/*      */     
-/* 1911 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 1912 */       if (arrayOfObject[i] == ChangeListener.class) {
-/*      */         
-/* 1914 */         if (this.changeEvent == null)
-/* 1915 */           this.changeEvent = new ChangeEvent(this); 
-/* 1916 */         ((ChangeListener)arrayOfObject[i + 1]).stateChanged(this.changeEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addActionListener(ActionListener paramActionListener) {
-/* 1926 */     this.listenerList.add(ActionListener.class, paramActionListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeActionListener(ActionListener paramActionListener) {
-/* 1938 */     if (paramActionListener != null && getAction() == paramActionListener) {
-/* 1939 */       setAction((Action)null);
-/*      */     } else {
-/* 1941 */       this.listenerList.remove(ActionListener.class, paramActionListener);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ActionListener[] getActionListeners() {
-/* 1954 */     return this.listenerList.<ActionListener>getListeners(ActionListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ChangeListener createChangeListener() {
-/* 1965 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected class ButtonChangeListener
-/*      */     implements ChangeListener, Serializable
-/*      */   {
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/* 1988 */       AbstractButton.this.getHandler().stateChanged(param1ChangeEvent);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireActionPerformed(ActionEvent paramActionEvent) {
-/* 2004 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/* 2005 */     ActionEvent actionEvent = null;
-/*      */ 
-/*      */     
-/* 2008 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 2009 */       if (arrayOfObject[i] == ActionListener.class) {
-/*      */         
-/* 2011 */         if (actionEvent == null) {
-/* 2012 */           String str = paramActionEvent.getActionCommand();
-/* 2013 */           if (str == null) {
-/* 2014 */             str = getActionCommand();
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2020 */           actionEvent = new ActionEvent(this, 1001, str, paramActionEvent.getWhen(), paramActionEvent.getModifiers());
-/*      */         } 
-/* 2022 */         ((ActionListener)arrayOfObject[i + 1]).actionPerformed(actionEvent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireItemStateChanged(ItemEvent paramItemEvent) {
-/* 2037 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/* 2038 */     ItemEvent itemEvent = null;
-/*      */ 
-/*      */     
-/* 2041 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 2042 */       if (arrayOfObject[i] == ItemListener.class) {
-/*      */         
-/* 2044 */         if (itemEvent == null)
-/*      */         {
-/*      */ 
-/*      */           
-/* 2048 */           itemEvent = new ItemEvent(this, 701, this, paramItemEvent.getStateChange());
-/*      */         }
-/* 2050 */         ((ItemListener)arrayOfObject[i + 1]).itemStateChanged(itemEvent);
-/*      */       } 
-/*      */     } 
-/* 2053 */     if (this.accessibleContext != null) {
-/* 2054 */       if (paramItemEvent.getStateChange() == 1) {
-/* 2055 */         this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.SELECTED);
-/*      */ 
-/*      */         
-/* 2058 */         this.accessibleContext.firePropertyChange("AccessibleValue", 
-/*      */             
-/* 2060 */             Integer.valueOf(0), Integer.valueOf(1));
-/*      */       } else {
-/* 2062 */         this.accessibleContext.firePropertyChange("AccessibleState", AccessibleState.SELECTED, null);
-/*      */ 
-/*      */         
-/* 2065 */         this.accessibleContext.firePropertyChange("AccessibleValue", 
-/*      */             
-/* 2067 */             Integer.valueOf(1), Integer.valueOf(0));
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected ActionListener createActionListener() {
-/* 2074 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected ItemListener createItemListener() {
-/* 2079 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEnabled(boolean paramBoolean) {
-/* 2088 */     if (!paramBoolean && this.model.isRollover()) {
-/* 2089 */       this.model.setRollover(false);
-/*      */     }
-/* 2091 */     super.setEnabled(paramBoolean);
-/* 2092 */     this.model.setEnabled(paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Deprecated
-/*      */   public String getLabel() {
-/* 2105 */     return getText();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Deprecated
-/*      */   public void setLabel(String paramString) {
-/* 2119 */     setText(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addItemListener(ItemListener paramItemListener) {
-/* 2127 */     this.listenerList.add(ItemListener.class, paramItemListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeItemListener(ItemListener paramItemListener) {
-/* 2135 */     this.listenerList.remove(ItemListener.class, paramItemListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ItemListener[] getItemListeners() {
-/* 2147 */     return this.listenerList.<ItemListener>getListeners(ItemListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] getSelectedObjects() {
-/* 2158 */     if (!isSelected()) {
-/* 2159 */       return null;
-/*      */     }
-/* 2161 */     Object[] arrayOfObject = new Object[1];
-/* 2162 */     arrayOfObject[0] = getText();
-/* 2163 */     return arrayOfObject;
-/*      */   }
-/*      */   
-/*      */   protected void init(String paramString, Icon paramIcon) {
-/* 2167 */     if (paramString != null) {
-/* 2168 */       setText(paramString);
-/*      */     }
-/*      */     
-/* 2171 */     if (paramIcon != null) {
-/* 2172 */       setIcon(paramIcon);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2176 */     updateUI();
-/*      */     
-/* 2178 */     setAlignmentX(0.0F);
-/* 2179 */     setAlignmentY(0.5F);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean imageUpdate(Image paramImage, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/* 2200 */     Icon icon = null;
-/*      */     
-/* 2202 */     if (!this.model.isEnabled()) {
-/* 2203 */       if (this.model.isSelected()) {
-/* 2204 */         icon = getDisabledSelectedIcon();
-/*      */       } else {
-/* 2206 */         icon = getDisabledIcon();
-/*      */       } 
-/* 2208 */     } else if (this.model.isPressed() && this.model.isArmed()) {
-/* 2209 */       icon = getPressedIcon();
-/* 2210 */     } else if (isRolloverEnabled() && this.model.isRollover()) {
-/* 2211 */       if (this.model.isSelected()) {
-/* 2212 */         icon = getRolloverSelectedIcon();
-/*      */       } else {
-/* 2214 */         icon = getRolloverIcon();
-/*      */       } 
-/* 2216 */     } else if (this.model.isSelected()) {
-/* 2217 */       icon = getSelectedIcon();
-/*      */     } 
-/*      */     
-/* 2220 */     if (icon == null) {
-/* 2221 */       icon = getIcon();
-/*      */     }
-/*      */     
-/* 2224 */     if (icon == null || 
-/* 2225 */       !SwingUtilities.doesIconReferenceImage(icon, paramImage))
-/*      */     {
-/*      */       
-/* 2228 */       return false;
-/*      */     }
-/* 2230 */     return super.imageUpdate(paramImage, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5);
-/*      */   }
-/*      */   
-/*      */   void setUIProperty(String paramString, Object paramObject) {
-/* 2234 */     if (paramString == "borderPainted") {
-/* 2235 */       if (!this.borderPaintedSet) {
-/* 2236 */         setBorderPainted(((Boolean)paramObject).booleanValue());
-/* 2237 */         this.borderPaintedSet = false;
-/*      */       } 
-/* 2239 */     } else if (paramString == "rolloverEnabled") {
-/* 2240 */       if (!this.rolloverEnabledSet) {
-/* 2241 */         setRolloverEnabled(((Boolean)paramObject).booleanValue());
-/* 2242 */         this.rolloverEnabledSet = false;
-/*      */       } 
-/* 2244 */     } else if (paramString == "iconTextGap") {
-/* 2245 */       if (!this.iconTextGapSet) {
-/* 2246 */         setIconTextGap(((Number)paramObject).intValue());
-/* 2247 */         this.iconTextGapSet = false;
-/*      */       } 
-/* 2249 */     } else if (paramString == "contentAreaFilled") {
-/* 2250 */       if (!this.contentAreaFilledSet) {
-/* 2251 */         setContentAreaFilled(((Boolean)paramObject).booleanValue());
-/* 2252 */         this.contentAreaFilledSet = false;
-/*      */       } 
-/*      */     } else {
-/* 2255 */       super.setUIProperty(paramString, paramObject);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String paramString() {
-/* 2275 */     String str1 = (this.defaultIcon != null && this.defaultIcon != this) ? this.defaultIcon.toString() : "";
-/*      */ 
-/*      */     
-/* 2278 */     String str2 = (this.pressedIcon != null && this.pressedIcon != this) ? this.pressedIcon.toString() : "";
-/*      */ 
-/*      */     
-/* 2281 */     String str3 = (this.disabledIcon != null && this.disabledIcon != this) ? this.disabledIcon.toString() : "";
-/*      */ 
-/*      */     
-/* 2284 */     String str4 = (this.selectedIcon != null && this.selectedIcon != this) ? this.selectedIcon.toString() : "";
-/*      */ 
-/*      */     
-/* 2287 */     String str5 = (this.disabledSelectedIcon != null && this.disabledSelectedIcon != this) ? this.disabledSelectedIcon.toString() : "";
-/*      */ 
-/*      */ 
-/*      */     
-/* 2291 */     String str6 = (this.rolloverIcon != null && this.rolloverIcon != this) ? this.rolloverIcon.toString() : "";
-/*      */ 
-/*      */     
-/* 2294 */     String str7 = (this.rolloverSelectedIcon != null && this.rolloverSelectedIcon != this) ? this.rolloverSelectedIcon.toString() : "";
-/*      */     
-/* 2296 */     String str8 = this.paintBorder ? "true" : "false";
-/* 2297 */     String str9 = this.paintFocus ? "true" : "false";
-/* 2298 */     String str10 = this.rolloverEnabled ? "true" : "false";
-/*      */     
-/* 2300 */     return super.paramString() + ",defaultIcon=" + str1 + ",disabledIcon=" + str3 + ",disabledSelectedIcon=" + str5 + ",margin=" + this.margin + ",paintBorder=" + str8 + ",paintFocus=" + str9 + ",pressedIcon=" + str2 + ",rolloverEnabled=" + str10 + ",rolloverIcon=" + str6 + ",rolloverSelectedIcon=" + str7 + ",selectedIcon=" + str4 + ",text=" + this.text;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Handler getHandler() {
-/* 2317 */     if (this.handler == null) {
-/* 2318 */       this.handler = new Handler();
-/*      */     }
-/* 2320 */     return this.handler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   class Handler
-/*      */     implements ActionListener, ChangeListener, ItemListener, Serializable
-/*      */   {
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/* 2334 */       Object object = param1ChangeEvent.getSource();
-/*      */       
-/* 2336 */       AbstractButton.this.updateMnemonicProperties();
-/* 2337 */       if (AbstractButton.this.isEnabled() != AbstractButton.this.model.isEnabled()) {
-/* 2338 */         AbstractButton.this.setEnabled(AbstractButton.this.model.isEnabled());
-/*      */       }
-/* 2340 */       AbstractButton.this.fireStateChanged();
-/* 2341 */       AbstractButton.this.repaint();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 2348 */       AbstractButton.this.fireActionPerformed(param1ActionEvent);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void itemStateChanged(ItemEvent param1ItemEvent) {
-/* 2355 */       AbstractButton.this.fireItemStateChanged(param1ItemEvent);
-/* 2356 */       if (AbstractButton.this.shouldUpdateSelectedStateFromAction()) {
-/* 2357 */         Action action = AbstractButton.this.getAction();
-/* 2358 */         if (action != null && AbstractAction.hasSelectedKey(action)) {
-/* 2359 */           boolean bool1 = AbstractButton.this.isSelected();
-/* 2360 */           boolean bool2 = AbstractAction.isSelected(action);
-/*      */           
-/* 2362 */           if (bool2 != bool1) {
-/* 2363 */             action.putValue("SwingSelectedKey", Boolean.valueOf(bool1));
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected abstract class AccessibleAbstractButton
-/*      */     extends JComponent.AccessibleJComponent
-/*      */     implements AccessibleAction, AccessibleValue, AccessibleText, AccessibleExtendedComponent
-/*      */   {
-/*      */     public String getAccessibleName() {
-/* 2401 */       String str = this.accessibleName;
-/*      */       
-/* 2403 */       if (str == null) {
-/* 2404 */         str = (String)AbstractButton.this.getClientProperty("AccessibleName");
-/*      */       }
-/* 2406 */       if (str == null) {
-/* 2407 */         str = AbstractButton.this.getText();
-/*      */       }
-/* 2409 */       if (str == null) {
-/* 2410 */         str = super.getAccessibleName();
-/*      */       }
-/* 2412 */       return str;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleIcon[] getAccessibleIcon() {
-/* 2421 */       Icon icon = AbstractButton.this.getIcon();
-/*      */       
-/* 2423 */       if (icon instanceof Accessible) {
-/*      */         
-/* 2425 */         AccessibleContext accessibleContext = ((Accessible)icon).getAccessibleContext();
-/* 2426 */         if (accessibleContext != null && accessibleContext instanceof AccessibleIcon) {
-/* 2427 */           return new AccessibleIcon[] { (AccessibleIcon)accessibleContext };
-/*      */         }
-/*      */       } 
-/* 2430 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleStateSet getAccessibleStateSet() {
-/* 2441 */       AccessibleStateSet accessibleStateSet = super.getAccessibleStateSet();
-/* 2442 */       if (AbstractButton.this.getModel().isArmed()) {
-/* 2443 */         accessibleStateSet.add(AccessibleState.ARMED);
-/*      */       }
-/* 2445 */       if (AbstractButton.this.isFocusOwner()) {
-/* 2446 */         accessibleStateSet.add(AccessibleState.FOCUSED);
-/*      */       }
-/* 2448 */       if (AbstractButton.this.getModel().isPressed()) {
-/* 2449 */         accessibleStateSet.add(AccessibleState.PRESSED);
-/*      */       }
-/* 2451 */       if (AbstractButton.this.isSelected()) {
-/* 2452 */         accessibleStateSet.add(AccessibleState.CHECKED);
-/*      */       }
-/* 2454 */       return accessibleStateSet;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleRelationSet getAccessibleRelationSet() {
-/* 2468 */       AccessibleRelationSet accessibleRelationSet = super.getAccessibleRelationSet();
-/*      */       
-/* 2470 */       if (!accessibleRelationSet.contains(AccessibleRelation.MEMBER_OF)) {
-/*      */         
-/* 2472 */         ButtonModel buttonModel = AbstractButton.this.getModel();
-/* 2473 */         if (buttonModel != null && buttonModel instanceof DefaultButtonModel) {
-/* 2474 */           ButtonGroup buttonGroup = ((DefaultButtonModel)buttonModel).getGroup();
-/* 2475 */           if (buttonGroup != null) {
-/*      */ 
-/*      */             
-/* 2478 */             int i = buttonGroup.getButtonCount();
-/* 2479 */             Object[] arrayOfObject = new Object[i];
-/* 2480 */             Enumeration<AbstractButton> enumeration = buttonGroup.getElements();
-/* 2481 */             for (byte b = 0; b < i; b++) {
-/* 2482 */               if (enumeration.hasMoreElements()) {
-/* 2483 */                 arrayOfObject[b] = enumeration.nextElement();
-/*      */               }
-/*      */             } 
-/* 2486 */             AccessibleRelation accessibleRelation = new AccessibleRelation(AccessibleRelation.MEMBER_OF);
-/*      */             
-/* 2488 */             accessibleRelation.setTarget(arrayOfObject);
-/* 2489 */             accessibleRelationSet.add(accessibleRelation);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/* 2493 */       return accessibleRelationSet;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleAction getAccessibleAction() {
-/* 2505 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleValue getAccessibleValue() {
-/* 2517 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getAccessibleActionCount() {
-/* 2528 */       return 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getAccessibleActionDescription(int param1Int) {
-/* 2537 */       if (param1Int == 0) {
-/* 2538 */         return UIManager.getString("AbstractButton.clickText");
-/*      */       }
-/* 2540 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean doAccessibleAction(int param1Int) {
-/* 2551 */       if (param1Int == 0) {
-/* 2552 */         AbstractButton.this.doClick();
-/* 2553 */         return true;
-/*      */       } 
-/* 2555 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getCurrentAccessibleValue() {
-/* 2567 */       if (AbstractButton.this.isSelected()) {
-/* 2568 */         return Integer.valueOf(1);
-/*      */       }
-/* 2570 */       return Integer.valueOf(0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean setCurrentAccessibleValue(Number param1Number) {
-/* 2581 */       if (param1Number == null) {
-/* 2582 */         return false;
-/*      */       }
-/* 2584 */       int i = param1Number.intValue();
-/* 2585 */       if (i == 0) {
-/* 2586 */         AbstractButton.this.setSelected(false);
-/*      */       } else {
-/* 2588 */         AbstractButton.this.setSelected(true);
-/*      */       } 
-/* 2590 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getMinimumAccessibleValue() {
-/* 2599 */       return Integer.valueOf(0);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Number getMaximumAccessibleValue() {
-/* 2608 */       return Integer.valueOf(1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleText getAccessibleText() {
-/* 2615 */       View view = (View)AbstractButton.this.getClientProperty("html");
-/* 2616 */       if (view != null) {
-/* 2617 */         return this;
-/*      */       }
-/* 2619 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getIndexAtPoint(Point param1Point) {
-/* 2639 */       View view = (View)AbstractButton.this.getClientProperty("html");
-/* 2640 */       if (view != null) {
-/* 2641 */         Rectangle rectangle = getTextRectangle();
-/* 2642 */         if (rectangle == null) {
-/* 2643 */           return -1;
-/*      */         }
-/* 2645 */         Rectangle2D.Float float_ = new Rectangle2D.Float(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */         
-/* 2647 */         Position.Bias[] arrayOfBias = new Position.Bias[1];
-/* 2648 */         return view.viewToModel(param1Point.x, param1Point.y, float_, arrayOfBias);
-/*      */       } 
-/* 2650 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Rectangle getCharacterBounds(int param1Int) {
-/* 2671 */       View view = (View)AbstractButton.this.getClientProperty("html");
-/* 2672 */       if (view != null) {
-/* 2673 */         Rectangle rectangle = getTextRectangle();
-/* 2674 */         if (rectangle == null) {
-/* 2675 */           return null;
-/*      */         }
-/* 2677 */         Rectangle2D.Float float_ = new Rectangle2D.Float(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*      */ 
-/*      */         
-/*      */         try {
-/* 2681 */           Shape shape = view.modelToView(param1Int, float_, Position.Bias.Forward);
-/* 2682 */           return shape.getBounds();
-/* 2683 */         } catch (BadLocationException badLocationException) {
-/* 2684 */           return null;
-/*      */         } 
-/*      */       } 
-/* 2687 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getCharCount() {
-/* 2698 */       View view = (View)AbstractButton.this.getClientProperty("html");
-/* 2699 */       if (view != null) {
-/* 2700 */         Document document = view.getDocument();
-/* 2701 */         if (document instanceof StyledDocument) {
-/* 2702 */           StyledDocument styledDocument = (StyledDocument)document;
-/* 2703 */           return styledDocument.getLength();
-/*      */         } 
-/*      */       } 
-/* 2706 */       return AbstractButton.this.accessibleContext.getAccessibleName().length();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getCaretPosition() {
-/* 2719 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getAtIndex(int param1Int1, int param1Int2) {
-/* 2733 */       if (param1Int2 < 0 || param1Int2 >= getCharCount()) {
-/* 2734 */         return null;
-/*      */       }
-/* 2736 */       switch (param1Int1) {
-/*      */         case 1:
-/*      */           try {
-/* 2739 */             return getText(param1Int2, 1);
-/* 2740 */           } catch (BadLocationException badLocationException) {
-/* 2741 */             return null;
-/*      */           } 
-/*      */         case 2:
-/*      */           try {
-/* 2745 */             String str = getText(0, getCharCount());
-/* 2746 */             BreakIterator breakIterator = BreakIterator.getWordInstance(getLocale());
-/* 2747 */             breakIterator.setText(str);
-/* 2748 */             int i = breakIterator.following(param1Int2);
-/* 2749 */             return str.substring(breakIterator.previous(), i);
-/* 2750 */           } catch (BadLocationException badLocationException) {
-/* 2751 */             return null;
-/*      */           } 
-/*      */         case 3:
-/*      */           try {
-/* 2755 */             String str = getText(0, getCharCount());
-/*      */             
-/* 2757 */             BreakIterator breakIterator = BreakIterator.getSentenceInstance(getLocale());
-/* 2758 */             breakIterator.setText(str);
-/* 2759 */             int i = breakIterator.following(param1Int2);
-/* 2760 */             return str.substring(breakIterator.previous(), i);
-/* 2761 */           } catch (BadLocationException badLocationException) {
-/* 2762 */             return null;
-/*      */           } 
-/*      */       } 
-/* 2765 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getAfterIndex(int param1Int1, int param1Int2) {
-/* 2780 */       if (param1Int2 < 0 || param1Int2 >= getCharCount()) {
-/* 2781 */         return null;
-/*      */       }
-/* 2783 */       switch (param1Int1) {
-/*      */         case 1:
-/* 2785 */           if (param1Int2 + 1 >= getCharCount()) {
-/* 2786 */             return null;
-/*      */           }
-/*      */           try {
-/* 2789 */             return getText(param1Int2 + 1, 1);
-/* 2790 */           } catch (BadLocationException badLocationException) {
-/* 2791 */             return null;
-/*      */           } 
-/*      */         case 2:
-/*      */           try {
-/* 2795 */             String str = getText(0, getCharCount());
-/* 2796 */             BreakIterator breakIterator = BreakIterator.getWordInstance(getLocale());
-/* 2797 */             breakIterator.setText(str);
-/* 2798 */             int i = breakIterator.following(param1Int2);
-/* 2799 */             if (i == -1 || i >= str.length()) {
-/* 2800 */               return null;
-/*      */             }
-/* 2802 */             int j = breakIterator.following(i);
-/* 2803 */             if (j == -1 || j >= str.length()) {
-/* 2804 */               return null;
-/*      */             }
-/* 2806 */             return str.substring(i, j);
-/* 2807 */           } catch (BadLocationException badLocationException) {
-/* 2808 */             return null;
-/*      */           } 
-/*      */         case 3:
-/*      */           try {
-/* 2812 */             String str = getText(0, getCharCount());
-/*      */             
-/* 2814 */             BreakIterator breakIterator = BreakIterator.getSentenceInstance(getLocale());
-/* 2815 */             breakIterator.setText(str);
-/* 2816 */             int i = breakIterator.following(param1Int2);
-/* 2817 */             if (i == -1 || i > str.length()) {
-/* 2818 */               return null;
-/*      */             }
-/* 2820 */             int j = breakIterator.following(i);
-/* 2821 */             if (j == -1 || j > str.length()) {
-/* 2822 */               return null;
-/*      */             }
-/* 2824 */             return str.substring(i, j);
-/* 2825 */           } catch (BadLocationException badLocationException) {
-/* 2826 */             return null;
-/*      */           } 
-/*      */       } 
-/* 2829 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getBeforeIndex(int param1Int1, int param1Int2) {
-/* 2844 */       if (param1Int2 < 0 || param1Int2 > getCharCount() - 1) {
-/* 2845 */         return null;
-/*      */       }
-/* 2847 */       switch (param1Int1) {
-/*      */         case 1:
-/* 2849 */           if (param1Int2 == 0) {
-/* 2850 */             return null;
-/*      */           }
-/*      */           try {
-/* 2853 */             return getText(param1Int2 - 1, 1);
-/* 2854 */           } catch (BadLocationException badLocationException) {
-/* 2855 */             return null;
-/*      */           } 
-/*      */         case 2:
-/*      */           try {
-/* 2859 */             String str = getText(0, getCharCount());
-/* 2860 */             BreakIterator breakIterator = BreakIterator.getWordInstance(getLocale());
-/* 2861 */             breakIterator.setText(str);
-/* 2862 */             int i = breakIterator.following(param1Int2);
-/* 2863 */             i = breakIterator.previous();
-/* 2864 */             int j = breakIterator.previous();
-/* 2865 */             if (j == -1) {
-/* 2866 */               return null;
-/*      */             }
-/* 2868 */             return str.substring(j, i);
-/* 2869 */           } catch (BadLocationException badLocationException) {
-/* 2870 */             return null;
-/*      */           } 
-/*      */         case 3:
-/*      */           try {
-/* 2874 */             String str = getText(0, getCharCount());
-/*      */             
-/* 2876 */             BreakIterator breakIterator = BreakIterator.getSentenceInstance(getLocale());
-/* 2877 */             breakIterator.setText(str);
-/* 2878 */             int i = breakIterator.following(param1Int2);
-/* 2879 */             i = breakIterator.previous();
-/* 2880 */             int j = breakIterator.previous();
-/* 2881 */             if (j == -1) {
-/* 2882 */               return null;
-/*      */             }
-/* 2884 */             return str.substring(j, i);
-/* 2885 */           } catch (BadLocationException badLocationException) {
-/* 2886 */             return null;
-/*      */           } 
-/*      */       } 
-/* 2889 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AttributeSet getCharacterAttribute(int param1Int) {
-/* 2901 */       View view = (View)AbstractButton.this.getClientProperty("html");
-/* 2902 */       if (view != null) {
-/* 2903 */         Document document = view.getDocument();
-/* 2904 */         if (document instanceof StyledDocument) {
-/* 2905 */           StyledDocument styledDocument = (StyledDocument)document;
-/* 2906 */           Element element = styledDocument.getCharacterElement(param1Int);
-/* 2907 */           if (element != null) {
-/* 2908 */             return element.getAttributes();
-/*      */           }
-/*      */         } 
-/*      */       } 
-/* 2912 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getSelectionStart() {
-/* 2925 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getSelectionEnd() {
-/* 2938 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getSelectedText() {
-/* 2949 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private String getText(int param1Int1, int param1Int2) throws BadLocationException {
-/* 2959 */       View view = (View)AbstractButton.this.getClientProperty("html");
-/* 2960 */       if (view != null) {
-/* 2961 */         Document document = view.getDocument();
-/* 2962 */         if (document instanceof StyledDocument) {
-/* 2963 */           StyledDocument styledDocument = (StyledDocument)document;
-/* 2964 */           return styledDocument.getText(param1Int1, param1Int2);
-/*      */         } 
-/*      */       } 
-/* 2967 */       return null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Rectangle getTextRectangle() {
-/* 2975 */       String str1 = AbstractButton.this.getText();
-/* 2976 */       Icon icon = AbstractButton.this.isEnabled() ? AbstractButton.this.getIcon() : AbstractButton.this.getDisabledIcon();
-/*      */       
-/* 2978 */       if (icon == null && str1 == null) {
-/* 2979 */         return null;
-/*      */       }
-/*      */       
-/* 2982 */       Rectangle rectangle1 = new Rectangle();
-/* 2983 */       Rectangle rectangle2 = new Rectangle();
-/* 2984 */       Rectangle rectangle3 = new Rectangle();
-/* 2985 */       Insets insets = new Insets(0, 0, 0, 0);
-/*      */       
-/* 2987 */       insets = AbstractButton.this.getInsets(insets);
-/* 2988 */       rectangle3.x = insets.left;
-/* 2989 */       rectangle3.y = insets.top;
-/* 2990 */       rectangle3.width = AbstractButton.this.getWidth() - insets.left + insets.right;
-/* 2991 */       rectangle3.height = AbstractButton.this.getHeight() - insets.top + insets.bottom;
-/*      */       
-/* 2993 */       String str2 = SwingUtilities.layoutCompoundLabel(AbstractButton.this, 
-/*      */           
-/* 2995 */           getFontMetrics(getFont()), str1, icon, AbstractButton.this
-/*      */ 
-/*      */           
-/* 2998 */           .getVerticalAlignment(), AbstractButton.this
-/* 2999 */           .getHorizontalAlignment(), AbstractButton.this
-/* 3000 */           .getVerticalTextPosition(), AbstractButton.this
-/* 3001 */           .getHorizontalTextPosition(), rectangle3, rectangle1, rectangle2, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 3007 */       return rectangle2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     AccessibleExtendedComponent getAccessibleExtendedComponent() {
-/* 3018 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getToolTipText() {
-/* 3029 */       return AbstractButton.this.getToolTipText();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public String getTitledBorderText() {
-/* 3040 */       return super.getTitledBorderText();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public AccessibleKeyBinding getAccessibleKeyBinding() {
-/* 3052 */       int i = AbstractButton.this.getMnemonic();
-/* 3053 */       if (i == 0) {
-/* 3054 */         return null;
-/*      */       }
-/* 3056 */       return new ButtonKeyBinding(i);
-/*      */     }
-/*      */     
-/*      */     class ButtonKeyBinding implements AccessibleKeyBinding {
-/*      */       int mnemonic;
-/*      */       
-/*      */       ButtonKeyBinding(int param2Int) {
-/* 3063 */         this.mnemonic = param2Int;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public int getAccessibleKeyBindingCount() {
-/* 3072 */         return 1;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public Object getAccessibleKeyBinding(int param2Int) {
-/* 3101 */         if (param2Int != 0) {
-/* 3102 */           throw new IllegalArgumentException();
-/*      */         }
-/* 3104 */         return KeyStroke.getKeyStroke(this.mnemonic, 0);
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\AbstractButton.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
+import java.text.*;
+import java.awt.geom.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.Transient;
+import java.util.Enumeration;
+import java.util.Vector;
+import java.io.Serializable;
+import javax.swing.event.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.accessibility.*;
+import javax.swing.text.*;
+import javax.swing.text.html.*;
+import javax.swing.plaf.basic.*;
+import java.util.*;
+
+/**
+ * Defines common behaviors for buttons and menu items.
+ * <p>
+ * Buttons can be configured, and to some degree controlled, by
+ * <code><a href="Action.html">Action</a></code>s.  Using an
+ * <code>Action</code> with a button has many benefits beyond directly
+ * configuring a button.  Refer to <a href="Action.html#buttonActions">
+ * Swing Components Supporting <code>Action</code></a> for more
+ * details, and you can find more information in <a
+ * href="https://docs.oracle.com/javase/tutorial/uiswing/misc/action.html">How
+ * to Use Actions</a>, a section in <em>The Java Tutorial</em>.
+ * <p>
+ * For further information see
+ * <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/button.html">How to Use Buttons, Check Boxes, and Radio Buttons</a>,
+ * a section in <em>The Java Tutorial</em>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Jeff Dinkins
+ */
+public abstract class AbstractButton extends JComponent implements ItemSelectable, SwingConstants {
+
+    // *********************************
+    // ******* Button properties *******
+    // *********************************
+
+    /** Identifies a change in the button model. */
+    public static final String MODEL_CHANGED_PROPERTY = "model";
+    /** Identifies a change in the button's text. */
+    public static final String TEXT_CHANGED_PROPERTY = "text";
+    /** Identifies a change to the button's mnemonic. */
+    public static final String MNEMONIC_CHANGED_PROPERTY = "mnemonic";
+
+    // Text positioning and alignment
+    /** Identifies a change in the button's margins. */
+    public static final String MARGIN_CHANGED_PROPERTY = "margin";
+    /** Identifies a change in the button's vertical alignment. */
+    public static final String VERTICAL_ALIGNMENT_CHANGED_PROPERTY = "verticalAlignment";
+    /** Identifies a change in the button's horizontal alignment. */
+    public static final String HORIZONTAL_ALIGNMENT_CHANGED_PROPERTY = "horizontalAlignment";
+
+    /** Identifies a change in the button's vertical text position. */
+    public static final String VERTICAL_TEXT_POSITION_CHANGED_PROPERTY = "verticalTextPosition";
+    /** Identifies a change in the button's horizontal text position. */
+    public static final String HORIZONTAL_TEXT_POSITION_CHANGED_PROPERTY = "horizontalTextPosition";
+
+    // Paint options
+    /**
+     * Identifies a change to having the border drawn,
+     * or having it not drawn.
+     */
+    public static final String BORDER_PAINTED_CHANGED_PROPERTY = "borderPainted";
+    /**
+     * Identifies a change to having the border highlighted when focused,
+     * or not.
+     */
+    public static final String FOCUS_PAINTED_CHANGED_PROPERTY = "focusPainted";
+    /**
+     * Identifies a change from rollover enabled to disabled or back
+     * to enabled.
+     */
+    public static final String ROLLOVER_ENABLED_CHANGED_PROPERTY = "rolloverEnabled";
+    /**
+     * Identifies a change to having the button paint the content area.
+     */
+    public static final String CONTENT_AREA_FILLED_CHANGED_PROPERTY = "contentAreaFilled";
+
+    // Icons
+    /** Identifies a change to the icon that represents the button. */
+    public static final String ICON_CHANGED_PROPERTY = "icon";
+
+    /**
+     * Identifies a change to the icon used when the button has been
+     * pressed.
+     */
+    public static final String PRESSED_ICON_CHANGED_PROPERTY = "pressedIcon";
+    /**
+     * Identifies a change to the icon used when the button has
+     * been selected.
+     */
+    public static final String SELECTED_ICON_CHANGED_PROPERTY = "selectedIcon";
+
+    /**
+     * Identifies a change to the icon used when the cursor is over
+     * the button.
+     */
+    public static final String ROLLOVER_ICON_CHANGED_PROPERTY = "rolloverIcon";
+    /**
+     * Identifies a change to the icon used when the cursor is
+     * over the button and it has been selected.
+     */
+    public static final String ROLLOVER_SELECTED_ICON_CHANGED_PROPERTY = "rolloverSelectedIcon";
+
+    /**
+     * Identifies a change to the icon used when the button has
+     * been disabled.
+     */
+    public static final String DISABLED_ICON_CHANGED_PROPERTY = "disabledIcon";
+    /**
+     * Identifies a change to the icon used when the button has been
+     * disabled and selected.
+     */
+    public static final String DISABLED_SELECTED_ICON_CHANGED_PROPERTY = "disabledSelectedIcon";
+
+
+    /** The data model that determines the button's state. */
+    protected ButtonModel model                = null;
+
+    private String     text                    = ""; // for BeanBox
+    private Insets     margin                  = null;
+    private Insets     defaultMargin           = null;
+
+    // Button icons
+    // PENDING(jeff) - hold icons in an array
+    private Icon       defaultIcon             = null;
+    private Icon       pressedIcon             = null;
+    private Icon       disabledIcon            = null;
+
+    private Icon       selectedIcon            = null;
+    private Icon       disabledSelectedIcon    = null;
+
+    private Icon       rolloverIcon            = null;
+    private Icon       rolloverSelectedIcon    = null;
+
+    // Display properties
+    private boolean    paintBorder             = true;
+    private boolean    paintFocus              = true;
+    private boolean    rolloverEnabled         = false;
+    private boolean    contentAreaFilled         = true;
+
+    // Icon/Label Alignment
+    private int        verticalAlignment       = CENTER;
+    private int        horizontalAlignment     = CENTER;
+
+    private int        verticalTextPosition    = CENTER;
+    private int        horizontalTextPosition  = TRAILING;
+
+    private int        iconTextGap             = 4;
+
+    private int        mnemonic;
+    private int        mnemonicIndex           = -1;
+
+    private long       multiClickThreshhold    = 0;
+
+    private boolean    borderPaintedSet        = false;
+    private boolean    rolloverEnabledSet      = false;
+    private boolean    iconTextGapSet          = false;
+    private boolean    contentAreaFilledSet    = false;
+
+    // Whether or not we've set the LayoutManager.
+    private boolean setLayout = false;
+
+    // This is only used by JButton, promoted to avoid an extra
+    // boolean field in JButton
+    boolean defaultCapable = true;
+
+    /**
+     * Combined listeners: ActionListener, ChangeListener, ItemListener.
+     */
+    private Handler handler;
+
+    /**
+     * The button model's <code>changeListener</code>.
+     */
+    protected ChangeListener changeListener = null;
+    /**
+     * The button model's <code>ActionListener</code>.
+     */
+    protected ActionListener actionListener = null;
+    /**
+     * The button model's <code>ItemListener</code>.
+     */
+    protected ItemListener itemListener = null;
+
+    /**
+     * Only one <code>ChangeEvent</code> is needed per button
+     * instance since the
+     * event's only state is the source property.  The source of events
+     * generated is always "this".
+     */
+    protected transient ChangeEvent changeEvent;
+
+    private boolean hideActionText = false;
+
+    /**
+     * Sets the <code>hideActionText</code> property, which determines
+     * whether the button displays text from the <code>Action</code>.
+     * This is useful only if an <code>Action</code> has been
+     * installed on the button.
+     *
+     * @param hideActionText <code>true</code> if the button's
+     *                       <code>text</code> property should not reflect
+     *                       that of the <code>Action</code>; the default is
+     *                       <code>false</code>
+     * @see <a href="Action.html#buttonActions">Swing Components Supporting
+     *      <code>Action</code></a>
+     * @since 1.6
+     * @beaninfo
+     *        bound: true
+     *    expert: true
+     *  description: Whether the text of the button should come from
+     *               the <code>Action</code>.
+     */
+    public void setHideActionText(boolean hideActionText) {
+        if (hideActionText != this.hideActionText) {
+            this.hideActionText = hideActionText;
+            if (getAction() != null) {
+                setTextFromAction(getAction(), false);
+            }
+            firePropertyChange("hideActionText", !hideActionText,
+                               hideActionText);
+        }
+    }
+
+    /**
+     * Returns the value of the <code>hideActionText</code> property, which
+     * determines whether the button displays text from the
+     * <code>Action</code>.  This is useful only if an <code>Action</code>
+     * has been installed on the button.
+     *
+     * @return <code>true</code> if the button's <code>text</code>
+     *         property should not reflect that of the
+     *         <code>Action</code>; the default is <code>false</code>
+     * @since 1.6
+     */
+    public boolean getHideActionText() {
+        return hideActionText;
+    }
+
+    /**
+     * Returns the button's text.
+     * @return the buttons text
+     * @see #setText
+     */
+    public String getText() {
+        return text;
+    }
+
+    /**
+     * Sets the button's text.
+     * @param text the string used to set the text
+     * @see #getText
+     * @beaninfo
+     *        bound: true
+     *    preferred: true
+     *    attribute: visualUpdate true
+     *  description: The button's text.
+     */
+    public void setText(String text) {
+        String oldValue = this.text;
+        this.text = text;
+        firePropertyChange(TEXT_CHANGED_PROPERTY, oldValue, text);
+        updateDisplayedMnemonicIndex(text, getMnemonic());
+
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, text);
+        }
+        if (text == null || oldValue == null || !text.equals(oldValue)) {
+            revalidate();
+            repaint();
+        }
+    }
+
+
+    /**
+     * Returns the state of the button. True if the
+     * toggle button is selected, false if it's not.
+     * @return true if the toggle button is selected, otherwise false
+     */
+    public boolean isSelected() {
+        return model.isSelected();
+    }
+
+    /**
+     * Sets the state of the button. Note that this method does not
+     * trigger an <code>actionEvent</code>.
+     * Call <code>doClick</code> to perform a programmatic action change.
+     *
+     * @param b  true if the button is selected, otherwise false
+     */
+    public void setSelected(boolean b) {
+        boolean oldValue = isSelected();
+
+        // TIGER - 4840653
+        // Removed code which fired an AccessibleState.SELECTED
+        // PropertyChangeEvent since this resulted in two
+        // identical events being fired since
+        // AbstractButton.fireItemStateChanged also fires the
+        // same event. This caused screen readers to speak the
+        // name of the item twice.
+
+        model.setSelected(b);
+    }
+
+    /**
+     * Programmatically perform a "click". This does the same
+     * thing as if the user had pressed and released the button.
+     */
+    public void doClick() {
+        doClick(68);
+    }
+
+    /**
+     * Programmatically perform a "click". This does the same
+     * thing as if the user had pressed and released the button.
+     * The button stays visually "pressed" for <code>pressTime</code>
+     *  milliseconds.
+     *
+     * @param pressTime the time to "hold down" the button, in milliseconds
+     */
+    public void doClick(int pressTime) {
+        Dimension size = getSize();
+        model.setArmed(true);
+        model.setPressed(true);
+        paintImmediately(new Rectangle(0,0, size.width, size.height));
+        try {
+            Thread.currentThread().sleep(pressTime);
+        } catch(InterruptedException ie) {
+        }
+        model.setPressed(false);
+        model.setArmed(false);
+    }
+
+    /**
+     * Sets space for margin between the button's border and
+     * the label. Setting to <code>null</code> will cause the button to
+     * use the default margin.  The button's default <code>Border</code>
+     * object will use this value to create the proper margin.
+     * However, if a non-default border is set on the button,
+     * it is that <code>Border</code> object's responsibility to create the
+     * appropriate margin space (else this property will
+     * effectively be ignored).
+     *
+     * @param m the space between the border and the label
+     *
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The space between the button's border and the label.
+     */
+    public void setMargin(Insets m) {
+        // Cache the old margin if it comes from the UI
+        if(m instanceof UIResource) {
+            defaultMargin = m;
+        } else if(margin instanceof UIResource) {
+            defaultMargin = margin;
+        }
+
+        // If the client passes in a null insets, restore the margin
+        // from the UI if possible
+        if(m == null && defaultMargin != null) {
+            m = defaultMargin;
+        }
+
+        Insets old = margin;
+        margin = m;
+        firePropertyChange(MARGIN_CHANGED_PROPERTY, old, m);
+        if (old == null || !old.equals(m)) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the margin between the button's border and
+     * the label.
+     *
+     * @return an <code>Insets</code> object specifying the margin
+     *          between the botton's border and the label
+     * @see #setMargin
+     */
+    public Insets getMargin() {
+        return (margin == null) ? null : (Insets) margin.clone();
+    }
+
+    /**
+     * Returns the default icon.
+     * @return the default <code>Icon</code>
+     * @see #setIcon
+     */
+    public Icon getIcon() {
+        return defaultIcon;
+    }
+
+    /**
+     * Sets the button's default icon. This icon is
+     * also used as the "pressed" and "disabled" icon if
+     * there is no explicitly set pressed icon.
+     *
+     * @param defaultIcon the icon used as the default image
+     * @see #getIcon
+     * @see #setPressedIcon
+     * @beaninfo
+     *           bound: true
+     *       attribute: visualUpdate true
+     *     description: The button's default icon
+     */
+    public void setIcon(Icon defaultIcon) {
+        Icon oldValue = this.defaultIcon;
+        this.defaultIcon = defaultIcon;
+
+        /* If the default icon has really changed and we had
+         * generated the disabled icon for this component,
+         * (i.e. setDisabledIcon() was never called) then
+         * clear the disabledIcon field.
+         */
+        if (defaultIcon != oldValue && (disabledIcon instanceof UIResource)) {
+            disabledIcon = null;
+        }
+
+        firePropertyChange(ICON_CHANGED_PROPERTY, oldValue, defaultIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, defaultIcon);
+        }
+        if (defaultIcon != oldValue) {
+            if (defaultIcon == null || oldValue == null ||
+                defaultIcon.getIconWidth() != oldValue.getIconWidth() ||
+                defaultIcon.getIconHeight() != oldValue.getIconHeight()) {
+                revalidate();
+            }
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the pressed icon for the button.
+     * @return the <code>pressedIcon</code> property
+     * @see #setPressedIcon
+     */
+    public Icon getPressedIcon() {
+        return pressedIcon;
+    }
+
+    /**
+     * Sets the pressed icon for the button.
+     * @param pressedIcon the icon used as the "pressed" image
+     * @see #getPressedIcon
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The pressed icon for the button.
+     */
+    public void setPressedIcon(Icon pressedIcon) {
+        Icon oldValue = this.pressedIcon;
+        this.pressedIcon = pressedIcon;
+        firePropertyChange(PRESSED_ICON_CHANGED_PROPERTY, oldValue, pressedIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, pressedIcon);
+        }
+        if (pressedIcon != oldValue) {
+            if (getModel().isPressed()) {
+                repaint();
+            }
+        }
+    }
+
+    /**
+     * Returns the selected icon for the button.
+     * @return the <code>selectedIcon</code> property
+     * @see #setSelectedIcon
+     */
+    public Icon getSelectedIcon() {
+        return selectedIcon;
+    }
+
+    /**
+     * Sets the selected icon for the button.
+     * @param selectedIcon the icon used as the "selected" image
+     * @see #getSelectedIcon
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The selected icon for the button.
+     */
+    public void setSelectedIcon(Icon selectedIcon) {
+        Icon oldValue = this.selectedIcon;
+        this.selectedIcon = selectedIcon;
+
+        /* If the default selected icon has really changed and we had
+         * generated the disabled selected icon for this component,
+         * (i.e. setDisabledSelectedIcon() was never called) then
+         * clear the disabledSelectedIcon field.
+         */
+        if (selectedIcon != oldValue &&
+            disabledSelectedIcon instanceof UIResource) {
+
+            disabledSelectedIcon = null;
+        }
+
+        firePropertyChange(SELECTED_ICON_CHANGED_PROPERTY, oldValue, selectedIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, selectedIcon);
+        }
+        if (selectedIcon != oldValue) {
+            if (isSelected()) {
+                repaint();
+            }
+        }
+    }
+
+    /**
+     * Returns the rollover icon for the button.
+     * @return the <code>rolloverIcon</code> property
+     * @see #setRolloverIcon
+     */
+    public Icon getRolloverIcon() {
+        return rolloverIcon;
+    }
+
+    /**
+     * Sets the rollover icon for the button.
+     * @param rolloverIcon the icon used as the "rollover" image
+     * @see #getRolloverIcon
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The rollover icon for the button.
+     */
+    public void setRolloverIcon(Icon rolloverIcon) {
+        Icon oldValue = this.rolloverIcon;
+        this.rolloverIcon = rolloverIcon;
+        firePropertyChange(ROLLOVER_ICON_CHANGED_PROPERTY, oldValue, rolloverIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, rolloverIcon);
+        }
+        setRolloverEnabled(true);
+        if (rolloverIcon != oldValue) {
+            // No way to determine whether we are currently in
+            // a rollover state, so repaint regardless
+            repaint();
+        }
+
+    }
+
+    /**
+     * Returns the rollover selection icon for the button.
+     * @return the <code>rolloverSelectedIcon</code> property
+     * @see #setRolloverSelectedIcon
+     */
+    public Icon getRolloverSelectedIcon() {
+        return rolloverSelectedIcon;
+    }
+
+    /**
+     * Sets the rollover selected icon for the button.
+     * @param rolloverSelectedIcon the icon used as the
+     *          "selected rollover" image
+     * @see #getRolloverSelectedIcon
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The rollover selected icon for the button.
+     */
+    public void setRolloverSelectedIcon(Icon rolloverSelectedIcon) {
+        Icon oldValue = this.rolloverSelectedIcon;
+        this.rolloverSelectedIcon = rolloverSelectedIcon;
+        firePropertyChange(ROLLOVER_SELECTED_ICON_CHANGED_PROPERTY, oldValue, rolloverSelectedIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, rolloverSelectedIcon);
+        }
+        setRolloverEnabled(true);
+        if (rolloverSelectedIcon != oldValue) {
+            // No way to determine whether we are currently in
+            // a rollover state, so repaint regardless
+            if (isSelected()) {
+                repaint();
+            }
+        }
+    }
+
+    /**
+     * Returns the icon used by the button when it's disabled.
+     * If no disabled icon has been set this will forward the call to
+     * the look and feel to construct an appropriate disabled Icon.
+     * <p>
+     * Some look and feels might not render the disabled Icon, in which
+     * case they will ignore this.
+     *
+     * @return the <code>disabledIcon</code> property
+     * @see #getPressedIcon
+     * @see #setDisabledIcon
+     * @see javax.swing.LookAndFeel#getDisabledIcon
+     */
+    @Transient
+    public Icon getDisabledIcon() {
+        if (disabledIcon == null) {
+            disabledIcon = UIManager.getLookAndFeel().getDisabledIcon(this, getIcon());
+            if (disabledIcon != null) {
+                firePropertyChange(DISABLED_ICON_CHANGED_PROPERTY, null, disabledIcon);
+            }
+        }
+        return disabledIcon;
+    }
+
+    /**
+     * Sets the disabled icon for the button.
+     * @param disabledIcon the icon used as the disabled image
+     * @see #getDisabledIcon
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The disabled icon for the button.
+     */
+    public void setDisabledIcon(Icon disabledIcon) {
+        Icon oldValue = this.disabledIcon;
+        this.disabledIcon = disabledIcon;
+        firePropertyChange(DISABLED_ICON_CHANGED_PROPERTY, oldValue, disabledIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, disabledIcon);
+        }
+        if (disabledIcon != oldValue) {
+            if (!isEnabled()) {
+                repaint();
+            }
+        }
+    }
+
+    /**
+     * Returns the icon used by the button when it's disabled and selected.
+     * If no disabled selection icon has been set, this will forward
+     * the call to the LookAndFeel to construct an appropriate disabled
+     * Icon from the selection icon if it has been set and to
+     * <code>getDisabledIcon()</code> otherwise.
+     * <p>
+     * Some look and feels might not render the disabled selected Icon, in
+     * which case they will ignore this.
+     *
+     * @return the <code>disabledSelectedIcon</code> property
+     * @see #getDisabledIcon
+     * @see #setDisabledSelectedIcon
+     * @see javax.swing.LookAndFeel#getDisabledSelectedIcon
+     */
+    public Icon getDisabledSelectedIcon() {
+        if (disabledSelectedIcon == null) {
+             if (selectedIcon != null) {
+                 disabledSelectedIcon = UIManager.getLookAndFeel().
+                         getDisabledSelectedIcon(this, getSelectedIcon());
+             } else {
+                 return getDisabledIcon();
+             }
+        }
+        return disabledSelectedIcon;
+    }
+
+    /**
+     * Sets the disabled selection icon for the button.
+     * @param disabledSelectedIcon the icon used as the disabled
+     *          selection image
+     * @see #getDisabledSelectedIcon
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: The disabled selection icon for the button.
+     */
+    public void setDisabledSelectedIcon(Icon disabledSelectedIcon) {
+        Icon oldValue = this.disabledSelectedIcon;
+        this.disabledSelectedIcon = disabledSelectedIcon;
+        firePropertyChange(DISABLED_SELECTED_ICON_CHANGED_PROPERTY, oldValue, disabledSelectedIcon);
+        if (accessibleContext != null) {
+            accessibleContext.firePropertyChange(
+                AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                oldValue, disabledSelectedIcon);
+        }
+        if (disabledSelectedIcon != oldValue) {
+            if (disabledSelectedIcon == null || oldValue == null ||
+                disabledSelectedIcon.getIconWidth() != oldValue.getIconWidth() ||
+                disabledSelectedIcon.getIconHeight() != oldValue.getIconHeight()) {
+                revalidate();
+            }
+            if (!isEnabled() && isSelected()) {
+                repaint();
+            }
+        }
+    }
+
+    /**
+     * Returns the vertical alignment of the text and icon.
+     *
+     * @return the <code>verticalAlignment</code> property, one of the
+     *          following values:
+     * <ul>
+     * <li>{@code SwingConstants.CENTER} (the default)
+     * <li>{@code SwingConstants.TOP}
+     * <li>{@code SwingConstants.BOTTOM}
+     * </ul>
+     */
+    public int getVerticalAlignment() {
+        return verticalAlignment;
+    }
+
+    /**
+     * Sets the vertical alignment of the icon and text.
+     * @param alignment one of the following values:
+     * <ul>
+     * <li>{@code SwingConstants.CENTER} (the default)
+     * <li>{@code SwingConstants.TOP}
+     * <li>{@code SwingConstants.BOTTOM}
+     * </ul>
+     * @throws IllegalArgumentException if the alignment is not one of the legal
+     *         values listed above
+     * @beaninfo
+     *        bound: true
+     *         enum: TOP    SwingConstants.TOP
+     *               CENTER SwingConstants.CENTER
+     *               BOTTOM  SwingConstants.BOTTOM
+     *    attribute: visualUpdate true
+     *  description: The vertical alignment of the icon and text.
+     */
+    public void setVerticalAlignment(int alignment) {
+        if (alignment == verticalAlignment) return;
+        int oldValue = verticalAlignment;
+        verticalAlignment = checkVerticalKey(alignment, "verticalAlignment");
+        firePropertyChange(VERTICAL_ALIGNMENT_CHANGED_PROPERTY, oldValue, verticalAlignment);         repaint();
+    }
+
+    /**
+     * Returns the horizontal alignment of the icon and text.
+     * {@code AbstractButton}'s default is {@code SwingConstants.CENTER},
+     * but subclasses such as {@code JCheckBox} may use a different default.
+     *
+     * @return the <code>horizontalAlignment</code> property,
+     *             one of the following values:
+     * <ul>
+     *   <li>{@code SwingConstants.RIGHT}
+     *   <li>{@code SwingConstants.LEFT}
+     *   <li>{@code SwingConstants.CENTER}
+     *   <li>{@code SwingConstants.LEADING}
+     *   <li>{@code SwingConstants.TRAILING}
+     * </ul>
+     */
+    public int getHorizontalAlignment() {
+        return horizontalAlignment;
+    }
+
+    /**
+     * Sets the horizontal alignment of the icon and text.
+     * {@code AbstractButton}'s default is {@code SwingConstants.CENTER},
+     * but subclasses such as {@code JCheckBox} may use a different default.
+     *
+     * @param alignment the alignment value, one of the following values:
+     * <ul>
+     *   <li>{@code SwingConstants.RIGHT}
+     *   <li>{@code SwingConstants.LEFT}
+     *   <li>{@code SwingConstants.CENTER}
+     *   <li>{@code SwingConstants.LEADING}
+     *   <li>{@code SwingConstants.TRAILING}
+     * </ul>
+     * @throws IllegalArgumentException if the alignment is not one of the
+     *         valid values
+     * @beaninfo
+     *        bound: true
+     *         enum: LEFT     SwingConstants.LEFT
+     *               CENTER   SwingConstants.CENTER
+     *               RIGHT    SwingConstants.RIGHT
+     *               LEADING  SwingConstants.LEADING
+     *               TRAILING SwingConstants.TRAILING
+     *    attribute: visualUpdate true
+     *  description: The horizontal alignment of the icon and text.
+     */
+    public void setHorizontalAlignment(int alignment) {
+        if (alignment == horizontalAlignment) return;
+        int oldValue = horizontalAlignment;
+        horizontalAlignment = checkHorizontalKey(alignment,
+                                                 "horizontalAlignment");
+        firePropertyChange(HORIZONTAL_ALIGNMENT_CHANGED_PROPERTY,
+                           oldValue, horizontalAlignment);
+        repaint();
+    }
+
+
+    /**
+     * Returns the vertical position of the text relative to the icon.
+     * @return the <code>verticalTextPosition</code> property,
+     *          one of the following values:
+     * <ul>
+     * <li>{@code SwingConstants.CENTER} (the default)
+     * <li>{@code SwingConstants.TOP}
+     * <li>{@code SwingConstants.BOTTOM}
+     * </ul>
+     */
+    public int getVerticalTextPosition() {
+        return verticalTextPosition;
+    }
+
+    /**
+     * Sets the vertical position of the text relative to the icon.
+     * @param textPosition  one of the following values:
+     * <ul>
+     * <li>{@code SwingConstants.CENTER} (the default)
+     * <li>{@code SwingConstants.TOP}
+     * <li>{@code SwingConstants.BOTTOM}
+     * </ul>
+     * @beaninfo
+     *        bound: true
+     *         enum: TOP    SwingConstants.TOP
+     *               CENTER SwingConstants.CENTER
+     *               BOTTOM SwingConstants.BOTTOM
+     *    attribute: visualUpdate true
+     *  description: The vertical position of the text relative to the icon.
+     */
+    public void setVerticalTextPosition(int textPosition) {
+        if (textPosition == verticalTextPosition) return;
+        int oldValue = verticalTextPosition;
+        verticalTextPosition = checkVerticalKey(textPosition, "verticalTextPosition");
+        firePropertyChange(VERTICAL_TEXT_POSITION_CHANGED_PROPERTY, oldValue, verticalTextPosition);
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Returns the horizontal position of the text relative to the icon.
+     * @return the <code>horizontalTextPosition</code> property,
+     *          one of the following values:
+     * <ul>
+     * <li>{@code SwingConstants.RIGHT}
+     * <li>{@code SwingConstants.LEFT}
+     * <li>{@code SwingConstants.CENTER}
+     * <li>{@code SwingConstants.LEADING}
+     * <li>{@code SwingConstants.TRAILING} (the default)
+     * </ul>
+     */
+    public int getHorizontalTextPosition() {
+        return horizontalTextPosition;
+    }
+
+    /**
+     * Sets the horizontal position of the text relative to the icon.
+     * @param textPosition one of the following values:
+     * <ul>
+     * <li>{@code SwingConstants.RIGHT}
+     * <li>{@code SwingConstants.LEFT}
+     * <li>{@code SwingConstants.CENTER}
+     * <li>{@code SwingConstants.LEADING}
+     * <li>{@code SwingConstants.TRAILING} (the default)
+     * </ul>
+     * @exception IllegalArgumentException if <code>textPosition</code>
+     *          is not one of the legal values listed above
+     * @beaninfo
+     *        bound: true
+     *         enum: LEFT     SwingConstants.LEFT
+     *               CENTER   SwingConstants.CENTER
+     *               RIGHT    SwingConstants.RIGHT
+     *               LEADING  SwingConstants.LEADING
+     *               TRAILING SwingConstants.TRAILING
+     *    attribute: visualUpdate true
+     *  description: The horizontal position of the text relative to the icon.
+     */
+    public void setHorizontalTextPosition(int textPosition) {
+        if (textPosition == horizontalTextPosition) return;
+        int oldValue = horizontalTextPosition;
+        horizontalTextPosition = checkHorizontalKey(textPosition,
+                                                    "horizontalTextPosition");
+        firePropertyChange(HORIZONTAL_TEXT_POSITION_CHANGED_PROPERTY,
+                           oldValue,
+                           horizontalTextPosition);
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Returns the amount of space between the text and the icon
+     * displayed in this button.
+     *
+     * @return an int equal to the number of pixels between the text
+     *         and the icon.
+     * @since 1.4
+     * @see #setIconTextGap
+     */
+    public int getIconTextGap() {
+        return iconTextGap;
+    }
+
+    /**
+     * If both the icon and text properties are set, this property
+     * defines the space between them.
+     * <p>
+     * The default value of this property is 4 pixels.
+     * <p>
+     * This is a JavaBeans bound property.
+     *
+     * @since 1.4
+     * @see #getIconTextGap
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: If both the icon and text properties are set, this
+     *               property defines the space between them.
+     */
+    public void setIconTextGap(int iconTextGap) {
+        int oldValue = this.iconTextGap;
+        this.iconTextGap = iconTextGap;
+        iconTextGapSet = true;
+        firePropertyChange("iconTextGap", oldValue, iconTextGap);
+        if (iconTextGap != oldValue) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Verify that the {@code key} argument is a legal value for the
+     * {@code horizontalAlignment} and {@code horizontalTextPosition}
+     * properties. Valid values are:
+     * <ul>
+     *   <li>{@code SwingConstants.RIGHT}
+     *   <li>{@code SwingConstants.LEFT}
+     *   <li>{@code SwingConstants.CENTER}
+     *   <li>{@code SwingConstants.LEADING}
+     *   <li>{@code SwingConstants.TRAILING}
+     * </ul>
+     *
+     * @param key the property value to check
+     * @param exception the message to use in the
+     *        {@code IllegalArgumentException} that is thrown for an invalid
+     *        value
+     * @return the {@code key} argument
+     * @exception IllegalArgumentException if key is not one of the legal
+     *            values listed above
+     * @see #setHorizontalTextPosition
+     * @see #setHorizontalAlignment
+     */
+    protected int checkHorizontalKey(int key, String exception) {
+        if ((key == LEFT) ||
+            (key == CENTER) ||
+            (key == RIGHT) ||
+            (key == LEADING) ||
+            (key == TRAILING)) {
+            return key;
+        } else {
+            throw new IllegalArgumentException(exception);
+        }
+    }
+
+    /**
+     * Verify that the {@code key} argument is a legal value for the
+     * vertical properties. Valid values are:
+     * <ul>
+     *   <li>{@code SwingConstants.CENTER}
+     *   <li>{@code SwingConstants.TOP}
+     *   <li>{@code SwingConstants.BOTTOM}
+     * </ul>
+     *
+     * @param key the property value to check
+     * @param exception the message to use in the
+     *        {@code IllegalArgumentException} that is thrown for an invalid
+     *        value
+     * @return the {@code key} argument
+     * @exception IllegalArgumentException if key is not one of the legal
+     *            values listed above
+     */
+    protected int checkVerticalKey(int key, String exception) {
+        if ((key == TOP) || (key == CENTER) || (key == BOTTOM)) {
+            return key;
+        } else {
+            throw new IllegalArgumentException(exception);
+        }
+    }
+
+    /**
+     *{@inheritDoc}
+     *
+     * @since 1.6
+     */
+    public void removeNotify() {
+        super.removeNotify();
+        if(isRolloverEnabled()) {
+            getModel().setRollover(false);
+        }
+    }
+
+    /**
+     * Sets the action command for this button.
+     * @param actionCommand the action command for this button
+     */
+    public void setActionCommand(String actionCommand) {
+        getModel().setActionCommand(actionCommand);
+    }
+
+    /**
+     * Returns the action command for this button.
+     * @return the action command for this button
+     */
+    public String getActionCommand() {
+        String ac = getModel().getActionCommand();
+        if(ac == null) {
+            ac = getText();
+        }
+        return ac;
+    }
+
+    private Action action;
+    private PropertyChangeListener actionPropertyChangeListener;
+
+    /**
+     * Sets the <code>Action</code>.
+     * The new <code>Action</code> replaces any previously set
+     * <code>Action</code> but does not affect <code>ActionListeners</code>
+     * independently added with <code>addActionListener</code>.
+     * If the <code>Action</code> is already a registered
+     * <code>ActionListener</code> for the button, it is not re-registered.
+     * <p>
+     * Setting the <code>Action</code> results in immediately changing
+     * all the properties described in <a href="Action.html#buttonActions">
+     * Swing Components Supporting <code>Action</code></a>.
+     * Subsequently, the button's properties are automatically updated
+     * as the <code>Action</code>'s properties change.
+     * <p>
+     * This method uses three other methods to set
+     * and help track the <code>Action</code>'s property values.
+     * It uses the <code>configurePropertiesFromAction</code> method
+     * to immediately change the button's properties.
+     * To track changes in the <code>Action</code>'s property values,
+     * this method registers the <code>PropertyChangeListener</code>
+     * returned by <code>createActionPropertyChangeListener</code>. The
+     * default {@code PropertyChangeListener} invokes the
+     * {@code actionPropertyChanged} method when a property in the
+     * {@code Action} changes.
+     *
+     * @param a the <code>Action</code> for the <code>AbstractButton</code>,
+     *          or <code>null</code>
+     * @since 1.3
+     * @see Action
+     * @see #getAction
+     * @see #configurePropertiesFromAction
+     * @see #createActionPropertyChangeListener
+     * @see #actionPropertyChanged
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: the Action instance connected with this ActionEvent source
+     */
+    public void setAction(Action a) {
+        Action oldValue = getAction();
+        if (action==null || !action.equals(a)) {
+            action = a;
+            if (oldValue!=null) {
+                removeActionListener(oldValue);
+                oldValue.removePropertyChangeListener(actionPropertyChangeListener);
+                actionPropertyChangeListener = null;
+            }
+            configurePropertiesFromAction(action);
+            if (action!=null) {
+                // Don't add if it is already a listener
+                if (!isListener(ActionListener.class, action)) {
+                    addActionListener(action);
+                }
+                // Reverse linkage:
+                actionPropertyChangeListener = createActionPropertyChangeListener(action);
+                action.addPropertyChangeListener(actionPropertyChangeListener);
+            }
+            firePropertyChange("action", oldValue, action);
+        }
+    }
+
+    private boolean isListener(Class c, ActionListener a) {
+        boolean isListener = false;
+        Object[] listeners = listenerList.getListenerList();
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==c && listeners[i+1]==a) {
+                    isListener=true;
+            }
+        }
+        return isListener;
+    }
+
+    /**
+     * Returns the currently set <code>Action</code> for this
+     * <code>ActionEvent</code> source, or <code>null</code>
+     * if no <code>Action</code> is set.
+     *
+     * @return the <code>Action</code> for this <code>ActionEvent</code>
+     *          source, or <code>null</code>
+     * @since 1.3
+     * @see Action
+     * @see #setAction
+     */
+    public Action getAction() {
+        return action;
+    }
+
+    /**
+     * Sets the properties on this button to match those in the specified
+     * <code>Action</code>.  Refer to <a href="Action.html#buttonActions">
+     * Swing Components Supporting <code>Action</code></a> for more
+     * details as to which properties this sets.
+     *
+     * @param a the <code>Action</code> from which to get the properties,
+     *          or <code>null</code>
+     * @since 1.3
+     * @see Action
+     * @see #setAction
+     */
+    protected void configurePropertiesFromAction(Action a) {
+        setMnemonicFromAction(a);
+        setTextFromAction(a, false);
+        AbstractAction.setToolTipTextFromAction(this, a);
+        setIconFromAction(a);
+        setActionCommandFromAction(a);
+        AbstractAction.setEnabledFromAction(this, a);
+        if (AbstractAction.hasSelectedKey(a) &&
+                shouldUpdateSelectedStateFromAction()) {
+            setSelectedFromAction(a);
+        }
+        setDisplayedMnemonicIndexFromAction(a, false);
+    }
+
+    void clientPropertyChanged(Object key, Object oldValue,
+                               Object newValue) {
+        if (key == "hideActionText") {
+            boolean current = (newValue instanceof Boolean) ?
+                                (Boolean)newValue : false;
+            if (getHideActionText() != current) {
+                setHideActionText(current);
+            }
+        }
+    }
+
+    /**
+     * Button subclasses that support mirroring the selected state from
+     * the action should override this to return true.  AbstractButton's
+     * implementation returns false.
+     */
+    boolean shouldUpdateSelectedStateFromAction() {
+        return false;
+    }
+
+    /**
+     * Updates the button's state in response to property changes in the
+     * associated action. This method is invoked from the
+     * {@code PropertyChangeListener} returned from
+     * {@code createActionPropertyChangeListener}. Subclasses do not normally
+     * need to invoke this. Subclasses that support additional {@code Action}
+     * properties should override this and
+     * {@code configurePropertiesFromAction}.
+     * <p>
+     * Refer to the table at <a href="Action.html#buttonActions">
+     * Swing Components Supporting <code>Action</code></a> for a list of
+     * the properties this method sets.
+     *
+     * @param action the <code>Action</code> associated with this button
+     * @param propertyName the name of the property that changed
+     * @since 1.6
+     * @see Action
+     * @see #configurePropertiesFromAction
+     */
+    protected void actionPropertyChanged(Action action, String propertyName) {
+        if (propertyName == Action.NAME) {
+            setTextFromAction(action, true);
+        } else if (propertyName == "enabled") {
+            AbstractAction.setEnabledFromAction(this, action);
+        } else if (propertyName == Action.SHORT_DESCRIPTION) {
+            AbstractAction.setToolTipTextFromAction(this, action);
+        } else if (propertyName == Action.SMALL_ICON) {
+            smallIconChanged(action);
+        } else if (propertyName == Action.MNEMONIC_KEY) {
+            setMnemonicFromAction(action);
+        } else if (propertyName == Action.ACTION_COMMAND_KEY) {
+            setActionCommandFromAction(action);
+        } else if (propertyName == Action.SELECTED_KEY &&
+                   AbstractAction.hasSelectedKey(action) &&
+                   shouldUpdateSelectedStateFromAction()) {
+            setSelectedFromAction(action);
+        } else if (propertyName == Action.DISPLAYED_MNEMONIC_INDEX_KEY) {
+            setDisplayedMnemonicIndexFromAction(action, true);
+        } else if (propertyName == Action.LARGE_ICON_KEY) {
+            largeIconChanged(action);
+        }
+    }
+
+    private void setDisplayedMnemonicIndexFromAction(
+            Action a, boolean fromPropertyChange) {
+        Integer iValue = (a == null) ? null :
+                (Integer)a.getValue(Action.DISPLAYED_MNEMONIC_INDEX_KEY);
+        if (fromPropertyChange || iValue != null) {
+            int value;
+            if (iValue == null) {
+                value = -1;
+            } else {
+                value = iValue;
+                String text = getText();
+                if (text == null || value >= text.length()) {
+                    value = -1;
+                }
+            }
+            setDisplayedMnemonicIndex(value);
+        }
+    }
+
+    private void setMnemonicFromAction(Action a) {
+        Integer n = (a == null) ? null :
+                                  (Integer)a.getValue(Action.MNEMONIC_KEY);
+        setMnemonic((n == null) ? '\0' : n);
+    }
+
+    private void setTextFromAction(Action a, boolean propertyChange) {
+        boolean hideText = getHideActionText();
+        if (!propertyChange) {
+            setText((a != null && !hideText) ?
+                        (String)a.getValue(Action.NAME) : null);
+        }
+        else if (!hideText) {
+            setText((String)a.getValue(Action.NAME));
+        }
+    }
+
+    void setIconFromAction(Action a) {
+        Icon icon = null;
+        if (a != null) {
+            icon = (Icon)a.getValue(Action.LARGE_ICON_KEY);
+            if (icon == null) {
+                icon = (Icon)a.getValue(Action.SMALL_ICON);
+            }
+        }
+        setIcon(icon);
+    }
+
+    void smallIconChanged(Action a) {
+        if (a.getValue(Action.LARGE_ICON_KEY) == null) {
+            setIconFromAction(a);
+        }
+    }
+
+    void largeIconChanged(Action a) {
+        setIconFromAction(a);
+    }
+
+    private void setActionCommandFromAction(Action a) {
+        setActionCommand((a != null) ?
+                             (String)a.getValue(Action.ACTION_COMMAND_KEY) :
+                             null);
+    }
+
+    /**
+     * Sets the seleted state of the button from the action.  This is defined
+     * here, but not wired up.  Subclasses like JToggleButton and
+     * JCheckBoxMenuItem make use of it.
+     *
+     * @param a the Action
+     */
+    private void setSelectedFromAction(Action a) {
+        boolean selected = false;
+        if (a != null) {
+            selected = AbstractAction.isSelected(a);
+        }
+        if (selected != isSelected()) {
+            // This won't notify ActionListeners, but that should be
+            // ok as the change is coming from the Action.
+            setSelected(selected);
+            // Make sure the change actually took effect
+            if (!selected && isSelected()) {
+                if (getModel() instanceof DefaultButtonModel) {
+                    ButtonGroup group = ((DefaultButtonModel)getModel()).getGroup();
+                    if (group != null) {
+                        group.clearSelection();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates and returns a <code>PropertyChangeListener</code> that is
+     * responsible for listening for changes from the specified
+     * <code>Action</code> and updating the appropriate properties.
+     * <p>
+     * <b>Warning:</b> If you subclass this do not create an anonymous
+     * inner class.  If you do the lifetime of the button will be tied to
+     * that of the <code>Action</code>.
+     *
+     * @param a the button's action
+     * @since 1.3
+     * @see Action
+     * @see #setAction
+     */
+    protected PropertyChangeListener createActionPropertyChangeListener(Action a) {
+        return createActionPropertyChangeListener0(a);
+    }
+
+
+    PropertyChangeListener createActionPropertyChangeListener0(Action a) {
+        return new ButtonActionPropertyChangeListener(this, a);
+    }
+
+    @SuppressWarnings("serial")
+    private static class ButtonActionPropertyChangeListener
+                 extends ActionPropertyChangeListener<AbstractButton> {
+        ButtonActionPropertyChangeListener(AbstractButton b, Action a) {
+            super(b, a);
+        }
+        protected void actionPropertyChanged(AbstractButton button,
+                                             Action action,
+                                             PropertyChangeEvent e) {
+            if (AbstractAction.shouldReconfigure(e)) {
+                button.configurePropertiesFromAction(action);
+            } else {
+                button.actionPropertyChanged(action, e.getPropertyName());
+            }
+        }
+    }
+
+    /**
+     * Gets the <code>borderPainted</code> property.
+     *
+     * @return the value of the <code>borderPainted</code> property
+     * @see #setBorderPainted
+     */
+    public boolean isBorderPainted() {
+        return paintBorder;
+    }
+
+    /**
+     * Sets the <code>borderPainted</code> property.
+     * If <code>true</code> and the button has a border,
+     * the border is painted. The default value for the
+     * <code>borderPainted</code> property is <code>true</code>.
+     * <p>
+     * Some look and feels might not support
+     * the <code>borderPainted</code> property,
+     * in which case they ignore this.
+     *
+     * @param b if true and border property is not <code>null</code>,
+     *          the border is painted
+     * @see #isBorderPainted
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Whether the border should be painted.
+     */
+    public void setBorderPainted(boolean b) {
+        boolean oldValue = paintBorder;
+        paintBorder = b;
+        borderPaintedSet = true;
+        firePropertyChange(BORDER_PAINTED_CHANGED_PROPERTY, oldValue, paintBorder);
+        if (b != oldValue) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Paint the button's border if <code>BorderPainted</code>
+     * property is true and the button has a border.
+     * @param g the <code>Graphics</code> context in which to paint
+     *
+     * @see #paint
+     * @see #setBorder
+     */
+    protected void paintBorder(Graphics g) {
+        if (isBorderPainted()) {
+            super.paintBorder(g);
+        }
+    }
+
+    /**
+     * Gets the <code>paintFocus</code> property.
+     *
+     * @return the <code>paintFocus</code> property
+     * @see #setFocusPainted
+     */
+    public boolean isFocusPainted() {
+        return paintFocus;
+    }
+
+    /**
+     * Sets the <code>paintFocus</code> property, which must
+     * be <code>true</code> for the focus state to be painted.
+     * The default value for the <code>paintFocus</code> property
+     * is <code>true</code>.
+     * Some look and feels might not paint focus state;
+     * they will ignore this property.
+     *
+     * @param b if <code>true</code>, the focus state should be painted
+     * @see #isFocusPainted
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Whether focus should be painted
+     */
+    public void setFocusPainted(boolean b) {
+        boolean oldValue = paintFocus;
+        paintFocus = b;
+        firePropertyChange(FOCUS_PAINTED_CHANGED_PROPERTY, oldValue, paintFocus);
+        if (b != oldValue && isFocusOwner()) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Gets the <code>contentAreaFilled</code> property.
+     *
+     * @return the <code>contentAreaFilled</code> property
+     * @see #setContentAreaFilled
+     */
+    public boolean isContentAreaFilled() {
+        return contentAreaFilled;
+    }
+
+    /**
+     * Sets the <code>contentAreaFilled</code> property.
+     * If <code>true</code> the button will paint the content
+     * area.  If you wish to have a transparent button, such as
+     * an icon only button, for example, then you should set
+     * this to <code>false</code>. Do not call <code>setOpaque(false)</code>.
+     * The default value for the the <code>contentAreaFilled</code>
+     * property is <code>true</code>.
+     * <p>
+     * This function may cause the component's opaque property to change.
+     * <p>
+     * The exact behavior of calling this function varies on a
+     * component-by-component and L&amp;F-by-L&amp;F basis.
+     *
+     * @param b if true, the content should be filled; if false
+     *          the content area is not filled
+     * @see #isContentAreaFilled
+     * @see #setOpaque
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Whether the button should paint the content area
+     *               or leave it transparent.
+     */
+    public void setContentAreaFilled(boolean b) {
+        boolean oldValue = contentAreaFilled;
+        contentAreaFilled = b;
+        contentAreaFilledSet = true;
+        firePropertyChange(CONTENT_AREA_FILLED_CHANGED_PROPERTY, oldValue, contentAreaFilled);
+        if (b != oldValue) {
+            repaint();
+        }
+    }
+
+    /**
+     * Gets the <code>rolloverEnabled</code> property.
+     *
+     * @return the value of the <code>rolloverEnabled</code> property
+     * @see #setRolloverEnabled
+     */
+    public boolean isRolloverEnabled() {
+        return rolloverEnabled;
+    }
+
+    /**
+     * Sets the <code>rolloverEnabled</code> property, which
+     * must be <code>true</code> for rollover effects to occur.
+     * The default value for the <code>rolloverEnabled</code>
+     * property is <code>false</code>.
+     * Some look and feels might not implement rollover effects;
+     * they will ignore this property.
+     *
+     * @param b if <code>true</code>, rollover effects should be painted
+     * @see #isRolloverEnabled
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: Whether rollover effects should be enabled.
+     */
+    public void setRolloverEnabled(boolean b) {
+        boolean oldValue = rolloverEnabled;
+        rolloverEnabled = b;
+        rolloverEnabledSet = true;
+        firePropertyChange(ROLLOVER_ENABLED_CHANGED_PROPERTY, oldValue, rolloverEnabled);
+        if (b != oldValue) {
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the keyboard mnemonic from the the current model.
+     * @return the keyboard mnemonic from the model
+     */
+    public int getMnemonic() {
+        return mnemonic;
+    }
+
+    /**
+     * Sets the keyboard mnemonic on the current model.
+     * The mnemonic is the key which when combined with the look and feel's
+     * mouseless modifier (usually Alt) will activate this button
+     * if focus is contained somewhere within this button's ancestor
+     * window.
+     * <p>
+     * A mnemonic must correspond to a single key on the keyboard
+     * and should be specified using one of the <code>VK_XXX</code>
+     * keycodes defined in <code>java.awt.event.KeyEvent</code>.
+     * These codes and the wider array of codes for international
+     * keyboards may be obtained through
+     * <code>java.awt.event.KeyEvent.getExtendedKeyCodeForChar</code>.
+     * Mnemonics are case-insensitive, therefore a key event
+     * with the corresponding keycode would cause the button to be
+     * activated whether or not the Shift modifier was pressed.
+     * <p>
+     * If the character defined by the mnemonic is found within
+     * the button's label string, the first occurrence of it
+     * will be underlined to indicate the mnemonic to the user.
+     *
+     * @param mnemonic the key code which represents the mnemonic
+     * @see     java.awt.event.KeyEvent
+     * @see     #setDisplayedMnemonicIndex
+     *
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: the keyboard character mnemonic
+     */
+    public void setMnemonic(int mnemonic) {
+        int oldValue = getMnemonic();
+        model.setMnemonic(mnemonic);
+        updateMnemonicProperties();
+    }
+
+    /**
+     * This method is now obsolete, please use <code>setMnemonic(int)</code>
+     * to set the mnemonic for a button.  This method is only designed
+     * to handle character values which fall between 'a' and 'z' or
+     * 'A' and 'Z'.
+     *
+     * @param mnemonic  a char specifying the mnemonic value
+     * @see #setMnemonic(int)
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: the keyboard character mnemonic
+     */
+    public void setMnemonic(char mnemonic) {
+        int vk = (int) mnemonic;
+        if(vk >= 'a' && vk <='z')
+            vk -= ('a' - 'A');
+        setMnemonic(vk);
+    }
+
+    /**
+     * Provides a hint to the look and feel as to which character in the
+     * text should be decorated to represent the mnemonic. Not all look and
+     * feels may support this. A value of -1 indicates either there is no
+     * mnemonic, the mnemonic character is not contained in the string, or
+     * the developer does not wish the mnemonic to be displayed.
+     * <p>
+     * The value of this is updated as the properties relating to the
+     * mnemonic change (such as the mnemonic itself, the text...).
+     * You should only ever have to call this if
+     * you do not wish the default character to be underlined. For example, if
+     * the text was 'Save As', with a mnemonic of 'a', and you wanted the 'A'
+     * to be decorated, as 'Save <u>A</u>s', you would have to invoke
+     * <code>setDisplayedMnemonicIndex(5)</code> after invoking
+     * <code>setMnemonic(KeyEvent.VK_A)</code>.
+     *
+     * @since 1.4
+     * @param index Index into the String to underline
+     * @exception IllegalArgumentException will be thrown if <code>index</code>
+     *            is &gt;= length of the text, or &lt; -1
+     * @see #getDisplayedMnemonicIndex
+     *
+     * @beaninfo
+     *        bound: true
+     *    attribute: visualUpdate true
+     *  description: the index into the String to draw the keyboard character
+     *               mnemonic at
+     */
+    public void setDisplayedMnemonicIndex(int index)
+                                          throws IllegalArgumentException {
+        int oldValue = mnemonicIndex;
+        if (index == -1) {
+            mnemonicIndex = -1;
+        } else {
+            String text = getText();
+            int textLength = (text == null) ? 0 : text.length();
+            if (index < -1 || index >= textLength) {  // index out of range
+                throw new IllegalArgumentException("index == " + index);
+            }
+        }
+        mnemonicIndex = index;
+        firePropertyChange("displayedMnemonicIndex", oldValue, index);
+        if (index != oldValue) {
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the character, as an index, that the look and feel should
+     * provide decoration for as representing the mnemonic character.
+     *
+     * @since 1.4
+     * @return index representing mnemonic character
+     * @see #setDisplayedMnemonicIndex
+     */
+    public int getDisplayedMnemonicIndex() {
+        return mnemonicIndex;
+    }
+
+    /**
+     * Update the displayedMnemonicIndex property. This method
+     * is called when either text or mnemonic changes. The new
+     * value of the displayedMnemonicIndex property is the index
+     * of the first occurrence of mnemonic in text.
+     */
+    private void updateDisplayedMnemonicIndex(String text, int mnemonic) {
+        setDisplayedMnemonicIndex(
+            SwingUtilities.findDisplayedMnemonicIndex(text, mnemonic));
+    }
+
+    /**
+     * Brings the mnemonic property in accordance with model's mnemonic.
+     * This is called when model's mnemonic changes. Also updates the
+     * displayedMnemonicIndex property.
+     */
+    private void updateMnemonicProperties() {
+        int newMnemonic = model.getMnemonic();
+        if (mnemonic != newMnemonic) {
+            int oldValue = mnemonic;
+            mnemonic = newMnemonic;
+            firePropertyChange(MNEMONIC_CHANGED_PROPERTY,
+                               oldValue, mnemonic);
+            updateDisplayedMnemonicIndex(getText(), mnemonic);
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
+     * Sets the amount of time (in milliseconds) required between
+     * mouse press events for the button to generate the corresponding
+     * action events.  After the initial mouse press occurs (and action
+     * event generated) any subsequent mouse press events which occur
+     * on intervals less than the threshhold will be ignored and no
+     * corresponding action event generated.  By default the threshhold is 0,
+     * which means that for each mouse press, an action event will be
+     * fired, no matter how quickly the mouse clicks occur.  In buttons
+     * where this behavior is not desirable (for example, the "OK" button
+     * in a dialog), this threshhold should be set to an appropriate
+     * positive value.
+     *
+     * @see #getMultiClickThreshhold
+     * @param threshhold the amount of time required between mouse
+     *        press events to generate corresponding action events
+     * @exception   IllegalArgumentException if threshhold &lt; 0
+     * @since 1.4
+     */
+    public void setMultiClickThreshhold(long threshhold) {
+        if (threshhold < 0) {
+            throw new IllegalArgumentException("threshhold must be >= 0");
+        }
+        this.multiClickThreshhold = threshhold;
+    }
+
+    /**
+     * Gets the amount of time (in milliseconds) required between
+     * mouse press events for the button to generate the corresponding
+     * action events.
+     *
+     * @see #setMultiClickThreshhold
+     * @return the amount of time required between mouse press events
+     *         to generate corresponding action events
+     * @since 1.4
+     */
+    public long getMultiClickThreshhold() {
+        return multiClickThreshhold;
+    }
+
+    /**
+     * Returns the model that this button represents.
+     * @return the <code>model</code> property
+     * @see #setModel
+     */
+    public ButtonModel getModel() {
+        return model;
+    }
+
+    /**
+     * Sets the model that this button represents.
+     * @param newModel the new <code>ButtonModel</code>
+     * @see #getModel
+     * @beaninfo
+     *        bound: true
+     *  description: Model that the Button uses.
+     */
+    public void setModel(ButtonModel newModel) {
+
+        ButtonModel oldModel = getModel();
+
+        if (oldModel != null) {
+            oldModel.removeChangeListener(changeListener);
+            oldModel.removeActionListener(actionListener);
+            oldModel.removeItemListener(itemListener);
+            changeListener = null;
+            actionListener = null;
+            itemListener = null;
+        }
+
+        model = newModel;
+
+        if (newModel != null) {
+            changeListener = createChangeListener();
+            actionListener = createActionListener();
+            itemListener = createItemListener();
+            newModel.addChangeListener(changeListener);
+            newModel.addActionListener(actionListener);
+            newModel.addItemListener(itemListener);
+
+            updateMnemonicProperties();
+            //We invoke setEnabled() from JComponent
+            //because setModel() can be called from a constructor
+            //when the button is not fully initialized
+            super.setEnabled(newModel.isEnabled());
+
+        } else {
+            mnemonic = '\0';
+        }
+
+        updateDisplayedMnemonicIndex(getText(), mnemonic);
+
+        firePropertyChange(MODEL_CHANGED_PROPERTY, oldModel, newModel);
+        if (newModel != oldModel) {
+            revalidate();
+            repaint();
+        }
+    }
+
+
+    /**
+     * Returns the L&amp;F object that renders this component.
+     * @return the ButtonUI object
+     * @see #setUI
+     */
+    public ButtonUI getUI() {
+        return (ButtonUI) ui;
+    }
+
+
+    /**
+     * Sets the L&amp;F object that renders this component.
+     * @param ui the <code>ButtonUI</code> L&amp;F object
+     * @see #getUI
+     * @beaninfo
+     *        bound: true
+     *       hidden: true
+     *    attribute: visualUpdate true
+     *  description: The UI object that implements the LookAndFeel.
+     */
+    public void setUI(ButtonUI ui) {
+        super.setUI(ui);
+        // disabled icons are generated by the LF so they should be unset here
+        if (disabledIcon instanceof UIResource) {
+            setDisabledIcon(null);
+        }
+        if (disabledSelectedIcon instanceof UIResource) {
+            setDisabledSelectedIcon(null);
+        }
+    }
+
+
+    /**
+     * Resets the UI property to a value from the current look
+     * and feel.  Subtypes of <code>AbstractButton</code>
+     * should override this to update the UI. For
+     * example, <code>JButton</code> might do the following:
+     * <pre>
+     *      setUI((ButtonUI)UIManager.getUI(
+     *          "ButtonUI", "javax.swing.plaf.basic.BasicButtonUI", this));
+     * </pre>
+     */
+    public void updateUI() {
+    }
+
+    /**
+     * Adds the specified component to this container at the specified
+     * index, refer to
+     * {@link java.awt.Container#addImpl(Component, Object, int)}
+     * for a complete description of this method.
+     *
+     * @param     comp the component to be added
+     * @param     constraints an object expressing layout constraints
+     *                 for this component
+     * @param     index the position in the container's list at which to
+     *                 insert the component, where <code>-1</code>
+     *                 means append to the end
+     * @exception IllegalArgumentException if <code>index</code> is invalid
+     * @exception IllegalArgumentException if adding the container's parent
+     *                  to itself
+     * @exception IllegalArgumentException if adding a window to a container
+     * @since 1.5
+     */
+    protected void addImpl(Component comp, Object constraints, int index) {
+        if (!setLayout) {
+            setLayout(new OverlayLayout(this));
+        }
+        super.addImpl(comp, constraints, index);
+    }
+
+    /**
+     * Sets the layout manager for this container, refer to
+     * {@link java.awt.Container#setLayout(LayoutManager)}
+     * for a complete description of this method.
+     *
+     * @param mgr the specified layout manager
+     * @since 1.5
+     */
+    public void setLayout(LayoutManager mgr) {
+        setLayout = true;
+        super.setLayout(mgr);
+    }
+
+    /**
+     * Adds a <code>ChangeListener</code> to the button.
+     * @param l the listener to be added
+     */
+    public void addChangeListener(ChangeListener l) {
+        listenerList.add(ChangeListener.class, l);
+    }
+
+    /**
+     * Removes a ChangeListener from the button.
+     * @param l the listener to be removed
+     */
+    public void removeChangeListener(ChangeListener l) {
+        listenerList.remove(ChangeListener.class, l);
+    }
+
+    /**
+     * Returns an array of all the <code>ChangeListener</code>s added
+     * to this AbstractButton with addChangeListener().
+     *
+     * @return all of the <code>ChangeListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ChangeListener[] getChangeListeners() {
+        return listenerList.getListeners(ChangeListener.class);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created.
+     * @see EventListenerList
+     */
+    protected void fireStateChanged() {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ChangeListener.class) {
+                // Lazily create the event:
+                if (changeEvent == null)
+                    changeEvent = new ChangeEvent(this);
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
+
+    /**
+     * Adds an <code>ActionListener</code> to the button.
+     * @param l the <code>ActionListener</code> to be added
+     */
+    public void addActionListener(ActionListener l) {
+        listenerList.add(ActionListener.class, l);
+    }
+
+    /**
+     * Removes an <code>ActionListener</code> from the button.
+     * If the listener is the currently set <code>Action</code>
+     * for the button, then the <code>Action</code>
+     * is set to <code>null</code>.
+     *
+     * @param l the listener to be removed
+     */
+    public void removeActionListener(ActionListener l) {
+        if ((l != null) && (getAction() == l)) {
+            setAction(null);
+        } else {
+            listenerList.remove(ActionListener.class, l);
+        }
+    }
+
+    /**
+     * Returns an array of all the <code>ActionListener</code>s added
+     * to this AbstractButton with addActionListener().
+     *
+     * @return all of the <code>ActionListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ActionListener[] getActionListeners() {
+        return listenerList.getListeners(ActionListener.class);
+    }
+
+    /**
+     * Subclasses that want to handle <code>ChangeEvents</code> differently
+     * can override this to return another <code>ChangeListener</code>
+     * implementation.
+     *
+     * @return the new <code>ChangeListener</code>
+     */
+    protected ChangeListener createChangeListener() {
+        return getHandler();
+    }
+
+    /**
+     * Extends <code>ChangeListener</code> to be serializable.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    @SuppressWarnings("serial")
+    protected class ButtonChangeListener implements ChangeListener, Serializable {
+        // NOTE: This class is NOT used, instead the functionality has
+        // been moved to Handler.
+        ButtonChangeListener() {
+        }
+
+        public void stateChanged(ChangeEvent e) {
+            getHandler().stateChanged(e);
+        }
+    }
+
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the <code>event</code>
+     * parameter.
+     *
+     * @param event  the <code>ActionEvent</code> object
+     * @see EventListenerList
+     */
+    protected void fireActionPerformed(ActionEvent event) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        ActionEvent e = null;
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ActionListener.class) {
+                // Lazily create the event:
+                if (e == null) {
+                      String actionCommand = event.getActionCommand();
+                      if(actionCommand == null) {
+                         actionCommand = getActionCommand();
+                      }
+                      e = new ActionEvent(AbstractButton.this,
+                                          ActionEvent.ACTION_PERFORMED,
+                                          actionCommand,
+                                          event.getWhen(),
+                                          event.getModifiers());
+                }
+                ((ActionListener)listeners[i+1]).actionPerformed(e);
+            }
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the <code>event</code> parameter.
+     *
+     * @param event  the <code>ItemEvent</code> object
+     * @see EventListenerList
+     */
+    protected void fireItemStateChanged(ItemEvent event) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        ItemEvent e = null;
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ItemListener.class) {
+                // Lazily create the event:
+                if (e == null) {
+                    e = new ItemEvent(AbstractButton.this,
+                                      ItemEvent.ITEM_STATE_CHANGED,
+                                      AbstractButton.this,
+                                      event.getStateChange());
+                }
+                ((ItemListener)listeners[i+1]).itemStateChanged(e);
+            }
+        }
+        if (accessibleContext != null) {
+            if (event.getStateChange() == ItemEvent.SELECTED) {
+                accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                    null, AccessibleState.SELECTED);
+                accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+                    Integer.valueOf(0), Integer.valueOf(1));
+            } else {
+                accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                    AccessibleState.SELECTED, null);
+                accessibleContext.firePropertyChange(
+                    AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+                    Integer.valueOf(1), Integer.valueOf(0));
+            }
+        }
+    }
+
+
+    protected ActionListener createActionListener() {
+        return getHandler();
+    }
+
+
+    protected ItemListener createItemListener() {
+        return getHandler();
+    }
+
+
+    /**
+     * Enables (or disables) the button.
+     * @param b  true to enable the button, otherwise false
+     */
+    public void setEnabled(boolean b) {
+        if (!b && model.isRollover()) {
+            model.setRollover(false);
+        }
+        super.setEnabled(b);
+        model.setEnabled(b);
+    }
+
+    // *** Deprecated java.awt.Button APIs below *** //
+
+    /**
+     * Returns the label text.
+     *
+     * @return a <code>String</code> containing the label
+     * @deprecated - Replaced by <code>getText</code>
+     */
+    @Deprecated
+    public String getLabel() {
+        return getText();
+    }
+
+    /**
+     * Sets the label text.
+     *
+     * @param label  a <code>String</code> containing the text
+     * @deprecated - Replaced by <code>setText(text)</code>
+     * @beaninfo
+     *        bound: true
+     *  description: Replace by setText(text)
+     */
+    @Deprecated
+    public void setLabel(String label) {
+        setText(label);
+    }
+
+    /**
+     * Adds an <code>ItemListener</code> to the <code>checkbox</code>.
+     * @param l  the <code>ItemListener</code> to be added
+     */
+    public void addItemListener(ItemListener l) {
+        listenerList.add(ItemListener.class, l);
+    }
+
+    /**
+     * Removes an <code>ItemListener</code> from the button.
+     * @param l the <code>ItemListener</code> to be removed
+     */
+    public void removeItemListener(ItemListener l) {
+        listenerList.remove(ItemListener.class, l);
+    }
+
+    /**
+     * Returns an array of all the <code>ItemListener</code>s added
+     * to this AbstractButton with addItemListener().
+     *
+     * @return all of the <code>ItemListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public ItemListener[] getItemListeners() {
+        return listenerList.getListeners(ItemListener.class);
+    }
+
+   /**
+     * Returns an array (length 1) containing the label or
+     * <code>null</code> if the button is not selected.
+     *
+     * @return an array containing 1 Object: the text of the button,
+     *         if the item is selected; otherwise <code>null</code>
+     */
+    public Object[] getSelectedObjects() {
+        if (isSelected() == false) {
+            return null;
+        }
+        Object[] selectedObjects = new Object[1];
+        selectedObjects[0] = getText();
+        return selectedObjects;
+    }
+
+    protected void init(String text, Icon icon) {
+        if(text != null) {
+            setText(text);
+        }
+
+        if(icon != null) {
+            setIcon(icon);
+        }
+
+        // Set the UI
+        updateUI();
+
+        setAlignmentX(LEFT_ALIGNMENT);
+        setAlignmentY(CENTER_ALIGNMENT);
+    }
+
+
+    /**
+     * This is overridden to return false if the current <code>Icon</code>'s
+     * <code>Image</code> is not equal to the
+     * passed in <code>Image</code> <code>img</code>.
+     *
+     * @param img  the <code>Image</code> to be compared
+     * @param infoflags flags used to repaint the button when the image
+     *          is updated and which determine how much is to be painted
+     * @param x  the x coordinate
+     * @param y  the y coordinate
+     * @param w  the width
+     * @param h  the height
+     * @see     java.awt.image.ImageObserver
+     * @see     java.awt.Component#imageUpdate(java.awt.Image, int, int, int, int, int)
+     */
+    public boolean imageUpdate(Image img, int infoflags,
+                               int x, int y, int w, int h) {
+        Icon iconDisplayed = null;
+
+        if (!model.isEnabled()) {
+            if (model.isSelected()) {
+                iconDisplayed = getDisabledSelectedIcon();
+            } else {
+                iconDisplayed = getDisabledIcon();
+            }
+        } else if (model.isPressed() && model.isArmed()) {
+            iconDisplayed = getPressedIcon();
+        } else if (isRolloverEnabled() && model.isRollover()) {
+            if (model.isSelected()) {
+                iconDisplayed = getRolloverSelectedIcon();
+            } else {
+                iconDisplayed = getRolloverIcon();
+            }
+        } else if (model.isSelected()) {
+            iconDisplayed = getSelectedIcon();
+        }
+
+        if (iconDisplayed == null) {
+            iconDisplayed = getIcon();
+        }
+
+        if (iconDisplayed == null
+            || !SwingUtilities.doesIconReferenceImage(iconDisplayed, img)) {
+            // We don't know about this image, disable the notification so
+            // we don't keep repainting.
+            return false;
+        }
+        return super.imageUpdate(img, infoflags, x, y, w, h);
+    }
+
+    void setUIProperty(String propertyName, Object value) {
+        if (propertyName == "borderPainted") {
+            if (!borderPaintedSet) {
+                setBorderPainted(((Boolean)value).booleanValue());
+                borderPaintedSet = false;
+            }
+        } else if (propertyName == "rolloverEnabled") {
+            if (!rolloverEnabledSet) {
+                setRolloverEnabled(((Boolean)value).booleanValue());
+                rolloverEnabledSet = false;
+            }
+        } else if (propertyName == "iconTextGap") {
+            if (!iconTextGapSet) {
+                setIconTextGap(((Number)value).intValue());
+                iconTextGapSet = false;
+            }
+        } else if (propertyName == "contentAreaFilled") {
+            if (!contentAreaFilledSet) {
+                setContentAreaFilled(((Boolean)value).booleanValue());
+                contentAreaFilledSet = false;
+            }
+        } else {
+            super.setUIProperty(propertyName, value);
+        }
+    }
+
+    /**
+     * Returns a string representation of this <code>AbstractButton</code>.
+     * This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     * <P>
+     * Overriding <code>paramString</code> to provide information about the
+     * specific new aspects of the JFC components.
+     *
+     * @return  a string representation of this <code>AbstractButton</code>
+     */
+    protected String paramString() {
+        String defaultIconString = ((defaultIcon != null)
+                                    && (defaultIcon != this) ?
+                                    defaultIcon.toString() : "");
+        String pressedIconString = ((pressedIcon != null)
+                                    && (pressedIcon != this) ?
+                                    pressedIcon.toString() : "");
+        String disabledIconString = ((disabledIcon != null)
+                                     && (disabledIcon != this) ?
+                                     disabledIcon.toString() : "");
+        String selectedIconString = ((selectedIcon != null)
+                                     && (selectedIcon != this) ?
+                                     selectedIcon.toString() : "");
+        String disabledSelectedIconString = ((disabledSelectedIcon != null) &&
+                                             (disabledSelectedIcon != this) ?
+                                             disabledSelectedIcon.toString()
+                                             : "");
+        String rolloverIconString = ((rolloverIcon != null)
+                                     && (rolloverIcon != this) ?
+                                     rolloverIcon.toString() : "");
+        String rolloverSelectedIconString = ((rolloverSelectedIcon != null) &&
+                                             (rolloverSelectedIcon != this) ?
+                                             rolloverSelectedIcon.toString()
+                                             : "");
+        String paintBorderString = (paintBorder ? "true" : "false");
+        String paintFocusString = (paintFocus ? "true" : "false");
+        String rolloverEnabledString = (rolloverEnabled ? "true" : "false");
+
+        return super.paramString() +
+        ",defaultIcon=" + defaultIconString +
+        ",disabledIcon=" + disabledIconString +
+        ",disabledSelectedIcon=" + disabledSelectedIconString +
+        ",margin=" + margin +
+        ",paintBorder=" + paintBorderString +
+        ",paintFocus=" + paintFocusString +
+        ",pressedIcon=" + pressedIconString +
+        ",rolloverEnabled=" + rolloverEnabledString +
+        ",rolloverIcon=" + rolloverIconString +
+        ",rolloverSelectedIcon=" + rolloverSelectedIconString +
+        ",selectedIcon=" + selectedIconString +
+        ",text=" + text;
+    }
+
+
+    private Handler getHandler() {
+        if (handler == null) {
+            handler = new Handler();
+        }
+        return handler;
+    }
+
+
+    //
+    // Listeners that are added to model
+    //
+    @SuppressWarnings("serial")
+    class Handler implements ActionListener, ChangeListener, ItemListener,
+                             Serializable {
+        //
+        // ChangeListener
+        //
+        public void stateChanged(ChangeEvent e) {
+            Object source = e.getSource();
+
+            updateMnemonicProperties();
+            if (isEnabled() != model.isEnabled()) {
+                setEnabled(model.isEnabled());
+            }
+            fireStateChanged();
+            repaint();
+        }
+
+        //
+        // ActionListener
+        //
+        public void actionPerformed(ActionEvent event) {
+            fireActionPerformed(event);
+        }
+
+        //
+        // ItemListener
+        //
+        public void itemStateChanged(ItemEvent event) {
+            fireItemStateChanged(event);
+            if (shouldUpdateSelectedStateFromAction()) {
+                Action action = getAction();
+                if (action != null && AbstractAction.hasSelectedKey(action)) {
+                    boolean selected = isSelected();
+                    boolean isActionSelected = AbstractAction.isSelected(
+                              action);
+                    if (isActionSelected != selected) {
+                        action.putValue(Action.SELECTED_KEY, selected);
+                    }
+                }
+            }
+        }
+    }
+
+///////////////////
+// Accessibility support
+///////////////////
+    /**
+     * This class implements accessibility support for the
+     * <code>AbstractButton</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to button and menu item
+     * user-interface elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     * @since 1.4
+     */
+    protected abstract class AccessibleAbstractButton
+        extends AccessibleJComponent implements AccessibleAction,
+        AccessibleValue, AccessibleText, AccessibleExtendedComponent {
+
+        /**
+         * Returns the accessible name of this object.
+         *
+         * @return the localized name of the object -- can be
+         *              <code>null</code> if this
+         *              object does not have a name
+         */
+        public String getAccessibleName() {
+            String name = accessibleName;
+
+            if (name == null) {
+                name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
+            }
+            if (name == null) {
+                name = AbstractButton.this.getText();
+            }
+            if (name == null) {
+                name = super.getAccessibleName();
+            }
+            return name;
+        }
+
+        /**
+         * Get the AccessibleIcons associated with this object if one
+         * or more exist.  Otherwise return null.
+         * @since 1.3
+         */
+        public AccessibleIcon [] getAccessibleIcon() {
+            Icon defaultIcon = getIcon();
+
+            if (defaultIcon instanceof Accessible) {
+                AccessibleContext ac =
+                    ((Accessible)defaultIcon).getAccessibleContext();
+                if (ac != null && ac instanceof AccessibleIcon) {
+                    return new AccessibleIcon[] { (AccessibleIcon)ac };
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Get the state set of this object.
+         *
+         * @return an instance of AccessibleState containing the current state
+         * of the object
+         * @see AccessibleState
+         */
+        public AccessibleStateSet getAccessibleStateSet() {
+        AccessibleStateSet states = super.getAccessibleStateSet();
+            if (getModel().isArmed()) {
+                states.add(AccessibleState.ARMED);
+            }
+            if (isFocusOwner()) {
+                states.add(AccessibleState.FOCUSED);
+            }
+            if (getModel().isPressed()) {
+                states.add(AccessibleState.PRESSED);
+            }
+            if (isSelected()) {
+                states.add(AccessibleState.CHECKED);
+            }
+            return states;
+        }
+
+        /**
+         * Get the AccessibleRelationSet associated with this object if one
+         * exists.  Otherwise return null.
+         * @see AccessibleRelation
+         * @since 1.3
+         */
+        public AccessibleRelationSet getAccessibleRelationSet() {
+
+            // Check where the AccessibleContext's relation
+            // set already contains a MEMBER_OF relation.
+            AccessibleRelationSet relationSet
+                = super.getAccessibleRelationSet();
+
+            if (!relationSet.contains(AccessibleRelation.MEMBER_OF)) {
+                // get the members of the button group if one exists
+                ButtonModel model = getModel();
+                if (model != null && model instanceof DefaultButtonModel) {
+                    ButtonGroup group = ((DefaultButtonModel)model).getGroup();
+                    if (group != null) {
+                        // set the target of the MEMBER_OF relation to be
+                        // the members of the button group.
+                        int len = group.getButtonCount();
+                        Object [] target = new Object[len];
+                        Enumeration<AbstractButton> elem = group.getElements();
+                        for (int i = 0; i < len; i++) {
+                            if (elem.hasMoreElements()) {
+                                target[i] = elem.nextElement();
+                            }
+                        }
+                        AccessibleRelation relation =
+                            new AccessibleRelation(AccessibleRelation.MEMBER_OF);
+                        relation.setTarget(target);
+                        relationSet.add(relation);
+                    }
+                }
+            }
+            return relationSet;
+        }
+
+        /**
+         * Get the AccessibleAction associated with this object.  In the
+         * implementation of the Java Accessibility API for this class,
+         * return this object, which is responsible for implementing the
+         * AccessibleAction interface on behalf of itself.
+         *
+         * @return this object
+         */
+        public AccessibleAction getAccessibleAction() {
+            return this;
+        }
+
+        /**
+         * Get the AccessibleValue associated with this object.  In the
+         * implementation of the Java Accessibility API for this class,
+         * return this object, which is responsible for implementing the
+         * AccessibleValue interface on behalf of itself.
+         *
+         * @return this object
+         */
+        public AccessibleValue getAccessibleValue() {
+            return this;
+        }
+
+        /**
+         * Returns the number of Actions available in this object.  The
+         * default behavior of a button is to have one action - toggle
+         * the button.
+         *
+         * @return 1, the number of Actions in this object
+         */
+        public int getAccessibleActionCount() {
+            return 1;
+        }
+
+        /**
+         * Return a description of the specified action of the object.
+         *
+         * @param i zero-based index of the actions
+         */
+        public String getAccessibleActionDescription(int i) {
+            if (i == 0) {
+                return UIManager.getString("AbstractButton.clickText");
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Perform the specified Action on the object
+         *
+         * @param i zero-based index of actions
+         * @return true if the the action was performed; else false.
+         */
+        public boolean doAccessibleAction(int i) {
+            if (i == 0) {
+                doClick();
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Get the value of this object as a Number.
+         *
+         * @return An Integer of 0 if this isn't selected or an Integer of 1 if
+         * this is selected.
+         * @see AbstractButton#isSelected
+         */
+        public Number getCurrentAccessibleValue() {
+            if (isSelected()) {
+                return Integer.valueOf(1);
+            } else {
+                return Integer.valueOf(0);
+            }
+        }
+
+        /**
+         * Set the value of this object as a Number.
+         *
+         * @return True if the value was set.
+         */
+        public boolean setCurrentAccessibleValue(Number n) {
+            // TIGER - 4422535
+            if (n == null) {
+                return false;
+            }
+            int i = n.intValue();
+            if (i == 0) {
+                setSelected(false);
+            } else {
+                setSelected(true);
+            }
+            return true;
+        }
+
+        /**
+         * Get the minimum value of this object as a Number.
+         *
+         * @return an Integer of 0.
+         */
+        public Number getMinimumAccessibleValue() {
+            return Integer.valueOf(0);
+        }
+
+        /**
+         * Get the maximum value of this object as a Number.
+         *
+         * @return An Integer of 1.
+         */
+        public Number getMaximumAccessibleValue() {
+            return Integer.valueOf(1);
+        }
+
+
+        /* AccessibleText ---------- */
+
+        public AccessibleText getAccessibleText() {
+            View view = (View)AbstractButton.this.getClientProperty("html");
+            if (view != null) {
+                return this;
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Given a point in local coordinates, return the zero-based index
+         * of the character under that Point.  If the point is invalid,
+         * this method returns -1.
+         *
+         * Note: the AbstractButton must have a valid size (e.g. have
+         * been added to a parent container whose ancestor container
+         * is a valid top-level window) for this method to be able
+         * to return a meaningful value.
+         *
+         * @param p the Point in local coordinates
+         * @return the zero-based index of the character under Point p; if
+         * Point is invalid returns -1.
+         * @since 1.3
+         */
+        public int getIndexAtPoint(Point p) {
+            View view = (View) AbstractButton.this.getClientProperty("html");
+            if (view != null) {
+                Rectangle r = getTextRectangle();
+                if (r == null) {
+                    return -1;
+                }
+                Rectangle2D.Float shape =
+                    new Rectangle2D.Float(r.x, r.y, r.width, r.height);
+                Position.Bias bias[] = new Position.Bias[1];
+                return view.viewToModel(p.x, p.y, shape, bias);
+            } else {
+                return -1;
+            }
+        }
+
+        /**
+         * Determine the bounding box of the character at the given
+         * index into the string.  The bounds are returned in local
+         * coordinates.  If the index is invalid an empty rectangle is
+         * returned.
+         *
+         * Note: the AbstractButton must have a valid size (e.g. have
+         * been added to a parent container whose ancestor container
+         * is a valid top-level window) for this method to be able
+         * to return a meaningful value.
+         *
+         * @param i the index into the String
+         * @return the screen coordinates of the character's the bounding box,
+         * if index is invalid returns an empty rectangle.
+         * @since 1.3
+         */
+        public Rectangle getCharacterBounds(int i) {
+            View view = (View) AbstractButton.this.getClientProperty("html");
+            if (view != null) {
+                Rectangle r = getTextRectangle();
+                if (r == null) {
+                    return null;
+                }
+                Rectangle2D.Float shape =
+                    new Rectangle2D.Float(r.x, r.y, r.width, r.height);
+                try {
+                    Shape charShape =
+                        view.modelToView(i, shape, Position.Bias.Forward);
+                    return charShape.getBounds();
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Return the number of characters (valid indicies)
+         *
+         * @return the number of characters
+         * @since 1.3
+         */
+        public int getCharCount() {
+            View view = (View) AbstractButton.this.getClientProperty("html");
+            if (view != null) {
+                Document d = view.getDocument();
+                if (d instanceof StyledDocument) {
+                    StyledDocument doc = (StyledDocument)d;
+                    return doc.getLength();
+                }
+            }
+            return accessibleContext.getAccessibleName().length();
+        }
+
+        /**
+         * Return the zero-based offset of the caret.
+         *
+         * Note: That to the right of the caret will have the same index
+         * value as the offset (the caret is between two characters).
+         * @return the zero-based offset of the caret.
+         * @since 1.3
+         */
+        public int getCaretPosition() {
+            // There is no caret.
+            return -1;
+        }
+
+        /**
+         * Returns the String at a given index.
+         *
+         * @param part the AccessibleText.CHARACTER, AccessibleText.WORD,
+         * or AccessibleText.SENTENCE to retrieve
+         * @param index an index within the text &gt;= 0
+         * @return the letter, word, or sentence,
+         *   null for an invalid index or part
+         * @since 1.3
+         */
+        public String getAtIndex(int part, int index) {
+            if (index < 0 || index >= getCharCount()) {
+                return null;
+            }
+            switch (part) {
+            case AccessibleText.CHARACTER:
+                try {
+                    return getText(index, 1);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            case AccessibleText.WORD:
+                try {
+                    String s = getText(0, getCharCount());
+                    BreakIterator words = BreakIterator.getWordInstance(getLocale());
+                    words.setText(s);
+                    int end = words.following(index);
+                    return s.substring(words.previous(), end);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            case AccessibleText.SENTENCE:
+                try {
+                    String s = getText(0, getCharCount());
+                    BreakIterator sentence =
+                        BreakIterator.getSentenceInstance(getLocale());
+                    sentence.setText(s);
+                    int end = sentence.following(index);
+                    return s.substring(sentence.previous(), end);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            default:
+                return null;
+            }
+        }
+
+        /**
+         * Returns the String after a given index.
+         *
+         * @param part the AccessibleText.CHARACTER, AccessibleText.WORD,
+         * or AccessibleText.SENTENCE to retrieve
+         * @param index an index within the text &gt;= 0
+         * @return the letter, word, or sentence, null for an invalid
+         *  index or part
+         * @since 1.3
+         */
+        public String getAfterIndex(int part, int index) {
+            if (index < 0 || index >= getCharCount()) {
+                return null;
+            }
+            switch (part) {
+            case AccessibleText.CHARACTER:
+                if (index+1 >= getCharCount()) {
+                   return null;
+                }
+                try {
+                    return getText(index+1, 1);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            case AccessibleText.WORD:
+                try {
+                    String s = getText(0, getCharCount());
+                    BreakIterator words = BreakIterator.getWordInstance(getLocale());
+                    words.setText(s);
+                    int start = words.following(index);
+                    if (start == BreakIterator.DONE || start >= s.length()) {
+                        return null;
+                    }
+                    int end = words.following(start);
+                    if (end == BreakIterator.DONE || end >= s.length()) {
+                        return null;
+                    }
+                    return s.substring(start, end);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            case AccessibleText.SENTENCE:
+                try {
+                    String s = getText(0, getCharCount());
+                    BreakIterator sentence =
+                        BreakIterator.getSentenceInstance(getLocale());
+                    sentence.setText(s);
+                    int start = sentence.following(index);
+                    if (start == BreakIterator.DONE || start > s.length()) {
+                        return null;
+                    }
+                    int end = sentence.following(start);
+                    if (end == BreakIterator.DONE || end > s.length()) {
+                        return null;
+                    }
+                    return s.substring(start, end);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            default:
+                return null;
+            }
+        }
+
+        /**
+         * Returns the String before a given index.
+         *
+         * @param part the AccessibleText.CHARACTER, AccessibleText.WORD,
+         *   or AccessibleText.SENTENCE to retrieve
+         * @param index an index within the text &gt;= 0
+         * @return the letter, word, or sentence, null for an invalid index
+         *  or part
+         * @since 1.3
+         */
+        public String getBeforeIndex(int part, int index) {
+            if (index < 0 || index > getCharCount()-1) {
+                return null;
+            }
+            switch (part) {
+            case AccessibleText.CHARACTER:
+                if (index == 0) {
+                    return null;
+                }
+                try {
+                    return getText(index-1, 1);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            case AccessibleText.WORD:
+                try {
+                    String s = getText(0, getCharCount());
+                    BreakIterator words = BreakIterator.getWordInstance(getLocale());
+                    words.setText(s);
+                    int end = words.following(index);
+                    end = words.previous();
+                    int start = words.previous();
+                    if (start == BreakIterator.DONE) {
+                        return null;
+                    }
+                    return s.substring(start, end);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            case AccessibleText.SENTENCE:
+                try {
+                    String s = getText(0, getCharCount());
+                    BreakIterator sentence =
+                        BreakIterator.getSentenceInstance(getLocale());
+                    sentence.setText(s);
+                    int end = sentence.following(index);
+                    end = sentence.previous();
+                    int start = sentence.previous();
+                    if (start == BreakIterator.DONE) {
+                        return null;
+                    }
+                    return s.substring(start, end);
+                } catch (BadLocationException e) {
+                    return null;
+                }
+            default:
+                return null;
+            }
+        }
+
+        /**
+         * Return the AttributeSet for a given character at a given index
+         *
+         * @param i the zero-based index into the text
+         * @return the AttributeSet of the character
+         * @since 1.3
+         */
+        public AttributeSet getCharacterAttribute(int i) {
+            View view = (View) AbstractButton.this.getClientProperty("html");
+            if (view != null) {
+                Document d = view.getDocument();
+                if (d instanceof StyledDocument) {
+                    StyledDocument doc = (StyledDocument)d;
+                    Element elem = doc.getCharacterElement(i);
+                    if (elem != null) {
+                        return elem.getAttributes();
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Returns the start offset within the selected text.
+         * If there is no selection, but there is
+         * a caret, the start and end offsets will be the same.
+         *
+         * @return the index into the text of the start of the selection
+         * @since 1.3
+         */
+        public int getSelectionStart() {
+            // Text cannot be selected.
+            return -1;
+        }
+
+        /**
+         * Returns the end offset within the selected text.
+         * If there is no selection, but there is
+         * a caret, the start and end offsets will be the same.
+         *
+         * @return the index into the text of the end of the selection
+         * @since 1.3
+         */
+        public int getSelectionEnd() {
+            // Text cannot be selected.
+            return -1;
+        }
+
+        /**
+         * Returns the portion of the text that is selected.
+         *
+         * @return the String portion of the text that is selected
+         * @since 1.3
+         */
+        public String getSelectedText() {
+            // Text cannot be selected.
+            return null;
+        }
+
+        /*
+         * Returns the text substring starting at the specified
+         * offset with the specified length.
+         */
+        private String getText(int offset, int length)
+            throws BadLocationException {
+
+            View view = (View) AbstractButton.this.getClientProperty("html");
+            if (view != null) {
+                Document d = view.getDocument();
+                if (d instanceof StyledDocument) {
+                    StyledDocument doc = (StyledDocument)d;
+                    return doc.getText(offset, length);
+                }
+            }
+            return null;
+        }
+
+        /*
+         * Returns the bounding rectangle for the component text.
+         */
+        private Rectangle getTextRectangle() {
+
+            String text = AbstractButton.this.getText();
+            Icon icon = (AbstractButton.this.isEnabled()) ? AbstractButton.this.getIcon() : AbstractButton.this.getDisabledIcon();
+
+            if ((icon == null) && (text == null)) {
+                return null;
+            }
+
+            Rectangle paintIconR = new Rectangle();
+            Rectangle paintTextR = new Rectangle();
+            Rectangle paintViewR = new Rectangle();
+            Insets paintViewInsets = new Insets(0, 0, 0, 0);
+
+            paintViewInsets = AbstractButton.this.getInsets(paintViewInsets);
+            paintViewR.x = paintViewInsets.left;
+            paintViewR.y = paintViewInsets.top;
+            paintViewR.width = AbstractButton.this.getWidth() - (paintViewInsets.left + paintViewInsets.right);
+            paintViewR.height = AbstractButton.this.getHeight() - (paintViewInsets.top + paintViewInsets.bottom);
+
+            String clippedText = SwingUtilities.layoutCompoundLabel(
+                AbstractButton.this,
+                getFontMetrics(getFont()),
+                text,
+                icon,
+                AbstractButton.this.getVerticalAlignment(),
+                AbstractButton.this.getHorizontalAlignment(),
+                AbstractButton.this.getVerticalTextPosition(),
+                AbstractButton.this.getHorizontalTextPosition(),
+                paintViewR,
+                paintIconR,
+                paintTextR,
+                0);
+
+            return paintTextR;
+        }
+
+        // ----- AccessibleExtendedComponent
+
+        /**
+         * Returns the AccessibleExtendedComponent
+         *
+         * @return the AccessibleExtendedComponent
+         */
+        AccessibleExtendedComponent getAccessibleExtendedComponent() {
+            return this;
+        }
+
+        /**
+         * Returns the tool tip text
+         *
+         * @return the tool tip text, if supported, of the object;
+         * otherwise, null
+         * @since 1.4
+         */
+        public String getToolTipText() {
+            return AbstractButton.this.getToolTipText();
+        }
+
+        /**
+         * Returns the titled border text
+         *
+         * @return the titled border text, if supported, of the object;
+         * otherwise, null
+         * @since 1.4
+         */
+        public String getTitledBorderText() {
+            return super.getTitledBorderText();
+        }
+
+        /**
+         * Returns key bindings associated with this object
+         *
+         * @return the key bindings, if supported, of the object;
+         * otherwise, null
+         * @see AccessibleKeyBinding
+         * @since 1.4
+         */
+        public AccessibleKeyBinding getAccessibleKeyBinding() {
+            int mnemonic = AbstractButton.this.getMnemonic();
+            if (mnemonic == 0) {
+                return null;
+            }
+            return new ButtonKeyBinding(mnemonic);
+        }
+
+        class ButtonKeyBinding implements AccessibleKeyBinding {
+            int mnemonic;
+
+            ButtonKeyBinding(int mnemonic) {
+                this.mnemonic = mnemonic;
+            }
+
+            /**
+             * Returns the number of key bindings for this object
+             *
+             * @return the zero-based number of key bindings for this object
+             */
+            public int getAccessibleKeyBindingCount() {
+                return 1;
+            }
+
+            /**
+             * Returns a key binding for this object.  The value returned is an
+             * java.lang.Object which must be cast to appropriate type depending
+             * on the underlying implementation of the key.  For example, if the
+             * Object returned is a javax.swing.KeyStroke, the user of this
+             * method should do the following:
+             * <nf><code>
+             * Component c = <get the component that has the key bindings>
+             * AccessibleContext ac = c.getAccessibleContext();
+             * AccessibleKeyBinding akb = ac.getAccessibleKeyBinding();
+             * for (int i = 0; i < akb.getAccessibleKeyBindingCount(); i++) {
+             *     Object o = akb.getAccessibleKeyBinding(i);
+             *     if (o instanceof javax.swing.KeyStroke) {
+             *         javax.swing.KeyStroke keyStroke = (javax.swing.KeyStroke)o;
+             *         <do something with the key binding>
+             *     }
+             * }
+             * </code></nf>
+             *
+             * @param i zero-based index of the key bindings
+             * @return a javax.lang.Object which specifies the key binding
+             * @exception IllegalArgumentException if the index is
+             * out of bounds
+             * @see #getAccessibleKeyBindingCount
+             */
+            public java.lang.Object getAccessibleKeyBinding(int i) {
+                if (i != 0) {
+                    throw new IllegalArgumentException();
+                }
+                return KeyStroke.getKeyStroke(mnemonic, 0);
+            }
+        }
+    }
+}

@@ -1,738 +1,734 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JMenuBar;
-/*     */ import javax.swing.JPopupMenu;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.AbstractBorder;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifBorders
-/*     */ {
-/*     */   public static class BevelBorder
-/*     */     extends AbstractBorder
-/*     */     implements UIResource
-/*     */   {
-/*  58 */     private Color darkShadow = UIManager.getColor("controlShadow");
-/*  59 */     private Color lightShadow = UIManager.getColor("controlLtHighlight");
-/*     */     private boolean isRaised;
-/*     */     
-/*     */     public BevelBorder(boolean param1Boolean, Color param1Color1, Color param1Color2) {
-/*  63 */       this.isRaised = param1Boolean;
-/*  64 */       this.darkShadow = param1Color1;
-/*  65 */       this.lightShadow = param1Color2;
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  69 */       param1Graphics.setColor(this.isRaised ? this.lightShadow : this.darkShadow);
-/*  70 */       param1Graphics.drawLine(param1Int1, param1Int2, param1Int1 + param1Int3 - 1, param1Int2);
-/*  71 */       param1Graphics.drawLine(param1Int1, param1Int2 + param1Int4 - 1, param1Int1, param1Int2 + 1);
-/*     */       
-/*  73 */       param1Graphics.setColor(this.isRaised ? this.darkShadow : this.lightShadow);
-/*  74 */       param1Graphics.drawLine(param1Int1 + 1, param1Int2 + param1Int4 - 1, param1Int1 + param1Int3 - 1, param1Int2 + param1Int4 - 1);
-/*  75 */       param1Graphics.drawLine(param1Int1 + param1Int3 - 1, param1Int2 + param1Int4 - 1, param1Int1 + param1Int3 - 1, param1Int2 + 1);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/*  79 */       param1Insets.set(1, 1, 1, 1);
-/*  80 */       return param1Insets;
-/*     */     }
-/*     */     
-/*     */     public boolean isOpaque(Component param1Component) {
-/*  84 */       return true;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static class FocusBorder
-/*     */     extends AbstractBorder
-/*     */     implements UIResource {
-/*     */     private Color focus;
-/*     */     private Color control;
-/*     */     
-/*     */     public FocusBorder(Color param1Color1, Color param1Color2) {
-/*  95 */       this.control = param1Color1;
-/*  96 */       this.focus = param1Color2;
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 100 */       if (param1Component.hasFocus()) {
-/* 101 */         param1Graphics.setColor(this.focus);
-/* 102 */         param1Graphics.drawRect(param1Int1, param1Int2, param1Int3 - 1, param1Int4 - 1);
-/*     */       } else {
-/* 104 */         param1Graphics.setColor(this.control);
-/* 105 */         param1Graphics.drawRect(param1Int1, param1Int2, param1Int3 - 1, param1Int4 - 1);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 110 */       param1Insets.set(1, 1, 1, 1);
-/* 111 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static class ButtonBorder
-/*     */     extends AbstractBorder implements UIResource {
-/* 117 */     protected Color focus = UIManager.getColor("activeCaptionBorder");
-/* 118 */     protected Color shadow = UIManager.getColor("Button.shadow");
-/* 119 */     protected Color highlight = UIManager.getColor("Button.light");
-/*     */     protected Color darkShadow;
-/*     */     
-/*     */     public ButtonBorder(Color param1Color1, Color param1Color2, Color param1Color3, Color param1Color4) {
-/* 123 */       this.shadow = param1Color1;
-/* 124 */       this.highlight = param1Color2;
-/* 125 */       this.darkShadow = param1Color3;
-/* 126 */       this.focus = param1Color4;
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 130 */       boolean bool1 = false;
-/* 131 */       boolean bool2 = false;
-/* 132 */       boolean bool3 = false;
-/* 133 */       boolean bool4 = false;
-/*     */       
-/* 135 */       if (param1Component instanceof AbstractButton) {
-/* 136 */         AbstractButton abstractButton = (AbstractButton)param1Component;
-/* 137 */         ButtonModel buttonModel = abstractButton.getModel();
-/*     */         
-/* 139 */         bool1 = (buttonModel.isArmed() && buttonModel.isPressed()) ? true : false;
-/*     */         
-/* 141 */         bool2 = ((buttonModel.isArmed() && bool1) || (abstractButton.isFocusPainted() && abstractButton.hasFocus())) ? true : false;
-/* 142 */         if (abstractButton instanceof JButton) {
-/* 143 */           bool3 = ((JButton)abstractButton).isDefaultCapable();
-/* 144 */           bool4 = ((JButton)abstractButton).isDefaultButton();
-/*     */         } 
-/*     */       } 
-/* 147 */       int i = param1Int1 + 1;
-/* 148 */       int j = param1Int2 + 1;
-/* 149 */       int k = param1Int1 + param1Int3 - 2;
-/* 150 */       int m = param1Int2 + param1Int4 - 2;
-/*     */       
-/* 152 */       if (bool3) {
-/* 153 */         if (bool4) {
-/* 154 */           param1Graphics.setColor(this.shadow);
-/* 155 */           param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 3, param1Int1 + 3, param1Int2 + param1Int4 - 4);
-/* 156 */           param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 3, param1Int1 + param1Int3 - 4, param1Int2 + 3);
-/*     */           
-/* 158 */           param1Graphics.setColor(this.highlight);
-/* 159 */           param1Graphics.drawLine(param1Int1 + 4, param1Int2 + param1Int4 - 4, param1Int1 + param1Int3 - 4, param1Int2 + param1Int4 - 4);
-/* 160 */           param1Graphics.drawLine(param1Int1 + param1Int3 - 4, param1Int2 + 3, param1Int1 + param1Int3 - 4, param1Int2 + param1Int4 - 4);
-/*     */         } 
-/* 162 */         i += 6;
-/* 163 */         j += 6;
-/* 164 */         k -= 6;
-/* 165 */         m -= 6;
-/*     */       } 
-/*     */       
-/* 168 */       if (bool2) {
-/* 169 */         param1Graphics.setColor(this.focus);
-/* 170 */         if (bool4) {
-/* 171 */           param1Graphics.drawRect(param1Int1, param1Int2, param1Int3 - 1, param1Int4 - 1);
-/*     */         } else {
-/* 173 */           param1Graphics.drawRect(i - 1, j - 1, k - i + 2, m - j + 2);
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 177 */       param1Graphics.setColor(bool1 ? this.shadow : this.highlight);
-/* 178 */       param1Graphics.drawLine(i, j, k, j);
-/* 179 */       param1Graphics.drawLine(i, j, i, m);
-/*     */       
-/* 181 */       param1Graphics.setColor(bool1 ? this.highlight : this.shadow);
-/* 182 */       param1Graphics.drawLine(k, j + 1, k, m);
-/* 183 */       param1Graphics.drawLine(i + 1, m, k, m);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 187 */       byte b = (param1Component instanceof JButton && ((JButton)param1Component).isDefaultCapable()) ? 8 : 2;
-/* 188 */       param1Insets.set(b, b, b, b);
-/* 189 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static class ToggleButtonBorder
-/*     */     extends ButtonBorder
-/*     */   {
-/*     */     public ToggleButtonBorder(Color param1Color1, Color param1Color2, Color param1Color3, Color param1Color4) {
-/* 197 */       super(param1Color1, param1Color2, param1Color3, param1Color4);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 202 */       if (param1Component instanceof AbstractButton) {
-/* 203 */         AbstractButton abstractButton = (AbstractButton)param1Component;
-/* 204 */         ButtonModel buttonModel = abstractButton.getModel();
-/*     */         
-/* 206 */         if ((buttonModel.isArmed() && buttonModel.isPressed()) || buttonModel.isSelected()) {
-/* 207 */           MotifBorders.drawBezel(param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, (buttonModel
-/* 208 */               .isPressed() || buttonModel.isSelected()), (abstractButton
-/* 209 */               .isFocusPainted() && abstractButton.hasFocus()), this.shadow, this.highlight, this.darkShadow, this.focus);
-/*     */         } else {
-/* 211 */           MotifBorders.drawBezel(param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, false, (abstractButton
-/* 212 */               .isFocusPainted() && abstractButton.hasFocus()), this.shadow, this.highlight, this.darkShadow, this.focus);
-/*     */         } 
-/*     */       } else {
-/*     */         
-/* 216 */         MotifBorders.drawBezel(param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, false, false, this.shadow, this.highlight, this.darkShadow, this.focus);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 222 */       param1Insets.set(2, 2, 3, 3);
-/* 223 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static class MenuBarBorder
-/*     */     extends ButtonBorder {
-/*     */     public MenuBarBorder(Color param1Color1, Color param1Color2, Color param1Color3, Color param1Color4) {
-/* 230 */       super(param1Color1, param1Color2, param1Color3, param1Color4);
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 234 */       if (!(param1Component instanceof JMenuBar)) {
-/*     */         return;
-/*     */       }
-/* 237 */       JMenuBar jMenuBar = (JMenuBar)param1Component;
-/* 238 */       if (jMenuBar.isBorderPainted() == true) {
-/*     */         
-/* 240 */         Dimension dimension = jMenuBar.getSize();
-/* 241 */         MotifBorders.drawBezel(param1Graphics, param1Int1, param1Int2, dimension.width, dimension.height, false, false, this.shadow, this.highlight, this.darkShadow, this.focus);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 247 */       param1Insets.set(6, 6, 6, 6);
-/* 248 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static class FrameBorder
-/*     */     extends AbstractBorder
-/*     */     implements UIResource
-/*     */   {
-/*     */     JComponent jcomp;
-/*     */     
-/*     */     Color frameHighlight;
-/*     */     Color frameColor;
-/*     */     Color frameShadow;
-/*     */     public static final int BORDER_SIZE = 5;
-/*     */     
-/*     */     public FrameBorder(JComponent param1JComponent) {
-/* 265 */       this.jcomp = param1JComponent;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setComponent(JComponent param1JComponent) {
-/* 271 */       this.jcomp = param1JComponent;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public JComponent component() {
-/* 278 */       return this.jcomp;
-/*     */     }
-/*     */     
-/*     */     protected Color getFrameHighlight() {
-/* 282 */       return this.frameHighlight;
-/*     */     }
-/*     */     
-/*     */     protected Color getFrameColor() {
-/* 286 */       return this.frameColor;
-/*     */     }
-/*     */     
-/*     */     protected Color getFrameShadow() {
-/* 290 */       return this.frameShadow;
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 294 */       param1Insets.set(5, 5, 5, 5);
-/* 295 */       return param1Insets;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawTopBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 302 */       Rectangle rectangle = new Rectangle(param1Int1, param1Int2, param1Int3, 5);
-/* 303 */       if (!param1Graphics.getClipBounds().intersects(rectangle)) {
-/* 304 */         return false;
-/*     */       }
-/*     */       
-/* 307 */       int i = param1Int3 - 1;
-/* 308 */       byte b = 4;
-/*     */ 
-/*     */       
-/* 311 */       param1Graphics.setColor(this.frameColor);
-/* 312 */       param1Graphics.drawLine(param1Int1, param1Int2 + 2, i - 2, param1Int2 + 2);
-/* 313 */       param1Graphics.drawLine(param1Int1, param1Int2 + 3, i - 2, param1Int2 + 3);
-/* 314 */       param1Graphics.drawLine(param1Int1, param1Int2 + 4, i - 2, param1Int2 + 4);
-/*     */ 
-/*     */       
-/* 317 */       param1Graphics.setColor(this.frameHighlight);
-/* 318 */       param1Graphics.drawLine(param1Int1, param1Int2, i, param1Int2);
-/* 319 */       param1Graphics.drawLine(param1Int1, param1Int2 + 1, i, param1Int2 + 1);
-/* 320 */       param1Graphics.drawLine(param1Int1, param1Int2 + 2, param1Int1, param1Int2 + 4);
-/* 321 */       param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 2, param1Int1 + 1, param1Int2 + 4);
-/*     */ 
-/*     */       
-/* 324 */       param1Graphics.setColor(this.frameShadow);
-/* 325 */       param1Graphics.drawLine(param1Int1 + 4, param1Int2 + 4, i - 4, param1Int2 + 4);
-/* 326 */       param1Graphics.drawLine(i, param1Int2 + 1, i, b);
-/* 327 */       param1Graphics.drawLine(i - 1, param1Int2 + 2, i - 1, b);
-/*     */       
-/* 329 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawLeftBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 337 */       Rectangle rectangle = new Rectangle(0, 0, (getBorderInsets(param1Component)).left, param1Int4);
-/* 338 */       if (!param1Graphics.getClipBounds().intersects(rectangle)) {
-/* 339 */         return false;
-/*     */       }
-/*     */       
-/* 342 */       byte b = 5;
-/*     */       
-/* 344 */       param1Graphics.setColor(this.frameHighlight);
-/* 345 */       param1Graphics.drawLine(param1Int1, b, param1Int1, param1Int4 - 1);
-/* 346 */       param1Graphics.drawLine(param1Int1 + 1, b, param1Int1 + 1, param1Int4 - 2);
-/*     */       
-/* 348 */       param1Graphics.setColor(this.frameColor);
-/* 349 */       param1Graphics.fillRect(param1Int1 + 2, b, param1Int1 + 2, param1Int4 - 3);
-/*     */       
-/* 351 */       param1Graphics.setColor(this.frameShadow);
-/* 352 */       param1Graphics.drawLine(param1Int1 + 4, b, param1Int1 + 4, param1Int4 - 5);
-/*     */       
-/* 354 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawRightBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 363 */       Rectangle rectangle = new Rectangle(param1Int3 - (getBorderInsets(param1Component)).right, 0, (getBorderInsets(param1Component)).right, param1Int4);
-/* 364 */       if (!param1Graphics.getClipBounds().intersects(rectangle)) {
-/* 365 */         return false;
-/*     */       }
-/*     */       
-/* 368 */       int i = param1Int3 - (getBorderInsets(param1Component)).right;
-/* 369 */       byte b = 5;
-/*     */       
-/* 371 */       param1Graphics.setColor(this.frameColor);
-/* 372 */       param1Graphics.fillRect(i + 1, b, 2, param1Int4 - 1);
-/*     */       
-/* 374 */       param1Graphics.setColor(this.frameShadow);
-/* 375 */       param1Graphics.fillRect(i + 3, b, 2, param1Int4 - 1);
-/*     */       
-/* 377 */       param1Graphics.setColor(this.frameHighlight);
-/* 378 */       param1Graphics.drawLine(i, b, i, param1Int4 - 1);
-/*     */       
-/* 380 */       return true;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawBottomBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 391 */       Rectangle rectangle = new Rectangle(0, param1Int4 - (getBorderInsets(param1Component)).bottom, param1Int3, (getBorderInsets(param1Component)).bottom);
-/* 392 */       if (!param1Graphics.getClipBounds().intersects(rectangle)) {
-/* 393 */         return false;
-/*     */       }
-/*     */       
-/* 396 */       int i = param1Int4 - (getBorderInsets(param1Component)).bottom;
-/*     */       
-/* 398 */       param1Graphics.setColor(this.frameShadow);
-/* 399 */       param1Graphics.drawLine(param1Int1 + 1, param1Int4 - 1, param1Int3 - 1, param1Int4 - 1);
-/* 400 */       param1Graphics.drawLine(param1Int1 + 2, param1Int4 - 2, param1Int3 - 2, param1Int4 - 2);
-/*     */       
-/* 402 */       param1Graphics.setColor(this.frameColor);
-/* 403 */       param1Graphics.fillRect(param1Int1 + 2, i + 1, param1Int3 - 4, 2);
-/*     */       
-/* 405 */       param1Graphics.setColor(this.frameHighlight);
-/* 406 */       param1Graphics.drawLine(param1Int1 + 5, i, param1Int3 - 5, i);
-/*     */       
-/* 408 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     protected boolean isActiveFrame() {
-/* 413 */       return this.jcomp.hasFocus();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 422 */       if (isActiveFrame()) {
-/* 423 */         this.frameColor = UIManager.getColor("activeCaptionBorder");
-/*     */       } else {
-/* 425 */         this.frameColor = UIManager.getColor("inactiveCaptionBorder");
-/*     */       } 
-/* 427 */       this.frameHighlight = this.frameColor.brighter();
-/* 428 */       this.frameShadow = this.frameColor.darker().darker();
-/*     */       
-/* 430 */       drawTopBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/* 431 */       drawLeftBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/* 432 */       drawRightBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/* 433 */       drawBottomBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class InternalFrameBorder
-/*     */     extends FrameBorder
-/*     */   {
-/*     */     JInternalFrame frame;
-/*     */     
-/*     */     public static final int CORNER_SIZE = 24;
-/*     */ 
-/*     */     
-/*     */     public InternalFrameBorder(JInternalFrame param1JInternalFrame) {
-/* 448 */       super(param1JInternalFrame);
-/* 449 */       this.frame = param1JInternalFrame;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setFrame(JInternalFrame param1JInternalFrame) {
-/* 455 */       this.frame = param1JInternalFrame;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public JInternalFrame frame() {
-/* 462 */       return this.frame;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public int resizePartWidth() {
-/* 474 */       if (!this.frame.isResizable()) {
-/* 475 */         return 0;
-/*     */       }
-/* 477 */       return 5;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawTopBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 484 */       if (super.drawTopBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4) && this.frame
-/* 485 */         .isResizable()) {
-/* 486 */         param1Graphics.setColor(getFrameShadow());
-/* 487 */         param1Graphics.drawLine(23, param1Int2 + 1, 23, param1Int2 + 4);
-/* 488 */         param1Graphics.drawLine(param1Int3 - 24 - 1, param1Int2 + 1, param1Int3 - 24 - 1, param1Int2 + 4);
-/*     */ 
-/*     */         
-/* 491 */         param1Graphics.setColor(getFrameHighlight());
-/* 492 */         param1Graphics.drawLine(24, param1Int2, 24, param1Int2 + 4);
-/* 493 */         param1Graphics.drawLine(param1Int3 - 24, param1Int2, param1Int3 - 24, param1Int2 + 4);
-/* 494 */         return true;
-/*     */       } 
-/* 496 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawLeftBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 503 */       if (super.drawLeftBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4) && this.frame
-/* 504 */         .isResizable()) {
-/* 505 */         param1Graphics.setColor(getFrameHighlight());
-/* 506 */         int i = param1Int2 + 24;
-/* 507 */         param1Graphics.drawLine(param1Int1, i, param1Int1 + 4, i);
-/* 508 */         int j = param1Int4 - 24;
-/* 509 */         param1Graphics.drawLine(param1Int1 + 1, j, param1Int1 + 5, j);
-/* 510 */         param1Graphics.setColor(getFrameShadow());
-/* 511 */         param1Graphics.drawLine(param1Int1 + 1, i - 1, param1Int1 + 5, i - 1);
-/* 512 */         param1Graphics.drawLine(param1Int1 + 1, j - 1, param1Int1 + 5, j - 1);
-/* 513 */         return true;
-/*     */       } 
-/* 515 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawRightBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 522 */       if (super.drawRightBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4) && this.frame
-/* 523 */         .isResizable()) {
-/* 524 */         int i = param1Int3 - (getBorderInsets(param1Component)).right;
-/* 525 */         param1Graphics.setColor(getFrameHighlight());
-/* 526 */         int j = param1Int2 + 24;
-/* 527 */         param1Graphics.drawLine(i, j, param1Int3 - 2, j);
-/* 528 */         int k = param1Int4 - 24;
-/* 529 */         param1Graphics.drawLine(i + 1, k, i + 3, k);
-/* 530 */         param1Graphics.setColor(getFrameShadow());
-/* 531 */         param1Graphics.drawLine(i + 1, j - 1, param1Int3 - 2, j - 1);
-/* 532 */         param1Graphics.drawLine(i + 1, k - 1, i + 3, k - 1);
-/* 533 */         return true;
-/*     */       } 
-/* 535 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected boolean drawBottomBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 542 */       if (super.drawBottomBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4) && this.frame
-/* 543 */         .isResizable()) {
-/* 544 */         int i = param1Int4 - (getBorderInsets(param1Component)).bottom;
-/*     */         
-/* 546 */         param1Graphics.setColor(getFrameShadow());
-/* 547 */         param1Graphics.drawLine(23, i + 1, 23, param1Int4 - 1);
-/*     */         
-/* 549 */         param1Graphics.drawLine(param1Int3 - 24, i + 1, param1Int3 - 24, param1Int4 - 1);
-/*     */ 
-/*     */         
-/* 552 */         param1Graphics.setColor(getFrameHighlight());
-/* 553 */         param1Graphics.drawLine(24, i, 24, param1Int4 - 2);
-/* 554 */         param1Graphics.drawLine(param1Int3 - 24 + 1, i, param1Int3 - 24 + 1, param1Int4 - 2);
-/*     */         
-/* 556 */         return true;
-/*     */       } 
-/* 558 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     protected boolean isActiveFrame() {
-/* 563 */       return this.frame.isSelected();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void drawBezel(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, boolean paramBoolean1, boolean paramBoolean2, Color paramColor1, Color paramColor2, Color paramColor3, Color paramColor4) {
-/* 572 */     Color color = paramGraphics.getColor();
-/* 573 */     paramGraphics.translate(paramInt1, paramInt2);
-/*     */     
-/* 575 */     if (paramBoolean1) {
-/* 576 */       if (paramBoolean2) {
-/* 577 */         paramGraphics.setColor(paramColor4);
-/* 578 */         paramGraphics.drawRect(0, 0, paramInt3 - 1, paramInt4 - 1);
-/*     */       } 
-/* 580 */       paramGraphics.setColor(paramColor1);
-/* 581 */       paramGraphics.drawRect(1, 1, paramInt3 - 3, paramInt4 - 3);
-/*     */       
-/* 583 */       paramGraphics.setColor(paramColor2);
-/* 584 */       paramGraphics.drawLine(2, paramInt4 - 3, paramInt3 - 3, paramInt4 - 3);
-/* 585 */       paramGraphics.drawLine(paramInt3 - 3, 2, paramInt3 - 3, paramInt4 - 4);
-/*     */     } else {
-/*     */       
-/* 588 */       if (paramBoolean2) {
-/* 589 */         paramGraphics.setColor(paramColor4);
-/* 590 */         paramGraphics.drawRect(0, 0, paramInt3 - 1, paramInt4 - 1);
-/*     */         
-/* 592 */         paramGraphics.setColor(paramColor2);
-/* 593 */         paramGraphics.drawLine(1, 1, 1, paramInt4 - 3);
-/* 594 */         paramGraphics.drawLine(2, 1, paramInt3 - 4, 1);
-/*     */         
-/* 596 */         paramGraphics.setColor(paramColor1);
-/* 597 */         paramGraphics.drawLine(2, paramInt4 - 3, paramInt3 - 3, paramInt4 - 3);
-/* 598 */         paramGraphics.drawLine(paramInt3 - 3, 1, paramInt3 - 3, paramInt4 - 4);
-/*     */         
-/* 600 */         paramGraphics.setColor(paramColor3);
-/* 601 */         paramGraphics.drawLine(1, paramInt4 - 2, paramInt3 - 2, paramInt4 - 2);
-/* 602 */         paramGraphics.drawLine(paramInt3 - 2, paramInt4 - 2, paramInt3 - 2, 1);
-/*     */       } else {
-/* 604 */         paramGraphics.setColor(paramColor2);
-/* 605 */         paramGraphics.drawLine(1, 1, 1, paramInt4 - 3);
-/* 606 */         paramGraphics.drawLine(2, 1, paramInt3 - 4, 1);
-/* 607 */         paramGraphics.setColor(paramColor1);
-/* 608 */         paramGraphics.drawLine(2, paramInt4 - 3, paramInt3 - 3, paramInt4 - 3);
-/* 609 */         paramGraphics.drawLine(paramInt3 - 3, 1, paramInt3 - 3, paramInt4 - 4);
-/*     */         
-/* 611 */         paramGraphics.setColor(paramColor3);
-/* 612 */         paramGraphics.drawLine(1, paramInt4 - 2, paramInt3 - 2, paramInt4 - 2);
-/* 613 */         paramGraphics.drawLine(paramInt3 - 2, paramInt4 - 2, paramInt3 - 2, 0);
-/*     */       } 
-/*     */       
-/* 616 */       paramGraphics.translate(-paramInt1, -paramInt2);
-/*     */     } 
-/* 618 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class MotifPopupMenuBorder
-/*     */     extends AbstractBorder
-/*     */     implements UIResource
-/*     */   {
-/*     */     protected Font font;
-/*     */ 
-/*     */     
-/*     */     protected Color background;
-/*     */     
-/*     */     protected Color foreground;
-/*     */     
-/*     */     protected Color shadowColor;
-/*     */     
-/*     */     protected Color highlightColor;
-/*     */     
-/*     */     protected static final int TEXT_SPACING = 2;
-/*     */     
-/*     */     protected static final int GROOVE_HEIGHT = 2;
-/*     */ 
-/*     */     
-/*     */     public MotifPopupMenuBorder(Font param1Font, Color param1Color1, Color param1Color2, Color param1Color3, Color param1Color4) {
-/* 644 */       this.font = param1Font;
-/* 645 */       this.background = param1Color1;
-/* 646 */       this.foreground = param1Color2;
-/* 647 */       this.shadowColor = param1Color3;
-/* 648 */       this.highlightColor = param1Color4;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 662 */       if (!(param1Component instanceof JPopupMenu)) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 666 */       Font font = param1Graphics.getFont();
-/* 667 */       Color color = param1Graphics.getColor();
-/* 668 */       JPopupMenu jPopupMenu = (JPopupMenu)param1Component;
-/*     */       
-/* 670 */       String str = jPopupMenu.getLabel();
-/* 671 */       if (str == null) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 675 */       param1Graphics.setFont(this.font);
-/*     */       
-/* 677 */       FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(jPopupMenu, param1Graphics, this.font);
-/* 678 */       int i = fontMetrics.getHeight();
-/* 679 */       int j = fontMetrics.getDescent();
-/* 680 */       int k = fontMetrics.getAscent();
-/* 681 */       Point point = new Point();
-/* 682 */       int m = SwingUtilities2.stringWidth(jPopupMenu, fontMetrics, str);
-/*     */ 
-/*     */       
-/* 685 */       point.y = param1Int2 + k + 2;
-/* 686 */       point.x = param1Int1 + (param1Int3 - m) / 2;
-/*     */       
-/* 688 */       param1Graphics.setColor(this.background);
-/* 689 */       param1Graphics.fillRect(point.x - 2, point.y - i - j, m + 4, i - j);
-/*     */       
-/* 691 */       param1Graphics.setColor(this.foreground);
-/* 692 */       SwingUtilities2.drawString(jPopupMenu, param1Graphics, str, point.x, point.y);
-/*     */       
-/* 694 */       MotifGraphicsUtils.drawGroove(param1Graphics, param1Int1, point.y + 2, param1Int3, 2, this.shadowColor, this.highlightColor);
-/*     */ 
-/*     */ 
-/*     */       
-/* 698 */       param1Graphics.setFont(font);
-/* 699 */       param1Graphics.setColor(color);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 708 */       if (!(param1Component instanceof JPopupMenu)) {
-/* 709 */         return param1Insets;
-/*     */       }
-/*     */       
-/* 712 */       int i = 0;
-/* 713 */       int j = 16;
-/*     */       
-/* 715 */       String str = ((JPopupMenu)param1Component).getLabel();
-/* 716 */       if (str == null) {
-/* 717 */         param1Insets.left = param1Insets.top = param1Insets.right = param1Insets.bottom = 0;
-/* 718 */         return param1Insets;
-/*     */       } 
-/*     */       
-/* 721 */       FontMetrics fontMetrics = param1Component.getFontMetrics(this.font);
-/*     */       
-/* 723 */       if (fontMetrics != null) {
-/* 724 */         i = fontMetrics.getDescent();
-/* 725 */         j = fontMetrics.getAscent();
-/*     */       } 
-/*     */       
-/* 728 */       param1Insets.top += j + i + 2 + 2;
-/* 729 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifBorders.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import sun.swing.SwingUtilities2;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+
+/**
+ * Factory object that can vend Icons appropriate for the basic L & F.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Amy Fowler
+ */
+public class MotifBorders {
+
+    public static class BevelBorder extends AbstractBorder implements UIResource {
+        private Color darkShadow = UIManager.getColor("controlShadow");
+        private Color lightShadow = UIManager.getColor("controlLtHighlight");
+        private boolean isRaised;
+
+        public BevelBorder(boolean isRaised, Color darkShadow, Color lightShadow) {
+            this.isRaised = isRaised;
+            this.darkShadow = darkShadow;
+            this.lightShadow = lightShadow;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+            g.setColor((isRaised) ? lightShadow : darkShadow);
+            g.drawLine(x, y, x+w-1, y);           // top
+            g.drawLine(x, y+h-1, x, y+1);         // left
+
+            g.setColor((isRaised) ? darkShadow : lightShadow);
+            g.drawLine(x+1, y+h-1, x+w-1, y+h-1); // bottom
+            g.drawLine(x+w-1, y+h-1, x+w-1, y+1); // right
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(1, 1, 1, 1);
+            return insets;
+        }
+
+        public boolean isOpaque(Component c) {
+            return true;
+        }
+
+    }
+
+
+    public static class FocusBorder extends AbstractBorder implements UIResource {
+        private Color focus;
+        private Color control;
+
+        public FocusBorder(Color control, Color focus) {
+            this.control = control;
+            this.focus = focus;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+            if (c.hasFocus()) {
+                g.setColor(focus);
+                g.drawRect(x, y, w-1, h-1);
+            } else {
+                g.setColor(control);
+                g.drawRect(x, y, w-1, h-1);
+            }
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(1, 1, 1, 1);
+            return insets;
+        }
+    }
+
+
+    public static class ButtonBorder extends AbstractBorder implements UIResource {
+        protected Color focus = UIManager.getColor("activeCaptionBorder");
+        protected Color shadow = UIManager.getColor("Button.shadow");
+        protected Color highlight = UIManager.getColor("Button.light");
+        protected Color darkShadow;
+
+        public ButtonBorder(Color shadow, Color highlight, Color darkShadow, Color focus) {
+            this.shadow = shadow;
+            this.highlight = highlight;
+            this.darkShadow = darkShadow;
+            this.focus = focus;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+            boolean isPressed = false;
+            boolean hasFocus = false;
+            boolean canBeDefault = false;
+            boolean isDefault = false;
+
+            if (c instanceof AbstractButton) {
+                AbstractButton b = (AbstractButton)c;
+                ButtonModel model = b.getModel();
+
+                isPressed = (model.isArmed() && model.isPressed());
+                hasFocus = (model.isArmed() && isPressed) ||
+                           (b.isFocusPainted() && b.hasFocus());
+                if (b instanceof JButton) {
+                    canBeDefault = ((JButton)b).isDefaultCapable();
+                    isDefault = ((JButton)b).isDefaultButton();
+                }
+            }
+            int bx1 = x+1;
+            int by1 = y+1;
+            int bx2 = x+w-2;
+            int by2 = y+h-2;
+
+            if (canBeDefault) {
+                if (isDefault) {
+                    g.setColor(shadow);
+                    g.drawLine(x+3, y+3, x+3, y+h-4);
+                    g.drawLine(x+3, y+3, x+w-4, y+3);
+
+                    g.setColor(highlight);
+                    g.drawLine(x+4, y+h-4, x+w-4, y+h-4);
+                    g.drawLine(x+w-4, y+3, x+w-4, y+h-4);
+                }
+                bx1 +=6;
+                by1 += 6;
+                bx2 -= 6;
+                by2 -= 6;
+            }
+
+            if (hasFocus) {
+                g.setColor(focus);
+                if (isDefault) {
+                    g.drawRect(x, y, w-1, h-1);
+                } else {
+                    g.drawRect(bx1-1, by1-1, bx2-bx1+2, by2-by1+2);
+                }
+            }
+
+            g.setColor(isPressed? shadow : highlight);
+            g.drawLine(bx1, by1, bx2, by1);
+            g.drawLine(bx1, by1, bx1, by2);
+
+            g.setColor(isPressed? highlight : shadow);
+            g.drawLine(bx2, by1+1, bx2, by2);
+            g.drawLine(bx1+1, by2, bx2, by2);
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            int thickness = (c instanceof JButton && ((JButton)c).isDefaultCapable())? 8 : 2;
+            insets.set(thickness, thickness, thickness, thickness);
+            return insets;
+        }
+
+    }
+
+    public static class ToggleButtonBorder extends ButtonBorder {
+
+        public ToggleButtonBorder(Color shadow, Color highlight, Color darkShadow, Color focus) {
+             super(shadow, highlight, darkShadow, focus);
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y,
+                            int width, int height) {
+            if (c instanceof AbstractButton) {
+                AbstractButton b = (AbstractButton)c;
+                ButtonModel model = b.getModel();
+
+                if (model.isArmed() && model.isPressed() || model.isSelected()) {
+                    drawBezel(g, x, y, width, height,
+                              (model.isPressed() || model.isSelected()),
+                              b.isFocusPainted() && b.hasFocus(), shadow, highlight, darkShadow, focus);
+                } else {
+                    drawBezel(g, x, y, width, height,
+                              false, b.isFocusPainted() && b.hasFocus(),
+                              shadow, highlight, darkShadow, focus);
+                }
+            } else {
+                drawBezel(g, x, y, width, height, false, false,
+                          shadow, highlight, darkShadow, focus);
+            }
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(2, 2, 3, 3);
+            return insets;
+        }
+    }
+
+    public static class MenuBarBorder extends ButtonBorder {
+
+        public MenuBarBorder(Color shadow, Color highlight, Color darkShadow, Color focus) {
+            super(shadow, highlight, darkShadow, focus);
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            if (!(c instanceof JMenuBar)) {
+                return;
+            }
+            JMenuBar menuBar = (JMenuBar)c;
+            if (menuBar.isBorderPainted() == true) {
+                // this draws the MenuBar border
+                Dimension size = menuBar.getSize();
+                drawBezel(g,x,y,size.width,size.height,false,false,
+                          shadow, highlight, darkShadow, focus);
+            }
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.set(6, 6, 6, 6);
+            return insets;
+        }
+    }
+
+    public static class FrameBorder extends AbstractBorder implements UIResource {
+
+        JComponent jcomp;
+        Color frameHighlight;
+        Color frameColor;
+        Color frameShadow;
+
+        // The width of the border
+        public final static int BORDER_SIZE = 5;
+
+        /** Constructs an FrameBorder for the JComponent <b>comp</b>.
+        */
+        public FrameBorder(JComponent comp) {
+            jcomp = comp;
+        }
+
+        /** Sets the FrameBorder's JComponent.
+      */
+        public void setComponent(JComponent comp) {
+            jcomp = comp;
+        }
+
+        /** Returns the FrameBorder's JComponent.
+          * @see #setComponent
+          */
+        public JComponent component() {
+            return jcomp;
+        }
+
+        protected Color getFrameHighlight() {
+            return frameHighlight;
+        }
+
+        protected Color getFrameColor() {
+            return frameColor;
+        }
+
+        protected Color getFrameShadow() {
+            return frameShadow;
+        }
+
+        public Insets getBorderInsets(Component c, Insets newInsets) {
+            newInsets.set(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
+            return newInsets;
+        }
+
+       /** Draws the FrameBorder's top border.
+         */
+        protected boolean drawTopBorder(Component c, Graphics g,
+                                    int x, int y, int width, int height) {
+            Rectangle titleBarRect = new Rectangle(x, y, width, BORDER_SIZE);
+            if (!g.getClipBounds().intersects(titleBarRect)) {
+                return false;
+            }
+
+            int maxX = width - 1;
+            int maxY = BORDER_SIZE - 1;
+
+            // Draw frame
+            g.setColor(frameColor);
+            g.drawLine(x, y + 2, maxX - 2, y + 2);
+            g.drawLine(x, y + 3, maxX - 2, y + 3);
+            g.drawLine(x, y + 4, maxX - 2, y + 4);
+
+            // Draw highlights
+            g.setColor(frameHighlight);
+            g.drawLine(x, y, maxX, y);
+            g.drawLine(x, y + 1, maxX, y + 1);
+            g.drawLine(x, y + 2, x, y + 4);
+            g.drawLine(x + 1, y + 2, x + 1, y + 4);
+
+            // Draw shadows
+            g.setColor(frameShadow);
+            g.drawLine(x + 4, y + 4, maxX - 4, y + 4);
+            g.drawLine(maxX, y + 1, maxX, maxY);
+            g.drawLine(maxX - 1, y + 2, maxX - 1, maxY);
+
+            return true;
+        }
+
+        /** Draws the FrameBorder's left border.
+          */
+        protected boolean drawLeftBorder(Component c, Graphics g, int x, int y,
+                               int width, int height) {
+            Rectangle borderRect =
+                new Rectangle(0, 0, getBorderInsets(c).left, height);
+            if (!g.getClipBounds().intersects(borderRect)) {
+                return false;
+            }
+
+            int startY = BORDER_SIZE;
+
+            g.setColor(frameHighlight);
+            g.drawLine(x, startY, x, height - 1);
+            g.drawLine(x + 1, startY, x + 1, height - 2);
+
+            g.setColor(frameColor);
+            g.fillRect(x + 2, startY, x + 2, height - 3);
+
+            g.setColor(frameShadow);
+            g.drawLine(x + 4, startY, x + 4, height - 5);
+
+            return true;
+        }
+
+        /** Draws the FrameBorder's right border.
+          */
+        protected boolean drawRightBorder(Component c, Graphics g, int x, int y,
+                                int width, int height) {
+            Rectangle borderRect = new Rectangle(
+                width - getBorderInsets(c).right, 0,
+                getBorderInsets(c).right, height);
+            if (!g.getClipBounds().intersects(borderRect)) {
+                return false;
+            }
+
+            int startX = width - getBorderInsets(c).right;
+            int startY = BORDER_SIZE;
+
+            g.setColor(frameColor);
+            g.fillRect(startX + 1, startY, 2, height - 1);
+
+            g.setColor(frameShadow);
+            g.fillRect(startX + 3, startY, 2, height - 1);
+
+            g.setColor(frameHighlight);
+            g.drawLine(startX, startY, startX, height - 1);
+
+            return true;
+        }
+
+        /** Draws the FrameBorder's bottom border.
+          */
+        protected boolean drawBottomBorder(Component c, Graphics g, int x, int y,
+                                 int width, int height) {
+            Rectangle    borderRect;
+            int     marginHeight, startY;
+
+            borderRect = new Rectangle(0, height - getBorderInsets(c).bottom,
+                                  width, getBorderInsets(c).bottom);
+            if (!g.getClipBounds().intersects(borderRect)) {
+                return false;
+            }
+
+            startY = height - getBorderInsets(c).bottom;
+
+            g.setColor(frameShadow);
+            g.drawLine(x + 1, height - 1, width - 1, height - 1);
+            g.drawLine(x + 2, height - 2, width - 2, height - 2);
+
+            g.setColor(frameColor);
+            g.fillRect(x + 2, startY + 1, width - 4, 2);
+
+            g.setColor(frameHighlight);
+            g.drawLine(x + 5, startY, width - 5, startY);
+
+            return true;
+        }
+
+        // Returns true if the associated component has focus.
+        protected boolean isActiveFrame() {
+            return jcomp.hasFocus();
+        }
+
+        /** Draws the FrameBorder in the given Rect.  Calls
+          * <b>drawTitleBar</b>, <b>drawLeftBorder</b>, <b>drawRightBorder</b> and
+          * <b>drawBottomBorder</b>.
+          */
+        public void paintBorder(Component c, Graphics g,
+                            int x, int y, int width, int height) {
+            if (isActiveFrame()) {
+                frameColor = UIManager.getColor("activeCaptionBorder");
+            } else {
+                frameColor = UIManager.getColor("inactiveCaptionBorder");
+            }
+            frameHighlight = frameColor.brighter();
+            frameShadow = frameColor.darker().darker();
+
+            drawTopBorder(c, g, x, y, width, height);
+            drawLeftBorder(c, g, x, y, width, height);
+            drawRightBorder(c, g, x, y, width, height);
+            drawBottomBorder(c, g, x, y, width, height);
+        }
+    }
+
+    public static class InternalFrameBorder extends FrameBorder {
+
+        JInternalFrame frame;
+
+        // The size of the bounding box for Motif frame corners.
+        public final static int CORNER_SIZE = 24;
+
+        /** Constructs an InternalFrameBorder for the InternalFrame
+          * <b>aFrame</b>.
+          */
+        public InternalFrameBorder(JInternalFrame aFrame) {
+            super(aFrame);
+            frame = aFrame;
+        }
+
+        /** Sets the InternalFrameBorder's InternalFrame.
+          */
+        public void setFrame(JInternalFrame aFrame) {
+            frame = aFrame;
+        }
+
+        /** Returns the InternalFrameBorder's InternalFrame.
+          * @see #setFrame
+          */
+        public JInternalFrame frame() {
+            return frame;
+        }
+
+        /** Returns the width of the InternalFrameBorder's resize controls,
+          * appearing along the InternalFrameBorder's bottom border.  Clicking
+          * and dragging within these controls lets the user change both the
+          * InternalFrame's width and height, while dragging between the controls
+          * constrains resizing to just the vertical dimension.  Override this
+          * method if you implement your own bottom border painting and use a
+          * resize control with a different size.
+          */
+        public int resizePartWidth() {
+            if (!frame.isResizable()) {
+                return 0;
+            }
+            return FrameBorder.BORDER_SIZE;
+        }
+
+        /** Draws the InternalFrameBorder's top border.
+         */
+        protected boolean drawTopBorder(Component c, Graphics g,
+                                    int x, int y, int width, int height) {
+            if (super.drawTopBorder(c, g, x, y, width, height) &&
+                frame.isResizable()) {
+                g.setColor(getFrameShadow());
+                g.drawLine(CORNER_SIZE - 1, y + 1, CORNER_SIZE - 1, y + 4);
+                g.drawLine(width - CORNER_SIZE - 1, y + 1,
+                       width - CORNER_SIZE - 1, y + 4);
+
+                g.setColor(getFrameHighlight());
+                g.drawLine(CORNER_SIZE, y, CORNER_SIZE, y + 4);
+                g.drawLine(width - CORNER_SIZE, y, width - CORNER_SIZE, y + 4);
+                return true;
+            }
+            return false;
+        }
+
+        /** Draws the InternalFrameBorder's left border.
+          */
+        protected boolean drawLeftBorder(Component c, Graphics g, int x, int y,
+                                     int width, int height) {
+            if (super.drawLeftBorder(c, g, x, y, width, height) &&
+                frame.isResizable()) {
+                g.setColor(getFrameHighlight());
+                int topY = y + CORNER_SIZE;
+                g.drawLine(x, topY, x + 4, topY);
+                int bottomY = height - CORNER_SIZE;
+                g.drawLine(x + 1, bottomY, x + 5, bottomY);
+                g.setColor(getFrameShadow());
+                g.drawLine(x + 1, topY - 1, x + 5, topY - 1);
+                g.drawLine(x + 1, bottomY - 1, x + 5, bottomY - 1);
+                return true;
+            }
+            return false;
+        }
+
+        /** Draws the InternalFrameBorder's right border.
+          */
+        protected boolean drawRightBorder(Component c, Graphics g, int x, int y,
+                                      int width, int height) {
+            if (super.drawRightBorder(c, g, x, y, width, height) &&
+                frame.isResizable()) {
+                int startX = width - getBorderInsets(c).right;
+                g.setColor(getFrameHighlight());
+                int topY = y + CORNER_SIZE;
+                g.drawLine(startX, topY, width - 2, topY);
+                int bottomY = height - CORNER_SIZE;
+                g.drawLine(startX + 1, bottomY, startX + 3, bottomY);
+                g.setColor(getFrameShadow());
+                g.drawLine(startX + 1, topY - 1, width - 2, topY - 1);
+                g.drawLine(startX + 1, bottomY - 1, startX + 3, bottomY - 1);
+                return true;
+            }
+            return false;
+        }
+
+        /** Draws the InternalFrameBorder's bottom border.
+          */
+        protected boolean drawBottomBorder(Component c, Graphics g, int x, int y,
+                                       int width, int height) {
+            if (super.drawBottomBorder(c, g, x, y, width, height) &&
+                frame.isResizable()) {
+                int startY = height - getBorderInsets(c).bottom;
+
+                g.setColor(getFrameShadow());
+                g.drawLine(CORNER_SIZE - 1, startY + 1,
+                       CORNER_SIZE - 1, height - 1);
+                g.drawLine(width - CORNER_SIZE, startY + 1,
+                       width - CORNER_SIZE, height - 1);
+
+                g.setColor(getFrameHighlight());
+                g.drawLine(CORNER_SIZE, startY, CORNER_SIZE, height - 2);
+                g.drawLine(width - CORNER_SIZE + 1, startY,
+                       width - CORNER_SIZE + 1, height - 2);
+                return true;
+            }
+            return false;
+        }
+
+        // Returns true if the associated internal frame has focus.
+        protected boolean isActiveFrame() {
+            return frame.isSelected();
+        }
+    }
+
+    public static void drawBezel(Graphics g, int x, int y, int w, int h,
+                               boolean isPressed, boolean hasFocus,
+                               Color shadow, Color highlight,
+                               Color darkShadow, Color focus)  {
+
+        Color oldColor = g.getColor();
+        g.translate(x, y);
+
+        if (isPressed) {
+            if (hasFocus){
+                g.setColor(focus);
+                g.drawRect(0, 0, w-1, h-1);
+            }
+            g.setColor(shadow);         // inner border
+            g.drawRect(1, 1, w-3, h-3);
+
+            g.setColor(highlight);    // inner 3D border
+            g.drawLine(2, h-3, w-3, h-3);
+            g.drawLine(w-3, 2, w-3, h-4);
+
+        } else {
+            if (hasFocus) {
+                g.setColor(focus);
+                g.drawRect(0, 0, w-1, h-1);
+
+                g.setColor(highlight);   // inner 3D border
+                g.drawLine(1, 1, 1, h-3);
+                g.drawLine(2, 1, w-4, 1);
+
+                g.setColor(shadow);
+                g.drawLine(2, h-3, w-3, h-3);
+                g.drawLine(w-3, 1, w-3, h-4);
+
+                g.setColor(darkShadow);        // black drop shadow  __|
+                g.drawLine(1, h-2, w-2, h-2);
+                g.drawLine(w-2, h-2, w-2, 1);
+            } else {
+                g.setColor(highlight);    // inner 3D border
+                g.drawLine(1,1,1,h-3);
+                g.drawLine(2,1,w-4,1);
+                g.setColor(shadow);
+                g.drawLine(2,h-3,w-3,h-3);
+                g.drawLine(w-3,1,w-3,h-4);
+
+                g.setColor(darkShadow);         // black drop shadow  __|
+                g.drawLine(1,h-2,w-2,h-2);
+                g.drawLine(w-2,h-2,w-2,0);
+
+            }
+            g.translate(-x, -y);
+        }
+        g.setColor(oldColor);
+    }
+
+    public static class MotifPopupMenuBorder extends AbstractBorder implements UIResource {
+        protected Font   font;
+        protected Color  background;
+        protected Color  foreground;
+        protected Color  shadowColor;
+        protected Color  highlightColor;
+
+        // Space between the border and text
+        static protected final int TEXT_SPACING = 2;
+
+        // Space for the separator under the title
+        static protected final int GROOVE_HEIGHT = 2;
+
+        /**
+         * Creates a MotifPopupMenuBorder instance
+         *
+         */
+        public MotifPopupMenuBorder(
+                                    Font titleFont,
+                                    Color bgColor,
+                                    Color fgColor,
+                                    Color shadow,
+                                    Color highlight)       {
+            this.font = titleFont;
+            this.background = bgColor;
+            this.foreground = fgColor;
+            this.shadowColor = shadow;
+            this.highlightColor = highlight;
+        }
+
+        /**
+         * Paints the border for the specified component with the
+         * specified position and size.
+         * @param c the component for which this border is being painted
+         * @param g the paint graphics
+         * @param x the x position of the painted border
+         * @param y the y position of the painted border
+         * @param width the width of the painted border
+         * @param height the height of the painted border
+         */
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            if (!(c instanceof JPopupMenu)) {
+                return;
+            }
+
+            Font origFont = g.getFont();
+            Color origColor = g.getColor();
+            JPopupMenu popup = (JPopupMenu)c;
+
+            String title = popup.getLabel();
+            if (title == null) {
+                return;
+            }
+
+            g.setFont(font);
+
+            FontMetrics fm = SwingUtilities2.getFontMetrics(popup, g, font);
+            int         fontHeight = fm.getHeight();
+            int         descent = fm.getDescent();
+            int         ascent = fm.getAscent();
+            Point       textLoc = new Point();
+            int         stringWidth = SwingUtilities2.stringWidth(popup, fm,
+                                                                  title);
+
+            textLoc.y = y + ascent + TEXT_SPACING;
+            textLoc.x = x + ((width - stringWidth) / 2);
+
+            g.setColor(background);
+            g.fillRect(textLoc.x - TEXT_SPACING, textLoc.y - (fontHeight-descent),
+                       stringWidth + (2 * TEXT_SPACING), fontHeight - descent);
+            g.setColor(foreground);
+            SwingUtilities2.drawString(popup, g, title, textLoc.x, textLoc.y);
+
+            MotifGraphicsUtils.drawGroove(g, x, textLoc.y + TEXT_SPACING,
+                                          width, GROOVE_HEIGHT,
+                                          shadowColor, highlightColor);
+
+            g.setFont(origFont);
+            g.setColor(origColor);
+        }
+
+        /**
+         * Reinitialize the insets parameter with this Border's current Insets.
+         * @param c the component for which this border insets value applies
+         * @param insets the object to be reinitialized
+         */
+        public Insets getBorderInsets(Component c, Insets insets) {
+            if (!(c instanceof JPopupMenu)) {
+                return insets;
+            }
+            FontMetrics fm;
+            int         descent = 0;
+            int         ascent = 16;
+
+            String title = ((JPopupMenu)c).getLabel();
+            if (title == null) {
+                insets.left = insets.top = insets.right = insets.bottom = 0;
+                return insets;
+            }
+
+            fm = c.getFontMetrics(font);
+
+            if(fm != null) {
+                descent = fm.getDescent();
+                ascent = fm.getAscent();
+            }
+
+            insets.top += ascent + descent + TEXT_SPACING + GROOVE_HEIGHT;
+            return insets;
+        }
+
+    }
+
+}

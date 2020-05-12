@@ -1,111 +1,106 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*     */ import javax.xml.stream.Location;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class StAXLocationWrapper
-/*     */   implements XMLLocator
-/*     */ {
-/*  39 */   private Location fLocation = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocation(Location location) {
-/*  44 */     this.fLocation = location;
-/*     */   }
-/*     */   
-/*     */   public Location getLocation() {
-/*  48 */     return this.fLocation;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPublicId() {
-/*  56 */     if (this.fLocation != null) {
-/*  57 */       return this.fLocation.getPublicId();
-/*     */     }
-/*  59 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getLiteralSystemId() {
-/*  63 */     if (this.fLocation != null) {
-/*  64 */       return this.fLocation.getSystemId();
-/*     */     }
-/*  66 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getBaseSystemId() {
-/*  70 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getExpandedSystemId() {
-/*  74 */     return getLiteralSystemId();
-/*     */   }
-/*     */   
-/*     */   public int getLineNumber() {
-/*  78 */     if (this.fLocation != null) {
-/*  79 */       return this.fLocation.getLineNumber();
-/*     */     }
-/*  81 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public int getColumnNumber() {
-/*  85 */     if (this.fLocation != null) {
-/*  86 */       return this.fLocation.getColumnNumber();
-/*     */     }
-/*  88 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public int getCharacterOffset() {
-/*  92 */     if (this.fLocation != null) {
-/*  93 */       return this.fLocation.getCharacterOffset();
-/*     */     }
-/*  95 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public String getEncoding() {
-/*  99 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getXMLVersion() {
-/* 103 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\StAXLocationWrapper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+
+import javax.xml.stream.Location;
+
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+
+/**
+ * <p>A light wrapper around a StAX location. This is useful
+ * when bridging between StAX and XNI components.</p>
+ *
+ * @author Michael Glavassevich, IBM
+ *
+ * @version $Id: StAXLocationWrapper.java,v 1.2 2010-10-26 23:01:13 joehw Exp $
+ */
+public final class StAXLocationWrapper implements XMLLocator {
+
+    private Location fLocation = null;
+
+    public StAXLocationWrapper() {}
+
+    public void setLocation(Location location) {
+        fLocation = location;
+    }
+
+    public Location getLocation() {
+        return fLocation;
+    }
+
+    /*
+     * XMLLocator methods
+     */
+
+    public String getPublicId() {
+        if (fLocation != null) {
+            return fLocation.getPublicId();
+        }
+        return null;
+    }
+
+    public String getLiteralSystemId() {
+        if (fLocation != null) {
+            return fLocation.getSystemId();
+        }
+        return null;
+    }
+
+    public String getBaseSystemId() {
+        return null;
+    }
+
+    public String getExpandedSystemId() {
+        return getLiteralSystemId();
+    }
+
+    public int getLineNumber() {
+        if (fLocation != null) {
+            return fLocation.getLineNumber();
+        }
+        return -1;
+    }
+
+    public int getColumnNumber() {
+        if (fLocation != null) {
+            return fLocation.getColumnNumber();
+        }
+        return -1;
+    }
+
+    public int getCharacterOffset() {
+        if (fLocation != null) {
+            return fLocation.getCharacterOffset();
+        }
+        return -1;
+    }
+
+    public String getEncoding() {
+        return null;
+    }
+
+    public String getXMLVersion() {
+        return null;
+    }
+
+} // StAXLocationWrapper

@@ -1,91 +1,85 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponentBase;
-/*    */ import com.sun.corba.se.spi.ior.iiop.AlternateIIOPAddressComponent;
-/*    */ import com.sun.corba.se.spi.ior.iiop.IIOPAddress;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class AlternateIIOPAddressComponentImpl
-/*    */   extends TaggedComponentBase
-/*    */   implements AlternateIIOPAddressComponent
-/*    */ {
-/*    */   private IIOPAddress addr;
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 47 */     if (!(paramObject instanceof AlternateIIOPAddressComponentImpl)) {
-/* 48 */       return false;
-/*    */     }
-/* 50 */     AlternateIIOPAddressComponentImpl alternateIIOPAddressComponentImpl = (AlternateIIOPAddressComponentImpl)paramObject;
-/*    */ 
-/*    */     
-/* 53 */     return this.addr.equals(alternateIIOPAddressComponentImpl.addr);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 58 */     return this.addr.hashCode();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 63 */     return "AlternateIIOPAddressComponentImpl[addr=" + this.addr + "]";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public AlternateIIOPAddressComponentImpl(IIOPAddress paramIIOPAddress) {
-/* 68 */     this.addr = paramIIOPAddress;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public IIOPAddress getAddress() {
-/* 73 */     return this.addr;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void writeContents(OutputStream paramOutputStream) {
-/* 78 */     this.addr.write(paramOutputStream);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getId() {
-/* 83 */     return 3;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\AlternateIIOPAddressComponentImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+import com.sun.corba.se.spi.ior.TaggedComponentBase ;
+
+import com.sun.corba.se.spi.ior.iiop.IIOPAddress ;
+import com.sun.corba.se.spi.ior.iiop.AlternateIIOPAddressComponent ;
+
+import org.omg.IOP.TAG_ALTERNATE_IIOP_ADDRESS ;
+
+/**
+ * @author Ken Cavanaugh
+ */
+public class AlternateIIOPAddressComponentImpl extends TaggedComponentBase
+    implements AlternateIIOPAddressComponent
+{
+    private IIOPAddress addr ;
+
+    public boolean equals( Object obj )
+    {
+        if (!(obj instanceof AlternateIIOPAddressComponentImpl))
+            return false ;
+
+        AlternateIIOPAddressComponentImpl other =
+            (AlternateIIOPAddressComponentImpl)obj ;
+
+        return addr.equals( other.addr ) ;
+    }
+
+    public int hashCode()
+    {
+        return addr.hashCode() ;
+    }
+
+    public String toString()
+    {
+        return "AlternateIIOPAddressComponentImpl[addr=" + addr + "]" ;
+    }
+
+    public AlternateIIOPAddressComponentImpl( IIOPAddress addr )
+    {
+        this.addr = addr ;
+    }
+
+    public IIOPAddress getAddress()
+    {
+        return addr ;
+    }
+
+    public void writeContents(OutputStream os)
+    {
+        addr.write( os ) ;
+    }
+
+    public int getId()
+    {
+        return TAG_ALTERNATE_IIOP_ADDRESS.value ; // 3 in CORBA 2.3.1 13.6.3
+    }
+}

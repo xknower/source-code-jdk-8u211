@@ -1,483 +1,476 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ import java.net.InetAddress;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class SnmpMsg
-/*     */   implements SnmpDefinitions
-/*     */ {
-/*  52 */   public int version = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  61 */   public byte[] data = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  66 */   public int dataLength = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  73 */   public InetAddress address = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  80 */   public int port = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*  84 */   public SnmpSecurityParameters securityParameters = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int getProtocolVersion(byte[] paramArrayOfbyte) throws SnmpStatusException {
-/*  92 */     int i = 0;
-/*  93 */     BerDecoder berDecoder = null;
-/*     */     try {
-/*  95 */       berDecoder = new BerDecoder(paramArrayOfbyte);
-/*  96 */       berDecoder.openSequence();
-/*  97 */       i = berDecoder.fetchInteger();
-/*     */     }
-/*  99 */     catch (BerException berException) {
-/* 100 */       throw new SnmpStatusException("Invalid encoding");
-/*     */     } 
-/*     */     try {
-/* 103 */       berDecoder.closeSequence();
-/*     */     }
-/* 105 */     catch (BerException berException) {}
-/*     */     
-/* 107 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract int getRequestId(byte[] paramArrayOfbyte) throws SnmpStatusException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract int encodeMessage(byte[] paramArrayOfbyte) throws SnmpTooBigException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract void decodeMessage(byte[] paramArrayOfbyte, int paramInt) throws SnmpStatusException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract void encodeSnmpPdu(SnmpPdu paramSnmpPdu, int paramInt) throws SnmpStatusException, SnmpTooBigException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract SnmpPdu decodeSnmpPdu() throws SnmpStatusException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String dumpHexBuffer(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/* 184 */     StringBuffer stringBuffer = new StringBuffer(paramInt2 << 1);
-/* 185 */     byte b = 1;
-/* 186 */     int i = paramInt1 + paramInt2;
-/*     */     
-/* 188 */     for (int j = paramInt1; j < i; j++) {
-/* 189 */       int k = paramArrayOfbyte[j] & 0xFF;
-/* 190 */       stringBuffer.append(Character.forDigit(k >>> 4, 16));
-/* 191 */       stringBuffer.append(Character.forDigit(k & 0xF, 16));
-/* 192 */       b++;
-/* 193 */       if (b % 16 == 0) {
-/* 194 */         stringBuffer.append('\n');
-/* 195 */         b = 1;
-/*     */       } else {
-/* 197 */         stringBuffer.append(' ');
-/*     */       } 
-/* 199 */     }  return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String printMessage() {
-/* 208 */     StringBuffer stringBuffer = new StringBuffer();
-/* 209 */     stringBuffer.append("Version: ");
-/* 210 */     stringBuffer.append(this.version);
-/* 211 */     stringBuffer.append("\n");
-/* 212 */     if (this.data == null) {
-/* 213 */       stringBuffer.append("Data: null");
-/*     */     } else {
-/*     */       
-/* 216 */       stringBuffer.append("Data: {\n");
-/* 217 */       stringBuffer.append(dumpHexBuffer(this.data, 0, this.dataLength));
-/* 218 */       stringBuffer.append("\n}\n");
-/*     */     } 
-/*     */     
-/* 221 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void encodeVarBindList(BerEncoder paramBerEncoder, SnmpVarBind[] paramArrayOfSnmpVarBind) throws SnmpStatusException, SnmpTooBigException {
-/* 233 */     byte b = 0;
-/*     */     try {
-/* 235 */       paramBerEncoder.openSequence();
-/* 236 */       if (paramArrayOfSnmpVarBind != null) {
-/* 237 */         for (int i = paramArrayOfSnmpVarBind.length - 1; i >= 0; i--) {
-/* 238 */           SnmpVarBind snmpVarBind = paramArrayOfSnmpVarBind[i];
-/* 239 */           if (snmpVarBind != null) {
-/* 240 */             paramBerEncoder.openSequence();
-/* 241 */             encodeVarBindValue(paramBerEncoder, snmpVarBind.value);
-/* 242 */             paramBerEncoder.putOid(snmpVarBind.oid.longValue());
-/* 243 */             paramBerEncoder.closeSequence();
-/* 244 */             b++;
-/*     */           } 
-/*     */         } 
-/*     */       }
-/* 248 */       paramBerEncoder.closeSequence();
-/*     */     }
-/* 250 */     catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-/* 251 */       throw new SnmpTooBigException(b);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void encodeVarBindValue(BerEncoder paramBerEncoder, SnmpValue paramSnmpValue) throws SnmpStatusException {
-/* 260 */     if (paramSnmpValue == null) {
-/* 261 */       paramBerEncoder.putNull();
-/*     */     }
-/* 263 */     else if (paramSnmpValue instanceof SnmpIpAddress) {
-/* 264 */       paramBerEncoder.putOctetString(((SnmpIpAddress)paramSnmpValue).byteValue(), 64);
-/*     */     }
-/* 266 */     else if (paramSnmpValue instanceof SnmpCounter) {
-/* 267 */       paramBerEncoder.putInteger(((SnmpCounter)paramSnmpValue).longValue(), 65);
-/*     */     }
-/* 269 */     else if (paramSnmpValue instanceof SnmpGauge) {
-/* 270 */       paramBerEncoder.putInteger(((SnmpGauge)paramSnmpValue).longValue(), 66);
-/*     */     }
-/* 272 */     else if (paramSnmpValue instanceof SnmpTimeticks) {
-/* 273 */       paramBerEncoder.putInteger(((SnmpTimeticks)paramSnmpValue).longValue(), 67);
-/*     */     }
-/* 275 */     else if (paramSnmpValue instanceof SnmpOpaque) {
-/* 276 */       paramBerEncoder.putOctetString(((SnmpOpaque)paramSnmpValue).byteValue(), 68);
-/*     */     }
-/* 278 */     else if (paramSnmpValue instanceof SnmpInt) {
-/* 279 */       paramBerEncoder.putInteger(((SnmpInt)paramSnmpValue).intValue());
-/*     */     }
-/* 281 */     else if (paramSnmpValue instanceof SnmpString) {
-/* 282 */       paramBerEncoder.putOctetString(((SnmpString)paramSnmpValue).byteValue());
-/*     */     }
-/* 284 */     else if (paramSnmpValue instanceof SnmpOid) {
-/* 285 */       paramBerEncoder.putOid(((SnmpOid)paramSnmpValue).longValue());
-/*     */     }
-/* 287 */     else if (paramSnmpValue instanceof SnmpCounter64) {
-/* 288 */       if (this.version == 0) {
-/* 289 */         throw new SnmpStatusException("Invalid value for SNMP v1 : " + paramSnmpValue);
-/*     */       }
-/* 291 */       paramBerEncoder.putInteger(((SnmpCounter64)paramSnmpValue).longValue(), 70);
-/*     */     }
-/* 293 */     else if (paramSnmpValue instanceof SnmpNull) {
-/* 294 */       int i = ((SnmpNull)paramSnmpValue).getTag();
-/* 295 */       if (this.version == 0 && i != 5) {
-/* 296 */         throw new SnmpStatusException("Invalid value for SNMP v1 : " + paramSnmpValue);
-/*     */       }
-/* 298 */       if (this.version == 1 && i != 5 && i != 128 && i != 129 && i != 130)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */         
-/* 303 */         throw new SnmpStatusException("Invalid value " + paramSnmpValue);
-/*     */       }
-/* 305 */       paramBerEncoder.putNull(i);
-/*     */     } else {
-/*     */       
-/* 308 */       throw new SnmpStatusException("Invalid value " + paramSnmpValue);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpVarBind[] decodeVarBindList(BerDecoder paramBerDecoder) throws BerException {
-/* 319 */     paramBerDecoder.openSequence();
-/* 320 */     Vector<SnmpVarBind> vector = new Vector();
-/* 321 */     while (paramBerDecoder.cannotCloseSequence()) {
-/* 322 */       SnmpVarBind snmpVarBind = new SnmpVarBind();
-/* 323 */       paramBerDecoder.openSequence();
-/* 324 */       snmpVarBind.oid = new SnmpOid(paramBerDecoder.fetchOid());
-/* 325 */       snmpVarBind.setSnmpValue(decodeVarBindValue(paramBerDecoder));
-/* 326 */       paramBerDecoder.closeSequence();
-/* 327 */       vector.addElement(snmpVarBind);
-/*     */     } 
-/* 329 */     paramBerDecoder.closeSequence();
-/* 330 */     SnmpVarBind[] arrayOfSnmpVarBind = new SnmpVarBind[vector.size()];
-/* 331 */     vector.copyInto((Object[])arrayOfSnmpVarBind);
-/* 332 */     return arrayOfSnmpVarBind; } SnmpValue decodeVarBindValue(BerDecoder paramBerDecoder) throws BerException { SnmpString snmpString; SnmpOid snmpOid;
-/*     */     SnmpNull snmpNull2;
-/*     */     SnmpIpAddress snmpIpAddress;
-/*     */     SnmpCounter snmpCounter;
-/*     */     SnmpGauge snmpGauge;
-/*     */     SnmpTimeticks snmpTimeticks;
-/*     */     SnmpOpaque snmpOpaque;
-/*     */     SnmpCounter64 snmpCounter64;
-/*     */     SnmpNull snmpNull1;
-/* 341 */     SnmpInt snmpInt = null;
-/* 342 */     int i = paramBerDecoder.getTag();
-/*     */ 
-/*     */ 
-/*     */     
-/* 346 */     switch (i) {
-/*     */       
-/*     */       case 2:
-/*     */         
-/*     */         try {
-/*     */ 
-/*     */           
-/* 353 */           snmpInt = new SnmpInt(paramBerDecoder.fetchInteger());
-/* 354 */         } catch (RuntimeException runtimeException) {
-/* 355 */           throw new BerException();
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 473 */         return snmpInt;case 4: try { snmpString = new SnmpString(paramBerDecoder.fetchOctetString()); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpString;case 6: try { snmpOid = new SnmpOid(paramBerDecoder.fetchOid()); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpOid;case 5: paramBerDecoder.fetchNull(); try { snmpNull2 = new SnmpNull(); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpNull2;case 64: try { snmpIpAddress = new SnmpIpAddress(paramBerDecoder.fetchOctetString(i)); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpIpAddress;case 65: try { snmpCounter = new SnmpCounter(paramBerDecoder.fetchIntegerAsLong(i)); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpCounter;case 66: try { snmpGauge = new SnmpGauge(paramBerDecoder.fetchIntegerAsLong(i)); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpGauge;case 67: try { snmpTimeticks = new SnmpTimeticks(paramBerDecoder.fetchIntegerAsLong(i)); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpTimeticks;case 68: try { snmpOpaque = new SnmpOpaque(paramBerDecoder.fetchOctetString(i)); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpOpaque;case 70: if (this.version == 0) throw new BerException(1);  try { snmpCounter64 = new SnmpCounter64(paramBerDecoder.fetchIntegerAsLong(i)); } catch (RuntimeException runtimeException) { throw new BerException(); }  return snmpCounter64;case 128: if (this.version == 0) throw new BerException(1);  paramBerDecoder.fetchNull(i); snmpNull1 = SnmpVarBind.noSuchObject; return snmpNull1;case 129: if (this.version == 0) throw new BerException(1);  paramBerDecoder.fetchNull(i); snmpNull1 = SnmpVarBind.noSuchInstance; return snmpNull1;case 130: if (this.version == 0) throw new BerException(1);  paramBerDecoder.fetchNull(i); snmpNull1 = SnmpVarBind.endOfMibView; return snmpNull1;
-/*     */     } 
-/*     */     throw new BerException(); }
-/*     */ 
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpMsg.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.snmp;
+
+import com.sun.jmx.snmp.SnmpSecurityParameters;
+// java imports
+//
+import java.util.Vector;
+import java.net.InetAddress;
+
+
+import com.sun.jmx.snmp.SnmpStatusException;
+/**
+ * A partially decoded representation of an SNMP packet. It contains
+ * the information contained in any SNMP message (SNMPv1, SNMPv2 or
+ * SNMPv3).
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+public abstract class SnmpMsg implements SnmpDefinitions {
+    /**
+     * The protocol version.
+     * <P><CODE>decodeMessage</CODE> and <CODE>encodeMessage</CODE> do not
+     * perform any check on this value.
+     * <BR><CODE>decodeSnmpPdu</CODE> and <CODE>encodeSnmpPdu</CODE> only
+     * accept  the values 0 (for SNMPv1), 1 (for SNMPv2) and 3 (for SNMPv3).
+     */
+    public int version = 0;
+
+    /**
+     * Encoding of the PDU.
+     * <P>This is usually the BER encoding of the PDU's syntax
+     * defined in RFC1157 and RFC1902. However, this can be authenticated
+     * or encrypted data (but you need to implemented your own
+     * <CODE>SnmpPduFactory</CODE> class).
+     */
+    public byte[] data = null;
+
+    /**
+     * Number of useful bytes in the <CODE>data</CODE> field.
+     */
+    public int dataLength = 0;
+
+    /**
+     * Source or destination address.
+     * <BR>For an incoming message it's the source.
+     * For an outgoing message it's the destination.
+     */
+    public InetAddress address = null;
+
+    /**
+     * Source or destination port.
+     * <BR>For an incoming message it's the source.
+     * For an outgoing message it's the destination.
+     */
+    public int port = 0;
+    /**
+     * Security parameters. Contain informations according to Security Model (Usm, community string based, ...).
+     */
+    public SnmpSecurityParameters securityParameters = null;
+    /**
+     * Returns the encoded SNMP version present in the passed byte array.
+     * @param data The unmarshalled SNMP message.
+     * @return The SNMP version (0, 1 or 3).
+     */
+    public static int getProtocolVersion(byte[] data)
+        throws SnmpStatusException {
+        int version = 0;
+        BerDecoder bdec = null;
+        try {
+            bdec = new BerDecoder(data);
+            bdec.openSequence();
+            version = bdec.fetchInteger();
+        }
+        catch(BerException x) {
+            throw new SnmpStatusException("Invalid encoding") ;
+        }
+        try {
+            bdec.closeSequence();
+        }
+        catch(BerException x) {
+        }
+        return version;
+    }
+
+    /**
+     * Returns the associated request ID.
+     * @param data The flat message.
+     * @return The request ID.
+     */
+    public abstract int getRequestId(byte[] data) throws SnmpStatusException;
+
+    /**
+     * Encodes this message and puts the result in the specified byte array.
+     * For internal use only.
+     *
+     * @param outputBytes An array to receive the resulting encoding.
+     *
+     * @exception ArrayIndexOutOfBoundsException If the result does not fit
+     *                                           into the specified array.
+     */
+    public abstract int encodeMessage(byte[] outputBytes)
+        throws SnmpTooBigException;
+
+     /**
+     * Decodes the specified bytes and initializes this message.
+     * For internal use only.
+     *
+     * @param inputBytes The bytes to be decoded.
+     *
+     * @exception SnmpStatusException If the specified bytes are not a valid encoding.
+     */
+    public abstract void decodeMessage(byte[] inputBytes, int byteCount)
+        throws SnmpStatusException;
+
+     /**
+     * Initializes this message with the specified <CODE>pdu</CODE>.
+     * <P>
+     * This method initializes the data field with an array of
+     * <CODE>maxDataLength</CODE> bytes. It encodes the <CODE>pdu</CODE>.
+     * The resulting encoding is stored in the data field
+     * and the length of the encoding is stored in <CODE>dataLength</CODE>.
+     * <p>
+     * If the encoding length exceeds <CODE>maxDataLength</CODE>,
+     * the method throws an exception.
+     *
+     * @param pdu The PDU to be encoded.
+     * @param maxDataLength The maximum length permitted for the data field.
+     *
+     * @exception SnmpStatusException If the specified <CODE>pdu</CODE> is not valid.
+     * @exception SnmpTooBigException If the resulting encoding does not fit
+     * into <CODE>maxDataLength</CODE> bytes.
+     * @exception ArrayIndexOutOfBoundsException If the encoding exceeds <CODE>maxDataLength</CODE>.
+     */
+    public abstract void encodeSnmpPdu(SnmpPdu pdu, int maxDataLength)
+        throws SnmpStatusException, SnmpTooBigException;
+
+
+    /**
+     * Gets the PDU encoded in this message.
+     * <P>
+     * This method decodes the data field and returns the resulting PDU.
+     *
+     * @return The resulting PDU.
+     * @exception SnmpStatusException If the encoding is not valid.
+     */
+    public abstract SnmpPdu decodeSnmpPdu()
+        throws SnmpStatusException;
+
+    /**
+     * Dumps the content of a byte buffer using hexadecimal form.
+     *
+     * @param b The buffer to dump.
+     * @param offset The position of the first byte to be dumped.
+     * @param len The number of bytes to be dumped starting from offset.
+     *
+     * @return The string containing the dump.
+     */
+    public static String dumpHexBuffer(byte [] b, int offset, int len) {
+        StringBuffer buf = new StringBuffer(len << 1) ;
+        int k = 1 ;
+        int flen = offset + len ;
+
+        for (int i = offset; i < flen ; i++) {
+            int j = b[i] & 0xFF ;
+            buf.append(Character.forDigit((j >>> 4) , 16)) ;
+            buf.append(Character.forDigit((j & 0x0F), 16)) ;
+            k++ ;
+            if (k%16 == 0) {
+                buf.append('\n') ;
+                k = 1 ;
+            } else
+                buf.append(' ') ;
+        }
+        return buf.toString() ;
+    }
+
+    /**
+     * Dumps this message in a string.
+     *
+     * @return The string containing the dump.
+     */
+    public String printMessage() {
+        StringBuffer sb = new StringBuffer() ;
+        sb.append("Version: ") ;
+        sb.append(version) ;
+        sb.append("\n") ;
+        if (data == null) {
+            sb.append("Data: null") ;
+        }
+        else {
+            sb.append("Data: {\n") ;
+            sb.append(dumpHexBuffer(data, 0, dataLength)) ;
+            sb.append("\n}\n") ;
+        }
+
+        return sb.toString() ;
+    }
+
+    /**
+     * For SNMP Runtime private use only.
+     */
+    public void encodeVarBindList(BerEncoder benc,
+                                  SnmpVarBind[] varBindList)
+        throws SnmpStatusException, SnmpTooBigException {
+        //
+        // Remember: the encoder does backward encoding
+        //
+        int encodedVarBindCount = 0 ;
+        try {
+            benc.openSequence() ;
+            if (varBindList != null) {
+                for (int i = varBindList.length - 1 ; i >= 0 ; i--) {
+                    SnmpVarBind bind = varBindList[i] ;
+                    if (bind != null) {
+                        benc.openSequence() ;
+                        encodeVarBindValue(benc, bind.value) ;
+                        benc.putOid(bind.oid.longValue()) ;
+                        benc.closeSequence() ;
+                        encodedVarBindCount++ ;
+                    }
+                }
+            }
+            benc.closeSequence() ;
+        }
+        catch(ArrayIndexOutOfBoundsException x) {
+            throw new SnmpTooBigException(encodedVarBindCount) ;
+        }
+    }
+
+    /**
+     * For SNMP Runtime private use only.
+     */
+    void encodeVarBindValue(BerEncoder benc,
+                            SnmpValue v)throws SnmpStatusException {
+        if (v == null) {
+            benc.putNull() ;
+        }
+        else if (v instanceof SnmpIpAddress) {
+            benc.putOctetString(((SnmpIpAddress)v).byteValue(), SnmpValue.IpAddressTag) ;
+        }
+        else if (v instanceof SnmpCounter) {
+            benc.putInteger(((SnmpCounter)v).longValue(), SnmpValue.CounterTag) ;
+        }
+        else if (v instanceof SnmpGauge) {
+            benc.putInteger(((SnmpGauge)v).longValue(), SnmpValue.GaugeTag) ;
+        }
+        else if (v instanceof SnmpTimeticks) {
+            benc.putInteger(((SnmpTimeticks)v).longValue(), SnmpValue.TimeticksTag) ;
+        }
+        else if (v instanceof SnmpOpaque) {
+            benc.putOctetString(((SnmpOpaque)v).byteValue(), SnmpValue.OpaqueTag) ;
+        }
+        else if (v instanceof SnmpInt) {
+            benc.putInteger(((SnmpInt)v).intValue()) ;
+        }
+        else if (v instanceof SnmpString) {
+            benc.putOctetString(((SnmpString)v).byteValue()) ;
+        }
+        else if (v instanceof SnmpOid) {
+            benc.putOid(((SnmpOid)v).longValue()) ;
+        }
+        else if (v instanceof SnmpCounter64) {
+            if (version == snmpVersionOne) {
+                throw new SnmpStatusException("Invalid value for SNMP v1 : " + v) ;
+            }
+            benc.putInteger(((SnmpCounter64)v).longValue(), SnmpValue.Counter64Tag) ;
+        }
+        else if (v instanceof SnmpNull) {
+            int tag = ((SnmpNull)v).getTag() ;
+            if ((version == snmpVersionOne) && (tag != SnmpValue.NullTag)) {
+                throw new SnmpStatusException("Invalid value for SNMP v1 : " + v) ;
+            }
+            if ((version == snmpVersionTwo) &&
+                (tag != SnmpValue.NullTag) &&
+                (tag != SnmpVarBind.errNoSuchObjectTag) &&
+                (tag != SnmpVarBind.errNoSuchInstanceTag) &&
+                (tag != SnmpVarBind.errEndOfMibViewTag)) {
+                throw new SnmpStatusException("Invalid value " + v) ;
+            }
+            benc.putNull(tag) ;
+        }
+        else {
+            throw new SnmpStatusException("Invalid value " + v) ;
+        }
+
+    }
+
+
+    /**
+     * For SNMP Runtime private use only.
+     */
+    public SnmpVarBind[] decodeVarBindList(BerDecoder bdec)
+        throws BerException {
+            bdec.openSequence() ;
+            Vector<SnmpVarBind> tmp = new Vector<SnmpVarBind>() ;
+            while (bdec.cannotCloseSequence()) {
+                SnmpVarBind bind = new SnmpVarBind() ;
+                bdec.openSequence() ;
+                bind.oid = new SnmpOid(bdec.fetchOid()) ;
+                bind.setSnmpValue(decodeVarBindValue(bdec)) ;
+                bdec.closeSequence() ;
+                tmp.addElement(bind) ;
+            }
+            bdec.closeSequence() ;
+            SnmpVarBind[] varBindList= new SnmpVarBind[tmp.size()] ;
+            tmp.copyInto(varBindList);
+            return varBindList ;
+        }
+
+
+    /**
+     * For SNMP Runtime private use only.
+     */
+    SnmpValue decodeVarBindValue(BerDecoder bdec)
+        throws BerException {
+        SnmpValue result = null ;
+        int tag = bdec.getTag() ;
+
+        // bugId 4641696 : RuntimeExceptions must be transformed in
+        //                 BerException.
+        switch(tag) {
+
+            //
+            // Simple syntax
+            //
+        case BerDecoder.IntegerTag :
+            try {
+                result = new SnmpInt(bdec.fetchInteger()) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpInt from decoded value.");
+            }
+            break ;
+        case BerDecoder.OctetStringTag :
+            try {
+                result = new SnmpString(bdec.fetchOctetString()) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpString from decoded value.");
+            }
+            break ;
+        case BerDecoder.OidTag :
+            try {
+                result = new SnmpOid(bdec.fetchOid()) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpOid from decoded value.");
+            }
+            break ;
+        case BerDecoder.NullTag :
+            bdec.fetchNull() ;
+            try {
+                result = new SnmpNull() ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpNull from decoded value.");
+            }
+            break ;
+
+            //
+            // Application syntax
+            //
+        case SnmpValue.IpAddressTag :
+            try {
+                result = new SnmpIpAddress(bdec.fetchOctetString(tag)) ;
+            } catch (RuntimeException r) {
+                throw new  BerException();
+              // BerException("Can't build SnmpIpAddress from decoded value.");
+            }
+            break ;
+        case SnmpValue.CounterTag :
+            try {
+                result = new SnmpCounter(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpCounter from decoded value.");
+            }
+            break ;
+        case SnmpValue.GaugeTag :
+            try {
+                result = new SnmpGauge(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpGauge from decoded value.");
+            }
+            break ;
+        case SnmpValue.TimeticksTag :
+            try {
+                result = new SnmpTimeticks(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+             // BerException("Can't build SnmpTimeticks from decoded value.");
+            }
+            break ;
+        case SnmpValue.OpaqueTag :
+            try {
+                result = new SnmpOpaque(bdec.fetchOctetString(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+                // BerException("Can't build SnmpOpaque from decoded value.");
+            }
+            break ;
+
+            //
+            // V2 syntaxes
+            //
+        case SnmpValue.Counter64Tag :
+            if (version == snmpVersionOne) {
+                throw new BerException(BerException.BAD_VERSION) ;
+            }
+            try {
+                result = new SnmpCounter64(bdec.fetchIntegerAsLong(tag)) ;
+            } catch(RuntimeException r) {
+                throw new BerException();
+             // BerException("Can't build SnmpCounter64 from decoded value.");
+            }
+            break ;
+
+        case SnmpVarBind.errNoSuchObjectTag :
+            if (version == snmpVersionOne) {
+                throw new BerException(BerException.BAD_VERSION) ;
+            }
+            bdec.fetchNull(tag) ;
+            result = SnmpVarBind.noSuchObject ;
+            break ;
+
+        case SnmpVarBind.errNoSuchInstanceTag :
+            if (version == snmpVersionOne) {
+                throw new BerException(BerException.BAD_VERSION) ;
+            }
+            bdec.fetchNull(tag) ;
+            result = SnmpVarBind.noSuchInstance ;
+            break ;
+
+        case SnmpVarBind.errEndOfMibViewTag :
+            if (version == snmpVersionOne) {
+                throw new BerException(BerException.BAD_VERSION) ;
+            }
+            bdec.fetchNull(tag) ;
+            result = SnmpVarBind.endOfMibView ;
+            break ;
+
+        default:
+            throw new BerException() ;
+
+        }
+
+        return result ;
+    }
+
+}

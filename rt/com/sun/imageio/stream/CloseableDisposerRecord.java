@@ -1,59 +1,54 @@
-/*    */ package com.sun.imageio.stream;
-/*    */ 
-/*    */ import java.io.Closeable;
-/*    */ import java.io.IOException;
-/*    */ import sun.java2d.DisposerRecord;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class CloseableDisposerRecord
-/*    */   implements DisposerRecord
-/*    */ {
-/*    */   private Closeable closeable;
-/*    */   
-/*    */   public CloseableDisposerRecord(Closeable paramCloseable) {
-/* 41 */     this.closeable = paramCloseable;
-/*    */   }
-/*    */   
-/*    */   public synchronized void dispose() {
-/* 45 */     if (this.closeable != null)
-/*    */       
-/* 47 */       try { this.closeable.close(); }
-/* 48 */       catch (IOException iOException) {  }
-/*    */       finally
-/* 50 */       { this.closeable = null; }
-/*    */        
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\stream\CloseableDisposerRecord.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.stream;
+
+import java.io.Closeable;
+import java.io.IOException;
+import sun.java2d.DisposerRecord;
+
+/**
+ * Convenience class that closes a given resource (e.g. RandomAccessFile),
+ * typically associated with an Image{Input,Output}Stream, prior to the
+ * stream being garbage collected.
+ */
+public class CloseableDisposerRecord implements DisposerRecord {
+    private Closeable closeable;
+
+    public CloseableDisposerRecord(Closeable closeable) {
+        this.closeable = closeable;
+    }
+
+    public synchronized void dispose() {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (IOException e) {
+            } finally {
+                closeable = null;
+            }
+        }
+    }
+}

@@ -1,195 +1,189 @@
-/*     */ package java.awt.geom;
-/*     */ 
-/*     */ import java.util.NoSuchElementException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class EllipseIterator
-/*     */   implements PathIterator
-/*     */ {
-/*     */   double x;
-/*     */   double y;
-/*     */   double w;
-/*     */   double h;
-/*     */   AffineTransform affine;
-/*     */   int index;
-/*     */   public static final double CtrlVal = 0.5522847498307933D;
-/*     */   private static final double pcv = 0.7761423749153966D;
-/*     */   private static final double ncv = 0.22385762508460333D;
-/*     */   
-/*     */   EllipseIterator(Ellipse2D paramEllipse2D, AffineTransform paramAffineTransform) {
-/*  42 */     this.x = paramEllipse2D.getX();
-/*  43 */     this.y = paramEllipse2D.getY();
-/*  44 */     this.w = paramEllipse2D.getWidth();
-/*  45 */     this.h = paramEllipse2D.getHeight();
-/*  46 */     this.affine = paramAffineTransform;
-/*  47 */     if (this.w < 0.0D || this.h < 0.0D) {
-/*  48 */       this.index = 6;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getWindingRule() {
-/*  59 */     return 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDone() {
-/*  67 */     return (this.index > 5);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void next() {
-/*  76 */     this.index++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  89 */   private static double[][] ctrlpts = new double[][] { { 1.0D, 0.7761423749153966D, 0.7761423749153966D, 1.0D, 0.5D, 1.0D }, { 0.22385762508460333D, 1.0D, 0.0D, 0.7761423749153966D, 0.0D, 0.5D }, { 0.0D, 0.22385762508460333D, 0.22385762508460333D, 0.0D, 0.5D, 0.0D }, { 0.7761423749153966D, 0.0D, 1.0D, 0.22385762508460333D, 1.0D, 0.5D } };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int currentSegment(float[] paramArrayOffloat) {
-/* 115 */     if (isDone()) {
-/* 116 */       throw new NoSuchElementException("ellipse iterator out of bounds");
-/*     */     }
-/* 118 */     if (this.index == 5) {
-/* 119 */       return 4;
-/*     */     }
-/* 121 */     if (this.index == 0) {
-/* 122 */       double[] arrayOfDouble1 = ctrlpts[3];
-/* 123 */       paramArrayOffloat[0] = (float)(this.x + arrayOfDouble1[4] * this.w);
-/* 124 */       paramArrayOffloat[1] = (float)(this.y + arrayOfDouble1[5] * this.h);
-/* 125 */       if (this.affine != null) {
-/* 126 */         this.affine.transform(paramArrayOffloat, 0, paramArrayOffloat, 0, 1);
-/*     */       }
-/* 128 */       return 0;
-/*     */     } 
-/* 130 */     double[] arrayOfDouble = ctrlpts[this.index - 1];
-/* 131 */     paramArrayOffloat[0] = (float)(this.x + arrayOfDouble[0] * this.w);
-/* 132 */     paramArrayOffloat[1] = (float)(this.y + arrayOfDouble[1] * this.h);
-/* 133 */     paramArrayOffloat[2] = (float)(this.x + arrayOfDouble[2] * this.w);
-/* 134 */     paramArrayOffloat[3] = (float)(this.y + arrayOfDouble[3] * this.h);
-/* 135 */     paramArrayOffloat[4] = (float)(this.x + arrayOfDouble[4] * this.w);
-/* 136 */     paramArrayOffloat[5] = (float)(this.y + arrayOfDouble[5] * this.h);
-/* 137 */     if (this.affine != null) {
-/* 138 */       this.affine.transform(paramArrayOffloat, 0, paramArrayOffloat, 0, 3);
-/*     */     }
-/* 140 */     return 3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int currentSegment(double[] paramArrayOfdouble) {
-/* 162 */     if (isDone()) {
-/* 163 */       throw new NoSuchElementException("ellipse iterator out of bounds");
-/*     */     }
-/* 165 */     if (this.index == 5) {
-/* 166 */       return 4;
-/*     */     }
-/* 168 */     if (this.index == 0) {
-/* 169 */       double[] arrayOfDouble1 = ctrlpts[3];
-/* 170 */       paramArrayOfdouble[0] = this.x + arrayOfDouble1[4] * this.w;
-/* 171 */       paramArrayOfdouble[1] = this.y + arrayOfDouble1[5] * this.h;
-/* 172 */       if (this.affine != null) {
-/* 173 */         this.affine.transform(paramArrayOfdouble, 0, paramArrayOfdouble, 0, 1);
-/*     */       }
-/* 175 */       return 0;
-/*     */     } 
-/* 177 */     double[] arrayOfDouble = ctrlpts[this.index - 1];
-/* 178 */     paramArrayOfdouble[0] = this.x + arrayOfDouble[0] * this.w;
-/* 179 */     paramArrayOfdouble[1] = this.y + arrayOfDouble[1] * this.h;
-/* 180 */     paramArrayOfdouble[2] = this.x + arrayOfDouble[2] * this.w;
-/* 181 */     paramArrayOfdouble[3] = this.y + arrayOfDouble[3] * this.h;
-/* 182 */     paramArrayOfdouble[4] = this.x + arrayOfDouble[4] * this.w;
-/* 183 */     paramArrayOfdouble[5] = this.y + arrayOfDouble[5] * this.h;
-/* 184 */     if (this.affine != null) {
-/* 185 */       this.affine.transform(paramArrayOfdouble, 0, paramArrayOfdouble, 0, 3);
-/*     */     }
-/* 187 */     return 3;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\EllipseIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+import java.util.*;
+
+/**
+ * A utility class to iterate over the path segments of an ellipse
+ * through the PathIterator interface.
+ *
+ * @author      Jim Graham
+ */
+class EllipseIterator implements PathIterator {
+    double x, y, w, h;
+    AffineTransform affine;
+    int index;
+
+    EllipseIterator(Ellipse2D e, AffineTransform at) {
+        this.x = e.getX();
+        this.y = e.getY();
+        this.w = e.getWidth();
+        this.h = e.getHeight();
+        this.affine = at;
+        if (w < 0 || h < 0) {
+            index = 6;
+        }
+    }
+
+    /**
+     * Return the winding rule for determining the insideness of the
+     * path.
+     * @see #WIND_EVEN_ODD
+     * @see #WIND_NON_ZERO
+     */
+    public int getWindingRule() {
+        return WIND_NON_ZERO;
+    }
+
+    /**
+     * Tests if there are more points to read.
+     * @return true if there are more points to read
+     */
+    public boolean isDone() {
+        return index > 5;
+    }
+
+    /**
+     * Moves the iterator to the next segment of the path forwards
+     * along the primary direction of traversal as long as there are
+     * more points in that direction.
+     */
+    public void next() {
+        index++;
+    }
+
+    // ArcIterator.btan(Math.PI/2)
+    public static final double CtrlVal = 0.5522847498307933;
+
+    /*
+     * ctrlpts contains the control points for a set of 4 cubic
+     * bezier curves that approximate a circle of radius 0.5
+     * centered at 0.5, 0.5
+     */
+    private static final double pcv = 0.5 + CtrlVal * 0.5;
+    private static final double ncv = 0.5 - CtrlVal * 0.5;
+    private static double ctrlpts[][] = {
+        {  1.0,  pcv,  pcv,  1.0,  0.5,  1.0 },
+        {  ncv,  1.0,  0.0,  pcv,  0.0,  0.5 },
+        {  0.0,  ncv,  ncv,  0.0,  0.5,  0.0 },
+        {  pcv,  0.0,  1.0,  ncv,  1.0,  0.5 }
+    };
+
+    /**
+     * Returns the coordinates and type of the current path segment in
+     * the iteration.
+     * The return value is the path segment type:
+     * SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE.
+     * A float array of length 6 must be passed in and may be used to
+     * store the coordinates of the point(s).
+     * Each point is stored as a pair of float x,y coordinates.
+     * SEG_MOVETO and SEG_LINETO types will return one point,
+     * SEG_QUADTO will return two points,
+     * SEG_CUBICTO will return 3 points
+     * and SEG_CLOSE will not return any points.
+     * @see #SEG_MOVETO
+     * @see #SEG_LINETO
+     * @see #SEG_QUADTO
+     * @see #SEG_CUBICTO
+     * @see #SEG_CLOSE
+     */
+    public int currentSegment(float[] coords) {
+        if (isDone()) {
+            throw new NoSuchElementException("ellipse iterator out of bounds");
+        }
+        if (index == 5) {
+            return SEG_CLOSE;
+        }
+        if (index == 0) {
+            double ctrls[] = ctrlpts[3];
+            coords[0] = (float) (x + ctrls[4] * w);
+            coords[1] = (float) (y + ctrls[5] * h);
+            if (affine != null) {
+                affine.transform(coords, 0, coords, 0, 1);
+            }
+            return SEG_MOVETO;
+        }
+        double ctrls[] = ctrlpts[index - 1];
+        coords[0] = (float) (x + ctrls[0] * w);
+        coords[1] = (float) (y + ctrls[1] * h);
+        coords[2] = (float) (x + ctrls[2] * w);
+        coords[3] = (float) (y + ctrls[3] * h);
+        coords[4] = (float) (x + ctrls[4] * w);
+        coords[5] = (float) (y + ctrls[5] * h);
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, 3);
+        }
+        return SEG_CUBICTO;
+    }
+
+    /**
+     * Returns the coordinates and type of the current path segment in
+     * the iteration.
+     * The return value is the path segment type:
+     * SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE.
+     * A double array of length 6 must be passed in and may be used to
+     * store the coordinates of the point(s).
+     * Each point is stored as a pair of double x,y coordinates.
+     * SEG_MOVETO and SEG_LINETO types will return one point,
+     * SEG_QUADTO will return two points,
+     * SEG_CUBICTO will return 3 points
+     * and SEG_CLOSE will not return any points.
+     * @see #SEG_MOVETO
+     * @see #SEG_LINETO
+     * @see #SEG_QUADTO
+     * @see #SEG_CUBICTO
+     * @see #SEG_CLOSE
+     */
+    public int currentSegment(double[] coords) {
+        if (isDone()) {
+            throw new NoSuchElementException("ellipse iterator out of bounds");
+        }
+        if (index == 5) {
+            return SEG_CLOSE;
+        }
+        if (index == 0) {
+            double ctrls[] = ctrlpts[3];
+            coords[0] = x + ctrls[4] * w;
+            coords[1] = y + ctrls[5] * h;
+            if (affine != null) {
+                affine.transform(coords, 0, coords, 0, 1);
+            }
+            return SEG_MOVETO;
+        }
+        double ctrls[] = ctrlpts[index - 1];
+        coords[0] = x + ctrls[0] * w;
+        coords[1] = y + ctrls[1] * h;
+        coords[2] = x + ctrls[2] * w;
+        coords[3] = y + ctrls[3] * h;
+        coords[4] = x + ctrls[4] * w;
+        coords[5] = y + ctrls[5] * h;
+        if (affine != null) {
+            affine.transform(coords, 0, coords, 0, 3);
+        }
+        return SEG_CUBICTO;
+    }
+}

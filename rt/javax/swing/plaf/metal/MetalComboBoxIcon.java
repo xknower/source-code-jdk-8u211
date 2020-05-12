@@ -1,80 +1,74 @@
-/*    */ package javax.swing.plaf.metal;
-/*    */ 
-/*    */ import java.awt.Component;
-/*    */ import java.awt.Graphics;
-/*    */ import java.io.Serializable;
-/*    */ import javax.swing.Icon;
-/*    */ import javax.swing.JComponent;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MetalComboBoxIcon
-/*    */   implements Icon, Serializable
-/*    */ {
-/*    */   public void paintIcon(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2) {
-/* 49 */     JComponent jComponent = (JComponent)paramComponent;
-/* 50 */     int i = getIconWidth();
-/*    */     
-/* 52 */     paramGraphics.translate(paramInt1, paramInt2);
-/*    */     
-/* 54 */     paramGraphics.setColor(jComponent.isEnabled() ? MetalLookAndFeel.getControlInfo() : MetalLookAndFeel.getControlShadow());
-/* 55 */     paramGraphics.drawLine(0, 0, i - 1, 0);
-/* 56 */     paramGraphics.drawLine(1, 1, 1 + i - 3, 1);
-/* 57 */     paramGraphics.drawLine(2, 2, 2 + i - 5, 2);
-/* 58 */     paramGraphics.drawLine(3, 3, 3 + i - 7, 3);
-/* 59 */     paramGraphics.drawLine(4, 4, 4 + i - 9, 4);
-/*    */     
-/* 61 */     paramGraphics.translate(-paramInt1, -paramInt2);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getIconWidth() {
-/* 67 */     return 10;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getIconHeight() {
-/* 72 */     return 5;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalComboBoxIcon.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.border.*;
+import java.io.Serializable;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+
+
+/**
+ * This utility class draws the horizontal bars which indicate a MetalComboBox
+ *
+ * @see MetalComboBoxUI
+ * @author Tom Santos
+ */
+public class MetalComboBoxIcon implements Icon, Serializable {
+
+    /**
+     * Paints the horizontal bars for the
+     */
+    public void paintIcon(Component c, Graphics g, int x, int y){
+        JComponent component = (JComponent)c;
+        int iconWidth = getIconWidth();
+
+        g.translate( x, y );
+
+        g.setColor( component.isEnabled() ? MetalLookAndFeel.getControlInfo() : MetalLookAndFeel.getControlShadow() );
+        g.drawLine( 0, 0, iconWidth - 1, 0 );
+        g.drawLine( 1, 1, 1 + (iconWidth - 3), 1 );
+        g.drawLine( 2, 2, 2 + (iconWidth - 5), 2 );
+        g.drawLine( 3, 3, 3 + (iconWidth - 7), 3 );
+        g.drawLine( 4, 4, 4 + (iconWidth - 9), 4 );
+
+        g.translate( -x, -y );
+    }
+
+    /**
+     * Created a stub to satisfy the interface.
+     */
+    public int getIconWidth() { return 10; }
+
+    /**
+     * Created a stub to satisfy the interface.
+     */
+    public int getIconHeight()  { return 5; }
+
+}

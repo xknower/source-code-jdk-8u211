@@ -1,70 +1,75 @@
-/*    */ package com.sun.org.apache.xml.internal.utils.res;
-/*    */ 
-/*    */ import java.util.ListResourceBundle;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class XResourceBundle
-/*    */   extends ListResourceBundle
-/*    */ {
-/*    */   public static final String ERROR_RESOURCES = "com.sun.org.apache.xalan.internal.res.XSLTErrorResources";
-/*    */   public static final String XSLT_RESOURCE = "com.sun.org.apache.xml.internal.utils.res.XResourceBundle";
-/*    */   public static final String LANG_BUNDLE_NAME = "com.sun.org.apache.xml.internal.utils.res.XResources";
-/*    */   public static final String MULT_ORDER = "multiplierOrder";
-/*    */   public static final String MULT_PRECEDES = "precedes";
-/*    */   public static final String MULT_FOLLOWS = "follows";
-/*    */   public static final String LANG_ORIENTATION = "orientation";
-/*    */   public static final String LANG_RIGHTTOLEFT = "rightToLeft";
-/*    */   public static final String LANG_LEFTTORIGHT = "leftToRight";
-/*    */   public static final String LANG_NUMBERING = "numbering";
-/*    */   public static final String LANG_ADDITIVE = "additive";
-/*    */   public static final String LANG_MULT_ADD = "multiplicative-additive";
-/*    */   public static final String LANG_MULTIPLIER = "multiplier";
-/*    */   public static final String LANG_MULTIPLIER_CHAR = "multiplierChar";
-/*    */   public static final String LANG_NUMBERGROUPS = "numberGroups";
-/*    */   public static final String LANG_NUM_TABLES = "tables";
-/*    */   public static final String LANG_ALPHABET = "alphabet";
-/*    */   public static final String LANG_TRAD_ALPHABET = "tradAlphabet";
-/*    */   
-/*    */   public Object[][] getContents() {
-/* 62 */     return new Object[][] { { "ui_language", "en" }, { "help_language", "en" }, { "language", "en" }, { "alphabet", new CharArrayWrapper(new char[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' }) }, { "tradAlphabet", new CharArrayWrapper(new char[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' }) }, { "orientation", "LeftToRight" }, { "numbering", "additive" } };
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\res\XResourceBundle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XResourceBundle.java,v 1.2.4.1 2005/09/15 08:16:04 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils.res;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ListResourceBundle;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+/**
+ * The default (english) resource bundle.
+ *
+ * @xsl.usage internal
+ */
+public class XResourceBundle extends ListResourceBundle {
+
+    /**
+     * Error resource constants
+     */
+    public static final String ERROR_RESOURCES =
+            "com.sun.org.apache.xalan.internal.res.XSLTErrorResources", XSLT_RESOURCE =
+            "com.sun.org.apache.xml.internal.utils.res.XResourceBundle", LANG_BUNDLE_NAME =
+            "com.sun.org.apache.xml.internal.utils.res.XResources", MULT_ORDER =
+            "multiplierOrder", MULT_PRECEDES = "precedes", MULT_FOLLOWS =
+            "follows", LANG_ORIENTATION = "orientation", LANG_RIGHTTOLEFT =
+            "rightToLeft", LANG_LEFTTORIGHT = "leftToRight", LANG_NUMBERING =
+            "numbering", LANG_ADDITIVE = "additive", LANG_MULT_ADD =
+            "multiplicative-additive", LANG_MULTIPLIER =
+            "multiplier", LANG_MULTIPLIER_CHAR =
+            "multiplierChar", LANG_NUMBERGROUPS = "numberGroups", LANG_NUM_TABLES =
+            "tables", LANG_ALPHABET = "alphabet", LANG_TRAD_ALPHABET = "tradAlphabet";
+
+
+    /**
+     * Get the association list.
+     *
+     * @return The association list.
+     */
+    public Object[][] getContents() {
+        return new Object[][]{
+                    {"ui_language", "en"}, {"help_language", "en"}, {"language", "en"},
+                    {"alphabet", new CharArrayWrapper(new char[]{'A', 'B', 'C', 'D', 'E', 'F', 'G',
+                            'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+                            'V', 'W', 'X', 'Y', 'Z'})},
+                    {"tradAlphabet", new CharArrayWrapper(new char[]{'A', 'B', 'C', 'D', 'E', 'F',
+                            'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+                            'U', 'V', 'W', 'X', 'Y', 'Z'})},
+                    //language orientation
+                    {"orientation", "LeftToRight"},
+                    //language numbering
+                    {"numbering", "additive"},};
+    }
+}

@@ -1,154 +1,148 @@
-/*     */ package com.sun.org.apache.xml.internal.security.signature;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SignatureProperties
-/*     */   extends SignatureElementProxy
-/*     */ {
-/*     */   public SignatureProperties(Document paramDocument) {
-/*  49 */     super(paramDocument);
-/*     */     
-/*  51 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SignatureProperties(Element paramElement, String paramString) throws XMLSecurityException {
-/*  61 */     super(paramElement, paramString);
-/*     */     
-/*  63 */     Attr attr = paramElement.getAttributeNodeNS((String)null, "Id");
-/*  64 */     if (attr != null) {
-/*  65 */       paramElement.setIdAttributeNode(attr, true);
-/*     */     }
-/*     */     
-/*  68 */     int i = getLength();
-/*  69 */     for (byte b = 0; b < i; b++) {
-/*     */       
-/*  71 */       Element element = XMLUtils.selectDsNode(this.constructionElement, "SignatureProperty", b);
-/*  72 */       Attr attr1 = element.getAttributeNodeNS((String)null, "Id");
-/*  73 */       if (attr1 != null) {
-/*  74 */         element.setIdAttributeNode(attr1, true);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/*  86 */     Element[] arrayOfElement = XMLUtils.selectDsNodes(this.constructionElement, "SignatureProperty");
-/*     */     
-/*  88 */     return arrayOfElement.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SignatureProperty item(int paramInt) throws XMLSignatureException {
-/*     */     try {
-/* 102 */       Element element = XMLUtils.selectDsNode(this.constructionElement, "SignatureProperty", paramInt);
-/*     */       
-/* 104 */       if (element == null) {
-/* 105 */         return null;
-/*     */       }
-/* 107 */       return new SignatureProperty(element, this.baseURI);
-/* 108 */     } catch (XMLSecurityException xMLSecurityException) {
-/* 109 */       throw new XMLSignatureException("empty", xMLSecurityException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setId(String paramString) {
-/* 119 */     if (paramString != null) {
-/* 120 */       this.constructionElement.setAttributeNS((String)null, "Id", paramString);
-/* 121 */       this.constructionElement.setIdAttributeNS((String)null, "Id", true);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getId() {
-/* 131 */     return this.constructionElement.getAttributeNS((String)null, "Id");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addSignatureProperty(SignatureProperty paramSignatureProperty) {
-/* 140 */     this.constructionElement.appendChild(paramSignatureProperty.getElement());
-/* 141 */     XMLUtils.addReturnToElement(this.constructionElement);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getBaseLocalName() {
-/* 146 */     return "SignatureProperties";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\signature\SignatureProperties.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.signature;
+
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+/**
+ * Handles <code>&lt;ds:SignatureProperties&gt;</code> elements
+ * This Element holds {@link SignatureProperty} that contian additional information items
+ * concerning the generation of the signature.
+ * for example, data-time stamp, serial number of cryptographic hardware.
+ *
+ * @author Christian Geuer-Pollmann
+ */
+public class SignatureProperties extends SignatureElementProxy {
+
+    /**
+     * Constructor SignatureProperties
+     *
+     * @param doc
+     */
+    public SignatureProperties(Document doc) {
+        super(doc);
+
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /**
+     * Constructs {@link SignatureProperties} from {@link Element}
+     * @param element <code>SignatureProperties</code> element
+     * @param BaseURI the URI of the resource where the XML instance was stored
+     * @throws XMLSecurityException
+     */
+    public SignatureProperties(Element element, String BaseURI) throws XMLSecurityException {
+        super(element, BaseURI);
+
+        Attr attr = element.getAttributeNodeNS(null, "Id");
+        if (attr != null) {
+            element.setIdAttributeNode(attr, true);
+        }
+
+        int length = getLength();
+        for (int i = 0; i < length; i++) {
+            Element propertyElem =
+                XMLUtils.selectDsNode(this.constructionElement, Constants._TAG_SIGNATUREPROPERTY, i);
+            Attr propertyAttr = propertyElem.getAttributeNodeNS(null, "Id");
+            if (propertyAttr != null) {
+                propertyElem.setIdAttributeNode(propertyAttr, true);
+            }
+        }
+    }
+
+    /**
+     * Return the nonnegative number of added SignatureProperty elements.
+     *
+     * @return the number of SignatureProperty elements
+     */
+    public int getLength() {
+        Element[] propertyElems =
+            XMLUtils.selectDsNodes(this.constructionElement, Constants._TAG_SIGNATUREPROPERTY);
+
+        return propertyElems.length;
+    }
+
+    /**
+     * Return the <it>i</it><sup>th</sup> SignatureProperty. Valid <code>i</code>
+     * values are 0 to <code>{link@ getSize}-1</code>.
+     *
+     * @param i Index of the requested {@link SignatureProperty}
+     * @return the <it>i</it><sup>th</sup> SignatureProperty
+     * @throws XMLSignatureException
+     */
+    public SignatureProperty item(int i) throws XMLSignatureException {
+        try {
+            Element propertyElem =
+                XMLUtils.selectDsNode(this.constructionElement, Constants._TAG_SIGNATUREPROPERTY, i);
+
+            if (propertyElem == null) {
+                return null;
+            }
+            return new SignatureProperty(propertyElem, this.baseURI);
+        } catch (XMLSecurityException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Sets the <code>Id</code> attribute
+     *
+     * @param Id the <code>Id</code> attribute
+     */
+    public void setId(String Id) {
+        if (Id != null) {
+            this.constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
+            this.constructionElement.setIdAttributeNS(null, Constants._ATT_ID, true);
+        }
+    }
+
+    /**
+     * Returns the <code>Id</code> attribute
+     *
+     * @return the <code>Id</code> attribute
+     */
+    public String getId() {
+        return this.constructionElement.getAttributeNS(null, Constants._ATT_ID);
+    }
+
+    /**
+     * Method addSignatureProperty
+     *
+     * @param sp
+     */
+    public void addSignatureProperty(SignatureProperty sp) {
+        this.constructionElement.appendChild(sp.getElement());
+        XMLUtils.addReturnToElement(this.constructionElement);
+    }
+
+    /** @inheritDoc */
+    public String getBaseLocalName() {
+        return Constants._TAG_SIGNATUREPROPERTIES;
+    }
+}

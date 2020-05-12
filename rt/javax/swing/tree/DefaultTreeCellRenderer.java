@@ -1,656 +1,691 @@
-/*     */ package javax.swing.tree;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JLabel;
-/*     */ import javax.swing.JTree;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ import javax.swing.plaf.basic.BasicGraphicsUtils;
-/*     */ import sun.swing.DefaultLookup;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DefaultTreeCellRenderer
-/*     */   extends JLabel
-/*     */   implements TreeCellRenderer
-/*     */ {
-/*     */   private JTree tree;
-/*     */   protected boolean selected;
-/*     */   protected boolean hasFocus;
-/*     */   private boolean drawsFocusBorderAroundIcon;
-/*     */   private boolean drawDashedFocusIndicator;
-/*     */   private Color treeBGColor;
-/*     */   private Color focusBGColor;
-/*     */   protected transient Icon closedIcon;
-/*     */   protected transient Icon leafIcon;
-/*     */   protected transient Icon openIcon;
-/*     */   protected Color textSelectionColor;
-/*     */   protected Color textNonSelectionColor;
-/*     */   protected Color backgroundSelectionColor;
-/*     */   protected Color backgroundNonSelectionColor;
-/*     */   protected Color borderSelectionColor;
-/*     */   private boolean isDropCell;
-/*     */   private boolean fillBackground;
-/*     */   private boolean inited = true;
-/*     */   
-/*     */   public void updateUI() {
-/* 179 */     super.updateUI();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 187 */     if (!this.inited || getLeafIcon() instanceof javax.swing.plaf.UIResource) {
-/* 188 */       setLeafIcon(DefaultLookup.getIcon(this, this.ui, "Tree.leafIcon"));
-/*     */     }
-/* 190 */     if (!this.inited || getClosedIcon() instanceof javax.swing.plaf.UIResource) {
-/* 191 */       setClosedIcon(DefaultLookup.getIcon(this, this.ui, "Tree.closedIcon"));
-/*     */     }
-/* 193 */     if (!this.inited || getOpenIcon() instanceof UIManager) {
-/* 194 */       setOpenIcon(DefaultLookup.getIcon(this, this.ui, "Tree.openIcon"));
-/*     */     }
-/* 196 */     if (!this.inited || getTextSelectionColor() instanceof javax.swing.plaf.UIResource) {
-/* 197 */       setTextSelectionColor(
-/* 198 */           DefaultLookup.getColor(this, this.ui, "Tree.selectionForeground"));
-/*     */     }
-/* 200 */     if (!this.inited || getTextNonSelectionColor() instanceof javax.swing.plaf.UIResource) {
-/* 201 */       setTextNonSelectionColor(
-/* 202 */           DefaultLookup.getColor(this, this.ui, "Tree.textForeground"));
-/*     */     }
-/* 204 */     if (!this.inited || getBackgroundSelectionColor() instanceof javax.swing.plaf.UIResource) {
-/* 205 */       setBackgroundSelectionColor(
-/* 206 */           DefaultLookup.getColor(this, this.ui, "Tree.selectionBackground"));
-/*     */     }
-/* 208 */     if (!this.inited || 
-/* 209 */       getBackgroundNonSelectionColor() instanceof javax.swing.plaf.UIResource) {
-/* 210 */       setBackgroundNonSelectionColor(
-/* 211 */           DefaultLookup.getColor(this, this.ui, "Tree.textBackground"));
-/*     */     }
-/* 213 */     if (!this.inited || getBorderSelectionColor() instanceof javax.swing.plaf.UIResource) {
-/* 214 */       setBorderSelectionColor(
-/* 215 */           DefaultLookup.getColor(this, this.ui, "Tree.selectionBorderColor"));
-/*     */     }
-/* 217 */     this.drawsFocusBorderAroundIcon = DefaultLookup.getBoolean(this, this.ui, "Tree.drawsFocusBorderAroundIcon", false);
-/*     */     
-/* 219 */     this.drawDashedFocusIndicator = DefaultLookup.getBoolean(this, this.ui, "Tree.drawDashedFocusIndicator", false);
-/*     */ 
-/*     */     
-/* 222 */     this.fillBackground = DefaultLookup.getBoolean(this, this.ui, "Tree.rendererFillBackground", true);
-/* 223 */     Insets insets = DefaultLookup.getInsets(this, this.ui, "Tree.rendererMargins");
-/* 224 */     if (insets != null) {
-/* 225 */       setBorder(new EmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
-/*     */     }
-/*     */ 
-/*     */     
-/* 229 */     setName("Tree.cellRenderer");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getDefaultOpenIcon() {
-/* 238 */     return DefaultLookup.getIcon(this, this.ui, "Tree.openIcon");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getDefaultClosedIcon() {
-/* 246 */     return DefaultLookup.getIcon(this, this.ui, "Tree.closedIcon");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getDefaultLeafIcon() {
-/* 254 */     return DefaultLookup.getIcon(this, this.ui, "Tree.leafIcon");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOpenIcon(Icon paramIcon) {
-/* 261 */     this.openIcon = paramIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getOpenIcon() {
-/* 268 */     return this.openIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setClosedIcon(Icon paramIcon) {
-/* 275 */     this.closedIcon = paramIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getClosedIcon() {
-/* 283 */     return this.closedIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLeafIcon(Icon paramIcon) {
-/* 290 */     this.leafIcon = paramIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Icon getLeafIcon() {
-/* 297 */     return this.leafIcon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setTextSelectionColor(Color paramColor) {
-/* 304 */     this.textSelectionColor = paramColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getTextSelectionColor() {
-/* 311 */     return this.textSelectionColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setTextNonSelectionColor(Color paramColor) {
-/* 318 */     this.textNonSelectionColor = paramColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getTextNonSelectionColor() {
-/* 325 */     return this.textNonSelectionColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setBackgroundSelectionColor(Color paramColor) {
-/* 332 */     this.backgroundSelectionColor = paramColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getBackgroundSelectionColor() {
-/* 340 */     return this.backgroundSelectionColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setBackgroundNonSelectionColor(Color paramColor) {
-/* 347 */     this.backgroundNonSelectionColor = paramColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getBackgroundNonSelectionColor() {
-/* 354 */     return this.backgroundNonSelectionColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setBorderSelectionColor(Color paramColor) {
-/* 361 */     this.borderSelectionColor = paramColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Color getBorderSelectionColor() {
-/* 368 */     return this.borderSelectionColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFont(Font paramFont) {
-/* 379 */     if (paramFont instanceof javax.swing.plaf.FontUIResource)
-/* 380 */       paramFont = null; 
-/* 381 */     super.setFont(paramFont);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Font getFont() {
-/* 390 */     Font font = super.getFont();
-/*     */     
-/* 392 */     if (font == null && this.tree != null)
-/*     */     {
-/*     */       
-/* 395 */       font = this.tree.getFont();
-/*     */     }
-/* 397 */     return font;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setBackground(Color paramColor) {
-/* 409 */     if (paramColor instanceof javax.swing.plaf.ColorUIResource)
-/* 410 */       paramColor = null; 
-/* 411 */     super.setBackground(paramColor);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component getTreeCellRendererComponent(JTree paramJTree, Object paramObject, boolean paramBoolean1, boolean paramBoolean2, boolean paramBoolean3, int paramInt, boolean paramBoolean4) {
-/* 428 */     String str = paramJTree.convertValueToText(paramObject, paramBoolean1, paramBoolean2, paramBoolean3, paramInt, paramBoolean4);
-/*     */ 
-/*     */     
-/* 431 */     this.tree = paramJTree;
-/* 432 */     this.hasFocus = paramBoolean4;
-/* 433 */     setText(str);
-/*     */     
-/* 435 */     Color color = null;
-/* 436 */     this.isDropCell = false;
-/*     */     
-/* 438 */     JTree.DropLocation dropLocation = paramJTree.getDropLocation();
-/* 439 */     if (dropLocation != null && dropLocation
-/* 440 */       .getChildIndex() == -1 && paramJTree
-/* 441 */       .getRowForPath(dropLocation.getPath()) == paramInt) {
-/*     */       
-/* 443 */       Color color1 = DefaultLookup.getColor(this, this.ui, "Tree.dropCellForeground");
-/* 444 */       if (color1 != null) {
-/* 445 */         color = color1;
-/*     */       } else {
-/* 447 */         color = getTextSelectionColor();
-/*     */       } 
-/*     */       
-/* 450 */       this.isDropCell = true;
-/* 451 */     } else if (paramBoolean1) {
-/* 452 */       color = getTextSelectionColor();
-/*     */     } else {
-/* 454 */       color = getTextNonSelectionColor();
-/*     */     } 
-/*     */     
-/* 457 */     setForeground(color);
-/*     */     
-/* 459 */     Icon icon = null;
-/* 460 */     if (paramBoolean3) {
-/* 461 */       icon = getLeafIcon();
-/* 462 */     } else if (paramBoolean2) {
-/* 463 */       icon = getOpenIcon();
-/*     */     } else {
-/* 465 */       icon = getClosedIcon();
-/*     */     } 
-/*     */     
-/* 468 */     if (!paramJTree.isEnabled()) {
-/* 469 */       setEnabled(false);
-/* 470 */       LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-/* 471 */       Icon icon1 = lookAndFeel.getDisabledIcon(paramJTree, icon);
-/* 472 */       if (icon1 != null) icon = icon1; 
-/* 473 */       setDisabledIcon(icon);
-/*     */     } else {
-/* 475 */       setEnabled(true);
-/* 476 */       setIcon(icon);
-/*     */     } 
-/* 478 */     setComponentOrientation(paramJTree.getComponentOrientation());
-/*     */     
-/* 480 */     this.selected = paramBoolean1;
-/*     */     
-/* 482 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics) {
-/*     */     Color color;
-/* 491 */     if (this.isDropCell) {
-/* 492 */       color = DefaultLookup.getColor(this, this.ui, "Tree.dropCellBackground");
-/* 493 */       if (color == null) {
-/* 494 */         color = getBackgroundSelectionColor();
-/*     */       }
-/* 496 */     } else if (this.selected) {
-/* 497 */       color = getBackgroundSelectionColor();
-/*     */     } else {
-/* 499 */       color = getBackgroundNonSelectionColor();
-/* 500 */       if (color == null) {
-/* 501 */         color = getBackground();
-/*     */       }
-/*     */     } 
-/*     */     
-/* 505 */     int i = -1;
-/* 506 */     if (color != null && this.fillBackground) {
-/* 507 */       i = getLabelStart();
-/* 508 */       paramGraphics.setColor(color);
-/* 509 */       if (getComponentOrientation().isLeftToRight()) {
-/* 510 */         paramGraphics.fillRect(i, 0, getWidth() - i, 
-/* 511 */             getHeight());
-/*     */       } else {
-/* 513 */         paramGraphics.fillRect(0, 0, getWidth() - i, 
-/* 514 */             getHeight());
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 518 */     if (this.hasFocus) {
-/* 519 */       if (this.drawsFocusBorderAroundIcon) {
-/* 520 */         i = 0;
-/*     */       }
-/* 522 */       else if (i == -1) {
-/* 523 */         i = getLabelStart();
-/*     */       } 
-/* 525 */       if (getComponentOrientation().isLeftToRight()) {
-/* 526 */         paintFocus(paramGraphics, i, 0, getWidth() - i, 
-/* 527 */             getHeight(), color);
-/*     */       } else {
-/* 529 */         paintFocus(paramGraphics, 0, 0, getWidth() - i, getHeight(), color);
-/*     */       } 
-/*     */     } 
-/* 532 */     super.paint(paramGraphics);
-/*     */   }
-/*     */   
-/*     */   private void paintFocus(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, Color paramColor) {
-/* 536 */     Color color = getBorderSelectionColor();
-/*     */     
-/* 538 */     if (color != null && (this.selected || !this.drawDashedFocusIndicator)) {
-/* 539 */       paramGraphics.setColor(color);
-/* 540 */       paramGraphics.drawRect(paramInt1, paramInt2, paramInt3 - 1, paramInt4 - 1);
-/*     */     } 
-/* 542 */     if (this.drawDashedFocusIndicator && paramColor != null) {
-/* 543 */       if (this.treeBGColor != paramColor) {
-/* 544 */         this.treeBGColor = paramColor;
-/* 545 */         this.focusBGColor = new Color(paramColor.getRGB() ^ 0xFFFFFFFF);
-/*     */       } 
-/* 547 */       paramGraphics.setColor(this.focusBGColor);
-/* 548 */       BasicGraphicsUtils.drawDashedRect(paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private int getLabelStart() {
-/* 553 */     Icon icon = getIcon();
-/* 554 */     if (icon != null && getText() != null) {
-/* 555 */       return icon.getIconWidth() + Math.max(0, getIconTextGap() - 1);
-/*     */     }
-/* 557 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize() {
-/* 565 */     Dimension dimension = super.getPreferredSize();
-/*     */     
-/* 567 */     if (dimension != null) {
-/* 568 */       dimension = new Dimension(dimension.width + 3, dimension.height);
-/*     */     }
-/* 570 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void validate() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void invalidate() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void revalidate() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void repaint(long paramLong, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void repaint(Rectangle paramRectangle) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void repaint() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void firePropertyChange(String paramString, Object paramObject1, Object paramObject2) {
-/* 626 */     if (paramString == "text" || ((paramString == "font" || paramString == "foreground") && paramObject1 != paramObject2 && 
-/*     */ 
-/*     */       
-/* 629 */       getClientProperty("html") != null))
-/*     */     {
-/* 631 */       super.firePropertyChange(paramString, paramObject1, paramObject2);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void firePropertyChange(String paramString, byte paramByte1, byte paramByte2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, char paramChar1, char paramChar2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, short paramShort1, short paramShort2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, int paramInt1, int paramInt2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, long paramLong1, long paramLong2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, float paramFloat1, float paramFloat2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, double paramDouble1, double paramDouble2) {}
-/*     */   
-/*     */   public void firePropertyChange(String paramString, boolean paramBoolean1, boolean paramBoolean2) {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\tree\DefaultTreeCellRenderer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.tree;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicGraphicsUtils;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
+import sun.swing.DefaultLookup;
+
+/**
+ * Displays an entry in a tree.
+ * <code>DefaultTreeCellRenderer</code> is not opaque and
+ * unless you subclass paint you should not change this.
+ * See <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/tree.html">How to Use Trees</a>
+ * in <em>The Java Tutorial</em>
+ * for examples of customizing node display using this class.
+ * <p>
+ * The set of icons and colors used by {@code DefaultTreeCellRenderer}
+ * can be configured using the various setter methods. The value for
+ * each property is initialized from the defaults table. When the
+ * look and feel changes ({@code updateUI} is invoked), any properties
+ * that have a value of type {@code UIResource} are refreshed from the
+ * defaults table. The following table lists the mapping between
+ * {@code DefaultTreeCellRenderer} property and defaults table key:
+ * <table border="1" cellpadding="1" cellspacing="0" summary="">
+ *   <tr valign="top"  align="left">
+ *     <th style="background-color:#CCCCFF" align="left">Property:
+ *     <th style="background-color:#CCCCFF" align="left">Key:
+ *   <tr><td>"leafIcon"<td>"Tree.leafIcon"
+ *   <tr><td>"closedIcon"<td>"Tree.closedIcon"
+ *   <tr><td>"openIcon"<td>"Tree.openIcon"
+ *   <tr><td>"textSelectionColor"<td>"Tree.selectionForeground"
+ *   <tr><td>"textNonSelectionColor"<td>"Tree.textForeground"
+ *   <tr><td>"backgroundSelectionColor"<td>"Tree.selectionBackground"
+ *   <tr><td>"backgroundNonSelectionColor"<td>"Tree.textBackground"
+ *   <tr><td>"borderSelectionColor"<td>"Tree.selectionBorderColor"
+ * </table>
+ * <p>
+ * <strong><a name="override">Implementation Note:</a></strong>
+ * This class overrides
+ * <code>invalidate</code>,
+ * <code>validate</code>,
+ * <code>revalidate</code>,
+ * <code>repaint</code>,
+ * and
+ * <code>firePropertyChange</code>
+ * solely to improve performance.
+ * If not overridden, these frequently called methods would execute code paths
+ * that are unnecessary for the default tree cell renderer.
+ * If you write your own renderer,
+ * take care to weigh the benefits and
+ * drawbacks of overriding these methods.
+ *
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Rob Davis
+ * @author Ray Ryan
+ * @author Scott Violet
+ */
+public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
+{
+    /** Last tree the renderer was painted in. */
+    private JTree tree;
+
+    /** Is the value currently selected. */
+    protected boolean selected;
+    /** True if has focus. */
+    protected boolean hasFocus;
+    /** True if draws focus border around icon as well. */
+    private boolean drawsFocusBorderAroundIcon;
+    /** If true, a dashed line is drawn as the focus indicator. */
+    private boolean drawDashedFocusIndicator;
+
+    // If drawDashedFocusIndicator is true, the following are used.
+    /**
+     * Background color of the tree.
+     */
+    private Color treeBGColor;
+    /**
+     * Color to draw the focus indicator in, determined from the background.
+     * color.
+     */
+    private Color focusBGColor;
+
+    // Icons
+    /** Icon used to show non-leaf nodes that aren't expanded. */
+    transient protected Icon closedIcon;
+
+    /** Icon used to show leaf nodes. */
+    transient protected Icon leafIcon;
+
+    /** Icon used to show non-leaf nodes that are expanded. */
+    transient protected Icon openIcon;
+
+    // Colors
+    /** Color to use for the foreground for selected nodes. */
+    protected Color textSelectionColor;
+
+    /** Color to use for the foreground for non-selected nodes. */
+    protected Color textNonSelectionColor;
+
+    /** Color to use for the background when a node is selected. */
+    protected Color backgroundSelectionColor;
+
+    /** Color to use for the background when the node isn't selected. */
+    protected Color backgroundNonSelectionColor;
+
+    /** Color to use for the focus indicator when the node has focus. */
+    protected Color borderSelectionColor;
+
+    private boolean isDropCell;
+    private boolean fillBackground;
+
+    /**
+     * Set to true after the constructor has run.
+     */
+    private boolean inited;
+
+    /**
+     * Creates a {@code DefaultTreeCellRenderer}. Icons and text color are
+     * determined from the {@code UIManager}.
+     */
+    public DefaultTreeCellRenderer() {
+        inited = true;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since 1.7
+     */
+    public void updateUI() {
+        super.updateUI();
+        // To avoid invoking new methods from the constructor, the
+        // inited field is first checked. If inited is false, the constructor
+        // has not run and there is no point in checking the value. As
+        // all look and feels have a non-null value for these properties,
+        // a null value means the developer has specifically set it to
+        // null. As such, if the value is null, this does not reset the
+        // value.
+        if (!inited || (getLeafIcon() instanceof UIResource)) {
+            setLeafIcon(DefaultLookup.getIcon(this, ui, "Tree.leafIcon"));
+        }
+        if (!inited || (getClosedIcon() instanceof UIResource)) {
+            setClosedIcon(DefaultLookup.getIcon(this, ui, "Tree.closedIcon"));
+        }
+        if (!inited || (getOpenIcon() instanceof UIManager)) {
+            setOpenIcon(DefaultLookup.getIcon(this, ui, "Tree.openIcon"));
+        }
+        if (!inited || (getTextSelectionColor() instanceof UIResource)) {
+            setTextSelectionColor(
+                    DefaultLookup.getColor(this, ui, "Tree.selectionForeground"));
+        }
+        if (!inited || (getTextNonSelectionColor() instanceof UIResource)) {
+            setTextNonSelectionColor(
+                    DefaultLookup.getColor(this, ui, "Tree.textForeground"));
+        }
+        if (!inited || (getBackgroundSelectionColor() instanceof UIResource)) {
+            setBackgroundSelectionColor(
+                    DefaultLookup.getColor(this, ui, "Tree.selectionBackground"));
+        }
+        if (!inited ||
+                (getBackgroundNonSelectionColor() instanceof UIResource)) {
+            setBackgroundNonSelectionColor(
+                    DefaultLookup.getColor(this, ui, "Tree.textBackground"));
+        }
+        if (!inited || (getBorderSelectionColor() instanceof UIResource)) {
+            setBorderSelectionColor(
+                    DefaultLookup.getColor(this, ui, "Tree.selectionBorderColor"));
+        }
+        drawsFocusBorderAroundIcon = DefaultLookup.getBoolean(
+                this, ui, "Tree.drawsFocusBorderAroundIcon", false);
+        drawDashedFocusIndicator = DefaultLookup.getBoolean(
+                this, ui, "Tree.drawDashedFocusIndicator", false);
+
+        fillBackground = DefaultLookup.getBoolean(this, ui, "Tree.rendererFillBackground", true);
+        Insets margins = DefaultLookup.getInsets(this, ui, "Tree.rendererMargins");
+        if (margins != null) {
+            setBorder(new EmptyBorder(margins.top, margins.left,
+                    margins.bottom, margins.right));
+        }
+
+        setName("Tree.cellRenderer");
+    }
+
+
+    /**
+      * Returns the default icon, for the current laf, that is used to
+      * represent non-leaf nodes that are expanded.
+      */
+    public Icon getDefaultOpenIcon() {
+        return DefaultLookup.getIcon(this, ui, "Tree.openIcon");
+    }
+
+    /**
+      * Returns the default icon, for the current laf, that is used to
+      * represent non-leaf nodes that are not expanded.
+      */
+    public Icon getDefaultClosedIcon() {
+        return DefaultLookup.getIcon(this, ui, "Tree.closedIcon");
+    }
+
+    /**
+      * Returns the default icon, for the current laf, that is used to
+      * represent leaf nodes.
+      */
+    public Icon getDefaultLeafIcon() {
+        return DefaultLookup.getIcon(this, ui, "Tree.leafIcon");
+    }
+
+    /**
+      * Sets the icon used to represent non-leaf nodes that are expanded.
+      */
+    public void setOpenIcon(Icon newIcon) {
+        openIcon = newIcon;
+    }
+
+    /**
+      * Returns the icon used to represent non-leaf nodes that are expanded.
+      */
+    public Icon getOpenIcon() {
+        return openIcon;
+    }
+
+    /**
+      * Sets the icon used to represent non-leaf nodes that are not expanded.
+      */
+    public void setClosedIcon(Icon newIcon) {
+        closedIcon = newIcon;
+    }
+
+    /**
+      * Returns the icon used to represent non-leaf nodes that are not
+      * expanded.
+      */
+    public Icon getClosedIcon() {
+        return closedIcon;
+    }
+
+    /**
+      * Sets the icon used to represent leaf nodes.
+      */
+    public void setLeafIcon(Icon newIcon) {
+        leafIcon = newIcon;
+    }
+
+    /**
+      * Returns the icon used to represent leaf nodes.
+      */
+    public Icon getLeafIcon() {
+        return leafIcon;
+    }
+
+    /**
+      * Sets the color the text is drawn with when the node is selected.
+      */
+    public void setTextSelectionColor(Color newColor) {
+        textSelectionColor = newColor;
+    }
+
+    /**
+      * Returns the color the text is drawn with when the node is selected.
+      */
+    public Color getTextSelectionColor() {
+        return textSelectionColor;
+    }
+
+    /**
+      * Sets the color the text is drawn with when the node isn't selected.
+      */
+    public void setTextNonSelectionColor(Color newColor) {
+        textNonSelectionColor = newColor;
+    }
+
+    /**
+      * Returns the color the text is drawn with when the node isn't selected.
+      */
+    public Color getTextNonSelectionColor() {
+        return textNonSelectionColor;
+    }
+
+    /**
+      * Sets the color to use for the background if node is selected.
+      */
+    public void setBackgroundSelectionColor(Color newColor) {
+        backgroundSelectionColor = newColor;
+    }
+
+
+    /**
+      * Returns the color to use for the background if node is selected.
+      */
+    public Color getBackgroundSelectionColor() {
+        return backgroundSelectionColor;
+    }
+
+    /**
+      * Sets the background color to be used for non selected nodes.
+      */
+    public void setBackgroundNonSelectionColor(Color newColor) {
+        backgroundNonSelectionColor = newColor;
+    }
+
+    /**
+      * Returns the background color to be used for non selected nodes.
+      */
+    public Color getBackgroundNonSelectionColor() {
+        return backgroundNonSelectionColor;
+    }
+
+    /**
+      * Sets the color to use for the border.
+      */
+    public void setBorderSelectionColor(Color newColor) {
+        borderSelectionColor = newColor;
+    }
+
+    /**
+      * Returns the color the border is drawn.
+      */
+    public Color getBorderSelectionColor() {
+        return borderSelectionColor;
+    }
+
+    /**
+     * Subclassed to map <code>FontUIResource</code>s to null. If
+     * <code>font</code> is null, or a <code>FontUIResource</code>, this
+     * has the effect of letting the font of the JTree show
+     * through. On the other hand, if <code>font</code> is non-null, and not
+     * a <code>FontUIResource</code>, the font becomes <code>font</code>.
+     */
+    public void setFont(Font font) {
+        if(font instanceof FontUIResource)
+            font = null;
+        super.setFont(font);
+    }
+
+    /**
+     * Gets the font of this component.
+     * @return this component's font; if a font has not been set
+     * for this component, the font of its parent is returned
+     */
+    public Font getFont() {
+        Font font = super.getFont();
+
+        if (font == null && tree != null) {
+            // Strive to return a non-null value, otherwise the html support
+            // will typically pick up the wrong font in certain situations.
+            font = tree.getFont();
+        }
+        return font;
+    }
+
+    /**
+     * Subclassed to map <code>ColorUIResource</code>s to null. If
+     * <code>color</code> is null, or a <code>ColorUIResource</code>, this
+     * has the effect of letting the background color of the JTree show
+     * through. On the other hand, if <code>color</code> is non-null, and not
+     * a <code>ColorUIResource</code>, the background becomes
+     * <code>color</code>.
+     */
+    public void setBackground(Color color) {
+        if(color instanceof ColorUIResource)
+            color = null;
+        super.setBackground(color);
+    }
+
+    /**
+      * Configures the renderer based on the passed in components.
+      * The value is set from messaging the tree with
+      * <code>convertValueToText</code>, which ultimately invokes
+      * <code>toString</code> on <code>value</code>.
+      * The foreground color is set based on the selection and the icon
+      * is set based on the <code>leaf</code> and <code>expanded</code>
+      * parameters.
+      */
+    public Component getTreeCellRendererComponent(JTree tree, Object value,
+                                                  boolean sel,
+                                                  boolean expanded,
+                                                  boolean leaf, int row,
+                                                  boolean hasFocus) {
+        String         stringValue = tree.convertValueToText(value, sel,
+                                          expanded, leaf, row, hasFocus);
+
+        this.tree = tree;
+        this.hasFocus = hasFocus;
+        setText(stringValue);
+
+        Color fg = null;
+        isDropCell = false;
+
+        JTree.DropLocation dropLocation = tree.getDropLocation();
+        if (dropLocation != null
+                && dropLocation.getChildIndex() == -1
+                && tree.getRowForPath(dropLocation.getPath()) == row) {
+
+            Color col = DefaultLookup.getColor(this, ui, "Tree.dropCellForeground");
+            if (col != null) {
+                fg = col;
+            } else {
+                fg = getTextSelectionColor();
+            }
+
+            isDropCell = true;
+        } else if (sel) {
+            fg = getTextSelectionColor();
+        } else {
+            fg = getTextNonSelectionColor();
+        }
+
+        setForeground(fg);
+
+        Icon icon = null;
+        if (leaf) {
+            icon = getLeafIcon();
+        } else if (expanded) {
+            icon = getOpenIcon();
+        } else {
+            icon = getClosedIcon();
+        }
+
+        if (!tree.isEnabled()) {
+            setEnabled(false);
+            LookAndFeel laf = UIManager.getLookAndFeel();
+            Icon disabledIcon = laf.getDisabledIcon(tree, icon);
+            if (disabledIcon != null) icon = disabledIcon;
+            setDisabledIcon(icon);
+        } else {
+            setEnabled(true);
+            setIcon(icon);
+        }
+        setComponentOrientation(tree.getComponentOrientation());
+
+        selected = sel;
+
+        return this;
+    }
+
+    /**
+      * Paints the value.  The background is filled based on selected.
+      */
+    public void paint(Graphics g) {
+        Color bColor;
+
+        if (isDropCell) {
+            bColor = DefaultLookup.getColor(this, ui, "Tree.dropCellBackground");
+            if (bColor == null) {
+                bColor = getBackgroundSelectionColor();
+            }
+        } else if (selected) {
+            bColor = getBackgroundSelectionColor();
+        } else {
+            bColor = getBackgroundNonSelectionColor();
+            if (bColor == null) {
+                bColor = getBackground();
+            }
+        }
+
+        int imageOffset = -1;
+        if (bColor != null && fillBackground) {
+            imageOffset = getLabelStart();
+            g.setColor(bColor);
+            if(getComponentOrientation().isLeftToRight()) {
+                g.fillRect(imageOffset, 0, getWidth() - imageOffset,
+                           getHeight());
+            } else {
+                g.fillRect(0, 0, getWidth() - imageOffset,
+                           getHeight());
+            }
+        }
+
+        if (hasFocus) {
+            if (drawsFocusBorderAroundIcon) {
+                imageOffset = 0;
+            }
+            else if (imageOffset == -1) {
+                imageOffset = getLabelStart();
+            }
+            if(getComponentOrientation().isLeftToRight()) {
+                paintFocus(g, imageOffset, 0, getWidth() - imageOffset,
+                           getHeight(), bColor);
+            } else {
+                paintFocus(g, 0, 0, getWidth() - imageOffset, getHeight(), bColor);
+            }
+        }
+        super.paint(g);
+    }
+
+    private void paintFocus(Graphics g, int x, int y, int w, int h, Color notColor) {
+        Color       bsColor = getBorderSelectionColor();
+
+        if (bsColor != null && (selected || !drawDashedFocusIndicator)) {
+            g.setColor(bsColor);
+            g.drawRect(x, y, w - 1, h - 1);
+        }
+        if (drawDashedFocusIndicator && notColor != null) {
+            if (treeBGColor != notColor) {
+                treeBGColor = notColor;
+                focusBGColor = new Color(~notColor.getRGB());
+            }
+            g.setColor(focusBGColor);
+            BasicGraphicsUtils.drawDashedRect(g, x, y, w, h);
+        }
+    }
+
+    private int getLabelStart() {
+        Icon currentI = getIcon();
+        if(currentI != null && getText() != null) {
+            return currentI.getIconWidth() + Math.max(0, getIconTextGap() - 1);
+        }
+        return 0;
+    }
+
+    /**
+     * Overrides <code>JComponent.getPreferredSize</code> to
+     * return slightly wider preferred size value.
+     */
+    public Dimension getPreferredSize() {
+        Dimension        retDimension = super.getPreferredSize();
+
+        if(retDimension != null)
+            retDimension = new Dimension(retDimension.width + 3,
+                                         retDimension.height);
+        return retDimension;
+    }
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void validate() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    *
+    * @since 1.5
+    */
+    public void invalidate() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void revalidate() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void repaint(long tm, int x, int y, int width, int height) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void repaint(Rectangle r) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    *
+    * @since 1.5
+    */
+    public void repaint() {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        // Strings get interned...
+        if (propertyName == "text"
+                || ((propertyName == "font" || propertyName == "foreground")
+                    && oldValue != newValue
+                    && getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey) != null)) {
+
+            super.firePropertyChange(propertyName, oldValue, newValue);
+        }
+    }
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, char oldValue, char newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, short oldValue, short newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, int oldValue, int newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, long oldValue, long newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, float oldValue, float newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, double oldValue, double newValue) {}
+
+   /**
+    * Overridden for performance reasons.
+    * See the <a href="#override">Implementation Note</a>
+    * for more information.
+    */
+    public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+
+}

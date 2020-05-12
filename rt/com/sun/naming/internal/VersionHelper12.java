@@ -1,295 +1,290 @@
-/*     */ package com.sun.naming.internal;
-/*     */ 
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.URL;
-/*     */ import java.net.URLClassLoader;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.NoSuchElementException;
-/*     */ import java.util.Properties;
-/*     */ import javax.naming.NamingEnumeration;
-/*     */ import javax.naming.NamingException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class VersionHelper12
-/*     */   extends VersionHelper
-/*     */ {
-/*     */   private static final String TRUST_URL_CODEBASE_PROPERTY = "com.sun.jndi.ldap.object.trustURLCodebase";
-/*     */   
-/*     */   public Class<?> loadClass(String paramString) throws ClassNotFoundException {
-/*  61 */     return loadClass(paramString, getContextClassLoader());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  70 */   private static final String trustURLCodebase = AccessController.<String>doPrivileged(new PrivilegedAction<String>()
-/*     */       {
-/*     */         public String run() {
-/*     */           try {
-/*  74 */             return System.getProperty("com.sun.jndi.ldap.object.trustURLCodebase", "false");
-/*     */           }
-/*  76 */           catch (SecurityException securityException) {
-/*  77 */             return "false";
-/*     */           } 
-/*     */         }
-/*     */       });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Class<?> loadClass(String paramString, ClassLoader paramClassLoader) throws ClassNotFoundException {
-/*  91 */     return Class.forName(paramString, true, paramClassLoader);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Class<?> loadClass(String paramString1, String paramString2) throws ClassNotFoundException, MalformedURLException {
-/* 101 */     if ("true".equalsIgnoreCase(trustURLCodebase)) {
-/* 102 */       ClassLoader classLoader = getContextClassLoader();
-/*     */       
-/* 104 */       URLClassLoader uRLClassLoader = URLClassLoader.newInstance(getUrlArray(paramString2), classLoader);
-/*     */       
-/* 106 */       return loadClass(paramString1, uRLClassLoader);
-/*     */     } 
-/* 108 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   String getJndiProperty(final int i) {
-/* 113 */     return AccessController.<String>doPrivileged(new PrivilegedAction<String>()
-/*     */         {
-/*     */           public String run() {
-/*     */             try {
-/* 117 */               return System.getProperty(VersionHelper.PROPS[i]);
-/* 118 */             } catch (SecurityException securityException) {
-/* 119 */               return null;
-/*     */             } 
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   String[] getJndiProperties() {
-/* 127 */     Properties properties = AccessController.<Properties>doPrivileged(new PrivilegedAction<Properties>()
-/*     */         {
-/*     */           public Properties run() {
-/*     */             try {
-/* 131 */               return System.getProperties();
-/* 132 */             } catch (SecurityException securityException) {
-/* 133 */               return null;
-/*     */             } 
-/*     */           }
-/*     */         });
-/*     */     
-/* 138 */     if (properties == null) {
-/* 139 */       return null;
-/*     */     }
-/* 141 */     String[] arrayOfString = new String[PROPS.length];
-/* 142 */     for (byte b = 0; b < PROPS.length; b++) {
-/* 143 */       arrayOfString[b] = properties.getProperty(PROPS[b]);
-/*     */     }
-/* 145 */     return arrayOfString;
-/*     */   }
-/*     */   
-/*     */   InputStream getResourceAsStream(final Class<?> c, final String name) {
-/* 149 */     return AccessController.<InputStream>doPrivileged(new PrivilegedAction<InputStream>()
-/*     */         {
-/*     */           public InputStream run() {
-/* 152 */             return c.getResourceAsStream(name);
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   InputStream getJavaHomeLibStream(final String filename) {
-/* 159 */     return AccessController.<InputStream>doPrivileged(new PrivilegedAction<InputStream>()
-/*     */         {
-/*     */           public InputStream run() {
-/*     */             try {
-/* 163 */               String str1 = System.getProperty("java.home");
-/* 164 */               if (str1 == null) {
-/* 165 */                 return null;
-/*     */               }
-/* 167 */               String str2 = str1 + File.separator + "lib" + File.separator + filename;
-/*     */               
-/* 169 */               return new FileInputStream(str2);
-/* 170 */             } catch (Exception exception) {
-/* 171 */               return null;
-/*     */             } 
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   NamingEnumeration<InputStream> getResources(final ClassLoader cl, final String name) throws IOException {
-/*     */     Enumeration<URL> enumeration;
-/*     */     try {
-/* 182 */       enumeration = AccessController.<Enumeration>doPrivileged((PrivilegedExceptionAction)new PrivilegedExceptionAction<Enumeration<URL>>()
-/*     */           {
-/*     */             public Enumeration<URL> run() throws IOException {
-/* 185 */               return (cl == null) ? 
-/* 186 */                 ClassLoader.getSystemResources(name) : cl
-/* 187 */                 .getResources(name);
-/*     */             }
-/*     */           });
-/*     */     }
-/* 191 */     catch (PrivilegedActionException privilegedActionException) {
-/* 192 */       throw (IOException)privilegedActionException.getException();
-/*     */     } 
-/* 194 */     return new InputStreamEnumeration(enumeration);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ClassLoader getContextClassLoader() {
-/* 207 */     return AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>()
-/*     */         {
-/*     */           public ClassLoader run()
-/*     */           {
-/* 211 */             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-/* 212 */             if (classLoader == null)
-/*     */             {
-/* 214 */               classLoader = ClassLoader.getSystemClassLoader();
-/*     */             }
-/*     */             
-/* 217 */             return classLoader;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   class InputStreamEnumeration
-/*     */     implements NamingEnumeration<InputStream>
-/*     */   {
-/*     */     private final Enumeration<URL> urls;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 234 */     private InputStream nextElement = null;
-/*     */     
-/*     */     InputStreamEnumeration(Enumeration<URL> param1Enumeration) {
-/* 237 */       this.urls = param1Enumeration;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private InputStream getNextElement() {
-/* 245 */       return AccessController.<InputStream>doPrivileged(new PrivilegedAction<InputStream>()
-/*     */           {
-/*     */             public InputStream run() {
-/* 248 */               while (VersionHelper12.InputStreamEnumeration.this.urls.hasMoreElements()) {
-/*     */                 try {
-/* 250 */                   return ((URL)VersionHelper12.InputStreamEnumeration.this.urls.nextElement()).openStream();
-/* 251 */                 } catch (IOException iOException) {}
-/*     */               } 
-/*     */ 
-/*     */               
-/* 255 */               return null;
-/*     */             }
-/*     */           });
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean hasMore() {
-/* 262 */       if (this.nextElement != null) {
-/* 263 */         return true;
-/*     */       }
-/* 265 */       this.nextElement = getNextElement();
-/* 266 */       return (this.nextElement != null);
-/*     */     }
-/*     */     
-/*     */     public boolean hasMoreElements() {
-/* 270 */       return hasMore();
-/*     */     }
-/*     */     
-/*     */     public InputStream next() {
-/* 274 */       if (hasMore()) {
-/* 275 */         InputStream inputStream = this.nextElement;
-/* 276 */         this.nextElement = null;
-/* 277 */         return inputStream;
-/*     */       } 
-/* 279 */       throw new NoSuchElementException();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public InputStream nextElement() {
-/* 284 */       return next();
-/*     */     }
-/*     */     
-/*     */     public void close() {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\naming\internal\VersionHelper12.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.naming.internal;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URLClassLoader;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
+import java.util.Properties;
+
+import javax.naming.*;
+
+/**
+ * VersionHelper was used by JNDI to accommodate differences between
+ * JDK 1.1.x and the Java 2 platform. As this is no longer necessary
+ * since JNDI's inclusion in the platform, this class currently
+ * serves as a set of utilities for performing system-level things,
+ * such as class-loading and reading system properties.
+ *
+ * @author Rosanna Lee
+ * @author Scott Seligman
+ */
+
+final class VersionHelper12 extends VersionHelper {
+
+    // Disallow external from creating one of these.
+    VersionHelper12() {
+    }
+
+    public Class<?> loadClass(String className) throws ClassNotFoundException {
+        return loadClass(className, getContextClassLoader());
+    }
+
+    /**
+     * Determines whether classes may be loaded from an arbitrary URL code base.
+     */
+    private static final String TRUST_URL_CODEBASE_PROPERTY =
+            "com.sun.jndi.ldap.object.trustURLCodebase";
+    private static final String trustURLCodebase =
+            AccessController.doPrivileged(
+                new PrivilegedAction<String>() {
+                    public String run() {
+                        try {
+                        return System.getProperty(TRUST_URL_CODEBASE_PROPERTY,
+                            "false");
+                        } catch (SecurityException e) {
+                        return "false";
+                        }
+                    }
+                }
+            );
+
+    /**
+     * Package private.
+     *
+     * This internal method is used with Thread Context Class Loader (TCCL),
+     * please don't expose this method as public.
+     */
+    Class<?> loadClass(String className, ClassLoader cl)
+        throws ClassNotFoundException {
+        Class<?> cls = Class.forName(className, true, cl);
+        return cls;
+    }
+
+    /**
+     * @param className A non-null fully qualified class name.
+     * @param codebase A non-null, space-separated list of URL strings.
+     */
+    public Class<?> loadClass(String className, String codebase)
+            throws ClassNotFoundException, MalformedURLException {
+        if ("true".equalsIgnoreCase(trustURLCodebase)) {
+            ClassLoader parent = getContextClassLoader();
+            ClassLoader cl =
+                    URLClassLoader.newInstance(getUrlArray(codebase), parent);
+
+            return loadClass(className, cl);
+        } else {
+            return null;
+        }
+    }
+
+    String getJndiProperty(final int i) {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<String>() {
+                public String run() {
+                    try {
+                        return System.getProperty(PROPS[i]);
+                    } catch (SecurityException e) {
+                        return null;
+                    }
+                }
+            }
+        );
+    }
+
+    String[] getJndiProperties() {
+        Properties sysProps = AccessController.doPrivileged(
+            new PrivilegedAction<Properties>() {
+                public Properties run() {
+                    try {
+                        return System.getProperties();
+                    } catch (SecurityException e) {
+                        return null;
+                    }
+                }
+            }
+        );
+        if (sysProps == null) {
+            return null;
+        }
+        String[] jProps = new String[PROPS.length];
+        for (int i = 0; i < PROPS.length; i++) {
+            jProps[i] = sysProps.getProperty(PROPS[i]);
+        }
+        return jProps;
+    }
+
+    InputStream getResourceAsStream(final Class<?> c, final String name) {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<InputStream>() {
+                public InputStream run() {
+                    return c.getResourceAsStream(name);
+                }
+            }
+        );
+    }
+
+    InputStream getJavaHomeLibStream(final String filename) {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<InputStream>() {
+                public InputStream run() {
+                    try {
+                        String javahome = System.getProperty("java.home");
+                        if (javahome == null) {
+                            return null;
+                        }
+                        String pathname = javahome + java.io.File.separator +
+                            "lib" + java.io.File.separator + filename;
+                        return new java.io.FileInputStream(pathname);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }
+            }
+        );
+    }
+
+    NamingEnumeration<InputStream> getResources(final ClassLoader cl,
+            final String name) throws IOException {
+        Enumeration<URL> urls;
+        try {
+            urls = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<Enumeration<URL>>() {
+                    public Enumeration<URL> run() throws IOException {
+                        return (cl == null)
+                            ? ClassLoader.getSystemResources(name)
+                            : cl.getResources(name);
+                    }
+                }
+            );
+        } catch (PrivilegedActionException e) {
+            throw (IOException)e.getException();
+        }
+        return new InputStreamEnumeration(urls);
+    }
+
+    /**
+     * Package private.
+     *
+     * This internal method returns Thread Context Class Loader (TCCL),
+     * if null, returns the system Class Loader.
+     *
+     * Please don't expose this method as public.
+     */
+    ClassLoader getContextClassLoader() {
+
+        return AccessController.doPrivileged(
+            new PrivilegedAction<ClassLoader>() {
+                public ClassLoader run() {
+                    ClassLoader loader =
+                            Thread.currentThread().getContextClassLoader();
+                    if (loader == null) {
+                        // Don't use bootstrap class loader directly!
+                        loader = ClassLoader.getSystemClassLoader();
+                    }
+
+                    return loader;
+                }
+            }
+        );
+    }
+
+    /**
+     * Given an enumeration of URLs, an instance of this class represents
+     * an enumeration of their InputStreams.  Each operation on the URL
+     * enumeration is performed within a doPrivileged block.
+     * This is used to enumerate the resources under a foreign codebase.
+     * This class is not MT-safe.
+     */
+    class InputStreamEnumeration implements NamingEnumeration<InputStream> {
+
+        private final Enumeration<URL> urls;
+
+        private InputStream nextElement = null;
+
+        InputStreamEnumeration(Enumeration<URL> urls) {
+            this.urls = urls;
+        }
+
+        /*
+         * Returns the next InputStream, or null if there are no more.
+         * An InputStream that cannot be opened is skipped.
+         */
+        private InputStream getNextElement() {
+            return AccessController.doPrivileged(
+                new PrivilegedAction<InputStream>() {
+                    public InputStream run() {
+                        while (urls.hasMoreElements()) {
+                            try {
+                                return urls.nextElement().openStream();
+                            } catch (IOException e) {
+                                // skip this URL
+                            }
+                        }
+                        return null;
+                    }
+                }
+            );
+        }
+
+        public boolean hasMore() {
+            if (nextElement != null) {
+                return true;
+            }
+            nextElement = getNextElement();
+            return (nextElement != null);
+        }
+
+        public boolean hasMoreElements() {
+            return hasMore();
+        }
+
+        public InputStream next() {
+            if (hasMore()) {
+                InputStream res = nextElement;
+                nextElement = null;
+                return res;
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+
+        public InputStream nextElement() {
+            return next();
+        }
+
+        public void close() {
+        }
+    }
+}

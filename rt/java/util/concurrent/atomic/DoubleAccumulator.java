@@ -1,390 +1,294 @@
-/*     */ package java.util.concurrent.atomic;
-/*     */ 
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.function.DoubleBinaryOperator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DoubleAccumulator
-/*     */   extends Striped64
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 7249069246863182397L;
-/*     */   private final DoubleBinaryOperator function;
-/*     */   private final long identity;
-/*     */   
-/*     */   public DoubleAccumulator(DoubleBinaryOperator paramDoubleBinaryOperator, double paramDouble) {
-/*  92 */     this.function = paramDoubleBinaryOperator;
-/*  93 */     this.base = this.identity = Double.doubleToRawLongBits(paramDouble);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void accumulate(double paramDouble) {
-/*     */     // Byte code:
-/*     */     //   0: aload_0
-/*     */     //   1: getfield cells : [Ljava/util/concurrent/atomic/Striped64$Cell;
-/*     */     //   4: dup
-/*     */     //   5: astore_3
-/*     */     //   6: ifnonnull -> 52
-/*     */     //   9: aload_0
-/*     */     //   10: getfield function : Ljava/util/function/DoubleBinaryOperator;
-/*     */     //   13: aload_0
-/*     */     //   14: getfield base : J
-/*     */     //   17: dup2
-/*     */     //   18: lstore #4
-/*     */     //   20: invokestatic longBitsToDouble : (J)D
-/*     */     //   23: dload_1
-/*     */     //   24: invokeinterface applyAsDouble : (DD)D
-/*     */     //   29: invokestatic doubleToRawLongBits : (D)J
-/*     */     //   32: dup2
-/*     */     //   33: lstore #8
-/*     */     //   35: lload #4
-/*     */     //   37: lcmp
-/*     */     //   38: ifeq -> 150
-/*     */     //   41: aload_0
-/*     */     //   42: lload #4
-/*     */     //   44: lload #8
-/*     */     //   46: invokevirtual casBase : (JJ)Z
-/*     */     //   49: ifne -> 150
-/*     */     //   52: iconst_1
-/*     */     //   53: istore #12
-/*     */     //   55: aload_3
-/*     */     //   56: ifnull -> 139
-/*     */     //   59: aload_3
-/*     */     //   60: arraylength
-/*     */     //   61: iconst_1
-/*     */     //   62: isub
-/*     */     //   63: dup
-/*     */     //   64: istore #10
-/*     */     //   66: iflt -> 139
-/*     */     //   69: aload_3
-/*     */     //   70: invokestatic getProbe : ()I
-/*     */     //   73: iload #10
-/*     */     //   75: iand
-/*     */     //   76: aaload
-/*     */     //   77: dup
-/*     */     //   78: astore #11
-/*     */     //   80: ifnull -> 139
-/*     */     //   83: aload_0
-/*     */     //   84: getfield function : Ljava/util/function/DoubleBinaryOperator;
-/*     */     //   87: aload #11
-/*     */     //   89: getfield value : J
-/*     */     //   92: dup2
-/*     */     //   93: lstore #6
-/*     */     //   95: invokestatic longBitsToDouble : (J)D
-/*     */     //   98: dload_1
-/*     */     //   99: invokeinterface applyAsDouble : (DD)D
-/*     */     //   104: invokestatic doubleToRawLongBits : (D)J
-/*     */     //   107: dup2
-/*     */     //   108: lstore #8
-/*     */     //   110: lload #6
-/*     */     //   112: lcmp
-/*     */     //   113: ifeq -> 128
-/*     */     //   116: aload #11
-/*     */     //   118: lload #6
-/*     */     //   120: lload #8
-/*     */     //   122: invokevirtual cas : (JJ)Z
-/*     */     //   125: ifeq -> 132
-/*     */     //   128: iconst_1
-/*     */     //   129: goto -> 133
-/*     */     //   132: iconst_0
-/*     */     //   133: dup
-/*     */     //   134: istore #12
-/*     */     //   136: ifne -> 150
-/*     */     //   139: aload_0
-/*     */     //   140: dload_1
-/*     */     //   141: aload_0
-/*     */     //   142: getfield function : Ljava/util/function/DoubleBinaryOperator;
-/*     */     //   145: iload #12
-/*     */     //   147: invokevirtual doubleAccumulate : (DLjava/util/function/DoubleBinaryOperator;Z)V
-/*     */     //   150: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #103	-> 0
-/*     */     //   #106	-> 20
-/*     */     //   #105	-> 29
-/*     */     //   #106	-> 46
-/*     */     //   #107	-> 52
-/*     */     //   #108	-> 55
-/*     */     //   #109	-> 70
-/*     */     //   #113	-> 95
-/*     */     //   #112	-> 104
-/*     */     //   #114	-> 122
-/*     */     //   #115	-> 139
-/*     */     //   #117	-> 150
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double get() {
-/* 129 */     Striped64.Cell[] arrayOfCell = this.cells;
-/* 130 */     double d = Double.longBitsToDouble(this.base);
-/* 131 */     if (arrayOfCell != null)
-/* 132 */       for (byte b = 0; b < arrayOfCell.length; b++) {
-/* 133 */         Striped64.Cell cell; if ((cell = arrayOfCell[b]) != null)
-/*     */         {
-/* 135 */           d = this.function.applyAsDouble(d, Double.longBitsToDouble(cell.value));
-/*     */         }
-/*     */       }  
-/* 138 */     return d;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 150 */     Striped64.Cell[] arrayOfCell = this.cells;
-/* 151 */     this.base = this.identity;
-/* 152 */     if (arrayOfCell != null) {
-/* 153 */       for (byte b = 0; b < arrayOfCell.length; b++) {
-/* 154 */         Striped64.Cell cell; if ((cell = arrayOfCell[b]) != null) {
-/* 155 */           cell.value = this.identity;
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double getThenReset() {
-/* 171 */     Striped64.Cell[] arrayOfCell = this.cells;
-/* 172 */     double d = Double.longBitsToDouble(this.base);
-/* 173 */     this.base = this.identity;
-/* 174 */     if (arrayOfCell != null) {
-/* 175 */       for (byte b = 0; b < arrayOfCell.length; b++) {
-/* 176 */         Striped64.Cell cell; if ((cell = arrayOfCell[b]) != null) {
-/* 177 */           double d1 = Double.longBitsToDouble(cell.value);
-/* 178 */           cell.value = this.identity;
-/* 179 */           d = this.function.applyAsDouble(d, d1);
-/*     */         } 
-/*     */       } 
-/*     */     }
-/* 183 */     return d;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 191 */     return Double.toString(get());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double doubleValue() {
-/* 200 */     return get();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long longValue() {
-/* 208 */     return (long)get();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int intValue() {
-/* 216 */     return (int)get();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float floatValue() {
-/* 224 */     return (float)get();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class SerializationProxy
-/*     */     implements Serializable
-/*     */   {
-/*     */     private static final long serialVersionUID = 7249069246863182397L;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final double value;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final DoubleBinaryOperator function;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final long identity;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     SerializationProxy(DoubleAccumulator param1DoubleAccumulator) {
-/* 252 */       this.function = param1DoubleAccumulator.function;
-/* 253 */       this.identity = param1DoubleAccumulator.identity;
-/* 254 */       this.value = param1DoubleAccumulator.get();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private Object readResolve() {
-/* 265 */       double d = Double.longBitsToDouble(this.identity);
-/* 266 */       DoubleAccumulator doubleAccumulator = new DoubleAccumulator(this.function, d);
-/* 267 */       doubleAccumulator.base = Double.doubleToRawLongBits(this.value);
-/* 268 */       return doubleAccumulator;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object writeReplace() {
-/* 282 */     return new SerializationProxy(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws InvalidObjectException {
-/* 291 */     throw new InvalidObjectException("Proxy required");
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\atomic\DoubleAccumulator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent.atomic;
+import java.io.Serializable;
+import java.util.function.DoubleBinaryOperator;
+
+/**
+ * One or more variables that together maintain a running {@code double}
+ * value updated using a supplied function.  When updates (method
+ * {@link #accumulate}) are contended across threads, the set of variables
+ * may grow dynamically to reduce contention.  Method {@link #get}
+ * (or, equivalently, {@link #doubleValue}) returns the current value
+ * across the variables maintaining updates.
+ *
+ * <p>This class is usually preferable to alternatives when multiple
+ * threads update a common value that is used for purposes such as
+ * summary statistics that are frequently updated but less frequently
+ * read.
+ *
+ * <p>The supplied accumulator function should be side-effect-free,
+ * since it may be re-applied when attempted updates fail due to
+ * contention among threads. The function is applied with the current
+ * value as its first argument, and the given update as the second
+ * argument.  For example, to maintain a running maximum value, you
+ * could supply {@code Double::max} along with {@code
+ * Double.NEGATIVE_INFINITY} as the identity. The order of
+ * accumulation within or across threads is not guaranteed. Thus, this
+ * class may not be applicable if numerical stability is required,
+ * especially when combining values of substantially different orders
+ * of magnitude.
+ *
+ * <p>Class {@link DoubleAdder} provides analogs of the functionality
+ * of this class for the common special case of maintaining sums.  The
+ * call {@code new DoubleAdder()} is equivalent to {@code new
+ * DoubleAccumulator((x, y) -> x + y, 0.0)}.
+ *
+ * <p>This class extends {@link Number}, but does <em>not</em> define
+ * methods such as {@code equals}, {@code hashCode} and {@code
+ * compareTo} because instances are expected to be mutated, and so are
+ * not useful as collection keys.
+ *
+ * @since 1.8
+ * @author Doug Lea
+ */
+public class DoubleAccumulator extends Striped64 implements Serializable {
+    private static final long serialVersionUID = 7249069246863182397L;
+
+    private final DoubleBinaryOperator function;
+    private final long identity; // use long representation
+
+    /**
+     * Creates a new instance using the given accumulator function
+     * and identity element.
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @param identity identity (initial value) for the accumulator function
+     */
+    public DoubleAccumulator(DoubleBinaryOperator accumulatorFunction,
+                             double identity) {
+        this.function = accumulatorFunction;
+        base = this.identity = Double.doubleToRawLongBits(identity);
+    }
+
+    /**
+     * Updates with the given value.
+     *
+     * @param x the value
+     */
+    public void accumulate(double x) {
+        Cell[] as; long b, v, r; int m; Cell a;
+        if ((as = cells) != null ||
+            (r = Double.doubleToRawLongBits
+             (function.applyAsDouble
+              (Double.longBitsToDouble(b = base), x))) != b  && !casBase(b, r)) {
+            boolean uncontended = true;
+            if (as == null || (m = as.length - 1) < 0 ||
+                (a = as[getProbe() & m]) == null ||
+                !(uncontended =
+                  (r = Double.doubleToRawLongBits
+                   (function.applyAsDouble
+                    (Double.longBitsToDouble(v = a.value), x))) == v ||
+                  a.cas(v, r)))
+                doubleAccumulate(x, function, uncontended);
+        }
+    }
+
+    /**
+     * Returns the current value.  The returned value is <em>NOT</em>
+     * an atomic snapshot; invocation in the absence of concurrent
+     * updates returns an accurate result, but concurrent updates that
+     * occur while the value is being calculated might not be
+     * incorporated.
+     *
+     * @return the current value
+     */
+    public double get() {
+        Cell[] as = cells; Cell a;
+        double result = Double.longBitsToDouble(base);
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null)
+                    result = function.applyAsDouble
+                        (result, Double.longBitsToDouble(a.value));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Resets variables maintaining updates to the identity value.
+     * This method may be a useful alternative to creating a new
+     * updater, but is only effective if there are no concurrent
+     * updates.  Because this method is intrinsically racy, it should
+     * only be used when it is known that no threads are concurrently
+     * updating.
+     */
+    public void reset() {
+        Cell[] as = cells; Cell a;
+        base = identity;
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null)
+                    a.value = identity;
+            }
+        }
+    }
+
+    /**
+     * Equivalent in effect to {@link #get} followed by {@link
+     * #reset}. This method may apply for example during quiescent
+     * points between multithreaded computations.  If there are
+     * updates concurrent with this method, the returned value is
+     * <em>not</em> guaranteed to be the final value occurring before
+     * the reset.
+     *
+     * @return the value before reset
+     */
+    public double getThenReset() {
+        Cell[] as = cells; Cell a;
+        double result = Double.longBitsToDouble(base);
+        base = identity;
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null) {
+                    double v = Double.longBitsToDouble(a.value);
+                    a.value = identity;
+                    result = function.applyAsDouble(result, v);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the String representation of the current value.
+     * @return the String representation of the current value
+     */
+    public String toString() {
+        return Double.toString(get());
+    }
+
+    /**
+     * Equivalent to {@link #get}.
+     *
+     * @return the current value
+     */
+    public double doubleValue() {
+        return get();
+    }
+
+    /**
+     * Returns the {@linkplain #get current value} as a {@code long}
+     * after a narrowing primitive conversion.
+     */
+    public long longValue() {
+        return (long)get();
+    }
+
+    /**
+     * Returns the {@linkplain #get current value} as an {@code int}
+     * after a narrowing primitive conversion.
+     */
+    public int intValue() {
+        return (int)get();
+    }
+
+    /**
+     * Returns the {@linkplain #get current value} as a {@code float}
+     * after a narrowing primitive conversion.
+     */
+    public float floatValue() {
+        return (float)get();
+    }
+
+    /**
+     * Serialization proxy, used to avoid reference to the non-public
+     * Striped64 superclass in serialized forms.
+     * @serial include
+     */
+    private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = 7249069246863182397L;
+
+        /**
+         * The current value returned by get().
+         * @serial
+         */
+        private final double value;
+        /**
+         * The function used for updates.
+         * @serial
+         */
+        private final DoubleBinaryOperator function;
+        /**
+         * The identity value
+         * @serial
+         */
+        private final long identity;
+
+        SerializationProxy(DoubleAccumulator a) {
+            function = a.function;
+            identity = a.identity;
+            value = a.get();
+        }
+
+        /**
+         * Returns a {@code DoubleAccumulator} object with initial state
+         * held by this proxy.
+         *
+         * @return a {@code DoubleAccumulator} object with initial state
+         * held by this proxy.
+         */
+        private Object readResolve() {
+            double d = Double.longBitsToDouble(identity);
+            DoubleAccumulator a = new DoubleAccumulator(function, d);
+            a.base = Double.doubleToRawLongBits(value);
+            return a;
+        }
+    }
+
+    /**
+     * Returns a
+     * <a href="../../../../serialized-form.html#java.util.concurrent.atomic.DoubleAccumulator.SerializationProxy">
+     * SerializationProxy</a>
+     * representing the state of this instance.
+     *
+     * @return a {@link SerializationProxy}
+     * representing the state of this instance
+     */
+    private Object writeReplace() {
+        return new SerializationProxy(this);
+    }
+
+    /**
+     * @param s the stream
+     * @throws java.io.InvalidObjectException always
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.InvalidObjectException {
+        throw new java.io.InvalidObjectException("Proxy required");
+    }
+
+}

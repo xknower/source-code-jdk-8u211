@@ -1,472 +1,474 @@
-/*     */ package com.sun.corba.se.impl.activation;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ActivationSystemException;
-/*     */ import com.sun.corba.se.spi.activation.BadServerDefinition;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
-/*     */ import com.sun.corba.se.spi.activation.ServerAlreadyInstalled;
-/*     */ import com.sun.corba.se.spi.activation.ServerAlreadyRegistered;
-/*     */ import com.sun.corba.se.spi.activation.ServerAlreadyUninstalled;
-/*     */ import com.sun.corba.se.spi.activation.ServerNotRegistered;
-/*     */ import com.sun.corba.se.spi.activation._RepositoryImplBase;
-/*     */ import com.sun.corba.se.spi.legacy.connection.LegacyServerSocketEndPointInfo;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.transport.SocketOrChannelAcceptor;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.Properties;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class RepositoryImpl
-/*     */   extends _RepositoryImplBase
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 8458417785209341858L;
-/*     */   private transient boolean debug;
-/*     */   static final int illegalServerId = -1;
-/*     */   private transient RepositoryDB db;
-/*     */   transient ORB orb;
-/*     */   transient ActivationSystemException wrapper;
-/*     */   
-/*     */   RepositoryImpl(ORB paramORB, File paramFile, boolean paramBoolean) {
-/* 395 */     this.debug = false;
-/*     */ 
-/*     */ 
-/*     */     
-/* 399 */     this.db = null;
-/*     */     
-/* 401 */     this.orb = null; this.debug = paramBoolean; this.orb = paramORB; this.wrapper = ActivationSystemException.get(paramORB, "orbd.repository"); File file = new File(paramFile, "servers.db"); if (!file.exists()) { this.db = new RepositoryDB(file); this.db.flush(); } else { try { FileInputStream fileInputStream = new FileInputStream(file); ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream); this.db = (RepositoryDB)objectInputStream.readObject(); objectInputStream.close(); } catch (Exception exception) { throw this.wrapper.cannotReadRepositoryDb(exception); }  }  paramORB.connect(this);
-/*     */   }
-/*     */   private String printServerDef(ServerDef paramServerDef) { return "ServerDef[applicationName=" + paramServerDef.applicationName + " serverName=" + paramServerDef.serverName + " serverClassPath=" + paramServerDef.serverClassPath + " serverArgs=" + paramServerDef.serverArgs + " serverVmArgs=" + paramServerDef.serverVmArgs + "]"; }
-/*     */   public int registerServer(ServerDef paramServerDef, int paramInt) throws ServerAlreadyRegistered { DBServerDef dBServerDef = null; synchronized (this.db) { int i; Enumeration<DBServerDef> enumeration = this.db.serverTable.elements(); while (enumeration.hasMoreElements()) { dBServerDef = enumeration.nextElement(); if (paramServerDef.applicationName.equals(dBServerDef.applicationName)) { if (this.debug) System.out.println("RepositoryImpl: registerServer called to register ServerDef " + printServerDef(paramServerDef) + " with " + ((paramInt == -1) ? "a new server Id" : ("server Id " + paramInt)) + " FAILED because it is already registered.");  throw new ServerAlreadyRegistered(dBServerDef.id); }  }  if (paramInt == -1) { i = this.db.incrementServerIdCounter(); } else { i = paramInt; }  dBServerDef = new DBServerDef(paramServerDef, i); this.db.serverTable.put(new Integer(i), dBServerDef); this.db.flush(); if (this.debug) if (paramInt == -1) { System.out.println("RepositoryImpl: registerServer called to register ServerDef " + printServerDef(paramServerDef) + " with new serverId " + i); } else { System.out.println("RepositoryImpl: registerServer called to register ServerDef " + printServerDef(paramServerDef) + " with assigned serverId " + i); }   return i; }  }
-/*     */   public int registerServer(ServerDef paramServerDef) throws ServerAlreadyRegistered, BadServerDefinition { LegacyServerSocketEndPointInfo legacyServerSocketEndPointInfo = this.orb.getLegacyServerSocketManager().legacyGetEndpoint("BOOT_NAMING"); int i = ((SocketOrChannelAcceptor)legacyServerSocketEndPointInfo).getServerSocket().getLocalPort(); ServerTableEntry serverTableEntry = new ServerTableEntry(this.wrapper, -1, paramServerDef, i, "", true, this.debug); switch (serverTableEntry.verify()) { case 0: return registerServer(paramServerDef, -1);case 1: throw new BadServerDefinition("main class not found.");case 2: throw new BadServerDefinition("no main method found.");case 3: throw new BadServerDefinition("server application error."); }  throw new BadServerDefinition("unknown Exception."); }
-/*     */   public void unregisterServer(int paramInt) throws ServerNotRegistered { DBServerDef dBServerDef = null; Integer integer = new Integer(paramInt); synchronized (this.db) { dBServerDef = (DBServerDef)this.db.serverTable.get(integer); if (dBServerDef == null) { if (this.debug) System.out.println("RepositoryImpl: unregisterServer for serverId " + paramInt + " called: server not registered");  throw new ServerNotRegistered(); }  this.db.serverTable.remove(integer); this.db.flush(); }  if (this.debug) System.out.println("RepositoryImpl: unregisterServer for serverId " + paramInt + " called");  }
-/*     */   private DBServerDef getDBServerDef(int paramInt) throws ServerNotRegistered { Integer integer = new Integer(paramInt); DBServerDef dBServerDef = (DBServerDef)this.db.serverTable.get(integer); if (dBServerDef == null) throw new ServerNotRegistered(paramInt);  return dBServerDef; }
-/*     */   public ServerDef getServer(int paramInt) throws ServerNotRegistered { DBServerDef dBServerDef = getDBServerDef(paramInt); ServerDef serverDef = new ServerDef(dBServerDef.applicationName, dBServerDef.name, dBServerDef.classPath, dBServerDef.args, dBServerDef.vmArgs); if (this.debug) System.out.println("RepositoryImpl: getServer for serverId " + paramInt + " returns " + printServerDef(serverDef));  return serverDef; }
-/*     */   public boolean isInstalled(int paramInt) throws ServerNotRegistered { DBServerDef dBServerDef = getDBServerDef(paramInt); return dBServerDef.isInstalled; }
-/*     */   public void install(int paramInt) throws ServerNotRegistered, ServerAlreadyInstalled { DBServerDef dBServerDef = getDBServerDef(paramInt); if (dBServerDef.isInstalled) throw new ServerAlreadyInstalled(paramInt);  dBServerDef.isInstalled = true; this.db.flush(); }
-/*     */   public void uninstall(int paramInt) throws ServerNotRegistered, ServerAlreadyUninstalled { DBServerDef dBServerDef = getDBServerDef(paramInt); if (!dBServerDef.isInstalled) throw new ServerAlreadyUninstalled(paramInt);  dBServerDef.isInstalled = false; this.db.flush(); } public int[] listRegisteredServers() { synchronized (this.db) { byte b = 0; int[] arrayOfInt = new int[this.db.serverTable.size()]; Enumeration<DBServerDef> enumeration = this.db.serverTable.elements(); while (enumeration.hasMoreElements()) { DBServerDef dBServerDef = enumeration.nextElement(); arrayOfInt[b++] = dBServerDef.id; }  if (this.debug) { StringBuffer stringBuffer = new StringBuffer(); for (byte b1 = 0; b1 < arrayOfInt.length; b1++) { stringBuffer.append(' '); stringBuffer.append(arrayOfInt[b1]); }  System.out.println("RepositoryImpl: listRegisteredServers returns" + stringBuffer.toString()); }  return arrayOfInt; }  } public int getServerID(String paramString) throws ServerNotRegistered { synchronized (this.db) { int i = -1; Enumeration<Integer> enumeration = this.db.serverTable.keys(); while (enumeration.hasMoreElements()) { Integer integer = enumeration.nextElement(); DBServerDef dBServerDef = (DBServerDef)this.db.serverTable.get(integer); if (dBServerDef.applicationName.equals(paramString)) { i = integer.intValue(); break; }  }  if (this.debug) System.out.println("RepositoryImpl: getServerID for " + paramString + " is " + i);  if (i == -1) throw new ServerNotRegistered();  return i; }  } public String[] getApplicationNames() { synchronized (this.db) { Vector<String> vector = new Vector(); Enumeration<Integer> enumeration = this.db.serverTable.keys(); while (enumeration.hasMoreElements()) { Integer integer = enumeration.nextElement(); DBServerDef dBServerDef = (DBServerDef)this.db.serverTable.get(integer); if (!dBServerDef.applicationName.equals("")) vector.addElement(dBServerDef.applicationName);  }  String[] arrayOfString = new String[vector.size()]; for (byte b = 0; b < vector.size(); b++) arrayOfString[b] = vector.elementAt(b);  if (this.debug) { StringBuffer stringBuffer = new StringBuffer(); for (byte b1 = 0; b1 < arrayOfString.length; b1++) { stringBuffer.append(' '); stringBuffer.append(arrayOfString[b1]); }  System.out.println("RepositoryImpl: getApplicationNames returns " + stringBuffer.toString()); }  return arrayOfString; }  } public static void main(String[] paramArrayOfString) { boolean bool = false; for (byte b = 0; b < paramArrayOfString.length; b++) { if (paramArrayOfString[b].equals("-debug")) bool = true;  }  try { Properties properties = new Properties(); properties.put("org.omg.CORBA.ORBClass", "com.sun.corba.se.impl.orb.ORBImpl"); ORB oRB = (ORB)ORB.init(paramArrayOfString, properties); String str = System.getProperty("com.sun.CORBA.activation.db", "db"); RepositoryImpl repositoryImpl = new RepositoryImpl(oRB, new File(str), bool); oRB.run(); } catch (Exception exception) { exception.printStackTrace(); }  } class RepositoryDB implements Serializable
-/*     */   {
-/* 413 */     File db; RepositoryDB(File param1File) { this.db = param1File;
-/*     */ 
-/*     */ 
-/*     */       
-/* 417 */       this.serverTable = new Hashtable<>(255);
-/* 418 */       this.serverIdCounter = new Integer(256); }
-/*     */     
-/*     */     Hashtable serverTable; Integer serverIdCounter;
-/*     */     
-/*     */     int incrementServerIdCounter() {
-/* 423 */       int i = this.serverIdCounter.intValue();
-/* 424 */       this.serverIdCounter = new Integer(++i);
-/*     */       
-/* 426 */       return i;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     void flush() {
-/*     */       try {
-/* 432 */         this.db.delete();
-/* 433 */         FileOutputStream fileOutputStream = new FileOutputStream(this.db);
-/* 434 */         ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-/* 435 */         objectOutputStream.writeObject(this);
-/* 436 */         objectOutputStream.flush();
-/* 437 */         objectOutputStream.close();
-/* 438 */       } catch (Exception exception) {
-/* 439 */         throw RepositoryImpl.this.wrapper.cannotWriteRepositoryDb(exception);
-/*     */       } 
-/*     */     } }
-/*     */   class DBServerDef implements Serializable { String applicationName; String name; String classPath; String args; String vmArgs;
-/*     */     boolean isInstalled;
-/*     */     int id;
-/*     */     
-/*     */     public String toString() {
-/* 447 */       return "DBServerDef(applicationName=" + this.applicationName + ", name=" + this.name + ", classPath=" + this.classPath + ", args=" + this.args + ", vmArgs=" + this.vmArgs + ", id=" + this.id + ", isInstalled=" + this.isInstalled + ")";
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     DBServerDef(ServerDef param1ServerDef, int param1Int) {
-/* 457 */       this.applicationName = param1ServerDef.applicationName;
-/* 458 */       this.name = param1ServerDef.serverName;
-/* 459 */       this.classPath = param1ServerDef.serverClassPath;
-/* 460 */       this.args = param1ServerDef.serverArgs;
-/* 461 */       this.vmArgs = param1ServerDef.serverVmArgs;
-/* 462 */       this.id = param1Int;
-/* 463 */       this.isInstalled = false;
-/*     */     } }
-/*     */ 
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\activation\RepositoryImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.activation;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Properties;
+import java.util.Hashtable;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INITIALIZE;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.SystemException;
+
+import com.sun.corba.se.spi.activation.BadServerDefinition;
+import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
+import com.sun.corba.se.spi.activation._RepositoryImplBase;
+import com.sun.corba.se.spi.activation.ServerAlreadyRegistered;
+import com.sun.corba.se.spi.activation.ServerAlreadyInstalled;
+import com.sun.corba.se.spi.activation.ServerAlreadyUninstalled;
+import com.sun.corba.se.spi.activation.ServerNotRegistered;
+import com.sun.corba.se.spi.legacy.connection.LegacyServerSocketEndPointInfo;
+import com.sun.corba.se.spi.transport.SocketOrChannelAcceptor;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+import com.sun.corba.se.impl.logging.ActivationSystemException;
+
+/**
+ *
+ * @author      Rohit Garg
+ * @since       JDK1.2
+ */
+public class RepositoryImpl extends _RepositoryImplBase
+    implements Serializable
+{
+
+    // added serialver computed by the tool
+    private static final long serialVersionUID = 8458417785209341858L;
+
+    RepositoryImpl(ORB orb, File dbDir, boolean debug)
+    {
+        this.debug = debug ;
+        this.orb = orb;
+        wrapper = ActivationSystemException.get( orb, CORBALogDomains.ORBD_REPOSITORY ) ;
+
+        // if databse does not exist, create it otherwise read it in
+        File dbFile = new File(dbDir, "servers.db");
+        if (!dbFile.exists()) {
+            db = new RepositoryDB(dbFile);
+            db.flush();
+        } else {
+            try {
+                FileInputStream fis = new FileInputStream(dbFile);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                db = (RepositoryDB) ois.readObject();
+                ois.close();
+            } catch (Exception e) {
+                throw wrapper.cannotReadRepositoryDb( e ) ;
+            }
+        }
+
+        // export the repository
+        orb.connect(this);
+    }
+
+    private String printServerDef( ServerDef sd )
+    {
+        return "ServerDef[applicationName=" + sd.applicationName +
+            " serverName=" + sd.serverName +
+            " serverClassPath=" + sd.serverClassPath +
+            " serverArgs=" + sd. serverArgs +
+            " serverVmArgs=" + sd.serverVmArgs +
+            "]" ;
+    }
+
+    public int registerServer(ServerDef serverDef, int theServerId)
+        throws ServerAlreadyRegistered
+    {
+        int         serverId;
+        DBServerDef server = null;
+
+        synchronized (db) {
+
+            // check if server already registered
+            Enumeration enumeration = db.serverTable.elements();
+            while (enumeration.hasMoreElements()) {
+                server = (DBServerDef) enumeration.nextElement();
+                if (serverDef.applicationName.equals(server.applicationName)) {
+                    if (debug)
+                        System.out.println(
+                            "RepositoryImpl: registerServer called " +
+                            "to register ServerDef " +
+                            printServerDef( serverDef ) +
+                            " with " + ((theServerId==illegalServerId) ?
+                        "a new server Id" : ("server Id " + theServerId)) +
+                                           " FAILED because it is already registered." ) ;
+
+                    throw (new ServerAlreadyRegistered(server.id));
+                }
+            }
+
+            // generate a new server id
+            if (theServerId == illegalServerId)
+                serverId = db.incrementServerIdCounter();
+            else
+                serverId = theServerId;
+
+            // add server def to the database
+            server = new DBServerDef(serverDef, serverId);
+            db.serverTable.put(new Integer(serverId), server);
+            db.flush();
+
+            if (debug)
+                if (theServerId==illegalServerId)
+                    System.out.println( "RepositoryImpl: registerServer called " +
+                                        "to register ServerDef " + printServerDef( serverDef ) +
+                                        " with new serverId " + serverId ) ;
+                else
+                    System.out.println( "RepositoryImpl: registerServer called " +
+                                        "to register ServerDef " + printServerDef( serverDef ) +
+                                        " with assigned serverId " + serverId ) ;
+
+            return serverId;
+        }
+    }
+
+    public int registerServer(ServerDef serverDef)
+        throws ServerAlreadyRegistered, BadServerDefinition
+    {
+        // verify that the entry is valid
+        LegacyServerSocketEndPointInfo endpoint =
+            orb.getLegacyServerSocketManager()
+                .legacyGetEndpoint(LegacyServerSocketEndPointInfo.BOOT_NAMING);
+        int initSvcPort = ((SocketOrChannelAcceptor)endpoint)
+            .getServerSocket().getLocalPort();
+        ServerTableEntry entry = new ServerTableEntry( wrapper,
+            illegalServerId, serverDef, (int) initSvcPort, "", true, debug );
+
+        switch (entry.verify()) {
+        case ServerMain.OK:
+            break;
+        case ServerMain.MAIN_CLASS_NOT_FOUND:
+            throw new BadServerDefinition("main class not found.");
+        case ServerMain.NO_MAIN_METHOD:
+            throw new BadServerDefinition("no main method found.");
+        case ServerMain.APPLICATION_ERROR:
+            throw new BadServerDefinition("server application error.");
+        default:
+            throw new BadServerDefinition("unknown Exception.");
+        }
+
+        return registerServer(serverDef, illegalServerId);
+    }
+
+    public void unregisterServer(int serverId) throws ServerNotRegistered {
+
+        DBServerDef server = null;
+        Integer id = new Integer(serverId);
+
+        synchronized (db) {
+
+            // check to see if the server is registered
+            server = (DBServerDef) db.serverTable.get(id);
+            if (server == null)  {
+                if (debug)
+                    System.out.println(
+                                       "RepositoryImpl: unregisterServer for serverId " +
+                                       serverId + " called: server not registered" ) ;
+
+                throw (new ServerNotRegistered());
+            }
+
+            // remove server from the database
+            db.serverTable.remove(id);
+            db.flush();
+        }
+
+        if (debug)
+            System.out.println(
+                               "RepositoryImpl: unregisterServer for serverId " + serverId +
+                               " called" ) ;
+    }
+
+    private DBServerDef getDBServerDef(int serverId) throws ServerNotRegistered
+    {
+        Integer id = new Integer(serverId);
+        DBServerDef server = (DBServerDef) db.serverTable.get(id);
+
+        if (server == null)
+            throw new ServerNotRegistered( serverId );
+
+        return server ;
+    }
+
+    public ServerDef getServer(int serverId) throws ServerNotRegistered
+    {
+        DBServerDef server = getDBServerDef( serverId ) ;
+
+        ServerDef serverDef = new ServerDef(server.applicationName, server.name,
+                                            server.classPath, server.args, server.vmArgs);
+
+        if (debug)
+            System.out.println(
+                               "RepositoryImpl: getServer for serverId " + serverId +
+                               " returns " + printServerDef( serverDef ) ) ;
+
+        return serverDef;
+    }
+
+    public boolean isInstalled(int serverId) throws ServerNotRegistered {
+        DBServerDef server = getDBServerDef( serverId ) ;
+        return server.isInstalled ;
+    }
+
+    public void install( int serverId )
+        throws ServerNotRegistered, ServerAlreadyInstalled
+    {
+        DBServerDef server = getDBServerDef( serverId ) ;
+
+        if (server.isInstalled)
+            throw new ServerAlreadyInstalled( serverId ) ;
+        else {
+            server.isInstalled = true ;
+            db.flush() ;
+        }
+    }
+
+    public void uninstall( int serverId )
+        throws ServerNotRegistered, ServerAlreadyUninstalled
+    {
+        DBServerDef server = getDBServerDef( serverId ) ;
+
+        if (!server.isInstalled)
+            throw new ServerAlreadyUninstalled( serverId ) ;
+        else {
+            server.isInstalled = false ;
+            db.flush() ;
+        }
+    }
+
+    public int[] listRegisteredServers() {
+        synchronized (db) {
+            int i=0;
+
+            int servers[] = new int[db.serverTable.size()];
+
+            Enumeration enumeration = db.serverTable.elements();
+
+            while (enumeration.hasMoreElements()) {
+                DBServerDef server = (DBServerDef) enumeration.nextElement();
+                servers[i++] = server.id;
+            }
+
+            if (debug) {
+                StringBuffer sb = new StringBuffer() ;
+                for (int ctr=0; ctr<servers.length; ctr++) {
+                    sb.append( ' ' ) ;
+                    sb.append( servers[ctr] ) ;
+                }
+
+                System.out.println(
+                                   "RepositoryImpl: listRegisteredServers returns" +
+                                   sb.toString() ) ;
+            }
+
+            return servers;
+        }
+    }
+
+    public int getServerID(String applicationName) throws ServerNotRegistered {
+        synchronized (db) {
+            int result = -1 ;
+
+            for (Enumeration serverIds = db.serverTable.keys();
+                 serverIds.hasMoreElements();)
+                {
+                    Integer nextServerId = (Integer) serverIds.nextElement();
+                    DBServerDef dbServerDef =
+                        (DBServerDef) db.serverTable.get(nextServerId);
+
+                    if (dbServerDef.applicationName.equals(applicationName)) {
+                        result = nextServerId.intValue();
+                        break ;
+                    }
+                }
+
+            if (debug)
+                System.out.println("RepositoryImpl: getServerID for " +
+                                   applicationName + " is " + result ) ;
+
+            if (result == -1) {
+                throw (new ServerNotRegistered());
+            } else {
+                return result ;
+            }
+        }
+    }
+
+    public String[] getApplicationNames() {
+        synchronized (db) {
+            Vector v = new Vector();
+            for (Enumeration serverIds = db.serverTable.keys();
+                 serverIds.hasMoreElements();)
+                {
+                    Integer nextServerId = (Integer) serverIds.nextElement();
+
+                    DBServerDef dbServerDef = (DBServerDef)db.serverTable.get(
+                                                                              nextServerId);
+
+                    if (!dbServerDef.applicationName.equals(""))
+                        v.addElement( dbServerDef.applicationName ) ;
+                }
+
+            String[] apps = new String[v.size()];
+            for (int i = 0; i < v.size(); i++) {
+                apps[i] = (String)v.elementAt(i);
+            }
+
+            if (debug) {
+                StringBuffer sb = new StringBuffer() ;
+                for (int ctr=0; ctr<apps.length; ctr++) {
+                    sb.append( ' ' ) ;
+                    sb.append( apps[ctr] ) ;
+                }
+
+                System.out.println( "RepositoryImpl: getApplicationNames returns " +
+                                    sb.toString() ) ;
+            }
+
+            return apps;
+        }
+    }
+    /**
+     * Typically the Repositoy is created within the ORBd VM but it can
+     * be independently started as well.
+     */
+    public static void main(String args[]) {
+        boolean debug = false ;
+        for (int ctr=0; ctr<args.length; ctr++)
+            if (args[ctr].equals("-debug"))
+                debug = true ;
+
+        try {
+            // See Bug 4396928 for more information about why we are
+            // initializing the ORBClass to PIORB (now ORBImpl, but see the bug).
+            Properties props = new Properties();
+            props.put("org.omg.CORBA.ORBClass",
+                "com.sun.corba.se.impl.orb.ORBImpl");
+            ORB orb = (ORB) ORB.init(args, props);
+
+            // create the repository object
+            String db = System.getProperty( ORBConstants.DB_PROPERTY,
+                    ORBConstants.DEFAULT_DB_NAME );
+            RepositoryImpl repository = new RepositoryImpl(orb, new File(db),
+                                                           debug);
+
+            // wait for shutdown
+            orb.run();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    transient private boolean debug = false;
+
+    final static int illegalServerId = -1;
+
+    transient private RepositoryDB db = null;
+
+    transient ORB orb = null;
+
+    transient ActivationSystemException wrapper ;
+
+    class RepositoryDB implements Serializable
+    {
+        File            db;
+        Hashtable       serverTable;
+        Integer         serverIdCounter;
+
+        RepositoryDB(File dbFile) {
+
+            db = dbFile;
+
+            // initialize the Server Id counter and hashtable.
+            // the lower id range is reserved for system servers
+            serverTable     = new Hashtable(255);
+            serverIdCounter = new Integer(256);
+        }
+
+        int incrementServerIdCounter()
+        {
+            int value = serverIdCounter.intValue();
+            serverIdCounter = new Integer(++value);
+
+            return value;
+        }
+
+        void flush()
+        {
+            try {
+                db.delete();
+                FileOutputStream fos = new FileOutputStream(db);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(this);
+                oos.flush();
+                oos.close();
+            } catch (Exception ex) {
+                throw wrapper.cannotWriteRepositoryDb( ex ) ;
+            }
+        }
+    }
+
+    class DBServerDef implements Serializable
+    {
+        public String toString() {
+            return "DBServerDef(applicationName=" + applicationName +
+                ", name=" + name +
+                ", classPath=" + classPath +
+                ", args=" + args +
+                ", vmArgs=" + vmArgs +
+                ", id=" + id +
+                ", isInstalled=" + isInstalled + ")" ;
+        }
+
+        DBServerDef(ServerDef server, int server_id) {
+            applicationName     = server.applicationName ;
+            name        = server.serverName;
+            classPath   = server.serverClassPath;
+            args        = server.serverArgs;
+            vmArgs      = server.serverVmArgs;
+            id          = server_id;
+            isInstalled = false ;
+        }
+
+        String applicationName;
+        String name;
+        String classPath;
+        String args;
+        String vmArgs;
+        boolean isInstalled ;
+        int    id;
+    }
+}

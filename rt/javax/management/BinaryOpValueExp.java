@@ -1,263 +1,257 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class BinaryOpValueExp
-/*     */   extends QueryEval
-/*     */   implements ValueExp
-/*     */ {
-/*     */   private static final long serialVersionUID = 1216286847881456786L;
-/*     */   private int op;
-/*     */   private ValueExp exp1;
-/*     */   private ValueExp exp2;
-/*     */   
-/*     */   public BinaryOpValueExp() {}
-/*     */   
-/*     */   public BinaryOpValueExp(int paramInt, ValueExp paramValueExp1, ValueExp paramValueExp2) {
-/*  68 */     this.op = paramInt;
-/*  69 */     this.exp1 = paramValueExp1;
-/*  70 */     this.exp2 = paramValueExp2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getOperator() {
-/*  78 */     return this.op;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp getLeftValue() {
-/*  85 */     return this.exp1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp getRightValue() {
-/*  92 */     return this.exp2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ValueExp apply(ObjectName paramObjectName) throws BadStringOperationException, BadBinaryOpValueExpException, BadAttributeValueExpException, InvalidApplicationException {
-/* 109 */     ValueExp valueExp1 = this.exp1.apply(paramObjectName);
-/* 110 */     ValueExp valueExp2 = this.exp2.apply(paramObjectName);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 117 */     boolean bool = valueExp1 instanceof NumericValueExp;
-/*     */     
-/* 119 */     if (bool) {
-/* 120 */       if (((NumericValueExp)valueExp1).isLong()) {
-/* 121 */         long l1 = ((NumericValueExp)valueExp1).longValue();
-/* 122 */         long l2 = ((NumericValueExp)valueExp2).longValue();
-/*     */         
-/* 124 */         switch (this.op) {
-/*     */           case 0:
-/* 126 */             return Query.value(l1 + l2);
-/*     */           case 2:
-/* 128 */             return Query.value(l1 * l2);
-/*     */           case 1:
-/* 130 */             return Query.value(l1 - l2);
-/*     */           case 3:
-/* 132 */             return Query.value(l1 / l2);
-/*     */         } 
-/*     */       
-/*     */       } else {
-/* 136 */         double d1 = ((NumericValueExp)valueExp1).doubleValue();
-/* 137 */         double d2 = ((NumericValueExp)valueExp2).doubleValue();
-/*     */         
-/* 139 */         switch (this.op) {
-/*     */           case 0:
-/* 141 */             return Query.value(d1 + d2);
-/*     */           case 2:
-/* 143 */             return Query.value(d1 * d2);
-/*     */           case 1:
-/* 145 */             return Query.value(d1 - d2);
-/*     */           case 3:
-/* 147 */             return Query.value(d1 / d2);
-/*     */         } 
-/*     */       } 
-/*     */     } else {
-/* 151 */       String str1 = ((StringValueExp)valueExp1).getValue();
-/* 152 */       String str2 = ((StringValueExp)valueExp2).getValue();
-/*     */       
-/* 154 */       switch (this.op) {
-/*     */         case 0:
-/* 156 */           return new StringValueExp(str1 + str2);
-/*     */       } 
-/* 158 */       throw new BadStringOperationException(opString());
-/*     */     } 
-/*     */ 
-/*     */     
-/* 162 */     throw new BadBinaryOpValueExpException(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*     */     try {
-/* 170 */       return parens(this.exp1, true) + " " + opString() + " " + parens(this.exp2, false);
-/* 171 */     } catch (BadBinaryOpValueExpException badBinaryOpValueExpException) {
-/* 172 */       return "invalid expression";
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String parens(ValueExp paramValueExp, boolean paramBoolean) throws BadBinaryOpValueExpException {
-/*     */     boolean bool;
-/* 214 */     if (paramValueExp instanceof BinaryOpValueExp)
-/* 215 */     { int i = ((BinaryOpValueExp)paramValueExp).op;
-/* 216 */       if (paramBoolean) {
-/* 217 */         bool = (precedence(i) >= precedence(this.op)) ? true : false;
-/*     */       } else {
-/* 219 */         bool = (precedence(i) > precedence(this.op)) ? true : false;
-/*     */       }  }
-/* 221 */     else { bool = true; }
-/*     */     
-/* 223 */     if (bool) {
-/* 224 */       return paramValueExp.toString();
-/*     */     }
-/* 226 */     return "(" + paramValueExp + ")";
-/*     */   }
-/*     */   
-/*     */   private int precedence(int paramInt) throws BadBinaryOpValueExpException {
-/* 230 */     switch (paramInt) { case 0: case 1:
-/* 231 */         return 0;
-/* 232 */       case 2: case 3: return 1; }
-/*     */     
-/* 234 */     throw new BadBinaryOpValueExpException(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String opString() throws BadBinaryOpValueExpException {
-/* 239 */     switch (this.op) {
-/*     */       case 0:
-/* 241 */         return "+";
-/*     */       case 2:
-/* 243 */         return "*";
-/*     */       case 1:
-/* 245 */         return "-";
-/*     */       case 3:
-/* 247 */         return "/";
-/*     */     } 
-/*     */     
-/* 250 */     throw new BadBinaryOpValueExpException(this);
-/*     */   }
-/*     */   
-/*     */   @Deprecated
-/*     */   public void setMBeanServer(MBeanServer paramMBeanServer) {
-/* 255 */     super.setMBeanServer(paramMBeanServer);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\BinaryOpValueExp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+/**
+ * This class is used by the query-building mechanism to represent binary
+ * operations.
+ * @serial include
+ *
+ * @since 1.5
+ */
+class BinaryOpValueExp extends QueryEval implements ValueExp {
+
+    /* Serial version */
+    private static final long serialVersionUID = 1216286847881456786L;
+
+    /**
+     * @serial The operator
+     */
+    private int op;
+
+    /**
+     * @serial The first value
+     */
+    private ValueExp exp1;
+
+    /**
+     * @serial The second value
+     */
+    private ValueExp exp2;
+
+
+    /**
+     * Basic Constructor.
+     */
+    public BinaryOpValueExp() {
+    }
+
+    /**
+     * Creates a new BinaryOpValueExp using operator o applied on v1 and
+     * v2 values.
+     */
+    public BinaryOpValueExp(int o, ValueExp v1, ValueExp v2) {
+        op   = o;
+        exp1 = v1;
+        exp2 = v2;
+    }
+
+
+    /**
+     * Returns the operator of the value expression.
+     */
+    public int getOperator()  {
+        return op;
+    }
+
+    /**
+     * Returns the left value of the value expression.
+     */
+    public ValueExp getLeftValue()  {
+        return exp1;
+    }
+
+    /**
+     * Returns the right value of the value expression.
+     */
+    public ValueExp getRightValue()  {
+        return exp2;
+    }
+
+    /**
+     * Applies the BinaryOpValueExp on a MBean.
+     *
+     * @param name The name of the MBean on which the BinaryOpValueExp will be applied.
+     *
+     * @return  The ValueExp.
+     *
+     * @exception BadStringOperationException
+     * @exception BadBinaryOpValueExpException
+     * @exception BadAttributeValueExpException
+     * @exception InvalidApplicationException
+     */
+    public ValueExp apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
+        BadAttributeValueExpException, InvalidApplicationException  {
+        ValueExp val1 = exp1.apply(name);
+        ValueExp val2 = exp2.apply(name);
+        String sval1;
+        String sval2;
+        double dval1;
+        double dval2;
+        long   lval1;
+        long   lval2;
+        boolean numeric = val1 instanceof NumericValueExp;
+
+        if (numeric) {
+            if (((NumericValueExp)val1).isLong()) {
+                lval1 = ((NumericValueExp)val1).longValue();
+                lval2 = ((NumericValueExp)val2).longValue();
+
+                switch (op) {
+                case Query.PLUS:
+                    return Query.value(lval1 + lval2);
+                case Query.TIMES:
+                    return Query.value(lval1 * lval2);
+                case Query.MINUS:
+                    return Query.value(lval1 - lval2);
+                case Query.DIV:
+                    return Query.value(lval1 / lval2);
+                }
+
+            } else {
+                dval1 = ((NumericValueExp)val1).doubleValue();
+                dval2 = ((NumericValueExp)val2).doubleValue();
+
+                switch (op) {
+                case Query.PLUS:
+                    return Query.value(dval1 + dval2);
+                case Query.TIMES:
+                    return Query.value(dval1 * dval2);
+                case Query.MINUS:
+                    return Query.value(dval1 - dval2);
+                case Query.DIV:
+                    return Query.value(dval1 / dval2);
+                }
+            }
+        } else {
+            sval1 = ((StringValueExp)val1).getValue();
+            sval2 = ((StringValueExp)val2).getValue();
+
+            switch (op) {
+            case Query.PLUS:
+                return new StringValueExp(sval1 + sval2);
+            default:
+                throw new BadStringOperationException(opString());
+            }
+        }
+
+        throw new BadBinaryOpValueExpException(this);
+    }
+
+    /**
+     * Returns the string representing the object
+     */
+    public String toString()  {
+        try {
+            return parens(exp1, true) + " " + opString() + " " + parens(exp2, false);
+        } catch (BadBinaryOpValueExpException ex) {
+            return "invalid expression";
+        }
+    }
+
+    /*
+     * Add parentheses to the given subexpression if necessary to
+     * preserve meaning.  Suppose this BinaryOpValueExp is
+     * Query.times(Query.plus(Query.attr("A"), Query.attr("B")), Query.attr("C")).
+     * Then the original toString() logic would return A + B * C.
+     * We check precedences in order to return (A + B) * C, which is the
+     * meaning of the ValueExp.
+     *
+     * We need to add parentheses if the unparenthesized expression would
+     * be parsed as a different ValueExp from the original.
+     * We cannot omit parentheses even when mathematically
+     * the result would be equivalent, because we do not know whether the
+     * numeric values will be integer or floating-point.  Addition and
+     * multiplication are associative for integers but not always for
+     * floating-point.
+     *
+     * So the rule is that we omit parentheses if the ValueExp
+     * is (A op1 B) op2 C and the precedence of op1 is greater than or
+     * equal to that of op2; or if the ValueExp is A op1 (B op2 C) and
+     * the precedence of op2 is greater than that of op1.  (There are two
+     * precedences: that of * and / is greater than that of + and -.)
+     * The case of (A op1 B) op2 (C op3 D) applies each rule in turn.
+     *
+     * The following examples show the rules in action.  On the left,
+     * the original ValueExp.  On the right, the string representation.
+     *
+     * (A + B) + C     A + B + C
+     * (A * B) + C     A * B + C
+     * (A + B) * C     (A + B) * C
+     * (A * B) * C     A * B * C
+     * A + (B + C)     A + (B + C)
+     * A + (B * C)     A + B * C
+     * A * (B + C)     A * (B + C)
+     * A * (B * C)     A * (B * C)
+     */
+    private String parens(ValueExp subexp, boolean left)
+    throws BadBinaryOpValueExpException {
+        boolean omit;
+        if (subexp instanceof BinaryOpValueExp) {
+            int subop = ((BinaryOpValueExp) subexp).op;
+            if (left)
+                omit = (precedence(subop) >= precedence(op));
+            else
+                omit = (precedence(subop) > precedence(op));
+        } else
+            omit = true;
+
+        if (omit)
+            return subexp.toString();
+        else
+            return "(" + subexp + ")";
+    }
+
+    private int precedence(int xop) throws BadBinaryOpValueExpException {
+        switch (xop) {
+            case Query.PLUS: case Query.MINUS: return 0;
+            case Query.TIMES: case Query.DIV: return 1;
+            default:
+                throw new BadBinaryOpValueExpException(this);
+        }
+    }
+
+    private String opString() throws BadBinaryOpValueExpException {
+        switch (op) {
+        case Query.PLUS:
+            return "+";
+        case Query.TIMES:
+            return "*";
+        case Query.MINUS:
+            return "-";
+        case Query.DIV:
+            return "/";
+        }
+
+        throw new BadBinaryOpValueExpException(this);
+    }
+
+    @Deprecated
+    public void setMBeanServer(MBeanServer s) {
+        super.setMBeanServer(s);
+     }
+ }

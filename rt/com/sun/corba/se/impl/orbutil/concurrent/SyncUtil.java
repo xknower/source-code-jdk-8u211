@@ -1,55 +1,49 @@
-/*    */ package com.sun.corba.se.impl.orbutil.concurrent;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SyncUtil
-/*    */ {
-/*    */   public static void acquire(Sync paramSync) {
-/* 39 */     boolean bool = false;
-/* 40 */     while (!bool) {
-/*    */       try {
-/* 42 */         paramSync.acquire();
-/* 43 */         bool = true;
-/* 44 */       } catch (InterruptedException interruptedException) {
-/* 45 */         bool = false;
-/*    */       } 
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\concurrent\SyncUtil.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil.concurrent;
+
+import com.sun.corba.se.impl.orbutil.concurrent.Sync ;
+
+public class SyncUtil {
+    private SyncUtil() {}
+
+    /** Method to acquire a Sync without ever throwing an
+    * InterruptedException.  Useful when a mutex is being
+    * used in place of Java synchronization.
+    */
+    public static void acquire( Sync sync )
+    {
+        boolean held = false ;
+        while (!held) {
+            try {
+                sync.acquire() ;
+                held = true ;
+            } catch (InterruptedException exc) {
+                held = false ;
+            }
+        }
+    }
+}

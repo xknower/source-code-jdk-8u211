@@ -1,2902 +1,2896 @@
-/*      */ package com.sun.corba.se.impl.io;
-/*      */ 
-/*      */ import com.sun.corba.se.impl.logging.OMGSystemException;
-/*      */ import com.sun.corba.se.impl.logging.UtilSystemException;
-/*      */ import com.sun.corba.se.impl.util.Utility;
-/*      */ import com.sun.org.omg.CORBA.ValueDefPackage.FullValueDescription;
-/*      */ import com.sun.org.omg.SendingContext.CodeBase;
-/*      */ import java.io.EOFException;
-/*      */ import java.io.Externalizable;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InvalidClassException;
-/*      */ import java.io.InvalidObjectException;
-/*      */ import java.io.NotActiveException;
-/*      */ import java.io.ObjectInputValidation;
-/*      */ import java.io.OptionalDataException;
-/*      */ import java.io.StreamCorruptedException;
-/*      */ import java.lang.reflect.Constructor;
-/*      */ import java.lang.reflect.Field;
-/*      */ import java.lang.reflect.InvocationTargetException;
-/*      */ import java.rmi.Remote;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.security.PrivilegedActionException;
-/*      */ import java.security.PrivilegedExceptionAction;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import java.util.Vector;
-/*      */ import javax.rmi.CORBA.Util;
-/*      */ import javax.rmi.CORBA.ValueHandler;
-/*      */ import org.omg.CORBA.BAD_PARAM;
-/*      */ import org.omg.CORBA.CompletionStatus;
-/*      */ import org.omg.CORBA.MARSHAL;
-/*      */ import org.omg.CORBA.ORB;
-/*      */ import org.omg.CORBA.Object;
-/*      */ import org.omg.CORBA.TCKind;
-/*      */ import org.omg.CORBA.TypeCode;
-/*      */ import org.omg.CORBA.ValueMember;
-/*      */ import org.omg.CORBA.portable.IndirectionException;
-/*      */ import org.omg.CORBA.portable.InputStream;
-/*      */ import org.omg.CORBA.portable.ValueInputStream;
-/*      */ import org.omg.CORBA_2_3.portable.InputStream;
-/*      */ import sun.corba.Bridge;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class IIOPInputStream
-/*      */   extends InputStreamHook
-/*      */ {
-/*   99 */   private static Bridge bridge = AccessController.<Bridge>doPrivileged(new PrivilegedAction<Bridge>()
-/*      */       {
-/*      */         public Object run() {
-/*  102 */           return Bridge.get();
-/*      */         }
-/*      */       });
-/*      */ 
-/*      */   
-/*  107 */   private static OMGSystemException omgWrapper = OMGSystemException.get("rpc.encoding");
-/*      */   
-/*  109 */   private static UtilSystemException utilWrapper = UtilSystemException.get("rpc.encoding");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  123 */   private ValueMember[] defaultReadObjectFVDMembers = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  131 */   private Object currentObject = null;
-/*      */   
-/*  133 */   private ObjectStreamClass currentClassDesc = null;
-/*      */   
-/*  135 */   private Class currentClass = null;
-/*      */   
-/*  137 */   private int recursionDepth = 0;
-/*      */   
-/*  139 */   private int simpleReadDepth = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  149 */   ActiveRecursionManager activeRecursionMgr = new ActiveRecursionManager();
-/*      */   
-/*  151 */   private IOException abortIOException = null;
-/*      */ 
-/*      */   
-/*  154 */   private ClassNotFoundException abortClassNotFoundException = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  176 */   public static final TypeCode kRemoteTypeCode = ORB.init().get_primitive_tc(TCKind.tk_objref);
-/*  177 */   public static final TypeCode kValueTypeCode = ORB.init().get_primitive_tc(TCKind.tk_value);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  190 */   private Object[] readObjectArgList = new Object[] { this };
-/*      */ 
-/*      */   
-/*  193 */   private static final Constructor OPT_DATA_EXCEPTION_CTOR = getOptDataExceptionCtor(); private InputStream orbStream; private CodeBase cbSender;
-/*      */   private ValueHandlerImpl vhandler;
-/*      */   private Vector callbacks;
-/*      */   ObjectStreamClass[] classdesc;
-/*      */   Class[] classes;
-/*      */   int spClass;
-/*      */   private static final String kEmptyStr = "";
-/*      */   private static final boolean useFVDOnly = false;
-/*      */   private byte streamFormatVersion;
-/*      */   
-/*      */   private static Constructor getOptDataExceptionCtor() {
-/*      */     try {
-/*  205 */       Constructor constructor = AccessController.<Constructor>doPrivileged(new PrivilegedExceptionAction<Constructor>()
-/*      */           {
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             public Object run() throws NoSuchMethodException, SecurityException
-/*      */             {
-/*  212 */               Constructor<OptionalDataException> constructor = OptionalDataException.class.getDeclaredConstructor(new Class[] { boolean.class });
-/*      */ 
-/*      */ 
-/*      */               
-/*  216 */               constructor.setAccessible(true);
-/*      */               
-/*  218 */               return constructor;
-/*      */             }
-/*      */           });
-/*  221 */       if (constructor == null)
-/*      */       {
-/*  223 */         throw new Error("Unable to find OptionalDataException constructor");
-/*      */       }
-/*  225 */       return constructor;
-/*      */     }
-/*  227 */     catch (Exception exception) {
-/*      */       
-/*  229 */       throw new ExceptionInInitializerError(exception);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private OptionalDataException createOptionalDataException() {
-/*      */     try {
-/*  239 */       OptionalDataException optionalDataException = OPT_DATA_EXCEPTION_CTOR.newInstance(new Object[] { Boolean.TRUE });
-/*      */ 
-/*      */       
-/*  242 */       if (optionalDataException == null)
-/*      */       {
-/*  244 */         throw new Error("Created null OptionalDataException");
-/*      */       }
-/*  246 */       return optionalDataException;
-/*      */     }
-/*  248 */     catch (Exception exception) {
-/*      */       
-/*  250 */       throw new Error("Couldn't create OptionalDataException", exception);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected byte getStreamFormatVersion() {
-/*  257 */     return this.streamFormatVersion;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readFormatVersion() throws IOException {
-/*  265 */     this.streamFormatVersion = this.orbStream.read_octet();
-/*      */     
-/*  267 */     if (this.streamFormatVersion < 1 || this.streamFormatVersion > this.vhandler
-/*  268 */       .getMaximumStreamFormatVersion()) {
-/*  269 */       MARSHAL mARSHAL = omgWrapper.unsupportedFormatVersion(CompletionStatus.COMPLETED_MAYBE);
-/*      */ 
-/*      */       
-/*  272 */       IOException iOException = new IOException("Unsupported format version: " + this.streamFormatVersion);
-/*      */       
-/*  274 */       iOException.initCause(mARSHAL);
-/*  275 */       throw iOException;
-/*      */     } 
-/*      */     
-/*  278 */     if (this.streamFormatVersion == 2 && 
-/*  279 */       !(this.orbStream instanceof ValueInputStream)) {
-/*  280 */       BAD_PARAM bAD_PARAM = omgWrapper.notAValueinputstream(CompletionStatus.COMPLETED_MAYBE);
-/*      */ 
-/*      */       
-/*  283 */       IOException iOException = new IOException("Not a ValueInputStream");
-/*  284 */       iOException.initCause(bAD_PARAM);
-/*  285 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setTestFVDFlag(boolean paramBoolean) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IIOPInputStream() throws IOException {
-/*  300 */     resetStream();
-/*      */   }
-/*      */   
-/*      */   final void setOrbStream(InputStream paramInputStream) {
-/*  304 */     this.orbStream = paramInputStream;
-/*      */   }
-/*      */   
-/*      */   final InputStream getOrbStream() {
-/*  308 */     return this.orbStream;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public final void setSender(CodeBase paramCodeBase) {
-/*  313 */     this.cbSender = paramCodeBase;
-/*      */   }
-/*      */   
-/*      */   public final CodeBase getSender() {
-/*  317 */     return this.cbSender;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void setValueHandler(ValueHandler paramValueHandler) {
-/*  323 */     this.vhandler = (ValueHandlerImpl)paramValueHandler;
-/*      */   }
-/*      */   
-/*      */   public final ValueHandler getValueHandler() {
-/*  327 */     return this.vhandler;
-/*      */   }
-/*      */   
-/*      */   final void increaseRecursionDepth() {
-/*  331 */     this.recursionDepth++;
-/*      */   }
-/*      */   
-/*      */   final int decreaseRecursionDepth() {
-/*  335 */     return --this.recursionDepth;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized Object readObjectDelegate() throws IOException {
-/*      */     try {
-/*  377 */       this.readObjectState.readData(this);
-/*      */       
-/*  379 */       return this.orbStream.read_abstract_interface();
-/*  380 */     } catch (MARSHAL mARSHAL) {
-/*  381 */       handleOptionalDataMarshalException(mARSHAL, true);
-/*  382 */       throw mARSHAL;
-/*  383 */     } catch (IndirectionException indirectionException) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  388 */       return this.activeRecursionMgr.getObject(indirectionException.offset);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final synchronized Object simpleReadObject(Class paramClass, String paramString, CodeBase paramCodeBase, int paramInt) {
-/*  400 */     Object object1 = this.currentObject;
-/*  401 */     ObjectStreamClass objectStreamClass = this.currentClassDesc;
-/*  402 */     Class clazz = this.currentClass;
-/*  403 */     byte b = this.streamFormatVersion;
-/*      */     
-/*  405 */     this.simpleReadDepth++;
-/*  406 */     Object object2 = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  413 */       if (this.vhandler.useFullValueDescription(paramClass, paramString)) {
-/*  414 */         object2 = inputObjectUsingFVD(paramClass, paramString, paramCodeBase, paramInt);
-/*      */       } else {
-/*  416 */         object2 = inputObject(paramClass, paramString, paramCodeBase, paramInt);
-/*      */       } 
-/*      */       
-/*  419 */       object2 = this.currentClassDesc.readResolve(object2);
-/*      */     }
-/*  421 */     catch (ClassNotFoundException classNotFoundException1) {
-/*      */       
-/*  423 */       bridge.throwException(classNotFoundException1);
-/*  424 */       return null;
-/*      */     }
-/*  426 */     catch (IOException iOException1) {
-/*      */ 
-/*      */       
-/*  429 */       bridge.throwException(iOException1);
-/*  430 */       return null;
-/*      */     } finally {
-/*      */       
-/*  433 */       this.simpleReadDepth--;
-/*  434 */       this.currentObject = object1;
-/*  435 */       this.currentClassDesc = objectStreamClass;
-/*  436 */       this.currentClass = clazz;
-/*  437 */       this.streamFormatVersion = b;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  444 */     IOException iOException = this.abortIOException;
-/*  445 */     if (this.simpleReadDepth == 0)
-/*  446 */       this.abortIOException = null; 
-/*  447 */     if (iOException != null) {
-/*  448 */       bridge.throwException(iOException);
-/*  449 */       return null;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  453 */     ClassNotFoundException classNotFoundException = this.abortClassNotFoundException;
-/*  454 */     if (this.simpleReadDepth == 0)
-/*  455 */       this.abortClassNotFoundException = null; 
-/*  456 */     if (classNotFoundException != null) {
-/*  457 */       bridge.throwException(classNotFoundException);
-/*  458 */       return null;
-/*      */     } 
-/*      */     
-/*  461 */     return object2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized void simpleSkipObject(String paramString, CodeBase paramCodeBase) {
-/*  470 */     Object object = this.currentObject;
-/*  471 */     ObjectStreamClass objectStreamClass = this.currentClassDesc;
-/*  472 */     Class clazz = this.currentClass;
-/*  473 */     byte b = this.streamFormatVersion;
-/*      */     
-/*  475 */     this.simpleReadDepth++;
-/*  476 */     Object object1 = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  482 */       skipObjectUsingFVD(paramString, paramCodeBase);
-/*      */     }
-/*  484 */     catch (ClassNotFoundException classNotFoundException1) {
-/*      */       
-/*  486 */       bridge.throwException(classNotFoundException1);
-/*      */       
-/*      */       return;
-/*  489 */     } catch (IOException iOException1) {
-/*      */       
-/*  491 */       bridge.throwException(iOException1);
-/*      */       
-/*      */       return;
-/*      */     } finally {
-/*  495 */       this.simpleReadDepth--;
-/*  496 */       this.streamFormatVersion = b;
-/*  497 */       this.currentObject = object;
-/*  498 */       this.currentClassDesc = objectStreamClass;
-/*  499 */       this.currentClass = clazz;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  506 */     IOException iOException = this.abortIOException;
-/*  507 */     if (this.simpleReadDepth == 0)
-/*  508 */       this.abortIOException = null; 
-/*  509 */     if (iOException != null) {
-/*  510 */       bridge.throwException(iOException);
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/*  515 */     ClassNotFoundException classNotFoundException = this.abortClassNotFoundException;
-/*  516 */     if (this.simpleReadDepth == 0)
-/*  517 */       this.abortClassNotFoundException = null; 
-/*  518 */     if (classNotFoundException != null) {
-/*  519 */       bridge.throwException(classNotFoundException);
-/*      */       return;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final Object readObjectOverride() throws OptionalDataException, ClassNotFoundException, IOException {
-/*  542 */     return readObjectDelegate();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final synchronized void defaultReadObjectDelegate() {
-/*      */     try {
-/*  566 */       if (this.currentObject == null || this.currentClassDesc == null)
-/*      */       {
-/*  568 */         throw new NotActiveException("defaultReadObjectDelegate");
-/*      */       }
-/*  570 */       if (!this.currentClassDesc.forClass().isAssignableFrom(this.currentObject
-/*  571 */           .getClass())) {
-/*  572 */         throw new IOException("Object Type mismatch");
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  579 */       if (this.defaultReadObjectFVDMembers != null && this.defaultReadObjectFVDMembers.length > 0)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  591 */         inputClassFields(this.currentObject, this.currentClass, this.currentClassDesc, this.defaultReadObjectFVDMembers, this.cbSender);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       else
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */         
-/*  601 */         ObjectStreamField[] arrayOfObjectStreamField = this.currentClassDesc.getFieldsNoCopy();
-/*  602 */         if (arrayOfObjectStreamField.length > 0) {
-/*  603 */           inputClassFields(this.currentObject, this.currentClass, arrayOfObjectStreamField, this.cbSender);
-/*      */         }
-/*      */       }
-/*      */     
-/*  607 */     } catch (NotActiveException notActiveException) {
-/*      */       
-/*  609 */       bridge.throwException(notActiveException);
-/*      */     }
-/*  611 */     catch (IOException iOException) {
-/*      */       
-/*  613 */       bridge.throwException(iOException);
-/*      */     }
-/*  615 */     catch (ClassNotFoundException classNotFoundException) {
-/*      */       
-/*  617 */       bridge.throwException(classNotFoundException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean enableResolveObjectDelegate(boolean paramBoolean) {
-/*  640 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void mark(int paramInt) {
-/*  647 */     this.orbStream.mark(paramInt);
-/*      */   }
-/*      */   
-/*      */   public final boolean markSupported() {
-/*  651 */     return this.orbStream.markSupported();
-/*      */   }
-/*      */   
-/*      */   public final void reset() throws IOException {
-/*      */     try {
-/*  656 */       this.orbStream.reset();
-/*  657 */     } catch (Error error) {
-/*  658 */       IOException iOException = new IOException(error.getMessage());
-/*  659 */       iOException.initCause(error);
-/*  660 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final int available() throws IOException {
-/*  665 */     return 0;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public final void close() throws IOException {}
-/*      */ 
-/*      */   
-/*      */   public final int read() throws IOException {
-/*      */     try {
-/*  674 */       this.readObjectState.readData(this);
-/*      */       
-/*  676 */       return this.orbStream.read_octet() << 0 & 0xFF;
-/*  677 */     } catch (MARSHAL mARSHAL) {
-/*  678 */       if (mARSHAL.minor == 1330446344) {
-/*      */         
-/*  680 */         setState(IN_READ_OBJECT_NO_MORE_OPT_DATA);
-/*  681 */         return -1;
-/*      */       } 
-/*      */       
-/*  684 */       throw mARSHAL;
-/*  685 */     } catch (Error error) {
-/*  686 */       IOException iOException = new IOException(error.getMessage());
-/*  687 */       iOException.initCause(error);
-/*  688 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/*      */     try {
-/*  694 */       this.readObjectState.readData(this);
-/*      */       
-/*  696 */       this.orbStream.read_octet_array(paramArrayOfbyte, paramInt1, paramInt2);
-/*  697 */       return paramInt2;
-/*  698 */     } catch (MARSHAL mARSHAL) {
-/*  699 */       if (mARSHAL.minor == 1330446344) {
-/*      */         
-/*  701 */         setState(IN_READ_OBJECT_NO_MORE_OPT_DATA);
-/*  702 */         return -1;
-/*      */       } 
-/*      */       
-/*  705 */       throw mARSHAL;
-/*  706 */     } catch (Error error) {
-/*  707 */       IOException iOException = new IOException(error.getMessage());
-/*  708 */       iOException.initCause(error);
-/*  709 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public final boolean readBoolean() throws IOException {
-/*      */     try {
-/*  716 */       this.readObjectState.readData(this);
-/*      */       
-/*  718 */       return this.orbStream.read_boolean();
-/*  719 */     } catch (MARSHAL mARSHAL) {
-/*  720 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  721 */       throw mARSHAL;
-/*      */     }
-/*  723 */     catch (Error error) {
-/*  724 */       IOException iOException = new IOException(error.getMessage());
-/*  725 */       iOException.initCause(error);
-/*  726 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final byte readByte() throws IOException {
-/*      */     try {
-/*  732 */       this.readObjectState.readData(this);
-/*      */       
-/*  734 */       return this.orbStream.read_octet();
-/*  735 */     } catch (MARSHAL mARSHAL) {
-/*  736 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  737 */       throw mARSHAL;
-/*      */     }
-/*  739 */     catch (Error error) {
-/*  740 */       IOException iOException = new IOException(error.getMessage());
-/*  741 */       iOException.initCause(error);
-/*  742 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final char readChar() throws IOException {
-/*      */     try {
-/*  748 */       this.readObjectState.readData(this);
-/*      */       
-/*  750 */       return this.orbStream.read_wchar();
-/*  751 */     } catch (MARSHAL mARSHAL) {
-/*  752 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  753 */       throw mARSHAL;
-/*      */     }
-/*  755 */     catch (Error error) {
-/*  756 */       IOException iOException = new IOException(error.getMessage());
-/*  757 */       iOException.initCause(error);
-/*  758 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final double readDouble() throws IOException {
-/*      */     try {
-/*  764 */       this.readObjectState.readData(this);
-/*      */       
-/*  766 */       return this.orbStream.read_double();
-/*  767 */     } catch (MARSHAL mARSHAL) {
-/*  768 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  769 */       throw mARSHAL;
-/*  770 */     } catch (Error error) {
-/*  771 */       IOException iOException = new IOException(error.getMessage());
-/*  772 */       iOException.initCause(error);
-/*  773 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final float readFloat() throws IOException {
-/*      */     try {
-/*  779 */       this.readObjectState.readData(this);
-/*      */       
-/*  781 */       return this.orbStream.read_float();
-/*  782 */     } catch (MARSHAL mARSHAL) {
-/*  783 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  784 */       throw mARSHAL;
-/*  785 */     } catch (Error error) {
-/*  786 */       IOException iOException = new IOException(error.getMessage());
-/*  787 */       iOException.initCause(error);
-/*  788 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void readFully(byte[] paramArrayOfbyte) throws IOException {
-/*  795 */     readFully(paramArrayOfbyte, 0, paramArrayOfbyte.length);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public final void readFully(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/*      */     try {
-/*  801 */       this.readObjectState.readData(this);
-/*      */       
-/*  803 */       this.orbStream.read_octet_array(paramArrayOfbyte, paramInt1, paramInt2);
-/*  804 */     } catch (MARSHAL mARSHAL) {
-/*  805 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*      */       
-/*  807 */       throw mARSHAL;
-/*  808 */     } catch (Error error) {
-/*  809 */       IOException iOException = new IOException(error.getMessage());
-/*  810 */       iOException.initCause(error);
-/*  811 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final int readInt() throws IOException {
-/*      */     try {
-/*  817 */       this.readObjectState.readData(this);
-/*      */       
-/*  819 */       return this.orbStream.read_long();
-/*  820 */     } catch (MARSHAL mARSHAL) {
-/*  821 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  822 */       throw mARSHAL;
-/*  823 */     } catch (Error error) {
-/*  824 */       IOException iOException = new IOException(error.getMessage());
-/*  825 */       iOException.initCause(error);
-/*  826 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public final String readLine() throws IOException {
-/*  832 */     throw new IOException("Method readLine not supported");
-/*      */   }
-/*      */   
-/*      */   public final long readLong() throws IOException {
-/*      */     try {
-/*  837 */       this.readObjectState.readData(this);
-/*      */       
-/*  839 */       return this.orbStream.read_longlong();
-/*  840 */     } catch (MARSHAL mARSHAL) {
-/*  841 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  842 */       throw mARSHAL;
-/*  843 */     } catch (Error error) {
-/*  844 */       IOException iOException = new IOException(error.getMessage());
-/*  845 */       iOException.initCause(error);
-/*  846 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final short readShort() throws IOException {
-/*      */     try {
-/*  852 */       this.readObjectState.readData(this);
-/*      */       
-/*  854 */       return this.orbStream.read_short();
-/*  855 */     } catch (MARSHAL mARSHAL) {
-/*  856 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  857 */       throw mARSHAL;
-/*  858 */     } catch (Error error) {
-/*  859 */       IOException iOException = new IOException(error.getMessage());
-/*  860 */       iOException.initCause(error);
-/*  861 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected final void readStreamHeader() throws IOException, StreamCorruptedException {}
-/*      */ 
-/*      */   
-/*      */   public final int readUnsignedByte() throws IOException {
-/*      */     try {
-/*  871 */       this.readObjectState.readData(this);
-/*      */       
-/*  873 */       return this.orbStream.read_octet() << 0 & 0xFF;
-/*  874 */     } catch (MARSHAL mARSHAL) {
-/*  875 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  876 */       throw mARSHAL;
-/*  877 */     } catch (Error error) {
-/*  878 */       IOException iOException = new IOException(error.getMessage());
-/*  879 */       iOException.initCause(error);
-/*  880 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public final int readUnsignedShort() throws IOException {
-/*      */     try {
-/*  886 */       this.readObjectState.readData(this);
-/*      */       
-/*  888 */       return this.orbStream.read_ushort() << 0 & 0xFFFF;
-/*  889 */     } catch (MARSHAL mARSHAL) {
-/*  890 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  891 */       throw mARSHAL;
-/*  892 */     } catch (Error error) {
-/*  893 */       IOException iOException = new IOException(error.getMessage());
-/*  894 */       iOException.initCause(error);
-/*  895 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected String internalReadUTF(InputStream paramInputStream) {
-/*  907 */     return paramInputStream.read_wstring();
-/*      */   }
-/*      */   
-/*      */   public final String readUTF() throws IOException {
-/*      */     try {
-/*  912 */       this.readObjectState.readData(this);
-/*      */       
-/*  914 */       return internalReadUTF(this.orbStream);
-/*  915 */     } catch (MARSHAL mARSHAL) {
-/*  916 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*  917 */       throw mARSHAL;
-/*  918 */     } catch (Error error) {
-/*  919 */       IOException iOException = new IOException(error.getMessage());
-/*  920 */       iOException.initCause(error);
-/*  921 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void handleOptionalDataMarshalException(MARSHAL paramMARSHAL, boolean paramBoolean) throws IOException {
-/*  942 */     if (paramMARSHAL.minor == 1330446344) {
-/*      */       OptionalDataException optionalDataException;
-/*      */ 
-/*      */ 
-/*      */       
-/*  947 */       if (!paramBoolean) {
-/*  948 */         EOFException eOFException = new EOFException("No more optional data");
-/*      */       } else {
-/*  950 */         optionalDataException = createOptionalDataException();
-/*      */       } 
-/*  952 */       optionalDataException.initCause(paramMARSHAL);
-/*      */       
-/*  954 */       setState(IN_READ_OBJECT_NO_MORE_OPT_DATA);
-/*      */       
-/*  956 */       throw optionalDataException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized void registerValidation(ObjectInputValidation paramObjectInputValidation, int paramInt) throws NotActiveException, InvalidObjectException {
-/*  964 */     throw new Error("Method registerValidation not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final Class resolveClass(ObjectStreamClass paramObjectStreamClass) throws IOException, ClassNotFoundException {
-/*  970 */     throw new IOException("Method resolveClass not supported");
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected final Object resolveObject(Object paramObject) throws IOException {
-/*  975 */     throw new IOException("Method resolveObject not supported");
-/*      */   }
-/*      */   
-/*      */   public final int skipBytes(int paramInt) throws IOException {
-/*      */     try {
-/*  980 */       this.readObjectState.readData(this);
-/*      */       
-/*  982 */       byte[] arrayOfByte = new byte[paramInt];
-/*  983 */       this.orbStream.read_octet_array(arrayOfByte, 0, paramInt);
-/*  984 */       return paramInt;
-/*  985 */     } catch (MARSHAL mARSHAL) {
-/*  986 */       handleOptionalDataMarshalException(mARSHAL, false);
-/*      */       
-/*  988 */       throw mARSHAL;
-/*  989 */     } catch (Error error) {
-/*  990 */       IOException iOException = new IOException(error.getMessage());
-/*  991 */       iOException.initCause(error);
-/*  992 */       throw iOException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private synchronized Object inputObject(Class<?> paramClass, String paramString, CodeBase paramCodeBase, int paramInt) throws IOException, ClassNotFoundException {
-/* 1007 */     this.currentClassDesc = ObjectStreamClass.lookup(paramClass);
-/* 1008 */     this.currentClass = this.currentClassDesc.forClass();
-/*      */     
-/* 1010 */     if (this.currentClass == null)
-/*      */     {
-/* 1012 */       throw new ClassNotFoundException(this.currentClassDesc.getName());
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1020 */       if (Enum.class.isAssignableFrom(paramClass)) {
-/* 1021 */         int i = this.orbStream.read_long();
-/* 1022 */         String str = (String)this.orbStream.read_value(String.class);
-/* 1023 */         return Enum.valueOf((Class)paramClass, str);
-/* 1024 */       }  if (this.currentClassDesc.isExternalizable()) {
-/*      */         try {
-/* 1026 */           this
-/* 1027 */             .currentObject = (this.currentClass == null) ? null : this.currentClassDesc.newInstance();
-/* 1028 */           if (this.currentObject != null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1033 */             this.activeRecursionMgr.addObject(paramInt, this.currentObject);
-/*      */ 
-/*      */             
-/* 1036 */             readFormatVersion();
-/*      */             
-/* 1038 */             Externalizable externalizable = (Externalizable)this.currentObject;
-/* 1039 */             externalizable.readExternal(this);
-/*      */           } 
-/* 1041 */         } catch (InvocationTargetException invocationTargetException) {
-/*      */           
-/* 1043 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InvocationTargetException accessing no-arg constructor");
-/*      */           
-/* 1045 */           invalidClassException.initCause(invocationTargetException);
-/* 1046 */           throw invalidClassException;
-/* 1047 */         } catch (UnsupportedOperationException unsupportedOperationException) {
-/*      */           
-/* 1049 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "UnsupportedOperationException accessing no-arg constructor");
-/*      */           
-/* 1051 */           invalidClassException.initCause(unsupportedOperationException);
-/* 1052 */           throw invalidClassException;
-/* 1053 */         } catch (InstantiationException instantiationException) {
-/*      */           
-/* 1055 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InstantiationException accessing no-arg constructor");
-/*      */           
-/* 1057 */           invalidClassException.initCause(instantiationException);
-/* 1058 */           throw invalidClassException;
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1066 */         ObjectStreamClass objectStreamClass = this.currentClassDesc;
-/* 1067 */         Class<?> clazz = this.currentClass;
-/*      */         
-/* 1069 */         int i = this.spClass;
-/*      */         
-/* 1071 */         if (this.currentClass.getName().equals("java.lang.String")) {
-/* 1072 */           return readUTF();
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1103 */         objectStreamClass = this.currentClassDesc; clazz = this.currentClass;
-/* 1104 */         for (; objectStreamClass != null && objectStreamClass.isSerializable(); 
-/* 1105 */           objectStreamClass = objectStreamClass.getSuperclass()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1114 */           Class<?> clazz1 = objectStreamClass.forClass();
-/*      */           Class<?> clazz2;
-/* 1116 */           for (clazz2 = clazz; clazz2 != null && 
-/* 1117 */             clazz1 != clazz2; clazz2 = clazz2.getSuperclass());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1130 */           this.spClass++;
-/* 1131 */           if (this.spClass >= this.classes.length) {
-/* 1132 */             int j = this.classes.length * 2;
-/* 1133 */             Class[] arrayOfClass = new Class[j];
-/* 1134 */             ObjectStreamClass[] arrayOfObjectStreamClass = new ObjectStreamClass[j];
-/*      */             
-/* 1136 */             System.arraycopy(this.classes, 0, arrayOfClass, 0, this.classes.length);
-/*      */ 
-/*      */             
-/* 1139 */             System.arraycopy(this.classdesc, 0, arrayOfObjectStreamClass, 0, this.classes.length);
-/*      */ 
-/*      */ 
-/*      */             
-/* 1143 */             this.classes = arrayOfClass;
-/* 1144 */             this.classdesc = arrayOfObjectStreamClass;
-/*      */           } 
-/*      */           
-/* 1147 */           if (clazz2 == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1152 */             this.classdesc[this.spClass] = objectStreamClass;
-/* 1153 */             this.classes[this.spClass] = null;
-/*      */ 
-/*      */           
-/*      */           }
-/*      */           else {
-/*      */ 
-/*      */             
-/* 1160 */             this.classdesc[this.spClass] = objectStreamClass;
-/* 1161 */             this.classes[this.spClass] = clazz2;
-/* 1162 */             clazz = clazz2.getSuperclass();
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1171 */           this
-/* 1172 */             .currentObject = (this.currentClass == null) ? null : this.currentClassDesc.newInstance();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1177 */           this.activeRecursionMgr.addObject(paramInt, this.currentObject);
-/* 1178 */         } catch (InvocationTargetException invocationTargetException) {
-/*      */           
-/* 1180 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InvocationTargetException accessing no-arg constructor");
-/*      */           
-/* 1182 */           invalidClassException.initCause(invocationTargetException);
-/* 1183 */           throw invalidClassException;
-/* 1184 */         } catch (UnsupportedOperationException unsupportedOperationException) {
-/*      */           
-/* 1186 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "UnsupportedOperationException accessing no-arg constructor");
-/*      */           
-/* 1188 */           invalidClassException.initCause(unsupportedOperationException);
-/* 1189 */           throw invalidClassException;
-/* 1190 */         } catch (InstantiationException instantiationException) {
-/*      */           
-/* 1192 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InstantiationException accessing no-arg constructor");
-/*      */           
-/* 1194 */           invalidClassException.initCause(instantiationException);
-/* 1195 */           throw invalidClassException;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1206 */           for (this.spClass = this.spClass; this.spClass > i; this.spClass--)
-/*      */           {
-/*      */ 
-/*      */             
-/* 1210 */             this.currentClassDesc = this.classdesc[this.spClass];
-/* 1211 */             this.currentClass = this.classes[this.spClass];
-/* 1212 */             if (this.classes[this.spClass] != null)
-/*      */             {
-/*      */ 
-/*      */ 
-/*      */               
-/* 1217 */               InputStreamHook.ReadObjectState readObjectState = this.readObjectState;
-/* 1218 */               setState(DEFAULT_STATE);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             }
-/*      */             else
-/*      */             {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/* 1269 */               ObjectStreamField[] arrayOfObjectStreamField = this.currentClassDesc.getFieldsNoCopy();
-/* 1270 */               if (arrayOfObjectStreamField.length > 0) {
-/* 1271 */                 inputClassFields((Object)null, this.currentClass, arrayOfObjectStreamField, paramCodeBase);
-/*      */               }
-/*      */             }
-/*      */           
-/*      */           }
-/*      */         
-/*      */         } finally {
-/*      */           
-/* 1279 */           this.spClass = i;
-/*      */         }
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/*      */     finally {
-/*      */       
-/* 1287 */       this.activeRecursionMgr.removeObject(paramInt);
-/*      */     } 
-/*      */     
-/* 1290 */     return this.currentObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Vector getOrderedDescriptions(String paramString, CodeBase paramCodeBase) {
-/* 1298 */     Vector<FullValueDescription> vector = new Vector();
-/*      */     
-/* 1300 */     if (paramCodeBase == null) {
-/* 1301 */       return vector;
-/*      */     }
-/*      */     
-/* 1304 */     FullValueDescription fullValueDescription = paramCodeBase.meta(paramString);
-/* 1305 */     while (fullValueDescription != null) {
-/* 1306 */       vector.insertElementAt(fullValueDescription, 0);
-/* 1307 */       if (fullValueDescription.base_value != null && !"".equals(fullValueDescription.base_value)) {
-/* 1308 */         fullValueDescription = paramCodeBase.meta(fullValueDescription.base_value); continue;
-/*      */       } 
-/* 1310 */       return vector;
-/*      */     } 
-/*      */     
-/* 1313 */     return vector;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private synchronized Object inputObjectUsingFVD(Class<?> paramClass, String paramString, CodeBase paramCodeBase, int paramInt) throws IOException, ClassNotFoundException {
-/* 1334 */     int i = this.spClass;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1341 */       ObjectStreamClass objectStreamClass = this.currentClassDesc = ObjectStreamClass.lookup(paramClass);
-/* 1342 */       Class<?> clazz = this.currentClass = paramClass;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1349 */       if (this.currentClassDesc.isExternalizable()) {
-/*      */         try {
-/* 1351 */           this
-/* 1352 */             .currentObject = (this.currentClass == null) ? null : this.currentClassDesc.newInstance();
-/* 1353 */           if (this.currentObject != null) {
-/*      */ 
-/*      */ 
-/*      */             
-/* 1357 */             this.activeRecursionMgr.addObject(paramInt, this.currentObject);
-/*      */ 
-/*      */             
-/* 1360 */             readFormatVersion();
-/*      */             
-/* 1362 */             Externalizable externalizable = (Externalizable)this.currentObject;
-/* 1363 */             externalizable.readExternal(this);
-/*      */           } 
-/* 1365 */         } catch (InvocationTargetException invocationTargetException) {
-/*      */           
-/* 1367 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InvocationTargetException accessing no-arg constructor");
-/*      */           
-/* 1369 */           invalidClassException.initCause(invocationTargetException);
-/* 1370 */           throw invalidClassException;
-/* 1371 */         } catch (UnsupportedOperationException unsupportedOperationException) {
-/*      */           
-/* 1373 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "UnsupportedOperationException accessing no-arg constructor");
-/*      */           
-/* 1375 */           invalidClassException.initCause(unsupportedOperationException);
-/* 1376 */           throw invalidClassException;
-/* 1377 */         } catch (InstantiationException instantiationException) {
-/*      */           
-/* 1379 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InstantiationException accessing no-arg constructor");
-/*      */           
-/* 1381 */           invalidClassException.initCause(instantiationException);
-/* 1382 */           throw invalidClassException;
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1389 */         objectStreamClass = this.currentClassDesc; clazz = this.currentClass;
-/* 1390 */         for (; objectStreamClass != null && objectStreamClass.isSerializable(); 
-/*      */           
-/* 1392 */           objectStreamClass = objectStreamClass.getSuperclass()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1401 */           Class<?> clazz1 = objectStreamClass.forClass();
-/*      */           Class<?> clazz2;
-/* 1403 */           for (clazz2 = clazz; clazz2 != null && 
-/* 1404 */             clazz1 != clazz2; clazz2 = clazz2.getSuperclass());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1417 */           this.spClass++;
-/* 1418 */           if (this.spClass >= this.classes.length) {
-/* 1419 */             int j = this.classes.length * 2;
-/* 1420 */             Class[] arrayOfClass = new Class[j];
-/* 1421 */             ObjectStreamClass[] arrayOfObjectStreamClass = new ObjectStreamClass[j];
-/*      */             
-/* 1423 */             System.arraycopy(this.classes, 0, arrayOfClass, 0, this.classes.length);
-/*      */ 
-/*      */             
-/* 1426 */             System.arraycopy(this.classdesc, 0, arrayOfObjectStreamClass, 0, this.classes.length);
-/*      */ 
-/*      */ 
-/*      */             
-/* 1430 */             this.classes = arrayOfClass;
-/* 1431 */             this.classdesc = arrayOfObjectStreamClass;
-/*      */           } 
-/*      */           
-/* 1434 */           if (clazz2 == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1439 */             this.classdesc[this.spClass] = objectStreamClass;
-/* 1440 */             this.classes[this.spClass] = null;
-/*      */ 
-/*      */           
-/*      */           }
-/*      */           else {
-/*      */ 
-/*      */             
-/* 1447 */             this.classdesc[this.spClass] = objectStreamClass;
-/* 1448 */             this.classes[this.spClass] = clazz2;
-/* 1449 */             clazz = clazz2.getSuperclass();
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         try {
-/* 1456 */           this
-/* 1457 */             .currentObject = (this.currentClass == null) ? null : this.currentClassDesc.newInstance();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1462 */           this.activeRecursionMgr.addObject(paramInt, this.currentObject);
-/* 1463 */         } catch (InvocationTargetException invocationTargetException) {
-/*      */           
-/* 1465 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InvocationTargetException accessing no-arg constructor");
-/*      */           
-/* 1467 */           invalidClassException.initCause(invocationTargetException);
-/* 1468 */           throw invalidClassException;
-/* 1469 */         } catch (UnsupportedOperationException unsupportedOperationException) {
-/*      */           
-/* 1471 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "UnsupportedOperationException accessing no-arg constructor");
-/*      */           
-/* 1473 */           invalidClassException.initCause(unsupportedOperationException);
-/* 1474 */           throw invalidClassException;
-/* 1475 */         } catch (InstantiationException instantiationException) {
-/*      */           
-/* 1477 */           InvalidClassException invalidClassException = new InvalidClassException(this.currentClass.getName(), "InstantiationException accessing no-arg constructor");
-/*      */           
-/* 1479 */           invalidClassException.initCause(instantiationException);
-/* 1480 */           throw invalidClassException;
-/*      */         } 
-/*      */         
-/* 1483 */         Enumeration<FullValueDescription> enumeration = getOrderedDescriptions(paramString, paramCodeBase).elements();
-/*      */         
-/* 1485 */         while (enumeration.hasMoreElements() && this.spClass > i) {
-/* 1486 */           FullValueDescription fullValueDescription = enumeration.nextElement();
-/*      */           
-/* 1488 */           String str1 = this.vhandler.getClassName(fullValueDescription.id);
-/* 1489 */           String str2 = this.vhandler.getClassName(this.vhandler.getRMIRepositoryID(this.currentClass));
-/*      */           
-/* 1491 */           while (this.spClass > i && 
-/* 1492 */             !str1.equals(str2)) {
-/* 1493 */             int j = findNextClass(str1, this.classes, this.spClass, i);
-/* 1494 */             if (j != -1) {
-/* 1495 */               this.spClass = j;
-/* 1496 */               clazz = this.currentClass = this.classes[this.spClass];
-/* 1497 */               str2 = this.vhandler.getClassName(this.vhandler.getRMIRepositoryID(this.currentClass));
-/*      */ 
-/*      */               
-/*      */               continue;
-/*      */             } 
-/*      */ 
-/*      */             
-/* 1504 */             if (fullValueDescription.is_custom) {
-/*      */               
-/* 1506 */               readFormatVersion();
-/* 1507 */               boolean bool = readBoolean();
-/*      */               
-/* 1509 */               if (bool) {
-/* 1510 */                 inputClassFields((Object)null, (Class)null, (ObjectStreamClass)null, fullValueDescription.members, paramCodeBase);
-/*      */               }
-/* 1512 */               if (getStreamFormatVersion() == 2)
-/*      */               {
-/* 1514 */                 ((ValueInputStream)getOrbStream()).start_value();
-/* 1515 */                 ((ValueInputStream)getOrbStream()).end_value();
-/*      */               
-/*      */               }
-/*      */ 
-/*      */             
-/*      */             }
-/*      */             else {
-/*      */ 
-/*      */               
-/* 1524 */               inputClassFields((Object)null, this.currentClass, (ObjectStreamClass)null, fullValueDescription.members, paramCodeBase);
-/*      */             } 
-/*      */             
-/* 1527 */             if (enumeration.hasMoreElements()) {
-/* 1528 */               fullValueDescription = enumeration.nextElement();
-/* 1529 */               str1 = this.vhandler.getClassName(fullValueDescription.id); continue;
-/*      */             } 
-/* 1531 */             return this.currentObject;
-/*      */           } 
-/*      */ 
-/*      */           
-/* 1535 */           objectStreamClass = this.currentClassDesc = ObjectStreamClass.lookup(this.currentClass);
-/*      */           
-/* 1537 */           if (!str2.equals("java.lang.Object")) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1544 */             InputStreamHook.ReadObjectState readObjectState = this.readObjectState;
-/* 1545 */             setState(DEFAULT_STATE);
-/*      */ 
-/*      */             
-/*      */             try {
-/* 1549 */               if (fullValueDescription.is_custom) {
-/*      */ 
-/*      */                 
-/* 1552 */                 readFormatVersion();
-/*      */ 
-/*      */                 
-/* 1555 */                 boolean bool1 = readBoolean();
-/*      */                 
-/* 1557 */                 this.readObjectState.beginUnmarshalCustomValue(this, bool1, (this.currentClassDesc.readObjectMethod != null));
-/*      */               } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/* 1563 */               boolean bool = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*      */               try {
-/* 1569 */                 if (!fullValueDescription.is_custom && this.currentClassDesc.hasReadObject()) {
-/* 1570 */                   setState(IN_READ_OBJECT_REMOTE_NOT_CUSTOM_MARSHALED);
-/*      */                 }
-/*      */ 
-/*      */ 
-/*      */                 
-/* 1575 */                 this.defaultReadObjectFVDMembers = fullValueDescription.members;
-/* 1576 */                 bool = invokeObjectReader(this.currentClassDesc, this.currentObject, this.currentClass);
-/*      */               
-/*      */               }
-/*      */               finally {
-/*      */                 
-/* 1581 */                 this.defaultReadObjectFVDMembers = null;
-/*      */               } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/* 1587 */               if (!bool || this.readObjectState == IN_READ_OBJECT_DEFAULTS_SENT) {
-/* 1588 */                 inputClassFields(this.currentObject, this.currentClass, objectStreamClass, fullValueDescription.members, paramCodeBase);
-/*      */               }
-/* 1590 */               if (fullValueDescription.is_custom) {
-/* 1591 */                 this.readObjectState.endUnmarshalCustomValue(this);
-/*      */               }
-/*      */             } finally {
-/* 1594 */               setState(readObjectState);
-/*      */             } 
-/*      */             
-/* 1597 */             clazz = this.currentClass = this.classes[--this.spClass];
-/*      */ 
-/*      */             
-/*      */             continue;
-/*      */           } 
-/*      */ 
-/*      */           
-/* 1604 */           inputClassFields((Object)null, this.currentClass, (ObjectStreamClass)null, fullValueDescription.members, paramCodeBase);
-/*      */           
-/* 1606 */           while (enumeration.hasMoreElements()) {
-/* 1607 */             fullValueDescription = enumeration.nextElement();
-/*      */             
-/* 1609 */             if (fullValueDescription.is_custom) {
-/* 1610 */               skipCustomUsingFVD(fullValueDescription.members, paramCodeBase); continue;
-/*      */             } 
-/* 1612 */             inputClassFields((Object)null, this.currentClass, (ObjectStreamClass)null, fullValueDescription.members, paramCodeBase);
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1618 */         while (enumeration.hasMoreElements()) {
-/*      */           
-/* 1620 */           FullValueDescription fullValueDescription = enumeration.nextElement();
-/* 1621 */           if (fullValueDescription.is_custom) {
-/* 1622 */             skipCustomUsingFVD(fullValueDescription.members, paramCodeBase); continue;
-/*      */           } 
-/* 1624 */           throwAwayData(fullValueDescription.members, paramCodeBase);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1628 */       return this.currentObject;
-/*      */     }
-/*      */     finally {
-/*      */       
-/* 1632 */       this.spClass = i;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1638 */       this.activeRecursionMgr.removeObject(paramInt);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Object skipObjectUsingFVD(String paramString, CodeBase paramCodeBase) throws IOException, ClassNotFoundException {
-/* 1658 */     Enumeration<FullValueDescription> enumeration = getOrderedDescriptions(paramString, paramCodeBase).elements();
-/*      */     
-/* 1660 */     while (enumeration.hasMoreElements()) {
-/* 1661 */       FullValueDescription fullValueDescription = enumeration.nextElement();
-/* 1662 */       String str = this.vhandler.getClassName(fullValueDescription.id);
-/*      */       
-/* 1664 */       if (!str.equals("java.lang.Object")) {
-/* 1665 */         if (fullValueDescription.is_custom) {
-/*      */           
-/* 1667 */           readFormatVersion();
-/*      */           
-/* 1669 */           boolean bool = readBoolean();
-/*      */           
-/* 1671 */           if (bool) {
-/* 1672 */             inputClassFields((Object)null, (Class)null, (ObjectStreamClass)null, fullValueDescription.members, paramCodeBase);
-/*      */           }
-/* 1674 */           if (getStreamFormatVersion() == 2) {
-/*      */             
-/* 1676 */             ((ValueInputStream)getOrbStream()).start_value();
-/* 1677 */             ((ValueInputStream)getOrbStream()).end_value();
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           continue;
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1686 */         inputClassFields((Object)null, (Class)null, (ObjectStreamClass)null, fullValueDescription.members, paramCodeBase);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1691 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int findNextClass(String paramString, Class[] paramArrayOfClass, int paramInt1, int paramInt2) {
-/* 1699 */     for (int i = paramInt1; i > paramInt2; i--) {
-/* 1700 */       if (paramString.equals(paramArrayOfClass[i].getName())) {
-/* 1701 */         return i;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1705 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean invokeObjectReader(ObjectStreamClass paramObjectStreamClass, Object paramObject, Class paramClass) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 1717 */     if (paramObjectStreamClass.readObjectMethod == null) {
-/* 1718 */       return false;
-/*      */     }
-/*      */     
-/*      */     try {
-/* 1722 */       paramObjectStreamClass.readObjectMethod.invoke(paramObject, this.readObjectArgList);
-/* 1723 */       return true;
-/* 1724 */     } catch (InvocationTargetException invocationTargetException) {
-/* 1725 */       Throwable throwable = invocationTargetException.getTargetException();
-/* 1726 */       if (throwable instanceof ClassNotFoundException)
-/* 1727 */         throw (ClassNotFoundException)throwable; 
-/* 1728 */       if (throwable instanceof IOException)
-/* 1729 */         throw (IOException)throwable; 
-/* 1730 */       if (throwable instanceof RuntimeException)
-/* 1731 */         throw (RuntimeException)throwable; 
-/* 1732 */       if (throwable instanceof Error) {
-/* 1733 */         throw (Error)throwable;
-/*      */       }
-/*      */       
-/* 1736 */       throw new Error("internal error");
-/* 1737 */     } catch (IllegalAccessException illegalAccessException) {
-/* 1738 */       return false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void resetStream() throws IOException {
-/* 1747 */     if (this.classes == null) {
-/* 1748 */       this.classes = new Class[20];
-/*      */     } else {
-/* 1750 */       for (byte b = 0; b < this.classes.length; b++)
-/* 1751 */         this.classes[b] = null; 
-/*      */     } 
-/* 1753 */     if (this.classdesc == null) {
-/* 1754 */       this.classdesc = new ObjectStreamClass[20];
-/*      */     } else {
-/* 1756 */       for (byte b = 0; b < this.classdesc.length; b++)
-/* 1757 */         this.classdesc[b] = null; 
-/*      */     } 
-/* 1759 */     this.spClass = 0;
-/*      */     
-/* 1761 */     if (this.callbacks != null) {
-/* 1762 */       this.callbacks.setSize(0);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private void inputPrimitiveField(Object paramObject, Class paramClass, ObjectStreamField paramObjectStreamField) throws InvalidClassException, IOException {
-/*      */     try {
-/*      */       byte b;
-/*      */       boolean bool;
-/*      */       char c;
-/*      */       short s;
-/*      */       int i;
-/*      */       long l;
-/*      */       float f;
-/*      */       double d;
-/* 1776 */       switch (paramObjectStreamField.getTypeCode()) {
-/*      */         case 'B':
-/* 1778 */           b = this.orbStream.read_octet();
-/* 1779 */           if (paramObjectStreamField.getField() != null) {
-/* 1780 */             bridge.putByte(paramObject, paramObjectStreamField.getFieldID(), b);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'Z':
-/* 1785 */           bool = this.orbStream.read_boolean();
-/* 1786 */           if (paramObjectStreamField.getField() != null) {
-/* 1787 */             bridge.putBoolean(paramObject, paramObjectStreamField.getFieldID(), bool);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'C':
-/* 1792 */           c = this.orbStream.read_wchar();
-/* 1793 */           if (paramObjectStreamField.getField() != null) {
-/* 1794 */             bridge.putChar(paramObject, paramObjectStreamField.getFieldID(), c);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'S':
-/* 1799 */           s = this.orbStream.read_short();
-/* 1800 */           if (paramObjectStreamField.getField() != null) {
-/* 1801 */             bridge.putShort(paramObject, paramObjectStreamField.getFieldID(), s);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'I':
-/* 1806 */           i = this.orbStream.read_long();
-/* 1807 */           if (paramObjectStreamField.getField() != null) {
-/* 1808 */             bridge.putInt(paramObject, paramObjectStreamField.getFieldID(), i);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'J':
-/* 1813 */           l = this.orbStream.read_longlong();
-/* 1814 */           if (paramObjectStreamField.getField() != null) {
-/* 1815 */             bridge.putLong(paramObject, paramObjectStreamField.getFieldID(), l);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'F':
-/* 1820 */           f = this.orbStream.read_float();
-/* 1821 */           if (paramObjectStreamField.getField() != null) {
-/* 1822 */             bridge.putFloat(paramObject, paramObjectStreamField.getFieldID(), f);
-/*      */           }
-/*      */           return;
-/*      */         
-/*      */         case 'D':
-/* 1827 */           d = this.orbStream.read_double();
-/* 1828 */           if (paramObjectStreamField.getField() != null) {
-/* 1829 */             bridge.putDouble(paramObject, paramObjectStreamField.getFieldID(), d);
-/*      */           }
-/*      */           return;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1835 */       throw new InvalidClassException(paramClass.getName());
-/*      */     }
-/* 1837 */     catch (IllegalArgumentException illegalArgumentException) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1845 */       ClassCastException classCastException = new ClassCastException("Assigning instance of class " + paramObjectStreamField.getType().getName() + " to field " + this.currentClassDesc.getName() + '#' + paramObjectStreamField.getField().getName());
-/* 1846 */       classCastException.initCause(illegalArgumentException);
-/* 1847 */       throw classCastException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Object inputObjectField(ValueMember paramValueMember, CodeBase paramCodeBase) throws IndirectionException, ClassNotFoundException, IOException, StreamCorruptedException {
-/* 1856 */     Object object = null;
-/* 1857 */     Class clazz = null;
-/* 1858 */     String str1 = paramValueMember.id;
-/*      */     
-/*      */     try {
-/* 1861 */       clazz = this.vhandler.getClassFromType(str1);
-/* 1862 */     } catch (ClassNotFoundException classNotFoundException) {
-/*      */       
-/* 1864 */       clazz = null;
-/*      */     } 
-/*      */     
-/* 1867 */     String str2 = null;
-/* 1868 */     if (clazz != null) {
-/* 1869 */       str2 = ValueUtility.getSignature(paramValueMember);
-/*      */     }
-/* 1871 */     if (str2 != null && (str2.equals("Ljava/lang/Object;") || str2
-/* 1872 */       .equals("Ljava/io/Serializable;") || str2
-/* 1873 */       .equals("Ljava/io/Externalizable;")))
-/* 1874 */     { object = Util.readAny(this.orbStream);
-/*      */ 
-/*      */       
-/*      */        }
-/*      */     
-/*      */     else
-/*      */     
-/*      */     { 
-/*      */ 
-/*      */       
-/* 1884 */       byte b = 2;
-/*      */       
-/* 1886 */       if (!this.vhandler.isSequence(str1))
-/*      */       {
-/* 1888 */         if (paramValueMember.type.kind().value() == kRemoteTypeCode.kind().value()) {
-/*      */ 
-/*      */           
-/* 1891 */           b = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         }
-/* 1908 */         else if (clazz != null && clazz.isInterface() && (this.vhandler
-/* 1909 */           .isAbstractBase(clazz) || 
-/* 1910 */           ObjectStreamClassCorbaExt.isAbstractInterface(clazz))) {
-/*      */           
-/* 1912 */           b = 1;
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1921 */       switch (b)
-/*      */       { case 0:
-/* 1923 */           if (clazz != null) {
-/* 1924 */             object = Utility.readObjectAndNarrow(this.orbStream, clazz);
-/*      */           } else {
-/* 1926 */             object = this.orbStream.read_Object();
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1946 */           return object;case 1: if (clazz != null) { object = Utility.readAbstractAndNarrow(this.orbStream, clazz); } else { object = this.orbStream.read_abstract_interface(); }  return object;case 2: if (clazz != null) { object = this.orbStream.read_value(clazz); } else { object = this.orbStream.read_value(); }  return object; }  throw new StreamCorruptedException("Unknown callType: " + b); }  return object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Object inputObjectField(ObjectStreamField paramObjectStreamField) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IndirectionException, IOException {
-/* 1960 */     if (ObjectStreamClassCorbaExt.isAny(paramObjectStreamField.getTypeString())) {
-/* 1961 */       return Util.readAny(this.orbStream);
-/*      */     }
-/*      */     
-/* 1964 */     Object object = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1969 */     Class<?> clazz1 = paramObjectStreamField.getType();
-/* 1970 */     Class<?> clazz2 = clazz1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1976 */     byte b = 2;
-/* 1977 */     boolean bool = false;
-/*      */     
-/* 1979 */     if (clazz1.isInterface()) {
-/* 1980 */       boolean bool1 = false;
-/*      */       
-/* 1982 */       if (Remote.class.isAssignableFrom(clazz1)) {
-/*      */ 
-/*      */         
-/* 1985 */         b = 0;
-/*      */       }
-/* 1987 */       else if (Object.class.isAssignableFrom(clazz1)) {
-/*      */ 
-/*      */         
-/* 1990 */         b = 0;
-/* 1991 */         bool1 = true;
-/*      */       }
-/* 1993 */       else if (this.vhandler.isAbstractBase(clazz1)) {
-/*      */ 
-/*      */         
-/* 1996 */         b = 1;
-/* 1997 */         bool1 = true;
-/* 1998 */       } else if (ObjectStreamClassCorbaExt.isAbstractInterface(clazz1)) {
-/*      */ 
-/*      */         
-/* 2001 */         b = 1;
-/*      */       } 
-/*      */       
-/* 2004 */       if (bool1) {
-/*      */         try {
-/* 2006 */           String str1 = Util.getCodebase(clazz1);
-/* 2007 */           String str2 = this.vhandler.createForAnyType(clazz1);
-/*      */           
-/* 2009 */           Class<?> clazz = Utility.loadStubClass(str2, str1, clazz1);
-/* 2010 */           clazz2 = clazz;
-/* 2011 */         } catch (ClassNotFoundException classNotFoundException) {
-/* 2012 */           bool = true;
-/*      */         } 
-/*      */       } else {
-/* 2015 */         bool = true;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2019 */     switch (b) {
-/*      */       case 0:
-/* 2021 */         if (!bool) {
-/* 2022 */           object = this.orbStream.read_Object(clazz2);
-/*      */         } else {
-/* 2024 */           object = Utility.readObjectAndNarrow(this.orbStream, clazz2);
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2040 */         return object;case 1: if (!bool) { object = this.orbStream.read_abstract_interface(clazz2); } else { object = Utility.readAbstractAndNarrow(this.orbStream, clazz2); }  return object;case 2: object = this.orbStream.read_value(clazz2); return object;
-/*      */     } 
-/*      */     throw new StreamCorruptedException("Unknown callType: " + b);
-/*      */   } private final boolean mustUseRemoteValueMembers() {
-/* 2044 */     return (this.defaultReadObjectFVDMembers != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void readFields(Map paramMap) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 2051 */     if (mustUseRemoteValueMembers()) {
-/* 2052 */       inputRemoteMembersForReadFields(paramMap);
-/*      */     } else {
-/* 2054 */       inputCurrentClassFieldsForReadFields(paramMap);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void inputRemoteMembersForReadFields(Map<String, Byte> paramMap) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 2063 */     ValueMember[] arrayOfValueMember = this.defaultReadObjectFVDMembers;
-/*      */ 
-/*      */     
-/*      */     try {
-/* 2067 */       for (byte b = 0; b < arrayOfValueMember.length; b++) {
-/*      */         byte b1; boolean bool; char c; short s; int i; long l; float f; double d; Object object;
-/* 2069 */         switch ((arrayOfValueMember[b]).type.kind().value()) {
-/*      */           
-/*      */           case 10:
-/* 2072 */             b1 = this.orbStream.read_octet();
-/* 2073 */             paramMap.put((arrayOfValueMember[b]).name, new Byte(b1));
-/*      */             break;
-/*      */           case 8:
-/* 2076 */             bool = this.orbStream.read_boolean();
-/* 2077 */             paramMap.put((arrayOfValueMember[b]).name, new Boolean(bool));
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 9:
-/*      */           case 26:
-/* 2086 */             c = this.orbStream.read_wchar();
-/* 2087 */             paramMap.put((arrayOfValueMember[b]).name, new Character(c));
-/*      */             break;
-/*      */           case 2:
-/* 2090 */             s = this.orbStream.read_short();
-/* 2091 */             paramMap.put((arrayOfValueMember[b]).name, new Short(s));
-/*      */             break;
-/*      */           case 3:
-/* 2094 */             i = this.orbStream.read_long();
-/* 2095 */             paramMap.put((arrayOfValueMember[b]).name, new Integer(i));
-/*      */             break;
-/*      */           case 23:
-/* 2098 */             l = this.orbStream.read_longlong();
-/* 2099 */             paramMap.put((arrayOfValueMember[b]).name, new Long(l));
-/*      */             break;
-/*      */           case 6:
-/* 2102 */             f = this.orbStream.read_float();
-/* 2103 */             paramMap.put((arrayOfValueMember[b]).name, new Float(f));
-/*      */             break;
-/*      */           case 7:
-/* 2106 */             d = this.orbStream.read_double();
-/* 2107 */             paramMap.put((arrayOfValueMember[b]).name, new Double(d));
-/*      */             break;
-/*      */           case 14:
-/*      */           case 29:
-/*      */           case 30:
-/* 2112 */             object = null;
-/*      */             try {
-/* 2114 */               object = inputObjectField(arrayOfValueMember[b], this.cbSender);
-/*      */             
-/*      */             }
-/* 2117 */             catch (IndirectionException indirectionException) {
-/*      */ 
-/*      */ 
-/*      */               
-/* 2121 */               object = this.activeRecursionMgr.getObject(indirectionException.offset);
-/*      */             } 
-/*      */             
-/* 2124 */             paramMap.put((arrayOfValueMember[b]).name, object);
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 2128 */             throw new StreamCorruptedException("Unknown kind: " + (arrayOfValueMember[b]).type
-/* 2129 */                 .kind().value());
-/*      */         } 
-/*      */       } 
-/* 2132 */     } catch (Throwable throwable) {
-/* 2133 */       StreamCorruptedException streamCorruptedException = new StreamCorruptedException(throwable.getMessage());
-/* 2134 */       streamCorruptedException.initCause(throwable);
-/* 2135 */       throw streamCorruptedException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final void inputCurrentClassFieldsForReadFields(Map<String, Byte> paramMap) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 2151 */     ObjectStreamField[] arrayOfObjectStreamField = this.currentClassDesc.getFieldsNoCopy();
-/*      */     
-/* 2153 */     int i = arrayOfObjectStreamField.length - this.currentClassDesc.objFields;
-/*      */     
-/*      */     int j;
-/* 2156 */     for (j = 0; j < i; j++) {
-/*      */       byte b; boolean bool; char c; short s; int k; long l; float f; double d;
-/* 2158 */       switch (arrayOfObjectStreamField[j].getTypeCode()) {
-/*      */         case 'B':
-/* 2160 */           b = this.orbStream.read_octet();
-/* 2161 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Byte(b));
-/*      */           break;
-/*      */         
-/*      */         case 'Z':
-/* 2165 */           bool = this.orbStream.read_boolean();
-/* 2166 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Boolean(bool));
-/*      */           break;
-/*      */         
-/*      */         case 'C':
-/* 2170 */           c = this.orbStream.read_wchar();
-/* 2171 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Character(c));
-/*      */           break;
-/*      */         
-/*      */         case 'S':
-/* 2175 */           s = this.orbStream.read_short();
-/* 2176 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Short(s));
-/*      */           break;
-/*      */         
-/*      */         case 'I':
-/* 2180 */           k = this.orbStream.read_long();
-/* 2181 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Integer(k));
-/*      */           break;
-/*      */         
-/*      */         case 'J':
-/* 2185 */           l = this.orbStream.read_longlong();
-/* 2186 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Long(l));
-/*      */           break;
-/*      */         
-/*      */         case 'F':
-/* 2190 */           f = this.orbStream.read_float();
-/* 2191 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Float(f));
-/*      */           break;
-/*      */         
-/*      */         case 'D':
-/* 2195 */           d = this.orbStream.read_double();
-/* 2196 */           paramMap.put(arrayOfObjectStreamField[j].getName(), new Double(d));
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         default:
-/* 2201 */           throw new InvalidClassException(this.currentClassDesc.getName());
-/*      */       } 
-/*      */ 
-/*      */     
-/*      */     } 
-/* 2206 */     if (this.currentClassDesc.objFields > 0) {
-/* 2207 */       for (j = i; j < arrayOfObjectStreamField.length; j++) {
-/* 2208 */         Object object = null;
-/*      */         try {
-/* 2210 */           object = inputObjectField(arrayOfObjectStreamField[j]);
-/* 2211 */         } catch (IndirectionException indirectionException) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 2215 */           object = this.activeRecursionMgr.getObject(indirectionException.offset);
-/*      */         } 
-/*      */         
-/* 2218 */         paramMap.put(arrayOfObjectStreamField[j].getName(), object);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void inputClassFields(Object paramObject, Class<?> paramClass, ObjectStreamField[] paramArrayOfObjectStreamField, CodeBase paramCodeBase) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 2240 */     int i = paramArrayOfObjectStreamField.length - this.currentClassDesc.objFields;
-/*      */     
-/* 2242 */     if (paramObject != null) {
-/* 2243 */       for (byte b = 0; b < i; b++) {
-/* 2244 */         inputPrimitiveField(paramObject, paramClass, paramArrayOfObjectStreamField[b]);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/* 2249 */     if (this.currentClassDesc.objFields > 0) {
-/* 2250 */       for (int j = i; j < paramArrayOfObjectStreamField.length; j++) {
-/* 2251 */         Object object = null;
-/*      */         
-/*      */         try {
-/* 2254 */           object = inputObjectField(paramArrayOfObjectStreamField[j]);
-/* 2255 */         } catch (IndirectionException indirectionException) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 2259 */           object = this.activeRecursionMgr.getObject(indirectionException.offset);
-/*      */         } 
-/*      */         
-/* 2262 */         if (paramObject != null && paramArrayOfObjectStreamField[j].getField() != null) {
-/*      */           
-/*      */           try {
-/*      */ 
-/*      */             
-/* 2267 */             Class<?> clazz = paramArrayOfObjectStreamField[j].getClazz();
-/* 2268 */             if (object != null && 
-/* 2269 */               !clazz.isAssignableFrom(object
-/* 2270 */                 .getClass())) {
-/* 2271 */               throw new IllegalArgumentException("Field mismatch");
-/*      */             }
-/* 2273 */             Field field = null;
-/* 2274 */             String str = paramArrayOfObjectStreamField[j].getName();
-/*      */             try {
-/* 2276 */               field = getDeclaredField(paramClass, str);
-/* 2277 */             } catch (PrivilegedActionException privilegedActionException) {
-/* 2278 */               throw new IllegalArgumentException((NoSuchFieldException)privilegedActionException
-/* 2279 */                   .getException());
-/* 2280 */             } catch (SecurityException securityException) {
-/* 2281 */               throw new IllegalArgumentException(securityException);
-/* 2282 */             } catch (NullPointerException nullPointerException) {
-/*      */             
-/* 2284 */             } catch (NoSuchFieldException noSuchFieldException) {}
-/*      */ 
-/*      */ 
-/*      */             
-/* 2288 */             if (field != null) {
-/*      */ 
-/*      */               
-/* 2291 */               Class<?> clazz1 = field.getType();
-/*      */ 
-/*      */ 
-/*      */               
-/* 2295 */               if (!clazz1.isAssignableFrom(clazz)) {
-/* 2296 */                 throw new IllegalArgumentException("Field Type mismatch");
-/*      */               }
-/*      */               
-/* 2299 */               if (object != null && !clazz.isInstance(object)) {
-/* 2300 */                 throw new IllegalArgumentException();
-/*      */               }
-/* 2302 */               bridge.putObject(paramObject, paramArrayOfObjectStreamField[j].getFieldID(), object);
-/*      */             } 
-/* 2304 */           } catch (IllegalArgumentException illegalArgumentException) {
-/* 2305 */             String str1 = "null";
-/* 2306 */             String str2 = "null";
-/* 2307 */             String str3 = "null";
-/* 2308 */             if (object != null) {
-/* 2309 */               str1 = object.getClass().getName();
-/*      */             }
-/* 2311 */             if (this.currentClassDesc != null) {
-/* 2312 */               str2 = this.currentClassDesc.getName();
-/*      */             }
-/* 2314 */             if (paramArrayOfObjectStreamField[j] != null && paramArrayOfObjectStreamField[j].getField() != null) {
-/* 2315 */               str3 = paramArrayOfObjectStreamField[j].getField().getName();
-/*      */             }
-/* 2317 */             ClassCastException classCastException = new ClassCastException("Assigning instance of class " + str1 + " to field " + str2 + '#' + str3);
-/*      */ 
-/*      */             
-/* 2320 */             classCastException.initCause(illegalArgumentException);
-/* 2321 */             throw classCastException;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void inputClassFields(Object paramObject, Class<?> paramClass, ObjectStreamClass paramObjectStreamClass, ValueMember[] paramArrayOfValueMember, CodeBase paramCodeBase) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/*      */     try {
-/* 2342 */       for (byte b = 0; b < paramArrayOfValueMember.length; b++) {
-/*      */         try {
-/* 2344 */           byte b1; boolean bool; char c; short s; int i; long l; float f; double d; Object object; switch ((paramArrayOfValueMember[b]).type.kind().value()) {
-/*      */             case 10:
-/* 2346 */               b1 = this.orbStream.read_octet();
-/* 2347 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2348 */                 setByteField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, b1); 
-/*      */               break;
-/*      */             case 8:
-/* 2351 */               bool = this.orbStream.read_boolean();
-/* 2352 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b])) {
-/* 2353 */                 setBooleanField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, bool);
-/*      */               }
-/*      */               break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             case 9:
-/*      */             case 26:
-/* 2362 */               c = this.orbStream.read_wchar();
-/* 2363 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2364 */                 setCharField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, c); 
-/*      */               break;
-/*      */             case 2:
-/* 2367 */               s = this.orbStream.read_short();
-/* 2368 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2369 */                 setShortField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, s); 
-/*      */               break;
-/*      */             case 3:
-/* 2372 */               i = this.orbStream.read_long();
-/* 2373 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2374 */                 setIntField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, i); 
-/*      */               break;
-/*      */             case 23:
-/* 2377 */               l = this.orbStream.read_longlong();
-/* 2378 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2379 */                 setLongField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, l); 
-/*      */               break;
-/*      */             case 6:
-/* 2382 */               f = this.orbStream.read_float();
-/* 2383 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2384 */                 setFloatField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, f); 
-/*      */               break;
-/*      */             case 7:
-/* 2387 */               d = this.orbStream.read_double();
-/* 2388 */               if (paramObject != null && paramObjectStreamClass.hasField(paramArrayOfValueMember[b]))
-/* 2389 */                 setDoubleField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, d); 
-/*      */               break;
-/*      */             case 14:
-/*      */             case 29:
-/*      */             case 30:
-/* 2394 */               object = null;
-/*      */               try {
-/* 2396 */                 object = inputObjectField(paramArrayOfValueMember[b], paramCodeBase);
-/* 2397 */               } catch (IndirectionException indirectionException) {
-/*      */ 
-/*      */ 
-/*      */                 
-/* 2401 */                 object = this.activeRecursionMgr.getObject(indirectionException.offset);
-/*      */               } 
-/*      */               
-/* 2404 */               if (paramObject == null)
-/*      */                 break; 
-/*      */               try {
-/* 2407 */                 if (paramObjectStreamClass.hasField(paramArrayOfValueMember[b])) {
-/* 2408 */                   setObjectField(paramObject, paramClass, (paramArrayOfValueMember[b]).name, object);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                 
-/*      */                 }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/*      */               }
-/* 2424 */               catch (IllegalArgumentException illegalArgumentException) {
-/*      */ 
-/*      */                 
-/* 2427 */                 ClassCastException classCastException = new ClassCastException("Assigning instance of class " + object.getClass().getName() + " to field " + (paramArrayOfValueMember[b]).name);
-/* 2428 */                 classCastException.initCause(illegalArgumentException);
-/* 2429 */                 throw classCastException;
-/*      */               } 
-/*      */               break;
-/*      */             
-/*      */             default:
-/* 2434 */               throw new StreamCorruptedException("Unknown kind: " + (paramArrayOfValueMember[b]).type
-/* 2435 */                   .kind().value());
-/*      */           } 
-/* 2437 */         } catch (IllegalArgumentException illegalArgumentException) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2443 */           ClassCastException classCastException = new ClassCastException("Assigning instance of class " + (paramArrayOfValueMember[b]).id + " to field " + this.currentClassDesc.getName() + '#' + (paramArrayOfValueMember[b]).name);
-/* 2444 */           classCastException.initCause(illegalArgumentException);
-/* 2445 */           throw classCastException;
-/*      */         } 
-/*      */       } 
-/* 2448 */     } catch (Throwable throwable) {
-/*      */       
-/* 2450 */       StreamCorruptedException streamCorruptedException = new StreamCorruptedException(throwable.getMessage());
-/* 2451 */       streamCorruptedException.initCause(throwable);
-/* 2452 */       throw streamCorruptedException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void skipCustomUsingFVD(ValueMember[] paramArrayOfValueMember, CodeBase paramCodeBase) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 2461 */     readFormatVersion();
-/* 2462 */     boolean bool = readBoolean();
-/*      */     
-/* 2464 */     if (bool) {
-/* 2465 */       throwAwayData(paramArrayOfValueMember, paramCodeBase);
-/*      */     }
-/* 2467 */     if (getStreamFormatVersion() == 2) {
-/*      */       
-/* 2469 */       ((ValueInputStream)getOrbStream()).start_value();
-/* 2470 */       ((ValueInputStream)getOrbStream()).end_value();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void throwAwayData(ValueMember[] paramArrayOfValueMember, CodeBase paramCodeBase) throws InvalidClassException, StreamCorruptedException, ClassNotFoundException, IOException {
-/* 2483 */     for (byte b = 0; b < paramArrayOfValueMember.length; b++) {
-/*      */       try {
-/*      */         Class clazz; String str1;
-/*      */         String str2;
-/* 2487 */         switch ((paramArrayOfValueMember[b]).type.kind().value()) {
-/*      */           case 10:
-/* 2489 */             this.orbStream.read_octet();
-/*      */             break;
-/*      */           case 8:
-/* 2492 */             this.orbStream.read_boolean();
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 9:
-/*      */           case 26:
-/* 2501 */             this.orbStream.read_wchar();
-/*      */             break;
-/*      */           case 2:
-/* 2504 */             this.orbStream.read_short();
-/*      */             break;
-/*      */           case 3:
-/* 2507 */             this.orbStream.read_long();
-/*      */             break;
-/*      */           case 23:
-/* 2510 */             this.orbStream.read_longlong();
-/*      */             break;
-/*      */           case 6:
-/* 2513 */             this.orbStream.read_float();
-/*      */             break;
-/*      */           case 7:
-/* 2516 */             this.orbStream.read_double();
-/*      */             break;
-/*      */           case 14:
-/*      */           case 29:
-/*      */           case 30:
-/* 2521 */             clazz = null;
-/* 2522 */             str1 = (paramArrayOfValueMember[b]).id;
-/*      */             
-/*      */             try {
-/* 2525 */               clazz = this.vhandler.getClassFromType(str1);
-/*      */             }
-/* 2527 */             catch (ClassNotFoundException classNotFoundException) {
-/*      */               
-/* 2529 */               clazz = null;
-/*      */             } 
-/* 2531 */             str2 = null;
-/* 2532 */             if (clazz != null) {
-/* 2533 */               str2 = ValueUtility.getSignature(paramArrayOfValueMember[b]);
-/*      */             }
-/*      */             
-/*      */             try {
-/* 2537 */               if (str2 != null && (str2.equals("Ljava/lang/Object;") || str2
-/* 2538 */                 .equals("Ljava/io/Serializable;") || str2
-/* 2539 */                 .equals("Ljava/io/Externalizable;"))) {
-/* 2540 */                 Util.readAny(this.orbStream);
-/*      */ 
-/*      */ 
-/*      */                 
-/*      */                 break;
-/*      */               } 
-/*      */ 
-/*      */ 
-/*      */               
-/* 2549 */               byte b1 = 2;
-/*      */               
-/* 2551 */               if (!this.vhandler.isSequence(str1)) {
-/* 2552 */                 FullValueDescription fullValueDescription = paramCodeBase.meta((paramArrayOfValueMember[b]).id);
-/* 2553 */                 if (kRemoteTypeCode == (paramArrayOfValueMember[b]).type) {
-/*      */ 
-/*      */                   
-/* 2556 */                   b1 = 0;
-/* 2557 */                 } else if (fullValueDescription.is_abstract) {
-/*      */ 
-/*      */                   
-/* 2560 */                   b1 = 1;
-/*      */                 } 
-/*      */               } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */               
-/* 2568 */               switch (b1) {
-/*      */                 case 0:
-/* 2570 */                   this.orbStream.read_Object();
-/*      */                   break;
-/*      */                 case 1:
-/* 2573 */                   this.orbStream.read_abstract_interface();
-/*      */                   break;
-/*      */                 case 2:
-/* 2576 */                   if (clazz != null) {
-/* 2577 */                     this.orbStream.read_value(clazz); break;
-/*      */                   } 
-/* 2579 */                   this.orbStream.read_value();
-/*      */                   break;
-/*      */               } 
-/*      */ 
-/*      */               
-/* 2584 */               throw new StreamCorruptedException("Unknown callType: " + b1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             }
-/* 2590 */             catch (IndirectionException indirectionException) {
-/*      */               break;
-/*      */             } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           default:
-/* 2598 */             throw new StreamCorruptedException("Unknown kind: " + (paramArrayOfValueMember[b]).type
-/* 2599 */                 .kind().value());
-/*      */         } 
-/*      */       
-/* 2602 */       } catch (IllegalArgumentException illegalArgumentException) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2608 */         ClassCastException classCastException = new ClassCastException("Assigning instance of class " + (paramArrayOfValueMember[b]).id + " to field " + this.currentClassDesc.getName() + '#' + (paramArrayOfValueMember[b]).name);
-/*      */         
-/* 2610 */         classCastException.initCause(illegalArgumentException);
-/* 2611 */         throw classCastException;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static void setObjectField(Object paramObject1, Class<?> paramClass, String paramString, Object paramObject2) {
-/*      */     try {
-/* 2619 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2620 */       Class<?> clazz = field.getType();
-/* 2621 */       if (paramObject2 != null && !clazz.isInstance(paramObject2)) {
-/* 2622 */         throw new Exception();
-/*      */       }
-/* 2624 */       long l = bridge.objectFieldOffset(field);
-/* 2625 */       bridge.putObject(paramObject1, l, paramObject2);
-/* 2626 */     } catch (Exception exception) {
-/* 2627 */       if (paramObject1 != null) {
-/* 2628 */         throw utilWrapper.errorSetObjectField(exception, paramString, paramObject1
-/* 2629 */             .toString(), paramObject2
-/* 2630 */             .toString());
-/*      */       }
-/* 2632 */       throw utilWrapper.errorSetObjectField(exception, paramString, "null " + paramClass
-/* 2633 */           .getName() + " object", paramObject2
-/* 2634 */           .toString());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setBooleanField(Object paramObject, Class<?> paramClass, String paramString, boolean paramBoolean) {
-/*      */     try {
-/* 2642 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2643 */       if (field != null && field.getType() == boolean.class) {
-/* 2644 */         long l = bridge.objectFieldOffset(field);
-/* 2645 */         bridge.putBoolean(paramObject, l, paramBoolean);
-/*      */       } else {
-/* 2647 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2649 */     } catch (Exception exception) {
-/* 2650 */       if (paramObject != null) {
-/* 2651 */         throw utilWrapper.errorSetBooleanField(exception, paramString, paramObject
-/* 2652 */             .toString(), new Boolean(paramBoolean));
-/*      */       }
-/*      */       
-/* 2655 */       throw utilWrapper.errorSetBooleanField(exception, paramString, "null " + paramClass
-/* 2656 */           .getName() + " object", new Boolean(paramBoolean));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setByteField(Object paramObject, Class<?> paramClass, String paramString, byte paramByte) {
-/*      */     try {
-/* 2665 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2666 */       if (field != null && field.getType() == byte.class) {
-/* 2667 */         long l = bridge.objectFieldOffset(field);
-/* 2668 */         bridge.putByte(paramObject, l, paramByte);
-/*      */       } else {
-/* 2670 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2672 */     } catch (Exception exception) {
-/* 2673 */       if (paramObject != null) {
-/* 2674 */         throw utilWrapper.errorSetByteField(exception, paramString, paramObject
-/* 2675 */             .toString(), new Byte(paramByte));
-/*      */       }
-/*      */       
-/* 2678 */       throw utilWrapper.errorSetByteField(exception, paramString, "null " + paramClass
-/* 2679 */           .getName() + " object", new Byte(paramByte));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setCharField(Object paramObject, Class<?> paramClass, String paramString, char paramChar) {
-/*      */     try {
-/* 2688 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2689 */       if (field != null && field.getType() == char.class) {
-/* 2690 */         long l = bridge.objectFieldOffset(field);
-/* 2691 */         bridge.putChar(paramObject, l, paramChar);
-/*      */       } else {
-/* 2693 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2695 */     } catch (Exception exception) {
-/* 2696 */       if (paramObject != null) {
-/* 2697 */         throw utilWrapper.errorSetCharField(exception, paramString, paramObject
-/* 2698 */             .toString(), new Character(paramChar));
-/*      */       }
-/*      */       
-/* 2701 */       throw utilWrapper.errorSetCharField(exception, paramString, "null " + paramClass
-/* 2702 */           .getName() + " object", new Character(paramChar));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setShortField(Object paramObject, Class<?> paramClass, String paramString, short paramShort) {
-/*      */     try {
-/* 2711 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2712 */       if (field != null && field.getType() == short.class) {
-/* 2713 */         long l = bridge.objectFieldOffset(field);
-/* 2714 */         bridge.putShort(paramObject, l, paramShort);
-/*      */       } else {
-/* 2716 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2718 */     } catch (Exception exception) {
-/* 2719 */       if (paramObject != null) {
-/* 2720 */         throw utilWrapper.errorSetShortField(exception, paramString, paramObject
-/* 2721 */             .toString(), new Short(paramShort));
-/*      */       }
-/*      */       
-/* 2724 */       throw utilWrapper.errorSetShortField(exception, paramString, "null " + paramClass
-/* 2725 */           .getName() + " object", new Short(paramShort));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setIntField(Object paramObject, Class<?> paramClass, String paramString, int paramInt) {
-/*      */     try {
-/* 2734 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2735 */       if (field != null && field.getType() == int.class) {
-/* 2736 */         long l = bridge.objectFieldOffset(field);
-/* 2737 */         bridge.putInt(paramObject, l, paramInt);
-/*      */       } else {
-/* 2739 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2741 */     } catch (Exception exception) {
-/* 2742 */       if (paramObject != null) {
-/* 2743 */         throw utilWrapper.errorSetIntField(exception, paramString, paramObject
-/* 2744 */             .toString(), new Integer(paramInt));
-/*      */       }
-/*      */       
-/* 2747 */       throw utilWrapper.errorSetIntField(exception, paramString, "null " + paramClass
-/* 2748 */           .getName() + " object", new Integer(paramInt));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setLongField(Object paramObject, Class<?> paramClass, String paramString, long paramLong) {
-/*      */     try {
-/* 2757 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2758 */       if (field != null && field.getType() == long.class) {
-/* 2759 */         long l = bridge.objectFieldOffset(field);
-/* 2760 */         bridge.putLong(paramObject, l, paramLong);
-/*      */       } else {
-/* 2762 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2764 */     } catch (Exception exception) {
-/* 2765 */       if (paramObject != null) {
-/* 2766 */         throw utilWrapper.errorSetLongField(exception, paramString, paramObject
-/* 2767 */             .toString(), new Long(paramLong));
-/*      */       }
-/*      */       
-/* 2770 */       throw utilWrapper.errorSetLongField(exception, paramString, "null " + paramClass
-/* 2771 */           .getName() + " object", new Long(paramLong));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setFloatField(Object paramObject, Class<?> paramClass, String paramString, float paramFloat) {
-/*      */     try {
-/* 2780 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2781 */       if (field != null && field.getType() == float.class) {
-/* 2782 */         long l = bridge.objectFieldOffset(field);
-/* 2783 */         bridge.putFloat(paramObject, l, paramFloat);
-/*      */       } else {
-/* 2785 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2787 */     } catch (Exception exception) {
-/* 2788 */       if (paramObject != null) {
-/* 2789 */         throw utilWrapper.errorSetFloatField(exception, paramString, paramObject
-/* 2790 */             .toString(), new Float(paramFloat));
-/*      */       }
-/*      */       
-/* 2793 */       throw utilWrapper.errorSetFloatField(exception, paramString, "null " + paramClass
-/* 2794 */           .getName() + " object", new Float(paramFloat));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void setDoubleField(Object paramObject, Class<?> paramClass, String paramString, double paramDouble) {
-/*      */     try {
-/* 2803 */       Field field = getDeclaredField(paramClass, paramString);
-/* 2804 */       if (field != null && field.getType() == double.class) {
-/* 2805 */         long l = bridge.objectFieldOffset(field);
-/* 2806 */         bridge.putDouble(paramObject, l, paramDouble);
-/*      */       } else {
-/* 2808 */         throw new InvalidObjectException("Field Type mismatch");
-/*      */       } 
-/* 2810 */     } catch (Exception exception) {
-/* 2811 */       if (paramObject != null) {
-/* 2812 */         throw utilWrapper.errorSetDoubleField(exception, paramString, paramObject
-/* 2813 */             .toString(), new Double(paramDouble));
-/*      */       }
-/*      */       
-/* 2816 */       throw utilWrapper.errorSetDoubleField(exception, paramString, "null " + paramClass
-/* 2817 */           .getName() + " object", new Double(paramDouble));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static Field getDeclaredField(final Class<?> c, final String fieldName) throws PrivilegedActionException, NoSuchFieldException, SecurityException {
-/* 2827 */     if (System.getSecurityManager() == null) {
-/* 2828 */       return c.getDeclaredField(fieldName);
-/*      */     }
-/* 2830 */     return 
-/* 2831 */       AccessController.<Field>doPrivileged(new PrivilegedExceptionAction<Field>()
-/*      */         {
-/*      */           public Field run() throws NoSuchFieldException {
-/* 2834 */             return c.getDeclaredField(fieldName);
-/*      */           }
-/*      */         });
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class ActiveRecursionManager
-/*      */   {
-/*      */     private Map<Integer, Object> offsetToObjectMap;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ActiveRecursionManager() {
-/* 2855 */       this.offsetToObjectMap = new HashMap<>();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void addObject(int param1Int, Object param1Object) {
-/* 2862 */       this.offsetToObjectMap.put(new Integer(param1Int), param1Object);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object getObject(int param1Int) throws IOException {
-/* 2871 */       Integer integer = new Integer(param1Int);
-/*      */       
-/* 2873 */       if (!this.offsetToObjectMap.containsKey(integer))
-/*      */       {
-/* 2875 */         throw new IOException("Invalid indirection to offset " + param1Int);
-/*      */       }
-/*      */       
-/* 2878 */       return this.offsetToObjectMap.get(integer);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void removeObject(int param1Int) {
-/* 2886 */       this.offsetToObjectMap.remove(new Integer(param1Int));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean containsObject(int param1Int) {
-/* 2893 */       return this.offsetToObjectMap.containsKey(new Integer(param1Int));
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\io\IIOPInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.io;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.StreamCorruptedException;
+import java.io.ObjectInputValidation;
+import java.io.NotActiveException;
+import java.io.InvalidObjectException;
+import java.io.InvalidClassException;
+import java.io.DataInputStream;
+import java.io.OptionalDataException;
+import java.io.WriteAbortedException;
+import java.io.Externalizable;
+import java.io.EOFException;
+import java.lang.reflect.*;
+import java.util.Vector;
+import java.util.Stack;
+import java.util.Hashtable;
+import java.util.Enumeration;
+
+import sun.corba.Bridge ;
+
+import java.security.AccessController ;
+import java.security.PrivilegedAction ;
+
+import com.sun.corba.se.impl.io.ObjectStreamClass;
+import com.sun.corba.se.impl.util.Utility;
+
+import org.omg.CORBA.portable.ValueInputStream;
+
+import org.omg.CORBA.ValueMember;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.TCKind;
+import org.omg.CORBA.ORB;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.portable.IndirectionException;
+import org.omg.CORBA.MARSHAL;
+import org.omg.CORBA.TypeCode;
+
+import com.sun.org.omg.CORBA.ValueDefPackage.FullValueDescription;
+import com.sun.org.omg.SendingContext.CodeBase;
+
+import javax.rmi.PortableRemoteObject;
+import javax.rmi.CORBA.Util;
+import javax.rmi.CORBA.ValueHandler;
+
+import java.security.*;
+import java.util.*;
+
+import com.sun.corba.se.impl.orbutil.ObjectUtility ;
+import com.sun.corba.se.impl.logging.OMGSystemException ;
+import com.sun.corba.se.impl.logging.UtilSystemException ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+/**
+ * IIOPInputStream is used by the ValueHandlerImpl to handle Java serialization
+ * input semantics.
+ *
+ * @author  Stephen Lewallen
+ * @since   JDK1.1.6
+ */
+
+public class IIOPInputStream
+    extends com.sun.corba.se.impl.io.InputStreamHook
+{
+    private static Bridge bridge =
+        (Bridge)AccessController.doPrivileged(
+            new PrivilegedAction() {
+                public Object run() {
+                    return Bridge.get() ;
+                }
+            }
+        ) ;
+
+    private static OMGSystemException omgWrapper = OMGSystemException.get(
+        CORBALogDomains.RPC_ENCODING ) ;
+    private static UtilSystemException utilWrapper = UtilSystemException.get(
+        CORBALogDomains.RPC_ENCODING ) ;
+
+    // Necessary to pass the appropriate fields into the
+    // defaultReadObjectDelegate method (which takes no
+    // parameters since it's called from
+    // java.io.ObjectInpuStream defaultReadObject()
+    // which we can't change).
+    //
+    // This is only used in the case where the fields had
+    // to be obtained remotely because of a serializable
+    // version difference.  Set in inputObjectUsingFVD.
+    // Part of serialization evolution fixes for Ladybird,
+    // bug 4365188.
+    private ValueMember defaultReadObjectFVDMembers[] = null;
+
+    private org.omg.CORBA_2_3.portable.InputStream orbStream;
+
+    private CodeBase cbSender;
+
+    private ValueHandlerImpl vhandler;  //d4365188
+
+    private Object currentObject = null;
+
+    private ObjectStreamClass currentClassDesc = null;
+
+    private Class currentClass = null;
+
+    private int recursionDepth = 0;
+
+    private int simpleReadDepth = 0;
+
+    // The ActiveRecursionManager replaces the old RecursionManager which
+    // used to record how many recursions were made, and resolve them after
+    // an object was completely deserialized.
+    //
+    // That created problems (as in bug 4414154) because when custom
+    // unmarshaling in readObject, there can be recursive references
+    // to one of the objects currently being unmarshaled, and the
+    // passive recursion system failed.
+    ActiveRecursionManager activeRecursionMgr = new ActiveRecursionManager();
+
+    private IOException abortIOException = null;
+
+    /* Remember the first exception that stopped this stream. */
+    private ClassNotFoundException abortClassNotFoundException = null;
+
+    /* Vector of validation callback objects
+     * The vector is created as needed. The vector is maintained in
+     * order of highest (first) priority to lowest
+     */
+    private Vector callbacks;
+
+    // Serialization machinery fields
+    /* Arrays used to keep track of classes and ObjectStreamClasses
+     * as they are being merged; used in inputObject.
+     * spClass is the stack pointer for both.  */
+    ObjectStreamClass[] classdesc;
+    Class[] classes;
+    int spClass;
+
+    private static final String kEmptyStr = "";
+
+    // TCKind TypeCodes used in FVD inputClassFields
+    //public static final TypeCode kRemoteTypeCode = new TypeCodeImpl(TCKind._tk_objref);
+    //public static final TypeCode kValueTypeCode =  new TypeCodeImpl(TCKind._tk_value);
+    // removed TypeCodeImpl dependency
+    public static final TypeCode kRemoteTypeCode = ORB.init().get_primitive_tc(TCKind.tk_objref);
+    public static final TypeCode kValueTypeCode =  ORB.init().get_primitive_tc(TCKind.tk_value);
+
+    // TESTING CODE - useFVDOnly should be made final before FCS in order to
+    // optimize out the check.
+    private static final boolean useFVDOnly = false;
+
+    private byte streamFormatVersion;
+
+    // Since java.io.OptionalDataException's constructors are
+    // package private, but we need to throw it in some special
+    // cases, we try to do it by reflection.
+    private static final Constructor OPT_DATA_EXCEPTION_CTOR;
+
+    private Object[] readObjectArgList = { this } ;
+
+    static {
+        OPT_DATA_EXCEPTION_CTOR = getOptDataExceptionCtor();
+    }
+
+    // Grab the OptionalDataException boolean ctor and make
+    // it accessible.  Note that any exceptions
+    // will be wrapped in ExceptionInInitializerErrors.
+    private static Constructor getOptDataExceptionCtor() {
+
+        try {
+
+            Constructor result =
+
+                (Constructor) AccessController.doPrivileged(
+                                    new PrivilegedExceptionAction() {
+                    public java.lang.Object run()
+                        throws NoSuchMethodException,
+                        SecurityException {
+
+                        Constructor boolCtor
+                            = OptionalDataException.class.getDeclaredConstructor(
+                                                               new Class[] {
+                                Boolean.TYPE });
+
+                        boolCtor.setAccessible(true);
+
+                        return boolCtor;
+                    }});
+
+            if (result == null)
+                // XXX I18N, logging needed.
+                throw new Error("Unable to find OptionalDataException constructor");
+
+            return result;
+
+        } catch (Exception ex) {
+            // XXX I18N, logging needed.
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+
+    // Create a new OptionalDataException with the EOF marker
+    // set to true.  See handleOptionalDataMarshalException.
+    private OptionalDataException createOptionalDataException() {
+        try {
+            OptionalDataException result
+                = (OptionalDataException)
+                   OPT_DATA_EXCEPTION_CTOR.newInstance(new Object[] {
+                       Boolean.TRUE });
+
+            if (result == null)
+                // XXX I18N, logging needed.
+                throw new Error("Created null OptionalDataException");
+
+            return result;
+
+        } catch (Exception ex) {
+            // XXX I18N, logging needed.
+            throw new Error("Couldn't create OptionalDataException", ex);
+        }
+    }
+
+    // Return the stream format version currently being used
+    // to deserialize an object
+    protected byte getStreamFormatVersion() {
+        return streamFormatVersion;
+    }
+
+    // At the beginning of data sent by a writeObject or
+    // writeExternal method there is a byte telling the
+    // reader the stream format version.
+    private void readFormatVersion() throws IOException {
+
+        streamFormatVersion = orbStream.read_octet();
+
+        if (streamFormatVersion < 1 ||
+            streamFormatVersion > vhandler.getMaximumStreamFormatVersion()) {
+            SystemException sysex = omgWrapper.unsupportedFormatVersion(
+                    CompletionStatus.COMPLETED_MAYBE);
+            // XXX I18N?  Logging for IOException?
+            IOException result = new IOException("Unsupported format version: "
+                                                 + streamFormatVersion);
+            result.initCause( sysex ) ;
+            throw result ;
+        }
+
+        if (streamFormatVersion == 2) {
+            if (!(orbStream instanceof ValueInputStream)) {
+                SystemException sysex = omgWrapper.notAValueinputstream(
+                    CompletionStatus.COMPLETED_MAYBE);
+                // XXX I18N?  Logging for IOException?
+                IOException result = new IOException("Not a ValueInputStream");
+                result.initCause( sysex ) ;
+                throw result;
+            }
+        }
+    }
+
+    public static void setTestFVDFlag(boolean val){
+        //  useFVDOnly = val;
+    }
+
+    /**
+     * Dummy constructor; passes upper stream a dummy stream;
+     **/
+    public IIOPInputStream()
+        throws java.io.IOException {
+        super();
+        resetStream();
+    }
+
+    final void setOrbStream(org.omg.CORBA_2_3.portable.InputStream os) {
+        orbStream = os;
+    }
+
+    final org.omg.CORBA_2_3.portable.InputStream getOrbStream() {
+        return orbStream;
+    }
+
+    //added setSender and getSender
+    public final void setSender(CodeBase cb) {
+        cbSender = cb;
+    }
+
+    public final CodeBase getSender() {
+        return cbSender;
+    }
+
+    // 4365188 this is added to enable backward compatability w/ wrong
+    // rep-ids
+    public final void setValueHandler(ValueHandler vh) {
+        vhandler = (com.sun.corba.se.impl.io.ValueHandlerImpl) vh;
+    }
+
+    public final ValueHandler getValueHandler() {
+        return (javax.rmi.CORBA.ValueHandler) vhandler;
+    }
+
+    final void increaseRecursionDepth(){
+        recursionDepth++;
+    }
+
+    final int decreaseRecursionDepth(){
+        return --recursionDepth;
+    }
+
+    /**
+     * Override the actions of the final method "readObject()"
+     * in ObjectInputStream.
+     * @since     JDK1.1.6
+     *
+     * Read an object from the ObjectInputStream.
+     * The class of the object, the signature of the class, and the values
+     * of the non-transient and non-static fields of the class and all
+     * of its supertypes are read.  Default deserializing for a class can be
+     * overriden using the writeObject and readObject methods.
+     * Objects referenced by this object are read transitively so
+     * that a complete equivalent graph of objects is reconstructed by readObject. <p>
+     *
+     * The root object is completly restored when all of its fields
+     * and the objects it references are completely restored.  At this
+     * point the object validation callbacks are executed in order
+     * based on their registered priorities. The callbacks are
+     * registered by objects (in the readObject special methods)
+     * as they are individually restored.
+     *
+     * Exceptions are thrown for problems with the InputStream and for classes
+     * that should not be deserialized.  All exceptions are fatal to the
+     * InputStream and leave it in an indeterminate state; it is up to the caller
+     * to ignore or recover the stream state.
+     * @exception java.lang.ClassNotFoundException Class of a serialized object
+     *      cannot be found.
+     * @exception InvalidClassException Something is wrong with a class used by
+     *     serialization.
+     * @exception StreamCorruptedException Control information in the
+     *     stream is inconsistent.
+     * @exception OptionalDataException Primitive data was found in the
+     * stream instead of objects.
+     * @exception IOException Any of the usual Input/Output related exceptions.
+     * @since     JDK1.1
+     */
+    public final synchronized Object readObjectDelegate() throws IOException
+    {
+        try {
+
+            readObjectState.readData(this);
+
+            return orbStream.read_abstract_interface();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, true);
+            throw marshalException;
+        } catch(IndirectionException cdrie)
+            {
+                // The CDR stream had never seen the given offset before,
+                // so check the recursion manager (it will throw an
+                // IOException if it doesn't have a reference, either).
+                return activeRecursionMgr.getObject(cdrie.offset);
+            }
+    }
+
+    final synchronized Object simpleReadObject(Class clz,
+                                  String repositoryID,
+                                  com.sun.org.omg.SendingContext.CodeBase sender,
+                                  int offset)
+                                         /* throws OptionalDataException, ClassNotFoundException, IOException */
+    {
+
+        /* Save the current state and get ready to read an object. */
+        Object prevObject = currentObject;
+        ObjectStreamClass prevClassDesc = currentClassDesc;
+        Class prevClass = currentClass;
+        byte oldStreamFormatVersion = streamFormatVersion;
+
+        simpleReadDepth++;      // Entering
+        Object obj = null;
+
+        /*
+         * Check for reset, handle it before reading an object.
+         */
+        try {
+            // d4365188: backward compatability
+            if (vhandler.useFullValueDescription(clz, repositoryID)) {
+                obj = inputObjectUsingFVD(clz, repositoryID, sender, offset);
+            } else {
+                obj = inputObject(clz, repositoryID, sender, offset);
+            }
+
+            obj = currentClassDesc.readResolve(obj);
+        }
+        catch(ClassNotFoundException cnfe)
+            {
+                bridge.throwException( cnfe ) ;
+                return null;
+            }
+        catch(IOException ioe)
+            {
+                // System.out.println("CLZ = " + clz + "; " + ioe.toString());
+                bridge.throwException(ioe) ;
+                return null;
+            }
+        finally {
+            simpleReadDepth --;
+            currentObject = prevObject;
+            currentClassDesc = prevClassDesc;
+            currentClass = prevClass;
+            streamFormatVersion = oldStreamFormatVersion;
+        }
+
+
+        /* Check for thrown exceptions and re-throw them, clearing them if
+         * this is the last recursive call .
+         */
+        IOException exIOE = abortIOException;
+        if (simpleReadDepth == 0)
+            abortIOException = null;
+        if (exIOE != null){
+            bridge.throwException( exIOE ) ;
+            return null;
+        }
+
+
+        ClassNotFoundException exCNF = abortClassNotFoundException;
+        if (simpleReadDepth == 0)
+            abortClassNotFoundException = null;
+        if (exCNF != null) {
+            bridge.throwException( exCNF ) ;
+            return null;
+        }
+
+        return obj;
+    }
+
+    public final synchronized  void simpleSkipObject(String repositoryID,
+                                       com.sun.org.omg.SendingContext.CodeBase sender)
+                                       /* throws OptionalDataException, ClassNotFoundException, IOException */
+    {
+
+        /* Save the current state and get ready to read an object. */
+        Object prevObject = currentObject;
+        ObjectStreamClass prevClassDesc = currentClassDesc;
+        Class prevClass = currentClass;
+        byte oldStreamFormatVersion = streamFormatVersion;
+
+        simpleReadDepth++;      // Entering
+        Object obj = null;
+
+        /*
+         * Check for reset, handle it before reading an object.
+         */
+        try {
+            skipObjectUsingFVD(repositoryID, sender);
+        }
+        catch(ClassNotFoundException cnfe)
+            {
+                bridge.throwException( cnfe ) ;
+                return;
+            }
+        catch(IOException ioe)
+            {
+                bridge.throwException( ioe ) ;
+                return;
+            }
+        finally {
+            simpleReadDepth --;
+            streamFormatVersion = oldStreamFormatVersion;
+            currentObject = prevObject;
+            currentClassDesc = prevClassDesc;
+            currentClass = prevClass;
+        }
+
+
+        /* Check for thrown exceptions and re-throw them, clearing them if
+         * this is the last recursive call .
+         */
+        IOException exIOE = abortIOException;
+        if (simpleReadDepth == 0)
+            abortIOException = null;
+        if (exIOE != null){
+            bridge.throwException( exIOE ) ;
+            return;
+        }
+
+
+        ClassNotFoundException exCNF = abortClassNotFoundException;
+        if (simpleReadDepth == 0)
+            abortClassNotFoundException = null;
+        if (exCNF != null) {
+            bridge.throwException( exCNF ) ;
+            return;
+        }
+
+        return;
+    }
+    /////////////////
+
+    /**
+     * This method is called by trusted subclasses of ObjectOutputStream
+     * that constructed ObjectOutputStream using the
+     * protected no-arg constructor. The subclass is expected to provide
+     * an override method with the modifier "final".
+     *
+     * @return the Object read from the stream.
+     *
+     * @see #ObjectInputStream()
+     * @see #readObject
+     * @since JDK 1.2
+     */
+    protected final Object readObjectOverride()
+        throws OptionalDataException, ClassNotFoundException, IOException
+    {
+        return readObjectDelegate();
+    }
+
+    /**
+     * Override the actions of the final method "defaultReadObject()"
+     * in ObjectInputStream.
+     * @since     JDK1.1.6
+     *
+     * Read the non-static and non-transient fields of the current class
+     * from this stream.  This may only be called from the readObject method
+     * of the class being deserialized. It will throw the NotActiveException
+     * if it is called otherwise.
+     *
+     * @exception java.lang.ClassNotFoundException if the class of a serialized
+     *              object could not be found.
+     * @exception IOException        if an I/O error occurs.
+     * @exception NotActiveException if the stream is not currently reading
+     *              objects.
+     * @since     JDK1.1
+     */
+    final synchronized void defaultReadObjectDelegate()
+    /* throws IOException, ClassNotFoundException, NotActiveException */
+    {
+        try {
+            if (currentObject == null || currentClassDesc == null)
+                // XXX I18N, logging needed.
+                throw new NotActiveException("defaultReadObjectDelegate");
+
+            if (!currentClassDesc.forClass().isAssignableFrom(
+                    currentObject.getClass())) {
+                throw new IOException("Object Type mismatch");
+            }
+
+            // The array will be null unless fields were retrieved
+            // remotely because of a serializable version difference.
+            // Bug fix for 4365188.  See the definition of
+            // defaultReadObjectFVDMembers for more information.
+            if (defaultReadObjectFVDMembers != null &&
+                defaultReadObjectFVDMembers.length > 0) {
+
+                // WARNING:  Be very careful!  What if some of
+                // these fields actually have to do this, too?
+                // This works because the defaultReadObjectFVDMembers
+                // reference is passed to inputClassFields, but
+                // there is no guarantee that
+                // defaultReadObjectFVDMembers will point to the
+                // same array after calling inputClassFields.
+
+                // Use the remote fields to unmarshal.
+                inputClassFields(currentObject,
+                                 currentClass,
+                                 currentClassDesc,
+                                 defaultReadObjectFVDMembers,
+                                 cbSender);
+
+            } else {
+
+                // Use the local fields to unmarshal.
+                ObjectStreamField[] fields =
+                    currentClassDesc.getFieldsNoCopy();
+                if (fields.length > 0) {
+                    inputClassFields(currentObject, currentClass, fields, cbSender);
+                }
+            }
+        }
+        catch(NotActiveException nae)
+            {
+                bridge.throwException( nae ) ;
+            }
+        catch(IOException ioe)
+            {
+                bridge.throwException( ioe ) ;
+            }
+        catch(ClassNotFoundException cnfe)
+            {
+                bridge.throwException( cnfe ) ;
+            }
+
+    }
+
+    /**
+     * Override the actions of the final method "enableResolveObject()"
+     * in ObjectInputStream.
+     * @since     JDK1.1.6
+     *
+     * Enable the stream to allow objects read from the stream to be replaced.
+     * If the stream is a trusted class it is allowed to enable replacment.
+     * Trusted classes are those classes with a classLoader equals null. <p>
+     *
+     * When enabled the resolveObject method is called for every object
+     * being deserialized.
+     *
+     * @exception SecurityException The classloader of this stream object is non-null.
+     * @since     JDK1.1
+     */
+    public final boolean enableResolveObjectDelegate(boolean enable)
+    /* throws SecurityException */
+    {
+        return false;
+    }
+
+    // The following three methods allow the implementing orbStream
+    // to provide mark/reset behavior as defined in java.io.InputStream.
+
+    public final void mark(int readAheadLimit) {
+        orbStream.mark(readAheadLimit);
+    }
+
+    public final boolean markSupported() {
+        return orbStream.markSupported();
+    }
+
+    public final void reset() throws IOException {
+        try {
+            orbStream.reset();
+        } catch (Error e) {
+            IOException err = new IOException(e.getMessage());
+            err.initCause(e) ;
+            throw err ;
+        }
+    }
+
+    public final int available() throws IOException{
+        return 0; // unreliable
+    }
+
+    public final void close() throws IOException{
+        // no op
+    }
+
+    public final int read() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return (orbStream.read_octet() << 0) & 0x000000FF;
+        } catch (MARSHAL marshalException) {
+            if (marshalException.minor
+                == OMGSystemException.RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE1) {
+                setState(IN_READ_OBJECT_NO_MORE_OPT_DATA);
+                return -1;
+            }
+
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e) ;
+            throw exc ;
+        }
+    }
+
+    public final int read(byte data[], int offset, int length) throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            orbStream.read_octet_array(data, offset, length);
+            return length;
+        } catch (MARSHAL marshalException) {
+            if (marshalException.minor
+                == OMGSystemException.RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE1) {
+                setState(IN_READ_OBJECT_NO_MORE_OPT_DATA);
+                return -1;
+            }
+
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e) ;
+            throw exc ;
+        }
+
+    }
+
+    public final boolean readBoolean() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_boolean();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final byte readByte() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_octet();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final char readChar() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_wchar();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final double readDouble() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_double();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final float readFloat() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_float();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final void readFully(byte data[]) throws IOException{
+// d11623 : implement readFully, required for serializing some core classes
+
+        readFully(data, 0, data.length);
+    }
+
+    public final void readFully(byte data[],  int offset,  int size) throws IOException{
+// d11623 : implement readFully, required for serializing some core classes
+        try{
+            readObjectState.readData(this);
+
+            orbStream.read_octet_array(data, offset, size);
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final int readInt() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_long();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final String readLine() throws IOException{
+        // XXX I18N, logging needed.
+        throw new IOException("Method readLine not supported");
+    }
+
+    public final long readLong() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_longlong();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final short readShort() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return orbStream.read_short();
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    protected final void readStreamHeader() throws IOException, StreamCorruptedException{
+        // no op
+    }
+
+    public final int readUnsignedByte() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return (orbStream.read_octet() << 0) & 0x000000FF;
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    public final int readUnsignedShort() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return (orbStream.read_ushort() << 0) & 0x0000FFFF;
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    /**
+     * Helper method for correcting the Kestrel bug 4367783 (dealing
+     * with larger than 8-bit chars).  The old behavior is preserved
+     * in orbutil.IIOPInputStream_1_3 in order to interoperate with
+     * our legacy ORBs.
+     */
+    protected String internalReadUTF(org.omg.CORBA.portable.InputStream stream)
+    {
+        return stream.read_wstring();
+    }
+
+    public final String readUTF() throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            return internalReadUTF(orbStream);
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e);
+            throw exc ;
+        }
+    }
+
+    // If the ORB stream detects an incompatibility between what's
+    // on the wire and what our Serializable's readObject wants,
+    // it throws a MARSHAL exception with a specific minor code.
+    // This is rethrown to the readObject as an OptionalDataException.
+    // So far in RMI-IIOP, this process isn't specific enough to
+    // tell the readObject how much data is available, so we always
+    // set the OptionalDataException's EOF marker to true.
+    private void handleOptionalDataMarshalException(MARSHAL marshalException,
+                                                    boolean objectRead)
+        throws IOException {
+
+        // Java Object Serialization spec 3.4: "If the readObject method
+        // of the class attempts to read more data than is present in the
+        // optional part of the stream for this class, the stream will
+        // return -1 for bytewise reads, throw an EOFException for
+        // primitive data reads, or throw an OptionalDataException
+        // with the eof field set to true for object reads."
+        if (marshalException.minor
+            == OMGSystemException.RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE1) {
+
+            IOException result;
+
+            if (!objectRead)
+                result = new EOFException("No more optional data");
+            else
+                result = createOptionalDataException();
+
+            result.initCause(marshalException);
+
+            setState(IN_READ_OBJECT_NO_MORE_OPT_DATA);
+
+            throw result;
+        }
+    }
+
+    public final synchronized void registerValidation(ObjectInputValidation obj,
+                                                      int prio)
+        throws NotActiveException, InvalidObjectException{
+        // XXX I18N, logging needed.
+        throw new Error("Method registerValidation not supported");
+    }
+
+    protected final Class resolveClass(ObjectStreamClass v)
+        throws IOException, ClassNotFoundException{
+        // XXX I18N, logging needed.
+        throw new IOException("Method resolveClass not supported");
+    }
+
+    protected final Object resolveObject(Object obj) throws IOException{
+        // XXX I18N, logging needed.
+        throw new IOException("Method resolveObject not supported");
+    }
+
+    public final int skipBytes(int len) throws IOException{
+        try{
+            readObjectState.readData(this);
+
+            byte buf[] = new byte[len];
+            orbStream.read_octet_array(buf, 0, len);
+            return len;
+        } catch (MARSHAL marshalException) {
+            handleOptionalDataMarshalException(marshalException, false);
+
+            throw marshalException;
+        } catch(Error e) {
+            IOException exc = new IOException(e.getMessage());
+            exc.initCause(e) ;
+            throw exc ;
+        }
+    }
+
+    private synchronized Object inputObject(Class clz,
+                               String repositoryID,
+                               com.sun.org.omg.SendingContext.CodeBase sender,
+                               int offset)
+        throws IOException, ClassNotFoundException
+    {
+
+        /*
+         * Get the descriptor and then class of the incoming object.
+         */
+
+        currentClassDesc = ObjectStreamClass.lookup(clz);
+        currentClass = currentClassDesc.forClass();
+        //currentClassDesc.setClass(currentClass);
+        if (currentClass == null)
+            // XXX I18N, logging needed.
+            throw new ClassNotFoundException(currentClassDesc.getName());
+
+        try {
+            /* If Externalizable,
+             *  Create an instance and tell it to read its data.
+             * else,
+             *  Handle it as a serializable class.
+             */
+            if (Enum.class.isAssignableFrom( clz )) {
+                int ordinal = orbStream.read_long() ;
+                String value = (String)orbStream.read_value( String.class ) ;
+                return Enum.valueOf( clz, value ) ;
+            } else if (currentClassDesc.isExternalizable()) {
+                try {
+                    currentObject = (currentClass == null) ?
+                        null : currentClassDesc.newInstance();
+                    if (currentObject != null) {
+
+                        // Store this object and its beginning position
+                        // since there might be indirections to it while
+                        // it's been unmarshalled.
+                        activeRecursionMgr.addObject(offset, currentObject);
+
+                        // Read format version
+                        readFormatVersion();
+
+                        Externalizable ext = (Externalizable)currentObject;
+                        ext.readExternal(this);
+                }
+            } catch (InvocationTargetException e) {
+                InvalidClassException exc = new InvalidClassException(
+                    currentClass.getName(),
+                    "InvocationTargetException accessing no-arg constructor");
+                exc.initCause( e ) ;
+                throw exc ;
+            } catch (UnsupportedOperationException e) {
+                InvalidClassException exc = new InvalidClassException(
+                    currentClass.getName(),
+                    "UnsupportedOperationException accessing no-arg constructor");
+                exc.initCause( e ) ;
+                throw exc ;
+            } catch (InstantiationException e) {
+                InvalidClassException exc = new InvalidClassException(
+                    currentClass.getName(),
+                    "InstantiationException accessing no-arg constructor");
+                exc.initCause( e ) ;
+                throw exc ;
+            }
+        } // end : if (currentClassDesc.isExternalizable())
+        else {
+            /* Count number of classes and descriptors we might have
+             * to work on.
+             */
+
+            ObjectStreamClass currdesc = currentClassDesc;
+            Class currclass = currentClass;
+
+            int spBase = spClass;       // current top of stack
+
+            if (currentClass.getName().equals("java.lang.String")) {
+                return this.readUTF();
+            }
+            /* The object's classes should be processed from supertype to subtype
+             * Push all the clases of the current object onto a stack.
+             * Note that only the serializable classes are represented
+             * in the descriptor list.
+             *
+             * Handle versioning where one or more supertypes of
+             * have been inserted or removed.  The stack will
+             * contain pairs of descriptors and the corresponding
+             * class.  If the object has a class that did not occur in
+             * the original the descriptor will be null.  If the
+             * original object had a descriptor for a class not
+             * present in the local hierarchy of the object the class will be
+             * null.
+             *
+             */
+
+            /*
+             * This is your basic diff pattern, made simpler
+             * because reordering is not allowed.
+             */
+            // sun.4296963 ibm.11861
+            // d11861 we should stop when we find the highest serializable class
+            // We need this so that when we allocate the new object below, we
+            // can call the constructor of the non-serializable superclass.
+            // Note that in the JRMP variant of this code the
+            // ObjectStreamClass.lookup() method handles this, but we've put
+            // this fix here rather than change lookup because the new behaviour
+            // is needed in other cases.
+
+            for (currdesc = currentClassDesc, currclass = currentClass;
+                 currdesc != null && currdesc.isSerializable();   /*sun.4296963 ibm.11861*/
+                 currdesc = currdesc.getSuperclass()) {
+
+                /*
+                 * Search the classes to see if the class of this
+                 * descriptor appears further up the hierarchy. Until
+                 * it's found assume its an inserted class.  If it's
+                 * not found, its the descriptor's class that has been
+                 * removed.
+                 */
+                Class cc = currdesc.forClass();
+                Class cl;
+                for (cl = currclass; cl != null; cl = cl.getSuperclass()) {
+                    if (cc == cl) {
+                        // found a superclass that matches this descriptor
+                        break;
+                    } else {
+                        /* Ignore a class that doesn't match.  No
+                         * action is needed since it is already
+                         * initialized.
+                         */
+                    }
+                } // end : for (cl = currclass; cl != null; cl = cl.getSuperclass())
+                /* Test if there is room for this new entry.
+                 * If not, double the size of the arrays and copy the contents.
+                 */
+                spClass++;
+                if (spClass >= classes.length) {
+                    int newlen = classes.length * 2;
+                    Class[] newclasses = new Class[newlen];
+                    ObjectStreamClass[] newclassdesc = new ObjectStreamClass[newlen];
+
+                    System.arraycopy(classes, 0,
+                                     newclasses, 0,
+                                     classes.length);
+                    System.arraycopy(classdesc, 0,
+                                     newclassdesc, 0,
+                                     classes.length);
+
+                    classes = newclasses;
+                    classdesc = newclassdesc;
+                }
+
+                if (cl == null) {
+                    /* Class not found corresponding to this descriptor.
+                     * Pop off all the extra classes pushed.
+                     * Push the descriptor and a null class.
+                     */
+                    classdesc[spClass] = currdesc;
+                    classes[spClass] = null;
+                } else {
+                    /* Current class descriptor matches current class.
+                     * Some classes may have been inserted.
+                     * Record the match and advance the class, continue
+                     * with the next descriptor.
+                     */
+                    classdesc[spClass] = currdesc;
+                    classes[spClass] = cl;
+                    currclass = cl.getSuperclass();
+                }
+            } // end : for (currdesc = currentClassDesc, currclass = currentClass;
+
+            /* Allocate a new object.  The object is only constructed
+             * above the highest serializable class and is set to
+             * default values for all more specialized classes.
+             */
+            try {
+                currentObject = (currentClass == null) ?
+                    null : currentClassDesc.newInstance() ;
+
+                // Store this object and its beginning position
+                // since there might be indirections to it while
+                // it's been unmarshalled.
+                activeRecursionMgr.addObject(offset, currentObject);
+            } catch (InvocationTargetException e) {
+                InvalidClassException exc = new InvalidClassException(
+                    currentClass.getName(),
+                    "InvocationTargetException accessing no-arg constructor");
+                exc.initCause( e ) ;
+                throw exc ;
+            } catch (UnsupportedOperationException e) {
+                InvalidClassException exc = new InvalidClassException(
+                    currentClass.getName(),
+                    "UnsupportedOperationException accessing no-arg constructor");
+                exc.initCause( e ) ;
+                throw exc ;
+            } catch (InstantiationException e) {
+                InvalidClassException exc = new InvalidClassException(
+                    currentClass.getName(),
+                    "InstantiationException accessing no-arg constructor");
+                exc.initCause( e ) ;
+                throw exc ;
+            }
+
+            /*
+             * For all the pushed descriptors and classes.
+             *  if the class has its own writeObject and readObject methods
+             *      call the readObject method
+             *  else
+             *      invoke the defaultReadObject method
+             */
+            try {
+                for (spClass = spClass; spClass > spBase; spClass--) {
+                    /*
+                     * Set current descriptor and corresponding class
+                     */
+                    currentClassDesc = classdesc[spClass];
+                    currentClass = classes[spClass];
+                    if (classes[spClass] != null) {
+                        /* Read the data from the stream described by the
+                         * descriptor and store into the matching class.
+                         */
+
+                        ReadObjectState oldState = readObjectState;
+                        setState(DEFAULT_STATE);
+
+                        try {
+
+                            // Changed since invokeObjectReader no longer does this.
+                            if (currentClassDesc.hasWriteObject()) {
+
+                                // Read format version
+                                readFormatVersion();
+
+                                // Read defaultWriteObject indicator
+                                boolean calledDefaultWriteObject = readBoolean();
+
+                                readObjectState.beginUnmarshalCustomValue(this,
+                                                                          calledDefaultWriteObject,
+                                                                          (currentClassDesc.readObjectMethod
+                                                                           != null));
+                            } else {
+                                if (currentClassDesc.hasReadObject())
+                                    setState(IN_READ_OBJECT_REMOTE_NOT_CUSTOM_MARSHALED);
+                            }
+
+                            if (!invokeObjectReader(currentClassDesc, currentObject, currentClass) ||
+                                readObjectState == IN_READ_OBJECT_DEFAULTS_SENT) {
+
+                                // Error case of no readObject and didn't call
+                                // defaultWriteObject handled in default state
+
+                                ObjectStreamField[] fields =
+                                    currentClassDesc.getFieldsNoCopy();
+                                if (fields.length > 0) {
+                                    inputClassFields(currentObject, currentClass, fields, sender);
+                                }
+                            }
+
+                            if (currentClassDesc.hasWriteObject())
+                                readObjectState.endUnmarshalCustomValue(this);
+
+                        } finally {
+                            setState(oldState);
+                        }
+
+                    } else {
+
+                        // _REVISIT_ : Can we ever get here?
+                        /* No local class for this descriptor,
+                         * Skip over the data for this class.
+                         * like defaultReadObject with a null currentObject.
+                         * The code will read the values but discard them.
+                         */
+                            ObjectStreamField[] fields =
+                                currentClassDesc.getFieldsNoCopy();
+                            if (fields.length > 0) {
+                                inputClassFields(null, currentClass, fields, sender);
+                            }
+
+                        }
+
+                }
+            } finally {
+                                // Make sure we exit at the same stack level as when we started.
+                spClass = spBase;
+            }
+        }
+        } finally {
+            // We've completed deserializing this object.  Any
+            // future indirections will be handled correctly at the
+            // CDR level.  The ActiveRecursionManager only deals with
+            // objects currently being deserialized.
+            activeRecursionMgr.removeObject(offset);
+        }
+
+        return currentObject;
+    }
+
+    // This retrieves a vector of FVD's for the hierarchy of serializable classes stemming from
+    // repositoryID.  It is assumed that the sender will not provide base_value id's for non-serializable
+    // classes!
+    private Vector getOrderedDescriptions(String repositoryID,
+                                          com.sun.org.omg.SendingContext.CodeBase sender) {
+        Vector descs = new Vector();
+
+        if (sender == null) {
+            return descs;
+        }
+
+        FullValueDescription aFVD = sender.meta(repositoryID);
+        while (aFVD != null) {
+            descs.insertElementAt(aFVD, 0);
+            if ((aFVD.base_value != null) && !kEmptyStr.equals(aFVD.base_value)) {
+                aFVD = sender.meta(aFVD.base_value);
+            }
+            else return descs;
+        }
+
+        return descs;
+    }
+
+    /**
+     * This input method uses FullValueDescriptions retrieved from the sender's runtime to
+     * read in the data.  This method is capable of throwing out data not applicable to client's fields.
+     * This method handles instances where the reader has a class not sent by the sender, the sender sent
+     * a class not present on the reader, and/or the reader's class does not match the sender's class.
+     *
+     * NOTE : If the local description indicates custom marshaling and the remote type's FVD also
+     * indicates custom marsahling than the local type is used to read the data off the wire.  However,
+     * if either says custom while the other does not, a MARSHAL error is thrown.  Externalizable is
+     * a form of custom marshaling.
+     *
+     */
+    private synchronized Object inputObjectUsingFVD(Class clz,
+                                       String repositoryID,
+                                       com.sun.org.omg.SendingContext.CodeBase sender,
+                                       int offset)
+        throws IOException, ClassNotFoundException
+    {
+        int spBase = spClass;   // current top of stack
+        try{
+
+            /*
+             * Get the descriptor and then class of the incoming object.
+             */
+
+            ObjectStreamClass currdesc = currentClassDesc = ObjectStreamClass.lookup(clz);
+            Class currclass = currentClass = clz;
+
+            /* If Externalizable,
+             *  Create an instance and tell it to read its data.
+             * else,
+             *  Handle it as a serializable class.
+             */
+            if (currentClassDesc.isExternalizable()) {
+                try {
+                    currentObject = (currentClass == null) ?
+                        null : currentClassDesc.newInstance();
+                    if (currentObject != null) {
+                        // Store this object and its beginning position
+                        // since there might be indirections to it while
+                        // it's been unmarshalled.
+                        activeRecursionMgr.addObject(offset, currentObject);
+
+                        // Read format version
+                        readFormatVersion();
+
+                        Externalizable ext = (Externalizable)currentObject;
+                        ext.readExternal(this);
+                    }
+                } catch (InvocationTargetException e) {
+                    InvalidClassException exc = new InvalidClassException(
+                        currentClass.getName(),
+                        "InvocationTargetException accessing no-arg constructor");
+                    exc.initCause( e ) ;
+                    throw exc ;
+                } catch (UnsupportedOperationException e) {
+                    InvalidClassException exc = new InvalidClassException(
+                        currentClass.getName(),
+                        "UnsupportedOperationException accessing no-arg constructor");
+                    exc.initCause( e ) ;
+                    throw exc ;
+                } catch (InstantiationException e) {
+                    InvalidClassException exc = new InvalidClassException(
+                        currentClass.getName(),
+                        "InstantiationException accessing no-arg constructor");
+                    exc.initCause( e ) ;
+                    throw exc ;
+                }
+            } else {
+                /*
+                 * This is your basic diff pattern, made simpler
+                 * because reordering is not allowed.
+                 */
+                for (currdesc = currentClassDesc, currclass = currentClass;
+                     currdesc != null && currdesc.isSerializable();   /*sun.4296963 ibm.11861*/
+
+                     currdesc = currdesc.getSuperclass()) {
+
+                    /*
+                     * Search the classes to see if the class of this
+                     * descriptor appears further up the hierarchy. Until
+                     * it's found assume its an inserted class.  If it's
+                     * not found, its the descriptor's class that has been
+                     * removed.
+                     */
+                    Class cc = currdesc.forClass();
+                    Class cl;
+                    for (cl = currclass; cl != null; cl = cl.getSuperclass()) {
+                        if (cc == cl) {
+                            // found a superclass that matches this descriptor
+                            break;
+                        } else {
+                            /* Ignore a class that doesn't match.  No
+                             * action is needed since it is already
+                             * initialized.
+                             */
+                        }
+                    } // end : for (cl = currclass; cl != null; cl = cl.getSuperclass())
+                    /* Test if there is room for this new entry.
+                     * If not, double the size of the arrays and copy the contents.
+                     */
+                    spClass++;
+                    if (spClass >= classes.length) {
+                        int newlen = classes.length * 2;
+                        Class[] newclasses = new Class[newlen];
+                        ObjectStreamClass[] newclassdesc = new ObjectStreamClass[newlen];
+
+                        System.arraycopy(classes, 0,
+                                         newclasses, 0,
+                                         classes.length);
+                        System.arraycopy(classdesc, 0,
+                                         newclassdesc, 0,
+                                         classes.length);
+
+                        classes = newclasses;
+                        classdesc = newclassdesc;
+                    }
+
+                    if (cl == null) {
+                        /* Class not found corresponding to this descriptor.
+                         * Pop off all the extra classes pushed.
+                         * Push the descriptor and a null class.
+                         */
+                        classdesc[spClass] = currdesc;
+                        classes[spClass] = null;
+                    } else {
+                        /* Current class descriptor matches current class.
+                         * Some classes may have been inserted.
+                         * Record the match and advance the class, continue
+                         * with the next descriptor.
+                         */
+                        classdesc[spClass] = currdesc;
+                        classes[spClass] = cl;
+                        currclass = cl.getSuperclass();
+                    }
+                } // end : for (currdesc = currentClassDesc, currclass = currentClass;
+
+                /* Allocate a new object.
+                 */
+                try {
+                    currentObject = (currentClass == null) ?
+                        null : currentClassDesc.newInstance();
+
+                    // Store this object and its beginning position
+                    // since there might be indirections to it while
+                    // it's been unmarshalled.
+                    activeRecursionMgr.addObject(offset, currentObject);
+                } catch (InvocationTargetException e) {
+                    InvalidClassException exc = new InvalidClassException(
+                        currentClass.getName(),
+                        "InvocationTargetException accessing no-arg constructor");
+                    exc.initCause( e ) ;
+                    throw exc ;
+                } catch (UnsupportedOperationException e) {
+                    InvalidClassException exc = new InvalidClassException(
+                        currentClass.getName(),
+                        "UnsupportedOperationException accessing no-arg constructor");
+                    exc.initCause( e ) ;
+                    throw exc ;
+                } catch (InstantiationException e) {
+                    InvalidClassException exc = new InvalidClassException(
+                        currentClass.getName(),
+                        "InstantiationException accessing no-arg constructor");
+                    exc.initCause( e ) ;
+                    throw exc ;
+                }
+
+                Enumeration fvdsList = getOrderedDescriptions(repositoryID, sender).elements();
+
+                while((fvdsList.hasMoreElements()) && (spClass > spBase)) {
+                    FullValueDescription fvd = (FullValueDescription)fvdsList.nextElement();
+                    // d4365188: backward compatability
+                    String repIDForFVD = vhandler.getClassName(fvd.id);
+                    String repIDForClass = vhandler.getClassName(vhandler.getRMIRepositoryID(currentClass));
+
+                    while ((spClass > spBase) &&
+                           (!repIDForFVD.equals(repIDForClass))) {
+                        int pos = findNextClass(repIDForFVD, classes, spClass, spBase);
+                        if (pos != -1) {
+                            spClass = pos;
+                            currclass = currentClass = classes[spClass];
+                            repIDForClass = vhandler.getClassName(vhandler.getRMIRepositoryID(currentClass));
+                        }
+                        else { // Read and throw away one level of the fvdslist
+
+                            // This seems to mean that the sender had a superclass that
+                            // we don't have
+
+                            if (fvd.is_custom) {
+
+                                readFormatVersion();
+                                boolean calledDefaultWriteObject = readBoolean();
+
+                                if (calledDefaultWriteObject)
+                                    inputClassFields(null, null, null, fvd.members, sender);
+
+                                if (getStreamFormatVersion() == 2) {
+
+                                    ((ValueInputStream)getOrbStream()).start_value();
+                                    ((ValueInputStream)getOrbStream()).end_value();
+                                }
+
+                                // WARNING: If stream format version is 1 and there's
+                                // optional data, we'll get some form of exception down
+                                // the line or data corruption.
+
+                            } else {
+
+                                inputClassFields(null, currentClass, null, fvd.members, sender);
+                            }
+
+                            if (fvdsList.hasMoreElements()){
+                                fvd = (FullValueDescription)fvdsList.nextElement();
+                                repIDForFVD = vhandler.getClassName(fvd.id);
+                            }
+                            else return currentObject;
+                        }
+                    }
+
+                    currdesc = currentClassDesc = ObjectStreamClass.lookup(currentClass);
+
+                    if (!repIDForClass.equals("java.lang.Object")) {
+
+                        // If the sender used custom marshaling, then it should have put
+                        // the two bytes on the wire indicating stream format version
+                        // and whether or not the writeObject method called
+                        // defaultWriteObject/writeFields.
+
+                        ReadObjectState oldState = readObjectState;
+                        setState(DEFAULT_STATE);
+
+                        try {
+
+                            if (fvd.is_custom) {
+
+                                // Read format version
+                                readFormatVersion();
+
+                                // Read defaultWriteObject indicator
+                                boolean calledDefaultWriteObject = readBoolean();
+
+                                readObjectState.beginUnmarshalCustomValue(this,
+                                                                          calledDefaultWriteObject,
+                                                                          (currentClassDesc.readObjectMethod
+                                                                           != null));
+                            }
+
+                            boolean usedReadObject = false;
+
+                            // Always use readObject if it exists, and fall back to default
+                            // unmarshaling if it doesn't.
+                            try {
+
+                                if (!fvd.is_custom && currentClassDesc.hasReadObject())
+                                    setState(IN_READ_OBJECT_REMOTE_NOT_CUSTOM_MARSHALED);
+
+                                // See the definition of defaultReadObjectFVDMembers
+                                // for more information.  This concerns making sure
+                                // we use the remote FVD's members in defaultReadObject.
+                                defaultReadObjectFVDMembers = fvd.members;
+                                usedReadObject = invokeObjectReader(currentClassDesc,
+                                                                    currentObject,
+                                                                    currentClass);
+
+                            } finally {
+                                defaultReadObjectFVDMembers = null;
+                            }
+
+                            // Note that the !usedReadObject !calledDefaultWriteObject
+                            // case is handled by the beginUnmarshalCustomValue method
+                            // of the default state
+                            if (!usedReadObject || readObjectState == IN_READ_OBJECT_DEFAULTS_SENT)
+                                inputClassFields(currentObject, currentClass, currdesc, fvd.members, sender);
+
+                            if (fvd.is_custom)
+                                readObjectState.endUnmarshalCustomValue(this);
+
+                        } finally {
+                            setState(oldState);
+                        }
+
+                        currclass = currentClass = classes[--spClass];
+
+                    } else {
+
+                        // The remaining hierarchy of the local class does not match the sender's FVD.
+                        // So, use remaining FVDs to read data off wire.  If any remaining FVDs indicate
+                        // custom marshaling, throw MARSHAL error.
+                        inputClassFields(null, currentClass, null, fvd.members, sender);
+
+                        while (fvdsList.hasMoreElements()){
+                            fvd = (FullValueDescription)fvdsList.nextElement();
+
+                            if (fvd.is_custom)
+                                skipCustomUsingFVD(fvd.members, sender);
+                            else
+                                inputClassFields(null, currentClass, null, fvd.members, sender);
+                        }
+
+                    }
+
+                } // end : while(fvdsList.hasMoreElements())
+                while (fvdsList.hasMoreElements()){
+
+                    FullValueDescription fvd = (FullValueDescription)fvdsList.nextElement();
+                    if (fvd.is_custom)
+                        skipCustomUsingFVD(fvd.members, sender);
+                    else
+                        throwAwayData(fvd.members, sender);
+                }
+            }
+
+            return currentObject;
+        }
+        finally {
+                // Make sure we exit at the same stack level as when we started.
+                spClass = spBase;
+
+                // We've completed deserializing this object.  Any
+                // future indirections will be handled correctly at the
+                // CDR level.  The ActiveRecursionManager only deals with
+                // objects currently being deserialized.
+                activeRecursionMgr.removeObject(offset);
+            }
+
+        }
+
+    /**
+     * This input method uses FullValueDescriptions retrieved from the sender's runtime to
+     * read in the data.  This method is capable of throwing out data not applicable to client's fields.
+     *
+     * NOTE : If the local description indicates custom marshaling and the remote type's FVD also
+     * indicates custom marsahling than the local type is used to read the data off the wire.  However,
+     * if either says custom while the other does not, a MARSHAL error is thrown.  Externalizable is
+     * a form of custom marshaling.
+     *
+     */
+    private Object skipObjectUsingFVD(String repositoryID,
+                                      com.sun.org.omg.SendingContext.CodeBase sender)
+        throws IOException, ClassNotFoundException
+    {
+
+        Enumeration fvdsList = getOrderedDescriptions(repositoryID, sender).elements();
+
+        while(fvdsList.hasMoreElements()) {
+            FullValueDescription fvd = (FullValueDescription)fvdsList.nextElement();
+            String repIDForFVD = vhandler.getClassName(fvd.id);
+
+            if (!repIDForFVD.equals("java.lang.Object")) {
+                if (fvd.is_custom) {
+
+                    readFormatVersion();
+
+                    boolean calledDefaultWriteObject = readBoolean();
+
+                    if (calledDefaultWriteObject)
+                        inputClassFields(null, null, null, fvd.members, sender);
+
+                    if (getStreamFormatVersion() == 2) {
+
+                        ((ValueInputStream)getOrbStream()).start_value();
+                        ((ValueInputStream)getOrbStream()).end_value();
+                    }
+
+                    // WARNING: If stream format version is 1 and there's
+                    // optional data, we'll get some form of exception down
+                    // the line.
+
+                } else {
+                    // Use default marshaling
+                    inputClassFields(null, null, null, fvd.members, sender);
+                }
+            }
+
+        } // end : while(fvdsList.hasMoreElements())
+        return null;
+
+    }
+
+    ///////////////////
+
+    private int findNextClass(String classname, Class classes[], int _spClass, int _spBase){
+
+        for (int i = _spClass; i > _spBase; i--){
+            if (classname.equals(classes[i].getName())) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /*
+     * Invoke the readObject method if present.  Assumes that in the case of custom
+     * marshaling, the format version and defaultWriteObject indicator were already
+     * removed.
+     */
+    private boolean invokeObjectReader(ObjectStreamClass osc, Object obj, Class aclass)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException
+    {
+        if (osc.readObjectMethod == null) {
+            return false;
+        }
+
+        try {
+            osc.readObjectMethod.invoke( obj, readObjectArgList ) ;
+            return true;
+        } catch (InvocationTargetException e) {
+            Throwable t = e.getTargetException();
+            if (t instanceof ClassNotFoundException)
+                throw (ClassNotFoundException)t;
+            else if (t instanceof IOException)
+                throw (IOException)t;
+            else if (t instanceof RuntimeException)
+                throw (RuntimeException) t;
+            else if (t instanceof Error)
+                throw (Error) t;
+            else
+                // XXX I18N, logging needed.
+                throw new Error("internal error");
+        } catch (IllegalAccessException e) {
+            return false;
+        }
+    }
+
+    /*
+     * Reset the stream to be just like it was after the constructor.
+     */
+    private void resetStream() throws IOException {
+
+        if (classes == null)
+            classes = new Class[20];
+        else {
+            for (int i = 0; i < classes.length; i++)
+                classes[i] = null;
+        }
+        if (classdesc == null)
+            classdesc = new ObjectStreamClass[20];
+        else {
+            for (int i = 0; i < classdesc.length; i++)
+                classdesc[i] = null;
+        }
+        spClass = 0;
+
+        if (callbacks != null)
+            callbacks.setSize(0);       // discard any pending callbacks
+    }
+
+    /**
+     * Factored out of inputClassFields  This reads a primitive value and sets it
+     * in the field of o described by the ObjectStreamField field.
+     *
+     * Note that reflection cannot be used here, because reflection cannot be used
+     * to set final fields.
+     */
+    private void inputPrimitiveField(Object o, Class cl, ObjectStreamField field)
+        throws InvalidClassException, IOException {
+
+        try {
+            switch (field.getTypeCode()) {
+                case 'B':
+                    byte byteValue = orbStream.read_octet();
+                    if (field.getField() != null) {
+                        bridge.putByte( o, field.getFieldID(), byteValue ) ;
+                        //reflective code: field.getField().setByte( o, byteValue ) ;
+                    }
+                    break;
+                case 'Z':
+                    boolean booleanValue = orbStream.read_boolean();
+                    if (field.getField() != null) {
+                        bridge.putBoolean( o, field.getFieldID(), booleanValue ) ;
+                        //reflective code: field.getField().setBoolean( o, booleanValue ) ;
+                    }
+                    break;
+                case 'C':
+                    char charValue = orbStream.read_wchar();
+                    if (field.getField() != null) {
+                        bridge.putChar( o, field.getFieldID(), charValue ) ;
+                        //reflective code: field.getField().setChar( o, charValue ) ;
+                    }
+                    break;
+                case 'S':
+                    short shortValue = orbStream.read_short();
+                    if (field.getField() != null) {
+                        bridge.putShort( o, field.getFieldID(), shortValue ) ;
+                        //reflective code: field.getField().setShort( o, shortValue ) ;
+                    }
+                    break;
+                case 'I':
+                    int intValue = orbStream.read_long();
+                    if (field.getField() != null) {
+                        bridge.putInt( o, field.getFieldID(), intValue ) ;
+                        //reflective code: field.getField().setInt( o, intValue ) ;
+                    }
+                    break;
+                case 'J':
+                    long longValue = orbStream.read_longlong();
+                    if (field.getField() != null) {
+                        bridge.putLong( o, field.getFieldID(), longValue ) ;
+                        //reflective code: field.getField().setLong( o, longValue ) ;
+                    }
+                    break;
+                case 'F' :
+                    float floatValue = orbStream.read_float();
+                    if (field.getField() != null) {
+                        bridge.putFloat( o, field.getFieldID(), floatValue ) ;
+                        //reflective code: field.getField().setFloat( o, floatValue ) ;
+                    }
+                    break;
+                case 'D' :
+                    double doubleValue = orbStream.read_double();
+                    if (field.getField() != null) {
+                        bridge.putDouble( o, field.getFieldID(), doubleValue ) ;
+                        //reflective code: field.getField().setDouble( o, doubleValue ) ;
+                    }
+                    break;
+                default:
+                    // XXX I18N, logging needed.
+                    throw new InvalidClassException(cl.getName());
+            }
+        } catch (IllegalArgumentException e) {
+            /* This case should never happen. If the field types
+               are not the same, InvalidClassException is raised when
+               matching the local class to the serialized ObjectStreamClass. */
+            ClassCastException cce = new ClassCastException("Assigning instance of class " +
+                                         field.getType().getName() +
+                                         " to field " +
+                                         currentClassDesc.getName() + '#' +
+                                         field.getField().getName());
+            cce.initCause( e ) ;
+            throw cce ;
+        }
+     }
+
+    private Object inputObjectField(org.omg.CORBA.ValueMember field,
+                                    com.sun.org.omg.SendingContext.CodeBase sender)
+        throws IndirectionException, ClassNotFoundException, IOException,
+               StreamCorruptedException {
+
+        Object objectValue = null;
+        Class type = null;
+        String id = field.id;
+
+        try {
+            type = vhandler.getClassFromType(id);
+        } catch(ClassNotFoundException cnfe) {
+            // Make sure type = null
+            type = null;
+        }
+
+        String signature = null;
+        if (type != null)
+            signature = ValueUtility.getSignature(field);
+
+        if (signature != null && (signature.equals("Ljava/lang/Object;") ||
+                                  signature.equals("Ljava/io/Serializable;") ||
+                                  signature.equals("Ljava/io/Externalizable;"))) {
+            objectValue = javax.rmi.CORBA.Util.readAny(orbStream);
+        } else {
+            // Decide what method call to make based on the type. If
+            // it is a type for which we need to load a stub, convert
+            // the type to the correct stub type.
+            //
+            // NOTE : Since FullValueDescription does not allow us
+            // to ask whether something is an interface we do not
+            // have the ability to optimize this check.
+
+            int callType = ValueHandlerImpl.kValueType;
+
+            if (!vhandler.isSequence(id)) {
+
+                if (field.type.kind().value() == kRemoteTypeCode.kind().value()) {
+
+                    // RMI Object reference...
+                    callType = ValueHandlerImpl.kRemoteType;
+
+                } else {
+
+                    // REVISIT.  If we don't have the local class,
+                    // we should probably verify that it's an RMI type,
+                    // query the remote FVD, and use is_abstract.
+                    // Our FVD seems to get NullPointerExceptions for any
+                    // non-RMI types.
+
+                    // This uses the local class in the same way as
+                    // inputObjectField(ObjectStreamField) does.  REVISIT
+                    // inputObjectField(ObjectStreamField)'s loadStubClass
+                    // logic.  Assumption is that the given type cannot
+                    // evolve to become a CORBA abstract interface or
+                    // a RMI abstract interface.
+
+                    if (type != null && type.isInterface() &&
+                        (vhandler.isAbstractBase(type) ||
+                         ObjectStreamClassCorbaExt.isAbstractInterface(type))) {
+
+                        callType = ValueHandlerImpl.kAbstractType;
+                    }
+                }
+            }
+
+            // Now that we have used the FVD of the field to determine the proper course
+            // of action, it is ok to use the type (Class) from this point forward since
+            // the rep. id for this read will also follow on the wire.
+
+            switch (callType) {
+                case ValueHandlerImpl.kRemoteType:
+                    if (type != null)
+                        objectValue = Utility.readObjectAndNarrow(orbStream, type);
+                    else
+                        objectValue = orbStream.read_Object();
+                    break;
+                case ValueHandlerImpl.kAbstractType:
+                    if (type != null)
+                        objectValue = Utility.readAbstractAndNarrow(orbStream, type);
+                    else
+                        objectValue = orbStream.read_abstract_interface();
+                    break;
+                case ValueHandlerImpl.kValueType:
+                    if (type != null)
+                        objectValue = orbStream.read_value(type);
+                    else
+                                            objectValue = orbStream.read_value();
+                    break;
+                default:
+                    // XXX I18N, logging needed.
+                    throw new StreamCorruptedException("Unknown callType: " + callType);
+            }
+        }
+
+        return objectValue;
+    }
+
+    /**
+     * Factored out of inputClassFields and reused in
+     * inputCurrentClassFieldsForReadFields.
+     *
+     * Reads the field (which of an Object type as opposed to a primitive)
+     * described by ObjectStreamField field and returns it.
+     */
+    private Object inputObjectField(ObjectStreamField field)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IndirectionException, IOException {
+
+        if (ObjectStreamClassCorbaExt.isAny(field.getTypeString())) {
+            return javax.rmi.CORBA.Util.readAny(orbStream);
+        }
+
+        Object objectValue = null;
+
+        // fields have an API to provide the actual class
+        // corresponding to the data type
+        // Class type = osc.forClass();
+        Class fieldType = field.getType();
+        Class actualType = fieldType; // This may change if stub loaded.
+
+        // Decide what method call to make based on the fieldType. If
+        // it is a type for which we need to load a stub, convert
+        // the type to the correct stub type.
+
+        int callType = ValueHandlerImpl.kValueType;
+        boolean narrow = false;
+
+        if (fieldType.isInterface()) {
+            boolean loadStubClass = false;
+
+            if (java.rmi.Remote.class.isAssignableFrom(fieldType)) {
+
+                // RMI Object reference...
+                callType = ValueHandlerImpl.kRemoteType;
+
+            } else if (org.omg.CORBA.Object.class.isAssignableFrom(fieldType)){
+
+                // IDL Object reference...
+                callType = ValueHandlerImpl.kRemoteType;
+                loadStubClass = true;
+
+            } else if (vhandler.isAbstractBase(fieldType)) {
+                // IDL Abstract Object reference...
+
+                callType = ValueHandlerImpl.kAbstractType;
+                loadStubClass = true;
+            } else if (ObjectStreamClassCorbaExt.isAbstractInterface(fieldType)) {
+                // RMI Abstract Object reference...
+
+                callType = ValueHandlerImpl.kAbstractType;
+            }
+
+            if (loadStubClass) {
+                try {
+                    String codebase = Util.getCodebase(fieldType);
+                    String repID = vhandler.createForAnyType(fieldType);
+                    Class stubType =
+                        Utility.loadStubClass(repID, codebase, fieldType);
+                    actualType = stubType;
+                } catch (ClassNotFoundException e) {
+                    narrow = true;
+                }
+            } else {
+                narrow = true;
+            }
+        }
+
+        switch (callType) {
+            case ValueHandlerImpl.kRemoteType:
+                if (!narrow)
+                    objectValue = (Object)orbStream.read_Object(actualType);
+                else
+                    objectValue = Utility.readObjectAndNarrow(orbStream, actualType);
+                break;
+            case ValueHandlerImpl.kAbstractType:
+                if (!narrow)
+                    objectValue = (Object)orbStream.read_abstract_interface(actualType);
+                else
+                    objectValue = Utility.readAbstractAndNarrow(orbStream, actualType);
+                break;
+            case ValueHandlerImpl.kValueType:
+                objectValue = (Object)orbStream.read_value(actualType);
+                break;
+            default:
+                // XXX I18N, logging needed.
+                throw new StreamCorruptedException("Unknown callType: " + callType);
+        }
+
+        return objectValue;
+    }
+
+    private final boolean mustUseRemoteValueMembers() {
+        return defaultReadObjectFVDMembers != null;
+    }
+
+    void readFields(java.util.Map fieldToValueMap)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException {
+
+        if (mustUseRemoteValueMembers()) {
+            inputRemoteMembersForReadFields(fieldToValueMap);
+        } else
+            inputCurrentClassFieldsForReadFields(fieldToValueMap);
+    }
+
+    private final void inputRemoteMembersForReadFields(java.util.Map fieldToValueMap)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException {
+
+        // Must have this local variable since defaultReadObjectFVDMembers
+        // may get mangled by recursion.
+        ValueMember fields[] = defaultReadObjectFVDMembers;
+
+        try {
+
+            for (int i = 0; i < fields.length; i++) {
+
+                switch (fields[i].type.kind().value()) {
+
+                case TCKind._tk_octet:
+                    byte byteValue = orbStream.read_octet();
+                    fieldToValueMap.put(fields[i].name, new Byte(byteValue));
+                    break;
+                case TCKind._tk_boolean:
+                    boolean booleanValue = orbStream.read_boolean();
+                    fieldToValueMap.put(fields[i].name, new Boolean(booleanValue));
+                    break;
+                case TCKind._tk_char:
+                    // Backwards compatibility.  Older Sun ORBs sent
+                    // _tk_char even though they read and wrote wchars
+                    // correctly.
+                    //
+                    // Fall through to the _tk_wchar case.
+                case TCKind._tk_wchar:
+                    char charValue = orbStream.read_wchar();
+                    fieldToValueMap.put(fields[i].name, new Character(charValue));
+                    break;
+                case TCKind._tk_short:
+                    short shortValue = orbStream.read_short();
+                    fieldToValueMap.put(fields[i].name, new Short(shortValue));
+                    break;
+                case TCKind._tk_long:
+                    int intValue = orbStream.read_long();
+                    fieldToValueMap.put(fields[i].name, new Integer(intValue));
+                    break;
+                case TCKind._tk_longlong:
+                    long longValue = orbStream.read_longlong();
+                    fieldToValueMap.put(fields[i].name, new Long(longValue));
+                    break;
+                case TCKind._tk_float:
+                    float floatValue = orbStream.read_float();
+                    fieldToValueMap.put(fields[i].name, new Float(floatValue));
+                    break;
+                case TCKind._tk_double:
+                    double doubleValue = orbStream.read_double();
+                    fieldToValueMap.put(fields[i].name, new Double(doubleValue));
+                    break;
+                case TCKind._tk_value:
+                case TCKind._tk_objref:
+                case TCKind._tk_value_box:
+                    Object objectValue = null;
+                    try {
+                        objectValue = inputObjectField(fields[i],
+                                                       cbSender);
+
+                    } catch (IndirectionException cdrie) {
+                        // The CDR stream had never seen the given offset before,
+                        // so check the recursion manager (it will throw an
+                        // IOException if it doesn't have a reference, either).
+                        objectValue = activeRecursionMgr.getObject(cdrie.offset);
+                    }
+
+                    fieldToValueMap.put(fields[i].name, objectValue);
+                    break;
+                default:
+                    // XXX I18N, logging needed.
+                    throw new StreamCorruptedException("Unknown kind: "
+                                                       + fields[i].type.kind().value());
+                }
+            }
+        } catch (Throwable t) {
+            StreamCorruptedException result = new StreamCorruptedException(t.getMessage());
+            result.initCause(t);
+            throw result;
+        }
+    }
+
+    /**
+     * Called from InputStreamHook.
+     *
+     * Reads the fields of the current class (could be the ones
+     * queried from the remote FVD) and puts them in
+     * the given Map, name to value.  Wraps primitives in the
+     * corresponding java.lang Objects.
+     */
+    private final void inputCurrentClassFieldsForReadFields(java.util.Map fieldToValueMap)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException {
+
+        ObjectStreamField[] fields = currentClassDesc.getFieldsNoCopy();
+
+        int primFields = fields.length - currentClassDesc.objFields;
+
+        // Handle the primitives first
+        for (int i = 0; i < primFields; ++i) {
+
+            switch (fields[i].getTypeCode()) {
+                case 'B':
+                    byte byteValue = orbStream.read_octet();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Byte(byteValue));
+                    break;
+                case 'Z':
+                   boolean booleanValue = orbStream.read_boolean();
+                   fieldToValueMap.put(fields[i].getName(),
+                                       new Boolean(booleanValue));
+                   break;
+                case 'C':
+                    char charValue = orbStream.read_wchar();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Character(charValue));
+                    break;
+                case 'S':
+                    short shortValue = orbStream.read_short();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Short(shortValue));
+                    break;
+                case 'I':
+                    int intValue = orbStream.read_long();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Integer(intValue));
+                    break;
+                case 'J':
+                    long longValue = orbStream.read_longlong();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Long(longValue));
+                    break;
+                case 'F' :
+                    float floatValue = orbStream.read_float();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Float(floatValue));
+                    break;
+                case 'D' :
+                    double doubleValue = orbStream.read_double();
+                    fieldToValueMap.put(fields[i].getName(),
+                                        new Double(doubleValue));
+                    break;
+                default:
+                    // XXX I18N, logging needed.
+                    throw new InvalidClassException(currentClassDesc.getName());
+            }
+        }
+
+        /* Read and set object fields from the input stream. */
+        if (currentClassDesc.objFields > 0) {
+            for (int i = primFields; i < fields.length; i++) {
+                Object objectValue = null;
+                try {
+                    objectValue = inputObjectField(fields[i]);
+                } catch(IndirectionException cdrie) {
+                    // The CDR stream had never seen the given offset before,
+                    // so check the recursion manager (it will throw an
+                    // IOException if it doesn't have a reference, either).
+                    objectValue = activeRecursionMgr.getObject(cdrie.offset);
+                }
+
+                fieldToValueMap.put(fields[i].getName(), objectValue);
+            }
+        }
+    }
+
+    /*
+     * Read the fields of the specified class from the input stream and set
+     * the values of the fields in the specified object. If the specified
+     * object is null, just consume the fields without setting any values. If
+     * any ObjectStreamField does not have a reflected Field, don't try to set
+     * that field in the object.
+     *
+     * REVISIT -- This code doesn't do what the comment says to when
+     * getField() is null!
+     */
+    private void inputClassFields(Object o, final Class<?> cl,
+                                  ObjectStreamField[] fields,
+                                  com.sun.org.omg.SendingContext.CodeBase sender)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException
+    {
+
+        int primFields = fields.length - currentClassDesc.objFields;
+
+        if (o != null) {
+            for (int i = 0; i < primFields; ++i) {
+                inputPrimitiveField(o, cl, fields[i]);
+            }
+        }
+
+        /* Read and set object fields from the input stream. */
+        if (currentClassDesc.objFields > 0) {
+            for (int i = primFields; i < fields.length; i++) {
+                Object objectValue = null;
+
+                try {
+                    objectValue = inputObjectField(fields[i]);
+                } catch(IndirectionException cdrie) {
+                    // The CDR stream had never seen the given offset before,
+                    // so check the recursion manager (it will throw an
+                    // IOException if it doesn't have a reference, either).
+                    objectValue = activeRecursionMgr.getObject(cdrie.offset);
+                }
+
+                if ((o == null) || (fields[i].getField() == null)) {
+                    continue;
+                }
+
+                try {
+                    Class<?> fieldCl = fields[i].getClazz();
+                    if ((objectValue != null)
+                            && (!fieldCl.isAssignableFrom(
+                                    objectValue.getClass()))) {
+                        throw new IllegalArgumentException("Field mismatch");
+                    }
+                    Field declaredClassField = null;
+                    final String inputStreamFieldName = fields[i].getName();
+                    try {
+                        declaredClassField = getDeclaredField( cl, inputStreamFieldName);
+                    } catch (PrivilegedActionException paEx) {
+                        throw new IllegalArgumentException(
+                            (NoSuchFieldException) paEx.getException());
+                    } catch (SecurityException secEx) {
+                        throw new IllegalArgumentException(secEx);
+                    }  catch (NullPointerException npEx) {
+                        continue;
+                    } catch (NoSuchFieldException e) {
+                        continue;
+                    }
+
+                    if (declaredClassField == null) {
+                        continue;
+                    }
+                    Class<?> declaredFieldClass = declaredClassField.getType();
+
+                    // check input field type is a declared field type
+                    // input field is a subclass of the declared field
+                    if (!declaredFieldClass.isAssignableFrom(fieldCl)) {
+                        throw new IllegalArgumentException(
+                                "Field Type mismatch");
+                    }
+                    if (objectValue != null && !fieldCl.isInstance(objectValue)) {
+                        throw new IllegalArgumentException();
+                    }
+                    bridge.putObject( o, fields[i].getFieldID(), objectValue ) ;
+                    // reflective code: fields[i].getField().set( o, objectValue ) ;
+                } catch (IllegalArgumentException iaEx) {
+                    String objectValueClassName = "null";
+                    String currentClassDescClassName = "null";
+                    String fieldName = "null";
+                    if (objectValue != null) {
+                        objectValueClassName = objectValue.getClass().getName();
+                    }
+                    if (currentClassDesc != null) {
+                        currentClassDescClassName = currentClassDesc.getName();
+                    }
+                    if (fields[i] != null && fields[i].getField() != null) {
+                        fieldName = fields[i].getField().getName();
+                    }
+                    ClassCastException ccEx = new ClassCastException(
+                            "Assigning instance of class " + objectValueClassName
+                                    + " to field " + currentClassDescClassName + '#' + fieldName);
+                    ccEx.initCause( iaEx ) ;
+                    throw ccEx ;
+                }
+            } // end : for loop
+            }
+        }
+
+    /*
+     * Read the fields of the specified class from the input stream and set
+     * the values of the fields in the specified object. If the specified
+     * object is null, just consume the fields without setting any values. If
+     * any ObjectStreamField does not have a reflected Field, don't try to set
+     * that field in the object.
+     */
+    private void inputClassFields(Object o, Class cl,
+                                  ObjectStreamClass osc,
+                                  ValueMember[] fields,
+                                  com.sun.org.omg.SendingContext.CodeBase sender)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException
+    {
+        try{
+            for (int i = 0; i < fields.length; ++i) {
+                try {
+                    switch (fields[i].type.kind().value()) {
+                    case TCKind._tk_octet:
+                        byte byteValue = orbStream.read_octet();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setByteField(o, cl, fields[i].name, byteValue);
+                        break;
+                    case TCKind._tk_boolean:
+                        boolean booleanValue = orbStream.read_boolean();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setBooleanField(o, cl, fields[i].name, booleanValue);
+                        break;
+                    case TCKind._tk_char:
+                        // Backwards compatibility.  Older Sun ORBs sent
+                        // _tk_char even though they read and wrote wchars
+                        // correctly.
+                        //
+                        // Fall through to the _tk_wchar case.
+                    case TCKind._tk_wchar:
+                        char charValue = orbStream.read_wchar();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setCharField(o, cl, fields[i].name, charValue);
+                        break;
+                    case TCKind._tk_short:
+                        short shortValue = orbStream.read_short();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setShortField(o, cl, fields[i].name, shortValue);
+                        break;
+                    case TCKind._tk_long:
+                        int intValue = orbStream.read_long();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setIntField(o, cl, fields[i].name, intValue);
+                        break;
+                    case TCKind._tk_longlong:
+                        long longValue = orbStream.read_longlong();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setLongField(o, cl, fields[i].name, longValue);
+                        break;
+                    case TCKind._tk_float:
+                        float floatValue = orbStream.read_float();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setFloatField(o, cl, fields[i].name, floatValue);
+                        break;
+                    case TCKind._tk_double:
+                        double doubleValue = orbStream.read_double();
+                        if ((o != null) && osc.hasField(fields[i]))
+                        setDoubleField(o, cl, fields[i].name, doubleValue);
+                        break;
+                    case TCKind._tk_value:
+                    case TCKind._tk_objref:
+                    case TCKind._tk_value_box:
+                        Object objectValue = null;
+                        try {
+                            objectValue = inputObjectField(fields[i], sender);
+                        } catch (IndirectionException cdrie) {
+                            // The CDR stream had never seen the given offset before,
+                            // so check the recursion manager (it will throw an
+                            // IOException if it doesn't have a reference, either).
+                            objectValue = activeRecursionMgr.getObject(cdrie.offset);
+                        }
+
+                        if (o == null)
+                            continue;
+                        try {
+                            if (osc.hasField(fields[i])){
+                                setObjectField(o,
+                                               cl,
+                                               fields[i].name,
+                                               objectValue);
+                            } else {
+                                // REVISIT.  Convert to a log message.
+                                // This is a normal case when fields have
+                                // been added as part of evolution, but
+                                // silently skipping can make it hard to
+                                // debug if there's an error
+//                                 System.out.println("**** warning, not setting field: "
+//                                                    + fields[i].name
+//                                                    + " since not on class "
+//                                                    + osc.getName());
+
+                            }
+                        } catch (IllegalArgumentException e) {
+                            // XXX I18N, logging needed.
+                            ClassCastException cce = new ClassCastException("Assigning instance of class " +
+                                objectValue.getClass().getName() + " to field " + fields[i].name);
+                            cce.initCause(e) ;
+                            throw cce ;
+                        }
+                        break;
+                    default:
+                        // XXX I18N, logging needed.
+                        throw new StreamCorruptedException("Unknown kind: "
+                                                           + fields[i].type.kind().value());
+                    }
+                } catch (IllegalArgumentException e) {
+                    /* This case should never happen. If the field types
+                       are not the same, InvalidClassException is raised when
+                       matching the local class to the serialized ObjectStreamClass. */
+                    // XXX I18N, logging needed.
+                    ClassCastException cce = new ClassCastException("Assigning instance of class " + fields[i].id +
+                        " to field " + currentClassDesc.getName() + '#' + fields[i].name);
+                    cce.initCause( e ) ;
+                    throw cce ;
+                }
+            }
+        } catch(Throwable t){
+            // XXX I18N, logging needed.
+            StreamCorruptedException sce = new StreamCorruptedException(t.getMessage());
+            sce.initCause(t) ;
+            throw sce ;
+        }
+    }
+
+    private void skipCustomUsingFVD(ValueMember[] fields,
+                                    com.sun.org.omg.SendingContext.CodeBase sender)
+                                    throws InvalidClassException, StreamCorruptedException,
+                                           ClassNotFoundException, IOException
+    {
+        readFormatVersion();
+        boolean calledDefaultWriteObject = readBoolean();
+
+        if (calledDefaultWriteObject)
+            throwAwayData(fields, sender);
+
+        if (getStreamFormatVersion() == 2) {
+
+            ((ValueInputStream)getOrbStream()).start_value();
+            ((ValueInputStream)getOrbStream()).end_value();
+        }
+    }
+
+    /*
+     * Read the fields of the specified class from the input stream throw data away.
+     * This must handle same switch logic as above.
+     */
+    private void throwAwayData(ValueMember[] fields,
+                               com.sun.org.omg.SendingContext.CodeBase sender)
+        throws InvalidClassException, StreamCorruptedException,
+               ClassNotFoundException, IOException {
+
+        for (int i = 0; i < fields.length; ++i) {
+
+            try {
+
+                switch (fields[i].type.kind().value()) {
+                case TCKind._tk_octet:
+                    orbStream.read_octet();
+                    break;
+                case TCKind._tk_boolean:
+                    orbStream.read_boolean();
+                    break;
+                case TCKind._tk_char:
+                    // Backwards compatibility.  Older Sun ORBs sent
+                    // _tk_char even though they read and wrote wchars
+                    // correctly.
+                    //
+                    // Fall through to the _tk_wchar case.
+                case TCKind._tk_wchar:
+                    orbStream.read_wchar();
+                    break;
+                case TCKind._tk_short:
+                    orbStream.read_short();
+                    break;
+                case TCKind._tk_long:
+                    orbStream.read_long();
+                    break;
+                case TCKind._tk_longlong:
+                    orbStream.read_longlong();
+                    break;
+                case TCKind._tk_float:
+                    orbStream.read_float();
+                    break;
+                case TCKind._tk_double:
+                    orbStream.read_double();
+                    break;
+                case TCKind._tk_value:
+                case TCKind._tk_objref:
+                case TCKind._tk_value_box:
+                    Class type = null;
+                    String id = fields[i].id;
+
+                    try {
+                        type = vhandler.getClassFromType(id);
+                    }
+                    catch(ClassNotFoundException cnfe){
+                        // Make sure type = null
+                        type = null;
+                    }
+                    String signature = null;
+                    if (type != null)
+                        signature = ValueUtility.getSignature(fields[i]);
+
+                    // Read value
+                    try {
+                        if ((signature != null) && ( signature.equals("Ljava/lang/Object;") ||
+                                                     signature.equals("Ljava/io/Serializable;") ||
+                                                     signature.equals("Ljava/io/Externalizable;")) ) {
+                            javax.rmi.CORBA.Util.readAny(orbStream);
+                        }
+                        else {
+                            // Decide what method call to make based on the type.
+                            //
+                            // NOTE : Since FullValueDescription does not allow us
+                            // to ask whether something is an interface we do not
+                            // have the ability to optimize this check.
+
+                            int callType = ValueHandlerImpl.kValueType;
+
+                            if (!vhandler.isSequence(id)) {
+                                FullValueDescription fieldFVD = sender.meta(fields[i].id);
+                                if (kRemoteTypeCode == fields[i].type) {
+
+                                    // RMI Object reference...
+                                    callType = ValueHandlerImpl.kRemoteType;
+                                } else if (fieldFVD.is_abstract) {
+                                    // RMI Abstract Object reference...
+
+                                    callType = ValueHandlerImpl.kAbstractType;
+                                }
+                            }
+
+                            // Now that we have used the FVD of the field to determine the proper course
+                            // of action, it is ok to use the type (Class) from this point forward since
+                            // the rep. id for this read will also follow on the wire.
+
+                            switch (callType) {
+                            case ValueHandlerImpl.kRemoteType:
+                                orbStream.read_Object();
+                                break;
+                            case ValueHandlerImpl.kAbstractType:
+                                orbStream.read_abstract_interface();
+                                break;
+                            case ValueHandlerImpl.kValueType:
+                                if (type != null) {
+                                    orbStream.read_value(type);
+                                } else {
+                                    orbStream.read_value();
+                                }
+                                break;
+                            default:
+                                // XXX I18N, logging needed.
+                                throw new StreamCorruptedException("Unknown callType: "
+                                                                   + callType);
+                            }
+                        }
+
+                    }
+                    catch(IndirectionException cdrie) {
+                        // Since we are throwing this away, don't bother handling recursion.
+                        continue;
+                    }
+
+                    break;
+                default:
+                    // XXX I18N, logging needed.
+                    throw new StreamCorruptedException("Unknown kind: "
+                                                       + fields[i].type.kind().value());
+
+                }
+            } catch (IllegalArgumentException e) {
+                /* This case should never happen. If the field types
+                   are not the same, InvalidClassException is raised when
+                   matching the local class to the serialized ObjectStreamClass. */
+                // XXX I18N, logging needed.
+                ClassCastException cce = new ClassCastException("Assigning instance of class " +
+                    fields[i].id + " to field " + currentClassDesc.getName() +
+                    '#' + fields[i].name);
+                cce.initCause(e) ;
+                throw cce ;
+            }
+        }
+
+    }
+
+    private static void setObjectField(Object o, Class<?> c, String fieldName, Object v) {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            Class fieldCl = fld.getType();
+            if(v != null && !fieldCl.isInstance(v)) {
+                throw new Exception();
+            }
+            long key = bridge.objectFieldOffset( fld ) ;
+            bridge.putObject( o, key, v ) ;
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetObjectField( e, fieldName,
+                    o.toString(),
+                    v.toString() ) ;
+            } else {
+                throw utilWrapper.errorSetObjectField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    v.toString() ) ;
+            }
+        }
+    }
+
+    private static void setBooleanField(Object o, Class<?> c, String fieldName, boolean v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Boolean.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putBoolean( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+            throw utilWrapper.errorSetBooleanField( e, fieldName,
+                o.toString(),
+                new Boolean(v) ) ;
+            } else {
+                throw utilWrapper.errorSetBooleanField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Boolean(v) ) ;
+            }
+        }
+    }
+
+    private static void setByteField(Object o, Class<?> c, String fieldName, byte v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Byte.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putByte( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetByteField( e, fieldName,
+                    o.toString(),
+                    new Byte(v) ) ;
+            } else {
+                throw utilWrapper.errorSetByteField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Byte(v) ) ;
+            }
+        }
+    }
+
+    private static void setCharField(Object o, Class<?> c, String fieldName, char v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Character.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putChar( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetCharField( e, fieldName,
+                    o.toString(),
+                    new Character(v) ) ;
+            } else {
+                throw utilWrapper.errorSetCharField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Character(v) ) ;
+            }
+        }
+    }
+
+    private static void setShortField(Object o, Class<?> c, String fieldName, short v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Short.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putShort( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+            throw utilWrapper.errorSetShortField( e, fieldName,
+                o.toString(),
+                new Short(v) ) ;
+            } else {
+                throw utilWrapper.errorSetShortField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Short(v) ) ;
+            }
+        }
+    }
+
+    private static void setIntField(Object o, final Class<?> c, final String fieldName, int v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Integer.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putInt( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetIntField( e, fieldName,
+                    o.toString(),
+                    new Integer(v) ) ;
+            } else {
+                throw utilWrapper.errorSetIntField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Integer(v) ) ;
+            }
+        }
+    }
+
+    private static void setLongField(Object o, Class<?> c, String fieldName, long v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Long.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putLong( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetLongField( e, fieldName,
+                    o.toString(),
+                    new Long(v) ) ;
+            } else {
+                throw utilWrapper.errorSetLongField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Long(v) ) ;
+            }
+        }
+    }
+
+    private static void setFloatField(Object o, Class<?> c, String fieldName, float v)
+    {
+        try {
+            Field fld = getDeclaredField( c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Float.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putFloat( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetFloatField( e, fieldName,
+                    o.toString(),
+                    new Float(v) ) ;
+            } else {
+                throw utilWrapper.errorSetFloatField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Float(v) ) ;
+            }
+        }
+    }
+
+    private static void setDoubleField(Object o, Class<?> c, String fieldName, double v)
+    {
+        try {
+            Field fld = getDeclaredField(c, fieldName ) ;
+            if ((fld != null) && (fld.getType() == Double.TYPE)) {
+                long key = bridge.objectFieldOffset( fld ) ;
+                bridge.putDouble( o, key, v ) ;
+            } else {
+                throw new InvalidObjectException("Field Type mismatch");
+            }
+        } catch (Exception e) {
+            if (o != null) {
+                throw utilWrapper.errorSetDoubleField( e, fieldName,
+                    o.toString(),
+                    new Double(v) ) ;
+            } else {
+                throw utilWrapper.errorSetDoubleField( e, fieldName,
+                    "null " + c.getName() + " object",
+                    new Double(v) ) ;
+            }
+        }
+    }
+
+
+    private static Field getDeclaredField(final Class<?> c,
+                                           final String fieldName)
+        throws PrivilegedActionException, NoSuchFieldException, SecurityException {
+        if (System.getSecurityManager() == null) {
+            return c.getDeclaredField(fieldName);
+        } else {
+            return AccessController
+                .doPrivileged(new PrivilegedExceptionAction<Field>() {
+                    public Field run()
+                            throws NoSuchFieldException {
+                        return c.getDeclaredField(fieldName);
+                    }
+                });
+        }
+    }
+
+    /**
+     * This class maintains a map of stream position to
+     * an Object currently being deserialized.  It is used
+     * to handle the cases where the are indirections to
+     * an object on the recursion stack.  The CDR level
+     * handles indirections to objects previously seen
+     * (and completely deserialized) in the stream.
+     */
+    static class ActiveRecursionManager
+    {
+        private Map<Integer, Object> offsetToObjectMap;
+
+        public ActiveRecursionManager() {
+            // A hash map is unsynchronized and allows
+            // null values
+            offsetToObjectMap = new HashMap<>();
+        }
+
+        // Called right after allocating a new object.
+        // Offset is the starting position in the stream
+        // of the object.
+        public void addObject(int offset, Object value) {
+            offsetToObjectMap.put(new Integer(offset), value);
+        }
+
+        // If the given starting position doesn't refer
+        // to the beginning of an object currently being
+        // deserialized, this throws an IOException.
+        // Otherwise, it returns a reference to the
+        // object.
+        public Object getObject(int offset) throws IOException {
+            Integer position = new Integer(offset);
+
+            if (!offsetToObjectMap.containsKey(position))
+                // XXX I18N, logging needed.
+                throw new IOException("Invalid indirection to offset "
+                                      + offset);
+
+            return offsetToObjectMap.get(position);
+        }
+
+        // Called when an object has been completely
+        // deserialized, so it should no longer be in
+        // this mapping.  The CDR level can handle
+        // further indirections.
+        public void removeObject(int offset) {
+            offsetToObjectMap.remove(new Integer(offset));
+        }
+
+        // If the given offset doesn't map to an Object,
+        // then it isn't an indirection to an object
+        // currently being deserialized.
+        public boolean containsObject(int offset) {
+            return offsetToObjectMap.containsKey(new Integer(offset));
+        }
+    }
+}

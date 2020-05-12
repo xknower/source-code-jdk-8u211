@@ -1,71 +1,71 @@
-/*    */ package javax.management.remote;
-/*    */ 
-/*    */ import java.io.IOException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JMXServerErrorException
-/*    */   extends IOException
-/*    */ {
-/*    */   private static final long serialVersionUID = 3996732239558744666L;
-/*    */   private final Error cause;
-/*    */   
-/*    */   public JMXServerErrorException(String paramString, Error paramError) {
-/* 58 */     super(paramString);
-/* 59 */     this.cause = paramError;
-/*    */   }
-/*    */   
-/*    */   public Throwable getCause() {
-/* 63 */     return this.cause;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\remote\JMXServerErrorException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package javax.management.remote;
+
+import java.io.IOException;
+
+// imports for javadoc
+import javax.management.MBeanServer;
+
+/**
+ * Exception thrown as the result of a remote {@link MBeanServer}
+ * method invocation when an <code>Error</code> is thrown while
+ * processing the invocation in the remote MBean server.  A
+ * <code>JMXServerErrorException</code> instance contains the original
+ * <code>Error</code> that occurred as its cause.
+ *
+ * @see java.rmi.ServerError
+ * @since 1.5
+ */
+public class JMXServerErrorException extends IOException {
+
+    private static final long serialVersionUID = 3996732239558744666L;
+
+    /**
+     * Constructs a <code>JMXServerErrorException</code> with the specified
+     * detail message and nested error.
+     *
+     * @param s the detail message.
+     * @param err the nested error.  An instance of this class can be
+     * constructed where this parameter is null, but the standard
+     * connectors will never do so.
+     */
+    public JMXServerErrorException(String s, Error err) {
+        super(s);
+        cause = err;
+    }
+
+    public Throwable getCause() {
+        return cause;
+    }
+
+    /**
+     * @serial An {@link Error} that caused this exception to be thrown.
+     * @see #getCause()
+     **/
+    private final Error cause;
+}

@@ -1,889 +1,884 @@
-/*     */ package com.sun.org.apache.xerces.internal.parsers;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLDTDScannerImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLDocumentScannerImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
-/*     */ import com.sun.org.apache.xerces.internal.impl.XMLNamespaceBinder;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dtd.XMLDTDProcessor;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dtd.XMLDTDValidator;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.DTDDVFactory;
-/*     */ import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
-/*     */ import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
-/*     */ import com.sun.org.apache.xerces.internal.util.FeatureState;
-/*     */ import com.sun.org.apache.xerces.internal.util.PropertyState;
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDScanner;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentScanner;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLPullParserConfiguration;
-/*     */ import java.io.IOException;
-/*     */ import java.util.Locale;
-/*     */ import jdk.xml.internal.JdkXmlUtils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DTDConfiguration
-/*     */   extends BasicParserConfiguration
-/*     */   implements XMLPullParserConfiguration
-/*     */ {
-/*     */   protected static final String WARN_ON_DUPLICATE_ATTDEF = "http://apache.org/xml/features/validation/warn-on-duplicate-attdef";
-/*     */   protected static final String WARN_ON_DUPLICATE_ENTITYDEF = "http://apache.org/xml/features/warn-on-duplicate-entitydef";
-/*     */   protected static final String WARN_ON_UNDECLARED_ELEMDEF = "http://apache.org/xml/features/validation/warn-on-undeclared-elemdef";
-/*     */   protected static final String ALLOW_JAVA_ENCODINGS = "http://apache.org/xml/features/allow-java-encodings";
-/*     */   protected static final String CONTINUE_AFTER_FATAL_ERROR = "http://apache.org/xml/features/continue-after-fatal-error";
-/*     */   protected static final String LOAD_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
-/*     */   protected static final String NOTIFY_BUILTIN_REFS = "http://apache.org/xml/features/scanner/notify-builtin-refs";
-/*     */   protected static final String NOTIFY_CHAR_REFS = "http://apache.org/xml/features/scanner/notify-char-refs";
-/*     */   protected static final String ERROR_REPORTER = "http://apache.org/xml/properties/internal/error-reporter";
-/*     */   protected static final String ENTITY_MANAGER = "http://apache.org/xml/properties/internal/entity-manager";
-/*     */   protected static final String DOCUMENT_SCANNER = "http://apache.org/xml/properties/internal/document-scanner";
-/*     */   protected static final String DTD_SCANNER = "http://apache.org/xml/properties/internal/dtd-scanner";
-/*     */   protected static final String XMLGRAMMAR_POOL = "http://apache.org/xml/properties/internal/grammar-pool";
-/*     */   protected static final String DTD_PROCESSOR = "http://apache.org/xml/properties/internal/dtd-processor";
-/*     */   protected static final String DTD_VALIDATOR = "http://apache.org/xml/properties/internal/validator/dtd";
-/*     */   protected static final String NAMESPACE_BINDER = "http://apache.org/xml/properties/internal/namespace-binder";
-/*     */   protected static final String DATATYPE_VALIDATOR_FACTORY = "http://apache.org/xml/properties/internal/datatype-validator-factory";
-/*     */   protected static final String VALIDATION_MANAGER = "http://apache.org/xml/properties/internal/validation-manager";
-/*     */   protected static final String JAXP_SCHEMA_LANGUAGE = "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
-/*     */   protected static final String JAXP_SCHEMA_SOURCE = "http://java.sun.com/xml/jaxp/properties/schemaSource";
-/*     */   protected static final String LOCALE = "http://apache.org/xml/properties/locale";
-/*     */   protected static final String XML_SECURITY_PROPERTY_MANAGER = "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager";
-/*     */   private static final String SECURITY_MANAGER = "http://apache.org/xml/properties/security-manager";
-/*     */   protected static final boolean PRINT_EXCEPTION_STACK_TRACE = false;
-/*     */   protected XMLGrammarPool fGrammarPool;
-/*     */   protected DTDDVFactory fDatatypeValidatorFactory;
-/*     */   protected XMLErrorReporter fErrorReporter;
-/*     */   protected XMLEntityManager fEntityManager;
-/*     */   protected XMLDocumentScanner fScanner;
-/*     */   protected XMLInputSource fInputSource;
-/*     */   protected XMLDTDScanner fDTDScanner;
-/*     */   protected XMLDTDProcessor fDTDProcessor;
-/*     */   protected XMLDTDValidator fDTDValidator;
-/*     */   protected XMLNamespaceBinder fNamespaceBinder;
-/*     */   protected ValidationManager fValidationManager;
-/*     */   protected XMLLocator fLocator;
-/*     */   protected boolean fParseInProgress = false;
-/*     */   
-/*     */   public DTDConfiguration() {
-/* 256 */     this((SymbolTable)null, (XMLGrammarPool)null, (XMLComponentManager)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DTDConfiguration(SymbolTable symbolTable) {
-/* 265 */     this(symbolTable, (XMLGrammarPool)null, (XMLComponentManager)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DTDConfiguration(SymbolTable symbolTable, XMLGrammarPool grammarPool) {
-/* 281 */     this(symbolTable, grammarPool, (XMLComponentManager)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DTDConfiguration(SymbolTable symbolTable, XMLGrammarPool grammarPool, XMLComponentManager parentSettings) {
-/* 299 */     super(symbolTable, parentSettings);
-/*     */ 
-/*     */     
-/* 302 */     String[] recognizedFeatures = { "http://apache.org/xml/features/continue-after-fatal-error", "http://apache.org/xml/features/nonvalidating/load-external-dtd", "jdk.xml.overrideDefaultParser" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 313 */     addRecognizedFeatures(recognizedFeatures);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 319 */     setFeature("http://apache.org/xml/features/continue-after-fatal-error", false);
-/* 320 */     setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", true);
-/*     */ 
-/*     */ 
-/*     */     
-/* 324 */     this.fFeatures.put("jdk.xml.overrideDefaultParser", Boolean.valueOf(JdkXmlUtils.OVERRIDE_PARSER_DEFAULT));
-/*     */ 
-/*     */     
-/* 327 */     String[] recognizedProperties = { "http://apache.org/xml/properties/internal/error-reporter", "http://apache.org/xml/properties/internal/entity-manager", "http://apache.org/xml/properties/internal/document-scanner", "http://apache.org/xml/properties/internal/dtd-scanner", "http://apache.org/xml/properties/internal/dtd-processor", "http://apache.org/xml/properties/internal/validator/dtd", "http://apache.org/xml/properties/internal/namespace-binder", "http://apache.org/xml/properties/internal/grammar-pool", "http://apache.org/xml/properties/internal/datatype-validator-factory", "http://apache.org/xml/properties/internal/validation-manager", "http://java.sun.com/xml/jaxp/properties/schemaSource", "http://java.sun.com/xml/jaxp/properties/schemaLanguage", "http://apache.org/xml/properties/locale", "http://apache.org/xml/properties/security-manager", "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 344 */     addRecognizedProperties(recognizedProperties);
-/*     */     
-/* 346 */     this.fGrammarPool = grammarPool;
-/* 347 */     if (this.fGrammarPool != null) {
-/* 348 */       setProperty("http://apache.org/xml/properties/internal/grammar-pool", this.fGrammarPool);
-/*     */     }
-/*     */     
-/* 351 */     this.fEntityManager = createEntityManager();
-/* 352 */     setProperty("http://apache.org/xml/properties/internal/entity-manager", this.fEntityManager);
-/* 353 */     addComponent(this.fEntityManager);
-/*     */     
-/* 355 */     this.fErrorReporter = createErrorReporter();
-/* 356 */     this.fErrorReporter.setDocumentLocator(this.fEntityManager.getEntityScanner());
-/* 357 */     setProperty("http://apache.org/xml/properties/internal/error-reporter", this.fErrorReporter);
-/* 358 */     addComponent(this.fErrorReporter);
-/*     */     
-/* 360 */     this.fScanner = createDocumentScanner();
-/* 361 */     setProperty("http://apache.org/xml/properties/internal/document-scanner", this.fScanner);
-/* 362 */     if (this.fScanner instanceof XMLComponent) {
-/* 363 */       addComponent((XMLComponent)this.fScanner);
-/*     */     }
-/*     */     
-/* 366 */     this.fDTDScanner = createDTDScanner();
-/* 367 */     if (this.fDTDScanner != null) {
-/* 368 */       setProperty("http://apache.org/xml/properties/internal/dtd-scanner", this.fDTDScanner);
-/* 369 */       if (this.fDTDScanner instanceof XMLComponent) {
-/* 370 */         addComponent((XMLComponent)this.fDTDScanner);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 374 */     this.fDTDProcessor = createDTDProcessor();
-/* 375 */     if (this.fDTDProcessor != null) {
-/* 376 */       setProperty("http://apache.org/xml/properties/internal/dtd-processor", this.fDTDProcessor);
-/* 377 */       if (this.fDTDProcessor instanceof XMLComponent) {
-/* 378 */         addComponent(this.fDTDProcessor);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 382 */     this.fDTDValidator = createDTDValidator();
-/* 383 */     if (this.fDTDValidator != null) {
-/* 384 */       setProperty("http://apache.org/xml/properties/internal/validator/dtd", this.fDTDValidator);
-/* 385 */       addComponent(this.fDTDValidator);
-/*     */     } 
-/*     */     
-/* 388 */     this.fNamespaceBinder = createNamespaceBinder();
-/* 389 */     if (this.fNamespaceBinder != null) {
-/* 390 */       setProperty("http://apache.org/xml/properties/internal/namespace-binder", this.fNamespaceBinder);
-/* 391 */       addComponent(this.fNamespaceBinder);
-/*     */     } 
-/*     */     
-/* 394 */     this.fDatatypeValidatorFactory = createDatatypeValidatorFactory();
-/* 395 */     if (this.fDatatypeValidatorFactory != null) {
-/* 396 */       setProperty("http://apache.org/xml/properties/internal/datatype-validator-factory", this.fDatatypeValidatorFactory);
-/*     */     }
-/*     */     
-/* 399 */     this.fValidationManager = createValidationManager();
-/*     */     
-/* 401 */     if (this.fValidationManager != null) {
-/* 402 */       setProperty("http://apache.org/xml/properties/internal/validation-manager", this.fValidationManager);
-/*     */     }
-/*     */     
-/* 405 */     if (this.fErrorReporter.getMessageFormatter("http://www.w3.org/TR/1998/REC-xml-19980210") == null) {
-/* 406 */       XMLMessageFormatter xmft = new XMLMessageFormatter();
-/* 407 */       this.fErrorReporter.putMessageFormatter("http://www.w3.org/TR/1998/REC-xml-19980210", xmft);
-/* 408 */       this.fErrorReporter.putMessageFormatter("http://www.w3.org/TR/1999/REC-xml-names-19990114", xmft);
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 413 */       setLocale(Locale.getDefault());
-/*     */     }
-/* 415 */     catch (XNIException xNIException) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 420 */     setProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", new XMLSecurityPropertyManager());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PropertyState getPropertyState(String propertyId) throws XMLConfigurationException {
-/* 429 */     if ("http://apache.org/xml/properties/locale".equals(propertyId)) {
-/* 430 */       return PropertyState.is(getLocale());
-/*     */     }
-/* 432 */     return super.getPropertyState(propertyId);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setProperty(String propertyId, Object value) throws XMLConfigurationException {
-/* 437 */     if ("http://apache.org/xml/properties/locale".equals(propertyId)) {
-/* 438 */       setLocale((Locale)value);
-/*     */     }
-/* 440 */     super.setProperty(propertyId, value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocale(Locale locale) throws XNIException {
-/* 452 */     super.setLocale(locale);
-/* 453 */     this.fErrorReporter.setLocale(locale);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInputSource(XMLInputSource inputSource) throws XMLConfigurationException, IOException {
-/* 482 */     this.fInputSource = inputSource;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean parse(boolean complete) throws XNIException, IOException {
-/* 505 */     if (this.fInputSource != null) {
-/*     */       
-/*     */       try {
-/* 508 */         reset();
-/* 509 */         this.fScanner.setInputSource(this.fInputSource);
-/* 510 */         this.fInputSource = null;
-/*     */       }
-/* 512 */       catch (XNIException ex) {
-/*     */ 
-/*     */         
-/* 515 */         throw ex;
-/*     */       }
-/* 517 */       catch (IOException ex) {
-/*     */ 
-/*     */         
-/* 520 */         throw ex;
-/*     */       }
-/* 522 */       catch (RuntimeException ex) {
-/*     */ 
-/*     */         
-/* 525 */         throw ex;
-/*     */       }
-/* 527 */       catch (Exception ex) {
-/*     */ 
-/*     */         
-/* 530 */         throw new XNIException(ex);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     try {
-/* 535 */       return this.fScanner.scanDocument(complete);
-/*     */     }
-/* 537 */     catch (XNIException ex) {
-/*     */ 
-/*     */       
-/* 540 */       throw ex;
-/*     */     }
-/* 542 */     catch (IOException ex) {
-/*     */ 
-/*     */       
-/* 545 */       throw ex;
-/*     */     }
-/* 547 */     catch (RuntimeException ex) {
-/*     */ 
-/*     */       
-/* 550 */       throw ex;
-/*     */     }
-/* 552 */     catch (Exception ex) {
-/*     */ 
-/*     */       
-/* 555 */       throw new XNIException(ex);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void cleanup() {
-/* 566 */     this.fEntityManager.closeReaders();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void parse(XMLInputSource source) throws XNIException, IOException {
-/* 583 */     if (this.fParseInProgress)
-/*     */     {
-/* 585 */       throw new XNIException("FWK005 parse may not be called while parsing.");
-/*     */     }
-/* 587 */     this.fParseInProgress = true;
-/*     */     
-/*     */     try {
-/* 590 */       setInputSource(source);
-/* 591 */       parse(true);
-/*     */     }
-/* 593 */     catch (XNIException ex) {
-/*     */ 
-/*     */       
-/* 596 */       throw ex;
-/*     */     }
-/* 598 */     catch (IOException ex) {
-/*     */ 
-/*     */       
-/* 601 */       throw ex;
-/*     */     }
-/* 603 */     catch (RuntimeException ex) {
-/*     */ 
-/*     */       
-/* 606 */       throw ex;
-/*     */     }
-/* 608 */     catch (Exception ex) {
-/*     */ 
-/*     */       
-/* 611 */       throw new XNIException(ex);
-/*     */     } finally {
-/*     */       
-/* 614 */       this.fParseInProgress = false;
-/*     */       
-/* 616 */       cleanup();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void reset() throws XNIException {
-/* 632 */     if (this.fValidationManager != null) {
-/* 633 */       this.fValidationManager.reset();
-/*     */     }
-/* 635 */     configurePipeline();
-/* 636 */     super.reset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void configurePipeline() {
-/* 650 */     if (this.fDTDValidator != null) {
-/* 651 */       this.fScanner.setDocumentHandler(this.fDTDValidator);
-/* 652 */       if (this.fFeatures.get("http://xml.org/sax/features/namespaces") == Boolean.TRUE) {
-/*     */ 
-/*     */         
-/* 655 */         this.fDTDValidator.setDocumentHandler(this.fNamespaceBinder);
-/* 656 */         this.fDTDValidator.setDocumentSource(this.fScanner);
-/* 657 */         this.fNamespaceBinder.setDocumentHandler(this.fDocumentHandler);
-/* 658 */         this.fNamespaceBinder.setDocumentSource(this.fDTDValidator);
-/* 659 */         this.fLastComponent = this.fNamespaceBinder;
-/*     */       } else {
-/*     */         
-/* 662 */         this.fDTDValidator.setDocumentHandler(this.fDocumentHandler);
-/* 663 */         this.fDTDValidator.setDocumentSource(this.fScanner);
-/* 664 */         this.fLastComponent = this.fDTDValidator;
-/*     */       }
-/*     */     
-/*     */     }
-/* 668 */     else if (this.fFeatures.get("http://xml.org/sax/features/namespaces") == Boolean.TRUE) {
-/* 669 */       this.fScanner.setDocumentHandler(this.fNamespaceBinder);
-/* 670 */       this.fNamespaceBinder.setDocumentHandler(this.fDocumentHandler);
-/* 671 */       this.fNamespaceBinder.setDocumentSource(this.fScanner);
-/* 672 */       this.fLastComponent = this.fNamespaceBinder;
-/*     */     } else {
-/*     */       
-/* 675 */       this.fScanner.setDocumentHandler(this.fDocumentHandler);
-/* 676 */       this.fLastComponent = this.fScanner;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 680 */     configureDTDPipeline();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void configureDTDPipeline() {
-/* 686 */     if (this.fDTDScanner != null) {
-/* 687 */       this.fProperties.put("http://apache.org/xml/properties/internal/dtd-scanner", this.fDTDScanner);
-/* 688 */       if (this.fDTDProcessor != null) {
-/* 689 */         this.fProperties.put("http://apache.org/xml/properties/internal/dtd-processor", this.fDTDProcessor);
-/* 690 */         this.fDTDScanner.setDTDHandler(this.fDTDProcessor);
-/* 691 */         this.fDTDProcessor.setDTDSource(this.fDTDScanner);
-/* 692 */         this.fDTDProcessor.setDTDHandler(this.fDTDHandler);
-/* 693 */         if (this.fDTDHandler != null) {
-/* 694 */           this.fDTDHandler.setDTDSource(this.fDTDProcessor);
-/*     */         }
-/*     */         
-/* 697 */         this.fDTDScanner.setDTDContentModelHandler(this.fDTDProcessor);
-/* 698 */         this.fDTDProcessor.setDTDContentModelSource(this.fDTDScanner);
-/* 699 */         this.fDTDProcessor.setDTDContentModelHandler(this.fDTDContentModelHandler);
-/* 700 */         if (this.fDTDContentModelHandler != null) {
-/* 701 */           this.fDTDContentModelHandler.setDTDContentModelSource(this.fDTDProcessor);
-/*     */         }
-/*     */       } else {
-/*     */         
-/* 705 */         this.fDTDScanner.setDTDHandler(this.fDTDHandler);
-/* 706 */         if (this.fDTDHandler != null) {
-/* 707 */           this.fDTDHandler.setDTDSource(this.fDTDScanner);
-/*     */         }
-/* 709 */         this.fDTDScanner.setDTDContentModelHandler(this.fDTDContentModelHandler);
-/* 710 */         if (this.fDTDContentModelHandler != null) {
-/* 711 */           this.fDTDContentModelHandler.setDTDContentModelSource(this.fDTDScanner);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FeatureState checkFeature(String featureId) throws XMLConfigurationException {
-/* 740 */     if (featureId.startsWith("http://apache.org/xml/features/")) {
-/* 741 */       int suffixLength = featureId.length() - "http://apache.org/xml/features/".length();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 749 */       if (suffixLength == "validation/dynamic".length() && featureId
-/* 750 */         .endsWith("validation/dynamic")) {
-/* 751 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 757 */       if (suffixLength == "validation/default-attribute-values".length() && featureId
-/* 758 */         .endsWith("validation/default-attribute-values"))
-/*     */       {
-/* 760 */         return FeatureState.NOT_SUPPORTED;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 765 */       if (suffixLength == "validation/validate-content-models".length() && featureId
-/* 766 */         .endsWith("validation/validate-content-models"))
-/*     */       {
-/* 768 */         return FeatureState.NOT_SUPPORTED;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 773 */       if (suffixLength == "nonvalidating/load-dtd-grammar".length() && featureId
-/* 774 */         .endsWith("nonvalidating/load-dtd-grammar")) {
-/* 775 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 780 */       if (suffixLength == "nonvalidating/load-external-dtd".length() && featureId
-/* 781 */         .endsWith("nonvalidating/load-external-dtd")) {
-/* 782 */         return FeatureState.RECOGNIZED;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 788 */       if (suffixLength == "validation/validate-datatypes".length() && featureId
-/* 789 */         .endsWith("validation/validate-datatypes")) {
-/* 790 */         return FeatureState.NOT_SUPPORTED;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 798 */     return super.checkFeature(featureId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected PropertyState checkProperty(String propertyId) throws XMLConfigurationException {
-/* 822 */     if (propertyId.startsWith("http://apache.org/xml/properties/")) {
-/* 823 */       int suffixLength = propertyId.length() - "http://apache.org/xml/properties/".length();
-/*     */       
-/* 825 */       if (suffixLength == "internal/dtd-scanner".length() && propertyId
-/* 826 */         .endsWith("internal/dtd-scanner")) {
-/* 827 */         return PropertyState.RECOGNIZED;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 835 */     return super.checkProperty(propertyId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected XMLEntityManager createEntityManager() {
-/* 843 */     return new XMLEntityManager();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected XMLErrorReporter createErrorReporter() {
-/* 848 */     return new XMLErrorReporter();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected XMLDocumentScanner createDocumentScanner() {
-/* 853 */     return new XMLDocumentScannerImpl();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected XMLDTDScanner createDTDScanner() {
-/* 858 */     return new XMLDTDScannerImpl();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected XMLDTDProcessor createDTDProcessor() {
-/* 863 */     return new XMLDTDProcessor();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected XMLDTDValidator createDTDValidator() {
-/* 868 */     return new XMLDTDValidator();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected XMLNamespaceBinder createNamespaceBinder() {
-/* 873 */     return new XMLNamespaceBinder();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected DTDDVFactory createDatatypeValidatorFactory() {
-/* 878 */     return DTDDVFactory.getInstance();
-/*     */   }
-/*     */   protected ValidationManager createValidationManager() {
-/* 881 */     return new ValidationManager();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\parsers\DTDConfiguration.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.parsers;
+
+import java.io.IOException;
+import java.util.Locale;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.XMLDTDScannerImpl;
+import com.sun.org.apache.xerces.internal.impl.XMLDocumentScannerImpl;
+import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
+import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
+import com.sun.org.apache.xerces.internal.impl.XMLNamespaceBinder;
+import com.sun.org.apache.xerces.internal.impl.dtd.XMLDTDProcessor;
+import com.sun.org.apache.xerces.internal.impl.dtd.XMLDTDValidator;
+import com.sun.org.apache.xerces.internal.impl.dv.DTDDVFactory;
+import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
+import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
+import com.sun.org.apache.xerces.internal.util.FeatureState;
+import com.sun.org.apache.xerces.internal.util.PropertyState;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDScanner;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentScanner;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLPullParserConfiguration;
+import jdk.xml.internal.JdkXmlUtils;
+
+/**
+ * This is the DTD-only parser configuration.  It extends the basic
+ * configuration with a standard set of parser components appropriate
+ * to DTD-centric validation. Since
+ * the Xerces2 reference implementation document and DTD scanner
+ * implementations are capable of acting as pull parsers, this
+ * configuration implements the
+ * <code>XMLPullParserConfiguration</code> interface.
+ * <p>
+ * In addition to the features and properties recognized by the base
+ * parser configuration, this class recognizes these additional
+ * features and properties:
+ * <ul>
+ * <li>Features
+ *  <ul>
+ *   <li>http://apache.org/xml/features/validation/warn-on-duplicate-attdef</li>
+ *   <li>http://apache.org/xml/features/validation/warn-on-undeclared-elemdef</li>
+ *   <li>http://apache.org/xml/features/allow-java-encodings</li>
+ *   <li>http://apache.org/xml/features/continue-after-fatal-error</li>
+ *   <li>http://apache.org/xml/features/load-external-dtd</li>
+ *  </ul>
+ * <li>Properties
+ *  <ul>
+ *   <li>http://apache.org/xml/properties/internal/error-reporter</li>
+ *   <li>http://apache.org/xml/properties/internal/entity-manager</li>
+ *   <li>http://apache.org/xml/properties/internal/document-scanner</li>
+ *   <li>http://apache.org/xml/properties/internal/dtd-scanner</li>
+ *   <li>http://apache.org/xml/properties/internal/grammar-pool</li>
+ *   <li>http://apache.org/xml/properties/internal/validator/dtd</li>
+ *   <li>http://apache.org/xml/properties/internal/datatype-validator-factory</li>
+ *  </ul>
+ * </ul>
+ *
+ * @author Arnaud  Le Hors, IBM
+ * @author Andy Clark, IBM
+ * @author Neil Graham, IBM
+ *
+ * @version $Id: DTDConfiguration.java,v 1.7 2010-11-01 04:40:09 joehw Exp $
+ */
+public class DTDConfiguration
+    extends BasicParserConfiguration
+    implements XMLPullParserConfiguration {
+
+    //
+    // Constants
+    //
+
+    // feature identifiers
+
+    /** Feature identifier: warn on duplicate attribute definition. */
+    protected static final String WARN_ON_DUPLICATE_ATTDEF =
+        Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_DUPLICATE_ATTDEF_FEATURE;
+
+    /** Feature identifier: warn on duplicate entity definition. */
+    protected static final String WARN_ON_DUPLICATE_ENTITYDEF =
+        Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_DUPLICATE_ENTITYDEF_FEATURE;
+
+    /** Feature identifier: warn on undeclared element definition. */
+    protected static final String WARN_ON_UNDECLARED_ELEMDEF =
+        Constants.XERCES_FEATURE_PREFIX + Constants.WARN_ON_UNDECLARED_ELEMDEF_FEATURE;
+
+    /** Feature identifier: allow Java encodings. */
+    protected static final String ALLOW_JAVA_ENCODINGS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.ALLOW_JAVA_ENCODINGS_FEATURE;
+
+    /** Feature identifier: continue after fatal error. */
+    protected static final String CONTINUE_AFTER_FATAL_ERROR =
+        Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE;
+
+    /** Feature identifier: load external DTD. */
+    protected static final String LOAD_EXTERNAL_DTD =
+        Constants.XERCES_FEATURE_PREFIX + Constants.LOAD_EXTERNAL_DTD_FEATURE;
+
+    /** Feature identifier: notify built-in refereces. */
+    protected static final String NOTIFY_BUILTIN_REFS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NOTIFY_BUILTIN_REFS_FEATURE;
+
+    /** Feature identifier: notify character refereces. */
+    protected static final String NOTIFY_CHAR_REFS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NOTIFY_CHAR_REFS_FEATURE;
+
+
+    // property identifiers
+
+    /** Property identifier: error reporter. */
+    protected static final String ERROR_REPORTER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY;
+
+    /** Property identifier: entity manager. */
+    protected static final String ENTITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
+
+    /** Property identifier document scanner: */
+    protected static final String DOCUMENT_SCANNER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.DOCUMENT_SCANNER_PROPERTY;
+
+    /** Property identifier: DTD scanner. */
+    protected static final String DTD_SCANNER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.DTD_SCANNER_PROPERTY;
+
+    /** Property identifier: grammar pool. */
+    protected static final String XMLGRAMMAR_POOL =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
+
+    /** Property identifier: DTD loader. */
+    protected static final String DTD_PROCESSOR =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.DTD_PROCESSOR_PROPERTY;
+
+    /** Property identifier: DTD validator. */
+    protected static final String DTD_VALIDATOR =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.DTD_VALIDATOR_PROPERTY;
+
+    /** Property identifier: namespace binder. */
+    protected static final String NAMESPACE_BINDER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.NAMESPACE_BINDER_PROPERTY;
+
+    /** Property identifier: datatype validator factory. */
+    protected static final String DATATYPE_VALIDATOR_FACTORY =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.DATATYPE_VALIDATOR_FACTORY_PROPERTY;
+
+    protected static final String VALIDATION_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.VALIDATION_MANAGER_PROPERTY;
+
+    /** Property identifier: JAXP schema language / DOM schema-type. */
+    protected static final String JAXP_SCHEMA_LANGUAGE =
+        Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_LANGUAGE;
+
+    /** Property identifier: JAXP schema source/ DOM schema-location. */
+    protected static final String JAXP_SCHEMA_SOURCE =
+        Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_SOURCE;
+
+    /** Property identifier: locale. */
+    protected static final String LOCALE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.LOCALE_PROPERTY;
+
+      /** Property identifier: Security property manager. */
+      protected static final String XML_SECURITY_PROPERTY_MANAGER =
+              Constants.XML_SECURITY_PROPERTY_MANAGER;
+
+     /** Property identifier: Security manager. */
+     private static final String SECURITY_MANAGER = Constants.SECURITY_MANAGER;
+
+    // debugging
+
+    /** Set to true and recompile to print exception stack trace. */
+    protected static final boolean PRINT_EXCEPTION_STACK_TRACE = false;
+
+    //
+    // Data
+    //
+
+    // components (non-configurable)
+
+    /** Grammar pool. */
+    protected XMLGrammarPool fGrammarPool;
+
+    /** Datatype validator factory. */
+    protected DTDDVFactory fDatatypeValidatorFactory;
+
+    // components (configurable)
+
+    /** Error reporter. */
+    protected XMLErrorReporter fErrorReporter;
+
+    /** Entity manager. */
+    protected XMLEntityManager fEntityManager;
+
+    /** Document scanner. */
+    protected XMLDocumentScanner fScanner;
+
+    /** Input Source */
+    protected XMLInputSource fInputSource;
+
+    /** DTD scanner. */
+    protected XMLDTDScanner fDTDScanner;
+
+    /** DTD Processor . */
+    protected XMLDTDProcessor fDTDProcessor;
+
+    /** DTD Validator. */
+    protected XMLDTDValidator fDTDValidator;
+
+    /** Namespace binder. */
+    protected XMLNamespaceBinder fNamespaceBinder;
+
+    protected ValidationManager fValidationManager;
+    // state
+
+    /** Locator */
+    protected XMLLocator fLocator;
+
+    /**
+     * True if a parse is in progress. This state is needed because
+     * some features/properties cannot be set while parsing (e.g.
+     * validation and namespaces).
+     */
+    protected boolean fParseInProgress = false;
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public DTDConfiguration() {
+        this(null, null, null);
+    } // <init>()
+
+    /**
+     * Constructs a parser configuration using the specified symbol table.
+     *
+     * @param symbolTable The symbol table to use.
+     */
+    public DTDConfiguration(SymbolTable symbolTable) {
+        this(symbolTable, null, null);
+    } // <init>(SymbolTable)
+
+    /**
+     * Constructs a parser configuration using the specified symbol table and
+     * grammar pool.
+     * <p>
+     * <strong>REVISIT:</strong>
+     * Grammar pool will be updated when the new validation engine is
+     * implemented.
+     *
+     * @param symbolTable The symbol table to use.
+     * @param grammarPool The grammar pool to use.
+     */
+    public DTDConfiguration(SymbolTable symbolTable,
+                                       XMLGrammarPool grammarPool) {
+        this(symbolTable, grammarPool, null);
+    } // <init>(SymbolTable,XMLGrammarPool)
+
+    /**
+     * Constructs a parser configuration using the specified symbol table,
+     * grammar pool, and parent settings.
+     * <p>
+     * <strong>REVISIT:</strong>
+     * Grammar pool will be updated when the new validation engine is
+     * implemented.
+     *
+     * @param symbolTable    The symbol table to use.
+     * @param grammarPool    The grammar pool to use.
+     * @param parentSettings The parent settings.
+     */
+    public DTDConfiguration(SymbolTable symbolTable,
+                                       XMLGrammarPool grammarPool,
+                                       XMLComponentManager parentSettings) {
+        super(symbolTable, parentSettings);
+
+        // add default recognized features
+        final String[] recognizedFeatures = {
+            //WARN_ON_DUPLICATE_ATTDEF,     // from XMLDTDScannerImpl
+            //WARN_ON_UNDECLARED_ELEMDEF,   // from XMLDTDScannerImpl
+            //ALLOW_JAVA_ENCODINGS,         // from XMLEntityManager
+            CONTINUE_AFTER_FATAL_ERROR,
+            LOAD_EXTERNAL_DTD,    // from XMLDTDScannerImpl
+            //NOTIFY_BUILTIN_REFS,  // from XMLDocumentFragmentScannerImpl
+            //NOTIFY_CHAR_REFS,         // from XMLDocumentFragmentScannerImpl
+            //WARN_ON_DUPLICATE_ENTITYDEF,  // from XMLEntityManager
+            JdkXmlUtils.OVERRIDE_PARSER
+        };
+        addRecognizedFeatures(recognizedFeatures);
+
+        // set state for default features
+        //setFeature(WARN_ON_DUPLICATE_ATTDEF, false);  // from XMLDTDScannerImpl
+        //setFeature(WARN_ON_UNDECLARED_ELEMDEF, false);  // from XMLDTDScannerImpl
+        //setFeature(ALLOW_JAVA_ENCODINGS, false);      // from XMLEntityManager
+        setFeature(CONTINUE_AFTER_FATAL_ERROR, false);
+        setFeature(LOAD_EXTERNAL_DTD, true);      // from XMLDTDScannerImpl
+        //setFeature(NOTIFY_BUILTIN_REFS, false);   // from XMLDocumentFragmentScannerImpl
+        //setFeature(NOTIFY_CHAR_REFS, false);      // from XMLDocumentFragmentScannerImpl
+        //setFeature(WARN_ON_DUPLICATE_ENTITYDEF, false);   // from XMLEntityManager
+        fFeatures.put(JdkXmlUtils.OVERRIDE_PARSER, JdkXmlUtils.OVERRIDE_PARSER_DEFAULT);
+
+        // add default recognized properties
+        final String[] recognizedProperties = {
+            ERROR_REPORTER,
+            ENTITY_MANAGER,
+            DOCUMENT_SCANNER,
+            DTD_SCANNER,
+            DTD_PROCESSOR,
+            DTD_VALIDATOR,
+            NAMESPACE_BINDER,
+            XMLGRAMMAR_POOL,
+            DATATYPE_VALIDATOR_FACTORY,
+            VALIDATION_MANAGER,
+            JAXP_SCHEMA_SOURCE,
+            JAXP_SCHEMA_LANGUAGE,
+            LOCALE,
+            SECURITY_MANAGER,
+            XML_SECURITY_PROPERTY_MANAGER
+        };
+        addRecognizedProperties(recognizedProperties);
+
+        fGrammarPool = grammarPool;
+        if(fGrammarPool != null){
+            setProperty(XMLGRAMMAR_POOL, fGrammarPool);
+        }
+
+        fEntityManager = createEntityManager();
+        setProperty(ENTITY_MANAGER, fEntityManager);
+        addComponent(fEntityManager);
+
+        fErrorReporter = createErrorReporter();
+        fErrorReporter.setDocumentLocator(fEntityManager.getEntityScanner());
+        setProperty(ERROR_REPORTER, fErrorReporter);
+        addComponent(fErrorReporter);
+
+        fScanner = createDocumentScanner();
+        setProperty(DOCUMENT_SCANNER, fScanner);
+        if (fScanner instanceof XMLComponent) {
+            addComponent((XMLComponent)fScanner);
+        }
+
+        fDTDScanner = createDTDScanner();
+        if (fDTDScanner != null) {
+            setProperty(DTD_SCANNER, fDTDScanner);
+            if (fDTDScanner instanceof XMLComponent) {
+                addComponent((XMLComponent)fDTDScanner);
+            }
+        }
+
+        fDTDProcessor = createDTDProcessor();
+        if (fDTDProcessor != null) {
+            setProperty(DTD_PROCESSOR, fDTDProcessor);
+            if (fDTDProcessor instanceof XMLComponent) {
+                addComponent((XMLComponent)fDTDProcessor);
+            }
+        }
+
+        fDTDValidator = createDTDValidator();
+        if (fDTDValidator != null) {
+            setProperty(DTD_VALIDATOR, fDTDValidator);
+            addComponent(fDTDValidator);
+        }
+
+        fNamespaceBinder = createNamespaceBinder();
+        if (fNamespaceBinder != null) {
+            setProperty(NAMESPACE_BINDER, fNamespaceBinder);
+            addComponent(fNamespaceBinder);
+        }
+
+        fDatatypeValidatorFactory = createDatatypeValidatorFactory();
+        if (fDatatypeValidatorFactory != null) {
+            setProperty(DATATYPE_VALIDATOR_FACTORY,
+                        fDatatypeValidatorFactory);
+        }
+        fValidationManager = createValidationManager();
+
+        if (fValidationManager != null) {
+            setProperty (VALIDATION_MANAGER, fValidationManager);
+        }
+        // add message formatters
+        if (fErrorReporter.getMessageFormatter(XMLMessageFormatter.XML_DOMAIN) == null) {
+            XMLMessageFormatter xmft = new XMLMessageFormatter();
+            fErrorReporter.putMessageFormatter(XMLMessageFormatter.XML_DOMAIN, xmft);
+            fErrorReporter.putMessageFormatter(XMLMessageFormatter.XMLNS_DOMAIN, xmft);
+        }
+
+        // set locale
+        try {
+            setLocale(Locale.getDefault());
+        }
+        catch (XNIException e) {
+            // do nothing
+            // REVISIT: What is the right thing to do? -Ac
+        }
+
+        setProperty(XML_SECURITY_PROPERTY_MANAGER, new XMLSecurityPropertyManager());
+    } // <init>(SymbolTable,XMLGrammarPool)
+
+    //
+    // Public methods
+    //
+
+    public PropertyState getPropertyState(String propertyId)
+        throws XMLConfigurationException {
+        if (LOCALE.equals(propertyId)) {
+            return PropertyState.is(getLocale());
+        }
+        return super.getPropertyState(propertyId);
+    }
+
+    public void setProperty(String propertyId, Object value)
+        throws XMLConfigurationException {
+        if (LOCALE.equals(propertyId)) {
+            setLocale((Locale) value);
+        }
+        super.setProperty(propertyId, value);
+    }
+
+    /**
+     * Set the locale to use for messages.
+     *
+     * @param locale The locale object to use for localization of messages.
+     *
+     * @exception XNIException Thrown if the parser does not support the
+     *                         specified locale.
+     */
+    public void setLocale(Locale locale) throws XNIException {
+        super.setLocale(locale);
+        fErrorReporter.setLocale(locale);
+    } // setLocale(Locale)
+
+    //
+    // XMLPullParserConfiguration methods
+    //
+
+    // parsing
+
+    /**
+     * Sets the input source for the document to parse.
+     *
+     * @param inputSource The document's input source.
+     *
+     * @exception XMLConfigurationException Thrown if there is a
+     *                        configuration error when initializing the
+     *                        parser.
+     * @exception IOException Thrown on I/O error.
+     *
+     * @see #parse(boolean)
+     */
+    public void setInputSource(XMLInputSource inputSource)
+        throws XMLConfigurationException, IOException {
+
+        // REVISIT: this method used to reset all the components and
+        //          construct the pipeline. Now reset() is called
+        //          in parse (boolean) just before we parse the document
+        //          Should this method still throw exceptions..?
+
+        fInputSource = inputSource;
+
+    } // setInputSource(XMLInputSource)
+
+    /**
+     * Parses the document in a pull parsing fashion.
+     *
+     * @param complete True if the pull parser should parse the
+     *                 remaining document completely.
+     *
+     * @return True if there is more document to parse.
+     *
+     * @exception XNIException Any XNI exception, possibly wrapping
+     *                         another exception.
+     * @exception IOException  An IO exception from the parser, possibly
+     *                         from a byte stream or character stream
+     *                         supplied by the parser.
+     *
+     * @see #setInputSource
+     */
+    public boolean parse(boolean complete) throws XNIException, IOException {
+        //
+        // reset and configure pipeline and set InputSource.
+        if (fInputSource !=null) {
+            try {
+                // resets and sets the pipeline.
+                reset();
+                fScanner.setInputSource(fInputSource);
+                fInputSource = null;
+            }
+            catch (XNIException ex) {
+                if (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                throw ex;
+            }
+            catch (IOException ex) {
+                if (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                throw ex;
+            }
+            catch (RuntimeException ex) {
+                if (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                throw ex;
+            }
+            catch (Exception ex) {
+                if (PRINT_EXCEPTION_STACK_TRACE)
+                    ex.printStackTrace();
+                throw new XNIException(ex);
+            }
+        }
+
+        try {
+            return fScanner.scanDocument(complete);
+        }
+        catch (XNIException ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw ex;
+        }
+        catch (IOException ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw ex;
+        }
+        catch (RuntimeException ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw ex;
+        }
+        catch (Exception ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw new XNIException(ex);
+        }
+
+    } // parse(boolean):boolean
+
+    /**
+     * If the application decides to terminate parsing before the xml document
+     * is fully parsed, the application should call this method to free any
+     * resource allocated during parsing. For example, close all opened streams.
+     */
+    public void cleanup() {
+        fEntityManager.closeReaders();
+    }
+
+    //
+    // XMLParserConfiguration methods
+    //
+
+    /**
+     * Parses the specified input source.
+     *
+     * @param source The input source.
+     *
+     * @exception XNIException Throws exception on XNI error.
+     * @exception java.io.IOException Throws exception on i/o error.
+     */
+    public void parse(XMLInputSource source) throws XNIException, IOException {
+
+        if (fParseInProgress) {
+            // REVISIT - need to add new error message
+            throw new XNIException("FWK005 parse may not be called while parsing.");
+        }
+        fParseInProgress = true;
+
+        try {
+            setInputSource(source);
+            parse(true);
+        }
+        catch (XNIException ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw ex;
+        }
+        catch (IOException ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw ex;
+        }
+        catch (RuntimeException ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw ex;
+        }
+        catch (Exception ex) {
+            if (PRINT_EXCEPTION_STACK_TRACE)
+                ex.printStackTrace();
+            throw new XNIException(ex);
+        }
+        finally {
+            fParseInProgress = false;
+            // close all streams opened by xerces
+            this.cleanup();
+        }
+
+    } // parse(InputSource)
+
+    //
+    // Protected methods
+    //
+
+    /**
+     * Reset all components before parsing.
+     *
+     * @throws XNIException Thrown if an error occurs during initialization.
+     */
+    protected void reset() throws XNIException {
+
+        if (fValidationManager != null)
+            fValidationManager.reset();
+        // configure the pipeline and initialize the components
+        configurePipeline();
+        super.reset();
+    } // reset()
+
+    /** Configures the pipeline. */
+        protected void configurePipeline() {
+
+                // REVISIT: This should be better designed. In other words, we
+                //          need to figure out what is the best way for people to
+                //          re-use *most* of the standard configuration but do
+                //          things common things such as remove a component (e.g.
+                //          the validator), insert a new component (e.g. XInclude),
+                //          etc... -Ac
+
+                // setup document pipeline
+                if (fDTDValidator != null) {
+                        fScanner.setDocumentHandler(fDTDValidator);
+                        if (fFeatures.get(NAMESPACES) == Boolean.TRUE) {
+
+                                // filters
+                                fDTDValidator.setDocumentHandler(fNamespaceBinder);
+                                fDTDValidator.setDocumentSource(fScanner);
+                                fNamespaceBinder.setDocumentHandler(fDocumentHandler);
+                                fNamespaceBinder.setDocumentSource(fDTDValidator);
+                                fLastComponent = fNamespaceBinder;
+                        }
+                        else {
+                                fDTDValidator.setDocumentHandler(fDocumentHandler);
+                                fDTDValidator.setDocumentSource(fScanner);
+                                fLastComponent = fDTDValidator;
+                        }
+                }
+                else {
+                        if (fFeatures.get(NAMESPACES) == Boolean.TRUE) {
+                                fScanner.setDocumentHandler(fNamespaceBinder);
+                                fNamespaceBinder.setDocumentHandler(fDocumentHandler);
+                                fNamespaceBinder.setDocumentSource(fScanner);
+                                fLastComponent = fNamespaceBinder;
+                        }
+                        else {
+                                fScanner.setDocumentHandler(fDocumentHandler);
+                                fLastComponent = fScanner;
+                        }
+                }
+
+        configureDTDPipeline();
+        } // configurePipeline()
+
+    protected void configureDTDPipeline (){
+
+        // setup dtd pipeline
+        if (fDTDScanner != null) {
+            fProperties.put(DTD_SCANNER, fDTDScanner);
+            if (fDTDProcessor != null) {
+                fProperties.put(DTD_PROCESSOR, fDTDProcessor);
+                fDTDScanner.setDTDHandler(fDTDProcessor);
+                fDTDProcessor.setDTDSource(fDTDScanner);
+                fDTDProcessor.setDTDHandler(fDTDHandler);
+                if (fDTDHandler != null) {
+                    fDTDHandler.setDTDSource(fDTDProcessor);
+                }
+
+                fDTDScanner.setDTDContentModelHandler(fDTDProcessor);
+                fDTDProcessor.setDTDContentModelSource(fDTDScanner);
+                fDTDProcessor.setDTDContentModelHandler(fDTDContentModelHandler);
+                if (fDTDContentModelHandler != null) {
+                    fDTDContentModelHandler.setDTDContentModelSource(fDTDProcessor);
+                }
+            }
+            else {
+                fDTDScanner.setDTDHandler(fDTDHandler);
+                if (fDTDHandler != null) {
+                    fDTDHandler.setDTDSource(fDTDScanner);
+                }
+                fDTDScanner.setDTDContentModelHandler(fDTDContentModelHandler);
+                if (fDTDContentModelHandler != null) {
+                    fDTDContentModelHandler.setDTDContentModelSource(fDTDScanner);
+                }
+            }
+        }
+
+
+    }
+
+    // features and properties
+
+    /**
+     * Check a feature. If feature is know and supported, this method simply
+     * returns. Otherwise, the appropriate exception is thrown.
+     *
+     * @param featureId The unique identifier (URI) of the feature.
+     *
+     * @throws XMLConfigurationException Thrown for configuration error.
+     *                                   In general, components should
+     *                                   only throw this exception if
+     *                                   it is <strong>really</strong>
+     *                                   a critical error.
+     */
+    protected FeatureState checkFeature(String featureId)
+        throws XMLConfigurationException {
+
+        //
+        // Xerces Features
+        //
+
+        if (featureId.startsWith(Constants.XERCES_FEATURE_PREFIX)) {
+            final int suffixLength = featureId.length() - Constants.XERCES_FEATURE_PREFIX.length();
+
+            //
+            // http://apache.org/xml/features/validation/dynamic
+            //   Allows the parser to validate a document only when it
+            //   contains a grammar. Validation is turned on/off based
+            //   on each document instance, automatically.
+            //
+            if (suffixLength == Constants.DYNAMIC_VALIDATION_FEATURE.length() &&
+                featureId.endsWith(Constants.DYNAMIC_VALIDATION_FEATURE)) {
+                return FeatureState.RECOGNIZED;
+            }
+
+            //
+            // http://apache.org/xml/features/validation/default-attribute-values
+            //
+            if (suffixLength == Constants.DEFAULT_ATTRIBUTE_VALUES_FEATURE.length() &&
+                featureId.endsWith(Constants.DEFAULT_ATTRIBUTE_VALUES_FEATURE)) {
+                // REVISIT
+                return FeatureState.NOT_SUPPORTED;
+            }
+            //
+            // http://apache.org/xml/features/validation/default-attribute-values
+            //
+            if (suffixLength == Constants.VALIDATE_CONTENT_MODELS_FEATURE.length() &&
+                featureId.endsWith(Constants.VALIDATE_CONTENT_MODELS_FEATURE)) {
+                // REVISIT
+                return FeatureState.NOT_SUPPORTED;
+            }
+            //
+            // http://apache.org/xml/features/validation/nonvalidating/load-dtd-grammar
+            //
+            if (suffixLength == Constants.LOAD_DTD_GRAMMAR_FEATURE.length() &&
+                featureId.endsWith(Constants.LOAD_DTD_GRAMMAR_FEATURE)) {
+                return FeatureState.RECOGNIZED;
+            }
+            //
+            // http://apache.org/xml/features/validation/nonvalidating/load-external-dtd
+            //
+            if (suffixLength == Constants.LOAD_EXTERNAL_DTD_FEATURE.length() &&
+                featureId.endsWith(Constants.LOAD_EXTERNAL_DTD_FEATURE)) {
+                return FeatureState.RECOGNIZED;
+            }
+
+            //
+            // http://apache.org/xml/features/validation/default-attribute-values
+            //
+            if (suffixLength == Constants.VALIDATE_DATATYPES_FEATURE.length() &&
+                featureId.endsWith(Constants.VALIDATE_DATATYPES_FEATURE)) {
+                return FeatureState.NOT_SUPPORTED;
+            }
+        }
+
+        //
+        // Not recognized
+        //
+
+        return super.checkFeature(featureId);
+
+    } // checkFeature(String)
+
+    /**
+     * Check a property. If the property is know and supported, this method
+     * simply returns. Otherwise, the appropriate exception is thrown.
+     *
+     * @param propertyId The unique identifier (URI) of the property
+     *                   being set.
+     *
+     * @throws XMLConfigurationException Thrown for configuration error.
+     *                                   In general, components should
+     *                                   only throw this exception if
+     *                                   it is <strong>really</strong>
+     *                                   a critical error.
+     */
+    protected PropertyState checkProperty(String propertyId)
+        throws XMLConfigurationException {
+
+        //
+        // Xerces Properties
+        //
+
+        if (propertyId.startsWith(Constants.XERCES_PROPERTY_PREFIX)) {
+            final int suffixLength = propertyId.length() - Constants.XERCES_PROPERTY_PREFIX.length();
+
+            if (suffixLength == Constants.DTD_SCANNER_PROPERTY.length() &&
+                propertyId.endsWith(Constants.DTD_SCANNER_PROPERTY)) {
+                return PropertyState.RECOGNIZED;
+            }
+        }
+
+        //
+        // Not recognized
+        //
+
+        return super.checkProperty(propertyId);
+
+    } // checkProperty(String)
+
+    // factory methods
+
+    /** Creates an entity manager. */
+    protected XMLEntityManager createEntityManager() {
+        return new XMLEntityManager();
+    } // createEntityManager():XMLEntityManager
+
+    /** Creates an error reporter. */
+    protected XMLErrorReporter createErrorReporter() {
+        return new XMLErrorReporter();
+    } // createErrorReporter():XMLErrorReporter
+
+    /** Create a document scanner. */
+    protected XMLDocumentScanner createDocumentScanner() {
+        return new XMLDocumentScannerImpl();
+    } // createDocumentScanner():XMLDocumentScanner
+
+    /** Create a DTD scanner. */
+    protected XMLDTDScanner createDTDScanner() {
+        return new XMLDTDScannerImpl();
+    } // createDTDScanner():XMLDTDScanner
+
+    /** Create a DTD loader . */
+    protected XMLDTDProcessor createDTDProcessor() {
+        return new XMLDTDProcessor();
+    } // createDTDProcessor():XMLDTDProcessor
+
+    /** Create a DTD validator. */
+    protected XMLDTDValidator createDTDValidator() {
+        return new XMLDTDValidator();
+    } // createDTDValidator():XMLDTDValidator
+
+    /** Create a namespace binder. */
+    protected XMLNamespaceBinder createNamespaceBinder() {
+        return new XMLNamespaceBinder();
+    } // createNamespaceBinder():XMLNamespaceBinder
+
+    /** Create a datatype validator factory. */
+    protected DTDDVFactory createDatatypeValidatorFactory() {
+        return DTDDVFactory.getInstance();
+    } // createDatatypeValidatorFactory():DatatypeValidatorFactory
+    protected ValidationManager createValidationManager(){
+        return new ValidationManager();
+    }
+
+} // class DTDConfiguration

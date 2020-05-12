@@ -1,79 +1,73 @@
-/*    */ package com.sun.corba.se.impl.presentation.rmi;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-/*    */ import java.io.SerializablePermission;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class StubFactoryDynamicBase
-/*    */   extends StubFactoryBase
-/*    */ {
-/*    */   protected final ClassLoader loader;
-/*    */   
-/*    */   private static Void checkPermission() {
-/* 43 */     SecurityManager securityManager = System.getSecurityManager();
-/* 44 */     if (securityManager != null) {
-/* 45 */       securityManager.checkPermission(new SerializablePermission("enableSubclassImplementation"));
-/*    */     }
-/*    */     
-/* 48 */     return null;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   private StubFactoryDynamicBase(Void paramVoid, PresentationManager.ClassData paramClassData, ClassLoader paramClassLoader) {
-/* 53 */     super(paramClassData);
-/*    */ 
-/*    */     
-/* 56 */     if (paramClassLoader == null) {
-/* 57 */       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-/* 58 */       if (classLoader == null)
-/* 59 */         classLoader = ClassLoader.getSystemClassLoader(); 
-/* 60 */       this.loader = classLoader;
-/*    */     } else {
-/* 62 */       this.loader = paramClassLoader;
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public StubFactoryDynamicBase(PresentationManager.ClassData paramClassData, ClassLoader paramClassLoader) {
-/* 69 */     this(checkPermission(), paramClassData, paramClassLoader);
-/*    */   }
-/*    */   
-/*    */   public abstract Object makeStub();
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubFactoryDynamicBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+import java.io.SerializablePermission;
+import java.lang.reflect.InvocationHandler ;
+import java.lang.reflect.Proxy ;
+
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager ;
+import com.sun.corba.se.spi.presentation.rmi.DynamicStub ;
+
+import com.sun.corba.se.spi.orbutil.proxy.InvocationHandlerFactory ;
+import com.sun.corba.se.spi.orbutil.proxy.LinkedInvocationHandler ;
+
+public abstract class StubFactoryDynamicBase extends StubFactoryBase
+{
+    protected final ClassLoader loader ;
+
+    private static Void checkPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SerializablePermission(
+                    "enableSubclassImplementation"));
+        }
+        return null;
+    }
+
+    private StubFactoryDynamicBase(Void unused,
+            PresentationManager.ClassData classData, ClassLoader loader) {
+        super(classData);
+        // this.loader must not be null, or the newProxyInstance call
+        // will fail.
+        if (loader == null) {
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            if (cl == null)
+                cl = ClassLoader.getSystemClassLoader();
+            this.loader = cl ;
+        } else {
+            this.loader = loader ;
+        }
+    }
+
+    public StubFactoryDynamicBase( PresentationManager.ClassData classData,
+        ClassLoader loader )
+    {
+        this (checkPermission(), classData, loader);
+    }
+
+    public abstract org.omg.CORBA.Object makeStub() ;
+}

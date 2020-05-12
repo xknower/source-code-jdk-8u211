@@ -1,513 +1,508 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import com.sun.org.apache.xml.internal.serializer.ElemDesc;
-/*     */ import com.sun.org.apache.xml.internal.serializer.ToHTMLStream;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class LiteralElement
-/*     */   extends Instruction
-/*     */ {
-/*     */   private String _name;
-/*  49 */   private LiteralElement _literalElemParent = null;
-/*  50 */   private List<SyntaxTreeNode> _attributeElements = null;
-/*  51 */   private Map<String, String> _accessedPrefixes = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean _allAttributesUnique = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public QName getName() {
-/*  62 */     return this._qname;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void display(int indent) {
-/*  69 */     indent(indent);
-/*  70 */     Util.println("LiteralElement name = " + this._name);
-/*  71 */     displayContents(indent + 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String accessedNamespace(String prefix) {
-/*  78 */     if (this._literalElemParent != null) {
-/*  79 */       String result = this._literalElemParent.accessedNamespace(prefix);
-/*  80 */       if (result != null) {
-/*  81 */         return result;
-/*     */       }
-/*     */     } 
-/*  84 */     return (this._accessedPrefixes != null) ? this._accessedPrefixes.get(prefix) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void registerNamespace(String prefix, String uri, SymbolTable stable, boolean declared) {
-/*  96 */     if (this._literalElemParent != null) {
-/*  97 */       String parentUri = this._literalElemParent.accessedNamespace(prefix);
-/*  98 */       if (parentUri != null && parentUri.equals(uri)) {
-/*     */         return;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 104 */     if (this._accessedPrefixes == null) {
-/* 105 */       this._accessedPrefixes = new Hashtable<>();
-/*     */     
-/*     */     }
-/* 108 */     else if (!declared) {
-/*     */       
-/* 110 */       String old = this._accessedPrefixes.get(prefix);
-/* 111 */       if (old != null) {
-/* 112 */         if (old.equals(uri)) {
-/*     */           return;
-/*     */         }
-/* 115 */         prefix = stable.generateNamespacePrefix();
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 120 */     if (!prefix.equals("xml")) {
-/* 121 */       this._accessedPrefixes.put(prefix, uri);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String translateQName(QName qname, SymbolTable stable) {
-/* 132 */     String localname = qname.getLocalPart();
-/* 133 */     String prefix = qname.getPrefix();
-/*     */ 
-/*     */     
-/* 136 */     if (prefix == null) {
-/* 137 */       prefix = "";
-/* 138 */     } else if (prefix.equals("xmlns")) {
-/* 139 */       return "xmlns";
-/*     */     } 
-/*     */     
-/* 142 */     String alternative = stable.lookupPrefixAlias(prefix);
-/* 143 */     if (alternative != null) {
-/* 144 */       stable.excludeNamespaces(prefix);
-/* 145 */       prefix = alternative;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 149 */     String uri = lookupNamespace(prefix);
-/* 150 */     if (uri == null) return localname;
-/*     */ 
-/*     */     
-/* 153 */     registerNamespace(prefix, uri, stable, false);
-/*     */ 
-/*     */     
-/* 156 */     if (prefix != "") {
-/* 157 */       return prefix + ":" + localname;
-/*     */     }
-/* 159 */     return localname;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAttribute(SyntaxTreeNode attribute) {
-/* 166 */     if (this._attributeElements == null) {
-/* 167 */       this._attributeElements = new ArrayList<>(2);
-/*     */     }
-/* 169 */     this._attributeElements.add(attribute);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFirstAttribute(SyntaxTreeNode attribute) {
-/* 176 */     if (this._attributeElements == null) {
-/* 177 */       this._attributeElements = new ArrayList<>(2);
-/*     */     }
-/* 179 */     this._attributeElements.add(0, attribute);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 188 */     if (this._attributeElements != null) {
-/* 189 */       for (SyntaxTreeNode node : this._attributeElements) {
-/* 190 */         node.typeCheck(stable);
-/*     */       }
-/*     */     }
-/* 193 */     typeCheckContents(stable);
-/* 194 */     return Type.Void;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Set<Map.Entry<String, String>> getNamespaceScope(SyntaxTreeNode node) {
-/* 203 */     Map<String, String> all = new HashMap<>();
-/*     */     
-/* 205 */     while (node != null) {
-/* 206 */       Map<String, String> mapping = node.getPrefixMapping();
-/* 207 */       if (mapping != null) {
-/* 208 */         for (String prefix : mapping.keySet()) {
-/* 209 */           if (!all.containsKey(prefix)) {
-/* 210 */             all.put(prefix, mapping.get(prefix));
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 214 */       node = node.getParent();
-/*     */     } 
-/* 216 */     return all.entrySet();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/* 224 */     SymbolTable stable = parser.getSymbolTable();
-/* 225 */     stable.setCurrentNode(this);
-/*     */ 
-/*     */     
-/* 228 */     SyntaxTreeNode parent = getParent();
-/* 229 */     if (parent != null && parent instanceof LiteralElement) {
-/* 230 */       this._literalElemParent = (LiteralElement)parent;
-/*     */     }
-/*     */     
-/* 233 */     this._name = translateQName(this._qname, stable);
-/*     */ 
-/*     */     
-/* 236 */     int count = this._attributes.getLength();
-/* 237 */     for (int i = 0; i < count; i++) {
-/* 238 */       QName qname = parser.getQName(this._attributes.getQName(i));
-/* 239 */       String uri = qname.getNamespace();
-/* 240 */       String val = this._attributes.getValue(i);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 245 */       if (qname.equals(parser.getUseAttributeSets())) {
-/* 246 */         if (!Util.isValidQNames(val)) {
-/* 247 */           ErrorMsg err = new ErrorMsg("INVALID_QNAME_ERR", val, this);
-/* 248 */           parser.reportError(3, err);
-/*     */         } 
-/* 250 */         setFirstAttribute(new UseAttributeSets(val, parser));
-/*     */       
-/*     */       }
-/* 253 */       else if (qname.equals(parser.getExtensionElementPrefixes())) {
-/* 254 */         stable.excludeNamespaces(val);
-/*     */       
-/*     */       }
-/* 257 */       else if (qname.equals(parser.getExcludeResultPrefixes())) {
-/* 258 */         stable.excludeNamespaces(val);
-/*     */       }
-/*     */       else {
-/*     */         
-/* 262 */         String prefix = qname.getPrefix();
-/* 263 */         if ((prefix == null || !prefix.equals("xmlns")) && (prefix != null || 
-/* 264 */           !qname.getLocalPart().equals("xmlns")) && (uri == null || 
-/* 265 */           !uri.equals("http://www.w3.org/1999/XSL/Transform"))) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 271 */           String name = translateQName(qname, stable);
-/* 272 */           LiteralAttribute attr = new LiteralAttribute(name, val, parser, this);
-/* 273 */           addAttribute(attr);
-/* 274 */           attr.setParent(this);
-/* 275 */           attr.parseContents(parser);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 281 */     Set<Map.Entry<String, String>> include = getNamespaceScope(this);
-/* 282 */     for (Map.Entry<String, String> entry : include) {
-/* 283 */       String prefix = entry.getKey();
-/* 284 */       if (!prefix.equals("xml")) {
-/* 285 */         String uri = lookupNamespace(prefix);
-/* 286 */         if (uri != null && !stable.isExcludedNamespace(uri)) {
-/* 287 */           registerNamespace(prefix, uri, stable, true);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 292 */     parseChildren(parser);
-/*     */ 
-/*     */     
-/* 295 */     for (int j = 0; j < count; j++) {
-/* 296 */       QName qname = parser.getQName(this._attributes.getQName(j));
-/* 297 */       String val = this._attributes.getValue(j);
-/*     */ 
-/*     */       
-/* 300 */       if (qname.equals(parser.getExtensionElementPrefixes())) {
-/* 301 */         stable.unExcludeNamespaces(val);
-/*     */       
-/*     */       }
-/* 304 */       else if (qname.equals(parser.getExcludeResultPrefixes())) {
-/* 305 */         stable.unExcludeNamespaces(val);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected boolean contextDependent() {
-/* 311 */     return dependentContents();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 323 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 324 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */     
-/* 327 */     this._allAttributesUnique = checkAttributesUnique();
-/*     */ 
-/*     */     
-/* 330 */     il.append(methodGen.loadHandler());
-/*     */     
-/* 332 */     il.append(new PUSH(cpg, this._name));
-/* 333 */     il.append(DUP2);
-/* 334 */     il.append(methodGen.startElement());
-/*     */ 
-/*     */     
-/* 337 */     int j = 0;
-/* 338 */     while (j < elementCount()) {
-/* 339 */       SyntaxTreeNode item = elementAt(j);
-/* 340 */       if (item instanceof Variable) {
-/* 341 */         item.translate(classGen, methodGen);
-/*     */       }
-/* 343 */       j++;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 347 */     if (this._accessedPrefixes != null) {
-/* 348 */       for (Map.Entry<String, String> entry : this._accessedPrefixes.entrySet()) {
-/* 349 */         String prefix = entry.getKey();
-/* 350 */         String uri = entry.getValue();
-/* 351 */         il.append(methodGen.loadHandler());
-/* 352 */         il.append(new PUSH(cpg, prefix));
-/* 353 */         il.append(new PUSH(cpg, uri));
-/* 354 */         il.append(methodGen.namespace());
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 359 */     if (this._attributeElements != null) {
-/* 360 */       for (SyntaxTreeNode node : this._attributeElements) {
-/* 361 */         if (!(node instanceof XslAttribute)) {
-/* 362 */           node.translate(classGen, methodGen);
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 368 */     translateContents(classGen, methodGen);
-/*     */ 
-/*     */     
-/* 371 */     il.append(methodGen.endElement());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isHTMLOutput() {
-/* 378 */     return (getStylesheet().getOutputMethod() == 2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ElemDesc getElemDesc() {
-/* 387 */     if (isHTMLOutput()) {
-/* 388 */       return ToHTMLStream.getElemDesc(this._name);
-/*     */     }
-/*     */     
-/* 391 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean allAttributesUnique() {
-/* 398 */     return this._allAttributesUnique;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean checkAttributesUnique() {
-/* 405 */     boolean hasHiddenXslAttribute = canProduceAttributeNodes(this, true);
-/* 406 */     if (hasHiddenXslAttribute) {
-/* 407 */       return false;
-/*     */     }
-/* 409 */     if (this._attributeElements != null) {
-/* 410 */       int numAttrs = this._attributeElements.size();
-/* 411 */       Map<String, SyntaxTreeNode> attrsTable = null;
-/* 412 */       for (int i = 0; i < numAttrs; i++) {
-/* 413 */         SyntaxTreeNode node = this._attributeElements.get(i);
-/*     */         
-/* 415 */         if (node instanceof UseAttributeSets) {
-/* 416 */           return false;
-/*     */         }
-/* 418 */         if (node instanceof XslAttribute) {
-/* 419 */           if (attrsTable == null) {
-/* 420 */             attrsTable = new HashMap<>();
-/* 421 */             for (int k = 0; k < i; k++) {
-/* 422 */               SyntaxTreeNode n = this._attributeElements.get(k);
-/* 423 */               if (n instanceof LiteralAttribute) {
-/* 424 */                 LiteralAttribute literalAttr = (LiteralAttribute)n;
-/* 425 */                 attrsTable.put(literalAttr.getName(), literalAttr);
-/*     */               } 
-/*     */             } 
-/*     */           } 
-/*     */           
-/* 430 */           XslAttribute xslAttr = (XslAttribute)node;
-/* 431 */           AttributeValue attrName = xslAttr.getName();
-/* 432 */           if (attrName instanceof AttributeValueTemplate) {
-/* 433 */             return false;
-/*     */           }
-/* 435 */           if (attrName instanceof SimpleAttributeValue) {
-/* 436 */             SimpleAttributeValue simpleAttr = (SimpleAttributeValue)attrName;
-/* 437 */             String name = simpleAttr.toString();
-/* 438 */             if (name != null && attrsTable.get(name) != null)
-/* 439 */               return false; 
-/* 440 */             if (name != null) {
-/* 441 */               attrsTable.put(name, xslAttr);
-/*     */             }
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 447 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean canProduceAttributeNodes(SyntaxTreeNode node, boolean ignoreXslAttribute) {
-/* 457 */     List<SyntaxTreeNode> contents = node.getContents();
-/* 458 */     for (SyntaxTreeNode child : contents) {
-/* 459 */       if (child instanceof Text) {
-/* 460 */         Text text = (Text)child;
-/* 461 */         if (text.isIgnore()) {
-/*     */           continue;
-/*     */         }
-/* 464 */         return false;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 468 */       if (child instanceof LiteralElement || child instanceof ValueOf || child instanceof XslElement || child instanceof Comment || child instanceof Number || child instanceof ProcessingInstruction)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 474 */         return false; } 
-/* 475 */       if (child instanceof XslAttribute) {
-/* 476 */         if (ignoreXslAttribute) {
-/*     */           continue;
-/*     */         }
-/* 479 */         return true;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 485 */       if (child instanceof CallTemplate || child instanceof ApplyTemplates || child instanceof Copy || child instanceof CopyOf)
-/*     */       {
-/*     */ 
-/*     */         
-/* 489 */         return true; } 
-/* 490 */       if ((child instanceof If || child instanceof ForEach) && 
-/*     */         
-/* 492 */         canProduceAttributeNodes(child, false)) {
-/* 493 */         return true;
-/*     */       }
-/* 495 */       if (child instanceof Choose) {
-/* 496 */         List<SyntaxTreeNode> chooseContents = child.getContents();
-/* 497 */         for (SyntaxTreeNode chooseChild : chooseContents) {
-/* 498 */           if ((chooseChild instanceof When || chooseChild instanceof Otherwise) && 
-/* 499 */             canProduceAttributeNodes(chooseChild, false)) {
-/* 500 */             return true;
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 505 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\LiteralElement.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import com.sun.org.apache.xml.internal.serializer.ElemDesc;
+import com.sun.org.apache.xml.internal.serializer.ToHTMLStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class LiteralElement extends Instruction {
+
+    private String _name;
+    private LiteralElement _literalElemParent = null;
+    private List<SyntaxTreeNode> _attributeElements = null;
+    private Map<String, String> _accessedPrefixes = null;
+
+    // True if all attributes of this LRE are unique, i.e. they all have
+    // different names. This flag is set to false if some attribute
+    // names are not known at compile time.
+    private boolean _allAttributesUnique = false;
+
+    /**
+     * Returns the QName for this literal element
+     */
+    public QName getName() {
+        return _qname;
+    }
+
+    /**
+     * Displays the contents of this literal element
+     */
+    public void display(int indent) {
+        indent(indent);
+        Util.println("LiteralElement name = " + _name);
+        displayContents(indent + IndentIncrement);
+    }
+
+    /**
+     * Returns the namespace URI for which a prefix is pointing to
+     */
+    private String accessedNamespace(String prefix) {
+        if (_literalElemParent != null) {
+            String result = _literalElemParent.accessedNamespace(prefix);
+            if (result != null) {
+                return result;
+            }
+        }
+        return _accessedPrefixes != null ? _accessedPrefixes.get(prefix) : null;
+    }
+
+    /**
+     * Method used to keep track of what namespaces that are references by
+     * this literal element and its attributes. The output must contain a
+     * definition for each namespace, so we stuff them in a map.
+     */
+    public void registerNamespace(String prefix, String uri,
+                                  SymbolTable stable, boolean declared) {
+
+        // Check if the parent has a declaration for this namespace
+        if (_literalElemParent != null) {
+            final String parentUri = _literalElemParent.accessedNamespace(prefix);
+            if (parentUri != null && parentUri.equals(uri)) {
+                return;
+            }
+        }
+
+        // Check if we have any declared namespaces
+        if (_accessedPrefixes == null) {
+            _accessedPrefixes = new Hashtable<>();
+        }
+        else {
+            if (!declared) {
+                // Check if this node has a declaration for this namespace
+                final String old = _accessedPrefixes.get(prefix);
+                if (old != null) {
+                    if (old.equals(uri))
+                        return;
+                    else
+                        prefix = stable.generateNamespacePrefix();
+                }
+            }
+        }
+
+        if (!prefix.equals("xml")) {
+            _accessedPrefixes.put(prefix,uri);
+        }
+    }
+
+    /**
+     * Translates the prefix of a QName according to the rules set in
+     * the attributes of xsl:stylesheet. Also registers a QName to assure
+     * that the output element contains the necessary namespace declarations.
+     */
+    private String translateQName(QName qname, SymbolTable stable) {
+        // Break up the QName and get prefix:localname strings
+        String localname = qname.getLocalPart();
+        String prefix = qname.getPrefix();
+
+        // Treat default namespace as "" and not null
+        if (prefix == null)
+            prefix = Constants.EMPTYSTRING;
+        else if (prefix.equals(XMLNS_PREFIX))
+            return(XMLNS_PREFIX);
+
+        // Check if we must translate the prefix
+        final String alternative = stable.lookupPrefixAlias(prefix);
+        if (alternative != null) {
+            stable.excludeNamespaces(prefix);
+            prefix = alternative;
+        }
+
+        // Get the namespace this prefix refers to
+        String uri = lookupNamespace(prefix);
+        if (uri == null) return(localname);
+
+        // Register the namespace as accessed
+        registerNamespace(prefix, uri, stable, false);
+
+        // Construct the new name for the element (may be unchanged)
+        if (prefix != Constants.EMPTYSTRING)
+            return(prefix+":"+localname);
+        else
+            return(localname);
+    }
+
+    /**
+     * Add an attribute to this element
+     */
+    public void addAttribute(SyntaxTreeNode attribute) {
+        if (_attributeElements == null) {
+            _attributeElements = new ArrayList<>(2);
+        }
+        _attributeElements.add(attribute);
+    }
+
+    /**
+     * Set the first attribute of this element
+     */
+    public void setFirstAttribute(SyntaxTreeNode attribute) {
+        if (_attributeElements == null) {
+            _attributeElements = new ArrayList<>(2);
+        }
+        _attributeElements.add(0, attribute);
+    }
+
+    /**
+     * Type-check the contents of this element. The element itself does not
+     * need any type checking as it leaves nothign on the JVM's stack.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        // Type-check all attributes
+        if (_attributeElements != null) {
+            for (SyntaxTreeNode node : _attributeElements) {
+                node.typeCheck(stable);
+            }
+        }
+        typeCheckContents(stable);
+        return Type.Void;
+    }
+
+    /**
+     * This method starts at a given node, traverses all namespace mappings,
+     * and assembles a list of all prefixes that (for the given node) maps
+     * to _ANY_ namespace URI. Used by literal result elements to determine
+     */
+    public Set<Map.Entry<String, String>> getNamespaceScope(SyntaxTreeNode node) {
+        Map<String, String> all = new HashMap<>();
+
+        while (node != null) {
+            Map<String, String> mapping = node.getPrefixMapping();
+            if (mapping != null) {
+                for( String prefix : mapping.keySet()) {
+                    if (!all.containsKey(prefix)) {
+                        all.put(prefix, mapping.get(prefix));
+                    }
+                }
+            }
+            node = node.getParent();
+        }
+        return all.entrySet();
+    }
+
+    /**
+     * Determines the final QName for the element and its attributes.
+     * Registers all namespaces that are used by the element/attributes
+     */
+    public void parseContents(Parser parser) {
+        final SymbolTable stable = parser.getSymbolTable();
+        stable.setCurrentNode(this);
+
+        // Check if in a literal element context
+        SyntaxTreeNode parent = getParent();
+        if (parent != null && parent instanceof LiteralElement) {
+            _literalElemParent = (LiteralElement) parent;
+        }
+
+        _name = translateQName(_qname, stable);
+
+        // Process all attributes and register all namespaces they use
+        final int count = _attributes.getLength();
+        for (int i = 0; i < count; i++) {
+            final QName qname = parser.getQName(_attributes.getQName(i));
+            final String uri = qname.getNamespace();
+            final String val = _attributes.getValue(i);
+
+            // Handle xsl:use-attribute-sets. Attribute sets are placed first
+            // in the vector or attributes to make sure that later local
+            // attributes can override an attributes in the set.
+            if (qname.equals(parser.getUseAttributeSets())) {
+                if (!Util.isValidQNames(val)) {
+                    ErrorMsg err = new ErrorMsg(ErrorMsg.INVALID_QNAME_ERR, val, this);
+                    parser.reportError(Constants.ERROR, err);
+               }
+                setFirstAttribute(new UseAttributeSets(val, parser));
+            }
+            // Handle xsl:extension-element-prefixes
+            else if (qname.equals(parser.getExtensionElementPrefixes())) {
+                stable.excludeNamespaces(val);
+            }
+            // Handle xsl:exclude-result-prefixes
+            else if (qname.equals(parser.getExcludeResultPrefixes())) {
+                stable.excludeNamespaces(val);
+            }
+            else {
+                // Ignore special attributes (e.g. xmlns:prefix and xmlns)
+                final String prefix = qname.getPrefix();
+                if (prefix != null && prefix.equals(XMLNS_PREFIX) ||
+                    prefix == null && qname.getLocalPart().equals(XMLNS_PREFIX) ||
+                    uri != null && uri.equals(XSLT_URI))
+                {
+                    continue;
+                }
+
+                // Handle all other literal attributes
+                final String name = translateQName(qname, stable);
+                LiteralAttribute attr = new LiteralAttribute(name, val, parser, this);
+                addAttribute(attr);
+                attr.setParent(this);
+                attr.parseContents(parser);
+            }
+        }
+
+        // Register all namespaces that are in scope, except for those that
+        // are listed in the xsl:stylesheet element's *-prefixes attributes
+        Set<Map.Entry<String, String>> include = getNamespaceScope(this);
+        for (Map.Entry<String, String> entry : include) {
+            final String prefix = entry.getKey();
+            if (!prefix.equals("xml")) {
+                final String uri = lookupNamespace(prefix);
+                if (uri != null && !stable.isExcludedNamespace(uri)) {
+                    registerNamespace(prefix, uri, stable, true);
+                }
+            }
+        }
+
+        parseChildren(parser);
+
+        // Process all attributes and register all namespaces they use
+        for (int i = 0; i < count; i++) {
+            final QName qname = parser.getQName(_attributes.getQName(i));
+            final String val = _attributes.getValue(i);
+
+            // Handle xsl:extension-element-prefixes
+            if (qname.equals(parser.getExtensionElementPrefixes())) {
+                stable.unExcludeNamespaces(val);
+            }
+            // Handle xsl:exclude-result-prefixes
+            else if (qname.equals(parser.getExcludeResultPrefixes())) {
+                stable.unExcludeNamespaces(val);
+            }
+        }
+    }
+
+    protected boolean contextDependent() {
+        return dependentContents();
+    }
+
+    /**
+     * Compiles code that emits the literal element to the output handler,
+     * first the start tag, then namespace declaration, then attributes,
+     * then the element contents, and then the element end tag. Since the
+     * value of an attribute may depend on a variable, variables must be
+     * compiled first.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Check whether all attributes are unique.
+        _allAttributesUnique = checkAttributesUnique();
+
+        // Compile code to emit element start tag
+        il.append(methodGen.loadHandler());
+
+        il.append(new PUSH(cpg, _name));
+        il.append(DUP2);                // duplicate these 2 args for endElement
+        il.append(methodGen.startElement());
+
+        // The value of an attribute may depend on a (sibling) variable
+        int j = 0;
+        while (j < elementCount())  {
+            final SyntaxTreeNode item = elementAt(j);
+            if (item instanceof Variable) {
+                item.translate(classGen, methodGen);
+            }
+            j++;
+        }
+
+        // Compile code to emit namespace attributes
+        if (_accessedPrefixes != null) {
+            for (Map.Entry<String, String> entry : _accessedPrefixes.entrySet()) {
+                final String prefix = entry.getKey();
+                final String uri = entry.getValue();
+                il.append(methodGen.loadHandler());
+                il.append(new PUSH(cpg, prefix));
+                il.append(new PUSH(cpg, uri));
+                il.append(methodGen.namespace());
+            }
+        }
+
+        // Output all attributes
+        if (_attributeElements != null) {
+            for (SyntaxTreeNode node : _attributeElements) {
+                if (!(node instanceof XslAttribute)) {
+                    node.translate(classGen, methodGen);
+                }
+            }
+        }
+
+        // Compile code to emit attributes and child elements
+        translateContents(classGen, methodGen);
+
+        // Compile code to emit element end tag
+        il.append(methodGen.endElement());
+    }
+
+    /**
+     * Return true if the output method is html.
+     */
+    private boolean isHTMLOutput() {
+        return getStylesheet().getOutputMethod() == Stylesheet.HTML_OUTPUT;
+    }
+
+    /**
+     * Return the ElemDesc object for an HTML element.
+     * Return null if the output method is not HTML or this is not a
+     * valid HTML element.
+     */
+    public ElemDesc getElemDesc() {
+        if (isHTMLOutput()) {
+            return ToHTMLStream.getElemDesc(_name);
+        }
+        else
+            return null;
+    }
+
+    /**
+     * Return true if all attributes of this LRE have unique names.
+     */
+    public boolean allAttributesUnique() {
+        return _allAttributesUnique;
+    }
+
+    /**
+     * Check whether all attributes are unique.
+     */
+    private boolean checkAttributesUnique() {
+         boolean hasHiddenXslAttribute = canProduceAttributeNodes(this, true);
+         if (hasHiddenXslAttribute)
+             return false;
+
+         if (_attributeElements != null) {
+             int numAttrs = _attributeElements.size();
+             Map<String, SyntaxTreeNode> attrsTable = null;
+             for (int i = 0; i < numAttrs; i++) {
+                 SyntaxTreeNode node = _attributeElements.get(i);
+
+                 if (node instanceof UseAttributeSets) {
+                     return false;
+                 }
+                 else if (node instanceof XslAttribute) {
+                     if (attrsTable == null) {
+                        attrsTable = new HashMap<>();
+                         for (int k = 0; k < i; k++) {
+                             SyntaxTreeNode n = _attributeElements.get(k);
+                             if (n instanceof LiteralAttribute) {
+                                 LiteralAttribute literalAttr = (LiteralAttribute)n;
+                                 attrsTable.put(literalAttr.getName(), literalAttr);
+                             }
+                         }
+                     }
+
+                     XslAttribute xslAttr = (XslAttribute)node;
+                     AttributeValue attrName = xslAttr.getName();
+                     if (attrName instanceof AttributeValueTemplate) {
+                         return false;
+                     }
+                     else if (attrName instanceof SimpleAttributeValue) {
+                         SimpleAttributeValue simpleAttr = (SimpleAttributeValue)attrName;
+                         String name = simpleAttr.toString();
+                         if (name != null && attrsTable.get(name) != null)
+                             return false;
+                         else if (name != null) {
+                             attrsTable.put(name, xslAttr);
+                         }
+                     }
+                 }
+             }
+         }
+         return true;
+    }
+
+    /**
+     * Return true if the instructions under the given SyntaxTreeNode can produce attribute nodes
+     * to an element. Only return false when we are sure that no attribute node is produced.
+     * Return true if we are not sure. If the flag ignoreXslAttribute is true, the direct
+     * <xsl:attribute> children of the current node are not included in the check.
+     */
+    private boolean canProduceAttributeNodes(SyntaxTreeNode node, boolean ignoreXslAttribute) {
+        List<SyntaxTreeNode> contents = node.getContents();
+        for (SyntaxTreeNode child : contents) {
+            if (child instanceof Text) {
+                Text text = (Text)child;
+                if (text.isIgnore())
+                    continue;
+                else
+                    return false;
+            }
+            // Cannot add an attribute to an element after children have been added to it.
+            // We can safely return false when the instruction can produce an output node.
+            else if (child instanceof LiteralElement
+                || child instanceof ValueOf
+                || child instanceof XslElement
+                || child instanceof Comment
+                || child instanceof Number
+                || child instanceof ProcessingInstruction)
+                return false;
+            else if (child instanceof XslAttribute) {
+                if (ignoreXslAttribute)
+                    continue;
+                else
+                    return true;
+            }
+            // In general, there is no way to check whether <xsl:call-template> or
+            // <xsl:apply-templates> can produce attribute nodes. <xsl:copy> and
+            // <xsl:copy-of> can also copy attribute nodes to an element. Return
+            // true in those cases to be safe.
+            else if (child instanceof CallTemplate
+                || child instanceof ApplyTemplates
+                || child instanceof Copy
+                || child instanceof CopyOf)
+                return true;
+            else if ((child instanceof If
+                       || child instanceof ForEach)
+                     && canProduceAttributeNodes(child, false)) {
+                return true;
+            }
+            else if (child instanceof Choose) {
+                List<SyntaxTreeNode> chooseContents = child.getContents();
+                for (SyntaxTreeNode chooseChild : chooseContents) {
+                    if (chooseChild instanceof When || chooseChild instanceof Otherwise) {
+                        if (canProduceAttributeNodes(chooseChild, false))
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+}

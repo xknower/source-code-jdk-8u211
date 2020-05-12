@@ -1,386 +1,381 @@
-/*     */ package java.time.format;
-/*     */ 
-/*     */ import java.text.DecimalFormatSymbols;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Objects;
-/*     */ import java.util.Set;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ import java.util.concurrent.ConcurrentMap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class DecimalStyle
-/*     */ {
-/*  91 */   public static final DecimalStyle STANDARD = new DecimalStyle('0', '+', '-', '.');
-/*     */ 
-/*     */ 
-/*     */   
-/*  95 */   private static final ConcurrentMap<Locale, DecimalStyle> CACHE = new ConcurrentHashMap<>(16, 0.75F, 2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final char zeroDigit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final char positiveSign;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final char negativeSign;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final char decimalSeparator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Set<Locale> getAvailableLocales() {
-/* 123 */     Locale[] arrayOfLocale = DecimalFormatSymbols.getAvailableLocales();
-/* 124 */     HashSet<? super Locale> hashSet = new HashSet(arrayOfLocale.length);
-/* 125 */     Collections.addAll(hashSet, arrayOfLocale);
-/* 126 */     return (Set)hashSet;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static DecimalStyle ofDefaultLocale() {
-/* 143 */     return of(Locale.getDefault(Locale.Category.FORMAT));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static DecimalStyle of(Locale paramLocale) {
-/* 155 */     Objects.requireNonNull(paramLocale, "locale");
-/* 156 */     DecimalStyle decimalStyle = CACHE.get(paramLocale);
-/* 157 */     if (decimalStyle == null) {
-/* 158 */       decimalStyle = create(paramLocale);
-/* 159 */       CACHE.putIfAbsent(paramLocale, decimalStyle);
-/* 160 */       decimalStyle = CACHE.get(paramLocale);
-/*     */     } 
-/* 162 */     return decimalStyle;
-/*     */   }
-/*     */   
-/*     */   private static DecimalStyle create(Locale paramLocale) {
-/* 166 */     DecimalFormatSymbols decimalFormatSymbols = DecimalFormatSymbols.getInstance(paramLocale);
-/* 167 */     char c1 = decimalFormatSymbols.getZeroDigit();
-/* 168 */     byte b = 43;
-/* 169 */     char c2 = decimalFormatSymbols.getMinusSign();
-/* 170 */     char c3 = decimalFormatSymbols.getDecimalSeparator();
-/* 171 */     if (c1 == '0' && c2 == '-' && c3 == '.') {
-/* 172 */       return STANDARD;
-/*     */     }
-/* 174 */     return new DecimalStyle(c1, b, c2, c3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private DecimalStyle(char paramChar1, char paramChar2, char paramChar3, char paramChar4) {
-/* 187 */     this.zeroDigit = paramChar1;
-/* 188 */     this.positiveSign = paramChar2;
-/* 189 */     this.negativeSign = paramChar3;
-/* 190 */     this.decimalSeparator = paramChar4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char getZeroDigit() {
-/* 203 */     return this.zeroDigit;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DecimalStyle withZeroDigit(char paramChar) {
-/* 217 */     if (paramChar == this.zeroDigit) {
-/* 218 */       return this;
-/*     */     }
-/* 220 */     return new DecimalStyle(paramChar, this.positiveSign, this.negativeSign, this.decimalSeparator);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char getPositiveSign() {
-/* 233 */     return this.positiveSign;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DecimalStyle withPositiveSign(char paramChar) {
-/* 246 */     if (paramChar == this.positiveSign) {
-/* 247 */       return this;
-/*     */     }
-/* 249 */     return new DecimalStyle(this.zeroDigit, paramChar, this.negativeSign, this.decimalSeparator);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char getNegativeSign() {
-/* 262 */     return this.negativeSign;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DecimalStyle withNegativeSign(char paramChar) {
-/* 275 */     if (paramChar == this.negativeSign) {
-/* 276 */       return this;
-/*     */     }
-/* 278 */     return new DecimalStyle(this.zeroDigit, this.positiveSign, paramChar, this.decimalSeparator);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char getDecimalSeparator() {
-/* 291 */     return this.decimalSeparator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DecimalStyle withDecimalSeparator(char paramChar) {
-/* 304 */     if (paramChar == this.decimalSeparator) {
-/* 305 */       return this;
-/*     */     }
-/* 307 */     return new DecimalStyle(this.zeroDigit, this.positiveSign, this.negativeSign, paramChar);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int convertToDigit(char paramChar) {
-/* 318 */     int i = paramChar - this.zeroDigit;
-/* 319 */     return (i >= 0 && i <= 9) ? i : -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String convertNumberToI18N(String paramString) {
-/* 329 */     if (this.zeroDigit == '0') {
-/* 330 */       return paramString;
-/*     */     }
-/* 332 */     int i = this.zeroDigit - 48;
-/* 333 */     char[] arrayOfChar = paramString.toCharArray();
-/* 334 */     for (byte b = 0; b < arrayOfChar.length; b++) {
-/* 335 */       arrayOfChar[b] = (char)(arrayOfChar[b] + i);
-/*     */     }
-/* 337 */     return new String(arrayOfChar);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 349 */     if (this == paramObject) {
-/* 350 */       return true;
-/*     */     }
-/* 352 */     if (paramObject instanceof DecimalStyle) {
-/* 353 */       DecimalStyle decimalStyle = (DecimalStyle)paramObject;
-/* 354 */       return (this.zeroDigit == decimalStyle.zeroDigit && this.positiveSign == decimalStyle.positiveSign && this.negativeSign == decimalStyle.negativeSign && this.decimalSeparator == decimalStyle.decimalSeparator);
-/*     */     } 
-/*     */     
-/* 357 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 367 */     return this.zeroDigit + this.positiveSign + this.negativeSign + this.decimalSeparator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 378 */     return "DecimalStyle[" + this.zeroDigit + this.positiveSign + this.negativeSign + this.decimalSeparator + "]";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\format\DecimalStyle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2008-2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.format;
+
+import java.text.DecimalFormatSymbols;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+/**
+ * Localized decimal style used in date and time formatting.
+ * <p>
+ * A significant part of dealing with dates and times is the localization.
+ * This class acts as a central point for accessing the information.
+ *
+ * @implSpec
+ * This class is immutable and thread-safe.
+ *
+ * @since 1.8
+ */
+public final class DecimalStyle {
+
+    /**
+     * The standard set of non-localized decimal style symbols.
+     * <p>
+     * This uses standard ASCII characters for zero, positive, negative and a dot for the decimal point.
+     */
+    public static final DecimalStyle STANDARD = new DecimalStyle('0', '+', '-', '.');
+    /**
+     * The cache of DecimalStyle instances.
+     */
+    private static final ConcurrentMap<Locale, DecimalStyle> CACHE = new ConcurrentHashMap<>(16, 0.75f, 2);
+
+    /**
+     * The zero digit.
+     */
+    private final char zeroDigit;
+    /**
+     * The positive sign.
+     */
+    private final char positiveSign;
+    /**
+     * The negative sign.
+     */
+    private final char negativeSign;
+    /**
+     * The decimal separator.
+     */
+    private final char decimalSeparator;
+
+    //-----------------------------------------------------------------------
+    /**
+     * Lists all the locales that are supported.
+     * <p>
+     * The locale 'en_US' will always be present.
+     *
+     * @return a Set of Locales for which localization is supported
+     */
+    public static Set<Locale> getAvailableLocales() {
+        Locale[] l = DecimalFormatSymbols.getAvailableLocales();
+        Set<Locale> locales = new HashSet<>(l.length);
+        Collections.addAll(locales, l);
+        return locales;
+    }
+
+    /**
+     * Obtains the DecimalStyle for the default
+     * {@link java.util.Locale.Category#FORMAT FORMAT} locale.
+     * <p>
+     * This method provides access to locale sensitive decimal style symbols.
+     * <p>
+     * This is equivalent to calling
+     * {@link #of(Locale)
+     *     of(Locale.getDefault(Locale.Category.FORMAT))}.
+     *
+     * @see java.util.Locale.Category#FORMAT
+     * @return the decimal style, not null
+     */
+    public static DecimalStyle ofDefaultLocale() {
+        return of(Locale.getDefault(Locale.Category.FORMAT));
+    }
+
+    /**
+     * Obtains the DecimalStyle for the specified locale.
+     * <p>
+     * This method provides access to locale sensitive decimal style symbols.
+     *
+     * @param locale  the locale, not null
+     * @return the decimal style, not null
+     */
+    public static DecimalStyle of(Locale locale) {
+        Objects.requireNonNull(locale, "locale");
+        DecimalStyle info = CACHE.get(locale);
+        if (info == null) {
+            info = create(locale);
+            CACHE.putIfAbsent(locale, info);
+            info = CACHE.get(locale);
+        }
+        return info;
+    }
+
+    private static DecimalStyle create(Locale locale) {
+        DecimalFormatSymbols oldSymbols = DecimalFormatSymbols.getInstance(locale);
+        char zeroDigit = oldSymbols.getZeroDigit();
+        char positiveSign = '+';
+        char negativeSign = oldSymbols.getMinusSign();
+        char decimalSeparator = oldSymbols.getDecimalSeparator();
+        if (zeroDigit == '0' && negativeSign == '-' && decimalSeparator == '.') {
+            return STANDARD;
+        }
+        return new DecimalStyle(zeroDigit, positiveSign, negativeSign, decimalSeparator);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Restricted constructor.
+     *
+     * @param zeroChar  the character to use for the digit of zero
+     * @param positiveSignChar  the character to use for the positive sign
+     * @param negativeSignChar  the character to use for the negative sign
+     * @param decimalPointChar  the character to use for the decimal point
+     */
+    private DecimalStyle(char zeroChar, char positiveSignChar, char negativeSignChar, char decimalPointChar) {
+        this.zeroDigit = zeroChar;
+        this.positiveSign = positiveSignChar;
+        this.negativeSign = negativeSignChar;
+        this.decimalSeparator = decimalPointChar;
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Gets the character that represents zero.
+     * <p>
+     * The character used to represent digits may vary by culture.
+     * This method specifies the zero character to use, which implies the characters for one to nine.
+     *
+     * @return the character for zero
+     */
+    public char getZeroDigit() {
+        return zeroDigit;
+    }
+
+    /**
+     * Returns a copy of the info with a new character that represents zero.
+     * <p>
+     * The character used to represent digits may vary by culture.
+     * This method specifies the zero character to use, which implies the characters for one to nine.
+     *
+     * @param zeroDigit  the character for zero
+     * @return  a copy with a new character that represents zero, not null
+
+     */
+    public DecimalStyle withZeroDigit(char zeroDigit) {
+        if (zeroDigit == this.zeroDigit) {
+            return this;
+        }
+        return new DecimalStyle(zeroDigit, positiveSign, negativeSign, decimalSeparator);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Gets the character that represents the positive sign.
+     * <p>
+     * The character used to represent a positive number may vary by culture.
+     * This method specifies the character to use.
+     *
+     * @return the character for the positive sign
+     */
+    public char getPositiveSign() {
+        return positiveSign;
+    }
+
+    /**
+     * Returns a copy of the info with a new character that represents the positive sign.
+     * <p>
+     * The character used to represent a positive number may vary by culture.
+     * This method specifies the character to use.
+     *
+     * @param positiveSign  the character for the positive sign
+     * @return  a copy with a new character that represents the positive sign, not null
+     */
+    public DecimalStyle withPositiveSign(char positiveSign) {
+        if (positiveSign == this.positiveSign) {
+            return this;
+        }
+        return new DecimalStyle(zeroDigit, positiveSign, negativeSign, decimalSeparator);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Gets the character that represents the negative sign.
+     * <p>
+     * The character used to represent a negative number may vary by culture.
+     * This method specifies the character to use.
+     *
+     * @return the character for the negative sign
+     */
+    public char getNegativeSign() {
+        return negativeSign;
+    }
+
+    /**
+     * Returns a copy of the info with a new character that represents the negative sign.
+     * <p>
+     * The character used to represent a negative number may vary by culture.
+     * This method specifies the character to use.
+     *
+     * @param negativeSign  the character for the negative sign
+     * @return  a copy with a new character that represents the negative sign, not null
+     */
+    public DecimalStyle withNegativeSign(char negativeSign) {
+        if (negativeSign == this.negativeSign) {
+            return this;
+        }
+        return new DecimalStyle(zeroDigit, positiveSign, negativeSign, decimalSeparator);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Gets the character that represents the decimal point.
+     * <p>
+     * The character used to represent a decimal point may vary by culture.
+     * This method specifies the character to use.
+     *
+     * @return the character for the decimal point
+     */
+    public char getDecimalSeparator() {
+        return decimalSeparator;
+    }
+
+    /**
+     * Returns a copy of the info with a new character that represents the decimal point.
+     * <p>
+     * The character used to represent a decimal point may vary by culture.
+     * This method specifies the character to use.
+     *
+     * @param decimalSeparator  the character for the decimal point
+     * @return  a copy with a new character that represents the decimal point, not null
+     */
+    public DecimalStyle withDecimalSeparator(char decimalSeparator) {
+        if (decimalSeparator == this.decimalSeparator) {
+            return this;
+        }
+        return new DecimalStyle(zeroDigit, positiveSign, negativeSign, decimalSeparator);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Checks whether the character is a digit, based on the currently set zero character.
+     *
+     * @param ch  the character to check
+     * @return the value, 0 to 9, of the character, or -1 if not a digit
+     */
+    int convertToDigit(char ch) {
+        int val = ch - zeroDigit;
+        return (val >= 0 && val <= 9) ? val : -1;
+    }
+
+    /**
+     * Converts the input numeric text to the internationalized form using the zero character.
+     *
+     * @param numericText  the text, consisting of digits 0 to 9, to convert, not null
+     * @return the internationalized text, not null
+     */
+    String convertNumberToI18N(String numericText) {
+        if (zeroDigit == '0') {
+            return numericText;
+        }
+        int diff = zeroDigit - '0';
+        char[] array = numericText.toCharArray();
+        for (int i = 0; i < array.length; i++) {
+            array[i] = (char) (array[i] + diff);
+        }
+        return new String(array);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Checks if this DecimalStyle is equal to another DecimalStyle.
+     *
+     * @param obj  the object to check, null returns false
+     * @return true if this is equal to the other date
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof DecimalStyle) {
+            DecimalStyle other = (DecimalStyle) obj;
+            return (zeroDigit == other.zeroDigit && positiveSign == other.positiveSign &&
+                    negativeSign == other.negativeSign && decimalSeparator == other.decimalSeparator);
+        }
+        return false;
+    }
+
+    /**
+     * A hash code for this DecimalStyle.
+     *
+     * @return a suitable hash code
+     */
+    @Override
+    public int hashCode() {
+        return zeroDigit + positiveSign + negativeSign + decimalSeparator;
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Returns a string describing this DecimalStyle.
+     *
+     * @return a string description, not null
+     */
+    @Override
+    public String toString() {
+        return "DecimalStyle[" + zeroDigit + positiveSign + negativeSign + decimalSeparator + "]";
+    }
+
+}

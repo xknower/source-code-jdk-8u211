@@ -1,113 +1,107 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class When
-/*     */   extends Instruction
-/*     */ {
-/*     */   private Expression _test;
-/*     */   private boolean _ignore = false;
-/*     */   
-/*     */   public void display(int indent) {
-/*  45 */     indent(indent);
-/*  46 */     Util.println("When");
-/*  47 */     indent(indent + 4);
-/*  48 */     System.out.print("test ");
-/*  49 */     Util.println(this._test.toString());
-/*  50 */     displayContents(indent + 4);
-/*     */   }
-/*     */   
-/*     */   public Expression getTest() {
-/*  54 */     return this._test;
-/*     */   }
-/*     */   
-/*     */   public boolean ignore() {
-/*  58 */     return this._ignore;
-/*     */   }
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/*  62 */     this._test = parser.parseExpression(this, "test", null);
-/*     */ 
-/*     */ 
-/*     */     
-/*  66 */     Object result = this._test.evaluateAtCompileTime();
-/*  67 */     if (result != null && result instanceof Boolean) {
-/*  68 */       this._ignore = !((Boolean)result).booleanValue();
-/*     */     }
-/*     */     
-/*  71 */     parseChildren(parser);
-/*     */ 
-/*     */     
-/*  74 */     if (this._test.isDummy()) {
-/*  75 */       reportError(this, parser, "REQUIRED_ATTR_ERR", "test");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  88 */     if (!(this._test.typeCheck(stable) instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType)) {
-/*  89 */       this._test = new CastExpr(this._test, Type.Boolean);
-/*     */     }
-/*     */     
-/*  92 */     if (!this._ignore) {
-/*  93 */       typeCheckContents(stable);
-/*     */     }
-/*     */     
-/*  96 */     return Type.Void;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 104 */     ErrorMsg msg = new ErrorMsg("STRAY_WHEN_ERR", this);
-/* 105 */     getParser().reportError(3, msg);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\When.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: When.java,v 1.2.4.1 2005/09/05 09:36:58 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class When extends Instruction {
+
+    private Expression _test;
+    private boolean _ignore = false;
+
+    public void display(int indent) {
+        indent(indent);
+        Util.println("When");
+        indent(indent + IndentIncrement);
+        System.out.print("test ");
+        Util.println(_test.toString());
+        displayContents(indent + IndentIncrement);
+    }
+
+    public Expression getTest() {
+        return _test;
+    }
+
+    public boolean ignore() {
+        return(_ignore);
+    }
+
+    public void parseContents(Parser parser) {
+        _test = parser.parseExpression(this, "test", null);
+
+        // Ignore xsl:if when test is false (function-available() and
+        // element-available())
+        Object result = _test.evaluateAtCompileTime();
+        if (result != null && result instanceof Boolean) {
+            _ignore = !((Boolean) result).booleanValue();
+        }
+
+        parseChildren(parser);
+
+        // Make sure required attribute(s) have been set
+        if (_test.isDummy()) {
+            reportError(this, parser, ErrorMsg.REQUIRED_ATTR_ERR, "test");
+        }
+    }
+
+    /**
+     * Type-check this when element. The test should always be type checked,
+     * while we do not bother with the contents if we know the test fails.
+     * This is important in cases where the "test" expression tests for
+     * the support of a non-available element, and the <xsl:when> body contains
+     * this non-available element.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        // Type-check the test expression
+        if (_test.typeCheck(stable) instanceof BooleanType == false) {
+            _test = new CastExpr(_test, Type.Boolean);
+        }
+        // Type-check the contents (if necessary)
+        if (!_ignore) {
+            typeCheckContents(stable);
+        }
+
+        return Type.Void;
+    }
+
+    /**
+     * This method should never be called. An Otherwise object will explicitly
+     * translate the "test" expression and and contents of this element.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ErrorMsg msg = new ErrorMsg(ErrorMsg.STRAY_WHEN_ERR, this);
+        getParser().reportError(Constants.ERROR, msg);
+    }
+}

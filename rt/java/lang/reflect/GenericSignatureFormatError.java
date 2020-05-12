@@ -1,62 +1,56 @@
-/*    */ package java.lang.reflect;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class GenericSignatureFormatError
-/*    */   extends ClassFormatError
-/*    */ {
-/*    */   private static final long serialVersionUID = 6709919147137911034L;
-/*    */   
-/*    */   public GenericSignatureFormatError() {}
-/*    */   
-/*    */   public GenericSignatureFormatError(String paramString) {
-/* 54 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\reflect\GenericSignatureFormatError.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.reflect;
+
+
+/**
+ * Thrown when a syntactically malformed signature attribute is
+ * encountered by a reflective method that needs to interpret the
+ * generic signature information for a type, method or constructor.
+ *
+ * @since 1.5
+ */
+public class GenericSignatureFormatError extends ClassFormatError {
+    private static final long serialVersionUID = 6709919147137911034L;
+
+    /**
+     * Constructs a new {@code GenericSignatureFormatError}.
+     *
+     */
+    public GenericSignatureFormatError() {
+        super();
+    }
+
+    /**
+     * Constructs a new {@code GenericSignatureFormatError} with the
+     * specified message.
+     *
+     * @param message the detail message, may be {@code null}
+     */
+    public GenericSignatureFormatError(String message) {
+        super(message);
+    }
+}

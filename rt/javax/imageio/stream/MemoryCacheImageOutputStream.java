@@ -1,202 +1,196 @@
-/*     */ package javax.imageio.stream;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MemoryCacheImageOutputStream
-/*     */   extends ImageOutputStreamImpl
-/*     */ {
-/*     */   private OutputStream stream;
-/*  46 */   private MemoryCache cache = new MemoryCache();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MemoryCacheImageOutputStream(OutputStream paramOutputStream) {
-/*  58 */     if (paramOutputStream == null) {
-/*  59 */       throw new IllegalArgumentException("stream == null!");
-/*     */     }
-/*  61 */     this.stream = paramOutputStream;
-/*     */   }
-/*     */   
-/*     */   public int read() throws IOException {
-/*  65 */     checkClosed();
-/*     */     
-/*  67 */     this.bitOffset = 0;
-/*     */     
-/*  69 */     int i = this.cache.read(this.streamPos);
-/*  70 */     if (i != -1) {
-/*  71 */       this.streamPos++;
-/*     */     }
-/*  73 */     return i;
-/*     */   }
-/*     */   
-/*     */   public int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/*  77 */     checkClosed();
-/*     */     
-/*  79 */     if (paramArrayOfbyte == null) {
-/*  80 */       throw new NullPointerException("b == null!");
-/*     */     }
-/*     */     
-/*  83 */     if (paramInt1 < 0 || paramInt2 < 0 || paramInt1 + paramInt2 > paramArrayOfbyte.length || paramInt1 + paramInt2 < 0) {
-/*  84 */       throw new IndexOutOfBoundsException("off < 0 || len < 0 || off+len > b.length || off+len < 0!");
-/*     */     }
-/*     */ 
-/*     */     
-/*  88 */     this.bitOffset = 0;
-/*     */     
-/*  90 */     if (paramInt2 == 0) {
-/*  91 */       return 0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  96 */     long l = this.cache.getLength() - this.streamPos;
-/*  97 */     if (l <= 0L) {
-/*  98 */       return -1;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 104 */     paramInt2 = (int)Math.min(l, paramInt2);
-/* 105 */     this.cache.read(paramArrayOfbyte, paramInt1, paramInt2, this.streamPos);
-/* 106 */     this.streamPos += paramInt2;
-/* 107 */     return paramInt2;
-/*     */   }
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 111 */     flushBits();
-/* 112 */     this.cache.write(paramInt, this.streamPos);
-/* 113 */     this.streamPos++;
-/*     */   }
-/*     */   
-/*     */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 117 */     flushBits();
-/* 118 */     this.cache.write(paramArrayOfbyte, paramInt1, paramInt2, this.streamPos);
-/* 119 */     this.streamPos += paramInt2;
-/*     */   }
-/*     */   
-/*     */   public long length() {
-/*     */     try {
-/* 124 */       checkClosed();
-/* 125 */       return this.cache.getLength();
-/* 126 */     } catch (IOException iOException) {
-/* 127 */       return -1L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isCached() {
-/* 142 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isCachedFile() {
-/* 155 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isCachedMemory() {
-/* 168 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 178 */     long l = this.cache.getLength();
-/* 179 */     seek(l);
-/* 180 */     flushBefore(l);
-/* 181 */     super.close();
-/* 182 */     this.cache.reset();
-/* 183 */     this.cache = null;
-/* 184 */     this.stream = null;
-/*     */   }
-/*     */   
-/*     */   public void flushBefore(long paramLong) throws IOException {
-/* 188 */     long l1 = this.flushedPos;
-/* 189 */     super.flushBefore(paramLong);
-/*     */     
-/* 191 */     long l2 = this.flushedPos - l1;
-/* 192 */     this.cache.writeToStream(this.stream, l1, l2);
-/* 193 */     this.cache.disposeBefore(this.flushedPos);
-/* 194 */     this.stream.flush();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\stream\MemoryCacheImageOutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.stream;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+/**
+ * An implementation of <code>ImageOutputStream</code> that writes its
+ * output to a regular <code>OutputStream</code>.  A memory buffer is
+ * used to cache at least the data between the discard position and
+ * the current write position.  The only constructor takes an
+ * <code>OutputStream</code>, so this class may not be used for
+ * read/modify/write operations.  Reading can occur only on parts of
+ * the stream that have already been written to the cache and not
+ * yet flushed.
+ *
+ */
+public class MemoryCacheImageOutputStream extends ImageOutputStreamImpl {
+
+    private OutputStream stream;
+
+    private MemoryCache cache = new MemoryCache();
+
+    /**
+     * Constructs a <code>MemoryCacheImageOutputStream</code> that will write
+     * to a given <code>OutputStream</code>.
+     *
+     * @param stream an <code>OutputStream</code> to write to.
+     *
+     * @exception IllegalArgumentException if <code>stream</code> is
+     * <code>null</code>.
+     */
+    public MemoryCacheImageOutputStream(OutputStream stream) {
+        if (stream == null) {
+            throw new IllegalArgumentException("stream == null!");
+        }
+        this.stream = stream;
+    }
+
+    public int read() throws IOException {
+        checkClosed();
+
+        bitOffset = 0;
+
+        int val = cache.read(streamPos);
+        if (val != -1) {
+            ++streamPos;
+        }
+        return val;
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        checkClosed();
+
+        if (b == null) {
+            throw new NullPointerException("b == null!");
+        }
+        // Fix 4467608: read([B,I,I) works incorrectly if len<=0
+        if (off < 0 || len < 0 || off + len > b.length || off + len < 0) {
+            throw new IndexOutOfBoundsException
+                ("off < 0 || len < 0 || off+len > b.length || off+len < 0!");
+        }
+
+        bitOffset = 0;
+
+        if (len == 0) {
+            return 0;
+        }
+
+        // check if we're already at/past EOF i.e.
+        // no more bytes left to read from cache
+        long bytesLeftInCache = cache.getLength() - streamPos;
+        if (bytesLeftInCache <= 0) {
+            return -1; // EOF
+        }
+
+        // guaranteed by now that bytesLeftInCache > 0 && len > 0
+        // and so the rest of the error checking is done by cache.read()
+        // NOTE that alot of error checking is duplicated
+        len = (int)Math.min(bytesLeftInCache, (long)len);
+        cache.read(b, off, len, streamPos);
+        streamPos += len;
+        return len;
+    }
+
+    public void write(int b) throws IOException {
+        flushBits(); // this will call checkClosed() for us
+        cache.write(b, streamPos);
+        ++streamPos;
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+        flushBits(); // this will call checkClosed() for us
+        cache.write(b, off, len, streamPos);
+        streamPos += len;
+    }
+
+    public long length() {
+        try {
+            checkClosed();
+            return cache.getLength();
+        } catch (IOException e) {
+            return -1L;
+        }
+    }
+
+    /**
+     * Returns <code>true</code> since this
+     * <code>ImageOutputStream</code> caches data in order to allow
+     * seeking backwards.
+     *
+     * @return <code>true</code>.
+     *
+     * @see #isCachedMemory
+     * @see #isCachedFile
+     */
+    public boolean isCached() {
+        return true;
+    }
+
+    /**
+     * Returns <code>false</code> since this
+     * <code>ImageOutputStream</code> does not maintain a file cache.
+     *
+     * @return <code>false</code>.
+     *
+     * @see #isCached
+     * @see #isCachedMemory
+     */
+    public boolean isCachedFile() {
+        return false;
+    }
+
+    /**
+     * Returns <code>true</code> since this
+     * <code>ImageOutputStream</code> maintains a main memory cache.
+     *
+     * @return <code>true</code>.
+     *
+     * @see #isCached
+     * @see #isCachedFile
+     */
+    public boolean isCachedMemory() {
+        return true;
+    }
+
+    /**
+     * Closes this <code>MemoryCacheImageOutputStream</code>.  All
+     * pending data is flushed to the output, and the cache
+     * is released.  The destination <code>OutputStream</code>
+     * is not closed.
+     */
+    public void close() throws IOException {
+        long length = cache.getLength();
+        seek(length);
+        flushBefore(length);
+        super.close();
+        cache.reset();
+        cache = null;
+        stream = null;
+    }
+
+    public void flushBefore(long pos) throws IOException {
+        long oFlushedPos = flushedPos;
+        super.flushBefore(pos); // this will call checkClosed() for us
+
+        long flushBytes = flushedPos - oFlushedPos;
+        cache.writeToStream(stream, oFlushedPos, flushBytes);
+        cache.disposeBefore(flushedPos);
+        stream.flush();
+    }
+}

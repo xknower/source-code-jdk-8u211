@@ -1,287 +1,281 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PushbackReader
-/*     */   extends FilterReader
-/*     */ {
-/*     */   private char[] buf;
-/*     */   private int pos;
-/*     */   
-/*     */   public PushbackReader(Reader paramReader, int paramInt) {
-/*  53 */     super(paramReader);
-/*  54 */     if (paramInt <= 0) {
-/*  55 */       throw new IllegalArgumentException("size <= 0");
-/*     */     }
-/*  57 */     this.buf = new char[paramInt];
-/*  58 */     this.pos = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PushbackReader(Reader paramReader) {
-/*  67 */     this(paramReader, 1);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void ensureOpen() throws IOException {
-/*  72 */     if (this.buf == null) {
-/*  73 */       throw new IOException("Stream closed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read() throws IOException {
-/*  85 */     synchronized (this.lock) {
-/*  86 */       ensureOpen();
-/*  87 */       if (this.pos < this.buf.length) {
-/*  88 */         return this.buf[this.pos++];
-/*     */       }
-/*  90 */       return super.read();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int read(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 107 */     synchronized (this.lock) {
-/* 108 */       ensureOpen();
-/*     */       try {
-/* 110 */         if (paramInt2 <= 0) {
-/* 111 */           if (paramInt2 < 0)
-/* 112 */             throw new IndexOutOfBoundsException(); 
-/* 113 */           if (paramInt1 < 0 || paramInt1 > paramArrayOfchar.length) {
-/* 114 */             throw new IndexOutOfBoundsException();
-/*     */           }
-/* 116 */           return 0;
-/*     */         } 
-/* 118 */         int i = this.buf.length - this.pos;
-/* 119 */         if (i > 0) {
-/* 120 */           if (paramInt2 < i)
-/* 121 */             i = paramInt2; 
-/* 122 */           System.arraycopy(this.buf, this.pos, paramArrayOfchar, paramInt1, i);
-/* 123 */           this.pos += i;
-/* 124 */           paramInt1 += i;
-/* 125 */           paramInt2 -= i;
-/*     */         } 
-/* 127 */         if (paramInt2 > 0) {
-/* 128 */           paramInt2 = super.read(paramArrayOfchar, paramInt1, paramInt2);
-/* 129 */           if (paramInt2 == -1) {
-/* 130 */             return (i == 0) ? -1 : i;
-/*     */           }
-/* 132 */           return i + paramInt2;
-/*     */         } 
-/* 134 */         return i;
-/* 135 */       } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-/* 136 */         throw new IndexOutOfBoundsException();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unread(int paramInt) throws IOException {
-/* 152 */     synchronized (this.lock) {
-/* 153 */       ensureOpen();
-/* 154 */       if (this.pos == 0)
-/* 155 */         throw new IOException("Pushback buffer overflow"); 
-/* 156 */       this.buf[--this.pos] = (char)paramInt;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unread(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException {
-/* 175 */     synchronized (this.lock) {
-/* 176 */       ensureOpen();
-/* 177 */       if (paramInt2 > this.pos)
-/* 178 */         throw new IOException("Pushback buffer overflow"); 
-/* 179 */       this.pos -= paramInt2;
-/* 180 */       System.arraycopy(paramArrayOfchar, paramInt1, this.buf, this.pos, paramInt2);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unread(char[] paramArrayOfchar) throws IOException {
-/* 196 */     unread(paramArrayOfchar, 0, paramArrayOfchar.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean ready() throws IOException {
-/* 205 */     synchronized (this.lock) {
-/* 206 */       ensureOpen();
-/* 207 */       return (this.pos < this.buf.length || super.ready());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void mark(int paramInt) throws IOException {
-/* 218 */     throw new IOException("mark/reset not supported");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() throws IOException {
-/* 228 */     throw new IOException("mark/reset not supported");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean markSupported() {
-/* 236 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 248 */     super.close();
-/* 249 */     this.buf = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long skip(long paramLong) throws IOException {
-/* 264 */     if (paramLong < 0L)
-/* 265 */       throw new IllegalArgumentException("skip value is negative"); 
-/* 266 */     synchronized (this.lock) {
-/* 267 */       ensureOpen();
-/* 268 */       int i = this.buf.length - this.pos;
-/* 269 */       if (i > 0) {
-/* 270 */         if (paramLong <= i) {
-/* 271 */           this.pos = (int)(this.pos + paramLong);
-/* 272 */           return paramLong;
-/*     */         } 
-/* 274 */         this.pos = this.buf.length;
-/* 275 */         paramLong -= i;
-/*     */       } 
-/*     */       
-/* 278 */       return i + super.skip(paramLong);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\PushbackReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+
+/**
+ * A character-stream reader that allows characters to be pushed back into the
+ * stream.
+ *
+ * @author      Mark Reinhold
+ * @since       JDK1.1
+ */
+
+public class PushbackReader extends FilterReader {
+
+    /** Pushback buffer */
+    private char[] buf;
+
+    /** Current position in buffer */
+    private int pos;
+
+    /**
+     * Creates a new pushback reader with a pushback buffer of the given size.
+     *
+     * @param   in   The reader from which characters will be read
+     * @param   size The size of the pushback buffer
+     * @exception IllegalArgumentException if {@code size <= 0}
+     */
+    public PushbackReader(Reader in, int size) {
+        super(in);
+        if (size <= 0) {
+            throw new IllegalArgumentException("size <= 0");
+        }
+        this.buf = new char[size];
+        this.pos = size;
+    }
+
+    /**
+     * Creates a new pushback reader with a one-character pushback buffer.
+     *
+     * @param   in  The reader from which characters will be read
+     */
+    public PushbackReader(Reader in) {
+        this(in, 1);
+    }
+
+    /** Checks to make sure that the stream has not been closed. */
+    private void ensureOpen() throws IOException {
+        if (buf == null)
+            throw new IOException("Stream closed");
+    }
+
+    /**
+     * Reads a single character.
+     *
+     * @return     The character read, or -1 if the end of the stream has been
+     *             reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (pos < buf.length)
+                return buf[pos++];
+            else
+                return super.read();
+        }
+    }
+
+    /**
+     * Reads characters into a portion of an array.
+     *
+     * @param      cbuf  Destination buffer
+     * @param      off   Offset at which to start writing characters
+     * @param      len   Maximum number of characters to read
+     *
+     * @return     The number of characters read, or -1 if the end of the
+     *             stream has been reached
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public int read(char cbuf[], int off, int len) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            try {
+                if (len <= 0) {
+                    if (len < 0) {
+                        throw new IndexOutOfBoundsException();
+                    } else if ((off < 0) || (off > cbuf.length)) {
+                        throw new IndexOutOfBoundsException();
+                    }
+                    return 0;
+                }
+                int avail = buf.length - pos;
+                if (avail > 0) {
+                    if (len < avail)
+                        avail = len;
+                    System.arraycopy(buf, pos, cbuf, off, avail);
+                    pos += avail;
+                    off += avail;
+                    len -= avail;
+                }
+                if (len > 0) {
+                    len = super.read(cbuf, off, len);
+                    if (len == -1) {
+                        return (avail == 0) ? -1 : avail;
+                    }
+                    return avail + len;
+                }
+                return avail;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new IndexOutOfBoundsException();
+            }
+        }
+    }
+
+    /**
+     * Pushes back a single character by copying it to the front of the
+     * pushback buffer. After this method returns, the next character to be read
+     * will have the value <code>(char)c</code>.
+     *
+     * @param  c  The int value representing a character to be pushed back
+     *
+     * @exception  IOException  If the pushback buffer is full,
+     *                          or if some other I/O error occurs
+     */
+    public void unread(int c) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (pos == 0)
+                throw new IOException("Pushback buffer overflow");
+            buf[--pos] = (char) c;
+        }
+    }
+
+    /**
+     * Pushes back a portion of an array of characters by copying it to the
+     * front of the pushback buffer.  After this method returns, the next
+     * character to be read will have the value <code>cbuf[off]</code>, the
+     * character after that will have the value <code>cbuf[off+1]</code>, and
+     * so forth.
+     *
+     * @param  cbuf  Character array
+     * @param  off   Offset of first character to push back
+     * @param  len   Number of characters to push back
+     *
+     * @exception  IOException  If there is insufficient room in the pushback
+     *                          buffer, or if some other I/O error occurs
+     */
+    public void unread(char cbuf[], int off, int len) throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            if (len > pos)
+                throw new IOException("Pushback buffer overflow");
+            pos -= len;
+            System.arraycopy(cbuf, off, buf, pos, len);
+        }
+    }
+
+    /**
+     * Pushes back an array of characters by copying it to the front of the
+     * pushback buffer.  After this method returns, the next character to be
+     * read will have the value <code>cbuf[0]</code>, the character after that
+     * will have the value <code>cbuf[1]</code>, and so forth.
+     *
+     * @param  cbuf  Character array to push back
+     *
+     * @exception  IOException  If there is insufficient room in the pushback
+     *                          buffer, or if some other I/O error occurs
+     */
+    public void unread(char cbuf[]) throws IOException {
+        unread(cbuf, 0, cbuf.length);
+    }
+
+    /**
+     * Tells whether this stream is ready to be read.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public boolean ready() throws IOException {
+        synchronized (lock) {
+            ensureOpen();
+            return (pos < buf.length) || super.ready();
+        }
+    }
+
+    /**
+     * Marks the present position in the stream. The <code>mark</code>
+     * for class <code>PushbackReader</code> always throws an exception.
+     *
+     * @exception  IOException  Always, since mark is not supported
+     */
+    public void mark(int readAheadLimit) throws IOException {
+        throw new IOException("mark/reset not supported");
+    }
+
+    /**
+     * Resets the stream. The <code>reset</code> method of
+     * <code>PushbackReader</code> always throws an exception.
+     *
+     * @exception  IOException  Always, since reset is not supported
+     */
+    public void reset() throws IOException {
+        throw new IOException("mark/reset not supported");
+    }
+
+    /**
+     * Tells whether this stream supports the mark() operation, which it does
+     * not.
+     */
+    public boolean markSupported() {
+        return false;
+    }
+
+    /**
+     * Closes the stream and releases any system resources associated with
+     * it. Once the stream has been closed, further read(),
+     * unread(), ready(), or skip() invocations will throw an IOException.
+     * Closing a previously closed stream has no effect.
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void close() throws IOException {
+        super.close();
+        buf = null;
+    }
+
+    /**
+     * Skips characters.  This method will block until some characters are
+     * available, an I/O error occurs, or the end of the stream is reached.
+     *
+     * @param  n  The number of characters to skip
+     *
+     * @return    The number of characters actually skipped
+     *
+     * @exception  IllegalArgumentException  If <code>n</code> is negative.
+     * @exception  IOException  If an I/O error occurs
+     */
+    public long skip(long n) throws IOException {
+        if (n < 0L)
+            throw new IllegalArgumentException("skip value is negative");
+        synchronized (lock) {
+            ensureOpen();
+            int avail = buf.length - pos;
+            if (avail > 0) {
+                if (n <= avail) {
+                    pos += n;
+                    return n;
+                } else {
+                    pos = buf.length;
+                    n -= avail;
+                }
+            }
+            return avail + super.skip(n);
+        }
+    }
+}

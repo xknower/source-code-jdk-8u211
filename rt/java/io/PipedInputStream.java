@@ -1,455 +1,449 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PipedInputStream
-/*     */   extends InputStream
-/*     */ {
-/*     */   boolean closedByWriter = false;
-/*     */   volatile boolean closedByReader = false;
-/*     */   boolean connected = false;
-/*     */   Thread readSide;
-/*     */   Thread writeSide;
-/*     */   private static final int DEFAULT_PIPE_SIZE = 1024;
-/*     */   protected static final int PIPE_SIZE = 1024;
-/*     */   protected byte[] buffer;
-/*  86 */   protected int in = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  93 */   protected int out = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PipedInputStream(PipedOutputStream paramPipedOutputStream) throws IOException {
-/* 106 */     this(paramPipedOutputStream, 1024);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PipedInputStream(PipedOutputStream paramPipedOutputStream, int paramInt) throws IOException {
-/* 125 */     initPipe(paramInt);
-/* 126 */     connect(paramPipedOutputStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PipedInputStream() {
-/* 138 */     initPipe(1024);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PipedInputStream(int paramInt) {
-/* 154 */     initPipe(paramInt);
-/*     */   }
-/*     */   
-/*     */   private void initPipe(int paramInt) {
-/* 158 */     if (paramInt <= 0) {
-/* 159 */       throw new IllegalArgumentException("Pipe Size <= 0");
-/*     */     }
-/* 161 */     this.buffer = new byte[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void connect(PipedOutputStream paramPipedOutputStream) throws IOException {
-/* 188 */     paramPipedOutputStream.connect(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void receive(int paramInt) throws IOException {
-/* 201 */     checkStateForReceive();
-/* 202 */     this.writeSide = Thread.currentThread();
-/* 203 */     if (this.in == this.out)
-/* 204 */       awaitSpace(); 
-/* 205 */     if (this.in < 0) {
-/* 206 */       this.in = 0;
-/* 207 */       this.out = 0;
-/*     */     } 
-/* 209 */     this.buffer[this.in++] = (byte)(paramInt & 0xFF);
-/* 210 */     if (this.in >= this.buffer.length) {
-/* 211 */       this.in = 0;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void receive(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 226 */     checkStateForReceive();
-/* 227 */     this.writeSide = Thread.currentThread();
-/* 228 */     int i = paramInt2;
-/* 229 */     while (i > 0) {
-/* 230 */       if (this.in == this.out)
-/* 231 */         awaitSpace(); 
-/* 232 */       int j = 0;
-/* 233 */       if (this.out < this.in) {
-/* 234 */         j = this.buffer.length - this.in;
-/* 235 */       } else if (this.in < this.out) {
-/* 236 */         if (this.in == -1) {
-/* 237 */           this.in = this.out = 0;
-/* 238 */           j = this.buffer.length - this.in;
-/*     */         } else {
-/* 240 */           j = this.out - this.in;
-/*     */         } 
-/*     */       } 
-/* 243 */       if (j > i)
-/* 244 */         j = i; 
-/* 245 */       assert j > 0;
-/* 246 */       System.arraycopy(paramArrayOfbyte, paramInt1, this.buffer, this.in, j);
-/* 247 */       i -= j;
-/* 248 */       paramInt1 += j;
-/* 249 */       this.in += j;
-/* 250 */       if (this.in >= this.buffer.length) {
-/* 251 */         this.in = 0;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void checkStateForReceive() throws IOException {
-/* 257 */     if (!this.connected)
-/* 258 */       throw new IOException("Pipe not connected"); 
-/* 259 */     if (this.closedByWriter || this.closedByReader)
-/* 260 */       throw new IOException("Pipe closed"); 
-/* 261 */     if (this.readSide != null && !this.readSide.isAlive()) {
-/* 262 */       throw new IOException("Read end dead");
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void awaitSpace() throws IOException {
-/* 267 */     while (this.in == this.out) {
-/* 268 */       checkStateForReceive();
-/*     */ 
-/*     */       
-/* 271 */       notifyAll();
-/*     */       try {
-/* 273 */         wait(1000L);
-/* 274 */       } catch (InterruptedException interruptedException) {
-/* 275 */         throw new InterruptedIOException();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void receivedLast() {
-/* 285 */     this.closedByWriter = true;
-/* 286 */     notifyAll();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int read() throws IOException {
-/* 304 */     if (!this.connected)
-/* 305 */       throw new IOException("Pipe not connected"); 
-/* 306 */     if (this.closedByReader)
-/* 307 */       throw new IOException("Pipe closed"); 
-/* 308 */     if (this.writeSide != null && !this.writeSide.isAlive() && !this.closedByWriter && this.in < 0)
-/*     */     {
-/* 310 */       throw new IOException("Write end dead");
-/*     */     }
-/*     */     
-/* 313 */     this.readSide = Thread.currentThread();
-/* 314 */     byte b = 2;
-/* 315 */     while (this.in < 0) {
-/* 316 */       if (this.closedByWriter)
-/*     */       {
-/* 318 */         return -1;
-/*     */       }
-/* 320 */       if (this.writeSide != null && !this.writeSide.isAlive() && --b < 0) {
-/* 321 */         throw new IOException("Pipe broken");
-/*     */       }
-/*     */       
-/* 324 */       notifyAll();
-/*     */       try {
-/* 326 */         wait(1000L);
-/* 327 */       } catch (InterruptedException interruptedException) {
-/* 328 */         throw new InterruptedIOException();
-/*     */       } 
-/*     */     } 
-/* 331 */     int i = this.buffer[this.out++] & 0xFF;
-/* 332 */     if (this.out >= this.buffer.length) {
-/* 333 */       this.out = 0;
-/*     */     }
-/* 335 */     if (this.in == this.out)
-/*     */     {
-/* 337 */       this.in = -1;
-/*     */     }
-/*     */     
-/* 340 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 368 */     if (paramArrayOfbyte == null)
-/* 369 */       throw new NullPointerException(); 
-/* 370 */     if (paramInt1 < 0 || paramInt2 < 0 || paramInt2 > paramArrayOfbyte.length - paramInt1)
-/* 371 */       throw new IndexOutOfBoundsException(); 
-/* 372 */     if (paramInt2 == 0) {
-/* 373 */       return 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 377 */     int i = read();
-/* 378 */     if (i < 0) {
-/* 379 */       return -1;
-/*     */     }
-/* 381 */     paramArrayOfbyte[paramInt1] = (byte)i;
-/* 382 */     int j = 1;
-/* 383 */     while (this.in >= 0 && paramInt2 > 1) {
-/*     */       int k;
-/*     */ 
-/*     */       
-/* 387 */       if (this.in > this.out) {
-/* 388 */         k = Math.min(this.buffer.length - this.out, this.in - this.out);
-/*     */       } else {
-/* 390 */         k = this.buffer.length - this.out;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 394 */       if (k > paramInt2 - 1) {
-/* 395 */         k = paramInt2 - 1;
-/*     */       }
-/* 397 */       System.arraycopy(this.buffer, this.out, paramArrayOfbyte, paramInt1 + j, k);
-/* 398 */       this.out += k;
-/* 399 */       j += k;
-/* 400 */       paramInt2 -= k;
-/*     */       
-/* 402 */       if (this.out >= this.buffer.length) {
-/* 403 */         this.out = 0;
-/*     */       }
-/* 405 */       if (this.in == this.out)
-/*     */       {
-/* 407 */         this.in = -1;
-/*     */       }
-/*     */     } 
-/* 410 */     return j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int available() throws IOException {
-/* 427 */     if (this.in < 0)
-/* 428 */       return 0; 
-/* 429 */     if (this.in == this.out)
-/* 430 */       return this.buffer.length; 
-/* 431 */     if (this.in > this.out) {
-/* 432 */       return this.in - this.out;
-/*     */     }
-/* 434 */     return this.in + this.buffer.length - this.out;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 444 */     this.closedByReader = true;
-/* 445 */     synchronized (this) {
-/* 446 */       this.in = -1;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\PipedInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+/**
+ * A piped input stream should be connected
+ * to a piped output stream; the piped  input
+ * stream then provides whatever data bytes
+ * are written to the piped output  stream.
+ * Typically, data is read from a <code>PipedInputStream</code>
+ * object by one thread  and data is written
+ * to the corresponding <code>PipedOutputStream</code>
+ * by some  other thread. Attempting to use
+ * both objects from a single thread is not
+ * recommended, as it may deadlock the thread.
+ * The piped input stream contains a buffer,
+ * decoupling read operations from write operations,
+ * within limits.
+ * A pipe is said to be <a name="BROKEN"> <i>broken</i> </a> if a
+ * thread that was providing data bytes to the connected
+ * piped output stream is no longer alive.
+ *
+ * @author  James Gosling
+ * @see     java.io.PipedOutputStream
+ * @since   JDK1.0
+ */
+public class PipedInputStream extends InputStream {
+    boolean closedByWriter = false;
+    volatile boolean closedByReader = false;
+    boolean connected = false;
+
+        /* REMIND: identification of the read and write sides needs to be
+           more sophisticated.  Either using thread groups (but what about
+           pipes within a thread?) or using finalization (but it may be a
+           long time until the next GC). */
+    Thread readSide;
+    Thread writeSide;
+
+    private static final int DEFAULT_PIPE_SIZE = 1024;
+
+    /**
+     * The default size of the pipe's circular input buffer.
+     * @since   JDK1.1
+     */
+    // This used to be a constant before the pipe size was allowed
+    // to change. This field will continue to be maintained
+    // for backward compatibility.
+    protected static final int PIPE_SIZE = DEFAULT_PIPE_SIZE;
+
+    /**
+     * The circular buffer into which incoming data is placed.
+     * @since   JDK1.1
+     */
+    protected byte buffer[];
+
+    /**
+     * The index of the position in the circular buffer at which the
+     * next byte of data will be stored when received from the connected
+     * piped output stream. <code>in&lt;0</code> implies the buffer is empty,
+     * <code>in==out</code> implies the buffer is full
+     * @since   JDK1.1
+     */
+    protected int in = -1;
+
+    /**
+     * The index of the position in the circular buffer at which the next
+     * byte of data will be read by this piped input stream.
+     * @since   JDK1.1
+     */
+    protected int out = 0;
+
+    /**
+     * Creates a <code>PipedInputStream</code> so
+     * that it is connected to the piped output
+     * stream <code>src</code>. Data bytes written
+     * to <code>src</code> will then be  available
+     * as input from this stream.
+     *
+     * @param      src   the stream to connect to.
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public PipedInputStream(PipedOutputStream src) throws IOException {
+        this(src, DEFAULT_PIPE_SIZE);
+    }
+
+    /**
+     * Creates a <code>PipedInputStream</code> so that it is
+     * connected to the piped output stream
+     * <code>src</code> and uses the specified pipe size for
+     * the pipe's buffer.
+     * Data bytes written to <code>src</code> will then
+     * be available as input from this stream.
+     *
+     * @param      src   the stream to connect to.
+     * @param      pipeSize the size of the pipe's buffer.
+     * @exception  IOException  if an I/O error occurs.
+     * @exception  IllegalArgumentException if {@code pipeSize <= 0}.
+     * @since      1.6
+     */
+    public PipedInputStream(PipedOutputStream src, int pipeSize)
+            throws IOException {
+         initPipe(pipeSize);
+         connect(src);
+    }
+
+    /**
+     * Creates a <code>PipedInputStream</code> so
+     * that it is not yet {@linkplain #connect(java.io.PipedOutputStream)
+     * connected}.
+     * It must be {@linkplain java.io.PipedOutputStream#connect(
+     * java.io.PipedInputStream) connected} to a
+     * <code>PipedOutputStream</code> before being used.
+     */
+    public PipedInputStream() {
+        initPipe(DEFAULT_PIPE_SIZE);
+    }
+
+    /**
+     * Creates a <code>PipedInputStream</code> so that it is not yet
+     * {@linkplain #connect(java.io.PipedOutputStream) connected} and
+     * uses the specified pipe size for the pipe's buffer.
+     * It must be {@linkplain java.io.PipedOutputStream#connect(
+     * java.io.PipedInputStream)
+     * connected} to a <code>PipedOutputStream</code> before being used.
+     *
+     * @param      pipeSize the size of the pipe's buffer.
+     * @exception  IllegalArgumentException if {@code pipeSize <= 0}.
+     * @since      1.6
+     */
+    public PipedInputStream(int pipeSize) {
+        initPipe(pipeSize);
+    }
+
+    private void initPipe(int pipeSize) {
+         if (pipeSize <= 0) {
+            throw new IllegalArgumentException("Pipe Size <= 0");
+         }
+         buffer = new byte[pipeSize];
+    }
+
+    /**
+     * Causes this piped input stream to be connected
+     * to the piped  output stream <code>src</code>.
+     * If this object is already connected to some
+     * other piped output  stream, an <code>IOException</code>
+     * is thrown.
+     * <p>
+     * If <code>src</code> is an
+     * unconnected piped output stream and <code>snk</code>
+     * is an unconnected piped input stream, they
+     * may be connected by either the call:
+     *
+     * <pre><code>snk.connect(src)</code> </pre>
+     * <p>
+     * or the call:
+     *
+     * <pre><code>src.connect(snk)</code> </pre>
+     * <p>
+     * The two calls have the same effect.
+     *
+     * @param      src   The piped output stream to connect to.
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public void connect(PipedOutputStream src) throws IOException {
+        src.connect(this);
+    }
+
+    /**
+     * Receives a byte of data.  This method will block if no input is
+     * available.
+     * @param b the byte being received
+     * @exception IOException If the pipe is <a href="#BROKEN"> <code>broken</code></a>,
+     *          {@link #connect(java.io.PipedOutputStream) unconnected},
+     *          closed, or if an I/O error occurs.
+     * @since     JDK1.1
+     */
+    protected synchronized void receive(int b) throws IOException {
+        checkStateForReceive();
+        writeSide = Thread.currentThread();
+        if (in == out)
+            awaitSpace();
+        if (in < 0) {
+            in = 0;
+            out = 0;
+        }
+        buffer[in++] = (byte)(b & 0xFF);
+        if (in >= buffer.length) {
+            in = 0;
+        }
+    }
+
+    /**
+     * Receives data into an array of bytes.  This method will
+     * block until some input is available.
+     * @param b the buffer into which the data is received
+     * @param off the start offset of the data
+     * @param len the maximum number of bytes received
+     * @exception IOException If the pipe is <a href="#BROKEN"> broken</a>,
+     *           {@link #connect(java.io.PipedOutputStream) unconnected},
+     *           closed,or if an I/O error occurs.
+     */
+    synchronized void receive(byte b[], int off, int len)  throws IOException {
+        checkStateForReceive();
+        writeSide = Thread.currentThread();
+        int bytesToTransfer = len;
+        while (bytesToTransfer > 0) {
+            if (in == out)
+                awaitSpace();
+            int nextTransferAmount = 0;
+            if (out < in) {
+                nextTransferAmount = buffer.length - in;
+            } else if (in < out) {
+                if (in == -1) {
+                    in = out = 0;
+                    nextTransferAmount = buffer.length - in;
+                } else {
+                    nextTransferAmount = out - in;
+                }
+            }
+            if (nextTransferAmount > bytesToTransfer)
+                nextTransferAmount = bytesToTransfer;
+            assert(nextTransferAmount > 0);
+            System.arraycopy(b, off, buffer, in, nextTransferAmount);
+            bytesToTransfer -= nextTransferAmount;
+            off += nextTransferAmount;
+            in += nextTransferAmount;
+            if (in >= buffer.length) {
+                in = 0;
+            }
+        }
+    }
+
+    private void checkStateForReceive() throws IOException {
+        if (!connected) {
+            throw new IOException("Pipe not connected");
+        } else if (closedByWriter || closedByReader) {
+            throw new IOException("Pipe closed");
+        } else if (readSide != null && !readSide.isAlive()) {
+            throw new IOException("Read end dead");
+        }
+    }
+
+    private void awaitSpace() throws IOException {
+        while (in == out) {
+            checkStateForReceive();
+
+            /* full: kick any waiting readers */
+            notifyAll();
+            try {
+                wait(1000);
+            } catch (InterruptedException ex) {
+                throw new java.io.InterruptedIOException();
+            }
+        }
+    }
+
+    /**
+     * Notifies all waiting threads that the last byte of data has been
+     * received.
+     */
+    synchronized void receivedLast() {
+        closedByWriter = true;
+        notifyAll();
+    }
+
+    /**
+     * Reads the next byte of data from this piped input stream. The
+     * value byte is returned as an <code>int</code> in the range
+     * <code>0</code> to <code>255</code>.
+     * This method blocks until input data is available, the end of the
+     * stream is detected, or an exception is thrown.
+     *
+     * @return     the next byte of data, or <code>-1</code> if the end of the
+     *             stream is reached.
+     * @exception  IOException  if the pipe is
+     *           {@link #connect(java.io.PipedOutputStream) unconnected},
+     *           <a href="#BROKEN"> <code>broken</code></a>, closed,
+     *           or if an I/O error occurs.
+     */
+    public synchronized int read()  throws IOException {
+        if (!connected) {
+            throw new IOException("Pipe not connected");
+        } else if (closedByReader) {
+            throw new IOException("Pipe closed");
+        } else if (writeSide != null && !writeSide.isAlive()
+                   && !closedByWriter && (in < 0)) {
+            throw new IOException("Write end dead");
+        }
+
+        readSide = Thread.currentThread();
+        int trials = 2;
+        while (in < 0) {
+            if (closedByWriter) {
+                /* closed by writer, return EOF */
+                return -1;
+            }
+            if ((writeSide != null) && (!writeSide.isAlive()) && (--trials < 0)) {
+                throw new IOException("Pipe broken");
+            }
+            /* might be a writer waiting */
+            notifyAll();
+            try {
+                wait(1000);
+            } catch (InterruptedException ex) {
+                throw new java.io.InterruptedIOException();
+            }
+        }
+        int ret = buffer[out++] & 0xFF;
+        if (out >= buffer.length) {
+            out = 0;
+        }
+        if (in == out) {
+            /* now empty */
+            in = -1;
+        }
+
+        return ret;
+    }
+
+    /**
+     * Reads up to <code>len</code> bytes of data from this piped input
+     * stream into an array of bytes. Less than <code>len</code> bytes
+     * will be read if the end of the data stream is reached or if
+     * <code>len</code> exceeds the pipe's buffer size.
+     * If <code>len </code> is zero, then no bytes are read and 0 is returned;
+     * otherwise, the method blocks until at least 1 byte of input is
+     * available, end of the stream has been detected, or an exception is
+     * thrown.
+     *
+     * @param      b     the buffer into which the data is read.
+     * @param      off   the start offset in the destination array <code>b</code>
+     * @param      len   the maximum number of bytes read.
+     * @return     the total number of bytes read into the buffer, or
+     *             <code>-1</code> if there is no more data because the end of
+     *             the stream has been reached.
+     * @exception  NullPointerException If <code>b</code> is <code>null</code>.
+     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
+     * <code>len</code> is negative, or <code>len</code> is greater than
+     * <code>b.length - off</code>
+     * @exception  IOException if the pipe is <a href="#BROKEN"> <code>broken</code></a>,
+     *           {@link #connect(java.io.PipedOutputStream) unconnected},
+     *           closed, or if an I/O error occurs.
+     */
+    public synchronized int read(byte b[], int off, int len)  throws IOException {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if (off < 0 || len < 0 || len > b.length - off) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return 0;
+        }
+
+        /* possibly wait on the first character */
+        int c = read();
+        if (c < 0) {
+            return -1;
+        }
+        b[off] = (byte) c;
+        int rlen = 1;
+        while ((in >= 0) && (len > 1)) {
+
+            int available;
+
+            if (in > out) {
+                available = Math.min((buffer.length - out), (in - out));
+            } else {
+                available = buffer.length - out;
+            }
+
+            // A byte is read beforehand outside the loop
+            if (available > (len - 1)) {
+                available = len - 1;
+            }
+            System.arraycopy(buffer, out, b, off + rlen, available);
+            out += available;
+            rlen += available;
+            len -= available;
+
+            if (out >= buffer.length) {
+                out = 0;
+            }
+            if (in == out) {
+                /* now empty */
+                in = -1;
+            }
+        }
+        return rlen;
+    }
+
+    /**
+     * Returns the number of bytes that can be read from this input
+     * stream without blocking.
+     *
+     * @return the number of bytes that can be read from this input stream
+     *         without blocking, or {@code 0} if this input stream has been
+     *         closed by invoking its {@link #close()} method, or if the pipe
+     *         is {@link #connect(java.io.PipedOutputStream) unconnected}, or
+     *          <a href="#BROKEN"> <code>broken</code></a>.
+     *
+     * @exception  IOException  if an I/O error occurs.
+     * @since   JDK1.0.2
+     */
+    public synchronized int available() throws IOException {
+        if(in < 0)
+            return 0;
+        else if(in == out)
+            return buffer.length;
+        else if (in > out)
+            return in - out;
+        else
+            return in + buffer.length - out;
+    }
+
+    /**
+     * Closes this piped input stream and releases any system resources
+     * associated with the stream.
+     *
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public void close()  throws IOException {
+        closedByReader = true;
+        synchronized (this) {
+            in = -1;
+        }
+    }
+}

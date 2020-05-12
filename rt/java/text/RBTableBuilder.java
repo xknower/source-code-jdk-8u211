@@ -1,908 +1,618 @@
-/*     */ package java.text;
-/*     */ 
-/*     */ import java.util.Vector;
-/*     */ import sun.text.ComposedCharIter;
-/*     */ import sun.text.IntHashtable;
-/*     */ import sun.text.UCompactIntArray;
-/*     */ import sun.text.normalizer.NormalizerImpl;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class RBTableBuilder
-/*     */ {
-/*     */   static final int CHARINDEX = 1879048192;
-/*     */   private static final int IGNORABLEMASK = 65535;
-/*     */   private static final int PRIMARYORDERINCREMENT = 65536;
-/*     */   private static final int SECONDARYORDERINCREMENT = 256;
-/*     */   private static final int TERTIARYORDERINCREMENT = 1;
-/*     */   private static final int INITIALTABLESIZE = 20;
-/*     */   private static final int MAXKEYSIZE = 5;
-/*     */   private RBCollationTables.BuildAPI tables;
-/*     */   private MergeCollation mPattern;
-/*     */   private boolean isOverIgnore;
-/*     */   private char[] keyBuf;
-/*     */   private IntHashtable contractFlags;
-/*     */   private boolean frenchSec;
-/*     */   private boolean seAsianSwapping;
-/*     */   private UCompactIntArray mapping;
-/*     */   private Vector<Vector<EntryPair>> contractTable;
-/*     */   private Vector<int[]> expandTable;
-/*     */   private short maxSecOrder;
-/*     */   private short maxTerOrder;
-/*     */   
-/*     */   public RBTableBuilder(RBCollationTables.BuildAPI paramBuildAPI) {
-/* 600 */     this.tables = null;
-/* 601 */     this.mPattern = null;
-/* 602 */     this.isOverIgnore = false;
-/* 603 */     this.keyBuf = new char[5];
-/* 604 */     this.contractFlags = new IntHashtable(100);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 609 */     this.frenchSec = false;
-/* 610 */     this.seAsianSwapping = false;
-/*     */     
-/* 612 */     this.mapping = null;
-/* 613 */     this.contractTable = null;
-/* 614 */     this.expandTable = null;
-/*     */     
-/* 616 */     this.maxSecOrder = 0;
-/* 617 */     this.maxTerOrder = 0;
-/*     */     this.tables = paramBuildAPI;
-/*     */   }
-/*     */   
-/*     */   public void build(String paramString, int paramInt) throws ParseException {
-/*     */     boolean bool = true;
-/*     */     byte b = 0;
-/*     */     if (paramString.length() == 0)
-/*     */       throw new ParseException("Build rules empty.", 0); 
-/*     */     this.mapping = new UCompactIntArray(-1);
-/*     */     paramString = NormalizerImpl.canonicalDecomposeWithSingleQuotation(paramString);
-/*     */     this.mPattern = new MergeCollation(paramString);
-/*     */     int i = 0;
-/*     */     for (b = 0; b < this.mPattern.getCount(); b++) {
-/*     */       PatternEntry patternEntry = this.mPattern.getItemAt(b);
-/*     */       if (patternEntry != null) {
-/*     */         String str2 = patternEntry.getChars();
-/*     */         if (str2.length() > 1)
-/*     */           switch (str2.charAt(str2.length() - 1)) {
-/*     */             case '@':
-/*     */               this.frenchSec = true;
-/*     */               str2 = str2.substring(0, str2.length() - 1);
-/*     */               break;
-/*     */             case '!':
-/*     */               this.seAsianSwapping = true;
-/*     */               str2 = str2.substring(0, str2.length() - 1);
-/*     */               break;
-/*     */           }  
-/*     */         i = increment(patternEntry.getStrength(), i);
-/*     */         String str1 = patternEntry.getExtension();
-/*     */         if (str1.length() != 0) {
-/*     */           addExpandOrder(str2, str1, i);
-/*     */         } else if (str2.length() > 1) {
-/*     */           char c = str2.charAt(0);
-/*     */           if (Character.isHighSurrogate(c) && str2.length() == 2) {
-/*     */             addOrder(Character.toCodePoint(c, str2.charAt(1)), i);
-/*     */           } else {
-/*     */             addContractOrder(str2, i);
-/*     */           } 
-/*     */         } else {
-/*     */           char c = str2.charAt(0);
-/*     */           addOrder(c, i);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     addComposedChars();
-/*     */     commit();
-/*     */     this.mapping.compact();
-/*     */     this.tables.fillInTables(this.frenchSec, this.seAsianSwapping, this.mapping, this.contractTable, this.expandTable, this.contractFlags, this.maxSecOrder, this.maxTerOrder);
-/*     */   }
-/*     */   
-/*     */   private void addComposedChars() throws ParseException {
-/*     */     ComposedCharIter composedCharIter = new ComposedCharIter();
-/*     */     int i;
-/*     */     while ((i = composedCharIter.next()) != -1) {
-/*     */       if (getCharOrder(i) == -1) {
-/*     */         String str = composedCharIter.decomposition();
-/*     */         if (str.length() == 1) {
-/*     */           int k = getCharOrder(str.charAt(0));
-/*     */           if (k != -1)
-/*     */             addOrder(i, k); 
-/*     */           continue;
-/*     */         } 
-/*     */         if (str.length() == 2) {
-/*     */           char c = str.charAt(0);
-/*     */           if (Character.isHighSurrogate(c)) {
-/*     */             int k = getCharOrder(str.codePointAt(0));
-/*     */             if (k != -1)
-/*     */               addOrder(i, k); 
-/*     */             continue;
-/*     */           } 
-/*     */         } 
-/*     */         int j = getContractOrder(str);
-/*     */         if (j != -1) {
-/*     */           addOrder(i, j);
-/*     */           continue;
-/*     */         } 
-/*     */         boolean bool = true;
-/*     */         for (byte b = 0; b < str.length(); b++) {
-/*     */           if (getCharOrder(str.charAt(b)) == -1) {
-/*     */             bool = false;
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/*     */         if (bool)
-/*     */           addExpandOrder(i, str, -1); 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private final void commit() {
-/*     */     if (this.expandTable != null)
-/*     */       for (byte b = 0; b < this.expandTable.size(); b++) {
-/*     */         int[] arrayOfInt = this.expandTable.elementAt(b);
-/*     */         for (byte b1 = 0; b1 < arrayOfInt.length; b1++) {
-/*     */           int i = arrayOfInt[b1];
-/*     */           if (i < 2113929216 && i > 1879048192) {
-/*     */             int j = i - 1879048192;
-/*     */             int k = getCharOrder(j);
-/*     */             if (k == -1) {
-/*     */               arrayOfInt[b1] = 0xFFFF & j;
-/*     */             } else {
-/*     */               arrayOfInt[b1] = k;
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       }  
-/*     */   }
-/*     */   
-/*     */   private final int increment(int paramInt1, int paramInt2) {
-/*     */     switch (paramInt1) {
-/*     */       case 0:
-/*     */         paramInt2 += 65536;
-/*     */         paramInt2 &= 0xFFFF0000;
-/*     */         this.isOverIgnore = true;
-/*     */         break;
-/*     */       case 1:
-/*     */         paramInt2 += 256;
-/*     */         paramInt2 &= 0xFFFFFF00;
-/*     */         if (!this.isOverIgnore)
-/*     */           this.maxSecOrder = (short)(this.maxSecOrder + 1); 
-/*     */         break;
-/*     */       case 2:
-/*     */         paramInt2++;
-/*     */         if (!this.isOverIgnore)
-/*     */           this.maxTerOrder = (short)(this.maxTerOrder + 1); 
-/*     */         break;
-/*     */     } 
-/*     */     return paramInt2;
-/*     */   }
-/*     */   
-/*     */   private final void addOrder(int paramInt1, int paramInt2) {
-/*     */     int i = this.mapping.elementAt(paramInt1);
-/*     */     if (i >= 2130706432) {
-/*     */       int j = 1;
-/*     */       if (Character.isSupplementaryCodePoint(paramInt1)) {
-/*     */         j = Character.toChars(paramInt1, this.keyBuf, 0);
-/*     */       } else {
-/*     */         this.keyBuf[0] = (char)paramInt1;
-/*     */       } 
-/*     */       addContractOrder(new String(this.keyBuf, 0, j), paramInt2);
-/*     */     } else {
-/*     */       this.mapping.setElementAt(paramInt1, paramInt2);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private final void addContractOrder(String paramString, int paramInt) {
-/*     */     addContractOrder(paramString, paramInt, true);
-/*     */   }
-/*     */   
-/*     */   private final void addContractOrder(String paramString, int paramInt, boolean paramBoolean) {
-/*     */     if (this.contractTable == null)
-/*     */       this.contractTable = new Vector<>(20); 
-/*     */     int i = paramString.codePointAt(0);
-/*     */     int j = this.mapping.elementAt(i);
-/*     */     Vector<EntryPair> vector = getContractValuesImpl(j - 2130706432);
-/*     */     if (vector == null) {
-/*     */       int m = 2130706432 + this.contractTable.size();
-/*     */       vector = new Vector<>(20);
-/*     */       this.contractTable.addElement(vector);
-/*     */       vector.addElement(new EntryPair(paramString.substring(0, Character.charCount(i)), j));
-/*     */       this.mapping.setElementAt(i, m);
-/*     */     } 
-/*     */     int k = RBCollationTables.getEntry(vector, paramString, paramBoolean);
-/*     */     if (k != -1) {
-/*     */       EntryPair entryPair = vector.elementAt(k);
-/*     */       entryPair.value = paramInt;
-/*     */     } else {
-/*     */       EntryPair entryPair = vector.lastElement();
-/*     */       if (paramString.length() > entryPair.entryName.length()) {
-/*     */         vector.addElement(new EntryPair(paramString, paramInt, paramBoolean));
-/*     */       } else {
-/*     */         vector.insertElementAt(new EntryPair(paramString, paramInt, paramBoolean), vector.size() - 1);
-/*     */       } 
-/*     */     } 
-/*     */     if (paramBoolean && paramString.length() > 1) {
-/*     */       addContractFlags(paramString);
-/*     */       addContractOrder((new StringBuffer(paramString)).reverse().toString(), paramInt, false);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private int getContractOrder(String paramString) {
-/*     */     int i = -1;
-/*     */     if (this.contractTable != null) {
-/*     */       int j = paramString.codePointAt(0);
-/*     */       Vector<EntryPair> vector = getContractValues(j);
-/*     */       if (vector != null) {
-/*     */         int k = RBCollationTables.getEntry(vector, paramString, true);
-/*     */         if (k != -1) {
-/*     */           EntryPair entryPair = vector.elementAt(k);
-/*     */           i = entryPair.value;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     return i;
-/*     */   }
-/*     */   
-/*     */   private final int getCharOrder(int paramInt) {
-/*     */     int i = this.mapping.elementAt(paramInt);
-/*     */     if (i >= 2130706432) {
-/*     */       Vector<EntryPair> vector = getContractValuesImpl(i - 2130706432);
-/*     */       EntryPair entryPair = vector.firstElement();
-/*     */       i = entryPair.value;
-/*     */     } 
-/*     */     return i;
-/*     */   }
-/*     */   
-/*     */   private Vector<EntryPair> getContractValues(int paramInt) {
-/*     */     int i = this.mapping.elementAt(paramInt);
-/*     */     return getContractValuesImpl(i - 2130706432);
-/*     */   }
-/*     */   
-/*     */   private Vector<EntryPair> getContractValuesImpl(int paramInt) {
-/*     */     if (paramInt >= 0)
-/*     */       return this.contractTable.elementAt(paramInt); 
-/*     */     return null;
-/*     */   }
-/*     */   
-/*     */   private final void addExpandOrder(String paramString1, String paramString2, int paramInt) throws ParseException {
-/*     */     int i = addExpansion(paramInt, paramString2);
-/*     */     if (paramString1.length() > 1) {
-/*     */       char c = paramString1.charAt(0);
-/*     */       if (Character.isHighSurrogate(c) && paramString1.length() == 2) {
-/*     */         char c1 = paramString1.charAt(1);
-/*     */         if (Character.isLowSurrogate(c1))
-/*     */           addOrder(Character.toCodePoint(c, c1), i); 
-/*     */       } else {
-/*     */         addContractOrder(paramString1, i);
-/*     */       } 
-/*     */     } else {
-/*     */       addOrder(paramString1.charAt(0), i);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private final void addExpandOrder(int paramInt1, String paramString, int paramInt2) throws ParseException {
-/*     */     int i = addExpansion(paramInt2, paramString);
-/*     */     addOrder(paramInt1, i);
-/*     */   }
-/*     */   
-/*     */   private int addExpansion(int paramInt, String paramString) {
-/*     */     if (this.expandTable == null)
-/*     */       this.expandTable = (Vector)new Vector<>(20); 
-/*     */     byte b1 = (paramInt == -1) ? 0 : 1;
-/*     */     int[] arrayOfInt = new int[paramString.length() + b1];
-/*     */     if (b1 == 1)
-/*     */       arrayOfInt[0] = paramInt; 
-/*     */     byte b2 = b1;
-/*     */     int i;
-/*     */     for (i = 0; i < paramString.length(); i++) {
-/*     */       char c1;
-/*     */       char c = paramString.charAt(i);
-/*     */       if (Character.isHighSurrogate(c)) {
-/*     */         char c2;
-/*     */         if (++i == paramString.length() || !Character.isLowSurrogate(c2 = paramString.charAt(i)))
-/*     */           break; 
-/*     */         c1 = Character.toCodePoint(c, c2);
-/*     */       } else {
-/*     */         c1 = c;
-/*     */       } 
-/*     */       int j = getCharOrder(c1);
-/*     */       if (j != -1) {
-/*     */         arrayOfInt[b2++] = j;
-/*     */       } else {
-/*     */         arrayOfInt[b2++] = 1879048192 + c1;
-/*     */       } 
-/*     */     } 
-/*     */     if (b2 < arrayOfInt.length) {
-/*     */       int[] arrayOfInt1 = new int[b2];
-/*     */       while (--b2 >= 0)
-/*     */         arrayOfInt1[b2] = arrayOfInt[b2]; 
-/*     */       arrayOfInt = arrayOfInt1;
-/*     */     } 
-/*     */     i = 2113929216 + this.expandTable.size();
-/*     */     this.expandTable.addElement(arrayOfInt);
-/*     */     return i;
-/*     */   }
-/*     */   
-/*     */   private void addContractFlags(String paramString) {
-/*     */     int i = paramString.length();
-/*     */     for (byte b = 0; b < i; b++) {
-/*     */       char c = paramString.charAt(b);
-/*     */       boolean bool = Character.isHighSurrogate(c) ? Character.toCodePoint(c, paramString.charAt(++b)) : c;
-/*     */       this.contractFlags.put(bool, 1);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\text\RBTableBuilder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1996-1998 - All Rights Reserved
+ *
+ *   The original version of this source code and documentation is copyrighted
+ * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These
+ * materials are provided under terms of a License Agreement between Taligent
+ * and Sun. This technology is protected by multiple US and International
+ * patents. This notice and attribution to Taligent may not be removed.
+ *   Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.text;
+
+import java.util.Vector;
+import sun.text.UCompactIntArray;
+import sun.text.IntHashtable;
+import sun.text.ComposedCharIter;
+import sun.text.CollatorUtilities;
+import sun.text.normalizer.NormalizerImpl;
+
+/**
+ * This class contains all the code to parse a RuleBasedCollator pattern
+ * and build a RBCollationTables object from it.  A particular instance
+ * of tis class exists only during the actual build process-- once an
+ * RBCollationTables object has been built, the RBTableBuilder object
+ * goes away.  This object carries all of the state which is only needed
+ * during the build process, plus a "shadow" copy of all of the state
+ * that will go into the tables object itself.  This object communicates
+ * with RBCollationTables through a separate class, RBCollationTables.BuildAPI,
+ * this is an inner class of RBCollationTables and provides a separate
+ * private API for communication with RBTableBuilder.
+ * This class isn't just an inner class of RBCollationTables itself because
+ * of its large size.  For source-code readability, it seemed better for the
+ * builder to have its own source file.
+ */
+final class RBTableBuilder {
+
+    public RBTableBuilder(RBCollationTables.BuildAPI tables) {
+        this.tables = tables;
+    }
+
+    /**
+     * Create a table-based collation object with the given rules.
+     * This is the main function that actually builds the tables and
+     * stores them back in the RBCollationTables object.  It is called
+     * ONLY by the RBCollationTables constructor.
+     * @see RuleBasedCollator#RuleBasedCollator
+     * @exception ParseException If the rules format is incorrect.
+     */
+
+    public void build(String pattern, int decmp) throws ParseException
+    {
+        boolean isSource = true;
+        int i = 0;
+        String expChars;
+        String groupChars;
+        if (pattern.length() == 0)
+            throw new ParseException("Build rules empty.", 0);
+
+        // This array maps Unicode characters to their collation ordering
+        mapping = new UCompactIntArray(RBCollationTables.UNMAPPED);
+        // Normalize the build rules.  Find occurances of all decomposed characters
+        // and normalize the rules before feeding into the builder.  By "normalize",
+        // we mean that all precomposed Unicode characters must be converted into
+        // a base character and one or more combining characters (such as accents).
+        // When there are multiple combining characters attached to a base character,
+        // the combining characters must be in their canonical order
+        //
+        // sherman/Note:
+        //(1)decmp will be NO_DECOMPOSITION only in ko locale to prevent decompose
+        //hangual syllables to jamos, so we can actually just call decompose with
+        //normalizer's IGNORE_HANGUL option turned on
+        //
+        //(2)just call the "special version" in NormalizerImpl directly
+        //pattern = Normalizer.decompose(pattern, false, Normalizer.IGNORE_HANGUL, true);
+        //
+        //Normalizer.Mode mode = CollatorUtilities.toNormalizerMode(decmp);
+        //pattern = Normalizer.normalize(pattern, mode, 0, true);
+
+        pattern = NormalizerImpl.canonicalDecomposeWithSingleQuotation(pattern);
+
+        // Build the merged collation entries
+        // Since rules can be specified in any order in the string
+        // (e.g. "c , C < d , D < e , E .... C < CH")
+        // this splits all of the rules in the string out into separate
+        // objects and then sorts them.  In the above example, it merges the
+        // "C < CH" rule in just before the "C < D" rule.
+        //
+
+        mPattern = new MergeCollation(pattern);
+
+        int order = 0;
+
+        // Now walk though each entry and add it to my own tables
+        for (i = 0; i < mPattern.getCount(); ++i)
+        {
+            PatternEntry entry = mPattern.getItemAt(i);
+            if (entry != null) {
+                groupChars = entry.getChars();
+                if (groupChars.length() > 1) {
+                    switch(groupChars.charAt(groupChars.length()-1)) {
+                    case '@':
+                        frenchSec = true;
+                        groupChars = groupChars.substring(0, groupChars.length()-1);
+                        break;
+                    case '!':
+                        seAsianSwapping = true;
+                        groupChars = groupChars.substring(0, groupChars.length()-1);
+                        break;
+                    }
+                }
+
+                order = increment(entry.getStrength(), order);
+                expChars = entry.getExtension();
+
+                if (expChars.length() != 0) {
+                    addExpandOrder(groupChars, expChars, order);
+                } else if (groupChars.length() > 1) {
+                    char ch = groupChars.charAt(0);
+                    if (Character.isHighSurrogate(ch) && groupChars.length() == 2) {
+                        addOrder(Character.toCodePoint(ch, groupChars.charAt(1)), order);
+                    } else {
+                        addContractOrder(groupChars, order);
+                    }
+                } else {
+                    char ch = groupChars.charAt(0);
+                    addOrder(ch, order);
+                }
+            }
+        }
+        addComposedChars();
+
+        commit();
+        mapping.compact();
+        /*
+        System.out.println("mappingSize=" + mapping.getKSize());
+        for (int j = 0; j < 0xffff; j++) {
+            int value = mapping.elementAt(j);
+            if (value != RBCollationTables.UNMAPPED)
+                System.out.println("index=" + Integer.toString(j, 16)
+                           + ", value=" + Integer.toString(value, 16));
+        }
+        */
+        tables.fillInTables(frenchSec, seAsianSwapping, mapping, contractTable, expandTable,
+                    contractFlags, maxSecOrder, maxTerOrder);
+    }
+
+    /** Add expanding entries for pre-composed unicode characters so that this
+     * collator can be used reasonably well with decomposition turned off.
+     */
+    private void addComposedChars() throws ParseException {
+        // Iterate through all of the pre-composed characters in Unicode
+        ComposedCharIter iter = new ComposedCharIter();
+        int c;
+        while ((c = iter.next()) != ComposedCharIter.DONE) {
+            if (getCharOrder(c) == RBCollationTables.UNMAPPED) {
+                //
+                // We don't already have an ordering for this pre-composed character.
+                //
+                // First, see if the decomposed string is already in our
+                // tables as a single contracting-string ordering.
+                // If so, just map the precomposed character to that order.
+                //
+                // TODO: What we should really be doing here is trying to find the
+                // longest initial substring of the decomposition that is present
+                // in the tables as a contracting character sequence, and find its
+                // ordering.  Then do this recursively with the remaining chars
+                // so that we build a list of orderings, and add that list to
+                // the expansion table.
+                // That would be more correct but also significantly slower, so
+                // I'm not totally sure it's worth doing.
+                //
+                String s = iter.decomposition();
+
+                //sherman/Note: if this is 1 character decomposed string, the
+                //only thing need to do is to check if this decomposed character
+                //has an entry in our order table, this order is not necessary
+                //to be a contraction order, if it does have one, add an entry
+                //for the precomposed character by using the same order, the
+                //previous impl unnecessarily adds a single character expansion
+                //entry.
+                if (s.length() == 1) {
+                    int order = getCharOrder(s.charAt(0));
+                    if (order != RBCollationTables.UNMAPPED) {
+                        addOrder(c, order);
+                    }
+                    continue;
+                } else if (s.length() == 2) {
+                    char ch0 = s.charAt(0);
+                    if (Character.isHighSurrogate(ch0)) {
+                        int order = getCharOrder(s.codePointAt(0));
+                        if (order != RBCollationTables.UNMAPPED) {
+                            addOrder(c, order);
+                        }
+                        continue;
+                    }
+                }
+                int contractOrder = getContractOrder(s);
+                if (contractOrder != RBCollationTables.UNMAPPED) {
+                    addOrder(c, contractOrder);
+                } else {
+                    //
+                    // We don't have a contracting ordering for the entire string
+                    // that results from the decomposition, but if we have orders
+                    // for each individual character, we can add an expanding
+                    // table entry for the pre-composed character
+                    //
+                    boolean allThere = true;
+                    for (int i = 0; i < s.length(); i++) {
+                        if (getCharOrder(s.charAt(i)) == RBCollationTables.UNMAPPED) {
+                            allThere = false;
+                            break;
+                        }
+                    }
+                    if (allThere) {
+                        addExpandOrder(c, s, RBCollationTables.UNMAPPED);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Look up for unmapped values in the expanded character table.
+     *
+     * When the expanding character tables are built by addExpandOrder,
+     * it doesn't know what the final ordering of each character
+     * in the expansion will be.  Instead, it just puts the raw character
+     * code into the table, adding CHARINDEX as a flag.  Now that we've
+     * finished building the mapping table, we can go back and look up
+     * that character to see what its real collation order is and
+     * stick that into the expansion table.  That lets us avoid doing
+     * a two-stage lookup later.
+     */
+    private final void commit()
+    {
+        if (expandTable != null) {
+            for (int i = 0; i < expandTable.size(); i++) {
+                int[] valueList = expandTable.elementAt(i);
+                for (int j = 0; j < valueList.length; j++) {
+                    int order = valueList[j];
+                    if (order < RBCollationTables.EXPANDCHARINDEX && order > CHARINDEX) {
+                        // found a expanding character that isn't filled in yet
+                        int ch = order - CHARINDEX;
+
+                        // Get the real values for the non-filled entry
+                        int realValue = getCharOrder(ch);
+
+                        if (realValue == RBCollationTables.UNMAPPED) {
+                            // The real value is still unmapped, maybe it's ignorable
+                            valueList[j] = IGNORABLEMASK & ch;
+                        } else {
+                            // just fill in the value
+                            valueList[j] = realValue;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /**
+     *  Increment of the last order based on the comparison level.
+     */
+    private final int increment(int aStrength, int lastValue)
+    {
+        switch(aStrength)
+        {
+        case Collator.PRIMARY:
+            // increment priamry order  and mask off secondary and tertiary difference
+            lastValue += PRIMARYORDERINCREMENT;
+            lastValue &= RBCollationTables.PRIMARYORDERMASK;
+            isOverIgnore = true;
+            break;
+        case Collator.SECONDARY:
+            // increment secondary order and mask off tertiary difference
+            lastValue += SECONDARYORDERINCREMENT;
+            lastValue &= RBCollationTables.SECONDARYDIFFERENCEONLY;
+            // record max # of ignorable chars with secondary difference
+            if (!isOverIgnore)
+                maxSecOrder++;
+            break;
+        case Collator.TERTIARY:
+            // increment tertiary order
+            lastValue += TERTIARYORDERINCREMENT;
+            // record max # of ignorable chars with tertiary difference
+            if (!isOverIgnore)
+                maxTerOrder++;
+            break;
+        }
+        return lastValue;
+    }
+
+    /**
+     *  Adds a character and its designated order into the collation table.
+     */
+    private final void addOrder(int ch, int anOrder)
+    {
+        // See if the char already has an order in the mapping table
+        int order = mapping.elementAt(ch);
+
+        if (order >= RBCollationTables.CONTRACTCHARINDEX) {
+            // There's already an entry for this character that points to a contracting
+            // character table.  Instead of adding the character directly to the mapping
+            // table, we must add it to the contract table instead.
+            int length = 1;
+            if (Character.isSupplementaryCodePoint(ch)) {
+                length = Character.toChars(ch, keyBuf, 0);
+            } else {
+                keyBuf[0] = (char)ch;
+            }
+            addContractOrder(new String(keyBuf, 0, length), anOrder);
+        } else {
+            // add the entry to the mapping table,
+            // the same later entry replaces the previous one
+            mapping.setElementAt(ch, anOrder);
+        }
+    }
+
+    private final void addContractOrder(String groupChars, int anOrder) {
+        addContractOrder(groupChars, anOrder, true);
+    }
+
+    /**
+     *  Adds the contracting string into the collation table.
+     */
+    private final void addContractOrder(String groupChars, int anOrder,
+                                          boolean fwd)
+    {
+        if (contractTable == null) {
+            contractTable = new Vector<>(INITIALTABLESIZE);
+        }
+
+        //initial character
+        int ch = groupChars.codePointAt(0);
+        /*
+        char ch0 = groupChars.charAt(0);
+        int ch = Character.isHighSurrogate(ch0)?
+          Character.toCodePoint(ch0, groupChars.charAt(1)):ch0;
+          */
+        // See if the initial character of the string already has a contract table.
+        int entry = mapping.elementAt(ch);
+        Vector<EntryPair> entryTable = getContractValuesImpl(entry - RBCollationTables.CONTRACTCHARINDEX);
+
+        if (entryTable == null) {
+            // We need to create a new table of contract entries for this base char
+            int tableIndex = RBCollationTables.CONTRACTCHARINDEX + contractTable.size();
+            entryTable = new Vector<>(INITIALTABLESIZE);
+            contractTable.addElement(entryTable);
+
+            // Add the initial character's current ordering first. then
+            // update its mapping to point to this contract table
+            entryTable.addElement(new EntryPair(groupChars.substring(0,Character.charCount(ch)), entry));
+            mapping.setElementAt(ch, tableIndex);
+        }
+
+        // Now add (or replace) this string in the table
+        int index = RBCollationTables.getEntry(entryTable, groupChars, fwd);
+        if (index != RBCollationTables.UNMAPPED) {
+            EntryPair pair = entryTable.elementAt(index);
+            pair.value = anOrder;
+        } else {
+            EntryPair pair = entryTable.lastElement();
+
+            // NOTE:  This little bit of logic is here to speed CollationElementIterator
+            // .nextContractChar().  This code ensures that the longest sequence in
+            // this list is always the _last_ one in the list.  This keeps
+            // nextContractChar() from having to search the entire list for the longest
+            // sequence.
+            if (groupChars.length() > pair.entryName.length()) {
+                entryTable.addElement(new EntryPair(groupChars, anOrder, fwd));
+            } else {
+                entryTable.insertElementAt(new EntryPair(groupChars, anOrder,
+                        fwd), entryTable.size() - 1);
+            }
+        }
+
+        // If this was a forward mapping for a contracting string, also add a
+        // reverse mapping for it, so that CollationElementIterator.previous
+        // can work right
+        if (fwd && groupChars.length() > 1) {
+            addContractFlags(groupChars);
+            addContractOrder(new StringBuffer(groupChars).reverse().toString(),
+                             anOrder, false);
+        }
+    }
+
+    /**
+     * If the given string has been specified as a contracting string
+     * in this collation table, return its ordering.
+     * Otherwise return UNMAPPED.
+     */
+    private int getContractOrder(String groupChars)
+    {
+        int result = RBCollationTables.UNMAPPED;
+        if (contractTable != null) {
+            int ch = groupChars.codePointAt(0);
+            /*
+            char ch0 = groupChars.charAt(0);
+            int ch = Character.isHighSurrogate(ch0)?
+              Character.toCodePoint(ch0, groupChars.charAt(1)):ch0;
+              */
+            Vector<EntryPair> entryTable = getContractValues(ch);
+            if (entryTable != null) {
+                int index = RBCollationTables.getEntry(entryTable, groupChars, true);
+                if (index != RBCollationTables.UNMAPPED) {
+                    EntryPair pair = entryTable.elementAt(index);
+                    result = pair.value;
+                }
+            }
+        }
+        return result;
+    }
+
+    private final int getCharOrder(int ch) {
+        int order = mapping.elementAt(ch);
+
+        if (order >= RBCollationTables.CONTRACTCHARINDEX) {
+            Vector<EntryPair> groupList = getContractValuesImpl(order - RBCollationTables.CONTRACTCHARINDEX);
+            EntryPair pair = groupList.firstElement();
+            order = pair.value;
+        }
+        return order;
+    }
+
+    /**
+     *  Get the entry of hash table of the contracting string in the collation
+     *  table.
+     *  @param ch the starting character of the contracting string
+     */
+    private Vector<EntryPair> getContractValues(int ch)
+    {
+        int index = mapping.elementAt(ch);
+        return getContractValuesImpl(index - RBCollationTables.CONTRACTCHARINDEX);
+    }
+
+    private Vector<EntryPair> getContractValuesImpl(int index)
+    {
+        if (index >= 0)
+        {
+            return contractTable.elementAt(index);
+        }
+        else // not found
+        {
+            return null;
+        }
+    }
+
+    /**
+     *  Adds the expanding string into the collation table.
+     */
+    private final void addExpandOrder(String contractChars,
+                                String expandChars,
+                                int anOrder) throws ParseException
+    {
+        // Create an expansion table entry
+        int tableIndex = addExpansion(anOrder, expandChars);
+
+        // And add its index into the main mapping table
+        if (contractChars.length() > 1) {
+            char ch = contractChars.charAt(0);
+            if (Character.isHighSurrogate(ch) && contractChars.length() == 2) {
+                char ch2 = contractChars.charAt(1);
+                if (Character.isLowSurrogate(ch2)) {
+                    //only add into table when it is a legal surrogate
+                    addOrder(Character.toCodePoint(ch, ch2), tableIndex);
+                }
+            } else {
+                addContractOrder(contractChars, tableIndex);
+            }
+        } else {
+            addOrder(contractChars.charAt(0), tableIndex);
+        }
+    }
+
+    private final void addExpandOrder(int ch, String expandChars, int anOrder)
+      throws ParseException
+    {
+        int tableIndex = addExpansion(anOrder, expandChars);
+        addOrder(ch, tableIndex);
+    }
+
+    /**
+     * Create a new entry in the expansion table that contains the orderings
+     * for the given characers.  If anOrder is valid, it is added to the
+     * beginning of the expanded list of orders.
+     */
+    private int addExpansion(int anOrder, String expandChars) {
+        if (expandTable == null) {
+            expandTable = new Vector<>(INITIALTABLESIZE);
+        }
+
+        // If anOrder is valid, we want to add it at the beginning of the list
+        int offset = (anOrder == RBCollationTables.UNMAPPED) ? 0 : 1;
+
+        int[] valueList = new int[expandChars.length() + offset];
+        if (offset == 1) {
+            valueList[0] = anOrder;
+        }
+
+        int j = offset;
+        for (int i = 0; i < expandChars.length(); i++) {
+            char ch0 = expandChars.charAt(i);
+            char ch1;
+            int ch;
+            if (Character.isHighSurrogate(ch0)) {
+                if (++i == expandChars.length() ||
+                    !Character.isLowSurrogate(ch1=expandChars.charAt(i))) {
+                    //ether we are missing the low surrogate or the next char
+                    //is not a legal low surrogate, so stop loop
+                    break;
+                }
+                ch = Character.toCodePoint(ch0, ch1);
+
+            } else {
+                ch = ch0;
+            }
+
+            int mapValue = getCharOrder(ch);
+
+            if (mapValue != RBCollationTables.UNMAPPED) {
+                valueList[j++] = mapValue;
+            } else {
+                // can't find it in the table, will be filled in by commit().
+                valueList[j++] = CHARINDEX + ch;
+            }
+        }
+        if (j < valueList.length) {
+            //we had at least one supplementary character, the size of valueList
+            //is bigger than it really needs...
+            int[] tmpBuf = new int[j];
+            while (--j >= 0) {
+                tmpBuf[j] = valueList[j];
+            }
+            valueList = tmpBuf;
+        }
+        // Add the expanding char list into the expansion table.
+        int tableIndex = RBCollationTables.EXPANDCHARINDEX + expandTable.size();
+        expandTable.addElement(valueList);
+
+        return tableIndex;
+    }
+
+    private void addContractFlags(String chars) {
+        char c0;
+        int c;
+        int len = chars.length();
+        for (int i = 0; i < len; i++) {
+            c0 = chars.charAt(i);
+            c = Character.isHighSurrogate(c0)
+                          ?Character.toCodePoint(c0, chars.charAt(++i))
+                          :c0;
+            contractFlags.put(c, 1);
+        }
+    }
+
+    // ==============================================================
+    // constants
+    // ==============================================================
+    final static int CHARINDEX = 0x70000000;  // need look up in .commit()
+
+    private final static int IGNORABLEMASK = 0x0000ffff;
+    private final static int PRIMARYORDERINCREMENT = 0x00010000;
+    private final static int SECONDARYORDERINCREMENT = 0x00000100;
+    private final static int TERTIARYORDERINCREMENT = 0x00000001;
+    private final static int INITIALTABLESIZE = 20;
+    private final static int MAXKEYSIZE = 5;
+
+    // ==============================================================
+    // instance variables
+    // ==============================================================
+
+    // variables used by the build process
+    private RBCollationTables.BuildAPI tables = null;
+    private MergeCollation mPattern = null;
+    private boolean isOverIgnore = false;
+    private char[] keyBuf = new char[MAXKEYSIZE];
+    private IntHashtable contractFlags = new IntHashtable(100);
+
+    // "shadow" copies of the instance variables in RBCollationTables
+    // (the values in these variables are copied back into RBCollationTables
+    // at the end of the build process)
+    private boolean frenchSec = false;
+    private boolean seAsianSwapping = false;
+
+    private UCompactIntArray mapping = null;
+    private Vector<Vector<EntryPair>>   contractTable = null;
+    private Vector<int[]>   expandTable = null;
+
+    private short maxSecOrder = 0;
+    private short maxTerOrder = 0;
+}

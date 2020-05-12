@@ -1,604 +1,601 @@
-/*     */ package java.nio;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class HeapCharBuffer
-/*     */   extends CharBuffer
-/*     */ {
-/*     */   HeapCharBuffer(int paramInt1, int paramInt2) {
-/*  57 */     super(-1, 0, paramInt2, paramInt1, new char[paramInt1], 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   HeapCharBuffer(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/*  70 */     super(-1, paramInt1, paramInt1 + paramInt2, paramArrayOfchar.length, paramArrayOfchar, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected HeapCharBuffer(char[] paramArrayOfchar, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  86 */     super(paramInt1, paramInt2, paramInt3, paramInt4, paramArrayOfchar, paramInt5);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer slice() {
-/*  98 */     return new HeapCharBuffer(this.hb, -1, 0, 
-/*     */ 
-/*     */         
-/* 101 */         remaining(), 
-/* 102 */         remaining(), 
-/* 103 */         position() + this.offset);
-/*     */   }
-/*     */   
-/*     */   public CharBuffer duplicate() {
-/* 107 */     return new HeapCharBuffer(this.hb, 
-/* 108 */         markValue(), 
-/* 109 */         position(), 
-/* 110 */         limit(), 
-/* 111 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer asReadOnlyBuffer() {
-/* 117 */     return new HeapCharBufferR(this.hb, 
-/* 118 */         markValue(), 
-/* 119 */         position(), 
-/* 120 */         limit(), 
-/* 121 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int ix(int paramInt) {
-/* 131 */     return paramInt + this.offset;
-/*     */   }
-/*     */   
-/*     */   public char get() {
-/* 135 */     return this.hb[ix(nextGetIndex())];
-/*     */   }
-/*     */   
-/*     */   public char get(int paramInt) {
-/* 139 */     return this.hb[ix(checkIndex(paramInt))];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   char getUnchecked(int paramInt) {
-/* 144 */     return this.hb[ix(paramInt)];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public CharBuffer get(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 149 */     checkBounds(paramInt1, paramInt2, paramArrayOfchar.length);
-/* 150 */     if (paramInt2 > remaining())
-/* 151 */       throw new BufferUnderflowException(); 
-/* 152 */     System.arraycopy(this.hb, ix(position()), paramArrayOfchar, paramInt1, paramInt2);
-/* 153 */     position(position() + paramInt2);
-/* 154 */     return this;
-/*     */   }
-/*     */   
-/*     */   public boolean isDirect() {
-/* 158 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isReadOnly() {
-/* 164 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public CharBuffer put(char paramChar) {
-/* 169 */     this.hb[ix(nextPutIndex())] = paramChar;
-/* 170 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer put(int paramInt, char paramChar) {
-/* 178 */     this.hb[ix(checkIndex(paramInt))] = paramChar;
-/* 179 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer put(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 187 */     checkBounds(paramInt1, paramInt2, paramArrayOfchar.length);
-/* 188 */     if (paramInt2 > remaining())
-/* 189 */       throw new BufferOverflowException(); 
-/* 190 */     System.arraycopy(paramArrayOfchar, paramInt1, this.hb, ix(position()), paramInt2);
-/* 191 */     position(position() + paramInt2);
-/* 192 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer put(CharBuffer paramCharBuffer) {
-/* 200 */     if (paramCharBuffer instanceof HeapCharBuffer) {
-/* 201 */       if (paramCharBuffer == this)
-/* 202 */         throw new IllegalArgumentException(); 
-/* 203 */       HeapCharBuffer heapCharBuffer = (HeapCharBuffer)paramCharBuffer;
-/* 204 */       int i = heapCharBuffer.remaining();
-/* 205 */       if (i > remaining())
-/* 206 */         throw new BufferOverflowException(); 
-/* 207 */       System.arraycopy(heapCharBuffer.hb, heapCharBuffer.ix(heapCharBuffer.position()), this.hb, 
-/* 208 */           ix(position()), i);
-/* 209 */       heapCharBuffer.position(heapCharBuffer.position() + i);
-/* 210 */       position(position() + i);
-/* 211 */     } else if (paramCharBuffer.isDirect()) {
-/* 212 */       int i = paramCharBuffer.remaining();
-/* 213 */       if (i > remaining())
-/* 214 */         throw new BufferOverflowException(); 
-/* 215 */       paramCharBuffer.get(this.hb, ix(position()), i);
-/* 216 */       position(position() + i);
-/*     */     } else {
-/* 218 */       super.put(paramCharBuffer);
-/*     */     } 
-/* 220 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer compact() {
-/* 228 */     System.arraycopy(this.hb, ix(position()), this.hb, ix(0), remaining());
-/* 229 */     position(remaining());
-/* 230 */     limit(capacity());
-/* 231 */     discardMark();
-/* 232 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String toString(int paramInt1, int paramInt2) {
-/*     */     try {
-/* 567 */       return new String(this.hb, paramInt1 + this.offset, paramInt2 - paramInt1);
-/* 568 */     } catch (StringIndexOutOfBoundsException stringIndexOutOfBoundsException) {
-/* 569 */       throw new IndexOutOfBoundsException();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer subSequence(int paramInt1, int paramInt2) {
-/* 577 */     if (paramInt1 < 0 || paramInt2 > 
-/* 578 */       length() || paramInt1 > paramInt2)
-/*     */     {
-/* 580 */       throw new IndexOutOfBoundsException(); } 
-/* 581 */     int i = position();
-/* 582 */     return new HeapCharBuffer(this.hb, -1, i + paramInt1, i + paramInt2, 
-/*     */ 
-/*     */ 
-/*     */         
-/* 586 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteOrder order() {
-/* 596 */     return ByteOrder.nativeOrder();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\HeapCharBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio;
+
+
+/**
+
+ * A read/write HeapCharBuffer.
+
+
+
+
+
+
+ */
+
+class HeapCharBuffer
+    extends CharBuffer
+{
+
+    // For speed these fields are actually declared in X-Buffer;
+    // these declarations are here as documentation
+    /*
+
+    protected final char[] hb;
+    protected final int offset;
+
+    */
+
+    HeapCharBuffer(int cap, int lim) {            // package-private
+
+        super(-1, 0, lim, cap, new char[cap], 0);
+        /*
+        hb = new char[cap];
+        offset = 0;
+        */
+
+
+
+
+    }
+
+    HeapCharBuffer(char[] buf, int off, int len) { // package-private
+
+        super(-1, off, off + len, buf.length, buf, 0);
+        /*
+        hb = buf;
+        offset = 0;
+        */
+
+
+
+
+    }
+
+    protected HeapCharBuffer(char[] buf,
+                                   int mark, int pos, int lim, int cap,
+                                   int off)
+    {
+
+        super(mark, pos, lim, cap, buf, off);
+        /*
+        hb = buf;
+        offset = off;
+        */
+
+
+
+
+    }
+
+    public CharBuffer slice() {
+        return new HeapCharBuffer(hb,
+                                        -1,
+                                        0,
+                                        this.remaining(),
+                                        this.remaining(),
+                                        this.position() + offset);
+    }
+
+    public CharBuffer duplicate() {
+        return new HeapCharBuffer(hb,
+                                        this.markValue(),
+                                        this.position(),
+                                        this.limit(),
+                                        this.capacity(),
+                                        offset);
+    }
+
+    public CharBuffer asReadOnlyBuffer() {
+
+        return new HeapCharBufferR(hb,
+                                     this.markValue(),
+                                     this.position(),
+                                     this.limit(),
+                                     this.capacity(),
+                                     offset);
+
+
+
+    }
+
+
+
+    protected int ix(int i) {
+        return i + offset;
+    }
+
+    public char get() {
+        return hb[ix(nextGetIndex())];
+    }
+
+    public char get(int i) {
+        return hb[ix(checkIndex(i))];
+    }
+
+
+    char getUnchecked(int i) {
+	return hb[ix(i)];
+    }
+
+
+    public CharBuffer get(char[] dst, int offset, int length) {
+        checkBounds(offset, length, dst.length);
+        if (length > remaining())
+            throw new BufferUnderflowException();
+        System.arraycopy(hb, ix(position()), dst, offset, length);
+        position(position() + length);
+        return this;
+    }
+
+    public boolean isDirect() {
+        return false;
+    }
+
+
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    public CharBuffer put(char x) {
+
+        hb[ix(nextPutIndex())] = x;
+        return this;
+
+
+
+    }
+
+    public CharBuffer put(int i, char x) {
+
+        hb[ix(checkIndex(i))] = x;
+        return this;
+
+
+
+    }
+
+    public CharBuffer put(char[] src, int offset, int length) {
+
+        checkBounds(offset, length, src.length);
+        if (length > remaining())
+            throw new BufferOverflowException();
+        System.arraycopy(src, offset, hb, ix(position()), length);
+        position(position() + length);
+        return this;
+
+
+
+    }
+
+    public CharBuffer put(CharBuffer src) {
+
+        if (src instanceof HeapCharBuffer) {
+            if (src == this)
+                throw new IllegalArgumentException();
+            HeapCharBuffer sb = (HeapCharBuffer)src;
+            int n = sb.remaining();
+            if (n > remaining())
+                throw new BufferOverflowException();
+            System.arraycopy(sb.hb, sb.ix(sb.position()),
+                             hb, ix(position()), n);
+            sb.position(sb.position() + n);
+            position(position() + n);
+        } else if (src.isDirect()) {
+            int n = src.remaining();
+            if (n > remaining())
+                throw new BufferOverflowException();
+            src.get(hb, ix(position()), n);
+            position(position() + n);
+        } else {
+            super.put(src);
+        }
+        return this;
+
+
+
+    }
+
+    public CharBuffer compact() {
+
+        System.arraycopy(hb, ix(position()), hb, ix(0), remaining());
+        position(remaining());
+        limit(capacity());
+        discardMark();
+        return this;
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    String toString(int start, int end) {               // package-private
+        try {
+            return new String(hb, start + offset, end - start);
+        } catch (StringIndexOutOfBoundsException x) {
+            throw new IndexOutOfBoundsException();
+        }
+    }
+
+
+    // --- Methods to support CharSequence ---
+
+    public CharBuffer subSequence(int start, int end) {
+        if ((start < 0)
+            || (end > length())
+            || (start > end))
+            throw new IndexOutOfBoundsException();
+        int pos = position();
+        return new HeapCharBuffer(hb,
+                                      -1,
+                                      pos + start,
+                                      pos + end,
+                                      capacity(),
+                                      offset);
+    }
+
+
+
+
+
+
+    public ByteOrder order() {
+        return ByteOrder.nativeOrder();
+    }
+
+
+
+}

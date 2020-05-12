@@ -1,119 +1,115 @@
-/*     */ package com.sun.org.apache.xerces.internal.xpointer;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
-/*     */ import java.io.PrintWriter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class XPointerErrorHandler
-/*     */   implements XMLErrorHandler
-/*     */ {
-/*     */   protected PrintWriter fOut;
-/*     */   
-/*     */   public XPointerErrorHandler() {
-/*  52 */     this(new PrintWriter(System.err));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XPointerErrorHandler(PrintWriter out) {
-/*  60 */     this.fOut = out;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void warning(String domain, String key, XMLParseException ex) throws XNIException {
-/*  70 */     printError("Warning", ex);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void error(String domain, String key, XMLParseException ex) throws XNIException {
-/*  76 */     printError("Error", ex);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void fatalError(String domain, String key, XMLParseException ex) throws XNIException {
-/*  83 */     printError("Fatal Error", ex);
-/*  84 */     throw ex;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void printError(String type, XMLParseException ex) {
-/*  94 */     this.fOut.print("[");
-/*  95 */     this.fOut.print(type);
-/*  96 */     this.fOut.print("] ");
-/*  97 */     String systemId = ex.getExpandedSystemId();
-/*  98 */     if (systemId != null) {
-/*  99 */       int index = systemId.lastIndexOf('/');
-/* 100 */       if (index != -1)
-/* 101 */         systemId = systemId.substring(index + 1); 
-/* 102 */       this.fOut.print(systemId);
-/*     */     } 
-/* 104 */     this.fOut.print(':');
-/* 105 */     this.fOut.print(ex.getLineNumber());
-/* 106 */     this.fOut.print(':');
-/* 107 */     this.fOut.print(ex.getColumnNumber());
-/* 108 */     this.fOut.print(": ");
-/* 109 */     this.fOut.print(ex.getMessage());
-/* 110 */     this.fOut.println();
-/* 111 */     this.fOut.flush();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\xpointer\XPointerErrorHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.sun.org.apache.xerces.internal.xpointer;
+
+import java.io.PrintWriter;
+
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
+
+/**
+ * The Default XPointer error handler used by the XInclude implementation.
+ * XPointer error's are thrown so that they may be caught by the XInclude
+ * implementation and reported as resource errors.
+ *
+ */
+class XPointerErrorHandler implements XMLErrorHandler {
+
+    //
+    // Data
+    //
+
+    /** Print writer. */
+    protected PrintWriter fOut;
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructs an error handler that prints error messages to
+     * <code>System.err</code>.
+     */
+    public XPointerErrorHandler() {
+        this(new PrintWriter(System.err));
+    } // <init>()
+
+    /**
+     * Constructs an error handler that prints error messages to the
+     * specified <code>PrintWriter</code.
+     */
+    public XPointerErrorHandler(PrintWriter out) {
+        fOut = out;
+    } // <init>(PrintWriter)
+
+    //
+    // ErrorHandler methods
+    //
+
+    /** Warning. */
+    public void warning(String domain, String key, XMLParseException ex)
+            throws XNIException {
+        printError("Warning", ex);
+    } // warning(XMLParseException)
+
+    /** Error. */
+    public void error(String domain, String key, XMLParseException ex)
+            throws XNIException {
+        printError("Error", ex);
+        //throw ex;
+    } // error(XMLParseException)
+
+    /** Fatal error. */
+    public void fatalError(String domain, String key, XMLParseException ex)
+            throws XNIException {
+        printError("Fatal Error", ex);
+        throw ex;
+    } // fatalError(XMLParseException)
+
+    //
+    // Private methods
+    //
+
+    /** Prints the error message. */
+    private void printError(String type, XMLParseException ex) {
+
+        fOut.print("[");
+        fOut.print(type);
+        fOut.print("] ");
+        String systemId = ex.getExpandedSystemId();
+        if (systemId != null) {
+            int index = systemId.lastIndexOf('/');
+            if (index != -1)
+                systemId = systemId.substring(index + 1);
+            fOut.print(systemId);
+        }
+        fOut.print(':');
+        fOut.print(ex.getLineNumber());
+        fOut.print(':');
+        fOut.print(ex.getColumnNumber());
+        fOut.print(": ");
+        fOut.print(ex.getMessage());
+        fOut.println();
+        fOut.flush();
+
+    } // printError(String,SAXParseException)
+
+} // class DefaultErrorHandler

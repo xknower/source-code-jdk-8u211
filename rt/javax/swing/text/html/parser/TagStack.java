@@ -1,170 +1,204 @@
-/*     */ package javax.swing.text.html.parser;
-/*     */ 
-/*     */ import java.util.BitSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class TagStack
-/*     */   implements DTDConstants
-/*     */ {
-/*     */   TagElement tag;
-/*     */   Element elem;
-/*     */   ContentModelState state;
-/*     */   TagStack next;
-/*     */   BitSet inclusions;
-/*     */   BitSet exclusions;
-/*     */   boolean net;
-/*     */   boolean pre;
-/*     */   
-/*     */   TagStack(TagElement paramTagElement, TagStack paramTagStack) {
-/*  61 */     this.tag = paramTagElement;
-/*  62 */     this.elem = paramTagElement.getElement();
-/*  63 */     this.next = paramTagStack;
-/*     */     
-/*  65 */     Element element = paramTagElement.getElement();
-/*  66 */     if (element.getContent() != null) {
-/*  67 */       this.state = new ContentModelState(element.getContent());
-/*     */     }
-/*     */     
-/*  70 */     if (paramTagStack != null) {
-/*  71 */       this.inclusions = paramTagStack.inclusions;
-/*  72 */       this.exclusions = paramTagStack.exclusions;
-/*  73 */       this.pre = paramTagStack.pre;
-/*     */     } 
-/*  75 */     if (paramTagElement.isPreformatted()) {
-/*  76 */       this.pre = true;
-/*     */     }
-/*     */     
-/*  79 */     if (element.inclusions != null) {
-/*  80 */       if (this.inclusions != null) {
-/*  81 */         this.inclusions = (BitSet)this.inclusions.clone();
-/*  82 */         this.inclusions.or(element.inclusions);
-/*     */       } else {
-/*  84 */         this.inclusions = element.inclusions;
-/*     */       } 
-/*     */     }
-/*  87 */     if (element.exclusions != null) {
-/*  88 */       if (this.exclusions != null) {
-/*  89 */         this.exclusions = (BitSet)this.exclusions.clone();
-/*  90 */         this.exclusions.or(element.exclusions);
-/*     */       } else {
-/*  92 */         this.exclusions = element.exclusions;
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Element first() {
-/* 102 */     return (this.state != null) ? this.state.first() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ContentModel contentModel() {
-/* 110 */     if (this.state == null) {
-/* 111 */       return null;
-/*     */     }
-/* 113 */     return this.state.getModel();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean excluded(int paramInt) {
-/* 124 */     return (this.exclusions != null && this.exclusions.get(this.elem.getIndex()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean advance(Element paramElement) {
-/* 134 */     if (this.exclusions != null && this.exclusions.get(paramElement.getIndex())) {
-/* 135 */       return false;
-/*     */     }
-/* 137 */     if (this.state != null) {
-/* 138 */       ContentModelState contentModelState = this.state.advance(paramElement);
-/* 139 */       if (contentModelState != null) {
-/* 140 */         this.state = contentModelState;
-/* 141 */         return true;
-/*     */       } 
-/* 143 */     } else if (this.elem.getType() == 19) {
-/* 144 */       return true;
-/*     */     } 
-/* 146 */     return (this.inclusions != null && this.inclusions.get(paramElement.getIndex()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean terminate() {
-/* 153 */     return (this.state == null || this.state.terminate());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 160 */     return (this.next == null) ? ("<" + this.tag
-/* 161 */       .getElement().getName() + ">") : (this.next + " <" + this.tag
-/* 162 */       .getElement().getName() + ">");
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\parser\TagStack.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text.html.parser;
+
+import java.util.BitSet;
+import java.util.Vector;
+import java.io.*;
+
+
+/**
+ * A stack of tags. Used while parsing an HTML document.
+ * It, together with the ContentModelStates, defines the
+ * complete state of the parser while reading a document.
+ * When a start tag is encountered an element is pushed onto
+ * the stack, when an end tag is enountered an element is popped
+ * of the stack.
+ *
+ * @see Parser
+ * @see DTD
+ * @see ContentModelState
+ * @author      Arthur van Hoff
+ */
+final
+class TagStack implements DTDConstants {
+    TagElement tag;
+    Element elem;
+    ContentModelState state;
+    TagStack next;
+    BitSet inclusions;
+    BitSet exclusions;
+    boolean net;
+    boolean pre;
+
+    /**
+     * Construct a stack element.
+     */
+    TagStack(TagElement tag, TagStack next) {
+        this.tag = tag;
+        this.elem = tag.getElement();
+        this.next = next;
+
+        Element elem = tag.getElement();
+        if (elem.getContent() != null) {
+            this.state = new ContentModelState(elem.getContent());
+        }
+
+        if (next != null) {
+            inclusions = next.inclusions;
+            exclusions = next.exclusions;
+            pre = next.pre;
+        }
+        if (tag.isPreformatted()) {
+            pre = true;
+        }
+
+        if (elem.inclusions != null) {
+            if (inclusions != null) {
+                inclusions = (BitSet)inclusions.clone();
+                inclusions.or(elem.inclusions);
+            } else {
+                inclusions = elem.inclusions;
+            }
+        }
+        if (elem.exclusions != null) {
+            if (exclusions != null) {
+                exclusions = (BitSet)exclusions.clone();
+                exclusions.or(elem.exclusions);
+            } else {
+                exclusions = elem.exclusions;
+            }
+        }
+    }
+
+    /**
+     * Return the element that must come next in the
+     * input stream.
+     */
+    public Element first() {
+        return (state != null) ? state.first() : null;
+    }
+
+    /**
+     * Return the ContentModel that must be satisfied by
+     * what comes next in the input stream.
+     */
+    public ContentModel contentModel() {
+        if (state == null) {
+            return null;
+        } else {
+            return state.getModel();
+        }
+    }
+
+    /**
+     * Return true if the element that is contained at
+     * the index specified by the parameter is part of
+     * the exclusions specified in the DTD for the element
+     * currently on the TagStack.
+     */
+    boolean excluded(int elemIndex) {
+        return (exclusions != null) && exclusions.get(elem.getIndex());
+    }
+
+
+    /**
+     * Advance the state by reducing the given element.
+     * Returns false if the element is not legal and the
+     * state is not advanced.
+     */
+    boolean advance(Element elem) {
+        if ((exclusions != null) && exclusions.get(elem.getIndex())) {
+            return false;
+        }
+        if (state != null) {
+            ContentModelState newState = state.advance(elem);
+            if (newState != null) {
+                state = newState;
+                return true;
+            }
+        } else if (this.elem.getType() == ANY) {
+            return true;
+        }
+        return (inclusions != null) && inclusions.get(elem.getIndex());
+    }
+
+    /**
+     * Return true if the current state can be terminated.
+     */
+    boolean terminate() {
+        return (state == null) || state.terminate();
+    }
+
+    /**
+     * Convert to a string.
+     */
+    public String toString() {
+        return (next == null) ?
+            "<" + tag.getElement().getName() + ">" :
+            next + " <" + tag.getElement().getName() + ">";
+    }
+}
+
+class NPrintWriter extends PrintWriter {
+
+    private int numLines = 5;
+    private int numPrinted = 0;
+
+    public NPrintWriter (int numberOfLines) {
+        super(System.out);
+        numLines = numberOfLines;
+    }
+
+    public void println(char[] array) {
+        if (numPrinted >= numLines) {
+            return;
+        }
+
+        char[] partialArray = null;
+
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == '\n') {
+                numPrinted++;
+            }
+
+            if (numPrinted == numLines) {
+                System.arraycopy(array, 0, partialArray, 0, i);
+            }
+        }
+
+        if (partialArray != null) {
+            super.print(partialArray);
+        }
+
+        if (numPrinted == numLines) {
+            return;
+        }
+
+        super.println(array);
+        numPrinted++;
+    }
+}

@@ -1,482 +1,476 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.KeyEvent;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JMenuItem;
-/*     */ import javax.swing.KeyStroke;
-/*     */ import javax.swing.SwingConstants;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.text.View;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifGraphicsUtils
-/*     */   implements SwingConstants
-/*     */ {
-/*     */   private static final String MAX_ACC_WIDTH = "maxAccWidth";
-/*     */   
-/*     */   static void drawPoint(Graphics paramGraphics, int paramInt1, int paramInt2) {
-/*  58 */     paramGraphics.drawLine(paramInt1, paramInt2, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void drawGroove(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, Color paramColor1, Color paramColor2) {
-/*  68 */     Color color = paramGraphics.getColor();
-/*  69 */     paramGraphics.translate(paramInt1, paramInt2);
-/*     */     
-/*  71 */     paramGraphics.setColor(paramColor1);
-/*  72 */     paramGraphics.drawRect(0, 0, paramInt3 - 2, paramInt4 - 2);
-/*     */     
-/*  74 */     paramGraphics.setColor(paramColor2);
-/*  75 */     paramGraphics.drawLine(1, paramInt4 - 3, 1, 1);
-/*  76 */     paramGraphics.drawLine(1, 1, paramInt3 - 3, 1);
-/*     */     
-/*  78 */     paramGraphics.drawLine(0, paramInt4 - 1, paramInt3 - 1, paramInt4 - 1);
-/*  79 */     paramGraphics.drawLine(paramInt3 - 1, paramInt4 - 1, paramInt3 - 1, 0);
-/*     */     
-/*  81 */     paramGraphics.translate(-paramInt1, -paramInt2);
-/*  82 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void drawStringInRect(Graphics paramGraphics, String paramString, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  96 */     drawStringInRect(null, paramGraphics, paramString, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void drawStringInRect(JComponent paramJComponent, Graphics paramGraphics, String paramString, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*     */     int i;
-/* 105 */     if (paramGraphics.getFont() == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 109 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(paramJComponent, paramGraphics);
-/* 110 */     if (fontMetrics == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 115 */     if (paramInt5 == 0) {
-/* 116 */       int m = SwingUtilities2.stringWidth(paramJComponent, fontMetrics, paramString);
-/* 117 */       if (m > paramInt3) {
-/* 118 */         m = paramInt3;
-/*     */       }
-/* 120 */       i = paramInt1 + (paramInt3 - m) / 2;
-/* 121 */     } else if (paramInt5 == 4) {
-/* 122 */       int m = SwingUtilities2.stringWidth(paramJComponent, fontMetrics, paramString);
-/* 123 */       if (m > paramInt3) {
-/* 124 */         m = paramInt3;
-/*     */       }
-/* 126 */       i = paramInt1 + paramInt3 - m;
-/*     */     } else {
-/* 128 */       i = paramInt1;
-/*     */     } 
-/*     */     
-/* 131 */     int k = (paramInt4 - fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
-/* 132 */     if (k < 0) {
-/* 133 */       k = 0;
-/*     */     }
-/*     */     
-/* 136 */     int j = paramInt2 + paramInt4 - k - fontMetrics.getDescent();
-/*     */     
-/* 138 */     SwingUtilities2.drawString(paramJComponent, paramGraphics, paramString, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void paintMenuItem(Graphics paramGraphics, JComponent paramJComponent, Icon paramIcon1, Icon paramIcon2, Color paramColor1, Color paramColor2, int paramInt) {
-/* 152 */     JMenuItem jMenuItem = (JMenuItem)paramJComponent;
-/* 153 */     ButtonModel buttonModel = jMenuItem.getModel();
-/*     */     
-/* 155 */     Dimension dimension = jMenuItem.getSize();
-/* 156 */     Insets insets = paramJComponent.getInsets();
-/*     */     
-/* 158 */     Rectangle rectangle1 = new Rectangle(dimension);
-/*     */     
-/* 160 */     rectangle1.x += insets.left;
-/* 161 */     rectangle1.y += insets.top;
-/* 162 */     rectangle1.width -= insets.right + rectangle1.x;
-/* 163 */     rectangle1.height -= insets.bottom + rectangle1.y;
-/*     */     
-/* 165 */     Rectangle rectangle2 = new Rectangle();
-/* 166 */     Rectangle rectangle3 = new Rectangle();
-/* 167 */     Rectangle rectangle4 = new Rectangle();
-/* 168 */     Rectangle rectangle5 = new Rectangle();
-/* 169 */     Rectangle rectangle6 = new Rectangle();
-/*     */     
-/* 171 */     Font font1 = paramGraphics.getFont();
-/* 172 */     Font font2 = paramJComponent.getFont();
-/* 173 */     paramGraphics.setFont(font2);
-/* 174 */     FontMetrics fontMetrics1 = SwingUtilities2.getFontMetrics(paramJComponent, paramGraphics, font2);
-/* 175 */     FontMetrics fontMetrics2 = SwingUtilities2.getFontMetrics(paramJComponent, paramGraphics, 
-/* 176 */         UIManager.getFont("MenuItem.acceleratorFont"));
-/*     */     
-/* 178 */     if (paramJComponent.isOpaque()) {
-/* 179 */       if (buttonModel.isArmed() || (paramJComponent instanceof javax.swing.JMenu && buttonModel.isSelected())) {
-/* 180 */         paramGraphics.setColor(paramColor1);
-/*     */       } else {
-/* 182 */         paramGraphics.setColor(paramJComponent.getBackground());
-/*     */       } 
-/* 184 */       paramGraphics.fillRect(0, 0, dimension.width, dimension.height);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 188 */     KeyStroke keyStroke = jMenuItem.getAccelerator();
-/* 189 */     String str1 = "";
-/* 190 */     if (keyStroke != null) {
-/* 191 */       int i = keyStroke.getModifiers();
-/* 192 */       if (i > 0) {
-/* 193 */         str1 = KeyEvent.getKeyModifiersText(i);
-/* 194 */         str1 = str1 + "+";
-/*     */       } 
-/* 196 */       str1 = str1 + KeyEvent.getKeyText(keyStroke.getKeyCode());
-/*     */     } 
-/*     */ 
-/*     */     
-/* 200 */     String str2 = layoutMenuItem(paramJComponent, fontMetrics1, jMenuItem.getText(), fontMetrics2, str1, jMenuItem
-/* 201 */         .getIcon(), paramIcon1, paramIcon2, jMenuItem
-/*     */         
-/* 203 */         .getVerticalAlignment(), jMenuItem
-/* 204 */         .getHorizontalAlignment(), jMenuItem
-/* 205 */         .getVerticalTextPosition(), jMenuItem
-/* 206 */         .getHorizontalTextPosition(), rectangle1, rectangle2, rectangle3, rectangle4, rectangle5, rectangle6, 
-/*     */ 
-/*     */ 
-/*     */         
-/* 210 */         (jMenuItem.getText() == null) ? 0 : paramInt, paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 216 */     Color color = paramGraphics.getColor();
-/* 217 */     if (paramIcon1 != null) {
-/* 218 */       if (buttonModel.isArmed() || (paramJComponent instanceof javax.swing.JMenu && buttonModel.isSelected()))
-/* 219 */         paramGraphics.setColor(paramColor2); 
-/* 220 */       paramIcon1.paintIcon(paramJComponent, paramGraphics, rectangle5.x, rectangle5.y);
-/* 221 */       paramGraphics.setColor(color);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 225 */     if (jMenuItem.getIcon() != null) {
-/*     */       Icon icon;
-/* 227 */       if (!buttonModel.isEnabled()) {
-/* 228 */         icon = jMenuItem.getDisabledIcon();
-/* 229 */       } else if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 230 */         icon = jMenuItem.getPressedIcon();
-/* 231 */         if (icon == null)
-/*     */         {
-/* 233 */           icon = jMenuItem.getIcon();
-/*     */         }
-/*     */       } else {
-/* 236 */         icon = jMenuItem.getIcon();
-/*     */       } 
-/*     */       
-/* 239 */       if (icon != null) {
-/* 240 */         icon.paintIcon(paramJComponent, paramGraphics, rectangle2.x, rectangle2.y);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 245 */     if (str2 != null && !str2.equals("")) {
-/*     */ 
-/*     */       
-/* 248 */       View view = (View)paramJComponent.getClientProperty("html");
-/* 249 */       if (view != null) {
-/* 250 */         view.paint(paramGraphics, rectangle3);
-/*     */       } else {
-/* 252 */         int i = jMenuItem.getDisplayedMnemonicIndex();
-/*     */         
-/* 254 */         if (!buttonModel.isEnabled()) {
-/*     */           
-/* 256 */           paramGraphics.setColor(jMenuItem.getBackground().brighter());
-/* 257 */           SwingUtilities2.drawStringUnderlineCharAt(jMenuItem, paramGraphics, str2, i, rectangle3.x, rectangle3.y + fontMetrics2
-/*     */               
-/* 259 */               .getAscent());
-/* 260 */           paramGraphics.setColor(jMenuItem.getBackground().darker());
-/* 261 */           SwingUtilities2.drawStringUnderlineCharAt(jMenuItem, paramGraphics, str2, i, rectangle3.x - 1, rectangle3.y + fontMetrics2
-/*     */               
-/* 263 */               .getAscent() - 1);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 267 */           if (buttonModel.isArmed() || (paramJComponent instanceof javax.swing.JMenu && buttonModel.isSelected())) {
-/* 268 */             paramGraphics.setColor(paramColor2);
-/*     */           } else {
-/* 270 */             paramGraphics.setColor(jMenuItem.getForeground());
-/*     */           } 
-/* 272 */           SwingUtilities2.drawStringUnderlineCharAt(jMenuItem, paramGraphics, str2, i, rectangle3.x, rectangle3.y + fontMetrics1
-/*     */ 
-/*     */               
-/* 275 */               .getAscent());
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 281 */     if (str1 != null && !str1.equals("")) {
-/*     */ 
-/*     */       
-/* 284 */       int i = 0;
-/* 285 */       Container container = jMenuItem.getParent();
-/* 286 */       if (container != null && container instanceof JComponent) {
-/* 287 */         JComponent jComponent = (JComponent)container;
-/* 288 */         Integer integer = (Integer)jComponent.getClientProperty("maxAccWidth");
-/*     */         
-/* 290 */         int j = (integer != null) ? integer.intValue() : rectangle4.width;
-/*     */ 
-/*     */         
-/* 293 */         i = j - rectangle4.width;
-/*     */       } 
-/*     */       
-/* 296 */       paramGraphics.setFont(UIManager.getFont("MenuItem.acceleratorFont"));
-/* 297 */       if (!buttonModel.isEnabled()) {
-/*     */         
-/* 299 */         paramGraphics.setColor(jMenuItem.getBackground().brighter());
-/* 300 */         SwingUtilities2.drawString(paramJComponent, paramGraphics, str1, rectangle4.x - i, rectangle4.y + fontMetrics1
-/* 301 */             .getAscent());
-/* 302 */         paramGraphics.setColor(jMenuItem.getBackground().darker());
-/* 303 */         SwingUtilities2.drawString(paramJComponent, paramGraphics, str1, rectangle4.x - i - 1, rectangle4.y + fontMetrics1
-/* 304 */             .getAscent() - 1);
-/*     */       } else {
-/*     */         
-/* 307 */         if (buttonModel.isArmed() || (paramJComponent instanceof javax.swing.JMenu && buttonModel.isSelected())) {
-/*     */           
-/* 309 */           paramGraphics.setColor(paramColor2);
-/*     */         } else {
-/* 311 */           paramGraphics.setColor(jMenuItem.getForeground());
-/*     */         } 
-/* 313 */         SwingUtilities2.drawString(paramJComponent, paramGraphics, str1, rectangle4.x - i, rectangle4.y + fontMetrics2
-/*     */             
-/* 315 */             .getAscent());
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 320 */     if (paramIcon2 != null) {
-/* 321 */       if (buttonModel.isArmed() || (paramJComponent instanceof javax.swing.JMenu && buttonModel.isSelected()))
-/* 322 */         paramGraphics.setColor(paramColor2); 
-/* 323 */       if (!(jMenuItem.getParent() instanceof javax.swing.JMenuBar)) {
-/* 324 */         paramIcon2.paintIcon(paramJComponent, paramGraphics, rectangle6.x, rectangle6.y);
-/*     */       }
-/*     */     } 
-/* 327 */     paramGraphics.setColor(color);
-/* 328 */     paramGraphics.setFont(font1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String layoutMenuItem(JComponent paramJComponent, FontMetrics paramFontMetrics1, String paramString1, FontMetrics paramFontMetrics2, String paramString2, Icon paramIcon1, Icon paramIcon2, Icon paramIcon3, int paramInt1, int paramInt2, int paramInt3, int paramInt4, Rectangle paramRectangle1, Rectangle paramRectangle2, Rectangle paramRectangle3, Rectangle paramRectangle4, Rectangle paramRectangle5, Rectangle paramRectangle6, int paramInt5, int paramInt6) {
-/* 363 */     SwingUtilities.layoutCompoundLabel(paramJComponent, paramFontMetrics1, paramString1, paramIcon1, paramInt1, paramInt2, paramInt3, paramInt4, paramRectangle1, paramRectangle2, paramRectangle3, paramInt5);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 380 */     if (paramString2 == null || paramString2.equals("")) {
-/* 381 */       paramRectangle4.width = paramRectangle4.height = 0;
-/* 382 */       paramString2 = "";
-/*     */     } else {
-/*     */       
-/* 385 */       paramRectangle4
-/* 386 */         .width = SwingUtilities2.stringWidth(paramJComponent, paramFontMetrics2, paramString2);
-/* 387 */       paramRectangle4.height = paramFontMetrics2.getHeight();
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 393 */     if (paramIcon2 != null) {
-/* 394 */       paramRectangle5.width = paramIcon2.getIconWidth();
-/* 395 */       paramRectangle5.height = paramIcon2.getIconHeight();
-/*     */     } else {
-/*     */       
-/* 398 */       paramRectangle5.width = paramRectangle5.height = 0;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 404 */     if (paramIcon3 != null) {
-/* 405 */       paramRectangle6.width = paramIcon3.getIconWidth();
-/* 406 */       paramRectangle6.height = paramIcon3.getIconHeight();
-/*     */     } else {
-/*     */       
-/* 409 */       paramRectangle6.width = paramRectangle6.height = 0;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 413 */     Rectangle rectangle = paramRectangle2.union(paramRectangle3);
-/* 414 */     if (isLeftToRight(paramJComponent)) {
-/* 415 */       paramRectangle3.x += paramRectangle5.width + paramInt6;
-/* 416 */       paramRectangle2.x += paramRectangle5.width + paramInt6;
-/*     */ 
-/*     */       
-/* 419 */       paramRectangle4.x = paramRectangle1.x + paramRectangle1.width - paramRectangle6.width - paramInt6 - paramRectangle4.width;
-/*     */ 
-/*     */ 
-/*     */       
-/* 423 */       paramRectangle5.x = paramRectangle1.x;
-/* 424 */       paramRectangle6.x = paramRectangle1.x + paramRectangle1.width - paramInt6 - paramRectangle6.width;
-/*     */     } else {
-/*     */       
-/* 427 */       paramRectangle3.x -= paramRectangle5.width + paramInt6;
-/* 428 */       paramRectangle2.x -= paramRectangle5.width + paramInt6;
-/*     */ 
-/*     */       
-/* 431 */       paramRectangle4.x = paramRectangle1.x + paramRectangle6.width + paramInt6;
-/*     */ 
-/*     */       
-/* 434 */       paramRectangle5.x = paramRectangle1.x + paramRectangle1.width - paramRectangle5.width;
-/* 435 */       paramRectangle1.x += paramInt6;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 440 */     paramRectangle4.y = rectangle.y + rectangle.height / 2 - paramRectangle4.height / 2;
-/* 441 */     paramRectangle6.y = rectangle.y + rectangle.height / 2 - paramRectangle6.height / 2;
-/* 442 */     paramRectangle5.y = rectangle.y + rectangle.height / 2 - paramRectangle5.height / 2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 448 */     return paramString1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void drawMenuBezel(Graphics paramGraphics, Color paramColor, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 456 */     paramGraphics.setColor(paramColor);
-/* 457 */     paramGraphics.fillRect(paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */     
-/* 459 */     paramGraphics.setColor(paramColor.brighter().brighter());
-/* 460 */     paramGraphics.drawLine(paramInt1 + 1, paramInt2 + paramInt4 - 1, paramInt1 + paramInt3 - 1, paramInt2 + paramInt4 - 1);
-/* 461 */     paramGraphics.drawLine(paramInt1 + paramInt3 - 1, paramInt2 + paramInt4 - 2, paramInt1 + paramInt3 - 1, paramInt2 + 1);
-/*     */     
-/* 463 */     paramGraphics.setColor(paramColor.darker().darker());
-/* 464 */     paramGraphics.drawLine(paramInt1, paramInt2, paramInt1 + paramInt3 - 2, paramInt2);
-/* 465 */     paramGraphics.drawLine(paramInt1, paramInt2 + 1, paramInt1, paramInt2 + paramInt4 - 2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean isLeftToRight(Component paramComponent) {
-/* 474 */     return paramComponent.getComponentOrientation().isLeftToRight();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifGraphicsUtils.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.java.swing.plaf.motif;
+
+import sun.swing.SwingUtilities2;
+
+import javax.swing.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Rectangle;
+import java.awt.Component;
+import java.awt.Insets;
+import java.awt.event.KeyEvent;
+import java.awt.Container;
+
+import javax.swing.plaf.basic.*;
+import javax.swing.text.View;
+
+/*
+ * @author Jeff Dinkins
+ * @author Dave Kloba
+ */
+
+public class MotifGraphicsUtils implements SwingConstants
+{
+    /* Client Property keys for text and accelerator text widths */
+    private static final String MAX_ACC_WIDTH  =  "maxAccWidth";
+
+    /**
+     * Draws the point (<b>x</b>, <b>y</b>) in the current color.
+     */
+    static void drawPoint(Graphics g, int x, int y) {
+        g.drawLine(x, y, x, y);
+    }
+
+    /*
+     * Convenience method for drawing a grooved line
+     *
+     */
+    public static void drawGroove(Graphics g, int x, int y, int w, int h,
+                                  Color shadow, Color highlight)
+    {
+        Color oldColor = g.getColor();  // Make no net change to g
+        g.translate(x, y);
+
+        g.setColor(shadow);
+        g.drawRect(0, 0, w-2, h-2);
+
+        g.setColor(highlight);
+        g.drawLine(1, h-3, 1, 1);
+        g.drawLine(1, 1, w-3, 1);
+
+        g.drawLine(0, h-1, w-1, h-1);
+        g.drawLine(w-1, h-1, w-1, 0);
+
+        g.translate(-x, -y);
+        g.setColor(oldColor);
+    }
+
+    /** Draws <b>aString</b> in the rectangle defined by
+      * (<b>x</b>, <b>y</b>, <b>width</b>, <b>height</b>).
+      * <b>justification</b> specifies the text's justification, one of
+      * LEFT, CENTER, or RIGHT.
+      * <b>drawStringInRect()</b> does not clip to the rectangle, but instead
+      * uses this rectangle and the desired justification to compute the point
+      * at which to begin drawing the text.
+      * @see #drawString
+      */
+    public static void drawStringInRect(Graphics g, String aString, int x, int y,
+                                 int width, int height, int justification) {
+        drawStringInRect(null, g, aString, x, y, width, height, justification);
+    }
+
+    static void drawStringInRect(JComponent c, Graphics g, String aString,
+                                 int x, int y, int width, int height,
+                                 int justification) {
+        FontMetrics  fontMetrics;
+        int          drawWidth, startX, startY, delta;
+
+        if (g.getFont() == null) {
+//            throw new InconsistencyException("No font set");
+            return;
+        }
+        fontMetrics = SwingUtilities2.getFontMetrics(c, g);
+        if (fontMetrics == null) {
+//            throw new InconsistencyException("No metrics for Font " + font());
+            return;
+        }
+
+        if (justification == CENTER) {
+            drawWidth = SwingUtilities2.stringWidth(c, fontMetrics, aString);
+            if (drawWidth > width) {
+                drawWidth = width;
+            }
+            startX = x + (width - drawWidth) / 2;
+        } else if (justification == RIGHT) {
+            drawWidth = SwingUtilities2.stringWidth(c, fontMetrics, aString);
+            if (drawWidth > width) {
+                drawWidth = width;
+            }
+            startX = x + width - drawWidth;
+        } else {
+            startX = x;
+        }
+
+        delta = (height - fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+        if (delta < 0) {
+            delta = 0;
+        }
+
+        startY = y + height - delta - fontMetrics.getDescent();
+
+        SwingUtilities2.drawString(c, g, aString, startX, startY);
+    }
+
+  /**
+   * This method is not being used to paint menu item since
+   * 6.0 This code left for compatibility only. Do not use or
+   * override it, this will not cause any visible effect.
+   */
+  public static void paintMenuItem(Graphics g, JComponent c,
+                                   Icon checkIcon, Icon arrowIcon,
+                                   Color background, Color foreground,
+                                   int defaultTextIconGap)
+    {
+
+        JMenuItem b = (JMenuItem) c;
+        ButtonModel model = b.getModel();
+
+        Dimension size = b.getSize();
+        Insets i = c.getInsets();
+
+        Rectangle viewRect = new Rectangle(size);
+
+        viewRect.x += i.left;
+        viewRect.y += i.top;
+        viewRect.width -= (i.right + viewRect.x);
+        viewRect.height -= (i.bottom + viewRect.y);
+
+        Rectangle iconRect = new Rectangle();
+        Rectangle textRect = new Rectangle();
+        Rectangle acceleratorRect = new Rectangle();
+        Rectangle checkRect = new Rectangle();
+        Rectangle arrowRect = new Rectangle();
+
+        Font holdf = g.getFont();
+        Font f = c.getFont();
+        g.setFont(f);
+        FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+        FontMetrics fmAccel = SwingUtilities2.getFontMetrics(
+            c, g, UIManager.getFont("MenuItem.acceleratorFont"));
+
+        if (c.isOpaque()) {
+            if (model.isArmed()|| (c instanceof JMenu && model.isSelected())) {
+                g.setColor(background);
+            } else {
+                g.setColor(c.getBackground());
+            }
+            g.fillRect(0,0, size.width, size.height);
+        }
+
+        // get Accelerator text
+        KeyStroke accelerator =  b.getAccelerator();
+        String acceleratorText = "";
+        if (accelerator != null) {
+            int modifiers = accelerator.getModifiers();
+            if (modifiers > 0) {
+                acceleratorText = KeyEvent.getKeyModifiersText(modifiers);
+                acceleratorText += "+";
+            }
+            acceleratorText += KeyEvent.getKeyText(accelerator.getKeyCode());
+        }
+
+        // layout the text and icon
+        String text = layoutMenuItem(c, fm, b.getText(), fmAccel,
+                                     acceleratorText, b.getIcon(),
+                                     checkIcon, arrowIcon,
+                                     b.getVerticalAlignment(),
+                                     b.getHorizontalAlignment(),
+                                     b.getVerticalTextPosition(),
+                                     b.getHorizontalTextPosition(),
+                                     viewRect, iconRect,
+                                     textRect, acceleratorRect,
+                                     checkRect, arrowRect,
+                                     b.getText() == null
+                                     ? 0 : defaultTextIconGap,
+                                     defaultTextIconGap
+                                     );
+
+        // Paint the Check
+        Color holdc = g.getColor();
+        if (checkIcon != null) {
+            if(model.isArmed() || (c instanceof JMenu && model.isSelected()))
+                g.setColor(foreground);
+            checkIcon.paintIcon(c, g, checkRect.x, checkRect.y);
+            g.setColor(holdc);
+        }
+
+        // Paint the Icon
+        if(b.getIcon() != null) {
+            Icon icon;
+            if(!model.isEnabled()) {
+                icon = b.getDisabledIcon();
+            } else if(model.isPressed() && model.isArmed()) {
+                icon = b.getPressedIcon();
+                if(icon == null) {
+                    // Use default icon
+                    icon = b.getIcon();
+                }
+            } else {
+                icon = b.getIcon();
+            }
+
+            if (icon!=null) {
+                icon.paintIcon(c, g, iconRect.x, iconRect.y);
+            }
+        }
+
+        // Draw the Text
+        if(text != null && !text.equals("")) {
+            // Once BasicHTML becomes public, use BasicHTML.propertyKey
+            // instead of the hardcoded string below!
+            View v = (View) c.getClientProperty("html");
+            if (v != null) {
+                v.paint(g, textRect);
+            } else {
+                int mnemIndex = b.getDisplayedMnemonicIndex();
+
+                if(!model.isEnabled()) {
+                    // *** paint the text disabled
+                    g.setColor(b.getBackground().brighter());
+                    SwingUtilities2.drawStringUnderlineCharAt(b, g,text,
+                        mnemIndex,
+                        textRect.x, textRect.y + fmAccel.getAscent());
+                    g.setColor(b.getBackground().darker());
+                    SwingUtilities2.drawStringUnderlineCharAt(b, g,text,
+                        mnemIndex,
+                        textRect.x - 1, textRect.y + fmAccel.getAscent() - 1);
+
+                } else {
+                    // *** paint the text normally
+                    if (model.isArmed()|| (c instanceof JMenu && model.isSelected())) {
+                        g.setColor(foreground);
+                    } else {
+                        g.setColor(b.getForeground());
+                    }
+                    SwingUtilities2.drawStringUnderlineCharAt(b, g,text,
+                                                  mnemIndex,
+                                                  textRect.x,
+                                                  textRect.y + fm.getAscent());
+                }
+            }
+        }
+
+        // Draw the Accelerator Text
+        if(acceleratorText != null && !acceleratorText.equals("")) {
+
+            //Get the maxAccWidth from the parent to calculate the offset.
+            int accOffset = 0;
+            Container parent = b.getParent();
+            if (parent != null && parent instanceof JComponent) {
+                JComponent p = (JComponent) parent;
+                Integer maxValueInt = (Integer) p.getClientProperty(MotifGraphicsUtils.MAX_ACC_WIDTH);
+                int maxValue = maxValueInt != null ?
+                    maxValueInt.intValue() : acceleratorRect.width;
+
+                //Calculate the offset, with which the accelerator texts will be drawn with.
+                accOffset = maxValue - acceleratorRect.width;
+            }
+
+            g.setFont( UIManager.getFont("MenuItem.acceleratorFont") );
+            if(!model.isEnabled()) {
+                // *** paint the acceleratorText disabled
+                g.setColor(b.getBackground().brighter());
+                SwingUtilities2.drawString(c, g,acceleratorText,
+                                              acceleratorRect.x - accOffset, acceleratorRect.y + fm.getAscent());
+                g.setColor(b.getBackground().darker());
+                SwingUtilities2.drawString(c, g,acceleratorText,
+                                              acceleratorRect.x - accOffset - 1, acceleratorRect.y + fm.getAscent() - 1);
+            } else {
+                // *** paint the acceleratorText normally
+                if (model.isArmed()|| (c instanceof JMenu && model.isSelected()))
+                    {
+                        g.setColor(foreground);
+                    } else {
+                        g.setColor(b.getForeground());
+                    }
+                SwingUtilities2.drawString(c, g,acceleratorText,
+                                              acceleratorRect.x - accOffset,
+                                              acceleratorRect.y + fmAccel.getAscent());
+            }
+        }
+
+        // Paint the Arrow
+        if (arrowIcon != null) {
+            if(model.isArmed() || (c instanceof JMenu && model.isSelected()))
+                g.setColor(foreground);
+            if( !(b.getParent() instanceof JMenuBar) )
+                arrowIcon.paintIcon(c, g, arrowRect.x, arrowRect.y);
+        }
+
+        g.setColor(holdc);
+        g.setFont(holdf);
+    }
+
+
+    /**
+     * Compute and return the location of the icons origin, the
+     * location of origin of the text baseline, and a possibly clipped
+     * version of the compound labels string.  Locations are computed
+     * relative to the viewR rectangle.
+     */
+
+    private static String layoutMenuItem(
+        JComponent c,
+        FontMetrics fm,
+        String text,
+        FontMetrics fmAccel,
+        String acceleratorText,
+        Icon icon,
+        Icon checkIcon,
+        Icon arrowIcon,
+        int verticalAlignment,
+        int horizontalAlignment,
+        int verticalTextPosition,
+        int horizontalTextPosition,
+        Rectangle viewR,
+        Rectangle iconR,
+        Rectangle textR,
+        Rectangle acceleratorR,
+        Rectangle checkIconR,
+        Rectangle arrowIconR,
+        int textIconGap,
+        int menuItemGap
+        )
+    {
+
+        SwingUtilities.layoutCompoundLabel(c,
+                                           fm,
+                                           text,
+                                           icon,
+                                           verticalAlignment,
+                                           horizontalAlignment,
+                                           verticalTextPosition,
+                                           horizontalTextPosition,
+                                           viewR,
+                                           iconR,
+                                           textR,
+                                           textIconGap);
+
+        /* Initialize the acceelratorText bounds rectangle textR.  If a null
+         * or and empty String was specified we substitute "" here
+         * and use 0,0,0,0 for acceleratorTextR.
+         */
+        if( (acceleratorText == null) || acceleratorText.equals("") ) {
+            acceleratorR.width = acceleratorR.height = 0;
+            acceleratorText = "";
+        }
+        else {
+            acceleratorR.width
+                = SwingUtilities2.stringWidth(c, fmAccel, acceleratorText);
+            acceleratorR.height = fmAccel.getHeight();
+        }
+
+        /* Initialize the checkIcon bounds rectangle checkIconR.
+         */
+
+        if (checkIcon != null) {
+            checkIconR.width = checkIcon.getIconWidth();
+            checkIconR.height = checkIcon.getIconHeight();
+        }
+        else {
+            checkIconR.width = checkIconR.height = 0;
+        }
+
+        /* Initialize the arrowIcon bounds rectangle arrowIconR.
+         */
+
+        if (arrowIcon != null) {
+            arrowIconR.width = arrowIcon.getIconWidth();
+            arrowIconR.height = arrowIcon.getIconHeight();
+        }
+        else {
+            arrowIconR.width = arrowIconR.height = 0;
+        }
+
+
+        Rectangle labelR = iconR.union(textR);
+        if( MotifGraphicsUtils.isLeftToRight(c) ) {
+            textR.x += checkIconR.width + menuItemGap;
+            iconR.x += checkIconR.width + menuItemGap;
+
+            // Position the Accelerator text rect
+            acceleratorR.x = viewR.x + viewR.width - arrowIconR.width
+                             - menuItemGap - acceleratorR.width;
+
+            // Position the Check and Arrow Icons
+            checkIconR.x = viewR.x;
+            arrowIconR.x = viewR.x + viewR.width - menuItemGap
+                           - arrowIconR.width;
+        } else {
+            textR.x -= (checkIconR.width + menuItemGap);
+            iconR.x -= (checkIconR.width + menuItemGap);
+
+            // Position the Accelerator text rect
+            acceleratorR.x = viewR.x + arrowIconR.width + menuItemGap;
+
+            // Position the Check and Arrow Icons
+            checkIconR.x = viewR.x + viewR.width - checkIconR.width;
+            arrowIconR.x = viewR.x + menuItemGap;
+        }
+
+        // Align the accelertor text and the check and arrow icons vertically
+        // with the center of the label rect.
+        acceleratorR.y = labelR.y + (labelR.height/2) - (acceleratorR.height/2);
+        arrowIconR.y = labelR.y + (labelR.height/2) - (arrowIconR.height/2);
+        checkIconR.y = labelR.y + (labelR.height/2) - (checkIconR.height/2);
+
+        /*
+          System.out.println("Layout: v=" +viewR+"  c="+checkIconR+" i="+
+          iconR+" t="+textR+" acc="+acceleratorR+" a="+arrowIconR);
+          */
+        return text;
+    }
+
+  private static void drawMenuBezel(Graphics g, Color background,
+                                    int x, int y,
+                                    int width, int height)
+    {
+      // shadowed button region
+      g.setColor(background);
+      g.fillRect(x,y,width,height);
+
+      g.setColor(background.brighter().brighter());
+      g.drawLine(x+1,       y+height-1,  x+width-1, y+height-1);
+      g.drawLine(x+width-1, y+height-2,  x+width-1, y+1);
+
+      g.setColor(background.darker().darker());
+      g.drawLine(x,   y,   x+width-2, y);
+      g.drawLine(x,   y+1, x,         y+height-2);
+
+    }
+
+    /*
+     * Convenience function for determining ComponentOrientation.  Helps us
+     * avoid having Munge directives throughout the code.
+     */
+    static boolean isLeftToRight( Component c ) {
+        return c.getComponentOrientation().isLeftToRight();
+    }
+}

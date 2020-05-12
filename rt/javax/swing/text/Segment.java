@@ -1,318 +1,316 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.text.CharacterIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Segment
-/*     */   implements Cloneable, CharacterIterator, CharSequence
-/*     */ {
-/*     */   public char[] array;
-/*     */   public int offset;
-/*     */   public int count;
-/*     */   private boolean partialReturn;
-/*     */   private int pos;
-/*     */   
-/*     */   public Segment() {
-/*  70 */     this(null, 0, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Segment(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/*  81 */     this.array = paramArrayOfchar;
-/*  82 */     this.offset = paramInt1;
-/*  83 */     this.count = paramInt2;
-/*  84 */     this.partialReturn = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPartialReturn(boolean paramBoolean) {
-/*  99 */     this.partialReturn = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isPartialReturn() {
-/* 109 */     return this.partialReturn;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 118 */     if (this.array != null) {
-/* 119 */       return new String(this.array, this.offset, this.count);
-/*     */     }
-/* 121 */     return "";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char first() {
-/* 134 */     this.pos = this.offset;
-/* 135 */     if (this.count != 0) {
-/* 136 */       return this.array[this.pos];
-/*     */     }
-/* 138 */     return Character.MAX_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char last() {
-/* 149 */     this.pos = this.offset + this.count;
-/* 150 */     if (this.count != 0) {
-/* 151 */       this.pos--;
-/* 152 */       return this.array[this.pos];
-/*     */     } 
-/* 154 */     return Character.MAX_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char current() {
-/* 165 */     if (this.count != 0 && this.pos < this.offset + this.count) {
-/* 166 */       return this.array[this.pos];
-/*     */     }
-/* 168 */     return Character.MAX_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char next() {
-/* 181 */     this.pos++;
-/* 182 */     int i = this.offset + this.count;
-/* 183 */     if (this.pos >= i) {
-/* 184 */       this.pos = i;
-/* 185 */       return Character.MAX_VALUE;
-/*     */     } 
-/* 187 */     return current();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char previous() {
-/* 199 */     if (this.pos == this.offset) {
-/* 200 */       return Character.MAX_VALUE;
-/*     */     }
-/* 202 */     this.pos--;
-/* 203 */     return current();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char setIndex(int paramInt) {
-/* 216 */     int i = this.offset + this.count;
-/* 217 */     if (paramInt < this.offset || paramInt > i) {
-/* 218 */       throw new IllegalArgumentException("bad position: " + paramInt);
-/*     */     }
-/* 220 */     this.pos = paramInt;
-/* 221 */     if (this.pos != i && this.count != 0) {
-/* 222 */       return this.array[this.pos];
-/*     */     }
-/* 224 */     return Character.MAX_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBeginIndex() {
-/* 233 */     return this.offset;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getEndIndex() {
-/* 243 */     return this.offset + this.count;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex() {
-/* 252 */     return this.pos;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char charAt(int paramInt) {
-/* 262 */     if (paramInt < 0 || paramInt >= this.count)
-/*     */     {
-/* 264 */       throw new StringIndexOutOfBoundsException(paramInt);
-/*     */     }
-/* 266 */     return this.array[this.offset + paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int length() {
-/* 274 */     return this.count;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharSequence subSequence(int paramInt1, int paramInt2) {
-/* 282 */     if (paramInt1 < 0) {
-/* 283 */       throw new StringIndexOutOfBoundsException(paramInt1);
-/*     */     }
-/* 285 */     if (paramInt2 > this.count) {
-/* 286 */       throw new StringIndexOutOfBoundsException(paramInt2);
-/*     */     }
-/* 288 */     if (paramInt1 > paramInt2) {
-/* 289 */       throw new StringIndexOutOfBoundsException(paramInt2 - paramInt1);
-/*     */     }
-/* 291 */     Segment segment = new Segment();
-/* 292 */     segment.array = this.array;
-/* 293 */     this.offset += paramInt1;
-/* 294 */     segment.count = paramInt2 - paramInt1;
-/* 295 */     return segment;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     Object object;
-/*     */     try {
-/* 306 */       object = super.clone();
-/* 307 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 308 */       object = null;
-/*     */     } 
-/* 310 */     return object;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\Segment.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.text.CharacterIterator;
+
+/**
+ * A segment of a character array representing a fragment
+ * of text.  It should be treated as immutable even though
+ * the array is directly accessible.  This gives fast access
+ * to fragments of text without the overhead of copying
+ * around characters.  This is effectively an unprotected
+ * String.
+ * <p>
+ * The Segment implements the java.text.CharacterIterator
+ * interface to support use with the i18n support without
+ * copying text into a string.
+ *
+ * @author  Timothy Prinzing
+ */
+public class Segment implements Cloneable, CharacterIterator, CharSequence {
+
+    /**
+     * This is the array containing the text of
+     * interest.  This array should never be modified;
+     * it is available only for efficiency.
+     */
+    public char[] array;
+
+    /**
+     * This is the offset into the array that
+     * the desired text begins.
+     */
+    public int offset;
+
+    /**
+     * This is the number of array elements that
+     * make up the text of interest.
+     */
+    public int count;
+
+    private boolean partialReturn;
+
+    /**
+     * Creates a new segment.
+     */
+    public Segment() {
+        this(null, 0, 0);
+    }
+
+    /**
+     * Creates a new segment referring to an existing array.
+     *
+     * @param array the array to refer to
+     * @param offset the offset into the array
+     * @param count the number of characters
+     */
+    public Segment(char[] array, int offset, int count) {
+        this.array = array;
+        this.offset = offset;
+        this.count = count;
+        partialReturn = false;
+    }
+
+    /**
+     * Flag to indicate that partial returns are valid.  If the flag is true,
+     * an implementation of the interface method Document.getText(position,length,Segment)
+     * should return as much text as possible without making a copy.  The default
+     * state of the flag is false which will cause Document.getText(position,length,Segment)
+     * to provide the same return behavior it always had, which may or may not
+     * make a copy of the text depending upon the request.
+     *
+     * @param p whether or not partial returns are valid.
+     * @since 1.4
+     */
+    public void setPartialReturn(boolean p) {
+        partialReturn = p;
+    }
+
+    /**
+     * Flag to indicate that partial returns are valid.
+     *
+     * @return whether or not partial returns are valid.
+     * @since 1.4
+     */
+    public boolean isPartialReturn() {
+        return partialReturn;
+    }
+
+    /**
+     * Converts a segment into a String.
+     *
+     * @return the string
+     */
+    public String toString() {
+        if (array != null) {
+            return new String(array, offset, count);
+        }
+        return "";
+    }
+
+    // --- CharacterIterator methods -------------------------------------
+
+    /**
+     * Sets the position to getBeginIndex() and returns the character at that
+     * position.
+     * @return the first character in the text, or DONE if the text is empty
+     * @see #getBeginIndex
+     * @since 1.3
+     */
+    public char first() {
+        pos = offset;
+        if (count != 0) {
+            return array[pos];
+        }
+        return DONE;
+    }
+
+    /**
+     * Sets the position to getEndIndex()-1 (getEndIndex() if the text is empty)
+     * and returns the character at that position.
+     * @return the last character in the text, or DONE if the text is empty
+     * @see #getEndIndex
+     * @since 1.3
+     */
+    public char last() {
+        pos = offset + count;
+        if (count != 0) {
+            pos -= 1;
+            return array[pos];
+        }
+        return DONE;
+    }
+
+    /**
+     * Gets the character at the current position (as returned by getIndex()).
+     * @return the character at the current position or DONE if the current
+     * position is off the end of the text.
+     * @see #getIndex
+     * @since 1.3
+     */
+    public char current() {
+        if (count != 0 && pos < offset + count) {
+            return array[pos];
+        }
+        return DONE;
+    }
+
+    /**
+     * Increments the iterator's index by one and returns the character
+     * at the new index.  If the resulting index is greater or equal
+     * to getEndIndex(), the current index is reset to getEndIndex() and
+     * a value of DONE is returned.
+     * @return the character at the new position or DONE if the new
+     * position is off the end of the text range.
+     * @since 1.3
+     */
+    public char next() {
+        pos += 1;
+        int end = offset + count;
+        if (pos >= end) {
+            pos = end;
+            return DONE;
+        }
+        return current();
+    }
+
+    /**
+     * Decrements the iterator's index by one and returns the character
+     * at the new index. If the current index is getBeginIndex(), the index
+     * remains at getBeginIndex() and a value of DONE is returned.
+     * @return the character at the new position or DONE if the current
+     * position is equal to getBeginIndex().
+     * @since 1.3
+     */
+    public char previous() {
+        if (pos == offset) {
+            return DONE;
+        }
+        pos -= 1;
+        return current();
+    }
+
+    /**
+     * Sets the position to the specified position in the text and returns that
+     * character.
+     * @param position the position within the text.  Valid values range from
+     * getBeginIndex() to getEndIndex().  An IllegalArgumentException is thrown
+     * if an invalid value is supplied.
+     * @return the character at the specified position or DONE if the specified position is equal to getEndIndex()
+     * @since 1.3
+     */
+    public char setIndex(int position) {
+        int end = offset + count;
+        if ((position < offset) || (position > end)) {
+            throw new IllegalArgumentException("bad position: " + position);
+        }
+        pos = position;
+        if ((pos != end) && (count != 0)) {
+            return array[pos];
+        }
+        return DONE;
+    }
+
+    /**
+     * Returns the start index of the text.
+     * @return the index at which the text begins.
+     * @since 1.3
+     */
+    public int getBeginIndex() {
+        return offset;
+    }
+
+    /**
+     * Returns the end index of the text.  This index is the index of the first
+     * character following the end of the text.
+     * @return the index after the last character in the text
+     * @since 1.3
+     */
+    public int getEndIndex() {
+        return offset + count;
+    }
+
+    /**
+     * Returns the current index.
+     * @return the current index.
+     * @since 1.3
+     */
+    public int getIndex() {
+        return pos;
+    }
+
+    // --- CharSequence methods -------------------------------------
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public char charAt(int index) {
+        if (index < 0
+            || index >= count) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+        return array[offset + index];
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public int length() {
+        return count;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public CharSequence subSequence(int start, int end) {
+        if (start < 0) {
+            throw new StringIndexOutOfBoundsException(start);
+        }
+        if (end > count) {
+            throw new StringIndexOutOfBoundsException(end);
+        }
+        if (start > end) {
+            throw new StringIndexOutOfBoundsException(end - start);
+        }
+        Segment segment = new Segment();
+        segment.array = this.array;
+        segment.offset = this.offset + start;
+        segment.count = end - start;
+        return segment;
+    }
+
+    /**
+     * Creates a shallow copy.
+     *
+     * @return the copy
+     */
+    public Object clone() {
+        Object o;
+        try {
+            o = super.clone();
+        } catch (CloneNotSupportedException cnse) {
+            o = null;
+        }
+        return o;
+    }
+
+    private int pos;
+
+
+}

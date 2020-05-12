@@ -1,293 +1,287 @@
-/*     */ package javax.xml.stream.util;
-/*     */ 
-/*     */ import javax.xml.namespace.NamespaceContext;
-/*     */ import javax.xml.namespace.QName;
-/*     */ import javax.xml.stream.Location;
-/*     */ import javax.xml.stream.XMLStreamException;
-/*     */ import javax.xml.stream.XMLStreamReader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StreamReaderDelegate
-/*     */   implements XMLStreamReader
-/*     */ {
-/*     */   private XMLStreamReader reader;
-/*     */   
-/*     */   public StreamReaderDelegate() {}
-/*     */   
-/*     */   public StreamReaderDelegate(XMLStreamReader reader) {
-/*  66 */     this.reader = reader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setParent(XMLStreamReader reader) {
-/*  74 */     this.reader = reader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLStreamReader getParent() {
-/*  82 */     return this.reader;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int next() throws XMLStreamException {
-/*  88 */     return this.reader.next();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int nextTag() throws XMLStreamException {
-/*  94 */     return this.reader.nextTag();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getElementText() throws XMLStreamException {
-/* 100 */     return this.reader.getElementText();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void require(int type, String namespaceURI, String localName) throws XMLStreamException {
-/* 106 */     this.reader.require(type, namespaceURI, localName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean hasNext() throws XMLStreamException {
-/* 112 */     return this.reader.hasNext();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws XMLStreamException {
-/* 118 */     this.reader.close();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getNamespaceURI(String prefix) {
-/* 123 */     return this.reader.getNamespaceURI(prefix);
-/*     */   }
-/*     */   
-/*     */   public NamespaceContext getNamespaceContext() {
-/* 127 */     return this.reader.getNamespaceContext();
-/*     */   }
-/*     */   
-/*     */   public boolean isStartElement() {
-/* 131 */     return this.reader.isStartElement();
-/*     */   }
-/*     */   
-/*     */   public boolean isEndElement() {
-/* 135 */     return this.reader.isEndElement();
-/*     */   }
-/*     */   
-/*     */   public boolean isCharacters() {
-/* 139 */     return this.reader.isCharacters();
-/*     */   }
-/*     */   
-/*     */   public boolean isWhiteSpace() {
-/* 143 */     return this.reader.isWhiteSpace();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getAttributeValue(String namespaceUri, String localName) {
-/* 149 */     return this.reader.getAttributeValue(namespaceUri, localName);
-/*     */   }
-/*     */   
-/*     */   public int getAttributeCount() {
-/* 153 */     return this.reader.getAttributeCount();
-/*     */   }
-/*     */   
-/*     */   public QName getAttributeName(int index) {
-/* 157 */     return this.reader.getAttributeName(index);
-/*     */   }
-/*     */   
-/*     */   public String getAttributePrefix(int index) {
-/* 161 */     return this.reader.getAttributePrefix(index);
-/*     */   }
-/*     */   
-/*     */   public String getAttributeNamespace(int index) {
-/* 165 */     return this.reader.getAttributeNamespace(index);
-/*     */   }
-/*     */   
-/*     */   public String getAttributeLocalName(int index) {
-/* 169 */     return this.reader.getAttributeLocalName(index);
-/*     */   }
-/*     */   
-/*     */   public String getAttributeType(int index) {
-/* 173 */     return this.reader.getAttributeType(index);
-/*     */   }
-/*     */   
-/*     */   public String getAttributeValue(int index) {
-/* 177 */     return this.reader.getAttributeValue(index);
-/*     */   }
-/*     */   
-/*     */   public boolean isAttributeSpecified(int index) {
-/* 181 */     return this.reader.isAttributeSpecified(index);
-/*     */   }
-/*     */   
-/*     */   public int getNamespaceCount() {
-/* 185 */     return this.reader.getNamespaceCount();
-/*     */   }
-/*     */   
-/*     */   public String getNamespacePrefix(int index) {
-/* 189 */     return this.reader.getNamespacePrefix(index);
-/*     */   }
-/*     */   
-/*     */   public String getNamespaceURI(int index) {
-/* 193 */     return this.reader.getNamespaceURI(index);
-/*     */   }
-/*     */   
-/*     */   public int getEventType() {
-/* 197 */     return this.reader.getEventType();
-/*     */   }
-/*     */   
-/*     */   public String getText() {
-/* 201 */     return this.reader.getText();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTextCharacters(int sourceStart, char[] target, int targetStart, int length) throws XMLStreamException {
-/* 209 */     return this.reader.getTextCharacters(sourceStart, target, targetStart, length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char[] getTextCharacters() {
-/* 217 */     return this.reader.getTextCharacters();
-/*     */   }
-/*     */   
-/*     */   public int getTextStart() {
-/* 221 */     return this.reader.getTextStart();
-/*     */   }
-/*     */   
-/*     */   public int getTextLength() {
-/* 225 */     return this.reader.getTextLength();
-/*     */   }
-/*     */   
-/*     */   public String getEncoding() {
-/* 229 */     return this.reader.getEncoding();
-/*     */   }
-/*     */   
-/*     */   public boolean hasText() {
-/* 233 */     return this.reader.hasText();
-/*     */   }
-/*     */   
-/*     */   public Location getLocation() {
-/* 237 */     return this.reader.getLocation();
-/*     */   }
-/*     */   
-/*     */   public QName getName() {
-/* 241 */     return this.reader.getName();
-/*     */   }
-/*     */   
-/*     */   public String getLocalName() {
-/* 245 */     return this.reader.getLocalName();
-/*     */   }
-/*     */   
-/*     */   public boolean hasName() {
-/* 249 */     return this.reader.hasName();
-/*     */   }
-/*     */   
-/*     */   public String getNamespaceURI() {
-/* 253 */     return this.reader.getNamespaceURI();
-/*     */   }
-/*     */   
-/*     */   public String getPrefix() {
-/* 257 */     return this.reader.getPrefix();
-/*     */   }
-/*     */   
-/*     */   public String getVersion() {
-/* 261 */     return this.reader.getVersion();
-/*     */   }
-/*     */   
-/*     */   public boolean isStandalone() {
-/* 265 */     return this.reader.isStandalone();
-/*     */   }
-/*     */   
-/*     */   public boolean standaloneSet() {
-/* 269 */     return this.reader.standaloneSet();
-/*     */   }
-/*     */   
-/*     */   public String getCharacterEncodingScheme() {
-/* 273 */     return this.reader.getCharacterEncodingScheme();
-/*     */   }
-/*     */   
-/*     */   public String getPITarget() {
-/* 277 */     return this.reader.getPITarget();
-/*     */   }
-/*     */   
-/*     */   public String getPIData() {
-/* 281 */     return this.reader.getPIData();
-/*     */   }
-/*     */   
-/*     */   public Object getProperty(String name) {
-/* 285 */     return this.reader.getProperty(name);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\strea\\util\StreamReaderDelegate.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * Copyright (c) 2009 by Oracle Corporation. All Rights Reserved.
+ */
+
+package javax.xml.stream.util;
+
+import java.io.Reader;
+import javax.xml.namespace.QName;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamException;
+
+/**
+ * This is the base class for deriving an XMLStreamReader filter
+ *
+ * This class is designed to sit between an XMLStreamReader and an
+ * application's XMLStreamReader.   By default each method
+ * does nothing but call the corresponding method on the
+ * parent interface.
+ *
+ * @version 1.0
+ * @author Copyright (c) 2009 by Oracle Corporation. All Rights Reserved.
+ * @see javax.xml.stream.XMLStreamReader
+ * @see EventReaderDelegate
+ * @since 1.6
+ */
+
+public class StreamReaderDelegate implements XMLStreamReader {
+  private XMLStreamReader reader;
+
+  /**
+   * Construct an empty filter with no parent.
+   */
+  public StreamReaderDelegate(){}
+
+  /**
+   * Construct an filter with the specified parent.
+   * @param reader the parent
+   */
+  public StreamReaderDelegate(XMLStreamReader reader) {
+    this.reader = reader;
+  }
+
+  /**
+   * Set the parent of this instance.
+   * @param reader the new parent
+   */
+  public void setParent(XMLStreamReader reader) {
+    this.reader = reader;
+  }
+
+  /**
+   * Get the parent of this instance.
+   * @return the parent or null if none is set
+   */
+  public XMLStreamReader getParent() {
+    return reader;
+  }
+
+  public int next()
+    throws XMLStreamException
+  {
+    return reader.next();
+  }
+
+  public int nextTag()
+    throws XMLStreamException
+  {
+    return reader.nextTag();
+  }
+
+  public String getElementText()
+    throws XMLStreamException
+  {
+    return reader.getElementText();
+  }
+
+  public void require(int type, String namespaceURI, String localName)
+    throws XMLStreamException
+  {
+    reader.require(type,namespaceURI,localName);
+  }
+
+  public boolean hasNext()
+    throws XMLStreamException
+  {
+    return reader.hasNext();
+  }
+
+  public void close()
+    throws XMLStreamException
+  {
+    reader.close();
+  }
+
+  public String getNamespaceURI(String prefix)
+  {
+    return reader.getNamespaceURI(prefix);
+  }
+
+  public NamespaceContext getNamespaceContext() {
+    return reader.getNamespaceContext();
+  }
+
+  public boolean isStartElement() {
+    return reader.isStartElement();
+  }
+
+  public boolean isEndElement() {
+    return reader.isEndElement();
+  }
+
+  public boolean isCharacters() {
+    return reader.isCharacters();
+  }
+
+  public boolean isWhiteSpace() {
+    return reader.isWhiteSpace();
+  }
+
+  public String getAttributeValue(String namespaceUri,
+                                  String localName)
+  {
+    return reader.getAttributeValue(namespaceUri,localName);
+  }
+
+  public int getAttributeCount() {
+    return reader.getAttributeCount();
+  }
+
+  public QName getAttributeName(int index) {
+    return reader.getAttributeName(index);
+  }
+
+  public String getAttributePrefix(int index) {
+    return reader.getAttributePrefix(index);
+  }
+
+  public String getAttributeNamespace(int index) {
+    return reader.getAttributeNamespace(index);
+  }
+
+  public String getAttributeLocalName(int index) {
+    return reader.getAttributeLocalName(index);
+  }
+
+  public String getAttributeType(int index) {
+    return reader.getAttributeType(index);
+  }
+
+  public String getAttributeValue(int index) {
+    return reader.getAttributeValue(index);
+  }
+
+  public boolean isAttributeSpecified(int index) {
+    return reader.isAttributeSpecified(index);
+  }
+
+  public int getNamespaceCount() {
+    return reader.getNamespaceCount();
+  }
+
+  public String getNamespacePrefix(int index) {
+    return reader.getNamespacePrefix(index);
+  }
+
+  public String getNamespaceURI(int index) {
+    return reader.getNamespaceURI(index);
+  }
+
+  public int getEventType() {
+    return reader.getEventType();
+  }
+
+  public String getText() {
+    return reader.getText();
+  }
+
+  public int getTextCharacters(int sourceStart,
+                               char[] target,
+                               int targetStart,
+                               int length)
+    throws XMLStreamException {
+    return reader.getTextCharacters(sourceStart,
+                                    target,
+                                    targetStart,
+                                    length);
+  }
+
+
+  public char[] getTextCharacters() {
+    return reader.getTextCharacters();
+  }
+
+  public int getTextStart() {
+    return reader.getTextStart();
+  }
+
+  public int getTextLength() {
+    return reader.getTextLength();
+  }
+
+  public String getEncoding() {
+    return reader.getEncoding();
+  }
+
+  public boolean hasText() {
+    return reader.hasText();
+  }
+
+  public Location getLocation() {
+    return reader.getLocation();
+  }
+
+  public QName getName() {
+    return reader.getName();
+  }
+
+  public String getLocalName() {
+    return reader.getLocalName();
+  }
+
+  public boolean hasName() {
+    return reader.hasName();
+  }
+
+  public String getNamespaceURI() {
+    return reader.getNamespaceURI();
+  }
+
+  public String getPrefix() {
+    return reader.getPrefix();
+  }
+
+  public String getVersion() {
+    return reader.getVersion();
+  }
+
+  public boolean isStandalone() {
+    return reader.isStandalone();
+  }
+
+  public boolean standaloneSet() {
+    return reader.standaloneSet();
+  }
+
+  public String getCharacterEncodingScheme() {
+    return reader.getCharacterEncodingScheme();
+  }
+
+  public String getPITarget() {
+    return reader.getPITarget();
+  }
+
+  public String getPIData() {
+    return reader.getPIData();
+  }
+
+  public Object getProperty(String name) {
+    return reader.getProperty(name);
+  }
+}

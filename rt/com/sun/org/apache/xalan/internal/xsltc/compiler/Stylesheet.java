@@ -1,1453 +1,1447 @@
-/*      */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*      */ 
-/*      */ import com.sun.org.apache.bcel.internal.generic.ANEWARRAY;
-/*      */ import com.sun.org.apache.bcel.internal.generic.BasicType;
-/*      */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*      */ import com.sun.org.apache.bcel.internal.generic.FieldGen;
-/*      */ import com.sun.org.apache.bcel.internal.generic.GETFIELD;
-/*      */ import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*      */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*      */ import com.sun.org.apache.bcel.internal.generic.ISTORE;
-/*      */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*      */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*      */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*      */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*      */ import com.sun.org.apache.bcel.internal.generic.NEWARRAY;
-/*      */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*      */ import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
-/*      */ import com.sun.org.apache.bcel.internal.generic.PUTSTATIC;
-/*      */ import com.sun.org.apache.bcel.internal.generic.TargetLostException;
-/*      */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*      */ import com.sun.org.apache.bcel.internal.util.InstructionFinder;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*      */ import com.sun.org.apache.xml.internal.utils.SystemIDResolver;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.Properties;
-/*      */ import java.util.StringTokenizer;
-/*      */ import java.util.Vector;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class Stylesheet
-/*      */   extends SyntaxTreeNode
-/*      */ {
-/*      */   private String _version;
-/*      */   private QName _name;
-/*      */   private String _systemId;
-/*      */   private Stylesheet _parentStylesheet;
-/*   94 */   private Vector _globals = new Vector();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   99 */   private Boolean _hasLocalParams = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String _className;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  109 */   private final Vector _templates = new Vector();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  115 */   private Vector _allValidTemplates = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  120 */   private int _nextModeSerial = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  125 */   private final Map<String, Mode> _modes = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Mode _defaultMode;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  135 */   private final Map<String, String> _extensions = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  141 */   public Stylesheet _importedFrom = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  147 */   public Stylesheet _includedFrom = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  152 */   private Vector _includedStylesheets = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  157 */   private int _importPrecedence = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  163 */   private int _minimumDescendantPrecedence = -1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  168 */   private Map<String, Key> _keys = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  174 */   private SourceLoader _loader = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean _numberFormattingUsed = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean _simplified = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean _multiDocument = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean _callsNodeset = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean _hasIdCall = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean _templateInlining = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  211 */   private Output _lastOutputElement = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  216 */   private Properties _outputProperties = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  222 */   private int _outputMethod = 0;
-/*      */   
-/*      */   public static final int UNKNOWN_OUTPUT = 0;
-/*      */   
-/*      */   public static final int XML_OUTPUT = 1;
-/*      */   
-/*      */   public static final int HTML_OUTPUT = 2;
-/*      */   
-/*      */   public static final int TEXT_OUTPUT = 3;
-/*      */ 
-/*      */   
-/*      */   public int getOutputMethod() {
-/*  234 */     return this._outputMethod;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void checkOutputMethod() {
-/*  241 */     if (this._lastOutputElement != null) {
-/*  242 */       String method = this._lastOutputElement.getOutputMethod();
-/*  243 */       if (method != null)
-/*  244 */         if (method.equals("xml")) {
-/*  245 */           this._outputMethod = 1;
-/*  246 */         } else if (method.equals("html")) {
-/*  247 */           this._outputMethod = 2;
-/*  248 */         } else if (method.equals("text")) {
-/*  249 */           this._outputMethod = 3;
-/*      */         }  
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public boolean getTemplateInlining() {
-/*  255 */     return this._templateInlining;
-/*      */   }
-/*      */   
-/*      */   public void setTemplateInlining(boolean flag) {
-/*  259 */     this._templateInlining = flag;
-/*      */   }
-/*      */   
-/*      */   public boolean isSimplified() {
-/*  263 */     return this._simplified;
-/*      */   }
-/*      */   
-/*      */   public void setSimplified() {
-/*  267 */     this._simplified = true;
-/*      */   }
-/*      */   
-/*      */   public void setHasIdCall(boolean flag) {
-/*  271 */     this._hasIdCall = flag;
-/*      */   }
-/*      */   
-/*      */   public void setOutputProperty(String key, String value) {
-/*  275 */     if (this._outputProperties == null) {
-/*  276 */       this._outputProperties = new Properties();
-/*      */     }
-/*  278 */     this._outputProperties.setProperty(key, value);
-/*      */   }
-/*      */   
-/*      */   public void setOutputProperties(Properties props) {
-/*  282 */     this._outputProperties = props;
-/*      */   }
-/*      */   
-/*      */   public Properties getOutputProperties() {
-/*  286 */     return this._outputProperties;
-/*      */   }
-/*      */   
-/*      */   public Output getLastOutputElement() {
-/*  290 */     return this._lastOutputElement;
-/*      */   }
-/*      */   
-/*      */   public void setMultiDocument(boolean flag) {
-/*  294 */     this._multiDocument = flag;
-/*      */   }
-/*      */   
-/*      */   public boolean isMultiDocument() {
-/*  298 */     return this._multiDocument;
-/*      */   }
-/*      */   
-/*      */   public void setCallsNodeset(boolean flag) {
-/*  302 */     if (flag) setMultiDocument(flag); 
-/*  303 */     this._callsNodeset = flag;
-/*      */   }
-/*      */   
-/*      */   public boolean callsNodeset() {
-/*  307 */     return this._callsNodeset;
-/*      */   }
-/*      */   
-/*      */   public void numberFormattingUsed() {
-/*  311 */     this._numberFormattingUsed = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  318 */     Stylesheet parent = getParentStylesheet();
-/*  319 */     if (null != parent) parent.numberFormattingUsed();
-/*      */   
-/*      */   }
-/*      */   
-/*      */   public void setImportPrecedence(int precedence) {
-/*  324 */     this._importPrecedence = precedence;
-/*      */ 
-/*      */     
-/*  327 */     Iterator<SyntaxTreeNode> elements = elements();
-/*  328 */     while (elements.hasNext()) {
-/*  329 */       SyntaxTreeNode child = elements.next();
-/*  330 */       if (child instanceof Include) {
-/*  331 */         Stylesheet included = ((Include)child).getIncludedStylesheet();
-/*  332 */         if (included != null && included._includedFrom == this) {
-/*  333 */           included.setImportPrecedence(precedence);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  339 */     if (this._importedFrom != null) {
-/*  340 */       if (this._importedFrom.getImportPrecedence() < precedence) {
-/*  341 */         Parser parser = getParser();
-/*  342 */         int nextPrecedence = parser.getNextImportPrecedence();
-/*  343 */         this._importedFrom.setImportPrecedence(nextPrecedence);
-/*      */       }
-/*      */     
-/*      */     }
-/*  347 */     else if (this._includedFrom != null && 
-/*  348 */       this._includedFrom.getImportPrecedence() != precedence) {
-/*  349 */       this._includedFrom.setImportPrecedence(precedence);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public int getImportPrecedence() {
-/*  354 */     return this._importPrecedence;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinimumDescendantPrecedence() {
-/*  363 */     if (this._minimumDescendantPrecedence == -1) {
-/*      */       
-/*  365 */       int min = getImportPrecedence();
-/*      */ 
-/*      */ 
-/*      */       
-/*  369 */       int inclImpCount = (this._includedStylesheets != null) ? this._includedStylesheets.size() : 0;
-/*      */ 
-/*      */       
-/*  372 */       for (int i = 0; i < inclImpCount; i++) {
-/*      */         
-/*  374 */         int prec = ((Stylesheet)this._includedStylesheets.elementAt(i)).getMinimumDescendantPrecedence();
-/*      */         
-/*  376 */         if (prec < min) {
-/*  377 */           min = prec;
-/*      */         }
-/*      */       } 
-/*      */       
-/*  381 */       this._minimumDescendantPrecedence = min;
-/*      */     } 
-/*  383 */     return this._minimumDescendantPrecedence;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean checkForLoop(String systemId) {
-/*  388 */     if (this._systemId != null && this._systemId.equals(systemId)) {
-/*  389 */       return true;
-/*      */     }
-/*      */     
-/*  392 */     if (this._parentStylesheet != null) {
-/*  393 */       return this._parentStylesheet.checkForLoop(systemId);
-/*      */     }
-/*  395 */     return false;
-/*      */   }
-/*      */   
-/*      */   public void setParser(Parser parser) {
-/*  399 */     super.setParser(parser);
-/*  400 */     this._name = makeStylesheetName("__stylesheet_");
-/*      */   }
-/*      */   
-/*      */   public void setParentStylesheet(Stylesheet parent) {
-/*  404 */     this._parentStylesheet = parent;
-/*      */   }
-/*      */   
-/*      */   public Stylesheet getParentStylesheet() {
-/*  408 */     return this._parentStylesheet;
-/*      */   }
-/*      */   
-/*      */   public void setImportingStylesheet(Stylesheet parent) {
-/*  412 */     this._importedFrom = parent;
-/*  413 */     parent.addIncludedStylesheet(this);
-/*      */   }
-/*      */   
-/*      */   public void setIncludingStylesheet(Stylesheet parent) {
-/*  417 */     this._includedFrom = parent;
-/*  418 */     parent.addIncludedStylesheet(this);
-/*      */   }
-/*      */   
-/*      */   public void addIncludedStylesheet(Stylesheet child) {
-/*  422 */     if (this._includedStylesheets == null) {
-/*  423 */       this._includedStylesheets = new Vector();
-/*      */     }
-/*  425 */     this._includedStylesheets.addElement(child);
-/*      */   }
-/*      */   
-/*      */   public void setSystemId(String systemId) {
-/*  429 */     if (systemId != null) {
-/*  430 */       this._systemId = SystemIDResolver.getAbsoluteURI(systemId);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public String getSystemId() {
-/*  435 */     return this._systemId;
-/*      */   }
-/*      */   
-/*      */   public void setSourceLoader(SourceLoader loader) {
-/*  439 */     this._loader = loader;
-/*      */   }
-/*      */   
-/*      */   public SourceLoader getSourceLoader() {
-/*  443 */     return this._loader;
-/*      */   }
-/*      */   
-/*      */   private QName makeStylesheetName(String prefix) {
-/*  447 */     return getParser().getQName(prefix + getXSLTC().nextStylesheetSerial());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasGlobals() {
-/*  454 */     return (this._globals.size() > 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean hasLocalParams() {
-/*  463 */     if (this._hasLocalParams == null) {
-/*  464 */       Vector<Template> templates = getAllValidTemplates();
-/*  465 */       int n = templates.size();
-/*  466 */       for (int i = 0; i < n; i++) {
-/*  467 */         Template template = templates.elementAt(i);
-/*  468 */         if (template.hasParams()) {
-/*  469 */           this._hasLocalParams = Boolean.TRUE;
-/*  470 */           return true;
-/*      */         } 
-/*      */       } 
-/*  473 */       this._hasLocalParams = Boolean.FALSE;
-/*  474 */       return false;
-/*      */     } 
-/*      */     
-/*  477 */     return this._hasLocalParams.booleanValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void addPrefixMapping(String prefix, String uri) {
-/*  487 */     if (prefix.equals("") && uri.equals("http://www.w3.org/1999/xhtml"))
-/*  488 */       return;  super.addPrefixMapping(prefix, uri);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void extensionURI(String prefixes, SymbolTable stable) {
-/*  495 */     if (prefixes != null) {
-/*  496 */       StringTokenizer tokens = new StringTokenizer(prefixes);
-/*  497 */       while (tokens.hasMoreTokens()) {
-/*  498 */         String prefix = tokens.nextToken();
-/*  499 */         String uri = lookupNamespace(prefix);
-/*  500 */         if (uri != null) {
-/*  501 */           this._extensions.put(uri, prefix);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public boolean isExtension(String uri) {
-/*  508 */     return (this._extensions.get(uri) != null);
-/*      */   }
-/*      */   
-/*      */   public void declareExtensionPrefixes(Parser parser) {
-/*  512 */     SymbolTable stable = parser.getSymbolTable();
-/*  513 */     String extensionPrefixes = getAttribute("extension-element-prefixes");
-/*  514 */     extensionURI(extensionPrefixes, stable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void parseContents(Parser parser) {
-/*  523 */     SymbolTable stable = parser.getSymbolTable();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  537 */     addPrefixMapping("xml", "http://www.w3.org/XML/1998/namespace");
-/*      */ 
-/*      */     
-/*  540 */     Stylesheet sheet = stable.addStylesheet(this._name, this);
-/*  541 */     if (sheet != null) {
-/*      */       
-/*  543 */       ErrorMsg err = new ErrorMsg("MULTIPLE_STYLESHEET_ERR", this);
-/*  544 */       parser.reportError(3, err);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  552 */     if (this._simplified) {
-/*  553 */       stable.excludeURI("http://www.w3.org/1999/XSL/Transform");
-/*  554 */       Template template = new Template();
-/*  555 */       template.parseSimplified(this, parser);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  559 */       parseOwnChildren(parser);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void parseOwnChildren(Parser parser) {
-/*  567 */     SymbolTable stable = parser.getSymbolTable();
-/*  568 */     String excludePrefixes = getAttribute("exclude-result-prefixes");
-/*  569 */     String extensionPrefixes = getAttribute("extension-element-prefixes");
-/*      */ 
-/*      */     
-/*  572 */     stable.pushExcludedNamespacesContext();
-/*  573 */     stable.excludeURI("http://www.w3.org/1999/XSL/Transform");
-/*  574 */     stable.excludeNamespaces(excludePrefixes);
-/*  575 */     stable.excludeNamespaces(extensionPrefixes);
-/*      */     
-/*  577 */     List<SyntaxTreeNode> contents = getContents();
-/*  578 */     int count = contents.size();
-/*      */     
-/*      */     int i;
-/*      */     
-/*  582 */     for (i = 0; i < count; i++) {
-/*  583 */       SyntaxTreeNode child = contents.get(i);
-/*  584 */       if (child instanceof VariableBase || child instanceof NamespaceAlias) {
-/*      */         
-/*  586 */         parser.getSymbolTable().setCurrentNode(child);
-/*  587 */         child.parseContents(parser);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  592 */     for (i = 0; i < count; i++) {
-/*  593 */       SyntaxTreeNode child = contents.get(i);
-/*  594 */       if (!(child instanceof VariableBase) && !(child instanceof NamespaceAlias)) {
-/*      */         
-/*  596 */         parser.getSymbolTable().setCurrentNode(child);
-/*  597 */         child.parseContents(parser);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  602 */       if (!this._templateInlining && child instanceof Template) {
-/*  603 */         Template template = (Template)child;
-/*  604 */         String name = "template$dot$" + template.getPosition();
-/*  605 */         template.setName(parser.getQName(name));
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  609 */     stable.popExcludedNamespacesContext();
-/*      */   }
-/*      */   
-/*      */   public void processModes() {
-/*  613 */     if (this._defaultMode == null)
-/*  614 */       this._defaultMode = new Mode(null, this, ""); 
-/*  615 */     this._defaultMode.processPatterns(this._keys);
-/*  616 */     for (Mode mode : this._modes.values()) {
-/*  617 */       mode.processPatterns(this._keys);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private void compileModes(ClassGenerator classGen) {
-/*  622 */     this._defaultMode.compileApplyTemplates(classGen);
-/*  623 */     for (Mode mode : this._modes.values()) {
-/*  624 */       mode.compileApplyTemplates(classGen);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public Mode getMode(QName modeName) {
-/*  629 */     if (modeName == null) {
-/*  630 */       if (this._defaultMode == null) {
-/*  631 */         this._defaultMode = new Mode(null, this, "");
-/*      */       }
-/*  633 */       return this._defaultMode;
-/*      */     } 
-/*      */     
-/*  636 */     Mode mode = this._modes.get(modeName.getStringRep());
-/*  637 */     if (mode == null) {
-/*  638 */       String suffix = Integer.toString(this._nextModeSerial++);
-/*  639 */       this._modes.put(modeName.getStringRep(), mode = new Mode(modeName, this, suffix));
-/*      */     } 
-/*  641 */     return mode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  649 */     int count = this._globals.size();
-/*  650 */     for (int i = 0; i < count; i++) {
-/*  651 */       VariableBase var = this._globals.elementAt(i);
-/*  652 */       var.typeCheck(stable);
-/*      */     } 
-/*  654 */     return typeCheckContents(stable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  661 */     translate();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addDOMField(ClassGenerator classGen) {
-/*  668 */     FieldGen fgen = new FieldGen(1, Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;"), "_dom", classGen.getConstantPool());
-/*  669 */     classGen.addField(fgen.getField());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addStaticField(ClassGenerator classGen, String type, String name) {
-/*  681 */     FieldGen fgen = new FieldGen(12, Util.getJCRefType(type), name, classGen.getConstantPool());
-/*  682 */     classGen.addField(fgen.getField());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void translate() {
-/*  690 */     this._className = getXSLTC().getClassName();
-/*      */ 
-/*      */     
-/*  693 */     ClassGenerator classGen = new ClassGenerator(this._className, "com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "", 33, null, this);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  700 */     addDOMField(classGen);
-/*      */ 
-/*      */ 
-/*      */     
-/*  704 */     compileTransform(classGen);
-/*      */ 
-/*      */     
-/*  707 */     Iterator<SyntaxTreeNode> elements = elements();
-/*  708 */     while (elements.hasNext()) {
-/*  709 */       SyntaxTreeNode element = elements.next();
-/*      */       
-/*  711 */       if (element instanceof Template) {
-/*      */         
-/*  713 */         Template template = (Template)element;
-/*      */         
-/*  715 */         getMode(template.getModeName()).addTemplate(template);
-/*      */         continue;
-/*      */       } 
-/*  718 */       if (element instanceof AttributeSet) {
-/*  719 */         ((AttributeSet)element).translate(classGen, null); continue;
-/*      */       } 
-/*  721 */       if (element instanceof Output) {
-/*      */         
-/*  723 */         Output output = (Output)element;
-/*  724 */         if (output.enabled()) this._lastOutputElement = output;
-/*      */       
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  733 */     checkOutputMethod();
-/*  734 */     processModes();
-/*  735 */     compileModes(classGen);
-/*  736 */     compileStaticInitializer(classGen);
-/*  737 */     compileConstructor(classGen, this._lastOutputElement);
-/*      */     
-/*  739 */     if (!getParser().errorsFound()) {
-/*  740 */       getXSLTC().dumpClass(classGen.getJavaClass());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void compileStaticInitializer(ClassGenerator classGen) {
-/*  751 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  752 */     InstructionList il = new InstructionList();
-/*      */     
-/*  754 */     MethodGenerator staticConst = new MethodGenerator(9, Type.VOID, null, null, "<clinit>", this._className, il, cpg);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  760 */     addStaticField(classGen, "[Ljava/lang/String;", "_sNamesArray");
-/*  761 */     addStaticField(classGen, "[Ljava/lang/String;", "_sUrisArray");
-/*  762 */     addStaticField(classGen, "[I", "_sTypesArray");
-/*  763 */     addStaticField(classGen, "[Ljava/lang/String;", "_sNamespaceArray");
-/*      */ 
-/*      */     
-/*  766 */     int charDataFieldCount = getXSLTC().getCharacterDataCount();
-/*  767 */     for (int i = 0; i < charDataFieldCount; i++) {
-/*  768 */       addStaticField(classGen, "[C", "_scharData" + i);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  773 */     Vector<String> namesIndex = getXSLTC().getNamesIndex();
-/*  774 */     int size = namesIndex.size();
-/*  775 */     String[] namesArray = new String[size];
-/*  776 */     String[] urisArray = new String[size];
-/*  777 */     int[] typesArray = new int[size];
-/*      */ 
-/*      */     
-/*  780 */     for (int j = 0; j < size; j++) {
-/*  781 */       String encodedName = namesIndex.elementAt(j); int index;
-/*  782 */       if ((index = encodedName.lastIndexOf(':')) > -1) {
-/*  783 */         urisArray[j] = encodedName.substring(0, index);
-/*      */       }
-/*      */       
-/*  786 */       index++;
-/*  787 */       if (encodedName.charAt(index) == '@') {
-/*  788 */         typesArray[j] = 2;
-/*  789 */         index++;
-/*  790 */       } else if (encodedName.charAt(index) == '?') {
-/*  791 */         typesArray[j] = 13;
-/*  792 */         index++;
-/*      */       } else {
-/*  794 */         typesArray[j] = 1;
-/*      */       } 
-/*      */       
-/*  797 */       if (index == 0) {
-/*  798 */         namesArray[j] = encodedName;
-/*      */       } else {
-/*      */         
-/*  801 */         namesArray[j] = encodedName.substring(index);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  805 */     staticConst.markChunkStart();
-/*  806 */     il.append(new PUSH(cpg, size));
-/*  807 */     il.append(new ANEWARRAY(cpg.addClass("java.lang.String")));
-/*  808 */     int namesArrayRef = cpg.addFieldref(this._className, "_sNamesArray", "[Ljava/lang/String;");
-/*      */ 
-/*      */     
-/*  811 */     il.append(new PUTSTATIC(namesArrayRef));
-/*  812 */     staticConst.markChunkEnd();
-/*      */     
-/*  814 */     for (int k = 0; k < size; k++) {
-/*  815 */       String name = namesArray[k];
-/*  816 */       staticConst.markChunkStart();
-/*  817 */       il.append(new GETSTATIC(namesArrayRef));
-/*  818 */       il.append(new PUSH(cpg, k));
-/*  819 */       il.append(new PUSH(cpg, name));
-/*  820 */       il.append(AASTORE);
-/*  821 */       staticConst.markChunkEnd();
-/*      */     } 
-/*      */     
-/*  824 */     staticConst.markChunkStart();
-/*  825 */     il.append(new PUSH(cpg, size));
-/*  826 */     il.append(new ANEWARRAY(cpg.addClass("java.lang.String")));
-/*  827 */     int urisArrayRef = cpg.addFieldref(this._className, "_sUrisArray", "[Ljava/lang/String;");
-/*      */ 
-/*      */     
-/*  830 */     il.append(new PUTSTATIC(urisArrayRef));
-/*  831 */     staticConst.markChunkEnd();
-/*      */     
-/*  833 */     for (int m = 0; m < size; m++) {
-/*  834 */       String uri = urisArray[m];
-/*  835 */       staticConst.markChunkStart();
-/*  836 */       il.append(new GETSTATIC(urisArrayRef));
-/*  837 */       il.append(new PUSH(cpg, m));
-/*  838 */       il.append(new PUSH(cpg, uri));
-/*  839 */       il.append(AASTORE);
-/*  840 */       staticConst.markChunkEnd();
-/*      */     } 
-/*      */     
-/*  843 */     staticConst.markChunkStart();
-/*  844 */     il.append(new PUSH(cpg, size));
-/*  845 */     il.append(new NEWARRAY(BasicType.INT));
-/*  846 */     int typesArrayRef = cpg.addFieldref(this._className, "_sTypesArray", "[I");
-/*      */ 
-/*      */     
-/*  849 */     il.append(new PUTSTATIC(typesArrayRef));
-/*  850 */     staticConst.markChunkEnd();
-/*      */     
-/*  852 */     for (int n = 0; n < size; n++) {
-/*  853 */       int nodeType = typesArray[n];
-/*  854 */       staticConst.markChunkStart();
-/*  855 */       il.append(new GETSTATIC(typesArrayRef));
-/*  856 */       il.append(new PUSH(cpg, n));
-/*  857 */       il.append(new PUSH(cpg, nodeType));
-/*  858 */       il.append(IASTORE);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  862 */     Vector<String> namespaces = getXSLTC().getNamespaceIndex();
-/*  863 */     staticConst.markChunkStart();
-/*  864 */     il.append(new PUSH(cpg, namespaces.size()));
-/*  865 */     il.append(new ANEWARRAY(cpg.addClass("java.lang.String")));
-/*  866 */     int namespaceArrayRef = cpg.addFieldref(this._className, "_sNamespaceArray", "[Ljava/lang/String;");
-/*      */ 
-/*      */     
-/*  869 */     il.append(new PUTSTATIC(namespaceArrayRef));
-/*  870 */     staticConst.markChunkEnd();
-/*      */     
-/*  872 */     for (int i1 = 0; i1 < namespaces.size(); i1++) {
-/*  873 */       String ns = namespaces.elementAt(i1);
-/*  874 */       staticConst.markChunkStart();
-/*  875 */       il.append(new GETSTATIC(namespaceArrayRef));
-/*  876 */       il.append(new PUSH(cpg, i1));
-/*  877 */       il.append(new PUSH(cpg, ns));
-/*  878 */       il.append(AASTORE);
-/*  879 */       staticConst.markChunkEnd();
-/*      */     } 
-/*      */ 
-/*      */     
-/*  883 */     int charDataCount = getXSLTC().getCharacterDataCount();
-/*  884 */     int toCharArray = cpg.addMethodref("java.lang.String", "toCharArray", "()[C");
-/*  885 */     for (int i2 = 0; i2 < charDataCount; i2++) {
-/*  886 */       staticConst.markChunkStart();
-/*  887 */       il.append(new PUSH(cpg, getXSLTC().getCharacterData(i2)));
-/*  888 */       il.append(new INVOKEVIRTUAL(toCharArray));
-/*  889 */       il.append(new PUTSTATIC(cpg.addFieldref(this._className, "_scharData" + i2, "[C")));
-/*      */ 
-/*      */       
-/*  892 */       staticConst.markChunkEnd();
-/*      */     } 
-/*      */     
-/*  895 */     il.append(RETURN);
-/*      */     
-/*  897 */     classGen.addMethod(staticConst);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void compileConstructor(ClassGenerator classGen, Output output) {
-/*  906 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  907 */     InstructionList il = new InstructionList();
-/*      */     
-/*  909 */     MethodGenerator constructor = new MethodGenerator(1, Type.VOID, null, null, "<init>", this._className, il, cpg);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  916 */     il.append(classGen.loadTranslet());
-/*  917 */     il.append(new INVOKESPECIAL(cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "<init>", "()V")));
-/*      */ 
-/*      */     
-/*  920 */     constructor.markChunkStart();
-/*  921 */     il.append(classGen.loadTranslet());
-/*  922 */     il.append(new GETSTATIC(cpg.addFieldref(this._className, "_sNamesArray", "[Ljava/lang/String;")));
-/*      */ 
-/*      */     
-/*  925 */     il.append(new PUTFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "namesArray", "[Ljava/lang/String;")));
-/*      */ 
-/*      */ 
-/*      */     
-/*  929 */     il.append(classGen.loadTranslet());
-/*  930 */     il.append(new GETSTATIC(cpg.addFieldref(this._className, "_sUrisArray", "[Ljava/lang/String;")));
-/*      */ 
-/*      */     
-/*  933 */     il.append(new PUTFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "urisArray", "[Ljava/lang/String;")));
-/*      */ 
-/*      */     
-/*  936 */     constructor.markChunkEnd();
-/*      */     
-/*  938 */     constructor.markChunkStart();
-/*  939 */     il.append(classGen.loadTranslet());
-/*  940 */     il.append(new GETSTATIC(cpg.addFieldref(this._className, "_sTypesArray", "[I")));
-/*      */ 
-/*      */     
-/*  943 */     il.append(new PUTFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "typesArray", "[I")));
-/*      */ 
-/*      */     
-/*  946 */     constructor.markChunkEnd();
-/*      */     
-/*  948 */     constructor.markChunkStart();
-/*  949 */     il.append(classGen.loadTranslet());
-/*  950 */     il.append(new GETSTATIC(cpg.addFieldref(this._className, "_sNamespaceArray", "[Ljava/lang/String;")));
-/*      */ 
-/*      */     
-/*  953 */     il.append(new PUTFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "namespaceArray", "[Ljava/lang/String;")));
-/*      */ 
-/*      */     
-/*  956 */     constructor.markChunkEnd();
-/*      */     
-/*  958 */     constructor.markChunkStart();
-/*  959 */     il.append(classGen.loadTranslet());
-/*  960 */     il.append(new PUSH(cpg, 101));
-/*  961 */     il.append(new PUTFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "transletVersion", "I")));
-/*      */ 
-/*      */     
-/*  964 */     constructor.markChunkEnd();
-/*      */     
-/*  966 */     if (this._hasIdCall) {
-/*  967 */       constructor.markChunkStart();
-/*  968 */       il.append(classGen.loadTranslet());
-/*  969 */       il.append(new PUSH(cpg, Boolean.TRUE));
-/*  970 */       il.append(new PUTFIELD(cpg.addFieldref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "_hasIdCall", "Z")));
-/*      */ 
-/*      */       
-/*  973 */       constructor.markChunkEnd();
-/*      */     } 
-/*      */ 
-/*      */     
-/*  977 */     if (output != null) {
-/*      */       
-/*  979 */       constructor.markChunkStart();
-/*  980 */       output.translate(classGen, constructor);
-/*  981 */       constructor.markChunkEnd();
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  986 */     if (this._numberFormattingUsed) {
-/*  987 */       constructor.markChunkStart();
-/*  988 */       DecimalFormatting.translateDefaultDFS(classGen, constructor);
-/*  989 */       constructor.markChunkEnd();
-/*      */     } 
-/*      */     
-/*  992 */     il.append(RETURN);
-/*      */     
-/*  994 */     classGen.addMethod(constructor);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String compileTopLevel(ClassGenerator classGen) {
-/* 1011 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1016 */     Type[] argTypes = { Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;"), Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), Util.getJCRefType("Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;") };
-/*      */ 
-/*      */     
-/* 1019 */     String[] argNames = { "document", "iterator", "handler" };
-/*      */ 
-/*      */ 
-/*      */     
-/* 1023 */     InstructionList il = new InstructionList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1030 */     MethodGenerator toplevel = new MethodGenerator(1, Type.VOID, argTypes, argNames, "topLevel", this._className, il, classGen.getConstantPool());
-/*      */     
-/* 1032 */     toplevel.addException("com.sun.org.apache.xalan.internal.xsltc.TransletException");
-/*      */ 
-/*      */ 
-/*      */     
-/* 1036 */     LocalVariableGen current = toplevel.addLocalVariable("current", Type.INT, (InstructionHandle)null, (InstructionHandle)null);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1040 */     int setFilter = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "setFilter", "(Lcom/sun/org/apache/xalan/internal/xsltc/StripFilter;)V");
-/*      */ 
-/*      */ 
-/*      */     
-/* 1044 */     int gitr = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getIterator", "()Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*      */ 
-/*      */     
-/* 1047 */     il.append(toplevel.loadDOM());
-/* 1048 */     il.append(new INVOKEINTERFACE(gitr, 1));
-/* 1049 */     il.append(toplevel.nextNode());
-/* 1050 */     current.setStart(il.append(new ISTORE(current.getIndex())));
-/*      */ 
-/*      */     
-/* 1053 */     Vector<SyntaxTreeNode> varDepElements = new Vector(this._globals);
-/* 1054 */     Iterator<SyntaxTreeNode> elements = elements();
-/* 1055 */     while (elements.hasNext()) {
-/* 1056 */       SyntaxTreeNode element = elements.next();
-/* 1057 */       if (element instanceof Key) {
-/* 1058 */         varDepElements.add(element);
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1063 */     varDepElements = resolveDependencies(varDepElements);
-/*      */ 
-/*      */     
-/* 1066 */     int count = varDepElements.size();
-/* 1067 */     for (int i = 0; i < count; i++) {
-/* 1068 */       TopLevelElement tle = (TopLevelElement)varDepElements.elementAt(i);
-/* 1069 */       tle.translate(classGen, toplevel);
-/* 1070 */       if (tle instanceof Key) {
-/* 1071 */         Key key = (Key)tle;
-/* 1072 */         this._keys.put(key.getName(), key);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1077 */     Vector whitespaceRules = new Vector();
-/* 1078 */     elements = elements();
-/* 1079 */     while (elements.hasNext()) {
-/* 1080 */       SyntaxTreeNode element = elements.next();
-/*      */       
-/* 1082 */       if (element instanceof DecimalFormatting) {
-/* 1083 */         ((DecimalFormatting)element).translate(classGen, toplevel);
-/*      */         continue;
-/*      */       } 
-/* 1086 */       if (element instanceof Whitespace) {
-/* 1087 */         whitespaceRules.addAll(((Whitespace)element).getRules());
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1092 */     if (whitespaceRules.size() > 0) {
-/* 1093 */       Whitespace.translateRules(whitespaceRules, classGen);
-/*      */     }
-/*      */     
-/* 1096 */     if (classGen.containsMethod("stripSpace", "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;II)Z") != null) {
-/* 1097 */       il.append(toplevel.loadDOM());
-/* 1098 */       il.append(classGen.loadTranslet());
-/* 1099 */       il.append(new INVOKEINTERFACE(setFilter, 2));
-/*      */     } 
-/*      */     
-/* 1102 */     il.append(RETURN);
-/*      */ 
-/*      */     
-/* 1105 */     classGen.addMethod(toplevel);
-/*      */     
-/* 1107 */     return "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;)V";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Vector resolveDependencies(Vector<TopLevelElement> input) {
-/* 1131 */     Vector<TopLevelElement> result = new Vector();
-/* 1132 */     while (input.size() > 0) {
-/* 1133 */       boolean changed = false;
-/* 1134 */       for (int i = 0; i < input.size(); ) {
-/* 1135 */         TopLevelElement vde = input.elementAt(i);
-/* 1136 */         Vector<?> dep = vde.getDependencies();
-/* 1137 */         if (dep == null || result.containsAll(dep)) {
-/* 1138 */           result.addElement(vde);
-/* 1139 */           input.remove(i);
-/* 1140 */           changed = true;
-/*      */           continue;
-/*      */         } 
-/* 1143 */         i++;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1148 */       if (!changed) {
-/*      */         
-/* 1150 */         ErrorMsg err = new ErrorMsg("CIRCULAR_VARIABLE_ERR", input.toString(), this);
-/* 1151 */         getParser().reportError(3, err);
-/* 1152 */         return result;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1164 */     return result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String compileBuildKeys(ClassGenerator classGen) {
-/* 1174 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1179 */     Type[] argTypes = { Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;"), Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), Util.getJCRefType("Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;"), Type.INT };
-/*      */ 
-/*      */ 
-/*      */     
-/* 1183 */     String[] argNames = { "document", "iterator", "handler", "current" };
-/*      */ 
-/*      */ 
-/*      */     
-/* 1187 */     InstructionList il = new InstructionList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1194 */     MethodGenerator buildKeys = new MethodGenerator(1, Type.VOID, argTypes, argNames, "buildKeys", this._className, il, classGen.getConstantPool());
-/*      */     
-/* 1196 */     buildKeys.addException("com.sun.org.apache.xalan.internal.xsltc.TransletException");
-/*      */     
-/* 1198 */     Iterator<SyntaxTreeNode> elements = elements();
-/* 1199 */     while (elements.hasNext()) {
-/*      */       
-/* 1201 */       SyntaxTreeNode element = elements.next();
-/* 1202 */       if (element instanceof Key) {
-/* 1203 */         Key key = (Key)element;
-/* 1204 */         key.translate(classGen, buildKeys);
-/* 1205 */         this._keys.put(key.getName(), key);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1209 */     il.append(RETURN);
-/*      */ 
-/*      */     
-/* 1212 */     buildKeys.stripAttributes(true);
-/* 1213 */     buildKeys.setMaxLocals();
-/* 1214 */     buildKeys.setMaxStack();
-/* 1215 */     buildKeys.removeNOPs();
-/*      */     
-/* 1217 */     classGen.addMethod(buildKeys.getMethod());
-/*      */     
-/* 1219 */     return "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;I)V";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void compileTransform(ClassGenerator classGen) {
-/* 1228 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1234 */     Type[] argTypes = new Type[3];
-/*      */     
-/* 1236 */     argTypes[0] = Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;");
-/* 1237 */     argTypes[1] = Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/* 1238 */     argTypes[2] = Util.getJCRefType("Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;");
-/*      */     
-/* 1240 */     String[] argNames = new String[3];
-/* 1241 */     argNames[0] = "document";
-/* 1242 */     argNames[1] = "iterator";
-/* 1243 */     argNames[2] = "handler";
-/*      */     
-/* 1245 */     InstructionList il = new InstructionList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1253 */     MethodGenerator transf = new MethodGenerator(1, Type.VOID, argTypes, argNames, "transform", this._className, il, classGen.getConstantPool());
-/* 1254 */     transf.addException("com.sun.org.apache.xalan.internal.xsltc.TransletException");
-/*      */ 
-/*      */     
-/* 1257 */     int check = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary", "resetPrefixIndex", "()V");
-/* 1258 */     il.append(new INVOKESTATIC(check));
-/*      */ 
-/*      */ 
-/*      */     
-/* 1262 */     LocalVariableGen current = transf.addLocalVariable("current", Type.INT, (InstructionHandle)null, (InstructionHandle)null);
-/*      */ 
-/*      */     
-/* 1265 */     String applyTemplatesSig = classGen.getApplyTemplatesSig();
-/* 1266 */     int applyTemplates = cpg.addMethodref(getClassName(), "applyTemplates", applyTemplatesSig);
-/*      */ 
-/*      */     
-/* 1269 */     int domField = cpg.addFieldref(getClassName(), "_dom", "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1274 */     il.append(classGen.loadTranslet());
-/*      */ 
-/*      */     
-/* 1277 */     if (isMultiDocument()) {
-/* 1278 */       il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.MultiDOM")));
-/* 1279 */       il.append(DUP);
-/*      */     } 
-/*      */     
-/* 1282 */     il.append(classGen.loadTranslet());
-/* 1283 */     il.append(transf.loadDOM());
-/* 1284 */     il.append(new INVOKEVIRTUAL(cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "makeDOMAdapter", "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;)Lcom/sun/org/apache/xalan/internal/xsltc/dom/DOMAdapter;")));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1290 */     if (isMultiDocument()) {
-/* 1291 */       int init = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.MultiDOM", "<init>", "(Lcom/sun/org/apache/xalan/internal/xsltc/DOM;)V");
-/*      */ 
-/*      */       
-/* 1294 */       il.append(new INVOKESPECIAL(init));
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1299 */     il.append(new PUTFIELD(domField));
-/*      */ 
-/*      */     
-/* 1302 */     int gitr = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getIterator", "()Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*      */ 
-/*      */     
-/* 1305 */     il.append(transf.loadDOM());
-/* 1306 */     il.append(new INVOKEINTERFACE(gitr, 1));
-/* 1307 */     il.append(transf.nextNode());
-/* 1308 */     current.setStart(il.append(new ISTORE(current.getIndex())));
-/*      */ 
-/*      */     
-/* 1311 */     il.append(classGen.loadTranslet());
-/* 1312 */     il.append(transf.loadHandler());
-/* 1313 */     int index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "transferOutputSettings", "(Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;)V");
-/*      */ 
-/*      */     
-/* 1316 */     il.append(new INVOKEVIRTUAL(index));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1324 */     String keySig = compileBuildKeys(classGen);
-/* 1325 */     int keyIdx = cpg.addMethodref(getClassName(), "buildKeys", keySig);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1329 */     Iterator<SyntaxTreeNode> toplevel = elements();
-/* 1330 */     if (this._globals.size() > 0 || toplevel.hasNext()) {
-/*      */       
-/* 1332 */       String topLevelSig = compileTopLevel(classGen);
-/*      */       
-/* 1334 */       int topLevelIdx = cpg.addMethodref(getClassName(), "topLevel", topLevelSig);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1338 */       il.append(classGen.loadTranslet());
-/* 1339 */       il.append(classGen.loadTranslet());
-/* 1340 */       il.append(new GETFIELD(domField));
-/* 1341 */       il.append(transf.loadIterator());
-/* 1342 */       il.append(transf.loadHandler());
-/* 1343 */       il.append(new INVOKEVIRTUAL(topLevelIdx));
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1347 */     il.append(transf.loadHandler());
-/* 1348 */     il.append(transf.startDocument());
-/*      */ 
-/*      */     
-/* 1351 */     il.append(classGen.loadTranslet());
-/*      */     
-/* 1353 */     il.append(classGen.loadTranslet());
-/* 1354 */     il.append(new GETFIELD(domField));
-/*      */     
-/* 1356 */     il.append(transf.loadIterator());
-/* 1357 */     il.append(transf.loadHandler());
-/* 1358 */     il.append(new INVOKEVIRTUAL(applyTemplates));
-/*      */     
-/* 1360 */     il.append(transf.loadHandler());
-/* 1361 */     il.append(transf.endDocument());
-/*      */     
-/* 1363 */     il.append(RETURN);
-/*      */ 
-/*      */     
-/* 1366 */     classGen.addMethod(transf);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void peepHoleOptimization(MethodGenerator methodGen) {
-/* 1374 */     String pattern = "`aload'`pop'`instruction'";
-/* 1375 */     InstructionList il = methodGen.getInstructionList();
-/* 1376 */     InstructionFinder find = new InstructionFinder(il);
-/* 1377 */     for (Iterator<InstructionHandle[]> iter = find.search("`aload'`pop'`instruction'"); iter.hasNext(); ) {
-/* 1378 */       InstructionHandle[] match = iter.next();
-/*      */       try {
-/* 1380 */         il.delete(match[0], match[1]);
-/*      */       }
-/* 1382 */       catch (TargetLostException targetLostException) {}
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int addParam(Param param) {
-/* 1389 */     this._globals.addElement(param);
-/* 1390 */     return this._globals.size() - 1;
-/*      */   }
-/*      */   
-/*      */   public int addVariable(Variable global) {
-/* 1394 */     this._globals.addElement(global);
-/* 1395 */     return this._globals.size() - 1;
-/*      */   }
-/*      */   
-/*      */   public void display(int indent) {
-/* 1399 */     indent(indent);
-/* 1400 */     Util.println("Stylesheet");
-/* 1401 */     displayContents(indent + 4);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public String getNamespace(String prefix) {
-/* 1406 */     return lookupNamespace(prefix);
-/*      */   }
-/*      */   
-/*      */   public String getClassName() {
-/* 1410 */     return this._className;
-/*      */   }
-/*      */   
-/*      */   public Vector getTemplates() {
-/* 1414 */     return this._templates;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Vector getAllValidTemplates() {
-/* 1419 */     if (this._includedStylesheets == null) {
-/* 1420 */       return this._templates;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1424 */     if (this._allValidTemplates == null) {
-/* 1425 */       Vector templates = new Vector();
-/* 1426 */       templates.addAll(this._templates);
-/* 1427 */       int size = this._includedStylesheets.size();
-/* 1428 */       for (int i = 0; i < size; i++) {
-/* 1429 */         Stylesheet included = this._includedStylesheets.elementAt(i);
-/* 1430 */         templates.addAll(included.getAllValidTemplates());
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1435 */       if (this._parentStylesheet != null) {
-/* 1436 */         return templates;
-/*      */       }
-/* 1438 */       this._allValidTemplates = templates;
-/*      */     } 
-/*      */     
-/* 1441 */     return this._allValidTemplates;
-/*      */   }
-/*      */   
-/*      */   protected void addTemplate(Template template) {
-/* 1445 */     this._templates.addElement(template);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\Stylesheet.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Stylesheet.java,v 1.5 2005/09/28 13:48:16 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ANEWARRAY;
+import com.sun.org.apache.bcel.internal.generic.BasicType;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.FieldGen;
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
+import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.bcel.internal.generic.NEWARRAY;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
+import com.sun.org.apache.bcel.internal.generic.PUTSTATIC;
+import com.sun.org.apache.bcel.internal.generic.TargetLostException;
+import com.sun.org.apache.bcel.internal.util.InstructionFinder;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.utils.SystemIDResolver;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+public final class Stylesheet extends SyntaxTreeNode {
+
+    /**
+     * XSLT version defined in the stylesheet.
+     */
+    private String _version;
+
+    /**
+     * Internal name of this stylesheet used as a key into the symbol table.
+     */
+    private QName _name;
+
+    /**
+     * A URI that represents the system ID for this stylesheet.
+     */
+    private String _systemId;
+
+    /**
+     * A reference to the parent stylesheet or null if topmost.
+     */
+    private Stylesheet _parentStylesheet;
+
+    /**
+     * Contains global variables and parameters defined in the stylesheet.
+     */
+    private Vector _globals = new Vector();
+
+    /**
+     * Used to cache the result returned by <code>hasLocalParams()</code>.
+     */
+    private Boolean _hasLocalParams = null;
+
+    /**
+     * The name of the class being generated.
+     */
+    private String _className;
+
+    /**
+      * Contains all templates defined in this stylesheet
+      */
+    private final Vector _templates = new Vector();
+
+    /**
+     * Used to cache result of <code>getAllValidTemplates()</code>. Only
+     * set in top-level stylesheets that include/import other stylesheets.
+     */
+    private Vector _allValidTemplates = null;
+
+    /**
+     * Counter to generate unique mode suffixes.
+     */
+    private int _nextModeSerial = 1;
+
+    /**
+     * Mapping between mode names and Mode instances.
+     */
+    private final Map<String, Mode> _modes = new HashMap<>();
+
+    /**
+     * A reference to the default Mode object.
+     */
+    private Mode _defaultMode;
+
+    /**
+     * Mapping between extension URIs and their prefixes.
+     */
+    private final Map<String, String> _extensions = new HashMap<>();
+
+    /**
+     * Reference to the stylesheet from which this stylesheet was
+     * imported (if any).
+     */
+    public Stylesheet _importedFrom = null;
+
+    /**
+     * Reference to the stylesheet from which this stylesheet was
+     * included (if any).
+     */
+    public Stylesheet _includedFrom = null;
+
+    /**
+     * Array of all the stylesheets imported or included from this one.
+     */
+    private Vector _includedStylesheets = null;
+
+    /**
+     * Import precendence for this stylesheet.
+     */
+    private int _importPrecedence = 1;
+
+    /**
+     * Minimum precendence of any descendant stylesheet by inclusion or
+     * importation.
+     */
+    private int _minimumDescendantPrecedence = -1;
+
+    /**
+     * Mapping between key names and Key objects (needed by Key/IdPattern).
+     */
+    private Map<String, Key> _keys = new HashMap<>();
+
+    /**
+     * A reference to the SourceLoader set by the user (a URIResolver
+     * if the JAXP API is being used).
+     */
+    private SourceLoader _loader = null;
+
+    /**
+     * Flag indicating if format-number() is called.
+     */
+    private boolean _numberFormattingUsed = false;
+
+    /**
+     * Flag indicating if this is a simplified stylesheets. A template
+     * matching on "/" must be added in this case.
+     */
+    private boolean _simplified = false;
+
+    /**
+     * Flag indicating if multi-document support is needed.
+     */
+    private boolean _multiDocument = false;
+
+    /**
+     * Flag indicating if nodset() is called.
+     */
+    private boolean _callsNodeset = false;
+
+    /**
+     * Flag indicating if id() is called.
+     */
+    private boolean _hasIdCall = false;
+
+    /**
+     * Set to true to enable template inlining optimization.
+     * @see XSLTC#_templateInlining
+     */
+    private boolean _templateInlining = false;
+
+    /**
+     * A reference to the last xsl:output object found in the styleshet.
+     */
+    private Output  _lastOutputElement = null;
+
+    /**
+     * Output properties for this stylesheet.
+     */
+    private Properties _outputProperties = null;
+
+    /**
+     * Output method for this stylesheet (must be set to one of
+     * the constants defined below).
+     */
+    private int _outputMethod = UNKNOWN_OUTPUT;
+
+    // Output method constants
+    public static final int UNKNOWN_OUTPUT = 0;
+    public static final int XML_OUTPUT     = 1;
+    public static final int HTML_OUTPUT    = 2;
+    public static final int TEXT_OUTPUT    = 3;
+
+    /**
+     * Return the output method
+     */
+    public int getOutputMethod() {
+        return _outputMethod;
+    }
+
+    /**
+     * Check and set the output method
+     */
+    private void checkOutputMethod() {
+        if (_lastOutputElement != null) {
+            String method = _lastOutputElement.getOutputMethod();
+            if (method != null) {
+                if (method.equals("xml"))
+                    _outputMethod = XML_OUTPUT;
+                else if (method.equals("html"))
+                    _outputMethod = HTML_OUTPUT;
+                else if (method.equals("text"))
+                    _outputMethod = TEXT_OUTPUT;
+            }
+        }
+    }
+
+    public boolean getTemplateInlining() {
+        return _templateInlining;
+    }
+
+    public void setTemplateInlining(boolean flag) {
+        _templateInlining = flag;
+    }
+
+    public boolean isSimplified() {
+        return(_simplified);
+    }
+
+    public void setSimplified() {
+        _simplified = true;
+    }
+
+    public void setHasIdCall(boolean flag) {
+        _hasIdCall = flag;
+    }
+
+    public void setOutputProperty(String key, String value) {
+        if (_outputProperties == null) {
+            _outputProperties = new Properties();
+        }
+        _outputProperties.setProperty(key, value);
+    }
+
+    public void setOutputProperties(Properties props) {
+        _outputProperties = props;
+    }
+
+    public Properties getOutputProperties() {
+        return _outputProperties;
+    }
+
+    public Output getLastOutputElement() {
+        return _lastOutputElement;
+    }
+
+    public void setMultiDocument(boolean flag) {
+        _multiDocument = flag;
+    }
+
+    public boolean isMultiDocument() {
+        return _multiDocument;
+    }
+
+    public void setCallsNodeset(boolean flag) {
+        if (flag) setMultiDocument(flag);
+        _callsNodeset = flag;
+    }
+
+    public boolean callsNodeset() {
+        return _callsNodeset;
+    }
+
+    public void numberFormattingUsed() {
+        _numberFormattingUsed = true;
+        /*
+         * Fix for bug 23046, if the stylesheet is included, set the
+         * numberFormattingUsed flag to the parent stylesheet too.
+         * AbstractTranslet.addDecimalFormat() will be inlined once for the
+         * outer most stylesheet.
+         */
+        Stylesheet parent = getParentStylesheet();
+        if (null != parent) parent.numberFormattingUsed();
+    }
+
+    public void setImportPrecedence(final int precedence) {
+        // Set import precedence for this stylesheet
+        _importPrecedence = precedence;
+
+        // Set import precedence for all included stylesheets
+        final Iterator<SyntaxTreeNode> elements = elements();
+        while (elements.hasNext()) {
+            SyntaxTreeNode child = elements.next();
+            if (child instanceof Include) {
+                Stylesheet included = ((Include)child).getIncludedStylesheet();
+                if (included != null && included._includedFrom == this) {
+                    included.setImportPrecedence(precedence);
+                }
+            }
+        }
+
+        // Set import precedence for the stylesheet that imported this one
+        if (_importedFrom != null) {
+            if (_importedFrom.getImportPrecedence() < precedence) {
+                final Parser parser = getParser();
+                final int nextPrecedence = parser.getNextImportPrecedence();
+                _importedFrom.setImportPrecedence(nextPrecedence);
+            }
+        }
+        // Set import precedence for the stylesheet that included this one
+        else if (_includedFrom != null) {
+            if (_includedFrom.getImportPrecedence() != precedence)
+                _includedFrom.setImportPrecedence(precedence);
+        }
+    }
+
+    public int getImportPrecedence() {
+        return _importPrecedence;
+    }
+
+    /**
+     * Get the minimum of the precedence of this stylesheet, any stylesheet
+     * imported by this stylesheet and any include/import descendant of this
+     * stylesheet.
+     */
+    public int getMinimumDescendantPrecedence() {
+        if (_minimumDescendantPrecedence == -1) {
+            // Start with precedence of current stylesheet as a basis.
+            int min = getImportPrecedence();
+
+            // Recursively examine all imported/included stylesheets.
+            final int inclImpCount = (_includedStylesheets != null)
+                                          ? _includedStylesheets.size()
+                                          : 0;
+
+            for (int i = 0; i < inclImpCount; i++) {
+                int prec = ((Stylesheet)_includedStylesheets.elementAt(i))
+                                              .getMinimumDescendantPrecedence();
+
+                if (prec < min) {
+                    min = prec;
+                }
+            }
+
+            _minimumDescendantPrecedence = min;
+        }
+        return _minimumDescendantPrecedence;
+    }
+
+    public boolean checkForLoop(String systemId) {
+        // Return true if this stylesheet includes/imports itself
+        if (_systemId != null && _systemId.equals(systemId)) {
+            return true;
+        }
+        // Then check with any stylesheets that included/imported this one
+        if (_parentStylesheet != null)
+            return _parentStylesheet.checkForLoop(systemId);
+        // Otherwise OK
+        return false;
+    }
+
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        _name = makeStylesheetName("__stylesheet_");
+    }
+
+    public void setParentStylesheet(Stylesheet parent) {
+        _parentStylesheet = parent;
+    }
+
+    public Stylesheet getParentStylesheet() {
+        return _parentStylesheet;
+    }
+
+    public void setImportingStylesheet(Stylesheet parent) {
+        _importedFrom = parent;
+        parent.addIncludedStylesheet(this);
+    }
+
+    public void setIncludingStylesheet(Stylesheet parent) {
+        _includedFrom = parent;
+        parent.addIncludedStylesheet(this);
+    }
+
+    public void addIncludedStylesheet(Stylesheet child) {
+        if (_includedStylesheets == null) {
+            _includedStylesheets = new Vector();
+        }
+        _includedStylesheets.addElement(child);
+    }
+
+    public void setSystemId(String systemId) {
+        if (systemId != null) {
+            _systemId = SystemIDResolver.getAbsoluteURI(systemId);
+        }
+    }
+
+    public String getSystemId() {
+        return _systemId;
+    }
+
+    public void setSourceLoader(SourceLoader loader) {
+        _loader = loader;
+    }
+
+    public SourceLoader getSourceLoader() {
+        return _loader;
+    }
+
+    private QName makeStylesheetName(String prefix) {
+        return getParser().getQName(prefix+getXSLTC().nextStylesheetSerial());
+    }
+
+    /**
+     * Returns true if this stylesheet has global vars or params.
+     */
+    public boolean hasGlobals() {
+        return _globals.size() > 0;
+    }
+
+    /**
+     * Returns true if at least one template in the stylesheet has params
+     * defined. Uses the variable <code>_hasLocalParams</code> to cache the
+     * result.
+     */
+    public boolean hasLocalParams() {
+        if (_hasLocalParams == null) {
+            Vector templates = getAllValidTemplates();
+            final int n = templates.size();
+            for (int i = 0; i < n; i++) {
+                final Template template = (Template)templates.elementAt(i);
+                if (template.hasParams()) {
+                    _hasLocalParams = Boolean.TRUE;
+                    return true;
+                }
+            }
+            _hasLocalParams = Boolean.FALSE;
+            return false;
+        }
+        else {
+            return _hasLocalParams.booleanValue();
+        }
+    }
+
+    /**
+     * Adds a single prefix mapping to this syntax tree node.
+     * @param prefix Namespace prefix.
+     * @param uri Namespace URI.
+     */
+    protected void addPrefixMapping(String prefix, String uri) {
+        if (prefix.equals(EMPTYSTRING) && uri.equals(XHTML_URI)) return;
+        super.addPrefixMapping(prefix, uri);
+    }
+
+    /**
+     * Store extension URIs
+     */
+    private void extensionURI(String prefixes, SymbolTable stable) {
+        if (prefixes != null) {
+            StringTokenizer tokens = new StringTokenizer(prefixes);
+            while (tokens.hasMoreTokens()) {
+                final String prefix = tokens.nextToken();
+                final String uri = lookupNamespace(prefix);
+                if (uri != null) {
+                    _extensions.put(uri, prefix);
+                }
+            }
+        }
+    }
+
+    public boolean isExtension(String uri) {
+        return (_extensions.get(uri) != null);
+    }
+
+    public void declareExtensionPrefixes(Parser parser) {
+        final SymbolTable stable = parser.getSymbolTable();
+        final String extensionPrefixes = getAttribute("extension-element-prefixes");
+        extensionURI(extensionPrefixes, stable);
+    }
+
+    /**
+     * Parse the version and uri fields of the stylesheet and add an
+     * entry to the symbol table mapping the name <tt>__stylesheet_</tt>
+     * to an instance of this class.
+     */
+    public void parseContents(Parser parser) {
+        final SymbolTable stable = parser.getSymbolTable();
+
+        /*
+        // Make sure the XSL version set in this stylesheet
+        if ((_version == null) || (_version.equals(EMPTYSTRING))) {
+            reportError(this, parser, ErrorMsg.REQUIRED_ATTR_ERR,"version");
+        }
+        // Verify that the version is 1.0 and nothing else
+        else if (!_version.equals("1.0")) {
+            reportError(this, parser, ErrorMsg.XSL_VERSION_ERR, _version);
+        }
+        */
+
+        // Add the implicit mapping of 'xml' to the XML namespace URI
+        addPrefixMapping("xml", "http://www.w3.org/XML/1998/namespace");
+
+        // Report and error if more than one stylesheet defined
+        final Stylesheet sheet = stable.addStylesheet(_name, this);
+        if (sheet != null) {
+            // Error: more that one stylesheet defined
+            ErrorMsg err = new ErrorMsg(ErrorMsg.MULTIPLE_STYLESHEET_ERR,this);
+            parser.reportError(Constants.ERROR, err);
+        }
+
+        // If this is a simplified stylesheet we must create a template that
+        // grabs the root node of the input doc ( <xsl:template match="/"/> ).
+        // This template needs the current element (the one passed to this
+        // method) as its only child, so the Template class has a special
+        // method that handles this (parseSimplified()).
+        if (_simplified) {
+            stable.excludeURI(XSLT_URI);
+            Template template = new Template();
+            template.parseSimplified(this, parser);
+        }
+        // Parse the children of this node
+        else {
+            parseOwnChildren(parser);
+        }
+    }
+
+    /**
+     * Parse all direct children of the <xsl:stylesheet/> element.
+     */
+    public final void parseOwnChildren(Parser parser) {
+        final SymbolTable stable = parser.getSymbolTable();
+        final String excludePrefixes = getAttribute("exclude-result-prefixes");
+        final String extensionPrefixes = getAttribute("extension-element-prefixes");
+
+        // Exclude XSLT uri
+        stable.pushExcludedNamespacesContext();
+        stable.excludeURI(Constants.XSLT_URI);
+        stable.excludeNamespaces(excludePrefixes);
+        stable.excludeNamespaces(extensionPrefixes);
+
+        final List<SyntaxTreeNode> contents = getContents();
+        final int count = contents.size();
+
+        // We have to scan the stylesheet element's top-level elements for
+        // variables and/or parameters before we parse the other elements
+        for (int i = 0; i < count; i++) {
+            SyntaxTreeNode child = contents.get(i);
+            if ((child instanceof VariableBase) ||
+                (child instanceof NamespaceAlias)) {
+                parser.getSymbolTable().setCurrentNode(child);
+                child.parseContents(parser);
+            }
+        }
+
+        // Now go through all the other top-level elements...
+        for (int i = 0; i < count; i++) {
+            SyntaxTreeNode child = contents.get(i);
+            if (!(child instanceof VariableBase) &&
+                !(child instanceof NamespaceAlias)) {
+                parser.getSymbolTable().setCurrentNode(child);
+                child.parseContents(parser);
+            }
+
+            // All template code should be compiled as methods if the
+            // <xsl:apply-imports/> element was ever used in this stylesheet
+            if (!_templateInlining && (child instanceof Template)) {
+                Template template = (Template)child;
+                String name = "template$dot$" + template.getPosition();
+                template.setName(parser.getQName(name));
+            }
+        }
+
+        stable.popExcludedNamespacesContext();
+    }
+
+    public void processModes() {
+        if (_defaultMode == null)
+            _defaultMode = new Mode(null, this, Constants.EMPTYSTRING);
+        _defaultMode.processPatterns(_keys);
+        for (Mode mode : _modes.values()) {
+            mode.processPatterns(_keys);
+        }
+    }
+
+    private void compileModes(ClassGenerator classGen) {
+        _defaultMode.compileApplyTemplates(classGen);
+        for (Mode mode : _modes.values()) {
+            mode.compileApplyTemplates(classGen);
+        }
+    }
+
+    public Mode getMode(QName modeName) {
+        if (modeName == null) {
+            if (_defaultMode == null) {
+                _defaultMode = new Mode(null, this, Constants.EMPTYSTRING);
+            }
+            return _defaultMode;
+        }
+        else {
+            Mode mode = _modes.get(modeName.getStringRep());
+            if (mode == null) {
+                final String suffix = Integer.toString(_nextModeSerial++);
+                _modes.put(modeName.getStringRep(), mode = new Mode(modeName, this, suffix));
+            }
+            return mode;
+        }
+    }
+
+    /**
+     * Type check all the children of this node.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        final int count = _globals.size();
+        for (int i = 0; i < count; i++) {
+            final VariableBase var = (VariableBase)_globals.elementAt(i);
+            var.typeCheck(stable);
+        }
+        return typeCheckContents(stable);
+    }
+
+    /**
+     * Translate the stylesheet into JVM bytecodes.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        translate();
+    }
+
+    private void addDOMField(ClassGenerator classGen) {
+        final FieldGen fgen = new FieldGen(ACC_PUBLIC,
+                                           Util.getJCRefType(DOM_INTF_SIG),
+                                           DOM_FIELD,
+                                           classGen.getConstantPool());
+        classGen.addField(fgen.getField());
+    }
+
+    /**
+     * Add a static field
+     */
+    private void addStaticField(ClassGenerator classGen, String type,
+                                String name)
+    {
+        final FieldGen fgen = new FieldGen(ACC_PROTECTED|ACC_STATIC,
+                                           Util.getJCRefType(type),
+                                           name,
+                                           classGen.getConstantPool());
+        classGen.addField(fgen.getField());
+
+    }
+
+    /**
+     * Translate the stylesheet into JVM bytecodes.
+     */
+    public void translate() {
+        _className = getXSLTC().getClassName();
+
+        // Define a new class by extending TRANSLET_CLASS
+        final ClassGenerator classGen =
+            new ClassGenerator(_className,
+                               TRANSLET_CLASS,
+                               Constants.EMPTYSTRING,
+                               ACC_PUBLIC | ACC_SUPER,
+                               null, this);
+
+        addDOMField(classGen);
+
+        // Compile transform() to initialize parameters, globals & output
+        // and run the transformation
+        compileTransform(classGen);
+
+        // Translate all non-template elements and filter out all templates
+        final Iterator<SyntaxTreeNode> elements = elements();
+        while (elements.hasNext()) {
+            SyntaxTreeNode element = elements.next();
+            // xsl:template
+            if (element instanceof Template) {
+                // Separate templates by modes
+                final Template template = (Template)element;
+                //_templates.addElement(template);
+                getMode(template.getModeName()).addTemplate(template);
+            }
+            // xsl:attribute-set
+            else if (element instanceof AttributeSet) {
+                ((AttributeSet)element).translate(classGen, null);
+            }
+            else if (element instanceof Output) {
+                // save the element for later to pass to compileConstructor
+                Output output = (Output)element;
+                if (output.enabled()) _lastOutputElement = output;
+            }
+            else {
+                // Global variables and parameters are handled elsewhere.
+                // Other top-level non-template elements are ignored. Literal
+                // elements outside of templates will never be output.
+            }
+        }
+
+        checkOutputMethod();
+        processModes();
+        compileModes(classGen);
+        compileStaticInitializer(classGen);
+        compileConstructor(classGen, _lastOutputElement);
+
+        if (!getParser().errorsFound()) {
+            getXSLTC().dumpClass(classGen.getJavaClass());
+        }
+    }
+
+    /**
+     * Compile the namesArray, urisArray and typesArray into
+     * the static initializer. They are read-only from the
+     * translet. All translet instances can share a single
+     * copy of this informtion.
+     */
+    private void compileStaticInitializer(ClassGenerator classGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = new InstructionList();
+
+        final MethodGenerator staticConst =
+            new MethodGenerator(ACC_PUBLIC|ACC_STATIC,
+                                com.sun.org.apache.bcel.internal.generic.Type.VOID,
+                                null, null, "<clinit>",
+                                _className, il, cpg);
+
+        addStaticField(classGen, "[" + STRING_SIG, STATIC_NAMES_ARRAY_FIELD);
+        addStaticField(classGen, "[" + STRING_SIG, STATIC_URIS_ARRAY_FIELD);
+        addStaticField(classGen, "[I", STATIC_TYPES_ARRAY_FIELD);
+        addStaticField(classGen, "[" + STRING_SIG, STATIC_NAMESPACE_ARRAY_FIELD);
+        // Create fields of type char[] that will contain literal text from
+        // the stylesheet.
+        final int charDataFieldCount = getXSLTC().getCharacterDataCount();
+        for (int i = 0; i < charDataFieldCount; i++) {
+            addStaticField(classGen, STATIC_CHAR_DATA_FIELD_SIG,
+                           STATIC_CHAR_DATA_FIELD+i);
+        }
+
+        // Put the names array into the translet - used for dom/translet mapping
+        final Vector namesIndex = getXSLTC().getNamesIndex();
+        int size = namesIndex.size();
+        String[] namesArray = new String[size];
+        String[] urisArray = new String[size];
+        int[] typesArray = new int[size];
+
+        int index;
+        for (int i = 0; i < size; i++) {
+            String encodedName = (String)namesIndex.elementAt(i);
+            if ((index = encodedName.lastIndexOf(':')) > -1) {
+                urisArray[i] = encodedName.substring(0, index);
+            }
+
+            index = index + 1;
+            if (encodedName.charAt(index) == '@') {
+                typesArray[i] = DTM.ATTRIBUTE_NODE;
+                index++;
+            } else if (encodedName.charAt(index) == '?') {
+                typesArray[i] = DTM.NAMESPACE_NODE;
+                index++;
+            } else {
+                typesArray[i] = DTM.ELEMENT_NODE;
+            }
+
+            if (index == 0) {
+                namesArray[i] = encodedName;
+            }
+            else {
+                namesArray[i] = encodedName.substring(index);
+            }
+        }
+
+        staticConst.markChunkStart();
+        il.append(new PUSH(cpg, size));
+        il.append(new ANEWARRAY(cpg.addClass(STRING)));
+        int namesArrayRef = cpg.addFieldref(_className,
+                                            STATIC_NAMES_ARRAY_FIELD,
+                                            NAMES_INDEX_SIG);
+        il.append(new PUTSTATIC(namesArrayRef));
+        staticConst.markChunkEnd();
+
+        for (int i = 0; i < size; i++) {
+            final String name = namesArray[i];
+            staticConst.markChunkStart();
+            il.append(new GETSTATIC(namesArrayRef));
+            il.append(new PUSH(cpg, i));
+            il.append(new PUSH(cpg, name));
+            il.append(AASTORE);
+            staticConst.markChunkEnd();
+        }
+
+        staticConst.markChunkStart();
+        il.append(new PUSH(cpg, size));
+        il.append(new ANEWARRAY(cpg.addClass(STRING)));
+        int urisArrayRef = cpg.addFieldref(_className,
+                                           STATIC_URIS_ARRAY_FIELD,
+                                           URIS_INDEX_SIG);
+        il.append(new PUTSTATIC(urisArrayRef));
+        staticConst.markChunkEnd();
+
+        for (int i = 0; i < size; i++) {
+            final String uri = urisArray[i];
+            staticConst.markChunkStart();
+            il.append(new GETSTATIC(urisArrayRef));
+            il.append(new PUSH(cpg, i));
+            il.append(new PUSH(cpg, uri));
+            il.append(AASTORE);
+            staticConst.markChunkEnd();
+        }
+
+        staticConst.markChunkStart();
+        il.append(new PUSH(cpg, size));
+        il.append(new NEWARRAY(BasicType.INT));
+        int typesArrayRef = cpg.addFieldref(_className,
+                                            STATIC_TYPES_ARRAY_FIELD,
+                                            TYPES_INDEX_SIG);
+        il.append(new PUTSTATIC(typesArrayRef));
+        staticConst.markChunkEnd();
+
+        for (int i = 0; i < size; i++) {
+            final int nodeType = typesArray[i];
+            staticConst.markChunkStart();
+            il.append(new GETSTATIC(typesArrayRef));
+            il.append(new PUSH(cpg, i));
+            il.append(new PUSH(cpg, nodeType));
+            il.append(IASTORE);
+        }
+
+        // Put the namespace names array into the translet
+        final Vector namespaces = getXSLTC().getNamespaceIndex();
+        staticConst.markChunkStart();
+        il.append(new PUSH(cpg, namespaces.size()));
+        il.append(new ANEWARRAY(cpg.addClass(STRING)));
+        int namespaceArrayRef = cpg.addFieldref(_className,
+                                                STATIC_NAMESPACE_ARRAY_FIELD,
+                                                NAMESPACE_INDEX_SIG);
+        il.append(new PUTSTATIC(namespaceArrayRef));
+        staticConst.markChunkEnd();
+
+        for (int i = 0; i < namespaces.size(); i++) {
+            final String ns = (String)namespaces.elementAt(i);
+            staticConst.markChunkStart();
+            il.append(new GETSTATIC(namespaceArrayRef));
+            il.append(new PUSH(cpg, i));
+            il.append(new PUSH(cpg, ns));
+            il.append(AASTORE);
+            staticConst.markChunkEnd();
+        }
+
+        // Grab all the literal text in the stylesheet and put it in a char[]
+        final int charDataCount = getXSLTC().getCharacterDataCount();
+        final int toCharArray = cpg.addMethodref(STRING, "toCharArray", "()[C");
+        for (int i = 0; i < charDataCount; i++) {
+            staticConst.markChunkStart();
+            il.append(new PUSH(cpg, getXSLTC().getCharacterData(i)));
+            il.append(new INVOKEVIRTUAL(toCharArray));
+            il.append(new PUTSTATIC(cpg.addFieldref(_className,
+                                               STATIC_CHAR_DATA_FIELD+i,
+                                               STATIC_CHAR_DATA_FIELD_SIG)));
+            staticConst.markChunkEnd();
+        }
+
+        il.append(RETURN);
+
+        classGen.addMethod(staticConst);
+
+    }
+
+    /**
+     * Compile the translet's constructor
+     */
+    private void compileConstructor(ClassGenerator classGen, Output output) {
+
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = new InstructionList();
+
+        final MethodGenerator constructor =
+            new MethodGenerator(ACC_PUBLIC,
+                                com.sun.org.apache.bcel.internal.generic.Type.VOID,
+                                null, null, "<init>",
+                                _className, il, cpg);
+
+        // Call the constructor in the AbstractTranslet superclass
+        il.append(classGen.loadTranslet());
+        il.append(new INVOKESPECIAL(cpg.addMethodref(TRANSLET_CLASS,
+                                                     "<init>", "()V")));
+
+        constructor.markChunkStart();
+        il.append(classGen.loadTranslet());
+        il.append(new GETSTATIC(cpg.addFieldref(_className,
+                                                STATIC_NAMES_ARRAY_FIELD,
+                                                NAMES_INDEX_SIG)));
+        il.append(new PUTFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               NAMES_INDEX,
+                                               NAMES_INDEX_SIG)));
+
+        il.append(classGen.loadTranslet());
+        il.append(new GETSTATIC(cpg.addFieldref(_className,
+                                                STATIC_URIS_ARRAY_FIELD,
+                                                URIS_INDEX_SIG)));
+        il.append(new PUTFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               URIS_INDEX,
+                                               URIS_INDEX_SIG)));
+        constructor.markChunkEnd();
+
+        constructor.markChunkStart();
+        il.append(classGen.loadTranslet());
+        il.append(new GETSTATIC(cpg.addFieldref(_className,
+                                                STATIC_TYPES_ARRAY_FIELD,
+                                                TYPES_INDEX_SIG)));
+        il.append(new PUTFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               TYPES_INDEX,
+                                               TYPES_INDEX_SIG)));
+        constructor.markChunkEnd();
+
+        constructor.markChunkStart();
+        il.append(classGen.loadTranslet());
+        il.append(new GETSTATIC(cpg.addFieldref(_className,
+                                                STATIC_NAMESPACE_ARRAY_FIELD,
+                                                NAMESPACE_INDEX_SIG)));
+        il.append(new PUTFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               NAMESPACE_INDEX,
+                                               NAMESPACE_INDEX_SIG)));
+        constructor.markChunkEnd();
+
+        constructor.markChunkStart();
+        il.append(classGen.loadTranslet());
+        il.append(new PUSH(cpg, AbstractTranslet.CURRENT_TRANSLET_VERSION));
+        il.append(new PUTFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                               TRANSLET_VERSION_INDEX,
+                                               TRANSLET_VERSION_INDEX_SIG)));
+        constructor.markChunkEnd();
+
+        if (_hasIdCall) {
+            constructor.markChunkStart();
+            il.append(classGen.loadTranslet());
+            il.append(new PUSH(cpg, Boolean.TRUE));
+            il.append(new PUTFIELD(cpg.addFieldref(TRANSLET_CLASS,
+                                                   HASIDCALL_INDEX,
+                                                   HASIDCALL_INDEX_SIG)));
+            constructor.markChunkEnd();
+        }
+
+        // Compile in code to set the output configuration from <xsl:output>
+        if (output != null) {
+            // Set all the output settings files in the translet
+            constructor.markChunkStart();
+            output.translate(classGen, constructor);
+            constructor.markChunkEnd();
+        }
+
+        // Compile default decimal formatting symbols.
+        // This is an implicit, nameless xsl:decimal-format top-level element.
+        if (_numberFormattingUsed) {
+            constructor.markChunkStart();
+            DecimalFormatting.translateDefaultDFS(classGen, constructor);
+            constructor.markChunkEnd();
+        }
+
+        il.append(RETURN);
+
+        classGen.addMethod(constructor);
+    }
+
+    /**
+     * Compile a topLevel() method into the output class. This method is
+     * called from transform() to handle all non-template top-level elements.
+     * Returns the signature of the topLevel() method.
+     *
+     * Global variables/params and keys are first sorted to resolve
+     * dependencies between them. The XSLT 1.0 spec does not allow a key
+     * to depend on a variable. However, for compatibility with Xalan
+     * interpretive, that type of dependency is allowed. Note also that
+     * the buildKeys() method is still generated as it is used by the
+     * LoadDocument class, but it no longer called from transform().
+     */
+    private String compileTopLevel(ClassGenerator classGen) {
+
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+
+        final com.sun.org.apache.bcel.internal.generic.Type[] argTypes = {
+            Util.getJCRefType(DOM_INTF_SIG),
+            Util.getJCRefType(NODE_ITERATOR_SIG),
+            Util.getJCRefType(TRANSLET_OUTPUT_SIG)
+        };
+
+        final String[] argNames = {
+            DOCUMENT_PNAME, ITERATOR_PNAME, TRANSLET_OUTPUT_PNAME
+        };
+
+        final InstructionList il = new InstructionList();
+
+        final MethodGenerator toplevel =
+            new MethodGenerator(ACC_PUBLIC,
+                                com.sun.org.apache.bcel.internal.generic.Type.VOID,
+                                argTypes, argNames,
+                                "topLevel", _className, il,
+                                classGen.getConstantPool());
+
+        toplevel.addException("com.sun.org.apache.xalan.internal.xsltc.TransletException");
+
+        // Define and initialize 'current' variable with the root node
+        final LocalVariableGen current =
+            toplevel.addLocalVariable("current",
+                                      com.sun.org.apache.bcel.internal.generic.Type.INT,
+                                      null, null);
+
+        final int setFilter = cpg.addInterfaceMethodref(DOM_INTF,
+                               "setFilter",
+                               "(Lcom/sun/org/apache/xalan/internal/xsltc/StripFilter;)V");
+
+        final int gitr = cpg.addInterfaceMethodref(DOM_INTF,
+                                                        "getIterator",
+                                                        "()"+NODE_ITERATOR_SIG);
+        il.append(toplevel.loadDOM());
+        il.append(new INVOKEINTERFACE(gitr, 1));
+        il.append(toplevel.nextNode());
+        current.setStart(il.append(new ISTORE(current.getIndex())));
+
+        // Create a new list containing variables/params + keys
+        Vector varDepElements = new Vector(_globals);
+        Iterator<SyntaxTreeNode> elements = elements();
+        while (elements.hasNext()) {
+            SyntaxTreeNode element = elements.next();
+            if (element instanceof Key) {
+                varDepElements.add(element);
+            }
+        }
+
+        // Determine a partial order for the variables/params and keys
+        varDepElements = resolveDependencies(varDepElements);
+
+        // Translate vars/params and keys in the right order
+        final int count = varDepElements.size();
+        for (int i = 0; i < count; i++) {
+            final TopLevelElement tle = (TopLevelElement) varDepElements.elementAt(i);
+            tle.translate(classGen, toplevel);
+            if (tle instanceof Key) {
+                final Key key = (Key) tle;
+                _keys.put(key.getName(), key);
+            }
+        }
+
+        // Compile code for other top-level elements
+        Vector whitespaceRules = new Vector();
+        elements = elements();
+        while (elements.hasNext()) {
+            SyntaxTreeNode element = elements.next();
+            // xsl:decimal-format
+            if (element instanceof DecimalFormatting) {
+                ((DecimalFormatting)element).translate(classGen,toplevel);
+            }
+            // xsl:strip/preserve-space
+            else if (element instanceof Whitespace) {
+                whitespaceRules.addAll(((Whitespace)element).getRules());
+            }
+        }
+
+        // Translate all whitespace strip/preserve rules
+        if (whitespaceRules.size() > 0) {
+            Whitespace.translateRules(whitespaceRules,classGen);
+        }
+
+        if (classGen.containsMethod(STRIP_SPACE, STRIP_SPACE_PARAMS) != null) {
+            il.append(toplevel.loadDOM());
+            il.append(classGen.loadTranslet());
+            il.append(new INVOKEINTERFACE(setFilter, 2));
+        }
+
+        il.append(RETURN);
+
+        // Compute max locals + stack and add method to class
+        classGen.addMethod(toplevel);
+
+        return("("+DOM_INTF_SIG+NODE_ITERATOR_SIG+TRANSLET_OUTPUT_SIG+")V");
+    }
+
+    /**
+     * This method returns a vector with variables/params and keys in the
+     * order in which they are to be compiled for initialization. The order
+     * is determined by analyzing the dependencies between them. The XSLT 1.0
+     * spec does not allow a key to depend on a variable. However, for
+     * compatibility with Xalan interpretive, that type of dependency is
+     * allowed and, therefore, consider to determine the partial order.
+     */
+    private Vector resolveDependencies(Vector input) {
+        /* DEBUG CODE - INGORE
+        for (int i = 0; i < input.size(); i++) {
+            final TopLevelElement e = (TopLevelElement) input.elementAt(i);
+            System.out.println("e = " + e + " depends on:");
+            Vector dep = e.getDependencies();
+            for (int j = 0; j < (dep != null ? dep.size() : 0); j++) {
+                System.out.println("\t" + dep.elementAt(j));
+            }
+        }
+        System.out.println("=================================");
+        */
+
+        Vector result = new Vector();
+        while (input.size() > 0) {
+            boolean changed = false;
+            for (int i = 0; i < input.size(); ) {
+                final TopLevelElement vde = (TopLevelElement) input.elementAt(i);
+                final Vector dep = vde.getDependencies();
+                if (dep == null || result.containsAll(dep)) {
+                    result.addElement(vde);
+                    input.remove(i);
+                    changed = true;
+                }
+                else {
+                    i++;
+                }
+            }
+
+            // If nothing was changed in this pass then we have a circular ref
+            if (!changed) {
+                ErrorMsg err = new ErrorMsg(ErrorMsg.CIRCULAR_VARIABLE_ERR,
+                                            input.toString(), this);
+                getParser().reportError(Constants.ERROR, err);
+                return(result);
+            }
+        }
+
+        /* DEBUG CODE - INGORE
+        System.out.println("=================================");
+        for (int i = 0; i < result.size(); i++) {
+            final TopLevelElement e = (TopLevelElement) result.elementAt(i);
+            System.out.println("e = " + e);
+        }
+        */
+
+        return result;
+    }
+
+    /**
+     * Compile a buildKeys() method into the output class. Note that keys
+     * for the input document are created in topLevel(), not in this method.
+     * However, we still need this method to create keys for documents loaded
+     * via the XPath document() function.
+     */
+    private String compileBuildKeys(ClassGenerator classGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+
+        final com.sun.org.apache.bcel.internal.generic.Type[] argTypes = {
+            Util.getJCRefType(DOM_INTF_SIG),
+            Util.getJCRefType(NODE_ITERATOR_SIG),
+            Util.getJCRefType(TRANSLET_OUTPUT_SIG),
+            com.sun.org.apache.bcel.internal.generic.Type.INT
+        };
+
+        final String[] argNames = {
+            DOCUMENT_PNAME, ITERATOR_PNAME, TRANSLET_OUTPUT_PNAME, "current"
+        };
+
+        final InstructionList il = new InstructionList();
+
+        final MethodGenerator buildKeys =
+            new MethodGenerator(ACC_PUBLIC,
+                                com.sun.org.apache.bcel.internal.generic.Type.VOID,
+                                argTypes, argNames,
+                                "buildKeys", _className, il,
+                                classGen.getConstantPool());
+
+        buildKeys.addException("com.sun.org.apache.xalan.internal.xsltc.TransletException");
+
+        final Iterator<SyntaxTreeNode> elements = elements();
+        while (elements.hasNext()) {
+            // xsl:key
+            final SyntaxTreeNode element = elements.next();
+            if (element instanceof Key) {
+                final Key key = (Key)element;
+                key.translate(classGen, buildKeys);
+                _keys.put(key.getName(),key);
+            }
+        }
+
+        il.append(RETURN);
+
+        // Compute max locals + stack and add method to class
+        buildKeys.stripAttributes(true);
+        buildKeys.setMaxLocals();
+        buildKeys.setMaxStack();
+        buildKeys.removeNOPs();
+
+        classGen.addMethod(buildKeys.getMethod());
+
+        return("("+DOM_INTF_SIG+NODE_ITERATOR_SIG+TRANSLET_OUTPUT_SIG+"I)V");
+    }
+
+    /**
+     * Compile transform() into the output class. This method is used to
+     * initialize global variables and global parameters. The current node
+     * is set to be the document's root node.
+     */
+    private void compileTransform(ClassGenerator classGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+
+        /*
+         * Define the the method transform with the following signature:
+         * void transform(DOM, NodeIterator, HandlerBase)
+         */
+        final com.sun.org.apache.bcel.internal.generic.Type[] argTypes =
+            new com.sun.org.apache.bcel.internal.generic.Type[3];
+        argTypes[0] = Util.getJCRefType(DOM_INTF_SIG);
+        argTypes[1] = Util.getJCRefType(NODE_ITERATOR_SIG);
+        argTypes[2] = Util.getJCRefType(TRANSLET_OUTPUT_SIG);
+
+        final String[] argNames = new String[3];
+        argNames[0] = DOCUMENT_PNAME;
+        argNames[1] = ITERATOR_PNAME;
+        argNames[2] = TRANSLET_OUTPUT_PNAME;
+
+        final InstructionList il = new InstructionList();
+        final MethodGenerator transf =
+            new MethodGenerator(ACC_PUBLIC,
+                                com.sun.org.apache.bcel.internal.generic.Type.VOID,
+                                argTypes, argNames,
+                                "transform",
+                                _className,
+                                il,
+                                classGen.getConstantPool());
+        transf.addException("com.sun.org.apache.xalan.internal.xsltc.TransletException");
+
+        // call resetPrefixIndex at the beginning of transform
+        final int check = cpg.addMethodref(BASIS_LIBRARY_CLASS, "resetPrefixIndex", "()V");
+        il.append(new INVOKESTATIC(check));
+
+        // Define and initialize current with the root node
+        final LocalVariableGen current =
+            transf.addLocalVariable("current",
+                                    com.sun.org.apache.bcel.internal.generic.Type.INT,
+                                    null, null);
+        final String applyTemplatesSig = classGen.getApplyTemplatesSig();
+        final int applyTemplates = cpg.addMethodref(getClassName(),
+                                                    "applyTemplates",
+                                                    applyTemplatesSig);
+        final int domField = cpg.addFieldref(getClassName(),
+                                             DOM_FIELD,
+                                             DOM_INTF_SIG);
+
+        // push translet for PUTFIELD
+        il.append(classGen.loadTranslet());
+        // prepare appropriate DOM implementation
+
+        if (isMultiDocument()) {
+            il.append(new NEW(cpg.addClass(MULTI_DOM_CLASS)));
+            il.append(DUP);
+        }
+
+        il.append(classGen.loadTranslet());
+        il.append(transf.loadDOM());
+        il.append(new INVOKEVIRTUAL(cpg.addMethodref(TRANSLET_CLASS,
+                                                     "makeDOMAdapter",
+                                                     "("+DOM_INTF_SIG+")"+
+                                                     DOM_ADAPTER_SIG)));
+        // DOMAdapter is on the stack
+
+        if (isMultiDocument()) {
+            final int init = cpg.addMethodref(MULTI_DOM_CLASS,
+                                              "<init>",
+                                              "("+DOM_INTF_SIG+")V");
+            il.append(new INVOKESPECIAL(init));
+            // MultiDOM is on the stack
+        }
+
+        //store to _dom variable
+        il.append(new PUTFIELD(domField));
+
+        // continue with globals initialization
+        final int gitr = cpg.addInterfaceMethodref(DOM_INTF,
+                                                        "getIterator",
+                                                        "()"+NODE_ITERATOR_SIG);
+        il.append(transf.loadDOM());
+        il.append(new INVOKEINTERFACE(gitr, 1));
+        il.append(transf.nextNode());
+        current.setStart(il.append(new ISTORE(current.getIndex())));
+
+        // Transfer the output settings to the output post-processor
+        il.append(classGen.loadTranslet());
+        il.append(transf.loadHandler());
+        final int index = cpg.addMethodref(TRANSLET_CLASS,
+                                           "transferOutputSettings",
+                                           "("+OUTPUT_HANDLER_SIG+")V");
+        il.append(new INVOKEVIRTUAL(index));
+
+        /*
+         * Compile buildKeys() method. Note that this method is not
+         * invoked here as keys for the input document are now created
+         * in topLevel(). However, this method is still needed by the
+         * LoadDocument class.
+         */
+        final String keySig = compileBuildKeys(classGen);
+        final int keyIdx = cpg.addMethodref(getClassName(),
+                                               "buildKeys", keySig);
+
+        // Look for top-level elements that need handling
+        final Iterator<SyntaxTreeNode> toplevel = elements();
+        if (_globals.size() > 0 || toplevel.hasNext()) {
+            // Compile method for handling top-level elements
+            final String topLevelSig = compileTopLevel(classGen);
+            // Get a reference to that method
+            final int topLevelIdx = cpg.addMethodref(getClassName(),
+                                                     "topLevel",
+                                                     topLevelSig);
+            // Push all parameters on the stack and call topLevel()
+            il.append(classGen.loadTranslet()); // The 'this' pointer
+            il.append(classGen.loadTranslet());
+            il.append(new GETFIELD(domField));  // The DOM reference
+            il.append(transf.loadIterator());
+            il.append(transf.loadHandler());    // The output handler
+            il.append(new INVOKEVIRTUAL(topLevelIdx));
+        }
+
+        // start document
+        il.append(transf.loadHandler());
+        il.append(transf.startDocument());
+
+        // push first arg for applyTemplates
+        il.append(classGen.loadTranslet());
+        // push translet for GETFIELD to get DOM arg
+        il.append(classGen.loadTranslet());
+        il.append(new GETFIELD(domField));
+        // push remaining 2 args
+        il.append(transf.loadIterator());
+        il.append(transf.loadHandler());
+        il.append(new INVOKEVIRTUAL(applyTemplates));
+        // endDocument
+        il.append(transf.loadHandler());
+        il.append(transf.endDocument());
+
+        il.append(RETURN);
+
+        // Compute max locals + stack and add method to class
+        classGen.addMethod(transf);
+
+    }
+
+    /**
+     * Peephole optimization: Remove sequences of [ALOAD, POP].
+     */
+    private void peepHoleOptimization(MethodGenerator methodGen) {
+        final String pattern = "`aload'`pop'`instruction'";
+        final InstructionList il = methodGen.getInstructionList();
+        final InstructionFinder find = new InstructionFinder(il);
+        for(Iterator iter=find.search(pattern); iter.hasNext(); ) {
+            InstructionHandle[] match = (InstructionHandle[])iter.next();
+            try {
+                il.delete(match[0], match[1]);
+            }
+            catch (TargetLostException e) {
+                // TODO: move target down into the list
+            }
+        }
+    }
+
+    public int addParam(Param param) {
+        _globals.addElement(param);
+        return _globals.size() - 1;
+    }
+
+    public int addVariable(Variable global) {
+        _globals.addElement(global);
+        return _globals.size() - 1;
+    }
+
+    public void display(int indent) {
+        indent(indent);
+        Util.println("Stylesheet");
+        displayContents(indent + IndentIncrement);
+    }
+
+    // do we need this wrapper ?????
+    public String getNamespace(String prefix) {
+        return lookupNamespace(prefix);
+    }
+
+    public String getClassName() {
+        return _className;
+    }
+
+    public Vector getTemplates() {
+        return _templates;
+    }
+
+    public Vector getAllValidTemplates() {
+        // Return templates if no imported/included stylesheets
+        if (_includedStylesheets == null) {
+            return _templates;
+        }
+
+        // Is returned value cached?
+        if (_allValidTemplates == null) {
+           Vector templates = new Vector();
+           templates.addAll(_templates);
+            int size = _includedStylesheets.size();
+            for (int i = 0; i < size; i++) {
+                Stylesheet included =(Stylesheet)_includedStylesheets.elementAt(i);
+                templates.addAll(included.getAllValidTemplates());
+            }
+            //templates.addAll(_templates);
+
+            // Cache results in top-level stylesheet only
+            if (_parentStylesheet != null) {
+                return templates;
+            }
+            _allValidTemplates = templates;
+         }
+
+        return _allValidTemplates;
+    }
+
+    protected void addTemplate(Template template) {
+        _templates.addElement(template);
+    }
+}

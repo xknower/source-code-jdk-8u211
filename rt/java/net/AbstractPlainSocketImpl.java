@@ -1,730 +1,726 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.io.FileDescriptor;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import sun.net.ConnectionResetException;
-/*     */ import sun.net.NetHooks;
-/*     */ import sun.net.ResourceManager;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class AbstractPlainSocketImpl
-/*     */   extends SocketImpl
-/*     */ {
-/*     */   int timeout;
-/*     */   private int trafficClass;
-/*     */   private boolean shut_rd = false;
-/*     */   private boolean shut_wr = false;
-/*  54 */   private SocketInputStream socketInputStream = null;
-/*  55 */   private SocketOutputStream socketOutputStream = null;
-/*     */ 
-/*     */   
-/*  58 */   protected int fdUseCount = 0;
-/*     */ 
-/*     */   
-/*  61 */   protected final Object fdLock = new Object();
-/*     */ 
-/*     */   
-/*     */   protected boolean closePending = false;
-/*     */ 
-/*     */   
-/*  67 */   private int CONNECTION_NOT_RESET = 0;
-/*  68 */   private int CONNECTION_RESET_PENDING = 1;
-/*  69 */   private int CONNECTION_RESET = 2;
-/*     */   private int resetState;
-/*  71 */   private final Object resetLock = new Object();
-/*     */   
-/*     */   protected boolean stream;
-/*     */   
-/*     */   public static final int SHUT_RD = 0;
-/*     */   
-/*     */   public static final int SHUT_WR = 1;
-/*     */ 
-/*     */   
-/*     */   static {
-/*  81 */     AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*     */         {
-/*     */           public Void run() {
-/*  84 */             System.loadLibrary("net");
-/*  85 */             return null;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void create(boolean paramBoolean) throws IOException {
-/*  95 */     this.stream = paramBoolean;
-/*  96 */     if (!paramBoolean) {
-/*  97 */       ResourceManager.beforeUdpCreate();
-/*     */       
-/*  99 */       this.fd = new FileDescriptor();
-/*     */       try {
-/* 101 */         socketCreate(false);
-/* 102 */       } catch (IOException iOException) {
-/* 103 */         ResourceManager.afterUdpClose();
-/* 104 */         this.fd = null;
-/* 105 */         throw iOException;
-/*     */       } 
-/*     */     } else {
-/* 108 */       this.fd = new FileDescriptor();
-/* 109 */       socketCreate(true);
-/*     */     } 
-/* 111 */     if (this.socket != null)
-/* 112 */       this.socket.setCreated(); 
-/* 113 */     if (this.serverSocket != null) {
-/* 114 */       this.serverSocket.setCreated();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void connect(String paramString, int paramInt) throws UnknownHostException, IOException {
-/* 126 */     boolean bool = false;
-/*     */     try {
-/* 128 */       InetAddress inetAddress = InetAddress.getByName(paramString);
-/* 129 */       this.port = paramInt;
-/* 130 */       this.address = inetAddress;
-/*     */       
-/* 132 */       connectToAddress(inetAddress, paramInt, this.timeout);
-/* 133 */       bool = true;
-/*     */     } finally {
-/* 135 */       if (!bool) {
-/*     */         try {
-/* 137 */           close();
-/* 138 */         } catch (IOException iOException) {}
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void connect(InetAddress paramInetAddress, int paramInt) throws IOException {
-/* 153 */     this.port = paramInt;
-/* 154 */     this.address = paramInetAddress;
-/*     */     
-/*     */     try {
-/* 157 */       connectToAddress(paramInetAddress, paramInt, this.timeout);
-/*     */       return;
-/* 159 */     } catch (IOException iOException) {
-/*     */       
-/* 161 */       close();
-/* 162 */       throw iOException;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void connect(SocketAddress paramSocketAddress, int paramInt) throws IOException {
-/* 178 */     boolean bool = false;
-/*     */     try {
-/* 180 */       if (paramSocketAddress == null || !(paramSocketAddress instanceof InetSocketAddress))
-/* 181 */         throw new IllegalArgumentException("unsupported address type"); 
-/* 182 */       InetSocketAddress inetSocketAddress = (InetSocketAddress)paramSocketAddress;
-/* 183 */       if (inetSocketAddress.isUnresolved())
-/* 184 */         throw new UnknownHostException(inetSocketAddress.getHostName()); 
-/* 185 */       this.port = inetSocketAddress.getPort();
-/* 186 */       this.address = inetSocketAddress.getAddress();
-/*     */       
-/* 188 */       connectToAddress(this.address, this.port, paramInt);
-/* 189 */       bool = true;
-/*     */     } finally {
-/* 191 */       if (!bool) {
-/*     */         try {
-/* 193 */           close();
-/* 194 */         } catch (IOException iOException) {}
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void connectToAddress(InetAddress paramInetAddress, int paramInt1, int paramInt2) throws IOException {
-/* 203 */     if (paramInetAddress.isAnyLocalAddress()) {
-/* 204 */       doConnect(InetAddress.getLocalHost(), paramInt1, paramInt2);
-/*     */     } else {
-/* 206 */       doConnect(paramInetAddress, paramInt1, paramInt2);
-/*     */     } 
-/*     */   }
-/*     */   public void setOption(int paramInt, Object paramObject) throws SocketException {
-/*     */     int i;
-/* 211 */     if (isClosedOrPending()) {
-/* 212 */       throw new SocketException("Socket Closed");
-/*     */     }
-/* 214 */     boolean bool = true;
-/* 215 */     switch (paramInt) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 128:
-/* 221 */         if (paramObject == null || (!(paramObject instanceof Integer) && !(paramObject instanceof Boolean)))
-/* 222 */           throw new SocketException("Bad parameter for option"); 
-/* 223 */         if (paramObject instanceof Boolean)
-/*     */         {
-/* 225 */           bool = false;
-/*     */         }
-/*     */         break;
-/*     */       case 4102:
-/* 229 */         if (paramObject == null || !(paramObject instanceof Integer))
-/* 230 */           throw new SocketException("Bad parameter for SO_TIMEOUT"); 
-/* 231 */         i = ((Integer)paramObject).intValue();
-/* 232 */         if (i < 0)
-/* 233 */           throw new IllegalArgumentException("timeout < 0"); 
-/* 234 */         this.timeout = i;
-/*     */         break;
-/*     */       case 3:
-/* 237 */         if (paramObject == null || !(paramObject instanceof Integer)) {
-/* 238 */           throw new SocketException("bad argument for IP_TOS");
-/*     */         }
-/* 240 */         this.trafficClass = ((Integer)paramObject).intValue();
-/*     */         break;
-/*     */       case 15:
-/* 243 */         throw new SocketException("Cannot re-bind socket");
-/*     */       case 1:
-/* 245 */         if (paramObject == null || !(paramObject instanceof Boolean))
-/* 246 */           throw new SocketException("bad parameter for TCP_NODELAY"); 
-/* 247 */         bool = ((Boolean)paramObject).booleanValue();
-/*     */         break;
-/*     */       case 4097:
-/*     */       case 4098:
-/* 251 */         if (paramObject == null || !(paramObject instanceof Integer) || ((Integer)paramObject)
-/* 252 */           .intValue() <= 0) {
-/* 253 */           throw new SocketException("bad parameter for SO_SNDBUF or SO_RCVBUF");
-/*     */         }
-/*     */         break;
-/*     */       
-/*     */       case 8:
-/* 258 */         if (paramObject == null || !(paramObject instanceof Boolean))
-/* 259 */           throw new SocketException("bad parameter for SO_KEEPALIVE"); 
-/* 260 */         bool = ((Boolean)paramObject).booleanValue();
-/*     */         break;
-/*     */       case 4099:
-/* 263 */         if (paramObject == null || !(paramObject instanceof Boolean))
-/* 264 */           throw new SocketException("bad parameter for SO_OOBINLINE"); 
-/* 265 */         bool = ((Boolean)paramObject).booleanValue();
-/*     */         break;
-/*     */       case 4:
-/* 268 */         if (paramObject == null || !(paramObject instanceof Boolean))
-/* 269 */           throw new SocketException("bad parameter for SO_REUSEADDR"); 
-/* 270 */         bool = ((Boolean)paramObject).booleanValue();
-/*     */         break;
-/*     */       default:
-/* 273 */         throw new SocketException("unrecognized TCP option: " + paramInt);
-/*     */     } 
-/* 275 */     socketSetOption(paramInt, bool, paramObject);
-/*     */   } public Object getOption(int paramInt) throws SocketException {
-/*     */     InetAddressContainer inetAddressContainer;
-/* 278 */     if (isClosedOrPending()) {
-/* 279 */       throw new SocketException("Socket Closed");
-/*     */     }
-/* 281 */     if (paramInt == 4102) {
-/* 282 */       return new Integer(this.timeout);
-/*     */     }
-/* 284 */     int i = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 293 */     switch (paramInt) {
-/*     */       case 1:
-/* 295 */         i = socketGetOption(paramInt, (Object)null);
-/* 296 */         return Boolean.valueOf((i != -1));
-/*     */       case 4099:
-/* 298 */         i = socketGetOption(paramInt, (Object)null);
-/* 299 */         return Boolean.valueOf((i != -1));
-/*     */       case 128:
-/* 301 */         i = socketGetOption(paramInt, (Object)null);
-/* 302 */         return (i == -1) ? Boolean.FALSE : new Integer(i);
-/*     */       case 4:
-/* 304 */         i = socketGetOption(paramInt, (Object)null);
-/* 305 */         return Boolean.valueOf((i != -1));
-/*     */       case 15:
-/* 307 */         inetAddressContainer = new InetAddressContainer();
-/* 308 */         i = socketGetOption(paramInt, inetAddressContainer);
-/* 309 */         return inetAddressContainer.addr;
-/*     */       case 4097:
-/*     */       case 4098:
-/* 312 */         i = socketGetOption(paramInt, (Object)null);
-/* 313 */         return new Integer(i);
-/*     */       case 3:
-/*     */         try {
-/* 316 */           i = socketGetOption(paramInt, (Object)null);
-/* 317 */           if (i == -1) {
-/* 318 */             return Integer.valueOf(this.trafficClass);
-/*     */           }
-/* 320 */           return Integer.valueOf(i);
-/*     */         }
-/* 322 */         catch (SocketException socketException) {
-/*     */           
-/* 324 */           return Integer.valueOf(this.trafficClass);
-/*     */         } 
-/*     */       case 8:
-/* 327 */         i = socketGetOption(paramInt, (Object)null);
-/* 328 */         return Boolean.valueOf((i != -1));
-/*     */     } 
-/*     */     
-/* 331 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized void doConnect(InetAddress paramInetAddress, int paramInt1, int paramInt2) throws IOException {
-/* 342 */     synchronized (this.fdLock) {
-/* 343 */       if (!this.closePending && (this.socket == null || !this.socket.isBound())) {
-/* 344 */         NetHooks.beforeTcpConnect(this.fd, paramInetAddress, paramInt1);
-/*     */       }
-/*     */     } 
-/*     */     try {
-/* 348 */       acquireFD();
-/*     */       try {
-/* 350 */         socketConnect(paramInetAddress, paramInt1, paramInt2);
-/*     */         
-/* 352 */         synchronized (this.fdLock) {
-/* 353 */           if (this.closePending) {
-/* 354 */             throw new SocketException("Socket closed");
-/*     */           }
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 361 */         if (this.socket != null) {
-/* 362 */           this.socket.setBound();
-/* 363 */           this.socket.setConnected();
-/*     */         } 
-/*     */       } finally {
-/* 366 */         releaseFD();
-/*     */       } 
-/* 368 */     } catch (IOException iOException) {
-/* 369 */       close();
-/* 370 */       throw iOException;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void bind(InetAddress paramInetAddress, int paramInt) throws IOException {
-/* 382 */     synchronized (this.fdLock) {
-/* 383 */       if (!this.closePending && (this.socket == null || !this.socket.isBound())) {
-/* 384 */         NetHooks.beforeTcpBind(this.fd, paramInetAddress, paramInt);
-/*     */       }
-/*     */     } 
-/* 387 */     socketBind(paramInetAddress, paramInt);
-/* 388 */     if (this.socket != null)
-/* 389 */       this.socket.setBound(); 
-/* 390 */     if (this.serverSocket != null) {
-/* 391 */       this.serverSocket.setBound();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void listen(int paramInt) throws IOException {
-/* 399 */     socketListen(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void accept(SocketImpl paramSocketImpl) throws IOException {
-/* 407 */     acquireFD();
-/*     */     try {
-/* 409 */       socketAccept(paramSocketImpl);
-/*     */     } finally {
-/* 411 */       releaseFD();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized InputStream getInputStream() throws IOException {
-/* 419 */     synchronized (this.fdLock) {
-/* 420 */       if (isClosedOrPending())
-/* 421 */         throw new IOException("Socket Closed"); 
-/* 422 */       if (this.shut_rd)
-/* 423 */         throw new IOException("Socket input is shutdown"); 
-/* 424 */       if (this.socketInputStream == null)
-/* 425 */         this.socketInputStream = new SocketInputStream(this); 
-/*     */     } 
-/* 427 */     return this.socketInputStream;
-/*     */   }
-/*     */   
-/*     */   void setInputStream(SocketInputStream paramSocketInputStream) {
-/* 431 */     this.socketInputStream = paramSocketInputStream;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized OutputStream getOutputStream() throws IOException {
-/* 438 */     synchronized (this.fdLock) {
-/* 439 */       if (isClosedOrPending())
-/* 440 */         throw new IOException("Socket Closed"); 
-/* 441 */       if (this.shut_wr)
-/* 442 */         throw new IOException("Socket output is shutdown"); 
-/* 443 */       if (this.socketOutputStream == null)
-/* 444 */         this.socketOutputStream = new SocketOutputStream(this); 
-/*     */     } 
-/* 446 */     return this.socketOutputStream;
-/*     */   }
-/*     */   
-/*     */   void setFileDescriptor(FileDescriptor paramFileDescriptor) {
-/* 450 */     this.fd = paramFileDescriptor;
-/*     */   }
-/*     */   
-/*     */   void setAddress(InetAddress paramInetAddress) {
-/* 454 */     this.address = paramInetAddress;
-/*     */   }
-/*     */   
-/*     */   void setPort(int paramInt) {
-/* 458 */     this.port = paramInt;
-/*     */   }
-/*     */   
-/*     */   void setLocalPort(int paramInt) {
-/* 462 */     this.localport = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized int available() throws IOException {
-/* 469 */     if (isClosedOrPending()) {
-/* 470 */       throw new IOException("Stream closed.");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 477 */     if (isConnectionReset() || this.shut_rd) {
-/* 478 */       return 0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 488 */     int i = 0;
-/*     */     try {
-/* 490 */       i = socketAvailable();
-/* 491 */       if (i == 0 && isConnectionResetPending()) {
-/* 492 */         setConnectionReset();
-/*     */       }
-/* 494 */     } catch (ConnectionResetException connectionResetException) {
-/* 495 */       setConnectionResetPending();
-/*     */       try {
-/* 497 */         i = socketAvailable();
-/* 498 */         if (i == 0) {
-/* 499 */           setConnectionReset();
-/*     */         }
-/* 501 */       } catch (ConnectionResetException connectionResetException1) {}
-/*     */     } 
-/*     */     
-/* 504 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void close() throws IOException {
-/* 511 */     synchronized (this.fdLock) {
-/* 512 */       if (this.fd != null) {
-/* 513 */         if (!this.stream) {
-/* 514 */           ResourceManager.afterUdpClose();
-/*     */         }
-/* 516 */         if (this.fdUseCount == 0) {
-/* 517 */           if (this.closePending) {
-/*     */             return;
-/*     */           }
-/* 520 */           this.closePending = true;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           try {
-/* 530 */             socketPreClose();
-/*     */           } finally {
-/* 532 */             socketClose();
-/*     */           } 
-/* 534 */           this.fd = null;
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           return;
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 543 */         if (!this.closePending) {
-/* 544 */           this.closePending = true;
-/* 545 */           this.fdUseCount--;
-/* 546 */           socketPreClose();
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void reset() throws IOException {
-/* 554 */     if (this.fd != null) {
-/* 555 */       socketClose();
-/*     */     }
-/* 557 */     this.fd = null;
-/* 558 */     super.reset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shutdownInput() throws IOException {
-/* 566 */     if (this.fd != null) {
-/* 567 */       socketShutdown(0);
-/* 568 */       if (this.socketInputStream != null) {
-/* 569 */         this.socketInputStream.setEOF(true);
-/*     */       }
-/* 571 */       this.shut_rd = true;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shutdownOutput() throws IOException {
-/* 579 */     if (this.fd != null) {
-/* 580 */       socketShutdown(1);
-/* 581 */       this.shut_wr = true;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected boolean supportsUrgentData() {
-/* 586 */     return true;
-/*     */   }
-/*     */   
-/*     */   protected void sendUrgentData(int paramInt) throws IOException {
-/* 590 */     if (this.fd == null) {
-/* 591 */       throw new IOException("Socket Closed");
-/*     */     }
-/* 593 */     socketSendUrgentData(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void finalize() throws IOException {
-/* 600 */     close();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   FileDescriptor acquireFD() {
-/* 610 */     synchronized (this.fdLock) {
-/* 611 */       this.fdUseCount++;
-/* 612 */       return this.fd;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void releaseFD() {
-/* 622 */     synchronized (this.fdLock) {
-/* 623 */       this.fdUseCount--;
-/* 624 */       if (this.fdUseCount == -1 && 
-/* 625 */         this.fd != null) {
-/*     */         
-/* 627 */         try { socketClose(); }
-/* 628 */         catch (IOException iOException) {  }
-/*     */         finally
-/* 630 */         { this.fd = null; }
-/*     */       
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isConnectionReset() {
-/* 638 */     synchronized (this.resetLock) {
-/* 639 */       return (this.resetState == this.CONNECTION_RESET);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public boolean isConnectionResetPending() {
-/* 644 */     synchronized (this.resetLock) {
-/* 645 */       return (this.resetState == this.CONNECTION_RESET_PENDING);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void setConnectionReset() {
-/* 650 */     synchronized (this.resetLock) {
-/* 651 */       this.resetState = this.CONNECTION_RESET;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void setConnectionResetPending() {
-/* 656 */     synchronized (this.resetLock) {
-/* 657 */       if (this.resetState == this.CONNECTION_NOT_RESET) {
-/* 658 */         this.resetState = this.CONNECTION_RESET_PENDING;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isClosedOrPending() {
-/* 672 */     synchronized (this.fdLock) {
-/* 673 */       if (this.closePending || this.fd == null) {
-/* 674 */         return true;
-/*     */       }
-/* 676 */       return false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTimeout() {
-/* 685 */     return this.timeout;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void socketPreClose() throws IOException {
-/* 693 */     socketClose0(true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void socketClose() throws IOException {
-/* 700 */     socketClose0(false);
-/*     */   }
-/*     */   
-/*     */   abstract void socketCreate(boolean paramBoolean) throws IOException;
-/*     */   
-/*     */   abstract void socketConnect(InetAddress paramInetAddress, int paramInt1, int paramInt2) throws IOException;
-/*     */   
-/*     */   abstract void socketBind(InetAddress paramInetAddress, int paramInt) throws IOException;
-/*     */   
-/*     */   abstract void socketListen(int paramInt) throws IOException;
-/*     */   
-/*     */   abstract void socketAccept(SocketImpl paramSocketImpl) throws IOException;
-/*     */   
-/*     */   abstract int socketAvailable() throws IOException;
-/*     */   
-/*     */   abstract void socketClose0(boolean paramBoolean) throws IOException;
-/*     */   
-/*     */   abstract void socketShutdown(int paramInt) throws IOException;
-/*     */   
-/*     */   abstract void socketSetOption(int paramInt, boolean paramBoolean, Object paramObject) throws SocketException;
-/*     */   
-/*     */   abstract int socketGetOption(int paramInt, Object paramObject) throws SocketException;
-/*     */   
-/*     */   abstract void socketSendUrgentData(int paramInt) throws IOException;
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\AbstractPlainSocketImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileDescriptor;
+
+import sun.net.ConnectionResetException;
+import sun.net.NetHooks;
+import sun.net.ResourceManager;
+
+/**
+ * Default Socket Implementation. This implementation does
+ * not implement any security checks.
+ * Note this class should <b>NOT</b> be public.
+ *
+ * @author  Steven B. Byrne
+ */
+abstract class AbstractPlainSocketImpl extends SocketImpl
+{
+    /* instance variable for SO_TIMEOUT */
+    int timeout;   // timeout in millisec
+    // traffic class
+    private int trafficClass;
+
+    private boolean shut_rd = false;
+    private boolean shut_wr = false;
+
+    private SocketInputStream socketInputStream = null;
+    private SocketOutputStream socketOutputStream = null;
+
+    /* number of threads using the FileDescriptor */
+    protected int fdUseCount = 0;
+
+    /* lock when increment/decrementing fdUseCount */
+    protected final Object fdLock = new Object();
+
+    /* indicates a close is pending on the file descriptor */
+    protected boolean closePending = false;
+
+    /* indicates connection reset state */
+    private int CONNECTION_NOT_RESET = 0;
+    private int CONNECTION_RESET_PENDING = 1;
+    private int CONNECTION_RESET = 2;
+    private int resetState;
+    private final Object resetLock = new Object();
+
+   /* whether this Socket is a stream (TCP) socket or not (UDP)
+    */
+    protected boolean stream;
+
+    /**
+     * Load net library into runtime.
+     */
+    static {
+        java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
+                    System.loadLibrary("net");
+                    return null;
+                }
+            });
+    }
+
+    /**
+     * Creates a socket with a boolean that specifies whether this
+     * is a stream socket (true) or an unconnected UDP socket (false).
+     */
+    protected synchronized void create(boolean stream) throws IOException {
+        this.stream = stream;
+        if (!stream) {
+            ResourceManager.beforeUdpCreate();
+            // only create the fd after we know we will be able to create the socket
+            fd = new FileDescriptor();
+            try {
+                socketCreate(false);
+            } catch (IOException ioe) {
+                ResourceManager.afterUdpClose();
+                fd = null;
+                throw ioe;
+            }
+        } else {
+            fd = new FileDescriptor();
+            socketCreate(true);
+        }
+        if (socket != null)
+            socket.setCreated();
+        if (serverSocket != null)
+            serverSocket.setCreated();
+    }
+
+    /**
+     * Creates a socket and connects it to the specified port on
+     * the specified host.
+     * @param host the specified host
+     * @param port the specified port
+     */
+    protected void connect(String host, int port)
+        throws UnknownHostException, IOException
+    {
+        boolean connected = false;
+        try {
+            InetAddress address = InetAddress.getByName(host);
+            this.port = port;
+            this.address = address;
+
+            connectToAddress(address, port, timeout);
+            connected = true;
+        } finally {
+            if (!connected) {
+                try {
+                    close();
+                } catch (IOException ioe) {
+                    /* Do nothing. If connect threw an exception then
+                       it will be passed up the call stack */
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a socket and connects it to the specified address on
+     * the specified port.
+     * @param address the address
+     * @param port the specified port
+     */
+    protected void connect(InetAddress address, int port) throws IOException {
+        this.port = port;
+        this.address = address;
+
+        try {
+            connectToAddress(address, port, timeout);
+            return;
+        } catch (IOException e) {
+            // everything failed
+            close();
+            throw e;
+        }
+    }
+
+    /**
+     * Creates a socket and connects it to the specified address on
+     * the specified port.
+     * @param address the address
+     * @param timeout the timeout value in milliseconds, or zero for no timeout.
+     * @throws IOException if connection fails
+     * @throws  IllegalArgumentException if address is null or is a
+     *          SocketAddress subclass not supported by this socket
+     * @since 1.4
+     */
+    protected void connect(SocketAddress address, int timeout)
+            throws IOException {
+        boolean connected = false;
+        try {
+            if (address == null || !(address instanceof InetSocketAddress))
+                throw new IllegalArgumentException("unsupported address type");
+            InetSocketAddress addr = (InetSocketAddress) address;
+            if (addr.isUnresolved())
+                throw new UnknownHostException(addr.getHostName());
+            this.port = addr.getPort();
+            this.address = addr.getAddress();
+
+            connectToAddress(this.address, port, timeout);
+            connected = true;
+        } finally {
+            if (!connected) {
+                try {
+                    close();
+                } catch (IOException ioe) {
+                    /* Do nothing. If connect threw an exception then
+                       it will be passed up the call stack */
+                }
+            }
+        }
+    }
+
+    private void connectToAddress(InetAddress address, int port, int timeout) throws IOException {
+        if (address.isAnyLocalAddress()) {
+            doConnect(InetAddress.getLocalHost(), port, timeout);
+        } else {
+            doConnect(address, port, timeout);
+        }
+    }
+
+    public void setOption(int opt, Object val) throws SocketException {
+        if (isClosedOrPending()) {
+            throw new SocketException("Socket Closed");
+        }
+        boolean on = true;
+        switch (opt) {
+            /* check type safety b4 going native.  These should never
+             * fail, since only java.Socket* has access to
+             * PlainSocketImpl.setOption().
+             */
+        case SO_LINGER:
+            if (val == null || (!(val instanceof Integer) && !(val instanceof Boolean)))
+                throw new SocketException("Bad parameter for option");
+            if (val instanceof Boolean) {
+                /* true only if disabling - enabling should be Integer */
+                on = false;
+            }
+            break;
+        case SO_TIMEOUT:
+            if (val == null || (!(val instanceof Integer)))
+                throw new SocketException("Bad parameter for SO_TIMEOUT");
+            int tmp = ((Integer) val).intValue();
+            if (tmp < 0)
+                throw new IllegalArgumentException("timeout < 0");
+            timeout = tmp;
+            break;
+        case IP_TOS:
+             if (val == null || !(val instanceof Integer)) {
+                 throw new SocketException("bad argument for IP_TOS");
+             }
+             trafficClass = ((Integer)val).intValue();
+             break;
+        case SO_BINDADDR:
+            throw new SocketException("Cannot re-bind socket");
+        case TCP_NODELAY:
+            if (val == null || !(val instanceof Boolean))
+                throw new SocketException("bad parameter for TCP_NODELAY");
+            on = ((Boolean)val).booleanValue();
+            break;
+        case SO_SNDBUF:
+        case SO_RCVBUF:
+            if (val == null || !(val instanceof Integer) ||
+                !(((Integer)val).intValue() > 0)) {
+                throw new SocketException("bad parameter for SO_SNDBUF " +
+                                          "or SO_RCVBUF");
+            }
+            break;
+        case SO_KEEPALIVE:
+            if (val == null || !(val instanceof Boolean))
+                throw new SocketException("bad parameter for SO_KEEPALIVE");
+            on = ((Boolean)val).booleanValue();
+            break;
+        case SO_OOBINLINE:
+            if (val == null || !(val instanceof Boolean))
+                throw new SocketException("bad parameter for SO_OOBINLINE");
+            on = ((Boolean)val).booleanValue();
+            break;
+        case SO_REUSEADDR:
+            if (val == null || !(val instanceof Boolean))
+                throw new SocketException("bad parameter for SO_REUSEADDR");
+            on = ((Boolean)val).booleanValue();
+            break;
+        default:
+            throw new SocketException("unrecognized TCP option: " + opt);
+        }
+        socketSetOption(opt, on, val);
+    }
+    public Object getOption(int opt) throws SocketException {
+        if (isClosedOrPending()) {
+            throw new SocketException("Socket Closed");
+        }
+        if (opt == SO_TIMEOUT) {
+            return new Integer(timeout);
+        }
+        int ret = 0;
+        /*
+         * The native socketGetOption() knows about 3 options.
+         * The 32 bit value it returns will be interpreted according
+         * to what we're asking.  A return of -1 means it understands
+         * the option but its turned off.  It will raise a SocketException
+         * if "opt" isn't one it understands.
+         */
+
+        switch (opt) {
+        case TCP_NODELAY:
+            ret = socketGetOption(opt, null);
+            return Boolean.valueOf(ret != -1);
+        case SO_OOBINLINE:
+            ret = socketGetOption(opt, null);
+            return Boolean.valueOf(ret != -1);
+        case SO_LINGER:
+            ret = socketGetOption(opt, null);
+            return (ret == -1) ? Boolean.FALSE: (Object)(new Integer(ret));
+        case SO_REUSEADDR:
+            ret = socketGetOption(opt, null);
+            return Boolean.valueOf(ret != -1);
+        case SO_BINDADDR:
+            InetAddressContainer in = new InetAddressContainer();
+            ret = socketGetOption(opt, in);
+            return in.addr;
+        case SO_SNDBUF:
+        case SO_RCVBUF:
+            ret = socketGetOption(opt, null);
+            return new Integer(ret);
+        case IP_TOS:
+            try {
+                ret = socketGetOption(opt, null);
+                if (ret == -1) { // ipv6 tos
+                    return trafficClass;
+                } else {
+                    return ret;
+                }
+            } catch (SocketException se) {
+                // TODO - should make better effort to read TOS or TCLASS
+                return trafficClass; // ipv6 tos
+            }
+        case SO_KEEPALIVE:
+            ret = socketGetOption(opt, null);
+            return Boolean.valueOf(ret != -1);
+        // should never get here
+        default:
+            return null;
+        }
+    }
+
+    /**
+     * The workhorse of the connection operation.  Tries several times to
+     * establish a connection to the given <host, port>.  If unsuccessful,
+     * throws an IOException indicating what went wrong.
+     */
+
+    synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
+        synchronized (fdLock) {
+            if (!closePending && (socket == null || !socket.isBound())) {
+                NetHooks.beforeTcpConnect(fd, address, port);
+            }
+        }
+        try {
+            acquireFD();
+            try {
+                socketConnect(address, port, timeout);
+                /* socket may have been closed during poll/select */
+                synchronized (fdLock) {
+                    if (closePending) {
+                        throw new SocketException ("Socket closed");
+                    }
+                }
+                // If we have a ref. to the Socket, then sets the flags
+                // created, bound & connected to true.
+                // This is normally done in Socket.connect() but some
+                // subclasses of Socket may call impl.connect() directly!
+                if (socket != null) {
+                    socket.setBound();
+                    socket.setConnected();
+                }
+            } finally {
+                releaseFD();
+            }
+        } catch (IOException e) {
+            close();
+            throw e;
+        }
+    }
+
+    /**
+     * Binds the socket to the specified address of the specified local port.
+     * @param address the address
+     * @param lport the port
+     */
+    protected synchronized void bind(InetAddress address, int lport)
+        throws IOException
+    {
+       synchronized (fdLock) {
+            if (!closePending && (socket == null || !socket.isBound())) {
+                NetHooks.beforeTcpBind(fd, address, lport);
+            }
+        }
+        socketBind(address, lport);
+        if (socket != null)
+            socket.setBound();
+        if (serverSocket != null)
+            serverSocket.setBound();
+    }
+
+    /**
+     * Listens, for a specified amount of time, for connections.
+     * @param count the amount of time to listen for connections
+     */
+    protected synchronized void listen(int count) throws IOException {
+        socketListen(count);
+    }
+
+    /**
+     * Accepts connections.
+     * @param s the connection
+     */
+    protected void accept(SocketImpl s) throws IOException {
+        acquireFD();
+        try {
+            socketAccept(s);
+        } finally {
+            releaseFD();
+        }
+    }
+
+    /**
+     * Gets an InputStream for this socket.
+     */
+    protected synchronized InputStream getInputStream() throws IOException {
+        synchronized (fdLock) {
+            if (isClosedOrPending())
+                throw new IOException("Socket Closed");
+            if (shut_rd)
+                throw new IOException("Socket input is shutdown");
+            if (socketInputStream == null)
+                socketInputStream = new SocketInputStream(this);
+        }
+        return socketInputStream;
+    }
+
+    void setInputStream(SocketInputStream in) {
+        socketInputStream = in;
+    }
+
+    /**
+     * Gets an OutputStream for this socket.
+     */
+    protected synchronized OutputStream getOutputStream() throws IOException {
+        synchronized (fdLock) {
+            if (isClosedOrPending())
+                throw new IOException("Socket Closed");
+            if (shut_wr)
+                throw new IOException("Socket output is shutdown");
+            if (socketOutputStream == null)
+                socketOutputStream = new SocketOutputStream(this);
+        }
+        return socketOutputStream;
+    }
+
+    void setFileDescriptor(FileDescriptor fd) {
+        this.fd = fd;
+    }
+
+    void setAddress(InetAddress address) {
+        this.address = address;
+    }
+
+    void setPort(int port) {
+        this.port = port;
+    }
+
+    void setLocalPort(int localport) {
+        this.localport = localport;
+    }
+
+    /**
+     * Returns the number of bytes that can be read without blocking.
+     */
+    protected synchronized int available() throws IOException {
+        if (isClosedOrPending()) {
+            throw new IOException("Stream closed.");
+        }
+
+        /*
+         * If connection has been reset or shut down for input, then return 0
+         * to indicate there are no buffered bytes.
+         */
+        if (isConnectionReset() || shut_rd) {
+            return 0;
+        }
+
+        /*
+         * If no bytes available and we were previously notified
+         * of a connection reset then we move to the reset state.
+         *
+         * If are notified of a connection reset then check
+         * again if there are bytes buffered on the socket.
+         */
+        int n = 0;
+        try {
+            n = socketAvailable();
+            if (n == 0 && isConnectionResetPending()) {
+                setConnectionReset();
+            }
+        } catch (ConnectionResetException exc1) {
+            setConnectionResetPending();
+            try {
+                n = socketAvailable();
+                if (n == 0) {
+                    setConnectionReset();
+                }
+            } catch (ConnectionResetException exc2) {
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Closes the socket.
+     */
+    protected void close() throws IOException {
+        synchronized(fdLock) {
+            if (fd != null) {
+                if (!stream) {
+                    ResourceManager.afterUdpClose();
+                }
+                if (fdUseCount == 0) {
+                    if (closePending) {
+                        return;
+                    }
+                    closePending = true;
+                    /*
+                     * We close the FileDescriptor in two-steps - first the
+                     * "pre-close" which closes the socket but doesn't
+                     * release the underlying file descriptor. This operation
+                     * may be lengthy due to untransmitted data and a long
+                     * linger interval. Once the pre-close is done we do the
+                     * actual socket to release the fd.
+                     */
+                    try {
+                        socketPreClose();
+                    } finally {
+                        socketClose();
+                    }
+                    fd = null;
+                    return;
+                } else {
+                    /*
+                     * If a thread has acquired the fd and a close
+                     * isn't pending then use a deferred close.
+                     * Also decrement fdUseCount to signal the last
+                     * thread that releases the fd to close it.
+                     */
+                    if (!closePending) {
+                        closePending = true;
+                        fdUseCount--;
+                        socketPreClose();
+                    }
+                }
+            }
+        }
+    }
+
+    void reset() throws IOException {
+        if (fd != null) {
+            socketClose();
+        }
+        fd = null;
+        super.reset();
+    }
+
+
+    /**
+     * Shutdown read-half of the socket connection;
+     */
+    protected void shutdownInput() throws IOException {
+      if (fd != null) {
+          socketShutdown(SHUT_RD);
+          if (socketInputStream != null) {
+              socketInputStream.setEOF(true);
+          }
+          shut_rd = true;
+      }
+    }
+
+    /**
+     * Shutdown write-half of the socket connection;
+     */
+    protected void shutdownOutput() throws IOException {
+      if (fd != null) {
+          socketShutdown(SHUT_WR);
+          shut_wr = true;
+      }
+    }
+
+    protected boolean supportsUrgentData () {
+        return true;
+    }
+
+    protected void sendUrgentData (int data) throws IOException {
+        if (fd == null) {
+            throw new IOException("Socket Closed");
+        }
+        socketSendUrgentData (data);
+    }
+
+    /**
+     * Cleans up if the user forgets to close it.
+     */
+    protected void finalize() throws IOException {
+        close();
+    }
+
+    /*
+     * "Acquires" and returns the FileDescriptor for this impl
+     *
+     * A corresponding releaseFD is required to "release" the
+     * FileDescriptor.
+     */
+    FileDescriptor acquireFD() {
+        synchronized (fdLock) {
+            fdUseCount++;
+            return fd;
+        }
+    }
+
+    /*
+     * "Release" the FileDescriptor for this impl.
+     *
+     * If the use count goes to -1 then the socket is closed.
+     */
+    void releaseFD() {
+        synchronized (fdLock) {
+            fdUseCount--;
+            if (fdUseCount == -1) {
+                if (fd != null) {
+                    try {
+                        socketClose();
+                    } catch (IOException e) {
+                    } finally {
+                        fd = null;
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isConnectionReset() {
+        synchronized (resetLock) {
+            return (resetState == CONNECTION_RESET);
+        }
+    }
+
+    public boolean isConnectionResetPending() {
+        synchronized (resetLock) {
+            return (resetState == CONNECTION_RESET_PENDING);
+        }
+    }
+
+    public void setConnectionReset() {
+        synchronized (resetLock) {
+            resetState = CONNECTION_RESET;
+        }
+    }
+
+    public void setConnectionResetPending() {
+        synchronized (resetLock) {
+            if (resetState == CONNECTION_NOT_RESET) {
+                resetState = CONNECTION_RESET_PENDING;
+            }
+        }
+
+    }
+
+    /*
+     * Return true if already closed or close is pending
+     */
+    public boolean isClosedOrPending() {
+        /*
+         * Lock on fdLock to ensure that we wait if a
+         * close is in progress.
+         */
+        synchronized (fdLock) {
+            if (closePending || (fd == null)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /*
+     * Return the current value of SO_TIMEOUT
+     */
+    public int getTimeout() {
+        return timeout;
+    }
+
+    /*
+     * "Pre-close" a socket by dup'ing the file descriptor - this enables
+     * the socket to be closed without releasing the file descriptor.
+     */
+    private void socketPreClose() throws IOException {
+        socketClose0(true);
+    }
+
+    /*
+     * Close the socket (and release the file descriptor).
+     */
+    protected void socketClose() throws IOException {
+        socketClose0(false);
+    }
+
+    abstract void socketCreate(boolean isServer) throws IOException;
+    abstract void socketConnect(InetAddress address, int port, int timeout)
+        throws IOException;
+    abstract void socketBind(InetAddress address, int port)
+        throws IOException;
+    abstract void socketListen(int count)
+        throws IOException;
+    abstract void socketAccept(SocketImpl s)
+        throws IOException;
+    abstract int socketAvailable()
+        throws IOException;
+    abstract void socketClose0(boolean useDeferredClose)
+        throws IOException;
+    abstract void socketShutdown(int howto)
+        throws IOException;
+    abstract void socketSetOption(int cmd, boolean on, Object value)
+        throws SocketException;
+    abstract int socketGetOption(int opt, Object iaContainerObj) throws SocketException;
+    abstract void socketSendUrgentData(int data)
+        throws IOException;
+
+    public final static int SHUT_RD = 0;
+    public final static int SHUT_WR = 1;
+}

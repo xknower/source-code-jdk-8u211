@@ -1,3833 +1,3829 @@
-/*      */ package com.sun.corba.se.impl.logging;
-/*      */ 
-/*      */ import com.sun.corba.se.spi.logging.LogWrapperBase;
-/*      */ import com.sun.corba.se.spi.logging.LogWrapperFactory;
-/*      */ import com.sun.corba.se.spi.orb.ORB;
-/*      */ import java.util.logging.Level;
-/*      */ import java.util.logging.Logger;
-/*      */ import org.omg.CORBA.BAD_CONTEXT;
-/*      */ import org.omg.CORBA.BAD_INV_ORDER;
-/*      */ import org.omg.CORBA.BAD_OPERATION;
-/*      */ import org.omg.CORBA.BAD_PARAM;
-/*      */ import org.omg.CORBA.BAD_TYPECODE;
-/*      */ import org.omg.CORBA.CompletionStatus;
-/*      */ import org.omg.CORBA.DATA_CONVERSION;
-/*      */ import org.omg.CORBA.IMP_LIMIT;
-/*      */ import org.omg.CORBA.INITIALIZE;
-/*      */ import org.omg.CORBA.INTERNAL;
-/*      */ import org.omg.CORBA.INTF_REPOS;
-/*      */ import org.omg.CORBA.INV_OBJREF;
-/*      */ import org.omg.CORBA.INV_POLICY;
-/*      */ import org.omg.CORBA.MARSHAL;
-/*      */ import org.omg.CORBA.NO_IMPLEMENT;
-/*      */ import org.omg.CORBA.NO_RESOURCES;
-/*      */ import org.omg.CORBA.OBJECT_NOT_EXIST;
-/*      */ import org.omg.CORBA.OBJ_ADAPTER;
-/*      */ import org.omg.CORBA.TRANSACTION_ROLLEDBACK;
-/*      */ import org.omg.CORBA.TRANSIENT;
-/*      */ import org.omg.CORBA.UNKNOWN;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class OMGSystemException
-/*      */   extends LogWrapperBase
-/*      */ {
-/*      */   public OMGSystemException(Logger paramLogger) {
-/*   47 */     super(paramLogger);
-/*      */   }
-/*      */   
-/*   50 */   private static LogWrapperFactory factory = new LogWrapperFactory()
-/*      */     {
-/*      */       public LogWrapperBase create(Logger param1Logger) {
-/*   53 */         return new OMGSystemException(param1Logger);
-/*      */       }
-/*      */     };
-/*      */   public static final int IDL_CONTEXT_NOT_FOUND = 1330446337; public static final int NO_MATCHING_IDL_CONTEXT = 1330446338; public static final int DEP_PREVENT_DESTRUCTION = 1330446337; public static final int DESTROY_INDESTRUCTIBLE = 1330446338; public static final int SHUTDOWN_WAIT_FOR_COMPLETION_DEADLOCK = 1330446339; public static final int BAD_OPERATION_AFTER_SHUTDOWN = 1330446340; public static final int BAD_INVOKE = 1330446341; public static final int BAD_SET_SERVANT_MANAGER = 1330446342; public static final int BAD_ARGUMENTS_CALL = 1330446343; public static final int BAD_CTX_CALL = 1330446344; public static final int BAD_RESULT_CALL = 1330446345; public static final int BAD_SEND = 1330446346; public static final int BAD_POLL_BEFORE = 1330446347; public static final int BAD_POLL_AFTER = 1330446348; public static final int BAD_POLL_SYNC = 1330446349; public static final int INVALID_PI_CALL1 = 1330446350; public static final int INVALID_PI_CALL2 = 1330446350; public static final int INVALID_PI_CALL3 = 1330446350; public static final int INVALID_PI_CALL4 = 1330446350; public static final int SERVICE_CONTEXT_ADD_FAILED = 1330446351; public static final int POLICY_FACTORY_REG_FAILED = 1330446352; public static final int CREATE_POA_DESTROY = 1330446353; public static final int PRIORITY_REASSIGN = 1330446354; public static final int XA_START_OUTSIZE = 1330446355; public static final int XA_START_PROTO = 1330446356; public static final int BAD_SERVANT_MANAGER_TYPE = 1330446337; public static final int OPERATION_UNKNOWN_TO_TARGET = 1330446338; public static final int UNABLE_REGISTER_VALUE_FACTORY = 1330446337; public static final int RID_ALREADY_DEFINED = 1330446338; public static final int NAME_USED_IFR = 1330446339; public static final int TARGET_NOT_CONTAINER = 1330446340; public static final int NAME_CLASH = 1330446341;
-/*      */   
-/*      */   public static OMGSystemException get(ORB paramORB, String paramString) {
-/*   59 */     return (OMGSystemException)paramORB
-/*   60 */       .getLogWrapper(paramString, "OMG", factory);
-/*      */   }
-/*      */   public static final int NOT_SERIALIZABLE = 1330446342; public static final int SO_BAD_SCHEME_NAME = 1330446343; public static final int SO_BAD_ADDRESS = 1330446344; public static final int SO_BAD_SCHEMA_SPECIFIC = 1330446345; public static final int SO_NON_SPECIFIC = 1330446346; public static final int IR_DERIVE_ABS_INT_BASE = 1330446347; public static final int IR_VALUE_SUPPORT = 1330446348; public static final int INCOMPLETE_TYPECODE = 1330446349; public static final int INVALID_OBJECT_ID = 1330446350; public static final int TYPECODE_BAD_NAME = 1330446351; public static final int TYPECODE_BAD_REPID = 1330446352; public static final int TYPECODE_INV_MEMBER = 1330446353; public static final int TC_UNION_DUP_LABEL = 1330446354; public static final int TC_UNION_INCOMPATIBLE = 1330446355; public static final int TC_UNION_BAD_DISC = 1330446356; public static final int SET_EXCEPTION_BAD_ANY = 1330446357; public static final int SET_EXCEPTION_UNLISTED = 1330446358; public static final int NO_CLIENT_WCHAR_CODESET_CTX = 1330446359; public static final int ILLEGAL_SERVICE_CONTEXT = 1330446360; public static final int ENUM_OUT_OF_RANGE = 1330446361; public static final int INVALID_SERVICE_CONTEXT_ID = 1330446362; public static final int RIR_WITH_NULL_OBJECT = 1330446363; public static final int INVALID_COMPONENT_ID = 1330446364; public static final int INVALID_PROFILE_ID = 1330446365; public static final int POLICY_TYPE_DUPLICATE = 1330446366; public static final int BAD_ONEWAY_DEFINITION = 1330446367; public static final int DII_FOR_IMPLICIT_OPERATION = 1330446368; public static final int XA_CALL_INVAL = 1330446369; public static final int UNION_BAD_DISCRIMINATOR = 1330446370; public static final int CTX_ILLEGAL_PROPERTY_NAME = 1330446371; public static final int CTX_ILLEGAL_SEARCH_STRING = 1330446372; public static final int CTX_ILLEGAL_NAME = 1330446373; public static final int CTX_NON_EMPTY = 1330446374; public static final int INVALID_STREAM_FORMAT_VERSION = 1330446375; public static final int NOT_A_VALUEOUTPUTSTREAM = 1330446376; public static final int NOT_A_VALUEINPUTSTREAM = 1330446377; public static final int MARSHALL_INCOMPLETE_TYPECODE = 1330446337; public static final int BAD_MEMBER_TYPECODE = 1330446338; public static final int ILLEGAL_PARAMETER = 1330446339; public static final int CHAR_NOT_IN_CODESET = 1330446337; public static final int PRIORITY_MAP_FAILRE = 1330446338; public static final int NO_USABLE_PROFILE = 1330446337; public static final int PRIORITY_RANGE_RESTRICT = 1330446337; public static final int NO_SERVER_WCHAR_CODESET_CMP = 1330446337; public static final int CODESET_COMPONENT_REQUIRED = 1330446338; public static final int IOR_POLICY_RECONCILE_ERROR = 1330446337; public static final int POLICY_UNKNOWN = 1330446338; public static final int NO_POLICY_FACTORY = 1330446339; public static final int XA_RMERR = 1330446337; public static final int XA_RMFAIL = 1330446338; public static final int NO_IR = 1330446337; public static final int NO_INTERFACE_IN_IR = 1330446338; public static final int UNABLE_LOCATE_VALUE_FACTORY = 1330446337; public static final int SET_RESULT_BEFORE_CTX = 1330446338; public static final int BAD_NVLIST = 1330446339; public static final int NOT_AN_OBJECT_IMPL = 1330446340; public static final int WCHAR_BAD_GIOP_VERSION_SENT = 1330446341; public static final int WCHAR_BAD_GIOP_VERSION_RETURNED = 1330446342; public static final int UNSUPPORTED_FORMAT_VERSION = 1330446343; public static final int RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE1 = 1330446344; public static final int RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE2 = 1330446344; public static final int RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE3 = 1330446344; public static final int MISSING_LOCAL_VALUE_IMPL = 1330446337; public static final int INCOMPATIBLE_VALUE_IMPL = 1330446338; public static final int NO_USABLE_PROFILE_2 = 1330446339; public static final int DII_LOCAL_OBJECT = 1330446340; public static final int BIO_RESET = 1330446341; public static final int BIO_META_NOT_AVAILABLE = 1330446342; public static final int BIO_GENOMIC_NO_ITERATOR = 1330446343; public static final int PI_OPERATION_NOT_SUPPORTED1 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED2 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED3 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED4 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED5 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED6 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED7 = 1330446337; public static final int PI_OPERATION_NOT_SUPPORTED8 = 1330446337; public static final int NO_CONNECTION_PRIORITY = 1330446338; public static final int XA_RB = 1330446337; public static final int XA_NOTA = 1330446338; public static final int XA_END_TRUE_ROLLBACK_DEFERRED = 1330446339; public static final int POA_REQUEST_DISCARD = 1330446337; public static final int NO_USABLE_PROFILE_3 = 1330446338; public static final int REQUEST_CANCELLED = 1330446339; public static final int POA_DESTROYED = 1330446340; public static final int UNREGISTERED_VALUE_AS_OBJREF = 1330446337; public static final int NO_OBJECT_ADAPTOR = 1330446338; public static final int BIO_NOT_AVAILABLE = 1330446339; public static final int OBJECT_ADAPTER_INACTIVE = 1330446340; public static final int ADAPTER_ACTIVATOR_EXCEPTION = 1330446337; public static final int BAD_SERVANT_TYPE = 1330446338; public static final int NO_DEFAULT_SERVANT = 1330446339; public static final int NO_SERVANT_MANAGER = 1330446340; public static final int BAD_POLICY_INCARNATE = 1330446341; public static final int PI_EXC_COMP_ESTABLISHED = 1330446342; public static final int NULL_SERVANT_RETURNED = 1330446343;
-/*      */   public static final int UNKNOWN_USER_EXCEPTION = 1330446337;
-/*      */   public static final int UNSUPPORTED_SYSTEM_EXCEPTION = 1330446338;
-/*      */   public static final int PI_UNKNOWN_USER_EXCEPTION = 1330446339;
-/*      */   
-/*      */   public static OMGSystemException get(String paramString) {
-/*   68 */     return (OMGSystemException)ORB.staticGetLogWrapper(paramString, "OMG", factory);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_CONTEXT idlContextNotFound(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*   80 */     BAD_CONTEXT bAD_CONTEXT = new BAD_CONTEXT(1330446337, paramCompletionStatus);
-/*   81 */     if (paramThrowable != null) {
-/*   82 */       bAD_CONTEXT.initCause(paramThrowable);
-/*      */     }
-/*   84 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*   85 */       Object[] arrayOfObject = null;
-/*   86 */       doLog(Level.WARNING, "OMG.idlContextNotFound", arrayOfObject, OMGSystemException.class, bAD_CONTEXT);
-/*      */     } 
-/*      */ 
-/*      */     
-/*   90 */     return bAD_CONTEXT;
-/*      */   }
-/*      */   
-/*      */   public BAD_CONTEXT idlContextNotFound(CompletionStatus paramCompletionStatus) {
-/*   94 */     return idlContextNotFound(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_CONTEXT idlContextNotFound(Throwable paramThrowable) {
-/*   98 */     return idlContextNotFound(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_CONTEXT idlContextNotFound() {
-/*  102 */     return idlContextNotFound(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_CONTEXT noMatchingIdlContext(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  108 */     BAD_CONTEXT bAD_CONTEXT = new BAD_CONTEXT(1330446338, paramCompletionStatus);
-/*  109 */     if (paramThrowable != null) {
-/*  110 */       bAD_CONTEXT.initCause(paramThrowable);
-/*      */     }
-/*  112 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  113 */       Object[] arrayOfObject = null;
-/*  114 */       doLog(Level.WARNING, "OMG.noMatchingIdlContext", arrayOfObject, OMGSystemException.class, bAD_CONTEXT);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  118 */     return bAD_CONTEXT;
-/*      */   }
-/*      */   
-/*      */   public BAD_CONTEXT noMatchingIdlContext(CompletionStatus paramCompletionStatus) {
-/*  122 */     return noMatchingIdlContext(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_CONTEXT noMatchingIdlContext(Throwable paramThrowable) {
-/*  126 */     return noMatchingIdlContext(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_CONTEXT noMatchingIdlContext() {
-/*  130 */     return noMatchingIdlContext(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER depPreventDestruction(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  140 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446337, paramCompletionStatus);
-/*  141 */     if (paramThrowable != null) {
-/*  142 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  144 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  145 */       Object[] arrayOfObject = null;
-/*  146 */       doLog(Level.WARNING, "OMG.depPreventDestruction", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  150 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER depPreventDestruction(CompletionStatus paramCompletionStatus) {
-/*  154 */     return depPreventDestruction(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER depPreventDestruction(Throwable paramThrowable) {
-/*  158 */     return depPreventDestruction(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER depPreventDestruction() {
-/*  162 */     return depPreventDestruction(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER destroyIndestructible(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  168 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446338, paramCompletionStatus);
-/*  169 */     if (paramThrowable != null) {
-/*  170 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  172 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  173 */       Object[] arrayOfObject = null;
-/*  174 */       doLog(Level.WARNING, "OMG.destroyIndestructible", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  178 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER destroyIndestructible(CompletionStatus paramCompletionStatus) {
-/*  182 */     return destroyIndestructible(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER destroyIndestructible(Throwable paramThrowable) {
-/*  186 */     return destroyIndestructible(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER destroyIndestructible() {
-/*  190 */     return destroyIndestructible(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER shutdownWaitForCompletionDeadlock(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  196 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446339, paramCompletionStatus);
-/*  197 */     if (paramThrowable != null) {
-/*  198 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  200 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  201 */       Object[] arrayOfObject = null;
-/*  202 */       doLog(Level.WARNING, "OMG.shutdownWaitForCompletionDeadlock", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  206 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER shutdownWaitForCompletionDeadlock(CompletionStatus paramCompletionStatus) {
-/*  210 */     return shutdownWaitForCompletionDeadlock(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER shutdownWaitForCompletionDeadlock(Throwable paramThrowable) {
-/*  214 */     return shutdownWaitForCompletionDeadlock(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER shutdownWaitForCompletionDeadlock() {
-/*  218 */     return shutdownWaitForCompletionDeadlock(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badOperationAfterShutdown(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  224 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446340, paramCompletionStatus);
-/*  225 */     if (paramThrowable != null) {
-/*  226 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  228 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  229 */       Object[] arrayOfObject = null;
-/*  230 */       doLog(Level.WARNING, "OMG.badOperationAfterShutdown", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  234 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badOperationAfterShutdown(CompletionStatus paramCompletionStatus) {
-/*  238 */     return badOperationAfterShutdown(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badOperationAfterShutdown(Throwable paramThrowable) {
-/*  242 */     return badOperationAfterShutdown(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badOperationAfterShutdown() {
-/*  246 */     return badOperationAfterShutdown(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badInvoke(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  252 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446341, paramCompletionStatus);
-/*  253 */     if (paramThrowable != null) {
-/*  254 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  256 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  257 */       Object[] arrayOfObject = null;
-/*  258 */       doLog(Level.WARNING, "OMG.badInvoke", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  262 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badInvoke(CompletionStatus paramCompletionStatus) {
-/*  266 */     return badInvoke(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badInvoke(Throwable paramThrowable) {
-/*  270 */     return badInvoke(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badInvoke() {
-/*  274 */     return badInvoke(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badSetServantManager(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  280 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446342, paramCompletionStatus);
-/*  281 */     if (paramThrowable != null) {
-/*  282 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  284 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  285 */       Object[] arrayOfObject = null;
-/*  286 */       doLog(Level.WARNING, "OMG.badSetServantManager", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  290 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badSetServantManager(CompletionStatus paramCompletionStatus) {
-/*  294 */     return badSetServantManager(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badSetServantManager(Throwable paramThrowable) {
-/*  298 */     return badSetServantManager(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badSetServantManager() {
-/*  302 */     return badSetServantManager(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badArgumentsCall(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  308 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446343, paramCompletionStatus);
-/*  309 */     if (paramThrowable != null) {
-/*  310 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  312 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  313 */       Object[] arrayOfObject = null;
-/*  314 */       doLog(Level.WARNING, "OMG.badArgumentsCall", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  318 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badArgumentsCall(CompletionStatus paramCompletionStatus) {
-/*  322 */     return badArgumentsCall(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badArgumentsCall(Throwable paramThrowable) {
-/*  326 */     return badArgumentsCall(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badArgumentsCall() {
-/*  330 */     return badArgumentsCall(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badCtxCall(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  336 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446344, paramCompletionStatus);
-/*  337 */     if (paramThrowable != null) {
-/*  338 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  340 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  341 */       Object[] arrayOfObject = null;
-/*  342 */       doLog(Level.WARNING, "OMG.badCtxCall", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  346 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badCtxCall(CompletionStatus paramCompletionStatus) {
-/*  350 */     return badCtxCall(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badCtxCall(Throwable paramThrowable) {
-/*  354 */     return badCtxCall(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badCtxCall() {
-/*  358 */     return badCtxCall(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badResultCall(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  364 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446345, paramCompletionStatus);
-/*  365 */     if (paramThrowable != null) {
-/*  366 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  368 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  369 */       Object[] arrayOfObject = null;
-/*  370 */       doLog(Level.WARNING, "OMG.badResultCall", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  374 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badResultCall(CompletionStatus paramCompletionStatus) {
-/*  378 */     return badResultCall(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badResultCall(Throwable paramThrowable) {
-/*  382 */     return badResultCall(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badResultCall() {
-/*  386 */     return badResultCall(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badSend(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  392 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446346, paramCompletionStatus);
-/*  393 */     if (paramThrowable != null) {
-/*  394 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  396 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  397 */       Object[] arrayOfObject = null;
-/*  398 */       doLog(Level.WARNING, "OMG.badSend", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  402 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badSend(CompletionStatus paramCompletionStatus) {
-/*  406 */     return badSend(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badSend(Throwable paramThrowable) {
-/*  410 */     return badSend(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badSend() {
-/*  414 */     return badSend(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badPollBefore(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  420 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446347, paramCompletionStatus);
-/*  421 */     if (paramThrowable != null) {
-/*  422 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  424 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  425 */       Object[] arrayOfObject = null;
-/*  426 */       doLog(Level.WARNING, "OMG.badPollBefore", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  430 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollBefore(CompletionStatus paramCompletionStatus) {
-/*  434 */     return badPollBefore(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollBefore(Throwable paramThrowable) {
-/*  438 */     return badPollBefore(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollBefore() {
-/*  442 */     return badPollBefore(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badPollAfter(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  448 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446348, paramCompletionStatus);
-/*  449 */     if (paramThrowable != null) {
-/*  450 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  452 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  453 */       Object[] arrayOfObject = null;
-/*  454 */       doLog(Level.WARNING, "OMG.badPollAfter", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  458 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollAfter(CompletionStatus paramCompletionStatus) {
-/*  462 */     return badPollAfter(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollAfter(Throwable paramThrowable) {
-/*  466 */     return badPollAfter(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollAfter() {
-/*  470 */     return badPollAfter(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER badPollSync(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  476 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446349, paramCompletionStatus);
-/*  477 */     if (paramThrowable != null) {
-/*  478 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  480 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  481 */       Object[] arrayOfObject = null;
-/*  482 */       doLog(Level.WARNING, "OMG.badPollSync", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  486 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollSync(CompletionStatus paramCompletionStatus) {
-/*  490 */     return badPollSync(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollSync(Throwable paramThrowable) {
-/*  494 */     return badPollSync(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER badPollSync() {
-/*  498 */     return badPollSync(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall1(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  504 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446350, paramCompletionStatus);
-/*  505 */     if (paramThrowable != null) {
-/*  506 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  508 */     if (this.logger.isLoggable(Level.FINE)) {
-/*  509 */       Object[] arrayOfObject = null;
-/*  510 */       doLog(Level.FINE, "OMG.invalidPiCall1", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  514 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall1(CompletionStatus paramCompletionStatus) {
-/*  518 */     return invalidPiCall1(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall1(Throwable paramThrowable) {
-/*  522 */     return invalidPiCall1(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall1() {
-/*  526 */     return invalidPiCall1(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall2(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  532 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446350, paramCompletionStatus);
-/*  533 */     if (paramThrowable != null) {
-/*  534 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  536 */     if (this.logger.isLoggable(Level.FINE)) {
-/*  537 */       Object[] arrayOfObject = null;
-/*  538 */       doLog(Level.FINE, "OMG.invalidPiCall2", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  542 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall2(CompletionStatus paramCompletionStatus) {
-/*  546 */     return invalidPiCall2(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall2(Throwable paramThrowable) {
-/*  550 */     return invalidPiCall2(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall2() {
-/*  554 */     return invalidPiCall2(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall3(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  560 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446350, paramCompletionStatus);
-/*  561 */     if (paramThrowable != null) {
-/*  562 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  564 */     if (this.logger.isLoggable(Level.FINE)) {
-/*  565 */       Object[] arrayOfObject = null;
-/*  566 */       doLog(Level.FINE, "OMG.invalidPiCall3", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  570 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall3(CompletionStatus paramCompletionStatus) {
-/*  574 */     return invalidPiCall3(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall3(Throwable paramThrowable) {
-/*  578 */     return invalidPiCall3(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall3() {
-/*  582 */     return invalidPiCall3(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall4(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  588 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446350, paramCompletionStatus);
-/*  589 */     if (paramThrowable != null) {
-/*  590 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  592 */     if (this.logger.isLoggable(Level.FINE)) {
-/*  593 */       Object[] arrayOfObject = null;
-/*  594 */       doLog(Level.FINE, "OMG.invalidPiCall4", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  598 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall4(CompletionStatus paramCompletionStatus) {
-/*  602 */     return invalidPiCall4(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall4(Throwable paramThrowable) {
-/*  606 */     return invalidPiCall4(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER invalidPiCall4() {
-/*  610 */     return invalidPiCall4(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER serviceContextAddFailed(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/*  616 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446351, paramCompletionStatus);
-/*  617 */     if (paramThrowable != null) {
-/*  618 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  620 */     if (this.logger.isLoggable(Level.FINE)) {
-/*  621 */       Object[] arrayOfObject = new Object[1];
-/*  622 */       arrayOfObject[0] = paramObject;
-/*  623 */       doLog(Level.FINE, "OMG.serviceContextAddFailed", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  627 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER serviceContextAddFailed(CompletionStatus paramCompletionStatus, Object paramObject) {
-/*  631 */     return serviceContextAddFailed(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER serviceContextAddFailed(Throwable paramThrowable, Object paramObject) {
-/*  635 */     return serviceContextAddFailed(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER serviceContextAddFailed(Object paramObject) {
-/*  639 */     return serviceContextAddFailed(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER policyFactoryRegFailed(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/*  645 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446352, paramCompletionStatus);
-/*  646 */     if (paramThrowable != null) {
-/*  647 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  649 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  650 */       Object[] arrayOfObject = new Object[1];
-/*  651 */       arrayOfObject[0] = paramObject;
-/*  652 */       doLog(Level.WARNING, "OMG.policyFactoryRegFailed", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  656 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER policyFactoryRegFailed(CompletionStatus paramCompletionStatus, Object paramObject) {
-/*  660 */     return policyFactoryRegFailed(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER policyFactoryRegFailed(Throwable paramThrowable, Object paramObject) {
-/*  664 */     return policyFactoryRegFailed(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER policyFactoryRegFailed(Object paramObject) {
-/*  668 */     return policyFactoryRegFailed(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER createPoaDestroy(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  674 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446353, paramCompletionStatus);
-/*  675 */     if (paramThrowable != null) {
-/*  676 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  678 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  679 */       Object[] arrayOfObject = null;
-/*  680 */       doLog(Level.WARNING, "OMG.createPoaDestroy", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  684 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER createPoaDestroy(CompletionStatus paramCompletionStatus) {
-/*  688 */     return createPoaDestroy(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER createPoaDestroy(Throwable paramThrowable) {
-/*  692 */     return createPoaDestroy(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER createPoaDestroy() {
-/*  696 */     return createPoaDestroy(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER priorityReassign(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  702 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446354, paramCompletionStatus);
-/*  703 */     if (paramThrowable != null) {
-/*  704 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  706 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  707 */       Object[] arrayOfObject = null;
-/*  708 */       doLog(Level.WARNING, "OMG.priorityReassign", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  712 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER priorityReassign(CompletionStatus paramCompletionStatus) {
-/*  716 */     return priorityReassign(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER priorityReassign(Throwable paramThrowable) {
-/*  720 */     return priorityReassign(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER priorityReassign() {
-/*  724 */     return priorityReassign(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartOutsize(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  730 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446355, paramCompletionStatus);
-/*  731 */     if (paramThrowable != null) {
-/*  732 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  734 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  735 */       Object[] arrayOfObject = null;
-/*  736 */       doLog(Level.WARNING, "OMG.xaStartOutsize", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  740 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartOutsize(CompletionStatus paramCompletionStatus) {
-/*  744 */     return xaStartOutsize(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartOutsize(Throwable paramThrowable) {
-/*  748 */     return xaStartOutsize(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartOutsize() {
-/*  752 */     return xaStartOutsize(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartProto(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  758 */     BAD_INV_ORDER bAD_INV_ORDER = new BAD_INV_ORDER(1330446356, paramCompletionStatus);
-/*  759 */     if (paramThrowable != null) {
-/*  760 */       bAD_INV_ORDER.initCause(paramThrowable);
-/*      */     }
-/*  762 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  763 */       Object[] arrayOfObject = null;
-/*  764 */       doLog(Level.WARNING, "OMG.xaStartProto", arrayOfObject, OMGSystemException.class, bAD_INV_ORDER);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  768 */     return bAD_INV_ORDER;
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartProto(CompletionStatus paramCompletionStatus) {
-/*  772 */     return xaStartProto(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartProto(Throwable paramThrowable) {
-/*  776 */     return xaStartProto(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_INV_ORDER xaStartProto() {
-/*  780 */     return xaStartProto(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_OPERATION badServantManagerType(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  790 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1330446337, paramCompletionStatus);
-/*  791 */     if (paramThrowable != null) {
-/*  792 */       bAD_OPERATION.initCause(paramThrowable);
-/*      */     }
-/*  794 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  795 */       Object[] arrayOfObject = null;
-/*  796 */       doLog(Level.WARNING, "OMG.badServantManagerType", arrayOfObject, OMGSystemException.class, bAD_OPERATION);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  800 */     return bAD_OPERATION;
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION badServantManagerType(CompletionStatus paramCompletionStatus) {
-/*  804 */     return badServantManagerType(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION badServantManagerType(Throwable paramThrowable) {
-/*  808 */     return badServantManagerType(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION badServantManagerType() {
-/*  812 */     return badServantManagerType(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_OPERATION operationUnknownToTarget(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  818 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1330446338, paramCompletionStatus);
-/*  819 */     if (paramThrowable != null) {
-/*  820 */       bAD_OPERATION.initCause(paramThrowable);
-/*      */     }
-/*  822 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  823 */       Object[] arrayOfObject = null;
-/*  824 */       doLog(Level.WARNING, "OMG.operationUnknownToTarget", arrayOfObject, OMGSystemException.class, bAD_OPERATION);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  828 */     return bAD_OPERATION;
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION operationUnknownToTarget(CompletionStatus paramCompletionStatus) {
-/*  832 */     return operationUnknownToTarget(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION operationUnknownToTarget(Throwable paramThrowable) {
-/*  836 */     return operationUnknownToTarget(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_OPERATION operationUnknownToTarget() {
-/*  840 */     return operationUnknownToTarget(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM unableRegisterValueFactory(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  850 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446337, paramCompletionStatus);
-/*  851 */     if (paramThrowable != null) {
-/*  852 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  854 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  855 */       Object[] arrayOfObject = null;
-/*  856 */       doLog(Level.WARNING, "OMG.unableRegisterValueFactory", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  860 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM unableRegisterValueFactory(CompletionStatus paramCompletionStatus) {
-/*  864 */     return unableRegisterValueFactory(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM unableRegisterValueFactory(Throwable paramThrowable) {
-/*  868 */     return unableRegisterValueFactory(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM unableRegisterValueFactory() {
-/*  872 */     return unableRegisterValueFactory(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM ridAlreadyDefined(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  878 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446338, paramCompletionStatus);
-/*  879 */     if (paramThrowable != null) {
-/*  880 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  882 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  883 */       Object[] arrayOfObject = null;
-/*  884 */       doLog(Level.WARNING, "OMG.ridAlreadyDefined", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  888 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ridAlreadyDefined(CompletionStatus paramCompletionStatus) {
-/*  892 */     return ridAlreadyDefined(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ridAlreadyDefined(Throwable paramThrowable) {
-/*  896 */     return ridAlreadyDefined(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ridAlreadyDefined() {
-/*  900 */     return ridAlreadyDefined(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM nameUsedIfr(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  906 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446339, paramCompletionStatus);
-/*  907 */     if (paramThrowable != null) {
-/*  908 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  910 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  911 */       Object[] arrayOfObject = null;
-/*  912 */       doLog(Level.WARNING, "OMG.nameUsedIfr", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  916 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM nameUsedIfr(CompletionStatus paramCompletionStatus) {
-/*  920 */     return nameUsedIfr(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM nameUsedIfr(Throwable paramThrowable) {
-/*  924 */     return nameUsedIfr(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM nameUsedIfr() {
-/*  928 */     return nameUsedIfr(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM targetNotContainer(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  934 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446340, paramCompletionStatus);
-/*  935 */     if (paramThrowable != null) {
-/*  936 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  938 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  939 */       Object[] arrayOfObject = null;
-/*  940 */       doLog(Level.WARNING, "OMG.targetNotContainer", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  944 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM targetNotContainer(CompletionStatus paramCompletionStatus) {
-/*  948 */     return targetNotContainer(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM targetNotContainer(Throwable paramThrowable) {
-/*  952 */     return targetNotContainer(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM targetNotContainer() {
-/*  956 */     return targetNotContainer(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM nameClash(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  962 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446341, paramCompletionStatus);
-/*  963 */     if (paramThrowable != null) {
-/*  964 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  966 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  967 */       Object[] arrayOfObject = null;
-/*  968 */       doLog(Level.WARNING, "OMG.nameClash", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  972 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM nameClash(CompletionStatus paramCompletionStatus) {
-/*  976 */     return nameClash(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM nameClash(Throwable paramThrowable) {
-/*  980 */     return nameClash(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM nameClash() {
-/*  984 */     return nameClash(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM notSerializable(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/*  990 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446342, paramCompletionStatus);
-/*  991 */     if (paramThrowable != null) {
-/*  992 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/*  994 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  995 */       Object[] arrayOfObject = new Object[1];
-/*  996 */       arrayOfObject[0] = paramObject;
-/*  997 */       doLog(Level.WARNING, "OMG.notSerializable", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1001 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notSerializable(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 1005 */     return notSerializable(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notSerializable(Throwable paramThrowable, Object paramObject) {
-/* 1009 */     return notSerializable(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notSerializable(Object paramObject) {
-/* 1013 */     return notSerializable(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM soBadSchemeName(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1019 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446343, paramCompletionStatus);
-/* 1020 */     if (paramThrowable != null) {
-/* 1021 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1023 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1024 */       Object[] arrayOfObject = null;
-/* 1025 */       doLog(Level.WARNING, "OMG.soBadSchemeName", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1029 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadSchemeName(CompletionStatus paramCompletionStatus) {
-/* 1033 */     return soBadSchemeName(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadSchemeName(Throwable paramThrowable) {
-/* 1037 */     return soBadSchemeName(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadSchemeName() {
-/* 1041 */     return soBadSchemeName(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM soBadAddress(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1047 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446344, paramCompletionStatus);
-/* 1048 */     if (paramThrowable != null) {
-/* 1049 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1051 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1052 */       Object[] arrayOfObject = null;
-/* 1053 */       doLog(Level.WARNING, "OMG.soBadAddress", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1057 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadAddress(CompletionStatus paramCompletionStatus) {
-/* 1061 */     return soBadAddress(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadAddress(Throwable paramThrowable) {
-/* 1065 */     return soBadAddress(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadAddress() {
-/* 1069 */     return soBadAddress(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM soBadSchemaSpecific(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1075 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446345, paramCompletionStatus);
-/* 1076 */     if (paramThrowable != null) {
-/* 1077 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1079 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1080 */       Object[] arrayOfObject = null;
-/* 1081 */       doLog(Level.WARNING, "OMG.soBadSchemaSpecific", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1085 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadSchemaSpecific(CompletionStatus paramCompletionStatus) {
-/* 1089 */     return soBadSchemaSpecific(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadSchemaSpecific(Throwable paramThrowable) {
-/* 1093 */     return soBadSchemaSpecific(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soBadSchemaSpecific() {
-/* 1097 */     return soBadSchemaSpecific(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM soNonSpecific(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1103 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446346, paramCompletionStatus);
-/* 1104 */     if (paramThrowable != null) {
-/* 1105 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1107 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1108 */       Object[] arrayOfObject = null;
-/* 1109 */       doLog(Level.WARNING, "OMG.soNonSpecific", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1113 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soNonSpecific(CompletionStatus paramCompletionStatus) {
-/* 1117 */     return soNonSpecific(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soNonSpecific(Throwable paramThrowable) {
-/* 1121 */     return soNonSpecific(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM soNonSpecific() {
-/* 1125 */     return soNonSpecific(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM irDeriveAbsIntBase(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1131 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446347, paramCompletionStatus);
-/* 1132 */     if (paramThrowable != null) {
-/* 1133 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1135 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1136 */       Object[] arrayOfObject = null;
-/* 1137 */       doLog(Level.WARNING, "OMG.irDeriveAbsIntBase", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1141 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM irDeriveAbsIntBase(CompletionStatus paramCompletionStatus) {
-/* 1145 */     return irDeriveAbsIntBase(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM irDeriveAbsIntBase(Throwable paramThrowable) {
-/* 1149 */     return irDeriveAbsIntBase(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM irDeriveAbsIntBase() {
-/* 1153 */     return irDeriveAbsIntBase(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM irValueSupport(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1159 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446348, paramCompletionStatus);
-/* 1160 */     if (paramThrowable != null) {
-/* 1161 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1163 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1164 */       Object[] arrayOfObject = null;
-/* 1165 */       doLog(Level.WARNING, "OMG.irValueSupport", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1169 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM irValueSupport(CompletionStatus paramCompletionStatus) {
-/* 1173 */     return irValueSupport(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM irValueSupport(Throwable paramThrowable) {
-/* 1177 */     return irValueSupport(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM irValueSupport() {
-/* 1181 */     return irValueSupport(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM incompleteTypecode(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1187 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446349, paramCompletionStatus);
-/* 1188 */     if (paramThrowable != null) {
-/* 1189 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1191 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1192 */       Object[] arrayOfObject = null;
-/* 1193 */       doLog(Level.WARNING, "OMG.incompleteTypecode", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1197 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM incompleteTypecode(CompletionStatus paramCompletionStatus) {
-/* 1201 */     return incompleteTypecode(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM incompleteTypecode(Throwable paramThrowable) {
-/* 1205 */     return incompleteTypecode(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM incompleteTypecode() {
-/* 1209 */     return incompleteTypecode(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM invalidObjectId(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1215 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446350, paramCompletionStatus);
-/* 1216 */     if (paramThrowable != null) {
-/* 1217 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1219 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1220 */       Object[] arrayOfObject = null;
-/* 1221 */       doLog(Level.WARNING, "OMG.invalidObjectId", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1225 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidObjectId(CompletionStatus paramCompletionStatus) {
-/* 1229 */     return invalidObjectId(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidObjectId(Throwable paramThrowable) {
-/* 1233 */     return invalidObjectId(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidObjectId() {
-/* 1237 */     return invalidObjectId(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM typecodeBadName(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1243 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446351, paramCompletionStatus);
-/* 1244 */     if (paramThrowable != null) {
-/* 1245 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1247 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1248 */       Object[] arrayOfObject = null;
-/* 1249 */       doLog(Level.WARNING, "OMG.typecodeBadName", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1253 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeBadName(CompletionStatus paramCompletionStatus) {
-/* 1257 */     return typecodeBadName(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeBadName(Throwable paramThrowable) {
-/* 1261 */     return typecodeBadName(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeBadName() {
-/* 1265 */     return typecodeBadName(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM typecodeBadRepid(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1271 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446352, paramCompletionStatus);
-/* 1272 */     if (paramThrowable != null) {
-/* 1273 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1275 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1276 */       Object[] arrayOfObject = null;
-/* 1277 */       doLog(Level.WARNING, "OMG.typecodeBadRepid", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1281 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeBadRepid(CompletionStatus paramCompletionStatus) {
-/* 1285 */     return typecodeBadRepid(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeBadRepid(Throwable paramThrowable) {
-/* 1289 */     return typecodeBadRepid(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeBadRepid() {
-/* 1293 */     return typecodeBadRepid(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM typecodeInvMember(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1299 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446353, paramCompletionStatus);
-/* 1300 */     if (paramThrowable != null) {
-/* 1301 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1303 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1304 */       Object[] arrayOfObject = null;
-/* 1305 */       doLog(Level.WARNING, "OMG.typecodeInvMember", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1309 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeInvMember(CompletionStatus paramCompletionStatus) {
-/* 1313 */     return typecodeInvMember(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeInvMember(Throwable paramThrowable) {
-/* 1317 */     return typecodeInvMember(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM typecodeInvMember() {
-/* 1321 */     return typecodeInvMember(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM tcUnionDupLabel(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1327 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446354, paramCompletionStatus);
-/* 1328 */     if (paramThrowable != null) {
-/* 1329 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1331 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1332 */       Object[] arrayOfObject = null;
-/* 1333 */       doLog(Level.WARNING, "OMG.tcUnionDupLabel", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1337 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionDupLabel(CompletionStatus paramCompletionStatus) {
-/* 1341 */     return tcUnionDupLabel(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionDupLabel(Throwable paramThrowable) {
-/* 1345 */     return tcUnionDupLabel(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionDupLabel() {
-/* 1349 */     return tcUnionDupLabel(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM tcUnionIncompatible(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1355 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446355, paramCompletionStatus);
-/* 1356 */     if (paramThrowable != null) {
-/* 1357 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1359 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1360 */       Object[] arrayOfObject = null;
-/* 1361 */       doLog(Level.WARNING, "OMG.tcUnionIncompatible", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1365 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionIncompatible(CompletionStatus paramCompletionStatus) {
-/* 1369 */     return tcUnionIncompatible(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionIncompatible(Throwable paramThrowable) {
-/* 1373 */     return tcUnionIncompatible(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionIncompatible() {
-/* 1377 */     return tcUnionIncompatible(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM tcUnionBadDisc(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1383 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446356, paramCompletionStatus);
-/* 1384 */     if (paramThrowable != null) {
-/* 1385 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1387 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1388 */       Object[] arrayOfObject = null;
-/* 1389 */       doLog(Level.WARNING, "OMG.tcUnionBadDisc", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1393 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionBadDisc(CompletionStatus paramCompletionStatus) {
-/* 1397 */     return tcUnionBadDisc(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionBadDisc(Throwable paramThrowable) {
-/* 1401 */     return tcUnionBadDisc(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM tcUnionBadDisc() {
-/* 1405 */     return tcUnionBadDisc(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM setExceptionBadAny(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1411 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446357, paramCompletionStatus);
-/* 1412 */     if (paramThrowable != null) {
-/* 1413 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1415 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1416 */       Object[] arrayOfObject = null;
-/* 1417 */       doLog(Level.WARNING, "OMG.setExceptionBadAny", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1421 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM setExceptionBadAny(CompletionStatus paramCompletionStatus) {
-/* 1425 */     return setExceptionBadAny(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM setExceptionBadAny(Throwable paramThrowable) {
-/* 1429 */     return setExceptionBadAny(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM setExceptionBadAny() {
-/* 1433 */     return setExceptionBadAny(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM setExceptionUnlisted(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1439 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446358, paramCompletionStatus);
-/* 1440 */     if (paramThrowable != null) {
-/* 1441 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1443 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1444 */       Object[] arrayOfObject = null;
-/* 1445 */       doLog(Level.WARNING, "OMG.setExceptionUnlisted", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1449 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM setExceptionUnlisted(CompletionStatus paramCompletionStatus) {
-/* 1453 */     return setExceptionUnlisted(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM setExceptionUnlisted(Throwable paramThrowable) {
-/* 1457 */     return setExceptionUnlisted(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM setExceptionUnlisted() {
-/* 1461 */     return setExceptionUnlisted(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM noClientWcharCodesetCtx(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1467 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446359, paramCompletionStatus);
-/* 1468 */     if (paramThrowable != null) {
-/* 1469 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1471 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1472 */       Object[] arrayOfObject = null;
-/* 1473 */       doLog(Level.WARNING, "OMG.noClientWcharCodesetCtx", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1477 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM noClientWcharCodesetCtx(CompletionStatus paramCompletionStatus) {
-/* 1481 */     return noClientWcharCodesetCtx(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM noClientWcharCodesetCtx(Throwable paramThrowable) {
-/* 1485 */     return noClientWcharCodesetCtx(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM noClientWcharCodesetCtx() {
-/* 1489 */     return noClientWcharCodesetCtx(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM illegalServiceContext(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1495 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446360, paramCompletionStatus);
-/* 1496 */     if (paramThrowable != null) {
-/* 1497 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1499 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1500 */       Object[] arrayOfObject = null;
-/* 1501 */       doLog(Level.WARNING, "OMG.illegalServiceContext", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1505 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM illegalServiceContext(CompletionStatus paramCompletionStatus) {
-/* 1509 */     return illegalServiceContext(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM illegalServiceContext(Throwable paramThrowable) {
-/* 1513 */     return illegalServiceContext(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM illegalServiceContext() {
-/* 1517 */     return illegalServiceContext(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM enumOutOfRange(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1523 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446361, paramCompletionStatus);
-/* 1524 */     if (paramThrowable != null) {
-/* 1525 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1527 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1528 */       Object[] arrayOfObject = null;
-/* 1529 */       doLog(Level.WARNING, "OMG.enumOutOfRange", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1533 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM enumOutOfRange(CompletionStatus paramCompletionStatus) {
-/* 1537 */     return enumOutOfRange(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM enumOutOfRange(Throwable paramThrowable) {
-/* 1541 */     return enumOutOfRange(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM enumOutOfRange() {
-/* 1545 */     return enumOutOfRange(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM invalidServiceContextId(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1551 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446362, paramCompletionStatus);
-/* 1552 */     if (paramThrowable != null) {
-/* 1553 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1555 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 1556 */       Object[] arrayOfObject = null;
-/* 1557 */       doLog(Level.FINE, "OMG.invalidServiceContextId", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1561 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidServiceContextId(CompletionStatus paramCompletionStatus) {
-/* 1565 */     return invalidServiceContextId(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidServiceContextId(Throwable paramThrowable) {
-/* 1569 */     return invalidServiceContextId(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidServiceContextId() {
-/* 1573 */     return invalidServiceContextId(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM rirWithNullObject(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1579 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446363, paramCompletionStatus);
-/* 1580 */     if (paramThrowable != null) {
-/* 1581 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1583 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1584 */       Object[] arrayOfObject = null;
-/* 1585 */       doLog(Level.WARNING, "OMG.rirWithNullObject", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1589 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM rirWithNullObject(CompletionStatus paramCompletionStatus) {
-/* 1593 */     return rirWithNullObject(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM rirWithNullObject(Throwable paramThrowable) {
-/* 1597 */     return rirWithNullObject(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM rirWithNullObject() {
-/* 1601 */     return rirWithNullObject(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM invalidComponentId(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 1607 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446364, paramCompletionStatus);
-/* 1608 */     if (paramThrowable != null) {
-/* 1609 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1611 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 1612 */       Object[] arrayOfObject = new Object[1];
-/* 1613 */       arrayOfObject[0] = paramObject;
-/* 1614 */       doLog(Level.FINE, "OMG.invalidComponentId", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1618 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidComponentId(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 1622 */     return invalidComponentId(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidComponentId(Throwable paramThrowable, Object paramObject) {
-/* 1626 */     return invalidComponentId(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidComponentId(Object paramObject) {
-/* 1630 */     return invalidComponentId(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM invalidProfileId(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1636 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446365, paramCompletionStatus);
-/* 1637 */     if (paramThrowable != null) {
-/* 1638 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1640 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1641 */       Object[] arrayOfObject = null;
-/* 1642 */       doLog(Level.WARNING, "OMG.invalidProfileId", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1646 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidProfileId(CompletionStatus paramCompletionStatus) {
-/* 1650 */     return invalidProfileId(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidProfileId(Throwable paramThrowable) {
-/* 1654 */     return invalidProfileId(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidProfileId() {
-/* 1658 */     return invalidProfileId(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM policyTypeDuplicate(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1664 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446366, paramCompletionStatus);
-/* 1665 */     if (paramThrowable != null) {
-/* 1666 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1668 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1669 */       Object[] arrayOfObject = null;
-/* 1670 */       doLog(Level.WARNING, "OMG.policyTypeDuplicate", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1674 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM policyTypeDuplicate(CompletionStatus paramCompletionStatus) {
-/* 1678 */     return policyTypeDuplicate(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM policyTypeDuplicate(Throwable paramThrowable) {
-/* 1682 */     return policyTypeDuplicate(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM policyTypeDuplicate() {
-/* 1686 */     return policyTypeDuplicate(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM badOnewayDefinition(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1692 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446367, paramCompletionStatus);
-/* 1693 */     if (paramThrowable != null) {
-/* 1694 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1696 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1697 */       Object[] arrayOfObject = null;
-/* 1698 */       doLog(Level.WARNING, "OMG.badOnewayDefinition", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1702 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badOnewayDefinition(CompletionStatus paramCompletionStatus) {
-/* 1706 */     return badOnewayDefinition(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badOnewayDefinition(Throwable paramThrowable) {
-/* 1710 */     return badOnewayDefinition(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM badOnewayDefinition() {
-/* 1714 */     return badOnewayDefinition(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM diiForImplicitOperation(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1720 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446368, paramCompletionStatus);
-/* 1721 */     if (paramThrowable != null) {
-/* 1722 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1724 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1725 */       Object[] arrayOfObject = null;
-/* 1726 */       doLog(Level.WARNING, "OMG.diiForImplicitOperation", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1730 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM diiForImplicitOperation(CompletionStatus paramCompletionStatus) {
-/* 1734 */     return diiForImplicitOperation(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM diiForImplicitOperation(Throwable paramThrowable) {
-/* 1738 */     return diiForImplicitOperation(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM diiForImplicitOperation() {
-/* 1742 */     return diiForImplicitOperation(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM xaCallInval(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1748 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446369, paramCompletionStatus);
-/* 1749 */     if (paramThrowable != null) {
-/* 1750 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1752 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1753 */       Object[] arrayOfObject = null;
-/* 1754 */       doLog(Level.WARNING, "OMG.xaCallInval", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1758 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM xaCallInval(CompletionStatus paramCompletionStatus) {
-/* 1762 */     return xaCallInval(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM xaCallInval(Throwable paramThrowable) {
-/* 1766 */     return xaCallInval(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM xaCallInval() {
-/* 1770 */     return xaCallInval(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM unionBadDiscriminator(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1776 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446370, paramCompletionStatus);
-/* 1777 */     if (paramThrowable != null) {
-/* 1778 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1780 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1781 */       Object[] arrayOfObject = null;
-/* 1782 */       doLog(Level.WARNING, "OMG.unionBadDiscriminator", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1786 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM unionBadDiscriminator(CompletionStatus paramCompletionStatus) {
-/* 1790 */     return unionBadDiscriminator(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM unionBadDiscriminator(Throwable paramThrowable) {
-/* 1794 */     return unionBadDiscriminator(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM unionBadDiscriminator() {
-/* 1798 */     return unionBadDiscriminator(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalPropertyName(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1804 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446371, paramCompletionStatus);
-/* 1805 */     if (paramThrowable != null) {
-/* 1806 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1808 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1809 */       Object[] arrayOfObject = null;
-/* 1810 */       doLog(Level.WARNING, "OMG.ctxIllegalPropertyName", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1814 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalPropertyName(CompletionStatus paramCompletionStatus) {
-/* 1818 */     return ctxIllegalPropertyName(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalPropertyName(Throwable paramThrowable) {
-/* 1822 */     return ctxIllegalPropertyName(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalPropertyName() {
-/* 1826 */     return ctxIllegalPropertyName(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalSearchString(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1832 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446372, paramCompletionStatus);
-/* 1833 */     if (paramThrowable != null) {
-/* 1834 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1836 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1837 */       Object[] arrayOfObject = null;
-/* 1838 */       doLog(Level.WARNING, "OMG.ctxIllegalSearchString", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1842 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalSearchString(CompletionStatus paramCompletionStatus) {
-/* 1846 */     return ctxIllegalSearchString(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalSearchString(Throwable paramThrowable) {
-/* 1850 */     return ctxIllegalSearchString(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalSearchString() {
-/* 1854 */     return ctxIllegalSearchString(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalName(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1860 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446373, paramCompletionStatus);
-/* 1861 */     if (paramThrowable != null) {
-/* 1862 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1864 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1865 */       Object[] arrayOfObject = null;
-/* 1866 */       doLog(Level.WARNING, "OMG.ctxIllegalName", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1870 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalName(CompletionStatus paramCompletionStatus) {
-/* 1874 */     return ctxIllegalName(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalName(Throwable paramThrowable) {
-/* 1878 */     return ctxIllegalName(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxIllegalName() {
-/* 1882 */     return ctxIllegalName(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM ctxNonEmpty(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1888 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446374, paramCompletionStatus);
-/* 1889 */     if (paramThrowable != null) {
-/* 1890 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1892 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1893 */       Object[] arrayOfObject = null;
-/* 1894 */       doLog(Level.WARNING, "OMG.ctxNonEmpty", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1898 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxNonEmpty(CompletionStatus paramCompletionStatus) {
-/* 1902 */     return ctxNonEmpty(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxNonEmpty(Throwable paramThrowable) {
-/* 1906 */     return ctxNonEmpty(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM ctxNonEmpty() {
-/* 1910 */     return ctxNonEmpty(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM invalidStreamFormatVersion(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 1916 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446375, paramCompletionStatus);
-/* 1917 */     if (paramThrowable != null) {
-/* 1918 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1920 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1921 */       Object[] arrayOfObject = new Object[1];
-/* 1922 */       arrayOfObject[0] = paramObject;
-/* 1923 */       doLog(Level.WARNING, "OMG.invalidStreamFormatVersion", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1927 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidStreamFormatVersion(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 1931 */     return invalidStreamFormatVersion(paramCompletionStatus, (Throwable)null, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidStreamFormatVersion(Throwable paramThrowable, Object paramObject) {
-/* 1935 */     return invalidStreamFormatVersion(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM invalidStreamFormatVersion(Object paramObject) {
-/* 1939 */     return invalidStreamFormatVersion(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM notAValueoutputstream(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1945 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446376, paramCompletionStatus);
-/* 1946 */     if (paramThrowable != null) {
-/* 1947 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1949 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1950 */       Object[] arrayOfObject = null;
-/* 1951 */       doLog(Level.WARNING, "OMG.notAValueoutputstream", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1955 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notAValueoutputstream(CompletionStatus paramCompletionStatus) {
-/* 1959 */     return notAValueoutputstream(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notAValueoutputstream(Throwable paramThrowable) {
-/* 1963 */     return notAValueoutputstream(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notAValueoutputstream() {
-/* 1967 */     return notAValueoutputstream(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_PARAM notAValueinputstream(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 1973 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1330446377, paramCompletionStatus);
-/* 1974 */     if (paramThrowable != null) {
-/* 1975 */       bAD_PARAM.initCause(paramThrowable);
-/*      */     }
-/* 1977 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 1978 */       Object[] arrayOfObject = null;
-/* 1979 */       doLog(Level.WARNING, "OMG.notAValueinputstream", arrayOfObject, OMGSystemException.class, bAD_PARAM);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1983 */     return bAD_PARAM;
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notAValueinputstream(CompletionStatus paramCompletionStatus) {
-/* 1987 */     return notAValueinputstream(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notAValueinputstream(Throwable paramThrowable) {
-/* 1991 */     return notAValueinputstream(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_PARAM notAValueinputstream() {
-/* 1995 */     return notAValueinputstream(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_TYPECODE marshallIncompleteTypecode(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2005 */     BAD_TYPECODE bAD_TYPECODE = new BAD_TYPECODE(1330446337, paramCompletionStatus);
-/* 2006 */     if (paramThrowable != null) {
-/* 2007 */       bAD_TYPECODE.initCause(paramThrowable);
-/*      */     }
-/* 2009 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2010 */       Object[] arrayOfObject = null;
-/* 2011 */       doLog(Level.WARNING, "OMG.marshallIncompleteTypecode", arrayOfObject, OMGSystemException.class, bAD_TYPECODE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2015 */     return bAD_TYPECODE;
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE marshallIncompleteTypecode(CompletionStatus paramCompletionStatus) {
-/* 2019 */     return marshallIncompleteTypecode(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE marshallIncompleteTypecode(Throwable paramThrowable) {
-/* 2023 */     return marshallIncompleteTypecode(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE marshallIncompleteTypecode() {
-/* 2027 */     return marshallIncompleteTypecode(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_TYPECODE badMemberTypecode(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2033 */     BAD_TYPECODE bAD_TYPECODE = new BAD_TYPECODE(1330446338, paramCompletionStatus);
-/* 2034 */     if (paramThrowable != null) {
-/* 2035 */       bAD_TYPECODE.initCause(paramThrowable);
-/*      */     }
-/* 2037 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2038 */       Object[] arrayOfObject = null;
-/* 2039 */       doLog(Level.WARNING, "OMG.badMemberTypecode", arrayOfObject, OMGSystemException.class, bAD_TYPECODE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2043 */     return bAD_TYPECODE;
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE badMemberTypecode(CompletionStatus paramCompletionStatus) {
-/* 2047 */     return badMemberTypecode(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE badMemberTypecode(Throwable paramThrowable) {
-/* 2051 */     return badMemberTypecode(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE badMemberTypecode() {
-/* 2055 */     return badMemberTypecode(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BAD_TYPECODE illegalParameter(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2061 */     BAD_TYPECODE bAD_TYPECODE = new BAD_TYPECODE(1330446339, paramCompletionStatus);
-/* 2062 */     if (paramThrowable != null) {
-/* 2063 */       bAD_TYPECODE.initCause(paramThrowable);
-/*      */     }
-/* 2065 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2066 */       Object[] arrayOfObject = null;
-/* 2067 */       doLog(Level.WARNING, "OMG.illegalParameter", arrayOfObject, OMGSystemException.class, bAD_TYPECODE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2071 */     return bAD_TYPECODE;
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE illegalParameter(CompletionStatus paramCompletionStatus) {
-/* 2075 */     return illegalParameter(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE illegalParameter(Throwable paramThrowable) {
-/* 2079 */     return illegalParameter(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public BAD_TYPECODE illegalParameter() {
-/* 2083 */     return illegalParameter(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DATA_CONVERSION charNotInCodeset(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2093 */     DATA_CONVERSION dATA_CONVERSION = new DATA_CONVERSION(1330446337, paramCompletionStatus);
-/* 2094 */     if (paramThrowable != null) {
-/* 2095 */       dATA_CONVERSION.initCause(paramThrowable);
-/*      */     }
-/* 2097 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2098 */       Object[] arrayOfObject = null;
-/* 2099 */       doLog(Level.WARNING, "OMG.charNotInCodeset", arrayOfObject, OMGSystemException.class, dATA_CONVERSION);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2103 */     return dATA_CONVERSION;
-/*      */   }
-/*      */   
-/*      */   public DATA_CONVERSION charNotInCodeset(CompletionStatus paramCompletionStatus) {
-/* 2107 */     return charNotInCodeset(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public DATA_CONVERSION charNotInCodeset(Throwable paramThrowable) {
-/* 2111 */     return charNotInCodeset(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public DATA_CONVERSION charNotInCodeset() {
-/* 2115 */     return charNotInCodeset(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DATA_CONVERSION priorityMapFailre(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2121 */     DATA_CONVERSION dATA_CONVERSION = new DATA_CONVERSION(1330446338, paramCompletionStatus);
-/* 2122 */     if (paramThrowable != null) {
-/* 2123 */       dATA_CONVERSION.initCause(paramThrowable);
-/*      */     }
-/* 2125 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2126 */       Object[] arrayOfObject = null;
-/* 2127 */       doLog(Level.WARNING, "OMG.priorityMapFailre", arrayOfObject, OMGSystemException.class, dATA_CONVERSION);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2131 */     return dATA_CONVERSION;
-/*      */   }
-/*      */   
-/*      */   public DATA_CONVERSION priorityMapFailre(CompletionStatus paramCompletionStatus) {
-/* 2135 */     return priorityMapFailre(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public DATA_CONVERSION priorityMapFailre(Throwable paramThrowable) {
-/* 2139 */     return priorityMapFailre(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public DATA_CONVERSION priorityMapFailre() {
-/* 2143 */     return priorityMapFailre(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IMP_LIMIT noUsableProfile(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2153 */     IMP_LIMIT iMP_LIMIT = new IMP_LIMIT(1330446337, paramCompletionStatus);
-/* 2154 */     if (paramThrowable != null) {
-/* 2155 */       iMP_LIMIT.initCause(paramThrowable);
-/*      */     }
-/* 2157 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2158 */       Object[] arrayOfObject = null;
-/* 2159 */       doLog(Level.WARNING, "OMG.noUsableProfile", arrayOfObject, OMGSystemException.class, iMP_LIMIT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2163 */     return iMP_LIMIT;
-/*      */   }
-/*      */   
-/*      */   public IMP_LIMIT noUsableProfile(CompletionStatus paramCompletionStatus) {
-/* 2167 */     return noUsableProfile(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public IMP_LIMIT noUsableProfile(Throwable paramThrowable) {
-/* 2171 */     return noUsableProfile(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public IMP_LIMIT noUsableProfile() {
-/* 2175 */     return noUsableProfile(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INITIALIZE priorityRangeRestrict(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2185 */     INITIALIZE iNITIALIZE = new INITIALIZE(1330446337, paramCompletionStatus);
-/* 2186 */     if (paramThrowable != null) {
-/* 2187 */       iNITIALIZE.initCause(paramThrowable);
-/*      */     }
-/* 2189 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2190 */       Object[] arrayOfObject = null;
-/* 2191 */       doLog(Level.WARNING, "OMG.priorityRangeRestrict", arrayOfObject, OMGSystemException.class, iNITIALIZE);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2195 */     return iNITIALIZE;
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE priorityRangeRestrict(CompletionStatus paramCompletionStatus) {
-/* 2199 */     return priorityRangeRestrict(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE priorityRangeRestrict(Throwable paramThrowable) {
-/* 2203 */     return priorityRangeRestrict(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INITIALIZE priorityRangeRestrict() {
-/* 2207 */     return priorityRangeRestrict(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INV_OBJREF noServerWcharCodesetCmp(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2217 */     INV_OBJREF iNV_OBJREF = new INV_OBJREF(1330446337, paramCompletionStatus);
-/* 2218 */     if (paramThrowable != null) {
-/* 2219 */       iNV_OBJREF.initCause(paramThrowable);
-/*      */     }
-/* 2221 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2222 */       Object[] arrayOfObject = null;
-/* 2223 */       doLog(Level.WARNING, "OMG.noServerWcharCodesetCmp", arrayOfObject, OMGSystemException.class, iNV_OBJREF);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2227 */     return iNV_OBJREF;
-/*      */   }
-/*      */   
-/*      */   public INV_OBJREF noServerWcharCodesetCmp(CompletionStatus paramCompletionStatus) {
-/* 2231 */     return noServerWcharCodesetCmp(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INV_OBJREF noServerWcharCodesetCmp(Throwable paramThrowable) {
-/* 2235 */     return noServerWcharCodesetCmp(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INV_OBJREF noServerWcharCodesetCmp() {
-/* 2239 */     return noServerWcharCodesetCmp(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INV_OBJREF codesetComponentRequired(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2245 */     INV_OBJREF iNV_OBJREF = new INV_OBJREF(1330446338, paramCompletionStatus);
-/* 2246 */     if (paramThrowable != null) {
-/* 2247 */       iNV_OBJREF.initCause(paramThrowable);
-/*      */     }
-/* 2249 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2250 */       Object[] arrayOfObject = null;
-/* 2251 */       doLog(Level.WARNING, "OMG.codesetComponentRequired", arrayOfObject, OMGSystemException.class, iNV_OBJREF);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2255 */     return iNV_OBJREF;
-/*      */   }
-/*      */   
-/*      */   public INV_OBJREF codesetComponentRequired(CompletionStatus paramCompletionStatus) {
-/* 2259 */     return codesetComponentRequired(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INV_OBJREF codesetComponentRequired(Throwable paramThrowable) {
-/* 2263 */     return codesetComponentRequired(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INV_OBJREF codesetComponentRequired() {
-/* 2267 */     return codesetComponentRequired(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INV_POLICY iorPolicyReconcileError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2277 */     INV_POLICY iNV_POLICY = new INV_POLICY(1330446337, paramCompletionStatus);
-/* 2278 */     if (paramThrowable != null) {
-/* 2279 */       iNV_POLICY.initCause(paramThrowable);
-/*      */     }
-/* 2281 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2282 */       Object[] arrayOfObject = null;
-/* 2283 */       doLog(Level.WARNING, "OMG.iorPolicyReconcileError", arrayOfObject, OMGSystemException.class, iNV_POLICY);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2287 */     return iNV_POLICY;
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY iorPolicyReconcileError(CompletionStatus paramCompletionStatus) {
-/* 2291 */     return iorPolicyReconcileError(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY iorPolicyReconcileError(Throwable paramThrowable) {
-/* 2295 */     return iorPolicyReconcileError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY iorPolicyReconcileError() {
-/* 2299 */     return iorPolicyReconcileError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INV_POLICY policyUnknown(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2305 */     INV_POLICY iNV_POLICY = new INV_POLICY(1330446338, paramCompletionStatus);
-/* 2306 */     if (paramThrowable != null) {
-/* 2307 */       iNV_POLICY.initCause(paramThrowable);
-/*      */     }
-/* 2309 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2310 */       Object[] arrayOfObject = null;
-/* 2311 */       doLog(Level.WARNING, "OMG.policyUnknown", arrayOfObject, OMGSystemException.class, iNV_POLICY);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2315 */     return iNV_POLICY;
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY policyUnknown(CompletionStatus paramCompletionStatus) {
-/* 2319 */     return policyUnknown(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY policyUnknown(Throwable paramThrowable) {
-/* 2323 */     return policyUnknown(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY policyUnknown() {
-/* 2327 */     return policyUnknown(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INV_POLICY noPolicyFactory(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2333 */     INV_POLICY iNV_POLICY = new INV_POLICY(1330446339, paramCompletionStatus);
-/* 2334 */     if (paramThrowable != null) {
-/* 2335 */       iNV_POLICY.initCause(paramThrowable);
-/*      */     }
-/* 2337 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2338 */       Object[] arrayOfObject = null;
-/* 2339 */       doLog(Level.WARNING, "OMG.noPolicyFactory", arrayOfObject, OMGSystemException.class, iNV_POLICY);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2343 */     return iNV_POLICY;
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY noPolicyFactory(CompletionStatus paramCompletionStatus) {
-/* 2347 */     return noPolicyFactory(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY noPolicyFactory(Throwable paramThrowable) {
-/* 2351 */     return noPolicyFactory(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INV_POLICY noPolicyFactory() {
-/* 2355 */     return noPolicyFactory(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL xaRmerr(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2365 */     INTERNAL iNTERNAL = new INTERNAL(1330446337, paramCompletionStatus);
-/* 2366 */     if (paramThrowable != null) {
-/* 2367 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/* 2369 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2370 */       Object[] arrayOfObject = null;
-/* 2371 */       doLog(Level.WARNING, "OMG.xaRmerr", arrayOfObject, OMGSystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2375 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL xaRmerr(CompletionStatus paramCompletionStatus) {
-/* 2379 */     return xaRmerr(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL xaRmerr(Throwable paramThrowable) {
-/* 2383 */     return xaRmerr(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL xaRmerr() {
-/* 2387 */     return xaRmerr(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTERNAL xaRmfail(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2393 */     INTERNAL iNTERNAL = new INTERNAL(1330446338, paramCompletionStatus);
-/* 2394 */     if (paramThrowable != null) {
-/* 2395 */       iNTERNAL.initCause(paramThrowable);
-/*      */     }
-/* 2397 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2398 */       Object[] arrayOfObject = null;
-/* 2399 */       doLog(Level.WARNING, "OMG.xaRmfail", arrayOfObject, OMGSystemException.class, iNTERNAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2403 */     return iNTERNAL;
-/*      */   }
-/*      */   
-/*      */   public INTERNAL xaRmfail(CompletionStatus paramCompletionStatus) {
-/* 2407 */     return xaRmfail(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL xaRmfail(Throwable paramThrowable) {
-/* 2411 */     return xaRmfail(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTERNAL xaRmfail() {
-/* 2415 */     return xaRmfail(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTF_REPOS noIr(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2425 */     INTF_REPOS iNTF_REPOS = new INTF_REPOS(1330446337, paramCompletionStatus);
-/* 2426 */     if (paramThrowable != null) {
-/* 2427 */       iNTF_REPOS.initCause(paramThrowable);
-/*      */     }
-/* 2429 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2430 */       Object[] arrayOfObject = null;
-/* 2431 */       doLog(Level.WARNING, "OMG.noIr", arrayOfObject, OMGSystemException.class, iNTF_REPOS);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2435 */     return iNTF_REPOS;
-/*      */   }
-/*      */   
-/*      */   public INTF_REPOS noIr(CompletionStatus paramCompletionStatus) {
-/* 2439 */     return noIr(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTF_REPOS noIr(Throwable paramThrowable) {
-/* 2443 */     return noIr(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTF_REPOS noIr() {
-/* 2447 */     return noIr(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public INTF_REPOS noInterfaceInIr(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2453 */     INTF_REPOS iNTF_REPOS = new INTF_REPOS(1330446338, paramCompletionStatus);
-/* 2454 */     if (paramThrowable != null) {
-/* 2455 */       iNTF_REPOS.initCause(paramThrowable);
-/*      */     }
-/* 2457 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2458 */       Object[] arrayOfObject = null;
-/* 2459 */       doLog(Level.WARNING, "OMG.noInterfaceInIr", arrayOfObject, OMGSystemException.class, iNTF_REPOS);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2463 */     return iNTF_REPOS;
-/*      */   }
-/*      */   
-/*      */   public INTF_REPOS noInterfaceInIr(CompletionStatus paramCompletionStatus) {
-/* 2467 */     return noInterfaceInIr(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public INTF_REPOS noInterfaceInIr(Throwable paramThrowable) {
-/* 2471 */     return noInterfaceInIr(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public INTF_REPOS noInterfaceInIr() {
-/* 2475 */     return noInterfaceInIr(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL unableLocateValueFactory(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2485 */     MARSHAL mARSHAL = new MARSHAL(1330446337, paramCompletionStatus);
-/* 2486 */     if (paramThrowable != null) {
-/* 2487 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2489 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 2490 */       Object[] arrayOfObject = null;
-/* 2491 */       doLog(Level.FINE, "OMG.unableLocateValueFactory", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2495 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL unableLocateValueFactory(CompletionStatus paramCompletionStatus) {
-/* 2499 */     return unableLocateValueFactory(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL unableLocateValueFactory(Throwable paramThrowable) {
-/* 2503 */     return unableLocateValueFactory(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL unableLocateValueFactory() {
-/* 2507 */     return unableLocateValueFactory(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL setResultBeforeCtx(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2513 */     MARSHAL mARSHAL = new MARSHAL(1330446338, paramCompletionStatus);
-/* 2514 */     if (paramThrowable != null) {
-/* 2515 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2517 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2518 */       Object[] arrayOfObject = null;
-/* 2519 */       doLog(Level.WARNING, "OMG.setResultBeforeCtx", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2523 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL setResultBeforeCtx(CompletionStatus paramCompletionStatus) {
-/* 2527 */     return setResultBeforeCtx(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL setResultBeforeCtx(Throwable paramThrowable) {
-/* 2531 */     return setResultBeforeCtx(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL setResultBeforeCtx() {
-/* 2535 */     return setResultBeforeCtx(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL badNvlist(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2541 */     MARSHAL mARSHAL = new MARSHAL(1330446339, paramCompletionStatus);
-/* 2542 */     if (paramThrowable != null) {
-/* 2543 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2545 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2546 */       Object[] arrayOfObject = null;
-/* 2547 */       doLog(Level.WARNING, "OMG.badNvlist", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2551 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL badNvlist(CompletionStatus paramCompletionStatus) {
-/* 2555 */     return badNvlist(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL badNvlist(Throwable paramThrowable) {
-/* 2559 */     return badNvlist(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL badNvlist() {
-/* 2563 */     return badNvlist(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL notAnObjectImpl(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2569 */     MARSHAL mARSHAL = new MARSHAL(1330446340, paramCompletionStatus);
-/* 2570 */     if (paramThrowable != null) {
-/* 2571 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2573 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2574 */       Object[] arrayOfObject = null;
-/* 2575 */       doLog(Level.WARNING, "OMG.notAnObjectImpl", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2579 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL notAnObjectImpl(CompletionStatus paramCompletionStatus) {
-/* 2583 */     return notAnObjectImpl(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL notAnObjectImpl(Throwable paramThrowable) {
-/* 2587 */     return notAnObjectImpl(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL notAnObjectImpl() {
-/* 2591 */     return notAnObjectImpl(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionSent(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2597 */     MARSHAL mARSHAL = new MARSHAL(1330446341, paramCompletionStatus);
-/* 2598 */     if (paramThrowable != null) {
-/* 2599 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2601 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2602 */       Object[] arrayOfObject = null;
-/* 2603 */       doLog(Level.WARNING, "OMG.wcharBadGiopVersionSent", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2607 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionSent(CompletionStatus paramCompletionStatus) {
-/* 2611 */     return wcharBadGiopVersionSent(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionSent(Throwable paramThrowable) {
-/* 2615 */     return wcharBadGiopVersionSent(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionSent() {
-/* 2619 */     return wcharBadGiopVersionSent(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionReturned(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2625 */     MARSHAL mARSHAL = new MARSHAL(1330446342, paramCompletionStatus);
-/* 2626 */     if (paramThrowable != null) {
-/* 2627 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2629 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2630 */       Object[] arrayOfObject = null;
-/* 2631 */       doLog(Level.WARNING, "OMG.wcharBadGiopVersionReturned", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2635 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionReturned(CompletionStatus paramCompletionStatus) {
-/* 2639 */     return wcharBadGiopVersionReturned(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionReturned(Throwable paramThrowable) {
-/* 2643 */     return wcharBadGiopVersionReturned(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL wcharBadGiopVersionReturned() {
-/* 2647 */     return wcharBadGiopVersionReturned(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL unsupportedFormatVersion(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2653 */     MARSHAL mARSHAL = new MARSHAL(1330446343, paramCompletionStatus);
-/* 2654 */     if (paramThrowable != null) {
-/* 2655 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2657 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2658 */       Object[] arrayOfObject = null;
-/* 2659 */       doLog(Level.WARNING, "OMG.unsupportedFormatVersion", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2663 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL unsupportedFormatVersion(CompletionStatus paramCompletionStatus) {
-/* 2667 */     return unsupportedFormatVersion(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL unsupportedFormatVersion(Throwable paramThrowable) {
-/* 2671 */     return unsupportedFormatVersion(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL unsupportedFormatVersion() {
-/* 2675 */     return unsupportedFormatVersion(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible1(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2681 */     MARSHAL mARSHAL = new MARSHAL(1330446344, paramCompletionStatus);
-/* 2682 */     if (paramThrowable != null) {
-/* 2683 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2685 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2686 */       Object[] arrayOfObject = null;
-/* 2687 */       doLog(Level.WARNING, "OMG.rmiiiopOptionalDataIncompatible1", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2691 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible1(CompletionStatus paramCompletionStatus) {
-/* 2695 */     return rmiiiopOptionalDataIncompatible1(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible1(Throwable paramThrowable) {
-/* 2699 */     return rmiiiopOptionalDataIncompatible1(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible1() {
-/* 2703 */     return rmiiiopOptionalDataIncompatible1(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible2(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2709 */     MARSHAL mARSHAL = new MARSHAL(1330446344, paramCompletionStatus);
-/* 2710 */     if (paramThrowable != null) {
-/* 2711 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2713 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2714 */       Object[] arrayOfObject = null;
-/* 2715 */       doLog(Level.WARNING, "OMG.rmiiiopOptionalDataIncompatible2", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2719 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible2(CompletionStatus paramCompletionStatus) {
-/* 2723 */     return rmiiiopOptionalDataIncompatible2(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible2(Throwable paramThrowable) {
-/* 2727 */     return rmiiiopOptionalDataIncompatible2(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible2() {
-/* 2731 */     return rmiiiopOptionalDataIncompatible2(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible3(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2737 */     MARSHAL mARSHAL = new MARSHAL(1330446344, paramCompletionStatus);
-/* 2738 */     if (paramThrowable != null) {
-/* 2739 */       mARSHAL.initCause(paramThrowable);
-/*      */     }
-/* 2741 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 2742 */       Object[] arrayOfObject = null;
-/* 2743 */       doLog(Level.FINE, "OMG.rmiiiopOptionalDataIncompatible3", arrayOfObject, OMGSystemException.class, mARSHAL);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2747 */     return mARSHAL;
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible3(CompletionStatus paramCompletionStatus) {
-/* 2751 */     return rmiiiopOptionalDataIncompatible3(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible3(Throwable paramThrowable) {
-/* 2755 */     return rmiiiopOptionalDataIncompatible3(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public MARSHAL rmiiiopOptionalDataIncompatible3() {
-/* 2759 */     return rmiiiopOptionalDataIncompatible3(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT missingLocalValueImpl(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2769 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446337, paramCompletionStatus);
-/* 2770 */     if (paramThrowable != null) {
-/* 2771 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2773 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2774 */       Object[] arrayOfObject = null;
-/* 2775 */       doLog(Level.WARNING, "OMG.missingLocalValueImpl", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2779 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT missingLocalValueImpl(CompletionStatus paramCompletionStatus) {
-/* 2783 */     return missingLocalValueImpl(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT missingLocalValueImpl(Throwable paramThrowable) {
-/* 2787 */     return missingLocalValueImpl(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT missingLocalValueImpl() {
-/* 2791 */     return missingLocalValueImpl(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT incompatibleValueImpl(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2797 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446338, paramCompletionStatus);
-/* 2798 */     if (paramThrowable != null) {
-/* 2799 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2801 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2802 */       Object[] arrayOfObject = null;
-/* 2803 */       doLog(Level.WARNING, "OMG.incompatibleValueImpl", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2807 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT incompatibleValueImpl(CompletionStatus paramCompletionStatus) {
-/* 2811 */     return incompatibleValueImpl(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT incompatibleValueImpl(Throwable paramThrowable) {
-/* 2815 */     return incompatibleValueImpl(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT incompatibleValueImpl() {
-/* 2819 */     return incompatibleValueImpl(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT noUsableProfile2(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2825 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446339, paramCompletionStatus);
-/* 2826 */     if (paramThrowable != null) {
-/* 2827 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2829 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2830 */       Object[] arrayOfObject = null;
-/* 2831 */       doLog(Level.WARNING, "OMG.noUsableProfile2", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2835 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT noUsableProfile2(CompletionStatus paramCompletionStatus) {
-/* 2839 */     return noUsableProfile2(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT noUsableProfile2(Throwable paramThrowable) {
-/* 2843 */     return noUsableProfile2(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT noUsableProfile2() {
-/* 2847 */     return noUsableProfile2(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT diiLocalObject(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2853 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446340, paramCompletionStatus);
-/* 2854 */     if (paramThrowable != null) {
-/* 2855 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2857 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2858 */       Object[] arrayOfObject = null;
-/* 2859 */       doLog(Level.WARNING, "OMG.diiLocalObject", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2863 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT diiLocalObject(CompletionStatus paramCompletionStatus) {
-/* 2867 */     return diiLocalObject(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT diiLocalObject(Throwable paramThrowable) {
-/* 2871 */     return diiLocalObject(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT diiLocalObject() {
-/* 2875 */     return diiLocalObject(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT bioReset(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2881 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446341, paramCompletionStatus);
-/* 2882 */     if (paramThrowable != null) {
-/* 2883 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2885 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2886 */       Object[] arrayOfObject = null;
-/* 2887 */       doLog(Level.WARNING, "OMG.bioReset", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2891 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioReset(CompletionStatus paramCompletionStatus) {
-/* 2895 */     return bioReset(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioReset(Throwable paramThrowable) {
-/* 2899 */     return bioReset(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioReset() {
-/* 2903 */     return bioReset(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT bioMetaNotAvailable(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2909 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446342, paramCompletionStatus);
-/* 2910 */     if (paramThrowable != null) {
-/* 2911 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2913 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2914 */       Object[] arrayOfObject = null;
-/* 2915 */       doLog(Level.WARNING, "OMG.bioMetaNotAvailable", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2919 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioMetaNotAvailable(CompletionStatus paramCompletionStatus) {
-/* 2923 */     return bioMetaNotAvailable(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioMetaNotAvailable(Throwable paramThrowable) {
-/* 2927 */     return bioMetaNotAvailable(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioMetaNotAvailable() {
-/* 2931 */     return bioMetaNotAvailable(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_IMPLEMENT bioGenomicNoIterator(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2937 */     NO_IMPLEMENT nO_IMPLEMENT = new NO_IMPLEMENT(1330446343, paramCompletionStatus);
-/* 2938 */     if (paramThrowable != null) {
-/* 2939 */       nO_IMPLEMENT.initCause(paramThrowable);
-/*      */     }
-/* 2941 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 2942 */       Object[] arrayOfObject = null;
-/* 2943 */       doLog(Level.WARNING, "OMG.bioGenomicNoIterator", arrayOfObject, OMGSystemException.class, nO_IMPLEMENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2947 */     return nO_IMPLEMENT;
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioGenomicNoIterator(CompletionStatus paramCompletionStatus) {
-/* 2951 */     return bioGenomicNoIterator(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioGenomicNoIterator(Throwable paramThrowable) {
-/* 2955 */     return bioGenomicNoIterator(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_IMPLEMENT bioGenomicNoIterator() {
-/* 2959 */     return bioGenomicNoIterator(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported1(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2969 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 2970 */     if (paramThrowable != null) {
-/* 2971 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 2973 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 2974 */       Object[] arrayOfObject = null;
-/* 2975 */       doLog(Level.FINE, "OMG.piOperationNotSupported1", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2979 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported1(CompletionStatus paramCompletionStatus) {
-/* 2983 */     return piOperationNotSupported1(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported1(Throwable paramThrowable) {
-/* 2987 */     return piOperationNotSupported1(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported1() {
-/* 2991 */     return piOperationNotSupported1(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported2(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 2997 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 2998 */     if (paramThrowable != null) {
-/* 2999 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3001 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3002 */       Object[] arrayOfObject = null;
-/* 3003 */       doLog(Level.FINE, "OMG.piOperationNotSupported2", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3007 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported2(CompletionStatus paramCompletionStatus) {
-/* 3011 */     return piOperationNotSupported2(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported2(Throwable paramThrowable) {
-/* 3015 */     return piOperationNotSupported2(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported2() {
-/* 3019 */     return piOperationNotSupported2(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported3(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3025 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 3026 */     if (paramThrowable != null) {
-/* 3027 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3029 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3030 */       Object[] arrayOfObject = null;
-/* 3031 */       doLog(Level.FINE, "OMG.piOperationNotSupported3", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3035 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported3(CompletionStatus paramCompletionStatus) {
-/* 3039 */     return piOperationNotSupported3(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported3(Throwable paramThrowable) {
-/* 3043 */     return piOperationNotSupported3(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported3() {
-/* 3047 */     return piOperationNotSupported3(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported4(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3053 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 3054 */     if (paramThrowable != null) {
-/* 3055 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3057 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3058 */       Object[] arrayOfObject = null;
-/* 3059 */       doLog(Level.FINE, "OMG.piOperationNotSupported4", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3063 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported4(CompletionStatus paramCompletionStatus) {
-/* 3067 */     return piOperationNotSupported4(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported4(Throwable paramThrowable) {
-/* 3071 */     return piOperationNotSupported4(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported4() {
-/* 3075 */     return piOperationNotSupported4(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported5(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3081 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 3082 */     if (paramThrowable != null) {
-/* 3083 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3085 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3086 */       Object[] arrayOfObject = null;
-/* 3087 */       doLog(Level.FINE, "OMG.piOperationNotSupported5", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3091 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported5(CompletionStatus paramCompletionStatus) {
-/* 3095 */     return piOperationNotSupported5(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported5(Throwable paramThrowable) {
-/* 3099 */     return piOperationNotSupported5(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported5() {
-/* 3103 */     return piOperationNotSupported5(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported6(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3109 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 3110 */     if (paramThrowable != null) {
-/* 3111 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3113 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3114 */       Object[] arrayOfObject = null;
-/* 3115 */       doLog(Level.FINE, "OMG.piOperationNotSupported6", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3119 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported6(CompletionStatus paramCompletionStatus) {
-/* 3123 */     return piOperationNotSupported6(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported6(Throwable paramThrowable) {
-/* 3127 */     return piOperationNotSupported6(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported6() {
-/* 3131 */     return piOperationNotSupported6(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported7(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3137 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 3138 */     if (paramThrowable != null) {
-/* 3139 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3141 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3142 */       Object[] arrayOfObject = null;
-/* 3143 */       doLog(Level.FINE, "OMG.piOperationNotSupported7", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3147 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported7(CompletionStatus paramCompletionStatus) {
-/* 3151 */     return piOperationNotSupported7(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported7(Throwable paramThrowable) {
-/* 3155 */     return piOperationNotSupported7(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported7() {
-/* 3159 */     return piOperationNotSupported7(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported8(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3165 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446337, paramCompletionStatus);
-/* 3166 */     if (paramThrowable != null) {
-/* 3167 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3169 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3170 */       Object[] arrayOfObject = null;
-/* 3171 */       doLog(Level.FINE, "OMG.piOperationNotSupported8", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3175 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported8(CompletionStatus paramCompletionStatus) {
-/* 3179 */     return piOperationNotSupported8(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported8(Throwable paramThrowable) {
-/* 3183 */     return piOperationNotSupported8(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES piOperationNotSupported8() {
-/* 3187 */     return piOperationNotSupported8(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public NO_RESOURCES noConnectionPriority(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3193 */     NO_RESOURCES nO_RESOURCES = new NO_RESOURCES(1330446338, paramCompletionStatus);
-/* 3194 */     if (paramThrowable != null) {
-/* 3195 */       nO_RESOURCES.initCause(paramThrowable);
-/*      */     }
-/* 3197 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3198 */       Object[] arrayOfObject = null;
-/* 3199 */       doLog(Level.WARNING, "OMG.noConnectionPriority", arrayOfObject, OMGSystemException.class, nO_RESOURCES);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3203 */     return nO_RESOURCES;
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES noConnectionPriority(CompletionStatus paramCompletionStatus) {
-/* 3207 */     return noConnectionPriority(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES noConnectionPriority(Throwable paramThrowable) {
-/* 3211 */     return noConnectionPriority(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public NO_RESOURCES noConnectionPriority() {
-/* 3215 */     return noConnectionPriority(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaRb(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3225 */     TRANSACTION_ROLLEDBACK tRANSACTION_ROLLEDBACK = new TRANSACTION_ROLLEDBACK(1330446337, paramCompletionStatus);
-/* 3226 */     if (paramThrowable != null) {
-/* 3227 */       tRANSACTION_ROLLEDBACK.initCause(paramThrowable);
-/*      */     }
-/* 3229 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3230 */       Object[] arrayOfObject = null;
-/* 3231 */       doLog(Level.WARNING, "OMG.xaRb", arrayOfObject, OMGSystemException.class, tRANSACTION_ROLLEDBACK);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3235 */     return tRANSACTION_ROLLEDBACK;
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaRb(CompletionStatus paramCompletionStatus) {
-/* 3239 */     return xaRb(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaRb(Throwable paramThrowable) {
-/* 3243 */     return xaRb(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaRb() {
-/* 3247 */     return xaRb(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaNota(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3253 */     TRANSACTION_ROLLEDBACK tRANSACTION_ROLLEDBACK = new TRANSACTION_ROLLEDBACK(1330446338, paramCompletionStatus);
-/* 3254 */     if (paramThrowable != null) {
-/* 3255 */       tRANSACTION_ROLLEDBACK.initCause(paramThrowable);
-/*      */     }
-/* 3257 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3258 */       Object[] arrayOfObject = null;
-/* 3259 */       doLog(Level.WARNING, "OMG.xaNota", arrayOfObject, OMGSystemException.class, tRANSACTION_ROLLEDBACK);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3263 */     return tRANSACTION_ROLLEDBACK;
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaNota(CompletionStatus paramCompletionStatus) {
-/* 3267 */     return xaNota(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaNota(Throwable paramThrowable) {
-/* 3271 */     return xaNota(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaNota() {
-/* 3275 */     return xaNota(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3281 */     TRANSACTION_ROLLEDBACK tRANSACTION_ROLLEDBACK = new TRANSACTION_ROLLEDBACK(1330446339, paramCompletionStatus);
-/* 3282 */     if (paramThrowable != null) {
-/* 3283 */       tRANSACTION_ROLLEDBACK.initCause(paramThrowable);
-/*      */     }
-/* 3285 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3286 */       Object[] arrayOfObject = null;
-/* 3287 */       doLog(Level.WARNING, "OMG.xaEndTrueRollbackDeferred", arrayOfObject, OMGSystemException.class, tRANSACTION_ROLLEDBACK);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3291 */     return tRANSACTION_ROLLEDBACK;
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred(CompletionStatus paramCompletionStatus) {
-/* 3295 */     return xaEndTrueRollbackDeferred(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred(Throwable paramThrowable) {
-/* 3299 */     return xaEndTrueRollbackDeferred(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred() {
-/* 3303 */     return xaEndTrueRollbackDeferred(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSIENT poaRequestDiscard(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3313 */     TRANSIENT tRANSIENT = new TRANSIENT(1330446337, paramCompletionStatus);
-/* 3314 */     if (paramThrowable != null) {
-/* 3315 */       tRANSIENT.initCause(paramThrowable);
-/*      */     }
-/* 3317 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3318 */       Object[] arrayOfObject = null;
-/* 3319 */       doLog(Level.WARNING, "OMG.poaRequestDiscard", arrayOfObject, OMGSystemException.class, tRANSIENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3323 */     return tRANSIENT;
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaRequestDiscard(CompletionStatus paramCompletionStatus) {
-/* 3327 */     return poaRequestDiscard(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaRequestDiscard(Throwable paramThrowable) {
-/* 3331 */     return poaRequestDiscard(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaRequestDiscard() {
-/* 3335 */     return poaRequestDiscard(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSIENT noUsableProfile3(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3341 */     TRANSIENT tRANSIENT = new TRANSIENT(1330446338, paramCompletionStatus);
-/* 3342 */     if (paramThrowable != null) {
-/* 3343 */       tRANSIENT.initCause(paramThrowable);
-/*      */     }
-/* 3345 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3346 */       Object[] arrayOfObject = null;
-/* 3347 */       doLog(Level.WARNING, "OMG.noUsableProfile3", arrayOfObject, OMGSystemException.class, tRANSIENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3351 */     return tRANSIENT;
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT noUsableProfile3(CompletionStatus paramCompletionStatus) {
-/* 3355 */     return noUsableProfile3(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT noUsableProfile3(Throwable paramThrowable) {
-/* 3359 */     return noUsableProfile3(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT noUsableProfile3() {
-/* 3363 */     return noUsableProfile3(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSIENT requestCancelled(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3369 */     TRANSIENT tRANSIENT = new TRANSIENT(1330446339, paramCompletionStatus);
-/* 3370 */     if (paramThrowable != null) {
-/* 3371 */       tRANSIENT.initCause(paramThrowable);
-/*      */     }
-/* 3373 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3374 */       Object[] arrayOfObject = null;
-/* 3375 */       doLog(Level.WARNING, "OMG.requestCancelled", arrayOfObject, OMGSystemException.class, tRANSIENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3379 */     return tRANSIENT;
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT requestCancelled(CompletionStatus paramCompletionStatus) {
-/* 3383 */     return requestCancelled(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT requestCancelled(Throwable paramThrowable) {
-/* 3387 */     return requestCancelled(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT requestCancelled() {
-/* 3391 */     return requestCancelled(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TRANSIENT poaDestroyed(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3397 */     TRANSIENT tRANSIENT = new TRANSIENT(1330446340, paramCompletionStatus);
-/* 3398 */     if (paramThrowable != null) {
-/* 3399 */       tRANSIENT.initCause(paramThrowable);
-/*      */     }
-/* 3401 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3402 */       Object[] arrayOfObject = null;
-/* 3403 */       doLog(Level.WARNING, "OMG.poaDestroyed", arrayOfObject, OMGSystemException.class, tRANSIENT);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3407 */     return tRANSIENT;
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaDestroyed(CompletionStatus paramCompletionStatus) {
-/* 3411 */     return poaDestroyed(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaDestroyed(Throwable paramThrowable) {
-/* 3415 */     return poaDestroyed(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public TRANSIENT poaDestroyed() {
-/* 3419 */     return poaDestroyed(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST unregisteredValueAsObjref(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3429 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1330446337, paramCompletionStatus);
-/* 3430 */     if (paramThrowable != null) {
-/* 3431 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 3433 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3434 */       Object[] arrayOfObject = null;
-/* 3435 */       doLog(Level.WARNING, "OMG.unregisteredValueAsObjref", arrayOfObject, OMGSystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3439 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST unregisteredValueAsObjref(CompletionStatus paramCompletionStatus) {
-/* 3443 */     return unregisteredValueAsObjref(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST unregisteredValueAsObjref(Throwable paramThrowable) {
-/* 3447 */     return unregisteredValueAsObjref(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST unregisteredValueAsObjref() {
-/* 3451 */     return unregisteredValueAsObjref(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST noObjectAdaptor(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3457 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1330446338, paramCompletionStatus);
-/* 3458 */     if (paramThrowable != null) {
-/* 3459 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 3461 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3462 */       Object[] arrayOfObject = null;
-/* 3463 */       doLog(Level.FINE, "OMG.noObjectAdaptor", arrayOfObject, OMGSystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3467 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST noObjectAdaptor(CompletionStatus paramCompletionStatus) {
-/* 3471 */     return noObjectAdaptor(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST noObjectAdaptor(Throwable paramThrowable) {
-/* 3475 */     return noObjectAdaptor(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST noObjectAdaptor() {
-/* 3479 */     return noObjectAdaptor(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST bioNotAvailable(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3485 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1330446339, paramCompletionStatus);
-/* 3486 */     if (paramThrowable != null) {
-/* 3487 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 3489 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3490 */       Object[] arrayOfObject = null;
-/* 3491 */       doLog(Level.WARNING, "OMG.bioNotAvailable", arrayOfObject, OMGSystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3495 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST bioNotAvailable(CompletionStatus paramCompletionStatus) {
-/* 3499 */     return bioNotAvailable(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST bioNotAvailable(Throwable paramThrowable) {
-/* 3503 */     return bioNotAvailable(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST bioNotAvailable() {
-/* 3507 */     return bioNotAvailable(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJECT_NOT_EXIST objectAdapterInactive(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3513 */     OBJECT_NOT_EXIST oBJECT_NOT_EXIST = new OBJECT_NOT_EXIST(1330446340, paramCompletionStatus);
-/* 3514 */     if (paramThrowable != null) {
-/* 3515 */       oBJECT_NOT_EXIST.initCause(paramThrowable);
-/*      */     }
-/* 3517 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3518 */       Object[] arrayOfObject = null;
-/* 3519 */       doLog(Level.WARNING, "OMG.objectAdapterInactive", arrayOfObject, OMGSystemException.class, oBJECT_NOT_EXIST);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3523 */     return oBJECT_NOT_EXIST;
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST objectAdapterInactive(CompletionStatus paramCompletionStatus) {
-/* 3527 */     return objectAdapterInactive(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST objectAdapterInactive(Throwable paramThrowable) {
-/* 3531 */     return objectAdapterInactive(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJECT_NOT_EXIST objectAdapterInactive() {
-/* 3535 */     return objectAdapterInactive(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER adapterActivatorException(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject1, Object paramObject2) {
-/* 3545 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446337, paramCompletionStatus);
-/* 3546 */     if (paramThrowable != null) {
-/* 3547 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3549 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3550 */       Object[] arrayOfObject = new Object[2];
-/* 3551 */       arrayOfObject[0] = paramObject1;
-/* 3552 */       arrayOfObject[1] = paramObject2;
-/* 3553 */       doLog(Level.WARNING, "OMG.adapterActivatorException", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3557 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER adapterActivatorException(CompletionStatus paramCompletionStatus, Object paramObject1, Object paramObject2) {
-/* 3561 */     return adapterActivatorException(paramCompletionStatus, (Throwable)null, paramObject1, paramObject2);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER adapterActivatorException(Throwable paramThrowable, Object paramObject1, Object paramObject2) {
-/* 3565 */     return adapterActivatorException(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject1, paramObject2);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER adapterActivatorException(Object paramObject1, Object paramObject2) {
-/* 3569 */     return adapterActivatorException(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject1, paramObject2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER badServantType(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3575 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446338, paramCompletionStatus);
-/* 3576 */     if (paramThrowable != null) {
-/* 3577 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3579 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3580 */       Object[] arrayOfObject = null;
-/* 3581 */       doLog(Level.WARNING, "OMG.badServantType", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3585 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER badServantType(CompletionStatus paramCompletionStatus) {
-/* 3589 */     return badServantType(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER badServantType(Throwable paramThrowable) {
-/* 3593 */     return badServantType(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER badServantType() {
-/* 3597 */     return badServantType(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER noDefaultServant(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3603 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446339, paramCompletionStatus);
-/* 3604 */     if (paramThrowable != null) {
-/* 3605 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3607 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3608 */       Object[] arrayOfObject = null;
-/* 3609 */       doLog(Level.WARNING, "OMG.noDefaultServant", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3613 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noDefaultServant(CompletionStatus paramCompletionStatus) {
-/* 3617 */     return noDefaultServant(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noDefaultServant(Throwable paramThrowable) {
-/* 3621 */     return noDefaultServant(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noDefaultServant() {
-/* 3625 */     return noDefaultServant(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER noServantManager(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3631 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446340, paramCompletionStatus);
-/* 3632 */     if (paramThrowable != null) {
-/* 3633 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3635 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3636 */       Object[] arrayOfObject = null;
-/* 3637 */       doLog(Level.WARNING, "OMG.noServantManager", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3641 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noServantManager(CompletionStatus paramCompletionStatus) {
-/* 3645 */     return noServantManager(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noServantManager(Throwable paramThrowable) {
-/* 3649 */     return noServantManager(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER noServantManager() {
-/* 3653 */     return noServantManager(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER badPolicyIncarnate(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3659 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446341, paramCompletionStatus);
-/* 3660 */     if (paramThrowable != null) {
-/* 3661 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3663 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3664 */       Object[] arrayOfObject = null;
-/* 3665 */       doLog(Level.WARNING, "OMG.badPolicyIncarnate", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3669 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER badPolicyIncarnate(CompletionStatus paramCompletionStatus) {
-/* 3673 */     return badPolicyIncarnate(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER badPolicyIncarnate(Throwable paramThrowable) {
-/* 3677 */     return badPolicyIncarnate(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER badPolicyIncarnate() {
-/* 3681 */     return badPolicyIncarnate(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER piExcCompEstablished(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3687 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446342, paramCompletionStatus);
-/* 3688 */     if (paramThrowable != null) {
-/* 3689 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3691 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3692 */       Object[] arrayOfObject = null;
-/* 3693 */       doLog(Level.WARNING, "OMG.piExcCompEstablished", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3697 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER piExcCompEstablished(CompletionStatus paramCompletionStatus) {
-/* 3701 */     return piExcCompEstablished(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER piExcCompEstablished(Throwable paramThrowable) {
-/* 3705 */     return piExcCompEstablished(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER piExcCompEstablished() {
-/* 3709 */     return piExcCompEstablished(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public OBJ_ADAPTER nullServantReturned(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3715 */     OBJ_ADAPTER oBJ_ADAPTER = new OBJ_ADAPTER(1330446343, paramCompletionStatus);
-/* 3716 */     if (paramThrowable != null) {
-/* 3717 */       oBJ_ADAPTER.initCause(paramThrowable);
-/*      */     }
-/* 3719 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3720 */       Object[] arrayOfObject = null;
-/* 3721 */       doLog(Level.FINE, "OMG.nullServantReturned", arrayOfObject, OMGSystemException.class, oBJ_ADAPTER);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3725 */     return oBJ_ADAPTER;
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER nullServantReturned(CompletionStatus paramCompletionStatus) {
-/* 3729 */     return nullServantReturned(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER nullServantReturned(Throwable paramThrowable) {
-/* 3733 */     return nullServantReturned(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public OBJ_ADAPTER nullServantReturned() {
-/* 3737 */     return nullServantReturned(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN unknownUserException(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3747 */     UNKNOWN uNKNOWN = new UNKNOWN(1330446337, paramCompletionStatus);
-/* 3748 */     if (paramThrowable != null) {
-/* 3749 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 3751 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 3752 */       Object[] arrayOfObject = null;
-/* 3753 */       doLog(Level.FINE, "OMG.unknownUserException", arrayOfObject, OMGSystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3757 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownUserException(CompletionStatus paramCompletionStatus) {
-/* 3761 */     return unknownUserException(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownUserException(Throwable paramThrowable) {
-/* 3765 */     return unknownUserException(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unknownUserException() {
-/* 3769 */     return unknownUserException(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN unsupportedSystemException(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3775 */     UNKNOWN uNKNOWN = new UNKNOWN(1330446338, paramCompletionStatus);
-/* 3776 */     if (paramThrowable != null) {
-/* 3777 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 3779 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3780 */       Object[] arrayOfObject = null;
-/* 3781 */       doLog(Level.WARNING, "OMG.unsupportedSystemException", arrayOfObject, OMGSystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3785 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unsupportedSystemException(CompletionStatus paramCompletionStatus) {
-/* 3789 */     return unsupportedSystemException(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unsupportedSystemException(Throwable paramThrowable) {
-/* 3793 */     return unsupportedSystemException(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN unsupportedSystemException() {
-/* 3797 */     return unsupportedSystemException(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UNKNOWN piUnknownUserException(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 3803 */     UNKNOWN uNKNOWN = new UNKNOWN(1330446339, paramCompletionStatus);
-/* 3804 */     if (paramThrowable != null) {
-/* 3805 */       uNKNOWN.initCause(paramThrowable);
-/*      */     }
-/* 3807 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 3808 */       Object[] arrayOfObject = null;
-/* 3809 */       doLog(Level.WARNING, "OMG.piUnknownUserException", arrayOfObject, OMGSystemException.class, uNKNOWN);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 3813 */     return uNKNOWN;
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN piUnknownUserException(CompletionStatus paramCompletionStatus) {
-/* 3817 */     return piUnknownUserException(paramCompletionStatus, (Throwable)null);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN piUnknownUserException(Throwable paramThrowable) {
-/* 3821 */     return piUnknownUserException(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*      */   }
-/*      */   
-/*      */   public UNKNOWN piUnknownUserException() {
-/* 3825 */     return piUnknownUserException(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*      */   }
-/*      */ }
+// Log wrapper class for standard exceptions
+//
+// Generated by MC.java version 1.0, DO NOT EDIT BY HAND!
+// Generated from input file c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/com/sun/corba/se/spi/logging/data/OMG.mc on Mon Apr 01 20:55:44 PDT 2019
 
+package com.sun.corba.se.impl.logging ;
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\logging\OMGSystemException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+import java.util.logging.Logger ;
+import java.util.logging.Level ;
+
+import org.omg.CORBA.OMGVMCID ;
+import com.sun.corba.se.impl.util.SUNVMCID ;
+import org.omg.CORBA.CompletionStatus ;
+import org.omg.CORBA.SystemException ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.logging.LogWrapperFactory;
+
+import com.sun.corba.se.spi.logging.LogWrapperBase;
+
+import org.omg.CORBA.BAD_CONTEXT ;
+import org.omg.CORBA.BAD_INV_ORDER ;
+import org.omg.CORBA.BAD_OPERATION ;
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA.BAD_TYPECODE ;
+import org.omg.CORBA.DATA_CONVERSION ;
+import org.omg.CORBA.IMP_LIMIT ;
+import org.omg.CORBA.INITIALIZE ;
+import org.omg.CORBA.INV_OBJREF ;
+import org.omg.CORBA.INV_POLICY ;
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.INTF_REPOS ;
+import org.omg.CORBA.MARSHAL ;
+import org.omg.CORBA.NO_IMPLEMENT ;
+import org.omg.CORBA.NO_RESOURCES ;
+import org.omg.CORBA.TRANSACTION_ROLLEDBACK ;
+import org.omg.CORBA.TRANSIENT ;
+import org.omg.CORBA.OBJECT_NOT_EXIST ;
+import org.omg.CORBA.OBJ_ADAPTER ;
+import org.omg.CORBA.UNKNOWN ;
+
+public class OMGSystemException extends LogWrapperBase {
+    
+    public OMGSystemException( Logger logger )
+    {
+        super( logger ) ;
+    }
+    
+    private static LogWrapperFactory factory = new LogWrapperFactory() {
+        public LogWrapperBase create( Logger logger )
+        {
+            return new OMGSystemException( logger ) ;
+        }
+    } ;
+    
+    public static OMGSystemException get( ORB orb, String logDomain )
+    {
+        OMGSystemException wrapper = 
+            (OMGSystemException) orb.getLogWrapper( logDomain, 
+                "OMG", factory ) ;
+        return wrapper ;
+    } 
+    
+    public static OMGSystemException get( String logDomain )
+    {
+        OMGSystemException wrapper = 
+            (OMGSystemException) ORB.staticGetLogWrapper( logDomain, 
+                "OMG", factory ) ;
+        return wrapper ;
+    } 
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_CONTEXT
+    ///////////////////////////////////////////////////////////
+    
+    public static final int IDL_CONTEXT_NOT_FOUND = OMGVMCID.value + 1 ;
+    
+    public BAD_CONTEXT idlContextNotFound( CompletionStatus cs, Throwable t ) {
+        BAD_CONTEXT exc = new BAD_CONTEXT( IDL_CONTEXT_NOT_FOUND, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.idlContextNotFound",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_CONTEXT idlContextNotFound( CompletionStatus cs ) {
+        return idlContextNotFound( cs, null  ) ;
+    }
+    
+    public BAD_CONTEXT idlContextNotFound( Throwable t ) {
+        return idlContextNotFound( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_CONTEXT idlContextNotFound(  ) {
+        return idlContextNotFound( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_MATCHING_IDL_CONTEXT = OMGVMCID.value + 2 ;
+    
+    public BAD_CONTEXT noMatchingIdlContext( CompletionStatus cs, Throwable t ) {
+        BAD_CONTEXT exc = new BAD_CONTEXT( NO_MATCHING_IDL_CONTEXT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noMatchingIdlContext",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_CONTEXT noMatchingIdlContext( CompletionStatus cs ) {
+        return noMatchingIdlContext( cs, null  ) ;
+    }
+    
+    public BAD_CONTEXT noMatchingIdlContext( Throwable t ) {
+        return noMatchingIdlContext( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_CONTEXT noMatchingIdlContext(  ) {
+        return noMatchingIdlContext( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_INV_ORDER
+    ///////////////////////////////////////////////////////////
+    
+    public static final int DEP_PREVENT_DESTRUCTION = OMGVMCID.value + 1 ;
+    
+    public BAD_INV_ORDER depPreventDestruction( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( DEP_PREVENT_DESTRUCTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.depPreventDestruction",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER depPreventDestruction( CompletionStatus cs ) {
+        return depPreventDestruction( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER depPreventDestruction( Throwable t ) {
+        return depPreventDestruction( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER depPreventDestruction(  ) {
+        return depPreventDestruction( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int DESTROY_INDESTRUCTIBLE = OMGVMCID.value + 2 ;
+    
+    public BAD_INV_ORDER destroyIndestructible( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( DESTROY_INDESTRUCTIBLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.destroyIndestructible",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER destroyIndestructible( CompletionStatus cs ) {
+        return destroyIndestructible( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER destroyIndestructible( Throwable t ) {
+        return destroyIndestructible( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER destroyIndestructible(  ) {
+        return destroyIndestructible( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SHUTDOWN_WAIT_FOR_COMPLETION_DEADLOCK = OMGVMCID.value + 3 ;
+    
+    public BAD_INV_ORDER shutdownWaitForCompletionDeadlock( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( SHUTDOWN_WAIT_FOR_COMPLETION_DEADLOCK, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.shutdownWaitForCompletionDeadlock",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER shutdownWaitForCompletionDeadlock( CompletionStatus cs ) {
+        return shutdownWaitForCompletionDeadlock( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER shutdownWaitForCompletionDeadlock( Throwable t ) {
+        return shutdownWaitForCompletionDeadlock( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER shutdownWaitForCompletionDeadlock(  ) {
+        return shutdownWaitForCompletionDeadlock( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_OPERATION_AFTER_SHUTDOWN = OMGVMCID.value + 4 ;
+    
+    public BAD_INV_ORDER badOperationAfterShutdown( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_OPERATION_AFTER_SHUTDOWN, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badOperationAfterShutdown",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badOperationAfterShutdown( CompletionStatus cs ) {
+        return badOperationAfterShutdown( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badOperationAfterShutdown( Throwable t ) {
+        return badOperationAfterShutdown( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badOperationAfterShutdown(  ) {
+        return badOperationAfterShutdown( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_INVOKE = OMGVMCID.value + 5 ;
+    
+    public BAD_INV_ORDER badInvoke( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_INVOKE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badInvoke",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badInvoke( CompletionStatus cs ) {
+        return badInvoke( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badInvoke( Throwable t ) {
+        return badInvoke( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badInvoke(  ) {
+        return badInvoke( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_SET_SERVANT_MANAGER = OMGVMCID.value + 6 ;
+    
+    public BAD_INV_ORDER badSetServantManager( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_SET_SERVANT_MANAGER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badSetServantManager",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badSetServantManager( CompletionStatus cs ) {
+        return badSetServantManager( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badSetServantManager( Throwable t ) {
+        return badSetServantManager( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badSetServantManager(  ) {
+        return badSetServantManager( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_ARGUMENTS_CALL = OMGVMCID.value + 7 ;
+    
+    public BAD_INV_ORDER badArgumentsCall( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_ARGUMENTS_CALL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badArgumentsCall",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badArgumentsCall( CompletionStatus cs ) {
+        return badArgumentsCall( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badArgumentsCall( Throwable t ) {
+        return badArgumentsCall( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badArgumentsCall(  ) {
+        return badArgumentsCall( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_CTX_CALL = OMGVMCID.value + 8 ;
+    
+    public BAD_INV_ORDER badCtxCall( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_CTX_CALL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badCtxCall",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badCtxCall( CompletionStatus cs ) {
+        return badCtxCall( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badCtxCall( Throwable t ) {
+        return badCtxCall( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badCtxCall(  ) {
+        return badCtxCall( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_RESULT_CALL = OMGVMCID.value + 9 ;
+    
+    public BAD_INV_ORDER badResultCall( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_RESULT_CALL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badResultCall",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badResultCall( CompletionStatus cs ) {
+        return badResultCall( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badResultCall( Throwable t ) {
+        return badResultCall( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badResultCall(  ) {
+        return badResultCall( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_SEND = OMGVMCID.value + 10 ;
+    
+    public BAD_INV_ORDER badSend( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_SEND, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badSend",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badSend( CompletionStatus cs ) {
+        return badSend( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badSend( Throwable t ) {
+        return badSend( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badSend(  ) {
+        return badSend( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_POLL_BEFORE = OMGVMCID.value + 11 ;
+    
+    public BAD_INV_ORDER badPollBefore( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_POLL_BEFORE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badPollBefore",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badPollBefore( CompletionStatus cs ) {
+        return badPollBefore( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badPollBefore( Throwable t ) {
+        return badPollBefore( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badPollBefore(  ) {
+        return badPollBefore( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_POLL_AFTER = OMGVMCID.value + 12 ;
+    
+    public BAD_INV_ORDER badPollAfter( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_POLL_AFTER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badPollAfter",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badPollAfter( CompletionStatus cs ) {
+        return badPollAfter( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badPollAfter( Throwable t ) {
+        return badPollAfter( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badPollAfter(  ) {
+        return badPollAfter( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_POLL_SYNC = OMGVMCID.value + 13 ;
+    
+    public BAD_INV_ORDER badPollSync( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( BAD_POLL_SYNC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badPollSync",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER badPollSync( CompletionStatus cs ) {
+        return badPollSync( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER badPollSync( Throwable t ) {
+        return badPollSync( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER badPollSync(  ) {
+        return badPollSync( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_PI_CALL1 = OMGVMCID.value + 14 ;
+    
+    public BAD_INV_ORDER invalidPiCall1( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( INVALID_PI_CALL1, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.invalidPiCall1",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall1( CompletionStatus cs ) {
+        return invalidPiCall1( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall1( Throwable t ) {
+        return invalidPiCall1( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall1(  ) {
+        return invalidPiCall1( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_PI_CALL2 = OMGVMCID.value + 14 ;
+    
+    public BAD_INV_ORDER invalidPiCall2( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( INVALID_PI_CALL2, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.invalidPiCall2",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall2( CompletionStatus cs ) {
+        return invalidPiCall2( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall2( Throwable t ) {
+        return invalidPiCall2( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall2(  ) {
+        return invalidPiCall2( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_PI_CALL3 = OMGVMCID.value + 14 ;
+    
+    public BAD_INV_ORDER invalidPiCall3( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( INVALID_PI_CALL3, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.invalidPiCall3",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall3( CompletionStatus cs ) {
+        return invalidPiCall3( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall3( Throwable t ) {
+        return invalidPiCall3( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall3(  ) {
+        return invalidPiCall3( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_PI_CALL4 = OMGVMCID.value + 14 ;
+    
+    public BAD_INV_ORDER invalidPiCall4( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( INVALID_PI_CALL4, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.invalidPiCall4",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall4( CompletionStatus cs ) {
+        return invalidPiCall4( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall4( Throwable t ) {
+        return invalidPiCall4( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER invalidPiCall4(  ) {
+        return invalidPiCall4( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVICE_CONTEXT_ADD_FAILED = OMGVMCID.value + 15 ;
+    
+    public BAD_INV_ORDER serviceContextAddFailed( CompletionStatus cs, Throwable t, Object arg0) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( SERVICE_CONTEXT_ADD_FAILED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.FINE, "OMG.serviceContextAddFailed",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER serviceContextAddFailed( CompletionStatus cs, Object arg0) {
+        return serviceContextAddFailed( cs, null, arg0 ) ;
+    }
+    
+    public BAD_INV_ORDER serviceContextAddFailed( Throwable t, Object arg0) {
+        return serviceContextAddFailed( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public BAD_INV_ORDER serviceContextAddFailed(  Object arg0) {
+        return serviceContextAddFailed( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int POLICY_FACTORY_REG_FAILED = OMGVMCID.value + 16 ;
+    
+    public BAD_INV_ORDER policyFactoryRegFailed( CompletionStatus cs, Throwable t, Object arg0) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( POLICY_FACTORY_REG_FAILED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "OMG.policyFactoryRegFailed",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER policyFactoryRegFailed( CompletionStatus cs, Object arg0) {
+        return policyFactoryRegFailed( cs, null, arg0 ) ;
+    }
+    
+    public BAD_INV_ORDER policyFactoryRegFailed( Throwable t, Object arg0) {
+        return policyFactoryRegFailed( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public BAD_INV_ORDER policyFactoryRegFailed(  Object arg0) {
+        return policyFactoryRegFailed( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int CREATE_POA_DESTROY = OMGVMCID.value + 17 ;
+    
+    public BAD_INV_ORDER createPoaDestroy( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( CREATE_POA_DESTROY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.createPoaDestroy",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER createPoaDestroy( CompletionStatus cs ) {
+        return createPoaDestroy( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER createPoaDestroy( Throwable t ) {
+        return createPoaDestroy( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER createPoaDestroy(  ) {
+        return createPoaDestroy( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PRIORITY_REASSIGN = OMGVMCID.value + 18 ;
+    
+    public BAD_INV_ORDER priorityReassign( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( PRIORITY_REASSIGN, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.priorityReassign",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER priorityReassign( CompletionStatus cs ) {
+        return priorityReassign( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER priorityReassign( Throwable t ) {
+        return priorityReassign( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER priorityReassign(  ) {
+        return priorityReassign( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int XA_START_OUTSIZE = OMGVMCID.value + 19 ;
+    
+    public BAD_INV_ORDER xaStartOutsize( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( XA_START_OUTSIZE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaStartOutsize",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER xaStartOutsize( CompletionStatus cs ) {
+        return xaStartOutsize( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER xaStartOutsize( Throwable t ) {
+        return xaStartOutsize( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER xaStartOutsize(  ) {
+        return xaStartOutsize( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int XA_START_PROTO = OMGVMCID.value + 20 ;
+    
+    public BAD_INV_ORDER xaStartProto( CompletionStatus cs, Throwable t ) {
+        BAD_INV_ORDER exc = new BAD_INV_ORDER( XA_START_PROTO, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaStartProto",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_INV_ORDER xaStartProto( CompletionStatus cs ) {
+        return xaStartProto( cs, null  ) ;
+    }
+    
+    public BAD_INV_ORDER xaStartProto( Throwable t ) {
+        return xaStartProto( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_INV_ORDER xaStartProto(  ) {
+        return xaStartProto( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_OPERATION
+    ///////////////////////////////////////////////////////////
+    
+    public static final int BAD_SERVANT_MANAGER_TYPE = OMGVMCID.value + 1 ;
+    
+    public BAD_OPERATION badServantManagerType( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( BAD_SERVANT_MANAGER_TYPE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badServantManagerType",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION badServantManagerType( CompletionStatus cs ) {
+        return badServantManagerType( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION badServantManagerType( Throwable t ) {
+        return badServantManagerType( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION badServantManagerType(  ) {
+        return badServantManagerType( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int OPERATION_UNKNOWN_TO_TARGET = OMGVMCID.value + 2 ;
+    
+    public BAD_OPERATION operationUnknownToTarget( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( OPERATION_UNKNOWN_TO_TARGET, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.operationUnknownToTarget",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION operationUnknownToTarget( CompletionStatus cs ) {
+        return operationUnknownToTarget( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION operationUnknownToTarget( Throwable t ) {
+        return operationUnknownToTarget( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION operationUnknownToTarget(  ) {
+        return operationUnknownToTarget( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_PARAM
+    ///////////////////////////////////////////////////////////
+    
+    public static final int UNABLE_REGISTER_VALUE_FACTORY = OMGVMCID.value + 1 ;
+    
+    public BAD_PARAM unableRegisterValueFactory( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( UNABLE_REGISTER_VALUE_FACTORY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.unableRegisterValueFactory",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM unableRegisterValueFactory( CompletionStatus cs ) {
+        return unableRegisterValueFactory( cs, null  ) ;
+    }
+    
+    public BAD_PARAM unableRegisterValueFactory( Throwable t ) {
+        return unableRegisterValueFactory( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM unableRegisterValueFactory(  ) {
+        return unableRegisterValueFactory( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int RID_ALREADY_DEFINED = OMGVMCID.value + 2 ;
+    
+    public BAD_PARAM ridAlreadyDefined( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( RID_ALREADY_DEFINED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.ridAlreadyDefined",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM ridAlreadyDefined( CompletionStatus cs ) {
+        return ridAlreadyDefined( cs, null  ) ;
+    }
+    
+    public BAD_PARAM ridAlreadyDefined( Throwable t ) {
+        return ridAlreadyDefined( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM ridAlreadyDefined(  ) {
+        return ridAlreadyDefined( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NAME_USED_IFR = OMGVMCID.value + 3 ;
+    
+    public BAD_PARAM nameUsedIfr( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( NAME_USED_IFR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.nameUsedIfr",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM nameUsedIfr( CompletionStatus cs ) {
+        return nameUsedIfr( cs, null  ) ;
+    }
+    
+    public BAD_PARAM nameUsedIfr( Throwable t ) {
+        return nameUsedIfr( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM nameUsedIfr(  ) {
+        return nameUsedIfr( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TARGET_NOT_CONTAINER = OMGVMCID.value + 4 ;
+    
+    public BAD_PARAM targetNotContainer( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TARGET_NOT_CONTAINER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.targetNotContainer",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM targetNotContainer( CompletionStatus cs ) {
+        return targetNotContainer( cs, null  ) ;
+    }
+    
+    public BAD_PARAM targetNotContainer( Throwable t ) {
+        return targetNotContainer( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM targetNotContainer(  ) {
+        return targetNotContainer( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NAME_CLASH = OMGVMCID.value + 5 ;
+    
+    public BAD_PARAM nameClash( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( NAME_CLASH, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.nameClash",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM nameClash( CompletionStatus cs ) {
+        return nameClash( cs, null  ) ;
+    }
+    
+    public BAD_PARAM nameClash( Throwable t ) {
+        return nameClash( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM nameClash(  ) {
+        return nameClash( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NOT_SERIALIZABLE = OMGVMCID.value + 6 ;
+    
+    public BAD_PARAM notSerializable( CompletionStatus cs, Throwable t, Object arg0) {
+        BAD_PARAM exc = new BAD_PARAM( NOT_SERIALIZABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "OMG.notSerializable",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM notSerializable( CompletionStatus cs, Object arg0) {
+        return notSerializable( cs, null, arg0 ) ;
+    }
+    
+    public BAD_PARAM notSerializable( Throwable t, Object arg0) {
+        return notSerializable( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public BAD_PARAM notSerializable(  Object arg0) {
+        return notSerializable( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int SO_BAD_SCHEME_NAME = OMGVMCID.value + 7 ;
+    
+    public BAD_PARAM soBadSchemeName( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( SO_BAD_SCHEME_NAME, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.soBadSchemeName",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM soBadSchemeName( CompletionStatus cs ) {
+        return soBadSchemeName( cs, null  ) ;
+    }
+    
+    public BAD_PARAM soBadSchemeName( Throwable t ) {
+        return soBadSchemeName( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM soBadSchemeName(  ) {
+        return soBadSchemeName( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SO_BAD_ADDRESS = OMGVMCID.value + 8 ;
+    
+    public BAD_PARAM soBadAddress( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( SO_BAD_ADDRESS, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.soBadAddress",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM soBadAddress( CompletionStatus cs ) {
+        return soBadAddress( cs, null  ) ;
+    }
+    
+    public BAD_PARAM soBadAddress( Throwable t ) {
+        return soBadAddress( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM soBadAddress(  ) {
+        return soBadAddress( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SO_BAD_SCHEMA_SPECIFIC = OMGVMCID.value + 9 ;
+    
+    public BAD_PARAM soBadSchemaSpecific( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( SO_BAD_SCHEMA_SPECIFIC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.soBadSchemaSpecific",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM soBadSchemaSpecific( CompletionStatus cs ) {
+        return soBadSchemaSpecific( cs, null  ) ;
+    }
+    
+    public BAD_PARAM soBadSchemaSpecific( Throwable t ) {
+        return soBadSchemaSpecific( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM soBadSchemaSpecific(  ) {
+        return soBadSchemaSpecific( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SO_NON_SPECIFIC = OMGVMCID.value + 10 ;
+    
+    public BAD_PARAM soNonSpecific( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( SO_NON_SPECIFIC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.soNonSpecific",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM soNonSpecific( CompletionStatus cs ) {
+        return soNonSpecific( cs, null  ) ;
+    }
+    
+    public BAD_PARAM soNonSpecific( Throwable t ) {
+        return soNonSpecific( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM soNonSpecific(  ) {
+        return soNonSpecific( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int IR_DERIVE_ABS_INT_BASE = OMGVMCID.value + 11 ;
+    
+    public BAD_PARAM irDeriveAbsIntBase( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( IR_DERIVE_ABS_INT_BASE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.irDeriveAbsIntBase",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM irDeriveAbsIntBase( CompletionStatus cs ) {
+        return irDeriveAbsIntBase( cs, null  ) ;
+    }
+    
+    public BAD_PARAM irDeriveAbsIntBase( Throwable t ) {
+        return irDeriveAbsIntBase( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM irDeriveAbsIntBase(  ) {
+        return irDeriveAbsIntBase( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int IR_VALUE_SUPPORT = OMGVMCID.value + 12 ;
+    
+    public BAD_PARAM irValueSupport( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( IR_VALUE_SUPPORT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.irValueSupport",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM irValueSupport( CompletionStatus cs ) {
+        return irValueSupport( cs, null  ) ;
+    }
+    
+    public BAD_PARAM irValueSupport( Throwable t ) {
+        return irValueSupport( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM irValueSupport(  ) {
+        return irValueSupport( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INCOMPLETE_TYPECODE = OMGVMCID.value + 13 ;
+    
+    public BAD_PARAM incompleteTypecode( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( INCOMPLETE_TYPECODE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.incompleteTypecode",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM incompleteTypecode( CompletionStatus cs ) {
+        return incompleteTypecode( cs, null  ) ;
+    }
+    
+    public BAD_PARAM incompleteTypecode( Throwable t ) {
+        return incompleteTypecode( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM incompleteTypecode(  ) {
+        return incompleteTypecode( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_OBJECT_ID = OMGVMCID.value + 14 ;
+    
+    public BAD_PARAM invalidObjectId( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( INVALID_OBJECT_ID, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.invalidObjectId",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM invalidObjectId( CompletionStatus cs ) {
+        return invalidObjectId( cs, null  ) ;
+    }
+    
+    public BAD_PARAM invalidObjectId( Throwable t ) {
+        return invalidObjectId( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM invalidObjectId(  ) {
+        return invalidObjectId( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TYPECODE_BAD_NAME = OMGVMCID.value + 15 ;
+    
+    public BAD_PARAM typecodeBadName( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TYPECODE_BAD_NAME, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.typecodeBadName",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM typecodeBadName( CompletionStatus cs ) {
+        return typecodeBadName( cs, null  ) ;
+    }
+    
+    public BAD_PARAM typecodeBadName( Throwable t ) {
+        return typecodeBadName( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM typecodeBadName(  ) {
+        return typecodeBadName( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TYPECODE_BAD_REPID = OMGVMCID.value + 16 ;
+    
+    public BAD_PARAM typecodeBadRepid( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TYPECODE_BAD_REPID, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.typecodeBadRepid",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM typecodeBadRepid( CompletionStatus cs ) {
+        return typecodeBadRepid( cs, null  ) ;
+    }
+    
+    public BAD_PARAM typecodeBadRepid( Throwable t ) {
+        return typecodeBadRepid( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM typecodeBadRepid(  ) {
+        return typecodeBadRepid( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TYPECODE_INV_MEMBER = OMGVMCID.value + 17 ;
+    
+    public BAD_PARAM typecodeInvMember( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TYPECODE_INV_MEMBER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.typecodeInvMember",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM typecodeInvMember( CompletionStatus cs ) {
+        return typecodeInvMember( cs, null  ) ;
+    }
+    
+    public BAD_PARAM typecodeInvMember( Throwable t ) {
+        return typecodeInvMember( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM typecodeInvMember(  ) {
+        return typecodeInvMember( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TC_UNION_DUP_LABEL = OMGVMCID.value + 18 ;
+    
+    public BAD_PARAM tcUnionDupLabel( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TC_UNION_DUP_LABEL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.tcUnionDupLabel",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM tcUnionDupLabel( CompletionStatus cs ) {
+        return tcUnionDupLabel( cs, null  ) ;
+    }
+    
+    public BAD_PARAM tcUnionDupLabel( Throwable t ) {
+        return tcUnionDupLabel( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM tcUnionDupLabel(  ) {
+        return tcUnionDupLabel( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TC_UNION_INCOMPATIBLE = OMGVMCID.value + 19 ;
+    
+    public BAD_PARAM tcUnionIncompatible( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TC_UNION_INCOMPATIBLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.tcUnionIncompatible",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM tcUnionIncompatible( CompletionStatus cs ) {
+        return tcUnionIncompatible( cs, null  ) ;
+    }
+    
+    public BAD_PARAM tcUnionIncompatible( Throwable t ) {
+        return tcUnionIncompatible( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM tcUnionIncompatible(  ) {
+        return tcUnionIncompatible( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TC_UNION_BAD_DISC = OMGVMCID.value + 20 ;
+    
+    public BAD_PARAM tcUnionBadDisc( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( TC_UNION_BAD_DISC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.tcUnionBadDisc",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM tcUnionBadDisc( CompletionStatus cs ) {
+        return tcUnionBadDisc( cs, null  ) ;
+    }
+    
+    public BAD_PARAM tcUnionBadDisc( Throwable t ) {
+        return tcUnionBadDisc( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM tcUnionBadDisc(  ) {
+        return tcUnionBadDisc( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SET_EXCEPTION_BAD_ANY = OMGVMCID.value + 21 ;
+    
+    public BAD_PARAM setExceptionBadAny( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( SET_EXCEPTION_BAD_ANY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.setExceptionBadAny",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM setExceptionBadAny( CompletionStatus cs ) {
+        return setExceptionBadAny( cs, null  ) ;
+    }
+    
+    public BAD_PARAM setExceptionBadAny( Throwable t ) {
+        return setExceptionBadAny( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM setExceptionBadAny(  ) {
+        return setExceptionBadAny( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SET_EXCEPTION_UNLISTED = OMGVMCID.value + 22 ;
+    
+    public BAD_PARAM setExceptionUnlisted( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( SET_EXCEPTION_UNLISTED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.setExceptionUnlisted",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM setExceptionUnlisted( CompletionStatus cs ) {
+        return setExceptionUnlisted( cs, null  ) ;
+    }
+    
+    public BAD_PARAM setExceptionUnlisted( Throwable t ) {
+        return setExceptionUnlisted( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM setExceptionUnlisted(  ) {
+        return setExceptionUnlisted( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_CLIENT_WCHAR_CODESET_CTX = OMGVMCID.value + 23 ;
+    
+    public BAD_PARAM noClientWcharCodesetCtx( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( NO_CLIENT_WCHAR_CODESET_CTX, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noClientWcharCodesetCtx",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM noClientWcharCodesetCtx( CompletionStatus cs ) {
+        return noClientWcharCodesetCtx( cs, null  ) ;
+    }
+    
+    public BAD_PARAM noClientWcharCodesetCtx( Throwable t ) {
+        return noClientWcharCodesetCtx( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM noClientWcharCodesetCtx(  ) {
+        return noClientWcharCodesetCtx( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ILLEGAL_SERVICE_CONTEXT = OMGVMCID.value + 24 ;
+    
+    public BAD_PARAM illegalServiceContext( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( ILLEGAL_SERVICE_CONTEXT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.illegalServiceContext",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM illegalServiceContext( CompletionStatus cs ) {
+        return illegalServiceContext( cs, null  ) ;
+    }
+    
+    public BAD_PARAM illegalServiceContext( Throwable t ) {
+        return illegalServiceContext( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM illegalServiceContext(  ) {
+        return illegalServiceContext( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ENUM_OUT_OF_RANGE = OMGVMCID.value + 25 ;
+    
+    public BAD_PARAM enumOutOfRange( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( ENUM_OUT_OF_RANGE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.enumOutOfRange",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM enumOutOfRange( CompletionStatus cs ) {
+        return enumOutOfRange( cs, null  ) ;
+    }
+    
+    public BAD_PARAM enumOutOfRange( Throwable t ) {
+        return enumOutOfRange( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM enumOutOfRange(  ) {
+        return enumOutOfRange( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_SERVICE_CONTEXT_ID = OMGVMCID.value + 26 ;
+    
+    public BAD_PARAM invalidServiceContextId( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( INVALID_SERVICE_CONTEXT_ID, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.invalidServiceContextId",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM invalidServiceContextId( CompletionStatus cs ) {
+        return invalidServiceContextId( cs, null  ) ;
+    }
+    
+    public BAD_PARAM invalidServiceContextId( Throwable t ) {
+        return invalidServiceContextId( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM invalidServiceContextId(  ) {
+        return invalidServiceContextId( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int RIR_WITH_NULL_OBJECT = OMGVMCID.value + 27 ;
+    
+    public BAD_PARAM rirWithNullObject( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( RIR_WITH_NULL_OBJECT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.rirWithNullObject",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM rirWithNullObject( CompletionStatus cs ) {
+        return rirWithNullObject( cs, null  ) ;
+    }
+    
+    public BAD_PARAM rirWithNullObject( Throwable t ) {
+        return rirWithNullObject( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM rirWithNullObject(  ) {
+        return rirWithNullObject( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_COMPONENT_ID = OMGVMCID.value + 28 ;
+    
+    public BAD_PARAM invalidComponentId( CompletionStatus cs, Throwable t, Object arg0) {
+        BAD_PARAM exc = new BAD_PARAM( INVALID_COMPONENT_ID, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.FINE, "OMG.invalidComponentId",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM invalidComponentId( CompletionStatus cs, Object arg0) {
+        return invalidComponentId( cs, null, arg0 ) ;
+    }
+    
+    public BAD_PARAM invalidComponentId( Throwable t, Object arg0) {
+        return invalidComponentId( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public BAD_PARAM invalidComponentId(  Object arg0) {
+        return invalidComponentId( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int INVALID_PROFILE_ID = OMGVMCID.value + 29 ;
+    
+    public BAD_PARAM invalidProfileId( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( INVALID_PROFILE_ID, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.invalidProfileId",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM invalidProfileId( CompletionStatus cs ) {
+        return invalidProfileId( cs, null  ) ;
+    }
+    
+    public BAD_PARAM invalidProfileId( Throwable t ) {
+        return invalidProfileId( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM invalidProfileId(  ) {
+        return invalidProfileId( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POLICY_TYPE_DUPLICATE = OMGVMCID.value + 30 ;
+    
+    public BAD_PARAM policyTypeDuplicate( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( POLICY_TYPE_DUPLICATE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.policyTypeDuplicate",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM policyTypeDuplicate( CompletionStatus cs ) {
+        return policyTypeDuplicate( cs, null  ) ;
+    }
+    
+    public BAD_PARAM policyTypeDuplicate( Throwable t ) {
+        return policyTypeDuplicate( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM policyTypeDuplicate(  ) {
+        return policyTypeDuplicate( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_ONEWAY_DEFINITION = OMGVMCID.value + 31 ;
+    
+    public BAD_PARAM badOnewayDefinition( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( BAD_ONEWAY_DEFINITION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badOnewayDefinition",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM badOnewayDefinition( CompletionStatus cs ) {
+        return badOnewayDefinition( cs, null  ) ;
+    }
+    
+    public BAD_PARAM badOnewayDefinition( Throwable t ) {
+        return badOnewayDefinition( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM badOnewayDefinition(  ) {
+        return badOnewayDefinition( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int DII_FOR_IMPLICIT_OPERATION = OMGVMCID.value + 32 ;
+    
+    public BAD_PARAM diiForImplicitOperation( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( DII_FOR_IMPLICIT_OPERATION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.diiForImplicitOperation",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM diiForImplicitOperation( CompletionStatus cs ) {
+        return diiForImplicitOperation( cs, null  ) ;
+    }
+    
+    public BAD_PARAM diiForImplicitOperation( Throwable t ) {
+        return diiForImplicitOperation( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM diiForImplicitOperation(  ) {
+        return diiForImplicitOperation( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int XA_CALL_INVAL = OMGVMCID.value + 33 ;
+    
+    public BAD_PARAM xaCallInval( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( XA_CALL_INVAL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaCallInval",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM xaCallInval( CompletionStatus cs ) {
+        return xaCallInval( cs, null  ) ;
+    }
+    
+    public BAD_PARAM xaCallInval( Throwable t ) {
+        return xaCallInval( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM xaCallInval(  ) {
+        return xaCallInval( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNION_BAD_DISCRIMINATOR = OMGVMCID.value + 34 ;
+    
+    public BAD_PARAM unionBadDiscriminator( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( UNION_BAD_DISCRIMINATOR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.unionBadDiscriminator",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM unionBadDiscriminator( CompletionStatus cs ) {
+        return unionBadDiscriminator( cs, null  ) ;
+    }
+    
+    public BAD_PARAM unionBadDiscriminator( Throwable t ) {
+        return unionBadDiscriminator( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM unionBadDiscriminator(  ) {
+        return unionBadDiscriminator( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CTX_ILLEGAL_PROPERTY_NAME = OMGVMCID.value + 35 ;
+    
+    public BAD_PARAM ctxIllegalPropertyName( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( CTX_ILLEGAL_PROPERTY_NAME, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.ctxIllegalPropertyName",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM ctxIllegalPropertyName( CompletionStatus cs ) {
+        return ctxIllegalPropertyName( cs, null  ) ;
+    }
+    
+    public BAD_PARAM ctxIllegalPropertyName( Throwable t ) {
+        return ctxIllegalPropertyName( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM ctxIllegalPropertyName(  ) {
+        return ctxIllegalPropertyName( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CTX_ILLEGAL_SEARCH_STRING = OMGVMCID.value + 36 ;
+    
+    public BAD_PARAM ctxIllegalSearchString( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( CTX_ILLEGAL_SEARCH_STRING, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.ctxIllegalSearchString",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM ctxIllegalSearchString( CompletionStatus cs ) {
+        return ctxIllegalSearchString( cs, null  ) ;
+    }
+    
+    public BAD_PARAM ctxIllegalSearchString( Throwable t ) {
+        return ctxIllegalSearchString( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM ctxIllegalSearchString(  ) {
+        return ctxIllegalSearchString( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CTX_ILLEGAL_NAME = OMGVMCID.value + 37 ;
+    
+    public BAD_PARAM ctxIllegalName( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( CTX_ILLEGAL_NAME, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.ctxIllegalName",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM ctxIllegalName( CompletionStatus cs ) {
+        return ctxIllegalName( cs, null  ) ;
+    }
+    
+    public BAD_PARAM ctxIllegalName( Throwable t ) {
+        return ctxIllegalName( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM ctxIllegalName(  ) {
+        return ctxIllegalName( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CTX_NON_EMPTY = OMGVMCID.value + 38 ;
+    
+    public BAD_PARAM ctxNonEmpty( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( CTX_NON_EMPTY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.ctxNonEmpty",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM ctxNonEmpty( CompletionStatus cs ) {
+        return ctxNonEmpty( cs, null  ) ;
+    }
+    
+    public BAD_PARAM ctxNonEmpty( Throwable t ) {
+        return ctxNonEmpty( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM ctxNonEmpty(  ) {
+        return ctxNonEmpty( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_STREAM_FORMAT_VERSION = OMGVMCID.value + 39 ;
+    
+    public BAD_PARAM invalidStreamFormatVersion( CompletionStatus cs, Throwable t, Object arg0) {
+        BAD_PARAM exc = new BAD_PARAM( INVALID_STREAM_FORMAT_VERSION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "OMG.invalidStreamFormatVersion",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM invalidStreamFormatVersion( CompletionStatus cs, Object arg0) {
+        return invalidStreamFormatVersion( cs, null, arg0 ) ;
+    }
+    
+    public BAD_PARAM invalidStreamFormatVersion( Throwable t, Object arg0) {
+        return invalidStreamFormatVersion( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public BAD_PARAM invalidStreamFormatVersion(  Object arg0) {
+        return invalidStreamFormatVersion( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int NOT_A_VALUEOUTPUTSTREAM = OMGVMCID.value + 40 ;
+    
+    public BAD_PARAM notAValueoutputstream( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( NOT_A_VALUEOUTPUTSTREAM, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.notAValueoutputstream",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM notAValueoutputstream( CompletionStatus cs ) {
+        return notAValueoutputstream( cs, null  ) ;
+    }
+    
+    public BAD_PARAM notAValueoutputstream( Throwable t ) {
+        return notAValueoutputstream( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM notAValueoutputstream(  ) {
+        return notAValueoutputstream( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NOT_A_VALUEINPUTSTREAM = OMGVMCID.value + 41 ;
+    
+    public BAD_PARAM notAValueinputstream( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( NOT_A_VALUEINPUTSTREAM, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.notAValueinputstream",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM notAValueinputstream( CompletionStatus cs ) {
+        return notAValueinputstream( cs, null  ) ;
+    }
+    
+    public BAD_PARAM notAValueinputstream( Throwable t ) {
+        return notAValueinputstream( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM notAValueinputstream(  ) {
+        return notAValueinputstream( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_TYPECODE
+    ///////////////////////////////////////////////////////////
+    
+    public static final int MARSHALL_INCOMPLETE_TYPECODE = OMGVMCID.value + 1 ;
+    
+    public BAD_TYPECODE marshallIncompleteTypecode( CompletionStatus cs, Throwable t ) {
+        BAD_TYPECODE exc = new BAD_TYPECODE( MARSHALL_INCOMPLETE_TYPECODE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.marshallIncompleteTypecode",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_TYPECODE marshallIncompleteTypecode( CompletionStatus cs ) {
+        return marshallIncompleteTypecode( cs, null  ) ;
+    }
+    
+    public BAD_TYPECODE marshallIncompleteTypecode( Throwable t ) {
+        return marshallIncompleteTypecode( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_TYPECODE marshallIncompleteTypecode(  ) {
+        return marshallIncompleteTypecode( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_MEMBER_TYPECODE = OMGVMCID.value + 2 ;
+    
+    public BAD_TYPECODE badMemberTypecode( CompletionStatus cs, Throwable t ) {
+        BAD_TYPECODE exc = new BAD_TYPECODE( BAD_MEMBER_TYPECODE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badMemberTypecode",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_TYPECODE badMemberTypecode( CompletionStatus cs ) {
+        return badMemberTypecode( cs, null  ) ;
+    }
+    
+    public BAD_TYPECODE badMemberTypecode( Throwable t ) {
+        return badMemberTypecode( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_TYPECODE badMemberTypecode(  ) {
+        return badMemberTypecode( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ILLEGAL_PARAMETER = OMGVMCID.value + 3 ;
+    
+    public BAD_TYPECODE illegalParameter( CompletionStatus cs, Throwable t ) {
+        BAD_TYPECODE exc = new BAD_TYPECODE( ILLEGAL_PARAMETER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.illegalParameter",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_TYPECODE illegalParameter( CompletionStatus cs ) {
+        return illegalParameter( cs, null  ) ;
+    }
+    
+    public BAD_TYPECODE illegalParameter( Throwable t ) {
+        return illegalParameter( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_TYPECODE illegalParameter(  ) {
+        return illegalParameter( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // DATA_CONVERSION
+    ///////////////////////////////////////////////////////////
+    
+    public static final int CHAR_NOT_IN_CODESET = OMGVMCID.value + 1 ;
+    
+    public DATA_CONVERSION charNotInCodeset( CompletionStatus cs, Throwable t ) {
+        DATA_CONVERSION exc = new DATA_CONVERSION( CHAR_NOT_IN_CODESET, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.charNotInCodeset",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public DATA_CONVERSION charNotInCodeset( CompletionStatus cs ) {
+        return charNotInCodeset( cs, null  ) ;
+    }
+    
+    public DATA_CONVERSION charNotInCodeset( Throwable t ) {
+        return charNotInCodeset( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public DATA_CONVERSION charNotInCodeset(  ) {
+        return charNotInCodeset( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PRIORITY_MAP_FAILRE = OMGVMCID.value + 2 ;
+    
+    public DATA_CONVERSION priorityMapFailre( CompletionStatus cs, Throwable t ) {
+        DATA_CONVERSION exc = new DATA_CONVERSION( PRIORITY_MAP_FAILRE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.priorityMapFailre",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public DATA_CONVERSION priorityMapFailre( CompletionStatus cs ) {
+        return priorityMapFailre( cs, null  ) ;
+    }
+    
+    public DATA_CONVERSION priorityMapFailre( Throwable t ) {
+        return priorityMapFailre( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public DATA_CONVERSION priorityMapFailre(  ) {
+        return priorityMapFailre( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // IMP_LIMIT
+    ///////////////////////////////////////////////////////////
+    
+    public static final int NO_USABLE_PROFILE = OMGVMCID.value + 1 ;
+    
+    public IMP_LIMIT noUsableProfile( CompletionStatus cs, Throwable t ) {
+        IMP_LIMIT exc = new IMP_LIMIT( NO_USABLE_PROFILE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noUsableProfile",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public IMP_LIMIT noUsableProfile( CompletionStatus cs ) {
+        return noUsableProfile( cs, null  ) ;
+    }
+    
+    public IMP_LIMIT noUsableProfile( Throwable t ) {
+        return noUsableProfile( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public IMP_LIMIT noUsableProfile(  ) {
+        return noUsableProfile( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INITIALIZE
+    ///////////////////////////////////////////////////////////
+    
+    public static final int PRIORITY_RANGE_RESTRICT = OMGVMCID.value + 1 ;
+    
+    public INITIALIZE priorityRangeRestrict( CompletionStatus cs, Throwable t ) {
+        INITIALIZE exc = new INITIALIZE( PRIORITY_RANGE_RESTRICT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.priorityRangeRestrict",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INITIALIZE priorityRangeRestrict( CompletionStatus cs ) {
+        return priorityRangeRestrict( cs, null  ) ;
+    }
+    
+    public INITIALIZE priorityRangeRestrict( Throwable t ) {
+        return priorityRangeRestrict( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INITIALIZE priorityRangeRestrict(  ) {
+        return priorityRangeRestrict( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INV_OBJREF
+    ///////////////////////////////////////////////////////////
+    
+    public static final int NO_SERVER_WCHAR_CODESET_CMP = OMGVMCID.value + 1 ;
+    
+    public INV_OBJREF noServerWcharCodesetCmp( CompletionStatus cs, Throwable t ) {
+        INV_OBJREF exc = new INV_OBJREF( NO_SERVER_WCHAR_CODESET_CMP, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noServerWcharCodesetCmp",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INV_OBJREF noServerWcharCodesetCmp( CompletionStatus cs ) {
+        return noServerWcharCodesetCmp( cs, null  ) ;
+    }
+    
+    public INV_OBJREF noServerWcharCodesetCmp( Throwable t ) {
+        return noServerWcharCodesetCmp( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INV_OBJREF noServerWcharCodesetCmp(  ) {
+        return noServerWcharCodesetCmp( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int CODESET_COMPONENT_REQUIRED = OMGVMCID.value + 2 ;
+    
+    public INV_OBJREF codesetComponentRequired( CompletionStatus cs, Throwable t ) {
+        INV_OBJREF exc = new INV_OBJREF( CODESET_COMPONENT_REQUIRED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.codesetComponentRequired",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INV_OBJREF codesetComponentRequired( CompletionStatus cs ) {
+        return codesetComponentRequired( cs, null  ) ;
+    }
+    
+    public INV_OBJREF codesetComponentRequired( Throwable t ) {
+        return codesetComponentRequired( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INV_OBJREF codesetComponentRequired(  ) {
+        return codesetComponentRequired( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INV_POLICY
+    ///////////////////////////////////////////////////////////
+    
+    public static final int IOR_POLICY_RECONCILE_ERROR = OMGVMCID.value + 1 ;
+    
+    public INV_POLICY iorPolicyReconcileError( CompletionStatus cs, Throwable t ) {
+        INV_POLICY exc = new INV_POLICY( IOR_POLICY_RECONCILE_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.iorPolicyReconcileError",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INV_POLICY iorPolicyReconcileError( CompletionStatus cs ) {
+        return iorPolicyReconcileError( cs, null  ) ;
+    }
+    
+    public INV_POLICY iorPolicyReconcileError( Throwable t ) {
+        return iorPolicyReconcileError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INV_POLICY iorPolicyReconcileError(  ) {
+        return iorPolicyReconcileError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POLICY_UNKNOWN = OMGVMCID.value + 2 ;
+    
+    public INV_POLICY policyUnknown( CompletionStatus cs, Throwable t ) {
+        INV_POLICY exc = new INV_POLICY( POLICY_UNKNOWN, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.policyUnknown",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INV_POLICY policyUnknown( CompletionStatus cs ) {
+        return policyUnknown( cs, null  ) ;
+    }
+    
+    public INV_POLICY policyUnknown( Throwable t ) {
+        return policyUnknown( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INV_POLICY policyUnknown(  ) {
+        return policyUnknown( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_POLICY_FACTORY = OMGVMCID.value + 3 ;
+    
+    public INV_POLICY noPolicyFactory( CompletionStatus cs, Throwable t ) {
+        INV_POLICY exc = new INV_POLICY( NO_POLICY_FACTORY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noPolicyFactory",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INV_POLICY noPolicyFactory( CompletionStatus cs ) {
+        return noPolicyFactory( cs, null  ) ;
+    }
+    
+    public INV_POLICY noPolicyFactory( Throwable t ) {
+        return noPolicyFactory( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INV_POLICY noPolicyFactory(  ) {
+        return noPolicyFactory( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INTERNAL
+    ///////////////////////////////////////////////////////////
+    
+    public static final int XA_RMERR = OMGVMCID.value + 1 ;
+    
+    public INTERNAL xaRmerr( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( XA_RMERR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaRmerr",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL xaRmerr( CompletionStatus cs ) {
+        return xaRmerr( cs, null  ) ;
+    }
+    
+    public INTERNAL xaRmerr( Throwable t ) {
+        return xaRmerr( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL xaRmerr(  ) {
+        return xaRmerr( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int XA_RMFAIL = OMGVMCID.value + 2 ;
+    
+    public INTERNAL xaRmfail( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( XA_RMFAIL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaRmfail",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL xaRmfail( CompletionStatus cs ) {
+        return xaRmfail( cs, null  ) ;
+    }
+    
+    public INTERNAL xaRmfail( Throwable t ) {
+        return xaRmfail( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL xaRmfail(  ) {
+        return xaRmfail( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INTF_REPOS
+    ///////////////////////////////////////////////////////////
+    
+    public static final int NO_IR = OMGVMCID.value + 1 ;
+    
+    public INTF_REPOS noIr( CompletionStatus cs, Throwable t ) {
+        INTF_REPOS exc = new INTF_REPOS( NO_IR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noIr",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTF_REPOS noIr( CompletionStatus cs ) {
+        return noIr( cs, null  ) ;
+    }
+    
+    public INTF_REPOS noIr( Throwable t ) {
+        return noIr( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTF_REPOS noIr(  ) {
+        return noIr( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_INTERFACE_IN_IR = OMGVMCID.value + 2 ;
+    
+    public INTF_REPOS noInterfaceInIr( CompletionStatus cs, Throwable t ) {
+        INTF_REPOS exc = new INTF_REPOS( NO_INTERFACE_IN_IR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noInterfaceInIr",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTF_REPOS noInterfaceInIr( CompletionStatus cs ) {
+        return noInterfaceInIr( cs, null  ) ;
+    }
+    
+    public INTF_REPOS noInterfaceInIr( Throwable t ) {
+        return noInterfaceInIr( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTF_REPOS noInterfaceInIr(  ) {
+        return noInterfaceInIr( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // MARSHAL
+    ///////////////////////////////////////////////////////////
+    
+    public static final int UNABLE_LOCATE_VALUE_FACTORY = OMGVMCID.value + 1 ;
+    
+    public MARSHAL unableLocateValueFactory( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( UNABLE_LOCATE_VALUE_FACTORY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.unableLocateValueFactory",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL unableLocateValueFactory( CompletionStatus cs ) {
+        return unableLocateValueFactory( cs, null  ) ;
+    }
+    
+    public MARSHAL unableLocateValueFactory( Throwable t ) {
+        return unableLocateValueFactory( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL unableLocateValueFactory(  ) {
+        return unableLocateValueFactory( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SET_RESULT_BEFORE_CTX = OMGVMCID.value + 2 ;
+    
+    public MARSHAL setResultBeforeCtx( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( SET_RESULT_BEFORE_CTX, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.setResultBeforeCtx",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL setResultBeforeCtx( CompletionStatus cs ) {
+        return setResultBeforeCtx( cs, null  ) ;
+    }
+    
+    public MARSHAL setResultBeforeCtx( Throwable t ) {
+        return setResultBeforeCtx( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL setResultBeforeCtx(  ) {
+        return setResultBeforeCtx( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_NVLIST = OMGVMCID.value + 3 ;
+    
+    public MARSHAL badNvlist( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( BAD_NVLIST, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badNvlist",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL badNvlist( CompletionStatus cs ) {
+        return badNvlist( cs, null  ) ;
+    }
+    
+    public MARSHAL badNvlist( Throwable t ) {
+        return badNvlist( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL badNvlist(  ) {
+        return badNvlist( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NOT_AN_OBJECT_IMPL = OMGVMCID.value + 4 ;
+    
+    public MARSHAL notAnObjectImpl( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( NOT_AN_OBJECT_IMPL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.notAnObjectImpl",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL notAnObjectImpl( CompletionStatus cs ) {
+        return notAnObjectImpl( cs, null  ) ;
+    }
+    
+    public MARSHAL notAnObjectImpl( Throwable t ) {
+        return notAnObjectImpl( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL notAnObjectImpl(  ) {
+        return notAnObjectImpl( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int WCHAR_BAD_GIOP_VERSION_SENT = OMGVMCID.value + 5 ;
+    
+    public MARSHAL wcharBadGiopVersionSent( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( WCHAR_BAD_GIOP_VERSION_SENT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.wcharBadGiopVersionSent",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL wcharBadGiopVersionSent( CompletionStatus cs ) {
+        return wcharBadGiopVersionSent( cs, null  ) ;
+    }
+    
+    public MARSHAL wcharBadGiopVersionSent( Throwable t ) {
+        return wcharBadGiopVersionSent( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL wcharBadGiopVersionSent(  ) {
+        return wcharBadGiopVersionSent( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int WCHAR_BAD_GIOP_VERSION_RETURNED = OMGVMCID.value + 6 ;
+    
+    public MARSHAL wcharBadGiopVersionReturned( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( WCHAR_BAD_GIOP_VERSION_RETURNED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.wcharBadGiopVersionReturned",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL wcharBadGiopVersionReturned( CompletionStatus cs ) {
+        return wcharBadGiopVersionReturned( cs, null  ) ;
+    }
+    
+    public MARSHAL wcharBadGiopVersionReturned( Throwable t ) {
+        return wcharBadGiopVersionReturned( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL wcharBadGiopVersionReturned(  ) {
+        return wcharBadGiopVersionReturned( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNSUPPORTED_FORMAT_VERSION = OMGVMCID.value + 7 ;
+    
+    public MARSHAL unsupportedFormatVersion( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( UNSUPPORTED_FORMAT_VERSION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.unsupportedFormatVersion",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL unsupportedFormatVersion( CompletionStatus cs ) {
+        return unsupportedFormatVersion( cs, null  ) ;
+    }
+    
+    public MARSHAL unsupportedFormatVersion( Throwable t ) {
+        return unsupportedFormatVersion( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL unsupportedFormatVersion(  ) {
+        return unsupportedFormatVersion( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE1 = OMGVMCID.value + 8 ;
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible1( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE1, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.rmiiiopOptionalDataIncompatible1",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible1( CompletionStatus cs ) {
+        return rmiiiopOptionalDataIncompatible1( cs, null  ) ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible1( Throwable t ) {
+        return rmiiiopOptionalDataIncompatible1( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible1(  ) {
+        return rmiiiopOptionalDataIncompatible1( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE2 = OMGVMCID.value + 8 ;
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible2( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE2, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.rmiiiopOptionalDataIncompatible2",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible2( CompletionStatus cs ) {
+        return rmiiiopOptionalDataIncompatible2( cs, null  ) ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible2( Throwable t ) {
+        return rmiiiopOptionalDataIncompatible2( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible2(  ) {
+        return rmiiiopOptionalDataIncompatible2( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE3 = OMGVMCID.value + 8 ;
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible3( CompletionStatus cs, Throwable t ) {
+        MARSHAL exc = new MARSHAL( RMIIIOP_OPTIONAL_DATA_INCOMPATIBLE3, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.rmiiiopOptionalDataIncompatible3",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible3( CompletionStatus cs ) {
+        return rmiiiopOptionalDataIncompatible3( cs, null  ) ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible3( Throwable t ) {
+        return rmiiiopOptionalDataIncompatible3( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public MARSHAL rmiiiopOptionalDataIncompatible3(  ) {
+        return rmiiiopOptionalDataIncompatible3( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // NO_IMPLEMENT
+    ///////////////////////////////////////////////////////////
+    
+    public static final int MISSING_LOCAL_VALUE_IMPL = OMGVMCID.value + 1 ;
+    
+    public NO_IMPLEMENT missingLocalValueImpl( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( MISSING_LOCAL_VALUE_IMPL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.missingLocalValueImpl",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT missingLocalValueImpl( CompletionStatus cs ) {
+        return missingLocalValueImpl( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT missingLocalValueImpl( Throwable t ) {
+        return missingLocalValueImpl( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT missingLocalValueImpl(  ) {
+        return missingLocalValueImpl( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INCOMPATIBLE_VALUE_IMPL = OMGVMCID.value + 2 ;
+    
+    public NO_IMPLEMENT incompatibleValueImpl( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( INCOMPATIBLE_VALUE_IMPL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.incompatibleValueImpl",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT incompatibleValueImpl( CompletionStatus cs ) {
+        return incompatibleValueImpl( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT incompatibleValueImpl( Throwable t ) {
+        return incompatibleValueImpl( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT incompatibleValueImpl(  ) {
+        return incompatibleValueImpl( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_USABLE_PROFILE_2 = OMGVMCID.value + 3 ;
+    
+    public NO_IMPLEMENT noUsableProfile2( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( NO_USABLE_PROFILE_2, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noUsableProfile2",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT noUsableProfile2( CompletionStatus cs ) {
+        return noUsableProfile2( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT noUsableProfile2( Throwable t ) {
+        return noUsableProfile2( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT noUsableProfile2(  ) {
+        return noUsableProfile2( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int DII_LOCAL_OBJECT = OMGVMCID.value + 4 ;
+    
+    public NO_IMPLEMENT diiLocalObject( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( DII_LOCAL_OBJECT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.diiLocalObject",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT diiLocalObject( CompletionStatus cs ) {
+        return diiLocalObject( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT diiLocalObject( Throwable t ) {
+        return diiLocalObject( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT diiLocalObject(  ) {
+        return diiLocalObject( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BIO_RESET = OMGVMCID.value + 5 ;
+    
+    public NO_IMPLEMENT bioReset( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( BIO_RESET, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.bioReset",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT bioReset( CompletionStatus cs ) {
+        return bioReset( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT bioReset( Throwable t ) {
+        return bioReset( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT bioReset(  ) {
+        return bioReset( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BIO_META_NOT_AVAILABLE = OMGVMCID.value + 6 ;
+    
+    public NO_IMPLEMENT bioMetaNotAvailable( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( BIO_META_NOT_AVAILABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.bioMetaNotAvailable",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT bioMetaNotAvailable( CompletionStatus cs ) {
+        return bioMetaNotAvailable( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT bioMetaNotAvailable( Throwable t ) {
+        return bioMetaNotAvailable( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT bioMetaNotAvailable(  ) {
+        return bioMetaNotAvailable( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BIO_GENOMIC_NO_ITERATOR = OMGVMCID.value + 7 ;
+    
+    public NO_IMPLEMENT bioGenomicNoIterator( CompletionStatus cs, Throwable t ) {
+        NO_IMPLEMENT exc = new NO_IMPLEMENT( BIO_GENOMIC_NO_ITERATOR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.bioGenomicNoIterator",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_IMPLEMENT bioGenomicNoIterator( CompletionStatus cs ) {
+        return bioGenomicNoIterator( cs, null  ) ;
+    }
+    
+    public NO_IMPLEMENT bioGenomicNoIterator( Throwable t ) {
+        return bioGenomicNoIterator( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_IMPLEMENT bioGenomicNoIterator(  ) {
+        return bioGenomicNoIterator( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // NO_RESOURCES
+    ///////////////////////////////////////////////////////////
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED1 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported1( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED1, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported1",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported1( CompletionStatus cs ) {
+        return piOperationNotSupported1( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported1( Throwable t ) {
+        return piOperationNotSupported1( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported1(  ) {
+        return piOperationNotSupported1( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED2 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported2( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED2, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported2",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported2( CompletionStatus cs ) {
+        return piOperationNotSupported2( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported2( Throwable t ) {
+        return piOperationNotSupported2( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported2(  ) {
+        return piOperationNotSupported2( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED3 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported3( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED3, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported3",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported3( CompletionStatus cs ) {
+        return piOperationNotSupported3( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported3( Throwable t ) {
+        return piOperationNotSupported3( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported3(  ) {
+        return piOperationNotSupported3( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED4 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported4( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED4, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported4",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported4( CompletionStatus cs ) {
+        return piOperationNotSupported4( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported4( Throwable t ) {
+        return piOperationNotSupported4( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported4(  ) {
+        return piOperationNotSupported4( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED5 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported5( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED5, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported5",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported5( CompletionStatus cs ) {
+        return piOperationNotSupported5( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported5( Throwable t ) {
+        return piOperationNotSupported5( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported5(  ) {
+        return piOperationNotSupported5( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED6 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported6( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED6, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported6",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported6( CompletionStatus cs ) {
+        return piOperationNotSupported6( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported6( Throwable t ) {
+        return piOperationNotSupported6( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported6(  ) {
+        return piOperationNotSupported6( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED7 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported7( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED7, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported7",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported7( CompletionStatus cs ) {
+        return piOperationNotSupported7( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported7( Throwable t ) {
+        return piOperationNotSupported7( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported7(  ) {
+        return piOperationNotSupported7( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_OPERATION_NOT_SUPPORTED8 = OMGVMCID.value + 1 ;
+    
+    public NO_RESOURCES piOperationNotSupported8( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( PI_OPERATION_NOT_SUPPORTED8, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.piOperationNotSupported8",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported8( CompletionStatus cs ) {
+        return piOperationNotSupported8( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported8( Throwable t ) {
+        return piOperationNotSupported8( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES piOperationNotSupported8(  ) {
+        return piOperationNotSupported8( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_CONNECTION_PRIORITY = OMGVMCID.value + 2 ;
+    
+    public NO_RESOURCES noConnectionPriority( CompletionStatus cs, Throwable t ) {
+        NO_RESOURCES exc = new NO_RESOURCES( NO_CONNECTION_PRIORITY, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noConnectionPriority",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public NO_RESOURCES noConnectionPriority( CompletionStatus cs ) {
+        return noConnectionPriority( cs, null  ) ;
+    }
+    
+    public NO_RESOURCES noConnectionPriority( Throwable t ) {
+        return noConnectionPriority( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public NO_RESOURCES noConnectionPriority(  ) {
+        return noConnectionPriority( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // TRANSACTION_ROLLEDBACK
+    ///////////////////////////////////////////////////////////
+    
+    public static final int XA_RB = OMGVMCID.value + 1 ;
+    
+    public TRANSACTION_ROLLEDBACK xaRb( CompletionStatus cs, Throwable t ) {
+        TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK( XA_RB, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaRb",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaRb( CompletionStatus cs ) {
+        return xaRb( cs, null  ) ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaRb( Throwable t ) {
+        return xaRb( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaRb(  ) {
+        return xaRb( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int XA_NOTA = OMGVMCID.value + 2 ;
+    
+    public TRANSACTION_ROLLEDBACK xaNota( CompletionStatus cs, Throwable t ) {
+        TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK( XA_NOTA, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaNota",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaNota( CompletionStatus cs ) {
+        return xaNota( cs, null  ) ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaNota( Throwable t ) {
+        return xaNota( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaNota(  ) {
+        return xaNota( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int XA_END_TRUE_ROLLBACK_DEFERRED = OMGVMCID.value + 3 ;
+    
+    public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred( CompletionStatus cs, Throwable t ) {
+        TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK( XA_END_TRUE_ROLLBACK_DEFERRED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.xaEndTrueRollbackDeferred",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred( CompletionStatus cs ) {
+        return xaEndTrueRollbackDeferred( cs, null  ) ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred( Throwable t ) {
+        return xaEndTrueRollbackDeferred( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSACTION_ROLLEDBACK xaEndTrueRollbackDeferred(  ) {
+        return xaEndTrueRollbackDeferred( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // TRANSIENT
+    ///////////////////////////////////////////////////////////
+    
+    public static final int POA_REQUEST_DISCARD = OMGVMCID.value + 1 ;
+    
+    public TRANSIENT poaRequestDiscard( CompletionStatus cs, Throwable t ) {
+        TRANSIENT exc = new TRANSIENT( POA_REQUEST_DISCARD, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.poaRequestDiscard",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSIENT poaRequestDiscard( CompletionStatus cs ) {
+        return poaRequestDiscard( cs, null  ) ;
+    }
+    
+    public TRANSIENT poaRequestDiscard( Throwable t ) {
+        return poaRequestDiscard( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSIENT poaRequestDiscard(  ) {
+        return poaRequestDiscard( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_USABLE_PROFILE_3 = OMGVMCID.value + 2 ;
+    
+    public TRANSIENT noUsableProfile3( CompletionStatus cs, Throwable t ) {
+        TRANSIENT exc = new TRANSIENT( NO_USABLE_PROFILE_3, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noUsableProfile3",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSIENT noUsableProfile3( CompletionStatus cs ) {
+        return noUsableProfile3( cs, null  ) ;
+    }
+    
+    public TRANSIENT noUsableProfile3( Throwable t ) {
+        return noUsableProfile3( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSIENT noUsableProfile3(  ) {
+        return noUsableProfile3( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int REQUEST_CANCELLED = OMGVMCID.value + 3 ;
+    
+    public TRANSIENT requestCancelled( CompletionStatus cs, Throwable t ) {
+        TRANSIENT exc = new TRANSIENT( REQUEST_CANCELLED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.requestCancelled",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSIENT requestCancelled( CompletionStatus cs ) {
+        return requestCancelled( cs, null  ) ;
+    }
+    
+    public TRANSIENT requestCancelled( Throwable t ) {
+        return requestCancelled( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSIENT requestCancelled(  ) {
+        return requestCancelled( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int POA_DESTROYED = OMGVMCID.value + 4 ;
+    
+    public TRANSIENT poaDestroyed( CompletionStatus cs, Throwable t ) {
+        TRANSIENT exc = new TRANSIENT( POA_DESTROYED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.poaDestroyed",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public TRANSIENT poaDestroyed( CompletionStatus cs ) {
+        return poaDestroyed( cs, null  ) ;
+    }
+    
+    public TRANSIENT poaDestroyed( Throwable t ) {
+        return poaDestroyed( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public TRANSIENT poaDestroyed(  ) {
+        return poaDestroyed( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // OBJECT_NOT_EXIST
+    ///////////////////////////////////////////////////////////
+    
+    public static final int UNREGISTERED_VALUE_AS_OBJREF = OMGVMCID.value + 1 ;
+    
+    public OBJECT_NOT_EXIST unregisteredValueAsObjref( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( UNREGISTERED_VALUE_AS_OBJREF, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.unregisteredValueAsObjref",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST unregisteredValueAsObjref( CompletionStatus cs ) {
+        return unregisteredValueAsObjref( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST unregisteredValueAsObjref( Throwable t ) {
+        return unregisteredValueAsObjref( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST unregisteredValueAsObjref(  ) {
+        return unregisteredValueAsObjref( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_OBJECT_ADAPTOR = OMGVMCID.value + 2 ;
+    
+    public OBJECT_NOT_EXIST noObjectAdaptor( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( NO_OBJECT_ADAPTOR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.noObjectAdaptor",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST noObjectAdaptor( CompletionStatus cs ) {
+        return noObjectAdaptor( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST noObjectAdaptor( Throwable t ) {
+        return noObjectAdaptor( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST noObjectAdaptor(  ) {
+        return noObjectAdaptor( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BIO_NOT_AVAILABLE = OMGVMCID.value + 3 ;
+    
+    public OBJECT_NOT_EXIST bioNotAvailable( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( BIO_NOT_AVAILABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.bioNotAvailable",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST bioNotAvailable( CompletionStatus cs ) {
+        return bioNotAvailable( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST bioNotAvailable( Throwable t ) {
+        return bioNotAvailable( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST bioNotAvailable(  ) {
+        return bioNotAvailable( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int OBJECT_ADAPTER_INACTIVE = OMGVMCID.value + 4 ;
+    
+    public OBJECT_NOT_EXIST objectAdapterInactive( CompletionStatus cs, Throwable t ) {
+        OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST( OBJECT_ADAPTER_INACTIVE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.objectAdapterInactive",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJECT_NOT_EXIST objectAdapterInactive( CompletionStatus cs ) {
+        return objectAdapterInactive( cs, null  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST objectAdapterInactive( Throwable t ) {
+        return objectAdapterInactive( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJECT_NOT_EXIST objectAdapterInactive(  ) {
+        return objectAdapterInactive( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // OBJ_ADAPTER
+    ///////////////////////////////////////////////////////////
+    
+    public static final int ADAPTER_ACTIVATOR_EXCEPTION = OMGVMCID.value + 1 ;
+    
+    public OBJ_ADAPTER adapterActivatorException( CompletionStatus cs, Throwable t, Object arg0, Object arg1) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( ADAPTER_ACTIVATOR_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[2] ;
+            parameters[0] = arg0 ;
+            parameters[1] = arg1 ;
+            doLog( Level.WARNING, "OMG.adapterActivatorException",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER adapterActivatorException( CompletionStatus cs, Object arg0, Object arg1) {
+        return adapterActivatorException( cs, null, arg0, arg1 ) ;
+    }
+    
+    public OBJ_ADAPTER adapterActivatorException( Throwable t, Object arg0, Object arg1) {
+        return adapterActivatorException( CompletionStatus.COMPLETED_NO, t, arg0, arg1 ) ;
+    }
+    
+    public OBJ_ADAPTER adapterActivatorException(  Object arg0, Object arg1) {
+        return adapterActivatorException( CompletionStatus.COMPLETED_NO, null, arg0, arg1 ) ;
+    }
+    
+    public static final int BAD_SERVANT_TYPE = OMGVMCID.value + 2 ;
+    
+    public OBJ_ADAPTER badServantType( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( BAD_SERVANT_TYPE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badServantType",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER badServantType( CompletionStatus cs ) {
+        return badServantType( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER badServantType( Throwable t ) {
+        return badServantType( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER badServantType(  ) {
+        return badServantType( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_DEFAULT_SERVANT = OMGVMCID.value + 3 ;
+    
+    public OBJ_ADAPTER noDefaultServant( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( NO_DEFAULT_SERVANT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noDefaultServant",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER noDefaultServant( CompletionStatus cs ) {
+        return noDefaultServant( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER noDefaultServant( Throwable t ) {
+        return noDefaultServant( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER noDefaultServant(  ) {
+        return noDefaultServant( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NO_SERVANT_MANAGER = OMGVMCID.value + 4 ;
+    
+    public OBJ_ADAPTER noServantManager( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( NO_SERVANT_MANAGER, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.noServantManager",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER noServantManager( CompletionStatus cs ) {
+        return noServantManager( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER noServantManager( Throwable t ) {
+        return noServantManager( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER noServantManager(  ) {
+        return noServantManager( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_POLICY_INCARNATE = OMGVMCID.value + 5 ;
+    
+    public OBJ_ADAPTER badPolicyIncarnate( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( BAD_POLICY_INCARNATE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.badPolicyIncarnate",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER badPolicyIncarnate( CompletionStatus cs ) {
+        return badPolicyIncarnate( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER badPolicyIncarnate( Throwable t ) {
+        return badPolicyIncarnate( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER badPolicyIncarnate(  ) {
+        return badPolicyIncarnate( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_EXC_COMP_ESTABLISHED = OMGVMCID.value + 6 ;
+    
+    public OBJ_ADAPTER piExcCompEstablished( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( PI_EXC_COMP_ESTABLISHED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.piExcCompEstablished",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER piExcCompEstablished( CompletionStatus cs ) {
+        return piExcCompEstablished( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER piExcCompEstablished( Throwable t ) {
+        return piExcCompEstablished( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER piExcCompEstablished(  ) {
+        return piExcCompEstablished( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NULL_SERVANT_RETURNED = OMGVMCID.value + 7 ;
+    
+    public OBJ_ADAPTER nullServantReturned( CompletionStatus cs, Throwable t ) {
+        OBJ_ADAPTER exc = new OBJ_ADAPTER( NULL_SERVANT_RETURNED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.nullServantReturned",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public OBJ_ADAPTER nullServantReturned( CompletionStatus cs ) {
+        return nullServantReturned( cs, null  ) ;
+    }
+    
+    public OBJ_ADAPTER nullServantReturned( Throwable t ) {
+        return nullServantReturned( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public OBJ_ADAPTER nullServantReturned(  ) {
+        return nullServantReturned( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // UNKNOWN
+    ///////////////////////////////////////////////////////////
+    
+    public static final int UNKNOWN_USER_EXCEPTION = OMGVMCID.value + 1 ;
+    
+    public UNKNOWN unknownUserException( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( UNKNOWN_USER_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = null ;
+            doLog( Level.FINE, "OMG.unknownUserException",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN unknownUserException( CompletionStatus cs ) {
+        return unknownUserException( cs, null  ) ;
+    }
+    
+    public UNKNOWN unknownUserException( Throwable t ) {
+        return unknownUserException( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN unknownUserException(  ) {
+        return unknownUserException( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int UNSUPPORTED_SYSTEM_EXCEPTION = OMGVMCID.value + 2 ;
+    
+    public UNKNOWN unsupportedSystemException( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( UNSUPPORTED_SYSTEM_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.unsupportedSystemException",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN unsupportedSystemException( CompletionStatus cs ) {
+        return unsupportedSystemException( cs, null  ) ;
+    }
+    
+    public UNKNOWN unsupportedSystemException( Throwable t ) {
+        return unsupportedSystemException( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN unsupportedSystemException(  ) {
+        return unsupportedSystemException( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int PI_UNKNOWN_USER_EXCEPTION = OMGVMCID.value + 3 ;
+    
+    public UNKNOWN piUnknownUserException( CompletionStatus cs, Throwable t ) {
+        UNKNOWN exc = new UNKNOWN( PI_UNKNOWN_USER_EXCEPTION, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "OMG.piUnknownUserException",
+                parameters, OMGSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public UNKNOWN piUnknownUserException( CompletionStatus cs ) {
+        return piUnknownUserException( cs, null  ) ;
+    }
+    
+    public UNKNOWN piUnknownUserException( Throwable t ) {
+        return piUnknownUserException( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public UNKNOWN piUnknownUserException(  ) {
+        return piUnknownUserException( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    
+}

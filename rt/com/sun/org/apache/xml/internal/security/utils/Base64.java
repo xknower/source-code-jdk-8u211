@@ -1,804 +1,798 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-/*     */ import java.io.BufferedReader;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.math.BigInteger;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.Text;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Base64
-/*     */ {
-/*     */   public static final int BASE64DEFAULTLENGTH = 76;
-/*     */   private static final int BASELENGTH = 255;
-/*     */   private static final int LOOKUPLENGTH = 64;
-/*     */   private static final int TWENTYFOURBITGROUP = 24;
-/*     */   private static final int EIGHTBIT = 8;
-/*     */   private static final int SIXTEENBIT = 16;
-/*     */   private static final int FOURBYTE = 4;
-/*     */   private static final int SIGN = -128;
-/*     */   private static final char PAD = '=';
-/*  61 */   private static final byte[] base64Alphabet = new byte[255];
-/*  62 */   private static final char[] lookUpBase64Alphabet = new char[64];
-/*     */   static {
-/*     */     byte b1;
-/*  65 */     for (b1 = 0; b1 < 'ÿ'; b1++) {
-/*  66 */       base64Alphabet[b1] = -1;
-/*     */     }
-/*  68 */     for (b1 = 90; b1 >= 65; b1--) {
-/*  69 */       base64Alphabet[b1] = (byte)(b1 - 65);
-/*     */     }
-/*  71 */     for (b1 = 122; b1 >= 97; b1--) {
-/*  72 */       base64Alphabet[b1] = (byte)(b1 - 97 + 26);
-/*     */     }
-/*     */     
-/*  75 */     for (b1 = 57; b1 >= 48; b1--) {
-/*  76 */       base64Alphabet[b1] = (byte)(b1 - 48 + 52);
-/*     */     }
-/*     */     
-/*  79 */     base64Alphabet[43] = 62;
-/*  80 */     base64Alphabet[47] = 63;
-/*     */     
-/*  82 */     for (b1 = 0; b1 <= 25; b1++) {
-/*  83 */       lookUpBase64Alphabet[b1] = (char)(65 + b1);
-/*     */     }
-/*     */     byte b2;
-/*  86 */     for (b1 = 26, b2 = 0; b1 <= 51; b1++, b2++) {
-/*  87 */       lookUpBase64Alphabet[b1] = (char)(97 + b2);
-/*     */     }
-/*     */     
-/*  90 */     for (b1 = 52, b2 = 0; b1 <= 61; b1++, b2++) {
-/*  91 */       lookUpBase64Alphabet[b1] = (char)(48 + b2);
-/*     */     }
-/*  93 */     lookUpBase64Alphabet[62] = '+';
-/*  94 */     lookUpBase64Alphabet[63] = '/';
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final byte[] getBytes(BigInteger paramBigInteger, int paramInt) {
-/* 115 */     paramInt = paramInt + 7 >> 3 << 3;
-/*     */     
-/* 117 */     if (paramInt < paramBigInteger.bitLength()) {
-/* 118 */       throw new IllegalArgumentException(I18n.translate("utils.Base64.IllegalBitlength"));
-/*     */     }
-/*     */     
-/* 121 */     byte[] arrayOfByte1 = paramBigInteger.toByteArray();
-/*     */     
-/* 123 */     if (paramBigInteger.bitLength() % 8 != 0 && paramBigInteger
-/* 124 */       .bitLength() / 8 + 1 == paramInt / 8) {
-/* 125 */       return arrayOfByte1;
-/*     */     }
-/*     */ 
-/*     */     
-/* 129 */     boolean bool = false;
-/* 130 */     int i = arrayOfByte1.length;
-/*     */     
-/* 132 */     if (paramBigInteger.bitLength() % 8 == 0) {
-/* 133 */       bool = true;
-/*     */       
-/* 135 */       i--;
-/*     */     } 
-/*     */     
-/* 138 */     int j = paramInt / 8 - i;
-/* 139 */     byte[] arrayOfByte2 = new byte[paramInt / 8];
-/*     */     
-/* 141 */     System.arraycopy(arrayOfByte1, bool, arrayOfByte2, j, i);
-/*     */     
-/* 143 */     return arrayOfByte2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final String encode(BigInteger paramBigInteger) {
-/* 153 */     return encode(getBytes(paramBigInteger, paramBigInteger.bitLength()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final byte[] encode(BigInteger paramBigInteger, int paramInt) {
-/* 170 */     paramInt = paramInt + 7 >> 3 << 3;
-/*     */     
-/* 172 */     if (paramInt < paramBigInteger.bitLength()) {
-/* 173 */       throw new IllegalArgumentException(I18n.translate("utils.Base64.IllegalBitlength"));
-/*     */     }
-/*     */     
-/* 176 */     byte[] arrayOfByte1 = paramBigInteger.toByteArray();
-/*     */     
-/* 178 */     if (paramBigInteger.bitLength() % 8 != 0 && paramBigInteger
-/* 179 */       .bitLength() / 8 + 1 == paramInt / 8) {
-/* 180 */       return arrayOfByte1;
-/*     */     }
-/*     */ 
-/*     */     
-/* 184 */     boolean bool = false;
-/* 185 */     int i = arrayOfByte1.length;
-/*     */     
-/* 187 */     if (paramBigInteger.bitLength() % 8 == 0) {
-/* 188 */       bool = true;
-/*     */       
-/* 190 */       i--;
-/*     */     } 
-/*     */     
-/* 193 */     int j = paramInt / 8 - i;
-/* 194 */     byte[] arrayOfByte2 = new byte[paramInt / 8];
-/*     */     
-/* 196 */     System.arraycopy(arrayOfByte1, bool, arrayOfByte2, j, i);
-/*     */     
-/* 198 */     return arrayOfByte2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final BigInteger decodeBigIntegerFromElement(Element paramElement) throws Base64DecodingException {
-/* 210 */     return new BigInteger(1, decode(paramElement));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final BigInteger decodeBigIntegerFromText(Text paramText) throws Base64DecodingException {
-/* 222 */     return new BigInteger(1, decode(paramText.getData()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final void fillElementWithBigInteger(Element paramElement, BigInteger paramBigInteger) {
-/* 234 */     String str = encode(paramBigInteger);
-/*     */     
-/* 236 */     if (!XMLUtils.ignoreLineBreaks() && str.length() > 76) {
-/* 237 */       str = "\n" + str + "\n";
-/*     */     }
-/*     */     
-/* 240 */     Document document = paramElement.getOwnerDocument();
-/* 241 */     Text text = document.createTextNode(str);
-/*     */     
-/* 243 */     paramElement.appendChild(text);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final byte[] decode(Element paramElement) throws Base64DecodingException {
-/* 259 */     Node node = paramElement.getFirstChild();
-/* 260 */     StringBuffer stringBuffer = new StringBuffer();
-/*     */     
-/* 262 */     while (node != null) {
-/* 263 */       if (node.getNodeType() == 3) {
-/* 264 */         Text text = (Text)node;
-/*     */         
-/* 266 */         stringBuffer.append(text.getData());
-/*     */       } 
-/* 268 */       node = node.getNextSibling();
-/*     */     } 
-/*     */     
-/* 271 */     return decode(stringBuffer.toString());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final Element encodeToElement(Document paramDocument, String paramString, byte[] paramArrayOfbyte) {
-/* 284 */     Element element = XMLUtils.createElementInSignatureSpace(paramDocument, paramString);
-/* 285 */     Text text = paramDocument.createTextNode(encode(paramArrayOfbyte));
-/*     */     
-/* 287 */     element.appendChild(text);
-/*     */     
-/* 289 */     return element;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final byte[] decode(byte[] paramArrayOfbyte) throws Base64DecodingException {
-/* 301 */     return decodeInternal(paramArrayOfbyte, -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final String encode(byte[] paramArrayOfbyte) {
-/* 312 */     return XMLUtils.ignoreLineBreaks() ? 
-/* 313 */       encode(paramArrayOfbyte, 2147483647) : 
-/* 314 */       encode(paramArrayOfbyte, 76);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final byte[] decode(BufferedReader paramBufferedReader) throws IOException, Base64DecodingException {
-/* 330 */     byte[] arrayOfByte = null;
-/* 331 */     UnsyncByteArrayOutputStream unsyncByteArrayOutputStream = null;
-/*     */     try {
-/* 333 */       unsyncByteArrayOutputStream = new UnsyncByteArrayOutputStream();
-/*     */       
-/*     */       String str;
-/* 336 */       while (null != (str = paramBufferedReader.readLine())) {
-/* 337 */         byte[] arrayOfByte1 = decode(str);
-/* 338 */         unsyncByteArrayOutputStream.write(arrayOfByte1);
-/*     */       } 
-/* 340 */       arrayOfByte = unsyncByteArrayOutputStream.toByteArray();
-/*     */     } finally {
-/* 342 */       unsyncByteArrayOutputStream.close();
-/*     */     } 
-/*     */     
-/* 345 */     return arrayOfByte;
-/*     */   }
-/*     */   
-/*     */   protected static final boolean isWhiteSpace(byte paramByte) {
-/* 349 */     return (paramByte == 32 || paramByte == 13 || paramByte == 10 || paramByte == 9);
-/*     */   }
-/*     */   
-/*     */   protected static final boolean isPad(byte paramByte) {
-/* 353 */     return (paramByte == 61);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final String encode(byte[] paramArrayOfbyte, int paramInt) {
-/* 371 */     if (paramInt < 4) {
-/* 372 */       paramInt = Integer.MAX_VALUE;
-/*     */     }
-/*     */     
-/* 375 */     if (paramArrayOfbyte == null) {
-/* 376 */       return null;
-/*     */     }
-/*     */     
-/* 379 */     int i = paramArrayOfbyte.length * 8;
-/* 380 */     if (i == 0) {
-/* 381 */       return "";
-/*     */     }
-/*     */     
-/* 384 */     int j = i % 24;
-/* 385 */     int k = i / 24;
-/* 386 */     int m = (j != 0) ? (k + 1) : k;
-/* 387 */     int n = paramInt / 4;
-/* 388 */     int i1 = (m - 1) / n;
-/* 389 */     char[] arrayOfChar = null;
-/*     */     
-/* 391 */     arrayOfChar = new char[m * 4 + i1];
-/*     */     
-/* 393 */     byte b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
-/* 394 */     byte b6 = 0;
-/* 395 */     byte b7 = 0;
-/* 396 */     byte b8 = 0;
-/*     */     byte b9;
-/* 398 */     for (b9 = 0; b9 < i1; b9++) {
-/* 399 */       for (byte b = 0; b < 19; b++) {
-/* 400 */         b3 = paramArrayOfbyte[b7++];
-/* 401 */         b4 = paramArrayOfbyte[b7++];
-/* 402 */         b5 = paramArrayOfbyte[b7++];
-/*     */         
-/* 404 */         b2 = (byte)(b4 & 0xF);
-/* 405 */         b1 = (byte)(b3 & 0x3);
-/*     */         
-/* 407 */         byte b10 = ((b3 & 0xFFFFFF80) == 0) ? (byte)(b3 >> 2) : (byte)(b3 >> 2 ^ 0xC0);
-/*     */         
-/* 409 */         byte b11 = ((b4 & 0xFFFFFF80) == 0) ? (byte)(b4 >> 4) : (byte)(b4 >> 4 ^ 0xF0);
-/* 410 */         byte b12 = ((b5 & 0xFFFFFF80) == 0) ? (byte)(b5 >> 6) : (byte)(b5 >> 6 ^ 0xFC);
-/*     */ 
-/*     */         
-/* 413 */         arrayOfChar[b6++] = lookUpBase64Alphabet[b10];
-/* 414 */         arrayOfChar[b6++] = lookUpBase64Alphabet[b11 | b1 << 4];
-/* 415 */         arrayOfChar[b6++] = lookUpBase64Alphabet[b2 << 2 | b12];
-/* 416 */         arrayOfChar[b6++] = lookUpBase64Alphabet[b5 & 0x3F];
-/*     */         
-/* 418 */         b8++;
-/*     */       } 
-/* 420 */       arrayOfChar[b6++] = '\n';
-/*     */     } 
-/*     */     
-/* 423 */     for (; b8 < k; b8++) {
-/* 424 */       b3 = paramArrayOfbyte[b7++];
-/* 425 */       b4 = paramArrayOfbyte[b7++];
-/* 426 */       b5 = paramArrayOfbyte[b7++];
-/*     */       
-/* 428 */       b2 = (byte)(b4 & 0xF);
-/* 429 */       b1 = (byte)(b3 & 0x3);
-/*     */       
-/* 431 */       b9 = ((b3 & 0xFFFFFF80) == 0) ? (byte)(b3 >> 2) : (byte)(b3 >> 2 ^ 0xC0);
-/*     */       
-/* 433 */       byte b10 = ((b4 & 0xFFFFFF80) == 0) ? (byte)(b4 >> 4) : (byte)(b4 >> 4 ^ 0xF0);
-/* 434 */       byte b11 = ((b5 & 0xFFFFFF80) == 0) ? (byte)(b5 >> 6) : (byte)(b5 >> 6 ^ 0xFC);
-/*     */ 
-/*     */       
-/* 437 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b9];
-/* 438 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b10 | b1 << 4];
-/* 439 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b2 << 2 | b11];
-/* 440 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b5 & 0x3F];
-/*     */     } 
-/*     */ 
-/*     */     
-/* 444 */     if (j == 8) {
-/* 445 */       b3 = paramArrayOfbyte[b7];
-/* 446 */       b1 = (byte)(b3 & 0x3);
-/* 447 */       b9 = ((b3 & 0xFFFFFF80) == 0) ? (byte)(b3 >> 2) : (byte)(b3 >> 2 ^ 0xC0);
-/* 448 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b9];
-/* 449 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b1 << 4];
-/* 450 */       arrayOfChar[b6++] = '=';
-/* 451 */       arrayOfChar[b6++] = '=';
-/* 452 */     } else if (j == 16) {
-/* 453 */       b3 = paramArrayOfbyte[b7];
-/* 454 */       b4 = paramArrayOfbyte[b7 + 1];
-/* 455 */       b2 = (byte)(b4 & 0xF);
-/* 456 */       b1 = (byte)(b3 & 0x3);
-/*     */       
-/* 458 */       b9 = ((b3 & 0xFFFFFF80) == 0) ? (byte)(b3 >> 2) : (byte)(b3 >> 2 ^ 0xC0);
-/* 459 */       byte b = ((b4 & 0xFFFFFF80) == 0) ? (byte)(b4 >> 4) : (byte)(b4 >> 4 ^ 0xF0);
-/*     */       
-/* 461 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b9];
-/* 462 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b | b1 << 4];
-/* 463 */       arrayOfChar[b6++] = lookUpBase64Alphabet[b2 << 2];
-/* 464 */       arrayOfChar[b6++] = '=';
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 469 */     return new String(arrayOfChar);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final byte[] decode(String paramString) throws Base64DecodingException {
-/* 480 */     if (paramString == null) {
-/* 481 */       return null;
-/*     */     }
-/* 483 */     byte[] arrayOfByte = new byte[paramString.length()];
-/* 484 */     int i = getBytesInternal(paramString, arrayOfByte);
-/* 485 */     return decodeInternal(arrayOfByte, i);
-/*     */   }
-/*     */   
-/*     */   protected static final int getBytesInternal(String paramString, byte[] paramArrayOfbyte) {
-/* 489 */     int i = paramString.length();
-/*     */     
-/* 491 */     byte b1 = 0;
-/* 492 */     for (byte b2 = 0; b2 < i; b2++) {
-/* 493 */       byte b = (byte)paramString.charAt(b2);
-/* 494 */       if (!isWhiteSpace(b)) {
-/* 495 */         paramArrayOfbyte[b1++] = b;
-/*     */       }
-/*     */     } 
-/* 498 */     return b1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final byte[] decodeInternal(byte[] paramArrayOfbyte, int paramInt) throws Base64DecodingException {
-/* 504 */     if (paramInt == -1) {
-/* 505 */       paramInt = removeWhiteSpace(paramArrayOfbyte);
-/*     */     }
-/*     */     
-/* 508 */     if (paramInt % 4 != 0) {
-/* 509 */       throw new Base64DecodingException("decoding.divisible.four");
-/*     */     }
-/*     */ 
-/*     */     
-/* 513 */     int i = paramInt / 4;
-/*     */     
-/* 515 */     if (i == 0) {
-/* 516 */       return new byte[0];
-/*     */     }
-/*     */     
-/* 519 */     byte[] arrayOfByte = null;
-/* 520 */     byte b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-/*     */     
-/* 522 */     int j = 0;
-/* 523 */     int k = 0;
-/* 524 */     int m = 0;
-/*     */ 
-/*     */     
-/* 527 */     m = (i - 1) * 4;
-/* 528 */     k = (i - 1) * 3;
-/*     */     
-/* 530 */     b1 = base64Alphabet[paramArrayOfbyte[m++]];
-/* 531 */     b2 = base64Alphabet[paramArrayOfbyte[m++]];
-/* 532 */     if (b1 == -1 || b2 == -1)
-/*     */     {
-/* 534 */       throw new Base64DecodingException("decoding.general");
-/*     */     }
-/*     */     
-/*     */     byte b5;
-/*     */     
-/* 539 */     b3 = base64Alphabet[b5 = paramArrayOfbyte[m++]]; byte b6;
-/* 540 */     b4 = base64Alphabet[b6 = paramArrayOfbyte[m++]];
-/* 541 */     if (b3 == -1 || b4 == -1) {
-/*     */       
-/* 543 */       if (isPad(b5) && isPad(b6)) {
-/* 544 */         if ((b2 & 0xF) != 0) {
-/* 545 */           throw new Base64DecodingException("decoding.general");
-/*     */         }
-/* 547 */         arrayOfByte = new byte[k + 1];
-/* 548 */         arrayOfByte[k] = (byte)(b1 << 2 | b2 >> 4);
-/* 549 */       } else if (!isPad(b5) && isPad(b6)) {
-/* 550 */         if ((b3 & 0x3) != 0) {
-/* 551 */           throw new Base64DecodingException("decoding.general");
-/*     */         }
-/* 553 */         arrayOfByte = new byte[k + 2];
-/* 554 */         arrayOfByte[k++] = (byte)(b1 << 2 | b2 >> 4);
-/* 555 */         arrayOfByte[k] = (byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF);
-/*     */       } else {
-/*     */         
-/* 558 */         throw new Base64DecodingException("decoding.general");
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 562 */       arrayOfByte = new byte[k + 3];
-/* 563 */       arrayOfByte[k++] = (byte)(b1 << 2 | b2 >> 4);
-/* 564 */       arrayOfByte[k++] = (byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF);
-/* 565 */       arrayOfByte[k++] = (byte)(b3 << 6 | b4);
-/*     */     } 
-/* 567 */     k = 0;
-/* 568 */     m = 0;
-/*     */     
-/* 570 */     for (j = i - 1; j > 0; j--) {
-/* 571 */       b1 = base64Alphabet[paramArrayOfbyte[m++]];
-/* 572 */       b2 = base64Alphabet[paramArrayOfbyte[m++]];
-/* 573 */       b3 = base64Alphabet[paramArrayOfbyte[m++]];
-/* 574 */       b4 = base64Alphabet[paramArrayOfbyte[m++]];
-/*     */       
-/* 576 */       if (b1 == -1 || b2 == -1 || b3 == -1 || b4 == -1)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */         
-/* 581 */         throw new Base64DecodingException("decoding.general");
-/*     */       }
-/*     */       
-/* 584 */       arrayOfByte[k++] = (byte)(b1 << 2 | b2 >> 4);
-/* 585 */       arrayOfByte[k++] = (byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF);
-/* 586 */       arrayOfByte[k++] = (byte)(b3 << 6 | b4);
-/*     */     } 
-/* 588 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final void decode(String paramString, OutputStream paramOutputStream) throws Base64DecodingException, IOException {
-/* 601 */     byte[] arrayOfByte = new byte[paramString.length()];
-/* 602 */     int i = getBytesInternal(paramString, arrayOfByte);
-/* 603 */     decode(arrayOfByte, paramOutputStream, i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final void decode(byte[] paramArrayOfbyte, OutputStream paramOutputStream) throws Base64DecodingException, IOException {
-/* 616 */     decode(paramArrayOfbyte, paramOutputStream, -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final void decode(byte[] paramArrayOfbyte, OutputStream paramOutputStream, int paramInt) throws Base64DecodingException, IOException {
-/* 622 */     if (paramInt == -1) {
-/* 623 */       paramInt = removeWhiteSpace(paramArrayOfbyte);
-/*     */     }
-/*     */     
-/* 626 */     if (paramInt % 4 != 0) {
-/* 627 */       throw new Base64DecodingException("decoding.divisible.four");
-/*     */     }
-/*     */ 
-/*     */     
-/* 631 */     int i = paramInt / 4;
-/*     */     
-/* 633 */     if (i == 0) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 638 */     byte b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-/*     */     
-/* 640 */     int j = 0;
-/* 641 */     byte b = 0;
-/*     */ 
-/*     */     
-/* 644 */     for (j = i - 1; j > 0; j--) {
-/* 645 */       b1 = base64Alphabet[paramArrayOfbyte[b++]];
-/* 646 */       b2 = base64Alphabet[paramArrayOfbyte[b++]];
-/* 647 */       b3 = base64Alphabet[paramArrayOfbyte[b++]];
-/* 648 */       b4 = base64Alphabet[paramArrayOfbyte[b++]];
-/* 649 */       if (b1 == -1 || b2 == -1 || b3 == -1 || b4 == -1)
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */         
-/* 654 */         throw new Base64DecodingException("decoding.general");
-/*     */       }
-/*     */       
-/* 657 */       paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 658 */       paramOutputStream.write((byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF));
-/* 659 */       paramOutputStream.write((byte)(b3 << 6 | b4));
-/*     */     } 
-/* 661 */     b1 = base64Alphabet[paramArrayOfbyte[b++]];
-/* 662 */     b2 = base64Alphabet[paramArrayOfbyte[b++]];
-/*     */ 
-/*     */     
-/* 665 */     if (b1 == -1 || b2 == -1)
-/*     */     {
-/* 667 */       throw new Base64DecodingException("decoding.general");
-/*     */     }
-/*     */     
-/*     */     byte b5;
-/* 671 */     b3 = base64Alphabet[b5 = paramArrayOfbyte[b++]]; byte b6;
-/* 672 */     b4 = base64Alphabet[b6 = paramArrayOfbyte[b++]];
-/* 673 */     if (b3 == -1 || b4 == -1) {
-/* 674 */       if (isPad(b5) && isPad(b6)) {
-/* 675 */         if ((b2 & 0xF) != 0) {
-/* 676 */           throw new Base64DecodingException("decoding.general");
-/*     */         }
-/* 678 */         paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 679 */       } else if (!isPad(b5) && isPad(b6)) {
-/* 680 */         if ((b3 & 0x3) != 0) {
-/* 681 */           throw new Base64DecodingException("decoding.general");
-/*     */         }
-/* 683 */         paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 684 */         paramOutputStream.write((byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF));
-/*     */       } else {
-/*     */         
-/* 687 */         throw new Base64DecodingException("decoding.general");
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 691 */       paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 692 */       paramOutputStream.write((byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF));
-/* 693 */       paramOutputStream.write((byte)(b3 << 6 | b4));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final void decode(InputStream paramInputStream, OutputStream paramOutputStream) throws Base64DecodingException, IOException {
-/* 708 */     byte b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-/*     */     
-/* 710 */     byte b = 0;
-/* 711 */     byte[] arrayOfByte = new byte[4];
-/*     */     
-/*     */     int i;
-/* 714 */     while ((i = paramInputStream.read()) > 0) {
-/* 715 */       byte b9 = (byte)i;
-/* 716 */       if (isWhiteSpace(b9)) {
-/*     */         continue;
-/*     */       }
-/* 719 */       if (isPad(b9)) {
-/* 720 */         arrayOfByte[b++] = b9;
-/* 721 */         if (b == 3) {
-/* 722 */           arrayOfByte[b++] = (byte)paramInputStream.read();
-/*     */         }
-/*     */         
-/*     */         break;
-/*     */       } 
-/* 727 */       arrayOfByte[b++] = b9; if (b9 == -1)
-/*     */       {
-/* 729 */         throw new Base64DecodingException("decoding.general");
-/*     */       }
-/*     */       
-/* 732 */       if (b != 4) {
-/*     */         continue;
-/*     */       }
-/* 735 */       b = 0;
-/* 736 */       b1 = base64Alphabet[arrayOfByte[0]];
-/* 737 */       b2 = base64Alphabet[arrayOfByte[1]];
-/* 738 */       b3 = base64Alphabet[arrayOfByte[2]];
-/* 739 */       b4 = base64Alphabet[arrayOfByte[3]];
-/*     */       
-/* 741 */       paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 742 */       paramOutputStream.write((byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF));
-/* 743 */       paramOutputStream.write((byte)(b3 << 6 | b4));
-/*     */     } 
-/*     */     
-/* 746 */     byte b5 = arrayOfByte[0], b6 = arrayOfByte[1], b7 = arrayOfByte[2], b8 = arrayOfByte[3];
-/* 747 */     b1 = base64Alphabet[b5];
-/* 748 */     b2 = base64Alphabet[b6];
-/* 749 */     b3 = base64Alphabet[b7];
-/* 750 */     b4 = base64Alphabet[b8];
-/* 751 */     if (b3 == -1 || b4 == -1) {
-/* 752 */       if (isPad(b7) && isPad(b8)) {
-/* 753 */         if ((b2 & 0xF) != 0) {
-/* 754 */           throw new Base64DecodingException("decoding.general");
-/*     */         }
-/* 756 */         paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 757 */       } else if (!isPad(b7) && isPad(b8)) {
-/* 758 */         b3 = base64Alphabet[b7];
-/* 759 */         if ((b3 & 0x3) != 0) {
-/* 760 */           throw new Base64DecodingException("decoding.general");
-/*     */         }
-/* 762 */         paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 763 */         paramOutputStream.write((byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF));
-/*     */       } else {
-/*     */         
-/* 766 */         throw new Base64DecodingException("decoding.general");
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 770 */       paramOutputStream.write((byte)(b1 << 2 | b2 >> 4));
-/* 771 */       paramOutputStream.write((byte)((b2 & 0xF) << 4 | b3 >> 2 & 0xF));
-/* 772 */       paramOutputStream.write((byte)(b3 << 6 | b4));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final int removeWhiteSpace(byte[] paramArrayOfbyte) {
-/* 783 */     if (paramArrayOfbyte == null) {
-/* 784 */       return 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 788 */     byte b1 = 0;
-/* 789 */     int i = paramArrayOfbyte.length;
-/* 790 */     for (byte b2 = 0; b2 < i; b2++) {
-/* 791 */       byte b = paramArrayOfbyte[b2];
-/* 792 */       if (!isWhiteSpace(b)) {
-/* 793 */         paramArrayOfbyte[b1++] = b;
-/*     */       }
-/*     */     } 
-/* 796 */     return b1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\Base64.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
+
+/**
+ * Implementation of MIME's Base64 encoding and decoding conversions.
+ * Optimized code. (raw version taken from oreilly.jonathan.util,
+ * and currently org.apache.xerces.ds.util.Base64)
+ *
+ * @author Raul Benito(Of the xerces copy, and little adaptations).
+ * @author Anli Shundi
+ * @author Christian Geuer-Pollmann
+ * @see <A HREF="ftp://ftp.isi.edu/in-notes/rfc2045.txt">RFC 2045</A>
+ * @see com.sun.org.apache.xml.internal.security.transforms.implementations.TransformBase64Decode
+ */
+public class Base64 {
+
+    /** Field BASE64DEFAULTLENGTH */
+    public static final int BASE64DEFAULTLENGTH = 76;
+
+    private static final int BASELENGTH = 255;
+    private static final int LOOKUPLENGTH = 64;
+    private static final int TWENTYFOURBITGROUP = 24;
+    private static final int EIGHTBIT = 8;
+    private static final int SIXTEENBIT = 16;
+    private static final int FOURBYTE = 4;
+    private static final int SIGN = -128;
+    private static final char PAD = '=';
+    private static final byte [] base64Alphabet = new byte[BASELENGTH];
+    private static final char [] lookUpBase64Alphabet = new char[LOOKUPLENGTH];
+
+    static {
+        for (int i = 0; i < BASELENGTH; i++) {
+            base64Alphabet[i] = -1;
+        }
+        for (int i = 'Z'; i >= 'A'; i--) {
+            base64Alphabet[i] = (byte) (i - 'A');
+        }
+        for (int i = 'z'; i>= 'a'; i--) {
+            base64Alphabet[i] = (byte) (i - 'a' + 26);
+        }
+
+        for (int i = '9'; i >= '0'; i--) {
+            base64Alphabet[i] = (byte) (i - '0' + 52);
+        }
+
+        base64Alphabet['+'] = 62;
+        base64Alphabet['/'] = 63;
+
+        for (int i = 0; i <= 25; i++) {
+            lookUpBase64Alphabet[i] = (char)('A' + i);
+        }
+
+        for (int i = 26,  j = 0; i <= 51; i++, j++) {
+            lookUpBase64Alphabet[i] = (char)('a' + j);
+        }
+
+        for (int i = 52,  j = 0; i <= 61; i++, j++) {
+            lookUpBase64Alphabet[i] = (char)('0' + j);
+        }
+        lookUpBase64Alphabet[62] = '+';
+        lookUpBase64Alphabet[63] = '/';
+    }
+
+    private Base64() {
+        // we don't allow instantiation
+    }
+
+    /**
+     * Returns a byte-array representation of a <code>{@link BigInteger}<code>.
+     * No sign-bit is output.
+     *
+     * <b>N.B.:</B> <code>{@link BigInteger}<code>'s toByteArray
+     * returns eventually longer arrays because of the leading sign-bit.
+     *
+     * @param big <code>BigInteger<code> to be converted
+     * @param bitlen <code>int<code> the desired length in bits of the representation
+     * @return a byte array with <code>bitlen</code> bits of <code>big</code>
+     */
+    static final byte[] getBytes(BigInteger big, int bitlen) {
+
+        //round bitlen
+        bitlen = ((bitlen + 7) >> 3) << 3;
+
+        if (bitlen < big.bitLength()) {
+            throw new IllegalArgumentException(I18n.translate("utils.Base64.IllegalBitlength"));
+        }
+
+        byte[] bigBytes = big.toByteArray();
+
+        if (((big.bitLength() % 8) != 0)
+            && (((big.bitLength() / 8) + 1) == (bitlen / 8))) {
+            return bigBytes;
+        }
+
+        // some copying needed
+        int startSrc = 0;    // no need to skip anything
+        int bigLen = bigBytes.length;    //valid length of the string
+
+        if ((big.bitLength() % 8) == 0) {    // correct values
+            startSrc = 1;    // skip sign bit
+
+            bigLen--;    // valid length of the string
+        }
+
+        int startDst = bitlen / 8 - bigLen;    //pad with leading nulls
+        byte[] resizedBytes = new byte[bitlen / 8];
+
+        System.arraycopy(bigBytes, startSrc, resizedBytes, startDst, bigLen);
+
+        return resizedBytes;
+    }
+
+    /**
+     * Encode in Base64 the given <code>{@link BigInteger}<code>.
+     *
+     * @param big
+     * @return String with Base64 encoding
+     */
+    public static final String encode(BigInteger big) {
+        return encode(getBytes(big, big.bitLength()));
+    }
+
+    /**
+     * Returns a byte-array representation of a <code>{@link BigInteger}<code>.
+     * No sign-bit is output.
+     *
+     * <b>N.B.:</B> <code>{@link BigInteger}<code>'s toByteArray
+     * returns eventually longer arrays because of the leading sign-bit.
+     *
+     * @param big <code>BigInteger<code> to be converted
+     * @param bitlen <code>int<code> the desired length in bits of the representation
+     * @return a byte array with <code>bitlen</code> bits of <code>big</code>
+     */
+    public static final  byte[] encode(BigInteger big, int bitlen) {
+
+        //round bitlen
+        bitlen = ((bitlen + 7) >> 3) << 3;
+
+        if (bitlen < big.bitLength()) {
+            throw new IllegalArgumentException(I18n.translate("utils.Base64.IllegalBitlength"));
+        }
+
+        byte[] bigBytes = big.toByteArray();
+
+        if (((big.bitLength() % 8) != 0)
+            && (((big.bitLength() / 8) + 1) == (bitlen / 8))) {
+            return bigBytes;
+        }
+
+        // some copying needed
+        int startSrc = 0;    // no need to skip anything
+        int bigLen = bigBytes.length;    //valid length of the string
+
+        if ((big.bitLength() % 8) == 0) {    // correct values
+            startSrc = 1;    // skip sign bit
+
+            bigLen--;    // valid length of the string
+        }
+
+        int startDst = bitlen / 8 - bigLen;    //pad with leading nulls
+        byte[] resizedBytes = new byte[bitlen / 8];
+
+        System.arraycopy(bigBytes, startSrc, resizedBytes, startDst, bigLen);
+
+        return resizedBytes;
+    }
+
+    /**
+     * Method decodeBigIntegerFromElement
+     *
+     * @param element
+     * @return the biginteger obtained from the node
+     * @throws Base64DecodingException
+     */
+    public static final BigInteger decodeBigIntegerFromElement(Element element)
+        throws Base64DecodingException {
+        return new BigInteger(1, Base64.decode(element));
+    }
+
+    /**
+     * Method decodeBigIntegerFromText
+     *
+     * @param text
+     * @return the biginter obtained from the text node
+     * @throws Base64DecodingException
+     */
+    public static final BigInteger decodeBigIntegerFromText(Text text)
+        throws Base64DecodingException {
+        return new BigInteger(1, Base64.decode(text.getData()));
+    }
+
+    /**
+     * This method takes an (empty) Element and a BigInteger and adds the
+     * base64 encoded BigInteger to the Element.
+     *
+     * @param element
+     * @param biginteger
+     */
+    public static final void fillElementWithBigInteger(Element element, BigInteger biginteger) {
+
+        String encodedInt = encode(biginteger);
+
+        if (!XMLUtils.ignoreLineBreaks() && encodedInt.length() > BASE64DEFAULTLENGTH) {
+            encodedInt = "\n" + encodedInt + "\n";
+        }
+
+        Document doc = element.getOwnerDocument();
+        Text text = doc.createTextNode(encodedInt);
+
+        element.appendChild(text);
+    }
+
+    /**
+     * Method decode
+     *
+     * Takes the <CODE>Text</CODE> children of the Element and interprets
+     * them as input for the <CODE>Base64.decode()</CODE> function.
+     *
+     * @param element
+     * @return the byte obtained of the decoding the element
+     * $todo$ not tested yet
+     * @throws Base64DecodingException
+     */
+    public static final byte[] decode(Element element) throws Base64DecodingException {
+
+        Node sibling = element.getFirstChild();
+        StringBuffer sb = new StringBuffer();
+
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.TEXT_NODE) {
+                Text t = (Text) sibling;
+
+                sb.append(t.getData());
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        return decode(sb.toString());
+    }
+
+    /**
+     * Method encodeToElement
+     *
+     * @param doc
+     * @param localName
+     * @param bytes
+     * @return an Element with the base64 encoded in the text.
+     *
+     */
+    public static final Element encodeToElement(Document doc, String localName, byte[] bytes) {
+        Element el = XMLUtils.createElementInSignatureSpace(doc, localName);
+        Text text = doc.createTextNode(encode(bytes));
+
+        el.appendChild(text);
+
+        return el;
+    }
+
+    /**
+     * Method decode
+     *
+     * @param base64
+     * @return the UTF bytes of the base64
+     * @throws Base64DecodingException
+     *
+     */
+    public static final byte[] decode(byte[] base64) throws Base64DecodingException  {
+        return decodeInternal(base64, -1);
+    }
+
+    /**
+     * Encode a byte array and fold lines at the standard 76th character unless
+     * ignore line breaks property is set.
+     *
+     * @param binaryData <code>byte[]<code> to be base64 encoded
+     * @return the <code>String<code> with encoded data
+     */
+    public static final String encode(byte[] binaryData) {
+        return XMLUtils.ignoreLineBreaks()
+            ? encode(binaryData, Integer.MAX_VALUE)
+            : encode(binaryData, BASE64DEFAULTLENGTH);
+    }
+
+    /**
+     * Base64 decode the lines from the reader and return an InputStream
+     * with the bytes.
+     *
+     * @param reader
+     * @return InputStream with the decoded bytes
+     * @exception IOException passes what the reader throws
+     * @throws IOException
+     * @throws Base64DecodingException
+     */
+    public static final byte[] decode(BufferedReader reader)
+        throws IOException, Base64DecodingException {
+
+        byte[] retBytes = null;
+        UnsyncByteArrayOutputStream baos = null;
+        try {
+            baos = new UnsyncByteArrayOutputStream();
+            String line;
+
+            while (null != (line = reader.readLine())) {
+                byte[] bytes = decode(line);
+                baos.write(bytes);
+            }
+            retBytes = baos.toByteArray();
+        } finally {
+            baos.close();
+        }
+
+        return retBytes;
+    }
+
+    protected static final boolean isWhiteSpace(byte octect) {
+        return (octect == 0x20 || octect == 0xd || octect == 0xa || octect == 0x9);
+    }
+
+    protected static final boolean isPad(byte octect) {
+        return (octect == PAD);
+    }
+
+    /**
+     * Encodes hex octets into Base64
+     *
+     * @param binaryData Array containing binaryData
+     * @return Encoded Base64 array
+     */
+    /**
+     * Encode a byte array in Base64 format and return an optionally
+     * wrapped line.
+     *
+     * @param binaryData <code>byte[]</code> data to be encoded
+     * @param length <code>int<code> length of wrapped lines; No wrapping if less than 4.
+     * @return a <code>String</code> with encoded data
+     */
+    public static final String  encode(byte[] binaryData,int length) {
+        if (length < 4) {
+            length = Integer.MAX_VALUE;
+        }
+
+        if (binaryData == null) {
+            return null;
+        }
+
+        int lengthDataBits = binaryData.length * EIGHTBIT;
+        if (lengthDataBits == 0) {
+            return "";
+        }
+
+        int fewerThan24bits = lengthDataBits % TWENTYFOURBITGROUP;
+        int numberTriplets = lengthDataBits / TWENTYFOURBITGROUP;
+        int numberQuartet = fewerThan24bits != 0 ? numberTriplets + 1 : numberTriplets;
+        int quartesPerLine = length / 4;
+        int numberLines = (numberQuartet - 1) / quartesPerLine;
+        char encodedData[] = null;
+
+        encodedData = new char[numberQuartet * 4 + numberLines];
+
+        byte k = 0, l = 0, b1 = 0, b2 = 0, b3 = 0;
+        int encodedIndex = 0;
+        int dataIndex = 0;
+        int i = 0;
+
+        for (int line = 0; line < numberLines; line++) {
+            for (int quartet = 0; quartet < 19; quartet++) {
+                b1 = binaryData[dataIndex++];
+                b2 = binaryData[dataIndex++];
+                b3 = binaryData[dataIndex++];
+
+                l  = (byte)(b2 & 0x0f);
+                k  = (byte)(b1 & 0x03);
+
+                byte val1 = ((b1 & SIGN) == 0) ? (byte)(b1 >> 2): (byte)((b1) >> 2 ^ 0xc0);
+
+                byte val2 = ((b2 & SIGN) == 0) ? (byte)(b2 >> 4) : (byte)((b2) >> 4 ^ 0xf0);
+                byte val3 = ((b3 & SIGN) == 0) ? (byte)(b3 >> 6) : (byte)((b3) >> 6 ^ 0xfc);
+
+
+                encodedData[encodedIndex++] = lookUpBase64Alphabet[val1];
+                encodedData[encodedIndex++] = lookUpBase64Alphabet[val2 | (k << 4)];
+                encodedData[encodedIndex++] = lookUpBase64Alphabet[(l << 2) | val3];
+                encodedData[encodedIndex++] = lookUpBase64Alphabet[b3 & 0x3f];
+
+                i++;
+            }
+            encodedData[encodedIndex++] = 0xa;
+        }
+
+        for (; i < numberTriplets; i++) {
+            b1 = binaryData[dataIndex++];
+            b2 = binaryData[dataIndex++];
+            b3 = binaryData[dataIndex++];
+
+            l  = (byte)(b2 & 0x0f);
+            k  = (byte)(b1 & 0x03);
+
+            byte val1 = ((b1 & SIGN) == 0) ? (byte)(b1 >> 2) : (byte)((b1) >> 2 ^ 0xc0);
+
+            byte val2 = ((b2 & SIGN) == 0) ? (byte)(b2 >> 4) : (byte)((b2) >> 4 ^ 0xf0);
+            byte val3 = ((b3 & SIGN) == 0) ? (byte)(b3 >> 6) : (byte)((b3) >> 6 ^ 0xfc);
+
+
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[val1];
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[val2 | (k << 4)];
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[(l << 2) | val3];
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[b3 & 0x3f];
+        }
+
+        // form integral number of 6-bit groups
+        if (fewerThan24bits == EIGHTBIT) {
+            b1 = binaryData[dataIndex];
+            k = (byte) (b1 &0x03);
+            byte val1 = ((b1 & SIGN) == 0) ? (byte)(b1 >> 2):(byte)((b1) >> 2 ^ 0xc0);
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[val1];
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[k << 4];
+            encodedData[encodedIndex++] = PAD;
+            encodedData[encodedIndex++] = PAD;
+        } else if (fewerThan24bits == SIXTEENBIT) {
+            b1 = binaryData[dataIndex];
+            b2 = binaryData[dataIndex +1 ];
+            l = ( byte ) (b2 & 0x0f);
+            k = ( byte ) (b1 & 0x03);
+
+            byte val1 = ((b1 & SIGN) == 0) ? (byte)(b1 >> 2) : (byte)((b1) >> 2 ^ 0xc0);
+            byte val2 = ((b2 & SIGN) == 0) ? (byte)(b2 >> 4) : (byte)((b2) >> 4 ^ 0xf0);
+
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[val1];
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[val2 | (k << 4)];
+            encodedData[encodedIndex++] = lookUpBase64Alphabet[l << 2];
+            encodedData[encodedIndex++] = PAD;
+        }
+
+        //encodedData[encodedIndex] = 0xa;
+
+        return new String(encodedData);
+    }
+
+    /**
+     * Decodes Base64 data into octets
+     *
+     * @param encoded String containing base64 encoded data
+     * @return byte array containing the decoded data
+     * @throws Base64DecodingException if there is a problem decoding the data
+     */
+    public static final byte[] decode(String encoded) throws Base64DecodingException {
+        if (encoded == null) {
+            return null;
+        }
+        byte[] bytes = new byte[encoded.length()];
+        int len = getBytesInternal(encoded, bytes);
+        return decodeInternal(bytes, len);
+    }
+
+    protected static final int getBytesInternal(String s, byte[] result) {
+        int length = s.length();
+
+        int newSize = 0;
+        for (int i = 0; i < length; i++) {
+            byte dataS = (byte)s.charAt(i);
+            if (!isWhiteSpace(dataS)) {
+                result[newSize++] = dataS;
+            }
+        }
+        return newSize;
+    }
+
+    protected static final byte[] decodeInternal(byte[] base64Data, int len)
+        throws Base64DecodingException {
+        // remove white spaces
+        if (len == -1) {
+            len = removeWhiteSpace(base64Data);
+        }
+
+        if (len % FOURBYTE != 0) {
+            throw new Base64DecodingException("decoding.divisible.four");
+            //should be divisible by four
+        }
+
+        int numberQuadruple = (len / FOURBYTE);
+
+        if (numberQuadruple == 0) {
+            return new byte[0];
+        }
+
+        byte decodedData[] = null;
+        byte b1 = 0, b2 = 0, b3 = 0, b4 = 0;
+
+        int i = 0;
+        int encodedIndex = 0;
+        int dataIndex = 0;
+
+        //decodedData = new byte[ (numberQuadruple)*3];
+        dataIndex = (numberQuadruple - 1) * 4;
+        encodedIndex = (numberQuadruple - 1) * 3;
+        //first last bits.
+        b1 = base64Alphabet[base64Data[dataIndex++]];
+        b2 = base64Alphabet[base64Data[dataIndex++]];
+        if ((b1==-1) || (b2==-1)) {
+             //if found "no data" just return null
+            throw new Base64DecodingException("decoding.general");
+        }
+
+
+        byte d3, d4;
+        b3 = base64Alphabet[d3 = base64Data[dataIndex++]];
+        b4 = base64Alphabet[d4 = base64Data[dataIndex++]];
+        if ((b3 == -1) || (b4 == -1) ) {
+            //Check if they are PAD characters
+            if (isPad(d3) && isPad(d4)) {               //Two PAD e.g. 3c[Pad][Pad]
+                if ((b2 & 0xf) != 0) { //last 4 bits should be zero
+                    throw new Base64DecodingException("decoding.general");
+                }
+                decodedData = new byte[encodedIndex + 1];
+                decodedData[encodedIndex]   = (byte)(b1 << 2 | b2 >> 4) ;
+            } else if (!isPad(d3) && isPad(d4)) {               //One PAD  e.g. 3cQ[Pad]
+                if ((b3 & 0x3) != 0) { //last 2 bits should be zero
+                    throw new Base64DecodingException("decoding.general");
+                }
+                decodedData = new byte[encodedIndex + 2];
+                decodedData[encodedIndex++] = (byte)(b1 << 2 | b2 >> 4);
+                decodedData[encodedIndex] = (byte)(((b2 & 0xf) << 4) |((b3 >> 2) & 0xf));
+            } else {
+                //an error  like "3c[Pad]r", "3cdX", "3cXd", "3cXX" where X is non data
+                throw new Base64DecodingException("decoding.general");
+            }
+        } else {
+            //No PAD e.g 3cQl
+            decodedData = new byte[encodedIndex+3];
+            decodedData[encodedIndex++] = (byte)(b1 << 2 | b2 >> 4) ;
+            decodedData[encodedIndex++] = (byte)(((b2 & 0xf) << 4) | ((b3 >> 2) & 0xf));
+            decodedData[encodedIndex++] = (byte)(b3 << 6 | b4);
+        }
+        encodedIndex = 0;
+        dataIndex = 0;
+        //the begin
+        for (i = numberQuadruple - 1; i > 0; i--) {
+            b1 = base64Alphabet[base64Data[dataIndex++]];
+            b2 = base64Alphabet[base64Data[dataIndex++]];
+            b3 = base64Alphabet[base64Data[dataIndex++]];
+            b4 = base64Alphabet[base64Data[dataIndex++]];
+
+            if ((b1 == -1) ||
+                (b2 == -1) ||
+                (b3 == -1) ||
+                (b4 == -1)) {
+                //if found "no data" just return null
+                throw new Base64DecodingException("decoding.general");
+            }
+
+            decodedData[encodedIndex++] = (byte)(b1 << 2 | b2 >> 4) ;
+            decodedData[encodedIndex++] = (byte)(((b2 & 0xf) << 4) |((b3 >> 2) & 0xf));
+            decodedData[encodedIndex++] = (byte)(b3 << 6 | b4 );
+        }
+        return decodedData;
+    }
+
+    /**
+     * Decodes Base64 data into outputstream
+     *
+     * @param base64Data String containing Base64 data
+     * @param os the outputstream
+     * @throws IOException
+     * @throws Base64DecodingException
+     */
+    public static final void decode(String base64Data, OutputStream os)
+        throws Base64DecodingException, IOException {
+        byte[] bytes = new byte[base64Data.length()];
+        int len = getBytesInternal(base64Data, bytes);
+        decode(bytes,os,len);
+    }
+
+    /**
+     * Decodes Base64 data into outputstream
+     *
+     * @param base64Data Byte array containing Base64 data
+     * @param os the outputstream
+     * @throws IOException
+     * @throws Base64DecodingException
+     */
+    public static final void decode(byte[] base64Data, OutputStream os)
+        throws Base64DecodingException, IOException {
+        decode(base64Data,os,-1);
+    }
+
+    protected static final void decode(byte[] base64Data, OutputStream os, int len)
+        throws Base64DecodingException, IOException {
+        // remove white spaces
+        if (len == -1) {
+            len = removeWhiteSpace(base64Data);
+        }
+
+        if (len % FOURBYTE != 0) {
+            throw new Base64DecodingException("decoding.divisible.four");
+            //should be divisible by four
+        }
+
+        int numberQuadruple = (len / FOURBYTE);
+
+        if (numberQuadruple == 0) {
+            return;
+        }
+
+        //byte decodedData[] = null;
+        byte b1 = 0, b2 = 0, b3 = 0, b4 = 0;
+
+        int i = 0;
+        int dataIndex = 0;
+
+        //the begin
+        for (i=numberQuadruple - 1; i > 0; i--) {
+            b1 = base64Alphabet[base64Data[dataIndex++]];
+            b2 = base64Alphabet[base64Data[dataIndex++]];
+            b3 = base64Alphabet[base64Data[dataIndex++]];
+            b4 = base64Alphabet[base64Data[dataIndex++]];
+            if ((b1 == -1) ||
+                (b2 == -1) ||
+                (b3 == -1) ||
+                (b4 == -1) ) {
+                //if found "no data" just return null
+                throw new Base64DecodingException("decoding.general");
+            }
+
+            os.write((byte)(b1 << 2 | b2 >> 4));
+            os.write((byte)(((b2 & 0xf) << 4 ) | ((b3 >> 2) & 0xf)));
+            os.write( (byte)(b3 << 6 | b4));
+        }
+        b1 = base64Alphabet[base64Data[dataIndex++]];
+        b2 = base64Alphabet[base64Data[dataIndex++]];
+
+        //  first last bits.
+        if ((b1 == -1) || (b2 == -1) ) {
+            //if found "no data" just return null
+            throw new Base64DecodingException("decoding.general");
+        }
+
+        byte d3, d4;
+        b3 = base64Alphabet[d3 = base64Data[dataIndex++]];
+        b4 = base64Alphabet[d4 = base64Data[dataIndex++]];
+        if ((b3 == -1 ) || (b4 == -1) ) { //Check if they are PAD characters
+            if (isPad(d3) && isPad(d4)) {               //Two PAD e.g. 3c[Pad][Pad]
+                if ((b2 & 0xf) != 0) { //last 4 bits should be zero
+                    throw new Base64DecodingException("decoding.general");
+                }
+                os.write((byte)(b1 << 2 | b2 >> 4));
+            } else if (!isPad(d3) && isPad(d4)) {               //One PAD  e.g. 3cQ[Pad]
+                if ((b3 & 0x3 ) != 0) { //last 2 bits should be zero
+                    throw new Base64DecodingException("decoding.general");
+                }
+                os.write((byte)(b1 << 2 | b2 >> 4));
+                os.write((byte)(((b2 & 0xf) << 4) | ((b3 >> 2) & 0xf)));
+            } else {
+                //an error  like "3c[Pad]r", "3cdX", "3cXd", "3cXX" where X is non data
+                throw new Base64DecodingException("decoding.general");
+            }
+        } else {
+            //No PAD e.g 3cQl
+            os.write((byte)(b1 << 2 | b2 >> 4));
+            os.write( (byte)(((b2 & 0xf) << 4) | ((b3 >> 2) & 0xf)));
+            os.write((byte)(b3 << 6 | b4));
+        }
+    }
+
+    /**
+     * Decodes Base64 data into  outputstream
+     *
+     * @param is containing Base64 data
+     * @param os the outputstream
+     * @throws IOException
+     * @throws Base64DecodingException
+     */
+    public static final void decode(InputStream is, OutputStream os)
+        throws Base64DecodingException, IOException {
+        //byte decodedData[] = null;
+        byte b1 = 0, b2 = 0, b3 = 0, b4 = 0;
+
+        int index=0;
+        byte[] data = new byte[4];
+        int read;
+        //the begin
+        while ((read = is.read()) > 0) {
+            byte readed = (byte)read;
+            if (isWhiteSpace(readed)) {
+                continue;
+            }
+            if (isPad(readed)) {
+                data[index++] = readed;
+                if (index == 3) {
+                    data[index++] = (byte)is.read();
+                }
+                break;
+            }
+
+            if ((data[index++] = readed) == -1) {
+                //if found "no data" just return null
+                throw new Base64DecodingException("decoding.general");
+            }
+
+            if (index != 4) {
+                continue;
+            }
+            index = 0;
+            b1 = base64Alphabet[data[0]];
+            b2 = base64Alphabet[data[1]];
+            b3 = base64Alphabet[data[2]];
+            b4 = base64Alphabet[data[3]];
+
+            os.write((byte)(b1 << 2 | b2 >> 4));
+            os.write((byte)(((b2 & 0xf) << 4) | ((b3 >> 2) & 0xf)));
+            os.write((byte)(b3 << 6 | b4));
+        }
+
+        byte d1 = data[0], d2 = data[1], d3 = data[2], d4 = data[3];
+        b1 = base64Alphabet[d1];
+        b2 = base64Alphabet[d2];
+        b3 = base64Alphabet[d3];
+        b4 = base64Alphabet[d4];
+        if ((b3 == -1) || (b4 == -1)) { //Check if they are PAD characters
+            if (isPad(d3) && isPad(d4)) {               //Two PAD e.g. 3c[Pad][Pad]
+                if ((b2 & 0xf) != 0) { //last 4 bits should be zero
+                    throw new Base64DecodingException("decoding.general");
+                }
+                os.write((byte)(b1 << 2 | b2 >> 4));
+            } else if (!isPad(d3) && isPad(d4)) {               //One PAD  e.g. 3cQ[Pad]
+                b3 = base64Alphabet[d3];
+                if ((b3 & 0x3) != 0) { //last 2 bits should be zero
+                    throw new Base64DecodingException("decoding.general");
+                }
+                os.write((byte)(b1 << 2 | b2 >> 4));
+                os.write((byte)(((b2 & 0xf) << 4) | ((b3 >> 2) & 0xf)));
+            } else {
+                //an error  like "3c[Pad]r", "3cdX", "3cXd", "3cXX" where X is non data
+                throw new Base64DecodingException("decoding.general");
+            }
+        } else {
+            //No PAD e.g 3cQl
+            os.write((byte)(b1 << 2 | b2 >> 4));
+            os.write((byte)(((b2 & 0xf) << 4) | ((b3 >> 2) & 0xf)));
+            os.write((byte)(b3 << 6 | b4));
+        }
+    }
+
+    /**
+     * remove WhiteSpace from MIME containing encoded Base64 data.
+     *
+     * @param data  the byte array of base64 data (with WS)
+     * @return      the new length
+     */
+    protected static final int removeWhiteSpace(byte[] data) {
+        if (data == null) {
+            return 0;
+        }
+
+        // count characters that's not whitespace
+        int newSize = 0;
+        int len = data.length;
+        for (int i = 0; i < len; i++) {
+            byte dataS = data[i];
+            if (!isWhiteSpace(dataS)) {
+                data[newSize++] = dataS;
+            }
+        }
+        return newSize;
+    }
+}

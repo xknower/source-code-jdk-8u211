@@ -1,58 +1,52 @@
-/*    */ package org.omg.CORBA.ORBPackage;
-/*    */ 
-/*    */ import org.omg.CORBA.UserException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class InconsistentTypeCode
-/*    */   extends UserException
-/*    */ {
-/*    */   public InconsistentTypeCode() {}
-/*    */   
-/*    */   public InconsistentTypeCode(String paramString) {
-/* 50 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\ORBPackage\InconsistentTypeCode.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package org.omg.CORBA.ORBPackage;
+
+/**
+ * InconsistentTypeCode is thrown when an attempt is made to create a
+ * dynamic any with a type code that does not match the particular
+ * subclass of <code>DynAny</code>.
+ */
+public final class InconsistentTypeCode
+    extends org.omg.CORBA.UserException {
+    /**
+     * Constructs an <code>InconsistentTypeCode</code> user exception
+     * with no reason message.
+    */
+    public InconsistentTypeCode() {
+        super();
+    }
+
+    /**
+    * Constructs an <code>InconsistentTypeCode</code> user exception
+    * with the specified reason message.
+    * @param reason The String containing a reason message
+    */
+    public InconsistentTypeCode(String reason) {
+        super(reason);
+    }
+}

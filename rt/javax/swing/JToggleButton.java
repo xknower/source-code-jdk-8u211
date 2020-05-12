@@ -1,430 +1,424 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.AWTEvent;
-/*     */ import java.awt.EventQueue;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.InputEvent;
-/*     */ import java.awt.event.ItemEvent;
-/*     */ import java.awt.event.ItemListener;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import javax.accessibility.Accessible;
-/*     */ import javax.accessibility.AccessibleContext;
-/*     */ import javax.accessibility.AccessibleRole;
-/*     */ import javax.accessibility.AccessibleState;
-/*     */ import javax.swing.plaf.ButtonUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class JToggleButton
-/*     */   extends AbstractButton
-/*     */   implements Accessible
-/*     */ {
-/*     */   private static final String uiClassID = "ToggleButtonUI";
-/*     */   
-/*     */   public JToggleButton() {
-/*  92 */     this((String)null, (Icon)null, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(Icon paramIcon) {
-/* 102 */     this((String)null, paramIcon, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(Icon paramIcon, boolean paramBoolean) {
-/* 114 */     this((String)null, paramIcon, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(String paramString) {
-/* 123 */     this(paramString, (Icon)null, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(String paramString, boolean paramBoolean) {
-/* 135 */     this(paramString, (Icon)null, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(Action paramAction) {
-/* 145 */     this();
-/* 146 */     setAction(paramAction);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(String paramString, Icon paramIcon) {
-/* 157 */     this(paramString, paramIcon, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JToggleButton(String paramString, Icon paramIcon, boolean paramBoolean) {
-/* 171 */     setModel(new ToggleButtonModel());
-/*     */     
-/* 173 */     this.model.setSelected(paramBoolean);
-/*     */ 
-/*     */     
-/* 176 */     init(paramString, paramIcon);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void updateUI() {
-/* 185 */     setUI((ButtonUI)UIManager.getUI(this));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getUIClassID() {
-/* 199 */     return "ToggleButtonUI";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean shouldUpdateSelectedStateFromAction() {
-/* 208 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class ToggleButtonModel
-/*     */     extends DefaultButtonModel
-/*     */   {
-/*     */     public boolean isSelected() {
-/* 240 */       return ((this.stateMask & 0x2) != 0);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setSelected(boolean param1Boolean) {
-/* 251 */       ButtonGroup buttonGroup = getGroup();
-/* 252 */       if (buttonGroup != null) {
-/*     */         
-/* 254 */         buttonGroup.setSelected(this, param1Boolean);
-/* 255 */         param1Boolean = buttonGroup.isSelected(this);
-/*     */       } 
-/*     */       
-/* 258 */       if (isSelected() == param1Boolean) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 262 */       if (param1Boolean) {
-/* 263 */         this.stateMask |= 0x2;
-/*     */       } else {
-/* 265 */         this.stateMask &= 0xFFFFFFFD;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 269 */       fireStateChanged();
-/*     */ 
-/*     */       
-/* 272 */       fireItemStateChanged(new ItemEvent(this, 701, this, 
-/*     */ 
-/*     */ 
-/*     */             
-/* 276 */             isSelected() ? 1 : 2));
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setPressed(boolean param1Boolean) {
-/* 284 */       if (isPressed() == param1Boolean || !isEnabled()) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 288 */       if (!param1Boolean && isArmed()) {
-/* 289 */         setSelected(!isSelected());
-/*     */       }
-/*     */       
-/* 292 */       if (param1Boolean) {
-/* 293 */         this.stateMask |= 0x4;
-/*     */       } else {
-/* 295 */         this.stateMask &= 0xFFFFFFFB;
-/*     */       } 
-/*     */       
-/* 298 */       fireStateChanged();
-/*     */       
-/* 300 */       if (!isPressed() && isArmed()) {
-/* 301 */         int i = 0;
-/* 302 */         AWTEvent aWTEvent = EventQueue.getCurrentEvent();
-/* 303 */         if (aWTEvent instanceof InputEvent) {
-/* 304 */           i = ((InputEvent)aWTEvent).getModifiers();
-/* 305 */         } else if (aWTEvent instanceof ActionEvent) {
-/* 306 */           i = ((ActionEvent)aWTEvent).getModifiers();
-/*     */         } 
-/* 308 */         fireActionPerformed(new ActionEvent(this, 1001, 
-/*     */               
-/* 310 */               getActionCommand(), 
-/* 311 */               EventQueue.getMostRecentEventTime(), i));
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 324 */     paramObjectOutputStream.defaultWriteObject();
-/* 325 */     if (getUIClassID().equals("ToggleButtonUI")) {
-/* 326 */       byte b = JComponent.getWriteObjCounter(this);
-/* 327 */       b = (byte)(b - 1); JComponent.setWriteObjCounter(this, b);
-/* 328 */       if (b == 0 && this.ui != null) {
-/* 329 */         this.ui.installUI(this);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String paramString() {
-/* 345 */     return super.paramString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AccessibleContext getAccessibleContext() {
-/* 366 */     if (this.accessibleContext == null) {
-/* 367 */       this.accessibleContext = new AccessibleJToggleButton();
-/*     */     }
-/* 369 */     return this.accessibleContext;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected class AccessibleJToggleButton
-/*     */     extends AbstractButton.AccessibleAbstractButton
-/*     */     implements ItemListener
-/*     */   {
-/*     */     public AccessibleJToggleButton() {
-/* 392 */       JToggleButton.this.addItemListener(this);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void itemStateChanged(ItemEvent param1ItemEvent) {
-/* 400 */       JToggleButton jToggleButton = (JToggleButton)param1ItemEvent.getSource();
-/* 401 */       if (JToggleButton.this.accessibleContext != null) {
-/* 402 */         if (jToggleButton.isSelected()) {
-/* 403 */           JToggleButton.this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.CHECKED);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 407 */           JToggleButton.this.accessibleContext.firePropertyChange("AccessibleState", AccessibleState.CHECKED, null);
-/*     */         } 
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public AccessibleRole getAccessibleRole() {
-/* 421 */       return AccessibleRole.TOGGLE_BUTTON;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\JToggleButton.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.accessibility.*;
+
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
+
+/**
+ * An implementation of a two-state button.
+ * The <code>JRadioButton</code> and <code>JCheckBox</code> classes
+ * are subclasses of this class.
+ * For information on using them see
+ * <a
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/button.html">How to Use Buttons, Check Boxes, and Radio Buttons</a>,
+ * a section in <em>The Java Tutorial</em>.
+ * <p>
+ * Buttons can be configured, and to some degree controlled, by
+ * <code><a href="Action.html">Action</a></code>s.  Using an
+ * <code>Action</code> with a button has many benefits beyond directly
+ * configuring a button.  Refer to <a href="Action.html#buttonActions">
+ * Swing Components Supporting <code>Action</code></a> for more
+ * details, and you can find more information in <a
+ * href="https://docs.oracle.com/javase/tutorial/uiswing/misc/action.html">How
+ * to Use Actions</a>, a section in <em>The Java Tutorial</em>.
+ * <p>
+ * <strong>Warning:</strong> Swing is not thread safe. For more
+ * information see <a
+ * href="package-summary.html#threading">Swing's Threading
+ * Policy</a>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @beaninfo
+ *   attribute: isContainer false
+ * description: An implementation of a two-state button.
+ *
+ * @see JRadioButton
+ * @see JCheckBox
+ * @author Jeff Dinkins
+ */
+public class JToggleButton extends AbstractButton implements Accessible {
+
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    private static final String uiClassID = "ToggleButtonUI";
+
+    /**
+     * Creates an initially unselected toggle button
+     * without setting the text or image.
+     */
+    public JToggleButton () {
+        this(null, null, false);
+    }
+
+    /**
+     * Creates an initially unselected toggle button
+     * with the specified image but no text.
+     *
+     * @param icon  the image that the button should display
+     */
+    public JToggleButton(Icon icon) {
+        this(null, icon, false);
+    }
+
+    /**
+     * Creates a toggle button with the specified image
+     * and selection state, but no text.
+     *
+     * @param icon  the image that the button should display
+     * @param selected  if true, the button is initially selected;
+     *                  otherwise, the button is initially unselected
+     */
+    public JToggleButton(Icon icon, boolean selected) {
+        this(null, icon, selected);
+    }
+
+    /**
+     * Creates an unselected toggle button with the specified text.
+     *
+     * @param text  the string displayed on the toggle button
+     */
+    public JToggleButton (String text) {
+        this(text, null, false);
+    }
+
+    /**
+     * Creates a toggle button with the specified text
+     * and selection state.
+     *
+     * @param text  the string displayed on the toggle button
+     * @param selected  if true, the button is initially selected;
+     *                  otherwise, the button is initially unselected
+     */
+    public JToggleButton (String text, boolean selected) {
+        this(text, null, selected);
+    }
+
+    /**
+     * Creates a toggle button where properties are taken from the
+     * Action supplied.
+     *
+     * @since 1.3
+     */
+    public JToggleButton(Action a) {
+        this();
+        setAction(a);
+    }
+
+    /**
+     * Creates a toggle button that has the specified text and image,
+     * and that is initially unselected.
+     *
+     * @param text the string displayed on the button
+     * @param icon  the image that the button should display
+     */
+    public JToggleButton(String text, Icon icon) {
+        this(text, icon, false);
+    }
+
+    /**
+     * Creates a toggle button with the specified text, image, and
+     * selection state.
+     *
+     * @param text the text of the toggle button
+     * @param icon  the image that the button should display
+     * @param selected  if true, the button is initially selected;
+     *                  otherwise, the button is initially unselected
+     */
+    public JToggleButton (String text, Icon icon, boolean selected) {
+        // Create the model
+        setModel(new ToggleButtonModel());
+
+        model.setSelected(selected);
+
+        // initialize
+        init(text, icon);
+    }
+
+    /**
+     * Resets the UI property to a value from the current look and feel.
+     *
+     * @see JComponent#updateUI
+     */
+    public void updateUI() {
+        setUI((ButtonUI)UIManager.getUI(this));
+    }
+
+    /**
+     * Returns a string that specifies the name of the l&amp;f class
+     * that renders this component.
+     *
+     * @return String "ToggleButtonUI"
+     * @see JComponent#getUIClassID
+     * @see UIDefaults#getUI
+     * @beaninfo
+     *  description: A string that specifies the name of the L&amp;F class
+     */
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
+
+    /**
+     * Overriden to return true, JToggleButton supports
+     * the selected state.
+     */
+    boolean shouldUpdateSelectedStateFromAction() {
+        return true;
+    }
+
+    // *********************************************************************
+
+    /**
+     * The ToggleButton model
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    public static class ToggleButtonModel extends DefaultButtonModel {
+
+        /**
+         * Creates a new ToggleButton Model
+         */
+        public ToggleButtonModel () {
+        }
+
+        /**
+         * Checks if the button is selected.
+         */
+        public boolean isSelected() {
+//              if(getGroup() != null) {
+//                  return getGroup().isSelected(this);
+//              } else {
+                return (stateMask & SELECTED) != 0;
+//              }
+        }
+
+
+        /**
+         * Sets the selected state of the button.
+         * @param b true selects the toggle button,
+         *          false deselects the toggle button.
+         */
+        public void setSelected(boolean b) {
+            ButtonGroup group = getGroup();
+            if (group != null) {
+                // use the group model instead
+                group.setSelected(this, b);
+                b = group.isSelected(this);
+            }
+
+            if (isSelected() == b) {
+                return;
+            }
+
+            if (b) {
+                stateMask |= SELECTED;
+            } else {
+                stateMask &= ~SELECTED;
+            }
+
+            // Send ChangeEvent
+            fireStateChanged();
+
+            // Send ItemEvent
+            fireItemStateChanged(
+                    new ItemEvent(this,
+                                  ItemEvent.ITEM_STATE_CHANGED,
+                                  this,
+                                  this.isSelected() ?  ItemEvent.SELECTED : ItemEvent.DESELECTED));
+
+        }
+
+        /**
+         * Sets the pressed state of the toggle button.
+         */
+        public void setPressed(boolean b) {
+            if ((isPressed() == b) || !isEnabled()) {
+                return;
+            }
+
+            if (b == false && isArmed()) {
+                setSelected(!this.isSelected());
+            }
+
+            if (b) {
+                stateMask |= PRESSED;
+            } else {
+                stateMask &= ~PRESSED;
+            }
+
+            fireStateChanged();
+
+            if(!isPressed() && isArmed()) {
+                int modifiers = 0;
+                AWTEvent currentEvent = EventQueue.getCurrentEvent();
+                if (currentEvent instanceof InputEvent) {
+                    modifiers = ((InputEvent)currentEvent).getModifiers();
+                } else if (currentEvent instanceof ActionEvent) {
+                    modifiers = ((ActionEvent)currentEvent).getModifiers();
+                }
+                fireActionPerformed(
+                    new ActionEvent(this, ActionEvent.ACTION_PERFORMED,
+                                    getActionCommand(),
+                                    EventQueue.getMostRecentEventTime(),
+                                    modifiers));
+            }
+
+        }
+    }
+
+
+    /**
+     * See readObject() and writeObject() in JComponent for more
+     * information about serialization in Swing.
+     */
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        if (getUIClassID().equals(uiClassID)) {
+            byte count = JComponent.getWriteObjCounter(this);
+            JComponent.setWriteObjCounter(this, --count);
+            if (count == 0 && ui != null) {
+                ui.installUI(this);
+            }
+        }
+    }
+
+
+    /**
+     * Returns a string representation of this JToggleButton. This method
+     * is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not
+     * be <code>null</code>.
+     *
+     * @return  a string representation of this JToggleButton.
+     */
+    protected String paramString() {
+        return super.paramString();
+    }
+
+
+/////////////////
+// Accessibility support
+////////////////
+
+    /**
+     * Gets the AccessibleContext associated with this JToggleButton.
+     * For toggle buttons, the AccessibleContext takes the form of an
+     * AccessibleJToggleButton.
+     * A new AccessibleJToggleButton instance is created if necessary.
+     *
+     * @return an AccessibleJToggleButton that serves as the
+     *         AccessibleContext of this JToggleButton
+     * @beaninfo
+     *       expert: true
+     *  description: The AccessibleContext associated with this ToggleButton.
+     */
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJToggleButton();
+        }
+        return accessibleContext;
+    }
+
+    /**
+     * This class implements accessibility support for the
+     * <code>JToggleButton</code> class.  It provides an implementation of the
+     * Java Accessibility API appropriate to toggle button user-interface
+     * elements.
+     * <p>
+     * <strong>Warning:</strong>
+     * Serialized objects of this class will not be compatible with
+     * future Swing releases. The current serialization support is
+     * appropriate for short term storage or RMI between applications running
+     * the same version of Swing.  As of 1.4, support for long term storage
+     * of all JavaBeans&trade;
+     * has been added to the <code>java.beans</code> package.
+     * Please see {@link java.beans.XMLEncoder}.
+     */
+    protected class AccessibleJToggleButton extends AccessibleAbstractButton
+            implements ItemListener {
+
+        public AccessibleJToggleButton() {
+            super();
+            JToggleButton.this.addItemListener(this);
+        }
+
+        /**
+         * Fire accessible property change events when the state of the
+         * toggle button changes.
+         */
+        public void itemStateChanged(ItemEvent e) {
+            JToggleButton tb = (JToggleButton) e.getSource();
+            if (JToggleButton.this.accessibleContext != null) {
+                if (tb.isSelected()) {
+                    JToggleButton.this.accessibleContext.firePropertyChange(
+                            AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                            null, AccessibleState.CHECKED);
+                } else {
+                    JToggleButton.this.accessibleContext.firePropertyChange(
+                            AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                            AccessibleState.CHECKED, null);
+                }
+            }
+        }
+
+        /**
+         * Get the role of this object.
+         *
+         * @return an instance of AccessibleRole describing the role of the
+         * object
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.TOGGLE_BUTTON;
+        }
+    } // inner class AccessibleJToggleButton
+}

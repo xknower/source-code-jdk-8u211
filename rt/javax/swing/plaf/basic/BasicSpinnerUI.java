@@ -1,1068 +1,1062 @@
-/*      */ package javax.swing.plaf.basic;
-/*      */ 
-/*      */ import java.awt.AWTEvent;
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.FocusTraversalPolicy;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.KeyboardFocusManager;
-/*      */ import java.awt.LayoutManager;
-/*      */ import java.awt.event.ActionEvent;
-/*      */ import java.awt.event.FocusEvent;
-/*      */ import java.awt.event.FocusListener;
-/*      */ import java.awt.event.MouseEvent;
-/*      */ import java.awt.event.MouseListener;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.text.AttributedCharacterIterator;
-/*      */ import java.text.DateFormat;
-/*      */ import java.text.Format;
-/*      */ import java.text.ParseException;
-/*      */ import java.text.SimpleDateFormat;
-/*      */ import java.util.Map;
-/*      */ import javax.swing.AbstractAction;
-/*      */ import javax.swing.ButtonModel;
-/*      */ import javax.swing.InputMap;
-/*      */ import javax.swing.JButton;
-/*      */ import javax.swing.JComponent;
-/*      */ import javax.swing.JFormattedTextField;
-/*      */ import javax.swing.JSpinner;
-/*      */ import javax.swing.LookAndFeel;
-/*      */ import javax.swing.SpinnerDateModel;
-/*      */ import javax.swing.SpinnerModel;
-/*      */ import javax.swing.SwingUtilities;
-/*      */ import javax.swing.Timer;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.border.Border;
-/*      */ import javax.swing.border.CompoundBorder;
-/*      */ import javax.swing.event.ChangeEvent;
-/*      */ import javax.swing.event.ChangeListener;
-/*      */ import javax.swing.plaf.ComponentUI;
-/*      */ import javax.swing.plaf.SpinnerUI;
-/*      */ import javax.swing.plaf.UIResource;
-/*      */ import javax.swing.text.InternationalFormatter;
-/*      */ import sun.swing.DefaultLookup;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class BasicSpinnerUI
-/*      */   extends SpinnerUI
-/*      */ {
-/*      */   protected JSpinner spinner;
-/*      */   private Handler handler;
-/*   72 */   private static final ArrowButtonHandler nextButtonHandler = new ArrowButtonHandler("increment", true);
-/*   73 */   private static final ArrowButtonHandler previousButtonHandler = new ArrowButtonHandler("decrement", false);
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private PropertyChangeListener propertyChangeListener;
-/*      */ 
-/*      */ 
-/*      */   
-/*   81 */   private static final Dimension zeroSize = new Dimension(0, 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*   93 */     return new BasicSpinnerUI();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void maybeAdd(Component paramComponent, String paramString) {
-/*   98 */     if (paramComponent != null) {
-/*   99 */       this.spinner.add(paramComponent, paramString);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void installUI(JComponent paramJComponent) {
-/*  117 */     this.spinner = (JSpinner)paramJComponent;
-/*  118 */     installDefaults();
-/*  119 */     installListeners();
-/*  120 */     maybeAdd(createNextButton(), "Next");
-/*  121 */     maybeAdd(createPreviousButton(), "Previous");
-/*  122 */     maybeAdd(createEditor(), "Editor");
-/*  123 */     updateEnabledState();
-/*  124 */     installKeyboardActions();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void uninstallUI(JComponent paramJComponent) {
-/*  135 */     uninstallDefaults();
-/*  136 */     uninstallListeners();
-/*  137 */     this.spinner = null;
-/*  138 */     paramJComponent.removeAll();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installListeners() {
-/*  153 */     this.propertyChangeListener = createPropertyChangeListener();
-/*  154 */     this.spinner.addPropertyChangeListener(this.propertyChangeListener);
-/*  155 */     if (DefaultLookup.getBoolean(this.spinner, this, "Spinner.disableOnBoundaryValues", false))
-/*      */     {
-/*  157 */       this.spinner.addChangeListener(getHandler());
-/*      */     }
-/*  159 */     JComponent jComponent = this.spinner.getEditor();
-/*  160 */     if (jComponent != null && jComponent instanceof JSpinner.DefaultEditor) {
-/*  161 */       JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)jComponent).getTextField();
-/*  162 */       if (jFormattedTextField != null) {
-/*  163 */         jFormattedTextField.addFocusListener(nextButtonHandler);
-/*  164 */         jFormattedTextField.addFocusListener(previousButtonHandler);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallListeners() {
-/*  179 */     this.spinner.removePropertyChangeListener(this.propertyChangeListener);
-/*  180 */     this.spinner.removeChangeListener(this.handler);
-/*  181 */     JComponent jComponent = this.spinner.getEditor();
-/*  182 */     removeEditorBorderListener(jComponent);
-/*  183 */     if (jComponent instanceof JSpinner.DefaultEditor) {
-/*  184 */       JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)jComponent).getTextField();
-/*  185 */       if (jFormattedTextField != null) {
-/*  186 */         jFormattedTextField.removeFocusListener(nextButtonHandler);
-/*  187 */         jFormattedTextField.removeFocusListener(previousButtonHandler);
-/*      */       } 
-/*      */     } 
-/*  190 */     this.propertyChangeListener = null;
-/*  191 */     this.handler = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installDefaults() {
-/*  209 */     this.spinner.setLayout(createLayout());
-/*  210 */     LookAndFeel.installBorder(this.spinner, "Spinner.border");
-/*  211 */     LookAndFeel.installColorsAndFont(this.spinner, "Spinner.background", "Spinner.foreground", "Spinner.font");
-/*  212 */     LookAndFeel.installProperty(this.spinner, "opaque", Boolean.TRUE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void uninstallDefaults() {
-/*  224 */     this.spinner.setLayout((LayoutManager)null);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private Handler getHandler() {
-/*  229 */     if (this.handler == null) {
-/*  230 */       this.handler = new Handler();
-/*      */     }
-/*  232 */     return this.handler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installNextButtonListeners(Component paramComponent) {
-/*  246 */     installButtonListeners(paramComponent, nextButtonHandler);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installPreviousButtonListeners(Component paramComponent) {
-/*  259 */     installButtonListeners(paramComponent, previousButtonHandler);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void installButtonListeners(Component paramComponent, ArrowButtonHandler paramArrowButtonHandler) {
-/*  264 */     if (paramComponent instanceof JButton) {
-/*  265 */       ((JButton)paramComponent).addActionListener(paramArrowButtonHandler);
-/*      */     }
-/*  267 */     paramComponent.addMouseListener(paramArrowButtonHandler);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected LayoutManager createLayout() {
-/*  284 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected PropertyChangeListener createPropertyChangeListener() {
-/*  300 */     return getHandler();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Component createPreviousButton() {
-/*  317 */     Component component = createArrowButton(5);
-/*  318 */     component.setName("Spinner.previousButton");
-/*  319 */     installPreviousButtonListeners(component);
-/*  320 */     return component;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Component createNextButton() {
-/*  337 */     Component component = createArrowButton(1);
-/*  338 */     component.setName("Spinner.nextButton");
-/*  339 */     installNextButtonListeners(component);
-/*  340 */     return component;
-/*      */   }
-/*      */   
-/*      */   private Component createArrowButton(int paramInt) {
-/*  344 */     BasicArrowButton basicArrowButton = new BasicArrowButton(paramInt);
-/*  345 */     Border border = UIManager.getBorder("Spinner.arrowButtonBorder");
-/*  346 */     if (border instanceof UIResource) {
-/*      */ 
-/*      */       
-/*  349 */       basicArrowButton.setBorder(new CompoundBorder(border, null));
-/*      */     } else {
-/*  351 */       basicArrowButton.setBorder(border);
-/*      */     } 
-/*  353 */     basicArrowButton.setInheritsPopupMenu(true);
-/*  354 */     return basicArrowButton;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected JComponent createEditor() {
-/*  382 */     JComponent jComponent = this.spinner.getEditor();
-/*  383 */     maybeRemoveEditorBorder(jComponent);
-/*  384 */     installEditorBorderListener(jComponent);
-/*  385 */     jComponent.setInheritsPopupMenu(true);
-/*  386 */     updateEditorAlignment(jComponent);
-/*  387 */     return jComponent;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void replaceEditor(JComponent paramJComponent1, JComponent paramJComponent2) {
-/*  407 */     this.spinner.remove(paramJComponent1);
-/*  408 */     maybeRemoveEditorBorder(paramJComponent2);
-/*  409 */     installEditorBorderListener(paramJComponent2);
-/*  410 */     paramJComponent2.setInheritsPopupMenu(true);
-/*  411 */     this.spinner.add(paramJComponent2, "Editor");
-/*      */   }
-/*      */   
-/*      */   private void updateEditorAlignment(JComponent paramJComponent) {
-/*  415 */     if (paramJComponent instanceof JSpinner.DefaultEditor) {
-/*      */       
-/*  417 */       int i = UIManager.getInt("Spinner.editorAlignment");
-/*  418 */       JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)paramJComponent).getTextField();
-/*  419 */       jFormattedTextField.setHorizontalAlignment(i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void maybeRemoveEditorBorder(JComponent paramJComponent) {
-/*  428 */     if (!UIManager.getBoolean("Spinner.editorBorderPainted")) {
-/*  429 */       if (paramJComponent instanceof javax.swing.JPanel && paramJComponent
-/*  430 */         .getBorder() == null && paramJComponent
-/*  431 */         .getComponentCount() > 0)
-/*      */       {
-/*  433 */         paramJComponent = (JComponent)paramJComponent.getComponent(0);
-/*      */       }
-/*      */       
-/*  436 */       if (paramJComponent != null && paramJComponent.getBorder() instanceof UIResource) {
-/*  437 */         paramJComponent.setBorder((Border)null);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void installEditorBorderListener(JComponent paramJComponent) {
-/*  447 */     if (!UIManager.getBoolean("Spinner.editorBorderPainted")) {
-/*  448 */       if (paramJComponent instanceof javax.swing.JPanel && paramJComponent
-/*  449 */         .getBorder() == null && paramJComponent
-/*  450 */         .getComponentCount() > 0)
-/*      */       {
-/*  452 */         paramJComponent = (JComponent)paramJComponent.getComponent(0);
-/*      */       }
-/*  454 */       if (paramJComponent != null && (paramJComponent
-/*  455 */         .getBorder() == null || paramJComponent
-/*  456 */         .getBorder() instanceof UIResource)) {
-/*  457 */         paramJComponent.addPropertyChangeListener(getHandler());
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void removeEditorBorderListener(JComponent paramJComponent) {
-/*  463 */     if (!UIManager.getBoolean("Spinner.editorBorderPainted")) {
-/*  464 */       if (paramJComponent instanceof javax.swing.JPanel && paramJComponent
-/*  465 */         .getComponentCount() > 0)
-/*      */       {
-/*  467 */         paramJComponent = (JComponent)paramJComponent.getComponent(0);
-/*      */       }
-/*  469 */       if (paramJComponent != null) {
-/*  470 */         paramJComponent.removePropertyChangeListener(getHandler());
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateEnabledState() {
-/*  481 */     updateEnabledState(this.spinner, this.spinner.isEnabled());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void updateEnabledState(Container paramContainer, boolean paramBoolean) {
-/*  490 */     for (int i = paramContainer.getComponentCount() - 1; i >= 0; i--) {
-/*  491 */       Component component = paramContainer.getComponent(i);
-/*      */       
-/*  493 */       if (DefaultLookup.getBoolean(this.spinner, this, "Spinner.disableOnBoundaryValues", false)) {
-/*      */         
-/*  495 */         SpinnerModel spinnerModel = this.spinner.getModel();
-/*  496 */         if (component.getName() == "Spinner.nextButton" && spinnerModel
-/*  497 */           .getNextValue() == null) {
-/*  498 */           component.setEnabled(false);
-/*      */         }
-/*  500 */         else if (component.getName() == "Spinner.previousButton" && spinnerModel
-/*  501 */           .getPreviousValue() == null) {
-/*  502 */           component.setEnabled(false);
-/*      */         } else {
-/*      */           
-/*  505 */           component.setEnabled(paramBoolean);
-/*      */         } 
-/*      */       } else {
-/*      */         
-/*  509 */         component.setEnabled(paramBoolean);
-/*      */       } 
-/*  511 */       if (component instanceof Container) {
-/*  512 */         updateEnabledState((Container)component, paramBoolean);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void installKeyboardActions() {
-/*  524 */     InputMap inputMap = getInputMap(1);
-/*      */ 
-/*      */     
-/*  527 */     SwingUtilities.replaceUIInputMap(this.spinner, 1, inputMap);
-/*      */ 
-/*      */ 
-/*      */     
-/*  531 */     LazyActionMap.installLazyActionMap(this.spinner, BasicSpinnerUI.class, "Spinner.actionMap");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private InputMap getInputMap(int paramInt) {
-/*  539 */     if (paramInt == 1) {
-/*  540 */       return (InputMap)DefaultLookup.get(this.spinner, this, "Spinner.ancestorInputMap");
-/*      */     }
-/*      */     
-/*  543 */     return null;
-/*      */   }
-/*      */   
-/*      */   static void loadActionMap(LazyActionMap paramLazyActionMap) {
-/*  547 */     paramLazyActionMap.put("increment", nextButtonHandler);
-/*  548 */     paramLazyActionMap.put("decrement", previousButtonHandler);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/*  560 */     super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/*  561 */     JComponent jComponent = this.spinner.getEditor();
-/*  562 */     Insets insets = this.spinner.getInsets();
-/*  563 */     paramInt1 = paramInt1 - insets.left - insets.right;
-/*  564 */     paramInt2 = paramInt2 - insets.top - insets.bottom;
-/*  565 */     if (paramInt1 >= 0 && paramInt2 >= 0) {
-/*  566 */       int i = jComponent.getBaseline(paramInt1, paramInt2);
-/*  567 */       if (i >= 0) {
-/*  568 */         return insets.top + i;
-/*      */       }
-/*      */     } 
-/*  571 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Component.BaselineResizeBehavior getBaselineResizeBehavior(JComponent paramJComponent) {
-/*  584 */     super.getBaselineResizeBehavior(paramJComponent);
-/*  585 */     return this.spinner.getEditor().getBaselineResizeBehavior();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class ArrowButtonHandler
-/*      */     extends AbstractAction
-/*      */     implements FocusListener, MouseListener, UIResource
-/*      */   {
-/*      */     final Timer autoRepeatTimer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final boolean isNext;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  608 */     JSpinner spinner = null;
-/*  609 */     JButton arrowButton = null;
-/*      */     
-/*      */     ArrowButtonHandler(String param1String, boolean param1Boolean) {
-/*  612 */       super(param1String);
-/*  613 */       this.isNext = param1Boolean;
-/*  614 */       this.autoRepeatTimer = new Timer(60, this);
-/*  615 */       this.autoRepeatTimer.setInitialDelay(300);
-/*      */     }
-/*      */     
-/*      */     private JSpinner eventToSpinner(AWTEvent param1AWTEvent) {
-/*  619 */       Object object = param1AWTEvent.getSource();
-/*  620 */       while (object instanceof Component && !(object instanceof JSpinner)) {
-/*  621 */         object = ((Component)object).getParent();
-/*      */       }
-/*  623 */       return (object instanceof JSpinner) ? (JSpinner)object : null;
-/*      */     }
-/*      */     
-/*      */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/*  627 */       JSpinner jSpinner = this.spinner;
-/*      */       
-/*  629 */       if (!(param1ActionEvent.getSource() instanceof Timer)) {
-/*      */         
-/*  631 */         jSpinner = eventToSpinner(param1ActionEvent);
-/*  632 */         if (param1ActionEvent.getSource() instanceof JButton) {
-/*  633 */           this.arrowButton = (JButton)param1ActionEvent.getSource();
-/*      */         }
-/*      */       }
-/*  636 */       else if (this.arrowButton != null && !this.arrowButton.getModel().isPressed() && this.autoRepeatTimer
-/*  637 */         .isRunning()) {
-/*  638 */         this.autoRepeatTimer.stop();
-/*  639 */         jSpinner = null;
-/*  640 */         this.arrowButton = null;
-/*      */       } 
-/*      */       
-/*  643 */       if (jSpinner != null) {
-/*      */         try {
-/*  645 */           int i = getCalendarField(jSpinner);
-/*  646 */           jSpinner.commitEdit();
-/*  647 */           if (i != -1) {
-/*  648 */             ((SpinnerDateModel)jSpinner.getModel())
-/*  649 */               .setCalendarField(i);
-/*      */           }
-/*      */           
-/*  652 */           Object object = this.isNext ? jSpinner.getNextValue() : jSpinner.getPreviousValue();
-/*  653 */           if (object != null) {
-/*  654 */             jSpinner.setValue(object);
-/*  655 */             select(jSpinner);
-/*      */           } 
-/*  657 */         } catch (IllegalArgumentException illegalArgumentException) {
-/*  658 */           UIManager.getLookAndFeel().provideErrorFeedback(jSpinner);
-/*  659 */         } catch (ParseException parseException) {
-/*  660 */           UIManager.getLookAndFeel().provideErrorFeedback(jSpinner);
-/*      */         } 
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void select(JSpinner param1JSpinner) {
-/*  670 */       JComponent jComponent = param1JSpinner.getEditor();
-/*      */       
-/*  672 */       if (jComponent instanceof JSpinner.DateEditor) {
-/*  673 */         JSpinner.DateEditor dateEditor = (JSpinner.DateEditor)jComponent;
-/*  674 */         JFormattedTextField jFormattedTextField = dateEditor.getTextField();
-/*  675 */         SimpleDateFormat simpleDateFormat = dateEditor.getFormat();
-/*      */         
-/*      */         Object object;
-/*  678 */         if (simpleDateFormat != null && (object = param1JSpinner.getValue()) != null) {
-/*  679 */           SpinnerDateModel spinnerDateModel = dateEditor.getModel();
-/*  680 */           DateFormat.Field field = DateFormat.Field.ofCalendarField(spinnerDateModel
-/*  681 */               .getCalendarField());
-/*      */           
-/*  683 */           if (field != null) {
-/*      */             
-/*      */             try {
-/*  686 */               AttributedCharacterIterator attributedCharacterIterator = simpleDateFormat.formatToCharacterIterator(object);
-/*  687 */               if (!select(jFormattedTextField, attributedCharacterIterator, field) && field == DateFormat.Field.HOUR0)
-/*      */               {
-/*  689 */                 select(jFormattedTextField, attributedCharacterIterator, DateFormat.Field.HOUR1);
-/*      */               }
-/*      */             }
-/*  692 */             catch (IllegalArgumentException illegalArgumentException) {}
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private boolean select(JFormattedTextField param1JFormattedTextField, AttributedCharacterIterator param1AttributedCharacterIterator, DateFormat.Field param1Field) {
-/*  705 */       int i = param1JFormattedTextField.getDocument().getLength();
-/*      */       
-/*  707 */       param1AttributedCharacterIterator.first();
-/*      */       while (true) {
-/*  709 */         Map<AttributedCharacterIterator.Attribute, Object> map = param1AttributedCharacterIterator.getAttributes();
-/*      */         
-/*  711 */         if (map != null && map.containsKey(param1Field)) {
-/*  712 */           int j = param1AttributedCharacterIterator.getRunStart(param1Field);
-/*  713 */           int k = param1AttributedCharacterIterator.getRunLimit(param1Field);
-/*      */           
-/*  715 */           if (j != -1 && k != -1 && j <= i && k <= i)
-/*      */           {
-/*  717 */             param1JFormattedTextField.select(j, k);
-/*      */           }
-/*  719 */           return true;
-/*      */         } 
-/*  721 */         if (param1AttributedCharacterIterator.next() == Character.MAX_VALUE) {
-/*  722 */           return false;
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int getCalendarField(JSpinner param1JSpinner) {
-/*  731 */       JComponent jComponent = param1JSpinner.getEditor();
-/*      */       
-/*  733 */       if (jComponent instanceof JSpinner.DateEditor) {
-/*  734 */         JSpinner.DateEditor dateEditor = (JSpinner.DateEditor)jComponent;
-/*  735 */         JFormattedTextField jFormattedTextField = dateEditor.getTextField();
-/*  736 */         int i = jFormattedTextField.getSelectionStart();
-/*      */         
-/*  738 */         JFormattedTextField.AbstractFormatter abstractFormatter = jFormattedTextField.getFormatter();
-/*      */         
-/*  740 */         if (abstractFormatter instanceof InternationalFormatter) {
-/*      */           
-/*  742 */           Format.Field[] arrayOfField = ((InternationalFormatter)abstractFormatter).getFields(i);
-/*      */           
-/*  744 */           for (byte b = 0; b < arrayOfField.length; b++) {
-/*  745 */             if (arrayOfField[b] instanceof DateFormat.Field) {
-/*      */               int j;
-/*      */               
-/*  748 */               if (arrayOfField[b] == DateFormat.Field.HOUR1) {
-/*  749 */                 j = 10;
-/*      */               }
-/*      */               else {
-/*      */                 
-/*  753 */                 j = ((DateFormat.Field)arrayOfField[b]).getCalendarField();
-/*      */               } 
-/*  755 */               if (j != -1) {
-/*  756 */                 return j;
-/*      */               }
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*  762 */       return -1;
-/*      */     }
-/*      */     
-/*      */     public void mousePressed(MouseEvent param1MouseEvent) {
-/*  766 */       if (SwingUtilities.isLeftMouseButton(param1MouseEvent) && param1MouseEvent.getComponent().isEnabled()) {
-/*  767 */         this.spinner = eventToSpinner(param1MouseEvent);
-/*  768 */         this.autoRepeatTimer.start();
-/*      */         
-/*  770 */         focusSpinnerIfNecessary();
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/*  775 */       this.autoRepeatTimer.stop();
-/*  776 */       this.arrowButton = null;
-/*  777 */       this.spinner = null;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void mouseClicked(MouseEvent param1MouseEvent) {}
-/*      */     
-/*      */     public void mouseEntered(MouseEvent param1MouseEvent) {
-/*  784 */       if (this.spinner != null && !this.autoRepeatTimer.isRunning() && this.spinner == eventToSpinner(param1MouseEvent)) {
-/*  785 */         this.autoRepeatTimer.start();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public void mouseExited(MouseEvent param1MouseEvent) {
-/*  790 */       if (this.autoRepeatTimer.isRunning()) {
-/*  791 */         this.autoRepeatTimer.stop();
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void focusSpinnerIfNecessary() {
-/*  801 */       Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-/*  802 */       if (this.spinner.isRequestFocusEnabled() && (component == null || 
-/*      */         
-/*  804 */         !SwingUtilities.isDescendingFrom(component, this.spinner))) {
-/*  805 */         Container container = this.spinner;
-/*      */         
-/*  807 */         if (!container.isFocusCycleRoot()) {
-/*  808 */           container = container.getFocusCycleRootAncestor();
-/*      */         }
-/*  810 */         if (container != null) {
-/*  811 */           FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy();
-/*  812 */           Component component1 = focusTraversalPolicy.getComponentAfter(container, this.spinner);
-/*      */           
-/*  814 */           if (component1 != null && SwingUtilities.isDescendingFrom(component1, this.spinner))
-/*      */           {
-/*  816 */             component1.requestFocus();
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void focusGained(FocusEvent param1FocusEvent) {}
-/*      */     
-/*      */     public void focusLost(FocusEvent param1FocusEvent) {
-/*  826 */       if (this.spinner == eventToSpinner(param1FocusEvent)) {
-/*  827 */         if (this.autoRepeatTimer.isRunning()) {
-/*  828 */           this.autoRepeatTimer.stop();
-/*      */         }
-/*  830 */         this.spinner = null;
-/*  831 */         if (this.arrowButton != null) {
-/*  832 */           ButtonModel buttonModel = this.arrowButton.getModel();
-/*  833 */           buttonModel.setPressed(false);
-/*  834 */           buttonModel.setArmed(false);
-/*  835 */           this.arrowButton = null;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static class Handler implements LayoutManager, PropertyChangeListener, ChangeListener {
-/*      */     private Component nextButton;
-/*      */     private Component previousButton;
-/*      */     private Component editor;
-/*      */     
-/*      */     private Handler() {
-/*  847 */       this.nextButton = null;
-/*  848 */       this.previousButton = null;
-/*  849 */       this.editor = null;
-/*      */     }
-/*      */     public void addLayoutComponent(String param1String, Component param1Component) {
-/*  852 */       if ("Next".equals(param1String)) {
-/*  853 */         this.nextButton = param1Component;
-/*      */       }
-/*  855 */       else if ("Previous".equals(param1String)) {
-/*  856 */         this.previousButton = param1Component;
-/*      */       }
-/*  858 */       else if ("Editor".equals(param1String)) {
-/*  859 */         this.editor = param1Component;
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void removeLayoutComponent(Component param1Component) {
-/*  864 */       if (param1Component == this.nextButton) {
-/*  865 */         this.nextButton = null;
-/*      */       }
-/*  867 */       else if (param1Component == this.previousButton) {
-/*  868 */         this.previousButton = null;
-/*      */       }
-/*  870 */       else if (param1Component == this.editor) {
-/*  871 */         this.editor = null;
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     private Dimension preferredSize(Component param1Component) {
-/*  876 */       return (param1Component == null) ? BasicSpinnerUI.zeroSize : param1Component.getPreferredSize();
-/*      */     }
-/*      */     
-/*      */     public Dimension preferredLayoutSize(Container param1Container) {
-/*  880 */       Dimension dimension1 = preferredSize(this.nextButton);
-/*  881 */       Dimension dimension2 = preferredSize(this.previousButton);
-/*  882 */       Dimension dimension3 = preferredSize(this.editor);
-/*      */ 
-/*      */ 
-/*      */       
-/*  886 */       dimension3.height = (dimension3.height + 1) / 2 * 2;
-/*      */       
-/*  888 */       Dimension dimension4 = new Dimension(dimension3.width, dimension3.height);
-/*  889 */       dimension4.width += Math.max(dimension1.width, dimension2.width);
-/*  890 */       Insets insets = param1Container.getInsets();
-/*  891 */       dimension4.width += insets.left + insets.right;
-/*  892 */       dimension4.height += insets.top + insets.bottom;
-/*  893 */       return dimension4;
-/*      */     }
-/*      */     
-/*      */     public Dimension minimumLayoutSize(Container param1Container) {
-/*  897 */       return preferredLayoutSize(param1Container);
-/*      */     }
-/*      */     
-/*      */     private void setBounds(Component param1Component, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  901 */       if (param1Component != null) {
-/*  902 */         param1Component.setBounds(param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public void layoutContainer(Container param1Container) {
-/*  907 */       int n, i1, i2, i = param1Container.getWidth();
-/*  908 */       int j = param1Container.getHeight();
-/*      */       
-/*  910 */       Insets insets1 = param1Container.getInsets();
-/*      */       
-/*  912 */       if (this.nextButton == null && this.previousButton == null) {
-/*  913 */         setBounds(this.editor, insets1.left, insets1.top, i - insets1.left - insets1.right, j - insets1.top - insets1.bottom);
-/*      */ 
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */       
-/*  919 */       Dimension dimension1 = preferredSize(this.nextButton);
-/*  920 */       Dimension dimension2 = preferredSize(this.previousButton);
-/*  921 */       int k = Math.max(dimension1.width, dimension2.width);
-/*  922 */       int m = j - insets1.top + insets1.bottom;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  929 */       Insets insets2 = UIManager.getInsets("Spinner.arrowButtonInsets");
-/*  930 */       if (insets2 == null) {
-/*  931 */         insets2 = insets1;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  937 */       if (param1Container.getComponentOrientation().isLeftToRight()) {
-/*  938 */         n = insets1.left;
-/*  939 */         i1 = i - insets1.left - k - insets2.right;
-/*  940 */         i2 = i - k - insets2.right;
-/*      */       } else {
-/*  942 */         i2 = insets2.left;
-/*  943 */         n = i2 + k;
-/*  944 */         i1 = i - insets2.left - k - insets1.right;
-/*      */       } 
-/*      */       
-/*  947 */       int i3 = insets2.top;
-/*  948 */       int i4 = j / 2 + j % 2 - i3;
-/*  949 */       int i5 = insets2.top + i4;
-/*  950 */       int i6 = j - i5 - insets2.bottom;
-/*      */       
-/*  952 */       setBounds(this.editor, n, insets1.top, i1, m);
-/*  953 */       setBounds(this.nextButton, i2, i3, k, i4);
-/*  954 */       setBounds(this.previousButton, i2, i5, k, i6);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/*  963 */       String str = param1PropertyChangeEvent.getPropertyName();
-/*  964 */       if (param1PropertyChangeEvent.getSource() instanceof JSpinner) {
-/*  965 */         JSpinner jSpinner = (JSpinner)param1PropertyChangeEvent.getSource();
-/*  966 */         SpinnerUI spinnerUI = jSpinner.getUI();
-/*      */         
-/*  968 */         if (spinnerUI instanceof BasicSpinnerUI) {
-/*  969 */           BasicSpinnerUI basicSpinnerUI = (BasicSpinnerUI)spinnerUI;
-/*      */           
-/*  971 */           if ("editor".equals(str)) {
-/*  972 */             JComponent jComponent1 = (JComponent)param1PropertyChangeEvent.getOldValue();
-/*  973 */             JComponent jComponent2 = (JComponent)param1PropertyChangeEvent.getNewValue();
-/*  974 */             basicSpinnerUI.replaceEditor(jComponent1, jComponent2);
-/*  975 */             basicSpinnerUI.updateEnabledState();
-/*  976 */             if (jComponent1 instanceof JSpinner.DefaultEditor) {
-/*      */               
-/*  978 */               JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)jComponent1).getTextField();
-/*  979 */               if (jFormattedTextField != null) {
-/*  980 */                 jFormattedTextField.removeFocusListener(BasicSpinnerUI.nextButtonHandler);
-/*  981 */                 jFormattedTextField.removeFocusListener(BasicSpinnerUI.previousButtonHandler);
-/*      */               } 
-/*      */             } 
-/*  984 */             if (jComponent2 instanceof JSpinner.DefaultEditor) {
-/*      */               
-/*  986 */               JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)jComponent2).getTextField();
-/*  987 */               if (jFormattedTextField != null) {
-/*  988 */                 if (jFormattedTextField.getFont() instanceof UIResource) {
-/*  989 */                   jFormattedTextField.setFont(jSpinner.getFont());
-/*      */                 }
-/*  991 */                 jFormattedTextField.addFocusListener(BasicSpinnerUI.nextButtonHandler);
-/*  992 */                 jFormattedTextField.addFocusListener(BasicSpinnerUI.previousButtonHandler);
-/*      */               }
-/*      */             
-/*      */             } 
-/*  996 */           } else if ("enabled".equals(str) || "model"
-/*  997 */             .equals(str)) {
-/*  998 */             basicSpinnerUI.updateEnabledState();
-/*      */           }
-/* 1000 */           else if ("font".equals(str)) {
-/* 1001 */             JComponent jComponent = jSpinner.getEditor();
-/* 1002 */             if (jComponent != null && jComponent instanceof JSpinner.DefaultEditor)
-/*      */             {
-/* 1004 */               JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)jComponent).getTextField();
-/* 1005 */               if (jFormattedTextField != null && 
-/* 1006 */                 jFormattedTextField.getFont() instanceof UIResource) {
-/* 1007 */                 jFormattedTextField.setFont(jSpinner.getFont());
-/*      */               }
-/*      */             }
-/*      */           
-/*      */           }
-/* 1012 */           else if ("ToolTipText".equals(str)) {
-/* 1013 */             updateToolTipTextForChildren(jSpinner);
-/*      */           } 
-/*      */         } 
-/* 1016 */       } else if (param1PropertyChangeEvent.getSource() instanceof JComponent) {
-/* 1017 */         JComponent jComponent = (JComponent)param1PropertyChangeEvent.getSource();
-/* 1018 */         if (jComponent.getParent() instanceof javax.swing.JPanel && jComponent
-/* 1019 */           .getParent().getParent() instanceof JSpinner && "border"
-/* 1020 */           .equals(str)) {
-/*      */           
-/* 1022 */           JSpinner jSpinner = (JSpinner)jComponent.getParent().getParent();
-/* 1023 */           SpinnerUI spinnerUI = jSpinner.getUI();
-/* 1024 */           if (spinnerUI instanceof BasicSpinnerUI) {
-/* 1025 */             BasicSpinnerUI basicSpinnerUI = (BasicSpinnerUI)spinnerUI;
-/* 1026 */             basicSpinnerUI.maybeRemoveEditorBorder(jComponent);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void updateToolTipTextForChildren(JComponent param1JComponent) {
-/* 1035 */       String str = param1JComponent.getToolTipText();
-/* 1036 */       Component[] arrayOfComponent = param1JComponent.getComponents();
-/* 1037 */       for (byte b = 0; b < arrayOfComponent.length; b++) {
-/* 1038 */         if (arrayOfComponent[b] instanceof JSpinner.DefaultEditor) {
-/* 1039 */           JFormattedTextField jFormattedTextField = ((JSpinner.DefaultEditor)arrayOfComponent[b]).getTextField();
-/* 1040 */           if (jFormattedTextField != null) {
-/* 1041 */             jFormattedTextField.setToolTipText(str);
-/*      */           }
-/* 1043 */         } else if (arrayOfComponent[b] instanceof JComponent) {
-/* 1044 */           ((JComponent)arrayOfComponent[b]).setToolTipText(param1JComponent.getToolTipText());
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */     
-/*      */     public void stateChanged(ChangeEvent param1ChangeEvent) {
-/* 1050 */       if (param1ChangeEvent.getSource() instanceof JSpinner) {
-/* 1051 */         JSpinner jSpinner = (JSpinner)param1ChangeEvent.getSource();
-/* 1052 */         SpinnerUI spinnerUI = jSpinner.getUI();
-/* 1053 */         if (DefaultLookup.getBoolean(jSpinner, spinnerUI, "Spinner.disableOnBoundaryValues", false) && spinnerUI instanceof BasicSpinnerUI) {
-/*      */ 
-/*      */           
-/* 1056 */           BasicSpinnerUI basicSpinnerUI = (BasicSpinnerUI)spinnerUI;
-/* 1057 */           basicSpinnerUI.updateEnabledState();
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicSpinnerUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.text.ParseException;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.text.*;
+
+import java.beans.*;
+import java.text.*;
+import java.util.*;
+import sun.swing.DefaultLookup;
+
+
+/**
+ * The default Spinner UI delegate.
+ *
+ * @author Hans Muller
+ * @since 1.4
+ */
+public class BasicSpinnerUI extends SpinnerUI
+{
+    /**
+     * The spinner that we're a UI delegate for.  Initialized by
+     * the <code>installUI</code> method, and reset to null
+     * by <code>uninstallUI</code>.
+     *
+     * @see #installUI
+     * @see #uninstallUI
+     */
+    protected JSpinner spinner;
+    private Handler handler;
+
+
+    /**
+     * The mouse/action listeners that are added to the spinner's
+     * arrow buttons.  These listeners are shared by all
+     * spinner arrow buttons.
+     *
+     * @see #createNextButton
+     * @see #createPreviousButton
+     */
+    private static final ArrowButtonHandler nextButtonHandler = new ArrowButtonHandler("increment", true);
+    private static final ArrowButtonHandler previousButtonHandler = new ArrowButtonHandler("decrement", false);
+    private PropertyChangeListener propertyChangeListener;
+
+
+    /**
+     * Used by the default LayoutManager class - SpinnerLayout for
+     * missing (null) editor/nextButton/previousButton children.
+     */
+    private static final Dimension zeroSize = new Dimension(0, 0);
+
+
+    /**
+     * Returns a new instance of BasicSpinnerUI.  SpinnerListUI
+     * delegates are allocated one per JSpinner.
+     *
+     * @param c the JSpinner (not used)
+     * @see ComponentUI#createUI
+     * @return a new BasicSpinnerUI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new BasicSpinnerUI();
+    }
+
+
+    private void maybeAdd(Component c, String s) {
+        if (c != null) {
+            spinner.add(c, s);
+        }
+    }
+
+
+    /**
+     * Calls <code>installDefaults</code>, <code>installListeners</code>,
+     * and then adds the components returned by <code>createNextButton</code>,
+     * <code>createPreviousButton</code>, and <code>createEditor</code>.
+     *
+     * @param c the JSpinner
+     * @see #installDefaults
+     * @see #installListeners
+     * @see #createNextButton
+     * @see #createPreviousButton
+     * @see #createEditor
+     */
+    public void installUI(JComponent c) {
+        this.spinner = (JSpinner)c;
+        installDefaults();
+        installListeners();
+        maybeAdd(createNextButton(), "Next");
+        maybeAdd(createPreviousButton(), "Previous");
+        maybeAdd(createEditor(), "Editor");
+        updateEnabledState();
+        installKeyboardActions();
+    }
+
+
+    /**
+     * Calls <code>uninstallDefaults</code>, <code>uninstallListeners</code>,
+     * and then removes all of the spinners children.
+     *
+     * @param c the JSpinner (not used)
+     */
+    public void uninstallUI(JComponent c) {
+        uninstallDefaults();
+        uninstallListeners();
+        this.spinner = null;
+        c.removeAll();
+    }
+
+
+    /**
+     * Initializes <code>PropertyChangeListener</code> with
+     * a shared object that delegates interesting PropertyChangeEvents
+     * to protected methods.
+     * <p>
+     * This method is called by <code>installUI</code>.
+     *
+     * @see #replaceEditor
+     * @see #uninstallListeners
+     */
+    protected void installListeners() {
+        propertyChangeListener = createPropertyChangeListener();
+        spinner.addPropertyChangeListener(propertyChangeListener);
+        if (DefaultLookup.getBoolean(spinner, this,
+            "Spinner.disableOnBoundaryValues", false)) {
+            spinner.addChangeListener(getHandler());
+        }
+        JComponent editor = spinner.getEditor();
+        if (editor != null && editor instanceof JSpinner.DefaultEditor) {
+            JTextField tf = ((JSpinner.DefaultEditor)editor).getTextField();
+            if (tf != null) {
+                tf.addFocusListener(nextButtonHandler);
+                tf.addFocusListener(previousButtonHandler);
+            }
+        }
+    }
+
+
+    /**
+     * Removes the <code>PropertyChangeListener</code> added
+     * by installListeners.
+     * <p>
+     * This method is called by <code>uninstallUI</code>.
+     *
+     * @see #installListeners
+     */
+    protected void uninstallListeners() {
+        spinner.removePropertyChangeListener(propertyChangeListener);
+        spinner.removeChangeListener(handler);
+        JComponent editor = spinner.getEditor();
+        removeEditorBorderListener(editor);
+        if (editor instanceof JSpinner.DefaultEditor) {
+            JTextField tf = ((JSpinner.DefaultEditor)editor).getTextField();
+            if (tf != null) {
+                tf.removeFocusListener(nextButtonHandler);
+                tf.removeFocusListener(previousButtonHandler);
+            }
+        }
+        propertyChangeListener = null;
+        handler = null;
+    }
+
+
+    /**
+     * Initialize the <code>JSpinner</code> <code>border</code>,
+     * <code>foreground</code>, and <code>background</code>, properties
+     * based on the corresponding "Spinner.*" properties from defaults table.
+     * The <code>JSpinners</code> layout is set to the value returned by
+     * <code>createLayout</code>.  This method is called by <code>installUI</code>.
+     *
+     * @see #uninstallDefaults
+     * @see #installUI
+     * @see #createLayout
+     * @see LookAndFeel#installBorder
+     * @see LookAndFeel#installColors
+     */
+    protected void installDefaults() {
+        spinner.setLayout(createLayout());
+        LookAndFeel.installBorder(spinner, "Spinner.border");
+        LookAndFeel.installColorsAndFont(spinner, "Spinner.background", "Spinner.foreground", "Spinner.font");
+        LookAndFeel.installProperty(spinner, "opaque", Boolean.TRUE);
+    }
+
+
+    /**
+     * Sets the <code>JSpinner's</code> layout manager to null.  This
+     * method is called by <code>uninstallUI</code>.
+     *
+     * @see #installDefaults
+     * @see #uninstallUI
+     */
+    protected void uninstallDefaults() {
+        spinner.setLayout(null);
+    }
+
+
+    private Handler getHandler() {
+        if (handler == null) {
+            handler = new Handler();
+        }
+        return handler;
+    }
+
+
+    /**
+     * Installs the necessary listeners on the next button, <code>c</code>,
+     * to update the <code>JSpinner</code> in response to a user gesture.
+     *
+     * @param c Component to install the listeners on
+     * @throws NullPointerException if <code>c</code> is null.
+     * @see #createNextButton
+     * @since 1.5
+     */
+    protected void installNextButtonListeners(Component c) {
+        installButtonListeners(c, nextButtonHandler);
+    }
+
+    /**
+     * Installs the necessary listeners on the previous button, <code>c</code>,
+     * to update the <code>JSpinner</code> in response to a user gesture.
+     *
+     * @param c Component to install the listeners on.
+     * @throws NullPointerException if <code>c</code> is null.
+     * @see #createPreviousButton
+     * @since 1.5
+     */
+    protected void installPreviousButtonListeners(Component c) {
+        installButtonListeners(c, previousButtonHandler);
+    }
+
+    private void installButtonListeners(Component c,
+                                        ArrowButtonHandler handler) {
+        if (c instanceof JButton) {
+            ((JButton)c).addActionListener(handler);
+        }
+        c.addMouseListener(handler);
+    }
+
+    /**
+     * Creates a <code>LayoutManager</code> that manages the <code>editor</code>,
+     * <code>nextButton</code>, and <code>previousButton</code>
+     * children of the JSpinner.  These three children must be
+     * added with a constraint that identifies their role:
+     * "Editor", "Next", and "Previous". The default layout manager
+     * can handle the absence of any of these children.
+     *
+     * @return a LayoutManager for the editor, next button, and previous button.
+     * @see #createNextButton
+     * @see #createPreviousButton
+     * @see #createEditor
+     */
+    protected LayoutManager createLayout() {
+        return getHandler();
+    }
+
+
+    /**
+     * Creates a <code>PropertyChangeListener</code> that can be
+     * added to the JSpinner itself.  Typically, this listener
+     * will call replaceEditor when the "editor" property changes,
+     * since it's the <code>SpinnerUI's</code> responsibility to
+     * add the editor to the JSpinner (and remove the old one).
+     * This method is called by <code>installListeners</code>.
+     *
+     * @return A PropertyChangeListener for the JSpinner itself
+     * @see #installListeners
+     */
+    protected PropertyChangeListener createPropertyChangeListener() {
+        return getHandler();
+    }
+
+
+    /**
+     * Creates a decrement button, i.e. component that replaces the spinner
+     * value with the object returned by <code>spinner.getPreviousValue</code>.
+     * By default the <code>previousButton</code> is a {@code JButton}. If the
+     * decrement button is not needed this method should return {@code null}.
+     *
+     * @return a component that will replace the spinner's value with the
+     *     previous value in the sequence, or {@code null}
+     * @see #installUI
+     * @see #createNextButton
+     * @see #installPreviousButtonListeners
+     */
+    protected Component createPreviousButton() {
+        Component c = createArrowButton(SwingConstants.SOUTH);
+        c.setName("Spinner.previousButton");
+        installPreviousButtonListeners(c);
+        return c;
+    }
+
+
+    /**
+     * Creates an increment button, i.e. component that replaces the spinner
+     * value with the object returned by <code>spinner.getNextValue</code>.
+     * By default the <code>nextButton</code> is a {@code JButton}. If the
+     * increment button is not needed this method should return {@code null}.
+     *
+     * @return a component that will replace the spinner's value with the
+     *     next value in the sequence, or {@code null}
+     * @see #installUI
+     * @see #createPreviousButton
+     * @see #installNextButtonListeners
+     */
+    protected Component createNextButton() {
+        Component c = createArrowButton(SwingConstants.NORTH);
+        c.setName("Spinner.nextButton");
+        installNextButtonListeners(c);
+        return c;
+    }
+
+    private Component createArrowButton(int direction) {
+        JButton b = new BasicArrowButton(direction);
+        Border buttonBorder = UIManager.getBorder("Spinner.arrowButtonBorder");
+        if (buttonBorder instanceof UIResource) {
+            // Wrap the border to avoid having the UIResource be replaced by
+            // the ButtonUI. This is the opposite of using BorderUIResource.
+            b.setBorder(new CompoundBorder(buttonBorder, null));
+        } else {
+            b.setBorder(buttonBorder);
+        }
+        b.setInheritsPopupMenu(true);
+        return b;
+    }
+
+
+    /**
+     * This method is called by installUI to get the editor component
+     * of the <code>JSpinner</code>.  By default it just returns
+     * <code>JSpinner.getEditor()</code>.  Subclasses can override
+     * <code>createEditor</code> to return a component that contains
+     * the spinner's editor or null, if they're going to handle adding
+     * the editor to the <code>JSpinner</code> in an
+     * <code>installUI</code> override.
+     * <p>
+     * Typically this method would be overridden to wrap the editor
+     * with a container with a custom border, since one can't assume
+     * that the editors border can be set directly.
+     * <p>
+     * The <code>replaceEditor</code> method is called when the spinners
+     * editor is changed with <code>JSpinner.setEditor</code>.  If you've
+     * overriden this method, then you'll probably want to override
+     * <code>replaceEditor</code> as well.
+     *
+     * @return the JSpinners editor JComponent, spinner.getEditor() by default
+     * @see #installUI
+     * @see #replaceEditor
+     * @see JSpinner#getEditor
+     */
+    protected JComponent createEditor() {
+        JComponent editor = spinner.getEditor();
+        maybeRemoveEditorBorder(editor);
+        installEditorBorderListener(editor);
+        editor.setInheritsPopupMenu(true);
+        updateEditorAlignment(editor);
+        return editor;
+    }
+
+
+    /**
+     * Called by the <code>PropertyChangeListener</code> when the
+     * <code>JSpinner</code> editor property changes.  It's the responsibility
+     * of this method to remove the old editor and add the new one.  By
+     * default this operation is just:
+     * <pre>
+     * spinner.remove(oldEditor);
+     * spinner.add(newEditor, "Editor");
+     * </pre>
+     * The implementation of <code>replaceEditor</code> should be coordinated
+     * with the <code>createEditor</code> method.
+     *
+     * @see #createEditor
+     * @see #createPropertyChangeListener
+     */
+    protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
+        spinner.remove(oldEditor);
+        maybeRemoveEditorBorder(newEditor);
+        installEditorBorderListener(newEditor);
+        newEditor.setInheritsPopupMenu(true);
+        spinner.add(newEditor, "Editor");
+    }
+
+    private void updateEditorAlignment(JComponent editor) {
+        if (editor instanceof JSpinner.DefaultEditor) {
+            // if editor alignment isn't set in LAF, we get 0 (CENTER) here
+            int alignment = UIManager.getInt("Spinner.editorAlignment");
+            JTextField text = ((JSpinner.DefaultEditor)editor).getTextField();
+            text.setHorizontalAlignment(alignment);
+        }
+    }
+
+    /**
+     * Remove the border around the inner editor component for LaFs
+     * that install an outside border around the spinner,
+     */
+    private void maybeRemoveEditorBorder(JComponent editor) {
+        if (!UIManager.getBoolean("Spinner.editorBorderPainted")) {
+            if (editor instanceof JPanel &&
+                editor.getBorder() == null &&
+                editor.getComponentCount() > 0) {
+
+                editor = (JComponent)editor.getComponent(0);
+            }
+
+            if (editor != null && editor.getBorder() instanceof UIResource) {
+                editor.setBorder(null);
+            }
+        }
+    }
+
+    /**
+     * Remove the border around the inner editor component for LaFs
+     * that install an outside border around the spinner,
+     */
+    private void installEditorBorderListener(JComponent editor) {
+        if (!UIManager.getBoolean("Spinner.editorBorderPainted")) {
+            if (editor instanceof JPanel &&
+                editor.getBorder() == null &&
+                editor.getComponentCount() > 0) {
+
+                editor = (JComponent)editor.getComponent(0);
+            }
+            if (editor != null &&
+                (editor.getBorder() == null ||
+                 editor.getBorder() instanceof UIResource)) {
+                editor.addPropertyChangeListener(getHandler());
+            }
+        }
+    }
+
+    private void removeEditorBorderListener(JComponent editor) {
+        if (!UIManager.getBoolean("Spinner.editorBorderPainted")) {
+            if (editor instanceof JPanel &&
+                editor.getComponentCount() > 0) {
+
+                editor = (JComponent)editor.getComponent(0);
+            }
+            if (editor != null) {
+                editor.removePropertyChangeListener(getHandler());
+            }
+        }
+    }
+
+
+    /**
+     * Updates the enabled state of the children Components based on the
+     * enabled state of the <code>JSpinner</code>.
+     */
+    private void updateEnabledState() {
+        updateEnabledState(spinner, spinner.isEnabled());
+    }
+
+
+    /**
+     * Recursively updates the enabled state of the child
+     * <code>Component</code>s of <code>c</code>.
+     */
+    private void updateEnabledState(Container c, boolean enabled) {
+        for (int counter = c.getComponentCount() - 1; counter >= 0;counter--) {
+            Component child = c.getComponent(counter);
+
+            if (DefaultLookup.getBoolean(spinner, this,
+                "Spinner.disableOnBoundaryValues", false)) {
+                SpinnerModel model = spinner.getModel();
+                if (child.getName() == "Spinner.nextButton" &&
+                    model.getNextValue() == null) {
+                    child.setEnabled(false);
+                }
+                else if (child.getName() == "Spinner.previousButton" &&
+                         model.getPreviousValue() == null) {
+                    child.setEnabled(false);
+                }
+                else {
+                    child.setEnabled(enabled);
+                }
+            }
+            else {
+                child.setEnabled(enabled);
+            }
+            if (child instanceof Container) {
+                updateEnabledState((Container)child, enabled);
+            }
+        }
+    }
+
+
+    /**
+     * Installs the keyboard Actions onto the JSpinner.
+     *
+     * @since 1.5
+     */
+    protected void installKeyboardActions() {
+        InputMap iMap = getInputMap(JComponent.
+                                   WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        SwingUtilities.replaceUIInputMap(spinner, JComponent.
+                                         WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
+                                         iMap);
+
+        LazyActionMap.installLazyActionMap(spinner, BasicSpinnerUI.class,
+                "Spinner.actionMap");
+    }
+
+    /**
+     * Returns the InputMap to install for <code>condition</code>.
+     */
+    private InputMap getInputMap(int condition) {
+        if (condition == JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT) {
+            return (InputMap)DefaultLookup.get(spinner, this,
+                    "Spinner.ancestorInputMap");
+        }
+        return null;
+    }
+
+    static void loadActionMap(LazyActionMap map) {
+        map.put("increment", nextButtonHandler);
+        map.put("decrement", previousButtonHandler);
+    }
+
+    /**
+     * Returns the baseline.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public int getBaseline(JComponent c, int width, int height) {
+        super.getBaseline(c, width, height);
+        JComponent editor = spinner.getEditor();
+        Insets insets = spinner.getInsets();
+        width = width - insets.left - insets.right;
+        height = height - insets.top - insets.bottom;
+        if (width >= 0 && height >= 0) {
+            int baseline = editor.getBaseline(width, height);
+            if (baseline >= 0) {
+                return insets.top + baseline;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns an enum indicating how the baseline of the component
+     * changes as the size changes.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public Component.BaselineResizeBehavior getBaselineResizeBehavior(
+            JComponent c) {
+        super.getBaselineResizeBehavior(c);
+        return spinner.getEditor().getBaselineResizeBehavior();
+    }
+
+    /**
+     * A handler for spinner arrow button mouse and action events.  When
+     * a left mouse pressed event occurs we look up the (enabled) spinner
+     * that's the source of the event and start the autorepeat timer.  The
+     * timer fires action events until any button is released at which
+     * point the timer is stopped and the reference to the spinner cleared.
+     * The timer doesn't start until after a 300ms delay, so often the
+     * source of the initial (and final) action event is just the button
+     * logic for mouse released - which means that we're relying on the fact
+     * that our mouse listener runs after the buttons mouse listener.
+     * <p>
+     * Note that one instance of this handler is shared by all slider previous
+     * arrow buttons and likewise for all of the next buttons,
+     * so it doesn't have any state that persists beyond the limits
+     * of a single button pressed/released gesture.
+     */
+    private static class ArrowButtonHandler extends AbstractAction
+                                            implements FocusListener, MouseListener, UIResource {
+        final javax.swing.Timer autoRepeatTimer;
+        final boolean isNext;
+        JSpinner spinner = null;
+        JButton arrowButton = null;
+
+        ArrowButtonHandler(String name, boolean isNext) {
+            super(name);
+            this.isNext = isNext;
+            autoRepeatTimer = new javax.swing.Timer(60, this);
+            autoRepeatTimer.setInitialDelay(300);
+        }
+
+        private JSpinner eventToSpinner(AWTEvent e) {
+            Object src = e.getSource();
+            while ((src instanceof Component) && !(src instanceof JSpinner)) {
+                src = ((Component)src).getParent();
+            }
+            return (src instanceof JSpinner) ? (JSpinner)src : null;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            JSpinner spinner = this.spinner;
+
+            if (!(e.getSource() instanceof javax.swing.Timer)) {
+                // Most likely resulting from being in ActionMap.
+                spinner = eventToSpinner(e);
+                if (e.getSource() instanceof JButton) {
+                    arrowButton = (JButton)e.getSource();
+                }
+            } else {
+                if (arrowButton!=null && !arrowButton.getModel().isPressed()
+                    && autoRepeatTimer.isRunning()) {
+                    autoRepeatTimer.stop();
+                    spinner = null;
+                    arrowButton = null;
+                }
+            }
+            if (spinner != null) {
+                try {
+                    int calendarField = getCalendarField(spinner);
+                    spinner.commitEdit();
+                    if (calendarField != -1) {
+                        ((SpinnerDateModel)spinner.getModel()).
+                                 setCalendarField(calendarField);
+                    }
+                    Object value = (isNext) ? spinner.getNextValue() :
+                               spinner.getPreviousValue();
+                    if (value != null) {
+                        spinner.setValue(value);
+                        select(spinner);
+                    }
+                } catch (IllegalArgumentException iae) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(spinner);
+                } catch (ParseException pe) {
+                    UIManager.getLookAndFeel().provideErrorFeedback(spinner);
+                }
+            }
+        }
+
+        /**
+         * If the spinner's editor is a DateEditor, this selects the field
+         * associated with the value that is being incremented.
+         */
+        private void select(JSpinner spinner) {
+            JComponent editor = spinner.getEditor();
+
+            if (editor instanceof JSpinner.DateEditor) {
+                JSpinner.DateEditor dateEditor = (JSpinner.DateEditor)editor;
+                JFormattedTextField ftf = dateEditor.getTextField();
+                Format format = dateEditor.getFormat();
+                Object value;
+
+                if (format != null && (value = spinner.getValue()) != null) {
+                    SpinnerDateModel model = dateEditor.getModel();
+                    DateFormat.Field field = DateFormat.Field.ofCalendarField(
+                        model.getCalendarField());
+
+                    if (field != null) {
+                        try {
+                            AttributedCharacterIterator iterator = format.
+                                formatToCharacterIterator(value);
+                            if (!select(ftf, iterator, field) &&
+                                       field == DateFormat.Field.HOUR0) {
+                                select(ftf, iterator, DateFormat.Field.HOUR1);
+                            }
+                        }
+                        catch (IllegalArgumentException iae) {}
+                    }
+                }
+            }
+        }
+
+        /**
+         * Selects the passed in field, returning true if it is found,
+         * false otherwise.
+         */
+        private boolean select(JFormattedTextField ftf,
+                               AttributedCharacterIterator iterator,
+                               DateFormat.Field field) {
+            int max = ftf.getDocument().getLength();
+
+            iterator.first();
+            do {
+                Map attrs = iterator.getAttributes();
+
+                if (attrs != null && attrs.containsKey(field)){
+                    int start = iterator.getRunStart(field);
+                    int end = iterator.getRunLimit(field);
+
+                    if (start != -1 && end != -1 && start <= max &&
+                                       end <= max) {
+                        ftf.select(start, end);
+                    }
+                    return true;
+                }
+            } while (iterator.next() != CharacterIterator.DONE);
+            return false;
+        }
+
+        /**
+         * Returns the calendarField under the start of the selection, or
+         * -1 if there is no valid calendar field under the selection (or
+         * the spinner isn't editing dates.
+         */
+        private int getCalendarField(JSpinner spinner) {
+            JComponent editor = spinner.getEditor();
+
+            if (editor instanceof JSpinner.DateEditor) {
+                JSpinner.DateEditor dateEditor = (JSpinner.DateEditor)editor;
+                JFormattedTextField ftf = dateEditor.getTextField();
+                int start = ftf.getSelectionStart();
+                JFormattedTextField.AbstractFormatter formatter =
+                                    ftf.getFormatter();
+
+                if (formatter instanceof InternationalFormatter) {
+                    Format.Field[] fields = ((InternationalFormatter)
+                                             formatter).getFields(start);
+
+                    for (int counter = 0; counter < fields.length; counter++) {
+                        if (fields[counter] instanceof DateFormat.Field) {
+                            int calendarField;
+
+                            if (fields[counter] == DateFormat.Field.HOUR1) {
+                                calendarField = Calendar.HOUR;
+                            }
+                            else {
+                                calendarField = ((DateFormat.Field)
+                                        fields[counter]).getCalendarField();
+                            }
+                            if (calendarField != -1) {
+                                return calendarField;
+                            }
+                        }
+                    }
+                }
+            }
+            return -1;
+        }
+
+        public void mousePressed(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e) && e.getComponent().isEnabled()) {
+                spinner = eventToSpinner(e);
+                autoRepeatTimer.start();
+
+                focusSpinnerIfNecessary();
+            }
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            autoRepeatTimer.stop();
+            arrowButton = null;
+            spinner = null;
+        }
+
+        public void mouseClicked(MouseEvent e) {
+        }
+
+        public void mouseEntered(MouseEvent e) {
+            if (spinner != null && !autoRepeatTimer.isRunning() && spinner == eventToSpinner(e)) {
+                autoRepeatTimer.start();
+            }
+        }
+
+        public void mouseExited(MouseEvent e) {
+            if (autoRepeatTimer.isRunning()) {
+                autoRepeatTimer.stop();
+            }
+        }
+
+        /**
+         * Requests focus on a child of the spinner if the spinner doesn't
+         * have focus.
+         */
+        private void focusSpinnerIfNecessary() {
+            Component fo = KeyboardFocusManager.
+                              getCurrentKeyboardFocusManager().getFocusOwner();
+            if (spinner.isRequestFocusEnabled() && (
+                        fo == null ||
+                        !SwingUtilities.isDescendingFrom(fo, spinner))) {
+                Container root = spinner;
+
+                if (!root.isFocusCycleRoot()) {
+                    root = root.getFocusCycleRootAncestor();
+                }
+                if (root != null) {
+                    FocusTraversalPolicy ftp = root.getFocusTraversalPolicy();
+                    Component child = ftp.getComponentAfter(root, spinner);
+
+                    if (child != null && SwingUtilities.isDescendingFrom(
+                                                        child, spinner)) {
+                        child.requestFocus();
+                    }
+                }
+            }
+        }
+
+        public void focusGained(FocusEvent e) {
+        }
+
+        public void focusLost(FocusEvent e) {
+            if (spinner == eventToSpinner(e)) {
+                if (autoRepeatTimer.isRunning()) {
+                    autoRepeatTimer.stop();
+                }
+                spinner = null;
+                if (arrowButton != null) {
+                    ButtonModel model = arrowButton.getModel();
+                    model.setPressed(false);
+                    model.setArmed(false);
+                    arrowButton = null;
+                }
+            }
+        }
+    }
+
+
+    private static class Handler implements LayoutManager,
+            PropertyChangeListener, ChangeListener {
+        //
+        // LayoutManager
+        //
+        private Component nextButton = null;
+        private Component previousButton = null;
+        private Component editor = null;
+
+        public void addLayoutComponent(String name, Component c) {
+            if ("Next".equals(name)) {
+                nextButton = c;
+            }
+            else if ("Previous".equals(name)) {
+                previousButton = c;
+            }
+            else if ("Editor".equals(name)) {
+                editor = c;
+            }
+        }
+
+        public void removeLayoutComponent(Component c) {
+            if (c == nextButton) {
+                nextButton = null;
+            }
+            else if (c == previousButton) {
+                previousButton = null;
+            }
+            else if (c == editor) {
+                editor = null;
+            }
+        }
+
+        private Dimension preferredSize(Component c) {
+            return (c == null) ? zeroSize : c.getPreferredSize();
+        }
+
+        public Dimension preferredLayoutSize(Container parent) {
+            Dimension nextD = preferredSize(nextButton);
+            Dimension previousD = preferredSize(previousButton);
+            Dimension editorD = preferredSize(editor);
+
+            /* Force the editors height to be a multiple of 2
+             */
+            editorD.height = ((editorD.height + 1) / 2) * 2;
+
+            Dimension size = new Dimension(editorD.width, editorD.height);
+            size.width += Math.max(nextD.width, previousD.width);
+            Insets insets = parent.getInsets();
+            size.width += insets.left + insets.right;
+            size.height += insets.top + insets.bottom;
+            return size;
+        }
+
+        public Dimension minimumLayoutSize(Container parent) {
+            return preferredLayoutSize(parent);
+        }
+
+        private void setBounds(Component c, int x, int y, int width, int height) {
+            if (c != null) {
+                c.setBounds(x, y, width, height);
+            }
+        }
+
+        public void layoutContainer(Container parent) {
+            int width  = parent.getWidth();
+            int height = parent.getHeight();
+
+            Insets insets = parent.getInsets();
+
+            if (nextButton == null && previousButton == null) {
+                setBounds(editor, insets.left,  insets.top, width - insets.left - insets.right,
+                        height - insets.top - insets.bottom);
+
+                return;
+            }
+
+            Dimension nextD = preferredSize(nextButton);
+            Dimension previousD = preferredSize(previousButton);
+            int buttonsWidth = Math.max(nextD.width, previousD.width);
+            int editorHeight = height - (insets.top + insets.bottom);
+
+            // The arrowButtonInsets value is used instead of the JSpinner's
+            // insets if not null. Defining this to be (0, 0, 0, 0) causes the
+            // buttons to be aligned with the outer edge of the spinner's
+            // border, and leaving it as "null" places the buttons completely
+            // inside the spinner's border.
+            Insets buttonInsets = UIManager.getInsets("Spinner.arrowButtonInsets");
+            if (buttonInsets == null) {
+                buttonInsets = insets;
+            }
+
+            /* Deal with the spinner's componentOrientation property.
+             */
+            int editorX, editorWidth, buttonsX;
+            if (parent.getComponentOrientation().isLeftToRight()) {
+                editorX = insets.left;
+                editorWidth = width - insets.left - buttonsWidth - buttonInsets.right;
+                buttonsX = width - buttonsWidth - buttonInsets.right;
+            } else {
+                buttonsX = buttonInsets.left;
+                editorX = buttonsX + buttonsWidth;
+                editorWidth = width - buttonInsets.left - buttonsWidth - insets.right;
+            }
+
+            int nextY = buttonInsets.top;
+            int nextHeight = (height / 2) + (height % 2) - nextY;
+            int previousY = buttonInsets.top + nextHeight;
+            int previousHeight = height - previousY - buttonInsets.bottom;
+
+            setBounds(editor,         editorX,  insets.top, editorWidth, editorHeight);
+            setBounds(nextButton,     buttonsX, nextY,      buttonsWidth, nextHeight);
+            setBounds(previousButton, buttonsX, previousY,  buttonsWidth, previousHeight);
+        }
+
+
+        //
+        // PropertyChangeListener
+        //
+        public void propertyChange(PropertyChangeEvent e)
+        {
+            String propertyName = e.getPropertyName();
+            if (e.getSource() instanceof JSpinner) {
+                JSpinner spinner = (JSpinner)(e.getSource());
+                SpinnerUI spinnerUI = spinner.getUI();
+
+                if (spinnerUI instanceof BasicSpinnerUI) {
+                    BasicSpinnerUI ui = (BasicSpinnerUI)spinnerUI;
+
+                    if ("editor".equals(propertyName)) {
+                        JComponent oldEditor = (JComponent)e.getOldValue();
+                        JComponent newEditor = (JComponent)e.getNewValue();
+                        ui.replaceEditor(oldEditor, newEditor);
+                        ui.updateEnabledState();
+                        if (oldEditor instanceof JSpinner.DefaultEditor) {
+                            JTextField tf =
+                                ((JSpinner.DefaultEditor)oldEditor).getTextField();
+                            if (tf != null) {
+                                tf.removeFocusListener(nextButtonHandler);
+                                tf.removeFocusListener(previousButtonHandler);
+                            }
+                        }
+                        if (newEditor instanceof JSpinner.DefaultEditor) {
+                            JTextField tf =
+                                ((JSpinner.DefaultEditor)newEditor).getTextField();
+                            if (tf != null) {
+                                if (tf.getFont() instanceof UIResource) {
+                                    tf.setFont(spinner.getFont());
+                                }
+                                tf.addFocusListener(nextButtonHandler);
+                                tf.addFocusListener(previousButtonHandler);
+                            }
+                        }
+                    }
+                    else if ("enabled".equals(propertyName) ||
+                             "model".equals(propertyName)) {
+                        ui.updateEnabledState();
+                    }
+                else if ("font".equals(propertyName)) {
+                    JComponent editor = spinner.getEditor();
+                    if (editor!=null && editor instanceof JSpinner.DefaultEditor) {
+                        JTextField tf =
+                            ((JSpinner.DefaultEditor)editor).getTextField();
+                        if (tf != null) {
+                            if (tf.getFont() instanceof UIResource) {
+                                tf.setFont(spinner.getFont());
+                            }
+                        }
+                    }
+                }
+                else if (JComponent.TOOL_TIP_TEXT_KEY.equals(propertyName)) {
+                    updateToolTipTextForChildren(spinner);
+                }
+                }
+            } else if (e.getSource() instanceof JComponent) {
+                JComponent c = (JComponent)e.getSource();
+                if ((c.getParent() instanceof JPanel) &&
+                    (c.getParent().getParent() instanceof JSpinner) &&
+                    "border".equals(propertyName)) {
+
+                    JSpinner spinner = (JSpinner)c.getParent().getParent();
+                    SpinnerUI spinnerUI = spinner.getUI();
+                    if (spinnerUI instanceof BasicSpinnerUI) {
+                        BasicSpinnerUI ui = (BasicSpinnerUI)spinnerUI;
+                        ui.maybeRemoveEditorBorder(c);
+                    }
+                }
+            }
+        }
+
+        // Syncronizes the ToolTip text for the components within the spinner
+        // to be the same value as the spinner ToolTip text.
+        private void updateToolTipTextForChildren(JComponent spinner) {
+            String toolTipText = spinner.getToolTipText();
+            Component[] children = spinner.getComponents();
+            for (int i = 0; i < children.length; i++) {
+                if (children[i] instanceof JSpinner.DefaultEditor) {
+                    JTextField tf = ((JSpinner.DefaultEditor)children[i]).getTextField();
+                    if (tf != null) {
+                        tf.setToolTipText(toolTipText);
+                    }
+                } else if (children[i] instanceof JComponent) {
+                    ((JComponent)children[i]).setToolTipText( spinner.getToolTipText() );
+                }
+            }
+        }
+
+        public void stateChanged(ChangeEvent e) {
+            if (e.getSource() instanceof JSpinner) {
+                JSpinner spinner = (JSpinner)e.getSource();
+                SpinnerUI spinnerUI = spinner.getUI();
+                if (DefaultLookup.getBoolean(spinner, spinnerUI,
+                    "Spinner.disableOnBoundaryValues", false) &&
+                    spinnerUI instanceof BasicSpinnerUI) {
+                    BasicSpinnerUI ui = (BasicSpinnerUI)spinnerUI;
+                    ui.updateEnabledState();
+                }
+            }
+        }
+    }
+}

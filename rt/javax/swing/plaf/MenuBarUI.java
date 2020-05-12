@@ -1,9 +1,39 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.plaf;
 
-public abstract class MenuBarUI extends ComponentUI {}
+import java.awt.Insets;
+import javax.swing.JMenuBar;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\MenuBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+import javax.swing.JMenu;
+/**
+ * Pluggable look and feel interface for JMenuBar.
+ *
+ * @author Georges Saab
+ * @author David Karlton
  */
+
+public abstract class MenuBarUI extends ComponentUI { }

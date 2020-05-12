@@ -1,52 +1,46 @@
-/*    */ package com.sun.corba.se.impl.presentation.rmi;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
-/*    */ import java.security.AccessController;
-/*    */ import java.security.PrivilegedAction;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class StubFactoryFactoryProxyImpl
-/*    */   extends StubFactoryFactoryDynamicBase
-/*    */ {
-/*    */   public PresentationManager.StubFactory makeDynamicStubFactory(PresentationManager paramPresentationManager, final PresentationManager.ClassData classData, final ClassLoader classLoader) {
-/* 38 */     return 
-/* 39 */       AccessController.<PresentationManager.StubFactory>doPrivileged((PrivilegedAction)new PrivilegedAction<StubFactoryProxyImpl>()
-/*    */         {
-/*    */           public StubFactoryProxyImpl run() {
-/* 42 */             return new StubFactoryProxyImpl(classData, classLoader);
-/*    */           }
-/*    */         });
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\StubFactoryFactoryProxyImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import com.sun.corba.se.spi.presentation.rmi.PresentationManager ;
+
+public class StubFactoryFactoryProxyImpl extends StubFactoryFactoryDynamicBase
+{
+    public PresentationManager.StubFactory makeDynamicStubFactory(
+        PresentationManager pm, final PresentationManager.ClassData classData,
+        final ClassLoader classLoader )
+    {
+        return AccessController
+                .doPrivileged(new PrivilegedAction<StubFactoryProxyImpl>() {
+                    @Override
+                    public StubFactoryProxyImpl run() {
+                        return new StubFactoryProxyImpl(classData, classLoader);
+                    }
+                });
+    }
+}

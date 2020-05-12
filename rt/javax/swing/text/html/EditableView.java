@@ -1,130 +1,128 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Shape;
-/*     */ import javax.swing.text.ComponentView;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ import javax.swing.text.View;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class EditableView
-/*     */   extends ComponentView
-/*     */ {
-/*     */   private boolean isVisible;
-/*     */   
-/*     */   EditableView(Element paramElement) {
-/*  48 */     super(paramElement);
-/*     */   }
-/*     */   
-/*     */   public float getMinimumSpan(int paramInt) {
-/*  52 */     if (this.isVisible) {
-/*  53 */       return super.getMinimumSpan(paramInt);
-/*     */     }
-/*  55 */     return 0.0F;
-/*     */   }
-/*     */   
-/*     */   public float getPreferredSpan(int paramInt) {
-/*  59 */     if (this.isVisible) {
-/*  60 */       return super.getPreferredSpan(paramInt);
-/*     */     }
-/*  62 */     return 0.0F;
-/*     */   }
-/*     */   
-/*     */   public float getMaximumSpan(int paramInt) {
-/*  66 */     if (this.isVisible) {
-/*  67 */       return super.getMaximumSpan(paramInt);
-/*     */     }
-/*  69 */     return 0.0F;
-/*     */   }
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, Shape paramShape) {
-/*  73 */     Component component = getComponent();
-/*  74 */     Container container = getContainer();
-/*     */     
-/*  76 */     if (container instanceof JTextComponent && this.isVisible != ((JTextComponent)container)
-/*  77 */       .isEditable()) {
-/*  78 */       this.isVisible = ((JTextComponent)container).isEditable();
-/*  79 */       preferenceChanged(null, true, true);
-/*  80 */       container.repaint();
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  93 */     if (this.isVisible) {
-/*  94 */       super.paint(paramGraphics, paramShape);
-/*     */     } else {
-/*     */       
-/*  97 */       setSize(0.0F, 0.0F);
-/*     */     } 
-/*  99 */     if (component != null) {
-/* 100 */       component.setFocusable(this.isVisible);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void setParent(View paramView) {
-/* 105 */     if (paramView != null) {
-/* 106 */       Container container = paramView.getContainer();
-/* 107 */       if (container != null) {
-/* 108 */         if (container instanceof JTextComponent) {
-/* 109 */           this.isVisible = ((JTextComponent)container).isEditable();
-/*     */         } else {
-/* 111 */           this.isVisible = false;
-/*     */         } 
-/*     */       }
-/*     */     } 
-/* 115 */     super.setParent(paramView);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isVisible() {
-/* 122 */     return this.isVisible;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\EditableView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import javax.swing.text.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+import java.util.*;
+
+/**
+ * EditableView sets the view it contains to be visible only when the
+ * JTextComponent the view is contained in is editable. The min/pref/max
+ * size is 0 when not visible.
+ *
+ * @author  Scott Violet
+ */
+class EditableView extends ComponentView {
+
+    EditableView(Element e) {
+        super(e);
+    }
+
+    public float getMinimumSpan(int axis) {
+        if (isVisible) {
+            return super.getMinimumSpan(axis);
+        }
+        return 0;
+    }
+
+    public float getPreferredSpan(int axis) {
+        if (isVisible) {
+            return super.getPreferredSpan(axis);
+        }
+        return 0;
+    }
+
+    public float getMaximumSpan(int axis) {
+        if (isVisible) {
+            return super.getMaximumSpan(axis);
+        }
+        return 0;
+    }
+
+    public void paint(Graphics g, Shape allocation) {
+        Component c = getComponent();
+        Container host = getContainer();
+
+        if (host instanceof JTextComponent &&
+            isVisible != ((JTextComponent)host).isEditable()) {
+            isVisible = ((JTextComponent)host).isEditable();
+            preferenceChanged(null, true, true);
+            host.repaint();
+        }
+        /*
+         * Note: we cannot tweak the visible state of the
+         * component in createComponent() even though it
+         * gets called after the setParent() call where
+         * the value of the boolean is set.  This
+         * because, the setComponentParent() in the
+         * superclass, always does a setVisible(false)
+         * after calling createComponent().   We therefore
+         * use this flag in the paint() method to
+         * setVisible() to true if required.
+         */
+        if (isVisible) {
+            super.paint(g, allocation);
+        }
+        else {
+            setSize(0, 0);
+        }
+        if (c != null) {
+            c.setFocusable(isVisible);
+        }
+    }
+
+    public void setParent(View parent) {
+        if (parent != null) {
+            Container host = parent.getContainer();
+            if (host != null) {
+                if (host instanceof JTextComponent) {
+                    isVisible = ((JTextComponent)host).isEditable();
+                } else {
+                    isVisible = false;
+                }
+            }
+        }
+        super.setParent(parent);
+    }
+
+    /**
+     * @return true if the Component is visible.
+     */
+    public boolean isVisible() {
+        return isVisible;
+    }
+
+    /** Set to true if the component is visible. This is based off the
+     * editability of the container. */
+    private boolean isVisible;
+} // End of EditableView

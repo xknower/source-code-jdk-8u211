@@ -1,100 +1,96 @@
-/*    */ package com.sun.corba.se.impl.protocol;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.logging.POASystemException;
-/*    */ import com.sun.corba.se.spi.ior.IOR;
-/*    */ import com.sun.corba.se.spi.oa.OADestroyed;
-/*    */ import com.sun.corba.se.spi.oa.OAInvocationInfo;
-/*    */ import com.sun.corba.se.spi.oa.ObjectAdapter;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import com.sun.corba.se.spi.protocol.ForwardException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class ServantCacheLocalCRDBase
-/*    */   extends LocalClientRequestDispatcherBase
-/*    */ {
-/*    */   private OAInvocationInfo cachedInfo;
-/*    */   protected POASystemException wrapper;
-/*    */   
-/*    */   protected ServantCacheLocalCRDBase(ORB paramORB, int paramInt, IOR paramIOR) {
-/* 59 */     super(paramORB, paramInt, paramIOR);
-/* 60 */     this.wrapper = POASystemException.get(paramORB, "rpc.protocol");
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected synchronized OAInvocationInfo getCachedInfo() {
-/* 66 */     if (!this.servantIsLocal) {
-/* 67 */       throw this.wrapper.servantMustBeLocal();
-/*    */     }
-/* 69 */     if (this.cachedInfo == null) {
-/* 70 */       ObjectAdapter objectAdapter = this.oaf.find(this.oaid);
-/* 71 */       this.cachedInfo = objectAdapter.makeInvocationInfo(this.objectId);
-/*    */ 
-/*    */       
-/* 74 */       this.orb.pushInvocationInfo(this.cachedInfo);
-/*    */       
-/*    */       try {
-/* 77 */         objectAdapter.enter();
-/* 78 */         objectAdapter.getInvocationServant(this.cachedInfo);
-/* 79 */       } catch (ForwardException forwardException) {
-/* 80 */         throw this.wrapper.illegalForwardRequest(forwardException);
-/* 81 */       } catch (OADestroyed oADestroyed) {
-/*    */ 
-/*    */         
-/* 84 */         throw this.wrapper.adapterDestroyed(oADestroyed);
-/*    */       } finally {
-/* 86 */         objectAdapter.returnServant();
-/* 87 */         objectAdapter.exit();
-/* 88 */         this.orb.popInvocationInfo();
-/*    */       } 
-/*    */     } 
-/*    */     
-/* 92 */     return this.cachedInfo;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\ServantCacheLocalCRDBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol;
+
+import org.omg.CORBA.BAD_OPERATION ;
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.SystemException ;
+import org.omg.CORBA.CompletionStatus ;
+
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher;
+import com.sun.corba.se.spi.protocol.ForwardException;
+
+// XXX This should be in the SPI
+import com.sun.corba.se.impl.protocol.LocalClientRequestDispatcherBase;
+
+import com.sun.corba.se.spi.oa.OAInvocationInfo;
+import com.sun.corba.se.spi.oa.ObjectAdapter;
+import com.sun.corba.se.spi.oa.OADestroyed;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.spi.ior.IOR ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.POASystemException;
+
+public abstract class ServantCacheLocalCRDBase extends LocalClientRequestDispatcherBase
+{
+
+    private OAInvocationInfo cachedInfo ;
+    protected POASystemException wrapper ;
+
+    protected ServantCacheLocalCRDBase( ORB orb, int scid, IOR ior )
+    {
+        super( orb, scid, ior ) ;
+        wrapper = POASystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+    }
+
+    protected synchronized OAInvocationInfo getCachedInfo()
+    {
+        if (!servantIsLocal)
+            throw wrapper.servantMustBeLocal() ;
+
+        if (cachedInfo == null) {
+            ObjectAdapter oa = oaf.find( oaid ) ;
+            cachedInfo = oa.makeInvocationInfo( objectId ) ;
+
+            // InvocationInfo must be pushed before calling getInvocationServant
+            orb.pushInvocationInfo( cachedInfo ) ;
+
+            try {
+                oa.enter( );
+                oa.getInvocationServant( cachedInfo ) ;
+            } catch (ForwardException freq) {
+                throw wrapper.illegalForwardRequest( freq ) ;
+            } catch( OADestroyed oades ) {
+                // This is an error since no user of this implementation
+                // should ever throw this exception
+                throw wrapper.adapterDestroyed( oades ) ;
+            } finally {
+                oa.returnServant( );
+                oa.exit( );
+                orb.popInvocationInfo() ;
+            }
+        }
+
+        return cachedInfo ;
+    }
+}
+
+// End of File

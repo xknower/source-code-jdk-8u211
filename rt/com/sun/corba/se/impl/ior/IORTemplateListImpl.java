@@ -1,135 +1,129 @@
-/*     */ package com.sun.corba.se.impl.ior;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.ior.IORFactories;
-/*     */ import com.sun.corba.se.spi.ior.IORFactory;
-/*     */ import com.sun.corba.se.spi.ior.IORTemplate;
-/*     */ import com.sun.corba.se.spi.ior.IORTemplateList;
-/*     */ import com.sun.corba.se.spi.ior.ObjectId;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Iterator;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class IORTemplateListImpl
-/*     */   extends FreezableList
-/*     */   implements IORTemplateList
-/*     */ {
-/*     */   public Object set(int paramInt, Object paramObject) {
-/*  52 */     if (paramObject instanceof IORTemplate)
-/*  53 */       return super.set(paramInt, paramObject); 
-/*  54 */     if (paramObject instanceof IORTemplateList) {
-/*  55 */       Object object = remove(paramInt);
-/*  56 */       add(paramInt, paramObject);
-/*  57 */       return object;
-/*     */     } 
-/*  59 */     throw new IllegalArgumentException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void add(int paramInt, Object paramObject) {
-/*  64 */     if (paramObject instanceof IORTemplate) {
-/*  65 */       super.add(paramInt, paramObject);
-/*  66 */     } else if (paramObject instanceof IORTemplateList) {
-/*  67 */       IORTemplateList iORTemplateList = (IORTemplateList)paramObject;
-/*  68 */       addAll(paramInt, iORTemplateList);
-/*     */     } else {
-/*  70 */       throw new IllegalArgumentException();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public IORTemplateListImpl() {
-/*  75 */     super(new ArrayList());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IORTemplateListImpl(InputStream paramInputStream) {
-/*  80 */     this();
-/*  81 */     int i = paramInputStream.read_long();
-/*  82 */     for (byte b = 0; b < i; b++) {
-/*  83 */       IORTemplate iORTemplate = IORFactories.makeIORTemplate(paramInputStream);
-/*  84 */       add((E)iORTemplate);
-/*     */     } 
-/*     */     
-/*  87 */     makeImmutable();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void makeImmutable() {
-/*  92 */     makeElementsImmutable();
-/*  93 */     super.makeImmutable();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream) {
-/*  98 */     paramOutputStream.write_long(size());
-/*  99 */     Iterator<E> iterator = iterator();
-/* 100 */     while (iterator.hasNext()) {
-/* 101 */       IORTemplate iORTemplate = (IORTemplate)iterator.next();
-/* 102 */       iORTemplate.write(paramOutputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IOR makeIOR(ORB paramORB, String paramString, ObjectId paramObjectId) {
-/* 108 */     return new IORImpl(paramORB, paramString, this, paramObjectId);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isEquivalent(IORFactory paramIORFactory) {
-/* 113 */     if (!(paramIORFactory instanceof IORTemplateList)) {
-/* 114 */       return false;
-/*     */     }
-/* 116 */     IORTemplateList iORTemplateList = (IORTemplateList)paramIORFactory;
-/*     */     
-/* 118 */     Iterator<E> iterator1 = iterator();
-/* 119 */     Iterator<E> iterator2 = iORTemplateList.iterator();
-/* 120 */     while (iterator1.hasNext() && iterator2.hasNext()) {
-/* 121 */       IORTemplate iORTemplate1 = (IORTemplate)iterator1.next();
-/* 122 */       IORTemplate iORTemplate2 = (IORTemplate)iterator2.next();
-/* 123 */       if (!iORTemplate1.isEquivalent(iORTemplate2)) {
-/* 124 */         return false;
-/*     */       }
-/*     */     } 
-/* 127 */     return (iterator1.hasNext() == iterator2.hasNext());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\IORTemplateListImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior;
+
+import java.util.ArrayList ;
+import java.util.Iterator ;
+
+import org.omg.CORBA_2_3.portable.InputStream ;
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+import com.sun.corba.se.spi.ior.IORTemplate ;
+import com.sun.corba.se.spi.ior.IORTemplateList ;
+import com.sun.corba.se.spi.ior.ObjectId ;
+import com.sun.corba.se.spi.ior.IORTemplate ;
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.ior.IORFactory ;
+import com.sun.corba.se.spi.ior.IORFactories ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+public class IORTemplateListImpl extends FreezableList implements IORTemplateList
+{
+    /* This class must override add( int, Object ) and set( int, Object )
+     * so that adding an IORTemplateList to an IORTemplateList just results
+     * in a list of TaggedProfileTemplates.
+     */
+    public Object set( int index, Object element )
+    {
+        if (element instanceof IORTemplate) {
+            return super.set( index, element ) ;
+        } else if (element instanceof IORTemplateList) {
+            Object result = remove( index ) ;
+            add( index, element ) ;
+            return result ;
+        } else
+            throw new IllegalArgumentException() ;
+    }
+
+    public void add( int index, Object element )
+    {
+        if (element instanceof IORTemplate) {
+            super.add( index, element ) ;
+        } else if (element instanceof IORTemplateList) {
+            IORTemplateList tl = (IORTemplateList)element ;
+            addAll( index, tl ) ;
+        } else
+            throw new IllegalArgumentException() ;
+    }
+
+    public IORTemplateListImpl()
+    {
+        super( new ArrayList() ) ;
+    }
+
+    public IORTemplateListImpl( InputStream is )
+    {
+        this() ;
+        int size = is.read_long() ;
+        for (int ctr=0; ctr<size; ctr++) {
+            IORTemplate iortemp = IORFactories.makeIORTemplate( is ) ;
+            add( iortemp ) ;
+        }
+
+        makeImmutable() ;
+    }
+
+    public void makeImmutable()
+    {
+        makeElementsImmutable() ;
+        super.makeImmutable() ;
+    }
+
+    public void write( OutputStream os )
+    {
+        os.write_long( size() ) ;
+        Iterator iter = iterator() ;
+        while (iter.hasNext()) {
+            IORTemplate iortemp = (IORTemplate)(iter.next()) ;
+            iortemp.write( os ) ;
+        }
+    }
+
+    public IOR makeIOR( ORB orb, String typeid, ObjectId oid )
+    {
+        return new IORImpl( orb, typeid, this, oid ) ;
+    }
+
+    public boolean isEquivalent( IORFactory other )
+    {
+        if (!(other instanceof IORTemplateList))
+            return false ;
+
+        IORTemplateList list = (IORTemplateList)other ;
+
+        Iterator thisIterator = iterator() ;
+        Iterator listIterator = list.iterator() ;
+        while (thisIterator.hasNext() && listIterator.hasNext()) {
+            IORTemplate thisTemplate = (IORTemplate)thisIterator.next() ;
+            IORTemplate listTemplate = (IORTemplate)listIterator.next() ;
+            if (!thisTemplate.isEquivalent( listTemplate ))
+                return false ;
+        }
+
+        return thisIterator.hasNext() == listIterator.hasNext() ;
+    }
+}

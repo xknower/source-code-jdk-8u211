@@ -1,73 +1,67 @@
-/*    */ package com.sun.corba.se.spi.extension;
-/*    */ 
-/*    */ import org.omg.CORBA.LocalObject;
-/*    */ import org.omg.CORBA.Policy;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class CopyObjectPolicy
-/*    */   extends LocalObject
-/*    */   implements Policy
-/*    */ {
-/*    */   private final int value;
-/*    */   
-/*    */   public CopyObjectPolicy(int paramInt) {
-/* 40 */     this.value = paramInt;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getValue() {
-/* 45 */     return this.value;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int policy_type() {
-/* 50 */     return 1398079490;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public Policy copy() {
-/* 55 */     return this;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void destroy() {}
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 65 */     return "CopyObjectPolicy[" + this.value + "]";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\extension\CopyObjectPolicy.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.extension ;
+
+import org.omg.CORBA.Policy ;
+import org.omg.CORBA.LocalObject ;
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+
+/** Policy used to specify the copyObject implementation to use.
+*/
+public class CopyObjectPolicy extends LocalObject implements Policy
+{
+    private final int value ;
+
+    public CopyObjectPolicy( int value )
+    {
+        this.value = value ;
+    }
+
+    public int getValue()
+    {
+        return value ;
+    }
+
+    public int policy_type ()
+    {
+        return ORBConstants.COPY_OBJECT_POLICY ;
+    }
+
+    public org.omg.CORBA.Policy copy ()
+    {
+        return this ;
+    }
+
+    public void destroy ()
+    {
+        // NO-OP
+    }
+
+    public String toString()
+    {
+        return "CopyObjectPolicy[" + value + "]" ;
+    }
+}

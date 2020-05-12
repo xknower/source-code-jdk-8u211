@@ -1,13 +1,49 @@
+/*
+ * Copyright (c) 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.security.interfaces;
 
 import java.math.BigInteger;
 
-public interface RSAKey {
-  BigInteger getModulus();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\interfaces\RSAKey.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The interface to an RSA public or private key.
+ *
+ * @author Jan Luehe
+ *
+ * @see RSAPublicKey
+ * @see RSAPrivateKey
+ *
+ * @since 1.3
  */
+
+public interface RSAKey {
+
+    /**
+     * Returns the modulus.
+     *
+     * @return the modulus
+     */
+    public BigInteger getModulus();
+}

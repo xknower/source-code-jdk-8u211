@@ -1,228 +1,222 @@
-/*     */ package com.sun.java.swing;
-/*     */ 
-/*     */ import java.awt.AWTEvent;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.EventQueue;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Map;
-/*     */ import java.util.WeakHashMap;
-/*     */ import java.util.concurrent.Callable;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.RepaintManager;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.awt.EventQueueDelegate;
-/*     */ import sun.awt.SunToolkit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SwingUtilities3
-/*     */ {
-/*  61 */   private static final Object DELEGATE_REPAINT_MANAGER_KEY = new StringBuilder("DelegateRepaintManagerKey");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setDelegateRepaintManager(JComponent paramJComponent, RepaintManager paramRepaintManager) {
-/*  72 */     AppContext.getAppContext().put(DELEGATE_REPAINT_MANAGER_KEY, Boolean.TRUE);
-/*     */ 
-/*     */     
-/*  75 */     paramJComponent.putClientProperty(DELEGATE_REPAINT_MANAGER_KEY, paramRepaintManager);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*  80 */   private static final Map<Container, Boolean> vsyncedMap = Collections.synchronizedMap(new WeakHashMap<>());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setVsyncRequested(Container paramContainer, boolean paramBoolean) {
-/*  97 */     assert paramContainer instanceof java.applet.Applet || paramContainer instanceof java.awt.Window;
-/*  98 */     if (paramBoolean) {
-/*  99 */       vsyncedMap.put(paramContainer, Boolean.TRUE);
-/*     */     } else {
-/* 101 */       vsyncedMap.remove(paramContainer);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isVsyncRequested(Container paramContainer) {
-/* 112 */     assert paramContainer instanceof java.applet.Applet || paramContainer instanceof java.awt.Window;
-/* 113 */     return (Boolean.TRUE == vsyncedMap.get(paramContainer));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static RepaintManager getDelegateRepaintManager(Component paramComponent) {
-/* 121 */     RepaintManager repaintManager = null;
-/* 122 */     if (Boolean.TRUE == SunToolkit.targetToAppContext(paramComponent)
-/* 123 */       .get(DELEGATE_REPAINT_MANAGER_KEY)) {
-/* 124 */       while (repaintManager == null && paramComponent != null) {
-/* 125 */         while (paramComponent != null && !(paramComponent instanceof JComponent))
-/*     */         {
-/* 127 */           paramComponent = paramComponent.getParent();
-/*     */         }
-/* 129 */         if (paramComponent != null) {
-/*     */ 
-/*     */           
-/* 132 */           repaintManager = (RepaintManager)((JComponent)paramComponent).getClientProperty(DELEGATE_REPAINT_MANAGER_KEY);
-/* 133 */           paramComponent = paramComponent.getParent();
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */     
-/* 138 */     return repaintManager;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setEventQueueDelegate(Map<String, Map<String, Object>> paramMap) {
-/* 147 */     EventQueueDelegate.setDelegate(new EventQueueDelegateFromMap(paramMap));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class EventQueueDelegateFromMap
-/*     */     implements EventQueueDelegate.Delegate
-/*     */   {
-/*     */     private final AWTEvent[] afterDispatchEventArgument;
-/*     */     
-/*     */     private final Object[] afterDispatchHandleArgument;
-/*     */     private final Callable<Void> afterDispatchCallable;
-/*     */     private final AWTEvent[] beforeDispatchEventArgument;
-/*     */     private final Callable<Object> beforeDispatchCallable;
-/*     */     private final EventQueue[] getNextEventEventQueueArgument;
-/*     */     private final Callable<AWTEvent> getNextEventCallable;
-/*     */     
-/*     */     public EventQueueDelegateFromMap(Map<String, Map<String, Object>> param1Map) {
-/* 164 */       Map map = param1Map.get("afterDispatch");
-/* 165 */       this.afterDispatchEventArgument = (AWTEvent[])map.get("event");
-/* 166 */       this.afterDispatchHandleArgument = (Object[])map.get("handle");
-/* 167 */       this.afterDispatchCallable = (Callable<Void>)map.get("method");
-/*     */       
-/* 169 */       map = param1Map.get("beforeDispatch");
-/* 170 */       this.beforeDispatchEventArgument = (AWTEvent[])map.get("event");
-/* 171 */       this.beforeDispatchCallable = (Callable<Object>)map.get("method");
-/*     */       
-/* 173 */       map = param1Map.get("getNextEvent");
-/* 174 */       this
-/* 175 */         .getNextEventEventQueueArgument = (EventQueue[])map.get("eventQueue");
-/* 176 */       this.getNextEventCallable = (Callable<AWTEvent>)map.get("method");
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void afterDispatch(AWTEvent param1AWTEvent, Object param1Object) throws InterruptedException {
-/* 181 */       this.afterDispatchEventArgument[0] = param1AWTEvent;
-/* 182 */       this.afterDispatchHandleArgument[0] = param1Object;
-/*     */       try {
-/* 184 */         this.afterDispatchCallable.call();
-/* 185 */       } catch (InterruptedException interruptedException) {
-/* 186 */         throw interruptedException;
-/* 187 */       } catch (RuntimeException runtimeException) {
-/* 188 */         throw runtimeException;
-/* 189 */       } catch (Exception exception) {
-/* 190 */         throw new RuntimeException(exception);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Object beforeDispatch(AWTEvent param1AWTEvent) throws InterruptedException {
-/* 196 */       this.beforeDispatchEventArgument[0] = param1AWTEvent;
-/*     */       try {
-/* 198 */         return this.beforeDispatchCallable.call();
-/* 199 */       } catch (InterruptedException interruptedException) {
-/* 200 */         throw interruptedException;
-/* 201 */       } catch (RuntimeException runtimeException) {
-/* 202 */         throw runtimeException;
-/* 203 */       } catch (Exception exception) {
-/* 204 */         throw new RuntimeException(exception);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public AWTEvent getNextEvent(EventQueue param1EventQueue) throws InterruptedException {
-/* 210 */       this.getNextEventEventQueueArgument[0] = param1EventQueue;
-/*     */       try {
-/* 212 */         return this.getNextEventCallable.call();
-/* 213 */       } catch (InterruptedException interruptedException) {
-/* 214 */         throw interruptedException;
-/* 215 */       } catch (RuntimeException runtimeException) {
-/* 216 */         throw runtimeException;
-/* 217 */       } catch (Exception exception) {
-/* 218 */         throw new RuntimeException(exception);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\SwingUtilities3.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing;
+
+import sun.awt.EventQueueDelegate;
+import sun.awt.AppContext;
+import sun.awt.SunToolkit;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.Callable;
+import java.applet.Applet;
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Window;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
+
+/**
+ * A collection of utility methods for Swing.
+ * <p>
+ * <b>WARNING:</b> While this class is public, it should not be treated as
+ * public API and its API may change in incompatable ways between dot dot
+ * releases and even patch releases. You should not rely on this class even
+ * existing.
+ *
+ * This is a second part of sun.swing.SwingUtilities2. It is required
+ * to provide services for JavaFX applets.
+ *
+ */
+public class SwingUtilities3 {
+    /**
+     * The {@code clientProperty} key for delegate {@code RepaintManager}
+     */
+    private static final Object DELEGATE_REPAINT_MANAGER_KEY =
+        new StringBuilder("DelegateRepaintManagerKey");
+
+    /**
+      * Registers delegate RepaintManager for {@code JComponent}.
+      */
+    public static void setDelegateRepaintManager(JComponent component,
+                                                RepaintManager repaintManager) {
+        /* setting up flag in AppContext to speed up lookups in case
+         * there are no delegate RepaintManagers used.
+         */
+        AppContext.getAppContext().put(DELEGATE_REPAINT_MANAGER_KEY,
+                                       Boolean.TRUE);
+
+        component.putClientProperty(DELEGATE_REPAINT_MANAGER_KEY,
+                                    repaintManager);
+    }
+
+    private static final Map<Container, Boolean> vsyncedMap =
+        Collections.synchronizedMap(new WeakHashMap<Container, Boolean>());
+
+    /**
+     * Sets vsyncRequested state for the {@code rootContainer}.  If
+     * {@code isRequested} is {@code true} then vsynced
+     * {@code BufferStrategy} is enabled for this {@code rootContainer}.
+     *
+     * Note: requesting vsynced painting does not guarantee one. The outcome
+     * depends on current RepaintManager's RepaintManager.PaintManager
+     * and on the capabilities of the graphics hardware/software and what not.
+     *
+     * @param rootContainer topmost container. Should be either {@code Window}
+     *  or {@code Applet}
+     * @param isRequested the value to set vsyncRequested state to
+     */
+    public static void setVsyncRequested(Container rootContainer,
+                                         boolean isRequested) {
+        assert (rootContainer instanceof Applet) || (rootContainer instanceof Window);
+        if (isRequested) {
+            vsyncedMap.put(rootContainer, Boolean.TRUE);
+        } else {
+            vsyncedMap.remove(rootContainer);
+        }
+    }
+
+    /**
+     * Checks if vsync painting is requested for {@code rootContainer}
+     *
+     * @param rootContainer topmost container. Should be either Window or Applet
+     * @return {@code true} if vsync painting is requested for {@code rootContainer}
+     */
+    public static boolean isVsyncRequested(Container rootContainer) {
+        assert (rootContainer instanceof Applet) || (rootContainer instanceof Window);
+        return Boolean.TRUE == vsyncedMap.get(rootContainer);
+    }
+
+    /**
+     * Returns delegate {@code RepaintManager} for {@code component} hierarchy.
+     */
+    public static RepaintManager getDelegateRepaintManager(Component
+                                                            component) {
+        RepaintManager delegate = null;
+        if (Boolean.TRUE == SunToolkit.targetToAppContext(component)
+                                      .get(DELEGATE_REPAINT_MANAGER_KEY)) {
+            while (delegate == null && component != null) {
+                while (component != null
+                         && ! (component instanceof JComponent)) {
+                    component = component.getParent();
+                }
+                if (component != null) {
+                    delegate = (RepaintManager)
+                        ((JComponent) component)
+                          .getClientProperty(DELEGATE_REPAINT_MANAGER_KEY);
+                    component = component.getParent();
+                }
+
+            }
+        }
+        return delegate;
+    }
+
+    /*
+     * We use maps to avoid reflection. Hopefully it should perform better
+     * this way.
+     */
+    public static void setEventQueueDelegate(
+            Map<String, Map<String, Object>> map) {
+        EventQueueDelegate.setDelegate(new EventQueueDelegateFromMap(map));
+    }
+
+    private static class EventQueueDelegateFromMap
+    implements EventQueueDelegate.Delegate {
+        private final AWTEvent[] afterDispatchEventArgument;
+        private final Object[] afterDispatchHandleArgument;
+        private final Callable<Void> afterDispatchCallable;
+
+        private final AWTEvent[] beforeDispatchEventArgument;
+        private final Callable<Object> beforeDispatchCallable;
+
+        private final EventQueue[] getNextEventEventQueueArgument;
+        private final Callable<AWTEvent> getNextEventCallable;
+
+        @SuppressWarnings("unchecked")
+        public EventQueueDelegateFromMap(Map<String, Map<String, Object>> objectMap) {
+            Map<String, Object> methodMap = objectMap.get("afterDispatch");
+            afterDispatchEventArgument = (AWTEvent[]) methodMap.get("event");
+            afterDispatchHandleArgument = (Object[]) methodMap.get("handle");
+            afterDispatchCallable = (Callable<Void>) methodMap.get("method");
+
+            methodMap = objectMap.get("beforeDispatch");
+            beforeDispatchEventArgument = (AWTEvent[]) methodMap.get("event");
+            beforeDispatchCallable = (Callable<Object>) methodMap.get("method");
+
+            methodMap = objectMap.get("getNextEvent");
+            getNextEventEventQueueArgument =
+                (EventQueue[]) methodMap.get("eventQueue");
+            getNextEventCallable = (Callable<AWTEvent>) methodMap.get("method");
+        }
+
+        @Override
+        public void afterDispatch(AWTEvent event, Object handle) throws InterruptedException {
+            afterDispatchEventArgument[0] = event;
+            afterDispatchHandleArgument[0] = handle;
+            try {
+                afterDispatchCallable.call();
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public Object beforeDispatch(AWTEvent event) throws InterruptedException {
+            beforeDispatchEventArgument[0] = event;
+            try {
+                return beforeDispatchCallable.call();
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public AWTEvent getNextEvent(EventQueue eventQueue) throws InterruptedException {
+            getNextEventEventQueueArgument[0] = eventQueue;
+            try {
+                return getNextEventCallable.call();
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+}

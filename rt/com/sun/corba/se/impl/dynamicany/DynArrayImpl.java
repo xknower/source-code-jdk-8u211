@@ -1,143 +1,138 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.Serializable;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ import org.omg.DynamicAny.DynArray;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DynArrayImpl
-/*     */   extends DynAnyCollectionImpl
-/*     */   implements DynArray
-/*     */ {
-/*     */   private DynArrayImpl() {
-/*  50 */     this((ORB)null, (Any)null, false);
-/*     */   }
-/*     */   
-/*     */   protected DynArrayImpl(ORB paramORB, Any paramAny, boolean paramBoolean) {
-/*  54 */     super(paramORB, paramAny, paramBoolean);
-/*     */   }
-/*     */   
-/*     */   protected DynArrayImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  58 */     super(paramORB, paramTypeCode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeComponentsFromAny() {
-/*     */     InputStream inputStream;
-/*  65 */     TypeCode typeCode1 = this.any.type();
-/*  66 */     int i = getBound();
-/*  67 */     TypeCode typeCode2 = getContentType();
-/*     */ 
-/*     */     
-/*     */     try {
-/*  71 */       inputStream = this.any.create_input_stream();
-/*  72 */     } catch (BAD_OPERATION bAD_OPERATION) {
-/*  73 */       return false;
-/*     */     } 
-/*     */     
-/*  76 */     this.components = new DynAny[i];
-/*  77 */     this.anys = new Any[i];
-/*     */     
-/*  79 */     for (byte b = 0; b < i; b++) {
-/*     */ 
-/*     */       
-/*  82 */       this.anys[b] = DynAnyUtil.extractAnyFromStream(typeCode2, inputStream, this.orb);
-/*     */       
-/*     */       try {
-/*  85 */         this.components[b] = DynAnyUtil.createMostDerivedDynAny(this.anys[b], this.orb, false);
-/*  86 */       } catch (InconsistentTypeCode inconsistentTypeCode) {}
-/*     */     } 
-/*     */     
-/*  89 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeComponentsFromTypeCode() {
-/*  98 */     TypeCode typeCode1 = this.any.type();
-/*  99 */     int i = getBound();
-/* 100 */     TypeCode typeCode2 = getContentType();
-/*     */     
-/* 102 */     this.components = new DynAny[i];
-/* 103 */     this.anys = new Any[i];
-/*     */     
-/* 105 */     for (byte b = 0; b < i; b++) {
-/* 106 */       createDefaultComponentAt(b, typeCode2);
-/*     */     }
-/* 108 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void checkValue(Object[] paramArrayOfObject) throws InvalidValue {
-/* 134 */     if (paramArrayOfObject == null || paramArrayOfObject.length != getBound())
-/* 135 */       throw new InvalidValue(); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynArrayImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.BAD_OPERATION;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import org.omg.CORBA.TypeCodePackage.Bounds;
+import org.omg.CORBA.portable.InputStream;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
+import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
+import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public class DynArrayImpl extends DynAnyCollectionImpl implements DynArray
+{
+    //
+    // Constructors
+    //
+
+    private DynArrayImpl() {
+        this(null, (Any)null, false);
+    }
+
+    protected DynArrayImpl(ORB orb, Any any, boolean copyValue) {
+        super(orb, any, copyValue);
+    }
+
+    protected DynArrayImpl(ORB orb, TypeCode typeCode) {
+        super(orb, typeCode);
+    }
+
+    // Initializes components and anys representation
+    // from the Any representation
+    protected boolean initializeComponentsFromAny() {
+        // This typeCode is of kind tk_array.
+        TypeCode typeCode = any.type();
+        int length = getBound();
+        TypeCode contentType = getContentType();
+        InputStream input;
+
+        try {
+            input = any.create_input_stream();
+        } catch (BAD_OPERATION e) {
+            return false;
+        }
+
+        components = new DynAny[length];
+        anys = new Any[length];
+
+        for (int i=0; i<length; i++) {
+            // _REVISIT_ Could use read_xxx_array() methods on InputStream for efficiency
+            // but only for primitive types
+            anys[i] = DynAnyUtil.extractAnyFromStream(contentType, input, orb);
+            try {
+                // Creates the appropriate subtype without copying the Any
+                components[i] = DynAnyUtil.createMostDerivedDynAny(anys[i], orb, false);
+            } catch (InconsistentTypeCode itc) { // impossible
+            }
+        }
+        return true;
+    }
+
+    // Initializes components and anys representation
+    // from the internal TypeCode information with default values.
+    // This is not done recursively, only one level.
+    // More levels are initialized lazily, on demand.
+    protected boolean initializeComponentsFromTypeCode() {
+        // This typeCode is of kind tk_array.
+        TypeCode typeCode = any.type();
+        int length = getBound();
+        TypeCode contentType = getContentType();
+
+        components = new DynAny[length];
+        anys = new Any[length];
+
+        for (int i=0; i<length; i++) {
+            createDefaultComponentAt(i, contentType);
+        }
+        return true;
+    }
+
+    //
+    // DynArray interface methods
+    //
+
+    // Initializes the elements of the array.
+    // If value does not contain the same number of elements as the array dimension,
+    // the operation raises InvalidValue.
+    // If one or more elements have a type that is inconsistent with the DynArrays TypeCode,
+    // the operation raises TypeMismatch.
+    // This operation does not change the current position.
+/*
+    public void set_elements (org.omg.CORBA.Any[] value)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue;
+*/
+
+    //
+    // Utility methods
+    //
+
+    protected void checkValue(Object[] value)
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (value == null || value.length != getBound()) {
+            throw new InvalidValue();
+        }
+    }
+}

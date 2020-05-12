@@ -1,270 +1,264 @@
-/*     */ package com.sun.org.apache.xerces.internal.utils;
-/*     */ 
-/*     */ import java.util.Formatter;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class XMLLimitAnalyzer
-/*     */ {
-/*     */   private final int[] values;
-/*     */   private final String[] names;
-/*     */   private final int[] totalValue;
-/*     */   private final Map[] caches;
-/*     */   private String entityStart;
-/*     */   private String entityEnd;
-/*     */   
-/*     */   public enum NameMap
-/*     */   {
-/*  60 */     ENTITY_EXPANSION_LIMIT("jdk.xml.entityExpansionLimit", "entityExpansionLimit"),
-/*  61 */     MAX_OCCUR_NODE_LIMIT("jdk.xml.maxOccurLimit", "maxOccurLimit"),
-/*  62 */     ELEMENT_ATTRIBUTE_LIMIT("jdk.xml.elementAttributeLimit", "elementAttributeLimit");
-/*     */     
-/*     */     final String newName;
-/*     */     final String oldName;
-/*     */     
-/*     */     NameMap(String newName, String oldName) {
-/*  68 */       this.newName = newName;
-/*  69 */       this.oldName = oldName;
-/*     */     }
-/*     */     
-/*     */     String getOldName(String newName) {
-/*  73 */       if (newName.equals(this.newName)) {
-/*  74 */         return this.oldName;
-/*     */       }
-/*  76 */       return null;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLLimitAnalyzer() {
-/* 104 */     this.values = new int[(XMLSecurityManager.Limit.values()).length];
-/* 105 */     this.totalValue = new int[(XMLSecurityManager.Limit.values()).length];
-/* 106 */     this.names = new String[(XMLSecurityManager.Limit.values()).length];
-/* 107 */     this.caches = new Map[(XMLSecurityManager.Limit.values()).length];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addValue(XMLSecurityManager.Limit limit, String entityName, int value) {
-/* 119 */     addValue(limit.ordinal(), entityName, value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addValue(int index, String entityName, int value) {
-/*     */     Map<String, Integer> cache;
-/* 129 */     if (index == XMLSecurityManager.Limit.ENTITY_EXPANSION_LIMIT.ordinal() || index == XMLSecurityManager.Limit.MAX_OCCUR_NODE_LIMIT
-/* 130 */       .ordinal() || index == XMLSecurityManager.Limit.ELEMENT_ATTRIBUTE_LIMIT
-/* 131 */       .ordinal() || index == XMLSecurityManager.Limit.TOTAL_ENTITY_SIZE_LIMIT
-/* 132 */       .ordinal() || index == XMLSecurityManager.Limit.ENTITY_REPLACEMENT_LIMIT
-/* 133 */       .ordinal()) {
-/*     */       
-/* 135 */       this.totalValue[index] = this.totalValue[index] + value;
-/*     */       return;
-/*     */     } 
-/* 138 */     if (index == XMLSecurityManager.Limit.MAX_ELEMENT_DEPTH_LIMIT.ordinal() || index == XMLSecurityManager.Limit.MAX_NAME_LIMIT
-/* 139 */       .ordinal()) {
-/* 140 */       this.values[index] = value;
-/* 141 */       this.totalValue[index] = value;
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/* 146 */     if (this.caches[index] == null) {
-/* 147 */       cache = new HashMap<>(10);
-/* 148 */       this.caches[index] = cache;
-/*     */     } else {
-/* 150 */       cache = this.caches[index];
-/*     */     } 
-/*     */     
-/* 153 */     int accumulatedValue = value;
-/* 154 */     if (cache.containsKey(entityName)) {
-/* 155 */       accumulatedValue += ((Integer)cache.get(entityName)).intValue();
-/* 156 */       cache.put(entityName, Integer.valueOf(accumulatedValue));
-/*     */     } else {
-/* 158 */       cache.put(entityName, Integer.valueOf(value));
-/*     */     } 
-/*     */     
-/* 161 */     if (accumulatedValue > this.values[index]) {
-/* 162 */       this.values[index] = accumulatedValue;
-/* 163 */       this.names[index] = entityName;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 167 */     if (index == XMLSecurityManager.Limit.GENERAL_ENTITY_SIZE_LIMIT.ordinal() || index == XMLSecurityManager.Limit.PARAMETER_ENTITY_SIZE_LIMIT
-/* 168 */       .ordinal()) {
-/* 169 */       this.totalValue[XMLSecurityManager.Limit.TOTAL_ENTITY_SIZE_LIMIT.ordinal()] = this.totalValue[XMLSecurityManager.Limit.TOTAL_ENTITY_SIZE_LIMIT.ordinal()] + value;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getValue(XMLSecurityManager.Limit limit) {
-/* 180 */     return getValue(limit.ordinal());
-/*     */   }
-/*     */   
-/*     */   public int getValue(int index) {
-/* 184 */     if (index == XMLSecurityManager.Limit.ENTITY_REPLACEMENT_LIMIT.ordinal()) {
-/* 185 */       return this.totalValue[index];
-/*     */     }
-/* 187 */     return this.values[index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getTotalValue(XMLSecurityManager.Limit limit) {
-/* 196 */     return this.totalValue[limit.ordinal()];
-/*     */   }
-/*     */   
-/*     */   public int getTotalValue(int index) {
-/* 200 */     return this.totalValue[index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getValueByIndex(int index) {
-/* 208 */     return this.values[index];
-/*     */   }
-/*     */   
-/*     */   public void startEntity(String name) {
-/* 212 */     this.entityStart = name;
-/*     */   }
-/*     */   
-/*     */   public boolean isTracking(String name) {
-/* 216 */     if (this.entityStart == null) {
-/* 217 */       return false;
-/*     */     }
-/* 219 */     return this.entityStart.equals(name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endEntity(XMLSecurityManager.Limit limit, String name) {
-/* 227 */     this.entityStart = "";
-/* 228 */     Map<String, Integer> cache = this.caches[limit.ordinal()];
-/* 229 */     if (cache != null) {
-/* 230 */       cache.remove(name);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset(XMLSecurityManager.Limit limit) {
-/* 239 */     if (limit.ordinal() == XMLSecurityManager.Limit.TOTAL_ENTITY_SIZE_LIMIT.ordinal()) {
-/* 240 */       this.totalValue[limit.ordinal()] = 0;
-/* 241 */     } else if (limit.ordinal() == XMLSecurityManager.Limit.GENERAL_ENTITY_SIZE_LIMIT.ordinal()) {
-/* 242 */       this.names[limit.ordinal()] = null;
-/* 243 */       this.values[limit.ordinal()] = 0;
-/* 244 */       this.caches[limit.ordinal()] = null;
-/* 245 */       this.totalValue[limit.ordinal()] = 0;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void debugPrint(XMLSecurityManager securityManager) {
-/* 250 */     Formatter formatter = new Formatter();
-/* 251 */     System.out.println(formatter.format("%30s %15s %15s %15s %30s", new Object[] { "Property", "Limit", "Total size", "Size", "Entity Name" }));
-/*     */ 
-/*     */     
-/* 254 */     for (XMLSecurityManager.Limit limit : XMLSecurityManager.Limit.values()) {
-/* 255 */       formatter = new Formatter();
-/* 256 */       System.out.println(formatter.format("%30s %15d %15d %15d %30s", new Object[] { limit
-/* 257 */               .name(), 
-/* 258 */               Integer.valueOf(securityManager.getLimit(limit)), 
-/* 259 */               Integer.valueOf(this.totalValue[limit.ordinal()]), 
-/* 260 */               Integer.valueOf(this.values[limit.ordinal()]), this.names[limit
-/* 261 */                 .ordinal()] }));
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\utils\XMLLimitAnalyzer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ *
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of either the GNU
+ * General Public License Version 2 only ("GPL") or the Common Development
+ * and Distribution License("CDDL") (collectively, the "License").  You
+ * may not use this file except in compliance with the License.  You can
+ * obtain a copy of the License at
+ * https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html
+ * or packager/legal/LICENSE.txt.  See the License for the specific
+ * language governing permissions and limitations under the License.
+ *
+ * When distributing the software, include this License Header Notice in each
+ * file and include the License file at packager/legal/LICENSE.txt.
+ *
+ * GPL Classpath Exception:
+ * Oracle designates this particular file as subject to the "Classpath"
+ * exception as provided by Oracle in the GPL Version 2 section of the License
+ * file that accompanied this code.
+ *
+ * Modifications:
+ * If applicable, add the following below the License Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
+ * "Portions Copyright [year] [name of copyright owner]"
+ *
+ * Contributor(s):
+ * If you wish your version of this file to be governed by only the CDDL or
+ * only the GPL Version 2, indicate your decision by adding "[Contributor]
+ * elects to include this software in this distribution under the [CDDL or GPL
+ * Version 2] license."  If you don't indicate a single choice of license, a
+ * recipient has the option to distribute your version of this file under
+ * either the CDDL, the GPL Version 2 or to extend the choice of license to
+ * its licensees as provided above.  However, if you add GPL Version 2 code
+ * and therefore, elected the GPL Version 2 license, then the option applies
+ * only if the new code is made subject to such option by the copyright
+ * holder.
  */
+package com.sun.org.apache.xerces.internal.utils;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager.Limit;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * A helper for analyzing entity expansion limits
+ *
+ * @author Joe Wang Oracle Corp.
+ *
+ */
+public final class XMLLimitAnalyzer {
+
+    /**
+     * Map old property names with the new ones
+     */
+    public static enum NameMap {
+        ENTITY_EXPANSION_LIMIT(Constants.SP_ENTITY_EXPANSION_LIMIT, Constants.ENTITY_EXPANSION_LIMIT),
+        MAX_OCCUR_NODE_LIMIT(Constants.SP_MAX_OCCUR_LIMIT, Constants.MAX_OCCUR_LIMIT),
+        ELEMENT_ATTRIBUTE_LIMIT(Constants.SP_ELEMENT_ATTRIBUTE_LIMIT, Constants.ELEMENT_ATTRIBUTE_LIMIT);
+
+        final String newName;
+        final String oldName;
+
+        NameMap(String newName, String oldName) {
+            this.newName = newName;
+            this.oldName = oldName;
+        }
+
+        String getOldName(String newName) {
+            if (newName.equals(this.newName)) {
+                return oldName;
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Max value accumulated for each property
+     */
+    private final int[] values;
+    /**
+     * Names of the entities corresponding to their max values
+     */
+    private final String[] names;
+    /**
+     * Total value of accumulated entities
+     */
+    private final int[] totalValue;
+
+    /**
+     * Maintain values of the top 10 elements in the process of parsing
+     */
+    private final Map[] caches;
+
+    private String entityStart, entityEnd;
+    /**
+     * Default constructor. Establishes default values for known security
+     * vulnerabilities.
+     */
+    public XMLLimitAnalyzer() {
+        values = new int[Limit.values().length];
+        totalValue = new int[Limit.values().length];
+        names = new String[Limit.values().length];
+        caches = new Map[Limit.values().length];
+    }
+
+    /**
+     * Add the value to the current max count for the specified property
+     * To find the max value of all entities, set no limit
+     *
+     * @param limit the type of the property
+     * @param entityName the name of the entity
+     * @param value the value of the entity
+     */
+    public void addValue(Limit limit, String entityName, int value) {
+        addValue(limit.ordinal(), entityName, value);
+    }
+
+    /**
+     * Add the value to the current count by the index of the property
+     * @param index the index of the property
+     * @param entityName the name of the entity
+     * @param value the value of the entity
+     */
+    public void addValue(int index, String entityName, int value) {
+        if (index == Limit.ENTITY_EXPANSION_LIMIT.ordinal() ||
+                index == Limit.MAX_OCCUR_NODE_LIMIT.ordinal() ||
+                index == Limit.ELEMENT_ATTRIBUTE_LIMIT.ordinal() ||
+                index == Limit.TOTAL_ENTITY_SIZE_LIMIT.ordinal() ||
+                index == Limit.ENTITY_REPLACEMENT_LIMIT.ordinal()
+                ) {
+            totalValue[index] += value;
+            return;
+        }
+        if (index == Limit.MAX_ELEMENT_DEPTH_LIMIT.ordinal() ||
+                index == Limit.MAX_NAME_LIMIT.ordinal()) {
+            values[index] = value;
+            totalValue[index] = value;
+            return;
+        }
+
+        Map<String, Integer> cache;
+        if (caches[index] == null) {
+            cache = new HashMap<>(10);
+            caches[index] = cache;
+        } else {
+            cache = caches[index];
+        }
+
+        int accumulatedValue = value;
+        if (cache.containsKey(entityName)) {
+            accumulatedValue += cache.get(entityName);
+            cache.put(entityName, accumulatedValue);
+        } else {
+            cache.put(entityName, value);
+        }
+
+        if (accumulatedValue > values[index]) {
+            values[index] = accumulatedValue;
+            names[index] = entityName;
+        }
+
+
+        if (index == Limit.GENERAL_ENTITY_SIZE_LIMIT.ordinal() ||
+                index == Limit.PARAMETER_ENTITY_SIZE_LIMIT.ordinal()) {
+            totalValue[Limit.TOTAL_ENTITY_SIZE_LIMIT.ordinal()] += value;
+        }
+    }
+
+    /**
+     * Return the value of the current max count for the specified property
+     *
+     * @param limit the property
+     * @return the value of the property
+     */
+    public int getValue(Limit limit) {
+        return getValue(limit.ordinal());
+    }
+
+    public int getValue(int index) {
+        if (index == Limit.ENTITY_REPLACEMENT_LIMIT.ordinal()) {
+            return totalValue[index];
+        }
+        return values[index];
+    }
+    /**
+     * Return the total value accumulated so far
+     *
+     * @param limit the property
+     * @return the accumulated value of the property
+     */
+    public int getTotalValue(Limit limit) {
+        return totalValue[limit.ordinal()];
+    }
+
+    public int getTotalValue(int index) {
+        return totalValue[index];
+    }
+    /**
+     * Return the current max value (count or length) by the index of a property
+     * @param index the index of a property
+     * @return count of a property
+     */
+    public int getValueByIndex(int index) {
+        return values[index];
+    }
+
+    public void startEntity(String name) {
+        entityStart = name;
+    }
+
+    public boolean isTracking(String name) {
+        if (entityStart == null) {
+            return false;
+        }
+        return entityStart.equals(name);
+    }
+    /**
+     * Stop tracking the entity
+     * @param limit the limit property
+     * @param name the name of an entity
+     */
+    public void endEntity(Limit limit, String name) {
+        entityStart = "";
+        Map<String, Integer> cache = caches[limit.ordinal()];
+        if (cache != null) {
+            cache.remove(name);
+        }
+    }
+
+    /**
+     * Resets the current value of the specified limit.
+     * @param limit The limit to be reset.
+     */
+    public void reset(Limit limit) {
+        if (limit.ordinal() == Limit.TOTAL_ENTITY_SIZE_LIMIT.ordinal()) {
+            totalValue[limit.ordinal()] = 0;
+        } else if (limit.ordinal() == Limit.GENERAL_ENTITY_SIZE_LIMIT.ordinal()) {
+            names[limit.ordinal()] = null;
+            values[limit.ordinal()] = 0;
+            caches[limit.ordinal()] = null;
+            totalValue[limit.ordinal()] = 0;
+        }
+    }
+
+    public void debugPrint(XMLSecurityManager securityManager) {
+        Formatter formatter = new Formatter();
+        System.out.println(formatter.format("%30s %15s %15s %15s %30s",
+                "Property","Limit","Total size","Size","Entity Name"));
+
+        for (Limit limit : Limit.values()) {
+            formatter = new Formatter();
+            System.out.println(formatter.format("%30s %15d %15d %15d %30s",
+                    limit.name(),
+                    securityManager.getLimit(limit),
+                    totalValue[limit.ordinal()],
+                    values[limit.ordinal()],
+                    names[limit.ordinal()]));
+        }
+    }
+}

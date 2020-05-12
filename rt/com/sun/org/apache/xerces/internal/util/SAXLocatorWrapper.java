@@ -1,116 +1,111 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*     */ import org.xml.sax.Locator;
-/*     */ import org.xml.sax.ext.Locator2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class SAXLocatorWrapper
-/*     */   implements XMLLocator
-/*     */ {
-/*  37 */   private Locator fLocator = null;
-/*  38 */   private Locator2 fLocator2 = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocator(Locator locator) {
-/*  43 */     this.fLocator = locator;
-/*  44 */     if (locator instanceof Locator2 || locator == null) {
-/*  45 */       this.fLocator2 = (Locator2)locator;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public Locator getLocator() {
-/*  50 */     return this.fLocator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPublicId() {
-/*  58 */     if (this.fLocator != null) {
-/*  59 */       return this.fLocator.getPublicId();
-/*     */     }
-/*  61 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getLiteralSystemId() {
-/*  65 */     if (this.fLocator != null) {
-/*  66 */       return this.fLocator.getSystemId();
-/*     */     }
-/*  68 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getBaseSystemId() {
-/*  72 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getExpandedSystemId() {
-/*  76 */     return getLiteralSystemId();
-/*     */   }
-/*     */   
-/*     */   public int getLineNumber() {
-/*  80 */     if (this.fLocator != null) {
-/*  81 */       return this.fLocator.getLineNumber();
-/*     */     }
-/*  83 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public int getColumnNumber() {
-/*  87 */     if (this.fLocator != null) {
-/*  88 */       return this.fLocator.getColumnNumber();
-/*     */     }
-/*  90 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public int getCharacterOffset() {
-/*  94 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public String getEncoding() {
-/*  98 */     if (this.fLocator2 != null) {
-/*  99 */       return this.fLocator2.getEncoding();
-/*     */     }
-/* 101 */     return null;
-/*     */   }
-/*     */   
-/*     */   public String getXMLVersion() {
-/* 105 */     if (this.fLocator2 != null) {
-/* 106 */       return this.fLocator2.getXMLVersion();
-/*     */     }
-/* 108 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\SAXLocatorWrapper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
+
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+
+/**
+ * <p>A light wrapper around a SAX locator. This is useful
+ * when bridging between SAX and XNI components.</p>
+ *
+ * @author Michael Glavassevich, IBM
+ *
+ */
+public final class SAXLocatorWrapper implements XMLLocator {
+
+    private Locator fLocator = null;
+    private Locator2 fLocator2 = null;
+
+    public SAXLocatorWrapper() {}
+
+    public void setLocator(Locator locator) {
+        fLocator = locator;
+        if (locator instanceof Locator2 || locator == null) {
+            fLocator2 = (Locator2) locator;
+        }
+    }
+
+    public Locator getLocator() {
+        return fLocator;
+    }
+
+    /*
+     * XMLLocator methods
+     */
+
+    public String getPublicId() {
+        if (fLocator != null) {
+            return fLocator.getPublicId();
+        }
+        return null;
+    }
+
+    public String getLiteralSystemId() {
+        if (fLocator != null) {
+            return fLocator.getSystemId();
+        }
+        return null;
+    }
+
+    public String getBaseSystemId() {
+        return null;
+    }
+
+    public String getExpandedSystemId() {
+        return getLiteralSystemId();
+    }
+
+    public int getLineNumber() {
+        if (fLocator != null) {
+            return fLocator.getLineNumber();
+        }
+        return -1;
+    }
+
+    public int getColumnNumber() {
+        if (fLocator != null) {
+            return fLocator.getColumnNumber();
+        }
+        return -1;
+    }
+
+    public int getCharacterOffset() {
+        return -1;
+    }
+
+    public String getEncoding() {
+        if (fLocator2 != null) {
+            return fLocator2.getEncoding();
+        }
+        return null;
+    }
+
+    public String getXMLVersion() {
+        if (fLocator2 != null) {
+            return fLocator2.getXMLVersion();
+        }
+        return null;
+    }
+
+} // SAXLocatorWrapper

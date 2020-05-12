@@ -1,975 +1,970 @@
-/*     */ package javax.swing.text.html;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.ActionListener;
-/*     */ import java.awt.event.ItemListener;
-/*     */ import java.awt.event.MouseAdapter;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.io.File;
-/*     */ import java.io.IOException;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.net.URL;
-/*     */ import java.net.URLEncoder;
-/*     */ import java.util.BitSet;
-/*     */ import javax.swing.AbstractListModel;
-/*     */ import javax.swing.Box;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.ComboBoxModel;
-/*     */ import javax.swing.DefaultButtonModel;
-/*     */ import javax.swing.ImageIcon;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JCheckBox;
-/*     */ import javax.swing.JComboBox;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JEditorPane;
-/*     */ import javax.swing.JFileChooser;
-/*     */ import javax.swing.JList;
-/*     */ import javax.swing.JPasswordField;
-/*     */ import javax.swing.JRadioButton;
-/*     */ import javax.swing.JScrollPane;
-/*     */ import javax.swing.JTextArea;
-/*     */ import javax.swing.JTextField;
-/*     */ import javax.swing.JToggleButton;
-/*     */ import javax.swing.ListModel;
-/*     */ import javax.swing.ListSelectionModel;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.event.ChangeListener;
-/*     */ import javax.swing.event.DocumentListener;
-/*     */ import javax.swing.event.HyperlinkEvent;
-/*     */ import javax.swing.event.ListDataListener;
-/*     */ import javax.swing.text.AbstractDocument;
-/*     */ import javax.swing.text.AttributeSet;
-/*     */ import javax.swing.text.BadLocationException;
-/*     */ import javax.swing.text.ComponentView;
-/*     */ import javax.swing.text.Document;
-/*     */ import javax.swing.text.Element;
-/*     */ import javax.swing.text.ElementIterator;
-/*     */ import javax.swing.text.PlainDocument;
-/*     */ import javax.swing.text.StyleConstants;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FormView
-/*     */   extends ComponentView
-/*     */   implements ActionListener
-/*     */ {
-/*     */   @Deprecated
-/* 117 */   public static final String SUBMIT = new String("Submit Query");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/* 126 */   public static final String RESET = new String("Reset");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final String PostDataProperty = "javax.swing.JEditorPane.postdata";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private short maxIsPreferred;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FormView(Element paramElement) {
-/* 148 */     super(paramElement);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Component createComponent() {
-/* 157 */     AttributeSet attributeSet = getElement().getAttributes();
-/*     */     
-/* 159 */     HTML.Tag tag = (HTML.Tag)attributeSet.getAttribute(StyleConstants.NameAttribute);
-/* 160 */     JComponent jComponent = null;
-/* 161 */     Object object = attributeSet.getAttribute(StyleConstants.ModelAttribute);
-/*     */ 
-/*     */ 
-/*     */     
-/* 165 */     removeStaleListenerForModel(object);
-/* 166 */     if (tag == HTML.Tag.INPUT) {
-/* 167 */       jComponent = createInputComponent(attributeSet, object);
-/* 168 */     } else if (tag == HTML.Tag.SELECT) {
-/*     */       
-/* 170 */       if (object instanceof OptionListModel) {
-/*     */         
-/* 172 */         JList jList = new JList((ListModel)object);
-/* 173 */         int i = HTML.getIntegerAttributeValue(attributeSet, HTML.Attribute.SIZE, 1);
-/*     */ 
-/*     */         
-/* 176 */         jList.setVisibleRowCount(i);
-/* 177 */         jList.setSelectionModel((ListSelectionModel)object);
-/* 178 */         jComponent = new JScrollPane(jList);
-/*     */       } else {
-/* 180 */         jComponent = new JComboBox((ComboBoxModel)object);
-/* 181 */         this.maxIsPreferred = 3;
-/*     */       } 
-/* 183 */     } else if (tag == HTML.Tag.TEXTAREA) {
-/* 184 */       JTextArea jTextArea = new JTextArea((Document)object);
-/* 185 */       int i = HTML.getIntegerAttributeValue(attributeSet, HTML.Attribute.ROWS, 1);
-/*     */ 
-/*     */       
-/* 188 */       jTextArea.setRows(i);
-/* 189 */       int j = HTML.getIntegerAttributeValue(attributeSet, HTML.Attribute.COLS, 20);
-/*     */ 
-/*     */       
-/* 192 */       this.maxIsPreferred = 3;
-/* 193 */       jTextArea.setColumns(j);
-/* 194 */       jComponent = new JScrollPane(jTextArea, 22, 32);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 199 */     if (jComponent != null) {
-/* 200 */       jComponent.setAlignmentY(1.0F);
-/*     */     }
-/* 202 */     return jComponent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private JComponent createInputComponent(AttributeSet paramAttributeSet, Object paramObject) {
-/*     */     Box box;
-/* 215 */     JButton jButton = null;
-/* 216 */     String str = (String)paramAttributeSet.getAttribute(HTML.Attribute.TYPE);
-/*     */     
-/* 218 */     if (str.equals("submit") || str.equals("reset")) {
-/*     */       
-/* 220 */       String str1 = (String)paramAttributeSet.getAttribute(HTML.Attribute.VALUE);
-/* 221 */       if (str1 == null) {
-/* 222 */         if (str.equals("submit")) {
-/* 223 */           str1 = UIManager.getString("FormView.submitButtonText");
-/*     */         } else {
-/* 225 */           str1 = UIManager.getString("FormView.resetButtonText");
-/*     */         } 
-/*     */       }
-/* 228 */       JButton jButton1 = new JButton(str1);
-/* 229 */       if (paramObject != null) {
-/* 230 */         jButton1.setModel((ButtonModel)paramObject);
-/* 231 */         jButton1.addActionListener(this);
-/*     */       } 
-/* 233 */       jButton = jButton1;
-/* 234 */       this.maxIsPreferred = 3;
-/* 235 */     } else if (str.equals("image")) {
-/* 236 */       JButton jButton1; String str1 = (String)paramAttributeSet.getAttribute(HTML.Attribute.SRC);
-/*     */       
-/*     */       try {
-/* 239 */         URL uRL1 = ((HTMLDocument)getElement().getDocument()).getBase();
-/* 240 */         URL uRL2 = new URL(uRL1, str1);
-/* 241 */         ImageIcon imageIcon = new ImageIcon(uRL2);
-/* 242 */         jButton1 = new JButton(imageIcon);
-/* 243 */       } catch (MalformedURLException malformedURLException) {
-/* 244 */         jButton1 = new JButton(str1);
-/*     */       } 
-/* 246 */       if (paramObject != null) {
-/* 247 */         jButton1.setModel((ButtonModel)paramObject);
-/* 248 */         jButton1.addMouseListener(new MouseEventListener());
-/*     */       } 
-/* 250 */       jButton = jButton1;
-/* 251 */       this.maxIsPreferred = 3;
-/* 252 */     } else if (str.equals("checkbox")) {
-/* 253 */       JCheckBox jCheckBox = new JCheckBox();
-/* 254 */       if (paramObject != null) {
-/* 255 */         jCheckBox.setModel((JToggleButton.ToggleButtonModel)paramObject);
-/*     */       }
-/* 257 */       this.maxIsPreferred = 3;
-/* 258 */     } else if (str.equals("radio")) {
-/* 259 */       JRadioButton jRadioButton = new JRadioButton();
-/* 260 */       if (paramObject != null) {
-/* 261 */         jRadioButton.setModel((JToggleButton.ToggleButtonModel)paramObject);
-/*     */       }
-/* 263 */       this.maxIsPreferred = 3;
-/* 264 */     } else if (str.equals("text")) {
-/* 265 */       JTextField jTextField2; int i = HTML.getIntegerAttributeValue(paramAttributeSet, HTML.Attribute.SIZE, -1);
-/*     */ 
-/*     */ 
-/*     */       
-/* 269 */       if (i > 0) {
-/* 270 */         jTextField2 = new JTextField();
-/* 271 */         jTextField2.setColumns(i);
-/*     */       } else {
-/*     */         
-/* 274 */         jTextField2 = new JTextField();
-/* 275 */         jTextField2.setColumns(20);
-/*     */       } 
-/* 277 */       JTextField jTextField1 = jTextField2;
-/* 278 */       if (paramObject != null) {
-/* 279 */         jTextField2.setDocument((Document)paramObject);
-/*     */       }
-/* 281 */       jTextField2.addActionListener(this);
-/* 282 */       this.maxIsPreferred = 3;
-/* 283 */     } else if (str.equals("password")) {
-/* 284 */       JPasswordField jPasswordField2 = new JPasswordField();
-/* 285 */       JPasswordField jPasswordField1 = jPasswordField2;
-/* 286 */       if (paramObject != null) {
-/* 287 */         jPasswordField2.setDocument((Document)paramObject);
-/*     */       }
-/* 289 */       int i = HTML.getIntegerAttributeValue(paramAttributeSet, HTML.Attribute.SIZE, -1);
-/*     */ 
-/*     */       
-/* 292 */       jPasswordField2.setColumns((i > 0) ? i : 20);
-/* 293 */       jPasswordField2.addActionListener(this);
-/* 294 */       this.maxIsPreferred = 3;
-/* 295 */     } else if (str.equals("file")) {
-/* 296 */       JTextField jTextField = new JTextField();
-/* 297 */       if (paramObject != null) {
-/* 298 */         jTextField.setDocument((Document)paramObject);
-/*     */       }
-/* 300 */       int i = HTML.getIntegerAttributeValue(paramAttributeSet, HTML.Attribute.SIZE, -1);
-/*     */       
-/* 302 */       jTextField.setColumns((i > 0) ? i : 20);
-/*     */       
-/* 304 */       JButton jButton1 = new JButton(UIManager.getString("FormView.browseFileButtonText"));
-/* 305 */       Box box1 = Box.createHorizontalBox();
-/* 306 */       box1.add(jTextField);
-/* 307 */       box1.add(Box.createHorizontalStrut(5));
-/* 308 */       box1.add(jButton1);
-/* 309 */       jButton1.addActionListener(new BrowseFileAction(paramAttributeSet, (Document)paramObject));
-/*     */       
-/* 311 */       box = box1;
-/* 312 */       this.maxIsPreferred = 3;
-/*     */     } 
-/* 314 */     return box;
-/*     */   }
-/*     */   
-/*     */   private void removeStaleListenerForModel(Object paramObject) {
-/* 318 */     if (paramObject instanceof DefaultButtonModel) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 322 */       DefaultButtonModel defaultButtonModel = (DefaultButtonModel)paramObject;
-/* 323 */       String str = "javax.swing.AbstractButton$Handler";
-/* 324 */       for (ActionListener actionListener : defaultButtonModel.getActionListeners()) {
-/* 325 */         if (str.equals(actionListener.getClass().getName())) {
-/* 326 */           defaultButtonModel.removeActionListener(actionListener);
-/*     */         }
-/*     */       } 
-/* 329 */       for (ChangeListener changeListener : defaultButtonModel.getChangeListeners()) {
-/* 330 */         if (str.equals(changeListener.getClass().getName())) {
-/* 331 */           defaultButtonModel.removeChangeListener(changeListener);
-/*     */         }
-/*     */       } 
-/* 334 */       for (ItemListener itemListener : defaultButtonModel.getItemListeners()) {
-/* 335 */         if (str.equals(itemListener.getClass().getName())) {
-/* 336 */           defaultButtonModel.removeItemListener(itemListener);
-/*     */         }
-/*     */       } 
-/* 339 */     } else if (paramObject instanceof AbstractListModel) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 345 */       AbstractListModel abstractListModel = (AbstractListModel)paramObject;
-/* 346 */       String str1 = "javax.swing.plaf.basic.BasicListUI$Handler";
-/*     */       
-/* 348 */       String str2 = "javax.swing.plaf.basic.BasicComboBoxUI$Handler";
-/*     */       
-/* 350 */       for (ListDataListener listDataListener : abstractListModel.getListDataListeners()) {
-/* 351 */         if (str1.equals(listDataListener.getClass().getName()) || str2
-/* 352 */           .equals(listDataListener.getClass().getName()))
-/*     */         {
-/* 354 */           abstractListModel.removeListDataListener(listDataListener);
-/*     */         }
-/*     */       } 
-/* 357 */     } else if (paramObject instanceof AbstractDocument) {
-/*     */ 
-/*     */       
-/* 360 */       String str1 = "javax.swing.plaf.basic.BasicTextUI$UpdateHandler";
-/*     */       
-/* 362 */       String str2 = "javax.swing.text.DefaultCaret$Handler";
-/*     */       
-/* 364 */       AbstractDocument abstractDocument = (AbstractDocument)paramObject;
-/* 365 */       for (DocumentListener documentListener : abstractDocument.getDocumentListeners()) {
-/* 366 */         if (str1.equals(documentListener.getClass().getName()) || str2
-/* 367 */           .equals(documentListener.getClass().getName()))
-/*     */         {
-/* 369 */           abstractDocument.removeDocumentListener(documentListener);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float getMaximumSpan(int paramInt) {
-/* 390 */     switch (paramInt) {
-/*     */       case 0:
-/* 392 */         if ((this.maxIsPreferred & 0x1) == 1) {
-/* 393 */           super.getMaximumSpan(paramInt);
-/* 394 */           return getPreferredSpan(paramInt);
-/*     */         } 
-/* 396 */         return super.getMaximumSpan(paramInt);
-/*     */       case 1:
-/* 398 */         if ((this.maxIsPreferred & 0x2) == 2) {
-/* 399 */           super.getMaximumSpan(paramInt);
-/* 400 */           return getPreferredSpan(paramInt);
-/*     */         } 
-/* 402 */         return super.getMaximumSpan(paramInt);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 406 */     return super.getMaximumSpan(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void actionPerformed(ActionEvent paramActionEvent) {
-/* 425 */     Element element = getElement();
-/* 426 */     StringBuilder stringBuilder = new StringBuilder();
-/* 427 */     HTMLDocument hTMLDocument = (HTMLDocument)getDocument();
-/* 428 */     AttributeSet attributeSet = element.getAttributes();
-/*     */     
-/* 430 */     String str = (String)attributeSet.getAttribute(HTML.Attribute.TYPE);
-/*     */     
-/* 432 */     if (str.equals("submit")) {
-/* 433 */       getFormData(stringBuilder);
-/* 434 */       submitData(stringBuilder.toString());
-/* 435 */     } else if (str.equals("reset")) {
-/* 436 */       resetForm();
-/* 437 */     } else if (str.equals("text") || str.equals("password")) {
-/* 438 */       if (isLastTextOrPasswordField()) {
-/* 439 */         getFormData(stringBuilder);
-/* 440 */         submitData(stringBuilder.toString());
-/*     */       } else {
-/* 442 */         getComponent().transferFocus();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void submitData(String paramString) {
-/*     */     URL uRL2;
-/* 453 */     Element element = getFormElement();
-/* 454 */     AttributeSet attributeSet = element.getAttributes();
-/* 455 */     HTMLDocument hTMLDocument = (HTMLDocument)element.getDocument();
-/* 456 */     URL uRL1 = hTMLDocument.getBase();
-/*     */     
-/* 458 */     String str1 = (String)attributeSet.getAttribute(HTML.Attribute.TARGET);
-/* 459 */     if (str1 == null) {
-/* 460 */       str1 = "_self";
-/*     */     }
-/*     */     
-/* 463 */     String str2 = (String)attributeSet.getAttribute(HTML.Attribute.METHOD);
-/* 464 */     if (str2 == null) {
-/* 465 */       str2 = "GET";
-/*     */     }
-/* 467 */     str2 = str2.toLowerCase();
-/* 468 */     boolean bool = str2.equals("post");
-/* 469 */     if (bool) {
-/* 470 */       storePostData(hTMLDocument, str1, paramString);
-/*     */     }
-/*     */     
-/* 473 */     String str3 = (String)attributeSet.getAttribute(HTML.Attribute.ACTION);
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 478 */       uRL2 = (str3 == null) ? new URL(uRL1.getProtocol(), uRL1.getHost(), uRL1.getPort(), uRL1.getFile()) : new URL(uRL1, str3);
-/*     */       
-/* 480 */       if (!bool) {
-/* 481 */         String str = paramString.toString();
-/* 482 */         uRL2 = new URL(uRL2 + "?" + str);
-/*     */       } 
-/* 484 */     } catch (MalformedURLException malformedURLException) {
-/* 485 */       uRL2 = null;
-/*     */     } 
-/* 487 */     final JEditorPane c = (JEditorPane)getContainer();
-/* 488 */     HTMLEditorKit hTMLEditorKit = (HTMLEditorKit)jEditorPane.getEditorKit();
-/*     */     
-/* 490 */     FormSubmitEvent formSubmitEvent1 = null;
-/* 491 */     if (!hTMLEditorKit.isAutoFormSubmission() || hTMLDocument.isFrameDocument()) {
-/* 492 */       FormSubmitEvent.MethodType methodType = bool ? FormSubmitEvent.MethodType.POST : FormSubmitEvent.MethodType.GET;
-/*     */ 
-/*     */       
-/* 495 */       formSubmitEvent1 = new FormSubmitEvent(this, HyperlinkEvent.EventType.ACTIVATED, uRL2, element, str1, methodType, paramString);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 501 */     final FormSubmitEvent fse = formSubmitEvent1;
-/* 502 */     final URL url = uRL2;
-/* 503 */     SwingUtilities.invokeLater(new Runnable() {
-/*     */           public void run() {
-/* 505 */             if (fse != null) {
-/* 506 */               c.fireHyperlinkUpdate(fse);
-/*     */             } else {
-/*     */               try {
-/* 509 */                 c.setPage(url);
-/* 510 */               } catch (IOException iOException) {
-/* 511 */                 UIManager.getLookAndFeel().provideErrorFeedback(c);
-/*     */               } 
-/*     */             } 
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void storePostData(HTMLDocument paramHTMLDocument, String paramString1, String paramString2) {
-/* 530 */     Document document = paramHTMLDocument;
-/* 531 */     String str = "javax.swing.JEditorPane.postdata";
-/*     */     
-/* 533 */     if (paramHTMLDocument.isFrameDocument()) {
-/*     */ 
-/*     */       
-/* 536 */       FrameView.FrameEditorPane frameEditorPane = (FrameView.FrameEditorPane)getContainer();
-/* 537 */       FrameView frameView = frameEditorPane.getFrameView();
-/* 538 */       JEditorPane jEditorPane = frameView.getOutermostJEditorPane();
-/* 539 */       if (jEditorPane != null) {
-/* 540 */         document = jEditorPane.getDocument();
-/* 541 */         str = str + "." + paramString1;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 545 */     document.putProperty(str, paramString2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected class MouseEventListener
-/*     */     extends MouseAdapter
-/*     */   {
-/*     */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/* 558 */       String str = FormView.this.getImageData(param1MouseEvent.getPoint());
-/* 559 */       FormView.this.imageSubmit(str);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void imageSubmit(String paramString) {
-/* 572 */     StringBuilder stringBuilder = new StringBuilder();
-/* 573 */     Element element = getElement();
-/* 574 */     HTMLDocument hTMLDocument = (HTMLDocument)element.getDocument();
-/* 575 */     getFormData(stringBuilder);
-/* 576 */     if (stringBuilder.length() > 0) {
-/* 577 */       stringBuilder.append('&');
-/*     */     }
-/* 579 */     stringBuilder.append(paramString);
-/* 580 */     submitData(stringBuilder.toString());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getImageData(Point paramPoint) {
-/* 599 */     String str5, str1 = paramPoint.x + ":" + paramPoint.y;
-/* 600 */     int i = str1.indexOf(':');
-/* 601 */     String str2 = str1.substring(0, i);
-/* 602 */     String str3 = str1.substring(++i);
-/* 603 */     String str4 = (String)getElement().getAttributes().getAttribute(HTML.Attribute.NAME);
-/*     */ 
-/*     */     
-/* 606 */     if (str4 == null || str4.equals("")) {
-/* 607 */       str5 = "x=" + str2 + "&y=" + str3;
-/*     */     } else {
-/* 609 */       str4 = URLEncoder.encode(str4);
-/* 610 */       str5 = str4 + ".x=" + str2 + "&" + str4 + ".y=" + str3;
-/*     */     } 
-/* 612 */     return str5;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Element getFormElement() {
-/* 630 */     Element element = getElement();
-/* 631 */     while (element != null) {
-/* 632 */       if (element.getAttributes()
-/* 633 */         .getAttribute(StyleConstants.NameAttribute) == HTML.Tag.FORM) {
-/* 634 */         return element;
-/*     */       }
-/* 636 */       element = element.getParentElement();
-/*     */     } 
-/* 638 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void getFormData(StringBuilder paramStringBuilder) {
-/* 654 */     Element element = getFormElement();
-/* 655 */     if (element != null) {
-/* 656 */       ElementIterator elementIterator = new ElementIterator(element);
-/*     */       
-/*     */       Element element1;
-/* 659 */       while ((element1 = elementIterator.next()) != null) {
-/* 660 */         if (isControl(element1)) {
-/*     */           
-/* 662 */           String str = (String)element1.getAttributes().getAttribute(HTML.Attribute.TYPE);
-/*     */           
-/* 664 */           if (str != null && str.equals("submit") && element1 != 
-/* 665 */             getElement())
-/*     */             continue; 
-/* 667 */           if (str == null || !str.equals("image"))
-/*     */           {
-/*     */ 
-/*     */ 
-/*     */             
-/* 672 */             loadElementDataIntoBuffer(element1, paramStringBuilder);
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void loadElementDataIntoBuffer(Element paramElement, StringBuilder paramStringBuilder) {
-/* 689 */     AttributeSet attributeSet = paramElement.getAttributes();
-/* 690 */     String str1 = (String)attributeSet.getAttribute(HTML.Attribute.NAME);
-/* 691 */     if (str1 == null) {
-/*     */       return;
-/*     */     }
-/* 694 */     String str2 = null;
-/*     */     
-/* 696 */     HTML.Tag tag = (HTML.Tag)paramElement.getAttributes().getAttribute(StyleConstants.NameAttribute);
-/*     */     
-/* 698 */     if (tag == HTML.Tag.INPUT) {
-/* 699 */       str2 = getInputElementData(attributeSet);
-/* 700 */     } else if (tag == HTML.Tag.TEXTAREA) {
-/* 701 */       str2 = getTextAreaData(attributeSet);
-/* 702 */     } else if (tag == HTML.Tag.SELECT) {
-/* 703 */       loadSelectData(attributeSet, paramStringBuilder);
-/*     */     } 
-/*     */     
-/* 706 */     if (str1 != null && str2 != null) {
-/* 707 */       appendBuffer(paramStringBuilder, str1, str2);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getInputElementData(AttributeSet paramAttributeSet) {
-/* 721 */     Object object = paramAttributeSet.getAttribute(StyleConstants.ModelAttribute);
-/* 722 */     String str1 = (String)paramAttributeSet.getAttribute(HTML.Attribute.TYPE);
-/* 723 */     String str2 = null;
-/*     */     
-/* 725 */     if (str1.equals("text") || str1.equals("password")) {
-/* 726 */       Document document = (Document)object;
-/*     */       try {
-/* 728 */         str2 = document.getText(0, document.getLength());
-/* 729 */       } catch (BadLocationException badLocationException) {
-/* 730 */         str2 = null;
-/*     */       } 
-/* 732 */     } else if (str1.equals("submit") || str1.equals("hidden")) {
-/* 733 */       str2 = (String)paramAttributeSet.getAttribute(HTML.Attribute.VALUE);
-/* 734 */       if (str2 == null) {
-/* 735 */         str2 = "";
-/*     */       }
-/* 737 */     } else if (str1.equals("radio") || str1.equals("checkbox")) {
-/* 738 */       ButtonModel buttonModel = (ButtonModel)object;
-/* 739 */       if (buttonModel.isSelected()) {
-/* 740 */         str2 = (String)paramAttributeSet.getAttribute(HTML.Attribute.VALUE);
-/* 741 */         if (str2 == null) {
-/* 742 */           str2 = "on";
-/*     */         }
-/*     */       } 
-/* 745 */     } else if (str1.equals("file")) {
-/* 746 */       String str; Document document = (Document)object;
-/*     */ 
-/*     */       
-/*     */       try {
-/* 750 */         str = document.getText(0, document.getLength());
-/* 751 */       } catch (BadLocationException badLocationException) {
-/* 752 */         str = null;
-/*     */       } 
-/* 754 */       if (str != null && str.length() > 0) {
-/* 755 */         str2 = str;
-/*     */       }
-/*     */     } 
-/* 758 */     return str2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getTextAreaData(AttributeSet paramAttributeSet) {
-/* 767 */     Document document = (Document)paramAttributeSet.getAttribute(StyleConstants.ModelAttribute);
-/*     */     try {
-/* 769 */       return document.getText(0, document.getLength());
-/* 770 */     } catch (BadLocationException badLocationException) {
-/* 771 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void loadSelectData(AttributeSet paramAttributeSet, StringBuilder paramStringBuilder) {
-/* 783 */     String str = (String)paramAttributeSet.getAttribute(HTML.Attribute.NAME);
-/* 784 */     if (str == null) {
-/*     */       return;
-/*     */     }
-/* 787 */     Object object = paramAttributeSet.getAttribute(StyleConstants.ModelAttribute);
-/* 788 */     if (object instanceof OptionListModel) {
-/* 789 */       OptionListModel<Option> optionListModel = (OptionListModel)object;
-/*     */       
-/* 791 */       for (byte b = 0; b < optionListModel.getSize(); b++) {
-/* 792 */         if (optionListModel.isSelectedIndex(b)) {
-/* 793 */           Option option = optionListModel.getElementAt(b);
-/* 794 */           appendBuffer(paramStringBuilder, str, option.getValue());
-/*     */         } 
-/*     */       } 
-/* 797 */     } else if (object instanceof ComboBoxModel) {
-/* 798 */       ComboBoxModel comboBoxModel = (ComboBoxModel)object;
-/* 799 */       Option option = (Option)comboBoxModel.getSelectedItem();
-/* 800 */       if (option != null) {
-/* 801 */         appendBuffer(paramStringBuilder, str, option.getValue());
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void appendBuffer(StringBuilder paramStringBuilder, String paramString1, String paramString2) {
-/* 813 */     if (paramStringBuilder.length() > 0) {
-/* 814 */       paramStringBuilder.append('&');
-/*     */     }
-/* 816 */     String str1 = URLEncoder.encode(paramString1);
-/* 817 */     paramStringBuilder.append(str1);
-/* 818 */     paramStringBuilder.append('=');
-/* 819 */     String str2 = URLEncoder.encode(paramString2);
-/* 820 */     paramStringBuilder.append(str2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isControl(Element paramElement) {
-/* 827 */     return paramElement.isLeaf();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isLastTextOrPasswordField() {
-/* 837 */     Element element1 = getFormElement();
-/* 838 */     Element element2 = getElement();
-/*     */     
-/* 840 */     if (element1 != null) {
-/* 841 */       ElementIterator elementIterator = new ElementIterator(element1);
-/*     */       
-/* 843 */       boolean bool = false;
-/*     */       Element element;
-/* 845 */       while ((element = elementIterator.next()) != null) {
-/* 846 */         if (element == element2) {
-/* 847 */           bool = true; continue;
-/*     */         } 
-/* 849 */         if (bool && isControl(element)) {
-/* 850 */           AttributeSet attributeSet = element.getAttributes();
-/*     */ 
-/*     */           
-/* 853 */           if (HTMLDocument.matchNameAttribute(attributeSet, HTML.Tag.INPUT)) {
-/*     */             
-/* 855 */             String str = (String)attributeSet.getAttribute(HTML.Attribute.TYPE);
-/*     */             
-/* 857 */             if ("text".equals(str) || "password".equals(str)) {
-/* 858 */               return false;
-/*     */             }
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 864 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void resetForm() {
-/* 876 */     Element element = getFormElement();
-/*     */     
-/* 878 */     if (element != null) {
-/* 879 */       ElementIterator elementIterator = new ElementIterator(element);
-/*     */       
-/*     */       Element element1;
-/* 882 */       while ((element1 = elementIterator.next()) != null) {
-/* 883 */         if (isControl(element1)) {
-/* 884 */           AttributeSet attributeSet = element1.getAttributes();
-/* 885 */           Object object = attributeSet.getAttribute(StyleConstants.ModelAttribute);
-/*     */           
-/* 887 */           if (object instanceof TextAreaDocument) {
-/* 888 */             TextAreaDocument textAreaDocument = (TextAreaDocument)object;
-/* 889 */             textAreaDocument.reset(); continue;
-/* 890 */           }  if (object instanceof PlainDocument) {
-/*     */             try {
-/* 892 */               PlainDocument plainDocument = (PlainDocument)object;
-/* 893 */               plainDocument.remove(0, plainDocument.getLength());
-/*     */               
-/* 895 */               if (HTMLDocument.matchNameAttribute(attributeSet, HTML.Tag.INPUT)) {
-/*     */                 
-/* 897 */                 String str = (String)attributeSet.getAttribute(HTML.Attribute.VALUE);
-/* 898 */                 if (str != null) {
-/* 899 */                   plainDocument.insertString(0, str, (AttributeSet)null);
-/*     */                 }
-/*     */               } 
-/* 902 */             } catch (BadLocationException badLocationException) {} continue;
-/*     */           } 
-/* 904 */           if (object instanceof OptionListModel) {
-/* 905 */             OptionListModel optionListModel = (OptionListModel)object;
-/* 906 */             int i = optionListModel.getSize();
-/* 907 */             for (byte b1 = 0; b1 < i; b1++) {
-/* 908 */               optionListModel.removeIndexInterval(b1, b1);
-/*     */             }
-/* 910 */             BitSet bitSet = optionListModel.getInitialSelection();
-/* 911 */             for (byte b2 = 0; b2 < bitSet.size(); b2++) {
-/* 912 */               if (bitSet.get(b2))
-/* 913 */                 optionListModel.addSelectionInterval(b2, b2); 
-/*     */             }  continue;
-/*     */           } 
-/* 916 */           if (object instanceof OptionComboBoxModel) {
-/* 917 */             OptionComboBoxModel optionComboBoxModel = (OptionComboBoxModel)object;
-/* 918 */             Option option = optionComboBoxModel.getInitialSelection();
-/* 919 */             if (option != null)
-/* 920 */               optionComboBoxModel.setSelectedItem(option);  continue;
-/*     */           } 
-/* 922 */           if (object instanceof JToggleButton.ToggleButtonModel) {
-/*     */             
-/* 924 */             boolean bool = ((String)attributeSet.getAttribute(HTML.Attribute.CHECKED) != null) ? true : false;
-/* 925 */             JToggleButton.ToggleButtonModel toggleButtonModel = (JToggleButton.ToggleButtonModel)object;
-/*     */             
-/* 927 */             toggleButtonModel.setSelected(bool);
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private class BrowseFileAction
-/*     */     implements ActionListener
-/*     */   {
-/*     */     private AttributeSet attrs;
-/*     */ 
-/*     */     
-/*     */     private Document model;
-/*     */ 
-/*     */     
-/*     */     BrowseFileAction(AttributeSet param1AttributeSet, Document param1Document) {
-/* 946 */       this.attrs = param1AttributeSet;
-/* 947 */       this.model = param1Document;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 953 */       JFileChooser jFileChooser = new JFileChooser();
-/* 954 */       jFileChooser.setMultiSelectionEnabled(false);
-/* 955 */       if (jFileChooser.showOpenDialog(FormView.this.getContainer()) == 0) {
-/*     */         
-/* 957 */         File file = jFileChooser.getSelectedFile();
-/*     */         
-/* 959 */         if (file != null)
-/*     */           try {
-/* 961 */             if (this.model.getLength() > 0) {
-/* 962 */               this.model.remove(0, this.model.getLength());
-/*     */             }
-/* 964 */             this.model.insertString(0, file.getPath(), null);
-/* 965 */           } catch (BadLocationException badLocationException) {} 
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\FormView.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import java.net.*;
+import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
+
+/**
+ * Component decorator that implements the view interface
+ * for form elements, &lt;input&gt;, &lt;textarea&gt;,
+ * and &lt;select&gt;.  The model for the component is stored
+ * as an attribute of the the element (using StyleConstants.ModelAttribute),
+ * and is used to build the component of the view.  The type
+ * of the model is assumed to of the type that would be set by
+ * <code>HTMLDocument.HTMLReader.FormAction</code>.  If there are
+ * multiple views mapped over the document, they will share the
+ * embedded component models.
+ * <p>
+ * The following table shows what components get built
+ * by this view.
+ * <table summary="shows what components get built by this view">
+ * <tr>
+ *   <th>Element Type</th>
+ *   <th>Component built</th>
+ * </tr>
+ * <tr>
+ *   <td>input, type button</td>
+ *   <td>JButton</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type checkbox</td>
+ *   <td>JCheckBox</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type image</td>
+ *   <td>JButton</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type password</td>
+ *   <td>JPasswordField</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type radio</td>
+ *   <td>JRadioButton</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type reset</td>
+ *   <td>JButton</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type submit</td>
+ *   <td>JButton</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type text</td>
+ *   <td>JTextField</td>
+ * </tr>
+ * <tr>
+ *   <td>select, size &gt; 1 or multiple attribute defined</td>
+ *   <td>JList in a JScrollPane</td>
+ * </tr>
+ * <tr>
+ *   <td>select, size unspecified or 1</td>
+ *   <td>JComboBox</td>
+ * </tr>
+ * <tr>
+ *   <td>textarea</td>
+ *   <td>JTextArea in a JScrollPane</td>
+ * </tr>
+ * <tr>
+ *   <td>input, type file</td>
+ *   <td>JTextField</td>
+ * </tr>
+ * </table>
+ *
+ * @author Timothy Prinzing
+ * @author Sunita Mani
+ */
+public class FormView extends ComponentView implements ActionListener {
+
+    /**
+     * If a value attribute is not specified for a FORM input element
+     * of type "submit", then this default string is used.
+     *
+     * @deprecated As of 1.3, value now comes from UIManager property
+     *             FormView.submitButtonText
+     */
+    @Deprecated
+    public static final String SUBMIT = new String("Submit Query");
+    /**
+     * If a value attribute is not specified for a FORM input element
+     * of type "reset", then this default string is used.
+     *
+     * @deprecated As of 1.3, value comes from UIManager UIManager property
+     *             FormView.resetButtonText
+     */
+    @Deprecated
+    public static final String RESET = new String("Reset");
+
+    /**
+     * Document attribute name for storing POST data. JEditorPane.getPostData()
+     * uses the same name, should be kept in sync.
+     */
+    final static String PostDataProperty = "javax.swing.JEditorPane.postdata";
+
+    /**
+     * Used to indicate if the maximum span should be the same as the
+     * preferred span. This is used so that the Component's size doesn't
+     * change if there is extra room on a line. The first bit is used for
+     * the X direction, and the second for the y direction.
+     */
+    private short maxIsPreferred;
+
+    /**
+     * Creates a new FormView object.
+     *
+     * @param elem the element to decorate
+     */
+    public FormView(Element elem) {
+        super(elem);
+    }
+
+    /**
+     * Create the component.  This is basically a
+     * big switch statement based upon the tag type
+     * and html attributes of the associated element.
+     */
+    protected Component createComponent() {
+        AttributeSet attr = getElement().getAttributes();
+        HTML.Tag t = (HTML.Tag)
+            attr.getAttribute(StyleConstants.NameAttribute);
+        JComponent c = null;
+        Object model = attr.getAttribute(StyleConstants.ModelAttribute);
+
+        // Remove listeners previously registered in shared model
+        // when a new UI component is replaced.  See bug 7189299.
+        removeStaleListenerForModel(model);
+        if (t == HTML.Tag.INPUT) {
+            c = createInputComponent(attr, model);
+        } else if (t == HTML.Tag.SELECT) {
+
+            if (model instanceof OptionListModel) {
+
+                JList list = new JList((ListModel) model);
+                int size = HTML.getIntegerAttributeValue(attr,
+                                                         HTML.Attribute.SIZE,
+                                                         1);
+                list.setVisibleRowCount(size);
+                list.setSelectionModel((ListSelectionModel)model);
+                c = new JScrollPane(list);
+            } else {
+                c = new JComboBox((ComboBoxModel) model);
+                maxIsPreferred = 3;
+            }
+        } else if (t == HTML.Tag.TEXTAREA) {
+            JTextArea area = new JTextArea((Document) model);
+            int rows = HTML.getIntegerAttributeValue(attr,
+                                                     HTML.Attribute.ROWS,
+                                                     1);
+            area.setRows(rows);
+            int cols = HTML.getIntegerAttributeValue(attr,
+                                                     HTML.Attribute.COLS,
+                                                     20);
+            maxIsPreferred = 3;
+            area.setColumns(cols);
+            c = new JScrollPane(area,
+                                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        }
+
+        if (c != null) {
+            c.setAlignmentY(1.0f);
+        }
+        return c;
+    }
+
+
+    /**
+     * Creates a component for an &lt;INPUT&gt; element based on the
+     * value of the "type" attribute.
+     *
+     * @param set of attributes associated with the &lt;INPUT&gt; element.
+     * @param model the value of the StyleConstants.ModelAttribute
+     * @return the component.
+     */
+    private JComponent createInputComponent(AttributeSet attr, Object model) {
+        JComponent c = null;
+        String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
+
+        if (type.equals("submit") || type.equals("reset")) {
+            String value = (String)
+                attr.getAttribute(HTML.Attribute.VALUE);
+            if (value == null) {
+                if (type.equals("submit")) {
+                    value = UIManager.getString("FormView.submitButtonText");
+                } else {
+                    value = UIManager.getString("FormView.resetButtonText");
+                }
+            }
+            JButton button = new JButton(value);
+            if (model != null) {
+                button.setModel((ButtonModel)model);
+                button.addActionListener(this);
+            }
+            c = button;
+            maxIsPreferred = 3;
+        } else if (type.equals("image")) {
+            String srcAtt = (String) attr.getAttribute(HTML.Attribute.SRC);
+            JButton button;
+            try {
+                URL base = ((HTMLDocument)getElement().getDocument()).getBase();
+                URL srcURL = new URL(base, srcAtt);
+                Icon icon = new ImageIcon(srcURL);
+                button  = new JButton(icon);
+            } catch (MalformedURLException e) {
+                button = new JButton(srcAtt);
+            }
+            if (model != null) {
+                button.setModel((ButtonModel)model);
+                button.addMouseListener(new MouseEventListener());
+            }
+            c = button;
+            maxIsPreferred = 3;
+        } else if (type.equals("checkbox")) {
+            c = new JCheckBox();
+            if (model != null) {
+                ((JCheckBox)c).setModel((JToggleButton.ToggleButtonModel) model);
+            }
+            maxIsPreferred = 3;
+        } else if (type.equals("radio")) {
+            c = new JRadioButton();
+            if (model != null) {
+                ((JRadioButton)c).setModel((JToggleButton.ToggleButtonModel)model);
+            }
+            maxIsPreferred = 3;
+        } else if (type.equals("text")) {
+            int size = HTML.getIntegerAttributeValue(attr,
+                                                     HTML.Attribute.SIZE,
+                                                     -1);
+            JTextField field;
+            if (size > 0) {
+                field = new JTextField();
+                field.setColumns(size);
+            }
+            else {
+                field = new JTextField();
+                field.setColumns(20);
+            }
+            c = field;
+            if (model != null) {
+                field.setDocument((Document) model);
+            }
+            field.addActionListener(this);
+            maxIsPreferred = 3;
+        } else if (type.equals("password")) {
+            JPasswordField field = new JPasswordField();
+            c = field;
+            if (model != null) {
+                field.setDocument((Document) model);
+            }
+            int size = HTML.getIntegerAttributeValue(attr,
+                                                     HTML.Attribute.SIZE,
+                                                     -1);
+            field.setColumns((size > 0) ? size : 20);
+            field.addActionListener(this);
+            maxIsPreferred = 3;
+        } else if (type.equals("file")) {
+            JTextField field = new JTextField();
+            if (model != null) {
+                field.setDocument((Document)model);
+            }
+            int size = HTML.getIntegerAttributeValue(attr, HTML.Attribute.SIZE,
+                                                     -1);
+            field.setColumns((size > 0) ? size : 20);
+            JButton browseButton = new JButton(UIManager.getString
+                                           ("FormView.browseFileButtonText"));
+            Box box = Box.createHorizontalBox();
+            box.add(field);
+            box.add(Box.createHorizontalStrut(5));
+            box.add(browseButton);
+            browseButton.addActionListener(new BrowseFileAction(
+                                           attr, (Document)model));
+            c = box;
+            maxIsPreferred = 3;
+        }
+        return c;
+    }
+
+    private void removeStaleListenerForModel(Object model) {
+        if (model instanceof DefaultButtonModel) {
+            // case of JButton whose model is DefaultButtonModel
+            // Need to remove stale ActionListener, ChangeListener and
+            // ItemListener that are instance of AbstractButton$Handler.
+            DefaultButtonModel buttonModel = (DefaultButtonModel) model;
+            String listenerClass = "javax.swing.AbstractButton$Handler";
+            for (ActionListener listener : buttonModel.getActionListeners()) {
+                if (listenerClass.equals(listener.getClass().getName())) {
+                    buttonModel.removeActionListener(listener);
+                }
+            }
+            for (ChangeListener listener : buttonModel.getChangeListeners()) {
+                if (listenerClass.equals(listener.getClass().getName())) {
+                    buttonModel.removeChangeListener(listener);
+                }
+            }
+            for (ItemListener listener : buttonModel.getItemListeners()) {
+                if (listenerClass.equals(listener.getClass().getName())) {
+                    buttonModel.removeItemListener(listener);
+                }
+            }
+        } else if (model instanceof AbstractListModel) {
+            // case of JComboBox and JList
+            // For JList, the stale ListDataListener is instance
+            // BasicListUI$Handler.
+            // For JComboBox, there are 2 stale ListDataListeners, which are
+            // BasicListUI$Handler and BasicComboBoxUI$Handler.
+            AbstractListModel listModel = (AbstractListModel) model;
+            String listenerClass1 =
+                    "javax.swing.plaf.basic.BasicListUI$Handler";
+            String listenerClass2 =
+                    "javax.swing.plaf.basic.BasicComboBoxUI$Handler";
+            for (ListDataListener listener : listModel.getListDataListeners()) {
+                if (listenerClass1.equals(listener.getClass().getName())
+                        || listenerClass2.equals(listener.getClass().getName()))
+                {
+                    listModel.removeListDataListener(listener);
+                }
+            }
+        } else if (model instanceof AbstractDocument) {
+            // case of JPasswordField, JTextField and JTextArea
+            // All have 2 stale DocumentListeners.
+            String listenerClass1 =
+                    "javax.swing.plaf.basic.BasicTextUI$UpdateHandler";
+            String listenerClass2 =
+                    "javax.swing.text.DefaultCaret$Handler";
+            AbstractDocument docModel = (AbstractDocument) model;
+            for (DocumentListener listener : docModel.getDocumentListeners()) {
+                if (listenerClass1.equals(listener.getClass().getName())
+                        || listenerClass2.equals(listener.getClass().getName()))
+                {
+                    docModel.removeDocumentListener(listener);
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines the maximum span for this view along an
+     * axis. For certain components, the maximum and preferred span are the
+     * same. For others this will return the value
+     * returned by Component.getMaximumSize along the
+     * axis of interest.
+     *
+     * @param axis may be either View.X_AXIS or View.Y_AXIS
+     * @return   the span the view would like to be rendered into &gt;= 0.
+     *           Typically the view is told to render into the span
+     *           that is returned, although there is no guarantee.
+     *           The parent may choose to resize or break the view.
+     * @exception IllegalArgumentException for an invalid axis
+     */
+    public float getMaximumSpan(int axis) {
+        switch (axis) {
+        case View.X_AXIS:
+            if ((maxIsPreferred & 1) == 1) {
+                super.getMaximumSpan(axis);
+                return getPreferredSpan(axis);
+            }
+            return super.getMaximumSpan(axis);
+        case View.Y_AXIS:
+            if ((maxIsPreferred & 2) == 2) {
+                super.getMaximumSpan(axis);
+                return getPreferredSpan(axis);
+            }
+            return super.getMaximumSpan(axis);
+        default:
+            break;
+        }
+        return super.getMaximumSpan(axis);
+    }
+
+
+    /**
+     * Responsible for processing the ActionEvent.
+     * If the element associated with the FormView,
+     * has a type of "submit", "reset", "text" or "password"
+     * then the action is processed.  In the case of a "submit"
+     * the form is submitted.  In the case of a "reset"
+     * the form is reset to its original state.
+     * In the case of "text" or "password", if the
+     * element is the last one of type "text" or "password",
+     * the form is submitted.  Otherwise, focus is transferred
+     * to the next component in the form.
+     *
+     * @param evt the ActionEvent.
+     */
+    public void actionPerformed(ActionEvent evt) {
+        Element element = getElement();
+        StringBuilder dataBuffer = new StringBuilder();
+        HTMLDocument doc = (HTMLDocument)getDocument();
+        AttributeSet attr = element.getAttributes();
+
+        String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
+
+        if (type.equals("submit")) {
+            getFormData(dataBuffer);
+            submitData(dataBuffer.toString());
+        } else if (type.equals("reset")) {
+            resetForm();
+        } else if (type.equals("text") || type.equals("password")) {
+            if (isLastTextOrPasswordField()) {
+                getFormData(dataBuffer);
+                submitData(dataBuffer.toString());
+            } else {
+                getComponent().transferFocus();
+            }
+        }
+    }
+
+
+    /**
+     * This method is responsible for submitting the form data.
+     * A thread is forked to undertake the submission.
+     */
+    protected void submitData(String data) {
+        Element form = getFormElement();
+        AttributeSet attrs = form.getAttributes();
+        HTMLDocument doc = (HTMLDocument) form.getDocument();
+        URL base = doc.getBase();
+
+        String target = (String) attrs.getAttribute(HTML.Attribute.TARGET);
+        if (target == null) {
+            target = "_self";
+        }
+
+        String method = (String) attrs.getAttribute(HTML.Attribute.METHOD);
+        if (method == null) {
+            method = "GET";
+        }
+        method = method.toLowerCase();
+        boolean isPostMethod = method.equals("post");
+        if (isPostMethod) {
+            storePostData(doc, target, data);
+        }
+
+        String action = (String) attrs.getAttribute(HTML.Attribute.ACTION);
+        URL actionURL;
+        try {
+            actionURL = (action == null)
+                ? new URL(base.getProtocol(), base.getHost(),
+                                        base.getPort(), base.getFile())
+                : new URL(base, action);
+            if (!isPostMethod) {
+                String query = data.toString();
+                actionURL = new URL(actionURL + "?" + query);
+            }
+        } catch (MalformedURLException e) {
+            actionURL = null;
+        }
+        final JEditorPane c = (JEditorPane) getContainer();
+        HTMLEditorKit kit = (HTMLEditorKit) c.getEditorKit();
+
+        FormSubmitEvent formEvent = null;
+        if (!kit.isAutoFormSubmission() || doc.isFrameDocument()) {
+            FormSubmitEvent.MethodType methodType = isPostMethod
+                    ? FormSubmitEvent.MethodType.POST
+                    : FormSubmitEvent.MethodType.GET;
+            formEvent = new FormSubmitEvent(
+                    FormView.this, HyperlinkEvent.EventType.ACTIVATED,
+                    actionURL, form, target, methodType, data);
+
+        }
+        // setPage() may take significant time so schedule it to run later.
+        final FormSubmitEvent fse = formEvent;
+        final URL url = actionURL;
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                if (fse != null) {
+                    c.fireHyperlinkUpdate(fse);
+                } else {
+                    try {
+                        c.setPage(url);
+                    } catch (IOException e) {
+                        UIManager.getLookAndFeel().provideErrorFeedback(c);
+                    }
+                }
+            }
+        });
+    }
+
+    private void storePostData(HTMLDocument doc, String target, String data) {
+
+        /* POST data is stored into the document property named by constant
+         * PostDataProperty from where it is later retrieved by method
+         * JEditorPane.getPostData().  If the current document is in a frame,
+         * the data is initially put into the toplevel (frameset) document
+         * property (named <PostDataProperty>.<Target frame name>).  It is the
+         * responsibility of FrameView which updates the target frame
+         * to move data from the frameset document property into the frame
+         * document property.
+         */
+
+        Document propDoc = doc;
+        String propName = PostDataProperty;
+
+        if (doc.isFrameDocument()) {
+            // find the top-most JEditorPane holding the frameset view.
+            FrameView.FrameEditorPane p =
+                    (FrameView.FrameEditorPane) getContainer();
+            FrameView v = p.getFrameView();
+            JEditorPane c = v.getOutermostJEditorPane();
+            if (c != null) {
+                propDoc = c.getDocument();
+                propName += ("." + target);
+            }
+        }
+
+        propDoc.putProperty(propName, data);
+    }
+
+    /**
+     * MouseEventListener class to handle form submissions when
+     * an input with type equal to image is clicked on.
+     * A MouseListener is necessary since along with the image
+     * data the coordinates associated with the mouse click
+     * need to be submitted.
+     */
+    protected class MouseEventListener extends MouseAdapter {
+
+        public void mouseReleased(MouseEvent evt) {
+            String imageData = getImageData(evt.getPoint());
+            imageSubmit(imageData);
+        }
+    }
+
+    /**
+     * This method is called to submit a form in response
+     * to a click on an image -- an &lt;INPUT&gt; form
+     * element of type "image".
+     *
+     * @param imageData the mouse click coordinates.
+     */
+    protected void imageSubmit(String imageData) {
+
+        StringBuilder dataBuffer = new StringBuilder();
+        Element elem = getElement();
+        HTMLDocument hdoc = (HTMLDocument)elem.getDocument();
+        getFormData(dataBuffer);
+        if (dataBuffer.length() > 0) {
+            dataBuffer.append('&');
+        }
+        dataBuffer.append(imageData);
+        submitData(dataBuffer.toString());
+        return;
+    }
+
+    /**
+     * Extracts the value of the name attribute
+     * associated with the input element of type
+     * image.  If name is defined it is encoded using
+     * the URLEncoder.encode() method and the
+     * image data is returned in the following format:
+     *      name + ".x" +"="+ x +"&"+ name +".y"+"="+ y
+     * otherwise,
+     *      "x="+ x +"&y="+ y
+     *
+     * @param point associated with the mouse click.
+     * @return the image data.
+     */
+    private String getImageData(Point point) {
+
+        String mouseCoords = point.x + ":" + point.y;
+        int sep = mouseCoords.indexOf(':');
+        String x = mouseCoords.substring(0, sep);
+        String y = mouseCoords.substring(++sep);
+        String name = (String) getElement().getAttributes().getAttribute(HTML.Attribute.NAME);
+
+        String data;
+        if (name == null || name.equals("")) {
+            data = "x="+ x +"&y="+ y;
+        } else {
+            name = URLEncoder.encode(name);
+            data = name + ".x" +"="+ x +"&"+ name +".y"+"="+ y;
+        }
+        return data;
+    }
+
+
+    /**
+     * The following methods provide functionality required to
+     * iterate over a the elements of the form and in the case
+     * of a form submission, extract the data from each model
+     * that is associated with each form element, and in the
+     * case of reset, reinitialize the each model to its
+     * initial state.
+     */
+
+
+    /**
+     * Returns the Element representing the <code>FORM</code>.
+     */
+    private Element getFormElement() {
+        Element elem = getElement();
+        while (elem != null) {
+            if (elem.getAttributes().getAttribute
+                (StyleConstants.NameAttribute) == HTML.Tag.FORM) {
+                return elem;
+            }
+            elem = elem.getParentElement();
+        }
+        return null;
+    }
+
+    /**
+     * Iterates over the
+     * element hierarchy, extracting data from the
+     * models associated with the relevant form elements.
+     * "Relevant" means the form elements that are part
+     * of the same form whose element triggered the submit
+     * action.
+     *
+     * @param buffer        the buffer that contains that data to submit
+     * @param targetElement the element that triggered the
+     *                      form submission
+     */
+    private void getFormData(StringBuilder buffer) {
+        Element formE = getFormElement();
+        if (formE != null) {
+            ElementIterator it = new ElementIterator(formE);
+            Element next;
+
+            while ((next = it.next()) != null) {
+                if (isControl(next)) {
+                    String type = (String)next.getAttributes().getAttribute
+                                       (HTML.Attribute.TYPE);
+
+                    if (type != null && type.equals("submit") &&
+                        next != getElement()) {
+                        // do nothing - this submit is not the trigger
+                    } else if (type == null || !type.equals("image")) {
+                        // images only result in data if they triggered
+                        // the submit and they require that the mouse click
+                        // coords be appended to the data.  Hence its
+                        // processing is handled by the view.
+                        loadElementDataIntoBuffer(next, buffer);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads the data
+     * associated with the element into the buffer.
+     * The format in which data is appended depends
+     * on the type of the form element.  Essentially
+     * data is loaded in name/value pairs.
+     *
+     */
+    private void loadElementDataIntoBuffer(Element elem, StringBuilder buffer) {
+
+        AttributeSet attr = elem.getAttributes();
+        String name = (String)attr.getAttribute(HTML.Attribute.NAME);
+        if (name == null) {
+            return;
+        }
+        String value = null;
+        HTML.Tag tag = (HTML.Tag)elem.getAttributes().getAttribute
+                                  (StyleConstants.NameAttribute);
+
+        if (tag == HTML.Tag.INPUT) {
+            value = getInputElementData(attr);
+        } else if (tag ==  HTML.Tag.TEXTAREA) {
+            value = getTextAreaData(attr);
+        } else if (tag == HTML.Tag.SELECT) {
+            loadSelectData(attr, buffer);
+        }
+
+        if (name != null && value != null) {
+            appendBuffer(buffer, name, value);
+        }
+    }
+
+
+    /**
+     * Returns the data associated with an &lt;INPUT&gt; form
+     * element.  The value of "type" attributes is
+     * used to determine the type of the model associated
+     * with the element and then the relevant data is
+     * extracted.
+     */
+    private String getInputElementData(AttributeSet attr) {
+
+        Object model = attr.getAttribute(StyleConstants.ModelAttribute);
+        String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
+        String value = null;
+
+        if (type.equals("text") || type.equals("password")) {
+            Document doc = (Document)model;
+            try {
+                value = doc.getText(0, doc.getLength());
+            } catch (BadLocationException e) {
+                value = null;
+            }
+        } else if (type.equals("submit") || type.equals("hidden")) {
+            value = (String) attr.getAttribute(HTML.Attribute.VALUE);
+            if (value == null) {
+                value = "";
+            }
+        } else if (type.equals("radio") || type.equals("checkbox")) {
+            ButtonModel m = (ButtonModel)model;
+            if (m.isSelected()) {
+                value = (String) attr.getAttribute(HTML.Attribute.VALUE);
+                if (value == null) {
+                    value = "on";
+                }
+            }
+        } else if (type.equals("file")) {
+            Document doc = (Document)model;
+            String path;
+
+            try {
+                path = doc.getText(0, doc.getLength());
+            } catch (BadLocationException e) {
+                path = null;
+            }
+            if (path != null && path.length() > 0) {
+                value = path;
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Returns the data associated with the &lt;TEXTAREA&gt; form
+     * element.  This is done by getting the text stored in the
+     * Document model.
+     */
+    private String getTextAreaData(AttributeSet attr) {
+        Document doc = (Document)attr.getAttribute(StyleConstants.ModelAttribute);
+        try {
+            return doc.getText(0, doc.getLength());
+        } catch (BadLocationException e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * Loads the buffer with the data associated with the Select
+     * form element.  Basically, only items that are selected
+     * and have their name attribute set are added to the buffer.
+     */
+    private void loadSelectData(AttributeSet attr, StringBuilder buffer) {
+
+        String name = (String)attr.getAttribute(HTML.Attribute.NAME);
+        if (name == null) {
+            return;
+        }
+        Object m = attr.getAttribute(StyleConstants.ModelAttribute);
+        if (m instanceof OptionListModel) {
+            OptionListModel<Option> model = (OptionListModel<Option>) m;
+
+            for (int i = 0; i < model.getSize(); i++) {
+                if (model.isSelectedIndex(i)) {
+                    Option option = model.getElementAt(i);
+                    appendBuffer(buffer, name, option.getValue());
+                }
+            }
+        } else if (m instanceof ComboBoxModel) {
+            ComboBoxModel model = (ComboBoxModel)m;
+            Option option = (Option)model.getSelectedItem();
+            if (option != null) {
+                appendBuffer(buffer, name, option.getValue());
+            }
+        }
+    }
+
+    /**
+     * Appends name / value pairs into the
+     * buffer.  Both names and values are encoded using the
+     * URLEncoder.encode() method before being added to the
+     * buffer.
+     */
+    private void appendBuffer(StringBuilder buffer, String name, String value) {
+        if (buffer.length() > 0) {
+            buffer.append('&');
+        }
+        String encodedName = URLEncoder.encode(name);
+        buffer.append(encodedName);
+        buffer.append('=');
+        String encodedValue = URLEncoder.encode(value);
+        buffer.append(encodedValue);
+    }
+
+    /**
+     * Returns true if the Element <code>elem</code> represents a control.
+     */
+    private boolean isControl(Element elem) {
+        return elem.isLeaf();
+    }
+
+    /**
+     * Iterates over the element hierarchy to determine if
+     * the element parameter, which is assumed to be an
+     * &lt;INPUT&gt; element of type password or text, is the last
+     * one of either kind, in the form to which it belongs.
+     */
+    boolean isLastTextOrPasswordField() {
+        Element parent = getFormElement();
+        Element elem = getElement();
+
+        if (parent != null) {
+            ElementIterator it = new ElementIterator(parent);
+            Element next;
+            boolean found = false;
+
+            while ((next = it.next()) != null) {
+                if (next == elem) {
+                    found = true;
+                }
+                else if (found && isControl(next)) {
+                    AttributeSet elemAttr = next.getAttributes();
+
+                    if (HTMLDocument.matchNameAttribute
+                                     (elemAttr, HTML.Tag.INPUT)) {
+                        String type = (String)elemAttr.getAttribute
+                                                  (HTML.Attribute.TYPE);
+
+                        if ("text".equals(type) || "password".equals(type)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Resets the form
+     * to its initial state by reinitializing the models
+     * associated with each form element to their initial
+     * values.
+     *
+     * param elem the element that triggered the reset
+     */
+    void resetForm() {
+        Element parent = getFormElement();
+
+        if (parent != null) {
+            ElementIterator it = new ElementIterator(parent);
+            Element next;
+
+            while((next = it.next()) != null) {
+                if (isControl(next)) {
+                    AttributeSet elemAttr = next.getAttributes();
+                    Object m = elemAttr.getAttribute(StyleConstants.
+                                                     ModelAttribute);
+                    if (m instanceof TextAreaDocument) {
+                        TextAreaDocument doc = (TextAreaDocument)m;
+                        doc.reset();
+                    } else if (m instanceof PlainDocument) {
+                        try {
+                            PlainDocument doc =  (PlainDocument)m;
+                            doc.remove(0, doc.getLength());
+                            if (HTMLDocument.matchNameAttribute
+                                             (elemAttr, HTML.Tag.INPUT)) {
+                                String value = (String)elemAttr.
+                                           getAttribute(HTML.Attribute.VALUE);
+                                if (value != null) {
+                                    doc.insertString(0, value, null);
+                                }
+                            }
+                        } catch (BadLocationException e) {
+                        }
+                    } else if (m instanceof OptionListModel) {
+                        OptionListModel model = (OptionListModel) m;
+                        int size = model.getSize();
+                        for (int i = 0; i < size; i++) {
+                            model.removeIndexInterval(i, i);
+                        }
+                        BitSet selectionRange = model.getInitialSelection();
+                        for (int i = 0; i < selectionRange.size(); i++) {
+                            if (selectionRange.get(i)) {
+                                model.addSelectionInterval(i, i);
+                            }
+                        }
+                    } else if (m instanceof OptionComboBoxModel) {
+                        OptionComboBoxModel model = (OptionComboBoxModel) m;
+                        Option option = model.getInitialSelection();
+                        if (option != null) {
+                            model.setSelectedItem(option);
+                        }
+                    } else if (m instanceof JToggleButton.ToggleButtonModel) {
+                        boolean checked = ((String)elemAttr.getAttribute
+                                           (HTML.Attribute.CHECKED) != null);
+                        JToggleButton.ToggleButtonModel model =
+                                        (JToggleButton.ToggleButtonModel)m;
+                        model.setSelected(checked);
+                    }
+                }
+            }
+        }
+    }
+
+
+    /**
+     * BrowseFileAction is used for input type == file. When the user
+     * clicks the button a JFileChooser is brought up allowing the user
+     * to select a file in the file system. The resulting path to the selected
+     * file is set in the text field (actually an instance of Document).
+     */
+    private class BrowseFileAction implements ActionListener {
+        private AttributeSet attrs;
+        private Document model;
+
+        BrowseFileAction(AttributeSet attrs, Document model) {
+            this.attrs = attrs;
+            this.model = model;
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            // PENDING: When mime support is added to JFileChooser use the
+            // accept value of attrs.
+            JFileChooser fc = new JFileChooser();
+            fc.setMultiSelectionEnabled(false);
+            if (fc.showOpenDialog(getContainer()) ==
+                  JFileChooser.APPROVE_OPTION) {
+                File selected = fc.getSelectedFile();
+
+                if (selected != null) {
+                    try {
+                        if (model.getLength() > 0) {
+                            model.remove(0, model.getLength());
+                        }
+                        model.insertString(0, selected.getPath(), null);
+                    } catch (BadLocationException ble) {}
+                }
+            }
+        }
+    }
+}

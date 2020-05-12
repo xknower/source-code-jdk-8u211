@@ -1,99 +1,100 @@
-/*    */ package com.sun.jmx.snmp;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class SnmpOpaque
-/*    */   extends SnmpString
-/*    */ {
-/*    */   private static final long serialVersionUID = 380952213936036664L;
-/*    */   static final String name = "Opaque";
-/*    */   
-/*    */   public SnmpOpaque(byte[] paramArrayOfbyte) {
-/* 49 */     super(paramArrayOfbyte);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public SnmpOpaque(Byte[] paramArrayOfByte) {
-/* 57 */     super(paramArrayOfByte);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public SnmpOpaque(String paramString) {
-/* 65 */     super(paramString);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 76 */     StringBuffer stringBuffer = new StringBuffer();
-/* 77 */     for (byte b = 0; b < this.value.length; b++) {
-/* 78 */       byte b1 = this.value[b];
-/* 79 */       byte b2 = (b1 >= 0) ? b1 : (b1 + 256);
-/* 80 */       stringBuffer.append(Character.forDigit(b2 / 16, 16));
-/* 81 */       stringBuffer.append(Character.forDigit(b2 % 16, 16));
-/*    */     } 
-/* 83 */     return stringBuffer.toString();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public final String getTypeName() {
-/* 91 */     return "Opaque";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpOpaque.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp;
+
+
+
+/**
+ * Is used to represent an SNMP value.
+ * The <CODE>Opaque</CODE> type is defined in RFC 1155.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public class SnmpOpaque extends SnmpString {
+    private static final long serialVersionUID = 380952213936036664L;
+
+    // CONSTRUCTORS
+    //-------------
+    /**
+     * Constructs a new <CODE>SnmpOpaque</CODE> from the specified bytes array.
+     * @param v The bytes composing the opaque value.
+     */
+    public SnmpOpaque(byte[] v) {
+        super(v) ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpOpaque</CODE> with the specified <CODE>Bytes</CODE> array.
+     * @param v The <CODE>Bytes</CODE> composing the opaque value.
+     */
+    public SnmpOpaque(Byte[] v) {
+        super(v) ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpOpaque</CODE> from the specified <CODE>String</CODE> value.
+     * @param v The initialization value.
+     */
+    public SnmpOpaque(String v) {
+        super(v) ;
+    }
+
+    // PUBLIC METHODS
+    //---------------
+    /**
+     * Converts the opaque to its <CODE>String</CODE> form, that is, a string of
+     * bytes expressed in hexadecimal form.
+     * @return The <CODE>String</CODE> representation of the value.
+     */
+    public String toString() {
+        StringBuffer result = new StringBuffer() ;
+        for (int i = 0 ; i < value.length ; i++) {
+            byte b = value[i] ;
+            int n = (b >= 0) ? b : b + 256 ;
+            result.append(Character.forDigit(n / 16, 16)) ;
+            result.append(Character.forDigit(n % 16, 16)) ;
+        }
+        return result.toString() ;
+    }
+
+    /**
+     * Returns a textual description of the type object.
+     * @return ASN.1 textual description.
+     */
+    final public String getTypeName() {
+        return name ;
+    }
+
+    // VARIABLES
+    //----------
+    /**
+     * Name of the type.
+     */
+    final static String name = "Opaque" ;
+}

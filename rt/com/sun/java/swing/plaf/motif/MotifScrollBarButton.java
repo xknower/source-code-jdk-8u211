@@ -1,217 +1,211 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.basic.BasicArrowButton;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifScrollBarButton
-/*     */   extends BasicArrowButton
-/*     */ {
-/*  48 */   private Color darkShadow = UIManager.getColor("controlShadow");
-/*  49 */   private Color lightShadow = UIManager.getColor("controlLtHighlight");
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MotifScrollBarButton(int paramInt) {
-/*  54 */     super(paramInt);
-/*     */     
-/*  56 */     switch (paramInt) {
-/*     */       case 1:
-/*     */       case 3:
-/*     */       case 5:
-/*     */       case 7:
-/*  61 */         this.direction = paramInt;
-/*     */         break;
-/*     */       default:
-/*  64 */         throw new IllegalArgumentException("invalid direction");
-/*     */     } 
-/*     */     
-/*  67 */     setRequestFocusEnabled(false);
-/*  68 */     setOpaque(true);
-/*  69 */     setBackground(UIManager.getColor("ScrollBar.background"));
-/*  70 */     setForeground(UIManager.getColor("ScrollBar.foreground"));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize() {
-/*  75 */     switch (this.direction) {
-/*     */       case 1:
-/*     */       case 5:
-/*  78 */         return new Dimension(11, 12);
-/*     */     } 
-/*     */ 
-/*     */     
-/*  82 */     return new Dimension(12, 11);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize() {
-/*  87 */     return getPreferredSize();
-/*     */   }
-/*     */   
-/*     */   public Dimension getMaximumSize() {
-/*  91 */     return getPreferredSize();
-/*     */   }
-/*     */   
-/*     */   public boolean isFocusTraversable() {
-/*  95 */     return false;
-/*     */   }
-/*     */   public void paint(Graphics paramGraphics) {
-/*     */     int i1, i2;
-/*     */     byte b;
-/* 100 */     int i = getWidth();
-/* 101 */     int j = getHeight();
-/*     */     
-/* 103 */     if (isOpaque()) {
-/* 104 */       paramGraphics.setColor(getBackground());
-/* 105 */       paramGraphics.fillRect(0, 0, i, j);
-/*     */     } 
-/*     */     
-/* 108 */     boolean bool = getModel().isPressed();
-/* 109 */     Color color1 = bool ? this.darkShadow : this.lightShadow;
-/* 110 */     Color color2 = bool ? this.lightShadow : this.darkShadow;
-/* 111 */     Color color3 = getBackground();
-/*     */     
-/* 113 */     int k = i / 2;
-/* 114 */     int m = j / 2;
-/* 115 */     int n = Math.min(i, j);
-/*     */     
-/* 117 */     switch (this.direction) {
-/*     */       case 1:
-/* 119 */         paramGraphics.setColor(color1);
-/* 120 */         paramGraphics.drawLine(k, 0, k, 0);
-/* 121 */         for (i1 = k - 1, i2 = 1, b = 1; i2 <= n - 2; i2 += 2) {
-/* 122 */           paramGraphics.setColor(color1);
-/* 123 */           paramGraphics.drawLine(i1, i2, i1, i2);
-/* 124 */           if (i2 >= n - 2) {
-/* 125 */             paramGraphics.drawLine(i1, i2 + 1, i1, i2 + 1);
-/*     */           }
-/* 127 */           paramGraphics.setColor(color3);
-/* 128 */           paramGraphics.drawLine(i1 + 1, i2, i1 + b, i2);
-/* 129 */           if (i2 < n - 2) {
-/* 130 */             paramGraphics.drawLine(i1, i2 + 1, i1 + b + 1, i2 + 1);
-/*     */           }
-/* 132 */           paramGraphics.setColor(color2);
-/* 133 */           paramGraphics.drawLine(i1 + b + 1, i2, i1 + b + 1, i2);
-/* 134 */           if (i2 >= n - 2) {
-/* 135 */             paramGraphics.drawLine(i1 + 1, i2 + 1, i1 + b + 1, i2 + 1);
-/*     */           }
-/* 137 */           b += 2;
-/* 138 */           i1--;
-/*     */         } 
-/*     */         break;
-/*     */       
-/*     */       case 5:
-/* 143 */         paramGraphics.setColor(color2);
-/* 144 */         paramGraphics.drawLine(k, n, k, n);
-/* 145 */         for (i1 = k - 1, i2 = n - 1, b = 1; i2 >= 1; i2 -= 2) {
-/* 146 */           paramGraphics.setColor(color1);
-/* 147 */           paramGraphics.drawLine(i1, i2, i1, i2);
-/* 148 */           if (i2 <= 2) {
-/* 149 */             paramGraphics.drawLine(i1, i2 - 1, i1 + b + 1, i2 - 1);
-/*     */           }
-/* 151 */           paramGraphics.setColor(color3);
-/* 152 */           paramGraphics.drawLine(i1 + 1, i2, i1 + b, i2);
-/* 153 */           if (i2 > 2) {
-/* 154 */             paramGraphics.drawLine(i1, i2 - 1, i1 + b + 1, i2 - 1);
-/*     */           }
-/* 156 */           paramGraphics.setColor(color2);
-/* 157 */           paramGraphics.drawLine(i1 + b + 1, i2, i1 + b + 1, i2);
-/*     */           
-/* 159 */           b += 2;
-/* 160 */           i1--;
-/*     */         } 
-/*     */         break;
-/*     */       
-/*     */       case 3:
-/* 165 */         paramGraphics.setColor(color1);
-/* 166 */         paramGraphics.drawLine(n, m, n, m);
-/* 167 */         for (i1 = m - 1, i2 = n - 1, b = 1; i2 >= 1; i2 -= 2) {
-/* 168 */           paramGraphics.setColor(color1);
-/* 169 */           paramGraphics.drawLine(i2, i1, i2, i1);
-/* 170 */           if (i2 <= 2) {
-/* 171 */             paramGraphics.drawLine(i2 - 1, i1, i2 - 1, i1 + b + 1);
-/*     */           }
-/* 173 */           paramGraphics.setColor(color3);
-/* 174 */           paramGraphics.drawLine(i2, i1 + 1, i2, i1 + b);
-/* 175 */           if (i2 > 2) {
-/* 176 */             paramGraphics.drawLine(i2 - 1, i1, i2 - 1, i1 + b + 1);
-/*     */           }
-/* 178 */           paramGraphics.setColor(color2);
-/* 179 */           paramGraphics.drawLine(i2, i1 + b + 1, i2, i1 + b + 1);
-/*     */           
-/* 181 */           b += 2;
-/* 182 */           i1--;
-/*     */         } 
-/*     */         break;
-/*     */       
-/*     */       case 7:
-/* 187 */         paramGraphics.setColor(color2);
-/* 188 */         paramGraphics.drawLine(0, m, 0, m);
-/* 189 */         for (i1 = m - 1, i2 = 1, b = 1; i2 <= n - 2; i2 += 2) {
-/* 190 */           paramGraphics.setColor(color1);
-/* 191 */           paramGraphics.drawLine(i2, i1, i2, i1);
-/* 192 */           if (i2 >= n - 2) {
-/* 193 */             paramGraphics.drawLine(i2 + 1, i1, i2 + 1, i1);
-/*     */           }
-/* 195 */           paramGraphics.setColor(color3);
-/* 196 */           paramGraphics.drawLine(i2, i1 + 1, i2, i1 + b);
-/* 197 */           if (i2 < n - 2) {
-/* 198 */             paramGraphics.drawLine(i2 + 1, i1, i2 + 1, i1 + b + 1);
-/*     */           }
-/* 200 */           paramGraphics.setColor(color2);
-/* 201 */           paramGraphics.drawLine(i2, i1 + b + 1, i2, i1 + b + 1);
-/* 202 */           if (i2 >= n - 2) {
-/* 203 */             paramGraphics.drawLine(i2 + 1, i1 + 1, i2 + 1, i1 + b + 1);
-/*     */           }
-/* 205 */           b += 2;
-/* 206 */           i1--;
-/*     */         } 
-/*     */         break;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifScrollBarButton.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicArrowButton;
+
+import java.awt.*;
+import java.awt.event.*;
+
+/**
+ * Motif scroll bar button.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class MotifScrollBarButton extends BasicArrowButton
+{
+    private Color darkShadow = UIManager.getColor("controlShadow");
+    private Color lightShadow = UIManager.getColor("controlLtHighlight");
+
+
+    public MotifScrollBarButton(int direction)
+    {
+        super(direction);
+
+        switch (direction) {
+        case NORTH:
+        case SOUTH:
+        case EAST:
+        case WEST:
+            this.direction = direction;
+            break;
+        default:
+            throw new IllegalArgumentException("invalid direction");
+        }
+
+        setRequestFocusEnabled(false);
+        setOpaque(true);
+        setBackground(UIManager.getColor("ScrollBar.background"));
+        setForeground(UIManager.getColor("ScrollBar.foreground"));
+    }
+
+
+    public Dimension getPreferredSize() {
+        switch (direction) {
+        case NORTH:
+        case SOUTH:
+            return new Dimension(11, 12);
+        case EAST:
+        case WEST:
+        default:
+            return new Dimension(12, 11);
+        }
+    }
+
+    public Dimension getMinimumSize() {
+        return getPreferredSize();
+    }
+
+    public Dimension getMaximumSize() {
+        return getPreferredSize();
+    }
+
+    public boolean isFocusTraversable() {
+        return false;
+    }
+
+    public void paint(Graphics g)
+    {
+        int w = getWidth();
+        int h = getHeight();
+
+        if (isOpaque()) {
+            g.setColor(getBackground());
+            g.fillRect(0, 0, w, h);
+        }
+
+        boolean isPressed = getModel().isPressed();
+        Color lead = (isPressed) ? darkShadow : lightShadow;
+        Color trail = (isPressed) ? lightShadow : darkShadow;
+        Color fill = getBackground();
+
+        int cx = w / 2;
+        int cy = h / 2;
+        int s = Math.min(w, h);
+
+        switch (direction) {
+        case NORTH:
+            g.setColor(lead);
+            g.drawLine(cx, 0, cx, 0);
+            for (int x = cx - 1, y = 1, dx = 1; y <= s - 2; y += 2) {
+                g.setColor(lead);
+                g.drawLine(x, y, x, y);
+                if (y >= (s - 2)) {
+                    g.drawLine(x, y + 1, x, y + 1);
+                }
+                g.setColor(fill);
+                g.drawLine(x + 1, y, x + dx, y);
+                if (y < (s - 2)) {
+                    g.drawLine(x, y + 1, x + dx + 1, y + 1);
+                }
+                g.setColor(trail);
+                g.drawLine(x + dx + 1, y, x + dx + 1, y);
+                if (y >= (s - 2)) {
+                    g.drawLine(x + 1, y + 1, x + dx + 1, y + 1);
+                }
+                dx += 2;
+                x -= 1;
+            }
+            break;
+
+        case SOUTH:
+            g.setColor(trail);
+            g.drawLine(cx, s, cx, s);
+            for (int x = cx - 1, y = s - 1, dx = 1; y >= 1; y -= 2) {
+                g.setColor(lead);
+                g.drawLine(x, y, x, y);
+                if (y <= 2) {
+                    g.drawLine(x, y - 1, x + dx + 1, y - 1);
+                }
+                g.setColor(fill);
+                g.drawLine(x + 1, y, x + dx, y);
+                if (y > 2) {
+                    g.drawLine(x, y - 1, x + dx + 1, y - 1);
+                }
+                g.setColor(trail);
+                g.drawLine(x + dx + 1, y, x + dx + 1, y);
+
+                dx += 2;
+                x -= 1;
+            }
+            break;
+
+        case EAST:
+            g.setColor(lead);
+            g.drawLine(s, cy, s, cy);
+            for (int y = cy - 1, x = s - 1, dy = 1; x >= 1; x -= 2) {
+                g.setColor(lead);
+                g.drawLine(x, y, x, y);
+                if (x <= 2) {
+                    g.drawLine(x - 1, y, x - 1, y + dy + 1);
+                }
+                g.setColor(fill);
+                g.drawLine(x, y + 1, x, y + dy);
+                if (x > 2) {
+                    g.drawLine(x - 1, y, x - 1, y + dy + 1);
+                }
+                g.setColor(trail);
+                g.drawLine(x, y + dy + 1, x, y + dy + 1);
+
+                dy += 2;
+                y -= 1;
+            }
+            break;
+
+        case WEST:
+            g.setColor(trail);
+            g.drawLine(0, cy, 0, cy);
+            for (int y = cy - 1, x = 1, dy = 1; x <= s - 2; x += 2) {
+                g.setColor(lead);
+                g.drawLine(x, y, x, y);
+                if (x >= (s - 2)) {
+                    g.drawLine(x + 1, y, x + 1, y);
+                }
+                g.setColor(fill);
+                g.drawLine(x, y + 1, x, y + dy);
+                if (x < (s - 2)) {
+                    g.drawLine(x + 1, y, x + 1, y + dy + 1);
+                }
+                g.setColor(trail);
+                g.drawLine(x, y + dy + 1, x, y + dy + 1);
+                if (x >= (s - 2)) {
+                    g.drawLine(x + 1, y + 1, x + 1, y + dy + 1);
+                }
+                dy += 2;
+                y -= 1;
+            }
+            break;
+        }
+    }
+}

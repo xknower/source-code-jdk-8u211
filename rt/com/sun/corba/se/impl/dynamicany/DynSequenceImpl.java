@@ -1,262 +1,257 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.Serializable;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ import org.omg.DynamicAny.DynSequence;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DynSequenceImpl
-/*     */   extends DynAnyCollectionImpl
-/*     */   implements DynSequence
-/*     */ {
-/*     */   private DynSequenceImpl() {
-/*  54 */     this((ORB)null, (Any)null, false);
-/*     */   }
-/*     */   
-/*     */   protected DynSequenceImpl(ORB paramORB, Any paramAny, boolean paramBoolean) {
-/*  58 */     super(paramORB, paramAny, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected DynSequenceImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  63 */     super(paramORB, paramTypeCode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeComponentsFromAny() {
-/*     */     InputStream inputStream;
-/*  70 */     TypeCode typeCode1 = this.any.type();
-/*     */     
-/*  72 */     TypeCode typeCode2 = getContentType();
-/*     */ 
-/*     */     
-/*     */     try {
-/*  76 */       inputStream = this.any.create_input_stream();
-/*  77 */     } catch (BAD_OPERATION bAD_OPERATION) {
-/*  78 */       return false;
-/*     */     } 
-/*     */     
-/*  81 */     int i = inputStream.read_long();
-/*  82 */     this.components = new DynAny[i];
-/*  83 */     this.anys = new Any[i];
-/*     */     
-/*  85 */     for (byte b = 0; b < i; b++) {
-/*     */ 
-/*     */       
-/*  88 */       this.anys[b] = DynAnyUtil.extractAnyFromStream(typeCode2, inputStream, this.orb);
-/*     */       
-/*     */       try {
-/*  91 */         this.components[b] = DynAnyUtil.createMostDerivedDynAny(this.anys[b], this.orb, false);
-/*  92 */       } catch (InconsistentTypeCode inconsistentTypeCode) {}
-/*     */     } 
-/*     */     
-/*  95 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeComponentsFromTypeCode() {
-/* 101 */     this.components = new DynAny[0];
-/* 102 */     this.anys = new Any[0];
-/* 103 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected boolean initializeAnyFromComponents() {
-/* 108 */     OutputStream outputStream = this.any.create_output_stream();
-/*     */     
-/* 110 */     outputStream.write_long(this.components.length);
-/* 111 */     for (byte b = 0; b < this.components.length; b++) {
-/* 112 */       if (this.components[b] instanceof DynAnyImpl) {
-/* 113 */         ((DynAnyImpl)this.components[b]).writeAny(outputStream);
-/*     */       } else {
-/*     */         
-/* 116 */         this.components[b].to_any().write_value(outputStream);
-/*     */       } 
-/*     */     } 
-/* 119 */     this.any.read_value(outputStream.create_input_stream(), this.any.type());
-/* 120 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int get_length() {
-/* 130 */     if (this.status == 2) {
-/* 131 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 133 */     return checkInitComponents() ? this.components.length : 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_length(int paramInt) throws InvalidValue {
-/* 161 */     if (this.status == 2) {
-/* 162 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 164 */     int i = getBound();
-/* 165 */     if (i > 0 && paramInt > i) {
-/* 166 */       throw new InvalidValue();
-/*     */     }
-/*     */     
-/* 169 */     checkInitComponents();
-/*     */     
-/* 171 */     int j = this.components.length;
-/* 172 */     if (paramInt > j) {
-/*     */       
-/* 174 */       DynAny[] arrayOfDynAny = new DynAny[paramInt];
-/* 175 */       Any[] arrayOfAny = new Any[paramInt];
-/* 176 */       System.arraycopy(this.components, 0, arrayOfDynAny, 0, j);
-/* 177 */       System.arraycopy(this.anys, 0, arrayOfAny, 0, j);
-/* 178 */       this.components = arrayOfDynAny;
-/* 179 */       this.anys = arrayOfAny;
-/*     */ 
-/*     */       
-/* 182 */       TypeCode typeCode = getContentType();
-/* 183 */       for (int k = j; k < paramInt; k++) {
-/* 184 */         createDefaultComponentAt(k, typeCode);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 189 */       if (this.index == -1)
-/* 190 */         this.index = j; 
-/* 191 */     } else if (paramInt < j) {
-/*     */       
-/* 193 */       DynAny[] arrayOfDynAny = new DynAny[paramInt];
-/* 194 */       Any[] arrayOfAny = new Any[paramInt];
-/* 195 */       System.arraycopy(this.components, 0, arrayOfDynAny, 0, paramInt);
-/* 196 */       System.arraycopy(this.anys, 0, arrayOfAny, 0, paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 203 */       this.components = arrayOfDynAny;
-/* 204 */       this.anys = arrayOfAny;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 212 */       if (paramInt == 0 || this.index >= paramInt) {
-/* 213 */         this.index = -1;
-/*     */       
-/*     */       }
-/*     */     
-/*     */     }
-/* 218 */     else if (this.index == -1 && paramInt > 0) {
-/* 219 */       this.index = 0;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void checkValue(Object[] paramArrayOfObject) throws InvalidValue {
-/* 245 */     if (paramArrayOfObject == null || paramArrayOfObject.length == 0) {
-/* 246 */       clearData();
-/* 247 */       this.index = -1;
-/*     */       return;
-/*     */     } 
-/* 250 */     this.index = 0;
-/*     */     
-/* 252 */     int i = getBound();
-/* 253 */     if (i > 0 && paramArrayOfObject.length > i)
-/* 254 */       throw new InvalidValue(); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynSequenceImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.BAD_OPERATION;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import org.omg.CORBA.TypeCodePackage.Bounds;
+import org.omg.CORBA.portable.InputStream;
+import org.omg.CORBA.portable.OutputStream;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
+import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
+import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+// _REVIST_ Could make this a subclass of DynArrayImpl
+// But that would mean that an object that implements DynSequence also implements DynArray
+// which the spec doesn't mention (it also doesn't forbid it).
+public class DynSequenceImpl extends DynAnyCollectionImpl implements DynSequence
+{
+    //
+    // Constructors
+    //
+
+    private DynSequenceImpl() {
+        this(null, (Any)null, false);
+    }
+
+    protected DynSequenceImpl(ORB orb, Any any, boolean copyValue) {
+        super(orb, any, copyValue);
+    }
+
+    // Sets the current position to -1 and creates an empty sequence.
+    protected DynSequenceImpl(ORB orb, TypeCode typeCode) {
+        super(orb, typeCode);
+    }
+
+    // Initializes components and anys representation
+    // from the Any representation
+    protected boolean initializeComponentsFromAny() {
+        // This typeCode is of kind tk_sequence.
+        TypeCode typeCode = any.type();
+        int length;
+        TypeCode contentType = getContentType();
+        InputStream input;
+
+        try {
+            input = any.create_input_stream();
+        } catch (BAD_OPERATION e) {
+            return false;
+        }
+
+        length = input.read_long();
+        components = new DynAny[length];
+        anys = new Any[length];
+
+        for (int i=0; i<length; i++) {
+            // _REVISIT_ Could use read_xxx_array() methods on InputStream for efficiency
+            // but only for primitive types
+            anys[i] = DynAnyUtil.extractAnyFromStream(contentType, input, orb);
+            try {
+                // Creates the appropriate subtype without copying the Any
+                components[i] = DynAnyUtil.createMostDerivedDynAny(anys[i], orb, false);
+            } catch (InconsistentTypeCode itc) { // impossible
+            }
+        }
+        return true;
+    }
+
+    // Sets the current position to -1 and creates an empty sequence.
+    protected boolean initializeComponentsFromTypeCode() {
+        // already done in the type code constructor
+        components = new DynAny[0];
+        anys = new Any[0];
+        return true;
+    }
+
+    // Collapses the whole DynAny hierarchys values into one single streamed Any
+    protected boolean initializeAnyFromComponents() {
+        OutputStream out = any.create_output_stream();
+        // Writing the length first is the only difference to supers implementation
+        out.write_long(components.length);
+        for (int i=0; i<components.length; i++) {
+            if (components[i] instanceof DynAnyImpl) {
+                ((DynAnyImpl)components[i]).writeAny(out);
+            } else {
+                // Not our implementation. Nothing we can do to prevent copying.
+                components[i].to_any().write_value(out);
+            }
+        }
+        any.read_value(out.create_input_stream(), any.type());
+        return true;
+    }
+
+
+    //
+    // DynSequence interface methods
+    //
+
+    // Returns the current length of the sequence
+    public int get_length() {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        return (checkInitComponents() ? components.length : 0);
+    }
+
+    // Sets the length of the sequence. Increasing the length of a sequence
+    // adds new elements at the tail without affecting the values of already
+    // existing elements. Newly added elements are default-initialized.
+    //
+    // Increasing the length of a sequence sets the current position to the first
+    // newly-added element if the previous current position was -1.
+    // Otherwise, if the previous current position was not -1,
+    // the current position is not affected.
+    //
+    // Increasing the length of a bounded sequence to a value larger than the bound
+    // raises InvalidValue.
+    //
+    // Decreasing the length of a sequence removes elements from the tail
+    // without affecting the value of those elements that remain.
+    // The new current position after decreasing the length of a sequence is determined
+    // as follows:
+    // ?f the length of the sequence is set to zero, the current position is set to -1.
+    // ?f the current position is -1 before decreasing the length, it remains at -1.
+    // ?f the current position indicates a valid element and that element is not removed
+    // when the length is decreased, the current position remains unaffected.
+    // ?f the current position indicates a valid element and that element is removed, the
+    // current position is set to -1.
+    public void set_length(int len)
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        int bound = getBound();
+        if (bound > 0 && len > bound) {
+            throw new InvalidValue();
+        }
+
+        checkInitComponents();
+
+        int oldLength = components.length;
+        if (len > oldLength) {
+            // Increase length
+            DynAny[] newComponents = new DynAny[len];
+            Any[] newAnys = new Any[len];
+            System.arraycopy(components, 0, newComponents, 0, oldLength);
+            System.arraycopy(anys, 0, newAnys, 0, oldLength);
+            components = newComponents;
+            anys = newAnys;
+
+            // Newly added elements are default-initialized
+            TypeCode contentType = getContentType();
+            for (int i=oldLength; i<len; i++) {
+                createDefaultComponentAt(i, contentType);
+            }
+
+            // Increasing the length of a sequence sets the current position to the first
+            // newly-added element if the previous current position was -1.
+            if (index == NO_INDEX)
+                index = oldLength;
+        } else if (len < oldLength) {
+            // Decrease length
+            DynAny[] newComponents = new DynAny[len];
+            Any[] newAnys = new Any[len];
+            System.arraycopy(components, 0, newComponents, 0, len);
+            System.arraycopy(anys, 0, newAnys, 0, len);
+            // It is probably right not to destroy the released component DynAnys.
+            // Some other DynAny or a user variable might still hold onto them
+            // and if not then the garbage collector will take care of it.
+            //for (int i=len; i<oldLength; i++) {
+            //    components[i].destroy();
+            //}
+            components = newComponents;
+            anys = newAnys;
+
+            // ?f the length of the sequence is set to zero, the current position is set to -1.
+            // ?f the current position is -1 before decreasing the length, it remains at -1.
+            // ?f the current position indicates a valid element and that element is not removed
+            // when the length is decreased, the current position remains unaffected.
+            // ?f the current position indicates a valid element and that element is removed,
+            // the current position is set to -1.
+            if (len == 0 || index >= len) {
+                index = NO_INDEX;
+            }
+        } else {
+            // Length unchanged
+            // Maybe components is now default initialized from type code
+            if (index == NO_INDEX && len > 0) {
+                index = 0;
+            }
+        }
+    }
+
+    // Initializes the elements of the sequence.
+    // The length of the DynSequence is set to the length of value.
+    // The current position is set to zero if value has non-zero length
+    // and to -1 if value is a zero-length sequence.
+    // If the length of value exceeds the bound of a bounded sequence,
+    // the operation raises InvalidValue.
+    // If value contains one or more elements whose TypeCode is not equivalent
+    // to the element TypeCode of the DynSequence, the operation raises TypeMismatch.
+/*
+    public void set_elements(org.omg.CORBA.Any[] value)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch,
+               org.omg.DynamicAny.DynAnyPackage.InvalidValue;
+*/
+
+    //
+    // Utility methods
+    //
+
+    protected void checkValue(Object[] value)
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (value == null || value.length == 0) {
+            clearData();
+            index = NO_INDEX;
+            return;
+        } else {
+            index = 0;
+        }
+        int bound = getBound();
+        if (bound > 0 && value.length > bound) {
+            throw new InvalidValue();
+        }
+    }
+}

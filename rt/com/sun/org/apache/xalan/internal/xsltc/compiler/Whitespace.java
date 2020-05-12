@@ -1,534 +1,532 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IF_ICMPEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ILOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import java.util.StringTokenizer;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Whitespace
-/*     */   extends TopLevelElement
-/*     */ {
-/*     */   public static final int USE_PREDICATE = 0;
-/*     */   public static final int STRIP_SPACE = 1;
-/*     */   public static final int PRESERVE_SPACE = 2;
-/*     */   public static final int RULE_NONE = 0;
-/*     */   public static final int RULE_ELEMENT = 1;
-/*     */   public static final int RULE_NAMESPACE = 2;
-/*     */   public static final int RULE_ALL = 3;
-/*     */   private String _elementList;
-/*     */   private int _action;
-/*     */   private int _importPrecedence;
-/*     */   
-/*     */   private static final class WhitespaceRule
-/*     */   {
-/*     */     private final int _action;
-/*     */     private String _namespace;
-/*     */     private String _element;
-/*     */     private int _type;
-/*     */     private int _priority;
-/*     */     
-/*     */     public WhitespaceRule(int action, String element, int precedence) {
-/*  80 */       this._action = action;
-/*     */ 
-/*     */       
-/*  83 */       int colon = element.lastIndexOf(':');
-/*  84 */       if (colon >= 0) {
-/*  85 */         this._namespace = element.substring(0, colon);
-/*  86 */         this._element = element.substring(colon + 1, element.length());
-/*     */       } else {
-/*     */         
-/*  89 */         this._namespace = "";
-/*  90 */         this._element = element;
-/*     */       } 
-/*     */ 
-/*     */       
-/*  94 */       this._priority = precedence << 2;
-/*     */ 
-/*     */       
-/*  97 */       if (this._element.equals("*")) {
-/*  98 */         if (this._namespace == "") {
-/*  99 */           this._type = 3;
-/* 100 */           this._priority += 2;
-/*     */         } else {
-/*     */           
-/* 103 */           this._type = 2;
-/* 104 */           this._priority++;
-/*     */         } 
-/*     */       } else {
-/*     */         
-/* 108 */         this._type = 1;
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public int compareTo(WhitespaceRule other) {
-/* 116 */       return (this._priority < other._priority) ? -1 : ((this._priority > other._priority) ? 1 : 0);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public int getAction() {
-/* 121 */       return this._action; }
-/* 122 */     public int getStrength() { return this._type; }
-/* 123 */     public int getPriority() { return this._priority; }
-/* 124 */     public String getElement() { return this._element; } public String getNamespace() {
-/* 125 */       return this._namespace;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/* 134 */     this._action = this._qname.getLocalPart().endsWith("strip-space") ? 1 : 2;
-/*     */ 
-/*     */ 
-/*     */     
-/* 138 */     this._importPrecedence = parser.getCurrentImportPrecedence();
-/*     */ 
-/*     */     
-/* 141 */     this._elementList = getAttribute("elements");
-/* 142 */     if (this._elementList == null || this._elementList.length() == 0) {
-/* 143 */       reportError(this, parser, "REQUIRED_ATTR_ERR", "elements");
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 147 */     SymbolTable stable = parser.getSymbolTable();
-/* 148 */     StringTokenizer list = new StringTokenizer(this._elementList);
-/* 149 */     StringBuffer elements = new StringBuffer("");
-/*     */     
-/* 151 */     while (list.hasMoreElements()) {
-/* 152 */       String token = list.nextToken();
-/*     */ 
-/*     */       
-/* 155 */       int col = token.indexOf(':');
-/*     */       
-/* 157 */       if (col != -1) {
-/* 158 */         String namespace = lookupNamespace(token.substring(0, col));
-/* 159 */         if (namespace != null) {
-/* 160 */           elements.append(namespace).append(':').append(token.substring(col + 1));
-/*     */         } else {
-/* 162 */           elements.append(token);
-/*     */         } 
-/*     */       } else {
-/* 165 */         elements.append(token);
-/*     */       } 
-/*     */       
-/* 168 */       if (list.hasMoreElements())
-/* 169 */         elements.append(" "); 
-/*     */     } 
-/* 171 */     this._elementList = elements.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Vector getRules() {
-/* 180 */     Vector<WhitespaceRule> rules = new Vector();
-/*     */     
-/* 182 */     StringTokenizer list = new StringTokenizer(this._elementList);
-/* 183 */     while (list.hasMoreElements()) {
-/* 184 */       rules.add(new WhitespaceRule(this._action, list
-/* 185 */             .nextToken(), this._importPrecedence));
-/*     */     }
-/*     */     
-/* 188 */     return rules;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static WhitespaceRule findContradictingRule(Vector<WhitespaceRule> rules, WhitespaceRule rule) {
-/* 198 */     for (int i = 0; i < rules.size(); i++) {
-/*     */       
-/* 200 */       WhitespaceRule currentRule = rules.elementAt(i);
-/*     */       
-/* 202 */       if (currentRule == rule) {
-/* 203 */         return null;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 211 */       switch (currentRule.getStrength()) {
-/*     */         case 3:
-/* 213 */           return currentRule;
-/*     */         
-/*     */         case 1:
-/* 216 */           if (!rule.getElement().equals(currentRule.getElement())) {
-/*     */             break;
-/*     */           }
-/*     */         
-/*     */         case 2:
-/* 221 */           if (rule.getNamespace().equals(currentRule.getNamespace())) {
-/* 222 */             return currentRule;
-/*     */           }
-/*     */           break;
-/*     */       } 
-/*     */     } 
-/* 227 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int prioritizeRules(Vector<WhitespaceRule> rules) {
-/* 237 */     int defaultAction = 2;
-/*     */ 
-/*     */     
-/* 240 */     quicksort(rules, 0, rules.size() - 1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 245 */     boolean strip = false;
-/* 246 */     for (int i = 0; i < rules.size(); i++) {
-/* 247 */       WhitespaceRule currentRule = rules.elementAt(i);
-/* 248 */       if (currentRule.getAction() == 1) {
-/* 249 */         strip = true;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 253 */     if (!strip) {
-/* 254 */       rules.removeAllElements();
-/* 255 */       return 2;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 259 */     for (int idx = 0; idx < rules.size(); ) {
-/* 260 */       WhitespaceRule currentRule = rules.elementAt(idx);
-/*     */ 
-/*     */       
-/* 263 */       if (findContradictingRule(rules, currentRule) != null) {
-/* 264 */         rules.remove(idx);
-/*     */         
-/*     */         continue;
-/*     */       } 
-/* 268 */       if (currentRule.getStrength() == 3) {
-/* 269 */         defaultAction = currentRule.getAction();
-/* 270 */         for (int j = idx; j < rules.size(); j++) {
-/* 271 */           rules.removeElementAt(j);
-/*     */         }
-/*     */       } 
-/*     */       
-/* 275 */       idx++;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 280 */     if (rules.size() == 0) {
-/* 281 */       return defaultAction;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     while (true) {
-/* 287 */       WhitespaceRule currentRule = rules.lastElement();
-/* 288 */       if (currentRule.getAction() == defaultAction) {
-/* 289 */         rules.removeElementAt(rules.size() - 1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 294 */         if (rules.size() <= 0)
-/*     */           break;  continue;
-/*     */       }  break;
-/* 297 */     }  return defaultAction;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void compileStripSpace(BranchHandle[] strip, int sCount, InstructionList il) {
-/* 303 */     InstructionHandle target = il.append(ICONST_1);
-/* 304 */     il.append(IRETURN);
-/* 305 */     for (int i = 0; i < sCount; i++) {
-/* 306 */       strip[i].setTarget(target);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void compilePreserveSpace(BranchHandle[] preserve, int pCount, InstructionList il) {
-/* 313 */     InstructionHandle target = il.append(ICONST_0);
-/* 314 */     il.append(IRETURN);
-/* 315 */     for (int i = 0; i < pCount; i++) {
-/* 316 */       preserve[i].setTarget(target);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void compilePredicate(Vector<WhitespaceRule> rules, int defaultAction, ClassGenerator classGen) {
-/* 338 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 339 */     InstructionList il = new InstructionList();
-/* 340 */     XSLTC xsltc = classGen.getParser().getXSLTC();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 352 */     MethodGenerator stripSpace = new MethodGenerator(17, Type.BOOLEAN, new Type[] { Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;"), Type.INT, Type.INT }, new String[] { "dom", "node", "type" }, "stripSpace", classGen.getClassName(), il, cpg);
-/*     */     
-/* 354 */     classGen.addInterface("com/sun/org/apache/xalan/internal/xsltc/StripFilter");
-/*     */     
-/* 356 */     int paramDom = stripSpace.getLocalIndex("dom");
-/* 357 */     int paramCurrent = stripSpace.getLocalIndex("node");
-/* 358 */     int paramType = stripSpace.getLocalIndex("type");
-/*     */     
-/* 360 */     BranchHandle[] strip = new BranchHandle[rules.size()];
-/* 361 */     BranchHandle[] preserve = new BranchHandle[rules.size()];
-/* 362 */     int sCount = 0;
-/* 363 */     int pCount = 0;
-/*     */ 
-/*     */     
-/* 366 */     for (int i = 0; i < rules.size(); i++) {
-/*     */       
-/* 368 */       WhitespaceRule rule = rules.elementAt(i);
-/*     */ 
-/*     */       
-/* 371 */       int gns = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getNamespaceName", "(I)Ljava/lang/String;");
-/*     */ 
-/*     */ 
-/*     */       
-/* 375 */       int strcmp = cpg.addMethodref("java/lang/String", "compareTo", "(Ljava/lang/String;)I");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 380 */       if (rule.getStrength() == 2) {
-/* 381 */         il.append(new ALOAD(paramDom));
-/* 382 */         il.append(new ILOAD(paramCurrent));
-/* 383 */         il.append(new INVOKEINTERFACE(gns, 2));
-/* 384 */         il.append(new PUSH(cpg, rule.getNamespace()));
-/* 385 */         il.append(new INVOKEVIRTUAL(strcmp));
-/* 386 */         il.append(ICONST_0);
-/*     */         
-/* 388 */         if (rule.getAction() == 1) {
-/* 389 */           strip[sCount++] = il.append(new IF_ICMPEQ(null));
-/*     */         } else {
-/*     */           
-/* 392 */           preserve[pCount++] = il.append(new IF_ICMPEQ(null));
-/*     */         }
-/*     */       
-/*     */       }
-/* 396 */       else if (rule.getStrength() == 1) {
-/*     */         QName qname;
-/* 398 */         Parser parser = classGen.getParser();
-/*     */         
-/* 400 */         if (rule.getNamespace() != "") {
-/* 401 */           qname = parser.getQName(rule.getNamespace(), (String)null, rule
-/* 402 */               .getElement());
-/*     */         } else {
-/* 404 */           qname = parser.getQName(rule.getElement());
-/*     */         } 
-/*     */         
-/* 407 */         int elementType = xsltc.registerElement(qname);
-/* 408 */         il.append(new ILOAD(paramType));
-/* 409 */         il.append(new PUSH(cpg, elementType));
-/*     */ 
-/*     */         
-/* 412 */         if (rule.getAction() == 1) {
-/* 413 */           strip[sCount++] = il.append(new IF_ICMPEQ(null));
-/*     */         } else {
-/* 415 */           preserve[pCount++] = il.append(new IF_ICMPEQ(null));
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 419 */     if (defaultAction == 1) {
-/* 420 */       compileStripSpace(strip, sCount, il);
-/* 421 */       compilePreserveSpace(preserve, pCount, il);
-/*     */     } else {
-/*     */       
-/* 424 */       compilePreserveSpace(preserve, pCount, il);
-/* 425 */       compileStripSpace(strip, sCount, il);
-/*     */     } 
-/*     */     
-/* 428 */     classGen.addMethod(stripSpace);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void compileDefault(int defaultAction, ClassGenerator classGen) {
-/* 436 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 437 */     InstructionList il = new InstructionList();
-/* 438 */     XSLTC xsltc = classGen.getParser().getXSLTC();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 450 */     MethodGenerator stripSpace = new MethodGenerator(17, Type.BOOLEAN, new Type[] { Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/DOM;"), Type.INT, Type.INT }, new String[] { "dom", "node", "type" }, "stripSpace", classGen.getClassName(), il, cpg);
-/*     */     
-/* 452 */     classGen.addInterface("com/sun/org/apache/xalan/internal/xsltc/StripFilter");
-/*     */     
-/* 454 */     if (defaultAction == 1) {
-/* 455 */       il.append(ICONST_1);
-/*     */     } else {
-/* 457 */       il.append(ICONST_0);
-/* 458 */     }  il.append(IRETURN);
-/*     */     
-/* 460 */     classGen.addMethod(stripSpace);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int translateRules(Vector rules, ClassGenerator classGen) {
-/* 475 */     int defaultAction = prioritizeRules(rules);
-/*     */     
-/* 477 */     if (rules.size() == 0) {
-/* 478 */       compileDefault(defaultAction, classGen);
-/* 479 */       return defaultAction;
-/*     */     } 
-/*     */     
-/* 482 */     compilePredicate(rules, defaultAction, classGen);
-/*     */     
-/* 484 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void quicksort(Vector rules, int p, int r) {
-/* 491 */     while (p < r) {
-/* 492 */       int q = partition(rules, p, r);
-/* 493 */       quicksort(rules, p, q);
-/* 494 */       p = q + 1;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int partition(Vector<WhitespaceRule> rules, int p, int r) {
-/* 502 */     WhitespaceRule x = rules.elementAt(p + r >>> 1);
-/* 503 */     int i = p - 1, j = r + 1;
-/*     */     while (true) {
-/* 505 */       if (x.compareTo(rules.elementAt(--j)) < 0)
-/*     */         continue; 
-/* 507 */       while (x.compareTo(rules.elementAt(++i)) > 0);
-/*     */       
-/* 509 */       if (i < j) {
-/* 510 */         WhitespaceRule tmp = rules.elementAt(i);
-/* 511 */         rules.setElementAt(rules.elementAt(j), i);
-/* 512 */         rules.setElementAt(tmp, j); continue;
-/*     */       }  break;
-/*     */     } 
-/* 515 */     return j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 524 */     return Type.Void;
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\Whitespace.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Whitespace.java,v 1.5 2005/09/28 13:48:18 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.IF_ICMPEQ;
+import com.sun.org.apache.bcel.internal.generic.ILOAD;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author Morten Jorgensen
+ */
+final class Whitespace extends TopLevelElement {
+    // Three possible actions for the translet:
+    public static final int USE_PREDICATE  = 0;
+    public static final int STRIP_SPACE    = 1;
+    public static final int PRESERVE_SPACE = 2;
+
+    // The 3 different categories of strip/preserve rules (order important)
+    public static final int RULE_NONE      = 0;
+    public static final int RULE_ELEMENT   = 1; // priority 0
+    public static final int RULE_NAMESPACE = 2; // priority -1/4
+    public static final int RULE_ALL       = 3; // priority -1/2
+
+    private String _elementList;
+    private int    _action;
+    private int    _importPrecedence;
+
+    /**
+     * Auxillary class for encapsulating a single strip/preserve rule
+     */
+    private final static class WhitespaceRule {
+        private final int _action;
+        private String _namespace; // Should be replaced by NS type (int)
+        private String _element;   // Should be replaced by node type (int)
+        private int    _type;
+        private int    _priority;
+
+        /**
+         * Strip/preserve rule constructor
+         */
+        public WhitespaceRule(int action, String element, int precedence) {
+            // Determine the action (strip or preserve) for this rule
+            _action = action;
+
+            // Get the namespace and element name for this rule
+            final int colon = element.lastIndexOf(':');
+            if (colon >= 0) {
+                _namespace = element.substring(0,colon);
+                _element = element.substring(colon+1,element.length());
+            }
+            else {
+                _namespace = Constants.EMPTYSTRING;
+                _element = element;
+            }
+
+            // Determine the initial priority for this rule
+            _priority = precedence << 2;
+
+            // Get the strip/preserve type; either "NS:EL", "NS:*" or "*"
+            if (_element.equals("*")) {
+                if (_namespace == Constants.EMPTYSTRING) {
+                    _type = RULE_ALL;       // Strip/preserve _all_ elements
+                    _priority += 2;         // Lowest priority
+                }
+                else {
+                    _type = RULE_NAMESPACE; // Strip/reserve elements within NS
+                    _priority += 1;         // Medium priority
+                }
+            }
+            else {
+                _type = RULE_ELEMENT;       // Strip/preserve single element
+            }
+        }
+
+        /**
+         * For sorting rules depending on priority
+         */
+        public int compareTo(WhitespaceRule other) {
+            return _priority < other._priority
+                ? -1
+                : _priority > other._priority ? 1 : 0;
+        }
+
+        public int getAction() { return _action; }
+        public int getStrength() { return _type; }
+        public int getPriority() { return _priority; }
+        public String getElement() { return _element; }
+        public String getNamespace() { return _namespace; }
+    }
+
+    /**
+     * Parse the attributes of the xsl:strip/preserve-space element.
+     * The element should have not contents (ignored if any).
+     */
+    public void parseContents(Parser parser) {
+        // Determine if this is an xsl:strip- or preserve-space element
+        _action = _qname.getLocalPart().endsWith("strip-space")
+            ? STRIP_SPACE : PRESERVE_SPACE;
+
+        // Determine the import precedence
+        _importPrecedence = parser.getCurrentImportPrecedence();
+
+        // Get the list of elements to strip/preserve
+        _elementList = getAttribute("elements");
+        if (_elementList == null || _elementList.length() == 0) {
+            reportError(this, parser, ErrorMsg.REQUIRED_ATTR_ERR, "elements");
+            return;
+        }
+
+        final SymbolTable stable = parser.getSymbolTable();
+        StringTokenizer list = new StringTokenizer(_elementList);
+        StringBuffer elements = new StringBuffer(Constants.EMPTYSTRING);
+
+        while (list.hasMoreElements()) {
+            String token = list.nextToken();
+            String prefix;
+            String namespace;
+            int col = token.indexOf(':');
+
+            if (col != -1) {
+                namespace = lookupNamespace(token.substring(0,col));
+                if (namespace != null) {
+                    elements.append(namespace).append(':').append(token.substring(col + 1));
+                } else {
+                    elements.append(token);
+                }
+            } else {
+                elements.append(token);
+            }
+
+            if (list.hasMoreElements())
+                elements.append(" ");
+        }
+        _elementList = elements.toString();
+    }
+
+
+    /**
+     * De-tokenize the elements listed in the 'elements' attribute and
+     * instanciate a set of strip/preserve rules.
+     */
+    public Vector getRules() {
+        final Vector rules = new Vector();
+        // Go through each element and instanciate strip/preserve-object
+        final StringTokenizer list = new StringTokenizer(_elementList);
+        while (list.hasMoreElements()) {
+            rules.add(new WhitespaceRule(_action,
+                                         list.nextToken(),
+                                         _importPrecedence));
+        }
+        return rules;
+    }
+
+
+    /**
+     * Scans through the rules vector and looks for a rule of higher
+     * priority that contradicts the current rule.
+     */
+    private static WhitespaceRule findContradictingRule(Vector rules,
+                                                        WhitespaceRule rule) {
+        for (int i = 0; i < rules.size(); i++) {
+            // Get the next rule in the prioritized list
+            WhitespaceRule currentRule = (WhitespaceRule)rules.elementAt(i);
+            // We only consider rules with higher priority
+            if (currentRule == rule) {
+                return null;
+            }
+
+            /*
+             * See if there is a contradicting rule with higher priority.
+             * If the rules has the same action then this rule is redundant,
+             * if they have different action then this rule will never win.
+             */
+            switch (currentRule.getStrength()) {
+            case RULE_ALL:
+                return currentRule;
+
+            case RULE_ELEMENT:
+                if (!rule.getElement().equals(currentRule.getElement())) {
+                    break;
+                }
+                // intentional fall-through
+            case RULE_NAMESPACE:
+                if (rule.getNamespace().equals(currentRule.getNamespace())) {
+                    return currentRule;
+                }
+                break;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Orders a set or rules by priority, removes redundant rules and rules
+     * that are shadowed by stronger, contradicting rules.
+     */
+    private static int prioritizeRules(Vector rules) {
+        WhitespaceRule currentRule;
+        int defaultAction = PRESERVE_SPACE;
+
+        // Sort all rules with regard to priority
+        quicksort(rules, 0, rules.size()-1);
+
+        // Check if there are any "xsl:strip-space" elements at all.
+        // If there are no xsl:strip elements we can ignore all xsl:preserve
+        // elements and signal that all whitespaces should be preserved
+        boolean strip = false;
+        for (int i = 0; i < rules.size(); i++) {
+            currentRule = (WhitespaceRule)rules.elementAt(i);
+            if (currentRule.getAction() == STRIP_SPACE) {
+                strip = true;
+            }
+        }
+        // Return with default action: PRESERVE_SPACE
+        if (!strip) {
+            rules.removeAllElements();
+            return PRESERVE_SPACE;
+        }
+
+        // Remove all rules that are contradicted by rules with higher priority
+        for (int idx = 0; idx < rules.size(); ) {
+            currentRule = (WhitespaceRule)rules.elementAt(idx);
+
+            // Remove this single rule if it has no purpose
+            if (findContradictingRule(rules,currentRule) != null) {
+                rules.remove(idx);
+            }
+            else {
+                // Remove all following rules if this one overrides all
+                if (currentRule.getStrength() == RULE_ALL) {
+                    defaultAction = currentRule.getAction();
+                    for (int i = idx; i < rules.size(); i++) {
+                        rules.removeElementAt(i);
+                    }
+                }
+                // Skip to next rule (there might not be any)...
+                idx++;
+            }
+        }
+
+        // The rules vector could be empty if first rule has strength RULE_ALL
+        if (rules.size() == 0) {
+            return defaultAction;
+        }
+
+        // Now work backwards and strip away all rules that have the same
+        // action as the default rule (no reason the check them at the end).
+        do {
+            currentRule = (WhitespaceRule)rules.lastElement();
+            if (currentRule.getAction() == defaultAction) {
+                rules.removeElementAt(rules.size() - 1);
+            }
+            else {
+                break;
+            }
+        } while (rules.size() > 0);
+
+        // Signal that whitespace detection predicate must be used.
+        return defaultAction;
+    }
+
+    public static void compileStripSpace(BranchHandle strip[],
+                                         int sCount,
+                                         InstructionList il) {
+        final InstructionHandle target = il.append(ICONST_1);
+        il.append(IRETURN);
+        for (int i = 0; i < sCount; i++) {
+            strip[i].setTarget(target);
+        }
+    }
+
+    public static void compilePreserveSpace(BranchHandle preserve[],
+                                            int pCount,
+                                            InstructionList il) {
+        final InstructionHandle target = il.append(ICONST_0);
+        il.append(IRETURN);
+        for (int i = 0; i < pCount; i++) {
+            preserve[i].setTarget(target);
+        }
+    }
+
+    /*
+    private static void compileDebug(ClassGenerator classGen,
+                                     InstructionList il) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final int prt = cpg.addMethodref("java/lang/System/out",
+                                         "println",
+                                         "(Ljava/lang/String;)V");
+        il.append(DUP);
+        il.append(new INVOKESTATIC(prt));
+    }
+    */
+
+    /**
+     * Compiles the predicate method
+     */
+    private static void compilePredicate(Vector rules,
+                                         int defaultAction,
+                                         ClassGenerator classGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = new InstructionList();
+        final XSLTC xsltc = classGen.getParser().getXSLTC();
+
+        // private boolean Translet.stripSpace(int type) - cannot be static
+        final MethodGenerator stripSpace =
+            new MethodGenerator(ACC_PUBLIC | ACC_FINAL ,
+                        com.sun.org.apache.bcel.internal.generic.Type.BOOLEAN,
+                        new com.sun.org.apache.bcel.internal.generic.Type[] {
+                            Util.getJCRefType(DOM_INTF_SIG),
+                            com.sun.org.apache.bcel.internal.generic.Type.INT,
+                            com.sun.org.apache.bcel.internal.generic.Type.INT
+                        },
+                        new String[] { "dom","node","type" },
+                        "stripSpace",classGen.getClassName(),il,cpg);
+
+        classGen.addInterface("com/sun/org/apache/xalan/internal/xsltc/StripFilter");
+
+        final int paramDom = stripSpace.getLocalIndex("dom");
+        final int paramCurrent = stripSpace.getLocalIndex("node");
+        final int paramType = stripSpace.getLocalIndex("type");
+
+        BranchHandle strip[] = new BranchHandle[rules.size()];
+        BranchHandle preserve[] = new BranchHandle[rules.size()];
+        int sCount = 0;
+        int pCount = 0;
+
+        // Traverse all strip/preserve rules
+        for (int i = 0; i<rules.size(); i++) {
+            // Get the next rule in the prioritised list
+            WhitespaceRule rule = (WhitespaceRule)rules.elementAt(i);
+
+            // Returns the namespace for a node in the DOM
+            final int gns = cpg.addInterfaceMethodref(DOM_INTF,
+                                                      "getNamespaceName",
+                                                      "(I)Ljava/lang/String;");
+
+            final int strcmp = cpg.addMethodref("java/lang/String",
+                                                "compareTo",
+                                                "(Ljava/lang/String;)I");
+
+            // Handle elements="ns:*" type rule
+            if (rule.getStrength() == RULE_NAMESPACE) {
+                il.append(new ALOAD(paramDom));
+                il.append(new ILOAD(paramCurrent));
+                il.append(new INVOKEINTERFACE(gns,2));
+                il.append(new PUSH(cpg, rule.getNamespace()));
+                il.append(new INVOKEVIRTUAL(strcmp));
+                il.append(ICONST_0);
+
+                if (rule.getAction() == STRIP_SPACE) {
+                    strip[sCount++] = il.append(new IF_ICMPEQ(null));
+                }
+                else {
+                    preserve[pCount++] = il.append(new IF_ICMPEQ(null));
+                }
+            }
+            // Handle elements="ns:el" type rule
+            else if (rule.getStrength() == RULE_ELEMENT) {
+                // Create the QName for the element
+                final Parser parser = classGen.getParser();
+                QName qname;
+                if (rule.getNamespace() != Constants.EMPTYSTRING )
+                    qname = parser.getQName(rule.getNamespace(), null,
+                                            rule.getElement());
+                else
+                    qname = parser.getQName(rule.getElement());
+
+                // Register the element.
+                final int elementType = xsltc.registerElement(qname);
+                il.append(new ILOAD(paramType));
+                il.append(new PUSH(cpg, elementType));
+
+                // Compare current node type with wanted element type
+                if (rule.getAction() == STRIP_SPACE)
+                    strip[sCount++] = il.append(new IF_ICMPEQ(null));
+                else
+                    preserve[pCount++] = il.append(new IF_ICMPEQ(null));
+            }
+        }
+
+        if (defaultAction == STRIP_SPACE) {
+            compileStripSpace(strip, sCount, il);
+            compilePreserveSpace(preserve, pCount, il);
+        }
+        else {
+            compilePreserveSpace(preserve, pCount, il);
+            compileStripSpace(strip, sCount, il);
+        }
+
+        classGen.addMethod(stripSpace);
+    }
+
+    /**
+     * Compiles the predicate method
+     */
+    private static void compileDefault(int defaultAction,
+                                       ClassGenerator classGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = new InstructionList();
+        final XSLTC xsltc = classGen.getParser().getXSLTC();
+
+        // private boolean Translet.stripSpace(int type) - cannot be static
+        final MethodGenerator stripSpace =
+            new MethodGenerator(ACC_PUBLIC | ACC_FINAL ,
+                        com.sun.org.apache.bcel.internal.generic.Type.BOOLEAN,
+                        new com.sun.org.apache.bcel.internal.generic.Type[] {
+                            Util.getJCRefType(DOM_INTF_SIG),
+                            com.sun.org.apache.bcel.internal.generic.Type.INT,
+                            com.sun.org.apache.bcel.internal.generic.Type.INT
+                        },
+                        new String[] { "dom","node","type" },
+                        "stripSpace",classGen.getClassName(),il,cpg);
+
+        classGen.addInterface("com/sun/org/apache/xalan/internal/xsltc/StripFilter");
+
+        if (defaultAction == STRIP_SPACE)
+            il.append(ICONST_1);
+        else
+            il.append(ICONST_0);
+        il.append(IRETURN);
+
+        classGen.addMethod(stripSpace);
+    }
+
+
+    /**
+     * Takes a vector of WhitespaceRule objects and generates a predicate
+     * method. This method returns the translets default action for handling
+     * whitespace text-nodes:
+     *    - USE_PREDICATE  (run the method generated by this method)
+     *    - STRIP_SPACE    (always strip whitespace text-nodes)
+     *    - PRESERVE_SPACE (always preserve whitespace text-nodes)
+     */
+    public static int translateRules(Vector rules,
+                                     ClassGenerator classGen) {
+        // Get the core rules in prioritized order
+        final int defaultAction = prioritizeRules(rules);
+        // The rules vector may be empty after prioritising
+        if (rules.size() == 0) {
+            compileDefault(defaultAction,classGen);
+            return defaultAction;
+        }
+        // Now - create a predicate method and sequence through rules...
+        compilePredicate(rules, defaultAction, classGen);
+        // Return with the translets required action (
+        return USE_PREDICATE;
+    }
+
+    /**
+     * Sorts a range of rules with regard to PRIORITY only
+     */
+    private static void quicksort(Vector rules, int p, int r) {
+        while (p < r) {
+            final int q = partition(rules, p, r);
+            quicksort(rules, p, q);
+            p = q + 1;
+        }
+    }
+
+    /**
+     * Used with quicksort method above
+     */
+    private static int partition(Vector rules, int p, int r) {
+        final WhitespaceRule x = (WhitespaceRule)rules.elementAt((p+r) >>> 1);
+        int i = p - 1, j = r + 1;
+        while (true) {
+            while (x.compareTo((WhitespaceRule)rules.elementAt(--j)) < 0) {
+            }
+            while (x.compareTo((WhitespaceRule)rules.elementAt(++i)) > 0) {
+            }
+            if (i < j) {
+                final WhitespaceRule tmp = (WhitespaceRule)rules.elementAt(i);
+                rules.setElementAt(rules.elementAt(j), i);
+                rules.setElementAt(tmp, j);
+            }
+            else {
+                return j;
+            }
+        }
+    }
+
+    /**
+     * Type-check contents/attributes - nothing to do...
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        return Type.Void; // We don't return anything.
+    }
+
+    /**
+     * This method should not produce any code
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+    }
+}

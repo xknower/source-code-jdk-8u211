@@ -1,13 +1,43 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.event;
 
-import java.util.EventListener;
+import javax.swing.undo.*;
 
-public interface UndoableEditListener extends EventListener {
-  void undoableEditHappened(UndoableEditEvent paramUndoableEditEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\UndoableEditListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Interface implemented by a class interested in hearing about
+ * undoable operations.
+ *
+ * @author Ray Ryan
  */
+
+public interface UndoableEditListener extends java.util.EventListener {
+
+    /**
+     * An undoable edit happened
+     */
+    void undoableEditHappened(UndoableEditEvent e);
+}

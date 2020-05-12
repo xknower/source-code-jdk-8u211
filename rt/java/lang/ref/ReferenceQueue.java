@@ -1,201 +1,196 @@
-/*     */ package java.lang.ref;
-/*     */ 
-/*     */ import java.lang.ref.Reference;
-/*     */ import java.lang.ref.ReferenceQueue;
-/*     */ import java.util.function.Consumer;
-/*     */ import sun.misc.VM;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ReferenceQueue<T>
-/*     */ {
-/*     */   private static class Null<S>
-/*     */     extends ReferenceQueue<S>
-/*     */   {
-/*     */     private Null() {}
-/*     */     
-/*     */     boolean enqueue(Reference<? extends S> param1Reference) {
-/*  47 */       return false;
-/*     */     }
-/*     */   }
-/*     */   
-/*  51 */   static ReferenceQueue<Object> NULL = new Null();
-/*  52 */   static ReferenceQueue<Object> ENQUEUED = new Null();
-/*     */ 
-/*     */   
-/*  55 */   private Lock lock = new Lock(); private static class Lock {
-/*  56 */     private Lock() {} } private volatile Reference<? extends T> head = null;
-/*  57 */   private long queueLength = 0L;
-/*     */   
-/*     */   boolean enqueue(Reference<? extends T> paramReference) {
-/*  60 */     synchronized (this.lock) {
-/*     */ 
-/*     */       
-/*  63 */       ReferenceQueue<? super T> referenceQueue = paramReference.queue;
-/*  64 */       if (referenceQueue == NULL || referenceQueue == ENQUEUED) {
-/*  65 */         return false;
-/*     */       }
-/*  67 */       assert referenceQueue == this;
-/*  68 */       paramReference.queue = (ReferenceQueue)ENQUEUED;
-/*  69 */       paramReference.next = (this.head == null) ? paramReference : this.head;
-/*  70 */       this.head = paramReference;
-/*  71 */       this.queueLength++;
-/*  72 */       if (paramReference instanceof FinalReference) {
-/*  73 */         VM.addFinalRefCount(1);
-/*     */       }
-/*  75 */       this.lock.notifyAll();
-/*  76 */       return true;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private Reference<? extends T> reallyPoll() {
-/*  81 */     Reference<? extends T> reference = this.head;
-/*  82 */     if (reference != null) {
-/*     */       
-/*  84 */       Reference<? extends T> reference1 = reference.next;
-/*  85 */       this.head = (reference1 == reference) ? null : reference1;
-/*  86 */       reference.queue = (ReferenceQueue)NULL;
-/*  87 */       reference.next = reference;
-/*  88 */       this.queueLength--;
-/*  89 */       if (reference instanceof FinalReference) {
-/*  90 */         VM.addFinalRefCount(-1);
-/*     */       }
-/*  92 */       return reference;
-/*     */     } 
-/*  94 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Reference<? extends T> poll() {
-/* 106 */     if (this.head == null)
-/* 107 */       return null; 
-/* 108 */     synchronized (this.lock) {
-/* 109 */       return reallyPoll();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Reference<? extends T> remove(long paramLong) throws IllegalArgumentException, InterruptedException {
-/* 136 */     if (paramLong < 0L) {
-/* 137 */       throw new IllegalArgumentException("Negative timeout value");
-/*     */     }
-/* 139 */     synchronized (this.lock) {
-/* 140 */       Reference<? extends T> reference = reallyPoll();
-/* 141 */       if (reference != null) return reference; 
-/* 142 */       long l = (paramLong == 0L) ? 0L : System.nanoTime();
-/*     */       while (true) {
-/* 144 */         this.lock.wait(paramLong);
-/* 145 */         reference = reallyPoll();
-/* 146 */         if (reference != null) return reference; 
-/* 147 */         if (paramLong != 0L) {
-/* 148 */           long l1 = System.nanoTime();
-/* 149 */           paramLong -= (l1 - l) / 1000000L;
-/* 150 */           if (paramLong <= 0L) return null; 
-/* 151 */           l = l1;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Reference<? extends T> remove() throws InterruptedException {
-/* 165 */     return remove(0L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void forEach(Consumer<? super Reference<? extends T>> paramConsumer) {
-/* 177 */     for (Reference<? extends T> reference = this.head; reference != null; ) {
-/* 178 */       paramConsumer.accept(reference);
-/*     */       
-/* 180 */       Reference<? extends T> reference1 = reference.next;
-/* 181 */       if (reference1 == reference) {
-/* 182 */         if (reference.queue == ENQUEUED) {
-/*     */           
-/* 184 */           reference = null;
-/*     */           
-/*     */           continue;
-/*     */         } 
-/* 188 */         reference = this.head;
-/*     */         
-/*     */         continue;
-/*     */       } 
-/* 192 */       reference = reference1;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\ref\ReferenceQueue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.ref;
+
+import java.util.function.Consumer;
+
+/**
+ * Reference queues, to which registered reference objects are appended by the
+ * garbage collector after the appropriate reachability changes are detected.
+ *
+ * @author   Mark Reinhold
+ * @since    1.2
+ */
+
+public class ReferenceQueue<T> {
+
+    /**
+     * Constructs a new reference-object queue.
+     */
+    public ReferenceQueue() { }
+
+    private static class Null<S> extends ReferenceQueue<S> {
+        boolean enqueue(Reference<? extends S> r) {
+            return false;
+        }
+    }
+
+    static ReferenceQueue<Object> NULL = new Null<>();
+    static ReferenceQueue<Object> ENQUEUED = new Null<>();
+
+    static private class Lock { };
+    private Lock lock = new Lock();
+    private volatile Reference<? extends T> head = null;
+    private long queueLength = 0;
+
+    boolean enqueue(Reference<? extends T> r) { /* Called only by Reference class */
+        synchronized (lock) {
+            // Check that since getting the lock this reference hasn't already been
+            // enqueued (and even then removed)
+            ReferenceQueue<?> queue = r.queue;
+            if ((queue == NULL) || (queue == ENQUEUED)) {
+                return false;
+            }
+            assert queue == this;
+            r.queue = ENQUEUED;
+            r.next = (head == null) ? r : head;
+            head = r;
+            queueLength++;
+            if (r instanceof FinalReference) {
+                sun.misc.VM.addFinalRefCount(1);
+            }
+            lock.notifyAll();
+            return true;
+        }
+    }
+
+    private Reference<? extends T> reallyPoll() {       /* Must hold lock */
+        Reference<? extends T> r = head;
+        if (r != null) {
+            @SuppressWarnings("unchecked")
+            Reference<? extends T> rn = r.next;
+            head = (rn == r) ? null : rn;
+            r.queue = NULL;
+            r.next = r;
+            queueLength--;
+            if (r instanceof FinalReference) {
+                sun.misc.VM.addFinalRefCount(-1);
+            }
+            return r;
+        }
+        return null;
+    }
+
+    /**
+     * Polls this queue to see if a reference object is available.  If one is
+     * available without further delay then it is removed from the queue and
+     * returned.  Otherwise this method immediately returns <tt>null</tt>.
+     *
+     * @return  A reference object, if one was immediately available,
+     *          otherwise <code>null</code>
+     */
+    public Reference<? extends T> poll() {
+        if (head == null)
+            return null;
+        synchronized (lock) {
+            return reallyPoll();
+        }
+    }
+
+    /**
+     * Removes the next reference object in this queue, blocking until either
+     * one becomes available or the given timeout period expires.
+     *
+     * <p> This method does not offer real-time guarantees: It schedules the
+     * timeout as if by invoking the {@link Object#wait(long)} method.
+     *
+     * @param  timeout  If positive, block for up to <code>timeout</code>
+     *                  milliseconds while waiting for a reference to be
+     *                  added to this queue.  If zero, block indefinitely.
+     *
+     * @return  A reference object, if one was available within the specified
+     *          timeout period, otherwise <code>null</code>
+     *
+     * @throws  IllegalArgumentException
+     *          If the value of the timeout argument is negative
+     *
+     * @throws  InterruptedException
+     *          If the timeout wait is interrupted
+     */
+    public Reference<? extends T> remove(long timeout)
+        throws IllegalArgumentException, InterruptedException
+    {
+        if (timeout < 0) {
+            throw new IllegalArgumentException("Negative timeout value");
+        }
+        synchronized (lock) {
+            Reference<? extends T> r = reallyPoll();
+            if (r != null) return r;
+            long start = (timeout == 0) ? 0 : System.nanoTime();
+            for (;;) {
+                lock.wait(timeout);
+                r = reallyPoll();
+                if (r != null) return r;
+                if (timeout != 0) {
+                    long end = System.nanoTime();
+                    timeout -= (end - start) / 1000_000;
+                    if (timeout <= 0) return null;
+                    start = end;
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes the next reference object in this queue, blocking until one
+     * becomes available.
+     *
+     * @return A reference object, blocking until one becomes available
+     * @throws  InterruptedException  If the wait is interrupted
+     */
+    public Reference<? extends T> remove() throws InterruptedException {
+        return remove(0);
+    }
+
+    /**
+     * Iterate queue and invoke given action with each Reference.
+     * Suitable for diagnostic purposes.
+     * WARNING: any use of this method should make sure to not
+     * retain the referents of iterated references (in case of
+     * FinalReference(s)) so that their life is not prolonged more
+     * than necessary.
+     */
+    void forEach(Consumer<? super Reference<? extends T>> action) {
+        for (Reference<? extends T> r = head; r != null;) {
+            action.accept(r);
+            @SuppressWarnings("unchecked")
+            Reference<? extends T> rn = r.next;
+            if (rn == r) {
+                if (r.queue == ENQUEUED) {
+                    // still enqueued -> we reached end of chain
+                    r = null;
+                } else {
+                    // already dequeued: r.queue == NULL; ->
+                    // restart from head when overtaken by queue poller(s)
+                    r = head;
+                }
+            } else {
+                // next in chain
+                r = rn;
+            }
+        }
+    }
+}

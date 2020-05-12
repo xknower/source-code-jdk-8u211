@@ -1,11 +1,40 @@
+/*
+ * Copyright (c) 1998, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package org.omg.CORBA;
 
-public interface UNSUPPORTED_POLICY {
-  public static final short value = 1;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\UNSUPPORTED_POLICY.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * One of the <tt>PolicyErrorCode</tt>s which would be filled if
+ * the requested <tt>Policy</tt> is understood to be valid by the
+ * ORB, but is not currently supported.
+ *
+ * @author rip-dev
  */
+public interface UNSUPPORTED_POLICY {
+    /**
+     *  The Error code for PolicyError exception.
+     */
+    final short value = (short) (1L);
+};

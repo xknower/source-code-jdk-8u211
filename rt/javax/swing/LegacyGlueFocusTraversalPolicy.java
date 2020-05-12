@@ -1,206 +1,200 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.FocusTraversalPolicy;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.HashSet;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class LegacyGlueFocusTraversalPolicy
-/*     */   extends FocusTraversalPolicy
-/*     */   implements Serializable
-/*     */ {
-/*     */   private transient FocusTraversalPolicy delegatePolicy;
-/*     */   private transient DefaultFocusManager delegateManager;
-/*  51 */   private HashMap<Component, Component> forwardMap = new HashMap<>(), backwardMap = new HashMap<>();
-/*     */ 
-/*     */   
-/*     */   LegacyGlueFocusTraversalPolicy(FocusTraversalPolicy paramFocusTraversalPolicy) {
-/*  55 */     this.delegatePolicy = paramFocusTraversalPolicy;
-/*     */   }
-/*     */   LegacyGlueFocusTraversalPolicy(DefaultFocusManager paramDefaultFocusManager) {
-/*  58 */     this.delegateManager = paramDefaultFocusManager;
-/*     */   }
-/*     */   
-/*     */   void setNextFocusableComponent(Component paramComponent1, Component paramComponent2) {
-/*  62 */     this.forwardMap.put(paramComponent1, paramComponent2);
-/*  63 */     this.backwardMap.put(paramComponent2, paramComponent1);
-/*     */   }
-/*     */   void unsetNextFocusableComponent(Component paramComponent1, Component paramComponent2) {
-/*  66 */     this.forwardMap.remove(paramComponent1);
-/*  67 */     this.backwardMap.remove(paramComponent2);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Component getComponentAfter(Container paramContainer, Component paramComponent) {
-/*  72 */     Component component = paramComponent;
-/*  73 */     HashSet<Component> hashSet = new HashSet();
-/*     */     
-/*     */     do {
-/*  76 */       Component component1 = component;
-/*  77 */       component = this.forwardMap.get(component);
-/*  78 */       if (component == null) {
-/*  79 */         if (this.delegatePolicy != null && component1
-/*  80 */           .isFocusCycleRoot(paramContainer)) {
-/*  81 */           return this.delegatePolicy.getComponentAfter(paramContainer, component1);
-/*     */         }
-/*  83 */         if (this.delegateManager != null) {
-/*  84 */           return this.delegateManager
-/*  85 */             .getComponentAfter(paramContainer, paramComponent);
-/*     */         }
-/*  87 */         return null;
-/*     */       } 
-/*     */       
-/*  90 */       if (hashSet.contains(component))
-/*     */       {
-/*  92 */         return null;
-/*     */       }
-/*  94 */       hashSet.add(component);
-/*  95 */     } while (!accept(component));
-/*     */     
-/*  97 */     return component;
-/*     */   }
-/*     */   
-/*     */   public Component getComponentBefore(Container paramContainer, Component paramComponent) {
-/* 101 */     Component component = paramComponent;
-/* 102 */     HashSet<Component> hashSet = new HashSet();
-/*     */     
-/*     */     do {
-/* 105 */       Component component1 = component;
-/* 106 */       component = this.backwardMap.get(component);
-/* 107 */       if (component == null) {
-/* 108 */         if (this.delegatePolicy != null && component1
-/* 109 */           .isFocusCycleRoot(paramContainer)) {
-/* 110 */           return this.delegatePolicy.getComponentBefore(paramContainer, component1);
-/*     */         }
-/* 112 */         if (this.delegateManager != null) {
-/* 113 */           return this.delegateManager
-/* 114 */             .getComponentBefore(paramContainer, paramComponent);
-/*     */         }
-/* 116 */         return null;
-/*     */       } 
-/*     */       
-/* 119 */       if (hashSet.contains(component))
-/*     */       {
-/* 121 */         return null;
-/*     */       }
-/* 123 */       hashSet.add(component);
-/* 124 */     } while (!accept(component));
-/*     */     
-/* 126 */     return component;
-/*     */   }
-/*     */   public Component getFirstComponent(Container paramContainer) {
-/* 129 */     if (this.delegatePolicy != null)
-/* 130 */       return this.delegatePolicy.getFirstComponent(paramContainer); 
-/* 131 */     if (this.delegateManager != null) {
-/* 132 */       return this.delegateManager.getFirstComponent(paramContainer);
-/*     */     }
-/* 134 */     return null;
-/*     */   }
-/*     */   
-/*     */   public Component getLastComponent(Container paramContainer) {
-/* 138 */     if (this.delegatePolicy != null)
-/* 139 */       return this.delegatePolicy.getLastComponent(paramContainer); 
-/* 140 */     if (this.delegateManager != null) {
-/* 141 */       return this.delegateManager.getLastComponent(paramContainer);
-/*     */     }
-/* 143 */     return null;
-/*     */   }
-/*     */   
-/*     */   public Component getDefaultComponent(Container paramContainer) {
-/* 147 */     if (this.delegatePolicy != null) {
-/* 148 */       return this.delegatePolicy.getDefaultComponent(paramContainer);
-/*     */     }
-/* 150 */     return getFirstComponent(paramContainer);
-/*     */   }
-/*     */   
-/*     */   private boolean accept(Component paramComponent) {
-/* 154 */     if (!paramComponent.isVisible() || !paramComponent.isDisplayable() || 
-/* 155 */       !paramComponent.isFocusable() || !paramComponent.isEnabled()) {
-/* 156 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 162 */     if (!(paramComponent instanceof java.awt.Window)) {
-/* 163 */       Container container = paramComponent.getParent();
-/* 164 */       for (; container != null; 
-/* 165 */         container = container.getParent()) {
-/*     */         
-/* 167 */         if (!container.isEnabled() && !container.isLightweight()) {
-/* 168 */           return false;
-/*     */         }
-/* 170 */         if (container instanceof java.awt.Window) {
-/*     */           break;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 176 */     return true;
-/*     */   }
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 179 */     paramObjectOutputStream.defaultWriteObject();
-/*     */     
-/* 181 */     if (this.delegatePolicy instanceof Serializable) {
-/* 182 */       paramObjectOutputStream.writeObject(this.delegatePolicy);
-/*     */     } else {
-/* 184 */       paramObjectOutputStream.writeObject(null);
-/*     */     } 
-/*     */     
-/* 187 */     if (this.delegateManager instanceof Serializable) {
-/* 188 */       paramObjectOutputStream.writeObject(this.delegateManager);
-/*     */     } else {
-/* 190 */       paramObjectOutputStream.writeObject(null);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 196 */     paramObjectInputStream.defaultReadObject();
-/* 197 */     this.delegatePolicy = (FocusTraversalPolicy)paramObjectInputStream.readObject();
-/* 198 */     this.delegateManager = (DefaultFocusManager)paramObjectInputStream.readObject();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\LegacyGlueFocusTraversalPolicy.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.awt.FocusTraversalPolicy;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Window;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.io.*;
+
+
+/**
+ * A FocusTraversalPolicy which provides support for legacy applications which
+ * handle focus traversal via JComponent.setNextFocusableComponent or by
+ * installing a custom DefaultFocusManager. If a specific traversal has not
+ * been hard coded, then that traversal is provided either by the custom
+ * DefaultFocusManager, or by a wrapped FocusTraversalPolicy instance.
+ *
+ * @author David Mendenhall
+ */
+final class LegacyGlueFocusTraversalPolicy extends FocusTraversalPolicy
+    implements Serializable
+{
+    private transient FocusTraversalPolicy delegatePolicy;
+    private transient DefaultFocusManager delegateManager;
+
+    private HashMap<Component, Component> forwardMap = new HashMap<Component, Component>(),
+        backwardMap = new HashMap<Component, Component>();
+
+    LegacyGlueFocusTraversalPolicy(FocusTraversalPolicy delegatePolicy) {
+        this.delegatePolicy = delegatePolicy;
+    }
+    LegacyGlueFocusTraversalPolicy(DefaultFocusManager delegateManager) {
+        this.delegateManager = delegateManager;
+    }
+
+    void setNextFocusableComponent(Component left, Component right) {
+        forwardMap.put(left, right);
+        backwardMap.put(right, left);
+    }
+    void unsetNextFocusableComponent(Component left, Component right) {
+        forwardMap.remove(left);
+        backwardMap.remove(right);
+    }
+
+    public Component getComponentAfter(Container focusCycleRoot,
+                                       Component aComponent) {
+        Component hardCoded = aComponent, prevHardCoded;
+        HashSet<Component> sanity = new HashSet<Component>();
+
+        do {
+            prevHardCoded = hardCoded;
+            hardCoded = forwardMap.get(hardCoded);
+            if (hardCoded == null) {
+                if (delegatePolicy != null &&
+                    prevHardCoded.isFocusCycleRoot(focusCycleRoot)) {
+                    return delegatePolicy.getComponentAfter(focusCycleRoot,
+                                                            prevHardCoded);
+                } else if (delegateManager != null) {
+                    return delegateManager.
+                        getComponentAfter(focusCycleRoot, aComponent);
+                } else {
+                    return null;
+                }
+            }
+            if (sanity.contains(hardCoded)) {
+                // cycle detected; bail
+                return null;
+            }
+            sanity.add(hardCoded);
+        } while (!accept(hardCoded));
+
+        return hardCoded;
+    }
+    public Component getComponentBefore(Container focusCycleRoot,
+                                        Component aComponent) {
+        Component hardCoded = aComponent, prevHardCoded;
+        HashSet<Component> sanity = new HashSet<Component>();
+
+        do {
+            prevHardCoded = hardCoded;
+            hardCoded = backwardMap.get(hardCoded);
+            if (hardCoded == null) {
+                if (delegatePolicy != null &&
+                    prevHardCoded.isFocusCycleRoot(focusCycleRoot)) {
+                    return delegatePolicy.getComponentBefore(focusCycleRoot,
+                                                       prevHardCoded);
+                } else if (delegateManager != null) {
+                    return delegateManager.
+                        getComponentBefore(focusCycleRoot, aComponent);
+                } else {
+                    return null;
+                }
+            }
+            if (sanity.contains(hardCoded)) {
+                // cycle detected; bail
+                return null;
+            }
+            sanity.add(hardCoded);
+        } while (!accept(hardCoded));
+
+        return hardCoded;
+    }
+    public Component getFirstComponent(Container focusCycleRoot) {
+        if (delegatePolicy != null) {
+            return delegatePolicy.getFirstComponent(focusCycleRoot);
+        } else if (delegateManager != null) {
+            return delegateManager.getFirstComponent(focusCycleRoot);
+        } else {
+            return null;
+        }
+    }
+    public Component getLastComponent(Container focusCycleRoot) {
+        if (delegatePolicy != null) {
+            return delegatePolicy.getLastComponent(focusCycleRoot);
+        } else if (delegateManager != null) {
+            return delegateManager.getLastComponent(focusCycleRoot);
+        } else {
+            return null;
+        }
+    }
+    public Component getDefaultComponent(Container focusCycleRoot) {
+        if (delegatePolicy != null) {
+            return delegatePolicy.getDefaultComponent(focusCycleRoot);
+        } else {
+            return getFirstComponent(focusCycleRoot);
+        }
+    }
+    private boolean accept(Component aComponent) {
+        if (!(aComponent.isVisible() && aComponent.isDisplayable() &&
+              aComponent.isFocusable() && aComponent.isEnabled())) {
+            return false;
+        }
+
+        // Verify that the Component is recursively enabled. Disabling a
+        // heavyweight Container disables its children, whereas disabling
+        // a lightweight Container does not.
+        if (!(aComponent instanceof Window)) {
+            for (Container enableTest = aComponent.getParent();
+                 enableTest != null;
+                 enableTest = enableTest.getParent())
+            {
+                if (!(enableTest.isEnabled() || enableTest.isLightweight())) {
+                    return false;
+                }
+                if (enableTest instanceof Window) {
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+
+        if (delegatePolicy instanceof Serializable) {
+            out.writeObject(delegatePolicy);
+        } else {
+            out.writeObject(null);
+        }
+
+        if (delegateManager instanceof Serializable) {
+            out.writeObject(delegateManager);
+        } else {
+            out.writeObject(null);
+        }
+    }
+    private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException
+    {
+        in.defaultReadObject();
+        delegatePolicy = (FocusTraversalPolicy)in.readObject();
+        delegateManager = (DefaultFocusManager)in.readObject();
+    }
+}

@@ -1,376 +1,370 @@
-/*     */ package java.rmi.activation;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.rmi.MarshalledObject;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Properties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ActivationGroupDesc
-/*     */   implements Serializable
-/*     */ {
-/*     */   private String className;
-/*     */   private String location;
-/*     */   private MarshalledObject<?> data;
-/*     */   private CommandEnvironment env;
-/*     */   private Properties props;
-/*     */   private static final long serialVersionUID = -4936225423168276595L;
-/*     */   
-/*     */   public ActivationGroupDesc(Properties paramProperties, CommandEnvironment paramCommandEnvironment) {
-/* 113 */     this(null, null, null, paramProperties, paramCommandEnvironment);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ActivationGroupDesc(String paramString1, String paramString2, MarshalledObject<?> paramMarshalledObject, Properties paramProperties, CommandEnvironment paramCommandEnvironment) {
-/* 140 */     this.props = paramProperties;
-/* 141 */     this.env = paramCommandEnvironment;
-/* 142 */     this.data = paramMarshalledObject;
-/* 143 */     this.location = paramString2;
-/* 144 */     this.className = paramString1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getClassName() {
-/* 155 */     return this.className;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocation() {
-/* 164 */     return this.location;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MarshalledObject<?> getData() {
-/* 173 */     return this.data;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Properties getPropertyOverrides() {
-/* 182 */     return (this.props != null) ? (Properties)this.props.clone() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CommandEnvironment getCommandEnvironment() {
-/* 191 */     return this.env;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class CommandEnvironment
-/*     */     implements Serializable
-/*     */   {
-/*     */     private static final long serialVersionUID = 6165754737887770191L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private String command;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private String[] options;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public CommandEnvironment(String param1String, String[] param1ArrayOfString) {
-/* 233 */       this.command = param1String;
-/*     */ 
-/*     */       
-/* 236 */       if (param1ArrayOfString == null) {
-/* 237 */         this.options = new String[0];
-/*     */       } else {
-/* 239 */         this.options = new String[param1ArrayOfString.length];
-/* 240 */         System.arraycopy(param1ArrayOfString, 0, this.options, 0, param1ArrayOfString.length);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public String getCommandPath() {
-/* 252 */       return this.command;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public String[] getCommandOptions() {
-/* 266 */       return (String[])this.options.clone();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public boolean equals(Object param1Object) {
-/* 279 */       if (param1Object instanceof CommandEnvironment) {
-/* 280 */         CommandEnvironment commandEnvironment = (CommandEnvironment)param1Object;
-/* 281 */         if ((this.command == null) ? (commandEnvironment.command == null) : this.command
-/*     */           
-/* 283 */           .equals(commandEnvironment.command))
-/* 284 */           if (Arrays.equals((Object[])this.options, (Object[])commandEnvironment.options));  return false;
-/*     */       } 
-/* 286 */       return false;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public int hashCode() {
-/* 299 */       return (this.command == null) ? 0 : this.command.hashCode();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private void readObject(ObjectInputStream param1ObjectInputStream) throws IOException, ClassNotFoundException {
-/* 316 */       param1ObjectInputStream.defaultReadObject();
-/* 317 */       if (this.options == null) {
-/* 318 */         this.options = new String[0];
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 333 */     if (paramObject instanceof ActivationGroupDesc) {
-/* 334 */       ActivationGroupDesc activationGroupDesc = (ActivationGroupDesc)paramObject;
-/* 335 */       if ((this.className == null) ? (activationGroupDesc.className == null) : this.className
-/*     */         
-/* 337 */         .equals(activationGroupDesc.className)) if ((this.location == null) ? (activationGroupDesc.location == null) : this.location
-/*     */           
-/* 339 */           .equals(activationGroupDesc.location)) if (((this.data == null) ? (activationGroupDesc.data == null) : this.data
-/* 340 */             .equals(activationGroupDesc.data)) && ((this.env == null) ? (activationGroupDesc.env == null) : this.env
-/* 341 */             .equals(activationGroupDesc.env)) && ((this.props == null) ? (activationGroupDesc.props == null) : this.props
-/*     */             
-/* 343 */             .equals(activationGroupDesc.props)));   return false;
-/*     */     } 
-/* 345 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 357 */     return ((this.location == null) ? 0 : (this.location
-/*     */       
-/* 359 */       .hashCode() << 24)) ^ ((this.env == null) ? 0 : (this.env
-/*     */ 
-/*     */       
-/* 362 */       .hashCode() << 16)) ^ ((this.className == null) ? 0 : (this.className
-/*     */ 
-/*     */       
-/* 365 */       .hashCode() << 8)) ^ ((this.data == null) ? 0 : this.data
-/*     */ 
-/*     */       
-/* 368 */       .hashCode());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\rmi\activation\ActivationGroupDesc.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.rmi.activation;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.rmi.MarshalledObject;
+import java.util.Arrays;
+import java.util.Properties;
+
+/**
+ * An activation group descriptor contains the information necessary to
+ * create/recreate an activation group in which to activate objects.
+ * Such a descriptor contains: <ul>
+ * <li> the group's class name,
+ * <li> the group's code location (the location of the group's class), and
+ * <li> a "marshalled" object that can contain group specific
+ * initialization data. </ul> <p>
+ *
+ * The group's class must be a concrete subclass of
+ * <code>ActivationGroup</code>. A subclass of
+ * <code>ActivationGroup</code> is created/recreated via the
+ * <code>ActivationGroup.createGroup</code> static method that invokes
+ * a special constructor that takes two arguments: <ul>
+ *
+ * <li> the group's <code>ActivationGroupID</code>, and
+ * <li> the group's initialization data (in a
+ * <code>java.rmi.MarshalledObject</code>)</ul><p>
+ *
+ * @author      Ann Wollrath
+ * @since       1.2
+ * @see         ActivationGroup
+ * @see         ActivationGroupID
+ */
+public final class ActivationGroupDesc implements Serializable {
+
+    /**
+     * @serial The group's fully package qualified class name.
+     */
+    private String className;
+
+    /**
+     * @serial The location from where to load the group's class.
+     */
+    private String location;
+
+    /**
+     * @serial The group's initialization data.
+     */
+    private MarshalledObject<?> data;
+
+    /**
+     * @serial The controlling options for executing the VM in
+     * another process.
+     */
+    private CommandEnvironment env;
+
+    /**
+     * @serial A properties map which will override those set
+     * by default in the subprocess environment.
+     */
+    private Properties props;
+
+    /** indicate compatibility with the Java 2 SDK v1.2 version of class */
+    private static final long serialVersionUID = -4936225423168276595L;
+
+    /**
+     * Constructs a group descriptor that uses the system defaults for group
+     * implementation and code location.  Properties specify Java
+     * environment overrides (which will override system properties in
+     * the group implementation's VM).  The command
+     * environment can control the exact command/options used in
+     * starting the child VM, or can be <code>null</code> to accept
+     * rmid's default.
+     *
+     * <p>This constructor will create an <code>ActivationGroupDesc</code>
+     * with a <code>null</code> group class name, which indicates the system's
+     * default <code>ActivationGroup</code> implementation.
+     *
+     * @param overrides the set of properties to set when the group is
+     * recreated.
+     * @param cmd the controlling options for executing the VM in
+     * another process (or <code>null</code>).
+     * @since 1.2
+     */
+    public ActivationGroupDesc(Properties overrides,
+                               CommandEnvironment cmd)
+    {
+        this(null, null, null, overrides, cmd);
+    }
+
+    /**
+     * Specifies an alternate group implementation and execution
+     * environment to be used for the group.
+     *
+     * @param className the group's package qualified class name or
+     * <code>null</code>. A <code>null</code> group class name indicates
+     * the system's default <code>ActivationGroup</code> implementation.
+     * @param location the location from where to load the group's
+     * class
+     * @param data the group's initialization data contained in
+     * marshalled form (could contain properties, for example)
+     * @param overrides a properties map which will override those set
+     * by default in the subprocess environment (will be translated
+     * into <code>-D</code> options), or <code>null</code>.
+     * @param cmd the controlling options for executing the VM in
+     * another process (or <code>null</code>).
+     * @since 1.2
+     */
+    public ActivationGroupDesc(String className,
+                               String location,
+                               MarshalledObject<?> data,
+                               Properties overrides,
+                               CommandEnvironment cmd)
+    {
+        this.props = overrides;
+        this.env = cmd;
+        this.data = data;
+        this.location = location;
+        this.className = className;
+    }
+
+    /**
+     * Returns the group's class name (possibly <code>null</code>).  A
+     * <code>null</code> group class name indicates the system's default
+     * <code>ActivationGroup</code> implementation.
+     * @return the group's class name
+     * @since 1.2
+     */
+    public String getClassName() {
+        return className;
+    }
+
+    /**
+     * Returns the group's code location.
+     * @return the group's code location
+     * @since 1.2
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * Returns the group's initialization data.
+     * @return the group's initialization data
+     * @since 1.2
+     */
+    public MarshalledObject<?> getData() {
+        return data;
+    }
+
+    /**
+     * Returns the group's property-override list.
+     * @return the property-override list, or <code>null</code>
+     * @since 1.2
+     */
+    public Properties getPropertyOverrides() {
+        return (props != null) ? (Properties) props.clone() : null;
+    }
+
+    /**
+     * Returns the group's command-environment control object.
+     * @return the command-environment object, or <code>null</code>
+     * @since 1.2
+     */
+    public CommandEnvironment getCommandEnvironment() {
+        return this.env;
+    }
+
+
+    /**
+     * Startup options for ActivationGroup implementations.
+     *
+     * This class allows overriding default system properties and
+     * specifying implementation-defined options for ActivationGroups.
+     * @since 1.2
+     */
+    public static class CommandEnvironment implements Serializable {
+        private static final long serialVersionUID = 6165754737887770191L;
+
+        /**
+         * @serial
+         */
+        private String command;
+
+        /**
+         * @serial
+         */
+        private String[] options;
+
+        /**
+         * Create a CommandEnvironment with all the necessary
+         * information.
+         *
+         * @param cmdpath the name of the java executable, including
+         * the full path, or <code>null</code>, meaning "use rmid's default".
+         * The named program <em>must</em> be able to accept multiple
+         * <code>-Dpropname=value</code> options (as documented for the
+         * "java" tool)
+         *
+         * @param argv extra options which will be used in creating the
+         * ActivationGroup.  Null has the same effect as an empty
+         * list.
+         * @since 1.2
+         */
+        public CommandEnvironment(String cmdpath,
+                                  String[] argv)
+        {
+            this.command = cmdpath;     // might be null
+
+            // Hold a safe copy of argv in this.options
+            if (argv == null) {
+                this.options = new String[0];
+            } else {
+                this.options = new String[argv.length];
+                System.arraycopy(argv, 0, this.options, 0, argv.length);
+            }
+        }
+
+        /**
+         * Fetch the configured path-qualified java command name.
+         *
+         * @return the configured name, or <code>null</code> if configured to
+         * accept the default
+         * @since 1.2
+         */
+        public String getCommandPath() {
+            return (this.command);
+        }
+
+        /**
+         * Fetch the configured java command options.
+         *
+         * @return An array of the command options which will be passed
+         * to the new child command by rmid.
+         * Note that rmid may add other options before or after these
+         * options, or both.
+         * Never returns <code>null</code>.
+         * @since 1.2
+         */
+        public String[] getCommandOptions() {
+            return options.clone();
+        }
+
+        /**
+         * Compares two command environments for content equality.
+         *
+         * @param       obj     the Object to compare with
+         * @return      true if these Objects are equal; false otherwise.
+         * @see         java.util.Hashtable
+         * @since 1.2
+         */
+        public boolean equals(Object obj) {
+
+            if (obj instanceof CommandEnvironment) {
+                CommandEnvironment env = (CommandEnvironment) obj;
+                return
+                    ((command == null ? env.command == null :
+                      command.equals(env.command)) &&
+                     Arrays.equals(options, env.options));
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Return identical values for similar
+         * <code>CommandEnvironment</code>s.
+         * @return an integer
+         * @see java.util.Hashtable
+         */
+        public int hashCode()
+        {
+            // hash command and ignore possibly expensive options
+            return (command == null ? 0 : command.hashCode());
+        }
+
+        /**
+         * <code>readObject</code> for custom serialization.
+         *
+         * <p>This method reads this object's serialized form for this
+         * class as follows:
+         *
+         * <p>This method first invokes <code>defaultReadObject</code> on
+         * the specified object input stream, and if <code>options</code>
+         * is <code>null</code>, then <code>options</code> is set to a
+         * zero-length array of <code>String</code>.
+         */
+        private void readObject(ObjectInputStream in)
+            throws IOException, ClassNotFoundException
+        {
+            in.defaultReadObject();
+            if (options == null) {
+                options = new String[0];
+            }
+        }
+    }
+
+    /**
+     * Compares two activation group descriptors for content equality.
+     *
+     * @param   obj     the Object to compare with
+     * @return  true if these Objects are equal; false otherwise.
+     * @see             java.util.Hashtable
+     * @since 1.2
+     */
+    public boolean equals(Object obj) {
+
+        if (obj instanceof ActivationGroupDesc) {
+            ActivationGroupDesc desc = (ActivationGroupDesc) obj;
+            return
+                ((className == null ? desc.className == null :
+                  className.equals(desc.className)) &&
+                 (location == null ? desc.location == null :
+                  location.equals(desc.location)) &&
+                 (data == null ? desc.data == null : data.equals(desc.data)) &&
+                 (env == null ? desc.env == null : env.equals(desc.env)) &&
+                 (props == null ? desc.props == null :
+                  props.equals(desc.props)));
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Produce identical numbers for similar <code>ActivationGroupDesc</code>s.
+     * @return an integer
+     * @see java.util.Hashtable
+     */
+    public int hashCode() {
+        // hash location, className, data, and env
+        // but omit props (may be expensive)
+        return ((location == null
+                    ? 0
+                    : location.hashCode() << 24) ^
+                (env == null
+                    ? 0
+                    : env.hashCode() << 16) ^
+                (className == null
+                    ? 0
+                    : className.hashCode() << 8) ^
+                (data == null
+                    ? 0
+                    : data.hashCode()));
+    }
+}

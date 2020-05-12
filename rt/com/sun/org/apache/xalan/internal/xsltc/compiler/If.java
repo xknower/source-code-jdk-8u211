@@ -1,118 +1,112 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class If
-/*     */   extends Instruction
-/*     */ {
-/*     */   private Expression _test;
-/*     */   private boolean _ignore = false;
-/*     */   
-/*     */   public void display(int indent) {
-/*  50 */     indent(indent);
-/*  51 */     Util.println("If");
-/*  52 */     indent(indent + 4);
-/*  53 */     System.out.print("test ");
-/*  54 */     Util.println(this._test.toString());
-/*  55 */     displayContents(indent + 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/*  63 */     this._test = parser.parseExpression(this, "test", null);
-/*     */ 
-/*     */     
-/*  66 */     if (this._test.isDummy()) {
-/*  67 */       reportError(this, parser, "REQUIRED_ATTR_ERR", "test");
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     
-/*  73 */     Object result = this._test.evaluateAtCompileTime();
-/*  74 */     if (result != null && result instanceof Boolean) {
-/*  75 */       this._ignore = !((Boolean)result).booleanValue();
-/*     */     }
-/*     */     
-/*  78 */     parseChildren(parser);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  87 */     if (!(this._test.typeCheck(stable) instanceof com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType)) {
-/*  88 */       this._test = new CastExpr(this._test, Type.Boolean);
-/*     */     }
-/*     */     
-/*  91 */     if (!this._ignore) {
-/*  92 */       typeCheckContents(stable);
-/*     */     }
-/*  94 */     return Type.Void;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 102 */     InstructionList il = methodGen.getInstructionList();
-/* 103 */     this._test.translateDesynthesized(classGen, methodGen);
-/*     */     
-/* 105 */     InstructionHandle truec = il.getEnd();
-/* 106 */     if (!this._ignore) {
-/* 107 */       translateContents(classGen, methodGen);
-/*     */     }
-/* 109 */     this._test.backPatchFalseList(il.append(NOP));
-/* 110 */     this._test.backPatchTrueList(truec.getNext());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\If.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: If.java,v 1.2.4.1 2005/09/01 15:39:47 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.BooleanType;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class If extends Instruction {
+
+    private Expression _test;
+    private boolean    _ignore = false;
+
+    /**
+     * Display the contents of this element
+     */
+    public void display(int indent) {
+        indent(indent);
+        Util.println("If");
+        indent(indent + IndentIncrement);
+        System.out.print("test ");
+        Util.println(_test.toString());
+        displayContents(indent + IndentIncrement);
+    }
+
+    /**
+     * Parse the "test" expression and contents of this element.
+     */
+    public void parseContents(Parser parser) {
+        // Parse the "test" expression
+        _test = parser.parseExpression(this, "test", null);
+
+        // Make sure required attribute(s) have been set
+        if (_test.isDummy()) {
+            reportError(this, parser, ErrorMsg.REQUIRED_ATTR_ERR, "test");
+            return;
+        }
+
+        // Ignore xsl:if when test is false (function-available() and
+        // element-available())
+        Object result = _test.evaluateAtCompileTime();
+        if (result != null && result instanceof Boolean) {
+            _ignore = !((Boolean) result).booleanValue();
+        }
+
+        parseChildren(parser);
+    }
+
+    /**
+     * Type-check the "test" expression and contents of this element.
+     * The contents will be ignored if we know the test will always fail.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        // Type-check the "test" expression
+        if (_test.typeCheck(stable) instanceof BooleanType == false) {
+            _test = new CastExpr(_test, Type.Boolean);
+        }
+        // Type check the element contents
+        if (!_ignore) {
+            typeCheckContents(stable);
+        }
+        return Type.Void;
+    }
+
+    /**
+     * Translate the "test" expression and contents of this element.
+     * The contents will be ignored if we know the test will always fail.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final InstructionList il = methodGen.getInstructionList();
+        _test.translateDesynthesized(classGen, methodGen);
+        // remember end of condition
+        final InstructionHandle truec = il.getEnd();
+        if (!_ignore) {
+            translateContents(classGen, methodGen);
+        }
+        _test.backPatchFalseList(il.append(NOP));
+        _test.backPatchTrueList(truec.getNext());
+    }
+}

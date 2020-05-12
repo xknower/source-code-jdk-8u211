@@ -1,228 +1,222 @@
-/*     */ package java.util.zip;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class GZIPOutputStream
-/*     */   extends DeflaterOutputStream
-/*     */ {
-/*  42 */   protected CRC32 crc = new CRC32();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int GZIP_MAGIC = 35615;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int TRAILER_SIZE = 8;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public GZIPOutputStream(OutputStream paramOutputStream, int paramInt) throws IOException {
-/*  67 */     this(paramOutputStream, paramInt, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public GZIPOutputStream(OutputStream paramOutputStream, int paramInt, boolean paramBoolean) throws IOException {
-/*  90 */     super(paramOutputStream, new Deflater(-1, true), paramInt, paramBoolean);
-/*     */ 
-/*     */     
-/*  93 */     this.usesDefaultDeflater = true;
-/*  94 */     writeHeader();
-/*  95 */     this.crc.reset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public GZIPOutputStream(OutputStream paramOutputStream) throws IOException {
-/* 109 */     this(paramOutputStream, 512, false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public GZIPOutputStream(OutputStream paramOutputStream, boolean paramBoolean) throws IOException {
-/* 131 */     this(paramOutputStream, 512, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 145 */     super.write(paramArrayOfbyte, paramInt1, paramInt2);
-/* 146 */     this.crc.update(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void finish() throws IOException {
-/* 156 */     if (!this.def.finished()) {
-/* 157 */       this.def.finish();
-/* 158 */       while (!this.def.finished()) {
-/* 159 */         int i = this.def.deflate(this.buf, 0, this.buf.length);
-/* 160 */         if (this.def.finished() && i <= this.buf.length - 8) {
-/*     */           
-/* 162 */           writeTrailer(this.buf, i);
-/* 163 */           i += 8;
-/* 164 */           this.out.write(this.buf, 0, i);
-/*     */           return;
-/*     */         } 
-/* 167 */         if (i > 0) {
-/* 168 */           this.out.write(this.buf, 0, i);
-/*     */         }
-/*     */       } 
-/*     */       
-/* 172 */       byte[] arrayOfByte = new byte[8];
-/* 173 */       writeTrailer(arrayOfByte, 0);
-/* 174 */       this.out.write(arrayOfByte);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeHeader() throws IOException {
-/* 182 */     this.out.write(new byte[] { 31, -117, 8, 0, 0, 0, 0, 0, 0, 0 });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeTrailer(byte[] paramArrayOfbyte, int paramInt) throws IOException {
-/* 201 */     writeInt((int)this.crc.getValue(), paramArrayOfbyte, paramInt);
-/* 202 */     writeInt(this.def.getTotalIn(), paramArrayOfbyte, paramInt + 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeInt(int paramInt1, byte[] paramArrayOfbyte, int paramInt2) throws IOException {
-/* 210 */     writeShort(paramInt1 & 0xFFFF, paramArrayOfbyte, paramInt2);
-/* 211 */     writeShort(paramInt1 >> 16 & 0xFFFF, paramArrayOfbyte, paramInt2 + 2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeShort(int paramInt1, byte[] paramArrayOfbyte, int paramInt2) throws IOException {
-/* 219 */     paramArrayOfbyte[paramInt2] = (byte)(paramInt1 & 0xFF);
-/* 220 */     paramArrayOfbyte[paramInt2 + 1] = (byte)(paramInt1 >> 8 & 0xFF);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\zip\GZIPOutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.zip;
+
+import java.io.OutputStream;
+import java.io.IOException;
+
+/**
+ * This class implements a stream filter for writing compressed data in
+ * the GZIP file format.
+ * @author      David Connelly
+ *
+ */
+public
+class GZIPOutputStream extends DeflaterOutputStream {
+    /**
+     * CRC-32 of uncompressed data.
+     */
+    protected CRC32 crc = new CRC32();
+
+    /*
+     * GZIP header magic number.
+     */
+    private final static int GZIP_MAGIC = 0x8b1f;
+
+    /*
+     * Trailer size in bytes.
+     *
+     */
+    private final static int TRAILER_SIZE = 8;
+
+    /**
+     * Creates a new output stream with the specified buffer size.
+     *
+     * <p>The new output stream instance is created as if by invoking
+     * the 3-argument constructor GZIPOutputStream(out, size, false).
+     *
+     * @param out the output stream
+     * @param size the output buffer size
+     * @exception IOException If an I/O error has occurred.
+     * @exception IllegalArgumentException if {@code size <= 0}
+     */
+    public GZIPOutputStream(OutputStream out, int size) throws IOException {
+        this(out, size, false);
+    }
+
+    /**
+     * Creates a new output stream with the specified buffer size and
+     * flush mode.
+     *
+     * @param out the output stream
+     * @param size the output buffer size
+     * @param syncFlush
+     *        if {@code true} invocation of the inherited
+     *        {@link DeflaterOutputStream#flush() flush()} method of
+     *        this instance flushes the compressor with flush mode
+     *        {@link Deflater#SYNC_FLUSH} before flushing the output
+     *        stream, otherwise only flushes the output stream
+     * @exception IOException If an I/O error has occurred.
+     * @exception IllegalArgumentException if {@code size <= 0}
+     *
+     * @since 1.7
+     */
+    public GZIPOutputStream(OutputStream out, int size, boolean syncFlush)
+        throws IOException
+    {
+        super(out, new Deflater(Deflater.DEFAULT_COMPRESSION, true),
+              size,
+              syncFlush);
+        usesDefaultDeflater = true;
+        writeHeader();
+        crc.reset();
+    }
+
+
+    /**
+     * Creates a new output stream with a default buffer size.
+     *
+     * <p>The new output stream instance is created as if by invoking
+     * the 2-argument constructor GZIPOutputStream(out, false).
+     *
+     * @param out the output stream
+     * @exception IOException If an I/O error has occurred.
+     */
+    public GZIPOutputStream(OutputStream out) throws IOException {
+        this(out, 512, false);
+    }
+
+    /**
+     * Creates a new output stream with a default buffer size and
+     * the specified flush mode.
+     *
+     * @param out the output stream
+     * @param syncFlush
+     *        if {@code true} invocation of the inherited
+     *        {@link DeflaterOutputStream#flush() flush()} method of
+     *        this instance flushes the compressor with flush mode
+     *        {@link Deflater#SYNC_FLUSH} before flushing the output
+     *        stream, otherwise only flushes the output stream
+     *
+     * @exception IOException If an I/O error has occurred.
+     *
+     * @since 1.7
+     */
+    public GZIPOutputStream(OutputStream out, boolean syncFlush)
+        throws IOException
+    {
+        this(out, 512, syncFlush);
+    }
+
+    /**
+     * Writes array of bytes to the compressed output stream. This method
+     * will block until all the bytes are written.
+     * @param buf the data to be written
+     * @param off the start offset of the data
+     * @param len the length of the data
+     * @exception IOException If an I/O error has occurred.
+     */
+    public synchronized void write(byte[] buf, int off, int len)
+        throws IOException
+    {
+        super.write(buf, off, len);
+        crc.update(buf, off, len);
+    }
+
+    /**
+     * Finishes writing compressed data to the output stream without closing
+     * the underlying stream. Use this method when applying multiple filters
+     * in succession to the same output stream.
+     * @exception IOException if an I/O error has occurred
+     */
+    public void finish() throws IOException {
+        if (!def.finished()) {
+            def.finish();
+            while (!def.finished()) {
+                int len = def.deflate(buf, 0, buf.length);
+                if (def.finished() && len <= buf.length - TRAILER_SIZE) {
+                    // last deflater buffer. Fit trailer at the end
+                    writeTrailer(buf, len);
+                    len = len + TRAILER_SIZE;
+                    out.write(buf, 0, len);
+                    return;
+                }
+                if (len > 0)
+                    out.write(buf, 0, len);
+            }
+            // if we can't fit the trailer at the end of the last
+            // deflater buffer, we write it separately
+            byte[] trailer = new byte[TRAILER_SIZE];
+            writeTrailer(trailer, 0);
+            out.write(trailer);
+        }
+    }
+
+    /*
+     * Writes GZIP member header.
+     */
+    private void writeHeader() throws IOException {
+        out.write(new byte[] {
+                      (byte) GZIP_MAGIC,        // Magic number (short)
+                      (byte)(GZIP_MAGIC >> 8),  // Magic number (short)
+                      Deflater.DEFLATED,        // Compression method (CM)
+                      0,                        // Flags (FLG)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Extra flags (XFLG)
+                      0                         // Operating system (OS)
+                  });
+    }
+
+    /*
+     * Writes GZIP member trailer to a byte array, starting at a given
+     * offset.
+     */
+    private void writeTrailer(byte[] buf, int offset) throws IOException {
+        writeInt((int)crc.getValue(), buf, offset); // CRC-32 of uncompr. data
+        writeInt(def.getTotalIn(), buf, offset + 4); // Number of uncompr. bytes
+    }
+
+    /*
+     * Writes integer in Intel byte order to a byte array, starting at a
+     * given offset.
+     */
+    private void writeInt(int i, byte[] buf, int offset) throws IOException {
+        writeShort(i & 0xffff, buf, offset);
+        writeShort((i >> 16) & 0xffff, buf, offset + 2);
+    }
+
+    /*
+     * Writes short integer in Intel byte order to a byte array, starting
+     * at a given offset
+     */
+    private void writeShort(int s, byte[] buf, int offset) throws IOException {
+        buf[offset] = (byte)(s & 0xff);
+        buf[offset + 1] = (byte)((s >> 8) & 0xff);
+    }
+}

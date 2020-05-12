@@ -1,276 +1,270 @@
-/*     */ package com.sun.corba.se.spi.activation;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDefHelper;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.util.Properties;
-/*     */ import org.omg.CORBA.MARSHAL;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.portable.ApplicationException;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.RemarshalException;
-/*     */ 
-/*     */ public class _RepositoryStub extends ObjectImpl implements Repository {
-/*     */   public int registerServer(ServerDef paramServerDef) throws ServerAlreadyRegistered, BadServerDefinition {
-/*  18 */     InputStream inputStream = null;
-/*     */     try {
-/*  20 */       OutputStream outputStream = _request("registerServer", true);
-/*  21 */       ServerDefHelper.write(outputStream, paramServerDef);
-/*  22 */       inputStream = _invoke(outputStream);
-/*  23 */       int i = ServerIdHelper.read(inputStream);
-/*  24 */       return i;
-/*  25 */     } catch (ApplicationException applicationException) {
-/*  26 */       inputStream = applicationException.getInputStream();
-/*  27 */       String str = applicationException.getId();
-/*  28 */       if (str.equals("IDL:activation/ServerAlreadyRegistered:1.0"))
-/*  29 */         throw ServerAlreadyRegisteredHelper.read(inputStream); 
-/*  30 */       if (str.equals("IDL:activation/BadServerDefinition:1.0")) {
-/*  31 */         throw BadServerDefinitionHelper.read(inputStream);
-/*     */       }
-/*  33 */       throw new MARSHAL(str);
-/*  34 */     } catch (RemarshalException remarshalException) {
-/*  35 */       return registerServer(paramServerDef);
-/*     */     } finally {
-/*  37 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void unregisterServer(int paramInt) throws ServerNotRegistered {
-/*  45 */     InputStream inputStream = null;
-/*     */     try {
-/*  47 */       OutputStream outputStream = _request("unregisterServer", true);
-/*  48 */       ServerIdHelper.write(outputStream, paramInt);
-/*  49 */       inputStream = _invoke(outputStream);
-/*     */       return;
-/*  51 */     } catch (ApplicationException applicationException) {
-/*  52 */       inputStream = applicationException.getInputStream();
-/*  53 */       String str = applicationException.getId();
-/*  54 */       if (str.equals("IDL:activation/ServerNotRegistered:1.0")) {
-/*  55 */         throw ServerNotRegisteredHelper.read(inputStream);
-/*     */       }
-/*  57 */       throw new MARSHAL(str);
-/*  58 */     } catch (RemarshalException remarshalException) {
-/*  59 */       unregisterServer(paramInt);
-/*     */     } finally {
-/*  61 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServerDef getServer(int paramInt) throws ServerNotRegistered {
-/*  69 */     InputStream inputStream = null;
-/*     */     try {
-/*  71 */       OutputStream outputStream = _request("getServer", true);
-/*  72 */       ServerIdHelper.write(outputStream, paramInt);
-/*  73 */       inputStream = _invoke(outputStream);
-/*  74 */       ServerDef serverDef = ServerDefHelper.read(inputStream);
-/*  75 */       return serverDef;
-/*  76 */     } catch (ApplicationException applicationException) {
-/*  77 */       inputStream = applicationException.getInputStream();
-/*  78 */       String str = applicationException.getId();
-/*  79 */       if (str.equals("IDL:activation/ServerNotRegistered:1.0")) {
-/*  80 */         throw ServerNotRegisteredHelper.read(inputStream);
-/*     */       }
-/*  82 */       throw new MARSHAL(str);
-/*  83 */     } catch (RemarshalException remarshalException) {
-/*  84 */       return getServer(paramInt);
-/*     */     } finally {
-/*  86 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isInstalled(int paramInt) throws ServerNotRegistered {
-/*  94 */     InputStream inputStream = null;
-/*     */     try {
-/*  96 */       OutputStream outputStream = _request("isInstalled", true);
-/*  97 */       ServerIdHelper.write(outputStream, paramInt);
-/*  98 */       inputStream = _invoke(outputStream);
-/*  99 */       boolean bool = inputStream.read_boolean();
-/* 100 */       return bool;
-/* 101 */     } catch (ApplicationException applicationException) {
-/* 102 */       inputStream = applicationException.getInputStream();
-/* 103 */       String str = applicationException.getId();
-/* 104 */       if (str.equals("IDL:activation/ServerNotRegistered:1.0")) {
-/* 105 */         throw ServerNotRegisteredHelper.read(inputStream);
-/*     */       }
-/* 107 */       throw new MARSHAL(str);
-/* 108 */     } catch (RemarshalException remarshalException) {
-/* 109 */       return isInstalled(paramInt);
-/*     */     } finally {
-/* 111 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void install(int paramInt) throws ServerNotRegistered, ServerAlreadyInstalled {
-/* 119 */     InputStream inputStream = null;
-/*     */     try {
-/* 121 */       OutputStream outputStream = _request("install", true);
-/* 122 */       ServerIdHelper.write(outputStream, paramInt);
-/* 123 */       inputStream = _invoke(outputStream);
-/*     */       return;
-/* 125 */     } catch (ApplicationException applicationException) {
-/* 126 */       inputStream = applicationException.getInputStream();
-/* 127 */       String str = applicationException.getId();
-/* 128 */       if (str.equals("IDL:activation/ServerNotRegistered:1.0"))
-/* 129 */         throw ServerNotRegisteredHelper.read(inputStream); 
-/* 130 */       if (str.equals("IDL:activation/ServerAlreadyInstalled:1.0")) {
-/* 131 */         throw ServerAlreadyInstalledHelper.read(inputStream);
-/*     */       }
-/* 133 */       throw new MARSHAL(str);
-/* 134 */     } catch (RemarshalException remarshalException) {
-/* 135 */       install(paramInt);
-/*     */     } finally {
-/* 137 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstall(int paramInt) throws ServerNotRegistered, ServerAlreadyUninstalled {
-/* 145 */     InputStream inputStream = null;
-/*     */     try {
-/* 147 */       OutputStream outputStream = _request("uninstall", true);
-/* 148 */       ServerIdHelper.write(outputStream, paramInt);
-/* 149 */       inputStream = _invoke(outputStream);
-/*     */       return;
-/* 151 */     } catch (ApplicationException applicationException) {
-/* 152 */       inputStream = applicationException.getInputStream();
-/* 153 */       String str = applicationException.getId();
-/* 154 */       if (str.equals("IDL:activation/ServerNotRegistered:1.0"))
-/* 155 */         throw ServerNotRegisteredHelper.read(inputStream); 
-/* 156 */       if (str.equals("IDL:activation/ServerAlreadyUninstalled:1.0")) {
-/* 157 */         throw ServerAlreadyUninstalledHelper.read(inputStream);
-/*     */       }
-/* 159 */       throw new MARSHAL(str);
-/* 160 */     } catch (RemarshalException remarshalException) {
-/* 161 */       uninstall(paramInt);
-/*     */     } finally {
-/* 163 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int[] listRegisteredServers() {
-/* 171 */     InputStream inputStream = null;
-/*     */     try {
-/* 173 */       OutputStream outputStream = _request("listRegisteredServers", true);
-/* 174 */       inputStream = _invoke(outputStream);
-/* 175 */       int[] arrayOfInt = ServerIdsHelper.read(inputStream);
-/* 176 */       return arrayOfInt;
-/* 177 */     } catch (ApplicationException applicationException) {
-/* 178 */       inputStream = applicationException.getInputStream();
-/* 179 */       String str = applicationException.getId();
-/* 180 */       throw new MARSHAL(str);
-/* 181 */     } catch (RemarshalException remarshalException) {
-/* 182 */       return listRegisteredServers();
-/*     */     } finally {
-/* 184 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] getApplicationNames() {
-/* 192 */     InputStream inputStream = null;
-/*     */     try {
-/* 194 */       OutputStream outputStream = _request("getApplicationNames", true);
-/* 195 */       inputStream = _invoke(outputStream);
-/* 196 */       String[] arrayOfString = StringSeqHelper.read(inputStream);
-/* 197 */       return arrayOfString;
-/* 198 */     } catch (ApplicationException applicationException) {
-/* 199 */       inputStream = applicationException.getInputStream();
-/* 200 */       String str = applicationException.getId();
-/* 201 */       throw new MARSHAL(str);
-/* 202 */     } catch (RemarshalException remarshalException) {
-/* 203 */       return getApplicationNames();
-/*     */     } finally {
-/* 205 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getServerID(String paramString) throws ServerNotRegistered {
-/* 213 */     InputStream inputStream = null;
-/*     */     try {
-/* 215 */       OutputStream outputStream = _request("getServerID", true);
-/* 216 */       outputStream.write_string(paramString);
-/* 217 */       inputStream = _invoke(outputStream);
-/* 218 */       int i = ServerIdHelper.read(inputStream);
-/* 219 */       return i;
-/* 220 */     } catch (ApplicationException applicationException) {
-/* 221 */       inputStream = applicationException.getInputStream();
-/* 222 */       String str = applicationException.getId();
-/* 223 */       if (str.equals("IDL:activation/ServerNotRegistered:1.0")) {
-/* 224 */         throw ServerNotRegisteredHelper.read(inputStream);
-/*     */       }
-/* 226 */       throw new MARSHAL(str);
-/* 227 */     } catch (RemarshalException remarshalException) {
-/* 228 */       return getServerID(paramString);
-/*     */     } finally {
-/* 230 */       _releaseReply(inputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/* 235 */   private static String[] __ids = new String[] { "IDL:activation/Repository:1.0" };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] _ids() {
-/* 240 */     return (String[])__ids.clone();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException {
-/* 245 */     String str = paramObjectInputStream.readUTF();
-/* 246 */     String[] arrayOfString = null;
-/* 247 */     Properties properties = null;
-/* 248 */     ORB oRB = ORB.init(arrayOfString, properties);
-/*     */     try {
-/* 250 */       Object object = oRB.string_to_object(str);
-/* 251 */       Delegate delegate = ((ObjectImpl)object)._get_delegate();
-/* 252 */       _set_delegate(delegate);
-/*     */     } finally {
-/* 254 */       oRB.destroy();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 260 */     String[] arrayOfString = null;
-/* 261 */     Properties properties = null;
-/* 262 */     ORB oRB = ORB.init(arrayOfString, properties);
-/*     */     try {
-/* 264 */       String str = oRB.object_to_string(this);
-/* 265 */       paramObjectOutputStream.writeUTF(str);
-/*     */     } finally {
-/* 267 */       oRB.destroy();
-/*     */     } 
-/*     */   }
-/*     */ }
+package com.sun.corba.se.spi.activation;
 
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\activation\_RepositoryStub.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+/**
+* com/sun/corba/se/spi/activation/_RepositoryStub.java .
+* Generated by the IDL-to-Java compiler (portable), version "3.2"
+* from c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/com/sun/corba/se/spi/activation/activation.idl
+* Monday, April 1, 2019 8:55:57 PM PDT
+*/
+
+public class _RepositoryStub extends org.omg.CORBA.portable.ObjectImpl implements com.sun.corba.se.spi.activation.Repository
+{
+
+
+  // always uninstalled.
+  public int registerServer (com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef serverDef) throws com.sun.corba.se.spi.activation.ServerAlreadyRegistered, com.sun.corba.se.spi.activation.BadServerDefinition
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("registerServer", true);
+                com.sun.corba.se.spi.activation.RepositoryPackage.ServerDefHelper.write ($out, serverDef);
+                $in = _invoke ($out);
+                int $result = com.sun.corba.se.spi.activation.ServerIdHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerAlreadyRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerAlreadyRegisteredHelper.read ($in);
+                else if (_id.equals ("IDL:activation/BadServerDefinition:1.0"))
+                    throw com.sun.corba.se.spi.activation.BadServerDefinitionHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return registerServer (serverDef        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // registerServer
+
+
+  // unregister server definition
+  public void unregisterServer (int serverId) throws com.sun.corba.se.spi.activation.ServerNotRegistered
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("unregisterServer", true);
+                com.sun.corba.se.spi.activation.ServerIdHelper.write ($out, serverId);
+                $in = _invoke ($out);
+                return;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerNotRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                unregisterServer (serverId        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // unregisterServer
+
+
+  // get server definition
+  public com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef getServer (int serverId) throws com.sun.corba.se.spi.activation.ServerNotRegistered
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("getServer", true);
+                com.sun.corba.se.spi.activation.ServerIdHelper.write ($out, serverId);
+                $in = _invoke ($out);
+                com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef $result = com.sun.corba.se.spi.activation.RepositoryPackage.ServerDefHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerNotRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return getServer (serverId        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // getServer
+
+
+  // Return whether the server has been installed
+  public boolean isInstalled (int serverId) throws com.sun.corba.se.spi.activation.ServerNotRegistered
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("isInstalled", true);
+                com.sun.corba.se.spi.activation.ServerIdHelper.write ($out, serverId);
+                $in = _invoke ($out);
+                boolean $result = $in.read_boolean ();
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerNotRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return isInstalled (serverId        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // isInstalled
+
+
+  // if the server is currently marked as installed.
+  public void install (int serverId) throws com.sun.corba.se.spi.activation.ServerNotRegistered, com.sun.corba.se.spi.activation.ServerAlreadyInstalled
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("install", true);
+                com.sun.corba.se.spi.activation.ServerIdHelper.write ($out, serverId);
+                $in = _invoke ($out);
+                return;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerNotRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.read ($in);
+                else if (_id.equals ("IDL:activation/ServerAlreadyInstalled:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerAlreadyInstalledHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                install (serverId        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // install
+
+
+  // if the server is currently marked as uninstalled.
+  public void uninstall (int serverId) throws com.sun.corba.se.spi.activation.ServerNotRegistered, com.sun.corba.se.spi.activation.ServerAlreadyUninstalled
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("uninstall", true);
+                com.sun.corba.se.spi.activation.ServerIdHelper.write ($out, serverId);
+                $in = _invoke ($out);
+                return;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerNotRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.read ($in);
+                else if (_id.equals ("IDL:activation/ServerAlreadyUninstalled:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerAlreadyUninstalledHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                uninstall (serverId        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // uninstall
+
+
+  // list registered servers
+  public int[] listRegisteredServers ()
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("listRegisteredServers", true);
+                $in = _invoke ($out);
+                int $result[] = com.sun.corba.se.spi.activation.ServerIdsHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return listRegisteredServers (        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // listRegisteredServers
+
+
+  // servers.
+  public String[] getApplicationNames ()
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("getApplicationNames", true);
+                $in = _invoke ($out);
+                String $result[] = com.sun.corba.se.spi.activation.RepositoryPackage.StringSeqHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return getApplicationNames (        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // getApplicationNames
+
+
+  // Find the ServerID associated with the given application name.
+  public int getServerID (String applicationName) throws com.sun.corba.se.spi.activation.ServerNotRegistered
+  {
+            org.omg.CORBA.portable.InputStream $in = null;
+            try {
+                org.omg.CORBA.portable.OutputStream $out = _request ("getServerID", true);
+                $out.write_string (applicationName);
+                $in = _invoke ($out);
+                int $result = com.sun.corba.se.spi.activation.ServerIdHelper.read ($in);
+                return $result;
+            } catch (org.omg.CORBA.portable.ApplicationException $ex) {
+                $in = $ex.getInputStream ();
+                String _id = $ex.getId ();
+                if (_id.equals ("IDL:activation/ServerNotRegistered:1.0"))
+                    throw com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.read ($in);
+                else
+                    throw new org.omg.CORBA.MARSHAL (_id);
+            } catch (org.omg.CORBA.portable.RemarshalException $rm) {
+                return getServerID (applicationName        );
+            } finally {
+                _releaseReply ($in);
+            }
+  } // getServerID
+
+  // Type-specific CORBA::Object operations
+  private static String[] __ids = {
+    "IDL:activation/Repository:1.0"};
+
+  public String[] _ids ()
+  {
+    return (String[])__ids.clone ();
+  }
+
+  private void readObject (java.io.ObjectInputStream s) throws java.io.IOException
+  {
+     String str = s.readUTF ();
+     String[] args = null;
+     java.util.Properties props = null;
+     org.omg.CORBA.ORB orb = org.omg.CORBA.ORB.init (args, props);
+   try {
+     org.omg.CORBA.Object obj = orb.string_to_object (str);
+     org.omg.CORBA.portable.Delegate delegate = ((org.omg.CORBA.portable.ObjectImpl) obj)._get_delegate ();
+     _set_delegate (delegate);
+   } finally {
+     orb.destroy() ;
+   }
+  }
+
+  private void writeObject (java.io.ObjectOutputStream s) throws java.io.IOException
+  {
+     String[] args = null;
+     java.util.Properties props = null;
+     org.omg.CORBA.ORB orb = org.omg.CORBA.ORB.init (args, props);
+   try {
+     String str = orb.object_to_string (this);
+     s.writeUTF (str);
+   } finally {
+     orb.destroy() ;
+   }
+  }
+} // class _RepositoryStub

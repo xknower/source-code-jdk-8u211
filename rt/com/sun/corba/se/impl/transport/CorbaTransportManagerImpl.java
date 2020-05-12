@@ -1,259 +1,255 @@
-/*     */ package com.sun.corba.se.impl.transport;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.oa.poa.Policies;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.pept.transport.Acceptor;
-/*     */ import com.sun.corba.se.pept.transport.ByteBufferPool;
-/*     */ import com.sun.corba.se.pept.transport.ConnectionCache;
-/*     */ import com.sun.corba.se.pept.transport.ContactInfo;
-/*     */ import com.sun.corba.se.pept.transport.InboundConnectionCache;
-/*     */ import com.sun.corba.se.pept.transport.OutboundConnectionCache;
-/*     */ import com.sun.corba.se.pept.transport.Selector;
-/*     */ import com.sun.corba.se.spi.ior.IORTemplate;
-/*     */ import com.sun.corba.se.spi.ior.ObjectAdapterId;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.transport.CorbaAcceptor;
-/*     */ import com.sun.corba.se.spi.transport.CorbaTransportManager;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collection;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CorbaTransportManagerImpl
-/*     */   implements CorbaTransportManager
-/*     */ {
-/*     */   protected ORB orb;
-/*     */   protected List acceptors;
-/*     */   protected Map outboundConnectionCaches;
-/*     */   protected Map inboundConnectionCaches;
-/*     */   protected Selector selector;
-/*     */   
-/*     */   public CorbaTransportManagerImpl(ORB paramORB) {
-/*  75 */     this.orb = paramORB;
-/*  76 */     this.acceptors = new ArrayList();
-/*  77 */     this.outboundConnectionCaches = new HashMap<>();
-/*  78 */     this.inboundConnectionCaches = new HashMap<>();
-/*  79 */     this.selector = new SelectorImpl(paramORB);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBufferPool getByteBufferPool(int paramInt) {
-/*  89 */     throw new RuntimeException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutboundConnectionCache getOutboundConnectionCache(ContactInfo paramContactInfo) {
-/*  95 */     synchronized (paramContactInfo) {
-/*  96 */       if (paramContactInfo.getConnectionCache() == null) {
-/*  97 */         OutboundConnectionCache outboundConnectionCache = null;
-/*  98 */         synchronized (this.outboundConnectionCaches) {
-/*     */           
-/* 100 */           outboundConnectionCache = (OutboundConnectionCache)this.outboundConnectionCaches.get(paramContactInfo
-/* 101 */               .getConnectionCacheType());
-/* 102 */           if (outboundConnectionCache == null) {
-/*     */ 
-/*     */             
-/* 105 */             outboundConnectionCache = new CorbaOutboundConnectionCacheImpl(this.orb, paramContactInfo);
-/*     */ 
-/*     */             
-/* 108 */             this.outboundConnectionCaches.put(paramContactInfo
-/* 109 */                 .getConnectionCacheType(), outboundConnectionCache);
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 113 */         paramContactInfo.setConnectionCache(outboundConnectionCache);
-/*     */       } 
-/* 115 */       return paramContactInfo.getConnectionCache();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Collection getOutboundConnectionCaches() {
-/* 121 */     return this.outboundConnectionCaches.values();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InboundConnectionCache getInboundConnectionCache(Acceptor paramAcceptor) {
-/* 127 */     synchronized (paramAcceptor) {
-/* 128 */       if (paramAcceptor.getConnectionCache() == null) {
-/* 129 */         InboundConnectionCache inboundConnectionCache = null;
-/* 130 */         synchronized (this.inboundConnectionCaches) {
-/*     */           
-/* 132 */           inboundConnectionCache = (InboundConnectionCache)this.inboundConnectionCaches.get(paramAcceptor
-/* 133 */               .getConnectionCacheType());
-/* 134 */           if (inboundConnectionCache == null) {
-/*     */ 
-/*     */             
-/* 137 */             inboundConnectionCache = new CorbaInboundConnectionCacheImpl(this.orb, paramAcceptor);
-/*     */ 
-/*     */             
-/* 140 */             this.inboundConnectionCaches.put(paramAcceptor
-/* 141 */                 .getConnectionCacheType(), inboundConnectionCache);
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 145 */         paramAcceptor.setConnectionCache(inboundConnectionCache);
-/*     */       } 
-/* 147 */       return paramAcceptor.getConnectionCache();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Collection getInboundConnectionCaches() {
-/* 153 */     return this.inboundConnectionCaches.values();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Selector getSelector(int paramInt) {
-/* 158 */     return this.selector;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized void registerAcceptor(Acceptor paramAcceptor) {
-/* 163 */     if (this.orb.transportDebugFlag) {
-/* 164 */       dprint(".registerAcceptor->: " + paramAcceptor);
-/*     */     }
-/* 166 */     this.acceptors.add(paramAcceptor);
-/* 167 */     if (this.orb.transportDebugFlag) {
-/* 168 */       dprint(".registerAcceptor<-: " + paramAcceptor);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Collection getAcceptors() {
-/* 174 */     return getAcceptors(null, null);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized void unregisterAcceptor(Acceptor paramAcceptor) {
-/* 179 */     this.acceptors.remove(paramAcceptor);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void close() {
-/*     */     try {
-/* 185 */       if (this.orb.transportDebugFlag) {
-/* 186 */         dprint(".close->");
-/*     */       }
-/* 188 */       for (ConnectionCache connectionCache : this.outboundConnectionCaches.values()) {
-/* 189 */         ((ConnectionCache)connectionCache).close();
-/*     */       }
-/* 191 */       for (ConnectionCache connectionCache : this.inboundConnectionCaches.values()) {
-/* 192 */         ((ConnectionCache)connectionCache).close();
-/* 193 */         unregisterAcceptor(((InboundConnectionCache)connectionCache).getAcceptor());
-/*     */       } 
-/* 195 */       getSelector(0).close();
-/*     */     } finally {
-/* 197 */       if (this.orb.transportDebugFlag) {
-/* 198 */         dprint(".close<-");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Collection getAcceptors(String paramString, ObjectAdapterId paramObjectAdapterId) {
-/* 215 */     Iterator<Acceptor> iterator = this.acceptors.iterator();
-/* 216 */     while (iterator.hasNext()) {
-/* 217 */       Acceptor acceptor = iterator.next();
-/* 218 */       if (acceptor.initialize() && 
-/* 219 */         acceptor.shouldRegisterAcceptEvent()) {
-/* 220 */         this.orb.getTransportManager().getSelector(0)
-/* 221 */           .registerForEvent(acceptor.getEventHandler());
-/*     */       }
-/*     */     } 
-/*     */     
-/* 225 */     return this.acceptors;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addToIORTemplate(IORTemplate paramIORTemplate, Policies paramPolicies, String paramString1, String paramString2, ObjectAdapterId paramObjectAdapterId) {
-/* 236 */     Iterator<CorbaAcceptor> iterator = getAcceptors(paramString2, paramObjectAdapterId).iterator();
-/* 237 */     while (iterator.hasNext()) {
-/* 238 */       CorbaAcceptor corbaAcceptor = iterator.next();
-/* 239 */       corbaAcceptor.addToIORTemplate(paramIORTemplate, paramPolicies, paramString1);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void dprint(String paramString) {
-/* 251 */     ORBUtility.dprint("CorbaTransportManagerImpl", paramString);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\transport\CorbaTransportManagerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.transport;
+
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.omg.CORBA.INITIALIZE;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.CompletionStatus;
+
+import com.sun.corba.se.pept.transport.Acceptor;
+import com.sun.corba.se.pept.transport.ConnectionCache;
+import com.sun.corba.se.pept.transport.ByteBufferPool;
+import com.sun.corba.se.pept.transport.ContactInfo;
+import com.sun.corba.se.pept.transport.InboundConnectionCache;
+import com.sun.corba.se.pept.transport.OutboundConnectionCache;
+import com.sun.corba.se.pept.transport.Selector;
+
+import com.sun.corba.se.spi.ior.IORTemplate;
+import com.sun.corba.se.spi.ior.ObjectAdapterId;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.transport.CorbaAcceptor;
+import com.sun.corba.se.spi.transport.CorbaTransportManager;
+import com.sun.corba.se.pept.transport.Connection;
+import com.sun.corba.se.pept.transport.ConnectionCache;
+
+// REVISIT - impl/poa specific:
+import com.sun.corba.se.impl.oa.poa.Policies;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+
+/**
+ * @author Harold Carr
+ */
+public class CorbaTransportManagerImpl
+    implements
+        CorbaTransportManager
+{
+    protected ORB orb;
+    protected List acceptors;
+    protected Map outboundConnectionCaches;
+    protected Map inboundConnectionCaches;
+    protected Selector selector;
+
+    public CorbaTransportManagerImpl(ORB orb)
+    {
+        this.orb = orb;
+        acceptors = new ArrayList();
+        outboundConnectionCaches = new HashMap();
+        inboundConnectionCaches = new HashMap();
+        selector = new SelectorImpl(orb);
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // pept TransportManager
+    //
+
+    public ByteBufferPool getByteBufferPool(int id)
+    {
+        throw new RuntimeException();
+    }
+
+    public OutboundConnectionCache getOutboundConnectionCache(
+        ContactInfo contactInfo)
+    {
+        synchronized (contactInfo) {
+            if (contactInfo.getConnectionCache() == null) {
+                OutboundConnectionCache connectionCache = null;
+                synchronized (outboundConnectionCaches) {
+                    connectionCache = (OutboundConnectionCache)
+                        outboundConnectionCaches.get(
+                            contactInfo.getConnectionCacheType());
+                    if (connectionCache == null) {
+                        // REVISIT: Would like to be able to configure
+                        // the connection cache type used.
+                        connectionCache =
+                            new CorbaOutboundConnectionCacheImpl(orb,
+                                                                 contactInfo);
+                        outboundConnectionCaches.put(
+                            contactInfo.getConnectionCacheType(),
+                            connectionCache);
+                    }
+                }
+                contactInfo.setConnectionCache(connectionCache);
+            }
+            return contactInfo.getConnectionCache();
+        }
+    }
+
+    public Collection getOutboundConnectionCaches()
+    {
+        return outboundConnectionCaches.values();
+    }
+
+    public InboundConnectionCache getInboundConnectionCache(
+        Acceptor acceptor)
+    {
+        synchronized (acceptor) {
+            if (acceptor.getConnectionCache() == null) {
+                InboundConnectionCache connectionCache = null;
+                synchronized (inboundConnectionCaches) {
+                    connectionCache = (InboundConnectionCache)
+                        inboundConnectionCaches.get(
+                            acceptor.getConnectionCacheType());
+                    if (connectionCache == null) {
+                        // REVISIT: Would like to be able to configure
+                        // the connection cache type used.
+                        connectionCache =
+                            new CorbaInboundConnectionCacheImpl(orb,
+                                                                acceptor);
+                        inboundConnectionCaches.put(
+                            acceptor.getConnectionCacheType(),
+                            connectionCache);
+                    }
+                }
+                acceptor.setConnectionCache(connectionCache);
+            }
+            return acceptor.getConnectionCache();
+        }
+    }
+
+    public Collection getInboundConnectionCaches()
+    {
+        return inboundConnectionCaches.values();
+    }
+
+    public Selector getSelector(int id)
+    {
+        return selector;
+    }
+
+    public synchronized void registerAcceptor(Acceptor acceptor)
+    {
+        if (orb.transportDebugFlag) {
+            dprint(".registerAcceptor->: " + acceptor);
+        }
+        acceptors.add(acceptor);
+        if (orb.transportDebugFlag) {
+            dprint(".registerAcceptor<-: " + acceptor);
+        }
+    }
+
+    public Collection getAcceptors()
+    {
+        return getAcceptors(null, null);
+    }
+
+    public synchronized void unregisterAcceptor(Acceptor acceptor)
+    {
+        acceptors.remove(acceptor);
+    }
+
+    public void close()
+    {
+        try {
+            if (orb.transportDebugFlag) {
+                dprint(".close->");
+            }
+            for (Object cc : outboundConnectionCaches.values()) {
+                ((ConnectionCache)cc).close() ;
+            }
+            for (Object icc : inboundConnectionCaches.values()) {
+                ((ConnectionCache)icc).close() ;
+                unregisterAcceptor(((InboundConnectionCache)icc).getAcceptor());
+            }
+            getSelector(0).close();
+        } finally {
+            if (orb.transportDebugFlag) {
+                dprint(".close<-");
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////
+    //
+    // CorbaTransportManager
+    //
+
+    public Collection getAcceptors(String objectAdapterManagerId,
+                                   ObjectAdapterId objectAdapterId)
+    {
+        // REVISIT - need to filter based on arguments.
+
+        // REVISIT - initialization will be moved to OA.
+        // Lazy initialization of acceptors.
+        Iterator iterator = acceptors.iterator();
+        while (iterator.hasNext()) {
+            Acceptor acceptor = (Acceptor) iterator.next();
+            if (acceptor.initialize()) {
+                if (acceptor.shouldRegisterAcceptEvent()) {
+                    orb.getTransportManager().getSelector(0)
+                        .registerForEvent(acceptor.getEventHandler());
+                }
+            }
+        }
+        return acceptors;
+    }
+
+    // REVISIT - POA specific policies
+    public void addToIORTemplate(IORTemplate iorTemplate,
+                                 Policies policies,
+                                 String codebase,
+                                 String objectAdapterManagerId,
+                                 ObjectAdapterId objectAdapterId)
+    {
+        Iterator iterator =
+            getAcceptors(objectAdapterManagerId, objectAdapterId).iterator();
+        while (iterator.hasNext()) {
+            CorbaAcceptor acceptor = (CorbaAcceptor) iterator.next();
+            acceptor.addToIORTemplate(iorTemplate, policies, codebase);
+        }
+    }
+
+
+    ////////////////////////////////////////////////////
+    //
+    // implemenation
+    //
+
+    protected void dprint(String msg)
+    {
+        ORBUtility.dprint("CorbaTransportManagerImpl", msg);
+    }
+}
+
+// End of file.

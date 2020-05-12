@@ -1,157 +1,153 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.storage.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverException;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverSpi;
-/*     */ import java.security.KeyStore;
-/*     */ import java.security.KeyStoreException;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.NoSuchElementException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class KeyStoreResolver
-/*     */   extends StorageResolverSpi
-/*     */ {
-/*  42 */   private KeyStore keyStore = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public KeyStoreResolver(KeyStore paramKeyStore) throws StorageResolverException {
-/*  51 */     this.keyStore = paramKeyStore;
-/*     */     
-/*     */     try {
-/*  54 */       paramKeyStore.aliases();
-/*  55 */     } catch (KeyStoreException keyStoreException) {
-/*  56 */       throw new StorageResolverException("generic.EmptyMessage", keyStoreException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Iterator<Certificate> getIterator() {
-/*  62 */     return new KeyStoreIterator(this.keyStore);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class KeyStoreIterator
-/*     */     implements Iterator<Certificate>
-/*     */   {
-/*  71 */     KeyStore keyStore = null;
-/*     */ 
-/*     */     
-/*  74 */     Enumeration<String> aliases = null;
-/*     */ 
-/*     */     
-/*  77 */     Certificate nextCert = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public KeyStoreIterator(KeyStore param1KeyStore) {
-/*     */       try {
-/*  86 */         this.keyStore = param1KeyStore;
-/*  87 */         this.aliases = this.keyStore.aliases();
-/*  88 */       } catch (KeyStoreException keyStoreException) {
-/*     */         
-/*  90 */         this.aliases = new Enumeration<String>() {
-/*     */             public boolean hasMoreElements() {
-/*  92 */               return false;
-/*     */             }
-/*     */             public String nextElement() {
-/*  95 */               return null;
-/*     */             }
-/*     */           };
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean hasNext() {
-/* 103 */       if (this.nextCert == null) {
-/* 104 */         this.nextCert = findNextCert();
-/*     */       }
-/*     */       
-/* 107 */       return (this.nextCert != null);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Certificate next() {
-/* 112 */       if (this.nextCert == null) {
-/*     */         
-/* 114 */         this.nextCert = findNextCert();
-/*     */         
-/* 116 */         if (this.nextCert == null) {
-/* 117 */           throw new NoSuchElementException();
-/*     */         }
-/*     */       } 
-/*     */       
-/* 121 */       Certificate certificate = this.nextCert;
-/* 122 */       this.nextCert = null;
-/* 123 */       return certificate;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void remove() {
-/* 130 */       throw new UnsupportedOperationException("Can't remove keys from KeyStore");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private Certificate findNextCert() {
-/* 136 */       while (this.aliases.hasMoreElements()) {
-/* 137 */         String str = this.aliases.nextElement();
-/*     */         try {
-/* 139 */           Certificate certificate = this.keyStore.getCertificate(str);
-/* 140 */           if (certificate != null) {
-/* 141 */             return certificate;
-/*     */           }
-/* 143 */         } catch (KeyStoreException keyStoreException) {
-/* 144 */           return null;
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 148 */       return null;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\storage\implementations\KeyStoreResolver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.storage.implementations;
+
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.Certificate;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverException;
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverSpi;
+
+/**
+ * Makes the Certificates from a JAVA {@link KeyStore} object available to the
+ * {@link com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver}.
+ */
+public class KeyStoreResolver extends StorageResolverSpi {
+
+    /** Field keyStore */
+    private KeyStore keyStore = null;
+
+    /**
+     * Constructor KeyStoreResolver
+     *
+     * @param keyStore is the keystore which contains the Certificates
+     * @throws StorageResolverException
+     */
+    public KeyStoreResolver(KeyStore keyStore) throws StorageResolverException {
+        this.keyStore = keyStore;
+        // Do a quick check on the keystore
+        try {
+            keyStore.aliases();
+        } catch (KeyStoreException ex) {
+            throw new StorageResolverException("generic.EmptyMessage", ex);
+        }
+    }
+
+    /** @inheritDoc */
+    public Iterator<Certificate> getIterator() {
+        return new KeyStoreIterator(this.keyStore);
+    }
+
+    /**
+     * Class KeyStoreIterator
+     */
+    static class KeyStoreIterator implements Iterator<Certificate> {
+
+        /** Field keyStore */
+        KeyStore keyStore = null;
+
+        /** Field aliases */
+        Enumeration<String> aliases = null;
+
+        /** Field nextCert */
+        Certificate nextCert = null;
+
+        /**
+         * Constructor KeyStoreIterator
+         *
+         * @param keyStore
+         */
+        public KeyStoreIterator(KeyStore keyStore) {
+            try {
+                this.keyStore = keyStore;
+                this.aliases = this.keyStore.aliases();
+            } catch (KeyStoreException ex) {
+                // empty Enumeration
+                this.aliases = new Enumeration<String>() {
+                    public boolean hasMoreElements() {
+                        return false;
+                    }
+                    public String nextElement() {
+                        return null;
+                    }
+                };
+            }
+        }
+
+        /** @inheritDoc */
+        public boolean hasNext() {
+            if (nextCert == null) {
+                nextCert = findNextCert();
+            }
+
+            return (nextCert != null);
+        }
+
+        /** @inheritDoc */
+        public Certificate next() {
+            if (nextCert == null) {
+                // maybe caller did not call hasNext()
+                nextCert = findNextCert();
+
+                if (nextCert == null) {
+                    throw new NoSuchElementException();
+                }
+            }
+
+            Certificate ret = nextCert;
+            nextCert = null;
+            return ret;
+        }
+
+        /**
+         * Method remove
+         */
+        public void remove() {
+            throw new UnsupportedOperationException("Can't remove keys from KeyStore");
+        }
+
+        // Find the next entry that contains a certificate and return it.
+        // In particular, this skips over entries containing symmetric keys.
+        private Certificate findNextCert() {
+            while (this.aliases.hasMoreElements()) {
+                String alias = this.aliases.nextElement();
+                try {
+                    Certificate cert = this.keyStore.getCertificate(alias);
+                    if (cert != null) {
+                        return cert;
+                    }
+                } catch (KeyStoreException ex) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+    }
+
+}

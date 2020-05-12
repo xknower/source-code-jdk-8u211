@@ -1,163 +1,157 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.lang.ref.ReferenceQueue;
-/*     */ import java.lang.ref.WeakReference;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class ActionPropertyChangeListener<T extends JComponent>
-/*     */   implements PropertyChangeListener, Serializable
-/*     */ {
-/*     */   private static ReferenceQueue<JComponent> queue;
-/*     */   private transient OwnedWeakReference<T> target;
-/*     */   private Action action;
-/*     */   
-/*     */   private static ReferenceQueue<JComponent> getQueue() {
-/*  64 */     synchronized (ActionPropertyChangeListener.class) {
-/*  65 */       if (queue == null) {
-/*  66 */         queue = new ReferenceQueue<>();
-/*     */       }
-/*     */     } 
-/*  69 */     return queue;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ActionPropertyChangeListener(T paramT, Action paramAction) {
-/*  74 */     setTarget(paramT);
-/*  75 */     this.action = paramAction;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/*  84 */     T t = getTarget();
-/*  85 */     if (t == null) {
-/*  86 */       getAction().removePropertyChangeListener(this);
-/*     */     } else {
-/*  88 */       actionPropertyChanged(t, getAction(), paramPropertyChangeEvent);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract void actionPropertyChanged(T paramT, Action paramAction, PropertyChangeEvent paramPropertyChangeEvent);
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setTarget(T paramT) {
-/* 100 */     ReferenceQueue<JComponent> referenceQueue = getQueue();
-/*     */ 
-/*     */     
-/*     */     OwnedWeakReference ownedWeakReference;
-/*     */     
-/* 105 */     while ((ownedWeakReference = (OwnedWeakReference)referenceQueue.poll()) != null) {
-/* 106 */       ActionPropertyChangeListener<?> actionPropertyChangeListener = ownedWeakReference.getOwner();
-/* 107 */       Action action = actionPropertyChangeListener.getAction();
-/* 108 */       if (action != null) {
-/* 109 */         action.removePropertyChangeListener(actionPropertyChangeListener);
-/*     */       }
-/*     */     } 
-/* 112 */     this.target = new OwnedWeakReference<>(paramT, (ReferenceQueue)referenceQueue, this);
-/*     */   }
-/*     */   
-/*     */   public T getTarget() {
-/* 116 */     if (this.target == null)
-/*     */     {
-/* 118 */       return null;
-/*     */     }
-/* 120 */     return this.target.get();
-/*     */   }
-/*     */   
-/*     */   public Action getAction() {
-/* 124 */     return this.action;
-/*     */   }
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 128 */     paramObjectOutputStream.defaultWriteObject();
-/* 129 */     paramObjectOutputStream.writeObject(getTarget());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 135 */     paramObjectInputStream.defaultReadObject();
-/* 136 */     JComponent jComponent = (JComponent)paramObjectInputStream.readObject();
-/* 137 */     if (jComponent != null) {
-/* 138 */       setTarget((T)jComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class OwnedWeakReference<U extends JComponent>
-/*     */     extends WeakReference<U>
-/*     */   {
-/*     */     private ActionPropertyChangeListener<?> owner;
-/*     */     
-/*     */     OwnedWeakReference(U param1U, ReferenceQueue<? super U> param1ReferenceQueue, ActionPropertyChangeListener<?> param1ActionPropertyChangeListener) {
-/* 149 */       super(param1U, param1ReferenceQueue);
-/* 150 */       this.owner = param1ActionPropertyChangeListener;
-/*     */     }
-/*     */     
-/*     */     public ActionPropertyChangeListener<?> getOwner() {
-/* 154 */       return this.owner;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\ActionPropertyChangeListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.*;
+import java.lang.ref.WeakReference;
+import java.lang.ref.ReferenceQueue;
+
+/**
+ * A package-private PropertyChangeListener which listens for
+ * property changes on an Action and updates the properties
+ * of an ActionEvent source.
+ * <p>
+ * Subclasses must override the actionPropertyChanged method,
+ * which is invoked from the propertyChange method as long as
+ * the target is still valid.
+ * </p>
+ * <p>
+ * WARNING WARNING WARNING WARNING WARNING WARNING:<br>
+ * Do NOT create an annonymous inner class that extends this!  If you do
+ * a strong reference will be held to the containing class, which in most
+ * cases defeats the purpose of this class.
+ *
+ * @param T the type of JComponent the underlying Action is attached to
+ *
+ * @author Georges Saab
+ * @see AbstractButton
+ */
+abstract class ActionPropertyChangeListener<T extends JComponent>
+        implements PropertyChangeListener, Serializable {
+    private static ReferenceQueue<JComponent> queue;
+
+    // WeakReference's aren't serializable.
+    private transient OwnedWeakReference<T> target;
+    // The Component's that reference an Action do so through a strong
+    // reference, so that there is no need to check for serialized.
+    private Action action;
+
+    private static ReferenceQueue<JComponent> getQueue() {
+        synchronized(ActionPropertyChangeListener.class) {
+            if (queue == null) {
+                queue = new ReferenceQueue<JComponent>();
+            }
+        }
+        return queue;
+    }
+
+    public ActionPropertyChangeListener(T c, Action a) {
+        super();
+        setTarget(c);
+        this.action = a;
+    }
+
+    /**
+     * PropertyChangeListener method.  If the target has been gc'ed this
+     * will remove the <code>PropertyChangeListener</code> from the Action,
+     * otherwise this will invoke actionPropertyChanged.
+     */
+    public final void propertyChange(PropertyChangeEvent e) {
+        T target = getTarget();
+        if (target == null) {
+            getAction().removePropertyChangeListener(this);
+        } else {
+            actionPropertyChanged(target, getAction(), e);
+        }
+    }
+
+    /**
+     * Invoked when a property changes on the Action and the target
+     * still exists.
+     */
+    protected abstract void actionPropertyChanged(T target, Action action,
+                                                  PropertyChangeEvent e);
+
+    private void setTarget(T c) {
+        ReferenceQueue<JComponent> queue = getQueue();
+        // Check to see whether any old buttons have
+        // been enqueued for GC.  If so, look up their
+        // PCL instance and remove it from its Action.
+        OwnedWeakReference<?> r;
+        while ((r = (OwnedWeakReference)queue.poll()) != null) {
+            ActionPropertyChangeListener<?> oldPCL = r.getOwner();
+            Action oldAction = oldPCL.getAction();
+            if (oldAction!=null) {
+                oldAction.removePropertyChangeListener(oldPCL);
+            }
+        }
+        this.target = new OwnedWeakReference<T>(c, queue, this);
+    }
+
+    public T getTarget() {
+        if (target == null) {
+            // Will only happen if serialized and real target was null
+            return null;
+        }
+        return this.target.get();
+    }
+
+    public Action getAction() {
+          return action;
+    }
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        s.writeObject(getTarget());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void readObject(ObjectInputStream s)
+                     throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        T target = (T)s.readObject();
+        if (target != null) {
+            setTarget(target);
+        }
+    }
+
+
+    private static class OwnedWeakReference<U extends JComponent> extends
+                              WeakReference<U> {
+        private ActionPropertyChangeListener<?> owner;
+
+        OwnedWeakReference(U target, ReferenceQueue<? super U> queue,
+                           ActionPropertyChangeListener<?> owner) {
+            super(target, queue);
+            this.owner = owner;
+        }
+
+        public ActionPropertyChangeListener<?> getOwner() {
+            return owner;
+        }
+    }
+}

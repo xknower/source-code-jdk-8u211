@@ -1,103 +1,97 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.runtime.output;
-/*    */ 
-/*    */ import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-/*    */ import java.io.BufferedWriter;
-/*    */ import java.io.IOException;
-/*    */ import java.io.Writer;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class WriterOutputBuffer
-/*    */   implements OutputBuffer
-/*    */ {
-/*    */   private static final int KB = 1024;
-/* 36 */   private static int BUFFER_SIZE = 4096;
-/*    */   private Writer _writer;
-/*    */   
-/*    */   static {
-/* 40 */     String osName = SecuritySupport.getSystemProperty("os.name");
-/* 41 */     if (osName.equalsIgnoreCase("solaris")) {
-/* 42 */       BUFFER_SIZE = 32768;
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public WriterOutputBuffer(Writer writer) {
-/* 55 */     this._writer = new BufferedWriter(writer, BUFFER_SIZE);
-/*    */   }
-/*    */   
-/*    */   public String close() {
-/*    */     try {
-/* 60 */       this._writer.flush();
-/*    */     }
-/* 62 */     catch (IOException e) {
-/* 63 */       throw new RuntimeException(e.toString());
-/*    */     } 
-/* 65 */     return "";
-/*    */   }
-/*    */   
-/*    */   public OutputBuffer append(String s) {
-/*    */     try {
-/* 70 */       this._writer.write(s);
-/*    */     }
-/* 72 */     catch (IOException e) {
-/* 73 */       throw new RuntimeException(e.toString());
-/*    */     } 
-/* 75 */     return this;
-/*    */   }
-/*    */   
-/*    */   public OutputBuffer append(char[] s, int from, int to) {
-/*    */     try {
-/* 80 */       this._writer.write(s, from, to);
-/*    */     }
-/* 82 */     catch (IOException e) {
-/* 83 */       throw new RuntimeException(e.toString());
-/*    */     } 
-/* 85 */     return this;
-/*    */   }
-/*    */   
-/*    */   public OutputBuffer append(char ch) {
-/*    */     try {
-/* 90 */       this._writer.write(ch);
-/*    */     }
-/* 92 */     catch (IOException e) {
-/* 93 */       throw new RuntimeException(e.toString());
-/*    */     } 
-/* 95 */     return this;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\runtime\output\WriterOutputBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: WriterOutputBuffer.java,v 1.2.4.1 2005/09/06 11:43:01 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.runtime.output;
+
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.Writer;
+
+/**
+ * @author Santiago Pericas-Geertsen
+ */
+class WriterOutputBuffer implements OutputBuffer {
+    private static final int KB = 1024;
+    private static int BUFFER_SIZE = 4 * KB;
+
+    static {
+        // Set a larger buffer size for Solaris
+        final String osName = SecuritySupport.getSystemProperty("os.name");
+        if (osName.equalsIgnoreCase("solaris")) {
+            BUFFER_SIZE = 32 * KB;
+        }
+    }
+
+    private Writer _writer;
+
+    /**
+     * Initializes a WriterOutputBuffer by creating an instance of a
+     * BufferedWriter. The size of the buffer in this writer may have
+     * a significant impact on throughput. Solaris prefers a larger
+     * buffer, while Linux works better with a smaller one.
+     */
+    public WriterOutputBuffer(Writer writer) {
+        _writer = new BufferedWriter(writer, BUFFER_SIZE);
+    }
+
+    public String close() {
+        try {
+            _writer.flush();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString());
+        }
+        return "";
+    }
+
+    public OutputBuffer append(String s) {
+        try {
+            _writer.write(s);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString());
+        }
+        return this;
+    }
+
+    public OutputBuffer append(char[] s, int from, int to) {
+        try {
+            _writer.write(s, from, to);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString());
+        }
+        return this;
+    }
+
+    public OutputBuffer append(char ch) {
+        try {
+            _writer.write(ch);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e.toString());
+        }
+        return this;
+    }
+}

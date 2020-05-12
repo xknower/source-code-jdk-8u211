@@ -1,151 +1,145 @@
-/*     */ package java.lang.invoke;
-/*     */ 
-/*     */ import java.lang.invoke.InfoFromMemberName;
-/*     */ import java.lang.invoke.MemberName;
-/*     */ import java.lang.invoke.MethodHandleInfo;
-/*     */ import java.lang.invoke.MethodHandleNatives;
-/*     */ import java.lang.invoke.MethodHandles;
-/*     */ import java.lang.invoke.MethodType;
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.lang.reflect.Member;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class InfoFromMemberName
-/*     */   implements MethodHandleInfo
-/*     */ {
-/*     */   private final MemberName member;
-/*     */   private final int referenceKind;
-/*     */   
-/*     */   InfoFromMemberName(MethodHandles.Lookup paramLookup, MemberName paramMemberName, byte paramByte) {
-/*  44 */     assert paramMemberName.isResolved() || paramMemberName.isMethodHandleInvoke();
-/*  45 */     assert paramMemberName.referenceKindIsConsistentWith(paramByte);
-/*  46 */     this.member = paramMemberName;
-/*  47 */     this.referenceKind = paramByte;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Class<?> getDeclaringClass() {
-/*  52 */     return this.member.getDeclaringClass();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/*  57 */     return this.member.getName();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public MethodType getMethodType() {
-/*  62 */     return this.member.getMethodOrFieldType();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getModifiers() {
-/*  67 */     return this.member.getModifiers();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getReferenceKind() {
-/*  72 */     return this.referenceKind;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*  77 */     return MethodHandleInfo.toString(getReferenceKind(), getDeclaringClass(), getName(), getMethodType());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public <T extends Member> T reflectAs(Class<T> paramClass, MethodHandles.Lookup paramLookup) {
-/*  82 */     if (this.member.isMethodHandleInvoke() && !this.member.isVarargs())
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  88 */       throw new IllegalArgumentException("cannot reflect signature polymorphic method");
-/*     */     }
-/*  90 */     Member member = AccessController.<Member>doPrivileged(new PrivilegedAction<Member>() {
-/*     */           public Member run() {
-/*     */             try {
-/*  93 */               return InfoFromMemberName.this.reflectUnchecked();
-/*  94 */             } catch (ReflectiveOperationException reflectiveOperationException) {
-/*  95 */               throw new IllegalArgumentException(reflectiveOperationException);
-/*     */             } 
-/*     */           }
-/*     */         });
-/*     */     try {
-/* 100 */       Class<?> clazz = getDeclaringClass();
-/* 101 */       byte b = (byte)getReferenceKind();
-/* 102 */       paramLookup.checkAccess(b, clazz, convertToMemberName(b, member));
-/* 103 */     } catch (IllegalAccessException illegalAccessException) {
-/* 104 */       throw new IllegalArgumentException(illegalAccessException);
-/*     */     } 
-/* 106 */     return paramClass.cast(member);
-/*     */   }
-/*     */   
-/*     */   private Member reflectUnchecked() throws ReflectiveOperationException {
-/* 110 */     byte b = (byte)getReferenceKind();
-/* 111 */     Class<?> clazz = getDeclaringClass();
-/* 112 */     boolean bool = Modifier.isPublic(getModifiers());
-/* 113 */     if (MethodHandleNatives.refKindIsMethod(b)) {
-/* 114 */       if (bool) {
-/* 115 */         return clazz.getMethod(getName(), getMethodType().parameterArray());
-/*     */       }
-/* 117 */       return clazz.getDeclaredMethod(getName(), getMethodType().parameterArray());
-/* 118 */     }  if (MethodHandleNatives.refKindIsConstructor(b)) {
-/* 119 */       if (bool) {
-/* 120 */         return clazz.getConstructor(getMethodType().parameterArray());
-/*     */       }
-/* 122 */       return clazz.getDeclaredConstructor(getMethodType().parameterArray());
-/* 123 */     }  if (MethodHandleNatives.refKindIsField(b)) {
-/* 124 */       if (bool) {
-/* 125 */         return clazz.getField(getName());
-/*     */       }
-/* 127 */       return clazz.getDeclaredField(getName());
-/*     */     } 
-/* 129 */     throw new IllegalArgumentException("referenceKind=" + b);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static MemberName convertToMemberName(byte paramByte, Member paramMember) throws IllegalAccessException {
-/* 134 */     if (paramMember instanceof Method) {
-/* 135 */       boolean bool = (paramByte == 7) ? true : false;
-/* 136 */       return new MemberName((Method)paramMember, bool);
-/* 137 */     }  if (paramMember instanceof Constructor)
-/* 138 */       return new MemberName((Constructor)paramMember); 
-/* 139 */     if (paramMember instanceof Field) {
-/* 140 */       boolean bool = (paramByte == 3 || paramByte == 4) ? true : false;
-/* 141 */       return new MemberName((Field)paramMember, bool);
-/*     */     } 
-/* 143 */     throw new InternalError(paramMember.getClass().getName());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\invoke\InfoFromMemberName.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.invoke;
+
+import java.security.*;
+import java.lang.reflect.*;
+import java.lang.invoke.MethodHandleNatives.Constants;
+import java.lang.invoke.MethodHandles.Lookup;
+import static java.lang.invoke.MethodHandleStatics.*;
+
+/*
+ * Auxiliary to MethodHandleInfo, wants to nest in MethodHandleInfo but must be non-public.
+ */
+/*non-public*/
+final
+class InfoFromMemberName implements MethodHandleInfo {
+    private final MemberName member;
+    private final int referenceKind;
+
+    InfoFromMemberName(Lookup lookup, MemberName member, byte referenceKind) {
+        assert(member.isResolved() || member.isMethodHandleInvoke());
+        assert(member.referenceKindIsConsistentWith(referenceKind));
+        this.member = member;
+        this.referenceKind = referenceKind;
+    }
+
+    @Override
+    public Class<?> getDeclaringClass() {
+        return member.getDeclaringClass();
+    }
+
+    @Override
+    public String getName() {
+        return member.getName();
+    }
+
+    @Override
+    public MethodType getMethodType() {
+        return member.getMethodOrFieldType();
+    }
+
+    @Override
+    public int getModifiers() {
+        return member.getModifiers();
+    }
+
+    @Override
+    public int getReferenceKind() {
+        return referenceKind;
+    }
+
+    @Override
+    public String toString() {
+        return MethodHandleInfo.toString(getReferenceKind(), getDeclaringClass(), getName(), getMethodType());
+    }
+
+    @Override
+    public <T extends Member> T reflectAs(Class<T> expected, Lookup lookup) {
+        if (member.isMethodHandleInvoke() && !member.isVarargs()) {
+            // This member is an instance of a signature-polymorphic method, which cannot be reflected
+            // A method handle invoker can come in either of two forms:
+            // A generic placeholder (present in the source code, and varargs)
+            // and a signature-polymorphic instance (synthetic and not varargs).
+            // For more information see comments on {@link MethodHandleNatives#linkMethod}.
+            throw new IllegalArgumentException("cannot reflect signature polymorphic method");
+        }
+        Member mem = AccessController.doPrivileged(new PrivilegedAction<Member>() {
+                public Member run() {
+                    try {
+                        return reflectUnchecked();
+                    } catch (ReflectiveOperationException ex) {
+                        throw new IllegalArgumentException(ex);
+                    }
+                }
+            });
+        try {
+            Class<?> defc = getDeclaringClass();
+            byte refKind = (byte) getReferenceKind();
+            lookup.checkAccess(refKind, defc, convertToMemberName(refKind, mem));
+        } catch (IllegalAccessException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+        return expected.cast(mem);
+    }
+
+    private Member reflectUnchecked() throws ReflectiveOperationException {
+        byte refKind = (byte) getReferenceKind();
+        Class<?> defc = getDeclaringClass();
+        boolean isPublic = Modifier.isPublic(getModifiers());
+        if (MethodHandleNatives.refKindIsMethod(refKind)) {
+            if (isPublic)
+                return defc.getMethod(getName(), getMethodType().parameterArray());
+            else
+                return defc.getDeclaredMethod(getName(), getMethodType().parameterArray());
+        } else if (MethodHandleNatives.refKindIsConstructor(refKind)) {
+            if (isPublic)
+                return defc.getConstructor(getMethodType().parameterArray());
+            else
+                return defc.getDeclaredConstructor(getMethodType().parameterArray());
+        } else if (MethodHandleNatives.refKindIsField(refKind)) {
+            if (isPublic)
+                return defc.getField(getName());
+            else
+                return defc.getDeclaredField(getName());
+        } else {
+            throw new IllegalArgumentException("referenceKind="+refKind);
+        }
+    }
+
+    private static MemberName convertToMemberName(byte refKind, Member mem) throws IllegalAccessException {
+        if (mem instanceof Method) {
+            boolean wantSpecial = (refKind == REF_invokeSpecial);
+            return new MemberName((Method) mem, wantSpecial);
+        } else if (mem instanceof Constructor) {
+            return new MemberName((Constructor) mem);
+        } else if (mem instanceof Field) {
+            boolean isSetter = (refKind == REF_putField || refKind == REF_putStatic);
+            return new MemberName((Field) mem, isSetter);
+        }
+        throw new InternalError(mem.getClass().getName());
+    }
+}

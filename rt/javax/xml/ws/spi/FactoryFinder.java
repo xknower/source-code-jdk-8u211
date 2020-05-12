@@ -1,221 +1,216 @@
-/*     */ package javax.xml.ws.spi;
-/*     */ 
-/*     */ import java.io.BufferedReader;
-/*     */ import java.io.Closeable;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.InputStreamReader;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Properties;
-/*     */ import javax.xml.ws.WebServiceException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class FactoryFinder
-/*     */ {
-/*     */   private static final String OSGI_SERVICE_LOADER_CLASS_NAME = "com.sun.org.glassfish.hk2.osgiresourcelocator.ServiceLoader";
-/*     */   
-/*     */   private static Object newInstance(String className, ClassLoader classLoader) {
-/*     */     try {
-/*  46 */       Class spiClass = safeLoadClass(className, classLoader);
-/*  47 */       return spiClass.newInstance();
-/*  48 */     } catch (ClassNotFoundException x) {
-/*  49 */       throw new WebServiceException("Provider " + className + " not found", x);
-/*     */     }
-/*  51 */     catch (Exception x) {
-/*  52 */       throw new WebServiceException("Provider " + className + " could not be instantiated: " + x, x);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Object find(String factoryId, String fallbackClassName) {
-/*     */     ClassLoader classLoader;
-/*  80 */     if (isOsgi()) {
-/*  81 */       return lookupUsingOSGiServiceLoader(factoryId);
-/*     */     }
-/*     */     
-/*     */     try {
-/*  85 */       classLoader = Thread.currentThread().getContextClassLoader();
-/*  86 */     } catch (Exception x) {
-/*  87 */       throw new WebServiceException(x.toString(), x);
-/*     */     } 
-/*     */     
-/*  90 */     String serviceId = "META-INF/services/" + factoryId;
-/*     */     
-/*  92 */     BufferedReader rd = null;
-/*     */     
-/*     */     try { InputStream is;
-/*  95 */       if (classLoader == null) {
-/*  96 */         is = ClassLoader.getSystemResourceAsStream(serviceId);
-/*     */       } else {
-/*  98 */         is = classLoader.getResourceAsStream(serviceId);
-/*     */       } 
-/*     */       
-/* 101 */       if (is != null) {
-/* 102 */         rd = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-/*     */         
-/* 104 */         String factoryClassName = rd.readLine();
-/*     */         
-/* 106 */         if (factoryClassName != null && 
-/* 107 */           !"".equals(factoryClassName)) {
-/* 108 */           return newInstance(factoryClassName, classLoader);
-/*     */         }
-/*     */       }  }
-/* 111 */     catch (Exception exception) {  }
-/*     */     finally
-/* 113 */     { close(rd); }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 118 */     FileInputStream inStream = null;
-/*     */     
-/* 120 */     try { String javah = System.getProperty("java.home");
-/* 121 */       String configFile = javah + File.separator + "lib" + File.separator + "jaxws.properties";
-/*     */       
-/* 123 */       File f = new File(configFile);
-/* 124 */       if (f.exists()) {
-/* 125 */         Properties props = new Properties();
-/* 126 */         inStream = new FileInputStream(f);
-/* 127 */         props.load(inStream);
-/* 128 */         String factoryClassName = props.getProperty(factoryId);
-/* 129 */         return newInstance(factoryClassName, classLoader);
-/*     */       }  }
-/* 131 */     catch (Exception exception) {  }
-/*     */     finally
-/* 133 */     { close(inStream); }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 139 */       String systemProp = System.getProperty(factoryId);
-/* 140 */       if (systemProp != null) {
-/* 141 */         return newInstance(systemProp, classLoader);
-/*     */       }
-/* 143 */     } catch (SecurityException securityException) {}
-/*     */ 
-/*     */     
-/* 146 */     if (fallbackClassName == null) {
-/* 147 */       throw new WebServiceException("Provider for " + factoryId + " cannot be found", null);
-/*     */     }
-/*     */ 
-/*     */     
-/* 151 */     return newInstance(fallbackClassName, classLoader);
-/*     */   }
-/*     */   
-/*     */   private static void close(Closeable closeable) {
-/* 155 */     if (closeable != null) {
-/*     */       try {
-/* 157 */         closeable.close();
-/* 158 */       } catch (IOException iOException) {}
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Class safeLoadClass(String className, ClassLoader classLoader) throws ClassNotFoundException {
-/*     */     try {
-/* 170 */       SecurityManager s = System.getSecurityManager();
-/* 171 */       if (s != null) {
-/* 172 */         int i = className.lastIndexOf('.');
-/* 173 */         if (i != -1) {
-/* 174 */           s.checkPackageAccess(className.substring(0, i));
-/*     */         }
-/*     */       } 
-/*     */       
-/* 178 */       if (classLoader == null) {
-/* 179 */         return Class.forName(className);
-/*     */       }
-/* 181 */       return classLoader.loadClass(className);
-/* 182 */     } catch (SecurityException se) {
-/*     */       
-/* 184 */       if ("com.sun.xml.internal.ws.spi.ProviderImpl".equals(className))
-/* 185 */         return Class.forName(className); 
-/* 186 */       throw se;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isOsgi() {
-/*     */     try {
-/* 194 */       Class.forName("com.sun.org.glassfish.hk2.osgiresourcelocator.ServiceLoader");
-/* 195 */       return true;
-/* 196 */     } catch (ClassNotFoundException classNotFoundException) {
-/*     */       
-/* 198 */       return false;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static Object lookupUsingOSGiServiceLoader(String factoryId) {
-/*     */     try {
-/* 204 */       Class<?> serviceClass = Class.forName(factoryId);
-/* 205 */       Class[] args = { serviceClass };
-/* 206 */       Class<?> target = Class.forName("com.sun.org.glassfish.hk2.osgiresourcelocator.ServiceLoader");
-/* 207 */       Method m = target.getMethod("lookupProviderInstances", new Class[] { Class.class });
-/* 208 */       Iterator iter = ((Iterable)m.invoke(null, (Object[])args)).iterator();
-/* 209 */       return iter.hasNext() ? iter.next() : null;
-/* 210 */     } catch (Exception ignored) {
-/*     */       
-/* 212 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\ws\spi\FactoryFinder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.ws.spi;
+
+import java.io.*;
+
+import java.util.Properties;
+import javax.xml.ws.WebServiceException;
+
+class FactoryFinder {
+
+    /**
+     * Creates an instance of the specified class using the specified
+     * <code>ClassLoader</code> object.
+     *
+     * @exception WebServiceException if the given class could not be found
+     *            or could not be instantiated
+     */
+    private static Object newInstance(String className,
+                                      ClassLoader classLoader)
+    {
+        try {
+            Class spiClass = safeLoadClass(className, classLoader);
+            return spiClass.newInstance();
+        } catch (ClassNotFoundException x) {
+            throw new WebServiceException(
+                "Provider " + className + " not found", x);
+        } catch (Exception x) {
+            throw new WebServiceException(
+                "Provider " + className + " could not be instantiated: " + x,
+                x);
+        }
+    }
+
+    /**
+     * Finds the implementation <code>Class</code> object for the given
+     * factory name, or if that fails, finds the <code>Class</code> object
+     * for the given fallback class name. The arguments supplied MUST be
+     * used in order. If using the first argument is successful, the second
+     * one will not be used.
+     * <P>
+     * This method is package private so that this code can be shared.
+     *
+     * @return the <code>Class</code> object of the specified message factory;
+     *         may not be <code>null</code>
+     *
+     * @param factoryId             the name of the factory to find, which is
+     *                              a system property
+     * @param fallbackClassName     the implementation class name, which is
+     *                              to be used only if nothing else
+     *                              is found; <code>null</code> to indicate that
+     *                              there is no fallback class name
+     * @exception WebServiceException if there is an error
+     */
+    static Object find(String factoryId, String fallbackClassName)
+    {
+        if (isOsgi()) {
+            return lookupUsingOSGiServiceLoader(factoryId);
+        }
+        ClassLoader classLoader;
+        try {
+            classLoader = Thread.currentThread().getContextClassLoader();
+        } catch (Exception x) {
+            throw new WebServiceException(x.toString(), x);
+        }
+
+        String serviceId = "META-INF/services/" + factoryId;
+        // try to find services in CLASSPATH
+        BufferedReader rd = null;
+        try {
+            InputStream is;
+            if (classLoader == null) {
+                is=ClassLoader.getSystemResourceAsStream(serviceId);
+            } else {
+                is=classLoader.getResourceAsStream(serviceId);
+            }
+
+            if( is!=null ) {
+                rd = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+
+                String factoryClassName = rd.readLine();
+
+                if (factoryClassName != null &&
+                    ! "".equals(factoryClassName)) {
+                    return newInstance(factoryClassName, classLoader);
+                }
+            }
+        } catch( Exception ignored) {
+        } finally {
+            close(rd);
+        }
+
+
+        // try to read from $java.home/lib/jaxws.properties
+        FileInputStream inStream = null;
+        try {
+            String javah=System.getProperty( "java.home" );
+            String configFile = javah + File.separator +
+                "lib" + File.separator + "jaxws.properties";
+            File f=new File( configFile );
+            if( f.exists()) {
+                Properties props=new Properties();
+                inStream = new FileInputStream(f);
+                props.load(inStream);
+                String factoryClassName = props.getProperty(factoryId);
+                return newInstance(factoryClassName, classLoader);
+            }
+        } catch(Exception ignored) {
+        } finally {
+            close(inStream);
+        }
+
+        // Use the system property
+        try {
+            String systemProp =
+                System.getProperty( factoryId );
+            if( systemProp!=null) {
+                return newInstance(systemProp, classLoader);
+            }
+        } catch (SecurityException ignored) {
+        }
+
+        if (fallbackClassName == null) {
+            throw new WebServiceException(
+                "Provider for " + factoryId + " cannot be found", null);
+        }
+
+        return newInstance(fallbackClassName, classLoader);
+    }
+
+    private static void close(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+
+    /**
+     * Loads the class, provided that the calling thread has an access to the class being loaded.
+     */
+    private static Class safeLoadClass(String className, ClassLoader classLoader) throws ClassNotFoundException {
+        try {
+            // make sure that the current thread has an access to the package of the given name.
+            SecurityManager s = System.getSecurityManager();
+            if (s != null) {
+                int i = className.lastIndexOf('.');
+                if (i != -1) {
+                    s.checkPackageAccess(className.substring(0, i));
+                }
+            }
+
+            if (classLoader == null)
+                return Class.forName(className);
+            else
+                return classLoader.loadClass(className);
+        } catch (SecurityException se) {
+            // anyone can access the platform default factory class without permission
+            if (Provider.DEFAULT_JAXWSPROVIDER.equals(className))
+                return Class.forName(className);
+            throw se;
+        }
+    }
+
+    private static final String OSGI_SERVICE_LOADER_CLASS_NAME = "com.sun.org.glassfish.hk2.osgiresourcelocator.ServiceLoader";
+
+    private static boolean isOsgi() {
+        try {
+            Class.forName(OSGI_SERVICE_LOADER_CLASS_NAME);
+            return true;
+        } catch (ClassNotFoundException ignored) {
+        }
+        return false;
+    }
+
+    private static Object lookupUsingOSGiServiceLoader(String factoryId) {
+        try {
+            // Use reflection to avoid having any dependendcy on ServiceLoader class
+            Class serviceClass = Class.forName(factoryId);
+            Class[] args = new Class[]{serviceClass};
+            Class target = Class.forName(OSGI_SERVICE_LOADER_CLASS_NAME);
+            java.lang.reflect.Method m = target.getMethod("lookupProviderInstances", Class.class);
+            java.util.Iterator iter = ((Iterable) m.invoke(null, (Object[]) args)).iterator();
+            return iter.hasNext() ? iter.next() : null;
+        } catch (Exception ignored) {
+            // log and continue
+            return null;
+        }
+    }
+
+}

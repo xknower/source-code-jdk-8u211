@@ -1,229 +1,225 @@
-/*     */ package java.nio;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ByteBufferAsCharBufferL
-/*     */   extends CharBuffer
-/*     */ {
-/*     */   protected final ByteBuffer bb;
-/*     */   protected final int offset;
-/*     */   
-/*     */   ByteBufferAsCharBufferL(ByteBuffer paramByteBuffer) {
-/*  44 */     super(-1, 0, paramByteBuffer
-/*  45 */         .remaining() >> 1, paramByteBuffer
-/*  46 */         .remaining() >> 1);
-/*  47 */     this.bb = paramByteBuffer;
-/*     */     
-/*  49 */     int i = capacity();
-/*  50 */     limit(i);
-/*  51 */     int j = position();
-/*  52 */     assert j <= i;
-/*  53 */     this.offset = j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ByteBufferAsCharBufferL(ByteBuffer paramByteBuffer, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  64 */     super(paramInt1, paramInt2, paramInt3, paramInt4);
-/*  65 */     this.bb = paramByteBuffer;
-/*  66 */     this.offset = paramInt5;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer slice() {
-/*  73 */     int i = position();
-/*  74 */     int j = limit();
-/*  75 */     assert i <= j;
-/*  76 */     boolean bool = (i <= j) ? (j - i) : false;
-/*  77 */     int k = (i << 1) + this.offset;
-/*  78 */     assert k >= 0;
-/*  79 */     return new ByteBufferAsCharBufferL(this.bb, -1, 0, bool, bool, k);
-/*     */   }
-/*     */   
-/*     */   public CharBuffer duplicate() {
-/*  83 */     return new ByteBufferAsCharBufferL(this.bb, 
-/*  84 */         markValue(), 
-/*  85 */         position(), 
-/*  86 */         limit(), 
-/*  87 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer asReadOnlyBuffer() {
-/*  93 */     return new ByteBufferAsCharBufferRL(this.bb, 
-/*  94 */         markValue(), 
-/*  95 */         position(), 
-/*  96 */         limit(), 
-/*  97 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int ix(int paramInt) {
-/* 107 */     return (paramInt << 1) + this.offset;
-/*     */   }
-/*     */   
-/*     */   public char get() {
-/* 111 */     return Bits.getCharL(this.bb, ix(nextGetIndex()));
-/*     */   }
-/*     */   
-/*     */   public char get(int paramInt) {
-/* 115 */     return Bits.getCharL(this.bb, ix(checkIndex(paramInt)));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   char getUnchecked(int paramInt) {
-/* 120 */     return Bits.getCharL(this.bb, ix(paramInt));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer put(char paramChar) {
-/* 128 */     Bits.putCharL(this.bb, ix(nextPutIndex()), paramChar);
-/* 129 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer put(int paramInt, char paramChar) {
-/* 137 */     Bits.putCharL(this.bb, ix(checkIndex(paramInt)), paramChar);
-/* 138 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer compact() {
-/* 146 */     int i = position();
-/* 147 */     int j = limit();
-/* 148 */     assert i <= j;
-/* 149 */     boolean bool = (i <= j) ? (j - i) : false;
-/*     */     
-/* 151 */     ByteBuffer byteBuffer1 = this.bb.duplicate();
-/* 152 */     byteBuffer1.limit(ix(j));
-/* 153 */     byteBuffer1.position(ix(0));
-/* 154 */     ByteBuffer byteBuffer2 = byteBuffer1.slice();
-/* 155 */     byteBuffer2.position(i << 1);
-/* 156 */     byteBuffer2.compact();
-/* 157 */     position(bool);
-/* 158 */     limit(capacity());
-/* 159 */     discardMark();
-/* 160 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDirect() {
-/* 167 */     return this.bb.isDirect();
-/*     */   }
-/*     */   
-/*     */   public boolean isReadOnly() {
-/* 171 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString(int paramInt1, int paramInt2) {
-/* 177 */     if (paramInt2 > limit() || paramInt1 > paramInt2)
-/* 178 */       throw new IndexOutOfBoundsException(); 
-/*     */     try {
-/* 180 */       int i = paramInt2 - paramInt1;
-/* 181 */       char[] arrayOfChar = new char[i];
-/* 182 */       CharBuffer charBuffer1 = CharBuffer.wrap(arrayOfChar);
-/* 183 */       CharBuffer charBuffer2 = duplicate();
-/* 184 */       charBuffer2.position(paramInt1);
-/* 185 */       charBuffer2.limit(paramInt2);
-/* 186 */       charBuffer1.put(charBuffer2);
-/* 187 */       return new String(arrayOfChar);
-/* 188 */     } catch (StringIndexOutOfBoundsException stringIndexOutOfBoundsException) {
-/* 189 */       throw new IndexOutOfBoundsException();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharBuffer subSequence(int paramInt1, int paramInt2) {
-/* 197 */     int i = position();
-/* 198 */     int j = limit();
-/* 199 */     assert i <= j;
-/* 200 */     i = (i <= j) ? i : j;
-/* 201 */     int k = j - i;
-/*     */     
-/* 203 */     if (paramInt1 < 0 || paramInt2 > k || paramInt1 > paramInt2)
-/* 204 */       throw new IndexOutOfBoundsException(); 
-/* 205 */     return new ByteBufferAsCharBufferL(this.bb, -1, i + paramInt1, i + paramInt2, 
-/*     */ 
-/*     */ 
-/*     */         
-/* 209 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteOrder order() {
-/* 221 */     return ByteOrder.LITTLE_ENDIAN;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\ByteBufferAsCharBufferL.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio;
+
+
+class ByteBufferAsCharBufferL                  // package-private
+    extends CharBuffer
+{
+
+
+
+    protected final ByteBuffer bb;
+    protected final int offset;
+
+
+
+    ByteBufferAsCharBufferL(ByteBuffer bb) {   // package-private
+
+        super(-1, 0,
+              bb.remaining() >> 1,
+              bb.remaining() >> 1);
+        this.bb = bb;
+        // enforce limit == capacity
+        int cap = this.capacity();
+        this.limit(cap);
+        int pos = this.position();
+        assert (pos <= cap);
+        offset = pos;
+
+
+
+    }
+
+    ByteBufferAsCharBufferL(ByteBuffer bb,
+                                     int mark, int pos, int lim, int cap,
+                                     int off)
+    {
+
+        super(mark, pos, lim, cap);
+        this.bb = bb;
+        offset = off;
+
+
+
+    }
+
+    public CharBuffer slice() {
+        int pos = this.position();
+        int lim = this.limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
+        int off = (pos << 1) + offset;
+        assert (off >= 0);
+        return new ByteBufferAsCharBufferL(bb, -1, 0, rem, rem, off);
+    }
+
+    public CharBuffer duplicate() {
+        return new ByteBufferAsCharBufferL(bb,
+                                                    this.markValue(),
+                                                    this.position(),
+                                                    this.limit(),
+                                                    this.capacity(),
+                                                    offset);
+    }
+
+    public CharBuffer asReadOnlyBuffer() {
+
+        return new ByteBufferAsCharBufferRL(bb,
+                                                 this.markValue(),
+                                                 this.position(),
+                                                 this.limit(),
+                                                 this.capacity(),
+                                                 offset);
+
+
+
+    }
+
+
+
+    protected int ix(int i) {
+        return (i << 1) + offset;
+    }
+
+    public char get() {
+        return Bits.getCharL(bb, ix(nextGetIndex()));
+    }
+
+    public char get(int i) {
+        return Bits.getCharL(bb, ix(checkIndex(i)));
+    }
+
+
+   char getUnchecked(int i) {
+        return Bits.getCharL(bb, ix(i));
+    }
+
+
+
+
+    public CharBuffer put(char x) {
+
+        Bits.putCharL(bb, ix(nextPutIndex()), x);
+        return this;
+
+
+
+    }
+
+    public CharBuffer put(int i, char x) {
+
+        Bits.putCharL(bb, ix(checkIndex(i)), x);
+        return this;
+
+
+
+    }
+
+    public CharBuffer compact() {
+
+        int pos = position();
+        int lim = limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
+
+        ByteBuffer db = bb.duplicate();
+        db.limit(ix(lim));
+        db.position(ix(0));
+        ByteBuffer sb = db.slice();
+        sb.position(pos << 1);
+        sb.compact();
+        position(rem);
+        limit(capacity());
+        discardMark();
+        return this;
+
+
+
+    }
+
+    public boolean isDirect() {
+        return bb.isDirect();
+    }
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+
+
+    public String toString(int start, int end) {
+        if ((end > limit()) || (start > end))
+            throw new IndexOutOfBoundsException();
+        try {
+            int len = end - start;
+            char[] ca = new char[len];
+            CharBuffer cb = CharBuffer.wrap(ca);
+            CharBuffer db = this.duplicate();
+            db.position(start);
+            db.limit(end);
+            cb.put(db);
+            return new String(ca);
+        } catch (StringIndexOutOfBoundsException x) {
+            throw new IndexOutOfBoundsException();
+        }
+    }
+
+
+    // --- Methods to support CharSequence ---
+
+    public CharBuffer subSequence(int start, int end) {
+        int pos = position();
+        int lim = limit();
+        assert (pos <= lim);
+        pos = (pos <= lim ? pos : lim);
+        int len = lim - pos;
+
+        if ((start < 0) || (end > len) || (start > end))
+            throw new IndexOutOfBoundsException();
+        return new ByteBufferAsCharBufferL(bb,
+                                                  -1,
+                                                  pos + start,
+                                                  pos + end,
+                                                  capacity(),
+                                                  offset);
+    }
+
+
+
+
+    public ByteOrder order() {
+
+
+
+
+        return ByteOrder.LITTLE_ENDIAN;
+
+    }
+
+}

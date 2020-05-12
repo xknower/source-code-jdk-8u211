@@ -1,128 +1,122 @@
-/*     */ package com.sun.corba.se.impl.orb;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.orb.Operation;
-/*     */ import com.sun.corba.se.spi.orb.StringPair;
-/*     */ import java.lang.reflect.Array;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.LinkedList;
-/*     */ import java.util.Properties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PrefixParserAction
-/*     */   extends ParserActionBase
-/*     */ {
-/*     */   private Class componentType;
-/*     */   private ORBUtilSystemException wrapper;
-/*     */   
-/*     */   public PrefixParserAction(String paramString1, Operation paramOperation, String paramString2, Class paramClass) {
-/*  51 */     super(paramString1, true, paramOperation, paramString2);
-/*  52 */     this.componentType = paramClass;
-/*  53 */     this.wrapper = ORBUtilSystemException.get("orb.lifecycle");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object apply(Properties paramProperties) {
-/*  65 */     String str = getPropertyName();
-/*  66 */     int i = str.length();
-/*  67 */     if (str.charAt(i - 1) != '.') {
-/*  68 */       str = str + '.';
-/*  69 */       i++;
-/*     */     } 
-/*     */     
-/*  72 */     LinkedList<Object> linkedList = new LinkedList();
-/*     */ 
-/*     */     
-/*  75 */     Iterator<String> iterator = paramProperties.keySet().iterator();
-/*  76 */     while (iterator.hasNext()) {
-/*  77 */       String str1 = iterator.next();
-/*  78 */       if (str1.startsWith(str)) {
-/*  79 */         String str2 = str1.substring(i);
-/*  80 */         String str3 = paramProperties.getProperty(str1);
-/*  81 */         StringPair stringPair = new StringPair(str2, str3);
-/*  82 */         Object object = getOperation().operate(stringPair);
-/*  83 */         linkedList.add(object);
-/*     */       } 
-/*     */     } 
-/*     */     
-/*  87 */     int j = linkedList.size();
-/*  88 */     if (j > 0) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  93 */       Object object = null;
-/*     */       try {
-/*  95 */         object = Array.newInstance(this.componentType, j);
-/*  96 */       } catch (Throwable throwable) {
-/*  97 */         throw this.wrapper.couldNotCreateArray(throwable, 
-/*  98 */             getPropertyName(), this.componentType, new Integer(j));
-/*     */       } 
-/*     */ 
-/*     */       
-/* 102 */       Iterator<Object> iterator1 = linkedList.iterator();
-/* 103 */       byte b = 0;
-/* 104 */       while (iterator1.hasNext()) {
-/* 105 */         Object object1 = iterator1.next();
-/*     */         
-/*     */         try {
-/* 108 */           Array.set(object, b, object1);
-/* 109 */         } catch (Throwable throwable) {
-/* 110 */           throw this.wrapper.couldNotSetArray(throwable, 
-/* 111 */               getPropertyName(), new Integer(b), this.componentType, new Integer(j), object1
-/*     */               
-/* 113 */               .toString());
-/*     */         } 
-/* 115 */         b++;
-/*     */       } 
-/*     */       
-/* 118 */       return object;
-/*     */     } 
-/* 120 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orb\PrefixParserAction.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orb ;
+
+import org.omg.CORBA.INITIALIZE ;
+
+import java.util.Properties ;
+import java.util.List ;
+import java.util.LinkedList ;
+import java.util.Iterator ;
+
+import java.lang.reflect.Array ;
+
+import com.sun.corba.se.spi.orb.Operation ;
+import com.sun.corba.se.spi.orb.StringPair ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.orbutil.ObjectUtility ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public class PrefixParserAction extends ParserActionBase {
+    private Class componentType ;
+    private ORBUtilSystemException wrapper ;
+
+    public PrefixParserAction( String propertyName,
+        Operation operation, String fieldName, Class componentType )
+    {
+        super( propertyName, true, operation, fieldName ) ;
+        this.componentType = componentType ;
+        this.wrapper = ORBUtilSystemException.get(
+            CORBALogDomains.ORB_LIFECYCLE ) ;
+    }
+
+    /** For each String s that matches the prefix given by getPropertyName(),
+     * apply getOperation() to { suffix( s ), value }
+     * and add the result to an Object[]
+     * which forms the result of apply.  Returns null if there are no
+     * matches.
+     */
+    public Object apply( Properties props )
+    {
+        String prefix = getPropertyName() ;
+        int prefixLength = prefix.length() ;
+        if (prefix.charAt( prefixLength - 1 ) != '.') {
+            prefix += '.' ;
+            prefixLength++ ;
+        }
+
+        List matches = new LinkedList() ;
+
+        // Find all keys in props that start with propertyName
+        Iterator iter = props.keySet().iterator() ;
+        while (iter.hasNext()) {
+            String key = (String)(iter.next()) ;
+            if (key.startsWith( prefix )) {
+                String suffix = key.substring( prefixLength ) ;
+                String value = props.getProperty( key ) ;
+                StringPair data = new StringPair( suffix, value ) ;
+                Object result = getOperation().operate( data ) ;
+                matches.add( result ) ;
+            }
+        }
+
+        int size = matches.size() ;
+        if (size > 0) {
+            // Convert the list into an array of the proper type.
+            // An Object[] as a result does NOT work.  Also report
+            // any errors carefully, as errors here or in parsers that
+            // use this Operation often show up at ORB.init().
+            Object result = null ;
+            try {
+                result = Array.newInstance( componentType, size ) ;
+            } catch (Throwable thr) {
+                throw wrapper.couldNotCreateArray( thr,
+                    getPropertyName(), componentType,
+                    new Integer( size ) ) ;
+            }
+
+            Iterator iter2 = matches.iterator() ;
+            int ctr = 0 ;
+            while (iter2.hasNext()) {
+                Object obj = iter2.next() ;
+
+                try {
+                    Array.set( result, ctr, obj ) ;
+                } catch (Throwable thr) {
+                    throw wrapper.couldNotSetArray( thr,
+                        getPropertyName(), new Integer(ctr),
+                        componentType, new Integer(size),
+                        obj.toString() ) ;
+                }
+                ctr++ ;
+            }
+
+            return result ;
+        } else
+            return null ;
+    }
+}

@@ -1,233 +1,228 @@
-/*     */ package com.sun.corba.se.impl.oa.toa;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.ior.JIDLObjectKeyTemplate;
-/*     */ import com.sun.corba.se.impl.oa.NullServantImpl;
-/*     */ import com.sun.corba.se.impl.oa.poa.Policies;
-/*     */ import com.sun.corba.se.impl.protocol.JIDLLocalCRDImpl;
-/*     */ import com.sun.corba.se.pept.protocol.ClientDelegate;
-/*     */ import com.sun.corba.se.spi.copyobject.CopierManager;
-/*     */ import com.sun.corba.se.spi.copyobject.ObjectCopierFactory;
-/*     */ import com.sun.corba.se.spi.oa.OADestroyed;
-/*     */ import com.sun.corba.se.spi.oa.OAInvocationInfo;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapterBase;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.presentation.rmi.StubAdapter;
-/*     */ import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher;
-/*     */ import com.sun.corba.se.spi.transport.CorbaContactInfoList;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.Policy;
-/*     */ import org.omg.CORBA.portable.Delegate;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceFactory;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TOAImpl
-/*     */   extends ObjectAdapterBase
-/*     */   implements TOA
-/*     */ {
-/*     */   private TransientObjectManager servants;
-/*     */   
-/*     */   public TOAImpl(ORB paramORB, TransientObjectManager paramTransientObjectManager, String paramString) {
-/*  83 */     super(paramORB);
-/*  84 */     this.servants = paramTransientObjectManager;
-/*     */ 
-/*     */     
-/*  87 */     int i = getORB().getTransientServerId();
-/*  88 */     byte b = 2;
-/*     */     
-/*  90 */     JIDLObjectKeyTemplate jIDLObjectKeyTemplate = new JIDLObjectKeyTemplate(paramORB, b, i);
-/*     */ 
-/*     */     
-/*  93 */     Policies policies = Policies.defaultPolicies;
-/*     */ 
-/*     */     
-/*  96 */     initializeTemplate(jIDLObjectKeyTemplate, true, policies, paramString, null, jIDLObjectKeyTemplate
-/*     */ 
-/*     */ 
-/*     */         
-/* 100 */         .getObjectAdapterId());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ObjectCopierFactory getObjectCopierFactory() {
-/* 108 */     CopierManager copierManager = getORB().getCopierManager();
-/* 109 */     return copierManager.getDefaultObjectCopierFactory();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Object getLocalServant(byte[] paramArrayOfbyte) {
-/* 114 */     return (Object)this.servants.lookupServant(paramArrayOfbyte);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void getInvocationServant(OAInvocationInfo paramOAInvocationInfo) {
-/* 125 */     Object object = this.servants.lookupServant(paramOAInvocationInfo.id());
-/* 126 */     if (object == null)
-/*     */     {
-/*     */       
-/* 129 */       object = new NullServantImpl(lifecycleWrapper().nullServant()); } 
-/* 130 */     paramOAInvocationInfo.setServant(object);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void returnServant() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] getInterfaces(Object paramObject, byte[] paramArrayOfbyte) {
-/* 142 */     return StubAdapter.getTypeIds(paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Policy getEffectivePolicy(int paramInt) {
-/* 151 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getManagerId() {
-/* 156 */     return -1;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public short getState() {
-/* 161 */     return 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void enter() throws OADestroyed {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void exit() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void connect(Object paramObject) {
-/* 178 */     byte[] arrayOfByte = this.servants.storeServant(paramObject, null);
-/*     */ 
-/*     */     
-/* 181 */     String str = StubAdapter.getTypeIds(paramObject)[0];
-/*     */ 
-/*     */     
-/* 184 */     ObjectReferenceFactory objectReferenceFactory = getCurrentFactory();
-/* 185 */     Object object = objectReferenceFactory.make_object(str, arrayOfByte);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 190 */     Delegate delegate = StubAdapter.getDelegate(object);
-/*     */ 
-/*     */     
-/* 193 */     CorbaContactInfoList corbaContactInfoList = (CorbaContactInfoList)((ClientDelegate)delegate).getContactInfoList();
-/*     */     
-/* 195 */     LocalClientRequestDispatcher localClientRequestDispatcher = corbaContactInfoList.getLocalClientRequestDispatcher();
-/*     */     
-/* 197 */     if (localClientRequestDispatcher instanceof JIDLLocalCRDImpl) {
-/* 198 */       JIDLLocalCRDImpl jIDLLocalCRDImpl = (JIDLLocalCRDImpl)localClientRequestDispatcher;
-/* 199 */       jIDLLocalCRDImpl.setServant(paramObject);
-/*     */     } else {
-/* 201 */       throw new RuntimeException("TOAImpl.connect can not be called on " + localClientRequestDispatcher);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 205 */     StubAdapter.setDelegate(paramObject, delegate);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void disconnect(Object paramObject) {
-/* 211 */     Delegate delegate = StubAdapter.getDelegate(paramObject);
-/*     */ 
-/*     */     
-/* 214 */     CorbaContactInfoList corbaContactInfoList = (CorbaContactInfoList)((ClientDelegate)delegate).getContactInfoList();
-/*     */     
-/* 216 */     LocalClientRequestDispatcher localClientRequestDispatcher = corbaContactInfoList.getLocalClientRequestDispatcher();
-/*     */     
-/* 218 */     if (localClientRequestDispatcher instanceof JIDLLocalCRDImpl) {
-/* 219 */       JIDLLocalCRDImpl jIDLLocalCRDImpl = (JIDLLocalCRDImpl)localClientRequestDispatcher;
-/* 220 */       byte[] arrayOfByte = jIDLLocalCRDImpl.getObjectId();
-/* 221 */       this.servants.deleteServant(arrayOfByte);
-/* 222 */       jIDLLocalCRDImpl.unexport();
-/*     */     } else {
-/* 224 */       throw new RuntimeException("TOAImpl.disconnect can not be called on " + localClientRequestDispatcher);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\toa\TOAImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.toa ;
+
+import org.omg.CORBA.Policy ;
+import org.omg.PortableInterceptor.ObjectReferenceTemplate ;
+import org.omg.PortableInterceptor.ObjectReferenceFactory ;
+import org.omg.PortableInterceptor.ACTIVE;
+import org.omg.PortableServer.ServantLocatorPackage.CookieHolder ;
+
+import com.sun.corba.se.pept.protocol.ClientDelegate ;
+
+import com.sun.corba.se.spi.copyobject.CopierManager ;
+import com.sun.corba.se.spi.copyobject.ObjectCopier ;
+import com.sun.corba.se.spi.copyobject.ObjectCopierFactory ;
+import com.sun.corba.se.spi.ior.ObjectKeyTemplate ;
+import com.sun.corba.se.spi.ior.iiop.IIOPAddress ;
+import com.sun.corba.se.spi.ior.iiop.IIOPFactories ;
+import com.sun.corba.se.spi.oa.OAInvocationInfo ;
+import com.sun.corba.se.spi.oa.OADestroyed ;
+import com.sun.corba.se.spi.oa.ObjectAdapterBase ;
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.presentation.rmi.StubAdapter ;
+import com.sun.corba.se.spi.protocol.RequestDispatcherRegistry ;
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher ;
+import com.sun.corba.se.spi.transport.CorbaContactInfoList ;
+
+import com.sun.corba.se.impl.ior.JIDLObjectKeyTemplate ;
+import com.sun.corba.se.impl.oa.NullServantImpl;
+import com.sun.corba.se.impl.oa.poa.Policies;
+import com.sun.corba.se.impl.oa.toa.TransientObjectManager ;
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+import com.sun.corba.se.impl.protocol.JIDLLocalCRDImpl ;
+
+/** The Transient Object Adapter (TOA) represents the OA for purely transient
+* objects.  It is used for standard RMI-IIOP as well as backwards compatible
+* server support (i.e. the ORB.connect() method)
+* Its characteristics include:
+* <UL>
+* <LI>There is only one OA instance of the TOA.  Its OAId is { "TOA" }</LI>
+* <LI>There is not adapter manager.  The TOA manager ID is fixed.<LI>
+* <LI>State is the same as ORB state (TBD)</LI>
+* </UL>
+* Other requirements:
+* <UL>
+* <LI>All object adapters must invoke ORB.adapterCreated when they are created.
+* </LI>
+* <LI>All adapter managers must invoke ORB.adapterManagerStateChanged when
+* their state changes, mapping the internal state to an ORT state.</LI>
+* <LI>AdapterStateChanged must be invoked (from somewhere) whenever
+* an adapter state changes that is not due to an adapter manager state change.</LI>
+* </UL>
+*/
+public class TOAImpl extends ObjectAdapterBase implements TOA
+{
+    private TransientObjectManager servants ;
+
+    public TOAImpl( ORB orb, TransientObjectManager tom, String codebase )
+    {
+        super( orb ) ;
+        servants = tom ;
+
+        // Make the object key template
+        int serverid = ((ORB)getORB()).getTransientServerId();
+        int scid = ORBConstants.TOA_SCID ;
+
+        ObjectKeyTemplate oktemp = new JIDLObjectKeyTemplate( orb, scid, serverid ) ;
+
+        // REVISIT - POA specific
+        Policies policies = Policies.defaultPolicies;
+
+        // REVISIT - absorb codebase into a policy
+        initializeTemplate( oktemp, true,
+                            policies,
+                            codebase,
+                            null, // manager id
+                            oktemp.getObjectAdapterId()
+                            ) ;
+    }
+
+    // Methods required for dispatching requests
+
+    public ObjectCopierFactory getObjectCopierFactory()
+    {
+        CopierManager cm = getORB().getCopierManager() ;
+        return cm.getDefaultObjectCopierFactory() ;
+    }
+
+    public org.omg.CORBA.Object getLocalServant( byte[] objectId )
+    {
+        return (org.omg.CORBA.Object)(servants.lookupServant( objectId ) ) ;
+    }
+
+    /** Get the servant for the request given by the parameters.
+    * This will update thread Current, so that subsequent calls to
+    * returnServant and removeCurrent from the same thread are for the
+    * same request.
+    * @param request is the request containing the rest of the request
+    */
+    public void getInvocationServant( OAInvocationInfo info )
+    {
+        java.lang.Object servant = servants.lookupServant( info.id() ) ;
+        if (servant == null)
+            // This is expected to result in an RMI-IIOP NoSuchObjectException.
+            // See bug 4973160.
+            servant = new NullServantImpl( lifecycleWrapper().nullServant() ) ;
+        info.setServant( servant ) ;
+    }
+
+    public void returnServant()
+    {
+        // NO-OP
+    }
+
+    /** Return the most derived interface for the given servant and objectId.
+    */
+    public String[] getInterfaces( Object servant, byte[] objectId )
+    {
+        return StubAdapter.getTypeIds( servant ) ;
+    }
+
+    // XXX For now, this does nothing.
+    // This will need fixing once we support ORB and thread level policies,
+    // but for now, there is no way to associate policies with the TOA, so
+    // getEffectivePolicy must always return null.
+    public Policy getEffectivePolicy( int type )
+    {
+        return null ;
+    }
+
+    public int getManagerId()
+    {
+        return -1 ;
+    }
+
+    public short getState()
+    {
+        return ACTIVE.value ;
+    }
+
+    public void enter() throws OADestroyed
+    {
+    }
+
+    public void exit()
+    {
+    }
+
+    // Methods unique to the TOA
+
+    public void connect( org.omg.CORBA.Object objref)
+    {
+        // Store the objref and get a userkey allocated by the transient
+        // object manager.
+        byte[] key = servants.storeServant(objref, null);
+
+        // Find out the repository ID for this objref.
+        String id = StubAdapter.getTypeIds( objref )[0] ;
+
+        // Create the new objref
+        ObjectReferenceFactory orf = getCurrentFactory() ;
+        org.omg.CORBA.Object obj = orf.make_object( id, key ) ;
+
+        // Copy the delegate from the new objref to the argument
+        // XXX handle the case of an attempt to connect a local object.
+
+        org.omg.CORBA.portable.Delegate delegate = StubAdapter.getDelegate(
+            obj ) ;
+        CorbaContactInfoList ccil = (CorbaContactInfoList)
+            ((ClientDelegate)delegate).getContactInfoList() ;
+        LocalClientRequestDispatcher lcs =
+            ccil.getLocalClientRequestDispatcher() ;
+
+        if (lcs instanceof JIDLLocalCRDImpl) {
+            JIDLLocalCRDImpl jlcs = (JIDLLocalCRDImpl)lcs ;
+            jlcs.setServant( objref ) ;
+        } else {
+            throw new RuntimeException(
+                "TOAImpl.connect can not be called on " + lcs ) ;
+        }
+
+        StubAdapter.setDelegate( objref, delegate ) ;
+    }
+
+    public void disconnect( org.omg.CORBA.Object objref )
+    {
+        // Get the delegate, then ior, then transientKey, then delete servant
+        org.omg.CORBA.portable.Delegate del = StubAdapter.getDelegate(
+            objref ) ;
+        CorbaContactInfoList ccil = (CorbaContactInfoList)
+            ((ClientDelegate)del).getContactInfoList() ;
+        LocalClientRequestDispatcher lcs =
+            ccil.getLocalClientRequestDispatcher() ;
+
+        if (lcs instanceof JIDLLocalCRDImpl) {
+            JIDLLocalCRDImpl jlcs = (JIDLLocalCRDImpl)lcs ;
+            byte[] oid = jlcs.getObjectId() ;
+            servants.deleteServant(oid);
+            jlcs.unexport() ;
+        } else {
+            throw new RuntimeException(
+                "TOAImpl.disconnect can not be called on " + lcs ) ;
+        }
+    }
+}

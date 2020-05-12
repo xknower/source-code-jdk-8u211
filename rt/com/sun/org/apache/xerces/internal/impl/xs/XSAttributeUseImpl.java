@@ -1,158 +1,153 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
-/*     */ import com.sun.org.apache.xerces.internal.xs.ShortList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSAttributeDeclaration;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSAttributeUse;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XSAttributeUseImpl
-/*     */   implements XSAttributeUse
-/*     */ {
-/*  44 */   public XSAttributeDecl fAttrDecl = null;
-/*     */   
-/*  46 */   public short fUse = 0;
-/*     */   
-/*  48 */   public short fConstraintType = 0;
-/*     */   
-/*  50 */   public ValidatedInfo fDefault = null;
-/*     */   
-/*  52 */   public XSObjectList fAnnotations = null;
-/*     */   
-/*     */   public void reset() {
-/*  55 */     this.fDefault = null;
-/*  56 */     this.fAttrDecl = null;
-/*  57 */     this.fUse = 0;
-/*  58 */     this.fConstraintType = 0;
-/*  59 */     this.fAnnotations = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getType() {
-/*  66 */     return 4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/*  74 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespace() {
-/*  83 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean getRequired() {
-/*  92 */     return (this.fUse == 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSAttributeDeclaration getAttrDeclaration() {
-/* 100 */     return this.fAttrDecl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getConstraintType() {
-/* 107 */     return this.fConstraintType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getConstraintValue() {
-/* 116 */     return (getConstraintType() == 0) ? null : this.fDefault
-/*     */       
-/* 118 */       .stringValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSNamespaceItem getNamespaceItem() {
-/* 125 */     return null;
-/*     */   }
-/*     */   
-/*     */   public Object getActualVC() {
-/* 129 */     return (getConstraintType() == 0) ? null : this.fDefault.actualValue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getActualVCType() {
-/* 135 */     return (getConstraintType() == 0) ? 45 : this.fDefault.actualValueType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortList getItemValueTypes() {
-/* 141 */     return (getConstraintType() == 0) ? null : this.fDefault.itemValueTypes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSObjectList getAnnotations() {
-/* 150 */     return (this.fAnnotations != null) ? this.fAnnotations : XSObjectListImpl.EMPTY_LIST;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XSAttributeUseImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.ValidatedInfo;
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSObjectListImpl;
+import com.sun.org.apache.xerces.internal.xs.ShortList;
+import com.sun.org.apache.xerces.internal.xs.XSAttributeDeclaration;
+import com.sun.org.apache.xerces.internal.xs.XSAttributeUse;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSNamespaceItem;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+
+/**
+ * The XML representation for an attribute use
+ * schema component is a local <attribute> element information item
+ *
+ * @xerces.internal
+ *
+ * @author Sandy Gao, IBM
+ * @version $Id: XSAttributeUseImpl.java,v 1.7 2010-11-01 04:39:55 joehw Exp $
+ */
+public class XSAttributeUseImpl implements XSAttributeUse {
+
+    // the referred attribute decl
+    public XSAttributeDecl fAttrDecl = null;
+    // use information: SchemaSymbols.USE_OPTIONAL, REQUIRED, PROHIBITED
+    public short fUse = SchemaSymbols.USE_OPTIONAL;
+    // value constraint type: default, fixed or !specified
+    public short fConstraintType = XSConstants.VC_NONE;
+    // value constraint value
+    public ValidatedInfo fDefault = null;
+    // optional annotation
+    public XSObjectList fAnnotations = null;
+
+    public void reset(){
+        fDefault = null;
+        fAttrDecl = null;
+        fUse = SchemaSymbols.USE_OPTIONAL;
+        fConstraintType = XSConstants.VC_NONE;
+        fAnnotations = null;
+    }
+
+    /**
+     * Get the type of the object, i.e ELEMENT_DECLARATION.
+     */
+    public short getType() {
+        return XSConstants.ATTRIBUTE_USE;
+    }
+
+    /**
+     * The <code>name</code> of this <code>XSObject</code> depending on the
+     * <code>XSObject</code> type.
+     */
+    public String getName() {
+        return null;
+    }
+
+    /**
+     * The namespace URI of this node, or <code>null</code> if it is
+     * unspecified.  defines how a namespace URI is attached to schema
+     * components.
+     */
+    public String getNamespace() {
+        return null;
+    }
+
+    /**
+     * {required} determines whether this use of an attribute declaration
+     * requires an appropriate attribute information item to be present, or
+     * merely allows it.
+     */
+    public boolean getRequired() {
+        return fUse == SchemaSymbols.USE_REQUIRED;
+    }
+
+    /**
+     * {attribute declaration} provides the attribute declaration itself,
+     * which will in turn determine the simple type definition used.
+     */
+    public XSAttributeDeclaration getAttrDeclaration() {
+        return fAttrDecl;
+    }
+
+    /**
+     * Value Constraint: one of default, fixed.
+     */
+    public short getConstraintType() {
+        return fConstraintType;
+    }
+
+    /**
+     * Value Constraint: The actual value (with respect to the {type
+     * definition}).
+     */
+    public String getConstraintValue() {
+        // REVISIT: SCAPI: what's the proper representation
+        return getConstraintType() == XSConstants.VC_NONE ?
+               null :
+               fDefault.stringValue();
+    }
+
+    /**
+     * @see org.apache.xerces.xs.XSObject#getNamespaceItem()
+     */
+    public XSNamespaceItem getNamespaceItem() {
+        return null;
+    }
+
+    public Object getActualVC() {
+        return getConstraintType() == XSConstants.VC_NONE ?
+               null :
+               fDefault.actualValue;
+    }
+
+    public short getActualVCType() {
+        return getConstraintType() == XSConstants.VC_NONE ?
+               XSConstants.UNAVAILABLE_DT :
+               fDefault.actualValueType;
+    }
+
+    public ShortList getItemValueTypes() {
+        return getConstraintType() == XSConstants.VC_NONE ?
+               null :
+               fDefault.itemValueTypes;
+    }
+
+    /**
+     * Optional. Annotations.
+     */
+    public XSObjectList getAnnotations() {
+        return (fAnnotations != null) ? fAnnotations : XSObjectListImpl.EMPTY_LIST;
+    }
+
+} // class XSAttributeUseImpl

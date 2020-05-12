@@ -1,149 +1,143 @@
-/*     */ package com.sun.security.auth;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import java.security.Principal;
-/*     */ import java.text.MessageFormat;
-/*     */ import jdk.Exported;
-/*     */ import sun.security.util.ResourcesMgr;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ @Exported
-/*     */ public class NTUserPrincipal
-/*     */   implements Principal, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -8737649811939033735L;
-/*     */   private String name;
-/*     */   
-/*     */   public NTUserPrincipal(String paramString) {
-/*  65 */     if (paramString == null) {
-/*     */ 
-/*     */       
-/*  68 */       MessageFormat messageFormat = new MessageFormat(ResourcesMgr.getString("invalid.null.input.value", "sun.security.util.AuthResources"));
-/*     */       
-/*  70 */       Object[] arrayOfObject = { "name" };
-/*  71 */       throw new NullPointerException(messageFormat.format(arrayOfObject));
-/*     */     } 
-/*  73 */     this.name = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getName() {
-/*  84 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/*  97 */     MessageFormat messageFormat = new MessageFormat(ResourcesMgr.getString("NTUserPrincipal.name", "sun.security.util.AuthResources"));
-/*     */     
-/*  99 */     Object[] arrayOfObject = { this.name };
-/* 100 */     return messageFormat.format(arrayOfObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 118 */     if (paramObject == null) {
-/* 119 */       return false;
-/*     */     }
-/* 121 */     if (this == paramObject) {
-/* 122 */       return true;
-/*     */     }
-/* 124 */     if (!(paramObject instanceof NTUserPrincipal))
-/* 125 */       return false; 
-/* 126 */     NTUserPrincipal nTUserPrincipal = (NTUserPrincipal)paramObject;
-/*     */     
-/* 128 */     if (this.name.equals(nTUserPrincipal.getName()))
-/* 129 */       return true; 
-/* 130 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 141 */     return getName().hashCode();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\security\auth\NTUserPrincipal.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.security.auth;
+
+import java.security.Principal;
+
+/**
+ * <p> This class implements the <code>Principal</code> interface
+ * and represents a Windows NT user.
+ *
+ * <p> Principals such as this <code>NTUserPrincipal</code>
+ * may be associated with a particular <code>Subject</code>
+ * to augment that <code>Subject</code> with an additional
+ * identity.  Refer to the <code>Subject</code> class for more information
+ * on how to achieve this.  Authorization decisions can then be based upon
+ * the Principals associated with a <code>Subject</code>.
+ *
+ * @see java.security.Principal
+ * @see javax.security.auth.Subject
+ */
+@jdk.Exported
+public class NTUserPrincipal implements Principal, java.io.Serializable {
+
+    private static final long serialVersionUID = -8737649811939033735L;
+
+    /**
+     * @serial
+     */
+    private String name;
+
+    /**
+     * Create an <code>NTUserPrincipal</code> with a Windows NT username.
+     *
+     * <p>
+     *
+     * @param name the Windows NT username for this user. <p>
+     *
+     * @exception NullPointerException if the <code>name</code>
+     *            is <code>null</code>.
+     */
+    public NTUserPrincipal(String name) {
+        if (name == null) {
+            java.text.MessageFormat form = new java.text.MessageFormat
+                (sun.security.util.ResourcesMgr.getString
+                        ("invalid.null.input.value",
+                        "sun.security.util.AuthResources"));
+            Object[] source = {"name"};
+            throw new NullPointerException(form.format(source));
+        }
+        this.name = name;
+    }
+
+    /**
+     * Return the Windows NT username for this <code>NTPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return the Windows NT username for this <code>NTPrincipal</code>
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return a string representation of this <code>NTPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return a string representation of this <code>NTPrincipal</code>.
+     */
+    public String toString() {
+        java.text.MessageFormat form = new java.text.MessageFormat
+                (sun.security.util.ResourcesMgr.getString
+                        ("NTUserPrincipal.name",
+                        "sun.security.util.AuthResources"));
+        Object[] source = {name};
+        return form.format(source);
+    }
+
+    /**
+     * Compares the specified Object with this <code>NTUserPrincipal</code>
+     * for equality.  Returns true if the given object is also a
+     * <code>NTUserPrincipal</code> and the two NTUserPrincipals
+     * have the same name.
+     *
+     * <p>
+     *
+     * @param o Object to be compared for equality with this
+     *          <code>NTPrincipal</code>.
+     *
+     * @return true if the specified Object is equal equal to this
+     *          <code>NTPrincipal</code>.
+     */
+    public boolean equals(Object o) {
+            if (o == null)
+                return false;
+
+        if (this == o)
+            return true;
+
+        if (!(o instanceof NTUserPrincipal))
+            return false;
+        NTUserPrincipal that = (NTUserPrincipal)o;
+
+            if (name.equals(that.getName()))
+                return true;
+            return false;
+    }
+
+    /**
+     * Return a hash code for this <code>NTUserPrincipal</code>.
+     *
+     * <p>
+     *
+     * @return a hash code for this <code>NTUserPrincipal</code>.
+     */
+    public int hashCode() {
+            return this.getName().hashCode();
+    }
+}

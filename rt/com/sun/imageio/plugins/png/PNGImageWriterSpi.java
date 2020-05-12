@@ -1,132 +1,126 @@
-/*     */ package com.sun.imageio.plugins.png;
-/*     */ 
-/*     */ import java.awt.image.ColorModel;
-/*     */ import java.awt.image.SampleModel;
-/*     */ import java.util.Locale;
-/*     */ import javax.imageio.ImageTypeSpecifier;
-/*     */ import javax.imageio.ImageWriter;
-/*     */ import javax.imageio.spi.ImageWriterSpi;
-/*     */ import javax.imageio.stream.ImageOutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class PNGImageWriterSpi
-/*     */   extends ImageWriterSpi
-/*     */ {
-/*     */   private static final String vendorName = "Oracle Corporation";
-/*     */   private static final String version = "1.0";
-/*  45 */   private static final String[] names = new String[] { "png", "PNG" };
-/*     */   
-/*  47 */   private static final String[] suffixes = new String[] { "png" };
-/*     */   
-/*  49 */   private static final String[] MIMETypes = new String[] { "image/png", "image/x-png" };
-/*     */ 
-/*     */   
-/*     */   private static final String writerClassName = "com.sun.imageio.plugins.png.PNGImageWriter";
-/*     */   
-/*  54 */   private static final String[] readerSpiNames = new String[] { "com.sun.imageio.plugins.png.PNGImageReaderSpi" };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PNGImageWriterSpi() {
-/*  59 */     super("Oracle Corporation", "1.0", names, suffixes, MIMETypes, "com.sun.imageio.plugins.png.PNGImageWriter", new Class[] { ImageOutputStream.class }, readerSpiNames, false, null, null, null, null, true, "javax_imageio_png_1.0", "com.sun.imageio.plugins.png.PNGMetadataFormat", null, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean canEncodeImage(ImageTypeSpecifier paramImageTypeSpecifier) {
-/*  78 */     SampleModel sampleModel = paramImageTypeSpecifier.getSampleModel();
-/*  79 */     ColorModel colorModel = paramImageTypeSpecifier.getColorModel();
-/*     */ 
-/*     */     
-/*  82 */     int[] arrayOfInt = sampleModel.getSampleSize();
-/*  83 */     int i = arrayOfInt[0]; int j;
-/*  84 */     for (j = 1; j < arrayOfInt.length; j++) {
-/*  85 */       if (arrayOfInt[j] > i) {
-/*  86 */         i = arrayOfInt[j];
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/*  91 */     if (i < 1 || i > 16) {
-/*  92 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/*  96 */     j = sampleModel.getNumBands();
-/*  97 */     if (j < 1 || j > 4) {
-/*  98 */       return false;
-/*     */     }
-/*     */     
-/* 101 */     boolean bool = colorModel.hasAlpha();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 106 */     if (colorModel instanceof java.awt.image.IndexColorModel) {
-/* 107 */       return true;
-/*     */     }
-/* 109 */     if ((j == 1 || j == 3) && bool) {
-/* 110 */       return false;
-/*     */     }
-/* 112 */     if ((j == 2 || j == 4) && !bool) {
-/* 113 */       return false;
-/*     */     }
-/*     */     
-/* 116 */     return true;
-/*     */   }
-/*     */   
-/*     */   public String getDescription(Locale paramLocale) {
-/* 120 */     return "Standard PNG image writer";
-/*     */   }
-/*     */   
-/*     */   public ImageWriter createWriterInstance(Object paramObject) {
-/* 124 */     return new PNGImageWriter(this);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\png\PNGImageWriterSpi.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.png;
+
+import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
+import java.awt.image.SampleModel;
+import java.util.Locale;
+import javax.imageio.ImageWriter;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+import javax.imageio.spi.ImageWriterSpi;
+import javax.imageio.stream.ImageOutputStream;
+
+public class PNGImageWriterSpi extends ImageWriterSpi {
+
+    private static final String vendorName = "Oracle Corporation";
+
+    private static final String version = "1.0";
+
+    private static final String[] names = { "png", "PNG" };
+
+    private static final String[] suffixes = { "png" };
+
+    private static final String[] MIMETypes = { "image/png", "image/x-png" };
+
+    private static final String writerClassName =
+        "com.sun.imageio.plugins.png.PNGImageWriter";
+
+    private static final String[] readerSpiNames = {
+        "com.sun.imageio.plugins.png.PNGImageReaderSpi"
+    };
+
+    public PNGImageWriterSpi() {
+          super(vendorName,
+                version,
+                names,
+                suffixes,
+                MIMETypes,
+                writerClassName,
+                new Class[] { ImageOutputStream.class },
+                readerSpiNames,
+                false,
+                null, null,
+                null, null,
+                true,
+                PNGMetadata.nativeMetadataFormatName,
+                "com.sun.imageio.plugins.png.PNGMetadataFormat",
+                null, null
+                );
+    }
+
+    public boolean canEncodeImage(ImageTypeSpecifier type) {
+        SampleModel sampleModel = type.getSampleModel();
+        ColorModel colorModel = type.getColorModel();
+
+        // Find the maximum bit depth across all channels
+        int[] sampleSize = sampleModel.getSampleSize();
+        int bitDepth = sampleSize[0];
+        for (int i = 1; i < sampleSize.length; i++) {
+            if (sampleSize[i] > bitDepth) {
+                bitDepth = sampleSize[i];
+            }
+        }
+
+        // Ensure bitDepth is between 1 and 16
+        if (bitDepth < 1 || bitDepth > 16) {
+            return false;
+        }
+
+        // Check number of bands, alpha
+        int numBands = sampleModel.getNumBands();
+        if (numBands < 1 || numBands > 4) {
+            return false;
+        }
+
+        boolean hasAlpha = colorModel.hasAlpha();
+        // Fix 4464413: PNGTransparency reg-test was failing
+        // because for IndexColorModels that have alpha,
+        // numBands == 1 && hasAlpha == true, thus causing
+        // the check below to fail and return false.
+        if (colorModel instanceof IndexColorModel) {
+            return true;
+        }
+        if ((numBands == 1 || numBands == 3) && hasAlpha) {
+            return false;
+        }
+        if ((numBands == 2 || numBands == 4) && !hasAlpha) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public String getDescription(Locale locale) {
+        return "Standard PNG image writer";
+    }
+
+    public ImageWriter createWriterInstance(Object extension) {
+        return new PNGImageWriter(this);
+    }
+}

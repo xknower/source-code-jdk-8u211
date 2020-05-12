@@ -1,184 +1,179 @@
-/*     */ package com.sun.org.apache.xerces.internal.parsers;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
-/*     */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
-/*     */ import org.xml.sax.SAXNotRecognizedException;
-/*     */ import org.xml.sax.SAXNotSupportedException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SAXParser
-/*     */   extends AbstractSAXParser
-/*     */ {
-/*     */   protected static final String NOTIFY_BUILTIN_REFS = "http://apache.org/xml/features/scanner/notify-builtin-refs";
-/*     */   protected static final String REPORT_WHITESPACE = "http://java.sun.com/xml/schema/features/report-ignored-element-content-whitespace";
-/*  59 */   private static final String[] RECOGNIZED_FEATURES = new String[] { "http://apache.org/xml/features/scanner/notify-builtin-refs", "http://java.sun.com/xml/schema/features/report-ignored-element-content-whitespace" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static final String XMLGRAMMAR_POOL = "http://apache.org/xml/properties/internal/grammar-pool";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  75 */   private static final String[] RECOGNIZED_PROPERTIES = new String[] { "http://apache.org/xml/properties/internal/symbol-table", "http://apache.org/xml/properties/internal/grammar-pool" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAXParser(XMLParserConfiguration config) {
-/*  89 */     super(config);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAXParser() {
-/*  96 */     this((SymbolTable)null, (XMLGrammarPool)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAXParser(SymbolTable symbolTable) {
-/* 103 */     this(symbolTable, (XMLGrammarPool)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SAXParser(SymbolTable symbolTable, XMLGrammarPool grammarPool) {
-/* 111 */     super(new XIncludeAwareParserConfiguration());
-/*     */ 
-/*     */     
-/* 114 */     this.fConfiguration.addRecognizedFeatures(RECOGNIZED_FEATURES);
-/* 115 */     this.fConfiguration.setFeature("http://apache.org/xml/features/scanner/notify-builtin-refs", true);
-/*     */ 
-/*     */     
-/* 118 */     this.fConfiguration.addRecognizedProperties(RECOGNIZED_PROPERTIES);
-/* 119 */     if (symbolTable != null) {
-/* 120 */       this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/symbol-table", symbolTable);
-/*     */     }
-/* 122 */     if (grammarPool != null) {
-/* 123 */       this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/grammar-pool", grammarPool);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-/* 138 */     if (name.equals("http://apache.org/xml/properties/security-manager")) {
-/* 139 */       this.securityManager = XMLSecurityManager.convert(value, this.securityManager);
-/* 140 */       super.setProperty("http://apache.org/xml/properties/security-manager", this.securityManager);
-/*     */       return;
-/*     */     } 
-/* 143 */     if (name.equals("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager")) {
-/* 144 */       if (value == null) {
-/* 145 */         this.securityPropertyManager = new XMLSecurityPropertyManager();
-/*     */       } else {
-/* 147 */         this.securityPropertyManager = (XMLSecurityPropertyManager)value;
-/*     */       } 
-/* 149 */       super.setProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", this.securityPropertyManager);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 153 */     if (this.securityManager == null) {
-/* 154 */       this.securityManager = new XMLSecurityManager(true);
-/* 155 */       super.setProperty("http://apache.org/xml/properties/security-manager", this.securityManager);
-/*     */     } 
-/*     */     
-/* 158 */     if (this.securityPropertyManager == null) {
-/* 159 */       this.securityPropertyManager = new XMLSecurityPropertyManager();
-/* 160 */       super.setProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", this.securityPropertyManager);
-/*     */     } 
-/*     */     
-/* 163 */     int index = this.securityPropertyManager.getIndex(name);
-/* 164 */     if (index > -1) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 170 */       this.securityPropertyManager.setValue(index, XMLSecurityPropertyManager.State.APIPROPERTY, (String)value);
-/*     */     
-/*     */     }
-/* 173 */     else if (!this.securityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, value)) {
-/*     */       
-/* 175 */       super.setProperty(name, value);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\parsers\SAXParser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2000-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.parsers;
+
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+
+/**
+ * This is the main Xerces SAX parser class. It uses the abstract SAX
+ * parser with a document scanner, a dtd scanner, and a validator, as
+ * well as a grammar pool.
+ *
+ * @author Arnaud  Le Hors, IBM
+ * @author Andy Clark, IBM
+ *
+ * @version $Id: SAXParser.java,v 1.7 2010-11-01 04:40:09 joehw Exp $
+ */
+public class SAXParser
+    extends AbstractSAXParser {
+
+    //
+    // Constants
+    //
+
+    // features
+
+    /** Feature identifier: notify built-in refereces. */
+    protected static final String NOTIFY_BUILTIN_REFS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NOTIFY_BUILTIN_REFS_FEATURE;
+
+    protected static final String REPORT_WHITESPACE =
+            Constants.SUN_SCHEMA_FEATURE_PREFIX + Constants.SUN_REPORT_IGNORED_ELEMENT_CONTENT_WHITESPACE;
+
+    /** Recognized features. */
+    private static final String[] RECOGNIZED_FEATURES = {
+        NOTIFY_BUILTIN_REFS,
+        REPORT_WHITESPACE
+    };
+
+    // properties
+
+    /** Property identifier: symbol table. */
+    protected static final String SYMBOL_TABLE =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    /** Property identifier: XML grammar pool. */
+    protected static final String XMLGRAMMAR_POOL =
+        Constants.XERCES_PROPERTY_PREFIX+Constants.XMLGRAMMAR_POOL_PROPERTY;
+
+    /** Recognized properties. */
+    private static final String[] RECOGNIZED_PROPERTIES = {
+        SYMBOL_TABLE,
+        XMLGRAMMAR_POOL,
+    };
+
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructs a SAX parser using the specified parser configuration.
+     */
+    public SAXParser(XMLParserConfiguration config) {
+        super(config);
+    } // <init>(XMLParserConfiguration)
+
+    /**
+     * Constructs a SAX parser using the dtd/xml schema parser configuration.
+     */
+    public SAXParser() {
+        this(null, null);
+    } // <init>()
+
+    /**
+     * Constructs a SAX parser using the specified symbol table.
+     */
+    public SAXParser(SymbolTable symbolTable) {
+        this(symbolTable, null);
+    } // <init>(SymbolTable)
+
+    /**
+     * Constructs a SAX parser using the specified symbol table and
+     * grammar pool.
+     */
+    public SAXParser(SymbolTable symbolTable, XMLGrammarPool grammarPool) {
+        super(new XIncludeAwareParserConfiguration());
+
+        // set features
+        fConfiguration.addRecognizedFeatures(RECOGNIZED_FEATURES);
+        fConfiguration.setFeature(NOTIFY_BUILTIN_REFS, true);
+
+        // set properties
+        fConfiguration.addRecognizedProperties(RECOGNIZED_PROPERTIES);
+        if (symbolTable != null) {
+            fConfiguration.setProperty(SYMBOL_TABLE, symbolTable);
+        }
+        if (grammarPool != null) {
+            fConfiguration.setProperty(XMLGRAMMAR_POOL, grammarPool);
+        }
+
+    } // <init>(SymbolTable,XMLGrammarPool)
+
+    /**
+     * Sets the particular property in the underlying implementation of
+     * org.xml.sax.XMLReader.
+     */
+    public void setProperty(String name, Object value)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+        /**
+         * It's possible for users to set a security manager through the interface.
+         * If it's the old SecurityManager, convert it to the new XMLSecurityManager
+         */
+        if (name.equals(Constants.SECURITY_MANAGER)) {
+            securityManager = XMLSecurityManager.convert(value, securityManager);
+            super.setProperty(Constants.SECURITY_MANAGER, securityManager);
+            return;
+        }
+        if (name.equals(Constants.XML_SECURITY_PROPERTY_MANAGER)) {
+            if (value == null) {
+                securityPropertyManager = new XMLSecurityPropertyManager();
+            } else {
+                securityPropertyManager = (XMLSecurityPropertyManager)value;
+            }
+            super.setProperty(Constants.XML_SECURITY_PROPERTY_MANAGER, securityPropertyManager);
+            return;
+        }
+
+        if (securityManager == null) {
+            securityManager = new XMLSecurityManager(true);
+            super.setProperty(Constants.SECURITY_MANAGER, securityManager);
+        }
+
+        if (securityPropertyManager == null) {
+            securityPropertyManager = new XMLSecurityPropertyManager();
+            super.setProperty(Constants.XML_SECURITY_PROPERTY_MANAGER, securityPropertyManager);
+        }
+
+        int index = securityPropertyManager.getIndex(name);
+        if (index > -1) {
+            /**
+             * this is a direct call to this parser, not a subclass since
+             * internally the support of this property is done through
+             * XMLSecurityPropertyManager
+             */
+            securityPropertyManager.setValue(index, XMLSecurityPropertyManager.State.APIPROPERTY, (String)value);
+        } else {
+            //check if the property is managed by security manager
+            if (!securityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, value)) {
+                //fall back to the default configuration to handle the property
+                super.setProperty(name, value);
+            }
+        }
+    }
+} // class SAXParser

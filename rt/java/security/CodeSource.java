@@ -1,653 +1,647 @@
-/*     */ package java.security;
-/*     */ 
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.net.SocketPermission;
-/*     */ import java.net.URL;
-/*     */ import java.security.cert.CertPath;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.security.cert.CertificateEncodingException;
-/*     */ import java.security.cert.CertificateException;
-/*     */ import java.security.cert.CertificateFactory;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Hashtable;
-/*     */ import sun.misc.IOUtils;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CodeSource
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 4977541819976013951L;
-/*     */   private URL location;
-/*  63 */   private transient CodeSigner[] signers = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  68 */   private transient Certificate[] certs = null;
-/*     */ 
-/*     */   
-/*     */   private transient SocketPermission sp;
-/*     */ 
-/*     */   
-/*  74 */   private transient CertificateFactory factory = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CodeSource(URL paramURL, Certificate[] paramArrayOfCertificate) {
-/*  86 */     this.location = paramURL;
-/*     */ 
-/*     */     
-/*  89 */     if (paramArrayOfCertificate != null) {
-/*  90 */       this.certs = (Certificate[])paramArrayOfCertificate.clone();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CodeSource(URL paramURL, CodeSigner[] paramArrayOfCodeSigner) {
-/* 105 */     this.location = paramURL;
-/*     */ 
-/*     */     
-/* 108 */     if (paramArrayOfCodeSigner != null) {
-/* 109 */       this.signers = (CodeSigner[])paramArrayOfCodeSigner.clone();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 120 */     if (this.location != null) {
-/* 121 */       return this.location.hashCode();
-/*     */     }
-/* 123 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 139 */     if (paramObject == this) {
-/* 140 */       return true;
-/*     */     }
-/*     */     
-/* 143 */     if (!(paramObject instanceof CodeSource)) {
-/* 144 */       return false;
-/*     */     }
-/* 146 */     CodeSource codeSource = (CodeSource)paramObject;
-/*     */ 
-/*     */     
-/* 149 */     if (this.location == null)
-/*     */     
-/* 151 */     { if (codeSource.location != null) return false;
-/*     */        }
-/*     */     
-/* 154 */     else if (!this.location.equals(codeSource.location)) { return false; }
-/*     */ 
-/*     */ 
-/*     */     
-/* 158 */     return matchCerts(codeSource, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final URL getLocation() {
-/* 169 */     return this.location;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Certificate[] getCertificates() {
-/* 187 */     if (this.certs != null) {
-/* 188 */       return (Certificate[])this.certs.clone();
-/*     */     }
-/* 190 */     if (this.signers != null) {
-/*     */       
-/* 192 */       ArrayList<Certificate> arrayList = new ArrayList();
-/*     */       
-/* 194 */       for (byte b = 0; b < this.signers.length; b++) {
-/* 195 */         arrayList.addAll(this.signers[b]
-/* 196 */             .getSignerCertPath().getCertificates());
-/*     */       }
-/* 198 */       this.certs = arrayList.<Certificate>toArray(
-/* 199 */           new Certificate[arrayList.size()]);
-/* 200 */       return (Certificate[])this.certs.clone();
-/*     */     } 
-/*     */     
-/* 203 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final CodeSigner[] getCodeSigners() {
-/* 221 */     if (this.signers != null) {
-/* 222 */       return (CodeSigner[])this.signers.clone();
-/*     */     }
-/* 224 */     if (this.certs != null) {
-/*     */       
-/* 226 */       this.signers = convertCertArrayToSignerArray(this.certs);
-/* 227 */       return (CodeSigner[])this.signers.clone();
-/*     */     } 
-/*     */     
-/* 230 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean implies(CodeSource paramCodeSource) {
-/* 306 */     if (paramCodeSource == null) {
-/* 307 */       return false;
-/*     */     }
-/* 309 */     return (matchCerts(paramCodeSource, false) && matchLocation(paramCodeSource));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean matchCerts(CodeSource paramCodeSource, boolean paramBoolean) {
-/* 325 */     if (this.certs == null && this.signers == null) {
-/* 326 */       if (paramBoolean) {
-/* 327 */         return (paramCodeSource.certs == null && paramCodeSource.signers == null);
-/*     */       }
-/* 329 */       return true;
-/*     */     } 
-/*     */     
-/* 332 */     if (this.signers != null && paramCodeSource.signers != null) {
-/* 333 */       if (paramBoolean && this.signers.length != paramCodeSource.signers.length) {
-/* 334 */         return false;
-/*     */       }
-/* 336 */       for (byte b = 0; b < this.signers.length; b++) {
-/* 337 */         boolean bool = false;
-/* 338 */         for (byte b1 = 0; b1 < paramCodeSource.signers.length; b1++) {
-/* 339 */           if (this.signers[b].equals(paramCodeSource.signers[b1])) {
-/* 340 */             bool = true;
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 344 */         if (!bool) return false; 
-/*     */       } 
-/* 346 */       return true;
-/*     */     } 
-/*     */     
-/* 349 */     if (this.certs != null && paramCodeSource.certs != null) {
-/* 350 */       if (paramBoolean && this.certs.length != paramCodeSource.certs.length) {
-/* 351 */         return false;
-/*     */       }
-/* 353 */       for (byte b = 0; b < this.certs.length; b++) {
-/* 354 */         boolean bool = false;
-/* 355 */         for (byte b1 = 0; b1 < paramCodeSource.certs.length; b1++) {
-/* 356 */           if (this.certs[b].equals(paramCodeSource.certs[b1])) {
-/* 357 */             bool = true;
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 361 */         if (!bool) return false; 
-/*     */       } 
-/* 363 */       return true;
-/*     */     } 
-/*     */     
-/* 366 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean matchLocation(CodeSource paramCodeSource) {
-/* 376 */     if (this.location == null) {
-/* 377 */       return true;
-/*     */     }
-/* 379 */     if (paramCodeSource == null || paramCodeSource.location == null) {
-/* 380 */       return false;
-/*     */     }
-/* 382 */     if (this.location.equals(paramCodeSource.location)) {
-/* 383 */       return true;
-/*     */     }
-/* 385 */     if (!this.location.getProtocol().equalsIgnoreCase(paramCodeSource.location.getProtocol())) {
-/* 386 */       return false;
-/*     */     }
-/* 388 */     int i = this.location.getPort();
-/* 389 */     if (i != -1) {
-/* 390 */       int j = paramCodeSource.location.getPort();
-/*     */       
-/* 392 */       int k = (j != -1) ? j : paramCodeSource.location.getDefaultPort();
-/* 393 */       if (i != k) {
-/* 394 */         return false;
-/*     */       }
-/*     */     } 
-/* 397 */     if (this.location.getFile().endsWith("/-")) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 402 */       String str = this.location.getFile().substring(0, this.location
-/* 403 */           .getFile().length() - 1);
-/* 404 */       if (!paramCodeSource.location.getFile().startsWith(str))
-/* 405 */         return false; 
-/* 406 */     } else if (this.location.getFile().endsWith("/*")) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 411 */       int j = paramCodeSource.location.getFile().lastIndexOf('/');
-/* 412 */       if (j == -1)
-/* 413 */         return false; 
-/* 414 */       String str3 = this.location.getFile().substring(0, this.location
-/* 415 */           .getFile().length() - 1);
-/* 416 */       String str4 = paramCodeSource.location.getFile().substring(0, j + 1);
-/* 417 */       if (!str4.equals(str3)) {
-/* 418 */         return false;
-/*     */       
-/*     */       }
-/*     */     }
-/* 422 */     else if (!paramCodeSource.location.getFile().equals(this.location.getFile()) && 
-/* 423 */       !paramCodeSource.location.getFile().equals(this.location.getFile() + "/")) {
-/* 424 */       return false;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 428 */     if (this.location.getRef() != null && 
-/* 429 */       !this.location.getRef().equals(paramCodeSource.location.getRef())) {
-/* 430 */       return false;
-/*     */     }
-/*     */     
-/* 433 */     String str1 = this.location.getHost();
-/* 434 */     String str2 = paramCodeSource.location.getHost();
-/* 435 */     if (str1 != null && ((
-/* 436 */       !"".equals(str1) && !"localhost".equals(str1)) || (
-/* 437 */       !"".equals(str2) && !"localhost".equals(str2))))
-/*     */     {
-/* 439 */       if (!str1.equals(str2)) {
-/* 440 */         if (str2 == null) {
-/* 441 */           return false;
-/*     */         }
-/* 443 */         if (this.sp == null) {
-/* 444 */           this.sp = new SocketPermission(str1, "resolve");
-/*     */         }
-/* 446 */         if (paramCodeSource.sp == null) {
-/* 447 */           paramCodeSource.sp = new SocketPermission(str2, "resolve");
-/*     */         }
-/* 449 */         if (!this.sp.implies(paramCodeSource.sp)) {
-/* 450 */           return false;
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */     
-/* 455 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 466 */     StringBuilder stringBuilder = new StringBuilder();
-/* 467 */     stringBuilder.append("(");
-/* 468 */     stringBuilder.append(this.location);
-/*     */     
-/* 470 */     if (this.certs != null && this.certs.length > 0) {
-/* 471 */       for (byte b = 0; b < this.certs.length; b++) {
-/* 472 */         stringBuilder.append(" " + this.certs[b]);
-/*     */       }
-/*     */     }
-/* 475 */     else if (this.signers != null && this.signers.length > 0) {
-/* 476 */       for (byte b = 0; b < this.signers.length; b++) {
-/* 477 */         stringBuilder.append(" " + this.signers[b]);
-/*     */       }
-/*     */     } else {
-/* 480 */       stringBuilder.append(" <no signer certificates>");
-/*     */     } 
-/* 482 */     stringBuilder.append(")");
-/* 483 */     return stringBuilder.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 503 */     paramObjectOutputStream.defaultWriteObject();
-/*     */ 
-/*     */     
-/* 506 */     if (this.certs == null || this.certs.length == 0) {
-/* 507 */       paramObjectOutputStream.writeInt(0);
-/*     */     } else {
-/*     */       
-/* 510 */       paramObjectOutputStream.writeInt(this.certs.length);
-/*     */       
-/* 512 */       for (byte b = 0; b < this.certs.length; b++) {
-/* 513 */         Certificate certificate = this.certs[b];
-/*     */         try {
-/* 515 */           paramObjectOutputStream.writeUTF(certificate.getType());
-/* 516 */           byte[] arrayOfByte = certificate.getEncoded();
-/* 517 */           paramObjectOutputStream.writeInt(arrayOfByte.length);
-/* 518 */           paramObjectOutputStream.write(arrayOfByte);
-/* 519 */         } catch (CertificateEncodingException certificateEncodingException) {
-/* 520 */           throw new IOException(certificateEncodingException.getMessage());
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 526 */     if (this.signers != null && this.signers.length > 0) {
-/* 527 */       paramObjectOutputStream.writeObject(this.signers);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 538 */     Hashtable<Object, Object> hashtable = null;
-/* 539 */     ArrayList<Certificate> arrayList = null;
-/*     */     
-/* 541 */     paramObjectInputStream.defaultReadObject();
-/*     */ 
-/*     */     
-/* 544 */     int i = paramObjectInputStream.readInt();
-/* 545 */     if (i > 0) {
-/*     */ 
-/*     */       
-/* 548 */       hashtable = new Hashtable<>(3);
-/* 549 */       arrayList = new ArrayList((i > 20) ? 20 : i);
-/* 550 */     } else if (i < 0) {
-/* 551 */       throw new IOException("size cannot be negative");
-/*     */     } 
-/*     */     
-/* 554 */     for (byte b = 0; b < i; b++) {
-/*     */       CertificateFactory certificateFactory;
-/*     */       
-/* 557 */       String str = paramObjectInputStream.readUTF();
-/* 558 */       if (hashtable.containsKey(str)) {
-/*     */         
-/* 560 */         certificateFactory = (CertificateFactory)hashtable.get(str);
-/*     */       } else {
-/*     */         
-/*     */         try {
-/* 564 */           certificateFactory = CertificateFactory.getInstance(str);
-/* 565 */         } catch (CertificateException certificateException) {
-/* 566 */           throw new ClassNotFoundException("Certificate factory for " + str + " not found");
-/*     */         } 
-/*     */ 
-/*     */         
-/* 570 */         hashtable.put(str, certificateFactory);
-/*     */       } 
-/*     */       
-/* 573 */       byte[] arrayOfByte = IOUtils.readNBytes(paramObjectInputStream, paramObjectInputStream.readInt());
-/* 574 */       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(arrayOfByte);
-/*     */       try {
-/* 576 */         arrayList.add(certificateFactory.generateCertificate(byteArrayInputStream));
-/* 577 */       } catch (CertificateException certificateException) {
-/* 578 */         throw new IOException(certificateException.getMessage());
-/*     */       } 
-/* 580 */       byteArrayInputStream.close();
-/*     */     } 
-/*     */     
-/* 583 */     if (arrayList != null) {
-/* 584 */       this.certs = arrayList.<Certificate>toArray(new Certificate[i]);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 589 */       this.signers = (CodeSigner[])((CodeSigner[])paramObjectInputStream.readObject()).clone();
-/* 590 */     } catch (IOException iOException) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private CodeSigner[] convertCertArrayToSignerArray(Certificate[] paramArrayOfCertificate) {
-/* 605 */     if (paramArrayOfCertificate == null) {
-/* 606 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 611 */       if (this.factory == null) {
-/* 612 */         this.factory = CertificateFactory.getInstance("X.509");
-/*     */       }
-/*     */ 
-/*     */       
-/* 616 */       byte b = 0;
-/* 617 */       ArrayList<CodeSigner> arrayList = new ArrayList();
-/* 618 */       while (b < paramArrayOfCertificate.length) {
-/* 619 */         ArrayList<Certificate> arrayList1 = new ArrayList();
-/*     */         
-/* 621 */         arrayList1.add(paramArrayOfCertificate[b++]);
-/* 622 */         byte b1 = b;
-/*     */ 
-/*     */ 
-/*     */         
-/* 626 */         while (b1 < paramArrayOfCertificate.length && paramArrayOfCertificate[b1] instanceof X509Certificate && ((X509Certificate)paramArrayOfCertificate[b1])
-/*     */           
-/* 628 */           .getBasicConstraints() != -1) {
-/* 629 */           arrayList1.add(paramArrayOfCertificate[b1]);
-/* 630 */           b1++;
-/*     */         } 
-/* 632 */         b = b1;
-/* 633 */         CertPath certPath = this.factory.generateCertPath(arrayList1);
-/* 634 */         arrayList.add(new CodeSigner(certPath, null));
-/*     */       } 
-/*     */       
-/* 637 */       if (arrayList.isEmpty()) {
-/* 638 */         return null;
-/*     */       }
-/* 640 */       return arrayList.<CodeSigner>toArray(new CodeSigner[arrayList.size()]);
-/*     */     
-/*     */     }
-/* 643 */     catch (CertificateException certificateException) {
-/* 644 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\CodeSource.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security;
+
+
+import java.net.URL;
+import java.net.SocketPermission;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Hashtable;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.cert.*;
+import sun.misc.IOUtils;
+
+/**
+ *
+ * <p>This class extends the concept of a codebase to
+ * encapsulate not only the location (URL) but also the certificate chains
+ * that were used to verify signed code originating from that location.
+ *
+ * @author Li Gong
+ * @author Roland Schemers
+ */
+
+public class CodeSource implements java.io.Serializable {
+
+    private static final long serialVersionUID = 4977541819976013951L;
+
+    /**
+     * The code location.
+     *
+     * @serial
+     */
+    private URL location;
+
+    /*
+     * The code signers.
+     */
+    private transient CodeSigner[] signers = null;
+
+    /*
+     * The code signers. Certificate chains are concatenated.
+     */
+    private transient java.security.cert.Certificate certs[] = null;
+
+    // cached SocketPermission used for matchLocation
+    private transient SocketPermission sp;
+
+    // for generating cert paths
+    private transient CertificateFactory factory = null;
+
+    /**
+     * Constructs a CodeSource and associates it with the specified
+     * location and set of certificates.
+     *
+     * @param url the location (URL).
+     *
+     * @param certs the certificate(s). It may be null. The contents of the
+     * array are copied to protect against subsequent modification.
+     */
+    public CodeSource(URL url, java.security.cert.Certificate certs[]) {
+        this.location = url;
+
+        // Copy the supplied certs
+        if (certs != null) {
+            this.certs = certs.clone();
+        }
+    }
+
+    /**
+     * Constructs a CodeSource and associates it with the specified
+     * location and set of code signers.
+     *
+     * @param url the location (URL).
+     * @param signers the code signers. It may be null. The contents of the
+     * array are copied to protect against subsequent modification.
+     *
+     * @since 1.5
+     */
+    public CodeSource(URL url, CodeSigner[] signers) {
+        this.location = url;
+
+        // Copy the supplied signers
+        if (signers != null) {
+            this.signers = signers.clone();
+        }
+    }
+
+    /**
+     * Returns the hash code value for this object.
+     *
+     * @return a hash code value for this object.
+     */
+    @Override
+    public int hashCode() {
+        if (location != null)
+            return location.hashCode();
+        else
+            return 0;
+    }
+
+    /**
+     * Tests for equality between the specified object and this
+     * object. Two CodeSource objects are considered equal if their
+     * locations are of identical value and if their signer certificate
+     * chains are of identical value. It is not required that
+     * the certificate chains be in the same order.
+     *
+     * @param obj the object to test for equality with this object.
+     *
+     * @return true if the objects are considered equal, false otherwise.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        // objects types must be equal
+        if (!(obj instanceof CodeSource))
+            return false;
+
+        CodeSource cs = (CodeSource) obj;
+
+        // URLs must match
+        if (location == null) {
+            // if location is null, then cs.location must be null as well
+            if (cs.location != null) return false;
+        } else {
+            // if location is not null, then it must equal cs.location
+            if (!location.equals(cs.location)) return false;
+        }
+
+        // certs must match
+        return matchCerts(cs, true);
+    }
+
+    /**
+     * Returns the location associated with this CodeSource.
+     *
+     * @return the location (URL).
+     */
+    public final URL getLocation() {
+        /* since URL is practically immutable, returning itself is not
+           a security problem */
+        return this.location;
+    }
+
+    /**
+     * Returns the certificates associated with this CodeSource.
+     * <p>
+     * If this CodeSource object was created using the
+     * {@link #CodeSource(URL url, CodeSigner[] signers)}
+     * constructor then its certificate chains are extracted and used to
+     * create an array of Certificate objects. Each signer certificate is
+     * followed by its supporting certificate chain (which may be empty).
+     * Each signer certificate and its supporting certificate chain is ordered
+     * bottom-to-top (i.e., with the signer certificate first and the (root)
+     * certificate authority last).
+     *
+     * @return A copy of the certificates array, or null if there is none.
+     */
+    public final java.security.cert.Certificate[] getCertificates() {
+        if (certs != null) {
+            return certs.clone();
+
+        } else if (signers != null) {
+            // Convert the code signers to certs
+            ArrayList<java.security.cert.Certificate> certChains =
+                        new ArrayList<>();
+            for (int i = 0; i < signers.length; i++) {
+                certChains.addAll(
+                    signers[i].getSignerCertPath().getCertificates());
+            }
+            certs = certChains.toArray(
+                        new java.security.cert.Certificate[certChains.size()]);
+            return certs.clone();
+
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the code signers associated with this CodeSource.
+     * <p>
+     * If this CodeSource object was created using the
+     * {@link #CodeSource(URL url, java.security.cert.Certificate[] certs)}
+     * constructor then its certificate chains are extracted and used to
+     * create an array of CodeSigner objects. Note that only X.509 certificates
+     * are examined - all other certificate types are ignored.
+     *
+     * @return A copy of the code signer array, or null if there is none.
+     *
+     * @since 1.5
+     */
+    public final CodeSigner[] getCodeSigners() {
+        if (signers != null) {
+            return signers.clone();
+
+        } else if (certs != null) {
+            // Convert the certs to code signers
+            signers = convertCertArrayToSignerArray(certs);
+            return signers.clone();
+
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns true if this CodeSource object "implies" the specified CodeSource.
+     * <p>
+     * More specifically, this method makes the following checks.
+     * If any fail, it returns false. If they all succeed, it returns true.
+     * <ul>
+     * <li> <i>codesource</i> must not be null.
+     * <li> If this object's certificates are not null, then all
+     * of this object's certificates must be present in <i>codesource</i>'s
+     * certificates.
+     * <li> If this object's location (getLocation()) is not null, then the
+     * following checks are made against this object's location and
+     * <i>codesource</i>'s:
+     *   <ul>
+     *     <li>  <i>codesource</i>'s location must not be null.
+     *
+     *     <li>  If this object's location
+     *           equals <i>codesource</i>'s location, then return true.
+     *
+     *     <li>  This object's protocol (getLocation().getProtocol()) must be
+     *           equal to <i>codesource</i>'s protocol, ignoring case.
+     *
+     *     <li>  If this object's host (getLocation().getHost()) is not null,
+     *           then the SocketPermission
+     *           constructed with this object's host must imply the
+     *           SocketPermission constructed with <i>codesource</i>'s host.
+     *
+     *     <li>  If this object's port (getLocation().getPort()) is not
+     *           equal to -1 (that is, if a port is specified), it must equal
+     *           <i>codesource</i>'s port or default port
+     *           (codesource.getLocation().getDefaultPort()).
+     *
+     *     <li>  If this object's file (getLocation().getFile()) doesn't equal
+     *           <i>codesource</i>'s file, then the following checks are made:
+     *           If this object's file ends with "/-",
+     *           then <i>codesource</i>'s file must start with this object's
+     *           file (exclusive the trailing "-").
+     *           If this object's file ends with a "/*",
+     *           then <i>codesource</i>'s file must start with this object's
+     *           file and must not have any further "/" separators.
+     *           If this object's file doesn't end with a "/",
+     *           then <i>codesource</i>'s file must match this object's
+     *           file with a '/' appended.
+     *
+     *     <li>  If this object's reference (getLocation().getRef()) is
+     *           not null, it must equal <i>codesource</i>'s reference.
+     *
+     *   </ul>
+     * </ul>
+     * <p>
+     * For example, the codesource objects with the following locations
+     * and null certificates all imply
+     * the codesource with the location "http://java.sun.com/classes/foo.jar"
+     * and null certificates:
+     * <pre>
+     *     http:
+     *     http://*.sun.com/classes/*
+     *     http://java.sun.com/classes/-
+     *     http://java.sun.com/classes/foo.jar
+     * </pre>
+     *
+     * Note that if this CodeSource has a null location and a null
+     * certificate chain, then it implies every other CodeSource.
+     *
+     * @param codesource CodeSource to compare against.
+     *
+     * @return true if the specified codesource is implied by this codesource,
+     * false if not.
+     */
+
+    public boolean implies(CodeSource codesource)
+    {
+        if (codesource == null)
+            return false;
+
+        return matchCerts(codesource, false) && matchLocation(codesource);
+    }
+
+    /**
+     * Returns true if all the certs in this
+     * CodeSource are also in <i>that</i>.
+     *
+     * @param that the CodeSource to check against.
+     * @param strict If true then a strict equality match is performed.
+     *               Otherwise a subset match is performed.
+     */
+    private boolean matchCerts(CodeSource that, boolean strict)
+    {
+        boolean match;
+
+        // match any key
+        if (certs == null && signers == null) {
+            if (strict) {
+                return (that.certs == null && that.signers == null);
+            } else {
+                return true;
+            }
+        // both have signers
+        } else if (signers != null && that.signers != null) {
+            if (strict && signers.length != that.signers.length) {
+                return false;
+            }
+            for (int i = 0; i < signers.length; i++) {
+                match = false;
+                for (int j = 0; j < that.signers.length; j++) {
+                    if (signers[i].equals(that.signers[j])) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) return false;
+            }
+            return true;
+
+        // both have certs
+        } else if (certs != null && that.certs != null) {
+            if (strict && certs.length != that.certs.length) {
+                return false;
+            }
+            for (int i = 0; i < certs.length; i++) {
+                match = false;
+                for (int j = 0; j < that.certs.length; j++) {
+                    if (certs[i].equals(that.certs[j])) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) return false;
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Returns true if two CodeSource's have the "same" location.
+     *
+     * @param that CodeSource to compare against
+     */
+    private boolean matchLocation(CodeSource that) {
+        if (location == null)
+            return true;
+
+        if ((that == null) || (that.location == null))
+            return false;
+
+        if (location.equals(that.location))
+            return true;
+
+        if (!location.getProtocol().equalsIgnoreCase(that.location.getProtocol()))
+            return false;
+
+        int thisPort = location.getPort();
+        if (thisPort != -1) {
+            int thatPort = that.location.getPort();
+            int port = thatPort != -1 ? thatPort
+                                      : that.location.getDefaultPort();
+            if (thisPort != port)
+                return false;
+        }
+
+        if (location.getFile().endsWith("/-")) {
+            // Matches the directory and (recursively) all files
+            // and subdirectories contained in that directory.
+            // For example, "/a/b/-" implies anything that starts with
+            // "/a/b/"
+            String thisPath = location.getFile().substring(0,
+                                            location.getFile().length()-1);
+            if (!that.location.getFile().startsWith(thisPath))
+                return false;
+        } else if (location.getFile().endsWith("/*")) {
+            // Matches the directory and all the files contained in that
+            // directory.
+            // For example, "/a/b/*" implies anything that starts with
+            // "/a/b/" but has no further slashes
+            int last = that.location.getFile().lastIndexOf('/');
+            if (last == -1)
+                return false;
+            String thisPath = location.getFile().substring(0,
+                                            location.getFile().length()-1);
+            String thatPath = that.location.getFile().substring(0, last+1);
+            if (!thatPath.equals(thisPath))
+                return false;
+        } else {
+            // Exact matches only.
+            // For example, "/a/b" and "/a/b/" both imply "/a/b/"
+            if ((!that.location.getFile().equals(location.getFile()))
+                && (!that.location.getFile().equals(location.getFile()+"/"))) {
+                return false;
+            }
+        }
+
+        if (location.getRef() != null
+            && !location.getRef().equals(that.location.getRef())) {
+            return false;
+        }
+
+        String thisHost = location.getHost();
+        String thatHost = that.location.getHost();
+        if (thisHost != null) {
+            if (("".equals(thisHost) || "localhost".equals(thisHost)) &&
+                ("".equals(thatHost) || "localhost".equals(thatHost))) {
+                // ok
+            } else if (!thisHost.equals(thatHost)) {
+                if (thatHost == null) {
+                    return false;
+                }
+                if (this.sp == null) {
+                    this.sp = new SocketPermission(thisHost, "resolve");
+                }
+                if (that.sp == null) {
+                    that.sp = new SocketPermission(thatHost, "resolve");
+                }
+                if (!this.sp.implies(that.sp)) {
+                    return false;
+                }
+            }
+        }
+        // everything matches
+        return true;
+    }
+
+    /**
+     * Returns a string describing this CodeSource, telling its
+     * URL and certificates.
+     *
+     * @return information about this CodeSource.
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+        sb.append(this.location);
+
+        if (this.certs != null && this.certs.length > 0) {
+            for (int i = 0; i < this.certs.length; i++) {
+                sb.append( " " + this.certs[i]);
+            }
+
+        } else if (this.signers != null && this.signers.length > 0) {
+            for (int i = 0; i < this.signers.length; i++) {
+                sb.append( " " + this.signers[i]);
+            }
+        } else {
+            sb.append(" <no signer certificates>");
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    /**
+     * Writes this object out to a stream (i.e., serializes it).
+     *
+     * @serialData An initial {@code URL} is followed by an
+     * {@code int} indicating the number of certificates to follow
+     * (a value of "zero" denotes that there are no certificates associated
+     * with this object).
+     * Each certificate is written out starting with a {@code String}
+     * denoting the certificate type, followed by an
+     * {@code int} specifying the length of the certificate encoding,
+     * followed by the certificate encoding itself which is written out as an
+     * array of bytes. Finally, if any code signers are present then the array
+     * of code signers is serialized and written out too.
+     */
+    private void writeObject(java.io.ObjectOutputStream oos)
+        throws IOException
+    {
+        oos.defaultWriteObject(); // location
+
+        // Serialize the array of certs
+        if (certs == null || certs.length == 0) {
+            oos.writeInt(0);
+        } else {
+            // write out the total number of certs
+            oos.writeInt(certs.length);
+            // write out each cert, including its type
+            for (int i = 0; i < certs.length; i++) {
+                java.security.cert.Certificate cert = certs[i];
+                try {
+                    oos.writeUTF(cert.getType());
+                    byte[] encoded = cert.getEncoded();
+                    oos.writeInt(encoded.length);
+                    oos.write(encoded);
+                } catch (CertificateEncodingException cee) {
+                    throw new IOException(cee.getMessage());
+                }
+            }
+        }
+
+        // Serialize the array of code signers (if any)
+        if (signers != null && signers.length > 0) {
+            oos.writeObject(signers);
+        }
+    }
+
+    /**
+     * Restores this object from a stream (i.e., deserializes it).
+     */
+    private void readObject(java.io.ObjectInputStream ois)
+        throws IOException, ClassNotFoundException
+    {
+        CertificateFactory cf;
+        Hashtable<String, CertificateFactory> cfs = null;
+        List<java.security.cert.Certificate> certList = null;
+
+        ois.defaultReadObject(); // location
+
+        // process any new-style certs in the stream (if present)
+        int size = ois.readInt();
+        if (size > 0) {
+            // we know of 3 different cert types: X.509, PGP, SDSI, which
+            // could all be present in the stream at the same time
+            cfs = new Hashtable<String, CertificateFactory>(3);
+            certList = new ArrayList<>(size > 20 ? 20 : size);
+        } else if (size < 0) {
+            throw new IOException("size cannot be negative");
+        }
+
+        for (int i = 0; i < size; i++) {
+            // read the certificate type, and instantiate a certificate
+            // factory of that type (reuse existing factory if possible)
+            String certType = ois.readUTF();
+            if (cfs.containsKey(certType)) {
+                // reuse certificate factory
+                cf = cfs.get(certType);
+            } else {
+                // create new certificate factory
+                try {
+                    cf = CertificateFactory.getInstance(certType);
+                } catch (CertificateException ce) {
+                    throw new ClassNotFoundException
+                        ("Certificate factory for " + certType + " not found");
+                }
+                // store the certificate factory so we can reuse it later
+                cfs.put(certType, cf);
+            }
+            // parse the certificate
+            byte[] encoded = IOUtils.readNBytes(ois, ois.readInt());
+            ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
+            try {
+                certList.add(cf.generateCertificate(bais));
+            } catch (CertificateException ce) {
+                throw new IOException(ce.getMessage());
+            }
+            bais.close();
+        }
+
+        if (certList != null) {
+            this.certs = certList.toArray(
+                    new java.security.cert.Certificate[size]);
+        }
+        // Deserialize array of code signers (if any)
+        try {
+            this.signers = ((CodeSigner[])ois.readObject()).clone();
+        } catch (IOException ioe) {
+            // no signers present
+        }
+    }
+
+    /*
+     * Convert an array of certificates to an array of code signers.
+     * The array of certificates is a concatenation of certificate chains
+     * where the initial certificate in each chain is the end-entity cert.
+     *
+     * @return An array of code signers or null if none are generated.
+     */
+    private CodeSigner[] convertCertArrayToSignerArray(
+        java.security.cert.Certificate[] certs) {
+
+        if (certs == null) {
+            return null;
+        }
+
+        try {
+            // Initialize certificate factory
+            if (factory == null) {
+                factory = CertificateFactory.getInstance("X.509");
+            }
+
+            // Iterate through all the certificates
+            int i = 0;
+            List<CodeSigner> signers = new ArrayList<>();
+            while (i < certs.length) {
+                List<java.security.cert.Certificate> certChain =
+                        new ArrayList<>();
+                certChain.add(certs[i++]); // first cert is an end-entity cert
+                int j = i;
+
+                // Extract chain of certificates
+                // (loop while certs are not end-entity certs)
+                while (j < certs.length &&
+                    certs[j] instanceof X509Certificate &&
+                    ((X509Certificate)certs[j]).getBasicConstraints() != -1) {
+                    certChain.add(certs[j]);
+                    j++;
+                }
+                i = j;
+                CertPath certPath = factory.generateCertPath(certChain);
+                signers.add(new CodeSigner(certPath, null));
+            }
+
+            if (signers.isEmpty()) {
+                return null;
+            } else {
+                return signers.toArray(new CodeSigner[signers.size()]);
+            }
+
+        } catch (CertificateException e) {
+            return null; //TODO - may be better to throw an ex. here
+        }
+    }
+}

@@ -1,308 +1,325 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class Writer
-/*     */   implements Appendable, Closeable, Flushable
-/*     */ {
-/*     */   private char[] writeBuffer;
-/*     */   private static final int WRITE_BUFFER_SIZE = 1024;
-/*     */   protected Object lock;
-/*     */   
-/*     */   protected Writer() {
-/*  76 */     this.lock = this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Writer(Object paramObject) {
-/*  87 */     if (paramObject == null) {
-/*  88 */       throw new NullPointerException();
-/*     */     }
-/*  90 */     this.lock = paramObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 108 */     synchronized (this.lock) {
-/* 109 */       if (this.writeBuffer == null) {
-/* 110 */         this.writeBuffer = new char[1024];
-/*     */       }
-/* 112 */       this.writeBuffer[0] = (char)paramInt;
-/* 113 */       write(this.writeBuffer, 0, 1);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(char[] paramArrayOfchar) throws IOException {
-/* 127 */     write(paramArrayOfchar, 0, paramArrayOfchar.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(String paramString) throws IOException {
-/* 157 */     write(paramString, 0, paramString.length());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(String paramString, int paramInt1, int paramInt2) throws IOException {
-/* 181 */     synchronized (this.lock) {
-/*     */       char[] arrayOfChar;
-/* 183 */       if (paramInt2 <= 1024) {
-/* 184 */         if (this.writeBuffer == null) {
-/* 185 */           this.writeBuffer = new char[1024];
-/*     */         }
-/* 187 */         arrayOfChar = this.writeBuffer;
-/*     */       } else {
-/* 189 */         arrayOfChar = new char[paramInt2];
-/*     */       } 
-/* 191 */       paramString.getChars(paramInt1, paramInt1 + paramInt2, arrayOfChar, 0);
-/* 192 */       write(arrayOfChar, 0, paramInt2);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer append(CharSequence paramCharSequence) throws IOException {
-/* 224 */     if (paramCharSequence == null) {
-/* 225 */       write("null");
-/*     */     } else {
-/* 227 */       write(paramCharSequence.toString());
-/* 228 */     }  return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer append(CharSequence paramCharSequence, int paramInt1, int paramInt2) throws IOException {
-/* 268 */     CharSequence charSequence = (paramCharSequence == null) ? "null" : paramCharSequence;
-/* 269 */     write(charSequence.subSequence(paramInt1, paramInt2).toString());
-/* 270 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer append(char paramChar) throws IOException {
-/* 293 */     write(paramChar);
-/* 294 */     return this;
-/*     */   }
-/*     */   
-/*     */   public abstract void write(char[] paramArrayOfchar, int paramInt1, int paramInt2) throws IOException;
-/*     */   
-/*     */   public abstract void flush() throws IOException;
-/*     */   
-/*     */   public abstract void close() throws IOException;
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\Writer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+
+/**
+ * Abstract class for writing to character streams.  The only methods that a
+ * subclass must implement are write(char[], int, int), flush(), and close().
+ * Most subclasses, however, will override some of the methods defined here in
+ * order to provide higher efficiency, additional functionality, or both.
+ *
+ * @see Writer
+ * @see   BufferedWriter
+ * @see   CharArrayWriter
+ * @see   FilterWriter
+ * @see   OutputStreamWriter
+ * @see     FileWriter
+ * @see   PipedWriter
+ * @see   PrintWriter
+ * @see   StringWriter
+ * @see Reader
+ *
+ * @author      Mark Reinhold
+ * @since       JDK1.1
+ */
+
+public abstract class Writer implements Appendable, Closeable, Flushable {
+
+    /**
+     * Temporary buffer used to hold writes of strings and single characters
+     */
+    private char[] writeBuffer;
+
+    /**
+     * Size of writeBuffer, must be >= 1
+     */
+    private static final int WRITE_BUFFER_SIZE = 1024;
+
+    /**
+     * The object used to synchronize operations on this stream.  For
+     * efficiency, a character-stream object may use an object other than
+     * itself to protect critical sections.  A subclass should therefore use
+     * the object in this field rather than <tt>this</tt> or a synchronized
+     * method.
+     */
+    protected Object lock;
+
+    /**
+     * Creates a new character-stream writer whose critical sections will
+     * synchronize on the writer itself.
+     */
+    protected Writer() {
+        this.lock = this;
+    }
+
+    /**
+     * Creates a new character-stream writer whose critical sections will
+     * synchronize on the given object.
+     *
+     * @param  lock
+     *         Object to synchronize on
+     */
+    protected Writer(Object lock) {
+        if (lock == null) {
+            throw new NullPointerException();
+        }
+        this.lock = lock;
+    }
+
+    /**
+     * Writes a single character.  The character to be written is contained in
+     * the 16 low-order bits of the given integer value; the 16 high-order bits
+     * are ignored.
+     *
+     * <p> Subclasses that intend to support efficient single-character output
+     * should override this method.
+     *
+     * @param  c
+     *         int specifying a character to be written
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    public void write(int c) throws IOException {
+        synchronized (lock) {
+            if (writeBuffer == null){
+                writeBuffer = new char[WRITE_BUFFER_SIZE];
+            }
+            writeBuffer[0] = (char) c;
+            write(writeBuffer, 0, 1);
+        }
+    }
+
+    /**
+     * Writes an array of characters.
+     *
+     * @param  cbuf
+     *         Array of characters to be written
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    public void write(char cbuf[]) throws IOException {
+        write(cbuf, 0, cbuf.length);
+    }
+
+    /**
+     * Writes a portion of an array of characters.
+     *
+     * @param  cbuf
+     *         Array of characters
+     *
+     * @param  off
+     *         Offset from which to start writing characters
+     *
+     * @param  len
+     *         Number of characters to write
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    abstract public void write(char cbuf[], int off, int len) throws IOException;
+
+    /**
+     * Writes a string.
+     *
+     * @param  str
+     *         String to be written
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    public void write(String str) throws IOException {
+        write(str, 0, str.length());
+    }
+
+    /**
+     * Writes a portion of a string.
+     *
+     * @param  str
+     *         A String
+     *
+     * @param  off
+     *         Offset from which to start writing characters
+     *
+     * @param  len
+     *         Number of characters to write
+     *
+     * @throws  IndexOutOfBoundsException
+     *          If <tt>off</tt> is negative, or <tt>len</tt> is negative,
+     *          or <tt>off+len</tt> is negative or greater than the length
+     *          of the given string
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    public void write(String str, int off, int len) throws IOException {
+        synchronized (lock) {
+            char cbuf[];
+            if (len <= WRITE_BUFFER_SIZE) {
+                if (writeBuffer == null) {
+                    writeBuffer = new char[WRITE_BUFFER_SIZE];
+                }
+                cbuf = writeBuffer;
+            } else {    // Don't permanently allocate very large buffers.
+                cbuf = new char[len];
+            }
+            str.getChars(off, (off + len), cbuf, 0);
+            write(cbuf, 0, len);
+        }
+    }
+
+    /**
+     * Appends the specified character sequence to this writer.
+     *
+     * <p> An invocation of this method of the form <tt>out.append(csq)</tt>
+     * behaves in exactly the same way as the invocation
+     *
+     * <pre>
+     *     out.write(csq.toString()) </pre>
+     *
+     * <p> Depending on the specification of <tt>toString</tt> for the
+     * character sequence <tt>csq</tt>, the entire sequence may not be
+     * appended. For instance, invoking the <tt>toString</tt> method of a
+     * character buffer will return a subsequence whose content depends upon
+     * the buffer's position and limit.
+     *
+     * @param  csq
+     *         The character sequence to append.  If <tt>csq</tt> is
+     *         <tt>null</tt>, then the four characters <tt>"null"</tt> are
+     *         appended to this writer.
+     *
+     * @return  This writer
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     *
+     * @since  1.5
+     */
+    public Writer append(CharSequence csq) throws IOException {
+        if (csq == null)
+            write("null");
+        else
+            write(csq.toString());
+        return this;
+    }
+
+    /**
+     * Appends a subsequence of the specified character sequence to this writer.
+     * <tt>Appendable</tt>.
+     *
+     * <p> An invocation of this method of the form <tt>out.append(csq, start,
+     * end)</tt> when <tt>csq</tt> is not <tt>null</tt> behaves in exactly the
+     * same way as the invocation
+     *
+     * <pre>
+     *     out.write(csq.subSequence(start, end).toString()) </pre>
+     *
+     * @param  csq
+     *         The character sequence from which a subsequence will be
+     *         appended.  If <tt>csq</tt> is <tt>null</tt>, then characters
+     *         will be appended as if <tt>csq</tt> contained the four
+     *         characters <tt>"null"</tt>.
+     *
+     * @param  start
+     *         The index of the first character in the subsequence
+     *
+     * @param  end
+     *         The index of the character following the last character in the
+     *         subsequence
+     *
+     * @return  This writer
+     *
+     * @throws  IndexOutOfBoundsException
+     *          If <tt>start</tt> or <tt>end</tt> are negative, <tt>start</tt>
+     *          is greater than <tt>end</tt>, or <tt>end</tt> is greater than
+     *          <tt>csq.length()</tt>
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     *
+     * @since  1.5
+     */
+    public Writer append(CharSequence csq, int start, int end) throws IOException {
+        CharSequence cs = (csq == null ? "null" : csq);
+        write(cs.subSequence(start, end).toString());
+        return this;
+    }
+
+    /**
+     * Appends the specified character to this writer.
+     *
+     * <p> An invocation of this method of the form <tt>out.append(c)</tt>
+     * behaves in exactly the same way as the invocation
+     *
+     * <pre>
+     *     out.write(c) </pre>
+     *
+     * @param  c
+     *         The 16-bit character to append
+     *
+     * @return  This writer
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     *
+     * @since 1.5
+     */
+    public Writer append(char c) throws IOException {
+        write(c);
+        return this;
+    }
+
+    /**
+     * Flushes the stream.  If the stream has saved any characters from the
+     * various write() methods in a buffer, write them immediately to their
+     * intended destination.  Then, if that destination is another character or
+     * byte stream, flush it.  Thus one flush() invocation will flush all the
+     * buffers in a chain of Writers and OutputStreams.
+     *
+     * <p> If the intended destination of this stream is an abstraction provided
+     * by the underlying operating system, for example a file, then flushing the
+     * stream guarantees only that bytes previously written to the stream are
+     * passed to the operating system for writing; it does not guarantee that
+     * they are actually written to a physical device such as a disk drive.
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    abstract public void flush() throws IOException;
+
+    /**
+     * Closes the stream, flushing it first. Once the stream has been closed,
+     * further write() or flush() invocations will cause an IOException to be
+     * thrown. Closing a previously closed stream has no effect.
+     *
+     * @throws  IOException
+     *          If an I/O error occurs
+     */
+    abstract public void close() throws IOException;
+
+}

@@ -1,104 +1,99 @@
-/*    */ package com.sun.java.swing.plaf.windows;
-/*    */ 
-/*    */ import java.awt.Graphics;
-/*    */ import javax.swing.AbstractButton;
-/*    */ import javax.swing.JComponent;
-/*    */ import javax.swing.border.Border;
-/*    */ import javax.swing.border.EmptyBorder;
-/*    */ import javax.swing.plaf.ComponentUI;
-/*    */ import javax.swing.plaf.basic.BasicToolBarUI;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class WindowsToolBarUI
-/*    */   extends BasicToolBarUI
-/*    */ {
-/*    */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 51 */     return new WindowsToolBarUI();
-/*    */   }
-/*    */   
-/*    */   protected void installDefaults() {
-/* 55 */     if (XPStyle.getXP() != null) {
-/* 56 */       setRolloverBorders(true);
-/*    */     }
-/* 58 */     super.installDefaults();
-/*    */   }
-/*    */   
-/*    */   protected Border createRolloverBorder() {
-/* 62 */     if (XPStyle.getXP() != null) {
-/* 63 */       return new EmptyBorder(3, 3, 3, 3);
-/*    */     }
-/* 65 */     return super.createRolloverBorder();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   protected Border createNonRolloverBorder() {
-/* 70 */     if (XPStyle.getXP() != null) {
-/* 71 */       return new EmptyBorder(3, 3, 3, 3);
-/*    */     }
-/* 73 */     return super.createNonRolloverBorder();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 78 */     XPStyle xPStyle = XPStyle.getXP();
-/* 79 */     if (xPStyle != null) {
-/* 80 */       xPStyle.getSkin(paramJComponent, TMSchema.Part.TP_TOOLBAR).paintSkin(paramGraphics, 0, 0, paramJComponent
-/* 81 */           .getWidth(), paramJComponent.getHeight(), null, true);
-/*    */     } else {
-/* 83 */       super.paint(paramGraphics, paramJComponent);
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   protected Border getRolloverBorder(AbstractButton paramAbstractButton) {
-/* 92 */     XPStyle xPStyle = XPStyle.getXP();
-/* 93 */     if (xPStyle != null) {
-/* 94 */       return xPStyle.getBorder(paramAbstractButton, WindowsButtonUI.getXPButtonType(paramAbstractButton));
-/*    */     }
-/* 96 */     return super.getRolloverBorder(paramAbstractButton);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsToolBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+
+import javax.swing.AbstractButton;
+import javax.swing.JComponent;
+import javax.swing.JToggleButton;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+
+import javax.swing.plaf.*;
+
+import javax.swing.plaf.basic.BasicBorders;
+import javax.swing.plaf.basic.BasicToolBarUI;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.Part;
+
+
+public class WindowsToolBarUI extends BasicToolBarUI {
+
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsToolBarUI();
+    }
+
+    protected void installDefaults() {
+        if (XPStyle.getXP() != null) {
+            setRolloverBorders(true);
+        }
+        super.installDefaults();
+    }
+
+    protected Border createRolloverBorder() {
+        if (XPStyle.getXP() != null) {
+            return new EmptyBorder(3, 3, 3, 3);
+        } else {
+            return super.createRolloverBorder();
+        }
+    }
+
+    protected Border createNonRolloverBorder() {
+        if (XPStyle.getXP() != null) {
+            return new EmptyBorder(3, 3, 3, 3);
+        } else {
+            return super.createNonRolloverBorder();
+        }
+    }
+
+    public void paint(Graphics g, JComponent c) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            xp.getSkin(c, Part.TP_TOOLBAR).paintSkin(g, 0, 0,
+                        c.getWidth(), c.getHeight(), null, true);
+        } else {
+            super.paint(g, c);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    protected Border getRolloverBorder(AbstractButton b) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            return xp.getBorder(b, WindowsButtonUI.getXPButtonType(b));
+        } else {
+            return super.getRolloverBorder(b);
+        }
+    }
+}

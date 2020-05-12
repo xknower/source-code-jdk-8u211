@@ -1,196 +1,190 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.TypeCodePackage.BadKind;
-/*     */ import org.omg.CORBA.TypeCodePackage.Bounds;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ import org.omg.DynamicAny.DynEnum;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DynEnumImpl
-/*     */   extends DynAnyBasicImpl
-/*     */   implements DynEnum
-/*     */ {
-/*  48 */   int currentEnumeratorIndex = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private DynEnumImpl() {
-/*  55 */     this((ORB)null, (Any)null, false);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected DynEnumImpl(ORB paramORB, Any paramAny, boolean paramBoolean) {
-/*  60 */     super(paramORB, paramAny, paramBoolean);
-/*  61 */     this.index = -1;
-/*     */     
-/*     */     try {
-/*  64 */       this.currentEnumeratorIndex = this.any.extract_long();
-/*  65 */     } catch (BAD_OPERATION bAD_OPERATION) {
-/*     */       
-/*  67 */       this.currentEnumeratorIndex = 0;
-/*  68 */       this.any.type(this.any.type());
-/*  69 */       this.any.insert_long(0);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected DynEnumImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  76 */     super(paramORB, paramTypeCode);
-/*  77 */     this.index = -1;
-/*  78 */     this.currentEnumeratorIndex = 0;
-/*  79 */     this.any.insert_long(0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int memberCount() {
-/*  87 */     int i = 0;
-/*     */     try {
-/*  89 */       i = this.any.type().member_count();
-/*  90 */     } catch (BadKind badKind) {}
-/*     */     
-/*  92 */     return i;
-/*     */   }
-/*     */   
-/*     */   private String memberName(int paramInt) {
-/*  96 */     String str = null;
-/*     */     
-/*  98 */     try { str = this.any.type().member_name(paramInt); }
-/*  99 */     catch (BadKind badKind) {  }
-/* 100 */     catch (Bounds bounds) {}
-/*     */     
-/* 102 */     return str;
-/*     */   }
-/*     */   
-/*     */   private int computeCurrentEnumeratorIndex(String paramString) {
-/* 106 */     int i = memberCount();
-/* 107 */     for (byte b = 0; b < i; b++) {
-/* 108 */       if (memberName(b).equals(paramString)) {
-/* 109 */         return b;
-/*     */       }
-/*     */     } 
-/* 112 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int component_count() {
-/* 121 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DynAny current_component() throws TypeMismatch {
-/* 129 */     if (this.status == 2) {
-/* 130 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 132 */     throw new TypeMismatch();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String get_as_string() {
-/* 141 */     if (this.status == 2) {
-/* 142 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 144 */     return memberName(this.currentEnumeratorIndex);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_as_string(String paramString) throws InvalidValue {
-/* 154 */     if (this.status == 2) {
-/* 155 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 157 */     int i = computeCurrentEnumeratorIndex(paramString);
-/* 158 */     if (i == -1) {
-/* 159 */       throw new InvalidValue();
-/*     */     }
-/* 161 */     this.currentEnumeratorIndex = i;
-/* 162 */     this.any.insert_long(i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int get_as_ulong() {
-/* 169 */     if (this.status == 2) {
-/* 170 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 172 */     return this.currentEnumeratorIndex;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_as_ulong(int paramInt) throws InvalidValue {
-/* 181 */     if (this.status == 2) {
-/* 182 */       throw this.wrapper.dynAnyDestroyed();
-/*     */     }
-/* 184 */     if (paramInt < 0 || paramInt >= memberCount()) {
-/* 185 */       throw new InvalidValue();
-/*     */     }
-/* 187 */     this.currentEnumeratorIndex = paramInt;
-/* 188 */     this.any.insert_long(paramInt);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynEnumImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.BAD_OPERATION;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import org.omg.CORBA.TypeCodePackage.Bounds;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.*;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public class DynEnumImpl extends DynAnyBasicImpl implements DynEnum
+{
+    //
+    // Instance variables
+    //
+
+    // This int and the any value are kept in sync at all times
+    int currentEnumeratorIndex = NO_INDEX;
+
+    //
+    // Constructors
+    //
+
+    private DynEnumImpl() {
+        this(null, (Any)null, false);
+    }
+
+    // The current position of a DynEnum is always -1.
+    protected DynEnumImpl(ORB orb, Any anAny, boolean copyValue) {
+        super(orb, anAny, copyValue);
+        index = NO_INDEX;
+        // The any doesn't have to be initialized. We have a default value in this case.
+        try {
+            currentEnumeratorIndex = any.extract_long();
+        } catch (BAD_OPERATION e) {
+            // _REVISIT_: Fix Me
+            currentEnumeratorIndex = 0;
+            any.type(any.type());
+            any.insert_long(0);
+        }
+    }
+
+    // Sets the current position to -1 and sets the value of the enumerator
+    // to the first enumerator value indicated by the TypeCode.
+    protected DynEnumImpl(ORB orb, TypeCode typeCode) {
+        super(orb, typeCode);
+        index = NO_INDEX;
+        currentEnumeratorIndex = 0;
+        any.insert_long(0);
+    }
+
+    //
+    // Utility methods
+    //
+
+    private int memberCount() {
+        int memberCount = 0;
+        try {
+            memberCount = any.type().member_count();
+        } catch (BadKind bad) {
+        }
+        return memberCount;
+    }
+
+    private String memberName(int i) {
+        String memberName = null;
+        try {
+            memberName = any.type().member_name(i);
+        } catch (BadKind bad) {
+        } catch (Bounds bounds) {
+        }
+        return memberName;
+    }
+
+    private int computeCurrentEnumeratorIndex(String value) {
+        int memberCount = memberCount();
+        for (int i=0; i<memberCount; i++) {
+            if (memberName(i).equals(value)) {
+                return i;
+            }
+        }
+        return NO_INDEX;
+    }
+
+    //
+    // DynAny interface methods
+    //
+
+    // Returns always 0 for DynEnum
+    public int component_count() {
+        return 0;
+    }
+
+    // Calling current_component on a DynAny that cannot have components,
+    // such as a DynEnum or an empty exception, raises TypeMismatch.
+    public org.omg.DynamicAny.DynAny current_component()
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        throw new TypeMismatch();
+    }
+
+    //
+    // DynEnum interface methods
+    //
+
+    // Returns the value of the DynEnum as an IDL identifier.
+    public String get_as_string () {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        return memberName(currentEnumeratorIndex);
+    }
+
+    // Sets the value of the DynEnum to the enumerated value
+    // whose IDL identifier is passed in the value parameter.
+    // If value contains a string that is not a valid IDL identifier
+    // for the corresponding enumerated type, the operation raises InvalidValue.
+    public void set_as_string (String value)
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        int newIndex = computeCurrentEnumeratorIndex(value);
+        if (newIndex == NO_INDEX) {
+            throw new InvalidValue();
+        }
+        currentEnumeratorIndex = newIndex;
+        any.insert_long(newIndex);
+    }
+
+    // Returns the value of the DynEnum as the enumerated values ordinal value.
+    // Enumerators have ordinal values 0 to n-1,
+    // as they appear from left to right in the corresponding IDL definition.
+    public int get_as_ulong () {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        return currentEnumeratorIndex;
+    }
+
+    // Sets the value of the DynEnum as the enumerated values ordinal value.
+    // If value contains a value that is outside the range of ordinal values
+    // for the corresponding enumerated type, the operation raises InvalidValue.
+    public void set_as_ulong (int value)
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (status == STATUS_DESTROYED) {
+            throw wrapper.dynAnyDestroyed() ;
+        }
+        if (value < 0 || value >= memberCount()) {
+            throw new InvalidValue();
+        }
+        currentEnumeratorIndex = value;
+        any.insert_long(value);
+    }
+}

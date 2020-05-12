@@ -1,2447 +1,2442 @@
-/*      */ package java.text;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.InvalidObjectException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.util.Calendar;
-/*      */ import java.util.Date;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Map;
-/*      */ import java.util.TimeZone;
-/*      */ import java.util.concurrent.ConcurrentHashMap;
-/*      */ import java.util.concurrent.ConcurrentMap;
-/*      */ import sun.util.calendar.CalendarUtils;
-/*      */ import sun.util.calendar.ZoneInfoFile;
-/*      */ import sun.util.locale.provider.LocaleProviderAdapter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class SimpleDateFormat
-/*      */   extends DateFormat
-/*      */ {
-/*      */   static final long serialVersionUID = 4774881970558875024L;
-/*      */   static final int currentSerialVersion = 1;
-/*  446 */   private int serialVersionOnStream = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String pattern;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient NumberFormat originalNumberFormat;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient String originalNumberPattern;
-/*      */ 
-/*      */ 
-/*      */   
-/*  465 */   private transient char minusSign = '-';
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient boolean hasFollowingMinusSign = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient boolean forceStandaloneForm = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient char[] compiledPattern;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int TAG_QUOTE_ASCII_CHAR = 100;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int TAG_QUOTE_CHARS = 101;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient char zeroDigit;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DateFormatSymbols formatData;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Date defaultCenturyStart;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient int defaultCenturyStartYear;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int MILLIS_PER_MINUTE = 60000;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final String GMT = "GMT";
-/*      */ 
-/*      */ 
-/*      */   
-/*  524 */   private static final ConcurrentMap<Locale, NumberFormat> cachedNumberFormatData = new ConcurrentHashMap<>(3);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Locale locale;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   transient boolean useDateFormatSymbols;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SimpleDateFormat() {
-/*  556 */     this("", Locale.getDefault(Locale.Category.FORMAT));
-/*  557 */     applyPatternImpl(LocaleProviderAdapter.getResourceBundleBased().getLocaleResources(this.locale)
-/*  558 */         .getDateTimePattern(3, 3, this.calendar));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SimpleDateFormat(String paramString) {
-/*  580 */     this(paramString, Locale.getDefault(Locale.Category.FORMAT));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SimpleDateFormat(String paramString, Locale paramLocale) {
-/*  597 */     if (paramString == null || paramLocale == null) {
-/*  598 */       throw new NullPointerException();
-/*      */     }
-/*      */     
-/*  601 */     initializeCalendar(paramLocale);
-/*  602 */     this.pattern = paramString;
-/*  603 */     this.formatData = DateFormatSymbols.getInstanceRef(paramLocale);
-/*  604 */     this.locale = paramLocale;
-/*  605 */     initialize(paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SimpleDateFormat(String paramString, DateFormatSymbols paramDateFormatSymbols) {
-/*  619 */     if (paramString == null || paramDateFormatSymbols == null) {
-/*  620 */       throw new NullPointerException();
-/*      */     }
-/*      */     
-/*  623 */     this.pattern = paramString;
-/*  624 */     this.formatData = (DateFormatSymbols)paramDateFormatSymbols.clone();
-/*  625 */     this.locale = Locale.getDefault(Locale.Category.FORMAT);
-/*  626 */     initializeCalendar(this.locale);
-/*  627 */     initialize(this.locale);
-/*  628 */     this.useDateFormatSymbols = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initialize(Locale paramLocale) {
-/*  634 */     this.compiledPattern = compile(this.pattern);
-/*      */ 
-/*      */     
-/*  637 */     this.numberFormat = cachedNumberFormatData.get(paramLocale);
-/*  638 */     if (this.numberFormat == null) {
-/*  639 */       this.numberFormat = NumberFormat.getIntegerInstance(paramLocale);
-/*  640 */       this.numberFormat.setGroupingUsed(false);
-/*      */ 
-/*      */       
-/*  643 */       cachedNumberFormatData.putIfAbsent(paramLocale, this.numberFormat);
-/*      */     } 
-/*  645 */     this.numberFormat = (NumberFormat)this.numberFormat.clone();
-/*      */     
-/*  647 */     initializeDefaultCentury();
-/*      */   }
-/*      */   
-/*      */   private void initializeCalendar(Locale paramLocale) {
-/*  651 */     if (this.calendar == null) {
-/*  652 */       assert paramLocale != null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  657 */       this.calendar = Calendar.getInstance(TimeZone.getDefault(), paramLocale);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private char[] compile(String paramString) {
-/*  726 */     int i = paramString.length();
-/*  727 */     boolean bool = false;
-/*  728 */     StringBuilder stringBuilder1 = new StringBuilder(i * 2);
-/*  729 */     StringBuilder stringBuilder2 = null;
-/*  730 */     byte b1 = 0, b2 = 0;
-/*  731 */     int j = -1, k = -1;
-/*      */     int m;
-/*  733 */     for (m = 0; m < i; m++) {
-/*  734 */       char c = paramString.charAt(m);
-/*      */       
-/*  736 */       if (c == '\'') {
-/*      */ 
-/*      */         
-/*  739 */         if (m + 1 < i) {
-/*  740 */           c = paramString.charAt(m + 1);
-/*  741 */           if (c == '\'') {
-/*  742 */             m++;
-/*  743 */             if (b1) {
-/*  744 */               encode(j, b1, stringBuilder1);
-/*  745 */               b2++;
-/*  746 */               k = j;
-/*  747 */               j = -1;
-/*  748 */               b1 = 0;
-/*      */             } 
-/*  750 */             if (bool) {
-/*  751 */               stringBuilder2.append(c);
-/*      */             } else {
-/*  753 */               stringBuilder1.append((char)(0x6400 | c));
-/*      */             } 
-/*      */             continue;
-/*      */           } 
-/*      */         } 
-/*  758 */         if (!bool) {
-/*  759 */           if (b1) {
-/*  760 */             encode(j, b1, stringBuilder1);
-/*  761 */             b2++;
-/*  762 */             k = j;
-/*  763 */             j = -1;
-/*  764 */             b1 = 0;
-/*      */           } 
-/*  766 */           if (stringBuilder2 == null) {
-/*  767 */             stringBuilder2 = new StringBuilder(i);
-/*      */           } else {
-/*  769 */             stringBuilder2.setLength(0);
-/*      */           } 
-/*  771 */           bool = true;
-/*      */         } else {
-/*  773 */           int n = stringBuilder2.length();
-/*  774 */           if (n == 1) {
-/*  775 */             char c1 = stringBuilder2.charAt(0);
-/*  776 */             if (c1 < '') {
-/*  777 */               stringBuilder1.append((char)(0x6400 | c1));
-/*      */             } else {
-/*  779 */               stringBuilder1.append('攁');
-/*  780 */               stringBuilder1.append(c1);
-/*      */             } 
-/*      */           } else {
-/*  783 */             encode(101, n, stringBuilder1);
-/*  784 */             stringBuilder1.append(stringBuilder2);
-/*      */           } 
-/*  786 */           bool = false;
-/*      */         } 
-/*      */         continue;
-/*      */       } 
-/*  790 */       if (bool) {
-/*  791 */         stringBuilder2.append(c);
-/*      */       
-/*      */       }
-/*  794 */       else if ((c < 'a' || c > 'z') && (c < 'A' || c > 'Z')) {
-/*  795 */         if (b1) {
-/*  796 */           encode(j, b1, stringBuilder1);
-/*  797 */           b2++;
-/*  798 */           k = j;
-/*  799 */           j = -1;
-/*  800 */           b1 = 0;
-/*      */         } 
-/*  802 */         if (c < '') {
-/*      */           
-/*  804 */           stringBuilder1.append((char)(0x6400 | c));
-/*      */         } else {
-/*      */           int n;
-/*      */ 
-/*      */           
-/*  809 */           for (n = m + 1; n < i; n++) {
-/*  810 */             char c1 = paramString.charAt(n);
-/*  811 */             if (c1 == '\'' || (c1 >= 'a' && c1 <= 'z') || (c1 >= 'A' && c1 <= 'Z')) {
-/*      */               break;
-/*      */             }
-/*      */           } 
-/*  815 */           stringBuilder1.append((char)(0x6500 | n - m));
-/*  816 */           for (; m < n; m++) {
-/*  817 */             stringBuilder1.append(paramString.charAt(m));
-/*      */           }
-/*  819 */           m--;
-/*      */         } 
-/*      */       } else {
-/*      */         int n;
-/*      */ 
-/*      */         
-/*  825 */         if ((n = "GyMdkHmsSEDFwWahKzZYuXL".indexOf(c)) == -1) {
-/*  826 */           throw new IllegalArgumentException("Illegal pattern character '" + c + "'");
-/*      */         }
-/*      */         
-/*  829 */         if (j == -1 || j == n) {
-/*  830 */           j = n;
-/*  831 */           b1++;
-/*      */         } else {
-/*      */           
-/*  834 */           encode(j, b1, stringBuilder1);
-/*  835 */           b2++;
-/*  836 */           k = j;
-/*  837 */           j = n;
-/*  838 */           b1 = 1;
-/*      */         } 
-/*      */       }  continue;
-/*  841 */     }  if (bool) {
-/*  842 */       throw new IllegalArgumentException("Unterminated quote");
-/*      */     }
-/*      */     
-/*  845 */     if (b1 != 0) {
-/*  846 */       encode(j, b1, stringBuilder1);
-/*  847 */       b2++;
-/*  848 */       k = j;
-/*      */     } 
-/*      */     
-/*  851 */     this.forceStandaloneForm = (b2 == 1 && k == 2);
-/*      */ 
-/*      */     
-/*  854 */     m = stringBuilder1.length();
-/*  855 */     char[] arrayOfChar = new char[m];
-/*  856 */     stringBuilder1.getChars(0, m, arrayOfChar, 0);
-/*  857 */     return arrayOfChar;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void encode(int paramInt1, int paramInt2, StringBuilder paramStringBuilder) {
-/*  864 */     if (paramInt1 == 21 && paramInt2 >= 4) {
-/*  865 */       throw new IllegalArgumentException("invalid ISO 8601 format: length=" + paramInt2);
-/*      */     }
-/*  867 */     if (paramInt2 < 255) {
-/*  868 */       paramStringBuilder.append((char)(paramInt1 << 8 | paramInt2));
-/*      */     } else {
-/*  870 */       paramStringBuilder.append((char)(paramInt1 << 8 | 0xFF));
-/*  871 */       paramStringBuilder.append((char)(paramInt2 >>> 16));
-/*  872 */       paramStringBuilder.append((char)(paramInt2 & 0xFFFF));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initializeDefaultCentury() {
-/*  880 */     this.calendar.setTimeInMillis(System.currentTimeMillis());
-/*  881 */     this.calendar.add(1, -80);
-/*  882 */     parseAmbiguousDatesAsAfter(this.calendar.getTime());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void parseAmbiguousDatesAsAfter(Date paramDate) {
-/*  889 */     this.defaultCenturyStart = paramDate;
-/*  890 */     this.calendar.setTime(paramDate);
-/*  891 */     this.defaultCenturyStartYear = this.calendar.get(1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void set2DigitYearStart(Date paramDate) {
-/*  904 */     parseAmbiguousDatesAsAfter(new Date(paramDate.getTime()));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Date get2DigitYearStart() {
-/*  917 */     return (Date)this.defaultCenturyStart.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public StringBuffer format(Date paramDate, StringBuffer paramStringBuffer, FieldPosition paramFieldPosition) {
-/*  935 */     paramFieldPosition.beginIndex = paramFieldPosition.endIndex = 0;
-/*  936 */     return format(paramDate, paramStringBuffer, paramFieldPosition.getFieldDelegate());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private StringBuffer format(Date paramDate, StringBuffer paramStringBuffer, Format.FieldDelegate paramFieldDelegate) {
-/*  943 */     this.calendar.setTime(paramDate);
-/*      */     
-/*  945 */     boolean bool = useDateFormatSymbols();
-/*      */     
-/*  947 */     for (int i = 0; i < this.compiledPattern.length; ) {
-/*  948 */       int j = this.compiledPattern[i] >>> 8;
-/*  949 */       int k = this.compiledPattern[i++] & 0xFF;
-/*  950 */       if (k == 255) {
-/*  951 */         k = this.compiledPattern[i++] << 16;
-/*  952 */         k |= this.compiledPattern[i++];
-/*      */       } 
-/*      */       
-/*  955 */       switch (j) {
-/*      */         case 100:
-/*  957 */           paramStringBuffer.append((char)k);
-/*      */           continue;
-/*      */         
-/*      */         case 101:
-/*  961 */           paramStringBuffer.append(this.compiledPattern, i, k);
-/*  962 */           i += k;
-/*      */           continue;
-/*      */       } 
-/*      */       
-/*  966 */       subFormat(j, k, paramFieldDelegate, paramStringBuffer, bool);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  970 */     return paramStringBuffer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AttributedCharacterIterator formatToCharacterIterator(Object paramObject) {
-/*  992 */     StringBuffer stringBuffer = new StringBuffer();
-/*  993 */     CharacterIteratorFieldDelegate characterIteratorFieldDelegate = new CharacterIteratorFieldDelegate();
-/*      */ 
-/*      */     
-/*  996 */     if (paramObject instanceof Date) {
-/*  997 */       format((Date)paramObject, stringBuffer, characterIteratorFieldDelegate);
-/*      */     }
-/*  999 */     else if (paramObject instanceof Number) {
-/* 1000 */       format(new Date(((Number)paramObject).longValue()), stringBuffer, characterIteratorFieldDelegate);
-/*      */     } else {
-/* 1002 */       if (paramObject == null) {
-/* 1003 */         throw new NullPointerException("formatToCharacterIterator must be passed non-null object");
-/*      */       }
-/*      */ 
-/*      */       
-/* 1007 */       throw new IllegalArgumentException("Cannot format given Object as a Date");
-/*      */     } 
-/*      */     
-/* 1010 */     return characterIteratorFieldDelegate.getIterator(stringBuffer.toString());
-/*      */   }
-/*      */ 
-/*      */   
-/* 1014 */   private static final int[] PATTERN_INDEX_TO_CALENDAR_FIELD = new int[] { 0, 1, 2, 5, 11, 11, 12, 13, 14, 7, 6, 8, 3, 4, 9, 10, 10, 15, 15, 17, 1000, 15, 2 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1041 */   private static final int[] PATTERN_INDEX_TO_DATE_FORMAT_FIELD = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 17, 1, 9, 17, 2 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1068 */   private static final DateFormat.Field[] PATTERN_INDEX_TO_DATE_FORMAT_FIELD_ID = new DateFormat.Field[] { DateFormat.Field.ERA, DateFormat.Field.YEAR, DateFormat.Field.MONTH, DateFormat.Field.DAY_OF_MONTH, DateFormat.Field.HOUR_OF_DAY1, DateFormat.Field.HOUR_OF_DAY0, DateFormat.Field.MINUTE, DateFormat.Field.SECOND, DateFormat.Field.MILLISECOND, DateFormat.Field.DAY_OF_WEEK, DateFormat.Field.DAY_OF_YEAR, DateFormat.Field.DAY_OF_WEEK_IN_MONTH, DateFormat.Field.WEEK_OF_YEAR, DateFormat.Field.WEEK_OF_MONTH, DateFormat.Field.AM_PM, DateFormat.Field.HOUR1, DateFormat.Field.HOUR0, DateFormat.Field.TIME_ZONE, DateFormat.Field.TIME_ZONE, DateFormat.Field.YEAR, DateFormat.Field.DAY_OF_WEEK, DateFormat.Field.TIME_ZONE, DateFormat.Field.MONTH };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void subFormat(int paramInt1, int paramInt2, Format.FieldDelegate paramFieldDelegate, StringBuffer paramStringBuffer, boolean paramBoolean) {
-/* 1101 */     int m, i1, i = Integer.MAX_VALUE;
-/* 1102 */     String str = null;
-/* 1103 */     int j = paramStringBuffer.length();
-/*      */     
-/* 1105 */     int k = PATTERN_INDEX_TO_CALENDAR_FIELD[paramInt1];
-/*      */     
-/* 1107 */     if (k == 17) {
-/* 1108 */       if (this.calendar.isWeekDateSupported()) {
-/* 1109 */         m = this.calendar.getWeekYear();
-/*      */       } else {
-/*      */         
-/* 1112 */         paramInt1 = 1;
-/* 1113 */         k = PATTERN_INDEX_TO_CALENDAR_FIELD[paramInt1];
-/* 1114 */         m = this.calendar.get(k);
-/*      */       } 
-/* 1116 */     } else if (k == 1000) {
-/* 1117 */       m = CalendarBuilder.toISODayOfWeek(this.calendar.get(7));
-/*      */     } else {
-/* 1119 */       m = this.calendar.get(k);
-/*      */     } 
-/*      */     
-/* 1122 */     boolean bool = (paramInt2 >= 4) ? true : true;
-/* 1123 */     if (!paramBoolean && k < 15 && paramInt1 != 22)
-/*      */     {
-/* 1125 */       str = this.calendar.getDisplayName(k, bool, this.locale);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1132 */     switch (paramInt1) {
-/*      */       case 0:
-/* 1134 */         if (paramBoolean) {
-/* 1135 */           String[] arrayOfString = this.formatData.getEras();
-/* 1136 */           if (m < arrayOfString.length) {
-/* 1137 */             str = arrayOfString[m];
-/*      */           }
-/*      */         } 
-/* 1140 */         if (str == null) {
-/* 1141 */           str = "";
-/*      */         }
-/*      */         break;
-/*      */       
-/*      */       case 1:
-/*      */       case 19:
-/* 1147 */         if (this.calendar instanceof java.util.GregorianCalendar) {
-/* 1148 */           if (paramInt2 != 2) {
-/* 1149 */             zeroPaddingNumber(m, paramInt2, i, paramStringBuffer); break;
-/*      */           } 
-/* 1151 */           zeroPaddingNumber(m, 2, 2, paramStringBuffer);
-/*      */           break;
-/*      */         } 
-/* 1154 */         if (str == null) {
-/* 1155 */           zeroPaddingNumber(m, (bool == 2) ? 1 : paramInt2, i, paramStringBuffer);
-/*      */         }
-/*      */         break;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 2:
-/* 1162 */         if (paramBoolean) {
-/*      */           
-/* 1164 */           if (paramInt2 >= 4) {
-/* 1165 */             String[] arrayOfString = this.formatData.getMonths();
-/* 1166 */             str = arrayOfString[m];
-/* 1167 */           } else if (paramInt2 == 3) {
-/* 1168 */             String[] arrayOfString = this.formatData.getShortMonths();
-/* 1169 */             str = arrayOfString[m];
-/*      */           }
-/*      */         
-/* 1172 */         } else if (paramInt2 < 3) {
-/* 1173 */           str = null;
-/* 1174 */         } else if (this.forceStandaloneForm) {
-/* 1175 */           str = this.calendar.getDisplayName(k, bool | 0x8000, this.locale);
-/* 1176 */           if (str == null) {
-/* 1177 */             str = this.calendar.getDisplayName(k, bool, this.locale);
-/*      */           }
-/*      */         } 
-/*      */         
-/* 1181 */         if (str == null) {
-/* 1182 */           zeroPaddingNumber(m + 1, paramInt2, i, paramStringBuffer);
-/*      */         }
-/*      */         break;
-/*      */       
-/*      */       case 22:
-/* 1187 */         assert str == null;
-/* 1188 */         if (this.locale == null) {
-/*      */           
-/* 1190 */           if (paramInt2 >= 4) {
-/* 1191 */             String[] arrayOfString = this.formatData.getMonths();
-/* 1192 */             str = arrayOfString[m];
-/* 1193 */           } else if (paramInt2 == 3) {
-/* 1194 */             String[] arrayOfString = this.formatData.getShortMonths();
-/* 1195 */             str = arrayOfString[m];
-/*      */           }
-/*      */         
-/* 1198 */         } else if (paramInt2 >= 3) {
-/* 1199 */           str = this.calendar.getDisplayName(k, bool | 0x8000, this.locale);
-/*      */         } 
-/*      */         
-/* 1202 */         if (str == null) {
-/* 1203 */           zeroPaddingNumber(m + 1, paramInt2, i, paramStringBuffer);
-/*      */         }
-/*      */         break;
-/*      */       
-/*      */       case 4:
-/* 1208 */         if (str == null) {
-/* 1209 */           if (m == 0) {
-/* 1210 */             zeroPaddingNumber(this.calendar.getMaximum(11) + 1, paramInt2, i, paramStringBuffer);
-/*      */             break;
-/*      */           } 
-/* 1213 */           zeroPaddingNumber(m, paramInt2, i, paramStringBuffer);
-/*      */         } 
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 9:
-/* 1219 */         if (paramBoolean) {
-/*      */           
-/* 1221 */           if (paramInt2 >= 4) {
-/* 1222 */             String[] arrayOfString1 = this.formatData.getWeekdays();
-/* 1223 */             str = arrayOfString1[m]; break;
-/*      */           } 
-/* 1225 */           String[] arrayOfString = this.formatData.getShortWeekdays();
-/* 1226 */           str = arrayOfString[m];
-/*      */         } 
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 14:
-/* 1232 */         if (paramBoolean) {
-/* 1233 */           String[] arrayOfString = this.formatData.getAmPmStrings();
-/* 1234 */           str = arrayOfString[m];
-/*      */         } 
-/*      */         break;
-/*      */       
-/*      */       case 15:
-/* 1239 */         if (str == null) {
-/* 1240 */           if (m == 0) {
-/* 1241 */             zeroPaddingNumber(this.calendar.getLeastMaximum(10) + 1, paramInt2, i, paramStringBuffer);
-/*      */             break;
-/*      */           } 
-/* 1244 */           zeroPaddingNumber(m, paramInt2, i, paramStringBuffer);
-/*      */         } 
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 17:
-/* 1250 */         if (str == null) {
-/* 1251 */           if (this.formatData.locale == null || this.formatData.isZoneStringsSet) {
-/*      */             
-/* 1253 */             int i2 = this.formatData.getZoneIndex(this.calendar.getTimeZone().getID());
-/* 1254 */             if (i2 == -1) {
-/*      */               
-/* 1256 */               m = this.calendar.get(15) + this.calendar.get(16);
-/* 1257 */               paramStringBuffer.append(ZoneInfoFile.toCustomID(m)); break;
-/*      */             } 
-/* 1259 */             byte b = (this.calendar.get(16) == 0) ? 1 : 3;
-/* 1260 */             if (paramInt2 < 4)
-/*      */             {
-/* 1262 */               b++;
-/*      */             }
-/* 1264 */             String[][] arrayOfString = this.formatData.getZoneStringsWrapper();
-/* 1265 */             paramStringBuffer.append(arrayOfString[i2][b]);
-/*      */             break;
-/*      */           } 
-/* 1268 */           TimeZone timeZone = this.calendar.getTimeZone();
-/* 1269 */           boolean bool1 = (this.calendar.get(16) != 0) ? true : false;
-/* 1270 */           boolean bool2 = (paramInt2 < 4) ? false : true;
-/* 1271 */           paramStringBuffer.append(timeZone.getDisplayName(bool1, bool2, this.formatData.locale));
-/*      */         } 
-/*      */         break;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 18:
-/* 1278 */         m = (this.calendar.get(15) + this.calendar.get(16)) / 60000;
-/*      */         
-/* 1280 */         n = 4;
-/* 1281 */         if (m >= 0) {
-/* 1282 */           paramStringBuffer.append('+');
-/*      */         } else {
-/* 1284 */           n++;
-/*      */         } 
-/*      */         
-/* 1287 */         i1 = m / 60 * 100 + m % 60;
-/* 1288 */         CalendarUtils.sprintf0d(paramStringBuffer, i1, n);
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 21:
-/* 1293 */         m = this.calendar.get(15) + this.calendar.get(16);
-/*      */         
-/* 1295 */         if (m == 0) {
-/* 1296 */           paramStringBuffer.append('Z');
-/*      */           
-/*      */           break;
-/*      */         } 
-/* 1300 */         m /= 60000;
-/* 1301 */         if (m >= 0) {
-/* 1302 */           paramStringBuffer.append('+');
-/*      */         } else {
-/* 1304 */           paramStringBuffer.append('-');
-/* 1305 */           m = -m;
-/*      */         } 
-/*      */         
-/* 1308 */         CalendarUtils.sprintf0d(paramStringBuffer, m / 60, 2);
-/* 1309 */         if (paramInt2 == 1) {
-/*      */           break;
-/*      */         }
-/*      */         
-/* 1313 */         if (paramInt2 == 3) {
-/* 1314 */           paramStringBuffer.append(':');
-/*      */         }
-/* 1316 */         CalendarUtils.sprintf0d(paramStringBuffer, m % 60, 2);
-/*      */         break;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       default:
-/* 1331 */         if (str == null) {
-/* 1332 */           zeroPaddingNumber(m, paramInt2, i, paramStringBuffer);
-/*      */         }
-/*      */         break;
-/*      */     } 
-/*      */     
-/* 1337 */     if (str != null) {
-/* 1338 */       paramStringBuffer.append(str);
-/*      */     }
-/*      */     
-/* 1341 */     int n = PATTERN_INDEX_TO_DATE_FORMAT_FIELD[paramInt1];
-/* 1342 */     DateFormat.Field field = PATTERN_INDEX_TO_DATE_FORMAT_FIELD_ID[paramInt1];
-/*      */     
-/* 1344 */     paramFieldDelegate.formatted(n, field, field, j, paramStringBuffer.length(), paramStringBuffer);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void zeroPaddingNumber(int paramInt1, int paramInt2, int paramInt3, StringBuffer paramStringBuffer) {
-/*      */     try {
-/* 1357 */       if (this.zeroDigit == '\000') {
-/* 1358 */         this.zeroDigit = ((DecimalFormat)this.numberFormat).getDecimalFormatSymbols().getZeroDigit();
-/*      */       }
-/* 1360 */       if (paramInt1 >= 0) {
-/* 1361 */         if (paramInt1 < 100 && paramInt2 >= 1 && paramInt2 <= 2) {
-/* 1362 */           if (paramInt1 < 10) {
-/* 1363 */             if (paramInt2 == 2) {
-/* 1364 */               paramStringBuffer.append(this.zeroDigit);
-/*      */             }
-/* 1366 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1));
-/*      */           } else {
-/* 1368 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1 / 10));
-/* 1369 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1 % 10));
-/*      */           }  return;
-/*      */         } 
-/* 1372 */         if (paramInt1 >= 1000 && paramInt1 < 10000) {
-/* 1373 */           if (paramInt2 == 4) {
-/* 1374 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1 / 1000));
-/* 1375 */             paramInt1 %= 1000;
-/* 1376 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1 / 100));
-/* 1377 */             paramInt1 %= 100;
-/* 1378 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1 / 10));
-/* 1379 */             paramStringBuffer.append((char)(this.zeroDigit + paramInt1 % 10));
-/*      */             return;
-/*      */           } 
-/* 1382 */           if (paramInt2 == 2 && paramInt3 == 2) {
-/* 1383 */             zeroPaddingNumber(paramInt1 % 100, 2, 2, paramStringBuffer);
-/*      */             return;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/* 1388 */     } catch (Exception exception) {}
-/*      */ 
-/*      */     
-/* 1391 */     this.numberFormat.setMinimumIntegerDigits(paramInt2);
-/* 1392 */     this.numberFormat.setMaximumIntegerDigits(paramInt3);
-/* 1393 */     this.numberFormat.format(paramInt1, paramStringBuffer, DontCareFieldPosition.INSTANCE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Date parse(String paramString, ParsePosition paramParsePosition) {
-/*      */     Date date;
-/* 1435 */     checkNegativeNumberExpression();
-/*      */     
-/* 1437 */     int i = paramParsePosition.index;
-/* 1438 */     int j = i;
-/* 1439 */     int k = paramString.length();
-/*      */     
-/* 1441 */     boolean[] arrayOfBoolean = { false };
-/*      */     
-/* 1443 */     CalendarBuilder calendarBuilder = new CalendarBuilder();
-/*      */     
-/* 1445 */     for (byte b = 0; b < this.compiledPattern.length; ) {
-/* 1446 */       int m = this.compiledPattern[b] >>> 8;
-/* 1447 */       int n = this.compiledPattern[b++] & 0xFF;
-/* 1448 */       if (n == 255) {
-/* 1449 */         n = this.compiledPattern[b++] << 16;
-/* 1450 */         n |= this.compiledPattern[b++];
-/*      */       } 
-/*      */       
-/* 1453 */       switch (m) {
-/*      */         case 100:
-/* 1455 */           if (i >= k || paramString.charAt(i) != (char)n) {
-/* 1456 */             paramParsePosition.index = j;
-/* 1457 */             paramParsePosition.errorIndex = i;
-/* 1458 */             return null;
-/*      */           } 
-/* 1460 */           i++;
-/*      */           continue;
-/*      */         
-/*      */         case 101:
-/* 1464 */           while (n-- > 0) {
-/* 1465 */             if (i >= k || paramString.charAt(i) != this.compiledPattern[b++]) {
-/* 1466 */               paramParsePosition.index = j;
-/* 1467 */               paramParsePosition.errorIndex = i;
-/* 1468 */               return null;
-/*      */             } 
-/* 1470 */             i++;
-/*      */           } 
-/*      */           continue;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1480 */       boolean bool1 = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1490 */       boolean bool2 = false;
-/*      */       
-/* 1492 */       if (b < this.compiledPattern.length) {
-/* 1493 */         int i1 = this.compiledPattern[b] >>> 8;
-/* 1494 */         if (i1 != 100 && i1 != 101)
-/*      */         {
-/* 1496 */           bool1 = true;
-/*      */         }
-/*      */         
-/* 1499 */         if (this.hasFollowingMinusSign && (i1 == 100 || i1 == 101)) {
-/*      */           int i2;
-/*      */ 
-/*      */           
-/* 1503 */           if (i1 == 100) {
-/* 1504 */             i2 = this.compiledPattern[b] & 0xFF;
-/*      */           } else {
-/* 1506 */             i2 = this.compiledPattern[b + 1];
-/*      */           } 
-/*      */           
-/* 1509 */           if (i2 == this.minusSign) {
-/* 1510 */             bool2 = true;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/* 1514 */       i = subParse(paramString, i, m, n, bool1, arrayOfBoolean, paramParsePosition, bool2, calendarBuilder);
-/*      */ 
-/*      */       
-/* 1517 */       if (i < 0) {
-/* 1518 */         paramParsePosition.index = j;
-/* 1519 */         return null;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1528 */     paramParsePosition.index = i;
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1532 */       date = calendarBuilder.establish(this.calendar).getTime();
-/*      */ 
-/*      */       
-/* 1535 */       if (arrayOfBoolean[0] && 
-/* 1536 */         date.before(this.defaultCenturyStart)) {
-/* 1537 */         date = calendarBuilder.addYear(100).establish(this.calendar).getTime();
-/*      */ 
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/* 1543 */     catch (IllegalArgumentException illegalArgumentException) {
-/* 1544 */       paramParsePosition.errorIndex = i;
-/* 1545 */       paramParsePosition.index = j;
-/* 1546 */       return null;
-/*      */     } 
-/*      */     
-/* 1549 */     return date;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int matchString(String paramString, int paramInt1, int paramInt2, String[] paramArrayOfString, CalendarBuilder paramCalendarBuilder) {
-/* 1563 */     byte b = 0;
-/* 1564 */     int i = paramArrayOfString.length;
-/*      */     
-/* 1566 */     if (paramInt2 == 7) {
-/* 1567 */       b = 1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1574 */     int j = 0; byte b1 = -1;
-/* 1575 */     for (; b < i; b++) {
-/*      */       
-/* 1577 */       int k = paramArrayOfString[b].length();
-/*      */ 
-/*      */       
-/* 1580 */       if (k > j && paramString
-/* 1581 */         .regionMatches(true, paramInt1, paramArrayOfString[b], 0, k)) {
-/*      */         
-/* 1583 */         b1 = b;
-/* 1584 */         j = k;
-/*      */       } 
-/*      */     } 
-/* 1587 */     if (b1 >= 0) {
-/*      */       
-/* 1589 */       paramCalendarBuilder.set(paramInt2, b1);
-/* 1590 */       return paramInt1 + j;
-/*      */     } 
-/* 1592 */     return -paramInt1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int matchString(String paramString, int paramInt1, int paramInt2, Map<String, Integer> paramMap, CalendarBuilder paramCalendarBuilder) {
-/* 1602 */     if (paramMap != null) {
-/*      */       
-/* 1604 */       if (paramMap instanceof java.util.SortedMap) {
-/* 1605 */         for (String str1 : paramMap.keySet()) {
-/* 1606 */           if (paramString.regionMatches(true, paramInt1, str1, 0, str1.length())) {
-/* 1607 */             paramCalendarBuilder.set(paramInt2, ((Integer)paramMap.get(str1)).intValue());
-/* 1608 */             return paramInt1 + str1.length();
-/*      */           } 
-/*      */         } 
-/* 1611 */         return -paramInt1;
-/*      */       } 
-/*      */       
-/* 1614 */       String str = null;
-/*      */       
-/* 1616 */       for (String str1 : paramMap.keySet()) {
-/* 1617 */         int i = str1.length();
-/* 1618 */         if ((str == null || i > str.length()) && 
-/* 1619 */           paramString.regionMatches(true, paramInt1, str1, 0, i)) {
-/* 1620 */           str = str1;
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1625 */       if (str != null) {
-/* 1626 */         paramCalendarBuilder.set(paramInt2, ((Integer)paramMap.get(str)).intValue());
-/* 1627 */         return paramInt1 + str.length();
-/*      */       } 
-/*      */     } 
-/* 1630 */     return -paramInt1;
-/*      */   }
-/*      */   
-/*      */   private int matchZoneString(String paramString, int paramInt, String[] paramArrayOfString) {
-/* 1634 */     for (byte b = 1; b <= 4; b++) {
-/*      */ 
-/*      */       
-/* 1637 */       String str = paramArrayOfString[b];
-/* 1638 */       if (paramString.regionMatches(true, paramInt, str, 0, str
-/* 1639 */           .length())) {
-/* 1640 */         return b;
-/*      */       }
-/*      */     } 
-/* 1643 */     return -1;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private boolean matchDSTString(String paramString, int paramInt1, int paramInt2, int paramInt3, String[][] paramArrayOfString) {
-/* 1648 */     int i = paramInt3 + 2;
-/* 1649 */     String str = paramArrayOfString[paramInt2][i];
-/* 1650 */     if (paramString.regionMatches(true, paramInt1, str, 0, str
-/* 1651 */         .length())) {
-/* 1652 */       return true;
-/*      */     }
-/* 1654 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int subParseZoneString(String paramString, int paramInt, CalendarBuilder paramCalendarBuilder) {
-/* 1662 */     boolean bool = false;
-/* 1663 */     TimeZone timeZone1 = getTimeZone();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1668 */     int i = this.formatData.getZoneIndex(timeZone1.getID());
-/* 1669 */     TimeZone timeZone2 = null;
-/* 1670 */     String[][] arrayOfString = this.formatData.getZoneStringsWrapper();
-/* 1671 */     String[] arrayOfString1 = null;
-/* 1672 */     int j = 0;
-/*      */     
-/* 1674 */     arrayOfString1 = arrayOfString[i];
-/* 1675 */     if (i != -1 && (j = matchZoneString(paramString, paramInt, arrayOfString1)) > 0) {
-/* 1676 */       if (j <= 2)
-/*      */       {
-/* 1678 */         bool = arrayOfString1[j].equalsIgnoreCase(arrayOfString1[j + 2]);
-/*      */       }
-/* 1680 */       timeZone2 = TimeZone.getTimeZone(arrayOfString1[0]);
-/*      */     } 
-/*      */     
-/* 1683 */     if (timeZone2 == null) {
-/* 1684 */       i = this.formatData.getZoneIndex(TimeZone.getDefault().getID());
-/*      */       
-/* 1686 */       arrayOfString1 = arrayOfString[i];
-/* 1687 */       if (i != -1 && (j = matchZoneString(paramString, paramInt, arrayOfString1)) > 0) {
-/* 1688 */         if (j <= 2) {
-/* 1689 */           bool = arrayOfString1[j].equalsIgnoreCase(arrayOfString1[j + 2]);
-/*      */         }
-/* 1691 */         timeZone2 = TimeZone.getTimeZone(arrayOfString1[0]);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1696 */     if (timeZone2 == null) {
-/* 1697 */       int k = arrayOfString.length;
-/* 1698 */       for (byte b = 0; b < k; b++) {
-/* 1699 */         arrayOfString1 = arrayOfString[b];
-/* 1700 */         if ((j = matchZoneString(paramString, paramInt, arrayOfString1)) > 0) {
-/* 1701 */           if (j <= 2) {
-/* 1702 */             bool = arrayOfString1[j].equalsIgnoreCase(arrayOfString1[j + 2]);
-/*      */           }
-/* 1704 */           timeZone2 = TimeZone.getTimeZone(arrayOfString1[0]);
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 1709 */     if (timeZone2 != null) {
-/* 1710 */       if (!timeZone2.equals(timeZone1)) {
-/* 1711 */         setTimeZone(timeZone2);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1719 */       boolean bool1 = (j >= 3) ? timeZone2.getDSTSavings() : false;
-/* 1720 */       if (!bool && (j < 3 || bool1)) {
-/* 1721 */         paramCalendarBuilder.clear(15).set(16, bool1);
-/*      */       }
-/* 1723 */       return paramInt + arrayOfString1[j].length();
-/*      */     } 
-/* 1725 */     return -paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int subParseNumericZone(String paramString, int paramInt1, int paramInt2, int paramInt3, boolean paramBoolean, CalendarBuilder paramCalendarBuilder) {
-/* 1742 */     int i = paramInt1;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1746 */     try { char c = paramString.charAt(i++);
-/*      */ 
-/*      */       
-/* 1749 */       if (isDigit(c))
-/*      */       
-/*      */       { 
-/* 1752 */         int j = c - 48;
-/* 1753 */         c = paramString.charAt(i++);
-/* 1754 */         if (isDigit(c))
-/* 1755 */         { j = j * 10 + c - 48; }
-/*      */         
-/*      */         else
-/*      */         
-/* 1759 */         { if (paramInt3 > 0 || !paramBoolean)
-/*      */           {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1796 */             return 1 - i; }  i--; }  if (j <= 23) { int k = 0; if (paramInt3 != 1) { c = paramString.charAt(i++); if (paramBoolean) { if (c != ':') return 1 - i;  c = paramString.charAt(i++); }  if (!isDigit(c)) return 1 - i;  k = c - 48; c = paramString.charAt(i++); if (!isDigit(c)) return 1 - i;  k = k * 10 + c - 48; if (k > 59) return 1 - i;  }  k += j * 60; paramCalendarBuilder.set(15, k * 60000 * paramInt2).set(16, 0); return i; }  }  } catch (IndexOutOfBoundsException indexOutOfBoundsException) {} return 1 - i;
-/*      */   }
-/*      */   
-/*      */   private boolean isDigit(char paramChar) {
-/* 1800 */     return (paramChar >= '0' && paramChar <= '9');
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int subParse(String paramString, int paramInt1, int paramInt2, int paramInt3, boolean paramBoolean1, boolean[] paramArrayOfboolean, ParsePosition paramParsePosition, boolean paramBoolean2, CalendarBuilder paramCalendarBuilder) {
-/*      */     Number number;
-/*      */     byte b;
-/* 1825 */     int i = 0;
-/* 1826 */     ParsePosition parsePosition = new ParsePosition(0);
-/* 1827 */     parsePosition.index = paramInt1;
-/* 1828 */     if (paramInt2 == 19 && !this.calendar.isWeekDateSupported())
-/*      */     {
-/* 1830 */       paramInt2 = 1;
-/*      */     }
-/* 1832 */     int j = PATTERN_INDEX_TO_CALENDAR_FIELD[paramInt2];
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     while (true) {
-/* 1837 */       if (parsePosition.index >= paramString.length()) {
-/* 1838 */         paramParsePosition.errorIndex = paramInt1;
-/* 1839 */         return -1;
-/*      */       } 
-/* 1841 */       char c = paramString.charAt(parsePosition.index);
-/* 1842 */       if (c != ' ' && c != '\t') {
-/*      */         break;
-/*      */       }
-/* 1845 */       parsePosition.index++;
-/*      */     } 
-/*      */     
-/* 1848 */     int k = parsePosition.index;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1856 */     if (paramInt2 == 4 || paramInt2 == 15 || (paramInt2 == 2 && paramInt3 <= 2) || paramInt2 == 1 || paramInt2 == 19)
-/*      */     
-/*      */     { 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1863 */       if (paramBoolean1)
-/* 1864 */       { if (paramInt1 + paramInt3 > paramString.length())
-/*      */         
-/*      */         { 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 2184 */           paramParsePosition.errorIndex = parsePosition.index;
-/* 2185 */           return -1; }  number = this.numberFormat.parse(paramString.substring(0, paramInt1 + paramInt3), parsePosition); } else { number = this.numberFormat.parse(paramString, parsePosition); }  if (number == null) { if (paramInt2 != 1 || this.calendar instanceof java.util.GregorianCalendar) { paramParsePosition.errorIndex = parsePosition.index; return -1; }  } else { i = number.intValue(); if (paramBoolean2 && i < 0 && ((parsePosition.index < paramString.length() && paramString.charAt(parsePosition.index) != this.minusSign) || (parsePosition.index == paramString.length() && paramString.charAt(parsePosition.index - 1) == this.minusSign))) { i = -i; parsePosition.index--; }  }  }  boolean bool = useDateFormatSymbols(); switch (paramInt2) { case 0: if (bool) { int m; if ((m = matchString(paramString, paramInt1, 0, this.formatData.getEras(), paramCalendarBuilder)) > 0) return m;  } else { Map<String, Integer> map = getDisplayNamesMap(j, this.locale); int m; if ((m = matchString(paramString, paramInt1, j, map, paramCalendarBuilder)) > 0) return m;  }  paramParsePosition.errorIndex = parsePosition.index; return -1;case 1: case 19: if (!(this.calendar instanceof java.util.GregorianCalendar)) { boolean bool1 = (paramInt3 >= 4) ? true : true; Map<String, Integer> map = this.calendar.getDisplayNames(j, bool1, this.locale); int m; if (map != null && (m = matchString(paramString, paramInt1, j, map, paramCalendarBuilder)) > 0) return m;  paramCalendarBuilder.set(j, i); return parsePosition.index; }  if (paramInt3 <= 2 && parsePosition.index - k == 2 && Character.isDigit(paramString.charAt(k)) && Character.isDigit(paramString.charAt(k + 1))) { int m = this.defaultCenturyStartYear % 100; paramArrayOfboolean[0] = (i == m); i += this.defaultCenturyStartYear / 100 * 100 + ((i < m) ? 100 : 0); }  paramCalendarBuilder.set(j, i); return parsePosition.index;case 2: if (paramInt3 <= 2) { paramCalendarBuilder.set(2, i - 1); return parsePosition.index; }  if (bool) { int n; if ((n = matchString(paramString, paramInt1, 2, this.formatData.getMonths(), paramCalendarBuilder)) > 0) return n;  int m; if ((m = matchString(paramString, paramInt1, 2, this.formatData.getShortMonths(), paramCalendarBuilder)) > 0) return m;  } else { Map<String, Integer> map = getDisplayNamesMap(j, this.locale); int m; if ((m = matchString(paramString, paramInt1, j, map, paramCalendarBuilder)) > 0) return m;  }  paramParsePosition.errorIndex = parsePosition.index; return -1;case 4: if (!isLenient()) if (i < 1 || i > 24) { paramParsePosition.errorIndex = parsePosition.index; return -1; }   if (i == this.calendar.getMaximum(11) + 1) i = 0;  paramCalendarBuilder.set(11, i); return parsePosition.index;case 9: if (bool) { int n; if ((n = matchString(paramString, paramInt1, 7, this.formatData.getWeekdays(), paramCalendarBuilder)) > 0) return n;  int m; if ((m = matchString(paramString, paramInt1, 7, this.formatData.getShortWeekdays(), paramCalendarBuilder)) > 0) return m;  } else { int[] arrayOfInt = { 2, 1 }; for (int n : arrayOfInt) { Map<String, Integer> map = this.calendar.getDisplayNames(j, n, this.locale); int m; if ((m = matchString(paramString, paramInt1, j, map, paramCalendarBuilder)) > 0) return m;  }  }  paramParsePosition.errorIndex = parsePosition.index; return -1;case 14: if (bool) { int m; if ((m = matchString(paramString, paramInt1, 9, this.formatData.getAmPmStrings(), paramCalendarBuilder)) > 0) return m;  } else { Map<String, Integer> map = getDisplayNamesMap(j, this.locale); int m; if ((m = matchString(paramString, paramInt1, j, map, paramCalendarBuilder)) > 0) return m;  }  paramParsePosition.errorIndex = parsePosition.index; return -1;case 15: if (!isLenient()) if (i < 1 || i > 12) { paramParsePosition.errorIndex = parsePosition.index; return -1; }   if (i == this.calendar.getLeastMaximum(10) + 1) i = 0;  paramCalendarBuilder.set(10, i); return parsePosition.index;case 17: case 18: b = 0; try { char c = paramString.charAt(parsePosition.index); if (c == '+') { b = 1; } else if (c == '-') { b = -1; }  if (b == 0) { if ((c == 'G' || c == 'g') && paramString.length() - paramInt1 >= "GMT".length() && paramString.regionMatches(true, paramInt1, "GMT", 0, "GMT".length())) { parsePosition.index = paramInt1 + "GMT".length(); if (paramString.length() - parsePosition.index > 0) { c = paramString.charAt(parsePosition.index); if (c == '+') { b = 1; } else if (c == '-') { b = -1; }  }  if (b == 0) { paramCalendarBuilder.set(15, 0).set(16, 0); return parsePosition.index; }  int m = subParseNumericZone(paramString, ++parsePosition.index, b, 0, true, paramCalendarBuilder); if (m > 0) return m;  parsePosition.index = -m; } else { int m = subParseZoneString(paramString, parsePosition.index, paramCalendarBuilder); if (m > 0) return m;  parsePosition.index = -m; }  } else { int m = subParseNumericZone(paramString, ++parsePosition.index, b, 0, false, paramCalendarBuilder); if (m > 0) return m;  parsePosition.index = -m; }  } catch (IndexOutOfBoundsException indexOutOfBoundsException) {} paramParsePosition.errorIndex = parsePosition.index; return -1;case 21: if (paramString.length() - parsePosition.index > 0) { char c = paramString.charAt(parsePosition.index); if (c == 'Z') { paramCalendarBuilder.set(15, 0).set(16, 0); return ++parsePosition.index; }  if (c == '+') { b = 1; } else if (c == '-') { b = -1; } else { paramParsePosition.errorIndex = ++parsePosition.index; return -1; }  int m = subParseNumericZone(paramString, ++parsePosition.index, b, paramInt3, (paramInt3 == 3), paramCalendarBuilder); if (m > 0) return m;  parsePosition.index = -m; }  paramParsePosition.errorIndex = parsePosition.index; return -1; }  if (paramBoolean1) { if (paramInt1 + paramInt3 > paramString.length()) { paramParsePosition.errorIndex = parsePosition.index; return -1; }  number = this.numberFormat.parse(paramString.substring(0, paramInt1 + paramInt3), parsePosition); } else { number = this.numberFormat.parse(paramString, parsePosition); }  if (number != null) { i = number.intValue(); if (paramBoolean2 && i < 0 && ((parsePosition.index < paramString.length() && paramString.charAt(parsePosition.index) != this.minusSign) || (parsePosition.index == paramString.length() && paramString.charAt(parsePosition.index - 1) == this.minusSign))) { i = -i; parsePosition.index--; }  paramCalendarBuilder.set(j, i); return parsePosition.index; }  paramParsePosition.errorIndex = parsePosition.index; return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean useDateFormatSymbols() {
-/* 2193 */     return (this.useDateFormatSymbols || this.locale == null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String translatePattern(String paramString1, String paramString2, String paramString3) {
-/* 2203 */     StringBuilder stringBuilder = new StringBuilder();
-/* 2204 */     boolean bool = false;
-/* 2205 */     for (byte b = 0; b < paramString1.length(); b++) {
-/* 2206 */       char c = paramString1.charAt(b);
-/* 2207 */       if (bool) {
-/* 2208 */         if (c == '\'') {
-/* 2209 */           bool = false;
-/*      */         
-/*      */         }
-/*      */       }
-/* 2213 */       else if (c == '\'') {
-/* 2214 */         bool = true;
-/* 2215 */       } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
-/* 2216 */         int i = paramString2.indexOf(c);
-/* 2217 */         if (i >= 0) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 2221 */           if (i < paramString3.length()) {
-/* 2222 */             c = paramString3.charAt(i);
-/*      */           }
-/*      */         } else {
-/* 2225 */           throw new IllegalArgumentException("Illegal pattern  character '" + c + "'");
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2231 */       stringBuilder.append(c);
-/*      */     } 
-/* 2233 */     if (bool) {
-/* 2234 */       throw new IllegalArgumentException("Unfinished quote in pattern");
-/*      */     }
-/* 2236 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toPattern() {
-/* 2245 */     return this.pattern;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toLocalizedPattern() {
-/* 2254 */     return translatePattern(this.pattern, "GyMdkHmsSEDFwWahKzZYuXL", this.formatData
-/*      */         
-/* 2256 */         .getLocalPatternChars());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void applyPattern(String paramString) {
-/* 2268 */     applyPatternImpl(paramString);
-/*      */   }
-/*      */   
-/*      */   private void applyPatternImpl(String paramString) {
-/* 2272 */     this.compiledPattern = compile(paramString);
-/* 2273 */     this.pattern = paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void applyLocalizedPattern(String paramString) {
-/* 2285 */     String str = translatePattern(paramString, this.formatData
-/* 2286 */         .getLocalPatternChars(), "GyMdkHmsSEDFwWahKzZYuXL");
-/*      */     
-/* 2288 */     this.compiledPattern = compile(str);
-/* 2289 */     this.pattern = str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DateFormatSymbols getDateFormatSymbols() {
-/* 2300 */     return (DateFormatSymbols)this.formatData.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDateFormatSymbols(DateFormatSymbols paramDateFormatSymbols) {
-/* 2312 */     this.formatData = (DateFormatSymbols)paramDateFormatSymbols.clone();
-/* 2313 */     this.useDateFormatSymbols = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/* 2324 */     SimpleDateFormat simpleDateFormat = (SimpleDateFormat)super.clone();
-/* 2325 */     simpleDateFormat.formatData = (DateFormatSymbols)this.formatData.clone();
-/* 2326 */     return simpleDateFormat;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/* 2337 */     return this.pattern.hashCode();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/* 2351 */     if (!super.equals(paramObject)) {
-/* 2352 */       return false;
-/*      */     }
-/* 2354 */     SimpleDateFormat simpleDateFormat = (SimpleDateFormat)paramObject;
-/* 2355 */     return (this.pattern.equals(simpleDateFormat.pattern) && this.formatData
-/* 2356 */       .equals(simpleDateFormat.formatData));
-/*      */   }
-/*      */   
-/* 2359 */   private static final int[] REST_OF_STYLES = new int[] { 32769, 2, 32770 };
-/*      */ 
-/*      */   
-/*      */   private Map<String, Integer> getDisplayNamesMap(int paramInt, Locale paramLocale) {
-/* 2363 */     Map<String, Integer> map = this.calendar.getDisplayNames(paramInt, 1, paramLocale);
-/*      */     
-/* 2365 */     for (int i : REST_OF_STYLES) {
-/* 2366 */       Map<String, Integer> map1 = this.calendar.getDisplayNames(paramInt, i, paramLocale);
-/* 2367 */       if (map1 != null) {
-/* 2368 */         map.putAll(map1);
-/*      */       }
-/*      */     } 
-/* 2371 */     return map;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 2382 */     paramObjectInputStream.defaultReadObject();
-/*      */     
-/*      */     try {
-/* 2385 */       this.compiledPattern = compile(this.pattern);
-/* 2386 */     } catch (Exception exception) {
-/* 2387 */       throw new InvalidObjectException("invalid pattern");
-/*      */     } 
-/*      */     
-/* 2390 */     if (this.serialVersionOnStream < 1) {
-/*      */       
-/* 2392 */       initializeDefaultCentury();
-/*      */     }
-/*      */     else {
-/*      */       
-/* 2396 */       parseAmbiguousDatesAsAfter(this.defaultCenturyStart);
-/*      */     } 
-/* 2398 */     this.serialVersionOnStream = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2404 */     TimeZone timeZone = getTimeZone();
-/* 2405 */     if (timeZone instanceof java.util.SimpleTimeZone) {
-/* 2406 */       String str = timeZone.getID();
-/* 2407 */       TimeZone timeZone1 = TimeZone.getTimeZone(str);
-/* 2408 */       if (timeZone1 != null && timeZone1.hasSameRules(timeZone) && timeZone1.getID().equals(str)) {
-/* 2409 */         setTimeZone(timeZone1);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void checkNegativeNumberExpression() {
-/* 2419 */     if (this.numberFormat instanceof DecimalFormat && 
-/* 2420 */       !this.numberFormat.equals(this.originalNumberFormat)) {
-/* 2421 */       String str = ((DecimalFormat)this.numberFormat).toPattern();
-/* 2422 */       if (!str.equals(this.originalNumberPattern)) {
-/* 2423 */         this.hasFollowingMinusSign = false;
-/*      */         
-/* 2425 */         int i = str.indexOf(';');
-/*      */ 
-/*      */         
-/* 2428 */         if (i > -1) {
-/* 2429 */           int j = str.indexOf('-', i);
-/* 2430 */           if (j > str.lastIndexOf('0') && j > str
-/* 2431 */             .lastIndexOf('#')) {
-/* 2432 */             this.hasFollowingMinusSign = true;
-/* 2433 */             this.minusSign = ((DecimalFormat)this.numberFormat).getDecimalFormatSymbols().getMinusSign();
-/*      */           } 
-/*      */         } 
-/* 2436 */         this.originalNumberPattern = str;
-/*      */       } 
-/* 2438 */       this.originalNumberFormat = this.numberFormat;
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\text\SimpleDateFormat.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1996-1998 - All Rights Reserved
+ *
+ *   The original version of this source code and documentation is copyrighted
+ * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These
+ * materials are provided under terms of a License Agreement between Taligent
+ * and Sun. This technology is protected by multiple US and International
+ * patents. This notice and attribution to Taligent may not be removed.
+ *   Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.text;
+
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import static java.text.DateFormatSymbols.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SimpleTimeZone;
+import java.util.SortedMap;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import sun.util.calendar.CalendarUtils;
+import sun.util.calendar.ZoneInfoFile;
+import sun.util.locale.provider.LocaleProviderAdapter;
+
+/**
+ * <code>SimpleDateFormat</code> is a concrete class for formatting and
+ * parsing dates in a locale-sensitive manner. It allows for formatting
+ * (date &rarr; text), parsing (text &rarr; date), and normalization.
+ *
+ * <p>
+ * <code>SimpleDateFormat</code> allows you to start by choosing
+ * any user-defined patterns for date-time formatting. However, you
+ * are encouraged to create a date-time formatter with either
+ * <code>getTimeInstance</code>, <code>getDateInstance</code>, or
+ * <code>getDateTimeInstance</code> in <code>DateFormat</code>. Each
+ * of these class methods can return a date/time formatter initialized
+ * with a default format pattern. You may modify the format pattern
+ * using the <code>applyPattern</code> methods as desired.
+ * For more information on using these methods, see
+ * {@link DateFormat}.
+ *
+ * <h3>Date and Time Patterns</h3>
+ * <p>
+ * Date and time formats are specified by <em>date and time pattern</em>
+ * strings.
+ * Within date and time pattern strings, unquoted letters from
+ * <code>'A'</code> to <code>'Z'</code> and from <code>'a'</code> to
+ * <code>'z'</code> are interpreted as pattern letters representing the
+ * components of a date or time string.
+ * Text can be quoted using single quotes (<code>'</code>) to avoid
+ * interpretation.
+ * <code>"''"</code> represents a single quote.
+ * All other characters are not interpreted; they're simply copied into the
+ * output string during formatting or matched against the input string
+ * during parsing.
+ * <p>
+ * The following pattern letters are defined (all other characters from
+ * <code>'A'</code> to <code>'Z'</code> and from <code>'a'</code> to
+ * <code>'z'</code> are reserved):
+ * <blockquote>
+ * <table border=0 cellspacing=3 cellpadding=0 summary="Chart shows pattern letters, date/time component, presentation, and examples.">
+ *     <tr style="background-color: rgb(204, 204, 255);">
+ *         <th align=left>Letter
+ *         <th align=left>Date or Time Component
+ *         <th align=left>Presentation
+ *         <th align=left>Examples
+ *     <tr>
+ *         <td><code>G</code>
+ *         <td>Era designator
+ *         <td><a href="#text">Text</a>
+ *         <td><code>AD</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>y</code>
+ *         <td>Year
+ *         <td><a href="#year">Year</a>
+ *         <td><code>1996</code>; <code>96</code>
+ *     <tr>
+ *         <td><code>Y</code>
+ *         <td>Week year
+ *         <td><a href="#year">Year</a>
+ *         <td><code>2009</code>; <code>09</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>M</code>
+ *         <td>Month in year (context sensitive)
+ *         <td><a href="#month">Month</a>
+ *         <td><code>July</code>; <code>Jul</code>; <code>07</code>
+ *     <tr>
+ *         <td><code>L</code>
+ *         <td>Month in year (standalone form)
+ *         <td><a href="#month">Month</a>
+ *         <td><code>July</code>; <code>Jul</code>; <code>07</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>w</code>
+ *         <td>Week in year
+ *         <td><a href="#number">Number</a>
+ *         <td><code>27</code>
+ *     <tr>
+ *         <td><code>W</code>
+ *         <td>Week in month
+ *         <td><a href="#number">Number</a>
+ *         <td><code>2</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>D</code>
+ *         <td>Day in year
+ *         <td><a href="#number">Number</a>
+ *         <td><code>189</code>
+ *     <tr>
+ *         <td><code>d</code>
+ *         <td>Day in month
+ *         <td><a href="#number">Number</a>
+ *         <td><code>10</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>F</code>
+ *         <td>Day of week in month
+ *         <td><a href="#number">Number</a>
+ *         <td><code>2</code>
+ *     <tr>
+ *         <td><code>E</code>
+ *         <td>Day name in week
+ *         <td><a href="#text">Text</a>
+ *         <td><code>Tuesday</code>; <code>Tue</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>u</code>
+ *         <td>Day number of week (1 = Monday, ..., 7 = Sunday)
+ *         <td><a href="#number">Number</a>
+ *         <td><code>1</code>
+ *     <tr>
+ *         <td><code>a</code>
+ *         <td>Am/pm marker
+ *         <td><a href="#text">Text</a>
+ *         <td><code>PM</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>H</code>
+ *         <td>Hour in day (0-23)
+ *         <td><a href="#number">Number</a>
+ *         <td><code>0</code>
+ *     <tr>
+ *         <td><code>k</code>
+ *         <td>Hour in day (1-24)
+ *         <td><a href="#number">Number</a>
+ *         <td><code>24</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>K</code>
+ *         <td>Hour in am/pm (0-11)
+ *         <td><a href="#number">Number</a>
+ *         <td><code>0</code>
+ *     <tr>
+ *         <td><code>h</code>
+ *         <td>Hour in am/pm (1-12)
+ *         <td><a href="#number">Number</a>
+ *         <td><code>12</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>m</code>
+ *         <td>Minute in hour
+ *         <td><a href="#number">Number</a>
+ *         <td><code>30</code>
+ *     <tr>
+ *         <td><code>s</code>
+ *         <td>Second in minute
+ *         <td><a href="#number">Number</a>
+ *         <td><code>55</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>S</code>
+ *         <td>Millisecond
+ *         <td><a href="#number">Number</a>
+ *         <td><code>978</code>
+ *     <tr>
+ *         <td><code>z</code>
+ *         <td>Time zone
+ *         <td><a href="#timezone">General time zone</a>
+ *         <td><code>Pacific Standard Time</code>; <code>PST</code>; <code>GMT-08:00</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>Z</code>
+ *         <td>Time zone
+ *         <td><a href="#rfc822timezone">RFC 822 time zone</a>
+ *         <td><code>-0800</code>
+ *     <tr>
+ *         <td><code>X</code>
+ *         <td>Time zone
+ *         <td><a href="#iso8601timezone">ISO 8601 time zone</a>
+ *         <td><code>-08</code>; <code>-0800</code>;  <code>-08:00</code>
+ * </table>
+ * </blockquote>
+ * Pattern letters are usually repeated, as their number determines the
+ * exact presentation:
+ * <ul>
+ * <li><strong><a name="text">Text:</a></strong>
+ *     For formatting, if the number of pattern letters is 4 or more,
+ *     the full form is used; otherwise a short or abbreviated form
+ *     is used if available.
+ *     For parsing, both forms are accepted, independent of the number
+ *     of pattern letters.<br><br></li>
+ * <li><strong><a name="number">Number:</a></strong>
+ *     For formatting, the number of pattern letters is the minimum
+ *     number of digits, and shorter numbers are zero-padded to this amount.
+ *     For parsing, the number of pattern letters is ignored unless
+ *     it's needed to separate two adjacent fields.<br><br></li>
+ * <li><strong><a name="year">Year:</a></strong>
+ *     If the formatter's {@link #getCalendar() Calendar} is the Gregorian
+ *     calendar, the following rules are applied.<br>
+ *     <ul>
+ *     <li>For formatting, if the number of pattern letters is 2, the year
+ *         is truncated to 2 digits; otherwise it is interpreted as a
+ *         <a href="#number">number</a>.
+ *     <li>For parsing, if the number of pattern letters is more than 2,
+ *         the year is interpreted literally, regardless of the number of
+ *         digits. So using the pattern "MM/dd/yyyy", "01/11/12" parses to
+ *         Jan 11, 12 A.D.
+ *     <li>For parsing with the abbreviated year pattern ("y" or "yy"),
+ *         <code>SimpleDateFormat</code> must interpret the abbreviated year
+ *         relative to some century.  It does this by adjusting dates to be
+ *         within 80 years before and 20 years after the time the <code>SimpleDateFormat</code>
+ *         instance is created. For example, using a pattern of "MM/dd/yy" and a
+ *         <code>SimpleDateFormat</code> instance created on Jan 1, 1997,  the string
+ *         "01/11/12" would be interpreted as Jan 11, 2012 while the string "05/04/64"
+ *         would be interpreted as May 4, 1964.
+ *         During parsing, only strings consisting of exactly two digits, as defined by
+ *         {@link Character#isDigit(char)}, will be parsed into the default century.
+ *         Any other numeric string, such as a one digit string, a three or more digit
+ *         string, or a two digit string that isn't all digits (for example, "-1"), is
+ *         interpreted literally.  So "01/02/3" or "01/02/003" are parsed, using the
+ *         same pattern, as Jan 2, 3 AD.  Likewise, "01/02/-3" is parsed as Jan 2, 4 BC.
+ *     </ul>
+ *     Otherwise, calendar system specific forms are applied.
+ *     For both formatting and parsing, if the number of pattern
+ *     letters is 4 or more, a calendar specific {@linkplain
+ *     Calendar#LONG long form} is used. Otherwise, a calendar
+ *     specific {@linkplain Calendar#SHORT short or abbreviated form}
+ *     is used.<br>
+ *     <br>
+ *     If week year {@code 'Y'} is specified and the {@linkplain
+ *     #getCalendar() calendar} doesn't support any <a
+ *     href="../util/GregorianCalendar.html#week_year"> week
+ *     years</a>, the calendar year ({@code 'y'}) is used instead. The
+ *     support of week years can be tested with a call to {@link
+ *     DateFormat#getCalendar() getCalendar()}.{@link
+ *     java.util.Calendar#isWeekDateSupported()
+ *     isWeekDateSupported()}.<br><br></li>
+ * <li><strong><a name="month">Month:</a></strong>
+ *     If the number of pattern letters is 3 or more, the month is
+ *     interpreted as <a href="#text">text</a>; otherwise,
+ *     it is interpreted as a <a href="#number">number</a>.<br>
+ *     <ul>
+ *     <li>Letter <em>M</em> produces context-sensitive month names, such as the
+ *         embedded form of names. If a {@code DateFormatSymbols} has been set
+ *         explicitly with constructor {@link #SimpleDateFormat(String,
+ *         DateFormatSymbols)} or method {@link
+ *         #setDateFormatSymbols(DateFormatSymbols)}, the month names given by
+ *         the {@code DateFormatSymbols} are used.</li>
+ *     <li>Letter <em>L</em> produces the standalone form of month names.</li>
+ *     </ul>
+ *     <br></li>
+ * <li><strong><a name="timezone">General time zone:</a></strong>
+ *     Time zones are interpreted as <a href="#text">text</a> if they have
+ *     names. For time zones representing a GMT offset value, the
+ *     following syntax is used:
+ *     <pre>
+ *     <a name="GMTOffsetTimeZone"><i>GMTOffsetTimeZone:</i></a>
+ *             <code>GMT</code> <i>Sign</i> <i>Hours</i> <code>:</code> <i>Minutes</i>
+ *     <i>Sign:</i> one of
+ *             <code>+ -</code>
+ *     <i>Hours:</i>
+ *             <i>Digit</i>
+ *             <i>Digit</i> <i>Digit</i>
+ *     <i>Minutes:</i>
+ *             <i>Digit</i> <i>Digit</i>
+ *     <i>Digit:</i> one of
+ *             <code>0 1 2 3 4 5 6 7 8 9</code></pre>
+ *     <i>Hours</i> must be between 0 and 23, and <i>Minutes</i> must be between
+ *     00 and 59. The format is locale independent and digits must be taken
+ *     from the Basic Latin block of the Unicode standard.
+ *     <p>For parsing, <a href="#rfc822timezone">RFC 822 time zones</a> are also
+ *     accepted.<br><br></li>
+ * <li><strong><a name="rfc822timezone">RFC 822 time zone:</a></strong>
+ *     For formatting, the RFC 822 4-digit time zone format is used:
+ *
+ *     <pre>
+ *     <i>RFC822TimeZone:</i>
+ *             <i>Sign</i> <i>TwoDigitHours</i> <i>Minutes</i>
+ *     <i>TwoDigitHours:</i>
+ *             <i>Digit Digit</i></pre>
+ *     <i>TwoDigitHours</i> must be between 00 and 23. Other definitions
+ *     are as for <a href="#timezone">general time zones</a>.
+ *
+ *     <p>For parsing, <a href="#timezone">general time zones</a> are also
+ *     accepted.
+ * <li><strong><a name="iso8601timezone">ISO 8601 Time zone:</a></strong>
+ *     The number of pattern letters designates the format for both formatting
+ *     and parsing as follows:
+ *     <pre>
+ *     <i>ISO8601TimeZone:</i>
+ *             <i>OneLetterISO8601TimeZone</i>
+ *             <i>TwoLetterISO8601TimeZone</i>
+ *             <i>ThreeLetterISO8601TimeZone</i>
+ *     <i>OneLetterISO8601TimeZone:</i>
+ *             <i>Sign</i> <i>TwoDigitHours</i>
+ *             {@code Z}
+ *     <i>TwoLetterISO8601TimeZone:</i>
+ *             <i>Sign</i> <i>TwoDigitHours</i> <i>Minutes</i>
+ *             {@code Z}
+ *     <i>ThreeLetterISO8601TimeZone:</i>
+ *             <i>Sign</i> <i>TwoDigitHours</i> {@code :} <i>Minutes</i>
+ *             {@code Z}</pre>
+ *     Other definitions are as for <a href="#timezone">general time zones</a> or
+ *     <a href="#rfc822timezone">RFC 822 time zones</a>.
+ *
+ *     <p>For formatting, if the offset value from GMT is 0, {@code "Z"} is
+ *     produced. If the number of pattern letters is 1, any fraction of an hour
+ *     is ignored. For example, if the pattern is {@code "X"} and the time zone is
+ *     {@code "GMT+05:30"}, {@code "+05"} is produced.
+ *
+ *     <p>For parsing, {@code "Z"} is parsed as the UTC time zone designator.
+ *     <a href="#timezone">General time zones</a> are <em>not</em> accepted.
+ *
+ *     <p>If the number of pattern letters is 4 or more, {@link
+ *     IllegalArgumentException} is thrown when constructing a {@code
+ *     SimpleDateFormat} or {@linkplain #applyPattern(String) applying a
+ *     pattern}.
+ * </ul>
+ * <code>SimpleDateFormat</code> also supports <em>localized date and time
+ * pattern</em> strings. In these strings, the pattern letters described above
+ * may be replaced with other, locale dependent, pattern letters.
+ * <code>SimpleDateFormat</code> does not deal with the localization of text
+ * other than the pattern letters; that's up to the client of the class.
+ *
+ * <h4>Examples</h4>
+ *
+ * The following examples show how date and time patterns are interpreted in
+ * the U.S. locale. The given date and time are 2001-07-04 12:08:56 local time
+ * in the U.S. Pacific Time time zone.
+ * <blockquote>
+ * <table border=0 cellspacing=3 cellpadding=0 summary="Examples of date and time patterns interpreted in the U.S. locale">
+ *     <tr style="background-color: rgb(204, 204, 255);">
+ *         <th align=left>Date and Time Pattern
+ *         <th align=left>Result
+ *     <tr>
+ *         <td><code>"yyyy.MM.dd G 'at' HH:mm:ss z"</code>
+ *         <td><code>2001.07.04 AD at 12:08:56 PDT</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>"EEE, MMM d, ''yy"</code>
+ *         <td><code>Wed, Jul 4, '01</code>
+ *     <tr>
+ *         <td><code>"h:mm a"</code>
+ *         <td><code>12:08 PM</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>"hh 'o''clock' a, zzzz"</code>
+ *         <td><code>12 o'clock PM, Pacific Daylight Time</code>
+ *     <tr>
+ *         <td><code>"K:mm a, z"</code>
+ *         <td><code>0:08 PM, PDT</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>"yyyyy.MMMMM.dd GGG hh:mm aaa"</code>
+ *         <td><code>02001.July.04 AD 12:08 PM</code>
+ *     <tr>
+ *         <td><code>"EEE, d MMM yyyy HH:mm:ss Z"</code>
+ *         <td><code>Wed, 4 Jul 2001 12:08:56 -0700</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>"yyMMddHHmmssZ"</code>
+ *         <td><code>010704120856-0700</code>
+ *     <tr>
+ *         <td><code>"yyyy-MM-dd'T'HH:mm:ss.SSSZ"</code>
+ *         <td><code>2001-07-04T12:08:56.235-0700</code>
+ *     <tr style="background-color: rgb(238, 238, 255);">
+ *         <td><code>"yyyy-MM-dd'T'HH:mm:ss.SSSXXX"</code>
+ *         <td><code>2001-07-04T12:08:56.235-07:00</code>
+ *     <tr>
+ *         <td><code>"YYYY-'W'ww-u"</code>
+ *         <td><code>2001-W27-3</code>
+ * </table>
+ * </blockquote>
+ *
+ * <h4><a name="synchronization">Synchronization</a></h4>
+ *
+ * <p>
+ * Date formats are not synchronized.
+ * It is recommended to create separate format instances for each thread.
+ * If multiple threads access a format concurrently, it must be synchronized
+ * externally.
+ *
+ * @see          <a href="https://docs.oracle.com/javase/tutorial/i18n/format/simpleDateFormat.html">Java Tutorial</a>
+ * @see          java.util.Calendar
+ * @see          java.util.TimeZone
+ * @see          DateFormat
+ * @see          DateFormatSymbols
+ * @author       Mark Davis, Chen-Lieh Huang, Alan Liu
+ */
+public class SimpleDateFormat extends DateFormat {
+
+    // the official serial version ID which says cryptically
+    // which version we're compatible with
+    static final long serialVersionUID = 4774881970558875024L;
+
+    // the internal serial version which says which version was written
+    // - 0 (default) for version up to JDK 1.1.3
+    // - 1 for version from JDK 1.1.4, which includes a new field
+    static final int currentSerialVersion = 1;
+
+    /**
+     * The version of the serialized data on the stream.  Possible values:
+     * <ul>
+     * <li><b>0</b> or not present on stream: JDK 1.1.3.  This version
+     * has no <code>defaultCenturyStart</code> on stream.
+     * <li><b>1</b> JDK 1.1.4 or later.  This version adds
+     * <code>defaultCenturyStart</code>.
+     * </ul>
+     * When streaming out this class, the most recent format
+     * and the highest allowable <code>serialVersionOnStream</code>
+     * is written.
+     * @serial
+     * @since JDK1.1.4
+     */
+    private int serialVersionOnStream = currentSerialVersion;
+
+    /**
+     * The pattern string of this formatter.  This is always a non-localized
+     * pattern.  May not be null.  See class documentation for details.
+     * @serial
+     */
+    private String pattern;
+
+    /**
+     * Saved numberFormat and pattern.
+     * @see SimpleDateFormat#checkNegativeNumberExpression
+     */
+    transient private NumberFormat originalNumberFormat;
+    transient private String originalNumberPattern;
+
+    /**
+     * The minus sign to be used with format and parse.
+     */
+    transient private char minusSign = '-';
+
+    /**
+     * True when a negative sign follows a number.
+     * (True as default in Arabic.)
+     */
+    transient private boolean hasFollowingMinusSign = false;
+
+    /**
+     * True if standalone form needs to be used.
+     */
+    transient private boolean forceStandaloneForm = false;
+
+    /**
+     * The compiled pattern.
+     */
+    transient private char[] compiledPattern;
+
+    /**
+     * Tags for the compiled pattern.
+     */
+    private final static int TAG_QUOTE_ASCII_CHAR       = 100;
+    private final static int TAG_QUOTE_CHARS            = 101;
+
+    /**
+     * Locale dependent digit zero.
+     * @see #zeroPaddingNumber
+     * @see java.text.DecimalFormatSymbols#getZeroDigit
+     */
+    transient private char zeroDigit;
+
+    /**
+     * The symbols used by this formatter for week names, month names,
+     * etc.  May not be null.
+     * @serial
+     * @see java.text.DateFormatSymbols
+     */
+    private DateFormatSymbols formatData;
+
+    /**
+     * We map dates with two-digit years into the century starting at
+     * <code>defaultCenturyStart</code>, which may be any date.  May
+     * not be null.
+     * @serial
+     * @since JDK1.1.4
+     */
+    private Date defaultCenturyStart;
+
+    transient private int defaultCenturyStartYear;
+
+    private static final int MILLIS_PER_MINUTE = 60 * 1000;
+
+    // For time zones that have no names, use strings GMT+minutes and
+    // GMT-minutes. For instance, in France the time zone is GMT+60.
+    private static final String GMT = "GMT";
+
+    /**
+     * Cache NumberFormat instances with Locale key.
+     */
+    private static final ConcurrentMap<Locale, NumberFormat> cachedNumberFormatData
+        = new ConcurrentHashMap<>(3);
+
+    /**
+     * The Locale used to instantiate this
+     * <code>SimpleDateFormat</code>. The value may be null if this object
+     * has been created by an older <code>SimpleDateFormat</code> and
+     * deserialized.
+     *
+     * @serial
+     * @since 1.6
+     */
+    private Locale locale;
+
+    /**
+     * Indicates whether this <code>SimpleDateFormat</code> should use
+     * the DateFormatSymbols. If true, the format and parse methods
+     * use the DateFormatSymbols values. If false, the format and
+     * parse methods call Calendar.getDisplayName or
+     * Calendar.getDisplayNames.
+     */
+    transient boolean useDateFormatSymbols;
+
+    /**
+     * Constructs a <code>SimpleDateFormat</code> using the default pattern and
+     * date format symbols for the default
+     * {@link java.util.Locale.Category#FORMAT FORMAT} locale.
+     * <b>Note:</b> This constructor may not support all locales.
+     * For full coverage, use the factory methods in the {@link DateFormat}
+     * class.
+     */
+    public SimpleDateFormat() {
+        this("", Locale.getDefault(Locale.Category.FORMAT));
+        applyPatternImpl(LocaleProviderAdapter.getResourceBundleBased().getLocaleResources(locale)
+                         .getDateTimePattern(SHORT, SHORT, calendar));
+    }
+
+    /**
+     * Constructs a <code>SimpleDateFormat</code> using the given pattern and
+     * the default date format symbols for the default
+     * {@link java.util.Locale.Category#FORMAT FORMAT} locale.
+     * <b>Note:</b> This constructor may not support all locales.
+     * For full coverage, use the factory methods in the {@link DateFormat}
+     * class.
+     * <p>This is equivalent to calling
+     * {@link #SimpleDateFormat(String, Locale)
+     *     SimpleDateFormat(pattern, Locale.getDefault(Locale.Category.FORMAT))}.
+     *
+     * @see java.util.Locale#getDefault(java.util.Locale.Category)
+     * @see java.util.Locale.Category#FORMAT
+     * @param pattern the pattern describing the date and time format
+     * @exception NullPointerException if the given pattern is null
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    public SimpleDateFormat(String pattern)
+    {
+        this(pattern, Locale.getDefault(Locale.Category.FORMAT));
+    }
+
+    /**
+     * Constructs a <code>SimpleDateFormat</code> using the given pattern and
+     * the default date format symbols for the given locale.
+     * <b>Note:</b> This constructor may not support all locales.
+     * For full coverage, use the factory methods in the {@link DateFormat}
+     * class.
+     *
+     * @param pattern the pattern describing the date and time format
+     * @param locale the locale whose date format symbols should be used
+     * @exception NullPointerException if the given pattern or locale is null
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    public SimpleDateFormat(String pattern, Locale locale)
+    {
+        if (pattern == null || locale == null) {
+            throw new NullPointerException();
+        }
+
+        initializeCalendar(locale);
+        this.pattern = pattern;
+        this.formatData = DateFormatSymbols.getInstanceRef(locale);
+        this.locale = locale;
+        initialize(locale);
+    }
+
+    /**
+     * Constructs a <code>SimpleDateFormat</code> using the given pattern and
+     * date format symbols.
+     *
+     * @param pattern the pattern describing the date and time format
+     * @param formatSymbols the date format symbols to be used for formatting
+     * @exception NullPointerException if the given pattern or formatSymbols is null
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    public SimpleDateFormat(String pattern, DateFormatSymbols formatSymbols)
+    {
+        if (pattern == null || formatSymbols == null) {
+            throw new NullPointerException();
+        }
+
+        this.pattern = pattern;
+        this.formatData = (DateFormatSymbols) formatSymbols.clone();
+        this.locale = Locale.getDefault(Locale.Category.FORMAT);
+        initializeCalendar(this.locale);
+        initialize(this.locale);
+        useDateFormatSymbols = true;
+    }
+
+    /* Initialize compiledPattern and numberFormat fields */
+    private void initialize(Locale loc) {
+        // Verify and compile the given pattern.
+        compiledPattern = compile(pattern);
+
+        /* try the cache first */
+        numberFormat = cachedNumberFormatData.get(loc);
+        if (numberFormat == null) { /* cache miss */
+            numberFormat = NumberFormat.getIntegerInstance(loc);
+            numberFormat.setGroupingUsed(false);
+
+            /* update cache */
+            cachedNumberFormatData.putIfAbsent(loc, numberFormat);
+        }
+        numberFormat = (NumberFormat) numberFormat.clone();
+
+        initializeDefaultCentury();
+    }
+
+    private void initializeCalendar(Locale loc) {
+        if (calendar == null) {
+            assert loc != null;
+            // The format object must be constructed using the symbols for this zone.
+            // However, the calendar should use the current default TimeZone.
+            // If this is not contained in the locale zone strings, then the zone
+            // will be formatted using generic GMT+/-H:MM nomenclature.
+            calendar = Calendar.getInstance(TimeZone.getDefault(), loc);
+        }
+    }
+
+    /**
+     * Returns the compiled form of the given pattern. The syntax of
+     * the compiled pattern is:
+     * <blockquote>
+     * CompiledPattern:
+     *     EntryList
+     * EntryList:
+     *     Entry
+     *     EntryList Entry
+     * Entry:
+     *     TagField
+     *     TagField data
+     * TagField:
+     *     Tag Length
+     *     TaggedData
+     * Tag:
+     *     pattern_char_index
+     *     TAG_QUOTE_CHARS
+     * Length:
+     *     short_length
+     *     long_length
+     * TaggedData:
+     *     TAG_QUOTE_ASCII_CHAR ascii_char
+     *
+     * </blockquote>
+     *
+     * where `short_length' is an 8-bit unsigned integer between 0 and
+     * 254.  `long_length' is a sequence of an 8-bit integer 255 and a
+     * 32-bit signed integer value which is split into upper and lower
+     * 16-bit fields in two char's. `pattern_char_index' is an 8-bit
+     * integer between 0 and 18. `ascii_char' is an 7-bit ASCII
+     * character value. `data' depends on its Tag value.
+     * <p>
+     * If Length is short_length, Tag and short_length are packed in a
+     * single char, as illustrated below.
+     * <blockquote>
+     *     char[0] = (Tag << 8) | short_length;
+     * </blockquote>
+     *
+     * If Length is long_length, Tag and 255 are packed in the first
+     * char and a 32-bit integer, as illustrated below.
+     * <blockquote>
+     *     char[0] = (Tag << 8) | 255;
+     *     char[1] = (char) (long_length >>> 16);
+     *     char[2] = (char) (long_length & 0xffff);
+     * </blockquote>
+     * <p>
+     * If Tag is a pattern_char_index, its Length is the number of
+     * pattern characters. For example, if the given pattern is
+     * "yyyy", Tag is 1 and Length is 4, followed by no data.
+     * <p>
+     * If Tag is TAG_QUOTE_CHARS, its Length is the number of char's
+     * following the TagField. For example, if the given pattern is
+     * "'o''clock'", Length is 7 followed by a char sequence of
+     * <code>o&nbs;'&nbs;c&nbs;l&nbs;o&nbs;c&nbs;k</code>.
+     * <p>
+     * TAG_QUOTE_ASCII_CHAR is a special tag and has an ASCII
+     * character in place of Length. For example, if the given pattern
+     * is "'o'", the TaggedData entry is
+     * <code>((TAG_QUOTE_ASCII_CHAR&nbs;<<&nbs;8)&nbs;|&nbs;'o')</code>.
+     *
+     * @exception NullPointerException if the given pattern is null
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    private char[] compile(String pattern) {
+        int length = pattern.length();
+        boolean inQuote = false;
+        StringBuilder compiledCode = new StringBuilder(length * 2);
+        StringBuilder tmpBuffer = null;
+        int count = 0, tagcount = 0;
+        int lastTag = -1, prevTag = -1;
+
+        for (int i = 0; i < length; i++) {
+            char c = pattern.charAt(i);
+
+            if (c == '\'') {
+                // '' is treated as a single quote regardless of being
+                // in a quoted section.
+                if ((i + 1) < length) {
+                    c = pattern.charAt(i + 1);
+                    if (c == '\'') {
+                        i++;
+                        if (count != 0) {
+                            encode(lastTag, count, compiledCode);
+                            tagcount++;
+                            prevTag = lastTag;
+                            lastTag = -1;
+                            count = 0;
+                        }
+                        if (inQuote) {
+                            tmpBuffer.append(c);
+                        } else {
+                            compiledCode.append((char)(TAG_QUOTE_ASCII_CHAR << 8 | c));
+                        }
+                        continue;
+                    }
+                }
+                if (!inQuote) {
+                    if (count != 0) {
+                        encode(lastTag, count, compiledCode);
+                        tagcount++;
+                        prevTag = lastTag;
+                        lastTag = -1;
+                        count = 0;
+                    }
+                    if (tmpBuffer == null) {
+                        tmpBuffer = new StringBuilder(length);
+                    } else {
+                        tmpBuffer.setLength(0);
+                    }
+                    inQuote = true;
+                } else {
+                    int len = tmpBuffer.length();
+                    if (len == 1) {
+                        char ch = tmpBuffer.charAt(0);
+                        if (ch < 128) {
+                            compiledCode.append((char)(TAG_QUOTE_ASCII_CHAR << 8 | ch));
+                        } else {
+                            compiledCode.append((char)(TAG_QUOTE_CHARS << 8 | 1));
+                            compiledCode.append(ch);
+                        }
+                    } else {
+                        encode(TAG_QUOTE_CHARS, len, compiledCode);
+                        compiledCode.append(tmpBuffer);
+                    }
+                    inQuote = false;
+                }
+                continue;
+            }
+            if (inQuote) {
+                tmpBuffer.append(c);
+                continue;
+            }
+            if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z')) {
+                if (count != 0) {
+                    encode(lastTag, count, compiledCode);
+                    tagcount++;
+                    prevTag = lastTag;
+                    lastTag = -1;
+                    count = 0;
+                }
+                if (c < 128) {
+                    // In most cases, c would be a delimiter, such as ':'.
+                    compiledCode.append((char)(TAG_QUOTE_ASCII_CHAR << 8 | c));
+                } else {
+                    // Take any contiguous non-ASCII alphabet characters and
+                    // put them in a single TAG_QUOTE_CHARS.
+                    int j;
+                    for (j = i + 1; j < length; j++) {
+                        char d = pattern.charAt(j);
+                        if (d == '\'' || (d >= 'a' && d <= 'z' || d >= 'A' && d <= 'Z')) {
+                            break;
+                        }
+                    }
+                    compiledCode.append((char)(TAG_QUOTE_CHARS << 8 | (j - i)));
+                    for (; i < j; i++) {
+                        compiledCode.append(pattern.charAt(i));
+                    }
+                    i--;
+                }
+                continue;
+            }
+
+            int tag;
+            if ((tag = DateFormatSymbols.patternChars.indexOf(c)) == -1) {
+                throw new IllegalArgumentException("Illegal pattern character " +
+                                                   "'" + c + "'");
+            }
+            if (lastTag == -1 || lastTag == tag) {
+                lastTag = tag;
+                count++;
+                continue;
+            }
+            encode(lastTag, count, compiledCode);
+            tagcount++;
+            prevTag = lastTag;
+            lastTag = tag;
+            count = 1;
+        }
+
+        if (inQuote) {
+            throw new IllegalArgumentException("Unterminated quote");
+        }
+
+        if (count != 0) {
+            encode(lastTag, count, compiledCode);
+            tagcount++;
+            prevTag = lastTag;
+        }
+
+        forceStandaloneForm = (tagcount == 1 && prevTag == PATTERN_MONTH);
+
+        // Copy the compiled pattern to a char array
+        int len = compiledCode.length();
+        char[] r = new char[len];
+        compiledCode.getChars(0, len, r, 0);
+        return r;
+    }
+
+    /**
+     * Encodes the given tag and length and puts encoded char(s) into buffer.
+     */
+    private static void encode(int tag, int length, StringBuilder buffer) {
+        if (tag == PATTERN_ISO_ZONE && length >= 4) {
+            throw new IllegalArgumentException("invalid ISO 8601 format: length=" + length);
+        }
+        if (length < 255) {
+            buffer.append((char)(tag << 8 | length));
+        } else {
+            buffer.append((char)((tag << 8) | 0xff));
+            buffer.append((char)(length >>> 16));
+            buffer.append((char)(length & 0xffff));
+        }
+    }
+
+    /* Initialize the fields we use to disambiguate ambiguous years. Separate
+     * so we can call it from readObject().
+     */
+    private void initializeDefaultCentury() {
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.add( Calendar.YEAR, -80 );
+        parseAmbiguousDatesAsAfter(calendar.getTime());
+    }
+
+    /* Define one-century window into which to disambiguate dates using
+     * two-digit years.
+     */
+    private void parseAmbiguousDatesAsAfter(Date startDate) {
+        defaultCenturyStart = startDate;
+        calendar.setTime(startDate);
+        defaultCenturyStartYear = calendar.get(Calendar.YEAR);
+    }
+
+    /**
+     * Sets the 100-year period 2-digit years will be interpreted as being in
+     * to begin on the date the user specifies.
+     *
+     * @param startDate During parsing, two digit years will be placed in the range
+     * <code>startDate</code> to <code>startDate + 100 years</code>.
+     * @see #get2DigitYearStart
+     * @since 1.2
+     */
+    public void set2DigitYearStart(Date startDate) {
+        parseAmbiguousDatesAsAfter(new Date(startDate.getTime()));
+    }
+
+    /**
+     * Returns the beginning date of the 100-year period 2-digit years are interpreted
+     * as being within.
+     *
+     * @return the start of the 100-year period into which two digit years are
+     * parsed
+     * @see #set2DigitYearStart
+     * @since 1.2
+     */
+    public Date get2DigitYearStart() {
+        return (Date) defaultCenturyStart.clone();
+    }
+
+    /**
+     * Formats the given <code>Date</code> into a date/time string and appends
+     * the result to the given <code>StringBuffer</code>.
+     *
+     * @param date the date-time value to be formatted into a date-time string.
+     * @param toAppendTo where the new date-time text is to be appended.
+     * @param pos the formatting position. On input: an alignment field,
+     * if desired. On output: the offsets of the alignment field.
+     * @return the formatted date-time string.
+     * @exception NullPointerException if the given {@code date} is {@code null}.
+     */
+    @Override
+    public StringBuffer format(Date date, StringBuffer toAppendTo,
+                               FieldPosition pos)
+    {
+        pos.beginIndex = pos.endIndex = 0;
+        return format(date, toAppendTo, pos.getFieldDelegate());
+    }
+
+    // Called from Format after creating a FieldDelegate
+    private StringBuffer format(Date date, StringBuffer toAppendTo,
+                                FieldDelegate delegate) {
+        // Convert input date to time field list
+        calendar.setTime(date);
+
+        boolean useDateFormatSymbols = useDateFormatSymbols();
+
+        for (int i = 0; i < compiledPattern.length; ) {
+            int tag = compiledPattern[i] >>> 8;
+            int count = compiledPattern[i++] & 0xff;
+            if (count == 255) {
+                count = compiledPattern[i++] << 16;
+                count |= compiledPattern[i++];
+            }
+
+            switch (tag) {
+            case TAG_QUOTE_ASCII_CHAR:
+                toAppendTo.append((char)count);
+                break;
+
+            case TAG_QUOTE_CHARS:
+                toAppendTo.append(compiledPattern, i, count);
+                i += count;
+                break;
+
+            default:
+                subFormat(tag, count, delegate, toAppendTo, useDateFormatSymbols);
+                break;
+            }
+        }
+        return toAppendTo;
+    }
+
+    /**
+     * Formats an Object producing an <code>AttributedCharacterIterator</code>.
+     * You can use the returned <code>AttributedCharacterIterator</code>
+     * to build the resulting String, as well as to determine information
+     * about the resulting String.
+     * <p>
+     * Each attribute key of the AttributedCharacterIterator will be of type
+     * <code>DateFormat.Field</code>, with the corresponding attribute value
+     * being the same as the attribute key.
+     *
+     * @exception NullPointerException if obj is null.
+     * @exception IllegalArgumentException if the Format cannot format the
+     *            given object, or if the Format's pattern string is invalid.
+     * @param obj The object to format
+     * @return AttributedCharacterIterator describing the formatted value.
+     * @since 1.4
+     */
+    @Override
+    public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
+        StringBuffer sb = new StringBuffer();
+        CharacterIteratorFieldDelegate delegate = new
+                         CharacterIteratorFieldDelegate();
+
+        if (obj instanceof Date) {
+            format((Date)obj, sb, delegate);
+        }
+        else if (obj instanceof Number) {
+            format(new Date(((Number)obj).longValue()), sb, delegate);
+        }
+        else if (obj == null) {
+            throw new NullPointerException(
+                   "formatToCharacterIterator must be passed non-null object");
+        }
+        else {
+            throw new IllegalArgumentException(
+                             "Cannot format given Object as a Date");
+        }
+        return delegate.getIterator(sb.toString());
+    }
+
+    // Map index into pattern character string to Calendar field number
+    private static final int[] PATTERN_INDEX_TO_CALENDAR_FIELD = {
+        Calendar.ERA,
+        Calendar.YEAR,
+        Calendar.MONTH,
+        Calendar.DATE,
+        Calendar.HOUR_OF_DAY,
+        Calendar.HOUR_OF_DAY,
+        Calendar.MINUTE,
+        Calendar.SECOND,
+        Calendar.MILLISECOND,
+        Calendar.DAY_OF_WEEK,
+        Calendar.DAY_OF_YEAR,
+        Calendar.DAY_OF_WEEK_IN_MONTH,
+        Calendar.WEEK_OF_YEAR,
+        Calendar.WEEK_OF_MONTH,
+        Calendar.AM_PM,
+        Calendar.HOUR,
+        Calendar.HOUR,
+        Calendar.ZONE_OFFSET,
+        Calendar.ZONE_OFFSET,
+        CalendarBuilder.WEEK_YEAR,         // Pseudo Calendar field
+        CalendarBuilder.ISO_DAY_OF_WEEK,   // Pseudo Calendar field
+        Calendar.ZONE_OFFSET,
+        Calendar.MONTH
+    };
+
+    // Map index into pattern character string to DateFormat field number
+    private static final int[] PATTERN_INDEX_TO_DATE_FORMAT_FIELD = {
+        DateFormat.ERA_FIELD,
+        DateFormat.YEAR_FIELD,
+        DateFormat.MONTH_FIELD,
+        DateFormat.DATE_FIELD,
+        DateFormat.HOUR_OF_DAY1_FIELD,
+        DateFormat.HOUR_OF_DAY0_FIELD,
+        DateFormat.MINUTE_FIELD,
+        DateFormat.SECOND_FIELD,
+        DateFormat.MILLISECOND_FIELD,
+        DateFormat.DAY_OF_WEEK_FIELD,
+        DateFormat.DAY_OF_YEAR_FIELD,
+        DateFormat.DAY_OF_WEEK_IN_MONTH_FIELD,
+        DateFormat.WEEK_OF_YEAR_FIELD,
+        DateFormat.WEEK_OF_MONTH_FIELD,
+        DateFormat.AM_PM_FIELD,
+        DateFormat.HOUR1_FIELD,
+        DateFormat.HOUR0_FIELD,
+        DateFormat.TIMEZONE_FIELD,
+        DateFormat.TIMEZONE_FIELD,
+        DateFormat.YEAR_FIELD,
+        DateFormat.DAY_OF_WEEK_FIELD,
+        DateFormat.TIMEZONE_FIELD,
+        DateFormat.MONTH_FIELD
+    };
+
+    // Maps from DecimalFormatSymbols index to Field constant
+    private static final Field[] PATTERN_INDEX_TO_DATE_FORMAT_FIELD_ID = {
+        Field.ERA,
+        Field.YEAR,
+        Field.MONTH,
+        Field.DAY_OF_MONTH,
+        Field.HOUR_OF_DAY1,
+        Field.HOUR_OF_DAY0,
+        Field.MINUTE,
+        Field.SECOND,
+        Field.MILLISECOND,
+        Field.DAY_OF_WEEK,
+        Field.DAY_OF_YEAR,
+        Field.DAY_OF_WEEK_IN_MONTH,
+        Field.WEEK_OF_YEAR,
+        Field.WEEK_OF_MONTH,
+        Field.AM_PM,
+        Field.HOUR1,
+        Field.HOUR0,
+        Field.TIME_ZONE,
+        Field.TIME_ZONE,
+        Field.YEAR,
+        Field.DAY_OF_WEEK,
+        Field.TIME_ZONE,
+        Field.MONTH
+    };
+
+    /**
+     * Private member function that does the real date/time formatting.
+     */
+    private void subFormat(int patternCharIndex, int count,
+                           FieldDelegate delegate, StringBuffer buffer,
+                           boolean useDateFormatSymbols)
+    {
+        int     maxIntCount = Integer.MAX_VALUE;
+        String  current = null;
+        int     beginOffset = buffer.length();
+
+        int field = PATTERN_INDEX_TO_CALENDAR_FIELD[patternCharIndex];
+        int value;
+        if (field == CalendarBuilder.WEEK_YEAR) {
+            if (calendar.isWeekDateSupported()) {
+                value = calendar.getWeekYear();
+            } else {
+                // use calendar year 'y' instead
+                patternCharIndex = PATTERN_YEAR;
+                field = PATTERN_INDEX_TO_CALENDAR_FIELD[patternCharIndex];
+                value = calendar.get(field);
+            }
+        } else if (field == CalendarBuilder.ISO_DAY_OF_WEEK) {
+            value = CalendarBuilder.toISODayOfWeek(calendar.get(Calendar.DAY_OF_WEEK));
+        } else {
+            value = calendar.get(field);
+        }
+
+        int style = (count >= 4) ? Calendar.LONG : Calendar.SHORT;
+        if (!useDateFormatSymbols && field < Calendar.ZONE_OFFSET
+            && patternCharIndex != PATTERN_MONTH_STANDALONE) {
+            current = calendar.getDisplayName(field, style, locale);
+        }
+
+        // Note: zeroPaddingNumber() assumes that maxDigits is either
+        // 2 or maxIntCount. If we make any changes to this,
+        // zeroPaddingNumber() must be fixed.
+
+        switch (patternCharIndex) {
+        case PATTERN_ERA: // 'G'
+            if (useDateFormatSymbols) {
+                String[] eras = formatData.getEras();
+                if (value < eras.length) {
+                    current = eras[value];
+                }
+            }
+            if (current == null) {
+                current = "";
+            }
+            break;
+
+        case PATTERN_WEEK_YEAR: // 'Y'
+        case PATTERN_YEAR:      // 'y'
+            if (calendar instanceof GregorianCalendar) {
+                if (count != 2) {
+                    zeroPaddingNumber(value, count, maxIntCount, buffer);
+                } else {
+                    zeroPaddingNumber(value, 2, 2, buffer);
+                } // clip 1996 to 96
+            } else {
+                if (current == null) {
+                    zeroPaddingNumber(value, style == Calendar.LONG ? 1 : count,
+                                      maxIntCount, buffer);
+                }
+            }
+            break;
+
+        case PATTERN_MONTH:            // 'M' (context seinsive)
+            if (useDateFormatSymbols) {
+                String[] months;
+                if (count >= 4) {
+                    months = formatData.getMonths();
+                    current = months[value];
+                } else if (count == 3) {
+                    months = formatData.getShortMonths();
+                    current = months[value];
+                }
+            } else {
+                if (count < 3) {
+                    current = null;
+                } else if (forceStandaloneForm) {
+                    current = calendar.getDisplayName(field, style | 0x8000, locale);
+                    if (current == null) {
+                        current = calendar.getDisplayName(field, style, locale);
+                    }
+                }
+            }
+            if (current == null) {
+                zeroPaddingNumber(value+1, count, maxIntCount, buffer);
+            }
+            break;
+
+        case PATTERN_MONTH_STANDALONE: // 'L'
+            assert current == null;
+            if (locale == null) {
+                String[] months;
+                if (count >= 4) {
+                    months = formatData.getMonths();
+                    current = months[value];
+                } else if (count == 3) {
+                    months = formatData.getShortMonths();
+                    current = months[value];
+                }
+            } else {
+                if (count >= 3) {
+                    current = calendar.getDisplayName(field, style | 0x8000, locale);
+                }
+            }
+            if (current == null) {
+                zeroPaddingNumber(value+1, count, maxIntCount, buffer);
+            }
+            break;
+
+        case PATTERN_HOUR_OF_DAY1: // 'k' 1-based.  eg, 23:59 + 1 hour =>> 24:59
+            if (current == null) {
+                if (value == 0) {
+                    zeroPaddingNumber(calendar.getMaximum(Calendar.HOUR_OF_DAY) + 1,
+                                      count, maxIntCount, buffer);
+                } else {
+                    zeroPaddingNumber(value, count, maxIntCount, buffer);
+                }
+            }
+            break;
+
+        case PATTERN_DAY_OF_WEEK: // 'E'
+            if (useDateFormatSymbols) {
+                String[] weekdays;
+                if (count >= 4) {
+                    weekdays = formatData.getWeekdays();
+                    current = weekdays[value];
+                } else { // count < 4, use abbreviated form if exists
+                    weekdays = formatData.getShortWeekdays();
+                    current = weekdays[value];
+                }
+            }
+            break;
+
+        case PATTERN_AM_PM:    // 'a'
+            if (useDateFormatSymbols) {
+                String[] ampm = formatData.getAmPmStrings();
+                current = ampm[value];
+            }
+            break;
+
+        case PATTERN_HOUR1:    // 'h' 1-based.  eg, 11PM + 1 hour =>> 12 AM
+            if (current == null) {
+                if (value == 0) {
+                    zeroPaddingNumber(calendar.getLeastMaximum(Calendar.HOUR) + 1,
+                                      count, maxIntCount, buffer);
+                } else {
+                    zeroPaddingNumber(value, count, maxIntCount, buffer);
+                }
+            }
+            break;
+
+        case PATTERN_ZONE_NAME: // 'z'
+            if (current == null) {
+                if (formatData.locale == null || formatData.isZoneStringsSet) {
+                    int zoneIndex =
+                        formatData.getZoneIndex(calendar.getTimeZone().getID());
+                    if (zoneIndex == -1) {
+                        value = calendar.get(Calendar.ZONE_OFFSET) +
+                            calendar.get(Calendar.DST_OFFSET);
+                        buffer.append(ZoneInfoFile.toCustomID(value));
+                    } else {
+                        int index = (calendar.get(Calendar.DST_OFFSET) == 0) ? 1: 3;
+                        if (count < 4) {
+                            // Use the short name
+                            index++;
+                        }
+                        String[][] zoneStrings = formatData.getZoneStringsWrapper();
+                        buffer.append(zoneStrings[zoneIndex][index]);
+                    }
+                } else {
+                    TimeZone tz = calendar.getTimeZone();
+                    boolean daylight = (calendar.get(Calendar.DST_OFFSET) != 0);
+                    int tzstyle = (count < 4 ? TimeZone.SHORT : TimeZone.LONG);
+                    buffer.append(tz.getDisplayName(daylight, tzstyle, formatData.locale));
+                }
+            }
+            break;
+
+        case PATTERN_ZONE_VALUE: // 'Z' ("-/+hhmm" form)
+            value = (calendar.get(Calendar.ZONE_OFFSET) +
+                     calendar.get(Calendar.DST_OFFSET)) / 60000;
+
+            int width = 4;
+            if (value >= 0) {
+                buffer.append('+');
+            } else {
+                width++;
+            }
+
+            int num = (value / 60) * 100 + (value % 60);
+            CalendarUtils.sprintf0d(buffer, num, width);
+            break;
+
+        case PATTERN_ISO_ZONE:   // 'X'
+            value = calendar.get(Calendar.ZONE_OFFSET)
+                    + calendar.get(Calendar.DST_OFFSET);
+
+            if (value == 0) {
+                buffer.append('Z');
+                break;
+            }
+
+            value /=  60000;
+            if (value >= 0) {
+                buffer.append('+');
+            } else {
+                buffer.append('-');
+                value = -value;
+            }
+
+            CalendarUtils.sprintf0d(buffer, value / 60, 2);
+            if (count == 1) {
+                break;
+            }
+
+            if (count == 3) {
+                buffer.append(':');
+            }
+            CalendarUtils.sprintf0d(buffer, value % 60, 2);
+            break;
+
+        default:
+     // case PATTERN_DAY_OF_MONTH:         // 'd'
+     // case PATTERN_HOUR_OF_DAY0:         // 'H' 0-based.  eg, 23:59 + 1 hour =>> 00:59
+     // case PATTERN_MINUTE:               // 'm'
+     // case PATTERN_SECOND:               // 's'
+     // case PATTERN_MILLISECOND:          // 'S'
+     // case PATTERN_DAY_OF_YEAR:          // 'D'
+     // case PATTERN_DAY_OF_WEEK_IN_MONTH: // 'F'
+     // case PATTERN_WEEK_OF_YEAR:         // 'w'
+     // case PATTERN_WEEK_OF_MONTH:        // 'W'
+     // case PATTERN_HOUR0:                // 'K' eg, 11PM + 1 hour =>> 0 AM
+     // case PATTERN_ISO_DAY_OF_WEEK:      // 'u' pseudo field, Monday = 1, ..., Sunday = 7
+            if (current == null) {
+                zeroPaddingNumber(value, count, maxIntCount, buffer);
+            }
+            break;
+        } // switch (patternCharIndex)
+
+        if (current != null) {
+            buffer.append(current);
+        }
+
+        int fieldID = PATTERN_INDEX_TO_DATE_FORMAT_FIELD[patternCharIndex];
+        Field f = PATTERN_INDEX_TO_DATE_FORMAT_FIELD_ID[patternCharIndex];
+
+        delegate.formatted(fieldID, f, f, beginOffset, buffer.length(), buffer);
+    }
+
+    /**
+     * Formats a number with the specified minimum and maximum number of digits.
+     */
+    private void zeroPaddingNumber(int value, int minDigits, int maxDigits, StringBuffer buffer)
+    {
+        // Optimization for 1, 2 and 4 digit numbers. This should
+        // cover most cases of formatting date/time related items.
+        // Note: This optimization code assumes that maxDigits is
+        // either 2 or Integer.MAX_VALUE (maxIntCount in format()).
+        try {
+            if (zeroDigit == 0) {
+                zeroDigit = ((DecimalFormat)numberFormat).getDecimalFormatSymbols().getZeroDigit();
+            }
+            if (value >= 0) {
+                if (value < 100 && minDigits >= 1 && minDigits <= 2) {
+                    if (value < 10) {
+                        if (minDigits == 2) {
+                            buffer.append(zeroDigit);
+                        }
+                        buffer.append((char)(zeroDigit + value));
+                    } else {
+                        buffer.append((char)(zeroDigit + value / 10));
+                        buffer.append((char)(zeroDigit + value % 10));
+                    }
+                    return;
+                } else if (value >= 1000 && value < 10000) {
+                    if (minDigits == 4) {
+                        buffer.append((char)(zeroDigit + value / 1000));
+                        value %= 1000;
+                        buffer.append((char)(zeroDigit + value / 100));
+                        value %= 100;
+                        buffer.append((char)(zeroDigit + value / 10));
+                        buffer.append((char)(zeroDigit + value % 10));
+                        return;
+                    }
+                    if (minDigits == 2 && maxDigits == 2) {
+                        zeroPaddingNumber(value % 100, 2, 2, buffer);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        numberFormat.setMinimumIntegerDigits(minDigits);
+        numberFormat.setMaximumIntegerDigits(maxDigits);
+        numberFormat.format((long)value, buffer, DontCareFieldPosition.INSTANCE);
+    }
+
+
+    /**
+     * Parses text from a string to produce a <code>Date</code>.
+     * <p>
+     * The method attempts to parse text starting at the index given by
+     * <code>pos</code>.
+     * If parsing succeeds, then the index of <code>pos</code> is updated
+     * to the index after the last character used (parsing does not necessarily
+     * use all characters up to the end of the string), and the parsed
+     * date is returned. The updated <code>pos</code> can be used to
+     * indicate the starting point for the next call to this method.
+     * If an error occurs, then the index of <code>pos</code> is not
+     * changed, the error index of <code>pos</code> is set to the index of
+     * the character where the error occurred, and null is returned.
+     *
+     * <p>This parsing operation uses the {@link DateFormat#calendar
+     * calendar} to produce a {@code Date}. All of the {@code
+     * calendar}'s date-time fields are {@linkplain Calendar#clear()
+     * cleared} before parsing, and the {@code calendar}'s default
+     * values of the date-time fields are used for any missing
+     * date-time information. For example, the year value of the
+     * parsed {@code Date} is 1970 with {@link GregorianCalendar} if
+     * no year value is given from the parsing operation.  The {@code
+     * TimeZone} value may be overwritten, depending on the given
+     * pattern and the time zone value in {@code text}. Any {@code
+     * TimeZone} value that has previously been set by a call to
+     * {@link #setTimeZone(java.util.TimeZone) setTimeZone} may need
+     * to be restored for further operations.
+     *
+     * @param text  A <code>String</code>, part of which should be parsed.
+     * @param pos   A <code>ParsePosition</code> object with index and error
+     *              index information as described above.
+     * @return A <code>Date</code> parsed from the string. In case of
+     *         error, returns null.
+     * @exception NullPointerException if <code>text</code> or <code>pos</code> is null.
+     */
+    @Override
+    public Date parse(String text, ParsePosition pos)
+    {
+        checkNegativeNumberExpression();
+
+        int start = pos.index;
+        int oldStart = start;
+        int textLength = text.length();
+
+        boolean[] ambiguousYear = {false};
+
+        CalendarBuilder calb = new CalendarBuilder();
+
+        for (int i = 0; i < compiledPattern.length; ) {
+            int tag = compiledPattern[i] >>> 8;
+            int count = compiledPattern[i++] & 0xff;
+            if (count == 255) {
+                count = compiledPattern[i++] << 16;
+                count |= compiledPattern[i++];
+            }
+
+            switch (tag) {
+            case TAG_QUOTE_ASCII_CHAR:
+                if (start >= textLength || text.charAt(start) != (char)count) {
+                    pos.index = oldStart;
+                    pos.errorIndex = start;
+                    return null;
+                }
+                start++;
+                break;
+
+            case TAG_QUOTE_CHARS:
+                while (count-- > 0) {
+                    if (start >= textLength || text.charAt(start) != compiledPattern[i++]) {
+                        pos.index = oldStart;
+                        pos.errorIndex = start;
+                        return null;
+                    }
+                    start++;
+                }
+                break;
+
+            default:
+                // Peek the next pattern to determine if we need to
+                // obey the number of pattern letters for
+                // parsing. It's required when parsing contiguous
+                // digit text (e.g., "20010704") with a pattern which
+                // has no delimiters between fields, like "yyyyMMdd".
+                boolean obeyCount = false;
+
+                // In Arabic, a minus sign for a negative number is put after
+                // the number. Even in another locale, a minus sign can be
+                // put after a number using DateFormat.setNumberFormat().
+                // If both the minus sign and the field-delimiter are '-',
+                // subParse() needs to determine whether a '-' after a number
+                // in the given text is a delimiter or is a minus sign for the
+                // preceding number. We give subParse() a clue based on the
+                // information in compiledPattern.
+                boolean useFollowingMinusSignAsDelimiter = false;
+
+                if (i < compiledPattern.length) {
+                    int nextTag = compiledPattern[i] >>> 8;
+                    if (!(nextTag == TAG_QUOTE_ASCII_CHAR ||
+                          nextTag == TAG_QUOTE_CHARS)) {
+                        obeyCount = true;
+                    }
+
+                    if (hasFollowingMinusSign &&
+                        (nextTag == TAG_QUOTE_ASCII_CHAR ||
+                         nextTag == TAG_QUOTE_CHARS)) {
+                        int c;
+                        if (nextTag == TAG_QUOTE_ASCII_CHAR) {
+                            c = compiledPattern[i] & 0xff;
+                        } else {
+                            c = compiledPattern[i+1];
+                        }
+
+                        if (c == minusSign) {
+                            useFollowingMinusSignAsDelimiter = true;
+                        }
+                    }
+                }
+                start = subParse(text, start, tag, count, obeyCount,
+                                 ambiguousYear, pos,
+                                 useFollowingMinusSignAsDelimiter, calb);
+                if (start < 0) {
+                    pos.index = oldStart;
+                    return null;
+                }
+            }
+        }
+
+        // At this point the fields of Calendar have been set.  Calendar
+        // will fill in default values for missing fields when the time
+        // is computed.
+
+        pos.index = start;
+
+        Date parsedDate;
+        try {
+            parsedDate = calb.establish(calendar).getTime();
+            // If the year value is ambiguous,
+            // then the two-digit year == the default start year
+            if (ambiguousYear[0]) {
+                if (parsedDate.before(defaultCenturyStart)) {
+                    parsedDate = calb.addYear(100).establish(calendar).getTime();
+                }
+            }
+        }
+        // An IllegalArgumentException will be thrown by Calendar.getTime()
+        // if any fields are out of range, e.g., MONTH == 17.
+        catch (IllegalArgumentException e) {
+            pos.errorIndex = start;
+            pos.index = oldStart;
+            return null;
+        }
+
+        return parsedDate;
+    }
+
+    /**
+     * Private code-size reduction function used by subParse.
+     * @param text the time text being parsed.
+     * @param start where to start parsing.
+     * @param field the date field being parsed.
+     * @param data the string array to parsed.
+     * @return the new start position if matching succeeded; a negative number
+     * indicating matching failure, otherwise.
+     */
+    private int matchString(String text, int start, int field, String[] data, CalendarBuilder calb)
+    {
+        int i = 0;
+        int count = data.length;
+
+        if (field == Calendar.DAY_OF_WEEK) {
+            i = 1;
+        }
+
+        // There may be multiple strings in the data[] array which begin with
+        // the same prefix (e.g., Cerven and Cervenec (June and July) in Czech).
+        // We keep track of the longest match, and return that.  Note that this
+        // unfortunately requires us to test all array elements.
+        int bestMatchLength = 0, bestMatch = -1;
+        for (; i<count; ++i)
+        {
+            int length = data[i].length();
+            // Always compare if we have no match yet; otherwise only compare
+            // against potentially better matches (longer strings).
+            if (length > bestMatchLength &&
+                text.regionMatches(true, start, data[i], 0, length))
+            {
+                bestMatch = i;
+                bestMatchLength = length;
+            }
+        }
+        if (bestMatch >= 0)
+        {
+            calb.set(field, bestMatch);
+            return start + bestMatchLength;
+        }
+        return -start;
+    }
+
+    /**
+     * Performs the same thing as matchString(String, int, int,
+     * String[]). This method takes a Map<String, Integer> instead of
+     * String[].
+     */
+    private int matchString(String text, int start, int field,
+                            Map<String,Integer> data, CalendarBuilder calb) {
+        if (data != null) {
+            // TODO: make this default when it's in the spec.
+            if (data instanceof SortedMap) {
+                for (String name : data.keySet()) {
+                    if (text.regionMatches(true, start, name, 0, name.length())) {
+                        calb.set(field, data.get(name));
+                        return start + name.length();
+                    }
+                }
+                return -start;
+            }
+
+            String bestMatch = null;
+
+            for (String name : data.keySet()) {
+                int length = name.length();
+                if (bestMatch == null || length > bestMatch.length()) {
+                    if (text.regionMatches(true, start, name, 0, length)) {
+                        bestMatch = name;
+                    }
+                }
+            }
+
+            if (bestMatch != null) {
+                calb.set(field, data.get(bestMatch));
+                return start + bestMatch.length();
+            }
+        }
+        return -start;
+    }
+
+    private int matchZoneString(String text, int start, String[] zoneNames) {
+        for (int i = 1; i <= 4; ++i) {
+            // Checking long and short zones [1 & 2],
+            // and long and short daylight [3 & 4].
+            String zoneName = zoneNames[i];
+            if (text.regionMatches(true, start,
+                                   zoneName, 0, zoneName.length())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean matchDSTString(String text, int start, int zoneIndex, int standardIndex,
+                                   String[][] zoneStrings) {
+        int index = standardIndex + 2;
+        String zoneName  = zoneStrings[zoneIndex][index];
+        if (text.regionMatches(true, start,
+                               zoneName, 0, zoneName.length())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * find time zone 'text' matched zoneStrings and set to internal
+     * calendar.
+     */
+    private int subParseZoneString(String text, int start, CalendarBuilder calb) {
+        boolean useSameName = false; // true if standard and daylight time use the same abbreviation.
+        TimeZone currentTimeZone = getTimeZone();
+
+        // At this point, check for named time zones by looking through
+        // the locale data from the TimeZoneNames strings.
+        // Want to be able to parse both short and long forms.
+        int zoneIndex = formatData.getZoneIndex(currentTimeZone.getID());
+        TimeZone tz = null;
+        String[][] zoneStrings = formatData.getZoneStringsWrapper();
+        String[] zoneNames = null;
+        int nameIndex = 0;
+        if (zoneIndex != -1) {
+            zoneNames = zoneStrings[zoneIndex];
+            if ((nameIndex = matchZoneString(text, start, zoneNames)) > 0) {
+                if (nameIndex <= 2) {
+                    // Check if the standard name (abbr) and the daylight name are the same.
+                    useSameName = zoneNames[nameIndex].equalsIgnoreCase(zoneNames[nameIndex + 2]);
+                }
+                tz = TimeZone.getTimeZone(zoneNames[0]);
+            }
+        }
+        if (tz == null) {
+            zoneIndex = formatData.getZoneIndex(TimeZone.getDefault().getID());
+            if (zoneIndex != -1) {
+                zoneNames = zoneStrings[zoneIndex];
+                if ((nameIndex = matchZoneString(text, start, zoneNames)) > 0) {
+                    if (nameIndex <= 2) {
+                        useSameName = zoneNames[nameIndex].equalsIgnoreCase(zoneNames[nameIndex + 2]);
+                    }
+                    tz = TimeZone.getTimeZone(zoneNames[0]);
+                }
+            }
+        }
+
+        if (tz == null) {
+            int len = zoneStrings.length;
+            for (int i = 0; i < len; i++) {
+                zoneNames = zoneStrings[i];
+                if ((nameIndex = matchZoneString(text, start, zoneNames)) > 0) {
+                    if (nameIndex <= 2) {
+                        useSameName = zoneNames[nameIndex].equalsIgnoreCase(zoneNames[nameIndex + 2]);
+                    }
+                    tz = TimeZone.getTimeZone(zoneNames[0]);
+                    break;
+                }
+            }
+        }
+        if (tz != null) { // Matched any ?
+            if (!tz.equals(currentTimeZone)) {
+                setTimeZone(tz);
+            }
+            // If the time zone matched uses the same name
+            // (abbreviation) for both standard and daylight time,
+            // let the time zone in the Calendar decide which one.
+            //
+            // Also if tz.getDSTSaving() returns 0 for DST, use tz to
+            // determine the local time. (6645292)
+            int dstAmount = (nameIndex >= 3) ? tz.getDSTSavings() : 0;
+            if (!(useSameName || (nameIndex >= 3 && dstAmount == 0))) {
+                calb.clear(Calendar.ZONE_OFFSET).set(Calendar.DST_OFFSET, dstAmount);
+            }
+            return (start + zoneNames[nameIndex].length());
+        }
+        return -start;
+    }
+
+    /**
+     * Parses numeric forms of time zone offset, such as "hh:mm", and
+     * sets calb to the parsed value.
+     *
+     * @param text  the text to be parsed
+     * @param start the character position to start parsing
+     * @param sign  1: positive; -1: negative
+     * @param count 0: 'Z' or "GMT+hh:mm" parsing; 1 - 3: the number of 'X's
+     * @param colon true - colon required between hh and mm; false - no colon required
+     * @param calb  a CalendarBuilder in which the parsed value is stored
+     * @return updated parsed position, or its negative value to indicate a parsing error
+     */
+    private int subParseNumericZone(String text, int start, int sign, int count,
+                                    boolean colon, CalendarBuilder calb) {
+        int index = start;
+
+      parse:
+        try {
+            char c = text.charAt(index++);
+            // Parse hh
+            int hours;
+            if (!isDigit(c)) {
+                break parse;
+            }
+            hours = c - '0';
+            c = text.charAt(index++);
+            if (isDigit(c)) {
+                hours = hours * 10 + (c - '0');
+            } else {
+                // If no colon in RFC 822 or 'X' (ISO), two digits are
+                // required.
+                if (count > 0 || !colon) {
+                    break parse;
+                }
+                --index;
+            }
+            if (hours > 23) {
+                break parse;
+            }
+            int minutes = 0;
+            if (count != 1) {
+                // Proceed with parsing mm
+                c = text.charAt(index++);
+                if (colon) {
+                    if (c != ':') {
+                        break parse;
+                    }
+                    c = text.charAt(index++);
+                }
+                if (!isDigit(c)) {
+                    break parse;
+                }
+                minutes = c - '0';
+                c = text.charAt(index++);
+                if (!isDigit(c)) {
+                    break parse;
+                }
+                minutes = minutes * 10 + (c - '0');
+                if (minutes > 59) {
+                    break parse;
+                }
+            }
+            minutes += hours * 60;
+            calb.set(Calendar.ZONE_OFFSET, minutes * MILLIS_PER_MINUTE * sign)
+                .set(Calendar.DST_OFFSET, 0);
+            return index;
+        } catch (IndexOutOfBoundsException e) {
+        }
+        return  1 - index; // -(index - 1)
+    }
+
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    /**
+     * Private member function that converts the parsed date strings into
+     * timeFields. Returns -start (for ParsePosition) if failed.
+     * @param text the time text to be parsed.
+     * @param start where to start parsing.
+     * @param patternCharIndex the index of the pattern character.
+     * @param count the count of a pattern character.
+     * @param obeyCount if true, then the next field directly abuts this one,
+     * and we should use the count to know when to stop parsing.
+     * @param ambiguousYear return parameter; upon return, if ambiguousYear[0]
+     * is true, then a two-digit year was parsed and may need to be readjusted.
+     * @param origPos origPos.errorIndex is used to return an error index
+     * at which a parse error occurred, if matching failure occurs.
+     * @return the new start position if matching succeeded; -1 indicating
+     * matching failure, otherwise. In case matching failure occurred,
+     * an error index is set to origPos.errorIndex.
+     */
+    private int subParse(String text, int start, int patternCharIndex, int count,
+                         boolean obeyCount, boolean[] ambiguousYear,
+                         ParsePosition origPos,
+                         boolean useFollowingMinusSignAsDelimiter, CalendarBuilder calb) {
+        Number number;
+        int value = 0;
+        ParsePosition pos = new ParsePosition(0);
+        pos.index = start;
+        if (patternCharIndex == PATTERN_WEEK_YEAR && !calendar.isWeekDateSupported()) {
+            // use calendar year 'y' instead
+            patternCharIndex = PATTERN_YEAR;
+        }
+        int field = PATTERN_INDEX_TO_CALENDAR_FIELD[patternCharIndex];
+
+        // If there are any spaces here, skip over them.  If we hit the end
+        // of the string, then fail.
+        for (;;) {
+            if (pos.index >= text.length()) {
+                origPos.errorIndex = start;
+                return -1;
+            }
+            char c = text.charAt(pos.index);
+            if (c != ' ' && c != '\t') {
+                break;
+            }
+            ++pos.index;
+        }
+        // Remember the actual start index
+        int actualStart = pos.index;
+
+      parsing:
+        {
+            // We handle a few special cases here where we need to parse
+            // a number value.  We handle further, more generic cases below.  We need
+            // to handle some of them here because some fields require extra processing on
+            // the parsed value.
+            if (patternCharIndex == PATTERN_HOUR_OF_DAY1 ||
+                patternCharIndex == PATTERN_HOUR1 ||
+                (patternCharIndex == PATTERN_MONTH && count <= 2) ||
+                patternCharIndex == PATTERN_YEAR ||
+                patternCharIndex == PATTERN_WEEK_YEAR) {
+                // It would be good to unify this with the obeyCount logic below,
+                // but that's going to be difficult.
+                if (obeyCount) {
+                    if ((start+count) > text.length()) {
+                        break parsing;
+                    }
+                    number = numberFormat.parse(text.substring(0, start+count), pos);
+                } else {
+                    number = numberFormat.parse(text, pos);
+                }
+                if (number == null) {
+                    if (patternCharIndex != PATTERN_YEAR || calendar instanceof GregorianCalendar) {
+                        break parsing;
+                    }
+                } else {
+                    value = number.intValue();
+
+                    if (useFollowingMinusSignAsDelimiter && (value < 0) &&
+                        (((pos.index < text.length()) &&
+                         (text.charAt(pos.index) != minusSign)) ||
+                         ((pos.index == text.length()) &&
+                          (text.charAt(pos.index-1) == minusSign)))) {
+                        value = -value;
+                        pos.index--;
+                    }
+                }
+            }
+
+            boolean useDateFormatSymbols = useDateFormatSymbols();
+
+            int index;
+            switch (patternCharIndex) {
+            case PATTERN_ERA: // 'G'
+                if (useDateFormatSymbols) {
+                    if ((index = matchString(text, start, Calendar.ERA, formatData.getEras(), calb)) > 0) {
+                        return index;
+                    }
+                } else {
+                    Map<String, Integer> map = getDisplayNamesMap(field, locale);
+                    if ((index = matchString(text, start, field, map, calb)) > 0) {
+                        return index;
+                    }
+                }
+                break parsing;
+
+            case PATTERN_WEEK_YEAR: // 'Y'
+            case PATTERN_YEAR:      // 'y'
+                if (!(calendar instanceof GregorianCalendar)) {
+                    // calendar might have text representations for year values,
+                    // such as "\u5143" in JapaneseImperialCalendar.
+                    int style = (count >= 4) ? Calendar.LONG : Calendar.SHORT;
+                    Map<String, Integer> map = calendar.getDisplayNames(field, style, locale);
+                    if (map != null) {
+                        if ((index = matchString(text, start, field, map, calb)) > 0) {
+                            return index;
+                        }
+                    }
+                    calb.set(field, value);
+                    return pos.index;
+                }
+
+                // If there are 3 or more YEAR pattern characters, this indicates
+                // that the year value is to be treated literally, without any
+                // two-digit year adjustments (e.g., from "01" to 2001).  Otherwise
+                // we made adjustments to place the 2-digit year in the proper
+                // century, for parsed strings from "00" to "99".  Any other string
+                // is treated literally:  "2250", "-1", "1", "002".
+                if (count <= 2 && (pos.index - actualStart) == 2
+                    && Character.isDigit(text.charAt(actualStart))
+                    && Character.isDigit(text.charAt(actualStart + 1))) {
+                    // Assume for example that the defaultCenturyStart is 6/18/1903.
+                    // This means that two-digit years will be forced into the range
+                    // 6/18/1903 to 6/17/2003.  As a result, years 00, 01, and 02
+                    // correspond to 2000, 2001, and 2002.  Years 04, 05, etc. correspond
+                    // to 1904, 1905, etc.  If the year is 03, then it is 2003 if the
+                    // other fields specify a date before 6/18, or 1903 if they specify a
+                    // date afterwards.  As a result, 03 is an ambiguous year.  All other
+                    // two-digit years are unambiguous.
+                    int ambiguousTwoDigitYear = defaultCenturyStartYear % 100;
+                    ambiguousYear[0] = value == ambiguousTwoDigitYear;
+                    value += (defaultCenturyStartYear/100)*100 +
+                        (value < ambiguousTwoDigitYear ? 100 : 0);
+                }
+                calb.set(field, value);
+                return pos.index;
+
+            case PATTERN_MONTH: // 'M'
+                if (count <= 2) // i.e., M or MM.
+                {
+                    // Don't want to parse the month if it is a string
+                    // while pattern uses numeric style: M or MM.
+                    // [We computed 'value' above.]
+                    calb.set(Calendar.MONTH, value - 1);
+                    return pos.index;
+                }
+
+                if (useDateFormatSymbols) {
+                    // count >= 3 // i.e., MMM or MMMM
+                    // Want to be able to parse both short and long forms.
+                    // Try count == 4 first:
+                    int newStart;
+                    if ((newStart = matchString(text, start, Calendar.MONTH,
+                                                formatData.getMonths(), calb)) > 0) {
+                        return newStart;
+                    }
+                    // count == 4 failed, now try count == 3
+                    if ((index = matchString(text, start, Calendar.MONTH,
+                                             formatData.getShortMonths(), calb)) > 0) {
+                        return index;
+                    }
+                } else {
+                    Map<String, Integer> map = getDisplayNamesMap(field, locale);
+                    if ((index = matchString(text, start, field, map, calb)) > 0) {
+                        return index;
+                    }
+                }
+                break parsing;
+
+            case PATTERN_HOUR_OF_DAY1: // 'k' 1-based.  eg, 23:59 + 1 hour =>> 24:59
+                if (!isLenient()) {
+                    // Validate the hour value in non-lenient
+                    if (value < 1 || value > 24) {
+                        break parsing;
+                    }
+                }
+                // [We computed 'value' above.]
+                if (value == calendar.getMaximum(Calendar.HOUR_OF_DAY) + 1) {
+                    value = 0;
+                }
+                calb.set(Calendar.HOUR_OF_DAY, value);
+                return pos.index;
+
+            case PATTERN_DAY_OF_WEEK:  // 'E'
+                {
+                    if (useDateFormatSymbols) {
+                        // Want to be able to parse both short and long forms.
+                        // Try count == 4 (DDDD) first:
+                        int newStart;
+                        if ((newStart=matchString(text, start, Calendar.DAY_OF_WEEK,
+                                                  formatData.getWeekdays(), calb)) > 0) {
+                            return newStart;
+                        }
+                        // DDDD failed, now try DDD
+                        if ((index = matchString(text, start, Calendar.DAY_OF_WEEK,
+                                                 formatData.getShortWeekdays(), calb)) > 0) {
+                            return index;
+                        }
+                    } else {
+                        int[] styles = { Calendar.LONG, Calendar.SHORT };
+                        for (int style : styles) {
+                            Map<String,Integer> map = calendar.getDisplayNames(field, style, locale);
+                            if ((index = matchString(text, start, field, map, calb)) > 0) {
+                                return index;
+                            }
+                        }
+                    }
+                }
+                break parsing;
+
+            case PATTERN_AM_PM:    // 'a'
+                if (useDateFormatSymbols) {
+                    if ((index = matchString(text, start, Calendar.AM_PM,
+                                             formatData.getAmPmStrings(), calb)) > 0) {
+                        return index;
+                    }
+                } else {
+                    Map<String,Integer> map = getDisplayNamesMap(field, locale);
+                    if ((index = matchString(text, start, field, map, calb)) > 0) {
+                        return index;
+                    }
+                }
+                break parsing;
+
+            case PATTERN_HOUR1: // 'h' 1-based.  eg, 11PM + 1 hour =>> 12 AM
+                if (!isLenient()) {
+                    // Validate the hour value in non-lenient
+                    if (value < 1 || value > 12) {
+                        break parsing;
+                    }
+                }
+                // [We computed 'value' above.]
+                if (value == calendar.getLeastMaximum(Calendar.HOUR) + 1) {
+                    value = 0;
+                }
+                calb.set(Calendar.HOUR, value);
+                return pos.index;
+
+            case PATTERN_ZONE_NAME:  // 'z'
+            case PATTERN_ZONE_VALUE: // 'Z'
+                {
+                    int sign = 0;
+                    try {
+                        char c = text.charAt(pos.index);
+                        if (c == '+') {
+                            sign = 1;
+                        } else if (c == '-') {
+                            sign = -1;
+                        }
+                        if (sign == 0) {
+                            // Try parsing a custom time zone "GMT+hh:mm" or "GMT".
+                            if ((c == 'G' || c == 'g')
+                                && (text.length() - start) >= GMT.length()
+                                && text.regionMatches(true, start, GMT, 0, GMT.length())) {
+                                pos.index = start + GMT.length();
+
+                                if ((text.length() - pos.index) > 0) {
+                                    c = text.charAt(pos.index);
+                                    if (c == '+') {
+                                        sign = 1;
+                                    } else if (c == '-') {
+                                        sign = -1;
+                                    }
+                                }
+
+                                if (sign == 0) {    /* "GMT" without offset */
+                                    calb.set(Calendar.ZONE_OFFSET, 0)
+                                        .set(Calendar.DST_OFFSET, 0);
+                                    return pos.index;
+                                }
+
+                                // Parse the rest as "hh:mm"
+                                int i = subParseNumericZone(text, ++pos.index,
+                                                            sign, 0, true, calb);
+                                if (i > 0) {
+                                    return i;
+                                }
+                                pos.index = -i;
+                            } else {
+                                // Try parsing the text as a time zone
+                                // name or abbreviation.
+                                int i = subParseZoneString(text, pos.index, calb);
+                                if (i > 0) {
+                                    return i;
+                                }
+                                pos.index = -i;
+                            }
+                        } else {
+                            // Parse the rest as "hhmm" (RFC 822)
+                            int i = subParseNumericZone(text, ++pos.index,
+                                                        sign, 0, false, calb);
+                            if (i > 0) {
+                                return i;
+                            }
+                            pos.index = -i;
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                    }
+                }
+                break parsing;
+
+            case PATTERN_ISO_ZONE:   // 'X'
+                {
+                    if ((text.length() - pos.index) <= 0) {
+                        break parsing;
+                    }
+
+                    int sign;
+                    char c = text.charAt(pos.index);
+                    if (c == 'Z') {
+                        calb.set(Calendar.ZONE_OFFSET, 0).set(Calendar.DST_OFFSET, 0);
+                        return ++pos.index;
+                    }
+
+                    // parse text as "+/-hh[[:]mm]" based on count
+                    if (c == '+') {
+                        sign = 1;
+                    } else if (c == '-') {
+                        sign = -1;
+                    } else {
+                        ++pos.index;
+                        break parsing;
+                    }
+                    int i = subParseNumericZone(text, ++pos.index, sign, count,
+                                                count == 3, calb);
+                    if (i > 0) {
+                        return i;
+                    }
+                    pos.index = -i;
+                }
+                break parsing;
+
+            default:
+         // case PATTERN_DAY_OF_MONTH:         // 'd'
+         // case PATTERN_HOUR_OF_DAY0:         // 'H' 0-based.  eg, 23:59 + 1 hour =>> 00:59
+         // case PATTERN_MINUTE:               // 'm'
+         // case PATTERN_SECOND:               // 's'
+         // case PATTERN_MILLISECOND:          // 'S'
+         // case PATTERN_DAY_OF_YEAR:          // 'D'
+         // case PATTERN_DAY_OF_WEEK_IN_MONTH: // 'F'
+         // case PATTERN_WEEK_OF_YEAR:         // 'w'
+         // case PATTERN_WEEK_OF_MONTH:        // 'W'
+         // case PATTERN_HOUR0:                // 'K' 0-based.  eg, 11PM + 1 hour =>> 0 AM
+         // case PATTERN_ISO_DAY_OF_WEEK:      // 'u' (pseudo field);
+
+                // Handle "generic" fields
+                if (obeyCount) {
+                    if ((start+count) > text.length()) {
+                        break parsing;
+                    }
+                    number = numberFormat.parse(text.substring(0, start+count), pos);
+                } else {
+                    number = numberFormat.parse(text, pos);
+                }
+                if (number != null) {
+                    value = number.intValue();
+
+                    if (useFollowingMinusSignAsDelimiter && (value < 0) &&
+                        (((pos.index < text.length()) &&
+                         (text.charAt(pos.index) != minusSign)) ||
+                         ((pos.index == text.length()) &&
+                          (text.charAt(pos.index-1) == minusSign)))) {
+                        value = -value;
+                        pos.index--;
+                    }
+
+                    calb.set(field, value);
+                    return pos.index;
+                }
+                break parsing;
+            }
+        }
+
+        // Parsing failed.
+        origPos.errorIndex = pos.index;
+        return -1;
+    }
+
+    /**
+     * Returns true if the DateFormatSymbols has been set explicitly or locale
+     * is null.
+     */
+    private boolean useDateFormatSymbols() {
+        return useDateFormatSymbols || locale == null;
+    }
+
+    /**
+     * Translates a pattern, mapping each character in the from string to the
+     * corresponding character in the to string.
+     *
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    private String translatePattern(String pattern, String from, String to) {
+        StringBuilder result = new StringBuilder();
+        boolean inQuote = false;
+        for (int i = 0; i < pattern.length(); ++i) {
+            char c = pattern.charAt(i);
+            if (inQuote) {
+                if (c == '\'') {
+                    inQuote = false;
+                }
+            }
+            else {
+                if (c == '\'') {
+                    inQuote = true;
+                } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                    int ci = from.indexOf(c);
+                    if (ci >= 0) {
+                        // patternChars is longer than localPatternChars due
+                        // to serialization compatibility. The pattern letters
+                        // unsupported by localPatternChars pass through.
+                        if (ci < to.length()) {
+                            c = to.charAt(ci);
+                        }
+                    } else {
+                        throw new IllegalArgumentException("Illegal pattern " +
+                                                           " character '" +
+                                                           c + "'");
+                    }
+                }
+            }
+            result.append(c);
+        }
+        if (inQuote) {
+            throw new IllegalArgumentException("Unfinished quote in pattern");
+        }
+        return result.toString();
+    }
+
+    /**
+     * Returns a pattern string describing this date format.
+     *
+     * @return a pattern string describing this date format.
+     */
+    public String toPattern() {
+        return pattern;
+    }
+
+    /**
+     * Returns a localized pattern string describing this date format.
+     *
+     * @return a localized pattern string describing this date format.
+     */
+    public String toLocalizedPattern() {
+        return translatePattern(pattern,
+                                DateFormatSymbols.patternChars,
+                                formatData.getLocalPatternChars());
+    }
+
+    /**
+     * Applies the given pattern string to this date format.
+     *
+     * @param pattern the new date and time pattern for this date format
+     * @exception NullPointerException if the given pattern is null
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    public void applyPattern(String pattern)
+    {
+        applyPatternImpl(pattern);
+    }
+
+    private void applyPatternImpl(String pattern) {
+        compiledPattern = compile(pattern);
+        this.pattern = pattern;
+    }
+
+    /**
+     * Applies the given localized pattern string to this date format.
+     *
+     * @param pattern a String to be mapped to the new date and time format
+     *        pattern for this format
+     * @exception NullPointerException if the given pattern is null
+     * @exception IllegalArgumentException if the given pattern is invalid
+     */
+    public void applyLocalizedPattern(String pattern) {
+         String p = translatePattern(pattern,
+                                     formatData.getLocalPatternChars(),
+                                     DateFormatSymbols.patternChars);
+         compiledPattern = compile(p);
+         this.pattern = p;
+    }
+
+    /**
+     * Gets a copy of the date and time format symbols of this date format.
+     *
+     * @return the date and time format symbols of this date format
+     * @see #setDateFormatSymbols
+     */
+    public DateFormatSymbols getDateFormatSymbols()
+    {
+        return (DateFormatSymbols)formatData.clone();
+    }
+
+    /**
+     * Sets the date and time format symbols of this date format.
+     *
+     * @param newFormatSymbols the new date and time format symbols
+     * @exception NullPointerException if the given newFormatSymbols is null
+     * @see #getDateFormatSymbols
+     */
+    public void setDateFormatSymbols(DateFormatSymbols newFormatSymbols)
+    {
+        this.formatData = (DateFormatSymbols)newFormatSymbols.clone();
+        useDateFormatSymbols = true;
+    }
+
+    /**
+     * Creates a copy of this <code>SimpleDateFormat</code>. This also
+     * clones the format's date format symbols.
+     *
+     * @return a clone of this <code>SimpleDateFormat</code>
+     */
+    @Override
+    public Object clone() {
+        SimpleDateFormat other = (SimpleDateFormat) super.clone();
+        other.formatData = (DateFormatSymbols) formatData.clone();
+        return other;
+    }
+
+    /**
+     * Returns the hash code value for this <code>SimpleDateFormat</code> object.
+     *
+     * @return the hash code value for this <code>SimpleDateFormat</code> object.
+     */
+    @Override
+    public int hashCode()
+    {
+        return pattern.hashCode();
+        // just enough fields for a reasonable distribution
+    }
+
+    /**
+     * Compares the given object with this <code>SimpleDateFormat</code> for
+     * equality.
+     *
+     * @return true if the given object is equal to this
+     * <code>SimpleDateFormat</code>
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!super.equals(obj)) {
+            return false; // super does class check
+        }
+        SimpleDateFormat that = (SimpleDateFormat) obj;
+        return (pattern.equals(that.pattern)
+                && formatData.equals(that.formatData));
+    }
+
+    private static final int[] REST_OF_STYLES = {
+        Calendar.SHORT_STANDALONE, Calendar.LONG_FORMAT, Calendar.LONG_STANDALONE,
+    };
+    private Map<String, Integer> getDisplayNamesMap(int field, Locale locale) {
+        Map<String, Integer> map = calendar.getDisplayNames(field, Calendar.SHORT_FORMAT, locale);
+        // Get all SHORT and LONG styles (avoid NARROW styles).
+        for (int style : REST_OF_STYLES) {
+            Map<String, Integer> m = calendar.getDisplayNames(field, style, locale);
+            if (m != null) {
+                map.putAll(m);
+            }
+        }
+        return map;
+    }
+
+    /**
+     * After reading an object from the input stream, the format
+     * pattern in the object is verified.
+     * <p>
+     * @exception InvalidObjectException if the pattern is invalid
+     */
+    private void readObject(ObjectInputStream stream)
+                         throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+
+        try {
+            compiledPattern = compile(pattern);
+        } catch (Exception e) {
+            throw new InvalidObjectException("invalid pattern");
+        }
+
+        if (serialVersionOnStream < 1) {
+            // didn't have defaultCenturyStart field
+            initializeDefaultCentury();
+        }
+        else {
+            // fill in dependent transient field
+            parseAmbiguousDatesAsAfter(defaultCenturyStart);
+        }
+        serialVersionOnStream = currentSerialVersion;
+
+        // If the deserialized object has a SimpleTimeZone, try
+        // to replace it with a ZoneInfo equivalent in order to
+        // be compatible with the SimpleTimeZone-based
+        // implementation as much as possible.
+        TimeZone tz = getTimeZone();
+        if (tz instanceof SimpleTimeZone) {
+            String id = tz.getID();
+            TimeZone zi = TimeZone.getTimeZone(id);
+            if (zi != null && zi.hasSameRules(tz) && zi.getID().equals(id)) {
+                setTimeZone(zi);
+            }
+        }
+    }
+
+    /**
+     * Analyze the negative subpattern of DecimalFormat and set/update values
+     * as necessary.
+     */
+    private void checkNegativeNumberExpression() {
+        if ((numberFormat instanceof DecimalFormat) &&
+            !numberFormat.equals(originalNumberFormat)) {
+            String numberPattern = ((DecimalFormat)numberFormat).toPattern();
+            if (!numberPattern.equals(originalNumberPattern)) {
+                hasFollowingMinusSign = false;
+
+                int separatorIndex = numberPattern.indexOf(';');
+                // If the negative subpattern is not absent, we have to analayze
+                // it in order to check if it has a following minus sign.
+                if (separatorIndex > -1) {
+                    int minusIndex = numberPattern.indexOf('-', separatorIndex);
+                    if ((minusIndex > numberPattern.lastIndexOf('0')) &&
+                        (minusIndex > numberPattern.lastIndexOf('#'))) {
+                        hasFollowingMinusSign = true;
+                        minusSign = ((DecimalFormat)numberFormat).getDecimalFormatSymbols().getMinusSign();
+                    }
+                }
+                originalNumberPattern = numberPattern;
+            }
+            originalNumberFormat = numberFormat;
+        }
+    }
+
+}

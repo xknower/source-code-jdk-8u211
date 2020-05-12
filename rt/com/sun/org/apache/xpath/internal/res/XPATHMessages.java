@@ -1,155 +1,149 @@
-/*     */ package com.sun.org.apache.xpath.internal.res;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.util.SecuritySupport;
-/*     */ import com.sun.org.apache.xml.internal.res.XMLMessages;
-/*     */ import java.text.MessageFormat;
-/*     */ import java.util.ListResourceBundle;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XPATHMessages
-/*     */   extends XMLMessages
-/*     */ {
-/*  39 */   private static ListResourceBundle XPATHBundle = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final String XPATH_ERROR_RESOURCES = "com.sun.org.apache.xpath.internal.res.XPATHErrorResources";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final String createXPATHMessage(String msgKey, Object[] args) {
-/*  58 */     if (XPATHBundle == null) {
-/*  59 */       XPATHBundle = SecuritySupport.getResourceBundle("com.sun.org.apache.xpath.internal.res.XPATHErrorResources");
-/*     */     }
-/*     */     
-/*  62 */     if (XPATHBundle != null) {
-/*  63 */       return createXPATHMsg(XPATHBundle, msgKey, args);
-/*     */     }
-/*  65 */     return "Could not load any resource bundles.";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final String createXPATHWarning(String msgKey, Object[] args) {
-/*  81 */     if (XPATHBundle == null) {
-/*  82 */       XPATHBundle = SecuritySupport.getResourceBundle("com.sun.org.apache.xpath.internal.res.XPATHErrorResources");
-/*     */     }
-/*     */     
-/*  85 */     if (XPATHBundle != null) {
-/*  86 */       return createXPATHMsg(XPATHBundle, msgKey, args);
-/*     */     }
-/*  88 */     return "Could not load any resource bundles.";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static final String createXPATHMsg(ListResourceBundle fResourceBundle, String msgKey, Object[] args) {
-/* 107 */     String fmsg = null;
-/* 108 */     boolean throwex = false;
-/* 109 */     String msg = null;
-/*     */     
-/* 111 */     if (msgKey != null) {
-/* 112 */       msg = fResourceBundle.getString(msgKey);
-/*     */     }
-/*     */     
-/* 115 */     if (msg == null) {
-/* 116 */       msg = fResourceBundle.getString("BAD_CODE");
-/* 117 */       throwex = true;
-/*     */     } 
-/*     */     
-/* 120 */     if (args != null) {
-/*     */ 
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */         
-/* 126 */         int n = args.length;
-/*     */         
-/* 128 */         for (int i = 0; i < n; i++) {
-/* 129 */           if (null == args[i]) {
-/* 130 */             args[i] = "";
-/*     */           }
-/*     */         } 
-/*     */         
-/* 134 */         fmsg = MessageFormat.format(msg, args);
-/* 135 */       } catch (Exception e) {
-/* 136 */         fmsg = fResourceBundle.getString("FORMAT_FAILED");
-/* 137 */         fmsg = fmsg + " " + msg;
-/*     */       } 
-/*     */     } else {
-/* 140 */       fmsg = msg;
-/*     */     } 
-/*     */     
-/* 143 */     if (throwex) {
-/* 144 */       throw new RuntimeException(fmsg);
-/*     */     }
-/*     */     
-/* 147 */     return fmsg;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\res\XPATHMessages.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XPATHMessages.java,v 1.2.4.1 2005/09/01 14:57:34 pvedula Exp $
+ */
+package com.sun.org.apache.xpath.internal.res;
+
+import com.sun.org.apache.bcel.internal.util.SecuritySupport;
+import com.sun.org.apache.xml.internal.res.XMLMessages;
+import java.util.ListResourceBundle;
+
+/**
+ * A utility class for issuing XPath error messages.
+ *
+ * @xsl.usage internal
+ */
+public class XPATHMessages extends XMLMessages {
+
+    /**
+     * The language specific resource object for XPath messages.
+     */
+    private static ListResourceBundle XPATHBundle = null;
+    /**
+     * The class name of the XPath error message string table.
+     */
+    private static final String XPATH_ERROR_RESOURCES =
+            "com.sun.org.apache.xpath.internal.res.XPATHErrorResources";
+
+    /**
+     * Creates a message from the specified key and replacement arguments,
+     * localized to the given locale.
+     *
+     * @param msgKey The key for the message text.
+     * @param args The arguments to be used as replacement text in the message
+     * created.
+     *
+     * @return The formatted message string.
+     */
+    public static final String createXPATHMessage(String msgKey, Object args[]) //throws Exception
+    {
+        if (XPATHBundle == null) {
+            XPATHBundle = SecuritySupport.getResourceBundle(XPATH_ERROR_RESOURCES);
+        }
+
+        if (XPATHBundle != null) {
+            return createXPATHMsg(XPATHBundle, msgKey, args);
+        } else {
+            return "Could not load any resource bundles.";
+        }
+    }
+
+    /**
+     * Creates a message from the specified key and replacement arguments,
+     * localized to the given locale.
+     *
+     * @param msgKey The key for the message text.
+     * @param args The arguments to be used as replacement text in the message
+     * created.
+     *
+     * @return The formatted warning string.
+     */
+    public static final String createXPATHWarning(String msgKey, Object args[]) //throws Exception
+    {
+        if (XPATHBundle == null) {
+            XPATHBundle = SecuritySupport.getResourceBundle(XPATH_ERROR_RESOURCES);
+        }
+
+        if (XPATHBundle != null) {
+            return createXPATHMsg(XPATHBundle, msgKey, args);
+        } else {
+            return "Could not load any resource bundles.";
+        }
+    }
+
+    /**
+     * Creates a message from the specified key and replacement arguments,
+     * localized to the given locale.
+     *
+     * @param fResourceBundle The resource bundle to use.
+     * @param msgKey The message key to use.
+     * @param args The arguments to be used as replacement text in the message
+     * created.
+     *
+     * @return The formatted message string.
+     */
+    public static final String createXPATHMsg(ListResourceBundle fResourceBundle,
+            String msgKey, Object args[]) //throws Exception
+    {
+
+        String fmsg = null;
+        boolean throwex = false;
+        String msg = null;
+
+        if (msgKey != null) {
+            msg = fResourceBundle.getString(msgKey);
+        }
+
+        if (msg == null) {
+            msg = fResourceBundle.getString(XPATHErrorResources.BAD_CODE);
+            throwex = true;
+        }
+
+        if (args != null) {
+            try {
+
+                // Do this to keep format from crying.
+                // This is better than making a bunch of conditional
+                // code all over the place.
+                int n = args.length;
+
+                for (int i = 0; i < n; i++) {
+                    if (null == args[i]) {
+                        args[i] = "";
+                    }
+                }
+
+                fmsg = java.text.MessageFormat.format(msg, args);
+            } catch (Exception e) {
+                fmsg = fResourceBundle.getString(XPATHErrorResources.FORMAT_FAILED);
+                fmsg += " " + msg;
+            }
+        } else {
+            fmsg = msg;
+        }
+
+        if (throwex) {
+            throw new RuntimeException(fmsg);
+        }
+
+        return fmsg;
+    }
+}

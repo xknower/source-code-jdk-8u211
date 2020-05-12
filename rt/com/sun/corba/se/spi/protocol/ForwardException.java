@@ -1,90 +1,84 @@
-/*    */ package com.sun.corba.se.spi.protocol;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*    */ import com.sun.corba.se.spi.ior.IOR;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import org.omg.CORBA.BAD_PARAM;
-/*    */ import org.omg.CORBA.Object;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ForwardException
-/*    */   extends RuntimeException
-/*    */ {
-/*    */   private ORB orb;
-/*    */   private Object obj;
-/*    */   private IOR ior;
-/*    */   
-/*    */   public ForwardException(ORB paramORB, IOR paramIOR) {
-/* 47 */     this.orb = paramORB;
-/* 48 */     this.obj = null;
-/* 49 */     this.ior = paramIOR;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public ForwardException(ORB paramORB, Object paramObject) {
-/* 59 */     if (paramObject instanceof org.omg.CORBA.LocalObject) {
-/* 60 */       throw new BAD_PARAM();
-/*    */     }
-/* 62 */     this.orb = paramORB;
-/* 63 */     this.obj = paramObject;
-/* 64 */     this.ior = null;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public synchronized Object getObject() {
-/* 69 */     if (this.obj == null) {
-/* 70 */       this.obj = ORBUtility.makeObjectReference(this.ior);
-/*    */     }
-/*    */     
-/* 73 */     return this.obj;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public synchronized IOR getIOR() {
-/* 78 */     if (this.ior == null) {
-/* 79 */       this.ior = ORBUtility.getIOR(this.obj);
-/*    */     }
-/*    */     
-/* 82 */     return this.ior;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\protocol\ForwardException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.protocol;
+
+import org.omg.CORBA.BAD_PARAM ;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+
+import com.sun.corba.se.spi.ior.IOR ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+/**
+ * Thrown to signal an OBJECT_FORWARD or LOCATION_FORWARD
+ */
+public class ForwardException extends RuntimeException {
+    private ORB orb ;
+    private org.omg.CORBA.Object obj;
+    private IOR ior ;
+
+    public ForwardException( ORB orb, IOR ior ) {
+        super();
+
+        this.orb = orb ;
+        this.obj = null ;
+        this.ior = ior ;
+    }
+
+    public ForwardException( ORB orb, org.omg.CORBA.Object obj) {
+        super();
+
+        // This check is done early so that no attempt
+        // may be made to do a location forward to a local
+        // object.  Doing this lazily would allow
+        // forwarding to locals in some restricted cases.
+        if (obj instanceof org.omg.CORBA.LocalObject)
+            throw new BAD_PARAM() ;
+
+        this.orb = orb ;
+        this.obj = obj ;
+        this.ior = null ;
+    }
+
+    public synchronized org.omg.CORBA.Object getObject()
+    {
+        if (obj == null) {
+            obj = ORBUtility.makeObjectReference( ior ) ;
+        }
+
+        return obj ;
+    }
+
+    public synchronized IOR getIOR()
+    {
+        if (ior == null) {
+            ior = ORBUtility.getIOR( obj ) ;
+        }
+
+        return ior ;
+    }
+}

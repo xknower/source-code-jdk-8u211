@@ -1,881 +1,875 @@
-/*     */ package javax.naming.spi;
-/*     */ 
-/*     */ import com.sun.naming.internal.FactoryEnumeration;
-/*     */ import com.sun.naming.internal.ResourceManager;
-/*     */ import com.sun.naming.internal.VersionHelper;
-/*     */ import java.net.MalformedURLException;
-/*     */ import java.util.Hashtable;
-/*     */ import javax.naming.CannotProceedException;
-/*     */ import javax.naming.Context;
-/*     */ import javax.naming.Name;
-/*     */ import javax.naming.NamingException;
-/*     */ import javax.naming.NoInitialContextException;
-/*     */ import javax.naming.RefAddr;
-/*     */ import javax.naming.Reference;
-/*     */ import javax.naming.Referenceable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class NamingManager
-/*     */ {
-/*  74 */   static final VersionHelper helper = VersionHelper.getVersionHelper();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  81 */   private static ObjectFactoryBuilder object_factory_builder = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final String defaultPkgPrefix = "com.sun.jndi.url";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static synchronized void setObjectFactoryBuilder(ObjectFactoryBuilder paramObjectFactoryBuilder) throws NamingException {
-/* 110 */     if (object_factory_builder != null) {
-/* 111 */       throw new IllegalStateException("ObjectFactoryBuilder already set");
-/*     */     }
-/* 113 */     SecurityManager securityManager = System.getSecurityManager();
-/* 114 */     if (securityManager != null) {
-/* 115 */       securityManager.checkSetFactory();
-/*     */     }
-/* 117 */     object_factory_builder = paramObjectFactoryBuilder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static synchronized ObjectFactoryBuilder getObjectFactoryBuilder() {
-/* 124 */     return object_factory_builder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static ObjectFactory getObjectFactoryFromReference(Reference paramReference, String paramString) throws IllegalAccessException, InstantiationException, MalformedURLException {
-/* 142 */     Class<?> clazz = null;
-/*     */ 
-/*     */     
-/*     */     try {
-/* 146 */       clazz = helper.loadClass(paramString);
-/* 147 */     } catch (ClassNotFoundException classNotFoundException) {}
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     String str;
-/*     */ 
-/*     */ 
-/*     */     
-/* 155 */     if (clazz == null && (
-/* 156 */       str = paramReference.getFactoryClassLocation()) != null) {
-/*     */       try {
-/* 158 */         clazz = helper.loadClass(paramString, str);
-/* 159 */       } catch (ClassNotFoundException classNotFoundException) {}
-/*     */     }
-/*     */ 
-/*     */     
-/* 163 */     return (clazz != null) ? (ObjectFactory)clazz.newInstance() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Object createObjectFromFactories(Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws Exception {
-/* 177 */     FactoryEnumeration factoryEnumeration = ResourceManager.getFactories("java.naming.factory.object", paramHashtable, paramContext);
-/*     */ 
-/*     */     
-/* 180 */     if (factoryEnumeration == null) {
-/* 181 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/* 185 */     Object object = null;
-/* 186 */     while (object == null && factoryEnumeration.hasMore()) {
-/* 187 */       ObjectFactory objectFactory = (ObjectFactory)factoryEnumeration.next();
-/* 188 */       object = objectFactory.getObjectInstance(paramObject, paramName, paramContext, paramHashtable);
-/*     */     } 
-/* 190 */     return object;
-/*     */   }
-/*     */   
-/*     */   private static String getURLScheme(String paramString) {
-/* 194 */     int i = paramString.indexOf(':');
-/* 195 */     int j = paramString.indexOf('/');
-/*     */     
-/* 197 */     if (i > 0 && (j == -1 || i < j))
-/* 198 */       return paramString.substring(0, i); 
-/* 199 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Object getObjectInstance(Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws Exception {
-/* 296 */     ObjectFactoryBuilder objectFactoryBuilder = getObjectFactoryBuilder();
-/* 297 */     if (objectFactoryBuilder != null) {
-/*     */       
-/* 299 */       ObjectFactory objectFactory = objectFactoryBuilder.createObjectFactory(paramObject, paramHashtable);
-/* 300 */       return objectFactory.getObjectInstance(paramObject, paramName, paramContext, paramHashtable);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 305 */     Reference reference = null;
-/* 306 */     if (paramObject instanceof Reference) {
-/* 307 */       reference = (Reference)paramObject;
-/* 308 */     } else if (paramObject instanceof Referenceable) {
-/* 309 */       reference = ((Referenceable)paramObject).getReference();
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 314 */     if (reference != null) {
-/* 315 */       String str = reference.getFactoryClassName();
-/* 316 */       if (str != null) {
-/*     */ 
-/*     */         
-/* 319 */         ObjectFactory objectFactory = getObjectFactoryFromReference(reference, str);
-/* 320 */         if (objectFactory != null) {
-/* 321 */           return objectFactory.getObjectInstance(reference, paramName, paramContext, paramHashtable);
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 327 */         return paramObject;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 333 */       Object object1 = processURLAddrs(reference, paramName, paramContext, paramHashtable);
-/* 334 */       if (object1 != null) {
-/* 335 */         return object1;
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 342 */     Object object = createObjectFromFactories(paramObject, paramName, paramContext, paramHashtable);
-/* 343 */     return (object != null) ? object : paramObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Object processURLAddrs(Reference paramReference, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws NamingException {
-/* 355 */     for (byte b = 0; b < paramReference.size(); b++) {
-/* 356 */       RefAddr refAddr = paramReference.get(b);
-/* 357 */       if (refAddr instanceof javax.naming.StringRefAddr && refAddr
-/* 358 */         .getType().equalsIgnoreCase("URL")) {
-/*     */         
-/* 360 */         String str = (String)refAddr.getContent();
-/* 361 */         Object object = processURL(str, paramName, paramContext, paramHashtable);
-/* 362 */         if (object != null) {
-/* 363 */           return object;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 367 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Object processURL(Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws NamingException {
-/* 377 */     if (paramObject instanceof String) {
-/* 378 */       String str1 = (String)paramObject;
-/* 379 */       String str2 = getURLScheme(str1);
-/* 380 */       if (str2 != null) {
-/* 381 */         Object object = getURLObject(str2, paramObject, paramName, paramContext, paramHashtable);
-/*     */         
-/* 383 */         if (object != null) {
-/* 384 */           return object;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 392 */     if (paramObject instanceof String[]) {
-/* 393 */       String[] arrayOfString = (String[])paramObject;
-/* 394 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/* 395 */         String str = getURLScheme(arrayOfString[b]);
-/* 396 */         if (str != null) {
-/* 397 */           Object object = getURLObject(str, paramObject, paramName, paramContext, paramHashtable);
-/*     */           
-/* 399 */           if (object != null)
-/* 400 */             return object; 
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/* 404 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Context getContext(Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws NamingException {
-/*     */     Object object;
-/* 433 */     if (paramObject instanceof Context)
-/*     */     {
-/* 435 */       return (Context)paramObject;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 439 */       object = getObjectInstance(paramObject, paramName, paramContext, paramHashtable);
-/* 440 */     } catch (NamingException namingException) {
-/* 441 */       throw namingException;
-/* 442 */     } catch (Exception exception) {
-/* 443 */       NamingException namingException = new NamingException();
-/* 444 */       namingException.setRootCause(exception);
-/* 445 */       throw namingException;
-/*     */     } 
-/*     */     
-/* 448 */     return (object instanceof Context) ? (Context)object : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Resolver getResolver(Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws NamingException {
-/*     */     Object object;
-/* 458 */     if (paramObject instanceof Resolver)
-/*     */     {
-/* 460 */       return (Resolver)paramObject;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 464 */       object = getObjectInstance(paramObject, paramName, paramContext, paramHashtable);
-/* 465 */     } catch (NamingException namingException) {
-/* 466 */       throw namingException;
-/* 467 */     } catch (Exception exception) {
-/* 468 */       NamingException namingException = new NamingException();
-/* 469 */       namingException.setRootCause(exception);
-/* 470 */       throw namingException;
-/*     */     } 
-/*     */     
-/* 473 */     return (object instanceof Resolver) ? (Resolver)object : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Context getURLContext(String paramString, Hashtable<?, ?> paramHashtable) throws NamingException {
-/* 550 */     Object object = getURLObject(paramString, null, null, null, paramHashtable);
-/* 551 */     if (object instanceof Context) {
-/* 552 */       return (Context)object;
-/*     */     }
-/* 554 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Object getURLObject(String paramString, Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws NamingException {
-/* 592 */     ObjectFactory objectFactory = (ObjectFactory)ResourceManager.getFactory("java.naming.factory.url.pkgs", paramHashtable, paramContext, "." + paramString + "." + paramString + "URLContextFactory", "com.sun.jndi.url");
-/*     */ 
-/*     */ 
-/*     */     
-/* 596 */     if (objectFactory == null) {
-/* 597 */       return null;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 601 */       return objectFactory.getObjectInstance(paramObject, paramName, paramContext, paramHashtable);
-/* 602 */     } catch (NamingException namingException) {
-/* 603 */       throw namingException;
-/* 604 */     } catch (Exception exception) {
-/* 605 */       NamingException namingException = new NamingException();
-/* 606 */       namingException.setRootCause(exception);
-/* 607 */       throw namingException;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 614 */   private static InitialContextFactoryBuilder initctx_factory_builder = null;
-/*     */ 
-/*     */   
-/*     */   public static final String CPE = "java.naming.spi.CannotProceedException";
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static synchronized InitialContextFactoryBuilder getInitialContextFactoryBuilder() {
-/* 622 */     return initctx_factory_builder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Context getInitialContext(Hashtable<?, ?> paramHashtable) throws NamingException {
-/*     */     InitialContextFactory initialContextFactory;
-/* 654 */     InitialContextFactoryBuilder initialContextFactoryBuilder = getInitialContextFactoryBuilder();
-/* 655 */     if (initialContextFactoryBuilder == null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 660 */       String str = (paramHashtable != null) ? (String)paramHashtable.get("java.naming.factory.initial") : null;
-/* 661 */       if (str == null) {
-/* 662 */         NoInitialContextException noInitialContextException = new NoInitialContextException("Need to specify class name in environment or system property, or as an applet parameter, or in an application resource file:  java.naming.factory.initial");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 667 */         throw noInitialContextException;
-/*     */       } 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 672 */         initialContextFactory = (InitialContextFactory)helper.loadClass(str).newInstance();
-/* 673 */       } catch (Exception exception) {
-/* 674 */         NoInitialContextException noInitialContextException = new NoInitialContextException("Cannot instantiate class: " + str);
-/*     */ 
-/*     */         
-/* 677 */         noInitialContextException.setRootCause(exception);
-/* 678 */         throw noInitialContextException;
-/*     */       } 
-/*     */     } else {
-/* 681 */       initialContextFactory = initialContextFactoryBuilder.createInitialContextFactory(paramHashtable);
-/*     */     } 
-/*     */     
-/* 684 */     return initialContextFactory.getInitialContext(paramHashtable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static synchronized void setInitialContextFactoryBuilder(InitialContextFactoryBuilder paramInitialContextFactoryBuilder) throws NamingException {
-/* 708 */     if (initctx_factory_builder != null) {
-/* 709 */       throw new IllegalStateException("InitialContextFactoryBuilder already set");
-/*     */     }
-/*     */     
-/* 712 */     SecurityManager securityManager = System.getSecurityManager();
-/* 713 */     if (securityManager != null) {
-/* 714 */       securityManager.checkSetFactory();
-/*     */     }
-/* 716 */     initctx_factory_builder = paramInitialContextFactoryBuilder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean hasInitialContextFactoryBuilder() {
-/* 727 */     return (getInitialContextFactoryBuilder() != null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Context getContinuationContext(CannotProceedException paramCannotProceedException) throws NamingException {
-/* 778 */     Hashtable<?, ?> hashtable = paramCannotProceedException.getEnvironment();
-/* 779 */     if (hashtable == null) {
-/* 780 */       hashtable = new Hashtable<>(7);
-/*     */     } else {
-/*     */       
-/* 783 */       hashtable = (Hashtable<?, ?>)hashtable.clone();
-/*     */     } 
-/* 785 */     hashtable.put("java.naming.spi.CannotProceedException", paramCannotProceedException);
-/*     */     
-/* 787 */     ContinuationContext continuationContext = new ContinuationContext(paramCannotProceedException, hashtable);
-/* 788 */     return continuationContext.getTargetContext();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Object getStateToBind(Object paramObject, Name paramName, Context paramContext, Hashtable<?, ?> paramHashtable) throws NamingException {
-/* 858 */     FactoryEnumeration factoryEnumeration = ResourceManager.getFactories("java.naming.factory.state", paramHashtable, paramContext);
-/*     */ 
-/*     */     
-/* 861 */     if (factoryEnumeration == null) {
-/* 862 */       return paramObject;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 867 */     Object object = null;
-/* 868 */     while (object == null && factoryEnumeration.hasMore()) {
-/* 869 */       StateFactory stateFactory = (StateFactory)factoryEnumeration.next();
-/* 870 */       object = stateFactory.getStateToBind(paramObject, paramName, paramContext, paramHashtable);
-/*     */     } 
-/*     */     
-/* 873 */     return (object != null) ? object : paramObject;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\naming\spi\NamingManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.naming.spi;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.StringTokenizer;
+import java.net.MalformedURLException;
+
+import javax.naming.*;
+import com.sun.naming.internal.VersionHelper;
+import com.sun.naming.internal.ResourceManager;
+import com.sun.naming.internal.FactoryEnumeration;
+
+/**
+ * This class contains methods for creating context objects
+ * and objects referred to by location information in the naming
+ * or directory service.
+ *<p>
+ * This class cannot be instantiated.  It has only static methods.
+ *<p>
+ * The mention of URL in the documentation for this class refers to
+ * a URL string as defined by RFC 1738 and its related RFCs. It is
+ * any string that conforms to the syntax described therein, and
+ * may not always have corresponding support in the java.net.URL
+ * class or Web browsers.
+ *<p>
+ * NamingManager is safe for concurrent access by multiple threads.
+ *<p>
+ * Except as otherwise noted,
+ * a <tt>Name</tt> or environment parameter
+ * passed to any method is owned by the caller.
+ * The implementation will not modify the object or keep a reference
+ * to it, although it may keep a reference to a clone or copy.
+ *
+ * @author Rosanna Lee
+ * @author Scott Seligman
+ * @since 1.3
+ */
+
+public class NamingManager {
+
+    /*
+     * Disallow anyone from creating one of these.
+     * Made package private so that DirectoryManager can subclass.
+     */
+
+    NamingManager() {}
+
+    // should be protected and package private
+    static final VersionHelper helper = VersionHelper.getVersionHelper();
+
+// --------- object factory stuff
+
+    /**
+     * Package-private; used by DirectoryManager and NamingManager.
+     */
+    private static ObjectFactoryBuilder object_factory_builder = null;
+
+    /**
+     * The ObjectFactoryBuilder determines the policy used when
+     * trying to load object factories.
+     * See getObjectInstance() and class ObjectFactory for a description
+     * of the default policy.
+     * setObjectFactoryBuilder() overrides this default policy by installing
+     * an ObjectFactoryBuilder. Subsequent object factories will
+     * be loaded and created using the installed builder.
+     *<p>
+     * The builder can only be installed if the executing thread is allowed
+     * (by the security manager's checkSetFactory() method) to do so.
+     * Once installed, the builder cannot be replaced.
+     *<p>
+     * @param builder The factory builder to install. If null, no builder
+     *                  is installed.
+     * @exception SecurityException builder cannot be installed
+     *          for security reasons.
+     * @exception NamingException builder cannot be installed for
+     *         a non-security-related reason.
+     * @exception IllegalStateException If a factory has already been installed.
+     * @see #getObjectInstance
+     * @see ObjectFactory
+     * @see ObjectFactoryBuilder
+     * @see java.lang.SecurityManager#checkSetFactory
+     */
+    public static synchronized void setObjectFactoryBuilder(
+            ObjectFactoryBuilder builder) throws NamingException {
+        if (object_factory_builder != null)
+            throw new IllegalStateException("ObjectFactoryBuilder already set");
+
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkSetFactory();
+        }
+        object_factory_builder = builder;
+    }
+
+    /**
+     * Used for accessing object factory builder.
+     */
+    static synchronized ObjectFactoryBuilder getObjectFactoryBuilder() {
+        return object_factory_builder;
+    }
+
+
+    /**
+     * Retrieves the ObjectFactory for the object identified by a reference,
+     * using the reference's factory class name and factory codebase
+     * to load in the factory's class.
+     * @param ref The non-null reference to use.
+     * @param factoryName The non-null class name of the factory.
+     * @return The object factory for the object identified by ref; null
+     * if unable to load the factory.
+     */
+    static ObjectFactory getObjectFactoryFromReference(
+        Reference ref, String factoryName)
+        throws IllegalAccessException,
+        InstantiationException,
+        MalformedURLException {
+        Class<?> clas = null;
+
+        // Try to use current class loader
+        try {
+             clas = helper.loadClass(factoryName);
+        } catch (ClassNotFoundException e) {
+            // ignore and continue
+            // e.printStackTrace();
+        }
+        // All other exceptions are passed up.
+
+        // Not in class path; try to use codebase
+        String codebase;
+        if (clas == null &&
+                (codebase = ref.getFactoryClassLocation()) != null) {
+            try {
+                clas = helper.loadClass(factoryName, codebase);
+            } catch (ClassNotFoundException e) {
+            }
+        }
+
+        return (clas != null) ? (ObjectFactory) clas.newInstance() : null;
+    }
+
+
+    /**
+     * Creates an object using the factories specified in the
+     * <tt>Context.OBJECT_FACTORIES</tt> property of the environment
+     * or of the provider resource file associated with <tt>nameCtx</tt>.
+     *
+     * @return factory created; null if cannot create
+     */
+    private static Object createObjectFromFactories(Object obj, Name name,
+            Context nameCtx, Hashtable<?,?> environment) throws Exception {
+
+        FactoryEnumeration factories = ResourceManager.getFactories(
+            Context.OBJECT_FACTORIES, environment, nameCtx);
+
+        if (factories == null)
+            return null;
+
+        // Try each factory until one succeeds
+        ObjectFactory factory;
+        Object answer = null;
+        while (answer == null && factories.hasMore()) {
+            factory = (ObjectFactory)factories.next();
+            answer = factory.getObjectInstance(obj, name, nameCtx, environment);
+        }
+        return answer;
+    }
+
+    private static String getURLScheme(String str) {
+        int colon_posn = str.indexOf(':');
+        int slash_posn = str.indexOf('/');
+
+        if (colon_posn > 0 && (slash_posn == -1 || colon_posn < slash_posn))
+            return str.substring(0, colon_posn);
+        return null;
+    }
+
+    /**
+     * Creates an instance of an object for the specified object
+     * and environment.
+     * <p>
+     * If an object factory builder has been installed, it is used to
+     * create a factory for creating the object.
+     * Otherwise, the following rules are used to create the object:
+     *<ol>
+     * <li>If <code>refInfo</code> is a <code>Reference</code>
+     *    or <code>Referenceable</code> containing a factory class name,
+     *    use the named factory to create the object.
+     *    Return <code>refInfo</code> if the factory cannot be created.
+     *    Under JDK 1.1, if the factory class must be loaded from a location
+     *    specified in the reference, a <tt>SecurityManager</tt> must have
+     *    been installed or the factory creation will fail.
+     *    If an exception is encountered while creating the factory,
+     *    it is passed up to the caller.
+     * <li>If <tt>refInfo</tt> is a <tt>Reference</tt> or
+     *    <tt>Referenceable</tt> with no factory class name,
+     *    and the address or addresses are <tt>StringRefAddr</tt>s with
+     *    address type "URL",
+     *    try the URL context factory corresponding to each URL's scheme id
+     *    to create the object (see <tt>getURLContext()</tt>).
+     *    If that fails, continue to the next step.
+     * <li> Use the object factories specified in
+     *    the <tt>Context.OBJECT_FACTORIES</tt> property of the environment,
+     *    and of the provider resource file associated with
+     *    <tt>nameCtx</tt>, in that order.
+     *    The value of this property is a colon-separated list of factory
+     *    class names that are tried in order, and the first one that succeeds
+     *    in creating an object is the one used.
+     *    If none of the factories can be loaded,
+     *    return <code>refInfo</code>.
+     *    If an exception is encountered while creating the object, the
+     *    exception is passed up to the caller.
+     *</ol>
+     *<p>
+     * Service providers that implement the <tt>DirContext</tt>
+     * interface should use
+     * <tt>DirectoryManager.getObjectInstance()</tt>, not this method.
+     * Service providers that implement only the <tt>Context</tt>
+     * interface should use this method.
+     * <p>
+     * Note that an object factory (an object that implements the ObjectFactory
+     * interface) must be public and must have a public constructor that
+     * accepts no arguments.
+     * <p>
+     * The <code>name</code> and <code>nameCtx</code> parameters may
+     * optionally be used to specify the name of the object being created.
+     * <code>name</code> is the name of the object, relative to context
+     * <code>nameCtx</code>.  This information could be useful to the object
+     * factory or to the object implementation.
+     *  If there are several possible contexts from which the object
+     *  could be named -- as will often be the case -- it is up to
+     *  the caller to select one.  A good rule of thumb is to select the
+     * "deepest" context available.
+     * If <code>nameCtx</code> is null, <code>name</code> is relative
+     * to the default initial context.  If no name is being specified, the
+     * <code>name</code> parameter should be null.
+     *
+     * @param refInfo The possibly null object for which to create an object.
+     * @param name The name of this object relative to <code>nameCtx</code>.
+     *          Specifying a name is optional; if it is
+     *          omitted, <code>name</code> should be null.
+     * @param nameCtx The context relative to which the <code>name</code>
+     *          parameter is specified.  If null, <code>name</code> is
+     *          relative to the default initial context.
+     * @param environment The possibly null environment to
+     *          be used in the creation of the object factory and the object.
+     * @return An object created using <code>refInfo</code>; or
+     *          <code>refInfo</code> if an object cannot be created using
+     *          the algorithm described above.
+     * @exception NamingException if a naming exception was encountered
+     *  while attempting to get a URL context, or if one of the
+     *          factories accessed throws a NamingException.
+     * @exception Exception if one of the factories accessed throws an
+     *          exception, or if an error was encountered while loading
+     *          and instantiating the factory and object classes.
+     *          A factory should only throw an exception if it does not want
+     *          other factories to be used in an attempt to create an object.
+     *  See ObjectFactory.getObjectInstance().
+     * @see #getURLContext
+     * @see ObjectFactory
+     * @see ObjectFactory#getObjectInstance
+     */
+    public static Object
+        getObjectInstance(Object refInfo, Name name, Context nameCtx,
+                          Hashtable<?,?> environment)
+        throws Exception
+    {
+
+        ObjectFactory factory;
+
+        // Use builder if installed
+        ObjectFactoryBuilder builder = getObjectFactoryBuilder();
+        if (builder != null) {
+            // builder must return non-null factory
+            factory = builder.createObjectFactory(refInfo, environment);
+            return factory.getObjectInstance(refInfo, name, nameCtx,
+                environment);
+        }
+
+        // Use reference if possible
+        Reference ref = null;
+        if (refInfo instanceof Reference) {
+            ref = (Reference) refInfo;
+        } else if (refInfo instanceof Referenceable) {
+            ref = ((Referenceable)(refInfo)).getReference();
+        }
+
+        Object answer;
+
+        if (ref != null) {
+            String f = ref.getFactoryClassName();
+            if (f != null) {
+                // if reference identifies a factory, use exclusively
+
+                factory = getObjectFactoryFromReference(ref, f);
+                if (factory != null) {
+                    return factory.getObjectInstance(ref, name, nameCtx,
+                                                     environment);
+                }
+                // No factory found, so return original refInfo.
+                // Will reach this point if factory class is not in
+                // class path and reference does not contain a URL for it
+                return refInfo;
+
+            } else {
+                // if reference has no factory, check for addresses
+                // containing URLs
+
+                answer = processURLAddrs(ref, name, nameCtx, environment);
+                if (answer != null) {
+                    return answer;
+                }
+            }
+        }
+
+        // try using any specified factories
+        answer =
+            createObjectFromFactories(refInfo, name, nameCtx, environment);
+        return (answer != null) ? answer : refInfo;
+    }
+
+    /*
+     * Ref has no factory.  For each address of type "URL", try its URL
+     * context factory.  Returns null if unsuccessful in creating and
+     * invoking a factory.
+     */
+    static Object processURLAddrs(Reference ref, Name name, Context nameCtx,
+                                  Hashtable<?,?> environment)
+            throws NamingException {
+
+        for (int i = 0; i < ref.size(); i++) {
+            RefAddr addr = ref.get(i);
+            if (addr instanceof StringRefAddr &&
+                addr.getType().equalsIgnoreCase("URL")) {
+
+                String url = (String)addr.getContent();
+                Object answer = processURL(url, name, nameCtx, environment);
+                if (answer != null) {
+                    return answer;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Object processURL(Object refInfo, Name name,
+                                     Context nameCtx, Hashtable<?,?> environment)
+            throws NamingException {
+        Object answer;
+
+        // If refInfo is a URL string, try to use its URL context factory
+        // If no context found, continue to try object factories.
+        if (refInfo instanceof String) {
+            String url = (String)refInfo;
+            String scheme = getURLScheme(url);
+            if (scheme != null) {
+                answer = getURLObject(scheme, refInfo, name, nameCtx,
+                                      environment);
+                if (answer != null) {
+                    return answer;
+                }
+            }
+        }
+
+        // If refInfo is an array of URL strings,
+        // try to find a context factory for any one of its URLs.
+        // If no context found, continue to try object factories.
+        if (refInfo instanceof String[]) {
+            String[] urls = (String[])refInfo;
+            for (int i = 0; i <urls.length; i++) {
+                String scheme = getURLScheme(urls[i]);
+                if (scheme != null) {
+                    answer = getURLObject(scheme, refInfo, name, nameCtx,
+                                          environment);
+                    if (answer != null)
+                        return answer;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Retrieves a context identified by <code>obj</code>, using the specified
+     * environment.
+     * Used by ContinuationContext.
+     *
+     * @param obj       The object identifying the context.
+     * @param name      The name of the context being returned, relative to
+     *                  <code>nameCtx</code>, or null if no name is being
+     *                  specified.
+     *                  See the <code>getObjectInstance</code> method for
+     *                  details.
+     * @param nameCtx   The context relative to which <code>name</code> is
+     *                  specified, or null for the default initial context.
+     *                  See the <code>getObjectInstance</code> method for
+     *                  details.
+     * @param environment Environment specifying characteristics of the
+     *                  resulting context.
+     * @return A context identified by <code>obj</code>.
+     *
+     * @see #getObjectInstance
+     */
+    static Context getContext(Object obj, Name name, Context nameCtx,
+                              Hashtable<?,?> environment) throws NamingException {
+        Object answer;
+
+        if (obj instanceof Context) {
+            // %%% Ignore environment for now.  OK since method not public.
+            return (Context)obj;
+        }
+
+        try {
+            answer = getObjectInstance(obj, name, nameCtx, environment);
+        } catch (NamingException e) {
+            throw e;
+        } catch (Exception e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
+
+        return (answer instanceof Context)
+            ? (Context)answer
+            : null;
+    }
+
+    // Used by ContinuationContext
+    static Resolver getResolver(Object obj, Name name, Context nameCtx,
+                                Hashtable<?,?> environment) throws NamingException {
+        Object answer;
+
+        if (obj instanceof Resolver) {
+            // %%% Ignore environment for now.  OK since method not public.
+            return (Resolver)obj;
+        }
+
+        try {
+            answer = getObjectInstance(obj, name, nameCtx, environment);
+        } catch (NamingException e) {
+            throw e;
+        } catch (Exception e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
+
+        return (answer instanceof Resolver)
+            ? (Resolver)answer
+            : null;
+    }
+
+
+    /***************** URL Context implementations ***************/
+
+    /**
+     * Creates a context for the given URL scheme id.
+     * <p>
+     * The resulting context is for resolving URLs of the
+     * scheme <code>scheme</code>. The resulting context is not tied
+     * to a specific URL. It is able to handle arbitrary URLs with
+     * the specified scheme.
+     *<p>
+     * The class name of the factory that creates the resulting context
+     * has the naming convention <i>scheme-id</i>URLContextFactory
+     * (e.g. "ftpURLContextFactory" for the "ftp" scheme-id),
+     * in the package specified as follows.
+     * The <tt>Context.URL_PKG_PREFIXES</tt> environment property (which
+     * may contain values taken from applet parameters, system properties,
+     * or application resource files)
+     * contains a colon-separated list of package prefixes.
+     * Each package prefix in
+     * the property is tried in the order specified to load the factory class.
+     * The default package prefix is "com.sun.jndi.url" (if none of the
+     * specified packages work, this default is tried).
+     * The complete package name is constructed using the package prefix,
+     * concatenated with the scheme id.
+     *<p>
+     * For example, if the scheme id is "ldap", and the
+     * <tt>Context.URL_PKG_PREFIXES</tt> property
+     * contains "com.widget:com.wiz.jndi",
+     * the naming manager would attempt to load the following classes
+     * until one is successfully instantiated:
+     *<ul>
+     * <li>com.widget.ldap.ldapURLContextFactory
+     *  <li>com.wiz.jndi.ldap.ldapURLContextFactory
+     *  <li>com.sun.jndi.url.ldap.ldapURLContextFactory
+     *</ul>
+     * If none of the package prefixes work, null is returned.
+     *<p>
+     * If a factory is instantiated, it is invoked with the following
+     * parameters to produce the resulting context.
+     * <p>
+     * <code>factory.getObjectInstance(null, environment);</code>
+     * <p>
+     * For example, invoking getObjectInstance() as shown above
+     * on a LDAP URL context factory would return a
+     * context that can resolve LDAP urls
+     * (e.g. "ldap://ldap.wiz.com/o=wiz,c=us",
+     * "ldap://ldap.umich.edu/o=umich,c=us", ...).
+     *<p>
+     * Note that an object factory (an object that implements the ObjectFactory
+     * interface) must be public and must have a public constructor that
+     * accepts no arguments.
+     *
+     * @param scheme    The non-null scheme-id of the URLs supported by the context.
+     * @param environment The possibly null environment properties to be
+     *           used in the creation of the object factory and the context.
+     * @return A context for resolving URLs with the
+     *         scheme id <code>scheme</code>;
+     *  <code>null</code> if the factory for creating the
+     *         context is not found.
+     * @exception NamingException If a naming exception occurs while creating
+     *          the context.
+     * @see #getObjectInstance
+     * @see ObjectFactory#getObjectInstance
+     */
+    public static Context getURLContext(String scheme,
+                                        Hashtable<?,?> environment)
+        throws NamingException
+    {
+        // pass in 'null' to indicate creation of generic context for scheme
+        // (i.e. not specific to a URL).
+
+            Object answer = getURLObject(scheme, null, null, null, environment);
+            if (answer instanceof Context) {
+                return (Context)answer;
+            } else {
+                return null;
+            }
+    }
+
+    private static final String defaultPkgPrefix = "com.sun.jndi.url";
+
+    /**
+     * Creates an object for the given URL scheme id using
+     * the supplied urlInfo.
+     * <p>
+     * If urlInfo is null, the result is a context for resolving URLs
+     * with the scheme id 'scheme'.
+     * If urlInfo is a URL, the result is a context named by the URL.
+     * Names passed to this context is assumed to be relative to this
+     * context (i.e. not a URL). For example, if urlInfo is
+     * "ldap://ldap.wiz.com/o=Wiz,c=us", the resulting context will
+     * be that pointed to by "o=Wiz,c=us" on the server 'ldap.wiz.com'.
+     * Subsequent names that can be passed to this context will be
+     * LDAP names relative to this context (e.g. cn="Barbs Jensen").
+     * If urlInfo is an array of URLs, the URLs are assumed
+     * to be equivalent in terms of the context to which they refer.
+     * The resulting context is like that of the single URL case.
+     * If urlInfo is of any other type, that is handled by the
+     * context factory for the URL scheme.
+     * @param scheme the URL scheme id for the context
+     * @param urlInfo information used to create the context
+     * @param name name of this object relative to <code>nameCtx</code>
+     * @param nameCtx Context whose provider resource file will be searched
+     *          for package prefix values (or null if none)
+     * @param environment Environment properties for creating the context
+     * @see javax.naming.InitialContext
+     */
+    private static Object getURLObject(String scheme, Object urlInfo,
+                                       Name name, Context nameCtx,
+                                       Hashtable<?,?> environment)
+            throws NamingException {
+
+        // e.g. "ftpURLContextFactory"
+        ObjectFactory factory = (ObjectFactory)ResourceManager.getFactory(
+            Context.URL_PKG_PREFIXES, environment, nameCtx,
+            "." + scheme + "." + scheme + "URLContextFactory", defaultPkgPrefix);
+
+        if (factory == null)
+          return null;
+
+        // Found object factory
+        try {
+            return factory.getObjectInstance(urlInfo, name, nameCtx, environment);
+        } catch (NamingException e) {
+            throw e;
+        } catch (Exception e) {
+            NamingException ne = new NamingException();
+            ne.setRootCause(e);
+            throw ne;
+        }
+
+    }
+
+
+// ------------ Initial Context Factory Stuff
+    private static InitialContextFactoryBuilder initctx_factory_builder = null;
+
+    /**
+     * Use this method for accessing initctx_factory_builder while
+     * inside an unsynchronized method.
+     */
+    private static synchronized InitialContextFactoryBuilder
+    getInitialContextFactoryBuilder() {
+        return initctx_factory_builder;
+    }
+
+    /**
+     * Creates an initial context using the specified environment
+     * properties.
+     *<p>
+     * If an InitialContextFactoryBuilder has been installed,
+     * it is used to create the factory for creating the initial context.
+     * Otherwise, the class specified in the
+     * <tt>Context.INITIAL_CONTEXT_FACTORY</tt> environment property is used.
+     * Note that an initial context factory (an object that implements the
+     * InitialContextFactory interface) must be public and must have a
+     * public constructor that accepts no arguments.
+     *
+     * @param env The possibly null environment properties used when
+     *                  creating the context.
+     * @return A non-null initial context.
+     * @exception NoInitialContextException If the
+     *          <tt>Context.INITIAL_CONTEXT_FACTORY</tt> property
+     *         is not found or names a nonexistent
+     *         class or a class that cannot be instantiated,
+     *          or if the initial context could not be created for some other
+     *          reason.
+     * @exception NamingException If some other naming exception was encountered.
+     * @see javax.naming.InitialContext
+     * @see javax.naming.directory.InitialDirContext
+     */
+    public static Context getInitialContext(Hashtable<?,?> env)
+        throws NamingException {
+        InitialContextFactory factory;
+
+        InitialContextFactoryBuilder builder = getInitialContextFactoryBuilder();
+        if (builder == null) {
+            // No factory installed, use property
+            // Get initial context factory class name
+
+            String className = env != null ?
+                (String)env.get(Context.INITIAL_CONTEXT_FACTORY) : null;
+            if (className == null) {
+                NoInitialContextException ne = new NoInitialContextException(
+                    "Need to specify class name in environment or system " +
+                    "property, or as an applet parameter, or in an " +
+                    "application resource file:  " +
+                    Context.INITIAL_CONTEXT_FACTORY);
+                throw ne;
+            }
+
+            try {
+                factory = (InitialContextFactory)
+                    helper.loadClass(className).newInstance();
+            } catch(Exception e) {
+                NoInitialContextException ne =
+                    new NoInitialContextException(
+                        "Cannot instantiate class: " + className);
+                ne.setRootCause(e);
+                throw ne;
+            }
+        } else {
+            factory = builder.createInitialContextFactory(env);
+        }
+
+        return factory.getInitialContext(env);
+    }
+
+
+    /**
+     * Sets the InitialContextFactory builder to be builder.
+     *
+     *<p>
+     * The builder can only be installed if the executing thread is allowed by
+     * the security manager to do so. Once installed, the builder cannot
+     * be replaced.
+     * @param builder The initial context factory builder to install. If null,
+     *                no builder is set.
+     * @exception SecurityException builder cannot be installed for security
+     *                  reasons.
+     * @exception NamingException builder cannot be installed for
+     *         a non-security-related reason.
+     * @exception IllegalStateException If a builder was previous installed.
+     * @see #hasInitialContextFactoryBuilder
+     * @see java.lang.SecurityManager#checkSetFactory
+     */
+    public static synchronized void setInitialContextFactoryBuilder(
+        InitialContextFactoryBuilder builder)
+        throws NamingException {
+            if (initctx_factory_builder != null)
+                throw new IllegalStateException(
+                    "InitialContextFactoryBuilder already set");
+
+            SecurityManager security = System.getSecurityManager();
+            if (security != null) {
+                security.checkSetFactory();
+            }
+            initctx_factory_builder = builder;
+    }
+
+    /**
+     * Determines whether an initial context factory builder has
+     * been set.
+     * @return true if an initial context factory builder has
+     *           been set; false otherwise.
+     * @see #setInitialContextFactoryBuilder
+     */
+    public static boolean hasInitialContextFactoryBuilder() {
+        return (getInitialContextFactoryBuilder() != null);
+    }
+
+// -----  Continuation Context Stuff
+
+    /**
+     * Constant that holds the name of the environment property into
+     * which <tt>getContinuationContext()</tt> stores the value of its
+     * <tt>CannotProceedException</tt> parameter.
+     * This property is inherited by the continuation context, and may
+     * be used by that context's service provider to inspect the
+     * fields of the exception.
+     *<p>
+     * The value of this constant is "java.naming.spi.CannotProceedException".
+     *
+     * @see #getContinuationContext
+     * @since 1.3
+     */
+    public static final String CPE = "java.naming.spi.CannotProceedException";
+
+    /**
+     * Creates a context in which to continue a context operation.
+     *<p>
+     * In performing an operation on a name that spans multiple
+     * namespaces, a context from one naming system may need to pass
+     * the operation on to the next naming system.  The context
+     * implementation does this by first constructing a
+     * <code>CannotProceedException</code> containing information
+     * pinpointing how far it has proceeded.  It then obtains a
+     * continuation context from JNDI by calling
+     * <code>getContinuationContext</code>.  The context
+     * implementation should then resume the context operation by
+     * invoking the same operation on the continuation context, using
+     * the remainder of the name that has not yet been resolved.
+     *<p>
+     * Before making use of the <tt>cpe</tt> parameter, this method
+     * updates the environment associated with that object by setting
+     * the value of the property <a href="#CPE"><tt>CPE</tt></a>
+     * to <tt>cpe</tt>.  This property will be inherited by the
+     * continuation context, and may be used by that context's
+     * service provider to inspect the fields of this exception.
+     *
+     * @param cpe
+     *          The non-null exception that triggered this continuation.
+     * @return A non-null Context object for continuing the operation.
+     * @exception NamingException If a naming exception occurred.
+     */
+    @SuppressWarnings("unchecked")
+    public static Context getContinuationContext(CannotProceedException cpe)
+            throws NamingException {
+
+        Hashtable<Object,Object> env = (Hashtable<Object,Object>)cpe.getEnvironment();
+        if (env == null) {
+            env = new Hashtable<>(7);
+        } else {
+            // Make a (shallow) copy of the environment.
+            env = (Hashtable<Object,Object>)env.clone();
+        }
+        env.put(CPE, cpe);
+
+        ContinuationContext cctx = new ContinuationContext(cpe, env);
+        return cctx.getTargetContext();
+    }
+
+// ------------ State Factory Stuff
+
+    /**
+     * Retrieves the state of an object for binding.
+     * <p>
+     * Service providers that implement the <tt>DirContext</tt> interface
+     * should use <tt>DirectoryManager.getStateToBind()</tt>, not this method.
+     * Service providers that implement only the <tt>Context</tt> interface
+     * should use this method.
+     *<p>
+     * This method uses the specified state factories in
+     * the <tt>Context.STATE_FACTORIES</tt> property from the environment
+     * properties, and from the provider resource file associated with
+     * <tt>nameCtx</tt>, in that order.
+     *    The value of this property is a colon-separated list of factory
+     *    class names that are tried in order, and the first one that succeeds
+     *    in returning the object's state is the one used.
+     * If no object's state can be retrieved in this way, return the
+     * object itself.
+     *    If an exception is encountered while retrieving the state, the
+     *    exception is passed up to the caller.
+     * <p>
+     * Note that a state factory
+     * (an object that implements the StateFactory
+     * interface) must be public and must have a public constructor that
+     * accepts no arguments.
+     * <p>
+     * The <code>name</code> and <code>nameCtx</code> parameters may
+     * optionally be used to specify the name of the object being created.
+     * See the description of "Name and Context Parameters" in
+     * {@link ObjectFactory#getObjectInstance
+     *          ObjectFactory.getObjectInstance()}
+     * for details.
+     * <p>
+     * This method may return a <tt>Referenceable</tt> object.  The
+     * service provider obtaining this object may choose to store it
+     * directly, or to extract its reference (using
+     * <tt>Referenceable.getReference()</tt>) and store that instead.
+     *
+     * @param obj The non-null object for which to get state to bind.
+     * @param name The name of this object relative to <code>nameCtx</code>,
+     *          or null if no name is specified.
+     * @param nameCtx The context relative to which the <code>name</code>
+     *          parameter is specified, or null if <code>name</code> is
+     *          relative to the default initial context.
+     *  @param environment The possibly null environment to
+     *          be used in the creation of the state factory and
+     *  the object's state.
+     * @return The non-null object representing <tt>obj</tt>'s state for
+     *  binding.  It could be the object (<tt>obj</tt>) itself.
+     * @exception NamingException If one of the factories accessed throws an
+     *          exception, or if an error was encountered while loading
+     *          and instantiating the factory and object classes.
+     *          A factory should only throw an exception if it does not want
+     *          other factories to be used in an attempt to create an object.
+     *  See <tt>StateFactory.getStateToBind()</tt>.
+     * @see StateFactory
+     * @see StateFactory#getStateToBind
+     * @see DirectoryManager#getStateToBind
+     * @since 1.3
+     */
+    public static Object
+        getStateToBind(Object obj, Name name, Context nameCtx,
+                       Hashtable<?,?> environment)
+        throws NamingException
+    {
+
+        FactoryEnumeration factories = ResourceManager.getFactories(
+            Context.STATE_FACTORIES, environment, nameCtx);
+
+        if (factories == null) {
+            return obj;
+        }
+
+        // Try each factory until one succeeds
+        StateFactory factory;
+        Object answer = null;
+        while (answer == null && factories.hasMore()) {
+            factory = (StateFactory)factories.next();
+            answer = factory.getStateToBind(obj, name, nameCtx, environment);
+        }
+
+        return (answer != null) ? answer : obj;
+    }
+}

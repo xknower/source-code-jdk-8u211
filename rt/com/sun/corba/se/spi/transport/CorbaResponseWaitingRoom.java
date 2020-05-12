@@ -1,17 +1,44 @@
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.transport;
 
 import com.sun.corba.se.pept.protocol.MessageMediator;
 import com.sun.corba.se.pept.transport.ResponseWaitingRoom;
 import org.omg.CORBA.SystemException;
 
-public interface CorbaResponseWaitingRoom extends ResponseWaitingRoom {
-  void signalExceptionToAllWaiters(SystemException paramSystemException);
-  
-  MessageMediator getMessageMediator(int paramInt);
+/**
+ * @author Harold Carr
+ */
+public interface CorbaResponseWaitingRoom
+    extends
+        ResponseWaitingRoom
+{
+    public void signalExceptionToAllWaiters(SystemException systemException);
+
+    public MessageMediator getMessageMediator(int requestId);
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\transport\CorbaResponseWaitingRoom.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

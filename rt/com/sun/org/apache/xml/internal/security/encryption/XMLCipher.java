@@ -1,3545 +1,3539 @@
-/*      */ package com.sun.org.apache.xml.internal.security.encryption;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.security.algorithms.JCEMapper;
-/*      */ import com.sun.org.apache.xml.internal.security.c14n.Canonicalizer;
-/*      */ import com.sun.org.apache.xml.internal.security.c14n.InvalidCanonicalizerException;
-/*      */ import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-/*      */ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.KeyInfo;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverException;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
-/*      */ import com.sun.org.apache.xml.internal.security.keys.keyresolver.implementations.EncryptedKeyResolver;
-/*      */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureException;
-/*      */ import com.sun.org.apache.xml.internal.security.transforms.InvalidTransformException;
-/*      */ import com.sun.org.apache.xml.internal.security.transforms.TransformationException;
-/*      */ import com.sun.org.apache.xml.internal.security.transforms.Transforms;
-/*      */ import com.sun.org.apache.xml.internal.security.utils.Base64;
-/*      */ import com.sun.org.apache.xml.internal.security.utils.ElementProxy;
-/*      */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*      */ import java.io.ByteArrayOutputStream;
-/*      */ import java.io.InputStream;
-/*      */ import java.io.UnsupportedEncodingException;
-/*      */ import java.net.URI;
-/*      */ import java.net.URISyntaxException;
-/*      */ import java.security.InvalidAlgorithmParameterException;
-/*      */ import java.security.InvalidKeyException;
-/*      */ import java.security.Key;
-/*      */ import java.security.NoSuchAlgorithmException;
-/*      */ import java.security.NoSuchProviderException;
-/*      */ import java.security.SecureRandom;
-/*      */ import java.security.spec.MGF1ParameterSpec;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.LinkedList;
-/*      */ import java.util.List;
-/*      */ import java.util.Map;
-/*      */ import java.util.logging.Level;
-/*      */ import java.util.logging.Logger;
-/*      */ import javax.crypto.BadPaddingException;
-/*      */ import javax.crypto.Cipher;
-/*      */ import javax.crypto.IllegalBlockSizeException;
-/*      */ import javax.crypto.NoSuchPaddingException;
-/*      */ import javax.crypto.spec.IvParameterSpec;
-/*      */ import javax.crypto.spec.OAEPParameterSpec;
-/*      */ import javax.crypto.spec.PSource;
-/*      */ import org.w3c.dom.Attr;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.Element;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.NodeList;
-/*      */ import org.w3c.dom.Text;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XMLCipher
-/*      */ {
-/*   88 */   private static Logger log = Logger.getLogger(XMLCipher.class.getName());
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String TRIPLEDES = "http://www.w3.org/2001/04/xmlenc#tripledes-cbc";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_128 = "http://www.w3.org/2001/04/xmlenc#aes128-cbc";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_256 = "http://www.w3.org/2001/04/xmlenc#aes256-cbc";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_192 = "http://www.w3.org/2001/04/xmlenc#aes192-cbc";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_128_GCM = "http://www.w3.org/2009/xmlenc11#aes128-gcm";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_192_GCM = "http://www.w3.org/2009/xmlenc11#aes192-gcm";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_256_GCM = "http://www.w3.org/2009/xmlenc11#aes256-gcm";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String RSA_v1dot5 = "http://www.w3.org/2001/04/xmlenc#rsa-1_5";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String RSA_OAEP = "http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String RSA_OAEP_11 = "http://www.w3.org/2009/xmlenc11#rsa-oaep";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String DIFFIE_HELLMAN = "http://www.w3.org/2001/04/xmlenc#dh";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String TRIPLEDES_KeyWrap = "http://www.w3.org/2001/04/xmlenc#kw-tripledes";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_128_KeyWrap = "http://www.w3.org/2001/04/xmlenc#kw-aes128";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_256_KeyWrap = "http://www.w3.org/2001/04/xmlenc#kw-aes256";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String AES_192_KeyWrap = "http://www.w3.org/2001/04/xmlenc#kw-aes192";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String SHA1 = "http://www.w3.org/2000/09/xmldsig#sha1";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String SHA256 = "http://www.w3.org/2001/04/xmlenc#sha256";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String SHA512 = "http://www.w3.org/2001/04/xmlenc#sha512";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String RIPEMD_160 = "http://www.w3.org/2001/04/xmlenc#ripemd160";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String XML_DSIG = "http://www.w3.org/2000/09/xmldsig#";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String N14C_XML = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String N14C_XML_WITH_COMMENTS = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String EXCL_XML_N14C = "http://www.w3.org/2001/10/xml-exc-c14n#";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String EXCL_XML_N14C_WITH_COMMENTS = "http://www.w3.org/2001/10/xml-exc-c14n#WithComments";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String PHYSICAL_XML_N14C = "http://santuario.apache.org/c14n/physical";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final String BASE64_ENCODING = "http://www.w3.org/2000/09/xmldsig#base64";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final int ENCRYPT_MODE = 1;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final int DECRYPT_MODE = 2;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final int UNWRAP_MODE = 4;
-/*      */ 
-/*      */   
-/*      */   public static final int WRAP_MODE = 3;
-/*      */ 
-/*      */   
-/*      */   private static final String ENC_ALGORITHMS = "http://www.w3.org/2001/04/xmlenc#tripledes-cbc\nhttp://www.w3.org/2001/04/xmlenc#aes128-cbc\nhttp://www.w3.org/2001/04/xmlenc#aes256-cbc\nhttp://www.w3.org/2001/04/xmlenc#aes192-cbc\nhttp://www.w3.org/2001/04/xmlenc#rsa-1_5\nhttp://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p\nhttp://www.w3.org/2009/xmlenc11#rsa-oaep\nhttp://www.w3.org/2001/04/xmlenc#kw-tripledes\nhttp://www.w3.org/2001/04/xmlenc#kw-aes128\nhttp://www.w3.org/2001/04/xmlenc#kw-aes256\nhttp://www.w3.org/2001/04/xmlenc#kw-aes192\nhttp://www.w3.org/2009/xmlenc11#aes128-gcm\nhttp://www.w3.org/2009/xmlenc11#aes192-gcm\nhttp://www.w3.org/2009/xmlenc11#aes256-gcm\n";
-/*      */ 
-/*      */   
-/*      */   private Cipher contextCipher;
-/*      */ 
-/*      */   
-/*  216 */   private int cipherMode = Integer.MIN_VALUE;
-/*      */ 
-/*      */   
-/*  219 */   private String algorithm = null;
-/*      */ 
-/*      */   
-/*  222 */   private String requestedJCEProvider = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Canonicalizer canon;
-/*      */ 
-/*      */   
-/*      */   private Document contextDocument;
-/*      */ 
-/*      */   
-/*      */   private Factory factory;
-/*      */ 
-/*      */   
-/*      */   private Serializer serializer;
-/*      */ 
-/*      */   
-/*      */   private Key key;
-/*      */ 
-/*      */   
-/*      */   private Key kek;
-/*      */ 
-/*      */   
-/*      */   private EncryptedKey ek;
-/*      */ 
-/*      */   
-/*      */   private EncryptedData ed;
-/*      */ 
-/*      */   
-/*      */   private SecureRandom random;
-/*      */ 
-/*      */   
-/*      */   private boolean secureValidation;
-/*      */ 
-/*      */   
-/*      */   private String digestAlg;
-/*      */ 
-/*      */   
-/*      */   private List<KeyResolverSpi> internalKeyResolvers;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSerializer(Serializer paramSerializer) {
-/*  264 */     this.serializer = paramSerializer;
-/*  265 */     paramSerializer.setCanonicalizer(this.canon);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Serializer getSerializer() {
-/*  272 */     return this.serializer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private XMLCipher(String paramString1, String paramString2, String paramString3, String paramString4) throws XMLEncryptionException {
-/*  294 */     if (log.isLoggable(Level.FINE)) {
-/*  295 */       log.log(Level.FINE, "Constructing XMLCipher...");
-/*      */     }
-/*      */     
-/*  298 */     this.factory = new Factory();
-/*      */     
-/*  300 */     this.algorithm = paramString1;
-/*  301 */     this.requestedJCEProvider = paramString2;
-/*  302 */     this.digestAlg = paramString4;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  308 */       if (paramString3 == null) {
-/*      */         
-/*  310 */         this.canon = Canonicalizer.getInstance("http://santuario.apache.org/c14n/physical");
-/*      */       } else {
-/*  312 */         this.canon = Canonicalizer.getInstance(paramString3);
-/*      */       } 
-/*  314 */     } catch (InvalidCanonicalizerException invalidCanonicalizerException) {
-/*  315 */       throw new XMLEncryptionException("empty", invalidCanonicalizerException);
-/*      */     } 
-/*      */     
-/*  318 */     if (this.serializer == null) {
-/*  319 */       this.serializer = new DocumentSerializer();
-/*      */     }
-/*  321 */     this.serializer.setCanonicalizer(this.canon);
-/*      */     
-/*  323 */     if (paramString1 != null) {
-/*  324 */       this.contextCipher = constructCipher(paramString1, paramString4);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isValidEncryptionAlgorithm(String paramString) {
-/*  336 */     return (paramString
-/*  337 */       .equals("http://www.w3.org/2001/04/xmlenc#tripledes-cbc") || paramString
-/*  338 */       .equals("http://www.w3.org/2001/04/xmlenc#aes128-cbc") || paramString
-/*  339 */       .equals("http://www.w3.org/2001/04/xmlenc#aes256-cbc") || paramString
-/*  340 */       .equals("http://www.w3.org/2001/04/xmlenc#aes192-cbc") || paramString
-/*  341 */       .equals("http://www.w3.org/2009/xmlenc11#aes128-gcm") || paramString
-/*  342 */       .equals("http://www.w3.org/2009/xmlenc11#aes192-gcm") || paramString
-/*  343 */       .equals("http://www.w3.org/2009/xmlenc11#aes256-gcm") || paramString
-/*  344 */       .equals("http://www.w3.org/2001/04/xmlenc#rsa-1_5") || paramString
-/*  345 */       .equals("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p") || paramString
-/*  346 */       .equals("http://www.w3.org/2009/xmlenc11#rsa-oaep") || paramString
-/*  347 */       .equals("http://www.w3.org/2001/04/xmlenc#kw-tripledes") || paramString
-/*  348 */       .equals("http://www.w3.org/2001/04/xmlenc#kw-aes128") || paramString
-/*  349 */       .equals("http://www.w3.org/2001/04/xmlenc#kw-aes256") || paramString
-/*  350 */       .equals("http://www.w3.org/2001/04/xmlenc#kw-aes192"));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void validateTransformation(String paramString) {
-/*  362 */     if (null == paramString) {
-/*  363 */       throw new NullPointerException("Transformation unexpectedly null...");
-/*      */     }
-/*  365 */     if (!isValidEncryptionAlgorithm(paramString)) {
-/*  366 */       log.log(Level.WARNING, "Algorithm non-standard, expected one of http://www.w3.org/2001/04/xmlenc#tripledes-cbc\nhttp://www.w3.org/2001/04/xmlenc#aes128-cbc\nhttp://www.w3.org/2001/04/xmlenc#aes256-cbc\nhttp://www.w3.org/2001/04/xmlenc#aes192-cbc\nhttp://www.w3.org/2001/04/xmlenc#rsa-1_5\nhttp://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p\nhttp://www.w3.org/2009/xmlenc11#rsa-oaep\nhttp://www.w3.org/2001/04/xmlenc#kw-tripledes\nhttp://www.w3.org/2001/04/xmlenc#kw-aes128\nhttp://www.w3.org/2001/04/xmlenc#kw-aes256\nhttp://www.w3.org/2001/04/xmlenc#kw-aes192\nhttp://www.w3.org/2009/xmlenc11#aes128-gcm\nhttp://www.w3.org/2009/xmlenc11#aes192-gcm\nhttp://www.w3.org/2009/xmlenc11#aes256-gcm\n");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getInstance(String paramString) throws XMLEncryptionException {
-/*  399 */     if (log.isLoggable(Level.FINE)) {
-/*  400 */       log.log(Level.FINE, "Getting XMLCipher with transformation");
-/*      */     }
-/*  402 */     validateTransformation(paramString);
-/*  403 */     return new XMLCipher(paramString, null, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getInstance(String paramString1, String paramString2) throws XMLEncryptionException {
-/*  421 */     if (log.isLoggable(Level.FINE)) {
-/*  422 */       log.log(Level.FINE, "Getting XMLCipher with transformation and c14n algorithm");
-/*      */     }
-/*  424 */     validateTransformation(paramString1);
-/*  425 */     return new XMLCipher(paramString1, null, paramString2, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getInstance(String paramString1, String paramString2, String paramString3) throws XMLEncryptionException {
-/*  444 */     if (log.isLoggable(Level.FINE)) {
-/*  445 */       log.log(Level.FINE, "Getting XMLCipher with transformation and c14n algorithm");
-/*      */     }
-/*  447 */     validateTransformation(paramString1);
-/*  448 */     return new XMLCipher(paramString1, null, paramString2, paramString3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getProviderInstance(String paramString1, String paramString2) throws XMLEncryptionException {
-/*  462 */     if (log.isLoggable(Level.FINE)) {
-/*  463 */       log.log(Level.FINE, "Getting XMLCipher with transformation and provider");
-/*      */     }
-/*  465 */     if (null == paramString2) {
-/*  466 */       throw new NullPointerException("Provider unexpectedly null..");
-/*      */     }
-/*  468 */     validateTransformation(paramString1);
-/*  469 */     return new XMLCipher(paramString1, paramString2, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getProviderInstance(String paramString1, String paramString2, String paramString3) throws XMLEncryptionException {
-/*  489 */     if (log.isLoggable(Level.FINE)) {
-/*  490 */       log.log(Level.FINE, "Getting XMLCipher with transformation, provider and c14n algorithm");
-/*      */     }
-/*  492 */     if (null == paramString2) {
-/*  493 */       throw new NullPointerException("Provider unexpectedly null..");
-/*      */     }
-/*  495 */     validateTransformation(paramString1);
-/*  496 */     return new XMLCipher(paramString1, paramString2, paramString3, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getProviderInstance(String paramString1, String paramString2, String paramString3, String paramString4) throws XMLEncryptionException {
-/*  517 */     if (log.isLoggable(Level.FINE)) {
-/*  518 */       log.log(Level.FINE, "Getting XMLCipher with transformation, provider and c14n algorithm");
-/*      */     }
-/*  520 */     if (null == paramString2) {
-/*  521 */       throw new NullPointerException("Provider unexpectedly null..");
-/*      */     }
-/*  523 */     validateTransformation(paramString1);
-/*  524 */     return new XMLCipher(paramString1, paramString2, paramString3, paramString4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getInstance() throws XMLEncryptionException {
-/*  537 */     if (log.isLoggable(Level.FINE)) {
-/*  538 */       log.log(Level.FINE, "Getting XMLCipher with no arguments");
-/*      */     }
-/*  540 */     return new XMLCipher(null, null, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static XMLCipher getProviderInstance(String paramString) throws XMLEncryptionException {
-/*  557 */     if (log.isLoggable(Level.FINE)) {
-/*  558 */       log.log(Level.FINE, "Getting XMLCipher with provider");
-/*      */     }
-/*  560 */     return new XMLCipher(null, paramString, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void init(int paramInt, Key paramKey) throws XMLEncryptionException {
-/*  585 */     if (log.isLoggable(Level.FINE)) {
-/*  586 */       log.log(Level.FINE, "Initializing XMLCipher...");
-/*      */     }
-/*      */     
-/*  589 */     this.ek = null;
-/*  590 */     this.ed = null;
-/*      */     
-/*  592 */     switch (paramInt) {
-/*      */       
-/*      */       case 1:
-/*  595 */         if (log.isLoggable(Level.FINE)) {
-/*  596 */           log.log(Level.FINE, "opmode = ENCRYPT_MODE");
-/*      */         }
-/*  598 */         this.ed = createEncryptedData(1, "NO VALUE YET");
-/*      */         break;
-/*      */       case 2:
-/*  601 */         if (log.isLoggable(Level.FINE)) {
-/*  602 */           log.log(Level.FINE, "opmode = DECRYPT_MODE");
-/*      */         }
-/*      */         break;
-/*      */       case 3:
-/*  606 */         if (log.isLoggable(Level.FINE)) {
-/*  607 */           log.log(Level.FINE, "opmode = WRAP_MODE");
-/*      */         }
-/*  609 */         this.ek = createEncryptedKey(1, "NO VALUE YET");
-/*      */         break;
-/*      */       case 4:
-/*  612 */         if (log.isLoggable(Level.FINE)) {
-/*  613 */           log.log(Level.FINE, "opmode = UNWRAP_MODE");
-/*      */         }
-/*      */         break;
-/*      */       default:
-/*  617 */         log.log(Level.SEVERE, "Mode unexpectedly invalid");
-/*  618 */         throw new XMLEncryptionException("Invalid mode in init");
-/*      */     } 
-/*      */     
-/*  621 */     this.cipherMode = paramInt;
-/*  622 */     this.key = paramKey;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSecureValidation(boolean paramBoolean) {
-/*  629 */     this.secureValidation = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void registerInternalKeyResolver(KeyResolverSpi paramKeyResolverSpi) {
-/*  640 */     if (this.internalKeyResolvers == null) {
-/*  641 */       this.internalKeyResolvers = new ArrayList<>();
-/*      */     }
-/*  643 */     this.internalKeyResolvers.add(paramKeyResolverSpi);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedData getEncryptedData() {
-/*  657 */     if (log.isLoggable(Level.FINE)) {
-/*  658 */       log.log(Level.FINE, "Returning EncryptedData");
-/*      */     }
-/*  660 */     return this.ed;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey getEncryptedKey() {
-/*  674 */     if (log.isLoggable(Level.FINE)) {
-/*  675 */       log.log(Level.FINE, "Returning EncryptedKey");
-/*      */     }
-/*  677 */     return this.ek;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setKEK(Key paramKey) {
-/*  692 */     this.kek = paramKey;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element martial(EncryptedData paramEncryptedData) {
-/*  709 */     return this.factory.toElement(paramEncryptedData);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element martial(Document paramDocument, EncryptedData paramEncryptedData) {
-/*  724 */     this.contextDocument = paramDocument;
-/*  725 */     return this.factory.toElement(paramEncryptedData);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element martial(EncryptedKey paramEncryptedKey) {
-/*  743 */     return this.factory.toElement(paramEncryptedKey);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element martial(Document paramDocument, EncryptedKey paramEncryptedKey) {
-/*  758 */     this.contextDocument = paramDocument;
-/*  759 */     return this.factory.toElement(paramEncryptedKey);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element martial(ReferenceList paramReferenceList) {
-/*  777 */     return this.factory.toElement(paramReferenceList);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Element martial(Document paramDocument, ReferenceList paramReferenceList) {
-/*  792 */     this.contextDocument = paramDocument;
-/*  793 */     return this.factory.toElement(paramReferenceList);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Document encryptElement(Element paramElement) throws Exception {
-/*  808 */     if (log.isLoggable(Level.FINE)) {
-/*  809 */       log.log(Level.FINE, "Encrypting element...");
-/*      */     }
-/*  811 */     if (null == paramElement) {
-/*  812 */       log.log(Level.SEVERE, "Element unexpectedly null...");
-/*      */     }
-/*  814 */     if (this.cipherMode != 1 && log.isLoggable(Level.FINE)) {
-/*  815 */       log.log(Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
-/*      */     }
-/*      */     
-/*  818 */     if (this.algorithm == null) {
-/*  819 */       throw new XMLEncryptionException("XMLCipher instance without transformation specified");
-/*      */     }
-/*  821 */     encryptData(this.contextDocument, paramElement, false);
-/*      */     
-/*  823 */     Element element = this.factory.toElement(this.ed);
-/*      */     
-/*  825 */     Node node = paramElement.getParentNode();
-/*  826 */     node.replaceChild(element, paramElement);
-/*      */     
-/*  828 */     return this.contextDocument;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Document encryptElementContent(Element paramElement) throws Exception {
-/*  846 */     if (log.isLoggable(Level.FINE)) {
-/*  847 */       log.log(Level.FINE, "Encrypting element content...");
-/*      */     }
-/*  849 */     if (null == paramElement) {
-/*  850 */       log.log(Level.SEVERE, "Element unexpectedly null...");
-/*      */     }
-/*  852 */     if (this.cipherMode != 1 && log.isLoggable(Level.FINE)) {
-/*  853 */       log.log(Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
-/*      */     }
-/*      */     
-/*  856 */     if (this.algorithm == null) {
-/*  857 */       throw new XMLEncryptionException("XMLCipher instance without transformation specified");
-/*      */     }
-/*  859 */     encryptData(this.contextDocument, paramElement, true);
-/*      */     
-/*  861 */     Element element = this.factory.toElement(this.ed);
-/*      */     
-/*  863 */     removeContent(paramElement);
-/*  864 */     paramElement.appendChild(element);
-/*      */     
-/*  866 */     return this.contextDocument;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document doFinal(Document paramDocument1, Document paramDocument2) throws Exception {
-/*  879 */     if (log.isLoggable(Level.FINE)) {
-/*  880 */       log.log(Level.FINE, "Processing source document...");
-/*      */     }
-/*  882 */     if (null == paramDocument1) {
-/*  883 */       log.log(Level.SEVERE, "Context document unexpectedly null...");
-/*      */     }
-/*  885 */     if (null == paramDocument2) {
-/*  886 */       log.log(Level.SEVERE, "Source document unexpectedly null...");
-/*      */     }
-/*      */     
-/*  889 */     this.contextDocument = paramDocument1;
-/*      */     
-/*  891 */     Document document = null;
-/*      */     
-/*  893 */     switch (this.cipherMode) {
-/*      */       case 2:
-/*  895 */         document = decryptElement(paramDocument2.getDocumentElement());
-/*      */       
-/*      */       case 1:
-/*  898 */         document = encryptElement(paramDocument2.getDocumentElement());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 3:
-/*      */       case 4:
-/*  907 */         return document;
-/*      */     } 
-/*      */     throw new XMLEncryptionException("empty", new IllegalStateException());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document doFinal(Document paramDocument, Element paramElement) throws Exception {
-/*  920 */     if (log.isLoggable(Level.FINE)) {
-/*  921 */       log.log(Level.FINE, "Processing source element...");
-/*      */     }
-/*  923 */     if (null == paramDocument) {
-/*  924 */       log.log(Level.SEVERE, "Context document unexpectedly null...");
-/*      */     }
-/*  926 */     if (null == paramElement) {
-/*  927 */       log.log(Level.SEVERE, "Source element unexpectedly null...");
-/*      */     }
-/*      */     
-/*  930 */     this.contextDocument = paramDocument;
-/*      */     
-/*  932 */     Document document = null;
-/*      */     
-/*  934 */     switch (this.cipherMode) {
-/*      */       case 2:
-/*  936 */         document = decryptElement(paramElement);
-/*      */       
-/*      */       case 1:
-/*  939 */         document = encryptElement(paramElement);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 3:
-/*      */       case 4:
-/*  948 */         return document;
-/*      */     } 
-/*      */     throw new XMLEncryptionException("empty", new IllegalStateException());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document doFinal(Document paramDocument, Element paramElement, boolean paramBoolean) throws Exception {
-/*  965 */     if (log.isLoggable(Level.FINE)) {
-/*  966 */       log.log(Level.FINE, "Processing source element...");
-/*      */     }
-/*  968 */     if (null == paramDocument) {
-/*  969 */       log.log(Level.SEVERE, "Context document unexpectedly null...");
-/*      */     }
-/*  971 */     if (null == paramElement) {
-/*  972 */       log.log(Level.SEVERE, "Source element unexpectedly null...");
-/*      */     }
-/*      */     
-/*  975 */     this.contextDocument = paramDocument;
-/*      */     
-/*  977 */     Document document = null;
-/*      */     
-/*  979 */     switch (this.cipherMode) {
-/*      */       case 2:
-/*  981 */         if (paramBoolean) {
-/*  982 */           document = decryptElementContent(paramElement);
-/*      */         } else {
-/*  984 */           document = decryptElement(paramElement);
-/*      */         } 
-/*      */       
-/*      */       case 1:
-/*  988 */         if (paramBoolean) {
-/*  989 */           document = encryptElementContent(paramElement);
-/*      */         } else {
-/*  991 */           document = encryptElement(paramElement);
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 3:
-/*      */       case 4:
-/* 1001 */         return document;
-/*      */     } 
-/*      */     throw new XMLEncryptionException("empty", new IllegalStateException());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedData encryptData(Document paramDocument, Element paramElement) throws Exception {
-/* 1018 */     return encryptData(paramDocument, paramElement, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedData encryptData(Document paramDocument, String paramString, InputStream paramInputStream) throws Exception {
-/* 1038 */     if (log.isLoggable(Level.FINE)) {
-/* 1039 */       log.log(Level.FINE, "Encrypting element...");
-/*      */     }
-/* 1041 */     if (null == paramDocument) {
-/* 1042 */       log.log(Level.SEVERE, "Context document unexpectedly null...");
-/*      */     }
-/* 1044 */     if (null == paramInputStream) {
-/* 1045 */       log.log(Level.SEVERE, "Serialized data unexpectedly null...");
-/*      */     }
-/* 1047 */     if (this.cipherMode != 1 && log.isLoggable(Level.FINE)) {
-/* 1048 */       log.log(Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
-/*      */     }
-/*      */     
-/* 1051 */     return encryptData(paramDocument, null, paramString, paramInputStream);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedData encryptData(Document paramDocument, Element paramElement, boolean paramBoolean) throws Exception {
-/* 1071 */     if (log.isLoggable(Level.FINE)) {
-/* 1072 */       log.log(Level.FINE, "Encrypting element...");
-/*      */     }
-/* 1074 */     if (null == paramDocument) {
-/* 1075 */       log.log(Level.SEVERE, "Context document unexpectedly null...");
-/*      */     }
-/* 1077 */     if (null == paramElement) {
-/* 1078 */       log.log(Level.SEVERE, "Element unexpectedly null...");
-/*      */     }
-/* 1080 */     if (this.cipherMode != 1 && log.isLoggable(Level.FINE)) {
-/* 1081 */       log.log(Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
-/*      */     }
-/*      */     
-/* 1084 */     if (paramBoolean) {
-/* 1085 */       return encryptData(paramDocument, paramElement, "http://www.w3.org/2001/04/xmlenc#Content", null);
-/*      */     }
-/* 1087 */     return encryptData(paramDocument, paramElement, "http://www.w3.org/2001/04/xmlenc#Element", null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private EncryptedData encryptData(Document paramDocument, Element paramElement, String paramString, InputStream paramInputStream) throws Exception {
-/*      */     Cipher cipher;
-/* 1094 */     this.contextDocument = paramDocument;
-/*      */     
-/* 1096 */     if (this.algorithm == null) {
-/* 1097 */       throw new XMLEncryptionException("XMLCipher instance without transformation specified");
-/*      */     }
-/*      */     
-/* 1100 */     byte[] arrayOfByte1 = null;
-/* 1101 */     if (paramInputStream == null) {
-/* 1102 */       if (paramString.equals("http://www.w3.org/2001/04/xmlenc#Content")) {
-/* 1103 */         NodeList nodeList = paramElement.getChildNodes();
-/* 1104 */         if (null != nodeList) {
-/* 1105 */           arrayOfByte1 = this.serializer.serializeToByteArray(nodeList);
-/*      */         } else {
-/* 1107 */           Object[] arrayOfObject = { "Element has no content." };
-/* 1108 */           throw new XMLEncryptionException("empty", arrayOfObject);
-/*      */         } 
-/*      */       } else {
-/* 1111 */         arrayOfByte1 = this.serializer.serializeToByteArray(paramElement);
-/*      */       } 
-/* 1113 */       if (log.isLoggable(Level.FINE)) {
-/* 1114 */         log.log(Level.FINE, "Serialized octets:\n" + new String(arrayOfByte1, "UTF-8"));
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1118 */     byte[] arrayOfByte2 = null;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1122 */     if (this.contextCipher == null) {
-/* 1123 */       cipher = constructCipher(this.algorithm, null);
-/*      */     } else {
-/* 1125 */       cipher = this.contextCipher;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1131 */       if ("http://www.w3.org/2009/xmlenc11#aes128-gcm".equals(this.algorithm) || "http://www.w3.org/2009/xmlenc11#aes192-gcm".equals(this.algorithm) || "http://www.w3.org/2009/xmlenc11#aes256-gcm"
-/* 1132 */         .equals(this.algorithm)) {
-/* 1133 */         if (this.random == null) {
-/* 1134 */           this.random = SecureRandom.getInstance("SHA1PRNG");
-/*      */         }
-/* 1136 */         byte[] arrayOfByte = new byte[12];
-/* 1137 */         this.random.nextBytes(arrayOfByte);
-/* 1138 */         IvParameterSpec ivParameterSpec = new IvParameterSpec(arrayOfByte);
-/* 1139 */         cipher.init(this.cipherMode, this.key, ivParameterSpec);
-/*      */       } else {
-/* 1141 */         cipher.init(this.cipherMode, this.key);
-/*      */       } 
-/* 1143 */     } catch (InvalidKeyException invalidKeyException) {
-/* 1144 */       throw new XMLEncryptionException("empty", invalidKeyException);
-/* 1145 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 1146 */       throw new XMLEncryptionException("empty", noSuchAlgorithmException);
-/*      */     } 
-/*      */     
-/*      */     try {
-/* 1150 */       if (paramInputStream != null) {
-/*      */         
-/* 1152 */         byte[] arrayOfByte = new byte[8192];
-/* 1153 */         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(); int i;
-/* 1154 */         while ((i = paramInputStream.read(arrayOfByte)) != -1) {
-/* 1155 */           byte[] arrayOfByte5 = cipher.update(arrayOfByte, 0, i);
-/* 1156 */           byteArrayOutputStream.write(arrayOfByte5);
-/*      */         } 
-/* 1158 */         byteArrayOutputStream.write(cipher.doFinal());
-/* 1159 */         arrayOfByte2 = byteArrayOutputStream.toByteArray();
-/*      */       } else {
-/* 1161 */         arrayOfByte2 = cipher.doFinal(arrayOfByte1);
-/* 1162 */         if (log.isLoggable(Level.FINE)) {
-/* 1163 */           log.log(Level.FINE, "Expected cipher.outputSize = " + 
-/* 1164 */               Integer.toString(cipher.getOutputSize(arrayOfByte1.length)));
-/*      */         }
-/*      */       } 
-/* 1167 */       if (log.isLoggable(Level.FINE)) {
-/* 1168 */         log.log(Level.FINE, "Actual cipher.outputSize = " + 
-/* 1169 */             Integer.toString(arrayOfByte2.length));
-/*      */       }
-/* 1171 */     } catch (IllegalStateException illegalStateException) {
-/* 1172 */       throw new XMLEncryptionException("empty", illegalStateException);
-/* 1173 */     } catch (IllegalBlockSizeException illegalBlockSizeException) {
-/* 1174 */       throw new XMLEncryptionException("empty", illegalBlockSizeException);
-/* 1175 */     } catch (BadPaddingException badPaddingException) {
-/* 1176 */       throw new XMLEncryptionException("empty", badPaddingException);
-/* 1177 */     } catch (UnsupportedEncodingException unsupportedEncodingException) {
-/* 1178 */       throw new XMLEncryptionException("empty", unsupportedEncodingException);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1183 */     byte[] arrayOfByte3 = cipher.getIV();
-/* 1184 */     byte[] arrayOfByte4 = new byte[arrayOfByte3.length + arrayOfByte2.length];
-/* 1185 */     System.arraycopy(arrayOfByte3, 0, arrayOfByte4, 0, arrayOfByte3.length);
-/* 1186 */     System.arraycopy(arrayOfByte2, 0, arrayOfByte4, arrayOfByte3.length, arrayOfByte2.length);
-/* 1187 */     String str = Base64.encode(arrayOfByte4);
-/*      */     
-/* 1189 */     if (log.isLoggable(Level.FINE)) {
-/* 1190 */       log.log(Level.FINE, "Encrypted octets:\n" + str);
-/* 1191 */       log.log(Level.FINE, "Encrypted octets length = " + str.length());
-/*      */     } 
-/*      */     
-/*      */     try {
-/* 1195 */       CipherData cipherData = this.ed.getCipherData();
-/* 1196 */       CipherValue cipherValue = cipherData.getCipherValue();
-/*      */       
-/* 1198 */       cipherValue.setValue(str);
-/*      */       
-/* 1200 */       if (paramString != null) {
-/* 1201 */         this.ed.setType((new URI(paramString)).toString());
-/*      */       }
-/*      */       
-/* 1204 */       EncryptionMethod encryptionMethod = this.factory.newEncryptionMethod((new URI(this.algorithm)).toString());
-/* 1205 */       encryptionMethod.setDigestAlgorithm(this.digestAlg);
-/* 1206 */       this.ed.setEncryptionMethod(encryptionMethod);
-/* 1207 */     } catch (URISyntaxException uRISyntaxException) {
-/* 1208 */       throw new XMLEncryptionException("empty", uRISyntaxException);
-/*      */     } 
-/* 1210 */     return this.ed;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedData loadEncryptedData(Document paramDocument, Element paramElement) throws XMLEncryptionException {
-/* 1225 */     if (log.isLoggable(Level.FINE)) {
-/* 1226 */       log.log(Level.FINE, "Loading encrypted element...");
-/*      */     }
-/* 1228 */     if (null == paramDocument) {
-/* 1229 */       throw new NullPointerException("Context document unexpectedly null...");
-/*      */     }
-/* 1231 */     if (null == paramElement) {
-/* 1232 */       throw new NullPointerException("Element unexpectedly null...");
-/*      */     }
-/* 1234 */     if (this.cipherMode != 2) {
-/* 1235 */       throw new XMLEncryptionException("XMLCipher unexpectedly not in DECRYPT_MODE...");
-/*      */     }
-/*      */     
-/* 1238 */     this.contextDocument = paramDocument;
-/* 1239 */     this.ed = this.factory.newEncryptedData(paramElement);
-/*      */     
-/* 1241 */     return this.ed;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey loadEncryptedKey(Document paramDocument, Element paramElement) throws XMLEncryptionException {
-/* 1256 */     if (log.isLoggable(Level.FINE)) {
-/* 1257 */       log.log(Level.FINE, "Loading encrypted key...");
-/*      */     }
-/* 1259 */     if (null == paramDocument) {
-/* 1260 */       throw new NullPointerException("Context document unexpectedly null...");
-/*      */     }
-/* 1262 */     if (null == paramElement) {
-/* 1263 */       throw new NullPointerException("Element unexpectedly null...");
-/*      */     }
-/* 1265 */     if (this.cipherMode != 4 && this.cipherMode != 2) {
-/* 1266 */       throw new XMLEncryptionException("XMLCipher unexpectedly not in UNWRAP_MODE or DECRYPT_MODE...");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1271 */     this.contextDocument = paramDocument;
-/* 1272 */     this.ek = this.factory.newEncryptedKey(paramElement);
-/* 1273 */     return this.ek;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey loadEncryptedKey(Element paramElement) throws XMLEncryptionException {
-/* 1288 */     return loadEncryptedKey(paramElement.getOwnerDocument(), paramElement);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey encryptKey(Document paramDocument, Key paramKey) throws XMLEncryptionException {
-/* 1301 */     return encryptKey(paramDocument, paramKey, null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey encryptKey(Document paramDocument, Key paramKey, String paramString, byte[] paramArrayOfbyte) throws XMLEncryptionException {
-/*      */     Cipher cipher;
-/* 1321 */     if (log.isLoggable(Level.FINE)) {
-/* 1322 */       log.log(Level.FINE, "Encrypting key ...");
-/*      */     }
-/*      */     
-/* 1325 */     if (null == paramKey) {
-/* 1326 */       log.log(Level.SEVERE, "Key unexpectedly null...");
-/*      */     }
-/* 1328 */     if (this.cipherMode != 3) {
-/* 1329 */       log.log(Level.FINE, "XMLCipher unexpectedly not in WRAP_MODE...");
-/*      */     }
-/* 1331 */     if (this.algorithm == null) {
-/* 1332 */       throw new XMLEncryptionException("XMLCipher instance without transformation specified");
-/*      */     }
-/*      */     
-/* 1335 */     this.contextDocument = paramDocument;
-/*      */     
-/* 1337 */     byte[] arrayOfByte = null;
-/*      */ 
-/*      */     
-/* 1340 */     if (this.contextCipher == null) {
-/*      */       
-/* 1342 */       cipher = constructCipher(this.algorithm, null);
-/*      */     } else {
-/* 1344 */       cipher = this.contextCipher;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1352 */       OAEPParameterSpec oAEPParameterSpec = constructOAEPParameters(this.algorithm, this.digestAlg, paramString, paramArrayOfbyte);
-/*      */ 
-/*      */       
-/* 1355 */       if (oAEPParameterSpec == null) {
-/* 1356 */         cipher.init(3, this.key);
-/*      */       } else {
-/* 1358 */         cipher.init(3, this.key, oAEPParameterSpec);
-/*      */       } 
-/* 1360 */       arrayOfByte = cipher.wrap(paramKey);
-/* 1361 */     } catch (InvalidKeyException invalidKeyException) {
-/* 1362 */       throw new XMLEncryptionException("empty", invalidKeyException);
-/* 1363 */     } catch (IllegalBlockSizeException illegalBlockSizeException) {
-/* 1364 */       throw new XMLEncryptionException("empty", illegalBlockSizeException);
-/* 1365 */     } catch (InvalidAlgorithmParameterException invalidAlgorithmParameterException) {
-/* 1366 */       throw new XMLEncryptionException("empty", invalidAlgorithmParameterException);
-/*      */     } 
-/*      */     
-/* 1369 */     String str = Base64.encode(arrayOfByte);
-/* 1370 */     if (log.isLoggable(Level.FINE)) {
-/* 1371 */       log.log(Level.FINE, "Encrypted key octets:\n" + str);
-/* 1372 */       log.log(Level.FINE, "Encrypted key octets length = " + str.length());
-/*      */     } 
-/*      */     
-/* 1375 */     CipherValue cipherValue = this.ek.getCipherData().getCipherValue();
-/* 1376 */     cipherValue.setValue(str);
-/*      */     
-/*      */     try {
-/* 1379 */       EncryptionMethod encryptionMethod = this.factory.newEncryptionMethod((new URI(this.algorithm)).toString());
-/* 1380 */       encryptionMethod.setDigestAlgorithm(this.digestAlg);
-/* 1381 */       encryptionMethod.setMGFAlgorithm(paramString);
-/* 1382 */       encryptionMethod.setOAEPparams(paramArrayOfbyte);
-/* 1383 */       this.ek.setEncryptionMethod(encryptionMethod);
-/* 1384 */     } catch (URISyntaxException uRISyntaxException) {
-/* 1385 */       throw new XMLEncryptionException("empty", uRISyntaxException);
-/*      */     } 
-/* 1387 */     return this.ek;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Key decryptKey(EncryptedKey paramEncryptedKey, String paramString) throws XMLEncryptionException {
-/*      */     Cipher cipher;
-/*      */     Key key;
-/* 1401 */     if (log.isLoggable(Level.FINE)) {
-/* 1402 */       log.log(Level.FINE, "Decrypting key from previously loaded EncryptedKey...");
-/*      */     }
-/*      */     
-/* 1405 */     if (this.cipherMode != 4 && log.isLoggable(Level.FINE)) {
-/* 1406 */       log.log(Level.FINE, "XMLCipher unexpectedly not in UNWRAP_MODE...");
-/*      */     }
-/*      */     
-/* 1409 */     if (paramString == null) {
-/* 1410 */       throw new XMLEncryptionException("Cannot decrypt a key without knowing the algorithm");
-/*      */     }
-/*      */     
-/* 1413 */     if (this.key == null) {
-/* 1414 */       if (log.isLoggable(Level.FINE)) {
-/* 1415 */         log.log(Level.FINE, "Trying to find a KEK via key resolvers");
-/*      */       }
-/*      */       
-/* 1418 */       KeyInfo keyInfo = paramEncryptedKey.getKeyInfo();
-/* 1419 */       if (keyInfo != null) {
-/* 1420 */         keyInfo.setSecureValidation(this.secureValidation);
-/*      */         try {
-/* 1422 */           String str1 = paramEncryptedKey.getEncryptionMethod().getAlgorithm();
-/* 1423 */           String str2 = JCEMapper.getJCEKeyAlgorithmFromURI(str1);
-/* 1424 */           if ("RSA".equals(str2)) {
-/* 1425 */             this.key = keyInfo.getPrivateKey();
-/*      */           } else {
-/* 1427 */             this.key = keyInfo.getSecretKey();
-/*      */           }
-/*      */         
-/* 1430 */         } catch (Exception exception) {
-/* 1431 */           if (log.isLoggable(Level.FINE)) {
-/* 1432 */             log.log(Level.FINE, exception.getMessage(), exception);
-/*      */           }
-/*      */         } 
-/*      */       } 
-/* 1436 */       if (this.key == null) {
-/* 1437 */         log.log(Level.SEVERE, "XMLCipher::decryptKey called without a KEK and cannot resolve");
-/* 1438 */         throw new XMLEncryptionException("Unable to decrypt without a KEK");
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1443 */     XMLCipherInput xMLCipherInput = new XMLCipherInput(paramEncryptedKey);
-/* 1444 */     xMLCipherInput.setSecureValidation(this.secureValidation);
-/* 1445 */     byte[] arrayOfByte = xMLCipherInput.getBytes();
-/*      */     
-/* 1447 */     String str = JCEMapper.getJCEKeyAlgorithmFromURI(paramString);
-/* 1448 */     if (log.isLoggable(Level.FINE)) {
-/* 1449 */       log.log(Level.FINE, "JCE Key Algorithm: " + str);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1453 */     if (this.contextCipher == null) {
-/*      */ 
-/*      */       
-/* 1456 */       cipher = constructCipher(paramEncryptedKey
-/* 1457 */           .getEncryptionMethod().getAlgorithm(), paramEncryptedKey
-/* 1458 */           .getEncryptionMethod().getDigestAlgorithm());
-/*      */     } else {
-/*      */       
-/* 1461 */       cipher = this.contextCipher;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1467 */       EncryptionMethod encryptionMethod = paramEncryptedKey.getEncryptionMethod();
-/*      */       
-/* 1469 */       OAEPParameterSpec oAEPParameterSpec = constructOAEPParameters(encryptionMethod
-/* 1470 */           .getAlgorithm(), encryptionMethod.getDigestAlgorithm(), encryptionMethod
-/* 1471 */           .getMGFAlgorithm(), encryptionMethod.getOAEPparams());
-/*      */       
-/* 1473 */       if (oAEPParameterSpec == null) {
-/* 1474 */         cipher.init(4, this.key);
-/*      */       } else {
-/* 1476 */         cipher.init(4, this.key, oAEPParameterSpec);
-/*      */       } 
-/* 1478 */       key = cipher.unwrap(arrayOfByte, str, 3);
-/* 1479 */     } catch (InvalidKeyException invalidKeyException) {
-/* 1480 */       throw new XMLEncryptionException("empty", invalidKeyException);
-/* 1481 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 1482 */       throw new XMLEncryptionException("empty", noSuchAlgorithmException);
-/* 1483 */     } catch (InvalidAlgorithmParameterException invalidAlgorithmParameterException) {
-/* 1484 */       throw new XMLEncryptionException("empty", invalidAlgorithmParameterException);
-/*      */     } 
-/* 1486 */     if (log.isLoggable(Level.FINE)) {
-/* 1487 */       log.log(Level.FINE, "Decryption of key type " + paramString + " OK");
-/*      */     }
-/*      */     
-/* 1490 */     return key;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private OAEPParameterSpec constructOAEPParameters(String paramString1, String paramString2, String paramString3, byte[] paramArrayOfbyte) {
-/* 1502 */     if ("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p".equals(paramString1) || "http://www.w3.org/2009/xmlenc11#rsa-oaep"
-/* 1503 */       .equals(paramString1)) {
-/*      */       
-/* 1505 */       String str = "SHA-1";
-/* 1506 */       if (paramString2 != null) {
-/* 1507 */         str = JCEMapper.translateURItoJCEID(paramString2);
-/*      */       }
-/*      */       
-/* 1510 */       PSource.PSpecified pSpecified = PSource.PSpecified.DEFAULT;
-/* 1511 */       if (paramArrayOfbyte != null) {
-/* 1512 */         pSpecified = new PSource.PSpecified(paramArrayOfbyte);
-/*      */       }
-/*      */       
-/* 1515 */       MGF1ParameterSpec mGF1ParameterSpec = new MGF1ParameterSpec("SHA-1");
-/* 1516 */       if ("http://www.w3.org/2009/xmlenc11#rsa-oaep".equals(paramString1)) {
-/* 1517 */         if ("http://www.w3.org/2009/xmlenc11#mgf1sha256".equals(paramString3)) {
-/* 1518 */           mGF1ParameterSpec = new MGF1ParameterSpec("SHA-256");
-/* 1519 */         } else if ("http://www.w3.org/2009/xmlenc11#mgf1sha384".equals(paramString3)) {
-/* 1520 */           mGF1ParameterSpec = new MGF1ParameterSpec("SHA-384");
-/* 1521 */         } else if ("http://www.w3.org/2009/xmlenc11#mgf1sha512".equals(paramString3)) {
-/* 1522 */           mGF1ParameterSpec = new MGF1ParameterSpec("SHA-512");
-/*      */         } 
-/*      */       }
-/* 1525 */       return new OAEPParameterSpec(str, "MGF1", mGF1ParameterSpec, pSpecified);
-/*      */     } 
-/*      */     
-/* 1528 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Cipher constructCipher(String paramString1, String paramString2) throws XMLEncryptionException {
-/*      */     Cipher cipher;
-/* 1535 */     String str = JCEMapper.translateURItoJCEID(paramString1);
-/* 1536 */     if (log.isLoggable(Level.FINE)) {
-/* 1537 */       log.log(Level.FINE, "JCE Algorithm = " + str);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1542 */       if (this.requestedJCEProvider == null) {
-/* 1543 */         cipher = Cipher.getInstance(str);
-/*      */       } else {
-/* 1545 */         cipher = Cipher.getInstance(str, this.requestedJCEProvider);
-/*      */       } 
-/* 1547 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/*      */ 
-/*      */       
-/* 1550 */       if ("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p".equals(paramString1) && (paramString2 == null || "http://www.w3.org/2000/09/xmldsig#sha1"
-/*      */         
-/* 1552 */         .equals(paramString2))) {
-/*      */         try {
-/* 1554 */           if (this.requestedJCEProvider == null) {
-/* 1555 */             cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
-/*      */           } else {
-/* 1557 */             cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding", this.requestedJCEProvider);
-/*      */           } 
-/* 1559 */         } catch (Exception exception) {
-/* 1560 */           throw new XMLEncryptionException("empty", exception);
-/*      */         } 
-/*      */       } else {
-/* 1563 */         throw new XMLEncryptionException("empty", noSuchAlgorithmException);
-/*      */       } 
-/* 1565 */     } catch (NoSuchProviderException noSuchProviderException) {
-/* 1566 */       throw new XMLEncryptionException("empty", noSuchProviderException);
-/* 1567 */     } catch (NoSuchPaddingException noSuchPaddingException) {
-/* 1568 */       throw new XMLEncryptionException("empty", noSuchPaddingException);
-/*      */     } 
-/*      */     
-/* 1571 */     return cipher;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Key decryptKey(EncryptedKey paramEncryptedKey) throws XMLEncryptionException {
-/* 1586 */     return decryptKey(paramEncryptedKey, this.ed.getEncryptionMethod().getAlgorithm());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void removeContent(Node paramNode) {
-/* 1595 */     while (paramNode.hasChildNodes()) {
-/* 1596 */       paramNode.removeChild(paramNode.getFirstChild());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Document decryptElement(Element paramElement) throws XMLEncryptionException {
-/* 1608 */     if (log.isLoggable(Level.FINE)) {
-/* 1609 */       log.log(Level.FINE, "Decrypting element...");
-/*      */     }
-/*      */     
-/* 1612 */     if (this.cipherMode != 2) {
-/* 1613 */       log.log(Level.SEVERE, "XMLCipher unexpectedly not in DECRYPT_MODE...");
-/*      */     }
-/*      */     
-/* 1616 */     byte[] arrayOfByte = decryptToByteArray(paramElement);
-/*      */     
-/* 1618 */     if (log.isLoggable(Level.FINE)) {
-/* 1619 */       log.log(Level.FINE, "Decrypted octets:\n" + new String(arrayOfByte));
-/*      */     }
-/*      */     
-/* 1622 */     Node node1 = paramElement.getParentNode();
-/* 1623 */     Node node2 = this.serializer.deserialize(arrayOfByte, node1);
-/*      */ 
-/*      */     
-/* 1626 */     if (node1 != null && 9 == node1.getNodeType()) {
-/*      */       
-/* 1628 */       this.contextDocument.removeChild(this.contextDocument.getDocumentElement());
-/* 1629 */       this.contextDocument.appendChild(node2);
-/* 1630 */     } else if (node1 != null) {
-/* 1631 */       node1.replaceChild(node2, paramElement);
-/*      */     } 
-/*      */     
-/* 1634 */     return this.contextDocument;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Document decryptElementContent(Element paramElement) throws XMLEncryptionException {
-/* 1648 */     Element element = (Element)paramElement.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "EncryptedData").item(0);
-/*      */     
-/* 1650 */     if (null == element) {
-/* 1651 */       throw new XMLEncryptionException("No EncryptedData child element.");
-/*      */     }
-/*      */     
-/* 1654 */     return decryptElement(element);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public byte[] decryptToByteArray(Element paramElement) throws XMLEncryptionException {
-/*      */     Cipher cipher;
-/* 1669 */     if (log.isLoggable(Level.FINE)) {
-/* 1670 */       log.log(Level.FINE, "Decrypting to ByteArray...");
-/*      */     }
-/*      */     
-/* 1673 */     if (this.cipherMode != 2) {
-/* 1674 */       log.log(Level.SEVERE, "XMLCipher unexpectedly not in DECRYPT_MODE...");
-/*      */     }
-/*      */     
-/* 1677 */     EncryptedData encryptedData = this.factory.newEncryptedData(paramElement);
-/*      */     
-/* 1679 */     if (this.key == null) {
-/* 1680 */       KeyInfo keyInfo = encryptedData.getKeyInfo();
-/* 1681 */       if (keyInfo != null) {
-/*      */         
-/*      */         try {
-/* 1684 */           String str = encryptedData.getEncryptionMethod().getAlgorithm();
-/* 1685 */           EncryptedKeyResolver encryptedKeyResolver = new EncryptedKeyResolver(str, this.kek);
-/* 1686 */           if (this.internalKeyResolvers != null) {
-/* 1687 */             int j = this.internalKeyResolvers.size();
-/* 1688 */             for (byte b = 0; b < j; b++) {
-/* 1689 */               encryptedKeyResolver.registerInternalKeyResolver(this.internalKeyResolvers.get(b));
-/*      */             }
-/*      */           } 
-/* 1692 */           keyInfo.registerInternalKeyResolver(encryptedKeyResolver);
-/* 1693 */           keyInfo.setSecureValidation(this.secureValidation);
-/* 1694 */           this.key = keyInfo.getSecretKey();
-/* 1695 */         } catch (KeyResolverException keyResolverException) {
-/* 1696 */           if (log.isLoggable(Level.FINE)) {
-/* 1697 */             log.log(Level.FINE, keyResolverException.getMessage(), keyResolverException);
-/*      */           }
-/*      */         } 
-/*      */       }
-/*      */       
-/* 1702 */       if (this.key == null) {
-/* 1703 */         log.log(Level.SEVERE, "XMLCipher::decryptElement called without a key and unable to resolve");
-/*      */ 
-/*      */         
-/* 1706 */         throw new XMLEncryptionException("encryption.nokey");
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1711 */     XMLCipherInput xMLCipherInput = new XMLCipherInput(encryptedData);
-/* 1712 */     xMLCipherInput.setSecureValidation(this.secureValidation);
-/* 1713 */     byte[] arrayOfByte1 = xMLCipherInput.getBytes();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1717 */     String str1 = JCEMapper.translateURItoJCEID(encryptedData.getEncryptionMethod().getAlgorithm());
-/* 1718 */     if (log.isLoggable(Level.FINE)) {
-/* 1719 */       log.log(Level.FINE, "JCE Algorithm = " + str1);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1724 */       if (this.requestedJCEProvider == null) {
-/* 1725 */         cipher = Cipher.getInstance(str1);
-/*      */       } else {
-/* 1727 */         cipher = Cipher.getInstance(str1, this.requestedJCEProvider);
-/*      */       } 
-/* 1729 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/* 1730 */       throw new XMLEncryptionException("empty", noSuchAlgorithmException);
-/* 1731 */     } catch (NoSuchProviderException noSuchProviderException) {
-/* 1732 */       throw new XMLEncryptionException("empty", noSuchProviderException);
-/* 1733 */     } catch (NoSuchPaddingException noSuchPaddingException) {
-/* 1734 */       throw new XMLEncryptionException("empty", noSuchPaddingException);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1742 */     int i = cipher.getBlockSize();
-/* 1743 */     String str2 = encryptedData.getEncryptionMethod().getAlgorithm();
-/* 1744 */     if ("http://www.w3.org/2009/xmlenc11#aes128-gcm".equals(str2) || "http://www.w3.org/2009/xmlenc11#aes192-gcm".equals(str2) || "http://www.w3.org/2009/xmlenc11#aes256-gcm".equals(str2)) {
-/* 1745 */       i = 12;
-/*      */     }
-/* 1747 */     byte[] arrayOfByte2 = new byte[i];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1754 */     System.arraycopy(arrayOfByte1, 0, arrayOfByte2, 0, i);
-/* 1755 */     IvParameterSpec ivParameterSpec = new IvParameterSpec(arrayOfByte2);
-/*      */     
-/*      */     try {
-/* 1758 */       cipher.init(this.cipherMode, this.key, ivParameterSpec);
-/* 1759 */     } catch (InvalidKeyException invalidKeyException) {
-/* 1760 */       throw new XMLEncryptionException("empty", invalidKeyException);
-/* 1761 */     } catch (InvalidAlgorithmParameterException invalidAlgorithmParameterException) {
-/* 1762 */       throw new XMLEncryptionException("empty", invalidAlgorithmParameterException);
-/*      */     } 
-/*      */     
-/*      */     try {
-/* 1766 */       return cipher.doFinal(arrayOfByte1, i, arrayOfByte1.length - i);
-/* 1767 */     } catch (IllegalBlockSizeException illegalBlockSizeException) {
-/* 1768 */       throw new XMLEncryptionException("empty", illegalBlockSizeException);
-/* 1769 */     } catch (BadPaddingException badPaddingException) {
-/* 1770 */       throw new XMLEncryptionException("empty", badPaddingException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedData createEncryptedData(int paramInt, String paramString) throws XMLEncryptionException {
-/*      */     CipherReference cipherReference;
-/*      */     CipherValue cipherValue;
-/* 1813 */     EncryptedData encryptedData = null;
-/* 1814 */     CipherData cipherData = null;
-/*      */     
-/* 1816 */     switch (paramInt) {
-/*      */       case 2:
-/* 1818 */         cipherReference = this.factory.newCipherReference(paramString);
-/* 1819 */         cipherData = this.factory.newCipherData(paramInt);
-/* 1820 */         cipherData.setCipherReference(cipherReference);
-/* 1821 */         encryptedData = this.factory.newEncryptedData(cipherData);
-/*      */         break;
-/*      */       case 1:
-/* 1824 */         cipherValue = this.factory.newCipherValue(paramString);
-/* 1825 */         cipherData = this.factory.newCipherData(paramInt);
-/* 1826 */         cipherData.setCipherValue(cipherValue);
-/* 1827 */         encryptedData = this.factory.newEncryptedData(cipherData);
-/*      */         break;
-/*      */     } 
-/* 1830 */     return encryptedData;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptedKey createEncryptedKey(int paramInt, String paramString) throws XMLEncryptionException {
-/*      */     CipherReference cipherReference;
-/*      */     CipherValue cipherValue;
-/* 1868 */     EncryptedKey encryptedKey = null;
-/* 1869 */     CipherData cipherData = null;
-/*      */     
-/* 1871 */     switch (paramInt) {
-/*      */       case 2:
-/* 1873 */         cipherReference = this.factory.newCipherReference(paramString);
-/* 1874 */         cipherData = this.factory.newCipherData(paramInt);
-/* 1875 */         cipherData.setCipherReference(cipherReference);
-/* 1876 */         encryptedKey = this.factory.newEncryptedKey(cipherData);
-/*      */         break;
-/*      */       case 1:
-/* 1879 */         cipherValue = this.factory.newCipherValue(paramString);
-/* 1880 */         cipherData = this.factory.newCipherData(paramInt);
-/* 1881 */         cipherData.setCipherValue(cipherValue);
-/* 1882 */         encryptedKey = this.factory.newEncryptedKey(cipherData);
-/*      */         break;
-/*      */     } 
-/* 1885 */     return encryptedKey;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AgreementMethod createAgreementMethod(String paramString) {
-/* 1895 */     return this.factory.newAgreementMethod(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public CipherData createCipherData(int paramInt) {
-/* 1906 */     return this.factory.newCipherData(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public CipherReference createCipherReference(String paramString) {
-/* 1916 */     return this.factory.newCipherReference(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public CipherValue createCipherValue(String paramString) {
-/* 1926 */     return this.factory.newCipherValue(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptionMethod createEncryptionMethod(String paramString) {
-/* 1936 */     return this.factory.newEncryptionMethod(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptionProperties createEncryptionProperties() {
-/* 1944 */     return this.factory.newEncryptionProperties();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public EncryptionProperty createEncryptionProperty() {
-/* 1952 */     return this.factory.newEncryptionProperty();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ReferenceList createReferenceList(int paramInt) {
-/* 1961 */     return this.factory.newReferenceList(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Transforms createTransforms() {
-/* 1973 */     return this.factory.newTransforms();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Transforms createTransforms(Document paramDocument) {
-/* 1987 */     return this.factory.newTransforms(paramDocument);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private class Factory
-/*      */   {
-/*      */     private Factory() {}
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     AgreementMethod newAgreementMethod(String param1String) {
-/* 2000 */       return new AgreementMethodImpl(param1String);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CipherData newCipherData(int param1Int) {
-/* 2009 */       return new CipherDataImpl(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CipherReference newCipherReference(String param1String) {
-/* 2017 */       return new CipherReferenceImpl(param1String);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CipherValue newCipherValue(String param1String) {
-/* 2025 */       return new CipherValueImpl(param1String);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptedData newEncryptedData(CipherData param1CipherData) {
-/* 2039 */       return new EncryptedDataImpl(param1CipherData);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptedKey newEncryptedKey(CipherData param1CipherData) {
-/* 2047 */       return new EncryptedKeyImpl(param1CipherData);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptionMethod newEncryptionMethod(String param1String) {
-/* 2055 */       return new EncryptionMethodImpl(param1String);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptionProperties newEncryptionProperties() {
-/* 2062 */       return new EncryptionPropertiesImpl();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptionProperty newEncryptionProperty() {
-/* 2069 */       return new EncryptionPropertyImpl();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     ReferenceList newReferenceList(int param1Int) {
-/* 2077 */       return new ReferenceListImpl(param1Int);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Transforms newTransforms() {
-/* 2084 */       return new TransformsImpl();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Transforms newTransforms(Document param1Document) {
-/* 2092 */       return new TransformsImpl(param1Document);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CipherData newCipherData(Element param1Element) throws XMLEncryptionException {
-/* 2101 */       if (null == param1Element) {
-/* 2102 */         throw new NullPointerException("element is null");
-/*      */       }
-/*      */       
-/* 2105 */       byte b = 0;
-/* 2106 */       Element element = null;
-/* 2107 */       if (param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherValue")
-/*      */         
-/* 2109 */         .getLength() > 0) {
-/*      */         
-/* 2111 */         b = 1;
-/*      */ 
-/*      */         
-/* 2114 */         element = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherValue").item(0);
-/* 2115 */       } else if (param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherReference")
-/*      */         
-/* 2117 */         .getLength() > 0) {
-/* 2118 */         b = 2;
-/*      */ 
-/*      */         
-/* 2121 */         element = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherReference").item(0);
-/*      */       } 
-/*      */       
-/* 2124 */       CipherData cipherData = newCipherData(b);
-/* 2125 */       if (b == 1) {
-/* 2126 */         cipherData.setCipherValue(newCipherValue(element));
-/* 2127 */       } else if (b == 2) {
-/* 2128 */         cipherData.setCipherReference(newCipherReference(element));
-/*      */       } 
-/*      */       
-/* 2131 */       return cipherData;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CipherReference newCipherReference(Element param1Element) throws XMLEncryptionException {
-/* 2143 */       Attr attr = param1Element.getAttributeNodeNS((String)null, "URI");
-/* 2144 */       CipherReferenceImpl cipherReferenceImpl = new CipherReferenceImpl(attr);
-/*      */ 
-/*      */ 
-/*      */       
-/* 2148 */       NodeList nodeList = param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "Transforms");
-/*      */       
-/* 2150 */       Element element = (Element)nodeList.item(0);
-/*      */       
-/* 2152 */       if (element != null) {
-/* 2153 */         if (XMLCipher.log.isLoggable(Level.FINE)) {
-/* 2154 */           XMLCipher.log.log(Level.FINE, "Creating a DSIG based Transforms element");
-/*      */         }
-/*      */         try {
-/* 2157 */           cipherReferenceImpl.setTransforms(new TransformsImpl(element));
-/* 2158 */         } catch (XMLSignatureException xMLSignatureException) {
-/* 2159 */           throw new XMLEncryptionException("empty", xMLSignatureException);
-/* 2160 */         } catch (InvalidTransformException invalidTransformException) {
-/* 2161 */           throw new XMLEncryptionException("empty", invalidTransformException);
-/* 2162 */         } catch (XMLSecurityException xMLSecurityException) {
-/* 2163 */           throw new XMLEncryptionException("empty", xMLSecurityException);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 2167 */       return cipherReferenceImpl;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     CipherValue newCipherValue(Element param1Element) {
-/* 2175 */       String str = XMLUtils.getFullTextChildrenFromElement(param1Element);
-/*      */       
-/* 2177 */       return newCipherValue(str);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptedData newEncryptedData(Element param1Element) throws XMLEncryptionException {
-/* 2187 */       EncryptedData encryptedData = null;
-/*      */ 
-/*      */       
-/* 2190 */       NodeList nodeList = param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherData");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2197 */       Element element1 = (Element)nodeList.item(nodeList.getLength() - 1);
-/*      */       
-/* 2199 */       CipherData cipherData = newCipherData(element1);
-/*      */       
-/* 2201 */       encryptedData = newEncryptedData(cipherData);
-/*      */       
-/* 2203 */       encryptedData.setId(param1Element.getAttributeNS((String)null, "Id"));
-/* 2204 */       encryptedData.setType(param1Element.getAttributeNS((String)null, "Type"));
-/* 2205 */       encryptedData.setMimeType(param1Element.getAttributeNS((String)null, "MimeType"));
-/* 2206 */       encryptedData.setEncoding(param1Element.getAttributeNS((String)null, "Encoding"));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2211 */       Element element2 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "EncryptionMethod").item(0);
-/* 2212 */       if (null != element2) {
-/* 2213 */         encryptedData.setEncryptionMethod(newEncryptionMethod(element2));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2221 */       Element element3 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "KeyInfo").item(0);
-/* 2222 */       if (null != element3) {
-/* 2223 */         KeyInfo keyInfo = newKeyInfo(element3);
-/* 2224 */         encryptedData.setKeyInfo(keyInfo);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2231 */       Element element4 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "EncryptionProperties").item(0);
-/* 2232 */       if (null != element4) {
-/* 2233 */         encryptedData.setEncryptionProperties(
-/* 2234 */             newEncryptionProperties(element4));
-/*      */       }
-/*      */ 
-/*      */       
-/* 2238 */       return encryptedData;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptedKey newEncryptedKey(Element param1Element) throws XMLEncryptionException {
-/* 2247 */       EncryptedKey encryptedKey = null;
-/*      */       
-/* 2249 */       NodeList nodeList = param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CipherData");
-/*      */ 
-/*      */       
-/* 2252 */       Element element1 = (Element)nodeList.item(nodeList.getLength() - 1);
-/*      */       
-/* 2254 */       CipherData cipherData = newCipherData(element1);
-/* 2255 */       encryptedKey = newEncryptedKey(cipherData);
-/*      */       
-/* 2257 */       encryptedKey.setId(param1Element.getAttributeNS((String)null, "Id"));
-/* 2258 */       encryptedKey.setType(param1Element.getAttributeNS((String)null, "Type"));
-/* 2259 */       encryptedKey.setMimeType(param1Element.getAttributeNS((String)null, "MimeType"));
-/* 2260 */       encryptedKey.setEncoding(param1Element.getAttributeNS((String)null, "Encoding"));
-/* 2261 */       encryptedKey.setRecipient(param1Element.getAttributeNS((String)null, "Recipient"));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2266 */       Element element2 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "EncryptionMethod").item(0);
-/* 2267 */       if (null != element2) {
-/* 2268 */         encryptedKey.setEncryptionMethod(newEncryptionMethod(element2));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2273 */       Element element3 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "KeyInfo").item(0);
-/* 2274 */       if (null != element3) {
-/* 2275 */         KeyInfo keyInfo = newKeyInfo(element3);
-/* 2276 */         encryptedKey.setKeyInfo(keyInfo);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2283 */       Element element4 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "EncryptionProperties").item(0);
-/* 2284 */       if (null != element4) {
-/* 2285 */         encryptedKey.setEncryptionProperties(
-/* 2286 */             newEncryptionProperties(element4));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2293 */       Element element5 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "ReferenceList").item(0);
-/* 2294 */       if (null != element5) {
-/* 2295 */         encryptedKey.setReferenceList(newReferenceList(element5));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2301 */       Element element6 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "CarriedKeyName").item(0);
-/* 2302 */       if (null != element6) {
-/* 2303 */         encryptedKey.setCarriedName(element6.getFirstChild().getNodeValue());
-/*      */       }
-/*      */       
-/* 2306 */       return encryptedKey;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     KeyInfo newKeyInfo(Element param1Element) throws XMLEncryptionException {
-/*      */       try {
-/* 2316 */         KeyInfo keyInfo = new KeyInfo(param1Element, null);
-/* 2317 */         keyInfo.setSecureValidation(XMLCipher.this.secureValidation);
-/* 2318 */         if (XMLCipher.this.internalKeyResolvers != null) {
-/* 2319 */           int i = XMLCipher.this.internalKeyResolvers.size();
-/* 2320 */           for (byte b = 0; b < i; b++) {
-/* 2321 */             keyInfo.registerInternalKeyResolver(XMLCipher.this.internalKeyResolvers.get(b));
-/*      */           }
-/*      */         } 
-/* 2324 */         return keyInfo;
-/* 2325 */       } catch (XMLSecurityException xMLSecurityException) {
-/* 2326 */         throw new XMLEncryptionException("Error loading Key Info", xMLSecurityException);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptionMethod newEncryptionMethod(Element param1Element) {
-/* 2335 */       String str = param1Element.getAttributeNS((String)null, "Algorithm");
-/* 2336 */       EncryptionMethod encryptionMethod = newEncryptionMethod(str);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2341 */       Element element1 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "KeySize").item(0);
-/* 2342 */       if (null != element1) {
-/* 2343 */         encryptionMethod.setKeySize(
-/* 2344 */             Integer.valueOf(element1
-/* 2345 */               .getFirstChild().getNodeValue()).intValue());
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2351 */       Element element2 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "OAEPparams").item(0);
-/* 2352 */       if (null != element2) {
-/*      */         try {
-/* 2354 */           String str1 = element2.getFirstChild().getNodeValue();
-/* 2355 */           encryptionMethod.setOAEPparams(Base64.decode(str1.getBytes("UTF-8")));
-/* 2356 */         } catch (UnsupportedEncodingException unsupportedEncodingException) {
-/* 2357 */           throw new RuntimeException("UTF-8 not supported", unsupportedEncodingException);
-/* 2358 */         } catch (Base64DecodingException base64DecodingException) {
-/* 2359 */           throw new RuntimeException("BASE-64 decoding error", base64DecodingException);
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2365 */       Element element3 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "DigestMethod").item(0);
-/* 2366 */       if (element3 != null) {
-/* 2367 */         String str1 = element3.getAttributeNS((String)null, "Algorithm");
-/* 2368 */         encryptionMethod.setDigestAlgorithm(str1);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2373 */       Element element4 = (Element)param1Element.getElementsByTagNameNS("http://www.w3.org/2009/xmlenc11#", "MGF").item(0);
-/* 2374 */       if (element4 != null && !"http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p".equals(XMLCipher.this.algorithm)) {
-/* 2375 */         String str1 = element4.getAttributeNS((String)null, "Algorithm");
-/* 2376 */         encryptionMethod.setMGFAlgorithm(str1);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2382 */       return encryptionMethod;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptionProperties newEncryptionProperties(Element param1Element) {
-/* 2390 */       EncryptionProperties encryptionProperties = newEncryptionProperties();
-/*      */       
-/* 2392 */       encryptionProperties.setId(param1Element.getAttributeNS((String)null, "Id"));
-/*      */ 
-/*      */       
-/* 2395 */       NodeList nodeList = param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "EncryptionProperty");
-/*      */ 
-/*      */       
-/* 2398 */       for (byte b = 0; b < nodeList.getLength(); b++) {
-/* 2399 */         Node node = nodeList.item(b);
-/* 2400 */         if (null != node) {
-/* 2401 */           encryptionProperties.addEncryptionProperty(newEncryptionProperty((Element)node));
-/*      */         }
-/*      */       } 
-/*      */       
-/* 2405 */       return encryptionProperties;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     EncryptionProperty newEncryptionProperty(Element param1Element) {
-/* 2413 */       EncryptionProperty encryptionProperty = newEncryptionProperty();
-/*      */       
-/* 2415 */       encryptionProperty.setTarget(param1Element.getAttributeNS((String)null, "Target"));
-/* 2416 */       encryptionProperty.setId(param1Element.getAttributeNS((String)null, "Id"));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2423 */       return encryptionProperty;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     ReferenceList newReferenceList(Element param1Element) {
-/* 2431 */       byte b2, b1 = 0;
-/* 2432 */       if (null != param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "DataReference")
-/*      */         
-/* 2434 */         .item(0)) {
-/* 2435 */         b1 = 1;
-/* 2436 */       } else if (null != param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "KeyReference")
-/*      */         
-/* 2438 */         .item(0)) {
-/* 2439 */         b1 = 2;
-/*      */       } 
-/*      */       
-/* 2442 */       ReferenceListImpl referenceListImpl = new ReferenceListImpl(b1);
-/* 2443 */       NodeList nodeList = null;
-/* 2444 */       switch (b1) {
-/*      */         
-/*      */         case 1:
-/* 2447 */           nodeList = param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "DataReference");
-/*      */ 
-/*      */           
-/* 2450 */           for (b2 = 0; b2 < nodeList.getLength(); b2++) {
-/* 2451 */             String str = ((Element)nodeList.item(b2)).getAttribute("URI");
-/* 2452 */             referenceListImpl.add(referenceListImpl.newDataReference(str));
-/*      */           } 
-/*      */           break;
-/*      */         
-/*      */         case 2:
-/* 2457 */           nodeList = param1Element.getElementsByTagNameNS("http://www.w3.org/2001/04/xmlenc#", "KeyReference");
-/*      */ 
-/*      */           
-/* 2460 */           for (b2 = 0; b2 < nodeList.getLength(); b2++) {
-/* 2461 */             String str = ((Element)nodeList.item(b2)).getAttribute("URI");
-/* 2462 */             referenceListImpl.add(referenceListImpl.newKeyReference(str));
-/*      */           } 
-/*      */           break;
-/*      */       } 
-/* 2466 */       return referenceListImpl;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Element toElement(EncryptedData param1EncryptedData) {
-/* 2474 */       return ((EncryptedDataImpl)param1EncryptedData).toElement();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Element toElement(EncryptedKey param1EncryptedKey) {
-/* 2482 */       return ((EncryptedKeyImpl)param1EncryptedKey).toElement();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     Element toElement(ReferenceList param1ReferenceList) {
-/* 2490 */       return ((ReferenceListImpl)param1ReferenceList).toElement();
-/*      */     }
-/*      */     
-/*      */     private class AgreementMethodImpl implements AgreementMethod {
-/* 2494 */       private byte[] kaNonce = null;
-/* 2495 */       private List<Element> agreementMethodInformation = null;
-/* 2496 */       private KeyInfo originatorKeyInfo = null;
-/* 2497 */       private KeyInfo recipientKeyInfo = null;
-/* 2498 */       private String algorithmURI = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public AgreementMethodImpl(String param2String) {
-/* 2504 */         this.agreementMethodInformation = new LinkedList<>();
-/* 2505 */         URI uRI = null;
-/*      */         try {
-/* 2507 */           uRI = new URI(param2String);
-/* 2508 */         } catch (URISyntaxException uRISyntaxException) {
-/* 2509 */           throw (IllegalArgumentException)(new IllegalArgumentException())
-/* 2510 */             .initCause(uRISyntaxException);
-/*      */         } 
-/* 2512 */         this.algorithmURI = uRI.toString();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public byte[] getKANonce() {
-/* 2517 */         return this.kaNonce;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setKANonce(byte[] param2ArrayOfbyte) {
-/* 2522 */         this.kaNonce = param2ArrayOfbyte;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Iterator<Element> getAgreementMethodInformation() {
-/* 2527 */         return this.agreementMethodInformation.iterator();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void addAgreementMethodInformation(Element param2Element) {
-/* 2532 */         this.agreementMethodInformation.add(param2Element);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void revoveAgreementMethodInformation(Element param2Element) {
-/* 2537 */         this.agreementMethodInformation.remove(param2Element);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public KeyInfo getOriginatorKeyInfo() {
-/* 2542 */         return this.originatorKeyInfo;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setOriginatorKeyInfo(KeyInfo param2KeyInfo) {
-/* 2547 */         this.originatorKeyInfo = param2KeyInfo;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public KeyInfo getRecipientKeyInfo() {
-/* 2552 */         return this.recipientKeyInfo;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setRecipientKeyInfo(KeyInfo param2KeyInfo) {
-/* 2557 */         this.recipientKeyInfo = param2KeyInfo;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getAlgorithm() {
-/* 2562 */         return this.algorithmURI;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class CipherDataImpl
-/*      */       implements CipherData
-/*      */     {
-/*      */       private static final String valueMessage = "Data type is reference type.";
-/*      */       private static final String referenceMessage = "Data type is value type.";
-/* 2571 */       private CipherValue cipherValue = null;
-/* 2572 */       private CipherReference cipherReference = null;
-/* 2573 */       private int cipherType = Integer.MIN_VALUE;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public CipherDataImpl(int param2Int) {
-/* 2579 */         this.cipherType = param2Int;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public CipherValue getCipherValue() {
-/* 2584 */         return this.cipherValue;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setCipherValue(CipherValue param2CipherValue) throws XMLEncryptionException {
-/* 2590 */         if (this.cipherType == 2) {
-/* 2591 */           throw new XMLEncryptionException("empty", new UnsupportedOperationException("Data type is reference type."));
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/* 2596 */         this.cipherValue = param2CipherValue;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public CipherReference getCipherReference() {
-/* 2601 */         return this.cipherReference;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setCipherReference(CipherReference param2CipherReference) throws XMLEncryptionException {
-/* 2607 */         if (this.cipherType == 1) {
-/* 2608 */           throw new XMLEncryptionException("empty", new UnsupportedOperationException("Data type is value type."));
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/* 2613 */         this.cipherReference = param2CipherReference;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public int getDataType() {
-/* 2618 */         return this.cipherType;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 2623 */         Element element = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 2624 */             .contextDocument, "CipherData");
-/*      */         
-/* 2626 */         if (this.cipherType == 1) {
-/* 2627 */           element.appendChild(((XMLCipher.Factory.CipherValueImpl)this.cipherValue).toElement());
-/* 2628 */         } else if (this.cipherType == 2) {
-/* 2629 */           element.appendChild(((XMLCipher.Factory.CipherReferenceImpl)this.cipherReference).toElement());
-/*      */         } 
-/*      */         
-/* 2632 */         return element;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class CipherReferenceImpl implements CipherReference {
-/* 2637 */       private String referenceURI = null;
-/* 2638 */       private Transforms referenceTransforms = null;
-/* 2639 */       private Attr referenceNode = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public CipherReferenceImpl(String param2String) {
-/* 2646 */         this.referenceURI = param2String;
-/* 2647 */         this.referenceNode = null;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public CipherReferenceImpl(Attr param2Attr) {
-/* 2654 */         this.referenceURI = param2Attr.getNodeValue();
-/* 2655 */         this.referenceNode = param2Attr;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getURI() {
-/* 2660 */         return this.referenceURI;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Attr getURIAsAttr() {
-/* 2665 */         return this.referenceNode;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Transforms getTransforms() {
-/* 2670 */         return this.referenceTransforms;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setTransforms(Transforms param2Transforms) {
-/* 2675 */         this.referenceTransforms = param2Transforms;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 2680 */         Element element = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 2681 */             .contextDocument, "CipherReference");
-/*      */         
-/* 2683 */         element.setAttributeNS((String)null, "URI", this.referenceURI);
-/* 2684 */         if (null != this.referenceTransforms) {
-/* 2685 */           element.appendChild(((XMLCipher.Factory.TransformsImpl)this.referenceTransforms).toElement());
-/*      */         }
-/*      */         
-/* 2688 */         return element;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class CipherValueImpl implements CipherValue {
-/* 2693 */       private String cipherValue = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public CipherValueImpl(String param2String) {
-/* 2699 */         this.cipherValue = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getValue() {
-/* 2704 */         return this.cipherValue;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setValue(String param2String) {
-/* 2709 */         this.cipherValue = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 2714 */         Element element = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 2715 */             .contextDocument, "CipherValue");
-/*      */         
-/* 2717 */         element.appendChild(XMLCipher.this.contextDocument.createTextNode(this.cipherValue));
-/*      */         
-/* 2719 */         return element;
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private class EncryptedDataImpl
-/*      */       extends EncryptedTypeImpl
-/*      */       implements EncryptedData
-/*      */     {
-/*      */       public EncryptedDataImpl(CipherData param2CipherData) {
-/* 2729 */         super(param2CipherData);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 2734 */         Element element = ElementProxy.createElementForFamily(XMLCipher.this
-/* 2735 */             .contextDocument, "http://www.w3.org/2001/04/xmlenc#", "EncryptedData");
-/*      */ 
-/*      */ 
-/*      */         
-/* 2739 */         if (null != getId()) {
-/* 2740 */           element.setAttributeNS((String)null, "Id", getId());
-/*      */         }
-/* 2742 */         if (null != getType()) {
-/* 2743 */           element.setAttributeNS((String)null, "Type", getType());
-/*      */         }
-/* 2745 */         if (null != getMimeType()) {
-/* 2746 */           element.setAttributeNS((String)null, "MimeType", 
-/* 2747 */               getMimeType());
-/*      */         }
-/*      */         
-/* 2750 */         if (null != getEncoding()) {
-/* 2751 */           element.setAttributeNS((String)null, "Encoding", 
-/* 2752 */               getEncoding());
-/*      */         }
-/*      */         
-/* 2755 */         if (null != getEncryptionMethod()) {
-/* 2756 */           element.appendChild(((XMLCipher.Factory.EncryptionMethodImpl)
-/* 2757 */               getEncryptionMethod()).toElement());
-/*      */         }
-/*      */         
-/* 2760 */         if (null != getKeyInfo()) {
-/* 2761 */           element.appendChild(getKeyInfo().getElement().cloneNode(true));
-/*      */         }
-/*      */         
-/* 2764 */         element.appendChild(((XMLCipher.Factory.CipherDataImpl)getCipherData()).toElement());
-/* 2765 */         if (null != getEncryptionProperties()) {
-/* 2766 */           element.appendChild(((XMLCipher.Factory.EncryptionPropertiesImpl)
-/* 2767 */               getEncryptionProperties()).toElement());
-/*      */         }
-/*      */         
-/* 2770 */         return element;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class EncryptedKeyImpl extends EncryptedTypeImpl implements EncryptedKey {
-/* 2775 */       private String keyRecipient = null;
-/* 2776 */       private ReferenceList referenceList = null;
-/* 2777 */       private String carriedName = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public EncryptedKeyImpl(CipherData param2CipherData) {
-/* 2783 */         super(param2CipherData);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getRecipient() {
-/* 2788 */         return this.keyRecipient;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setRecipient(String param2String) {
-/* 2793 */         this.keyRecipient = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public ReferenceList getReferenceList() {
-/* 2798 */         return this.referenceList;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setReferenceList(ReferenceList param2ReferenceList) {
-/* 2803 */         this.referenceList = param2ReferenceList;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getCarriedName() {
-/* 2808 */         return this.carriedName;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setCarriedName(String param2String) {
-/* 2813 */         this.carriedName = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 2818 */         Element element = ElementProxy.createElementForFamily(XMLCipher.this
-/* 2819 */             .contextDocument, "http://www.w3.org/2001/04/xmlenc#", "EncryptedKey");
-/*      */ 
-/*      */ 
-/*      */         
-/* 2823 */         if (null != getId()) {
-/* 2824 */           element.setAttributeNS((String)null, "Id", getId());
-/*      */         }
-/* 2826 */         if (null != getType()) {
-/* 2827 */           element.setAttributeNS((String)null, "Type", getType());
-/*      */         }
-/* 2829 */         if (null != getMimeType()) {
-/* 2830 */           element.setAttributeNS((String)null, "MimeType", 
-/* 2831 */               getMimeType());
-/*      */         }
-/*      */         
-/* 2834 */         if (null != getEncoding()) {
-/* 2835 */           element.setAttributeNS((String)null, "Encoding", getEncoding());
-/*      */         }
-/* 2837 */         if (null != getRecipient()) {
-/* 2838 */           element.setAttributeNS((String)null, "Recipient", 
-/* 2839 */               getRecipient());
-/*      */         }
-/*      */         
-/* 2842 */         if (null != getEncryptionMethod()) {
-/* 2843 */           element.appendChild(((XMLCipher.Factory.EncryptionMethodImpl)
-/* 2844 */               getEncryptionMethod()).toElement());
-/*      */         }
-/* 2846 */         if (null != getKeyInfo()) {
-/* 2847 */           element.appendChild(getKeyInfo().getElement().cloneNode(true));
-/*      */         }
-/* 2849 */         element.appendChild(((XMLCipher.Factory.CipherDataImpl)getCipherData()).toElement());
-/* 2850 */         if (null != getEncryptionProperties()) {
-/* 2851 */           element.appendChild(((XMLCipher.Factory.EncryptionPropertiesImpl)
-/* 2852 */               getEncryptionProperties()).toElement());
-/*      */         }
-/* 2854 */         if (this.referenceList != null && !this.referenceList.isEmpty()) {
-/* 2855 */           element.appendChild(((XMLCipher.Factory.ReferenceListImpl)getReferenceList()).toElement());
-/*      */         }
-/* 2857 */         if (null != this.carriedName) {
-/*      */           
-/* 2859 */           Element element1 = ElementProxy.createElementForFamily(XMLCipher.this
-/* 2860 */               .contextDocument, "http://www.w3.org/2001/04/xmlenc#", "CarriedKeyName");
-/*      */ 
-/*      */ 
-/*      */           
-/* 2864 */           Text text = XMLCipher.this.contextDocument.createTextNode(this.carriedName);
-/* 2865 */           element1.appendChild(text);
-/* 2866 */           element.appendChild(element1);
-/*      */         } 
-/*      */         
-/* 2869 */         return element;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private abstract class EncryptedTypeImpl {
-/* 2874 */       private String id = null;
-/* 2875 */       private String type = null;
-/* 2876 */       private String mimeType = null;
-/* 2877 */       private String encoding = null;
-/* 2878 */       private EncryptionMethod encryptionMethod = null;
-/* 2879 */       private KeyInfo keyInfo = null;
-/* 2880 */       private CipherData cipherData = null;
-/* 2881 */       private EncryptionProperties encryptionProperties = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       protected EncryptedTypeImpl(CipherData param2CipherData) {
-/* 2888 */         this.cipherData = param2CipherData;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public String getId() {
-/* 2896 */         return this.id;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setId(String param2String) {
-/* 2904 */         this.id = param2String;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public String getType() {
-/* 2912 */         return this.type;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setType(String param2String) {
-/* 2920 */         if (param2String == null || param2String.length() == 0) {
-/* 2921 */           this.type = null;
-/*      */         } else {
-/* 2923 */           URI uRI = null;
-/*      */           try {
-/* 2925 */             uRI = new URI(param2String);
-/* 2926 */           } catch (URISyntaxException uRISyntaxException) {
-/* 2927 */             throw (IllegalArgumentException)(new IllegalArgumentException())
-/* 2928 */               .initCause(uRISyntaxException);
-/*      */           } 
-/* 2930 */           this.type = uRI.toString();
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public String getMimeType() {
-/* 2939 */         return this.mimeType;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setMimeType(String param2String) {
-/* 2946 */         this.mimeType = param2String;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public String getEncoding() {
-/* 2954 */         return this.encoding;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setEncoding(String param2String) {
-/* 2962 */         if (param2String == null || param2String.length() == 0) {
-/* 2963 */           this.encoding = null;
-/*      */         } else {
-/* 2965 */           URI uRI = null;
-/*      */           try {
-/* 2967 */             uRI = new URI(param2String);
-/* 2968 */           } catch (URISyntaxException uRISyntaxException) {
-/* 2969 */             throw (IllegalArgumentException)(new IllegalArgumentException())
-/* 2970 */               .initCause(uRISyntaxException);
-/*      */           } 
-/* 2972 */           this.encoding = uRI.toString();
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public EncryptionMethod getEncryptionMethod() {
-/* 2981 */         return this.encryptionMethod;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setEncryptionMethod(EncryptionMethod param2EncryptionMethod) {
-/* 2989 */         this.encryptionMethod = param2EncryptionMethod;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public KeyInfo getKeyInfo() {
-/* 2997 */         return this.keyInfo;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setKeyInfo(KeyInfo param2KeyInfo) {
-/* 3005 */         this.keyInfo = param2KeyInfo;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public CipherData getCipherData() {
-/* 3013 */         return this.cipherData;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public EncryptionProperties getEncryptionProperties() {
-/* 3021 */         return this.encryptionProperties;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public void setEncryptionProperties(EncryptionProperties param2EncryptionProperties) {
-/* 3029 */         this.encryptionProperties = param2EncryptionProperties;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class EncryptionMethodImpl implements EncryptionMethod {
-/* 3034 */       private String algorithm = null;
-/* 3035 */       private int keySize = Integer.MIN_VALUE;
-/* 3036 */       private byte[] oaepParams = null;
-/* 3037 */       private List<Element> encryptionMethodInformation = null;
-/* 3038 */       private String digestAlgorithm = null;
-/* 3039 */       private String mgfAlgorithm = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public EncryptionMethodImpl(String param2String) {
-/* 3046 */         URI uRI = null;
-/*      */         try {
-/* 3048 */           uRI = new URI(param2String);
-/* 3049 */         } catch (URISyntaxException uRISyntaxException) {
-/* 3050 */           throw (IllegalArgumentException)(new IllegalArgumentException())
-/* 3051 */             .initCause(uRISyntaxException);
-/*      */         } 
-/* 3053 */         this.algorithm = uRI.toString();
-/* 3054 */         this.encryptionMethodInformation = new LinkedList<>();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getAlgorithm() {
-/* 3059 */         return this.algorithm;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public int getKeySize() {
-/* 3064 */         return this.keySize;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setKeySize(int param2Int) {
-/* 3069 */         this.keySize = param2Int;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public byte[] getOAEPparams() {
-/* 3074 */         return this.oaepParams;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setOAEPparams(byte[] param2ArrayOfbyte) {
-/* 3079 */         this.oaepParams = param2ArrayOfbyte;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setDigestAlgorithm(String param2String) {
-/* 3084 */         this.digestAlgorithm = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getDigestAlgorithm() {
-/* 3089 */         return this.digestAlgorithm;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setMGFAlgorithm(String param2String) {
-/* 3094 */         this.mgfAlgorithm = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getMGFAlgorithm() {
-/* 3099 */         return this.mgfAlgorithm;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Iterator<Element> getEncryptionMethodInformation() {
-/* 3104 */         return this.encryptionMethodInformation.iterator();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void addEncryptionMethodInformation(Element param2Element) {
-/* 3109 */         this.encryptionMethodInformation.add(param2Element);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void removeEncryptionMethodInformation(Element param2Element) {
-/* 3114 */         this.encryptionMethodInformation.remove(param2Element);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 3119 */         Element element = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 3120 */             .contextDocument, "EncryptionMethod");
-/*      */         
-/* 3122 */         element.setAttributeNS((String)null, "Algorithm", this.algorithm);
-/* 3123 */         if (this.keySize > 0) {
-/* 3124 */           element.appendChild(
-/* 3125 */               XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 3126 */                 .contextDocument, "KeySize")
-/* 3127 */               .appendChild(XMLCipher.this.contextDocument.createTextNode(String.valueOf(this.keySize))));
-/*      */         }
-/* 3129 */         if (null != this.oaepParams) {
-/*      */           
-/* 3131 */           Element element1 = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 3132 */               .contextDocument, "OAEPparams");
-/*      */           
-/* 3134 */           element1.appendChild(XMLCipher.this.contextDocument.createTextNode(Base64.encode(this.oaepParams)));
-/* 3135 */           element.appendChild(element1);
-/*      */         } 
-/* 3137 */         if (this.digestAlgorithm != null) {
-/*      */           
-/* 3139 */           Element element1 = XMLUtils.createElementInSignatureSpace(XMLCipher.this.contextDocument, "DigestMethod");
-/* 3140 */           element1.setAttributeNS((String)null, "Algorithm", this.digestAlgorithm);
-/* 3141 */           element.appendChild(element1);
-/*      */         } 
-/* 3143 */         if (this.mgfAlgorithm != null) {
-/*      */           
-/* 3145 */           Element element1 = XMLUtils.createElementInEncryption11Space(XMLCipher.this
-/* 3146 */               .contextDocument, "MGF");
-/*      */           
-/* 3148 */           element1.setAttributeNS((String)null, "Algorithm", this.mgfAlgorithm);
-/* 3149 */           element1.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + 
-/*      */               
-/* 3151 */               ElementProxy.getDefaultPrefix("http://www.w3.org/2009/xmlenc11#"), "http://www.w3.org/2009/xmlenc11#");
-/*      */ 
-/*      */           
-/* 3154 */           element.appendChild(element1);
-/*      */         } 
-/* 3156 */         Iterator<Element> iterator = this.encryptionMethodInformation.iterator();
-/* 3157 */         while (iterator.hasNext()) {
-/* 3158 */           element.appendChild(iterator.next());
-/*      */         }
-/*      */         
-/* 3161 */         return element;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class EncryptionPropertiesImpl implements EncryptionProperties {
-/* 3166 */       private String id = null;
-/* 3167 */       private List<EncryptionProperty> encryptionProperties = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public EncryptionPropertiesImpl() {
-/* 3173 */         this.encryptionProperties = new LinkedList<>();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getId() {
-/* 3178 */         return this.id;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setId(String param2String) {
-/* 3183 */         this.id = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Iterator<EncryptionProperty> getEncryptionProperties() {
-/* 3188 */         return this.encryptionProperties.iterator();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void addEncryptionProperty(EncryptionProperty param2EncryptionProperty) {
-/* 3193 */         this.encryptionProperties.add(param2EncryptionProperty);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void removeEncryptionProperty(EncryptionProperty param2EncryptionProperty) {
-/* 3198 */         this.encryptionProperties.remove(param2EncryptionProperty);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 3203 */         Element element = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 3204 */             .contextDocument, "EncryptionProperties");
-/*      */         
-/* 3206 */         if (null != this.id) {
-/* 3207 */           element.setAttributeNS((String)null, "Id", this.id);
-/*      */         }
-/* 3209 */         Iterator<EncryptionProperty> iterator = getEncryptionProperties();
-/* 3210 */         while (iterator.hasNext()) {
-/* 3211 */           element.appendChild(((XMLCipher.Factory.EncryptionPropertyImpl)iterator.next()).toElement());
-/*      */         }
-/*      */         
-/* 3214 */         return element;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     private class EncryptionPropertyImpl implements EncryptionProperty {
-/* 3219 */       private String target = null;
-/* 3220 */       private String id = null;
-/* 3221 */       private Map<String, String> attributeMap = new HashMap<>();
-/* 3222 */       private List<Element> encryptionInformation = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public EncryptionPropertyImpl() {
-/* 3228 */         this.encryptionInformation = new LinkedList<>();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getTarget() {
-/* 3233 */         return this.target;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setTarget(String param2String) {
-/* 3238 */         if (param2String == null || param2String.length() == 0) {
-/* 3239 */           this.target = null;
-/* 3240 */         } else if (param2String.startsWith("#")) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 3245 */           this.target = param2String;
-/*      */         } else {
-/* 3247 */           URI uRI = null;
-/*      */           try {
-/* 3249 */             uRI = new URI(param2String);
-/* 3250 */           } catch (URISyntaxException uRISyntaxException) {
-/* 3251 */             throw (IllegalArgumentException)(new IllegalArgumentException())
-/* 3252 */               .initCause(uRISyntaxException);
-/*      */           } 
-/* 3254 */           this.target = uRI.toString();
-/*      */         } 
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getId() {
-/* 3260 */         return this.id;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setId(String param2String) {
-/* 3265 */         this.id = param2String;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public String getAttribute(String param2String) {
-/* 3270 */         return this.attributeMap.get(param2String);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void setAttribute(String param2String1, String param2String2) {
-/* 3275 */         this.attributeMap.put(param2String1, param2String2);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Iterator<Element> getEncryptionInformation() {
-/* 3280 */         return this.encryptionInformation.iterator();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void addEncryptionInformation(Element param2Element) {
-/* 3285 */         this.encryptionInformation.add(param2Element);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void removeEncryptionInformation(Element param2Element) {
-/* 3290 */         this.encryptionInformation.remove(param2Element);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 3295 */         Element element = XMLUtils.createElementInEncryptionSpace(XMLCipher.this
-/* 3296 */             .contextDocument, "EncryptionProperty");
-/*      */         
-/* 3298 */         if (null != this.target) {
-/* 3299 */           element.setAttributeNS((String)null, "Target", this.target);
-/*      */         }
-/* 3301 */         if (null != this.id) {
-/* 3302 */           element.setAttributeNS((String)null, "Id", this.id);
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */         
-/* 3307 */         return element;
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private class TransformsImpl
-/*      */       extends Transforms
-/*      */       implements Transforms
-/*      */     {
-/*      */       public TransformsImpl() {
-/* 3318 */         super(XMLCipher.this.contextDocument);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public TransformsImpl(Document param2Document) {
-/* 3326 */         if (param2Document == null) {
-/* 3327 */           throw new RuntimeException("Document is null");
-/*      */         }
-/*      */         
-/* 3330 */         this.doc = param2Document;
-/* 3331 */         this
-/* 3332 */           .constructionElement = createElementForFamilyLocal(this.doc, 
-/* 3333 */             getBaseNamespace(), getBaseLocalName());
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public TransformsImpl(Element param2Element) throws XMLSignatureException, InvalidTransformException, XMLSecurityException, TransformationException {
-/* 3348 */         super(param2Element, "");
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public Element toElement() {
-/* 3356 */         if (this.doc == null) {
-/* 3357 */           this.doc = XMLCipher.this.contextDocument;
-/*      */         }
-/*      */         
-/* 3360 */         return getElement();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Transforms getDSTransforms() {
-/* 3365 */         return this;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       public String getBaseNamespace() {
-/* 3371 */         return "http://www.w3.org/2001/04/xmlenc#";
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private class ReferenceListImpl
-/*      */       implements ReferenceList
-/*      */     {
-/*      */       private Class<?> sentry;
-/*      */       
-/*      */       private List<Reference> references;
-/*      */       
-/*      */       public ReferenceListImpl(int param2Int) {
-/* 3384 */         if (param2Int == 1) {
-/* 3385 */           this.sentry = DataReference.class;
-/* 3386 */         } else if (param2Int == 2) {
-/* 3387 */           this.sentry = KeyReference.class;
-/*      */         } else {
-/* 3389 */           throw new IllegalArgumentException();
-/*      */         } 
-/* 3391 */         this.references = new LinkedList<>();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void add(Reference param2Reference) {
-/* 3396 */         if (!param2Reference.getClass().equals(this.sentry)) {
-/* 3397 */           throw new IllegalArgumentException();
-/*      */         }
-/* 3399 */         this.references.add(param2Reference);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public void remove(Reference param2Reference) {
-/* 3404 */         if (!param2Reference.getClass().equals(this.sentry)) {
-/* 3405 */           throw new IllegalArgumentException();
-/*      */         }
-/* 3407 */         this.references.remove(param2Reference);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public int size() {
-/* 3412 */         return this.references.size();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public boolean isEmpty() {
-/* 3417 */         return this.references.isEmpty();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Iterator<Reference> getReferences() {
-/* 3422 */         return this.references.iterator();
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       Element toElement() {
-/* 3427 */         Element element = ElementProxy.createElementForFamily(XMLCipher.this
-/* 3428 */             .contextDocument, "http://www.w3.org/2001/04/xmlenc#", "ReferenceList");
-/*      */ 
-/*      */ 
-/*      */         
-/* 3432 */         Iterator<Reference> iterator = this.references.iterator();
-/* 3433 */         while (iterator.hasNext()) {
-/* 3434 */           Reference reference = iterator.next();
-/* 3435 */           element.appendChild(((ReferenceImpl)reference).toElement());
-/*      */         } 
-/* 3437 */         return element;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Reference newDataReference(String param2String) {
-/* 3442 */         return new DataReference(param2String);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public Reference newKeyReference(String param2String) {
-/* 3447 */         return new KeyReference(param2String);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       private abstract class ReferenceImpl
-/*      */         implements Reference
-/*      */       {
-/*      */         private String uri;
-/*      */         
-/*      */         private List<Element> referenceInformation;
-/*      */ 
-/*      */         
-/*      */         ReferenceImpl(String param3String) {
-/* 3461 */           this.uri = param3String;
-/* 3462 */           this.referenceInformation = new LinkedList<>();
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public abstract String getType();
-/*      */ 
-/*      */         
-/*      */         public String getURI() {
-/* 3470 */           return this.uri;
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public Iterator<Element> getElementRetrievalInformation() {
-/* 3475 */           return this.referenceInformation.iterator();
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public void setURI(String param3String) {
-/* 3480 */           this.uri = param3String;
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public void removeElementRetrievalInformation(Element param3Element) {
-/* 3485 */           this.referenceInformation.remove(param3Element);
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public void addElementRetrievalInformation(Element param3Element) {
-/* 3490 */           this.referenceInformation.add(param3Element);
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         public Element toElement() {
-/* 3497 */           String str = getType();
-/*      */           
-/* 3499 */           Element element = ElementProxy.createElementForFamily(XMLCipher.this
-/* 3500 */               .contextDocument, "http://www.w3.org/2001/04/xmlenc#", str);
-/*      */ 
-/*      */ 
-/*      */           
-/* 3504 */           element.setAttribute("URI", this.uri);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 3510 */           return element;
-/*      */         }
-/*      */       }
-/*      */       
-/*      */       private class DataReference
-/*      */         extends ReferenceImpl {
-/*      */         DataReference(String param3String) {
-/* 3517 */           super(param3String);
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public String getType() {
-/* 3522 */           return "DataReference";
-/*      */         }
-/*      */       }
-/*      */       
-/*      */       private class KeyReference
-/*      */         extends ReferenceImpl {
-/*      */         KeyReference(String param3String) {
-/* 3529 */           super(param3String);
-/*      */         }
-/*      */ 
-/*      */         
-/*      */         public String getType() {
-/* 3534 */           return "KeyReference";
-/*      */         }
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\encryption\XMLCipher.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.encryption;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
+import java.security.spec.MGF1ParameterSpec;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
+
+import com.sun.org.apache.xml.internal.security.algorithms.JCEMapper;
+import com.sun.org.apache.xml.internal.security.algorithms.MessageDigestAlgorithm;
+import com.sun.org.apache.xml.internal.security.c14n.Canonicalizer;
+import com.sun.org.apache.xml.internal.security.c14n.InvalidCanonicalizerException;
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
+import com.sun.org.apache.xml.internal.security.keys.KeyInfo;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverException;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolverSpi;
+import com.sun.org.apache.xml.internal.security.keys.keyresolver.implementations.EncryptedKeyResolver;
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureException;
+import com.sun.org.apache.xml.internal.security.transforms.InvalidTransformException;
+import com.sun.org.apache.xml.internal.security.transforms.TransformationException;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.ElementProxy;
+import com.sun.org.apache.xml.internal.security.utils.EncryptionConstants;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+/**
+ * <code>XMLCipher</code> encrypts and decrypts the contents of
+ * <code>Document</code>s, <code>Element</code>s and <code>Element</code>
+ * contents. It was designed to resemble <code>javax.crypto.Cipher</code> in
+ * order to facilitate understanding of its functioning.
+ *
+ * @author Axl Mattheus (Sun Microsystems)
+ * @author Christian Geuer-Pollmann
+ */
+public class XMLCipher {
+
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(XMLCipher.class.getName());
+
+    /** Triple DES EDE (192 bit key) in CBC mode */
+    public static final String TRIPLEDES =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_TRIPLEDES;
+
+    /** AES 128 Cipher */
+    public static final String AES_128 =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128;
+
+    /** AES 256 Cipher */
+    public static final String AES_256 =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256;
+
+    /** AES 192 Cipher */
+    public static final String AES_192 =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192;
+
+    /** AES 128 GCM Cipher */
+    public static final String AES_128_GCM =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM;
+
+    /** AES 192 GCM Cipher */
+    public static final String AES_192_GCM =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES192_GCM;
+
+    /** AES 256 GCM Cipher */
+    public static final String AES_256_GCM =
+        EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES256_GCM;
+
+    /** RSA 1.5 Cipher */
+    public static final String RSA_v1dot5 =
+        EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSA15;
+
+    /** RSA OAEP Cipher */
+    public static final String RSA_OAEP =
+        EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP;
+
+    /** RSA OAEP Cipher */
+    public static final String RSA_OAEP_11 =
+        EncryptionConstants.ALGO_ID_KEYTRANSPORT_RSAOAEP_11;
+
+    /** DIFFIE_HELLMAN Cipher */
+    public static final String DIFFIE_HELLMAN =
+        EncryptionConstants.ALGO_ID_KEYAGREEMENT_DH;
+
+    /** Triple DES EDE (192 bit key) in CBC mode KEYWRAP*/
+    public static final String TRIPLEDES_KeyWrap =
+        EncryptionConstants.ALGO_ID_KEYWRAP_TRIPLEDES;
+
+    /** AES 128 Cipher KeyWrap */
+    public static final String AES_128_KeyWrap =
+        EncryptionConstants.ALGO_ID_KEYWRAP_AES128;
+
+    /** AES 256 Cipher KeyWrap */
+    public static final String AES_256_KeyWrap =
+        EncryptionConstants.ALGO_ID_KEYWRAP_AES256;
+
+    /** AES 192 Cipher KeyWrap */
+    public static final String AES_192_KeyWrap =
+        EncryptionConstants.ALGO_ID_KEYWRAP_AES192;
+
+    /** SHA1 Cipher */
+    public static final String SHA1 =
+        Constants.ALGO_ID_DIGEST_SHA1;
+
+    /** SHA256 Cipher */
+    public static final String SHA256 =
+        MessageDigestAlgorithm.ALGO_ID_DIGEST_SHA256;
+
+    /** SHA512 Cipher */
+    public static final String SHA512 =
+        MessageDigestAlgorithm.ALGO_ID_DIGEST_SHA512;
+
+    /** RIPEMD Cipher */
+    public static final String RIPEMD_160 =
+        MessageDigestAlgorithm.ALGO_ID_DIGEST_RIPEMD160;
+
+    /** XML Signature NS */
+    public static final String XML_DSIG =
+        Constants.SignatureSpecNS;
+
+    /** N14C_XML */
+    public static final String N14C_XML =
+        Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS;
+
+    /** N14C_XML with comments*/
+    public static final String N14C_XML_WITH_COMMENTS =
+        Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS;
+
+    /** N14C_XML exclusive */
+    public static final String EXCL_XML_N14C =
+        Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS;
+
+    /** N14C_XML exclusive with comments*/
+    public static final String EXCL_XML_N14C_WITH_COMMENTS =
+        Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS;
+
+    /** N14C_PHYSICAL preserve the physical representation*/
+    public static final String PHYSICAL_XML_N14C =
+        Canonicalizer.ALGO_ID_C14N_PHYSICAL;
+
+    /** Base64 encoding */
+    public static final String BASE64_ENCODING =
+        com.sun.org.apache.xml.internal.security.transforms.Transforms.TRANSFORM_BASE64_DECODE;
+
+    /** ENCRYPT Mode */
+    public static final int ENCRYPT_MODE = Cipher.ENCRYPT_MODE;
+
+    /** DECRYPT Mode */
+    public static final int DECRYPT_MODE = Cipher.DECRYPT_MODE;
+
+    /** UNWRAP Mode */
+    public static final int UNWRAP_MODE  = Cipher.UNWRAP_MODE;
+
+    /** WRAP Mode */
+    public static final int WRAP_MODE    = Cipher.WRAP_MODE;
+
+    private static final String ENC_ALGORITHMS = TRIPLEDES + "\n" +
+    AES_128 + "\n" + AES_256 + "\n" + AES_192 + "\n" + RSA_v1dot5 + "\n" +
+    RSA_OAEP + "\n" + RSA_OAEP_11 + "\n" + TRIPLEDES_KeyWrap + "\n" +
+    AES_128_KeyWrap + "\n" + AES_256_KeyWrap + "\n" + AES_192_KeyWrap + "\n" +
+    AES_128_GCM + "\n" + AES_192_GCM + "\n" + AES_256_GCM + "\n";
+
+    /** Cipher created during initialisation that is used for encryption */
+    private Cipher contextCipher;
+
+    /** Mode that the XMLCipher object is operating in */
+    private int cipherMode = Integer.MIN_VALUE;
+
+    /** URI of algorithm that is being used for cryptographic operation */
+    private String algorithm = null;
+
+    /** Cryptographic provider requested by caller */
+    private String requestedJCEProvider = null;
+
+    /** Holds c14n to serialize, if initialized then _always_ use this c14n to serialize */
+    private Canonicalizer canon;
+
+    /** Used for creation of DOM nodes in WRAP and ENCRYPT modes */
+    private Document contextDocument;
+
+    /** Instance of factory used to create XML Encryption objects */
+    private Factory factory;
+
+    /** Serializer class for going to/from UTF-8 */
+    private Serializer serializer;
+
+    /** Local copy of user's key */
+    private Key key;
+
+    /** Local copy of the kek (used to decrypt EncryptedKeys during a
+     *  DECRYPT_MODE operation */
+    private Key kek;
+
+    // The EncryptedKey being built (part of a WRAP operation) or read
+    // (part of an UNWRAP operation)
+    private EncryptedKey ek;
+
+    // The EncryptedData being built (part of a WRAP operation) or read
+    // (part of an UNWRAP operation)
+    private EncryptedData ed;
+
+    private SecureRandom random;
+
+    private boolean secureValidation;
+
+    private String digestAlg;
+
+    /** List of internal KeyResolvers for DECRYPT and UNWRAP modes. */
+    private List<KeyResolverSpi> internalKeyResolvers;
+
+    /**
+     * Set the Serializer algorithm to use
+     */
+    public void setSerializer(Serializer serializer) {
+        this.serializer = serializer;
+        serializer.setCanonicalizer(this.canon);
+    }
+
+    /**
+     * Get the Serializer algorithm to use
+     */
+    public Serializer getSerializer() {
+        return serializer;
+    }
+
+    /**
+     * Creates a new <code>XMLCipher</code>.
+     *
+     * @param transformation    the name of the transformation, e.g.,
+     *                          <code>XMLCipher.TRIPLEDES</code>. If null the XMLCipher can only
+     *                          be used for decrypt or unwrap operations where the encryption method
+     *                          is defined in the <code>EncryptionMethod</code> element.
+     * @param provider          the JCE provider that supplies the transformation,
+     *                          if null use the default provider.
+     * @param canon             the name of the c14n algorithm, if
+     *                          <code>null</code> use standard serializer
+     * @param digestMethod      An optional digestMethod to use.
+     */
+    private XMLCipher(
+        String transformation,
+        String provider,
+        String canonAlg,
+        String digestMethod
+    ) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Constructing XMLCipher...");
+        }
+
+        factory = new Factory();
+
+        algorithm = transformation;
+        requestedJCEProvider = provider;
+        digestAlg = digestMethod;
+
+        // Create a canonicalizer - used when serializing DOM to octets
+        // prior to encryption (and for the reverse)
+
+        try {
+            if (canonAlg == null) {
+                // The default is to preserve the physical representation.
+                this.canon = Canonicalizer.getInstance(Canonicalizer.ALGO_ID_C14N_PHYSICAL);
+            } else {
+                this.canon = Canonicalizer.getInstance(canonAlg);
+            }
+        } catch (InvalidCanonicalizerException ice) {
+            throw new XMLEncryptionException("empty", ice);
+        }
+
+        if (serializer == null) {
+            serializer = new DocumentSerializer();
+        }
+        serializer.setCanonicalizer(this.canon);
+
+        if (transformation != null) {
+            contextCipher = constructCipher(transformation, digestMethod);
+        }
+    }
+
+    /**
+     * Checks to ensure that the supplied algorithm is valid.
+     *
+     * @param algorithm the algorithm to check.
+     * @return true if the algorithm is valid, otherwise false.
+     * @since 1.0.
+     */
+    private static boolean isValidEncryptionAlgorithm(String algorithm) {
+        return (
+            algorithm.equals(TRIPLEDES) ||
+            algorithm.equals(AES_128) ||
+            algorithm.equals(AES_256) ||
+            algorithm.equals(AES_192) ||
+            algorithm.equals(AES_128_GCM) ||
+            algorithm.equals(AES_192_GCM) ||
+            algorithm.equals(AES_256_GCM) ||
+            algorithm.equals(RSA_v1dot5) ||
+            algorithm.equals(RSA_OAEP) ||
+            algorithm.equals(RSA_OAEP_11) ||
+            algorithm.equals(TRIPLEDES_KeyWrap) ||
+            algorithm.equals(AES_128_KeyWrap) ||
+            algorithm.equals(AES_256_KeyWrap) ||
+            algorithm.equals(AES_192_KeyWrap)
+        );
+    }
+
+    /**
+     * Validate the transformation argument of getInstance or getProviderInstance
+     *
+     * @param transformation the name of the transformation, e.g.,
+     *   <code>XMLCipher.TRIPLEDES</code> which is shorthand for
+     *   &quot;http://www.w3.org/2001/04/xmlenc#tripledes-cbc&quot;
+     */
+    private static void validateTransformation(String transformation) {
+        if (null == transformation) {
+            throw new NullPointerException("Transformation unexpectedly null...");
+        }
+        if (!isValidEncryptionAlgorithm(transformation)) {
+            log.log(java.util.logging.Level.WARNING, "Algorithm non-standard, expected one of " + ENC_ALGORITHMS);
+        }
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements the specified
+     * transformation and operates on the specified context document.
+     * <p>
+     * If the default provider package supplies an implementation of the
+     * requested transformation, an instance of Cipher containing that
+     * implementation is returned. If the transformation is not available in
+     * the default provider package, other provider packages are searched.
+     * <p>
+     * <b>NOTE<sub>1</sub>:</b> The transformation name does not follow the same
+     * pattern as that outlined in the Java Cryptography Extension Reference
+     * Guide but rather that specified by the XML Encryption Syntax and
+     * Processing document. The rational behind this is to make it easier for a
+     * novice at writing Java Encryption software to use the library.
+     * <p>
+     * <b>NOTE<sub>2</sub>:</b> <code>getInstance()</code> does not follow the
+     * same pattern regarding exceptional conditions as that used in
+     * <code>javax.crypto.Cipher</code>. Instead, it only throws an
+     * <code>XMLEncryptionException</code> which wraps an underlying exception.
+     * The stack trace from the exception should be self explanatory.
+     *
+     * @param transformation the name of the transformation, e.g.,
+     *   <code>XMLCipher.TRIPLEDES</code> which is shorthand for
+     *   &quot;http://www.w3.org/2001/04/xmlenc#tripledes-cbc&quot;
+     * @throws XMLEncryptionException
+     * @return the XMLCipher
+     * @see javax.crypto.Cipher#getInstance(java.lang.String)
+     */
+    public static XMLCipher getInstance(String transformation) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with transformation");
+        }
+        validateTransformation(transformation);
+        return new XMLCipher(transformation, null, null, null);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements the specified
+     * transformation, operates on the specified context document and serializes
+     * the document with the specified canonicalization algorithm before it
+     * encrypts the document.
+     * <p>
+     *
+     * @param transformation    the name of the transformation
+     * @param canon             the name of the c14n algorithm, if <code>null</code> use
+     *                          standard serializer
+     * @return the XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getInstance(String transformation, String canon)
+        throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with transformation and c14n algorithm");
+        }
+        validateTransformation(transformation);
+        return new XMLCipher(transformation, null, canon, null);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements the specified
+     * transformation, operates on the specified context document and serializes
+     * the document with the specified canonicalization algorithm before it
+     * encrypts the document.
+     * <p>
+     *
+     * @param transformation    the name of the transformation
+     * @param canon             the name of the c14n algorithm, if <code>null</code> use
+     *                          standard serializer
+     * @param digestMethod      An optional digestMethod to use
+     * @return the XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getInstance(String transformation, String canon, String digestMethod)
+        throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with transformation and c14n algorithm");
+        }
+        validateTransformation(transformation);
+        return new XMLCipher(transformation, null, canon, digestMethod);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements the specified
+     * transformation and operates on the specified context document.
+     *
+     * @param transformation    the name of the transformation
+     * @param provider          the JCE provider that supplies the transformation
+     * @return the XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getProviderInstance(String transformation, String provider)
+        throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with transformation and provider");
+        }
+        if (null == provider) {
+            throw new NullPointerException("Provider unexpectedly null..");
+        }
+        validateTransformation(transformation);
+        return new XMLCipher(transformation, provider, null, null);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements the specified
+     * transformation, operates on the specified context document and serializes
+     * the document with the specified canonicalization algorithm before it
+     * encrypts the document.
+     * <p>
+     *
+     * @param transformation    the name of the transformation
+     * @param provider          the JCE provider that supplies the transformation
+     * @param canon             the name of the c14n algorithm, if <code>null</code> use standard
+     *                          serializer
+     * @return the XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getProviderInstance(
+        String transformation, String provider, String canon
+    ) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with transformation, provider and c14n algorithm");
+        }
+        if (null == provider) {
+            throw new NullPointerException("Provider unexpectedly null..");
+        }
+        validateTransformation(transformation);
+        return new XMLCipher(transformation, provider, canon, null);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements the specified
+     * transformation, operates on the specified context document and serializes
+     * the document with the specified canonicalization algorithm before it
+     * encrypts the document.
+     * <p>
+     *
+     * @param transformation    the name of the transformation
+     * @param provider          the JCE provider that supplies the transformation
+     * @param canon             the name of the c14n algorithm, if <code>null</code> use standard
+     *                          serializer
+     * @param digestMethod      An optional digestMethod to use
+     * @return the XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getProviderInstance(
+        String transformation, String provider, String canon, String digestMethod
+    ) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with transformation, provider and c14n algorithm");
+        }
+        if (null == provider) {
+            throw new NullPointerException("Provider unexpectedly null..");
+        }
+        validateTransformation(transformation);
+        return new XMLCipher(transformation, provider, canon, digestMethod);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements no specific
+     * transformation, and can therefore only be used for decrypt or
+     * unwrap operations where the encryption method is defined in the
+     * <code>EncryptionMethod</code> element.
+     *
+     * @return The XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getInstance() throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with no arguments");
+        }
+        return new XMLCipher(null, null, null, null);
+    }
+
+    /**
+     * Returns an <code>XMLCipher</code> that implements no specific
+     * transformation, and can therefore only be used for decrypt or
+     * unwrap operations where the encryption method is defined in the
+     * <code>EncryptionMethod</code> element.
+     *
+     * Allows the caller to specify a provider that will be used for
+     * cryptographic operations.
+     *
+     * @param provider          the JCE provider that supplies the transformation
+     * @return the XMLCipher
+     * @throws XMLEncryptionException
+     */
+    public static XMLCipher getProviderInstance(String provider) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Getting XMLCipher with provider");
+        }
+        return new XMLCipher(null, provider, null, null);
+    }
+
+    /**
+     * Initializes this cipher with a key.
+     * <p>
+     * The cipher is initialized for one of the following four operations:
+     * encryption, decryption, key wrapping or key unwrapping, depending on the
+     * value of opmode.
+     *
+     * For WRAP and ENCRYPT modes, this also initialises the internal
+     * EncryptedKey or EncryptedData (with a CipherValue)
+     * structure that will be used during the ensuing operations.  This
+     * can be obtained (in order to modify KeyInfo elements etc. prior to
+     * finalising the encryption) by calling
+     * {@link #getEncryptedData} or {@link #getEncryptedKey}.
+     *
+     * @param opmode the operation mode of this cipher (this is one of the
+     *   following: ENCRYPT_MODE, DECRYPT_MODE, WRAP_MODE or UNWRAP_MODE)
+     * @param key
+     * @see javax.crypto.Cipher#init(int, java.security.Key)
+     * @throws XMLEncryptionException
+     */
+    public void init(int opmode, Key key) throws XMLEncryptionException {
+        // sanity checks
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Initializing XMLCipher...");
+        }
+
+        ek = null;
+        ed = null;
+
+        switch (opmode) {
+
+        case ENCRYPT_MODE :
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "opmode = ENCRYPT_MODE");
+            }
+            ed = createEncryptedData(CipherData.VALUE_TYPE, "NO VALUE YET");
+            break;
+        case DECRYPT_MODE :
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "opmode = DECRYPT_MODE");
+            }
+            break;
+        case WRAP_MODE :
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "opmode = WRAP_MODE");
+            }
+            ek = createEncryptedKey(CipherData.VALUE_TYPE, "NO VALUE YET");
+            break;
+        case UNWRAP_MODE :
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "opmode = UNWRAP_MODE");
+            }
+            break;
+        default :
+            log.log(java.util.logging.Level.SEVERE, "Mode unexpectedly invalid");
+            throw new XMLEncryptionException("Invalid mode in init");
+        }
+
+        cipherMode = opmode;
+        this.key = key;
+    }
+
+    /**
+     * Set whether secure validation is enabled or not. The default is false.
+     */
+    public void setSecureValidation(boolean secureValidation) {
+        this.secureValidation = secureValidation;
+    }
+
+    /**
+     * This method is used to add a custom {@link KeyResolverSpi} to an XMLCipher.
+     * These KeyResolvers are used in KeyInfo objects in DECRYPT and
+     * UNWRAP modes.
+     *
+     * @param keyResolver
+     */
+    public void registerInternalKeyResolver(KeyResolverSpi keyResolver) {
+        if (internalKeyResolvers == null) {
+            internalKeyResolvers = new ArrayList<KeyResolverSpi>();
+        }
+        internalKeyResolvers.add(keyResolver);
+    }
+
+    /**
+     * Get the EncryptedData being built
+     * <p>
+     * Returns the EncryptedData being built during an ENCRYPT operation.
+     * This can then be used by applications to add KeyInfo elements and
+     * set other parameters.
+     *
+     * @return The EncryptedData being built
+     */
+    public EncryptedData getEncryptedData() {
+        // Sanity checks
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Returning EncryptedData");
+        }
+        return ed;
+    }
+
+    /**
+     * Get the EncryptedData being build
+     *
+     * Returns the EncryptedData being built during an ENCRYPT operation.
+     * This can then be used by applications to add KeyInfo elements and
+     * set other parameters.
+     *
+     * @return The EncryptedData being built
+     */
+    public EncryptedKey getEncryptedKey() {
+        // Sanity checks
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Returning EncryptedKey");
+        }
+        return ek;
+    }
+
+    /**
+     * Set a Key Encryption Key.
+     * <p>
+     * The Key Encryption Key (KEK) is used for encrypting/decrypting
+     * EncryptedKey elements.  By setting this separately, the XMLCipher
+     * class can know whether a key applies to the data part or wrapped key
+     * part of an encrypted object.
+     *
+     * @param kek The key to use for de/encrypting key data
+     */
+
+    public void setKEK(Key kek) {
+        this.kek = kek;
+    }
+
+    /**
+     * Martial an EncryptedData
+     *
+     * Takes an EncryptedData object and returns a DOM Element that
+     * represents the appropriate <code>EncryptedData</code>
+     * <p>
+     * <b>Note:</b> This should only be used in cases where the context
+     * document has been passed in via a call to doFinal.
+     *
+     * @param encryptedData EncryptedData object to martial
+     * @return the DOM <code>Element</code> representing the passed in
+     * object
+     */
+    public Element martial(EncryptedData encryptedData) {
+        return factory.toElement(encryptedData);
+    }
+
+    /**
+     * Martial an EncryptedData
+     *
+     * Takes an EncryptedData object and returns a DOM Element that
+     * represents the appropriate <code>EncryptedData</code>
+     *
+     * @param context The document that will own the returned nodes
+     * @param encryptedData EncryptedData object to martial
+     * @return the DOM <code>Element</code> representing the passed in
+     * object
+     */
+    public Element martial(Document context, EncryptedData encryptedData) {
+        contextDocument = context;
+        return factory.toElement(encryptedData);
+    }
+
+    /**
+     * Martial an EncryptedKey
+     *
+     * Takes an EncryptedKey object and returns a DOM Element that
+     * represents the appropriate <code>EncryptedKey</code>
+     *
+     * <p>
+     * <b>Note:</b> This should only be used in cases where the context
+     * document has been passed in via a call to doFinal.
+     *
+     * @param encryptedKey EncryptedKey object to martial
+     * @return the DOM <code>Element</code> representing the passed in
+     * object
+     */
+    public Element martial(EncryptedKey encryptedKey) {
+        return factory.toElement(encryptedKey);
+    }
+
+    /**
+     * Martial an EncryptedKey
+     *
+     * Takes an EncryptedKey object and returns a DOM Element that
+     * represents the appropriate <code>EncryptedKey</code>
+     *
+     * @param context The document that will own the created nodes
+     * @param encryptedKey EncryptedKey object to martial
+     * @return the DOM <code>Element</code> representing the passed in
+     * object
+     */
+    public Element martial(Document context, EncryptedKey encryptedKey) {
+        contextDocument = context;
+        return factory.toElement(encryptedKey);
+    }
+
+    /**
+     * Martial a ReferenceList
+     *
+     * Takes a ReferenceList object and returns a DOM Element that
+     * represents the appropriate <code>ReferenceList</code>
+     *
+     * <p>
+     * <b>Note:</b> This should only be used in cases where the context
+     * document has been passed in via a call to doFinal.
+     *
+     * @param referenceList ReferenceList object to martial
+     * @return the DOM <code>Element</code> representing the passed in
+     * object
+     */
+    public Element martial(ReferenceList referenceList) {
+        return factory.toElement(referenceList);
+    }
+
+    /**
+     * Martial a ReferenceList
+     *
+     * Takes a ReferenceList object and returns a DOM Element that
+     * represents the appropriate <code>ReferenceList</code>
+     *
+     * @param context The document that will own the created nodes
+     * @param referenceList ReferenceList object to martial
+     * @return the DOM <code>Element</code> representing the passed in
+     * object
+     */
+    public Element martial(Document context, ReferenceList referenceList) {
+        contextDocument = context;
+        return factory.toElement(referenceList);
+    }
+
+    /**
+     * Encrypts an <code>Element</code> and replaces it with its encrypted
+     * counterpart in the context <code>Document</code>, that is, the
+     * <code>Document</code> specified when one calls
+     * {@link #getInstance(String) getInstance}.
+     *
+     * @param element the <code>Element</code> to encrypt.
+     * @return the context <code>Document</code> with the encrypted
+     *   <code>Element</code> having replaced the source <code>Element</code>.
+     *  @throws Exception
+     */
+    private Document encryptElement(Element element) throws Exception{
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypting element...");
+        }
+        if (null == element) {
+            log.log(java.util.logging.Level.SEVERE, "Element unexpectedly null...");
+        }
+        if (cipherMode != ENCRYPT_MODE && log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
+        }
+
+        if (algorithm == null) {
+            throw new XMLEncryptionException("XMLCipher instance without transformation specified");
+        }
+        encryptData(contextDocument, element, false);
+
+        Element encryptedElement = factory.toElement(ed);
+
+        Node sourceParent = element.getParentNode();
+        sourceParent.replaceChild(encryptedElement, element);
+
+        return contextDocument;
+    }
+
+    /**
+     * Encrypts a <code>NodeList</code> (the contents of an
+     * <code>Element</code>) and replaces its parent <code>Element</code>'s
+     * content with this the resulting <code>EncryptedType</code> within the
+     * context <code>Document</code>, that is, the <code>Document</code>
+     * specified when one calls
+     * {@link #getInstance(String) getInstance}.
+     *
+     * @param element the <code>NodeList</code> to encrypt.
+     * @return the context <code>Document</code> with the encrypted
+     *   <code>NodeList</code> having replaced the content of the source
+     *   <code>Element</code>.
+     * @throws Exception
+     */
+    private Document encryptElementContent(Element element) throws /* XMLEncryption */Exception {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypting element content...");
+        }
+        if (null == element) {
+            log.log(java.util.logging.Level.SEVERE, "Element unexpectedly null...");
+        }
+        if (cipherMode != ENCRYPT_MODE && log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
+        }
+
+        if (algorithm == null) {
+            throw new XMLEncryptionException("XMLCipher instance without transformation specified");
+        }
+        encryptData(contextDocument, element, true);
+
+        Element encryptedElement = factory.toElement(ed);
+
+        removeContent(element);
+        element.appendChild(encryptedElement);
+
+        return contextDocument;
+    }
+
+    /**
+     * Process a DOM <code>Document</code> node. The processing depends on the
+     * initialization parameters of {@link #init(int, Key) init()}.
+     *
+     * @param context the context <code>Document</code>.
+     * @param source the <code>Document</code> to be encrypted or decrypted.
+     * @return the processed <code>Document</code>.
+     * @throws Exception to indicate any exceptional conditions.
+     */
+    public Document doFinal(Document context, Document source) throws /* XMLEncryption */Exception {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Processing source document...");
+        }
+        if (null == context) {
+            log.log(java.util.logging.Level.SEVERE, "Context document unexpectedly null...");
+        }
+        if (null == source) {
+            log.log(java.util.logging.Level.SEVERE, "Source document unexpectedly null...");
+        }
+
+        contextDocument = context;
+
+        Document result = null;
+
+        switch (cipherMode) {
+        case DECRYPT_MODE:
+            result = decryptElement(source.getDocumentElement());
+            break;
+        case ENCRYPT_MODE:
+            result = encryptElement(source.getDocumentElement());
+            break;
+        case UNWRAP_MODE:
+        case WRAP_MODE:
+            break;
+        default:
+            throw new XMLEncryptionException("empty", new IllegalStateException());
+        }
+
+        return result;
+    }
+
+    /**
+     * Process a DOM <code>Element</code> node. The processing depends on the
+     * initialization parameters of {@link #init(int, Key) init()}.
+     *
+     * @param context the context <code>Document</code>.
+     * @param element the <code>Element</code> to be encrypted.
+     * @return the processed <code>Document</code>.
+     * @throws Exception to indicate any exceptional conditions.
+     */
+    public Document doFinal(Document context, Element element) throws /* XMLEncryption */Exception {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Processing source element...");
+        }
+        if (null == context) {
+            log.log(java.util.logging.Level.SEVERE, "Context document unexpectedly null...");
+        }
+        if (null == element) {
+            log.log(java.util.logging.Level.SEVERE, "Source element unexpectedly null...");
+        }
+
+        contextDocument = context;
+
+        Document result = null;
+
+        switch (cipherMode) {
+        case DECRYPT_MODE:
+            result = decryptElement(element);
+            break;
+        case ENCRYPT_MODE:
+            result = encryptElement(element);
+            break;
+        case UNWRAP_MODE:
+        case WRAP_MODE:
+            break;
+        default:
+            throw new XMLEncryptionException("empty", new IllegalStateException());
+        }
+
+        return result;
+    }
+
+    /**
+     * Process the contents of a DOM <code>Element</code> node. The processing
+     * depends on the initialization parameters of
+     * {@link #init(int, Key) init()}.
+     *
+     * @param context the context <code>Document</code>.
+     * @param element the <code>Element</code> which contents is to be
+     *   encrypted.
+     * @param content
+     * @return the processed <code>Document</code>.
+     * @throws Exception to indicate any exceptional conditions.
+     */
+    public Document doFinal(Document context, Element element, boolean content)
+        throws /* XMLEncryption*/ Exception {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Processing source element...");
+        }
+        if (null == context) {
+            log.log(java.util.logging.Level.SEVERE, "Context document unexpectedly null...");
+        }
+        if (null == element) {
+            log.log(java.util.logging.Level.SEVERE, "Source element unexpectedly null...");
+        }
+
+        contextDocument = context;
+
+        Document result = null;
+
+        switch (cipherMode) {
+        case DECRYPT_MODE:
+            if (content) {
+                result = decryptElementContent(element);
+            } else {
+                result = decryptElement(element);
+            }
+            break;
+        case ENCRYPT_MODE:
+            if (content) {
+                result = encryptElementContent(element);
+            } else {
+                result = encryptElement(element);
+            }
+            break;
+        case UNWRAP_MODE:
+        case WRAP_MODE:
+            break;
+        default:
+            throw new XMLEncryptionException("empty", new IllegalStateException());
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns an <code>EncryptedData</code> interface. Use this operation if
+     * you want to have full control over the contents of the
+     * <code>EncryptedData</code> structure.
+     *
+     * This does not change the source document in any way.
+     *
+     * @param context the context <code>Document</code>.
+     * @param element the <code>Element</code> that will be encrypted.
+     * @return the <code>EncryptedData</code>
+     * @throws Exception
+     */
+    public EncryptedData encryptData(Document context, Element element) throws
+        /* XMLEncryption */Exception {
+        return encryptData(context, element, false);
+    }
+
+    /**
+     * Returns an <code>EncryptedData</code> interface. Use this operation if
+     * you want to have full control over the serialization of the element
+     * or element content.
+     *
+     * This does not change the source document in any way.
+     *
+     * @param context the context <code>Document</code>.
+     * @param type a URI identifying type information about the plaintext form
+     *    of the encrypted content (may be <code>null</code>)
+     * @param serializedData the serialized data
+     * @return the <code>EncryptedData</code>
+     * @throws Exception
+     */
+    public EncryptedData encryptData(
+        Document context, String type, InputStream serializedData
+    ) throws Exception {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypting element...");
+        }
+        if (null == context) {
+            log.log(java.util.logging.Level.SEVERE, "Context document unexpectedly null...");
+        }
+        if (null == serializedData) {
+            log.log(java.util.logging.Level.SEVERE, "Serialized data unexpectedly null...");
+        }
+        if (cipherMode != ENCRYPT_MODE && log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
+        }
+
+        return encryptData(context, null, type, serializedData);
+    }
+
+    /**
+     * Returns an <code>EncryptedData</code> interface. Use this operation if
+     * you want to have full control over the contents of the
+     * <code>EncryptedData</code> structure.
+     *
+     * This does not change the source document in any way.
+     *
+     * @param context the context <code>Document</code>.
+     * @param element the <code>Element</code> that will be encrypted.
+     * @param contentMode <code>true</code> to encrypt element's content only,
+     *    <code>false</code> otherwise
+     * @return the <code>EncryptedData</code>
+     * @throws Exception
+     */
+    public EncryptedData encryptData(
+        Document context, Element element, boolean contentMode
+    ) throws /* XMLEncryption */ Exception {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypting element...");
+        }
+        if (null == context) {
+            log.log(java.util.logging.Level.SEVERE, "Context document unexpectedly null...");
+        }
+        if (null == element) {
+            log.log(java.util.logging.Level.SEVERE, "Element unexpectedly null...");
+        }
+        if (cipherMode != ENCRYPT_MODE && log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "XMLCipher unexpectedly not in ENCRYPT_MODE...");
+        }
+
+        if (contentMode) {
+            return encryptData(context, element, EncryptionConstants.TYPE_CONTENT, null);
+        } else {
+            return encryptData(context, element, EncryptionConstants.TYPE_ELEMENT, null);
+        }
+    }
+
+    private EncryptedData encryptData(
+        Document context, Element element, String type, InputStream serializedData
+    ) throws /* XMLEncryption */ Exception {
+        contextDocument = context;
+
+        if (algorithm == null) {
+            throw new XMLEncryptionException("XMLCipher instance without transformation specified");
+        }
+
+        byte[] serializedOctets = null;
+        if (serializedData == null) {
+            if (type.equals(EncryptionConstants.TYPE_CONTENT)) {
+                NodeList children = element.getChildNodes();
+                if (null != children) {
+                    serializedOctets = serializer.serializeToByteArray(children);
+                } else {
+                    Object exArgs[] = { "Element has no content." };
+                    throw new XMLEncryptionException("empty", exArgs);
+                }
+            } else {
+                serializedOctets = serializer.serializeToByteArray(element);
+            }
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Serialized octets:\n" + new String(serializedOctets, "UTF-8"));
+            }
+        }
+
+        byte[] encryptedBytes = null;
+
+        // Now create the working cipher if none was created already
+        Cipher c;
+        if (contextCipher == null) {
+            c = constructCipher(algorithm, null);
+        } else {
+            c = contextCipher;
+        }
+        // Now perform the encryption
+
+        try {
+            // The Spec mandates a 96-bit IV for GCM algorithms
+            if (AES_128_GCM.equals(algorithm) || AES_192_GCM.equals(algorithm)
+                || AES_256_GCM.equals(algorithm)) {
+                if (random == null) {
+                    random = SecureRandom.getInstance("SHA1PRNG");
+                }
+                byte[] temp = new byte[12];
+                random.nextBytes(temp);
+                IvParameterSpec paramSpec = new IvParameterSpec(temp);
+                c.init(cipherMode, key, paramSpec);
+            } else {
+                c.init(cipherMode, key);
+            }
+        } catch (InvalidKeyException ike) {
+            throw new XMLEncryptionException("empty", ike);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new XMLEncryptionException("empty", ex);
+        }
+
+        try {
+            if (serializedData != null) {
+                int numBytes;
+                byte[] buf = new byte[8192];
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                while ((numBytes = serializedData.read(buf)) != -1) {
+                    byte[] data = c.update(buf, 0, numBytes);
+                    baos.write(data);
+                }
+                baos.write(c.doFinal());
+                encryptedBytes = baos.toByteArray();
+            } else {
+                encryptedBytes = c.doFinal(serializedOctets);
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Expected cipher.outputSize = " +
+                        Integer.toString(c.getOutputSize(serializedOctets.length)));
+                }
+            }
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Actual cipher.outputSize = "
+                             + Integer.toString(encryptedBytes.length));
+            }
+        } catch (IllegalStateException ise) {
+            throw new XMLEncryptionException("empty", ise);
+        } catch (IllegalBlockSizeException ibse) {
+            throw new XMLEncryptionException("empty", ibse);
+        } catch (BadPaddingException bpe) {
+            throw new XMLEncryptionException("empty", bpe);
+        } catch (UnsupportedEncodingException uee) {
+            throw new XMLEncryptionException("empty", uee);
+        }
+
+        // Now build up to a properly XML Encryption encoded octet stream
+        // IvParameterSpec iv;
+        byte[] iv = c.getIV();
+        byte[] finalEncryptedBytes = new byte[iv.length + encryptedBytes.length];
+        System.arraycopy(iv, 0, finalEncryptedBytes, 0, iv.length);
+        System.arraycopy(encryptedBytes, 0, finalEncryptedBytes, iv.length, encryptedBytes.length);
+        String base64EncodedEncryptedOctets = Base64.encode(finalEncryptedBytes);
+
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypted octets:\n" + base64EncodedEncryptedOctets);
+            log.log(java.util.logging.Level.FINE, "Encrypted octets length = " + base64EncodedEncryptedOctets.length());
+        }
+
+        try {
+            CipherData cd = ed.getCipherData();
+            CipherValue cv = cd.getCipherValue();
+            // cv.setValue(base64EncodedEncryptedOctets.getBytes());
+            cv.setValue(base64EncodedEncryptedOctets);
+
+            if (type != null) {
+                ed.setType(new URI(type).toString());
+            }
+            EncryptionMethod method =
+                factory.newEncryptionMethod(new URI(algorithm).toString());
+            method.setDigestAlgorithm(digestAlg);
+            ed.setEncryptionMethod(method);
+        } catch (URISyntaxException ex) {
+            throw new XMLEncryptionException("empty", ex);
+        }
+        return ed;
+    }
+
+    /**
+     * Returns an <code>EncryptedData</code> interface. Use this operation if
+     * you want to load an <code>EncryptedData</code> structure from a DOM
+     * structure and manipulate the contents.
+     *
+     * @param context the context <code>Document</code>.
+     * @param element the <code>Element</code> that will be loaded
+     * @throws XMLEncryptionException
+     * @return the <code>EncryptedData</code>
+     */
+    public EncryptedData loadEncryptedData(Document context, Element element)
+        throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Loading encrypted element...");
+        }
+        if (null == context) {
+            throw new NullPointerException("Context document unexpectedly null...");
+        }
+        if (null == element) {
+            throw new NullPointerException("Element unexpectedly null...");
+        }
+        if (cipherMode != DECRYPT_MODE) {
+            throw new XMLEncryptionException("XMLCipher unexpectedly not in DECRYPT_MODE...");
+        }
+
+        contextDocument = context;
+        ed = factory.newEncryptedData(element);
+
+        return ed;
+    }
+
+    /**
+     * Returns an <code>EncryptedKey</code> interface. Use this operation if
+     * you want to load an <code>EncryptedKey</code> structure from a DOM
+     * structure and manipulate the contents.
+     *
+     * @param context the context <code>Document</code>.
+     * @param element the <code>Element</code> that will be loaded
+     * @return the <code>EncryptedKey</code>
+     * @throws XMLEncryptionException
+     */
+    public EncryptedKey loadEncryptedKey(Document context, Element element)
+        throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Loading encrypted key...");
+        }
+        if (null == context) {
+            throw new NullPointerException("Context document unexpectedly null...");
+        }
+        if (null == element) {
+            throw new NullPointerException("Element unexpectedly null...");
+        }
+        if (cipherMode != UNWRAP_MODE && cipherMode != DECRYPT_MODE) {
+            throw new XMLEncryptionException(
+                "XMLCipher unexpectedly not in UNWRAP_MODE or DECRYPT_MODE..."
+            );
+        }
+
+        contextDocument = context;
+        ek = factory.newEncryptedKey(element);
+        return ek;
+    }
+
+    /**
+     * Returns an <code>EncryptedKey</code> interface. Use this operation if
+     * you want to load an <code>EncryptedKey</code> structure from a DOM
+     * structure and manipulate the contents.
+     *
+     * Assumes that the context document is the document that owns the element
+     *
+     * @param element the <code>Element</code> that will be loaded
+     * @return the <code>EncryptedKey</code>
+     * @throws XMLEncryptionException
+     */
+    public EncryptedKey loadEncryptedKey(Element element) throws XMLEncryptionException {
+        return loadEncryptedKey(element.getOwnerDocument(), element);
+    }
+
+    /**
+     * Encrypts a key to an EncryptedKey structure
+     *
+     * @param doc the Context document that will be used to general DOM
+     * @param key Key to encrypt (will use previously set KEK to
+     * perform encryption
+     * @return the <code>EncryptedKey</code>
+     * @throws XMLEncryptionException
+     */
+    public EncryptedKey encryptKey(Document doc, Key key) throws XMLEncryptionException {
+        return encryptKey(doc, key, null, null);
+    }
+
+    /**
+     * Encrypts a key to an EncryptedKey structure
+     *
+     * @param doc the Context document that will be used to general DOM
+     * @param key Key to encrypt (will use previously set KEK to
+     * perform encryption
+     * @param mgfAlgorithm The xenc11 MGF Algorithm to use
+     * @param oaepParams The OAEPParams to use
+     * @return the <code>EncryptedKey</code>
+     * @throws XMLEncryptionException
+     */
+    public EncryptedKey encryptKey(
+        Document doc,
+        Key key,
+        String mgfAlgorithm,
+        byte[] oaepParams
+    ) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypting key ...");
+        }
+
+        if (null == key) {
+            log.log(java.util.logging.Level.SEVERE, "Key unexpectedly null...");
+        }
+        if (cipherMode != WRAP_MODE) {
+            log.log(java.util.logging.Level.FINE, "XMLCipher unexpectedly not in WRAP_MODE...");
+        }
+        if (algorithm == null) {
+            throw new XMLEncryptionException("XMLCipher instance without transformation specified");
+        }
+
+        contextDocument = doc;
+
+        byte[] encryptedBytes = null;
+        Cipher c;
+
+        if (contextCipher == null) {
+            // Now create the working cipher
+            c = constructCipher(algorithm, null);
+        } else {
+            c = contextCipher;
+        }
+        // Now perform the encryption
+
+        try {
+            // Should internally generate an IV
+            // todo - allow user to set an IV
+            OAEPParameterSpec oaepParameters =
+                constructOAEPParameters(
+                    algorithm, digestAlg, mgfAlgorithm, oaepParams
+                );
+            if (oaepParameters == null) {
+                c.init(Cipher.WRAP_MODE, this.key);
+            } else {
+                c.init(Cipher.WRAP_MODE, this.key, oaepParameters);
+            }
+            encryptedBytes = c.wrap(key);
+        } catch (InvalidKeyException ike) {
+            throw new XMLEncryptionException("empty", ike);
+        } catch (IllegalBlockSizeException ibse) {
+            throw new XMLEncryptionException("empty", ibse);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new XMLEncryptionException("empty", e);
+        }
+
+        String base64EncodedEncryptedOctets = Base64.encode(encryptedBytes);
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Encrypted key octets:\n" + base64EncodedEncryptedOctets);
+            log.log(java.util.logging.Level.FINE, "Encrypted key octets length = " + base64EncodedEncryptedOctets.length());
+        }
+
+        CipherValue cv = ek.getCipherData().getCipherValue();
+        cv.setValue(base64EncodedEncryptedOctets);
+
+        try {
+            EncryptionMethod method = factory.newEncryptionMethod(new URI(algorithm).toString());
+            method.setDigestAlgorithm(digestAlg);
+            method.setMGFAlgorithm(mgfAlgorithm);
+            method.setOAEPparams(oaepParams);
+            ek.setEncryptionMethod(method);
+        } catch (URISyntaxException ex) {
+            throw new XMLEncryptionException("empty", ex);
+        }
+        return ek;
+    }
+
+    /**
+     * Decrypt a key from a passed in EncryptedKey structure
+     *
+     * @param encryptedKey Previously loaded EncryptedKey that needs
+     * to be decrypted.
+     * @param algorithm Algorithm for the decryption
+     * @return a key corresponding to the given type
+     * @throws XMLEncryptionException
+     */
+    public Key decryptKey(EncryptedKey encryptedKey, String algorithm)
+        throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Decrypting key from previously loaded EncryptedKey...");
+        }
+
+        if (cipherMode != UNWRAP_MODE && log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "XMLCipher unexpectedly not in UNWRAP_MODE...");
+        }
+
+        if (algorithm == null) {
+            throw new XMLEncryptionException("Cannot decrypt a key without knowing the algorithm");
+        }
+
+        if (key == null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Trying to find a KEK via key resolvers");
+            }
+
+            KeyInfo ki = encryptedKey.getKeyInfo();
+            if (ki != null) {
+                ki.setSecureValidation(secureValidation);
+                try {
+                    String keyWrapAlg = encryptedKey.getEncryptionMethod().getAlgorithm();
+                    String keyType = JCEMapper.getJCEKeyAlgorithmFromURI(keyWrapAlg);
+                    if ("RSA".equals(keyType)) {
+                        key = ki.getPrivateKey();
+                    } else {
+                        key = ki.getSecretKey();
+                    }
+                }
+                catch (Exception e) {
+                    if (log.isLoggable(java.util.logging.Level.FINE)) {
+                        log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+                    }
+                }
+            }
+            if (key == null) {
+                log.log(java.util.logging.Level.SEVERE, "XMLCipher::decryptKey called without a KEK and cannot resolve");
+                throw new XMLEncryptionException("Unable to decrypt without a KEK");
+            }
+        }
+
+        // Obtain the encrypted octets
+        XMLCipherInput cipherInput = new XMLCipherInput(encryptedKey);
+        cipherInput.setSecureValidation(secureValidation);
+        byte[] encryptedBytes = cipherInput.getBytes();
+
+        String jceKeyAlgorithm = JCEMapper.getJCEKeyAlgorithmFromURI(algorithm);
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "JCE Key Algorithm: " + jceKeyAlgorithm);
+        }
+
+        Cipher c;
+        if (contextCipher == null) {
+            // Now create the working cipher
+            c =
+                constructCipher(
+                    encryptedKey.getEncryptionMethod().getAlgorithm(),
+                    encryptedKey.getEncryptionMethod().getDigestAlgorithm()
+                );
+        } else {
+            c = contextCipher;
+        }
+
+        Key ret;
+
+        try {
+            EncryptionMethod encMethod = encryptedKey.getEncryptionMethod();
+            OAEPParameterSpec oaepParameters =
+                constructOAEPParameters(
+                    encMethod.getAlgorithm(), encMethod.getDigestAlgorithm(),
+                    encMethod.getMGFAlgorithm(), encMethod.getOAEPparams()
+                );
+            if (oaepParameters == null) {
+                c.init(Cipher.UNWRAP_MODE, key);
+            } else {
+                c.init(Cipher.UNWRAP_MODE, key, oaepParameters);
+            }
+            ret = c.unwrap(encryptedBytes, jceKeyAlgorithm, Cipher.SECRET_KEY);
+        } catch (InvalidKeyException ike) {
+            throw new XMLEncryptionException("empty", ike);
+        } catch (NoSuchAlgorithmException nsae) {
+            throw new XMLEncryptionException("empty", nsae);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new XMLEncryptionException("empty", e);
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Decryption of key type " + algorithm + " OK");
+        }
+
+        return ret;
+    }
+
+    /**
+     * Construct an OAEPParameterSpec object from the given parameters
+     */
+    private OAEPParameterSpec constructOAEPParameters(
+        String encryptionAlgorithm,
+        String digestAlgorithm,
+        String mgfAlgorithm,
+        byte[] oaepParams
+    ) {
+        if (XMLCipher.RSA_OAEP.equals(encryptionAlgorithm)
+            || XMLCipher.RSA_OAEP_11.equals(encryptionAlgorithm)) {
+
+            String jceDigestAlgorithm = "SHA-1";
+            if (digestAlgorithm != null) {
+                jceDigestAlgorithm = JCEMapper.translateURItoJCEID(digestAlgorithm);
+            }
+
+            PSource.PSpecified pSource = PSource.PSpecified.DEFAULT;
+            if (oaepParams != null) {
+                pSource = new PSource.PSpecified(oaepParams);
+            }
+
+            MGF1ParameterSpec mgfParameterSpec = new MGF1ParameterSpec("SHA-1");
+            if (XMLCipher.RSA_OAEP_11.equals(encryptionAlgorithm)) {
+                if (EncryptionConstants.MGF1_SHA256.equals(mgfAlgorithm)) {
+                    mgfParameterSpec = new MGF1ParameterSpec("SHA-256");
+                } else if (EncryptionConstants.MGF1_SHA384.equals(mgfAlgorithm)) {
+                    mgfParameterSpec = new MGF1ParameterSpec("SHA-384");
+                } else if (EncryptionConstants.MGF1_SHA512.equals(mgfAlgorithm)) {
+                    mgfParameterSpec = new MGF1ParameterSpec("SHA-512");
+                }
+            }
+            return new OAEPParameterSpec(jceDigestAlgorithm, "MGF1", mgfParameterSpec, pSource);
+        }
+
+        return null;
+    }
+
+    /**
+     * Construct a Cipher object
+     */
+    private Cipher constructCipher(String algorithm, String digestAlgorithm) throws XMLEncryptionException {
+        String jceAlgorithm = JCEMapper.translateURItoJCEID(algorithm);
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "JCE Algorithm = " + jceAlgorithm);
+        }
+
+        Cipher c;
+        try {
+            if (requestedJCEProvider == null) {
+                c = Cipher.getInstance(jceAlgorithm);
+            } else {
+                c = Cipher.getInstance(jceAlgorithm, requestedJCEProvider);
+            }
+        } catch (NoSuchAlgorithmException nsae) {
+            // Check to see if an RSA OAEP MGF-1 with SHA-1 algorithm was requested
+            // Some JDKs don't support RSA/ECB/OAEPPadding
+            if (XMLCipher.RSA_OAEP.equals(algorithm)
+                && (digestAlgorithm == null
+                    || MessageDigestAlgorithm.ALGO_ID_DIGEST_SHA1.equals(digestAlgorithm))) {
+                try {
+                    if (requestedJCEProvider == null) {
+                        c = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
+                    } else {
+                        c = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding", requestedJCEProvider);
+                    }
+                } catch (Exception ex) {
+                    throw new XMLEncryptionException("empty", ex);
+                }
+            } else {
+                throw new XMLEncryptionException("empty", nsae);
+            }
+        } catch (NoSuchProviderException nspre) {
+            throw new XMLEncryptionException("empty", nspre);
+        } catch (NoSuchPaddingException nspae) {
+            throw new XMLEncryptionException("empty", nspae);
+        }
+
+        return c;
+    }
+
+    /**
+     * Decrypt a key from a passed in EncryptedKey structure.  This version
+     * is used mainly internally, when  the cipher already has an
+     * EncryptedData loaded.  The algorithm URI will be read from the
+     * EncryptedData
+     *
+     * @param encryptedKey Previously loaded EncryptedKey that needs
+     * to be decrypted.
+     * @return a key corresponding to the given type
+     * @throws XMLEncryptionException
+     */
+    public Key decryptKey(EncryptedKey encryptedKey) throws XMLEncryptionException {
+        return decryptKey(encryptedKey, ed.getEncryptionMethod().getAlgorithm());
+    }
+
+    /**
+     * Removes the contents of a <code>Node</code>.
+     *
+     * @param node the <code>Node</code> to clear.
+     */
+    private static void removeContent(Node node) {
+        while (node.hasChildNodes()) {
+            node.removeChild(node.getFirstChild());
+        }
+    }
+
+    /**
+     * Decrypts <code>EncryptedData</code> in a single-part operation.
+     *
+     * @param element the <code>EncryptedData</code> to decrypt.
+     * @return the <code>Node</code> as a result of the decrypt operation.
+     * @throws XMLEncryptionException
+     */
+    private Document decryptElement(Element element) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Decrypting element...");
+        }
+
+        if (cipherMode != DECRYPT_MODE) {
+            log.log(java.util.logging.Level.SEVERE, "XMLCipher unexpectedly not in DECRYPT_MODE...");
+        }
+
+        byte[] octets = decryptToByteArray(element);
+
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Decrypted octets:\n" + new String(octets));
+        }
+
+        Node sourceParent = element.getParentNode();
+        Node decryptedNode = serializer.deserialize(octets, sourceParent);
+
+        // The de-serialiser returns a node whose children we need to take on.
+        if (sourceParent != null && Node.DOCUMENT_NODE == sourceParent.getNodeType()) {
+            // If this is a content decryption, this may have problems
+            contextDocument.removeChild(contextDocument.getDocumentElement());
+            contextDocument.appendChild(decryptedNode);
+        } else if (sourceParent != null) {
+            sourceParent.replaceChild(decryptedNode, element);
+        }
+
+        return contextDocument;
+    }
+
+    /**
+     *
+     * @param element
+     * @return the <code>Node</code> as a result of the decrypt operation.
+     * @throws XMLEncryptionException
+     */
+    private Document decryptElementContent(Element element) throws XMLEncryptionException {
+        Element e =
+            (Element) element.getElementsByTagNameNS(
+                EncryptionConstants.EncryptionSpecNS,
+                EncryptionConstants._TAG_ENCRYPTEDDATA
+            ).item(0);
+
+        if (null == e) {
+            throw new XMLEncryptionException("No EncryptedData child element.");
+        }
+
+        return decryptElement(e);
+    }
+
+    /**
+     * Decrypt an EncryptedData element to a byte array.
+     *
+     * When passed in an EncryptedData node, returns the decryption
+     * as a byte array.
+     *
+     * Does not modify the source document.
+     * @param element
+     * @return the bytes resulting from the decryption
+     * @throws XMLEncryptionException
+     */
+    public byte[] decryptToByteArray(Element element) throws XMLEncryptionException {
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Decrypting to ByteArray...");
+        }
+
+        if (cipherMode != DECRYPT_MODE) {
+            log.log(java.util.logging.Level.SEVERE, "XMLCipher unexpectedly not in DECRYPT_MODE...");
+        }
+
+        EncryptedData encryptedData = factory.newEncryptedData(element);
+
+        if (key == null) {
+            KeyInfo ki = encryptedData.getKeyInfo();
+            if (ki != null) {
+                try {
+                    // Add an EncryptedKey resolver
+                    String encMethodAlgorithm = encryptedData.getEncryptionMethod().getAlgorithm();
+                    EncryptedKeyResolver resolver = new EncryptedKeyResolver(encMethodAlgorithm, kek);
+                    if (internalKeyResolvers != null) {
+                        int size = internalKeyResolvers.size();
+                        for (int i = 0; i < size; i++) {
+                            resolver.registerInternalKeyResolver(internalKeyResolvers.get(i));
+                        }
+                    }
+                    ki.registerInternalKeyResolver(resolver);
+                    ki.setSecureValidation(secureValidation);
+                    key = ki.getSecretKey();
+                } catch (KeyResolverException kre) {
+                    if (log.isLoggable(java.util.logging.Level.FINE)) {
+                        log.log(java.util.logging.Level.FINE, kre.getMessage(), kre);
+                    }
+                }
+            }
+
+            if (key == null) {
+                log.log(java.util.logging.Level.SEVERE,
+                    "XMLCipher::decryptElement called without a key and unable to resolve"
+                );
+                throw new XMLEncryptionException("encryption.nokey");
+            }
+        }
+
+        // Obtain the encrypted octets
+        XMLCipherInput cipherInput = new XMLCipherInput(encryptedData);
+        cipherInput.setSecureValidation(secureValidation);
+        byte[] encryptedBytes = cipherInput.getBytes();
+
+        // Now create the working cipher
+        String jceAlgorithm =
+            JCEMapper.translateURItoJCEID(encryptedData.getEncryptionMethod().getAlgorithm());
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "JCE Algorithm = " + jceAlgorithm);
+        }
+
+        Cipher c;
+        try {
+            if (requestedJCEProvider == null) {
+                c = Cipher.getInstance(jceAlgorithm);
+            } else {
+                c = Cipher.getInstance(jceAlgorithm, requestedJCEProvider);
+            }
+        } catch (NoSuchAlgorithmException nsae) {
+            throw new XMLEncryptionException("empty", nsae);
+        } catch (NoSuchProviderException nspre) {
+            throw new XMLEncryptionException("empty", nspre);
+        } catch (NoSuchPaddingException nspae) {
+            throw new XMLEncryptionException("empty", nspae);
+        }
+
+        // Calculate the IV length and copy out
+
+        // For now, we only work with Block ciphers, so this will work.
+        // This should probably be put into the JCE mapper.
+
+        int ivLen = c.getBlockSize();
+        String alg = encryptedData.getEncryptionMethod().getAlgorithm();
+        if (AES_128_GCM.equals(alg) || AES_192_GCM.equals(alg) || AES_256_GCM.equals(alg)) {
+            ivLen = 12;
+        }
+        byte[] ivBytes = new byte[ivLen];
+
+        // You may be able to pass the entire piece in to IvParameterSpec
+        // and it will only take the first x bytes, but no way to be certain
+        // that this will work for every JCE provider, so lets copy the
+        // necessary bytes into a dedicated array.
+
+        System.arraycopy(encryptedBytes, 0, ivBytes, 0, ivLen);
+        IvParameterSpec iv = new IvParameterSpec(ivBytes);
+
+        try {
+            c.init(cipherMode, key, iv);
+        } catch (InvalidKeyException ike) {
+            throw new XMLEncryptionException("empty", ike);
+        } catch (InvalidAlgorithmParameterException iape) {
+            throw new XMLEncryptionException("empty", iape);
+        }
+
+        try {
+            return c.doFinal(encryptedBytes, ivLen, encryptedBytes.length - ivLen);
+        } catch (IllegalBlockSizeException ibse) {
+            throw new XMLEncryptionException("empty", ibse);
+        } catch (BadPaddingException bpe) {
+            throw new XMLEncryptionException("empty", bpe);
+        }
+    }
+
+    /*
+     * Expose the interface for creating XML Encryption objects
+     */
+
+    /**
+     * Creates an <code>EncryptedData</code> <code>Element</code>.
+     *
+     * The newEncryptedData and newEncryptedKey methods create fairly complete
+     * elements that are immediately useable.  All the other create* methods
+     * return bare elements that still need to be built upon.
+     *<p>
+     * An EncryptionMethod will still need to be added however
+     *
+     * @param type Either REFERENCE_TYPE or VALUE_TYPE - defines what kind of
+     * CipherData this EncryptedData will contain.
+     * @param value the Base 64 encoded, encrypted text to wrap in the
+     *   <code>EncryptedData</code> or the URI to set in the CipherReference
+     * (usage will depend on the <code>type</code>
+     * @return the <code>EncryptedData</code> <code>Element</code>.
+     *
+     * <!--
+     * <EncryptedData Id[OPT] Type[OPT] MimeType[OPT] Encoding[OPT]>
+     *     <EncryptionMethod/>[OPT]
+     *     <ds:KeyInfo>[OPT]
+     *         <EncryptedKey/>[OPT]
+     *         <AgreementMethod/>[OPT]
+     *         <ds:KeyName/>[OPT]
+     *         <ds:RetrievalMethod/>[OPT]
+     *         <ds:[MUL]/>[OPT]
+     *     </ds:KeyInfo>
+     *     <CipherData>[MAN]
+     *         <CipherValue/> XOR <CipherReference/>
+     *     </CipherData>
+     *     <EncryptionProperties/>[OPT]
+     * </EncryptedData>
+     * -->
+     * @throws XMLEncryptionException
+     */
+    public EncryptedData createEncryptedData(int type, String value) throws XMLEncryptionException {
+        EncryptedData result = null;
+        CipherData data = null;
+
+        switch (type) {
+        case CipherData.REFERENCE_TYPE:
+            CipherReference cipherReference = factory.newCipherReference(value);
+            data = factory.newCipherData(type);
+            data.setCipherReference(cipherReference);
+            result = factory.newEncryptedData(data);
+            break;
+        case CipherData.VALUE_TYPE:
+            CipherValue cipherValue = factory.newCipherValue(value);
+            data = factory.newCipherData(type);
+            data.setCipherValue(cipherValue);
+            result = factory.newEncryptedData(data);
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates an <code>EncryptedKey</code> <code>Element</code>.
+     *
+     * The newEncryptedData and newEncryptedKey methods create fairly complete
+     * elements that are immediately useable.  All the other create* methods
+     * return bare elements that still need to be built upon.
+     *<p>
+     * An EncryptionMethod will still need to be added however
+     *
+     * @param type Either REFERENCE_TYPE or VALUE_TYPE - defines what kind of
+     * CipherData this EncryptedData will contain.
+     * @param value the Base 64 encoded, encrypted text to wrap in the
+     *   <code>EncryptedKey</code> or the URI to set in the CipherReference
+     * (usage will depend on the <code>type</code>
+     * @return the <code>EncryptedKey</code> <code>Element</code>.
+     *
+     * <!--
+     * <EncryptedKey Id[OPT] Type[OPT] MimeType[OPT] Encoding[OPT]>
+     *     <EncryptionMethod/>[OPT]
+     *     <ds:KeyInfo>[OPT]
+     *         <EncryptedKey/>[OPT]
+     *         <AgreementMethod/>[OPT]
+     *         <ds:KeyName/>[OPT]
+     *         <ds:RetrievalMethod/>[OPT]
+     *         <ds:[MUL]/>[OPT]
+     *     </ds:KeyInfo>
+     *     <CipherData>[MAN]
+     *         <CipherValue/> XOR <CipherReference/>
+     *     </CipherData>
+     *     <EncryptionProperties/>[OPT]
+     * </EncryptedData>
+     * -->
+     * @throws XMLEncryptionException
+     */
+    public EncryptedKey createEncryptedKey(int type, String value) throws XMLEncryptionException {
+        EncryptedKey result = null;
+        CipherData data = null;
+
+        switch (type) {
+        case CipherData.REFERENCE_TYPE:
+            CipherReference cipherReference = factory.newCipherReference(value);
+            data = factory.newCipherData(type);
+            data.setCipherReference(cipherReference);
+            result = factory.newEncryptedKey(data);
+            break;
+        case CipherData.VALUE_TYPE:
+            CipherValue cipherValue = factory.newCipherValue(value);
+            data = factory.newCipherData(type);
+            data.setCipherValue(cipherValue);
+            result = factory.newEncryptedKey(data);
+        }
+
+        return result;
+    }
+
+    /**
+     * Create an AgreementMethod object
+     *
+     * @param algorithm Algorithm of the agreement method
+     * @return a new <code>AgreementMethod</code>
+     */
+    public AgreementMethod createAgreementMethod(String algorithm) {
+        return factory.newAgreementMethod(algorithm);
+    }
+
+    /**
+     * Create a CipherData object
+     *
+     * @param type Type of this CipherData (either VALUE_TUPE or
+     * REFERENCE_TYPE)
+     * @return a new <code>CipherData</code>
+     */
+    public CipherData createCipherData(int type) {
+        return factory.newCipherData(type);
+    }
+
+    /**
+     * Create a CipherReference object
+     *
+     * @param uri The URI that the reference will refer
+     * @return a new <code>CipherReference</code>
+     */
+    public CipherReference createCipherReference(String uri) {
+        return factory.newCipherReference(uri);
+    }
+
+    /**
+     * Create a CipherValue element
+     *
+     * @param value The value to set the ciphertext to
+     * @return a new <code>CipherValue</code>
+     */
+    public CipherValue createCipherValue(String value) {
+        return factory.newCipherValue(value);
+    }
+
+    /**
+     * Create an EncryptionMethod object
+     *
+     * @param algorithm Algorithm for the encryption
+     * @return a new <code>EncryptionMethod</code>
+     */
+    public EncryptionMethod createEncryptionMethod(String algorithm) {
+        return factory.newEncryptionMethod(algorithm);
+    }
+
+    /**
+     * Create an EncryptionProperties element
+     * @return a new <code>EncryptionProperties</code>
+     */
+    public EncryptionProperties createEncryptionProperties() {
+        return factory.newEncryptionProperties();
+    }
+
+    /**
+     * Create a new EncryptionProperty element
+     * @return a new <code>EncryptionProperty</code>
+     */
+    public EncryptionProperty createEncryptionProperty() {
+        return factory.newEncryptionProperty();
+    }
+
+    /**
+     * Create a new ReferenceList object
+     * @param type ReferenceList.DATA_REFERENCE or ReferenceList.KEY_REFERENCE
+     * @return a new <code>ReferenceList</code>
+     */
+    public ReferenceList createReferenceList(int type) {
+        return factory.newReferenceList(type);
+    }
+
+    /**
+     * Create a new Transforms object
+     * <p>
+     * <b>Note</b>: A context document <i>must</i> have been set
+     * elsewhere (possibly via a call to doFinal).  If not, use the
+     * createTransforms(Document) method.
+     * @return a new <code>Transforms</code>
+     */
+    public Transforms createTransforms() {
+        return factory.newTransforms();
+    }
+
+    /**
+     * Create a new Transforms object
+     *
+     * Because the handling of Transforms is currently done in the signature
+     * code, the creation of a Transforms object <b>requires</b> a
+     * context document.
+     *
+     * @param doc Document that will own the created Transforms node
+     * @return a new <code>Transforms</code>
+     */
+    public Transforms createTransforms(Document doc) {
+        return factory.newTransforms(doc);
+    }
+
+    /**
+     *
+     * @author Axl Mattheus
+     */
+    private class Factory {
+        /**
+         * @param algorithm
+         * @return a new AgreementMethod
+         */
+        AgreementMethod newAgreementMethod(String algorithm)  {
+            return new AgreementMethodImpl(algorithm);
+        }
+
+        /**
+         * @param type
+         * @return a new CipherData
+         *
+         */
+        CipherData newCipherData(int type) {
+            return new CipherDataImpl(type);
+        }
+
+        /**
+         * @param uri
+         * @return a new CipherReference
+         */
+        CipherReference newCipherReference(String uri)  {
+            return new CipherReferenceImpl(uri);
+        }
+
+        /**
+         * @param value
+         * @return a new CipherValue
+         */
+        CipherValue newCipherValue(String value) {
+            return new CipherValueImpl(value);
+        }
+
+        /*
+        CipherValue newCipherValue(byte[] value) {
+            return new CipherValueImpl(value);
+        }
+         */
+
+        /**
+         * @param data
+         * @return a new EncryptedData
+         */
+        EncryptedData newEncryptedData(CipherData data) {
+            return new EncryptedDataImpl(data);
+        }
+
+        /**
+         * @param data
+         * @return a new EncryptedKey
+         */
+        EncryptedKey newEncryptedKey(CipherData data) {
+            return new EncryptedKeyImpl(data);
+        }
+
+        /**
+         * @param algorithm
+         * @return a new EncryptionMethod
+         */
+        EncryptionMethod newEncryptionMethod(String algorithm) {
+            return new EncryptionMethodImpl(algorithm);
+        }
+
+        /**
+         * @return a new EncryptionProperties
+         */
+        EncryptionProperties newEncryptionProperties() {
+            return new EncryptionPropertiesImpl();
+        }
+
+        /**
+         * @return a new EncryptionProperty
+         */
+        EncryptionProperty newEncryptionProperty() {
+            return new EncryptionPropertyImpl();
+        }
+
+        /**
+         * @param type ReferenceList.DATA_REFERENCE or ReferenceList.KEY_REFERENCE
+         * @return a new ReferenceList
+         */
+        ReferenceList newReferenceList(int type) {
+            return new ReferenceListImpl(type);
+        }
+
+        /**
+         * @return a new Transforms
+         */
+        Transforms newTransforms() {
+            return new TransformsImpl();
+        }
+
+        /**
+         * @param doc
+         * @return a new Transforms
+         */
+        Transforms newTransforms(Document doc) {
+            return new TransformsImpl(doc);
+        }
+
+        /**
+         * @param element
+         * @return a new CipherData
+         * @throws XMLEncryptionException
+         */
+        CipherData newCipherData(Element element) throws XMLEncryptionException {
+            if (null == element) {
+                throw new NullPointerException("element is null");
+            }
+
+            int type = 0;
+            Element e = null;
+            if (element.getElementsByTagNameNS(
+                EncryptionConstants.EncryptionSpecNS,
+                EncryptionConstants._TAG_CIPHERVALUE).getLength() > 0
+            ) {
+                type = CipherData.VALUE_TYPE;
+                e = (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_CIPHERVALUE).item(0);
+            } else if (element.getElementsByTagNameNS(
+                EncryptionConstants.EncryptionSpecNS,
+                EncryptionConstants._TAG_CIPHERREFERENCE).getLength() > 0) {
+                type = CipherData.REFERENCE_TYPE;
+                e = (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_CIPHERREFERENCE).item(0);
+            }
+
+            CipherData result = newCipherData(type);
+            if (type == CipherData.VALUE_TYPE) {
+                result.setCipherValue(newCipherValue(e));
+            } else if (type == CipherData.REFERENCE_TYPE) {
+                result.setCipherReference(newCipherReference(e));
+            }
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new CipherReference
+         * @throws XMLEncryptionException
+         *
+         */
+        CipherReference newCipherReference(Element element) throws XMLEncryptionException {
+
+            Attr uriAttr =
+                element.getAttributeNodeNS(null, EncryptionConstants._ATT_URI);
+            CipherReference result = new CipherReferenceImpl(uriAttr);
+
+            // Find any Transforms
+            NodeList transformsElements =
+                element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS, EncryptionConstants._TAG_TRANSFORMS);
+            Element transformsElement = (Element) transformsElements.item(0);
+
+            if (transformsElement != null) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Creating a DSIG based Transforms element");
+                }
+                try {
+                    result.setTransforms(new TransformsImpl(transformsElement));
+                } catch (XMLSignatureException xse) {
+                    throw new XMLEncryptionException("empty", xse);
+                } catch (InvalidTransformException ite) {
+                    throw new XMLEncryptionException("empty", ite);
+                } catch (XMLSecurityException xse) {
+                    throw new XMLEncryptionException("empty", xse);
+                }
+            }
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new CipherValue
+         */
+        CipherValue newCipherValue(Element element) {
+            String value = XMLUtils.getFullTextChildrenFromElement(element);
+
+            return newCipherValue(value);
+        }
+
+        /**
+         * @param element
+         * @return a new EncryptedData
+         * @throws XMLEncryptionException
+         *
+         */
+        EncryptedData newEncryptedData(Element element) throws XMLEncryptionException {
+            EncryptedData result = null;
+
+            NodeList dataElements =
+                element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS, EncryptionConstants._TAG_CIPHERDATA);
+
+            // Need to get the last CipherData found, as earlier ones will
+            // be for elements in the KeyInfo lists
+
+            Element dataElement =
+                (Element) dataElements.item(dataElements.getLength() - 1);
+
+            CipherData data = newCipherData(dataElement);
+
+            result = newEncryptedData(data);
+
+            result.setId(element.getAttributeNS(null, EncryptionConstants._ATT_ID));
+            result.setType(element.getAttributeNS(null, EncryptionConstants._ATT_TYPE));
+            result.setMimeType(element.getAttributeNS(null, EncryptionConstants._ATT_MIMETYPE));
+            result.setEncoding( element.getAttributeNS(null, Constants._ATT_ENCODING));
+
+            Element encryptionMethodElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_ENCRYPTIONMETHOD).item(0);
+            if (null != encryptionMethodElement) {
+                result.setEncryptionMethod(newEncryptionMethod(encryptionMethodElement));
+            }
+
+            // BFL 16/7/03 - simple implementation
+            // TODO: Work out how to handle relative URI
+
+            Element keyInfoElement =
+                (Element) element.getElementsByTagNameNS(
+                    Constants.SignatureSpecNS, Constants._TAG_KEYINFO).item(0);
+            if (null != keyInfoElement) {
+                KeyInfo ki = newKeyInfo(keyInfoElement);
+                result.setKeyInfo(ki);
+            }
+
+            // TODO: Implement
+            Element encryptionPropertiesElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_ENCRYPTIONPROPERTIES).item(0);
+            if (null != encryptionPropertiesElement) {
+                result.setEncryptionProperties(
+                    newEncryptionProperties(encryptionPropertiesElement)
+                );
+            }
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new EncryptedKey
+         * @throws XMLEncryptionException
+         */
+        EncryptedKey newEncryptedKey(Element element) throws XMLEncryptionException {
+            EncryptedKey result = null;
+            NodeList dataElements =
+                element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS, EncryptionConstants._TAG_CIPHERDATA);
+            Element dataElement =
+                (Element) dataElements.item(dataElements.getLength() - 1);
+
+            CipherData data = newCipherData(dataElement);
+            result = newEncryptedKey(data);
+
+            result.setId(element.getAttributeNS(null, EncryptionConstants._ATT_ID));
+            result.setType(element.getAttributeNS(null, EncryptionConstants._ATT_TYPE));
+            result.setMimeType(element.getAttributeNS(null, EncryptionConstants._ATT_MIMETYPE));
+            result.setEncoding(element.getAttributeNS(null, Constants._ATT_ENCODING));
+            result.setRecipient(element.getAttributeNS(null, EncryptionConstants._ATT_RECIPIENT));
+
+            Element encryptionMethodElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_ENCRYPTIONMETHOD).item(0);
+            if (null != encryptionMethodElement) {
+                result.setEncryptionMethod(newEncryptionMethod(encryptionMethodElement));
+            }
+
+            Element keyInfoElement =
+                (Element) element.getElementsByTagNameNS(
+                    Constants.SignatureSpecNS, Constants._TAG_KEYINFO).item(0);
+            if (null != keyInfoElement) {
+                KeyInfo ki = newKeyInfo(keyInfoElement);
+                result.setKeyInfo(ki);
+            }
+
+            // TODO: Implement
+            Element encryptionPropertiesElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_ENCRYPTIONPROPERTIES).item(0);
+            if (null != encryptionPropertiesElement) {
+                result.setEncryptionProperties(
+                    newEncryptionProperties(encryptionPropertiesElement)
+                );
+            }
+
+            Element referenceListElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_REFERENCELIST).item(0);
+            if (null != referenceListElement) {
+                result.setReferenceList(newReferenceList(referenceListElement));
+            }
+
+            Element carriedNameElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_CARRIEDKEYNAME).item(0);
+            if (null != carriedNameElement) {
+                result.setCarriedName(carriedNameElement.getFirstChild().getNodeValue());
+            }
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new KeyInfo
+         * @throws XMLEncryptionException
+         */
+        KeyInfo newKeyInfo(Element element) throws XMLEncryptionException {
+            try {
+                KeyInfo ki = new KeyInfo(element, null);
+                ki.setSecureValidation(secureValidation);
+                if (internalKeyResolvers != null) {
+                    int size = internalKeyResolvers.size();
+                    for (int i = 0; i < size; i++) {
+                        ki.registerInternalKeyResolver(internalKeyResolvers.get(i));
+                    }
+                }
+                return ki;
+            } catch (XMLSecurityException xse) {
+                throw new XMLEncryptionException("Error loading Key Info", xse);
+            }
+        }
+
+        /**
+         * @param element
+         * @return a new EncryptionMethod
+         */
+        EncryptionMethod newEncryptionMethod(Element element) {
+            String encAlgorithm = element.getAttributeNS(null, EncryptionConstants._ATT_ALGORITHM);
+            EncryptionMethod result = newEncryptionMethod(encAlgorithm);
+
+            Element keySizeElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_KEYSIZE).item(0);
+            if (null != keySizeElement) {
+                result.setKeySize(
+                    Integer.valueOf(
+                        keySizeElement.getFirstChild().getNodeValue()).intValue());
+            }
+
+            Element oaepParamsElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_OAEPPARAMS).item(0);
+            if (null != oaepParamsElement) {
+                try {
+                    String oaepParams = oaepParamsElement.getFirstChild().getNodeValue();
+                    result.setOAEPparams(Base64.decode(oaepParams.getBytes("UTF-8")));
+                } catch(UnsupportedEncodingException e) {
+                    throw new RuntimeException("UTF-8 not supported", e);
+                } catch (Base64DecodingException e) {
+                    throw new RuntimeException("BASE-64 decoding error", e);
+                }
+            }
+
+            Element digestElement =
+                (Element) element.getElementsByTagNameNS(
+                    Constants.SignatureSpecNS, Constants._TAG_DIGESTMETHOD).item(0);
+            if (digestElement != null) {
+                String digestAlgorithm = digestElement.getAttributeNS(null, "Algorithm");
+                result.setDigestAlgorithm(digestAlgorithm);
+            }
+
+            Element mgfElement =
+                (Element) element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpec11NS, EncryptionConstants._TAG_MGF).item(0);
+            if (mgfElement != null && !XMLCipher.RSA_OAEP.equals(algorithm)) {
+                String mgfAlgorithm = mgfElement.getAttributeNS(null, "Algorithm");
+                result.setMGFAlgorithm(mgfAlgorithm);
+            }
+
+            // TODO: Make this mess work
+            // <any namespace='##other' minOccurs='0' maxOccurs='unbounded'/>
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new EncryptionProperties
+         */
+        EncryptionProperties newEncryptionProperties(Element element) {
+            EncryptionProperties result = newEncryptionProperties();
+
+            result.setId(element.getAttributeNS(null, EncryptionConstants._ATT_ID));
+
+            NodeList encryptionPropertyList =
+                element.getElementsByTagNameNS(
+                    EncryptionConstants.EncryptionSpecNS,
+                    EncryptionConstants._TAG_ENCRYPTIONPROPERTY);
+            for (int i = 0; i < encryptionPropertyList.getLength(); i++) {
+                Node n = encryptionPropertyList.item(i);
+                if (null != n) {
+                    result.addEncryptionProperty(newEncryptionProperty((Element) n));
+                }
+            }
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new EncryptionProperty
+         */
+        EncryptionProperty newEncryptionProperty(Element element) {
+            EncryptionProperty result = newEncryptionProperty();
+
+            result.setTarget(element.getAttributeNS(null, EncryptionConstants._ATT_TARGET));
+            result.setId(element.getAttributeNS(null, EncryptionConstants._ATT_ID));
+            // TODO: Make this lot work...
+            // <anyAttribute namespace="http://www.w3.org/XML/1998/namespace"/>
+
+            // TODO: Make this work...
+            // <any namespace='##other' processContents='lax'/>
+
+            return result;
+        }
+
+        /**
+         * @param element
+         * @return a new ReferenceList
+         */
+        ReferenceList newReferenceList(Element element) {
+            int type = 0;
+            if (null != element.getElementsByTagNameNS(
+                EncryptionConstants.EncryptionSpecNS,
+                EncryptionConstants._TAG_DATAREFERENCE).item(0)) {
+                type = ReferenceList.DATA_REFERENCE;
+            } else if (null != element.getElementsByTagNameNS(
+                EncryptionConstants.EncryptionSpecNS,
+                EncryptionConstants._TAG_KEYREFERENCE).item(0)) {
+                type = ReferenceList.KEY_REFERENCE;
+            }
+
+            ReferenceList result = new ReferenceListImpl(type);
+            NodeList list = null;
+            switch (type) {
+            case ReferenceList.DATA_REFERENCE:
+                list =
+                    element.getElementsByTagNameNS(
+                        EncryptionConstants.EncryptionSpecNS,
+                        EncryptionConstants._TAG_DATAREFERENCE);
+                for (int i = 0; i < list.getLength() ; i++) {
+                    String uri = ((Element) list.item(i)).getAttribute("URI");
+                    result.add(result.newDataReference(uri));
+                }
+                break;
+            case ReferenceList.KEY_REFERENCE:
+                list =
+                    element.getElementsByTagNameNS(
+                        EncryptionConstants.EncryptionSpecNS,
+                        EncryptionConstants._TAG_KEYREFERENCE);
+                for (int i = 0; i < list.getLength() ; i++) {
+                    String uri = ((Element) list.item(i)).getAttribute("URI");
+                    result.add(result.newKeyReference(uri));
+                }
+            }
+
+            return result;
+        }
+
+        /**
+         * @param encryptedData
+         * @return the XML Element form of that EncryptedData
+         */
+        Element toElement(EncryptedData encryptedData) {
+            return ((EncryptedDataImpl) encryptedData).toElement();
+        }
+
+        /**
+         * @param encryptedKey
+         * @return the XML Element form of that EncryptedKey
+         */
+        Element toElement(EncryptedKey encryptedKey) {
+            return ((EncryptedKeyImpl) encryptedKey).toElement();
+        }
+
+        /**
+         * @param referenceList
+         * @return the XML Element form of that ReferenceList
+         */
+        Element toElement(ReferenceList referenceList) {
+            return ((ReferenceListImpl) referenceList).toElement();
+        }
+
+        private class AgreementMethodImpl implements AgreementMethod {
+            private byte[] kaNonce = null;
+            private List<Element> agreementMethodInformation = null;
+            private KeyInfo originatorKeyInfo = null;
+            private KeyInfo recipientKeyInfo = null;
+            private String algorithmURI = null;
+
+            /**
+             * @param algorithm
+             */
+            public AgreementMethodImpl(String algorithm) {
+                agreementMethodInformation = new LinkedList<Element>();
+                URI tmpAlgorithm = null;
+                try {
+                    tmpAlgorithm = new URI(algorithm);
+                } catch (URISyntaxException ex) {
+                    throw (IllegalArgumentException)
+                    new IllegalArgumentException().initCause(ex);
+                }
+                algorithmURI = tmpAlgorithm.toString();
+            }
+
+            /** @inheritDoc */
+            public byte[] getKANonce() {
+                return kaNonce;
+            }
+
+            /** @inheritDoc */
+            public void setKANonce(byte[] kanonce) {
+                kaNonce = kanonce;
+            }
+
+            /** @inheritDoc */
+            public Iterator<Element> getAgreementMethodInformation() {
+                return agreementMethodInformation.iterator();
+            }
+
+            /** @inheritDoc */
+            public void addAgreementMethodInformation(Element info) {
+                agreementMethodInformation.add(info);
+            }
+
+            /** @inheritDoc */
+            public void revoveAgreementMethodInformation(Element info) {
+                agreementMethodInformation.remove(info);
+            }
+
+            /** @inheritDoc */
+            public KeyInfo getOriginatorKeyInfo() {
+                return originatorKeyInfo;
+            }
+
+            /** @inheritDoc */
+            public void setOriginatorKeyInfo(KeyInfo keyInfo) {
+                originatorKeyInfo = keyInfo;
+            }
+
+            /** @inheritDoc */
+            public KeyInfo getRecipientKeyInfo() {
+                return recipientKeyInfo;
+            }
+
+            /** @inheritDoc */
+            public void setRecipientKeyInfo(KeyInfo keyInfo) {
+                recipientKeyInfo = keyInfo;
+            }
+
+            /** @inheritDoc */
+            public String getAlgorithm() {
+                return algorithmURI;
+            }
+        }
+
+        private class CipherDataImpl implements CipherData {
+            private static final String valueMessage =
+                "Data type is reference type.";
+            private static final String referenceMessage =
+                "Data type is value type.";
+            private CipherValue cipherValue = null;
+            private CipherReference cipherReference = null;
+            private int cipherType = Integer.MIN_VALUE;
+
+            /**
+             * @param type
+             */
+            public CipherDataImpl(int type) {
+                cipherType = type;
+            }
+
+            /** @inheritDoc */
+            public CipherValue getCipherValue() {
+                return cipherValue;
+            }
+
+            /** @inheritDoc */
+            public void setCipherValue(CipherValue value) throws XMLEncryptionException {
+
+                if (cipherType == REFERENCE_TYPE) {
+                    throw new XMLEncryptionException(
+                        "empty", new UnsupportedOperationException(valueMessage)
+                    );
+                }
+
+                cipherValue = value;
+            }
+
+            /** @inheritDoc */
+            public CipherReference getCipherReference() {
+                return cipherReference;
+            }
+
+            /** @inheritDoc */
+            public void setCipherReference(CipherReference reference) throws
+            XMLEncryptionException {
+                if (cipherType == VALUE_TYPE) {
+                    throw new XMLEncryptionException(
+                        "empty", new UnsupportedOperationException(referenceMessage)
+                    );
+                }
+
+                cipherReference = reference;
+            }
+
+            /** @inheritDoc */
+            public int getDataType() {
+                return cipherType;
+            }
+
+            Element toElement() {
+                Element result =
+                    XMLUtils.createElementInEncryptionSpace(
+                        contextDocument, EncryptionConstants._TAG_CIPHERDATA
+                    );
+                if (cipherType == VALUE_TYPE) {
+                    result.appendChild(((CipherValueImpl) cipherValue).toElement());
+                } else if (cipherType == REFERENCE_TYPE) {
+                    result.appendChild(((CipherReferenceImpl) cipherReference).toElement());
+                }
+
+                return result;
+            }
+        }
+
+        private class CipherReferenceImpl implements CipherReference {
+            private String referenceURI = null;
+            private Transforms referenceTransforms = null;
+            private Attr referenceNode = null;
+
+            /**
+             * @param uri
+             */
+            public CipherReferenceImpl(String uri) {
+                /* Don't check validity of URI as may be "" */
+                referenceURI = uri;
+                referenceNode = null;
+            }
+
+            /**
+             * @param uri
+             */
+            public CipherReferenceImpl(Attr uri) {
+                referenceURI = uri.getNodeValue();
+                referenceNode = uri;
+            }
+
+            /** @inheritDoc */
+            public String getURI() {
+                return referenceURI;
+            }
+
+            /** @inheritDoc */
+            public Attr getURIAsAttr() {
+                return referenceNode;
+            }
+
+            /** @inheritDoc */
+            public Transforms getTransforms() {
+                return referenceTransforms;
+            }
+
+            /** @inheritDoc */
+            public void setTransforms(Transforms transforms) {
+                referenceTransforms = transforms;
+            }
+
+            Element toElement() {
+                Element result =
+                    XMLUtils.createElementInEncryptionSpace(
+                        contextDocument, EncryptionConstants._TAG_CIPHERREFERENCE
+                    );
+                result.setAttributeNS(null, EncryptionConstants._ATT_URI, referenceURI);
+                if (null != referenceTransforms) {
+                    result.appendChild(((TransformsImpl) referenceTransforms).toElement());
+                }
+
+                return result;
+            }
+        }
+
+        private class CipherValueImpl implements CipherValue {
+            private String cipherValue = null;
+
+            /**
+             * @param value
+             */
+            public CipherValueImpl(String value) {
+                cipherValue = value;
+            }
+
+            /** @inheritDoc */
+            public String getValue() {
+                return cipherValue;
+            }
+
+            /** @inheritDoc */
+            public void setValue(String value) {
+                cipherValue = value;
+            }
+
+            Element toElement() {
+                Element result =
+                    XMLUtils.createElementInEncryptionSpace(
+                        contextDocument, EncryptionConstants._TAG_CIPHERVALUE
+                    );
+                result.appendChild(contextDocument.createTextNode(cipherValue));
+
+                return result;
+            }
+        }
+
+        private class EncryptedDataImpl extends EncryptedTypeImpl implements EncryptedData {
+
+            /**
+             * @param data
+             */
+            public EncryptedDataImpl(CipherData data) {
+                super(data);
+            }
+
+            Element toElement() {
+                Element result =
+                    ElementProxy.createElementForFamily(
+                        contextDocument, EncryptionConstants.EncryptionSpecNS,
+                        EncryptionConstants._TAG_ENCRYPTEDDATA
+                    );
+
+                if (null != super.getId()) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_ID, super.getId());
+                }
+                if (null != super.getType()) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_TYPE, super.getType());
+                }
+                if (null != super.getMimeType()) {
+                    result.setAttributeNS(
+                        null, EncryptionConstants._ATT_MIMETYPE, super.getMimeType()
+                    );
+                }
+                if (null != super.getEncoding()) {
+                    result.setAttributeNS(
+                        null, EncryptionConstants._ATT_ENCODING, super.getEncoding()
+                    );
+                }
+                if (null != super.getEncryptionMethod()) {
+                    result.appendChild(
+                        ((EncryptionMethodImpl)super.getEncryptionMethod()).toElement()
+                    );
+                }
+                if (null != super.getKeyInfo()) {
+                    result.appendChild(super.getKeyInfo().getElement().cloneNode(true));
+                }
+
+                result.appendChild(((CipherDataImpl) super.getCipherData()).toElement());
+                if (null != super.getEncryptionProperties()) {
+                    result.appendChild(((EncryptionPropertiesImpl)
+                        super.getEncryptionProperties()).toElement());
+                }
+
+                return result;
+            }
+        }
+
+        private class EncryptedKeyImpl extends EncryptedTypeImpl implements EncryptedKey {
+            private String keyRecipient = null;
+            private ReferenceList referenceList = null;
+            private String carriedName = null;
+
+            /**
+             * @param data
+             */
+            public EncryptedKeyImpl(CipherData data) {
+                super(data);
+            }
+
+            /** @inheritDoc */
+            public String getRecipient() {
+                return keyRecipient;
+            }
+
+            /** @inheritDoc */
+            public void setRecipient(String recipient) {
+                keyRecipient = recipient;
+            }
+
+            /** @inheritDoc */
+            public ReferenceList getReferenceList() {
+                return referenceList;
+            }
+
+            /** @inheritDoc */
+            public void setReferenceList(ReferenceList list) {
+                referenceList = list;
+            }
+
+            /** @inheritDoc */
+            public String getCarriedName() {
+                return carriedName;
+            }
+
+            /** @inheritDoc */
+            public void setCarriedName(String name) {
+                carriedName = name;
+            }
+
+            Element toElement() {
+                Element result =
+                    ElementProxy.createElementForFamily(
+                        contextDocument, EncryptionConstants.EncryptionSpecNS,
+                        EncryptionConstants._TAG_ENCRYPTEDKEY
+                    );
+
+                if (null != super.getId()) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_ID, super.getId());
+                }
+                if (null != super.getType()) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_TYPE, super.getType());
+                }
+                if (null != super.getMimeType()) {
+                    result.setAttributeNS(
+                        null, EncryptionConstants._ATT_MIMETYPE, super.getMimeType()
+                    );
+                }
+                if (null != super.getEncoding()) {
+                    result.setAttributeNS(null, Constants._ATT_ENCODING, super.getEncoding());
+                }
+                if (null != getRecipient()) {
+                    result.setAttributeNS(
+                        null, EncryptionConstants._ATT_RECIPIENT, getRecipient()
+                    );
+                }
+                if (null != super.getEncryptionMethod()) {
+                    result.appendChild(((EncryptionMethodImpl)
+                        super.getEncryptionMethod()).toElement());
+                }
+                if (null != super.getKeyInfo()) {
+                    result.appendChild(super.getKeyInfo().getElement().cloneNode(true));
+                }
+                result.appendChild(((CipherDataImpl) super.getCipherData()).toElement());
+                if (null != super.getEncryptionProperties()) {
+                    result.appendChild(((EncryptionPropertiesImpl)
+                        super.getEncryptionProperties()).toElement());
+                }
+                if (referenceList != null && !referenceList.isEmpty()) {
+                    result.appendChild(((ReferenceListImpl)getReferenceList()).toElement());
+                }
+                if (null != carriedName) {
+                    Element element =
+                        ElementProxy.createElementForFamily(
+                            contextDocument,
+                            EncryptionConstants.EncryptionSpecNS,
+                            EncryptionConstants._TAG_CARRIEDKEYNAME
+                        );
+                    Node node = contextDocument.createTextNode(carriedName);
+                    element.appendChild(node);
+                    result.appendChild(element);
+                }
+
+                return result;
+            }
+        }
+
+        private abstract class EncryptedTypeImpl {
+            private String id =  null;
+            private String type = null;
+            private String mimeType = null;
+            private String encoding = null;
+            private EncryptionMethod encryptionMethod = null;
+            private KeyInfo keyInfo = null;
+            private CipherData cipherData = null;
+            private EncryptionProperties encryptionProperties = null;
+
+            /**
+             * Constructor.
+             * @param data
+             */
+            protected EncryptedTypeImpl(CipherData data) {
+                cipherData = data;
+            }
+
+            /**
+             *
+             * @return the Id
+             */
+            public String getId() {
+                return id;
+            }
+
+            /**
+             *
+             * @param id
+             */
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            /**
+             *
+             * @return the type
+             */
+            public String getType() {
+                return type;
+            }
+
+            /**
+             *
+             * @param type
+             */
+            public void setType(String type) {
+                if (type == null || type.length() == 0) {
+                    this.type = null;
+                } else {
+                    URI tmpType = null;
+                    try {
+                        tmpType = new URI(type);
+                    } catch (URISyntaxException ex) {
+                        throw (IllegalArgumentException)
+                        new IllegalArgumentException().initCause(ex);
+                    }
+                    this.type = tmpType.toString();
+                }
+            }
+
+            /**
+             *
+             * @return the MimeType
+             */
+            public String getMimeType() {
+                return mimeType;
+            }
+            /**
+             *
+             * @param type
+             */
+            public void setMimeType(String type) {
+                mimeType = type;
+            }
+
+            /**
+             *
+             * @return the encoding
+             */
+            public String getEncoding() {
+                return encoding;
+            }
+
+            /**
+             *
+             * @param encoding
+             */
+            public void setEncoding(String encoding) {
+                if (encoding == null || encoding.length() == 0) {
+                    this.encoding = null;
+                } else {
+                    URI tmpEncoding = null;
+                    try {
+                        tmpEncoding = new URI(encoding);
+                    } catch (URISyntaxException ex) {
+                        throw (IllegalArgumentException)
+                        new IllegalArgumentException().initCause(ex);
+                    }
+                    this.encoding = tmpEncoding.toString();
+                }
+            }
+
+            /**
+             *
+             * @return the EncryptionMethod
+             */
+            public EncryptionMethod getEncryptionMethod() {
+                return encryptionMethod;
+            }
+
+            /**
+             *
+             * @param method
+             */
+            public void setEncryptionMethod(EncryptionMethod method) {
+                encryptionMethod = method;
+            }
+
+            /**
+             *
+             * @return the KeyInfo
+             */
+            public KeyInfo getKeyInfo() {
+                return keyInfo;
+            }
+
+            /**
+             *
+             * @param info
+             */
+            public void setKeyInfo(KeyInfo info) {
+                keyInfo = info;
+            }
+
+            /**
+             *
+             * @return the CipherData
+             */
+            public CipherData getCipherData() {
+                return cipherData;
+            }
+
+            /**
+             *
+             * @return the EncryptionProperties
+             */
+            public EncryptionProperties getEncryptionProperties() {
+                return encryptionProperties;
+            }
+
+            /**
+             *
+             * @param properties
+             */
+            public void setEncryptionProperties(EncryptionProperties properties) {
+                encryptionProperties = properties;
+            }
+        }
+
+        private class EncryptionMethodImpl implements EncryptionMethod {
+            private String algorithm = null;
+            private int keySize = Integer.MIN_VALUE;
+            private byte[] oaepParams = null;
+            private List<Element> encryptionMethodInformation = null;
+            private String digestAlgorithm = null;
+            private String mgfAlgorithm = null;
+
+            /**
+             * Constructor.
+             * @param algorithm
+             */
+            public EncryptionMethodImpl(String algorithm) {
+                URI tmpAlgorithm = null;
+                try {
+                    tmpAlgorithm = new URI(algorithm);
+                } catch (URISyntaxException ex) {
+                    throw (IllegalArgumentException)
+                    new IllegalArgumentException().initCause(ex);
+                }
+                this.algorithm = tmpAlgorithm.toString();
+                encryptionMethodInformation = new LinkedList<Element>();
+            }
+
+            /** @inheritDoc */
+            public String getAlgorithm() {
+                return algorithm;
+            }
+
+            /** @inheritDoc */
+            public int getKeySize() {
+                return keySize;
+            }
+
+            /** @inheritDoc */
+            public void setKeySize(int size) {
+                keySize = size;
+            }
+
+            /** @inheritDoc */
+            public byte[] getOAEPparams() {
+                return oaepParams;
+            }
+
+            /** @inheritDoc */
+            public void setOAEPparams(byte[] params) {
+                oaepParams = params;
+            }
+
+            /** @inheritDoc */
+            public void setDigestAlgorithm(String digestAlgorithm) {
+                this.digestAlgorithm = digestAlgorithm;
+            }
+
+            /** @inheritDoc */
+            public String getDigestAlgorithm() {
+                return digestAlgorithm;
+            }
+
+            /** @inheritDoc */
+            public void setMGFAlgorithm(String mgfAlgorithm) {
+                this.mgfAlgorithm = mgfAlgorithm;
+            }
+
+            /** @inheritDoc */
+            public String getMGFAlgorithm() {
+                return mgfAlgorithm;
+            }
+
+            /** @inheritDoc */
+            public Iterator<Element> getEncryptionMethodInformation() {
+                return encryptionMethodInformation.iterator();
+            }
+
+            /** @inheritDoc */
+            public void addEncryptionMethodInformation(Element info) {
+                encryptionMethodInformation.add(info);
+            }
+
+            /** @inheritDoc */
+            public void removeEncryptionMethodInformation(Element info) {
+                encryptionMethodInformation.remove(info);
+            }
+
+            Element toElement() {
+                Element result =
+                    XMLUtils.createElementInEncryptionSpace(
+                        contextDocument, EncryptionConstants._TAG_ENCRYPTIONMETHOD
+                    );
+                result.setAttributeNS(null, EncryptionConstants._ATT_ALGORITHM, algorithm);
+                if (keySize > 0) {
+                    result.appendChild(
+                        XMLUtils.createElementInEncryptionSpace(
+                            contextDocument, EncryptionConstants._TAG_KEYSIZE
+                    ).appendChild(contextDocument.createTextNode(String.valueOf(keySize))));
+                }
+                if (null != oaepParams) {
+                    Element oaepElement =
+                        XMLUtils.createElementInEncryptionSpace(
+                            contextDocument, EncryptionConstants._TAG_OAEPPARAMS
+                        );
+                    oaepElement.appendChild(contextDocument.createTextNode(Base64.encode(oaepParams)));
+                    result.appendChild(oaepElement);
+                }
+                if (digestAlgorithm != null) {
+                    Element digestElement =
+                        XMLUtils.createElementInSignatureSpace(contextDocument, Constants._TAG_DIGESTMETHOD);
+                    digestElement.setAttributeNS(null, "Algorithm", digestAlgorithm);
+                    result.appendChild(digestElement);
+                }
+                if (mgfAlgorithm != null) {
+                    Element mgfElement =
+                        XMLUtils.createElementInEncryption11Space(
+                            contextDocument, EncryptionConstants._TAG_MGF
+                        );
+                    mgfElement.setAttributeNS(null, "Algorithm", mgfAlgorithm);
+                    mgfElement.setAttributeNS(
+                        Constants.NamespaceSpecNS,
+                        "xmlns:" + ElementProxy.getDefaultPrefix(EncryptionConstants.EncryptionSpec11NS),
+                        EncryptionConstants.EncryptionSpec11NS
+                    );
+                    result.appendChild(mgfElement);
+                }
+                Iterator<Element> itr = encryptionMethodInformation.iterator();
+                while (itr.hasNext()) {
+                    result.appendChild(itr.next());
+                }
+
+                return result;
+            }
+        }
+
+        private class EncryptionPropertiesImpl implements EncryptionProperties {
+            private String id = null;
+            private List<EncryptionProperty> encryptionProperties = null;
+
+            /**
+             * Constructor.
+             */
+            public EncryptionPropertiesImpl() {
+                encryptionProperties = new LinkedList<EncryptionProperty>();
+            }
+
+            /** @inheritDoc */
+            public String getId() {
+                return id;
+            }
+
+            /** @inheritDoc */
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            /** @inheritDoc */
+            public Iterator<EncryptionProperty> getEncryptionProperties() {
+                return encryptionProperties.iterator();
+            }
+
+            /** @inheritDoc */
+            public void addEncryptionProperty(EncryptionProperty property) {
+                encryptionProperties.add(property);
+            }
+
+            /** @inheritDoc */
+            public void removeEncryptionProperty(EncryptionProperty property) {
+                encryptionProperties.remove(property);
+            }
+
+            Element toElement() {
+                Element result =
+                    XMLUtils.createElementInEncryptionSpace(
+                        contextDocument, EncryptionConstants._TAG_ENCRYPTIONPROPERTIES
+                    );
+                if (null != id) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_ID, id);
+                }
+                Iterator<EncryptionProperty> itr = getEncryptionProperties();
+                while (itr.hasNext()) {
+                    result.appendChild(((EncryptionPropertyImpl)itr.next()).toElement());
+                }
+
+                return result;
+            }
+        }
+
+        private class EncryptionPropertyImpl implements EncryptionProperty {
+            private String target = null;
+            private String id = null;
+            private Map<String, String> attributeMap = new HashMap<String, String>();
+            private List<Element> encryptionInformation = null;
+
+            /**
+             * Constructor.
+             */
+            public EncryptionPropertyImpl() {
+                encryptionInformation = new LinkedList<Element>();
+            }
+
+            /** @inheritDoc */
+            public String getTarget() {
+                return target;
+            }
+
+            /** @inheritDoc */
+            public void setTarget(String target) {
+                if (target == null || target.length() == 0) {
+                    this.target = null;
+                } else if (target.startsWith("#")) {
+                    /*
+                     * This is a same document URI reference. Do not parse,
+                     * because it has no scheme.
+                     */
+                    this.target = target;
+                } else {
+                    URI tmpTarget = null;
+                    try {
+                        tmpTarget = new URI(target);
+                    } catch (URISyntaxException ex) {
+                        throw (IllegalArgumentException)
+                        new IllegalArgumentException().initCause(ex);
+                    }
+                    this.target = tmpTarget.toString();
+                }
+            }
+
+            /** @inheritDoc */
+            public String getId() {
+                return id;
+            }
+
+            /** @inheritDoc */
+            public void setId(String id) {
+                this.id = id;
+            }
+
+            /** @inheritDoc */
+            public String getAttribute(String attribute) {
+                return attributeMap.get(attribute);
+            }
+
+            /** @inheritDoc */
+            public void setAttribute(String attribute, String value) {
+                attributeMap.put(attribute, value);
+            }
+
+            /** @inheritDoc */
+            public Iterator<Element> getEncryptionInformation() {
+                return encryptionInformation.iterator();
+            }
+
+            /** @inheritDoc */
+            public void addEncryptionInformation(Element info) {
+                encryptionInformation.add(info);
+            }
+
+            /** @inheritDoc */
+            public void removeEncryptionInformation(Element info) {
+                encryptionInformation.remove(info);
+            }
+
+            Element toElement() {
+                Element result =
+                    XMLUtils.createElementInEncryptionSpace(
+                        contextDocument, EncryptionConstants._TAG_ENCRYPTIONPROPERTY
+                    );
+                if (null != target) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_TARGET, target);
+                }
+                if (null != id) {
+                    result.setAttributeNS(null, EncryptionConstants._ATT_ID, id);
+                }
+                // TODO: figure out the anyAttribyte stuff...
+                // TODO: figure out the any stuff...
+
+                return result;
+            }
+        }
+
+        private class TransformsImpl extends com.sun.org.apache.xml.internal.security.transforms.Transforms
+            implements Transforms {
+
+            /**
+             * Construct Transforms
+             */
+            public TransformsImpl() {
+                super(contextDocument);
+            }
+
+            /**
+             *
+             * @param doc
+             */
+            public TransformsImpl(Document doc) {
+                if (doc == null) {
+                    throw new RuntimeException("Document is null");
+                }
+
+                this.doc = doc;
+                this.constructionElement =
+                    createElementForFamilyLocal(
+                        this.doc, this.getBaseNamespace(), this.getBaseLocalName()
+                    );
+            }
+
+            /**
+             *
+             * @param element
+             * @throws XMLSignatureException
+             * @throws InvalidTransformException
+             * @throws XMLSecurityException
+             * @throws TransformationException
+             */
+            public TransformsImpl(Element element)
+                throws XMLSignatureException, InvalidTransformException,
+                    XMLSecurityException, TransformationException {
+                super(element, "");
+            }
+
+            /**
+             *
+             * @return the XML Element form of that Transforms
+             */
+            public Element toElement() {
+                if (doc == null) {
+                    doc = contextDocument;
+                }
+
+                return getElement();
+            }
+
+            /** @inheritDoc */
+            public com.sun.org.apache.xml.internal.security.transforms.Transforms getDSTransforms() {
+                return this;
+            }
+
+            // Over-ride the namespace
+            /** @inheritDoc */
+            public String getBaseNamespace() {
+                return EncryptionConstants.EncryptionSpecNS;
+            }
+        }
+
+        private class ReferenceListImpl implements ReferenceList {
+            private Class<?> sentry;
+            private List<Reference> references;
+
+            /**
+             * Constructor.
+             * @param type
+             */
+            public ReferenceListImpl(int type) {
+                if (type == ReferenceList.DATA_REFERENCE) {
+                    sentry = DataReference.class;
+                } else if (type == ReferenceList.KEY_REFERENCE) {
+                    sentry = KeyReference.class;
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                references = new LinkedList<Reference>();
+            }
+
+            /** @inheritDoc */
+            public void add(Reference reference) {
+                if (!reference.getClass().equals(sentry)) {
+                    throw new IllegalArgumentException();
+                }
+                references.add(reference);
+            }
+
+            /** @inheritDoc */
+            public void remove(Reference reference) {
+                if (!reference.getClass().equals(sentry)) {
+                    throw new IllegalArgumentException();
+                }
+                references.remove(reference);
+            }
+
+            /** @inheritDoc */
+            public int size() {
+                return references.size();
+            }
+
+            /** @inheritDoc */
+            public boolean isEmpty() {
+                return references.isEmpty();
+            }
+
+            /** @inheritDoc */
+            public Iterator<Reference> getReferences() {
+                return references.iterator();
+            }
+
+            Element toElement() {
+                Element result =
+                    ElementProxy.createElementForFamily(
+                        contextDocument,
+                        EncryptionConstants.EncryptionSpecNS,
+                        EncryptionConstants._TAG_REFERENCELIST
+                    );
+                Iterator<Reference> eachReference = references.iterator();
+                while (eachReference.hasNext()) {
+                    Reference reference = eachReference.next();
+                    result.appendChild(((ReferenceImpl) reference).toElement());
+                }
+                return result;
+            }
+
+            /** @inheritDoc */
+            public Reference newDataReference(String uri) {
+                return new DataReference(uri);
+            }
+
+            /** @inheritDoc */
+            public Reference newKeyReference(String uri) {
+                return new KeyReference(uri);
+            }
+
+            /**
+             * <code>ReferenceImpl</code> is an implementation of
+             * <code>Reference</code>.
+             *
+             * @see Reference
+             */
+            private abstract class ReferenceImpl implements Reference {
+                private String uri;
+                private List<Element> referenceInformation;
+
+                ReferenceImpl(String uri) {
+                    this.uri = uri;
+                    referenceInformation = new LinkedList<Element>();
+                }
+
+                /** @inheritDoc */
+                public abstract String getType();
+
+                /** @inheritDoc */
+                public String getURI() {
+                    return uri;
+                }
+
+                /** @inheritDoc */
+                public Iterator<Element> getElementRetrievalInformation() {
+                    return referenceInformation.iterator();
+                }
+
+                /** @inheritDoc */
+                public void setURI(String uri) {
+                    this.uri = uri;
+                }
+
+                /** @inheritDoc */
+                public void removeElementRetrievalInformation(Element node) {
+                    referenceInformation.remove(node);
+                }
+
+                /** @inheritDoc */
+                public void addElementRetrievalInformation(Element node) {
+                    referenceInformation.add(node);
+                }
+
+                /**
+                 * @return the XML Element form of that Reference
+                 */
+                public Element toElement() {
+                    String tagName = getType();
+                    Element result =
+                        ElementProxy.createElementForFamily(
+                            contextDocument,
+                            EncryptionConstants.EncryptionSpecNS,
+                            tagName
+                        );
+                    result.setAttribute(EncryptionConstants._ATT_URI, uri);
+
+                    // TODO: Need to martial referenceInformation
+                    // Figure out how to make this work..
+                    // <any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
+
+                    return result;
+                }
+            }
+
+            private class DataReference extends ReferenceImpl {
+
+                DataReference(String uri) {
+                    super(uri);
+                }
+
+                /** @inheritDoc */
+                public String getType() {
+                    return EncryptionConstants._TAG_DATAREFERENCE;
+                }
+            }
+
+            private class KeyReference extends ReferenceImpl {
+
+                KeyReference(String uri) {
+                    super(uri);
+                }
+
+                /** @inheritDoc */
+                public String getType() {
+                    return EncryptionConstants._TAG_KEYREFERENCE;
+                }
+            }
+        }
+    }
+}

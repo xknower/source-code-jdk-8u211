@@ -1,1247 +1,1242 @@
-/*      */ package com.sun.org.apache.xerces.internal.impl.xs.models;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.impl.dtd.models.CMNode;
-/*      */ import com.sun.org.apache.xerces.internal.impl.dtd.models.CMStateSet;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.SubstitutionGroupHandler;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaException;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.XSConstraints;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.XSElementDecl;
-/*      */ import com.sun.org.apache.xerces.internal.impl.xs.XSWildcardDecl;
-/*      */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Vector;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XSDFACM
-/*      */   implements XSCMValidator
-/*      */ {
-/*      */   private static final boolean DEBUG = false;
-/*      */   private static final boolean DEBUG_VALIDATE_CONTENT = false;
-/*   76 */   private Object[] fElemMap = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   82 */   private int[] fElemMapType = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   87 */   private int[] fElemMapId = null;
-/*      */ 
-/*      */   
-/*   90 */   private int fElemMapSize = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   97 */   private boolean[] fFinalStateFlags = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  104 */   private CMStateSet[] fFollowList = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  112 */   private CMNode fHeadNode = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  118 */   private int fLeafCount = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  124 */   private XSCMLeaf[] fLeafList = null;
-/*      */ 
-/*      */   
-/*  127 */   private int[] fLeafListType = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  141 */   private int[][] fTransTable = (int[][])null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  146 */   private Occurence[] fCountingStates = null;
-/*      */   
-/*      */   static final class Occurence {
-/*      */     final int minOccurs;
-/*      */     
-/*      */     public Occurence(XSCMRepeatingLeaf leaf, int elemIndex) {
-/*  152 */       this.minOccurs = leaf.getMinOccurs();
-/*  153 */       this.maxOccurs = leaf.getMaxOccurs();
-/*  154 */       this.elemIndex = elemIndex;
-/*      */     } final int maxOccurs; final int elemIndex;
-/*      */     public String toString() {
-/*  157 */       return "minOccurs=" + this.minOccurs + ";maxOccurs=" + ((this.maxOccurs != -1) ? 
-/*      */ 
-/*      */         
-/*  160 */         Integer.toString(this.maxOccurs) : "unbounded");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  168 */   private int fTransTableSize = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int[] fElemMapCounter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int[] fElemMapCounterLowerBound;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int[] fElemMapCounterUpperBound;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSDFACM(CMNode syntaxTree, int leafCount) {
-/*  214 */     this.fLeafCount = leafCount;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  236 */     buildDFA(syntaxTree);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  244 */   private static long time = 0L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isFinalState(int state) {
-/*  258 */     return (state < 0) ? false : this.fFinalStateFlags[state];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object oneTransition(QName curElem, int[] state, SubstitutionGroupHandler subGroupHandler) {
-/*  277 */     int curState = state[0];
-/*      */     
-/*  279 */     if (curState == -1 || curState == -2) {
-/*      */ 
-/*      */       
-/*  282 */       if (curState == -1) {
-/*  283 */         state[0] = -2;
-/*      */       }
-/*  285 */       return findMatchingDecl(curElem, subGroupHandler);
-/*      */     } 
-/*      */     
-/*  288 */     int nextState = 0;
-/*  289 */     int elemIndex = 0;
-/*  290 */     Object matchingDecl = null;
-/*      */     
-/*  292 */     for (; elemIndex < this.fElemMapSize; elemIndex++) {
-/*  293 */       nextState = this.fTransTable[curState][elemIndex];
-/*  294 */       if (nextState != -1) {
-/*      */         
-/*  296 */         int type = this.fElemMapType[elemIndex];
-/*  297 */         if (type == 1) {
-/*  298 */           matchingDecl = subGroupHandler.getMatchingElemDecl(curElem, (XSElementDecl)this.fElemMap[elemIndex]);
-/*  299 */           if (matchingDecl != null) {
-/*      */             
-/*  301 */             if (this.fElemMapCounter[elemIndex] >= 0) {
-/*  302 */               this.fElemMapCounter[elemIndex] = this.fElemMapCounter[elemIndex] + 1;
-/*      */             }
-/*      */             
-/*      */             break;
-/*      */           } 
-/*  307 */         } else if (type == 2 && (
-/*  308 */           (XSWildcardDecl)this.fElemMap[elemIndex]).allowNamespace(curElem.uri)) {
-/*  309 */           matchingDecl = this.fElemMap[elemIndex];
-/*      */           
-/*  311 */           if (this.fElemMapCounter[elemIndex] >= 0) {
-/*  312 */             this.fElemMapCounter[elemIndex] = this.fElemMapCounter[elemIndex] + 1;
-/*      */           }
-/*      */ 
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  321 */     if (elemIndex == this.fElemMapSize) {
-/*  322 */       state[1] = state[0];
-/*  323 */       state[0] = -1;
-/*  324 */       return findMatchingDecl(curElem, subGroupHandler);
-/*      */     } 
-/*      */     
-/*  327 */     if (this.fCountingStates != null) {
-/*  328 */       Occurence o = this.fCountingStates[curState];
-/*  329 */       if (o != null) {
-/*  330 */         if (curState == nextState) {
-/*  331 */           state[2] = state[2] + 1; if (state[2] + 1 > o.maxOccurs && o.maxOccurs != -1)
-/*      */           {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  357 */             return findMatchingDecl(curElem, state, subGroupHandler, elemIndex);
-/*      */           }
-/*      */         } else {
-/*  360 */           if (state[2] < o.minOccurs) {
-/*      */             
-/*  362 */             state[1] = state[0];
-/*  363 */             state[0] = -1;
-/*  364 */             return findMatchingDecl(curElem, subGroupHandler);
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */           
-/*  369 */           o = this.fCountingStates[nextState];
-/*  370 */           if (o != null) {
-/*  371 */             state[2] = (elemIndex == o.elemIndex) ? 1 : 0;
-/*      */           }
-/*      */         } 
-/*      */       } else {
-/*      */         
-/*  376 */         o = this.fCountingStates[nextState];
-/*  377 */         if (o != null)
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */           
-/*  382 */           state[2] = (elemIndex == o.elemIndex) ? 1 : 0;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  387 */     state[0] = nextState;
-/*  388 */     return matchingDecl;
-/*      */   }
-/*      */   
-/*      */   Object findMatchingDecl(QName curElem, SubstitutionGroupHandler subGroupHandler) {
-/*  392 */     Object matchingDecl = null;
-/*      */     
-/*  394 */     for (int elemIndex = 0; elemIndex < this.fElemMapSize; elemIndex++) {
-/*  395 */       int type = this.fElemMapType[elemIndex];
-/*  396 */       if (type == 1) {
-/*  397 */         matchingDecl = subGroupHandler.getMatchingElemDecl(curElem, (XSElementDecl)this.fElemMap[elemIndex]);
-/*  398 */         if (matchingDecl != null) {
-/*  399 */           return matchingDecl;
-/*      */         }
-/*      */       }
-/*  402 */       else if (type == 2 && (
-/*  403 */         (XSWildcardDecl)this.fElemMap[elemIndex]).allowNamespace(curElem.uri)) {
-/*  404 */         return this.fElemMap[elemIndex];
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  408 */     return null;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   Object findMatchingDecl(QName curElem, int[] state, SubstitutionGroupHandler subGroupHandler, int elemIndex) {
-/*  413 */     int curState = state[0];
-/*  414 */     int nextState = 0;
-/*  415 */     Object matchingDecl = null;
-/*      */     
-/*  417 */     while (++elemIndex < this.fElemMapSize) {
-/*  418 */       nextState = this.fTransTable[curState][elemIndex];
-/*  419 */       if (nextState == -1)
-/*      */         continue; 
-/*  421 */       int type = this.fElemMapType[elemIndex];
-/*  422 */       if (type == 1) {
-/*  423 */         matchingDecl = subGroupHandler.getMatchingElemDecl(curElem, (XSElementDecl)this.fElemMap[elemIndex]);
-/*  424 */         if (matchingDecl != null)
-/*      */           break; 
-/*      */         continue;
-/*      */       } 
-/*  428 */       if (type == 2 && (
-/*  429 */         (XSWildcardDecl)this.fElemMap[elemIndex]).allowNamespace(curElem.uri)) {
-/*  430 */         matchingDecl = this.fElemMap[elemIndex];
-/*      */ 
-/*      */         
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  437 */     if (elemIndex == this.fElemMapSize) {
-/*  438 */       state[1] = state[0];
-/*  439 */       state[0] = -1;
-/*  440 */       return findMatchingDecl(curElem, subGroupHandler);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  445 */     state[0] = nextState;
-/*  446 */     Occurence o = this.fCountingStates[nextState];
-/*  447 */     if (o != null) {
-/*  448 */       state[2] = (elemIndex == o.elemIndex) ? 1 : 0;
-/*      */     }
-/*  450 */     return matchingDecl;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int[] startContentModel() {
-/*  456 */     for (int elemIndex = 0; elemIndex < this.fElemMapSize; elemIndex++) {
-/*  457 */       if (this.fElemMapCounter[elemIndex] != -1) {
-/*  458 */         this.fElemMapCounter[elemIndex] = 0;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  465 */     return new int[3];
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean endContentModel(int[] state) {
-/*  470 */     int curState = state[0];
-/*  471 */     if (this.fFinalStateFlags[curState]) {
-/*  472 */       if (this.fCountingStates != null) {
-/*  473 */         Occurence o = this.fCountingStates[curState];
-/*  474 */         if (o != null && state[2] < o.minOccurs)
-/*      */         {
-/*  476 */           return false;
-/*      */         }
-/*      */       } 
-/*  479 */       return true;
-/*      */     } 
-/*  481 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void buildDFA(CMNode syntaxTree) {
-/*  547 */     int EOCPos = this.fLeafCount;
-/*  548 */     XSCMLeaf nodeEOC = new XSCMLeaf(1, null, -1, this.fLeafCount++);
-/*  549 */     this.fHeadNode = new XSCMBinOp(102, syntaxTree, nodeEOC);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  569 */     this.fLeafList = new XSCMLeaf[this.fLeafCount];
-/*  570 */     this.fLeafListType = new int[this.fLeafCount];
-/*  571 */     postTreeBuildInit(this.fHeadNode);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  578 */     this.fFollowList = new CMStateSet[this.fLeafCount];
-/*  579 */     for (int index = 0; index < this.fLeafCount; index++)
-/*  580 */       this.fFollowList[index] = new CMStateSet(this.fLeafCount); 
-/*  581 */     calcFollowList(this.fHeadNode);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  593 */     this.fElemMap = new Object[this.fLeafCount];
-/*  594 */     this.fElemMapType = new int[this.fLeafCount];
-/*  595 */     this.fElemMapId = new int[this.fLeafCount];
-/*      */     
-/*  597 */     this.fElemMapCounter = new int[this.fLeafCount];
-/*  598 */     this.fElemMapCounterLowerBound = new int[this.fLeafCount];
-/*  599 */     this.fElemMapCounterUpperBound = new int[this.fLeafCount];
-/*      */     
-/*  601 */     this.fElemMapSize = 0;
-/*  602 */     Occurence[] elemOccurenceMap = null;
-/*      */     
-/*  604 */     for (int outIndex = 0; outIndex < this.fLeafCount; outIndex++) {
-/*      */ 
-/*      */       
-/*  607 */       this.fElemMap[outIndex] = null;
-/*      */       
-/*  609 */       int inIndex = 0;
-/*  610 */       int id = this.fLeafList[outIndex].getParticleId();
-/*  611 */       for (; inIndex < this.fElemMapSize && 
-/*  612 */         id != this.fElemMapId[inIndex]; inIndex++);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  617 */       if (inIndex == this.fElemMapSize) {
-/*  618 */         XSCMLeaf leaf = this.fLeafList[outIndex];
-/*  619 */         this.fElemMap[this.fElemMapSize] = leaf.getLeaf();
-/*  620 */         if (leaf instanceof XSCMRepeatingLeaf) {
-/*  621 */           if (elemOccurenceMap == null) {
-/*  622 */             elemOccurenceMap = new Occurence[this.fLeafCount];
-/*      */           }
-/*  624 */           elemOccurenceMap[this.fElemMapSize] = new Occurence((XSCMRepeatingLeaf)leaf, this.fElemMapSize);
-/*      */         } 
-/*      */         
-/*  627 */         this.fElemMapType[this.fElemMapSize] = this.fLeafListType[outIndex];
-/*  628 */         this.fElemMapId[this.fElemMapSize] = id;
-/*      */ 
-/*      */         
-/*  631 */         int[] bounds = (int[])leaf.getUserData();
-/*  632 */         if (bounds != null) {
-/*  633 */           this.fElemMapCounter[this.fElemMapSize] = 0;
-/*  634 */           this.fElemMapCounterLowerBound[this.fElemMapSize] = bounds[0];
-/*  635 */           this.fElemMapCounterUpperBound[this.fElemMapSize] = bounds[1];
-/*      */         } else {
-/*  637 */           this.fElemMapCounter[this.fElemMapSize] = -1;
-/*  638 */           this.fElemMapCounterLowerBound[this.fElemMapSize] = -1;
-/*  639 */           this.fElemMapCounterUpperBound[this.fElemMapSize] = -1;
-/*      */         } 
-/*      */         
-/*  642 */         this.fElemMapSize++;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  652 */     this.fElemMapSize--;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  660 */     int[] fLeafSorter = new int[this.fLeafCount + this.fElemMapSize];
-/*  661 */     int fSortCount = 0;
-/*      */     
-/*  663 */     for (int elemIndex = 0; elemIndex < this.fElemMapSize; elemIndex++) {
-/*  664 */       int id = this.fElemMapId[elemIndex];
-/*  665 */       for (int leafIndex = 0; leafIndex < this.fLeafCount; leafIndex++) {
-/*  666 */         if (id == this.fLeafList[leafIndex].getParticleId())
-/*  667 */           fLeafSorter[fSortCount++] = leafIndex; 
-/*      */       } 
-/*  669 */       fLeafSorter[fSortCount++] = -1;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  687 */     int curArraySize = this.fLeafCount * 4;
-/*  688 */     CMStateSet[] statesToDo = new CMStateSet[curArraySize];
-/*  689 */     this.fFinalStateFlags = new boolean[curArraySize];
-/*  690 */     this.fTransTable = new int[curArraySize][];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  697 */     CMStateSet setT = this.fHeadNode.firstPos();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  707 */     int unmarkedState = 0;
-/*  708 */     int curState = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  714 */     this.fTransTable[curState] = makeDefStateList();
-/*  715 */     statesToDo[curState] = setT;
-/*  716 */     curState++;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  722 */     HashMap<Object, Object> stateTable = new HashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  731 */     while (unmarkedState < curState) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  736 */       setT = statesToDo[unmarkedState];
-/*  737 */       int[] transEntry = this.fTransTable[unmarkedState];
-/*      */ 
-/*      */       
-/*  740 */       this.fFinalStateFlags[unmarkedState] = setT.getBit(EOCPos);
-/*      */ 
-/*      */       
-/*  743 */       unmarkedState++;
-/*      */ 
-/*      */       
-/*  746 */       CMStateSet newSet = null;
-/*      */       
-/*  748 */       int sorterIndex = 0;
-/*      */       
-/*  750 */       for (int i = 0; i < this.fElemMapSize; i++) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  757 */         if (newSet == null) {
-/*  758 */           newSet = new CMStateSet(this.fLeafCount);
-/*      */         } else {
-/*  760 */           newSet.zeroBits();
-/*      */         } 
-/*      */         
-/*  763 */         int leafIndex = fLeafSorter[sorterIndex++];
-/*      */         
-/*  765 */         while (leafIndex != -1) {
-/*      */           
-/*  767 */           if (setT.getBit(leafIndex))
-/*      */           {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  773 */             newSet.union(this.fFollowList[leafIndex]);
-/*      */           }
-/*      */           
-/*  776 */           leafIndex = fLeafSorter[sorterIndex++];
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  784 */         if (!newSet.isEmpty()) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  791 */           Integer stateObj = (Integer)stateTable.get(newSet);
-/*  792 */           int stateIndex = (stateObj == null) ? curState : stateObj.intValue();
-/*      */ 
-/*      */ 
-/*      */           
-/*  796 */           if (stateIndex == curState) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  802 */             statesToDo[curState] = newSet;
-/*  803 */             this.fTransTable[curState] = makeDefStateList();
-/*      */ 
-/*      */             
-/*  806 */             stateTable.put(newSet, new Integer(curState));
-/*      */ 
-/*      */ 
-/*      */             
-/*  810 */             curState++;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  817 */             newSet = null;
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  826 */           transEntry[i] = stateIndex;
-/*      */ 
-/*      */           
-/*  829 */           if (curState == curArraySize) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  835 */             int newSize = (int)(curArraySize * 1.5D);
-/*  836 */             CMStateSet[] newToDo = new CMStateSet[newSize];
-/*  837 */             boolean[] newFinalFlags = new boolean[newSize];
-/*  838 */             int[][] newTransTable = new int[newSize][];
-/*      */ 
-/*      */             
-/*  841 */             System.arraycopy(statesToDo, 0, newToDo, 0, curArraySize);
-/*  842 */             System.arraycopy(this.fFinalStateFlags, 0, newFinalFlags, 0, curArraySize);
-/*  843 */             System.arraycopy(this.fTransTable, 0, newTransTable, 0, curArraySize);
-/*      */ 
-/*      */             
-/*  846 */             curArraySize = newSize;
-/*  847 */             statesToDo = newToDo;
-/*  848 */             this.fFinalStateFlags = newFinalFlags;
-/*  849 */             this.fTransTable = newTransTable;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  859 */     if (elemOccurenceMap != null) {
-/*  860 */       this.fCountingStates = new Occurence[curState];
-/*  861 */       for (int i = 0; i < curState; i++) {
-/*  862 */         int[] transitions = this.fTransTable[i];
-/*  863 */         for (int j = 0; j < transitions.length; j++) {
-/*  864 */           if (i == transitions[j]) {
-/*  865 */             this.fCountingStates[i] = elemOccurenceMap[j];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  878 */     this.fHeadNode = null;
-/*  879 */     this.fLeafList = null;
-/*  880 */     this.fFollowList = null;
-/*  881 */     this.fLeafListType = null;
-/*  882 */     this.fElemMapId = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void calcFollowList(CMNode nodeCur) {
-/*  894 */     if (nodeCur.type() == 101) {
-/*      */       
-/*  896 */       calcFollowList(((XSCMBinOp)nodeCur).getLeft());
-/*  897 */       calcFollowList(((XSCMBinOp)nodeCur).getRight());
-/*      */     }
-/*  899 */     else if (nodeCur.type() == 102) {
-/*      */       
-/*  901 */       calcFollowList(((XSCMBinOp)nodeCur).getLeft());
-/*  902 */       calcFollowList(((XSCMBinOp)nodeCur).getRight());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  909 */       CMStateSet last = ((XSCMBinOp)nodeCur).getLeft().lastPos();
-/*  910 */       CMStateSet first = ((XSCMBinOp)nodeCur).getRight().firstPos();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  917 */       for (int index = 0; index < this.fLeafCount; index++) {
-/*  918 */         if (last.getBit(index)) {
-/*  919 */           this.fFollowList[index].union(first);
-/*      */         }
-/*      */       } 
-/*  922 */     } else if (nodeCur.type() == 4 || nodeCur
-/*  923 */       .type() == 6) {
-/*      */       
-/*  925 */       calcFollowList(((XSCMUniOp)nodeCur).getChild());
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  931 */       CMStateSet first = nodeCur.firstPos();
-/*  932 */       CMStateSet last = nodeCur.lastPos();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  939 */       for (int index = 0; index < this.fLeafCount; index++) {
-/*  940 */         if (last.getBit(index)) {
-/*  941 */           this.fFollowList[index].union(first);
-/*      */         }
-/*      */       }
-/*      */     
-/*  945 */     } else if (nodeCur.type() == 5) {
-/*      */       
-/*  947 */       calcFollowList(((XSCMUniOp)nodeCur).getChild());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void dumpTree(CMNode nodeCur, int level) {
-/*  961 */     for (int index = 0; index < level; index++) {
-/*  962 */       System.out.print("   ");
-/*      */     }
-/*  964 */     int type = nodeCur.type();
-/*      */     
-/*  966 */     switch (type) {
-/*      */       
-/*      */       case 101:
-/*      */       case 102:
-/*  970 */         if (type == 101) {
-/*  971 */           System.out.print("Choice Node ");
-/*      */         } else {
-/*  973 */           System.out.print("Seq Node ");
-/*      */         } 
-/*  975 */         if (nodeCur.isNullable()) {
-/*  976 */           System.out.print("Nullable ");
-/*      */         }
-/*  978 */         System.out.print("firstPos=");
-/*  979 */         System.out.print(nodeCur.firstPos().toString());
-/*  980 */         System.out.print(" lastPos=");
-/*  981 */         System.out.println(nodeCur.lastPos().toString());
-/*      */         
-/*  983 */         dumpTree(((XSCMBinOp)nodeCur).getLeft(), level + 1);
-/*  984 */         dumpTree(((XSCMBinOp)nodeCur).getRight(), level + 1);
-/*      */         return;
-/*      */       
-/*      */       case 4:
-/*      */       case 5:
-/*      */       case 6:
-/*  990 */         System.out.print("Rep Node ");
-/*      */         
-/*  992 */         if (nodeCur.isNullable()) {
-/*  993 */           System.out.print("Nullable ");
-/*      */         }
-/*  995 */         System.out.print("firstPos=");
-/*  996 */         System.out.print(nodeCur.firstPos().toString());
-/*  997 */         System.out.print(" lastPos=");
-/*  998 */         System.out.println(nodeCur.lastPos().toString());
-/*      */         
-/* 1000 */         dumpTree(((XSCMUniOp)nodeCur).getChild(), level + 1);
-/*      */         return;
-/*      */       
-/*      */       case 1:
-/* 1004 */         System.out
-/* 1005 */           .print("Leaf: (pos=" + ((XSCMLeaf)nodeCur)
-/*      */             
-/* 1007 */             .getPosition() + "), (elemIndex=" + ((XSCMLeaf)nodeCur)
-/*      */ 
-/*      */             
-/* 1010 */             .getLeaf() + ") ");
-/*      */ 
-/*      */ 
-/*      */         
-/* 1014 */         if (nodeCur.isNullable()) {
-/* 1015 */           System.out.print(" Nullable ");
-/*      */         }
-/* 1017 */         System.out.print("firstPos=");
-/* 1018 */         System.out.print(nodeCur.firstPos().toString());
-/* 1019 */         System.out.print(" lastPos=");
-/* 1020 */         System.out.println(nodeCur.lastPos().toString());
-/*      */         return;
-/*      */       
-/*      */       case 2:
-/* 1024 */         System.out.print("Any Node: ");
-/*      */         
-/* 1026 */         System.out.print("firstPos=");
-/* 1027 */         System.out.print(nodeCur.firstPos().toString());
-/* 1028 */         System.out.print(" lastPos=");
-/* 1029 */         System.out.println(nodeCur.lastPos().toString());
-/*      */         return;
-/*      */     } 
-/* 1032 */     throw new RuntimeException("ImplementationMessages.VAL_NIICM");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int[] makeDefStateList() {
-/* 1046 */     int[] retArray = new int[this.fElemMapSize];
-/* 1047 */     for (int index = 0; index < this.fElemMapSize; index++)
-/* 1048 */       retArray[index] = -1; 
-/* 1049 */     return retArray;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void postTreeBuildInit(CMNode nodeCur) throws RuntimeException {
-/* 1055 */     nodeCur.setMaxStates(this.fLeafCount);
-/*      */     
-/* 1057 */     XSCMLeaf leaf = null;
-/* 1058 */     int pos = 0;
-/*      */     
-/* 1060 */     if (nodeCur.type() == 2) {
-/* 1061 */       leaf = (XSCMLeaf)nodeCur;
-/* 1062 */       pos = leaf.getPosition();
-/* 1063 */       this.fLeafList[pos] = leaf;
-/* 1064 */       this.fLeafListType[pos] = 2;
-/*      */     }
-/* 1066 */     else if (nodeCur.type() == 101 || nodeCur
-/* 1067 */       .type() == 102) {
-/* 1068 */       postTreeBuildInit(((XSCMBinOp)nodeCur).getLeft());
-/* 1069 */       postTreeBuildInit(((XSCMBinOp)nodeCur).getRight());
-/*      */     }
-/* 1071 */     else if (nodeCur.type() == 4 || nodeCur
-/* 1072 */       .type() == 6 || nodeCur
-/* 1073 */       .type() == 5) {
-/* 1074 */       postTreeBuildInit(((XSCMUniOp)nodeCur).getChild());
-/*      */     }
-/* 1076 */     else if (nodeCur.type() == 1) {
-/*      */ 
-/*      */       
-/* 1079 */       leaf = (XSCMLeaf)nodeCur;
-/* 1080 */       pos = leaf.getPosition();
-/* 1081 */       this.fLeafList[pos] = leaf;
-/* 1082 */       this.fLeafListType[pos] = 1;
-/*      */     } else {
-/*      */       
-/* 1085 */       throw new RuntimeException("ImplementationMessages.VAL_NIICM");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean checkUniqueParticleAttribution(SubstitutionGroupHandler subGroupHandler) throws XMLSchemaException {
-/* 1100 */     byte[][] conflictTable = new byte[this.fElemMapSize][this.fElemMapSize];
-/*      */     
-/*      */     int i;
-/* 1103 */     for (i = 0; i < this.fTransTable.length && this.fTransTable[i] != null; i++) {
-/* 1104 */       for (int j = 0; j < this.fElemMapSize; j++) {
-/* 1105 */         for (int k = j + 1; k < this.fElemMapSize; k++) {
-/* 1106 */           if (this.fTransTable[i][j] != -1 && this.fTransTable[i][k] != -1)
-/*      */           {
-/* 1108 */             if (conflictTable[j][k] == 0) {
-/*      */               
-/* 1110 */               if (XSConstraints.overlapUPA(this.fElemMap[j], this.fElemMap[k], subGroupHandler)) {
-/*      */                 
-/* 1112 */                 if (this.fCountingStates != null) {
-/* 1113 */                   Occurence o = this.fCountingStates[i];
-/*      */ 
-/*      */ 
-/*      */                   
-/* 1117 */                   if (o != null) if ((((this.fTransTable[i][j] == i) ? 1 : 0) ^ ((this.fTransTable[i][k] == i) ? 1 : 0)) != 0 && o.minOccurs == o.maxOccurs) {
-/*      */ 
-/*      */                       
-/* 1120 */                       conflictTable[j][k] = -1;
-/*      */                       continue;
-/*      */                     }  
-/*      */                 } 
-/* 1124 */                 conflictTable[j][k] = 1;
-/*      */                 continue;
-/*      */               } 
-/* 1127 */               conflictTable[j][k] = -1;
-/*      */             } 
-/*      */           }
-/*      */           
-/*      */           continue;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1136 */     for (i = 0; i < this.fElemMapSize; i++) {
-/* 1137 */       for (int j = 0; j < this.fElemMapSize; j++) {
-/* 1138 */         if (conflictTable[i][j] == 1)
-/*      */         {
-/*      */ 
-/*      */           
-/* 1142 */           throw new XMLSchemaException("cos-nonambig", new Object[] { this.fElemMap[i].toString(), this.fElemMap[j]
-/* 1143 */                 .toString() });
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1150 */     for (i = 0; i < this.fElemMapSize; i++) {
-/* 1151 */       if (this.fElemMapType[i] == 2) {
-/* 1152 */         XSWildcardDecl wildcard = (XSWildcardDecl)this.fElemMap[i];
-/* 1153 */         if (wildcard.fType == 3 || wildcard.fType == 2)
-/*      */         {
-/* 1155 */           return true;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1160 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Vector whatCanGoHere(int[] state) {
-/* 1173 */     int curState = state[0];
-/* 1174 */     if (curState < 0)
-/* 1175 */       curState = state[1]; 
-/* 1176 */     Occurence o = (this.fCountingStates != null) ? this.fCountingStates[curState] : null;
-/*      */     
-/* 1178 */     int count = state[2];
-/*      */     
-/* 1180 */     Vector<Object> ret = new Vector();
-/* 1181 */     for (int elemIndex = 0; elemIndex < this.fElemMapSize; elemIndex++) {
-/* 1182 */       int nextState = this.fTransTable[curState][elemIndex];
-/* 1183 */       if (nextState != -1) {
-/* 1184 */         if (o != null) {
-/* 1185 */           if (curState == nextState) {
-/*      */ 
-/*      */ 
-/*      */             
-/* 1189 */             if (count >= o.maxOccurs && o.maxOccurs != -1)
-/*      */             {
-/*      */               continue;
-/*      */             
-/*      */             }
-/*      */           
-/*      */           }
-/* 1196 */           else if (count < o.minOccurs) {
-/*      */             continue;
-/*      */           } 
-/*      */         }
-/* 1200 */         ret.addElement(this.fElemMap[elemIndex]);
-/*      */       }  continue;
-/*      */     } 
-/* 1203 */     return ret;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ArrayList checkMinMaxBounds() {
-/* 1220 */     ArrayList<String> result = null;
-/* 1221 */     for (int elemIndex = 0; elemIndex < this.fElemMapSize; elemIndex++) {
-/* 1222 */       int count = this.fElemMapCounter[elemIndex];
-/* 1223 */       if (count != -1) {
-/*      */ 
-/*      */         
-/* 1226 */         int minOccurs = this.fElemMapCounterLowerBound[elemIndex];
-/* 1227 */         int maxOccurs = this.fElemMapCounterUpperBound[elemIndex];
-/* 1228 */         if (count < minOccurs) {
-/* 1229 */           if (result == null) result = new ArrayList(); 
-/* 1230 */           result.add("cvc-complex-type.2.4.b");
-/* 1231 */           result.add("{" + this.fElemMap[elemIndex] + "}");
-/*      */         } 
-/* 1233 */         if (maxOccurs != -1 && count > maxOccurs) {
-/* 1234 */           if (result == null) result = new ArrayList<>(); 
-/* 1235 */           result.add("cvc-complex-type.2.4.e");
-/* 1236 */           result.add("{" + this.fElemMap[elemIndex] + "}");
-/*      */         } 
-/*      */       } 
-/* 1239 */     }  return result;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\models\XSDFACM.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.models;
+
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.impl.dtd.models.CMNode;
+import com.sun.org.apache.xerces.internal.impl.dtd.models.CMStateSet;
+import com.sun.org.apache.xerces.internal.impl.xs.SchemaSymbols;
+import com.sun.org.apache.xerces.internal.impl.xs.SubstitutionGroupHandler;
+import com.sun.org.apache.xerces.internal.impl.xs.XSElementDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSParticleDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSModelGroupImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSWildcardDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaException;
+import com.sun.org.apache.xerces.internal.impl.xs.XSConstraints;
+
+import java.util.Vector;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+/**
+ * DFAContentModel is the implementation of XSCMValidator that does
+ * all of the non-trivial element content validation. This class does
+ * the conversion from the regular expression to the DFA that
+ * it then uses in its validation algorithm.
+ *
+ * @xerces.internal
+ *
+ * @author Neil Graham, IBM
+ * @version $Id: XSDFACM.java,v 1.9 2010/08/06 23:49:43 joehw Exp $
+ */
+public class XSDFACM
+    implements XSCMValidator {
+
+    //
+    // Constants
+    //
+    private static final boolean DEBUG = false;
+
+    // special strings
+
+    // debugging
+
+    /** Set to true to debug content model validation. */
+    private static final boolean DEBUG_VALIDATE_CONTENT = false;
+
+    //
+    // Data
+    //
+
+    /**
+     * This is the map of unique input symbol elements to indices into
+     * each state's per-input symbol transition table entry. This is part
+     * of the built DFA information that must be kept around to do the
+     * actual validation.  Note tat since either XSElementDecl or XSParticleDecl object
+     * can live here, we've got to use an Object.
+     */
+    private Object fElemMap[] = null;
+
+    /**
+     * This is a map of whether the element map contains information
+     * related to ANY models.
+     */
+    private int fElemMapType[] = null;
+
+    /**
+     * id of the unique input symbol
+     */
+    private int fElemMapId[] = null;
+
+    /** The element map size. */
+    private int fElemMapSize = 0;
+
+    /**
+     * This is an array of booleans, one per state (there are
+     * fTransTableSize states in the DFA) that indicates whether that
+     * state is a final state.
+     */
+    private boolean fFinalStateFlags[] = null;
+
+    /**
+     * The list of follow positions for each NFA position (i.e. for each
+     * non-epsilon leaf node.) This is only used during the building of
+     * the DFA, and is let go afterwards.
+     */
+    private CMStateSet fFollowList[] = null;
+
+    /**
+     * This is the head node of our intermediate representation. It is
+     * only non-null during the building of the DFA (just so that it
+     * does not have to be passed all around.) Once the DFA is built,
+     * this is no longer required so its nulled out.
+     */
+    private CMNode fHeadNode = null;
+
+    /**
+     * The count of leaf nodes. This is an important number that set some
+     * limits on the sizes of data structures in the DFA process.
+     */
+    private int fLeafCount = 0;
+
+    /**
+     * An array of non-epsilon leaf nodes, which is used during the DFA
+     * build operation, then dropped.
+     */
+    private XSCMLeaf fLeafList[] = null;
+
+    /** Array mapping ANY types to the leaf list. */
+    private int fLeafListType[] = null;
+
+    /**
+     * This is the transition table that is the main by product of all
+     * of the effort here. It is an array of arrays of ints. The first
+     * dimension is the number of states we end up with in the DFA. The
+     * second dimensions is the number of unique elements in the content
+     * model (fElemMapSize). Each entry in the second dimension indicates
+     * the new state given that input for the first dimension's start
+     * state.
+     * <p>
+     * The fElemMap array handles mapping from element indexes to
+     * positions in the second dimension of the transition table.
+     */
+    private int fTransTable[][] = null;
+    /**
+     * Array containing occurence information for looping states
+     * which use counters to check minOccurs/maxOccurs.
+     */
+    private Occurence [] fCountingStates = null;
+    static final class Occurence {
+        final int minOccurs;
+        final int maxOccurs;
+        final int elemIndex;
+        public Occurence (XSCMRepeatingLeaf leaf, int elemIndex) {
+            minOccurs = leaf.getMinOccurs();
+            maxOccurs = leaf.getMaxOccurs();
+            this.elemIndex = elemIndex;
+        }
+        public String toString() {
+            return "minOccurs=" + minOccurs
+                + ";maxOccurs=" +
+                ((maxOccurs != SchemaSymbols.OCCURRENCE_UNBOUNDED)
+                        ? Integer.toString(maxOccurs) : "unbounded");
+        }
+    }
+
+    /**
+     * The number of valid entries in the transition table, and in the other
+     * related tables such as fFinalStateFlags.
+     */
+    private int fTransTableSize = 0;
+
+    /**
+     * Array of counters for all the for elements (or wildcards)
+     * of the form a{n,m} where n > 1 and m <= unbounded. Used
+     * to count the a's to later check against n and m. Counter
+     * set to -1 if element (or wildcard) not optimized by
+     * constant space algorithm.
+     */
+    private int fElemMapCounter[];
+
+    /**
+     * Array of lower bounds for all the for elements (or wildcards)
+     * of the form a{n,m} where n > 1 and m <= unbounded. This array
+     * stores the n's for those elements (or wildcards) for which
+     * the constant space algorithm applies (or -1 otherwise).
+     */
+    private int fElemMapCounterLowerBound[];
+
+    /**
+     * Array of upper bounds for all the for elements (or wildcards)
+     * of the form a{n,m} where n > 1 and m <= unbounded. This array
+     * stores the n's for those elements (or wildcards) for which
+     * the constant space algorithm applies, or -1 if algorithm does
+     * not apply or m = unbounded.
+     */
+    private int fElemMapCounterUpperBound[];   // -1 if no upper bound
+
+    // temp variables
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructs a DFA content model.
+     *
+     * @param syntaxTree    The syntax tree of the content model.
+     * @param leafCount     The number of leaves.
+     *
+     * @exception RuntimeException Thrown if DFA can't be built.
+     */
+
+   public XSDFACM(CMNode syntaxTree, int leafCount) {
+
+        // Store away our index and pools in members
+        fLeafCount = leafCount;
+
+        //
+        //  Create some string pool indexes that represent the names of some
+        //  magical nodes in the syntax tree.
+        //  (already done in static initialization...
+        //
+
+        //
+        //  Ok, so lets grind through the building of the DFA. This method
+        //  handles the high level logic of the algorithm, but it uses a
+        //  number of helper classes to do its thing.
+        //
+        //  In order to avoid having hundreds of references to the error and
+        //  string handlers around, this guy and all of his helper classes
+        //  just throw a simple exception and we then pass it along.
+        //
+
+        if(DEBUG_VALIDATE_CONTENT) {
+            XSDFACM.time -= System.currentTimeMillis();
+        }
+
+        buildDFA(syntaxTree);
+
+        if(DEBUG_VALIDATE_CONTENT) {
+            XSDFACM.time += System.currentTimeMillis();
+            System.out.println("DFA build: " + XSDFACM.time + "ms");
+        }
+    }
+
+    private static long time = 0;
+
+    //
+    // XSCMValidator methods
+    //
+
+    /**
+     * check whether the given state is one of the final states
+     *
+     * @param state       the state to check
+     *
+     * @return whether it's a final state
+     */
+    public boolean isFinalState (int state) {
+        return (state < 0)? false :
+            fFinalStateFlags[state];
+    }
+
+    /**
+     * one transition only
+     *
+     * @param curElem The current element's QName
+     * @param state stack to store the previous state
+     * @param subGroupHandler the substitution group handler
+     *
+     * @return  null if transition is invalid; otherwise the Object corresponding to the
+     *      XSElementDecl or XSWildcardDecl identified.  Also, the
+     *      state array will be modified to include the new state; this so that the validator can
+     *      store it away.
+     *
+     * @exception RuntimeException thrown on error
+     */
+    public Object oneTransition(QName curElem, int[] state, SubstitutionGroupHandler subGroupHandler) {
+        int curState = state[0];
+
+        if(curState == XSCMValidator.FIRST_ERROR || curState == XSCMValidator.SUBSEQUENT_ERROR) {
+            // there was an error last time; so just go find correct Object in fElemmMap.
+            // ... after resetting state[0].
+            if(curState == XSCMValidator.FIRST_ERROR)
+                state[0] = XSCMValidator.SUBSEQUENT_ERROR;
+
+            return findMatchingDecl(curElem, subGroupHandler);
+        }
+
+        int nextState = 0;
+        int elemIndex = 0;
+        Object matchingDecl = null;
+
+        for (; elemIndex < fElemMapSize; elemIndex++) {
+            nextState = fTransTable[curState][elemIndex];
+            if (nextState == -1)
+                continue;
+            int type = fElemMapType[elemIndex] ;
+            if (type == XSParticleDecl.PARTICLE_ELEMENT) {
+                matchingDecl = subGroupHandler.getMatchingElemDecl(curElem, (XSElementDecl)fElemMap[elemIndex]);
+                if (matchingDecl != null) {
+                    // Increment counter if constant space algorithm applies
+                    if (fElemMapCounter[elemIndex] >= 0) {
+                        fElemMapCounter[elemIndex]++;
+                    }
+                    break;
+                }
+            }
+            else if (type == XSParticleDecl.PARTICLE_WILDCARD) {
+                if (((XSWildcardDecl)fElemMap[elemIndex]).allowNamespace(curElem.uri)) {
+                    matchingDecl = fElemMap[elemIndex];
+                    // Increment counter if constant space algorithm applies
+                    if (fElemMapCounter[elemIndex] >= 0) {
+                        fElemMapCounter[elemIndex]++;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // if we still can't find a match, set the state to first_error
+        // and return null
+        if (elemIndex == fElemMapSize) {
+            state[1] = state[0];
+            state[0] = XSCMValidator.FIRST_ERROR;
+            return findMatchingDecl(curElem, subGroupHandler);
+        }
+
+        if (fCountingStates != null) {
+            Occurence o = fCountingStates[curState];
+            if (o != null) {
+                if (curState == nextState) {
+                    if (++state[2] > o.maxOccurs &&
+                        o.maxOccurs != SchemaSymbols.OCCURRENCE_UNBOUNDED) {
+                        // It's likely that we looped too many times on the current state
+                        // however it's possible that we actually matched another particle
+                        // which allows the same name.
+                        //
+                        // Consider:
+                        //
+                        // <xs:sequence>
+                        //  <xs:element name="foo" type="xs:string" minOccurs="3" maxOccurs="3"/>
+                        //  <xs:element name="foo" type="xs:string" fixed="bar"/>
+                        // </xs:sequence>
+                        //
+                        // and
+                        //
+                        // <xs:sequence>
+                        //  <xs:element name="foo" type="xs:string" minOccurs="3" maxOccurs="3"/>
+                        //  <xs:any namespace="##any" processContents="skip"/>
+                        // </xs:sequence>
+                        //
+                        // In the DFA there will be two transitions from the current state which
+                        // allow "foo". Note that this is not a UPA violation. The ambiguity of which
+                        // transition to take is resolved by the current value of the counter. Since
+                        // we've already seen enough instances of the first "foo" perhaps there is
+                        // another element declaration or wildcard deeper in the element map which
+                        // matches.
+                        return findMatchingDecl(curElem, state, subGroupHandler, elemIndex);
+                    }
+                }
+                else if (state[2] < o.minOccurs) {
+                    // not enough loops on the current state.
+                    state[1] = state[0];
+                    state[0] = XSCMValidator.FIRST_ERROR;
+                    return findMatchingDecl(curElem, subGroupHandler);
+                }
+                else {
+                    // Exiting a counting state. If we're entering a new
+                    // counting state, reset the counter.
+                    o = fCountingStates[nextState];
+                    if (o != null) {
+                        state[2] = (elemIndex == o.elemIndex) ? 1 : 0;
+                    }
+                }
+            }
+            else {
+                o = fCountingStates[nextState];
+                if (o != null) {
+                    // Entering a new counting state. Reset the counter.
+                    // If we've already seen one instance of the looping
+                    // particle set the counter to 1, otherwise set it
+                    // to 0.
+                    state[2] = (elemIndex == o.elemIndex) ? 1 : 0;
+                }
+            }
+        }
+
+        state[0] = nextState;
+        return matchingDecl;
+    } // oneTransition(QName, int[], SubstitutionGroupHandler):  Object
+
+    Object findMatchingDecl(QName curElem, SubstitutionGroupHandler subGroupHandler) {
+        Object matchingDecl = null;
+
+        for (int elemIndex = 0; elemIndex < fElemMapSize; elemIndex++) {
+            int type = fElemMapType[elemIndex] ;
+            if (type == XSParticleDecl.PARTICLE_ELEMENT) {
+                matchingDecl = subGroupHandler.getMatchingElemDecl(curElem, (XSElementDecl)fElemMap[elemIndex]);
+                if (matchingDecl != null) {
+                    return matchingDecl;
+                }
+            }
+            else if (type == XSParticleDecl.PARTICLE_WILDCARD) {
+                if(((XSWildcardDecl)fElemMap[elemIndex]).allowNamespace(curElem.uri))
+                    return fElemMap[elemIndex];
+            }
+        }
+
+        return null;
+    } // findMatchingDecl(QName, SubstitutionGroupHandler): Object
+
+    Object findMatchingDecl(QName curElem, int[] state, SubstitutionGroupHandler subGroupHandler, int elemIndex) {
+
+        int curState = state[0];
+        int nextState = 0;
+        Object matchingDecl = null;
+
+        while (++elemIndex < fElemMapSize) {
+            nextState = fTransTable[curState][elemIndex];
+            if (nextState == -1)
+                continue;
+            int type = fElemMapType[elemIndex] ;
+            if (type == XSParticleDecl.PARTICLE_ELEMENT) {
+                matchingDecl = subGroupHandler.getMatchingElemDecl(curElem, (XSElementDecl)fElemMap[elemIndex]);
+                if (matchingDecl != null) {
+                    break;
+                }
+            }
+            else if (type == XSParticleDecl.PARTICLE_WILDCARD) {
+                if (((XSWildcardDecl)fElemMap[elemIndex]).allowNamespace(curElem.uri)) {
+                    matchingDecl = fElemMap[elemIndex];
+                    break;
+                }
+            }
+        }
+
+        // if we still can't find a match, set the state to FIRST_ERROR and return null
+        if (elemIndex == fElemMapSize) {
+            state[1] = state[0];
+            state[0] = XSCMValidator.FIRST_ERROR;
+            return findMatchingDecl(curElem, subGroupHandler);
+        }
+
+        // if we found a match, set the next state and reset the
+        // counter if the next state is a counting state.
+        state[0] = nextState;
+        final Occurence o = fCountingStates[nextState];
+        if (o != null) {
+            state[2] = (elemIndex == o.elemIndex) ? 1 : 0;
+        }
+        return matchingDecl;
+    } // findMatchingDecl(QName, int[], SubstitutionGroupHandler, int): Object
+
+    // This method returns the start states of the content model.
+    public int[] startContentModel() {
+        // Clear all constant space algorithm counters in use
+        for (int elemIndex = 0; elemIndex < fElemMapSize; elemIndex++) {
+            if (fElemMapCounter[elemIndex] != -1) {
+                fElemMapCounter[elemIndex] = 0;
+            }
+        }
+        // [0] : the current state
+        // [1] : if [0] is an error state then the
+        //       last valid state before the error
+        // [2] : occurence counter for counting states
+        return new int [3];
+    } // startContentModel():int[]
+
+    // this method returns whether the last state was a valid final state
+    public boolean endContentModel(int[] state) {
+        final int curState = state[0];
+        if (fFinalStateFlags[curState]) {
+            if (fCountingStates != null) {
+                Occurence o = fCountingStates[curState];
+                if (o != null && state[2] < o.minOccurs) {
+                    // not enough loops on the current state to be considered final.
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    } // endContentModel(int[]):  boolean
+
+    // Killed off whatCanGoHere; we may need it for DOM canInsert(...) etc.,
+    // but we can put it back later.
+
+    //
+    // Private methods
+    //
+
+    /**
+     * Builds the internal DFA transition table from the given syntax tree.
+     *
+     * @param syntaxTree The syntax tree.
+     *
+     * @exception RuntimeException Thrown if DFA cannot be built.
+     */
+    private void buildDFA(CMNode syntaxTree) {
+        //
+        //  The first step we need to take is to rewrite the content model
+        //  using our CMNode objects, and in the process get rid of any
+        //  repetition short cuts, converting them into '*' style repetitions
+        //  or getting rid of repetitions altogether.
+        //
+        //  The conversions done are:
+        //
+        //  x+ -> (x|x*)
+        //  x? -> (x|epsilon)
+        //
+        //  This is a relatively complex scenario. What is happening is that
+        //  we create a top level binary node of which the special EOC value
+        //  is set as the right side node. The the left side is set to the
+        //  rewritten syntax tree. The source is the original content model
+        //  info from the decl pool. The rewrite is done by buildSyntaxTree()
+        //  which recurses the decl pool's content of the element and builds
+        //  a new tree in the process.
+        //
+        //  Note that, during this operation, we set each non-epsilon leaf
+        //  node's DFA state position and count the number of such leafs, which
+        //  is left in the fLeafCount member.
+        //
+        //  The nodeTmp object is passed in just as a temp node to use during
+        //  the recursion. Otherwise, we'd have to create a new node on every
+        //  level of recursion, which would be piggy in Java (as is everything
+        //  for that matter.)
+        //
+
+        /* MODIFIED (Jan, 2001)
+         *
+         * Use following rules.
+         *   nullable(x+) := nullable(x), first(x+) := first(x),  last(x+) := last(x)
+         *   nullable(x?) := true, first(x?) := first(x),  last(x?) := last(x)
+         *
+         * The same computation of follow as x* is applied to x+
+         *
+         * The modification drastically reduces computation time of
+         * "(a, (b, a+, (c, (b, a+)+, a+, (d,  (c, (b, a+)+, a+)+, (b, a+)+, a+)+)+)+)+"
+         */
+
+        //
+        //  And handle specially the EOC node, which also must be numbered
+        //  and counted as a non-epsilon leaf node. It could not be handled
+        //  in the above tree build because it was created before all that
+        //  started. We save the EOC position since its used during the DFA
+        //  building loop.
+        //
+        int EOCPos = fLeafCount;
+        XSCMLeaf nodeEOC = new XSCMLeaf(XSParticleDecl.PARTICLE_ELEMENT, null, -1, fLeafCount++);
+        fHeadNode = new XSCMBinOp(
+            XSModelGroupImpl.MODELGROUP_SEQUENCE,
+            syntaxTree,
+            nodeEOC
+        );
+
+        //
+        //  Ok, so now we have to iterate the new tree and do a little more
+        //  work now that we know the leaf count. One thing we need to do is
+        //  to calculate the first and last position sets of each node. This
+        //  is cached away in each of the nodes.
+        //
+        //  Along the way we also set the leaf count in each node as the
+        //  maximum state count. They must know this in order to create their
+        //  first/last pos sets.
+        //
+        //  We also need to build an array of references to the non-epsilon
+        //  leaf nodes. Since we iterate it in the same way as before, this
+        //  will put them in the array according to their position values.
+        //
+        fLeafList = new XSCMLeaf[fLeafCount];
+        fLeafListType = new int[fLeafCount];
+        postTreeBuildInit(fHeadNode);
+
+        //
+        //  And, moving onward... We now need to build the follow position
+        //  sets for all the nodes. So we allocate an array of state sets,
+        //  one for each leaf node (i.e. each DFA position.)
+        //
+        fFollowList = new CMStateSet[fLeafCount];
+        for (int index = 0; index < fLeafCount; index++)
+            fFollowList[index] = new CMStateSet(fLeafCount);
+        calcFollowList(fHeadNode);
+        //
+        //  And finally the big push... Now we build the DFA using all the
+        //  states and the tree we've built up. First we set up the various
+        //  data structures we are going to use while we do this.
+        //
+        //  First of all we need an array of unique element names in our
+        //  content model. For each transition table entry, we need a set of
+        //  contiguous indices to represent the transitions for a particular
+        //  input element. So we need to a zero based range of indexes that
+        //  map to element types. This element map provides that mapping.
+        //
+        fElemMap = new Object[fLeafCount];
+        fElemMapType = new int[fLeafCount];
+        fElemMapId = new int[fLeafCount];
+
+        fElemMapCounter = new int[fLeafCount];
+        fElemMapCounterLowerBound = new int[fLeafCount];
+        fElemMapCounterUpperBound = new int[fLeafCount];
+
+        fElemMapSize = 0;
+        Occurence [] elemOccurenceMap = null;
+
+        for (int outIndex = 0; outIndex < fLeafCount; outIndex++) {
+            // optimization from Henry Zongaro:
+            //fElemMap[outIndex] = new Object ();
+            fElemMap[outIndex] = null;
+
+            int inIndex = 0;
+            final int id = fLeafList[outIndex].getParticleId();
+            for (; inIndex < fElemMapSize; inIndex++) {
+                if (id == fElemMapId[inIndex])
+                    break;
+            }
+
+            // If it was not in the list, then add it, if not the EOC node
+            if (inIndex == fElemMapSize) {
+                XSCMLeaf leaf = fLeafList[outIndex];
+                fElemMap[fElemMapSize] = leaf.getLeaf();
+                if (leaf instanceof XSCMRepeatingLeaf) {
+                    if (elemOccurenceMap == null) {
+                        elemOccurenceMap = new Occurence[fLeafCount];
+                    }
+                    elemOccurenceMap[fElemMapSize] = new Occurence((XSCMRepeatingLeaf) leaf, fElemMapSize);
+                }
+
+                fElemMapType[fElemMapSize] = fLeafListType[outIndex];
+                fElemMapId[fElemMapSize] = id;
+
+                // Init counters and bounds for a{n,m} algorithm
+                int[] bounds = (int[]) leaf.getUserData();
+                if (bounds != null) {
+                    fElemMapCounter[fElemMapSize] = 0;
+                    fElemMapCounterLowerBound[fElemMapSize] = bounds[0];
+                    fElemMapCounterUpperBound[fElemMapSize] = bounds[1];
+                } else {
+                    fElemMapCounter[fElemMapSize] = -1;
+                    fElemMapCounterLowerBound[fElemMapSize] = -1;
+                    fElemMapCounterUpperBound[fElemMapSize] = -1;
+                }
+
+                fElemMapSize++;
+            }
+        }
+
+        // the last entry in the element map must be the EOC element.
+        // remove it from the map.
+        if (DEBUG) {
+            if (fElemMapId[fElemMapSize-1] != -1)
+                System.err.println("interal error in DFA: last element is not EOC.");
+        }
+        fElemMapSize--;
+
+        /***
+         * Optimization(Jan, 2001); We sort fLeafList according to
+         * elemIndex which is *uniquely* associated to each leaf.
+         * We are *assuming* that each element appears in at least one leaf.
+         **/
+
+        int[] fLeafSorter = new int[fLeafCount + fElemMapSize];
+        int fSortCount = 0;
+
+        for (int elemIndex = 0; elemIndex < fElemMapSize; elemIndex++) {
+            final int id = fElemMapId[elemIndex];
+            for (int leafIndex = 0; leafIndex < fLeafCount; leafIndex++) {
+                if (id == fLeafList[leafIndex].getParticleId())
+                    fLeafSorter[fSortCount++] = leafIndex;
+            }
+            fLeafSorter[fSortCount++] = -1;
+        }
+
+        /* Optimization(Jan, 2001) */
+
+        //
+        //  Next lets create some arrays, some that hold transient
+        //  information during the DFA build and some that are permament.
+        //  These are kind of sticky since we cannot know how big they will
+        //  get, but we don't want to use any Java collections because of
+        //  performance.
+        //
+        //  Basically they will probably be about fLeafCount*2 on average,
+        //  but can be as large as 2^(fLeafCount*2), worst case. So we start
+        //  with fLeafCount*4 as a middle ground. This will be very unlikely
+        //  to ever have to expand, though it if does, the overhead will be
+        //  somewhat ugly.
+        //
+        int curArraySize = fLeafCount * 4;
+        CMStateSet[] statesToDo = new CMStateSet[curArraySize];
+        fFinalStateFlags = new boolean[curArraySize];
+        fTransTable = new int[curArraySize][];
+
+        //
+        //  Ok we start with the initial set as the first pos set of the
+        //  head node (which is the seq node that holds the content model
+        //  and the EOC node.)
+        //
+        CMStateSet setT = fHeadNode.firstPos();
+
+        //
+        //  Init our two state flags. Basically the unmarked state counter
+        //  is always chasing the current state counter. When it catches up,
+        //  that means we made a pass through that did not add any new states
+        //  to the lists, at which time we are done. We could have used a
+        //  expanding array of flags which we used to mark off states as we
+        //  complete them, but this is easier though less readable maybe.
+        //
+        int unmarkedState = 0;
+        int curState = 0;
+
+        //
+        //  Init the first transition table entry, and put the initial state
+        //  into the states to do list, then bump the current state.
+        //
+        fTransTable[curState] = makeDefStateList();
+        statesToDo[curState] = setT;
+        curState++;
+
+        /* Optimization(Jan, 2001); This is faster for
+         * a large content model such as, "(t001+|t002+|.... |t500+)".
+         */
+
+        HashMap stateTable = new HashMap();
+
+        /* Optimization(Jan, 2001) */
+
+        //
+        //  Ok, almost done with the algorithm... We now enter the
+        //  loop where we go until the states done counter catches up with
+        //  the states to do counter.
+        //
+        while (unmarkedState < curState) {
+            //
+            //  Get the first unmarked state out of the list of states to do.
+            //  And get the associated transition table entry.
+            //
+            setT = statesToDo[unmarkedState];
+            int[] transEntry = fTransTable[unmarkedState];
+
+            // Mark this one final if it contains the EOC state
+            fFinalStateFlags[unmarkedState] = setT.getBit(EOCPos);
+
+            // Bump up the unmarked state count, marking this state done
+            unmarkedState++;
+
+            // Loop through each possible input symbol in the element map
+            CMStateSet newSet = null;
+            /* Optimization(Jan, 2001) */
+            int sorterIndex = 0;
+            /* Optimization(Jan, 2001) */
+            for (int elemIndex = 0; elemIndex < fElemMapSize; elemIndex++) {
+                //
+                //  Build up a set of states which is the union of all of
+                //  the follow sets of DFA positions that are in the current
+                //  state. If we gave away the new set last time through then
+                //  create a new one. Otherwise, zero out the existing one.
+                //
+                if (newSet == null)
+                    newSet = new CMStateSet(fLeafCount);
+                else
+                    newSet.zeroBits();
+
+                /* Optimization(Jan, 2001) */
+                int leafIndex = fLeafSorter[sorterIndex++];
+
+                while (leafIndex != -1) {
+                    // If this leaf index (DFA position) is in the current set...
+                    if (setT.getBit(leafIndex)) {
+                        //
+                        //  If this leaf is the current input symbol, then we
+                        //  want to add its follow list to the set of states to
+                        //  transition to from the current state.
+                        //
+                        newSet.union(fFollowList[leafIndex]);
+                    }
+
+                   leafIndex = fLeafSorter[sorterIndex++];
+                }
+                /* Optimization(Jan, 2001) */
+
+                //
+                //  If this new set is not empty, then see if its in the list
+                //  of states to do. If not, then add it.
+                //
+                if (!newSet.isEmpty()) {
+                    //
+                    //  Search the 'states to do' list to see if this new
+                    //  state set is already in there.
+                    //
+
+                    /* Optimization(Jan, 2001) */
+                    Integer stateObj = (Integer)stateTable.get(newSet);
+                    int stateIndex = (stateObj == null ? curState : stateObj.intValue());
+                    /* Optimization(Jan, 2001) */
+
+                    // If we did not find it, then add it
+                    if (stateIndex == curState) {
+                        //
+                        //  Put this new state into the states to do and init
+                        //  a new entry at the same index in the transition
+                        //  table.
+                        //
+                        statesToDo[curState] = newSet;
+                        fTransTable[curState] = makeDefStateList();
+
+                        /* Optimization(Jan, 2001) */
+                        stateTable.put(newSet, new Integer(curState));
+                        /* Optimization(Jan, 2001) */
+
+                        // We now have a new state to do so bump the count
+                        curState++;
+
+                        //
+                        //  Null out the new set to indicate we adopted it.
+                        //  This will cause the creation of a new set on the
+                        //  next time around the loop.
+                        //
+                        newSet = null;
+                    }
+
+                    //
+                    //  Now set this state in the transition table's entry
+                    //  for this element (using its index), with the DFA
+                    //  state we will move to from the current state when we
+                    //  see this input element.
+                    //
+                    transEntry[elemIndex] = stateIndex;
+
+                    // Expand the arrays if we're full
+                    if (curState == curArraySize) {
+                        //
+                        //  Yikes, we overflowed the initial array size, so
+                        //  we've got to expand all of these arrays. So adjust
+                        //  up the size by 50% and allocate new arrays.
+                        //
+                        final int newSize = (int)(curArraySize * 1.5);
+                        CMStateSet[] newToDo = new CMStateSet[newSize];
+                        boolean[] newFinalFlags = new boolean[newSize];
+                        int[][] newTransTable = new int[newSize][];
+
+                        // Copy over all of the existing content
+                        System.arraycopy(statesToDo, 0, newToDo, 0, curArraySize);
+                        System.arraycopy(fFinalStateFlags, 0, newFinalFlags, 0, curArraySize);
+                        System.arraycopy(fTransTable, 0, newTransTable, 0, curArraySize);
+
+                        // Store the new array size
+                        curArraySize = newSize;
+                        statesToDo = newToDo;
+                        fFinalStateFlags = newFinalFlags;
+                        fTransTable = newTransTable;
+                    }
+                }
+            }
+        }
+
+        //
+        // Fill in the occurence information for each looping state
+        // if we're using counters.
+        //
+        if (elemOccurenceMap != null) {
+            fCountingStates = new Occurence[curState];
+            for (int i = 0; i < curState; ++i) {
+                int [] transitions = fTransTable[i];
+                for (int j = 0; j < transitions.length; ++j) {
+                    if (i == transitions[j]) {
+                        fCountingStates[i] = elemOccurenceMap[j];
+                        break;
+                    }
+                }
+            }
+        }
+
+        //
+        //  And now we can say bye bye to the temp representation since we've
+        //  built the DFA.
+        //
+        if (DEBUG_VALIDATE_CONTENT)
+            dumpTree(fHeadNode, 0);
+        fHeadNode = null;
+        fLeafList = null;
+        fFollowList = null;
+        fLeafListType = null;
+        fElemMapId = null;
+    }
+
+    /**
+     * Calculates the follow list of the current node.
+     *
+     * @param nodeCur The curent node.
+     *
+     * @exception RuntimeException Thrown if follow list cannot be calculated.
+     */
+    private void calcFollowList(CMNode nodeCur) {
+        // Recurse as required
+        if (nodeCur.type() == XSModelGroupImpl.MODELGROUP_CHOICE) {
+            // Recurse only
+            calcFollowList(((XSCMBinOp)nodeCur).getLeft());
+            calcFollowList(((XSCMBinOp)nodeCur).getRight());
+        }
+         else if (nodeCur.type() == XSModelGroupImpl.MODELGROUP_SEQUENCE) {
+            // Recurse first
+            calcFollowList(((XSCMBinOp)nodeCur).getLeft());
+            calcFollowList(((XSCMBinOp)nodeCur).getRight());
+
+            //
+            //  Now handle our level. We use our left child's last pos
+            //  set and our right child's first pos set, so go ahead and
+            //  get them ahead of time.
+            //
+            final CMStateSet last  = ((XSCMBinOp)nodeCur).getLeft().lastPos();
+            final CMStateSet first = ((XSCMBinOp)nodeCur).getRight().firstPos();
+
+            //
+            //  Now, for every position which is in our left child's last set
+            //  add all of the states in our right child's first set to the
+            //  follow set for that position.
+            //
+            for (int index = 0; index < fLeafCount; index++) {
+                if (last.getBit(index))
+                    fFollowList[index].union(first);
+            }
+        }
+         else if (nodeCur.type() == XSParticleDecl.PARTICLE_ZERO_OR_MORE
+        || nodeCur.type() == XSParticleDecl.PARTICLE_ONE_OR_MORE) {
+            // Recurse first
+            calcFollowList(((XSCMUniOp)nodeCur).getChild());
+
+            //
+            //  Now handle our level. We use our own first and last position
+            //  sets, so get them up front.
+            //
+            final CMStateSet first = nodeCur.firstPos();
+            final CMStateSet last  = nodeCur.lastPos();
+
+            //
+            //  For every position which is in our last position set, add all
+            //  of our first position states to the follow set for that
+            //  position.
+            //
+            for (int index = 0; index < fLeafCount; index++) {
+                if (last.getBit(index))
+                    fFollowList[index].union(first);
+            }
+        }
+
+        else if (nodeCur.type() == XSParticleDecl.PARTICLE_ZERO_OR_ONE) {
+            // Recurse only
+            calcFollowList(((XSCMUniOp)nodeCur).getChild());
+        }
+
+    }
+
+    /**
+     * Dumps the tree of the current node to standard output.
+     *
+     * @param nodeCur The current node.
+     * @param level   The maximum levels to output.
+     *
+     * @exception RuntimeException Thrown on error.
+     */
+    private void dumpTree(CMNode nodeCur, int level) {
+        for (int index = 0; index < level; index++)
+            System.out.print("   ");
+
+        int type = nodeCur.type();
+
+        switch(type ) {
+
+        case XSModelGroupImpl.MODELGROUP_CHOICE:
+        case XSModelGroupImpl.MODELGROUP_SEQUENCE: {
+            if (type == XSModelGroupImpl.MODELGROUP_CHOICE)
+                System.out.print("Choice Node ");
+            else
+                System.out.print("Seq Node ");
+
+            if (nodeCur.isNullable())
+                System.out.print("Nullable ");
+
+            System.out.print("firstPos=");
+            System.out.print(nodeCur.firstPos().toString());
+            System.out.print(" lastPos=");
+            System.out.println(nodeCur.lastPos().toString());
+
+            dumpTree(((XSCMBinOp)nodeCur).getLeft(), level+1);
+            dumpTree(((XSCMBinOp)nodeCur).getRight(), level+1);
+            break;
+        }
+        case XSParticleDecl.PARTICLE_ZERO_OR_MORE:
+        case XSParticleDecl.PARTICLE_ONE_OR_MORE:
+        case XSParticleDecl.PARTICLE_ZERO_OR_ONE: {
+            System.out.print("Rep Node ");
+
+            if (nodeCur.isNullable())
+                System.out.print("Nullable ");
+
+            System.out.print("firstPos=");
+            System.out.print(nodeCur.firstPos().toString());
+            System.out.print(" lastPos=");
+            System.out.println(nodeCur.lastPos().toString());
+
+            dumpTree(((XSCMUniOp)nodeCur).getChild(), level+1);
+            break;
+        }
+        case XSParticleDecl.PARTICLE_ELEMENT: {
+            System.out.print
+            (
+                "Leaf: (pos="
+                + ((XSCMLeaf)nodeCur).getPosition()
+                + "), "
+                + "(elemIndex="
+                + ((XSCMLeaf)nodeCur).getLeaf()
+                + ") "
+            );
+
+            if (nodeCur.isNullable())
+                System.out.print(" Nullable ");
+
+            System.out.print("firstPos=");
+            System.out.print(nodeCur.firstPos().toString());
+            System.out.print(" lastPos=");
+            System.out.println(nodeCur.lastPos().toString());
+            break;
+        }
+        case XSParticleDecl.PARTICLE_WILDCARD:
+              System.out.print("Any Node: ");
+
+            System.out.print("firstPos=");
+            System.out.print(nodeCur.firstPos().toString());
+            System.out.print(" lastPos=");
+            System.out.println(nodeCur.lastPos().toString());
+            break;
+        default: {
+            throw new RuntimeException("ImplementationMessages.VAL_NIICM");
+        }
+        }
+
+    }
+
+
+    /**
+     * -1 is used to represent bad transitions in the transition table
+     * entry for each state. So each entry is initialized to an all -1
+     * array. This method creates a new entry and initializes it.
+     */
+    private int[] makeDefStateList()
+    {
+        int[] retArray = new int[fElemMapSize];
+        for (int index = 0; index < fElemMapSize; index++)
+            retArray[index] = -1;
+        return retArray;
+    }
+
+    /** Post tree build initialization. */
+    private void postTreeBuildInit(CMNode nodeCur) throws RuntimeException {
+        // Set the maximum states on this node
+        nodeCur.setMaxStates(fLeafCount);
+
+        XSCMLeaf leaf = null;
+        int pos = 0;
+        // Recurse as required
+        if (nodeCur.type() == XSParticleDecl.PARTICLE_WILDCARD) {
+            leaf = (XSCMLeaf)nodeCur;
+            pos = leaf.getPosition();
+            fLeafList[pos] = leaf;
+            fLeafListType[pos] = XSParticleDecl.PARTICLE_WILDCARD;
+        }
+        else if ((nodeCur.type() == XSModelGroupImpl.MODELGROUP_CHOICE) ||
+                 (nodeCur.type() == XSModelGroupImpl.MODELGROUP_SEQUENCE)) {
+            postTreeBuildInit(((XSCMBinOp)nodeCur).getLeft());
+            postTreeBuildInit(((XSCMBinOp)nodeCur).getRight());
+        }
+        else if (nodeCur.type() == XSParticleDecl.PARTICLE_ZERO_OR_MORE ||
+                 nodeCur.type() == XSParticleDecl.PARTICLE_ONE_OR_MORE ||
+                 nodeCur.type() == XSParticleDecl.PARTICLE_ZERO_OR_ONE) {
+            postTreeBuildInit(((XSCMUniOp)nodeCur).getChild());
+        }
+        else if (nodeCur.type() == XSParticleDecl.PARTICLE_ELEMENT) {
+            //  Put this node in the leaf list at the current index if its
+            //  a non-epsilon leaf.
+            leaf = (XSCMLeaf)nodeCur;
+            pos = leaf.getPosition();
+            fLeafList[pos] = leaf;
+            fLeafListType[pos] = XSParticleDecl.PARTICLE_ELEMENT;
+        }
+        else {
+            throw new RuntimeException("ImplementationMessages.VAL_NIICM");
+        }
+    }
+
+    /**
+     * check whether this content violates UPA constraint.
+     *
+     * @param subGroupHandler the substitution group handler
+     * @return true if this content model contains other or list wildcard
+     */
+    public boolean checkUniqueParticleAttribution(SubstitutionGroupHandler subGroupHandler) throws XMLSchemaException {
+        // Unique Particle Attribution
+        // store the conflict results between any two elements in fElemMap
+        // 0: not compared; -1: no conflict; 1: conflict
+        // initialize the conflict table (all 0 initially)
+        byte conflictTable[][] = new byte[fElemMapSize][fElemMapSize];
+
+        // for each state, check whether it has overlap transitions
+        for (int i = 0; i < fTransTable.length && fTransTable[i] != null; i++) {
+            for (int j = 0; j < fElemMapSize; j++) {
+                for (int k = j+1; k < fElemMapSize; k++) {
+                    if (fTransTable[i][j] != -1 &&
+                        fTransTable[i][k] != -1) {
+                        if (conflictTable[j][k] == 0) {
+                            if (XSConstraints.overlapUPA
+                                    (fElemMap[j], fElemMap[k],
+                                            subGroupHandler)) {
+                                if (fCountingStates != null) {
+                                    Occurence o = fCountingStates[i];
+                                    // If "i" is a counting state and exactly one of the transitions
+                                    // loops back to "i" then the two particles do not overlap if
+                                    // minOccurs == maxOccurs.
+                                    if (o != null &&
+                                        fTransTable[i][j] == i ^ fTransTable[i][k] == i &&
+                                        o.minOccurs == o.maxOccurs) {
+                                        conflictTable[j][k] = (byte) -1;
+                                        continue;
+                                    }
+                                }
+                                conflictTable[j][k] = (byte) 1;
+                            }
+                            else {
+                                conflictTable[j][k] = (byte) -1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // report all errors
+        for (int i = 0; i < fElemMapSize; i++) {
+            for (int j = 0; j < fElemMapSize; j++) {
+                if (conflictTable[i][j] == 1) {
+                    //errors.newError("cos-nonambig", new Object[]{fElemMap[i].toString(),
+                    //                                             fElemMap[j].toString()});
+                    // REVISIT: do we want to report all errors? or just one?
+                    throw new XMLSchemaException("cos-nonambig", new Object[]{fElemMap[i].toString(),
+                                                                              fElemMap[j].toString()});
+                }
+            }
+        }
+
+        // if there is a other or list wildcard, we need to check this CM
+        // again, if this grammar is cached.
+        for (int i = 0; i < fElemMapSize; i++) {
+            if (fElemMapType[i] == XSParticleDecl.PARTICLE_WILDCARD) {
+                XSWildcardDecl wildcard = (XSWildcardDecl)fElemMap[i];
+                if (wildcard.fType == XSWildcardDecl.NSCONSTRAINT_LIST ||
+                    wildcard.fType == XSWildcardDecl.NSCONSTRAINT_NOT) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check which elements are valid to appear at this point. This method also
+     * works if the state is in error, in which case it returns what should
+     * have been seen.
+     *
+     * @param state  the current state
+     * @return       a Vector whose entries are instances of
+     *               either XSWildcardDecl or XSElementDecl.
+     */
+    public Vector whatCanGoHere(int[] state) {
+        int curState = state[0];
+        if (curState < 0)
+            curState = state[1];
+        Occurence o = (fCountingStates != null) ?
+                fCountingStates[curState] : null;
+        int count = state[2];
+
+        Vector ret = new Vector();
+        for (int elemIndex = 0; elemIndex < fElemMapSize; elemIndex++) {
+            int nextState = fTransTable[curState][elemIndex];
+            if (nextState != -1) {
+                if (o != null) {
+                    if (curState == nextState) {
+                        // Do not include transitions which loop back to the
+                        // current state if we've looped the maximum number
+                        // of times or greater.
+                        if (count >= o.maxOccurs &&
+                            o.maxOccurs != SchemaSymbols.OCCURRENCE_UNBOUNDED) {
+                            continue;
+                        }
+                    }
+                    // Do not include transitions which advance past the
+                    // current state if we have not looped enough times.
+                    else if (count < o.minOccurs) {
+                        continue;
+                    }
+                }
+                ret.addElement(fElemMap[elemIndex]);
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Used by constant space algorithm for a{n,m} for n > 1 and
+     * m <= unbounded. Called by a validator if validation of
+     * countent model succeeds after subsuming a{n,m} to a*
+     * (or a+) to check the n and m bounds.
+     * Returns <code>null</code> if validation of bounds is
+     * successful. Returns a list of strings with error info
+     * if not. Even entries in list returned are error codes
+     * (used to look up properties) and odd entries are parameters
+     * to be passed when formatting error message. Each parameter
+     * is associated with the error code that preceeds it in
+     * the list.
+     */
+    public ArrayList checkMinMaxBounds() {
+        ArrayList result = null;
+        for (int elemIndex = 0; elemIndex < fElemMapSize; elemIndex++) {
+            int count = fElemMapCounter[elemIndex];
+            if (count == -1) {
+                continue;
+            }
+            final int minOccurs = fElemMapCounterLowerBound[elemIndex];
+            final int maxOccurs = fElemMapCounterUpperBound[elemIndex];
+            if (count < minOccurs) {
+                if (result == null) result = new ArrayList();
+                result.add("cvc-complex-type.2.4.b");
+                result.add("{" + fElemMap[elemIndex] + "}");
+            }
+            if (maxOccurs != -1 && count > maxOccurs) {
+                if (result == null) result = new ArrayList();
+                result.add("cvc-complex-type.2.4.e");
+                result.add("{" + fElemMap[elemIndex] + "}");
+            }
+        }
+        return result;
+    }
+
+} // class DFAContentModel

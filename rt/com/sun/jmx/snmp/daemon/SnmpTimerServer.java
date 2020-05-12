@@ -1,113 +1,110 @@
-/*     */ package com.sun.jmx.snmp.daemon;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.util.logging.Level;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class SnmpTimerServer
-/*     */   extends Thread
-/*     */ {
-/*  23 */   private SnmpInformRequest req = null;
-/*     */   
-/*  25 */   SnmpQManager snmpq = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isBeingDestroyed = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpTimerServer(ThreadGroup paramThreadGroup, SnmpQManager paramSnmpQManager) {
-/*  36 */     super(paramThreadGroup, "SnmpTimerServer");
-/*  37 */     setName("SnmpTimerServer");
-/*  38 */     this.snmpq = paramSnmpQManager;
-/*  39 */     start();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized void stopTimerServer() {
-/*  44 */     if (isAlive()) {
-/*  45 */       interrupt();
-/*     */ 
-/*     */       
-/*     */       try {
-/*  49 */         join();
-/*  50 */       } catch (InterruptedException interruptedException) {}
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void run() {
-/*  57 */     Thread.currentThread().setPriority(5);
-/*     */     
-/*  59 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  60 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpTimerServer.class.getName(), "run", "Timer Thread started");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     while (true) {
-/*     */       try {
-/*  67 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  68 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpTimerServer.class.getName(), "run", "Blocking for inform requests");
-/*     */         }
-/*     */         
-/*  71 */         if (this.req == null) {
-/*  72 */           this.req = this.snmpq.getTimeoutRequests();
-/*     */         }
-/*  74 */         if (this.req != null && this.req.inProgress()) {
-/*  75 */           if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*  76 */             JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpTimerServer.class.getName(), "run", "Handle timeout inform request " + this.req
-/*  77 */                 .getRequestId());
-/*     */           }
-/*  79 */           this.req.action();
-/*  80 */           this.req = null;
-/*     */         } 
-/*  82 */         if (this.isBeingDestroyed == true)
-/*     */           break; 
-/*  84 */       } catch (Exception exception) {
-/*  85 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  86 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(), "run", "Got unexpected exception", exception);
-/*     */         }
-/*     */       }
-/*  89 */       catch (ThreadDeath threadDeath) {
-/*  90 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  91 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(), "run", "ThreadDeath, timer server unexpectedly shutting down", threadDeath);
-/*     */         }
-/*     */         
-/*  94 */         throw threadDeath;
-/*  95 */       } catch (OutOfMemoryError outOfMemoryError) {
-/*  96 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  97 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(), "run", "OutOfMemoryError", outOfMemoryError);
-/*     */         }
-/*     */         
-/* 100 */         yield();
-/* 101 */       } catch (Error error) {
-/* 102 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST))
-/* 103 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(), "run", "Received Internal error", error); 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\daemon\SnmpTimerServer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ *
+ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+// Copyright (c) 1995-96 by Cisco Systems, Inc.
+
+package com.sun.jmx.snmp.daemon;
+
+import java.util.logging.Level;
+
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+
+/**
+ * This class retries any timed out inform requests. This class is for internal use.
+ */
+
+final class SnmpTimerServer extends Thread {
+
+        // VARIABLES
+    //----------
+
+    private SnmpInformRequest req = null ;
+
+    SnmpQManager snmpq = null ;
+
+    // This boolean is used to stop handling requests while the corresponding SnmpQManager
+    // is being destroyed.
+    //
+    boolean isBeingDestroyed = false;
+
+    // CONSTRUCTORS
+    //-------------
+
+    public SnmpTimerServer (ThreadGroup grp, SnmpQManager q) {
+        super(grp, "SnmpTimerServer") ;
+        setName("SnmpTimerServer") ;
+        snmpq = q ;
+        start() ;
+    }
+
+    public synchronized void stopTimerServer() {
+
+        if (isAlive()) {
+            interrupt();
+            try {
+                // Wait until the thread die.
+                //
+                join();
+            } catch (InterruptedException e) {
+                // Ignore...
+            }
+        }
+    }
+
+    public void run() {
+        Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpTimerServer.class.getName(),
+                "run", "Timer Thread started");
+        }
+
+        while (true) {
+
+            try {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpTimerServer.class.getName(),
+                        "run", "Blocking for inform requests");
+                }
+                if (req == null) {
+                    req = snmpq.getTimeoutRequests() ;
+                }
+                if (req != null && req.inProgress()) {
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpTimerServer.class.getName(),
+                            "run", "Handle timeout inform request " + req.getRequestId());
+                    }
+                    req.action() ;
+                    req = null ;
+                }
+                if (isBeingDestroyed == true)
+                    break;
+            } catch (Exception e) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(),
+                        "run", "Got unexpected exception", e);
+                }
+            } catch (ThreadDeath d) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(),
+                        "run", "ThreadDeath, timer server unexpectedly shutting down", d);
+                }
+                throw d ;
+            } catch (OutOfMemoryError ome) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(),
+                        "run", "OutOfMemoryError", ome);
+                }
+                yield();
+            } catch (Error err) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpTimerServer.class.getName(),
+                        "run", "Received Internal error", err);
+                }
+            }
+        }
+    }
+
+}

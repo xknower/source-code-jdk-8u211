@@ -1,13 +1,45 @@
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.legacy.interceptor;
 
 import com.sun.corba.se.spi.legacy.connection.Connection;
 
-public interface RequestInfoExt {
-  Connection connection();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\legacy\interceptor\RequestInfoExt.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * This interface is implemented by our implementation of
+ * PortableInterceptor.ClientRequestInfo and
+ * PortableInterceptor.ServerRequestInfo. <p>
+ *
  */
+
+public interface RequestInfoExt
+{
+    /**
+     * @return The connection on which the request is made.
+     *         The return value will be null when a local transport
+     *         is used.
+     */
+    public Connection connection();
+}

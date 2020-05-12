@@ -1,260 +1,253 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.BorderLayout;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.ActionListener;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import java.beans.PropertyVetoException;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.JPopupMenu;
-/*     */ import javax.swing.JToggleButton;
-/*     */ import javax.swing.ToolTipManager;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicDesktopIconUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthDesktopIconUI
-/*     */   extends BasicDesktopIconUI
-/*     */   implements SynthUI, PropertyChangeListener
-/*     */ {
-/*     */   private SynthStyle style;
-/*  45 */   private Handler handler = new Handler();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  54 */     return new SynthDesktopIconUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installComponents() {
-/*  62 */     if (UIManager.getBoolean("InternalFrame.useTaskBar")) {
-/*  63 */       this.iconPane = new JToggleButton(this.frame.getTitle(), this.frame.getFrameIcon()) {
-/*     */           public String getToolTipText() {
-/*  65 */             return getText();
-/*     */           }
-/*     */           
-/*     */           public JPopupMenu getComponentPopupMenu() {
-/*  69 */             return SynthDesktopIconUI.this.frame.getComponentPopupMenu();
-/*     */           }
-/*     */         };
-/*  72 */       ToolTipManager.sharedInstance().registerComponent(this.iconPane);
-/*  73 */       this.iconPane.setFont(this.desktopIcon.getFont());
-/*  74 */       this.iconPane.setBackground(this.desktopIcon.getBackground());
-/*  75 */       this.iconPane.setForeground(this.desktopIcon.getForeground());
-/*     */     } else {
-/*  77 */       this.iconPane = new SynthInternalFrameTitlePane(this.frame);
-/*  78 */       this.iconPane.setName("InternalFrame.northPane");
-/*     */     } 
-/*  80 */     this.desktopIcon.setLayout(new BorderLayout());
-/*  81 */     this.desktopIcon.add(this.iconPane, "Center");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners() {
-/*  89 */     super.installListeners();
-/*  90 */     this.desktopIcon.addPropertyChangeListener(this);
-/*     */     
-/*  92 */     if (this.iconPane instanceof JToggleButton) {
-/*  93 */       this.frame.addPropertyChangeListener(this);
-/*  94 */       ((JToggleButton)this.iconPane).addActionListener(this.handler);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 103 */     if (this.iconPane instanceof JToggleButton) {
-/* 104 */       ((JToggleButton)this.iconPane).removeActionListener(this.handler);
-/* 105 */       this.frame.removePropertyChangeListener(this);
-/*     */     } 
-/* 107 */     this.desktopIcon.removePropertyChangeListener(this);
-/* 108 */     super.uninstallListeners();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/* 116 */     updateStyle(this.desktopIcon);
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JComponent paramJComponent) {
-/* 120 */     SynthContext synthContext = getContext(paramJComponent, 1);
-/* 121 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/* 122 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 130 */     SynthContext synthContext = getContext(this.desktopIcon, 1);
-/* 131 */     this.style.uninstallDefaults(synthContext);
-/* 132 */     synthContext.dispose();
-/* 133 */     this.style = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 141 */     return getContext(paramJComponent, getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 145 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getComponentState(JComponent paramJComponent) {
-/* 149 */     return SynthLookAndFeel.getComponentState(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 166 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 168 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 169 */     synthContext.getPainter().paintDesktopIconBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 170 */         .getWidth(), paramJComponent.getHeight());
-/* 171 */     paint(synthContext, paramGraphics);
-/* 172 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 186 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 188 */     paint(synthContext, paramGraphics);
-/* 189 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 208 */     paramSynthContext.getPainter().paintDesktopIconBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 212 */     if (paramPropertyChangeEvent.getSource() instanceof JInternalFrame.JDesktopIcon) {
-/* 213 */       if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent)) {
-/* 214 */         updateStyle((JInternalFrame.JDesktopIcon)paramPropertyChangeEvent.getSource());
-/*     */       }
-/* 216 */     } else if (paramPropertyChangeEvent.getSource() instanceof JInternalFrame) {
-/* 217 */       JInternalFrame jInternalFrame = (JInternalFrame)paramPropertyChangeEvent.getSource();
-/* 218 */       if (this.iconPane instanceof JToggleButton) {
-/* 219 */         JToggleButton jToggleButton = (JToggleButton)this.iconPane;
-/* 220 */         String str = paramPropertyChangeEvent.getPropertyName();
-/* 221 */         if (str == "title") {
-/* 222 */           jToggleButton.setText((String)paramPropertyChangeEvent.getNewValue());
-/* 223 */         } else if (str == "frameIcon") {
-/* 224 */           jToggleButton.setIcon((Icon)paramPropertyChangeEvent.getNewValue());
-/* 225 */         } else if (str == "icon" || str == "selected") {
-/*     */           
-/* 227 */           jToggleButton.setSelected((!jInternalFrame.isIcon() && jInternalFrame.isSelected()));
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private final class Handler implements ActionListener {
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 235 */       if (param1ActionEvent.getSource() instanceof JToggleButton) {
-/*     */         
-/* 237 */         JToggleButton jToggleButton = (JToggleButton)param1ActionEvent.getSource();
-/*     */         try {
-/* 239 */           boolean bool = jToggleButton.isSelected();
-/* 240 */           if (!bool && !SynthDesktopIconUI.this.frame.isIconifiable()) {
-/* 241 */             jToggleButton.setSelected(true);
-/*     */           } else {
-/* 243 */             SynthDesktopIconUI.this.frame.setIcon(!bool);
-/* 244 */             if (bool) {
-/* 245 */               SynthDesktopIconUI.this.frame.setSelected(true);
-/*     */             }
-/*     */           } 
-/* 248 */         } catch (PropertyVetoException propertyVetoException) {}
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private Handler() {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthDesktopIconUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicDesktopIconUI;
+import java.beans.*;
+
+
+/**
+ * Provides the Synth L&amp;F UI delegate for a minimized internal frame on a desktop.
+ *
+ * @author Joshua Outwater
+ * @since 1.7
+ */
+public class SynthDesktopIconUI extends BasicDesktopIconUI
+                                implements SynthUI, PropertyChangeListener {
+    private SynthStyle style;
+    private Handler handler = new Handler();
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c)    {
+        return new SynthDesktopIconUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installComponents() {
+        if (UIManager.getBoolean("InternalFrame.useTaskBar")) {
+            iconPane = new JToggleButton(frame.getTitle(), frame.getFrameIcon()) {
+                @Override public String getToolTipText() {
+                    return getText();
+                }
+
+                @Override public JPopupMenu getComponentPopupMenu() {
+                    return frame.getComponentPopupMenu();
+                }
+            };
+            ToolTipManager.sharedInstance().registerComponent(iconPane);
+            iconPane.setFont(desktopIcon.getFont());
+            iconPane.setBackground(desktopIcon.getBackground());
+            iconPane.setForeground(desktopIcon.getForeground());
+        } else {
+            iconPane = new SynthInternalFrameTitlePane(frame);
+            iconPane.setName("InternalFrame.northPane");
+        }
+        desktopIcon.setLayout(new BorderLayout());
+        desktopIcon.add(iconPane, BorderLayout.CENTER);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installListeners() {
+        super.installListeners();
+        desktopIcon.addPropertyChangeListener(this);
+
+        if (iconPane instanceof JToggleButton) {
+            frame.addPropertyChangeListener(this);
+            ((JToggleButton)iconPane).addActionListener(handler);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallListeners() {
+        if (iconPane instanceof JToggleButton) {
+            ((JToggleButton)iconPane).removeActionListener(handler);
+            frame.removePropertyChangeListener(this);
+        }
+        desktopIcon.removePropertyChangeListener(this);
+        super.uninstallListeners();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        updateStyle(desktopIcon);
+    }
+
+    private void updateStyle(JComponent c) {
+        SynthContext context = getContext(c, ENABLED);
+        style = SynthLookAndFeel.updateStyle(context, this);
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(desktopIcon, ENABLED);
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    private int getComponentState(JComponent c) {
+        return SynthLookAndFeel.getComponentState(c);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintDesktopIconBackground(context, g, 0, 0,
+                                                  c.getWidth(), c.getHeight());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component. This implementation does nothing.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintDesktopIconBorder(context, g, x, y, w, h);
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getSource() instanceof JInternalFrame.JDesktopIcon) {
+            if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
+                updateStyle((JInternalFrame.JDesktopIcon)evt.getSource());
+            }
+        } else if (evt.getSource() instanceof JInternalFrame) {
+            JInternalFrame frame = (JInternalFrame)evt.getSource();
+            if (iconPane instanceof JToggleButton) {
+                JToggleButton button = (JToggleButton)iconPane;
+                String prop = evt.getPropertyName();
+                if (prop == "title") {
+                    button.setText((String)evt.getNewValue());
+                } else if (prop == "frameIcon") {
+                    button.setIcon((Icon)evt.getNewValue());
+                } else if (prop == JInternalFrame.IS_ICON_PROPERTY ||
+                           prop == JInternalFrame.IS_SELECTED_PROPERTY) {
+                    button.setSelected(!frame.isIcon() && frame.isSelected());
+                }
+            }
+        }
+    }
+
+    private final class Handler implements ActionListener {
+        public void actionPerformed(ActionEvent evt) {
+            if (evt.getSource() instanceof JToggleButton) {
+                // Either iconify the frame or deiconify and activate it.
+                JToggleButton button = (JToggleButton)evt.getSource();
+                try {
+                    boolean selected = button.isSelected();
+                    if (!selected && !frame.isIconifiable()) {
+                        button.setSelected(true);
+                    } else {
+                        frame.setIcon(!selected);
+                        if (selected) {
+                            frame.setSelected(true);
+                        }
+                    }
+                } catch (PropertyVetoException e2) {
+                }
+            }
+        }
+    }
+}

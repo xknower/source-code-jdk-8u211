@@ -1,450 +1,445 @@
-/*     */ package java.beans;
-/*     */ 
-/*     */ import com.sun.beans.TypeResolver;
-/*     */ import java.lang.ref.Reference;
-/*     */ import java.lang.ref.SoftReference;
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FeatureDescriptor
-/*     */ {
-/*     */   private static final String TRANSIENT = "transient";
-/*     */   private Reference<? extends Class<?>> classRef;
-/*     */   private boolean expert;
-/*     */   private boolean hidden;
-/*     */   private boolean preferred;
-/*     */   private String shortDescription;
-/*     */   private String name;
-/*     */   private String displayName;
-/*     */   private Hashtable<String, Object> table;
-/*     */   
-/*     */   public FeatureDescriptor() {}
-/*     */   
-/*     */   public String getName() {
-/*  68 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setName(String paramString) {
-/*  77 */     this.name = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getDisplayName() {
-/*  87 */     if (this.displayName == null) {
-/*  88 */       return getName();
-/*     */     }
-/*  90 */     return this.displayName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDisplayName(String paramString) {
-/* 100 */     this.displayName = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isExpert() {
-/* 110 */     return this.expert;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setExpert(boolean paramBoolean) {
-/* 120 */     this.expert = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isHidden() {
-/* 130 */     return this.hidden;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setHidden(boolean paramBoolean) {
-/* 140 */     this.hidden = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isPreferred() {
-/* 150 */     return this.preferred;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPreferred(boolean paramBoolean) {
-/* 161 */     this.preferred = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getShortDescription() {
-/* 171 */     if (this.shortDescription == null) {
-/* 172 */       return getDisplayName();
-/*     */     }
-/* 174 */     return this.shortDescription;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setShortDescription(String paramString) {
-/* 184 */     this.shortDescription = paramString;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValue(String paramString, Object paramObject) {
-/* 194 */     getTable().put(paramString, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getValue(String paramString) {
-/* 205 */     return (this.table != null) ? this.table
-/* 206 */       .get(paramString) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Enumeration<String> attributeNames() {
-/* 218 */     return getTable().keys();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   FeatureDescriptor(FeatureDescriptor paramFeatureDescriptor1, FeatureDescriptor paramFeatureDescriptor2) {
-/* 232 */     paramFeatureDescriptor1.expert |= paramFeatureDescriptor2.expert;
-/* 233 */     paramFeatureDescriptor1.hidden |= paramFeatureDescriptor2.hidden;
-/* 234 */     paramFeatureDescriptor1.preferred |= paramFeatureDescriptor2.preferred;
-/* 235 */     this.name = paramFeatureDescriptor2.name;
-/* 236 */     this.shortDescription = paramFeatureDescriptor1.shortDescription;
-/* 237 */     if (paramFeatureDescriptor2.shortDescription != null) {
-/* 238 */       this.shortDescription = paramFeatureDescriptor2.shortDescription;
-/*     */     }
-/* 240 */     this.displayName = paramFeatureDescriptor1.displayName;
-/* 241 */     if (paramFeatureDescriptor2.displayName != null) {
-/* 242 */       this.displayName = paramFeatureDescriptor2.displayName;
-/*     */     }
-/* 244 */     this.classRef = paramFeatureDescriptor1.classRef;
-/* 245 */     if (paramFeatureDescriptor2.classRef != null) {
-/* 246 */       this.classRef = paramFeatureDescriptor2.classRef;
-/*     */     }
-/* 248 */     addTable(paramFeatureDescriptor1.table);
-/* 249 */     addTable(paramFeatureDescriptor2.table);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   FeatureDescriptor(FeatureDescriptor paramFeatureDescriptor) {
-/* 257 */     this.expert = paramFeatureDescriptor.expert;
-/* 258 */     this.hidden = paramFeatureDescriptor.hidden;
-/* 259 */     this.preferred = paramFeatureDescriptor.preferred;
-/* 260 */     this.name = paramFeatureDescriptor.name;
-/* 261 */     this.shortDescription = paramFeatureDescriptor.shortDescription;
-/* 262 */     this.displayName = paramFeatureDescriptor.displayName;
-/* 263 */     this.classRef = paramFeatureDescriptor.classRef;
-/*     */     
-/* 265 */     addTable(paramFeatureDescriptor.table);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addTable(Hashtable<String, Object> paramHashtable) {
-/* 275 */     if (paramHashtable != null && !paramHashtable.isEmpty()) {
-/* 276 */       getTable().putAll(paramHashtable);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Hashtable<String, Object> getTable() {
-/* 286 */     if (this.table == null) {
-/* 287 */       this.table = new Hashtable<>();
-/*     */     }
-/* 289 */     return this.table;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setTransient(Transient paramTransient) {
-/* 300 */     if (paramTransient != null && null == getValue("transient")) {
-/* 301 */       setValue("transient", Boolean.valueOf(paramTransient.value()));
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isTransient() {
-/* 312 */     Object object = getValue("transient");
-/* 313 */     return (object instanceof Boolean) ? ((Boolean)object)
-/* 314 */       .booleanValue() : false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setClass0(Class<?> paramClass) {
-/* 321 */     this.classRef = getWeakReference(paramClass);
-/*     */   }
-/*     */   
-/*     */   Class<?> getClass0() {
-/* 325 */     return (this.classRef != null) ? this.classRef
-/* 326 */       .get() : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static <T> Reference<T> getSoftReference(T paramT) {
-/* 338 */     return (paramT != null) ? new SoftReference<>(paramT) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static <T> Reference<T> getWeakReference(T paramT) {
-/* 351 */     return (paramT != null) ? new WeakReference<>(paramT) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Class<?> getReturnType(Class<?> paramClass, Method paramMethod) {
-/* 367 */     if (paramClass == null) {
-/* 368 */       paramClass = paramMethod.getDeclaringClass();
-/*     */     }
-/* 370 */     return TypeResolver.erase(TypeResolver.resolveInClass(paramClass, paramMethod.getGenericReturnType()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Class<?>[] getParameterTypes(Class<?> paramClass, Method paramMethod) {
-/* 384 */     if (paramClass == null) {
-/* 385 */       paramClass = paramMethod.getDeclaringClass();
-/*     */     }
-/* 387 */     return TypeResolver.erase(TypeResolver.resolveInClass(paramClass, paramMethod.getGenericParameterTypes()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 406 */     StringBuilder stringBuilder = new StringBuilder(getClass().getName());
-/* 407 */     stringBuilder.append("[name=").append(this.name);
-/* 408 */     appendTo(stringBuilder, "displayName", this.displayName);
-/* 409 */     appendTo(stringBuilder, "shortDescription", this.shortDescription);
-/* 410 */     appendTo(stringBuilder, "preferred", this.preferred);
-/* 411 */     appendTo(stringBuilder, "hidden", this.hidden);
-/* 412 */     appendTo(stringBuilder, "expert", this.expert);
-/* 413 */     if (this.table != null && !this.table.isEmpty()) {
-/* 414 */       stringBuilder.append("; values={");
-/* 415 */       for (Map.Entry<String, Object> entry : this.table.entrySet()) {
-/* 416 */         stringBuilder.append((String)entry.getKey()).append("=").append(entry.getValue()).append("; ");
-/*     */       }
-/* 418 */       stringBuilder.setLength(stringBuilder.length() - 2);
-/* 419 */       stringBuilder.append("}");
-/*     */     } 
-/* 421 */     appendTo(stringBuilder);
-/* 422 */     return stringBuilder.append("]").toString();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void appendTo(StringBuilder paramStringBuilder) {}
-/*     */   
-/*     */   static void appendTo(StringBuilder paramStringBuilder, String paramString, Reference<?> paramReference) {
-/* 429 */     if (paramReference != null) {
-/* 430 */       appendTo(paramStringBuilder, paramString, paramReference.get());
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   static void appendTo(StringBuilder paramStringBuilder, String paramString, Object paramObject) {
-/* 435 */     if (paramObject != null) {
-/* 436 */       paramStringBuilder.append("; ").append(paramString).append("=").append(paramObject);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   static void appendTo(StringBuilder paramStringBuilder, String paramString, boolean paramBoolean) {
-/* 441 */     if (paramBoolean)
-/* 442 */       paramStringBuilder.append("; ").append(paramString); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\beans\FeatureDescriptor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.beans;
+
+import com.sun.beans.TypeResolver;
+
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
+
+import java.lang.reflect.Method;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Map.Entry;
+
+/**
+ * The FeatureDescriptor class is the common baseclass for PropertyDescriptor,
+ * EventSetDescriptor, and MethodDescriptor, etc.
+ * <p>
+ * It supports some common information that can be set and retrieved for
+ * any of the introspection descriptors.
+ * <p>
+ * In addition it provides an extension mechanism so that arbitrary
+ * attribute/value pairs can be associated with a design feature.
+ */
+
+public class FeatureDescriptor {
+    private static final String TRANSIENT = "transient";
+
+    private Reference<? extends Class<?>> classRef;
+
+    /**
+     * Constructs a <code>FeatureDescriptor</code>.
+     */
+    public FeatureDescriptor() {
+    }
+
+    /**
+     * Gets the programmatic name of this feature.
+     *
+     * @return The programmatic name of the property/method/event
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Sets the programmatic name of this feature.
+     *
+     * @param name  The programmatic name of the property/method/event
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Gets the localized display name of this feature.
+     *
+     * @return The localized display name for the property/method/event.
+     *  This defaults to the same as its programmatic name from getName.
+     */
+    public String getDisplayName() {
+        if (displayName == null) {
+            return getName();
+        }
+        return displayName;
+    }
+
+    /**
+     * Sets the localized display name of this feature.
+     *
+     * @param displayName  The localized display name for the
+     *          property/method/event.
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+     * The "expert" flag is used to distinguish between those features that are
+     * intended for expert users from those that are intended for normal users.
+     *
+     * @return True if this feature is intended for use by experts only.
+     */
+    public boolean isExpert() {
+        return expert;
+    }
+
+    /**
+     * The "expert" flag is used to distinguish between features that are
+     * intended for expert users from those that are intended for normal users.
+     *
+     * @param expert True if this feature is intended for use by experts only.
+     */
+    public void setExpert(boolean expert) {
+        this.expert = expert;
+    }
+
+    /**
+     * The "hidden" flag is used to identify features that are intended only
+     * for tool use, and which should not be exposed to humans.
+     *
+     * @return True if this feature should be hidden from human users.
+     */
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    /**
+     * The "hidden" flag is used to identify features that are intended only
+     * for tool use, and which should not be exposed to humans.
+     *
+     * @param hidden  True if this feature should be hidden from human users.
+     */
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    /**
+     * The "preferred" flag is used to identify features that are particularly
+     * important for presenting to humans.
+     *
+     * @return True if this feature should be preferentially shown to human users.
+     */
+    public boolean isPreferred() {
+        return preferred;
+    }
+
+    /**
+     * The "preferred" flag is used to identify features that are particularly
+     * important for presenting to humans.
+     *
+     * @param preferred  True if this feature should be preferentially shown
+     *                   to human users.
+     */
+    public void setPreferred(boolean preferred) {
+        this.preferred = preferred;
+    }
+
+    /**
+     * Gets the short description of this feature.
+     *
+     * @return  A localized short description associated with this
+     *   property/method/event.  This defaults to be the display name.
+     */
+    public String getShortDescription() {
+        if (shortDescription == null) {
+            return getDisplayName();
+        }
+        return shortDescription;
+    }
+
+    /**
+     * You can associate a short descriptive string with a feature.  Normally
+     * these descriptive strings should be less than about 40 characters.
+     * @param text  A (localized) short description to be associated with
+     * this property/method/event.
+     */
+    public void setShortDescription(String text) {
+        shortDescription = text;
+    }
+
+    /**
+     * Associate a named attribute with this feature.
+     *
+     * @param attributeName  The locale-independent name of the attribute
+     * @param value  The value.
+     */
+    public void setValue(String attributeName, Object value) {
+        getTable().put(attributeName, value);
+    }
+
+    /**
+     * Retrieve a named attribute with this feature.
+     *
+     * @param attributeName  The locale-independent name of the attribute
+     * @return  The value of the attribute.  May be null if
+     *     the attribute is unknown.
+     */
+    public Object getValue(String attributeName) {
+        return (this.table != null)
+                ? this.table.get(attributeName)
+                : null;
+    }
+
+    /**
+     * Gets an enumeration of the locale-independent names of this
+     * feature.
+     *
+     * @return  An enumeration of the locale-independent names of any
+     *    attributes that have been registered with setValue.
+     */
+    public Enumeration<String> attributeNames() {
+        return getTable().keys();
+    }
+
+    /**
+     * Package-private constructor,
+     * Merge information from two FeatureDescriptors.
+     * The merged hidden and expert flags are formed by or-ing the values.
+     * In the event of other conflicts, the second argument (y) is
+     * given priority over the first argument (x).
+     *
+     * @param x  The first (lower priority) MethodDescriptor
+     * @param y  The second (higher priority) MethodDescriptor
+     */
+    FeatureDescriptor(FeatureDescriptor x, FeatureDescriptor y) {
+        expert = x.expert | y.expert;
+        hidden = x.hidden | y.hidden;
+        preferred = x.preferred | y.preferred;
+        name = y.name;
+        shortDescription = x.shortDescription;
+        if (y.shortDescription != null) {
+            shortDescription = y.shortDescription;
+        }
+        displayName = x.displayName;
+        if (y.displayName != null) {
+            displayName = y.displayName;
+        }
+        classRef = x.classRef;
+        if (y.classRef != null) {
+            classRef = y.classRef;
+        }
+        addTable(x.table);
+        addTable(y.table);
+    }
+
+    /*
+     * Package-private dup constructor
+     * This must isolate the new object from any changes to the old object.
+     */
+    FeatureDescriptor(FeatureDescriptor old) {
+        expert = old.expert;
+        hidden = old.hidden;
+        preferred = old.preferred;
+        name = old.name;
+        shortDescription = old.shortDescription;
+        displayName = old.displayName;
+        classRef = old.classRef;
+
+        addTable(old.table);
+    }
+
+    /**
+     * Copies all values from the specified attribute table.
+     * If some attribute is exist its value should be overridden.
+     *
+     * @param table  the attribute table with new values
+     */
+    private void addTable(Hashtable<String, Object> table) {
+        if ((table != null) && !table.isEmpty()) {
+            getTable().putAll(table);
+        }
+    }
+
+    /**
+     * Returns the initialized attribute table.
+     *
+     * @return the initialized attribute table
+     */
+    private Hashtable<String, Object> getTable() {
+        if (this.table == null) {
+            this.table = new Hashtable<>();
+        }
+        return this.table;
+    }
+
+    /**
+     * Sets the "transient" attribute according to the annotation.
+     * If the "transient" attribute is already set
+     * it should not be changed.
+     *
+     * @param annotation  the annotation of the element of the feature
+     */
+    void setTransient(Transient annotation) {
+        if ((annotation != null) && (null == getValue(TRANSIENT))) {
+            setValue(TRANSIENT, annotation.value());
+        }
+    }
+
+    /**
+     * Indicates whether the feature is transient.
+     *
+     * @return {@code true} if the feature is transient,
+     *         {@code false} otherwise
+     */
+    boolean isTransient() {
+        Object value = getValue(TRANSIENT);
+        return (value instanceof Boolean)
+                ? (Boolean) value
+                : false;
+    }
+
+    // Package private methods for recreating the weak/soft referent
+
+    void setClass0(Class<?> cls) {
+        this.classRef = getWeakReference(cls);
+    }
+
+    Class<?> getClass0() {
+        return (this.classRef != null)
+                ? this.classRef.get()
+                : null;
+    }
+
+    /**
+     * Creates a new soft reference that refers to the given object.
+     *
+     * @return a new soft reference or <code>null</code> if object is <code>null</code>
+     *
+     * @see SoftReference
+     */
+    static <T> Reference<T> getSoftReference(T object) {
+        return (object != null)
+                ? new SoftReference<>(object)
+                : null;
+    }
+
+    /**
+     * Creates a new weak reference that refers to the given object.
+     *
+     * @return a new weak reference or <code>null</code> if object is <code>null</code>
+     *
+     * @see WeakReference
+     */
+    static <T> Reference<T> getWeakReference(T object) {
+        return (object != null)
+                ? new WeakReference<>(object)
+                : null;
+    }
+
+    /**
+     * Resolves the return type of the method.
+     *
+     * @param base    the class that contains the method in the hierarchy
+     * @param method  the object that represents the method
+     * @return a class identifying the return type of the method
+     *
+     * @see Method#getGenericReturnType
+     * @see Method#getReturnType
+     */
+    static Class<?> getReturnType(Class<?> base, Method method) {
+        if (base == null) {
+            base = method.getDeclaringClass();
+        }
+        return TypeResolver.erase(TypeResolver.resolveInClass(base, method.getGenericReturnType()));
+    }
+
+    /**
+     * Resolves the parameter types of the method.
+     *
+     * @param base    the class that contains the method in the hierarchy
+     * @param method  the object that represents the method
+     * @return an array of classes identifying the parameter types of the method
+     *
+     * @see Method#getGenericParameterTypes
+     * @see Method#getParameterTypes
+     */
+    static Class<?>[] getParameterTypes(Class<?> base, Method method) {
+        if (base == null) {
+            base = method.getDeclaringClass();
+        }
+        return TypeResolver.erase(TypeResolver.resolveInClass(base, method.getGenericParameterTypes()));
+    }
+
+    private boolean expert;
+    private boolean hidden;
+    private boolean preferred;
+    private String shortDescription;
+    private String name;
+    private String displayName;
+    private Hashtable<String, Object> table;
+
+    /**
+     * Returns a string representation of the object.
+     *
+     * @return a string representation of the object
+     *
+     * @since 1.7
+     */
+    public String toString() {
+        StringBuilder sb = new StringBuilder(getClass().getName());
+        sb.append("[name=").append(this.name);
+        appendTo(sb, "displayName", this.displayName);
+        appendTo(sb, "shortDescription", this.shortDescription);
+        appendTo(sb, "preferred", this.preferred);
+        appendTo(sb, "hidden", this.hidden);
+        appendTo(sb, "expert", this.expert);
+        if ((this.table != null) && !this.table.isEmpty()) {
+            sb.append("; values={");
+            for (Entry<String, Object> entry : this.table.entrySet()) {
+                sb.append(entry.getKey()).append("=").append(entry.getValue()).append("; ");
+            }
+            sb.setLength(sb.length() - 2);
+            sb.append("}");
+        }
+        appendTo(sb);
+        return sb.append("]").toString();
+    }
+
+    void appendTo(StringBuilder sb) {
+    }
+
+    static void appendTo(StringBuilder sb, String name, Reference<?> reference) {
+        if (reference != null) {
+            appendTo(sb, name, reference.get());
+        }
+    }
+
+    static void appendTo(StringBuilder sb, String name, Object value) {
+        if (value != null) {
+            sb.append("; ").append(name).append("=").append(value);
+        }
+    }
+
+    static void appendTo(StringBuilder sb, String name, boolean value) {
+        if (value) {
+            sb.append("; ").append(name);
+        }
+    }
+}

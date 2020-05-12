@@ -1,950 +1,954 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.lang.ref.ReferenceQueue;
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.util.Vector;
-/*     */ import javax.swing.undo.AbstractUndoableEdit;
-/*     */ import javax.swing.undo.CannotRedoException;
-/*     */ import javax.swing.undo.CannotUndoException;
-/*     */ import javax.swing.undo.UndoableEdit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class GapContent
-/*     */   extends GapVector
-/*     */   implements AbstractDocument.Content, Serializable
-/*     */ {
-/*     */   public GapContent() {
-/*  67 */     this(10);
-/*     */   }
-/*     */   protected Object allocateArray(int paramInt) { return new char[paramInt]; }
-/*     */   protected int getArrayLength() { char[] arrayOfChar = (char[])getArray(); return arrayOfChar.length; }
-/*     */   public int length() { return getArrayLength() - getGapEnd() - getGapStart(); }
-/*     */   public UndoableEdit insertString(int paramInt, String paramString) throws BadLocationException { if (paramInt > length() || paramInt < 0)
-/*     */       throw new BadLocationException("Invalid insert", length());  char[] arrayOfChar = paramString.toCharArray(); replace(paramInt, 0, arrayOfChar, arrayOfChar.length); return new InsertUndo(paramInt, paramString.length()); }
-/*     */   public UndoableEdit remove(int paramInt1, int paramInt2) throws BadLocationException { if (paramInt1 + paramInt2 >= length())
-/*     */       throw new BadLocationException("Invalid remove", length() + 1);  String str = getString(paramInt1, paramInt2); RemoveUndo removeUndo = new RemoveUndo(paramInt1, str);
-/*     */     replace(paramInt1, paramInt2, empty, 0);
-/*     */     return removeUndo; } public String getString(int paramInt1, int paramInt2) throws BadLocationException { Segment segment = new Segment();
-/*     */     getChars(paramInt1, paramInt2, segment);
-/*  79 */     return new String(segment.array, segment.offset, segment.count); } public GapContent(int paramInt) { super(Math.max(paramInt, 2));
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 330 */     this.unusedMarks = 0; char[] arrayOfChar = new char[1]; arrayOfChar[0] = '\n'; replace(0, 0, arrayOfChar, arrayOfChar.length); this.marks = new MarkVector(); this.search = new MarkData(0); this.queue = new ReferenceQueue<>(); }
-/*     */   public void getChars(int paramInt1, int paramInt2, Segment paramSegment) throws BadLocationException { int i = paramInt1 + paramInt2; if (paramInt1 < 0 || i < 0)
-/*     */       throw new BadLocationException("Invalid location", -1);  if (i > length() || paramInt1 > length())
-/*     */       throw new BadLocationException("Invalid location", length() + 1);  int j = getGapStart(); int k = getGapEnd(); char[] arrayOfChar = (char[])getArray(); if (paramInt1 + paramInt2 <= j) { paramSegment.array = arrayOfChar; paramSegment.offset = paramInt1; }
-/*     */     else if (paramInt1 >= j) { paramSegment.array = arrayOfChar; paramSegment.offset = k + paramInt1 - j; }
-/*     */     else { int m = j - paramInt1; if (paramSegment.isPartialReturn()) {
-/*     */         paramSegment.array = arrayOfChar; paramSegment.offset = paramInt1; paramSegment.count = m; return;
-/*     */       }  paramSegment.array = new char[paramInt2]; paramSegment.offset = 0; System.arraycopy(arrayOfChar, paramInt1, paramSegment.array, 0, m); System.arraycopy(arrayOfChar, k, paramSegment.array, m, paramInt2 - m); }
-/*     */      paramSegment.count = paramInt2; }
-/*     */   public Position createPosition(int paramInt) throws BadLocationException { while (this.queue.poll() != null)
-/*     */       this.unusedMarks++;  if (this.unusedMarks > Math.max(5, this.marks.size() / 10))
-/*     */       removeUnusedMarks();  int i = getGapStart(); int j = getGapEnd(); int k = (paramInt < i) ? paramInt : (paramInt + j - i); this.search.index = k; int m = findSortIndex(this.search); MarkData markData; StickyPosition stickyPosition; if (m >= this.marks.size() || (markData = this.marks.elementAt(m)).index != k || (stickyPosition = markData.getPosition()) == null) {
-/*     */       stickyPosition = new StickyPosition(); markData = new MarkData(k, stickyPosition, this.queue); stickyPosition.setMark(markData); this.marks.insertElementAt(markData, m);
-/* 343 */     }  return stickyPosition; } protected void shiftEnd(int paramInt) { int i = getGapEnd();
-/*     */     
-/* 345 */     super.shiftEnd(paramInt);
-/*     */ 
-/*     */     
-/* 348 */     int j = getGapEnd() - i;
-/* 349 */     int k = findMarkAdjustIndex(i);
-/* 350 */     int m = this.marks.size();
-/* 351 */     for (int n = k; n < m; n++)
-/* 352 */     { MarkData markData = this.marks.elementAt(n);
-/* 353 */       markData.index += j; }  } final class MarkData extends WeakReference<StickyPosition> {
-/*     */     int index; MarkData(int param1Int) { super((GapContent.StickyPosition)null); this.index = param1Int; } MarkData(int param1Int, GapContent.StickyPosition param1StickyPosition, ReferenceQueue<? super GapContent.StickyPosition> param1ReferenceQueue) { super(param1StickyPosition, param1ReferenceQueue); this.index = param1Int; }
-/*     */     public final int getOffset() { int i = GapContent.this.getGapStart(); int j = GapContent.this.getGapEnd(); int k = (this.index < i) ? this.index : (this.index - j - i); return Math.max(k, 0); }
-/*     */     GapContent.StickyPosition getPosition() { return get(); } }
-/*     */   final class StickyPosition implements Position {
-/*     */     GapContent.MarkData mark;
-/*     */     void setMark(GapContent.MarkData param1MarkData) { this.mark = param1MarkData; }
-/*     */     public final int getOffset() { return this.mark.getOffset(); }
-/*     */     public String toString() { return Integer.toString(getOffset()); } } private static final char[] empty = new char[0]; private transient MarkVector marks; private transient MarkData search; private transient int unusedMarks; private transient ReferenceQueue<StickyPosition> queue; static final int GROWTH_SIZE = 524288;
-/* 362 */   int getNewArraySize(int paramInt) { if (paramInt < 524288) {
-/* 363 */       return super.getNewArraySize(paramInt);
-/*     */     }
-/* 365 */     return paramInt + 524288; }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftGap(int paramInt) {
-/* 376 */     int i = getGapStart();
-/* 377 */     int j = paramInt - i;
-/* 378 */     int k = getGapEnd();
-/* 379 */     int m = k + j;
-/* 380 */     int n = k - i;
-/*     */ 
-/*     */     
-/* 383 */     super.shiftGap(paramInt);
-/*     */ 
-/*     */     
-/* 386 */     if (j > 0) {
-/*     */       
-/* 388 */       int i1 = findMarkAdjustIndex(i);
-/* 389 */       int i2 = this.marks.size();
-/* 390 */       for (int i3 = i1; i3 < i2; i3++) {
-/* 391 */         MarkData markData = this.marks.elementAt(i3);
-/* 392 */         if (markData.index >= m) {
-/*     */           break;
-/*     */         }
-/* 395 */         markData.index -= n;
-/*     */       } 
-/* 397 */     } else if (j < 0) {
-/*     */       
-/* 399 */       int i1 = findMarkAdjustIndex(paramInt);
-/* 400 */       int i2 = this.marks.size();
-/* 401 */       for (int i3 = i1; i3 < i2; i3++) {
-/* 402 */         MarkData markData = this.marks.elementAt(i3);
-/* 403 */         if (markData.index >= k) {
-/*     */           break;
-/*     */         }
-/* 406 */         markData.index += n;
-/*     */       } 
-/*     */     } 
-/* 409 */     resetMarksAtZero();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void resetMarksAtZero() {
-/* 417 */     if (this.marks != null && getGapStart() == 0) {
-/* 418 */       int i = getGapEnd();
-/* 419 */       byte b = 0; int j = this.marks.size();
-/* 420 */       while (b < j) {
-/* 421 */         MarkData markData = this.marks.elementAt(b);
-/* 422 */         if (markData.index <= i) {
-/* 423 */           markData.index = 0;
-/*     */           b++;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftGapStartDown(int paramInt) {
-/* 442 */     int i = findMarkAdjustIndex(paramInt);
-/* 443 */     int j = this.marks.size();
-/* 444 */     int k = getGapStart();
-/* 445 */     int m = getGapEnd();
-/* 446 */     for (int n = i; n < j; n++) {
-/* 447 */       MarkData markData = this.marks.elementAt(n);
-/* 448 */       if (markData.index > k) {
-/*     */         break;
-/*     */       }
-/*     */       
-/* 452 */       markData.index = m;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 456 */     super.shiftGapStartDown(paramInt);
-/*     */     
-/* 458 */     resetMarksAtZero();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void shiftGapEndUp(int paramInt) {
-/* 470 */     int i = findMarkAdjustIndex(getGapEnd());
-/* 471 */     int j = this.marks.size();
-/* 472 */     for (int k = i; k < j; k++) {
-/* 473 */       MarkData markData = this.marks.elementAt(k);
-/* 474 */       if (markData.index >= paramInt) {
-/*     */         break;
-/*     */       }
-/* 477 */       markData.index = paramInt;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 481 */     super.shiftGapEndUp(paramInt);
-/*     */     
-/* 483 */     resetMarksAtZero();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final int compare(MarkData paramMarkData1, MarkData paramMarkData2) {
-/* 494 */     if (paramMarkData1.index < paramMarkData2.index)
-/* 495 */       return -1; 
-/* 496 */     if (paramMarkData1.index > paramMarkData2.index) {
-/* 497 */       return 1;
-/*     */     }
-/* 499 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final int findMarkAdjustIndex(int paramInt) {
-/* 508 */     this.search.index = Math.max(paramInt, 1);
-/* 509 */     int i = findSortIndex(this.search);
-/*     */ 
-/*     */ 
-/*     */     
-/* 513 */     for (int j = i - 1; j >= 0; j--) {
-/* 514 */       MarkData markData = this.marks.elementAt(j);
-/* 515 */       if (markData.index != this.search.index) {
-/*     */         break;
-/*     */       }
-/* 518 */       i--;
-/*     */     } 
-/* 520 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final int findSortIndex(MarkData paramMarkData) {
-/* 530 */     int i = 0;
-/* 531 */     int j = this.marks.size() - 1;
-/* 532 */     int k = 0;
-/*     */     
-/* 534 */     if (j == -1) {
-/* 535 */       return 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 539 */     MarkData markData = this.marks.elementAt(j);
-/* 540 */     int m = compare(paramMarkData, markData);
-/* 541 */     if (m > 0) {
-/* 542 */       return j + 1;
-/*     */     }
-/* 544 */     while (i <= j) {
-/* 545 */       k = i + (j - i) / 2;
-/* 546 */       MarkData markData1 = this.marks.elementAt(k);
-/* 547 */       m = compare(paramMarkData, markData1);
-/*     */       
-/* 549 */       if (m == 0)
-/*     */       {
-/* 551 */         return k; } 
-/* 552 */       if (m < 0) {
-/* 553 */         j = k - 1; continue;
-/*     */       } 
-/* 555 */       i = k + 1;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 560 */     return (m < 0) ? k : (k + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final void removeUnusedMarks() {
-/* 568 */     int i = this.marks.size();
-/* 569 */     MarkVector markVector = new MarkVector(i);
-/* 570 */     for (byte b = 0; b < i; b++) {
-/* 571 */       MarkData markData = this.marks.elementAt(b);
-/* 572 */       if (markData.get() != null) {
-/* 573 */         markVector.addElement(markData);
-/*     */       }
-/*     */     } 
-/* 576 */     this.marks = markVector;
-/* 577 */     this.unusedMarks = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class MarkVector
-/*     */     extends GapVector
-/*     */   {
-/*     */     GapContent.MarkData[] oneMark;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     MarkVector()
-/*     */     {
-/* 683 */       this.oneMark = new GapContent.MarkData[1]; } MarkVector(int param1Int) { super(param1Int); this.oneMark = new GapContent.MarkData[1]; } protected Object allocateArray(int param1Int) { return new GapContent.MarkData[param1Int]; }
-/*     */     protected int getArrayLength() { GapContent.MarkData[] arrayOfMarkData = (GapContent.MarkData[])getArray(); return arrayOfMarkData.length; }
-/*     */     public int size() { return getArrayLength() - getGapEnd() - getGapStart(); }
-/*     */     public void insertElementAt(GapContent.MarkData param1MarkData, int param1Int) { this.oneMark[0] = param1MarkData; replace(param1Int, 0, this.oneMark, 1); }
-/*     */     public void addElement(GapContent.MarkData param1MarkData) { insertElementAt(param1MarkData, size()); }
-/*     */     public GapContent.MarkData elementAt(int param1Int) { int i = getGapStart(); int j = getGapEnd(); GapContent.MarkData[] arrayOfMarkData = (GapContent.MarkData[])getArray(); if (param1Int < i) return arrayOfMarkData[param1Int];  param1Int += j - i; return arrayOfMarkData[param1Int]; }
-/*     */     protected void replaceRange(int param1Int1, int param1Int2, Object[] param1ArrayOfObject) { int i = getGapStart(); int j = getGapEnd(); int k = param1Int1; byte b = 0; Object[] arrayOfObject = (Object[])getArray(); if (param1Int1 >= i) { k += j - i; param1Int2 += j - i; } else if (param1Int2 >= i) { param1Int2 += j - i; while (k < i) arrayOfObject[k++] = param1ArrayOfObject[b++];  k = j; } else { while (k < param1Int2) arrayOfObject[k++] = param1ArrayOfObject[b++];  }  while (k < param1Int2)
-/*     */         arrayOfObject[k++] = param1ArrayOfObject[b++];  } }
-/* 691 */   private void readObject(ObjectInputStream paramObjectInputStream) throws ClassNotFoundException, IOException { paramObjectInputStream.defaultReadObject();
-/* 692 */     this.marks = new MarkVector();
-/* 693 */     this.search = new MarkData(0);
-/* 694 */     this.queue = new ReferenceQueue<>(); }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Vector getPositionsInRange(Vector paramVector, int paramInt1, int paramInt2) {
-/* 713 */     int j, k, i = paramInt1 + paramInt2;
-/*     */ 
-/*     */     
-/* 716 */     int m = getGapStart();
-/* 717 */     int n = getGapEnd();
-/*     */ 
-/*     */     
-/* 720 */     if (paramInt1 < m) {
-/* 721 */       if (paramInt1 == 0) {
-/*     */         
-/* 723 */         j = 0;
-/*     */       } else {
-/*     */         
-/* 726 */         j = findMarkAdjustIndex(paramInt1);
-/*     */       } 
-/* 728 */       if (i >= m) {
-/* 729 */         k = findMarkAdjustIndex(i + n - m + 1);
-/*     */       } else {
-/*     */         
-/* 732 */         k = findMarkAdjustIndex(i + 1);
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 736 */       j = findMarkAdjustIndex(paramInt1 + n - m);
-/* 737 */       k = findMarkAdjustIndex(i + n - m + 1);
-/*     */     } 
-/*     */     
-/* 740 */     Vector<UndoPosRef> vector = (paramVector == null) ? new Vector(Math.max(1, k - j)) : paramVector;
-/*     */ 
-/*     */     
-/* 743 */     for (int i1 = j; i1 < k; i1++) {
-/* 744 */       vector.addElement(new UndoPosRef(this.marks.elementAt(i1)));
-/*     */     }
-/* 746 */     return vector;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void updateUndoPositions(Vector<UndoPosRef> paramVector, int paramInt1, int paramInt2) {
-/*     */     byte b;
-/* 761 */     int i = paramInt1 + paramInt2;
-/* 762 */     int j = getGapEnd();
-/*     */     
-/* 764 */     int k = findMarkAdjustIndex(j + 1);
-/*     */     
-/* 766 */     if (paramInt1 != 0) {
-/* 767 */       b = findMarkAdjustIndex(j);
-/*     */     } else {
-/*     */       
-/* 770 */       b = 0;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 774 */     for (int m = paramVector.size() - 1; m >= 0; m--) {
-/* 775 */       UndoPosRef undoPosRef = paramVector.elementAt(m);
-/* 776 */       undoPosRef.resetLocation(i, j);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 782 */     if (b < k) {
-/* 783 */       Object[] arrayOfObject = new Object[k - b];
-/* 784 */       byte b1 = 0;
-/*     */       
-/* 786 */       if (paramInt1 == 0) {
-/*     */         byte b2;
-/*     */ 
-/*     */         
-/* 790 */         for (b2 = b; b2 < k; b2++) {
-/* 791 */           MarkData markData = this.marks.elementAt(b2);
-/* 792 */           if (markData.index == 0) {
-/* 793 */             arrayOfObject[b1++] = markData;
-/*     */           }
-/*     */         } 
-/* 796 */         for (b2 = b; b2 < k; b2++) {
-/* 797 */           MarkData markData = this.marks.elementAt(b2);
-/* 798 */           if (markData.index != 0) {
-/* 799 */             arrayOfObject[b1++] = markData;
-/*     */           }
-/*     */         } 
-/*     */       } else {
-/*     */         byte b2;
-/* 804 */         for (b2 = b; b2 < k; b2++) {
-/* 805 */           MarkData markData = this.marks.elementAt(b2);
-/* 806 */           if (markData.index != j) {
-/* 807 */             arrayOfObject[b1++] = markData;
-/*     */           }
-/*     */         } 
-/* 810 */         for (b2 = b; b2 < k; b2++) {
-/* 811 */           MarkData markData = this.marks.elementAt(b2);
-/* 812 */           if (markData.index == j) {
-/* 813 */             arrayOfObject[b1++] = markData;
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 818 */       this.marks.replaceRange(b, k, arrayOfObject);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   final class UndoPosRef
-/*     */   {
-/*     */     protected int undoLocation;
-/*     */     protected GapContent.MarkData rec;
-/*     */     
-/*     */     UndoPosRef(GapContent.MarkData param1MarkData) {
-/* 828 */       this.rec = param1MarkData;
-/* 829 */       this.undoLocation = param1MarkData.getOffset();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected void resetLocation(int param1Int1, int param1Int2) {
-/* 840 */       if (this.undoLocation != param1Int1) {
-/* 841 */         this.rec.index = this.undoLocation;
-/*     */       } else {
-/*     */         
-/* 844 */         this.rec.index = param1Int2;
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   class InsertUndo
-/*     */     extends AbstractUndoableEdit
-/*     */   {
-/*     */     protected int offset;
-/*     */     
-/*     */     protected int length;
-/*     */     
-/*     */     protected String string;
-/*     */     protected Vector posRefs;
-/*     */     
-/*     */     protected InsertUndo(int param1Int1, int param1Int2) {
-/* 861 */       this.offset = param1Int1;
-/* 862 */       this.length = param1Int2;
-/*     */     }
-/*     */     
-/*     */     public void undo() throws CannotUndoException {
-/* 866 */       super.undo();
-/*     */       
-/*     */       try {
-/* 869 */         this.posRefs = GapContent.this.getPositionsInRange((Vector)null, this.offset, this.length);
-/* 870 */         this.string = GapContent.this.getString(this.offset, this.length);
-/* 871 */         GapContent.this.remove(this.offset, this.length);
-/* 872 */       } catch (BadLocationException badLocationException) {
-/* 873 */         throw new CannotUndoException();
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void redo() throws CannotRedoException {
-/* 878 */       super.redo();
-/*     */       try {
-/* 880 */         GapContent.this.insertString(this.offset, this.string);
-/* 881 */         this.string = null;
-/*     */         
-/* 883 */         if (this.posRefs != null) {
-/* 884 */           GapContent.this.updateUndoPositions(this.posRefs, this.offset, this.length);
-/* 885 */           this.posRefs = null;
-/*     */         } 
-/* 887 */       } catch (BadLocationException badLocationException) {
-/* 888 */         throw new CannotRedoException();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   class RemoveUndo
-/*     */     extends AbstractUndoableEdit
-/*     */   {
-/*     */     protected int offset;
-/*     */ 
-/*     */     
-/*     */     protected int length;
-/*     */ 
-/*     */     
-/*     */     protected String string;
-/*     */ 
-/*     */     
-/*     */     protected Vector posRefs;
-/*     */ 
-/*     */     
-/*     */     protected RemoveUndo(int param1Int, String param1String) {
-/* 911 */       this.offset = param1Int;
-/* 912 */       this.string = param1String;
-/* 913 */       this.length = param1String.length();
-/* 914 */       this.posRefs = GapContent.this.getPositionsInRange((Vector)null, param1Int, this.length);
-/*     */     }
-/*     */     
-/*     */     public void undo() throws CannotUndoException {
-/* 918 */       super.undo();
-/*     */       try {
-/* 920 */         GapContent.this.insertString(this.offset, this.string);
-/*     */         
-/* 922 */         if (this.posRefs != null) {
-/* 923 */           GapContent.this.updateUndoPositions(this.posRefs, this.offset, this.length);
-/* 924 */           this.posRefs = null;
-/*     */         } 
-/* 926 */         this.string = null;
-/* 927 */       } catch (BadLocationException badLocationException) {
-/* 928 */         throw new CannotUndoException();
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public void redo() throws CannotRedoException {
-/* 933 */       super.redo();
-/*     */       try {
-/* 935 */         this.string = GapContent.this.getString(this.offset, this.length);
-/*     */         
-/* 937 */         this.posRefs = GapContent.this.getPositionsInRange((Vector)null, this.offset, this.length);
-/* 938 */         GapContent.this.remove(this.offset, this.length);
-/* 939 */       } catch (BadLocationException badLocationException) {
-/* 940 */         throw new CannotRedoException();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\GapContent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.util.Vector;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.SwingUtilities;
+import java.lang.ref.WeakReference;
+import java.lang.ref.ReferenceQueue;
+
+/**
+ * An implementation of the AbstractDocument.Content interface
+ * implemented using a gapped buffer similar to that used by emacs.
+ * The underlying storage is a array of unicode characters with
+ * a gap somewhere.  The gap is moved to the location of changes
+ * to take advantage of common behavior where most changes are
+ * in the same location.  Changes that occur at a gap boundary are
+ * generally cheap and moving the gap is generally cheaper than
+ * moving the array contents directly to accommodate the change.
+ * <p>
+ * The positions tracking change are also generally cheap to
+ * maintain.  The Position implementations (marks) store the array
+ * index and can easily calculate the sequential position from
+ * the current gap location.  Changes only require update to the
+ * the marks between the old and new gap boundaries when the gap
+ * is moved, so generally updating the marks is pretty cheap.
+ * The marks are stored sorted so they can be located quickly
+ * with a binary search.  This increases the cost of adding a
+ * mark, and decreases the cost of keeping the mark updated.
+ *
+ * @author  Timothy Prinzing
+ */
+public class GapContent extends GapVector implements AbstractDocument.Content, Serializable {
+
+    /**
+     * Creates a new GapContent object.  Initial size defaults to 10.
+     */
+    public GapContent() {
+        this(10);
+    }
+
+    /**
+     * Creates a new GapContent object, with the initial
+     * size specified.  The initial size will not be allowed
+     * to go below 2, to give room for the implied break and
+     * the gap.
+     *
+     * @param initialLength the initial size
+     */
+    public GapContent(int initialLength) {
+        super(Math.max(initialLength,2));
+        char[] implied = new char[1];
+        implied[0] = '\n';
+        replace(0, 0, implied, implied.length);
+
+        marks = new MarkVector();
+        search = new MarkData(0);
+        queue = new ReferenceQueue<StickyPosition>();
+    }
+
+    /**
+     * Allocate an array to store items of the type
+     * appropriate (which is determined by the subclass).
+     */
+    protected Object allocateArray(int len) {
+        return new char[len];
+    }
+
+    /**
+     * Get the length of the allocated array.
+     */
+    protected int getArrayLength() {
+        char[] carray = (char[]) getArray();
+        return carray.length;
+    }
+
+    // --- AbstractDocument.Content methods -------------------------
+
+    /**
+     * Returns the length of the content.
+     *
+     * @return the length &gt;= 1
+     * @see AbstractDocument.Content#length
+     */
+    public int length() {
+        int len = getArrayLength() - (getGapEnd() - getGapStart());
+        return len;
+    }
+
+    /**
+     * Inserts a string into the content.
+     *
+     * @param where the starting position &gt;= 0, &lt; length()
+     * @param str the non-null string to insert
+     * @return an UndoableEdit object for undoing
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#insertString
+     */
+    public UndoableEdit insertString(int where, String str) throws BadLocationException {
+        if (where > length() || where < 0) {
+            throw new BadLocationException("Invalid insert", length());
+        }
+        char[] chars = str.toCharArray();
+        replace(where, 0, chars, chars.length);
+        return new InsertUndo(where, str.length());
+    }
+
+    /**
+     * Removes part of the content.
+     *
+     * @param where the starting position &gt;= 0, where + nitems &lt; length()
+     * @param nitems the number of characters to remove &gt;= 0
+     * @return an UndoableEdit object for undoing
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#remove
+     */
+    public UndoableEdit remove(int where, int nitems) throws BadLocationException {
+        if (where + nitems >= length()) {
+            throw new BadLocationException("Invalid remove", length() + 1);
+        }
+        String removedString = getString(where, nitems);
+        UndoableEdit edit = new RemoveUndo(where, removedString);
+        replace(where, nitems, empty, 0);
+        return edit;
+
+    }
+
+    /**
+     * Retrieves a portion of the content.
+     *
+     * @param where the starting position &gt;= 0
+     * @param len the length to retrieve &gt;= 0
+     * @return a string representing the content
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#getString
+     */
+    public String getString(int where, int len) throws BadLocationException {
+        Segment s = new Segment();
+        getChars(where, len, s);
+        return new String(s.array, s.offset, s.count);
+    }
+
+    /**
+     * Retrieves a portion of the content.  If the desired content spans
+     * the gap, we copy the content.  If the desired content does not
+     * span the gap, the actual store is returned to avoid the copy since
+     * it is contiguous.
+     *
+     * @param where the starting position &gt;= 0, where + len &lt;= length()
+     * @param len the number of characters to retrieve &gt;= 0
+     * @param chars the Segment object to return the characters in
+     * @exception BadLocationException if the specified position is invalid
+     * @see AbstractDocument.Content#getChars
+     */
+    public void getChars(int where, int len, Segment chars) throws BadLocationException {
+        int end = where + len;
+        if (where < 0 || end < 0) {
+            throw new BadLocationException("Invalid location", -1);
+        }
+        if (end > length() || where > length()) {
+            throw new BadLocationException("Invalid location", length() + 1);
+        }
+        int g0 = getGapStart();
+        int g1 = getGapEnd();
+        char[] array = (char[]) getArray();
+        if ((where + len) <= g0) {
+            // below gap
+            chars.array = array;
+            chars.offset = where;
+        } else if (where >= g0) {
+            // above gap
+            chars.array = array;
+            chars.offset = g1 + where - g0;
+        } else {
+            // spans the gap
+            int before = g0 - where;
+            if (chars.isPartialReturn()) {
+                // partial return allowed, return amount before the gap
+                chars.array = array;
+                chars.offset = where;
+                chars.count = before;
+                return;
+            }
+            // partial return not allowed, must copy
+            chars.array = new char[len];
+            chars.offset = 0;
+            System.arraycopy(array, where, chars.array, 0, before);
+            System.arraycopy(array, g1, chars.array, before, len - before);
+        }
+        chars.count = len;
+    }
+
+    /**
+     * Creates a position within the content that will
+     * track change as the content is mutated.
+     *
+     * @param offset the offset to track &gt;= 0
+     * @return the position
+     * @exception BadLocationException if the specified position is invalid
+     */
+    public Position createPosition(int offset) throws BadLocationException {
+        while ( queue.poll() != null ) {
+            unusedMarks++;
+        }
+        if (unusedMarks > Math.max(5, (marks.size() / 10))) {
+            removeUnusedMarks();
+        }
+        int g0 = getGapStart();
+        int g1 = getGapEnd();
+        int index = (offset < g0) ? offset : offset + (g1 - g0);
+        search.index = index;
+        int sortIndex = findSortIndex(search);
+        MarkData m;
+        StickyPosition position;
+        if (sortIndex < marks.size()
+            && (m = marks.elementAt(sortIndex)).index == index
+            && (position = m.getPosition()) != null) {
+            //position references the correct StickyPostition
+        } else {
+            position = new StickyPosition();
+            m = new MarkData(index,position,queue);
+            position.setMark(m);
+            marks.insertElementAt(m, sortIndex);
+        }
+
+        return position;
+    }
+
+    /**
+     * Holds the data for a mark... separately from
+     * the real mark so that the real mark (Position
+     * that the caller of createPosition holds) can be
+     * collected if there are no more references to
+     * it.  The update table holds only a reference
+     * to this data.
+     */
+    final class MarkData extends WeakReference<StickyPosition> {
+
+        MarkData(int index) {
+            super(null);
+            this.index = index;
+        }
+        MarkData(int index, StickyPosition position, ReferenceQueue<? super StickyPosition> queue) {
+            super(position, queue);
+            this.index = index;
+        }
+
+        /**
+         * Fetch the location in the contiguous sequence
+         * being modeled.  The index in the gap array
+         * is held by the mark, so it is adjusted according
+         * to it's relationship to the gap.
+         */
+        public final int getOffset() {
+            int g0 = getGapStart();
+            int g1 = getGapEnd();
+            int offs = (index < g0) ? index : index - (g1 - g0);
+            return Math.max(offs, 0);
+        }
+
+        StickyPosition getPosition() {
+            return get();
+        }
+        int index;
+    }
+
+    final class StickyPosition implements Position {
+
+        StickyPosition() {
+        }
+
+        void setMark(MarkData mark) {
+            this.mark = mark;
+        }
+
+        public final int getOffset() {
+            return mark.getOffset();
+        }
+
+        public String toString() {
+            return Integer.toString(getOffset());
+        }
+
+        MarkData mark;
+    }
+
+    // --- variables --------------------------------------
+
+    private static final char[] empty = new char[0];
+    private transient MarkVector marks;
+
+    /**
+     * Record used for searching for the place to
+     * start updating mark indexs when the gap
+     * boundaries are moved.
+     */
+    private transient MarkData search;
+
+    /**
+     * The number of unused mark entries
+     */
+    private transient int unusedMarks = 0;
+
+    private transient ReferenceQueue<StickyPosition> queue;
+
+    final static int GROWTH_SIZE = 1024 * 512;
+
+    // --- gap management -------------------------------
+
+    /**
+     * Make the gap bigger, moving any necessary data and updating
+     * the appropriate marks
+     */
+    protected void shiftEnd(int newSize) {
+        int oldGapEnd = getGapEnd();
+
+        super.shiftEnd(newSize);
+
+        // Adjust marks.
+        int dg = getGapEnd() - oldGapEnd;
+        int adjustIndex = findMarkAdjustIndex(oldGapEnd);
+        int n = marks.size();
+        for (int i = adjustIndex; i < n; i++) {
+            MarkData mark = marks.elementAt(i);
+            mark.index += dg;
+        }
+    }
+
+    /**
+     * Overridden to make growth policy less agressive for large
+     * text amount.
+     */
+    int getNewArraySize(int reqSize) {
+        if (reqSize < GROWTH_SIZE) {
+            return super.getNewArraySize(reqSize);
+        } else {
+            return reqSize + GROWTH_SIZE;
+        }
+    }
+
+    /**
+     * Move the start of the gap to a new location,
+     * without changing the size of the gap.  This
+     * moves the data in the array and updates the
+     * marks accordingly.
+     */
+    protected void shiftGap(int newGapStart) {
+        int oldGapStart = getGapStart();
+        int dg = newGapStart - oldGapStart;
+        int oldGapEnd = getGapEnd();
+        int newGapEnd = oldGapEnd + dg;
+        int gapSize = oldGapEnd - oldGapStart;
+
+        // shift gap in the character array
+        super.shiftGap(newGapStart);
+
+        // update the marks
+        if (dg > 0) {
+            // Move gap up, move data and marks down.
+            int adjustIndex = findMarkAdjustIndex(oldGapStart);
+            int n = marks.size();
+            for (int i = adjustIndex; i < n; i++) {
+                MarkData mark = marks.elementAt(i);
+                if (mark.index >= newGapEnd) {
+                    break;
+                }
+                mark.index -= gapSize;
+            }
+        } else if (dg < 0) {
+            // Move gap down, move data and marks up.
+            int adjustIndex = findMarkAdjustIndex(newGapStart);
+            int n = marks.size();
+            for (int i = adjustIndex; i < n; i++) {
+                MarkData mark = marks.elementAt(i);
+                if (mark.index >= oldGapEnd) {
+                    break;
+                }
+                mark.index += gapSize;
+            }
+        }
+        resetMarksAtZero();
+    }
+
+    /**
+     * Resets all the marks that have an offset of 0 to have an index of
+     * zero as well.
+     */
+    protected void resetMarksAtZero() {
+        if (marks != null && getGapStart() == 0) {
+            int g1 = getGapEnd();
+            for (int counter = 0, maxCounter = marks.size();
+                 counter < maxCounter; counter++) {
+                MarkData mark = marks.elementAt(counter);
+                if (mark.index <= g1) {
+                    mark.index = 0;
+                }
+                else {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Adjust the gap end downward.  This doesn't move
+     * any data, but it does update any marks affected
+     * by the boundary change.  All marks from the old
+     * gap start down to the new gap start are squeezed
+     * to the end of the gap (their location has been
+     * removed).
+     */
+    protected void shiftGapStartDown(int newGapStart) {
+        // Push aside all marks from oldGapStart down to newGapStart.
+        int adjustIndex = findMarkAdjustIndex(newGapStart);
+        int n = marks.size();
+        int g0 = getGapStart();
+        int g1 = getGapEnd();
+        for (int i = adjustIndex; i < n; i++) {
+            MarkData mark = marks.elementAt(i);
+            if (mark.index > g0) {
+                // no more marks to adjust
+                break;
+            }
+            mark.index = g1;
+        }
+
+        // shift the gap in the character array
+        super.shiftGapStartDown(newGapStart);
+
+        resetMarksAtZero();
+    }
+
+    /**
+     * Adjust the gap end upward.  This doesn't move
+     * any data, but it does update any marks affected
+     * by the boundary change. All marks from the old
+     * gap end up to the new gap end are squeezed
+     * to the end of the gap (their location has been
+     * removed).
+     */
+    protected void shiftGapEndUp(int newGapEnd) {
+        int adjustIndex = findMarkAdjustIndex(getGapEnd());
+        int n = marks.size();
+        for (int i = adjustIndex; i < n; i++) {
+            MarkData mark = marks.elementAt(i);
+            if (mark.index >= newGapEnd) {
+                break;
+            }
+            mark.index = newGapEnd;
+        }
+
+        // shift the gap in the character array
+        super.shiftGapEndUp(newGapEnd);
+
+        resetMarksAtZero();
+    }
+
+    /**
+     * Compares two marks.
+     *
+     * @param o1 the first object
+     * @param o2 the second object
+     * @return < 0 if o1 < o2, 0 if the same, > 0 if o1 > o2
+     */
+    final int compare(MarkData o1, MarkData o2) {
+        if (o1.index < o2.index) {
+            return -1;
+        } else if (o1.index > o2.index) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Finds the index to start mark adjustments given
+     * some search index.
+     */
+    final int findMarkAdjustIndex(int searchIndex) {
+        search.index = Math.max(searchIndex, 1);
+        int index = findSortIndex(search);
+
+        // return the first in the series
+        // (ie. there may be duplicates).
+        for (int i = index - 1; i >= 0; i--) {
+            MarkData d = marks.elementAt(i);
+            if (d.index != search.index) {
+                break;
+            }
+            index -= 1;
+        }
+        return index;
+    }
+
+    /**
+     * Finds the index of where to insert a new mark.
+     *
+     * @param o the mark to insert
+     * @return the index
+     */
+    final int findSortIndex(MarkData o) {
+        int lower = 0;
+        int upper = marks.size() - 1;
+        int mid = 0;
+
+        if (upper == -1) {
+            return 0;
+        }
+
+        int cmp;
+        MarkData last = marks.elementAt(upper);
+        cmp = compare(o, last);
+        if (cmp > 0)
+            return upper + 1;
+
+        while (lower <= upper) {
+            mid = lower + ((upper - lower) / 2);
+            MarkData entry = marks.elementAt(mid);
+            cmp = compare(o, entry);
+
+            if (cmp == 0) {
+                // found a match
+                return mid;
+            } else if (cmp < 0) {
+                upper = mid - 1;
+            } else {
+                lower = mid + 1;
+            }
+        }
+
+        // didn't find it, but we indicate the index of where it would belong.
+        return (cmp < 0) ? mid : mid + 1;
+    }
+
+    /**
+     * Remove all unused marks out of the sorted collection
+     * of marks.
+     */
+    final void removeUnusedMarks() {
+        int n = marks.size();
+        MarkVector cleaned = new MarkVector(n);
+        for (int i = 0; i < n; i++) {
+            MarkData mark = marks.elementAt(i);
+            if (mark.get() != null) {
+                cleaned.addElement(mark);
+            }
+        }
+        marks = cleaned;
+        unusedMarks = 0;
+    }
+
+
+    static class MarkVector extends GapVector {
+
+        MarkVector() {
+            super();
+        }
+
+        MarkVector(int size) {
+            super(size);
+        }
+
+        /**
+         * Allocate an array to store items of the type
+         * appropriate (which is determined by the subclass).
+         */
+        protected Object allocateArray(int len) {
+            return new MarkData[len];
+        }
+
+        /**
+         * Get the length of the allocated array
+         */
+        protected int getArrayLength() {
+            MarkData[] marks = (MarkData[]) getArray();
+            return marks.length;
+        }
+
+        /**
+         * Returns the number of marks currently held
+         */
+        public int size() {
+            int len = getArrayLength() - (getGapEnd() - getGapStart());
+            return len;
+        }
+
+        /**
+         * Inserts a mark into the vector
+         */
+        public void insertElementAt(MarkData m, int index) {
+            oneMark[0] = m;
+            replace(index, 0, oneMark, 1);
+        }
+
+        /**
+         * Add a mark to the end
+         */
+        public void addElement(MarkData m) {
+            insertElementAt(m, size());
+        }
+
+        /**
+         * Fetches the mark at the given index
+         */
+        public MarkData elementAt(int index) {
+            int g0 = getGapStart();
+            int g1 = getGapEnd();
+            MarkData[] array = (MarkData[]) getArray();
+            if (index < g0) {
+                // below gap
+                return array[index];
+            } else {
+                // above gap
+                index += g1 - g0;
+                return array[index];
+            }
+        }
+
+        /**
+         * Replaces the elements in the specified range with the passed
+         * in objects. This will NOT adjust the gap. The passed in indices
+         * do not account for the gap, they are the same as would be used
+         * int <code>elementAt</code>.
+         */
+        protected void replaceRange(int start, int end, Object[] marks) {
+            int g0 = getGapStart();
+            int g1 = getGapEnd();
+            int index = start;
+            int newIndex = 0;
+            Object[] array = (Object[]) getArray();
+            if (start >= g0) {
+                // Completely passed gap
+                index += (g1 - g0);
+                end += (g1 - g0);
+            }
+            else if (end >= g0) {
+                // straddles gap
+                end += (g1 - g0);
+                while (index < g0) {
+                    array[index++] = marks[newIndex++];
+                }
+                index = g1;
+            }
+            else {
+                // below gap
+                while (index < end) {
+                    array[index++] = marks[newIndex++];
+                }
+            }
+            while (index < end) {
+                array[index++] = marks[newIndex++];
+            }
+        }
+
+        MarkData[] oneMark = new MarkData[1];
+
+    }
+
+    // --- serialization -------------------------------------
+
+    private void readObject(ObjectInputStream s)
+      throws ClassNotFoundException, IOException {
+        s.defaultReadObject();
+        marks = new MarkVector();
+        search = new MarkData(0);
+        queue = new ReferenceQueue<StickyPosition>();
+    }
+
+
+    // --- undo support --------------------------------------
+
+    /**
+     * Returns a Vector containing instances of UndoPosRef for the
+     * Positions in the range
+     * <code>offset</code> to <code>offset</code> + <code>length</code>.
+     * If <code>v</code> is not null the matching Positions are placed in
+     * there. The vector with the resulting Positions are returned.
+     *
+     * @param v the Vector to use, with a new one created on null
+     * @param offset the starting offset &gt;= 0
+     * @param length the length &gt;= 0
+     * @return the set of instances
+     */
+    protected Vector getPositionsInRange(Vector v, int offset, int length) {
+        int endOffset = offset + length;
+        int startIndex;
+        int endIndex;
+        int g0 = getGapStart();
+        int g1 = getGapEnd();
+
+        // Find the index of the marks.
+        if (offset < g0) {
+            if (offset == 0) {
+                // findMarkAdjustIndex start at 1!
+                startIndex = 0;
+            }
+            else {
+                startIndex = findMarkAdjustIndex(offset);
+            }
+            if (endOffset >= g0) {
+                endIndex = findMarkAdjustIndex(endOffset + (g1 - g0) + 1);
+            }
+            else {
+                endIndex = findMarkAdjustIndex(endOffset + 1);
+            }
+        }
+        else {
+            startIndex = findMarkAdjustIndex(offset + (g1 - g0));
+            endIndex = findMarkAdjustIndex(endOffset + (g1 - g0) + 1);
+        }
+
+        Vector placeIn = (v == null) ? new Vector(Math.max(1, endIndex -
+                                                           startIndex)) : v;
+
+        for (int counter = startIndex; counter < endIndex; counter++) {
+            placeIn.addElement(new UndoPosRef(marks.elementAt(counter)));
+        }
+        return placeIn;
+    }
+
+    /**
+     * Resets the location for all the UndoPosRef instances
+     * in <code>positions</code>.
+     * <p>
+     * This is meant for internal usage, and is generally not of interest
+     * to subclasses.
+     *
+     * @param positions the UndoPosRef instances to reset
+     */
+    protected void updateUndoPositions(Vector positions, int offset,
+                                       int length) {
+        // Find the indexs of the end points.
+        int endOffset = offset + length;
+        int g1 = getGapEnd();
+        int startIndex;
+        int endIndex = findMarkAdjustIndex(g1 + 1);
+
+        if (offset != 0) {
+            startIndex = findMarkAdjustIndex(g1);
+        }
+        else {
+            startIndex = 0;
+        }
+
+        // Reset the location of the refenences.
+        for(int counter = positions.size() - 1; counter >= 0; counter--) {
+            UndoPosRef ref = (UndoPosRef)positions.elementAt(counter);
+            ref.resetLocation(endOffset, g1);
+        }
+        // We have to resort the marks in the range startIndex to endIndex.
+        // We can take advantage of the fact that it will be in
+        // increasing order, accept there will be a bunch of MarkData's with
+        // the index g1 (or 0 if offset == 0) interspersed throughout.
+        if (startIndex < endIndex) {
+            Object[] sorted = new Object[endIndex - startIndex];
+            int addIndex = 0;
+            int counter;
+            if (offset == 0) {
+                // If the offset is 0, the positions won't have incremented,
+                // have to do the reverse thing.
+                // Find the elements in startIndex whose index is 0
+                for (counter = startIndex; counter < endIndex; counter++) {
+                    MarkData mark = marks.elementAt(counter);
+                    if (mark.index == 0) {
+                        sorted[addIndex++] = mark;
+                    }
+                }
+                for (counter = startIndex; counter < endIndex; counter++) {
+                    MarkData mark = marks.elementAt(counter);
+                    if (mark.index != 0) {
+                        sorted[addIndex++] = mark;
+                    }
+                }
+            }
+            else {
+                for (counter = startIndex; counter < endIndex; counter++) {
+                    MarkData mark = marks.elementAt(counter);
+                    if (mark.index != g1) {
+                        sorted[addIndex++] = mark;
+                    }
+                }
+                for (counter = startIndex; counter < endIndex; counter++) {
+                    MarkData mark = marks.elementAt(counter);
+                    if (mark.index == g1) {
+                        sorted[addIndex++] = mark;
+                    }
+                }
+            }
+            // And replace
+            marks.replaceRange(startIndex, endIndex, sorted);
+        }
+    }
+
+    /**
+     * Used to hold a reference to a Mark that is being reset as the
+     * result of removing from the content.
+     */
+    final class UndoPosRef {
+        UndoPosRef(MarkData rec) {
+            this.rec = rec;
+            this.undoLocation = rec.getOffset();
+        }
+
+        /**
+         * Resets the location of the Position to the offset when the
+         * receiver was instantiated.
+         *
+         * @param endOffset end location of inserted string.
+         * @param g1 resulting end of gap.
+         */
+        protected void resetLocation(int endOffset, int g1) {
+            if (undoLocation != endOffset) {
+                this.rec.index = undoLocation;
+            }
+            else {
+                this.rec.index = g1;
+            }
+        }
+
+        /** Previous Offset of rec. */
+        protected int undoLocation;
+        /** Mark to reset offset. */
+        protected MarkData rec;
+    } // End of GapContent.UndoPosRef
+
+
+    /**
+     * UnoableEdit created for inserts.
+     */
+    class InsertUndo extends AbstractUndoableEdit {
+        protected InsertUndo(int offset, int length) {
+            super();
+            this.offset = offset;
+            this.length = length;
+        }
+
+        public void undo() throws CannotUndoException {
+            super.undo();
+            try {
+                // Get the Positions in the range being removed.
+                posRefs = getPositionsInRange(null, offset, length);
+                string = getString(offset, length);
+                remove(offset, length);
+            } catch (BadLocationException bl) {
+              throw new CannotUndoException();
+            }
+        }
+
+        public void redo() throws CannotRedoException {
+            super.redo();
+            try {
+                insertString(offset, string);
+                string = null;
+                // Update the Positions that were in the range removed.
+                if(posRefs != null) {
+                    updateUndoPositions(posRefs, offset, length);
+                    posRefs = null;
+                }
+            } catch (BadLocationException bl) {
+                throw new CannotRedoException();
+            }
+        }
+
+        /** Where string was inserted. */
+        protected int offset;
+        /** Length of string inserted. */
+        protected int length;
+        /** The string that was inserted. This will only be valid after an
+         * undo. */
+        protected String string;
+        /** An array of instances of UndoPosRef for the Positions in the
+         * range that was removed, valid after undo. */
+        protected Vector posRefs;
+    } // GapContent.InsertUndo
+
+
+    /**
+     * UndoableEdit created for removes.
+     */
+    class RemoveUndo extends AbstractUndoableEdit {
+        protected RemoveUndo(int offset, String string) {
+            super();
+            this.offset = offset;
+            this.string = string;
+            this.length = string.length();
+            posRefs = getPositionsInRange(null, offset, length);
+        }
+
+        public void undo() throws CannotUndoException {
+            super.undo();
+            try {
+                insertString(offset, string);
+                // Update the Positions that were in the range removed.
+                if(posRefs != null) {
+                    updateUndoPositions(posRefs, offset, length);
+                    posRefs = null;
+                }
+                string = null;
+            } catch (BadLocationException bl) {
+              throw new CannotUndoException();
+            }
+        }
+
+        public void redo() throws CannotRedoException {
+            super.redo();
+            try {
+                string = getString(offset, length);
+                // Get the Positions in the range being removed.
+                posRefs = getPositionsInRange(null, offset, length);
+                remove(offset, length);
+            } catch (BadLocationException bl) {
+              throw new CannotRedoException();
+            }
+        }
+
+        /** Where the string was removed from. */
+        protected int offset;
+        /** Length of string removed. */
+        protected int length;
+        /** The string that was removed. This is valid when redo is valid. */
+        protected String string;
+        /** An array of instances of UndoPosRef for the Positions in the
+         * range that was removed, valid before undo. */
+        protected Vector posRefs;
+    } // GapContent.RemoveUndo
+}

@@ -1,328 +1,322 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.util.XSGrammarPool;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XSGrammar;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*     */ import com.sun.org.apache.xerces.internal.xs.LSInputList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.StringList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSLoader;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSModel;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSNamedMap;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSObjectList;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*     */ import org.w3c.dom.DOMConfiguration;
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.DOMStringList;
-/*     */ import org.w3c.dom.ls.LSInput;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class XSLoaderImpl
-/*     */   implements XSLoader, DOMConfiguration
-/*     */ {
-/*  56 */   private final XSGrammarPool fGrammarPool = new XSGrammarMerger();
-/*     */ 
-/*     */   
-/*  59 */   private final XMLSchemaLoader fSchemaLoader = new XMLSchemaLoader();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSLoaderImpl() {
-/*  65 */     this.fSchemaLoader.setProperty("http://apache.org/xml/properties/internal/grammar-pool", this.fGrammarPool);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMConfiguration getConfig() {
-/*  93 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSModel loadURIList(StringList uriList) {
-/* 104 */     int length = uriList.getLength();
-/*     */     try {
-/* 106 */       this.fGrammarPool.clear();
-/* 107 */       for (int i = 0; i < length; i++) {
-/* 108 */         this.fSchemaLoader.loadGrammar(new XMLInputSource(null, uriList.item(i), null));
-/*     */       }
-/* 110 */       return this.fGrammarPool.toXSModel();
-/*     */     }
-/* 112 */     catch (Exception e) {
-/* 113 */       this.fSchemaLoader.reportDOMFatalError(e);
-/* 114 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSModel loadInputList(LSInputList is) {
-/* 126 */     int length = is.getLength();
-/*     */     try {
-/* 128 */       this.fGrammarPool.clear();
-/* 129 */       for (int i = 0; i < length; i++) {
-/* 130 */         this.fSchemaLoader.loadGrammar(this.fSchemaLoader.dom2xmlInputSource(is.item(i)));
-/*     */       }
-/* 132 */       return this.fGrammarPool.toXSModel();
-/*     */     }
-/* 134 */     catch (Exception e) {
-/* 135 */       this.fSchemaLoader.reportDOMFatalError(e);
-/* 136 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSModel loadURI(String uri) {
-/*     */     try {
-/* 149 */       this.fGrammarPool.clear();
-/* 150 */       return ((XSGrammar)this.fSchemaLoader.loadGrammar(new XMLInputSource(null, uri, null))).toXSModel();
-/*     */     }
-/* 152 */     catch (Exception e) {
-/* 153 */       this.fSchemaLoader.reportDOMFatalError(e);
-/* 154 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSModel load(LSInput is) {
-/*     */     try {
-/* 167 */       this.fGrammarPool.clear();
-/* 168 */       return ((XSGrammar)this.fSchemaLoader.loadGrammar(this.fSchemaLoader.dom2xmlInputSource(is))).toXSModel();
-/*     */     }
-/* 170 */     catch (Exception e) {
-/* 171 */       this.fSchemaLoader.reportDOMFatalError(e);
-/* 172 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setParameter(String name, Object value) throws DOMException {
-/* 180 */     this.fSchemaLoader.setParameter(name, value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getParameter(String name) throws DOMException {
-/* 187 */     return this.fSchemaLoader.getParameter(name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean canSetParameter(String name, Object value) {
-/* 194 */     return this.fSchemaLoader.canSetParameter(name, value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DOMStringList getParameterNames() {
-/* 201 */     return this.fSchemaLoader.getParameterNames();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final class XSGrammarMerger
-/*     */     extends XSGrammarPool
-/*     */   {
-/*     */     public void putGrammar(Grammar grammar) {
-/* 215 */       SchemaGrammar cachedGrammar = toSchemaGrammar(super.getGrammar(grammar.getGrammarDescription()));
-/* 216 */       if (cachedGrammar != null) {
-/* 217 */         SchemaGrammar newGrammar = toSchemaGrammar(grammar);
-/* 218 */         if (newGrammar != null) {
-/* 219 */           mergeSchemaGrammars(cachedGrammar, newGrammar);
-/*     */         }
-/*     */       } else {
-/*     */         
-/* 223 */         super.putGrammar(grammar);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private SchemaGrammar toSchemaGrammar(Grammar grammar) {
-/* 228 */       return (grammar instanceof SchemaGrammar) ? (SchemaGrammar)grammar : null;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private void mergeSchemaGrammars(SchemaGrammar cachedGrammar, SchemaGrammar newGrammar) {
-/* 234 */       XSNamedMap map = newGrammar.getComponents((short)2);
-/* 235 */       int length = map.getLength(); int i;
-/* 236 */       for (i = 0; i < length; i++) {
-/* 237 */         XSElementDecl decl = (XSElementDecl)map.item(i);
-/* 238 */         if (cachedGrammar.getGlobalElementDecl(decl.getName()) == null) {
-/* 239 */           cachedGrammar.addGlobalElementDecl(decl);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 244 */       map = newGrammar.getComponents((short)1);
-/* 245 */       length = map.getLength();
-/* 246 */       for (i = 0; i < length; i++) {
-/* 247 */         XSAttributeDecl decl = (XSAttributeDecl)map.item(i);
-/* 248 */         if (cachedGrammar.getGlobalAttributeDecl(decl.getName()) == null) {
-/* 249 */           cachedGrammar.addGlobalAttributeDecl(decl);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 254 */       map = newGrammar.getComponents((short)3);
-/* 255 */       length = map.getLength();
-/* 256 */       for (i = 0; i < length; i++) {
-/* 257 */         XSTypeDefinition decl = (XSTypeDefinition)map.item(i);
-/* 258 */         if (cachedGrammar.getGlobalTypeDecl(decl.getName()) == null) {
-/* 259 */           cachedGrammar.addGlobalTypeDecl(decl);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 264 */       map = newGrammar.getComponents((short)5);
-/* 265 */       length = map.getLength();
-/* 266 */       for (i = 0; i < length; i++) {
-/* 267 */         XSAttributeGroupDecl decl = (XSAttributeGroupDecl)map.item(i);
-/* 268 */         if (cachedGrammar.getGlobalAttributeGroupDecl(decl.getName()) == null) {
-/* 269 */           cachedGrammar.addGlobalAttributeGroupDecl(decl);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 274 */       map = newGrammar.getComponents((short)7);
-/* 275 */       length = map.getLength();
-/* 276 */       for (i = 0; i < length; i++) {
-/* 277 */         XSGroupDecl decl = (XSGroupDecl)map.item(i);
-/* 278 */         if (cachedGrammar.getGlobalGroupDecl(decl.getName()) == null) {
-/* 279 */           cachedGrammar.addGlobalGroupDecl(decl);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */       
-/* 284 */       map = newGrammar.getComponents((short)11);
-/* 285 */       length = map.getLength();
-/* 286 */       for (i = 0; i < length; i++) {
-/* 287 */         XSNotationDecl decl = (XSNotationDecl)map.item(i);
-/* 288 */         if (cachedGrammar.getGlobalNotationDecl(decl.getName()) == null) {
-/* 289 */           cachedGrammar.addGlobalNotationDecl(decl);
-/*     */         }
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 298 */       XSObjectList annotations = newGrammar.getAnnotations();
-/* 299 */       length = annotations.getLength();
-/* 300 */       for (int j = 0; j < length; j++) {
-/* 301 */         cachedGrammar.addAnnotation((XSAnnotationImpl)annotations.item(j));
-/*     */       }
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean containsGrammar(XMLGrammarDescription desc) {
-/* 307 */       return false;
-/*     */     }
-/*     */     
-/*     */     public Grammar getGrammar(XMLGrammarDescription desc) {
-/* 311 */       return null;
-/*     */     }
-/*     */     
-/*     */     public Grammar retrieveGrammar(XMLGrammarDescription desc) {
-/* 315 */       return null;
-/*     */     }
-/*     */     
-/*     */     public Grammar[] retrieveInitialGrammarSet(String grammarType) {
-/* 319 */       return new Grammar[0];
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\XSLoaderImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs;
+
+import com.sun.org.apache.xerces.internal.impl.xs.util.XSGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
+import com.sun.org.apache.xerces.internal.xni.grammars.XSGrammar;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xs.LSInputList;
+import com.sun.org.apache.xerces.internal.xs.StringList;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+import com.sun.org.apache.xerces.internal.xs.XSLoader;
+import com.sun.org.apache.xerces.internal.xs.XSModel;
+import com.sun.org.apache.xerces.internal.xs.XSNamedMap;
+import com.sun.org.apache.xerces.internal.xs.XSObjectList;
+import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
+import org.w3c.dom.DOMConfiguration;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.DOMStringList;
+import org.w3c.dom.ls.LSInput;
+
+/**
+ * <p>An implementation of XSLoader which wraps XMLSchemaLoader.</p>
+ *
+ * @xerces.internal
+ *
+ * @author Michael Glavassevich, IBM
+ *
+ * @version $Id: XSLoaderImpl.java,v 1.7 2010-11-01 04:39:55 joehw Exp $
+ */
+public final class XSLoaderImpl implements XSLoader, DOMConfiguration {
+
+    /**
+     * Grammar pool. Need this to prevent us from
+     * getting two grammars from the same namespace.
+     */
+    private final XSGrammarPool fGrammarPool = new XSGrammarMerger();
+
+    /** Schema loader. **/
+    private final XMLSchemaLoader fSchemaLoader = new XMLSchemaLoader();
+
+    /**
+     * No-args constructor.
+     */
+    public XSLoaderImpl() {
+        fSchemaLoader.setProperty(XMLSchemaLoader.XMLGRAMMAR_POOL, fGrammarPool);
+    }
+
+    /**
+     *  The configuration of a document. It maintains a table of recognized
+     * parameters. Using the configuration, it is possible to change the
+     * behavior of the load methods. The configuration may support the
+     * setting of and the retrieval of the following non-boolean parameters
+     * defined on the <code>DOMConfiguration</code> interface:
+     * <code>error-handler</code> (<code>DOMErrorHandler</code>) and
+     * <code>resource-resolver</code> (<code>LSResourceResolver</code>).
+     * <br> The following list of boolean parameters is defined:
+     * <dl>
+     * <dt>
+     * <code>"validate"</code></dt>
+     * <dd>
+     * <dl>
+     * <dt><code>true</code></dt>
+     * <dd>[required] (default) Validate an XML
+     * Schema during loading. If validation errors are found, the error
+     * handler is notified. </dd>
+     * <dt><code>false</code></dt>
+     * <dd>[optional] Do not
+     * report errors during the loading of an XML Schema document. </dd>
+     * </dl></dd>
+     * </dl>
+     */
+    public DOMConfiguration getConfig() {
+        return this;
+    }
+
+    /**
+     * Parses the content of XML Schema documents specified as the list of URI
+     * references. If the URI contains a fragment identifier, the behavior
+     * is not defined by this specification.
+     * @param uriList The list of URI locations.
+     * @return An XSModel representing the schema documents.
+     */
+    public XSModel loadURIList(StringList uriList) {
+        int length = uriList.getLength();
+        try {
+            fGrammarPool.clear();
+            for (int i = 0; i < length; ++i) {
+                fSchemaLoader.loadGrammar(new XMLInputSource(null, uriList.item(i), null));
+            }
+            return fGrammarPool.toXSModel();
+        }
+        catch (Exception e) {
+            fSchemaLoader.reportDOMFatalError(e);
+            return null;
+        }
+    }
+
+    /**
+     *  Parses the content of XML Schema documents specified as a list of
+     * <code>LSInput</code>s.
+     * @param is  The list of <code>LSInput</code>s from which the XML
+     *   Schema documents are to be read.
+     * @return An XSModel representing the schema documents.
+     */
+    public XSModel loadInputList(LSInputList is) {
+        final int length = is.getLength();
+        try {
+            fGrammarPool.clear();
+            for (int i = 0; i < length; ++i) {
+                fSchemaLoader.loadGrammar(fSchemaLoader.dom2xmlInputSource(is.item(i)));
+            }
+            return fGrammarPool.toXSModel();
+        }
+        catch (Exception e) {
+            fSchemaLoader.reportDOMFatalError(e);
+            return null;
+        }
+    }
+
+    /**
+     * Parse an XML Schema document from a location identified by a URI
+     * reference. If the URI contains a fragment identifier, the behavior is
+     * not defined by this specification.
+     * @param uri The location of the XML Schema document to be read.
+     * @return An XSModel representing this schema.
+     */
+    public XSModel loadURI(String uri) {
+        try {
+            fGrammarPool.clear();
+            return ((XSGrammar) fSchemaLoader.loadGrammar(new XMLInputSource(null, uri, null))).toXSModel();
+        }
+        catch (Exception e){
+            fSchemaLoader.reportDOMFatalError(e);
+            return null;
+        }
+    }
+
+    /**
+     *  Parse an XML Schema document from a resource identified by a
+     * <code>LSInput</code> .
+     * @param is  The <code>LSInput</code> from which the source
+     *   document is to be read.
+     * @return An XSModel representing this schema.
+     */
+    public XSModel load(LSInput is) {
+        try {
+            fGrammarPool.clear();
+            return ((XSGrammar) fSchemaLoader.loadGrammar(fSchemaLoader.dom2xmlInputSource(is))).toXSModel();
+        }
+        catch (Exception e) {
+            fSchemaLoader.reportDOMFatalError(e);
+            return null;
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.dom3.DOMConfiguration#setParameter(java.lang.String, java.lang.Object)
+     */
+    public void setParameter(String name, Object value) throws DOMException {
+        fSchemaLoader.setParameter(name, value);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.dom3.DOMConfiguration#getParameter(java.lang.String)
+     */
+    public Object getParameter(String name) throws DOMException {
+        return fSchemaLoader.getParameter(name);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.dom3.DOMConfiguration#canSetParameter(java.lang.String, java.lang.Object)
+     */
+    public boolean canSetParameter(String name, Object value) {
+        return fSchemaLoader.canSetParameter(name, value);
+    }
+
+    /* (non-Javadoc)
+     * @see com.sun.org.apache.xerces.internal.dom3.DOMConfiguration#getParameterNames()
+     */
+    public DOMStringList getParameterNames() {
+        return fSchemaLoader.getParameterNames();
+    }
+
+    /**
+     * Grammar pool which merges grammars from the same namespace into one. This eliminates
+     * duplicate named components. It doesn't ensure that the grammar is consistent, however
+     * this no worse than than the behaviour of XMLSchemaLoader alone when used as an XSLoader.
+     */
+    private static final class XSGrammarMerger extends XSGrammarPool {
+
+        public XSGrammarMerger () {}
+
+        public void putGrammar(Grammar grammar) {
+            SchemaGrammar cachedGrammar =
+                toSchemaGrammar(super.getGrammar(grammar.getGrammarDescription()));
+            if (cachedGrammar != null) {
+                SchemaGrammar newGrammar = toSchemaGrammar(grammar);
+                if (newGrammar != null) {
+                    mergeSchemaGrammars(cachedGrammar, newGrammar);
+                }
+            }
+            else {
+                super.putGrammar(grammar);
+            }
+        }
+
+        private SchemaGrammar toSchemaGrammar (Grammar grammar) {
+            return (grammar instanceof SchemaGrammar) ? (SchemaGrammar) grammar : null;
+        }
+
+        private void mergeSchemaGrammars(SchemaGrammar cachedGrammar, SchemaGrammar newGrammar) {
+
+            /** Add new top-level element declarations. **/
+            XSNamedMap map = newGrammar.getComponents(XSConstants.ELEMENT_DECLARATION);
+            int length = map.getLength();
+            for (int i = 0; i < length; ++i) {
+                XSElementDecl decl = (XSElementDecl) map.item(i);
+                if (cachedGrammar.getGlobalElementDecl(decl.getName()) == null) {
+                    cachedGrammar.addGlobalElementDecl(decl);
+                }
+            }
+
+            /** Add new top-level attribute declarations. **/
+            map = newGrammar.getComponents(XSConstants.ATTRIBUTE_DECLARATION);
+            length = map.getLength();
+            for (int i = 0; i < length; ++i) {
+                XSAttributeDecl decl = (XSAttributeDecl) map.item(i);
+                if (cachedGrammar.getGlobalAttributeDecl(decl.getName()) == null) {
+                    cachedGrammar.addGlobalAttributeDecl(decl);
+                }
+            }
+
+            /** Add new top-level type definitions. **/
+            map = newGrammar.getComponents(XSConstants.TYPE_DEFINITION);
+            length = map.getLength();
+            for (int i = 0; i < length; ++i) {
+                XSTypeDefinition decl = (XSTypeDefinition) map.item(i);
+                if (cachedGrammar.getGlobalTypeDecl(decl.getName()) == null) {
+                    cachedGrammar.addGlobalTypeDecl(decl);
+                }
+            }
+
+            /** Add new top-level attribute group definitions. **/
+            map = newGrammar.getComponents(XSConstants.ATTRIBUTE_GROUP);
+            length = map.getLength();
+            for (int i = 0; i < length; ++i) {
+                XSAttributeGroupDecl decl = (XSAttributeGroupDecl) map.item(i);
+                if (cachedGrammar.getGlobalAttributeGroupDecl(decl.getName()) == null) {
+                    cachedGrammar.addGlobalAttributeGroupDecl(decl);
+                }
+            }
+
+            /** Add new top-level model group definitions. **/
+            map = newGrammar.getComponents(XSConstants.MODEL_GROUP);
+            length = map.getLength();
+            for (int i = 0; i < length; ++i) {
+                XSGroupDecl decl = (XSGroupDecl) map.item(i);
+                if (cachedGrammar.getGlobalGroupDecl(decl.getName()) == null) {
+                    cachedGrammar.addGlobalGroupDecl(decl);
+                }
+            }
+
+            /** Add new top-level notation declarations. **/
+            map = newGrammar.getComponents(XSConstants.NOTATION_DECLARATION);
+            length = map.getLength();
+            for (int i = 0; i < length; ++i) {
+                XSNotationDecl decl = (XSNotationDecl) map.item(i);
+                if (cachedGrammar.getGlobalNotationDecl(decl.getName()) == null) {
+                    cachedGrammar.addGlobalNotationDecl(decl);
+                }
+            }
+
+            /**
+             * Add all annotations. Since these components are not named it's
+             * possible we'll add duplicate components. There isn't much we can
+             * do. It's no worse than XMLSchemaLoader when used as an XSLoader.
+             */
+            XSObjectList annotations = newGrammar.getAnnotations();
+            length = annotations.getLength();
+            for (int i = 0; i < length; ++i) {
+                cachedGrammar.addAnnotation((XSAnnotationImpl) annotations.item(i));
+            }
+
+        }
+
+        public boolean containsGrammar(XMLGrammarDescription desc) {
+            return false;
+        }
+
+        public Grammar getGrammar(XMLGrammarDescription desc) {
+            return null;
+        }
+
+        public Grammar retrieveGrammar(XMLGrammarDescription desc) {
+            return null;
+        }
+
+        public Grammar [] retrieveInitialGrammarSet (String grammarType) {
+            return new Grammar[0];
+        }
+    }
+}

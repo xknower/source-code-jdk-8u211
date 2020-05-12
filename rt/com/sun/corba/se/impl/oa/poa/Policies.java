@@ -1,358 +1,352 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.extension.CopyObjectPolicy;
-/*     */ import com.sun.corba.se.spi.extension.ServantCachingPolicy;
-/*     */ import com.sun.corba.se.spi.extension.ZeroPortPolicy;
-/*     */ import java.util.BitSet;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import org.omg.CORBA.Policy;
-/*     */ import org.omg.PortableServer.IdAssignmentPolicy;
-/*     */ import org.omg.PortableServer.IdUniquenessPolicy;
-/*     */ import org.omg.PortableServer.ImplicitActivationPolicy;
-/*     */ import org.omg.PortableServer.LifespanPolicy;
-/*     */ import org.omg.PortableServer.POAPackage.InvalidPolicy;
-/*     */ import org.omg.PortableServer.RequestProcessingPolicy;
-/*     */ import org.omg.PortableServer.ServantRetentionPolicy;
-/*     */ import org.omg.PortableServer.ThreadPolicy;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class Policies
-/*     */ {
-/*     */   private static final int MIN_POA_POLICY_ID = 16;
-/*     */   private static final int MAX_POA_POLICY_ID = 22;
-/*     */   private static final int POLICY_TABLE_SIZE = 7;
-/*     */   int defaultObjectCopierFactoryId;
-/*  59 */   private HashMap policyMap = new HashMap<>();
-/*     */   
-/*  61 */   public static final Policies defaultPolicies = new Policies();
-/*     */ 
-/*     */   
-/*  64 */   public static final Policies rootPOAPolicies = new Policies(0, 0, 0, 1, 0, 0, 0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int[] poaPolicyValues;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getPolicyValue(int paramInt) {
-/*  78 */     return this.poaPolicyValues[paramInt - 16];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void setPolicyValue(int paramInt1, int paramInt2) {
-/*  83 */     this.poaPolicyValues[paramInt1 - 16] = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Policies(int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, int paramInt7) {
-/*  95 */     this.poaPolicyValues = new int[] { paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, paramInt7 };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Policies() {
-/* 106 */     this(0, 0, 0, 1, 1, 0, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 116 */     StringBuffer stringBuffer = new StringBuffer();
-/* 117 */     stringBuffer.append("Policies[");
-/* 118 */     boolean bool = true;
-/* 119 */     Iterator<E> iterator = this.policyMap.values().iterator();
-/* 120 */     while (iterator.hasNext()) {
-/* 121 */       if (bool) {
-/* 122 */         bool = false;
-/*     */       } else {
-/* 124 */         stringBuffer.append(",");
-/*     */       } 
-/* 126 */       stringBuffer.append(iterator.next().toString());
-/*     */     } 
-/* 128 */     stringBuffer.append("]");
-/* 129 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getPOAPolicyValue(Policy paramPolicy) {
-/* 137 */     if (paramPolicy instanceof ThreadPolicy)
-/* 138 */       return ((ThreadPolicy)paramPolicy).value().value(); 
-/* 139 */     if (paramPolicy instanceof LifespanPolicy)
-/* 140 */       return ((LifespanPolicy)paramPolicy).value().value(); 
-/* 141 */     if (paramPolicy instanceof IdUniquenessPolicy)
-/* 142 */       return ((IdUniquenessPolicy)paramPolicy).value().value(); 
-/* 143 */     if (paramPolicy instanceof IdAssignmentPolicy)
-/* 144 */       return ((IdAssignmentPolicy)paramPolicy).value().value(); 
-/* 145 */     if (paramPolicy instanceof ServantRetentionPolicy)
-/* 146 */       return ((ServantRetentionPolicy)paramPolicy).value().value(); 
-/* 147 */     if (paramPolicy instanceof RequestProcessingPolicy)
-/* 148 */       return ((RequestProcessingPolicy)paramPolicy).value().value(); 
-/* 149 */     if (paramPolicy instanceof ImplicitActivationPolicy) {
-/* 150 */       return ((ImplicitActivationPolicy)paramPolicy).value().value();
-/*     */     }
-/* 152 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void checkForPolicyError(BitSet paramBitSet) throws InvalidPolicy {
-/* 160 */     for (short s = 0; s < paramBitSet.length(); s = (short)(s + 1)) {
-/* 161 */       if (paramBitSet.get(s)) {
-/* 162 */         throw new InvalidPolicy(s);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void addToErrorSet(Policy[] paramArrayOfPolicy, int paramInt, BitSet paramBitSet) {
-/* 171 */     for (byte b = 0; b < paramArrayOfPolicy.length; b++) {
-/* 172 */       if (paramArrayOfPolicy[b].policy_type() == paramInt) {
-/* 173 */         paramBitSet.set(b);
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Policies(Policy[] paramArrayOfPolicy, int paramInt) throws InvalidPolicy {
-/* 184 */     this();
-/*     */     
-/* 186 */     this.defaultObjectCopierFactoryId = paramInt;
-/*     */     
-/* 188 */     if (paramArrayOfPolicy == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 193 */     BitSet bitSet = new BitSet(paramArrayOfPolicy.length);
-/*     */     short s;
-/* 195 */     for (s = 0; s < paramArrayOfPolicy.length; s = (short)(s + 1)) {
-/* 196 */       Policy policy1 = paramArrayOfPolicy[s];
-/* 197 */       int i = getPOAPolicyValue(policy1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 202 */       Integer integer = new Integer(policy1.policy_type());
-/* 203 */       Policy policy2 = (Policy)this.policyMap.get(integer);
-/* 204 */       if (policy2 == null) {
-/* 205 */         this.policyMap.put(integer, policy1);
-/*     */       }
-/* 207 */       if (i >= 0) {
-/* 208 */         setPolicyValue(integer.intValue(), i);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 213 */         if (policy2 != null && 
-/* 214 */           getPOAPolicyValue(policy2) != i) {
-/* 215 */           bitSet.set(s);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 222 */     if (!retainServants() && useActiveMapOnly()) {
-/* 223 */       addToErrorSet(paramArrayOfPolicy, 21, bitSet);
-/*     */       
-/* 225 */       addToErrorSet(paramArrayOfPolicy, 22, bitSet);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 230 */     if (isImplicitlyActivated()) {
-/* 231 */       if (!retainServants()) {
-/* 232 */         addToErrorSet(paramArrayOfPolicy, 20, bitSet);
-/*     */         
-/* 234 */         addToErrorSet(paramArrayOfPolicy, 21, bitSet);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 238 */       if (!isSystemAssignedIds()) {
-/* 239 */         addToErrorSet(paramArrayOfPolicy, 20, bitSet);
-/*     */         
-/* 241 */         addToErrorSet(paramArrayOfPolicy, 19, bitSet);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 246 */     checkForPolicyError(bitSet);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Policy get_effective_policy(int paramInt) {
-/* 251 */     Integer integer = new Integer(paramInt);
-/* 252 */     return (Policy)this.policyMap.get(integer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean isOrbControlledThreads() {
-/* 258 */     return (getPolicyValue(16) == 0);
-/*     */   }
-/*     */   
-/*     */   public final boolean isSingleThreaded() {
-/* 262 */     return (getPolicyValue(16) == 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean isTransient() {
-/* 268 */     return (getPolicyValue(17) == 0);
-/*     */   }
-/*     */   
-/*     */   public final boolean isPersistent() {
-/* 272 */     return (getPolicyValue(17) == 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean isUniqueIds() {
-/* 278 */     return (getPolicyValue(18) == 0);
-/*     */   }
-/*     */   
-/*     */   public final boolean isMultipleIds() {
-/* 282 */     return (getPolicyValue(18) == 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean isUserAssignedIds() {
-/* 288 */     return (getPolicyValue(19) == 0);
-/*     */   }
-/*     */   
-/*     */   public final boolean isSystemAssignedIds() {
-/* 292 */     return (getPolicyValue(19) == 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean retainServants() {
-/* 298 */     return (getPolicyValue(21) == 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean useActiveMapOnly() {
-/* 304 */     return (getPolicyValue(22) == 0);
-/*     */   }
-/*     */   
-/*     */   public final boolean useDefaultServant() {
-/* 308 */     return (getPolicyValue(22) == 1);
-/*     */   }
-/*     */   
-/*     */   public final boolean useServantManager() {
-/* 312 */     return (getPolicyValue(22) == 2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean isImplicitlyActivated() {
-/* 318 */     return (getPolicyValue(20) == 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int servantCachingLevel() {
-/* 325 */     Integer integer = new Integer(1398079488);
-/* 326 */     ServantCachingPolicy servantCachingPolicy = (ServantCachingPolicy)this.policyMap.get(integer);
-/* 327 */     if (servantCachingPolicy == null) {
-/* 328 */       return 0;
-/*     */     }
-/* 330 */     return servantCachingPolicy.getType();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean forceZeroPort() {
-/* 335 */     Integer integer = new Integer(1398079489);
-/* 336 */     ZeroPortPolicy zeroPortPolicy = (ZeroPortPolicy)this.policyMap.get(integer);
-/* 337 */     if (zeroPortPolicy == null) {
-/* 338 */       return false;
-/*     */     }
-/* 340 */     return zeroPortPolicy.forceZeroPort();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final int getCopierId() {
-/* 345 */     Integer integer = new Integer(1398079490);
-/* 346 */     CopyObjectPolicy copyObjectPolicy = (CopyObjectPolicy)this.policyMap.get(integer);
-/* 347 */     if (copyObjectPolicy != null) {
-/* 348 */       return copyObjectPolicy.getValue();
-/*     */     }
-/* 350 */     return this.defaultObjectCopierFactoryId;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\Policies.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa;
+
+import java.util.HashMap ;
+import java.util.BitSet ;
+import java.util.Iterator ;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+import com.sun.corba.se.spi.extension.ServantCachingPolicy ;
+import com.sun.corba.se.spi.extension.ZeroPortPolicy ;
+import com.sun.corba.se.spi.extension.CopyObjectPolicy ;
+
+import org.omg.CORBA.*;
+import org.omg.PortableServer.*;
+import org.omg.PortableServer.POAPackage.*;
+
+public final class Policies {
+/* Order of *POLICY_ID :
+   THREAD_
+   LIFESPAN_
+   ID_UNIQUENESS_
+   ID_ASSIGNMENT_
+   IMPLICIT_ACTIVATION_
+   SERvANT_RETENTION_
+   REQUEST_PROCESSING_
+   The code in this class depends on this order!
+*/
+    private static final int MIN_POA_POLICY_ID = THREAD_POLICY_ID.value ;
+    private static final int MAX_POA_POLICY_ID = REQUEST_PROCESSING_POLICY_ID.value ;
+    private static final int POLICY_TABLE_SIZE = MAX_POA_POLICY_ID -
+        MIN_POA_POLICY_ID + 1 ;
+
+    int defaultObjectCopierFactoryId ;
+
+    private HashMap policyMap = new HashMap() ; // Maps Integer(policy type) to Policy
+
+    public static final Policies defaultPolicies
+        = new Policies() ;
+
+    public static final Policies rootPOAPolicies
+        = new Policies(
+            ThreadPolicyValue._ORB_CTRL_MODEL,
+            LifespanPolicyValue._TRANSIENT,
+            IdUniquenessPolicyValue._UNIQUE_ID,
+            IdAssignmentPolicyValue._SYSTEM_ID,
+            ImplicitActivationPolicyValue._IMPLICIT_ACTIVATION,
+            ServantRetentionPolicyValue._RETAIN,
+            RequestProcessingPolicyValue._USE_ACTIVE_OBJECT_MAP_ONLY ) ;
+
+    private int[] poaPolicyValues ;
+
+    private int getPolicyValue( int id )
+    {
+        return poaPolicyValues[ id - MIN_POA_POLICY_ID ] ;
+    }
+
+    private void setPolicyValue( int id, int value )
+    {
+        poaPolicyValues[ id - MIN_POA_POLICY_ID ] = value ;
+    }
+
+    private Policies(
+        int threadModel,
+        int lifespan,
+        int idUniqueness,
+        int idAssignment,
+        int implicitActivation,
+        int retention,
+        int requestProcessing )
+    {
+        poaPolicyValues = new int[] {
+            threadModel,
+            lifespan,
+            idUniqueness,
+            idAssignment,
+            implicitActivation,
+            retention,
+            requestProcessing };
+    }
+
+    private Policies() {
+        this( ThreadPolicyValue._ORB_CTRL_MODEL,
+            LifespanPolicyValue._TRANSIENT,
+            IdUniquenessPolicyValue._UNIQUE_ID,
+            IdAssignmentPolicyValue._SYSTEM_ID,
+            ImplicitActivationPolicyValue._NO_IMPLICIT_ACTIVATION,
+            ServantRetentionPolicyValue._RETAIN,
+            RequestProcessingPolicyValue._USE_ACTIVE_OBJECT_MAP_ONLY ) ;
+    }
+
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append( "Policies[" ) ;
+        boolean first = true ;
+        Iterator iter = policyMap.values().iterator() ;
+        while (iter.hasNext()) {
+            if (first)
+                first = false ;
+            else
+                buffer.append( "," ) ;
+
+            buffer.append( iter.next().toString() ) ;
+        }
+        buffer.append( "]" ) ;
+        return buffer.toString() ;
+    }
+
+    /* Returns the integer value of the POA policy, if this is a
+     * POA policy, otherwise returns -1.
+     */
+    private int getPOAPolicyValue( Policy policy)
+    {
+        if (policy instanceof ThreadPolicy) {
+            return ((ThreadPolicy) policy).value().value();
+        } else if (policy instanceof LifespanPolicy) {
+            return ((LifespanPolicy) policy).value().value();
+        } else if (policy instanceof IdUniquenessPolicy) {
+            return ((IdUniquenessPolicy) policy).value().value();
+        } else if (policy instanceof IdAssignmentPolicy) {
+            return ((IdAssignmentPolicy) policy).value().value();
+        } else if (policy instanceof ServantRetentionPolicy) {
+            return ((ServantRetentionPolicy) policy).value().value();
+        } else if (policy instanceof RequestProcessingPolicy) {
+            return  ((RequestProcessingPolicy) policy).value().value();
+        } else if (policy instanceof ImplicitActivationPolicy) {
+            return ((ImplicitActivationPolicy) policy).value().value();
+        }  else
+            return -1 ;
+    }
+
+    /** If any errors were found, throw INVALID_POLICY with the smallest
+     * index of any offending policy.
+     */
+    private void checkForPolicyError( BitSet errorSet ) throws InvalidPolicy
+    {
+        for (short ctr=0; ctr<errorSet.length(); ctr++ )
+            if (errorSet.get(ctr))
+                throw new InvalidPolicy(ctr);
+    }
+
+    /** Add the first index in policies at which the policy is of type
+    * policyId to errorSet, if the polictId is in policies (it may not be).
+    */
+    private void addToErrorSet( Policy[] policies, int policyId,
+        BitSet errorSet )
+    {
+        for (int ctr=0; ctr<policies.length; ctr++ )
+            if (policies[ctr].policy_type() == policyId) {
+                errorSet.set( ctr ) ;
+                return ;
+            }
+    }
+
+    /** Main constructor used from POA::create_POA.  This need only be visible
+    * within the POA package.
+    */
+    Policies(Policy[] policies, int id ) throws InvalidPolicy
+    {
+        // Make sure the defaults are set according to the POA spec
+        this();
+
+        defaultObjectCopierFactoryId = id ;
+
+        if ( policies == null )
+            return;
+
+        // Set to record all indices in policies for which errors
+        // were observed.
+        BitSet errorSet = new BitSet( policies.length ) ;
+
+        for(short i = 0; i < policies.length; i++) {
+            Policy policy = policies[i];
+            int POAPolicyValue = getPOAPolicyValue( policy ) ;
+
+            // Save the policy in policyMap to support
+            // POA.get_effective_policy, if it was not already saved
+            // in policyMap.
+            Integer key = new Integer( policy.policy_type() ) ;
+            Policy prev = (Policy)(policyMap.get( key )) ;
+            if (prev == null)
+                policyMap.put( key, policy ) ;
+
+            if (POAPolicyValue >= 0) {
+                setPolicyValue( key.intValue(), POAPolicyValue  ) ;
+
+                // if the value of this POA policy was previously set to a
+                // different value than the current value given in
+                // POAPolicyValue, record an error.
+                if ((prev != null) &&
+                    (getPOAPolicyValue( prev ) != POAPolicyValue))
+                    errorSet.set( i ) ;
+            }
+        }
+
+        // Check for bad policy combinations
+
+        // NON_RETAIN requires USE_DEFAULT_SERVANT or USE_SERVANT_MANAGER
+        if (!retainServants() && useActiveMapOnly() ) {
+            addToErrorSet( policies, SERVANT_RETENTION_POLICY_ID.value,
+                errorSet ) ;
+            addToErrorSet( policies, REQUEST_PROCESSING_POLICY_ID.value,
+                errorSet ) ;
+        }
+
+        // IMPLICIT_ACTIVATION requires SYSTEM_ID and RETAIN
+        if (isImplicitlyActivated()) {
+            if (!retainServants()) {
+                addToErrorSet( policies, IMPLICIT_ACTIVATION_POLICY_ID.value,
+                    errorSet ) ;
+                addToErrorSet( policies, SERVANT_RETENTION_POLICY_ID.value,
+                    errorSet ) ;
+            }
+
+            if (!isSystemAssignedIds()) {
+                addToErrorSet( policies, IMPLICIT_ACTIVATION_POLICY_ID.value,
+                    errorSet ) ;
+                addToErrorSet( policies, ID_ASSIGNMENT_POLICY_ID.value,
+                    errorSet ) ;
+            }
+        }
+
+        checkForPolicyError( errorSet ) ;
+    }
+
+    public Policy get_effective_policy( int type )
+    {
+        Integer key = new Integer( type ) ;
+        Policy result = (Policy)(policyMap.get(key)) ;
+        return result ;
+    }
+
+    /* Thread Policies */
+    public final boolean isOrbControlledThreads() {
+        return getPolicyValue( THREAD_POLICY_ID.value ) ==
+            ThreadPolicyValue._ORB_CTRL_MODEL;
+    }
+    public final boolean isSingleThreaded() {
+        return getPolicyValue( THREAD_POLICY_ID.value ) ==
+            ThreadPolicyValue._SINGLE_THREAD_MODEL;
+    }
+
+    /* Lifespan */
+    public final boolean isTransient() {
+        return getPolicyValue( LIFESPAN_POLICY_ID.value ) ==
+            LifespanPolicyValue._TRANSIENT;
+    }
+    public final boolean isPersistent() {
+        return getPolicyValue( LIFESPAN_POLICY_ID.value ) ==
+            LifespanPolicyValue._PERSISTENT;
+    }
+
+    /* ID Uniqueness */
+    public final boolean isUniqueIds() {
+        return getPolicyValue( ID_UNIQUENESS_POLICY_ID.value ) ==
+            IdUniquenessPolicyValue._UNIQUE_ID;
+    }
+    public final boolean isMultipleIds() {
+        return getPolicyValue( ID_UNIQUENESS_POLICY_ID.value ) ==
+            IdUniquenessPolicyValue._MULTIPLE_ID;
+    }
+
+    /* ID Assignment */
+    public final boolean isUserAssignedIds() {
+        return getPolicyValue( ID_ASSIGNMENT_POLICY_ID.value ) ==
+            IdAssignmentPolicyValue._USER_ID;
+    }
+    public final boolean isSystemAssignedIds() {
+        return getPolicyValue( ID_ASSIGNMENT_POLICY_ID.value ) ==
+            IdAssignmentPolicyValue._SYSTEM_ID;
+    }
+
+    /* Servant Rentention */
+    public final boolean retainServants() {
+        return getPolicyValue( SERVANT_RETENTION_POLICY_ID.value ) ==
+            ServantRetentionPolicyValue._RETAIN;
+    }
+
+    /* Request Processing */
+    public final boolean useActiveMapOnly() {
+        return getPolicyValue( REQUEST_PROCESSING_POLICY_ID.value ) ==
+            RequestProcessingPolicyValue._USE_ACTIVE_OBJECT_MAP_ONLY;
+    }
+    public final boolean useDefaultServant() {
+        return getPolicyValue( REQUEST_PROCESSING_POLICY_ID.value ) ==
+            RequestProcessingPolicyValue._USE_DEFAULT_SERVANT;
+    }
+    public final boolean useServantManager() {
+        return getPolicyValue( REQUEST_PROCESSING_POLICY_ID.value ) ==
+            RequestProcessingPolicyValue._USE_SERVANT_MANAGER;
+    }
+
+    /* Implicit Activation */
+    public final boolean isImplicitlyActivated() {
+        return getPolicyValue( IMPLICIT_ACTIVATION_POLICY_ID.value ) ==
+        ImplicitActivationPolicyValue._IMPLICIT_ACTIVATION;
+    }
+
+    /* proprietary servant caching policy */
+    public final int servantCachingLevel()
+    {
+        Integer key = new Integer( ORBConstants.SERVANT_CACHING_POLICY ) ;
+        ServantCachingPolicy policy = (ServantCachingPolicy)policyMap.get( key ) ;
+        if (policy == null)
+            return ServantCachingPolicy.NO_SERVANT_CACHING ;
+        else
+            return policy.getType() ;
+    }
+
+    public final boolean forceZeroPort()
+    {
+        Integer key = new Integer( ORBConstants.ZERO_PORT_POLICY ) ;
+        ZeroPortPolicy policy = (ZeroPortPolicy)policyMap.get( key ) ;
+        if (policy == null)
+            return false ;
+        else
+            return policy.forceZeroPort() ;
+    }
+
+    public final int getCopierId()
+    {
+        Integer key = new Integer( ORBConstants.COPY_OBJECT_POLICY ) ;
+        CopyObjectPolicy policy = (CopyObjectPolicy)policyMap.get( key ) ;
+        if (policy != null)
+            return policy.getValue() ;
+        else
+            return defaultObjectCopierFactoryId ;
+    }
+}

@@ -1,63 +1,57 @@
-/*    */ package com.sun.corba.se.impl.monitoring;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoredObject;
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoredObjectFactory;
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoringFactories;
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoringManager;
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoringManagerFactory;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MonitoringManagerImpl
-/*    */   implements MonitoringManager
-/*    */ {
-/*    */   private final MonitoredObject rootMonitoredObject;
-/*    */   
-/*    */   MonitoringManagerImpl(String paramString1, String paramString2) {
-/* 39 */     MonitoredObjectFactory monitoredObjectFactory = MonitoringFactories.getMonitoredObjectFactory();
-/* 40 */     this
-/* 41 */       .rootMonitoredObject = monitoredObjectFactory.createMonitoredObject(paramString1, paramString2);
-/*    */   }
-/*    */   
-/*    */   public void clearState() {
-/* 45 */     this.rootMonitoredObject.clearState();
-/*    */   }
-/*    */   
-/*    */   public MonitoredObject getRootMonitoredObject() {
-/* 49 */     return this.rootMonitoredObject;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void close() {
-/* 54 */     MonitoringManagerFactory monitoringManagerFactory = MonitoringFactories.getMonitoringManagerFactory();
-/* 55 */     monitoringManagerFactory.remove(this.rootMonitoredObject.getName());
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\monitoring\MonitoringManagerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.monitoring;
+
+import com.sun.corba.se.spi.monitoring.MonitoringManager;
+import com.sun.corba.se.spi.monitoring.MonitoringManagerFactory;
+import com.sun.corba.se.spi.monitoring.MonitoredObject;
+import com.sun.corba.se.spi.monitoring.MonitoredObjectFactory;
+import com.sun.corba.se.spi.monitoring.MonitoringFactories;
+
+public class MonitoringManagerImpl implements MonitoringManager {
+    private final MonitoredObject rootMonitoredObject;
+
+    MonitoringManagerImpl(String nameOfTheRoot, String description) {
+        MonitoredObjectFactory f =
+            MonitoringFactories.getMonitoredObjectFactory();
+        rootMonitoredObject =
+            f.createMonitoredObject(nameOfTheRoot, description);
+    }
+
+    public void clearState() {
+        rootMonitoredObject.clearState();
+    }
+
+    public MonitoredObject getRootMonitoredObject() {
+        return rootMonitoredObject;
+    }
+
+    public void close() {
+        MonitoringManagerFactory f =
+            MonitoringFactories.getMonitoringManagerFactory();
+        f.remove(rootMonitoredObject.getName());
+    }
+}

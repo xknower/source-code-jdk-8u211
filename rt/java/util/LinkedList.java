@@ -1,1267 +1,1262 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.lang.reflect.Array;
-/*      */ import java.util.function.Consumer;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class LinkedList<E>
-/*      */   extends AbstractSequentialList<E>
-/*      */   implements List<E>, Deque<E>, Cloneable, Serializable
-/*      */ {
-/*   87 */   transient int size = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   transient Node<E> first;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   transient Node<E> last;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final long serialVersionUID = 876323262645176354L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedList() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LinkedList(Collection<? extends E> paramCollection) {
-/*  118 */     this();
-/*  119 */     addAll(paramCollection);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void linkFirst(E paramE) {
-/*  126 */     Node<E> node1 = this.first;
-/*  127 */     Node<E> node2 = new Node<>(null, paramE, node1);
-/*  128 */     this.first = node2;
-/*  129 */     if (node1 == null) {
-/*  130 */       this.last = node2;
-/*      */     } else {
-/*  132 */       node1.prev = node2;
-/*  133 */     }  this.size++;
-/*  134 */     this.modCount++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void linkLast(E paramE) {
-/*  141 */     Node<E> node1 = this.last;
-/*  142 */     Node<E> node2 = new Node<>(node1, paramE, null);
-/*  143 */     this.last = node2;
-/*  144 */     if (node1 == null) {
-/*  145 */       this.first = node2;
-/*      */     } else {
-/*  147 */       node1.next = node2;
-/*  148 */     }  this.size++;
-/*  149 */     this.modCount++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void linkBefore(E paramE, Node<E> paramNode) {
-/*  157 */     Node<E> node1 = paramNode.prev;
-/*  158 */     Node<E> node2 = new Node<>(node1, paramE, paramNode);
-/*  159 */     paramNode.prev = node2;
-/*  160 */     if (node1 == null) {
-/*  161 */       this.first = node2;
-/*      */     } else {
-/*  163 */       node1.next = node2;
-/*  164 */     }  this.size++;
-/*  165 */     this.modCount++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E unlinkFirst(Node<E> paramNode) {
-/*  173 */     E e = paramNode.item;
-/*  174 */     Node<E> node = paramNode.next;
-/*  175 */     paramNode.item = null;
-/*  176 */     paramNode.next = null;
-/*  177 */     this.first = node;
-/*  178 */     if (node == null) {
-/*  179 */       this.last = null;
-/*      */     } else {
-/*  181 */       node.prev = null;
-/*  182 */     }  this.size--;
-/*  183 */     this.modCount++;
-/*  184 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private E unlinkLast(Node<E> paramNode) {
-/*  192 */     E e = paramNode.item;
-/*  193 */     Node<E> node = paramNode.prev;
-/*  194 */     paramNode.item = null;
-/*  195 */     paramNode.prev = null;
-/*  196 */     this.last = node;
-/*  197 */     if (node == null) {
-/*  198 */       this.first = null;
-/*      */     } else {
-/*  200 */       node.next = null;
-/*  201 */     }  this.size--;
-/*  202 */     this.modCount++;
-/*  203 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   E unlink(Node<E> paramNode) {
-/*  211 */     E e = paramNode.item;
-/*  212 */     Node<E> node1 = paramNode.next;
-/*  213 */     Node<E> node2 = paramNode.prev;
-/*      */     
-/*  215 */     if (node2 == null) {
-/*  216 */       this.first = node1;
-/*      */     } else {
-/*  218 */       node2.next = node1;
-/*  219 */       paramNode.prev = null;
-/*      */     } 
-/*      */     
-/*  222 */     if (node1 == null) {
-/*  223 */       this.last = node2;
-/*      */     } else {
-/*  225 */       node1.prev = node2;
-/*  226 */       paramNode.next = null;
-/*      */     } 
-/*      */     
-/*  229 */     paramNode.item = null;
-/*  230 */     this.size--;
-/*  231 */     this.modCount++;
-/*  232 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E getFirst() {
-/*  242 */     Node<E> node = this.first;
-/*  243 */     if (node == null)
-/*  244 */       throw new NoSuchElementException(); 
-/*  245 */     return node.item;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E getLast() {
-/*  255 */     Node<E> node = this.last;
-/*  256 */     if (node == null)
-/*  257 */       throw new NoSuchElementException(); 
-/*  258 */     return node.item;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E removeFirst() {
-/*  268 */     Node<E> node = this.first;
-/*  269 */     if (node == null)
-/*  270 */       throw new NoSuchElementException(); 
-/*  271 */     return unlinkFirst(node);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E removeLast() {
-/*  281 */     Node<E> node = this.last;
-/*  282 */     if (node == null)
-/*  283 */       throw new NoSuchElementException(); 
-/*  284 */     return unlinkLast(node);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addFirst(E paramE) {
-/*  293 */     linkFirst(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addLast(E paramE) {
-/*  304 */     linkLast(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Object paramObject) {
-/*  317 */     return (indexOf(paramObject) != -1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/*  326 */     return this.size;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean add(E paramE) {
-/*  338 */     linkLast(paramE);
-/*  339 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean remove(Object paramObject) {
-/*  356 */     if (paramObject == null) {
-/*  357 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/*  358 */         if (node.item == null) {
-/*  359 */           unlink(node);
-/*  360 */           return true;
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/*  364 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/*  365 */         if (paramObject.equals(node.item)) {
-/*  366 */           unlink(node);
-/*  367 */           return true;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*  371 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean addAll(Collection<? extends E> paramCollection) {
-/*  387 */     return addAll(this.size, paramCollection);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean addAll(int paramInt, Collection<? extends E> paramCollection) {
-/*      */     Node<E> node1, node2;
-/*  406 */     checkPositionIndex(paramInt);
-/*      */     
-/*  408 */     Object[] arrayOfObject = paramCollection.toArray();
-/*  409 */     int i = arrayOfObject.length;
-/*  410 */     if (i == 0) {
-/*  411 */       return false;
-/*      */     }
-/*      */     
-/*  414 */     if (paramInt == this.size) {
-/*  415 */       node2 = null;
-/*  416 */       node1 = this.last;
-/*      */     } else {
-/*  418 */       node2 = node(paramInt);
-/*  419 */       node1 = node2.prev;
-/*      */     } 
-/*      */     
-/*  422 */     for (Object object1 : arrayOfObject) {
-/*  423 */       Object object2 = object1;
-/*  424 */       Node<E> node = new Node<>(node1, (E)object2, null);
-/*  425 */       if (node1 == null) {
-/*  426 */         this.first = node;
-/*      */       } else {
-/*  428 */         node1.next = node;
-/*  429 */       }  node1 = node;
-/*      */     } 
-/*      */     
-/*  432 */     if (node2 == null) {
-/*  433 */       this.last = node1;
-/*      */     } else {
-/*  435 */       node1.next = node2;
-/*  436 */       node2.prev = node1;
-/*      */     } 
-/*      */     
-/*  439 */     this.size += i;
-/*  440 */     this.modCount++;
-/*  441 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  453 */     for (Node<E> node = this.first; node != null; ) {
-/*  454 */       Node<E> node1 = node.next;
-/*  455 */       node.item = null;
-/*  456 */       node.next = null;
-/*  457 */       node.prev = null;
-/*  458 */       node = node1;
-/*      */     } 
-/*  460 */     this.first = this.last = null;
-/*  461 */     this.size = 0;
-/*  462 */     this.modCount++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E get(int paramInt) {
-/*  476 */     checkElementIndex(paramInt);
-/*  477 */     return (node(paramInt)).item;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E set(int paramInt, E paramE) {
-/*  490 */     checkElementIndex(paramInt);
-/*  491 */     Node<E> node = node(paramInt);
-/*  492 */     E e = node.item;
-/*  493 */     node.item = paramE;
-/*  494 */     return e;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void add(int paramInt, E paramE) {
-/*  507 */     checkPositionIndex(paramInt);
-/*      */     
-/*  509 */     if (paramInt == this.size) {
-/*  510 */       linkLast(paramE);
-/*      */     } else {
-/*  512 */       linkBefore(paramE, node(paramInt));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E remove(int paramInt) {
-/*  525 */     checkElementIndex(paramInt);
-/*  526 */     return unlink(node(paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isElementIndex(int paramInt) {
-/*  533 */     return (paramInt >= 0 && paramInt < this.size);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isPositionIndex(int paramInt) {
-/*  541 */     return (paramInt >= 0 && paramInt <= this.size);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String outOfBoundsMsg(int paramInt) {
-/*  550 */     return "Index: " + paramInt + ", Size: " + this.size;
-/*      */   }
-/*      */   
-/*      */   private void checkElementIndex(int paramInt) {
-/*  554 */     if (!isElementIndex(paramInt))
-/*  555 */       throw new IndexOutOfBoundsException(outOfBoundsMsg(paramInt)); 
-/*      */   }
-/*      */   
-/*      */   private void checkPositionIndex(int paramInt) {
-/*  559 */     if (!isPositionIndex(paramInt)) {
-/*  560 */       throw new IndexOutOfBoundsException(outOfBoundsMsg(paramInt));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Node<E> node(int paramInt) {
-/*  569 */     if (paramInt < this.size >> 1) {
-/*  570 */       Node<E> node1 = this.first;
-/*  571 */       for (byte b = 0; b < paramInt; b++)
-/*  572 */         node1 = node1.next; 
-/*  573 */       return node1;
-/*      */     } 
-/*  575 */     Node<E> node = this.last;
-/*  576 */     for (int i = this.size - 1; i > paramInt; i--)
-/*  577 */       node = node.prev; 
-/*  578 */     return node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int indexOf(Object paramObject) {
-/*  596 */     byte b = 0;
-/*  597 */     if (paramObject == null) {
-/*  598 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/*  599 */         if (node.item == null)
-/*  600 */           return b; 
-/*  601 */         b++;
-/*      */       } 
-/*      */     } else {
-/*  604 */       for (Node<E> node = this.first; node != null; node = node.next) {
-/*  605 */         if (paramObject.equals(node.item))
-/*  606 */           return b; 
-/*  607 */         b++;
-/*      */       } 
-/*      */     } 
-/*  610 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int lastIndexOf(Object paramObject) {
-/*  625 */     int i = this.size;
-/*  626 */     if (paramObject == null) {
-/*  627 */       for (Node<E> node = this.last; node != null; node = node.prev) {
-/*  628 */         i--;
-/*  629 */         if (node.item == null)
-/*  630 */           return i; 
-/*      */       } 
-/*      */     } else {
-/*  633 */       for (Node<E> node = this.last; node != null; node = node.prev) {
-/*  634 */         i--;
-/*  635 */         if (paramObject.equals(node.item))
-/*  636 */           return i; 
-/*      */       } 
-/*      */     } 
-/*  639 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E peek() {
-/*  651 */     Node<E> node = this.first;
-/*  652 */     return (node == null) ? null : node.item;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E element() {
-/*  663 */     return getFirst();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E poll() {
-/*  673 */     Node<E> node = this.first;
-/*  674 */     return (node == null) ? null : unlinkFirst(node);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E remove() {
-/*  685 */     return removeFirst();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offer(E paramE) {
-/*  696 */     return add(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offerFirst(E paramE) {
-/*  708 */     addFirst(paramE);
-/*  709 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean offerLast(E paramE) {
-/*  720 */     addLast(paramE);
-/*  721 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E peekFirst() {
-/*  733 */     Node<E> node = this.first;
-/*  734 */     return (node == null) ? null : node.item;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E peekLast() {
-/*  746 */     Node<E> node = this.last;
-/*  747 */     return (node == null) ? null : node.item;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E pollFirst() {
-/*  759 */     Node<E> node = this.first;
-/*  760 */     return (node == null) ? null : unlinkFirst(node);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E pollLast() {
-/*  772 */     Node<E> node = this.last;
-/*  773 */     return (node == null) ? null : unlinkLast(node);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void push(E paramE) {
-/*  786 */     addFirst(paramE);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public E pop() {
-/*  801 */     return removeFirst();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeFirstOccurrence(Object paramObject) {
-/*  814 */     return remove(paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeLastOccurrence(Object paramObject) {
-/*  827 */     if (paramObject == null) {
-/*  828 */       for (Node<E> node = this.last; node != null; node = node.prev) {
-/*  829 */         if (node.item == null) {
-/*  830 */           unlink(node);
-/*  831 */           return true;
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/*  835 */       for (Node<E> node = this.last; node != null; node = node.prev) {
-/*  836 */         if (paramObject.equals(node.item)) {
-/*  837 */           unlink(node);
-/*  838 */           return true;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*  842 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ListIterator<E> listIterator(int paramInt) {
-/*  867 */     checkPositionIndex(paramInt);
-/*  868 */     return new ListItr(paramInt);
-/*      */   }
-/*      */   
-/*      */   private class ListItr implements ListIterator<E> {
-/*      */     private LinkedList.Node<E> lastReturned;
-/*      */     private LinkedList.Node<E> next;
-/*      */     private int nextIndex;
-/*  875 */     private int expectedModCount = LinkedList.this.modCount;
-/*      */ 
-/*      */     
-/*      */     ListItr(int param1Int) {
-/*  879 */       this.next = (param1Int == LinkedList.this.size) ? null : LinkedList.this.node(param1Int);
-/*  880 */       this.nextIndex = param1Int;
-/*      */     }
-/*      */     
-/*      */     public boolean hasNext() {
-/*  884 */       return (this.nextIndex < LinkedList.this.size);
-/*      */     }
-/*      */     
-/*      */     public E next() {
-/*  888 */       checkForComodification();
-/*  889 */       if (!hasNext()) {
-/*  890 */         throw new NoSuchElementException();
-/*      */       }
-/*  892 */       this.lastReturned = this.next;
-/*  893 */       this.next = this.next.next;
-/*  894 */       this.nextIndex++;
-/*  895 */       return this.lastReturned.item;
-/*      */     }
-/*      */     
-/*      */     public boolean hasPrevious() {
-/*  899 */       return (this.nextIndex > 0);
-/*      */     }
-/*      */     
-/*      */     public E previous() {
-/*  903 */       checkForComodification();
-/*  904 */       if (!hasPrevious()) {
-/*  905 */         throw new NoSuchElementException();
-/*      */       }
-/*  907 */       this.lastReturned = this.next = (this.next == null) ? LinkedList.this.last : this.next.prev;
-/*  908 */       this.nextIndex--;
-/*  909 */       return this.lastReturned.item;
-/*      */     }
-/*      */     
-/*      */     public int nextIndex() {
-/*  913 */       return this.nextIndex;
-/*      */     }
-/*      */     
-/*      */     public int previousIndex() {
-/*  917 */       return this.nextIndex - 1;
-/*      */     }
-/*      */     
-/*      */     public void remove() {
-/*  921 */       checkForComodification();
-/*  922 */       if (this.lastReturned == null) {
-/*  923 */         throw new IllegalStateException();
-/*      */       }
-/*  925 */       LinkedList.Node<E> node = this.lastReturned.next;
-/*  926 */       LinkedList.this.unlink(this.lastReturned);
-/*  927 */       if (this.next == this.lastReturned) {
-/*  928 */         this.next = node;
-/*      */       } else {
-/*  930 */         this.nextIndex--;
-/*  931 */       }  this.lastReturned = null;
-/*  932 */       this.expectedModCount++;
-/*      */     }
-/*      */     
-/*      */     public void set(E param1E) {
-/*  936 */       if (this.lastReturned == null)
-/*  937 */         throw new IllegalStateException(); 
-/*  938 */       checkForComodification();
-/*  939 */       this.lastReturned.item = param1E;
-/*      */     }
-/*      */     
-/*      */     public void add(E param1E) {
-/*  943 */       checkForComodification();
-/*  944 */       this.lastReturned = null;
-/*  945 */       if (this.next == null) {
-/*  946 */         LinkedList.this.linkLast(param1E);
-/*      */       } else {
-/*  948 */         LinkedList.this.linkBefore(param1E, this.next);
-/*  949 */       }  this.nextIndex++;
-/*  950 */       this.expectedModCount++;
-/*      */     }
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/*  954 */       Objects.requireNonNull(param1Consumer);
-/*  955 */       while (LinkedList.this.modCount == this.expectedModCount && this.nextIndex < LinkedList.this.size) {
-/*  956 */         param1Consumer.accept(this.next.item);
-/*  957 */         this.lastReturned = this.next;
-/*  958 */         this.next = this.next.next;
-/*  959 */         this.nextIndex++;
-/*      */       } 
-/*  961 */       checkForComodification();
-/*      */     }
-/*      */     
-/*      */     final void checkForComodification() {
-/*  965 */       if (LinkedList.this.modCount != this.expectedModCount)
-/*  966 */         throw new ConcurrentModificationException(); 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static class Node<E> {
-/*      */     E item;
-/*      */     Node<E> next;
-/*      */     Node<E> prev;
-/*      */     
-/*      */     Node(Node<E> param1Node1, E param1E, Node<E> param1Node2) {
-/*  976 */       this.item = param1E;
-/*  977 */       this.next = param1Node2;
-/*  978 */       this.prev = param1Node1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Iterator<E> descendingIterator() {
-/*  986 */     return new DescendingIterator();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private class DescendingIterator
-/*      */     implements Iterator<E>
-/*      */   {
-/*  993 */     private final LinkedList<E>.ListItr itr = new LinkedList.ListItr(LinkedList.this.size());
-/*      */     public boolean hasNext() {
-/*  995 */       return this.itr.hasPrevious();
-/*      */     }
-/*      */     public E next() {
-/*  998 */       return this.itr.previous();
-/*      */     }
-/*      */     public void remove() {
-/* 1001 */       this.itr.remove();
-/*      */     }
-/*      */     
-/*      */     private DescendingIterator() {} }
-/*      */   
-/*      */   private LinkedList<E> superClone() {
-/*      */     try {
-/* 1008 */       return (LinkedList<E>)super.clone();
-/* 1009 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 1010 */       throw new InternalError(cloneNotSupportedException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/* 1021 */     LinkedList<E> linkedList = superClone();
-/*      */ 
-/*      */     
-/* 1024 */     linkedList.first = linkedList.last = null;
-/* 1025 */     linkedList.size = 0;
-/* 1026 */     linkedList.modCount = 0;
-/*      */ 
-/*      */     
-/* 1029 */     for (Node<E> node = this.first; node != null; node = node.next) {
-/* 1030 */       linkedList.add(node.item);
-/*      */     }
-/* 1032 */     return linkedList;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object[] toArray() {
-/* 1050 */     Object[] arrayOfObject = new Object[this.size];
-/* 1051 */     byte b = 0;
-/* 1052 */     for (Node<E> node = this.first; node != null; node = node.next)
-/* 1053 */       arrayOfObject[b++] = node.item; 
-/* 1054 */     return arrayOfObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public <T> T[] toArray(T[] paramArrayOfT) {
-/* 1097 */     if (paramArrayOfT.length < this.size)
-/* 1098 */       paramArrayOfT = (T[])Array.newInstance(paramArrayOfT
-/* 1099 */           .getClass().getComponentType(), this.size); 
-/* 1100 */     byte b = 0;
-/* 1101 */     T[] arrayOfT = paramArrayOfT;
-/* 1102 */     for (Node<E> node = this.first; node != null; node = node.next) {
-/* 1103 */       arrayOfT[b++] = (T)node.item;
-/*      */     }
-/* 1105 */     if (paramArrayOfT.length > this.size) {
-/* 1106 */       paramArrayOfT[this.size] = null;
-/*      */     }
-/* 1108 */     return paramArrayOfT;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1124 */     paramObjectOutputStream.defaultWriteObject();
-/*      */ 
-/*      */     
-/* 1127 */     paramObjectOutputStream.writeInt(this.size);
-/*      */ 
-/*      */     
-/* 1130 */     for (Node<E> node = this.first; node != null; node = node.next) {
-/* 1131 */       paramObjectOutputStream.writeObject(node.item);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1142 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */     
-/* 1145 */     int i = paramObjectInputStream.readInt();
-/*      */ 
-/*      */     
-/* 1148 */     for (byte b = 0; b < i; b++) {
-/* 1149 */       linkLast((E)paramObjectInputStream.readObject());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Spliterator<E> spliterator() {
-/* 1170 */     return new LLSpliterator<>(this, -1, 0);
-/*      */   }
-/*      */   
-/*      */   static final class LLSpliterator<E>
-/*      */     implements Spliterator<E> {
-/*      */     static final int BATCH_UNIT = 1024;
-/*      */     static final int MAX_BATCH = 33554432;
-/*      */     final LinkedList<E> list;
-/*      */     LinkedList.Node<E> current;
-/*      */     int est;
-/*      */     int expectedModCount;
-/*      */     int batch;
-/*      */     
-/*      */     LLSpliterator(LinkedList<E> param1LinkedList, int param1Int1, int param1Int2) {
-/* 1184 */       this.list = param1LinkedList;
-/* 1185 */       this.est = param1Int1;
-/* 1186 */       this.expectedModCount = param1Int2;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     final int getEst() {
-/*      */       int i;
-/* 1192 */       if ((i = this.est) < 0) {
-/* 1193 */         LinkedList<E> linkedList; if ((linkedList = this.list) == null) {
-/* 1194 */           i = this.est = 0;
-/*      */         } else {
-/* 1196 */           this.expectedModCount = linkedList.modCount;
-/* 1197 */           this.current = linkedList.first;
-/* 1198 */           i = this.est = linkedList.size;
-/*      */         } 
-/*      */       } 
-/* 1201 */       return i;
-/*      */     }
-/*      */     public long estimateSize() {
-/* 1204 */       return getEst();
-/*      */     }
-/*      */     
-/*      */     public Spliterator<E> trySplit() {
-/* 1208 */       int i = getEst(); LinkedList.Node<E> node;
-/* 1209 */       if (i > 1 && (node = this.current) != null) {
-/* 1210 */         int j = this.batch + 1024;
-/* 1211 */         if (j > i)
-/* 1212 */           j = i; 
-/* 1213 */         if (j > 33554432)
-/* 1214 */           j = 33554432; 
-/* 1215 */         Object[] arrayOfObject = new Object[j];
-/* 1216 */         byte b = 0; 
-/* 1217 */         do { arrayOfObject[b++] = node.item; } while ((node = node.next) != null && b < j);
-/* 1218 */         this.current = node;
-/* 1219 */         this.batch = b;
-/* 1220 */         this.est = i - b;
-/* 1221 */         return Spliterators.spliterator(arrayOfObject, 0, b, 16);
-/*      */       } 
-/* 1223 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super E> param1Consumer) {
-/* 1228 */       if (param1Consumer == null) throw new NullPointerException();  LinkedList.Node<E> node; int i;
-/* 1229 */       if ((i = getEst()) > 0 && (node = this.current) != null) {
-/* 1230 */         this.current = null;
-/* 1231 */         this.est = 0;
-/*      */         do {
-/* 1233 */           E e = node.item;
-/* 1234 */           node = node.next;
-/* 1235 */           param1Consumer.accept(e);
-/* 1236 */         } while (node != null && --i > 0);
-/*      */       } 
-/* 1238 */       if (this.list.modCount != this.expectedModCount) {
-/* 1239 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super E> param1Consumer) {
-/* 1244 */       if (param1Consumer == null) throw new NullPointerException();  LinkedList.Node<E> node;
-/* 1245 */       if (getEst() > 0 && (node = this.current) != null) {
-/* 1246 */         this.est--;
-/* 1247 */         E e = node.item;
-/* 1248 */         this.current = node.next;
-/* 1249 */         param1Consumer.accept(e);
-/* 1250 */         if (this.list.modCount != this.expectedModCount)
-/* 1251 */           throw new ConcurrentModificationException(); 
-/* 1252 */         return true;
-/*      */       } 
-/* 1254 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1258 */       return 16464;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\LinkedList.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.util.function.Consumer;
+
+/**
+ * Doubly-linked list implementation of the {@code List} and {@code Deque}
+ * interfaces.  Implements all optional list operations, and permits all
+ * elements (including {@code null}).
+ *
+ * <p>All of the operations perform as could be expected for a doubly-linked
+ * list.  Operations that index into the list will traverse the list from
+ * the beginning or the end, whichever is closer to the specified index.
+ *
+ * <p><strong>Note that this implementation is not synchronized.</strong>
+ * If multiple threads access a linked list concurrently, and at least
+ * one of the threads modifies the list structurally, it <i>must</i> be
+ * synchronized externally.  (A structural modification is any operation
+ * that adds or deletes one or more elements; merely setting the value of
+ * an element is not a structural modification.)  This is typically
+ * accomplished by synchronizing on some object that naturally
+ * encapsulates the list.
+ *
+ * If no such object exists, the list should be "wrapped" using the
+ * {@link Collections#synchronizedList Collections.synchronizedList}
+ * method.  This is best done at creation time, to prevent accidental
+ * unsynchronized access to the list:<pre>
+ *   List list = Collections.synchronizedList(new LinkedList(...));</pre>
+ *
+ * <p>The iterators returned by this class's {@code iterator} and
+ * {@code listIterator} methods are <i>fail-fast</i>: if the list is
+ * structurally modified at any time after the iterator is created, in
+ * any way except through the Iterator's own {@code remove} or
+ * {@code add} methods, the iterator will throw a {@link
+ * ConcurrentModificationException}.  Thus, in the face of concurrent
+ * modification, the iterator fails quickly and cleanly, rather than
+ * risking arbitrary, non-deterministic behavior at an undetermined
+ * time in the future.
+ *
+ * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
+ * as it is, generally speaking, impossible to make any hard guarantees in the
+ * presence of unsynchronized concurrent modification.  Fail-fast iterators
+ * throw {@code ConcurrentModificationException} on a best-effort basis.
+ * Therefore, it would be wrong to write a program that depended on this
+ * exception for its correctness:   <i>the fail-fast behavior of iterators
+ * should be used only to detect bugs.</i>
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @author  Josh Bloch
+ * @see     List
+ * @see     ArrayList
+ * @since 1.2
+ * @param <E> the type of elements held in this collection
+ */
+
+public class LinkedList<E>
+    extends AbstractSequentialList<E>
+    implements List<E>, Deque<E>, Cloneable, java.io.Serializable
+{
+    transient int size = 0;
+
+    /**
+     * Pointer to first node.
+     * Invariant: (first == null && last == null) ||
+     *            (first.prev == null && first.item != null)
+     */
+    transient Node<E> first;
+
+    /**
+     * Pointer to last node.
+     * Invariant: (first == null && last == null) ||
+     *            (last.next == null && last.item != null)
+     */
+    transient Node<E> last;
+
+    /**
+     * Constructs an empty list.
+     */
+    public LinkedList() {
+    }
+
+    /**
+     * Constructs a list containing the elements of the specified
+     * collection, in the order they are returned by the collection's
+     * iterator.
+     *
+     * @param  c the collection whose elements are to be placed into this list
+     * @throws NullPointerException if the specified collection is null
+     */
+    public LinkedList(Collection<? extends E> c) {
+        this();
+        addAll(c);
+    }
+
+    /**
+     * Links e as first element.
+     */
+    private void linkFirst(E e) {
+        final Node<E> f = first;
+        final Node<E> newNode = new Node<>(null, e, f);
+        first = newNode;
+        if (f == null)
+            last = newNode;
+        else
+            f.prev = newNode;
+        size++;
+        modCount++;
+    }
+
+    /**
+     * Links e as last element.
+     */
+    void linkLast(E e) {
+        final Node<E> l = last;
+        final Node<E> newNode = new Node<>(l, e, null);
+        last = newNode;
+        if (l == null)
+            first = newNode;
+        else
+            l.next = newNode;
+        size++;
+        modCount++;
+    }
+
+    /**
+     * Inserts element e before non-null Node succ.
+     */
+    void linkBefore(E e, Node<E> succ) {
+        // assert succ != null;
+        final Node<E> pred = succ.prev;
+        final Node<E> newNode = new Node<>(pred, e, succ);
+        succ.prev = newNode;
+        if (pred == null)
+            first = newNode;
+        else
+            pred.next = newNode;
+        size++;
+        modCount++;
+    }
+
+    /**
+     * Unlinks non-null first node f.
+     */
+    private E unlinkFirst(Node<E> f) {
+        // assert f == first && f != null;
+        final E element = f.item;
+        final Node<E> next = f.next;
+        f.item = null;
+        f.next = null; // help GC
+        first = next;
+        if (next == null)
+            last = null;
+        else
+            next.prev = null;
+        size--;
+        modCount++;
+        return element;
+    }
+
+    /**
+     * Unlinks non-null last node l.
+     */
+    private E unlinkLast(Node<E> l) {
+        // assert l == last && l != null;
+        final E element = l.item;
+        final Node<E> prev = l.prev;
+        l.item = null;
+        l.prev = null; // help GC
+        last = prev;
+        if (prev == null)
+            first = null;
+        else
+            prev.next = null;
+        size--;
+        modCount++;
+        return element;
+    }
+
+    /**
+     * Unlinks non-null node x.
+     */
+    E unlink(Node<E> x) {
+        // assert x != null;
+        final E element = x.item;
+        final Node<E> next = x.next;
+        final Node<E> prev = x.prev;
+
+        if (prev == null) {
+            first = next;
+        } else {
+            prev.next = next;
+            x.prev = null;
+        }
+
+        if (next == null) {
+            last = prev;
+        } else {
+            next.prev = prev;
+            x.next = null;
+        }
+
+        x.item = null;
+        size--;
+        modCount++;
+        return element;
+    }
+
+    /**
+     * Returns the first element in this list.
+     *
+     * @return the first element in this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E getFirst() {
+        final Node<E> f = first;
+        if (f == null)
+            throw new NoSuchElementException();
+        return f.item;
+    }
+
+    /**
+     * Returns the last element in this list.
+     *
+     * @return the last element in this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E getLast() {
+        final Node<E> l = last;
+        if (l == null)
+            throw new NoSuchElementException();
+        return l.item;
+    }
+
+    /**
+     * Removes and returns the first element from this list.
+     *
+     * @return the first element from this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E removeFirst() {
+        final Node<E> f = first;
+        if (f == null)
+            throw new NoSuchElementException();
+        return unlinkFirst(f);
+    }
+
+    /**
+     * Removes and returns the last element from this list.
+     *
+     * @return the last element from this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E removeLast() {
+        final Node<E> l = last;
+        if (l == null)
+            throw new NoSuchElementException();
+        return unlinkLast(l);
+    }
+
+    /**
+     * Inserts the specified element at the beginning of this list.
+     *
+     * @param e the element to add
+     */
+    public void addFirst(E e) {
+        linkFirst(e);
+    }
+
+    /**
+     * Appends the specified element to the end of this list.
+     *
+     * <p>This method is equivalent to {@link #add}.
+     *
+     * @param e the element to add
+     */
+    public void addLast(E e) {
+        linkLast(e);
+    }
+
+    /**
+     * Returns {@code true} if this list contains the specified element.
+     * More formally, returns {@code true} if and only if this list contains
+     * at least one element {@code e} such that
+     * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
+     *
+     * @param o element whose presence in this list is to be tested
+     * @return {@code true} if this list contains the specified element
+     */
+    public boolean contains(Object o) {
+        return indexOf(o) != -1;
+    }
+
+    /**
+     * Returns the number of elements in this list.
+     *
+     * @return the number of elements in this list
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Appends the specified element to the end of this list.
+     *
+     * <p>This method is equivalent to {@link #addLast}.
+     *
+     * @param e element to be appended to this list
+     * @return {@code true} (as specified by {@link Collection#add})
+     */
+    public boolean add(E e) {
+        linkLast(e);
+        return true;
+    }
+
+    /**
+     * Removes the first occurrence of the specified element from this list,
+     * if it is present.  If this list does not contain the element, it is
+     * unchanged.  More formally, removes the element with the lowest index
+     * {@code i} such that
+     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>
+     * (if such an element exists).  Returns {@code true} if this list
+     * contained the specified element (or equivalently, if this list
+     * changed as a result of the call).
+     *
+     * @param o element to be removed from this list, if present
+     * @return {@code true} if this list contained the specified element
+     */
+    public boolean remove(Object o) {
+        if (o == null) {
+            for (Node<E> x = first; x != null; x = x.next) {
+                if (x.item == null) {
+                    unlink(x);
+                    return true;
+                }
+            }
+        } else {
+            for (Node<E> x = first; x != null; x = x.next) {
+                if (o.equals(x.item)) {
+                    unlink(x);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Appends all of the elements in the specified collection to the end of
+     * this list, in the order that they are returned by the specified
+     * collection's iterator.  The behavior of this operation is undefined if
+     * the specified collection is modified while the operation is in
+     * progress.  (Note that this will occur if the specified collection is
+     * this list, and it's nonempty.)
+     *
+     * @param c collection containing elements to be added to this list
+     * @return {@code true} if this list changed as a result of the call
+     * @throws NullPointerException if the specified collection is null
+     */
+    public boolean addAll(Collection<? extends E> c) {
+        return addAll(size, c);
+    }
+
+    /**
+     * Inserts all of the elements in the specified collection into this
+     * list, starting at the specified position.  Shifts the element
+     * currently at that position (if any) and any subsequent elements to
+     * the right (increases their indices).  The new elements will appear
+     * in the list in the order that they are returned by the
+     * specified collection's iterator.
+     *
+     * @param index index at which to insert the first element
+     *              from the specified collection
+     * @param c collection containing elements to be added to this list
+     * @return {@code true} if this list changed as a result of the call
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws NullPointerException if the specified collection is null
+     */
+    public boolean addAll(int index, Collection<? extends E> c) {
+        checkPositionIndex(index);
+
+        Object[] a = c.toArray();
+        int numNew = a.length;
+        if (numNew == 0)
+            return false;
+
+        Node<E> pred, succ;
+        if (index == size) {
+            succ = null;
+            pred = last;
+        } else {
+            succ = node(index);
+            pred = succ.prev;
+        }
+
+        for (Object o : a) {
+            @SuppressWarnings("unchecked") E e = (E) o;
+            Node<E> newNode = new Node<>(pred, e, null);
+            if (pred == null)
+                first = newNode;
+            else
+                pred.next = newNode;
+            pred = newNode;
+        }
+
+        if (succ == null) {
+            last = pred;
+        } else {
+            pred.next = succ;
+            succ.prev = pred;
+        }
+
+        size += numNew;
+        modCount++;
+        return true;
+    }
+
+    /**
+     * Removes all of the elements from this list.
+     * The list will be empty after this call returns.
+     */
+    public void clear() {
+        // Clearing all of the links between nodes is "unnecessary", but:
+        // - helps a generational GC if the discarded nodes inhabit
+        //   more than one generation
+        // - is sure to free memory even if there is a reachable Iterator
+        for (Node<E> x = first; x != null; ) {
+            Node<E> next = x.next;
+            x.item = null;
+            x.next = null;
+            x.prev = null;
+            x = next;
+        }
+        first = last = null;
+        size = 0;
+        modCount++;
+    }
+
+
+    // Positional Access Operations
+
+    /**
+     * Returns the element at the specified position in this list.
+     *
+     * @param index index of the element to return
+     * @return the element at the specified position in this list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E get(int index) {
+        checkElementIndex(index);
+        return node(index).item;
+    }
+
+    /**
+     * Replaces the element at the specified position in this list with the
+     * specified element.
+     *
+     * @param index index of the element to replace
+     * @param element element to be stored at the specified position
+     * @return the element previously at the specified position
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E set(int index, E element) {
+        checkElementIndex(index);
+        Node<E> x = node(index);
+        E oldVal = x.item;
+        x.item = element;
+        return oldVal;
+    }
+
+    /**
+     * Inserts the specified element at the specified position in this list.
+     * Shifts the element currently at that position (if any) and any
+     * subsequent elements to the right (adds one to their indices).
+     *
+     * @param index index at which the specified element is to be inserted
+     * @param element element to be inserted
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public void add(int index, E element) {
+        checkPositionIndex(index);
+
+        if (index == size)
+            linkLast(element);
+        else
+            linkBefore(element, node(index));
+    }
+
+    /**
+     * Removes the element at the specified position in this list.  Shifts any
+     * subsequent elements to the left (subtracts one from their indices).
+     * Returns the element that was removed from the list.
+     *
+     * @param index the index of the element to be removed
+     * @return the element previously at the specified position
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E remove(int index) {
+        checkElementIndex(index);
+        return unlink(node(index));
+    }
+
+    /**
+     * Tells if the argument is the index of an existing element.
+     */
+    private boolean isElementIndex(int index) {
+        return index >= 0 && index < size;
+    }
+
+    /**
+     * Tells if the argument is the index of a valid position for an
+     * iterator or an add operation.
+     */
+    private boolean isPositionIndex(int index) {
+        return index >= 0 && index <= size;
+    }
+
+    /**
+     * Constructs an IndexOutOfBoundsException detail message.
+     * Of the many possible refactorings of the error handling code,
+     * this "outlining" performs best with both server and client VMs.
+     */
+    private String outOfBoundsMsg(int index) {
+        return "Index: "+index+", Size: "+size;
+    }
+
+    private void checkElementIndex(int index) {
+        if (!isElementIndex(index))
+            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+    }
+
+    private void checkPositionIndex(int index) {
+        if (!isPositionIndex(index))
+            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+    }
+
+    /**
+     * Returns the (non-null) Node at the specified element index.
+     */
+    Node<E> node(int index) {
+        // assert isElementIndex(index);
+
+        if (index < (size >> 1)) {
+            Node<E> x = first;
+            for (int i = 0; i < index; i++)
+                x = x.next;
+            return x;
+        } else {
+            Node<E> x = last;
+            for (int i = size - 1; i > index; i--)
+                x = x.prev;
+            return x;
+        }
+    }
+
+    // Search Operations
+
+    /**
+     * Returns the index of the first occurrence of the specified element
+     * in this list, or -1 if this list does not contain the element.
+     * More formally, returns the lowest index {@code i} such that
+     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
+     * or -1 if there is no such index.
+     *
+     * @param o element to search for
+     * @return the index of the first occurrence of the specified element in
+     *         this list, or -1 if this list does not contain the element
+     */
+    public int indexOf(Object o) {
+        int index = 0;
+        if (o == null) {
+            for (Node<E> x = first; x != null; x = x.next) {
+                if (x.item == null)
+                    return index;
+                index++;
+            }
+        } else {
+            for (Node<E> x = first; x != null; x = x.next) {
+                if (o.equals(x.item))
+                    return index;
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns the index of the last occurrence of the specified element
+     * in this list, or -1 if this list does not contain the element.
+     * More formally, returns the highest index {@code i} such that
+     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
+     * or -1 if there is no such index.
+     *
+     * @param o element to search for
+     * @return the index of the last occurrence of the specified element in
+     *         this list, or -1 if this list does not contain the element
+     */
+    public int lastIndexOf(Object o) {
+        int index = size;
+        if (o == null) {
+            for (Node<E> x = last; x != null; x = x.prev) {
+                index--;
+                if (x.item == null)
+                    return index;
+            }
+        } else {
+            for (Node<E> x = last; x != null; x = x.prev) {
+                index--;
+                if (o.equals(x.item))
+                    return index;
+            }
+        }
+        return -1;
+    }
+
+    // Queue operations.
+
+    /**
+     * Retrieves, but does not remove, the head (first element) of this list.
+     *
+     * @return the head of this list, or {@code null} if this list is empty
+     * @since 1.5
+     */
+    public E peek() {
+        final Node<E> f = first;
+        return (f == null) ? null : f.item;
+    }
+
+    /**
+     * Retrieves, but does not remove, the head (first element) of this list.
+     *
+     * @return the head of this list
+     * @throws NoSuchElementException if this list is empty
+     * @since 1.5
+     */
+    public E element() {
+        return getFirst();
+    }
+
+    /**
+     * Retrieves and removes the head (first element) of this list.
+     *
+     * @return the head of this list, or {@code null} if this list is empty
+     * @since 1.5
+     */
+    public E poll() {
+        final Node<E> f = first;
+        return (f == null) ? null : unlinkFirst(f);
+    }
+
+    /**
+     * Retrieves and removes the head (first element) of this list.
+     *
+     * @return the head of this list
+     * @throws NoSuchElementException if this list is empty
+     * @since 1.5
+     */
+    public E remove() {
+        return removeFirst();
+    }
+
+    /**
+     * Adds the specified element as the tail (last element) of this list.
+     *
+     * @param e the element to add
+     * @return {@code true} (as specified by {@link Queue#offer})
+     * @since 1.5
+     */
+    public boolean offer(E e) {
+        return add(e);
+    }
+
+    // Deque operations
+    /**
+     * Inserts the specified element at the front of this list.
+     *
+     * @param e the element to insert
+     * @return {@code true} (as specified by {@link Deque#offerFirst})
+     * @since 1.6
+     */
+    public boolean offerFirst(E e) {
+        addFirst(e);
+        return true;
+    }
+
+    /**
+     * Inserts the specified element at the end of this list.
+     *
+     * @param e the element to insert
+     * @return {@code true} (as specified by {@link Deque#offerLast})
+     * @since 1.6
+     */
+    public boolean offerLast(E e) {
+        addLast(e);
+        return true;
+    }
+
+    /**
+     * Retrieves, but does not remove, the first element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the first element of this list, or {@code null}
+     *         if this list is empty
+     * @since 1.6
+     */
+    public E peekFirst() {
+        final Node<E> f = first;
+        return (f == null) ? null : f.item;
+     }
+
+    /**
+     * Retrieves, but does not remove, the last element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the last element of this list, or {@code null}
+     *         if this list is empty
+     * @since 1.6
+     */
+    public E peekLast() {
+        final Node<E> l = last;
+        return (l == null) ? null : l.item;
+    }
+
+    /**
+     * Retrieves and removes the first element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the first element of this list, or {@code null} if
+     *     this list is empty
+     * @since 1.6
+     */
+    public E pollFirst() {
+        final Node<E> f = first;
+        return (f == null) ? null : unlinkFirst(f);
+    }
+
+    /**
+     * Retrieves and removes the last element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the last element of this list, or {@code null} if
+     *     this list is empty
+     * @since 1.6
+     */
+    public E pollLast() {
+        final Node<E> l = last;
+        return (l == null) ? null : unlinkLast(l);
+    }
+
+    /**
+     * Pushes an element onto the stack represented by this list.  In other
+     * words, inserts the element at the front of this list.
+     *
+     * <p>This method is equivalent to {@link #addFirst}.
+     *
+     * @param e the element to push
+     * @since 1.6
+     */
+    public void push(E e) {
+        addFirst(e);
+    }
+
+    /**
+     * Pops an element from the stack represented by this list.  In other
+     * words, removes and returns the first element of this list.
+     *
+     * <p>This method is equivalent to {@link #removeFirst()}.
+     *
+     * @return the element at the front of this list (which is the top
+     *         of the stack represented by this list)
+     * @throws NoSuchElementException if this list is empty
+     * @since 1.6
+     */
+    public E pop() {
+        return removeFirst();
+    }
+
+    /**
+     * Removes the first occurrence of the specified element in this
+     * list (when traversing the list from head to tail).  If the list
+     * does not contain the element, it is unchanged.
+     *
+     * @param o element to be removed from this list, if present
+     * @return {@code true} if the list contained the specified element
+     * @since 1.6
+     */
+    public boolean removeFirstOccurrence(Object o) {
+        return remove(o);
+    }
+
+    /**
+     * Removes the last occurrence of the specified element in this
+     * list (when traversing the list from head to tail).  If the list
+     * does not contain the element, it is unchanged.
+     *
+     * @param o element to be removed from this list, if present
+     * @return {@code true} if the list contained the specified element
+     * @since 1.6
+     */
+    public boolean removeLastOccurrence(Object o) {
+        if (o == null) {
+            for (Node<E> x = last; x != null; x = x.prev) {
+                if (x.item == null) {
+                    unlink(x);
+                    return true;
+                }
+            }
+        } else {
+            for (Node<E> x = last; x != null; x = x.prev) {
+                if (o.equals(x.item)) {
+                    unlink(x);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns a list-iterator of the elements in this list (in proper
+     * sequence), starting at the specified position in the list.
+     * Obeys the general contract of {@code List.listIterator(int)}.<p>
+     *
+     * The list-iterator is <i>fail-fast</i>: if the list is structurally
+     * modified at any time after the Iterator is created, in any way except
+     * through the list-iterator's own {@code remove} or {@code add}
+     * methods, the list-iterator will throw a
+     * {@code ConcurrentModificationException}.  Thus, in the face of
+     * concurrent modification, the iterator fails quickly and cleanly, rather
+     * than risking arbitrary, non-deterministic behavior at an undetermined
+     * time in the future.
+     *
+     * @param index index of the first element to be returned from the
+     *              list-iterator (by a call to {@code next})
+     * @return a ListIterator of the elements in this list (in proper
+     *         sequence), starting at the specified position in the list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @see List#listIterator(int)
+     */
+    public ListIterator<E> listIterator(int index) {
+        checkPositionIndex(index);
+        return new ListItr(index);
+    }
+
+    private class ListItr implements ListIterator<E> {
+        private Node<E> lastReturned;
+        private Node<E> next;
+        private int nextIndex;
+        private int expectedModCount = modCount;
+
+        ListItr(int index) {
+            // assert isPositionIndex(index);
+            next = (index == size) ? null : node(index);
+            nextIndex = index;
+        }
+
+        public boolean hasNext() {
+            return nextIndex < size;
+        }
+
+        public E next() {
+            checkForComodification();
+            if (!hasNext())
+                throw new NoSuchElementException();
+
+            lastReturned = next;
+            next = next.next;
+            nextIndex++;
+            return lastReturned.item;
+        }
+
+        public boolean hasPrevious() {
+            return nextIndex > 0;
+        }
+
+        public E previous() {
+            checkForComodification();
+            if (!hasPrevious())
+                throw new NoSuchElementException();
+
+            lastReturned = next = (next == null) ? last : next.prev;
+            nextIndex--;
+            return lastReturned.item;
+        }
+
+        public int nextIndex() {
+            return nextIndex;
+        }
+
+        public int previousIndex() {
+            return nextIndex - 1;
+        }
+
+        public void remove() {
+            checkForComodification();
+            if (lastReturned == null)
+                throw new IllegalStateException();
+
+            Node<E> lastNext = lastReturned.next;
+            unlink(lastReturned);
+            if (next == lastReturned)
+                next = lastNext;
+            else
+                nextIndex--;
+            lastReturned = null;
+            expectedModCount++;
+        }
+
+        public void set(E e) {
+            if (lastReturned == null)
+                throw new IllegalStateException();
+            checkForComodification();
+            lastReturned.item = e;
+        }
+
+        public void add(E e) {
+            checkForComodification();
+            lastReturned = null;
+            if (next == null)
+                linkLast(e);
+            else
+                linkBefore(e, next);
+            nextIndex++;
+            expectedModCount++;
+        }
+
+        public void forEachRemaining(Consumer<? super E> action) {
+            Objects.requireNonNull(action);
+            while (modCount == expectedModCount && nextIndex < size) {
+                action.accept(next.item);
+                lastReturned = next;
+                next = next.next;
+                nextIndex++;
+            }
+            checkForComodification();
+        }
+
+        final void checkForComodification() {
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+        }
+    }
+
+    private static class Node<E> {
+        E item;
+        Node<E> next;
+        Node<E> prev;
+
+        Node(Node<E> prev, E element, Node<E> next) {
+            this.item = element;
+            this.next = next;
+            this.prev = prev;
+        }
+    }
+
+    /**
+     * @since 1.6
+     */
+    public Iterator<E> descendingIterator() {
+        return new DescendingIterator();
+    }
+
+    /**
+     * Adapter to provide descending iterators via ListItr.previous
+     */
+    private class DescendingIterator implements Iterator<E> {
+        private final ListItr itr = new ListItr(size());
+        public boolean hasNext() {
+            return itr.hasPrevious();
+        }
+        public E next() {
+            return itr.previous();
+        }
+        public void remove() {
+            itr.remove();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private LinkedList<E> superClone() {
+        try {
+            return (LinkedList<E>) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
+    }
+
+    /**
+     * Returns a shallow copy of this {@code LinkedList}. (The elements
+     * themselves are not cloned.)
+     *
+     * @return a shallow copy of this {@code LinkedList} instance
+     */
+    public Object clone() {
+        LinkedList<E> clone = superClone();
+
+        // Put clone into "virgin" state
+        clone.first = clone.last = null;
+        clone.size = 0;
+        clone.modCount = 0;
+
+        // Initialize clone with our elements
+        for (Node<E> x = first; x != null; x = x.next)
+            clone.add(x.item);
+
+        return clone;
+    }
+
+    /**
+     * Returns an array containing all of the elements in this list
+     * in proper sequence (from first to last element).
+     *
+     * <p>The returned array will be "safe" in that no references to it are
+     * maintained by this list.  (In other words, this method must allocate
+     * a new array).  The caller is thus free to modify the returned array.
+     *
+     * <p>This method acts as bridge between array-based and collection-based
+     * APIs.
+     *
+     * @return an array containing all of the elements in this list
+     *         in proper sequence
+     */
+    public Object[] toArray() {
+        Object[] result = new Object[size];
+        int i = 0;
+        for (Node<E> x = first; x != null; x = x.next)
+            result[i++] = x.item;
+        return result;
+    }
+
+    /**
+     * Returns an array containing all of the elements in this list in
+     * proper sequence (from first to last element); the runtime type of
+     * the returned array is that of the specified array.  If the list fits
+     * in the specified array, it is returned therein.  Otherwise, a new
+     * array is allocated with the runtime type of the specified array and
+     * the size of this list.
+     *
+     * <p>If the list fits in the specified array with room to spare (i.e.,
+     * the array has more elements than the list), the element in the array
+     * immediately following the end of the list is set to {@code null}.
+     * (This is useful in determining the length of the list <i>only</i> if
+     * the caller knows that the list does not contain any null elements.)
+     *
+     * <p>Like the {@link #toArray()} method, this method acts as bridge between
+     * array-based and collection-based APIs.  Further, this method allows
+     * precise control over the runtime type of the output array, and may,
+     * under certain circumstances, be used to save allocation costs.
+     *
+     * <p>Suppose {@code x} is a list known to contain only strings.
+     * The following code can be used to dump the list into a newly
+     * allocated array of {@code String}:
+     *
+     * <pre>
+     *     String[] y = x.toArray(new String[0]);</pre>
+     *
+     * Note that {@code toArray(new Object[0])} is identical in function to
+     * {@code toArray()}.
+     *
+     * @param a the array into which the elements of the list are to
+     *          be stored, if it is big enough; otherwise, a new array of the
+     *          same runtime type is allocated for this purpose.
+     * @return an array containing the elements of the list
+     * @throws ArrayStoreException if the runtime type of the specified array
+     *         is not a supertype of the runtime type of every element in
+     *         this list
+     * @throws NullPointerException if the specified array is null
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(T[] a) {
+        if (a.length < size)
+            a = (T[])java.lang.reflect.Array.newInstance(
+                                a.getClass().getComponentType(), size);
+        int i = 0;
+        Object[] result = a;
+        for (Node<E> x = first; x != null; x = x.next)
+            result[i++] = x.item;
+
+        if (a.length > size)
+            a[size] = null;
+
+        return a;
+    }
+
+    private static final long serialVersionUID = 876323262645176354L;
+
+    /**
+     * Saves the state of this {@code LinkedList} instance to a stream
+     * (that is, serializes it).
+     *
+     * @serialData The size of the list (the number of elements it
+     *             contains) is emitted (int), followed by all of its
+     *             elements (each an Object) in the proper order.
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        // Write out any hidden serialization magic
+        s.defaultWriteObject();
+
+        // Write out size
+        s.writeInt(size);
+
+        // Write out all elements in the proper order.
+        for (Node<E> x = first; x != null; x = x.next)
+            s.writeObject(x.item);
+    }
+
+    /**
+     * Reconstitutes this {@code LinkedList} instance from a stream
+     * (that is, deserializes it).
+     */
+    @SuppressWarnings("unchecked")
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        // Read in any hidden serialization magic
+        s.defaultReadObject();
+
+        // Read in size
+        int size = s.readInt();
+
+        // Read in all elements in the proper order.
+        for (int i = 0; i < size; i++)
+            linkLast((E)s.readObject());
+    }
+
+    /**
+     * Creates a <em><a href="Spliterator.html#binding">late-binding</a></em>
+     * and <em>fail-fast</em> {@link Spliterator} over the elements in this
+     * list.
+     *
+     * <p>The {@code Spliterator} reports {@link Spliterator#SIZED} and
+     * {@link Spliterator#ORDERED}.  Overriding implementations should document
+     * the reporting of additional characteristic values.
+     *
+     * @implNote
+     * The {@code Spliterator} additionally reports {@link Spliterator#SUBSIZED}
+     * and implements {@code trySplit} to permit limited parallelism..
+     *
+     * @return a {@code Spliterator} over the elements in this list
+     * @since 1.8
+     */
+    @Override
+    public Spliterator<E> spliterator() {
+        return new LLSpliterator<E>(this, -1, 0);
+    }
+
+    /** A customized variant of Spliterators.IteratorSpliterator */
+    static final class LLSpliterator<E> implements Spliterator<E> {
+        static final int BATCH_UNIT = 1 << 10;  // batch array size increment
+        static final int MAX_BATCH = 1 << 25;  // max batch array size;
+        final LinkedList<E> list; // null OK unless traversed
+        Node<E> current;      // current node; null until initialized
+        int est;              // size estimate; -1 until first needed
+        int expectedModCount; // initialized when est set
+        int batch;            // batch size for splits
+
+        LLSpliterator(LinkedList<E> list, int est, int expectedModCount) {
+            this.list = list;
+            this.est = est;
+            this.expectedModCount = expectedModCount;
+        }
+
+        final int getEst() {
+            int s; // force initialization
+            final LinkedList<E> lst;
+            if ((s = est) < 0) {
+                if ((lst = list) == null)
+                    s = est = 0;
+                else {
+                    expectedModCount = lst.modCount;
+                    current = lst.first;
+                    s = est = lst.size;
+                }
+            }
+            return s;
+        }
+
+        public long estimateSize() { return (long) getEst(); }
+
+        public Spliterator<E> trySplit() {
+            Node<E> p;
+            int s = getEst();
+            if (s > 1 && (p = current) != null) {
+                int n = batch + BATCH_UNIT;
+                if (n > s)
+                    n = s;
+                if (n > MAX_BATCH)
+                    n = MAX_BATCH;
+                Object[] a = new Object[n];
+                int j = 0;
+                do { a[j++] = p.item; } while ((p = p.next) != null && j < n);
+                current = p;
+                batch = j;
+                est = s - j;
+                return Spliterators.spliterator(a, 0, j, Spliterator.ORDERED);
+            }
+            return null;
+        }
+
+        public void forEachRemaining(Consumer<? super E> action) {
+            Node<E> p; int n;
+            if (action == null) throw new NullPointerException();
+            if ((n = getEst()) > 0 && (p = current) != null) {
+                current = null;
+                est = 0;
+                do {
+                    E e = p.item;
+                    p = p.next;
+                    action.accept(e);
+                } while (p != null && --n > 0);
+            }
+            if (list.modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+        }
+
+        public boolean tryAdvance(Consumer<? super E> action) {
+            Node<E> p;
+            if (action == null) throw new NullPointerException();
+            if (getEst() > 0 && (p = current) != null) {
+                --est;
+                E e = p.item;
+                current = p.next;
+                action.accept(e);
+                if (list.modCount != expectedModCount)
+                    throw new ConcurrentModificationException();
+                return true;
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
+        }
+    }
+
+}

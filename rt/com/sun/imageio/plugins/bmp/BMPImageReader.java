@@ -1,1866 +1,1861 @@
-/*      */ package com.sun.imageio.plugins.bmp;
-/*      */ 
-/*      */ import com.sun.imageio.plugins.common.I18N;
-/*      */ import com.sun.imageio.plugins.common.ImageUtil;
-/*      */ import java.awt.Point;
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.color.ColorSpace;
-/*      */ import java.awt.color.ICC_ColorSpace;
-/*      */ import java.awt.color.ICC_Profile;
-/*      */ import java.awt.image.BufferedImage;
-/*      */ import java.awt.image.ColorModel;
-/*      */ import java.awt.image.ComponentSampleModel;
-/*      */ import java.awt.image.DataBufferByte;
-/*      */ import java.awt.image.DataBufferInt;
-/*      */ import java.awt.image.DataBufferUShort;
-/*      */ import java.awt.image.DirectColorModel;
-/*      */ import java.awt.image.IndexColorModel;
-/*      */ import java.awt.image.MultiPixelPackedSampleModel;
-/*      */ import java.awt.image.PixelInterleavedSampleModel;
-/*      */ import java.awt.image.Raster;
-/*      */ import java.awt.image.SampleModel;
-/*      */ import java.awt.image.SinglePixelPackedSampleModel;
-/*      */ import java.awt.image.WritableRaster;
-/*      */ import java.io.ByteArrayInputStream;
-/*      */ import java.io.IOException;
-/*      */ import java.nio.ByteOrder;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Iterator;
-/*      */ import javax.imageio.IIOException;
-/*      */ import javax.imageio.ImageIO;
-/*      */ import javax.imageio.ImageReadParam;
-/*      */ import javax.imageio.ImageReader;
-/*      */ import javax.imageio.ImageTypeSpecifier;
-/*      */ import javax.imageio.event.IIOReadProgressListener;
-/*      */ import javax.imageio.event.IIOReadUpdateListener;
-/*      */ import javax.imageio.event.IIOReadWarningListener;
-/*      */ import javax.imageio.metadata.IIOMetadata;
-/*      */ import javax.imageio.spi.ImageReaderSpi;
-/*      */ import javax.imageio.stream.ImageInputStream;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class BMPImageReader
-/*      */   extends ImageReader
-/*      */   implements BMPConstants
-/*      */ {
-/*      */   private static final int VERSION_2_1_BIT = 0;
-/*      */   private static final int VERSION_2_4_BIT = 1;
-/*      */   private static final int VERSION_2_8_BIT = 2;
-/*      */   private static final int VERSION_2_24_BIT = 3;
-/*      */   private static final int VERSION_3_1_BIT = 4;
-/*      */   private static final int VERSION_3_4_BIT = 5;
-/*      */   private static final int VERSION_3_8_BIT = 6;
-/*      */   private static final int VERSION_3_24_BIT = 7;
-/*      */   private static final int VERSION_3_NT_16_BIT = 8;
-/*      */   private static final int VERSION_3_NT_32_BIT = 9;
-/*      */   private static final int VERSION_4_1_BIT = 10;
-/*      */   private static final int VERSION_4_4_BIT = 11;
-/*      */   private static final int VERSION_4_8_BIT = 12;
-/*      */   private static final int VERSION_4_16_BIT = 13;
-/*      */   private static final int VERSION_4_24_BIT = 14;
-/*      */   private static final int VERSION_4_32_BIT = 15;
-/*      */   private static final int VERSION_3_XP_EMBEDDED = 16;
-/*      */   private static final int VERSION_4_XP_EMBEDDED = 17;
-/*      */   private static final int VERSION_5_XP_EMBEDDED = 18;
-/*      */   private long bitmapFileSize;
-/*      */   private long bitmapOffset;
-/*      */   private long compression;
-/*      */   private long imageSize;
-/*      */   private byte[] palette;
-/*      */   private int imageType;
-/*      */   private int numBands;
-/*      */   private boolean isBottomUp;
-/*      */   private int bitsPerPixel;
-/*      */   private int redMask;
-/*      */   private int greenMask;
-/*      */   private int blueMask;
-/*      */   private int alphaMask;
-/*      */   private SampleModel sampleModel;
-/*      */   private SampleModel originalSampleModel;
-/*      */   private ColorModel colorModel;
-/*      */   private ColorModel originalColorModel;
-/*  124 */   private ImageInputStream iis = null;
-/*      */ 
-/*      */   
-/*      */   private boolean gotHeader = false;
-/*      */ 
-/*      */   
-/*      */   private int width;
-/*      */ 
-/*      */   
-/*      */   private int height;
-/*      */ 
-/*      */   
-/*      */   private Rectangle destinationRegion;
-/*      */ 
-/*      */   
-/*      */   private Rectangle sourceRegion;
-/*      */ 
-/*      */   
-/*      */   private BMPMetadata metadata;
-/*      */ 
-/*      */   
-/*      */   private BufferedImage bi;
-/*      */ 
-/*      */   
-/*      */   private boolean noTransform = true;
-/*      */ 
-/*      */   
-/*      */   private boolean seleBand = false;
-/*      */ 
-/*      */   
-/*      */   private int scaleX;
-/*      */ 
-/*      */   
-/*      */   private int scaleY;
-/*      */   
-/*      */   private int[] sourceBands;
-/*      */   
-/*      */   private int[] destBands;
-/*      */ 
-/*      */   
-/*      */   public BMPImageReader(ImageReaderSpi paramImageReaderSpi) {
-/*  165 */     super(paramImageReaderSpi);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setInput(Object paramObject, boolean paramBoolean1, boolean paramBoolean2) {
-/*  172 */     super.setInput(paramObject, paramBoolean1, paramBoolean2);
-/*  173 */     this.iis = (ImageInputStream)paramObject;
-/*  174 */     if (this.iis != null)
-/*  175 */       this.iis.setByteOrder(ByteOrder.LITTLE_ENDIAN); 
-/*  176 */     resetHeaderInfo();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public int getNumImages(boolean paramBoolean) throws IOException {
-/*  181 */     if (this.iis == null) {
-/*  182 */       throw new IllegalStateException(I18N.getString("GetNumImages0"));
-/*      */     }
-/*  184 */     if (this.seekForwardOnly && paramBoolean) {
-/*  185 */       throw new IllegalStateException(I18N.getString("GetNumImages1"));
-/*      */     }
-/*  187 */     return 1;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public int getWidth(int paramInt) throws IOException {
-/*  192 */     checkIndex(paramInt);
-/*      */     try {
-/*  194 */       readHeader();
-/*  195 */     } catch (IllegalArgumentException illegalArgumentException) {
-/*  196 */       throw new IIOException(I18N.getString("BMPImageReader6"), illegalArgumentException);
-/*      */     } 
-/*  198 */     return this.width;
-/*      */   }
-/*      */   
-/*      */   public int getHeight(int paramInt) throws IOException {
-/*  202 */     checkIndex(paramInt);
-/*      */     try {
-/*  204 */       readHeader();
-/*  205 */     } catch (IllegalArgumentException illegalArgumentException) {
-/*  206 */       throw new IIOException(I18N.getString("BMPImageReader6"), illegalArgumentException);
-/*      */     } 
-/*  208 */     return this.height;
-/*      */   }
-/*      */   
-/*      */   private void checkIndex(int paramInt) {
-/*  212 */     if (paramInt != 0) {
-/*  213 */       throw new IndexOutOfBoundsException(I18N.getString("BMPImageReader0"));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void readHeader() throws IOException, IllegalArgumentException {
-/*  229 */     if (this.gotHeader) {
-/*      */       return;
-/*      */     }
-/*  232 */     if (this.iis == null) {
-/*  233 */       throw new IllegalStateException("Input source not set!");
-/*      */     }
-/*  235 */     int i = 0, j = 0;
-/*      */     
-/*  237 */     this.metadata = new BMPMetadata();
-/*  238 */     this.iis.mark();
-/*      */ 
-/*      */     
-/*  241 */     byte[] arrayOfByte = new byte[2];
-/*  242 */     this.iis.read(arrayOfByte);
-/*  243 */     if (arrayOfByte[0] != 66 || arrayOfByte[1] != 77) {
-/*  244 */       throw new IllegalArgumentException(I18N.getString("BMPImageReader1"));
-/*      */     }
-/*      */     
-/*  247 */     this.bitmapFileSize = this.iis.readUnsignedInt();
-/*      */     
-/*  249 */     this.iis.skipBytes(4);
-/*      */ 
-/*      */     
-/*  252 */     this.bitmapOffset = this.iis.readUnsignedInt();
-/*      */ 
-/*      */ 
-/*      */     
-/*  256 */     long l = this.iis.readUnsignedInt();
-/*      */     
-/*  258 */     if (l == 12L) {
-/*  259 */       this.width = this.iis.readShort();
-/*  260 */       this.height = this.iis.readShort();
-/*      */     } else {
-/*  262 */       this.width = this.iis.readInt();
-/*  263 */       this.height = this.iis.readInt();
-/*      */     } 
-/*      */     
-/*  266 */     this.metadata.width = this.width;
-/*  267 */     this.metadata.height = this.height;
-/*      */     
-/*  269 */     int k = this.iis.readUnsignedShort();
-/*  270 */     this.bitsPerPixel = this.iis.readUnsignedShort();
-/*      */ 
-/*      */     
-/*  273 */     this.metadata.bitsPerPixel = (short)this.bitsPerPixel;
-/*      */ 
-/*      */ 
-/*      */     
-/*  277 */     this.numBands = 3;
-/*      */     
-/*  279 */     if (l == 12L) {
-/*      */       
-/*  281 */       this.metadata.bmpVersion = "BMP v. 2.x";
-/*      */ 
-/*      */       
-/*  284 */       if (this.bitsPerPixel == 1) {
-/*  285 */         this.imageType = 0;
-/*  286 */       } else if (this.bitsPerPixel == 4) {
-/*  287 */         this.imageType = 1;
-/*  288 */       } else if (this.bitsPerPixel == 8) {
-/*  289 */         this.imageType = 2;
-/*  290 */       } else if (this.bitsPerPixel == 24) {
-/*  291 */         this.imageType = 3;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  295 */       int m = (int)((this.bitmapOffset - 14L - l) / 3L);
-/*  296 */       int n = m * 3;
-/*  297 */       this.palette = new byte[n];
-/*  298 */       this.iis.readFully(this.palette, 0, n);
-/*  299 */       this.metadata.palette = this.palette;
-/*  300 */       this.metadata.paletteSize = m;
-/*      */     } else {
-/*  302 */       this.compression = this.iis.readUnsignedInt();
-/*  303 */       this.imageSize = this.iis.readUnsignedInt();
-/*  304 */       long l1 = this.iis.readInt();
-/*  305 */       long l2 = this.iis.readInt();
-/*  306 */       long l3 = this.iis.readUnsignedInt();
-/*  307 */       long l4 = this.iis.readUnsignedInt();
-/*      */       
-/*  309 */       this.metadata.compression = (int)this.compression;
-/*  310 */       this.metadata.xPixelsPerMeter = (int)l1;
-/*  311 */       this.metadata.yPixelsPerMeter = (int)l2;
-/*  312 */       this.metadata.colorsUsed = (int)l3;
-/*  313 */       this.metadata.colorsImportant = (int)l4;
-/*      */       
-/*  315 */       if (l == 40L) {
-/*      */         int m; int n;
-/*  317 */         switch ((int)this.compression) {
-/*      */           
-/*      */           case 4:
-/*      */           case 5:
-/*  321 */             this.metadata.bmpVersion = "BMP v. 3.x";
-/*  322 */             this.imageType = 16;
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 0:
-/*      */           case 1:
-/*      */           case 2:
-/*  330 */             if (this.bitmapOffset < l + 14L) {
-/*  331 */               throw new IIOException(I18N.getString("BMPImageReader7"));
-/*      */             }
-/*  333 */             m = (int)((this.bitmapOffset - 14L - l) / 4L);
-/*  334 */             n = m * 4;
-/*  335 */             this.palette = new byte[n];
-/*  336 */             this.iis.readFully(this.palette, 0, n);
-/*      */             
-/*  338 */             this.metadata.palette = this.palette;
-/*  339 */             this.metadata.paletteSize = m;
-/*      */             
-/*  341 */             if (this.bitsPerPixel == 1) {
-/*  342 */               this.imageType = 4;
-/*  343 */             } else if (this.bitsPerPixel == 4) {
-/*  344 */               this.imageType = 5;
-/*  345 */             } else if (this.bitsPerPixel == 8) {
-/*  346 */               this.imageType = 6;
-/*  347 */             } else if (this.bitsPerPixel == 24) {
-/*  348 */               this.imageType = 7;
-/*  349 */             } else if (this.bitsPerPixel == 16) {
-/*  350 */               this.imageType = 8;
-/*      */               
-/*  352 */               this.redMask = 31744;
-/*  353 */               this.greenMask = 992;
-/*  354 */               this.blueMask = 31;
-/*  355 */               this.metadata.redMask = this.redMask;
-/*  356 */               this.metadata.greenMask = this.greenMask;
-/*  357 */               this.metadata.blueMask = this.blueMask;
-/*  358 */             } else if (this.bitsPerPixel == 32) {
-/*  359 */               this.imageType = 9;
-/*  360 */               this.redMask = 16711680;
-/*  361 */               this.greenMask = 65280;
-/*  362 */               this.blueMask = 255;
-/*  363 */               this.metadata.redMask = this.redMask;
-/*  364 */               this.metadata.greenMask = this.greenMask;
-/*  365 */               this.metadata.blueMask = this.blueMask;
-/*      */             } 
-/*      */             
-/*  368 */             this.metadata.bmpVersion = "BMP v. 3.x";
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 3:
-/*  373 */             if (this.bitsPerPixel == 16) {
-/*  374 */               this.imageType = 8;
-/*  375 */             } else if (this.bitsPerPixel == 32) {
-/*  376 */               this.imageType = 9;
-/*      */             } 
-/*      */ 
-/*      */             
-/*  380 */             this.redMask = (int)this.iis.readUnsignedInt();
-/*  381 */             this.greenMask = (int)this.iis.readUnsignedInt();
-/*  382 */             this.blueMask = (int)this.iis.readUnsignedInt();
-/*  383 */             this.metadata.redMask = this.redMask;
-/*  384 */             this.metadata.greenMask = this.greenMask;
-/*  385 */             this.metadata.blueMask = this.blueMask;
-/*      */             
-/*  387 */             if (l3 != 0L) {
-/*      */               
-/*  389 */               n = (int)l3 * 4;
-/*  390 */               this.palette = new byte[n];
-/*  391 */               this.iis.readFully(this.palette, 0, n);
-/*      */               
-/*  393 */               this.metadata.palette = this.palette;
-/*  394 */               this.metadata.paletteSize = (int)l3;
-/*      */             } 
-/*  396 */             this.metadata.bmpVersion = "BMP v. 3.x NT";
-/*      */             break;
-/*      */           
-/*      */           default:
-/*  400 */             throw new IIOException(
-/*  401 */                 I18N.getString("BMPImageReader2"));
-/*      */         } 
-/*  403 */       } else if (l == 108L || l == 124L) {
-/*      */         
-/*  405 */         if (l == 108L) {
-/*  406 */           this.metadata.bmpVersion = "BMP v. 4.x";
-/*  407 */         } else if (l == 124L) {
-/*  408 */           this.metadata.bmpVersion = "BMP v. 5.x";
-/*      */         } 
-/*      */         
-/*  411 */         this.redMask = (int)this.iis.readUnsignedInt();
-/*  412 */         this.greenMask = (int)this.iis.readUnsignedInt();
-/*  413 */         this.blueMask = (int)this.iis.readUnsignedInt();
-/*      */         
-/*  415 */         this.alphaMask = (int)this.iis.readUnsignedInt();
-/*  416 */         long l5 = this.iis.readUnsignedInt();
-/*  417 */         int m = this.iis.readInt();
-/*  418 */         int n = this.iis.readInt();
-/*  419 */         int i1 = this.iis.readInt();
-/*  420 */         int i2 = this.iis.readInt();
-/*  421 */         int i3 = this.iis.readInt();
-/*  422 */         int i4 = this.iis.readInt();
-/*  423 */         int i5 = this.iis.readInt();
-/*  424 */         int i6 = this.iis.readInt();
-/*  425 */         int i7 = this.iis.readInt();
-/*  426 */         long l6 = this.iis.readUnsignedInt();
-/*  427 */         long l7 = this.iis.readUnsignedInt();
-/*  428 */         long l8 = this.iis.readUnsignedInt();
-/*      */         
-/*  430 */         if (l == 124L) {
-/*  431 */           this.metadata.intent = this.iis.readInt();
-/*  432 */           i = this.iis.readInt();
-/*  433 */           j = this.iis.readInt();
-/*  434 */           this.iis.skipBytes(4);
-/*      */         } 
-/*      */         
-/*  437 */         this.metadata.colorSpace = (int)l5;
-/*      */         
-/*  439 */         if (l5 == 0L) {
-/*      */           
-/*  441 */           this.metadata.redX = m;
-/*  442 */           this.metadata.redY = n;
-/*  443 */           this.metadata.redZ = i1;
-/*  444 */           this.metadata.greenX = i2;
-/*  445 */           this.metadata.greenY = i3;
-/*  446 */           this.metadata.greenZ = i4;
-/*  447 */           this.metadata.blueX = i5;
-/*  448 */           this.metadata.blueY = i6;
-/*  449 */           this.metadata.blueZ = i7;
-/*  450 */           this.metadata.gammaRed = (int)l6;
-/*  451 */           this.metadata.gammaGreen = (int)l7;
-/*  452 */           this.metadata.gammaBlue = (int)l8;
-/*      */         } 
-/*      */ 
-/*      */         
-/*  456 */         int i8 = (int)((this.bitmapOffset - 14L - l) / 4L);
-/*  457 */         int i9 = i8 * 4;
-/*  458 */         this.palette = new byte[i9];
-/*  459 */         this.iis.readFully(this.palette, 0, i9);
-/*  460 */         this.metadata.palette = this.palette;
-/*  461 */         this.metadata.paletteSize = i8;
-/*      */         
-/*  463 */         switch ((int)this.compression) {
-/*      */           case 4:
-/*      */           case 5:
-/*  466 */             if (l == 108L) {
-/*  467 */               this.imageType = 17; break;
-/*  468 */             }  if (l == 124L) {
-/*  469 */               this.imageType = 18;
-/*      */             }
-/*      */             break;
-/*      */           default:
-/*  473 */             if (this.bitsPerPixel == 1) {
-/*  474 */               this.imageType = 10;
-/*  475 */             } else if (this.bitsPerPixel == 4) {
-/*  476 */               this.imageType = 11;
-/*  477 */             } else if (this.bitsPerPixel == 8) {
-/*  478 */               this.imageType = 12;
-/*  479 */             } else if (this.bitsPerPixel == 16) {
-/*  480 */               this.imageType = 13;
-/*  481 */               if ((int)this.compression == 0) {
-/*  482 */                 this.redMask = 31744;
-/*  483 */                 this.greenMask = 992;
-/*  484 */                 this.blueMask = 31;
-/*      */               } 
-/*  486 */             } else if (this.bitsPerPixel == 24) {
-/*  487 */               this.imageType = 14;
-/*  488 */             } else if (this.bitsPerPixel == 32) {
-/*  489 */               this.imageType = 15;
-/*  490 */               if ((int)this.compression == 0) {
-/*  491 */                 this.redMask = 16711680;
-/*  492 */                 this.greenMask = 65280;
-/*  493 */                 this.blueMask = 255;
-/*      */               } 
-/*      */             } 
-/*      */             
-/*  497 */             this.metadata.redMask = this.redMask;
-/*  498 */             this.metadata.greenMask = this.greenMask;
-/*  499 */             this.metadata.blueMask = this.blueMask;
-/*  500 */             this.metadata.alphaMask = this.alphaMask; break;
-/*      */         } 
-/*      */       } else {
-/*  503 */         throw new IIOException(
-/*  504 */             I18N.getString("BMPImageReader3"));
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  508 */     if (this.height > 0) {
-/*      */       
-/*  510 */       this.isBottomUp = true;
-/*      */     } else {
-/*      */       
-/*  513 */       this.isBottomUp = false;
-/*  514 */       this.height = Math.abs(this.height);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  519 */     ColorSpace colorSpace = ColorSpace.getInstance(1000);
-/*  520 */     if (this.metadata.colorSpace == 3 || this.metadata.colorSpace == 4) {
-/*      */ 
-/*      */       
-/*  523 */       this.iis.mark();
-/*  524 */       this.iis.skipBytes(i - l);
-/*  525 */       byte[] arrayOfByte1 = new byte[j];
-/*  526 */       this.iis.readFully(arrayOfByte1, 0, j);
-/*  527 */       this.iis.reset();
-/*      */       
-/*      */       try {
-/*  530 */         if (this.metadata.colorSpace == 3 && 
-/*  531 */           isLinkedProfileAllowed() && 
-/*  532 */           !isUncOrDevicePath(arrayOfByte1)) {
-/*      */           
-/*  534 */           String str = new String(arrayOfByte1, "windows-1252");
-/*      */ 
-/*      */           
-/*  537 */           colorSpace = new ICC_ColorSpace(ICC_Profile.getInstance(str));
-/*      */         } else {
-/*      */           
-/*  540 */           colorSpace = new ICC_ColorSpace(ICC_Profile.getInstance(arrayOfByte1));
-/*      */         } 
-/*  542 */       } catch (Exception exception) {
-/*  543 */         colorSpace = ColorSpace.getInstance(1000);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  547 */     if (this.bitsPerPixel == 0 || this.compression == 4L || this.compression == 5L) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  552 */       this.colorModel = null;
-/*  553 */       this.sampleModel = null;
-/*  554 */     } else if (this.bitsPerPixel == 1 || this.bitsPerPixel == 4 || this.bitsPerPixel == 8) {
-/*      */       byte[] arrayOfByte1, arrayOfByte2, arrayOfByte3;
-/*  556 */       this.numBands = 1;
-/*      */       
-/*  558 */       if (this.bitsPerPixel == 8) {
-/*  559 */         int[] arrayOfInt = new int[this.numBands];
-/*  560 */         for (byte b = 0; b < this.numBands; b++) {
-/*  561 */           arrayOfInt[b] = this.numBands - 1 - b;
-/*      */         }
-/*  563 */         this.sampleModel = new PixelInterleavedSampleModel(0, this.width, this.height, this.numBands, this.numBands * this.width, arrayOfInt);
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */ 
-/*      */ 
-/*      */         
-/*  571 */         this.sampleModel = new MultiPixelPackedSampleModel(0, this.width, this.height, this.bitsPerPixel);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  579 */       if (this.imageType == 0 || this.imageType == 1 || this.imageType == 2) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  584 */         l = (this.palette.length / 3);
-/*      */         
-/*  586 */         if (l > 256L) {
-/*  587 */           l = 256L;
-/*      */         }
-/*      */ 
-/*      */         
-/*  591 */         arrayOfByte1 = new byte[(int)l];
-/*  592 */         arrayOfByte2 = new byte[(int)l];
-/*  593 */         arrayOfByte3 = new byte[(int)l];
-/*  594 */         for (byte b = 0; b < (int)l; b++) {
-/*  595 */           int m = 3 * b;
-/*  596 */           arrayOfByte3[b] = this.palette[m];
-/*  597 */           arrayOfByte2[b] = this.palette[m + 1];
-/*  598 */           arrayOfByte1[b] = this.palette[m + 2];
-/*      */         } 
-/*      */       } else {
-/*  601 */         l = (this.palette.length / 4);
-/*      */         
-/*  603 */         if (l > 256L) {
-/*  604 */           l = 256L;
-/*      */         }
-/*      */ 
-/*      */         
-/*  608 */         arrayOfByte1 = new byte[(int)l];
-/*  609 */         arrayOfByte2 = new byte[(int)l];
-/*  610 */         arrayOfByte3 = new byte[(int)l];
-/*  611 */         for (byte b = 0; b < l; b++) {
-/*  612 */           int m = 4 * b;
-/*  613 */           arrayOfByte3[b] = this.palette[m];
-/*  614 */           arrayOfByte2[b] = this.palette[m + 1];
-/*  615 */           arrayOfByte1[b] = this.palette[m + 2];
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  619 */       if (ImageUtil.isIndicesForGrayscale(arrayOfByte1, arrayOfByte2, arrayOfByte3))
-/*  620 */       { this
-/*  621 */           .colorModel = ImageUtil.createColorModel(null, this.sampleModel); }
-/*      */       else
-/*  623 */       { this.colorModel = new IndexColorModel(this.bitsPerPixel, (int)l, arrayOfByte1, arrayOfByte2, arrayOfByte3); } 
-/*  624 */     } else if (this.bitsPerPixel == 16) {
-/*  625 */       this.numBands = 3;
-/*  626 */       this.sampleModel = new SinglePixelPackedSampleModel(1, this.width, this.height, new int[] { this.redMask, this.greenMask, this.blueMask });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  631 */       this.colorModel = new DirectColorModel(colorSpace, 16, this.redMask, this.greenMask, this.blueMask, 0, false, 1);
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     }
-/*  636 */     else if (this.bitsPerPixel == 32) {
-/*  637 */       this.numBands = (this.alphaMask == 0) ? 3 : 4;
-/*      */ 
-/*      */ 
-/*      */       
-/*  641 */       (new int[3])[0] = this.redMask; (new int[3])[1] = this.greenMask; (new int[3])[2] = this.blueMask; (new int[4])[0] = this.redMask; (new int[4])[1] = this.greenMask; (new int[4])[2] = this.blueMask; (new int[4])[3] = this.alphaMask; int[] arrayOfInt = (this.numBands == 3) ? new int[3] : new int[4];
-/*      */ 
-/*      */ 
-/*      */       
-/*  645 */       this.sampleModel = new SinglePixelPackedSampleModel(3, this.width, this.height, arrayOfInt);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  650 */       this.colorModel = new DirectColorModel(colorSpace, 32, this.redMask, this.greenMask, this.blueMask, this.alphaMask, false, 3);
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */       
-/*  655 */       this.numBands = 3;
-/*      */       
-/*  657 */       int[] arrayOfInt = new int[this.numBands];
-/*  658 */       for (byte b = 0; b < this.numBands; b++) {
-/*  659 */         arrayOfInt[b] = this.numBands - 1 - b;
-/*      */       }
-/*      */       
-/*  662 */       this.sampleModel = new PixelInterleavedSampleModel(0, this.width, this.height, this.numBands, this.numBands * this.width, arrayOfInt);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  669 */       this
-/*  670 */         .colorModel = ImageUtil.createColorModel(colorSpace, this.sampleModel);
-/*      */     } 
-/*      */     
-/*  673 */     this.originalSampleModel = this.sampleModel;
-/*  674 */     this.originalColorModel = this.colorModel;
-/*      */ 
-/*      */ 
-/*      */     
-/*  678 */     this.iis.reset();
-/*  679 */     this.iis.skipBytes(this.bitmapOffset);
-/*  680 */     this.gotHeader = true;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Iterator getImageTypes(int paramInt) throws IOException {
-/*  685 */     checkIndex(paramInt);
-/*      */     try {
-/*  687 */       readHeader();
-/*  688 */     } catch (IllegalArgumentException illegalArgumentException) {
-/*  689 */       throw new IIOException(I18N.getString("BMPImageReader6"), illegalArgumentException);
-/*      */     } 
-/*  691 */     ArrayList<ImageTypeSpecifier> arrayList = new ArrayList(1);
-/*  692 */     arrayList.add(new ImageTypeSpecifier(this.originalColorModel, this.originalSampleModel));
-/*      */     
-/*  694 */     return arrayList.iterator();
-/*      */   }
-/*      */   
-/*      */   public ImageReadParam getDefaultReadParam() {
-/*  698 */     return new ImageReadParam();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public IIOMetadata getImageMetadata(int paramInt) throws IOException {
-/*  703 */     checkIndex(paramInt);
-/*  704 */     if (this.metadata == null) {
-/*      */       try {
-/*  706 */         readHeader();
-/*  707 */       } catch (IllegalArgumentException illegalArgumentException) {
-/*  708 */         throw new IIOException(I18N.getString("BMPImageReader6"), illegalArgumentException);
-/*      */       } 
-/*      */     }
-/*  711 */     return this.metadata;
-/*      */   }
-/*      */   
-/*      */   public IIOMetadata getStreamMetadata() throws IOException {
-/*  715 */     return null;
-/*      */   }
-/*      */   
-/*      */   public boolean isRandomAccessEasy(int paramInt) throws IOException {
-/*  719 */     checkIndex(paramInt);
-/*      */     try {
-/*  721 */       readHeader();
-/*  722 */     } catch (IllegalArgumentException illegalArgumentException) {
-/*  723 */       throw new IIOException(I18N.getString("BMPImageReader6"), illegalArgumentException);
-/*      */     } 
-/*  725 */     return (this.metadata.compression == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BufferedImage read(int paramInt, ImageReadParam paramImageReadParam) throws IOException {
-/*  731 */     if (this.iis == null) {
-/*  732 */       throw new IllegalStateException(I18N.getString("BMPImageReader5"));
-/*      */     }
-/*      */     
-/*  735 */     checkIndex(paramInt);
-/*  736 */     clearAbortRequest();
-/*  737 */     processImageStarted(paramInt);
-/*      */     
-/*  739 */     if (paramImageReadParam == null) {
-/*  740 */       paramImageReadParam = getDefaultReadParam();
-/*      */     }
-/*      */     
-/*      */     try {
-/*  744 */       readHeader();
-/*  745 */     } catch (IllegalArgumentException illegalArgumentException) {
-/*  746 */       throw new IIOException(I18N.getString("BMPImageReader6"), illegalArgumentException);
-/*      */     } 
-/*      */     
-/*  749 */     this.sourceRegion = new Rectangle(0, 0, 0, 0);
-/*  750 */     this.destinationRegion = new Rectangle(0, 0, 0, 0);
-/*      */     
-/*  752 */     computeRegions(paramImageReadParam, this.width, this.height, paramImageReadParam
-/*  753 */         .getDestination(), this.sourceRegion, this.destinationRegion);
-/*      */ 
-/*      */ 
-/*      */     
-/*  757 */     this.scaleX = paramImageReadParam.getSourceXSubsampling();
-/*  758 */     this.scaleY = paramImageReadParam.getSourceYSubsampling();
-/*      */ 
-/*      */     
-/*  761 */     this.sourceBands = paramImageReadParam.getSourceBands();
-/*  762 */     this.destBands = paramImageReadParam.getDestinationBands();
-/*      */     
-/*  764 */     this.seleBand = (this.sourceBands != null && this.destBands != null);
-/*  765 */     this
-/*  766 */       .noTransform = (this.destinationRegion.equals(new Rectangle(0, 0, this.width, this.height)) || this.seleBand);
-/*      */ 
-/*      */     
-/*  769 */     if (!this.seleBand) {
-/*  770 */       this.sourceBands = new int[this.numBands];
-/*  771 */       this.destBands = new int[this.numBands];
-/*  772 */       for (byte b = 0; b < this.numBands; b++) {
-/*  773 */         this.sourceBands[b] = b; this.destBands[b] = b;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  777 */     this.bi = paramImageReadParam.getDestination();
-/*      */ 
-/*      */     
-/*  780 */     WritableRaster writableRaster = null;
-/*      */     
-/*  782 */     if (this.bi == null) {
-/*  783 */       if (this.sampleModel != null && this.colorModel != null) {
-/*  784 */         this
-/*  785 */           .sampleModel = this.sampleModel.createCompatibleSampleModel(this.destinationRegion.x + this.destinationRegion.width, this.destinationRegion.y + this.destinationRegion.height);
-/*      */ 
-/*      */ 
-/*      */         
-/*  789 */         if (this.seleBand)
-/*  790 */           this.sampleModel = this.sampleModel.createSubsetSampleModel(this.sourceBands); 
-/*  791 */         writableRaster = Raster.createWritableRaster(this.sampleModel, new Point());
-/*  792 */         this.bi = new BufferedImage(this.colorModel, writableRaster, false, null);
-/*      */       } 
-/*      */     } else {
-/*  795 */       writableRaster = this.bi.getWritableTile(0, 0);
-/*  796 */       this.sampleModel = this.bi.getSampleModel();
-/*  797 */       this.colorModel = this.bi.getColorModel();
-/*      */       
-/*  799 */       this.noTransform &= this.destinationRegion.equals(writableRaster.getBounds());
-/*      */     } 
-/*      */     
-/*  802 */     byte[] arrayOfByte = null;
-/*  803 */     short[] arrayOfShort = null;
-/*  804 */     int[] arrayOfInt = null;
-/*      */ 
-/*      */     
-/*  807 */     if (this.sampleModel != null) {
-/*  808 */       if (this.sampleModel.getDataType() == 0) {
-/*      */         
-/*  810 */         arrayOfByte = ((DataBufferByte)writableRaster.getDataBuffer()).getData();
-/*  811 */       } else if (this.sampleModel.getDataType() == 1) {
-/*      */         
-/*  813 */         arrayOfShort = ((DataBufferUShort)writableRaster.getDataBuffer()).getData();
-/*  814 */       } else if (this.sampleModel.getDataType() == 3) {
-/*      */         
-/*  816 */         arrayOfInt = ((DataBufferInt)writableRaster.getDataBuffer()).getData();
-/*      */       } 
-/*      */     }
-/*      */     
-/*  820 */     switch (this.imageType) {
-/*      */ 
-/*      */       
-/*      */       case 0:
-/*  824 */         read1Bit(arrayOfByte);
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 1:
-/*  829 */         read4Bit(arrayOfByte);
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 2:
-/*  834 */         read8Bit(arrayOfByte);
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 3:
-/*  839 */         read24Bit(arrayOfByte);
-/*      */         break;
-/*      */ 
-/*      */       
-/*      */       case 4:
-/*  844 */         read1Bit(arrayOfByte);
-/*      */         break;
-/*      */       
-/*      */       case 5:
-/*  848 */         switch ((int)this.compression) {
-/*      */           case 0:
-/*  850 */             read4Bit(arrayOfByte);
-/*      */             break;
-/*      */           
-/*      */           case 2:
-/*  854 */             readRLE4(arrayOfByte);
-/*      */             break;
-/*      */         } 
-/*      */         
-/*  858 */         throw new IIOException(
-/*  859 */             I18N.getString("BMPImageReader1"));
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 6:
-/*  864 */         switch ((int)this.compression) {
-/*      */           case 0:
-/*  866 */             read8Bit(arrayOfByte);
-/*      */             break;
-/*      */           
-/*      */           case 1:
-/*  870 */             readRLE8(arrayOfByte);
-/*      */             break;
-/*      */         } 
-/*      */         
-/*  874 */         throw new IIOException(
-/*  875 */             I18N.getString("BMPImageReader1"));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 7:
-/*  882 */         read24Bit(arrayOfByte);
-/*      */         break;
-/*      */       
-/*      */       case 8:
-/*  886 */         read16Bit(arrayOfShort);
-/*      */         break;
-/*      */       
-/*      */       case 9:
-/*  890 */         read32Bit(arrayOfInt);
-/*      */         break;
-/*      */       
-/*      */       case 16:
-/*      */       case 17:
-/*      */       case 18:
-/*  896 */         this.bi = readEmbedded((int)this.compression, this.bi, paramImageReadParam);
-/*      */         break;
-/*      */       
-/*      */       case 10:
-/*  900 */         read1Bit(arrayOfByte);
-/*      */         break;
-/*      */       
-/*      */       case 11:
-/*  904 */         switch ((int)this.compression) {
-/*      */           
-/*      */           case 0:
-/*  907 */             read4Bit(arrayOfByte);
-/*      */             break;
-/*      */           
-/*      */           case 2:
-/*  911 */             readRLE4(arrayOfByte);
-/*      */             break;
-/*      */         } 
-/*      */         
-/*  915 */         throw new IIOException(
-/*  916 */             I18N.getString("BMPImageReader1"));
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 12:
-/*  921 */         switch ((int)this.compression) {
-/*      */           
-/*      */           case 0:
-/*  924 */             read8Bit(arrayOfByte);
-/*      */             break;
-/*      */           
-/*      */           case 1:
-/*  928 */             readRLE8(arrayOfByte);
-/*      */             break;
-/*      */         } 
-/*      */         
-/*  932 */         throw new IIOException(
-/*  933 */             I18N.getString("BMPImageReader1"));
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 13:
-/*  938 */         read16Bit(arrayOfShort);
-/*      */         break;
-/*      */       
-/*      */       case 14:
-/*  942 */         read24Bit(arrayOfByte);
-/*      */         break;
-/*      */       
-/*      */       case 15:
-/*  946 */         read32Bit(arrayOfInt);
-/*      */         break;
-/*      */     } 
-/*      */     
-/*  950 */     if (abortRequested()) {
-/*  951 */       processReadAborted();
-/*      */     } else {
-/*  953 */       processImageComplete();
-/*      */     } 
-/*  955 */     return this.bi;
-/*      */   }
-/*      */   
-/*      */   public boolean canReadRaster() {
-/*  959 */     return true;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Raster readRaster(int paramInt, ImageReadParam paramImageReadParam) throws IOException {
-/*  964 */     BufferedImage bufferedImage = read(paramInt, paramImageReadParam);
-/*  965 */     return bufferedImage.getData();
-/*      */   }
-/*      */   
-/*      */   private void resetHeaderInfo() {
-/*  969 */     this.gotHeader = false;
-/*  970 */     this.bi = null;
-/*  971 */     this.sampleModel = this.originalSampleModel = null;
-/*  972 */     this.colorModel = this.originalColorModel = null;
-/*      */   }
-/*      */   
-/*      */   public void reset() {
-/*  976 */     super.reset();
-/*  977 */     this.iis = null;
-/*  978 */     resetHeaderInfo();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void read1Bit(byte[] paramArrayOfbyte) throws IOException {
-/*  983 */     int i = (this.width + 7) / 8;
-/*  984 */     int j = i % 4;
-/*  985 */     if (j != 0) {
-/*  986 */       j = 4 - j;
-/*      */     }
-/*      */     
-/*  989 */     int k = i + j;
-/*      */     
-/*  991 */     if (this.noTransform) {
-/*  992 */       int m = this.isBottomUp ? ((this.height - 1) * i) : 0;
-/*      */       
-/*  994 */       for (byte b = 0; b < this.height && 
-/*  995 */         !abortRequested(); b++) {
-/*      */ 
-/*      */         
-/*  998 */         this.iis.readFully(paramArrayOfbyte, m, i);
-/*  999 */         this.iis.skipBytes(j);
-/* 1000 */         m += this.isBottomUp ? -i : i;
-/* 1001 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1004 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } else {
-/* 1007 */       byte[] arrayOfByte = new byte[k];
-/*      */       
-/* 1009 */       int m = ((MultiPixelPackedSampleModel)this.sampleModel).getScanlineStride();
-/*      */       
-/* 1011 */       if (this.isBottomUp) {
-/* 1012 */         int i4 = this.sourceRegion.y + (this.destinationRegion.height - 1) * this.scaleY;
-/*      */         
-/* 1014 */         this.iis.skipBytes(k * (this.height - 1 - i4));
-/*      */       } else {
-/* 1016 */         this.iis.skipBytes(k * this.sourceRegion.y);
-/*      */       } 
-/* 1018 */       int n = k * (this.scaleY - 1);
-/*      */ 
-/*      */       
-/* 1021 */       int[] arrayOfInt1 = new int[this.destinationRegion.width];
-/* 1022 */       int[] arrayOfInt2 = new int[this.destinationRegion.width];
-/* 1023 */       int[] arrayOfInt3 = new int[this.destinationRegion.width];
-/* 1024 */       int[] arrayOfInt4 = new int[this.destinationRegion.width];
-/*      */       
-/* 1026 */       int i1 = this.destinationRegion.x, i2 = this.sourceRegion.x, i3 = 0;
-/* 1027 */       for (; i1 < this.destinationRegion.x + this.destinationRegion.width; 
-/* 1028 */         i1++, i3++, i2 += this.scaleX) {
-/* 1029 */         arrayOfInt3[i3] = i2 >> 3;
-/* 1030 */         arrayOfInt1[i3] = 7 - (i2 & 0x7);
-/* 1031 */         arrayOfInt4[i3] = i1 >> 3;
-/* 1032 */         arrayOfInt2[i3] = 7 - (i1 & 0x7);
-/*      */       } 
-/*      */       
-/* 1035 */       i1 = this.destinationRegion.y * m;
-/* 1036 */       if (this.isBottomUp) {
-/* 1037 */         i1 += (this.destinationRegion.height - 1) * m;
-/*      */       }
-/* 1039 */       i2 = 0; i3 = this.sourceRegion.y;
-/* 1040 */       for (; i2 < this.destinationRegion.height; i2++, i3 += this.scaleY) {
-/*      */         
-/* 1042 */         if (abortRequested())
-/*      */           break; 
-/* 1044 */         this.iis.read(arrayOfByte, 0, k);
-/* 1045 */         for (byte b = 0; b < this.destinationRegion.width; b++) {
-/*      */           
-/* 1047 */           int i4 = arrayOfByte[arrayOfInt3[b]] >> arrayOfInt1[b] & 0x1;
-/* 1048 */           paramArrayOfbyte[i1 + arrayOfInt4[b]] = (byte)(paramArrayOfbyte[i1 + arrayOfInt4[b]] | i4 << arrayOfInt2[b]);
-/*      */         } 
-/*      */         
-/* 1051 */         i1 += this.isBottomUp ? -m : m;
-/* 1052 */         this.iis.skipBytes(n);
-/* 1053 */         processImageUpdate(this.bi, 0, i2, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1056 */         processImageProgress(100.0F * i2 / this.destinationRegion.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void read4Bit(byte[] paramArrayOfbyte) throws IOException {
-/* 1064 */     int i = (this.width + 1) / 2;
-/*      */ 
-/*      */     
-/* 1067 */     int j = i % 4;
-/* 1068 */     if (j != 0) {
-/* 1069 */       j = 4 - j;
-/*      */     }
-/* 1071 */     int k = i + j;
-/*      */     
-/* 1073 */     if (this.noTransform) {
-/* 1074 */       int m = this.isBottomUp ? ((this.height - 1) * i) : 0;
-/*      */       
-/* 1076 */       for (byte b = 0; b < this.height && 
-/* 1077 */         !abortRequested(); b++) {
-/*      */ 
-/*      */         
-/* 1080 */         this.iis.readFully(paramArrayOfbyte, m, i);
-/* 1081 */         this.iis.skipBytes(j);
-/* 1082 */         m += this.isBottomUp ? -i : i;
-/* 1083 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1086 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } else {
-/* 1089 */       byte[] arrayOfByte = new byte[k];
-/*      */       
-/* 1091 */       int m = ((MultiPixelPackedSampleModel)this.sampleModel).getScanlineStride();
-/*      */       
-/* 1093 */       if (this.isBottomUp) {
-/* 1094 */         int i4 = this.sourceRegion.y + (this.destinationRegion.height - 1) * this.scaleY;
-/*      */         
-/* 1096 */         this.iis.skipBytes(k * (this.height - 1 - i4));
-/*      */       } else {
-/* 1098 */         this.iis.skipBytes(k * this.sourceRegion.y);
-/*      */       } 
-/* 1100 */       int n = k * (this.scaleY - 1);
-/*      */ 
-/*      */       
-/* 1103 */       int[] arrayOfInt1 = new int[this.destinationRegion.width];
-/* 1104 */       int[] arrayOfInt2 = new int[this.destinationRegion.width];
-/* 1105 */       int[] arrayOfInt3 = new int[this.destinationRegion.width];
-/* 1106 */       int[] arrayOfInt4 = new int[this.destinationRegion.width];
-/*      */       
-/* 1108 */       int i1 = this.destinationRegion.x, i2 = this.sourceRegion.x, i3 = 0;
-/* 1109 */       for (; i1 < this.destinationRegion.x + this.destinationRegion.width; 
-/* 1110 */         i1++, i3++, i2 += this.scaleX) {
-/* 1111 */         arrayOfInt3[i3] = i2 >> 1;
-/* 1112 */         arrayOfInt1[i3] = 1 - (i2 & 0x1) << 2;
-/* 1113 */         arrayOfInt4[i3] = i1 >> 1;
-/* 1114 */         arrayOfInt2[i3] = 1 - (i1 & 0x1) << 2;
-/*      */       } 
-/*      */       
-/* 1117 */       i1 = this.destinationRegion.y * m;
-/* 1118 */       if (this.isBottomUp) {
-/* 1119 */         i1 += (this.destinationRegion.height - 1) * m;
-/*      */       }
-/* 1121 */       i2 = 0; i3 = this.sourceRegion.y;
-/* 1122 */       for (; i2 < this.destinationRegion.height; i2++, i3 += this.scaleY) {
-/*      */         
-/* 1124 */         if (abortRequested())
-/*      */           break; 
-/* 1126 */         this.iis.read(arrayOfByte, 0, k);
-/* 1127 */         for (byte b = 0; b < this.destinationRegion.width; b++) {
-/*      */           
-/* 1129 */           int i4 = arrayOfByte[arrayOfInt3[b]] >> arrayOfInt1[b] & 0xF;
-/* 1130 */           paramArrayOfbyte[i1 + arrayOfInt4[b]] = (byte)(paramArrayOfbyte[i1 + arrayOfInt4[b]] | i4 << arrayOfInt2[b]);
-/*      */         } 
-/*      */         
-/* 1133 */         i1 += this.isBottomUp ? -m : m;
-/* 1134 */         this.iis.skipBytes(n);
-/* 1135 */         processImageUpdate(this.bi, 0, i2, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1138 */         processImageProgress(100.0F * i2 / this.destinationRegion.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void read8Bit(byte[] paramArrayOfbyte) throws IOException {
-/* 1147 */     int i = this.width % 4;
-/* 1148 */     if (i != 0) {
-/* 1149 */       i = 4 - i;
-/*      */     }
-/*      */     
-/* 1152 */     int j = this.width + i;
-/*      */     
-/* 1154 */     if (this.noTransform) {
-/* 1155 */       int k = this.isBottomUp ? ((this.height - 1) * this.width) : 0;
-/*      */       
-/* 1157 */       for (byte b = 0; b < this.height && 
-/* 1158 */         !abortRequested(); b++) {
-/*      */ 
-/*      */         
-/* 1161 */         this.iis.readFully(paramArrayOfbyte, k, this.width);
-/* 1162 */         this.iis.skipBytes(i);
-/* 1163 */         k += this.isBottomUp ? -this.width : this.width;
-/* 1164 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1167 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } else {
-/* 1170 */       byte[] arrayOfByte = new byte[j];
-/*      */       
-/* 1172 */       int k = ((ComponentSampleModel)this.sampleModel).getScanlineStride();
-/*      */       
-/* 1174 */       if (this.isBottomUp) {
-/* 1175 */         int i2 = this.sourceRegion.y + (this.destinationRegion.height - 1) * this.scaleY;
-/*      */         
-/* 1177 */         this.iis.skipBytes(j * (this.height - 1 - i2));
-/*      */       } else {
-/* 1179 */         this.iis.skipBytes(j * this.sourceRegion.y);
-/*      */       } 
-/* 1181 */       int m = j * (this.scaleY - 1);
-/*      */       
-/* 1183 */       int n = this.destinationRegion.y * k;
-/* 1184 */       if (this.isBottomUp)
-/* 1185 */         n += (this.destinationRegion.height - 1) * k; 
-/* 1186 */       n += this.destinationRegion.x;
-/*      */       
-/* 1188 */       byte b = 0; int i1 = this.sourceRegion.y;
-/* 1189 */       for (; b < this.destinationRegion.height; b++, i1 += this.scaleY) {
-/*      */         
-/* 1191 */         if (abortRequested())
-/*      */           break; 
-/* 1193 */         this.iis.read(arrayOfByte, 0, j);
-/* 1194 */         byte b1 = 0; int i2 = this.sourceRegion.x;
-/* 1195 */         for (; b1 < this.destinationRegion.width; b1++, i2 += this.scaleX)
-/*      */         {
-/* 1197 */           paramArrayOfbyte[n + b1] = arrayOfByte[i2];
-/*      */         }
-/*      */         
-/* 1200 */         n += this.isBottomUp ? -k : k;
-/* 1201 */         this.iis.skipBytes(m);
-/* 1202 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1205 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void read24Bit(byte[] paramArrayOfbyte) throws IOException {
-/* 1214 */     int i = this.width * 3 % 4;
-/* 1215 */     if (i != 0) {
-/* 1216 */       i = 4 - i;
-/*      */     }
-/* 1218 */     int j = this.width * 3;
-/* 1219 */     int k = j + i;
-/*      */     
-/* 1221 */     if (this.noTransform) {
-/* 1222 */       int m = this.isBottomUp ? ((this.height - 1) * this.width * 3) : 0;
-/*      */       
-/* 1224 */       for (byte b = 0; b < this.height && 
-/* 1225 */         !abortRequested(); b++) {
-/*      */ 
-/*      */         
-/* 1228 */         this.iis.readFully(paramArrayOfbyte, m, j);
-/* 1229 */         this.iis.skipBytes(i);
-/* 1230 */         m += this.isBottomUp ? -j : j;
-/* 1231 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1234 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } else {
-/* 1237 */       byte[] arrayOfByte = new byte[k];
-/*      */       
-/* 1239 */       j = ((ComponentSampleModel)this.sampleModel).getScanlineStride();
-/*      */       
-/* 1241 */       if (this.isBottomUp) {
-/* 1242 */         int i2 = this.sourceRegion.y + (this.destinationRegion.height - 1) * this.scaleY;
-/*      */         
-/* 1244 */         this.iis.skipBytes(k * (this.height - 1 - i2));
-/*      */       } else {
-/* 1246 */         this.iis.skipBytes(k * this.sourceRegion.y);
-/*      */       } 
-/* 1248 */       int m = k * (this.scaleY - 1);
-/*      */       
-/* 1250 */       int n = this.destinationRegion.y * j;
-/* 1251 */       if (this.isBottomUp)
-/* 1252 */         n += (this.destinationRegion.height - 1) * j; 
-/* 1253 */       n += this.destinationRegion.x * 3;
-/*      */       
-/* 1255 */       byte b = 0; int i1 = this.sourceRegion.y;
-/* 1256 */       for (; b < this.destinationRegion.height; b++, i1 += this.scaleY) {
-/*      */         
-/* 1258 */         if (abortRequested())
-/*      */           break; 
-/* 1260 */         this.iis.read(arrayOfByte, 0, k);
-/* 1261 */         byte b1 = 0; int i2 = 3 * this.sourceRegion.x;
-/* 1262 */         for (; b1 < this.destinationRegion.width; b1++, i2 += 3 * this.scaleX) {
-/*      */           
-/* 1264 */           int i3 = 3 * b1 + n;
-/* 1265 */           for (byte b2 = 0; b2 < this.destBands.length; b2++) {
-/* 1266 */             paramArrayOfbyte[i3 + this.destBands[b2]] = arrayOfByte[i2 + this.sourceBands[b2]];
-/*      */           }
-/*      */         } 
-/* 1269 */         n += this.isBottomUp ? -j : j;
-/* 1270 */         this.iis.skipBytes(m);
-/* 1271 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1274 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void read16Bit(short[] paramArrayOfshort) throws IOException {
-/* 1282 */     int i = this.width * 2 % 4;
-/*      */     
-/* 1284 */     if (i != 0) {
-/* 1285 */       i = 4 - i;
-/*      */     }
-/* 1287 */     int j = this.width + i / 2;
-/*      */     
-/* 1289 */     if (this.noTransform) {
-/* 1290 */       int k = this.isBottomUp ? ((this.height - 1) * this.width) : 0;
-/* 1291 */       for (byte b = 0; b < this.height && 
-/* 1292 */         !abortRequested(); b++) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1296 */         this.iis.readFully(paramArrayOfshort, k, this.width);
-/* 1297 */         this.iis.skipBytes(i);
-/*      */         
-/* 1299 */         k += this.isBottomUp ? -this.width : this.width;
-/* 1300 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1303 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } else {
-/* 1306 */       short[] arrayOfShort = new short[j];
-/*      */       
-/* 1308 */       int k = ((SinglePixelPackedSampleModel)this.sampleModel).getScanlineStride();
-/*      */       
-/* 1310 */       if (this.isBottomUp) {
-/* 1311 */         int i2 = this.sourceRegion.y + (this.destinationRegion.height - 1) * this.scaleY;
-/*      */         
-/* 1313 */         this.iis.skipBytes(j * (this.height - 1 - i2) << 1);
-/*      */       } else {
-/* 1315 */         this.iis.skipBytes(j * this.sourceRegion.y << 1);
-/*      */       } 
-/* 1317 */       int m = j * (this.scaleY - 1) << 1;
-/*      */       
-/* 1319 */       int n = this.destinationRegion.y * k;
-/* 1320 */       if (this.isBottomUp)
-/* 1321 */         n += (this.destinationRegion.height - 1) * k; 
-/* 1322 */       n += this.destinationRegion.x;
-/*      */       
-/* 1324 */       byte b = 0; int i1 = this.sourceRegion.y;
-/* 1325 */       for (; b < this.destinationRegion.height; b++, i1 += this.scaleY) {
-/*      */         
-/* 1327 */         if (abortRequested())
-/*      */           break; 
-/* 1329 */         this.iis.readFully(arrayOfShort, 0, j);
-/* 1330 */         byte b1 = 0; int i2 = this.sourceRegion.x;
-/* 1331 */         for (; b1 < this.destinationRegion.width; b1++, i2 += this.scaleX)
-/*      */         {
-/* 1333 */           paramArrayOfshort[n + b1] = arrayOfShort[i2];
-/*      */         }
-/*      */         
-/* 1336 */         n += this.isBottomUp ? -k : k;
-/* 1337 */         this.iis.skipBytes(m);
-/* 1338 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1341 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private void read32Bit(int[] paramArrayOfint) throws IOException {
-/* 1347 */     if (this.noTransform) {
-/* 1348 */       int i = this.isBottomUp ? ((this.height - 1) * this.width) : 0;
-/*      */       
-/* 1350 */       for (byte b = 0; b < this.height && 
-/* 1351 */         !abortRequested(); b++) {
-/*      */ 
-/*      */         
-/* 1354 */         this.iis.readFully(paramArrayOfint, i, this.width);
-/* 1355 */         i += this.isBottomUp ? -this.width : this.width;
-/* 1356 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1359 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } else {
-/* 1362 */       int[] arrayOfInt = new int[this.width];
-/*      */       
-/* 1364 */       int i = ((SinglePixelPackedSampleModel)this.sampleModel).getScanlineStride();
-/*      */       
-/* 1366 */       if (this.isBottomUp) {
-/* 1367 */         int n = this.sourceRegion.y + (this.destinationRegion.height - 1) * this.scaleY;
-/*      */         
-/* 1369 */         this.iis.skipBytes(this.width * (this.height - 1 - n) << 2);
-/*      */       } else {
-/* 1371 */         this.iis.skipBytes(this.width * this.sourceRegion.y << 2);
-/*      */       } 
-/* 1373 */       int j = this.width * (this.scaleY - 1) << 2;
-/*      */       
-/* 1375 */       int k = this.destinationRegion.y * i;
-/* 1376 */       if (this.isBottomUp)
-/* 1377 */         k += (this.destinationRegion.height - 1) * i; 
-/* 1378 */       k += this.destinationRegion.x;
-/*      */       
-/* 1380 */       byte b = 0; int m = this.sourceRegion.y;
-/* 1381 */       for (; b < this.destinationRegion.height; b++, m += this.scaleY) {
-/*      */         
-/* 1383 */         if (abortRequested())
-/*      */           break; 
-/* 1385 */         this.iis.readFully(arrayOfInt, 0, this.width);
-/* 1386 */         byte b1 = 0; int n = this.sourceRegion.x;
-/* 1387 */         for (; b1 < this.destinationRegion.width; b1++, n += this.scaleX)
-/*      */         {
-/* 1389 */           paramArrayOfint[k + b1] = arrayOfInt[n];
-/*      */         }
-/*      */         
-/* 1392 */         k += this.isBottomUp ? -i : i;
-/* 1393 */         this.iis.skipBytes(j);
-/* 1394 */         processImageUpdate(this.bi, 0, b, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */         
-/* 1397 */         processImageProgress(100.0F * b / this.destinationRegion.height);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void readRLE8(byte[] paramArrayOfbyte) throws IOException {
-/* 1404 */     int i = (int)this.imageSize;
-/* 1405 */     if (i == 0) {
-/* 1406 */       i = (int)(this.bitmapFileSize - this.bitmapOffset);
-/*      */     }
-/*      */     
-/* 1409 */     int j = 0;
-/*      */ 
-/*      */     
-/* 1412 */     int k = this.width % 4;
-/* 1413 */     if (k != 0) {
-/* 1414 */       j = 4 - k;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1418 */     byte[] arrayOfByte = new byte[i];
-/* 1419 */     boolean bool = false;
-/* 1420 */     this.iis.readFully(arrayOfByte, 0, i);
-/*      */ 
-/*      */     
-/* 1423 */     decodeRLE8(i, j, arrayOfByte, paramArrayOfbyte);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void decodeRLE8(int paramInt1, int paramInt2, byte[] paramArrayOfbyte1, byte[] paramArrayOfbyte2) throws IOException {
-/* 1431 */     byte[] arrayOfByte = new byte[this.width * this.height];
-/* 1432 */     int i = 0, j = 0;
-/*      */     
-/* 1434 */     boolean bool = false;
-/* 1435 */     int k = this.isBottomUp ? (this.height - 1) : 0;
-/*      */     
-/* 1437 */     int m = ((ComponentSampleModel)this.sampleModel).getScanlineStride();
-/* 1438 */     byte b = 0;
-/*      */     
-/* 1440 */     while (i != paramInt1) {
-/* 1441 */       int n = paramArrayOfbyte1[i++] & 0xFF;
-/* 1442 */       if (n == 0) {
-/* 1443 */         int i1; int i2; int i3; byte b1; switch (paramArrayOfbyte1[i++] & 0xFF) {
-/*      */ 
-/*      */           
-/*      */           case 0:
-/* 1447 */             if (k >= this.sourceRegion.y && k < this.sourceRegion.y + this.sourceRegion.height)
-/*      */             {
-/* 1449 */               if (this.noTransform) {
-/* 1450 */                 int i4 = k * this.width;
-/* 1451 */                 for (byte b2 = 0; b2 < this.width; b2++)
-/* 1452 */                   paramArrayOfbyte2[i4++] = arrayOfByte[b2]; 
-/* 1453 */                 processImageUpdate(this.bi, 0, k, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */                 
-/* 1456 */                 b++;
-/* 1457 */               } else if ((k - this.sourceRegion.y) % this.scaleY == 0) {
-/* 1458 */                 int i4 = (k - this.sourceRegion.y) / this.scaleY + this.destinationRegion.y;
-/*      */                 
-/* 1460 */                 int i5 = i4 * m;
-/* 1461 */                 i5 += this.destinationRegion.x;
-/* 1462 */                 int i6 = this.sourceRegion.x;
-/* 1463 */                 for (; i6 < this.sourceRegion.x + this.sourceRegion.width; 
-/* 1464 */                   i6 += this.scaleX)
-/* 1465 */                   paramArrayOfbyte2[i5++] = arrayOfByte[i6]; 
-/* 1466 */                 processImageUpdate(this.bi, 0, i4, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */                 
-/* 1469 */                 b++;
-/*      */               } 
-/*      */             }
-/* 1472 */             processImageProgress(100.0F * b / this.destinationRegion.height);
-/* 1473 */             k += this.isBottomUp ? -1 : 1;
-/* 1474 */             j = 0;
-/*      */             
-/* 1476 */             if (abortRequested()) {
-/* 1477 */               bool = true;
-/*      */             }
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 1:
-/* 1484 */             bool = true;
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 2:
-/* 1489 */             i1 = paramArrayOfbyte1[i++] & 0xFF;
-/* 1490 */             i2 = paramArrayOfbyte1[i] & 0xFF;
-/*      */             
-/* 1492 */             j += i1 + i2 * this.width;
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 1496 */             i3 = paramArrayOfbyte1[i - 1] & 0xFF;
-/* 1497 */             for (b1 = 0; b1 < i3; b1++) {
-/* 1498 */               arrayOfByte[j++] = (byte)(paramArrayOfbyte1[i++] & 0xFF);
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */             
-/* 1503 */             if ((i3 & 0x1) == 1)
-/* 1504 */               i++; 
-/*      */             break;
-/*      */         } 
-/*      */       } else {
-/* 1508 */         for (byte b1 = 0; b1 < n; b1++) {
-/* 1509 */           arrayOfByte[j++] = (byte)(paramArrayOfbyte1[i] & 0xFF);
-/*      */         }
-/*      */         
-/* 1512 */         i++;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1516 */       if (bool) {
-/*      */         break;
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readRLE4(byte[] paramArrayOfbyte) throws IOException {
-/* 1525 */     int i = (int)this.imageSize;
-/* 1526 */     if (i == 0) {
-/* 1527 */       i = (int)(this.bitmapFileSize - this.bitmapOffset);
-/*      */     }
-/*      */     
-/* 1530 */     int j = 0;
-/*      */ 
-/*      */     
-/* 1533 */     int k = this.width % 4;
-/* 1534 */     if (k != 0) {
-/* 1535 */       j = 4 - k;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1539 */     byte[] arrayOfByte = new byte[i];
-/* 1540 */     this.iis.readFully(arrayOfByte, 0, i);
-/*      */ 
-/*      */     
-/* 1543 */     decodeRLE4(i, j, arrayOfByte, paramArrayOfbyte);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void decodeRLE4(int paramInt1, int paramInt2, byte[] paramArrayOfbyte1, byte[] paramArrayOfbyte2) throws IOException {
-/* 1550 */     byte[] arrayOfByte = new byte[this.width];
-/* 1551 */     int i = 0, j = 0;
-/*      */     
-/* 1553 */     boolean bool = false;
-/* 1554 */     int k = this.isBottomUp ? (this.height - 1) : 0;
-/*      */     
-/* 1556 */     int m = ((MultiPixelPackedSampleModel)this.sampleModel).getScanlineStride();
-/* 1557 */     byte b = 0;
-/*      */     
-/* 1559 */     while (i != paramInt1) {
-/*      */       
-/* 1561 */       int n = paramArrayOfbyte1[i++] & 0xFF;
-/* 1562 */       if (n == 0) {
-/*      */         int i1; int i2;
-/*      */         int i3;
-/*      */         byte b1;
-/* 1566 */         switch (paramArrayOfbyte1[i++] & 0xFF) {
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 0:
-/* 1571 */             if (k >= this.sourceRegion.y && k < this.sourceRegion.y + this.sourceRegion.height)
-/*      */             {
-/* 1573 */               if (this.noTransform) {
-/* 1574 */                 int i4 = k * (this.width + 1 >> 1);
-/* 1575 */                 for (byte b2 = 0, b3 = 0; b2 < this.width >> 1; b2++) {
-/* 1576 */                   paramArrayOfbyte2[i4++] = (byte)(arrayOfByte[b3++] << 4 | arrayOfByte[b3++]);
-/*      */                 }
-/* 1578 */                 if ((this.width & 0x1) == 1) {
-/* 1579 */                   paramArrayOfbyte2[i4] = (byte)(paramArrayOfbyte2[i4] | arrayOfByte[this.width - 1] << 4);
-/*      */                 }
-/* 1581 */                 processImageUpdate(this.bi, 0, k, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */                 
-/* 1584 */                 b++;
-/* 1585 */               } else if ((k - this.sourceRegion.y) % this.scaleY == 0) {
-/* 1586 */                 int i4 = (k - this.sourceRegion.y) / this.scaleY + this.destinationRegion.y;
-/*      */                 
-/* 1588 */                 int i5 = i4 * m;
-/* 1589 */                 i5 += this.destinationRegion.x >> 1;
-/* 1590 */                 int i6 = 1 - (this.destinationRegion.x & 0x1) << 2;
-/* 1591 */                 int i7 = this.sourceRegion.x;
-/* 1592 */                 for (; i7 < this.sourceRegion.x + this.sourceRegion.width; 
-/* 1593 */                   i7 += this.scaleX) {
-/* 1594 */                   paramArrayOfbyte2[i5] = (byte)(paramArrayOfbyte2[i5] | arrayOfByte[i7] << i6);
-/* 1595 */                   i6 += 4;
-/* 1596 */                   if (i6 == 4) {
-/* 1597 */                     i5++;
-/*      */                   }
-/* 1599 */                   i6 &= 0x7;
-/*      */                 } 
-/* 1601 */                 processImageUpdate(this.bi, 0, i4, this.destinationRegion.width, 1, 1, 1, new int[] { 0 });
-/*      */ 
-/*      */                 
-/* 1604 */                 b++;
-/*      */               } 
-/*      */             }
-/* 1607 */             processImageProgress(100.0F * b / this.destinationRegion.height);
-/* 1608 */             k += this.isBottomUp ? -1 : 1;
-/* 1609 */             j = 0;
-/*      */             
-/* 1611 */             if (abortRequested()) {
-/* 1612 */               bool = true;
-/*      */             }
-/*      */             break;
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           case 1:
-/* 1619 */             bool = true;
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 2:
-/* 1624 */             i1 = paramArrayOfbyte1[i++] & 0xFF;
-/* 1625 */             i2 = paramArrayOfbyte1[i] & 0xFF;
-/*      */             
-/* 1627 */             j += i1 + i2 * this.width;
-/*      */             break;
-/*      */           
-/*      */           default:
-/* 1631 */             i3 = paramArrayOfbyte1[i - 1] & 0xFF;
-/* 1632 */             for (b1 = 0; b1 < i3; b1++) {
-/* 1633 */               arrayOfByte[j++] = (byte)(((b1 & 0x1) == 0) ? ((paramArrayOfbyte1[i] & 0xF0) >> 4) : (paramArrayOfbyte1[i++] & 0xF));
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1639 */             if ((i3 & 0x1) == 1) {
-/* 1640 */               i++;
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */             
-/* 1645 */             if (((int)Math.ceil((i3 / 2)) & 0x1) == 1) {
-/* 1646 */               i++;
-/*      */             }
-/*      */             break;
-/*      */         } 
-/*      */       
-/*      */       } else {
-/* 1652 */         int[] arrayOfInt = { (paramArrayOfbyte1[i] & 0xF0) >> 4, paramArrayOfbyte1[i] & 0xF };
-/*      */         
-/* 1654 */         for (byte b1 = 0; b1 < n && j < this.width; b1++) {
-/* 1655 */           arrayOfByte[j++] = (byte)arrayOfInt[b1 & 0x1];
-/*      */         }
-/*      */         
-/* 1658 */         i++;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1662 */       if (bool) {
-/*      */         break;
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private BufferedImage readEmbedded(int paramInt, BufferedImage paramBufferedImage, ImageReadParam paramImageReadParam) throws IOException {
-/*      */     String str;
-/* 1681 */     switch (paramInt) {
-/*      */       case 4:
-/* 1683 */         str = "JPEG";
-/*      */         break;
-/*      */       case 5:
-/* 1686 */         str = "PNG";
-/*      */         break;
-/*      */       default:
-/* 1689 */         throw new IOException("Unexpected compression type: " + paramInt);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1693 */     ImageReader imageReader = ImageIO.getImageReadersByFormatName(str).next();
-/* 1694 */     if (imageReader == null) {
-/* 1695 */       throw new RuntimeException(I18N.getString("BMPImageReader4") + " " + str);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1699 */     byte[] arrayOfByte = new byte[(int)this.imageSize];
-/* 1700 */     this.iis.read(arrayOfByte);
-/* 1701 */     imageReader.setInput(ImageIO.createImageInputStream(new ByteArrayInputStream(arrayOfByte)));
-/* 1702 */     if (paramBufferedImage == null) {
-/* 1703 */       ImageTypeSpecifier imageTypeSpecifier = imageReader.getImageTypes(0).next();
-/* 1704 */       paramBufferedImage = imageTypeSpecifier.createBufferedImage(this.destinationRegion.x + this.destinationRegion.width, this.destinationRegion.y + this.destinationRegion.height);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1710 */     imageReader.addIIOReadProgressListener(new EmbeddedProgressAdapter()
-/*      */         {
-/*      */           public void imageProgress(ImageReader param1ImageReader, float param1Float)
-/*      */           {
-/* 1714 */             BMPImageReader.this.processImageProgress(param1Float);
-/*      */           }
-/*      */         });
-/*      */     
-/* 1718 */     imageReader.addIIOReadUpdateListener(new IIOReadUpdateListener()
-/*      */         {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           public void imageUpdate(ImageReader param1ImageReader, BufferedImage param1BufferedImage, int param1Int1, int param1Int2, int param1Int3, int param1Int4, int param1Int5, int param1Int6, int[] param1ArrayOfint)
-/*      */           {
-/* 1726 */             BMPImageReader.this.processImageUpdate(param1BufferedImage, param1Int1, param1Int2, param1Int3, param1Int4, param1Int5, param1Int6, param1ArrayOfint);
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           public void passComplete(ImageReader param1ImageReader, BufferedImage param1BufferedImage) {
-/* 1733 */             BMPImageReader.this.processPassComplete(param1BufferedImage);
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           public void passStarted(ImageReader param1ImageReader, BufferedImage param1BufferedImage, int param1Int1, int param1Int2, int param1Int3, int param1Int4, int param1Int5, int param1Int6, int param1Int7, int[] param1ArrayOfint) {
-/* 1743 */             BMPImageReader.this.processPassStarted(param1BufferedImage, param1Int1, param1Int2, param1Int3, param1Int4, param1Int5, param1Int6, param1Int7, param1ArrayOfint);
-/*      */           }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           public void thumbnailPassComplete(ImageReader param1ImageReader, BufferedImage param1BufferedImage) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           public void thumbnailPassStarted(ImageReader param1ImageReader, BufferedImage param1BufferedImage, int param1Int1, int param1Int2, int param1Int3, int param1Int4, int param1Int5, int param1Int6, int param1Int7, int[] param1ArrayOfint) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           public void thumbnailUpdate(ImageReader param1ImageReader, BufferedImage param1BufferedImage, int param1Int1, int param1Int2, int param1Int3, int param1Int4, int param1Int5, int param1Int6, int[] param1ArrayOfint) {}
-/*      */         });
-/* 1764 */     imageReader.addIIOReadWarningListener(new IIOReadWarningListener()
-/*      */         {
-/*      */           public void warningOccurred(ImageReader param1ImageReader, String param1String) {
-/* 1767 */             BMPImageReader.this.processWarningOccurred(param1String);
-/*      */           }
-/*      */         });
-/*      */     
-/* 1771 */     ImageReadParam imageReadParam = imageReader.getDefaultReadParam();
-/* 1772 */     imageReadParam.setDestination(paramBufferedImage);
-/* 1773 */     imageReadParam.setDestinationBands(paramImageReadParam.getDestinationBands());
-/* 1774 */     imageReadParam.setDestinationOffset(paramImageReadParam.getDestinationOffset());
-/* 1775 */     imageReadParam.setSourceBands(paramImageReadParam.getSourceBands());
-/* 1776 */     imageReadParam.setSourceRegion(paramImageReadParam.getSourceRegion());
-/* 1777 */     imageReadParam.setSourceSubsampling(paramImageReadParam.getSourceXSubsampling(), paramImageReadParam
-/* 1778 */         .getSourceYSubsampling(), paramImageReadParam
-/* 1779 */         .getSubsamplingXOffset(), paramImageReadParam
-/* 1780 */         .getSubsamplingYOffset());
-/* 1781 */     imageReader.read(0, imageReadParam);
-/* 1782 */     return paramBufferedImage;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1797 */   private static Boolean isLinkedProfileDisabled = null; private class EmbeddedProgressAdapter implements IIOReadProgressListener {
-/*      */     private EmbeddedProgressAdapter() {} public void imageComplete(ImageReader param1ImageReader) {} public void imageProgress(ImageReader param1ImageReader, float param1Float) {} public void imageStarted(ImageReader param1ImageReader, int param1Int) {} public void thumbnailComplete(ImageReader param1ImageReader) {} public void thumbnailProgress(ImageReader param1ImageReader, float param1Float) {} public void thumbnailStarted(ImageReader param1ImageReader, int param1Int1, int param1Int2) {} public void sequenceComplete(ImageReader param1ImageReader) {} public void sequenceStarted(ImageReader param1ImageReader, int param1Int) {} public void readAborted(ImageReader param1ImageReader) {} }
-/*      */   private static boolean isLinkedProfileAllowed() {
-/* 1800 */     if (isLinkedProfileDisabled == null) {
-/* 1801 */       PrivilegedAction<Boolean> privilegedAction = new PrivilegedAction<Boolean>() {
-/*      */           public Boolean run() {
-/* 1803 */             return Boolean.valueOf(Boolean.getBoolean("sun.imageio.plugins.bmp.disableLinkedProfiles"));
-/*      */           }
-/*      */         };
-/* 1806 */       isLinkedProfileDisabled = AccessController.<Boolean>doPrivileged(privilegedAction);
-/*      */     } 
-/* 1808 */     return !isLinkedProfileDisabled.booleanValue();
-/*      */   }
-/*      */   
-/* 1811 */   private static Boolean isWindowsPlatform = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isUncOrDevicePath(byte[] paramArrayOfbyte) {
-/* 1825 */     if (isWindowsPlatform == null) {
-/* 1826 */       PrivilegedAction<Boolean> privilegedAction = new PrivilegedAction<Boolean>() {
-/*      */           public Boolean run() {
-/* 1828 */             String str = System.getProperty("os.name");
-/* 1829 */             return Boolean.valueOf((str != null && str
-/* 1830 */                 .toLowerCase().startsWith("win")));
-/*      */           }
-/*      */         };
-/* 1833 */       isWindowsPlatform = AccessController.<Boolean>doPrivileged(privilegedAction);
-/*      */     } 
-/*      */     
-/* 1836 */     if (!isWindowsPlatform.booleanValue())
-/*      */     {
-/* 1838 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1842 */     if (paramArrayOfbyte[0] == 47) paramArrayOfbyte[0] = 92; 
-/* 1843 */     if (paramArrayOfbyte[1] == 47) paramArrayOfbyte[1] = 92; 
-/* 1844 */     if (paramArrayOfbyte[3] == 47) paramArrayOfbyte[3] = 92;
-/*      */ 
-/*      */     
-/* 1847 */     if (paramArrayOfbyte[0] == 92 && paramArrayOfbyte[1] == 92) {
-/* 1848 */       if (paramArrayOfbyte[2] == 63 && paramArrayOfbyte[3] == 92)
-/*      */       {
-/* 1850 */         return ((paramArrayOfbyte[4] == 85 || paramArrayOfbyte[4] == 117) && (paramArrayOfbyte[5] == 78 || paramArrayOfbyte[5] == 110) && (paramArrayOfbyte[6] == 67 || paramArrayOfbyte[6] == 99));
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 1855 */       return true;
-/*      */     } 
-/*      */     
-/* 1858 */     return false;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\bmp\BMPImageReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.bmp;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferUShort;
+import java.awt.image.DirectColorModel;
+import java.awt.image.IndexColorModel;
+import java.awt.image.MultiPixelPackedSampleModel;
+import java.awt.image.PixelInterleavedSampleModel;
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
+import java.awt.image.SinglePixelPackedSampleModel;
+import java.awt.image.WritableRaster;
+
+import javax.imageio.IIOException;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.event.IIOReadProgressListener;
+import javax.imageio.event.IIOReadUpdateListener;
+import javax.imageio.event.IIOReadWarningListener;
+
+import java.io.*;
+import java.nio.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+
+import com.sun.imageio.plugins.common.ImageUtil;
+import com.sun.imageio.plugins.common.I18N;
+
+/** This class is the Java Image IO plugin reader for BMP images.
+ *  It may subsample the image, clip the image, select sub-bands,
+ *  and shift the decoded image origin if the proper decoding parameter
+ *  are set in the provided <code>ImageReadParam</code>.
+ *
+ *  This class supports Microsoft Windows Bitmap Version 3-5,
+ *  as well as OS/2 Bitmap Version 2.x (for single-image BMP file).
+ */
+public class BMPImageReader extends ImageReader implements BMPConstants {
+    // BMP Image types
+    private static final int VERSION_2_1_BIT = 0;
+    private static final int VERSION_2_4_BIT = 1;
+    private static final int VERSION_2_8_BIT = 2;
+    private static final int VERSION_2_24_BIT = 3;
+
+    private static final int VERSION_3_1_BIT = 4;
+    private static final int VERSION_3_4_BIT = 5;
+    private static final int VERSION_3_8_BIT = 6;
+    private static final int VERSION_3_24_BIT = 7;
+
+    private static final int VERSION_3_NT_16_BIT = 8;
+    private static final int VERSION_3_NT_32_BIT = 9;
+
+    private static final int VERSION_4_1_BIT = 10;
+    private static final int VERSION_4_4_BIT = 11;
+    private static final int VERSION_4_8_BIT = 12;
+    private static final int VERSION_4_16_BIT = 13;
+    private static final int VERSION_4_24_BIT = 14;
+    private static final int VERSION_4_32_BIT = 15;
+
+    private static final int VERSION_3_XP_EMBEDDED = 16;
+    private static final int VERSION_4_XP_EMBEDDED = 17;
+    private static final int VERSION_5_XP_EMBEDDED = 18;
+
+    // BMP variables
+    private long bitmapFileSize;
+    private long bitmapOffset;
+    private long compression;
+    private long imageSize;
+    private byte palette[];
+    private int imageType;
+    private int numBands;
+    private boolean isBottomUp;
+    private int bitsPerPixel;
+    private int redMask, greenMask, blueMask, alphaMask;
+
+    private SampleModel sampleModel, originalSampleModel;
+    private ColorModel colorModel, originalColorModel;
+
+    /** The input stream where reads from */
+    private ImageInputStream iis = null;
+
+    /** Indicates whether the header is read. */
+    private boolean gotHeader = false;
+
+    /** The original image width. */
+    private int width;
+
+    /** The original image height. */
+    private int height;
+
+    /** The destination region. */
+    private Rectangle destinationRegion;
+
+    /** The source region. */
+    private Rectangle sourceRegion;
+
+    /** The metadata from the stream. */
+    private BMPMetadata metadata;
+
+    /** The destination image. */
+    private BufferedImage bi;
+
+    /** Indicates whether subsampled, subregion is required, and offset is
+     *  defined
+     */
+    private boolean noTransform = true;
+
+    /** Indicates whether subband is selected. */
+    private boolean seleBand = false;
+
+    /** The scaling factors. */
+    private int scaleX, scaleY;
+
+    /** source and destination bands. */
+    private int[] sourceBands, destBands;
+
+    /** Constructs <code>BMPImageReader</code> from the provided
+     *  <code>ImageReaderSpi</code>.
+     */
+    public BMPImageReader(ImageReaderSpi originator) {
+        super(originator);
+    }
+
+    /** Overrides the method defined in the superclass. */
+    public void setInput(Object input,
+                         boolean seekForwardOnly,
+                         boolean ignoreMetadata) {
+        super.setInput(input, seekForwardOnly, ignoreMetadata);
+        iis = (ImageInputStream) input; // Always works
+        if(iis != null)
+            iis.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+        resetHeaderInfo();
+    }
+
+    /** Overrides the method defined in the superclass. */
+    public int getNumImages(boolean allowSearch) throws IOException {
+        if (iis == null) {
+            throw new IllegalStateException(I18N.getString("GetNumImages0"));
+        }
+        if (seekForwardOnly && allowSearch) {
+            throw new IllegalStateException(I18N.getString("GetNumImages1"));
+        }
+        return 1;
+    }
+
+    @Override
+    public int getWidth(int imageIndex) throws IOException {
+        checkIndex(imageIndex);
+        try {
+            readHeader();
+        } catch (IllegalArgumentException e) {
+            throw new IIOException(I18N.getString("BMPImageReader6"), e);
+        }
+        return width;
+    }
+
+    public int getHeight(int imageIndex) throws IOException {
+        checkIndex(imageIndex);
+        try {
+            readHeader();
+        } catch (IllegalArgumentException e) {
+            throw new IIOException(I18N.getString("BMPImageReader6"), e);
+        }
+        return height;
+    }
+
+    private void checkIndex(int imageIndex) {
+        if (imageIndex != 0) {
+            throw new IndexOutOfBoundsException(I18N.getString("BMPImageReader0"));
+        }
+    }
+
+    /**
+     * Process the image header.
+     *
+     * @exception IllegalStateException if source stream is not set.
+     *
+     * @exception IOException if image stream is corrupted.
+     *
+     * @exception IllegalArgumentException if the image stream does not contain
+     *             a BMP image, or if a sample model instance to describe the
+     *             image can not be created.
+     */
+    protected void readHeader() throws IOException, IllegalArgumentException {
+        if (gotHeader)
+            return;
+
+        if (iis == null) {
+            throw new IllegalStateException("Input source not set!");
+        }
+        int profileData = 0, profileSize = 0;
+
+        this.metadata = new BMPMetadata();
+        iis.mark();
+
+        // read and check the magic marker
+        byte[] marker = new byte[2];
+        iis.read(marker);
+        if (marker[0] != 0x42 || marker[1] != 0x4d)
+            throw new IllegalArgumentException(I18N.getString("BMPImageReader1"));
+
+        // Read file size
+        bitmapFileSize = iis.readUnsignedInt();
+        // skip the two reserved fields
+        iis.skipBytes(4);
+
+        // Offset to the bitmap from the beginning
+        bitmapOffset = iis.readUnsignedInt();
+        // End File Header
+
+        // Start BitmapCoreHeader
+        long size = iis.readUnsignedInt();
+
+        if (size == 12) {
+            width = iis.readShort();
+            height = iis.readShort();
+        } else {
+            width = iis.readInt();
+            height = iis.readInt();
+        }
+
+        metadata.width = width;
+        metadata.height = height;
+
+        int planes = iis.readUnsignedShort();
+        bitsPerPixel = iis.readUnsignedShort();
+
+        //metadata.colorPlane = planes;
+        metadata.bitsPerPixel = (short)bitsPerPixel;
+
+        // As BMP always has 3 rgb bands, except for Version 5,
+        // which is bgra
+        numBands = 3;
+
+        if (size == 12) {
+            // Windows 2.x and OS/2 1.x
+            metadata.bmpVersion = VERSION_2;
+
+            // Classify the image type
+            if (bitsPerPixel == 1) {
+                imageType = VERSION_2_1_BIT;
+            } else if (bitsPerPixel == 4) {
+                imageType = VERSION_2_4_BIT;
+            } else if (bitsPerPixel == 8) {
+                imageType = VERSION_2_8_BIT;
+            } else if (bitsPerPixel == 24) {
+                imageType = VERSION_2_24_BIT;
+            }
+
+            // Read in the palette
+            int numberOfEntries = (int)((bitmapOffset - 14 - size) / 3);
+            int sizeOfPalette = numberOfEntries*3;
+            palette = new byte[sizeOfPalette];
+            iis.readFully(palette, 0, sizeOfPalette);
+            metadata.palette = palette;
+            metadata.paletteSize = numberOfEntries;
+        } else {
+            compression = iis.readUnsignedInt();
+            imageSize = iis.readUnsignedInt();
+            long xPelsPerMeter = iis.readInt();
+            long yPelsPerMeter = iis.readInt();
+            long colorsUsed = iis.readUnsignedInt();
+            long colorsImportant = iis.readUnsignedInt();
+
+            metadata.compression = (int)compression;
+            metadata.xPixelsPerMeter = (int)xPelsPerMeter;
+            metadata.yPixelsPerMeter = (int)yPelsPerMeter;
+            metadata.colorsUsed = (int)colorsUsed;
+            metadata.colorsImportant = (int)colorsImportant;
+
+            if (size == 40) {
+                // Windows 3.x and Windows NT
+                switch((int)compression) {
+
+                case BI_JPEG:
+                case BI_PNG:
+                    metadata.bmpVersion = VERSION_3;
+                    imageType = VERSION_3_XP_EMBEDDED;
+                    break;
+
+                case BI_RGB:  // No compression
+                case BI_RLE8:  // 8-bit RLE compression
+                case BI_RLE4:  // 4-bit RLE compression
+
+                    // Read in the palette
+                    if (bitmapOffset < (size + 14)) {
+                        throw new IIOException(I18N.getString("BMPImageReader7"));
+                    }
+                    int numberOfEntries = (int)((bitmapOffset-14-size) / 4);
+                    int sizeOfPalette = numberOfEntries * 4;
+                    palette = new byte[sizeOfPalette];
+                    iis.readFully(palette, 0, sizeOfPalette);
+
+                    metadata.palette = palette;
+                    metadata.paletteSize = numberOfEntries;
+
+                    if (bitsPerPixel == 1) {
+                        imageType = VERSION_3_1_BIT;
+                    } else if (bitsPerPixel == 4) {
+                        imageType = VERSION_3_4_BIT;
+                    } else if (bitsPerPixel == 8) {
+                        imageType = VERSION_3_8_BIT;
+                    } else if (bitsPerPixel == 24) {
+                        imageType = VERSION_3_24_BIT;
+                    } else if (bitsPerPixel == 16) {
+                        imageType = VERSION_3_NT_16_BIT;
+
+                        redMask = 0x7C00;
+                        greenMask = 0x3E0;
+                        blueMask =  (1 << 5) - 1;// 0x1F;
+                        metadata.redMask = redMask;
+                        metadata.greenMask = greenMask;
+                        metadata.blueMask = blueMask;
+                    } else if (bitsPerPixel == 32) {
+                        imageType = VERSION_3_NT_32_BIT;
+                        redMask   = 0x00FF0000;
+                        greenMask = 0x0000FF00;
+                        blueMask  = 0x000000FF;
+                        metadata.redMask = redMask;
+                        metadata.greenMask = greenMask;
+                        metadata.blueMask = blueMask;
+                    }
+
+                    metadata.bmpVersion = VERSION_3;
+                    break;
+
+                case BI_BITFIELDS:
+
+                    if (bitsPerPixel == 16) {
+                        imageType = VERSION_3_NT_16_BIT;
+                    } else if (bitsPerPixel == 32) {
+                        imageType = VERSION_3_NT_32_BIT;
+                    }
+
+                    // BitsField encoding
+                    redMask = (int)iis.readUnsignedInt();
+                    greenMask = (int)iis.readUnsignedInt();
+                    blueMask = (int)iis.readUnsignedInt();
+                    metadata.redMask = redMask;
+                    metadata.greenMask = greenMask;
+                    metadata.blueMask = blueMask;
+
+                    if (colorsUsed != 0) {
+                        // there is a palette
+                        sizeOfPalette = (int)colorsUsed*4;
+                        palette = new byte[sizeOfPalette];
+                        iis.readFully(palette, 0, sizeOfPalette);
+
+                        metadata.palette = palette;
+                        metadata.paletteSize = (int)colorsUsed;
+                    }
+                    metadata.bmpVersion = VERSION_3_NT;
+
+                    break;
+                default:
+                    throw new
+                        IIOException(I18N.getString("BMPImageReader2"));
+                }
+            } else if (size == 108 || size == 124) {
+                // Windows 4.x BMP
+                if (size == 108)
+                    metadata.bmpVersion = VERSION_4;
+                else if (size == 124)
+                    metadata.bmpVersion = VERSION_5;
+
+                // rgb masks, valid only if comp is BI_BITFIELDS
+                redMask = (int)iis.readUnsignedInt();
+                greenMask = (int)iis.readUnsignedInt();
+                blueMask = (int)iis.readUnsignedInt();
+                // Only supported for 32bpp BI_RGB argb
+                alphaMask = (int)iis.readUnsignedInt();
+                long csType = iis.readUnsignedInt();
+                int redX = iis.readInt();
+                int redY = iis.readInt();
+                int redZ = iis.readInt();
+                int greenX = iis.readInt();
+                int greenY = iis.readInt();
+                int greenZ = iis.readInt();
+                int blueX = iis.readInt();
+                int blueY = iis.readInt();
+                int blueZ = iis.readInt();
+                long gammaRed = iis.readUnsignedInt();
+                long gammaGreen = iis.readUnsignedInt();
+                long gammaBlue = iis.readUnsignedInt();
+
+                if (size == 124) {
+                    metadata.intent = iis.readInt();
+                    profileData = iis.readInt();
+                    profileSize = iis.readInt();
+                    iis.skipBytes(4);
+                }
+
+                metadata.colorSpace = (int)csType;
+
+                if (csType == LCS_CALIBRATED_RGB) {
+                    // All the new fields are valid only for this case
+                    metadata.redX = redX;
+                    metadata.redY = redY;
+                    metadata.redZ = redZ;
+                    metadata.greenX = greenX;
+                    metadata.greenY = greenY;
+                    metadata.greenZ = greenZ;
+                    metadata.blueX = blueX;
+                    metadata.blueY = blueY;
+                    metadata.blueZ = blueZ;
+                    metadata.gammaRed = (int)gammaRed;
+                    metadata.gammaGreen = (int)gammaGreen;
+                    metadata.gammaBlue = (int)gammaBlue;
+                }
+
+                // Read in the palette
+                int numberOfEntries = (int)((bitmapOffset-14-size) / 4);
+                int sizeOfPalette = numberOfEntries*4;
+                palette = new byte[sizeOfPalette];
+                iis.readFully(palette, 0, sizeOfPalette);
+                metadata.palette = palette;
+                metadata.paletteSize = numberOfEntries;
+
+                switch ((int)compression) {
+                case BI_JPEG:
+                case BI_PNG:
+                    if (size == 108) {
+                        imageType = VERSION_4_XP_EMBEDDED;
+                    } else if (size == 124) {
+                        imageType = VERSION_5_XP_EMBEDDED;
+                    }
+                    break;
+                default:
+                    if (bitsPerPixel == 1) {
+                        imageType = VERSION_4_1_BIT;
+                    } else if (bitsPerPixel == 4) {
+                        imageType = VERSION_4_4_BIT;
+                    } else if (bitsPerPixel == 8) {
+                        imageType = VERSION_4_8_BIT;
+                    } else if (bitsPerPixel == 16) {
+                        imageType = VERSION_4_16_BIT;
+                        if ((int)compression == BI_RGB) {
+                            redMask = 0x7C00;
+                            greenMask = 0x3E0;
+                            blueMask = 0x1F;
+                        }
+                    } else if (bitsPerPixel == 24) {
+                        imageType = VERSION_4_24_BIT;
+                    } else if (bitsPerPixel == 32) {
+                        imageType = VERSION_4_32_BIT;
+                        if ((int)compression == BI_RGB) {
+                            redMask   = 0x00FF0000;
+                            greenMask = 0x0000FF00;
+                            blueMask  = 0x000000FF;
+                        }
+                    }
+
+                    metadata.redMask = redMask;
+                    metadata.greenMask = greenMask;
+                    metadata.blueMask = blueMask;
+                    metadata.alphaMask = alphaMask;
+                }
+            } else {
+                throw new
+                    IIOException(I18N.getString("BMPImageReader3"));
+            }
+        }
+
+        if (height > 0) {
+            // bottom up image
+            isBottomUp = true;
+        } else {
+            // top down image
+            isBottomUp = false;
+            height = Math.abs(height);
+        }
+
+        // Reset Image Layout so there's only one tile.
+        //Define the color space
+        ColorSpace colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        if (metadata.colorSpace == PROFILE_LINKED ||
+            metadata.colorSpace == PROFILE_EMBEDDED) {
+
+            iis.mark();
+            iis.skipBytes(profileData - size);
+            byte[] profile = new byte[profileSize];
+            iis.readFully(profile, 0, profileSize);
+            iis.reset();
+
+            try {
+                if (metadata.colorSpace == PROFILE_LINKED &&
+                    isLinkedProfileAllowed() &&
+                    !isUncOrDevicePath(profile))
+                {
+                    String path = new String(profile, "windows-1252");
+
+                    colorSpace =
+                        new ICC_ColorSpace(ICC_Profile.getInstance(path));
+                } else {
+                    colorSpace =
+                        new ICC_ColorSpace(ICC_Profile.getInstance(profile));
+                }
+            } catch (Exception e) {
+                colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+            }
+        }
+
+        if (bitsPerPixel == 0 ||
+            compression == BI_JPEG || compression == BI_PNG )
+        {
+            // the colorModel and sampleModel will be initialzed
+            // by the  reader of embedded image
+            colorModel = null;
+            sampleModel = null;
+        } else if (bitsPerPixel == 1 || bitsPerPixel == 4 || bitsPerPixel == 8) {
+            // When number of bitsPerPixel is <= 8, we use IndexColorModel.
+            numBands = 1;
+
+            if (bitsPerPixel == 8) {
+                int[] bandOffsets = new int[numBands];
+                for (int i = 0; i < numBands; i++) {
+                    bandOffsets[i] = numBands -1 -i;
+                }
+                sampleModel =
+                    new PixelInterleavedSampleModel(DataBuffer.TYPE_BYTE,
+                                                    width, height,
+                                                    numBands,
+                                                    numBands * width,
+                                                    bandOffsets);
+            } else {
+                // 1 and 4 bit pixels can be stored in a packed format.
+                sampleModel =
+                    new MultiPixelPackedSampleModel(DataBuffer.TYPE_BYTE,
+                                                    width, height,
+                                                    bitsPerPixel);
+            }
+
+            // Create IndexColorModel from the palette.
+            byte r[], g[], b[];
+            if (imageType == VERSION_2_1_BIT ||
+                imageType == VERSION_2_4_BIT ||
+                imageType == VERSION_2_8_BIT) {
+
+
+                size = palette.length/3;
+
+                if (size > 256) {
+                    size = 256;
+                }
+
+                int off;
+                r = new byte[(int)size];
+                g = new byte[(int)size];
+                b = new byte[(int)size];
+                for (int i=0; i<(int)size; i++) {
+                    off = 3 * i;
+                    b[i] = palette[off];
+                    g[i] = palette[off+1];
+                    r[i] = palette[off+2];
+                }
+            } else {
+                size = palette.length/4;
+
+                if (size > 256) {
+                    size = 256;
+                }
+
+                int off;
+                r = new byte[(int)size];
+                g = new byte[(int)size];
+                b = new byte[(int)size];
+                for (int i=0; i<size; i++) {
+                    off = 4 * i;
+                    b[i] = palette[off];
+                    g[i] = palette[off+1];
+                    r[i] = palette[off+2];
+                }
+            }
+
+            if (ImageUtil.isIndicesForGrayscale(r, g, b))
+                colorModel =
+                    ImageUtil.createColorModel(null, sampleModel);
+            else
+                colorModel = new IndexColorModel(bitsPerPixel, (int)size, r, g, b);
+        } else if (bitsPerPixel == 16) {
+            numBands = 3;
+            sampleModel =
+                new SinglePixelPackedSampleModel(DataBuffer.TYPE_USHORT,
+                                                 width, height,
+                                                 new int[] {redMask, greenMask, blueMask});
+
+            colorModel =
+                new DirectColorModel(colorSpace,
+                                     16, redMask, greenMask, blueMask, 0,
+                                     false, DataBuffer.TYPE_USHORT);
+
+        } else if (bitsPerPixel == 32) {
+            numBands = alphaMask == 0 ? 3 : 4;
+
+            // The number of bands in the SampleModel is determined by
+            // the length of the mask array passed in.
+            int[] bitMasks = numBands == 3 ?
+                new int[] {redMask, greenMask, blueMask} :
+                new int[] {redMask, greenMask, blueMask, alphaMask};
+
+                sampleModel =
+                    new SinglePixelPackedSampleModel(DataBuffer.TYPE_INT,
+                                                     width, height,
+                                                     bitMasks);
+
+                colorModel =
+                    new DirectColorModel(colorSpace,
+                                         32, redMask, greenMask, blueMask, alphaMask,
+                                         false, DataBuffer.TYPE_INT);
+        } else {
+            numBands = 3;
+            // Create SampleModel
+            int[] bandOffsets = new int[numBands];
+            for (int i = 0; i < numBands; i++) {
+                bandOffsets[i] = numBands -1 -i;
+            }
+
+            sampleModel =
+                new PixelInterleavedSampleModel(DataBuffer.TYPE_BYTE,
+                                                width, height,
+                                                numBands,
+                                                numBands * width,
+                                                bandOffsets);
+
+            colorModel =
+                ImageUtil.createColorModel(colorSpace, sampleModel);
+        }
+
+        originalSampleModel = sampleModel;
+        originalColorModel = colorModel;
+
+        // Reset to the start of bitmap; then jump to the
+        //start of image data
+        iis.reset();
+        iis.skipBytes(bitmapOffset);
+        gotHeader = true;
+    }
+
+    public Iterator getImageTypes(int imageIndex)
+      throws IOException {
+        checkIndex(imageIndex);
+        try {
+            readHeader();
+        } catch (IllegalArgumentException e) {
+            throw new IIOException(I18N.getString("BMPImageReader6"), e);
+        }
+        ArrayList list = new ArrayList(1);
+        list.add(new ImageTypeSpecifier(originalColorModel,
+                                        originalSampleModel));
+        return list.iterator();
+    }
+
+    public ImageReadParam getDefaultReadParam() {
+        return new ImageReadParam();
+    }
+
+    public IIOMetadata getImageMetadata(int imageIndex)
+      throws IOException {
+        checkIndex(imageIndex);
+        if (metadata == null) {
+            try {
+                readHeader();
+            } catch (IllegalArgumentException e) {
+                throw new IIOException(I18N.getString("BMPImageReader6"), e);
+            }
+        }
+        return metadata;
+    }
+
+    public IIOMetadata getStreamMetadata() throws IOException {
+        return null;
+    }
+
+    public boolean isRandomAccessEasy(int imageIndex) throws IOException {
+        checkIndex(imageIndex);
+        try {
+            readHeader();
+        } catch (IllegalArgumentException e) {
+            throw new IIOException(I18N.getString("BMPImageReader6"), e);
+        }
+        return metadata.compression == BI_RGB;
+    }
+
+    public BufferedImage read(int imageIndex, ImageReadParam param)
+        throws IOException {
+
+        if (iis == null) {
+            throw new IllegalStateException(I18N.getString("BMPImageReader5"));
+        }
+
+        checkIndex(imageIndex);
+        clearAbortRequest();
+        processImageStarted(imageIndex);
+
+        if (param == null)
+            param = getDefaultReadParam();
+
+        //read header
+        try {
+            readHeader();
+        } catch (IllegalArgumentException e) {
+            throw new IIOException(I18N.getString("BMPImageReader6"), e);
+        }
+
+        sourceRegion = new Rectangle(0, 0, 0, 0);
+        destinationRegion = new Rectangle(0, 0, 0, 0);
+
+        computeRegions(param, this.width, this.height,
+                       param.getDestination(),
+                       sourceRegion,
+                       destinationRegion);
+
+        scaleX = param.getSourceXSubsampling();
+        scaleY = param.getSourceYSubsampling();
+
+        // If the destination band is set used it
+        sourceBands = param.getSourceBands();
+        destBands = param.getDestinationBands();
+
+        seleBand = (sourceBands != null) && (destBands != null);
+        noTransform =
+            destinationRegion.equals(new Rectangle(0, 0, width, height)) ||
+            seleBand;
+
+        if (!seleBand) {
+            sourceBands = new int[numBands];
+            destBands = new int[numBands];
+            for (int i = 0; i < numBands; i++)
+                destBands[i] = sourceBands[i] = i;
+        }
+
+        // If the destination is provided, then use it.  Otherwise, create new one
+        bi = param.getDestination();
+
+        // Get the image data.
+        WritableRaster raster = null;
+
+        if (bi == null) {
+            if (sampleModel != null && colorModel != null) {
+                sampleModel =
+                    sampleModel.createCompatibleSampleModel(destinationRegion.x +
+                                                            destinationRegion.width,
+                                                            destinationRegion.y +
+                                                            destinationRegion.height);
+                if (seleBand)
+                    sampleModel = sampleModel.createSubsetSampleModel(sourceBands);
+                raster = Raster.createWritableRaster(sampleModel, new Point());
+                bi = new BufferedImage(colorModel, raster, false, null);
+            }
+        } else {
+            raster = bi.getWritableTile(0, 0);
+            sampleModel = bi.getSampleModel();
+            colorModel = bi.getColorModel();
+
+            noTransform &=  destinationRegion.equals(raster.getBounds());
+        }
+
+        byte bdata[] = null; // buffer for byte data
+        short sdata[] = null; // buffer for short data
+        int idata[] = null; // buffer for int data
+
+        // the sampleModel can be null in case of embedded image
+        if (sampleModel != null) {
+            if (sampleModel.getDataType() == DataBuffer.TYPE_BYTE)
+                bdata = (byte[])
+                    ((DataBufferByte)raster.getDataBuffer()).getData();
+            else if (sampleModel.getDataType() == DataBuffer.TYPE_USHORT)
+                sdata = (short[])
+                    ((DataBufferUShort)raster.getDataBuffer()).getData();
+            else if (sampleModel.getDataType() == DataBuffer.TYPE_INT)
+                idata = (int[])
+                    ((DataBufferInt)raster.getDataBuffer()).getData();
+        }
+
+        // There should only be one tile.
+        switch(imageType) {
+
+        case VERSION_2_1_BIT:
+            // no compression
+            read1Bit(bdata);
+            break;
+
+        case VERSION_2_4_BIT:
+            // no compression
+            read4Bit(bdata);
+            break;
+
+        case VERSION_2_8_BIT:
+            // no compression
+            read8Bit(bdata);
+            break;
+
+        case VERSION_2_24_BIT:
+            // no compression
+            read24Bit(bdata);
+            break;
+
+        case VERSION_3_1_BIT:
+            // 1-bit images cannot be compressed.
+            read1Bit(bdata);
+            break;
+
+        case VERSION_3_4_BIT:
+            switch((int)compression) {
+            case BI_RGB:
+                read4Bit(bdata);
+                break;
+
+            case BI_RLE4:
+                readRLE4(bdata);
+                break;
+
+            default:
+                throw new
+                    IIOException(I18N.getString("BMPImageReader1"));
+            }
+            break;
+
+        case VERSION_3_8_BIT:
+            switch((int)compression) {
+            case BI_RGB:
+                read8Bit(bdata);
+                break;
+
+            case BI_RLE8:
+                readRLE8(bdata);
+                break;
+
+            default:
+                throw new
+                    IIOException(I18N.getString("BMPImageReader1"));
+            }
+
+            break;
+
+        case VERSION_3_24_BIT:
+            // 24-bit images are not compressed
+            read24Bit(bdata);
+            break;
+
+        case VERSION_3_NT_16_BIT:
+            read16Bit(sdata);
+            break;
+
+        case VERSION_3_NT_32_BIT:
+            read32Bit(idata);
+            break;
+
+        case VERSION_3_XP_EMBEDDED:
+        case VERSION_4_XP_EMBEDDED:
+        case VERSION_5_XP_EMBEDDED:
+            bi = readEmbedded((int)compression, bi, param);
+            break;
+
+        case VERSION_4_1_BIT:
+            read1Bit(bdata);
+            break;
+
+        case VERSION_4_4_BIT:
+            switch((int)compression) {
+
+            case BI_RGB:
+                read4Bit(bdata);
+                break;
+
+            case BI_RLE4:
+                readRLE4(bdata);
+                break;
+
+            default:
+                throw new
+                    IIOException(I18N.getString("BMPImageReader1"));
+            }
+            break;
+
+        case VERSION_4_8_BIT:
+            switch((int)compression) {
+
+            case BI_RGB:
+                read8Bit(bdata);
+                break;
+
+            case BI_RLE8:
+                readRLE8(bdata);
+                break;
+
+            default:
+                throw new
+                    IIOException(I18N.getString("BMPImageReader1"));
+            }
+            break;
+
+        case VERSION_4_16_BIT:
+            read16Bit(sdata);
+            break;
+
+        case VERSION_4_24_BIT:
+            read24Bit(bdata);
+            break;
+
+        case VERSION_4_32_BIT:
+            read32Bit(idata);
+            break;
+        }
+
+        if (abortRequested())
+            processReadAborted();
+        else
+            processImageComplete();
+
+        return bi;
+    }
+
+    public boolean canReadRaster() {
+        return true;
+    }
+
+    public Raster readRaster(int imageIndex,
+                             ImageReadParam param) throws IOException {
+        BufferedImage bi = read(imageIndex, param);
+        return bi.getData();
+    }
+
+    private void resetHeaderInfo() {
+        gotHeader = false;
+        bi = null;
+        sampleModel = originalSampleModel = null;
+        colorModel = originalColorModel = null;
+    }
+
+    public void reset() {
+        super.reset();
+        iis = null;
+        resetHeaderInfo();
+    }
+
+    // Deal with 1 Bit images using IndexColorModels
+    private void read1Bit(byte[] bdata) throws IOException {
+        int bytesPerScanline = (width + 7) / 8;
+        int padding = bytesPerScanline % 4;
+        if (padding != 0) {
+            padding = 4 - padding;
+        }
+
+        int lineLength = bytesPerScanline + padding;
+
+        if (noTransform) {
+            int j = isBottomUp ? (height -1)*bytesPerScanline : 0;
+
+            for (int i=0; i<height; i++) {
+                if (abortRequested()) {
+                    break;
+                }
+                iis.readFully(bdata, j, bytesPerScanline);
+                iis.skipBytes(padding);
+                j += isBottomUp ? -bytesPerScanline : bytesPerScanline;
+                processImageUpdate(bi, 0, i,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F * i/destinationRegion.height);
+            }
+        } else {
+            byte[] buf = new byte[lineLength];
+            int lineStride =
+                ((MultiPixelPackedSampleModel)sampleModel).getScanlineStride();
+
+            if (isBottomUp) {
+                int lastLine =
+                    sourceRegion.y + (destinationRegion.height - 1) * scaleY;
+                iis.skipBytes(lineLength * (height - 1 - lastLine));
+            } else
+                iis.skipBytes(lineLength * sourceRegion.y);
+
+            int skipLength = lineLength * (scaleY - 1);
+
+            // cache the values to avoid duplicated computation
+            int[] srcOff = new int[destinationRegion.width];
+            int[] destOff = new int[destinationRegion.width];
+            int[] srcPos = new int[destinationRegion.width];
+            int[] destPos = new int[destinationRegion.width];
+
+            for (int i = destinationRegion.x, x = sourceRegion.x, j = 0;
+                 i < destinationRegion.x + destinationRegion.width;
+                 i++, j++, x += scaleX) {
+                srcPos[j] = x >> 3;
+                srcOff[j] = 7 - (x & 7);
+                destPos[j] = i >> 3;
+                destOff[j] = 7 - (i & 7);
+            }
+
+            int k = destinationRegion.y * lineStride;
+            if (isBottomUp)
+                k += (destinationRegion.height - 1) * lineStride;
+
+            for (int j = 0, y = sourceRegion.y;
+                 j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.read(buf, 0, lineLength);
+                for (int i = 0; i < destinationRegion.width; i++) {
+                    //get the bit and assign to the data buffer of the raster
+                    int v = (buf[srcPos[i]] >> srcOff[i]) & 1;
+                    bdata[k + destPos[i]] |= v << destOff[i];
+                }
+
+                k += isBottomUp ? -lineStride : lineStride;
+                iis.skipBytes(skipLength);
+                processImageUpdate(bi, 0, j,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+    }
+
+    // Method to read a 4 bit BMP image data
+    private void read4Bit(byte[] bdata) throws IOException {
+
+        int bytesPerScanline = (width + 1) / 2;
+
+        // Padding bytes at the end of each scanline
+        int padding = bytesPerScanline % 4;
+        if (padding != 0)
+            padding = 4 - padding;
+
+        int lineLength = bytesPerScanline + padding;
+
+        if (noTransform) {
+            int j = isBottomUp ? (height -1) * bytesPerScanline : 0;
+
+            for (int i=0; i<height; i++) {
+                if (abortRequested()) {
+                    break;
+                }
+                iis.readFully(bdata, j, bytesPerScanline);
+                iis.skipBytes(padding);
+                j += isBottomUp ? -bytesPerScanline : bytesPerScanline;
+                processImageUpdate(bi, 0, i,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F * i/destinationRegion.height);
+            }
+        } else {
+            byte[] buf = new byte[lineLength];
+            int lineStride =
+                ((MultiPixelPackedSampleModel)sampleModel).getScanlineStride();
+
+            if (isBottomUp) {
+                int lastLine =
+                    sourceRegion.y + (destinationRegion.height - 1) * scaleY;
+                iis.skipBytes(lineLength * (height - 1 - lastLine));
+            } else
+                iis.skipBytes(lineLength * sourceRegion.y);
+
+            int skipLength = lineLength * (scaleY - 1);
+
+            // cache the values to avoid duplicated computation
+            int[] srcOff = new int[destinationRegion.width];
+            int[] destOff = new int[destinationRegion.width];
+            int[] srcPos = new int[destinationRegion.width];
+            int[] destPos = new int[destinationRegion.width];
+
+            for (int i = destinationRegion.x, x = sourceRegion.x, j = 0;
+                 i < destinationRegion.x + destinationRegion.width;
+                 i++, j++, x += scaleX) {
+                srcPos[j] = x >> 1;
+                srcOff[j] = (1 - (x & 1)) << 2;
+                destPos[j] = i >> 1;
+                destOff[j] = (1 - (i & 1)) << 2;
+            }
+
+            int k = destinationRegion.y * lineStride;
+            if (isBottomUp)
+                k += (destinationRegion.height - 1) * lineStride;
+
+            for (int j = 0, y = sourceRegion.y;
+                 j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.read(buf, 0, lineLength);
+                for (int i = 0; i < destinationRegion.width; i++) {
+                    //get the bit and assign to the data buffer of the raster
+                    int v = (buf[srcPos[i]] >> srcOff[i]) & 0x0F;
+                    bdata[k + destPos[i]] |= v << destOff[i];
+                }
+
+                k += isBottomUp ? -lineStride : lineStride;
+                iis.skipBytes(skipLength);
+                processImageUpdate(bi, 0, j,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+    }
+
+    // Method to read 8 bit BMP image data
+    private void read8Bit(byte[] bdata) throws IOException {
+
+        // Padding bytes at the end of each scanline
+        int padding = width % 4;
+        if (padding != 0) {
+            padding = 4 - padding;
+        }
+
+        int lineLength = width + padding;
+
+        if (noTransform) {
+            int j = isBottomUp ? (height -1) * width : 0;
+
+            for (int i=0; i<height; i++) {
+                if (abortRequested()) {
+                    break;
+                }
+                iis.readFully(bdata, j, width);
+                iis.skipBytes(padding);
+                j += isBottomUp ? -width : width;
+                processImageUpdate(bi, 0, i,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F * i/destinationRegion.height);
+            }
+        } else {
+            byte[] buf = new byte[lineLength];
+            int lineStride =
+                ((ComponentSampleModel)sampleModel).getScanlineStride();
+
+            if (isBottomUp) {
+                int lastLine =
+                    sourceRegion.y + (destinationRegion.height - 1) * scaleY;
+                iis.skipBytes(lineLength * (height - 1 - lastLine));
+            } else
+                iis.skipBytes(lineLength * sourceRegion.y);
+
+            int skipLength = lineLength * (scaleY - 1);
+
+            int k = destinationRegion.y * lineStride;
+            if (isBottomUp)
+                k += (destinationRegion.height - 1) * lineStride;
+            k += destinationRegion.x;
+
+            for (int j = 0, y = sourceRegion.y;
+                 j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.read(buf, 0, lineLength);
+                for (int i = 0, m = sourceRegion.x;
+                     i < destinationRegion.width; i++, m += scaleX) {
+                    //get the bit and assign to the data buffer of the raster
+                    bdata[k + i] = buf[m];
+                }
+
+                k += isBottomUp ? -lineStride : lineStride;
+                iis.skipBytes(skipLength);
+                processImageUpdate(bi, 0, j,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+    }
+
+    // Method to read 24 bit BMP image data
+    private void read24Bit(byte[] bdata) throws IOException {
+        // Padding bytes at the end of each scanline
+        // width * bitsPerPixel should be divisible by 32
+        int padding = width * 3 % 4;
+        if ( padding != 0)
+            padding = 4 - padding;
+
+        int lineStride = width * 3;
+        int lineLength = lineStride + padding;
+
+        if (noTransform) {
+            int j = isBottomUp ? (height -1) * width * 3 : 0;
+
+            for (int i=0; i<height; i++) {
+                if (abortRequested()) {
+                    break;
+                }
+                iis.readFully(bdata, j, lineStride);
+                iis.skipBytes(padding);
+                j += isBottomUp ? -lineStride : lineStride;
+                processImageUpdate(bi, 0, i,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F * i/destinationRegion.height);
+            }
+        } else {
+            byte[] buf = new byte[lineLength];
+            lineStride =
+                ((ComponentSampleModel)sampleModel).getScanlineStride();
+
+            if (isBottomUp) {
+                int lastLine =
+                    sourceRegion.y + (destinationRegion.height - 1) * scaleY;
+                iis.skipBytes(lineLength * (height - 1 - lastLine));
+            } else
+                iis.skipBytes(lineLength * sourceRegion.y);
+
+            int skipLength = lineLength * (scaleY - 1);
+
+            int k = destinationRegion.y * lineStride;
+            if (isBottomUp)
+                k += (destinationRegion.height - 1) * lineStride;
+            k += destinationRegion.x * 3;
+
+            for (int j = 0, y = sourceRegion.y;
+                 j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.read(buf, 0, lineLength);
+                for (int i = 0, m = 3 * sourceRegion.x;
+                     i < destinationRegion.width; i++, m += 3 * scaleX) {
+                    //get the bit and assign to the data buffer of the raster
+                    int n = 3 * i + k;
+                    for (int b = 0; b < destBands.length; b++)
+                        bdata[n + destBands[b]] = buf[m + sourceBands[b]];
+                }
+
+                k += isBottomUp ? -lineStride : lineStride;
+                iis.skipBytes(skipLength);
+                processImageUpdate(bi, 0, j,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+    }
+
+    private void read16Bit(short sdata[]) throws IOException {
+        // Padding bytes at the end of each scanline
+        // width * bitsPerPixel should be divisible by 32
+        int padding = width * 2 % 4;
+
+        if ( padding != 0)
+            padding = 4 - padding;
+
+        int lineLength = width + padding / 2;
+
+        if (noTransform) {
+            int j = isBottomUp ? (height -1) * width : 0;
+            for (int i=0; i<height; i++) {
+                if (abortRequested()) {
+                    break;
+                }
+
+                iis.readFully(sdata, j, width);
+                iis.skipBytes(padding);
+
+                j += isBottomUp ? -width : width;
+                processImageUpdate(bi, 0, i,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F * i/destinationRegion.height);
+            }
+        } else {
+            short[] buf = new short[lineLength];
+            int lineStride =
+                ((SinglePixelPackedSampleModel)sampleModel).getScanlineStride();
+
+            if (isBottomUp) {
+                int lastLine =
+                    sourceRegion.y + (destinationRegion.height - 1) * scaleY;
+                iis.skipBytes(lineLength * (height - 1 - lastLine) << 1);
+            } else
+                iis.skipBytes(lineLength * sourceRegion.y << 1);
+
+            int skipLength = lineLength * (scaleY - 1) << 1;
+
+            int k = destinationRegion.y * lineStride;
+            if (isBottomUp)
+                k += (destinationRegion.height - 1) * lineStride;
+            k += destinationRegion.x;
+
+            for (int j = 0, y = sourceRegion.y;
+                 j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.readFully(buf, 0, lineLength);
+                for (int i = 0, m = sourceRegion.x;
+                     i < destinationRegion.width; i++, m += scaleX) {
+                    //get the bit and assign to the data buffer of the raster
+                    sdata[k + i] = buf[m];
+                }
+
+                k += isBottomUp ? -lineStride : lineStride;
+                iis.skipBytes(skipLength);
+                processImageUpdate(bi, 0, j,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+    }
+
+    private void read32Bit(int idata[]) throws IOException {
+        if (noTransform) {
+            int j = isBottomUp ? (height -1) * width : 0;
+
+            for (int i=0; i<height; i++) {
+                if (abortRequested()) {
+                    break;
+                }
+                iis.readFully(idata, j, width);
+                j += isBottomUp ? -width : width;
+                processImageUpdate(bi, 0, i,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F * i/destinationRegion.height);
+            }
+        } else {
+            int[] buf = new int[width];
+            int lineStride =
+                ((SinglePixelPackedSampleModel)sampleModel).getScanlineStride();
+
+            if (isBottomUp) {
+                int lastLine =
+                    sourceRegion.y + (destinationRegion.height - 1) * scaleY;
+                iis.skipBytes(width * (height - 1 - lastLine) << 2);
+            } else
+                iis.skipBytes(width * sourceRegion.y << 2);
+
+            int skipLength = width * (scaleY - 1) << 2;
+
+            int k = destinationRegion.y * lineStride;
+            if (isBottomUp)
+                k += (destinationRegion.height - 1) * lineStride;
+            k += destinationRegion.x;
+
+            for (int j = 0, y = sourceRegion.y;
+                 j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.readFully(buf, 0, width);
+                for (int i = 0, m = sourceRegion.x;
+                     i < destinationRegion.width; i++, m += scaleX) {
+                    //get the bit and assign to the data buffer of the raster
+                    idata[k + i] = buf[m];
+                }
+
+                k += isBottomUp ? -lineStride : lineStride;
+                iis.skipBytes(skipLength);
+                processImageUpdate(bi, 0, j,
+                                   destinationRegion.width, 1, 1, 1,
+                                   new int[]{0});
+                processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+    }
+
+    private void readRLE8(byte bdata[]) throws IOException {
+        // If imageSize field is not provided, calculate it.
+        int imSize = (int)imageSize;
+        if (imSize == 0) {
+            imSize = (int)(bitmapFileSize - bitmapOffset);
+        }
+
+        int padding = 0;
+        // If width is not 32 bit aligned, then while uncompressing each
+        // scanline will have padding bytes, calculate the amount of padding
+        int remainder = width % 4;
+        if (remainder != 0) {
+            padding = 4 - remainder;
+        }
+
+        // Read till we have the whole image
+        byte values[] = new byte[imSize];
+        int bytesRead = 0;
+        iis.readFully(values, 0, imSize);
+
+        // Since data is compressed, decompress it
+        decodeRLE8(imSize, padding, values, bdata);
+    }
+
+    private void decodeRLE8(int imSize,
+                            int padding,
+                            byte[] values,
+                            byte[] bdata) throws IOException {
+
+        byte val[] = new byte[width * height];
+        int count = 0, l = 0;
+        int value;
+        boolean flag = false;
+        int lineNo = isBottomUp ? height - 1 : 0;
+        int lineStride =
+            ((ComponentSampleModel)sampleModel).getScanlineStride();
+        int finished = 0;
+
+        while (count != imSize) {
+            value = values[count++] & 0xff;
+            if (value == 0) {
+                switch(values[count++] & 0xff) {
+
+                case 0:
+                    // End-of-scanline marker
+                    if (lineNo >= sourceRegion.y &&
+                        lineNo < sourceRegion.y + sourceRegion.height) {
+                        if (noTransform) {
+                            int pos = lineNo * width;
+                            for(int i = 0; i < width; i++)
+                                bdata[pos++] = val[i];
+                            processImageUpdate(bi, 0, lineNo,
+                                               destinationRegion.width, 1, 1, 1,
+                                               new int[]{0});
+                            finished++;
+                        } else if ((lineNo - sourceRegion.y) % scaleY == 0) {
+                            int currentLine = (lineNo - sourceRegion.y) / scaleY +
+                                destinationRegion.y;
+                            int pos = currentLine * lineStride;
+                            pos += destinationRegion.x;
+                            for (int i = sourceRegion.x;
+                                 i < sourceRegion.x + sourceRegion.width;
+                                 i += scaleX)
+                                bdata[pos++] = val[i];
+                            processImageUpdate(bi, 0, currentLine,
+                                               destinationRegion.width, 1, 1, 1,
+                                               new int[]{0});
+                            finished++;
+                        }
+                    }
+                    processImageProgress(100.0F * finished / destinationRegion.height);
+                    lineNo += isBottomUp ? -1 : 1;
+                    l = 0;
+
+                    if (abortRequested()) {
+                        flag = true;
+                    }
+
+                    break;
+
+                case 1:
+                    // End-of-RLE marker
+                    flag = true;
+                    break;
+
+                case 2:
+                    // delta or vector marker
+                    int xoff = values[count++] & 0xff;
+                    int yoff = values[count] & 0xff;
+                    // Move to the position xoff, yoff down
+                    l += xoff + yoff*width;
+                    break;
+
+                default:
+                    int end = values[count-1] & 0xff;
+                    for (int i=0; i<end; i++) {
+                        val[l++] = (byte)(values[count++] & 0xff);
+                    }
+
+                    // Whenever end pixels can fit into odd number of bytes,
+                    // an extra padding byte will be present, so skip that.
+                    if ((end & 1) == 1) {
+                        count++;
+                    }
+                }
+            } else {
+                for (int i=0; i<value; i++) {
+                    val[l++] = (byte)(values[count] & 0xff);
+                }
+
+                count++;
+            }
+
+            // If End-of-RLE data, then exit the while loop
+            if (flag) {
+                break;
+            }
+        }
+    }
+
+    private void readRLE4(byte[] bdata) throws IOException {
+
+        // If imageSize field is not specified, calculate it.
+        int imSize = (int)imageSize;
+        if (imSize == 0) {
+            imSize = (int)(bitmapFileSize - bitmapOffset);
+        }
+
+        int padding = 0;
+        // If width is not 32 byte aligned, then while uncompressing each
+        // scanline will have padding bytes, calculate the amount of padding
+        int remainder = width % 4;
+        if (remainder != 0) {
+            padding = 4 - remainder;
+        }
+
+        // Read till we have the whole image
+        byte[] values = new byte[imSize];
+        iis.readFully(values, 0, imSize);
+
+        // Decompress the RLE4 compressed data.
+        decodeRLE4(imSize, padding, values, bdata);
+    }
+
+    private void decodeRLE4(int imSize,
+                            int padding,
+                            byte[] values,
+                            byte[] bdata) throws IOException {
+        byte[] val = new byte[width];
+        int count = 0, l = 0;
+        int value;
+        boolean flag = false;
+        int lineNo = isBottomUp ? height - 1 : 0;
+        int lineStride =
+            ((MultiPixelPackedSampleModel)sampleModel).getScanlineStride();
+        int finished = 0;
+
+        while (count != imSize) {
+
+            value = values[count++] & 0xFF;
+            if (value == 0) {
+
+
+                // Absolute mode
+                switch(values[count++] & 0xFF) {
+
+                case 0:
+                    // End-of-scanline marker
+                    // End-of-scanline marker
+                    if (lineNo >= sourceRegion.y &&
+                        lineNo < sourceRegion.y + sourceRegion.height) {
+                        if (noTransform) {
+                            int pos = lineNo * (width + 1 >> 1);
+                            for(int i = 0, j = 0; i < width >> 1; i++)
+                                bdata[pos++] =
+                                    (byte)((val[j++] << 4) | val[j++]);
+                            if ((width & 1) == 1)
+                                bdata[pos] |= val[width - 1] << 4;
+
+                            processImageUpdate(bi, 0, lineNo,
+                                               destinationRegion.width, 1, 1, 1,
+                                               new int[]{0});
+                            finished++;
+                        } else if ((lineNo - sourceRegion.y) % scaleY == 0) {
+                            int currentLine = (lineNo - sourceRegion.y) / scaleY +
+                                destinationRegion.y;
+                            int pos = currentLine * lineStride;
+                            pos += destinationRegion.x >> 1;
+                            int shift = (1 - (destinationRegion.x & 1)) << 2;
+                            for (int i = sourceRegion.x;
+                                 i < sourceRegion.x + sourceRegion.width;
+                                 i += scaleX) {
+                                bdata[pos] |= val[i] << shift;
+                                shift += 4;
+                                if (shift == 4) {
+                                    pos++;
+                                }
+                                shift &= 7;
+                            }
+                            processImageUpdate(bi, 0, currentLine,
+                                               destinationRegion.width, 1, 1, 1,
+                                               new int[]{0});
+                            finished++;
+                        }
+                    }
+                    processImageProgress(100.0F * finished / destinationRegion.height);
+                    lineNo += isBottomUp ? -1 : 1;
+                    l = 0;
+
+                    if (abortRequested()) {
+                        flag = true;
+                    }
+
+                    break;
+
+                case 1:
+                    // End-of-RLE marker
+                    flag = true;
+                    break;
+
+                case 2:
+                    // delta or vector marker
+                    int xoff = values[count++] & 0xFF;
+                    int yoff = values[count] & 0xFF;
+                    // Move to the position xoff, yoff down
+                    l += xoff + yoff*width;
+                    break;
+
+                default:
+                    int end = values[count-1] & 0xFF;
+                    for (int i=0; i<end; i++) {
+                        val[l++] = (byte)(((i & 1) == 0) ? (values[count] & 0xf0) >> 4
+                                          : (values[count++] & 0x0f));
+                    }
+
+                    // When end is odd, the above for loop does not
+                    // increment count, so do it now.
+                    if ((end & 1) == 1) {
+                        count++;
+                    }
+
+                    // Whenever end pixels can fit into odd number of bytes,
+                    // an extra padding byte will be present, so skip that.
+                    if ((((int)Math.ceil(end/2)) & 1) ==1 ) {
+                        count++;
+                    }
+                    break;
+                }
+            } else {
+                // Encoded mode
+                int alternate[] = { (values[count] & 0xf0) >> 4,
+                                    values[count] & 0x0f };
+                for (int i=0; (i < value) && (l < width); i++) {
+                    val[l++] = (byte)alternate[i & 1];
+                }
+
+                count++;
+            }
+
+            // If End-of-RLE data, then exit the while loop
+            if (flag) {
+                break;
+            }
+        }
+    }
+
+    /** Decodes the jpeg/png image embedded in the bitmap using any jpeg
+     *  ImageIO-style plugin.
+     *
+     * @param bi The destination <code>BufferedImage</code>.
+     * @param bmpParam The <code>ImageReadParam</code> for decoding this
+     *          BMP image.  The parameters for subregion, band selection and
+     *          subsampling are used in decoding the jpeg image.
+     */
+
+    private BufferedImage readEmbedded(int type,
+                              BufferedImage bi, ImageReadParam bmpParam)
+      throws IOException {
+        String format;
+        switch(type) {
+          case BI_JPEG:
+              format = "JPEG";
+              break;
+          case BI_PNG:
+              format = "PNG";
+              break;
+          default:
+              throw new
+                  IOException("Unexpected compression type: " + type);
+        }
+        ImageReader reader =
+            ImageIO.getImageReadersByFormatName(format).next();
+        if (reader == null) {
+            throw new RuntimeException(I18N.getString("BMPImageReader4") +
+                                       " " + format);
+        }
+        // prepare input
+        byte[] buff = new byte[(int)imageSize];
+        iis.read(buff);
+        reader.setInput(ImageIO.createImageInputStream(new ByteArrayInputStream(buff)));
+        if (bi == null) {
+            ImageTypeSpecifier embType = reader.getImageTypes(0).next();
+            bi = embType.createBufferedImage(destinationRegion.x +
+                                             destinationRegion.width,
+                                             destinationRegion.y +
+                                             destinationRegion.height);
+        }
+
+        reader.addIIOReadProgressListener(new EmbeddedProgressAdapter() {
+                public void imageProgress(ImageReader source,
+                                          float percentageDone)
+                {
+                    processImageProgress(percentageDone);
+                }
+            });
+
+        reader.addIIOReadUpdateListener(new IIOReadUpdateListener() {
+                public void imageUpdate(ImageReader source,
+                                        BufferedImage theImage,
+                                        int minX, int minY,
+                                        int width, int height,
+                                        int periodX, int periodY,
+                                        int[] bands)
+                {
+                    processImageUpdate(theImage, minX, minY,
+                                       width, height,
+                                       periodX, periodY, bands);
+                }
+                public void passComplete(ImageReader source,
+                                         BufferedImage theImage)
+                {
+                    processPassComplete(theImage);
+                }
+                public void passStarted(ImageReader source,
+                                        BufferedImage theImage,
+                                        int pass,
+                                        int minPass, int maxPass,
+                                        int minX, int minY,
+                                        int periodX, int periodY,
+                                        int[] bands)
+                {
+                    processPassStarted(theImage, pass, minPass, maxPass,
+                                       minX, minY, periodX, periodY,
+                                       bands);
+                }
+                public void thumbnailPassComplete(ImageReader source,
+                                                  BufferedImage thumb) {}
+                public void thumbnailPassStarted(ImageReader source,
+                                                 BufferedImage thumb,
+                                                 int pass,
+                                                 int minPass, int maxPass,
+                                                 int minX, int minY,
+                                                 int periodX, int periodY,
+                                                 int[] bands) {}
+                public void thumbnailUpdate(ImageReader source,
+                                            BufferedImage theThumbnail,
+                                            int minX, int minY,
+                                            int width, int height,
+                                            int periodX, int periodY,
+                                            int[] bands) {}
+            });
+
+        reader.addIIOReadWarningListener(new IIOReadWarningListener() {
+                public void warningOccurred(ImageReader source, String warning)
+                {
+                    processWarningOccurred(warning);
+                }
+            });
+
+        ImageReadParam param = reader.getDefaultReadParam();
+        param.setDestination(bi);
+        param.setDestinationBands(bmpParam.getDestinationBands());
+        param.setDestinationOffset(bmpParam.getDestinationOffset());
+        param.setSourceBands(bmpParam.getSourceBands());
+        param.setSourceRegion(bmpParam.getSourceRegion());
+        param.setSourceSubsampling(bmpParam.getSourceXSubsampling(),
+                                   bmpParam.getSourceYSubsampling(),
+                                   bmpParam.getSubsamplingXOffset(),
+                                   bmpParam.getSubsamplingYOffset());
+        reader.read(0, param);
+        return bi;
+    }
+
+    private class EmbeddedProgressAdapter implements IIOReadProgressListener {
+        public void imageComplete(ImageReader src) {}
+        public void imageProgress(ImageReader src, float percentageDone) {}
+        public void imageStarted(ImageReader src, int imageIndex) {}
+        public void thumbnailComplete(ImageReader src) {}
+        public void thumbnailProgress(ImageReader src, float percentageDone) {}
+        public void thumbnailStarted(ImageReader src, int iIdx, int tIdx) {}
+        public void sequenceComplete(ImageReader src) {}
+        public void sequenceStarted(ImageReader src, int minIndex) {}
+        public void readAborted(ImageReader src) {}
+    }
+
+    private static Boolean isLinkedProfileDisabled = null;
+
+    private static boolean isLinkedProfileAllowed() {
+        if (isLinkedProfileDisabled == null) {
+            PrivilegedAction<Boolean> a = new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    return Boolean.getBoolean("sun.imageio.plugins.bmp.disableLinkedProfiles");
+                }
+            };
+            isLinkedProfileDisabled = AccessController.doPrivileged(a);
+        }
+        return !isLinkedProfileDisabled;
+    }
+
+    private static Boolean isWindowsPlatform = null;
+
+    /**
+     * Verifies whether the byte array contans a unc path.
+     * Non-UNC path examples:
+     *  c:\path\to\file  - simple notation
+     *  \\?\c:\path\to\file - long notation
+     *
+     * UNC path examples:
+     *  \\server\share - a UNC path in simple notation
+     *  \\?\UNC\server\share - a UNC path in long notation
+     *  \\.\some\device - a path to device.
+     */
+    private static boolean isUncOrDevicePath(byte[] p) {
+        if (isWindowsPlatform == null) {
+            PrivilegedAction<Boolean> a = new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    String osname = System.getProperty("os.name");
+                    return (osname != null &&
+                            osname.toLowerCase().startsWith("win"));
+                }
+            };
+            isWindowsPlatform = AccessController.doPrivileged(a);
+        }
+
+        if (!isWindowsPlatform) {
+            /* no need for the check on platforms except windows */
+            return false;
+        }
+
+        /* normalize prefix of the path */
+        if (p[0] == '/') p[0] = '\\';
+        if (p[1] == '/') p[1] = '\\';
+        if (p[3] == '/') p[3] = '\\';
+
+
+        if ((p[0] == '\\') && (p[1] == '\\')) {
+            if ((p[2] == '?') && (p[3] == '\\')) {
+                // long path: whether unc or local
+                return ((p[4] == 'U' || p[4] == 'u') &&
+                        (p[5] == 'N' || p[5] == 'n') &&
+                        (p[6] == 'C' || p[6] == 'c'));
+            } else {
+                // device path or short unc notation
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+}

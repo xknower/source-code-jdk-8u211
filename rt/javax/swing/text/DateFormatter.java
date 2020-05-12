@@ -1,166 +1,160 @@
-/*     */ package javax.swing.text;
-/*     */ 
-/*     */ import java.text.DateFormat;
-/*     */ import java.text.Format;
-/*     */ import java.text.ParseException;
-/*     */ import java.util.Calendar;
-/*     */ import java.util.Date;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DateFormatter
-/*     */   extends InternationalFormatter
-/*     */ {
-/*     */   public DateFormatter() {
-/*  56 */     this(DateFormat.getDateInstance());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DateFormatter(DateFormat paramDateFormat) {
-/*  66 */     super(paramDateFormat);
-/*  67 */     setFormat(paramDateFormat);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFormat(DateFormat paramDateFormat) {
-/*  81 */     setFormat(paramDateFormat);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Calendar getCalendar() {
-/*  90 */     Format format = getFormat();
-/*     */     
-/*  92 */     if (format instanceof DateFormat) {
-/*  93 */       return ((DateFormat)format).getCalendar();
-/*     */     }
-/*  95 */     return Calendar.getInstance();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean getSupportsIncrement() {
-/* 104 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Object getAdjustField(int paramInt, Map paramMap) {
-/* 111 */     Iterator<Object> iterator = paramMap.keySet().iterator();
-/*     */     
-/* 113 */     while (iterator.hasNext()) {
-/* 114 */       DateFormat.Field field = (DateFormat.Field)iterator.next();
-/*     */       
-/* 116 */       if (field instanceof DateFormat.Field && (field == DateFormat.Field.HOUR1 || field
-/*     */         
-/* 118 */         .getCalendarField() != -1)) {
-/* 119 */         return field;
-/*     */       }
-/*     */     } 
-/* 122 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Object adjustValue(Object paramObject1, Map paramMap, Object paramObject2, int paramInt) throws BadLocationException, ParseException {
-/* 132 */     if (paramObject2 != null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 137 */       if (paramObject2 == DateFormat.Field.HOUR1) {
-/* 138 */         paramObject2 = DateFormat.Field.HOUR0;
-/*     */       }
-/* 140 */       int i = ((DateFormat.Field)paramObject2).getCalendarField();
-/*     */       
-/* 142 */       Calendar calendar = getCalendar();
-/*     */       
-/* 144 */       if (calendar != null) {
-/* 145 */         calendar.setTime((Date)paramObject1);
-/*     */         
-/* 147 */         int j = calendar.get(i);
-/*     */         
-/*     */         try {
-/* 150 */           calendar.add(i, paramInt);
-/* 151 */           paramObject1 = calendar.getTime();
-/* 152 */         } catch (Throwable throwable) {
-/* 153 */           paramObject1 = null;
-/*     */         } 
-/* 155 */         return paramObject1;
-/*     */       } 
-/*     */     } 
-/* 158 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\DateFormatter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text;
+
+import java.awt.event.*;
+import java.text.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.text.*;
+
+/**
+ * DateFormatter is an <code>InternationalFormatter</code> that does its
+ * formatting by way of an instance of <code>java.text.DateFormat</code>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see java.text.DateFormat
+ *
+ * @since 1.4
+ */
+public class DateFormatter extends InternationalFormatter {
+    /**
+     * This is shorthand for
+     * <code>new DateFormatter(DateFormat.getDateInstance())</code>.
+     */
+    public DateFormatter() {
+        this(DateFormat.getDateInstance());
+    }
+
+    /**
+     * Returns a DateFormatter configured with the specified
+     * <code>Format</code> instance.
+     *
+     * @param format Format used to dictate legal values
+     */
+    public DateFormatter(DateFormat format) {
+        super(format);
+        setFormat(format);
+    }
+
+    /**
+     * Sets the format that dictates the legal values that can be edited
+     * and displayed.
+     * <p>
+     * If you have used the nullary constructor the value of this property
+     * will be determined for the current locale by way of the
+     * <code>Dateformat.getDateInstance()</code> method.
+     *
+     * @param format DateFormat instance used for converting from/to Strings
+     */
+    public void setFormat(DateFormat format) {
+        super.setFormat(format);
+    }
+
+    /**
+     * Returns the Calendar that <code>DateFormat</code> is associated with,
+     * or if the <code>Format</code> is not a <code>DateFormat</code>
+     * <code>Calendar.getInstance</code> is returned.
+     */
+    private Calendar getCalendar() {
+        Format f = getFormat();
+
+        if (f instanceof DateFormat) {
+            return ((DateFormat)f).getCalendar();
+        }
+        return Calendar.getInstance();
+    }
+
+
+    /**
+     * Returns true, as DateFormatterFilter will support
+     * incrementing/decrementing of the value.
+     */
+    boolean getSupportsIncrement() {
+        return true;
+    }
+
+    /**
+     * Returns the field that will be adjusted by adjustValue.
+     */
+    Object getAdjustField(int start, Map attributes) {
+        Iterator attrs = attributes.keySet().iterator();
+
+        while (attrs.hasNext()) {
+            Object key = attrs.next();
+
+            if ((key instanceof DateFormat.Field) &&
+                (key == DateFormat.Field.HOUR1 ||
+                 ((DateFormat.Field)key).getCalendarField() != -1)) {
+                return key;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Adjusts the Date if FieldPosition identifies a known calendar
+     * field.
+     */
+    Object adjustValue(Object value, Map attributes, Object key,
+                           int direction) throws
+                      BadLocationException, ParseException {
+        if (key != null) {
+            int field;
+
+            // HOUR1 has no corresponding calendar field, thus, map
+            // it to HOUR0 which will give the correct behavior.
+            if (key == DateFormat.Field.HOUR1) {
+                key = DateFormat.Field.HOUR0;
+            }
+            field = ((DateFormat.Field)key).getCalendarField();
+
+            Calendar calendar = getCalendar();
+
+            if (calendar != null) {
+                calendar.setTime((Date)value);
+
+                int fieldValue = calendar.get(field);
+
+                try {
+                    calendar.add(field, direction);
+                    value = calendar.getTime();
+                } catch (Throwable th) {
+                    value = null;
+                }
+                return value;
+            }
+        }
+        return null;
+    }
+}

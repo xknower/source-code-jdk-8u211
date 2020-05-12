@@ -1,200 +1,194 @@
-/*     */ package com.sun.corba.se.impl.protocol.giopmsgheaders;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.encoding.CDRInputStream;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.ior.IORFactories;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.IOException;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class LocateReplyMessage_1_2
-/*     */   extends Message_1_2
-/*     */   implements LocateReplyMessage
-/*     */ {
-/*  59 */   private ORB orb = null;
-/*  60 */   private ORBUtilSystemException wrapper = null;
-/*  61 */   private int reply_status = 0;
-/*  62 */   private IOR ior = null;
-/*  63 */   private String exClassName = null;
-/*  64 */   private int minorCode = 0;
-/*  65 */   private CompletionStatus completionStatus = null;
-/*  66 */   private short addrDisposition = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LocateReplyMessage_1_2(ORB paramORB) {
-/*  71 */     this.orb = paramORB;
-/*  72 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   LocateReplyMessage_1_2(ORB paramORB, int paramInt1, int paramInt2, IOR paramIOR) {
-/*  78 */     super(1195986768, GIOPVersion.V1_2, (byte)0, (byte)4, 0);
-/*     */     
-/*  80 */     this.orb = paramORB;
-/*  81 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */     
-/*  83 */     this.request_id = paramInt1;
-/*  84 */     this.reply_status = paramInt2;
-/*  85 */     this.ior = paramIOR;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getRequestId() {
-/*  91 */     return this.request_id;
-/*     */   }
-/*     */   
-/*     */   public int getReplyStatus() {
-/*  95 */     return this.reply_status;
-/*     */   }
-/*     */   
-/*     */   public short getAddrDisposition() {
-/*  99 */     return this.addrDisposition;
-/*     */   }
-/*     */   
-/*     */   public SystemException getSystemException(String paramString) {
-/* 103 */     return MessageBase.getSystemException(this.exClassName, this.minorCode, this.completionStatus, paramString, this.wrapper);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IOR getIOR() {
-/* 108 */     return this.ior;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void read(InputStream paramInputStream) {
-/* 114 */     super.read(paramInputStream);
-/* 115 */     this.request_id = paramInputStream.read_ulong();
-/* 116 */     this.reply_status = paramInputStream.read_long();
-/* 117 */     isValidReplyStatus(this.reply_status);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 125 */     if (this.reply_status == 4) {
-/*     */       
-/* 127 */       String str = paramInputStream.read_string();
-/* 128 */       this.exClassName = ORBUtility.classNameOf(str);
-/* 129 */       this.minorCode = paramInputStream.read_long();
-/* 130 */       int i = paramInputStream.read_long();
-/*     */       
-/* 132 */       switch (i) {
-/*     */         case 0:
-/* 134 */           this.completionStatus = CompletionStatus.COMPLETED_YES;
-/*     */           return;
-/*     */         case 1:
-/* 137 */           this.completionStatus = CompletionStatus.COMPLETED_NO;
-/*     */           return;
-/*     */         case 2:
-/* 140 */           this.completionStatus = CompletionStatus.COMPLETED_MAYBE;
-/*     */           return;
-/*     */       } 
-/* 143 */       throw this.wrapper.badCompletionStatusInLocateReply(CompletionStatus.COMPLETED_MAYBE, new Integer(i));
-/*     */     } 
-/*     */     
-/* 146 */     if (this.reply_status == 2 || this.reply_status == 3) {
-/*     */       
-/* 148 */       CDRInputStream cDRInputStream = (CDRInputStream)paramInputStream;
-/* 149 */       this.ior = IORFactories.makeIOR(cDRInputStream);
-/* 150 */     } else if (this.reply_status == 5) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 154 */       this.addrDisposition = AddressingDispositionHelper.read(paramInputStream);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream) {
-/* 162 */     super.write(paramOutputStream);
-/* 163 */     paramOutputStream.write_ulong(this.request_id);
-/* 164 */     paramOutputStream.write_long(this.reply_status);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void isValidReplyStatus(int paramInt) {
-/* 174 */     switch (paramInt) {
-/*     */       case 0:
-/*     */       case 1:
-/*     */       case 2:
-/*     */       case 3:
-/*     */       case 4:
-/*     */       case 5:
-/*     */         return;
-/*     */     } 
-/* 183 */     ORBUtilSystemException oRBUtilSystemException = ORBUtilSystemException.get("rpc.protocol");
-/*     */     
-/* 185 */     throw oRBUtilSystemException.illegalReplyStatus(CompletionStatus.COMPLETED_MAYBE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void callback(MessageHandler paramMessageHandler) throws IOException {
-/* 192 */     paramMessageHandler.handleInput(this);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\giopmsgheaders\LocateReplyMessage_1_2.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol.giopmsgheaders;
+
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.CompletionStatus;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.ior.IORFactories;
+
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+import com.sun.corba.se.impl.encoding.CDROutputStream;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+/**
+ * This implements the GIOP 1.2 LocateReply header.
+ *
+ * @author Ram Jeyaraman 05/14/2000
+ */
+
+public final class LocateReplyMessage_1_2 extends Message_1_2
+        implements LocateReplyMessage {
+
+    // Instance variables
+
+    private ORB orb = null;
+    private ORBUtilSystemException wrapper = null ;
+    private int reply_status = (int) 0;
+    private IOR ior = null;
+    private String exClassName = null;
+    private int minorCode = (int) 0;
+    private CompletionStatus completionStatus = null;
+    private short addrDisposition = KeyAddr.value; // default;
+
+    // Constructors
+
+    LocateReplyMessage_1_2(ORB orb) {
+        this.orb = orb;
+        this.wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+    }
+
+    LocateReplyMessage_1_2(ORB orb, int _request_id,
+            int _reply_status, IOR _ior) {
+        super(Message.GIOPBigMagic, GIOPVersion.V1_2, FLAG_NO_FRAG_BIG_ENDIAN,
+            Message.GIOPLocateReply, 0);
+        this.orb = orb;
+        this.wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+        request_id = _request_id;
+        reply_status = _reply_status;
+        ior = _ior;
+    }
+
+    // Accessor methods
+
+    public int getRequestId() {
+        return this.request_id;
+    }
+
+    public int getReplyStatus() {
+        return this.reply_status;
+    }
+
+    public short getAddrDisposition() {
+        return this.addrDisposition;
+    }
+
+    public SystemException getSystemException(String message) {
+        return MessageBase.getSystemException(
+            exClassName, minorCode, completionStatus, message, wrapper);
+    }
+
+    public IOR getIOR() {
+        return this.ior;
+    }
+
+    // IO methods
+
+    public void read(org.omg.CORBA.portable.InputStream istream) {
+        super.read(istream);
+        this.request_id = istream.read_ulong();
+        this.reply_status = istream.read_long();
+        isValidReplyStatus(this.reply_status); // raises exception on error
+
+        // GIOP 1.2 LocateReply message bodies are not aligned on
+        // 8 byte boundaries.
+
+        // The code below reads the reply body in some cases
+        // LOC_SYSTEM_EXCEPTION & OBJECT_FORWARD & OBJECT_FORWARD_PERM &
+        // LOC_NEEDS_ADDRESSING_MODE
+        if (this.reply_status == LOC_SYSTEM_EXCEPTION) {
+
+            String reposId = istream.read_string();
+            this.exClassName = ORBUtility.classNameOf(reposId);
+            this.minorCode = istream.read_long();
+            int status = istream.read_long();
+
+            switch (status) {
+            case CompletionStatus._COMPLETED_YES:
+                this.completionStatus = CompletionStatus.COMPLETED_YES;
+                break;
+            case CompletionStatus._COMPLETED_NO:
+                this.completionStatus = CompletionStatus.COMPLETED_NO;
+                break;
+            case CompletionStatus._COMPLETED_MAYBE:
+                this.completionStatus = CompletionStatus.COMPLETED_MAYBE;
+                break;
+            default:
+                throw wrapper.badCompletionStatusInLocateReply(
+                    CompletionStatus.COMPLETED_MAYBE, new Integer(status) );
+            }
+        } else if ( (this.reply_status == OBJECT_FORWARD) ||
+                (this.reply_status == OBJECT_FORWARD_PERM) ){
+            CDRInputStream cdr = (CDRInputStream) istream;
+            this.ior = IORFactories.makeIOR( cdr ) ;
+        }  else if (this.reply_status == LOC_NEEDS_ADDRESSING_MODE) {
+            // read GIOP::AddressingDisposition from body and resend the
+            // original request using the requested addressing mode. The
+            // resending is transparent to the caller.
+            this.addrDisposition = AddressingDispositionHelper.read(istream);
+        }
+    }
+
+    // Note, this writes only the header information. SystemException or
+    // IOR or GIOP::AddressingDisposition may be written afterwards into the
+    // reply mesg body.
+    public void write(org.omg.CORBA.portable.OutputStream ostream) {
+        super.write(ostream);
+        ostream.write_ulong(this.request_id);
+        ostream.write_long(this.reply_status);
+
+
+        // GIOP 1.2 LocateReply message bodies are not aligned on
+        // 8 byte boundaries.
+    }
+
+    // Static methods
+
+    public static void isValidReplyStatus(int replyStatus) {
+        switch (replyStatus) {
+        case UNKNOWN_OBJECT :
+        case OBJECT_HERE :
+        case OBJECT_FORWARD :
+        case OBJECT_FORWARD_PERM :
+        case LOC_SYSTEM_EXCEPTION :
+        case LOC_NEEDS_ADDRESSING_MODE :
+            break;
+        default :
+            ORBUtilSystemException localWrapper = ORBUtilSystemException.get(
+                CORBALogDomains.RPC_PROTOCOL ) ;
+            throw localWrapper.illegalReplyStatus( CompletionStatus.COMPLETED_MAYBE);
+        }
+    }
+
+    public void callback(MessageHandler handler)
+        throws java.io.IOException
+    {
+        handler.handleInput(this);
+    }
+} // class LocateReplyMessage_1_2

@@ -1,50 +1,46 @@
-/*    */ package com.sun.imageio.plugins.jpeg;
-/*    */ 
-/*    */ import java.util.ListResourceBundle;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JPEGImageReaderResources
-/*    */   extends ListResourceBundle
-/*    */ {
-/*    */   protected Object[][] getContents() {
-/* 35 */     return new Object[][] {
-/*    */         {
-/* 37 */           Integer.toString(0), "Truncated File - Missing EOI marker"
-/*    */         
-/* 39 */         }, { Integer.toString(1), "JFIF markers not allowed in JFIF JPEG thumbnail; ignored"
-/*    */         },
-/* 41 */         { Integer.toString(2), "Embedded color profile is invalid; ignored" }
-/*    */       };
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\jpeg\JPEGImageReaderResources.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.jpeg;
+
+import java.util.ListResourceBundle;
+
+public class JPEGImageReaderResources extends ListResourceBundle {
+
+    public JPEGImageReaderResources() {}
+
+    protected Object[][] getContents() {
+        return new Object[][] {
+
+        {Integer.toString(JPEGImageReader.WARNING_NO_EOI),
+         "Truncated File - Missing EOI marker"},
+        {Integer.toString(JPEGImageReader.WARNING_NO_JFIF_IN_THUMB),
+         "JFIF markers not allowed in JFIF JPEG thumbnail; ignored"},
+        {Integer.toString(JPEGImageReader.WARNING_IGNORE_INVALID_ICC),
+         "Embedded color profile is invalid; ignored"}
+
+        };
+    }
+}

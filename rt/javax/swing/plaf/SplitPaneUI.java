@@ -1,24 +1,69 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.plaf;
 
-import java.awt.Graphics;
 import javax.swing.JSplitPane;
+import java.awt.Graphics;
 
-public abstract class SplitPaneUI extends ComponentUI {
-  public abstract void resetToPreferredSizes(JSplitPane paramJSplitPane);
-  
-  public abstract void setDividerLocation(JSplitPane paramJSplitPane, int paramInt);
-  
-  public abstract int getDividerLocation(JSplitPane paramJSplitPane);
-  
-  public abstract int getMinimumDividerLocation(JSplitPane paramJSplitPane);
-  
-  public abstract int getMaximumDividerLocation(JSplitPane paramJSplitPane);
-  
-  public abstract void finishedPaintingChildren(JSplitPane paramJSplitPane, Graphics paramGraphics);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\SplitPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Pluggable look and feel interface for JSplitPane.
+ *
+ * @author Scott Violet
  */
+public abstract class SplitPaneUI extends ComponentUI
+{
+    /**
+     * Messaged to relayout the JSplitPane based on the preferred size
+     * of the children components.
+     */
+    public abstract void resetToPreferredSizes(JSplitPane jc);
+
+    /**
+     * Sets the location of the divider to location.
+     */
+    public abstract void setDividerLocation(JSplitPane jc, int location);
+
+    /**
+     * Returns the location of the divider.
+     */
+    public abstract int getDividerLocation(JSplitPane jc);
+
+    /**
+     * Returns the minimum possible location of the divider.
+     */
+    public abstract int getMinimumDividerLocation(JSplitPane jc);
+
+    /**
+     * Returns the maximum possible location of the divider.
+     */
+    public abstract int getMaximumDividerLocation(JSplitPane jc);
+
+    /**
+     * Messaged after the JSplitPane the receiver is providing the look
+     * and feel for paints its children.
+     */
+    public abstract void finishedPaintingChildren(JSplitPane jc, Graphics g);
+}

@@ -1,9 +1,43 @@
+/*
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.xml.soap;
 
-public interface SOAPBodyElement extends SOAPElement {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\soap\SOAPBodyElement.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A <code>SOAPBodyElement</code> object represents the contents in
+ * a <code>SOAPBody</code> object.  The <code>SOAPFault</code> interface
+ * is a <code>SOAPBodyElement</code> object that has been defined.
+ * <P>
+ * A new <code>SOAPBodyElement</code> object can be created and added
+ * to a <code>SOAPBody</code> object with the <code>SOAPBody</code>
+ * method <code>addBodyElement</code>. In the following line of code,
+ * <code>sb</code> is a <code>SOAPBody</code> object, and
+ * <code>myName</code> is a <code>Name</code> object.
+ * <PRE>
+ *    SOAPBodyElement sbe = sb.addBodyElement(myName);
+ * </PRE>
  */
+public interface SOAPBodyElement extends SOAPElement {
+}

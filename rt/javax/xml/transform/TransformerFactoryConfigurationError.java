@@ -1,136 +1,130 @@
-/*     */ package javax.xml.transform;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TransformerFactoryConfigurationError
-/*     */   extends Error
-/*     */ {
-/*     */   private static final long serialVersionUID = -6527718720676281516L;
-/*     */   private Exception exception;
-/*     */   
-/*     */   public TransformerFactoryConfigurationError() {
-/*  51 */     this.exception = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerFactoryConfigurationError(String msg) {
-/*  62 */     super(msg);
-/*     */     
-/*  64 */     this.exception = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerFactoryConfigurationError(Exception e) {
-/*  76 */     super(e.toString());
-/*     */     
-/*  78 */     this.exception = e;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerFactoryConfigurationError(Exception e, String msg) {
-/*  91 */     super(msg);
-/*     */     
-/*  93 */     this.exception = e;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessage() {
-/* 105 */     String message = super.getMessage();
-/*     */     
-/* 107 */     if (message == null && this.exception != null) {
-/* 108 */       return this.exception.getMessage();
-/*     */     }
-/*     */     
-/* 111 */     return message;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Exception getException() {
-/* 121 */     return this.exception;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getCause() {
-/* 128 */     return this.exception;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\transform\TransformerFactoryConfigurationError.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.transform;
+
+/**
+ * Thrown when a problem with configuration with the Transformer Factories
+ * exists. This error will typically be thrown when the class of a
+ * transformation factory specified in the system properties cannot be found
+ * or instantiated.
+ */
+public class TransformerFactoryConfigurationError extends Error {
+    private static final long serialVersionUID = -6527718720676281516L;
+
+    /**
+     * <code>Exception</code> for the
+     *  <code>TransformerFactoryConfigurationError</code>.
+     */
+    private Exception exception;
+
+    /**
+     * Create a new <code>TransformerFactoryConfigurationError</code> with no
+     * detail mesage.
+     */
+    public TransformerFactoryConfigurationError() {
+
+        super();
+
+        this.exception = null;
+    }
+
+    /**
+     * Create a new <code>TransformerFactoryConfigurationError</code> with
+     * the <code>String</code> specified as an error message.
+     *
+     * @param msg The error message for the exception.
+     */
+    public TransformerFactoryConfigurationError(String msg) {
+
+        super(msg);
+
+        this.exception = null;
+    }
+
+    /**
+     * Create a new <code>TransformerFactoryConfigurationError</code> with a
+     * given <code>Exception</code> base cause of the error.
+     *
+     * @param e The exception to be encapsulated in a
+     * TransformerFactoryConfigurationError.
+     */
+    public TransformerFactoryConfigurationError(Exception e) {
+
+        super(e.toString());
+
+        this.exception = e;
+    }
+
+    /**
+     * Create a new <code>TransformerFactoryConfigurationError</code> with the
+     * given <code>Exception</code> base cause and detail message.
+     *
+     * @param e The exception to be encapsulated in a
+     * TransformerFactoryConfigurationError
+     * @param msg The detail message.
+     */
+    public TransformerFactoryConfigurationError(Exception e, String msg) {
+
+        super(msg);
+
+        this.exception = e;
+    }
+
+    /**
+     * Return the message (if any) for this error . If there is no
+     * message for the exception and there is an encapsulated
+     * exception then the message of that exception will be returned.
+     *
+     * @return The error message.
+     */
+    public String getMessage() {
+
+        String message = super.getMessage();
+
+        if ((message == null) && (exception != null)) {
+            return exception.getMessage();
+        }
+
+        return message;
+    }
+
+    /**
+     * Return the actual exception (if any) that caused this exception to
+     * be raised.
+     *
+     * @return The encapsulated exception, or null if there is none.
+     */
+    public Exception getException() {
+        return exception;
+    }
+    /**
+     * use the exception chaining mechanism of JDK1.4
+    */
+    @Override
+    public Throwable getCause() {
+        return exception;
+    }
+}

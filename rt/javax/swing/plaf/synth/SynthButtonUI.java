@@ -1,539 +1,534 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicButtonUI;
-/*     */ import javax.swing.plaf.basic.BasicHTML;
-/*     */ import javax.swing.text.View;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthButtonUI
-/*     */   extends BasicButtonUI
-/*     */   implements PropertyChangeListener, SynthUI
-/*     */ {
-/*     */   private SynthStyle style;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  54 */     return new SynthButtonUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults(AbstractButton paramAbstractButton) {
-/*  62 */     updateStyle(paramAbstractButton);
-/*     */     
-/*  64 */     LookAndFeel.installProperty(paramAbstractButton, "rolloverEnabled", Boolean.TRUE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners(AbstractButton paramAbstractButton) {
-/*  72 */     super.installListeners(paramAbstractButton);
-/*  73 */     paramAbstractButton.addPropertyChangeListener(this);
-/*     */   }
-/*     */   
-/*     */   void updateStyle(AbstractButton paramAbstractButton) {
-/*  77 */     SynthContext synthContext = getContext(paramAbstractButton, 1);
-/*  78 */     SynthStyle synthStyle = this.style;
-/*  79 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*  80 */     if (this.style != synthStyle) {
-/*  81 */       if (paramAbstractButton.getMargin() == null || paramAbstractButton
-/*  82 */         .getMargin() instanceof javax.swing.plaf.UIResource) {
-/*  83 */         Insets insets = (Insets)this.style.get(synthContext, getPropertyPrefix() + "margin");
-/*     */ 
-/*     */         
-/*  86 */         if (insets == null)
-/*     */         {
-/*  88 */           insets = SynthLookAndFeel.EMPTY_UIRESOURCE_INSETS;
-/*     */         }
-/*  90 */         paramAbstractButton.setMargin(insets);
-/*     */       } 
-/*     */       
-/*  93 */       Object object = this.style.get(synthContext, getPropertyPrefix() + "iconTextGap");
-/*  94 */       if (object != null) {
-/*  95 */         LookAndFeel.installProperty(paramAbstractButton, "iconTextGap", object);
-/*     */       }
-/*     */       
-/*  98 */       object = this.style.get(synthContext, getPropertyPrefix() + "contentAreaFilled");
-/*  99 */       LookAndFeel.installProperty(paramAbstractButton, "contentAreaFilled", (object != null) ? object : Boolean.TRUE);
-/*     */ 
-/*     */       
-/* 102 */       if (synthStyle != null) {
-/* 103 */         uninstallKeyboardActions(paramAbstractButton);
-/* 104 */         installKeyboardActions(paramAbstractButton);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 108 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners(AbstractButton paramAbstractButton) {
-/* 116 */     super.uninstallListeners(paramAbstractButton);
-/* 117 */     paramAbstractButton.removePropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults(AbstractButton paramAbstractButton) {
-/* 125 */     SynthContext synthContext = getContext(paramAbstractButton, 1);
-/*     */     
-/* 127 */     this.style.uninstallDefaults(synthContext);
-/* 128 */     synthContext.dispose();
-/* 129 */     this.style = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 137 */     return getContext(paramJComponent, getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 141 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getComponentState(JComponent paramJComponent) {
-/* 148 */     int i = 1;
-/*     */     
-/* 150 */     if (!paramJComponent.isEnabled()) {
-/* 151 */       i = 8;
-/*     */     }
-/* 153 */     if (SynthLookAndFeel.getSelectedUI() == this) {
-/* 154 */       return SynthLookAndFeel.getSelectedUIState() | 0x1;
-/*     */     }
-/* 156 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 157 */     ButtonModel buttonModel = abstractButton.getModel();
-/*     */     
-/* 159 */     if (buttonModel.isPressed()) {
-/* 160 */       if (buttonModel.isArmed()) {
-/* 161 */         i = 4;
-/*     */       } else {
-/*     */         
-/* 164 */         i = 2;
-/*     */       } 
-/*     */     }
-/* 167 */     if (buttonModel.isRollover()) {
-/* 168 */       i |= 0x2;
-/*     */     }
-/* 170 */     if (buttonModel.isSelected()) {
-/* 171 */       i |= 0x200;
-/*     */     }
-/* 173 */     if (paramJComponent.isFocusOwner() && abstractButton.isFocusPainted()) {
-/* 174 */       i |= 0x100;
-/*     */     }
-/* 176 */     if (paramJComponent instanceof JButton && ((JButton)paramJComponent).isDefaultButton()) {
-/* 177 */       i |= 0x400;
-/*     */     }
-/* 179 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/*     */     int i;
-/* 187 */     if (paramJComponent == null) {
-/* 188 */       throw new NullPointerException("Component must be non-null");
-/*     */     }
-/* 190 */     if (paramInt1 < 0 || paramInt2 < 0) {
-/* 191 */       throw new IllegalArgumentException("Width and height must be >= 0");
-/*     */     }
-/*     */     
-/* 194 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 195 */     String str = abstractButton.getText();
-/* 196 */     if (str == null || "".equals(str)) {
-/* 197 */       return -1;
-/*     */     }
-/* 199 */     Insets insets = abstractButton.getInsets();
-/* 200 */     Rectangle rectangle1 = new Rectangle();
-/* 201 */     Rectangle rectangle2 = new Rectangle();
-/* 202 */     Rectangle rectangle3 = new Rectangle();
-/* 203 */     rectangle1.x = insets.left;
-/* 204 */     rectangle1.y = insets.top;
-/* 205 */     rectangle1.width = paramInt1 - insets.right + rectangle1.x;
-/* 206 */     rectangle1.height = paramInt2 - insets.bottom + rectangle1.y;
-/*     */ 
-/*     */     
-/* 209 */     SynthContext synthContext = getContext(abstractButton);
-/* 210 */     FontMetrics fontMetrics = synthContext.getComponent().getFontMetrics(synthContext
-/* 211 */         .getStyle().getFont(synthContext));
-/* 212 */     synthContext.getStyle().getGraphicsUtils(synthContext).layoutText(synthContext, fontMetrics, abstractButton
-/* 213 */         .getText(), abstractButton.getIcon(), abstractButton
-/* 214 */         .getHorizontalAlignment(), abstractButton.getVerticalAlignment(), abstractButton
-/* 215 */         .getHorizontalTextPosition(), abstractButton.getVerticalTextPosition(), rectangle1, rectangle3, rectangle2, abstractButton
-/* 216 */         .getIconTextGap());
-/* 217 */     View view = (View)abstractButton.getClientProperty("html");
-/*     */     
-/* 219 */     if (view != null) {
-/* 220 */       i = BasicHTML.getHTMLBaseline(view, rectangle2.width, rectangle2.height);
-/*     */       
-/* 222 */       if (i >= 0) {
-/* 223 */         i += rectangle2.y;
-/*     */       }
-/*     */     } else {
-/*     */       
-/* 227 */       i = rectangle2.y + fontMetrics.getAscent();
-/*     */     } 
-/* 229 */     synthContext.dispose();
-/* 230 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 251 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 253 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 254 */     paintBackground(synthContext, paramGraphics, paramJComponent);
-/* 255 */     paint(synthContext, paramGraphics);
-/* 256 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 270 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 272 */     paint(synthContext, paramGraphics);
-/* 273 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 284 */     AbstractButton abstractButton = (AbstractButton)paramSynthContext.getComponent();
-/*     */     
-/* 286 */     paramGraphics.setColor(paramSynthContext.getStyle().getColor(paramSynthContext, ColorType.TEXT_FOREGROUND));
-/*     */     
-/* 288 */     paramGraphics.setFont(this.style.getFont(paramSynthContext));
-/* 289 */     paramSynthContext.getStyle().getGraphicsUtils(paramSynthContext).paintText(paramSynthContext, paramGraphics, abstractButton
-/* 290 */         .getText(), getIcon(abstractButton), abstractButton
-/* 291 */         .getHorizontalAlignment(), abstractButton.getVerticalAlignment(), abstractButton
-/* 292 */         .getHorizontalTextPosition(), abstractButton.getVerticalTextPosition(), abstractButton
-/* 293 */         .getIconTextGap(), abstractButton.getDisplayedMnemonicIndex(), 
-/* 294 */         getTextShiftOffset(paramSynthContext));
-/*     */   }
-/*     */   
-/*     */   void paintBackground(SynthContext paramSynthContext, Graphics paramGraphics, JComponent paramJComponent) {
-/* 298 */     if (((AbstractButton)paramJComponent).isContentAreaFilled()) {
-/* 299 */       paramSynthContext.getPainter().paintButtonBackground(paramSynthContext, paramGraphics, 0, 0, paramJComponent
-/* 300 */           .getWidth(), paramJComponent
-/* 301 */           .getHeight());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 311 */     paramSynthContext.getPainter().paintButtonBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Icon getDefaultIcon(AbstractButton paramAbstractButton) {
-/* 322 */     SynthContext synthContext = getContext(paramAbstractButton);
-/* 323 */     Icon icon = synthContext.getStyle().getIcon(synthContext, getPropertyPrefix() + "icon");
-/* 324 */     synthContext.dispose();
-/* 325 */     return icon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Icon getIcon(AbstractButton paramAbstractButton) {
-/* 336 */     Icon icon = paramAbstractButton.getIcon();
-/* 337 */     ButtonModel buttonModel = paramAbstractButton.getModel();
-/*     */     
-/* 339 */     if (!buttonModel.isEnabled()) {
-/* 340 */       icon = getSynthDisabledIcon(paramAbstractButton, icon);
-/* 341 */     } else if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 342 */       icon = getPressedIcon(paramAbstractButton, getSelectedIcon(paramAbstractButton, icon));
-/* 343 */     } else if (paramAbstractButton.isRolloverEnabled() && buttonModel.isRollover()) {
-/* 344 */       icon = getRolloverIcon(paramAbstractButton, getSelectedIcon(paramAbstractButton, icon));
-/* 345 */     } else if (buttonModel.isSelected()) {
-/* 346 */       icon = getSelectedIcon(paramAbstractButton, icon);
-/*     */     } else {
-/* 348 */       icon = getEnabledIcon(paramAbstractButton, icon);
-/*     */     } 
-/* 350 */     if (icon == null) {
-/* 351 */       return getDefaultIcon(paramAbstractButton);
-/*     */     }
-/* 353 */     return icon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Icon getIcon(AbstractButton paramAbstractButton, Icon paramIcon1, Icon paramIcon2, int paramInt) {
-/* 369 */     Icon icon = paramIcon1;
-/* 370 */     if (icon == null) {
-/* 371 */       if (paramIcon2 instanceof javax.swing.plaf.UIResource) {
-/* 372 */         icon = getSynthIcon(paramAbstractButton, paramInt);
-/* 373 */         if (icon == null) {
-/* 374 */           icon = paramIcon2;
-/*     */         }
-/*     */       } else {
-/* 377 */         icon = paramIcon2;
-/*     */       } 
-/*     */     }
-/* 380 */     return icon;
-/*     */   }
-/*     */   
-/*     */   private Icon getSynthIcon(AbstractButton paramAbstractButton, int paramInt) {
-/* 384 */     return this.style.getIcon(getContext(paramAbstractButton, paramInt), getPropertyPrefix() + "icon");
-/*     */   }
-/*     */   
-/*     */   private Icon getEnabledIcon(AbstractButton paramAbstractButton, Icon paramIcon) {
-/* 388 */     if (paramIcon == null) {
-/* 389 */       paramIcon = getSynthIcon(paramAbstractButton, 1);
-/*     */     }
-/* 391 */     return paramIcon;
-/*     */   }
-/*     */   
-/*     */   private Icon getSelectedIcon(AbstractButton paramAbstractButton, Icon paramIcon) {
-/* 395 */     return getIcon(paramAbstractButton, paramAbstractButton.getSelectedIcon(), paramIcon, 512);
-/*     */   }
-/*     */   
-/*     */   private Icon getRolloverIcon(AbstractButton paramAbstractButton, Icon paramIcon) {
-/*     */     Icon icon;
-/* 400 */     ButtonModel buttonModel = paramAbstractButton.getModel();
-/*     */     
-/* 402 */     if (buttonModel.isSelected()) {
-/* 403 */       icon = getIcon(paramAbstractButton, paramAbstractButton.getRolloverSelectedIcon(), paramIcon, 514);
-/*     */     } else {
-/*     */       
-/* 406 */       icon = getIcon(paramAbstractButton, paramAbstractButton.getRolloverIcon(), paramIcon, 2);
-/*     */     } 
-/*     */     
-/* 409 */     return icon;
-/*     */   }
-/*     */   
-/*     */   private Icon getPressedIcon(AbstractButton paramAbstractButton, Icon paramIcon) {
-/* 413 */     return getIcon(paramAbstractButton, paramAbstractButton.getPressedIcon(), paramIcon, 4);
-/*     */   }
-/*     */   
-/*     */   private Icon getSynthDisabledIcon(AbstractButton paramAbstractButton, Icon paramIcon) {
-/*     */     Icon icon;
-/* 418 */     ButtonModel buttonModel = paramAbstractButton.getModel();
-/*     */     
-/* 420 */     if (buttonModel.isSelected()) {
-/* 421 */       icon = getIcon(paramAbstractButton, paramAbstractButton.getDisabledSelectedIcon(), paramIcon, 520);
-/*     */     } else {
-/*     */       
-/* 424 */       icon = getIcon(paramAbstractButton, paramAbstractButton.getDisabledIcon(), paramIcon, 8);
-/*     */     } 
-/*     */     
-/* 427 */     return icon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getTextShiftOffset(SynthContext paramSynthContext) {
-/* 434 */     AbstractButton abstractButton = (AbstractButton)paramSynthContext.getComponent();
-/* 435 */     ButtonModel buttonModel = abstractButton.getModel();
-/*     */     
-/* 437 */     if (buttonModel.isArmed() && buttonModel.isPressed() && abstractButton
-/* 438 */       .getPressedIcon() == null) {
-/* 439 */       return paramSynthContext.getStyle().getInt(paramSynthContext, getPropertyPrefix() + "textShiftOffset", 0);
-/*     */     }
-/*     */     
-/* 442 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 454 */     if (paramJComponent.getComponentCount() > 0 && paramJComponent.getLayout() != null) {
-/* 455 */       return null;
-/*     */     }
-/* 457 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 458 */     SynthContext synthContext = getContext(paramJComponent);
-/* 459 */     Dimension dimension = synthContext.getStyle().getGraphicsUtils(synthContext).getMinimumSize(synthContext, synthContext
-/* 460 */         .getStyle().getFont(synthContext), abstractButton.getText(), getSizingIcon(abstractButton), abstractButton
-/* 461 */         .getHorizontalAlignment(), abstractButton.getVerticalAlignment(), abstractButton
-/* 462 */         .getHorizontalTextPosition(), abstractButton
-/* 463 */         .getVerticalTextPosition(), abstractButton.getIconTextGap(), abstractButton
-/* 464 */         .getDisplayedMnemonicIndex());
-/*     */     
-/* 466 */     synthContext.dispose();
-/* 467 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 475 */     if (paramJComponent.getComponentCount() > 0 && paramJComponent.getLayout() != null) {
-/* 476 */       return null;
-/*     */     }
-/* 478 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 479 */     SynthContext synthContext = getContext(paramJComponent);
-/* 480 */     Dimension dimension = synthContext.getStyle().getGraphicsUtils(synthContext).getPreferredSize(synthContext, synthContext
-/* 481 */         .getStyle().getFont(synthContext), abstractButton.getText(), getSizingIcon(abstractButton), abstractButton
-/* 482 */         .getHorizontalAlignment(), abstractButton.getVerticalAlignment(), abstractButton
-/* 483 */         .getHorizontalTextPosition(), abstractButton
-/* 484 */         .getVerticalTextPosition(), abstractButton.getIconTextGap(), abstractButton
-/* 485 */         .getDisplayedMnemonicIndex());
-/*     */     
-/* 487 */     synthContext.dispose();
-/* 488 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 496 */     if (paramJComponent.getComponentCount() > 0 && paramJComponent.getLayout() != null) {
-/* 497 */       return null;
-/*     */     }
-/*     */     
-/* 500 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 501 */     SynthContext synthContext = getContext(paramJComponent);
-/* 502 */     Dimension dimension = synthContext.getStyle().getGraphicsUtils(synthContext).getMaximumSize(synthContext, synthContext
-/* 503 */         .getStyle().getFont(synthContext), abstractButton.getText(), getSizingIcon(abstractButton), abstractButton
-/* 504 */         .getHorizontalAlignment(), abstractButton.getVerticalAlignment(), abstractButton
-/* 505 */         .getHorizontalTextPosition(), abstractButton
-/* 506 */         .getVerticalTextPosition(), abstractButton.getIconTextGap(), abstractButton
-/* 507 */         .getDisplayedMnemonicIndex());
-/*     */     
-/* 509 */     synthContext.dispose();
-/* 510 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Icon getSizingIcon(AbstractButton paramAbstractButton) {
-/* 518 */     Icon icon = getEnabledIcon(paramAbstractButton, paramAbstractButton.getIcon());
-/* 519 */     if (icon == null) {
-/* 520 */       icon = getDefaultIcon(paramAbstractButton);
-/*     */     }
-/* 522 */     return icon;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 530 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent))
-/* 531 */       updateStyle((AbstractButton)paramPropertyChangeEvent.getSource()); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthButtonUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.*;
+import java.awt.*;
+import java.beans.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.View;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JButton}.
+ *
+ * @author Scott Violet
+ * @since 1.7
+ */
+public class SynthButtonUI extends BasicButtonUI implements
+                                 PropertyChangeListener, SynthUI {
+    private SynthStyle style;
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthButtonUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults(AbstractButton b) {
+        updateStyle(b);
+
+        LookAndFeel.installProperty(b, "rolloverEnabled", Boolean.TRUE);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installListeners(AbstractButton b) {
+        super.installListeners(b);
+        b.addPropertyChangeListener(this);
+    }
+
+    void updateStyle(AbstractButton b) {
+        SynthContext context = getContext(b, SynthConstants.ENABLED);
+        SynthStyle oldStyle = style;
+        style = SynthLookAndFeel.updateStyle(context, this);
+        if (style != oldStyle) {
+            if (b.getMargin() == null ||
+                                (b.getMargin() instanceof UIResource)) {
+                Insets margin = (Insets)style.get(context,getPropertyPrefix() +
+                                                  "margin");
+
+                if (margin == null) {
+                    // Some places assume margins are non-null.
+                    margin = SynthLookAndFeel.EMPTY_UIRESOURCE_INSETS;
+                }
+                b.setMargin(margin);
+            }
+
+            Object value = style.get(context, getPropertyPrefix() + "iconTextGap");
+            if (value != null) {
+                        LookAndFeel.installProperty(b, "iconTextGap", value);
+            }
+
+            value = style.get(context, getPropertyPrefix() + "contentAreaFilled");
+            LookAndFeel.installProperty(b, "contentAreaFilled",
+                                        value != null? value : Boolean.TRUE);
+
+            if (oldStyle != null) {
+                uninstallKeyboardActions(b);
+                installKeyboardActions(b);
+            }
+
+        }
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallListeners(AbstractButton b) {
+        super.uninstallListeners(b);
+        b.removePropertyChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults(AbstractButton b) {
+        SynthContext context = getContext(b, ENABLED);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, getComponentState(c));
+    }
+
+    SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    /**
+     * Returns the current state of the passed in <code>AbstractButton</code>.
+     */
+    private int getComponentState(JComponent c) {
+        int state = ENABLED;
+
+        if (!c.isEnabled()) {
+            state = DISABLED;
+        }
+        if (SynthLookAndFeel.getSelectedUI() == this) {
+            return SynthLookAndFeel.getSelectedUIState() | SynthConstants.ENABLED;
+        }
+        AbstractButton button = (AbstractButton) c;
+        ButtonModel model = button.getModel();
+
+        if (model.isPressed()) {
+            if (model.isArmed()) {
+                state = PRESSED;
+            }
+            else {
+                state = MOUSE_OVER;
+            }
+        }
+        if (model.isRollover()) {
+            state |= MOUSE_OVER;
+        }
+        if (model.isSelected()) {
+            state |= SELECTED;
+        }
+        if (c.isFocusOwner() && button.isFocusPainted()) {
+            state |= FOCUSED;
+        }
+        if ((c instanceof JButton) && ((JButton)c).isDefaultButton()) {
+            state |= DEFAULT;
+        }
+        return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getBaseline(JComponent c, int width, int height) {
+        if (c == null) {
+            throw new NullPointerException("Component must be non-null");
+        }
+        if (width < 0 || height < 0) {
+            throw new IllegalArgumentException(
+                    "Width and height must be >= 0");
+        }
+        AbstractButton b = (AbstractButton)c;
+        String text = b.getText();
+        if (text == null || "".equals(text)) {
+            return -1;
+        }
+        Insets i = b.getInsets();
+        Rectangle viewRect = new Rectangle();
+        Rectangle textRect = new Rectangle();
+        Rectangle iconRect = new Rectangle();
+        viewRect.x = i.left;
+        viewRect.y = i.top;
+        viewRect.width = width - (i.right + viewRect.x);
+        viewRect.height = height - (i.bottom + viewRect.y);
+
+        // layout the text and icon
+        SynthContext context = getContext(b);
+        FontMetrics fm = context.getComponent().getFontMetrics(
+            context.getStyle().getFont(context));
+        context.getStyle().getGraphicsUtils(context).layoutText(
+            context, fm, b.getText(), b.getIcon(),
+            b.getHorizontalAlignment(), b.getVerticalAlignment(),
+            b.getHorizontalTextPosition(), b.getVerticalTextPosition(),
+            viewRect, iconRect, textRect, b.getIconTextGap());
+        View view = (View)b.getClientProperty(BasicHTML.propertyKey);
+        int baseline;
+        if (view != null) {
+            baseline = BasicHTML.getHTMLBaseline(view, textRect.width,
+                                                 textRect.height);
+            if (baseline >= 0) {
+                baseline += textRect.y;
+            }
+        }
+        else {
+            baseline = textRect.y + fm.getAscent();
+        }
+        context.dispose();
+        return baseline;
+    }
+
+    // ********************************
+    //          Paint Methods
+    // ********************************
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        paintBackground(context, g, c);
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+        AbstractButton b = (AbstractButton)context.getComponent();
+
+        g.setColor(context.getStyle().getColor(context,
+                                               ColorType.TEXT_FOREGROUND));
+        g.setFont(style.getFont(context));
+        context.getStyle().getGraphicsUtils(context).paintText(
+            context, g, b.getText(), getIcon(b),
+            b.getHorizontalAlignment(), b.getVerticalAlignment(),
+            b.getHorizontalTextPosition(), b.getVerticalTextPosition(),
+            b.getIconTextGap(), b.getDisplayedMnemonicIndex(),
+            getTextShiftOffset(context));
+    }
+
+    void paintBackground(SynthContext context, Graphics g, JComponent c) {
+        if (((AbstractButton) c).isContentAreaFilled()) {
+            context.getPainter().paintButtonBackground(context, g, 0, 0,
+                                                       c.getWidth(),
+                                                       c.getHeight());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintButtonBorder(context, g, x, y, w, h);
+    }
+
+    /**
+     * Returns the default icon. This should not callback
+     * to the JComponent.
+     *
+     * @param b button the icon is associated with
+     * @return default icon
+     */
+    protected Icon getDefaultIcon(AbstractButton b) {
+        SynthContext context = getContext(b);
+        Icon icon = context.getStyle().getIcon(context, getPropertyPrefix() + "icon");
+        context.dispose();
+        return icon;
+    }
+
+    /**
+     * Returns the Icon to use for painting the button. The icon is chosen with
+     * respect to the current state of the button.
+     *
+     * @param b button the icon is associated with
+     * @return an icon
+     */
+    protected Icon getIcon(AbstractButton b) {
+        Icon icon = b.getIcon();
+        ButtonModel model = b.getModel();
+
+        if (!model.isEnabled()) {
+            icon = getSynthDisabledIcon(b, icon);
+        } else if (model.isPressed() && model.isArmed()) {
+            icon = getPressedIcon(b, getSelectedIcon(b, icon));
+        } else if (b.isRolloverEnabled() && model.isRollover()) {
+            icon = getRolloverIcon(b, getSelectedIcon(b, icon));
+        } else if (model.isSelected()) {
+            icon = getSelectedIcon(b, icon);
+        } else {
+            icon = getEnabledIcon(b, icon);
+        }
+        if(icon == null) {
+            return getDefaultIcon(b);
+        }
+        return icon;
+    }
+
+    /**
+     * This method will return the icon that should be used for a button.  We
+     * only want to use the synth icon defined by the style if the specific
+     * icon has not been defined for the button state and the backup icon is a
+     * UIResource (we set it, not the developer).
+     *
+     * @param b button
+     * @param specificIcon icon returned from the button for the specific state
+     * @param defaultIcon fallback icon
+     * @param state the synth state of the button
+     */
+    private Icon getIcon(AbstractButton b, Icon specificIcon, Icon defaultIcon,
+            int state) {
+        Icon icon = specificIcon;
+        if (icon == null) {
+            if (defaultIcon instanceof UIResource) {
+                icon = getSynthIcon(b, state);
+                if (icon == null) {
+                    icon = defaultIcon;
+                }
+            } else {
+                icon = defaultIcon;
+            }
+        }
+        return icon;
+    }
+
+    private Icon getSynthIcon(AbstractButton b, int synthConstant) {
+        return style.getIcon(getContext(b, synthConstant), getPropertyPrefix() + "icon");
+    }
+
+    private Icon getEnabledIcon(AbstractButton b, Icon defaultIcon) {
+        if (defaultIcon == null) {
+            defaultIcon = getSynthIcon(b, SynthConstants.ENABLED);
+        }
+        return defaultIcon;
+    }
+
+    private Icon getSelectedIcon(AbstractButton b, Icon defaultIcon) {
+        return getIcon(b, b.getSelectedIcon(), defaultIcon,
+                SynthConstants.SELECTED);
+    }
+
+    private Icon getRolloverIcon(AbstractButton b, Icon defaultIcon) {
+        ButtonModel model = b.getModel();
+        Icon icon;
+        if (model.isSelected()) {
+            icon = getIcon(b, b.getRolloverSelectedIcon(), defaultIcon,
+                    SynthConstants.MOUSE_OVER | SynthConstants.SELECTED);
+        } else {
+            icon = getIcon(b, b.getRolloverIcon(), defaultIcon,
+                    SynthConstants.MOUSE_OVER);
+        }
+        return icon;
+    }
+
+    private Icon getPressedIcon(AbstractButton b, Icon defaultIcon) {
+        return getIcon(b, b.getPressedIcon(), defaultIcon,
+                SynthConstants.PRESSED);
+    }
+
+    private Icon getSynthDisabledIcon(AbstractButton b, Icon defaultIcon) {
+        ButtonModel model = b.getModel();
+        Icon icon;
+        if (model.isSelected()) {
+            icon = getIcon(b, b.getDisabledSelectedIcon(), defaultIcon,
+                    SynthConstants.DISABLED | SynthConstants.SELECTED);
+        } else {
+            icon = getIcon(b, b.getDisabledIcon(), defaultIcon,
+                    SynthConstants.DISABLED);
+        }
+        return icon;
+    }
+
+    /**
+     * Returns the amount to shift the text/icon when painting.
+     */
+    private int getTextShiftOffset(SynthContext state) {
+        AbstractButton button = (AbstractButton)state.getComponent();
+        ButtonModel model = button.getModel();
+
+        if (model.isArmed() && model.isPressed() &&
+                               button.getPressedIcon() == null) {
+            return state.getStyle().getInt(state, getPropertyPrefix() +
+                                           "textShiftOffset", 0);
+        }
+        return 0;
+    }
+
+    // ********************************
+    //          Layout Methods
+    // ********************************
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Dimension getMinimumSize(JComponent c) {
+        if (c.getComponentCount() > 0 && c.getLayout() != null) {
+            return null;
+        }
+        AbstractButton b = (AbstractButton)c;
+        SynthContext ss = getContext(c);
+        Dimension size = ss.getStyle().getGraphicsUtils(ss).getMinimumSize(
+               ss, ss.getStyle().getFont(ss), b.getText(), getSizingIcon(b),
+               b.getHorizontalAlignment(), b.getVerticalAlignment(),
+               b.getHorizontalTextPosition(),
+               b.getVerticalTextPosition(), b.getIconTextGap(),
+               b.getDisplayedMnemonicIndex());
+
+        ss.dispose();
+        return size;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Dimension getPreferredSize(JComponent c) {
+        if (c.getComponentCount() > 0 && c.getLayout() != null) {
+            return null;
+        }
+        AbstractButton b = (AbstractButton)c;
+        SynthContext ss = getContext(c);
+        Dimension size = ss.getStyle().getGraphicsUtils(ss).getPreferredSize(
+               ss, ss.getStyle().getFont(ss), b.getText(), getSizingIcon(b),
+               b.getHorizontalAlignment(), b.getVerticalAlignment(),
+               b.getHorizontalTextPosition(),
+               b.getVerticalTextPosition(), b.getIconTextGap(),
+               b.getDisplayedMnemonicIndex());
+
+        ss.dispose();
+        return size;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Dimension getMaximumSize(JComponent c) {
+        if (c.getComponentCount() > 0 && c.getLayout() != null) {
+            return null;
+        }
+
+        AbstractButton b = (AbstractButton)c;
+        SynthContext ss = getContext(c);
+        Dimension size = ss.getStyle().getGraphicsUtils(ss).getMaximumSize(
+               ss, ss.getStyle().getFont(ss), b.getText(), getSizingIcon(b),
+               b.getHorizontalAlignment(), b.getVerticalAlignment(),
+               b.getHorizontalTextPosition(),
+               b.getVerticalTextPosition(), b.getIconTextGap(),
+               b.getDisplayedMnemonicIndex());
+
+        ss.dispose();
+        return size;
+    }
+
+    /**
+     * Returns the Icon used in calculating the
+     * preferred/minimum/maximum size.
+     */
+    protected Icon getSizingIcon(AbstractButton b) {
+        Icon icon = getEnabledIcon(b, b.getIcon());
+        if (icon == null) {
+            icon = getDefaultIcon(b);
+        }
+        return icon;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent e) {
+        if (SynthLookAndFeel.shouldUpdateStyle(e)) {
+            updateStyle((AbstractButton)e.getSource());
+        }
+    }
+}

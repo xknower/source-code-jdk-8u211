@@ -1,349 +1,343 @@
-/*     */ package com.sun.org.apache.xml.internal.serializer;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.Writer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class SerializerTraceWriter
-/*     */   extends Writer
-/*     */   implements WriterChain
-/*     */ {
-/*     */   private final Writer m_writer;
-/*     */   private final SerializerTrace m_tracer;
-/*     */   private int buf_length;
-/*     */   private byte[] buf;
-/*     */   private int count;
-/*     */   
-/*     */   private void setBufferSize(int size) {
-/*  83 */     this.buf = new byte[size + 3];
-/*  84 */     this.buf_length = size;
-/*  85 */     this.count = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SerializerTraceWriter(Writer out, SerializerTrace tracer) {
-/* 101 */     this.m_writer = out;
-/* 102 */     this.m_tracer = tracer;
-/* 103 */     setBufferSize(1024);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void flushBuffer() throws IOException {
-/* 118 */     if (this.count > 0) {
-/*     */       
-/* 120 */       char[] chars = new char[this.count];
-/* 121 */       for (int i = 0; i < this.count; i++) {
-/* 122 */         chars[i] = (char)this.buf[i];
-/*     */       }
-/* 124 */       if (this.m_tracer != null) {
-/* 125 */         this.m_tracer.fireGenerateEvent(12, chars, 0, chars.length);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 131 */       this.count = 0;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void flush() throws IOException {
-/* 142 */     if (this.m_writer != null) {
-/* 143 */       this.m_writer.flush();
-/*     */     }
-/*     */     
-/* 146 */     flushBuffer();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 156 */     if (this.m_writer != null) {
-/* 157 */       this.m_writer.close();
-/*     */     }
-/*     */     
-/* 160 */     flushBuffer();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int c) throws IOException {
-/* 178 */     if (this.m_writer != null) {
-/* 179 */       this.m_writer.write(c);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 186 */     if (this.count >= this.buf_length) {
-/* 187 */       flushBuffer();
-/*     */     }
-/* 189 */     if (c < 128) {
-/*     */       
-/* 191 */       this.buf[this.count++] = (byte)c;
-/*     */     }
-/* 193 */     else if (c < 2048) {
-/*     */       
-/* 195 */       this.buf[this.count++] = (byte)(192 + (c >> 6));
-/* 196 */       this.buf[this.count++] = (byte)(128 + (c & 0x3F));
-/*     */     }
-/*     */     else {
-/*     */       
-/* 200 */       this.buf[this.count++] = (byte)(224 + (c >> 12));
-/* 201 */       this.buf[this.count++] = (byte)(128 + (c >> 6 & 0x3F));
-/* 202 */       this.buf[this.count++] = (byte)(128 + (c & 0x3F));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(char[] chars, int start, int length) throws IOException {
-/* 221 */     if (this.m_writer != null) {
-/* 222 */       this.m_writer.write(chars, start, length);
-/*     */     }
-/*     */     
-/* 225 */     int lengthx3 = (length << 1) + length;
-/*     */     
-/* 227 */     if (lengthx3 >= this.buf_length) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 234 */       flushBuffer();
-/* 235 */       setBufferSize(2 * lengthx3);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 239 */     if (lengthx3 > this.buf_length - this.count)
-/*     */     {
-/* 241 */       flushBuffer();
-/*     */     }
-/*     */     
-/* 244 */     int n = length + start;
-/* 245 */     for (int i = start; i < n; i++) {
-/*     */       
-/* 247 */       char c = chars[i];
-/*     */       
-/* 249 */       if (c < '') {
-/* 250 */         this.buf[this.count++] = (byte)c;
-/* 251 */       } else if (c < 'ࠀ') {
-/*     */         
-/* 253 */         this.buf[this.count++] = (byte)(192 + (c >> 6));
-/* 254 */         this.buf[this.count++] = (byte)(128 + (c & 0x3F));
-/*     */       }
-/*     */       else {
-/*     */         
-/* 258 */         this.buf[this.count++] = (byte)(224 + (c >> 12));
-/* 259 */         this.buf[this.count++] = (byte)(128 + (c >> 6 & 0x3F));
-/* 260 */         this.buf[this.count++] = (byte)(128 + (c & 0x3F));
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(String s) throws IOException {
-/* 276 */     if (this.m_writer != null) {
-/* 277 */       this.m_writer.write(s);
-/*     */     }
-/*     */     
-/* 280 */     int length = s.length();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 286 */     int lengthx3 = (length << 1) + length;
-/*     */     
-/* 288 */     if (lengthx3 >= this.buf_length) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 295 */       flushBuffer();
-/* 296 */       setBufferSize(2 * lengthx3);
-/*     */     } 
-/*     */     
-/* 299 */     if (lengthx3 > this.buf_length - this.count)
-/*     */     {
-/* 301 */       flushBuffer();
-/*     */     }
-/*     */     
-/* 304 */     for (int i = 0; i < length; i++) {
-/*     */       
-/* 306 */       char c = s.charAt(i);
-/*     */       
-/* 308 */       if (c < '') {
-/* 309 */         this.buf[this.count++] = (byte)c;
-/* 310 */       } else if (c < 'ࠀ') {
-/*     */         
-/* 312 */         this.buf[this.count++] = (byte)(192 + (c >> 6));
-/* 313 */         this.buf[this.count++] = (byte)(128 + (c & 0x3F));
-/*     */       }
-/*     */       else {
-/*     */         
-/* 317 */         this.buf[this.count++] = (byte)(224 + (c >> 12));
-/* 318 */         this.buf[this.count++] = (byte)(128 + (c >> 6 & 0x3F));
-/* 319 */         this.buf[this.count++] = (byte)(128 + (c & 0x3F));
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer getWriter() {
-/* 329 */     return this.m_writer;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutputStream getOutputStream() {
-/* 338 */     OutputStream retval = null;
-/* 339 */     if (this.m_writer instanceof WriterChain)
-/* 340 */       retval = ((WriterChain)this.m_writer).getOutputStream(); 
-/* 341 */     return retval;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serializer\SerializerTraceWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2003-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: SerializerTraceWriter.java,v 1.2.4.1 2005/09/15 08:15:25 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.serializer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+
+/**
+ * This class wraps the real writer, it only purpose is to send
+ * CHARACTERTOSTREAM events to the trace listener.
+ * Each method immediately sends the call to the wrapped writer unchanged, but
+ * in addition it collects characters to be issued to a trace listener.
+ *
+ * In this way the trace
+ * listener knows what characters have been written to the output Writer.
+ *
+ * There may still be differences in what the trace events say is going to the
+ * output writer and what is really going there. These differences will be due
+ * to the fact that this class is UTF-8 encoding before emiting the trace event
+ * and the underlying writer may not be UTF-8 encoding. There may also be
+ * encoding differences.  So the main pupose of this class is to provide a
+ * resonable facsimile of the true output.
+ *
+ * @xsl.usage internal
+ */
+final class SerializerTraceWriter extends Writer implements WriterChain
+{
+
+    /** The real writer to immediately write to.
+     * This reference may be null, in which case nothing is written out, but
+     * only the trace events are fired for output.
+     */
+    private final java.io.Writer m_writer;
+
+    /** The tracer to send events to */
+    private final SerializerTrace m_tracer;
+
+    /** The size of the internal buffer, just to keep too many
+     * events from being sent to the tracer
+     */
+    private int buf_length;
+
+    /**
+     * Internal buffer to collect the characters to go to the trace listener.
+     *
+     */
+    private byte buf[];
+
+    /**
+     * How many bytes have been collected and still need to go to trace
+     * listener.
+     */
+    private int count;
+
+    /**
+     * Creates or replaces the internal buffer, and makes sure it has a few
+     * extra bytes slight overflow of the last UTF8 encoded character.
+     * @param size
+     */
+    private void setBufferSize(int size)
+    {
+        buf = new byte[size + 3];
+        buf_length = size;
+        count = 0;
+    }
+
+    /**
+     * Constructor.
+     * If the writer passed in is null, then this SerializerTraceWriter will
+     * only signal trace events of what would have been written to that writer.
+     * If the writer passed in is not null then the trace events will mirror
+     * what is going to that writer. In this way tools, such as a debugger, can
+     * gather information on what is being written out.
+     *
+     * @param out the Writer to write to (possibly null)
+     * @param tracer the tracer to inform that characters are being written
+     */
+    public SerializerTraceWriter(Writer out, SerializerTrace tracer)
+    {
+        m_writer = out;
+        m_tracer = tracer;
+        setBufferSize(1024);
+    }
+
+    /**
+     * Flush out the collected characters by sending them to the trace
+     * listener.  These characters are never written to the real writer
+     * (m_writer) because that has already happened with every method
+     * call. This method simple informs the listener of what has already
+     * happened.
+     * @throws IOException
+     */
+    private void flushBuffer() throws IOException
+    {
+
+        // Just for tracing purposes
+        if (count > 0)
+        {
+            char[] chars = new char[count];
+            for(int i=0; i<count; i++)
+                chars[i] = (char) buf[i];
+
+            if (m_tracer != null)
+                m_tracer.fireGenerateEvent(
+                    SerializerTrace.EVENTTYPE_OUTPUT_CHARACTERS,
+                    chars,
+                    0,
+                    chars.length);
+
+            count = 0;
+        }
+    }
+
+    /**
+     * Flush the internal buffer and flush the Writer
+     * @see java.io.Writer#flush()
+     */
+    public void flush() throws java.io.IOException
+    {
+        // send to the real writer
+        if (m_writer != null)
+            m_writer.flush();
+
+        // from here on just for tracing purposes
+        flushBuffer();
+    }
+
+    /**
+     * Flush the internal buffer and close the Writer
+     * @see java.io.Writer#close()
+     */
+    public void close() throws java.io.IOException
+    {
+        // send to the real writer
+        if (m_writer != null)
+            m_writer.close();
+
+        // from here on just for tracing purposes
+        flushBuffer();
+    }
+
+
+    /**
+     * Write a single character.  The character to be written is contained in
+     * the 16 low-order bits of the given integer value; the 16 high-order bits
+     * are ignored.
+     *
+     * <p> Subclasses that intend to support efficient single-character output
+     * should override this method.
+     *
+     * @param c  int specifying a character to be written.
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void write(final int c) throws IOException
+    {
+        // send to the real writer
+        if (m_writer != null)
+            m_writer.write(c);
+
+        // ---------- from here on just collect for tracing purposes
+
+        /* If we are close to the end of the buffer then flush it.
+         * Remember the buffer can hold a few more characters than buf_length
+         */
+        if (count >= buf_length)
+            flushBuffer();
+
+        if (c < 0x80)
+        {
+            buf[count++] = (byte) (c);
+        }
+        else if (c < 0x800)
+        {
+            buf[count++] = (byte) (0xc0 + (c >> 6));
+            buf[count++] = (byte) (0x80 + (c & 0x3f));
+        }
+        else
+        {
+            buf[count++] = (byte) (0xe0 + (c >> 12));
+            buf[count++] = (byte) (0x80 + ((c >> 6) & 0x3f));
+            buf[count++] = (byte) (0x80 + (c & 0x3f));
+        }
+    }
+
+    /**
+     * Write a portion of an array of characters.
+     *
+     * @param  chars  Array of characters
+     * @param  start   Offset from which to start writing characters
+     * @param  length   Number of characters to write
+     *
+     * @exception  IOException  If an I/O error occurs
+     *
+     * @throws java.io.IOException
+     */
+    public void write(final char chars[], final int start, final int length)
+        throws java.io.IOException
+    {
+        // send to the real writer
+        if (m_writer != null)
+            m_writer.write(chars, start, length);
+
+        // from here on just collect for tracing purposes
+        int lengthx3 = (length << 1) + length;
+
+        if (lengthx3 >= buf_length)
+        {
+
+            /* If the request length exceeds the size of the output buffer,
+              * flush the output buffer and make the buffer bigger to handle.
+              */
+
+            flushBuffer();
+            setBufferSize(2 * lengthx3);
+
+        }
+
+        if (lengthx3 > buf_length - count)
+        {
+            flushBuffer();
+        }
+
+        final int n = length + start;
+        for (int i = start; i < n; i++)
+        {
+            final char c = chars[i];
+
+            if (c < 0x80)
+                buf[count++] = (byte) (c);
+            else if (c < 0x800)
+            {
+                buf[count++] = (byte) (0xc0 + (c >> 6));
+                buf[count++] = (byte) (0x80 + (c & 0x3f));
+            }
+            else
+            {
+                buf[count++] = (byte) (0xe0 + (c >> 12));
+                buf[count++] = (byte) (0x80 + ((c >> 6) & 0x3f));
+                buf[count++] = (byte) (0x80 + (c & 0x3f));
+            }
+        }
+
+    }
+
+    /**
+     * Write a string.
+     *
+     * @param  s  String to be written
+     *
+     * @exception  IOException  If an I/O error occurs
+     */
+    public void write(final String s) throws IOException
+    {
+        // send to the real writer
+        if (m_writer != null)
+            m_writer.write(s);
+
+        // from here on just collect for tracing purposes
+        final int length = s.length();
+
+        // We multiply the length by three since this is the maximum length
+        // of the characters that we can put into the buffer.  It is possible
+        // for each Unicode character to expand to three bytes.
+
+        int lengthx3 = (length << 1) + length;
+
+        if (lengthx3 >= buf_length)
+        {
+
+            /* If the request length exceeds the size of the output buffer,
+              * flush the output buffer and make the buffer bigger to handle.
+              */
+
+            flushBuffer();
+            setBufferSize(2 * lengthx3);
+        }
+
+        if (lengthx3 > buf_length - count)
+        {
+            flushBuffer();
+        }
+
+        for (int i = 0; i < length; i++)
+        {
+            final char c = s.charAt(i);
+
+            if (c < 0x80)
+                buf[count++] = (byte) (c);
+            else if (c < 0x800)
+            {
+                buf[count++] = (byte) (0xc0 + (c >> 6));
+                buf[count++] = (byte) (0x80 + (c & 0x3f));
+            }
+            else
+            {
+                buf[count++] = (byte) (0xe0 + (c >> 12));
+                buf[count++] = (byte) (0x80 + ((c >> 6) & 0x3f));
+                buf[count++] = (byte) (0x80 + (c & 0x3f));
+            }
+        }
+    }
+
+    /**
+     * Get the writer that this one directly wraps.
+     */
+    public Writer getWriter()
+    {
+        return m_writer;
+    }
+
+    /**
+     * Get the OutputStream that is the at the end of the
+     * chain of writers.
+     */
+    public OutputStream getOutputStream()
+    {
+        OutputStream retval = null;
+        if (m_writer instanceof WriterChain)
+            retval = ((WriterChain) m_writer).getOutputStream();
+        return retval;
+    }
+}

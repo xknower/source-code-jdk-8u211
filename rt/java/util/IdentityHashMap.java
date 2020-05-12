@@ -1,1605 +1,1600 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.io.StreamCorruptedException;
-/*      */ import java.lang.reflect.Array;
-/*      */ import java.util.function.BiConsumer;
-/*      */ import java.util.function.BiFunction;
-/*      */ import java.util.function.Consumer;
-/*      */ import sun.misc.SharedSecrets;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class IdentityHashMap<K, V>
-/*      */   extends AbstractMap<K, V>
-/*      */   implements Map<K, V>, Serializable, Cloneable
-/*      */ {
-/*      */   private static final int DEFAULT_CAPACITY = 32;
-/*      */   private static final int MINIMUM_CAPACITY = 4;
-/*      */   private static final int MAXIMUM_CAPACITY = 536870912;
-/*      */   transient Object[] table;
-/*      */   int size;
-/*      */   transient int modCount;
-/*  190 */   static final Object NULL_KEY = new Object();
-/*      */   
-/*      */   private transient Set<Map.Entry<K, V>> entrySet;
-/*      */   private static final long serialVersionUID = 8188218128353913216L;
-/*      */   
-/*      */   private static Object maskNull(Object paramObject) {
-/*  196 */     return (paramObject == null) ? NULL_KEY : paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static final Object unmaskNull(Object paramObject) {
-/*  203 */     return (paramObject == NULL_KEY) ? null : paramObject;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IdentityHashMap() {
-/*  211 */     init(32);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IdentityHashMap(int paramInt) {
-/*  224 */     if (paramInt < 0) {
-/*  225 */       throw new IllegalArgumentException("expectedMaxSize is negative: " + paramInt);
-/*      */     }
-/*  227 */     init(capacity(paramInt));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int capacity(int paramInt) {
-/*  239 */     return (paramInt > 178956970) ? 536870912 : ((paramInt <= 2) ? 4 : 
-/*      */ 
-/*      */       
-/*  242 */       Integer.highestOneBit(paramInt + (paramInt << 1)));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void init(int paramInt) {
-/*  255 */     this.table = new Object[2 * paramInt];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IdentityHashMap(Map<? extends K, ? extends V> paramMap) {
-/*  267 */     this((int)((1 + paramMap.size()) * 1.1D));
-/*  268 */     putAll(paramMap);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/*  277 */     return this.size;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEmpty() {
-/*  288 */     return (this.size == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int hash(Object paramObject, int paramInt) {
-/*  295 */     int i = System.identityHashCode(paramObject);
-/*      */     
-/*  297 */     return (i << 1) - (i << 8) & paramInt - 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int nextKeyIndex(int paramInt1, int paramInt2) {
-/*  304 */     return (paramInt1 + 2 < paramInt2) ? (paramInt1 + 2) : 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public V get(Object paramObject) {
-/*  326 */     Object object = maskNull(paramObject);
-/*  327 */     Object[] arrayOfObject = this.table;
-/*  328 */     int i = arrayOfObject.length;
-/*  329 */     int j = hash(object, i);
-/*      */     while (true) {
-/*  331 */       Object object1 = arrayOfObject[j];
-/*  332 */       if (object1 == object)
-/*  333 */         return (V)arrayOfObject[j + 1]; 
-/*  334 */       if (object1 == null)
-/*  335 */         return null; 
-/*  336 */       j = nextKeyIndex(j, i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsKey(Object paramObject) {
-/*  350 */     Object object = maskNull(paramObject);
-/*  351 */     Object[] arrayOfObject = this.table;
-/*  352 */     int i = arrayOfObject.length;
-/*  353 */     int j = hash(object, i);
-/*      */     while (true) {
-/*  355 */       Object object1 = arrayOfObject[j];
-/*  356 */       if (object1 == object)
-/*  357 */         return true; 
-/*  358 */       if (object1 == null)
-/*  359 */         return false; 
-/*  360 */       j = nextKeyIndex(j, i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean containsValue(Object paramObject) {
-/*  374 */     Object[] arrayOfObject = this.table;
-/*  375 */     for (byte b = 1; b < arrayOfObject.length; b += 2) {
-/*  376 */       if (arrayOfObject[b] == paramObject && arrayOfObject[b - 1] != null)
-/*  377 */         return true; 
-/*      */     } 
-/*  379 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean containsMapping(Object paramObject1, Object paramObject2) {
-/*  391 */     Object object = maskNull(paramObject1);
-/*  392 */     Object[] arrayOfObject = this.table;
-/*  393 */     int i = arrayOfObject.length;
-/*  394 */     int j = hash(object, i);
-/*      */     while (true) {
-/*  396 */       Object object1 = arrayOfObject[j];
-/*  397 */       if (object1 == object)
-/*  398 */         return (arrayOfObject[j + 1] == paramObject2); 
-/*  399 */       if (object1 == null)
-/*  400 */         return false; 
-/*  401 */       j = nextKeyIndex(j, i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public V put(K paramK, V paramV) {
-/*      */     Object[] arrayOfObject;
-/*      */     int i, j;
-/*  421 */     Object object = maskNull(paramK);
-/*      */     
-/*      */     while (true) {
-/*  424 */       arrayOfObject = this.table;
-/*  425 */       int k = arrayOfObject.length;
-/*  426 */       i = hash(object, k);
-/*      */       Object object1;
-/*  428 */       for (; (object1 = arrayOfObject[i]) != null; 
-/*  429 */         i = nextKeyIndex(i, k)) {
-/*  430 */         if (object1 == object) {
-/*      */           
-/*  432 */           Object object2 = arrayOfObject[i + 1];
-/*  433 */           arrayOfObject[i + 1] = paramV;
-/*  434 */           return (V)object2;
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  438 */       j = this.size + 1;
-/*      */ 
-/*      */       
-/*  441 */       if (j + (j << 1) > k && resize(k))
-/*      */         continue;  break;
-/*      */     } 
-/*  444 */     this.modCount++;
-/*  445 */     arrayOfObject[i] = object;
-/*  446 */     arrayOfObject[i + 1] = paramV;
-/*  447 */     this.size = j;
-/*  448 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean resize(int paramInt) {
-/*  460 */     int i = paramInt * 2;
-/*      */     
-/*  462 */     Object[] arrayOfObject1 = this.table;
-/*  463 */     int j = arrayOfObject1.length;
-/*  464 */     if (j == 1073741824) {
-/*  465 */       if (this.size == 536870911)
-/*  466 */         throw new IllegalStateException("Capacity exhausted."); 
-/*  467 */       return false;
-/*      */     } 
-/*  469 */     if (j >= i) {
-/*  470 */       return false;
-/*      */     }
-/*  472 */     Object[] arrayOfObject2 = new Object[i];
-/*      */     
-/*  474 */     for (byte b = 0; b < j; b += 2) {
-/*  475 */       Object object = arrayOfObject1[b];
-/*  476 */       if (object != null) {
-/*  477 */         Object object1 = arrayOfObject1[b + 1];
-/*  478 */         arrayOfObject1[b] = null;
-/*  479 */         arrayOfObject1[b + 1] = null;
-/*  480 */         int k = hash(object, i);
-/*  481 */         while (arrayOfObject2[k] != null)
-/*  482 */           k = nextKeyIndex(k, i); 
-/*  483 */         arrayOfObject2[k] = object;
-/*  484 */         arrayOfObject2[k + 1] = object1;
-/*      */       } 
-/*      */     } 
-/*  487 */     this.table = arrayOfObject2;
-/*  488 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putAll(Map<? extends K, ? extends V> paramMap) {
-/*  500 */     int i = paramMap.size();
-/*  501 */     if (i == 0)
-/*      */       return; 
-/*  503 */     if (i > this.size) {
-/*  504 */       resize(capacity(i));
-/*      */     }
-/*  506 */     for (Map.Entry<? extends K, ? extends V> entry : paramMap.entrySet()) {
-/*  507 */       put((K)entry.getKey(), (V)entry.getValue());
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public V remove(Object paramObject) {
-/*  520 */     Object object = maskNull(paramObject);
-/*  521 */     Object[] arrayOfObject = this.table;
-/*  522 */     int i = arrayOfObject.length;
-/*  523 */     int j = hash(object, i);
-/*      */     
-/*      */     while (true) {
-/*  526 */       Object object1 = arrayOfObject[j];
-/*  527 */       if (object1 == object) {
-/*  528 */         this.modCount++;
-/*  529 */         this.size--;
-/*      */         
-/*  531 */         Object object2 = arrayOfObject[j + 1];
-/*  532 */         arrayOfObject[j + 1] = null;
-/*  533 */         arrayOfObject[j] = null;
-/*  534 */         closeDeletion(j);
-/*  535 */         return (V)object2;
-/*      */       } 
-/*  537 */       if (object1 == null)
-/*  538 */         return null; 
-/*  539 */       j = nextKeyIndex(j, i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean removeMapping(Object paramObject1, Object paramObject2) {
-/*  552 */     Object object = maskNull(paramObject1);
-/*  553 */     Object[] arrayOfObject = this.table;
-/*  554 */     int i = arrayOfObject.length;
-/*  555 */     int j = hash(object, i);
-/*      */     
-/*      */     while (true) {
-/*  558 */       Object object1 = arrayOfObject[j];
-/*  559 */       if (object1 == object) {
-/*  560 */         if (arrayOfObject[j + 1] != paramObject2)
-/*  561 */           return false; 
-/*  562 */         this.modCount++;
-/*  563 */         this.size--;
-/*  564 */         arrayOfObject[j] = null;
-/*  565 */         arrayOfObject[j + 1] = null;
-/*  566 */         closeDeletion(j);
-/*  567 */         return true;
-/*      */       } 
-/*  569 */       if (object1 == null)
-/*  570 */         return false; 
-/*  571 */       j = nextKeyIndex(j, i);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void closeDeletion(int paramInt) {
-/*  584 */     Object[] arrayOfObject = this.table;
-/*  585 */     int i = arrayOfObject.length;
-/*      */ 
-/*      */     
-/*      */     Object object;
-/*      */     
-/*      */     int j;
-/*      */     
-/*  592 */     for (j = nextKeyIndex(paramInt, i); (object = arrayOfObject[j]) != null; 
-/*  593 */       j = nextKeyIndex(j, i)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  600 */       int k = hash(object, i);
-/*  601 */       if ((j < k && (k <= paramInt || paramInt <= j)) || (k <= paramInt && paramInt <= j)) {
-/*  602 */         arrayOfObject[paramInt] = object;
-/*  603 */         arrayOfObject[paramInt + 1] = arrayOfObject[j + 1];
-/*  604 */         arrayOfObject[j] = null;
-/*  605 */         arrayOfObject[j + 1] = null;
-/*  606 */         paramInt = j;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  616 */     this.modCount++;
-/*  617 */     Object[] arrayOfObject = this.table;
-/*  618 */     for (byte b = 0; b < arrayOfObject.length; b++)
-/*  619 */       arrayOfObject[b] = null; 
-/*  620 */     this.size = 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/*  641 */     if (paramObject == this)
-/*  642 */       return true; 
-/*  643 */     if (paramObject instanceof IdentityHashMap) {
-/*  644 */       IdentityHashMap identityHashMap = (IdentityHashMap)paramObject;
-/*  645 */       if (identityHashMap.size() != this.size) {
-/*  646 */         return false;
-/*      */       }
-/*  648 */       Object[] arrayOfObject = identityHashMap.table;
-/*  649 */       for (byte b = 0; b < arrayOfObject.length; b += 2) {
-/*  650 */         Object object = arrayOfObject[b];
-/*  651 */         if (object != null && !containsMapping(object, arrayOfObject[b + 1]))
-/*  652 */           return false; 
-/*      */       } 
-/*  654 */       return true;
-/*  655 */     }  if (paramObject instanceof Map) {
-/*  656 */       Map map = (Map)paramObject;
-/*  657 */       return entrySet().equals(map.entrySet());
-/*      */     } 
-/*  659 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/*  683 */     int i = 0;
-/*  684 */     Object[] arrayOfObject = this.table;
-/*  685 */     for (byte b = 0; b < arrayOfObject.length; b += 2) {
-/*  686 */       Object object = arrayOfObject[b];
-/*  687 */       if (object != null) {
-/*  688 */         Object object1 = unmaskNull(object);
-/*  689 */         i += System.identityHashCode(object1) ^ 
-/*  690 */           System.identityHashCode(arrayOfObject[b + 1]);
-/*      */       } 
-/*      */     } 
-/*  693 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/*      */     try {
-/*  704 */       IdentityHashMap identityHashMap = (IdentityHashMap)super.clone();
-/*  705 */       identityHashMap.entrySet = null;
-/*  706 */       identityHashMap.table = (Object[])this.table.clone();
-/*  707 */       return identityHashMap;
-/*  708 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*  709 */       throw new InternalError(cloneNotSupportedException);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   private abstract class IdentityHashMapIterator<T> implements Iterator<T> {
-/*  714 */     int index = (IdentityHashMap.this.size != 0) ? 0 : IdentityHashMap.this.table.length;
-/*  715 */     int expectedModCount = IdentityHashMap.this.modCount;
-/*  716 */     int lastReturnedIndex = -1;
-/*      */     boolean indexValid;
-/*  718 */     Object[] traversalTable = IdentityHashMap.this.table;
-/*      */     
-/*      */     public boolean hasNext() {
-/*  721 */       Object[] arrayOfObject = this.traversalTable;
-/*  722 */       for (int i = this.index; i < arrayOfObject.length; i += 2) {
-/*  723 */         Object object = arrayOfObject[i];
-/*  724 */         if (object != null) {
-/*  725 */           this.index = i;
-/*  726 */           return this.indexValid = true;
-/*      */         } 
-/*      */       } 
-/*  729 */       this.index = arrayOfObject.length;
-/*  730 */       return false;
-/*      */     }
-/*      */     
-/*      */     protected int nextIndex() {
-/*  734 */       if (IdentityHashMap.this.modCount != this.expectedModCount)
-/*  735 */         throw new ConcurrentModificationException(); 
-/*  736 */       if (!this.indexValid && !hasNext()) {
-/*  737 */         throw new NoSuchElementException();
-/*      */       }
-/*  739 */       this.indexValid = false;
-/*  740 */       this.lastReturnedIndex = this.index;
-/*  741 */       this.index += 2;
-/*  742 */       return this.lastReturnedIndex;
-/*      */     }
-/*      */     private IdentityHashMapIterator() {}
-/*      */     public void remove() {
-/*  746 */       if (this.lastReturnedIndex == -1)
-/*  747 */         throw new IllegalStateException(); 
-/*  748 */       if (IdentityHashMap.this.modCount != this.expectedModCount) {
-/*  749 */         throw new ConcurrentModificationException();
-/*      */       }
-/*  751 */       this.expectedModCount = ++IdentityHashMap.this.modCount;
-/*  752 */       int i = this.lastReturnedIndex;
-/*  753 */       this.lastReturnedIndex = -1;
-/*      */       
-/*  755 */       this.index = i;
-/*  756 */       this.indexValid = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  770 */       Object[] arrayOfObject = this.traversalTable;
-/*  771 */       int j = arrayOfObject.length;
-/*      */       
-/*  773 */       int k = i;
-/*  774 */       Object object1 = arrayOfObject[k];
-/*  775 */       arrayOfObject[k] = null;
-/*  776 */       arrayOfObject[k + 1] = null;
-/*      */ 
-/*      */ 
-/*      */       
-/*  780 */       if (arrayOfObject != IdentityHashMap.this.table) {
-/*  781 */         IdentityHashMap.this.remove(object1);
-/*  782 */         this.expectedModCount = IdentityHashMap.this.modCount;
-/*      */         
-/*      */         return;
-/*      */       } 
-/*  786 */       IdentityHashMap.this.size--;
-/*      */       Object object2;
-/*      */       int m;
-/*  789 */       for (m = IdentityHashMap.nextKeyIndex(k, j); (object2 = arrayOfObject[m]) != null; 
-/*  790 */         m = IdentityHashMap.nextKeyIndex(m, j)) {
-/*  791 */         int n = IdentityHashMap.hash(object2, j);
-/*      */         
-/*  793 */         if ((m < n && (n <= k || k <= m)) || (n <= k && k <= m)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  803 */           if (m < i && k >= i && this.traversalTable == IdentityHashMap.this.table) {
-/*      */             
-/*  805 */             int i1 = j - i;
-/*  806 */             Object[] arrayOfObject1 = new Object[i1];
-/*  807 */             System.arraycopy(arrayOfObject, i, arrayOfObject1, 0, i1);
-/*      */             
-/*  809 */             this.traversalTable = arrayOfObject1;
-/*  810 */             this.index = 0;
-/*      */           } 
-/*      */           
-/*  813 */           arrayOfObject[k] = object2;
-/*  814 */           arrayOfObject[k + 1] = arrayOfObject[m + 1];
-/*  815 */           arrayOfObject[m] = null;
-/*  816 */           arrayOfObject[m + 1] = null;
-/*  817 */           k = m;
-/*      */         } 
-/*      */       } 
-/*      */     } }
-/*      */   
-/*      */   private class KeyIterator extends IdentityHashMapIterator<K> {
-/*      */     private KeyIterator() {}
-/*      */     
-/*      */     public K next() {
-/*  826 */       return (K)IdentityHashMap.unmaskNull(this.traversalTable[nextIndex()]);
-/*      */     } }
-/*      */   
-/*      */   private class ValueIterator extends IdentityHashMapIterator<V> {
-/*      */     private ValueIterator() {}
-/*      */     
-/*      */     public V next() {
-/*  833 */       return (V)this.traversalTable[nextIndex() + 1];
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private class EntryIterator extends IdentityHashMapIterator<Map.Entry<K, V>> {
-/*      */     private Entry lastReturnedEntry;
-/*      */     
-/*      */     private EntryIterator() {}
-/*      */     
-/*      */     public Map.Entry<K, V> next() {
-/*  843 */       this.lastReturnedEntry = new Entry(nextIndex());
-/*  844 */       return this.lastReturnedEntry;
-/*      */     }
-/*      */     
-/*      */     public void remove() {
-/*  848 */       this
-/*  849 */         .lastReturnedIndex = (null == this.lastReturnedEntry) ? -1 : this.lastReturnedEntry.index;
-/*  850 */       super.remove();
-/*  851 */       this.lastReturnedEntry.index = this.lastReturnedIndex;
-/*  852 */       this.lastReturnedEntry = null;
-/*      */     }
-/*      */     
-/*      */     private class Entry implements Map.Entry<K, V> {
-/*      */       private int index;
-/*      */       
-/*      */       private Entry(int param2Int) {
-/*  859 */         this.index = param2Int;
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public K getKey() {
-/*  864 */         checkIndexForEntryUse();
-/*  865 */         return (K)IdentityHashMap.unmaskNull(IdentityHashMap.EntryIterator.this.traversalTable[this.index]);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public V getValue() {
-/*  870 */         checkIndexForEntryUse();
-/*  871 */         return (V)IdentityHashMap.EntryIterator.this.traversalTable[this.index + 1];
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public V setValue(V param2V) {
-/*  876 */         checkIndexForEntryUse();
-/*  877 */         Object object = IdentityHashMap.EntryIterator.this.traversalTable[this.index + 1];
-/*  878 */         IdentityHashMap.EntryIterator.this.traversalTable[this.index + 1] = param2V;
-/*      */         
-/*  880 */         if (IdentityHashMap.EntryIterator.this.traversalTable != IdentityHashMap.this.table)
-/*  881 */           IdentityHashMap.this.put(IdentityHashMap.EntryIterator.this.traversalTable[this.index], param2V); 
-/*  882 */         return (V)object;
-/*      */       }
-/*      */       
-/*      */       public boolean equals(Object param2Object) {
-/*  886 */         if (this.index < 0) {
-/*  887 */           return super.equals(param2Object);
-/*      */         }
-/*  889 */         if (!(param2Object instanceof Map.Entry))
-/*  890 */           return false; 
-/*  891 */         Map.Entry entry = (Map.Entry)param2Object;
-/*  892 */         return (entry.getKey() == IdentityHashMap.unmaskNull(IdentityHashMap.EntryIterator.this.traversalTable[this.index]) && entry
-/*  893 */           .getValue() == IdentityHashMap.EntryIterator.this.traversalTable[this.index + 1]);
-/*      */       }
-/*      */       
-/*      */       public int hashCode() {
-/*  897 */         if (IdentityHashMap.EntryIterator.this.lastReturnedIndex < 0) {
-/*  898 */           return super.hashCode();
-/*      */         }
-/*  900 */         return System.identityHashCode(IdentityHashMap.unmaskNull(IdentityHashMap.EntryIterator.this.traversalTable[this.index])) ^ 
-/*  901 */           System.identityHashCode(IdentityHashMap.EntryIterator.this.traversalTable[this.index + 1]);
-/*      */       }
-/*      */       
-/*      */       public String toString() {
-/*  905 */         if (this.index < 0) {
-/*  906 */           return super.toString();
-/*      */         }
-/*  908 */         return IdentityHashMap.unmaskNull(IdentityHashMap.EntryIterator.this.traversalTable[this.index]) + "=" + IdentityHashMap.EntryIterator.this.traversalTable[this.index + 1];
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       private void checkIndexForEntryUse() {
-/*  913 */         if (this.index < 0) {
-/*  914 */           throw new IllegalStateException("Entry was removed");
-/*      */         }
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Set<K> keySet() {
-/*  967 */     Set<K> set = this.keySet;
-/*  968 */     if (set == null) {
-/*  969 */       set = new KeySet();
-/*  970 */       this.keySet = set;
-/*      */     } 
-/*  972 */     return set;
-/*      */   }
-/*      */   private class KeySet extends AbstractSet<K> { private KeySet() {}
-/*      */     
-/*      */     public Iterator<K> iterator() {
-/*  977 */       return new IdentityHashMap.KeyIterator();
-/*      */     }
-/*      */     public int size() {
-/*  980 */       return IdentityHashMap.this.size;
-/*      */     }
-/*      */     public boolean contains(Object param1Object) {
-/*  983 */       return IdentityHashMap.this.containsKey(param1Object);
-/*      */     }
-/*      */     public boolean remove(Object param1Object) {
-/*  986 */       int i = IdentityHashMap.this.size;
-/*  987 */       IdentityHashMap.this.remove(param1Object);
-/*  988 */       return (IdentityHashMap.this.size != i);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean removeAll(Collection<?> param1Collection) {
-/*  996 */       Objects.requireNonNull(param1Collection);
-/*  997 */       boolean bool = false;
-/*  998 */       for (Iterator<K> iterator = iterator(); iterator.hasNext();) {
-/*  999 */         if (param1Collection.contains(iterator.next())) {
-/* 1000 */           iterator.remove();
-/* 1001 */           bool = true;
-/*      */         } 
-/*      */       } 
-/* 1004 */       return bool;
-/*      */     }
-/*      */     public void clear() {
-/* 1007 */       IdentityHashMap.this.clear();
-/*      */     }
-/*      */     public int hashCode() {
-/* 1010 */       int i = 0;
-/* 1011 */       for (K k : this)
-/* 1012 */         i += System.identityHashCode(k); 
-/* 1013 */       return i;
-/*      */     }
-/*      */     public Object[] toArray() {
-/* 1016 */       return toArray(new Object[0]);
-/*      */     }
-/*      */     
-/*      */     public <T> T[] toArray(T[] param1ArrayOfT) {
-/* 1020 */       int i = IdentityHashMap.this.modCount;
-/* 1021 */       int j = size();
-/* 1022 */       if (param1ArrayOfT.length < j)
-/* 1023 */         param1ArrayOfT = (T[])Array.newInstance(param1ArrayOfT.getClass().getComponentType(), j); 
-/* 1024 */       Object[] arrayOfObject = IdentityHashMap.this.table;
-/* 1025 */       byte b1 = 0;
-/* 1026 */       for (byte b2 = 0; b2 < arrayOfObject.length; b2 += 2) {
-/*      */         Object object;
-/* 1028 */         if ((object = arrayOfObject[b2]) != null) {
-/*      */           
-/* 1030 */           if (b1 >= j) {
-/* 1031 */             throw new ConcurrentModificationException();
-/*      */           }
-/* 1033 */           param1ArrayOfT[b1++] = (T)IdentityHashMap.unmaskNull(object);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1037 */       if (b1 < j || i != IdentityHashMap.this.modCount) {
-/* 1038 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */       
-/* 1041 */       if (b1 < param1ArrayOfT.length) {
-/* 1042 */         param1ArrayOfT[b1] = null;
-/*      */       }
-/* 1044 */       return param1ArrayOfT;
-/*      */     }
-/*      */     
-/*      */     public Spliterator<K> spliterator() {
-/* 1048 */       return new IdentityHashMap.KeySpliterator<>(IdentityHashMap.this, 0, -1, 0, 0);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Collection<V> values() {
-/* 1073 */     Collection<V> collection = this.values;
-/* 1074 */     if (collection == null) {
-/* 1075 */       collection = new Values();
-/* 1076 */       this.values = collection;
-/*      */     } 
-/* 1078 */     return collection;
-/*      */   }
-/*      */   private class Values extends AbstractCollection<V> { private Values() {}
-/*      */     
-/*      */     public Iterator<V> iterator() {
-/* 1083 */       return new IdentityHashMap.ValueIterator();
-/*      */     }
-/*      */     public int size() {
-/* 1086 */       return IdentityHashMap.this.size;
-/*      */     }
-/*      */     public boolean contains(Object param1Object) {
-/* 1089 */       return IdentityHashMap.this.containsValue(param1Object);
-/*      */     }
-/*      */     public boolean remove(Object param1Object) {
-/* 1092 */       for (Iterator<V> iterator = iterator(); iterator.hasNext();) {
-/* 1093 */         if (iterator.next() == param1Object) {
-/* 1094 */           iterator.remove();
-/* 1095 */           return true;
-/*      */         } 
-/*      */       } 
-/* 1098 */       return false;
-/*      */     }
-/*      */     public void clear() {
-/* 1101 */       IdentityHashMap.this.clear();
-/*      */     }
-/*      */     public Object[] toArray() {
-/* 1104 */       return toArray(new Object[0]);
-/*      */     }
-/*      */     
-/*      */     public <T> T[] toArray(T[] param1ArrayOfT) {
-/* 1108 */       int i = IdentityHashMap.this.modCount;
-/* 1109 */       int j = size();
-/* 1110 */       if (param1ArrayOfT.length < j)
-/* 1111 */         param1ArrayOfT = (T[])Array.newInstance(param1ArrayOfT.getClass().getComponentType(), j); 
-/* 1112 */       Object[] arrayOfObject = IdentityHashMap.this.table;
-/* 1113 */       byte b1 = 0;
-/* 1114 */       for (byte b2 = 0; b2 < arrayOfObject.length; b2 += 2) {
-/* 1115 */         if (arrayOfObject[b2] != null) {
-/*      */           
-/* 1117 */           if (b1 >= j) {
-/* 1118 */             throw new ConcurrentModificationException();
-/*      */           }
-/* 1120 */           param1ArrayOfT[b1++] = (T)arrayOfObject[b2 + 1];
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1124 */       if (b1 < j || i != IdentityHashMap.this.modCount) {
-/* 1125 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */       
-/* 1128 */       if (b1 < param1ArrayOfT.length) {
-/* 1129 */         param1ArrayOfT[b1] = null;
-/*      */       }
-/* 1131 */       return param1ArrayOfT;
-/*      */     }
-/*      */     
-/*      */     public Spliterator<V> spliterator() {
-/* 1135 */       return new IdentityHashMap.ValueSpliterator<>(IdentityHashMap.this, 0, -1, 0, 0);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Set<Map.Entry<K, V>> entrySet() {
-/* 1178 */     Set<Map.Entry<K, V>> set = this.entrySet;
-/* 1179 */     if (set != null) {
-/* 1180 */       return set;
-/*      */     }
-/* 1182 */     return this.entrySet = new EntrySet();
-/*      */   }
-/*      */   private class EntrySet extends AbstractSet<Map.Entry<K, V>> { private EntrySet() {}
-/*      */     
-/*      */     public Iterator<Map.Entry<K, V>> iterator() {
-/* 1187 */       return new IdentityHashMap.EntryIterator();
-/*      */     }
-/*      */     public boolean contains(Object param1Object) {
-/* 1190 */       if (!(param1Object instanceof Map.Entry))
-/* 1191 */         return false; 
-/* 1192 */       Map.Entry entry = (Map.Entry)param1Object;
-/* 1193 */       return IdentityHashMap.this.containsMapping(entry.getKey(), entry.getValue());
-/*      */     }
-/*      */     public boolean remove(Object param1Object) {
-/* 1196 */       if (!(param1Object instanceof Map.Entry))
-/* 1197 */         return false; 
-/* 1198 */       Map.Entry entry = (Map.Entry)param1Object;
-/* 1199 */       return IdentityHashMap.this.removeMapping(entry.getKey(), entry.getValue());
-/*      */     }
-/*      */     public int size() {
-/* 1202 */       return IdentityHashMap.this.size;
-/*      */     }
-/*      */     public void clear() {
-/* 1205 */       IdentityHashMap.this.clear();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean removeAll(Collection<?> param1Collection) {
-/* 1213 */       Objects.requireNonNull(param1Collection);
-/* 1214 */       boolean bool = false;
-/* 1215 */       for (Iterator<Map.Entry<K, V>> iterator = iterator(); iterator.hasNext();) {
-/* 1216 */         if (param1Collection.contains(iterator.next())) {
-/* 1217 */           iterator.remove();
-/* 1218 */           bool = true;
-/*      */         } 
-/*      */       } 
-/* 1221 */       return bool;
-/*      */     }
-/*      */     
-/*      */     public Object[] toArray() {
-/* 1225 */       return toArray(new Object[0]);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public <T> T[] toArray(T[] param1ArrayOfT) {
-/* 1230 */       int i = IdentityHashMap.this.modCount;
-/* 1231 */       int j = size();
-/* 1232 */       if (param1ArrayOfT.length < j)
-/* 1233 */         param1ArrayOfT = (T[])Array.newInstance(param1ArrayOfT.getClass().getComponentType(), j); 
-/* 1234 */       Object[] arrayOfObject = IdentityHashMap.this.table;
-/* 1235 */       byte b1 = 0;
-/* 1236 */       for (byte b2 = 0; b2 < arrayOfObject.length; b2 += 2) {
-/*      */         Object object;
-/* 1238 */         if ((object = arrayOfObject[b2]) != null) {
-/*      */           
-/* 1240 */           if (b1 >= j) {
-/* 1241 */             throw new ConcurrentModificationException();
-/*      */           }
-/* 1243 */           param1ArrayOfT[b1++] = (T)new AbstractMap.SimpleEntry<>(IdentityHashMap.unmaskNull(object), arrayOfObject[b2 + 1]);
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1247 */       if (b1 < j || i != IdentityHashMap.this.modCount) {
-/* 1248 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */       
-/* 1251 */       if (b1 < param1ArrayOfT.length) {
-/* 1252 */         param1ArrayOfT[b1] = null;
-/*      */       }
-/* 1254 */       return param1ArrayOfT;
-/*      */     }
-/*      */     
-/*      */     public Spliterator<Map.Entry<K, V>> spliterator() {
-/* 1258 */       return new IdentityHashMap.EntrySpliterator<>(IdentityHashMap.this, 0, -1, 0, 0);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1278 */     paramObjectOutputStream.defaultWriteObject();
-/*      */ 
-/*      */     
-/* 1281 */     paramObjectOutputStream.writeInt(this.size);
-/*      */ 
-/*      */     
-/* 1284 */     Object[] arrayOfObject = this.table;
-/* 1285 */     for (byte b = 0; b < arrayOfObject.length; b += 2) {
-/* 1286 */       Object object = arrayOfObject[b];
-/* 1287 */       if (object != null) {
-/* 1288 */         paramObjectOutputStream.writeObject(unmaskNull(object));
-/* 1289 */         paramObjectOutputStream.writeObject(arrayOfObject[b + 1]);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1301 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */     
-/* 1304 */     int i = paramObjectInputStream.readInt();
-/* 1305 */     if (i < 0) {
-/* 1306 */       throw new StreamCorruptedException("Illegal mappings count: " + i);
-/*      */     }
-/* 1308 */     int j = capacity(i);
-/* 1309 */     SharedSecrets.getJavaOISAccess().checkArray(paramObjectInputStream, Object[].class, j);
-/* 1310 */     init(j);
-/*      */ 
-/*      */     
-/* 1313 */     for (byte b = 0; b < i; b++) {
-/*      */       
-/* 1315 */       Object object1 = paramObjectInputStream.readObject();
-/*      */       
-/* 1317 */       Object object2 = paramObjectInputStream.readObject();
-/* 1318 */       putForCreate((K)object1, (V)object2);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void putForCreate(K paramK, V paramV) throws StreamCorruptedException {
-/* 1329 */     Object object1 = maskNull(paramK);
-/* 1330 */     Object[] arrayOfObject = this.table;
-/* 1331 */     int i = arrayOfObject.length;
-/* 1332 */     int j = hash(object1, i);
-/*      */     
-/*      */     Object object2;
-/* 1335 */     while ((object2 = arrayOfObject[j]) != null) {
-/* 1336 */       if (object2 == object1)
-/* 1337 */         throw new StreamCorruptedException(); 
-/* 1338 */       j = nextKeyIndex(j, i);
-/*      */     } 
-/* 1340 */     arrayOfObject[j] = object1;
-/* 1341 */     arrayOfObject[j + 1] = paramV;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void forEach(BiConsumer<? super K, ? super V> paramBiConsumer) {
-/* 1347 */     Objects.requireNonNull(paramBiConsumer);
-/* 1348 */     int i = this.modCount;
-/*      */     
-/* 1350 */     Object[] arrayOfObject = this.table;
-/* 1351 */     for (byte b = 0; b < arrayOfObject.length; b += 2) {
-/* 1352 */       Object object = arrayOfObject[b];
-/* 1353 */       if (object != null) {
-/* 1354 */         paramBiConsumer.accept((K)unmaskNull(object), (V)arrayOfObject[b + 1]);
-/*      */       }
-/*      */       
-/* 1357 */       if (this.modCount != i) {
-/* 1358 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> paramBiFunction) {
-/* 1366 */     Objects.requireNonNull(paramBiFunction);
-/* 1367 */     int i = this.modCount;
-/*      */     
-/* 1369 */     Object[] arrayOfObject = this.table;
-/* 1370 */     for (byte b = 0; b < arrayOfObject.length; b += 2) {
-/* 1371 */       Object object = arrayOfObject[b];
-/* 1372 */       if (object != null) {
-/* 1373 */         arrayOfObject[b + 1] = paramBiFunction.apply((K)unmaskNull(object), (V)arrayOfObject[b + 1]);
-/*      */       }
-/*      */       
-/* 1376 */       if (this.modCount != i) {
-/* 1377 */         throw new ConcurrentModificationException();
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static class IdentityHashMapSpliterator<K, V>
-/*      */   {
-/*      */     final IdentityHashMap<K, V> map;
-/*      */     
-/*      */     int index;
-/*      */     
-/*      */     int fence;
-/*      */     
-/*      */     int est;
-/*      */     int expectedModCount;
-/*      */     
-/*      */     IdentityHashMapSpliterator(IdentityHashMap<K, V> param1IdentityHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1395 */       this.map = param1IdentityHashMap;
-/* 1396 */       this.index = param1Int1;
-/* 1397 */       this.fence = param1Int2;
-/* 1398 */       this.est = param1Int3;
-/* 1399 */       this.expectedModCount = param1Int4;
-/*      */     }
-/*      */     
-/*      */     final int getFence() {
-/*      */       int i;
-/* 1404 */       if ((i = this.fence) < 0) {
-/* 1405 */         this.est = this.map.size;
-/* 1406 */         this.expectedModCount = this.map.modCount;
-/* 1407 */         i = this.fence = this.map.table.length;
-/*      */       } 
-/* 1409 */       return i;
-/*      */     }
-/*      */     
-/*      */     public final long estimateSize() {
-/* 1413 */       getFence();
-/* 1414 */       return this.est;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class KeySpliterator<K, V>
-/*      */     extends IdentityHashMapSpliterator<K, V>
-/*      */     implements Spliterator<K>
-/*      */   {
-/*      */     KeySpliterator(IdentityHashMap<K, V> param1IdentityHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1423 */       super(param1IdentityHashMap, param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */     }
-/*      */     
-/*      */     public KeySpliterator<K, V> trySplit() {
-/* 1427 */       int i = getFence(), j = this.index, k = j + i >>> 1 & 0xFFFFFFFE;
-/* 1428 */       return (j >= k) ? null : new KeySpliterator(this.map, j, this.index = k, this.est >>>= 1, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super K> param1Consumer) {
-/* 1435 */       if (param1Consumer == null)
-/* 1436 */         throw new NullPointerException();  int i; int j;
-/*      */       IdentityHashMap<K, V> identityHashMap;
-/*      */       Object[] arrayOfObject;
-/* 1439 */       if ((identityHashMap = this.map) != null && (arrayOfObject = identityHashMap.table) != null && (i = this.index) >= 0 && (this
-/* 1440 */         .index = j = getFence()) <= arrayOfObject.length) {
-/* 1441 */         for (; i < j; i += 2) {
-/* 1442 */           Object object; if ((object = arrayOfObject[i]) != null)
-/* 1443 */             param1Consumer.accept((K)IdentityHashMap.unmaskNull(object)); 
-/*      */         } 
-/* 1445 */         if (identityHashMap.modCount == this.expectedModCount)
-/*      */           return; 
-/*      */       } 
-/* 1448 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super K> param1Consumer) {
-/* 1453 */       if (param1Consumer == null)
-/* 1454 */         throw new NullPointerException(); 
-/* 1455 */       Object[] arrayOfObject = this.map.table;
-/* 1456 */       int i = getFence();
-/* 1457 */       while (this.index < i) {
-/* 1458 */         Object object = arrayOfObject[this.index];
-/* 1459 */         this.index += 2;
-/* 1460 */         if (object != null) {
-/* 1461 */           param1Consumer.accept((K)IdentityHashMap.unmaskNull(object));
-/* 1462 */           if (this.map.modCount != this.expectedModCount)
-/* 1463 */             throw new ConcurrentModificationException(); 
-/* 1464 */           return true;
-/*      */         } 
-/*      */       } 
-/* 1467 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1471 */       return ((this.fence < 0 || this.est == this.map.size) ? 64 : 0) | 0x1;
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   static final class ValueSpliterator<K, V>
-/*      */     extends IdentityHashMapSpliterator<K, V>
-/*      */     implements Spliterator<V>
-/*      */   {
-/*      */     ValueSpliterator(IdentityHashMap<K, V> param1IdentityHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1480 */       super(param1IdentityHashMap, param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */     }
-/*      */     
-/*      */     public ValueSpliterator<K, V> trySplit() {
-/* 1484 */       int i = getFence(), j = this.index, k = j + i >>> 1 & 0xFFFFFFFE;
-/* 1485 */       return (j >= k) ? null : new ValueSpliterator(this.map, j, this.index = k, this.est >>>= 1, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super V> param1Consumer) {
-/* 1491 */       if (param1Consumer == null)
-/* 1492 */         throw new NullPointerException();  int i; int j;
-/*      */       IdentityHashMap<K, V> identityHashMap;
-/*      */       Object[] arrayOfObject;
-/* 1495 */       if ((identityHashMap = this.map) != null && (arrayOfObject = identityHashMap.table) != null && (i = this.index) >= 0 && (this
-/* 1496 */         .index = j = getFence()) <= arrayOfObject.length) {
-/* 1497 */         for (; i < j; i += 2) {
-/* 1498 */           if (arrayOfObject[i] != null) {
-/* 1499 */             Object object = arrayOfObject[i + 1];
-/* 1500 */             param1Consumer.accept((V)object);
-/*      */           } 
-/*      */         } 
-/* 1503 */         if (identityHashMap.modCount == this.expectedModCount)
-/*      */           return; 
-/*      */       } 
-/* 1506 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super V> param1Consumer) {
-/* 1510 */       if (param1Consumer == null)
-/* 1511 */         throw new NullPointerException(); 
-/* 1512 */       Object[] arrayOfObject = this.map.table;
-/* 1513 */       int i = getFence();
-/* 1514 */       while (this.index < i) {
-/* 1515 */         Object object1 = arrayOfObject[this.index];
-/* 1516 */         Object object2 = arrayOfObject[this.index + 1];
-/* 1517 */         this.index += 2;
-/* 1518 */         if (object1 != null) {
-/* 1519 */           param1Consumer.accept((V)object2);
-/* 1520 */           if (this.map.modCount != this.expectedModCount)
-/* 1521 */             throw new ConcurrentModificationException(); 
-/* 1522 */           return true;
-/*      */         } 
-/*      */       } 
-/* 1525 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1529 */       return (this.fence < 0 || this.est == this.map.size) ? 64 : 0;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static final class EntrySpliterator<K, V>
-/*      */     extends IdentityHashMapSpliterator<K, V>
-/*      */     implements Spliterator<Map.Entry<K, V>>
-/*      */   {
-/*      */     EntrySpliterator(IdentityHashMap<K, V> param1IdentityHashMap, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 1539 */       super(param1IdentityHashMap, param1Int1, param1Int2, param1Int3, param1Int4);
-/*      */     }
-/*      */     
-/*      */     public EntrySpliterator<K, V> trySplit() {
-/* 1543 */       int i = getFence(), j = this.index, k = j + i >>> 1 & 0xFFFFFFFE;
-/* 1544 */       return (j >= k) ? null : new EntrySpliterator(this.map, j, this.index = k, this.est >>>= 1, this.expectedModCount);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void forEachRemaining(Consumer<? super Map.Entry<K, V>> param1Consumer) {
-/* 1550 */       if (param1Consumer == null)
-/* 1551 */         throw new NullPointerException();  int i; int j;
-/*      */       IdentityHashMap<K, V> identityHashMap;
-/*      */       Object[] arrayOfObject;
-/* 1554 */       if ((identityHashMap = this.map) != null && (arrayOfObject = identityHashMap.table) != null && (i = this.index) >= 0 && (this
-/* 1555 */         .index = j = getFence()) <= arrayOfObject.length) {
-/* 1556 */         for (; i < j; i += 2) {
-/* 1557 */           Object object = arrayOfObject[i];
-/* 1558 */           if (object != null) {
-/*      */             
-/* 1560 */             Object object1 = IdentityHashMap.unmaskNull(object);
-/* 1561 */             Object object2 = arrayOfObject[i + 1];
-/* 1562 */             param1Consumer
-/* 1563 */               .accept(new AbstractMap.SimpleImmutableEntry<>((K)object1, (V)object2));
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 1567 */         if (identityHashMap.modCount == this.expectedModCount)
-/*      */           return; 
-/*      */       } 
-/* 1570 */       throw new ConcurrentModificationException();
-/*      */     }
-/*      */     
-/*      */     public boolean tryAdvance(Consumer<? super Map.Entry<K, V>> param1Consumer) {
-/* 1574 */       if (param1Consumer == null)
-/* 1575 */         throw new NullPointerException(); 
-/* 1576 */       Object[] arrayOfObject = this.map.table;
-/* 1577 */       int i = getFence();
-/* 1578 */       while (this.index < i) {
-/* 1579 */         Object object1 = arrayOfObject[this.index];
-/* 1580 */         Object object2 = arrayOfObject[this.index + 1];
-/* 1581 */         this.index += 2;
-/* 1582 */         if (object1 != null) {
-/*      */           
-/* 1584 */           Object object = IdentityHashMap.unmaskNull(object1);
-/* 1585 */           param1Consumer
-/* 1586 */             .accept(new AbstractMap.SimpleImmutableEntry<>((K)object, (V)object2));
-/* 1587 */           if (this.map.modCount != this.expectedModCount)
-/* 1588 */             throw new ConcurrentModificationException(); 
-/* 1589 */           return true;
-/*      */         } 
-/*      */       } 
-/* 1592 */       return false;
-/*      */     }
-/*      */     
-/*      */     public int characteristics() {
-/* 1596 */       return ((this.fence < 0 || this.est == this.map.size) ? 64 : 0) | 0x1;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\IdentityHashMap.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.lang.reflect.Array;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import sun.misc.SharedSecrets;
+
+/**
+ * This class implements the <tt>Map</tt> interface with a hash table, using
+ * reference-equality in place of object-equality when comparing keys (and
+ * values).  In other words, in an <tt>IdentityHashMap</tt>, two keys
+ * <tt>k1</tt> and <tt>k2</tt> are considered equal if and only if
+ * <tt>(k1==k2)</tt>.  (In normal <tt>Map</tt> implementations (like
+ * <tt>HashMap</tt>) two keys <tt>k1</tt> and <tt>k2</tt> are considered equal
+ * if and only if <tt>(k1==null ? k2==null : k1.equals(k2))</tt>.)
+ *
+ * <p><b>This class is <i>not</i> a general-purpose <tt>Map</tt>
+ * implementation!  While this class implements the <tt>Map</tt> interface, it
+ * intentionally violates <tt>Map's</tt> general contract, which mandates the
+ * use of the <tt>equals</tt> method when comparing objects.  This class is
+ * designed for use only in the rare cases wherein reference-equality
+ * semantics are required.</b>
+ *
+ * <p>A typical use of this class is <i>topology-preserving object graph
+ * transformations</i>, such as serialization or deep-copying.  To perform such
+ * a transformation, a program must maintain a "node table" that keeps track
+ * of all the object references that have already been processed.  The node
+ * table must not equate distinct objects even if they happen to be equal.
+ * Another typical use of this class is to maintain <i>proxy objects</i>.  For
+ * example, a debugging facility might wish to maintain a proxy object for
+ * each object in the program being debugged.
+ *
+ * <p>This class provides all of the optional map operations, and permits
+ * <tt>null</tt> values and the <tt>null</tt> key.  This class makes no
+ * guarantees as to the order of the map; in particular, it does not guarantee
+ * that the order will remain constant over time.
+ *
+ * <p>This class provides constant-time performance for the basic
+ * operations (<tt>get</tt> and <tt>put</tt>), assuming the system
+ * identity hash function ({@link System#identityHashCode(Object)})
+ * disperses elements properly among the buckets.
+ *
+ * <p>This class has one tuning parameter (which affects performance but not
+ * semantics): <i>expected maximum size</i>.  This parameter is the maximum
+ * number of key-value mappings that the map is expected to hold.  Internally,
+ * this parameter is used to determine the number of buckets initially
+ * comprising the hash table.  The precise relationship between the expected
+ * maximum size and the number of buckets is unspecified.
+ *
+ * <p>If the size of the map (the number of key-value mappings) sufficiently
+ * exceeds the expected maximum size, the number of buckets is increased.
+ * Increasing the number of buckets ("rehashing") may be fairly expensive, so
+ * it pays to create identity hash maps with a sufficiently large expected
+ * maximum size.  On the other hand, iteration over collection views requires
+ * time proportional to the number of buckets in the hash table, so it
+ * pays not to set the expected maximum size too high if you are especially
+ * concerned with iteration performance or memory usage.
+ *
+ * <p><strong>Note that this implementation is not synchronized.</strong>
+ * If multiple threads access an identity hash map concurrently, and at
+ * least one of the threads modifies the map structurally, it <i>must</i>
+ * be synchronized externally.  (A structural modification is any operation
+ * that adds or deletes one or more mappings; merely changing the value
+ * associated with a key that an instance already contains is not a
+ * structural modification.)  This is typically accomplished by
+ * synchronizing on some object that naturally encapsulates the map.
+ *
+ * If no such object exists, the map should be "wrapped" using the
+ * {@link Collections#synchronizedMap Collections.synchronizedMap}
+ * method.  This is best done at creation time, to prevent accidental
+ * unsynchronized access to the map:<pre>
+ *   Map m = Collections.synchronizedMap(new IdentityHashMap(...));</pre>
+ *
+ * <p>The iterators returned by the <tt>iterator</tt> method of the
+ * collections returned by all of this class's "collection view
+ * methods" are <i>fail-fast</i>: if the map is structurally modified
+ * at any time after the iterator is created, in any way except
+ * through the iterator's own <tt>remove</tt> method, the iterator
+ * will throw a {@link ConcurrentModificationException}.  Thus, in the
+ * face of concurrent modification, the iterator fails quickly and
+ * cleanly, rather than risking arbitrary, non-deterministic behavior
+ * at an undetermined time in the future.
+ *
+ * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
+ * as it is, generally speaking, impossible to make any hard guarantees in the
+ * presence of unsynchronized concurrent modification.  Fail-fast iterators
+ * throw <tt>ConcurrentModificationException</tt> on a best-effort basis.
+ * Therefore, it would be wrong to write a program that depended on this
+ * exception for its correctness: <i>fail-fast iterators should be used only
+ * to detect bugs.</i>
+ *
+ * <p>Implementation note: This is a simple <i>linear-probe</i> hash table,
+ * as described for example in texts by Sedgewick and Knuth.  The array
+ * alternates holding keys and values.  (This has better locality for large
+ * tables than does using separate arrays.)  For many JRE implementations
+ * and operation mixes, this class will yield better performance than
+ * {@link HashMap} (which uses <i>chaining</i> rather than linear-probing).
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @see     System#identityHashCode(Object)
+ * @see     Object#hashCode()
+ * @see     Collection
+ * @see     Map
+ * @see     HashMap
+ * @see     TreeMap
+ * @author  Doug Lea and Josh Bloch
+ * @since   1.4
+ */
+
+public class IdentityHashMap<K,V>
+    extends AbstractMap<K,V>
+    implements Map<K,V>, java.io.Serializable, Cloneable
+{
+    /**
+     * The initial capacity used by the no-args constructor.
+     * MUST be a power of two.  The value 32 corresponds to the
+     * (specified) expected maximum size of 21, given a load factor
+     * of 2/3.
+     */
+    private static final int DEFAULT_CAPACITY = 32;
+
+    /**
+     * The minimum capacity, used if a lower value is implicitly specified
+     * by either of the constructors with arguments.  The value 4 corresponds
+     * to an expected maximum size of 2, given a load factor of 2/3.
+     * MUST be a power of two.
+     */
+    private static final int MINIMUM_CAPACITY = 4;
+
+    /**
+     * The maximum capacity, used if a higher value is implicitly specified
+     * by either of the constructors with arguments.
+     * MUST be a power of two <= 1<<29.
+     *
+     * In fact, the map can hold no more than MAXIMUM_CAPACITY-1 items
+     * because it has to have at least one slot with the key == null
+     * in order to avoid infinite loops in get(), put(), remove()
+     */
+    private static final int MAXIMUM_CAPACITY = 1 << 29;
+
+    /**
+     * The table, resized as necessary. Length MUST always be a power of two.
+     */
+    transient Object[] table; // non-private to simplify nested class access
+
+    /**
+     * The number of key-value mappings contained in this identity hash map.
+     *
+     * @serial
+     */
+    int size;
+
+    /**
+     * The number of modifications, to support fast-fail iterators
+     */
+    transient int modCount;
+
+    /**
+     * Value representing null keys inside tables.
+     */
+    static final Object NULL_KEY = new Object();
+
+    /**
+     * Use NULL_KEY for key if it is null.
+     */
+    private static Object maskNull(Object key) {
+        return (key == null ? NULL_KEY : key);
+    }
+
+    /**
+     * Returns internal representation of null key back to caller as null.
+     */
+    static final Object unmaskNull(Object key) {
+        return (key == NULL_KEY ? null : key);
+    }
+
+    /**
+     * Constructs a new, empty identity hash map with a default expected
+     * maximum size (21).
+     */
+    public IdentityHashMap() {
+        init(DEFAULT_CAPACITY);
+    }
+
+    /**
+     * Constructs a new, empty map with the specified expected maximum size.
+     * Putting more than the expected number of key-value mappings into
+     * the map may cause the internal data structure to grow, which may be
+     * somewhat time-consuming.
+     *
+     * @param expectedMaxSize the expected maximum size of the map
+     * @throws IllegalArgumentException if <tt>expectedMaxSize</tt> is negative
+     */
+    public IdentityHashMap(int expectedMaxSize) {
+        if (expectedMaxSize < 0)
+            throw new IllegalArgumentException("expectedMaxSize is negative: "
+                                               + expectedMaxSize);
+        init(capacity(expectedMaxSize));
+    }
+
+    /**
+     * Returns the appropriate capacity for the given expected maximum size.
+     * Returns the smallest power of two between MINIMUM_CAPACITY and
+     * MAXIMUM_CAPACITY, inclusive, that is greater than (3 *
+     * expectedMaxSize)/2, if such a number exists.  Otherwise returns
+     * MAXIMUM_CAPACITY.
+     */
+    private static int capacity(int expectedMaxSize) {
+        // assert expectedMaxSize >= 0;
+        return
+            (expectedMaxSize > MAXIMUM_CAPACITY / 3) ? MAXIMUM_CAPACITY :
+            (expectedMaxSize <= 2 * MINIMUM_CAPACITY / 3) ? MINIMUM_CAPACITY :
+            Integer.highestOneBit(expectedMaxSize + (expectedMaxSize << 1));
+    }
+
+    /**
+     * Initializes object to be an empty map with the specified initial
+     * capacity, which is assumed to be a power of two between
+     * MINIMUM_CAPACITY and MAXIMUM_CAPACITY inclusive.
+     */
+    private void init(int initCapacity) {
+        // assert (initCapacity & -initCapacity) == initCapacity; // power of 2
+        // assert initCapacity >= MINIMUM_CAPACITY;
+        // assert initCapacity <= MAXIMUM_CAPACITY;
+
+        table = new Object[2 * initCapacity];
+    }
+
+    /**
+     * Constructs a new identity hash map containing the keys-value mappings
+     * in the specified map.
+     *
+     * @param m the map whose mappings are to be placed into this map
+     * @throws NullPointerException if the specified map is null
+     */
+    public IdentityHashMap(Map<? extends K, ? extends V> m) {
+        // Allow for a bit of growth
+        this((int) ((1 + m.size()) * 1.1));
+        putAll(m);
+    }
+
+    /**
+     * Returns the number of key-value mappings in this identity hash map.
+     *
+     * @return the number of key-value mappings in this map
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Returns <tt>true</tt> if this identity hash map contains no key-value
+     * mappings.
+     *
+     * @return <tt>true</tt> if this identity hash map contains no key-value
+     *         mappings
+     */
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    /**
+     * Returns index for Object x.
+     */
+    private static int hash(Object x, int length) {
+        int h = System.identityHashCode(x);
+        // Multiply by -127, and left-shift to use least bit as part of hash
+        return ((h << 1) - (h << 8)) & (length - 1);
+    }
+
+    /**
+     * Circularly traverses table of size len.
+     */
+    private static int nextKeyIndex(int i, int len) {
+        return (i + 2 < len ? i + 2 : 0);
+    }
+
+    /**
+     * Returns the value to which the specified key is mapped,
+     * or {@code null} if this map contains no mapping for the key.
+     *
+     * <p>More formally, if this map contains a mapping from a key
+     * {@code k} to a value {@code v} such that {@code (key == k)},
+     * then this method returns {@code v}; otherwise it returns
+     * {@code null}.  (There can be at most one such mapping.)
+     *
+     * <p>A return value of {@code null} does not <i>necessarily</i>
+     * indicate that the map contains no mapping for the key; it's also
+     * possible that the map explicitly maps the key to {@code null}.
+     * The {@link #containsKey containsKey} operation may be used to
+     * distinguish these two cases.
+     *
+     * @see #put(Object, Object)
+     */
+    @SuppressWarnings("unchecked")
+    public V get(Object key) {
+        Object k = maskNull(key);
+        Object[] tab = table;
+        int len = tab.length;
+        int i = hash(k, len);
+        while (true) {
+            Object item = tab[i];
+            if (item == k)
+                return (V) tab[i + 1];
+            if (item == null)
+                return null;
+            i = nextKeyIndex(i, len);
+        }
+    }
+
+    /**
+     * Tests whether the specified object reference is a key in this identity
+     * hash map.
+     *
+     * @param   key   possible key
+     * @return  <code>true</code> if the specified object reference is a key
+     *          in this map
+     * @see     #containsValue(Object)
+     */
+    public boolean containsKey(Object key) {
+        Object k = maskNull(key);
+        Object[] tab = table;
+        int len = tab.length;
+        int i = hash(k, len);
+        while (true) {
+            Object item = tab[i];
+            if (item == k)
+                return true;
+            if (item == null)
+                return false;
+            i = nextKeyIndex(i, len);
+        }
+    }
+
+    /**
+     * Tests whether the specified object reference is a value in this identity
+     * hash map.
+     *
+     * @param value value whose presence in this map is to be tested
+     * @return <tt>true</tt> if this map maps one or more keys to the
+     *         specified object reference
+     * @see     #containsKey(Object)
+     */
+    public boolean containsValue(Object value) {
+        Object[] tab = table;
+        for (int i = 1; i < tab.length; i += 2)
+            if (tab[i] == value && tab[i - 1] != null)
+                return true;
+
+        return false;
+    }
+
+    /**
+     * Tests if the specified key-value mapping is in the map.
+     *
+     * @param   key   possible key
+     * @param   value possible value
+     * @return  <code>true</code> if and only if the specified key-value
+     *          mapping is in the map
+     */
+    private boolean containsMapping(Object key, Object value) {
+        Object k = maskNull(key);
+        Object[] tab = table;
+        int len = tab.length;
+        int i = hash(k, len);
+        while (true) {
+            Object item = tab[i];
+            if (item == k)
+                return tab[i + 1] == value;
+            if (item == null)
+                return false;
+            i = nextKeyIndex(i, len);
+        }
+    }
+
+    /**
+     * Associates the specified value with the specified key in this identity
+     * hash map.  If the map previously contained a mapping for the key, the
+     * old value is replaced.
+     *
+     * @param key the key with which the specified value is to be associated
+     * @param value the value to be associated with the specified key
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     *         (A <tt>null</tt> return can also indicate that the map
+     *         previously associated <tt>null</tt> with <tt>key</tt>.)
+     * @see     Object#equals(Object)
+     * @see     #get(Object)
+     * @see     #containsKey(Object)
+     */
+    public V put(K key, V value) {
+        final Object k = maskNull(key);
+
+        retryAfterResize: for (;;) {
+            final Object[] tab = table;
+            final int len = tab.length;
+            int i = hash(k, len);
+
+            for (Object item; (item = tab[i]) != null;
+                 i = nextKeyIndex(i, len)) {
+                if (item == k) {
+                    @SuppressWarnings("unchecked")
+                        V oldValue = (V) tab[i + 1];
+                    tab[i + 1] = value;
+                    return oldValue;
+                }
+            }
+
+            final int s = size + 1;
+            // Use optimized form of 3 * s.
+            // Next capacity is len, 2 * current capacity.
+            if (s + (s << 1) > len && resize(len))
+                continue retryAfterResize;
+
+            modCount++;
+            tab[i] = k;
+            tab[i + 1] = value;
+            size = s;
+            return null;
+        }
+    }
+
+    /**
+     * Resizes the table if necessary to hold given capacity.
+     *
+     * @param newCapacity the new capacity, must be a power of two.
+     * @return whether a resize did in fact take place
+     */
+    private boolean resize(int newCapacity) {
+        // assert (newCapacity & -newCapacity) == newCapacity; // power of 2
+        int newLength = newCapacity * 2;
+
+        Object[] oldTable = table;
+        int oldLength = oldTable.length;
+        if (oldLength == 2 * MAXIMUM_CAPACITY) { // can't expand any further
+            if (size == MAXIMUM_CAPACITY - 1)
+                throw new IllegalStateException("Capacity exhausted.");
+            return false;
+        }
+        if (oldLength >= newLength)
+            return false;
+
+        Object[] newTable = new Object[newLength];
+
+        for (int j = 0; j < oldLength; j += 2) {
+            Object key = oldTable[j];
+            if (key != null) {
+                Object value = oldTable[j+1];
+                oldTable[j] = null;
+                oldTable[j+1] = null;
+                int i = hash(key, newLength);
+                while (newTable[i] != null)
+                    i = nextKeyIndex(i, newLength);
+                newTable[i] = key;
+                newTable[i + 1] = value;
+            }
+        }
+        table = newTable;
+        return true;
+    }
+
+    /**
+     * Copies all of the mappings from the specified map to this map.
+     * These mappings will replace any mappings that this map had for
+     * any of the keys currently in the specified map.
+     *
+     * @param m mappings to be stored in this map
+     * @throws NullPointerException if the specified map is null
+     */
+    public void putAll(Map<? extends K, ? extends V> m) {
+        int n = m.size();
+        if (n == 0)
+            return;
+        if (n > size)
+            resize(capacity(n)); // conservatively pre-expand
+
+        for (Entry<? extends K, ? extends V> e : m.entrySet())
+            put(e.getKey(), e.getValue());
+    }
+
+    /**
+     * Removes the mapping for this key from this map if present.
+     *
+     * @param key key whose mapping is to be removed from the map
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     *         (A <tt>null</tt> return can also indicate that the map
+     *         previously associated <tt>null</tt> with <tt>key</tt>.)
+     */
+    public V remove(Object key) {
+        Object k = maskNull(key);
+        Object[] tab = table;
+        int len = tab.length;
+        int i = hash(k, len);
+
+        while (true) {
+            Object item = tab[i];
+            if (item == k) {
+                modCount++;
+                size--;
+                @SuppressWarnings("unchecked")
+                    V oldValue = (V) tab[i + 1];
+                tab[i + 1] = null;
+                tab[i] = null;
+                closeDeletion(i);
+                return oldValue;
+            }
+            if (item == null)
+                return null;
+            i = nextKeyIndex(i, len);
+        }
+    }
+
+    /**
+     * Removes the specified key-value mapping from the map if it is present.
+     *
+     * @param   key   possible key
+     * @param   value possible value
+     * @return  <code>true</code> if and only if the specified key-value
+     *          mapping was in the map
+     */
+    private boolean removeMapping(Object key, Object value) {
+        Object k = maskNull(key);
+        Object[] tab = table;
+        int len = tab.length;
+        int i = hash(k, len);
+
+        while (true) {
+            Object item = tab[i];
+            if (item == k) {
+                if (tab[i + 1] != value)
+                    return false;
+                modCount++;
+                size--;
+                tab[i] = null;
+                tab[i + 1] = null;
+                closeDeletion(i);
+                return true;
+            }
+            if (item == null)
+                return false;
+            i = nextKeyIndex(i, len);
+        }
+    }
+
+    /**
+     * Rehash all possibly-colliding entries following a
+     * deletion. This preserves the linear-probe
+     * collision properties required by get, put, etc.
+     *
+     * @param d the index of a newly empty deleted slot
+     */
+    private void closeDeletion(int d) {
+        // Adapted from Knuth Section 6.4 Algorithm R
+        Object[] tab = table;
+        int len = tab.length;
+
+        // Look for items to swap into newly vacated slot
+        // starting at index immediately following deletion,
+        // and continuing until a null slot is seen, indicating
+        // the end of a run of possibly-colliding keys.
+        Object item;
+        for (int i = nextKeyIndex(d, len); (item = tab[i]) != null;
+             i = nextKeyIndex(i, len) ) {
+            // The following test triggers if the item at slot i (which
+            // hashes to be at slot r) should take the spot vacated by d.
+            // If so, we swap it in, and then continue with d now at the
+            // newly vacated i.  This process will terminate when we hit
+            // the null slot at the end of this run.
+            // The test is messy because we are using a circular table.
+            int r = hash(item, len);
+            if ((i < r && (r <= d || d <= i)) || (r <= d && d <= i)) {
+                tab[d] = item;
+                tab[d + 1] = tab[i + 1];
+                tab[i] = null;
+                tab[i + 1] = null;
+                d = i;
+            }
+        }
+    }
+
+    /**
+     * Removes all of the mappings from this map.
+     * The map will be empty after this call returns.
+     */
+    public void clear() {
+        modCount++;
+        Object[] tab = table;
+        for (int i = 0; i < tab.length; i++)
+            tab[i] = null;
+        size = 0;
+    }
+
+    /**
+     * Compares the specified object with this map for equality.  Returns
+     * <tt>true</tt> if the given object is also a map and the two maps
+     * represent identical object-reference mappings.  More formally, this
+     * map is equal to another map <tt>m</tt> if and only if
+     * <tt>this.entrySet().equals(m.entrySet())</tt>.
+     *
+     * <p><b>Owing to the reference-equality-based semantics of this map it is
+     * possible that the symmetry and transitivity requirements of the
+     * <tt>Object.equals</tt> contract may be violated if this map is compared
+     * to a normal map.  However, the <tt>Object.equals</tt> contract is
+     * guaranteed to hold among <tt>IdentityHashMap</tt> instances.</b>
+     *
+     * @param  o object to be compared for equality with this map
+     * @return <tt>true</tt> if the specified object is equal to this map
+     * @see Object#equals(Object)
+     */
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        } else if (o instanceof IdentityHashMap) {
+            IdentityHashMap<?,?> m = (IdentityHashMap<?,?>) o;
+            if (m.size() != size)
+                return false;
+
+            Object[] tab = m.table;
+            for (int i = 0; i < tab.length; i+=2) {
+                Object k = tab[i];
+                if (k != null && !containsMapping(k, tab[i + 1]))
+                    return false;
+            }
+            return true;
+        } else if (o instanceof Map) {
+            Map<?,?> m = (Map<?,?>)o;
+            return entrySet().equals(m.entrySet());
+        } else {
+            return false;  // o is not a Map
+        }
+    }
+
+    /**
+     * Returns the hash code value for this map.  The hash code of a map is
+     * defined to be the sum of the hash codes of each entry in the map's
+     * <tt>entrySet()</tt> view.  This ensures that <tt>m1.equals(m2)</tt>
+     * implies that <tt>m1.hashCode()==m2.hashCode()</tt> for any two
+     * <tt>IdentityHashMap</tt> instances <tt>m1</tt> and <tt>m2</tt>, as
+     * required by the general contract of {@link Object#hashCode}.
+     *
+     * <p><b>Owing to the reference-equality-based semantics of the
+     * <tt>Map.Entry</tt> instances in the set returned by this map's
+     * <tt>entrySet</tt> method, it is possible that the contractual
+     * requirement of <tt>Object.hashCode</tt> mentioned in the previous
+     * paragraph will be violated if one of the two objects being compared is
+     * an <tt>IdentityHashMap</tt> instance and the other is a normal map.</b>
+     *
+     * @return the hash code value for this map
+     * @see Object#equals(Object)
+     * @see #equals(Object)
+     */
+    public int hashCode() {
+        int result = 0;
+        Object[] tab = table;
+        for (int i = 0; i < tab.length; i +=2) {
+            Object key = tab[i];
+            if (key != null) {
+                Object k = unmaskNull(key);
+                result += System.identityHashCode(k) ^
+                          System.identityHashCode(tab[i + 1]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a shallow copy of this identity hash map: the keys and values
+     * themselves are not cloned.
+     *
+     * @return a shallow copy of this map
+     */
+    public Object clone() {
+        try {
+            IdentityHashMap<?,?> m = (IdentityHashMap<?,?>) super.clone();
+            m.entrySet = null;
+            m.table = table.clone();
+            return m;
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
+    }
+
+    private abstract class IdentityHashMapIterator<T> implements Iterator<T> {
+        int index = (size != 0 ? 0 : table.length); // current slot.
+        int expectedModCount = modCount; // to support fast-fail
+        int lastReturnedIndex = -1;      // to allow remove()
+        boolean indexValid; // To avoid unnecessary next computation
+        Object[] traversalTable = table; // reference to main table or copy
+
+        public boolean hasNext() {
+            Object[] tab = traversalTable;
+            for (int i = index; i < tab.length; i+=2) {
+                Object key = tab[i];
+                if (key != null) {
+                    index = i;
+                    return indexValid = true;
+                }
+            }
+            index = tab.length;
+            return false;
+        }
+
+        protected int nextIndex() {
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+            if (!indexValid && !hasNext())
+                throw new NoSuchElementException();
+
+            indexValid = false;
+            lastReturnedIndex = index;
+            index += 2;
+            return lastReturnedIndex;
+        }
+
+        public void remove() {
+            if (lastReturnedIndex == -1)
+                throw new IllegalStateException();
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+
+            expectedModCount = ++modCount;
+            int deletedSlot = lastReturnedIndex;
+            lastReturnedIndex = -1;
+            // back up index to revisit new contents after deletion
+            index = deletedSlot;
+            indexValid = false;
+
+            // Removal code proceeds as in closeDeletion except that
+            // it must catch the rare case where an element already
+            // seen is swapped into a vacant slot that will be later
+            // traversed by this iterator. We cannot allow future
+            // next() calls to return it again.  The likelihood of
+            // this occurring under 2/3 load factor is very slim, but
+            // when it does happen, we must make a copy of the rest of
+            // the table to use for the rest of the traversal. Since
+            // this can only happen when we are near the end of the table,
+            // even in these rare cases, this is not very expensive in
+            // time or space.
+
+            Object[] tab = traversalTable;
+            int len = tab.length;
+
+            int d = deletedSlot;
+            Object key = tab[d];
+            tab[d] = null;        // vacate the slot
+            tab[d + 1] = null;
+
+            // If traversing a copy, remove in real table.
+            // We can skip gap-closure on copy.
+            if (tab != IdentityHashMap.this.table) {
+                IdentityHashMap.this.remove(key);
+                expectedModCount = modCount;
+                return;
+            }
+
+            size--;
+
+            Object item;
+            for (int i = nextKeyIndex(d, len); (item = tab[i]) != null;
+                 i = nextKeyIndex(i, len)) {
+                int r = hash(item, len);
+                // See closeDeletion for explanation of this conditional
+                if ((i < r && (r <= d || d <= i)) ||
+                    (r <= d && d <= i)) {
+
+                    // If we are about to swap an already-seen element
+                    // into a slot that may later be returned by next(),
+                    // then clone the rest of table for use in future
+                    // next() calls. It is OK that our copy will have
+                    // a gap in the "wrong" place, since it will never
+                    // be used for searching anyway.
+
+                    if (i < deletedSlot && d >= deletedSlot &&
+                        traversalTable == IdentityHashMap.this.table) {
+                        int remaining = len - deletedSlot;
+                        Object[] newTable = new Object[remaining];
+                        System.arraycopy(tab, deletedSlot,
+                                         newTable, 0, remaining);
+                        traversalTable = newTable;
+                        index = 0;
+                    }
+
+                    tab[d] = item;
+                    tab[d + 1] = tab[i + 1];
+                    tab[i] = null;
+                    tab[i + 1] = null;
+                    d = i;
+                }
+            }
+        }
+    }
+
+    private class KeyIterator extends IdentityHashMapIterator<K> {
+        @SuppressWarnings("unchecked")
+        public K next() {
+            return (K) unmaskNull(traversalTable[nextIndex()]);
+        }
+    }
+
+    private class ValueIterator extends IdentityHashMapIterator<V> {
+        @SuppressWarnings("unchecked")
+        public V next() {
+            return (V) traversalTable[nextIndex() + 1];
+        }
+    }
+
+    private class EntryIterator
+        extends IdentityHashMapIterator<Map.Entry<K,V>>
+    {
+        private Entry lastReturnedEntry;
+
+        public Map.Entry<K,V> next() {
+            lastReturnedEntry = new Entry(nextIndex());
+            return lastReturnedEntry;
+        }
+
+        public void remove() {
+            lastReturnedIndex =
+                ((null == lastReturnedEntry) ? -1 : lastReturnedEntry.index);
+            super.remove();
+            lastReturnedEntry.index = lastReturnedIndex;
+            lastReturnedEntry = null;
+        }
+
+        private class Entry implements Map.Entry<K,V> {
+            private int index;
+
+            private Entry(int index) {
+                this.index = index;
+            }
+
+            @SuppressWarnings("unchecked")
+            public K getKey() {
+                checkIndexForEntryUse();
+                return (K) unmaskNull(traversalTable[index]);
+            }
+
+            @SuppressWarnings("unchecked")
+            public V getValue() {
+                checkIndexForEntryUse();
+                return (V) traversalTable[index+1];
+            }
+
+            @SuppressWarnings("unchecked")
+            public V setValue(V value) {
+                checkIndexForEntryUse();
+                V oldValue = (V) traversalTable[index+1];
+                traversalTable[index+1] = value;
+                // if shadowing, force into main table
+                if (traversalTable != IdentityHashMap.this.table)
+                    put((K) traversalTable[index], value);
+                return oldValue;
+            }
+
+            public boolean equals(Object o) {
+                if (index < 0)
+                    return super.equals(o);
+
+                if (!(o instanceof Map.Entry))
+                    return false;
+                Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+                return (e.getKey() == unmaskNull(traversalTable[index]) &&
+                       e.getValue() == traversalTable[index+1]);
+            }
+
+            public int hashCode() {
+                if (lastReturnedIndex < 0)
+                    return super.hashCode();
+
+                return (System.identityHashCode(unmaskNull(traversalTable[index])) ^
+                       System.identityHashCode(traversalTable[index+1]));
+            }
+
+            public String toString() {
+                if (index < 0)
+                    return super.toString();
+
+                return (unmaskNull(traversalTable[index]) + "="
+                        + traversalTable[index+1]);
+            }
+
+            private void checkIndexForEntryUse() {
+                if (index < 0)
+                    throw new IllegalStateException("Entry was removed");
+            }
+        }
+    }
+
+    // Views
+
+    /**
+     * This field is initialized to contain an instance of the entry set
+     * view the first time this view is requested.  The view is stateless,
+     * so there's no reason to create more than one.
+     */
+    private transient Set<Map.Entry<K,V>> entrySet;
+
+    /**
+     * Returns an identity-based set view of the keys contained in this map.
+     * The set is backed by the map, so changes to the map are reflected in
+     * the set, and vice-versa.  If the map is modified while an iteration
+     * over the set is in progress, the results of the iteration are
+     * undefined.  The set supports element removal, which removes the
+     * corresponding mapping from the map, via the <tt>Iterator.remove</tt>,
+     * <tt>Set.remove</tt>, <tt>removeAll</tt>, <tt>retainAll</tt>, and
+     * <tt>clear</tt> methods.  It does not support the <tt>add</tt> or
+     * <tt>addAll</tt> methods.
+     *
+     * <p><b>While the object returned by this method implements the
+     * <tt>Set</tt> interface, it does <i>not</i> obey <tt>Set's</tt> general
+     * contract.  Like its backing map, the set returned by this method
+     * defines element equality as reference-equality rather than
+     * object-equality.  This affects the behavior of its <tt>contains</tt>,
+     * <tt>remove</tt>, <tt>containsAll</tt>, <tt>equals</tt>, and
+     * <tt>hashCode</tt> methods.</b>
+     *
+     * <p><b>The <tt>equals</tt> method of the returned set returns <tt>true</tt>
+     * only if the specified object is a set containing exactly the same
+     * object references as the returned set.  The symmetry and transitivity
+     * requirements of the <tt>Object.equals</tt> contract may be violated if
+     * the set returned by this method is compared to a normal set.  However,
+     * the <tt>Object.equals</tt> contract is guaranteed to hold among sets
+     * returned by this method.</b>
+     *
+     * <p>The <tt>hashCode</tt> method of the returned set returns the sum of
+     * the <i>identity hashcodes</i> of the elements in the set, rather than
+     * the sum of their hashcodes.  This is mandated by the change in the
+     * semantics of the <tt>equals</tt> method, in order to enforce the
+     * general contract of the <tt>Object.hashCode</tt> method among sets
+     * returned by this method.
+     *
+     * @return an identity-based set view of the keys contained in this map
+     * @see Object#equals(Object)
+     * @see System#identityHashCode(Object)
+     */
+    public Set<K> keySet() {
+        Set<K> ks = keySet;
+        if (ks == null) {
+            ks = new KeySet();
+            keySet = ks;
+        }
+        return ks;
+    }
+
+    private class KeySet extends AbstractSet<K> {
+        public Iterator<K> iterator() {
+            return new KeyIterator();
+        }
+        public int size() {
+            return size;
+        }
+        public boolean contains(Object o) {
+            return containsKey(o);
+        }
+        public boolean remove(Object o) {
+            int oldSize = size;
+            IdentityHashMap.this.remove(o);
+            return size != oldSize;
+        }
+        /*
+         * Must revert from AbstractSet's impl to AbstractCollection's, as
+         * the former contains an optimization that results in incorrect
+         * behavior when c is a smaller "normal" (non-identity-based) Set.
+         */
+        public boolean removeAll(Collection<?> c) {
+            Objects.requireNonNull(c);
+            boolean modified = false;
+            for (Iterator<K> i = iterator(); i.hasNext(); ) {
+                if (c.contains(i.next())) {
+                    i.remove();
+                    modified = true;
+                }
+            }
+            return modified;
+        }
+        public void clear() {
+            IdentityHashMap.this.clear();
+        }
+        public int hashCode() {
+            int result = 0;
+            for (K key : this)
+                result += System.identityHashCode(key);
+            return result;
+        }
+        public Object[] toArray() {
+            return toArray(new Object[0]);
+        }
+        @SuppressWarnings("unchecked")
+        public <T> T[] toArray(T[] a) {
+            int expectedModCount = modCount;
+            int size = size();
+            if (a.length < size)
+                a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+            Object[] tab = table;
+            int ti = 0;
+            for (int si = 0; si < tab.length; si += 2) {
+                Object key;
+                if ((key = tab[si]) != null) { // key present ?
+                    // more elements than expected -> concurrent modification from other thread
+                    if (ti >= size) {
+                        throw new ConcurrentModificationException();
+                    }
+                    a[ti++] = (T) unmaskNull(key); // unmask key
+                }
+            }
+            // fewer elements than expected or concurrent modification from other thread detected
+            if (ti < size || expectedModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+            // final null marker as per spec
+            if (ti < a.length) {
+                a[ti] = null;
+            }
+            return a;
+        }
+
+        public Spliterator<K> spliterator() {
+            return new KeySpliterator<>(IdentityHashMap.this, 0, -1, 0, 0);
+        }
+    }
+
+    /**
+     * Returns a {@link Collection} view of the values contained in this map.
+     * The collection is backed by the map, so changes to the map are
+     * reflected in the collection, and vice-versa.  If the map is
+     * modified while an iteration over the collection is in progress,
+     * the results of the iteration are undefined.  The collection
+     * supports element removal, which removes the corresponding
+     * mapping from the map, via the <tt>Iterator.remove</tt>,
+     * <tt>Collection.remove</tt>, <tt>removeAll</tt>,
+     * <tt>retainAll</tt> and <tt>clear</tt> methods.  It does not
+     * support the <tt>add</tt> or <tt>addAll</tt> methods.
+     *
+     * <p><b>While the object returned by this method implements the
+     * <tt>Collection</tt> interface, it does <i>not</i> obey
+     * <tt>Collection's</tt> general contract.  Like its backing map,
+     * the collection returned by this method defines element equality as
+     * reference-equality rather than object-equality.  This affects the
+     * behavior of its <tt>contains</tt>, <tt>remove</tt> and
+     * <tt>containsAll</tt> methods.</b>
+     */
+    public Collection<V> values() {
+        Collection<V> vs = values;
+        if (vs == null) {
+            vs = new Values();
+            values = vs;
+        }
+        return vs;
+    }
+
+    private class Values extends AbstractCollection<V> {
+        public Iterator<V> iterator() {
+            return new ValueIterator();
+        }
+        public int size() {
+            return size;
+        }
+        public boolean contains(Object o) {
+            return containsValue(o);
+        }
+        public boolean remove(Object o) {
+            for (Iterator<V> i = iterator(); i.hasNext(); ) {
+                if (i.next() == o) {
+                    i.remove();
+                    return true;
+                }
+            }
+            return false;
+        }
+        public void clear() {
+            IdentityHashMap.this.clear();
+        }
+        public Object[] toArray() {
+            return toArray(new Object[0]);
+        }
+        @SuppressWarnings("unchecked")
+        public <T> T[] toArray(T[] a) {
+            int expectedModCount = modCount;
+            int size = size();
+            if (a.length < size)
+                a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+            Object[] tab = table;
+            int ti = 0;
+            for (int si = 0; si < tab.length; si += 2) {
+                if (tab[si] != null) { // key present ?
+                    // more elements than expected -> concurrent modification from other thread
+                    if (ti >= size) {
+                        throw new ConcurrentModificationException();
+                    }
+                    a[ti++] = (T) tab[si+1]; // copy value
+                }
+            }
+            // fewer elements than expected or concurrent modification from other thread detected
+            if (ti < size || expectedModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+            // final null marker as per spec
+            if (ti < a.length) {
+                a[ti] = null;
+            }
+            return a;
+        }
+
+        public Spliterator<V> spliterator() {
+            return new ValueSpliterator<>(IdentityHashMap.this, 0, -1, 0, 0);
+        }
+    }
+
+    /**
+     * Returns a {@link Set} view of the mappings contained in this map.
+     * Each element in the returned set is a reference-equality-based
+     * <tt>Map.Entry</tt>.  The set is backed by the map, so changes
+     * to the map are reflected in the set, and vice-versa.  If the
+     * map is modified while an iteration over the set is in progress,
+     * the results of the iteration are undefined.  The set supports
+     * element removal, which removes the corresponding mapping from
+     * the map, via the <tt>Iterator.remove</tt>, <tt>Set.remove</tt>,
+     * <tt>removeAll</tt>, <tt>retainAll</tt> and <tt>clear</tt>
+     * methods.  It does not support the <tt>add</tt> or
+     * <tt>addAll</tt> methods.
+     *
+     * <p>Like the backing map, the <tt>Map.Entry</tt> objects in the set
+     * returned by this method define key and value equality as
+     * reference-equality rather than object-equality.  This affects the
+     * behavior of the <tt>equals</tt> and <tt>hashCode</tt> methods of these
+     * <tt>Map.Entry</tt> objects.  A reference-equality based <tt>Map.Entry
+     * e</tt> is equal to an object <tt>o</tt> if and only if <tt>o</tt> is a
+     * <tt>Map.Entry</tt> and <tt>e.getKey()==o.getKey() &amp;&amp;
+     * e.getValue()==o.getValue()</tt>.  To accommodate these equals
+     * semantics, the <tt>hashCode</tt> method returns
+     * <tt>System.identityHashCode(e.getKey()) ^
+     * System.identityHashCode(e.getValue())</tt>.
+     *
+     * <p><b>Owing to the reference-equality-based semantics of the
+     * <tt>Map.Entry</tt> instances in the set returned by this method,
+     * it is possible that the symmetry and transitivity requirements of
+     * the {@link Object#equals(Object)} contract may be violated if any of
+     * the entries in the set is compared to a normal map entry, or if
+     * the set returned by this method is compared to a set of normal map
+     * entries (such as would be returned by a call to this method on a normal
+     * map).  However, the <tt>Object.equals</tt> contract is guaranteed to
+     * hold among identity-based map entries, and among sets of such entries.
+     * </b>
+     *
+     * @return a set view of the identity-mappings contained in this map
+     */
+    public Set<Map.Entry<K,V>> entrySet() {
+        Set<Map.Entry<K,V>> es = entrySet;
+        if (es != null)
+            return es;
+        else
+            return entrySet = new EntrySet();
+    }
+
+    private class EntrySet extends AbstractSet<Map.Entry<K,V>> {
+        public Iterator<Map.Entry<K,V>> iterator() {
+            return new EntryIterator();
+        }
+        public boolean contains(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
+            return containsMapping(entry.getKey(), entry.getValue());
+        }
+        public boolean remove(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
+            return removeMapping(entry.getKey(), entry.getValue());
+        }
+        public int size() {
+            return size;
+        }
+        public void clear() {
+            IdentityHashMap.this.clear();
+        }
+        /*
+         * Must revert from AbstractSet's impl to AbstractCollection's, as
+         * the former contains an optimization that results in incorrect
+         * behavior when c is a smaller "normal" (non-identity-based) Set.
+         */
+        public boolean removeAll(Collection<?> c) {
+            Objects.requireNonNull(c);
+            boolean modified = false;
+            for (Iterator<Map.Entry<K,V>> i = iterator(); i.hasNext(); ) {
+                if (c.contains(i.next())) {
+                    i.remove();
+                    modified = true;
+                }
+            }
+            return modified;
+        }
+
+        public Object[] toArray() {
+            return toArray(new Object[0]);
+        }
+
+        @SuppressWarnings("unchecked")
+        public <T> T[] toArray(T[] a) {
+            int expectedModCount = modCount;
+            int size = size();
+            if (a.length < size)
+                a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+            Object[] tab = table;
+            int ti = 0;
+            for (int si = 0; si < tab.length; si += 2) {
+                Object key;
+                if ((key = tab[si]) != null) { // key present ?
+                    // more elements than expected -> concurrent modification from other thread
+                    if (ti >= size) {
+                        throw new ConcurrentModificationException();
+                    }
+                    a[ti++] = (T) new AbstractMap.SimpleEntry<>(unmaskNull(key), tab[si + 1]);
+                }
+            }
+            // fewer elements than expected or concurrent modification from other thread detected
+            if (ti < size || expectedModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+            // final null marker as per spec
+            if (ti < a.length) {
+                a[ti] = null;
+            }
+            return a;
+        }
+
+        public Spliterator<Map.Entry<K,V>> spliterator() {
+            return new EntrySpliterator<>(IdentityHashMap.this, 0, -1, 0, 0);
+        }
+    }
+
+
+    private static final long serialVersionUID = 8188218128353913216L;
+
+    /**
+     * Saves the state of the <tt>IdentityHashMap</tt> instance to a stream
+     * (i.e., serializes it).
+     *
+     * @serialData The <i>size</i> of the HashMap (the number of key-value
+     *          mappings) (<tt>int</tt>), followed by the key (Object) and
+     *          value (Object) for each key-value mapping represented by the
+     *          IdentityHashMap.  The key-value mappings are emitted in no
+     *          particular order.
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException  {
+        // Write out and any hidden stuff
+        s.defaultWriteObject();
+
+        // Write out size (number of Mappings)
+        s.writeInt(size);
+
+        // Write out keys and values (alternating)
+        Object[] tab = table;
+        for (int i = 0; i < tab.length; i += 2) {
+            Object key = tab[i];
+            if (key != null) {
+                s.writeObject(unmaskNull(key));
+                s.writeObject(tab[i + 1]);
+            }
+        }
+    }
+
+    /**
+     * Reconstitutes the <tt>IdentityHashMap</tt> instance from a stream (i.e.,
+     * deserializes it).
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException  {
+        // Read in any hidden stuff
+        s.defaultReadObject();
+
+        // Read in size (number of Mappings)
+        int size = s.readInt();
+        if (size < 0)
+            throw new java.io.StreamCorruptedException
+                ("Illegal mappings count: " + size);
+        int cap = capacity(size);
+        SharedSecrets.getJavaOISAccess().checkArray(s, Object[].class, cap);
+        init(cap);
+
+        // Read the keys and values, and put the mappings in the table
+        for (int i=0; i<size; i++) {
+            @SuppressWarnings("unchecked")
+                K key = (K) s.readObject();
+            @SuppressWarnings("unchecked")
+                V value = (V) s.readObject();
+            putForCreate(key, value);
+        }
+    }
+
+    /**
+     * The put method for readObject.  It does not resize the table,
+     * update modCount, etc.
+     */
+    private void putForCreate(K key, V value)
+        throws java.io.StreamCorruptedException
+    {
+        Object k = maskNull(key);
+        Object[] tab = table;
+        int len = tab.length;
+        int i = hash(k, len);
+
+        Object item;
+        while ( (item = tab[i]) != null) {
+            if (item == k)
+                throw new java.io.StreamCorruptedException();
+            i = nextKeyIndex(i, len);
+        }
+        tab[i] = k;
+        tab[i + 1] = value;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void forEach(BiConsumer<? super K, ? super V> action) {
+        Objects.requireNonNull(action);
+        int expectedModCount = modCount;
+
+        Object[] t = table;
+        for (int index = 0; index < t.length; index += 2) {
+            Object k = t[index];
+            if (k != null) {
+                action.accept((K) unmaskNull(k), (V) t[index + 1]);
+            }
+
+            if (modCount != expectedModCount) {
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+        Objects.requireNonNull(function);
+        int expectedModCount = modCount;
+
+        Object[] t = table;
+        for (int index = 0; index < t.length; index += 2) {
+            Object k = t[index];
+            if (k != null) {
+                t[index + 1] = function.apply((K) unmaskNull(k), (V) t[index + 1]);
+            }
+
+            if (modCount != expectedModCount) {
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+
+    /**
+     * Similar form as array-based Spliterators, but skips blank elements,
+     * and guestimates size as decreasing by half per split.
+     */
+    static class IdentityHashMapSpliterator<K,V> {
+        final IdentityHashMap<K,V> map;
+        int index;             // current index, modified on advance/split
+        int fence;             // -1 until first use; then one past last index
+        int est;               // size estimate
+        int expectedModCount;  // initialized when fence set
+
+        IdentityHashMapSpliterator(IdentityHashMap<K,V> map, int origin,
+                                   int fence, int est, int expectedModCount) {
+            this.map = map;
+            this.index = origin;
+            this.fence = fence;
+            this.est = est;
+            this.expectedModCount = expectedModCount;
+        }
+
+        final int getFence() { // initialize fence and size on first use
+            int hi;
+            if ((hi = fence) < 0) {
+                est = map.size;
+                expectedModCount = map.modCount;
+                hi = fence = map.table.length;
+            }
+            return hi;
+        }
+
+        public final long estimateSize() {
+            getFence(); // force init
+            return (long) est;
+        }
+    }
+
+    static final class KeySpliterator<K,V>
+        extends IdentityHashMapSpliterator<K,V>
+        implements Spliterator<K> {
+        KeySpliterator(IdentityHashMap<K,V> map, int origin, int fence, int est,
+                       int expectedModCount) {
+            super(map, origin, fence, est, expectedModCount);
+        }
+
+        public KeySpliterator<K,V> trySplit() {
+            int hi = getFence(), lo = index, mid = ((lo + hi) >>> 1) & ~1;
+            return (lo >= mid) ? null :
+                new KeySpliterator<K,V>(map, lo, index = mid, est >>>= 1,
+                                        expectedModCount);
+        }
+
+        @SuppressWarnings("unchecked")
+        public void forEachRemaining(Consumer<? super K> action) {
+            if (action == null)
+                throw new NullPointerException();
+            int i, hi, mc; Object key;
+            IdentityHashMap<K,V> m; Object[] a;
+            if ((m = map) != null && (a = m.table) != null &&
+                (i = index) >= 0 && (index = hi = getFence()) <= a.length) {
+                for (; i < hi; i += 2) {
+                    if ((key = a[i]) != null)
+                        action.accept((K)unmaskNull(key));
+                }
+                if (m.modCount == expectedModCount)
+                    return;
+            }
+            throw new ConcurrentModificationException();
+        }
+
+        @SuppressWarnings("unchecked")
+        public boolean tryAdvance(Consumer<? super K> action) {
+            if (action == null)
+                throw new NullPointerException();
+            Object[] a = map.table;
+            int hi = getFence();
+            while (index < hi) {
+                Object key = a[index];
+                index += 2;
+                if (key != null) {
+                    action.accept((K)unmaskNull(key));
+                    if (map.modCount != expectedModCount)
+                        throw new ConcurrentModificationException();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return (fence < 0 || est == map.size ? SIZED : 0) | Spliterator.DISTINCT;
+        }
+    }
+
+    static final class ValueSpliterator<K,V>
+        extends IdentityHashMapSpliterator<K,V>
+        implements Spliterator<V> {
+        ValueSpliterator(IdentityHashMap<K,V> m, int origin, int fence, int est,
+                         int expectedModCount) {
+            super(m, origin, fence, est, expectedModCount);
+        }
+
+        public ValueSpliterator<K,V> trySplit() {
+            int hi = getFence(), lo = index, mid = ((lo + hi) >>> 1) & ~1;
+            return (lo >= mid) ? null :
+                new ValueSpliterator<K,V>(map, lo, index = mid, est >>>= 1,
+                                          expectedModCount);
+        }
+
+        public void forEachRemaining(Consumer<? super V> action) {
+            if (action == null)
+                throw new NullPointerException();
+            int i, hi, mc;
+            IdentityHashMap<K,V> m; Object[] a;
+            if ((m = map) != null && (a = m.table) != null &&
+                (i = index) >= 0 && (index = hi = getFence()) <= a.length) {
+                for (; i < hi; i += 2) {
+                    if (a[i] != null) {
+                        @SuppressWarnings("unchecked") V v = (V)a[i+1];
+                        action.accept(v);
+                    }
+                }
+                if (m.modCount == expectedModCount)
+                    return;
+            }
+            throw new ConcurrentModificationException();
+        }
+
+        public boolean tryAdvance(Consumer<? super V> action) {
+            if (action == null)
+                throw new NullPointerException();
+            Object[] a = map.table;
+            int hi = getFence();
+            while (index < hi) {
+                Object key = a[index];
+                @SuppressWarnings("unchecked") V v = (V)a[index+1];
+                index += 2;
+                if (key != null) {
+                    action.accept(v);
+                    if (map.modCount != expectedModCount)
+                        throw new ConcurrentModificationException();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return (fence < 0 || est == map.size ? SIZED : 0);
+        }
+
+    }
+
+    static final class EntrySpliterator<K,V>
+        extends IdentityHashMapSpliterator<K,V>
+        implements Spliterator<Map.Entry<K,V>> {
+        EntrySpliterator(IdentityHashMap<K,V> m, int origin, int fence, int est,
+                         int expectedModCount) {
+            super(m, origin, fence, est, expectedModCount);
+        }
+
+        public EntrySpliterator<K,V> trySplit() {
+            int hi = getFence(), lo = index, mid = ((lo + hi) >>> 1) & ~1;
+            return (lo >= mid) ? null :
+                new EntrySpliterator<K,V>(map, lo, index = mid, est >>>= 1,
+                                          expectedModCount);
+        }
+
+        public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
+            if (action == null)
+                throw new NullPointerException();
+            int i, hi, mc;
+            IdentityHashMap<K,V> m; Object[] a;
+            if ((m = map) != null && (a = m.table) != null &&
+                (i = index) >= 0 && (index = hi = getFence()) <= a.length) {
+                for (; i < hi; i += 2) {
+                    Object key = a[i];
+                    if (key != null) {
+                        @SuppressWarnings("unchecked") K k =
+                            (K)unmaskNull(key);
+                        @SuppressWarnings("unchecked") V v = (V)a[i+1];
+                        action.accept
+                            (new AbstractMap.SimpleImmutableEntry<K,V>(k, v));
+
+                    }
+                }
+                if (m.modCount == expectedModCount)
+                    return;
+            }
+            throw new ConcurrentModificationException();
+        }
+
+        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+            if (action == null)
+                throw new NullPointerException();
+            Object[] a = map.table;
+            int hi = getFence();
+            while (index < hi) {
+                Object key = a[index];
+                @SuppressWarnings("unchecked") V v = (V)a[index+1];
+                index += 2;
+                if (key != null) {
+                    @SuppressWarnings("unchecked") K k =
+                        (K)unmaskNull(key);
+                    action.accept
+                        (new AbstractMap.SimpleImmutableEntry<K,V>(k, v));
+                    if (map.modCount != expectedModCount)
+                        throw new ConcurrentModificationException();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public int characteristics() {
+            return (fence < 0 || est == map.size ? SIZED : 0) | Spliterator.DISTINCT;
+        }
+    }
+
+}

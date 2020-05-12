@@ -1,97 +1,91 @@
-/*    */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*    */ 
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.util.ByteListImpl;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class HexBinaryDV
-/*    */   extends TypeValidator
-/*    */ {
-/*    */   public short getAllowedFacets() {
-/* 41 */     return 2079;
-/*    */   }
-/*    */   
-/*    */   public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
-/* 45 */     byte[] decoded = HexBin.decode(content);
-/* 46 */     if (decoded == null) {
-/* 47 */       throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[] { content, "hexBinary" });
-/*    */     }
-/* 49 */     return new XHex(decoded);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getDataLength(Object value) {
-/* 54 */     return ((XHex)value).getLength();
-/*    */   }
-/*    */   
-/*    */   private static final class XHex
-/*    */     extends ByteListImpl {
-/*    */     public XHex(byte[] data) {
-/* 60 */       super(data);
-/*    */     }
-/*    */     public synchronized String toString() {
-/* 63 */       if (this.canonical == null) {
-/* 64 */         this.canonical = HexBin.encode(this.data);
-/*    */       }
-/* 66 */       return this.canonical;
-/*    */     }
-/*    */     
-/*    */     public boolean equals(Object obj) {
-/* 70 */       if (!(obj instanceof XHex))
-/* 71 */         return false; 
-/* 72 */       byte[] odata = ((XHex)obj).data;
-/* 73 */       int len = this.data.length;
-/* 74 */       if (len != odata.length)
-/* 75 */         return false; 
-/* 76 */       for (int i = 0; i < len; i++) {
-/* 77 */         if (this.data[i] != odata[i])
-/* 78 */           return false; 
-/*    */       } 
-/* 80 */       return true;
-/*    */     }
-/*    */     
-/*    */     public int hashCode() {
-/* 84 */       int hash = 0;
-/* 85 */       for (int i = 0; i < this.data.length; i++) {
-/* 86 */         hash = hash * 37 + (this.data[i] & 0xFF);
-/*    */       }
-/* 88 */       return hash;
-/*    */     }
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\HexBinaryDV.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
+import com.sun.org.apache.xerces.internal.impl.dv.util.ByteListImpl;
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+
+/**
+ * Represent the schema type "hexBinary"
+ *
+ * @xerces.internal
+ *
+ * @author Neeraj Bajaj, Sun Microsystems, inc.
+ * @author Sandy Gao, IBM
+ *
+ * @version $Id: HexBinaryDV.java,v 1.7 2010-11-01 04:39:47 joehw Exp $
+ */
+public class HexBinaryDV extends TypeValidator {
+
+    public short getAllowedFacets(){
+        return (XSSimpleTypeDecl.FACET_LENGTH | XSSimpleTypeDecl.FACET_MINLENGTH | XSSimpleTypeDecl.FACET_MAXLENGTH | XSSimpleTypeDecl.FACET_PATTERN | XSSimpleTypeDecl.FACET_ENUMERATION | XSSimpleTypeDecl.FACET_WHITESPACE );
+    }
+
+    public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
+        byte[] decoded = HexBin.decode(content);
+        if (decoded == null)
+            throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[]{content, "hexBinary"});
+
+        return new XHex(decoded);
+    }
+
+    // length of a binary type is the number of bytes
+    public int getDataLength(Object value) {
+        return ((XHex)value).getLength();
+    }
+
+    private static final class XHex extends ByteListImpl {
+
+        public XHex(byte[] data) {
+            super(data);
+        }
+        public synchronized String toString() {
+            if (canonical == null) {
+                canonical = HexBin.encode(data);
+            }
+            return canonical;
+        }
+
+        public boolean equals(Object obj) {
+            if (!(obj instanceof XHex))
+                return false;
+            byte[] odata = ((XHex)obj).data;
+            int len = data.length;
+            if (len != odata.length)
+                return false;
+            for (int i = 0; i < len; i++) {
+                if (data[i] != odata[i])
+                    return false;
+            }
+            return true;
+        }
+
+        public int hashCode() {
+            int hash = 0;
+            for (int i = 0; i < data.length; ++i) {
+                hash = hash * 37 + (((int) data[i]) & 0xff);
+            }
+            return hash;
+        }
+    }
+}

@@ -1,431 +1,425 @@
-/*     */ package java.nio.file;
-/*     */ 
-/*     */ import java.io.Closeable;
-/*     */ import java.io.IOException;
-/*     */ import java.nio.file.attribute.BasicFileAttributes;
-/*     */ import java.util.ArrayDeque;
-/*     */ import java.util.Collection;
-/*     */ import java.util.Iterator;
-/*     */ import sun.nio.fs.BasicFileAttributesHolder;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class FileTreeWalker
-/*     */   implements Closeable
-/*     */ {
-/*     */   private final boolean followLinks;
-/*     */   private final LinkOption[] linkOptions;
-/*     */   private final int maxDepth;
-/*  61 */   private final ArrayDeque<DirectoryNode> stack = new ArrayDeque<>();
-/*     */   
-/*     */   private boolean closed;
-/*     */ 
-/*     */   
-/*     */   private static class DirectoryNode
-/*     */   {
-/*     */     private final Path dir;
-/*     */     private final Object key;
-/*     */     private final DirectoryStream<Path> stream;
-/*     */     private final Iterator<Path> iterator;
-/*     */     private boolean skipped;
-/*     */     
-/*     */     DirectoryNode(Path param1Path, Object param1Object, DirectoryStream<Path> param1DirectoryStream) {
-/*  75 */       this.dir = param1Path;
-/*  76 */       this.key = param1Object;
-/*  77 */       this.stream = param1DirectoryStream;
-/*  78 */       this.iterator = param1DirectoryStream.iterator();
-/*     */     }
-/*     */     
-/*     */     Path directory() {
-/*  82 */       return this.dir;
-/*     */     }
-/*     */     
-/*     */     Object key() {
-/*  86 */       return this.key;
-/*     */     }
-/*     */     
-/*     */     DirectoryStream<Path> stream() {
-/*  90 */       return this.stream;
-/*     */     }
-/*     */     
-/*     */     Iterator<Path> iterator() {
-/*  94 */       return this.iterator;
-/*     */     }
-/*     */     
-/*     */     void skip() {
-/*  98 */       this.skipped = true;
-/*     */     }
-/*     */     
-/*     */     boolean skipped() {
-/* 102 */       return this.skipped;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   enum EventType
-/*     */   {
-/* 113 */     START_DIRECTORY,
-/*     */ 
-/*     */ 
-/*     */     
-/* 117 */     END_DIRECTORY,
-/*     */ 
-/*     */ 
-/*     */     
-/* 121 */     ENTRY;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class Event
-/*     */   {
-/*     */     private final FileTreeWalker.EventType type;
-/*     */     
-/*     */     private final Path file;
-/*     */     private final BasicFileAttributes attrs;
-/*     */     private final IOException ioe;
-/*     */     
-/*     */     private Event(FileTreeWalker.EventType param1EventType, Path param1Path, BasicFileAttributes param1BasicFileAttributes, IOException param1IOException) {
-/* 134 */       this.type = param1EventType;
-/* 135 */       this.file = param1Path;
-/* 136 */       this.attrs = param1BasicFileAttributes;
-/* 137 */       this.ioe = param1IOException;
-/*     */     }
-/*     */     
-/*     */     Event(FileTreeWalker.EventType param1EventType, Path param1Path, BasicFileAttributes param1BasicFileAttributes) {
-/* 141 */       this(param1EventType, param1Path, param1BasicFileAttributes, null);
-/*     */     }
-/*     */     
-/*     */     Event(FileTreeWalker.EventType param1EventType, Path param1Path, IOException param1IOException) {
-/* 145 */       this(param1EventType, param1Path, null, param1IOException);
-/*     */     }
-/*     */     
-/*     */     FileTreeWalker.EventType type() {
-/* 149 */       return this.type;
-/*     */     }
-/*     */     
-/*     */     Path file() {
-/* 153 */       return this.file;
-/*     */     }
-/*     */     
-/*     */     BasicFileAttributes attributes() {
-/* 157 */       return this.attrs;
-/*     */     }
-/*     */     
-/*     */     IOException ioeException() {
-/* 161 */       return this.ioe;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   FileTreeWalker(Collection<FileVisitOption> paramCollection, int paramInt) {
-/* 178 */     boolean bool = false;
-/* 179 */     for (FileVisitOption fileVisitOption : paramCollection) {
-/*     */       
-/* 181 */       switch (fileVisitOption) { case FOLLOW_LINKS:
-/* 182 */           bool = true; continue; }
-/*     */       
-/* 184 */       throw new AssertionError("Should not get here");
-/*     */     } 
-/*     */     
-/* 187 */     if (paramInt < 0) {
-/* 188 */       throw new IllegalArgumentException("'maxDepth' is negative");
-/*     */     }
-/* 190 */     this.followLinks = bool;
-/* 191 */     (new LinkOption[1])[0] = LinkOption.NOFOLLOW_LINKS; this.linkOptions = bool ? new LinkOption[0] : new LinkOption[1];
-/*     */     
-/* 193 */     this.maxDepth = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private BasicFileAttributes getAttributes(Path paramPath, boolean paramBoolean) throws IOException {
-/*     */     BasicFileAttributes basicFileAttributes;
-/* 205 */     if (paramBoolean && paramPath instanceof BasicFileAttributesHolder)
-/*     */     {
-/* 207 */       if (System.getSecurityManager() == null) {
-/*     */         
-/* 209 */         basicFileAttributes = ((BasicFileAttributesHolder)paramPath).get();
-/* 210 */         if (basicFileAttributes != null && (!this.followLinks || !basicFileAttributes.isSymbolicLink())) {
-/* 211 */           return basicFileAttributes;
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 219 */       basicFileAttributes = Files.readAttributes(paramPath, (Class)BasicFileAttributes.class, this.linkOptions);
-/* 220 */     } catch (IOException iOException) {
-/* 221 */       if (!this.followLinks) {
-/* 222 */         throw iOException;
-/*     */       }
-/*     */       
-/* 225 */       basicFileAttributes = Files.readAttributes(paramPath, (Class)BasicFileAttributes.class, new LinkOption[] { LinkOption.NOFOLLOW_LINKS });
-/*     */     } 
-/*     */ 
-/*     */     
-/* 229 */     return basicFileAttributes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean wouldLoop(Path paramPath, Object paramObject) {
-/* 239 */     for (DirectoryNode directoryNode : this.stack) {
-/* 240 */       Object object = directoryNode.key();
-/* 241 */       if (paramObject != null && object != null) {
-/* 242 */         if (paramObject.equals(object))
-/*     */         {
-/* 244 */           return true; } 
-/*     */         continue;
-/*     */       } 
-/*     */       try {
-/* 248 */         if (Files.isSameFile(paramPath, directoryNode.directory()))
-/*     */         {
-/* 250 */           return true;
-/*     */         }
-/* 252 */       } catch (IOException|SecurityException iOException) {}
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 257 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Event visit(Path paramPath, boolean paramBoolean1, boolean paramBoolean2) {
-/*     */     BasicFileAttributes basicFileAttributes;
-/*     */     try {
-/* 276 */       basicFileAttributes = getAttributes(paramPath, paramBoolean2);
-/* 277 */     } catch (IOException iOException) {
-/* 278 */       return new Event(EventType.ENTRY, paramPath, iOException);
-/* 279 */     } catch (SecurityException securityException) {
-/* 280 */       if (paramBoolean1)
-/* 281 */         return null; 
-/* 282 */       throw securityException;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 286 */     int i = this.stack.size();
-/* 287 */     if (i >= this.maxDepth || !basicFileAttributes.isDirectory()) {
-/* 288 */       return new Event(EventType.ENTRY, paramPath, basicFileAttributes);
-/*     */     }
-/*     */ 
-/*     */     
-/* 292 */     if (this.followLinks && wouldLoop(paramPath, basicFileAttributes.fileKey())) {
-/* 293 */       return new Event(EventType.ENTRY, paramPath, new FileSystemLoopException(paramPath
-/* 294 */             .toString()));
-/*     */     }
-/*     */ 
-/*     */     
-/* 298 */     DirectoryStream<Path> directoryStream = null;
-/*     */     try {
-/* 300 */       directoryStream = Files.newDirectoryStream(paramPath);
-/* 301 */     } catch (IOException iOException) {
-/* 302 */       return new Event(EventType.ENTRY, paramPath, iOException);
-/* 303 */     } catch (SecurityException securityException) {
-/* 304 */       if (paramBoolean1)
-/* 305 */         return null; 
-/* 306 */       throw securityException;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 310 */     this.stack.push(new DirectoryNode(paramPath, basicFileAttributes.fileKey(), directoryStream));
-/* 311 */     return new Event(EventType.START_DIRECTORY, paramPath, basicFileAttributes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Event walk(Path paramPath) {
-/* 319 */     if (this.closed) {
-/* 320 */       throw new IllegalStateException("Closed");
-/*     */     }
-/* 322 */     Event event = visit(paramPath, false, false);
-/*     */ 
-/*     */     
-/* 325 */     assert event != null;
-/* 326 */     return event;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Event next() {
-/*     */     Event event;
-/* 334 */     DirectoryNode directoryNode = this.stack.peek();
-/* 335 */     if (directoryNode == null) {
-/* 336 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     do {
-/* 341 */       Path path = null;
-/* 342 */       IOException iOException = null;
-/*     */ 
-/*     */       
-/* 345 */       if (!directoryNode.skipped()) {
-/* 346 */         Iterator<Path> iterator = directoryNode.iterator();
-/*     */         try {
-/* 348 */           if (iterator.hasNext()) {
-/* 349 */             path = iterator.next();
-/*     */           }
-/* 351 */         } catch (DirectoryIteratorException directoryIteratorException) {
-/* 352 */           iOException = directoryIteratorException.getCause();
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 357 */       if (path == null) {
-/*     */         try {
-/* 359 */           directoryNode.stream().close();
-/* 360 */         } catch (IOException iOException1) {
-/* 361 */           if (iOException != null) {
-/* 362 */             iOException = iOException1;
-/*     */           } else {
-/* 364 */             iOException.addSuppressed(iOException1);
-/*     */           } 
-/*     */         } 
-/* 367 */         this.stack.pop();
-/* 368 */         return new Event(EventType.END_DIRECTORY, directoryNode.directory(), iOException);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 372 */       event = visit(path, true, true);
-/*     */ 
-/*     */     
-/*     */     }
-/* 376 */     while (event == null);
-/*     */     
-/* 378 */     return event;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void pop() {
-/* 388 */     if (!this.stack.isEmpty()) {
-/* 389 */       DirectoryNode directoryNode = this.stack.pop();
-/*     */       try {
-/* 391 */         directoryNode.stream().close();
-/* 392 */       } catch (IOException iOException) {}
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void skipRemainingSiblings() {
-/* 401 */     if (!this.stack.isEmpty()) {
-/* 402 */       ((DirectoryNode)this.stack.peek()).skip();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isOpen() {
-/* 410 */     return !this.closed;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() {
-/* 418 */     if (!this.closed) {
-/* 419 */       while (!this.stack.isEmpty()) {
-/* 420 */         pop();
-/*     */       }
-/* 422 */       this.closed = true;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\FileTreeWalker.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file;
+
+import java.nio.file.attribute.BasicFileAttributes;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Iterator;
+import sun.nio.fs.BasicFileAttributesHolder;
+
+/**
+ * Walks a file tree, generating a sequence of events corresponding to the files
+ * in the tree.
+ *
+ * <pre>{@code
+ *     Path top = ...
+ *     Set<FileVisitOption> options = ...
+ *     int maxDepth = ...
+ *
+ *     try (FileTreeWalker walker = new FileTreeWalker(options, maxDepth)) {
+ *         FileTreeWalker.Event ev = walker.walk(top);
+ *         do {
+ *             process(ev);
+ *             ev = walker.next();
+ *         } while (ev != null);
+ *     }
+ * }</pre>
+ *
+ * @see Files#walkFileTree
+ */
+
+class FileTreeWalker implements Closeable {
+    private final boolean followLinks;
+    private final LinkOption[] linkOptions;
+    private final int maxDepth;
+    private final ArrayDeque<DirectoryNode> stack = new ArrayDeque<>();
+    private boolean closed;
+
+    /**
+     * The element on the walking stack corresponding to a directory node.
+     */
+    private static class DirectoryNode {
+        private final Path dir;
+        private final Object key;
+        private final DirectoryStream<Path> stream;
+        private final Iterator<Path> iterator;
+        private boolean skipped;
+
+        DirectoryNode(Path dir, Object key, DirectoryStream<Path> stream) {
+            this.dir = dir;
+            this.key = key;
+            this.stream = stream;
+            this.iterator = stream.iterator();
+        }
+
+        Path directory() {
+            return dir;
+        }
+
+        Object key() {
+            return key;
+        }
+
+        DirectoryStream<Path> stream() {
+            return stream;
+        }
+
+        Iterator<Path> iterator() {
+            return iterator;
+        }
+
+        void skip() {
+            skipped = true;
+        }
+
+        boolean skipped() {
+            return skipped;
+        }
+    }
+
+    /**
+     * The event types.
+     */
+    static enum EventType {
+        /**
+         * Start of a directory
+         */
+        START_DIRECTORY,
+        /**
+         * End of a directory
+         */
+        END_DIRECTORY,
+        /**
+         * An entry in a directory
+         */
+        ENTRY;
+    }
+
+    /**
+     * Events returned by the {@link #walk} and {@link #next} methods.
+     */
+    static class Event {
+        private final EventType type;
+        private final Path file;
+        private final BasicFileAttributes attrs;
+        private final IOException ioe;
+
+        private Event(EventType type, Path file, BasicFileAttributes attrs, IOException ioe) {
+            this.type = type;
+            this.file = file;
+            this.attrs = attrs;
+            this.ioe = ioe;
+        }
+
+        Event(EventType type, Path file, BasicFileAttributes attrs) {
+            this(type, file, attrs, null);
+        }
+
+        Event(EventType type, Path file, IOException ioe) {
+            this(type, file, null, ioe);
+        }
+
+        EventType type() {
+            return type;
+        }
+
+        Path file() {
+            return file;
+        }
+
+        BasicFileAttributes attributes() {
+            return attrs;
+        }
+
+        IOException ioeException() {
+            return ioe;
+        }
+    }
+
+    /**
+     * Creates a {@code FileTreeWalker}.
+     *
+     * @throws  IllegalArgumentException
+     *          if {@code maxDepth} is negative
+     * @throws  ClassCastException
+     *          if (@code options} contains an element that is not a
+     *          {@code FileVisitOption}
+     * @throws  NullPointerException
+     *          if {@code options} is {@ocde null} or the options
+     *          array contains a {@code null} element
+     */
+    FileTreeWalker(Collection<FileVisitOption> options, int maxDepth) {
+        boolean fl = false;
+        for (FileVisitOption option: options) {
+            // will throw NPE if options contains null
+            switch (option) {
+                case FOLLOW_LINKS : fl = true; break;
+                default:
+                    throw new AssertionError("Should not get here");
+            }
+        }
+        if (maxDepth < 0)
+            throw new IllegalArgumentException("'maxDepth' is negative");
+
+        this.followLinks = fl;
+        this.linkOptions = (fl) ? new LinkOption[0] :
+            new LinkOption[] { LinkOption.NOFOLLOW_LINKS };
+        this.maxDepth = maxDepth;
+    }
+
+    /**
+     * Returns the attributes of the given file, taking into account whether
+     * the walk is following sym links is not. The {@code canUseCached}
+     * argument determines whether this method can use cached attributes.
+     */
+    private BasicFileAttributes getAttributes(Path file, boolean canUseCached)
+        throws IOException
+    {
+        // if attributes are cached then use them if possible
+        if (canUseCached &&
+            (file instanceof BasicFileAttributesHolder) &&
+            (System.getSecurityManager() == null))
+        {
+            BasicFileAttributes cached = ((BasicFileAttributesHolder)file).get();
+            if (cached != null && (!followLinks || !cached.isSymbolicLink())) {
+                return cached;
+            }
+        }
+
+        // attempt to get attributes of file. If fails and we are following
+        // links then a link target might not exist so get attributes of link
+        BasicFileAttributes attrs;
+        try {
+            attrs = Files.readAttributes(file, BasicFileAttributes.class, linkOptions);
+        } catch (IOException ioe) {
+            if (!followLinks)
+                throw ioe;
+
+            // attempt to get attrmptes without following links
+            attrs = Files.readAttributes(file,
+                                         BasicFileAttributes.class,
+                                         LinkOption.NOFOLLOW_LINKS);
+        }
+        return attrs;
+    }
+
+    /**
+     * Returns true if walking into the given directory would result in a
+     * file system loop/cycle.
+     */
+    private boolean wouldLoop(Path dir, Object key) {
+        // if this directory and ancestor has a file key then we compare
+        // them; otherwise we use less efficient isSameFile test.
+        for (DirectoryNode ancestor: stack) {
+            Object ancestorKey = ancestor.key();
+            if (key != null && ancestorKey != null) {
+                if (key.equals(ancestorKey)) {
+                    // cycle detected
+                    return true;
+                }
+            } else {
+                try {
+                    if (Files.isSameFile(dir, ancestor.directory())) {
+                        // cycle detected
+                        return true;
+                    }
+                } catch (IOException | SecurityException x) {
+                    // ignore
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Visits the given file, returning the {@code Event} corresponding to that
+     * visit.
+     *
+     * The {@code ignoreSecurityException} parameter determines whether
+     * any SecurityException should be ignored or not. If a SecurityException
+     * is thrown, and is ignored, then this method returns {@code null} to
+     * mean that there is no event corresponding to a visit to the file.
+     *
+     * The {@code canUseCached} parameter determines whether cached attributes
+     * for the file can be used or not.
+     */
+    private Event visit(Path entry, boolean ignoreSecurityException, boolean canUseCached) {
+        // need the file attributes
+        BasicFileAttributes attrs;
+        try {
+            attrs = getAttributes(entry, canUseCached);
+        } catch (IOException ioe) {
+            return new Event(EventType.ENTRY, entry, ioe);
+        } catch (SecurityException se) {
+            if (ignoreSecurityException)
+                return null;
+            throw se;
+        }
+
+        // at maximum depth or file is not a directory
+        int depth = stack.size();
+        if (depth >= maxDepth || !attrs.isDirectory()) {
+            return new Event(EventType.ENTRY, entry, attrs);
+        }
+
+        // check for cycles when following links
+        if (followLinks && wouldLoop(entry, attrs.fileKey())) {
+            return new Event(EventType.ENTRY, entry,
+                             new FileSystemLoopException(entry.toString()));
+        }
+
+        // file is a directory, attempt to open it
+        DirectoryStream<Path> stream = null;
+        try {
+            stream = Files.newDirectoryStream(entry);
+        } catch (IOException ioe) {
+            return new Event(EventType.ENTRY, entry, ioe);
+        } catch (SecurityException se) {
+            if (ignoreSecurityException)
+                return null;
+            throw se;
+        }
+
+        // push a directory node to the stack and return an event
+        stack.push(new DirectoryNode(entry, attrs.fileKey(), stream));
+        return new Event(EventType.START_DIRECTORY, entry, attrs);
+    }
+
+
+    /**
+     * Start walking from the given file.
+     */
+    Event walk(Path file) {
+        if (closed)
+            throw new IllegalStateException("Closed");
+
+        Event ev = visit(file,
+                         false,   // ignoreSecurityException
+                         false);  // canUseCached
+        assert ev != null;
+        return ev;
+    }
+
+    /**
+     * Returns the next Event or {@code null} if there are no more events or
+     * the walker is closed.
+     */
+    Event next() {
+        DirectoryNode top = stack.peek();
+        if (top == null)
+            return null;      // stack is empty, we are done
+
+        // continue iteration of the directory at the top of the stack
+        Event ev;
+        do {
+            Path entry = null;
+            IOException ioe = null;
+
+            // get next entry in the directory
+            if (!top.skipped()) {
+                Iterator<Path> iterator = top.iterator();
+                try {
+                    if (iterator.hasNext()) {
+                        entry = iterator.next();
+                    }
+                } catch (DirectoryIteratorException x) {
+                    ioe = x.getCause();
+                }
+            }
+
+            // no next entry so close and pop directory, creating corresponding event
+            if (entry == null) {
+                try {
+                    top.stream().close();
+                } catch (IOException e) {
+                    if (ioe != null) {
+                        ioe = e;
+                    } else {
+                        ioe.addSuppressed(e);
+                    }
+                }
+                stack.pop();
+                return new Event(EventType.END_DIRECTORY, top.directory(), ioe);
+            }
+
+            // visit the entry
+            ev = visit(entry,
+                       true,   // ignoreSecurityException
+                       true);  // canUseCached
+
+        } while (ev == null);
+
+        return ev;
+    }
+
+    /**
+     * Pops the directory node that is the current top of the stack so that
+     * there are no more events for the directory (including no END_DIRECTORY)
+     * event. This method is a no-op if the stack is empty or the walker is
+     * closed.
+     */
+    void pop() {
+        if (!stack.isEmpty()) {
+            DirectoryNode node = stack.pop();
+            try {
+                node.stream().close();
+            } catch (IOException ignore) { }
+        }
+    }
+
+    /**
+     * Skips the remaining entries in the directory at the top of the stack.
+     * This method is a no-op if the stack is empty or the walker is closed.
+     */
+    void skipRemainingSiblings() {
+        if (!stack.isEmpty()) {
+            stack.peek().skip();
+        }
+    }
+
+    /**
+     * Returns {@code true} if the walker is open.
+     */
+    boolean isOpen() {
+        return !closed;
+    }
+
+    /**
+     * Closes/pops all directories on the stack.
+     */
+    @Override
+    public void close() {
+        if (!closed) {
+            while (!stack.isEmpty()) {
+                pop();
+            }
+            closed = true;
+        }
+    }
+}

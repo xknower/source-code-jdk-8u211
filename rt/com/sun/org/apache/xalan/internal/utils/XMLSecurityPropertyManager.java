@@ -1,106 +1,102 @@
-/*    */ package com.sun.org.apache.xalan.internal.utils;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class XMLSecurityPropertyManager
-/*    */   extends FeaturePropertyBase
-/*    */ {
-/*    */   public enum Property
-/*    */   {
-/* 42 */     ACCESS_EXTERNAL_DTD("http://javax.xml.XMLConstants/property/accessExternalDTD", "all"),
-/*    */     
-/* 44 */     ACCESS_EXTERNAL_STYLESHEET("http://javax.xml.XMLConstants/property/accessExternalStylesheet", "all");
-/*    */     
-/*    */     final String name;
-/*    */     
-/*    */     final String defaultValue;
-/*    */     
-/*    */     Property(String name, String value) {
-/* 51 */       this.name = name;
-/* 52 */       this.defaultValue = value;
-/*    */     }
-/*    */     
-/*    */     public boolean equalsName(String propertyName) {
-/* 56 */       return (propertyName == null) ? false : this.name.equals(propertyName);
-/*    */     }
-/*    */     
-/*    */     String defaultValue() {
-/* 60 */       return this.defaultValue;
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public XMLSecurityPropertyManager() {
-/* 69 */     this.values = new String[(Property.values()).length];
-/* 70 */     for (Property property : Property.values()) {
-/* 71 */       this.values[property.ordinal()] = property.defaultValue();
-/*    */     }
-/*    */     
-/* 74 */     readSystemProperties();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public int getIndex(String propertyName) {
-/* 83 */     for (Property property : Property.values()) {
-/* 84 */       if (property.equalsName(propertyName))
-/*    */       {
-/* 86 */         return property.ordinal();
-/*    */       }
-/*    */     } 
-/* 89 */     return -1;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private void readSystemProperties() {
-/* 96 */     getSystemProperty(Property.ACCESS_EXTERNAL_DTD, "javax.xml.accessExternalDTD");
-/*    */     
-/* 98 */     getSystemProperty(Property.ACCESS_EXTERNAL_STYLESHEET, "javax.xml.accessExternalStylesheet");
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\interna\\utils\XMLSecurityPropertyManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.org.apache.xalan.internal.utils;
+
+
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import javax.xml.XMLConstants;
+
+/**
+ * This class manages security related properties
+ *
+ */
+public final class XMLSecurityPropertyManager extends FeaturePropertyBase {
+
+    /**
+     * Properties managed by the security property manager
+     */
+    public static enum Property {
+        ACCESS_EXTERNAL_DTD(XMLConstants.ACCESS_EXTERNAL_DTD,
+                XalanConstants.EXTERNAL_ACCESS_DEFAULT),
+        ACCESS_EXTERNAL_STYLESHEET(XMLConstants.ACCESS_EXTERNAL_STYLESHEET,
+                XalanConstants.EXTERNAL_ACCESS_DEFAULT);
+
+        final String name;
+        final String defaultValue;
+
+        Property(String name, String value) {
+            this.name = name;
+            this.defaultValue = value;
+        }
+
+        public boolean equalsName(String propertyName) {
+            return (propertyName == null) ? false : name.equals(propertyName);
+        }
+
+        String defaultValue() {
+            return defaultValue;
+        }
+    }
+
+
+    /**
+     * Default constructor. Establishes default values
+     */
+    public XMLSecurityPropertyManager() {
+        values = new String[Property.values().length];
+        for (Property property : Property.values()) {
+            values[property.ordinal()] = property.defaultValue();
+        }
+        //read system properties or jaxp.properties
+        readSystemProperties();
+    }
+
+    /**
+     * Get the index by property name
+     * @param propertyName property name
+     * @return the index of the property if found; return -1 if not
+     */
+    public int getIndex(String propertyName){
+        for (Property property : Property.values()) {
+            if (property.equalsName(propertyName)) {
+                //internally, ordinal is used as index
+                return property.ordinal();
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Read from system properties, or those in jaxp.properties
+     */
+    private void readSystemProperties() {
+        getSystemProperty(Property.ACCESS_EXTERNAL_DTD,
+                XalanConstants.SP_ACCESS_EXTERNAL_DTD);
+        getSystemProperty(Property.ACCESS_EXTERNAL_STYLESHEET,
+                XalanConstants.SP_ACCESS_EXTERNAL_STYLESHEET);
+    }
+
+}

@@ -1,11 +1,44 @@
+/*
+ * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.security.acl;
 
-public class AclNotFoundException extends Exception {
-  private static final long serialVersionUID = 5684295034092681791L;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\acl\AclNotFoundException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * This is an exception that is thrown whenever a reference is made to a
+ * non-existent ACL (Access Control List).
+ *
+ * @author      Satish Dharmaraj
  */
+public class AclNotFoundException extends Exception {
+
+    private static final long serialVersionUID = 5684295034092681791L;
+
+    /**
+     * Constructs an AclNotFoundException.
+     */
+    public AclNotFoundException() {
+    }
+
+}

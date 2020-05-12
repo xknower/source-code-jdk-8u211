@@ -1,484 +1,478 @@
-/*     */ package javax.management.relation;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import com.sun.jmx.mbeanserver.GetPropertyAction;
-/*     */ import com.sun.jmx.mbeanserver.Util;
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.ObjectStreamField;
-/*     */ import java.security.AccessController;
-/*     */ import java.util.List;
-/*     */ import java.util.Vector;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.MBeanServerNotification;
-/*     */ import javax.management.Notification;
-/*     */ import javax.management.NotificationFilterSupport;
-/*     */ import javax.management.ObjectName;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanServerNotificationFilter
-/*     */   extends NotificationFilterSupport
-/*     */ {
-/*     */   private static final long oldSerialVersionUID = 6001782699077323605L;
-/*     */   private static final long newSerialVersionUID = 2605900539589789736L;
-/*  78 */   private static final ObjectStreamField[] oldSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("mySelectObjNameList", Vector.class), new ObjectStreamField("myDeselectObjNameList", Vector.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  85 */   private static final ObjectStreamField[] newSerialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("selectedNames", List.class), new ObjectStreamField("deselectedNames", List.class) };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final ObjectStreamField[] serialPersistentFields;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean compat = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/*     */     try {
-/* 111 */       GetPropertyAction getPropertyAction = new GetPropertyAction("jmx.serial.form");
-/* 112 */       String str = AccessController.<String>doPrivileged(getPropertyAction);
-/* 113 */       compat = (str != null && str.equals("1.0"));
-/* 114 */     } catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 117 */     if (compat) {
-/* 118 */       serialPersistentFields = oldSerialPersistentFields;
-/* 119 */       serialVersionUID = 6001782699077323605L;
-/*     */     } else {
-/* 121 */       serialPersistentFields = newSerialPersistentFields;
-/* 122 */       serialVersionUID = 2605900539589789736L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 140 */   private List<ObjectName> selectedNames = new Vector<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 150 */   private List<ObjectName> deselectedNames = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanServerNotificationFilter() {
-/* 163 */     JmxProperties.RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(), "MBeanServerNotificationFilter");
-/*     */ 
-/*     */     
-/* 166 */     enableType("JMX.mbean.registered");
-/* 167 */     enableType("JMX.mbean.unregistered");
-/*     */     
-/* 169 */     JmxProperties.RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(), "MBeanServerNotificationFilter");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void disableAllObjectNames() {
-/* 184 */     JmxProperties.RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(), "disableAllObjectNames");
-/*     */ 
-/*     */     
-/* 187 */     this.selectedNames = new Vector<>();
-/* 188 */     this.deselectedNames = null;
-/*     */     
-/* 190 */     JmxProperties.RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(), "disableAllObjectNames");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void disableObjectName(ObjectName paramObjectName) throws IllegalArgumentException {
-/* 205 */     if (paramObjectName == null) {
-/* 206 */       String str = "Invalid parameter.";
-/* 207 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 210 */     JmxProperties.RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(), "disableObjectName", paramObjectName);
-/*     */ 
-/*     */ 
-/*     */     
-/* 214 */     if (this.selectedNames != null && 
-/* 215 */       this.selectedNames.size() != 0) {
-/* 216 */       this.selectedNames.remove(paramObjectName);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 221 */     if (this.deselectedNames != null)
-/*     */     {
-/* 223 */       if (!this.deselectedNames.contains(paramObjectName))
-/*     */       {
-/* 225 */         this.deselectedNames.add(paramObjectName);
-/*     */       }
-/*     */     }
-/*     */     
-/* 229 */     JmxProperties.RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(), "disableObjectName");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void enableAllObjectNames() {
-/* 239 */     JmxProperties.RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(), "enableAllObjectNames");
-/*     */ 
-/*     */     
-/* 242 */     this.selectedNames = null;
-/* 243 */     this.deselectedNames = new Vector<>();
-/*     */     
-/* 245 */     JmxProperties.RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(), "enableAllObjectNames");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void enableObjectName(ObjectName paramObjectName) throws IllegalArgumentException {
-/* 260 */     if (paramObjectName == null) {
-/* 261 */       String str = "Invalid parameter.";
-/* 262 */       throw new IllegalArgumentException(str);
-/*     */     } 
-/*     */     
-/* 265 */     JmxProperties.RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(), "enableObjectName", paramObjectName);
-/*     */ 
-/*     */ 
-/*     */     
-/* 269 */     if (this.deselectedNames != null && 
-/* 270 */       this.deselectedNames.size() != 0) {
-/* 271 */       this.deselectedNames.remove(paramObjectName);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 276 */     if (this.selectedNames != null)
-/*     */     {
-/* 278 */       if (!this.selectedNames.contains(paramObjectName))
-/*     */       {
-/* 280 */         this.selectedNames.add(paramObjectName);
-/*     */       }
-/*     */     }
-/*     */     
-/* 284 */     JmxProperties.RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(), "enableObjectName");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Vector<ObjectName> getEnabledObjectNames() {
-/* 299 */     if (this.selectedNames != null) {
-/* 300 */       return new Vector<>(this.selectedNames);
-/*     */     }
-/* 302 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Vector<ObjectName> getDisabledObjectNames() {
-/* 316 */     if (this.deselectedNames != null) {
-/* 317 */       return new Vector<>(this.deselectedNames);
-/*     */     }
-/* 319 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized boolean isNotificationEnabled(Notification paramNotification) throws IllegalArgumentException {
-/* 347 */     if (paramNotification == null) {
-/* 348 */       String str1 = "Invalid parameter.";
-/* 349 */       throw new IllegalArgumentException(str1);
-/*     */     } 
-/*     */     
-/* 352 */     JmxProperties.RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(), "isNotificationEnabled", paramNotification);
-/*     */ 
-/*     */ 
-/*     */     
-/* 356 */     String str = paramNotification.getType();
-/* 357 */     Vector<String> vector = getEnabledTypes();
-/* 358 */     if (!vector.contains(str)) {
-/* 359 */       JmxProperties.RELATION_LOGGER.logp(Level.FINER, MBeanServerNotificationFilter.class
-/* 360 */           .getName(), "isNotificationEnabled", "Type not selected, exiting");
-/*     */ 
-/*     */       
-/* 363 */       return false;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 367 */     MBeanServerNotification mBeanServerNotification = (MBeanServerNotification)paramNotification;
-/*     */ 
-/*     */     
-/* 370 */     ObjectName objectName = mBeanServerNotification.getMBeanName();
-/*     */     
-/* 372 */     boolean bool = false;
-/* 373 */     if (this.selectedNames != null) {
-/*     */ 
-/*     */       
-/* 376 */       if (this.selectedNames.size() == 0) {
-/*     */         
-/* 378 */         JmxProperties.RELATION_LOGGER.logp(Level.FINER, MBeanServerNotificationFilter.class
-/* 379 */             .getName(), "isNotificationEnabled", "No ObjectNames selected, exiting");
-/*     */ 
-/*     */         
-/* 382 */         return false;
-/*     */       } 
-/*     */       
-/* 385 */       bool = this.selectedNames.contains(objectName);
-/* 386 */       if (!bool) {
-/*     */         
-/* 388 */         JmxProperties.RELATION_LOGGER.logp(Level.FINER, MBeanServerNotificationFilter.class
-/* 389 */             .getName(), "isNotificationEnabled", "ObjectName not in selected list, exiting");
-/*     */ 
-/*     */         
-/* 392 */         return false;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 396 */     if (!bool) {
-/*     */ 
-/*     */       
-/* 399 */       if (this.deselectedNames == null) {
-/*     */ 
-/*     */         
-/* 402 */         JmxProperties.RELATION_LOGGER.logp(Level.FINER, MBeanServerNotificationFilter.class
-/* 403 */             .getName(), "isNotificationEnabled", "ObjectName not selected, and all names deselected, exiting");
-/*     */ 
-/*     */ 
-/*     */         
-/* 407 */         return false;
-/*     */       } 
-/* 409 */       if (this.deselectedNames.contains(objectName)) {
-/*     */         
-/* 411 */         JmxProperties.RELATION_LOGGER.logp(Level.FINER, MBeanServerNotificationFilter.class
-/* 412 */             .getName(), "isNotificationEnabled", "ObjectName explicitly not selected, exiting");
-/*     */ 
-/*     */         
-/* 415 */         return false;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 419 */     JmxProperties.RELATION_LOGGER.logp(Level.FINER, MBeanServerNotificationFilter.class
-/* 420 */         .getName(), "isNotificationEnabled", "ObjectName selected, exiting");
-/*     */ 
-/*     */     
-/* 423 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 432 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 436 */       ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 437 */       this.selectedNames = Util.<List<ObjectName>>cast(getField.get("mySelectObjNameList", (Object)null));
-/* 438 */       if (getField.defaulted("mySelectObjNameList"))
-/*     */       {
-/* 440 */         throw new NullPointerException("mySelectObjNameList");
-/*     */       }
-/* 442 */       this.deselectedNames = Util.<List<ObjectName>>cast(getField.get("myDeselectObjNameList", (Object)null));
-/* 443 */       if (getField.defaulted("myDeselectObjNameList"))
-/*     */       {
-/* 445 */         throw new NullPointerException("myDeselectObjNameList");
-/*     */       
-/*     */       }
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 452 */       paramObjectInputStream.defaultReadObject();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 462 */     if (compat) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 466 */       ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 467 */       putField.put("mySelectObjNameList", this.selectedNames);
-/* 468 */       putField.put("myDeselectObjNameList", this.deselectedNames);
-/* 469 */       paramObjectOutputStream.writeFields();
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */       
-/* 475 */       paramObjectOutputStream.defaultWriteObject();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\relation\MBeanServerNotificationFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management.relation;
+
+import static com.sun.jmx.mbeanserver.Util.cast;
+import static com.sun.jmx.defaults.JmxProperties.RELATION_LOGGER;
+import com.sun.jmx.mbeanserver.GetPropertyAction;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+import java.security.AccessController;
+
+import java.util.List;
+import java.util.Vector;
+
+import javax.management.MBeanServerNotification;
+
+import javax.management.Notification;
+import javax.management.NotificationFilterSupport;
+import javax.management.ObjectName;
+
+import java.util.List;
+import java.util.logging.Level;
+import java.util.Vector;
+
+/**
+ * Filter for {@link MBeanServerNotification}.
+ * This filter filters MBeanServerNotification notifications by
+ * selecting the ObjectNames of interest and the operations (registration,
+ * unregistration, both) of interest (corresponding to notification
+ * types).
+ *
+ * <p>The <b>serialVersionUID</b> of this class is <code>2605900539589789736L</code>.
+ *
+ * @since 1.5
+ */
+@SuppressWarnings("serial")  // serialVersionUID must be constant
+public class MBeanServerNotificationFilter extends NotificationFilterSupport {
+
+    // Serialization compatibility stuff:
+    // Two serial forms are supported in this class. The selected form depends
+    // on system property "jmx.serial.form":
+    //  - "1.0" for JMX 1.0
+    //  - any other value for JMX 1.1 and higher
+    //
+    // Serial version for old serial form
+    private static final long oldSerialVersionUID = 6001782699077323605L;
+    //
+    // Serial version for new serial form
+    private static final long newSerialVersionUID = 2605900539589789736L;
+    //
+    // Serializable fields in old serial form
+    private static final ObjectStreamField[] oldSerialPersistentFields =
+    {
+      new ObjectStreamField("mySelectObjNameList", Vector.class),
+      new ObjectStreamField("myDeselectObjNameList", Vector.class)
+    };
+    //
+    // Serializable fields in new serial form
+    private static final ObjectStreamField[] newSerialPersistentFields =
+    {
+      new ObjectStreamField("selectedNames", List.class),
+      new ObjectStreamField("deselectedNames", List.class)
+    };
+    //
+    // Actual serial version and serial form
+    private static final long serialVersionUID;
+    /**
+     * @serialField selectedNames List List of {@link ObjectName}s of interest
+     *         <ul>
+     *         <li><code>null</code> means that all {@link ObjectName}s are implicitly selected
+     *         (check for explicit deselections)</li>
+     *         <li>Empty vector means that no {@link ObjectName} is explicitly selected</li>
+     *         </ul>
+     * @serialField deselectedNames List List of {@link ObjectName}s with no interest
+     *         <ul>
+     *         <li><code>null</code> means that all {@link ObjectName}s are implicitly deselected
+     *         (check for explicit selections))</li>
+     *         <li>Empty vector means that no {@link ObjectName} is explicitly deselected</li>
+     *         </ul>
+     */
+    private static final ObjectStreamField[] serialPersistentFields;
+    private static boolean compat = false;
+    static {
+        try {
+            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+            String form = AccessController.doPrivileged(act);
+            compat = (form != null && form.equals("1.0"));
+        } catch (Exception e) {
+            // OK : Too bad, no compat with 1.0
+        }
+        if (compat) {
+            serialPersistentFields = oldSerialPersistentFields;
+            serialVersionUID = oldSerialVersionUID;
+        } else {
+            serialPersistentFields = newSerialPersistentFields;
+            serialVersionUID = newSerialVersionUID;
+        }
+    }
+    //
+    // END Serialization compatibility stuff
+
+    //
+    // Private members
+    //
+
+    /**
+     * @serial List of {@link ObjectName}s of interest
+     *         <ul>
+     *         <li><code>null</code> means that all {@link ObjectName}s are implicitly selected
+     *         (check for explicit deselections)</li>
+     *         <li>Empty vector means that no {@link ObjectName} is explicitly selected</li>
+     *         </ul>
+     */
+    private List<ObjectName> selectedNames = new Vector<ObjectName>();
+
+    /**
+     * @serial List of {@link ObjectName}s with no interest
+     *         <ul>
+     *         <li><code>null</code> means that all {@link ObjectName}s are implicitly deselected
+     *         (check for explicit selections))</li>
+     *         <li>Empty vector means that no {@link ObjectName} is explicitly deselected</li>
+     *         </ul>
+     */
+    private List<ObjectName> deselectedNames = null;
+
+    //
+    // Constructor
+    //
+
+    /**
+     * Creates a filter selecting all MBeanServerNotification notifications for
+     * all ObjectNames.
+     */
+    public MBeanServerNotificationFilter() {
+
+        super();
+        RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(),
+                "MBeanServerNotificationFilter");
+
+        enableType(MBeanServerNotification.REGISTRATION_NOTIFICATION);
+        enableType(MBeanServerNotification.UNREGISTRATION_NOTIFICATION);
+
+        RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(),
+                "MBeanServerNotificationFilter");
+        return;
+    }
+
+    //
+    // Accessors
+    //
+
+    /**
+     * Disables any MBeanServerNotification (all ObjectNames are
+     * deselected).
+     */
+    public synchronized void disableAllObjectNames() {
+
+        RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(),
+                "disableAllObjectNames");
+
+        selectedNames = new Vector<ObjectName>();
+        deselectedNames = null;
+
+        RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(),
+                "disableAllObjectNames");
+        return;
+    }
+
+    /**
+     * Disables MBeanServerNotifications concerning given ObjectName.
+     *
+     * @param objectName  ObjectName no longer of interest
+     *
+     * @exception IllegalArgumentException  if the given ObjectName is null
+     */
+    public synchronized void disableObjectName(ObjectName objectName)
+        throws IllegalArgumentException {
+
+        if (objectName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(),
+                "disableObjectName", objectName);
+
+        // Removes from selected ObjectNames, if present
+        if (selectedNames != null) {
+            if (selectedNames.size() != 0) {
+                selectedNames.remove(objectName);
+            }
+        }
+
+        // Adds it in deselected ObjectNames
+        if (deselectedNames != null) {
+            // If all are deselected, no need to do anything :)
+            if (!(deselectedNames.contains(objectName))) {
+                // ObjectName was not already deselected
+                deselectedNames.add(objectName);
+            }
+        }
+
+        RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(),
+                "disableObjectName");
+        return;
+    }
+
+    /**
+     * Enables all MBeanServerNotifications (all ObjectNames are selected).
+     */
+    public synchronized void enableAllObjectNames() {
+
+        RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(),
+                "enableAllObjectNames");
+
+        selectedNames = null;
+        deselectedNames = new Vector<ObjectName>();
+
+        RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(),
+                "enableAllObjectNames");
+        return;
+    }
+
+    /**
+     * Enables MBeanServerNotifications concerning given ObjectName.
+     *
+     * @param objectName  ObjectName of interest
+     *
+     * @exception IllegalArgumentException  if the given ObjectName is null
+     */
+    public synchronized void enableObjectName(ObjectName objectName)
+        throws IllegalArgumentException {
+
+        if (objectName == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(),
+                "enableObjectName", objectName);
+
+        // Removes from deselected ObjectNames, if present
+        if (deselectedNames != null) {
+            if (deselectedNames.size() != 0) {
+                deselectedNames.remove(objectName);
+            }
+        }
+
+        // Adds it in selected ObjectNames
+        if (selectedNames != null) {
+            // If all are selected, no need to do anything :)
+            if (!(selectedNames.contains(objectName))) {
+                // ObjectName was not already selected
+                selectedNames.add(objectName);
+            }
+        }
+
+        RELATION_LOGGER.exiting(MBeanServerNotificationFilter.class.getName(),
+                "enableObjectName");
+        return;
+    }
+
+    /**
+     * Gets all the ObjectNames enabled.
+     *
+     * @return Vector of ObjectNames:
+     * <P>- null means all ObjectNames are implicitly selected, except the
+     * ObjectNames explicitly deselected
+     * <P>- empty means all ObjectNames are deselected, i.e. no ObjectName
+     * selected.
+     */
+    public synchronized Vector<ObjectName> getEnabledObjectNames() {
+        if (selectedNames != null) {
+            return new Vector<ObjectName>(selectedNames);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Gets all the ObjectNames disabled.
+     *
+     * @return Vector of ObjectNames:
+     * <P>- null means all ObjectNames are implicitly deselected, except the
+     * ObjectNames explicitly selected
+     * <P>- empty means all ObjectNames are selected, i.e. no ObjectName
+     * deselected.
+     */
+    public synchronized Vector<ObjectName> getDisabledObjectNames() {
+        if (deselectedNames != null) {
+            return new Vector<ObjectName>(deselectedNames);
+        } else {
+            return null;
+        }
+    }
+
+    //
+    // NotificationFilter interface
+    //
+
+    /**
+     * Invoked before sending the specified notification to the listener.
+     * <P>If:
+     * <P>- the ObjectName of the concerned MBean is selected (explicitly OR
+     * (implicitly and not explicitly deselected))
+     * <P>AND
+     * <P>- the type of the operation (registration or unregistration) is
+     * selected
+     * <P>then the notification is sent to the listener.
+     *
+     * @param notif  The notification to be sent.
+     *
+     * @return true if the notification has to be sent to the listener, false
+     * otherwise.
+     *
+     * @exception IllegalArgumentException  if null parameter
+     */
+    public synchronized boolean isNotificationEnabled(Notification notif)
+        throws IllegalArgumentException {
+
+        if (notif == null) {
+            String excMsg = "Invalid parameter.";
+            throw new IllegalArgumentException(excMsg);
+        }
+
+        RELATION_LOGGER.entering(MBeanServerNotificationFilter.class.getName(),
+                "isNotificationEnabled", notif);
+
+        // Checks the type first
+        String ntfType = notif.getType();
+        Vector<String> enabledTypes = getEnabledTypes();
+        if (!(enabledTypes.contains(ntfType))) {
+            RELATION_LOGGER.logp(Level.FINER,
+                    MBeanServerNotificationFilter.class.getName(),
+                    "isNotificationEnabled",
+                    "Type not selected, exiting");
+            return false;
+        }
+
+        // We have a MBeanServerNotification: downcasts it
+        MBeanServerNotification mbsNtf = (MBeanServerNotification)notif;
+
+        // Checks the ObjectName
+        ObjectName objName = mbsNtf.getMBeanName();
+        // Is it selected?
+        boolean isSelectedFlg = false;
+        if (selectedNames != null) {
+            // Not all are implicitly selected:
+            // checks for explicit selection
+            if (selectedNames.size() == 0) {
+                // All are explicitly not selected
+                RELATION_LOGGER.logp(Level.FINER,
+                        MBeanServerNotificationFilter.class.getName(),
+                        "isNotificationEnabled",
+                        "No ObjectNames selected, exiting");
+                return false;
+            }
+
+            isSelectedFlg = selectedNames.contains(objName);
+            if (!isSelectedFlg) {
+                // Not in the explicit selected list
+                RELATION_LOGGER.logp(Level.FINER,
+                        MBeanServerNotificationFilter.class.getName(),
+                        "isNotificationEnabled",
+                        "ObjectName not in selected list, exiting");
+                return false;
+            }
+        }
+
+        if (!isSelectedFlg) {
+            // Not explicitly selected: is it deselected?
+
+            if (deselectedNames == null) {
+                // All are implicitly deselected and it is not explicitly
+                // selected
+                RELATION_LOGGER.logp(Level.FINER,
+                        MBeanServerNotificationFilter.class.getName(),
+                        "isNotificationEnabled",
+                        "ObjectName not selected, and all " +
+                        "names deselected, exiting");
+                return false;
+
+            } else if (deselectedNames.contains(objName)) {
+                // Explicitly deselected
+                RELATION_LOGGER.logp(Level.FINER,
+                        MBeanServerNotificationFilter.class.getName(),
+                        "isNotificationEnabled",
+                        "ObjectName explicitly not selected, exiting");
+                return false;
+            }
+        }
+
+        RELATION_LOGGER.logp(Level.FINER,
+                MBeanServerNotificationFilter.class.getName(),
+                "isNotificationEnabled",
+                "ObjectName selected, exiting");
+        return true;
+    }
+
+
+    /**
+     * Deserializes an {@link MBeanServerNotificationFilter} from an {@link ObjectInputStream}.
+     */
+    private void readObject(ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+      if (compat)
+      {
+        // Read an object serialized in the old serial form
+        //
+        ObjectInputStream.GetField fields = in.readFields();
+        selectedNames = cast(fields.get("mySelectObjNameList", null));
+        if (fields.defaulted("mySelectObjNameList"))
+        {
+          throw new NullPointerException("mySelectObjNameList");
+        }
+        deselectedNames = cast(fields.get("myDeselectObjNameList", null));
+        if (fields.defaulted("myDeselectObjNameList"))
+        {
+          throw new NullPointerException("myDeselectObjNameList");
+        }
+      }
+      else
+      {
+        // Read an object serialized in the new serial form
+        //
+        in.defaultReadObject();
+      }
+    }
+
+
+    /**
+     * Serializes an {@link MBeanServerNotificationFilter} to an {@link ObjectOutputStream}.
+     */
+    private void writeObject(ObjectOutputStream out)
+            throws IOException {
+      if (compat)
+      {
+        // Serializes this instance in the old serial form
+        //
+        ObjectOutputStream.PutField fields = out.putFields();
+        fields.put("mySelectObjNameList", selectedNames);
+        fields.put("myDeselectObjNameList", deselectedNames);
+        out.writeFields();
+      }
+      else
+      {
+        // Serializes this instance in the new serial form
+        //
+        out.defaultWriteObject();
+      }
+    }
+}

@@ -1,1026 +1,1020 @@
-/*      */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*      */ 
-/*      */ import com.sun.org.apache.bcel.internal.classfile.JavaClass;
-/*      */ import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-/*      */ import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*      */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*      */ import java.io.BufferedOutputStream;
-/*      */ import java.io.ByteArrayOutputStream;
-/*      */ import java.io.File;
-/*      */ import java.io.FileOutputStream;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InputStream;
-/*      */ import java.net.URL;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Collections;
-/*      */ import java.util.Date;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import java.util.Properties;
-/*      */ import java.util.Vector;
-/*      */ import java.util.jar.Attributes;
-/*      */ import java.util.jar.JarEntry;
-/*      */ import java.util.jar.JarOutputStream;
-/*      */ import java.util.jar.Manifest;
-/*      */ import jdk.xml.internal.JdkXmlFeatures;
-/*      */ import org.xml.sax.InputSource;
-/*      */ import org.xml.sax.XMLReader;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class XSLTC
-/*      */ {
-/*      */   private Parser _parser;
-/*   66 */   private XMLReader _reader = null;
-/*      */ 
-/*      */   
-/*   69 */   private SourceLoader _loader = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Stylesheet _stylesheet;
-/*      */ 
-/*      */   
-/*   76 */   private int _modeSerial = 1;
-/*   77 */   private int _stylesheetSerial = 1;
-/*   78 */   private int _stepPatternSerial = 1;
-/*   79 */   private int _helperClassSerial = 0;
-/*   80 */   private int _attributeSetSerial = 0;
-/*      */   
-/*      */   private int[] _numberFieldIndexes;
-/*      */   
-/*      */   private int _nextGType;
-/*      */   
-/*      */   private Vector _namesIndex;
-/*      */   
-/*      */   private Map<String, Integer> _elements;
-/*      */   
-/*      */   private Map<String, Integer> _attributes;
-/*      */   
-/*      */   private int _nextNSType;
-/*      */   
-/*      */   private Vector _namespaceIndex;
-/*      */   
-/*      */   private Map<String, Integer> _namespaces;
-/*      */   
-/*      */   private Map<String, Integer> _namespacePrefixes;
-/*      */   
-/*      */   private Vector m_characterData;
-/*      */   
-/*      */   public static final int FILE_OUTPUT = 0;
-/*      */   
-/*      */   public static final int JAR_OUTPUT = 1;
-/*      */   
-/*      */   public static final int BYTEARRAY_OUTPUT = 2;
-/*      */   public static final int CLASSLOADER_OUTPUT = 3;
-/*      */   public static final int BYTEARRAY_AND_FILE_OUTPUT = 4;
-/*      */   public static final int BYTEARRAY_AND_JAR_OUTPUT = 5;
-/*      */   private boolean _debug = false;
-/*  111 */   private String _jarFileName = null;
-/*  112 */   private String _className = null;
-/*  113 */   private String _packageName = null;
-/*  114 */   private File _destDir = null;
-/*  115 */   private int _outputType = 0;
-/*      */ 
-/*      */   
-/*      */   private Vector _classes;
-/*      */ 
-/*      */   
-/*      */   private Vector _bcelClasses;
-/*      */ 
-/*      */   
-/*      */   private boolean _callsNodeset = false;
-/*      */ 
-/*      */   
-/*      */   private boolean _multiDocument = false;
-/*      */ 
-/*      */   
-/*      */   private boolean _hasIdCall = false;
-/*      */ 
-/*      */   
-/*      */   private boolean _templateInlining = false;
-/*      */ 
-/*      */   
-/*      */   private boolean _isSecureProcessing = false;
-/*      */ 
-/*      */   
-/*      */   private boolean _overrideDefaultParser;
-/*      */   
-/*  141 */   private String _accessExternalStylesheet = "all";
-/*      */ 
-/*      */ 
-/*      */   
-/*  145 */   private String _accessExternalDTD = "all";
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private XMLSecurityManager _xmlSecurityManager;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final JdkXmlFeatures _xmlFeatures;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ClassLoader _extensionClassLoader;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final Map<String, Class> _externalExtensionFunctions;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XSLTC(JdkXmlFeatures featureManager) {
-/*  167 */     this._overrideDefaultParser = featureManager.getFeature(JdkXmlFeatures.XmlFeature.JDK_OVERRIDE_PARSER);
-/*      */     
-/*  169 */     this._parser = new Parser(this, this._overrideDefaultParser);
-/*  170 */     this._xmlFeatures = featureManager;
-/*  171 */     this._extensionClassLoader = null;
-/*  172 */     this._externalExtensionFunctions = (Map)new HashMap<>();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSecureProcessing(boolean flag) {
-/*  179 */     this._isSecureProcessing = flag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSecureProcessing() {
-/*  186 */     return this._isSecureProcessing;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getFeature(JdkXmlFeatures.XmlFeature name) {
-/*  195 */     return this._xmlFeatures.getFeature(name);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getProperty(String name) {
-/*  202 */     if (name.equals("http://javax.xml.XMLConstants/property/accessExternalStylesheet")) {
-/*  203 */       return this._accessExternalStylesheet;
-/*      */     }
-/*  205 */     if (name.equals("http://javax.xml.XMLConstants/property/accessExternalDTD"))
-/*  206 */       return this._accessExternalDTD; 
-/*  207 */     if (name.equals("http://apache.org/xml/properties/security-manager"))
-/*  208 */       return this._xmlSecurityManager; 
-/*  209 */     if (name.equals("jdk.xml.transform.extensionClassLoader")) {
-/*  210 */       return this._extensionClassLoader;
-/*      */     }
-/*  212 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setProperty(String name, Object value) {
-/*  219 */     if (name.equals("http://javax.xml.XMLConstants/property/accessExternalStylesheet")) {
-/*  220 */       this._accessExternalStylesheet = (String)value;
-/*      */     }
-/*  222 */     else if (name.equals("http://javax.xml.XMLConstants/property/accessExternalDTD")) {
-/*  223 */       this._accessExternalDTD = (String)value;
-/*  224 */     } else if (name.equals("http://apache.org/xml/properties/security-manager")) {
-/*  225 */       this._xmlSecurityManager = (XMLSecurityManager)value;
-/*  226 */     } else if (name.equals("jdk.xml.transform.extensionClassLoader")) {
-/*  227 */       this._extensionClassLoader = (ClassLoader)value;
-/*      */ 
-/*      */       
-/*  230 */       this._externalExtensionFunctions.clear();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Parser getParser() {
-/*  238 */     return this._parser;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOutputType(int type) {
-/*  245 */     this._outputType = type;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Properties getOutputProperties() {
-/*  252 */     return this._parser.getOutputProperties();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void init() {
-/*  259 */     reset();
-/*  260 */     this._reader = null;
-/*  261 */     this._classes = new Vector();
-/*  262 */     this._bcelClasses = new Vector();
-/*      */   }
-/*      */   
-/*      */   private void setExternalExtensionFunctions(String name, Class clazz) {
-/*  266 */     if (this._isSecureProcessing && clazz != null && !this._externalExtensionFunctions.containsKey(name)) {
-/*  267 */       this._externalExtensionFunctions.put(name, clazz);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   Class loadExternalFunction(String name) throws ClassNotFoundException {
-/*  277 */     Class<?> loaded = null;
-/*      */     
-/*  279 */     if (this._externalExtensionFunctions.containsKey(name)) {
-/*  280 */       loaded = this._externalExtensionFunctions.get(name);
-/*  281 */     } else if (this._extensionClassLoader != null) {
-/*  282 */       loaded = Class.forName(name, true, this._extensionClassLoader);
-/*  283 */       setExternalExtensionFunctions(name, loaded);
-/*      */     } 
-/*  285 */     if (loaded == null) {
-/*  286 */       throw new ClassNotFoundException(name);
-/*      */     }
-/*      */     
-/*  289 */     return loaded;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Map<String, Class> getExternalExtensionFunctions() {
-/*  297 */     return Collections.unmodifiableMap((Map)this._externalExtensionFunctions);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void reset() {
-/*  304 */     this._nextGType = 14;
-/*  305 */     this._elements = new HashMap<>();
-/*  306 */     this._attributes = new HashMap<>();
-/*  307 */     this._namespaces = new HashMap<>();
-/*  308 */     this._namespaces.put("", new Integer(this._nextNSType));
-/*  309 */     this._namesIndex = new Vector(128);
-/*  310 */     this._namespaceIndex = new Vector(32);
-/*  311 */     this._namespacePrefixes = new HashMap<>();
-/*  312 */     this._stylesheet = null;
-/*  313 */     this._parser.init();
-/*      */     
-/*  315 */     this._modeSerial = 1;
-/*  316 */     this._stylesheetSerial = 1;
-/*  317 */     this._stepPatternSerial = 1;
-/*  318 */     this._helperClassSerial = 0;
-/*  319 */     this._attributeSetSerial = 0;
-/*  320 */     this._multiDocument = false;
-/*  321 */     this._hasIdCall = false;
-/*  322 */     this._numberFieldIndexes = new int[] { -1, -1, -1 };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  327 */     this._externalExtensionFunctions.clear();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSourceLoader(SourceLoader loader) {
-/*  336 */     this._loader = loader;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTemplateInlining(boolean templateInlining) {
-/*  346 */     this._templateInlining = templateInlining;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getTemplateInlining() {
-/*  352 */     return this._templateInlining;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPIParameters(String media, String title, String charset) {
-/*  365 */     this._parser.setPIParameters(media, title, charset);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean compile(URL url) {
-/*      */     try {
-/*  375 */       InputStream stream = url.openStream();
-/*  376 */       InputSource input = new InputSource(stream);
-/*  377 */       input.setSystemId(url.toString());
-/*  378 */       return compile(input, this._className);
-/*      */     }
-/*  380 */     catch (IOException e) {
-/*  381 */       this._parser.reportError(2, new ErrorMsg("JAXP_COMPILE_ERR", e));
-/*  382 */       return false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean compile(URL url, String name) {
-/*      */     try {
-/*  394 */       InputStream stream = url.openStream();
-/*  395 */       InputSource input = new InputSource(stream);
-/*  396 */       input.setSystemId(url.toString());
-/*  397 */       return compile(input, name);
-/*      */     }
-/*  399 */     catch (IOException e) {
-/*  400 */       this._parser.reportError(2, new ErrorMsg("JAXP_COMPILE_ERR", e));
-/*  401 */       return false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean compile(InputStream stream, String name) {
-/*  412 */     InputSource input = new InputSource(stream);
-/*  413 */     input.setSystemId(name);
-/*  414 */     return compile(input, name);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean compile(InputSource input, String name) {
-/*      */     try {
-/*  426 */       reset();
-/*      */ 
-/*      */       
-/*  429 */       String systemId = null;
-/*  430 */       if (input != null) {
-/*  431 */         systemId = input.getSystemId();
-/*      */       }
-/*      */ 
-/*      */       
-/*  435 */       if (this._className == null) {
-/*  436 */         if (name != null) {
-/*  437 */           setClassName(name);
-/*      */         }
-/*  439 */         else if (systemId != null && !systemId.equals("")) {
-/*  440 */           setClassName(Util.baseName(systemId));
-/*      */         } 
-/*      */ 
-/*      */         
-/*  444 */         if (this._className == null || this._className.length() == 0) {
-/*  445 */           setClassName("GregorSamsa");
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/*  450 */       SyntaxTreeNode element = null;
-/*  451 */       if (this._reader == null) {
-/*  452 */         element = this._parser.parse(input);
-/*      */       } else {
-/*      */         
-/*  455 */         element = this._parser.parse(this._reader, input);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  459 */       if (!this._parser.errorsFound() && element != null) {
-/*      */         
-/*  461 */         this._stylesheet = this._parser.makeStylesheet(element);
-/*  462 */         this._stylesheet.setSourceLoader(this._loader);
-/*  463 */         this._stylesheet.setSystemId(systemId);
-/*  464 */         this._stylesheet.setParentStylesheet(null);
-/*  465 */         this._stylesheet.setTemplateInlining(this._templateInlining);
-/*  466 */         this._parser.setCurrentStylesheet(this._stylesheet);
-/*      */ 
-/*      */         
-/*  469 */         this._parser.createAST(this._stylesheet);
-/*      */       } 
-/*      */       
-/*  472 */       if (!this._parser.errorsFound() && this._stylesheet != null) {
-/*  473 */         this._stylesheet.setCallsNodeset(this._callsNodeset);
-/*  474 */         this._stylesheet.setMultiDocument(this._multiDocument);
-/*  475 */         this._stylesheet.setHasIdCall(this._hasIdCall);
-/*      */ 
-/*      */         
-/*  478 */         synchronized (getClass()) {
-/*  479 */           this._stylesheet.translate();
-/*      */         }
-/*      */       
-/*      */       } 
-/*  483 */     } catch (Exception e) {
-/*  484 */       e.printStackTrace();
-/*  485 */       this._parser.reportError(2, new ErrorMsg("JAXP_COMPILE_ERR", e));
-/*      */     }
-/*  487 */     catch (Error e) {
-/*  488 */       if (this._debug) e.printStackTrace(); 
-/*  489 */       this._parser.reportError(2, new ErrorMsg("JAXP_COMPILE_ERR", e));
-/*      */     } finally {
-/*      */       
-/*  492 */       this._reader = null;
-/*      */     } 
-/*  494 */     return !this._parser.errorsFound();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean compile(Vector stylesheets) {
-/*  504 */     int count = stylesheets.size();
-/*      */ 
-/*      */     
-/*  507 */     if (count == 0) return true;
-/*      */ 
-/*      */ 
-/*      */     
-/*  511 */     if (count == 1) {
-/*  512 */       Object url = stylesheets.firstElement();
-/*  513 */       if (url instanceof URL) {
-/*  514 */         return compile((URL)url);
-/*      */       }
-/*  516 */       return false;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  520 */     Enumeration urls = stylesheets.elements();
-/*  521 */     while (urls.hasMoreElements()) {
-/*  522 */       this._className = null;
-/*  523 */       Object url = urls.nextElement();
-/*  524 */       if (url instanceof URL && 
-/*  525 */         !compile((URL)url)) return false;
-/*      */     
-/*      */     } 
-/*      */     
-/*  529 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public byte[][] getBytecodes() {
-/*  537 */     int count = this._classes.size();
-/*  538 */     byte[][] result = new byte[count][1];
-/*  539 */     for (int i = 0; i < count; i++)
-/*  540 */       result[i] = this._classes.elementAt(i); 
-/*  541 */     return result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public byte[][] compile(String name, InputSource input, int outputType) {
-/*  553 */     this._outputType = outputType;
-/*  554 */     if (compile(input, name)) {
-/*  555 */       return getBytecodes();
-/*      */     }
-/*  557 */     return (byte[][])null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public byte[][] compile(String name, InputSource input) {
-/*  568 */     return compile(name, input, 2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setXMLReader(XMLReader reader) {
-/*  576 */     this._reader = reader;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLReader getXMLReader() {
-/*  583 */     return this._reader;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ArrayList<ErrorMsg> getErrors() {
-/*  591 */     return this._parser.getErrors();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ArrayList<ErrorMsg> getWarnings() {
-/*  599 */     return this._parser.getWarnings();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void printErrors() {
-/*  606 */     this._parser.printErrors();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void printWarnings() {
-/*  613 */     this._parser.printWarnings();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setMultiDocument(boolean flag) {
-/*  621 */     this._multiDocument = flag;
-/*      */   }
-/*      */   
-/*      */   public boolean isMultiDocument() {
-/*  625 */     return this._multiDocument;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void setCallsNodeset(boolean flag) {
-/*  633 */     if (flag) setMultiDocument(flag); 
-/*  634 */     this._callsNodeset = flag;
-/*      */   }
-/*      */   
-/*      */   public boolean callsNodeset() {
-/*  638 */     return this._callsNodeset;
-/*      */   }
-/*      */   
-/*      */   protected void setHasIdCall(boolean flag) {
-/*  642 */     this._hasIdCall = flag;
-/*      */   }
-/*      */   
-/*      */   public boolean hasIdCall() {
-/*  646 */     return this._hasIdCall;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setClassName(String className) {
-/*  656 */     String base = Util.baseName(className);
-/*  657 */     String noext = Util.noExtName(base);
-/*  658 */     String name = Util.toJavaName(noext);
-/*      */     
-/*  660 */     if (this._packageName == null) {
-/*  661 */       this._className = name;
-/*      */     } else {
-/*  663 */       this._className = this._packageName + '.' + name;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getClassName() {
-/*  670 */     return this._className;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String classFileName(String className) {
-/*  678 */     return className.replace('.', File.separatorChar) + ".class";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private File getOutputFile(String className) {
-/*  685 */     if (this._destDir != null) {
-/*  686 */       return new File(this._destDir, classFileName(className));
-/*      */     }
-/*  688 */     return new File(classFileName(className));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean setDestDirectory(String dstDirName) {
-/*  696 */     File dir = new File(dstDirName);
-/*  697 */     if (SecuritySupport.getFileExists(dir) || dir.mkdirs()) {
-/*  698 */       this._destDir = dir;
-/*  699 */       return true;
-/*      */     } 
-/*      */     
-/*  702 */     this._destDir = null;
-/*  703 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPackageName(String packageName) {
-/*  711 */     this._packageName = packageName;
-/*  712 */     if (this._className != null) setClassName(this._className);
-/*      */   
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setJarFileName(String jarFileName) {
-/*  720 */     String JAR_EXT = ".jar";
-/*  721 */     if (jarFileName.endsWith(".jar")) {
-/*  722 */       this._jarFileName = jarFileName;
-/*      */     } else {
-/*  724 */       this._jarFileName = jarFileName + ".jar";
-/*  725 */     }  this._outputType = 1;
-/*      */   }
-/*      */   
-/*      */   public String getJarFileName() {
-/*  729 */     return this._jarFileName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setStylesheet(Stylesheet stylesheet) {
-/*  736 */     if (this._stylesheet == null) this._stylesheet = stylesheet;
-/*      */   
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Stylesheet getStylesheet() {
-/*  743 */     return this._stylesheet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int registerAttribute(QName name) {
-/*  751 */     Integer code = this._attributes.get(name.toString());
-/*  752 */     if (code == null) {
-/*  753 */       code = Integer.valueOf(this._nextGType++);
-/*  754 */       this._attributes.put(name.toString(), code);
-/*  755 */       String uri = name.getNamespace();
-/*  756 */       String local = "@" + name.getLocalPart();
-/*  757 */       if (uri != null && !uri.equals("")) {
-/*  758 */         this._namesIndex.addElement(uri + ":" + local);
-/*      */       } else {
-/*  760 */         this._namesIndex.addElement(local);
-/*  761 */       }  if (name.getLocalPart().equals("*")) {
-/*  762 */         registerNamespace(name.getNamespace());
-/*      */       }
-/*      */     } 
-/*  765 */     return code.intValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int registerElement(QName name) {
-/*  774 */     Integer code = this._elements.get(name.toString());
-/*  775 */     if (code == null) {
-/*  776 */       this._elements.put(name.toString(), code = Integer.valueOf(this._nextGType++));
-/*  777 */       this._namesIndex.addElement(name.toString());
-/*      */     } 
-/*  779 */     if (name.getLocalPart().equals("*")) {
-/*  780 */       registerNamespace(name.getNamespace());
-/*      */     }
-/*  782 */     return code.intValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int registerNamespacePrefix(QName name) {
-/*  792 */     Integer code = this._namespacePrefixes.get(name.toString());
-/*  793 */     if (code == null) {
-/*  794 */       code = Integer.valueOf(this._nextGType++);
-/*  795 */       this._namespacePrefixes.put(name.toString(), code);
-/*  796 */       String uri = name.getNamespace();
-/*  797 */       if (uri != null && !uri.equals("")) {
-/*      */         
-/*  799 */         this._namesIndex.addElement("?");
-/*      */       } else {
-/*  801 */         this._namesIndex.addElement("?" + name.getLocalPart());
-/*      */       } 
-/*      */     } 
-/*  804 */     return code.intValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int registerNamespace(String namespaceURI) {
-/*  812 */     Integer code = this._namespaces.get(namespaceURI);
-/*  813 */     if (code == null) {
-/*  814 */       code = Integer.valueOf(this._nextNSType++);
-/*  815 */       this._namespaces.put(namespaceURI, code);
-/*  816 */       this._namespaceIndex.addElement(namespaceURI);
-/*      */     } 
-/*  818 */     return code.intValue();
-/*      */   }
-/*      */   
-/*      */   public int nextModeSerial() {
-/*  822 */     return this._modeSerial++;
-/*      */   }
-/*      */   
-/*      */   public int nextStylesheetSerial() {
-/*  826 */     return this._stylesheetSerial++;
-/*      */   }
-/*      */   
-/*      */   public int nextStepPatternSerial() {
-/*  830 */     return this._stepPatternSerial++;
-/*      */   }
-/*      */   
-/*      */   public int[] getNumberFieldIndexes() {
-/*  834 */     return this._numberFieldIndexes;
-/*      */   }
-/*      */   
-/*      */   public int nextHelperClassSerial() {
-/*  838 */     return this._helperClassSerial++;
-/*      */   }
-/*      */   
-/*      */   public int nextAttributeSetSerial() {
-/*  842 */     return this._attributeSetSerial++;
-/*      */   }
-/*      */   
-/*      */   public Vector getNamesIndex() {
-/*  846 */     return this._namesIndex;
-/*      */   }
-/*      */   
-/*      */   public Vector getNamespaceIndex() {
-/*  850 */     return this._namespaceIndex;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getHelperClassName() {
-/*  858 */     return getClassName() + '$' + this._helperClassSerial++;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void dumpClass(JavaClass clazz) {
-/*  863 */     if (this._outputType == 0 || this._outputType == 4) {
-/*      */ 
-/*      */       
-/*  866 */       File outFile = getOutputFile(clazz.getClassName());
-/*  867 */       String parentDir = outFile.getParent();
-/*  868 */       if (parentDir != null) {
-/*  869 */         File parentFile = new File(parentDir);
-/*  870 */         if (!SecuritySupport.getFileExists(parentFile))
-/*  871 */           parentFile.mkdirs(); 
-/*      */       } 
-/*      */     } 
-/*      */     try {
-/*      */       ByteArrayOutputStream out;
-/*  876 */       switch (this._outputType) {
-/*      */         case 0:
-/*  878 */           clazz.dump(new BufferedOutputStream(new FileOutputStream(
-/*      */ 
-/*      */                   
-/*  881 */                   getOutputFile(clazz.getClassName()))));
-/*      */           break;
-/*      */         case 1:
-/*  884 */           this._bcelClasses.addElement(clazz);
-/*      */           break;
-/*      */         case 2:
-/*      */         case 3:
-/*      */         case 4:
-/*      */         case 5:
-/*  890 */           out = new ByteArrayOutputStream(2048);
-/*  891 */           clazz.dump(out);
-/*  892 */           this._classes.addElement(out.toByteArray());
-/*      */           
-/*  894 */           if (this._outputType == 4) {
-/*  895 */             clazz.dump(new BufferedOutputStream(new FileOutputStream(
-/*  896 */                     getOutputFile(clazz.getClassName())))); break;
-/*  897 */           }  if (this._outputType == 5) {
-/*  898 */             this._bcelClasses.addElement(clazz);
-/*      */           }
-/*      */           break;
-/*      */       } 
-/*      */     
-/*  903 */     } catch (Exception e) {
-/*  904 */       e.printStackTrace();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String entryName(File f) throws IOException {
-/*  912 */     return f.getName().replace(File.separatorChar, '/');
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void outputToJar() throws IOException {
-/*  920 */     Manifest manifest = new Manifest();
-/*  921 */     Attributes atrs = manifest.getMainAttributes();
-/*  922 */     atrs.put(Attributes.Name.MANIFEST_VERSION, "1.2");
-/*      */     
-/*  924 */     Map<String, Attributes> map = manifest.getEntries();
-/*      */     
-/*  926 */     Enumeration<JavaClass> classes = this._bcelClasses.elements();
-/*  927 */     String now = (new Date()).toString();
-/*  928 */     Attributes.Name dateAttr = new Attributes.Name("Date");
-/*      */     
-/*  930 */     while (classes.hasMoreElements()) {
-/*  931 */       JavaClass clazz = classes.nextElement();
-/*  932 */       String className = clazz.getClassName().replace('.', '/');
-/*  933 */       Attributes attr = new Attributes();
-/*  934 */       attr.put(dateAttr, now);
-/*  935 */       map.put(className + ".class", attr);
-/*      */     } 
-/*      */     
-/*  938 */     File jarFile = new File(this._destDir, this._jarFileName);
-/*  939 */     JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile), manifest);
-/*      */     
-/*  941 */     classes = this._bcelClasses.elements();
-/*  942 */     while (classes.hasMoreElements()) {
-/*  943 */       JavaClass clazz = classes.nextElement();
-/*  944 */       String className = clazz.getClassName().replace('.', '/');
-/*  945 */       jos.putNextEntry(new JarEntry(className + ".class"));
-/*  946 */       ByteArrayOutputStream out = new ByteArrayOutputStream(2048);
-/*  947 */       clazz.dump(out);
-/*  948 */       out.writeTo(jos);
-/*      */     } 
-/*  950 */     jos.close();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDebug(boolean debug) {
-/*  957 */     this._debug = debug;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean debug() {
-/*  964 */     return this._debug;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getCharacterData(int index) {
-/*  977 */     return ((StringBuffer)this.m_characterData.elementAt(index)).toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getCharacterDataCount() {
-/*  985 */     return (this.m_characterData != null) ? this.m_characterData.size() : 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int addCharacterData(String newData) {
-/*      */     StringBuffer currData;
-/*  997 */     if (this.m_characterData == null) {
-/*  998 */       this.m_characterData = new Vector();
-/*  999 */       currData = new StringBuffer();
-/* 1000 */       this.m_characterData.addElement(currData);
-/*      */     } else {
-/*      */       
-/* 1003 */       currData = this.m_characterData.elementAt(this.m_characterData.size() - 1);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1010 */     if (newData.length() + currData.length() > 21845) {
-/* 1011 */       currData = new StringBuffer();
-/* 1012 */       this.m_characterData.addElement(currData);
-/*      */     } 
-/*      */     
-/* 1015 */     int newDataOffset = currData.length();
-/* 1016 */     currData.append(newData);
-/*      */     
-/* 1018 */     return newDataOffset;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\XSLTC.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.classfile.JavaClass;
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import javax.xml.XMLConstants;
+import jdk.xml.internal.JdkXmlFeatures;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author G. Todd Miller
+ * @author Morten Jorgensen
+ * @author John Howard (johnh@schemasoft.com)
+ */
+public final class XSLTC {
+
+    // A reference to the main stylesheet parser object.
+    private Parser _parser;
+
+    // A reference to an external XMLReader (SAX parser) passed to us
+    private XMLReader _reader = null;
+
+    // A reference to an external SourceLoader (for use with include/import)
+    private SourceLoader _loader = null;
+
+    // A reference to the stylesheet being compiled.
+    private Stylesheet _stylesheet;
+
+    // Counters used by various classes to generate unique names.
+    // private int _variableSerial     = 1;
+    private int _modeSerial         = 1;
+    private int _stylesheetSerial   = 1;
+    private int _stepPatternSerial  = 1;
+    private int _helperClassSerial  = 0;
+    private int _attributeSetSerial = 0;
+
+    private int[] _numberFieldIndexes;
+
+    // Name index tables
+    private int       _nextGType;  // Next available element type
+    private Vector    _namesIndex; // Index of all registered QNames
+    private Map<String, Integer> _elements;   // Map of all registered elements
+    private Map<String, Integer> _attributes; // Map of all registered attributes
+
+    // Namespace index tables
+    private int       _nextNSType; // Next available namespace type
+    private Vector    _namespaceIndex; // Index of all registered namespaces
+    private Map<String, Integer> _namespaces; // Map of all registered namespaces
+    private Map<String, Integer> _namespacePrefixes;// Map of all registered namespace prefixes
+
+
+    // All literal text in the stylesheet
+    private Vector m_characterData;
+
+    // These define the various methods for outputting the translet
+    public static final int FILE_OUTPUT        = 0;
+    public static final int JAR_OUTPUT         = 1;
+    public static final int BYTEARRAY_OUTPUT   = 2;
+    public static final int CLASSLOADER_OUTPUT = 3;
+    public static final int BYTEARRAY_AND_FILE_OUTPUT = 4;
+    public static final int BYTEARRAY_AND_JAR_OUTPUT  = 5;
+
+
+    // Compiler options (passed from command line or XSLTC client)
+    private boolean _debug = false;      // -x
+    private String  _jarFileName = null; // -j <jar-file-name>
+    private String  _className = null;   // -o <class-name>
+    private String  _packageName = null; // -p <package-name>
+    private File    _destDir = null;     // -d <directory-name>
+    private int     _outputType = FILE_OUTPUT; // by default
+
+    private Vector  _classes;
+    private Vector  _bcelClasses;
+    private boolean _callsNodeset = false;
+    private boolean _multiDocument = false;
+    private boolean _hasIdCall = false;
+
+    /**
+     * Set to true if template inlining is requested. Template
+     * inlining used to be the default, but we have found that
+     * Hotspots does a better job with shorter methods, so the
+     * default is *not* to inline now.
+     */
+    private boolean _templateInlining = false;
+
+    /**
+     * State of the secure processing feature.
+     */
+    private boolean _isSecureProcessing = false;
+
+    private boolean _overrideDefaultParser;
+
+    /**
+     * protocols allowed for external references set by the stylesheet processing instruction, Import and Include element.
+     */
+    private String _accessExternalStylesheet = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
+     /**
+     * protocols allowed for external DTD references in source file and/or stylesheet.
+     */
+    private String _accessExternalDTD = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
+
+    private XMLSecurityManager _xmlSecurityManager;
+
+    private final JdkXmlFeatures _xmlFeatures;
+
+    /**
+    *  Extension function class loader variables
+    */
+
+    /* Class loader reference that will be used for external extension functions loading */
+    private ClassLoader _extensionClassLoader;
+
+    /**
+    *  HashMap with the loaded classes
+    */
+    private final Map<String, Class> _externalExtensionFunctions;
+
+    /**
+     * XSLTC compiler constructor
+     */
+    public XSLTC(JdkXmlFeatures featureManager) {
+        _overrideDefaultParser = featureManager.getFeature(
+                JdkXmlFeatures.XmlFeature.JDK_OVERRIDE_PARSER);
+        _parser = new Parser(this, _overrideDefaultParser);
+        _xmlFeatures = featureManager;
+        _extensionClassLoader = null;
+        _externalExtensionFunctions = new HashMap<>();
+    }
+
+    /**
+     * Set the state of the secure processing feature.
+     */
+    public void setSecureProcessing(boolean flag) {
+        _isSecureProcessing = flag;
+    }
+
+    /**
+     * Return the state of the secure processing feature.
+     */
+    public boolean isSecureProcessing() {
+        return _isSecureProcessing;
+    }
+
+     /**
+     * Return the value of the specified feature
+     * @param name name of the feature
+     * @return true if the feature is enabled, false otherwise
+     */
+    public boolean getFeature(JdkXmlFeatures.XmlFeature name) {
+        return _xmlFeatures.getFeature(name);
+    }
+
+    /**
+     * Return allowed protocols for accessing external stylesheet.
+     */
+    public Object getProperty(String name) {
+        if (name.equals(XMLConstants.ACCESS_EXTERNAL_STYLESHEET)) {
+            return _accessExternalStylesheet;
+        }
+        else if (name.equals(XMLConstants.ACCESS_EXTERNAL_DTD)) {
+            return _accessExternalDTD;
+        } else if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            return _xmlSecurityManager;
+        } else if (name.equals(XalanConstants.JDK_EXTENSION_CLASSLOADER)) {
+            return _extensionClassLoader;
+        }
+        return null;
+    }
+
+    /**
+     * Set allowed protocols for accessing external stylesheet.
+     */
+    public void setProperty(String name, Object value) {
+        if (name.equals(XMLConstants.ACCESS_EXTERNAL_STYLESHEET)) {
+            _accessExternalStylesheet = (String)value;
+        }
+        else if (name.equals(XMLConstants.ACCESS_EXTERNAL_DTD)) {
+            _accessExternalDTD = (String)value;
+        } else if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            _xmlSecurityManager = (XMLSecurityManager)value;
+        } else if (name.equals(XalanConstants.JDK_EXTENSION_CLASSLOADER)) {
+            _extensionClassLoader = (ClassLoader) value;
+            /* Clear the external extension functions HashMap if extension class
+               loader was changed */
+            _externalExtensionFunctions.clear();
+        }
+    }
+
+    /**
+     * Only for user by the internal TrAX implementation.
+     */
+    public Parser getParser() {
+        return _parser;
+    }
+
+    /**
+     * Only for user by the internal TrAX implementation.
+     */
+    public void setOutputType(int type) {
+        _outputType = type;
+    }
+
+    /**
+     * Only for user by the internal TrAX implementation.
+     */
+    public Properties getOutputProperties() {
+        return _parser.getOutputProperties();
+    }
+
+    /**
+     * Initializes the compiler to compile a new stylesheet
+     */
+    public void init() {
+        reset();
+        _reader = null;
+        _classes = new Vector();
+        _bcelClasses = new Vector();
+    }
+
+    private void setExternalExtensionFunctions(String name, Class clazz) {
+        if (_isSecureProcessing && clazz != null && !_externalExtensionFunctions.containsKey(name)) {
+            _externalExtensionFunctions.put(name, clazz);
+        }
+    }
+
+    /*
+     * Function loads an external extension function.
+     * The filtering of function types (external,internal) takes place in FunctionCall class
+     *
+     */
+    Class loadExternalFunction(String name) throws ClassNotFoundException {
+        Class loaded = null;
+        //Check if the function is not loaded already
+        if (_externalExtensionFunctions.containsKey(name)) {
+            loaded = _externalExtensionFunctions.get(name);
+        } else if (_extensionClassLoader != null) {
+            loaded = Class.forName(name, true, _extensionClassLoader);
+            setExternalExtensionFunctions(name, loaded);
+        }
+        if (loaded == null) {
+            throw new ClassNotFoundException(name);
+        }
+        //Return loaded class
+        return (Class) loaded;
+    }
+
+    /*
+     * Returns unmodifiable view of HashMap with loaded external extension
+     * functions - will be needed for the TransformerImpl
+    */
+    public Map<String, Class> getExternalExtensionFunctions() {
+        return Collections.unmodifiableMap(_externalExtensionFunctions);
+    }
+
+    /**
+     * Initializes the compiler to produce a new translet
+     */
+    private void reset() {
+        _nextGType      = DTM.NTYPES;
+        _elements       = new HashMap<>();
+        _attributes     = new HashMap<>();
+        _namespaces     = new HashMap<>();
+        _namespaces.put("",new Integer(_nextNSType));
+        _namesIndex     = new Vector(128);
+        _namespaceIndex = new Vector(32);
+        _namespacePrefixes = new HashMap<>();
+        _stylesheet     = null;
+        _parser.init();
+        //_variableSerial     = 1;
+        _modeSerial         = 1;
+        _stylesheetSerial   = 1;
+        _stepPatternSerial  = 1;
+        _helperClassSerial  = 0;
+        _attributeSetSerial = 0;
+        _multiDocument      = false;
+        _hasIdCall          = false;
+        _numberFieldIndexes = new int[] {
+            -1,         // LEVEL_SINGLE
+            -1,         // LEVEL_MULTIPLE
+            -1          // LEVEL_ANY
+        };
+        _externalExtensionFunctions.clear();
+    }
+
+    /**
+     * Defines an external SourceLoader to provide the compiler with documents
+     * referenced in xsl:include/import
+     * @param loader The SourceLoader to use for include/import
+     */
+    public void setSourceLoader(SourceLoader loader) {
+        _loader = loader;
+    }
+
+    /**
+     * Set a flag indicating if templates are to be inlined or not. The
+     * default is to do inlining, but this causes problems when the
+     * stylesheets have a large number of templates (e.g. branch targets
+     * exceeding 64K or a length of a method exceeding 64K).
+     */
+    public void setTemplateInlining(boolean templateInlining) {
+        _templateInlining = templateInlining;
+    }
+     /**
+     * Return the state of the template inlining feature.
+     */
+    public boolean getTemplateInlining() {
+        return _templateInlining;
+    }
+
+    /**
+     * Set the parameters to use to locate the correct <?xml-stylesheet ...?>
+     * processing instruction in the case where the input document to the
+     * compiler (and parser) is an XML document.
+     * @param media The media attribute to be matched. May be null, in which
+     * case the prefered templates will be used (i.e. alternate = no).
+     * @param title The value of the title attribute to match. May be null.
+     * @param charset The value of the charset attribute to match. May be null.
+     */
+    public void setPIParameters(String media, String title, String charset) {
+        _parser.setPIParameters(media, title, charset);
+    }
+
+    /**
+     * Compiles an XSL stylesheet pointed to by a URL
+     * @param url An URL containing the input XSL stylesheet
+     */
+    public boolean compile(URL url) {
+        try {
+            // Open input stream from URL and wrap inside InputSource
+            final InputStream stream = url.openStream();
+            final InputSource input = new InputSource(stream);
+            input.setSystemId(url.toString());
+            return compile(input, _className);
+        }
+        catch (IOException e) {
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
+            return false;
+        }
+    }
+
+    /**
+     * Compiles an XSL stylesheet pointed to by a URL
+     * @param url An URL containing the input XSL stylesheet
+     * @param name The name to assign to the translet class
+     */
+    public boolean compile(URL url, String name) {
+        try {
+            // Open input stream from URL and wrap inside InputSource
+            final InputStream stream = url.openStream();
+            final InputSource input = new InputSource(stream);
+            input.setSystemId(url.toString());
+            return compile(input, name);
+        }
+        catch (IOException e) {
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
+            return false;
+        }
+    }
+
+    /**
+     * Compiles an XSL stylesheet passed in through an InputStream
+     * @param stream An InputStream that will pass in the stylesheet contents
+     * @param name The name of the translet class to generate
+     * @return 'true' if the compilation was successful
+     */
+    public boolean compile(InputStream stream, String name) {
+        final InputSource input = new InputSource(stream);
+        input.setSystemId(name); // We have nothing else!!!
+        return compile(input, name);
+    }
+
+    /**
+     * Compiles an XSL stylesheet passed in through an InputStream
+     * @param input An InputSource that will pass in the stylesheet contents
+     * @param name The name of the translet class to generate - can be null
+     * @return 'true' if the compilation was successful
+     */
+    public boolean compile(InputSource input, String name) {
+        try {
+            // Reset globals in case we're called by compile(Vector v);
+            reset();
+
+            // The systemId may not be set, so we'll have to check the URL
+            String systemId = null;
+            if (input != null) {
+                systemId = input.getSystemId();
+            }
+
+            // Set the translet class name if not already set
+            if (_className == null) {
+                if (name != null) {
+                    setClassName(name);
+                }
+                else if (systemId != null && !systemId.equals("")) {
+                    setClassName(Util.baseName(systemId));
+                }
+
+                // Ensure we have a non-empty class name at this point
+                if (_className == null || _className.length() == 0) {
+                    setClassName("GregorSamsa"); // default translet name
+                }
+            }
+
+            // Get the root node of the abstract syntax tree
+            SyntaxTreeNode element = null;
+            if (_reader == null) {
+                element = _parser.parse(input);
+            }
+            else {
+                element = _parser.parse(_reader, input);
+            }
+
+            // Compile the translet - this is where the work is done!
+            if ((!_parser.errorsFound()) && (element != null)) {
+                // Create a Stylesheet element from the root node
+                _stylesheet = _parser.makeStylesheet(element);
+                _stylesheet.setSourceLoader(_loader);
+                _stylesheet.setSystemId(systemId);
+                _stylesheet.setParentStylesheet(null);
+                _stylesheet.setTemplateInlining(_templateInlining);
+                _parser.setCurrentStylesheet(_stylesheet);
+
+                // Create AST under the Stylesheet element (parse & type-check)
+                _parser.createAST(_stylesheet);
+            }
+            // Generate the bytecodes and output the translet class(es)
+            if ((!_parser.errorsFound()) && (_stylesheet != null)) {
+                _stylesheet.setCallsNodeset(_callsNodeset);
+                _stylesheet.setMultiDocument(_multiDocument);
+                _stylesheet.setHasIdCall(_hasIdCall);
+
+                // Class synchronization is needed for BCEL
+                synchronized (getClass()) {
+                    _stylesheet.translate();
+                }
+            }
+        }
+        catch (Exception e) {
+            /*if (_debug)*/ e.printStackTrace();
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
+        }
+        catch (Error e) {
+            if (_debug) e.printStackTrace();
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
+        }
+        finally {
+            _reader = null; // reset this here to be sure it is not re-used
+        }
+        return !_parser.errorsFound();
+    }
+
+    /**
+     * Compiles a set of stylesheets pointed to by a Vector of URLs
+     * @param stylesheets A Vector containing URLs pointing to the stylesheets
+     * @return 'true' if the compilation was successful
+     */
+    public boolean compile(Vector stylesheets) {
+        // Get the number of stylesheets (ie. URLs) in the vector
+        final int count = stylesheets.size();
+
+        // Return straight away if the vector is empty
+        if (count == 0) return true;
+
+        // Special handling needed if the URL count is one, becuase the
+        // _className global must not be reset if it was set explicitly
+        if (count == 1) {
+            final Object url = stylesheets.firstElement();
+            if (url instanceof URL)
+                return compile((URL)url);
+            else
+                return false;
+        }
+        else {
+            // Traverse all elements in the vector and compile
+            final Enumeration urls = stylesheets.elements();
+            while (urls.hasMoreElements()) {
+                _className = null; // reset, so that new name will be computed
+                final Object url = urls.nextElement();
+                if (url instanceof URL) {
+                    if (!compile((URL)url)) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns an array of bytecode arrays generated by a compilation.
+     * @return JVM bytecodes that represent translet class definition
+     */
+    public byte[][] getBytecodes() {
+        final int count = _classes.size();
+        final byte[][] result = new byte[count][1];
+        for (int i = 0; i < count; i++)
+            result[i] = (byte[])_classes.elementAt(i);
+        return result;
+    }
+
+    /**
+     * Compiles a stylesheet pointed to by a URL. The result is put in a
+     * set of byte arrays. One byte array for each generated class.
+     * @param name The name of the translet class to generate
+     * @param input An InputSource that will pass in the stylesheet contents
+     * @param outputType The output type
+     * @return JVM bytecodes that represent translet class definition
+     */
+    public byte[][] compile(String name, InputSource input, int outputType) {
+        _outputType = outputType;
+        if (compile(input, name))
+            return getBytecodes();
+        else
+            return null;
+    }
+
+    /**
+     * Compiles a stylesheet pointed to by a URL. The result is put in a
+     * set of byte arrays. One byte array for each generated class.
+     * @param name The name of the translet class to generate
+     * @param input An InputSource that will pass in the stylesheet contents
+     * @return JVM bytecodes that represent translet class definition
+     */
+    public byte[][] compile(String name, InputSource input) {
+        return compile(name, input, BYTEARRAY_OUTPUT);
+    }
+
+    /**
+     * Set the XMLReader to use for parsing the next input stylesheet
+     * @param reader XMLReader (SAX2 parser) to use
+     */
+    public void setXMLReader(XMLReader reader) {
+        _reader = reader;
+    }
+
+    /**
+     * Get the XMLReader to use for parsing the next input stylesheet
+     */
+    public XMLReader getXMLReader() {
+        return _reader ;
+    }
+
+    /**
+     * Get a list of all compile error messages
+     * @return A List containing all compile error messages
+     */
+    public ArrayList<ErrorMsg> getErrors() {
+        return _parser.getErrors();
+    }
+
+    /**
+     * Get a list of all compile warning messages
+     * @return A List containing all compile error messages
+     */
+    public ArrayList<ErrorMsg> getWarnings() {
+        return _parser.getWarnings();
+    }
+
+    /**
+     * Print all compile error messages to standard output
+     */
+    public void printErrors() {
+        _parser.printErrors();
+    }
+
+    /**
+     * Print all compile warning messages to standard output
+     */
+    public void printWarnings() {
+        _parser.printWarnings();
+    }
+
+    /**
+     * This method is called by the XPathParser when it encounters a call
+     * to the document() function. Affects the DOM used by the translet.
+     */
+    protected void setMultiDocument(boolean flag) {
+        _multiDocument = flag;
+    }
+
+    public boolean isMultiDocument() {
+        return _multiDocument;
+    }
+
+    /**
+     * This method is called by the XPathParser when it encounters a call
+     * to the nodeset() extension function. Implies multi document.
+     */
+    protected void setCallsNodeset(boolean flag) {
+        if (flag) setMultiDocument(flag);
+        _callsNodeset = flag;
+    }
+
+    public boolean callsNodeset() {
+        return _callsNodeset;
+    }
+
+    protected void setHasIdCall(boolean flag) {
+        _hasIdCall = flag;
+    }
+
+    public boolean hasIdCall() {
+        return _hasIdCall;
+    }
+
+    /**
+     * Set the class name for the generated translet. This class name is
+     * overridden if multiple stylesheets are compiled in one go using the
+     * compile(Vector urls) method.
+     * @param className The name to assign to the translet class
+     */
+    public void setClassName(String className) {
+        final String base  = Util.baseName(className);
+        final String noext = Util.noExtName(base);
+        String name  = Util.toJavaName(noext);
+
+        if (_packageName == null)
+            _className = name;
+        else
+            _className = _packageName + '.' + name;
+    }
+
+    /**
+     * Get the class name for the generated translet.
+     */
+    public String getClassName() {
+        return _className;
+    }
+
+    /**
+     * Convert for Java class name of local system file name.
+     * (Replace '.' with '/' on UNIX and replace '.' by '\' on Windows/DOS.)
+     */
+    private String classFileName(final String className) {
+        return className.replace('.', File.separatorChar) + ".class";
+    }
+
+    /**
+     * Generate an output File object to send the translet to
+     */
+    private File getOutputFile(String className) {
+        if (_destDir != null)
+            return new File(_destDir, classFileName(className));
+        else
+            return new File(classFileName(className));
+    }
+
+    /**
+     * Set the destination directory for the translet.
+     * The current working directory will be used by default.
+     */
+    public boolean setDestDirectory(String dstDirName) {
+        final File dir = new File(dstDirName);
+        if (SecuritySupport.getFileExists(dir) || dir.mkdirs()) {
+            _destDir = dir;
+            return true;
+        }
+        else {
+            _destDir = null;
+            return false;
+        }
+    }
+
+    /**
+     * Set an optional package name for the translet and auxiliary classes
+     */
+    public void setPackageName(String packageName) {
+        _packageName = packageName;
+        if (_className != null) setClassName(_className);
+    }
+
+    /**
+     * Set the name of an optional JAR-file to dump the translet and
+     * auxiliary classes to
+     */
+    public void setJarFileName(String jarFileName) {
+        final String JAR_EXT = ".jar";
+        if (jarFileName.endsWith(JAR_EXT))
+            _jarFileName = jarFileName;
+        else
+            _jarFileName = jarFileName + JAR_EXT;
+        _outputType = JAR_OUTPUT;
+    }
+
+    public String getJarFileName() {
+        return _jarFileName;
+    }
+
+    /**
+     * Set the top-level stylesheet
+     */
+    public void setStylesheet(Stylesheet stylesheet) {
+        if (_stylesheet == null) _stylesheet = stylesheet;
+    }
+
+    /**
+     * Returns the top-level stylesheet
+     */
+    public Stylesheet getStylesheet() {
+        return _stylesheet;
+    }
+
+    /**
+     * Registers an attribute and gives it a type so that it can be mapped to
+     * DOM attribute types at run-time.
+     */
+    public int registerAttribute(QName name) {
+        Integer code = _attributes.get(name.toString());
+        if (code == null) {
+            code = _nextGType++;
+            _attributes.put(name.toString(), code);
+            final String uri = name.getNamespace();
+            final String local = "@"+name.getLocalPart();
+            if ((uri != null) && (!uri.equals("")))
+                _namesIndex.addElement(uri+":"+local);
+            else
+                _namesIndex.addElement(local);
+            if (name.getLocalPart().equals("*")) {
+                registerNamespace(name.getNamespace());
+            }
+        }
+        return code.intValue();
+    }
+
+    /**
+     * Registers an element and gives it a type so that it can be mapped to
+     * DOM element types at run-time.
+     */
+    public int registerElement(QName name) {
+        // Register element (full QName)
+        Integer code = _elements.get(name.toString());
+        if (code == null) {
+            _elements.put(name.toString(), code = _nextGType++);
+            _namesIndex.addElement(name.toString());
+        }
+        if (name.getLocalPart().equals("*")) {
+            registerNamespace(name.getNamespace());
+        }
+        return code.intValue();
+    }
+
+     /**
+      * Registers a namespace prefix and gives it a type so that it can be mapped to
+      * DOM namespace types at run-time.
+      */
+
+    public int registerNamespacePrefix(QName name) {
+
+    Integer code = _namespacePrefixes.get(name.toString());
+    if (code == null) {
+        code = _nextGType++;
+        _namespacePrefixes.put(name.toString(), code);
+        final String uri = name.getNamespace();
+        if ((uri != null) && (!uri.equals(""))){
+            // namespace::ext2:ped2 will be made empty in TypedNamespaceIterator
+            _namesIndex.addElement("?");
+        } else{
+           _namesIndex.addElement("?"+name.getLocalPart());
+        }
+    }
+    return code.intValue();
+    }
+
+    /**
+     * Registers a namespace and gives it a type so that it can be mapped to
+     * DOM namespace types at run-time.
+     */
+    public int registerNamespace(String namespaceURI) {
+        Integer code = _namespaces.get(namespaceURI);
+        if (code == null) {
+            code = _nextNSType++;
+            _namespaces.put(namespaceURI,code);
+            _namespaceIndex.addElement(namespaceURI);
+        }
+        return code.intValue();
+    }
+
+    public int nextModeSerial() {
+        return _modeSerial++;
+    }
+
+    public int nextStylesheetSerial() {
+        return _stylesheetSerial++;
+    }
+
+    public int nextStepPatternSerial() {
+        return _stepPatternSerial++;
+    }
+
+    public int[] getNumberFieldIndexes() {
+        return _numberFieldIndexes;
+    }
+
+    public int nextHelperClassSerial() {
+        return _helperClassSerial++;
+    }
+
+    public int nextAttributeSetSerial() {
+        return _attributeSetSerial++;
+    }
+
+    public Vector getNamesIndex() {
+        return _namesIndex;
+    }
+
+    public Vector getNamespaceIndex() {
+        return _namespaceIndex;
+    }
+
+    /**
+     * Returns a unique name for every helper class needed to
+     * execute a translet.
+     */
+    public String getHelperClassName() {
+        return getClassName() + '$' + _helperClassSerial++;
+    }
+
+    public void dumpClass(JavaClass clazz) {
+
+        if (_outputType == FILE_OUTPUT ||
+            _outputType == BYTEARRAY_AND_FILE_OUTPUT)
+        {
+            File outFile = getOutputFile(clazz.getClassName());
+            String parentDir = outFile.getParent();
+            if (parentDir != null) {
+                File parentFile = new File(parentDir);
+                if (!SecuritySupport.getFileExists(parentFile))
+                    parentFile.mkdirs();
+            }
+        }
+
+        try {
+            switch (_outputType) {
+            case FILE_OUTPUT:
+                clazz.dump(
+                    new BufferedOutputStream(
+                        new FileOutputStream(
+                            getOutputFile(clazz.getClassName()))));
+                break;
+            case JAR_OUTPUT:
+                _bcelClasses.addElement(clazz);
+                break;
+            case BYTEARRAY_OUTPUT:
+            case BYTEARRAY_AND_FILE_OUTPUT:
+            case BYTEARRAY_AND_JAR_OUTPUT:
+            case CLASSLOADER_OUTPUT:
+                ByteArrayOutputStream out = new ByteArrayOutputStream(2048);
+                clazz.dump(out);
+                _classes.addElement(out.toByteArray());
+
+                if (_outputType == BYTEARRAY_AND_FILE_OUTPUT)
+                  clazz.dump(new BufferedOutputStream(
+                        new FileOutputStream(getOutputFile(clazz.getClassName()))));
+                else if (_outputType == BYTEARRAY_AND_JAR_OUTPUT)
+                  _bcelClasses.addElement(clazz);
+
+                break;
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * File separators are converted to forward slashes for ZIP files.
+     */
+    private String entryName(File f) throws IOException {
+        return f.getName().replace(File.separatorChar, '/');
+    }
+
+    /**
+     * Generate output JAR-file and packages
+     */
+    public void outputToJar() throws IOException {
+        // create the manifest
+        final Manifest manifest = new Manifest();
+        final java.util.jar.Attributes atrs = manifest.getMainAttributes();
+        atrs.put(java.util.jar.Attributes.Name.MANIFEST_VERSION,"1.2");
+
+        final Map map = manifest.getEntries();
+        // create manifest
+        Enumeration classes = _bcelClasses.elements();
+        final String now = (new Date()).toString();
+        final java.util.jar.Attributes.Name dateAttr =
+            new java.util.jar.Attributes.Name("Date");
+        while (classes.hasMoreElements()) {
+            final JavaClass clazz = (JavaClass)classes.nextElement();
+            final String className = clazz.getClassName().replace('.','/');
+            final java.util.jar.Attributes attr = new java.util.jar.Attributes();
+            attr.put(dateAttr, now);
+            map.put(className+".class", attr);
+        }
+
+        final File jarFile = new File(_destDir, _jarFileName);
+        final JarOutputStream jos =
+            new JarOutputStream(new FileOutputStream(jarFile), manifest);
+        classes = _bcelClasses.elements();
+        while (classes.hasMoreElements()) {
+            final JavaClass clazz = (JavaClass)classes.nextElement();
+            final String className = clazz.getClassName().replace('.','/');
+            jos.putNextEntry(new JarEntry(className+".class"));
+            final ByteArrayOutputStream out = new ByteArrayOutputStream(2048);
+            clazz.dump(out); // dump() closes it's output stream
+            out.writeTo(jos);
+        }
+        jos.close();
+    }
+
+    /**
+     * Turn debugging messages on/off
+     */
+    public void setDebug(boolean debug) {
+        _debug = debug;
+    }
+
+    /**
+     * Get current debugging message setting
+     */
+    public boolean debug() {
+        return _debug;
+    }
+
+
+    /**
+     * Retrieve a string representation of the character data to be stored
+     * in the translet as a <code>char[]</code>.  There may be more than
+     * one such array required.
+     * @param index The index of the <code>char[]</code>.  Zero-based.
+     * @return String The character data to be stored in the corresponding
+     *               <code>char[]</code>.
+     */
+    public String getCharacterData(int index) {
+        return ((StringBuffer) m_characterData.elementAt(index)).toString();
+    }
+
+    /**
+     * Get the number of char[] arrays, thus far, that will be created to
+     * store literal text in the stylesheet.
+     */
+    public int getCharacterDataCount() {
+        return (m_characterData != null) ? m_characterData.size() : 0;
+    }
+
+    /**
+     * Add literal text to char arrays that will be used to store character
+     * data in the stylesheet.
+     * @param newData String data to be added to char arrays.
+     *                Pre-condition:  <code>newData.length() &le; 21845</code>
+     * @return int offset at which character data will be stored
+     */
+    public int addCharacterData(String newData) {
+        StringBuffer currData;
+        if (m_characterData == null) {
+            m_characterData = new Vector();
+            currData = new StringBuffer();
+            m_characterData.addElement(currData);
+        } else {
+            currData = (StringBuffer) m_characterData
+                                           .elementAt(m_characterData.size()-1);
+        }
+
+        // Character data could take up to three-times as much space when
+        // written to the class file as UTF-8.  The maximum size for a
+        // constant is 65535/3.  If we exceed that,
+        // (We really should use some "bin packing".)
+        if (newData.length() + currData.length() > 21845) {
+            currData = new StringBuffer();
+            m_characterData.addElement(currData);
+        }
+
+        int newDataOffset = currData.length();
+        currData.append(newData);
+
+        return newDataOffset;
+    }
+}

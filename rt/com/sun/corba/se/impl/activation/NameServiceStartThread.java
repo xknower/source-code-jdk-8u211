@@ -1,69 +1,63 @@
-/*    */ package com.sun.corba.se.impl.activation;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.naming.pcosnaming.NameService;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import java.io.File;
-/*    */ import org.omg.CosNaming.NamingContext;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NameServiceStartThread
-/*    */   extends Thread
-/*    */ {
-/*    */   private ORB orb;
-/*    */   private File dbDir;
-/*    */   
-/*    */   public NameServiceStartThread(ORB paramORB, File paramFile) {
-/* 45 */     this.orb = paramORB;
-/* 46 */     this.dbDir = paramFile;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void run() {
-/*    */     try {
-/* 53 */       NameService nameService = new NameService(this.orb, this.dbDir);
-/* 54 */       NamingContext namingContext = nameService.initialNamingContext();
-/* 55 */       this.orb.register_initial_reference("NameService", namingContext);
-/*    */     }
-/* 57 */     catch (Exception exception) {
-/* 58 */       System.err.println("NameService did not start successfully");
-/*    */       
-/* 60 */       exception.printStackTrace();
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\activation\NameServiceStartThread.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.activation;
+
+
+import java.io.File;
+
+import org.omg.CosNaming.NamingContext;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.impl.naming.pcosnaming.NameService;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+// REVISIT: After Merlin to see if we can get rid of this Thread and
+// make the registration of PNameService for INS and BootStrap neat.
+public class NameServiceStartThread extends java.lang.Thread
+{
+    private ORB orb;
+    private File dbDir;
+
+    public NameServiceStartThread( ORB theOrb, File theDir )
+    {
+        orb = theOrb;
+        dbDir = theDir;
+    }
+
+    public void run( )
+    {
+        try {
+            // start Name Service
+            NameService nameService = new NameService(orb, dbDir );
+            NamingContext rootContext = nameService.initialNamingContext();
+            orb.register_initial_reference(
+                ORBConstants.PERSISTENT_NAME_SERVICE_NAME, rootContext );
+        } catch( Exception e ) {
+            System.err.println(
+                "NameService did not start successfully" );
+            e.printStackTrace( );
+        }
+    }
+}

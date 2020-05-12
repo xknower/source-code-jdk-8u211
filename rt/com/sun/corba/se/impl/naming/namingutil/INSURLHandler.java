@@ -1,71 +1,65 @@
-/*    */ package com.sun.corba.se.impl.naming.namingutil;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class INSURLHandler
-/*    */ {
-/* 38 */   private static INSURLHandler insURLHandler = null;
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private static final int CORBALOC_PREFIX_LENGTH = 9;
-/*    */ 
-/*    */   
-/*    */   private static final int CORBANAME_PREFIX_LENGTH = 10;
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public static synchronized INSURLHandler getINSURLHandler() {
-/* 50 */     if (insURLHandler == null) {
-/* 51 */       insURLHandler = new INSURLHandler();
-/*    */     }
-/* 53 */     return insURLHandler;
-/*    */   }
-/*    */   
-/*    */   public INSURL parseURL(String paramString) {
-/* 57 */     String str = paramString;
-/* 58 */     if (str.startsWith("corbaloc:") == true)
-/* 59 */       return new CorbalocURL(str.substring(9)); 
-/* 60 */     if (str.startsWith("corbaname:") == true) {
-/* 61 */       return new CorbanameURL(str.substring(10));
-/*    */     }
-/* 63 */     return null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\namingutil\INSURLHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.naming.namingutil;
+
+import org.omg.CORBA.CompletionStatus;
+import java.util.StringTokenizer;
+
+/**
+ *  This class is the entry point to parse different types of INS URL's.
+ *
+ *  @Author Hemanth
+ */
+
+public class INSURLHandler {
+
+    private static INSURLHandler insURLHandler = null;
+
+    // Length of corbaloc:
+    private static final int CORBALOC_PREFIX_LENGTH = 9;
+
+    // Length of corbaname:
+    private static final int CORBANAME_PREFIX_LENGTH = 10;
+
+    private INSURLHandler( ) {
+    }
+
+    public synchronized static INSURLHandler getINSURLHandler( ) {
+        if( insURLHandler == null ) {
+            insURLHandler = new INSURLHandler( );
+        }
+        return insURLHandler;
+    }
+
+    public INSURL parseURL( String aUrl ) {
+        String url = aUrl;
+        if ( url.startsWith( "corbaloc:" ) == true ) {
+            return new CorbalocURL( url.substring( CORBALOC_PREFIX_LENGTH ) );
+        } else if ( url.startsWith ( "corbaname:" ) == true ) {
+            return new CorbanameURL( url.substring( CORBANAME_PREFIX_LENGTH ) );
+        }
+        return null;
+    }
+}

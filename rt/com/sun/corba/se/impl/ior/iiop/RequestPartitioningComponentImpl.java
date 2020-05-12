@@ -1,105 +1,99 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponentBase;
-/*    */ import com.sun.corba.se.spi.ior.iiop.RequestPartitioningComponent;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class RequestPartitioningComponentImpl
-/*    */   extends TaggedComponentBase
-/*    */   implements RequestPartitioningComponent
-/*    */ {
-/* 44 */   private static ORBUtilSystemException wrapper = ORBUtilSystemException.get("oa.ior");
-/*    */   
-/*    */   private int partitionToUse;
-/*    */ 
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 50 */     if (!(paramObject instanceof RequestPartitioningComponentImpl)) {
-/* 51 */       return false;
-/*    */     }
-/* 53 */     RequestPartitioningComponentImpl requestPartitioningComponentImpl = (RequestPartitioningComponentImpl)paramObject;
-/*    */ 
-/*    */     
-/* 56 */     return (this.partitionToUse == requestPartitioningComponentImpl.partitionToUse);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 61 */     return this.partitionToUse;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 66 */     return "RequestPartitioningComponentImpl[partitionToUse=" + this.partitionToUse + "]";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public RequestPartitioningComponentImpl() {
-/* 71 */     this.partitionToUse = 0;
-/*    */   }
-/*    */   
-/*    */   public RequestPartitioningComponentImpl(int paramInt) {
-/* 75 */     if (paramInt < 0 || paramInt > 63)
-/*    */     {
-/* 77 */       throw wrapper.invalidRequestPartitioningComponentValue(new Integer(paramInt), new Integer(0), new Integer(63));
-/*    */     }
-/*    */ 
-/*    */ 
-/*    */     
-/* 82 */     this.partitionToUse = paramInt;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getRequestPartitioningId() {
-/* 87 */     return this.partitionToUse;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void writeContents(OutputStream paramOutputStream) {
-/* 92 */     paramOutputStream.write_ulong(this.partitionToUse);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getId() {
-/* 97 */     return 1398099457;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\RequestPartitioningComponentImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/**
+ */
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.CORBA_2_3.portable.OutputStream;
+
+import com.sun.corba.se.spi.ior.TaggedComponentBase;
+import com.sun.corba.se.spi.ior.iiop.RequestPartitioningComponent;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+
+public class RequestPartitioningComponentImpl extends TaggedComponentBase
+    implements RequestPartitioningComponent
+{
+    private static ORBUtilSystemException wrapper =
+        ORBUtilSystemException.get( CORBALogDomains.OA_IOR ) ;
+
+    private int partitionToUse;
+
+    public boolean equals(Object obj)
+    {
+        if (!(obj instanceof RequestPartitioningComponentImpl))
+            return false ;
+
+        RequestPartitioningComponentImpl other =
+            (RequestPartitioningComponentImpl)obj ;
+
+        return partitionToUse == other.partitionToUse ;
+    }
+
+    public int hashCode()
+    {
+        return partitionToUse;
+    }
+
+    public String toString()
+    {
+        return "RequestPartitioningComponentImpl[partitionToUse=" + partitionToUse + "]" ;
+    }
+
+    public RequestPartitioningComponentImpl()
+    {
+        partitionToUse = 0;
+    }
+
+    public RequestPartitioningComponentImpl(int thePartitionToUse) {
+        if (thePartitionToUse < ORBConstants.REQUEST_PARTITIONING_MIN_THREAD_POOL_ID ||
+            thePartitionToUse > ORBConstants.REQUEST_PARTITIONING_MAX_THREAD_POOL_ID) {
+            throw wrapper.invalidRequestPartitioningComponentValue(
+                  new Integer(thePartitionToUse),
+                  new Integer(ORBConstants.REQUEST_PARTITIONING_MIN_THREAD_POOL_ID),
+                  new Integer(ORBConstants.REQUEST_PARTITIONING_MAX_THREAD_POOL_ID));
+        }
+        partitionToUse = thePartitionToUse;
+    }
+
+    public int getRequestPartitioningId()
+    {
+        return partitionToUse;
+    }
+
+    public void writeContents(OutputStream os)
+    {
+        os.write_ulong(partitionToUse);
+    }
+
+    public int getId()
+    {
+        return ORBConstants.TAG_REQUEST_PARTITIONING_ID;
+    }
+}

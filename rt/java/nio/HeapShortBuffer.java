@@ -1,604 +1,601 @@
-/*     */ package java.nio;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class HeapShortBuffer
-/*     */   extends ShortBuffer
-/*     */ {
-/*     */   HeapShortBuffer(int paramInt1, int paramInt2) {
-/*  57 */     super(-1, 0, paramInt2, paramInt1, new short[paramInt1], 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   HeapShortBuffer(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/*  70 */     super(-1, paramInt1, paramInt1 + paramInt2, paramArrayOfshort.length, paramArrayOfshort, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected HeapShortBuffer(short[] paramArrayOfshort, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  86 */     super(paramInt1, paramInt2, paramInt3, paramInt4, paramArrayOfshort, paramInt5);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer slice() {
-/*  98 */     return new HeapShortBuffer(this.hb, -1, 0, 
-/*     */ 
-/*     */         
-/* 101 */         remaining(), 
-/* 102 */         remaining(), 
-/* 103 */         position() + this.offset);
-/*     */   }
-/*     */   
-/*     */   public ShortBuffer duplicate() {
-/* 107 */     return new HeapShortBuffer(this.hb, 
-/* 108 */         markValue(), 
-/* 109 */         position(), 
-/* 110 */         limit(), 
-/* 111 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer asReadOnlyBuffer() {
-/* 117 */     return new HeapShortBufferR(this.hb, 
-/* 118 */         markValue(), 
-/* 119 */         position(), 
-/* 120 */         limit(), 
-/* 121 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int ix(int paramInt) {
-/* 131 */     return paramInt + this.offset;
-/*     */   }
-/*     */   
-/*     */   public short get() {
-/* 135 */     return this.hb[ix(nextGetIndex())];
-/*     */   }
-/*     */   
-/*     */   public short get(int paramInt) {
-/* 139 */     return this.hb[ix(checkIndex(paramInt))];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer get(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/* 149 */     checkBounds(paramInt1, paramInt2, paramArrayOfshort.length);
-/* 150 */     if (paramInt2 > remaining())
-/* 151 */       throw new BufferUnderflowException(); 
-/* 152 */     System.arraycopy(this.hb, ix(position()), paramArrayOfshort, paramInt1, paramInt2);
-/* 153 */     position(position() + paramInt2);
-/* 154 */     return this;
-/*     */   }
-/*     */   
-/*     */   public boolean isDirect() {
-/* 158 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isReadOnly() {
-/* 164 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer put(short paramShort) {
-/* 169 */     this.hb[ix(nextPutIndex())] = paramShort;
-/* 170 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer put(int paramInt, short paramShort) {
-/* 178 */     this.hb[ix(checkIndex(paramInt))] = paramShort;
-/* 179 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer put(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/* 187 */     checkBounds(paramInt1, paramInt2, paramArrayOfshort.length);
-/* 188 */     if (paramInt2 > remaining())
-/* 189 */       throw new BufferOverflowException(); 
-/* 190 */     System.arraycopy(paramArrayOfshort, paramInt1, this.hb, ix(position()), paramInt2);
-/* 191 */     position(position() + paramInt2);
-/* 192 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer put(ShortBuffer paramShortBuffer) {
-/* 200 */     if (paramShortBuffer instanceof HeapShortBuffer) {
-/* 201 */       if (paramShortBuffer == this)
-/* 202 */         throw new IllegalArgumentException(); 
-/* 203 */       HeapShortBuffer heapShortBuffer = (HeapShortBuffer)paramShortBuffer;
-/* 204 */       int i = heapShortBuffer.remaining();
-/* 205 */       if (i > remaining())
-/* 206 */         throw new BufferOverflowException(); 
-/* 207 */       System.arraycopy(heapShortBuffer.hb, heapShortBuffer.ix(heapShortBuffer.position()), this.hb, 
-/* 208 */           ix(position()), i);
-/* 209 */       heapShortBuffer.position(heapShortBuffer.position() + i);
-/* 210 */       position(position() + i);
-/* 211 */     } else if (paramShortBuffer.isDirect()) {
-/* 212 */       int i = paramShortBuffer.remaining();
-/* 213 */       if (i > remaining())
-/* 214 */         throw new BufferOverflowException(); 
-/* 215 */       paramShortBuffer.get(this.hb, ix(position()), i);
-/* 216 */       position(position() + i);
-/*     */     } else {
-/* 218 */       super.put(paramShortBuffer);
-/*     */     } 
-/* 220 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer compact() {
-/* 228 */     System.arraycopy(this.hb, ix(position()), this.hb, ix(0), remaining());
-/* 229 */     position(remaining());
-/* 230 */     limit(capacity());
-/* 231 */     discardMark();
-/* 232 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteOrder order() {
-/* 596 */     return ByteOrder.nativeOrder();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\HeapShortBuffer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio;
+
+
+/**
+
+ * A read/write HeapShortBuffer.
+
+
+
+
+
+
+ */
+
+class HeapShortBuffer
+    extends ShortBuffer
+{
+
+    // For speed these fields are actually declared in X-Buffer;
+    // these declarations are here as documentation
+    /*
+
+    protected final short[] hb;
+    protected final int offset;
+
+    */
+
+    HeapShortBuffer(int cap, int lim) {            // package-private
+
+        super(-1, 0, lim, cap, new short[cap], 0);
+        /*
+        hb = new short[cap];
+        offset = 0;
+        */
+
+
+
+
+    }
+
+    HeapShortBuffer(short[] buf, int off, int len) { // package-private
+
+        super(-1, off, off + len, buf.length, buf, 0);
+        /*
+        hb = buf;
+        offset = 0;
+        */
+
+
+
+
+    }
+
+    protected HeapShortBuffer(short[] buf,
+                                   int mark, int pos, int lim, int cap,
+                                   int off)
+    {
+
+        super(mark, pos, lim, cap, buf, off);
+        /*
+        hb = buf;
+        offset = off;
+        */
+
+
+
+
+    }
+
+    public ShortBuffer slice() {
+        return new HeapShortBuffer(hb,
+                                        -1,
+                                        0,
+                                        this.remaining(),
+                                        this.remaining(),
+                                        this.position() + offset);
+    }
+
+    public ShortBuffer duplicate() {
+        return new HeapShortBuffer(hb,
+                                        this.markValue(),
+                                        this.position(),
+                                        this.limit(),
+                                        this.capacity(),
+                                        offset);
+    }
+
+    public ShortBuffer asReadOnlyBuffer() {
+
+        return new HeapShortBufferR(hb,
+                                     this.markValue(),
+                                     this.position(),
+                                     this.limit(),
+                                     this.capacity(),
+                                     offset);
+
+
+
+    }
+
+
+
+    protected int ix(int i) {
+        return i + offset;
+    }
+
+    public short get() {
+        return hb[ix(nextGetIndex())];
+    }
+
+    public short get(int i) {
+        return hb[ix(checkIndex(i))];
+    }
+
+
+
+
+
+
+
+    public ShortBuffer get(short[] dst, int offset, int length) {
+        checkBounds(offset, length, dst.length);
+        if (length > remaining())
+            throw new BufferUnderflowException();
+        System.arraycopy(hb, ix(position()), dst, offset, length);
+        position(position() + length);
+        return this;
+    }
+
+    public boolean isDirect() {
+        return false;
+    }
+
+
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    public ShortBuffer put(short x) {
+
+        hb[ix(nextPutIndex())] = x;
+        return this;
+
+
+
+    }
+
+    public ShortBuffer put(int i, short x) {
+
+        hb[ix(checkIndex(i))] = x;
+        return this;
+
+
+
+    }
+
+    public ShortBuffer put(short[] src, int offset, int length) {
+
+        checkBounds(offset, length, src.length);
+        if (length > remaining())
+            throw new BufferOverflowException();
+        System.arraycopy(src, offset, hb, ix(position()), length);
+        position(position() + length);
+        return this;
+
+
+
+    }
+
+    public ShortBuffer put(ShortBuffer src) {
+
+        if (src instanceof HeapShortBuffer) {
+            if (src == this)
+                throw new IllegalArgumentException();
+            HeapShortBuffer sb = (HeapShortBuffer)src;
+            int n = sb.remaining();
+            if (n > remaining())
+                throw new BufferOverflowException();
+            System.arraycopy(sb.hb, sb.ix(sb.position()),
+                             hb, ix(position()), n);
+            sb.position(sb.position() + n);
+            position(position() + n);
+        } else if (src.isDirect()) {
+            int n = src.remaining();
+            if (n > remaining())
+                throw new BufferOverflowException();
+            src.get(hb, ix(position()), n);
+            position(position() + n);
+        } else {
+            super.put(src);
+        }
+        return this;
+
+
+
+    }
+
+    public ShortBuffer compact() {
+
+        System.arraycopy(hb, ix(position()), hb, ix(0), remaining());
+        position(remaining());
+        limit(capacity());
+        discardMark();
+        return this;
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteOrder order() {
+        return ByteOrder.nativeOrder();
+    }
+
+
+
+}

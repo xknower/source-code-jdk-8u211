@@ -1,351 +1,345 @@
-/*     */ package java.net;
-/*     */ 
-/*     */ import java.io.FileDescriptor;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class PlainSocketImpl
-/*     */   extends AbstractPlainSocketImpl
-/*     */ {
-/*     */   private AbstractPlainSocketImpl impl;
-/*     */   private static float version;
-/*     */   private static boolean preferIPv4Stack = false;
-/*     */   private static boolean useDualStackImpl = false;
-/*     */   private static String exclBindProp;
-/*     */   private static boolean exclusiveBind = true;
-/*     */   
-/*     */   static {
-/*  64 */     AccessController.doPrivileged(new PrivilegedAction() {
-/*     */           public Object run() {
-/*  66 */             PlainSocketImpl.version = 0.0F;
-/*     */             try {
-/*  68 */               PlainSocketImpl.version = Float.parseFloat(System.getProperties().getProperty("os.version"));
-/*  69 */               PlainSocketImpl.preferIPv4Stack = Boolean.parseBoolean(
-/*  70 */                   System.getProperties().getProperty("java.net.preferIPv4Stack"));
-/*  71 */               PlainSocketImpl.exclBindProp = System.getProperty("sun.net.useExclusiveBind");
-/*  72 */             } catch (NumberFormatException numberFormatException) {
-/*  73 */               assert false : numberFormatException;
-/*     */             } 
-/*  75 */             return null;
-/*     */           }
-/*     */         });
-/*     */     
-/*  79 */     if (version >= 6.0D && !preferIPv4Stack) {
-/*  80 */       useDualStackImpl = true;
-/*     */     }
-/*     */     
-/*  83 */     if (exclBindProp != null) {
-/*     */ 
-/*     */       
-/*  86 */       exclusiveBind = (exclBindProp.length() == 0) ? true : Boolean.parseBoolean(exclBindProp);
-/*  87 */     } else if (version < 6.0D) {
-/*  88 */       exclusiveBind = false;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   PlainSocketImpl() {
-/*  96 */     if (useDualStackImpl) {
-/*  97 */       this.impl = new DualStackPlainSocketImpl(exclusiveBind);
-/*     */     } else {
-/*  99 */       this.impl = new TwoStacksPlainSocketImpl(exclusiveBind);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   PlainSocketImpl(FileDescriptor paramFileDescriptor) {
-/* 107 */     if (useDualStackImpl) {
-/* 108 */       this.impl = new DualStackPlainSocketImpl(paramFileDescriptor, exclusiveBind);
-/*     */     } else {
-/* 110 */       this.impl = new TwoStacksPlainSocketImpl(paramFileDescriptor, exclusiveBind);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected FileDescriptor getFileDescriptor() {
-/* 117 */     return this.impl.getFileDescriptor();
-/*     */   }
-/*     */   
-/*     */   protected InetAddress getInetAddress() {
-/* 121 */     return this.impl.getInetAddress();
-/*     */   }
-/*     */   
-/*     */   protected int getPort() {
-/* 125 */     return this.impl.getPort();
-/*     */   }
-/*     */   
-/*     */   protected int getLocalPort() {
-/* 129 */     return this.impl.getLocalPort();
-/*     */   }
-/*     */   
-/*     */   void setSocket(Socket paramSocket) {
-/* 133 */     this.impl.setSocket(paramSocket);
-/*     */   }
-/*     */   
-/*     */   Socket getSocket() {
-/* 137 */     return this.impl.getSocket();
-/*     */   }
-/*     */   
-/*     */   void setServerSocket(ServerSocket paramServerSocket) {
-/* 141 */     this.impl.setServerSocket(paramServerSocket);
-/*     */   }
-/*     */   
-/*     */   ServerSocket getServerSocket() {
-/* 145 */     return this.impl.getServerSocket();
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 149 */     return this.impl.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void create(boolean paramBoolean) throws IOException {
-/* 155 */     this.impl.create(paramBoolean);
-/*     */ 
-/*     */     
-/* 158 */     this.fd = this.impl.fd;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void connect(String paramString, int paramInt) throws UnknownHostException, IOException {
-/* 164 */     this.impl.connect(paramString, paramInt);
-/*     */   }
-/*     */   
-/*     */   protected void connect(InetAddress paramInetAddress, int paramInt) throws IOException {
-/* 168 */     this.impl.connect(paramInetAddress, paramInt);
-/*     */   }
-/*     */   
-/*     */   protected void connect(SocketAddress paramSocketAddress, int paramInt) throws IOException {
-/* 172 */     this.impl.connect(paramSocketAddress, paramInt);
-/*     */   }
-/*     */   
-/*     */   public void setOption(int paramInt, Object paramObject) throws SocketException {
-/* 176 */     this.impl.setOption(paramInt, paramObject);
-/*     */   }
-/*     */   
-/*     */   public Object getOption(int paramInt) throws SocketException {
-/* 180 */     return this.impl.getOption(paramInt);
-/*     */   }
-/*     */   
-/*     */   synchronized void doConnect(InetAddress paramInetAddress, int paramInt1, int paramInt2) throws IOException {
-/* 184 */     this.impl.doConnect(paramInetAddress, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected synchronized void bind(InetAddress paramInetAddress, int paramInt) throws IOException {
-/* 190 */     this.impl.bind(paramInetAddress, paramInt);
-/*     */   }
-/*     */   
-/*     */   protected synchronized void accept(SocketImpl paramSocketImpl) throws IOException {
-/* 194 */     if (paramSocketImpl instanceof PlainSocketImpl) {
-/*     */       
-/* 196 */       AbstractPlainSocketImpl abstractPlainSocketImpl = ((PlainSocketImpl)paramSocketImpl).impl;
-/* 197 */       abstractPlainSocketImpl.address = new InetAddress();
-/* 198 */       abstractPlainSocketImpl.fd = new FileDescriptor();
-/* 199 */       this.impl.accept(abstractPlainSocketImpl);
-/*     */       
-/* 201 */       paramSocketImpl.fd = abstractPlainSocketImpl.fd;
-/*     */     } else {
-/* 203 */       this.impl.accept(paramSocketImpl);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void setFileDescriptor(FileDescriptor paramFileDescriptor) {
-/* 208 */     this.impl.setFileDescriptor(paramFileDescriptor);
-/*     */   }
-/*     */   
-/*     */   void setAddress(InetAddress paramInetAddress) {
-/* 212 */     this.impl.setAddress(paramInetAddress);
-/*     */   }
-/*     */   
-/*     */   void setPort(int paramInt) {
-/* 216 */     this.impl.setPort(paramInt);
-/*     */   }
-/*     */   
-/*     */   void setLocalPort(int paramInt) {
-/* 220 */     this.impl.setLocalPort(paramInt);
-/*     */   }
-/*     */   
-/*     */   protected synchronized InputStream getInputStream() throws IOException {
-/* 224 */     return this.impl.getInputStream();
-/*     */   }
-/*     */   
-/*     */   void setInputStream(SocketInputStream paramSocketInputStream) {
-/* 228 */     this.impl.setInputStream(paramSocketInputStream);
-/*     */   }
-/*     */   
-/*     */   protected synchronized OutputStream getOutputStream() throws IOException {
-/* 232 */     return this.impl.getOutputStream();
-/*     */   }
-/*     */   
-/*     */   protected void close() throws IOException {
-/*     */     try {
-/* 237 */       this.impl.close();
-/*     */     } finally {
-/*     */       
-/* 240 */       this.fd = null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void reset() throws IOException {
-/*     */     try {
-/* 246 */       this.impl.reset();
-/*     */     } finally {
-/*     */       
-/* 249 */       this.fd = null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void shutdownInput() throws IOException {
-/* 254 */     this.impl.shutdownInput();
-/*     */   }
-/*     */   
-/*     */   protected void shutdownOutput() throws IOException {
-/* 258 */     this.impl.shutdownOutput();
-/*     */   }
-/*     */   
-/*     */   protected void sendUrgentData(int paramInt) throws IOException {
-/* 262 */     this.impl.sendUrgentData(paramInt);
-/*     */   }
-/*     */   
-/*     */   FileDescriptor acquireFD() {
-/* 266 */     return this.impl.acquireFD();
-/*     */   }
-/*     */   
-/*     */   void releaseFD() {
-/* 270 */     this.impl.releaseFD();
-/*     */   }
-/*     */   
-/*     */   public boolean isConnectionReset() {
-/* 274 */     return this.impl.isConnectionReset();
-/*     */   }
-/*     */   
-/*     */   public boolean isConnectionResetPending() {
-/* 278 */     return this.impl.isConnectionResetPending();
-/*     */   }
-/*     */   
-/*     */   public void setConnectionReset() {
-/* 282 */     this.impl.setConnectionReset();
-/*     */   }
-/*     */   
-/*     */   public void setConnectionResetPending() {
-/* 286 */     this.impl.setConnectionResetPending();
-/*     */   }
-/*     */   
-/*     */   public boolean isClosedOrPending() {
-/* 290 */     return this.impl.isClosedOrPending();
-/*     */   }
-/*     */   
-/*     */   public int getTimeout() {
-/* 294 */     return this.impl.getTimeout();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void socketCreate(boolean paramBoolean) throws IOException {
-/* 300 */     this.impl.socketCreate(paramBoolean);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void socketConnect(InetAddress paramInetAddress, int paramInt1, int paramInt2) throws IOException {
-/* 305 */     this.impl.socketConnect(paramInetAddress, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void socketBind(InetAddress paramInetAddress, int paramInt) throws IOException {
-/* 310 */     this.impl.socketBind(paramInetAddress, paramInt);
-/*     */   }
-/*     */   
-/*     */   void socketListen(int paramInt) throws IOException {
-/* 314 */     this.impl.socketListen(paramInt);
-/*     */   }
-/*     */   
-/*     */   void socketAccept(SocketImpl paramSocketImpl) throws IOException {
-/* 318 */     this.impl.socketAccept(paramSocketImpl);
-/*     */   }
-/*     */   
-/*     */   int socketAvailable() throws IOException {
-/* 322 */     return this.impl.socketAvailable();
-/*     */   }
-/*     */   
-/*     */   void socketClose0(boolean paramBoolean) throws IOException {
-/* 326 */     this.impl.socketClose0(paramBoolean);
-/*     */   }
-/*     */   
-/*     */   void socketShutdown(int paramInt) throws IOException {
-/* 330 */     this.impl.socketShutdown(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void socketSetOption(int paramInt, boolean paramBoolean, Object paramObject) throws SocketException {
-/* 335 */     this.impl.socketSetOption(paramInt, paramBoolean, paramObject);
-/*     */   }
-/*     */   
-/*     */   int socketGetOption(int paramInt, Object paramObject) throws SocketException {
-/* 339 */     return this.impl.socketGetOption(paramInt, paramObject);
-/*     */   }
-/*     */   
-/*     */   void socketSendUrgentData(int paramInt) throws IOException {
-/* 343 */     this.impl.socketSendUrgentData(paramInt);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\PlainSocketImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.net;
+
+import java.io.*;
+import java.security.PrivilegedAction;
+
+/*
+ * This class PlainSocketImpl simply delegates to the appropriate real
+ * SocketImpl. We do this because PlainSocketImpl is already extended
+ * by SocksSocketImpl.
+ * <p>
+ * There are two possibilities for the real SocketImpl,
+ * TwoStacksPlainSocketImpl or DualStackPlainSocketImpl. We use
+ * DualStackPlainSocketImpl on systems that have a dual stack
+ * TCP implementation. Otherwise we create an instance of
+ * TwoStacksPlainSocketImpl and delegate to it.
+ *
+ * @author Chris Hegarty
+ */
+
+class PlainSocketImpl extends AbstractPlainSocketImpl
+{
+    private AbstractPlainSocketImpl impl;
+
+    /* the windows version. */
+    private static float version;
+
+    /* java.net.preferIPv4Stack */
+    private static boolean preferIPv4Stack = false;
+
+    /* If the version supports a dual stack TCP implementation */
+    private static boolean useDualStackImpl = false;
+
+    /* sun.net.useExclusiveBind */
+    private static String exclBindProp;
+
+    /* True if exclusive binding is on for Windows */
+    private static boolean exclusiveBind = true;
+
+    static {
+        java.security.AccessController.doPrivileged( new PrivilegedAction<Object>() {
+                public Object run() {
+                    version = 0;
+                    try {
+                        version = Float.parseFloat(System.getProperties().getProperty("os.version"));
+                        preferIPv4Stack = Boolean.parseBoolean(
+                                          System.getProperties().getProperty("java.net.preferIPv4Stack"));
+                        exclBindProp = System.getProperty("sun.net.useExclusiveBind");
+                    } catch (NumberFormatException e ) {
+                        assert false : e;
+                    }
+                    return null; // nothing to return
+                } });
+
+        // (version >= 6.0) implies Vista or greater.
+        if (version >= 6.0 && !preferIPv4Stack) {
+                useDualStackImpl = true;
+        }
+
+        if (exclBindProp != null) {
+            // sun.net.useExclusiveBind is true
+            exclusiveBind = exclBindProp.length() == 0 ? true
+                    : Boolean.parseBoolean(exclBindProp);
+        } else if (version < 6.0) {
+            exclusiveBind = false;
+        }
+    }
+
+    /**
+     * Constructs an empty instance.
+     */
+    PlainSocketImpl() {
+        if (useDualStackImpl) {
+            impl = new DualStackPlainSocketImpl(exclusiveBind);
+        } else {
+            impl = new TwoStacksPlainSocketImpl(exclusiveBind);
+        }
+    }
+
+    /**
+     * Constructs an instance with the given file descriptor.
+     */
+    PlainSocketImpl(FileDescriptor fd) {
+        if (useDualStackImpl) {
+            impl = new DualStackPlainSocketImpl(fd, exclusiveBind);
+        } else {
+            impl = new TwoStacksPlainSocketImpl(fd, exclusiveBind);
+        }
+    }
+
+    // Override methods in SocketImpl that access impl's fields.
+
+    protected FileDescriptor getFileDescriptor() {
+        return impl.getFileDescriptor();
+    }
+
+    protected InetAddress getInetAddress() {
+        return impl.getInetAddress();
+    }
+
+    protected int getPort() {
+        return impl.getPort();
+    }
+
+    protected int getLocalPort() {
+        return impl.getLocalPort();
+    }
+
+    void setSocket(Socket soc) {
+        impl.setSocket(soc);
+    }
+
+    Socket getSocket() {
+        return impl.getSocket();
+    }
+
+    void setServerSocket(ServerSocket soc) {
+        impl.setServerSocket(soc);
+    }
+
+    ServerSocket getServerSocket() {
+        return impl.getServerSocket();
+    }
+
+    public String toString() {
+        return impl.toString();
+    }
+
+    // Override methods in AbstractPlainSocketImpl that access impl's fields.
+
+    protected synchronized void create(boolean stream) throws IOException {
+        impl.create(stream);
+
+        // set fd to delegate's fd to be compatible with older releases
+        this.fd = impl.fd;
+    }
+
+    protected void connect(String host, int port)
+        throws UnknownHostException, IOException
+    {
+        impl.connect(host, port);
+    }
+
+    protected void connect(InetAddress address, int port) throws IOException {
+        impl.connect(address, port);
+    }
+
+    protected void connect(SocketAddress address, int timeout) throws IOException {
+        impl.connect(address, timeout);
+    }
+
+    public void setOption(int opt, Object val) throws SocketException {
+        impl.setOption(opt, val);
+    }
+
+    public Object getOption(int opt) throws SocketException {
+        return impl.getOption(opt);
+    }
+
+    synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
+        impl.doConnect(address, port, timeout);
+    }
+
+    protected synchronized void bind(InetAddress address, int lport)
+        throws IOException
+    {
+        impl.bind(address, lport);
+    }
+
+    protected synchronized void accept(SocketImpl s) throws IOException {
+        if (s instanceof PlainSocketImpl) {
+            // pass in the real impl not the wrapper.
+            SocketImpl delegate = ((PlainSocketImpl)s).impl;
+            delegate.address = new InetAddress();
+            delegate.fd = new FileDescriptor();
+            impl.accept(delegate);
+            // set fd to delegate's fd to be compatible with older releases
+            s.fd = delegate.fd;
+        } else {
+            impl.accept(s);
+        }
+    }
+
+    void setFileDescriptor(FileDescriptor fd) {
+        impl.setFileDescriptor(fd);
+    }
+
+    void setAddress(InetAddress address) {
+        impl.setAddress(address);
+    }
+
+    void setPort(int port) {
+        impl.setPort(port);
+    }
+
+    void setLocalPort(int localPort) {
+        impl.setLocalPort(localPort);
+    }
+
+    protected synchronized InputStream getInputStream() throws IOException {
+        return impl.getInputStream();
+    }
+
+    void setInputStream(SocketInputStream in) {
+        impl.setInputStream(in);
+    }
+
+    protected synchronized OutputStream getOutputStream() throws IOException {
+        return impl.getOutputStream();
+    }
+
+    protected void close() throws IOException {
+        try {
+            impl.close();
+        } finally {
+            // set fd to delegate's fd to be compatible with older releases
+            this.fd = null;
+        }
+    }
+
+    void reset() throws IOException {
+        try {
+            impl.reset();
+        } finally {
+            // set fd to delegate's fd to be compatible with older releases
+            this.fd = null;
+        }
+    }
+
+    protected void shutdownInput() throws IOException {
+        impl.shutdownInput();
+    }
+
+    protected void shutdownOutput() throws IOException {
+        impl.shutdownOutput();
+    }
+
+    protected void sendUrgentData(int data) throws IOException {
+        impl.sendUrgentData(data);
+    }
+
+    FileDescriptor acquireFD() {
+        return impl.acquireFD();
+    }
+
+    void releaseFD() {
+        impl.releaseFD();
+    }
+
+    public boolean isConnectionReset() {
+        return impl.isConnectionReset();
+    }
+
+    public boolean isConnectionResetPending() {
+        return impl.isConnectionResetPending();
+    }
+
+    public void setConnectionReset() {
+        impl.setConnectionReset();
+    }
+
+    public void setConnectionResetPending() {
+        impl.setConnectionResetPending();
+    }
+
+    public boolean isClosedOrPending() {
+        return impl.isClosedOrPending();
+    }
+
+    public int getTimeout() {
+        return impl.getTimeout();
+    }
+
+    // Override methods in AbstractPlainSocketImpl that need to be implemented.
+
+    void socketCreate(boolean isServer) throws IOException {
+        impl.socketCreate(isServer);
+    }
+
+    void socketConnect(InetAddress address, int port, int timeout)
+        throws IOException {
+        impl.socketConnect(address, port, timeout);
+    }
+
+    void socketBind(InetAddress address, int port)
+        throws IOException {
+        impl.socketBind(address, port);
+    }
+
+    void socketListen(int count) throws IOException {
+        impl.socketListen(count);
+    }
+
+    void socketAccept(SocketImpl s) throws IOException {
+        impl.socketAccept(s);
+    }
+
+    int socketAvailable() throws IOException {
+        return impl.socketAvailable();
+    }
+
+    void socketClose0(boolean useDeferredClose) throws IOException {
+        impl.socketClose0(useDeferredClose);
+    }
+
+    void socketShutdown(int howto) throws IOException {
+        impl.socketShutdown(howto);
+    }
+
+    void socketSetOption(int cmd, boolean on, Object value)
+        throws SocketException {
+        impl.socketSetOption(cmd, on, value);
+    }
+
+    int socketGetOption(int opt, Object iaContainerObj) throws SocketException {
+        return impl.socketGetOption(opt, iaContainerObj);
+    }
+
+    void socketSendUrgentData(int data) throws IOException {
+        impl.socketSendUrgentData(data);
+    }
+}

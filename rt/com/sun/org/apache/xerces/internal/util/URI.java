@@ -1,2218 +1,2210 @@
-/*      */ package com.sun.org.apache.xerces.internal.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.Objects;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class URI
-/*      */   implements Serializable
-/*      */ {
-/*      */   static final long serialVersionUID = 1601921774685357214L;
-/*      */   
-/*      */   public static class MalformedURIException
-/*      */     extends IOException
-/*      */   {
-/*      */     static final long serialVersionUID = -6695054834342951930L;
-/*      */     
-/*      */     public MalformedURIException() {}
-/*      */     
-/*      */     public MalformedURIException(String p_msg) {
-/*   89 */       super(p_msg);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   96 */   private static final byte[] fgLookupTable = new byte[128];
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int RESERVED_CHARACTERS = 1;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int MARK_CHARACTERS = 2;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int SCHEME_CHARACTERS = 4;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int USERINFO_CHARACTERS = 8;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final int ASCII_ALPHA_CHARACTERS = 16;
-/*      */ 
-/*      */   
-/*      */   private static final int ASCII_DIGIT_CHARACTERS = 32;
-/*      */ 
-/*      */   
-/*      */   private static final int ASCII_HEX_CHARACTERS = 64;
-/*      */ 
-/*      */   
-/*      */   private static final int PATH_CHARACTERS = 128;
-/*      */ 
-/*      */   
-/*      */   private static final int MASK_ALPHA_NUMERIC = 48;
-/*      */ 
-/*      */   
-/*      */   private static final int MASK_UNRESERVED_MASK = 50;
-/*      */ 
-/*      */   
-/*      */   private static final int MASK_URI_CHARACTER = 51;
-/*      */ 
-/*      */   
-/*      */   private static final int MASK_SCHEME_CHARACTER = 52;
-/*      */ 
-/*      */   
-/*      */   private static final int MASK_USERINFO_CHARACTER = 58;
-/*      */ 
-/*      */   
-/*      */   private static final int MASK_PATH_CHARACTER = 178;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static {
-/*      */     int i;
-/*  149 */     for (i = 48; i <= 57; i++) {
-/*  150 */       fgLookupTable[i] = (byte)(fgLookupTable[i] | 0x60);
-/*      */     }
-/*      */ 
-/*      */     
-/*  154 */     for (i = 65; i <= 70; i++) {
-/*  155 */       fgLookupTable[i] = (byte)(fgLookupTable[i] | 0x50);
-/*  156 */       fgLookupTable[i + 32] = (byte)(fgLookupTable[i + 32] | 0x50);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  160 */     for (i = 71; i <= 90; i++) {
-/*  161 */       fgLookupTable[i] = (byte)(fgLookupTable[i] | 0x10);
-/*  162 */       fgLookupTable[i + 32] = (byte)(fgLookupTable[i + 32] | 0x10);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  166 */     fgLookupTable[59] = (byte)(fgLookupTable[59] | 0x1);
-/*  167 */     fgLookupTable[47] = (byte)(fgLookupTable[47] | 0x1);
-/*  168 */     fgLookupTable[63] = (byte)(fgLookupTable[63] | 0x1);
-/*  169 */     fgLookupTable[58] = (byte)(fgLookupTable[58] | 0x1);
-/*  170 */     fgLookupTable[64] = (byte)(fgLookupTable[64] | 0x1);
-/*  171 */     fgLookupTable[38] = (byte)(fgLookupTable[38] | 0x1);
-/*  172 */     fgLookupTable[61] = (byte)(fgLookupTable[61] | 0x1);
-/*  173 */     fgLookupTable[43] = (byte)(fgLookupTable[43] | 0x1);
-/*  174 */     fgLookupTable[36] = (byte)(fgLookupTable[36] | 0x1);
-/*  175 */     fgLookupTable[44] = (byte)(fgLookupTable[44] | 0x1);
-/*  176 */     fgLookupTable[91] = (byte)(fgLookupTable[91] | 0x1);
-/*  177 */     fgLookupTable[93] = (byte)(fgLookupTable[93] | 0x1);
-/*      */ 
-/*      */     
-/*  180 */     fgLookupTable[45] = (byte)(fgLookupTable[45] | 0x2);
-/*  181 */     fgLookupTable[95] = (byte)(fgLookupTable[95] | 0x2);
-/*  182 */     fgLookupTable[46] = (byte)(fgLookupTable[46] | 0x2);
-/*  183 */     fgLookupTable[33] = (byte)(fgLookupTable[33] | 0x2);
-/*  184 */     fgLookupTable[126] = (byte)(fgLookupTable[126] | 0x2);
-/*  185 */     fgLookupTable[42] = (byte)(fgLookupTable[42] | 0x2);
-/*  186 */     fgLookupTable[39] = (byte)(fgLookupTable[39] | 0x2);
-/*  187 */     fgLookupTable[40] = (byte)(fgLookupTable[40] | 0x2);
-/*  188 */     fgLookupTable[41] = (byte)(fgLookupTable[41] | 0x2);
-/*      */ 
-/*      */     
-/*  191 */     fgLookupTable[43] = (byte)(fgLookupTable[43] | 0x4);
-/*  192 */     fgLookupTable[45] = (byte)(fgLookupTable[45] | 0x4);
-/*  193 */     fgLookupTable[46] = (byte)(fgLookupTable[46] | 0x4);
-/*      */ 
-/*      */     
-/*  196 */     fgLookupTable[59] = (byte)(fgLookupTable[59] | 0x8);
-/*  197 */     fgLookupTable[58] = (byte)(fgLookupTable[58] | 0x8);
-/*  198 */     fgLookupTable[38] = (byte)(fgLookupTable[38] | 0x8);
-/*  199 */     fgLookupTable[61] = (byte)(fgLookupTable[61] | 0x8);
-/*  200 */     fgLookupTable[43] = (byte)(fgLookupTable[43] | 0x8);
-/*  201 */     fgLookupTable[36] = (byte)(fgLookupTable[36] | 0x8);
-/*  202 */     fgLookupTable[44] = (byte)(fgLookupTable[44] | 0x8);
-/*      */ 
-/*      */     
-/*  205 */     fgLookupTable[59] = (byte)(fgLookupTable[59] | 0x80);
-/*  206 */     fgLookupTable[47] = (byte)(fgLookupTable[47] | 0x80);
-/*  207 */     fgLookupTable[58] = (byte)(fgLookupTable[58] | 0x80);
-/*  208 */     fgLookupTable[64] = (byte)(fgLookupTable[64] | 0x80);
-/*  209 */     fgLookupTable[38] = (byte)(fgLookupTable[38] | 0x80);
-/*  210 */     fgLookupTable[61] = (byte)(fgLookupTable[61] | 0x80);
-/*  211 */     fgLookupTable[43] = (byte)(fgLookupTable[43] | 0x80);
-/*  212 */     fgLookupTable[36] = (byte)(fgLookupTable[36] | 0x80);
-/*  213 */     fgLookupTable[44] = (byte)(fgLookupTable[44] | 0x80);
-/*      */   }
-/*      */ 
-/*      */   
-/*  217 */   private String m_scheme = null;
-/*      */ 
-/*      */   
-/*  220 */   private String m_userinfo = null;
-/*      */ 
-/*      */   
-/*  223 */   private String m_host = null;
-/*      */ 
-/*      */   
-/*  226 */   private int m_port = -1;
-/*      */ 
-/*      */   
-/*  229 */   private String m_regAuthority = null;
-/*      */ 
-/*      */   
-/*  232 */   private String m_path = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*  236 */   private String m_queryString = null;
-/*      */ 
-/*      */   
-/*  239 */   private String m_fragment = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean DEBUG = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(URI p_other) {
-/*  256 */     initialize(p_other);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(String p_uriSpec) throws MalformedURIException {
-/*  275 */     this((URI)null, p_uriSpec);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(String p_uriSpec, boolean allowNonAbsoluteURI) throws MalformedURIException {
-/*  298 */     this((URI)null, p_uriSpec, allowNonAbsoluteURI);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(URI p_base, String p_uriSpec) throws MalformedURIException {
-/*  314 */     initialize(p_base, p_uriSpec);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(URI p_base, String p_uriSpec, boolean allowNonAbsoluteURI) throws MalformedURIException {
-/*  335 */     initialize(p_base, p_uriSpec, allowNonAbsoluteURI);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(String p_scheme, String p_schemeSpecificPart) throws MalformedURIException {
-/*  352 */     if (p_scheme == null || p_scheme.trim().length() == 0) {
-/*  353 */       throw new MalformedURIException("Cannot construct URI with null/empty scheme!");
-/*      */     }
-/*      */     
-/*  356 */     if (p_schemeSpecificPart == null || p_schemeSpecificPart
-/*  357 */       .trim().length() == 0) {
-/*  358 */       throw new MalformedURIException("Cannot construct URI with null/empty scheme-specific part!");
-/*      */     }
-/*      */     
-/*  361 */     setScheme(p_scheme);
-/*  362 */     setPath(p_schemeSpecificPart);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(String p_scheme, String p_host, String p_path, String p_queryString, String p_fragment) throws MalformedURIException {
-/*  389 */     this(p_scheme, null, p_host, -1, p_path, p_queryString, p_fragment);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public URI(String p_scheme, String p_userinfo, String p_host, int p_port, String p_path, String p_queryString, String p_fragment) throws MalformedURIException {
-/*  421 */     if (p_scheme == null || p_scheme.trim().length() == 0) {
-/*  422 */       throw new MalformedURIException("Scheme is required!");
-/*      */     }
-/*      */     
-/*  425 */     if (p_host == null) {
-/*  426 */       if (p_userinfo != null) {
-/*  427 */         throw new MalformedURIException("Userinfo may not be specified if host is not specified!");
-/*      */       }
-/*      */       
-/*  430 */       if (p_port != -1) {
-/*  431 */         throw new MalformedURIException("Port may not be specified if host is not specified!");
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  436 */     if (p_path != null) {
-/*  437 */       if (p_path.indexOf('?') != -1 && p_queryString != null) {
-/*  438 */         throw new MalformedURIException("Query string cannot be specified in path and query string!");
-/*      */       }
-/*      */ 
-/*      */       
-/*  442 */       if (p_path.indexOf('#') != -1 && p_fragment != null) {
-/*  443 */         throw new MalformedURIException("Fragment cannot be specified in both the path and fragment!");
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  448 */     setScheme(p_scheme);
-/*  449 */     setHost(p_host);
-/*  450 */     setPort(p_port);
-/*  451 */     setUserinfo(p_userinfo);
-/*  452 */     setPath(p_path);
-/*  453 */     setQueryString(p_queryString);
-/*  454 */     setFragment(p_fragment);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initialize(URI p_other) {
-/*  463 */     this.m_scheme = p_other.getScheme();
-/*  464 */     this.m_userinfo = p_other.getUserinfo();
-/*  465 */     this.m_host = p_other.getHost();
-/*  466 */     this.m_port = p_other.getPort();
-/*  467 */     this.m_regAuthority = p_other.getRegBasedAuthority();
-/*  468 */     this.m_path = p_other.getPath();
-/*  469 */     this.m_queryString = p_other.getQueryString();
-/*  470 */     this.m_fragment = p_other.getFragment();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initialize(URI p_base, String p_uriSpec, boolean allowNonAbsoluteURI) throws MalformedURIException {
-/*  494 */     String uriSpec = p_uriSpec;
-/*  495 */     int uriSpecLen = (uriSpec != null) ? uriSpec.length() : 0;
-/*      */     
-/*  497 */     if (p_base == null && uriSpecLen == 0) {
-/*  498 */       if (allowNonAbsoluteURI) {
-/*  499 */         this.m_path = "";
-/*      */         return;
-/*      */       } 
-/*  502 */       throw new MalformedURIException("Cannot initialize URI with empty parameters.");
-/*      */     } 
-/*      */ 
-/*      */     
-/*  506 */     if (uriSpecLen == 0) {
-/*  507 */       initialize(p_base);
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  511 */     int index = 0;
-/*      */ 
-/*      */     
-/*  514 */     int colonIdx = uriSpec.indexOf(':');
-/*  515 */     if (colonIdx != -1) {
-/*  516 */       int searchFrom = colonIdx - 1;
-/*      */       
-/*  518 */       int slashIdx = uriSpec.lastIndexOf('/', searchFrom);
-/*  519 */       int queryIdx = uriSpec.lastIndexOf('?', searchFrom);
-/*  520 */       int fragmentIdx = uriSpec.lastIndexOf('#', searchFrom);
-/*      */       
-/*  522 */       if (colonIdx == 0 || slashIdx != -1 || queryIdx != -1 || fragmentIdx != -1) {
-/*      */ 
-/*      */         
-/*  525 */         if (colonIdx == 0 || (p_base == null && fragmentIdx != 0 && !allowNonAbsoluteURI)) {
-/*  526 */           throw new MalformedURIException("No scheme found in URI.");
-/*      */         }
-/*      */       } else {
-/*      */         
-/*  530 */         initializeScheme(uriSpec);
-/*  531 */         index = this.m_scheme.length() + 1;
-/*      */ 
-/*      */         
-/*  534 */         if (colonIdx == uriSpecLen - 1 || uriSpec.charAt(colonIdx + 1) == '#') {
-/*  535 */           throw new MalformedURIException("Scheme specific part cannot be empty.");
-/*      */         }
-/*      */       }
-/*      */     
-/*  539 */     } else if (p_base == null && uriSpec.indexOf('#') != 0 && !allowNonAbsoluteURI) {
-/*  540 */       throw new MalformedURIException("No scheme found in URI.");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  552 */     if (index + 1 < uriSpecLen && uriSpec
-/*  553 */       .charAt(index) == '/' && uriSpec.charAt(index + 1) == '/') {
-/*  554 */       index += 2;
-/*  555 */       int startPos = index;
-/*      */ 
-/*      */       
-/*  558 */       char testChar = Character.MIN_VALUE;
-/*  559 */       while (index < uriSpecLen) {
-/*  560 */         testChar = uriSpec.charAt(index);
-/*  561 */         if (testChar == '/' || testChar == '?' || testChar == '#') {
-/*      */           break;
-/*      */         }
-/*  564 */         index++;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  570 */       if (index > startPos) {
-/*      */ 
-/*      */         
-/*  573 */         if (!initializeAuthority(uriSpec.substring(startPos, index))) {
-/*  574 */           index = startPos - 2;
-/*      */         }
-/*      */       } else {
-/*      */         
-/*  578 */         this.m_host = "";
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  582 */     initializePath(uriSpec, index);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  589 */     if (p_base != null) {
-/*  590 */       absolutize(p_base);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initialize(URI p_base, String p_uriSpec) throws MalformedURIException {
-/*  613 */     String uriSpec = p_uriSpec;
-/*  614 */     int uriSpecLen = (uriSpec != null) ? uriSpec.length() : 0;
-/*      */     
-/*  616 */     if (p_base == null && uriSpecLen == 0) {
-/*  617 */       throw new MalformedURIException("Cannot initialize URI with empty parameters.");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  622 */     if (uriSpecLen == 0) {
-/*  623 */       initialize(p_base);
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  627 */     int index = 0;
-/*      */ 
-/*      */     
-/*  630 */     int colonIdx = uriSpec.indexOf(':');
-/*  631 */     if (colonIdx != -1) {
-/*  632 */       int searchFrom = colonIdx - 1;
-/*      */       
-/*  634 */       int slashIdx = uriSpec.lastIndexOf('/', searchFrom);
-/*  635 */       int queryIdx = uriSpec.lastIndexOf('?', searchFrom);
-/*  636 */       int fragmentIdx = uriSpec.lastIndexOf('#', searchFrom);
-/*      */       
-/*  638 */       if (colonIdx == 0 || slashIdx != -1 || queryIdx != -1 || fragmentIdx != -1) {
-/*      */ 
-/*      */         
-/*  641 */         if (colonIdx == 0 || (p_base == null && fragmentIdx != 0)) {
-/*  642 */           throw new MalformedURIException("No scheme found in URI.");
-/*      */         }
-/*      */       } else {
-/*      */         
-/*  646 */         initializeScheme(uriSpec);
-/*  647 */         index = this.m_scheme.length() + 1;
-/*      */ 
-/*      */         
-/*  650 */         if (colonIdx == uriSpecLen - 1 || uriSpec.charAt(colonIdx + 1) == '#') {
-/*  651 */           throw new MalformedURIException("Scheme specific part cannot be empty.");
-/*      */         }
-/*      */       }
-/*      */     
-/*  655 */     } else if (p_base == null && uriSpec.indexOf('#') != 0) {
-/*  656 */       throw new MalformedURIException("No scheme found in URI.");
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  668 */     if (index + 1 < uriSpecLen && uriSpec
-/*  669 */       .charAt(index) == '/' && uriSpec.charAt(index + 1) == '/') {
-/*  670 */       index += 2;
-/*  671 */       int startPos = index;
-/*      */ 
-/*      */       
-/*  674 */       char testChar = Character.MIN_VALUE;
-/*  675 */       while (index < uriSpecLen) {
-/*  676 */         testChar = uriSpec.charAt(index);
-/*  677 */         if (testChar == '/' || testChar == '?' || testChar == '#') {
-/*      */           break;
-/*      */         }
-/*  680 */         index++;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  686 */       if (index > startPos) {
-/*      */ 
-/*      */         
-/*  689 */         if (!initializeAuthority(uriSpec.substring(startPos, index))) {
-/*  690 */           index = startPos - 2;
-/*      */         }
-/*  692 */       } else if (index < uriSpecLen) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  696 */         this.m_host = "";
-/*      */       } else {
-/*  698 */         throw new MalformedURIException("Expected authority.");
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  702 */     initializePath(uriSpec, index);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  709 */     if (p_base != null) {
-/*  710 */       absolutize(p_base);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void absolutize(URI p_base) {
-/*  728 */     if (this.m_path.length() == 0 && this.m_scheme == null && this.m_host == null && this.m_regAuthority == null) {
-/*      */       
-/*  730 */       this.m_scheme = p_base.getScheme();
-/*  731 */       this.m_userinfo = p_base.getUserinfo();
-/*  732 */       this.m_host = p_base.getHost();
-/*  733 */       this.m_port = p_base.getPort();
-/*  734 */       this.m_regAuthority = p_base.getRegBasedAuthority();
-/*  735 */       this.m_path = p_base.getPath();
-/*      */       
-/*  737 */       if (this.m_queryString == null) {
-/*  738 */         this.m_queryString = p_base.getQueryString();
-/*      */         
-/*  740 */         if (this.m_fragment == null) {
-/*  741 */           this.m_fragment = p_base.getFragment();
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/*  749 */     if (this.m_scheme == null) {
-/*  750 */       this.m_scheme = p_base.getScheme();
-/*      */     } else {
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  758 */     if (this.m_host == null && this.m_regAuthority == null) {
-/*  759 */       this.m_userinfo = p_base.getUserinfo();
-/*  760 */       this.m_host = p_base.getHost();
-/*  761 */       this.m_port = p_base.getPort();
-/*  762 */       this.m_regAuthority = p_base.getRegBasedAuthority();
-/*      */     } else {
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  769 */     if (this.m_path.length() > 0 && this.m_path
-/*  770 */       .startsWith("/")) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  776 */     String path = "";
-/*  777 */     String basePath = p_base.getPath();
-/*      */ 
-/*      */     
-/*  780 */     if (basePath != null && basePath.length() > 0) {
-/*  781 */       int lastSlash = basePath.lastIndexOf('/');
-/*  782 */       if (lastSlash != -1) {
-/*  783 */         path = basePath.substring(0, lastSlash + 1);
-/*      */       }
-/*      */     }
-/*  786 */     else if (this.m_path.length() > 0) {
-/*  787 */       path = "/";
-/*      */     } 
-/*      */ 
-/*      */     
-/*  791 */     path = path.concat(this.m_path);
-/*      */ 
-/*      */     
-/*  794 */     int index = -1;
-/*  795 */     while ((index = path.indexOf("/./")) != -1) {
-/*  796 */       path = path.substring(0, index + 1).concat(path.substring(index + 3));
-/*      */     }
-/*      */ 
-/*      */     
-/*  800 */     if (path.endsWith("/.")) {
-/*  801 */       path = path.substring(0, path.length() - 1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  806 */     index = 1;
-/*  807 */     int segIndex = -1;
-/*  808 */     String tempString = null;
-/*      */     
-/*  810 */     while ((index = path.indexOf("/../", index)) > 0) {
-/*  811 */       tempString = path.substring(0, path.indexOf("/../"));
-/*  812 */       segIndex = tempString.lastIndexOf('/');
-/*  813 */       if (segIndex != -1) {
-/*  814 */         if (!tempString.substring(segIndex).equals("..")) {
-/*  815 */           path = path.substring(0, segIndex + 1).concat(path.substring(index + 4));
-/*  816 */           index = segIndex;
-/*      */           continue;
-/*      */         } 
-/*  819 */         index += 4;
-/*      */         
-/*      */         continue;
-/*      */       } 
-/*  823 */       index += 4;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  829 */     if (path.endsWith("/..")) {
-/*  830 */       tempString = path.substring(0, path.length() - 3);
-/*  831 */       segIndex = tempString.lastIndexOf('/');
-/*  832 */       if (segIndex != -1) {
-/*  833 */         path = path.substring(0, segIndex + 1);
-/*      */       }
-/*      */     } 
-/*  836 */     this.m_path = path;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initializeScheme(String p_uriSpec) throws MalformedURIException {
-/*  849 */     int uriSpecLen = p_uriSpec.length();
-/*  850 */     int index = 0;
-/*  851 */     String scheme = null;
-/*  852 */     char testChar = Character.MIN_VALUE;
-/*      */     
-/*  854 */     while (index < uriSpecLen) {
-/*  855 */       testChar = p_uriSpec.charAt(index);
-/*  856 */       if (testChar == ':' || testChar == '/' || testChar == '?' || testChar == '#') {
-/*      */         break;
-/*      */       }
-/*      */       
-/*  860 */       index++;
-/*      */     } 
-/*  862 */     scheme = p_uriSpec.substring(0, index);
-/*      */     
-/*  864 */     if (scheme.length() == 0) {
-/*  865 */       throw new MalformedURIException("No scheme found in URI.");
-/*      */     }
-/*      */     
-/*  868 */     setScheme(scheme);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean initializeAuthority(String p_uriSpec) {
-/*  883 */     int index = 0;
-/*  884 */     int start = 0;
-/*  885 */     int end = p_uriSpec.length();
-/*      */     
-/*  887 */     char testChar = Character.MIN_VALUE;
-/*  888 */     String userinfo = null;
-/*      */ 
-/*      */     
-/*  891 */     if (p_uriSpec.indexOf('@', start) != -1) {
-/*  892 */       while (index < end) {
-/*  893 */         testChar = p_uriSpec.charAt(index);
-/*  894 */         if (testChar == '@') {
-/*      */           break;
-/*      */         }
-/*  897 */         index++;
-/*      */       } 
-/*  899 */       userinfo = p_uriSpec.substring(start, index);
-/*  900 */       index++;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  905 */     String host = null;
-/*  906 */     start = index;
-/*  907 */     boolean hasPort = false;
-/*  908 */     if (index < end) {
-/*  909 */       if (p_uriSpec.charAt(start) == '[') {
-/*  910 */         int bracketIndex = p_uriSpec.indexOf(']', start);
-/*  911 */         index = (bracketIndex != -1) ? bracketIndex : end;
-/*  912 */         if (index + 1 < end && p_uriSpec.charAt(index + 1) == ':') {
-/*  913 */           index++;
-/*  914 */           hasPort = true;
-/*      */         } else {
-/*      */           
-/*  917 */           index = end;
-/*      */         } 
-/*      */       } else {
-/*      */         
-/*  921 */         int colonIndex = p_uriSpec.lastIndexOf(':', end);
-/*  922 */         index = (colonIndex > start) ? colonIndex : end;
-/*  923 */         hasPort = (index != end);
-/*      */       } 
-/*      */     }
-/*  926 */     host = p_uriSpec.substring(start, index);
-/*  927 */     int port = -1;
-/*  928 */     if (host.length() > 0)
-/*      */     {
-/*  930 */       if (hasPort) {
-/*      */         
-/*  932 */         start = ++index;
-/*  933 */         while (index < end) {
-/*  934 */           index++;
-/*      */         }
-/*  936 */         String portStr = p_uriSpec.substring(start, index);
-/*  937 */         if (portStr.length() > 0) {
-/*      */           
-/*      */           try {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  949 */             port = Integer.parseInt(portStr);
-/*  950 */             if (port == -1) port--;
-/*      */           
-/*  952 */           } catch (NumberFormatException nfe) {
-/*  953 */             port = -2;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */     
-/*  959 */     if (isValidServerBasedAuthority(host, port, userinfo)) {
-/*  960 */       this.m_host = host;
-/*  961 */       this.m_port = port;
-/*  962 */       this.m_userinfo = userinfo;
-/*  963 */       return true;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  969 */     if (isValidRegistryBasedAuthority(p_uriSpec)) {
-/*  970 */       this.m_regAuthority = p_uriSpec;
-/*  971 */       return true;
-/*      */     } 
-/*  973 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isValidServerBasedAuthority(String host, int port, String userinfo) {
-/*  990 */     if (!isWellFormedAddress(host)) {
-/*  991 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  998 */     if (port < -1 || port > 65535) {
-/*  999 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1003 */     if (userinfo != null) {
-/*      */ 
-/*      */       
-/* 1006 */       int index = 0;
-/* 1007 */       int end = userinfo.length();
-/* 1008 */       char testChar = Character.MIN_VALUE;
-/* 1009 */       while (index < end) {
-/* 1010 */         testChar = userinfo.charAt(index);
-/* 1011 */         if (testChar == '%') {
-/* 1012 */           if (index + 2 >= end || 
-/* 1013 */             !isHex(userinfo.charAt(index + 1)) || 
-/* 1014 */             !isHex(userinfo.charAt(index + 2))) {
-/* 1015 */             return false;
-/*      */           }
-/* 1017 */           index += 2;
-/*      */         }
-/* 1019 */         else if (!isUserinfoCharacter(testChar)) {
-/* 1020 */           return false;
-/*      */         } 
-/* 1022 */         index++;
-/*      */       } 
-/*      */     } 
-/* 1025 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isValidRegistryBasedAuthority(String authority) {
-/* 1036 */     int index = 0;
-/* 1037 */     int end = authority.length();
-/*      */ 
-/*      */     
-/* 1040 */     while (index < end) {
-/* 1041 */       char testChar = authority.charAt(index);
-/*      */ 
-/*      */       
-/* 1044 */       if (testChar == '%') {
-/* 1045 */         if (index + 2 >= end || 
-/* 1046 */           !isHex(authority.charAt(index + 1)) || 
-/* 1047 */           !isHex(authority.charAt(index + 2))) {
-/* 1048 */           return false;
-/*      */         }
-/* 1050 */         index += 2;
-/*      */ 
-/*      */       
-/*      */       }
-/* 1054 */       else if (!isPathCharacter(testChar)) {
-/* 1055 */         return false;
-/*      */       } 
-/* 1057 */       index++;
-/*      */     } 
-/* 1059 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initializePath(String p_uriSpec, int p_nStartIndex) throws MalformedURIException {
-/* 1072 */     if (p_uriSpec == null) {
-/* 1073 */       throw new MalformedURIException("Cannot initialize path from null string!");
-/*      */     }
-/*      */ 
-/*      */     
-/* 1077 */     int index = p_nStartIndex;
-/* 1078 */     int start = p_nStartIndex;
-/* 1079 */     int end = p_uriSpec.length();
-/* 1080 */     char testChar = Character.MIN_VALUE;
-/*      */ 
-/*      */     
-/* 1083 */     if (start < end)
-/*      */     {
-/* 1085 */       if (getScheme() == null || p_uriSpec.charAt(start) == '/') {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1090 */         while (index < end) {
-/* 1091 */           testChar = p_uriSpec.charAt(index);
-/*      */ 
-/*      */           
-/* 1094 */           if (testChar == '%') {
-/* 1095 */             if (index + 2 >= end || 
-/* 1096 */               !isHex(p_uriSpec.charAt(index + 1)) || 
-/* 1097 */               !isHex(p_uriSpec.charAt(index + 2))) {
-/* 1098 */               throw new MalformedURIException("Path contains invalid escape sequence!");
-/*      */             }
-/*      */             
-/* 1101 */             index += 2;
-/*      */ 
-/*      */           
-/*      */           }
-/* 1105 */           else if (!isPathCharacter(testChar)) {
-/* 1106 */             if (testChar == '?' || testChar == '#') {
-/*      */               break;
-/*      */             }
-/* 1109 */             throw new MalformedURIException("Path contains invalid character: " + testChar);
-/*      */           } 
-/*      */           
-/* 1112 */           index++;
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1119 */         while (index < end) {
-/* 1120 */           testChar = p_uriSpec.charAt(index);
-/*      */           
-/* 1122 */           if (testChar == '?' || testChar == '#') {
-/*      */             break;
-/*      */           }
-/*      */ 
-/*      */           
-/* 1127 */           if (testChar == '%') {
-/* 1128 */             if (index + 2 >= end || 
-/* 1129 */               !isHex(p_uriSpec.charAt(index + 1)) || 
-/* 1130 */               !isHex(p_uriSpec.charAt(index + 2))) {
-/* 1131 */               throw new MalformedURIException("Opaque part contains invalid escape sequence!");
-/*      */             }
-/*      */             
-/* 1134 */             index += 2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*      */           }
-/* 1141 */           else if (!isURICharacter(testChar)) {
-/* 1142 */             throw new MalformedURIException("Opaque part contains invalid character: " + testChar);
-/*      */           } 
-/*      */           
-/* 1145 */           index++;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/* 1149 */     this.m_path = p_uriSpec.substring(start, index);
-/*      */ 
-/*      */     
-/* 1152 */     if (testChar == '?') {
-/*      */       
-/* 1154 */       start = ++index;
-/* 1155 */       while (index < end) {
-/* 1156 */         testChar = p_uriSpec.charAt(index);
-/* 1157 */         if (testChar == '#') {
-/*      */           break;
-/*      */         }
-/* 1160 */         if (testChar == '%') {
-/* 1161 */           if (index + 2 >= end || 
-/* 1162 */             !isHex(p_uriSpec.charAt(index + 1)) || 
-/* 1163 */             !isHex(p_uriSpec.charAt(index + 2))) {
-/* 1164 */             throw new MalformedURIException("Query string contains invalid escape sequence!");
-/*      */           }
-/*      */           
-/* 1167 */           index += 2;
-/*      */         }
-/* 1169 */         else if (!isURICharacter(testChar)) {
-/* 1170 */           throw new MalformedURIException("Query string contains invalid character: " + testChar);
-/*      */         } 
-/*      */         
-/* 1173 */         index++;
-/*      */       } 
-/* 1175 */       this.m_queryString = p_uriSpec.substring(start, index);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1179 */     if (testChar == '#') {
-/*      */       
-/* 1181 */       start = ++index;
-/* 1182 */       while (index < end) {
-/* 1183 */         testChar = p_uriSpec.charAt(index);
-/*      */         
-/* 1185 */         if (testChar == '%') {
-/* 1186 */           if (index + 2 >= end || 
-/* 1187 */             !isHex(p_uriSpec.charAt(index + 1)) || 
-/* 1188 */             !isHex(p_uriSpec.charAt(index + 2))) {
-/* 1189 */             throw new MalformedURIException("Fragment contains invalid escape sequence!");
-/*      */           }
-/*      */           
-/* 1192 */           index += 2;
-/*      */         }
-/* 1194 */         else if (!isURICharacter(testChar)) {
-/* 1195 */           throw new MalformedURIException("Fragment contains invalid character: " + testChar);
-/*      */         } 
-/*      */         
-/* 1198 */         index++;
-/*      */       } 
-/* 1200 */       this.m_fragment = p_uriSpec.substring(start, index);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getScheme() {
-/* 1210 */     return this.m_scheme;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getSchemeSpecificPart() {
-/* 1220 */     StringBuilder schemespec = new StringBuilder();
-/*      */     
-/* 1222 */     if (this.m_host != null || this.m_regAuthority != null) {
-/* 1223 */       schemespec.append("//");
-/*      */ 
-/*      */       
-/* 1226 */       if (this.m_host != null) {
-/*      */         
-/* 1228 */         if (this.m_userinfo != null) {
-/* 1229 */           schemespec.append(this.m_userinfo);
-/* 1230 */           schemespec.append('@');
-/*      */         } 
-/*      */         
-/* 1233 */         schemespec.append(this.m_host);
-/*      */         
-/* 1235 */         if (this.m_port != -1) {
-/* 1236 */           schemespec.append(':');
-/* 1237 */           schemespec.append(this.m_port);
-/*      */         }
-/*      */       
-/*      */       } else {
-/*      */         
-/* 1242 */         schemespec.append(this.m_regAuthority);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1246 */     if (this.m_path != null) {
-/* 1247 */       schemespec.append(this.m_path);
-/*      */     }
-/*      */     
-/* 1250 */     if (this.m_queryString != null) {
-/* 1251 */       schemespec.append('?');
-/* 1252 */       schemespec.append(this.m_queryString);
-/*      */     } 
-/*      */     
-/* 1255 */     if (this.m_fragment != null) {
-/* 1256 */       schemespec.append('#');
-/* 1257 */       schemespec.append(this.m_fragment);
-/*      */     } 
-/*      */     
-/* 1260 */     return schemespec.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getUserinfo() {
-/* 1269 */     return this.m_userinfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getHost() {
-/* 1278 */     return this.m_host;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getPort() {
-/* 1287 */     return this.m_port;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getRegBasedAuthority() {
-/* 1296 */     return this.m_regAuthority;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getAuthority() {
-/* 1305 */     StringBuilder authority = new StringBuilder();
-/* 1306 */     if (this.m_host != null || this.m_regAuthority != null) {
-/* 1307 */       authority.append("//");
-/*      */ 
-/*      */       
-/* 1310 */       if (this.m_host != null) {
-/*      */         
-/* 1312 */         if (this.m_userinfo != null) {
-/* 1313 */           authority.append(this.m_userinfo);
-/* 1314 */           authority.append('@');
-/*      */         } 
-/*      */         
-/* 1317 */         authority.append(this.m_host);
-/*      */         
-/* 1319 */         if (this.m_port != -1) {
-/* 1320 */           authority.append(':');
-/* 1321 */           authority.append(this.m_port);
-/*      */         }
-/*      */       
-/*      */       } else {
-/*      */         
-/* 1326 */         authority.append(this.m_regAuthority);
-/*      */       } 
-/*      */     } 
-/* 1329 */     return authority.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getPath(boolean p_includeQueryString, boolean p_includeFragment) {
-/* 1348 */     StringBuilder pathString = new StringBuilder(this.m_path);
-/*      */     
-/* 1350 */     if (p_includeQueryString && this.m_queryString != null) {
-/* 1351 */       pathString.append('?');
-/* 1352 */       pathString.append(this.m_queryString);
-/*      */     } 
-/*      */     
-/* 1355 */     if (p_includeFragment && this.m_fragment != null) {
-/* 1356 */       pathString.append('#');
-/* 1357 */       pathString.append(this.m_fragment);
-/*      */     } 
-/* 1359 */     return pathString.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getPath() {
-/* 1369 */     return this.m_path;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getQueryString() {
-/* 1380 */     return this.m_queryString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getFragment() {
-/* 1391 */     return this.m_fragment;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setScheme(String p_scheme) throws MalformedURIException {
-/* 1404 */     if (p_scheme == null) {
-/* 1405 */       throw new MalformedURIException("Cannot set scheme from null string!");
-/*      */     }
-/*      */     
-/* 1408 */     if (!isConformantSchemeName(p_scheme)) {
-/* 1409 */       throw new MalformedURIException("The scheme is not conformant.");
-/*      */     }
-/*      */     
-/* 1412 */     this.m_scheme = p_scheme.toLowerCase();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUserinfo(String p_userinfo) throws MalformedURIException {
-/* 1425 */     if (p_userinfo == null) {
-/* 1426 */       this.m_userinfo = null;
-/*      */       
-/*      */       return;
-/*      */     } 
-/* 1430 */     if (this.m_host == null) {
-/* 1431 */       throw new MalformedURIException("Userinfo cannot be set when host is null!");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1437 */     int index = 0;
-/* 1438 */     int end = p_userinfo.length();
-/* 1439 */     char testChar = Character.MIN_VALUE;
-/* 1440 */     while (index < end) {
-/* 1441 */       testChar = p_userinfo.charAt(index);
-/* 1442 */       if (testChar == '%') {
-/* 1443 */         if (index + 2 >= end || 
-/* 1444 */           !isHex(p_userinfo.charAt(index + 1)) || 
-/* 1445 */           !isHex(p_userinfo.charAt(index + 2))) {
-/* 1446 */           throw new MalformedURIException("Userinfo contains invalid escape sequence!");
-/*      */         
-/*      */         }
-/*      */       }
-/* 1450 */       else if (!isUserinfoCharacter(testChar)) {
-/* 1451 */         throw new MalformedURIException("Userinfo contains invalid character:" + testChar);
-/*      */       } 
-/*      */       
-/* 1454 */       index++;
-/*      */     } 
-/*      */     
-/* 1457 */     this.m_userinfo = p_userinfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setHost(String p_host) throws MalformedURIException {
-/* 1473 */     if (p_host == null || p_host.length() == 0) {
-/* 1474 */       if (p_host != null) {
-/* 1475 */         this.m_regAuthority = null;
-/*      */       }
-/* 1477 */       this.m_host = p_host;
-/* 1478 */       this.m_userinfo = null;
-/* 1479 */       this.m_port = -1;
-/*      */       return;
-/*      */     } 
-/* 1482 */     if (!isWellFormedAddress(p_host)) {
-/* 1483 */       throw new MalformedURIException("Host is not a well formed address!");
-/*      */     }
-/* 1485 */     this.m_host = p_host;
-/* 1486 */     this.m_regAuthority = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPort(int p_port) throws MalformedURIException {
-/* 1501 */     if (p_port >= 0 && p_port <= 65535) {
-/* 1502 */       if (this.m_host == null) {
-/* 1503 */         throw new MalformedURIException("Port cannot be set when host is null!");
-/*      */       
-/*      */       }
-/*      */     }
-/* 1507 */     else if (p_port != -1) {
-/* 1508 */       throw new MalformedURIException("Invalid port number!");
-/*      */     } 
-/* 1510 */     this.m_port = p_port;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRegBasedAuthority(String authority) throws MalformedURIException {
-/* 1527 */     if (authority == null) {
-/* 1528 */       this.m_regAuthority = null;
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/* 1533 */     if (authority.length() < 1 || 
-/* 1534 */       !isValidRegistryBasedAuthority(authority) || authority
-/* 1535 */       .indexOf('/') != -1) {
-/* 1536 */       throw new MalformedURIException("Registry based authority is not well formed.");
-/*      */     }
-/* 1538 */     this.m_regAuthority = authority;
-/* 1539 */     this.m_host = null;
-/* 1540 */     this.m_userinfo = null;
-/* 1541 */     this.m_port = -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPath(String p_path) throws MalformedURIException {
-/* 1559 */     if (p_path == null) {
-/* 1560 */       this.m_path = null;
-/* 1561 */       this.m_queryString = null;
-/* 1562 */       this.m_fragment = null;
-/*      */     } else {
-/*      */       
-/* 1565 */       initializePath(p_path, 0);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void appendPath(String p_addToPath) throws MalformedURIException {
-/* 1584 */     if (p_addToPath == null || p_addToPath.trim().length() == 0) {
-/*      */       return;
-/*      */     }
-/*      */     
-/* 1588 */     if (!isURIString(p_addToPath)) {
-/* 1589 */       throw new MalformedURIException("Path contains invalid character!");
-/*      */     }
-/*      */ 
-/*      */     
-/* 1593 */     if (this.m_path == null || this.m_path.trim().length() == 0) {
-/* 1594 */       if (p_addToPath.startsWith("/")) {
-/* 1595 */         this.m_path = p_addToPath;
-/*      */       } else {
-/*      */         
-/* 1598 */         this.m_path = "/" + p_addToPath;
-/*      */       }
-/*      */     
-/* 1601 */     } else if (this.m_path.endsWith("/")) {
-/* 1602 */       if (p_addToPath.startsWith("/")) {
-/* 1603 */         this.m_path = this.m_path.concat(p_addToPath.substring(1));
-/*      */       } else {
-/*      */         
-/* 1606 */         this.m_path = this.m_path.concat(p_addToPath);
-/*      */       }
-/*      */     
-/*      */     }
-/* 1610 */     else if (p_addToPath.startsWith("/")) {
-/* 1611 */       this.m_path = this.m_path.concat(p_addToPath);
-/*      */     } else {
-/*      */       
-/* 1614 */       this.m_path = this.m_path.concat("/" + p_addToPath);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setQueryString(String p_queryString) throws MalformedURIException {
-/* 1631 */     if (p_queryString == null) {
-/* 1632 */       this.m_queryString = null;
-/*      */     } else {
-/* 1634 */       if (!isGenericURI()) {
-/* 1635 */         throw new MalformedURIException("Query string can only be set for a generic URI!");
-/*      */       }
-/*      */       
-/* 1638 */       if (getPath() == null) {
-/* 1639 */         throw new MalformedURIException("Query string cannot be set when path is null!");
-/*      */       }
-/*      */       
-/* 1642 */       if (!isURIString(p_queryString)) {
-/* 1643 */         throw new MalformedURIException("Query string contains invalid character!");
-/*      */       }
-/*      */ 
-/*      */       
-/* 1647 */       this.m_queryString = p_queryString;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFragment(String p_fragment) throws MalformedURIException {
-/* 1663 */     if (p_fragment == null) {
-/* 1664 */       this.m_fragment = null;
-/*      */     } else {
-/* 1666 */       if (!isGenericURI()) {
-/* 1667 */         throw new MalformedURIException("Fragment can only be set for a generic URI!");
-/*      */       }
-/*      */       
-/* 1670 */       if (getPath() == null) {
-/* 1671 */         throw new MalformedURIException("Fragment cannot be set when path is null!");
-/*      */       }
-/*      */       
-/* 1674 */       if (!isURIString(p_fragment)) {
-/* 1675 */         throw new MalformedURIException("Fragment contains invalid character!");
-/*      */       }
-/*      */ 
-/*      */       
-/* 1679 */       this.m_fragment = p_fragment;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object p_test) {
-/* 1693 */     if (p_test instanceof URI) {
-/* 1694 */       URI testURI = (URI)p_test;
-/* 1695 */       if (((this.m_scheme == null && testURI.m_scheme == null) || (this.m_scheme != null && testURI.m_scheme != null && this.m_scheme
-/*      */         
-/* 1697 */         .equals(testURI.m_scheme))) && ((this.m_userinfo == null && testURI.m_userinfo == null) || (this.m_userinfo != null && testURI.m_userinfo != null && this.m_userinfo
-/*      */ 
-/*      */         
-/* 1700 */         .equals(testURI.m_userinfo))) && ((this.m_host == null && testURI.m_host == null) || (this.m_host != null && testURI.m_host != null && this.m_host
-/*      */ 
-/*      */         
-/* 1703 */         .equals(testURI.m_host))) && this.m_port == testURI.m_port && ((this.m_path == null && testURI.m_path == null) || (this.m_path != null && testURI.m_path != null && this.m_path
-/*      */ 
-/*      */ 
-/*      */         
-/* 1707 */         .equals(testURI.m_path))) && ((this.m_queryString == null && testURI.m_queryString == null) || (this.m_queryString != null && testURI.m_queryString != null && this.m_queryString
-/*      */ 
-/*      */         
-/* 1710 */         .equals(testURI.m_queryString))) && ((this.m_fragment == null && testURI.m_fragment == null) || (this.m_fragment != null && testURI.m_fragment != null && this.m_fragment
-/*      */ 
-/*      */         
-/* 1713 */         .equals(testURI.m_fragment)))) {
-/* 1714 */         return true;
-/*      */       }
-/*      */     } 
-/* 1717 */     return false;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/* 1722 */     int hash = 5;
-/* 1723 */     hash = 47 * hash + Objects.hashCode(this.m_scheme);
-/* 1724 */     hash = 47 * hash + Objects.hashCode(this.m_userinfo);
-/* 1725 */     hash = 47 * hash + Objects.hashCode(this.m_host);
-/* 1726 */     hash = 47 * hash + this.m_port;
-/* 1727 */     hash = 47 * hash + Objects.hashCode(this.m_path);
-/* 1728 */     hash = 47 * hash + Objects.hashCode(this.m_queryString);
-/* 1729 */     hash = 47 * hash + Objects.hashCode(this.m_fragment);
-/* 1730 */     return hash;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 1740 */     StringBuilder uriSpecString = new StringBuilder();
-/*      */     
-/* 1742 */     if (this.m_scheme != null) {
-/* 1743 */       uriSpecString.append(this.m_scheme);
-/* 1744 */       uriSpecString.append(':');
-/*      */     } 
-/* 1746 */     uriSpecString.append(getSchemeSpecificPart());
-/* 1747 */     return uriSpecString.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isGenericURI() {
-/* 1760 */     return (this.m_host != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isAbsoluteURI() {
-/* 1771 */     return (this.m_scheme != null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean isConformantSchemeName(String p_scheme) {
-/* 1782 */     if (p_scheme == null || p_scheme.trim().length() == 0) {
-/* 1783 */       return false;
-/*      */     }
-/*      */     
-/* 1786 */     if (!isAlpha(p_scheme.charAt(0))) {
-/* 1787 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1791 */     int schemeLength = p_scheme.length();
-/* 1792 */     for (int i = 1; i < schemeLength; i++) {
-/* 1793 */       char testChar = p_scheme.charAt(i);
-/* 1794 */       if (!isSchemeCharacter(testChar)) {
-/* 1795 */         return false;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1799 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean isWellFormedAddress(String address) {
-/* 1815 */     if (address == null) {
-/* 1816 */       return false;
-/*      */     }
-/*      */     
-/* 1819 */     int addrLength = address.length();
-/* 1820 */     if (addrLength == 0) {
-/* 1821 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1825 */     if (address.startsWith("[")) {
-/* 1826 */       return isWellFormedIPv6Reference(address);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1830 */     if (address.startsWith(".") || address
-/* 1831 */       .startsWith("-") || address
-/* 1832 */       .endsWith("-")) {
-/* 1833 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1839 */     int index = address.lastIndexOf('.');
-/* 1840 */     if (address.endsWith(".")) {
-/* 1841 */       index = address.substring(0, index).lastIndexOf('.');
-/*      */     }
-/*      */     
-/* 1844 */     if (index + 1 < addrLength && isDigit(address.charAt(index + 1))) {
-/* 1845 */       return isWellFormedIPv4Address(address);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1855 */     if (addrLength > 255) {
-/* 1856 */       return false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1862 */     int labelCharCount = 0;
-/*      */     
-/* 1864 */     for (int i = 0; i < addrLength; i++) {
-/* 1865 */       char testChar = address.charAt(i);
-/* 1866 */       if (testChar == '.') {
-/* 1867 */         if (!isAlphanum(address.charAt(i - 1))) {
-/* 1868 */           return false;
-/*      */         }
-/* 1870 */         if (i + 1 < addrLength && !isAlphanum(address.charAt(i + 1))) {
-/* 1871 */           return false;
-/*      */         }
-/* 1873 */         labelCharCount = 0;
-/*      */       } else {
-/* 1875 */         if (!isAlphanum(testChar) && testChar != '-') {
-/* 1876 */           return false;
-/*      */         }
-/*      */         
-/* 1879 */         if (++labelCharCount > 63) {
-/* 1880 */           return false;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 1884 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean isWellFormedIPv4Address(String address) {
-/* 1900 */     int addrLength = address.length();
-/*      */     
-/* 1902 */     int numDots = 0;
-/* 1903 */     int numDigits = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1915 */     for (int i = 0; i < addrLength; i++) {
-/* 1916 */       char testChar = address.charAt(i);
-/* 1917 */       if (testChar == '.') {
-/* 1918 */         if ((i > 0 && !isDigit(address.charAt(i - 1))) || (i + 1 < addrLength && 
-/* 1919 */           !isDigit(address.charAt(i + 1)))) {
-/* 1920 */           return false;
-/*      */         }
-/* 1922 */         numDigits = 0;
-/* 1923 */         if (++numDots > 3) {
-/* 1924 */           return false;
-/*      */         }
-/*      */       } else {
-/* 1927 */         if (!isDigit(testChar)) {
-/* 1928 */           return false;
-/*      */         }
-/*      */ 
-/*      */         
-/* 1932 */         if (++numDigits > 3) {
-/* 1933 */           return false;
-/*      */         }
-/*      */         
-/* 1936 */         if (numDigits == 3) {
-/* 1937 */           char first = address.charAt(i - 2);
-/* 1938 */           char second = address.charAt(i - 1);
-/* 1939 */           if (first >= '2' && (first != '2' || (second >= '5' && (second != '5' || testChar > '5'))))
-/*      */           {
-/*      */ 
-/*      */             
-/* 1943 */             return false; } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 1947 */     return (numDots == 3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean isWellFormedIPv6Reference(String address) {
-/* 1967 */     int addrLength = address.length();
-/* 1968 */     int index = 1;
-/* 1969 */     int end = addrLength - 1;
-/*      */ 
-/*      */     
-/* 1972 */     if (addrLength <= 2 || address.charAt(0) != '[' || address
-/* 1973 */       .charAt(end) != ']') {
-/* 1974 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1978 */     int[] counter = new int[1];
-/*      */ 
-/*      */     
-/* 1981 */     index = scanHexSequence(address, index, end, counter);
-/* 1982 */     if (index == -1) {
-/* 1983 */       return false;
-/*      */     }
-/*      */     
-/* 1986 */     if (index == end) {
-/* 1987 */       return (counter[0] == 8);
-/*      */     }
-/*      */     
-/* 1990 */     if (index + 1 < end && address.charAt(index) == ':') {
-/* 1991 */       if (address.charAt(index + 1) == ':') {
-/*      */         
-/* 1993 */         counter[0] = counter[0] + 1; if (counter[0] + 1 > 8) {
-/* 1994 */           return false;
-/*      */         }
-/* 1996 */         index += 2;
-/*      */         
-/* 1998 */         if (index == end) {
-/* 1999 */           return true;
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2006 */         return (counter[0] == 6 && 
-/* 2007 */           isWellFormedIPv4Address(address.substring(index + 1, end)));
-/*      */       } 
-/*      */     } else {
-/*      */       
-/* 2011 */       return false;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2015 */     int prevCount = counter[0];
-/* 2016 */     index = scanHexSequence(address, index, end, counter);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2021 */     if (index != end) { if (index != -1) {
-/* 2022 */         if (isWellFormedIPv4Address(address
-/* 2023 */             .substring((counter[0] > prevCount) ? (index + 1) : index, end)));
-/*      */       }
-/*      */       return false; }
-/*      */   
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int scanHexSequence(String address, int index, int end, int[] counter) {
-/* 2044 */     int numDigits = 0;
-/* 2045 */     int start = index;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2050 */     for (; index < end; index++) {
-/* 2051 */       char testChar = address.charAt(index);
-/* 2052 */       if (testChar == ':') {
-/*      */         
-/* 2054 */         counter[0] = counter[0] + 1; if (numDigits > 0 && counter[0] + 1 > 8) {
-/* 2055 */           return -1;
-/*      */         }
-/*      */         
-/* 2058 */         if (numDigits == 0 || (index + 1 < end && address.charAt(index + 1) == ':')) {
-/* 2059 */           return index;
-/*      */         }
-/* 2061 */         numDigits = 0;
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2065 */         if (!isHex(testChar)) {
-/* 2066 */           if (testChar == '.' && numDigits < 4 && numDigits > 0 && counter[0] <= 6) {
-/* 2067 */             int back = index - numDigits - 1;
-/* 2068 */             return (back >= start) ? back : (back + 1);
-/*      */           } 
-/* 2070 */           return -1;
-/*      */         } 
-/*      */         
-/* 2073 */         if (++numDigits > 4)
-/* 2074 */           return -1; 
-/*      */       } 
-/*      */     } 
-/* 2077 */     counter[0] = counter[0] + 1; return (numDigits > 0 && counter[0] + 1 <= 8) ? end : -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isDigit(char p_char) {
-/* 2087 */     return (p_char >= '0' && p_char <= '9');
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isHex(char p_char) {
-/* 2097 */     return (p_char <= 'f' && (fgLookupTable[p_char] & 0x40) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isAlpha(char p_char) {
-/* 2106 */     return ((p_char >= 'a' && p_char <= 'z') || (p_char >= 'A' && p_char <= 'Z'));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isAlphanum(char p_char) {
-/* 2115 */     return (p_char <= 'z' && (fgLookupTable[p_char] & 0x30) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isReservedCharacter(char p_char) {
-/* 2125 */     return (p_char <= ']' && (fgLookupTable[p_char] & 0x1) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isUnreservedCharacter(char p_char) {
-/* 2134 */     return (p_char <= '~' && (fgLookupTable[p_char] & 0x32) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isURICharacter(char p_char) {
-/* 2144 */     return (p_char <= '~' && (fgLookupTable[p_char] & 0x33) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isSchemeCharacter(char p_char) {
-/* 2153 */     return (p_char <= 'z' && (fgLookupTable[p_char] & 0x34) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isUserinfoCharacter(char p_char) {
-/* 2162 */     return (p_char <= 'z' && (fgLookupTable[p_char] & 0x3A) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isPathCharacter(char p_char) {
-/* 2171 */     return (p_char <= '~' && (fgLookupTable[p_char] & 0xB2) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean isURIString(String p_uric) {
-/* 2183 */     if (p_uric == null) {
-/* 2184 */       return false;
-/*      */     }
-/* 2186 */     int end = p_uric.length();
-/* 2187 */     char testChar = Character.MIN_VALUE;
-/* 2188 */     for (int i = 0; i < end; i++) {
-/* 2189 */       testChar = p_uric.charAt(i);
-/* 2190 */       if (testChar == '%') {
-/* 2191 */         if (i + 2 >= end || 
-/* 2192 */           !isHex(p_uric.charAt(i + 1)) || 
-/* 2193 */           !isHex(p_uric.charAt(i + 2))) {
-/* 2194 */           return false;
-/*      */         }
-/*      */         
-/* 2197 */         i += 2;
-/*      */ 
-/*      */       
-/*      */       }
-/* 2201 */       else if (!isURICharacter(testChar)) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 2205 */         return false;
-/*      */       } 
-/*      */     } 
-/* 2208 */     return true;
-/*      */   }
-/*      */   
-/*      */   public URI() {}
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\URI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Objects;
+
+/**********************************************************************
+* A class to represent a Uniform Resource Identifier (URI). This class
+* is designed to handle the parsing of URIs and provide access to
+* the various components (scheme, host, port, userinfo, path, query
+* string and fragment) that may constitute a URI.
+* <p>
+* Parsing of a URI specification is done according to the URI
+* syntax described in
+* <a href="http://www.ietf.org/rfc/rfc2396.txt?number=2396">RFC 2396</a>,
+* and amended by
+* <a href="http://www.ietf.org/rfc/rfc2732.txt?number=2732">RFC 2732</a>.
+* <p>
+* Every absolute URI consists of a scheme, followed by a colon (':'),
+* followed by a scheme-specific part. For URIs that follow the
+* "generic URI" syntax, the scheme-specific part begins with two
+* slashes ("//") and may be followed by an authority segment (comprised
+* of user information, host, and port), path segment, query segment
+* and fragment. Note that RFC 2396 no longer specifies the use of the
+* parameters segment and excludes the "user:password" syntax as part of
+* the authority segment. If "user:password" appears in a URI, the entire
+* user/password string is stored as userinfo.
+* <p>
+* For URIs that do not follow the "generic URI" syntax (e.g. mailto),
+* the entire scheme-specific part is treated as the "path" portion
+* of the URI.
+* <p>
+* Note that, unlike the java.net.URL class, this class does not provide
+* any built-in network access functionality nor does it provide any
+* scheme-specific functionality (for example, it does not know a
+* default port for a specific scheme). Rather, it only knows the
+* grammar and basic set of operations that can be applied to a URI.
+*
+*
+**********************************************************************/
+ public class URI implements Serializable {
+
+  /*******************************************************************
+  * MalformedURIExceptions are thrown in the process of building a URI
+  * or setting fields on a URI when an operation would result in an
+  * invalid URI specification.
+  *
+  ********************************************************************/
+  public static class MalformedURIException extends IOException {
+
+   /** Serialization version. */
+   static final long serialVersionUID = -6695054834342951930L;
+
+   /******************************************************************
+    * Constructs a <code>MalformedURIException</code> with no specified
+    * detail message.
+    ******************************************************************/
+    public MalformedURIException() {
+      super();
+    }
+
+    /*****************************************************************
+    * Constructs a <code>MalformedURIException</code> with the
+    * specified detail message.
+    *
+    * @param p_msg the detail message.
+    ******************************************************************/
+    public MalformedURIException(String p_msg) {
+      super(p_msg);
+    }
+  }
+
+  /** Serialization version. */
+  static final long serialVersionUID = 1601921774685357214L;
+
+  private static final byte [] fgLookupTable = new byte[128];
+
+  /**
+   * Character Classes
+   */
+
+  /** reserved characters ;/?:@&=+$,[] */
+  //RFC 2732 added '[' and ']' as reserved characters
+  private static final int RESERVED_CHARACTERS = 0x01;
+
+  /** URI punctuation mark characters: -_.!~*'() - these, combined with
+      alphanumerics, constitute the "unreserved" characters */
+  private static final int MARK_CHARACTERS = 0x02;
+
+  /** scheme can be composed of alphanumerics and these characters: +-. */
+  private static final int SCHEME_CHARACTERS = 0x04;
+
+  /** userinfo can be composed of unreserved, escaped and these
+      characters: ;:&=+$, */
+  private static final int USERINFO_CHARACTERS = 0x08;
+
+  /** ASCII letter characters */
+  private static final int ASCII_ALPHA_CHARACTERS = 0x10;
+
+  /** ASCII digit characters */
+  private static final int ASCII_DIGIT_CHARACTERS = 0x20;
+
+  /** ASCII hex characters */
+  private static final int ASCII_HEX_CHARACTERS = 0x40;
+
+  /** Path characters */
+  private static final int PATH_CHARACTERS = 0x80;
+
+  /** Mask for alpha-numeric characters */
+  private static final int MASK_ALPHA_NUMERIC = ASCII_ALPHA_CHARACTERS | ASCII_DIGIT_CHARACTERS;
+
+  /** Mask for unreserved characters */
+  private static final int MASK_UNRESERVED_MASK = MASK_ALPHA_NUMERIC | MARK_CHARACTERS;
+
+  /** Mask for URI allowable characters except for % */
+  private static final int MASK_URI_CHARACTER = MASK_UNRESERVED_MASK | RESERVED_CHARACTERS;
+
+  /** Mask for scheme characters */
+  private static final int MASK_SCHEME_CHARACTER = MASK_ALPHA_NUMERIC | SCHEME_CHARACTERS;
+
+  /** Mask for userinfo characters */
+  private static final int MASK_USERINFO_CHARACTER = MASK_UNRESERVED_MASK | USERINFO_CHARACTERS;
+
+  /** Mask for path characters */
+  private static final int MASK_PATH_CHARACTER = MASK_UNRESERVED_MASK | PATH_CHARACTERS;
+
+  static {
+      // Add ASCII Digits and ASCII Hex Numbers
+      for (int i = '0'; i <= '9'; ++i) {
+          fgLookupTable[i] |= ASCII_DIGIT_CHARACTERS | ASCII_HEX_CHARACTERS;
+      }
+
+      // Add ASCII Letters and ASCII Hex Numbers
+      for (int i = 'A'; i <= 'F'; ++i) {
+          fgLookupTable[i] |= ASCII_ALPHA_CHARACTERS | ASCII_HEX_CHARACTERS;
+          fgLookupTable[i+0x00000020] |= ASCII_ALPHA_CHARACTERS | ASCII_HEX_CHARACTERS;
+      }
+
+      // Add ASCII Letters
+      for (int i = 'G'; i <= 'Z'; ++i) {
+          fgLookupTable[i] |= ASCII_ALPHA_CHARACTERS;
+          fgLookupTable[i+0x00000020] |= ASCII_ALPHA_CHARACTERS;
+      }
+
+      // Add Reserved Characters
+      fgLookupTable[';'] |= RESERVED_CHARACTERS;
+      fgLookupTable['/'] |= RESERVED_CHARACTERS;
+      fgLookupTable['?'] |= RESERVED_CHARACTERS;
+      fgLookupTable[':'] |= RESERVED_CHARACTERS;
+      fgLookupTable['@'] |= RESERVED_CHARACTERS;
+      fgLookupTable['&'] |= RESERVED_CHARACTERS;
+      fgLookupTable['='] |= RESERVED_CHARACTERS;
+      fgLookupTable['+'] |= RESERVED_CHARACTERS;
+      fgLookupTable['$'] |= RESERVED_CHARACTERS;
+      fgLookupTable[','] |= RESERVED_CHARACTERS;
+      fgLookupTable['['] |= RESERVED_CHARACTERS;
+      fgLookupTable[']'] |= RESERVED_CHARACTERS;
+
+      // Add Mark Characters
+      fgLookupTable['-'] |= MARK_CHARACTERS;
+      fgLookupTable['_'] |= MARK_CHARACTERS;
+      fgLookupTable['.'] |= MARK_CHARACTERS;
+      fgLookupTable['!'] |= MARK_CHARACTERS;
+      fgLookupTable['~'] |= MARK_CHARACTERS;
+      fgLookupTable['*'] |= MARK_CHARACTERS;
+      fgLookupTable['\''] |= MARK_CHARACTERS;
+      fgLookupTable['('] |= MARK_CHARACTERS;
+      fgLookupTable[')'] |= MARK_CHARACTERS;
+
+      // Add Scheme Characters
+      fgLookupTable['+'] |= SCHEME_CHARACTERS;
+      fgLookupTable['-'] |= SCHEME_CHARACTERS;
+      fgLookupTable['.'] |= SCHEME_CHARACTERS;
+
+      // Add Userinfo Characters
+      fgLookupTable[';'] |= USERINFO_CHARACTERS;
+      fgLookupTable[':'] |= USERINFO_CHARACTERS;
+      fgLookupTable['&'] |= USERINFO_CHARACTERS;
+      fgLookupTable['='] |= USERINFO_CHARACTERS;
+      fgLookupTable['+'] |= USERINFO_CHARACTERS;
+      fgLookupTable['$'] |= USERINFO_CHARACTERS;
+      fgLookupTable[','] |= USERINFO_CHARACTERS;
+
+      // Add Path Characters
+      fgLookupTable[';'] |= PATH_CHARACTERS;
+      fgLookupTable['/'] |= PATH_CHARACTERS;
+      fgLookupTable[':'] |= PATH_CHARACTERS;
+      fgLookupTable['@'] |= PATH_CHARACTERS;
+      fgLookupTable['&'] |= PATH_CHARACTERS;
+      fgLookupTable['='] |= PATH_CHARACTERS;
+      fgLookupTable['+'] |= PATH_CHARACTERS;
+      fgLookupTable['$'] |= PATH_CHARACTERS;
+      fgLookupTable[','] |= PATH_CHARACTERS;
+  }
+
+  /** Stores the scheme (usually the protocol) for this URI. */
+  private String m_scheme = null;
+
+  /** If specified, stores the userinfo for this URI; otherwise null */
+  private String m_userinfo = null;
+
+  /** If specified, stores the host for this URI; otherwise null */
+  private String m_host = null;
+
+  /** If specified, stores the port for this URI; otherwise -1 */
+  private int m_port = -1;
+
+  /** If specified, stores the registry based authority for this URI; otherwise -1 */
+  private String m_regAuthority = null;
+
+  /** If specified, stores the path for this URI; otherwise null */
+  private String m_path = null;
+
+  /** If specified, stores the query string for this URI; otherwise
+      null.  */
+  private String m_queryString = null;
+
+  /** If specified, stores the fragment for this URI; otherwise null */
+  private String m_fragment = null;
+
+  private static boolean DEBUG = false;
+
+  /**
+  * Construct a new and uninitialized URI.
+  */
+  public URI() {
+  }
+
+ /**
+  * Construct a new URI from another URI. All fields for this URI are
+  * set equal to the fields of the URI passed in.
+  *
+  * @param p_other the URI to copy (cannot be null)
+  */
+  public URI(URI p_other) {
+    initialize(p_other);
+  }
+
+ /**
+  * Construct a new URI from a URI specification string. If the
+  * specification follows the "generic URI" syntax, (two slashes
+  * following the first colon), the specification will be parsed
+  * accordingly - setting the scheme, userinfo, host,port, path, query
+  * string and fragment fields as necessary. If the specification does
+  * not follow the "generic URI" syntax, the specification is parsed
+  * into a scheme and scheme-specific part (stored as the path) only.
+  *
+  * @param p_uriSpec the URI specification string (cannot be null or
+  *                  empty)
+  *
+  * @exception MalformedURIException if p_uriSpec violates any syntax
+  *                                   rules
+  */
+  public URI(String p_uriSpec) throws MalformedURIException {
+    this((URI)null, p_uriSpec);
+  }
+
+  /**
+   * Construct a new URI from a URI specification string. If the
+   * specification follows the "generic URI" syntax, (two slashes
+   * following the first colon), the specification will be parsed
+   * accordingly - setting the scheme, userinfo, host,port, path, query
+   * string and fragment fields as necessary. If the specification does
+   * not follow the "generic URI" syntax, the specification is parsed
+   * into a scheme and scheme-specific part (stored as the path) only.
+   * Construct a relative URI if boolean is assigned to "true"
+   * and p_uriSpec is not valid absolute URI, instead of throwing an exception.
+   *
+   * @param p_uriSpec the URI specification string (cannot be null or
+   *                  empty)
+   * @param allowNonAbsoluteURI true to permit non-absolute URIs,
+   *                            false otherwise.
+   *
+   * @exception MalformedURIException if p_uriSpec violates any syntax
+   *                                   rules
+   */
+  public URI(String p_uriSpec, boolean allowNonAbsoluteURI) throws MalformedURIException {
+      this((URI)null, p_uriSpec, allowNonAbsoluteURI);
+  }
+
+ /**
+  * Construct a new URI from a base URI and a URI specification string.
+  * The URI specification string may be a relative URI.
+  *
+  * @param p_base the base URI (cannot be null if p_uriSpec is null or
+  *               empty)
+  * @param p_uriSpec the URI specification string (cannot be null or
+  *                  empty if p_base is null)
+  *
+  * @exception MalformedURIException if p_uriSpec violates any syntax
+  *                                  rules
+  */
+  public URI(URI p_base, String p_uriSpec) throws MalformedURIException {
+    initialize(p_base, p_uriSpec);
+  }
+
+  /**
+   * Construct a new URI from a base URI and a URI specification string.
+   * The URI specification string may be a relative URI.
+   * Construct a relative URI if boolean is assigned to "true"
+   * and p_uriSpec is not valid absolute URI and p_base is null
+   * instead of throwing an exception.
+   *
+   * @param p_base the base URI (cannot be null if p_uriSpec is null or
+   *               empty)
+   * @param p_uriSpec the URI specification string (cannot be null or
+   *                  empty if p_base is null)
+   * @param allowNonAbsoluteURI true to permit non-absolute URIs,
+   *                            false otherwise.
+   *
+   * @exception MalformedURIException if p_uriSpec violates any syntax
+   *                                  rules
+   */
+  public URI(URI p_base, String p_uriSpec, boolean allowNonAbsoluteURI) throws MalformedURIException {
+      initialize(p_base, p_uriSpec, allowNonAbsoluteURI);
+  }
+
+ /**
+  * Construct a new URI that does not follow the generic URI syntax.
+  * Only the scheme and scheme-specific part (stored as the path) are
+  * initialized.
+  *
+  * @param p_scheme the URI scheme (cannot be null or empty)
+  * @param p_schemeSpecificPart the scheme-specific part (cannot be
+  *                             null or empty)
+  *
+  * @exception MalformedURIException if p_scheme violates any
+  *                                  syntax rules
+  */
+  public URI(String p_scheme, String p_schemeSpecificPart)
+             throws MalformedURIException {
+    if (p_scheme == null || p_scheme.trim().length() == 0) {
+      throw new MalformedURIException(
+            "Cannot construct URI with null/empty scheme!");
+    }
+    if (p_schemeSpecificPart == null ||
+        p_schemeSpecificPart.trim().length() == 0) {
+      throw new MalformedURIException(
+          "Cannot construct URI with null/empty scheme-specific part!");
+    }
+    setScheme(p_scheme);
+    setPath(p_schemeSpecificPart);
+  }
+
+ /**
+  * Construct a new URI that follows the generic URI syntax from its
+  * component parts. Each component is validated for syntax and some
+  * basic semantic checks are performed as well.  See the individual
+  * setter methods for specifics.
+  *
+  * @param p_scheme the URI scheme (cannot be null or empty)
+  * @param p_host the hostname, IPv4 address or IPv6 reference for the URI
+  * @param p_path the URI path - if the path contains '?' or '#',
+  *               then the query string and/or fragment will be
+  *               set from the path; however, if the query and
+  *               fragment are specified both in the path and as
+  *               separate parameters, an exception is thrown
+  * @param p_queryString the URI query string (cannot be specified
+  *                      if path is null)
+  * @param p_fragment the URI fragment (cannot be specified if path
+  *                   is null)
+  *
+  * @exception MalformedURIException if any of the parameters violates
+  *                                  syntax rules or semantic rules
+  */
+  public URI(String p_scheme, String p_host, String p_path,
+             String p_queryString, String p_fragment)
+         throws MalformedURIException {
+    this(p_scheme, null, p_host, -1, p_path, p_queryString, p_fragment);
+  }
+
+ /**
+  * Construct a new URI that follows the generic URI syntax from its
+  * component parts. Each component is validated for syntax and some
+  * basic semantic checks are performed as well.  See the individual
+  * setter methods for specifics.
+  *
+  * @param p_scheme the URI scheme (cannot be null or empty)
+  * @param p_userinfo the URI userinfo (cannot be specified if host
+  *                   is null)
+  * @param p_host the hostname, IPv4 address or IPv6 reference for the URI
+  * @param p_port the URI port (may be -1 for "unspecified"; cannot
+  *               be specified if host is null)
+  * @param p_path the URI path - if the path contains '?' or '#',
+  *               then the query string and/or fragment will be
+  *               set from the path; however, if the query and
+  *               fragment are specified both in the path and as
+  *               separate parameters, an exception is thrown
+  * @param p_queryString the URI query string (cannot be specified
+  *                      if path is null)
+  * @param p_fragment the URI fragment (cannot be specified if path
+  *                   is null)
+  *
+  * @exception MalformedURIException if any of the parameters violates
+  *                                  syntax rules or semantic rules
+  */
+  public URI(String p_scheme, String p_userinfo,
+             String p_host, int p_port, String p_path,
+             String p_queryString, String p_fragment)
+         throws MalformedURIException {
+    if (p_scheme == null || p_scheme.trim().length() == 0) {
+      throw new MalformedURIException("Scheme is required!");
+    }
+
+    if (p_host == null) {
+      if (p_userinfo != null) {
+        throw new MalformedURIException(
+             "Userinfo may not be specified if host is not specified!");
+      }
+      if (p_port != -1) {
+        throw new MalformedURIException(
+             "Port may not be specified if host is not specified!");
+      }
+    }
+
+    if (p_path != null) {
+      if (p_path.indexOf('?') != -1 && p_queryString != null) {
+        throw new MalformedURIException(
+          "Query string cannot be specified in path and query string!");
+      }
+
+      if (p_path.indexOf('#') != -1 && p_fragment != null) {
+        throw new MalformedURIException(
+          "Fragment cannot be specified in both the path and fragment!");
+      }
+    }
+
+    setScheme(p_scheme);
+    setHost(p_host);
+    setPort(p_port);
+    setUserinfo(p_userinfo);
+    setPath(p_path);
+    setQueryString(p_queryString);
+    setFragment(p_fragment);
+  }
+
+ /**
+  * Initialize all fields of this URI from another URI.
+  *
+  * @param p_other the URI to copy (cannot be null)
+  */
+  private void initialize(URI p_other) {
+    m_scheme = p_other.getScheme();
+    m_userinfo = p_other.getUserinfo();
+    m_host = p_other.getHost();
+    m_port = p_other.getPort();
+    m_regAuthority = p_other.getRegBasedAuthority();
+    m_path = p_other.getPath();
+    m_queryString = p_other.getQueryString();
+    m_fragment = p_other.getFragment();
+  }
+
+  /**
+   * Initializes this URI from a base URI and a URI specification string.
+   * See RFC 2396 Section 4 and Appendix B for specifications on parsing
+   * the URI and Section 5 for specifications on resolving relative URIs
+   * and relative paths.
+   *
+   * @param p_base the base URI (may be null if p_uriSpec is an absolute
+   *               URI)
+   * @param p_uriSpec the URI spec string which may be an absolute or
+   *                  relative URI (can only be null/empty if p_base
+   *                  is not null)
+   * @param allowNonAbsoluteURI true to permit non-absolute URIs,
+   *                         in case of relative URI, false otherwise.
+   *
+   * @exception MalformedURIException if p_base is null and p_uriSpec
+   *                                  is not an absolute URI or if
+   *                                  p_uriSpec violates syntax rules
+   */
+  private void initialize(URI p_base, String p_uriSpec, boolean allowNonAbsoluteURI)
+      throws MalformedURIException {
+
+      String uriSpec = p_uriSpec;
+      int uriSpecLen = (uriSpec != null) ? uriSpec.length() : 0;
+
+      if (p_base == null && uriSpecLen == 0) {
+          if (allowNonAbsoluteURI) {
+              m_path = "";
+              return;
+          }
+          throw new MalformedURIException("Cannot initialize URI with empty parameters.");
+      }
+
+      // just make a copy of the base if spec is empty
+      if (uriSpecLen == 0) {
+          initialize(p_base);
+          return;
+      }
+
+      int index = 0;
+
+      // Check for scheme, which must be before '/', '?' or '#'.
+      int colonIdx = uriSpec.indexOf(':');
+      if (colonIdx != -1) {
+          final int searchFrom = colonIdx - 1;
+          // search backwards starting from character before ':'.
+          int slashIdx = uriSpec.lastIndexOf('/', searchFrom);
+          int queryIdx = uriSpec.lastIndexOf('?', searchFrom);
+          int fragmentIdx = uriSpec.lastIndexOf('#', searchFrom);
+
+          if (colonIdx == 0 || slashIdx != -1 ||
+              queryIdx != -1 || fragmentIdx != -1) {
+              // A standalone base is a valid URI according to spec
+              if (colonIdx == 0 || (p_base == null && fragmentIdx != 0 && !allowNonAbsoluteURI)) {
+                  throw new MalformedURIException("No scheme found in URI.");
+              }
+          }
+          else {
+              initializeScheme(uriSpec);
+              index = m_scheme.length()+1;
+
+              // Neither 'scheme:' or 'scheme:#fragment' are valid URIs.
+              if (colonIdx == uriSpecLen - 1 || uriSpec.charAt(colonIdx+1) == '#') {
+                  throw new MalformedURIException("Scheme specific part cannot be empty.");
+              }
+          }
+      }
+      else if (p_base == null && uriSpec.indexOf('#') != 0 && !allowNonAbsoluteURI) {
+          throw new MalformedURIException("No scheme found in URI.");
+      }
+
+      // Two slashes means we may have authority, but definitely means we're either
+      // matching net_path or abs_path. These two productions are ambiguous in that
+      // every net_path (except those containing an IPv6Reference) is an abs_path.
+      // RFC 2396 resolves this ambiguity by applying a greedy left most matching rule.
+      // Try matching net_path first, and if that fails we don't have authority so
+      // then attempt to match abs_path.
+      //
+      // net_path = "//" authority [ abs_path ]
+      // abs_path = "/"  path_segments
+      if (((index+1) < uriSpecLen) &&
+          (uriSpec.charAt(index) == '/' && uriSpec.charAt(index+1) == '/')) {
+          index += 2;
+          int startPos = index;
+
+          // Authority will be everything up to path, query or fragment
+          char testChar = '\0';
+          while (index < uriSpecLen) {
+              testChar = uriSpec.charAt(index);
+              if (testChar == '/' || testChar == '?' || testChar == '#') {
+                  break;
+              }
+              index++;
+          }
+
+          // Attempt to parse authority. If the section is an empty string
+          // this is a valid server based authority, so set the host to this
+          // value.
+          if (index > startPos) {
+              // If we didn't find authority we need to back up. Attempt to
+              // match against abs_path next.
+              if (!initializeAuthority(uriSpec.substring(startPos, index))) {
+                  index = startPos - 2;
+              }
+          }
+          else {
+              m_host = "";
+          }
+      }
+
+      initializePath(uriSpec, index);
+
+      // Resolve relative URI to base URI - see RFC 2396 Section 5.2
+      // In some cases, it might make more sense to throw an exception
+      // (when scheme is specified is the string spec and the base URI
+      // is also specified, for example), but we're just following the
+      // RFC specifications
+      if (p_base != null) {
+          absolutize(p_base);
+      }
+  }
+
+ /**
+  * Initializes this URI from a base URI and a URI specification string.
+  * See RFC 2396 Section 4 and Appendix B for specifications on parsing
+  * the URI and Section 5 for specifications on resolving relative URIs
+  * and relative paths.
+  *
+  * @param p_base the base URI (may be null if p_uriSpec is an absolute
+  *               URI)
+  * @param p_uriSpec the URI spec string which may be an absolute or
+  *                  relative URI (can only be null/empty if p_base
+  *                  is not null)
+  *
+  * @exception MalformedURIException if p_base is null and p_uriSpec
+  *                                  is not an absolute URI or if
+  *                                  p_uriSpec violates syntax rules
+  */
+  private void initialize(URI p_base, String p_uriSpec)
+                         throws MalformedURIException {
+
+    String uriSpec = p_uriSpec;
+    int uriSpecLen = (uriSpec != null) ? uriSpec.length() : 0;
+
+    if (p_base == null && uriSpecLen == 0) {
+      throw new MalformedURIException(
+                  "Cannot initialize URI with empty parameters.");
+    }
+
+    // just make a copy of the base if spec is empty
+    if (uriSpecLen == 0) {
+      initialize(p_base);
+      return;
+    }
+
+    int index = 0;
+
+    // Check for scheme, which must be before '/', '?' or '#'.
+    int colonIdx = uriSpec.indexOf(':');
+    if (colonIdx != -1) {
+        final int searchFrom = colonIdx - 1;
+        // search backwards starting from character before ':'.
+        int slashIdx = uriSpec.lastIndexOf('/', searchFrom);
+        int queryIdx = uriSpec.lastIndexOf('?', searchFrom);
+        int fragmentIdx = uriSpec.lastIndexOf('#', searchFrom);
+
+        if (colonIdx == 0 || slashIdx != -1 ||
+            queryIdx != -1 || fragmentIdx != -1) {
+            // A standalone base is a valid URI according to spec
+            if (colonIdx == 0 || (p_base == null && fragmentIdx != 0)) {
+                throw new MalformedURIException("No scheme found in URI.");
+            }
+        }
+        else {
+            initializeScheme(uriSpec);
+            index = m_scheme.length()+1;
+
+            // Neither 'scheme:' or 'scheme:#fragment' are valid URIs.
+            if (colonIdx == uriSpecLen - 1 || uriSpec.charAt(colonIdx+1) == '#') {
+                throw new MalformedURIException("Scheme specific part cannot be empty.");
+            }
+        }
+    }
+    else if (p_base == null && uriSpec.indexOf('#') != 0) {
+        throw new MalformedURIException("No scheme found in URI.");
+    }
+
+    // Two slashes means we may have authority, but definitely means we're either
+    // matching net_path or abs_path. These two productions are ambiguous in that
+    // every net_path (except those containing an IPv6Reference) is an abs_path.
+    // RFC 2396 resolves this ambiguity by applying a greedy left most matching rule.
+    // Try matching net_path first, and if that fails we don't have authority so
+    // then attempt to match abs_path.
+    //
+    // net_path = "//" authority [ abs_path ]
+    // abs_path = "/"  path_segments
+    if (((index+1) < uriSpecLen) &&
+        (uriSpec.charAt(index) == '/' && uriSpec.charAt(index+1) == '/')) {
+      index += 2;
+      int startPos = index;
+
+      // Authority will be everything up to path, query or fragment
+      char testChar = '\0';
+      while (index < uriSpecLen) {
+        testChar = uriSpec.charAt(index);
+        if (testChar == '/' || testChar == '?' || testChar == '#') {
+          break;
+        }
+        index++;
+      }
+
+      // Attempt to parse authority. If the section is an empty string
+      // this is a valid server based authority, so set the host to this
+      // value.
+      if (index > startPos) {
+        // If we didn't find authority we need to back up. Attempt to
+        // match against abs_path next.
+        if (!initializeAuthority(uriSpec.substring(startPos, index))) {
+          index = startPos - 2;
+        }
+      } else if (index < uriSpecLen) {
+        //Same as java.net.URI:
+        // DEVIATION: Allow empty authority prior to non-empty
+        // path, query component or fragment identifier
+        m_host = "";
+      } else {
+        throw new MalformedURIException("Expected authority.");
+      }
+    }
+
+    initializePath(uriSpec, index);
+
+    // Resolve relative URI to base URI - see RFC 2396 Section 5.2
+    // In some cases, it might make more sense to throw an exception
+    // (when scheme is specified is the string spec and the base URI
+    // is also specified, for example), but we're just following the
+    // RFC specifications
+    if (p_base != null) {
+        absolutize(p_base);
+    }
+  }
+
+  /**
+   * Absolutize URI with given base URI.
+   *
+   * @param p_base base URI for absolutization
+   */
+  public void absolutize(URI p_base) {
+
+      // check to see if this is the current doc - RFC 2396 5.2 #2
+      // note that this is slightly different from the RFC spec in that
+      // we don't include the check for query string being null
+      // - this handles cases where the urispec is just a query
+      // string or a fragment (e.g. "?y" or "#s") -
+      // see <http://www.ics.uci.edu/~fielding/url/test1.html> which
+      // identified this as a bug in the RFC
+      if (m_path.length() == 0 && m_scheme == null &&
+          m_host == null && m_regAuthority == null) {
+          m_scheme = p_base.getScheme();
+          m_userinfo = p_base.getUserinfo();
+          m_host = p_base.getHost();
+          m_port = p_base.getPort();
+          m_regAuthority = p_base.getRegBasedAuthority();
+          m_path = p_base.getPath();
+
+          if (m_queryString == null) {
+              m_queryString = p_base.getQueryString();
+
+              if (m_fragment == null) {
+                  m_fragment = p_base.getFragment();
+              }
+          }
+          return;
+      }
+
+      // check for scheme - RFC 2396 5.2 #3
+      // if we found a scheme, it means absolute URI, so we're done
+      if (m_scheme == null) {
+          m_scheme = p_base.getScheme();
+      }
+      else {
+          return;
+      }
+
+      // check for authority - RFC 2396 5.2 #4
+      // if we found a host, then we've got a network path, so we're done
+      if (m_host == null && m_regAuthority == null) {
+          m_userinfo = p_base.getUserinfo();
+          m_host = p_base.getHost();
+          m_port = p_base.getPort();
+          m_regAuthority = p_base.getRegBasedAuthority();
+      }
+      else {
+          return;
+      }
+
+      // check for absolute path - RFC 2396 5.2 #5
+      if (m_path.length() > 0 &&
+              m_path.startsWith("/")) {
+          return;
+      }
+
+      // if we get to this point, we need to resolve relative path
+      // RFC 2396 5.2 #6
+      String path = "";
+      String basePath = p_base.getPath();
+
+      // 6a - get all but the last segment of the base URI path
+      if (basePath != null && basePath.length() > 0) {
+          int lastSlash = basePath.lastIndexOf('/');
+          if (lastSlash != -1) {
+              path = basePath.substring(0, lastSlash+1);
+          }
+      }
+      else if (m_path.length() > 0) {
+          path = "/";
+      }
+
+      // 6b - append the relative URI path
+      path = path.concat(m_path);
+
+      // 6c - remove all "./" where "." is a complete path segment
+      int index = -1;
+      while ((index = path.indexOf("/./")) != -1) {
+          path = path.substring(0, index+1).concat(path.substring(index+3));
+      }
+
+      // 6d - remove "." if path ends with "." as a complete path segment
+      if (path.endsWith("/.")) {
+          path = path.substring(0, path.length()-1);
+      }
+
+      // 6e - remove all "<segment>/../" where "<segment>" is a complete
+      // path segment not equal to ".."
+      index = 1;
+      int segIndex = -1;
+      String tempString = null;
+
+      while ((index = path.indexOf("/../", index)) > 0) {
+          tempString = path.substring(0, path.indexOf("/../"));
+          segIndex = tempString.lastIndexOf('/');
+          if (segIndex != -1) {
+              if (!tempString.substring(segIndex).equals("..")) {
+                  path = path.substring(0, segIndex+1).concat(path.substring(index+4));
+                  index = segIndex;
+              }
+              else {
+                  index += 4;
+              }
+          }
+          else {
+              index += 4;
+          }
+      }
+
+      // 6f - remove ending "<segment>/.." where "<segment>" is a
+      // complete path segment
+      if (path.endsWith("/..")) {
+          tempString = path.substring(0, path.length()-3);
+          segIndex = tempString.lastIndexOf('/');
+          if (segIndex != -1) {
+              path = path.substring(0, segIndex+1);
+          }
+      }
+      m_path = path;
+  }
+
+ /**
+  * Initialize the scheme for this URI from a URI string spec.
+  *
+  * @param p_uriSpec the URI specification (cannot be null)
+  *
+  * @exception MalformedURIException if URI does not have a conformant
+  *                                  scheme
+  */
+  private void initializeScheme(String p_uriSpec)
+                 throws MalformedURIException {
+    int uriSpecLen = p_uriSpec.length();
+    int index = 0;
+    String scheme = null;
+    char testChar = '\0';
+
+    while (index < uriSpecLen) {
+      testChar = p_uriSpec.charAt(index);
+      if (testChar == ':' || testChar == '/' ||
+          testChar == '?' || testChar == '#') {
+        break;
+      }
+      index++;
+    }
+    scheme = p_uriSpec.substring(0, index);
+
+    if (scheme.length() == 0) {
+      throw new MalformedURIException("No scheme found in URI.");
+    }
+    else {
+      setScheme(scheme);
+    }
+  }
+
+ /**
+  * Initialize the authority (either server or registry based)
+  * for this URI from a URI string spec.
+  *
+  * @param p_uriSpec the URI specification (cannot be null)
+  *
+  * @return true if the given string matched server or registry
+  * based authority
+  */
+  private boolean initializeAuthority(String p_uriSpec) {
+
+    int index = 0;
+    int start = 0;
+    int end = p_uriSpec.length();
+
+    char testChar = '\0';
+    String userinfo = null;
+
+    // userinfo is everything up to @
+    if (p_uriSpec.indexOf('@', start) != -1) {
+      while (index < end) {
+        testChar = p_uriSpec.charAt(index);
+        if (testChar == '@') {
+          break;
+        }
+        index++;
+      }
+      userinfo = p_uriSpec.substring(start, index);
+      index++;
+    }
+
+    // host is everything up to last ':', or up to
+    // and including ']' if followed by ':'.
+    String host = null;
+    start = index;
+    boolean hasPort = false;
+    if (index < end) {
+      if (p_uriSpec.charAt(start) == '[') {
+        int bracketIndex = p_uriSpec.indexOf(']', start);
+        index = (bracketIndex != -1) ? bracketIndex : end;
+        if (index+1 < end && p_uriSpec.charAt(index+1) == ':') {
+          ++index;
+          hasPort = true;
+        }
+        else {
+          index = end;
+        }
+      }
+      else {
+        int colonIndex = p_uriSpec.lastIndexOf(':', end);
+        index = (colonIndex > start) ? colonIndex : end;
+        hasPort = (index != end);
+      }
+    }
+    host = p_uriSpec.substring(start, index);
+    int port = -1;
+    if (host.length() > 0) {
+      // port
+      if (hasPort) {
+        index++;
+        start = index;
+        while (index < end) {
+          index++;
+        }
+        String portStr = p_uriSpec.substring(start, index);
+        if (portStr.length() > 0) {
+          // REVISIT: Remove this code.
+          /** for (int i = 0; i < portStr.length(); i++) {
+            if (!isDigit(portStr.charAt(i))) {
+              throw new MalformedURIException(
+                   portStr +
+                   " is invalid. Port should only contain digits!");
+            }
+          }**/
+          // REVISIT: Remove this code.
+          // Store port value as string instead of integer.
+          try {
+            port = Integer.parseInt(portStr);
+            if (port == -1) --port;
+          }
+          catch (NumberFormatException nfe) {
+            port = -2;
+          }
+        }
+      }
+    }
+
+    if (isValidServerBasedAuthority(host, port, userinfo)) {
+      m_host = host;
+      m_port = port;
+      m_userinfo = userinfo;
+      return true;
+    }
+    // Note: Registry based authority is being removed from a
+    // new spec for URI which would obsolete RFC 2396. If the
+    // spec is added to XML errata, processing of reg_name
+    // needs to be removed. - mrglavas.
+    else if (isValidRegistryBasedAuthority(p_uriSpec)) {
+      m_regAuthority = p_uriSpec;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Determines whether the components host, port, and user info
+   * are valid as a server authority.
+   *
+   * @param host the host component of authority
+   * @param port the port number component of authority
+   * @param userinfo the user info component of authority
+   *
+   * @return true if the given host, port, and userinfo compose
+   * a valid server authority
+   */
+  private boolean isValidServerBasedAuthority(String host, int port, String userinfo) {
+
+    // Check if the host is well formed.
+    if (!isWellFormedAddress(host)) {
+      return false;
+    }
+
+    // Check that port is well formed if it exists.
+    // REVISIT: There's no restriction on port value ranges, but
+    // perform the same check as in setPort to be consistent. Pass
+    // in a string to this method instead of an integer.
+    if (port < -1 || port > 65535) {
+      return false;
+    }
+
+    // Check that userinfo is well formed if it exists.
+    if (userinfo != null) {
+      // Userinfo can contain alphanumerics, mark characters, escaped
+      // and ';',':','&','=','+','$',','
+      int index = 0;
+      int end = userinfo.length();
+      char testChar = '\0';
+      while (index < end) {
+        testChar = userinfo.charAt(index);
+        if (testChar == '%') {
+          if (index+2 >= end ||
+            !isHex(userinfo.charAt(index+1)) ||
+            !isHex(userinfo.charAt(index+2))) {
+            return false;
+          }
+          index += 2;
+        }
+        else if (!isUserinfoCharacter(testChar)) {
+          return false;
+        }
+        ++index;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Determines whether the given string is a registry based authority.
+   *
+   * @param authority the authority component of a URI
+   *
+   * @return true if the given string is a registry based authority
+   */
+  private boolean isValidRegistryBasedAuthority(String authority) {
+    int index = 0;
+    int end = authority.length();
+    char testChar;
+
+    while (index < end) {
+      testChar = authority.charAt(index);
+
+      // check for valid escape sequence
+      if (testChar == '%') {
+        if (index+2 >= end ||
+            !isHex(authority.charAt(index+1)) ||
+            !isHex(authority.charAt(index+2))) {
+            return false;
+        }
+        index += 2;
+      }
+      // can check against path characters because the set
+      // is the same except for '/' which we've already excluded.
+      else if (!isPathCharacter(testChar)) {
+        return false;
+      }
+      ++index;
+    }
+    return true;
+  }
+
+ /**
+  * Initialize the path for this URI from a URI string spec.
+  *
+  * @param p_uriSpec the URI specification (cannot be null)
+  * @param p_nStartIndex the index to begin scanning from
+  *
+  * @exception MalformedURIException if p_uriSpec violates syntax rules
+  */
+  private void initializePath(String p_uriSpec, int p_nStartIndex)
+                 throws MalformedURIException {
+    if (p_uriSpec == null) {
+      throw new MalformedURIException(
+                "Cannot initialize path from null string!");
+    }
+
+    int index = p_nStartIndex;
+    int start = p_nStartIndex;
+    int end = p_uriSpec.length();
+    char testChar = '\0';
+
+    // path - everything up to query string or fragment
+    if (start < end) {
+        // RFC 2732 only allows '[' and ']' to appear in the opaque part.
+        if (getScheme() == null || p_uriSpec.charAt(start) == '/') {
+
+            // Scan path.
+            // abs_path = "/"  path_segments
+            // rel_path = rel_segment [ abs_path ]
+            while (index < end) {
+                testChar = p_uriSpec.charAt(index);
+
+                // check for valid escape sequence
+                if (testChar == '%') {
+                    if (index+2 >= end ||
+                    !isHex(p_uriSpec.charAt(index+1)) ||
+                    !isHex(p_uriSpec.charAt(index+2))) {
+                        throw new MalformedURIException(
+                            "Path contains invalid escape sequence!");
+                    }
+                    index += 2;
+                }
+                // Path segments cannot contain '[' or ']' since pchar
+                // production was not changed by RFC 2732.
+                else if (!isPathCharacter(testChar)) {
+                    if (testChar == '?' || testChar == '#') {
+                        break;
+                    }
+                    throw new MalformedURIException(
+                        "Path contains invalid character: " + testChar);
+                }
+                ++index;
+            }
+        }
+        else {
+
+            // Scan opaque part.
+            // opaque_part = uric_no_slash *uric
+            while (index < end) {
+                testChar = p_uriSpec.charAt(index);
+
+                if (testChar == '?' || testChar == '#') {
+                    break;
+                }
+
+                // check for valid escape sequence
+                if (testChar == '%') {
+                    if (index+2 >= end ||
+                    !isHex(p_uriSpec.charAt(index+1)) ||
+                    !isHex(p_uriSpec.charAt(index+2))) {
+                        throw new MalformedURIException(
+                            "Opaque part contains invalid escape sequence!");
+                    }
+                    index += 2;
+                }
+                // If the scheme specific part is opaque, it can contain '['
+                // and ']'. uric_no_slash wasn't modified by RFC 2732, which
+                // I've interpreted as an error in the spec, since the
+                // production should be equivalent to (uric - '/'), and uric
+                // contains '[' and ']'. - mrglavas
+                else if (!isURICharacter(testChar)) {
+                    throw new MalformedURIException(
+                        "Opaque part contains invalid character: " + testChar);
+                }
+                ++index;
+            }
+        }
+    }
+    m_path = p_uriSpec.substring(start, index);
+
+    // query - starts with ? and up to fragment or end
+    if (testChar == '?') {
+      index++;
+      start = index;
+      while (index < end) {
+        testChar = p_uriSpec.charAt(index);
+        if (testChar == '#') {
+          break;
+        }
+        if (testChar == '%') {
+           if (index+2 >= end ||
+              !isHex(p_uriSpec.charAt(index+1)) ||
+              !isHex(p_uriSpec.charAt(index+2))) {
+            throw new MalformedURIException(
+                    "Query string contains invalid escape sequence!");
+           }
+           index += 2;
+        }
+        else if (!isURICharacter(testChar)) {
+          throw new MalformedURIException(
+                "Query string contains invalid character: " + testChar);
+        }
+        index++;
+      }
+      m_queryString = p_uriSpec.substring(start, index);
+    }
+
+    // fragment - starts with #
+    if (testChar == '#') {
+      index++;
+      start = index;
+      while (index < end) {
+        testChar = p_uriSpec.charAt(index);
+
+        if (testChar == '%') {
+           if (index+2 >= end ||
+              !isHex(p_uriSpec.charAt(index+1)) ||
+              !isHex(p_uriSpec.charAt(index+2))) {
+            throw new MalformedURIException(
+                    "Fragment contains invalid escape sequence!");
+           }
+           index += 2;
+        }
+        else if (!isURICharacter(testChar)) {
+          throw new MalformedURIException(
+                "Fragment contains invalid character: "+testChar);
+        }
+        index++;
+      }
+      m_fragment = p_uriSpec.substring(start, index);
+    }
+  }
+
+ /**
+  * Get the scheme for this URI.
+  *
+  * @return the scheme for this URI
+  */
+  public String getScheme() {
+    return m_scheme;
+  }
+
+ /**
+  * Get the scheme-specific part for this URI (everything following the
+  * scheme and the first colon). See RFC 2396 Section 5.2 for spec.
+  *
+  * @return the scheme-specific part for this URI
+  */
+  public String getSchemeSpecificPart() {
+    final StringBuilder schemespec = new StringBuilder();
+
+    if (m_host != null || m_regAuthority != null) {
+      schemespec.append("//");
+
+      // Server based authority.
+      if (m_host != null) {
+
+        if (m_userinfo != null) {
+          schemespec.append(m_userinfo);
+          schemespec.append('@');
+        }
+
+        schemespec.append(m_host);
+
+        if (m_port != -1) {
+          schemespec.append(':');
+          schemespec.append(m_port);
+        }
+      }
+      // Registry based authority.
+      else {
+        schemespec.append(m_regAuthority);
+      }
+    }
+
+    if (m_path != null) {
+      schemespec.append((m_path));
+    }
+
+    if (m_queryString != null) {
+      schemespec.append('?');
+      schemespec.append(m_queryString);
+    }
+
+    if (m_fragment != null) {
+      schemespec.append('#');
+      schemespec.append(m_fragment);
+    }
+
+    return schemespec.toString();
+  }
+
+ /**
+  * Get the userinfo for this URI.
+  *
+  * @return the userinfo for this URI (null if not specified).
+  */
+  public String getUserinfo() {
+    return m_userinfo;
+  }
+
+  /**
+  * Get the host for this URI.
+  *
+  * @return the host for this URI (null if not specified).
+  */
+  public String getHost() {
+    return m_host;
+  }
+
+ /**
+  * Get the port for this URI.
+  *
+  * @return the port for this URI (-1 if not specified).
+  */
+  public int getPort() {
+    return m_port;
+  }
+
+  /**
+   * Get the registry based authority for this URI.
+   *
+   * @return the registry based authority (null if not specified).
+   */
+  public String getRegBasedAuthority() {
+    return m_regAuthority;
+  }
+
+  /**
+   * Get the authority for this URI.
+   *
+   * @return the authority
+   */
+  public String getAuthority() {
+      final StringBuilder authority = new StringBuilder();
+      if (m_host != null || m_regAuthority != null) {
+          authority.append("//");
+
+          // Server based authority.
+          if (m_host != null) {
+
+              if (m_userinfo != null) {
+                  authority.append(m_userinfo);
+                  authority.append('@');
+              }
+
+              authority.append(m_host);
+
+              if (m_port != -1) {
+                  authority.append(':');
+                  authority.append(m_port);
+              }
+          }
+          // Registry based authority.
+          else {
+              authority.append(m_regAuthority);
+          }
+      }
+      return authority.toString();
+  }
+
+ /**
+  * Get the path for this URI (optionally with the query string and
+  * fragment).
+  *
+  * @param p_includeQueryString if true (and query string is not null),
+  *                             then a "?" followed by the query string
+  *                             will be appended
+  * @param p_includeFragment if true (and fragment is not null),
+  *                             then a "#" followed by the fragment
+  *                             will be appended
+  *
+  * @return the path for this URI possibly including the query string
+  *         and fragment
+  */
+  public String getPath(boolean p_includeQueryString,
+                        boolean p_includeFragment) {
+    final StringBuilder pathString = new StringBuilder(m_path);
+
+    if (p_includeQueryString && m_queryString != null) {
+      pathString.append('?');
+      pathString.append(m_queryString);
+    }
+
+    if (p_includeFragment && m_fragment != null) {
+      pathString.append('#');
+      pathString.append(m_fragment);
+    }
+    return pathString.toString();
+  }
+
+ /**
+  * Get the path for this URI. Note that the value returned is the path
+  * only and does not include the query string or fragment.
+  *
+  * @return the path for this URI.
+  */
+  public String getPath() {
+    return m_path;
+  }
+
+ /**
+  * Get the query string for this URI.
+  *
+  * @return the query string for this URI. Null is returned if there
+  *         was no "?" in the URI spec, empty string if there was a
+  *         "?" but no query string following it.
+  */
+  public String getQueryString() {
+    return m_queryString;
+  }
+
+ /**
+  * Get the fragment for this URI.
+  *
+  * @return the fragment for this URI. Null is returned if there
+  *         was no "#" in the URI spec, empty string if there was a
+  *         "#" but no fragment following it.
+  */
+  public String getFragment() {
+    return m_fragment;
+  }
+
+ /**
+  * Set the scheme for this URI. The scheme is converted to lowercase
+  * before it is set.
+  *
+  * @param p_scheme the scheme for this URI (cannot be null)
+  *
+  * @exception MalformedURIException if p_scheme is not a conformant
+  *                                  scheme name
+  */
+  public void setScheme(String p_scheme) throws MalformedURIException {
+    if (p_scheme == null) {
+      throw new MalformedURIException(
+                "Cannot set scheme from null string!");
+    }
+    if (!isConformantSchemeName(p_scheme)) {
+      throw new MalformedURIException("The scheme is not conformant.");
+    }
+
+    m_scheme = p_scheme.toLowerCase();
+  }
+
+ /**
+  * Set the userinfo for this URI. If a non-null value is passed in and
+  * the host value is null, then an exception is thrown.
+  *
+  * @param p_userinfo the userinfo for this URI
+  *
+  * @exception MalformedURIException if p_userinfo contains invalid
+  *                                  characters
+  */
+  public void setUserinfo(String p_userinfo) throws MalformedURIException {
+    if (p_userinfo == null) {
+      m_userinfo = null;
+      return;
+    }
+    else {
+      if (m_host == null) {
+        throw new MalformedURIException(
+                     "Userinfo cannot be set when host is null!");
+      }
+
+      // userinfo can contain alphanumerics, mark characters, escaped
+      // and ';',':','&','=','+','$',','
+      int index = 0;
+      int end = p_userinfo.length();
+      char testChar = '\0';
+      while (index < end) {
+        testChar = p_userinfo.charAt(index);
+        if (testChar == '%') {
+          if (index+2 >= end ||
+              !isHex(p_userinfo.charAt(index+1)) ||
+              !isHex(p_userinfo.charAt(index+2))) {
+            throw new MalformedURIException(
+                  "Userinfo contains invalid escape sequence!");
+          }
+        }
+        else if (!isUserinfoCharacter(testChar)) {
+          throw new MalformedURIException(
+                  "Userinfo contains invalid character:"+testChar);
+        }
+        index++;
+      }
+    }
+    m_userinfo = p_userinfo;
+  }
+
+ /**
+  * <p>Set the host for this URI. If null is passed in, the userinfo
+  * field is also set to null and the port is set to -1.</p>
+  *
+  * <p>Note: This method overwrites registry based authority if it
+  * previously existed in this URI.</p>
+  *
+  * @param p_host the host for this URI
+  *
+  * @exception MalformedURIException if p_host is not a valid IP
+  *                                  address or DNS hostname.
+  */
+  public void setHost(String p_host) throws MalformedURIException {
+    if (p_host == null || p_host.length() == 0) {
+      if (p_host != null) {
+        m_regAuthority = null;
+      }
+      m_host = p_host;
+      m_userinfo = null;
+      m_port = -1;
+      return;
+    }
+    else if (!isWellFormedAddress(p_host)) {
+      throw new MalformedURIException("Host is not a well formed address!");
+    }
+    m_host = p_host;
+    m_regAuthority = null;
+  }
+
+ /**
+  * Set the port for this URI. -1 is used to indicate that the port is
+  * not specified, otherwise valid port numbers are  between 0 and 65535.
+  * If a valid port number is passed in and the host field is null,
+  * an exception is thrown.
+  *
+  * @param p_port the port number for this URI
+  *
+  * @exception MalformedURIException if p_port is not -1 and not a
+  *                                  valid port number
+  */
+  public void setPort(int p_port) throws MalformedURIException {
+    if (p_port >= 0 && p_port <= 65535) {
+      if (m_host == null) {
+        throw new MalformedURIException(
+                      "Port cannot be set when host is null!");
+      }
+    }
+    else if (p_port != -1) {
+      throw new MalformedURIException("Invalid port number!");
+    }
+    m_port = p_port;
+  }
+
+  /**
+   * <p>Sets the registry based authority for this URI.</p>
+   *
+   * <p>Note: This method overwrites server based authority
+   * if it previously existed in this URI.</p>
+   *
+   * @param authority the registry based authority for this URI
+   *
+   * @exception MalformedURIException it authority is not a
+   * well formed registry based authority
+   */
+  public void setRegBasedAuthority(String authority)
+    throws MalformedURIException {
+
+        if (authority == null) {
+          m_regAuthority = null;
+          return;
+        }
+        // reg_name = 1*( unreserved | escaped | "$" | "," |
+        //            ";" | ":" | "@" | "&" | "=" | "+" )
+        else if (authority.length() < 1 ||
+          !isValidRegistryBasedAuthority(authority) ||
+          authority.indexOf('/') != -1) {
+      throw new MalformedURIException("Registry based authority is not well formed.");
+        }
+        m_regAuthority = authority;
+        m_host = null;
+        m_userinfo = null;
+        m_port = -1;
+  }
+
+ /**
+  * Set the path for this URI. If the supplied path is null, then the
+  * query string and fragment are set to null as well. If the supplied
+  * path includes a query string and/or fragment, these fields will be
+  * parsed and set as well. Note that, for URIs following the "generic
+  * URI" syntax, the path specified should start with a slash.
+  * For URIs that do not follow the generic URI syntax, this method
+  * sets the scheme-specific part.
+  *
+  * @param p_path the path for this URI (may be null)
+  *
+  * @exception MalformedURIException if p_path contains invalid
+  *                                  characters
+  */
+  public void setPath(String p_path) throws MalformedURIException {
+    if (p_path == null) {
+      m_path = null;
+      m_queryString = null;
+      m_fragment = null;
+    }
+    else {
+      initializePath(p_path, 0);
+    }
+  }
+
+ /**
+  * Append to the end of the path of this URI. If the current path does
+  * not end in a slash and the path to be appended does not begin with
+  * a slash, a slash will be appended to the current path before the
+  * new segment is added. Also, if the current path ends in a slash
+  * and the new segment begins with a slash, the extra slash will be
+  * removed before the new segment is appended.
+  *
+  * @param p_addToPath the new segment to be added to the current path
+  *
+  * @exception MalformedURIException if p_addToPath contains syntax
+  *                                  errors
+  */
+  public void appendPath(String p_addToPath)
+                         throws MalformedURIException {
+    if (p_addToPath == null || p_addToPath.trim().length() == 0) {
+      return;
+    }
+
+    if (!isURIString(p_addToPath)) {
+      throw new MalformedURIException(
+              "Path contains invalid character!");
+    }
+
+    if (m_path == null || m_path.trim().length() == 0) {
+      if (p_addToPath.startsWith("/")) {
+        m_path = p_addToPath;
+      }
+      else {
+        m_path = "/" + p_addToPath;
+      }
+    }
+    else if (m_path.endsWith("/")) {
+      if (p_addToPath.startsWith("/")) {
+        m_path = m_path.concat(p_addToPath.substring(1));
+      }
+      else {
+        m_path = m_path.concat(p_addToPath);
+      }
+    }
+    else {
+      if (p_addToPath.startsWith("/")) {
+        m_path = m_path.concat(p_addToPath);
+      }
+      else {
+        m_path = m_path.concat("/" + p_addToPath);
+      }
+    }
+  }
+
+ /**
+  * Set the query string for this URI. A non-null value is valid only
+  * if this is an URI conforming to the generic URI syntax and
+  * the path value is not null.
+  *
+  * @param p_queryString the query string for this URI
+  *
+  * @exception MalformedURIException if p_queryString is not null and this
+  *                                  URI does not conform to the generic
+  *                                  URI syntax or if the path is null
+  */
+  public void setQueryString(String p_queryString) throws MalformedURIException {
+    if (p_queryString == null) {
+      m_queryString = null;
+    }
+    else if (!isGenericURI()) {
+      throw new MalformedURIException(
+              "Query string can only be set for a generic URI!");
+    }
+    else if (getPath() == null) {
+      throw new MalformedURIException(
+              "Query string cannot be set when path is null!");
+    }
+    else if (!isURIString(p_queryString)) {
+      throw new MalformedURIException(
+              "Query string contains invalid character!");
+    }
+    else {
+      m_queryString = p_queryString;
+    }
+  }
+
+ /**
+  * Set the fragment for this URI. A non-null value is valid only
+  * if this is a URI conforming to the generic URI syntax and
+  * the path value is not null.
+  *
+  * @param p_fragment the fragment for this URI
+  *
+  * @exception MalformedURIException if p_fragment is not null and this
+  *                                  URI does not conform to the generic
+  *                                  URI syntax or if the path is null
+  */
+  public void setFragment(String p_fragment) throws MalformedURIException {
+    if (p_fragment == null) {
+      m_fragment = null;
+    }
+    else if (!isGenericURI()) {
+      throw new MalformedURIException(
+         "Fragment can only be set for a generic URI!");
+    }
+    else if (getPath() == null) {
+      throw new MalformedURIException(
+              "Fragment cannot be set when path is null!");
+    }
+    else if (!isURIString(p_fragment)) {
+      throw new MalformedURIException(
+              "Fragment contains invalid character!");
+    }
+    else {
+      m_fragment = p_fragment;
+    }
+  }
+
+ /**
+  * Determines if the passed-in Object is equivalent to this URI.
+  *
+  * @param p_test the Object to test for equality.
+  *
+  * @return true if p_test is a URI with all values equal to this
+  *         URI, false otherwise
+  */
+  @Override
+  public boolean equals(Object p_test) {
+    if (p_test instanceof URI) {
+      URI testURI = (URI) p_test;
+      if (((m_scheme == null && testURI.m_scheme == null) ||
+           (m_scheme != null && testURI.m_scheme != null &&
+            m_scheme.equals(testURI.m_scheme))) &&
+          ((m_userinfo == null && testURI.m_userinfo == null) ||
+           (m_userinfo != null && testURI.m_userinfo != null &&
+            m_userinfo.equals(testURI.m_userinfo))) &&
+          ((m_host == null && testURI.m_host == null) ||
+           (m_host != null && testURI.m_host != null &&
+            m_host.equals(testURI.m_host))) &&
+            m_port == testURI.m_port &&
+          ((m_path == null && testURI.m_path == null) ||
+           (m_path != null && testURI.m_path != null &&
+            m_path.equals(testURI.m_path))) &&
+          ((m_queryString == null && testURI.m_queryString == null) ||
+           (m_queryString != null && testURI.m_queryString != null &&
+            m_queryString.equals(testURI.m_queryString))) &&
+          ((m_fragment == null && testURI.m_fragment == null) ||
+           (m_fragment != null && testURI.m_fragment != null &&
+            m_fragment.equals(testURI.m_fragment)))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 47 * hash + Objects.hashCode(this.m_scheme);
+        hash = 47 * hash + Objects.hashCode(this.m_userinfo);
+        hash = 47 * hash + Objects.hashCode(this.m_host);
+        hash = 47 * hash + this.m_port;
+        hash = 47 * hash + Objects.hashCode(this.m_path);
+        hash = 47 * hash + Objects.hashCode(this.m_queryString);
+        hash = 47 * hash + Objects.hashCode(this.m_fragment);
+        return hash;
+    }
+
+ /**
+  * Get the URI as a string specification. See RFC 2396 Section 5.2.
+  *
+  * @return the URI string specification
+  */
+  @Override
+  public String toString() {
+    final StringBuilder uriSpecString = new StringBuilder();
+
+    if (m_scheme != null) {
+      uriSpecString.append(m_scheme);
+      uriSpecString.append(':');
+    }
+    uriSpecString.append(getSchemeSpecificPart());
+    return uriSpecString.toString();
+  }
+
+ /**
+  * Get the indicator as to whether this URI uses the "generic URI"
+  * syntax.
+  *
+  * @return true if this URI uses the "generic URI" syntax, false
+  *         otherwise
+  */
+  public boolean isGenericURI() {
+    // presence of the host (whether valid or empty) means
+    // double-slashes which means generic uri
+    return (m_host != null);
+  }
+
+  /**
+   * Returns whether this URI represents an absolute URI.
+   *
+   * @return true if this URI represents an absolute URI, false
+   *         otherwise
+   */
+  public boolean isAbsoluteURI() {
+      // presence of the scheme means absolute uri
+      return (m_scheme != null);
+  }
+
+ /**
+  * Determine whether a scheme conforms to the rules for a scheme name.
+  * A scheme is conformant if it starts with an alphanumeric, and
+  * contains only alphanumerics, '+','-' and '.'.
+  *
+  * @return true if the scheme is conformant, false otherwise
+  */
+  public static boolean isConformantSchemeName(String p_scheme) {
+    if (p_scheme == null || p_scheme.trim().length() == 0) {
+      return false;
+    }
+
+    if (!isAlpha(p_scheme.charAt(0))) {
+      return false;
+    }
+
+    char testChar;
+    int schemeLength = p_scheme.length();
+    for (int i = 1; i < schemeLength; ++i) {
+      testChar = p_scheme.charAt(i);
+      if (!isSchemeCharacter(testChar)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+ /**
+  * Determine whether a string is syntactically capable of representing
+  * a valid IPv4 address, IPv6 reference or the domain name of a network host.
+  * A valid IPv4 address consists of four decimal digit groups separated by a
+  * '.'. Each group must consist of one to three digits. See RFC 2732 Section 3,
+  * and RFC 2373 Section 2.2, for the definition of IPv6 references. A hostname
+  * consists of domain labels (each of which must begin and end with an alphanumeric
+  * but may contain '-') separated & by a '.'. See RFC 2396 Section 3.2.2.
+  *
+  * @return true if the string is a syntactically valid IPv4 address,
+  * IPv6 reference or hostname
+  */
+  public static boolean isWellFormedAddress(String address) {
+    if (address == null) {
+      return false;
+    }
+
+    int addrLength = address.length();
+    if (addrLength == 0) {
+      return false;
+    }
+
+    // Check if the host is a valid IPv6reference.
+    if (address.startsWith("[")) {
+      return isWellFormedIPv6Reference(address);
+    }
+
+    // Cannot start with a '.', '-', or end with a '-'.
+    if (address.startsWith(".") ||
+        address.startsWith("-") ||
+        address.endsWith("-")) {
+      return false;
+    }
+
+    // rightmost domain label starting with digit indicates IP address
+    // since top level domain label can only start with an alpha
+    // see RFC 2396 Section 3.2.2
+    int index = address.lastIndexOf('.');
+    if (address.endsWith(".")) {
+      index = address.substring(0, index).lastIndexOf('.');
+    }
+
+    if (index+1 < addrLength && isDigit(address.charAt(index+1))) {
+      return isWellFormedIPv4Address(address);
+    }
+    else {
+      // hostname      = *( domainlabel "." ) toplabel [ "." ]
+      // domainlabel   = alphanum | alphanum *( alphanum | "-" ) alphanum
+      // toplabel      = alpha | alpha *( alphanum | "-" ) alphanum
+
+      // RFC 2396 states that hostnames take the form described in
+      // RFC 1034 (Section 3) and RFC 1123 (Section 2.1). According
+      // to RFC 1034, hostnames are limited to 255 characters.
+      if (addrLength > 255) {
+        return false;
+      }
+
+      // domain labels can contain alphanumerics and '-"
+      // but must start and end with an alphanumeric
+      char testChar;
+      int labelCharCount = 0;
+
+      for (int i = 0; i < addrLength; i++) {
+        testChar = address.charAt(i);
+        if (testChar == '.') {
+          if (!isAlphanum(address.charAt(i-1))) {
+            return false;
+          }
+          if (i+1 < addrLength && !isAlphanum(address.charAt(i+1))) {
+            return false;
+          }
+          labelCharCount = 0;
+        }
+        else if (!isAlphanum(testChar) && testChar != '-') {
+          return false;
+        }
+        // RFC 1034: Labels must be 63 characters or less.
+        else if (++labelCharCount > 63) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * <p>Determines whether a string is an IPv4 address as defined by
+   * RFC 2373, and under the further constraint that it must be a 32-bit
+   * address. Though not expressed in the grammar, in order to satisfy
+   * the 32-bit address constraint, each segment of the address cannot
+   * be greater than 255 (8 bits of information).</p>
+   *
+   * <p><code>IPv4address = 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT</code></p>
+   *
+   * @return true if the string is a syntactically valid IPv4 address
+   */
+  public static boolean isWellFormedIPv4Address(String address) {
+
+      int addrLength = address.length();
+      char testChar;
+      int numDots = 0;
+      int numDigits = 0;
+
+      // make sure that 1) we see only digits and dot separators, 2) that
+      // any dot separator is preceded and followed by a digit and
+      // 3) that we find 3 dots
+      //
+      // RFC 2732 amended RFC 2396 by replacing the definition
+      // of IPv4address with the one defined by RFC 2373. - mrglavas
+      //
+      // IPv4address = 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT
+      //
+      // One to three digits must be in each segment.
+      for (int i = 0; i < addrLength; i++) {
+        testChar = address.charAt(i);
+        if (testChar == '.') {
+          if ((i > 0 && !isDigit(address.charAt(i-1))) ||
+              (i+1 < addrLength && !isDigit(address.charAt(i+1)))) {
+            return false;
+          }
+          numDigits = 0;
+          if (++numDots > 3) {
+            return false;
+          }
+        }
+        else if (!isDigit(testChar)) {
+          return false;
+        }
+        // Check that that there are no more than three digits
+        // in this segment.
+        else if (++numDigits > 3) {
+          return false;
+        }
+        // Check that this segment is not greater than 255.
+        else if (numDigits == 3) {
+          char first = address.charAt(i-2);
+          char second = address.charAt(i-1);
+          if (!(first < '2' ||
+               (first == '2' &&
+               (second < '5' ||
+               (second == '5' && testChar <= '5'))))) {
+            return false;
+          }
+        }
+      }
+      return (numDots == 3);
+  }
+
+  /**
+   * <p>Determines whether a string is an IPv6 reference as defined
+   * by RFC 2732, where IPv6address is defined in RFC 2373. The
+   * IPv6 address is parsed according to Section 2.2 of RFC 2373,
+   * with the additional constraint that the address be composed of
+   * 128 bits of information.</p>
+   *
+   * <p><code>IPv6reference = "[" IPv6address "]"</code></p>
+   *
+   * <p>Note: The BNF expressed in RFC 2373 Appendix B does not
+   * accurately describe section 2.2, and was in fact removed from
+   * RFC 3513, the successor of RFC 2373.</p>
+   *
+   * @return true if the string is a syntactically valid IPv6 reference
+   */
+  public static boolean isWellFormedIPv6Reference(String address) {
+
+      int addrLength = address.length();
+      int index = 1;
+      int end = addrLength-1;
+
+      // Check if string is a potential match for IPv6reference.
+      if (!(addrLength > 2 && address.charAt(0) == '['
+          && address.charAt(end) == ']')) {
+          return false;
+      }
+
+      // Counter for the number of 16-bit sections read in the address.
+      int [] counter = new int[1];
+
+      // Scan hex sequence before possible '::' or IPv4 address.
+      index = scanHexSequence(address, index, end, counter);
+      if (index == -1) {
+          return false;
+      }
+      // Address must contain 128-bits of information.
+      else if (index == end) {
+          return (counter[0] == 8);
+      }
+
+      if (index+1 < end && address.charAt(index) == ':') {
+          if (address.charAt(index+1) == ':') {
+              // '::' represents at least one 16-bit group of zeros.
+              if (++counter[0] > 8) {
+                  return false;
+              }
+              index += 2;
+              // Trailing zeros will fill out the rest of the address.
+              if (index == end) {
+                 return true;
+              }
+          }
+          // If the second character wasn't ':', in order to be valid,
+          // the remainder of the string must match IPv4Address,
+          // and we must have read exactly 6 16-bit groups.
+          else {
+              return (counter[0] == 6) &&
+                  isWellFormedIPv4Address(address.substring(index+1, end));
+          }
+      }
+      else {
+          return false;
+      }
+
+      // 3. Scan hex sequence after '::'.
+      int prevCount = counter[0];
+      index = scanHexSequence(address, index, end, counter);
+
+      // We've either reached the end of the string, the address ends in
+      // an IPv4 address, or it is invalid. scanHexSequence has already
+      // made sure that we have the right number of bits.
+      return (index == end) ||
+          (index != -1 && isWellFormedIPv4Address(
+          address.substring((counter[0] > prevCount) ? index+1 : index, end)));
+  }
+
+  /**
+   * Helper method for isWellFormedIPv6Reference which scans the
+   * hex sequences of an IPv6 address. It returns the index of the
+   * next character to scan in the address, or -1 if the string
+   * cannot match a valid IPv6 address.
+   *
+   * @param address the string to be scanned
+   * @param index the beginning index (inclusive)
+   * @param end the ending index (exclusive)
+   * @param counter a counter for the number of 16-bit sections read
+   * in the address
+   *
+   * @return the index of the next character to scan, or -1 if the
+   * string cannot match a valid IPv6 address
+   */
+  private static int scanHexSequence (String address, int index, int end, int [] counter) {
+
+      char testChar;
+      int numDigits = 0;
+      int start = index;
+
+      // Trying to match the following productions:
+      // hexseq = hex4 *( ":" hex4)
+      // hex4   = 1*4HEXDIG
+      for (; index < end; ++index) {
+        testChar = address.charAt(index);
+        if (testChar == ':') {
+            // IPv6 addresses are 128-bit, so there can be at most eight sections.
+            if (numDigits > 0 && ++counter[0] > 8) {
+                return -1;
+            }
+            // This could be '::'.
+            if (numDigits == 0 || ((index+1 < end) && address.charAt(index+1) == ':')) {
+                return index;
+            }
+            numDigits = 0;
+        }
+        // This might be invalid or an IPv4address. If it's potentially an IPv4address,
+        // backup to just after the last valid character that matches hexseq.
+        else if (!isHex(testChar)) {
+            if (testChar == '.' && numDigits < 4 && numDigits > 0 && counter[0] <= 6) {
+                int back = index - numDigits - 1;
+                return (back >= start) ? back : (back+1);
+            }
+            return -1;
+        }
+        // There can be at most 4 hex digits per group.
+        else if (++numDigits > 4) {
+            return -1;
+        }
+      }
+      return (numDigits > 0 && ++counter[0] <= 8) ? end : -1;
+  }
+
+
+ /**
+  * Determine whether a char is a digit.
+  *
+  * @return true if the char is betweeen '0' and '9', false otherwise
+  */
+  private static boolean isDigit(char p_char) {
+    return p_char >= '0' && p_char <= '9';
+  }
+
+ /**
+  * Determine whether a character is a hexadecimal character.
+  *
+  * @return true if the char is betweeen '0' and '9', 'a' and 'f'
+  *         or 'A' and 'F', false otherwise
+  */
+  private static boolean isHex(char p_char) {
+    return (p_char <= 'f' && (fgLookupTable[p_char] & ASCII_HEX_CHARACTERS) != 0);
+  }
+
+ /**
+  * Determine whether a char is an alphabetic character: a-z or A-Z
+  *
+  * @return true if the char is alphabetic, false otherwise
+  */
+  private static boolean isAlpha(char p_char) {
+      return ((p_char >= 'a' && p_char <= 'z') || (p_char >= 'A' && p_char <= 'Z' ));
+  }
+
+ /**
+  * Determine whether a char is an alphanumeric: 0-9, a-z or A-Z
+  *
+  * @return true if the char is alphanumeric, false otherwise
+  */
+  private static boolean isAlphanum(char p_char) {
+     return (p_char <= 'z' && (fgLookupTable[p_char] & MASK_ALPHA_NUMERIC) != 0);
+  }
+
+ /**
+  * Determine whether a character is a reserved character:
+  * ';', '/', '?', ':', '@', '&', '=', '+', '$', ',', '[', or ']'
+  *
+  * @return true if the string contains any reserved characters
+  */
+  private static boolean isReservedCharacter(char p_char) {
+     return (p_char <= ']' && (fgLookupTable[p_char] & RESERVED_CHARACTERS) != 0);
+  }
+
+ /**
+  * Determine whether a char is an unreserved character.
+  *
+  * @return true if the char is unreserved, false otherwise
+  */
+  private static boolean isUnreservedCharacter(char p_char) {
+     return (p_char <= '~' && (fgLookupTable[p_char] & MASK_UNRESERVED_MASK) != 0);
+  }
+
+ /**
+  * Determine whether a char is a URI character (reserved or
+  * unreserved, not including '%' for escaped octets).
+  *
+  * @return true if the char is a URI character, false otherwise
+  */
+  private static boolean isURICharacter (char p_char) {
+      return (p_char <= '~' && (fgLookupTable[p_char] & MASK_URI_CHARACTER) != 0);
+  }
+
+ /**
+  * Determine whether a char is a scheme character.
+  *
+  * @return true if the char is a scheme character, false otherwise
+  */
+  private static boolean isSchemeCharacter (char p_char) {
+      return (p_char <= 'z' && (fgLookupTable[p_char] & MASK_SCHEME_CHARACTER) != 0);
+  }
+
+ /**
+  * Determine whether a char is a userinfo character.
+  *
+  * @return true if the char is a userinfo character, false otherwise
+  */
+  private static boolean isUserinfoCharacter (char p_char) {
+      return (p_char <= 'z' && (fgLookupTable[p_char] & MASK_USERINFO_CHARACTER) != 0);
+  }
+
+ /**
+  * Determine whether a char is a path character.
+  *
+  * @return true if the char is a path character, false otherwise
+  */
+  private static boolean isPathCharacter (char p_char) {
+      return (p_char <= '~' && (fgLookupTable[p_char] & MASK_PATH_CHARACTER) != 0);
+  }
+
+
+ /**
+  * Determine whether a given string contains only URI characters (also
+  * called "uric" in RFC 2396). uric consist of all reserved
+  * characters, unreserved characters and escaped characters.
+  *
+  * @return true if the string is comprised of uric, false otherwise
+  */
+  private static boolean isURIString(String p_uric) {
+    if (p_uric == null) {
+      return false;
+    }
+    int end = p_uric.length();
+    char testChar = '\0';
+    for (int i = 0; i < end; i++) {
+      testChar = p_uric.charAt(i);
+      if (testChar == '%') {
+        if (i+2 >= end ||
+            !isHex(p_uric.charAt(i+1)) ||
+            !isHex(p_uric.charAt(i+2))) {
+          return false;
+        }
+        else {
+          i += 2;
+          continue;
+        }
+      }
+      if (isURICharacter(testChar)) {
+          continue;
+      }
+      else {
+        return false;
+      }
+    }
+    return true;
+  }
+}

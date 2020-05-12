@@ -1,77 +1,70 @@
-/*    */ package com.sun.corba.se.impl.orbutil.fsm;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.orbutil.fsm.Action;
-/*    */ import com.sun.corba.se.spi.orbutil.fsm.FSM;
-/*    */ import com.sun.corba.se.spi.orbutil.fsm.Guard;
-/*    */ import com.sun.corba.se.spi.orbutil.fsm.GuardBase;
-/*    */ import com.sun.corba.se.spi.orbutil.fsm.Input;
-/*    */ import com.sun.corba.se.spi.orbutil.fsm.State;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class GuardedAction
-/*    */ {
-/* 36 */   private static Guard trueGuard = new GuardBase("true")
-/*    */     {
-/*    */       public Guard.Result evaluate(FSM param1FSM, Input param1Input) {
-/* 39 */         return Guard.Result.ENABLED;
-/*    */       }
-/*    */     };
-/*    */ 
-/*    */   
-/*    */   private Guard guard;
-/*    */   private Action action;
-/*    */   private State nextState;
-/*    */   
-/*    */   public GuardedAction(Action paramAction, State paramState) {
-/* 49 */     this.guard = trueGuard;
-/* 50 */     this.action = paramAction;
-/* 51 */     this.nextState = paramState;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public GuardedAction(Guard paramGuard, Action paramAction, State paramState) {
-/* 56 */     this.guard = paramGuard;
-/* 57 */     this.action = paramAction;
-/* 58 */     this.nextState = paramState;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 63 */     return "GuardedAction[action=" + this.action + " guard=" + this.guard + " nextState=" + this.nextState + "]";
-/*    */   }
-/*    */   
-/*    */   public Action getAction() {
-/* 67 */     return this.action;
-/* 68 */   } public Guard getGuard() { return this.guard; } public State getNextState() {
-/* 69 */     return this.nextState;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\fsm\GuardedAction.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil.fsm ;
+
+import com.sun.corba.se.spi.orbutil.fsm.Guard ;
+import com.sun.corba.se.spi.orbutil.fsm.GuardBase ;
+import com.sun.corba.se.spi.orbutil.fsm.Input ;
+import com.sun.corba.se.spi.orbutil.fsm.Action ;
+import com.sun.corba.se.spi.orbutil.fsm.State ;
+import com.sun.corba.se.spi.orbutil.fsm.FSM ;
+
+public class GuardedAction {
+    private static Guard trueGuard = new GuardBase( "true" ) {
+        public Guard.Result evaluate( FSM fsm, Input in )
+        {
+            return Guard.Result.ENABLED ;
+        }
+    } ;
+
+    private Guard guard ;
+    private Action action ;
+    private State nextState ;
+
+    public GuardedAction( Action action, State nextState )
+    {
+        this.guard = trueGuard ;
+        this.action = action ;
+        this.nextState = nextState ;
+    }
+
+    public GuardedAction( Guard guard, Action action, State nextState )
+    {
+        this.guard = guard ;
+        this.action = action ;
+        this.nextState = nextState ;
+    }
+
+    public String toString()
+    {
+        return "GuardedAction[action=" + action + " guard=" + guard +
+            " nextState=" + nextState + "]" ;
+    }
+
+    public Action getAction() { return action ; }
+    public Guard getGuard() { return guard ; }
+    public State getNextState() { return nextState ; }
+}

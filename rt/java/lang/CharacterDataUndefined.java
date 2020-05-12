@@ -1,100 +1,95 @@
-/*    */ package java.lang;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class CharacterDataUndefined
-/*    */   extends CharacterData
-/*    */ {
-/*    */   int getProperties(int paramInt) {
-/* 34 */     return 0;
-/*    */   }
-/*    */   
-/*    */   int getType(int paramInt) {
-/* 38 */     return 0;
-/*    */   }
-/*    */   
-/*    */   boolean isJavaIdentifierStart(int paramInt) {
-/* 42 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isJavaIdentifierPart(int paramInt) {
-/* 46 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isUnicodeIdentifierStart(int paramInt) {
-/* 50 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isUnicodeIdentifierPart(int paramInt) {
-/* 54 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isIdentifierIgnorable(int paramInt) {
-/* 58 */     return false;
-/*    */   }
-/*    */   
-/*    */   int toLowerCase(int paramInt) {
-/* 62 */     return paramInt;
-/*    */   }
-/*    */   
-/*    */   int toUpperCase(int paramInt) {
-/* 66 */     return paramInt;
-/*    */   }
-/*    */   
-/*    */   int toTitleCase(int paramInt) {
-/* 70 */     return paramInt;
-/*    */   }
-/*    */   
-/*    */   int digit(int paramInt1, int paramInt2) {
-/* 74 */     return -1;
-/*    */   }
-/*    */   
-/*    */   int getNumericValue(int paramInt) {
-/* 78 */     return -1;
-/*    */   }
-/*    */   
-/*    */   boolean isWhitespace(int paramInt) {
-/* 82 */     return false;
-/*    */   }
-/*    */   
-/*    */   byte getDirectionality(int paramInt) {
-/* 86 */     return -1;
-/*    */   }
-/*    */   
-/*    */   boolean isMirrored(int paramInt) {
-/* 90 */     return false;
-/*    */   }
-/*    */   
-/* 93 */   static final CharacterData instance = new CharacterDataUndefined();
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\CharacterDataUndefined.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+/** The CharacterData class encapsulates the large tables found in
+    Java.lang.Character. */
+
+class CharacterDataUndefined extends CharacterData {
+
+    int getProperties(int ch) {
+        return 0;
+    }
+
+    int getType(int ch) {
+	return Character.UNASSIGNED;
+    }
+
+    boolean isJavaIdentifierStart(int ch) {
+		return false;
+    }
+
+    boolean isJavaIdentifierPart(int ch) {
+		return false;
+    }
+
+    boolean isUnicodeIdentifierStart(int ch) {
+		return false;
+    }
+
+    boolean isUnicodeIdentifierPart(int ch) {
+		return false;
+    }
+
+    boolean isIdentifierIgnorable(int ch) {
+		return false;
+    }
+
+    int toLowerCase(int ch) {
+		return ch;
+    }
+
+    int toUpperCase(int ch) {
+		return ch;
+    }
+
+    int toTitleCase(int ch) {
+		return ch;
+    }
+
+    int digit(int ch, int radix) {
+		return -1;
+    }
+
+    int getNumericValue(int ch) {
+		return -1;
+    }
+
+    boolean isWhitespace(int ch) {
+		return false;
+    }
+
+    byte getDirectionality(int ch) {
+		return Character.DIRECTIONALITY_UNDEFINED;
+    }
+
+    boolean isMirrored(int ch) {
+		return false;
+    }
+
+    static final CharacterData instance = new CharacterDataUndefined();
+    private CharacterDataUndefined() {};
+}

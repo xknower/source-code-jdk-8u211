@@ -1,347 +1,342 @@
-/*     */ package com.sun.org.apache.xml.internal.utils;
-/*     */ 
-/*     */ import java.util.StringTokenizer;
-/*     */ import java.util.Vector;
-/*     */ import javax.xml.transform.Source;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ import javax.xml.transform.URIResolver;
-/*     */ import javax.xml.transform.sax.SAXSource;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.helpers.DefaultHandler;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StylesheetPIHandler
-/*     */   extends DefaultHandler
-/*     */ {
-/*     */   String m_baseID;
-/*     */   String m_media;
-/*     */   String m_title;
-/*     */   String m_charset;
-/*  58 */   Vector m_stylesheets = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   URIResolver m_uriResolver;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setURIResolver(URIResolver resolver) {
-/*  77 */     this.m_uriResolver = resolver;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public URIResolver getURIResolver() {
-/*  88 */     return this.m_uriResolver;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public StylesheetPIHandler(String baseID, String media, String title, String charset) {
-/* 105 */     this.m_baseID = baseID;
-/* 106 */     this.m_media = media;
-/* 107 */     this.m_title = title;
-/* 108 */     this.m_charset = charset;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Source getAssociatedStylesheet() {
-/* 120 */     int sz = this.m_stylesheets.size();
-/*     */     
-/* 122 */     if (sz > 0) {
-/*     */       
-/* 124 */       Source source = this.m_stylesheets.elementAt(sz - 1);
-/* 125 */       return source;
-/*     */     } 
-/*     */     
-/* 128 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void processingInstruction(String target, String data) throws SAXException {
-/* 146 */     if (target.equals("xml-stylesheet")) {
-/*     */       
-/* 148 */       String href = null;
-/* 149 */       String type = null;
-/* 150 */       String title = null;
-/* 151 */       String media = null;
-/* 152 */       String charset = null;
-/* 153 */       boolean alternate = false;
-/* 154 */       StringTokenizer tokenizer = new StringTokenizer(data, " \t=\n", true);
-/* 155 */       boolean lookedAhead = false;
-/* 156 */       Source source = null;
-/*     */       
-/* 158 */       String token = "";
-/* 159 */       while (tokenizer.hasMoreTokens()) {
-/*     */         
-/* 161 */         if (!lookedAhead) {
-/* 162 */           token = tokenizer.nextToken();
-/*     */         } else {
-/* 164 */           lookedAhead = false;
-/* 165 */         }  if (tokenizer.hasMoreTokens() && (token
-/* 166 */           .equals(" ") || token.equals("\t") || token.equals("="))) {
-/*     */           continue;
-/*     */         }
-/* 169 */         String name = token;
-/* 170 */         if (name.equals("type")) {
-/*     */           
-/* 172 */           token = tokenizer.nextToken();
-/* 173 */           while (tokenizer.hasMoreTokens() && (token
-/* 174 */             .equals(" ") || token.equals("\t") || token.equals("=")))
-/* 175 */             token = tokenizer.nextToken(); 
-/* 176 */           type = token.substring(1, token.length() - 1);
-/*     */           continue;
-/*     */         } 
-/* 179 */         if (name.equals("href")) {
-/*     */           
-/* 181 */           token = tokenizer.nextToken();
-/* 182 */           while (tokenizer.hasMoreTokens() && (token
-/* 183 */             .equals(" ") || token.equals("\t") || token.equals("=")))
-/* 184 */             token = tokenizer.nextToken(); 
-/* 185 */           href = token;
-/* 186 */           if (tokenizer.hasMoreTokens()) {
-/*     */             
-/* 188 */             token = tokenizer.nextToken();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 197 */             while (token.equals("=") && tokenizer.hasMoreTokens()) {
-/*     */               
-/* 199 */               href = href + token + tokenizer.nextToken();
-/* 200 */               if (tokenizer.hasMoreTokens()) {
-/*     */                 
-/* 202 */                 token = tokenizer.nextToken();
-/* 203 */                 lookedAhead = true;
-/*     */               } 
-/*     */             } 
-/*     */           } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 211 */           href = href.substring(1, href.length() - 1);
-/*     */ 
-/*     */           
-/*     */           try {
-/* 215 */             if (this.m_uriResolver != null) {
-/*     */               
-/* 217 */               source = this.m_uriResolver.resolve(href, this.m_baseID);
-/*     */               
-/*     */               continue;
-/*     */             } 
-/* 221 */             href = SystemIDResolver.getAbsoluteURI(href, this.m_baseID);
-/* 222 */             source = new SAXSource(new InputSource(href));
-/*     */           
-/*     */           }
-/* 225 */           catch (TransformerException te) {
-/*     */             
-/* 227 */             throw new SAXException(te);
-/*     */           }  continue;
-/*     */         } 
-/* 230 */         if (name.equals("title")) {
-/*     */           
-/* 232 */           token = tokenizer.nextToken();
-/* 233 */           while (tokenizer.hasMoreTokens() && (token
-/* 234 */             .equals(" ") || token.equals("\t") || token.equals("=")))
-/* 235 */             token = tokenizer.nextToken(); 
-/* 236 */           title = token.substring(1, token.length() - 1); continue;
-/*     */         } 
-/* 238 */         if (name.equals("media")) {
-/*     */           
-/* 240 */           token = tokenizer.nextToken();
-/* 241 */           while (tokenizer.hasMoreTokens() && (token
-/* 242 */             .equals(" ") || token.equals("\t") || token.equals("=")))
-/* 243 */             token = tokenizer.nextToken(); 
-/* 244 */           media = token.substring(1, token.length() - 1); continue;
-/*     */         } 
-/* 246 */         if (name.equals("charset")) {
-/*     */           
-/* 248 */           token = tokenizer.nextToken();
-/* 249 */           while (tokenizer.hasMoreTokens() && (token
-/* 250 */             .equals(" ") || token.equals("\t") || token.equals("=")))
-/* 251 */             token = tokenizer.nextToken(); 
-/* 252 */           charset = token.substring(1, token.length() - 1); continue;
-/*     */         } 
-/* 254 */         if (name.equals("alternate")) {
-/*     */           
-/* 256 */           token = tokenizer.nextToken();
-/* 257 */           while (tokenizer.hasMoreTokens() && (token
-/* 258 */             .equals(" ") || token.equals("\t") || token.equals("="))) {
-/* 259 */             token = tokenizer.nextToken();
-/*     */           }
-/* 261 */           alternate = token.substring(1, token.length() - 1).equals("yes");
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 266 */       if (null != type && (type
-/* 267 */         .equals("text/xsl") || type.equals("text/xml") || type.equals("application/xml+xslt")) && null != href) {
-/*     */ 
-/*     */         
-/* 270 */         if (null != this.m_media)
-/*     */         {
-/* 272 */           if (null != media) {
-/*     */             
-/* 274 */             if (!media.equals(this.m_media)) {
-/*     */               return;
-/*     */             }
-/*     */           } else {
-/*     */             return;
-/*     */           } 
-/*     */         }
-/* 281 */         if (null != this.m_charset)
-/*     */         {
-/* 283 */           if (null != charset) {
-/*     */             
-/* 285 */             if (!charset.equals(this.m_charset)) {
-/*     */               return;
-/*     */             }
-/*     */           } else {
-/*     */             return;
-/*     */           } 
-/*     */         }
-/* 292 */         if (null != this.m_title)
-/*     */         {
-/* 294 */           if (null != title) {
-/*     */             
-/* 296 */             if (!title.equals(this.m_title)) {
-/*     */               return;
-/*     */             }
-/*     */           } else {
-/*     */             return;
-/*     */           } 
-/*     */         }
-/* 303 */         this.m_stylesheets.addElement(source);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
-/* 326 */     throw new StopParseException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setBaseId(String baseId) {
-/* 335 */     this.m_baseID = baseId;
-/*     */   }
-/*     */   
-/*     */   public String getBaseId() {
-/* 339 */     return this.m_baseID;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\StylesheetPIHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StylesheetPIHandler.java,v 1.2.4.1 2005/09/15 08:15:57 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.utils;
+
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import javax.xml.transform.Source;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.URIResolver;
+import javax.xml.transform.sax.SAXSource;
+
+import com.sun.org.apache.xml.internal.utils.SystemIDResolver;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.helpers.DefaultHandler;
+
+/**
+ * Search for the xml-stylesheet processing instructions in an XML document.
+ * @see <a href="http://www.w3.org/TR/xml-stylesheet/">Associating Style Sheets with XML documents, Version 1.0</a>
+ */
+public class StylesheetPIHandler extends DefaultHandler
+{
+  /** The baseID of the document being processed.  */
+  String m_baseID;
+
+  /** The desired media criteria. */
+  String m_media;
+
+  /** The desired title criteria.  */
+  String m_title;
+
+  /** The desired character set criteria.   */
+  String m_charset;
+
+  /** A list of SAXSource objects that match the criteria.  */
+  Vector m_stylesheets = new Vector();
+
+  // Add code to use a URIResolver. Patch from Dmitri Ilyin.
+
+  /**
+   * The object that implements the URIResolver interface,
+   * or null.
+   */
+  URIResolver m_uriResolver;
+
+  /**
+   * Get the object that will be used to resolve URIs in href
+   * in xml-stylesheet processing instruction.
+   *
+   * @param resolver An object that implements the URIResolver interface,
+   * or null.
+   */
+  public void setURIResolver(URIResolver resolver)
+  {
+    m_uriResolver = resolver;
+  }
+
+  /**
+   * Get the object that will be used to resolve URIs in href
+   * in xml-stylesheet processing instruction.
+   *
+   * @return The URIResolver that was set with setURIResolver.
+   */
+  public URIResolver getURIResolver()
+  {
+    return m_uriResolver;
+  }
+
+  /**
+   * Construct a StylesheetPIHandler instance that will search
+   * for xml-stylesheet PIs based on the given criteria.
+   *
+   * @param baseID The base ID of the XML document, needed to resolve
+   *               relative IDs.
+   * @param media The desired media criteria.
+   * @param title The desired title criteria.
+   * @param charset The desired character set criteria.
+   */
+  public StylesheetPIHandler(String baseID, String media, String title,
+                             String charset)
+  {
+
+    m_baseID = baseID;
+    m_media = media;
+    m_title = title;
+    m_charset = charset;
+  }
+
+  /**
+   * Return the last stylesheet found that match the constraints.
+   *
+   * @return Source object that references the last stylesheet reference
+   *         that matches the constraints.
+   */
+  public Source getAssociatedStylesheet()
+  {
+
+    int sz = m_stylesheets.size();
+
+    if (sz > 0)
+    {
+      Source source = (Source) m_stylesheets.elementAt(sz-1);
+      return source;
+    }
+    else
+      return null;
+  }
+
+  /**
+   * Handle the xml-stylesheet processing instruction.
+   *
+   * @param target The processing instruction target.
+   * @param data The processing instruction data, or null if
+   *             none is supplied.
+   * @throws org.xml.sax.SAXException Any SAX exception, possibly
+   *            wrapping another exception.
+   * @see org.xml.sax.ContentHandler#processingInstruction
+   * @see <a href="http://www.w3.org/TR/xml-stylesheet/">Associating Style Sheets with XML documents, Version 1.0</a>
+   */
+  public void processingInstruction(String target, String data)
+          throws org.xml.sax.SAXException
+  {
+
+    if (target.equals("xml-stylesheet"))
+    {
+      String href = null;  // CDATA #REQUIRED
+      String type = null;  // CDATA #REQUIRED
+      String title = null;  // CDATA #IMPLIED
+      String media = null;  // CDATA #IMPLIED
+      String charset = null;  // CDATA #IMPLIED
+      boolean alternate = false;  // (yes|no) "no"
+      StringTokenizer tokenizer = new StringTokenizer(data, " \t=\n", true);
+      boolean lookedAhead = false;
+      Source source = null;
+
+      String token = "";
+      while (tokenizer.hasMoreTokens())
+      {
+        if (!lookedAhead)
+          token = tokenizer.nextToken();
+        else
+          lookedAhead = false;
+        if (tokenizer.hasMoreTokens() &&
+               (token.equals(" ") || token.equals("\t") || token.equals("=")))
+          continue;
+
+        String name = token;
+        if (name.equals("type"))
+        {
+          token = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens() &&
+               (token.equals(" " ) || token.equals("\t") || token.equals("=")))
+            token = tokenizer.nextToken();
+          type = token.substring(1, token.length() - 1);
+
+        }
+        else if (name.equals("href"))
+        {
+          token = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens() &&
+               (token.equals(" " ) || token.equals("\t") || token.equals("=")))
+            token = tokenizer.nextToken();
+          href = token;
+          if (tokenizer.hasMoreTokens())
+          {
+            token = tokenizer.nextToken();
+            // If the href value has parameters to be passed to a
+            // servlet(something like "foobar?id=12..."),
+            // we want to make sure we get them added to
+            // the href value. Without this check, we would move on
+            // to try to process another attribute and that would be
+            // wrong.
+            // We need to set lookedAhead here to flag that we
+            // already have the next token.
+            while ( token.equals("=") && tokenizer.hasMoreTokens())
+            {
+              href = href + token + tokenizer.nextToken();
+              if (tokenizer.hasMoreTokens())
+              {
+                token = tokenizer.nextToken();
+                lookedAhead = true;
+              }
+              else
+              {
+                break;
+              }
+            }
+          }
+          href = href.substring(1, href.length() - 1);
+          try
+          {
+            // Add code to use a URIResolver. Patch from Dmitri Ilyin.
+            if (m_uriResolver != null)
+            {
+              source = m_uriResolver.resolve(href, m_baseID);
+            }
+           else
+            {
+              href = SystemIDResolver.getAbsoluteURI(href, m_baseID);
+              source = new SAXSource(new InputSource(href));
+            }
+          }
+          catch(TransformerException te)
+          {
+            throw new org.xml.sax.SAXException(te);
+          }
+        }
+        else if (name.equals("title"))
+        {
+          token = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens() &&
+               (token.equals(" " ) || token.equals("\t") || token.equals("=")))
+            token = tokenizer.nextToken();
+          title = token.substring(1, token.length() - 1);
+        }
+        else if (name.equals("media"))
+        {
+          token = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens() &&
+               (token.equals(" " ) || token.equals("\t") || token.equals("=")))
+            token = tokenizer.nextToken();
+          media = token.substring(1, token.length() - 1);
+        }
+        else if (name.equals("charset"))
+        {
+          token = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens() &&
+              (token.equals(" " ) || token.equals("\t") || token.equals("=")))
+            token = tokenizer.nextToken();
+          charset = token.substring(1, token.length() - 1);
+        }
+        else if (name.equals("alternate"))
+        {
+          token = tokenizer.nextToken();
+          while (tokenizer.hasMoreTokens() &&
+               (token.equals(" " ) || token.equals("\t") || token.equals("=")))
+            token = tokenizer.nextToken();
+          alternate = token.substring(1, token.length()
+                                             - 1).equals("yes");
+        }
+
+      }
+
+      if ((null != type)
+          && (type.equals("text/xsl") || type.equals("text/xml") || type.equals("application/xml+xslt"))
+          && (null != href))
+      {
+        if (null != m_media)
+        {
+          if (null != media)
+          {
+            if (!media.equals(m_media))
+              return;
+          }
+          else
+            return;
+        }
+
+        if (null != m_charset)
+        {
+          if (null != charset)
+          {
+            if (!charset.equals(m_charset))
+              return;
+          }
+          else
+            return;
+        }
+
+        if (null != m_title)
+        {
+          if (null != title)
+          {
+            if (!title.equals(m_title))
+              return;
+          }
+          else
+            return;
+        }
+
+        m_stylesheets.addElement(source);
+      }
+    }
+  }
+
+
+  /**
+   * The spec notes that "The xml-stylesheet processing instruction is allowed only in the prolog of an XML document.",
+   * so, at least for right now, I'm going to go ahead an throw a TransformerException
+   * in order to stop the parse.
+   *
+   * @param namespaceURI The Namespace URI, or an empty string.
+   * @param localName The local name (without prefix), or empty string if not namespace processing.
+   * @param qName The qualified name (with prefix).
+   * @param atts  The specified or defaulted attributes.
+   *
+   * @throws StopParseException since there can be no valid xml-stylesheet processing
+   *                            instructions past the first element.
+   */
+  public void startElement(
+          String namespaceURI, String localName, String qName, Attributes atts)
+            throws org.xml.sax.SAXException
+  {
+    throw new StopParseException();
+  }
+
+  /**
+    * Added additional getter and setter methods for the Base Id
+    * to fix bugzilla bug 24187
+    *
+    */
+   public void setBaseId(String baseId) {
+       m_baseID = baseId;
+
+   }
+   public String  getBaseId() {
+       return m_baseID ;
+   }
+
+}

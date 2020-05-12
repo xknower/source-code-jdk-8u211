@@ -1,233 +1,227 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Set;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.KeyStroke;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicTabbedPaneUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsTabbedPaneUI
-/*     */   extends BasicTabbedPaneUI
-/*     */ {
-/*     */   private static Set<KeyStroke> managingFocusForwardTraversalKeys;
-/*     */   private static Set<KeyStroke> managingFocusBackwardTraversalKeys;
-/*     */   private boolean contentOpaque = true;
-/*     */   
-/*     */   protected void installDefaults() {
-/*  67 */     super.installDefaults();
-/*  68 */     this.contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque");
-/*     */ 
-/*     */     
-/*  71 */     if (managingFocusForwardTraversalKeys == null) {
-/*  72 */       managingFocusForwardTraversalKeys = new HashSet<>();
-/*  73 */       managingFocusForwardTraversalKeys.add(KeyStroke.getKeyStroke(9, 0));
-/*     */     } 
-/*  75 */     this.tabPane.setFocusTraversalKeys(0, (Set)managingFocusForwardTraversalKeys);
-/*     */     
-/*  77 */     if (managingFocusBackwardTraversalKeys == null) {
-/*  78 */       managingFocusBackwardTraversalKeys = new HashSet<>();
-/*  79 */       managingFocusBackwardTraversalKeys.add(KeyStroke.getKeyStroke(9, 1));
-/*     */     } 
-/*  81 */     this.tabPane.setFocusTraversalKeys(1, (Set)managingFocusBackwardTraversalKeys);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/*  87 */     this.tabPane.setFocusTraversalKeys(0, null);
-/*  88 */     this.tabPane.setFocusTraversalKeys(1, null);
-/*  89 */     super.uninstallDefaults();
-/*     */   }
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  93 */     return new WindowsTabbedPaneUI();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void setRolloverTab(int paramInt) {
-/*  98 */     if (XPStyle.getXP() != null) {
-/*  99 */       int i = getRolloverTab();
-/* 100 */       super.setRolloverTab(paramInt);
-/* 101 */       Rectangle rectangle1 = null;
-/* 102 */       Rectangle rectangle2 = null;
-/* 103 */       if (i >= 0 && i < this.tabPane.getTabCount()) {
-/* 104 */         rectangle1 = getTabBounds(this.tabPane, i);
-/*     */       }
-/* 106 */       if (paramInt >= 0) {
-/* 107 */         rectangle2 = getTabBounds(this.tabPane, paramInt);
-/*     */       }
-/* 109 */       if (rectangle1 != null) {
-/* 110 */         if (rectangle2 != null) {
-/* 111 */           this.tabPane.repaint(rectangle1.union(rectangle2));
-/*     */         } else {
-/* 113 */           this.tabPane.repaint(rectangle1);
-/*     */         } 
-/* 115 */       } else if (rectangle2 != null) {
-/* 116 */         this.tabPane.repaint(rectangle2);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void paintContentBorder(Graphics paramGraphics, int paramInt1, int paramInt2) {
-/* 122 */     XPStyle xPStyle = XPStyle.getXP();
-/* 123 */     if (xPStyle != null && (this.contentOpaque || this.tabPane.isOpaque())) {
-/* 124 */       XPStyle.Skin skin = xPStyle.getSkin(this.tabPane, TMSchema.Part.TABP_PANE);
-/* 125 */       if (skin != null) {
-/* 126 */         Insets insets1 = this.tabPane.getInsets();
-/*     */ 
-/*     */         
-/* 129 */         Insets insets2 = UIManager.getInsets("TabbedPane.tabAreaInsets");
-/* 130 */         int i = insets1.left;
-/* 131 */         int j = insets1.top;
-/* 132 */         int k = this.tabPane.getWidth() - insets1.right - insets1.left;
-/* 133 */         int m = this.tabPane.getHeight() - insets1.top - insets1.bottom;
-/*     */ 
-/*     */         
-/* 136 */         if (paramInt1 == 2 || paramInt1 == 4) {
-/* 137 */           int n = calculateTabAreaWidth(paramInt1, this.runCount, this.maxTabWidth);
-/* 138 */           if (paramInt1 == 2) {
-/* 139 */             i += n - insets2.bottom;
-/*     */           }
-/* 141 */           k -= n - insets2.bottom;
-/*     */         } else {
-/* 143 */           int n = calculateTabAreaHeight(paramInt1, this.runCount, this.maxTabHeight);
-/* 144 */           if (paramInt1 == 1) {
-/* 145 */             j += n - insets2.bottom;
-/*     */           }
-/* 147 */           m -= n - insets2.bottom;
-/*     */         } 
-/*     */         
-/* 150 */         paintRotatedSkin(paramGraphics, skin, paramInt1, i, j, k, m, (TMSchema.State)null);
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/* 154 */     super.paintContentBorder(paramGraphics, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintTabBackground(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, boolean paramBoolean) {
-/* 159 */     if (XPStyle.getXP() == null) {
-/* 160 */       super.paintTabBackground(paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, paramBoolean);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintTabBorder(Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, boolean paramBoolean) {
-/* 166 */     XPStyle xPStyle = XPStyle.getXP();
-/* 167 */     if (xPStyle != null) {
-/*     */       TMSchema.Part part;
-/*     */       
-/* 170 */       int i = this.tabPane.getTabCount();
-/* 171 */       int j = getRunForTab(i, paramInt2);
-/* 172 */       if (this.tabRuns[j] == paramInt2) {
-/* 173 */         part = TMSchema.Part.TABP_TABITEMLEFTEDGE;
-/* 174 */       } else if (i > 1 && lastTabInRun(i, j) == paramInt2) {
-/* 175 */         part = TMSchema.Part.TABP_TABITEMRIGHTEDGE;
-/* 176 */         if (paramBoolean)
-/*     */         {
-/* 178 */           if (paramInt1 == 1 || paramInt1 == 3) {
-/* 179 */             paramInt5++;
-/*     */           } else {
-/* 181 */             paramInt6++;
-/*     */           } 
-/*     */         }
-/*     */       } else {
-/* 185 */         part = TMSchema.Part.TABP_TABITEM;
-/*     */       } 
-/*     */       
-/* 188 */       TMSchema.State state = TMSchema.State.NORMAL;
-/* 189 */       if (paramBoolean) {
-/* 190 */         state = TMSchema.State.SELECTED;
-/* 191 */       } else if (paramInt2 == getRolloverTab()) {
-/* 192 */         state = TMSchema.State.HOT;
-/*     */       } 
-/*     */       
-/* 195 */       paintRotatedSkin(paramGraphics, xPStyle.getSkin(this.tabPane, part), paramInt1, paramInt3, paramInt4, paramInt5, paramInt6, state);
-/*     */     } else {
-/* 197 */       super.paintTabBorder(paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5, paramInt6, paramBoolean);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void paintRotatedSkin(Graphics paramGraphics, XPStyle.Skin paramSkin, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, TMSchema.State paramState) {
-/* 203 */     Graphics2D graphics2D = (Graphics2D)paramGraphics.create();
-/* 204 */     graphics2D.translate(paramInt2, paramInt3);
-/* 205 */     switch (paramInt1) { case 4:
-/* 206 */         graphics2D.translate(paramInt4, 0);
-/* 207 */         graphics2D.rotate(Math.toRadians(90.0D));
-/* 208 */         paramSkin.paintSkin(graphics2D, 0, 0, paramInt5, paramInt4, paramState);
-/*     */         break;
-/*     */       case 2:
-/* 211 */         graphics2D.scale(-1.0D, 1.0D);
-/* 212 */         graphics2D.rotate(Math.toRadians(90.0D));
-/* 213 */         paramSkin.paintSkin(graphics2D, 0, 0, paramInt5, paramInt4, paramState);
-/*     */         break;
-/*     */       case 3:
-/* 216 */         graphics2D.translate(0, paramInt5);
-/* 217 */         graphics2D.scale(-1.0D, 1.0D);
-/* 218 */         graphics2D.rotate(Math.toRadians(180.0D));
-/* 219 */         paramSkin.paintSkin(graphics2D, 0, 0, paramInt4, paramInt5, paramState);
-/*     */         break;
-/*     */       
-/*     */       default:
-/* 223 */         paramSkin.paintSkin(graphics2D, 0, 0, paramInt4, paramInt5, paramState); break; }
-/*     */     
-/* 225 */     graphics2D.dispose();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsTabbedPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+
+import javax.swing.plaf.basic.*;
+import javax.swing.plaf.*;
+import javax.swing.*;
+import java.util.Set;
+import java.util.HashSet;
+import java.awt.event.*;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+
+/**
+ * Windows rendition of the component.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsTabbedPaneUI extends BasicTabbedPaneUI {
+    /**
+     * Keys to use for forward focus traversal when the JComponent is
+     * managing focus.
+     */
+    private static Set<KeyStroke> managingFocusForwardTraversalKeys;
+
+    /**
+     * Keys to use for backward focus traversal when the JComponent is
+     * managing focus.
+     */
+    private static Set<KeyStroke> managingFocusBackwardTraversalKeys;
+
+    private boolean contentOpaque = true;
+
+    protected void installDefaults() {
+        super.installDefaults();
+        contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque");
+
+        // focus forward traversal key
+        if (managingFocusForwardTraversalKeys==null) {
+            managingFocusForwardTraversalKeys = new HashSet<KeyStroke>();
+            managingFocusForwardTraversalKeys.add(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
+        }
+        tabPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, managingFocusForwardTraversalKeys);
+        // focus backward traversal key
+        if (managingFocusBackwardTraversalKeys==null) {
+            managingFocusBackwardTraversalKeys = new HashSet<KeyStroke>();
+            managingFocusBackwardTraversalKeys.add( KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK));
+        }
+        tabPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, managingFocusBackwardTraversalKeys);
+    }
+
+    protected void uninstallDefaults() {
+        // sets the focus forward and backward traversal keys to null
+        // to restore the defaults
+        tabPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+        tabPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+        super.uninstallDefaults();
+    }
+
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsTabbedPaneUI();
+    }
+
+    protected void setRolloverTab(int index) {
+        // Rollover is only supported on XP
+        if (XPStyle.getXP() != null) {
+            int oldRolloverTab = getRolloverTab();
+            super.setRolloverTab(index);
+            Rectangle r1 = null;
+            Rectangle r2 = null;
+            if ( (oldRolloverTab >= 0) && (oldRolloverTab < tabPane.getTabCount()) ) {
+                r1 = getTabBounds(tabPane, oldRolloverTab);
+            }
+            if (index >= 0) {
+                r2 = getTabBounds(tabPane, index);
+            }
+            if (r1 != null) {
+                if (r2 != null) {
+                    tabPane.repaint(r1.union(r2));
+                } else {
+                    tabPane.repaint(r1);
+                }
+            } else if (r2 != null) {
+                tabPane.repaint(r2);
+            }
+        }
+    }
+
+    protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null && (contentOpaque || tabPane.isOpaque())) {
+            Skin skin = xp.getSkin(tabPane, Part.TABP_PANE);
+            if (skin != null) {
+                Insets insets = tabPane.getInsets();
+                // Note: don't call getTabAreaInsets(), because it causes rotation.
+                // Make sure "TabbedPane.tabsOverlapBorder" is set to true in WindowsLookAndFeel
+                Insets tabAreaInsets = UIManager.getInsets("TabbedPane.tabAreaInsets");
+                int x = insets.left;
+                int y = insets.top;
+                int w = tabPane.getWidth() - insets.right - insets.left;
+                int h = tabPane.getHeight() - insets.top - insets.bottom;
+
+                // Expand area by tabAreaInsets.bottom to allow tabs to overlap onto the border.
+                if (tabPlacement == LEFT || tabPlacement == RIGHT) {
+                    int tabWidth = calculateTabAreaWidth(tabPlacement, runCount, maxTabWidth);
+                    if (tabPlacement == LEFT) {
+                        x += (tabWidth - tabAreaInsets.bottom);
+                    }
+                    w -= (tabWidth - tabAreaInsets.bottom);
+                } else {
+                    int tabHeight = calculateTabAreaHeight(tabPlacement, runCount, maxTabHeight);
+                    if (tabPlacement == TOP) {
+                        y += (tabHeight - tabAreaInsets.bottom);
+                    }
+                    h -= (tabHeight - tabAreaInsets.bottom);
+                }
+
+                paintRotatedSkin(g, skin, tabPlacement, x, y, w, h, null);
+                return;
+            }
+        }
+        super.paintContentBorder(g, tabPlacement, selectedIndex);
+    }
+
+    protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
+                                      int x, int y, int w, int h, boolean isSelected ) {
+        if (XPStyle.getXP() == null) {
+            super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
+        }
+    }
+
+    protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex,
+                                  int x, int y, int w, int h, boolean isSelected ) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            Part part;
+
+            int tabCount = tabPane.getTabCount();
+            int tabRun = getRunForTab(tabCount, tabIndex);
+            if (tabRuns[tabRun] == tabIndex) {
+                part = Part.TABP_TABITEMLEFTEDGE;
+            } else if (tabCount > 1 && lastTabInRun(tabCount, tabRun) == tabIndex) {
+                part = Part.TABP_TABITEMRIGHTEDGE;
+                if (isSelected) {
+                    // Align with right edge
+                    if (tabPlacement == TOP || tabPlacement == BOTTOM) {
+                        w++;
+                    } else {
+                        h++;
+                    }
+                }
+            } else {
+                part = Part.TABP_TABITEM;
+            }
+
+            State state = State.NORMAL;
+            if (isSelected) {
+                state = State.SELECTED;
+            } else if (tabIndex == getRolloverTab()) {
+                state = State.HOT;
+            }
+
+            paintRotatedSkin(g, xp.getSkin(tabPane, part), tabPlacement, x, y, w, h, state);
+        } else {
+            super.paintTabBorder(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
+        }
+    }
+
+    private void paintRotatedSkin(Graphics g, Skin skin, int tabPlacement,
+                                  int x, int y, int w, int h, State state) {
+        Graphics2D g2d = (Graphics2D)g.create();
+        g2d.translate(x, y);
+        switch (tabPlacement) {
+           case RIGHT:  g2d.translate(w, 0);
+                        g2d.rotate(Math.toRadians(90.0));
+                        skin.paintSkin(g2d, 0, 0, h, w, state);
+                        break;
+
+           case LEFT:   g2d.scale(-1.0, 1.0);
+                        g2d.rotate(Math.toRadians(90.0));
+                        skin.paintSkin(g2d, 0, 0, h, w, state);
+                        break;
+
+           case BOTTOM: g2d.translate(0, h);
+                        g2d.scale(-1.0, 1.0);
+                        g2d.rotate(Math.toRadians(180.0));
+                        skin.paintSkin(g2d, 0, 0, w, h, state);
+                        break;
+
+           case TOP:
+           default:     skin.paintSkin(g2d, 0, 0, w, h, state);
+        }
+        g2d.dispose();
+    }
+}

@@ -1,57 +1,51 @@
-/*    */ package com.sun.corba.se.impl.monitoring;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoringManager;
-/*    */ import com.sun.corba.se.spi.monitoring.MonitoringManagerFactory;
-/*    */ import java.util.HashMap;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MonitoringManagerFactoryImpl
-/*    */   implements MonitoringManagerFactory
-/*    */ {
-/* 34 */   private HashMap monitoringManagerTable = new HashMap<>();
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public synchronized MonitoringManager createMonitoringManager(String paramString1, String paramString2) {
-/* 39 */     MonitoringManagerImpl monitoringManagerImpl = null;
-/* 40 */     monitoringManagerImpl = (MonitoringManagerImpl)this.monitoringManagerTable.get(paramString1);
-/* 41 */     if (monitoringManagerImpl == null) {
-/* 42 */       monitoringManagerImpl = new MonitoringManagerImpl(paramString1, paramString2);
-/* 43 */       this.monitoringManagerTable.put(paramString1, monitoringManagerImpl);
-/*    */     } 
-/* 45 */     return monitoringManagerImpl;
-/*    */   }
-/*    */   
-/*    */   public synchronized void remove(String paramString) {
-/* 49 */     this.monitoringManagerTable.remove(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\monitoring\MonitoringManagerFactoryImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.monitoring;
+
+import java.util.HashMap;
+import com.sun.corba.se.spi.monitoring.MonitoringManagerFactory;
+import com.sun.corba.se.spi.monitoring.MonitoringManager;
+
+public class MonitoringManagerFactoryImpl implements MonitoringManagerFactory {
+
+    private HashMap monitoringManagerTable = new HashMap();
+
+    public synchronized MonitoringManager createMonitoringManager(
+        String nameOfTheRoot, String description)
+    {
+        MonitoringManagerImpl m = null;
+        m = (MonitoringManagerImpl)monitoringManagerTable.get(nameOfTheRoot);
+        if (m == null) {
+            m = new MonitoringManagerImpl(nameOfTheRoot, description);
+            monitoringManagerTable.put(nameOfTheRoot, m);
+        }
+        return m;
+    }
+
+    public synchronized void remove(String nameOfTheRoot) {
+        monitoringManagerTable.remove(nameOfTheRoot);
+    }
+}

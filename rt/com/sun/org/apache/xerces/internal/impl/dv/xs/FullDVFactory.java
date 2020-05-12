@@ -1,173 +1,168 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.XSFacets;
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
-/*     */ import com.sun.org.apache.xerces.internal.util.SymbolHash;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FullDVFactory
-/*     */   extends BaseDVFactory
-/*     */ {
-/*     */   static final String URI_SCHEMAFORSCHEMA = "http://www.w3.org/2001/XMLSchema";
-/*  42 */   static SymbolHash fFullTypes = new SymbolHash(89);
-/*     */   static {
-/*  44 */     createBuiltInTypes(fFullTypes);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSSimpleType getBuiltInType(String name) {
-/*  59 */     return (XSSimpleType)fFullTypes.get(name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SymbolHash getBuiltInTypes() {
-/*  69 */     return fFullTypes.makeClone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void createBuiltInTypes(SymbolHash types) {
-/*  75 */     BaseDVFactory.createBuiltInTypes(types);
-/*     */ 
-/*     */     
-/*  78 */     String DOUBLE = "double";
-/*  79 */     String DURATION = "duration";
-/*  80 */     String ENTITY = "ENTITY";
-/*  81 */     String ENTITIES = "ENTITIES";
-/*  82 */     String FLOAT = "float";
-/*  83 */     String HEXBINARY = "hexBinary";
-/*  84 */     String ID = "ID";
-/*  85 */     String IDREF = "IDREF";
-/*  86 */     String IDREFS = "IDREFS";
-/*  87 */     String NAME = "Name";
-/*  88 */     String NCNAME = "NCName";
-/*  89 */     String NMTOKEN = "NMTOKEN";
-/*  90 */     String NMTOKENS = "NMTOKENS";
-/*  91 */     String LANGUAGE = "language";
-/*  92 */     String NORMALIZEDSTRING = "normalizedString";
-/*  93 */     String NOTATION = "NOTATION";
-/*  94 */     String QNAME = "QName";
-/*  95 */     String STRING = "string";
-/*  96 */     String TOKEN = "token";
-/*     */     
-/*  98 */     XSFacets facets = new XSFacets();
-/*     */     
-/* 100 */     XSSimpleTypeDecl anySimpleType = XSSimpleTypeDecl.fAnySimpleType;
-/* 101 */     XSSimpleTypeDecl stringDV = (XSSimpleTypeDecl)types.get("string");
-/*     */     
-/* 103 */     types.put("float", new XSSimpleTypeDecl(anySimpleType, "float", (short)4, (short)1, true, true, true, true, (short)5));
-/* 104 */     types.put("double", new XSSimpleTypeDecl(anySimpleType, "double", (short)5, (short)1, true, true, true, true, (short)6));
-/* 105 */     types.put("duration", new XSSimpleTypeDecl(anySimpleType, "duration", (short)6, (short)1, false, false, false, true, (short)7));
-/* 106 */     types.put("hexBinary", new XSSimpleTypeDecl(anySimpleType, "hexBinary", (short)15, (short)0, false, false, false, true, (short)16));
-/* 107 */     types.put("QName", new XSSimpleTypeDecl(anySimpleType, "QName", (short)18, (short)0, false, false, false, true, (short)19));
-/* 108 */     types.put("NOTATION", new XSSimpleTypeDecl(anySimpleType, "NOTATION", (short)20, (short)0, false, false, false, true, (short)20));
-/*     */     
-/* 110 */     facets.whiteSpace = 1;
-/* 111 */     XSSimpleTypeDecl normalizedDV = new XSSimpleTypeDecl(stringDV, "normalizedString", "http://www.w3.org/2001/XMLSchema", (short)0, false, null, (short)21);
-/* 112 */     normalizedDV.applyFacets1(facets, (short)16, (short)0);
-/* 113 */     types.put("normalizedString", normalizedDV);
-/*     */     
-/* 115 */     facets.whiteSpace = 2;
-/* 116 */     XSSimpleTypeDecl tokenDV = new XSSimpleTypeDecl(normalizedDV, "token", "http://www.w3.org/2001/XMLSchema", (short)0, false, null, (short)22);
-/* 117 */     tokenDV.applyFacets1(facets, (short)16, (short)0);
-/* 118 */     types.put("token", tokenDV);
-/*     */     
-/* 120 */     facets.whiteSpace = 2;
-/* 121 */     facets.pattern = "([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*";
-/* 122 */     XSSimpleTypeDecl languageDV = new XSSimpleTypeDecl(tokenDV, "language", "http://www.w3.org/2001/XMLSchema", (short)0, false, null, (short)23);
-/* 123 */     languageDV.applyFacets1(facets, (short)24, (short)0);
-/* 124 */     types.put("language", languageDV);
-/*     */     
-/* 126 */     facets.whiteSpace = 2;
-/* 127 */     XSSimpleTypeDecl nameDV = new XSSimpleTypeDecl(tokenDV, "Name", "http://www.w3.org/2001/XMLSchema", (short)0, false, null, (short)25);
-/* 128 */     nameDV.applyFacets1(facets, (short)16, (short)0, (short)2);
-/* 129 */     types.put("Name", nameDV);
-/*     */     
-/* 131 */     facets.whiteSpace = 2;
-/* 132 */     XSSimpleTypeDecl ncnameDV = new XSSimpleTypeDecl(nameDV, "NCName", "http://www.w3.org/2001/XMLSchema", (short)0, false, null, (short)26);
-/* 133 */     ncnameDV.applyFacets1(facets, (short)16, (short)0, (short)3);
-/* 134 */     types.put("NCName", ncnameDV);
-/*     */     
-/* 136 */     types.put("ID", new XSSimpleTypeDecl(ncnameDV, "ID", (short)21, (short)0, false, false, false, true, (short)27));
-/* 137 */     XSSimpleTypeDecl idrefDV = new XSSimpleTypeDecl(ncnameDV, "IDREF", (short)22, (short)0, false, false, false, true, (short)28);
-/* 138 */     types.put("IDREF", idrefDV);
-/*     */     
-/* 140 */     facets.minLength = 1;
-/* 141 */     XSSimpleTypeDecl tempDV = new XSSimpleTypeDecl(null, "http://www.w3.org/2001/XMLSchema", (short)0, idrefDV, true, null);
-/* 142 */     XSSimpleTypeDecl idrefsDV = new XSSimpleTypeDecl(tempDV, "IDREFS", "http://www.w3.org/2001/XMLSchema", (short)0, false, null);
-/* 143 */     idrefsDV.applyFacets1(facets, (short)2, (short)0);
-/* 144 */     types.put("IDREFS", idrefsDV);
-/*     */     
-/* 146 */     XSSimpleTypeDecl entityDV = new XSSimpleTypeDecl(ncnameDV, "ENTITY", (short)23, (short)0, false, false, false, true, (short)29);
-/* 147 */     types.put("ENTITY", entityDV);
-/*     */     
-/* 149 */     facets.minLength = 1;
-/* 150 */     tempDV = new XSSimpleTypeDecl(null, "http://www.w3.org/2001/XMLSchema", (short)0, entityDV, true, null);
-/* 151 */     XSSimpleTypeDecl entitiesDV = new XSSimpleTypeDecl(tempDV, "ENTITIES", "http://www.w3.org/2001/XMLSchema", (short)0, false, null);
-/* 152 */     entitiesDV.applyFacets1(facets, (short)2, (short)0);
-/* 153 */     types.put("ENTITIES", entitiesDV);
-/*     */ 
-/*     */     
-/* 156 */     facets.whiteSpace = 2;
-/* 157 */     XSSimpleTypeDecl nmtokenDV = new XSSimpleTypeDecl(tokenDV, "NMTOKEN", "http://www.w3.org/2001/XMLSchema", (short)0, false, null, (short)24);
-/* 158 */     nmtokenDV.applyFacets1(facets, (short)16, (short)0, (short)1);
-/* 159 */     types.put("NMTOKEN", nmtokenDV);
-/*     */     
-/* 161 */     facets.minLength = 1;
-/* 162 */     tempDV = new XSSimpleTypeDecl(null, "http://www.w3.org/2001/XMLSchema", (short)0, nmtokenDV, true, null);
-/* 163 */     XSSimpleTypeDecl nmtokensDV = new XSSimpleTypeDecl(tempDV, "NMTOKENS", "http://www.w3.org/2001/XMLSchema", (short)0, false, null);
-/* 164 */     nmtokensDV.applyFacets1(facets, (short)2, (short)0);
-/* 165 */     types.put("NMTOKENS", nmtokensDV);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\FullDVFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2002, 2003,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.XSSimpleType;
+import com.sun.org.apache.xerces.internal.impl.dv.XSFacets;
+import com.sun.org.apache.xerces.internal.util.SymbolHash;
+import com.sun.org.apache.xerces.internal.xs.XSConstants;
+
+/**
+ * the factory to create/return built-in schema DVs and create user-defined DVs
+ *
+ * @xerces.internal
+ *
+ * @author Neeraj Bajaj, Sun Microsystems, inc.
+ * @author Sandy Gao, IBM
+ *
+ */
+public class FullDVFactory extends BaseDVFactory {
+
+    static final String URI_SCHEMAFORSCHEMA = "http://www.w3.org/2001/XMLSchema";
+
+    // there are 45 types. 89 is the closest prime number to 45*2=90.
+    static SymbolHash fFullTypes = new SymbolHash(89);
+    static {
+        createBuiltInTypes(fFullTypes);
+    }
+
+    /**
+     * Get a built-in simple type of the given name
+     * REVISIT: its still not decided within the Schema WG how to define the
+     *          ur-types and if all simple types should be derived from a
+     *          complex type, so as of now we ignore the fact that anySimpleType
+     *          is derived from anyType, and pass 'null' as the base of
+     *          anySimpleType. It needs to be changed as per the decision taken.
+     *
+     * @param name  the name of the datatype
+     * @return      the datatype validator of the given name
+     */
+    public XSSimpleType getBuiltInType(String name) {
+        return (XSSimpleType)fFullTypes.get(name);
+    }
+
+    /**
+     * get all built-in simple types, which are stored in a hashtable keyed by
+     * the name
+     *
+     * @return      a hashtable which contains all built-in simple types
+     */
+    public SymbolHash getBuiltInTypes() {
+        return (SymbolHash)fFullTypes.makeClone();
+    }
+
+    // create all built-in types
+    static void createBuiltInTypes(SymbolHash types) {
+        // create base types first
+        BaseDVFactory.createBuiltInTypes(types);
+
+        // full schema simple type names
+        final String DOUBLE            = "double";
+        final String DURATION          = "duration";
+        final String ENTITY            = "ENTITY";
+        final String ENTITIES          = "ENTITIES";
+        final String FLOAT             = "float";
+        final String HEXBINARY         = "hexBinary";
+        final String ID                = "ID";
+        final String IDREF             = "IDREF";
+        final String IDREFS            = "IDREFS";
+        final String NAME              = "Name";
+        final String NCNAME            = "NCName";
+        final String NMTOKEN           = "NMTOKEN";
+        final String NMTOKENS          = "NMTOKENS";
+        final String LANGUAGE          = "language";
+        final String NORMALIZEDSTRING  = "normalizedString";
+        final String NOTATION          = "NOTATION";
+        final String QNAME             = "QName";
+        final String STRING            = "string";
+        final String TOKEN             = "token";
+
+        final XSFacets facets = new XSFacets();
+
+        XSSimpleTypeDecl anySimpleType = XSSimpleTypeDecl.fAnySimpleType;
+        XSSimpleTypeDecl stringDV = (XSSimpleTypeDecl)types.get(STRING);
+
+        types.put(FLOAT, new XSSimpleTypeDecl(anySimpleType, FLOAT, XSSimpleTypeDecl.DV_FLOAT, XSSimpleType.ORDERED_PARTIAL, true, true, true, true, XSConstants.FLOAT_DT));
+        types.put(DOUBLE, new XSSimpleTypeDecl(anySimpleType, DOUBLE, XSSimpleTypeDecl.DV_DOUBLE, XSSimpleType.ORDERED_PARTIAL, true, true, true, true, XSConstants.DOUBLE_DT));
+        types.put(DURATION, new XSSimpleTypeDecl(anySimpleType, DURATION, XSSimpleTypeDecl.DV_DURATION, XSSimpleType.ORDERED_PARTIAL, false, false, false, true, XSConstants.DURATION_DT));
+        types.put(HEXBINARY, new XSSimpleTypeDecl(anySimpleType, HEXBINARY, XSSimpleTypeDecl.DV_HEXBINARY, XSSimpleType.ORDERED_FALSE, false, false, false, true, XSConstants.HEXBINARY_DT));
+        types.put(QNAME, new XSSimpleTypeDecl(anySimpleType, QNAME, XSSimpleTypeDecl.DV_QNAME, XSSimpleType.ORDERED_FALSE, false, false, false, true, XSConstants.QNAME_DT));
+        types.put(NOTATION, new XSSimpleTypeDecl(anySimpleType, NOTATION, XSSimpleTypeDecl.DV_NOTATION, XSSimpleType.ORDERED_FALSE, false, false, false, true, XSConstants.NOTATION_DT));
+
+        facets.whiteSpace =  XSSimpleType.WS_REPLACE;
+        XSSimpleTypeDecl normalizedDV = new XSSimpleTypeDecl(stringDV, NORMALIZEDSTRING , URI_SCHEMAFORSCHEMA, (short)0, false, null, XSConstants.NORMALIZEDSTRING_DT);
+        normalizedDV.applyFacets1(facets, XSSimpleType.FACET_WHITESPACE, (short)0 );
+        types.put(NORMALIZEDSTRING, normalizedDV);
+
+        facets.whiteSpace = XSSimpleType.WS_COLLAPSE;
+        XSSimpleTypeDecl tokenDV = new XSSimpleTypeDecl(normalizedDV, TOKEN , URI_SCHEMAFORSCHEMA, (short)0, false, null, XSConstants.TOKEN_DT);
+        tokenDV.applyFacets1(facets, XSSimpleType.FACET_WHITESPACE, (short)0 );
+        types.put(TOKEN, tokenDV);
+
+        facets.whiteSpace = XSSimpleType.WS_COLLAPSE;
+        facets.pattern  = "([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*";
+        XSSimpleTypeDecl languageDV = new XSSimpleTypeDecl(tokenDV, LANGUAGE , URI_SCHEMAFORSCHEMA, (short)0, false, null, XSConstants.LANGUAGE_DT);
+        languageDV.applyFacets1(facets, (short)(XSSimpleType.FACET_WHITESPACE | XSSimpleType.FACET_PATTERN) ,(short)0);
+        types.put(LANGUAGE, languageDV);
+
+        facets.whiteSpace =  XSSimpleType.WS_COLLAPSE;
+        XSSimpleTypeDecl nameDV = new XSSimpleTypeDecl(tokenDV, NAME , URI_SCHEMAFORSCHEMA, (short)0, false, null, XSConstants.NAME_DT);
+        nameDV.applyFacets1(facets, XSSimpleType.FACET_WHITESPACE, (short)0, XSSimpleTypeDecl.SPECIAL_PATTERN_NAME);
+        types.put(NAME, nameDV);
+
+        facets.whiteSpace = XSSimpleType.WS_COLLAPSE;
+        XSSimpleTypeDecl ncnameDV = new XSSimpleTypeDecl(nameDV, NCNAME , URI_SCHEMAFORSCHEMA, (short)0, false, null, XSConstants.NCNAME_DT) ;
+        ncnameDV.applyFacets1(facets, XSSimpleType.FACET_WHITESPACE, (short)0, XSSimpleTypeDecl.SPECIAL_PATTERN_NCNAME);
+        types.put(NCNAME, ncnameDV);
+
+        types.put(ID, new XSSimpleTypeDecl(ncnameDV,  ID, XSSimpleTypeDecl.DV_ID, XSSimpleType.ORDERED_FALSE, false, false, false , true, XSConstants.ID_DT));
+        XSSimpleTypeDecl idrefDV = new XSSimpleTypeDecl(ncnameDV,  IDREF , XSSimpleTypeDecl.DV_IDREF, XSSimpleType.ORDERED_FALSE, false, false, false, true, XSConstants.IDREF_DT);
+        types.put(IDREF, idrefDV);
+
+        facets.minLength = 1;
+        XSSimpleTypeDecl tempDV = new XSSimpleTypeDecl(null, URI_SCHEMAFORSCHEMA, (short)0, idrefDV, true, null);
+        XSSimpleTypeDecl idrefsDV = new XSSimpleTypeDecl(tempDV, IDREFS, URI_SCHEMAFORSCHEMA, (short)0, false, null);
+        idrefsDV.applyFacets1(facets, XSSimpleType.FACET_MINLENGTH, (short)0);
+        types.put(IDREFS, idrefsDV);
+
+        XSSimpleTypeDecl entityDV = new XSSimpleTypeDecl(ncnameDV, ENTITY , XSSimpleTypeDecl.DV_ENTITY, XSSimpleType.ORDERED_FALSE, false, false, false, true, XSConstants.ENTITY_DT);
+        types.put(ENTITY, entityDV);
+
+        facets.minLength = 1;
+        tempDV = new XSSimpleTypeDecl(null, URI_SCHEMAFORSCHEMA, (short)0, entityDV, true, null);
+        XSSimpleTypeDecl entitiesDV = new XSSimpleTypeDecl(tempDV, ENTITIES, URI_SCHEMAFORSCHEMA, (short)0, false, null);
+        entitiesDV.applyFacets1(facets, XSSimpleType.FACET_MINLENGTH, (short)0);
+        types.put(ENTITIES, entitiesDV);
+
+
+        facets.whiteSpace  = XSSimpleType.WS_COLLAPSE;
+        XSSimpleTypeDecl nmtokenDV = new XSSimpleTypeDecl(tokenDV, NMTOKEN, URI_SCHEMAFORSCHEMA, (short)0, false, null, XSConstants.NMTOKEN_DT);
+        nmtokenDV.applyFacets1(facets, XSSimpleType.FACET_WHITESPACE, (short)0, XSSimpleTypeDecl.SPECIAL_PATTERN_NMTOKEN);
+        types.put(NMTOKEN, nmtokenDV);
+
+        facets.minLength = 1;
+        tempDV = new XSSimpleTypeDecl(null, URI_SCHEMAFORSCHEMA, (short)0, nmtokenDV, true, null);
+        XSSimpleTypeDecl nmtokensDV = new XSSimpleTypeDecl(tempDV, NMTOKENS, URI_SCHEMAFORSCHEMA, (short)0, false, null);
+        nmtokensDV.applyFacets1(facets, XSSimpleType.FACET_MINLENGTH, (short)0);
+        types.put(NMTOKENS, nmtokensDV);
+    }//createBuiltInTypes(SymbolHash)
+
+}//XFormsDVFactory

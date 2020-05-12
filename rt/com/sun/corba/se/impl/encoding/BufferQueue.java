@@ -1,66 +1,60 @@
-/*    */ package com.sun.corba.se.impl.encoding;
-/*    */ 
-/*    */ import java.util.LinkedList;
-/*    */ import java.util.NoSuchElementException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class BufferQueue
-/*    */ {
-/* 37 */   private LinkedList list = new LinkedList();
-/*    */ 
-/*    */   
-/*    */   public void enqueue(ByteBufferWithInfo paramByteBufferWithInfo) {
-/* 41 */     this.list.addLast(paramByteBufferWithInfo);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public ByteBufferWithInfo dequeue() throws NoSuchElementException {
-/* 46 */     return this.list.removeFirst();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int size() {
-/* 51 */     return this.list.size();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void push(ByteBufferWithInfo paramByteBufferWithInfo) {
-/* 58 */     this.list.addFirst(paramByteBufferWithInfo);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\BufferQueue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.encoding;
+
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.LinkedList;
+
+/**
+ * Simple unsynchronized queue implementation for ByteBufferWithInfos.
+ */
+// XREVISIT - Should be in orbutil or package private
+public class BufferQueue
+{
+    private LinkedList list = new LinkedList();
+
+    public void enqueue(ByteBufferWithInfo item)
+    {
+        list.addLast(item);
+    }
+
+    public ByteBufferWithInfo dequeue() throws NoSuchElementException
+    {
+        return (ByteBufferWithInfo)list.removeFirst();
+    }
+
+    public int size()
+    {
+        return list.size();
+    }
+
+    // Adds the given ByteBufferWithInfo to the front
+    // of the queue.
+    public void push(ByteBufferWithInfo item)
+    {
+        list.addFirst(item);
+    }
+}

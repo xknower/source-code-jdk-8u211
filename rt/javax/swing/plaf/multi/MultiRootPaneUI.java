@@ -1,217 +1,211 @@
-/*     */ package javax.swing.plaf.multi;
-/*     */ 
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.util.Vector;
-/*     */ import javax.accessibility.Accessible;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.RootPaneUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MultiRootPaneUI
-/*     */   extends RootPaneUI
-/*     */ {
-/*  51 */   protected Vector uis = new Vector();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ComponentUI[] getUIs() {
-/*  63 */     return MultiLookAndFeel.uisToArray(this.uis);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean contains(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/*  82 */     boolean bool = ((ComponentUI)this.uis.elementAt(0)).contains(paramJComponent, paramInt1, paramInt2);
-/*  83 */     for (byte b = 1; b < this.uis.size(); b++) {
-/*  84 */       ((ComponentUI)this.uis.elementAt(b)).contains(paramJComponent, paramInt1, paramInt2);
-/*     */     }
-/*  86 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/*  93 */     for (byte b = 0; b < this.uis.size(); b++) {
-/*  94 */       ((ComponentUI)this.uis.elementAt(b)).update(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 104 */     MultiRootPaneUI multiRootPaneUI = new MultiRootPaneUI();
-/* 105 */     return MultiLookAndFeel.createUIs(multiRootPaneUI, multiRootPaneUI.uis, paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 114 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 115 */       ((ComponentUI)this.uis.elementAt(b)).installUI(paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/* 123 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 124 */       ((ComponentUI)this.uis.elementAt(b)).uninstallUI(paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 132 */     for (byte b = 0; b < this.uis.size(); b++) {
-/* 133 */       ((ComponentUI)this.uis.elementAt(b)).paint(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 145 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getPreferredSize(paramJComponent);
-/* 146 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 147 */       ((ComponentUI)this.uis.elementAt(b)).getPreferredSize(paramJComponent);
-/*     */     }
-/* 149 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 160 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getMinimumSize(paramJComponent);
-/* 161 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 162 */       ((ComponentUI)this.uis.elementAt(b)).getMinimumSize(paramJComponent);
-/*     */     }
-/* 164 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 175 */     Dimension dimension = ((ComponentUI)this.uis.elementAt(0)).getMaximumSize(paramJComponent);
-/* 176 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 177 */       ((ComponentUI)this.uis.elementAt(b)).getMaximumSize(paramJComponent);
-/*     */     }
-/* 179 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAccessibleChildrenCount(JComponent paramJComponent) {
-/* 190 */     int i = ((ComponentUI)this.uis.elementAt(0)).getAccessibleChildrenCount(paramJComponent);
-/* 191 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 192 */       ((ComponentUI)this.uis.elementAt(b)).getAccessibleChildrenCount(paramJComponent);
-/*     */     }
-/* 194 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Accessible getAccessibleChild(JComponent paramJComponent, int paramInt) {
-/* 205 */     Accessible accessible = ((ComponentUI)this.uis.elementAt(0)).getAccessibleChild(paramJComponent, paramInt);
-/* 206 */     for (byte b = 1; b < this.uis.size(); b++) {
-/* 207 */       ((ComponentUI)this.uis.elementAt(b)).getAccessibleChild(paramJComponent, paramInt);
-/*     */     }
-/* 209 */     return accessible;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\multi\MultiRootPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.multi;
+
+import java.util.Vector;
+import javax.swing.plaf.RootPaneUI;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.JComponent;
+import java.awt.Graphics;
+import java.awt.Dimension;
+import javax.accessibility.Accessible;
+
+/**
+ * A multiplexing UI used to combine <code>RootPaneUI</code>s.
+ *
+ * <p>This file was automatically generated by AutoMulti.
+ *
+ * @author  Otto Multey
+ * @since 1.4
+ */
+public class MultiRootPaneUI extends RootPaneUI {
+
+    /**
+     * The vector containing the real UIs.  This is populated
+     * in the call to <code>createUI</code>, and can be obtained by calling
+     * the <code>getUIs</code> method.  The first element is guaranteed to be the real UI
+     * obtained from the default look and feel.
+     */
+    protected Vector uis = new Vector();
+
+////////////////////
+// Common UI methods
+////////////////////
+
+    /**
+     * Returns the list of UIs associated with this multiplexing UI.  This
+     * allows processing of the UIs by an application aware of multiplexing
+     * UIs on components.
+     */
+    public ComponentUI[] getUIs() {
+        return MultiLookAndFeel.uisToArray(uis);
+    }
+
+////////////////////
+// RootPaneUI methods
+////////////////////
+
+////////////////////
+// ComponentUI methods
+////////////////////
+
+    /**
+     * Invokes the <code>contains</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public boolean contains(JComponent a, int b, int c) {
+        boolean returnValue =
+            ((ComponentUI) (uis.elementAt(0))).contains(a,b,c);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).contains(a,b,c);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>update</code> method on each UI handled by this object.
+     */
+    public void update(Graphics a, JComponent b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).update(a,b);
+        }
+    }
+
+    /**
+     * Returns a multiplexing UI instance if any of the auxiliary
+     * <code>LookAndFeel</code>s supports this UI.  Otherwise, just returns the
+     * UI object obtained from the default <code>LookAndFeel</code>.
+     */
+    public static ComponentUI createUI(JComponent a) {
+        ComponentUI mui = new MultiRootPaneUI();
+        return MultiLookAndFeel.createUIs(mui,
+                                          ((MultiRootPaneUI) mui).uis,
+                                          a);
+    }
+
+    /**
+     * Invokes the <code>installUI</code> method on each UI handled by this object.
+     */
+    public void installUI(JComponent a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).installUI(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>uninstallUI</code> method on each UI handled by this object.
+     */
+    public void uninstallUI(JComponent a) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).uninstallUI(a);
+        }
+    }
+
+    /**
+     * Invokes the <code>paint</code> method on each UI handled by this object.
+     */
+    public void paint(Graphics a, JComponent b) {
+        for (int i = 0; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).paint(a,b);
+        }
+    }
+
+    /**
+     * Invokes the <code>getPreferredSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getPreferredSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getPreferredSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getPreferredSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getMinimumSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getMinimumSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getMinimumSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getMinimumSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getMaximumSize</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Dimension getMaximumSize(JComponent a) {
+        Dimension returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getMaximumSize(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getMaximumSize(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getAccessibleChildrenCount</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public int getAccessibleChildrenCount(JComponent a) {
+        int returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getAccessibleChildrenCount(a);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getAccessibleChildrenCount(a);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Invokes the <code>getAccessibleChild</code> method on each UI handled by this object.
+     *
+     * @return the value obtained from the first UI, which is
+     * the UI obtained from the default <code>LookAndFeel</code>
+     */
+    public Accessible getAccessibleChild(JComponent a, int b) {
+        Accessible returnValue =
+            ((ComponentUI) (uis.elementAt(0))).getAccessibleChild(a,b);
+        for (int i = 1; i < uis.size(); i++) {
+            ((ComponentUI) (uis.elementAt(i))).getAccessibleChild(a,b);
+        }
+        return returnValue;
+    }
+}

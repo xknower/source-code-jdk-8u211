@@ -1,9 +1,34 @@
+/*
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.xml.ws.handler;
 
-public interface LogicalHandler<C extends LogicalMessageContext> extends Handler<C> {}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\ws\handler\LogicalHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+/** The <code>LogicalHandler</code> extends
+ *  Handler to provide typesafety for the message context parameter.
+ *
+ *  @since JAX-WS 2.0
+**/
+public interface LogicalHandler<C extends LogicalMessageContext> extends Handler<C> {
+}

@@ -1,11 +1,41 @@
+/*
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing.plaf;
 
 import javax.swing.ActionMap;
 
-public class ActionMapUIResource extends ActionMap implements UIResource {}
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\ActionMapUIResource.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A subclass of javax.swing.ActionMap that implements UIResource.
+ * UI classes which provide an ActionMap should use this class.
+ *
+ * @author Scott Violet
+ * @since 1.3
  */
+public class ActionMapUIResource extends ActionMap implements UIResource {
+    public ActionMapUIResource() {
+    }
+}

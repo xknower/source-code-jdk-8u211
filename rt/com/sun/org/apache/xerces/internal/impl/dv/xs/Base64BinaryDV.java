@@ -1,100 +1,94 @@
-/*    */ package com.sun.org.apache.xerces.internal.impl.dv.xs;
-/*    */ 
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-/*    */ import com.sun.org.apache.xerces.internal.impl.dv.util.ByteListImpl;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class Base64BinaryDV
-/*    */   extends TypeValidator
-/*    */ {
-/*    */   public short getAllowedFacets() {
-/* 41 */     return 2079;
-/*    */   }
-/*    */   
-/*    */   public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
-/* 45 */     byte[] decoded = Base64.decode(content);
-/* 46 */     if (decoded == null) {
-/* 47 */       throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[] { content, "base64Binary" });
-/*    */     }
-/* 49 */     return new XBase64(decoded);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getDataLength(Object value) {
-/* 54 */     return ((XBase64)value).getLength();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   private static final class XBase64
-/*    */     extends ByteListImpl
-/*    */   {
-/*    */     public XBase64(byte[] data) {
-/* 63 */       super(data);
-/*    */     }
-/*    */     public synchronized String toString() {
-/* 66 */       if (this.canonical == null) {
-/* 67 */         this.canonical = Base64.encode(this.data);
-/*    */       }
-/* 69 */       return this.canonical;
-/*    */     }
-/*    */     
-/*    */     public boolean equals(Object obj) {
-/* 73 */       if (!(obj instanceof XBase64))
-/* 74 */         return false; 
-/* 75 */       byte[] odata = ((XBase64)obj).data;
-/* 76 */       int len = this.data.length;
-/* 77 */       if (len != odata.length)
-/* 78 */         return false; 
-/* 79 */       for (int i = 0; i < len; i++) {
-/* 80 */         if (this.data[i] != odata[i])
-/* 81 */           return false; 
-/*    */       } 
-/* 83 */       return true;
-/*    */     }
-/*    */     
-/*    */     public int hashCode() {
-/* 87 */       int hash = 0;
-/* 88 */       for (int i = 0; i < this.data.length; i++) {
-/* 89 */         hash = hash * 37 + (this.data[i] & 0xFF);
-/*    */       }
-/* 91 */       return hash;
-/*    */     }
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\dv\xs\Base64BinaryDV.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001, 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.dv.xs;
+
+import com.sun.org.apache.xerces.internal.impl.dv.InvalidDatatypeValueException;
+import com.sun.org.apache.xerces.internal.impl.dv.ValidationContext;
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import com.sun.org.apache.xerces.internal.impl.dv.util.ByteListImpl;
+
+/**
+ * Represent the schema type "base64Binary"
+ *
+ * @xerces.internal
+ *
+ * @author Neeraj Bajaj, Sun Microsystems, inc.
+ * @author Sandy Gao, IBM
+ *
+ * @version $Id: Base64BinaryDV.java,v 1.7 2010-11-01 04:39:46 joehw Exp $
+ */
+public class Base64BinaryDV extends TypeValidator {
+
+    public short getAllowedFacets(){
+        return (XSSimpleTypeDecl.FACET_LENGTH | XSSimpleTypeDecl.FACET_MINLENGTH | XSSimpleTypeDecl.FACET_MAXLENGTH | XSSimpleTypeDecl.FACET_PATTERN | XSSimpleTypeDecl.FACET_ENUMERATION | XSSimpleTypeDecl.FACET_WHITESPACE );
+    }
+
+    public Object getActualValue(String content, ValidationContext context) throws InvalidDatatypeValueException {
+        byte[] decoded = Base64.decode(content);
+        if (decoded == null)
+            throw new InvalidDatatypeValueException("cvc-datatype-valid.1.2.1", new Object[]{content, "base64Binary"});
+
+        return new XBase64(decoded);
+    }
+
+    // length of a binary type is the number of bytes
+    public int getDataLength(Object value) {
+        return ((XBase64)value).getLength();
+    }
+
+    /**
+     * represent base64 data
+     */
+    private static final class XBase64 extends ByteListImpl {
+
+        public XBase64(byte[] data) {
+            super(data);
+        }
+        public synchronized String toString() {
+            if (canonical == null) {
+                canonical = Base64.encode(data);
+            }
+            return canonical;
+        }
+
+        public boolean equals(Object obj) {
+            if (!(obj instanceof XBase64))
+                return false;
+            byte[] odata = ((XBase64)obj).data;
+            int len = data.length;
+            if (len != odata.length)
+                return false;
+            for (int i = 0; i < len; i++) {
+                if (data[i] != odata[i])
+                    return false;
+            }
+            return true;
+        }
+
+        public int hashCode() {
+            int hash = 0;
+            for (int i = 0; i < data.length; ++i) {
+                hash = hash * 37 + (((int) data[i]) & 0xff);
+            }
+            return hash;
+        }
+    }
+} // class Base64BinaryDV

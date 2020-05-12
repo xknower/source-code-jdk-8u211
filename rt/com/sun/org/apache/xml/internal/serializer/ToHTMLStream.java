@@ -1,2326 +1,2320 @@
-/*      */ package com.sun.org.apache.xml.internal.serializer;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.serializer.utils.Utils;
-/*      */ import java.io.IOException;
-/*      */ import java.io.OutputStream;
-/*      */ import java.io.UnsupportedEncodingException;
-/*      */ import java.io.Writer;
-/*      */ import java.util.Properties;
-/*      */ import org.xml.sax.Attributes;
-/*      */ import org.xml.sax.SAXException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class ToHTMLStream
-/*      */   extends ToStream
-/*      */ {
-/*      */   protected boolean m_inDTD = false;
-/*      */   private boolean m_inBlockElem = false;
-/*   63 */   private static final CharInfo m_htmlcharInfo = CharInfo.getCharInfoInternal("com.sun.org.apache.xml.internal.serializer.HTMLEntities", "html");
-/*      */ 
-/*      */   
-/*   66 */   static final Trie m_elementFlags = new Trie();
-/*      */   
-/*      */   static {
-/*   69 */     initTagReference(m_elementFlags);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   static void initTagReference(Trie m_elementFlags) {
-/*   74 */     m_elementFlags.put("BASEFONT", new ElemDesc(2));
-/*   75 */     m_elementFlags.put("FRAME", new ElemDesc(10));
-/*      */ 
-/*      */     
-/*   78 */     m_elementFlags.put("FRAMESET", new ElemDesc(8));
-/*   79 */     m_elementFlags.put("NOFRAMES", new ElemDesc(8));
-/*   80 */     m_elementFlags.put("ISINDEX", new ElemDesc(10));
-/*      */ 
-/*      */     
-/*   83 */     m_elementFlags.put("APPLET", new ElemDesc(2097152));
-/*      */ 
-/*      */     
-/*   86 */     m_elementFlags.put("CENTER", new ElemDesc(8));
-/*   87 */     m_elementFlags.put("DIR", new ElemDesc(8));
-/*   88 */     m_elementFlags.put("MENU", new ElemDesc(8));
-/*      */ 
-/*      */     
-/*   91 */     m_elementFlags.put("TT", new ElemDesc(4096));
-/*   92 */     m_elementFlags.put("I", new ElemDesc(4096));
-/*   93 */     m_elementFlags.put("B", new ElemDesc(4096));
-/*   94 */     m_elementFlags.put("BIG", new ElemDesc(4096));
-/*   95 */     m_elementFlags.put("SMALL", new ElemDesc(4096));
-/*   96 */     m_elementFlags.put("EM", new ElemDesc(8192));
-/*   97 */     m_elementFlags.put("STRONG", new ElemDesc(8192));
-/*   98 */     m_elementFlags.put("DFN", new ElemDesc(8192));
-/*   99 */     m_elementFlags.put("CODE", new ElemDesc(8192));
-/*  100 */     m_elementFlags.put("SAMP", new ElemDesc(8192));
-/*  101 */     m_elementFlags.put("KBD", new ElemDesc(8192));
-/*  102 */     m_elementFlags.put("VAR", new ElemDesc(8192));
-/*  103 */     m_elementFlags.put("CITE", new ElemDesc(8192));
-/*  104 */     m_elementFlags.put("ABBR", new ElemDesc(8192));
-/*  105 */     m_elementFlags.put("ACRONYM", new ElemDesc(8192));
-/*  106 */     m_elementFlags.put("SUP", new ElemDesc(98304));
-/*      */ 
-/*      */     
-/*  109 */     m_elementFlags.put("SUB", new ElemDesc(98304));
-/*      */ 
-/*      */     
-/*  112 */     m_elementFlags.put("SPAN", new ElemDesc(98304));
-/*      */ 
-/*      */     
-/*  115 */     m_elementFlags.put("BDO", new ElemDesc(98304));
-/*      */ 
-/*      */     
-/*  118 */     m_elementFlags.put("BR", new ElemDesc(98314));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  126 */     m_elementFlags.put("BODY", new ElemDesc(8));
-/*  127 */     m_elementFlags.put("ADDRESS", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  134 */     m_elementFlags.put("DIV", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  141 */     m_elementFlags.put("A", new ElemDesc(32768));
-/*  142 */     m_elementFlags.put("MAP", new ElemDesc(98312));
-/*      */ 
-/*      */ 
-/*      */     
-/*  146 */     m_elementFlags.put("AREA", new ElemDesc(10));
-/*      */ 
-/*      */     
-/*  149 */     m_elementFlags.put("LINK", new ElemDesc(131082));
-/*      */ 
-/*      */ 
-/*      */     
-/*  153 */     m_elementFlags.put("IMG", new ElemDesc(2195458));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  161 */     m_elementFlags.put("OBJECT", new ElemDesc(2326528));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  169 */     m_elementFlags.put("PARAM", new ElemDesc(2));
-/*  170 */     m_elementFlags.put("HR", new ElemDesc(58));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  178 */     m_elementFlags.put("P", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  185 */     m_elementFlags.put("H1", new ElemDesc(262152));
-/*      */ 
-/*      */     
-/*  188 */     m_elementFlags.put("H2", new ElemDesc(262152));
-/*      */ 
-/*      */     
-/*  191 */     m_elementFlags.put("H3", new ElemDesc(262152));
-/*      */ 
-/*      */     
-/*  194 */     m_elementFlags.put("H4", new ElemDesc(262152));
-/*      */ 
-/*      */     
-/*  197 */     m_elementFlags.put("H5", new ElemDesc(262152));
-/*      */ 
-/*      */     
-/*  200 */     m_elementFlags.put("H6", new ElemDesc(262152));
-/*      */ 
-/*      */     
-/*  203 */     m_elementFlags.put("PRE", new ElemDesc(1048584));
-/*      */ 
-/*      */     
-/*  206 */     m_elementFlags.put("Q", new ElemDesc(98304));
-/*      */ 
-/*      */     
-/*  209 */     m_elementFlags.put("BLOCKQUOTE", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  216 */     m_elementFlags.put("INS", new ElemDesc(0));
-/*  217 */     m_elementFlags.put("DEL", new ElemDesc(0));
-/*  218 */     m_elementFlags.put("DL", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  225 */     m_elementFlags.put("DT", new ElemDesc(8));
-/*  226 */     m_elementFlags.put("DD", new ElemDesc(8));
-/*  227 */     m_elementFlags.put("OL", new ElemDesc(524296));
-/*      */ 
-/*      */     
-/*  230 */     m_elementFlags.put("UL", new ElemDesc(524296));
-/*      */ 
-/*      */     
-/*  233 */     m_elementFlags.put("LI", new ElemDesc(8));
-/*  234 */     m_elementFlags.put("FORM", new ElemDesc(8));
-/*  235 */     m_elementFlags.put("LABEL", new ElemDesc(16384));
-/*  236 */     m_elementFlags.put("INPUT", new ElemDesc(18434));
-/*      */ 
-/*      */ 
-/*      */     
-/*  240 */     m_elementFlags.put("SELECT", new ElemDesc(18432));
-/*      */ 
-/*      */     
-/*  243 */     m_elementFlags.put("OPTGROUP", new ElemDesc(0));
-/*  244 */     m_elementFlags.put("OPTION", new ElemDesc(0));
-/*  245 */     m_elementFlags.put("TEXTAREA", new ElemDesc(18432));
-/*      */ 
-/*      */     
-/*  248 */     m_elementFlags.put("FIELDSET", new ElemDesc(24));
-/*      */ 
-/*      */     
-/*  251 */     m_elementFlags.put("LEGEND", new ElemDesc(0));
-/*  252 */     m_elementFlags.put("BUTTON", new ElemDesc(18432));
-/*      */ 
-/*      */     
-/*  255 */     m_elementFlags.put("TABLE", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  262 */     m_elementFlags.put("CAPTION", new ElemDesc(8));
-/*  263 */     m_elementFlags.put("THEAD", new ElemDesc(8));
-/*  264 */     m_elementFlags.put("TFOOT", new ElemDesc(8));
-/*  265 */     m_elementFlags.put("TBODY", new ElemDesc(8));
-/*  266 */     m_elementFlags.put("COLGROUP", new ElemDesc(8));
-/*  267 */     m_elementFlags.put("COL", new ElemDesc(10));
-/*      */ 
-/*      */     
-/*  270 */     m_elementFlags.put("TR", new ElemDesc(8));
-/*  271 */     m_elementFlags.put("TH", new ElemDesc(0));
-/*  272 */     m_elementFlags.put("TD", new ElemDesc(0));
-/*  273 */     m_elementFlags.put("HEAD", new ElemDesc(4194312));
-/*      */ 
-/*      */     
-/*  276 */     m_elementFlags.put("TITLE", new ElemDesc(8));
-/*  277 */     m_elementFlags.put("BASE", new ElemDesc(10));
-/*      */ 
-/*      */     
-/*  280 */     m_elementFlags.put("META", new ElemDesc(131082));
-/*      */ 
-/*      */ 
-/*      */     
-/*  284 */     m_elementFlags.put("STYLE", new ElemDesc(131336));
-/*      */ 
-/*      */ 
-/*      */     
-/*  288 */     m_elementFlags.put("SCRIPT", new ElemDesc(229632));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  296 */     m_elementFlags.put("NOSCRIPT", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  303 */     m_elementFlags.put("HTML", new ElemDesc(8));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  308 */     m_elementFlags.put("FONT", new ElemDesc(4096));
-/*      */ 
-/*      */     
-/*  311 */     m_elementFlags.put("S", new ElemDesc(4096));
-/*  312 */     m_elementFlags.put("STRIKE", new ElemDesc(4096));
-/*      */ 
-/*      */     
-/*  315 */     m_elementFlags.put("U", new ElemDesc(4096));
-/*      */ 
-/*      */     
-/*  318 */     m_elementFlags.put("NOBR", new ElemDesc(4096));
-/*      */ 
-/*      */     
-/*  321 */     m_elementFlags.put("IFRAME", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  330 */     m_elementFlags.put("LAYER", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  338 */     m_elementFlags.put("ILAYER", new ElemDesc(56));
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  352 */     ElemDesc elemDesc = (ElemDesc)m_elementFlags.get("A");
-/*  353 */     elemDesc.setAttr("HREF", 2);
-/*  354 */     elemDesc.setAttr("NAME", 2);
-/*      */ 
-/*      */     
-/*  357 */     elemDesc = (ElemDesc)m_elementFlags.get("AREA");
-/*  358 */     elemDesc.setAttr("HREF", 2);
-/*  359 */     elemDesc.setAttr("NOHREF", 4);
-/*      */ 
-/*      */     
-/*  362 */     elemDesc = (ElemDesc)m_elementFlags.get("BASE");
-/*  363 */     elemDesc.setAttr("HREF", 2);
-/*      */ 
-/*      */     
-/*  366 */     elemDesc = (ElemDesc)m_elementFlags.get("BUTTON");
-/*  367 */     elemDesc.setAttr("DISABLED", 4);
-/*      */ 
-/*      */     
-/*  370 */     elemDesc = (ElemDesc)m_elementFlags.get("BLOCKQUOTE");
-/*  371 */     elemDesc.setAttr("CITE", 2);
-/*      */ 
-/*      */     
-/*  374 */     elemDesc = (ElemDesc)m_elementFlags.get("DEL");
-/*  375 */     elemDesc.setAttr("CITE", 2);
-/*      */ 
-/*      */     
-/*  378 */     elemDesc = (ElemDesc)m_elementFlags.get("DIR");
-/*  379 */     elemDesc.setAttr("COMPACT", 4);
-/*      */ 
-/*      */ 
-/*      */     
-/*  383 */     elemDesc = (ElemDesc)m_elementFlags.get("DIV");
-/*  384 */     elemDesc.setAttr("SRC", 2);
-/*  385 */     elemDesc.setAttr("NOWRAP", 4);
-/*      */ 
-/*      */     
-/*  388 */     elemDesc = (ElemDesc)m_elementFlags.get("DL");
-/*  389 */     elemDesc.setAttr("COMPACT", 4);
-/*      */ 
-/*      */     
-/*  392 */     elemDesc = (ElemDesc)m_elementFlags.get("FORM");
-/*  393 */     elemDesc.setAttr("ACTION", 2);
-/*      */ 
-/*      */ 
-/*      */     
-/*  397 */     elemDesc = (ElemDesc)m_elementFlags.get("FRAME");
-/*  398 */     elemDesc.setAttr("SRC", 2);
-/*  399 */     elemDesc.setAttr("LONGDESC", 2);
-/*  400 */     elemDesc.setAttr("NORESIZE", 4);
-/*      */ 
-/*      */     
-/*  403 */     elemDesc = (ElemDesc)m_elementFlags.get("HEAD");
-/*  404 */     elemDesc.setAttr("PROFILE", 2);
-/*      */ 
-/*      */     
-/*  407 */     elemDesc = (ElemDesc)m_elementFlags.get("HR");
-/*  408 */     elemDesc.setAttr("NOSHADE", 4);
-/*      */ 
-/*      */ 
-/*      */     
-/*  412 */     elemDesc = (ElemDesc)m_elementFlags.get("IFRAME");
-/*  413 */     elemDesc.setAttr("SRC", 2);
-/*  414 */     elemDesc.setAttr("LONGDESC", 2);
-/*      */ 
-/*      */ 
-/*      */     
-/*  418 */     elemDesc = (ElemDesc)m_elementFlags.get("ILAYER");
-/*  419 */     elemDesc.setAttr("SRC", 2);
-/*      */ 
-/*      */     
-/*  422 */     elemDesc = (ElemDesc)m_elementFlags.get("IMG");
-/*  423 */     elemDesc.setAttr("SRC", 2);
-/*  424 */     elemDesc.setAttr("LONGDESC", 2);
-/*  425 */     elemDesc.setAttr("USEMAP", 2);
-/*  426 */     elemDesc.setAttr("ISMAP", 4);
-/*      */ 
-/*      */     
-/*  429 */     elemDesc = (ElemDesc)m_elementFlags.get("INPUT");
-/*  430 */     elemDesc.setAttr("SRC", 2);
-/*  431 */     elemDesc.setAttr("USEMAP", 2);
-/*  432 */     elemDesc.setAttr("CHECKED", 4);
-/*  433 */     elemDesc.setAttr("DISABLED", 4);
-/*  434 */     elemDesc.setAttr("ISMAP", 4);
-/*  435 */     elemDesc.setAttr("READONLY", 4);
-/*      */ 
-/*      */     
-/*  438 */     elemDesc = (ElemDesc)m_elementFlags.get("INS");
-/*  439 */     elemDesc.setAttr("CITE", 2);
-/*      */ 
-/*      */ 
-/*      */     
-/*  443 */     elemDesc = (ElemDesc)m_elementFlags.get("LAYER");
-/*  444 */     elemDesc.setAttr("SRC", 2);
-/*      */ 
-/*      */     
-/*  447 */     elemDesc = (ElemDesc)m_elementFlags.get("LINK");
-/*  448 */     elemDesc.setAttr("HREF", 2);
-/*      */ 
-/*      */     
-/*  451 */     elemDesc = (ElemDesc)m_elementFlags.get("MENU");
-/*  452 */     elemDesc.setAttr("COMPACT", 4);
-/*      */ 
-/*      */     
-/*  455 */     elemDesc = (ElemDesc)m_elementFlags.get("OBJECT");
-/*  456 */     elemDesc.setAttr("CLASSID", 2);
-/*  457 */     elemDesc.setAttr("CODEBASE", 2);
-/*  458 */     elemDesc.setAttr("DATA", 2);
-/*  459 */     elemDesc.setAttr("ARCHIVE", 2);
-/*  460 */     elemDesc.setAttr("USEMAP", 2);
-/*  461 */     elemDesc.setAttr("DECLARE", 4);
-/*      */ 
-/*      */     
-/*  464 */     elemDesc = (ElemDesc)m_elementFlags.get("OL");
-/*  465 */     elemDesc.setAttr("COMPACT", 4);
-/*      */ 
-/*      */     
-/*  468 */     elemDesc = (ElemDesc)m_elementFlags.get("OPTGROUP");
-/*  469 */     elemDesc.setAttr("DISABLED", 4);
-/*      */ 
-/*      */     
-/*  472 */     elemDesc = (ElemDesc)m_elementFlags.get("OPTION");
-/*  473 */     elemDesc.setAttr("SELECTED", 4);
-/*  474 */     elemDesc.setAttr("DISABLED", 4);
-/*      */ 
-/*      */     
-/*  477 */     elemDesc = (ElemDesc)m_elementFlags.get("Q");
-/*  478 */     elemDesc.setAttr("CITE", 2);
-/*      */ 
-/*      */     
-/*  481 */     elemDesc = (ElemDesc)m_elementFlags.get("SCRIPT");
-/*  482 */     elemDesc.setAttr("SRC", 2);
-/*  483 */     elemDesc.setAttr("FOR", 2);
-/*  484 */     elemDesc.setAttr("DEFER", 4);
-/*      */ 
-/*      */     
-/*  487 */     elemDesc = (ElemDesc)m_elementFlags.get("SELECT");
-/*  488 */     elemDesc.setAttr("DISABLED", 4);
-/*  489 */     elemDesc.setAttr("MULTIPLE", 4);
-/*      */ 
-/*      */     
-/*  492 */     elemDesc = (ElemDesc)m_elementFlags.get("TABLE");
-/*  493 */     elemDesc.setAttr("NOWRAP", 4);
-/*      */ 
-/*      */     
-/*  496 */     elemDesc = (ElemDesc)m_elementFlags.get("TD");
-/*  497 */     elemDesc.setAttr("NOWRAP", 4);
-/*      */ 
-/*      */     
-/*  500 */     elemDesc = (ElemDesc)m_elementFlags.get("TEXTAREA");
-/*  501 */     elemDesc.setAttr("DISABLED", 4);
-/*  502 */     elemDesc.setAttr("READONLY", 4);
-/*      */ 
-/*      */     
-/*  505 */     elemDesc = (ElemDesc)m_elementFlags.get("TH");
-/*  506 */     elemDesc.setAttr("NOWRAP", 4);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  511 */     elemDesc = (ElemDesc)m_elementFlags.get("TR");
-/*  512 */     elemDesc.setAttr("NOWRAP", 4);
-/*      */ 
-/*      */     
-/*  515 */     elemDesc = (ElemDesc)m_elementFlags.get("UL");
-/*  516 */     elemDesc.setAttr("COMPACT", 4);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  522 */   private static final ElemDesc m_dummy = new ElemDesc(8);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean m_specialEscapeURLs = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean m_omitMetaTag = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSpecialEscapeURLs(boolean bool) {
-/*  537 */     this.m_specialEscapeURLs = bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOmitMetaTag(boolean bool) {
-/*  547 */     this.m_omitMetaTag = bool;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOutputFormat(Properties format) {
-/*  569 */     this
-/*  570 */       .m_specialEscapeURLs = OutputPropertyUtils.getBooleanProperty("{http://xml.apache.org/xalan}use-url-escaping", format);
-/*      */ 
-/*      */ 
-/*      */     
-/*  574 */     this
-/*  575 */       .m_omitMetaTag = OutputPropertyUtils.getBooleanProperty("{http://xml.apache.org/xalan}omit-meta-tag", format);
-/*      */ 
-/*      */ 
-/*      */     
-/*  579 */     super.setOutputFormat(format);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean getSpecialEscapeURLs() {
-/*  589 */     return this.m_specialEscapeURLs;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final boolean getOmitMetaTag() {
-/*  599 */     return this.m_omitMetaTag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static final ElemDesc getElemDesc(String name) {
-/*  615 */     Object obj = m_elementFlags.get(name);
-/*  616 */     if (null != obj)
-/*  617 */       return (ElemDesc)obj; 
-/*  618 */     return m_dummy;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  626 */   private Trie m_htmlInfo = new Trie(m_elementFlags);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ElemDesc getElemDesc2(String name) {
-/*  633 */     Object obj = this.m_htmlInfo.get2(name);
-/*  634 */     if (null != obj)
-/*  635 */       return (ElemDesc)obj; 
-/*  636 */     return m_dummy;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ToHTMLStream() {
-/*  646 */     this.m_charInfo = m_htmlcharInfo;
-/*      */     
-/*  648 */     this.m_prefixMap = new NamespaceMappings();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void startDocumentInternal() throws SAXException {
-/*  665 */     super.startDocumentInternal();
-/*      */     
-/*  667 */     this.m_needToCallStartDocument = false;
-/*  668 */     this.m_needToOutputDocTypeDecl = true;
-/*  669 */     this.m_startNewLine = false;
-/*  670 */     setOmitXMLDeclaration(true);
-/*      */     
-/*  672 */     if (true == this.m_needToOutputDocTypeDecl) {
-/*      */       
-/*  674 */       String doctypeSystem = getDoctypeSystem();
-/*  675 */       String doctypePublic = getDoctypePublic();
-/*  676 */       if (null != doctypeSystem || null != doctypePublic) {
-/*      */         
-/*  678 */         Writer writer = this.m_writer;
-/*      */         
-/*      */         try {
-/*  681 */           writer.write("<!DOCTYPE html");
-/*      */           
-/*  683 */           if (null != doctypePublic) {
-/*      */             
-/*  685 */             writer.write(" PUBLIC \"");
-/*  686 */             writer.write(doctypePublic);
-/*  687 */             writer.write(34);
-/*      */           } 
-/*      */           
-/*  690 */           if (null != doctypeSystem) {
-/*      */             
-/*  692 */             if (null == doctypePublic) {
-/*  693 */               writer.write(" SYSTEM \"");
-/*      */             } else {
-/*  695 */               writer.write(" \"");
-/*      */             } 
-/*  697 */             writer.write(doctypeSystem);
-/*  698 */             writer.write(34);
-/*      */           } 
-/*      */           
-/*  701 */           writer.write(62);
-/*  702 */           outputLineSep();
-/*      */         }
-/*  704 */         catch (IOException e) {
-/*      */           
-/*  706 */           throw new SAXException(e);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  711 */     this.m_needToOutputDocTypeDecl = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void endDocument() throws SAXException {
-/*  725 */     flushPending();
-/*  726 */     if (this.m_doIndent && !this.m_isprevtext) {
-/*      */       
-/*      */       try {
-/*      */         
-/*  730 */         outputLineSep();
-/*      */       }
-/*  732 */       catch (IOException e) {
-/*      */         
-/*  734 */         throw new SAXException(e);
-/*      */       } 
-/*      */     }
-/*      */     
-/*  738 */     flushWriter();
-/*  739 */     if (this.m_tracer != null) {
-/*  740 */       fireEndDoc();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startElement(String namespaceURI, String localName, String name, Attributes atts) throws SAXException {
-/*  764 */     ElemContext elemContext = this.m_elemContext;
-/*      */ 
-/*      */     
-/*  767 */     if (elemContext.m_startTagOpen) {
-/*      */       
-/*  769 */       closeStartTag();
-/*  770 */       elemContext.m_startTagOpen = false;
-/*      */     }
-/*  772 */     else if (this.m_cdataTagOpen) {
-/*      */       
-/*  774 */       closeCDATA();
-/*  775 */       this.m_cdataTagOpen = false;
-/*      */     }
-/*  777 */     else if (this.m_needToCallStartDocument) {
-/*      */       
-/*  779 */       startDocumentInternal();
-/*  780 */       this.m_needToCallStartDocument = false;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  785 */     if (null != namespaceURI && namespaceURI.length() > 0) {
-/*      */       
-/*  787 */       super.startElement(namespaceURI, localName, name, atts);
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  795 */       ElemDesc elemDesc = getElemDesc2(name);
-/*  796 */       int elemFlags = elemDesc.getFlags();
-/*      */ 
-/*      */       
-/*  799 */       if (this.m_doIndent) {
-/*      */ 
-/*      */         
-/*  802 */         boolean isBlockElement = ((elemFlags & 0x8) != 0);
-/*  803 */         if (this.m_ispreserve) {
-/*  804 */           this.m_ispreserve = false;
-/*  805 */         } else if (null != elemContext.m_elementName && (!this.m_inBlockElem || isBlockElement)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  811 */           this.m_startNewLine = true;
-/*      */           
-/*  813 */           indent();
-/*      */         } 
-/*      */         
-/*  816 */         this.m_inBlockElem = !isBlockElement;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  820 */       if (atts != null) {
-/*  821 */         addAttributes(atts);
-/*      */       }
-/*  823 */       this.m_isprevtext = false;
-/*  824 */       Writer writer = this.m_writer;
-/*  825 */       writer.write(60);
-/*  826 */       writer.write(name);
-/*      */ 
-/*      */ 
-/*      */       
-/*  830 */       if (this.m_tracer != null) {
-/*  831 */         firePseudoAttributes();
-/*      */       }
-/*  833 */       if ((elemFlags & 0x2) != 0) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  837 */         this.m_elemContext = elemContext.push();
-/*      */ 
-/*      */ 
-/*      */         
-/*  841 */         this.m_elemContext.m_elementName = name;
-/*  842 */         this.m_elemContext.m_elementDesc = elemDesc;
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */       
-/*  847 */       elemContext = elemContext.push(namespaceURI, localName, name);
-/*  848 */       this.m_elemContext = elemContext;
-/*  849 */       elemContext.m_elementDesc = elemDesc;
-/*  850 */       elemContext.m_isRaw = ((elemFlags & 0x100) != 0);
-/*      */ 
-/*      */ 
-/*      */       
-/*  854 */       if ((elemFlags & 0x400000) != 0) {
-/*      */ 
-/*      */         
-/*  857 */         closeStartTag();
-/*  858 */         elemContext.m_startTagOpen = false;
-/*  859 */         if (!this.m_omitMetaTag)
-/*      */         {
-/*  861 */           if (this.m_doIndent)
-/*  862 */             indent(); 
-/*  863 */           writer.write("<META http-equiv=\"Content-Type\" content=\"text/html; charset=");
-/*      */           
-/*  865 */           String encoding = getEncoding();
-/*  866 */           String encode = Encodings.getMimeEncoding(encoding);
-/*  867 */           writer.write(encode);
-/*  868 */           writer.write("\">");
-/*      */         }
-/*      */       
-/*      */       } 
-/*  872 */     } catch (IOException e) {
-/*      */       
-/*  874 */       throw new SAXException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void endElement(String namespaceURI, String localName, String name) throws SAXException {
-/*  895 */     if (this.m_cdataTagOpen) {
-/*  896 */       closeCDATA();
-/*      */     }
-/*      */     
-/*  899 */     if (null != namespaceURI && namespaceURI.length() > 0) {
-/*      */       
-/*  901 */       super.endElement(namespaceURI, localName, name);
-/*      */ 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  909 */       ElemContext elemContext = this.m_elemContext;
-/*  910 */       ElemDesc elemDesc = elemContext.m_elementDesc;
-/*  911 */       int elemFlags = elemDesc.getFlags();
-/*  912 */       boolean elemEmpty = ((elemFlags & 0x2) != 0);
-/*      */ 
-/*      */       
-/*  915 */       if (this.m_doIndent) {
-/*      */         
-/*  917 */         boolean isBlockElement = ((elemFlags & 0x8) != 0);
-/*  918 */         boolean shouldIndent = false;
-/*      */         
-/*  920 */         if (this.m_ispreserve) {
-/*      */           
-/*  922 */           this.m_ispreserve = false;
-/*      */         }
-/*  924 */         else if (this.m_doIndent && (!this.m_inBlockElem || isBlockElement)) {
-/*      */           
-/*  926 */           this.m_startNewLine = true;
-/*  927 */           shouldIndent = true;
-/*      */         } 
-/*  929 */         if (!elemContext.m_startTagOpen && shouldIndent)
-/*  930 */           indent(elemContext.m_currentElemDepth - 1); 
-/*  931 */         this.m_inBlockElem = !isBlockElement;
-/*      */       } 
-/*      */       
-/*  934 */       Writer writer = this.m_writer;
-/*  935 */       if (!elemContext.m_startTagOpen) {
-/*      */         
-/*  937 */         writer.write("</");
-/*  938 */         writer.write(name);
-/*  939 */         writer.write(62);
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */ 
-/*      */         
-/*  946 */         if (this.m_tracer != null) {
-/*  947 */           fireStartElem(name);
-/*      */         }
-/*      */ 
-/*      */         
-/*  951 */         int nAttrs = this.m_attributes.getLength();
-/*  952 */         if (nAttrs > 0) {
-/*      */           
-/*  954 */           processAttributes(this.m_writer, nAttrs);
-/*      */           
-/*  956 */           this.m_attributes.clear();
-/*      */         } 
-/*  958 */         if (!elemEmpty) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  965 */           writer.write("></");
-/*  966 */           writer.write(name);
-/*  967 */           writer.write(62);
-/*      */         }
-/*      */         else {
-/*      */           
-/*  971 */           writer.write(62);
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/*  976 */       if ((elemFlags & 0x200000) != 0)
-/*  977 */         this.m_ispreserve = true; 
-/*  978 */       this.m_isprevtext = false;
-/*      */ 
-/*      */       
-/*  981 */       if (this.m_tracer != null) {
-/*  982 */         fireEndElem(name);
-/*      */       }
-/*      */       
-/*  985 */       if (elemEmpty) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  990 */         this.m_elemContext = elemContext.m_prev;
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */       
-/*  995 */       if (!elemContext.m_startTagOpen)
-/*      */       {
-/*  997 */         if (this.m_doIndent && !this.m_preserves.isEmpty())
-/*  998 */           this.m_preserves.pop(); 
-/*      */       }
-/* 1000 */       this.m_elemContext = elemContext.m_prev;
-/*      */     
-/*      */     }
-/* 1003 */     catch (IOException e) {
-/*      */       
-/* 1005 */       throw new SAXException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void processAttribute(Writer writer, String name, String value, ElemDesc elemDesc) throws IOException {
-/* 1026 */     writer.write(32);
-/*      */     
-/* 1028 */     if ((value.length() == 0 || value.equalsIgnoreCase(name)) && elemDesc != null && elemDesc
-/*      */       
-/* 1030 */       .isAttrFlagSet(name, 4)) {
-/*      */       
-/* 1032 */       writer.write(name);
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/* 1039 */       writer.write(name);
-/* 1040 */       writer.write("=\"");
-/* 1041 */       if (elemDesc != null && elemDesc
-/* 1042 */         .isAttrFlagSet(name, 2)) {
-/* 1043 */         writeAttrURI(writer, value, this.m_specialEscapeURLs);
-/*      */       } else {
-/* 1045 */         writeAttrString(writer, value, getEncoding());
-/* 1046 */       }  writer.write(34);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isASCIIDigit(char c) {
-/* 1056 */     return (c >= '0' && c <= '9');
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String makeHHString(int i) {
-/* 1070 */     String s = Integer.toHexString(i).toUpperCase();
-/* 1071 */     if (s.length() == 1)
-/*      */     {
-/* 1073 */       s = "0" + s;
-/*      */     }
-/* 1075 */     return s;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isHHSign(String str) {
-/* 1086 */     boolean sign = true;
-/*      */     
-/*      */     try {
-/* 1089 */       char c = (char)Integer.parseInt(str, 16);
-/*      */     }
-/* 1091 */     catch (NumberFormatException e) {
-/*      */       
-/* 1093 */       sign = false;
-/*      */     } 
-/* 1095 */     return sign;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeAttrURI(Writer writer, String string, boolean doURLEscaping) throws IOException {
-/* 1127 */     int end = string.length();
-/* 1128 */     if (end > this.m_attrBuff.length)
-/*      */     {
-/* 1130 */       this.m_attrBuff = new char[end * 2 + 1];
-/*      */     }
-/* 1132 */     string.getChars(0, end, this.m_attrBuff, 0);
-/* 1133 */     char[] chars = this.m_attrBuff;
-/*      */     
-/* 1135 */     int cleanStart = 0;
-/* 1136 */     int cleanLength = 0;
-/*      */ 
-/*      */     
-/* 1139 */     char ch = Character.MIN_VALUE;
-/* 1140 */     for (int i = 0; i < end; i++) {
-/*      */       
-/* 1142 */       ch = chars[i];
-/*      */       
-/* 1144 */       if (ch < ' ' || ch > '~') {
-/*      */         
-/* 1146 */         if (cleanLength > 0) {
-/*      */           
-/* 1148 */           writer.write(chars, cleanStart, cleanLength);
-/* 1149 */           cleanLength = 0;
-/*      */         } 
-/* 1151 */         if (doURLEscaping) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1163 */           if (ch <= '')
-/*      */           {
-/* 1165 */             writer.write(37);
-/* 1166 */             writer.write(makeHHString(ch));
-/*      */           }
-/* 1168 */           else if (ch <= '߿')
-/*      */           {
-/*      */ 
-/*      */             
-/* 1172 */             int high = ch >> 6 | 0xC0;
-/* 1173 */             int low = ch & 0x3F | 0x80;
-/*      */             
-/* 1175 */             writer.write(37);
-/* 1176 */             writer.write(makeHHString(high));
-/* 1177 */             writer.write(37);
-/* 1178 */             writer.write(makeHHString(low));
-/*      */           }
-/* 1180 */           else if (Encodings.isHighUTF16Surrogate(ch))
-/*      */           {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1190 */             int highSurrogate = ch & 0x3FF;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1196 */             int wwww = (highSurrogate & 0x3C0) >> 6;
-/* 1197 */             int uuuuu = wwww + 1;
-/*      */ 
-/*      */             
-/* 1200 */             int zzzz = (highSurrogate & 0x3C) >> 2;
-/*      */ 
-/*      */             
-/* 1203 */             int yyyyyy = (highSurrogate & 0x3) << 4 & 0x30;
-/*      */ 
-/*      */             
-/* 1206 */             ch = chars[++i];
-/*      */ 
-/*      */             
-/* 1209 */             int lowSurrogate = ch & 0x3FF;
-/*      */ 
-/*      */             
-/* 1212 */             yyyyyy |= (lowSurrogate & 0x3C0) >> 6;
-/*      */ 
-/*      */             
-/* 1215 */             int xxxxxx = lowSurrogate & 0x3F;
-/*      */             
-/* 1217 */             int byte1 = 0xF0 | uuuuu >> 2;
-/* 1218 */             int byte2 = 0x80 | (uuuuu & 0x3) << 4 & 0x30 | zzzz;
-/*      */             
-/* 1220 */             int byte3 = 0x80 | yyyyyy;
-/* 1221 */             int byte4 = 0x80 | xxxxxx;
-/*      */             
-/* 1223 */             writer.write(37);
-/* 1224 */             writer.write(makeHHString(byte1));
-/* 1225 */             writer.write(37);
-/* 1226 */             writer.write(makeHHString(byte2));
-/* 1227 */             writer.write(37);
-/* 1228 */             writer.write(makeHHString(byte3));
-/* 1229 */             writer.write(37);
-/* 1230 */             writer.write(makeHHString(byte4));
-/*      */           }
-/*      */           else
-/*      */           {
-/* 1234 */             int high = ch >> 12 | 0xE0;
-/* 1235 */             int middle = (ch & 0xFC0) >> 6 | 0x80;
-/*      */             
-/* 1237 */             int low = ch & 0x3F | 0x80;
-/*      */             
-/* 1239 */             writer.write(37);
-/* 1240 */             writer.write(makeHHString(high));
-/* 1241 */             writer.write(37);
-/* 1242 */             writer.write(makeHHString(middle));
-/* 1243 */             writer.write(37);
-/* 1244 */             writer.write(makeHHString(low));
-/*      */           }
-/*      */         
-/*      */         }
-/* 1248 */         else if (escapingNotNeeded(ch)) {
-/*      */           
-/* 1250 */           writer.write(ch);
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1254 */           writer.write("&#");
-/* 1255 */           writer.write(Integer.toString(ch));
-/* 1256 */           writer.write(59);
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1262 */         cleanStart = i + 1;
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 1267 */       else if (ch == '"') {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1279 */         if (cleanLength > 0) {
-/*      */           
-/* 1281 */           writer.write(chars, cleanStart, cleanLength);
-/* 1282 */           cleanLength = 0;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1287 */         if (doURLEscaping) {
-/* 1288 */           writer.write("%22");
-/*      */         } else {
-/* 1290 */           writer.write("&quot;");
-/*      */         } 
-/*      */ 
-/*      */         
-/* 1294 */         cleanStart = i + 1;
-/*      */       }
-/* 1296 */       else if (ch == '&') {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1301 */         if (cleanLength > 0) {
-/*      */           
-/* 1303 */           writer.write(chars, cleanStart, cleanLength);
-/* 1304 */           cleanLength = 0;
-/*      */         } 
-/* 1306 */         writer.write("&amp;");
-/* 1307 */         cleanStart = i + 1;
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */ 
-/*      */         
-/* 1313 */         cleanLength++;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1319 */     if (cleanLength > 1) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1324 */       if (cleanStart == 0) {
-/* 1325 */         writer.write(string);
-/*      */       } else {
-/* 1327 */         writer.write(chars, cleanStart, cleanLength);
-/*      */       } 
-/* 1329 */     } else if (cleanLength == 1) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1333 */       writer.write(ch);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void writeAttrString(Writer writer, String string, String encoding) throws IOException {
-/* 1350 */     int end = string.length();
-/* 1351 */     if (end > this.m_attrBuff.length)
-/*      */     {
-/* 1353 */       this.m_attrBuff = new char[end * 2 + 1];
-/*      */     }
-/* 1355 */     string.getChars(0, end, this.m_attrBuff, 0);
-/* 1356 */     char[] chars = this.m_attrBuff;
-/*      */ 
-/*      */ 
-/*      */     
-/* 1360 */     int cleanStart = 0;
-/* 1361 */     int cleanLength = 0;
-/*      */     
-/* 1363 */     char ch = Character.MIN_VALUE;
-/* 1364 */     for (int i = 0; i < end; i++) {
-/*      */       
-/* 1366 */       ch = chars[i];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1372 */       if (escapingNotNeeded(ch) && !this.m_charInfo.isSpecialAttrChar(ch)) {
-/*      */         
-/* 1374 */         cleanLength++;
-/*      */       }
-/* 1376 */       else if ('<' == ch || '>' == ch) {
-/*      */         
-/* 1378 */         cleanLength++;
-/*      */       }
-/* 1380 */       else if ('&' == ch && i + 1 < end && '{' == chars[i + 1]) {
-/*      */ 
-/*      */         
-/* 1383 */         cleanLength++;
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1387 */         if (cleanLength > 0) {
-/*      */           
-/* 1389 */           writer.write(chars, cleanStart, cleanLength);
-/* 1390 */           cleanLength = 0;
-/*      */         } 
-/* 1392 */         int pos = accumDefaultEntity(writer, ch, i, chars, end, false, true);
-/*      */         
-/* 1394 */         if (i != pos) {
-/*      */           
-/* 1396 */           i = pos - 1;
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1400 */           if (Encodings.isHighUTF16Surrogate(ch)) {
-/*      */ 
-/*      */             
-/* 1403 */             writeUTF16Surrogate(ch, chars, i, end);
-/* 1404 */             i++;
-/*      */           } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/* 1420 */           String outputStringForChar = this.m_charInfo.getOutputStringForChar(ch);
-/* 1421 */           if (null != outputStringForChar) {
-/*      */             
-/* 1423 */             writer.write(outputStringForChar);
-/*      */           }
-/* 1425 */           else if (escapingNotNeeded(ch)) {
-/*      */             
-/* 1427 */             writer.write(ch);
-/*      */           }
-/*      */           else {
-/*      */             
-/* 1431 */             writer.write("&#");
-/* 1432 */             writer.write(Integer.toString(ch));
-/* 1433 */             writer.write(59);
-/*      */           } 
-/*      */         } 
-/* 1436 */         cleanStart = i + 1;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1442 */     if (cleanLength > 1) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1447 */       if (cleanStart == 0) {
-/* 1448 */         writer.write(string);
-/*      */       } else {
-/* 1450 */         writer.write(chars, cleanStart, cleanLength);
-/*      */       } 
-/* 1452 */     } else if (cleanLength == 1) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1456 */       writer.write(ch);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void characters(char[] chars, int start, int length) throws SAXException {
-/* 1493 */     if (this.m_elemContext.m_isRaw) {
-/*      */       
-/*      */       try {
-/*      */         
-/* 1497 */         if (this.m_elemContext.m_startTagOpen) {
-/*      */           
-/* 1499 */           closeStartTag();
-/* 1500 */           this.m_elemContext.m_startTagOpen = false;
-/*      */         } 
-/* 1502 */         this.m_ispreserve = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1511 */         writeNormalizedChars(chars, start, length, false, this.m_lineSepUse);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1516 */         if (this.m_tracer != null) {
-/* 1517 */           fireCharEvent(chars, start, length);
-/*      */         }
-/*      */         
-/*      */         return;
-/* 1521 */       } catch (IOException ioe) {
-/*      */         
-/* 1523 */         throw new SAXException(Utils.messages
-/* 1524 */             .createMessage("ER_OIERROR", null), ioe);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1533 */     super.characters(chars, start, length);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void cdata(char[] ch, int start, int length) throws SAXException {
-/* 1568 */     if (null != this.m_elemContext.m_elementName && (this.m_elemContext.m_elementName
-/* 1569 */       .equalsIgnoreCase("SCRIPT") || this.m_elemContext.m_elementName
-/* 1570 */       .equalsIgnoreCase("STYLE"))) {
-/*      */       
-/*      */       try
-/*      */       {
-/* 1574 */         if (this.m_elemContext.m_startTagOpen) {
-/*      */           
-/* 1576 */           closeStartTag();
-/* 1577 */           this.m_elemContext.m_startTagOpen = false;
-/*      */         } 
-/*      */         
-/* 1580 */         this.m_ispreserve = true;
-/*      */         
-/* 1582 */         if (shouldIndent()) {
-/* 1583 */           indent();
-/*      */         }
-/*      */         
-/* 1586 */         writeNormalizedChars(ch, start, length, true, this.m_lineSepUse);
-/*      */       }
-/* 1588 */       catch (IOException ioe)
-/*      */       {
-/* 1590 */         throw new SAXException(Utils.messages
-/* 1591 */             .createMessage("ER_OIERROR", null), ioe);
-/*      */       
-/*      */       }
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/* 1600 */       super.cdata(ch, start, length);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void processingInstruction(String target, String data) throws SAXException {
-/* 1620 */     flushPending();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1624 */     if (target.equals("javax.xml.transform.disable-output-escaping")) {
-/*      */       
-/* 1626 */       startNonEscaping();
-/*      */     }
-/* 1628 */     else if (target.equals("javax.xml.transform.enable-output-escaping")) {
-/*      */       
-/* 1630 */       endNonEscaping();
-/*      */     } else {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */         
-/* 1636 */         if (this.m_elemContext.m_startTagOpen) {
-/*      */           
-/* 1638 */           closeStartTag();
-/* 1639 */           this.m_elemContext.m_startTagOpen = false;
-/*      */         }
-/* 1641 */         else if (this.m_needToCallStartDocument) {
-/* 1642 */           startDocumentInternal();
-/*      */         } 
-/* 1644 */         if (shouldIndent()) {
-/* 1645 */           indent();
-/*      */         }
-/* 1647 */         Writer writer = this.m_writer;
-/*      */         
-/* 1649 */         writer.write("<?");
-/* 1650 */         writer.write(target);
-/*      */         
-/* 1652 */         if (data.length() > 0 && !Character.isSpaceChar(data.charAt(0))) {
-/* 1653 */           writer.write(32);
-/*      */         }
-/*      */         
-/* 1656 */         writer.write(data);
-/* 1657 */         writer.write(62);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1662 */         if (this.m_elemContext.m_currentElemDepth <= 0) {
-/* 1663 */           outputLineSep();
-/*      */         }
-/* 1665 */         this.m_startNewLine = true;
-/*      */       }
-/* 1667 */       catch (IOException e) {
-/*      */         
-/* 1669 */         throw new SAXException(e);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1674 */     if (this.m_tracer != null) {
-/* 1675 */       fireEscapingEvent(target, data);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void entityReference(String name) throws SAXException {
-/*      */     try {
-/* 1691 */       Writer writer = this.m_writer;
-/* 1692 */       writer.write(38);
-/* 1693 */       writer.write(name);
-/* 1694 */       writer.write(59);
-/*      */     }
-/* 1696 */     catch (IOException e) {
-/*      */       
-/* 1698 */       throw new SAXException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void endElement(String elemName) throws SAXException {
-/* 1706 */     endElement((String)null, (String)null, elemName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void processAttributes(Writer writer, int nAttrs) throws IOException, SAXException {
-/* 1726 */     for (int i = 0; i < nAttrs; i++)
-/*      */     {
-/* 1728 */       processAttribute(writer, this.m_attributes
-/*      */           
-/* 1730 */           .getQName(i), this.m_attributes
-/* 1731 */           .getValue(i), this.m_elemContext.m_elementDesc);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void closeStartTag() throws SAXException {
-/*      */     try {
-/* 1748 */       if (this.m_tracer != null) {
-/* 1749 */         fireStartElem(this.m_elemContext.m_elementName);
-/*      */       }
-/* 1751 */       int nAttrs = this.m_attributes.getLength();
-/* 1752 */       if (nAttrs > 0) {
-/*      */         
-/* 1754 */         processAttributes(this.m_writer, nAttrs);
-/*      */         
-/* 1756 */         this.m_attributes.clear();
-/*      */       } 
-/*      */       
-/* 1759 */       this.m_writer.write(62);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1765 */       if (this.m_cdataSectionElements != null)
-/* 1766 */         this.m_elemContext.m_isCdataSection = isCdataSection(); 
-/* 1767 */       if (this.m_doIndent)
-/*      */       {
-/* 1769 */         this.m_isprevtext = false;
-/* 1770 */         this.m_preserves.push(this.m_ispreserve);
-/*      */       }
-/*      */     
-/*      */     }
-/* 1774 */     catch (IOException e) {
-/*      */       
-/* 1776 */       throw new SAXException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected synchronized void init(OutputStream output, Properties format) throws UnsupportedEncodingException {
-/* 1791 */     if (null == format)
-/*      */     {
-/* 1793 */       format = OutputPropertiesFactory.getDefaultMethodProperties("html");
-/*      */     }
-/* 1795 */     init(output, format, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setOutputStream(OutputStream output) {
-/*      */     try {
-/*      */       Properties format;
-/* 1815 */       if (null == this.m_format) {
-/* 1816 */         format = OutputPropertiesFactory.getDefaultMethodProperties("html");
-/*      */       } else {
-/* 1818 */         format = this.m_format;
-/* 1819 */       }  init(output, format, true);
-/*      */     }
-/* 1821 */     catch (UnsupportedEncodingException unsupportedEncodingException) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void namespaceAfterStartElement(String prefix, String uri) throws SAXException {
-/* 1842 */     if (this.m_elemContext.m_elementURI == null) {
-/*      */       
-/* 1844 */       String prefix1 = getPrefixPart(this.m_elemContext.m_elementName);
-/* 1845 */       if (prefix1 == null && "".equals(prefix))
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1851 */         this.m_elemContext.m_elementURI = uri;
-/*      */       }
-/*      */     } 
-/* 1854 */     startPrefixMapping(prefix, uri, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startDTD(String name, String publicId, String systemId) throws SAXException {
-/* 1860 */     this.m_inDTD = true;
-/* 1861 */     super.startDTD(name, publicId, systemId);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endDTD() throws SAXException {
-/* 1871 */     this.m_inDTD = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void attributeDecl(String eName, String aName, String type, String valueDefault, String value) throws SAXException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void elementDecl(String name, String model) throws SAXException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void internalEntityDecl(String name, String value) throws SAXException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void externalEntityDecl(String name, String publicId, String systemId) throws SAXException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addUniqueAttribute(String name, String value, int flags) throws SAXException {
-/*      */     try {
-/* 1932 */       Writer writer = this.m_writer;
-/* 1933 */       if ((flags & 0x1) > 0 && m_htmlcharInfo.onlyQuotAmpLtGt) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1940 */         writer.write(32);
-/* 1941 */         writer.write(name);
-/* 1942 */         writer.write("=\"");
-/* 1943 */         writer.write(value);
-/* 1944 */         writer.write(34);
-/*      */       }
-/* 1946 */       else if ((flags & 0x2) > 0 && (value
-/*      */         
-/* 1948 */         .length() == 0 || value.equalsIgnoreCase(name))) {
-/*      */         
-/* 1950 */         writer.write(32);
-/* 1951 */         writer.write(name);
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1955 */         writer.write(32);
-/* 1956 */         writer.write(name);
-/* 1957 */         writer.write("=\"");
-/* 1958 */         if ((flags & 0x4) > 0) {
-/*      */           
-/* 1960 */           writeAttrURI(writer, value, this.m_specialEscapeURLs);
-/*      */         }
-/*      */         else {
-/*      */           
-/* 1964 */           writeAttrString(writer, value, getEncoding());
-/*      */         } 
-/* 1966 */         writer.write(34);
-/*      */       } 
-/* 1968 */     } catch (IOException e) {
-/* 1969 */       throw new SAXException(e);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void comment(char[] ch, int start, int length) throws SAXException {
-/* 1977 */     if (this.m_inDTD)
-/*      */       return; 
-/* 1979 */     super.comment(ch, start, length);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean reset() {
-/* 1984 */     boolean ret = super.reset();
-/* 1985 */     if (!ret)
-/* 1986 */       return false; 
-/* 1987 */     initToHTMLStream();
-/* 1988 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initToHTMLStream() {
-/* 1994 */     this.m_inBlockElem = false;
-/* 1995 */     this.m_inDTD = false;
-/*      */     
-/* 1997 */     this.m_omitMetaTag = false;
-/* 1998 */     this.m_specialEscapeURLs = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static class Trie
-/*      */   {
-/*      */     public static final int ALPHA_SIZE = 128;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     final Node m_Root;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2027 */     private char[] m_charBuffer = new char[0];
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private final boolean m_lowerCaseOnly;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Trie() {
-/* 2037 */       this.m_Root = new Node();
-/* 2038 */       this.m_lowerCaseOnly = false;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Trie(boolean lowerCaseOnly) {
-/* 2048 */       this.m_Root = new Node();
-/* 2049 */       this.m_lowerCaseOnly = lowerCaseOnly;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object put(String key, Object value) {
-/* 2063 */       int len = key.length();
-/* 2064 */       if (len > this.m_charBuffer.length)
-/*      */       {
-/*      */         
-/* 2067 */         this.m_charBuffer = new char[len];
-/*      */       }
-/*      */       
-/* 2070 */       Node node = this.m_Root;
-/*      */       
-/* 2072 */       for (int i = 0; i < len; i++) {
-/*      */ 
-/*      */         
-/* 2075 */         Node nextNode = node.m_nextChar[Character.toLowerCase(key.charAt(i))];
-/*      */         
-/* 2077 */         if (nextNode != null) {
-/*      */           
-/* 2079 */           node = nextNode;
-/*      */         }
-/*      */         else {
-/*      */           
-/* 2083 */           for (; i < len; i++) {
-/*      */             
-/* 2085 */             Node newNode = new Node();
-/* 2086 */             if (this.m_lowerCaseOnly) {
-/*      */ 
-/*      */               
-/* 2089 */               node.m_nextChar[Character.toLowerCase(key
-/* 2090 */                     .charAt(i))] = newNode;
-/*      */             
-/*      */             }
-/*      */             else {
-/*      */ 
-/*      */               
-/* 2096 */               node.m_nextChar[Character.toUpperCase(key
-/* 2097 */                     .charAt(i))] = newNode;
-/*      */               
-/* 2099 */               node.m_nextChar[Character.toLowerCase(key
-/* 2100 */                     .charAt(i))] = newNode;
-/*      */             } 
-/*      */             
-/* 2103 */             node = newNode;
-/*      */           } 
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/* 2109 */       Object ret = node.m_Value;
-/*      */       
-/* 2111 */       node.m_Value = value;
-/*      */       
-/* 2113 */       return ret;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object get(String key) {
-/*      */       char ch;
-/* 2126 */       int len = key.length();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2131 */       if (this.m_charBuffer.length < len) {
-/* 2132 */         return null;
-/*      */       }
-/* 2134 */       Node node = this.m_Root;
-/* 2135 */       switch (len) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 0:
-/* 2142 */           return null;
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 1:
-/* 2147 */           ch = key.charAt(0);
-/* 2148 */           if (ch < '') {
-/*      */             
-/* 2150 */             node = node.m_nextChar[ch];
-/* 2151 */             if (node != null)
-/* 2152 */               return node.m_Value; 
-/*      */           } 
-/* 2154 */           return null;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2179 */       for (int i = 0; i < len; i++) {
-/*      */ 
-/*      */         
-/* 2182 */         char c = key.charAt(i);
-/* 2183 */         if ('' <= c)
-/*      */         {
-/*      */           
-/* 2186 */           return null;
-/*      */         }
-/*      */         
-/* 2189 */         node = node.m_nextChar[c];
-/* 2190 */         if (node == null) {
-/* 2191 */           return null;
-/*      */         }
-/*      */       } 
-/* 2194 */       return node.m_Value;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private class Node
-/*      */     {
-/* 2211 */       final Node[] m_nextChar = new Node[128];
-/* 2212 */       Object m_Value = null;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Trie(Trie existingTrie) {
-/* 2232 */       this.m_Root = existingTrie.m_Root;
-/* 2233 */       this.m_lowerCaseOnly = existingTrie.m_lowerCaseOnly;
-/*      */ 
-/*      */       
-/* 2236 */       int max = existingTrie.getLongestKeyLength();
-/* 2237 */       this.m_charBuffer = new char[max];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object get2(String key) {
-/*      */       char ch;
-/* 2251 */       int len = key.length();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2256 */       if (this.m_charBuffer.length < len) {
-/* 2257 */         return null;
-/*      */       }
-/* 2259 */       Node node = this.m_Root;
-/* 2260 */       switch (len) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 0:
-/* 2267 */           return null;
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         case 1:
-/* 2272 */           ch = key.charAt(0);
-/* 2273 */           if (ch < '') {
-/*      */             
-/* 2275 */             node = node.m_nextChar[ch];
-/* 2276 */             if (node != null)
-/* 2277 */               return node.m_Value; 
-/*      */           } 
-/* 2279 */           return null;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2291 */       key.getChars(0, len, this.m_charBuffer, 0);
-/*      */       
-/* 2293 */       for (int i = 0; i < len; i++) {
-/*      */         
-/* 2295 */         char c = this.m_charBuffer[i];
-/* 2296 */         if ('' <= c)
-/*      */         {
-/*      */           
-/* 2299 */           return null;
-/*      */         }
-/*      */         
-/* 2302 */         node = node.m_nextChar[c];
-/* 2303 */         if (node == null) {
-/* 2304 */           return null;
-/*      */         }
-/*      */       } 
-/* 2307 */       return node.m_Value;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getLongestKeyLength() {
-/* 2317 */       return this.m_charBuffer.length;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serializer\ToHTMLStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ToHTMLStream.java,v 1.2.4.1 2005/09/15 08:15:26 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.serializer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Properties;
+
+import javax.xml.transform.Result;
+
+import com.sun.org.apache.xml.internal.serializer.utils.MsgKey;
+import com.sun.org.apache.xml.internal.serializer.utils.Utils;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
+/**
+ * This serializer takes a series of SAX or
+ * SAX-like events and writes its output
+ * to the given stream.
+ *
+ * This class is not a public API, it is public
+ * because it is used from another package.
+ *
+ * @xsl.usage internal
+ */
+public final class ToHTMLStream extends ToStream
+{
+
+    /** This flag is set while receiving events from the DTD */
+    protected boolean m_inDTD = false;
+
+    /** True if the current element is a block element.  (seems like
+     *  this needs to be a stack. -sb). */
+    private boolean m_inBlockElem = false;
+
+    /**
+     * Map that tells which XML characters should have special treatment, and it
+     *  provides character to entity name lookup.
+     */
+    private static final CharInfo m_htmlcharInfo =
+//        new CharInfo(CharInfo.HTML_ENTITIES_RESOURCE);
+        CharInfo.getCharInfoInternal(CharInfo.HTML_ENTITIES_RESOURCE, Method.HTML);
+
+    /** A digital search trie for fast, case insensitive lookup of ElemDesc objects. */
+    static final Trie m_elementFlags = new Trie();
+
+    static {
+        initTagReference(m_elementFlags);
+    }
+    static void initTagReference(Trie m_elementFlags) {
+
+        // HTML 4.0 loose DTD
+        m_elementFlags.put("BASEFONT", new ElemDesc(0 | ElemDesc.EMPTY));
+        m_elementFlags.put(
+            "FRAME",
+            new ElemDesc(0 | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put("FRAMESET", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("NOFRAMES", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "ISINDEX",
+            new ElemDesc(0 | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "APPLET",
+            new ElemDesc(0 | ElemDesc.WHITESPACESENSITIVE));
+        m_elementFlags.put("CENTER", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("DIR", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("MENU", new ElemDesc(0 | ElemDesc.BLOCK));
+
+        // HTML 4.0 strict DTD
+        m_elementFlags.put("TT", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+        m_elementFlags.put("I", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+        m_elementFlags.put("B", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+        m_elementFlags.put("BIG", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+        m_elementFlags.put("SMALL", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+        m_elementFlags.put("EM", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("STRONG", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("DFN", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("CODE", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("SAMP", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("KBD", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("VAR", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("CITE", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("ABBR", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put("ACRONYM", new ElemDesc(0 | ElemDesc.PHRASE));
+        m_elementFlags.put(
+            "SUP",
+            new ElemDesc(0 | ElemDesc.SPECIAL | ElemDesc.ASPECIAL));
+        m_elementFlags.put(
+            "SUB",
+            new ElemDesc(0 | ElemDesc.SPECIAL | ElemDesc.ASPECIAL));
+        m_elementFlags.put(
+            "SPAN",
+            new ElemDesc(0 | ElemDesc.SPECIAL | ElemDesc.ASPECIAL));
+        m_elementFlags.put(
+            "BDO",
+            new ElemDesc(0 | ElemDesc.SPECIAL | ElemDesc.ASPECIAL));
+        m_elementFlags.put(
+            "BR",
+            new ElemDesc(
+                0
+                    | ElemDesc.SPECIAL
+                    | ElemDesc.ASPECIAL
+                    | ElemDesc.EMPTY
+                    | ElemDesc.BLOCK));
+        m_elementFlags.put("BODY", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "ADDRESS",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put(
+            "DIV",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put("A", new ElemDesc(0 | ElemDesc.SPECIAL));
+        m_elementFlags.put(
+            "MAP",
+            new ElemDesc(
+                0 | ElemDesc.SPECIAL | ElemDesc.ASPECIAL | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "AREA",
+            new ElemDesc(0 | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "LINK",
+            new ElemDesc(
+                0 | ElemDesc.HEADMISC | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "IMG",
+            new ElemDesc(
+                0
+                    | ElemDesc.SPECIAL
+                    | ElemDesc.ASPECIAL
+                    | ElemDesc.EMPTY
+                    | ElemDesc.WHITESPACESENSITIVE));
+        m_elementFlags.put(
+            "OBJECT",
+            new ElemDesc(
+                0
+                    | ElemDesc.SPECIAL
+                    | ElemDesc.ASPECIAL
+                    | ElemDesc.HEADMISC
+                    | ElemDesc.WHITESPACESENSITIVE));
+        m_elementFlags.put("PARAM", new ElemDesc(0 | ElemDesc.EMPTY));
+        m_elementFlags.put(
+            "HR",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET
+                    | ElemDesc.EMPTY));
+        m_elementFlags.put(
+            "P",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put(
+            "H1",
+            new ElemDesc(0 | ElemDesc.HEAD | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "H2",
+            new ElemDesc(0 | ElemDesc.HEAD | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "H3",
+            new ElemDesc(0 | ElemDesc.HEAD | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "H4",
+            new ElemDesc(0 | ElemDesc.HEAD | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "H5",
+            new ElemDesc(0 | ElemDesc.HEAD | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "H6",
+            new ElemDesc(0 | ElemDesc.HEAD | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "PRE",
+            new ElemDesc(0 | ElemDesc.PREFORMATTED | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "Q",
+            new ElemDesc(0 | ElemDesc.SPECIAL | ElemDesc.ASPECIAL));
+        m_elementFlags.put(
+            "BLOCKQUOTE",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put("INS", new ElemDesc(0));
+        m_elementFlags.put("DEL", new ElemDesc(0));
+        m_elementFlags.put(
+            "DL",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put("DT", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("DD", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "OL",
+            new ElemDesc(0 | ElemDesc.LIST | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "UL",
+            new ElemDesc(0 | ElemDesc.LIST | ElemDesc.BLOCK));
+        m_elementFlags.put("LI", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("FORM", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("LABEL", new ElemDesc(0 | ElemDesc.FORMCTRL));
+        m_elementFlags.put(
+            "INPUT",
+            new ElemDesc(
+                0 | ElemDesc.FORMCTRL | ElemDesc.INLINELABEL | ElemDesc.EMPTY));
+        m_elementFlags.put(
+            "SELECT",
+            new ElemDesc(0 | ElemDesc.FORMCTRL | ElemDesc.INLINELABEL));
+        m_elementFlags.put("OPTGROUP", new ElemDesc(0));
+        m_elementFlags.put("OPTION", new ElemDesc(0));
+        m_elementFlags.put(
+            "TEXTAREA",
+            new ElemDesc(0 | ElemDesc.FORMCTRL | ElemDesc.INLINELABEL));
+        m_elementFlags.put(
+            "FIELDSET",
+            new ElemDesc(0 | ElemDesc.BLOCK | ElemDesc.BLOCKFORM));
+        m_elementFlags.put("LEGEND", new ElemDesc(0));
+        m_elementFlags.put(
+            "BUTTON",
+            new ElemDesc(0 | ElemDesc.FORMCTRL | ElemDesc.INLINELABEL));
+        m_elementFlags.put(
+            "TABLE",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put("CAPTION", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("THEAD", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("TFOOT", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("TBODY", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("COLGROUP", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "COL",
+            new ElemDesc(0 | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put("TR", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put("TH", new ElemDesc(0));
+        m_elementFlags.put("TD", new ElemDesc(0));
+        m_elementFlags.put(
+            "HEAD",
+            new ElemDesc(0 | ElemDesc.BLOCK | ElemDesc.HEADELEM));
+        m_elementFlags.put("TITLE", new ElemDesc(0 | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "BASE",
+            new ElemDesc(0 | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "META",
+            new ElemDesc(
+                0 | ElemDesc.HEADMISC | ElemDesc.EMPTY | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "STYLE",
+            new ElemDesc(
+                0 | ElemDesc.HEADMISC | ElemDesc.RAW | ElemDesc.BLOCK));
+        m_elementFlags.put(
+            "SCRIPT",
+            new ElemDesc(
+                0
+                    | ElemDesc.SPECIAL
+                    | ElemDesc.ASPECIAL
+                    | ElemDesc.HEADMISC
+                    | ElemDesc.RAW));
+        m_elementFlags.put(
+            "NOSCRIPT",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        m_elementFlags.put("HTML", new ElemDesc(0 | ElemDesc.BLOCK));
+
+        // From "John Ky" <hand@syd.speednet.com.au
+        // Transitional Document Type Definition ()
+        // file:///C:/Documents%20and%20Settings/sboag.BOAG600E/My%20Documents/html/sgml/loosedtd.html#basefont
+        m_elementFlags.put("FONT", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+
+        // file:///C:/Documents%20and%20Settings/sboag.BOAG600E/My%20Documents/html/present/graphics.html#edef-STRIKE
+        m_elementFlags.put("S", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+        m_elementFlags.put("STRIKE", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+
+        // file:///C:/Documents%20and%20Settings/sboag.BOAG600E/My%20Documents/html/present/graphics.html#edef-U
+        m_elementFlags.put("U", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+
+        // From "John Ky" <hand@syd.speednet.com.au
+        m_elementFlags.put("NOBR", new ElemDesc(0 | ElemDesc.FONTSTYLE));
+
+        // HTML 4.0, section 16.5
+        m_elementFlags.put(
+            "IFRAME",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+
+        // Netscape 4 extension
+        m_elementFlags.put(
+            "LAYER",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+        // Netscape 4 extension
+        m_elementFlags.put(
+            "ILAYER",
+            new ElemDesc(
+                0
+                    | ElemDesc.BLOCK
+                    | ElemDesc.BLOCKFORM
+                    | ElemDesc.BLOCKFORMFIELDSET));
+
+
+        // NOW FOR ATTRIBUTE INFORMATION . . .
+        ElemDesc elemDesc;
+
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("A");
+        elemDesc.setAttr("HREF", ElemDesc.ATTRURL);
+        elemDesc.setAttr("NAME", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("AREA");
+        elemDesc.setAttr("HREF", ElemDesc.ATTRURL);
+        elemDesc.setAttr("NOHREF", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("BASE");
+        elemDesc.setAttr("HREF", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("BUTTON");
+        elemDesc.setAttr("DISABLED", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("BLOCKQUOTE");
+        elemDesc.setAttr("CITE", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("DEL");
+        elemDesc.setAttr("CITE", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("DIR");
+        elemDesc.setAttr("COMPACT", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+
+        elemDesc = (ElemDesc) m_elementFlags.get("DIV");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL); // Netscape 4 extension
+        elemDesc.setAttr("NOWRAP", ElemDesc.ATTREMPTY); // Internet-Explorer extension
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("DL");
+        elemDesc.setAttr("COMPACT", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("FORM");
+        elemDesc.setAttr("ACTION", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        // Attribution to: "Voytenko, Dimitry" <DVoytenko@SECTORBASE.COM>
+        elemDesc = (ElemDesc) m_elementFlags.get("FRAME");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("LONGDESC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("NORESIZE",ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("HEAD");
+        elemDesc.setAttr("PROFILE", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("HR");
+        elemDesc.setAttr("NOSHADE", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        // HTML 4.0, section 16.5
+        elemDesc = (ElemDesc) m_elementFlags.get("IFRAME");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("LONGDESC", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        // Netscape 4 extension
+        elemDesc = (ElemDesc) m_elementFlags.get("ILAYER");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("IMG");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("LONGDESC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("USEMAP", ElemDesc.ATTRURL);
+        elemDesc.setAttr("ISMAP", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("INPUT");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("USEMAP", ElemDesc.ATTRURL);
+        elemDesc.setAttr("CHECKED", ElemDesc.ATTREMPTY);
+        elemDesc.setAttr("DISABLED", ElemDesc.ATTREMPTY);
+        elemDesc.setAttr("ISMAP", ElemDesc.ATTREMPTY);
+        elemDesc.setAttr("READONLY", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("INS");
+        elemDesc.setAttr("CITE", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        // Netscape 4 extension
+        elemDesc = (ElemDesc) m_elementFlags.get("LAYER");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("LINK");
+        elemDesc.setAttr("HREF", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("MENU");
+        elemDesc.setAttr("COMPACT", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("OBJECT");
+        elemDesc.setAttr("CLASSID", ElemDesc.ATTRURL);
+        elemDesc.setAttr("CODEBASE", ElemDesc.ATTRURL);
+        elemDesc.setAttr("DATA", ElemDesc.ATTRURL);
+        elemDesc.setAttr("ARCHIVE", ElemDesc.ATTRURL);
+        elemDesc.setAttr("USEMAP", ElemDesc.ATTRURL);
+        elemDesc.setAttr("DECLARE", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("OL");
+        elemDesc.setAttr("COMPACT", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("OPTGROUP");
+        elemDesc.setAttr("DISABLED", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("OPTION");
+        elemDesc.setAttr("SELECTED", ElemDesc.ATTREMPTY);
+        elemDesc.setAttr("DISABLED", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("Q");
+        elemDesc.setAttr("CITE", ElemDesc.ATTRURL);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("SCRIPT");
+        elemDesc.setAttr("SRC", ElemDesc.ATTRURL);
+        elemDesc.setAttr("FOR", ElemDesc.ATTRURL);
+        elemDesc.setAttr("DEFER", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("SELECT");
+        elemDesc.setAttr("DISABLED", ElemDesc.ATTREMPTY);
+        elemDesc.setAttr("MULTIPLE", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("TABLE");
+        elemDesc.setAttr("NOWRAP", ElemDesc.ATTREMPTY); // Internet-Explorer extension
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("TD");
+        elemDesc.setAttr("NOWRAP", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("TEXTAREA");
+        elemDesc.setAttr("DISABLED", ElemDesc.ATTREMPTY);
+        elemDesc.setAttr("READONLY", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("TH");
+        elemDesc.setAttr("NOWRAP", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        // The nowrap attribute of a tr element is both
+        // a Netscape and Internet-Explorer extension
+        elemDesc = (ElemDesc) m_elementFlags.get("TR");
+        elemDesc.setAttr("NOWRAP", ElemDesc.ATTREMPTY);
+
+        // ----------------------------------------------
+        elemDesc = (ElemDesc) m_elementFlags.get("UL");
+        elemDesc.setAttr("COMPACT", ElemDesc.ATTREMPTY);
+    }
+
+    /**
+     * Dummy element for elements not found.
+     */
+    static private final ElemDesc m_dummy = new ElemDesc(0 | ElemDesc.BLOCK);
+
+    /** True if URLs should be specially escaped with the %xx form. */
+    private boolean m_specialEscapeURLs = true;
+
+    /** True if the META tag should be omitted. */
+    private boolean m_omitMetaTag = false;
+
+    /**
+     * Tells if the formatter should use special URL escaping.
+     *
+     * @param bool True if URLs should be specially escaped with the %xx form.
+     */
+    public void setSpecialEscapeURLs(boolean bool)
+    {
+        m_specialEscapeURLs = bool;
+    }
+
+    /**
+     * Tells if the formatter should omit the META tag.
+     *
+     * @param bool True if the META tag should be omitted.
+     */
+    public void setOmitMetaTag(boolean bool)
+    {
+        m_omitMetaTag = bool;
+    }
+
+    /**
+     * Specifies an output format for this serializer. It the
+     * serializer has already been associated with an output format,
+     * it will switch to the new format. This method should not be
+     * called while the serializer is in the process of serializing
+     * a document.
+     *
+     * This method can be called multiple times before starting
+     * the serialization of a particular result-tree. In principle
+     * all serialization parameters can be changed, with the exception
+     * of method="html" (it must be method="html" otherwise we
+     * shouldn't even have a ToHTMLStream object here!)
+     *
+     * @param format The output format or serialzation parameters
+     * to use.
+     */
+    public void setOutputFormat(Properties format)
+    {
+
+        m_specialEscapeURLs =
+            OutputPropertyUtils.getBooleanProperty(
+                OutputPropertiesFactory.S_USE_URL_ESCAPING,
+                format);
+
+        m_omitMetaTag =
+            OutputPropertyUtils.getBooleanProperty(
+                OutputPropertiesFactory.S_OMIT_META_TAG,
+                format);
+
+        super.setOutputFormat(format);
+    }
+
+    /**
+     * Tells if the formatter should use special URL escaping.
+     *
+     * @return True if URLs should be specially escaped with the %xx form.
+     */
+    private final boolean getSpecialEscapeURLs()
+    {
+        return m_specialEscapeURLs;
+    }
+
+    /**
+     * Tells if the formatter should omit the META tag.
+     *
+     * @return True if the META tag should be omitted.
+     */
+    private final boolean getOmitMetaTag()
+    {
+        return m_omitMetaTag;
+    }
+
+    /**
+     * Get a description of the given element.
+     *
+     * @param name non-null name of element, case insensitive.
+     *
+     * @return non-null reference to ElemDesc, which may be m_dummy if no
+     *         element description matches the given name.
+     */
+    public static final ElemDesc getElemDesc(String name)
+    {
+        /* this method used to return m_dummy  when name was null
+         * but now it doesn't check and and requires non-null name.
+         */
+        Object obj = m_elementFlags.get(name);
+        if (null != obj)
+            return (ElemDesc)obj;
+        return m_dummy;
+    }
+
+    /**
+     * A Trie that is just a copy of the "static" one.
+     * We need this one to be able to use the faster, but not thread-safe
+     * method Trie.get2(name)
+     */
+    private Trie m_htmlInfo = new Trie(m_elementFlags);
+    /**
+     * Calls to this method could be replaced with calls to
+     * getElemDesc(name), but this one should be faster.
+     */
+    private ElemDesc getElemDesc2(String name)
+    {
+        Object obj = m_htmlInfo.get2(name);
+        if (null != obj)
+            return (ElemDesc)obj;
+        return m_dummy;
+    }
+
+    /**
+     * Default constructor.
+     */
+    public ToHTMLStream()
+    {
+
+        super();
+        m_charInfo = m_htmlcharInfo;
+        // initialize namespaces
+        m_prefixMap = new NamespaceMappings();
+
+    }
+
+    /** The name of the current element. */
+//    private String m_currentElementName = null;
+
+    /**
+     * Receive notification of the beginning of a document.
+     *
+     * @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *            wrapping another exception.
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    protected void startDocumentInternal() throws org.xml.sax.SAXException
+    {
+        super.startDocumentInternal();
+
+        m_needToCallStartDocument = false;
+        m_needToOutputDocTypeDecl = true;
+        m_startNewLine = false;
+        setOmitXMLDeclaration(true);
+
+        if (true == m_needToOutputDocTypeDecl)
+        {
+            String doctypeSystem = getDoctypeSystem();
+            String doctypePublic = getDoctypePublic();
+            if ((null != doctypeSystem) || (null != doctypePublic))
+            {
+                final java.io.Writer writer = m_writer;
+                try
+                {
+                writer.write("<!DOCTYPE html");
+
+                if (null != doctypePublic)
+                {
+                    writer.write(" PUBLIC \"");
+                    writer.write(doctypePublic);
+                    writer.write('"');
+                }
+
+                if (null != doctypeSystem)
+                {
+                    if (null == doctypePublic)
+                        writer.write(" SYSTEM \"");
+                    else
+                        writer.write(" \"");
+
+                    writer.write(doctypeSystem);
+                    writer.write('"');
+                }
+
+                writer.write('>');
+                outputLineSep();
+                }
+                catch(IOException e)
+                {
+                    throw new SAXException(e);
+                }
+            }
+        }
+
+        m_needToOutputDocTypeDecl = false;
+    }
+
+    /**
+     * Receive notification of the end of a document.
+     *
+     * @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *            wrapping another exception.
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public final void endDocument() throws org.xml.sax.SAXException
+    {
+
+        flushPending();
+        if (m_doIndent && !m_isprevtext)
+        {
+            try
+            {
+            outputLineSep();
+            }
+            catch(IOException e)
+            {
+                throw new SAXException(e);
+            }
+        }
+
+        flushWriter();
+        if (m_tracer != null)
+            super.fireEndDoc();
+    }
+
+    /**
+     *  Receive notification of the beginning of an element.
+     *
+     *
+     *  @param namespaceURI
+     *  @param localName
+     *  @param name The element type name.
+     *  @param atts The attributes attached to the element, if any.
+     *  @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *             wrapping another exception.
+     *  @see #endElement
+     *  @see org.xml.sax.AttributeList
+     */
+    public void startElement(
+        String namespaceURI,
+        String localName,
+        String name,
+        Attributes atts)
+        throws org.xml.sax.SAXException
+    {
+
+        ElemContext elemContext = m_elemContext;
+
+        // clean up any pending things first
+        if (elemContext.m_startTagOpen)
+        {
+            closeStartTag();
+            elemContext.m_startTagOpen = false;
+        }
+        else if (m_cdataTagOpen)
+        {
+            closeCDATA();
+            m_cdataTagOpen = false;
+        }
+        else if (m_needToCallStartDocument)
+        {
+            startDocumentInternal();
+            m_needToCallStartDocument = false;
+        }
+
+
+        // if this element has a namespace then treat it like XML
+        if (null != namespaceURI && namespaceURI.length() > 0)
+        {
+            super.startElement(namespaceURI, localName, name, atts);
+
+            return;
+        }
+
+        try
+        {
+            // getElemDesc2(name) is faster than getElemDesc(name)
+            ElemDesc elemDesc = getElemDesc2(name);
+            int elemFlags = elemDesc.getFlags();
+
+            // deal with indentation issues first
+            if (m_doIndent)
+            {
+
+                boolean isBlockElement = (elemFlags & ElemDesc.BLOCK) != 0;
+                if (m_ispreserve)
+                    m_ispreserve = false;
+                else if (
+                    (null != elemContext.m_elementName)
+                    && (!m_inBlockElem
+                        || isBlockElement) /* && !isWhiteSpaceSensitive */
+                    )
+                {
+                    m_startNewLine = true;
+
+                    indent();
+
+                }
+                m_inBlockElem = !isBlockElement;
+            }
+
+            // save any attributes for later processing
+            if (atts != null)
+                addAttributes(atts);
+
+            m_isprevtext = false;
+            final java.io.Writer writer = m_writer;
+            writer.write('<');
+            writer.write(name);
+
+
+
+            if (m_tracer != null)
+                firePseudoAttributes();
+
+            if ((elemFlags & ElemDesc.EMPTY) != 0)
+            {
+                // an optimization for elements which are expected
+                // to be empty.
+                m_elemContext = elemContext.push();
+                /* XSLTC sometimes calls namespaceAfterStartElement()
+                 * so we need to remember the name
+                 */
+                m_elemContext.m_elementName = name;
+                m_elemContext.m_elementDesc = elemDesc;
+                return;
+            }
+            else
+            {
+                elemContext = elemContext.push(namespaceURI,localName,name);
+                m_elemContext = elemContext;
+                elemContext.m_elementDesc = elemDesc;
+                elemContext.m_isRaw = (elemFlags & ElemDesc.RAW) != 0;
+            }
+
+
+            if ((elemFlags & ElemDesc.HEADELEM) != 0)
+            {
+                // This is the <HEAD> element, do some special processing
+                closeStartTag();
+                elemContext.m_startTagOpen = false;
+                if (!m_omitMetaTag)
+                {
+                    if (m_doIndent)
+                        indent();
+                    writer.write(
+                        "<META http-equiv=\"Content-Type\" content=\"text/html; charset=");
+                    String encoding = getEncoding();
+                    String encode = Encodings.getMimeEncoding(encoding);
+                    writer.write(encode);
+                    writer.write("\">");
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            throw new SAXException(e);
+        }
+    }
+
+    /**
+     *  Receive notification of the end of an element.
+     *
+     *
+     *  @param namespaceURI
+     *  @param localName
+     *  @param name The element type name
+     *  @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *             wrapping another exception.
+     */
+    public final void endElement(
+        final String namespaceURI,
+        final String localName,
+        final String name)
+        throws org.xml.sax.SAXException
+    {
+        // deal with any pending issues
+        if (m_cdataTagOpen)
+            closeCDATA();
+
+        // if the element has a namespace, treat it like XML, not HTML
+        if (null != namespaceURI && namespaceURI.length() > 0)
+        {
+            super.endElement(namespaceURI, localName, name);
+
+            return;
+        }
+
+        try
+        {
+
+            ElemContext elemContext = m_elemContext;
+            final ElemDesc elemDesc = elemContext.m_elementDesc;
+            final int elemFlags = elemDesc.getFlags();
+            final boolean elemEmpty = (elemFlags & ElemDesc.EMPTY) != 0;
+
+            // deal with any indentation issues
+            if (m_doIndent)
+            {
+                final boolean isBlockElement = (elemFlags&ElemDesc.BLOCK) != 0;
+                boolean shouldIndent = false;
+
+                if (m_ispreserve)
+                {
+                    m_ispreserve = false;
+                }
+                else if (m_doIndent && (!m_inBlockElem || isBlockElement))
+                {
+                    m_startNewLine = true;
+                    shouldIndent = true;
+                }
+                if (!elemContext.m_startTagOpen && shouldIndent)
+                    indent(elemContext.m_currentElemDepth - 1);
+                m_inBlockElem = !isBlockElement;
+            }
+
+            final java.io.Writer writer = m_writer;
+            if (!elemContext.m_startTagOpen)
+            {
+                writer.write("</");
+                writer.write(name);
+                writer.write('>');
+            }
+            else
+            {
+                // the start-tag open when this method was called,
+                // so we need to process it now.
+
+                if (m_tracer != null)
+                    super.fireStartElem(name);
+
+                // the starting tag was still open when we received this endElement() call
+                // so we need to process any gathered attributes NOW, before they go away.
+                int nAttrs = m_attributes.getLength();
+                if (nAttrs > 0)
+                {
+                    processAttributes(m_writer, nAttrs);
+                    // clear attributes object for re-use with next element
+                    m_attributes.clear();
+                }
+                if (!elemEmpty)
+                {
+                    // As per Dave/Paul recommendation 12/06/2000
+                    // if (shouldIndent)
+                    // writer.write('>');
+                    //  indent(m_currentIndent);
+
+                    writer.write("></");
+                    writer.write(name);
+                    writer.write('>');
+                }
+                else
+                {
+                    writer.write('>');
+                }
+            }
+
+            // clean up because the element has ended
+            if ((elemFlags & ElemDesc.WHITESPACESENSITIVE) != 0)
+                m_ispreserve = true;
+            m_isprevtext = false;
+
+            // fire off the end element event
+            if (m_tracer != null)
+                super.fireEndElem(name);
+
+            // OPTIMIZE-EMPTY
+            if (elemEmpty)
+            {
+                // a quick exit if the HTML element had no children.
+                // This block of code can be removed if the corresponding block of code
+                // in startElement() also labeled with "OPTIMIZE-EMPTY" is also removed
+                m_elemContext = elemContext.m_prev;
+                return;
+            }
+
+            // some more clean because the element has ended.
+            if (!elemContext.m_startTagOpen)
+            {
+                if (m_doIndent && !m_preserves.isEmpty())
+                    m_preserves.pop();
+            }
+            m_elemContext = elemContext.m_prev;
+//            m_isRawStack.pop();
+        }
+        catch (IOException e)
+        {
+            throw new SAXException(e);
+        }
+    }
+
+    /**
+     * Process an attribute.
+     * @param   writer The writer to write the processed output to.
+     * @param   name   The name of the attribute.
+     * @param   value   The value of the attribute.
+     * @param   elemDesc The description of the HTML element
+     *           that has this attribute.
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    protected void processAttribute(
+        java.io.Writer writer,
+        String name,
+        String value,
+        ElemDesc elemDesc)
+        throws IOException
+    {
+        writer.write(' ');
+
+        if (   ((value.length() == 0) || value.equalsIgnoreCase(name))
+            && elemDesc != null
+            && elemDesc.isAttrFlagSet(name, ElemDesc.ATTREMPTY))
+        {
+            writer.write(name);
+        }
+        else
+        {
+            // %REVIEW% %OPT%
+            // Two calls to single-char write may NOT
+            // be more efficient than one to string-write...
+            writer.write(name);
+            writer.write("=\"");
+            if (   elemDesc != null
+                && elemDesc.isAttrFlagSet(name, ElemDesc.ATTRURL))
+                writeAttrURI(writer, value, m_specialEscapeURLs);
+            else
+                writeAttrString(writer, value, this.getEncoding());
+            writer.write('"');
+
+        }
+    }
+
+    /**
+     * Tell if a character is an ASCII digit.
+     */
+    private boolean isASCIIDigit(char c)
+    {
+        return (c >= '0' && c <= '9');
+    }
+
+    /**
+     * Make an integer into an HH hex value.
+     * Does no checking on the size of the input, since this
+     * is only meant to be used locally by writeAttrURI.
+     *
+     * @param i must be a value less than 255.
+     *
+     * @return should be a two character string.
+     */
+    private static String makeHHString(int i)
+    {
+        String s = Integer.toHexString(i).toUpperCase();
+        if (s.length() == 1)
+        {
+            s = "0" + s;
+        }
+        return s;
+    }
+
+    /**
+    * Dmitri Ilyin: Makes sure if the String is HH encoded sign.
+    * @param str must be 2 characters long
+    *
+    * @return true or false
+    */
+    private boolean isHHSign(String str)
+    {
+        boolean sign = true;
+        try
+        {
+            char r = (char) Integer.parseInt(str, 16);
+        }
+        catch (NumberFormatException e)
+        {
+            sign = false;
+        }
+        return sign;
+    }
+
+    /**
+     * Write the specified <var>string</var> after substituting non ASCII characters,
+     * with <CODE>%HH</CODE>, where HH is the hex of the byte value.
+     *
+     * @param   string      String to convert to XML format.
+     * @param doURLEscaping True if we should try to encode as
+     *                      per http://www.ietf.org/rfc/rfc2396.txt.
+     *
+     * @throws org.xml.sax.SAXException if a bad surrogate pair is detected.
+     */
+    public void writeAttrURI(
+        final java.io.Writer writer, String string, boolean doURLEscaping)
+        throws IOException
+    {
+        // http://www.ietf.org/rfc/rfc2396.txt says:
+        // A URI is always in an "escaped" form, since escaping or unescaping a
+        // completed URI might change its semantics.  Normally, the only time
+        // escape encodings can safely be made is when the URI is being created
+        // from its component parts; each component may have its own set of
+        // characters that are reserved, so only the mechanism responsible for
+        // generating or interpreting that component can determine whether or
+        // not escaping a character will change its semantics. Likewise, a URI
+        // must be separated into its components before the escaped characters
+        // within those components can be safely decoded.
+        //
+        // ...So we do our best to do limited escaping of the URL, without
+        // causing damage.  If the URL is already properly escaped, in theory, this
+        // function should not change the string value.
+
+        final int end = string.length();
+        if (end > m_attrBuff.length)
+        {
+           m_attrBuff = new char[end*2 + 1];
+        }
+        string.getChars(0,end, m_attrBuff, 0);
+        final char[] chars = m_attrBuff;
+
+        int cleanStart = 0;
+        int cleanLength = 0;
+
+
+        char ch = 0;
+        for (int i = 0; i < end; i++)
+        {
+            ch = chars[i];
+
+            if ((ch < 32) || (ch > 126))
+            {
+                if (cleanLength > 0)
+                {
+                    writer.write(chars, cleanStart, cleanLength);
+                    cleanLength = 0;
+                }
+                if (doURLEscaping)
+                {
+                    // Encode UTF16 to UTF8.
+                    // Reference is Unicode, A Primer, by Tony Graham.
+                    // Page 92.
+
+                    // Note that Kay doesn't escape 0x20...
+                    //  if(ch == 0x20) // Not sure about this... -sb
+                    //  {
+                    //    writer.write(ch);
+                    //  }
+                    //  else
+                    if (ch <= 0x7F)
+                    {
+                        writer.write('%');
+                        writer.write(makeHHString(ch));
+                    }
+                    else if (ch <= 0x7FF)
+                    {
+                        // Clear low 6 bits before rotate, put high 4 bits in low byte,
+                        // and set two high bits.
+                        int high = (ch >> 6) | 0xC0;
+                        int low = (ch & 0x3F) | 0x80;
+                        // First 6 bits, + high bit
+                        writer.write('%');
+                        writer.write(makeHHString(high));
+                        writer.write('%');
+                        writer.write(makeHHString(low));
+                    }
+                    else if (Encodings.isHighUTF16Surrogate(ch)) // high surrogate
+                    {
+                        // I'm sure this can be done in 3 instructions, but I choose
+                        // to try and do it exactly like it is done in the book, at least
+                        // until we are sure this is totally clean.  I don't think performance
+                        // is a big issue with this particular function, though I could be
+                        // wrong.  Also, the stuff below clearly does more masking than
+                        // it needs to do.
+
+                        // Clear high 6 bits.
+                        int highSurrogate = ((int) ch) & 0x03FF;
+
+                        // Middle 4 bits (wwww) + 1
+                        // "Note that the value of wwww from the high surrogate bit pattern
+                        // is incremented to make the uuuuu bit pattern in the scalar value
+                        // so the surrogate pair don't address the BMP."
+                        int wwww = ((highSurrogate & 0x03C0) >> 6);
+                        int uuuuu = wwww + 1;
+
+                        // next 4 bits
+                        int zzzz = (highSurrogate & 0x003C) >> 2;
+
+                        // low 2 bits
+                        int yyyyyy = ((highSurrogate & 0x0003) << 4) & 0x30;
+
+                        // Get low surrogate character.
+                        ch = chars[++i];
+
+                        // Clear high 6 bits.
+                        int lowSurrogate = ((int) ch) & 0x03FF;
+
+                        // put the middle 4 bits into the bottom of yyyyyy (byte 3)
+                        yyyyyy = yyyyyy | ((lowSurrogate & 0x03C0) >> 6);
+
+                        // bottom 6 bits.
+                        int xxxxxx = (lowSurrogate & 0x003F);
+
+                        int byte1 = 0xF0 | (uuuuu >> 2); // top 3 bits of uuuuu
+                        int byte2 =
+                            0x80 | (((uuuuu & 0x03) << 4) & 0x30) | zzzz;
+                        int byte3 = 0x80 | yyyyyy;
+                        int byte4 = 0x80 | xxxxxx;
+
+                        writer.write('%');
+                        writer.write(makeHHString(byte1));
+                        writer.write('%');
+                        writer.write(makeHHString(byte2));
+                        writer.write('%');
+                        writer.write(makeHHString(byte3));
+                        writer.write('%');
+                        writer.write(makeHHString(byte4));
+                    }
+                    else
+                    {
+                        int high = (ch >> 12) | 0xE0; // top 4 bits
+                        int middle = ((ch & 0x0FC0) >> 6) | 0x80;
+                        // middle 6 bits
+                        int low = (ch & 0x3F) | 0x80;
+                        // First 6 bits, + high bit
+                        writer.write('%');
+                        writer.write(makeHHString(high));
+                        writer.write('%');
+                        writer.write(makeHHString(middle));
+                        writer.write('%');
+                        writer.write(makeHHString(low));
+                    }
+
+                }
+                else if (escapingNotNeeded(ch))
+                {
+                    writer.write(ch);
+                }
+                else
+                {
+                    writer.write("&#");
+                    writer.write(Integer.toString(ch));
+                    writer.write(';');
+                }
+                // In this character range we have first written out any previously accumulated
+                // "clean" characters, then processed the current more complicated character,
+                // which may have incremented "i".
+                // We now we reset the next possible clean character.
+                cleanStart = i + 1;
+            }
+            // Since http://www.ietf.org/rfc/rfc2396.txt refers to the URI grammar as
+            // not allowing quotes in the URI proper syntax, nor in the fragment
+            // identifier, we believe that it's OK to double escape quotes.
+            else if (ch == '"')
+            {
+                // If the character is a '%' number number, try to avoid double-escaping.
+                // There is a question if this is legal behavior.
+
+                // Dmitri Ilyin: to check if '%' number number is invalid. It must be checked if %xx is a sign, that would be encoded
+                // The encoded signes are in Hex form. So %xx my be in form %3C that is "<" sign. I will try to change here a little.
+
+                //        if( ((i+2) < len) && isASCIIDigit(stringArray[i+1]) && isASCIIDigit(stringArray[i+2]) )
+
+                // We are no longer escaping '%'
+
+                if (cleanLength > 0)
+                {
+                    writer.write(chars, cleanStart, cleanLength);
+                    cleanLength = 0;
+                }
+
+
+                // Mike Kay encodes this as &#34;, so he may know something I don't?
+                if (doURLEscaping)
+                    writer.write("%22");
+                else
+                    writer.write("&quot;"); // we have to escape this, I guess.
+
+                // We have written out any clean characters, then the escaped '%' and now we
+                // We now we reset the next possible clean character.
+                cleanStart = i + 1;
+            }
+            else if (ch == '&')
+            {
+                // HTML 4.01 reads, "Authors should use "&amp;" (ASCII decimal 38)
+                // instead of "&" to avoid confusion with the beginning of a character
+                // reference (entity reference open delimiter).
+                if (cleanLength > 0)
+                {
+                    writer.write(chars, cleanStart, cleanLength);
+                    cleanLength = 0;
+                }
+                writer.write("&amp;");
+                cleanStart = i + 1;
+            }
+            else
+            {
+                // no processing for this character, just count how
+                // many characters in a row that we have that need no processing
+                cleanLength++;
+            }
+        }
+
+        // are there any clean characters at the end of the array
+        // that we haven't processed yet?
+        if (cleanLength > 1)
+        {
+            // if the whole string can be written out as-is do so
+            // otherwise write out the clean chars at the end of the
+            // array
+            if (cleanStart == 0)
+                writer.write(string);
+            else
+                writer.write(chars, cleanStart, cleanLength);
+        }
+        else if (cleanLength == 1)
+        {
+            // a little optimization for 1 clean character
+            // (we could have let the previous if(...) handle them all)
+            writer.write(ch);
+        }
+    }
+
+    /**
+     * Writes the specified <var>string</var> after substituting <VAR>specials</VAR>,
+     * and UTF-16 surrogates for character references <CODE>&amp;#xnn</CODE>.
+     *
+     * @param   string      String to convert to XML format.
+     * @param   encoding    CURRENTLY NOT IMPLEMENTED.
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public void writeAttrString(
+        final java.io.Writer writer, String string, String encoding)
+        throws IOException
+    {
+        final int end = string.length();
+        if (end > m_attrBuff.length)
+        {
+            m_attrBuff = new char[end * 2 + 1];
+        }
+        string.getChars(0, end, m_attrBuff, 0);
+        final char[] chars = m_attrBuff;
+
+
+
+        int cleanStart = 0;
+        int cleanLength = 0;
+
+        char ch = 0;
+        for (int i = 0; i < end; i++)
+        {
+            ch = chars[i];
+
+            // System.out.println("SPECIALSSIZE: "+SPECIALSSIZE);
+            // System.out.println("ch: "+(int)ch);
+            // System.out.println("m_maxCharacter: "+(int)m_maxCharacter);
+            // System.out.println("m_attrCharsMap[ch]: "+(int)m_attrCharsMap[ch]);
+            if (escapingNotNeeded(ch) && (!m_charInfo.isSpecialAttrChar(ch)))
+            {
+                cleanLength++;
+            }
+            else if ('<' == ch || '>' == ch)
+            {
+                cleanLength++; // no escaping in this case, as specified in 15.2
+            }
+            else if (
+                ('&' == ch) && ((i + 1) < end) && ('{' == chars[i + 1]))
+            {
+                cleanLength++; // no escaping in this case, as specified in 15.2
+            }
+            else
+            {
+                if (cleanLength > 0)
+                {
+                    writer.write(chars,cleanStart,cleanLength);
+                    cleanLength = 0;
+                }
+                int pos = accumDefaultEntity(writer, ch, i, chars, end, false, true);
+
+                if (i != pos)
+                {
+                    i = pos - 1;
+                }
+                else
+                {
+                    if (Encodings.isHighUTF16Surrogate(ch))
+                    {
+
+                            writeUTF16Surrogate(ch, chars, i, end);
+                            i++; // two input characters processed
+                                 // this increments by one and the for()
+                                 // loop itself increments by another one.
+                    }
+
+                    // The next is kind of a hack to keep from escaping in the case
+                    // of Shift_JIS and the like.
+
+                    /*
+                    else if ((ch < m_maxCharacter) && (m_maxCharacter == 0xFFFF)
+                    && (ch != 160))
+                    {
+                    writer.write(ch);  // no escaping in this case
+                    }
+                    else
+                    */
+                    String outputStringForChar = m_charInfo.getOutputStringForChar(ch);
+                    if (null != outputStringForChar)
+                    {
+                        writer.write(outputStringForChar);
+                    }
+                    else if (escapingNotNeeded(ch))
+                    {
+                        writer.write(ch); // no escaping in this case
+                    }
+                    else
+                    {
+                        writer.write("&#");
+                        writer.write(Integer.toString(ch));
+                        writer.write(';');
+                    }
+                }
+                cleanStart = i + 1;
+            }
+        } // end of for()
+
+        // are there any clean characters at the end of the array
+        // that we haven't processed yet?
+        if (cleanLength > 1)
+        {
+            // if the whole string can be written out as-is do so
+            // otherwise write out the clean chars at the end of the
+            // array
+            if (cleanStart == 0)
+                writer.write(string);
+            else
+                writer.write(chars, cleanStart, cleanLength);
+        }
+        else if (cleanLength == 1)
+        {
+            // a little optimization for 1 clean character
+            // (we could have let the previous if(...) handle them all)
+            writer.write(ch);
+        }
+    }
+
+
+
+    /**
+     * Receive notification of character data.
+     *
+     * <p>The Parser will call this method to report each chunk of
+     * character data.  SAX parsers may return all contiguous character
+     * data in a single chunk, or they may split it into several
+     * chunks; however, all of the characters in any single event
+     * must come from the same external entity, so that the Locator
+     * provides useful information.</p>
+     *
+     * <p>The application must not attempt to read from the array
+     * outside of the specified range.</p>
+     *
+     * <p>Note that some parsers will report whitespace using the
+     * ignorableWhitespace() method rather than this one (validating
+     * parsers must do so).</p>
+     *
+     * @param chars The characters from the XML document.
+     * @param start The start position in the array.
+     * @param length The number of characters to read from the array.
+     * @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *            wrapping another exception.
+     * @see #ignorableWhitespace
+     * @see org.xml.sax.Locator
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public final void characters(char chars[], int start, int length)
+        throws org.xml.sax.SAXException
+    {
+
+        if (m_elemContext.m_isRaw)
+        {
+            try
+            {
+                if (m_elemContext.m_startTagOpen)
+                {
+                    closeStartTag();
+                    m_elemContext.m_startTagOpen = false;
+                }
+                m_ispreserve = true;
+
+//              With m_ispreserve just set true it looks like shouldIndent()
+//              will always return false, so drop any possible indentation.
+//              if (shouldIndent())
+//                  indent();
+
+                // writer.write("<![CDATA[");
+                // writer.write(chars, start, length);
+                writeNormalizedChars(chars, start, length, false, m_lineSepUse);
+
+                // writer.write("]]>");
+
+                // time to generate characters event
+                if (m_tracer != null)
+                    super.fireCharEvent(chars, start, length);
+
+                return;
+            }
+            catch (IOException ioe)
+            {
+                throw new org.xml.sax.SAXException(
+                    Utils.messages.createMessage(
+                        MsgKey.ER_OIERROR,
+                        null),
+                    ioe);
+                //"IO error", ioe);
+            }
+        }
+        else
+        {
+            super.characters(chars, start, length);
+        }
+    }
+
+    /**
+     *  Receive notification of cdata.
+     *
+     *  <p>The Parser will call this method to report each chunk of
+     *  character data.  SAX parsers may return all contiguous character
+     *  data in a single chunk, or they may split it into several
+     *  chunks; however, all of the characters in any single event
+     *  must come from the same external entity, so that the Locator
+     *  provides useful information.</p>
+     *
+     *  <p>The application must not attempt to read from the array
+     *  outside of the specified range.</p>
+     *
+     *  <p>Note that some parsers will report whitespace using the
+     *  ignorableWhitespace() method rather than this one (validating
+     *  parsers must do so).</p>
+     *
+     *  @param ch The characters from the XML document.
+     *  @param start The start position in the array.
+     *  @param length The number of characters to read from the array.
+     *  @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *             wrapping another exception.
+     *  @see #ignorableWhitespace
+     *  @see org.xml.sax.Locator
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public final void cdata(char ch[], int start, int length)
+        throws org.xml.sax.SAXException
+    {
+
+        if ((null != m_elemContext.m_elementName)
+            && (m_elemContext.m_elementName.equalsIgnoreCase("SCRIPT")
+                || m_elemContext.m_elementName.equalsIgnoreCase("STYLE")))
+        {
+            try
+            {
+                if (m_elemContext.m_startTagOpen)
+                {
+                    closeStartTag();
+                    m_elemContext.m_startTagOpen = false;
+                }
+
+                m_ispreserve = true;
+
+                if (shouldIndent())
+                    indent();
+
+                // writer.write(ch, start, length);
+                writeNormalizedChars(ch, start, length, true, m_lineSepUse);
+            }
+            catch (IOException ioe)
+            {
+                throw new org.xml.sax.SAXException(
+                    Utils.messages.createMessage(
+                        MsgKey.ER_OIERROR,
+                        null),
+                    ioe);
+                //"IO error", ioe);
+            }
+        }
+        else
+        {
+            super.cdata(ch, start, length);
+        }
+    }
+
+    /**
+     *  Receive notification of a processing instruction.
+     *
+     *  @param target The processing instruction target.
+     *  @param data The processing instruction data, or null if
+     *         none was supplied.
+     *  @throws org.xml.sax.SAXException Any SAX exception, possibly
+     *             wrapping another exception.
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public void processingInstruction(String target, String data)
+        throws org.xml.sax.SAXException
+    {
+
+        // Process any pending starDocument and startElement first.
+        flushPending();
+
+        // Use a fairly nasty hack to tell if the next node is supposed to be
+        // unescaped text.
+        if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING))
+        {
+            startNonEscaping();
+        }
+        else if (target.equals(Result.PI_ENABLE_OUTPUT_ESCAPING))
+        {
+            endNonEscaping();
+        }
+        else
+        {
+            try
+            {
+            if (m_elemContext.m_startTagOpen)
+            {
+                closeStartTag();
+                m_elemContext.m_startTagOpen = false;
+            }
+            else if (m_needToCallStartDocument)
+                startDocumentInternal();
+
+            if (shouldIndent())
+                indent();
+
+            final java.io.Writer writer = m_writer;
+            //writer.write("<?" + target);
+            writer.write("<?");
+            writer.write(target);
+
+            if (data.length() > 0 && !Character.isSpaceChar(data.charAt(0)))
+                writer.write(' ');
+
+            //writer.write(data + ">"); // different from XML
+            writer.write(data); // different from XML
+            writer.write('>'); // different from XML
+
+            // Always output a newline char if not inside of an
+            // element. The whitespace is not significant in that
+            // case.
+            if (m_elemContext.m_currentElemDepth <= 0)
+                outputLineSep();
+
+            m_startNewLine = true;
+            }
+            catch(IOException e)
+            {
+                throw new SAXException(e);
+            }
+        }
+
+        // now generate the PI event
+        if (m_tracer != null)
+            super.fireEscapingEvent(target, data);
+     }
+
+    /**
+     * Receive notivication of a entityReference.
+     *
+     * @param name non-null reference to entity name string.
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public final void entityReference(String name)
+        throws org.xml.sax.SAXException
+    {
+        try
+        {
+
+        final java.io.Writer writer = m_writer;
+        writer.write('&');
+        writer.write(name);
+        writer.write(';');
+
+        } catch(IOException e)
+        {
+            throw new SAXException(e);
+        }
+    }
+    /**
+     * @see ExtendedContentHandler#endElement(String)
+     */
+    public final void endElement(String elemName) throws SAXException
+    {
+        endElement(null, null, elemName);
+    }
+
+    /**
+     * Process the attributes, which means to write out the currently
+     * collected attributes to the writer. The attributes are not
+     * cleared by this method
+     *
+     * @param writer the writer to write processed attributes to.
+     * @param nAttrs the number of attributes in m_attributes
+     * to be processed
+     *
+     * @throws org.xml.sax.SAXException
+     */
+    public void processAttributes(java.io.Writer writer, int nAttrs)
+        throws IOException,SAXException
+    {
+            /*
+             * process the collected attributes
+             */
+            for (int i = 0; i < nAttrs; i++)
+            {
+                processAttribute(
+                    writer,
+                    m_attributes.getQName(i),
+                    m_attributes.getValue(i),
+                    m_elemContext.m_elementDesc);
+            }
+    }
+
+    /**
+     * For the enclosing elements starting tag write out out any attributes
+     * followed by ">"
+     *
+     *@throws org.xml.sax.SAXException
+     */
+    protected void closeStartTag() throws SAXException
+    {
+            try
+            {
+
+            // finish processing attributes, time to fire off the start element event
+            if (m_tracer != null)
+                super.fireStartElem(m_elemContext.m_elementName);
+
+            int nAttrs = m_attributes.getLength();
+            if (nAttrs>0)
+            {
+                processAttributes(m_writer, nAttrs);
+                // clear attributes object for re-use with next element
+                m_attributes.clear();
+            }
+
+            m_writer.write('>');
+
+            /* whether Xalan or XSLTC, we have the prefix mappings now, so
+             * lets determine if the current element is specified in the cdata-
+             * section-elements list.
+             */
+            if (m_cdataSectionElements != null)
+                m_elemContext.m_isCdataSection = isCdataSection();
+            if (m_doIndent)
+            {
+                m_isprevtext = false;
+                m_preserves.push(m_ispreserve);
+            }
+
+            }
+            catch(IOException e)
+            {
+                throw new SAXException(e);
+            }
+    }
+    /**
+     * Initialize the serializer with the specified output stream and output
+     * format. Must be called before calling any of the serialize methods.
+     *
+     * @param output The output stream to use
+     * @param format The output format
+     * @throws UnsupportedEncodingException The encoding specified   in the
+     * output format is not supported
+     */
+    protected synchronized void init(OutputStream output, Properties format)
+        throws UnsupportedEncodingException
+    {
+        if (null == format)
+        {
+            format = OutputPropertiesFactory.getDefaultMethodProperties(Method.HTML);
+         }
+        super.init(output,format, false);
+    }
+
+        /**
+         * Specifies an output stream to which the document should be
+         * serialized. This method should not be called while the
+         * serializer is in the process of serializing a document.
+         * <p>
+         * The encoding specified in the output properties is used, or
+         * if no encoding was specified, the default for the selected
+         * output method.
+         *
+         * @param output The output stream
+         */
+        public void setOutputStream(OutputStream output)
+        {
+
+            try
+            {
+                Properties format;
+                if (null == m_format)
+                    format = OutputPropertiesFactory.getDefaultMethodProperties(Method.HTML);
+                else
+                    format = m_format;
+                init(output, format, true);
+            }
+            catch (UnsupportedEncodingException uee)
+            {
+
+                // Should have been warned in init, I guess...
+            }
+        }
+        /**
+         * This method is used when a prefix/uri namespace mapping
+         * is indicated after the element was started with a
+         * startElement() and before and endElement().
+         * startPrefixMapping(prefix,uri) would be used before the
+         * startElement() call.
+         * @param uri the URI of the namespace
+         * @param prefix the prefix associated with the given URI.
+         *
+         * @see ExtendedContentHandler#namespaceAfterStartElement(String, String)
+         */
+        public void namespaceAfterStartElement(String prefix, String uri)
+            throws SAXException
+        {
+            // hack for XSLTC with finding URI for default namespace
+            if (m_elemContext.m_elementURI == null)
+            {
+                String prefix1 = getPrefixPart(m_elemContext.m_elementName);
+                if (prefix1 == null && EMPTYSTRING.equals(prefix))
+                {
+                    // the elements URI is not known yet, and it
+                    // doesn't have a prefix, and we are currently
+                    // setting the uri for prefix "", so we have
+                    // the uri for the element... lets remember it
+                    m_elemContext.m_elementURI = uri;
+                }
+            }
+            startPrefixMapping(prefix,uri,false);
+        }
+
+    public void startDTD(String name, String publicId, String systemId)
+        throws SAXException
+    {
+        m_inDTD = true;
+        super.startDTD(name, publicId, systemId);
+    }
+
+    /**
+     * Report the end of DTD declarations.
+     * @throws org.xml.sax.SAXException The application may raise an exception.
+     * @see #startDTD
+     */
+    public void endDTD() throws org.xml.sax.SAXException
+    {
+        m_inDTD = false;
+        /* for ToHTMLStream the DOCTYPE is entirely output in the
+         * startDocumentInternal() method, so don't do anything here
+         */
+    }
+    /**
+     * This method does nothing.
+     */
+    public void attributeDecl(
+        String eName,
+        String aName,
+        String type,
+        String valueDefault,
+        String value)
+        throws SAXException
+    {
+        // The internal DTD subset is not serialized by the ToHTMLStream serializer
+    }
+
+    /**
+     * This method does nothing.
+     */
+    public void elementDecl(String name, String model) throws SAXException
+    {
+        // The internal DTD subset is not serialized by the ToHTMLStream serializer
+    }
+    /**
+     * This method does nothing.
+     */
+    public void internalEntityDecl(String name, String value)
+        throws SAXException
+    {
+        // The internal DTD subset is not serialized by the ToHTMLStream serializer
+    }
+    /**
+     * This method does nothing.
+     */
+    public void externalEntityDecl(
+        String name,
+        String publicId,
+        String systemId)
+        throws SAXException
+    {
+        // The internal DTD subset is not serialized by the ToHTMLStream serializer
+    }
+
+    /**
+     * This method is used to add an attribute to the currently open element.
+     * The caller has guaranted that this attribute is unique, which means that it
+     * not been seen before and will not be seen again.
+     *
+     * @param name the qualified name of the attribute
+     * @param value the value of the attribute which can contain only
+     * ASCII printable characters characters in the range 32 to 127 inclusive.
+     * @param flags the bit values of this integer give optimization information.
+     */
+    public void addUniqueAttribute(String name, String value, int flags)
+        throws SAXException
+    {
+        try
+        {
+            final java.io.Writer writer = m_writer;
+            if ((flags & NO_BAD_CHARS) > 0 && m_htmlcharInfo.onlyQuotAmpLtGt)
+            {
+                // "flags" has indicated that the characters
+                // '>'  '<'   '&'  and '"' are not in the value and
+                // m_htmlcharInfo has recorded that there are no other
+                // entities in the range 0 to 127 so we write out the
+                // value directly
+                writer.write(' ');
+                writer.write(name);
+                writer.write("=\"");
+                writer.write(value);
+                writer.write('"');
+            }
+            else if (
+                (flags & HTML_ATTREMPTY) > 0
+                    && (value.length() == 0 || value.equalsIgnoreCase(name)))
+            {
+                writer.write(' ');
+                writer.write(name);
+            }
+            else
+            {
+                writer.write(' ');
+                writer.write(name);
+                writer.write("=\"");
+                if ((flags & HTML_ATTRURL) > 0)
+                {
+                    writeAttrURI(writer, value, m_specialEscapeURLs);
+                }
+                else
+                {
+                    writeAttrString(writer, value, this.getEncoding());
+                }
+                writer.write('"');
+            }
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }
+    }
+
+    public void comment(char ch[], int start, int length)
+            throws SAXException
+    {
+        // The internal DTD subset is not serialized by the ToHTMLStream serializer
+        if (m_inDTD)
+            return;
+        super.comment(ch, start, length);
+    }
+
+    public boolean reset()
+    {
+        boolean ret = super.reset();
+        if (!ret)
+            return false;
+        initToHTMLStream();
+        return true;
+    }
+
+    private void initToHTMLStream()
+    {
+//        m_elementDesc = null;
+        m_inBlockElem = false;
+        m_inDTD = false;
+//        m_isRawStack.clear();
+        m_omitMetaTag = false;
+        m_specialEscapeURLs = true;
+    }
+
+    static class Trie
+    {
+        /**
+         * A digital search trie for 7-bit ASCII text
+         * The API is a subset of java.util.Hashtable
+         * The key must be a 7-bit ASCII string
+         * The value may be any Java Object
+         * One can get an object stored in a trie from its key,
+         * but the search is either case sensitive or case
+         * insensitive to the characters in the key, and this
+         * choice of sensitivity or insensitivity is made when
+         * the Trie is created, before any objects are put in it.
+         *
+         * This class is a copy of the one in com.sun.org.apache.xml.internal.utils.
+         * It exists to cut the serializers dependancy on that package.
+         *
+         * @xsl.usage internal
+         */
+
+        /** Size of the m_nextChar array.  */
+        public static final int ALPHA_SIZE = 128;
+
+        /** The root node of the tree.    */
+        final Node m_Root;
+
+        /** helper buffer to convert Strings to char arrays */
+        private char[] m_charBuffer = new char[0];
+
+        /** true if the search for an object is lower case only with the key */
+        private final boolean m_lowerCaseOnly;
+
+        /**
+         * Construct the trie that has a case insensitive search.
+         */
+        public Trie()
+        {
+            m_Root = new Node();
+            m_lowerCaseOnly = false;
+        }
+
+        /**
+         * Construct the trie given the desired case sensitivity with the key.
+         * @param lowerCaseOnly true if the search keys are to be loser case only,
+         * not case insensitive.
+         */
+        public Trie(boolean lowerCaseOnly)
+        {
+            m_Root = new Node();
+            m_lowerCaseOnly = lowerCaseOnly;
+        }
+
+        /**
+         * Put an object into the trie for lookup.
+         *
+         * @param key must be a 7-bit ASCII string
+         * @param value any java object.
+         *
+         * @return The old object that matched key, or null.
+         */
+        public Object put(String key, Object value)
+        {
+
+            final int len = key.length();
+            if (len > m_charBuffer.length)
+            {
+                // make the biggest buffer ever needed in get(String)
+                m_charBuffer = new char[len];
+            }
+
+            Node node = m_Root;
+
+            for (int i = 0; i < len; i++)
+            {
+                Node nextNode =
+                    node.m_nextChar[Character.toLowerCase(key.charAt(i))];
+
+                if (nextNode != null)
+                {
+                    node = nextNode;
+                }
+                else
+                {
+                    for (; i < len; i++)
+                    {
+                        Node newNode = new Node();
+                        if (m_lowerCaseOnly)
+                        {
+                            // put this value into the tree only with a lower case key
+                            node.m_nextChar[Character.toLowerCase(
+                                key.charAt(i))] =
+                                newNode;
+                        }
+                        else
+                        {
+                            // put this value into the tree with a case insensitive key
+                            node.m_nextChar[Character.toUpperCase(
+                                key.charAt(i))] =
+                                newNode;
+                            node.m_nextChar[Character.toLowerCase(
+                                key.charAt(i))] =
+                                newNode;
+                        }
+                        node = newNode;
+                    }
+                    break;
+                }
+            }
+
+            Object ret = node.m_Value;
+
+            node.m_Value = value;
+
+            return ret;
+        }
+
+        /**
+         * Get an object that matches the key.
+         *
+         * @param key must be a 7-bit ASCII string
+         *
+         * @return The object that matches the key, or null.
+         */
+        public Object get(final String key)
+        {
+
+            final int len = key.length();
+
+            /* If the name is too long, we won't find it, this also keeps us
+             * from overflowing m_charBuffer
+             */
+            if (m_charBuffer.length < len)
+                return null;
+
+            Node node = m_Root;
+            switch (len) // optimize the look up based on the number of chars
+            {
+                // case 0 looks silly, but the generated bytecode runs
+                // faster for lookup of elements of length 2 with this in
+                // and a fair bit faster.  Don't know why.
+                case 0 :
+                    {
+                        return null;
+                    }
+
+                case 1 :
+                    {
+                        final char ch = key.charAt(0);
+                        if (ch < ALPHA_SIZE)
+                        {
+                            node = node.m_nextChar[ch];
+                            if (node != null)
+                                return node.m_Value;
+                        }
+                        return null;
+                    }
+                    //                comment out case 2 because the default is faster
+                    //                case 2 :
+                    //                    {
+                    //                        final char ch0 = key.charAt(0);
+                    //                        final char ch1 = key.charAt(1);
+                    //                        if (ch0 < ALPHA_SIZE && ch1 < ALPHA_SIZE)
+                    //                        {
+                    //                            node = node.m_nextChar[ch0];
+                    //                            if (node != null)
+                    //                            {
+                    //
+                    //                                if (ch1 < ALPHA_SIZE)
+                    //                                {
+                    //                                    node = node.m_nextChar[ch1];
+                    //                                    if (node != null)
+                    //                                        return node.m_Value;
+                    //                                }
+                    //                            }
+                    //                        }
+                    //                        return null;
+                    //                   }
+                default :
+                    {
+                        for (int i = 0; i < len; i++)
+                        {
+                            // A thread-safe way to loop over the characters
+                            final char ch = key.charAt(i);
+                            if (ALPHA_SIZE <= ch)
+                            {
+                                // the key is not 7-bit ASCII so we won't find it here
+                                return null;
+                            }
+
+                            node = node.m_nextChar[ch];
+                            if (node == null)
+                                return null;
+                        }
+
+                        return node.m_Value;
+                    }
+            }
+        }
+
+        /**
+         * The node representation for the trie.
+         * @xsl.usage internal
+         */
+        private class Node
+        {
+
+            /**
+             * Constructor, creates a Node[ALPHA_SIZE].
+             */
+            Node()
+            {
+                m_nextChar = new Node[ALPHA_SIZE];
+                m_Value = null;
+            }
+
+            /** The next nodes.   */
+            final Node m_nextChar[];
+
+            /** The value.   */
+            Object m_Value;
+        }
+        /**
+         * Construct the trie from another Trie.
+         * Both the existing Trie and this new one share the same table for
+         * lookup, and it is assumed that the table is fully populated and
+         * not changing anymore.
+         *
+         * @param existingTrie the Trie that this one is a copy of.
+         */
+        public Trie(Trie existingTrie)
+        {
+            // copy some fields from the existing Trie into this one.
+            m_Root = existingTrie.m_Root;
+            m_lowerCaseOnly = existingTrie.m_lowerCaseOnly;
+
+            // get a buffer just big enough to hold the longest key in the table.
+            int max = existingTrie.getLongestKeyLength();
+            m_charBuffer = new char[max];
+        }
+
+        /**
+         * Get an object that matches the key.
+         * This method is faster than get(), but is not thread-safe.
+         *
+         * @param key must be a 7-bit ASCII string
+         *
+         * @return The object that matches the key, or null.
+         */
+        public Object get2(final String key)
+        {
+
+            final int len = key.length();
+
+            /* If the name is too long, we won't find it, this also keeps us
+             * from overflowing m_charBuffer
+             */
+            if (m_charBuffer.length < len)
+                return null;
+
+            Node node = m_Root;
+            switch (len) // optimize the look up based on the number of chars
+            {
+                // case 0 looks silly, but the generated bytecode runs
+                // faster for lookup of elements of length 2 with this in
+                // and a fair bit faster.  Don't know why.
+                case 0 :
+                    {
+                        return null;
+                    }
+
+                case 1 :
+                    {
+                        final char ch = key.charAt(0);
+                        if (ch < ALPHA_SIZE)
+                        {
+                            node = node.m_nextChar[ch];
+                            if (node != null)
+                                return node.m_Value;
+                        }
+                        return null;
+                    }
+                default :
+                    {
+                        /* Copy string into array. This is not thread-safe because
+                         * it modifies the contents of m_charBuffer. If multiple
+                         * threads were to use this Trie they all would be
+                         * using this same array (not good). So this
+                         * method is not thread-safe, but it is faster because
+                         * converting to a char[] and looping over elements of
+                         * the array is faster than a String's charAt(i).
+                         */
+                        key.getChars(0, len, m_charBuffer, 0);
+
+                        for (int i = 0; i < len; i++)
+                        {
+                            final char ch = m_charBuffer[i];
+                            if (ALPHA_SIZE <= ch)
+                            {
+                                // the key is not 7-bit ASCII so we won't find it here
+                                return null;
+                            }
+
+                            node = node.m_nextChar[ch];
+                            if (node == null)
+                                return null;
+                        }
+
+                        return node.m_Value;
+                    }
+            }
+        }
+
+        /**
+         * Get the length of the longest key used in the table.
+         */
+        public int getLongestKeyLength()
+        {
+            return m_charBuffer.length;
+        }
+    }
+}

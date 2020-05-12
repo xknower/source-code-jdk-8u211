@@ -1,61 +1,55 @@
-/*    */ package java.lang;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class UnknownError
-/*    */   extends VirtualMachineError
-/*    */ {
-/*    */   private static final long serialVersionUID = 2524784860676771849L;
-/*    */   
-/*    */   public UnknownError() {}
-/*    */   
-/*    */   public UnknownError(String paramString) {
-/* 53 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\UnknownError.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+/**
+ * Thrown when an unknown but serious exception has occurred in the
+ * Java Virtual Machine.
+ *
+ * @author unascribed
+ * @since   JDK1.0
+ */
+public
+class UnknownError extends VirtualMachineError {
+    private static final long serialVersionUID = 2524784860676771849L;
+
+    /**
+     * Constructs an <code>UnknownError</code> with no detail message.
+     */
+    public UnknownError() {
+        super();
+    }
+
+    /**
+     * Constructs an <code>UnknownError</code> with the specified detail
+     * message.
+     *
+     * @param   s   the detail message.
+     */
+    public UnknownError(String s) {
+        super(s);
+    }
+}

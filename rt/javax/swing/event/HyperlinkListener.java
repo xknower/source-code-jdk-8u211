@@ -1,13 +1,43 @@
+/*
+ * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package javax.swing.event;
+
 
 import java.util.EventListener;
 
-public interface HyperlinkListener extends EventListener {
-  void hyperlinkUpdate(HyperlinkEvent paramHyperlinkEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\HyperlinkListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * HyperlinkListener
+ *
+ * @author  Timothy Prinzing
  */
+public interface HyperlinkListener extends EventListener {
+
+    /**
+     * Called when a hypertext link is updated.
+     *
+     * @param e the event responsible for the update
+     */
+    void hyperlinkUpdate(HyperlinkEvent e);
+}

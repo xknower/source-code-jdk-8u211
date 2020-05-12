@@ -1,226 +1,225 @@
-/*     */ package java.nio;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ByteBufferAsShortBufferB
-/*     */   extends ShortBuffer
-/*     */ {
-/*     */   protected final ByteBuffer bb;
-/*     */   protected final int offset;
-/*     */   
-/*     */   ByteBufferAsShortBufferB(ByteBuffer paramByteBuffer) {
-/*  44 */     super(-1, 0, paramByteBuffer
-/*  45 */         .remaining() >> 1, paramByteBuffer
-/*  46 */         .remaining() >> 1);
-/*  47 */     this.bb = paramByteBuffer;
-/*     */     
-/*  49 */     int i = capacity();
-/*  50 */     limit(i);
-/*  51 */     int j = position();
-/*  52 */     assert j <= i;
-/*  53 */     this.offset = j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ByteBufferAsShortBufferB(ByteBuffer paramByteBuffer, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  64 */     super(paramInt1, paramInt2, paramInt3, paramInt4);
-/*  65 */     this.bb = paramByteBuffer;
-/*  66 */     this.offset = paramInt5;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer slice() {
-/*  73 */     int i = position();
-/*  74 */     int j = limit();
-/*  75 */     assert i <= j;
-/*  76 */     boolean bool = (i <= j) ? (j - i) : false;
-/*  77 */     int k = (i << 1) + this.offset;
-/*  78 */     assert k >= 0;
-/*  79 */     return new ByteBufferAsShortBufferB(this.bb, -1, 0, bool, bool, k);
-/*     */   }
-/*     */   
-/*     */   public ShortBuffer duplicate() {
-/*  83 */     return new ByteBufferAsShortBufferB(this.bb, 
-/*  84 */         markValue(), 
-/*  85 */         position(), 
-/*  86 */         limit(), 
-/*  87 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer asReadOnlyBuffer() {
-/*  93 */     return new ByteBufferAsShortBufferRB(this.bb, 
-/*  94 */         markValue(), 
-/*  95 */         position(), 
-/*  96 */         limit(), 
-/*  97 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int ix(int paramInt) {
-/* 107 */     return (paramInt << 1) + this.offset;
-/*     */   }
-/*     */   
-/*     */   public short get() {
-/* 111 */     return Bits.getShortB(this.bb, ix(nextGetIndex()));
-/*     */   }
-/*     */   
-/*     */   public short get(int paramInt) {
-/* 115 */     return Bits.getShortB(this.bb, ix(checkIndex(paramInt)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer put(short paramShort) {
-/* 128 */     Bits.putShortB(this.bb, ix(nextPutIndex()), paramShort);
-/* 129 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer put(int paramInt, short paramShort) {
-/* 137 */     Bits.putShortB(this.bb, ix(checkIndex(paramInt)), paramShort);
-/* 138 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer compact() {
-/* 146 */     int i = position();
-/* 147 */     int j = limit();
-/* 148 */     assert i <= j;
-/* 149 */     boolean bool = (i <= j) ? (j - i) : false;
-/*     */     
-/* 151 */     ByteBuffer byteBuffer1 = this.bb.duplicate();
-/* 152 */     byteBuffer1.limit(ix(j));
-/* 153 */     byteBuffer1.position(ix(0));
-/* 154 */     ByteBuffer byteBuffer2 = byteBuffer1.slice();
-/* 155 */     byteBuffer2.position(i << 1);
-/* 156 */     byteBuffer2.compact();
-/* 157 */     position(bool);
-/* 158 */     limit(capacity());
-/* 159 */     discardMark();
-/* 160 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDirect() {
-/* 167 */     return this.bb.isDirect();
-/*     */   }
-/*     */   
-/*     */   public boolean isReadOnly() {
-/* 171 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteOrder order() {
-/* 218 */     return ByteOrder.BIG_ENDIAN;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\ByteBufferAsShortBufferB.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio;
+
+
+class ByteBufferAsShortBufferB                  // package-private
+    extends ShortBuffer
+{
+
+
+
+    protected final ByteBuffer bb;
+    protected final int offset;
+
+
+
+    ByteBufferAsShortBufferB(ByteBuffer bb) {   // package-private
+
+        super(-1, 0,
+              bb.remaining() >> 1,
+              bb.remaining() >> 1);
+        this.bb = bb;
+        // enforce limit == capacity
+        int cap = this.capacity();
+        this.limit(cap);
+        int pos = this.position();
+        assert (pos <= cap);
+        offset = pos;
+
+
+
+    }
+
+    ByteBufferAsShortBufferB(ByteBuffer bb,
+                                     int mark, int pos, int lim, int cap,
+                                     int off)
+    {
+
+        super(mark, pos, lim, cap);
+        this.bb = bb;
+        offset = off;
+
+
+
+    }
+
+    public ShortBuffer slice() {
+        int pos = this.position();
+        int lim = this.limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
+        int off = (pos << 1) + offset;
+        assert (off >= 0);
+        return new ByteBufferAsShortBufferB(bb, -1, 0, rem, rem, off);
+    }
+
+    public ShortBuffer duplicate() {
+        return new ByteBufferAsShortBufferB(bb,
+                                                    this.markValue(),
+                                                    this.position(),
+                                                    this.limit(),
+                                                    this.capacity(),
+                                                    offset);
+    }
+
+    public ShortBuffer asReadOnlyBuffer() {
+
+        return new ByteBufferAsShortBufferRB(bb,
+                                                 this.markValue(),
+                                                 this.position(),
+                                                 this.limit(),
+                                                 this.capacity(),
+                                                 offset);
+
+
+
+    }
+
+
+
+    protected int ix(int i) {
+        return (i << 1) + offset;
+    }
+
+    public short get() {
+        return Bits.getShortB(bb, ix(nextGetIndex()));
+    }
+
+    public short get(int i) {
+        return Bits.getShortB(bb, ix(checkIndex(i)));
+    }
+
+
+
+
+
+
+
+
+
+    public ShortBuffer put(short x) {
+
+        Bits.putShortB(bb, ix(nextPutIndex()), x);
+        return this;
+
+
+
+    }
+
+    public ShortBuffer put(int i, short x) {
+
+        Bits.putShortB(bb, ix(checkIndex(i)), x);
+        return this;
+
+
+
+    }
+
+    public ShortBuffer compact() {
+
+        int pos = position();
+        int lim = limit();
+        assert (pos <= lim);
+        int rem = (pos <= lim ? lim - pos : 0);
+
+        ByteBuffer db = bb.duplicate();
+        db.limit(ix(lim));
+        db.position(ix(0));
+        ByteBuffer sb = db.slice();
+        sb.position(pos << 1);
+        sb.compact();
+        position(rem);
+        limit(capacity());
+        discardMark();
+        return this;
+
+
+
+    }
+
+    public boolean isDirect() {
+        return bb.isDirect();
+    }
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteOrder order() {
+
+        return ByteOrder.BIG_ENDIAN;
+
+
+
+
+    }
+
+}

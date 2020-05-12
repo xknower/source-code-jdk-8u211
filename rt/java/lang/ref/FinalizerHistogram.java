@@ -1,86 +1,80 @@
-/*    */ package java.lang.ref;
-/*    */ 
-/*    */ import java.lang.ref.Finalizer;
-/*    */ import java.lang.ref.FinalizerHistogram;
-/*    */ import java.lang.ref.Reference;
-/*    */ import java.lang.ref.ReferenceQueue;
-/*    */ import java.util.Arrays;
-/*    */ import java.util.Comparator;
-/*    */ import java.util.HashMap;
-/*    */ import java.util.Map;
-/*    */ import java.util.function.Function;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ final class FinalizerHistogram
-/*    */ {
-/*    */   private static final class Entry
-/*    */   {
-/*    */     private int instanceCount;
-/*    */     private final String className;
-/*    */     
-/*    */     int getInstanceCount() {
-/* 46 */       return this.instanceCount;
-/*    */     }
-/*    */     
-/*    */     void increment() {
-/* 50 */       this.instanceCount++;
-/*    */     }
-/*    */     
-/*    */     Entry(String param1String) {
-/* 54 */       this.className = param1String;
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   static Entry[] getFinalizerHistogram() {
-/* 62 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/* 63 */     ReferenceQueue<Object> referenceQueue = Finalizer.getQueue();
-/* 64 */     referenceQueue.forEach(paramReference -> {
-/*    */           Object object = paramReference.get();
-/*    */ 
-/*    */           
-/*    */           if (object != null) {
-/*    */             ((Entry)paramMap.computeIfAbsent(object.getClass().getName(), Entry::new)).increment();
-/*    */             
-/*    */             object = null;
-/*    */           } 
-/*    */         });
-/*    */     
-/* 75 */     Entry[] arrayOfEntry = (Entry[])hashMap.values().toArray((Object[])new Entry[hashMap.size()]);
-/* 76 */     Arrays.sort(arrayOfEntry, 
-/* 77 */         Comparator.<Entry>comparingInt(Entry::getInstanceCount).reversed());
-/* 78 */     return arrayOfEntry;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\ref\FinalizerHistogram.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.ref;
+
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Comparator;
+
+/**
+ * This FinalizerHistogram class is for GC.finalizer_info diagnostic command support.
+ * It is invoked by the VM.
+ */
+
+final class FinalizerHistogram {
+
+    private static final class Entry {
+        private int instanceCount;
+        private final String className;
+
+        int getInstanceCount() {
+            return instanceCount;
+        }
+
+        void increment() {
+            instanceCount += 1;
+        }
+
+        Entry(String className) {
+            this.className = className;
+        }
+    }
+
+    // Method below is called by VM and VM expect certain
+    // entry class layout.
+
+    static Entry[] getFinalizerHistogram() {
+        Map<String, Entry> countMap = new HashMap<>();
+        ReferenceQueue<Object> queue = Finalizer.getQueue();
+        queue.forEach(r -> {
+            Object referent = r.get();
+            if (referent != null) {
+                countMap.computeIfAbsent(
+                    referent.getClass().getName(), Entry::new).increment();
+                /* Clear stack slot containing this variable, to decrease
+                   the chances of false retention with a conservative GC */
+                referent = null;
+            }
+        });
+
+        Entry fhe[] = countMap.values().toArray(new Entry[countMap.size()]);
+        Arrays.sort(fhe,
+                Comparator.comparingInt(Entry::getInstanceCount).reversed());
+        return fhe;
+    }
+}

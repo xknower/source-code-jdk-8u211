@@ -1,3040 +1,3035 @@
-/*      */ package com.sun.org.apache.xerces.internal.impl;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.impl.io.ASCIIReader;
-/*      */ import com.sun.org.apache.xerces.internal.impl.io.UCSReader;
-/*      */ import com.sun.org.apache.xerces.internal.impl.io.UTF8Reader;
-/*      */ import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
-/*      */ import com.sun.org.apache.xerces.internal.util.AugmentationsImpl;
-/*      */ import com.sun.org.apache.xerces.internal.util.EncodingMap;
-/*      */ import com.sun.org.apache.xerces.internal.util.HTTPInputSource;
-/*      */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*      */ import com.sun.org.apache.xerces.internal.util.URI;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLChar;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLEntityDescriptionImpl;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLResourceIdentifierImpl;
-/*      */ import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
-/*      */ import com.sun.org.apache.xerces.internal.utils.XMLLimitAnalyzer;
-/*      */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
-/*      */ import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
-/*      */ import com.sun.org.apache.xerces.internal.xni.Augmentations;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*      */ import com.sun.xml.internal.stream.Entity;
-/*      */ import com.sun.xml.internal.stream.StaxEntityResolverWrapper;
-/*      */ import com.sun.xml.internal.stream.StaxXMLInputSource;
-/*      */ import com.sun.xml.internal.stream.XMLEntityStorage;
-/*      */ import java.io.BufferedReader;
-/*      */ import java.io.EOFException;
-/*      */ import java.io.File;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InputStream;
-/*      */ import java.io.InputStreamReader;
-/*      */ import java.io.Reader;
-/*      */ import java.io.StringReader;
-/*      */ import java.io.UnsupportedEncodingException;
-/*      */ import java.lang.reflect.Method;
-/*      */ import java.net.HttpURLConnection;
-/*      */ import java.net.URI;
-/*      */ import java.net.URISyntaxException;
-/*      */ import java.net.URL;
-/*      */ import java.net.URLConnection;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Iterator;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Map;
-/*      */ import java.util.Stack;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class XMLEntityManager
-/*      */   implements XMLComponent, XMLEntityResolver
-/*      */ {
-/*      */   public static final int DEFAULT_BUFFER_SIZE = 8192;
-/*      */   public static final int DEFAULT_XMLDECL_BUFFER_SIZE = 64;
-/*      */   public static final int DEFAULT_INTERNAL_BUFFER_SIZE = 1024;
-/*      */   protected static final String VALIDATION = "http://xml.org/sax/features/validation";
-/*      */   protected boolean fStrictURI;
-/*      */   protected static final String EXTERNAL_GENERAL_ENTITIES = "http://xml.org/sax/features/external-general-entities";
-/*      */   protected static final String EXTERNAL_PARAMETER_ENTITIES = "http://xml.org/sax/features/external-parameter-entities";
-/*      */   protected static final String ALLOW_JAVA_ENCODINGS = "http://apache.org/xml/features/allow-java-encodings";
-/*      */   protected static final String WARN_ON_DUPLICATE_ENTITYDEF = "http://apache.org/xml/features/warn-on-duplicate-entitydef";
-/*      */   protected static final String LOAD_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
-/*      */   protected static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*      */   protected static final String ERROR_REPORTER = "http://apache.org/xml/properties/internal/error-reporter";
-/*      */   protected static final String STANDARD_URI_CONFORMANT = "http://apache.org/xml/features/standard-uri-conformant";
-/*      */   protected static final String ENTITY_RESOLVER = "http://apache.org/xml/properties/internal/entity-resolver";
-/*      */   protected static final String STAX_ENTITY_RESOLVER = "http://apache.org/xml/properties/internal/stax-entity-resolver";
-/*      */   protected static final String VALIDATION_MANAGER = "http://apache.org/xml/properties/internal/validation-manager";
-/*      */   protected static final String BUFFER_SIZE = "http://apache.org/xml/properties/input-buffer-size";
-/*      */   protected static final String SECURITY_MANAGER = "http://apache.org/xml/properties/security-manager";
-/*      */   protected static final String PARSER_SETTINGS = "http://apache.org/xml/features/internal/parser-settings";
-/*      */   private static final String XML_SECURITY_PROPERTY_MANAGER = "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager";
-/*      */   static final String EXTERNAL_ACCESS_DEFAULT = "all";
-/*  179 */   private static final String[] RECOGNIZED_FEATURES = new String[] { "http://xml.org/sax/features/validation", "http://xml.org/sax/features/external-general-entities", "http://xml.org/sax/features/external-parameter-entities", "http://apache.org/xml/features/allow-java-encodings", "http://apache.org/xml/features/warn-on-duplicate-entitydef", "http://apache.org/xml/features/standard-uri-conformant" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  189 */   private static final Boolean[] FEATURE_DEFAULTS = new Boolean[] { null, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  199 */   private static final String[] RECOGNIZED_PROPERTIES = new String[] { "http://apache.org/xml/properties/internal/symbol-table", "http://apache.org/xml/properties/internal/error-reporter", "http://apache.org/xml/properties/internal/entity-resolver", "http://apache.org/xml/properties/internal/validation-manager", "http://apache.org/xml/properties/input-buffer-size", "http://apache.org/xml/properties/security-manager", "http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  210 */   private static final Object[] PROPERTY_DEFAULTS = new Object[] { null, null, null, null, new Integer(8192), null, null };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  220 */   private static final String XMLEntity = "[xml]".intern();
-/*  221 */   private static final String DTDEntity = "[dtd]".intern();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final boolean DEBUG_BUFFER = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fWarnDuplicateEntityDef;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final boolean DEBUG_ENTITIES = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final boolean DEBUG_ENCODINGS = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final boolean DEBUG_RESOLVER = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fValidation;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fExternalGeneralEntities;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fExternalParameterEntities;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fAllowJavaEncodings = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fLoadExternalDTD = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected SymbolTable fSymbolTable;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XMLErrorReporter fErrorReporter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityResolver fEntityResolver;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected StaxEntityResolverWrapper fStaxEntityResolver;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected PropertyManager fPropertyManager;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean fSupportDTD = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean fReplaceEntityReferences = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean fSupportExternalEntities = true;
-/*      */ 
-/*      */ 
-/*      */   
-/*  312 */   protected String fAccessExternalDTD = "all";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected ValidationManager fValidationManager;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  329 */   protected int fBufferSize = 8192;
-/*      */ 
-/*      */   
-/*  332 */   protected XMLSecurityManager fSecurityManager = null;
-/*      */   
-/*  334 */   protected XMLLimitAnalyzer fLimitAnalyzer = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int entityExpansionIndex;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fStandalone;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean fInExternalSubset = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityHandler fEntityHandler;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityScanner fEntityScanner;
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityScanner fXML10EntityScanner;
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityScanner fXML11EntityScanner;
-/*      */ 
-/*      */   
-/*  363 */   protected int fEntityExpansionCount = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  368 */   protected Map<String, Entity> fEntities = new HashMap<>();
-/*      */ 
-/*      */   
-/*  371 */   protected Stack<Entity> fEntityStack = new Stack<>();
-/*      */ 
-/*      */   
-/*  374 */   protected Entity.ScannedEntity fCurrentEntity = null;
-/*      */ 
-/*      */   
-/*      */   boolean fISCreatedByResolver = false;
-/*      */ 
-/*      */   
-/*      */   protected XMLEntityStorage fEntityStorage;
-/*      */ 
-/*      */   
-/*  383 */   protected final Object[] defaultEncoding = new Object[] { "UTF-8", null };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  389 */   private final XMLResourceIdentifierImpl fResourceIdentifier = new XMLResourceIdentifierImpl();
-/*      */ 
-/*      */   
-/*  392 */   private final Augmentations fEntityAugs = new AugmentationsImpl();
-/*      */ 
-/*      */   
-/*  395 */   private CharacterBufferPool fBufferPool = new CharacterBufferPool(this.fBufferSize, 1024);
-/*      */ 
-/*      */   
-/*      */   private static String gUserDir;
-/*      */ 
-/*      */   
-/*      */   private static URI gUserDirURI;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLEntityManager() {
-/*  406 */     this.fSecurityManager = new XMLSecurityManager(true);
-/*  407 */     this.fEntityStorage = new XMLEntityStorage(this);
-/*  408 */     setScannerVersion((short)1);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public XMLEntityManager(PropertyManager propertyManager) {
-/*  413 */     this.fPropertyManager = propertyManager;
-/*      */ 
-/*      */     
-/*  416 */     this.fEntityStorage = new XMLEntityStorage(this);
-/*  417 */     this.fEntityScanner = new XMLEntityScanner(propertyManager, this);
-/*  418 */     reset(propertyManager);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addInternalEntity(String name, String text) {
-/*  436 */     if (!this.fEntities.containsKey(name)) {
-/*  437 */       Entity entity = new Entity.InternalEntity(name, text, this.fInExternalSubset);
-/*  438 */       this.fEntities.put(name, entity);
-/*      */     }
-/*  440 */     else if (this.fWarnDuplicateEntityDef) {
-/*  441 */       this.fErrorReporter.reportError("http://www.w3.org/TR/1998/REC-xml-19980210", "MSG_DUPLICATE_ENTITY_DEFINITION", new Object[] { name }, (short)0);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addExternalEntity(String name, String publicId, String literalSystemId, String baseSystemId) throws IOException {
-/*  475 */     if (!this.fEntities.containsKey(name)) {
-/*  476 */       if (baseSystemId == null) {
-/*      */         
-/*  478 */         int size = this.fEntityStack.size();
-/*  479 */         if (size == 0 && this.fCurrentEntity != null && this.fCurrentEntity.entityLocation != null) {
-/*  480 */           baseSystemId = this.fCurrentEntity.entityLocation.getExpandedSystemId();
-/*      */         }
-/*  482 */         for (int i = size - 1; i >= 0; i--) {
-/*      */           
-/*  484 */           Entity.ScannedEntity externalEntity = (Entity.ScannedEntity)this.fEntityStack.elementAt(i);
-/*  485 */           if (externalEntity.entityLocation != null && externalEntity.entityLocation.getExpandedSystemId() != null) {
-/*  486 */             baseSystemId = externalEntity.entityLocation.getExpandedSystemId();
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  493 */       Entity entity = new Entity.ExternalEntity(name, new XMLEntityDescriptionImpl(name, publicId, literalSystemId, baseSystemId, expandSystemId(literalSystemId, baseSystemId, false)), null, this.fInExternalSubset);
-/*  494 */       this.fEntities.put(name, entity);
-/*      */     }
-/*  496 */     else if (this.fWarnDuplicateEntityDef) {
-/*  497 */       this.fErrorReporter.reportError("http://www.w3.org/TR/1998/REC-xml-19980210", "MSG_DUPLICATE_ENTITY_DEFINITION", new Object[] { name }, (short)0);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addUnparsedEntity(String name, String publicId, String systemId, String baseSystemId, String notation) {
-/*  526 */     if (!this.fEntities.containsKey(name)) {
-/*  527 */       Entity.ExternalEntity entity = new Entity.ExternalEntity(name, new XMLEntityDescriptionImpl(name, publicId, systemId, baseSystemId, null), notation, this.fInExternalSubset);
-/*      */ 
-/*      */       
-/*  530 */       this.fEntities.put(name, entity);
-/*      */     }
-/*  532 */     else if (this.fWarnDuplicateEntityDef) {
-/*  533 */       this.fErrorReporter.reportError("http://www.w3.org/TR/1998/REC-xml-19980210", "MSG_DUPLICATE_ENTITY_DEFINITION", new Object[] { name }, (short)0);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLEntityStorage getEntityStore() {
-/*  544 */     return this.fEntityStorage;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public XMLEntityScanner getEntityScanner() {
-/*  549 */     if (this.fEntityScanner == null) {
-/*      */       
-/*  551 */       if (this.fXML10EntityScanner == null) {
-/*  552 */         this.fXML10EntityScanner = new XMLEntityScanner();
-/*      */       }
-/*  554 */       this.fXML10EntityScanner.reset(this.fSymbolTable, this, this.fErrorReporter);
-/*  555 */       this.fEntityScanner = this.fXML10EntityScanner;
-/*      */     } 
-/*  557 */     return this.fEntityScanner;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setScannerVersion(short version) {
-/*  563 */     if (version == 1) {
-/*  564 */       if (this.fXML10EntityScanner == null) {
-/*  565 */         this.fXML10EntityScanner = new XMLEntityScanner();
-/*      */       }
-/*  567 */       this.fXML10EntityScanner.reset(this.fSymbolTable, this, this.fErrorReporter);
-/*  568 */       this.fEntityScanner = this.fXML10EntityScanner;
-/*  569 */       this.fEntityScanner.setCurrentEntity(this.fCurrentEntity);
-/*      */     } else {
-/*  571 */       if (this.fXML11EntityScanner == null) {
-/*  572 */         this.fXML11EntityScanner = new XML11EntityScanner();
-/*      */       }
-/*  574 */       this.fXML11EntityScanner.reset(this.fSymbolTable, this, this.fErrorReporter);
-/*  575 */       this.fEntityScanner = this.fXML11EntityScanner;
-/*  576 */       this.fEntityScanner.setCurrentEntity(this.fCurrentEntity);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String setupCurrentEntity(boolean reference, String name, XMLInputSource xmlInputSource, boolean literal, boolean isExternal) throws IOException, XNIException {
-/*  601 */     String publicId = xmlInputSource.getPublicId();
-/*  602 */     String literalSystemId = xmlInputSource.getSystemId();
-/*  603 */     String baseSystemId = xmlInputSource.getBaseSystemId();
-/*  604 */     String encoding = xmlInputSource.getEncoding();
-/*  605 */     boolean encodingExternallySpecified = (encoding != null);
-/*  606 */     Boolean isBigEndian = null;
-/*      */ 
-/*      */     
-/*  609 */     InputStream stream = null;
-/*  610 */     Reader reader = xmlInputSource.getCharacterStream();
-/*      */ 
-/*      */     
-/*  613 */     String expandedSystemId = expandSystemId(literalSystemId, baseSystemId, this.fStrictURI);
-/*  614 */     if (baseSystemId == null) {
-/*  615 */       baseSystemId = expandedSystemId;
-/*      */     }
-/*  617 */     if (reader == null) {
-/*  618 */       stream = xmlInputSource.getByteStream();
-/*  619 */       if (stream == null) {
-/*  620 */         URL location = new URL(expandedSystemId);
-/*  621 */         URLConnection connect = location.openConnection();
-/*  622 */         if (!(connect instanceof HttpURLConnection)) {
-/*  623 */           stream = connect.getInputStream();
-/*      */         } else {
-/*      */           
-/*  626 */           boolean followRedirects = true;
-/*      */ 
-/*      */           
-/*  629 */           if (xmlInputSource instanceof HTTPInputSource) {
-/*  630 */             HttpURLConnection urlConnection = (HttpURLConnection)connect;
-/*  631 */             HTTPInputSource httpInputSource = (HTTPInputSource)xmlInputSource;
-/*      */ 
-/*      */             
-/*  634 */             Iterator<Map.Entry<String, String>> propIter = httpInputSource.getHTTPRequestProperties();
-/*  635 */             while (propIter.hasNext()) {
-/*  636 */               Map.Entry<String, String> entry = propIter.next();
-/*  637 */               urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
-/*      */             } 
-/*      */ 
-/*      */             
-/*  641 */             followRedirects = httpInputSource.getFollowHTTPRedirects();
-/*  642 */             if (!followRedirects) {
-/*  643 */               setInstanceFollowRedirects(urlConnection, followRedirects);
-/*      */             }
-/*      */           } 
-/*      */           
-/*  647 */           stream = connect.getInputStream();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  653 */           if (followRedirects) {
-/*  654 */             String redirect = connect.getURL().toString();
-/*      */ 
-/*      */             
-/*  657 */             if (!redirect.equals(expandedSystemId)) {
-/*  658 */               literalSystemId = redirect;
-/*  659 */               expandedSystemId = redirect;
-/*      */             } 
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/*  666 */       stream = new RewindableInputStream(stream);
-/*      */ 
-/*      */       
-/*  669 */       if (encoding == null) {
-/*      */         
-/*  671 */         byte[] b4 = new byte[4];
-/*  672 */         int count = 0;
-/*  673 */         for (; count < 4; count++) {
-/*  674 */           b4[count] = (byte)stream.read();
-/*      */         }
-/*  676 */         if (count == 4) {
-/*  677 */           Object[] encodingDesc = getEncodingName(b4, count);
-/*  678 */           encoding = (String)encodingDesc[0];
-/*  679 */           isBigEndian = (Boolean)encodingDesc[1];
-/*      */           
-/*  681 */           stream.reset();
-/*      */ 
-/*      */ 
-/*      */           
-/*  685 */           if (count > 2 && encoding.equals("UTF-8")) {
-/*  686 */             int b0 = b4[0] & 0xFF;
-/*  687 */             int b1 = b4[1] & 0xFF;
-/*  688 */             int b2 = b4[2] & 0xFF;
-/*  689 */             if (b0 == 239 && b1 == 187 && b2 == 191)
-/*      */             {
-/*  691 */               stream.skip(3L);
-/*      */             }
-/*      */           } 
-/*  694 */           reader = createReader(stream, encoding, isBigEndian);
-/*      */         } else {
-/*  696 */           reader = createReader(stream, encoding, isBigEndian);
-/*      */         }
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/*  702 */         encoding = encoding.toUpperCase(Locale.ENGLISH);
-/*      */ 
-/*      */         
-/*  705 */         if (encoding.equals("UTF-8")) {
-/*  706 */           int[] b3 = new int[3];
-/*  707 */           int count = 0;
-/*  708 */           for (; count < 3; count++) {
-/*  709 */             b3[count] = stream.read();
-/*  710 */             if (b3[count] == -1)
-/*      */               break; 
-/*      */           } 
-/*  713 */           if (count == 3) {
-/*  714 */             if (b3[0] != 239 || b3[1] != 187 || b3[2] != 191)
-/*      */             {
-/*  716 */               stream.reset();
-/*      */             }
-/*      */           } else {
-/*  719 */             stream.reset();
-/*      */           
-/*      */           }
-/*      */         
-/*      */         }
-/*  724 */         else if (encoding.equals("UTF-16")) {
-/*  725 */           int[] b4 = new int[4];
-/*  726 */           int count = 0;
-/*  727 */           for (; count < 4; count++) {
-/*  728 */             b4[count] = stream.read();
-/*  729 */             if (b4[count] == -1)
-/*      */               break; 
-/*      */           } 
-/*  732 */           stream.reset();
-/*      */           
-/*  734 */           String utf16Encoding = "UTF-16";
-/*  735 */           if (count >= 2) {
-/*  736 */             int b0 = b4[0];
-/*  737 */             int b1 = b4[1];
-/*  738 */             if (b0 == 254 && b1 == 255) {
-/*      */               
-/*  740 */               utf16Encoding = "UTF-16BE";
-/*  741 */               isBigEndian = Boolean.TRUE;
-/*      */             }
-/*  743 */             else if (b0 == 255 && b1 == 254) {
-/*      */               
-/*  745 */               utf16Encoding = "UTF-16LE";
-/*  746 */               isBigEndian = Boolean.FALSE;
-/*      */             }
-/*  748 */             else if (count == 4) {
-/*  749 */               int b2 = b4[2];
-/*  750 */               int b3 = b4[3];
-/*  751 */               if (b0 == 0 && b1 == 60 && b2 == 0 && b3 == 63) {
-/*      */                 
-/*  753 */                 utf16Encoding = "UTF-16BE";
-/*  754 */                 isBigEndian = Boolean.TRUE;
-/*      */               } 
-/*  756 */               if (b0 == 60 && b1 == 0 && b2 == 63 && b3 == 0) {
-/*      */                 
-/*  758 */                 utf16Encoding = "UTF-16LE";
-/*  759 */                 isBigEndian = Boolean.FALSE;
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/*  763 */           reader = createReader(stream, utf16Encoding, isBigEndian);
-/*      */ 
-/*      */         
-/*      */         }
-/*  767 */         else if (encoding.equals("ISO-10646-UCS-4")) {
-/*  768 */           int[] b4 = new int[4];
-/*  769 */           int count = 0;
-/*  770 */           for (; count < 4; count++) {
-/*  771 */             b4[count] = stream.read();
-/*  772 */             if (b4[count] == -1)
-/*      */               break; 
-/*      */           } 
-/*  775 */           stream.reset();
-/*      */ 
-/*      */           
-/*  778 */           if (count == 4)
-/*      */           {
-/*  780 */             if (b4[0] == 0 && b4[1] == 0 && b4[2] == 0 && b4[3] == 60) {
-/*  781 */               isBigEndian = Boolean.TRUE;
-/*      */             
-/*      */             }
-/*  784 */             else if (b4[0] == 60 && b4[1] == 0 && b4[2] == 0 && b4[3] == 0) {
-/*  785 */               isBigEndian = Boolean.FALSE;
-/*      */             
-/*      */             }
-/*      */           
-/*      */           }
-/*      */         }
-/*  791 */         else if (encoding.equals("ISO-10646-UCS-2")) {
-/*  792 */           int[] b4 = new int[4];
-/*  793 */           int count = 0;
-/*  794 */           for (; count < 4; count++) {
-/*  795 */             b4[count] = stream.read();
-/*  796 */             if (b4[count] == -1)
-/*      */               break; 
-/*      */           } 
-/*  799 */           stream.reset();
-/*      */           
-/*  801 */           if (count == 4)
-/*      */           {
-/*  803 */             if (b4[0] == 0 && b4[1] == 60 && b4[2] == 0 && b4[3] == 63) {
-/*  804 */               isBigEndian = Boolean.TRUE;
-/*      */             
-/*      */             }
-/*  807 */             else if (b4[0] == 60 && b4[1] == 0 && b4[2] == 63 && b4[3] == 0) {
-/*  808 */               isBigEndian = Boolean.FALSE;
-/*      */             } 
-/*      */           }
-/*      */         } 
-/*      */         
-/*  813 */         reader = createReader(stream, encoding, isBigEndian);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  830 */     if (this.fCurrentEntity != null) {
-/*  831 */       this.fEntityStack.push(this.fCurrentEntity);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  839 */     this.fCurrentEntity = new Entity.ScannedEntity(reference, name, new XMLResourceIdentifierImpl(publicId, literalSystemId, baseSystemId, expandedSystemId), stream, reader, encoding, literal, encodingExternallySpecified, isExternal);
-/*      */ 
-/*      */     
-/*  842 */     this.fCurrentEntity.setEncodingExternallySpecified(encodingExternallySpecified);
-/*  843 */     this.fEntityScanner.setCurrentEntity(this.fCurrentEntity);
-/*  844 */     this.fResourceIdentifier.setValues(publicId, literalSystemId, baseSystemId, expandedSystemId);
-/*  845 */     if (this.fLimitAnalyzer != null) {
-/*  846 */       this.fLimitAnalyzer.startEntity(name);
-/*      */     }
-/*  848 */     return encoding;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isExternalEntity(String entityName) {
-/*  861 */     Entity entity = this.fEntities.get(entityName);
-/*  862 */     if (entity == null) {
-/*  863 */       return false;
-/*      */     }
-/*  865 */     return entity.isExternal();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEntityDeclInExternalSubset(String entityName) {
-/*  878 */     Entity entity = this.fEntities.get(entityName);
-/*  879 */     if (entity == null) {
-/*  880 */       return false;
-/*      */     }
-/*  882 */     return entity.isEntityDeclInExternalSubset();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setStandalone(boolean standalone) {
-/*  897 */     this.fStandalone = standalone;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isStandalone() {
-/*  903 */     return this.fStandalone;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean isDeclaredEntity(String entityName) {
-/*  908 */     Entity entity = this.fEntities.get(entityName);
-/*  909 */     return (entity != null);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public boolean isUnparsedEntity(String entityName) {
-/*  914 */     Entity entity = this.fEntities.get(entityName);
-/*  915 */     if (entity == null) {
-/*  916 */       return false;
-/*      */     }
-/*  918 */     return entity.isUnparsed();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLResourceIdentifier getCurrentResourceIdentifier() {
-/*  929 */     return this.fResourceIdentifier;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEntityHandler(XMLEntityHandler entityHandler) {
-/*  940 */     this.fEntityHandler = entityHandler;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public StaxXMLInputSource resolveEntityAsPerStax(XMLResourceIdentifier resourceIdentifier) throws IOException {
-/*  946 */     if (resourceIdentifier == null) return null;
-/*      */     
-/*  948 */     String publicId = resourceIdentifier.getPublicId();
-/*  949 */     String literalSystemId = resourceIdentifier.getLiteralSystemId();
-/*  950 */     String baseSystemId = resourceIdentifier.getBaseSystemId();
-/*  951 */     String expandedSystemId = resourceIdentifier.getExpandedSystemId();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  958 */     boolean needExpand = (expandedSystemId == null);
-/*      */ 
-/*      */ 
-/*      */     
-/*  962 */     if (baseSystemId == null && this.fCurrentEntity != null && this.fCurrentEntity.entityLocation != null) {
-/*  963 */       baseSystemId = this.fCurrentEntity.entityLocation.getExpandedSystemId();
-/*  964 */       if (baseSystemId != null)
-/*  965 */         needExpand = true; 
-/*      */     } 
-/*  967 */     if (needExpand) {
-/*  968 */       expandedSystemId = expandSystemId(literalSystemId, baseSystemId, false);
-/*      */     }
-/*      */     
-/*  971 */     StaxXMLInputSource staxInputSource = null;
-/*  972 */     XMLInputSource xmlInputSource = null;
-/*      */     
-/*  974 */     XMLResourceIdentifierImpl ri = null;
-/*      */     
-/*  976 */     if (resourceIdentifier instanceof XMLResourceIdentifierImpl) {
-/*  977 */       ri = (XMLResourceIdentifierImpl)resourceIdentifier;
-/*      */     } else {
-/*  979 */       this.fResourceIdentifier.clear();
-/*  980 */       ri = this.fResourceIdentifier;
-/*      */     } 
-/*  982 */     ri.setValues(publicId, literalSystemId, baseSystemId, expandedSystemId);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  987 */     this.fISCreatedByResolver = false;
-/*      */     
-/*  989 */     if (this.fStaxEntityResolver != null) {
-/*  990 */       staxInputSource = this.fStaxEntityResolver.resolveEntity(ri);
-/*  991 */       if (staxInputSource != null) {
-/*  992 */         this.fISCreatedByResolver = true;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  996 */     if (this.fEntityResolver != null) {
-/*  997 */       xmlInputSource = this.fEntityResolver.resolveEntity(ri);
-/*  998 */       if (xmlInputSource != null) {
-/*  999 */         this.fISCreatedByResolver = true;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1003 */     if (xmlInputSource != null)
-/*      */     {
-/* 1005 */       staxInputSource = new StaxXMLInputSource(xmlInputSource, this.fISCreatedByResolver);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1010 */     if (staxInputSource == null) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1014 */       staxInputSource = new StaxXMLInputSource(new XMLInputSource(publicId, literalSystemId, baseSystemId));
-/* 1015 */     } else if (staxInputSource.hasXMLStreamOrXMLEventReader()) {
-/*      */     
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1024 */     return staxInputSource;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLInputSource resolveEntity(XMLResourceIdentifier resourceIdentifier) throws IOException, XNIException {
-/* 1051 */     if (resourceIdentifier == null) return null; 
-/* 1052 */     String publicId = resourceIdentifier.getPublicId();
-/* 1053 */     String literalSystemId = resourceIdentifier.getLiteralSystemId();
-/* 1054 */     String baseSystemId = resourceIdentifier.getBaseSystemId();
-/* 1055 */     String expandedSystemId = resourceIdentifier.getExpandedSystemId();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1063 */     boolean needExpand = (expandedSystemId == null);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1067 */     if (baseSystemId == null && this.fCurrentEntity != null && this.fCurrentEntity.entityLocation != null) {
-/* 1068 */       baseSystemId = this.fCurrentEntity.entityLocation.getExpandedSystemId();
-/* 1069 */       if (baseSystemId != null)
-/* 1070 */         needExpand = true; 
-/*      */     } 
-/* 1072 */     if (needExpand) {
-/* 1073 */       expandedSystemId = expandSystemId(literalSystemId, baseSystemId, false);
-/*      */     }
-/*      */     
-/* 1076 */     XMLInputSource xmlInputSource = null;
-/*      */     
-/* 1078 */     if (this.fEntityResolver != null) {
-/* 1079 */       resourceIdentifier.setBaseSystemId(baseSystemId);
-/* 1080 */       resourceIdentifier.setExpandedSystemId(expandedSystemId);
-/* 1081 */       xmlInputSource = this.fEntityResolver.resolveEntity(resourceIdentifier);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1089 */     if (xmlInputSource == null)
-/*      */     {
-/*      */ 
-/*      */       
-/* 1093 */       xmlInputSource = new XMLInputSource(publicId, literalSystemId, baseSystemId);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1101 */     return xmlInputSource;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startEntity(boolean isGE, String entityName, boolean literal) throws IOException, XNIException {
-/* 1120 */     Entity entity = this.fEntityStorage.getEntity(entityName);
-/* 1121 */     if (entity == null) {
-/* 1122 */       if (this.fEntityHandler != null) {
-/* 1123 */         String encoding = null;
-/* 1124 */         this.fResourceIdentifier.clear();
-/* 1125 */         this.fEntityAugs.removeAllItems();
-/* 1126 */         this.fEntityAugs.putItem("ENTITY_SKIPPED", Boolean.TRUE);
-/* 1127 */         this.fEntityHandler.startEntity(entityName, this.fResourceIdentifier, encoding, this.fEntityAugs);
-/* 1128 */         this.fEntityAugs.removeAllItems();
-/* 1129 */         this.fEntityAugs.putItem("ENTITY_SKIPPED", Boolean.TRUE);
-/* 1130 */         this.fEntityHandler.endEntity(entityName, this.fEntityAugs);
-/*      */       } 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/* 1136 */     boolean external = entity.isExternal();
-/* 1137 */     Entity.ExternalEntity externalEntity = null;
-/* 1138 */     String extLitSysId = null, extBaseSysId = null, expandedSystemId = null;
-/* 1139 */     if (external) {
-/* 1140 */       externalEntity = (Entity.ExternalEntity)entity;
-/* 1141 */       extLitSysId = (externalEntity.entityLocation != null) ? externalEntity.entityLocation.getLiteralSystemId() : null;
-/* 1142 */       extBaseSysId = (externalEntity.entityLocation != null) ? externalEntity.entityLocation.getBaseSystemId() : null;
-/* 1143 */       expandedSystemId = expandSystemId(extLitSysId, extBaseSysId);
-/* 1144 */       boolean unparsed = entity.isUnparsed();
-/* 1145 */       boolean parameter = entityName.startsWith("%");
-/* 1146 */       boolean general = !parameter;
-/* 1147 */       if (unparsed || (general && !this.fExternalGeneralEntities) || (parameter && !this.fExternalParameterEntities) || !this.fSupportDTD || !this.fSupportExternalEntities) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1151 */         if (this.fEntityHandler != null) {
-/* 1152 */           this.fResourceIdentifier.clear();
-/* 1153 */           String encoding = null;
-/* 1154 */           this.fResourceIdentifier.setValues((externalEntity.entityLocation != null) ? externalEntity.entityLocation
-/* 1155 */               .getPublicId() : null, extLitSysId, extBaseSysId, expandedSystemId);
-/*      */           
-/* 1157 */           this.fEntityAugs.removeAllItems();
-/* 1158 */           this.fEntityAugs.putItem("ENTITY_SKIPPED", Boolean.TRUE);
-/* 1159 */           this.fEntityHandler.startEntity(entityName, this.fResourceIdentifier, encoding, this.fEntityAugs);
-/* 1160 */           this.fEntityAugs.removeAllItems();
-/* 1161 */           this.fEntityAugs.putItem("ENTITY_SKIPPED", Boolean.TRUE);
-/* 1162 */           this.fEntityHandler.endEntity(entityName, this.fEntityAugs);
-/*      */         } 
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1169 */     int size = this.fEntityStack.size();
-/* 1170 */     for (int i = size; i >= 0; i--) {
-/*      */ 
-/*      */       
-/* 1173 */       Entity activeEntity = (i == size) ? this.fCurrentEntity : this.fEntityStack.elementAt(i);
-/* 1174 */       if (activeEntity.name == entityName) {
-/* 1175 */         String path = entityName;
-/* 1176 */         for (int j = i + 1; j < size; j++) {
-/* 1177 */           activeEntity = this.fEntityStack.elementAt(j);
-/* 1178 */           path = path + " -> " + activeEntity.name;
-/*      */         } 
-/* 1180 */         path = path + " -> " + this.fCurrentEntity.name;
-/* 1181 */         path = path + " -> " + entityName;
-/* 1182 */         this.fErrorReporter.reportError(getEntityScanner(), "http://www.w3.org/TR/1998/REC-xml-19980210", "RecursiveReference", new Object[] { entityName, path }, (short)2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1187 */         if (this.fEntityHandler != null) {
-/* 1188 */           this.fResourceIdentifier.clear();
-/* 1189 */           String encoding = null;
-/* 1190 */           if (external) {
-/* 1191 */             this.fResourceIdentifier.setValues((externalEntity.entityLocation != null) ? externalEntity.entityLocation
-/* 1192 */                 .getPublicId() : null, extLitSysId, extBaseSysId, expandedSystemId);
-/*      */           }
-/*      */           
-/* 1195 */           this.fEntityAugs.removeAllItems();
-/* 1196 */           this.fEntityAugs.putItem("ENTITY_SKIPPED", Boolean.TRUE);
-/* 1197 */           this.fEntityHandler.startEntity(entityName, this.fResourceIdentifier, encoding, this.fEntityAugs);
-/* 1198 */           this.fEntityAugs.removeAllItems();
-/* 1199 */           this.fEntityAugs.putItem("ENTITY_SKIPPED", Boolean.TRUE);
-/* 1200 */           this.fEntityHandler.endEntity(entityName, this.fEntityAugs);
-/*      */         } 
-/*      */ 
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1208 */     StaxXMLInputSource staxInputSource = null;
-/* 1209 */     XMLInputSource xmlInputSource = null;
-/*      */     
-/* 1211 */     if (external) {
-/* 1212 */       staxInputSource = resolveEntityAsPerStax(externalEntity.entityLocation);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1218 */       xmlInputSource = staxInputSource.getXMLInputSource();
-/* 1219 */       if (!this.fISCreatedByResolver)
-/*      */       {
-/* 1221 */         if (this.fLoadExternalDTD) {
-/* 1222 */           String accessError = SecuritySupport.checkAccess(expandedSystemId, this.fAccessExternalDTD, "all");
-/* 1223 */           if (accessError != null) {
-/* 1224 */             this.fErrorReporter.reportError(getEntityScanner(), "http://www.w3.org/TR/1998/REC-xml-19980210", "AccessExternalEntity", new Object[] {
-/*      */                   
-/* 1226 */                   SecuritySupport.sanitizePath(expandedSystemId), accessError }, (short)2);
-/*      */           }
-/*      */         }
-/*      */       
-/*      */       }
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1234 */       Entity.InternalEntity internalEntity = (Entity.InternalEntity)entity;
-/* 1235 */       Reader reader = new StringReader(internalEntity.text);
-/* 1236 */       xmlInputSource = new XMLInputSource(null, null, null, reader, null);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1240 */     startEntity(isGE, entityName, xmlInputSource, literal, external);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startDocumentEntity(XMLInputSource xmlInputSource) throws IOException, XNIException {
-/* 1255 */     startEntity(false, XMLEntity, xmlInputSource, false, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startDTDEntity(XMLInputSource xmlInputSource) throws IOException, XNIException {
-/* 1270 */     startEntity(false, DTDEntity, xmlInputSource, false, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startExternalSubset() {
-/* 1276 */     this.fInExternalSubset = true;
-/*      */   }
-/*      */   
-/*      */   public void endExternalSubset() {
-/* 1280 */     this.fInExternalSubset = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startEntity(boolean isGE, String name, XMLInputSource xmlInputSource, boolean literal, boolean isExternal) throws IOException, XNIException {
-/* 1304 */     String encoding = setupCurrentEntity(isGE, name, xmlInputSource, literal, isExternal);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1310 */     this.fEntityExpansionCount++;
-/* 1311 */     if (this.fLimitAnalyzer != null) {
-/* 1312 */       this.fLimitAnalyzer.addValue(this.entityExpansionIndex, name, 1);
-/*      */     }
-/* 1314 */     if (this.fSecurityManager != null && this.fSecurityManager.isOverLimit(this.entityExpansionIndex, this.fLimitAnalyzer)) {
-/* 1315 */       this.fSecurityManager.debugPrint(this.fLimitAnalyzer);
-/* 1316 */       this.fErrorReporter.reportError("http://www.w3.org/TR/1998/REC-xml-19980210", "EntityExpansionLimit", new Object[] { this.fSecurityManager
-/* 1317 */             .getLimitValueByIndex(this.entityExpansionIndex) }, (short)2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1322 */       this.fEntityExpansionCount = 0;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1326 */     if (this.fEntityHandler != null) {
-/* 1327 */       this.fEntityHandler.startEntity(name, this.fResourceIdentifier, encoding, null);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Entity.ScannedEntity getCurrentEntity() {
-/* 1338 */     return this.fCurrentEntity;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Entity.ScannedEntity getTopLevelEntity() {
-/* 1346 */     return 
-/* 1347 */       this.fEntityStack.empty() ? null : (Entity.ScannedEntity)this.fEntityStack.elementAt(0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void closeReaders() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endEntity() throws IOException, XNIException {
-/* 1371 */     Entity.ScannedEntity entity = (this.fEntityStack.size() > 0) ? (Entity.ScannedEntity)this.fEntityStack.pop() : null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1378 */     if (this.fCurrentEntity != null) {
-/*      */       
-/*      */       try {
-/* 1381 */         if (this.fLimitAnalyzer != null) {
-/* 1382 */           this.fLimitAnalyzer.endEntity(XMLSecurityManager.Limit.GENERAL_ENTITY_SIZE_LIMIT, this.fCurrentEntity.name);
-/* 1383 */           if (this.fCurrentEntity.name.equals("[xml]")) {
-/* 1384 */             this.fSecurityManager.debugPrint(this.fLimitAnalyzer);
-/*      */           }
-/*      */         } 
-/* 1387 */         this.fCurrentEntity.close();
-/* 1388 */       } catch (IOException ex) {
-/* 1389 */         throw new XNIException(ex);
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1393 */     if (this.fEntityHandler != null)
-/*      */     {
-/* 1395 */       if (entity == null) {
-/* 1396 */         this.fEntityAugs.removeAllItems();
-/* 1397 */         this.fEntityAugs.putItem("LAST_ENTITY", Boolean.TRUE);
-/* 1398 */         this.fEntityHandler.endEntity(this.fCurrentEntity.name, this.fEntityAugs);
-/* 1399 */         this.fEntityAugs.removeAllItems();
-/*      */       } else {
-/* 1401 */         this.fEntityHandler.endEntity(this.fCurrentEntity.name, null);
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1405 */     boolean documentEntity = (this.fCurrentEntity.name == XMLEntity);
-/*      */ 
-/*      */     
-/* 1408 */     this.fCurrentEntity = entity;
-/* 1409 */     this.fEntityScanner.setCurrentEntity(this.fCurrentEntity);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1415 */     if ((((this.fCurrentEntity == null) ? 1 : 0) & (!documentEntity ? 1 : 0)) != 0) {
-/* 1416 */       throw new EOFException();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset(PropertyManager propertyManager) {
-/* 1433 */     this.fSymbolTable = (SymbolTable)propertyManager.getProperty("http://apache.org/xml/properties/internal/symbol-table");
-/* 1434 */     this.fErrorReporter = (XMLErrorReporter)propertyManager.getProperty("http://apache.org/xml/properties/internal/error-reporter");
-/*      */     try {
-/* 1436 */       this.fStaxEntityResolver = (StaxEntityResolverWrapper)propertyManager.getProperty("http://apache.org/xml/properties/internal/stax-entity-resolver");
-/* 1437 */     } catch (XMLConfigurationException e) {
-/* 1438 */       this.fStaxEntityResolver = null;
-/*      */     } 
-/*      */     
-/* 1441 */     this.fSupportDTD = ((Boolean)propertyManager.getProperty("javax.xml.stream.supportDTD")).booleanValue();
-/* 1442 */     this.fReplaceEntityReferences = ((Boolean)propertyManager.getProperty("javax.xml.stream.isReplacingEntityReferences")).booleanValue();
-/* 1443 */     this.fSupportExternalEntities = ((Boolean)propertyManager.getProperty("javax.xml.stream.isSupportingExternalEntities")).booleanValue();
-/*      */ 
-/*      */     
-/* 1446 */     this.fLoadExternalDTD = !((Boolean)propertyManager.getProperty("http://java.sun.com/xml/stream/properties/ignore-external-dtd")).booleanValue();
-/*      */ 
-/*      */     
-/* 1449 */     XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)propertyManager.getProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager");
-/* 1450 */     this.fAccessExternalDTD = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD);
-/*      */     
-/* 1452 */     this.fSecurityManager = (XMLSecurityManager)propertyManager.getProperty("http://apache.org/xml/properties/security-manager");
-/*      */     
-/* 1454 */     this.fLimitAnalyzer = new XMLLimitAnalyzer();
-/*      */     
-/* 1456 */     this.fEntityStorage.reset(propertyManager);
-/*      */     
-/* 1458 */     this.fEntityScanner.reset(propertyManager);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1462 */     this.fEntities.clear();
-/* 1463 */     this.fEntityStack.removeAllElements();
-/* 1464 */     this.fCurrentEntity = null;
-/* 1465 */     this.fValidation = false;
-/* 1466 */     this.fExternalGeneralEntities = true;
-/* 1467 */     this.fExternalParameterEntities = true;
-/* 1468 */     this.fAllowJavaEncodings = true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset(XMLComponentManager componentManager) throws XMLConfigurationException {
-/* 1488 */     boolean parser_settings = componentManager.getFeature("http://apache.org/xml/features/internal/parser-settings", true);
-/*      */     
-/* 1490 */     if (!parser_settings) {
-/*      */       
-/* 1492 */       reset();
-/* 1493 */       if (this.fEntityScanner != null) {
-/* 1494 */         this.fEntityScanner.reset(componentManager);
-/*      */       }
-/* 1496 */       if (this.fEntityStorage != null) {
-/* 1497 */         this.fEntityStorage.reset(componentManager);
-/*      */       }
-/*      */       
-/*      */       return;
-/*      */     } 
-/*      */     
-/* 1503 */     this.fValidation = componentManager.getFeature("http://xml.org/sax/features/validation", false);
-/* 1504 */     this.fExternalGeneralEntities = componentManager.getFeature("http://xml.org/sax/features/external-general-entities", true);
-/* 1505 */     this.fExternalParameterEntities = componentManager.getFeature("http://xml.org/sax/features/external-parameter-entities", true);
-/*      */ 
-/*      */     
-/* 1508 */     this.fAllowJavaEncodings = componentManager.getFeature("http://apache.org/xml/features/allow-java-encodings", false);
-/* 1509 */     this.fWarnDuplicateEntityDef = componentManager.getFeature("http://apache.org/xml/features/warn-on-duplicate-entitydef", false);
-/* 1510 */     this.fStrictURI = componentManager.getFeature("http://apache.org/xml/features/standard-uri-conformant", false);
-/* 1511 */     this.fLoadExternalDTD = componentManager.getFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", true);
-/*      */ 
-/*      */     
-/* 1514 */     this.fSymbolTable = (SymbolTable)componentManager.getProperty("http://apache.org/xml/properties/internal/symbol-table");
-/* 1515 */     this.fErrorReporter = (XMLErrorReporter)componentManager.getProperty("http://apache.org/xml/properties/internal/error-reporter");
-/* 1516 */     this.fEntityResolver = (XMLEntityResolver)componentManager.getProperty("http://apache.org/xml/properties/internal/entity-resolver", null);
-/* 1517 */     this.fStaxEntityResolver = (StaxEntityResolverWrapper)componentManager.getProperty("http://apache.org/xml/properties/internal/stax-entity-resolver", null);
-/* 1518 */     this.fValidationManager = (ValidationManager)componentManager.getProperty("http://apache.org/xml/properties/internal/validation-manager", null);
-/* 1519 */     this.fSecurityManager = (XMLSecurityManager)componentManager.getProperty("http://apache.org/xml/properties/security-manager", null);
-/* 1520 */     this.entityExpansionIndex = this.fSecurityManager.getIndex("http://www.oracle.com/xml/jaxp/properties/entityExpansionLimit");
-/*      */ 
-/*      */     
-/* 1523 */     this.fSupportDTD = true;
-/* 1524 */     this.fReplaceEntityReferences = true;
-/* 1525 */     this.fSupportExternalEntities = true;
-/*      */ 
-/*      */     
-/* 1528 */     XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)componentManager.getProperty("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager", null);
-/* 1529 */     if (spm == null) {
-/* 1530 */       spm = new XMLSecurityPropertyManager();
-/*      */     }
-/* 1532 */     this.fAccessExternalDTD = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD);
-/*      */ 
-/*      */     
-/* 1535 */     reset();
-/*      */     
-/* 1537 */     this.fEntityScanner.reset(componentManager);
-/* 1538 */     this.fEntityStorage.reset(componentManager);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset() {
-/* 1546 */     this.fLimitAnalyzer = new XMLLimitAnalyzer();
-/*      */     
-/* 1548 */     this.fStandalone = false;
-/* 1549 */     this.fEntities.clear();
-/* 1550 */     this.fEntityStack.removeAllElements();
-/* 1551 */     this.fEntityExpansionCount = 0;
-/*      */     
-/* 1553 */     this.fCurrentEntity = null;
-/*      */     
-/* 1555 */     if (this.fXML10EntityScanner != null) {
-/* 1556 */       this.fXML10EntityScanner.reset(this.fSymbolTable, this, this.fErrorReporter);
-/*      */     }
-/* 1558 */     if (this.fXML11EntityScanner != null) {
-/* 1559 */       this.fXML11EntityScanner.reset(this.fSymbolTable, this, this.fErrorReporter);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1584 */     this.fEntityHandler = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getRecognizedFeatures() {
-/* 1597 */     return (String[])RECOGNIZED_FEATURES.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFeature(String featureId, boolean state) throws XMLConfigurationException {
-/* 1619 */     if (featureId.startsWith("http://apache.org/xml/features/")) {
-/* 1620 */       int suffixLength = featureId.length() - "http://apache.org/xml/features/".length();
-/* 1621 */       if (suffixLength == "allow-java-encodings".length() && featureId
-/* 1622 */         .endsWith("allow-java-encodings")) {
-/* 1623 */         this.fAllowJavaEncodings = state;
-/*      */       }
-/* 1625 */       if (suffixLength == "nonvalidating/load-external-dtd".length() && featureId
-/* 1626 */         .endsWith("nonvalidating/load-external-dtd")) {
-/* 1627 */         this.fLoadExternalDTD = state;
-/*      */         return;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setProperty(String propertyId, Object value) {
-/* 1651 */     if (propertyId.startsWith("http://apache.org/xml/properties/")) {
-/* 1652 */       int suffixLength = propertyId.length() - "http://apache.org/xml/properties/".length();
-/*      */       
-/* 1654 */       if (suffixLength == "internal/symbol-table".length() && propertyId
-/* 1655 */         .endsWith("internal/symbol-table")) {
-/* 1656 */         this.fSymbolTable = (SymbolTable)value;
-/*      */         return;
-/*      */       } 
-/* 1659 */       if (suffixLength == "internal/error-reporter".length() && propertyId
-/* 1660 */         .endsWith("internal/error-reporter")) {
-/* 1661 */         this.fErrorReporter = (XMLErrorReporter)value;
-/*      */         return;
-/*      */       } 
-/* 1664 */       if (suffixLength == "internal/entity-resolver".length() && propertyId
-/* 1665 */         .endsWith("internal/entity-resolver")) {
-/* 1666 */         this.fEntityResolver = (XMLEntityResolver)value;
-/*      */         return;
-/*      */       } 
-/* 1669 */       if (suffixLength == "input-buffer-size".length() && propertyId
-/* 1670 */         .endsWith("input-buffer-size")) {
-/* 1671 */         Integer bufferSize = (Integer)value;
-/* 1672 */         if (bufferSize != null && bufferSize
-/* 1673 */           .intValue() > 64) {
-/* 1674 */           this.fBufferSize = bufferSize.intValue();
-/* 1675 */           this.fEntityScanner.setBufferSize(this.fBufferSize);
-/* 1676 */           this.fBufferPool.setExternalBufferSize(this.fBufferSize);
-/*      */         } 
-/*      */       } 
-/* 1679 */       if (suffixLength == "security-manager".length() && propertyId
-/* 1680 */         .endsWith("security-manager")) {
-/* 1681 */         this.fSecurityManager = (XMLSecurityManager)value;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1686 */     if (propertyId.equals("http://www.oracle.com/xml/jaxp/properties/xmlSecurityPropertyManager")) {
-/*      */       
-/* 1688 */       XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)value;
-/* 1689 */       this.fAccessExternalDTD = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD);
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   public void setLimitAnalyzer(XMLLimitAnalyzer fLimitAnalyzer) {
-/* 1694 */     this.fLimitAnalyzer = fLimitAnalyzer;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getRecognizedProperties() {
-/* 1703 */     return (String[])RECOGNIZED_PROPERTIES.clone();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Boolean getFeatureDefault(String featureId) {
-/* 1715 */     for (int i = 0; i < RECOGNIZED_FEATURES.length; i++) {
-/* 1716 */       if (RECOGNIZED_FEATURES[i].equals(featureId)) {
-/* 1717 */         return FEATURE_DEFAULTS[i];
-/*      */       }
-/*      */     } 
-/* 1720 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getPropertyDefault(String propertyId) {
-/* 1733 */     for (int i = 0; i < RECOGNIZED_PROPERTIES.length; i++) {
-/* 1734 */       if (RECOGNIZED_PROPERTIES[i].equals(propertyId)) {
-/* 1735 */         return PROPERTY_DEFAULTS[i];
-/*      */       }
-/*      */     } 
-/* 1738 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String expandSystemId(String systemId) {
-/* 1759 */     return expandSystemId(systemId, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1771 */   private static boolean[] gNeedEscaping = new boolean[128];
-/*      */   
-/* 1773 */   private static char[] gAfterEscaping1 = new char[128];
-/*      */   
-/* 1775 */   private static char[] gAfterEscaping2 = new char[128];
-/* 1776 */   private static char[] gHexChs = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-/*      */ 
-/*      */   
-/*      */   static {
-/* 1780 */     for (int i = 0; i <= 31; i++) {
-/* 1781 */       gNeedEscaping[i] = true;
-/* 1782 */       gAfterEscaping1[i] = gHexChs[i >> 4];
-/* 1783 */       gAfterEscaping2[i] = gHexChs[i & 0xF];
-/*      */     } 
-/* 1785 */     gNeedEscaping[127] = true;
-/* 1786 */     gAfterEscaping1[127] = '7';
-/* 1787 */     gAfterEscaping2[127] = 'F';
-/* 1788 */     char[] escChs = { ' ', '<', '>', '#', '%', '"', '{', '}', '|', '\\', '^', '~', '[', ']', '`' };
-/*      */     
-/* 1790 */     int len = escChs.length;
-/*      */     
-/* 1792 */     for (int j = 0; j < len; j++) {
-/* 1793 */       char ch = escChs[j];
-/* 1794 */       gNeedEscaping[ch] = true;
-/* 1795 */       gAfterEscaping1[ch] = gHexChs[ch >> 4];
-/* 1796 */       gAfterEscaping2[ch] = gHexChs[ch & 0xF];
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static synchronized URI getUserDir() throws URI.MalformedURIException {
-/* 1812 */     String userDir = "";
-/*      */     try {
-/* 1814 */       userDir = SecuritySupport.getSystemProperty("user.dir");
-/*      */     }
-/* 1816 */     catch (SecurityException securityException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/* 1820 */     if (userDir.length() == 0) {
-/* 1821 */       return new URI("file", "", "", null, null);
-/*      */     }
-/*      */     
-/* 1824 */     if (gUserDirURI != null && userDir.equals(gUserDir)) {
-/* 1825 */       return gUserDirURI;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1829 */     gUserDir = userDir;
-/*      */     
-/* 1831 */     char separator = File.separatorChar;
-/* 1832 */     userDir = userDir.replace(separator, '/');
-/*      */     
-/* 1834 */     int len = userDir.length();
-/* 1835 */     StringBuffer buffer = new StringBuffer(len * 3);
-/*      */     
-/* 1837 */     if (len >= 2 && userDir.charAt(1) == ':') {
-/* 1838 */       int ch = Character.toUpperCase(userDir.charAt(0));
-/* 1839 */       if (ch >= 65 && ch <= 90) {
-/* 1840 */         buffer.append('/');
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1845 */     int i = 0;
-/* 1846 */     for (; i < len; i++) {
-/* 1847 */       int ch = userDir.charAt(i);
-/*      */       
-/* 1849 */       if (ch >= 128)
-/*      */         break; 
-/* 1851 */       if (gNeedEscaping[ch]) {
-/* 1852 */         buffer.append('%');
-/* 1853 */         buffer.append(gAfterEscaping1[ch]);
-/* 1854 */         buffer.append(gAfterEscaping2[ch]);
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1858 */         buffer.append((char)ch);
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1863 */     if (i < len) {
-/*      */       
-/* 1865 */       byte[] bytes = null;
-/*      */       
-/*      */       try {
-/* 1868 */         bytes = userDir.substring(i).getBytes("UTF-8");
-/* 1869 */       } catch (UnsupportedEncodingException e) {
-/*      */         
-/* 1871 */         return new URI("file", "", userDir, null, null);
-/*      */       } 
-/* 1873 */       len = bytes.length;
-/*      */ 
-/*      */       
-/* 1876 */       for (i = 0; i < len; i++) {
-/* 1877 */         byte b = bytes[i];
-/*      */         
-/* 1879 */         if (b < 0) {
-/* 1880 */           int ch = b + 256;
-/* 1881 */           buffer.append('%');
-/* 1882 */           buffer.append(gHexChs[ch >> 4]);
-/* 1883 */           buffer.append(gHexChs[ch & 0xF]);
-/*      */         }
-/* 1885 */         else if (gNeedEscaping[b]) {
-/* 1886 */           buffer.append('%');
-/* 1887 */           buffer.append(gAfterEscaping1[b]);
-/* 1888 */           buffer.append(gAfterEscaping2[b]);
-/*      */         } else {
-/*      */           
-/* 1891 */           buffer.append((char)b);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1897 */     if (!userDir.endsWith("/")) {
-/* 1898 */       buffer.append('/');
-/*      */     }
-/* 1900 */     gUserDirURI = new URI("file", "", buffer.toString(), null, null);
-/*      */     
-/* 1902 */     return gUserDirURI;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void absolutizeAgainstUserDir(URI uri) throws URI.MalformedURIException {
-/* 1914 */     uri.absolutize(getUserDir());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String expandSystemId(String systemId, String baseSystemId) {
-/* 1933 */     if (systemId == null || systemId.length() == 0) {
-/* 1934 */       return systemId;
-/*      */     }
-/*      */     
-/*      */     try {
-/* 1938 */       URI uRI = new URI(systemId);
-/* 1939 */       if (uRI != null) {
-/* 1940 */         return systemId;
-/*      */       }
-/* 1942 */     } catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException malformedURIException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/* 1946 */     String id = fixURI(systemId);
-/*      */ 
-/*      */     
-/* 1949 */     URI base = null;
-/* 1950 */     URI uri = null;
-/*      */     try {
-/* 1952 */       if (baseSystemId == null || baseSystemId.length() == 0 || baseSystemId
-/* 1953 */         .equals(systemId)) {
-/* 1954 */         String dir = getUserDir().toString();
-/* 1955 */         base = new URI("file", "", dir, null, null);
-/*      */       } else {
-/*      */         try {
-/* 1958 */           base = new URI(fixURI(baseSystemId));
-/* 1959 */         } catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/* 1960 */           if (baseSystemId.indexOf(':') != -1) {
-/*      */ 
-/*      */             
-/* 1963 */             base = new URI("file", "", fixURI(baseSystemId), null, null);
-/*      */           } else {
-/* 1965 */             String dir = getUserDir().toString();
-/* 1966 */             dir = dir + fixURI(baseSystemId);
-/* 1967 */             base = new URI("file", "", dir, null, null);
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1972 */       uri = new URI(base, id);
-/* 1973 */     } catch (Exception exception) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1978 */     if (uri == null) {
-/* 1979 */       return systemId;
-/*      */     }
-/* 1981 */     return uri.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static String expandSystemId(String systemId, String baseSystemId, boolean strict) throws URI.MalformedURIException {
-/* 2004 */     if (systemId == null) {
-/* 2005 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2009 */     if (strict) {
-/*      */       
-/*      */       try {
-/* 2012 */         new URI(systemId);
-/* 2013 */         return systemId;
-/*      */       }
-/* 2015 */       catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException malformedURIException) {
-/*      */         
-/* 2017 */         URI base = null;
-/*      */         
-/* 2019 */         if (baseSystemId == null || baseSystemId.length() == 0) {
-/* 2020 */           base = new URI("file", "", getUserDir().toString(), null, null);
-/*      */         } else {
-/*      */ 
-/*      */           
-/*      */           try {
-/* 2025 */             base = new URI(baseSystemId);
-/*      */           }
-/* 2027 */           catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*      */             
-/* 2029 */             String dir = getUserDir().toString();
-/* 2030 */             dir = dir + baseSystemId;
-/* 2031 */             base = new URI("file", "", dir, null, null);
-/*      */           } 
-/*      */         } 
-/*      */         
-/* 2035 */         URI uri = new URI(base, systemId);
-/*      */         
-/* 2037 */         return uri.toString();
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 2044 */       return expandSystemIdStrictOff(systemId, baseSystemId);
-/*      */     }
-/* 2046 */     catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */ 
-/*      */         
-/* 2053 */         return expandSystemIdStrictOff1(systemId, baseSystemId);
-/* 2054 */       } catch (URISyntaxException uRISyntaxException) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2059 */         if (systemId.length() == 0) {
-/* 2060 */           return systemId;
-/*      */         }
-/*      */ 
-/*      */         
-/* 2064 */         String id = fixURI(systemId);
-/*      */ 
-/*      */         
-/* 2067 */         URI base = null;
-/* 2068 */         URI uri = null;
-/*      */         try {
-/* 2070 */           if (baseSystemId == null || baseSystemId.length() == 0 || baseSystemId
-/* 2071 */             .equals(systemId)) {
-/* 2072 */             base = getUserDir();
-/*      */           } else {
-/*      */             
-/*      */             try {
-/* 2076 */               base = new URI(fixURI(baseSystemId).trim());
-/*      */             }
-/* 2078 */             catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException malformedURIException) {
-/* 2079 */               if (baseSystemId.indexOf(':') != -1) {
-/*      */ 
-/*      */                 
-/* 2082 */                 base = new URI("file", "", fixURI(baseSystemId).trim(), null, null);
-/*      */               } else {
-/*      */                 
-/* 2085 */                 base = new URI(getUserDir(), fixURI(baseSystemId));
-/*      */               } 
-/*      */             } 
-/*      */           } 
-/*      */           
-/* 2090 */           uri = new URI(base, id.trim());
-/*      */         }
-/* 2092 */         catch (Exception exception) {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2097 */         if (uri == null) {
-/* 2098 */           return systemId;
-/*      */         }
-/* 2100 */         return uri.toString();
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String expandSystemIdStrictOn(String systemId, String baseSystemId) throws URI.MalformedURIException {
-/* 2110 */     URI systemURI = new URI(systemId, true);
-/*      */     
-/* 2112 */     if (systemURI.isAbsoluteURI()) {
-/* 2113 */       return systemId;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2117 */     URI baseURI = null;
-/* 2118 */     if (baseSystemId == null || baseSystemId.length() == 0) {
-/* 2119 */       baseURI = getUserDir();
-/*      */     } else {
-/*      */       
-/* 2122 */       baseURI = new URI(baseSystemId, true);
-/* 2123 */       if (!baseURI.isAbsoluteURI())
-/*      */       {
-/* 2125 */         baseURI.absolutize(getUserDir());
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2130 */     systemURI.absolutize(baseURI);
-/*      */ 
-/*      */     
-/* 2133 */     return systemURI.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setInstanceFollowRedirects(HttpURLConnection urlCon, boolean followRedirects) {
-/*      */     try {
-/* 2145 */       Method method = HttpURLConnection.class.getMethod("setInstanceFollowRedirects", new Class[] { boolean.class });
-/* 2146 */       method.invoke(urlCon, new Object[] { followRedirects ? Boolean.TRUE : Boolean.FALSE });
-/*      */     
-/*      */     }
-/* 2149 */     catch (Exception exception) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String expandSystemIdStrictOff(String systemId, String baseSystemId) throws URI.MalformedURIException {
-/* 2159 */     URI systemURI = new URI(systemId, true);
-/*      */     
-/* 2161 */     if (systemURI.isAbsoluteURI()) {
-/* 2162 */       if (systemURI.getScheme().length() > 1) {
-/* 2163 */         return systemId;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2171 */       throw new URI.MalformedURIException();
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2175 */     URI baseURI = null;
-/* 2176 */     if (baseSystemId == null || baseSystemId.length() == 0) {
-/* 2177 */       baseURI = getUserDir();
-/*      */     } else {
-/*      */       
-/* 2180 */       baseURI = new URI(baseSystemId, true);
-/* 2181 */       if (!baseURI.isAbsoluteURI())
-/*      */       {
-/* 2183 */         baseURI.absolutize(getUserDir());
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2188 */     systemURI.absolutize(baseURI);
-/*      */ 
-/*      */     
-/* 2191 */     return systemURI.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String expandSystemIdStrictOff1(String systemId, String baseSystemId) throws URISyntaxException, URI.MalformedURIException {
-/* 2200 */     URI systemURI = new URI(systemId);
-/*      */     
-/* 2202 */     if (systemURI.isAbsolute()) {
-/* 2203 */       if (systemURI.getScheme().length() > 1) {
-/* 2204 */         return systemId;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2212 */       throw new URISyntaxException(systemId, "the scheme's length is only one character");
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2216 */     URI baseURI = null;
-/* 2217 */     if (baseSystemId == null || baseSystemId.length() == 0) {
-/* 2218 */       baseURI = getUserDir();
-/*      */     } else {
-/*      */       
-/* 2221 */       baseURI = new URI(baseSystemId, true);
-/* 2222 */       if (!baseURI.isAbsoluteURI())
-/*      */       {
-/* 2224 */         baseURI.absolutize(getUserDir());
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2230 */     systemURI = (new URI(baseURI.toString())).resolve(systemURI);
-/*      */ 
-/*      */     
-/* 2233 */     return systemURI.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Object[] getEncodingName(byte[] b4, int count) {
-/* 2256 */     if (count < 2) {
-/* 2257 */       return this.defaultEncoding;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2261 */     int b0 = b4[0] & 0xFF;
-/* 2262 */     int b1 = b4[1] & 0xFF;
-/* 2263 */     if (b0 == 254 && b1 == 255)
-/*      */     {
-/* 2265 */       return new Object[] { "UTF-16BE", new Boolean(true) };
-/*      */     }
-/* 2267 */     if (b0 == 255 && b1 == 254)
-/*      */     {
-/* 2269 */       return new Object[] { "UTF-16LE", new Boolean(false) };
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2274 */     if (count < 3) {
-/* 2275 */       return this.defaultEncoding;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2279 */     int b2 = b4[2] & 0xFF;
-/* 2280 */     if (b0 == 239 && b1 == 187 && b2 == 191) {
-/* 2281 */       return this.defaultEncoding;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2286 */     if (count < 4) {
-/* 2287 */       return this.defaultEncoding;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2291 */     int b3 = b4[3] & 0xFF;
-/* 2292 */     if (b0 == 0 && b1 == 0 && b2 == 0 && b3 == 60)
-/*      */     {
-/* 2294 */       return new Object[] { "ISO-10646-UCS-4", new Boolean(true) };
-/*      */     }
-/* 2296 */     if (b0 == 60 && b1 == 0 && b2 == 0 && b3 == 0)
-/*      */     {
-/* 2298 */       return new Object[] { "ISO-10646-UCS-4", new Boolean(false) };
-/*      */     }
-/* 2300 */     if (b0 == 0 && b1 == 0 && b2 == 60 && b3 == 0)
-/*      */     {
-/*      */       
-/* 2303 */       return new Object[] { "ISO-10646-UCS-4", null };
-/*      */     }
-/* 2305 */     if (b0 == 0 && b1 == 60 && b2 == 0 && b3 == 0)
-/*      */     {
-/*      */       
-/* 2308 */       return new Object[] { "ISO-10646-UCS-4", null };
-/*      */     }
-/* 2310 */     if (b0 == 0 && b1 == 60 && b2 == 0 && b3 == 63)
-/*      */     {
-/*      */ 
-/*      */       
-/* 2314 */       return new Object[] { "UTF-16BE", new Boolean(true) };
-/*      */     }
-/* 2316 */     if (b0 == 60 && b1 == 0 && b2 == 63 && b3 == 0)
-/*      */     {
-/*      */       
-/* 2319 */       return new Object[] { "UTF-16LE", new Boolean(false) };
-/*      */     }
-/* 2321 */     if (b0 == 76 && b1 == 111 && b2 == 167 && b3 == 148)
-/*      */     {
-/*      */       
-/* 2324 */       return new Object[] { "CP037", null };
-/*      */     }
-/*      */     
-/* 2327 */     return this.defaultEncoding;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Reader createReader(InputStream inputStream, String encoding, Boolean isBigEndian) throws IOException {
-/* 2351 */     if (encoding == null) {
-/* 2352 */       encoding = "UTF-8";
-/*      */     }
-/*      */ 
-/*      */     
-/* 2356 */     String ENCODING = encoding.toUpperCase(Locale.ENGLISH);
-/* 2357 */     if (ENCODING.equals("UTF-8"))
-/*      */     {
-/*      */ 
-/*      */       
-/* 2361 */       return new UTF8Reader(inputStream, this.fBufferSize, this.fErrorReporter.getMessageFormatter("http://www.w3.org/TR/1998/REC-xml-19980210"), this.fErrorReporter.getLocale());
-/*      */     }
-/* 2363 */     if (ENCODING.equals("US-ASCII"))
-/*      */     {
-/*      */ 
-/*      */       
-/* 2367 */       return new ASCIIReader(inputStream, this.fBufferSize, this.fErrorReporter.getMessageFormatter("http://www.w3.org/TR/1998/REC-xml-19980210"), this.fErrorReporter.getLocale());
-/*      */     }
-/* 2369 */     if (ENCODING.equals("ISO-10646-UCS-4")) {
-/* 2370 */       if (isBigEndian != null) {
-/* 2371 */         boolean isBE = isBigEndian.booleanValue();
-/* 2372 */         if (isBE) {
-/* 2373 */           return new UCSReader(inputStream, (short)8);
-/*      */         }
-/* 2375 */         return new UCSReader(inputStream, (short)4);
-/*      */       } 
-/*      */       
-/* 2378 */       this.fErrorReporter.reportError(getEntityScanner(), "http://www.w3.org/TR/1998/REC-xml-19980210", "EncodingByteOrderUnsupported", new Object[] { encoding }, (short)2);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2384 */     if (ENCODING.equals("ISO-10646-UCS-2")) {
-/* 2385 */       if (isBigEndian != null) {
-/* 2386 */         boolean isBE = isBigEndian.booleanValue();
-/* 2387 */         if (isBE) {
-/* 2388 */           return new UCSReader(inputStream, (short)2);
-/*      */         }
-/* 2390 */         return new UCSReader(inputStream, (short)1);
-/*      */       } 
-/*      */       
-/* 2393 */       this.fErrorReporter.reportError(getEntityScanner(), "http://www.w3.org/TR/1998/REC-xml-19980210", "EncodingByteOrderUnsupported", new Object[] { encoding }, (short)2);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2401 */     boolean validIANA = XMLChar.isValidIANAEncoding(encoding);
-/* 2402 */     boolean validJava = XMLChar.isValidJavaEncoding(encoding);
-/* 2403 */     if (!validIANA || (this.fAllowJavaEncodings && !validJava)) {
-/* 2404 */       this.fErrorReporter.reportError(getEntityScanner(), "http://www.w3.org/TR/1998/REC-xml-19980210", "EncodingDeclInvalid", new Object[] { encoding }, (short)2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2416 */       encoding = "ISO-8859-1";
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2420 */     String javaEncoding = EncodingMap.getIANA2JavaMapping(ENCODING);
-/* 2421 */     if (javaEncoding == null) {
-/* 2422 */       if (this.fAllowJavaEncodings) {
-/* 2423 */         javaEncoding = encoding;
-/*      */       } else {
-/* 2425 */         this.fErrorReporter.reportError(getEntityScanner(), "http://www.w3.org/TR/1998/REC-xml-19980210", "EncodingDeclInvalid", new Object[] { encoding }, (short)2);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2430 */         javaEncoding = "ISO8859_1";
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2440 */     return new BufferedReader(new InputStreamReader(inputStream, javaEncoding));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getPublicId() {
-/* 2456 */     return (this.fCurrentEntity != null && this.fCurrentEntity.entityLocation != null) ? this.fCurrentEntity.entityLocation.getPublicId() : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getExpandedSystemId() {
-/* 2473 */     if (this.fCurrentEntity != null) {
-/* 2474 */       if (this.fCurrentEntity.entityLocation != null && this.fCurrentEntity.entityLocation
-/* 2475 */         .getExpandedSystemId() != null) {
-/* 2476 */         return this.fCurrentEntity.entityLocation.getExpandedSystemId();
-/*      */       }
-/*      */       
-/* 2479 */       int size = this.fEntityStack.size();
-/* 2480 */       for (int i = size - 1; i >= 0; i--) {
-/*      */         
-/* 2482 */         Entity.ScannedEntity externalEntity = (Entity.ScannedEntity)this.fEntityStack.elementAt(i);
-/*      */         
-/* 2484 */         if (externalEntity.entityLocation != null && externalEntity.entityLocation
-/* 2485 */           .getExpandedSystemId() != null) {
-/* 2486 */           return externalEntity.entityLocation.getExpandedSystemId();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2491 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getLiteralSystemId() {
-/* 2505 */     if (this.fCurrentEntity != null) {
-/* 2506 */       if (this.fCurrentEntity.entityLocation != null && this.fCurrentEntity.entityLocation
-/* 2507 */         .getLiteralSystemId() != null) {
-/* 2508 */         return this.fCurrentEntity.entityLocation.getLiteralSystemId();
-/*      */       }
-/*      */       
-/* 2511 */       int size = this.fEntityStack.size();
-/* 2512 */       for (int i = size - 1; i >= 0; i--) {
-/*      */         
-/* 2514 */         Entity.ScannedEntity externalEntity = (Entity.ScannedEntity)this.fEntityStack.elementAt(i);
-/*      */         
-/* 2516 */         if (externalEntity.entityLocation != null && externalEntity.entityLocation
-/* 2517 */           .getLiteralSystemId() != null) {
-/* 2518 */           return externalEntity.entityLocation.getLiteralSystemId();
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2523 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLineNumber() {
-/* 2545 */     if (this.fCurrentEntity != null) {
-/* 2546 */       if (this.fCurrentEntity.isExternal()) {
-/* 2547 */         return this.fCurrentEntity.lineNumber;
-/*      */       }
-/*      */       
-/* 2550 */       int size = this.fEntityStack.size();
-/* 2551 */       for (int i = size - 1; i > 0; i--) {
-/* 2552 */         Entity.ScannedEntity firstExternalEntity = (Entity.ScannedEntity)this.fEntityStack.elementAt(i);
-/* 2553 */         if (firstExternalEntity.isExternal()) {
-/* 2554 */           return firstExternalEntity.lineNumber;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2560 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getColumnNumber() {
-/* 2587 */     if (this.fCurrentEntity != null) {
-/* 2588 */       if (this.fCurrentEntity.isExternal()) {
-/* 2589 */         return this.fCurrentEntity.columnNumber;
-/*      */       }
-/*      */       
-/* 2592 */       int size = this.fEntityStack.size();
-/* 2593 */       for (int i = size - 1; i > 0; i--) {
-/* 2594 */         Entity.ScannedEntity firstExternalEntity = (Entity.ScannedEntity)this.fEntityStack.elementAt(i);
-/* 2595 */         if (firstExternalEntity.isExternal()) {
-/* 2596 */           return firstExternalEntity.columnNumber;
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2602 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected static String fixURI(String str) {
-/* 2620 */     str = str.replace(File.separatorChar, '/');
-/*      */ 
-/*      */     
-/* 2623 */     if (str.length() >= 2) {
-/* 2624 */       char ch1 = str.charAt(1);
-/*      */       
-/* 2626 */       if (ch1 == ':') {
-/* 2627 */         char ch0 = Character.toUpperCase(str.charAt(0));
-/* 2628 */         if (ch0 >= 'A' && ch0 <= 'Z') {
-/* 2629 */           str = "/" + str;
-/*      */         
-/*      */         }
-/*      */       }
-/* 2633 */       else if (ch1 == '/' && str.charAt(0) == '/') {
-/* 2634 */         str = "file:" + str;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2642 */     int pos = str.indexOf(' ');
-/* 2643 */     if (pos >= 0) {
-/* 2644 */       StringBuilder sb = new StringBuilder(str.length());
-/*      */       int i;
-/* 2646 */       for (i = 0; i < pos; i++) {
-/* 2647 */         sb.append(str.charAt(i));
-/*      */       }
-/* 2649 */       sb.append("%20");
-/*      */       
-/* 2651 */       for (i = pos + 1; i < str.length(); i++) {
-/* 2652 */         if (str.charAt(i) == ' ') {
-/* 2653 */           sb.append("%20");
-/*      */         } else {
-/* 2655 */           sb.append(str.charAt(i));
-/*      */         } 
-/* 2657 */       }  str = sb.toString();
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2661 */     return str;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final void print() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class CharacterBuffer
-/*      */   {
-/*      */     private char[] ch;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private boolean isExternal;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public CharacterBuffer(boolean isExternal, int size) {
-/* 2739 */       this.isExternal = isExternal;
-/* 2740 */       this.ch = new char[size];
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class CharacterBufferPool
-/*      */   {
-/*      */     private static final int DEFAULT_POOL_SIZE = 3;
-/*      */ 
-/*      */     
-/*      */     private XMLEntityManager.CharacterBuffer[] fInternalBufferPool;
-/*      */ 
-/*      */     
-/*      */     private XMLEntityManager.CharacterBuffer[] fExternalBufferPool;
-/*      */     
-/*      */     private int fExternalBufferSize;
-/*      */     
-/*      */     private int fInternalBufferSize;
-/*      */     
-/*      */     private int poolSize;
-/*      */     
-/*      */     private int fInternalTop;
-/*      */     
-/*      */     private int fExternalTop;
-/*      */ 
-/*      */     
-/*      */     public CharacterBufferPool(int externalBufferSize, int internalBufferSize) {
-/* 2768 */       this(3, externalBufferSize, internalBufferSize);
-/*      */     }
-/*      */     
-/*      */     public CharacterBufferPool(int poolSize, int externalBufferSize, int internalBufferSize) {
-/* 2772 */       this.fExternalBufferSize = externalBufferSize;
-/* 2773 */       this.fInternalBufferSize = internalBufferSize;
-/* 2774 */       this.poolSize = poolSize;
-/* 2775 */       init();
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     private void init() {
-/* 2780 */       this.fInternalBufferPool = new XMLEntityManager.CharacterBuffer[this.poolSize];
-/* 2781 */       this.fExternalBufferPool = new XMLEntityManager.CharacterBuffer[this.poolSize];
-/* 2782 */       this.fInternalTop = -1;
-/* 2783 */       this.fExternalTop = -1;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public XMLEntityManager.CharacterBuffer getBuffer(boolean external) {
-/* 2788 */       if (external) {
-/* 2789 */         if (this.fExternalTop > -1) {
-/* 2790 */           return this.fExternalBufferPool[this.fExternalTop--];
-/*      */         }
-/*      */         
-/* 2793 */         return new XMLEntityManager.CharacterBuffer(true, this.fExternalBufferSize);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2797 */       if (this.fInternalTop > -1) {
-/* 2798 */         return this.fInternalBufferPool[this.fInternalTop--];
-/*      */       }
-/*      */       
-/* 2801 */       return new XMLEntityManager.CharacterBuffer(false, this.fInternalBufferSize);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void returnToPool(XMLEntityManager.CharacterBuffer buffer) {
-/* 2808 */       if (buffer.isExternal) {
-/* 2809 */         if (this.fExternalTop < this.fExternalBufferPool.length - 1) {
-/* 2810 */           this.fExternalBufferPool[++this.fExternalTop] = buffer;
-/*      */         }
-/*      */       }
-/* 2813 */       else if (this.fInternalTop < this.fInternalBufferPool.length - 1) {
-/* 2814 */         this.fInternalBufferPool[++this.fInternalTop] = buffer;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void setExternalBufferSize(int bufferSize) {
-/* 2820 */       this.fExternalBufferSize = bufferSize;
-/* 2821 */       this.fExternalBufferPool = new XMLEntityManager.CharacterBuffer[this.poolSize];
-/* 2822 */       this.fExternalTop = -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final class RewindableInputStream
-/*      */     extends InputStream
-/*      */   {
-/*      */     private InputStream fInputStream;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private byte[] fData;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int fStartOffset;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int fEndOffset;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int fOffset;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private int fLength;
-/*      */ 
-/*      */     
-/*      */     private int fMark;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public RewindableInputStream(InputStream is) {
-/* 2860 */       this.fData = new byte[64];
-/* 2861 */       this.fInputStream = is;
-/* 2862 */       this.fStartOffset = 0;
-/* 2863 */       this.fEndOffset = -1;
-/* 2864 */       this.fOffset = 0;
-/* 2865 */       this.fLength = 0;
-/* 2866 */       this.fMark = 0;
-/*      */     }
-/*      */     
-/*      */     public void setStartOffset(int offset) {
-/* 2870 */       this.fStartOffset = offset;
-/*      */     }
-/*      */     
-/*      */     public void rewind() {
-/* 2874 */       this.fOffset = this.fStartOffset;
-/*      */     }
-/*      */     
-/*      */     public int read() throws IOException {
-/* 2878 */       int b = 0;
-/* 2879 */       if (this.fOffset < this.fLength) {
-/* 2880 */         return this.fData[this.fOffset++] & 0xFF;
-/*      */       }
-/* 2882 */       if (this.fOffset == this.fEndOffset) {
-/* 2883 */         return -1;
-/*      */       }
-/* 2885 */       if (this.fOffset == this.fData.length) {
-/* 2886 */         byte[] newData = new byte[this.fOffset << 1];
-/* 2887 */         System.arraycopy(this.fData, 0, newData, 0, this.fOffset);
-/* 2888 */         this.fData = newData;
-/*      */       } 
-/* 2890 */       b = this.fInputStream.read();
-/* 2891 */       if (b == -1) {
-/* 2892 */         this.fEndOffset = this.fOffset;
-/* 2893 */         return -1;
-/*      */       } 
-/* 2895 */       this.fData[this.fLength++] = (byte)b;
-/* 2896 */       this.fOffset++;
-/* 2897 */       return b & 0xFF;
-/*      */     }
-/*      */     
-/*      */     public int read(byte[] b, int off, int len) throws IOException {
-/* 2901 */       int bytesLeft = this.fLength - this.fOffset;
-/* 2902 */       if (bytesLeft == 0) {
-/* 2903 */         if (this.fOffset == this.fEndOffset) {
-/* 2904 */           return -1;
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 2912 */         if (XMLEntityManager.this.fCurrentEntity.mayReadChunks || !XMLEntityManager.this.fCurrentEntity.xmlDeclChunkRead) {
-/*      */           
-/* 2914 */           if (!XMLEntityManager.this.fCurrentEntity.xmlDeclChunkRead) {
-/*      */             
-/* 2916 */             XMLEntityManager.this.fCurrentEntity.xmlDeclChunkRead = true;
-/* 2917 */             len = 28;
-/*      */           } 
-/* 2919 */           return this.fInputStream.read(b, off, len);
-/*      */         } 
-/*      */         
-/* 2922 */         int returnedVal = read();
-/* 2923 */         if (returnedVal == -1) {
-/* 2924 */           this.fEndOffset = this.fOffset;
-/* 2925 */           return -1;
-/*      */         } 
-/* 2927 */         b[off] = (byte)returnedVal;
-/* 2928 */         return 1;
-/*      */       } 
-/*      */       
-/* 2931 */       if (len < bytesLeft) {
-/* 2932 */         if (len <= 0) {
-/* 2933 */           return 0;
-/*      */         }
-/*      */       } else {
-/* 2936 */         len = bytesLeft;
-/*      */       } 
-/* 2938 */       if (b != null) {
-/* 2939 */         System.arraycopy(this.fData, this.fOffset, b, off, len);
-/*      */       }
-/* 2941 */       this.fOffset += len;
-/* 2942 */       return len;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public long skip(long n) throws IOException {
-/* 2948 */       if (n <= 0L) {
-/* 2949 */         return 0L;
-/*      */       }
-/* 2951 */       int bytesLeft = this.fLength - this.fOffset;
-/* 2952 */       if (bytesLeft == 0) {
-/* 2953 */         if (this.fOffset == this.fEndOffset) {
-/* 2954 */           return 0L;
-/*      */         }
-/* 2956 */         return this.fInputStream.skip(n);
-/*      */       } 
-/* 2958 */       if (n <= bytesLeft) {
-/* 2959 */         this.fOffset = (int)(this.fOffset + n);
-/* 2960 */         return n;
-/*      */       } 
-/* 2962 */       this.fOffset += bytesLeft;
-/* 2963 */       if (this.fOffset == this.fEndOffset) {
-/* 2964 */         return bytesLeft;
-/*      */       }
-/* 2966 */       n -= bytesLeft;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2975 */       return this.fInputStream.skip(n) + bytesLeft;
-/*      */     }
-/*      */     
-/*      */     public int available() throws IOException {
-/* 2979 */       int bytesLeft = this.fLength - this.fOffset;
-/* 2980 */       if (bytesLeft == 0) {
-/* 2981 */         if (this.fOffset == this.fEndOffset) {
-/* 2982 */           return -1;
-/*      */         }
-/* 2984 */         return XMLEntityManager.this.fCurrentEntity.mayReadChunks ? this.fInputStream.available() : 0;
-/*      */       } 
-/*      */       
-/* 2987 */       return bytesLeft;
-/*      */     }
-/*      */     
-/*      */     public void mark(int howMuch) {
-/* 2991 */       this.fMark = this.fOffset;
-/*      */     }
-/*      */     
-/*      */     public void reset() {
-/* 2995 */       this.fOffset = this.fMark;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean markSupported() {
-/* 3000 */       return true;
-/*      */     }
-/*      */     
-/*      */     public void close() throws IOException {
-/* 3004 */       if (this.fInputStream != null) {
-/* 3005 */         this.fInputStream.close();
-/* 3006 */         this.fInputStream = null;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void test() {
-/* 3014 */     this.fEntityStorage.addExternalEntity("entityUsecase1", null, "/space/home/stax/sun/6thJan2004/zephyr/data/test.txt", "/space/home/stax/sun/6thJan2004/zephyr/data/entity.xml");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 3019 */     this.fEntityStorage.addInternalEntity("entityUsecase2", "<Test>value</Test>");
-/* 3020 */     this.fEntityStorage.addInternalEntity("entityUsecase3", "value3");
-/* 3021 */     this.fEntityStorage.addInternalEntity("text", "Hello World.");
-/* 3022 */     this.fEntityStorage.addInternalEntity("empty-element", "<foo/>");
-/* 3023 */     this.fEntityStorage.addInternalEntity("balanced-element", "<foo></foo>");
-/* 3024 */     this.fEntityStorage.addInternalEntity("balanced-element-with-text", "<foo>Hello, World</foo>");
-/* 3025 */     this.fEntityStorage.addInternalEntity("balanced-element-with-entity", "<foo>&text;</foo>");
-/* 3026 */     this.fEntityStorage.addInternalEntity("unbalanced-entity", "<foo>");
-/* 3027 */     this.fEntityStorage.addInternalEntity("recursive-entity", "<foo>&recursive-entity2;</foo>");
-/* 3028 */     this.fEntityStorage.addInternalEntity("recursive-entity2", "<bar>&recursive-entity3;</bar>");
-/* 3029 */     this.fEntityStorage.addInternalEntity("recursive-entity3", "<baz>&recursive-entity;</baz>");
-/* 3030 */     this.fEntityStorage.addInternalEntity("ch", "&#x00A9;");
-/* 3031 */     this.fEntityStorage.addInternalEntity("ch1", "&#84;");
-/* 3032 */     this.fEntityStorage.addInternalEntity("% ch2", "param");
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\XMLEntityManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl ;
+
+import com.sun.org.apache.xerces.internal.impl.io.ASCIIReader;
+import com.sun.org.apache.xerces.internal.impl.io.UCSReader;
+import com.sun.org.apache.xerces.internal.impl.io.UTF8Reader;
+import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
+import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
+import com.sun.org.apache.xerces.internal.util.*;
+import com.sun.org.apache.xerces.internal.util.URI;
+import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
+import com.sun.org.apache.xerces.internal.utils.XMLLimitAnalyzer;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xerces.internal.xni.Augmentations;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.*;
+import com.sun.xml.internal.stream.Entity;
+import com.sun.xml.internal.stream.StaxEntityResolverWrapper;
+import com.sun.xml.internal.stream.StaxXMLInputSource;
+import com.sun.xml.internal.stream.XMLEntityStorage;
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Stack;
+import javax.xml.stream.XMLInputFactory;
+
+
+/**
+ * Will keep track of current entity.
+ *
+ * The entity manager handles the registration of general and parameter
+ * entities; resolves entities; and starts entities. The entity manager
+ * is a central component in a standard parser configuration and this
+ * class works directly with the entity scanner to manage the underlying
+ * xni.
+ * <p>
+ * This component requires the following features and properties from the
+ * component manager that uses it:
+ * <ul>
+ *  <li>http://xml.org/sax/features/validation</li>
+ *  <li>http://xml.org/sax/features/external-general-entities</li>
+ *  <li>http://xml.org/sax/features/external-parameter-entities</li>
+ *  <li>http://apache.org/xml/features/allow-java-encodings</li>
+ *  <li>http://apache.org/xml/properties/internal/symbol-table</li>
+ *  <li>http://apache.org/xml/properties/internal/error-reporter</li>
+ *  <li>http://apache.org/xml/properties/internal/entity-resolver</li>
+ * </ul>
+ *
+ *
+ * @author Andy Clark, IBM
+ * @author Arnaud  Le Hors, IBM
+ * @author K.Venugopal SUN Microsystems
+ * @author Neeraj Bajaj SUN Microsystems
+ * @author Sunitha Reddy SUN Microsystems
+ * @version $Id: XMLEntityManager.java,v 1.17 2010-11-01 04:39:41 joehw Exp $
+ */
+public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
+
+    //
+    // Constants
+    //
+
+    /** Default buffer size (2048). */
+    public static final int DEFAULT_BUFFER_SIZE = 8192;
+
+    /** Default buffer size before we've finished with the XMLDecl:  */
+    public static final int DEFAULT_XMLDECL_BUFFER_SIZE = 64;
+
+    /** Default internal entity buffer size (1024). */
+    public static final int DEFAULT_INTERNAL_BUFFER_SIZE = 1024;
+
+    // feature identifiers
+
+    /** Feature identifier: validation. */
+    protected static final String VALIDATION =
+            Constants.SAX_FEATURE_PREFIX + Constants.VALIDATION_FEATURE;
+
+    /**
+     * standard uri conformant (strict uri).
+     * http://apache.org/xml/features/standard-uri-conformant
+     */
+    protected boolean fStrictURI;
+
+
+    /** Feature identifier: external general entities. */
+    protected static final String EXTERNAL_GENERAL_ENTITIES =
+            Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_GENERAL_ENTITIES_FEATURE;
+
+    /** Feature identifier: external parameter entities. */
+    protected static final String EXTERNAL_PARAMETER_ENTITIES =
+            Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_PARAMETER_ENTITIES_FEATURE;
+
+    /** Feature identifier: allow Java encodings. */
+    protected static final String ALLOW_JAVA_ENCODINGS =
+            Constants.XERCES_FEATURE_PREFIX + Constants.ALLOW_JAVA_ENCODINGS_FEATURE;
+
+    /** Feature identifier: warn on duplicate EntityDef */
+    protected static final String WARN_ON_DUPLICATE_ENTITYDEF =
+            Constants.XERCES_FEATURE_PREFIX +Constants.WARN_ON_DUPLICATE_ENTITYDEF_FEATURE;
+
+    /** Feature identifier: load external DTD. */
+    protected static final String LOAD_EXTERNAL_DTD =
+            Constants.XERCES_FEATURE_PREFIX + Constants.LOAD_EXTERNAL_DTD_FEATURE;
+
+    // property identifiers
+
+    /** Property identifier: symbol table. */
+    protected static final String SYMBOL_TABLE =
+            Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    /** Property identifier: error reporter. */
+    protected static final String ERROR_REPORTER =
+            Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY;
+
+    /** Feature identifier: standard uri conformant */
+    protected static final String STANDARD_URI_CONFORMANT =
+            Constants.XERCES_FEATURE_PREFIX +Constants.STANDARD_URI_CONFORMANT_FEATURE;
+
+    /** Property identifier: entity resolver. */
+    protected static final String ENTITY_RESOLVER =
+            Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_RESOLVER_PROPERTY;
+
+    protected static final String STAX_ENTITY_RESOLVER =
+            Constants.XERCES_PROPERTY_PREFIX + Constants.STAX_ENTITY_RESOLVER_PROPERTY;
+
+    // property identifier:  ValidationManager
+    protected static final String VALIDATION_MANAGER =
+            Constants.XERCES_PROPERTY_PREFIX + Constants.VALIDATION_MANAGER_PROPERTY;
+
+    /** property identifier: buffer size. */
+    protected static final String BUFFER_SIZE =
+            Constants.XERCES_PROPERTY_PREFIX + Constants.BUFFER_SIZE_PROPERTY;
+
+    /** property identifier: security manager. */
+    protected static final String SECURITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
+
+    protected static final String PARSER_SETTINGS =
+        Constants.XERCES_FEATURE_PREFIX + Constants.PARSER_SETTINGS;
+
+    /** Property identifier: Security property manager. */
+    private static final String XML_SECURITY_PROPERTY_MANAGER =
+            Constants.XML_SECURITY_PROPERTY_MANAGER;
+
+    /** access external dtd: file protocol */
+    static final String EXTERNAL_ACCESS_DEFAULT = Constants.EXTERNAL_ACCESS_DEFAULT;
+
+    // recognized features and properties
+
+    /** Recognized features. */
+    private static final String[] RECOGNIZED_FEATURES = {
+                VALIDATION,
+                EXTERNAL_GENERAL_ENTITIES,
+                EXTERNAL_PARAMETER_ENTITIES,
+                ALLOW_JAVA_ENCODINGS,
+                WARN_ON_DUPLICATE_ENTITYDEF,
+                STANDARD_URI_CONFORMANT
+    };
+
+    /** Feature defaults. */
+    private static final Boolean[] FEATURE_DEFAULTS = {
+                null,
+                Boolean.TRUE,
+                Boolean.TRUE,
+                Boolean.TRUE,
+                Boolean.FALSE,
+                Boolean.FALSE
+    };
+
+    /** Recognized properties. */
+    private static final String[] RECOGNIZED_PROPERTIES = {
+                SYMBOL_TABLE,
+                ERROR_REPORTER,
+                ENTITY_RESOLVER,
+                VALIDATION_MANAGER,
+                BUFFER_SIZE,
+                SECURITY_MANAGER,
+                XML_SECURITY_PROPERTY_MANAGER
+    };
+
+    /** Property defaults. */
+    private static final Object[] PROPERTY_DEFAULTS = {
+                null,
+                null,
+                null,
+                null,
+                new Integer(DEFAULT_BUFFER_SIZE),
+                null,
+                null
+    };
+
+    private static final String XMLEntity = "[xml]".intern();
+    private static final String DTDEntity = "[dtd]".intern();
+
+    // debugging
+
+    /**
+     * Debug printing of buffer. This debugging flag works best when you
+     * resize the DEFAULT_BUFFER_SIZE down to something reasonable like
+     * 64 characters.
+     */
+    private static final boolean DEBUG_BUFFER = false;
+
+    /** warn on duplicate Entity declaration.
+     *  http://apache.org/xml/features/warn-on-duplicate-entitydef
+     */
+    protected boolean fWarnDuplicateEntityDef;
+
+    /** Debug some basic entities. */
+    private static final boolean DEBUG_ENTITIES = false;
+
+    /** Debug switching readers for encodings. */
+    private static final boolean DEBUG_ENCODINGS = false;
+
+    // should be diplayed trace resolving messages
+    private static final boolean DEBUG_RESOLVER = false ;
+
+    //
+    // Data
+    //
+
+    // features
+
+    /**
+     * Validation. This feature identifier is:
+     * http://xml.org/sax/features/validation
+     */
+    protected boolean fValidation;
+
+    /**
+     * External general entities. This feature identifier is:
+     * http://xml.org/sax/features/external-general-entities
+     */
+    protected boolean fExternalGeneralEntities;
+
+    /**
+     * External parameter entities. This feature identifier is:
+     * http://xml.org/sax/features/external-parameter-entities
+     */
+    protected boolean fExternalParameterEntities;
+
+    /**
+     * Allow Java encoding names. This feature identifier is:
+     * http://apache.org/xml/features/allow-java-encodings
+     */
+    protected boolean fAllowJavaEncodings = true ;
+
+    /** Load external DTD. */
+    protected boolean fLoadExternalDTD = true;
+
+    // properties
+
+    /**
+     * Symbol table. This property identifier is:
+     * http://apache.org/xml/properties/internal/symbol-table
+     */
+    protected SymbolTable fSymbolTable;
+
+    /**
+     * Error reporter. This property identifier is:
+     * http://apache.org/xml/properties/internal/error-reporter
+     */
+    protected XMLErrorReporter fErrorReporter;
+
+    /**
+     * Entity resolver. This property identifier is:
+     * http://apache.org/xml/properties/internal/entity-resolver
+     */
+    protected XMLEntityResolver fEntityResolver;
+
+    /** Stax Entity Resolver. This property identifier is XMLInputFactory.ENTITY_RESOLVER */
+
+    protected StaxEntityResolverWrapper fStaxEntityResolver;
+
+    /** Property Manager. This is used from Stax */
+    protected PropertyManager fPropertyManager ;
+
+    /** StAX properties */
+    boolean fSupportDTD = true;
+    boolean fReplaceEntityReferences = true;
+    boolean fSupportExternalEntities = true;
+
+    /** used to restrict external access */
+    protected String fAccessExternalDTD = EXTERNAL_ACCESS_DEFAULT;
+
+    // settings
+
+    /**
+     * Validation manager. This property identifier is:
+     * http://apache.org/xml/properties/internal/validation-manager
+     */
+    protected ValidationManager fValidationManager;
+
+    // settings
+
+    /**
+     * Buffer size. We get this value from a property. The default size
+     * is used if the input buffer size property is not specified.
+     * REVISIT: do we need a property for internal entity buffer size?
+     */
+    protected int fBufferSize = DEFAULT_BUFFER_SIZE;
+
+    /** Security Manager */
+    protected XMLSecurityManager fSecurityManager = null;
+
+    protected XMLLimitAnalyzer fLimitAnalyzer = null;
+
+    protected int entityExpansionIndex;
+
+    /**
+     * True if the document entity is standalone. This should really
+     * only be set by the document source (e.g. XMLDocumentScanner).
+     */
+    protected boolean fStandalone;
+
+    // are the entities being parsed in the external subset?
+    // NOTE:  this *is not* the same as whether they're external entities!
+    protected boolean fInExternalSubset = false;
+
+
+    // handlers
+    /** Entity handler. */
+    protected XMLEntityHandler fEntityHandler;
+
+    /** Current entity scanner */
+    protected XMLEntityScanner fEntityScanner ;
+
+    /** XML 1.0 entity scanner. */
+    protected XMLEntityScanner fXML10EntityScanner;
+
+    /** XML 1.1 entity scanner. */
+    protected XMLEntityScanner fXML11EntityScanner;
+
+    /** count of entities expanded: */
+    protected int fEntityExpansionCount = 0;
+
+    // entities
+
+    /** Entities. */
+    protected Map<String, Entity> fEntities = new HashMap<>();
+
+    /** Entity stack. */
+    protected Stack<Entity> fEntityStack = new Stack<>();
+
+    /** Current entity. */
+    protected Entity.ScannedEntity fCurrentEntity = null;
+
+    /** identify if the InputSource is created by a resolver */
+    boolean fISCreatedByResolver = false;
+
+    // shared context
+
+    protected XMLEntityStorage fEntityStorage ;
+
+    protected final Object [] defaultEncoding = new Object[]{"UTF-8", null};
+
+
+    // temp vars
+
+    /** Resource identifer. */
+    private final XMLResourceIdentifierImpl fResourceIdentifier = new XMLResourceIdentifierImpl();
+
+    /** Augmentations for entities. */
+    private final Augmentations fEntityAugs = new AugmentationsImpl();
+
+    /** Pool of character buffers. */
+    private CharacterBufferPool fBufferPool = new CharacterBufferPool(fBufferSize, DEFAULT_INTERNAL_BUFFER_SIZE);
+
+    //
+    // Constructors
+    //
+
+    /**
+     * If this constructor is used to create the object, reset() should be invoked on this object
+     */
+    public XMLEntityManager() {
+        //for entity managers not created by parsers
+        fSecurityManager = new XMLSecurityManager(true);
+        fEntityStorage = new XMLEntityStorage(this) ;
+        setScannerVersion(Constants.XML_VERSION_1_0);
+    } // <init>()
+
+    /** Default constructor. */
+    public XMLEntityManager(PropertyManager propertyManager) {
+        fPropertyManager = propertyManager ;
+        //pass a reference to current entity being scanned
+        //fEntityStorage = new XMLEntityStorage(fCurrentEntity) ;
+        fEntityStorage = new XMLEntityStorage(this) ;
+        fEntityScanner = new XMLEntityScanner(propertyManager, this) ;
+        reset(propertyManager);
+    } // <init>()
+
+    /**
+     * Adds an internal entity declaration.
+     * <p>
+     * <strong>Note:</strong> This method ignores subsequent entity
+     * declarations.
+     * <p>
+     * <strong>Note:</strong> The name should be a unique symbol. The
+     * SymbolTable can be used for this purpose.
+     *
+     * @param name The name of the entity.
+     * @param text The text of the entity.
+     *
+     * @see SymbolTable
+     */
+    public void addInternalEntity(String name, String text) {
+        if (!fEntities.containsKey(name)) {
+            Entity entity = new Entity.InternalEntity(name, text, fInExternalSubset);
+            fEntities.put(name, entity);
+        } else{
+            if(fWarnDuplicateEntityDef){
+                fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,
+                        "MSG_DUPLICATE_ENTITY_DEFINITION",
+                        new Object[]{ name },
+                        XMLErrorReporter.SEVERITY_WARNING );
+            }
+        }
+
+    } // addInternalEntity(String,String)
+
+    /**
+     * Adds an external entity declaration.
+     * <p>
+     * <strong>Note:</strong> This method ignores subsequent entity
+     * declarations.
+     * <p>
+     * <strong>Note:</strong> The name should be a unique symbol. The
+     * SymbolTable can be used for this purpose.
+     *
+     * @param name         The name of the entity.
+     * @param publicId     The public identifier of the entity.
+     * @param literalSystemId     The system identifier of the entity.
+     * @param baseSystemId The base system identifier of the entity.
+     *                     This is the system identifier of the entity
+     *                     where <em>the entity being added</em> and
+     *                     is used to expand the system identifier when
+     *                     the system identifier is a relative URI.
+     *                     When null the system identifier of the first
+     *                     external entity on the stack is used instead.
+     *
+     * @see SymbolTable
+     */
+    public void addExternalEntity(String name,
+            String publicId, String literalSystemId,
+            String baseSystemId) throws IOException {
+        if (!fEntities.containsKey(name)) {
+            if (baseSystemId == null) {
+                // search for the first external entity on the stack
+                int size = fEntityStack.size();
+                if (size == 0 && fCurrentEntity != null && fCurrentEntity.entityLocation != null) {
+                    baseSystemId = fCurrentEntity.entityLocation.getExpandedSystemId();
+                }
+                for (int i = size - 1; i >= 0 ; i--) {
+                    Entity.ScannedEntity externalEntity =
+                            (Entity.ScannedEntity)fEntityStack.elementAt(i);
+                    if (externalEntity.entityLocation != null && externalEntity.entityLocation.getExpandedSystemId() != null) {
+                        baseSystemId = externalEntity.entityLocation.getExpandedSystemId();
+                        break;
+                    }
+                }
+            }
+            Entity entity = new Entity.ExternalEntity(name,
+                    new XMLEntityDescriptionImpl(name, publicId, literalSystemId, baseSystemId,
+                    expandSystemId(literalSystemId, baseSystemId, false)), null, fInExternalSubset);
+            fEntities.put(name, entity);
+        } else{
+            if(fWarnDuplicateEntityDef){
+                fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,
+                        "MSG_DUPLICATE_ENTITY_DEFINITION",
+                        new Object[]{ name },
+                        XMLErrorReporter.SEVERITY_WARNING );
+            }
+        }
+
+    } // addExternalEntity(String,String,String,String)
+
+
+    /**
+     * Adds an unparsed entity declaration.
+     * <p>
+     * <strong>Note:</strong> This method ignores subsequent entity
+     * declarations.
+     * <p>
+     * <strong>Note:</strong> The name should be a unique symbol. The
+     * SymbolTable can be used for this purpose.
+     *
+     * @param name     The name of the entity.
+     * @param publicId The public identifier of the entity.
+     * @param systemId The system identifier of the entity.
+     * @param notation The name of the notation.
+     *
+     * @see SymbolTable
+     */
+    public void addUnparsedEntity(String name,
+            String publicId, String systemId,
+            String baseSystemId, String notation) {
+        if (!fEntities.containsKey(name)) {
+            Entity.ExternalEntity entity = new Entity.ExternalEntity(name,
+                    new XMLEntityDescriptionImpl(name, publicId, systemId, baseSystemId, null),
+                    notation, fInExternalSubset);
+            fEntities.put(name, entity);
+        } else{
+            if(fWarnDuplicateEntityDef){
+                fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,
+                        "MSG_DUPLICATE_ENTITY_DEFINITION",
+                        new Object[]{ name },
+                        XMLErrorReporter.SEVERITY_WARNING );
+            }
+        }
+    } // addUnparsedEntity(String,String,String,String)
+
+
+    /** get the entity storage object from entity manager */
+    public XMLEntityStorage getEntityStore(){
+        return fEntityStorage ;
+    }
+
+    /** return the entity responsible for reading the entity */
+    public XMLEntityScanner getEntityScanner(){
+        if(fEntityScanner == null) {
+            // default to 1.0
+            if(fXML10EntityScanner == null) {
+                fXML10EntityScanner = new XMLEntityScanner();
+            }
+            fXML10EntityScanner.reset(fSymbolTable, this, fErrorReporter);
+            fEntityScanner = fXML10EntityScanner;
+        }
+        return fEntityScanner;
+
+    }
+
+    public void setScannerVersion(short version) {
+
+        if(version == Constants.XML_VERSION_1_0) {
+            if(fXML10EntityScanner == null) {
+                fXML10EntityScanner = new XMLEntityScanner();
+            }
+            fXML10EntityScanner.reset(fSymbolTable, this, fErrorReporter);
+            fEntityScanner = fXML10EntityScanner;
+            fEntityScanner.setCurrentEntity(fCurrentEntity);
+        } else {
+            if(fXML11EntityScanner == null) {
+                fXML11EntityScanner = new XML11EntityScanner();
+            }
+            fXML11EntityScanner.reset(fSymbolTable, this, fErrorReporter);
+            fEntityScanner = fXML11EntityScanner;
+            fEntityScanner.setCurrentEntity(fCurrentEntity);
+        }
+
+    }
+
+    /**
+     * This method uses the passed-in XMLInputSource to make
+     * fCurrentEntity usable for reading.
+     *
+     * @param reference flag to indicate whether the entity is an Entity Reference.
+     * @param name  name of the entity (XML is it's the document entity)
+     * @param xmlInputSource    the input source, with sufficient information
+     *      to begin scanning characters.
+     * @param literal        True if this entity is started within a
+     *                       literal value.
+     * @param isExternal    whether this entity should be treated as an internal or external entity.
+     * @throws IOException  if anything can't be read
+     *  XNIException    If any parser-specific goes wrong.
+     * @return the encoding of the new entity or null if a character stream was employed
+     */
+    public String setupCurrentEntity(boolean reference, String name, XMLInputSource xmlInputSource,
+            boolean literal, boolean isExternal)
+            throws IOException, XNIException {
+        // get information
+
+        final String publicId = xmlInputSource.getPublicId();
+        String literalSystemId = xmlInputSource.getSystemId();
+        String baseSystemId = xmlInputSource.getBaseSystemId();
+        String encoding = xmlInputSource.getEncoding();
+        final boolean encodingExternallySpecified = (encoding != null);
+        Boolean isBigEndian = null;
+
+        // create reader
+        InputStream stream = null;
+        Reader reader = xmlInputSource.getCharacterStream();
+
+        // First chance checking strict URI
+        String expandedSystemId = expandSystemId(literalSystemId, baseSystemId, fStrictURI);
+        if (baseSystemId == null) {
+            baseSystemId = expandedSystemId;
+        }
+        if (reader == null) {
+            stream = xmlInputSource.getByteStream();
+            if (stream == null) {
+                URL location = new URL(expandedSystemId);
+                URLConnection connect = location.openConnection();
+                if (!(connect instanceof HttpURLConnection)) {
+                    stream = connect.getInputStream();
+                }
+                else {
+                    boolean followRedirects = true;
+
+                    // setup URLConnection if we have an HTTPInputSource
+                    if (xmlInputSource instanceof HTTPInputSource) {
+                        final HttpURLConnection urlConnection = (HttpURLConnection) connect;
+                        final HTTPInputSource httpInputSource = (HTTPInputSource) xmlInputSource;
+
+                        // set request properties
+                        Iterator<Map.Entry<String, String>> propIter = httpInputSource.getHTTPRequestProperties();
+                        while (propIter.hasNext()) {
+                            Map.Entry<String, String> entry = propIter.next();
+                            urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
+                        }
+
+                        // set preference for redirection
+                        followRedirects = httpInputSource.getFollowHTTPRedirects();
+                        if (!followRedirects) {
+                            setInstanceFollowRedirects(urlConnection, followRedirects);
+                        }
+                    }
+
+                    stream = connect.getInputStream();
+
+                    // REVISIT: If the URLConnection has external encoding
+                    // information, we should be reading it here. It's located
+                    // in the charset parameter of Content-Type. -- mrglavas
+
+                    if (followRedirects) {
+                        String redirect = connect.getURL().toString();
+                        // E43: Check if the URL was redirected, and then
+                        // update literal and expanded system IDs if needed.
+                        if (!redirect.equals(expandedSystemId)) {
+                            literalSystemId = redirect;
+                            expandedSystemId = redirect;
+                        }
+                    }
+                }
+            }
+
+            // wrap this stream in RewindableInputStream
+            stream = new RewindableInputStream(stream);
+
+            // perform auto-detect of encoding if necessary
+            if (encoding == null) {
+                // read first four bytes and determine encoding
+                final byte[] b4 = new byte[4];
+                int count = 0;
+                for (; count<4; count++ ) {
+                    b4[count] = (byte)stream.read();
+                }
+                if (count == 4) {
+                    Object [] encodingDesc = getEncodingName(b4, count);
+                    encoding = (String)(encodingDesc[0]);
+                    isBigEndian = (Boolean)(encodingDesc[1]);
+
+                    stream.reset();
+                    // Special case UTF-8 files with BOM created by Microsoft
+                    // tools. It's more efficient to consume the BOM than make
+                    // the reader perform extra checks. -Ac
+                    if (count > 2 && encoding.equals("UTF-8")) {
+                        int b0 = b4[0] & 0xFF;
+                        int b1 = b4[1] & 0xFF;
+                        int b2 = b4[2] & 0xFF;
+                        if (b0 == 0xEF && b1 == 0xBB && b2 == 0xBF) {
+                            // ignore first three bytes...
+                            stream.skip(3);
+                        }
+                    }
+                    reader = createReader(stream, encoding, isBigEndian);
+                } else {
+                    reader = createReader(stream, encoding, isBigEndian);
+                }
+            }
+
+            // use specified encoding
+            else {
+                encoding = encoding.toUpperCase(Locale.ENGLISH);
+
+                // If encoding is UTF-8, consume BOM if one is present.
+                if (encoding.equals("UTF-8")) {
+                    final int[] b3 = new int[3];
+                    int count = 0;
+                    for (; count < 3; ++count) {
+                        b3[count] = stream.read();
+                        if (b3[count] == -1)
+                            break;
+                    }
+                    if (count == 3) {
+                        if (b3[0] != 0xEF || b3[1] != 0xBB || b3[2] != 0xBF) {
+                            // First three bytes are not BOM, so reset.
+                            stream.reset();
+                        }
+                    } else {
+                        stream.reset();
+                    }
+                }
+                // If encoding is UTF-16, we still need to read the first four bytes
+                // in order to discover the byte order.
+                else if (encoding.equals("UTF-16")) {
+                    final int[] b4 = new int[4];
+                    int count = 0;
+                    for (; count < 4; ++count) {
+                        b4[count] = stream.read();
+                        if (b4[count] == -1)
+                            break;
+                    }
+                    stream.reset();
+
+                    String utf16Encoding = "UTF-16";
+                    if (count >= 2) {
+                        final int b0 = b4[0];
+                        final int b1 = b4[1];
+                        if (b0 == 0xFE && b1 == 0xFF) {
+                            // UTF-16, big-endian
+                            utf16Encoding = "UTF-16BE";
+                            isBigEndian = Boolean.TRUE;
+                        }
+                        else if (b0 == 0xFF && b1 == 0xFE) {
+                            // UTF-16, little-endian
+                            utf16Encoding = "UTF-16LE";
+                            isBigEndian = Boolean.FALSE;
+                        }
+                        else if (count == 4) {
+                            final int b2 = b4[2];
+                            final int b3 = b4[3];
+                            if (b0 == 0x00 && b1 == 0x3C && b2 == 0x00 && b3 == 0x3F) {
+                                // UTF-16, big-endian, no BOM
+                                utf16Encoding = "UTF-16BE";
+                                isBigEndian = Boolean.TRUE;
+                            }
+                            if (b0 == 0x3C && b1 == 0x00 && b2 == 0x3F && b3 == 0x00) {
+                                // UTF-16, little-endian, no BOM
+                                utf16Encoding = "UTF-16LE";
+                                isBigEndian = Boolean.FALSE;
+                            }
+                        }
+                    }
+                    reader = createReader(stream, utf16Encoding, isBigEndian);
+                }
+                // If encoding is UCS-4, we still need to read the first four bytes
+                // in order to discover the byte order.
+                else if (encoding.equals("ISO-10646-UCS-4")) {
+                    final int[] b4 = new int[4];
+                    int count = 0;
+                    for (; count < 4; ++count) {
+                        b4[count] = stream.read();
+                        if (b4[count] == -1)
+                            break;
+                    }
+                    stream.reset();
+
+                    // Ignore unusual octet order for now.
+                    if (count == 4) {
+                        // UCS-4, big endian (1234)
+                        if (b4[0] == 0x00 && b4[1] == 0x00 && b4[2] == 0x00 && b4[3] == 0x3C) {
+                            isBigEndian = Boolean.TRUE;
+                        }
+                        // UCS-4, little endian (1234)
+                        else if (b4[0] == 0x3C && b4[1] == 0x00 && b4[2] == 0x00 && b4[3] == 0x00) {
+                            isBigEndian = Boolean.FALSE;
+                        }
+                    }
+                }
+                // If encoding is UCS-2, we still need to read the first four bytes
+                // in order to discover the byte order.
+                else if (encoding.equals("ISO-10646-UCS-2")) {
+                    final int[] b4 = new int[4];
+                    int count = 0;
+                    for (; count < 4; ++count) {
+                        b4[count] = stream.read();
+                        if (b4[count] == -1)
+                            break;
+                    }
+                    stream.reset();
+
+                    if (count == 4) {
+                        // UCS-2, big endian
+                        if (b4[0] == 0x00 && b4[1] == 0x3C && b4[2] == 0x00 && b4[3] == 0x3F) {
+                            isBigEndian = Boolean.TRUE;
+                        }
+                        // UCS-2, little endian
+                        else if (b4[0] == 0x3C && b4[1] == 0x00 && b4[2] == 0x3F && b4[3] == 0x00) {
+                            isBigEndian = Boolean.FALSE;
+                        }
+                    }
+                }
+
+                reader = createReader(stream, encoding, isBigEndian);
+            }
+
+            // read one character at a time so we don't jump too far
+            // ahead, converting characters from the byte stream in
+            // the wrong encoding
+            if (DEBUG_ENCODINGS) {
+                System.out.println("$$$ no longer wrapping reader in OneCharReader");
+            }
+            //reader = new OneCharReader(reader);
+        }
+
+        // We've seen a new Reader.
+        // Push it on the stack so we can close it later.
+        //fOwnReaders.add(reader);
+
+        // push entity on stack
+        if (fCurrentEntity != null) {
+            fEntityStack.push(fCurrentEntity);
+        }
+
+        // create entity
+        /* if encoding is specified externally, 'encoding' information present
+         * in the prolog of the XML document is not considered. Hence, prolog can
+         * be read in Chunks of data instead of byte by byte.
+         */
+        fCurrentEntity = new Entity.ScannedEntity(reference, name,
+                new XMLResourceIdentifierImpl(publicId, literalSystemId, baseSystemId, expandedSystemId),
+                stream, reader, encoding, literal, encodingExternallySpecified, isExternal);
+        fCurrentEntity.setEncodingExternallySpecified(encodingExternallySpecified);
+        fEntityScanner.setCurrentEntity(fCurrentEntity);
+        fResourceIdentifier.setValues(publicId, literalSystemId, baseSystemId, expandedSystemId);
+        if (fLimitAnalyzer != null) {
+            fLimitAnalyzer.startEntity(name);
+        }
+        return encoding;
+    } //setupCurrentEntity(String, XMLInputSource, boolean, boolean):  String
+
+
+    /**
+     * Checks whether an entity given by name is external.
+     *
+     * @param entityName The name of the entity to check.
+     * @return True if the entity is external, false otherwise
+     * (including when the entity is not declared).
+     */
+    public boolean isExternalEntity(String entityName) {
+
+        Entity entity = fEntities.get(entityName);
+        if (entity == null) {
+            return false;
+        }
+        return entity.isExternal();
+    }
+
+    /**
+     * Checks whether the declaration of an entity given by name is
+     * // in the external subset.
+     *
+     * @param entityName The name of the entity to check.
+     * @return True if the entity was declared in the external subset, false otherwise
+     *           (including when the entity is not declared).
+     */
+    public boolean isEntityDeclInExternalSubset(String entityName) {
+
+        Entity entity = fEntities.get(entityName);
+        if (entity == null) {
+            return false;
+        }
+        return entity.isEntityDeclInExternalSubset();
+    }
+
+
+
+    //
+    // Public methods
+    //
+
+    /**
+     * Sets whether the document entity is standalone.
+     *
+     * @param standalone True if document entity is standalone.
+     */
+    public void setStandalone(boolean standalone) {
+        fStandalone = standalone;
+    }
+    // setStandalone(boolean)
+
+    /** Returns true if the document entity is standalone. */
+    public boolean isStandalone() {
+        return fStandalone;
+    }  //isStandalone():boolean
+
+    public boolean isDeclaredEntity(String entityName) {
+
+        Entity entity = fEntities.get(entityName);
+        return entity != null;
+    }
+
+    public boolean isUnparsedEntity(String entityName) {
+
+        Entity entity = fEntities.get(entityName);
+        if (entity == null) {
+            return false;
+        }
+        return entity.isUnparsed();
+    }
+
+
+
+    // this simply returns the fResourceIdentifier object;
+    // this should only be used with caution by callers that
+    // carefully manage the entity manager's behaviour, so that
+    // this doesn't returning meaningless or misleading data.
+    // @return  a reference to the current fResourceIdentifier object
+    public XMLResourceIdentifier getCurrentResourceIdentifier() {
+        return fResourceIdentifier;
+    }
+
+    /**
+     * Sets the entity handler. When an entity starts and ends, the
+     * entity handler is notified of the change.
+     *
+     * @param entityHandler The new entity handler.
+     */
+
+    public void setEntityHandler(com.sun.org.apache.xerces.internal.impl.XMLEntityHandler entityHandler) {
+        fEntityHandler = (XMLEntityHandler) entityHandler;
+    } // setEntityHandler(XMLEntityHandler)
+
+    //this function returns StaxXMLInputSource
+    public StaxXMLInputSource resolveEntityAsPerStax(XMLResourceIdentifier resourceIdentifier) throws java.io.IOException{
+
+        if(resourceIdentifier == null ) return null;
+
+        String publicId = resourceIdentifier.getPublicId();
+        String literalSystemId = resourceIdentifier.getLiteralSystemId();
+        String baseSystemId = resourceIdentifier.getBaseSystemId();
+        String expandedSystemId = resourceIdentifier.getExpandedSystemId();
+        // if no base systemId given, assume that it's relative
+        // to the systemId of the current scanned entity
+        // Sometimes the system id is not (properly) expanded.
+        // We need to expand the system id if:
+        // a. the expanded one was null; or
+        // b. the base system id was null, but becomes non-null from the current entity.
+        boolean needExpand = (expandedSystemId == null);
+        // REVISIT:  why would the baseSystemId ever be null?  if we
+        // didn't have to make this check we wouldn't have to reuse the
+        // fXMLResourceIdentifier object...
+        if (baseSystemId == null && fCurrentEntity != null && fCurrentEntity.entityLocation != null) {
+            baseSystemId = fCurrentEntity.entityLocation.getExpandedSystemId();
+            if (baseSystemId != null)
+                needExpand = true;
+        }
+        if (needExpand)
+            expandedSystemId = expandSystemId(literalSystemId, baseSystemId,false);
+
+        // give the entity resolver a chance
+        StaxXMLInputSource staxInputSource = null;
+        XMLInputSource xmlInputSource = null;
+
+        XMLResourceIdentifierImpl ri = null;
+
+        if (resourceIdentifier instanceof XMLResourceIdentifierImpl) {
+            ri = (XMLResourceIdentifierImpl)resourceIdentifier;
+        } else {
+            fResourceIdentifier.clear();
+            ri = fResourceIdentifier;
+        }
+        ri.setValues(publicId, literalSystemId, baseSystemId, expandedSystemId);
+        if(DEBUG_RESOLVER){
+            System.out.println("BEFORE Calling resolveEntity") ;
+        }
+
+        fISCreatedByResolver = false;
+        //either of Stax or Xerces would be null
+        if(fStaxEntityResolver != null){
+            staxInputSource = fStaxEntityResolver.resolveEntity(ri);
+            if(staxInputSource != null) {
+                fISCreatedByResolver = true;
+            }
+        }
+
+        if(fEntityResolver != null){
+            xmlInputSource = fEntityResolver.resolveEntity(ri);
+            if(xmlInputSource != null) {
+                fISCreatedByResolver = true;
+            }
+        }
+
+        if(xmlInputSource != null){
+            //wrap this XMLInputSource to StaxInputSource
+            staxInputSource = new StaxXMLInputSource(xmlInputSource, fISCreatedByResolver);
+        }
+
+        // do default resolution
+        //this works for both stax & Xerces, if staxInputSource is null, it means parser need to revert to default resolution
+        if (staxInputSource == null) {
+            // REVISIT: when systemId is null, I think we should return null.
+            //          is this the right solution? -SG
+            //if (systemId != null)
+            staxInputSource = new StaxXMLInputSource(new XMLInputSource(publicId, literalSystemId, baseSystemId));
+        }else if(staxInputSource.hasXMLStreamOrXMLEventReader()){
+            //Waiting for the clarification from EG. - nb
+        }
+
+        if (DEBUG_RESOLVER) {
+            System.err.println("XMLEntityManager.resolveEntity(" + publicId + ")");
+            System.err.println(" = " + xmlInputSource);
+        }
+
+        return staxInputSource;
+
+    }
+
+    /**
+     * Resolves the specified public and system identifiers. This
+     * method first attempts to resolve the entity based on the
+     * EntityResolver registered by the application. If no entity
+     * resolver is registered or if the registered entity handler
+     * is unable to resolve the entity, then default entity
+     * resolution will occur.
+     *
+     * @param publicId     The public identifier of the entity.
+     * @param systemId     The system identifier of the entity.
+     * @param baseSystemId The base system identifier of the entity.
+     *                     This is the system identifier of the current
+     *                     entity and is used to expand the system
+     *                     identifier when the system identifier is a
+     *                     relative URI.
+     *
+     * @return Returns an input source that wraps the resolved entity.
+     *         This method will never return null.
+     *
+     * @throws IOException  Thrown on i/o error.
+     * @throws XNIException Thrown by entity resolver to signal an error.
+     */
+    public XMLInputSource resolveEntity(XMLResourceIdentifier resourceIdentifier) throws IOException, XNIException {
+        if(resourceIdentifier == null ) return null;
+        String publicId = resourceIdentifier.getPublicId();
+        String literalSystemId = resourceIdentifier.getLiteralSystemId();
+        String baseSystemId = resourceIdentifier.getBaseSystemId();
+        String expandedSystemId = resourceIdentifier.getExpandedSystemId();
+
+        // if no base systemId given, assume that it's relative
+        // to the systemId of the current scanned entity
+        // Sometimes the system id is not (properly) expanded.
+        // We need to expand the system id if:
+        // a. the expanded one was null; or
+        // b. the base system id was null, but becomes non-null from the current entity.
+        boolean needExpand = (expandedSystemId == null);
+        // REVISIT:  why would the baseSystemId ever be null?  if we
+        // didn't have to make this check we wouldn't have to reuse the
+        // fXMLResourceIdentifier object...
+        if (baseSystemId == null && fCurrentEntity != null && fCurrentEntity.entityLocation != null) {
+            baseSystemId = fCurrentEntity.entityLocation.getExpandedSystemId();
+            if (baseSystemId != null)
+                needExpand = true;
+        }
+        if (needExpand)
+            expandedSystemId = expandSystemId(literalSystemId, baseSystemId,false);
+
+        // give the entity resolver a chance
+        XMLInputSource xmlInputSource = null;
+
+        if (fEntityResolver != null) {
+            resourceIdentifier.setBaseSystemId(baseSystemId);
+            resourceIdentifier.setExpandedSystemId(expandedSystemId);
+            xmlInputSource = fEntityResolver.resolveEntity(resourceIdentifier);
+        }
+
+        // do default resolution
+        // REVISIT: what's the correct behavior if the user provided an entity
+        // resolver (fEntityResolver != null), but resolveEntity doesn't return
+        // an input source (xmlInputSource == null)?
+        // do we do default resolution, or do we just return null? -SG
+        if (xmlInputSource == null) {
+            // REVISIT: when systemId is null, I think we should return null.
+            //          is this the right solution? -SG
+            //if (systemId != null)
+            xmlInputSource = new XMLInputSource(publicId, literalSystemId, baseSystemId);
+        }
+
+        if (DEBUG_RESOLVER) {
+            System.err.println("XMLEntityManager.resolveEntity(" + publicId + ")");
+            System.err.println(" = " + xmlInputSource);
+        }
+
+        return xmlInputSource;
+
+    } // resolveEntity(XMLResourceIdentifier):XMLInputSource
+
+    /**
+     * Starts a named entity.
+     *
+     * @param isGE flag to indicate whether the entity is a General Entity
+     * @param entityName The name of the entity to start.
+     * @param literal    True if this entity is started within a literal
+     *                   value.
+     *
+     * @throws IOException  Thrown on i/o error.
+     * @throws XNIException Thrown by entity handler to signal an error.
+     */
+    public void startEntity(boolean isGE, String entityName, boolean literal)
+    throws IOException, XNIException {
+
+        // was entity declared?
+        Entity entity = fEntityStorage.getEntity(entityName);
+        if (entity == null) {
+            if (fEntityHandler != null) {
+                String encoding = null;
+                fResourceIdentifier.clear();
+                fEntityAugs.removeAllItems();
+                fEntityAugs.putItem(Constants.ENTITY_SKIPPED, Boolean.TRUE);
+                fEntityHandler.startEntity(entityName, fResourceIdentifier, encoding, fEntityAugs);
+                fEntityAugs.removeAllItems();
+                fEntityAugs.putItem(Constants.ENTITY_SKIPPED, Boolean.TRUE);
+                fEntityHandler.endEntity(entityName, fEntityAugs);
+            }
+            return;
+        }
+
+        // should we skip external entities?
+        boolean external = entity.isExternal();
+        Entity.ExternalEntity externalEntity = null;
+        String extLitSysId = null, extBaseSysId = null, expandedSystemId = null;
+        if (external) {
+            externalEntity = (Entity.ExternalEntity)entity;
+            extLitSysId = (externalEntity.entityLocation != null ? externalEntity.entityLocation.getLiteralSystemId() : null);
+            extBaseSysId = (externalEntity.entityLocation != null ? externalEntity.entityLocation.getBaseSystemId() : null);
+            expandedSystemId = expandSystemId(extLitSysId, extBaseSysId);
+            boolean unparsed = entity.isUnparsed();
+            boolean parameter = entityName.startsWith("%");
+            boolean general = !parameter;
+            if (unparsed || (general && !fExternalGeneralEntities) ||
+                    (parameter && !fExternalParameterEntities) ||
+                    !fSupportDTD || !fSupportExternalEntities) {
+
+                if (fEntityHandler != null) {
+                    fResourceIdentifier.clear();
+                    final String encoding = null;
+                    fResourceIdentifier.setValues(
+                            (externalEntity.entityLocation != null ? externalEntity.entityLocation.getPublicId() : null),
+                            extLitSysId, extBaseSysId, expandedSystemId);
+                    fEntityAugs.removeAllItems();
+                    fEntityAugs.putItem(Constants.ENTITY_SKIPPED, Boolean.TRUE);
+                    fEntityHandler.startEntity(entityName, fResourceIdentifier, encoding, fEntityAugs);
+                    fEntityAugs.removeAllItems();
+                    fEntityAugs.putItem(Constants.ENTITY_SKIPPED, Boolean.TRUE);
+                    fEntityHandler.endEntity(entityName, fEntityAugs);
+                }
+                return;
+            }
+        }
+
+        // is entity recursive?
+        int size = fEntityStack.size();
+        for (int i = size; i >= 0; i--) {
+            Entity activeEntity = i == size
+                    ? fCurrentEntity
+                    : (Entity)fEntityStack.elementAt(i);
+            if (activeEntity.name == entityName) {
+                String path = entityName;
+                for (int j = i + 1; j < size; j++) {
+                    activeEntity = (Entity)fEntityStack.elementAt(j);
+                    path = path + " -> " + activeEntity.name;
+                }
+                path = path + " -> " + fCurrentEntity.name;
+                path = path + " -> " + entityName;
+                fErrorReporter.reportError(this.getEntityScanner(),XMLMessageFormatter.XML_DOMAIN,
+                        "RecursiveReference",
+                        new Object[] { entityName, path },
+                        XMLErrorReporter.SEVERITY_FATAL_ERROR);
+
+                        if (fEntityHandler != null) {
+                            fResourceIdentifier.clear();
+                            final String encoding = null;
+                            if (external) {
+                                fResourceIdentifier.setValues(
+                                        (externalEntity.entityLocation != null ? externalEntity.entityLocation.getPublicId() : null),
+                                        extLitSysId, extBaseSysId, expandedSystemId);
+                            }
+                            fEntityAugs.removeAllItems();
+                            fEntityAugs.putItem(Constants.ENTITY_SKIPPED, Boolean.TRUE);
+                            fEntityHandler.startEntity(entityName, fResourceIdentifier, encoding, fEntityAugs);
+                            fEntityAugs.removeAllItems();
+                            fEntityAugs.putItem(Constants.ENTITY_SKIPPED, Boolean.TRUE);
+                            fEntityHandler.endEntity(entityName, fEntityAugs);
+                        }
+
+                        return;
+            }
+        }
+
+        // resolve external entity
+        StaxXMLInputSource staxInputSource = null;
+        XMLInputSource xmlInputSource = null ;
+
+        if (external) {
+            staxInputSource = resolveEntityAsPerStax(externalEntity.entityLocation);
+            /** xxx:  Waiting from the EG
+             * //simply return if there was entity resolver registered and application
+             * //returns either XMLStreamReader or XMLEventReader.
+             * if(staxInputSource.hasXMLStreamOrXMLEventReader()) return ;
+             */
+            xmlInputSource = staxInputSource.getXMLInputSource() ;
+            if (!fISCreatedByResolver) {
+                //let the not-LoadExternalDTD or not-SupportDTD process to handle the situation
+                if (fLoadExternalDTD) {
+                    String accessError = SecuritySupport.checkAccess(expandedSystemId, fAccessExternalDTD, Constants.ACCESS_EXTERNAL_ALL);
+                    if (accessError != null) {
+                        fErrorReporter.reportError(this.getEntityScanner(),XMLMessageFormatter.XML_DOMAIN,
+                                "AccessExternalEntity",
+                                new Object[] { SecuritySupport.sanitizePath(expandedSystemId), accessError },
+                                XMLErrorReporter.SEVERITY_FATAL_ERROR);
+                    }
+                }
+            }
+        }
+        // wrap internal entity
+        else {
+            Entity.InternalEntity internalEntity = (Entity.InternalEntity)entity;
+            Reader reader = new StringReader(internalEntity.text);
+            xmlInputSource = new XMLInputSource(null, null, null, reader, null);
+        }
+
+        // start the entity
+        startEntity(isGE, entityName, xmlInputSource, literal, external);
+
+    } // startEntity(String,boolean)
+
+    /**
+     * Starts the document entity. The document entity has the "[xml]"
+     * pseudo-name.
+     *
+     * @param xmlInputSource The input source of the document entity.
+     *
+     * @throws IOException  Thrown on i/o error.
+     * @throws XNIException Thrown by entity handler to signal an error.
+     */
+    public void startDocumentEntity(XMLInputSource xmlInputSource)
+    throws IOException, XNIException {
+        startEntity(false, XMLEntity, xmlInputSource, false, true);
+    } // startDocumentEntity(XMLInputSource)
+
+    //xxx these methods are not required.
+    /**
+     * Starts the DTD entity. The DTD entity has the "[dtd]"
+     * pseudo-name.
+     *
+     * @param xmlInputSource The input source of the DTD entity.
+     *
+     * @throws IOException  Thrown on i/o error.
+     * @throws XNIException Thrown by entity handler to signal an error.
+     */
+    public void startDTDEntity(XMLInputSource xmlInputSource)
+    throws IOException, XNIException {
+        startEntity(false, DTDEntity, xmlInputSource, false, true);
+    } // startDTDEntity(XMLInputSource)
+
+    // indicate start of external subset so that
+    // location of entity decls can be tracked
+    public void startExternalSubset() {
+        fInExternalSubset = true;
+    }
+
+    public void endExternalSubset() {
+        fInExternalSubset = false;
+    }
+
+    /**
+     * Starts an entity.
+     * <p>
+     * This method can be used to insert an application defined XML
+     * entity stream into the parsing stream.
+     *
+     * @param isGE flag to indicate whether the entity is a General Entity
+     * @param name           The name of the entity.
+     * @param xmlInputSource The input source of the entity.
+     * @param literal        True if this entity is started within a
+     *                       literal value.
+     * @param isExternal    whether this entity should be treated as an internal or external entity.
+     *
+     * @throws IOException  Thrown on i/o error.
+     * @throws XNIException Thrown by entity handler to signal an error.
+     */
+    public void startEntity(boolean isGE, String name,
+            XMLInputSource xmlInputSource,
+            boolean literal, boolean isExternal)
+            throws IOException, XNIException {
+
+        String encoding = setupCurrentEntity(isGE, name, xmlInputSource, literal, isExternal);
+
+        //when entity expansion limit is set by the Application, we need to
+        //check for the entity expansion limit set by the parser, if number of entity
+        //expansions exceeds the entity expansion limit, parser will throw fatal error.
+        // Note that this represents the nesting level of open entities.
+        fEntityExpansionCount++;
+        if(fLimitAnalyzer != null) {
+           fLimitAnalyzer.addValue(entityExpansionIndex, name, 1);
+        }
+        if( fSecurityManager != null && fSecurityManager.isOverLimit(entityExpansionIndex, fLimitAnalyzer)){
+            fSecurityManager.debugPrint(fLimitAnalyzer);
+            fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,"EntityExpansionLimit",
+                    new Object[]{fSecurityManager.getLimitValueByIndex(entityExpansionIndex)},
+                                             XMLErrorReporter.SEVERITY_FATAL_ERROR );
+            // is there anything better to do than reset the counter?
+            // at least one can envision debugging applications where this might
+            // be useful...
+            fEntityExpansionCount = 0;
+        }
+
+        // call handler
+        if (fEntityHandler != null) {
+            fEntityHandler.startEntity(name, fResourceIdentifier, encoding, null);
+        }
+
+    } // startEntity(String,XMLInputSource)
+
+    /**
+     * Return the current entity being scanned. Current entity is SET using startEntity function.
+     * @return Entity.ScannedEntity
+     */
+
+    public Entity.ScannedEntity getCurrentEntity(){
+        return fCurrentEntity ;
+    }
+
+    /**
+     * Return the top level entity handled by this manager, or null
+     * if no entity was added.
+     */
+    public Entity.ScannedEntity getTopLevelEntity() {
+        return (Entity.ScannedEntity)
+            (fEntityStack.empty() ? null : fEntityStack.elementAt(0));
+    }
+
+
+    /**
+     * Close all opened InputStreams and Readers opened by this parser.
+     */
+    public void closeReaders() {
+        /** this call actually does nothing, readers are closed in the endEntity method
+         * through the current entity.
+         * The change seems to have happened during the jdk6 development with the
+         * addition of StAX
+        **/
+    }
+
+    public void endEntity() throws IOException, XNIException {
+
+        // call handler
+        if (DEBUG_BUFFER) {
+            System.out.print("(endEntity: ");
+            print();
+            System.out.println();
+        }
+        //pop the entity from the stack
+        Entity.ScannedEntity entity = fEntityStack.size() > 0 ? (Entity.ScannedEntity)fEntityStack.pop() : null ;
+
+        /** need to close the reader first since the program can end
+         *  prematurely (e.g. fEntityHandler.endEntity may throw exception)
+         *  leaving the reader open
+         */
+        //close the reader
+        if(fCurrentEntity != null){
+            //close the reader
+            try{
+                if (fLimitAnalyzer != null) {
+                    fLimitAnalyzer.endEntity(XMLSecurityManager.Limit.GENERAL_ENTITY_SIZE_LIMIT, fCurrentEntity.name);
+                    if (fCurrentEntity.name.equals("[xml]")) {
+                        fSecurityManager.debugPrint(fLimitAnalyzer);
+                    }
+                }
+                fCurrentEntity.close();
+            }catch(IOException ex){
+                throw new XNIException(ex);
+            }
+        }
+
+        if (fEntityHandler != null) {
+            //so this is the last opened entity, signal it to current fEntityHandler using Augmentation
+            if(entity == null){
+                fEntityAugs.removeAllItems();
+                fEntityAugs.putItem(Constants.LAST_ENTITY, Boolean.TRUE);
+                fEntityHandler.endEntity(fCurrentEntity.name, fEntityAugs);
+                fEntityAugs.removeAllItems();
+            }else{
+                fEntityHandler.endEntity(fCurrentEntity.name, null);
+            }
+        }
+        //check if it is a document entity
+        boolean documentEntity = fCurrentEntity.name == XMLEntity;
+
+        //set popped entity as current entity
+        fCurrentEntity = entity;
+        fEntityScanner.setCurrentEntity(fCurrentEntity);
+
+        //check if there are any entity left in the stack -- if there are
+        //no entries EOF has been reached.
+        // throw exception when it is the last entity but it is not a document entity
+
+        if(fCurrentEntity == null & !documentEntity){
+            throw new EOFException() ;
+        }
+
+        if (DEBUG_BUFFER) {
+            System.out.print(")endEntity: ");
+            print();
+            System.out.println();
+        }
+
+    } // endEntity()
+
+
+    //
+    // XMLComponent methods
+    //
+    public void reset(PropertyManager propertyManager){
+        // xerces properties
+        fSymbolTable = (SymbolTable)propertyManager.getProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY);
+        fErrorReporter = (XMLErrorReporter)propertyManager.getProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.ERROR_REPORTER_PROPERTY);
+        try {
+            fStaxEntityResolver = (StaxEntityResolverWrapper)propertyManager.getProperty(STAX_ENTITY_RESOLVER);
+        } catch (XMLConfigurationException e) {
+            fStaxEntityResolver = null;
+        }
+
+        fSupportDTD = ((Boolean)propertyManager.getProperty(XMLInputFactory.SUPPORT_DTD)).booleanValue();
+        fReplaceEntityReferences = ((Boolean)propertyManager.getProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES)).booleanValue();
+        fSupportExternalEntities = ((Boolean)propertyManager.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)).booleanValue();
+
+        // Zephyr feature ignore-external-dtd is the opposite of Xerces' load-external-dtd
+        fLoadExternalDTD = !((Boolean)propertyManager.getProperty(Constants.ZEPHYR_PROPERTY_PREFIX + Constants.IGNORE_EXTERNAL_DTD)).booleanValue();
+
+        // JAXP 1.5 feature
+        XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager) propertyManager.getProperty(XML_SECURITY_PROPERTY_MANAGER);
+        fAccessExternalDTD = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD);
+
+        fSecurityManager = (XMLSecurityManager)propertyManager.getProperty(SECURITY_MANAGER);
+
+        fLimitAnalyzer = new XMLLimitAnalyzer();
+        //reset fEntityStorage
+        fEntityStorage.reset(propertyManager);
+        //reset XMLEntityReaderImpl
+        fEntityScanner.reset(propertyManager);
+
+        // initialize state
+        //fStandalone = false;
+        fEntities.clear();
+        fEntityStack.removeAllElements();
+        fCurrentEntity = null;
+        fValidation = false;
+        fExternalGeneralEntities = true;
+        fExternalParameterEntities = true;
+        fAllowJavaEncodings = true ;
+    }
+
+    /**
+     * Resets the component. The component can query the component manager
+     * about any features and properties that affect the operation of the
+     * component.
+     *
+     * @param componentManager The component manager.
+     *
+     * @throws SAXException Thrown by component on initialization error.
+     *                      For example, if a feature or property is
+     *                      required for the operation of the component, the
+     *                      component manager may throw a
+     *                      SAXNotRecognizedException or a
+     *                      SAXNotSupportedException.
+     */
+    public void reset(XMLComponentManager componentManager)
+    throws XMLConfigurationException {
+
+        boolean parser_settings = componentManager.getFeature(PARSER_SETTINGS, true);
+
+        if (!parser_settings) {
+            // parser settings have not been changed
+            reset();
+            if(fEntityScanner != null){
+                fEntityScanner.reset(componentManager);
+            }
+            if(fEntityStorage != null){
+                fEntityStorage.reset(componentManager);
+            }
+            return;
+        }
+
+        // sax features
+        fValidation = componentManager.getFeature(VALIDATION, false);
+        fExternalGeneralEntities = componentManager.getFeature(EXTERNAL_GENERAL_ENTITIES, true);
+        fExternalParameterEntities = componentManager.getFeature(EXTERNAL_PARAMETER_ENTITIES, true);
+
+        // xerces features
+        fAllowJavaEncodings = componentManager.getFeature(ALLOW_JAVA_ENCODINGS, false);
+        fWarnDuplicateEntityDef = componentManager.getFeature(WARN_ON_DUPLICATE_ENTITYDEF, false);
+        fStrictURI = componentManager.getFeature(STANDARD_URI_CONFORMANT, false);
+        fLoadExternalDTD = componentManager.getFeature(LOAD_EXTERNAL_DTD, true);
+
+        // xerces properties
+        fSymbolTable = (SymbolTable)componentManager.getProperty(SYMBOL_TABLE);
+        fErrorReporter = (XMLErrorReporter)componentManager.getProperty(ERROR_REPORTER);
+        fEntityResolver = (XMLEntityResolver)componentManager.getProperty(ENTITY_RESOLVER, null);
+        fStaxEntityResolver = (StaxEntityResolverWrapper)componentManager.getProperty(STAX_ENTITY_RESOLVER, null);
+        fValidationManager = (ValidationManager)componentManager.getProperty(VALIDATION_MANAGER, null);
+        fSecurityManager = (XMLSecurityManager)componentManager.getProperty(SECURITY_MANAGER, null);
+        entityExpansionIndex = fSecurityManager.getIndex(Constants.JDK_ENTITY_EXPANSION_LIMIT);
+
+        //StAX Property
+        fSupportDTD = true;
+        fReplaceEntityReferences = true;
+        fSupportExternalEntities = true;
+
+        // JAXP 1.5 feature
+        XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager) componentManager.getProperty(XML_SECURITY_PROPERTY_MANAGER, null);
+        if (spm == null) {
+            spm = new XMLSecurityPropertyManager();
+        }
+        fAccessExternalDTD = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD);
+
+        //reset general state
+        reset();
+
+        fEntityScanner.reset(componentManager);
+        fEntityStorage.reset(componentManager);
+
+    } // reset(XMLComponentManager)
+
+    // reset general state.  Should not be called other than by
+    // a class acting as a component manager but not
+    // implementing that interface for whatever reason.
+    public void reset() {
+        fLimitAnalyzer = new XMLLimitAnalyzer();
+        // initialize state
+        fStandalone = false;
+        fEntities.clear();
+        fEntityStack.removeAllElements();
+        fEntityExpansionCount = 0;
+
+        fCurrentEntity = null;
+        // reset scanner
+        if(fXML10EntityScanner != null){
+            fXML10EntityScanner.reset(fSymbolTable, this, fErrorReporter);
+        }
+        if(fXML11EntityScanner != null) {
+            fXML11EntityScanner.reset(fSymbolTable, this, fErrorReporter);
+        }
+
+        // DEBUG
+        if (DEBUG_ENTITIES) {
+            addInternalEntity("text", "Hello, World.");
+            addInternalEntity("empty-element", "<foo/>");
+            addInternalEntity("balanced-element", "<foo></foo>");
+            addInternalEntity("balanced-element-with-text", "<foo>Hello, World</foo>");
+            addInternalEntity("balanced-element-with-entity", "<foo>&text;</foo>");
+            addInternalEntity("unbalanced-entity", "<foo>");
+            addInternalEntity("recursive-entity", "<foo>&recursive-entity2;</foo>");
+            addInternalEntity("recursive-entity2", "<bar>&recursive-entity3;</bar>");
+            addInternalEntity("recursive-entity3", "<baz>&recursive-entity;</baz>");
+            try {
+                addExternalEntity("external-text", null, "external-text.ent", "test/external-text.xml");
+                addExternalEntity("external-balanced-element", null, "external-balanced-element.ent", "test/external-balanced-element.xml");
+                addExternalEntity("one", null, "ent/one.ent", "test/external-entity.xml");
+                addExternalEntity("two", null, "ent/two.ent", "test/ent/one.xml");
+            }
+            catch (IOException ex) {
+                // should never happen
+            }
+        }
+
+        fEntityHandler = null;
+
+        // reset scanner
+        //if(fEntityScanner!=null)
+          //  fEntityScanner.reset(fSymbolTable, this,fErrorReporter);
+
+    }
+    /**
+     * Returns a list of feature identifiers that are recognized by
+     * this component. This method may return null if no features
+     * are recognized by this component.
+     */
+    public String[] getRecognizedFeatures() {
+        return (String[])(RECOGNIZED_FEATURES.clone());
+    } // getRecognizedFeatures():String[]
+
+    /**
+     * Sets the state of a feature. This method is called by the component
+     * manager any time after reset when a feature changes state.
+     * <p>
+     * <strong>Note:</strong> Components should silently ignore features
+     * that do not affect the operation of the component.
+     *
+     * @param featureId The feature identifier.
+     * @param state     The state of the feature.
+     *
+     * @throws SAXNotRecognizedException The component should not throw
+     *                                   this exception.
+     * @throws SAXNotSupportedException The component should not throw
+     *                                  this exception.
+     */
+    public void setFeature(String featureId, boolean state)
+    throws XMLConfigurationException {
+
+        // xerces features
+        if (featureId.startsWith(Constants.XERCES_FEATURE_PREFIX)) {
+            final int suffixLength = featureId.length() - Constants.XERCES_FEATURE_PREFIX.length();
+            if (suffixLength == Constants.ALLOW_JAVA_ENCODINGS_FEATURE.length() &&
+                featureId.endsWith(Constants.ALLOW_JAVA_ENCODINGS_FEATURE)) {
+                fAllowJavaEncodings = state;
+            }
+            if (suffixLength == Constants.LOAD_EXTERNAL_DTD_FEATURE.length() &&
+                featureId.endsWith(Constants.LOAD_EXTERNAL_DTD_FEATURE)) {
+                fLoadExternalDTD = state;
+                return;
+            }
+        }
+
+    } // setFeature(String,boolean)
+
+    /**
+     * Sets the value of a property. This method is called by the component
+     * manager any time after reset when a property changes value.
+     * <p>
+     * <strong>Note:</strong> Components should silently ignore properties
+     * that do not affect the operation of the component.
+     *
+     * @param propertyId The property identifier.
+     * @param value      The value of the property.
+     *
+     * @throws SAXNotRecognizedException The component should not throw
+     *                                   this exception.
+     * @throws SAXNotSupportedException The component should not throw
+     *                                  this exception.
+     */
+    public void setProperty(String propertyId, Object value){
+        // Xerces properties
+        if (propertyId.startsWith(Constants.XERCES_PROPERTY_PREFIX)) {
+            final int suffixLength = propertyId.length() - Constants.XERCES_PROPERTY_PREFIX.length();
+
+            if (suffixLength == Constants.SYMBOL_TABLE_PROPERTY.length() &&
+                propertyId.endsWith(Constants.SYMBOL_TABLE_PROPERTY)) {
+                fSymbolTable = (SymbolTable)value;
+                return;
+            }
+            if (suffixLength == Constants.ERROR_REPORTER_PROPERTY.length() &&
+                propertyId.endsWith(Constants.ERROR_REPORTER_PROPERTY)) {
+                fErrorReporter = (XMLErrorReporter)value;
+                return;
+            }
+            if (suffixLength == Constants.ENTITY_RESOLVER_PROPERTY.length() &&
+                propertyId.endsWith(Constants.ENTITY_RESOLVER_PROPERTY)) {
+                fEntityResolver = (XMLEntityResolver)value;
+                return;
+            }
+            if (suffixLength == Constants.BUFFER_SIZE_PROPERTY.length() &&
+                propertyId.endsWith(Constants.BUFFER_SIZE_PROPERTY)) {
+                Integer bufferSize = (Integer)value;
+                if (bufferSize != null &&
+                    bufferSize.intValue() > DEFAULT_XMLDECL_BUFFER_SIZE) {
+                    fBufferSize = bufferSize.intValue();
+                    fEntityScanner.setBufferSize(fBufferSize);
+                    fBufferPool.setExternalBufferSize(fBufferSize);
+                }
+            }
+            if (suffixLength == Constants.SECURITY_MANAGER_PROPERTY.length() &&
+                propertyId.endsWith(Constants.SECURITY_MANAGER_PROPERTY)) {
+                fSecurityManager = (XMLSecurityManager)value;
+            }
+        }
+
+        //JAXP 1.5 properties
+        if (propertyId.equals(XML_SECURITY_PROPERTY_MANAGER))
+        {
+            XMLSecurityPropertyManager spm = (XMLSecurityPropertyManager)value;
+            fAccessExternalDTD = spm.getValue(XMLSecurityPropertyManager.Property.ACCESS_EXTERNAL_DTD);
+        }
+    }
+
+    public void setLimitAnalyzer(XMLLimitAnalyzer fLimitAnalyzer) {
+        this.fLimitAnalyzer = fLimitAnalyzer;
+    }
+
+    /**
+     * Returns a list of property identifiers that are recognized by
+     * this component. This method may return null if no properties
+     * are recognized by this component.
+     */
+    public String[] getRecognizedProperties() {
+        return (String[])(RECOGNIZED_PROPERTIES.clone());
+    } // getRecognizedProperties():String[]
+    /**
+     * Returns the default state for a feature, or null if this
+     * component does not want to report a default value for this
+     * feature.
+     *
+     * @param featureId The feature identifier.
+     *
+     * @since Xerces 2.2.0
+     */
+    public Boolean getFeatureDefault(String featureId) {
+        for (int i = 0; i < RECOGNIZED_FEATURES.length; i++) {
+            if (RECOGNIZED_FEATURES[i].equals(featureId)) {
+                return FEATURE_DEFAULTS[i];
+            }
+        }
+        return null;
+    } // getFeatureDefault(String):Boolean
+
+    /**
+     * Returns the default state for a property, or null if this
+     * component does not want to report a default value for this
+     * property.
+     *
+     * @param propertyId The property identifier.
+     *
+     * @since Xerces 2.2.0
+     */
+    public Object getPropertyDefault(String propertyId) {
+        for (int i = 0; i < RECOGNIZED_PROPERTIES.length; i++) {
+            if (RECOGNIZED_PROPERTIES[i].equals(propertyId)) {
+                return PROPERTY_DEFAULTS[i];
+            }
+        }
+        return null;
+    } // getPropertyDefault(String):Object
+
+    //
+    // Public static methods
+    //
+
+    /**
+     * Expands a system id and returns the system id as a URI, if
+     * it can be expanded. A return value of null means that the
+     * identifier is already expanded. An exception thrown
+     * indicates a failure to expand the id.
+     *
+     * @param systemId The systemId to be expanded.
+     *
+     * @return Returns the URI string representing the expanded system
+     *         identifier. A null value indicates that the given
+     *         system identifier is already expanded.
+     *
+     */
+    public static String expandSystemId(String systemId) {
+        return expandSystemId(systemId, null);
+    } // expandSystemId(String):String
+
+    //
+    // Public static methods
+    //
+
+    // current value of the "user.dir" property
+    private static String gUserDir;
+    // cached URI object for the current value of the escaped "user.dir" property stored as a URI
+    private static URI gUserDirURI;
+    // which ASCII characters need to be escaped
+    private static boolean gNeedEscaping[] = new boolean[128];
+    // the first hex character if a character needs to be escaped
+    private static char gAfterEscaping1[] = new char[128];
+    // the second hex character if a character needs to be escaped
+    private static char gAfterEscaping2[] = new char[128];
+    private static char[] gHexChs = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                     '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    // initialize the above 3 arrays
+    static {
+        for (int i = 0; i <= 0x1f; i++) {
+            gNeedEscaping[i] = true;
+            gAfterEscaping1[i] = gHexChs[i >> 4];
+            gAfterEscaping2[i] = gHexChs[i & 0xf];
+        }
+        gNeedEscaping[0x7f] = true;
+        gAfterEscaping1[0x7f] = '7';
+        gAfterEscaping2[0x7f] = 'F';
+        char[] escChs = {' ', '<', '>', '#', '%', '"', '{', '}',
+                         '|', '\\', '^', '~', '[', ']', '`'};
+        int len = escChs.length;
+        char ch;
+        for (int i = 0; i < len; i++) {
+            ch = escChs[i];
+            gNeedEscaping[ch] = true;
+            gAfterEscaping1[ch] = gHexChs[ch >> 4];
+            gAfterEscaping2[ch] = gHexChs[ch & 0xf];
+        }
+    }
+
+    // To escape the "user.dir" system property, by using %HH to represent
+    // special ASCII characters: 0x00~0x1F, 0x7F, ' ', '<', '>', '#', '%'
+    // and '"'. It's a static method, so needs to be synchronized.
+    // this method looks heavy, but since the system property isn't expected
+    // to change often, so in most cases, we only need to return the URI
+    // that was escaped before.
+    // According to the URI spec, non-ASCII characters (whose value >= 128)
+    // need to be escaped too.
+    // REVISIT: don't know how to escape non-ASCII characters, especially
+    // which encoding to use. Leave them for now.
+    private static synchronized URI getUserDir() throws URI.MalformedURIException {
+        // get the user.dir property
+        String userDir = "";
+        try {
+            userDir = SecuritySupport.getSystemProperty("user.dir");
+        }
+        catch (SecurityException se) {
+        }
+
+        // return empty string if property value is empty string.
+        if (userDir.length() == 0)
+            return new URI("file", "", "", null, null);
+        // compute the new escaped value if the new property value doesn't
+        // match the previous one
+        if (gUserDirURI != null && userDir.equals(gUserDir)) {
+            return gUserDirURI;
+        }
+
+        // record the new value as the global property value
+        gUserDir = userDir;
+
+        char separator = java.io.File.separatorChar;
+        userDir = userDir.replace(separator, '/');
+
+        int len = userDir.length(), ch;
+        StringBuffer buffer = new StringBuffer(len*3);
+        // change C:/blah to /C:/blah
+        if (len >= 2 && userDir.charAt(1) == ':') {
+            ch = Character.toUpperCase(userDir.charAt(0));
+            if (ch >= 'A' && ch <= 'Z') {
+                buffer.append('/');
+            }
+        }
+
+        // for each character in the path
+        int i = 0;
+        for (; i < len; i++) {
+            ch = userDir.charAt(i);
+            // if it's not an ASCII character, break here, and use UTF-8 encoding
+            if (ch >= 128)
+                break;
+            if (gNeedEscaping[ch]) {
+                buffer.append('%');
+                buffer.append(gAfterEscaping1[ch]);
+                buffer.append(gAfterEscaping2[ch]);
+                // record the fact that it's escaped
+            }
+            else {
+                buffer.append((char)ch);
+            }
+        }
+
+        // we saw some non-ascii character
+        if (i < len) {
+            // get UTF-8 bytes for the remaining sub-string
+            byte[] bytes = null;
+            byte b;
+            try {
+                bytes = userDir.substring(i).getBytes("UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) {
+                // should never happen
+                return new URI("file", "", userDir, null, null);
+            }
+            len = bytes.length;
+
+            // for each byte
+            for (i = 0; i < len; i++) {
+                b = bytes[i];
+                // for non-ascii character: make it positive, then escape
+                if (b < 0) {
+                    ch = b + 256;
+                    buffer.append('%');
+                    buffer.append(gHexChs[ch >> 4]);
+                    buffer.append(gHexChs[ch & 0xf]);
+                }
+                else if (gNeedEscaping[b]) {
+                    buffer.append('%');
+                    buffer.append(gAfterEscaping1[b]);
+                    buffer.append(gAfterEscaping2[b]);
+                }
+                else {
+                    buffer.append((char)b);
+                }
+            }
+        }
+
+        // change blah/blah to blah/blah/
+        if (!userDir.endsWith("/"))
+            buffer.append('/');
+
+        gUserDirURI = new URI("file", "", buffer.toString(), null, null);
+
+        return gUserDirURI;
+    }
+
+    /**
+     * Absolutizes a URI using the current value
+     * of the "user.dir" property as the base URI. If
+     * the URI is already absolute, this is a no-op.
+     *
+     * @param uri the URI to absolutize
+     */
+    public static void absolutizeAgainstUserDir(URI uri)
+        throws URI.MalformedURIException {
+        uri.absolutize(getUserDir());
+    }
+
+    /**
+     * Expands a system id and returns the system id as a URI, if
+     * it can be expanded. A return value of null means that the
+     * identifier is already expanded. An exception thrown
+     * indicates a failure to expand the id.
+     *
+     * @param systemId The systemId to be expanded.
+     *
+     * @return Returns the URI string representing the expanded system
+     *         identifier. A null value indicates that the given
+     *         system identifier is already expanded.
+     *
+     */
+    public static String expandSystemId(String systemId, String baseSystemId) {
+
+        // check for bad parameters id
+        if (systemId == null || systemId.length() == 0) {
+            return systemId;
+        }
+        // if id already expanded, return
+        try {
+            URI uri = new URI(systemId);
+            if (uri != null) {
+                return systemId;
+            }
+        } catch (URI.MalformedURIException e) {
+            // continue on...
+        }
+        // normalize id
+        String id = fixURI(systemId);
+
+        // normalize base
+        URI base = null;
+        URI uri = null;
+        try {
+            if (baseSystemId == null || baseSystemId.length() == 0 ||
+                    baseSystemId.equals(systemId)) {
+                String dir = getUserDir().toString();
+                base = new URI("file", "", dir, null, null);
+            } else {
+                try {
+                    base = new URI(fixURI(baseSystemId));
+                } catch (URI.MalformedURIException e) {
+                    if (baseSystemId.indexOf(':') != -1) {
+                        // for xml schemas we might have baseURI with
+                        // a specified drive
+                        base = new URI("file", "", fixURI(baseSystemId), null, null);
+                    } else {
+                        String dir = getUserDir().toString();
+                        dir = dir + fixURI(baseSystemId);
+                        base = new URI("file", "", dir, null, null);
+                    }
+                }
+            }
+            // expand id
+            uri = new URI(base, id);
+        } catch (Exception e) {
+            // let it go through
+
+        }
+
+        if (uri == null) {
+            return systemId;
+        }
+        return uri.toString();
+
+    } // expandSystemId(String,String):String
+
+    /**
+     * Expands a system id and returns the system id as a URI, if
+     * it can be expanded. A return value of null means that the
+     * identifier is already expanded. An exception thrown
+     * indicates a failure to expand the id.
+     *
+     * @param systemId The systemId to be expanded.
+     *
+     * @return Returns the URI string representing the expanded system
+     *         identifier. A null value indicates that the given
+     *         system identifier is already expanded.
+     *
+     */
+    public static String expandSystemId(String systemId, String baseSystemId,
+                                        boolean strict)
+            throws URI.MalformedURIException {
+
+        // check if there is a system id before
+        // trying to expand it.
+        if (systemId == null) {
+            return null;
+        }
+
+        // system id has to be a valid URI
+        if (strict) {
+            try {
+                // if it's already an absolute one, return it
+                new URI(systemId);
+                return systemId;
+            }
+            catch (URI.MalformedURIException ex) {
+            }
+            URI base = null;
+            // if there isn't a base uri, use the working directory
+            if (baseSystemId == null || baseSystemId.length() == 0) {
+                base = new URI("file", "", getUserDir().toString(), null, null);
+            }
+            // otherwise, use the base uri
+            else {
+                try {
+                    base = new URI(baseSystemId);
+                }
+                catch (URI.MalformedURIException e) {
+                    // assume "base" is also a relative uri
+                    String dir = getUserDir().toString();
+                    dir = dir + baseSystemId;
+                    base = new URI("file", "", dir, null, null);
+                }
+            }
+            // absolutize the system id using the base
+            URI uri = new URI(base, systemId);
+            // return the string rep of the new uri (an absolute one)
+            return uri.toString();
+
+            // if any exception is thrown, it'll get thrown to the caller.
+        }
+
+        // Assume the URIs are well-formed. If it turns out they're not, try fixing them up.
+        try {
+             return expandSystemIdStrictOff(systemId, baseSystemId);
+        }
+        catch (URI.MalformedURIException e) {
+            /** Xerces URI rejects unicode, try java.net.URI
+             * this is not ideal solution, but it covers known cases which either
+             * Xerces URI or java.net.URI can handle alone
+             * will file bug against java.net.URI
+             */
+            try {
+                return expandSystemIdStrictOff1(systemId, baseSystemId);
+            } catch (URISyntaxException ex) {
+                // continue on...
+            }
+        }
+        // check for bad parameters id
+        if (systemId.length() == 0) {
+            return systemId;
+        }
+
+        // normalize id
+        String id = fixURI(systemId);
+
+        // normalize base
+        URI base = null;
+        URI uri = null;
+        try {
+            if (baseSystemId == null || baseSystemId.length() == 0 ||
+                baseSystemId.equals(systemId)) {
+                base = getUserDir();
+            }
+            else {
+                try {
+                    base = new URI(fixURI(baseSystemId).trim());
+                }
+                catch (URI.MalformedURIException e) {
+                    if (baseSystemId.indexOf(':') != -1) {
+                        // for xml schemas we might have baseURI with
+                        // a specified drive
+                        base = new URI("file", "", fixURI(baseSystemId).trim(), null, null);
+                    }
+                    else {
+                        base = new URI(getUserDir(), fixURI(baseSystemId));
+                    }
+                }
+             }
+             // expand id
+             uri = new URI(base, id.trim());
+        }
+        catch (Exception e) {
+            // let it go through
+
+        }
+
+        if (uri == null) {
+            return systemId;
+        }
+        return uri.toString();
+
+    } // expandSystemId(String,String,boolean):String
+
+    /**
+     * Helper method for expandSystemId(String,String,boolean):String
+     */
+    private static String expandSystemIdStrictOn(String systemId, String baseSystemId)
+        throws URI.MalformedURIException {
+
+        URI systemURI = new URI(systemId, true);
+        // If it's already an absolute one, return it
+        if (systemURI.isAbsoluteURI()) {
+            return systemId;
+        }
+
+        // If there isn't a base URI, use the working directory
+        URI baseURI = null;
+        if (baseSystemId == null || baseSystemId.length() == 0) {
+            baseURI = getUserDir();
+        }
+        else {
+            baseURI = new URI(baseSystemId, true);
+            if (!baseURI.isAbsoluteURI()) {
+                // assume "base" is also a relative uri
+                baseURI.absolutize(getUserDir());
+            }
+        }
+
+        // absolutize the system identifier using the base URI
+        systemURI.absolutize(baseURI);
+
+        // return the string rep of the new uri (an absolute one)
+        return systemURI.toString();
+
+        // if any exception is thrown, it'll get thrown to the caller.
+
+    } // expandSystemIdStrictOn(String,String):String
+
+    /**
+     * Attempt to set whether redirects will be followed for an <code>HttpURLConnection</code>.
+     * This may fail on earlier JDKs which do not support setting this preference.
+     */
+    public static void setInstanceFollowRedirects(HttpURLConnection urlCon, boolean followRedirects) {
+        try {
+            Method method = HttpURLConnection.class.getMethod("setInstanceFollowRedirects", new Class[] {Boolean.TYPE});
+            method.invoke(urlCon, new Object[] {followRedirects ? Boolean.TRUE : Boolean.FALSE});
+        }
+        // setInstanceFollowRedirects doesn't exist.
+        catch (Exception exc) {}
+    }
+
+
+    /**
+     * Helper method for expandSystemId(String,String,boolean):String
+     */
+    private static String expandSystemIdStrictOff(String systemId, String baseSystemId)
+        throws URI.MalformedURIException {
+
+        URI systemURI = new URI(systemId, true);
+        // If it's already an absolute one, return it
+        if (systemURI.isAbsoluteURI()) {
+            if (systemURI.getScheme().length() > 1) {
+                return systemId;
+            }
+            /**
+             * If the scheme's length is only one character,
+             * it's likely that this was intended as a file
+             * path. Fixing this up in expandSystemId to
+             * maintain backwards compatibility.
+             */
+            throw new URI.MalformedURIException();
+        }
+
+        // If there isn't a base URI, use the working directory
+        URI baseURI = null;
+        if (baseSystemId == null || baseSystemId.length() == 0) {
+            baseURI = getUserDir();
+        }
+        else {
+            baseURI = new URI(baseSystemId, true);
+            if (!baseURI.isAbsoluteURI()) {
+                // assume "base" is also a relative uri
+                baseURI.absolutize(getUserDir());
+            }
+        }
+
+        // absolutize the system identifier using the base URI
+        systemURI.absolutize(baseURI);
+
+        // return the string rep of the new uri (an absolute one)
+        return systemURI.toString();
+
+        // if any exception is thrown, it'll get thrown to the caller.
+
+    } // expandSystemIdStrictOff(String,String):String
+
+    private static String expandSystemIdStrictOff1(String systemId, String baseSystemId)
+        throws URISyntaxException, URI.MalformedURIException {
+
+            java.net.URI systemURI = new java.net.URI(systemId);
+        // If it's already an absolute one, return it
+        if (systemURI.isAbsolute()) {
+            if (systemURI.getScheme().length() > 1) {
+                return systemId;
+            }
+            /**
+             * If the scheme's length is only one character,
+             * it's likely that this was intended as a file
+             * path. Fixing this up in expandSystemId to
+             * maintain backwards compatibility.
+             */
+            throw new URISyntaxException(systemId, "the scheme's length is only one character");
+        }
+
+        // If there isn't a base URI, use the working directory
+        URI baseURI = null;
+        if (baseSystemId == null || baseSystemId.length() == 0) {
+            baseURI = getUserDir();
+        }
+        else {
+            baseURI = new URI(baseSystemId, true);
+            if (!baseURI.isAbsoluteURI()) {
+                // assume "base" is also a relative uri
+                baseURI.absolutize(getUserDir());
+            }
+        }
+
+        // absolutize the system identifier using the base URI
+//        systemURI.absolutize(baseURI);
+        systemURI = (new java.net.URI(baseURI.toString())).resolve(systemURI);
+
+        // return the string rep of the new uri (an absolute one)
+        return systemURI.toString();
+
+        // if any exception is thrown, it'll get thrown to the caller.
+
+    } // expandSystemIdStrictOff(String,String):String
+
+    //
+    // Protected methods
+    //
+
+
+    /**
+     * Returns the IANA encoding name that is auto-detected from
+     * the bytes specified, with the endian-ness of that encoding where appropriate.
+     *
+     * @param b4    The first four bytes of the input.
+     * @param count The number of bytes actually read.
+     * @return a 2-element array:  the first element, an IANA-encoding string,
+     *  the second element a Boolean which is true iff the document is big endian, false
+     *  if it's little-endian, and null if the distinction isn't relevant.
+     */
+    protected Object[] getEncodingName(byte[] b4, int count) {
+
+        if (count < 2) {
+            return defaultEncoding;
+        }
+
+        // UTF-16, with BOM
+        int b0 = b4[0] & 0xFF;
+        int b1 = b4[1] & 0xFF;
+        if (b0 == 0xFE && b1 == 0xFF) {
+            // UTF-16, big-endian
+            return new Object [] {"UTF-16BE", new Boolean(true)};
+        }
+        if (b0 == 0xFF && b1 == 0xFE) {
+            // UTF-16, little-endian
+            return new Object [] {"UTF-16LE", new Boolean(false)};
+        }
+
+        // default to UTF-8 if we don't have enough bytes to make a
+        // good determination of the encoding
+        if (count < 3) {
+            return defaultEncoding;
+        }
+
+        // UTF-8 with a BOM
+        int b2 = b4[2] & 0xFF;
+        if (b0 == 0xEF && b1 == 0xBB && b2 == 0xBF) {
+            return defaultEncoding;
+        }
+
+        // default to UTF-8 if we don't have enough bytes to make a
+        // good determination of the encoding
+        if (count < 4) {
+            return defaultEncoding;
+        }
+
+        // other encodings
+        int b3 = b4[3] & 0xFF;
+        if (b0 == 0x00 && b1 == 0x00 && b2 == 0x00 && b3 == 0x3C) {
+            // UCS-4, big endian (1234)
+            return new Object [] {"ISO-10646-UCS-4", new Boolean(true)};
+        }
+        if (b0 == 0x3C && b1 == 0x00 && b2 == 0x00 && b3 == 0x00) {
+            // UCS-4, little endian (4321)
+            return new Object [] {"ISO-10646-UCS-4", new Boolean(false)};
+        }
+        if (b0 == 0x00 && b1 == 0x00 && b2 == 0x3C && b3 == 0x00) {
+            // UCS-4, unusual octet order (2143)
+            // REVISIT: What should this be?
+            return new Object [] {"ISO-10646-UCS-4", null};
+        }
+        if (b0 == 0x00 && b1 == 0x3C && b2 == 0x00 && b3 == 0x00) {
+            // UCS-4, unusual octect order (3412)
+            // REVISIT: What should this be?
+            return new Object [] {"ISO-10646-UCS-4", null};
+        }
+        if (b0 == 0x00 && b1 == 0x3C && b2 == 0x00 && b3 == 0x3F) {
+            // UTF-16, big-endian, no BOM
+            // (or could turn out to be UCS-2...
+            // REVISIT: What should this be?
+            return new Object [] {"UTF-16BE", new Boolean(true)};
+        }
+        if (b0 == 0x3C && b1 == 0x00 && b2 == 0x3F && b3 == 0x00) {
+            // UTF-16, little-endian, no BOM
+            // (or could turn out to be UCS-2...
+            return new Object [] {"UTF-16LE", new Boolean(false)};
+        }
+        if (b0 == 0x4C && b1 == 0x6F && b2 == 0xA7 && b3 == 0x94) {
+            // EBCDIC
+            // a la xerces1, return CP037 instead of EBCDIC here
+            return new Object [] {"CP037", null};
+        }
+
+        return defaultEncoding;
+
+    } // getEncodingName(byte[],int):Object[]
+
+    /**
+     * Creates a reader capable of reading the given input stream in
+     * the specified encoding.
+     *
+     * @param inputStream  The input stream.
+     * @param encoding     The encoding name that the input stream is
+     *                     encoded using. If the user has specified that
+     *                     Java encoding names are allowed, then the
+     *                     encoding name may be a Java encoding name;
+     *                     otherwise, it is an ianaEncoding name.
+     * @param isBigEndian   For encodings (like uCS-4), whose names cannot
+     *                      specify a byte order, this tells whether the order is bigEndian.  null menas
+     *                      unknown or not relevant.
+     *
+     * @return Returns a reader.
+     */
+    protected Reader createReader(InputStream inputStream, String encoding, Boolean isBigEndian)
+    throws IOException {
+
+        // normalize encoding name
+        if (encoding == null) {
+            encoding = "UTF-8";
+        }
+
+        // try to use an optimized reader
+        String ENCODING = encoding.toUpperCase(Locale.ENGLISH);
+        if (ENCODING.equals("UTF-8")) {
+            if (DEBUG_ENCODINGS) {
+                System.out.println("$$$ creating UTF8Reader");
+            }
+            return new UTF8Reader(inputStream, fBufferSize, fErrorReporter.getMessageFormatter(XMLMessageFormatter.XML_DOMAIN), fErrorReporter.getLocale() );
+        }
+        if (ENCODING.equals("US-ASCII")) {
+            if (DEBUG_ENCODINGS) {
+                System.out.println("$$$ creating ASCIIReader");
+            }
+            return new ASCIIReader(inputStream, fBufferSize, fErrorReporter.getMessageFormatter(XMLMessageFormatter.XML_DOMAIN), fErrorReporter.getLocale());
+        }
+        if(ENCODING.equals("ISO-10646-UCS-4")) {
+            if(isBigEndian != null) {
+                boolean isBE = isBigEndian.booleanValue();
+                if(isBE) {
+                    return new UCSReader(inputStream, UCSReader.UCS4BE);
+                } else {
+                    return new UCSReader(inputStream, UCSReader.UCS4LE);
+                }
+            } else {
+                fErrorReporter.reportError(this.getEntityScanner(),XMLMessageFormatter.XML_DOMAIN,
+                        "EncodingByteOrderUnsupported",
+                        new Object[] { encoding },
+                        XMLErrorReporter.SEVERITY_FATAL_ERROR);
+            }
+        }
+        if(ENCODING.equals("ISO-10646-UCS-2")) {
+            if(isBigEndian != null) { // sould never happen with this encoding...
+                boolean isBE = isBigEndian.booleanValue();
+                if(isBE) {
+                    return new UCSReader(inputStream, UCSReader.UCS2BE);
+                } else {
+                    return new UCSReader(inputStream, UCSReader.UCS2LE);
+                }
+            } else {
+                fErrorReporter.reportError(this.getEntityScanner(),XMLMessageFormatter.XML_DOMAIN,
+                        "EncodingByteOrderUnsupported",
+                        new Object[] { encoding },
+                        XMLErrorReporter.SEVERITY_FATAL_ERROR);
+            }
+        }
+
+        // check for valid name
+        boolean validIANA = XMLChar.isValidIANAEncoding(encoding);
+        boolean validJava = XMLChar.isValidJavaEncoding(encoding);
+        if (!validIANA || (fAllowJavaEncodings && !validJava)) {
+            fErrorReporter.reportError(this.getEntityScanner(),XMLMessageFormatter.XML_DOMAIN,
+                    "EncodingDeclInvalid",
+                    new Object[] { encoding },
+                    XMLErrorReporter.SEVERITY_FATAL_ERROR);
+                    // NOTE: AndyH suggested that, on failure, we use ISO Latin 1
+                    //       because every byte is a valid ISO Latin 1 character.
+                    //       It may not translate correctly but if we failed on
+                    //       the encoding anyway, then we're expecting the content
+                    //       of the document to be bad. This will just prevent an
+                    //       invalid UTF-8 sequence to be detected. This is only
+                    //       important when continue-after-fatal-error is turned
+                    //       on. -Ac
+                    encoding = "ISO-8859-1";
+        }
+
+        // try to use a Java reader
+        String javaEncoding = EncodingMap.getIANA2JavaMapping(ENCODING);
+        if (javaEncoding == null) {
+            if(fAllowJavaEncodings) {
+                javaEncoding = encoding;
+            } else {
+                fErrorReporter.reportError(this.getEntityScanner(),XMLMessageFormatter.XML_DOMAIN,
+                        "EncodingDeclInvalid",
+                        new Object[] { encoding },
+                        XMLErrorReporter.SEVERITY_FATAL_ERROR);
+                        // see comment above.
+                        javaEncoding = "ISO8859_1";
+            }
+        }
+        if (DEBUG_ENCODINGS) {
+            System.out.print("$$$ creating Java InputStreamReader: encoding="+javaEncoding);
+            if (javaEncoding == encoding) {
+                System.out.print(" (IANA encoding)");
+            }
+            System.out.println();
+        }
+        return new BufferedReader( new InputStreamReader(inputStream, javaEncoding));
+
+    } // createReader(InputStream,String, Boolean): Reader
+
+
+    /**
+     * Return the public identifier for the current document event.
+     * <p>
+     * The return value is the public identifier of the document
+     * entity or of the external parsed entity in which the markup
+     * triggering the event appears.
+     *
+     * @return A string containing the public identifier, or
+     *         null if none is available.
+     */
+    public String getPublicId() {
+        return (fCurrentEntity != null && fCurrentEntity.entityLocation != null) ? fCurrentEntity.entityLocation.getPublicId() : null;
+    } // getPublicId():String
+
+    /**
+     * Return the expanded system identifier for the current document event.
+     * <p>
+     * The return value is the expanded system identifier of the document
+     * entity or of the external parsed entity in which the markup
+     * triggering the event appears.
+     * <p>
+     * If the system identifier is a URL, the parser must resolve it
+     * fully before passing it to the application.
+     *
+     * @return A string containing the expanded system identifier, or null
+     *         if none is available.
+     */
+    public String getExpandedSystemId() {
+        if (fCurrentEntity != null) {
+            if (fCurrentEntity.entityLocation != null &&
+                    fCurrentEntity.entityLocation.getExpandedSystemId() != null ) {
+                return fCurrentEntity.entityLocation.getExpandedSystemId();
+            } else {
+                // search for the first external entity on the stack
+                int size = fEntityStack.size();
+                for (int i = size - 1; i >= 0 ; i--) {
+                    Entity.ScannedEntity externalEntity =
+                            (Entity.ScannedEntity)fEntityStack.elementAt(i);
+
+                    if (externalEntity.entityLocation != null &&
+                            externalEntity.entityLocation.getExpandedSystemId() != null) {
+                        return externalEntity.entityLocation.getExpandedSystemId();
+                    }
+                }
+            }
+        }
+        return null;
+    } // getExpandedSystemId():String
+
+    /**
+     * Return the literal system identifier for the current document event.
+     * <p>
+     * The return value is the literal system identifier of the document
+     * entity or of the external parsed entity in which the markup
+     * triggering the event appears.
+     * <p>
+     * @return A string containing the literal system identifier, or null
+     *         if none is available.
+     */
+    public String getLiteralSystemId() {
+        if (fCurrentEntity != null) {
+            if (fCurrentEntity.entityLocation != null &&
+                    fCurrentEntity.entityLocation.getLiteralSystemId() != null ) {
+                return fCurrentEntity.entityLocation.getLiteralSystemId();
+            } else {
+                // search for the first external entity on the stack
+                int size = fEntityStack.size();
+                for (int i = size - 1; i >= 0 ; i--) {
+                    Entity.ScannedEntity externalEntity =
+                            (Entity.ScannedEntity)fEntityStack.elementAt(i);
+
+                    if (externalEntity.entityLocation != null &&
+                            externalEntity.entityLocation.getLiteralSystemId() != null) {
+                        return externalEntity.entityLocation.getLiteralSystemId();
+                    }
+                }
+            }
+        }
+        return null;
+    } // getLiteralSystemId():String
+
+    /**
+     * Return the line number where the current document event ends.
+     * <p>
+     * <strong>Warning:</strong> The return value from the method
+     * is intended only as an approximation for the sake of error
+     * reporting; it is not intended to provide sufficient information
+     * to edit the character content of the original XML document.
+     * <p>
+     * The return value is an approximation of the line number
+     * in the document entity or external parsed entity where the
+     * markup triggering the event appears.
+     * <p>
+     * If possible, the SAX driver should provide the line position
+     * of the first character after the text associated with the document
+     * event.  The first line in the document is line 1.
+     *
+     * @return The line number, or -1 if none is available.
+     */
+    public int getLineNumber() {
+        if (fCurrentEntity != null) {
+            if (fCurrentEntity.isExternal()) {
+                return fCurrentEntity.lineNumber;
+            } else {
+                // search for the first external entity on the stack
+                int size = fEntityStack.size();
+                for (int i=size-1; i>0 ; i--) {
+                    Entity.ScannedEntity firstExternalEntity = (Entity.ScannedEntity)fEntityStack.elementAt(i);
+                    if (firstExternalEntity.isExternal()) {
+                        return firstExternalEntity.lineNumber;
+                    }
+                }
+            }
+        }
+
+        return -1;
+
+    } // getLineNumber():int
+
+    /**
+     * Return the column number where the current document event ends.
+     * <p>
+     * <strong>Warning:</strong> The return value from the method
+     * is intended only as an approximation for the sake of error
+     * reporting; it is not intended to provide sufficient information
+     * to edit the character content of the original XML document.
+     * <p>
+     * The return value is an approximation of the column number
+     * in the document entity or external parsed entity where the
+     * markup triggering the event appears.
+     * <p>
+     * If possible, the SAX driver should provide the line position
+     * of the first character after the text associated with the document
+     * event.
+     * <p>
+     * If possible, the SAX driver should provide the line position
+     * of the first character after the text associated with the document
+     * event.  The first column in each line is column 1.
+     *
+     * @return The column number, or -1 if none is available.
+     */
+    public int getColumnNumber() {
+        if (fCurrentEntity != null) {
+            if (fCurrentEntity.isExternal()) {
+                return fCurrentEntity.columnNumber;
+            } else {
+                // search for the first external entity on the stack
+                int size = fEntityStack.size();
+                for (int i=size-1; i>0 ; i--) {
+                    Entity.ScannedEntity firstExternalEntity = (Entity.ScannedEntity)fEntityStack.elementAt(i);
+                    if (firstExternalEntity.isExternal()) {
+                        return firstExternalEntity.columnNumber;
+                    }
+                }
+            }
+        }
+
+        return -1;
+    } // getColumnNumber():int
+
+
+    //
+    // Protected static methods
+    //
+
+    /**
+     * Fixes a platform dependent filename to standard URI form.
+     *
+     * @param str The string to fix.
+     *
+     * @return Returns the fixed URI string.
+     */
+    protected static String fixURI(String str) {
+
+        // handle platform dependent strings
+        str = str.replace(java.io.File.separatorChar, '/');
+
+        // Windows fix
+        if (str.length() >= 2) {
+            char ch1 = str.charAt(1);
+            // change "C:blah" to "/C:blah"
+            if (ch1 == ':') {
+                char ch0 = Character.toUpperCase(str.charAt(0));
+                if (ch0 >= 'A' && ch0 <= 'Z') {
+                    str = "/" + str;
+                }
+            }
+            // change "//blah" to "file://blah"
+            else if (ch1 == '/' && str.charAt(0) == '/') {
+                str = "file:" + str;
+            }
+        }
+
+        // replace spaces in file names with %20.
+        // Original comment from JDK5: the following algorithm might not be
+        // very performant, but people who want to use invalid URI's have to
+        // pay the price.
+        int pos = str.indexOf(' ');
+        if (pos >= 0) {
+            StringBuilder sb = new StringBuilder(str.length());
+            // put characters before ' ' into the string builder
+            for (int i = 0; i < pos; i++)
+                sb.append(str.charAt(i));
+            // and %20 for the space
+            sb.append("%20");
+            // for the remamining part, also convert ' ' to "%20".
+            for (int i = pos+1; i < str.length(); i++) {
+                if (str.charAt(i) == ' ')
+                    sb.append("%20");
+                else
+                    sb.append(str.charAt(i));
+            }
+            str = sb.toString();
+        }
+
+        // done
+        return str;
+
+    } // fixURI(String):String
+
+
+    //
+    // Package visible methods
+    //
+    /** Prints the contents of the buffer. */
+    final void print() {
+        if (DEBUG_BUFFER) {
+            if (fCurrentEntity != null) {
+                System.out.print('[');
+                System.out.print(fCurrentEntity.count);
+                System.out.print(' ');
+                System.out.print(fCurrentEntity.position);
+                if (fCurrentEntity.count > 0) {
+                    System.out.print(" \"");
+                    for (int i = 0; i < fCurrentEntity.count; i++) {
+                        if (i == fCurrentEntity.position) {
+                            System.out.print('^');
+                        }
+                        char c = fCurrentEntity.ch[i];
+                        switch (c) {
+                            case '\n': {
+                                System.out.print("\\n");
+                                break;
+                            }
+                            case '\r': {
+                                System.out.print("\\r");
+                                break;
+                            }
+                            case '\t': {
+                                System.out.print("\\t");
+                                break;
+                            }
+                            case '\\': {
+                                System.out.print("\\\\");
+                                break;
+                            }
+                            default: {
+                                System.out.print(c);
+                            }
+                        }
+                    }
+                    if (fCurrentEntity.position == fCurrentEntity.count) {
+                        System.out.print('^');
+                    }
+                    System.out.print('"');
+                }
+                System.out.print(']');
+                System.out.print(" @ ");
+                System.out.print(fCurrentEntity.lineNumber);
+                System.out.print(',');
+                System.out.print(fCurrentEntity.columnNumber);
+            } else {
+                System.out.print("*NO CURRENT ENTITY*");
+            }
+        }
+    } // print()
+
+    /**
+     * Buffer used in entity manager to reuse character arrays instead
+     * of creating new ones every time.
+     *
+     * @xerces.internal
+     *
+     * @author Ankit Pasricha, IBM
+     */
+    private static class CharacterBuffer {
+
+        /** character buffer */
+        private char[] ch;
+
+        /** whether the buffer is for an external or internal scanned entity */
+        private boolean isExternal;
+
+        public CharacterBuffer(boolean isExternal, int size) {
+            this.isExternal = isExternal;
+            ch = new char[size];
+        }
+    }
+
+
+     /**
+     * Stores a number of character buffers and provides it to the entity
+     * manager to use when an entity is seen.
+     *
+     * @xerces.internal
+     *
+     * @author Ankit Pasricha, IBM
+     */
+    private static class CharacterBufferPool {
+
+        private static final int DEFAULT_POOL_SIZE = 3;
+
+        private CharacterBuffer[] fInternalBufferPool;
+        private CharacterBuffer[] fExternalBufferPool;
+
+        private int fExternalBufferSize;
+        private int fInternalBufferSize;
+        private int poolSize;
+
+        private int fInternalTop;
+        private int fExternalTop;
+
+        public CharacterBufferPool(int externalBufferSize, int internalBufferSize) {
+            this(DEFAULT_POOL_SIZE, externalBufferSize, internalBufferSize);
+        }
+
+        public CharacterBufferPool(int poolSize, int externalBufferSize, int internalBufferSize) {
+            fExternalBufferSize = externalBufferSize;
+            fInternalBufferSize = internalBufferSize;
+            this.poolSize = poolSize;
+            init();
+        }
+
+        /** Initializes buffer pool. **/
+        private void init() {
+            fInternalBufferPool = new CharacterBuffer[poolSize];
+            fExternalBufferPool = new CharacterBuffer[poolSize];
+            fInternalTop = -1;
+            fExternalTop = -1;
+        }
+
+        /** Retrieves buffer from pool. **/
+        public CharacterBuffer getBuffer(boolean external) {
+            if (external) {
+                if (fExternalTop > -1) {
+                    return (CharacterBuffer)fExternalBufferPool[fExternalTop--];
+                }
+                else {
+                    return new CharacterBuffer(true, fExternalBufferSize);
+                }
+            }
+            else {
+                if (fInternalTop > -1) {
+                    return (CharacterBuffer)fInternalBufferPool[fInternalTop--];
+                }
+                else {
+                    return new CharacterBuffer(false, fInternalBufferSize);
+                }
+            }
+        }
+
+        /** Returns buffer to pool. **/
+        public void returnToPool(CharacterBuffer buffer) {
+            if (buffer.isExternal) {
+                if (fExternalTop < fExternalBufferPool.length - 1) {
+                    fExternalBufferPool[++fExternalTop] = buffer;
+                }
+            }
+            else if (fInternalTop < fInternalBufferPool.length - 1) {
+                fInternalBufferPool[++fInternalTop] = buffer;
+            }
+        }
+
+        /** Sets the size of external buffers and dumps the old pool. **/
+        public void setExternalBufferSize(int bufferSize) {
+            fExternalBufferSize = bufferSize;
+            fExternalBufferPool = new CharacterBuffer[poolSize];
+            fExternalTop = -1;
+        }
+    }
+
+    /**
+    * This class wraps the byte inputstreams we're presented with.
+    * We need it because java.io.InputStreams don't provide
+    * functionality to reread processed bytes, and they have a habit
+    * of reading more than one character when you call their read()
+    * methods.  This means that, once we discover the true (declared)
+    * encoding of a document, we can neither backtrack to read the
+    * whole doc again nor start reading where we are with a new
+    * reader.
+    *
+    * This class allows rewinding an inputStream by allowing a mark
+    * to be set, and the stream reset to that position.  <strong>The
+    * class assumes that it needs to read one character per
+    * invocation when it's read() method is inovked, but uses the
+    * underlying InputStream's read(char[], offset length) method--it
+    * won't buffer data read this way!</strong>
+    *
+    * @xerces.internal
+    *
+    * @author Neil Graham, IBM
+    * @author Glenn Marcy, IBM
+    */
+
+    protected final class RewindableInputStream extends InputStream {
+
+        private InputStream fInputStream;
+        private byte[] fData;
+        private int fStartOffset;
+        private int fEndOffset;
+        private int fOffset;
+        private int fLength;
+        private int fMark;
+
+        public RewindableInputStream(InputStream is) {
+            fData = new byte[DEFAULT_XMLDECL_BUFFER_SIZE];
+            fInputStream = is;
+            fStartOffset = 0;
+            fEndOffset = -1;
+            fOffset = 0;
+            fLength = 0;
+            fMark = 0;
+        }
+
+        public void setStartOffset(int offset) {
+            fStartOffset = offset;
+        }
+
+        public void rewind() {
+            fOffset = fStartOffset;
+        }
+
+        public int read() throws IOException {
+            int b = 0;
+            if (fOffset < fLength) {
+                return fData[fOffset++] & 0xff;
+            }
+            if (fOffset == fEndOffset) {
+                return -1;
+            }
+            if (fOffset == fData.length) {
+                byte[] newData = new byte[fOffset << 1];
+                System.arraycopy(fData, 0, newData, 0, fOffset);
+                fData = newData;
+            }
+            b = fInputStream.read();
+            if (b == -1) {
+                fEndOffset = fOffset;
+                return -1;
+            }
+            fData[fLength++] = (byte)b;
+            fOffset++;
+            return b & 0xff;
+        }
+
+        public int read(byte[] b, int off, int len) throws IOException {
+            int bytesLeft = fLength - fOffset;
+            if (bytesLeft == 0) {
+                if (fOffset == fEndOffset) {
+                    return -1;
+                }
+
+                /**
+                 * //System.out.println("fCurrentEntitty = " + fCurrentEntity );
+                 * //System.out.println("fInputStream = " + fInputStream );
+                 * // better get some more for the voracious reader... */
+
+                if(fCurrentEntity.mayReadChunks || !fCurrentEntity.xmlDeclChunkRead) {
+
+                    if (!fCurrentEntity.xmlDeclChunkRead)
+                    {
+                        fCurrentEntity.xmlDeclChunkRead = true;
+                        len = Entity.ScannedEntity.DEFAULT_XMLDECL_BUFFER_SIZE;
+                    }
+                    return fInputStream.read(b, off, len);
+                }
+
+                int returnedVal = read();
+                if(returnedVal == -1) {
+                  fEndOffset = fOffset;
+                  return -1;
+                }
+                b[off] = (byte)returnedVal;
+                return 1;
+
+            }
+            if (len < bytesLeft) {
+                if (len <= 0) {
+                    return 0;
+                }
+            } else {
+                len = bytesLeft;
+            }
+            if (b != null) {
+                System.arraycopy(fData, fOffset, b, off, len);
+            }
+            fOffset += len;
+            return len;
+        }
+
+        public long skip(long n)
+        throws IOException {
+            int bytesLeft;
+            if (n <= 0) {
+                return 0;
+            }
+            bytesLeft = fLength - fOffset;
+            if (bytesLeft == 0) {
+                if (fOffset == fEndOffset) {
+                    return 0;
+                }
+                return fInputStream.skip(n);
+            }
+            if (n <= bytesLeft) {
+                fOffset += n;
+                return n;
+            }
+            fOffset += bytesLeft;
+            if (fOffset == fEndOffset) {
+                return bytesLeft;
+            }
+            n -= bytesLeft;
+            /*
+            * In a manner of speaking, when this class isn't permitting more
+            * than one byte at a time to be read, it is "blocking".  The
+            * available() method should indicate how much can be read without
+            * blocking, so while we're in this mode, it should only indicate
+            * that bytes in its buffer are available; otherwise, the result of
+            * available() on the underlying InputStream is appropriate.
+            */
+            return fInputStream.skip(n) + bytesLeft;
+        }
+
+        public int available() throws IOException {
+            int bytesLeft = fLength - fOffset;
+            if (bytesLeft == 0) {
+                if (fOffset == fEndOffset) {
+                    return -1;
+                }
+                return fCurrentEntity.mayReadChunks ? fInputStream.available()
+                : 0;
+            }
+            return bytesLeft;
+        }
+
+        public void mark(int howMuch) {
+            fMark = fOffset;
+        }
+
+        public void reset() {
+            fOffset = fMark;
+            //test();
+        }
+
+        public boolean markSupported() {
+            return true;
+        }
+
+        public void close() throws IOException {
+            if (fInputStream != null) {
+                fInputStream.close();
+                fInputStream = null;
+            }
+        }
+    } // end of RewindableInputStream class
+
+    public void test(){
+        //System.out.println("TESTING: Added familytree to entityManager");
+        //Usecase1
+        fEntityStorage.addExternalEntity("entityUsecase1",null,
+                "/space/home/stax/sun/6thJan2004/zephyr/data/test.txt",
+                "/space/home/stax/sun/6thJan2004/zephyr/data/entity.xml");
+
+        //Usecase2
+        fEntityStorage.addInternalEntity("entityUsecase2","<Test>value</Test>");
+        fEntityStorage.addInternalEntity("entityUsecase3","value3");
+        fEntityStorage.addInternalEntity("text", "Hello World.");
+        fEntityStorage.addInternalEntity("empty-element", "<foo/>");
+        fEntityStorage.addInternalEntity("balanced-element", "<foo></foo>");
+        fEntityStorage.addInternalEntity("balanced-element-with-text", "<foo>Hello, World</foo>");
+        fEntityStorage.addInternalEntity("balanced-element-with-entity", "<foo>&text;</foo>");
+        fEntityStorage.addInternalEntity("unbalanced-entity", "<foo>");
+        fEntityStorage.addInternalEntity("recursive-entity", "<foo>&recursive-entity2;</foo>");
+        fEntityStorage.addInternalEntity("recursive-entity2", "<bar>&recursive-entity3;</bar>");
+        fEntityStorage.addInternalEntity("recursive-entity3", "<baz>&recursive-entity;</baz>");
+        fEntityStorage.addInternalEntity("ch","&#x00A9;");
+        fEntityStorage.addInternalEntity("ch1","&#84;");
+        fEntityStorage.addInternalEntity("% ch2","param");
+    }
+
+} // class XMLEntityManager

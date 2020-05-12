@@ -1,17 +1,39 @@
-package org.omg.CORBA.portable;
+/*
+ * Copyright (c) 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
 
+package org.omg.CORBA.portable;
 import java.io.Serializable;
 
 public interface BoxedValueHelper {
-  Serializable read_value(InputStream paramInputStream);
-  
-  void write_value(OutputStream paramOutputStream, Serializable paramSerializable);
-  
-  String get_id();
+    Serializable read_value(InputStream is);
+    void write_value(OutputStream os, Serializable value);
+    String get_id();
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\portable\BoxedValueHelper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

@@ -1,154 +1,149 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils.resolver.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverContext;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ResolverFragment
-/*     */   extends ResourceResolverSpi
-/*     */ {
-/*  46 */   private static Logger log = Logger.getLogger(ResolverFragment.class.getName());
-/*     */ 
-/*     */   
-/*     */   public boolean engineIsThreadSafe() {
-/*  50 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureInput engineResolveURI(ResourceResolverContext paramResourceResolverContext) throws ResourceResolverException {
-/*     */     Element element;
-/*  63 */     Document document1 = paramResourceResolverContext.attr.getOwnerElement().getOwnerDocument();
-/*     */     
-/*  65 */     Document document2 = null;
-/*  66 */     if (paramResourceResolverContext.uriToResolve.equals("")) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  71 */       if (log.isLoggable(Level.FINE)) {
-/*  72 */         log.log(Level.FINE, "ResolverFragment with empty URI (means complete document)");
-/*     */       }
-/*  74 */       document2 = document1;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  84 */       String str = paramResourceResolverContext.uriToResolve.substring(1);
-/*     */       
-/*  86 */       element = document1.getElementById(str);
-/*  87 */       if (element == null) {
-/*  88 */         Object[] arrayOfObject = { str };
-/*  89 */         throw new ResourceResolverException("signature.Verification.MissingID", arrayOfObject, paramResourceResolverContext.attr, paramResourceResolverContext.baseUri);
-/*     */       } 
-/*     */ 
-/*     */       
-/*  93 */       if (paramResourceResolverContext.secureValidation) {
-/*  94 */         Element element1 = paramResourceResolverContext.attr.getOwnerDocument().getDocumentElement();
-/*  95 */         if (!XMLUtils.protectAgainstWrappingAttack(element1, str)) {
-/*  96 */           Object[] arrayOfObject = { str };
-/*  97 */           throw new ResourceResolverException("signature.Verification.MultipleIDs", arrayOfObject, paramResourceResolverContext.attr, paramResourceResolverContext.baseUri);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */       
-/* 102 */       if (log.isLoggable(Level.FINE)) {
-/* 103 */         log.log(Level.FINE, "Try to catch an Element with ID " + str + " and Element was " + element);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 109 */     XMLSignatureInput xMLSignatureInput = new XMLSignatureInput(element);
-/* 110 */     xMLSignatureInput.setExcludeComments(true);
-/*     */     
-/* 112 */     xMLSignatureInput.setMIMEType("text/xml");
-/* 113 */     if (paramResourceResolverContext.baseUri != null && paramResourceResolverContext.baseUri.length() > 0) {
-/* 114 */       xMLSignatureInput.setSourceURI(paramResourceResolverContext.baseUri.concat(paramResourceResolverContext.uriToResolve));
-/*     */     } else {
-/* 116 */       xMLSignatureInput.setSourceURI(paramResourceResolverContext.uriToResolve);
-/*     */     } 
-/* 118 */     return xMLSignatureInput;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean engineCanResolveURI(ResourceResolverContext paramResourceResolverContext) {
-/* 128 */     if (paramResourceResolverContext.uriToResolve == null) {
-/* 129 */       if (log.isLoggable(Level.FINE)) {
-/* 130 */         log.log(Level.FINE, "Quick fail for null uri");
-/*     */       }
-/* 132 */       return false;
-/*     */     } 
-/*     */     
-/* 135 */     if (paramResourceResolverContext.uriToResolve.equals("") || (paramResourceResolverContext.uriToResolve
-/* 136 */       .charAt(0) == '#' && !paramResourceResolverContext.uriToResolve.startsWith("#xpointer("))) {
-/*     */       
-/* 138 */       if (log.isLoggable(Level.FINE)) {
-/* 139 */         log.log(Level.FINE, "State I can resolve reference: \"" + paramResourceResolverContext.uriToResolve + "\"");
-/*     */       }
-/* 141 */       return true;
-/*     */     } 
-/* 143 */     if (log.isLoggable(Level.FINE)) {
-/* 144 */       log.log(Level.FINE, "Do not seem to be able to resolve reference: \"" + paramResourceResolverContext.uriToResolve + "\"");
-/*     */     }
-/* 146 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\resolver\implementations\ResolverFragment.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils.resolver.implementations;
+
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverContext;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverException;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+/**
+ * This resolver is used for resolving same-document URIs like URI="" of URI="#id".
+ *
+ * @author $Author: coheigea $
+ * @see <A HREF="http://www.w3.org/TR/xmldsig-core/#sec-ReferenceProcessingModel">The Reference processing model in the XML Signature spec</A>
+ * @see <A HREF="http://www.w3.org/TR/xmldsig-core/#sec-Same-Document">Same-Document URI-References in the XML Signature spec</A>
+ * @see <A HREF="http://www.ietf.org/rfc/rfc2396.txt">Section 4.2 of RFC 2396</A>
+ */
+public class ResolverFragment extends ResourceResolverSpi {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(ResolverFragment.class.getName());
+
+    @Override
+    public boolean engineIsThreadSafe() {
+        return true;
+    }
+
+    /**
+     * Method engineResolve
+     *
+     * @inheritDoc
+     * @param uri
+     * @param baseURI
+     */
+    public XMLSignatureInput engineResolveURI(ResourceResolverContext context)
+        throws ResourceResolverException {
+
+        Document doc = context.attr.getOwnerElement().getOwnerDocument();
+
+        Node selectedElem = null;
+        if (context.uriToResolve.equals("")) {
+            /*
+             * Identifies the node-set (minus any comment nodes) of the XML
+             * resource containing the signature
+             */
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "ResolverFragment with empty URI (means complete document)");
+            }
+            selectedElem = doc;
+        } else {
+            /*
+             * URI="#chapter1"
+             * Identifies a node-set containing the element with ID attribute
+             * value 'chapter1' of the XML resource containing the signature.
+             * XML Signature (and its applications) modify this node-set to
+             * include the element plus all descendants including namespaces and
+             * attributes -- but not comments.
+             */
+            String id = context.uriToResolve.substring(1);
+
+            selectedElem = doc.getElementById(id);
+            if (selectedElem == null) {
+                Object exArgs[] = { id };
+                throw new ResourceResolverException(
+                    "signature.Verification.MissingID", exArgs, context.attr, context.baseUri
+                );
+            }
+            if (context.secureValidation) {
+                Element start = context.attr.getOwnerDocument().getDocumentElement();
+                if (!XMLUtils.protectAgainstWrappingAttack(start, id)) {
+                    Object exArgs[] = { id };
+                    throw new ResourceResolverException(
+                        "signature.Verification.MultipleIDs", exArgs, context.attr, context.baseUri
+                    );
+                }
+            }
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE,
+                    "Try to catch an Element with ID " + id + " and Element was " + selectedElem
+                );
+            }
+        }
+
+        XMLSignatureInput result = new XMLSignatureInput(selectedElem);
+        result.setExcludeComments(true);
+
+        result.setMIMEType("text/xml");
+        if (context.baseUri != null && context.baseUri.length() > 0) {
+            result.setSourceURI(context.baseUri.concat(context.uriToResolve));
+        } else {
+            result.setSourceURI(context.uriToResolve);
+        }
+        return result;
+    }
+
+    /**
+     * Method engineCanResolve
+     * @inheritDoc
+     * @param uri
+     * @param baseURI
+     */
+    public boolean engineCanResolveURI(ResourceResolverContext context) {
+        if (context.uriToResolve == null) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Quick fail for null uri");
+            }
+            return false;
+        }
+
+        if (context.uriToResolve.equals("") ||
+            ((context.uriToResolve.charAt(0) == '#') && !context.uriToResolve.startsWith("#xpointer("))
+        ) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "State I can resolve reference: \"" + context.uriToResolve + "\"");
+            }
+            return true;
+        }
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Do not seem to be able to resolve reference: \"" + context.uriToResolve + "\"");
+        }
+        return false;
+    }
+
+}

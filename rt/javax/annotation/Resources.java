@@ -1,20 +1,46 @@
-package javax.annotation;
+/*
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package javax.annotation;
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
+
+/**
+ * This class is used to allow multiple resources declarations.
+ *
+ * @see javax.annotation.Resource
+ * @since Common Annotations 1.0
+ */
 
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Retention(RUNTIME)
+@Target(TYPE)
 public @interface Resources {
-  Resource[] value();
+   /**
+    * Array used for multiple resource declarations.
+    */
+   Resource[] value();
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\annotation\Resources.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

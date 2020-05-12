@@ -1,235 +1,229 @@
-/*     */ package com.sun.org.apache.xml.internal.security.keys.storage.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509SKI;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverException;
-/*     */ import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverSpi;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.Base64;
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.io.IOException;
-/*     */ import java.security.cert.Certificate;
-/*     */ import java.security.cert.CertificateException;
-/*     */ import java.security.cert.CertificateExpiredException;
-/*     */ import java.security.cert.CertificateFactory;
-/*     */ import java.security.cert.CertificateNotYetValidException;
-/*     */ import java.security.cert.X509Certificate;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CertsInFilesystemDirectoryResolver
-/*     */   extends StorageResolverSpi
-/*     */ {
-/*  52 */   private static Logger log = Logger.getLogger(CertsInFilesystemDirectoryResolver.class
-/*  53 */       .getName());
-/*     */ 
-/*     */ 
-/*     */   
-/*  57 */   private String merlinsCertificatesDir = null;
-/*     */ 
-/*     */   
-/*  60 */   private List<X509Certificate> certs = new ArrayList<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CertsInFilesystemDirectoryResolver(String paramString) throws StorageResolverException {
-/*  68 */     this.merlinsCertificatesDir = paramString;
-/*     */     
-/*  70 */     readCertsFromHarddrive();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readCertsFromHarddrive() throws StorageResolverException {
-/*  80 */     File file = new File(this.merlinsCertificatesDir);
-/*  81 */     ArrayList<String> arrayList = new ArrayList();
-/*  82 */     String[] arrayOfString = file.list();
-/*     */     
-/*  84 */     for (byte b1 = 0; b1 < arrayOfString.length; b1++) {
-/*  85 */       String str = arrayOfString[b1];
-/*     */       
-/*  87 */       if (str.endsWith(".crt")) {
-/*  88 */         arrayList.add(arrayOfString[b1]);
-/*     */       }
-/*     */     } 
-/*     */     
-/*  92 */     CertificateFactory certificateFactory = null;
-/*     */     
-/*     */     try {
-/*  95 */       certificateFactory = CertificateFactory.getInstance("X.509");
-/*  96 */     } catch (CertificateException certificateException) {
-/*  97 */       throw new StorageResolverException("empty", certificateException);
-/*     */     } 
-/*     */     
-/* 100 */     if (certificateFactory == null) {
-/* 101 */       throw new StorageResolverException("empty");
-/*     */     }
-/*     */     
-/* 104 */     for (byte b2 = 0; b2 < arrayList.size(); b2++) {
-/* 105 */       String str1 = file.getAbsolutePath() + File.separator + (String)arrayList.get(b2);
-/* 106 */       File file1 = new File(str1);
-/* 107 */       boolean bool = false;
-/* 108 */       String str2 = null;
-/*     */       
-/* 110 */       FileInputStream fileInputStream = null;
-/*     */       try {
-/* 112 */         fileInputStream = new FileInputStream(file1);
-/*     */         
-/* 114 */         X509Certificate x509Certificate = (X509Certificate)certificateFactory.generateCertificate(fileInputStream);
-/*     */ 
-/*     */         
-/* 117 */         x509Certificate.checkValidity();
-/* 118 */         this.certs.add(x509Certificate);
-/*     */         
-/* 120 */         str2 = x509Certificate.getSubjectX500Principal().getName();
-/* 121 */         bool = true;
-/* 122 */       } catch (FileNotFoundException fileNotFoundException) {
-/* 123 */         if (log.isLoggable(Level.FINE)) {
-/* 124 */           log.log(Level.FINE, "Could not add certificate from file " + str1, fileNotFoundException);
-/*     */         }
-/* 126 */       } catch (CertificateNotYetValidException certificateNotYetValidException) {
-/* 127 */         if (log.isLoggable(Level.FINE)) {
-/* 128 */           log.log(Level.FINE, "Could not add certificate from file " + str1, certificateNotYetValidException);
-/*     */         }
-/* 130 */       } catch (CertificateExpiredException certificateExpiredException) {
-/* 131 */         if (log.isLoggable(Level.FINE)) {
-/* 132 */           log.log(Level.FINE, "Could not add certificate from file " + str1, certificateExpiredException);
-/*     */         }
-/* 134 */       } catch (CertificateException certificateException) {
-/* 135 */         if (log.isLoggable(Level.FINE)) {
-/* 136 */           log.log(Level.FINE, "Could not add certificate from file " + str1, certificateException);
-/*     */         }
-/*     */       } finally {
-/*     */         try {
-/* 140 */           if (fileInputStream != null) {
-/* 141 */             fileInputStream.close();
-/*     */           }
-/* 143 */         } catch (IOException iOException) {
-/* 144 */           if (log.isLoggable(Level.FINE)) {
-/* 145 */             log.log(Level.FINE, "Could not add certificate from file " + str1, iOException);
-/*     */           }
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 150 */       if (bool && log.isLoggable(Level.FINE)) {
-/* 151 */         log.log(Level.FINE, "Added certificate: " + str2);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Iterator<Certificate> getIterator() {
-/* 158 */     return new FilesystemIterator(this.certs);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class FilesystemIterator
-/*     */     implements Iterator<Certificate>
-/*     */   {
-/* 167 */     List<X509Certificate> certs = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     int i;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public FilesystemIterator(List<X509Certificate> param1List) {
-/* 178 */       this.certs = param1List;
-/* 179 */       this.i = 0;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean hasNext() {
-/* 184 */       return (this.i < this.certs.size());
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Certificate next() {
-/* 189 */       return this.certs.get(this.i++);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void remove() {
-/* 197 */       throw new UnsupportedOperationException("Can't remove keys from KeyStore");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void main(String[] paramArrayOfString) throws Exception {
-/* 209 */     CertsInFilesystemDirectoryResolver certsInFilesystemDirectoryResolver = new CertsInFilesystemDirectoryResolver("data/ie/baltimore/merlin-examples/merlin-xmldsig-eighteen/certs");
-/*     */ 
-/*     */ 
-/*     */     
-/* 213 */     for (Iterator<Certificate> iterator = certsInFilesystemDirectoryResolver.getIterator(); iterator.hasNext(); ) {
-/* 214 */       X509Certificate x509Certificate = (X509Certificate)iterator.next();
-/*     */       
-/* 216 */       byte[] arrayOfByte = XMLX509SKI.getSKIBytesFromCert(x509Certificate);
-/*     */       
-/* 218 */       System.out.println();
-/* 219 */       System.out.println("Base64(SKI())=                 \"" + 
-/* 220 */           Base64.encode(arrayOfByte) + "\"");
-/* 221 */       System.out.println("cert.getSerialNumber()=        \"" + x509Certificate
-/* 222 */           .getSerialNumber().toString() + "\"");
-/* 223 */       System.out.println("cert.getSubjectX500Principal().getName()= \"" + x509Certificate
-/* 224 */           .getSubjectX500Principal().getName() + "\"");
-/* 225 */       System.out.println("cert.getIssuerX500Principal().getName()=  \"" + x509Certificate
-/* 226 */           .getIssuerX500Principal().getName() + "\"");
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\keys\storage\implementations\CertsInFilesystemDirectoryResolver.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.keys.storage.implementations;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverException;
+import com.sun.org.apache.xml.internal.security.keys.storage.StorageResolverSpi;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+
+/**
+ * This {@link StorageResolverSpi} makes all raw (binary) {@link X509Certificate}s
+ * which reside as files in a single directory available to the
+ * {@link com.sun.org.apache.xml.internal.security.keys.storage.StorageResolver}.
+ */
+public class CertsInFilesystemDirectoryResolver extends StorageResolverSpi {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(
+            CertsInFilesystemDirectoryResolver.class.getName()
+        );
+
+    /** Field merlinsCertificatesDir */
+    private String merlinsCertificatesDir = null;
+
+    /** Field certs */
+    private List<X509Certificate> certs = new ArrayList<X509Certificate>();
+
+    /**
+     * @param directoryName
+     * @throws StorageResolverException
+     */
+    public CertsInFilesystemDirectoryResolver(String directoryName)
+        throws StorageResolverException {
+        this.merlinsCertificatesDir = directoryName;
+
+        this.readCertsFromHarddrive();
+    }
+
+    /**
+     * Method readCertsFromHarddrive
+     *
+     * @throws StorageResolverException
+     */
+    private void readCertsFromHarddrive() throws StorageResolverException {
+
+        File certDir = new File(this.merlinsCertificatesDir);
+        List<String> al = new ArrayList<String>();
+        String[] names = certDir.list();
+
+        for (int i = 0; i < names.length; i++) {
+            String currentFileName = names[i];
+
+            if (currentFileName.endsWith(".crt")) {
+                al.add(names[i]);
+            }
+        }
+
+        CertificateFactory cf = null;
+
+        try {
+            cf = CertificateFactory.getInstance("X.509");
+        } catch (CertificateException ex) {
+            throw new StorageResolverException("empty", ex);
+        }
+
+        if (cf == null) {
+            throw new StorageResolverException("empty");
+        }
+
+        for (int i = 0; i < al.size(); i++) {
+            String filename = certDir.getAbsolutePath() + File.separator + al.get(i);
+            File file = new File(filename);
+            boolean added = false;
+            String dn = null;
+
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                X509Certificate cert =
+                    (X509Certificate) cf.generateCertificate(fis);
+
+                //add to ArrayList
+                cert.checkValidity();
+                this.certs.add(cert);
+
+                dn = cert.getSubjectX500Principal().getName();
+                added = true;
+            } catch (FileNotFoundException ex) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Could not add certificate from file " + filename, ex);
+                }
+            } catch (CertificateNotYetValidException ex) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Could not add certificate from file " + filename, ex);
+                }
+            } catch (CertificateExpiredException ex) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Could not add certificate from file " + filename, ex);
+                }
+            } catch (CertificateException ex) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Could not add certificate from file " + filename, ex);
+                }
+            } finally {
+                try {
+                    if (fis != null) {
+                        fis.close();
+                    }
+                } catch (IOException ex) {
+                    if (log.isLoggable(java.util.logging.Level.FINE)) {
+                        log.log(java.util.logging.Level.FINE, "Could not add certificate from file " + filename, ex);
+                    }
+                }
+            }
+
+            if (added && log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "Added certificate: " + dn);
+            }
+        }
+    }
+
+    /** @inheritDoc */
+    public Iterator<Certificate> getIterator() {
+        return new FilesystemIterator(this.certs);
+    }
+
+    /**
+     * Class FilesystemIterator
+     */
+    private static class FilesystemIterator implements Iterator<Certificate> {
+
+        /** Field certs */
+        List<X509Certificate> certs = null;
+
+        /** Field i */
+        int i;
+
+        /**
+         * Constructor FilesystemIterator
+         *
+         * @param certs
+         */
+        public FilesystemIterator(List<X509Certificate> certs) {
+            this.certs = certs;
+            this.i = 0;
+        }
+
+        /** @inheritDoc */
+        public boolean hasNext() {
+            return (this.i < this.certs.size());
+        }
+
+        /** @inheritDoc */
+        public Certificate next() {
+            return this.certs.get(this.i++);
+        }
+
+        /**
+         * Method remove
+         *
+         */
+        public void remove() {
+            throw new UnsupportedOperationException("Can't remove keys from KeyStore");
+        }
+    }
+
+    /**
+     * Method main
+     *
+     * @param unused
+     * @throws Exception
+     */
+    public static void main(String unused[]) throws Exception {
+
+        CertsInFilesystemDirectoryResolver krs =
+            new CertsInFilesystemDirectoryResolver(
+                "data/ie/baltimore/merlin-examples/merlin-xmldsig-eighteen/certs");
+
+        for (Iterator<Certificate> i = krs.getIterator(); i.hasNext(); ) {
+            X509Certificate cert = (X509Certificate) i.next();
+            byte[] ski =
+                com.sun.org.apache.xml.internal.security.keys.content.x509.XMLX509SKI.getSKIBytesFromCert(cert);
+
+            System.out.println();
+            System.out.println("Base64(SKI())=                 \""
+                               + Base64.encode(ski) + "\"");
+            System.out.println("cert.getSerialNumber()=        \""
+                               + cert.getSerialNumber().toString() + "\"");
+            System.out.println("cert.getSubjectX500Principal().getName()= \""
+                               + cert.getSubjectX500Principal().getName() + "\"");
+            System.out.println("cert.getIssuerX500Principal().getName()=  \""
+                               + cert.getIssuerX500Principal().getName() + "\"");
+        }
+    }
+}

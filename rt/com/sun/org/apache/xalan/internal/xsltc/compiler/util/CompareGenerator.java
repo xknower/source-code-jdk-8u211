@@ -1,126 +1,120 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ACONST_NULL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ILOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ISTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Instruction;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Type;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class CompareGenerator
-/*     */   extends MethodGenerator
-/*     */ {
-/*  44 */   private static int DOM_INDEX = 1;
-/*  45 */   private static int CURRENT_INDEX = 2;
-/*  46 */   private static int LEVEL_INDEX = 3;
-/*  47 */   private static int TRANSLET_INDEX = 4;
-/*  48 */   private static int LAST_INDEX = 5;
-/*  49 */   private int ITERATOR_INDEX = 6;
-/*     */   
-/*     */   private final Instruction _iloadCurrent;
-/*     */   
-/*     */   private final Instruction _istoreCurrent;
-/*     */   
-/*     */   private final Instruction _aloadDom;
-/*     */   
-/*     */   private final Instruction _iloadLast;
-/*     */   private final Instruction _aloadIterator;
-/*     */   private final Instruction _astoreIterator;
-/*     */   
-/*     */   public CompareGenerator(int access_flags, Type return_type, Type[] arg_types, String[] arg_names, String method_name, String class_name, InstructionList il, ConstantPoolGen cp) {
-/*  62 */     super(access_flags, return_type, arg_types, arg_names, method_name, class_name, il, cp);
-/*     */ 
-/*     */     
-/*  65 */     this._iloadCurrent = new ILOAD(CURRENT_INDEX);
-/*  66 */     this._istoreCurrent = new ISTORE(CURRENT_INDEX);
-/*  67 */     this._aloadDom = new ALOAD(DOM_INDEX);
-/*  68 */     this._iloadLast = new ILOAD(LAST_INDEX);
-/*     */ 
-/*     */     
-/*  71 */     LocalVariableGen iterator = addLocalVariable("iterator", 
-/*  72 */         Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */     
-/*  74 */     this.ITERATOR_INDEX = iterator.getIndex();
-/*  75 */     this._aloadIterator = new ALOAD(this.ITERATOR_INDEX);
-/*  76 */     this._astoreIterator = new ASTORE(this.ITERATOR_INDEX);
-/*  77 */     il.append(new ACONST_NULL());
-/*  78 */     il.append(storeIterator());
-/*     */   }
-/*     */   
-/*     */   public Instruction loadLastNode() {
-/*  82 */     return this._iloadLast;
-/*     */   }
-/*     */   
-/*     */   public Instruction loadCurrentNode() {
-/*  86 */     return this._iloadCurrent;
-/*     */   }
-/*     */   
-/*     */   public Instruction storeCurrentNode() {
-/*  90 */     return this._istoreCurrent;
-/*     */   }
-/*     */   
-/*     */   public Instruction loadDOM() {
-/*  94 */     return this._aloadDom;
-/*     */   }
-/*     */   
-/*     */   public int getHandlerIndex() {
-/*  98 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public int getIteratorIndex() {
-/* 102 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public Instruction storeIterator() {
-/* 106 */     return this._astoreIterator;
-/*     */   }
-/*     */   
-/*     */   public Instruction loadIterator() {
-/* 110 */     return this._aloadIterator;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getLocalIndex(String name) {
-/* 115 */     if (name.equals("current")) {
-/* 116 */       return CURRENT_INDEX;
-/*     */     }
-/* 118 */     return super.getLocalIndex(name);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\CompareGenerator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: CompareGenerator.java,v 1.2.4.1 2005/09/05 11:08:02 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import com.sun.org.apache.bcel.internal.generic.ACONST_NULL;
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.ILOAD;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
+import com.sun.org.apache.bcel.internal.generic.Instruction;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public final class CompareGenerator extends MethodGenerator {
+
+    private static int DOM_INDEX      = 1;
+    private static int CURRENT_INDEX  = 2;
+    private static int LEVEL_INDEX    = 3;
+    private static int TRANSLET_INDEX = 4;
+    private static int LAST_INDEX     = 5;
+    private int ITERATOR_INDEX = 6;
+
+    private final Instruction _iloadCurrent;
+    private final Instruction _istoreCurrent;
+    private final Instruction _aloadDom;
+    private final Instruction _iloadLast;
+    private final Instruction _aloadIterator;
+    private final Instruction _astoreIterator;
+
+    public CompareGenerator(int access_flags, Type return_type,
+                            Type[] arg_types, String[] arg_names,
+                            String method_name, String class_name,
+                            InstructionList il, ConstantPoolGen cp) {
+        super(access_flags, return_type, arg_types, arg_names, method_name,
+              class_name, il, cp);
+
+        _iloadCurrent = new ILOAD(CURRENT_INDEX);
+        _istoreCurrent = new ISTORE(CURRENT_INDEX);
+        _aloadDom = new ALOAD(DOM_INDEX);
+        _iloadLast = new ILOAD(LAST_INDEX);
+
+        LocalVariableGen iterator =
+            addLocalVariable("iterator",
+                             Util.getJCRefType(Constants.NODE_ITERATOR_SIG),
+                             null, null);
+        ITERATOR_INDEX = iterator.getIndex();
+        _aloadIterator = new ALOAD(ITERATOR_INDEX);
+        _astoreIterator = new ASTORE(ITERATOR_INDEX);
+        il.append(new ACONST_NULL());
+        il.append(storeIterator());
+    }
+
+    public Instruction loadLastNode() {
+        return _iloadLast;
+    }
+
+    public Instruction loadCurrentNode() {
+        return _iloadCurrent;
+    }
+
+    public Instruction storeCurrentNode() {
+        return _istoreCurrent;
+    }
+
+    public Instruction loadDOM() {
+        return _aloadDom;
+    }
+
+    public int getHandlerIndex() {
+        return INVALID_INDEX;           // not available
+    }
+
+    public int getIteratorIndex() {
+        return INVALID_INDEX;
+    }
+
+    public Instruction storeIterator() {
+        return _astoreIterator;
+    }
+
+    public Instruction loadIterator() {
+        return _aloadIterator;
+    }
+
+    //??? may not be used anymore
+    public int getLocalIndex(String name) {
+        if (name.equals("current")) {
+            return CURRENT_INDEX;
+        }
+        return super.getLocalIndex(name);
+    }
+}

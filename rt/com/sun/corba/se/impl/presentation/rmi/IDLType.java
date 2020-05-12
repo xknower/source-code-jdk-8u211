@@ -1,130 +1,124 @@
-/*     */ package com.sun.corba.se.impl.presentation.rmi;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class IDLType
-/*     */ {
-/*     */   private Class cl_;
-/*     */   private String[] modules_;
-/*     */   private String memberName_;
-/*     */   
-/*     */   public IDLType(Class paramClass, String[] paramArrayOfString, String paramString) {
-/*  43 */     this.cl_ = paramClass;
-/*  44 */     this.modules_ = paramArrayOfString;
-/*  45 */     this.memberName_ = paramString;
-/*     */   }
-/*     */   
-/*     */   public IDLType(Class paramClass, String paramString) {
-/*  49 */     this(paramClass, new String[0], paramString);
-/*     */   }
-/*     */   
-/*     */   public Class getJavaClass() {
-/*  53 */     return this.cl_;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String[] getModules() {
-/*  58 */     return this.modules_;
-/*     */   }
-/*     */   
-/*     */   public String makeConcatenatedName(char paramChar, boolean paramBoolean) {
-/*  62 */     StringBuffer stringBuffer = new StringBuffer();
-/*  63 */     for (byte b = 0; b < this.modules_.length; b++) {
-/*  64 */       String str = this.modules_[b];
-/*  65 */       if (b > 0) {
-/*  66 */         stringBuffer.append(paramChar);
-/*     */       }
-/*  68 */       if (paramBoolean && IDLNameTranslatorImpl.isIDLKeyword(str)) {
-/*  69 */         str = IDLNameTranslatorImpl.mangleIDLKeywordClash(str);
-/*     */       }
-/*  71 */       stringBuffer.append(str);
-/*     */     } 
-/*     */     
-/*  74 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getModuleName() {
-/*  85 */     return makeConcatenatedName('_', false);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getExceptionName() {
-/*  94 */     String str1 = makeConcatenatedName('/', true);
-/*     */     
-/*  96 */     String str2 = "Exception";
-/*  97 */     String str3 = this.memberName_;
-/*  98 */     if (str3.endsWith(str2)) {
-/*  99 */       int i = str3.length() - str2.length();
-/* 100 */       str3 = str3.substring(0, i);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 104 */     str3 = str3 + "Ex";
-/*     */     
-/* 106 */     if (str1.length() == 0) {
-/* 107 */       return "IDL:" + str3 + ":1.0";
-/*     */     }
-/* 109 */     return "IDL:" + str1 + '/' + str3 + ":1.0";
-/*     */   }
-/*     */   
-/*     */   public String getMemberName() {
-/* 113 */     return this.memberName_;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean hasModule() {
-/* 122 */     return (this.modules_.length > 0);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\IDLType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+/**
+ * Holds information about the OMG IDL mapping of a Java type.
+ */
+public class IDLType {
+
+    private Class cl_;
+
+    // terminology for OMG IDL type package name
+    private String[] modules_;
+
+    // name of element within module
+    private String memberName_;
+
+
+    public IDLType(Class cl, String[] modules, String memberName) {
+        cl_ = cl;
+        modules_ = modules;
+        memberName_ = memberName;
+    }
+
+    public IDLType(Class cl, String memberName) {
+        this( cl, new String[0], memberName ) ;
+    }
+
+    public Class getJavaClass() {
+        return cl_;
+    }
+
+    public String[] getModules()
+    {
+        return modules_ ;
+    }
+
+    public String makeConcatenatedName( char separator, boolean fixIDLKeywords ) {
+        StringBuffer sbuff = new StringBuffer() ;
+        for (int ctr=0; ctr<modules_.length; ctr++) {
+            String mod = modules_[ctr] ;
+            if (ctr>0)
+                sbuff.append( separator ) ;
+
+            if (fixIDLKeywords && IDLNameTranslatorImpl.isIDLKeyword(mod))
+                mod = IDLNameTranslatorImpl.mangleIDLKeywordClash( mod ) ;
+
+            sbuff.append( mod ) ;
+        }
+
+        return sbuff.toString() ;
+    }
+
+    public String getModuleName() {
+        // Note that this should probably be makeConcatenatedName( '/', true )
+        // for spec compliance,
+        // but rmic does it this way, so we'll leave this.
+        // The effect is that an overloaded method like
+        // void foo( bar.typedef.Baz )
+        // will get an IDL name of foo__bar_typedef_Baz instead of
+        // foo__bar__typedef_Baz (note the extra _ before typedef).
+        return makeConcatenatedName( '_', false ) ;
+    }
+
+    public String getExceptionName() {
+        // Here we will check for IDL keyword collisions (see bug 5010332).
+        // This means that the repository ID for
+        // foo.exception.SomeException is
+        // "IDL:foo/_exception/SomeEx:1.0" (note the underscore in front
+        // of the exception module name).
+        String modName = makeConcatenatedName( '/', true ) ;
+
+        String suffix = "Exception" ;
+        String excName = memberName_ ;
+        if (excName.endsWith( suffix )) {
+            int last = excName.length() - suffix.length() ;
+            excName = excName.substring( 0, last ) ;
+        }
+
+        // See bug 4989312: we must always add the Ex.
+        excName += "Ex" ;
+
+        if (modName.length() == 0)
+            return "IDL:" + excName + ":1.0" ;
+        else
+            return "IDL:" + modName + '/' + excName + ":1.0" ;
+    }
+
+    public String getMemberName() {
+        return memberName_;
+    }
+
+    /**
+     * True if this type doesn't have a containing module.  This
+     * would be true of a java type defined in the default package
+     * or a primitive.
+     */
+    public boolean hasModule() {
+        return (modules_.length > 0) ;
+    }
+}

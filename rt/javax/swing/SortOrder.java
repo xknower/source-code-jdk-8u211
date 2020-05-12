@@ -1,60 +1,54 @@
-/*    */ package javax.swing;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum SortOrder
-/*    */ {
-/* 39 */   ASCENDING,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 46 */   DESCENDING,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 53 */   UNSORTED;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\SortOrder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+/**
+ * SortOrder is an enumeration of the possible sort orderings.
+ *
+ * @see RowSorter
+ * @since 1.6
+ */
+public enum SortOrder {
+    /**
+     * Enumeration value indicating the items are sorted in increasing order.
+     * For example, the set <code>1, 4, 0</code> sorted in
+     * <code>ASCENDING</code> order is <code>0, 1, 4</code>.
+     */
+    ASCENDING,
+
+    /**
+     * Enumeration value indicating the items are sorted in decreasing order.
+     * For example, the set <code>1, 4, 0</code> sorted in
+     * <code>DESCENDING</code> order is <code>4, 1, 0</code>.
+     */
+    DESCENDING,
+
+    /**
+     * Enumeration value indicating the items are unordered.
+     * For example, the set <code>1, 4, 0</code> in
+     * <code>UNSORTED</code> order is <code>1, 4, 0</code>.
+     */
+    UNSORTED
+}

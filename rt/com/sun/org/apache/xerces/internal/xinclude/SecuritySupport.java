@@ -1,156 +1,152 @@
-/*     */ package com.sun.org.apache.xerces.internal.xinclude;
-/*     */ 
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.io.InputStream;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class SecuritySupport
-/*     */ {
-/*  41 */   private static final SecuritySupport securitySupport = new SecuritySupport();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static SecuritySupport getInstance() {
-/*  47 */     return securitySupport;
-/*     */   }
-/*     */   
-/*     */   ClassLoader getContextClassLoader() {
-/*  51 */     return 
-/*  52 */       AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>() {
-/*     */           public Object run() {
-/*  54 */             ClassLoader cl = null;
-/*     */             try {
-/*  56 */               cl = Thread.currentThread().getContextClassLoader();
-/*  57 */             } catch (SecurityException securityException) {}
-/*  58 */             return cl;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   ClassLoader getSystemClassLoader() {
-/*  64 */     return 
-/*  65 */       AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>() {
-/*     */           public Object run() {
-/*  67 */             ClassLoader cl = null;
-/*     */             try {
-/*  69 */               cl = ClassLoader.getSystemClassLoader();
-/*  70 */             } catch (SecurityException securityException) {}
-/*  71 */             return cl;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   ClassLoader getParentClassLoader(final ClassLoader cl) {
-/*  77 */     return 
-/*  78 */       AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>() {
-/*     */           public Object run() {
-/*  80 */             ClassLoader parent = null;
-/*     */             try {
-/*  82 */               parent = cl.getParent();
-/*  83 */             } catch (SecurityException securityException) {}
-/*     */ 
-/*     */ 
-/*     */             
-/*  87 */             return (parent == cl) ? null : parent;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   String getSystemProperty(final String propName) {
-/*  93 */     return 
-/*  94 */       AccessController.<String>doPrivileged(new PrivilegedAction<String>() {
-/*     */           public Object run() {
-/*  96 */             return System.getProperty(propName);
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   FileInputStream getFileInputStream(final File file) throws FileNotFoundException {
-/*     */     try {
-/* 105 */       return 
-/* 106 */         AccessController.<FileInputStream>doPrivileged(new PrivilegedExceptionAction<FileInputStream>() {
-/*     */             public Object run() throws FileNotFoundException {
-/* 108 */               return new FileInputStream(file);
-/*     */             }
-/*     */           });
-/* 111 */     } catch (PrivilegedActionException e) {
-/* 112 */       throw (FileNotFoundException)e.getException();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   InputStream getResourceAsStream(final ClassLoader cl, final String name) {
-/* 119 */     return 
-/* 120 */       AccessController.<InputStream>doPrivileged(new PrivilegedAction<InputStream>() {
-/*     */           public Object run() {
-/*     */             InputStream ris;
-/* 123 */             if (cl == null) {
-/* 124 */               ris = ClassLoader.getSystemResourceAsStream(name);
-/*     */             } else {
-/* 126 */               ris = cl.getResourceAsStream(name);
-/*     */             } 
-/* 128 */             return ris;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   boolean getFileExists(final File f) {
-/* 134 */     return (
-/* 135 */       (Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>() {
-/*     */           public Object run() {
-/* 137 */             return new Boolean(f.exists());
-/*     */           }
-/* 139 */         })).booleanValue();
-/*     */   }
-/*     */   
-/*     */   long getLastModified(final File f) {
-/* 143 */     return (
-/* 144 */       (Long)AccessController.<Long>doPrivileged(new PrivilegedAction<Long>() {
-/*     */           public Object run() {
-/* 146 */             return new Long(f.lastModified());
-/*     */           }
-/* 148 */         })).longValue();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\xinclude\SecuritySupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.xinclude;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+
+/**
+ * This class is duplicated for each subpackage so keep it in sync.
+ * It is package private and therefore is not exposed as part of any API.
+ *
+ * @xerces.internal
+ */
+final class SecuritySupport {
+
+    private static final SecuritySupport securitySupport = new SecuritySupport();
+
+    /**
+     * Return an instance of this class.
+     */
+    static SecuritySupport getInstance() {
+        return securitySupport;
+    }
+
+    ClassLoader getContextClassLoader() {
+        return (ClassLoader)
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                ClassLoader cl = null;
+                try {
+                    cl = Thread.currentThread().getContextClassLoader();
+                } catch (SecurityException ex) { }
+                return cl;
+            }
+        });
+    }
+
+    ClassLoader getSystemClassLoader() {
+        return (ClassLoader)
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                ClassLoader cl = null;
+                try {
+                    cl = ClassLoader.getSystemClassLoader();
+                } catch (SecurityException ex) {}
+                return cl;
+            }
+        });
+    }
+
+    ClassLoader getParentClassLoader(final ClassLoader cl) {
+        return (ClassLoader)
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                ClassLoader parent = null;
+                try {
+                    parent = cl.getParent();
+                } catch (SecurityException ex) {}
+
+                // eliminate loops in case of the boot
+                // ClassLoader returning itself as a parent
+                return (parent == cl) ? null : parent;
+            }
+        });
+    }
+
+    String getSystemProperty(final String propName) {
+        return (String)
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                return System.getProperty(propName);
+            }
+        });
+    }
+
+    FileInputStream getFileInputStream(final File file)
+    throws FileNotFoundException
+    {
+        try {
+            return (FileInputStream)
+            AccessController.doPrivileged(new PrivilegedExceptionAction() {
+                public Object run() throws FileNotFoundException {
+                    return new FileInputStream(file);
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            throw (FileNotFoundException)e.getException();
+        }
+    }
+
+    InputStream getResourceAsStream(final ClassLoader cl,
+            final String name)
+    {
+        return (InputStream)
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                InputStream ris;
+                if (cl == null) {
+                    ris = ClassLoader.getSystemResourceAsStream(name);
+                } else {
+                    ris = cl.getResourceAsStream(name);
+                }
+                return ris;
+            }
+        });
+    }
+
+    boolean getFileExists(final File f) {
+        return ((Boolean)
+                AccessController.doPrivileged(new PrivilegedAction() {
+                    public Object run() {
+                        return new Boolean(f.exists());
+                    }
+                })).booleanValue();
+    }
+
+    long getLastModified(final File f) {
+        return ((Long)
+                AccessController.doPrivileged(new PrivilegedAction() {
+                    public Object run() {
+                        return new Long(f.lastModified());
+                    }
+                })).longValue();
+    }
+
+    private SecuritySupport () {}
+}

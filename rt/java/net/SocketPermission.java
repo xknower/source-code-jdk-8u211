@@ -1,1282 +1,1486 @@
-/*      */ package java.net;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.Permission;
-/*      */ import java.security.PermissionCollection;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.StringTokenizer;
-/*      */ import sun.net.PortConfig;
-/*      */ import sun.net.RegisteredDomain;
-/*      */ import sun.net.util.IPAddressUtil;
-/*      */ import sun.net.www.URLConnection;
-/*      */ import sun.security.action.GetBooleanAction;
-/*      */ import sun.security.util.Debug;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class SocketPermission
-/*      */   extends Permission
-/*      */   implements Serializable
-/*      */ {
-/*      */   private static final long serialVersionUID = -7204263841984476862L;
-/*      */   private static final int CONNECT = 1;
-/*      */   private static final int LISTEN = 2;
-/*      */   private static final int ACCEPT = 4;
-/*      */   private static final int RESOLVE = 8;
-/*      */   private static final int NONE = 0;
-/*      */   private static final int ALL = 15;
-/*      */   private static final int PORT_MIN = 0;
-/*      */   private static final int PORT_MAX = 65535;
-/*      */   private static final int PRIV_PORT_MAX = 1023;
-/*      */   private static final int DEF_EPH_LOW = 49152;
-/*      */   private transient int mask;
-/*      */   private String actions;
-/*      */   private transient String hostname;
-/*      */   private transient String cname;
-/*      */   private transient InetAddress[] addresses;
-/*      */   private transient boolean wildcard;
-/*      */   private transient boolean init_with_ip;
-/*      */   private transient boolean invalid;
-/*      */   private transient int[] portrange;
-/*      */   private transient boolean defaultDeny = false;
-/*      */   private transient boolean untrusted;
-/*      */   private transient boolean trusted;
-/*      */   private static boolean trustNameService;
-/*  235 */   private static Debug debug = null;
-/*      */   private static boolean debugInit = false;
-/*      */   private transient String cdomain;
-/*      */   private transient String hdomain;
-/*      */   
-/*  240 */   private static class EphemeralRange { static final int low = SocketPermission.initEphemeralPorts("low", 49152);
-/*  241 */     static final int high = SocketPermission.initEphemeralPorts("high", 65535); }
-/*      */ 
-/*      */   
-/*      */   static {
-/*  245 */     Boolean bool = AccessController.<Boolean>doPrivileged(new GetBooleanAction("sun.net.trustNameService"));
-/*      */     
-/*  247 */     trustNameService = bool.booleanValue();
-/*      */   }
-/*      */   
-/*      */   private static synchronized Debug getDebug() {
-/*  251 */     if (!debugInit) {
-/*  252 */       debug = Debug.getInstance("access");
-/*  253 */       debugInit = true;
-/*      */     } 
-/*  255 */     return debug;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SocketPermission(String paramString1, String paramString2) {
-/*  289 */     super(getHost(paramString1));
-/*      */     
-/*  291 */     init(getName(), getMask(paramString2));
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   SocketPermission(String paramString, int paramInt) {
-/*  296 */     super(getHost(paramString));
-/*      */     
-/*  298 */     init(getName(), paramInt);
-/*      */   }
-/*      */   
-/*      */   private void setDeny() {
-/*  302 */     this.defaultDeny = true;
-/*      */   }
-/*      */   
-/*      */   private static String getHost(String paramString) {
-/*  306 */     if (paramString.equals("")) {
-/*  307 */       return "localhost";
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     int i;
-/*      */ 
-/*      */     
-/*  314 */     if (paramString.charAt(0) != '[' && (
-/*  315 */       i = paramString.indexOf(':')) != paramString.lastIndexOf(':')) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  320 */       StringTokenizer stringTokenizer = new StringTokenizer(paramString, ":");
-/*  321 */       int j = stringTokenizer.countTokens();
-/*  322 */       if (j == 9) {
-/*      */         
-/*  324 */         i = paramString.lastIndexOf(':');
-/*      */         
-/*  326 */         paramString = "[" + paramString.substring(0, i) + "]" + paramString.substring(i);
-/*  327 */       } else if (j == 8 && paramString.indexOf("::") == -1) {
-/*      */         
-/*  329 */         paramString = "[" + paramString + "]";
-/*      */       } else {
-/*      */         
-/*  332 */         throw new IllegalArgumentException("Ambiguous hostport part");
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*  337 */     return paramString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int[] parsePort(String paramString) throws Exception {
-/*      */     int j, k;
-/*  345 */     if (paramString == null || paramString.equals("") || paramString.equals("*")) {
-/*  346 */       return new int[] { 0, 65535 };
-/*      */     }
-/*      */     
-/*  349 */     int i = paramString.indexOf('-');
-/*      */     
-/*  351 */     if (i == -1) {
-/*  352 */       int m = Integer.parseInt(paramString);
-/*  353 */       return new int[] { m, m };
-/*      */     } 
-/*  355 */     String str1 = paramString.substring(0, i);
-/*  356 */     String str2 = paramString.substring(i + 1);
-/*      */ 
-/*      */     
-/*  359 */     if (str1.equals("")) {
-/*  360 */       j = 0;
-/*      */     } else {
-/*  362 */       j = Integer.parseInt(str1);
-/*      */     } 
-/*      */     
-/*  365 */     if (str2.equals("")) {
-/*  366 */       k = 65535;
-/*      */     } else {
-/*  368 */       k = Integer.parseInt(str2);
-/*      */     } 
-/*  370 */     if (j < 0 || k < 0 || k < j) {
-/*  371 */       throw new IllegalArgumentException("invalid port range");
-/*      */     }
-/*  373 */     return new int[] { j, k };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean includesEphemerals() {
-/*  382 */     return (this.portrange[0] == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void init(String paramString, int paramInt) {
-/*  393 */     if ((paramInt & 0xF) != paramInt) {
-/*  394 */       throw new IllegalArgumentException("invalid actions mask");
-/*      */     }
-/*      */     
-/*  397 */     this.mask = paramInt | 0x8;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  408 */     int i = 0;
-/*  409 */     boolean bool = false; int j = 0;
-/*  410 */     int k = -1;
-/*  411 */     String str = paramString;
-/*  412 */     if (paramString.charAt(0) == '[') {
-/*  413 */       bool = true;
-/*  414 */       i = paramString.indexOf(']');
-/*  415 */       if (i != -1) {
-/*  416 */         paramString = paramString.substring(bool, i);
-/*      */       } else {
-/*  418 */         throw new IllegalArgumentException("invalid host/port: " + paramString);
-/*      */       } 
-/*      */       
-/*  421 */       k = str.indexOf(':', i + 1);
-/*      */     } else {
-/*  423 */       bool = false;
-/*  424 */       k = paramString.indexOf(':', i);
-/*  425 */       j = k;
-/*  426 */       if (k != -1) {
-/*  427 */         paramString = paramString.substring(bool, j);
-/*      */       }
-/*      */     } 
-/*      */     
-/*  431 */     if (k != -1) {
-/*  432 */       String str1 = str.substring(k + 1);
-/*      */       try {
-/*  434 */         this.portrange = parsePort(str1);
-/*  435 */       } catch (Exception exception) {
-/*  436 */         throw new IllegalArgumentException("invalid port range: " + str1);
-/*      */       } 
-/*      */     } else {
-/*      */       
-/*  440 */       this.portrange = new int[] { 0, 65535 };
-/*      */     } 
-/*      */     
-/*  443 */     this.hostname = paramString;
-/*      */ 
-/*      */     
-/*  446 */     if (paramString.lastIndexOf('*') > 0) {
-/*  447 */       throw new IllegalArgumentException("invalid host wildcard specification");
-/*      */     }
-/*  449 */     if (paramString.startsWith("*")) {
-/*  450 */       this.wildcard = true;
-/*  451 */       if (paramString.equals("*")) {
-/*  452 */         this.cname = "";
-/*  453 */       } else if (paramString.startsWith("*.")) {
-/*  454 */         this.cname = paramString.substring(1).toLowerCase();
-/*      */       } else {
-/*  456 */         throw new IllegalArgumentException("invalid host wildcard specification");
-/*      */       } 
-/*      */       
-/*      */       return;
-/*      */     } 
-/*  461 */     if (paramString.length() > 0) {
-/*      */       
-/*  463 */       char c = paramString.charAt(0);
-/*  464 */       if (c == ':' || Character.digit(c, 16) != -1) {
-/*  465 */         byte[] arrayOfByte = IPAddressUtil.textToNumericFormatV4(paramString);
-/*  466 */         if (arrayOfByte == null) {
-/*  467 */           arrayOfByte = IPAddressUtil.textToNumericFormatV6(paramString);
-/*      */         }
-/*  469 */         if (arrayOfByte != null) {
-/*      */           try {
-/*  471 */             this
-/*      */               
-/*  473 */               .addresses = new InetAddress[] { InetAddress.getByAddress(arrayOfByte) };
-/*  474 */             this.init_with_ip = true;
-/*  475 */           } catch (UnknownHostException unknownHostException) {
-/*      */             
-/*  477 */             this.invalid = true;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int getMask(String paramString) {
-/*  493 */     if (paramString == null) {
-/*  494 */       throw new NullPointerException("action can't be null");
-/*      */     }
-/*      */     
-/*  497 */     if (paramString.equals("")) {
-/*  498 */       throw new IllegalArgumentException("action can't be empty");
-/*      */     }
-/*      */     
-/*  501 */     int i = 0;
-/*      */ 
-/*      */ 
-/*      */     
-/*  505 */     if (paramString == "resolve")
-/*  506 */       return 8; 
-/*  507 */     if (paramString == "connect")
-/*  508 */       return 1; 
-/*  509 */     if (paramString == "listen")
-/*  510 */       return 2; 
-/*  511 */     if (paramString == "accept")
-/*  512 */       return 4; 
-/*  513 */     if (paramString == "connect,accept") {
-/*  514 */       return 5;
-/*      */     }
-/*      */     
-/*  517 */     char[] arrayOfChar = paramString.toCharArray();
-/*      */     
-/*  519 */     int j = arrayOfChar.length - 1;
-/*  520 */     if (j < 0) {
-/*  521 */       return i;
-/*      */     }
-/*  523 */     while (j != -1) {
-/*      */       byte b;
-/*      */       
-/*      */       char c;
-/*  527 */       while (j != -1 && ((c = arrayOfChar[j]) == ' ' || c == '\r' || c == '\n' || c == '\f' || c == '\t'))
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */         
-/*  532 */         j--;
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  537 */       if (j >= 6 && (arrayOfChar[j - 6] == 'c' || arrayOfChar[j - 6] == 'C') && (arrayOfChar[j - 5] == 'o' || arrayOfChar[j - 5] == 'O') && (arrayOfChar[j - 4] == 'n' || arrayOfChar[j - 4] == 'N') && (arrayOfChar[j - 3] == 'n' || arrayOfChar[j - 3] == 'N') && (arrayOfChar[j - 2] == 'e' || arrayOfChar[j - 2] == 'E') && (arrayOfChar[j - 1] == 'c' || arrayOfChar[j - 1] == 'C') && (arrayOfChar[j] == 't' || arrayOfChar[j] == 'T')) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  545 */         b = 7;
-/*  546 */         i |= 0x1;
-/*      */       }
-/*  548 */       else if (j >= 6 && (arrayOfChar[j - 6] == 'r' || arrayOfChar[j - 6] == 'R') && (arrayOfChar[j - 5] == 'e' || arrayOfChar[j - 5] == 'E') && (arrayOfChar[j - 4] == 's' || arrayOfChar[j - 4] == 'S') && (arrayOfChar[j - 3] == 'o' || arrayOfChar[j - 3] == 'O') && (arrayOfChar[j - 2] == 'l' || arrayOfChar[j - 2] == 'L') && (arrayOfChar[j - 1] == 'v' || arrayOfChar[j - 1] == 'V') && (arrayOfChar[j] == 'e' || arrayOfChar[j] == 'E')) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  556 */         b = 7;
-/*  557 */         i |= 0x8;
-/*      */       }
-/*  559 */       else if (j >= 5 && (arrayOfChar[j - 5] == 'l' || arrayOfChar[j - 5] == 'L') && (arrayOfChar[j - 4] == 'i' || arrayOfChar[j - 4] == 'I') && (arrayOfChar[j - 3] == 's' || arrayOfChar[j - 3] == 'S') && (arrayOfChar[j - 2] == 't' || arrayOfChar[j - 2] == 'T') && (arrayOfChar[j - 1] == 'e' || arrayOfChar[j - 1] == 'E') && (arrayOfChar[j] == 'n' || arrayOfChar[j] == 'N')) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  566 */         b = 6;
-/*  567 */         i |= 0x2;
-/*      */       }
-/*  569 */       else if (j >= 5 && (arrayOfChar[j - 5] == 'a' || arrayOfChar[j - 5] == 'A') && (arrayOfChar[j - 4] == 'c' || arrayOfChar[j - 4] == 'C') && (arrayOfChar[j - 3] == 'c' || arrayOfChar[j - 3] == 'C') && (arrayOfChar[j - 2] == 'e' || arrayOfChar[j - 2] == 'E') && (arrayOfChar[j - 1] == 'p' || arrayOfChar[j - 1] == 'P') && (arrayOfChar[j] == 't' || arrayOfChar[j] == 'T')) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  576 */         b = 6;
-/*  577 */         i |= 0x4;
-/*      */       }
-/*      */       else {
-/*      */         
-/*  581 */         throw new IllegalArgumentException("invalid permission: " + paramString);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  587 */       boolean bool = false;
-/*  588 */       while (j >= b && !bool) {
-/*  589 */         switch (arrayOfChar[j - b]) {
-/*      */           case ',':
-/*  591 */             bool = true; break;
-/*      */           case '\t': case '\n': case '\f':
-/*      */           case '\r':
-/*      */           case ' ':
-/*      */             break;
-/*      */           default:
-/*  597 */             throw new IllegalArgumentException("invalid permission: " + paramString);
-/*      */         } 
-/*      */         
-/*  600 */         j--;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  604 */       j -= b;
-/*      */     } 
-/*      */     
-/*  607 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isUntrusted() throws UnknownHostException {
-/*  613 */     if (this.trusted) return false; 
-/*  614 */     if (this.invalid || this.untrusted) return true; 
-/*      */     try {
-/*  616 */       if (!trustNameService && (this.defaultDeny || 
-/*  617 */         URLConnection.isProxiedHost(this.hostname))) {
-/*  618 */         if (this.cname == null) {
-/*  619 */           getCanonName();
-/*      */         }
-/*  621 */         if (!match(this.cname, this.hostname))
-/*      */         {
-/*  623 */           if (!authorized(this.hostname, this.addresses[0].getAddress())) {
-/*  624 */             this.untrusted = true;
-/*  625 */             Debug debug = getDebug();
-/*  626 */             if (debug != null && Debug.isOn("failure")) {
-/*  627 */               debug.println("socket access restriction: proxied host (" + this.addresses[0] + ") does not match " + this.cname + " from reverse lookup");
-/*      */             }
-/*  629 */             return true;
-/*      */           } 
-/*      */         }
-/*  632 */         this.trusted = true;
-/*      */       } 
-/*  634 */     } catch (UnknownHostException unknownHostException) {
-/*  635 */       this.invalid = true;
-/*  636 */       throw unknownHostException;
-/*      */     } 
-/*  638 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void getCanonName() throws UnknownHostException {
-/*  648 */     if (this.cname != null || this.invalid || this.untrusted) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  656 */       if (this.addresses == null) {
-/*  657 */         getIP();
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  662 */       if (this.init_with_ip) {
-/*  663 */         this.cname = this.addresses[0].getHostName(false).toLowerCase();
-/*      */       } else {
-/*  665 */         this
-/*  666 */           .cname = InetAddress.getByName(this.addresses[0].getHostAddress()).getHostName(false).toLowerCase();
-/*      */       } 
-/*  668 */     } catch (UnknownHostException unknownHostException) {
-/*  669 */       this.invalid = true;
-/*  670 */       throw unknownHostException;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean match(String paramString1, String paramString2) {
-/*  677 */     String str1 = paramString1.toLowerCase();
-/*  678 */     String str2 = paramString2.toLowerCase();
-/*  679 */     if (str1.startsWith(str2) && (str1
-/*  680 */       .length() == str2.length() || str1.charAt(str2.length()) == '.'))
-/*  681 */       return true; 
-/*  682 */     if (this.cdomain == null) {
-/*  683 */       this.cdomain = RegisteredDomain.getRegisteredDomain(str1);
-/*      */     }
-/*  685 */     if (this.hdomain == null) {
-/*  686 */       this.hdomain = RegisteredDomain.getRegisteredDomain(str2);
-/*      */     }
-/*      */     
-/*  689 */     return (this.cdomain.length() != 0 && this.hdomain.length() != 0 && this.cdomain
-/*  690 */       .equals(this.hdomain));
-/*      */   }
-/*      */   
-/*      */   private boolean authorized(String paramString, byte[] paramArrayOfbyte) {
-/*  694 */     if (paramArrayOfbyte.length == 4)
-/*  695 */       return authorizedIPv4(paramString, paramArrayOfbyte); 
-/*  696 */     if (paramArrayOfbyte.length == 16) {
-/*  697 */       return authorizedIPv6(paramString, paramArrayOfbyte);
-/*      */     }
-/*  699 */     return false;
-/*      */   }
-/*      */   
-/*      */   private boolean authorizedIPv4(String paramString, byte[] paramArrayOfbyte) {
-/*  703 */     String str = "";
-/*      */ 
-/*      */     
-/*      */     try {
-/*  707 */       str = "auth." + (paramArrayOfbyte[3] & 0xFF) + "." + (paramArrayOfbyte[2] & 0xFF) + "." + (paramArrayOfbyte[1] & 0xFF) + "." + (paramArrayOfbyte[0] & 0xFF) + ".in-addr.arpa";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  713 */       str = this.hostname + '.' + str;
-/*  714 */       InetAddress inetAddress = InetAddress.getAllByName0(str, false)[0];
-/*  715 */       if (inetAddress.equals(InetAddress.getByAddress(paramArrayOfbyte))) {
-/*  716 */         return true;
-/*      */       }
-/*  718 */       Debug debug = getDebug();
-/*  719 */       if (debug != null && Debug.isOn("failure")) {
-/*  720 */         debug.println("socket access restriction: IP address of " + inetAddress + " != " + InetAddress.getByAddress(paramArrayOfbyte));
-/*      */       }
-/*  722 */     } catch (UnknownHostException unknownHostException) {
-/*  723 */       Debug debug = getDebug();
-/*  724 */       if (debug != null && Debug.isOn("failure")) {
-/*  725 */         debug.println("socket access restriction: forward lookup failed for " + str);
-/*      */       }
-/*      */     } 
-/*  728 */     return false;
-/*      */   }
-/*      */   
-/*      */   private boolean authorizedIPv6(String paramString, byte[] paramArrayOfbyte) {
-/*  732 */     String str = "";
-/*      */ 
-/*      */     
-/*      */     try {
-/*  736 */       StringBuffer stringBuffer = new StringBuffer(39);
-/*      */       
-/*  738 */       for (byte b = 15; b >= 0; b--) {
-/*  739 */         stringBuffer.append(Integer.toHexString(paramArrayOfbyte[b] & 0xF));
-/*  740 */         stringBuffer.append('.');
-/*  741 */         stringBuffer.append(Integer.toHexString(paramArrayOfbyte[b] >> 4 & 0xF));
-/*  742 */         stringBuffer.append('.');
-/*      */       } 
-/*  744 */       str = "auth." + stringBuffer.toString() + "IP6.ARPA";
-/*      */       
-/*  746 */       str = this.hostname + '.' + str;
-/*  747 */       InetAddress inetAddress = InetAddress.getAllByName0(str, false)[0];
-/*  748 */       if (inetAddress.equals(InetAddress.getByAddress(paramArrayOfbyte)))
-/*  749 */         return true; 
-/*  750 */       Debug debug = getDebug();
-/*  751 */       if (debug != null && Debug.isOn("failure")) {
-/*  752 */         debug.println("socket access restriction: IP address of " + inetAddress + " != " + InetAddress.getByAddress(paramArrayOfbyte));
-/*      */       }
-/*  754 */     } catch (UnknownHostException unknownHostException) {
-/*  755 */       Debug debug = getDebug();
-/*  756 */       if (debug != null && Debug.isOn("failure")) {
-/*  757 */         debug.println("socket access restriction: forward lookup failed for " + str);
-/*      */       }
-/*      */     } 
-/*  760 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void getIP() throws UnknownHostException {
-/*  771 */     if (this.addresses != null || this.wildcard || this.invalid) {
-/*      */       return;
-/*      */     }
-/*      */     try {
-/*      */       String str;
-/*  776 */       if (getName().charAt(0) == '[') {
-/*      */         
-/*  778 */         str = getName().substring(1, getName().indexOf(']'));
-/*      */       } else {
-/*  780 */         int i = getName().indexOf(":");
-/*  781 */         if (i == -1) {
-/*  782 */           str = getName();
-/*      */         } else {
-/*  784 */           str = getName().substring(0, i);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  788 */       this
-/*  789 */         .addresses = new InetAddress[] { InetAddress.getAllByName0(str, false)[0] };
-/*      */     }
-/*  791 */     catch (UnknownHostException unknownHostException) {
-/*  792 */       this.invalid = true;
-/*  793 */       throw unknownHostException;
-/*  794 */     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/*  795 */       this.invalid = true;
-/*  796 */       throw new UnknownHostException(getName());
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean implies(Permission paramPermission) {
-/*  837 */     if (!(paramPermission instanceof SocketPermission)) {
-/*  838 */       return false;
-/*      */     }
-/*  840 */     if (paramPermission == this) {
-/*  841 */       return true;
-/*      */     }
-/*  843 */     SocketPermission socketPermission = (SocketPermission)paramPermission;
-/*      */     
-/*  845 */     return ((this.mask & socketPermission.mask) == socketPermission.mask && 
-/*  846 */       impliesIgnoreMask(socketPermission));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   boolean impliesIgnoreMask(SocketPermission paramSocketPermission) {
-/*  875 */     if ((paramSocketPermission.mask & 0x8) != paramSocketPermission.mask)
-/*      */     {
-/*      */       
-/*  878 */       if (paramSocketPermission.portrange[0] < this.portrange[0] || paramSocketPermission.portrange[1] > this.portrange[1])
-/*      */       {
-/*      */ 
-/*      */         
-/*  882 */         if (includesEphemerals() || paramSocketPermission.includesEphemerals()) {
-/*  883 */           if (!inRange(this.portrange[0], this.portrange[1], paramSocketPermission.portrange[0], paramSocketPermission.portrange[1]))
-/*      */           {
-/*      */             
-/*  886 */             return false;
-/*      */           }
-/*      */         } else {
-/*  889 */           return false;
-/*      */         } 
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */     
-/*  895 */     if (this.wildcard && "".equals(this.cname)) {
-/*  896 */       return true;
-/*      */     }
-/*      */     
-/*  899 */     if (this.invalid || paramSocketPermission.invalid) {
-/*  900 */       return compareHostnames(paramSocketPermission);
-/*      */     }
-/*      */     
-/*      */     try {
-/*  904 */       if (this.init_with_ip) {
-/*  905 */         if (paramSocketPermission.wildcard) {
-/*  906 */           return false;
-/*      */         }
-/*  908 */         if (paramSocketPermission.init_with_ip) {
-/*  909 */           return this.addresses[0].equals(paramSocketPermission.addresses[0]);
-/*      */         }
-/*  911 */         if (paramSocketPermission.addresses == null) {
-/*  912 */           paramSocketPermission.getIP();
-/*      */         }
-/*  914 */         for (byte b = 0; b < paramSocketPermission.addresses.length; b++) {
-/*  915 */           if (this.addresses[0].equals(paramSocketPermission.addresses[b])) {
-/*  916 */             return true;
-/*      */           }
-/*      */         } 
-/*      */ 
-/*      */         
-/*  921 */         return false;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  925 */       if (this.wildcard || paramSocketPermission.wildcard) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  929 */         if (this.wildcard && paramSocketPermission.wildcard) {
-/*  930 */           return paramSocketPermission.cname.endsWith(this.cname);
-/*      */         }
-/*      */         
-/*  933 */         if (paramSocketPermission.wildcard) {
-/*  934 */           return false;
-/*      */         }
-/*      */ 
-/*      */         
-/*  938 */         if (paramSocketPermission.cname == null) {
-/*  939 */           paramSocketPermission.getCanonName();
-/*      */         }
-/*  941 */         return paramSocketPermission.cname.endsWith(this.cname);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  945 */       if (this.addresses == null) {
-/*  946 */         getIP();
-/*      */       }
-/*      */       
-/*  949 */       if (paramSocketPermission.addresses == null) {
-/*  950 */         paramSocketPermission.getIP();
-/*      */       }
-/*      */       
-/*  953 */       if (!paramSocketPermission.init_with_ip || !isUntrusted()) {
-/*  954 */         for (byte b = 0; b < this.addresses.length; b++) {
-/*  955 */           for (byte b1 = 0; b1 < paramSocketPermission.addresses.length; b1++) {
-/*  956 */             if (this.addresses[b].equals(paramSocketPermission.addresses[b1])) {
-/*  957 */               return true;
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */         
-/*  963 */         if (this.cname == null) {
-/*  964 */           getCanonName();
-/*      */         }
-/*      */         
-/*  967 */         if (paramSocketPermission.cname == null) {
-/*  968 */           paramSocketPermission.getCanonName();
-/*      */         }
-/*      */         
-/*  971 */         return this.cname.equalsIgnoreCase(paramSocketPermission.cname);
-/*      */       }
-/*      */     
-/*  974 */     } catch (UnknownHostException unknownHostException) {
-/*  975 */       return compareHostnames(paramSocketPermission);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  981 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean compareHostnames(SocketPermission paramSocketPermission) {
-/*  987 */     String str1 = this.hostname;
-/*  988 */     String str2 = paramSocketPermission.hostname;
-/*      */     
-/*  990 */     if (str1 == null)
-/*  991 */       return false; 
-/*  992 */     if (this.wildcard) {
-/*  993 */       int i = this.cname.length();
-/*  994 */       return str2.regionMatches(true, str2
-/*  995 */           .length() - i, this.cname, 0, i);
-/*      */     } 
-/*      */     
-/*  998 */     return str1.equalsIgnoreCase(str2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/* 1013 */     if (paramObject == this) {
-/* 1014 */       return true;
-/*      */     }
-/* 1016 */     if (!(paramObject instanceof SocketPermission)) {
-/* 1017 */       return false;
-/*      */     }
-/* 1019 */     SocketPermission socketPermission = (SocketPermission)paramObject;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1024 */     if (this.mask != socketPermission.mask) return false;
-/*      */     
-/* 1026 */     if ((socketPermission.mask & 0x8) != socketPermission.mask)
-/*      */     {
-/* 1028 */       if (this.portrange[0] != socketPermission.portrange[0] || this.portrange[1] != socketPermission.portrange[1])
-/*      */       {
-/* 1030 */         return false;
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1041 */     if (getName().equalsIgnoreCase(socketPermission.getName())) {
-/* 1042 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/* 1050 */       getCanonName();
-/* 1051 */       socketPermission.getCanonName();
-/* 1052 */     } catch (UnknownHostException unknownHostException) {
-/* 1053 */       return false;
-/*      */     } 
-/*      */     
-/* 1056 */     if (this.invalid || socketPermission.invalid) {
-/* 1057 */       return false;
-/*      */     }
-/* 1059 */     if (this.cname != null) {
-/* 1060 */       return this.cname.equalsIgnoreCase(socketPermission.cname);
-/*      */     }
-/*      */     
-/* 1063 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/* 1080 */     if (this.init_with_ip || this.wildcard) {
-/* 1081 */       return getName().hashCode();
-/*      */     }
-/*      */     
-/*      */     try {
-/* 1085 */       getCanonName();
-/* 1086 */     } catch (UnknownHostException unknownHostException) {}
-/*      */ 
-/*      */ 
-/*      */     
-/* 1090 */     if (this.invalid || this.cname == null) {
-/* 1091 */       return getName().hashCode();
-/*      */     }
-/* 1093 */     return this.cname.hashCode();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   int getMask() {
-/* 1103 */     return this.mask;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String getActions(int paramInt) {
-/* 1117 */     StringBuilder stringBuilder = new StringBuilder();
-/* 1118 */     boolean bool = false;
-/*      */     
-/* 1120 */     if ((paramInt & 0x1) == 1) {
-/* 1121 */       bool = true;
-/* 1122 */       stringBuilder.append("connect");
-/*      */     } 
-/*      */     
-/* 1125 */     if ((paramInt & 0x2) == 2) {
-/* 1126 */       if (bool) { stringBuilder.append(','); }
-/* 1127 */       else { bool = true; }
-/* 1128 */        stringBuilder.append("listen");
-/*      */     } 
-/*      */     
-/* 1131 */     if ((paramInt & 0x4) == 4) {
-/* 1132 */       if (bool) { stringBuilder.append(','); }
-/* 1133 */       else { bool = true; }
-/* 1134 */        stringBuilder.append("accept");
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1138 */     if ((paramInt & 0x8) == 8) {
-/* 1139 */       if (bool) { stringBuilder.append(','); }
-/* 1140 */       else { bool = true; }
-/* 1141 */        stringBuilder.append("resolve");
-/*      */     } 
-/*      */     
-/* 1144 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getActions() {
-/* 1156 */     if (this.actions == null) {
-/* 1157 */       this.actions = getActions(this.mask);
-/*      */     }
-/* 1159 */     return this.actions;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PermissionCollection newPermissionCollection() {
-/* 1175 */     return new SocketPermissionCollection();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private synchronized void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1188 */     if (this.actions == null)
-/* 1189 */       getActions(); 
-/* 1190 */     paramObjectOutputStream.defaultWriteObject();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private synchronized void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1201 */     paramObjectInputStream.defaultReadObject();
-/* 1202 */     init(getName(), getMask(this.actions));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int initEphemeralPorts(final String suffix, int paramInt) {
-/* 1210 */     return ((Integer)AccessController.<Integer>doPrivileged(new PrivilegedAction<Integer>()
-/*      */         {
-/*      */           public Integer run() {
-/* 1213 */             int i = Integer.getInteger("jdk.net.ephemeralPortRange." + suffix, -1).intValue();
-/*      */ 
-/*      */             
-/* 1216 */             if (i != -1) {
-/* 1217 */               return Integer.valueOf(i);
-/*      */             }
-/* 1219 */             return Integer.valueOf(suffix.equals("low") ? 
-/* 1220 */                 PortConfig.getLower() : PortConfig.getUpper());
-/*      */           }
-/*      */         })).intValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean inRange(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 1236 */     int i = EphemeralRange.low;
-/* 1237 */     int j = EphemeralRange.high;
-/*      */     
-/* 1239 */     if (paramInt3 == 0) {
-/*      */       
-/* 1241 */       if (!inRange(paramInt1, paramInt2, i, j)) {
-/* 1242 */         return false;
-/*      */       }
-/* 1244 */       if (paramInt4 == 0)
-/*      */       {
-/* 1246 */         return true;
-/*      */       }
-/*      */       
-/* 1249 */       paramInt3 = 1;
-/*      */     } 
-/*      */     
-/* 1252 */     if (paramInt1 == 0 && paramInt2 == 0)
-/*      */     {
-/* 1254 */       return (paramInt3 >= i && paramInt4 <= j);
-/*      */     }
-/*      */     
-/* 1257 */     if (paramInt1 != 0)
-/*      */     {
-/* 1259 */       return (paramInt3 >= paramInt1 && paramInt4 <= paramInt2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1266 */     if (paramInt2 >= i - 1) {
-/* 1267 */       return (paramInt4 <= j);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1274 */     return ((paramInt3 <= paramInt2 && paramInt4 <= paramInt2) || (paramInt3 >= i && paramInt4 <= j));
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\SocketPermission.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+import java.util.Enumeration;
+import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.StringTokenizer;
+import java.net.InetAddress;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.PrivilegedAction;
+import java.security.AccessController;
+import java.security.Security;
+import java.io.Serializable;
+import java.io.ObjectStreamField;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import sun.net.util.IPAddressUtil;
+import sun.net.RegisteredDomain;
+import sun.net.PortConfig;
+import sun.security.util.SecurityConstants;
+import sun.security.util.Debug;
+
+
+/**
+ * This class represents access to a network via sockets.
+ * A SocketPermission consists of a
+ * host specification and a set of "actions" specifying ways to
+ * connect to that host. The host is specified as
+ * <pre>
+ *    host = (hostname | IPv4address | iPv6reference) [:portrange]
+ *    portrange = portnumber | -portnumber | portnumber-[portnumber]
+ * </pre>
+ * The host is expressed as a DNS name, as a numerical IP address,
+ * or as "localhost" (for the local machine).
+ * The wildcard "*" may be included once in a DNS name host
+ * specification. If it is included, it must be in the leftmost
+ * position, as in "*.sun.com".
+ * <p>
+ * The format of the IPv6reference should follow that specified in <a
+ * href="http://www.ietf.org/rfc/rfc2732.txt"><i>RFC&nbsp;2732: Format
+ * for Literal IPv6 Addresses in URLs</i></a>:
+ * <pre>
+ *    ipv6reference = "[" IPv6address "]"
+ *</pre>
+ * For example, you can construct a SocketPermission instance
+ * as the following:
+ * <pre>
+ *    String hostAddress = inetaddress.getHostAddress();
+ *    if (inetaddress instanceof Inet6Address) {
+ *        sp = new SocketPermission("[" + hostAddress + "]:" + port, action);
+ *    } else {
+ *        sp = new SocketPermission(hostAddress + ":" + port, action);
+ *    }
+ * </pre>
+ * or
+ * <pre>
+ *    String host = url.getHost();
+ *    sp = new SocketPermission(host + ":" + port, action);
+ * </pre>
+ * <p>
+ * The <A HREF="Inet6Address.html#lform">full uncompressed form</A> of
+ * an IPv6 literal address is also valid.
+ * <p>
+ * The port or portrange is optional. A port specification of the
+ * form "N-", where <i>N</i> is a port number, signifies all ports
+ * numbered <i>N</i> and above, while a specification of the
+ * form "-N" indicates all ports numbered <i>N</i> and below.
+ * The special port value {@code 0} refers to the entire <i>ephemeral</i>
+ * port range. This is a fixed range of ports a system may use to
+ * allocate dynamic ports from. The actual range may be system dependent.
+ * <p>
+ * The possible ways to connect to the host are
+ * <pre>
+ * accept
+ * connect
+ * listen
+ * resolve
+ * </pre>
+ * The "listen" action is only meaningful when used with "localhost" and
+ * means the ability to bind to a specified port.
+ * The "resolve" action is implied when any of the other actions are present.
+ * The action "resolve" refers to host/ip name service lookups.
+ * <P>
+ * The actions string is converted to lowercase before processing.
+ * <p>As an example of the creation and meaning of SocketPermissions,
+ * note that if the following permission:
+ *
+ * <pre>
+ *   p1 = new SocketPermission("puffin.eng.sun.com:7777", "connect,accept");
+ * </pre>
+ *
+ * is granted to some code, it allows that code to connect to port 7777 on
+ * {@code puffin.eng.sun.com}, and to accept connections on that port.
+ *
+ * <p>Similarly, if the following permission:
+ *
+ * <pre>
+ *   p2 = new SocketPermission("localhost:1024-", "accept,connect,listen");
+ * </pre>
+ *
+ * is granted to some code, it allows that code to
+ * accept connections on, connect to, or listen on any port between
+ * 1024 and 65535 on the local host.
+ *
+ * <p>Note: Granting code permission to accept or make connections to remote
+ * hosts may be dangerous because malevolent code can then more easily
+ * transfer and share confidential data among parties who may not
+ * otherwise have access to the data.
+ *
+ * @see java.security.Permissions
+ * @see SocketPermission
+ *
+ *
+ * @author Marianne Mueller
+ * @author Roland Schemers
+ *
+ * @serial exclude
+ */
+
+public final class SocketPermission extends Permission
+    implements java.io.Serializable
+{
+    private static final long serialVersionUID = -7204263841984476862L;
+
+    /**
+     * Connect to host:port
+     */
+    private final static int CONNECT    = 0x1;
+
+    /**
+     * Listen on host:port
+     */
+    private final static int LISTEN     = 0x2;
+
+    /**
+     * Accept a connection from host:port
+     */
+    private final static int ACCEPT     = 0x4;
+
+    /**
+     * Resolve DNS queries
+     */
+    private final static int RESOLVE    = 0x8;
+
+    /**
+     * No actions
+     */
+    private final static int NONE               = 0x0;
+
+    /**
+     * All actions
+     */
+    private final static int ALL        = CONNECT|LISTEN|ACCEPT|RESOLVE;
+
+    // various port constants
+    private static final int PORT_MIN = 0;
+    private static final int PORT_MAX = 65535;
+    private static final int PRIV_PORT_MAX = 1023;
+    private static final int DEF_EPH_LOW = 49152;
+
+    // the actions mask
+    private transient int mask;
+
+    /**
+     * the actions string.
+     *
+     * @serial
+     */
+
+    private String actions; // Left null as long as possible, then
+                            // created and re-used in the getAction function.
+
+    // hostname part as it is passed
+    private transient String hostname;
+
+    // the canonical name of the host
+    // in the case of "*.foo.com", cname is ".foo.com".
+
+    private transient String cname;
+
+    // all the IP addresses of the host
+    private transient InetAddress[] addresses;
+
+    // true if the hostname is a wildcard (e.g. "*.sun.com")
+    private transient boolean wildcard;
+
+    // true if we were initialized with a single numeric IP address
+    private transient boolean init_with_ip;
+
+    // true if this SocketPermission represents an invalid/unknown host
+    // used for implies when the delayed lookup has already failed
+    private transient boolean invalid;
+
+    // port range on host
+    private transient int[] portrange;
+
+    private transient boolean defaultDeny = false;
+
+    // true if this SocketPermission represents a hostname
+    // that failed our reverse mapping heuristic test
+    private transient boolean untrusted;
+    private transient boolean trusted;
+
+    // true if the sun.net.trustNameService system property is set
+    private static boolean trustNameService;
+
+    private static Debug debug = null;
+    private static boolean debugInit = false;
+
+    // lazy initializer
+    private static class EphemeralRange {
+        static final int low = initEphemeralPorts("low", DEF_EPH_LOW);
+        static final int high = initEphemeralPorts("high", PORT_MAX);
+    };
+
+    static {
+        Boolean tmp = java.security.AccessController.doPrivileged(
+                new sun.security.action.GetBooleanAction("sun.net.trustNameService"));
+        trustNameService = tmp.booleanValue();
+    }
+
+    private static synchronized Debug getDebug() {
+        if (!debugInit) {
+            debug = Debug.getInstance("access");
+            debugInit = true;
+        }
+        return debug;
+    }
+
+    /**
+     * Creates a new SocketPermission object with the specified actions.
+     * The host is expressed as a DNS name, or as a numerical IP address.
+     * Optionally, a port or a portrange may be supplied (separated
+     * from the DNS name or IP address by a colon).
+     * <p>
+     * To specify the local machine, use "localhost" as the <i>host</i>.
+     * Also note: An empty <i>host</i> String ("") is equivalent to "localhost".
+     * <p>
+     * The <i>actions</i> parameter contains a comma-separated list of the
+     * actions granted for the specified host (and port(s)). Possible actions are
+     * "connect", "listen", "accept", "resolve", or
+     * any combination of those. "resolve" is automatically added
+     * when any of the other three are specified.
+     * <p>
+     * Examples of SocketPermission instantiation are the following:
+     * <pre>
+     *    nr = new SocketPermission("www.catalog.com", "connect");
+     *    nr = new SocketPermission("www.sun.com:80", "connect");
+     *    nr = new SocketPermission("*.sun.com", "connect");
+     *    nr = new SocketPermission("*.edu", "resolve");
+     *    nr = new SocketPermission("204.160.241.0", "connect");
+     *    nr = new SocketPermission("localhost:1024-65535", "listen");
+     *    nr = new SocketPermission("204.160.241.0:1024-65535", "connect");
+     * </pre>
+     *
+     * @param host the hostname or IPaddress of the computer, optionally
+     * including a colon followed by a port or port range.
+     * @param action the action string.
+     */
+    public SocketPermission(String host, String action) {
+        super(getHost(host));
+        // name initialized to getHost(host); NPE detected in getHost()
+        init(getName(), getMask(action));
+    }
+
+
+    SocketPermission(String host, int mask) {
+        super(getHost(host));
+        // name initialized to getHost(host); NPE detected in getHost()
+        init(getName(), mask);
+    }
+
+    private void setDeny() {
+        defaultDeny = true;
+    }
+
+    private static String getHost(String host) {
+        if (host.equals("")) {
+            return "localhost";
+        } else {
+            /* IPv6 literal address used in this context should follow
+             * the format specified in RFC 2732;
+             * if not, we try to solve the unambiguous case
+             */
+            int ind;
+            if (host.charAt(0) != '[') {
+                if ((ind = host.indexOf(':')) != host.lastIndexOf(':')) {
+                    /* More than one ":", meaning IPv6 address is not
+                     * in RFC 2732 format;
+                     * We will rectify user errors for all unambiguious cases
+                     */
+                    StringTokenizer st = new StringTokenizer(host, ":");
+                    int tokens = st.countTokens();
+                    if (tokens == 9) {
+                        // IPv6 address followed by port
+                        ind = host.lastIndexOf(':');
+                        host = "[" + host.substring(0, ind) + "]" +
+                            host.substring(ind);
+                    } else if (tokens == 8 && host.indexOf("::") == -1) {
+                        // IPv6 address only, not followed by port
+                        host = "[" + host + "]";
+                    } else {
+                        // could be ambiguous
+                        throw new IllegalArgumentException("Ambiguous"+
+                                                           " hostport part");
+                    }
+                }
+            }
+            return host;
+        }
+    }
+
+    private int[] parsePort(String port)
+        throws Exception
+    {
+
+        if (port == null || port.equals("") || port.equals("*")) {
+            return new int[] {PORT_MIN, PORT_MAX};
+        }
+
+        int dash = port.indexOf('-');
+
+        if (dash == -1) {
+            int p = Integer.parseInt(port);
+            return new int[] {p, p};
+        } else {
+            String low = port.substring(0, dash);
+            String high = port.substring(dash+1);
+            int l,h;
+
+            if (low.equals("")) {
+                l = PORT_MIN;
+            } else {
+                l = Integer.parseInt(low);
+            }
+
+            if (high.equals("")) {
+                h = PORT_MAX;
+            } else {
+                h = Integer.parseInt(high);
+            }
+            if (l < 0 || h < 0 || h<l)
+                throw new IllegalArgumentException("invalid port range");
+
+            return new int[] {l, h};
+        }
+    }
+
+    /**
+     * Returns true if the permission has specified zero
+     * as its value (or lower bound) signifying the ephemeral range
+     */
+    private boolean includesEphemerals() {
+        return portrange[0] == 0;
+    }
+
+    /**
+     * Initialize the SocketPermission object. We don't do any DNS lookups
+     * as this point, instead we hold off until the implies method is
+     * called.
+     */
+    private void init(String host, int mask) {
+        // Set the integer mask that represents the actions
+
+        if ((mask & ALL) != mask)
+            throw new IllegalArgumentException("invalid actions mask");
+
+        // always OR in RESOLVE if we allow any of the others
+        this.mask = mask | RESOLVE;
+
+        // Parse the host name.  A name has up to three components, the
+        // hostname, a port number, or two numbers representing a port
+        // range.   "www.sun.com:8080-9090" is a valid host name.
+
+        // With IPv6 an address can be 2010:836B:4179::836B:4179
+        // An IPv6 address needs to be enclose in []
+        // For ex: [2010:836B:4179::836B:4179]:8080-9090
+        // Refer to RFC 2732 for more information.
+
+        int rb = 0 ;
+        int start = 0, end = 0;
+        int sep = -1;
+        String hostport = host;
+        if (host.charAt(0) == '[') {
+            start = 1;
+            rb = host.indexOf(']');
+            if (rb != -1) {
+                host = host.substring(start, rb);
+            } else {
+                throw new
+                    IllegalArgumentException("invalid host/port: "+host);
+            }
+            sep = hostport.indexOf(':', rb+1);
+        } else {
+            start = 0;
+            sep = host.indexOf(':', rb);
+            end = sep;
+            if (sep != -1) {
+                host = host.substring(start, end);
+            }
+        }
+
+        if (sep != -1) {
+            String port = hostport.substring(sep+1);
+            try {
+                portrange = parsePort(port);
+            } catch (Exception e) {
+                throw new
+                    IllegalArgumentException("invalid port range: "+port);
+            }
+        } else {
+            portrange = new int[] { PORT_MIN, PORT_MAX };
+        }
+
+        hostname = host;
+
+        // is this a domain wildcard specification
+        if (host.lastIndexOf('*') > 0) {
+            throw new
+               IllegalArgumentException("invalid host wildcard specification");
+        } else if (host.startsWith("*")) {
+            wildcard = true;
+            if (host.equals("*")) {
+                cname = "";
+            } else if (host.startsWith("*.")) {
+                cname = host.substring(1).toLowerCase();
+            } else {
+              throw new
+               IllegalArgumentException("invalid host wildcard specification");
+            }
+            return;
+        } else {
+            if (host.length() > 0) {
+                // see if we are being initialized with an IP address.
+                char ch = host.charAt(0);
+                if (ch == ':' || Character.digit(ch, 16) != -1) {
+                    byte ip[] = IPAddressUtil.textToNumericFormatV4(host);
+                    if (ip == null) {
+                        ip = IPAddressUtil.textToNumericFormatV6(host);
+                    }
+                    if (ip != null) {
+                        try {
+                            addresses =
+                                new InetAddress[]
+                                {InetAddress.getByAddress(ip) };
+                            init_with_ip = true;
+                        } catch (UnknownHostException uhe) {
+                            // this shouldn't happen
+                            invalid = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Convert an action string to an integer actions mask.
+     *
+     * @param action the action string
+     * @return the action mask
+     */
+    private static int getMask(String action) {
+
+        if (action == null) {
+            throw new NullPointerException("action can't be null");
+        }
+
+        if (action.equals("")) {
+            throw new IllegalArgumentException("action can't be empty");
+        }
+
+        int mask = NONE;
+
+        // Use object identity comparison against known-interned strings for
+        // performance benefit (these values are used heavily within the JDK).
+        if (action == SecurityConstants.SOCKET_RESOLVE_ACTION) {
+            return RESOLVE;
+        } else if (action == SecurityConstants.SOCKET_CONNECT_ACTION) {
+            return CONNECT;
+        } else if (action == SecurityConstants.SOCKET_LISTEN_ACTION) {
+            return LISTEN;
+        } else if (action == SecurityConstants.SOCKET_ACCEPT_ACTION) {
+            return ACCEPT;
+        } else if (action == SecurityConstants.SOCKET_CONNECT_ACCEPT_ACTION) {
+            return CONNECT|ACCEPT;
+        }
+
+        char[] a = action.toCharArray();
+
+        int i = a.length - 1;
+        if (i < 0)
+            return mask;
+
+        while (i != -1) {
+            char c;
+
+            // skip whitespace
+            while ((i!=-1) && ((c = a[i]) == ' ' ||
+                               c == '\r' ||
+                               c == '\n' ||
+                               c == '\f' ||
+                               c == '\t'))
+                i--;
+
+            // check for the known strings
+            int matchlen;
+
+            if (i >= 6 && (a[i-6] == 'c' || a[i-6] == 'C') &&
+                          (a[i-5] == 'o' || a[i-5] == 'O') &&
+                          (a[i-4] == 'n' || a[i-4] == 'N') &&
+                          (a[i-3] == 'n' || a[i-3] == 'N') &&
+                          (a[i-2] == 'e' || a[i-2] == 'E') &&
+                          (a[i-1] == 'c' || a[i-1] == 'C') &&
+                          (a[i] == 't' || a[i] == 'T'))
+            {
+                matchlen = 7;
+                mask |= CONNECT;
+
+            } else if (i >= 6 && (a[i-6] == 'r' || a[i-6] == 'R') &&
+                                 (a[i-5] == 'e' || a[i-5] == 'E') &&
+                                 (a[i-4] == 's' || a[i-4] == 'S') &&
+                                 (a[i-3] == 'o' || a[i-3] == 'O') &&
+                                 (a[i-2] == 'l' || a[i-2] == 'L') &&
+                                 (a[i-1] == 'v' || a[i-1] == 'V') &&
+                                 (a[i] == 'e' || a[i] == 'E'))
+            {
+                matchlen = 7;
+                mask |= RESOLVE;
+
+            } else if (i >= 5 && (a[i-5] == 'l' || a[i-5] == 'L') &&
+                                 (a[i-4] == 'i' || a[i-4] == 'I') &&
+                                 (a[i-3] == 's' || a[i-3] == 'S') &&
+                                 (a[i-2] == 't' || a[i-2] == 'T') &&
+                                 (a[i-1] == 'e' || a[i-1] == 'E') &&
+                                 (a[i] == 'n' || a[i] == 'N'))
+            {
+                matchlen = 6;
+                mask |= LISTEN;
+
+            } else if (i >= 5 && (a[i-5] == 'a' || a[i-5] == 'A') &&
+                                 (a[i-4] == 'c' || a[i-4] == 'C') &&
+                                 (a[i-3] == 'c' || a[i-3] == 'C') &&
+                                 (a[i-2] == 'e' || a[i-2] == 'E') &&
+                                 (a[i-1] == 'p' || a[i-1] == 'P') &&
+                                 (a[i] == 't' || a[i] == 'T'))
+            {
+                matchlen = 6;
+                mask |= ACCEPT;
+
+            } else {
+                // parse error
+                throw new IllegalArgumentException(
+                        "invalid permission: " + action);
+            }
+
+            // make sure we didn't just match the tail of a word
+            // like "ackbarfaccept".  Also, skip to the comma.
+            boolean seencomma = false;
+            while (i >= matchlen && !seencomma) {
+                switch(a[i-matchlen]) {
+                case ',':
+                    seencomma = true;
+                    break;
+                case ' ': case '\r': case '\n':
+                case '\f': case '\t':
+                    break;
+                default:
+                    throw new IllegalArgumentException(
+                            "invalid permission: " + action);
+                }
+                i--;
+            }
+
+            // point i at the location of the comma minus one (or -1).
+            i -= matchlen;
+        }
+
+        return mask;
+    }
+
+    private boolean isUntrusted()
+        throws UnknownHostException
+    {
+        if (trusted) return false;
+        if (invalid || untrusted) return true;
+        try {
+            if (!trustNameService && (defaultDeny ||
+                sun.net.www.URLConnection.isProxiedHost(hostname))) {
+                if (this.cname == null) {
+                    this.getCanonName();
+                }
+                if (!match(cname, hostname)) {
+                    // Last chance
+                    if (!authorized(hostname, addresses[0].getAddress())) {
+                        untrusted = true;
+                        Debug debug = getDebug();
+                        if (debug != null && Debug.isOn("failure")) {
+                            debug.println("socket access restriction: proxied host " + "(" + addresses[0] + ")" + " does not match " + cname + " from reverse lookup");
+                        }
+                        return true;
+                    }
+                }
+                trusted = true;
+            }
+        } catch (UnknownHostException uhe) {
+            invalid = true;
+            throw uhe;
+        }
+        return false;
+    }
+
+    /**
+     * attempt to get the fully qualified domain name
+     *
+     */
+    void getCanonName()
+        throws UnknownHostException
+    {
+        if (cname != null || invalid || untrusted) return;
+
+        // attempt to get the canonical name
+
+        try {
+            // first get the IP addresses if we don't have them yet
+            // this is because we need the IP address to then get
+            // FQDN.
+            if (addresses == null) {
+                getIP();
+            }
+
+            // we have to do this check, otherwise we might not
+            // get the fully qualified domain name
+            if (init_with_ip) {
+                cname = addresses[0].getHostName(false).toLowerCase();
+            } else {
+             cname = InetAddress.getByName(addresses[0].getHostAddress()).
+                                              getHostName(false).toLowerCase();
+            }
+        } catch (UnknownHostException uhe) {
+            invalid = true;
+            throw uhe;
+        }
+    }
+
+    private transient String cdomain, hdomain;
+
+    private boolean match(String cname, String hname) {
+        String a = cname.toLowerCase();
+        String b = hname.toLowerCase();
+        if (a.startsWith(b)  &&
+            ((a.length() == b.length()) || (a.charAt(b.length()) == '.')))
+            return true;
+        if (cdomain == null) {
+            cdomain = RegisteredDomain.getRegisteredDomain(a);
+        }
+        if (hdomain == null) {
+            hdomain = RegisteredDomain.getRegisteredDomain(b);
+        }
+
+        return cdomain.length() != 0 && hdomain.length() != 0
+                        && cdomain.equals(hdomain);
+    }
+
+    private boolean authorized(String cname, byte[] addr) {
+        if (addr.length == 4)
+            return authorizedIPv4(cname, addr);
+        else if (addr.length == 16)
+            return authorizedIPv6(cname, addr);
+        else
+            return false;
+    }
+
+    private boolean authorizedIPv4(String cname, byte[] addr) {
+        String authHost = "";
+        InetAddress auth;
+
+        try {
+            authHost = "auth." +
+                        (addr[3] & 0xff) + "." + (addr[2] & 0xff) + "." +
+                        (addr[1] & 0xff) + "." + (addr[0] & 0xff) +
+                        ".in-addr.arpa";
+            // Following check seems unnecessary
+            // auth = InetAddress.getAllByName0(authHost, false)[0];
+            authHost = hostname + '.' + authHost;
+            auth = InetAddress.getAllByName0(authHost, false)[0];
+            if (auth.equals(InetAddress.getByAddress(addr))) {
+                return true;
+            }
+            Debug debug = getDebug();
+            if (debug != null && Debug.isOn("failure")) {
+                debug.println("socket access restriction: IP address of " + auth + " != " + InetAddress.getByAddress(addr));
+            }
+        } catch (UnknownHostException uhe) {
+            Debug debug = getDebug();
+            if (debug != null && Debug.isOn("failure")) {
+                debug.println("socket access restriction: forward lookup failed for " + authHost);
+            }
+        }
+        return false;
+    }
+
+    private boolean authorizedIPv6(String cname, byte[] addr) {
+        String authHost = "";
+        InetAddress auth;
+
+        try {
+            StringBuffer sb = new StringBuffer(39);
+
+            for (int i = 15; i >= 0; i--) {
+                sb.append(Integer.toHexString(((addr[i]) & 0x0f)));
+                sb.append('.');
+                sb.append(Integer.toHexString(((addr[i] >> 4) & 0x0f)));
+                sb.append('.');
+            }
+            authHost = "auth." + sb.toString() + "IP6.ARPA";
+            //auth = InetAddress.getAllByName0(authHost, false)[0];
+            authHost = hostname + '.' + authHost;
+            auth = InetAddress.getAllByName0(authHost, false)[0];
+            if (auth.equals(InetAddress.getByAddress(addr)))
+                return true;
+            Debug debug = getDebug();
+            if (debug != null && Debug.isOn("failure")) {
+                debug.println("socket access restriction: IP address of " + auth + " != " + InetAddress.getByAddress(addr));
+            }
+        } catch (UnknownHostException uhe) {
+            Debug debug = getDebug();
+            if (debug != null && Debug.isOn("failure")) {
+                debug.println("socket access restriction: forward lookup failed for " + authHost);
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * get IP addresses. Sets invalid to true if we can't get them.
+     *
+     */
+    void getIP()
+        throws UnknownHostException
+    {
+        if (addresses != null || wildcard || invalid) return;
+
+        try {
+            // now get all the IP addresses
+            String host;
+            if (getName().charAt(0) == '[') {
+                // Literal IPv6 address
+                host = getName().substring(1, getName().indexOf(']'));
+            } else {
+                int i = getName().indexOf(":");
+                if (i == -1)
+                    host = getName();
+                else {
+                    host = getName().substring(0,i);
+                }
+            }
+
+            addresses =
+                new InetAddress[] {InetAddress.getAllByName0(host, false)[0]};
+
+        } catch (UnknownHostException uhe) {
+            invalid = true;
+            throw uhe;
+        }  catch (IndexOutOfBoundsException iobe) {
+            invalid = true;
+            throw new UnknownHostException(getName());
+        }
+    }
+
+    /**
+     * Checks if this socket permission object "implies" the
+     * specified permission.
+     * <P>
+     * More specifically, this method first ensures that all of the following
+     * are true (and returns false if any of them are not):
+     * <ul>
+     * <li> <i>p</i> is an instanceof SocketPermission,
+     * <li> <i>p</i>'s actions are a proper subset of this
+     * object's actions, and
+     * <li> <i>p</i>'s port range is included in this port range. Note:
+     * port range is ignored when p only contains the action, 'resolve'.
+     * </ul>
+     *
+     * Then {@code implies} checks each of the following, in order,
+     * and for each returns true if the stated condition is true:
+     * <ul>
+     * <li> If this object was initialized with a single IP address and one of <i>p</i>'s
+     * IP addresses is equal to this object's IP address.
+     * <li>If this object is a wildcard domain (such as *.sun.com), and
+     * <i>p</i>'s canonical name (the name without any preceding *)
+     * ends with this object's canonical host name. For example, *.sun.com
+     * implies *.eng.sun.com.
+     * <li>If this object was not initialized with a single IP address, and one of this
+     * object's IP addresses equals one of <i>p</i>'s IP addresses.
+     * <li>If this canonical name equals <i>p</i>'s canonical name.
+     * </ul>
+     *
+     * If none of the above are true, {@code implies} returns false.
+     * @param p the permission to check against.
+     *
+     * @return true if the specified permission is implied by this object,
+     * false if not.
+     */
+    public boolean implies(Permission p) {
+        int i,j;
+
+        if (!(p instanceof SocketPermission))
+            return false;
+
+        if (p == this)
+            return true;
+
+        SocketPermission that = (SocketPermission) p;
+
+        return ((this.mask & that.mask) == that.mask) &&
+                                        impliesIgnoreMask(that);
+    }
+
+    /**
+     * Checks if the incoming Permission's action are a proper subset of
+     * the this object's actions.
+     * <P>
+     * Check, in the following order:
+     * <ul>
+     * <li> Checks that "p" is an instanceof a SocketPermission
+     * <li> Checks that "p"'s actions are a proper subset of the
+     * current object's actions.
+     * <li> Checks that "p"'s port range is included in this port range
+     * <li> If this object was initialized with an IP address, checks that
+     *      one of "p"'s IP addresses is equal to this object's IP address.
+     * <li> If either object is a wildcard domain (i.e., "*.sun.com"),
+     *      attempt to match based on the wildcard.
+     * <li> If this object was not initialized with an IP address, attempt
+     *      to find a match based on the IP addresses in both objects.
+     * <li> Attempt to match on the canonical hostnames of both objects.
+     * </ul>
+     * @param that the incoming permission request
+     *
+     * @return true if "permission" is a proper subset of the current object,
+     * false if not.
+     */
+    boolean impliesIgnoreMask(SocketPermission that) {
+        int i,j;
+
+        if ((that.mask & RESOLVE) != that.mask) {
+
+            // check simple port range
+            if ((that.portrange[0] < this.portrange[0]) ||
+                    (that.portrange[1] > this.portrange[1])) {
+
+                // if either includes the ephemeral range, do full check
+                if (this.includesEphemerals() || that.includesEphemerals()) {
+                    if (!inRange(this.portrange[0], this.portrange[1],
+                                     that.portrange[0], that.portrange[1]))
+                    {
+                                return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        // allow a "*" wildcard to always match anything
+        if (this.wildcard && "".equals(this.cname))
+            return true;
+
+        // return if either one of these NetPerm objects are invalid...
+        if (this.invalid || that.invalid) {
+            return compareHostnames(that);
+        }
+
+        try {
+            if (this.init_with_ip) { // we only check IP addresses
+                if (that.wildcard)
+                    return false;
+
+                if (that.init_with_ip) {
+                    return (this.addresses[0].equals(that.addresses[0]));
+                } else {
+                    if (that.addresses == null) {
+                        that.getIP();
+                    }
+                    for (i=0; i < that.addresses.length; i++) {
+                        if (this.addresses[0].equals(that.addresses[i]))
+                            return true;
+                    }
+                }
+                // since "this" was initialized with an IP address, we
+                // don't check any other cases
+                return false;
+            }
+
+            // check and see if we have any wildcards...
+            if (this.wildcard || that.wildcard) {
+                // if they are both wildcards, return true iff
+                // that's cname ends with this cname (i.e., *.sun.com
+                // implies *.eng.sun.com)
+                if (this.wildcard && that.wildcard)
+                    return (that.cname.endsWith(this.cname));
+
+                // a non-wildcard can't imply a wildcard
+                if (that.wildcard)
+                    return false;
+
+                // this is a wildcard, lets see if that's cname ends with
+                // it...
+                if (that.cname == null) {
+                    that.getCanonName();
+                }
+                return (that.cname.endsWith(this.cname));
+            }
+
+            // comapare IP addresses
+            if (this.addresses == null) {
+                this.getIP();
+            }
+
+            if (that.addresses == null) {
+                that.getIP();
+            }
+
+            if (!(that.init_with_ip && this.isUntrusted())) {
+                for (j = 0; j < this.addresses.length; j++) {
+                    for (i=0; i < that.addresses.length; i++) {
+                        if (this.addresses[j].equals(that.addresses[i]))
+                            return true;
+                    }
+                }
+
+                // XXX: if all else fails, compare hostnames?
+                // Do we really want this?
+                if (this.cname == null) {
+                    this.getCanonName();
+                }
+
+                if (that.cname == null) {
+                    that.getCanonName();
+                }
+
+                return (this.cname.equalsIgnoreCase(that.cname));
+            }
+
+        } catch (UnknownHostException uhe) {
+            return compareHostnames(that);
+        }
+
+        // make sure the first thing that is done here is to return
+        // false. If not, uncomment the return false in the above catch.
+
+        return false;
+    }
+
+    private boolean compareHostnames(SocketPermission that) {
+        // we see if the original names/IPs passed in were equal.
+
+        String thisHost = hostname;
+        String thatHost = that.hostname;
+
+        if (thisHost == null) {
+            return false;
+        } else if (this.wildcard) {
+            final int cnameLength = this.cname.length();
+            return thatHost.regionMatches(true,
+                                          (thatHost.length() - cnameLength),
+                                          this.cname, 0, cnameLength);
+        } else {
+            return thisHost.equalsIgnoreCase(thatHost);
+        }
+    }
+
+    /**
+     * Checks two SocketPermission objects for equality.
+     * <P>
+     * @param obj the object to test for equality with this object.
+     *
+     * @return true if <i>obj</i> is a SocketPermission, and has the
+     *  same hostname, port range, and actions as this
+     *  SocketPermission object. However, port range will be ignored
+     *  in the comparison if <i>obj</i> only contains the action, 'resolve'.
+     */
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        if (! (obj instanceof SocketPermission))
+            return false;
+
+        SocketPermission that = (SocketPermission) obj;
+
+        //this is (overly?) complex!!!
+
+        // check the mask first
+        if (this.mask != that.mask) return false;
+
+        if ((that.mask & RESOLVE) != that.mask) {
+            // now check the port range...
+            if ((this.portrange[0] != that.portrange[0]) ||
+                (this.portrange[1] != that.portrange[1])) {
+                return false;
+            }
+        }
+
+        // short cut. This catches:
+        //  "crypto" equal to "crypto", or
+        // "1.2.3.4" equal to "1.2.3.4.", or
+        //  "*.edu" equal to "*.edu", but it
+        //  does not catch "crypto" equal to
+        // "crypto.eng.sun.com".
+
+        if (this.getName().equalsIgnoreCase(that.getName())) {
+            return true;
+        }
+
+        // we now attempt to get the Canonical (FQDN) name and
+        // compare that. If this fails, about all we can do is return
+        // false.
+
+        try {
+            this.getCanonName();
+            that.getCanonName();
+        } catch (UnknownHostException uhe) {
+            return false;
+        }
+
+        if (this.invalid || that.invalid)
+            return false;
+
+        if (this.cname != null) {
+            return this.cname.equalsIgnoreCase(that.cname);
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the hash code value for this object.
+     *
+     * @return a hash code value for this object.
+     */
+
+    public int hashCode() {
+        /*
+         * If this SocketPermission was initialized with an IP address
+         * or a wildcard, use getName().hashCode(), otherwise use
+         * the hashCode() of the host name returned from
+         * java.net.InetAddress.getHostName method.
+         */
+
+        if (init_with_ip || wildcard) {
+            return this.getName().hashCode();
+        }
+
+        try {
+            getCanonName();
+        } catch (UnknownHostException uhe) {
+
+        }
+
+        if (invalid || cname == null)
+            return this.getName().hashCode();
+        else
+            return this.cname.hashCode();
+    }
+
+    /**
+     * Return the current action mask.
+     *
+     * @return the actions mask.
+     */
+
+    int getMask() {
+        return mask;
+    }
+
+    /**
+     * Returns the "canonical string representation" of the actions in the
+     * specified mask.
+     * Always returns present actions in the following order:
+     * connect, listen, accept, resolve.
+     *
+     * @param mask a specific integer action mask to translate into a string
+     * @return the canonical string representation of the actions
+     */
+    private static String getActions(int mask)
+    {
+        StringBuilder sb = new StringBuilder();
+        boolean comma = false;
+
+        if ((mask & CONNECT) == CONNECT) {
+            comma = true;
+            sb.append("connect");
+        }
+
+        if ((mask & LISTEN) == LISTEN) {
+            if (comma) sb.append(',');
+            else comma = true;
+            sb.append("listen");
+        }
+
+        if ((mask & ACCEPT) == ACCEPT) {
+            if (comma) sb.append(',');
+            else comma = true;
+            sb.append("accept");
+        }
+
+
+        if ((mask & RESOLVE) == RESOLVE) {
+            if (comma) sb.append(',');
+            else comma = true;
+            sb.append("resolve");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns the canonical string representation of the actions.
+     * Always returns present actions in the following order:
+     * connect, listen, accept, resolve.
+     *
+     * @return the canonical string representation of the actions.
+     */
+    public String getActions()
+    {
+        if (actions == null)
+            actions = getActions(this.mask);
+
+        return actions;
+    }
+
+    /**
+     * Returns a new PermissionCollection object for storing SocketPermission
+     * objects.
+     * <p>
+     * SocketPermission objects must be stored in a manner that allows them
+     * to be inserted into the collection in any order, but that also enables the
+     * PermissionCollection {@code implies}
+     * method to be implemented in an efficient (and consistent) manner.
+     *
+     * @return a new PermissionCollection object suitable for storing SocketPermissions.
+     */
+
+    public PermissionCollection newPermissionCollection() {
+        return new SocketPermissionCollection();
+    }
+
+    /**
+     * WriteObject is called to save the state of the SocketPermission
+     * to a stream. The actions are serialized, and the superclass
+     * takes care of the name.
+     */
+    private synchronized void writeObject(java.io.ObjectOutputStream s)
+        throws IOException
+    {
+        // Write out the actions. The superclass takes care of the name
+        // call getActions to make sure actions field is initialized
+        if (actions == null)
+            getActions();
+        s.defaultWriteObject();
+    }
+
+    /**
+     * readObject is called to restore the state of the SocketPermission from
+     * a stream.
+     */
+    private synchronized void readObject(java.io.ObjectInputStream s)
+         throws IOException, ClassNotFoundException
+    {
+        // Read in the action, then initialize the rest
+        s.defaultReadObject();
+        init(getName(),getMask(actions));
+    }
+
+    /**
+     * Check the system/security property for the ephemeral port range
+     * for this system. The suffix is either "high" or "low"
+     */
+    private static int initEphemeralPorts(String suffix, int defval) {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<Integer>(){
+                public Integer run() {
+                    int val = Integer.getInteger(
+                            "jdk.net.ephemeralPortRange."+suffix, -1
+                    );
+                    if (val != -1) {
+                        return val;
+                    } else {
+                        return suffix.equals("low") ?
+                            PortConfig.getLower() : PortConfig.getUpper();
+                    }
+                }
+            }
+        );
+    }
+
+    /**
+     * Check if the target range is within the policy range
+     * together with the ephemeral range for this platform
+     * (if policy includes ephemeral range)
+     */
+    private static boolean inRange(
+        int policyLow, int policyHigh, int targetLow, int targetHigh
+    )
+    {
+        final int ephemeralLow = EphemeralRange.low;
+        final int ephemeralHigh = EphemeralRange.high;
+
+        if (targetLow == 0) {
+            // check policy includes ephemeral range
+            if (!inRange(policyLow, policyHigh, ephemeralLow, ephemeralHigh)) {
+                return false;
+            }
+            if (targetHigh == 0) {
+                // nothing left to do
+                return true;
+            }
+            // continue check with first real port number
+            targetLow = 1;
+        }
+
+        if (policyLow == 0 && policyHigh == 0) {
+            // ephemeral range only
+            return targetLow >= ephemeralLow && targetHigh <= ephemeralHigh;
+        }
+
+        if (policyLow != 0) {
+            // simple check of policy only
+            return targetLow >= policyLow && targetHigh <= policyHigh;
+        }
+
+        // policyLow == 0 which means possibly two ranges to check
+
+        // first check if policy and ephem range overlap/contiguous
+
+        if (policyHigh >= ephemeralLow - 1) {
+            return targetHigh <= ephemeralHigh;
+        }
+
+        // policy and ephem range do not overlap
+
+        // target range must lie entirely inside policy range or eph range
+
+        return  (targetLow <= policyHigh && targetHigh <= policyHigh) ||
+                (targetLow >= ephemeralLow && targetHigh <= ephemeralHigh);
+    }
+    /*
+    public String toString()
+    {
+        StringBuffer s = new StringBuffer(super.toString() + "\n" +
+            "cname = " + cname + "\n" +
+            "wildcard = " + wildcard + "\n" +
+            "invalid = " + invalid + "\n" +
+            "portrange = " + portrange[0] + "," + portrange[1] + "\n");
+        if (addresses != null) for (int i=0; i<addresses.length; i++) {
+            s.append( addresses[i].getHostAddress());
+            s.append("\n");
+        } else {
+            s.append("(no addresses)\n");
+        }
+
+        return s.toString();
+    }
+
+    public static void main(String args[]) throws Exception {
+        SocketPermission this_ = new SocketPermission(args[0], "connect");
+        SocketPermission that_ = new SocketPermission(args[1], "connect");
+        System.out.println("-----\n");
+        System.out.println("this.implies(that) = " + this_.implies(that_));
+        System.out.println("-----\n");
+        System.out.println("this = "+this_);
+        System.out.println("-----\n");
+        System.out.println("that = "+that_);
+        System.out.println("-----\n");
+
+        SocketPermissionCollection nps = new SocketPermissionCollection();
+        nps.add(this_);
+        nps.add(new SocketPermission("www-leland.stanford.edu","connect"));
+        nps.add(new SocketPermission("www-sun.com","connect"));
+        System.out.println("nps.implies(that) = " + nps.implies(that_));
+        System.out.println("-----\n");
+    }
+    */
+}
+
+/**
+
+if (init'd with IP, key is IP as string)
+if wildcard, its the wild card
+else its the cname?
+
+ *
+ * @see java.security.Permission
+ * @see java.security.Permissions
+ * @see java.security.PermissionCollection
+ *
+ *
+ * @author Roland Schemers
+ *
+ * @serial include
+ */
+
+final class SocketPermissionCollection extends PermissionCollection
+    implements Serializable
+{
+    // Not serialized; see serialization section at end of class
+    private transient List<SocketPermission> perms;
+
+    /**
+     * Create an empty SocketPermissions object.
+     *
+     */
+
+    public SocketPermissionCollection() {
+        perms = new ArrayList<SocketPermission>();
+    }
+
+    /**
+     * Adds a permission to the SocketPermissions. The key for the hash is
+     * the name in the case of wildcards, or all the IP addresses.
+     *
+     * @param permission the Permission object to add.
+     *
+     * @exception IllegalArgumentException - if the permission is not a
+     *                                       SocketPermission
+     *
+     * @exception SecurityException - if this SocketPermissionCollection object
+     *                                has been marked readonly
+     */
+    public void add(Permission permission) {
+        if (! (permission instanceof SocketPermission))
+            throw new IllegalArgumentException("invalid permission: "+
+                                               permission);
+        if (isReadOnly())
+            throw new SecurityException(
+                "attempt to add a Permission to a readonly PermissionCollection");
+
+        // optimization to ensure perms most likely to be tested
+        // show up early (4301064)
+        synchronized (this) {
+            perms.add(0, (SocketPermission)permission);
+        }
+    }
+
+    /**
+     * Check and see if this collection of permissions implies the permissions
+     * expressed in "permission".
+     *
+     * @param permission the Permission object to compare
+     *
+     * @return true if "permission" is a proper subset of a permission in
+     * the collection, false if not.
+     */
+
+    public boolean implies(Permission permission)
+    {
+        if (! (permission instanceof SocketPermission))
+                return false;
+
+        SocketPermission np = (SocketPermission) permission;
+
+        int desired = np.getMask();
+        int effective = 0;
+        int needed = desired;
+
+        synchronized (this) {
+            int len = perms.size();
+            //System.out.println("implies "+np);
+            for (int i = 0; i < len; i++) {
+                SocketPermission x = perms.get(i);
+                //System.out.println("  trying "+x);
+                if (((needed & x.getMask()) != 0) && x.impliesIgnoreMask(np)) {
+                    effective |=  x.getMask();
+                    if ((effective & desired) == desired)
+                        return true;
+                    needed = (desired ^ effective);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns an enumeration of all the SocketPermission objects in the
+     * container.
+     *
+     * @return an enumeration of all the SocketPermission objects.
+     */
+
+    @SuppressWarnings("unchecked")
+    public Enumeration<Permission> elements() {
+        // Convert Iterator into Enumeration
+        synchronized (this) {
+            return Collections.enumeration((List<Permission>)(List)perms);
+        }
+    }
+
+    private static final long serialVersionUID = 2787186408602843674L;
+
+    // Need to maintain serialization interoperability with earlier releases,
+    // which had the serializable field:
+
+    //
+    // The SocketPermissions for this set.
+    // @serial
+    //
+    // private Vector permissions;
+
+    /**
+     * @serialField permissions java.util.Vector
+     *     A list of the SocketPermissions for this set.
+     */
+    private static final ObjectStreamField[] serialPersistentFields = {
+        new ObjectStreamField("permissions", Vector.class),
+    };
+
+    /**
+     * @serialData "permissions" field (a Vector containing the SocketPermissions).
+     */
+    /*
+     * Writes the contents of the perms field out as a Vector for
+     * serialization compatibility with earlier releases.
+     */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        // Don't call out.defaultWriteObject()
+
+        // Write out Vector
+        Vector<SocketPermission> permissions = new Vector<>(perms.size());
+
+        synchronized (this) {
+            permissions.addAll(perms);
+        }
+
+        ObjectOutputStream.PutField pfields = out.putFields();
+        pfields.put("permissions", permissions);
+        out.writeFields();
+    }
+
+    /*
+     * Reads in a Vector of SocketPermissions and saves them in the perms field.
+     */
+    private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException
+    {
+        // Don't call in.defaultReadObject()
+
+        // Read in serialized fields
+        ObjectInputStream.GetField gfields = in.readFields();
+
+        // Get the one we want
+        @SuppressWarnings("unchecked")
+        Vector<SocketPermission> permissions = (Vector<SocketPermission>)gfields.get("permissions", null);
+        perms = new ArrayList<SocketPermission>(permissions.size());
+        perms.addAll(permissions);
+    }
+}

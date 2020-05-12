@@ -1,66 +1,61 @@
-/*    */ package com.sun.corba.se.impl.corba;
-/*    */ 
-/*    */ import org.omg.CORBA.Environment;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class EnvironmentImpl
-/*    */   extends Environment
-/*    */ {
-/*    */   private Exception _exc;
-/*    */   
-/*    */   public Exception exception() {
-/* 48 */     return this._exc;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void exception(Exception paramException) {
-/* 53 */     this._exc = paramException;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void clear() {
-/* 58 */     this._exc = null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\corba\EnvironmentImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.corba;
+
+import org.omg.CORBA.Environment;
+import org.omg.CORBA.UserException;
+import org.omg.CORBA.ORB;
+
+public class EnvironmentImpl extends Environment {
+
+    private Exception _exc;
+
+    public EnvironmentImpl()
+    {
+    }
+
+    public Exception exception()
+    {
+        return _exc;
+    }
+
+    public void exception(Exception exc)
+    {
+        _exc = exc;
+    }
+
+    public void clear()
+    {
+        _exc = null;
+    }
+
+}

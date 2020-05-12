@@ -1,113 +1,108 @@
-/*     */ package javax.xml.transform;
-/*     */ 
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.io.InputStream;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class SecuritySupport
-/*     */ {
-/*     */   ClassLoader getContextClassLoader() throws SecurityException {
-/*  44 */     return 
-/*  45 */       AccessController.<ClassLoader>doPrivileged(new PrivilegedAction<ClassLoader>() {
-/*     */           public Object run() {
-/*  47 */             ClassLoader cl = null;
-/*     */             
-/*  49 */             cl = Thread.currentThread().getContextClassLoader();
-/*     */             
-/*  51 */             if (cl == null)
-/*  52 */               cl = ClassLoader.getSystemClassLoader(); 
-/*  53 */             return cl;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   String getSystemProperty(final String propName) {
-/*  59 */     return 
-/*  60 */       AccessController.<String>doPrivileged(new PrivilegedAction<String>() {
-/*     */           public Object run() {
-/*  62 */             return System.getProperty(propName);
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   FileInputStream getFileInputStream(final File file) throws FileNotFoundException {
-/*     */     try {
-/*  71 */       return 
-/*  72 */         AccessController.<FileInputStream>doPrivileged(new PrivilegedExceptionAction<FileInputStream>() {
-/*     */             public Object run() throws FileNotFoundException {
-/*  74 */               return new FileInputStream(file);
-/*     */             }
-/*     */           });
-/*  77 */     } catch (PrivilegedActionException e) {
-/*  78 */       throw (FileNotFoundException)e.getException();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   InputStream getResourceAsStream(final ClassLoader cl, final String name) {
-/*  85 */     return 
-/*  86 */       AccessController.<InputStream>doPrivileged(new PrivilegedAction<InputStream>() {
-/*     */           public Object run() {
-/*     */             InputStream ris;
-/*  89 */             if (cl == null) {
-/*  90 */               ris = Object.class.getResourceAsStream(name);
-/*     */             } else {
-/*  92 */               ris = cl.getResourceAsStream(name);
-/*     */             } 
-/*  94 */             return ris;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */   
-/*     */   boolean doesFileExist(final File f) {
-/* 100 */     return (
-/* 101 */       (Boolean)AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>() {
-/*     */           public Object run() {
-/* 103 */             return new Boolean(f.exists());
-/*     */           }
-/* 105 */         })).booleanValue();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\transform\SecuritySupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.transform;
+
+import java.security.*;
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+/**
+ * This class is duplicated for each JAXP subpackage so keep it in sync.
+ * It is package private and therefore is not exposed as part of the JAXP
+ * API.
+ *
+ * Security related methods that only work on J2SE 1.2 and newer.
+ */
+class SecuritySupport  {
+
+
+    ClassLoader getContextClassLoader() throws SecurityException{
+        return (ClassLoader)
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                ClassLoader cl = null;
+                //try {
+                cl = Thread.currentThread().getContextClassLoader();
+                //} catch (SecurityException ex) { }
+                if (cl == null)
+                    cl = ClassLoader.getSystemClassLoader();
+                return cl;
+            }
+        });
+    }
+
+    String getSystemProperty(final String propName) {
+        return (String)
+            AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    return System.getProperty(propName);
+                }
+            });
+    }
+
+    FileInputStream getFileInputStream(final File file)
+        throws FileNotFoundException
+    {
+        try {
+            return (FileInputStream)
+                AccessController.doPrivileged(new PrivilegedExceptionAction() {
+                    public Object run() throws FileNotFoundException {
+                        return new FileInputStream(file);
+                    }
+                });
+        } catch (PrivilegedActionException e) {
+            throw (FileNotFoundException)e.getException();
+        }
+    }
+
+    InputStream getResourceAsStream(final ClassLoader cl,
+                                           final String name)
+    {
+        return (InputStream)
+            AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    InputStream ris;
+                    if (cl == null) {
+                        ris = Object.class.getResourceAsStream(name);
+                    } else {
+                        ris = cl.getResourceAsStream(name);
+                    }
+                    return ris;
+                }
+            });
+    }
+
+    boolean doesFileExist(final File f) {
+    return ((Boolean)
+            AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    return new Boolean(f.exists());
+                }
+            })).booleanValue();
+    }
+
+}

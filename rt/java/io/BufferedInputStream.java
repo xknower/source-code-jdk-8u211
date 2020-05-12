@@ -1,494 +1,489 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BufferedInputStream
-/*     */   extends FilterInputStream
-/*     */ {
-/*  53 */   private static int DEFAULT_BUFFER_SIZE = 8192;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  61 */   private static int MAX_BUFFER_SIZE = 2147483639;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected volatile byte[] buf;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  79 */   private static final AtomicReferenceFieldUpdater<BufferedInputStream, byte[]> bufUpdater = (AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(BufferedInputStream.class, (Class)byte[].class, "buf");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int count;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int pos;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 136 */   protected int markpos = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int marklimit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private InputStream getInIfOpen() throws IOException {
-/* 157 */     InputStream inputStream = this.in;
-/* 158 */     if (inputStream == null)
-/* 159 */       throw new IOException("Stream closed"); 
-/* 160 */     return inputStream;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private byte[] getBufIfOpen() throws IOException {
-/* 168 */     byte[] arrayOfByte = this.buf;
-/* 169 */     if (arrayOfByte == null)
-/* 170 */       throw new IOException("Stream closed"); 
-/* 171 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedInputStream(InputStream paramInputStream) {
-/* 183 */     this(paramInputStream, DEFAULT_BUFFER_SIZE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedInputStream(InputStream paramInputStream, int paramInt) {
-/* 199 */     super(paramInputStream);
-/* 200 */     if (paramInt <= 0) {
-/* 201 */       throw new IllegalArgumentException("Buffer size <= 0");
-/*     */     }
-/* 203 */     this.buf = new byte[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void fill() throws IOException {
-/* 214 */     byte[] arrayOfByte = getBufIfOpen();
-/* 215 */     if (this.markpos < 0) {
-/* 216 */       this.pos = 0;
-/* 217 */     } else if (this.pos >= arrayOfByte.length) {
-/* 218 */       if (this.markpos > 0)
-/* 219 */       { int j = this.pos - this.markpos;
-/* 220 */         System.arraycopy(arrayOfByte, this.markpos, arrayOfByte, 0, j);
-/* 221 */         this.pos = j;
-/* 222 */         this.markpos = 0; }
-/* 223 */       else if (arrayOfByte.length >= this.marklimit)
-/* 224 */       { this.markpos = -1;
-/* 225 */         this.pos = 0; }
-/* 226 */       else { if (arrayOfByte.length >= MAX_BUFFER_SIZE) {
-/* 227 */           throw new OutOfMemoryError("Required array size too large");
-/*     */         }
-/* 229 */         int j = (this.pos <= MAX_BUFFER_SIZE - this.pos) ? (this.pos * 2) : MAX_BUFFER_SIZE;
-/*     */         
-/* 231 */         if (j > this.marklimit)
-/* 232 */           j = this.marklimit; 
-/* 233 */         byte[] arrayOfByte1 = new byte[j];
-/* 234 */         System.arraycopy(arrayOfByte, 0, arrayOfByte1, 0, this.pos);
-/* 235 */         if (!bufUpdater.compareAndSet(this, arrayOfByte, arrayOfByte1))
-/*     */         {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 241 */           throw new IOException("Stream closed");
-/*     */         }
-/* 243 */         arrayOfByte = arrayOfByte1; }
-/*     */     
-/* 245 */     }  this.count = this.pos;
-/* 246 */     int i = getInIfOpen().read(arrayOfByte, this.pos, arrayOfByte.length - this.pos);
-/* 247 */     if (i > 0) {
-/* 248 */       this.count = i + this.pos;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int read() throws IOException {
-/* 264 */     if (this.pos >= this.count) {
-/* 265 */       fill();
-/* 266 */       if (this.pos >= this.count)
-/* 267 */         return -1; 
-/*     */     } 
-/* 269 */     return getBufIfOpen()[this.pos++] & 0xFF;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int read1(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 277 */     int i = this.count - this.pos;
-/* 278 */     if (i <= 0) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 283 */       if (paramInt2 >= (getBufIfOpen()).length && this.markpos < 0) {
-/* 284 */         return getInIfOpen().read(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */       }
-/* 286 */       fill();
-/* 287 */       i = this.count - this.pos;
-/* 288 */       if (i <= 0) return -1; 
-/*     */     } 
-/* 290 */     int j = (i < paramInt2) ? i : paramInt2;
-/* 291 */     System.arraycopy(getBufIfOpen(), this.pos, paramArrayOfbyte, paramInt1, j);
-/* 292 */     this.pos += j;
-/* 293 */     return j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 336 */     getBufIfOpen();
-/* 337 */     if ((paramInt1 | paramInt2 | paramInt1 + paramInt2 | paramArrayOfbyte.length - paramInt1 + paramInt2) < 0)
-/* 338 */       throw new IndexOutOfBoundsException(); 
-/* 339 */     if (paramInt2 == 0) {
-/* 340 */       return 0;
-/*     */     }
-/*     */     
-/* 343 */     int i = 0;
-/*     */     while (true) {
-/* 345 */       int j = read1(paramArrayOfbyte, paramInt1 + i, paramInt2 - i);
-/* 346 */       if (j <= 0)
-/* 347 */         return (i == 0) ? j : i; 
-/* 348 */       i += j;
-/* 349 */       if (i >= paramInt2) {
-/* 350 */         return i;
-/*     */       }
-/* 352 */       InputStream inputStream = this.in;
-/* 353 */       if (inputStream != null && inputStream.available() <= 0) {
-/* 354 */         return i;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized long skip(long paramLong) throws IOException {
-/* 368 */     getBufIfOpen();
-/* 369 */     if (paramLong <= 0L) {
-/* 370 */       return 0L;
-/*     */     }
-/* 372 */     long l1 = (this.count - this.pos);
-/*     */     
-/* 374 */     if (l1 <= 0L) {
-/*     */       
-/* 376 */       if (this.markpos < 0) {
-/* 377 */         return getInIfOpen().skip(paramLong);
-/*     */       }
-/*     */       
-/* 380 */       fill();
-/* 381 */       l1 = (this.count - this.pos);
-/* 382 */       if (l1 <= 0L) {
-/* 383 */         return 0L;
-/*     */       }
-/*     */     } 
-/* 386 */     long l2 = (l1 < paramLong) ? l1 : paramLong;
-/* 387 */     this.pos = (int)(this.pos + l2);
-/* 388 */     return l2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized int available() throws IOException {
-/* 409 */     int i = this.count - this.pos;
-/* 410 */     int j = getInIfOpen().available();
-/* 411 */     return (i > Integer.MAX_VALUE - j) ? Integer.MAX_VALUE : (i + j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void mark(int paramInt) {
-/* 425 */     this.marklimit = paramInt;
-/* 426 */     this.markpos = this.pos;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void reset() throws IOException {
-/* 446 */     getBufIfOpen();
-/* 447 */     if (this.markpos < 0)
-/* 448 */       throw new IOException("Resetting to invalid mark"); 
-/* 449 */     this.pos = this.markpos;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean markSupported() {
-/* 464 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/*     */     byte[] arrayOfByte;
-/* 478 */     while ((arrayOfByte = this.buf) != null) {
-/* 479 */       if (bufUpdater.compareAndSet(this, arrayOfByte, null)) {
-/* 480 */         InputStream inputStream = this.in;
-/* 481 */         this.in = null;
-/* 482 */         if (inputStream != null)
-/* 483 */           inputStream.close(); 
-/*     */         return;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\BufferedInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
+/**
+ * A <code>BufferedInputStream</code> adds
+ * functionality to another input stream-namely,
+ * the ability to buffer the input and to
+ * support the <code>mark</code> and <code>reset</code>
+ * methods. When  the <code>BufferedInputStream</code>
+ * is created, an internal buffer array is
+ * created. As bytes  from the stream are read
+ * or skipped, the internal buffer is refilled
+ * as necessary  from the contained input stream,
+ * many bytes at a time. The <code>mark</code>
+ * operation  remembers a point in the input
+ * stream and the <code>reset</code> operation
+ * causes all the  bytes read since the most
+ * recent <code>mark</code> operation to be
+ * reread before new bytes are  taken from
+ * the contained input stream.
+ *
+ * @author  Arthur van Hoff
+ * @since   JDK1.0
+ */
+public
+class BufferedInputStream extends FilterInputStream {
+
+    private static int DEFAULT_BUFFER_SIZE = 8192;
+
+    /**
+     * The maximum size of array to allocate.
+     * Some VMs reserve some header words in an array.
+     * Attempts to allocate larger arrays may result in
+     * OutOfMemoryError: Requested array size exceeds VM limit
+     */
+    private static int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+
+    /**
+     * The internal buffer array where the data is stored. When necessary,
+     * it may be replaced by another array of
+     * a different size.
+     */
+    protected volatile byte buf[];
+
+    /**
+     * Atomic updater to provide compareAndSet for buf. This is
+     * necessary because closes can be asynchronous. We use nullness
+     * of buf[] as primary indicator that this stream is closed. (The
+     * "in" field is also nulled out on close.)
+     */
+    private static final
+        AtomicReferenceFieldUpdater<BufferedInputStream, byte[]> bufUpdater =
+        AtomicReferenceFieldUpdater.newUpdater
+        (BufferedInputStream.class,  byte[].class, "buf");
+
+    /**
+     * The index one greater than the index of the last valid byte in
+     * the buffer.
+     * This value is always
+     * in the range <code>0</code> through <code>buf.length</code>;
+     * elements <code>buf[0]</code>  through <code>buf[count-1]
+     * </code>contain buffered input data obtained
+     * from the underlying  input stream.
+     */
+    protected int count;
+
+    /**
+     * The current position in the buffer. This is the index of the next
+     * character to be read from the <code>buf</code> array.
+     * <p>
+     * This value is always in the range <code>0</code>
+     * through <code>count</code>. If it is less
+     * than <code>count</code>, then  <code>buf[pos]</code>
+     * is the next byte to be supplied as input;
+     * if it is equal to <code>count</code>, then
+     * the  next <code>read</code> or <code>skip</code>
+     * operation will require more bytes to be
+     * read from the contained  input stream.
+     *
+     * @see     java.io.BufferedInputStream#buf
+     */
+    protected int pos;
+
+    /**
+     * The value of the <code>pos</code> field at the time the last
+     * <code>mark</code> method was called.
+     * <p>
+     * This value is always
+     * in the range <code>-1</code> through <code>pos</code>.
+     * If there is no marked position in  the input
+     * stream, this field is <code>-1</code>. If
+     * there is a marked position in the input
+     * stream,  then <code>buf[markpos]</code>
+     * is the first byte to be supplied as input
+     * after a <code>reset</code> operation. If
+     * <code>markpos</code> is not <code>-1</code>,
+     * then all bytes from positions <code>buf[markpos]</code>
+     * through  <code>buf[pos-1]</code> must remain
+     * in the buffer array (though they may be
+     * moved to  another place in the buffer array,
+     * with suitable adjustments to the values
+     * of <code>count</code>,  <code>pos</code>,
+     * and <code>markpos</code>); they may not
+     * be discarded unless and until the difference
+     * between <code>pos</code> and <code>markpos</code>
+     * exceeds <code>marklimit</code>.
+     *
+     * @see     java.io.BufferedInputStream#mark(int)
+     * @see     java.io.BufferedInputStream#pos
+     */
+    protected int markpos = -1;
+
+    /**
+     * The maximum read ahead allowed after a call to the
+     * <code>mark</code> method before subsequent calls to the
+     * <code>reset</code> method fail.
+     * Whenever the difference between <code>pos</code>
+     * and <code>markpos</code> exceeds <code>marklimit</code>,
+     * then the  mark may be dropped by setting
+     * <code>markpos</code> to <code>-1</code>.
+     *
+     * @see     java.io.BufferedInputStream#mark(int)
+     * @see     java.io.BufferedInputStream#reset()
+     */
+    protected int marklimit;
+
+    /**
+     * Check to make sure that underlying input stream has not been
+     * nulled out due to close; if not return it;
+     */
+    private InputStream getInIfOpen() throws IOException {
+        InputStream input = in;
+        if (input == null)
+            throw new IOException("Stream closed");
+        return input;
+    }
+
+    /**
+     * Check to make sure that buffer has not been nulled out due to
+     * close; if not return it;
+     */
+    private byte[] getBufIfOpen() throws IOException {
+        byte[] buffer = buf;
+        if (buffer == null)
+            throw new IOException("Stream closed");
+        return buffer;
+    }
+
+    /**
+     * Creates a <code>BufferedInputStream</code>
+     * and saves its  argument, the input stream
+     * <code>in</code>, for later use. An internal
+     * buffer array is created and  stored in <code>buf</code>.
+     *
+     * @param   in   the underlying input stream.
+     */
+    public BufferedInputStream(InputStream in) {
+        this(in, DEFAULT_BUFFER_SIZE);
+    }
+
+    /**
+     * Creates a <code>BufferedInputStream</code>
+     * with the specified buffer size,
+     * and saves its  argument, the input stream
+     * <code>in</code>, for later use.  An internal
+     * buffer array of length  <code>size</code>
+     * is created and stored in <code>buf</code>.
+     *
+     * @param   in     the underlying input stream.
+     * @param   size   the buffer size.
+     * @exception IllegalArgumentException if {@code size <= 0}.
+     */
+    public BufferedInputStream(InputStream in, int size) {
+        super(in);
+        if (size <= 0) {
+            throw new IllegalArgumentException("Buffer size <= 0");
+        }
+        buf = new byte[size];
+    }
+
+    /**
+     * Fills the buffer with more data, taking into account
+     * shuffling and other tricks for dealing with marks.
+     * Assumes that it is being called by a synchronized method.
+     * This method also assumes that all data has already been read in,
+     * hence pos > count.
+     */
+    private void fill() throws IOException {
+        byte[] buffer = getBufIfOpen();
+        if (markpos < 0)
+            pos = 0;            /* no mark: throw away the buffer */
+        else if (pos >= buffer.length)  /* no room left in buffer */
+            if (markpos > 0) {  /* can throw away early part of the buffer */
+                int sz = pos - markpos;
+                System.arraycopy(buffer, markpos, buffer, 0, sz);
+                pos = sz;
+                markpos = 0;
+            } else if (buffer.length >= marklimit) {
+                markpos = -1;   /* buffer got too big, invalidate mark */
+                pos = 0;        /* drop buffer contents */
+            } else if (buffer.length >= MAX_BUFFER_SIZE) {
+                throw new OutOfMemoryError("Required array size too large");
+            } else {            /* grow buffer */
+                int nsz = (pos <= MAX_BUFFER_SIZE - pos) ?
+                        pos * 2 : MAX_BUFFER_SIZE;
+                if (nsz > marklimit)
+                    nsz = marklimit;
+                byte nbuf[] = new byte[nsz];
+                System.arraycopy(buffer, 0, nbuf, 0, pos);
+                if (!bufUpdater.compareAndSet(this, buffer, nbuf)) {
+                    // Can't replace buf if there was an async close.
+                    // Note: This would need to be changed if fill()
+                    // is ever made accessible to multiple threads.
+                    // But for now, the only way CAS can fail is via close.
+                    // assert buf == null;
+                    throw new IOException("Stream closed");
+                }
+                buffer = nbuf;
+            }
+        count = pos;
+        int n = getInIfOpen().read(buffer, pos, buffer.length - pos);
+        if (n > 0)
+            count = n + pos;
+    }
+
+    /**
+     * See
+     * the general contract of the <code>read</code>
+     * method of <code>InputStream</code>.
+     *
+     * @return     the next byte of data, or <code>-1</code> if the end of the
+     *             stream is reached.
+     * @exception  IOException  if this input stream has been closed by
+     *                          invoking its {@link #close()} method,
+     *                          or an I/O error occurs.
+     * @see        java.io.FilterInputStream#in
+     */
+    public synchronized int read() throws IOException {
+        if (pos >= count) {
+            fill();
+            if (pos >= count)
+                return -1;
+        }
+        return getBufIfOpen()[pos++] & 0xff;
+    }
+
+    /**
+     * Read characters into a portion of an array, reading from the underlying
+     * stream at most once if necessary.
+     */
+    private int read1(byte[] b, int off, int len) throws IOException {
+        int avail = count - pos;
+        if (avail <= 0) {
+            /* If the requested length is at least as large as the buffer, and
+               if there is no mark/reset activity, do not bother to copy the
+               bytes into the local buffer.  In this way buffered streams will
+               cascade harmlessly. */
+            if (len >= getBufIfOpen().length && markpos < 0) {
+                return getInIfOpen().read(b, off, len);
+            }
+            fill();
+            avail = count - pos;
+            if (avail <= 0) return -1;
+        }
+        int cnt = (avail < len) ? avail : len;
+        System.arraycopy(getBufIfOpen(), pos, b, off, cnt);
+        pos += cnt;
+        return cnt;
+    }
+
+    /**
+     * Reads bytes from this byte-input stream into the specified byte array,
+     * starting at the given offset.
+     *
+     * <p> This method implements the general contract of the corresponding
+     * <code>{@link InputStream#read(byte[], int, int) read}</code> method of
+     * the <code>{@link InputStream}</code> class.  As an additional
+     * convenience, it attempts to read as many bytes as possible by repeatedly
+     * invoking the <code>read</code> method of the underlying stream.  This
+     * iterated <code>read</code> continues until one of the following
+     * conditions becomes true: <ul>
+     *
+     *   <li> The specified number of bytes have been read,
+     *
+     *   <li> The <code>read</code> method of the underlying stream returns
+     *   <code>-1</code>, indicating end-of-file, or
+     *
+     *   <li> The <code>available</code> method of the underlying stream
+     *   returns zero, indicating that further input requests would block.
+     *
+     * </ul> If the first <code>read</code> on the underlying stream returns
+     * <code>-1</code> to indicate end-of-file then this method returns
+     * <code>-1</code>.  Otherwise this method returns the number of bytes
+     * actually read.
+     *
+     * <p> Subclasses of this class are encouraged, but not required, to
+     * attempt to read as many bytes as possible in the same fashion.
+     *
+     * @param      b     destination buffer.
+     * @param      off   offset at which to start storing bytes.
+     * @param      len   maximum number of bytes to read.
+     * @return     the number of bytes read, or <code>-1</code> if the end of
+     *             the stream has been reached.
+     * @exception  IOException  if this input stream has been closed by
+     *                          invoking its {@link #close()} method,
+     *                          or an I/O error occurs.
+     */
+    public synchronized int read(byte b[], int off, int len)
+        throws IOException
+    {
+        getBufIfOpen(); // Check for closed stream
+        if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return 0;
+        }
+
+        int n = 0;
+        for (;;) {
+            int nread = read1(b, off + n, len - n);
+            if (nread <= 0)
+                return (n == 0) ? nread : n;
+            n += nread;
+            if (n >= len)
+                return n;
+            // if not closed but no bytes available, return
+            InputStream input = in;
+            if (input != null && input.available() <= 0)
+                return n;
+        }
+    }
+
+    /**
+     * See the general contract of the <code>skip</code>
+     * method of <code>InputStream</code>.
+     *
+     * @exception  IOException  if the stream does not support seek,
+     *                          or if this input stream has been closed by
+     *                          invoking its {@link #close()} method, or an
+     *                          I/O error occurs.
+     */
+    public synchronized long skip(long n) throws IOException {
+        getBufIfOpen(); // Check for closed stream
+        if (n <= 0) {
+            return 0;
+        }
+        long avail = count - pos;
+
+        if (avail <= 0) {
+            // If no mark position set then don't keep in buffer
+            if (markpos <0)
+                return getInIfOpen().skip(n);
+
+            // Fill in buffer to save bytes for reset
+            fill();
+            avail = count - pos;
+            if (avail <= 0)
+                return 0;
+        }
+
+        long skipped = (avail < n) ? avail : n;
+        pos += skipped;
+        return skipped;
+    }
+
+    /**
+     * Returns an estimate of the number of bytes that can be read (or
+     * skipped over) from this input stream without blocking by the next
+     * invocation of a method for this input stream. The next invocation might be
+     * the same thread or another thread.  A single read or skip of this
+     * many bytes will not block, but may read or skip fewer bytes.
+     * <p>
+     * This method returns the sum of the number of bytes remaining to be read in
+     * the buffer (<code>count&nbsp;- pos</code>) and the result of calling the
+     * {@link java.io.FilterInputStream#in in}.available().
+     *
+     * @return     an estimate of the number of bytes that can be read (or skipped
+     *             over) from this input stream without blocking.
+     * @exception  IOException  if this input stream has been closed by
+     *                          invoking its {@link #close()} method,
+     *                          or an I/O error occurs.
+     */
+    public synchronized int available() throws IOException {
+        int n = count - pos;
+        int avail = getInIfOpen().available();
+        return n > (Integer.MAX_VALUE - avail)
+                    ? Integer.MAX_VALUE
+                    : n + avail;
+    }
+
+    /**
+     * See the general contract of the <code>mark</code>
+     * method of <code>InputStream</code>.
+     *
+     * @param   readlimit   the maximum limit of bytes that can be read before
+     *                      the mark position becomes invalid.
+     * @see     java.io.BufferedInputStream#reset()
+     */
+    public synchronized void mark(int readlimit) {
+        marklimit = readlimit;
+        markpos = pos;
+    }
+
+    /**
+     * See the general contract of the <code>reset</code>
+     * method of <code>InputStream</code>.
+     * <p>
+     * If <code>markpos</code> is <code>-1</code>
+     * (no mark has been set or the mark has been
+     * invalidated), an <code>IOException</code>
+     * is thrown. Otherwise, <code>pos</code> is
+     * set equal to <code>markpos</code>.
+     *
+     * @exception  IOException  if this stream has not been marked or,
+     *                  if the mark has been invalidated, or the stream
+     *                  has been closed by invoking its {@link #close()}
+     *                  method, or an I/O error occurs.
+     * @see        java.io.BufferedInputStream#mark(int)
+     */
+    public synchronized void reset() throws IOException {
+        getBufIfOpen(); // Cause exception if closed
+        if (markpos < 0)
+            throw new IOException("Resetting to invalid mark");
+        pos = markpos;
+    }
+
+    /**
+     * Tests if this input stream supports the <code>mark</code>
+     * and <code>reset</code> methods. The <code>markSupported</code>
+     * method of <code>BufferedInputStream</code> returns
+     * <code>true</code>.
+     *
+     * @return  a <code>boolean</code> indicating if this stream type supports
+     *          the <code>mark</code> and <code>reset</code> methods.
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.InputStream#reset()
+     */
+    public boolean markSupported() {
+        return true;
+    }
+
+    /**
+     * Closes this input stream and releases any system resources
+     * associated with the stream.
+     * Once the stream has been closed, further read(), available(), reset(),
+     * or skip() invocations will throw an IOException.
+     * Closing a previously closed stream has no effect.
+     *
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public void close() throws IOException {
+        byte[] buffer;
+        while ( (buffer = buf) != null) {
+            if (bufUpdater.compareAndSet(this, buffer, null)) {
+                InputStream input = in;
+                in = null;
+                if (input != null)
+                    input.close();
+                return;
+            }
+            // Else retry in case a new buf was CASed in fill()
+        }
+    }
+}

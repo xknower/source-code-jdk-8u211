@@ -1,404 +1,293 @@
-/*     */ package java.util.zip;
-/*     */ 
-/*     */ import java.io.ByteArrayInputStream;
-/*     */ import java.io.EOFException;
-/*     */ import java.io.FilterInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.SequenceInputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class GZIPInputStream
-/*     */   extends InflaterInputStream
-/*     */ {
-/*  48 */   protected CRC32 crc = new CRC32();
-/*     */   
-/*     */   protected boolean eos;
-/*     */   private boolean closed = false;
-/*     */   public static final int GZIP_MAGIC = 35615;
-/*     */   private static final int FTEXT = 1;
-/*     */   private static final int FHCRC = 2;
-/*     */   private static final int FEXTRA = 4;
-/*     */   private static final int FNAME = 8;
-/*     */   private static final int FCOMMENT = 16;
-/*     */   private byte[] tmpbuf;
-/*     */   
-/*     */   private void ensureOpen() throws IOException {
-/*  61 */     if (this.closed) {
-/*  62 */       throw new IOException("Stream closed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public GZIPInputStream(InputStream paramInputStream, int paramInt) throws IOException {
-/*  77 */     super(paramInputStream, new Inflater(true), paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 278 */     this.tmpbuf = new byte[128];
-/*     */     this.usesDefaultInflater = true;
-/*     */     readHeader(paramInputStream);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void skipBytes(InputStream paramInputStream, int paramInt) throws IOException {
-/* 285 */     while (paramInt > 0) {
-/* 286 */       int i = paramInputStream.read(this.tmpbuf, 0, (paramInt < this.tmpbuf.length) ? paramInt : this.tmpbuf.length);
-/* 287 */       if (i == -1) {
-/* 288 */         throw new EOFException();
-/*     */       }
-/* 290 */       paramInt -= i;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public GZIPInputStream(InputStream paramInputStream) throws IOException {
-/*     */     this(paramInputStream, 512);
-/*     */   }
-/*     */   
-/*     */   public int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/*     */     ensureOpen();
-/*     */     if (this.eos)
-/*     */       return -1; 
-/*     */     int i = super.read(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */     if (i == -1) {
-/*     */       if (readTrailer()) {
-/*     */         this.eos = true;
-/*     */       } else {
-/*     */         return read(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */       } 
-/*     */     } else {
-/*     */       this.crc.update(paramArrayOfbyte, paramInt1, i);
-/*     */     } 
-/*     */     return i;
-/*     */   }
-/*     */   
-/*     */   public void close() throws IOException {
-/*     */     if (!this.closed) {
-/*     */       super.close();
-/*     */       this.eos = true;
-/*     */       this.closed = true;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private int readHeader(InputStream paramInputStream) throws IOException {
-/*     */     CheckedInputStream checkedInputStream = new CheckedInputStream(paramInputStream, this.crc);
-/*     */     this.crc.reset();
-/*     */     if (readUShort(checkedInputStream) != 35615)
-/*     */       throw new ZipException("Not in GZIP format"); 
-/*     */     if (readUByte(checkedInputStream) != 8)
-/*     */       throw new ZipException("Unsupported compression method"); 
-/*     */     int i = readUByte(checkedInputStream);
-/*     */     skipBytes(checkedInputStream, 6);
-/*     */     int j = 10;
-/*     */     if ((i & 0x4) == 4) {
-/*     */       int k = readUShort(checkedInputStream);
-/*     */       skipBytes(checkedInputStream, k);
-/*     */       j += k + 2;
-/*     */     } 
-/*     */     if ((i & 0x8) == 8)
-/*     */       do {
-/*     */         j++;
-/*     */       } while (readUByte(checkedInputStream) != 0); 
-/*     */     if ((i & 0x10) == 16)
-/*     */       do {
-/*     */         j++;
-/*     */       } while (readUByte(checkedInputStream) != 0); 
-/*     */     if ((i & 0x2) == 2) {
-/*     */       int k = (int)this.crc.getValue() & 0xFFFF;
-/*     */       if (readUShort(checkedInputStream) != k)
-/*     */         throw new ZipException("Corrupt GZIP header"); 
-/*     */       j += 2;
-/*     */     } 
-/*     */     this.crc.reset();
-/*     */     return j;
-/*     */   }
-/*     */   
-/*     */   private boolean readTrailer() throws IOException {
-/*     */     InputStream inputStream = this.in;
-/*     */     int i = this.inf.getRemaining();
-/*     */     if (i > 0)
-/*     */       inputStream = new SequenceInputStream(new ByteArrayInputStream(this.buf, this.len - i, i), new FilterInputStream(inputStream) {
-/*     */             public void close() throws IOException {}
-/*     */           }); 
-/*     */     if (readUInt(inputStream) != this.crc.getValue() || readUInt(inputStream) != (this.inf.getBytesWritten() & 0xFFFFFFFFL))
-/*     */       throw new ZipException("Corrupt GZIP trailer"); 
-/*     */     if (this.in.available() > 0 || i > 26) {
-/*     */       int j = 8;
-/*     */       try {
-/*     */         j += readHeader(inputStream);
-/*     */       } catch (IOException iOException) {
-/*     */         return true;
-/*     */       } 
-/*     */       this.inf.reset();
-/*     */       if (i > j)
-/*     */         this.inf.setInput(this.buf, this.len - i + j, i - j); 
-/*     */       return false;
-/*     */     } 
-/*     */     return true;
-/*     */   }
-/*     */   
-/*     */   private long readUInt(InputStream paramInputStream) throws IOException {
-/*     */     long l = readUShort(paramInputStream);
-/*     */     return readUShort(paramInputStream) << 16L | l;
-/*     */   }
-/*     */   
-/*     */   private int readUShort(InputStream paramInputStream) throws IOException {
-/*     */     int i = readUByte(paramInputStream);
-/*     */     return readUByte(paramInputStream) << 8 | i;
-/*     */   }
-/*     */   
-/*     */   private int readUByte(InputStream paramInputStream) throws IOException {
-/*     */     int i = paramInputStream.read();
-/*     */     if (i == -1)
-/*     */       throw new EOFException(); 
-/*     */     if (i < -1 || i > 255)
-/*     */       throw new IOException(this.in.getClass().getName() + ".read() returned value out of range -1..255: " + i); 
-/*     */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\zip\GZIPInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.zip;
+
+import java.io.SequenceInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.EOFException;
+
+/**
+ * This class implements a stream filter for reading compressed data in
+ * the GZIP file format.
+ *
+ * @see         InflaterInputStream
+ * @author      David Connelly
+ *
+ */
+public
+class GZIPInputStream extends InflaterInputStream {
+    /**
+     * CRC-32 for uncompressed data.
+     */
+    protected CRC32 crc = new CRC32();
+
+    /**
+     * Indicates end of input stream.
+     */
+    protected boolean eos;
+
+    private boolean closed = false;
+
+    /**
+     * Check to make sure that this stream has not been closed
+     */
+    private void ensureOpen() throws IOException {
+        if (closed) {
+            throw new IOException("Stream closed");
+        }
+    }
+
+    /**
+     * Creates a new input stream with the specified buffer size.
+     * @param in the input stream
+     * @param size the input buffer size
+     *
+     * @exception ZipException if a GZIP format error has occurred or the
+     *                         compression method used is unsupported
+     * @exception IOException if an I/O error has occurred
+     * @exception IllegalArgumentException if {@code size <= 0}
+     */
+    public GZIPInputStream(InputStream in, int size) throws IOException {
+        super(in, new Inflater(true), size);
+        usesDefaultInflater = true;
+        readHeader(in);
+    }
+
+    /**
+     * Creates a new input stream with a default buffer size.
+     * @param in the input stream
+     *
+     * @exception ZipException if a GZIP format error has occurred or the
+     *                         compression method used is unsupported
+     * @exception IOException if an I/O error has occurred
+     */
+    public GZIPInputStream(InputStream in) throws IOException {
+        this(in, 512);
+    }
+
+    /**
+     * Reads uncompressed data into an array of bytes. If <code>len</code> is not
+     * zero, the method will block until some input can be decompressed; otherwise,
+     * no bytes are read and <code>0</code> is returned.
+     * @param buf the buffer into which the data is read
+     * @param off the start offset in the destination array <code>b</code>
+     * @param len the maximum number of bytes read
+     * @return  the actual number of bytes read, or -1 if the end of the
+     *          compressed input stream is reached
+     *
+     * @exception  NullPointerException If <code>buf</code> is <code>null</code>.
+     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
+     * <code>len</code> is negative, or <code>len</code> is greater than
+     * <code>buf.length - off</code>
+     * @exception ZipException if the compressed input data is corrupt.
+     * @exception IOException if an I/O error has occurred.
+     *
+     */
+    public int read(byte[] buf, int off, int len) throws IOException {
+        ensureOpen();
+        if (eos) {
+            return -1;
+        }
+        int n = super.read(buf, off, len);
+        if (n == -1) {
+            if (readTrailer())
+                eos = true;
+            else
+                return this.read(buf, off, len);
+        } else {
+            crc.update(buf, off, n);
+        }
+        return n;
+    }
+
+    /**
+     * Closes this input stream and releases any system resources associated
+     * with the stream.
+     * @exception IOException if an I/O error has occurred
+     */
+    public void close() throws IOException {
+        if (!closed) {
+            super.close();
+            eos = true;
+            closed = true;
+        }
+    }
+
+    /**
+     * GZIP header magic number.
+     */
+    public final static int GZIP_MAGIC = 0x8b1f;
+
+    /*
+     * File header flags.
+     */
+    private final static int FTEXT      = 1;    // Extra text
+    private final static int FHCRC      = 2;    // Header CRC
+    private final static int FEXTRA     = 4;    // Extra field
+    private final static int FNAME      = 8;    // File name
+    private final static int FCOMMENT   = 16;   // File comment
+
+    /*
+     * Reads GZIP member header and returns the total byte number
+     * of this member header.
+     */
+    private int readHeader(InputStream this_in) throws IOException {
+        CheckedInputStream in = new CheckedInputStream(this_in, crc);
+        crc.reset();
+        // Check header magic
+        if (readUShort(in) != GZIP_MAGIC) {
+            throw new ZipException("Not in GZIP format");
+        }
+        // Check compression method
+        if (readUByte(in) != 8) {
+            throw new ZipException("Unsupported compression method");
+        }
+        // Read flags
+        int flg = readUByte(in);
+        // Skip MTIME, XFL, and OS fields
+        skipBytes(in, 6);
+        int n = 2 + 2 + 6;
+        // Skip optional extra field
+        if ((flg & FEXTRA) == FEXTRA) {
+            int m = readUShort(in);
+            skipBytes(in, m);
+            n += m + 2;
+        }
+        // Skip optional file name
+        if ((flg & FNAME) == FNAME) {
+            do {
+                n++;
+            } while (readUByte(in) != 0);
+        }
+        // Skip optional file comment
+        if ((flg & FCOMMENT) == FCOMMENT) {
+            do {
+                n++;
+            } while (readUByte(in) != 0);
+        }
+        // Check optional header CRC
+        if ((flg & FHCRC) == FHCRC) {
+            int v = (int)crc.getValue() & 0xffff;
+            if (readUShort(in) != v) {
+                throw new ZipException("Corrupt GZIP header");
+            }
+            n += 2;
+        }
+        crc.reset();
+        return n;
+    }
+
+    /*
+     * Reads GZIP member trailer and returns true if the eos
+     * reached, false if there are more (concatenated gzip
+     * data set)
+     */
+    private boolean readTrailer() throws IOException {
+        InputStream in = this.in;
+        int n = inf.getRemaining();
+        if (n > 0) {
+            in = new SequenceInputStream(
+                        new ByteArrayInputStream(buf, len - n, n),
+                        new FilterInputStream(in) {
+                            public void close() throws IOException {}
+                        });
+        }
+        // Uses left-to-right evaluation order
+        if ((readUInt(in) != crc.getValue()) ||
+            // rfc1952; ISIZE is the input size modulo 2^32
+            (readUInt(in) != (inf.getBytesWritten() & 0xffffffffL)))
+            throw new ZipException("Corrupt GZIP trailer");
+
+        // If there are more bytes available in "in" or
+        // the leftover in the "inf" is > 26 bytes:
+        // this.trailer(8) + next.header.min(10) + next.trailer(8)
+        // try concatenated case
+        if (this.in.available() > 0 || n > 26) {
+            int m = 8;                  // this.trailer
+            try {
+                m += readHeader(in);    // next.header
+            } catch (IOException ze) {
+                return true;  // ignore any malformed, do nothing
+            }
+            inf.reset();
+            if (n > m)
+                inf.setInput(buf, len - n + m, n - m);
+            return false;
+        }
+        return true;
+    }
+
+    /*
+     * Reads unsigned integer in Intel byte order.
+     */
+    private long readUInt(InputStream in) throws IOException {
+        long s = readUShort(in);
+        return ((long)readUShort(in) << 16) | s;
+    }
+
+    /*
+     * Reads unsigned short in Intel byte order.
+     */
+    private int readUShort(InputStream in) throws IOException {
+        int b = readUByte(in);
+        return (readUByte(in) << 8) | b;
+    }
+
+    /*
+     * Reads unsigned byte.
+     */
+    private int readUByte(InputStream in) throws IOException {
+        int b = in.read();
+        if (b == -1) {
+            throw new EOFException();
+        }
+        if (b < -1 || b > 255) {
+            // Report on this.in, not argument in; see read{Header, Trailer}.
+            throw new IOException(this.in.getClass().getName()
+                + ".read() returned value out of range -1..255: " + b);
+        }
+        return b;
+    }
+
+    private byte[] tmpbuf = new byte[128];
+
+    /*
+     * Skips bytes of input data blocking until all bytes are skipped.
+     * Does not assume that the input stream is capable of seeking.
+     */
+    private void skipBytes(InputStream in, int n) throws IOException {
+        while (n > 0) {
+            int len = in.read(tmpbuf, 0, n < tmpbuf.length ? n : tmpbuf.length);
+            if (len == -1) {
+                throw new EOFException();
+            }
+            n -= len;
+        }
+    }
+}

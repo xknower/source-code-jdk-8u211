@@ -1,85 +1,79 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*    */ 
-/*    */ import com.sun.org.apache.xalan.internal.xsltc.compiler.SyntaxTreeNode;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class TypeCheckError
-/*    */   extends Exception
-/*    */ {
-/*    */   static final long serialVersionUID = 3246224233917854640L;
-/* 34 */   ErrorMsg _error = null;
-/* 35 */   SyntaxTreeNode _node = null;
-/*    */ 
-/*    */   
-/*    */   public TypeCheckError(SyntaxTreeNode node) {
-/* 39 */     this._node = node;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public TypeCheckError(ErrorMsg error) {
-/* 44 */     this._error = error;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public TypeCheckError(String code, Object param) {
-/* 49 */     this._error = new ErrorMsg(code, param);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public TypeCheckError(String code, Object param1, Object param2) {
-/* 54 */     this._error = new ErrorMsg(code, param1, param2);
-/*    */   }
-/*    */   
-/*    */   public ErrorMsg getErrorMsg() {
-/* 58 */     return this._error;
-/*    */   }
-/*    */   
-/*    */   public String getMessage() {
-/* 62 */     return toString();
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 68 */     if (this._error == null) {
-/* 69 */       if (this._node != null) {
-/* 70 */         this
-/* 71 */           ._error = new ErrorMsg("TYPE_CHECK_ERR", this._node.toString());
-/*    */       } else {
-/* 73 */         this._error = new ErrorMsg("TYPE_CHECK_UNK_LOC_ERR");
-/*    */       } 
-/*    */     }
-/*    */     
-/* 77 */     return this._error.toString();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\TypeCheckError.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: TypeCheckError.java,v 1.2.4.1 2005/09/05 11:42:57 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.SyntaxTreeNode;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+public class TypeCheckError extends Exception {
+    static final long serialVersionUID = 3246224233917854640L;
+    ErrorMsg _error = null;
+    SyntaxTreeNode _node = null;
+
+    public TypeCheckError(SyntaxTreeNode node) {
+        super();
+        _node = node;
+    }
+
+    public TypeCheckError(ErrorMsg error) {
+        super();
+        _error = error;
+    }
+
+    public TypeCheckError(String code, Object param) {
+        super();
+        _error = new ErrorMsg(code, param);
+    }
+
+    public TypeCheckError(String code, Object param1, Object param2) {
+        super();
+        _error = new ErrorMsg(code, param1, param2);
+    }
+
+    public ErrorMsg getErrorMsg() {
+        return _error;
+    }
+
+    public String getMessage() {
+        return toString();
+    }
+
+    public String toString() {
+        String result;
+
+        if (_error == null) {
+            if (_node != null) {
+                _error = new ErrorMsg(ErrorMsg.TYPE_CHECK_ERR,
+                                      _node.toString());
+            } else {
+                _error = new ErrorMsg(ErrorMsg.TYPE_CHECK_UNK_LOC_ERR);
+            }
+        }
+
+        return _error.toString();
+    }
+}

@@ -1,818 +1,723 @@
-/*     */ package java.time.temporal;
-/*     */ 
-/*     */ import java.time.DateTimeException;
-/*     */ import java.time.DayOfWeek;
-/*     */ import java.time.Duration;
-/*     */ import java.time.LocalDate;
-/*     */ import java.time.chrono.ChronoLocalDate;
-/*     */ import java.time.chrono.Chronology;
-/*     */ import java.time.chrono.IsoChronology;
-/*     */ import java.time.format.ResolverStyle;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ import java.util.Objects;
-/*     */ import java.util.ResourceBundle;
-/*     */ import sun.util.locale.provider.LocaleProviderAdapter;
-/*     */ import sun.util.locale.provider.LocaleResources;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class IsoFields
-/*     */ {
-/* 195 */   public static final TemporalField DAY_OF_QUARTER = Field.DAY_OF_QUARTER;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 210 */   public static final TemporalField QUARTER_OF_YEAR = Field.QUARTER_OF_YEAR;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 240 */   public static final TemporalField WEEK_OF_WEEK_BASED_YEAR = Field.WEEK_OF_WEEK_BASED_YEAR;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 254 */   public static final TemporalField WEEK_BASED_YEAR = Field.WEEK_BASED_YEAR;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 269 */   public static final TemporalUnit WEEK_BASED_YEARS = Unit.WEEK_BASED_YEARS;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 277 */   public static final TemporalUnit QUARTER_YEARS = Unit.QUARTER_YEARS;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private IsoFields() {
-/* 283 */     throw new AssertionError("Not instantiable");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private enum Field
-/*     */     implements TemporalField
-/*     */   {
-/* 291 */     DAY_OF_QUARTER
-/*     */     {
-/*     */       public TemporalUnit getBaseUnit() {
-/* 294 */         return ChronoUnit.DAYS;
-/*     */       }
-/*     */       
-/*     */       public TemporalUnit getRangeUnit() {
-/* 298 */         return IsoFields.QUARTER_YEARS;
-/*     */       }
-/*     */       
-/*     */       public ValueRange range() {
-/* 302 */         return ValueRange.of(1L, 90L, 92L);
-/*     */       }
-/*     */       
-/*     */       public boolean isSupportedBy(TemporalAccessor param2TemporalAccessor) {
-/* 306 */         return (param2TemporalAccessor.isSupported(ChronoField.DAY_OF_YEAR) && param2TemporalAccessor.isSupported(ChronoField.MONTH_OF_YEAR) && param2TemporalAccessor
-/* 307 */           .isSupported(ChronoField.YEAR) && isIso(param2TemporalAccessor));
-/*     */       }
-/*     */       
-/*     */       public ValueRange rangeRefinedBy(TemporalAccessor param2TemporalAccessor) {
-/* 311 */         if (!isSupportedBy(param2TemporalAccessor)) {
-/* 312 */           throw new UnsupportedTemporalTypeException("Unsupported field: DayOfQuarter");
-/*     */         }
-/* 314 */         long l = param2TemporalAccessor.getLong(QUARTER_OF_YEAR);
-/* 315 */         if (l == 1L) {
-/* 316 */           long l1 = param2TemporalAccessor.getLong(ChronoField.YEAR);
-/* 317 */           return IsoChronology.INSTANCE.isLeapYear(l1) ? ValueRange.of(1L, 91L) : ValueRange.of(1L, 90L);
-/* 318 */         }  if (l == 2L)
-/* 319 */           return ValueRange.of(1L, 91L); 
-/* 320 */         if (l == 3L || l == 4L) {
-/* 321 */           return ValueRange.of(1L, 92L);
-/*     */         }
-/* 323 */         return range();
-/*     */       }
-/*     */       
-/*     */       public long getFrom(TemporalAccessor param2TemporalAccessor) {
-/* 327 */         if (!isSupportedBy(param2TemporalAccessor)) {
-/* 328 */           throw new UnsupportedTemporalTypeException("Unsupported field: DayOfQuarter");
-/*     */         }
-/* 330 */         int i = param2TemporalAccessor.get(ChronoField.DAY_OF_YEAR);
-/* 331 */         int j = param2TemporalAccessor.get(ChronoField.MONTH_OF_YEAR);
-/* 332 */         long l = param2TemporalAccessor.getLong(ChronoField.YEAR);
-/* 333 */         return (i - Field.QUARTER_DAYS[(j - 1) / 3 + (IsoChronology.INSTANCE.isLeapYear(l) ? 4 : 0)]);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       public <R extends Temporal> R adjustInto(R param2R, long param2Long) {
-/* 339 */         long l = getFrom((TemporalAccessor)param2R);
-/* 340 */         range().checkValidValue(param2Long, this);
-/* 341 */         return (R)param2R.with(ChronoField.DAY_OF_YEAR, param2R.getLong(ChronoField.DAY_OF_YEAR) + param2Long - l);
-/*     */       }
-/*     */       
-/*     */       public ChronoLocalDate resolve(Map<TemporalField, Long> param2Map, TemporalAccessor param2TemporalAccessor, ResolverStyle param2ResolverStyle) {
-/*     */         LocalDate localDate;
-/* 346 */         Long long_1 = param2Map.get(ChronoField.YEAR);
-/* 347 */         Long long_2 = param2Map.get(QUARTER_OF_YEAR);
-/* 348 */         if (long_1 == null || long_2 == null) {
-/* 349 */           return null;
-/*     */         }
-/* 351 */         int i = ChronoField.YEAR.checkValidIntValue(long_1.longValue());
-/* 352 */         long l = ((Long)param2Map.get(DAY_OF_QUARTER)).longValue();
-/* 353 */         ensureIso(param2TemporalAccessor);
-/*     */         
-/* 355 */         if (param2ResolverStyle == ResolverStyle.LENIENT) {
-/* 356 */           localDate = LocalDate.of(i, 1, 1).plusMonths(Math.multiplyExact(Math.subtractExact(long_2.longValue(), 1L), 3L));
-/* 357 */           l = Math.subtractExact(l, 1L);
-/*     */         } else {
-/* 359 */           int j = QUARTER_OF_YEAR.range().checkValidIntValue(long_2.longValue(), QUARTER_OF_YEAR);
-/* 360 */           localDate = LocalDate.of(i, (j - 1) * 3 + 1, 1);
-/* 361 */           if (l < 1L || l > 90L) {
-/* 362 */             if (param2ResolverStyle == ResolverStyle.STRICT) {
-/* 363 */               rangeRefinedBy(localDate).checkValidValue(l, this);
-/*     */             } else {
-/* 365 */               range().checkValidValue(l, this);
-/*     */             } 
-/*     */           }
-/* 368 */           l--;
-/*     */         } 
-/* 370 */         param2Map.remove(this);
-/* 371 */         param2Map.remove(ChronoField.YEAR);
-/* 372 */         param2Map.remove(QUARTER_OF_YEAR);
-/* 373 */         return localDate.plusDays(l);
-/*     */       }
-/*     */       
-/*     */       public String toString() {
-/* 377 */         return "DayOfQuarter";
-/*     */       }
-/*     */     },
-/* 380 */     QUARTER_OF_YEAR
-/*     */     {
-/*     */       public TemporalUnit getBaseUnit() {
-/* 383 */         return IsoFields.QUARTER_YEARS;
-/*     */       }
-/*     */       
-/*     */       public TemporalUnit getRangeUnit() {
-/* 387 */         return ChronoUnit.YEARS;
-/*     */       }
-/*     */       
-/*     */       public ValueRange range() {
-/* 391 */         return ValueRange.of(1L, 4L);
-/*     */       }
-/*     */       
-/*     */       public boolean isSupportedBy(TemporalAccessor param2TemporalAccessor) {
-/* 395 */         return (param2TemporalAccessor.isSupported(ChronoField.MONTH_OF_YEAR) && isIso(param2TemporalAccessor));
-/*     */       }
-/*     */       
-/*     */       public long getFrom(TemporalAccessor param2TemporalAccessor) {
-/* 399 */         if (!isSupportedBy(param2TemporalAccessor)) {
-/* 400 */           throw new UnsupportedTemporalTypeException("Unsupported field: QuarterOfYear");
-/*     */         }
-/* 402 */         long l = param2TemporalAccessor.getLong(ChronoField.MONTH_OF_YEAR);
-/* 403 */         return (l + 2L) / 3L;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       public <R extends Temporal> R adjustInto(R param2R, long param2Long) {
-/* 409 */         long l = getFrom((TemporalAccessor)param2R);
-/* 410 */         range().checkValidValue(param2Long, this);
-/* 411 */         return (R)param2R.with(ChronoField.MONTH_OF_YEAR, param2R.getLong(ChronoField.MONTH_OF_YEAR) + (param2Long - l) * 3L);
-/*     */       }
-/*     */       
-/*     */       public String toString() {
-/* 415 */         return "QuarterOfYear";
-/*     */       }
-/*     */     },
-/* 418 */     WEEK_OF_WEEK_BASED_YEAR
-/*     */     {
-/*     */       public String getDisplayName(Locale param2Locale) {
-/* 421 */         Objects.requireNonNull(param2Locale, "locale");
-/*     */         
-/* 423 */         LocaleResources localeResources = LocaleProviderAdapter.getResourceBundleBased().getLocaleResources(param2Locale);
-/* 424 */         ResourceBundle resourceBundle = localeResources.getJavaTimeFormatData();
-/* 425 */         return resourceBundle.containsKey("field.week") ? resourceBundle.getString("field.week") : toString();
-/*     */       }
-/*     */ 
-/*     */       
-/*     */       public TemporalUnit getBaseUnit() {
-/* 430 */         return ChronoUnit.WEEKS;
-/*     */       }
-/*     */       
-/*     */       public TemporalUnit getRangeUnit() {
-/* 434 */         return IsoFields.WEEK_BASED_YEARS;
-/*     */       }
-/*     */       
-/*     */       public ValueRange range() {
-/* 438 */         return ValueRange.of(1L, 52L, 53L);
-/*     */       }
-/*     */       
-/*     */       public boolean isSupportedBy(TemporalAccessor param2TemporalAccessor) {
-/* 442 */         return (param2TemporalAccessor.isSupported(ChronoField.EPOCH_DAY) && isIso(param2TemporalAccessor));
-/*     */       }
-/*     */       
-/*     */       public ValueRange rangeRefinedBy(TemporalAccessor param2TemporalAccessor) {
-/* 446 */         if (!isSupportedBy(param2TemporalAccessor)) {
-/* 447 */           throw new UnsupportedTemporalTypeException("Unsupported field: WeekOfWeekBasedYear");
-/*     */         }
-/* 449 */         return getWeekRange(LocalDate.from(param2TemporalAccessor));
-/*     */       }
-/*     */       
-/*     */       public long getFrom(TemporalAccessor param2TemporalAccessor) {
-/* 453 */         if (!isSupportedBy(param2TemporalAccessor)) {
-/* 454 */           throw new UnsupportedTemporalTypeException("Unsupported field: WeekOfWeekBasedYear");
-/*     */         }
-/* 456 */         return getWeek(LocalDate.from(param2TemporalAccessor));
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       public <R extends Temporal> R adjustInto(R param2R, long param2Long) {
-/* 462 */         range().checkValidValue(param2Long, this);
-/* 463 */         return (R)param2R.plus(Math.subtractExact(param2Long, getFrom((TemporalAccessor)param2R)), ChronoUnit.WEEKS);
-/*     */       }
-/*     */ 
-/*     */       
-/*     */       public ChronoLocalDate resolve(Map<TemporalField, Long> param2Map, TemporalAccessor param2TemporalAccessor, ResolverStyle param2ResolverStyle) {
-/* 468 */         Long long_1 = param2Map.get(WEEK_BASED_YEAR);
-/* 469 */         Long long_2 = param2Map.get(ChronoField.DAY_OF_WEEK);
-/* 470 */         if (long_1 == null || long_2 == null) {
-/* 471 */           return null;
-/*     */         }
-/* 473 */         int i = WEEK_BASED_YEAR.range().checkValidIntValue(long_1.longValue(), WEEK_BASED_YEAR);
-/* 474 */         long l = ((Long)param2Map.get(WEEK_OF_WEEK_BASED_YEAR)).longValue();
-/* 475 */         ensureIso(param2TemporalAccessor);
-/* 476 */         LocalDate localDate = LocalDate.of(i, 1, 4);
-/* 477 */         if (param2ResolverStyle == ResolverStyle.LENIENT) {
-/* 478 */           long l1 = long_2.longValue();
-/* 479 */           if (l1 > 7L) {
-/* 480 */             localDate = localDate.plusWeeks((l1 - 1L) / 7L);
-/* 481 */             l1 = (l1 - 1L) % 7L + 1L;
-/* 482 */           } else if (l1 < 1L) {
-/* 483 */             localDate = localDate.plusWeeks(Math.subtractExact(l1, 7L) / 7L);
-/* 484 */             l1 = (l1 + 6L) % 7L + 1L;
-/*     */           } 
-/* 486 */           localDate = localDate.plusWeeks(Math.subtractExact(l, 1L)).with(ChronoField.DAY_OF_WEEK, l1);
-/*     */         } else {
-/* 488 */           int j = ChronoField.DAY_OF_WEEK.checkValidIntValue(long_2.longValue());
-/* 489 */           if (l < 1L || l > 52L) {
-/* 490 */             if (param2ResolverStyle == ResolverStyle.STRICT) {
-/* 491 */               getWeekRange(localDate).checkValidValue(l, this);
-/*     */             } else {
-/* 493 */               range().checkValidValue(l, this);
-/*     */             } 
-/*     */           }
-/* 496 */           localDate = localDate.plusWeeks(l - 1L).with(ChronoField.DAY_OF_WEEK, j);
-/*     */         } 
-/* 498 */         param2Map.remove(this);
-/* 499 */         param2Map.remove(WEEK_BASED_YEAR);
-/* 500 */         param2Map.remove(ChronoField.DAY_OF_WEEK);
-/* 501 */         return localDate;
-/*     */       }
-/*     */       
-/*     */       public String toString() {
-/* 505 */         return "WeekOfWeekBasedYear";
-/*     */       }
-/*     */     },
-/* 508 */     WEEK_BASED_YEAR
-/*     */     {
-/*     */       public TemporalUnit getBaseUnit() {
-/* 511 */         return IsoFields.WEEK_BASED_YEARS;
-/*     */       }
-/*     */       
-/*     */       public TemporalUnit getRangeUnit() {
-/* 515 */         return ChronoUnit.FOREVER;
-/*     */       }
-/*     */       
-/*     */       public ValueRange range() {
-/* 519 */         return ChronoField.YEAR.range();
-/*     */       }
-/*     */       
-/*     */       public boolean isSupportedBy(TemporalAccessor param2TemporalAccessor) {
-/* 523 */         return (param2TemporalAccessor.isSupported(ChronoField.EPOCH_DAY) && isIso(param2TemporalAccessor));
-/*     */       }
-/*     */       
-/*     */       public long getFrom(TemporalAccessor param2TemporalAccessor) {
-/* 527 */         if (!isSupportedBy(param2TemporalAccessor)) {
-/* 528 */           throw new UnsupportedTemporalTypeException("Unsupported field: WeekBasedYear");
-/*     */         }
-/* 530 */         return getWeekBasedYear(LocalDate.from(param2TemporalAccessor));
-/*     */       }
-/*     */ 
-/*     */       
-/*     */       public <R extends Temporal> R adjustInto(R param2R, long param2Long) {
-/* 535 */         if (!isSupportedBy((TemporalAccessor)param2R)) {
-/* 536 */           throw new UnsupportedTemporalTypeException("Unsupported field: WeekBasedYear");
-/*     */         }
-/* 538 */         int i = range().checkValidIntValue(param2Long, WEEK_BASED_YEAR);
-/* 539 */         LocalDate localDate1 = LocalDate.from((TemporalAccessor)param2R);
-/* 540 */         int j = localDate1.get(ChronoField.DAY_OF_WEEK);
-/* 541 */         int k = getWeek(localDate1);
-/* 542 */         if (k == 53 && getWeekRange(i) == 52) {
-/* 543 */           k = 52;
-/*     */         }
-/* 545 */         LocalDate localDate2 = LocalDate.of(i, 1, 4);
-/* 546 */         int m = j - localDate2.get(ChronoField.DAY_OF_WEEK) + (k - 1) * 7;
-/* 547 */         localDate2 = localDate2.plusDays(m);
-/* 548 */         return (R)param2R.with(localDate2);
-/*     */       }
-/*     */       
-/*     */       public String toString() {
-/* 552 */         return "WeekBasedYear";
-/*     */       }
-/*     */     };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 572 */     private static final int[] QUARTER_DAYS = new int[] { 0, 90, 181, 273, 0, 91, 182, 274 };
-/*     */     public boolean isDateBased() { return true; }
-/*     */     public boolean isTimeBased() { return false; }
-/* 575 */     private static boolean isIso(TemporalAccessor param1TemporalAccessor) { return Chronology.from(param1TemporalAccessor).equals(IsoChronology.INSTANCE); }
-/*     */     public ValueRange rangeRefinedBy(TemporalAccessor param1TemporalAccessor) { return range(); } static {
-/*     */     
-/*     */     } private static void ensureIso(TemporalAccessor param1TemporalAccessor) {
-/* 579 */       if (!isIso(param1TemporalAccessor)) {
-/* 580 */         throw new DateTimeException("Resolve requires IsoChronology");
-/*     */       }
-/*     */     }
-/*     */     
-/*     */     private static ValueRange getWeekRange(LocalDate param1LocalDate) {
-/* 585 */       int i = getWeekBasedYear(param1LocalDate);
-/* 586 */       return ValueRange.of(1L, getWeekRange(i));
-/*     */     }
-/*     */     
-/*     */     private static int getWeekRange(int param1Int) {
-/* 590 */       LocalDate localDate = LocalDate.of(param1Int, 1, 1);
-/*     */       
-/* 592 */       if (localDate.getDayOfWeek() == DayOfWeek.THURSDAY || (localDate.getDayOfWeek() == DayOfWeek.WEDNESDAY && localDate.isLeapYear())) {
-/* 593 */         return 53;
-/*     */       }
-/* 595 */       return 52;
-/*     */     }
-/*     */     
-/*     */     private static int getWeek(LocalDate param1LocalDate) {
-/* 599 */       int i = param1LocalDate.getDayOfWeek().ordinal();
-/* 600 */       int j = param1LocalDate.getDayOfYear() - 1;
-/* 601 */       int k = j + 3 - i;
-/* 602 */       int m = k / 7;
-/* 603 */       int n = k - m * 7;
-/* 604 */       int i1 = n - 3;
-/* 605 */       if (i1 < -3) {
-/* 606 */         i1 += 7;
-/*     */       }
-/* 608 */       if (j < i1) {
-/* 609 */         return (int)getWeekRange(param1LocalDate.withDayOfYear(180).minusYears(1L)).getMaximum();
-/*     */       }
-/* 611 */       int i2 = (j - i1) / 7 + 1;
-/* 612 */       if (i2 == 53 && 
-/* 613 */         !((i1 == -3 || (i1 == -2 && param1LocalDate.isLeapYear())) ? 1 : 0)) {
-/* 614 */         i2 = 1;
-/*     */       }
-/*     */       
-/* 617 */       return i2;
-/*     */     }
-/*     */     
-/*     */     private static int getWeekBasedYear(LocalDate param1LocalDate) {
-/* 621 */       int i = param1LocalDate.getYear();
-/* 622 */       int j = param1LocalDate.getDayOfYear();
-/* 623 */       if (j <= 3) {
-/* 624 */         int k = param1LocalDate.getDayOfWeek().ordinal();
-/* 625 */         if (j - k < -2) {
-/* 626 */           i--;
-/*     */         }
-/* 628 */       } else if (j >= 363) {
-/* 629 */         int k = param1LocalDate.getDayOfWeek().ordinal();
-/* 630 */         j = j - 363 - (param1LocalDate.isLeapYear() ? 1 : 0);
-/* 631 */         if (j - k >= 0) {
-/* 632 */           i++;
-/*     */         }
-/*     */       } 
-/* 635 */       return i;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private enum Unit
-/*     */     implements TemporalUnit
-/*     */   {
-/* 648 */     WEEK_BASED_YEARS("WeekBasedYears", Duration.ofSeconds(31556952L)),
-/*     */ 
-/*     */ 
-/*     */     
-/* 652 */     QUARTER_YEARS("QuarterYears", Duration.ofSeconds(7889238L));
-/*     */     
-/*     */     private final String name;
-/*     */     private final Duration duration;
-/*     */     
-/*     */     Unit(String param1String1, Duration param1Duration) {
-/* 658 */       this.name = param1String1;
-/* 659 */       this.duration = param1Duration;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public Duration getDuration() {
-/* 664 */       return this.duration;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean isDurationEstimated() {
-/* 669 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean isDateBased() {
-/* 674 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean isTimeBased() {
-/* 679 */       return false;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean isSupportedBy(Temporal param1Temporal) {
-/* 684 */       return param1Temporal.isSupported(ChronoField.EPOCH_DAY);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public <R extends Temporal> R addTo(R param1R, long param1Long) {
-/*     */       // Byte code:
-/*     */       //   0: getstatic java/time/temporal/IsoFields$1.$SwitchMap$java$time$temporal$IsoFields$Unit : [I
-/*     */       //   3: aload_0
-/*     */       //   4: invokevirtual ordinal : ()I
-/*     */       //   7: iaload
-/*     */       //   8: lookupswitch default -> 92, 1 -> 36, 2 -> 60
-/*     */       //   36: aload_1
-/*     */       //   37: getstatic java/time/temporal/IsoFields.WEEK_BASED_YEAR : Ljava/time/temporal/TemporalField;
-/*     */       //   40: aload_1
-/*     */       //   41: getstatic java/time/temporal/IsoFields.WEEK_BASED_YEAR : Ljava/time/temporal/TemporalField;
-/*     */       //   44: invokeinterface get : (Ljava/time/temporal/TemporalField;)I
-/*     */       //   49: i2l
-/*     */       //   50: lload_2
-/*     */       //   51: invokestatic addExact : (JJ)J
-/*     */       //   54: invokeinterface with : (Ljava/time/temporal/TemporalField;J)Ljava/time/temporal/Temporal;
-/*     */       //   59: areturn
-/*     */       //   60: aload_1
-/*     */       //   61: lload_2
-/*     */       //   62: ldc2_w 4
-/*     */       //   65: ldiv
-/*     */       //   66: getstatic java/time/temporal/ChronoUnit.YEARS : Ljava/time/temporal/ChronoUnit;
-/*     */       //   69: invokeinterface plus : (JLjava/time/temporal/TemporalUnit;)Ljava/time/temporal/Temporal;
-/*     */       //   74: lload_2
-/*     */       //   75: ldc2_w 4
-/*     */       //   78: lrem
-/*     */       //   79: ldc2_w 3
-/*     */       //   82: lmul
-/*     */       //   83: getstatic java/time/temporal/ChronoUnit.MONTHS : Ljava/time/temporal/ChronoUnit;
-/*     */       //   86: invokeinterface plus : (JLjava/time/temporal/TemporalUnit;)Ljava/time/temporal/Temporal;
-/*     */       //   91: areturn
-/*     */       //   92: new java/lang/IllegalStateException
-/*     */       //   95: dup
-/*     */       //   96: ldc 'Unreachable'
-/*     */       //   98: invokespecial <init> : (Ljava/lang/String;)V
-/*     */       //   101: athrow
-/*     */       // Line number table:
-/*     */       //   Java source line number -> byte code offset
-/*     */       //   #690	-> 0
-/*     */       //   #692	-> 36
-/*     */       //   #693	-> 44
-/*     */       //   #692	-> 54
-/*     */       //   #695	-> 60
-/*     */       //   #696	-> 86
-/*     */       //   #695	-> 91
-/*     */       //   #698	-> 92
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public long between(Temporal param1Temporal1, Temporal param1Temporal2) {
-/*     */       // Byte code:
-/*     */       //   0: aload_1
-/*     */       //   1: invokevirtual getClass : ()Ljava/lang/Class;
-/*     */       //   4: aload_2
-/*     */       //   5: invokevirtual getClass : ()Ljava/lang/Class;
-/*     */       //   8: if_acmpeq -> 20
-/*     */       //   11: aload_1
-/*     */       //   12: aload_2
-/*     */       //   13: aload_0
-/*     */       //   14: invokeinterface until : (Ljava/time/temporal/Temporal;Ljava/time/temporal/TemporalUnit;)J
-/*     */       //   19: lreturn
-/*     */       //   20: getstatic java/time/temporal/IsoFields$1.$SwitchMap$java$time$temporal$IsoFields$Unit : [I
-/*     */       //   23: aload_0
-/*     */       //   24: invokevirtual ordinal : ()I
-/*     */       //   27: iaload
-/*     */       //   28: lookupswitch default -> 93, 1 -> 56, 2 -> 78
-/*     */       //   56: aload_2
-/*     */       //   57: getstatic java/time/temporal/IsoFields.WEEK_BASED_YEAR : Ljava/time/temporal/TemporalField;
-/*     */       //   60: invokeinterface getLong : (Ljava/time/temporal/TemporalField;)J
-/*     */       //   65: aload_1
-/*     */       //   66: getstatic java/time/temporal/IsoFields.WEEK_BASED_YEAR : Ljava/time/temporal/TemporalField;
-/*     */       //   69: invokeinterface getLong : (Ljava/time/temporal/TemporalField;)J
-/*     */       //   74: invokestatic subtractExact : (JJ)J
-/*     */       //   77: lreturn
-/*     */       //   78: aload_1
-/*     */       //   79: aload_2
-/*     */       //   80: getstatic java/time/temporal/ChronoUnit.MONTHS : Ljava/time/temporal/ChronoUnit;
-/*     */       //   83: invokeinterface until : (Ljava/time/temporal/Temporal;Ljava/time/temporal/TemporalUnit;)J
-/*     */       //   88: ldc2_w 3
-/*     */       //   91: ldiv
-/*     */       //   92: lreturn
-/*     */       //   93: new java/lang/IllegalStateException
-/*     */       //   96: dup
-/*     */       //   97: ldc 'Unreachable'
-/*     */       //   99: invokespecial <init> : (Ljava/lang/String;)V
-/*     */       //   102: athrow
-/*     */       // Line number table:
-/*     */       //   Java source line number -> byte code offset
-/*     */       //   #704	-> 0
-/*     */       //   #705	-> 11
-/*     */       //   #707	-> 20
-/*     */       //   #709	-> 56
-/*     */       //   #710	-> 69
-/*     */       //   #709	-> 74
-/*     */       //   #712	-> 78
-/*     */       //   #714	-> 93
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public String toString() {
-/* 720 */       return this.name;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\temporal\IsoFields.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * Copyright (c) 2011-2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.temporal;
+
+import static java.time.DayOfWeek.THURSDAY;
+import static java.time.DayOfWeek.WEDNESDAY;
+import static java.time.temporal.ChronoField.DAY_OF_WEEK;
+import static java.time.temporal.ChronoField.DAY_OF_YEAR;
+import static java.time.temporal.ChronoField.EPOCH_DAY;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.FOREVER;
+import static java.time.temporal.ChronoUnit.MONTHS;
+import static java.time.temporal.ChronoUnit.WEEKS;
+import static java.time.temporal.ChronoUnit.YEARS;
+
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.Chronology;
+import java.time.chrono.IsoChronology;
+import java.time.format.ResolverStyle;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
+import sun.util.locale.provider.LocaleProviderAdapter;
+import sun.util.locale.provider.LocaleResources;
+
+/**
+ * Fields and units specific to the ISO-8601 calendar system,
+ * including quarter-of-year and week-based-year.
+ * <p>
+ * This class defines fields and units that are specific to the ISO calendar system.
+ *
+ * <h3>Quarter of year</h3>
+ * The ISO-8601 standard is based on the standard civic 12 month year.
+ * This is commonly divided into four quarters, often abbreviated as Q1, Q2, Q3 and Q4.
+ * <p>
+ * January, February and March are in Q1.
+ * April, May and June are in Q2.
+ * July, August and September are in Q3.
+ * October, November and December are in Q4.
+ * <p>
+ * The complete date is expressed using three fields:
+ * <ul>
+ * <li>{@link #DAY_OF_QUARTER DAY_OF_QUARTER} - the day within the quarter, from 1 to 90, 91 or 92
+ * <li>{@link #QUARTER_OF_YEAR QUARTER_OF_YEAR} - the week within the week-based-year
+ * <li>{@link ChronoField#YEAR YEAR} - the standard ISO year
+ * </ul>
+ *
+ * <h3>Week based years</h3>
+ * The ISO-8601 standard was originally intended as a data interchange format,
+ * defining a string format for dates and times. However, it also defines an
+ * alternate way of expressing the date, based on the concept of week-based-year.
+ * <p>
+ * The date is expressed using three fields:
+ * <ul>
+ * <li>{@link ChronoField#DAY_OF_WEEK DAY_OF_WEEK} - the standard field defining the
+ *  day-of-week from Monday (1) to Sunday (7)
+ * <li>{@link #WEEK_OF_WEEK_BASED_YEAR} - the week within the week-based-year
+ * <li>{@link #WEEK_BASED_YEAR WEEK_BASED_YEAR} - the week-based-year
+ * </ul>
+ * The week-based-year itself is defined relative to the standard ISO proleptic year.
+ * It differs from the standard year in that it always starts on a Monday.
+ * <p>
+ * The first week of a week-based-year is the first Monday-based week of the standard
+ * ISO year that has at least 4 days in the new year.
+ * <ul>
+ * <li>If January 1st is Monday then week 1 starts on January 1st
+ * <li>If January 1st is Tuesday then week 1 starts on December 31st of the previous standard year
+ * <li>If January 1st is Wednesday then week 1 starts on December 30th of the previous standard year
+ * <li>If January 1st is Thursday then week 1 starts on December 29th of the previous standard year
+ * <li>If January 1st is Friday then week 1 starts on January 4th
+ * <li>If January 1st is Saturday then week 1 starts on January 3rd
+ * <li>If January 1st is Sunday then week 1 starts on January 2nd
+ * </ul>
+ * There are 52 weeks in most week-based years, however on occasion there are 53 weeks.
+ * <p>
+ * For example:
+ *
+ * <table cellpadding="0" cellspacing="3" border="0" style="text-align: left; width: 50%;">
+ * <caption>Examples of Week based Years</caption>
+ * <tr><th>Date</th><th>Day-of-week</th><th>Field values</th></tr>
+ * <tr><th>2008-12-28</th><td>Sunday</td><td>Week 52 of week-based-year 2008</td></tr>
+ * <tr><th>2008-12-29</th><td>Monday</td><td>Week 1 of week-based-year 2009</td></tr>
+ * <tr><th>2008-12-31</th><td>Wednesday</td><td>Week 1 of week-based-year 2009</td></tr>
+ * <tr><th>2009-01-01</th><td>Thursday</td><td>Week 1 of week-based-year 2009</td></tr>
+ * <tr><th>2009-01-04</th><td>Sunday</td><td>Week 1 of week-based-year 2009</td></tr>
+ * <tr><th>2009-01-05</th><td>Monday</td><td>Week 2 of week-based-year 2009</td></tr>
+ * </table>
+ *
+ * @implSpec
+ * <p>
+ * This class is immutable and thread-safe.
+ *
+ * @since 1.8
+ */
+public final class IsoFields {
+
+    /**
+     * The field that represents the day-of-quarter.
+     * <p>
+     * This field allows the day-of-quarter value to be queried and set.
+     * The day-of-quarter has values from 1 to 90 in Q1 of a standard year, from 1 to 91
+     * in Q1 of a leap year, from 1 to 91 in Q2 and from 1 to 92 in Q3 and Q4.
+     * <p>
+     * The day-of-quarter can only be calculated if the day-of-year, month-of-year and year
+     * are available.
+     * <p>
+     * When setting this field, the value is allowed to be partially lenient, taking any
+     * value from 1 to 92. If the quarter has less than 92 days, then day 92, and
+     * potentially day 91, is in the following quarter.
+     * <p>
+     * In the resolving phase of parsing, a date can be created from a year,
+     * quarter-of-year and day-of-quarter.
+     * <p>
+     * In {@linkplain ResolverStyle#STRICT strict mode}, all three fields are
+     * validated against their range of valid values. The day-of-quarter field
+     * is validated from 1 to 90, 91 or 92 depending on the year and quarter.
+     * <p>
+     * In {@linkplain ResolverStyle#SMART smart mode}, all three fields are
+     * validated against their range of valid values. The day-of-quarter field is
+     * validated between 1 and 92, ignoring the actual range based on the year and quarter.
+     * If the day-of-quarter exceeds the actual range by one day, then the resulting date
+     * is one day later. If the day-of-quarter exceeds the actual range by two days,
+     * then the resulting date is two days later.
+     * <p>
+     * In {@linkplain ResolverStyle#LENIENT lenient mode}, only the year is validated
+     * against the range of valid values. The resulting date is calculated equivalent to
+     * the following three stage approach. First, create a date on the first of January
+     * in the requested year. Then take the quarter-of-year, subtract one, and add the
+     * amount in quarters to the date. Finally, take the day-of-quarter, subtract one,
+     * and add the amount in days to the date.
+     * <p>
+     * This unit is an immutable and thread-safe singleton.
+     */
+    public static final TemporalField DAY_OF_QUARTER = Field.DAY_OF_QUARTER;
+    /**
+     * The field that represents the quarter-of-year.
+     * <p>
+     * This field allows the quarter-of-year value to be queried and set.
+     * The quarter-of-year has values from 1 to 4.
+     * <p>
+     * The quarter-of-year can only be calculated if the month-of-year is available.
+     * <p>
+     * In the resolving phase of parsing, a date can be created from a year,
+     * quarter-of-year and day-of-quarter.
+     * See {@link #DAY_OF_QUARTER} for details.
+     * <p>
+     * This unit is an immutable and thread-safe singleton.
+     */
+    public static final TemporalField QUARTER_OF_YEAR = Field.QUARTER_OF_YEAR;
+    /**
+     * The field that represents the week-of-week-based-year.
+     * <p>
+     * This field allows the week of the week-based-year value to be queried and set.
+     * The week-of-week-based-year has values from 1 to 52, or 53 if the
+     * week-based-year has 53 weeks.
+     * <p>
+     * In the resolving phase of parsing, a date can be created from a
+     * week-based-year, week-of-week-based-year and day-of-week.
+     * <p>
+     * In {@linkplain ResolverStyle#STRICT strict mode}, all three fields are
+     * validated against their range of valid values. The week-of-week-based-year
+     * field is validated from 1 to 52 or 53 depending on the week-based-year.
+     * <p>
+     * In {@linkplain ResolverStyle#SMART smart mode}, all three fields are
+     * validated against their range of valid values. The week-of-week-based-year
+     * field is validated between 1 and 53, ignoring the week-based-year.
+     * If the week-of-week-based-year is 53, but the week-based-year only has
+     * 52 weeks, then the resulting date is in week 1 of the following week-based-year.
+     * <p>
+     * In {@linkplain ResolverStyle#LENIENT lenient mode}, only the week-based-year
+     * is validated against the range of valid values. If the day-of-week is outside
+     * the range 1 to 7, then the resulting date is adjusted by a suitable number of
+     * weeks to reduce the day-of-week to the range 1 to 7. If the week-of-week-based-year
+     * value is outside the range 1 to 52, then any excess weeks are added or subtracted
+     * from the resulting date.
+     * <p>
+     * This unit is an immutable and thread-safe singleton.
+     */
+    public static final TemporalField WEEK_OF_WEEK_BASED_YEAR = Field.WEEK_OF_WEEK_BASED_YEAR;
+    /**
+     * The field that represents the week-based-year.
+     * <p>
+     * This field allows the week-based-year value to be queried and set.
+     * <p>
+     * The field has a range that matches {@link LocalDate#MAX} and {@link LocalDate#MIN}.
+     * <p>
+     * In the resolving phase of parsing, a date can be created from a
+     * week-based-year, week-of-week-based-year and day-of-week.
+     * See {@link #WEEK_OF_WEEK_BASED_YEAR} for details.
+     * <p>
+     * This unit is an immutable and thread-safe singleton.
+     */
+    public static final TemporalField WEEK_BASED_YEAR = Field.WEEK_BASED_YEAR;
+    /**
+     * The unit that represents week-based-years for the purpose of addition and subtraction.
+     * <p>
+     * This allows a number of week-based-years to be added to, or subtracted from, a date.
+     * The unit is equal to either 52 or 53 weeks.
+     * The estimated duration of a week-based-year is the same as that of a standard ISO
+     * year at {@code 365.2425 Days}.
+     * <p>
+     * The rules for addition add the number of week-based-years to the existing value
+     * for the week-based-year field. If the resulting week-based-year only has 52 weeks,
+     * then the date will be in week 1 of the following week-based-year.
+     * <p>
+     * This unit is an immutable and thread-safe singleton.
+     */
+    public static final TemporalUnit WEEK_BASED_YEARS = Unit.WEEK_BASED_YEARS;
+    /**
+     * Unit that represents the concept of a quarter-year.
+     * For the ISO calendar system, it is equal to 3 months.
+     * The estimated duration of a quarter-year is one quarter of {@code 365.2425 Days}.
+     * <p>
+     * This unit is an immutable and thread-safe singleton.
+     */
+    public static final TemporalUnit QUARTER_YEARS = Unit.QUARTER_YEARS;
+
+    /**
+     * Restricted constructor.
+     */
+    private IsoFields() {
+        throw new AssertionError("Not instantiable");
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Implementation of the field.
+     */
+    private static enum Field implements TemporalField {
+        DAY_OF_QUARTER {
+            @Override
+            public TemporalUnit getBaseUnit() {
+                return DAYS;
+            }
+            @Override
+            public TemporalUnit getRangeUnit() {
+                return QUARTER_YEARS;
+            }
+            @Override
+            public ValueRange range() {
+                return ValueRange.of(1, 90, 92);
+            }
+            @Override
+            public boolean isSupportedBy(TemporalAccessor temporal) {
+                return temporal.isSupported(DAY_OF_YEAR) && temporal.isSupported(MONTH_OF_YEAR) &&
+                        temporal.isSupported(YEAR) && isIso(temporal);
+            }
+            @Override
+            public ValueRange rangeRefinedBy(TemporalAccessor temporal) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: DayOfQuarter");
+                }
+                long qoy = temporal.getLong(QUARTER_OF_YEAR);
+                if (qoy == 1) {
+                    long year = temporal.getLong(YEAR);
+                    return (IsoChronology.INSTANCE.isLeapYear(year) ? ValueRange.of(1, 91) : ValueRange.of(1, 90));
+                } else if (qoy == 2) {
+                    return ValueRange.of(1, 91);
+                } else if (qoy == 3 || qoy == 4) {
+                    return ValueRange.of(1, 92);
+                } // else value not from 1 to 4, so drop through
+                return range();
+            }
+            @Override
+            public long getFrom(TemporalAccessor temporal) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: DayOfQuarter");
+                }
+                int doy = temporal.get(DAY_OF_YEAR);
+                int moy = temporal.get(MONTH_OF_YEAR);
+                long year = temporal.getLong(YEAR);
+                return doy - QUARTER_DAYS[((moy - 1) / 3) + (IsoChronology.INSTANCE.isLeapYear(year) ? 4 : 0)];
+            }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <R extends Temporal> R adjustInto(R temporal, long newValue) {
+                // calls getFrom() to check if supported
+                long curValue = getFrom(temporal);
+                range().checkValidValue(newValue, this);  // leniently check from 1 to 92 TODO: check
+                return (R) temporal.with(DAY_OF_YEAR, temporal.getLong(DAY_OF_YEAR) + (newValue - curValue));
+            }
+            @Override
+            public ChronoLocalDate resolve(
+                    Map<TemporalField, Long> fieldValues, TemporalAccessor partialTemporal, ResolverStyle resolverStyle) {
+                Long yearLong = fieldValues.get(YEAR);
+                Long qoyLong = fieldValues.get(QUARTER_OF_YEAR);
+                if (yearLong == null || qoyLong == null) {
+                    return null;
+                }
+                int y = YEAR.checkValidIntValue(yearLong);  // always validate
+                long doq = fieldValues.get(DAY_OF_QUARTER);
+                ensureIso(partialTemporal);
+                LocalDate date;
+                if (resolverStyle == ResolverStyle.LENIENT) {
+                    date = LocalDate.of(y, 1, 1).plusMonths(Math.multiplyExact(Math.subtractExact(qoyLong, 1), 3));
+                    doq = Math.subtractExact(doq, 1);
+                } else {
+                    int qoy = QUARTER_OF_YEAR.range().checkValidIntValue(qoyLong, QUARTER_OF_YEAR);  // validated
+                    date = LocalDate.of(y, ((qoy - 1) * 3) + 1, 1);
+                    if (doq < 1 || doq > 90) {
+                        if (resolverStyle == ResolverStyle.STRICT) {
+                            rangeRefinedBy(date).checkValidValue(doq, this);  // only allow exact range
+                        } else {  // SMART
+                            range().checkValidValue(doq, this);  // allow 1-92 rolling into next quarter
+                        }
+                    }
+                    doq--;
+                }
+                fieldValues.remove(this);
+                fieldValues.remove(YEAR);
+                fieldValues.remove(QUARTER_OF_YEAR);
+                return date.plusDays(doq);
+            }
+            @Override
+            public String toString() {
+                return "DayOfQuarter";
+            }
+        },
+        QUARTER_OF_YEAR {
+            @Override
+            public TemporalUnit getBaseUnit() {
+                return QUARTER_YEARS;
+            }
+            @Override
+            public TemporalUnit getRangeUnit() {
+                return YEARS;
+            }
+            @Override
+            public ValueRange range() {
+                return ValueRange.of(1, 4);
+            }
+            @Override
+            public boolean isSupportedBy(TemporalAccessor temporal) {
+                return temporal.isSupported(MONTH_OF_YEAR) && isIso(temporal);
+            }
+            @Override
+            public long getFrom(TemporalAccessor temporal) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: QuarterOfYear");
+                }
+                long moy = temporal.getLong(MONTH_OF_YEAR);
+                return ((moy + 2) / 3);
+            }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <R extends Temporal> R adjustInto(R temporal, long newValue) {
+                // calls getFrom() to check if supported
+                long curValue = getFrom(temporal);
+                range().checkValidValue(newValue, this);  // strictly check from 1 to 4
+                return (R) temporal.with(MONTH_OF_YEAR, temporal.getLong(MONTH_OF_YEAR) + (newValue - curValue) * 3);
+            }
+            @Override
+            public String toString() {
+                return "QuarterOfYear";
+            }
+        },
+        WEEK_OF_WEEK_BASED_YEAR {
+            @Override
+            public String getDisplayName(Locale locale) {
+                Objects.requireNonNull(locale, "locale");
+                LocaleResources lr = LocaleProviderAdapter.getResourceBundleBased()
+                                            .getLocaleResources(locale);
+                ResourceBundle rb = lr.getJavaTimeFormatData();
+                return rb.containsKey("field.week") ? rb.getString("field.week") : toString();
+            }
+
+            @Override
+            public TemporalUnit getBaseUnit() {
+                return WEEKS;
+            }
+            @Override
+            public TemporalUnit getRangeUnit() {
+                return WEEK_BASED_YEARS;
+            }
+            @Override
+            public ValueRange range() {
+                return ValueRange.of(1, 52, 53);
+            }
+            @Override
+            public boolean isSupportedBy(TemporalAccessor temporal) {
+                return temporal.isSupported(EPOCH_DAY) && isIso(temporal);
+            }
+            @Override
+            public ValueRange rangeRefinedBy(TemporalAccessor temporal) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: WeekOfWeekBasedYear");
+                }
+                return getWeekRange(LocalDate.from(temporal));
+            }
+            @Override
+            public long getFrom(TemporalAccessor temporal) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: WeekOfWeekBasedYear");
+                }
+                return getWeek(LocalDate.from(temporal));
+            }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <R extends Temporal> R adjustInto(R temporal, long newValue) {
+                // calls getFrom() to check if supported
+                range().checkValidValue(newValue, this);  // lenient range
+                return (R) temporal.plus(Math.subtractExact(newValue, getFrom(temporal)), WEEKS);
+            }
+            @Override
+            public ChronoLocalDate resolve(
+                    Map<TemporalField, Long> fieldValues, TemporalAccessor partialTemporal, ResolverStyle resolverStyle) {
+                Long wbyLong = fieldValues.get(WEEK_BASED_YEAR);
+                Long dowLong = fieldValues.get(DAY_OF_WEEK);
+                if (wbyLong == null || dowLong == null) {
+                    return null;
+                }
+                int wby = WEEK_BASED_YEAR.range().checkValidIntValue(wbyLong, WEEK_BASED_YEAR);  // always validate
+                long wowby = fieldValues.get(WEEK_OF_WEEK_BASED_YEAR);
+                ensureIso(partialTemporal);
+                LocalDate date = LocalDate.of(wby, 1, 4);
+                if (resolverStyle == ResolverStyle.LENIENT) {
+                    long dow = dowLong;  // unvalidated
+                    if (dow > 7) {
+                        date = date.plusWeeks((dow - 1) / 7);
+                        dow = ((dow - 1) % 7) + 1;
+                    } else if (dow < 1) {
+                        date = date.plusWeeks(Math.subtractExact(dow,  7) / 7);
+                        dow = ((dow + 6) % 7) + 1;
+                    }
+                    date = date.plusWeeks(Math.subtractExact(wowby, 1)).with(DAY_OF_WEEK, dow);
+                } else {
+                    int dow = DAY_OF_WEEK.checkValidIntValue(dowLong);  // validated
+                    if (wowby < 1 || wowby > 52) {
+                        if (resolverStyle == ResolverStyle.STRICT) {
+                            getWeekRange(date).checkValidValue(wowby, this);  // only allow exact range
+                        } else {  // SMART
+                            range().checkValidValue(wowby, this);  // allow 1-53 rolling into next year
+                        }
+                    }
+                    date = date.plusWeeks(wowby - 1).with(DAY_OF_WEEK, dow);
+                }
+                fieldValues.remove(this);
+                fieldValues.remove(WEEK_BASED_YEAR);
+                fieldValues.remove(DAY_OF_WEEK);
+                return date;
+            }
+            @Override
+            public String toString() {
+                return "WeekOfWeekBasedYear";
+            }
+        },
+        WEEK_BASED_YEAR {
+            @Override
+            public TemporalUnit getBaseUnit() {
+                return WEEK_BASED_YEARS;
+            }
+            @Override
+            public TemporalUnit getRangeUnit() {
+                return FOREVER;
+            }
+            @Override
+            public ValueRange range() {
+                return YEAR.range();
+            }
+            @Override
+            public boolean isSupportedBy(TemporalAccessor temporal) {
+                return temporal.isSupported(EPOCH_DAY) && isIso(temporal);
+            }
+            @Override
+            public long getFrom(TemporalAccessor temporal) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: WeekBasedYear");
+                }
+                return getWeekBasedYear(LocalDate.from(temporal));
+            }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <R extends Temporal> R adjustInto(R temporal, long newValue) {
+                if (isSupportedBy(temporal) == false) {
+                    throw new UnsupportedTemporalTypeException("Unsupported field: WeekBasedYear");
+                }
+                int newWby = range().checkValidIntValue(newValue, WEEK_BASED_YEAR);  // strict check
+                LocalDate date = LocalDate.from(temporal);
+                int dow = date.get(DAY_OF_WEEK);
+                int week = getWeek(date);
+                if (week == 53 && getWeekRange(newWby) == 52) {
+                    week = 52;
+                }
+                LocalDate resolved = LocalDate.of(newWby, 1, 4);  // 4th is guaranteed to be in week one
+                int days = (dow - resolved.get(DAY_OF_WEEK)) + ((week - 1) * 7);
+                resolved = resolved.plusDays(days);
+                return (R) temporal.with(resolved);
+            }
+            @Override
+            public String toString() {
+                return "WeekBasedYear";
+            }
+        };
+
+        @Override
+        public boolean isDateBased() {
+            return true;
+        }
+
+        @Override
+        public boolean isTimeBased() {
+            return false;
+        }
+
+        @Override
+        public ValueRange rangeRefinedBy(TemporalAccessor temporal) {
+            return range();
+        }
+
+        //-------------------------------------------------------------------------
+        private static final int[] QUARTER_DAYS = {0, 90, 181, 273, 0, 91, 182, 274};
+
+        private static boolean isIso(TemporalAccessor temporal) {
+            return Chronology.from(temporal).equals(IsoChronology.INSTANCE);
+        }
+
+        private static void ensureIso(TemporalAccessor temporal) {
+            if (isIso(temporal) == false) {
+                throw new DateTimeException("Resolve requires IsoChronology");
+            }
+        }
+
+        private static ValueRange getWeekRange(LocalDate date) {
+            int wby = getWeekBasedYear(date);
+            return ValueRange.of(1, getWeekRange(wby));
+        }
+
+        private static int getWeekRange(int wby) {
+            LocalDate date = LocalDate.of(wby, 1, 1);
+            // 53 weeks if standard year starts on Thursday, or Wed in a leap year
+            if (date.getDayOfWeek() == THURSDAY || (date.getDayOfWeek() == WEDNESDAY && date.isLeapYear())) {
+                return 53;
+            }
+            return 52;
+        }
+
+        private static int getWeek(LocalDate date) {
+            int dow0 = date.getDayOfWeek().ordinal();
+            int doy0 = date.getDayOfYear() - 1;
+            int doyThu0 = doy0 + (3 - dow0);  // adjust to mid-week Thursday (which is 3 indexed from zero)
+            int alignedWeek = doyThu0 / 7;
+            int firstThuDoy0 = doyThu0 - (alignedWeek * 7);
+            int firstMonDoy0 = firstThuDoy0 - 3;
+            if (firstMonDoy0 < -3) {
+                firstMonDoy0 += 7;
+            }
+            if (doy0 < firstMonDoy0) {
+                return (int) getWeekRange(date.withDayOfYear(180).minusYears(1)).getMaximum();
+            }
+            int week = ((doy0 - firstMonDoy0) / 7) + 1;
+            if (week == 53) {
+                if ((firstMonDoy0 == -3 || (firstMonDoy0 == -2 && date.isLeapYear())) == false) {
+                    week = 1;
+                }
+            }
+            return week;
+        }
+
+        private static int getWeekBasedYear(LocalDate date) {
+            int year = date.getYear();
+            int doy = date.getDayOfYear();
+            if (doy <= 3) {
+                int dow = date.getDayOfWeek().ordinal();
+                if (doy - dow < -2) {
+                    year--;
+                }
+            } else if (doy >= 363) {
+                int dow = date.getDayOfWeek().ordinal();
+                doy = doy - 363 - (date.isLeapYear() ? 1 : 0);
+                if (doy - dow >= 0) {
+                    year++;
+                }
+            }
+            return year;
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Implementation of the unit.
+     */
+    private static enum Unit implements TemporalUnit {
+
+        /**
+         * Unit that represents the concept of a week-based-year.
+         */
+        WEEK_BASED_YEARS("WeekBasedYears", Duration.ofSeconds(31556952L)),
+        /**
+         * Unit that represents the concept of a quarter-year.
+         */
+        QUARTER_YEARS("QuarterYears", Duration.ofSeconds(31556952L / 4));
+
+        private final String name;
+        private final Duration duration;
+
+        private Unit(String name, Duration estimatedDuration) {
+            this.name = name;
+            this.duration = estimatedDuration;
+        }
+
+        @Override
+        public Duration getDuration() {
+            return duration;
+        }
+
+        @Override
+        public boolean isDurationEstimated() {
+            return true;
+        }
+
+        @Override
+        public boolean isDateBased() {
+            return true;
+        }
+
+        @Override
+        public boolean isTimeBased() {
+            return false;
+        }
+
+        @Override
+        public boolean isSupportedBy(Temporal temporal) {
+            return temporal.isSupported(EPOCH_DAY);
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public <R extends Temporal> R addTo(R temporal, long amount) {
+            switch (this) {
+                case WEEK_BASED_YEARS:
+                    return (R) temporal.with(WEEK_BASED_YEAR,
+                            Math.addExact(temporal.get(WEEK_BASED_YEAR), amount));
+                case QUARTER_YEARS:
+                    return (R) temporal.plus(amount / 4, YEARS)
+                            .plus((amount % 4) * 3, MONTHS);
+                default:
+                    throw new IllegalStateException("Unreachable");
+            }
+        }
+
+        @Override
+        public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive) {
+            if (temporal1Inclusive.getClass() != temporal2Exclusive.getClass()) {
+                return temporal1Inclusive.until(temporal2Exclusive, this);
+            }
+            switch(this) {
+                case WEEK_BASED_YEARS:
+                    return Math.subtractExact(temporal2Exclusive.getLong(WEEK_BASED_YEAR),
+                            temporal1Inclusive.getLong(WEEK_BASED_YEAR));
+                case QUARTER_YEARS:
+                    return temporal1Inclusive.until(temporal2Exclusive, MONTHS) / 3;
+                default:
+                    throw new IllegalStateException("Unreachable");
+            }
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+}

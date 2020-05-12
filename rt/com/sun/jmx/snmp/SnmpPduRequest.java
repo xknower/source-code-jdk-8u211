@@ -1,115 +1,109 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpPduRequest
-/*     */   extends SnmpPduPacket
-/*     */   implements SnmpPduRequestType
-/*     */ {
-/*     */   private static final long serialVersionUID = 2218754017025258979L;
-/*  53 */   public int errorStatus = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  62 */   public int errorIndex = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setErrorIndex(int paramInt) {
-/*  69 */     this.errorIndex = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setErrorStatus(int paramInt) {
-/*  77 */     this.errorStatus = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getErrorIndex() {
-/*  84 */     return this.errorIndex;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getErrorStatus() {
-/*  90 */     return this.errorStatus;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpPdu getResponsePdu() {
-/*  97 */     SnmpPduRequest snmpPduRequest = new SnmpPduRequest();
-/*  98 */     snmpPduRequest.address = this.address;
-/*  99 */     snmpPduRequest.port = this.port;
-/* 100 */     snmpPduRequest.version = this.version;
-/* 101 */     snmpPduRequest.community = this.community;
-/* 102 */     snmpPduRequest.type = 162;
-/* 103 */     snmpPduRequest.requestId = this.requestId;
-/* 104 */     snmpPduRequest.errorStatus = 0;
-/* 105 */     snmpPduRequest.errorIndex = 0;
-/*     */     
-/* 107 */     return snmpPduRequest;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpPduRequest.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp;
+
+
+
+
+/**
+ * Is used to represent <CODE>get</CODE>, <CODE>get-next</CODE>, <CODE>set</CODE>, <CODE>response</CODE> and <CODE>SNMPv2-trap</CODE> PDUs.
+ * <P>
+ * You will not usually need to use this class, except if you
+ * decide to implement your own
+ * {@link com.sun.jmx.snmp.SnmpPduFactory SnmpPduFactory} object.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public class SnmpPduRequest extends SnmpPduPacket
+    implements SnmpPduRequestType {
+    private static final long serialVersionUID = 2218754017025258979L;
+
+
+    /**
+     * Error status. Statuses are defined in
+     * {@link com.sun.jmx.snmp.SnmpDefinitions SnmpDefinitions}.
+     * @serial
+     */
+    public int errorStatus=0 ;
+
+
+    /**
+     * Error index. Remember that SNMP indices start from 1.
+     * Thus the corresponding <CODE>SnmpVarBind</CODE> is
+     * <CODE>varBindList[errorIndex-1]</CODE>.
+     * @serial
+     */
+    public int errorIndex=0 ;
+    /**
+     * Implements <CODE>SnmpPduRequestType</CODE> interface.
+     *
+     * @since 1.5
+     */
+    public void setErrorIndex(int i) {
+        errorIndex = i;
+    }
+    /**
+     * Implements <CODE>SnmpPduRequestType</CODE> interface.
+     *
+     * @since 1.5
+     */
+    public void setErrorStatus(int i) {
+        errorStatus = i;
+    }
+    /**
+     * Implements <CODE>SnmpPduRequestType</CODE> interface.
+     *
+     * @since 1.5
+     */
+    public int getErrorIndex() { return errorIndex; }
+    /**
+     * Implements <CODE>SnmpPduRequestType</CODE> interface.
+     *
+     * @since 1.5
+     */
+    public int getErrorStatus() { return errorStatus; }
+    /**
+     * Implements <CODE>SnmpAckPdu</CODE> interface.
+     *
+     * @since 1.5
+     */
+    public SnmpPdu getResponsePdu() {
+        SnmpPduRequest result = new SnmpPduRequest();
+        result.address = address;
+        result.port = port;
+        result.version = version;
+        result.community = community;
+        result.type = SnmpDefinitions.pduGetResponsePdu;
+        result.requestId = requestId;
+        result.errorStatus = SnmpDefinitions.snmpRspNoError;
+        result.errorIndex = 0;
+
+        return result;
+    }
+}

@@ -1,114 +1,108 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.oa.NullServantImpl;
-/*     */ import org.omg.PortableServer.ForwardRequest;
-/*     */ import org.omg.PortableServer.POAPackage.NoServant;
-/*     */ import org.omg.PortableServer.POAPackage.ObjectNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.WrongPolicy;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ import org.omg.PortableServer.ServantManager;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class POAPolicyMediatorImpl_R_AOM
-/*     */   extends POAPolicyMediatorBase_R
-/*     */ {
-/*     */   POAPolicyMediatorImpl_R_AOM(Policies paramPolicies, POAImpl paramPOAImpl) {
-/*  55 */     super(paramPolicies, paramPOAImpl);
-/*     */ 
-/*     */     
-/*  58 */     if (!paramPolicies.useActiveMapOnly()) {
-/*  59 */       throw paramPOAImpl.invocationWrapper().policyMediatorBadPolicyInFactory();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected Object internalGetServant(byte[] paramArrayOfbyte, String paramString) throws ForwardRequest {
-/*     */     NullServantImpl nullServantImpl;
-/*  65 */     Servant servant = internalIdToServant(paramArrayOfbyte);
-/*  66 */     if (servant == null)
-/*     */     {
-/*  68 */       nullServantImpl = new NullServantImpl(this.poa.invocationWrapper().nullServant()); } 
-/*  69 */     return nullServantImpl;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void etherealizeAll() {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServantManager getServantManager() throws WrongPolicy {
-/*  79 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setServantManager(ServantManager paramServantManager) throws WrongPolicy {
-/*  85 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Servant getDefaultServant() throws NoServant, WrongPolicy {
-/*  90 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setDefaultServant(Servant paramServant) throws WrongPolicy {
-/*  95 */     throw new WrongPolicy();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Servant idToServant(byte[] paramArrayOfbyte) throws WrongPolicy, ObjectNotActive {
-/* 101 */     Servant servant = internalIdToServant(paramArrayOfbyte);
-/*     */     
-/* 103 */     if (servant == null) {
-/* 104 */       throw new ObjectNotActive();
-/*     */     }
-/* 106 */     return servant;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\POAPolicyMediatorImpl_R_AOM.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa ;
+
+import org.omg.PortableServer.Servant ;
+import org.omg.PortableServer.ServantManager ;
+import org.omg.PortableServer.ForwardRequest ;
+import org.omg.PortableServer.POAPackage.WrongPolicy ;
+import org.omg.PortableServer.POAPackage.ObjectNotActive ;
+import org.omg.PortableServer.POAPackage.ServantNotActive ;
+import org.omg.PortableServer.POAPackage.ObjectAlreadyActive ;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive ;
+import org.omg.PortableServer.POAPackage.NoServant ;
+
+import com.sun.corba.se.impl.orbutil.concurrent.SyncUtil ;
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+
+import com.sun.corba.se.impl.oa.NullServantImpl ;
+
+/** Implementation of POARequesHandler that provides policy specific
+ * operations on the POA in the case:
+ * <ul>
+ * <li>retain</li>
+ * <li>useActiveObjectMapOnly</li>
+ * </ul>
+ */
+public class POAPolicyMediatorImpl_R_AOM extends POAPolicyMediatorBase_R {
+    POAPolicyMediatorImpl_R_AOM( Policies policies, POAImpl poa )
+    {
+        // assert policies.retainServants()
+        super( policies, poa ) ;
+
+        // policies.useActiveObjectMapOnly()
+        if (!policies.useActiveMapOnly())
+            throw poa.invocationWrapper().policyMediatorBadPolicyInFactory() ;
+    }
+
+    protected java.lang.Object internalGetServant( byte[] id,
+        String operation ) throws ForwardRequest
+    {
+        java.lang.Object servant = internalIdToServant( id ) ;
+        if (servant == null)
+            servant = new NullServantImpl(
+                poa.invocationWrapper().nullServant() ) ;
+        return servant ;
+    }
+
+    public void etherealizeAll()
+    {
+        // NO-OP
+    }
+
+    public ServantManager getServantManager() throws WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public void setServantManager( ServantManager servantManager )
+        throws WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public Servant getDefaultServant() throws NoServant, WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public void setDefaultServant( Servant servant ) throws WrongPolicy
+    {
+        throw new WrongPolicy();
+    }
+
+    public Servant idToServant( byte[] id )
+        throws WrongPolicy, ObjectNotActive
+    {
+        Servant s = internalIdToServant( id ) ;
+
+        if (s == null)
+            throw new ObjectNotActive() ;
+        else
+            return s;
+    }
+}

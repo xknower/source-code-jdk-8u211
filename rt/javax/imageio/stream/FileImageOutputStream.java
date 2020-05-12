@@ -1,171 +1,172 @@
-/*     */ package javax.imageio.stream;
-/*     */ 
-/*     */ import com.sun.imageio.stream.CloseableDisposerRecord;
-/*     */ import com.sun.imageio.stream.StreamFinalizer;
-/*     */ import java.io.File;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.io.IOException;
-/*     */ import java.io.RandomAccessFile;
-/*     */ import sun.java2d.Disposer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FileImageOutputStream
-/*     */   extends ImageOutputStreamImpl
-/*     */ {
-/*     */   private RandomAccessFile raf;
-/*     */   private final Object disposerReferent;
-/*     */   private final CloseableDisposerRecord disposerRecord;
-/*     */   
-/*     */   public FileImageOutputStream(File paramFile) throws FileNotFoundException, IOException {
-/*  69 */     this((paramFile == null) ? null : new RandomAccessFile(paramFile, "rw"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileImageOutputStream(RandomAccessFile paramRandomAccessFile) {
-/*  82 */     if (paramRandomAccessFile == null) {
-/*  83 */       throw new IllegalArgumentException("raf == null!");
-/*     */     }
-/*  85 */     this.raf = paramRandomAccessFile;
-/*     */     
-/*  87 */     this.disposerRecord = new CloseableDisposerRecord(paramRandomAccessFile);
-/*  88 */     if (getClass() == FileImageOutputStream.class) {
-/*  89 */       this.disposerReferent = new Object();
-/*  90 */       Disposer.addRecord(this.disposerReferent, this.disposerRecord);
-/*     */     } else {
-/*  92 */       this.disposerReferent = new StreamFinalizer(this);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int read() throws IOException {
-/*  97 */     checkClosed();
-/*  98 */     this.bitOffset = 0;
-/*  99 */     int i = this.raf.read();
-/* 100 */     if (i != -1) {
-/* 101 */       this.streamPos++;
-/*     */     }
-/* 103 */     return i;
-/*     */   }
-/*     */   
-/*     */   public int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 107 */     checkClosed();
-/* 108 */     this.bitOffset = 0;
-/* 109 */     int i = this.raf.read(paramArrayOfbyte, paramInt1, paramInt2);
-/* 110 */     if (i != -1) {
-/* 111 */       this.streamPos += i;
-/*     */     }
-/* 113 */     return i;
-/*     */   }
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 117 */     flushBits();
-/* 118 */     this.raf.write(paramInt);
-/* 119 */     this.streamPos++;
-/*     */   }
-/*     */   
-/*     */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 123 */     flushBits();
-/* 124 */     this.raf.write(paramArrayOfbyte, paramInt1, paramInt2);
-/* 125 */     this.streamPos += paramInt2;
-/*     */   }
-/*     */   
-/*     */   public long length() {
-/*     */     try {
-/* 130 */       checkClosed();
-/* 131 */       return this.raf.length();
-/* 132 */     } catch (IOException iOException) {
-/* 133 */       return -1L;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void seek(long paramLong) throws IOException {
-/* 149 */     checkClosed();
-/* 150 */     if (paramLong < this.flushedPos) {
-/* 151 */       throw new IndexOutOfBoundsException("pos < flushedPos!");
-/*     */     }
-/* 153 */     this.bitOffset = 0;
-/* 154 */     this.raf.seek(paramLong);
-/* 155 */     this.streamPos = this.raf.getFilePointer();
-/*     */   }
-/*     */   
-/*     */   public void close() throws IOException {
-/* 159 */     super.close();
-/* 160 */     this.disposerRecord.dispose();
-/* 161 */     this.raf = null;
-/*     */   }
-/*     */   
-/*     */   protected void finalize() throws Throwable {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\imageio\stream\FileImageOutputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.imageio.stream;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import com.sun.imageio.stream.CloseableDisposerRecord;
+import com.sun.imageio.stream.StreamFinalizer;
+import sun.java2d.Disposer;
+
+/**
+ * An implementation of <code>ImageOutputStream</code> that writes its
+ * output directly to a <code>File</code> or
+ * <code>RandomAccessFile</code>.
+ *
+ */
+public class FileImageOutputStream extends ImageOutputStreamImpl {
+
+    private RandomAccessFile raf;
+
+    /** The referent to be registered with the Disposer. */
+    private final Object disposerReferent;
+
+    /** The DisposerRecord that closes the underlying RandomAccessFile. */
+    private final CloseableDisposerRecord disposerRecord;
+
+    /**
+     * Constructs a <code>FileImageOutputStream</code> that will write
+     * to a given <code>File</code>.
+     *
+     * @param f a <code>File</code> to write to.
+     *
+     * @exception IllegalArgumentException if <code>f</code> is
+     * <code>null</code>.
+     * @exception SecurityException if a security manager exists
+     * and does not allow write access to the file.
+     * @exception FileNotFoundException if <code>f</code> does not denote
+     * a regular file or it cannot be opened for reading and writing for any
+     * other reason.
+     * @exception IOException if an I/O error occurs.
+     */
+    public FileImageOutputStream(File f)
+        throws FileNotFoundException, IOException {
+        this(f == null ? null : new RandomAccessFile(f, "rw"));
+    }
+
+    /**
+     * Constructs a <code>FileImageOutputStream</code> that will write
+     * to a given <code>RandomAccessFile</code>.
+     *
+     * @param raf a <code>RandomAccessFile</code> to write to.
+     *
+     * @exception IllegalArgumentException if <code>raf</code> is
+     * <code>null</code>.
+     */
+    public FileImageOutputStream(RandomAccessFile raf) {
+        if (raf == null) {
+            throw new IllegalArgumentException("raf == null!");
+        }
+        this.raf = raf;
+
+        disposerRecord = new CloseableDisposerRecord(raf);
+        if (getClass() == FileImageOutputStream.class) {
+            disposerReferent = new Object();
+            Disposer.addRecord(disposerReferent, disposerRecord);
+        } else {
+            disposerReferent = new StreamFinalizer(this);
+        }
+    }
+
+    public int read() throws IOException {
+        checkClosed();
+        bitOffset = 0;
+        int val = raf.read();
+        if (val != -1) {
+            ++streamPos;
+        }
+        return val;
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        checkClosed();
+        bitOffset = 0;
+        int nbytes = raf.read(b, off, len);
+        if (nbytes != -1) {
+            streamPos += nbytes;
+        }
+        return nbytes;
+    }
+
+    public void write(int b) throws IOException {
+        flushBits(); // this will call checkClosed() for us
+        raf.write(b);
+        ++streamPos;
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+        flushBits(); // this will call checkClosed() for us
+        raf.write(b, off, len);
+        streamPos += len;
+    }
+
+    public long length() {
+        try {
+            checkClosed();
+            return raf.length();
+        } catch (IOException e) {
+            return -1L;
+        }
+    }
+
+    /**
+     * Sets the current stream position and resets the bit offset to
+     * 0.  It is legal to seeking past the end of the file; an
+     * <code>EOFException</code> will be thrown only if a read is
+     * performed.  The file length will not be increased until a write
+     * is performed.
+     *
+     * @exception IndexOutOfBoundsException if <code>pos</code> is smaller
+     * than the flushed position.
+     * @exception IOException if any other I/O error occurs.
+     */
+    public void seek(long pos) throws IOException {
+        checkClosed();
+        if (pos < flushedPos) {
+            throw new IndexOutOfBoundsException("pos < flushedPos!");
+        }
+        bitOffset = 0;
+        raf.seek(pos);
+        streamPos = raf.getFilePointer();
+    }
+
+    public void close() throws IOException {
+        super.close();
+        disposerRecord.dispose(); // this closes the RandomAccessFile
+        raf = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void finalize() throws Throwable {
+        // Empty finalizer: for performance reasons we instead use the
+        // Disposer mechanism for ensuring that the underlying
+        // RandomAccessFile is closed prior to garbage collection
+    }
+}

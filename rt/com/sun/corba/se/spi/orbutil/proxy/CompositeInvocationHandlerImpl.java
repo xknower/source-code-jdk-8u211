@@ -1,99 +1,94 @@
-/*    */ package com.sun.corba.se.spi.orbutil.proxy;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*    */ import com.sun.corba.se.impl.presentation.rmi.DynamicAccessPermission;
-/*    */ import java.lang.reflect.InvocationHandler;
-/*    */ import java.lang.reflect.Method;
-/*    */ import java.util.LinkedHashMap;
-/*    */ import java.util.Map;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class CompositeInvocationHandlerImpl
-/*    */   implements CompositeInvocationHandler
-/*    */ {
-/* 44 */   private Map classToInvocationHandler = new LinkedHashMap<>();
-/* 45 */   private InvocationHandler defaultHandler = null;
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void addInvocationHandler(Class<?> paramClass, InvocationHandler paramInvocationHandler) {
-/* 50 */     checkAccess();
-/* 51 */     this.classToInvocationHandler.put(paramClass, paramInvocationHandler);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void setDefaultHandler(InvocationHandler paramInvocationHandler) {
-/* 56 */     checkAccess();
-/* 57 */     this.defaultHandler = paramInvocationHandler;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Object invoke(Object paramObject, Method paramMethod, Object[] paramArrayOfObject) throws Throwable {
-/* 65 */     Class<?> clazz = paramMethod.getDeclaringClass();
-/*    */     
-/* 67 */     InvocationHandler invocationHandler = (InvocationHandler)this.classToInvocationHandler.get(clazz);
-/*    */     
-/* 69 */     if (invocationHandler == null) {
-/* 70 */       if (this.defaultHandler != null) {
-/* 71 */         invocationHandler = this.defaultHandler;
-/*    */       } else {
-/* 73 */         ORBUtilSystemException oRBUtilSystemException = ORBUtilSystemException.get("util");
-/*    */         
-/* 75 */         throw oRBUtilSystemException.noInvocationHandler("\"" + paramMethod.toString() + "\"");
-/*    */       } 
-/*    */     }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */     
-/* 82 */     return invocationHandler.invoke(paramObject, paramMethod, paramArrayOfObject);
-/*    */   }
-/*    */   
-/* 85 */   private static final DynamicAccessPermission perm = new DynamicAccessPermission("access");
-/*    */   private void checkAccess() {
-/* 87 */     SecurityManager securityManager = System.getSecurityManager();
-/* 88 */     if (securityManager != null)
-/* 89 */       securityManager.checkPermission(perm); 
-/*    */   }
-/*    */   
-/*    */   private static final long serialVersionUID = 4571178305984833743L;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\orbutil\proxy\CompositeInvocationHandlerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.orbutil.proxy ;
+
+import java.io.Serializable ;
+
+import java.util.Map ;
+import java.util.LinkedHashMap ;
+
+import java.lang.reflect.Proxy ;
+import java.lang.reflect.Method ;
+import java.lang.reflect.InvocationHandler ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+import com.sun.corba.se.impl.presentation.rmi.DynamicAccessPermission;
+
+public class CompositeInvocationHandlerImpl implements
+    CompositeInvocationHandler
+{
+    private Map classToInvocationHandler = new LinkedHashMap() ;
+    private InvocationHandler defaultHandler = null ;
+
+    public void addInvocationHandler( Class interf,
+        InvocationHandler handler )
+    {
+        checkAccess();
+        classToInvocationHandler.put( interf, handler ) ;
+    }
+
+    public void setDefaultHandler( InvocationHandler handler )
+    {
+        checkAccess();
+        defaultHandler = handler ;
+    }
+
+    public Object invoke( Object proxy, Method method, Object[] args )
+        throws Throwable
+    {
+        // Note that the declaring class in method is the interface
+        // in which the method was defined, not the proxy class.
+        Class cls = method.getDeclaringClass() ;
+        InvocationHandler handler =
+            (InvocationHandler)classToInvocationHandler.get( cls ) ;
+
+        if (handler == null) {
+            if (defaultHandler != null)
+                handler = defaultHandler ;
+            else {
+                ORBUtilSystemException wrapper = ORBUtilSystemException.get(
+                    CORBALogDomains.UTIL ) ;
+                throw wrapper.noInvocationHandler( "\"" + method.toString() +
+                    "\"" ) ;
+            }
+        }
+
+        // handler should never be null here.
+
+        return handler.invoke( proxy, method, args ) ;
+    }
+
+    private static final DynamicAccessPermission perm = new DynamicAccessPermission("access");
+    private void checkAccess() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(perm);
+}
+    }
+
+    private static final long serialVersionUID = 4571178305984833743L;
+}

@@ -1,218 +1,212 @@
-/*     */ package java.math;
-/*     */ 
-/*     */ import java.util.Random;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class BitSieve
-/*     */ {
-/*     */   private long[] bits;
-/*     */   private int length;
-/*  62 */   private static BitSieve smallSieve = new BitSieve();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private BitSieve() {
-/*  76 */     this.length = 9600;
-/*  77 */     this.bits = new long[unitIndex(this.length - 1) + 1];
-/*     */ 
-/*     */     
-/*  80 */     set(0);
-/*  81 */     int i = 1;
-/*  82 */     int j = 3;
-/*     */ 
-/*     */     
-/*     */     do {
-/*  86 */       sieveSingle(this.length, i + j, j);
-/*  87 */       i = sieveSearch(this.length, i + 1);
-/*  88 */       j = 2 * i + 1;
-/*  89 */     } while (i > 0 && j < this.length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   BitSieve(BigInteger paramBigInteger, int paramInt) {
-/* 105 */     this.bits = new long[unitIndex(paramInt - 1) + 1];
-/* 106 */     this.length = paramInt;
-/* 107 */     int i = 0;
-/*     */     
-/* 109 */     int j = smallSieve.sieveSearch(smallSieve.length, i);
-/* 110 */     int k = j * 2 + 1;
-/*     */ 
-/*     */     
-/* 113 */     MutableBigInteger mutableBigInteger1 = new MutableBigInteger(paramBigInteger);
-/* 114 */     MutableBigInteger mutableBigInteger2 = new MutableBigInteger();
-/*     */     
-/*     */     do {
-/* 117 */       i = mutableBigInteger1.divideOneWord(k, mutableBigInteger2);
-/*     */ 
-/*     */       
-/* 120 */       i = k - i;
-/* 121 */       if (i % 2 == 0)
-/* 122 */         i += k; 
-/* 123 */       sieveSingle(paramInt, (i - 1) / 2, k);
-/*     */ 
-/*     */       
-/* 126 */       j = smallSieve.sieveSearch(smallSieve.length, j + 1);
-/* 127 */       k = j * 2 + 1;
-/* 128 */     } while (j > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static int unitIndex(int paramInt) {
-/* 135 */     return paramInt >>> 6;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static long bit(int paramInt) {
-/* 142 */     return 1L << (paramInt & 0x3F);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean get(int paramInt) {
-/* 149 */     int i = unitIndex(paramInt);
-/* 150 */     return ((this.bits[i] & bit(paramInt)) != 0L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void set(int paramInt) {
-/* 157 */     int i = unitIndex(paramInt);
-/* 158 */     this.bits[i] = this.bits[i] | bit(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int sieveSearch(int paramInt1, int paramInt2) {
-/* 167 */     if (paramInt2 >= paramInt1) {
-/* 168 */       return -1;
-/*     */     }
-/* 170 */     int i = paramInt2;
-/*     */     while (true) {
-/* 172 */       if (!get(i))
-/* 173 */         return i; 
-/* 174 */       i++;
-/* 175 */       if (i >= paramInt1 - 1) {
-/* 176 */         return -1;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void sieveSingle(int paramInt1, int paramInt2, int paramInt3) {
-/* 185 */     while (paramInt2 < paramInt1) {
-/* 186 */       set(paramInt2);
-/* 187 */       paramInt2 += paramInt3;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   BigInteger retrieve(BigInteger paramBigInteger, int paramInt, Random paramRandom) {
-/* 196 */     boolean bool = true;
-/* 197 */     for (byte b = 0; b < this.bits.length; b++) {
-/* 198 */       long l = this.bits[b] ^ 0xFFFFFFFFFFFFFFFFL;
-/* 199 */       for (byte b1 = 0; b1 < 64; b1++) {
-/* 200 */         if ((l & 0x1L) == 1L) {
-/* 201 */           BigInteger bigInteger = paramBigInteger.add(
-/* 202 */               BigInteger.valueOf(bool));
-/* 203 */           if (bigInteger.primeToCertainty(paramInt, paramRandom))
-/* 204 */             return bigInteger; 
-/*     */         } 
-/* 206 */         l >>>= 1L;
-/* 207 */         bool += true;
-/*     */       } 
-/*     */     } 
-/* 210 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\math\BitSieve.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.math;
+
+/**
+ * A simple bit sieve used for finding prime number candidates. Allows setting
+ * and clearing of bits in a storage array. The size of the sieve is assumed to
+ * be constant to reduce overhead. All the bits of a new bitSieve are zero, and
+ * bits are removed from it by setting them.
+ *
+ * To reduce storage space and increase efficiency, no even numbers are
+ * represented in the sieve (each bit in the sieve represents an odd number).
+ * The relationship between the index of a bit and the number it represents is
+ * given by
+ * N = offset + (2*index + 1);
+ * Where N is the integer represented by a bit in the sieve, offset is some
+ * even integer offset indicating where the sieve begins, and index is the
+ * index of a bit in the sieve array.
+ *
+ * @see     BigInteger
+ * @author  Michael McCloskey
+ * @since   1.3
+ */
+class BitSieve {
+    /**
+     * Stores the bits in this bitSieve.
+     */
+    private long bits[];
+
+    /**
+     * Length is how many bits this sieve holds.
+     */
+    private int length;
+
+    /**
+     * A small sieve used to filter out multiples of small primes in a search
+     * sieve.
+     */
+    private static BitSieve smallSieve = new BitSieve();
+
+    /**
+     * Construct a "small sieve" with a base of 0.  This constructor is
+     * used internally to generate the set of "small primes" whose multiples
+     * are excluded from sieves generated by the main (package private)
+     * constructor, BitSieve(BigInteger base, int searchLen).  The length
+     * of the sieve generated by this constructor was chosen for performance;
+     * it controls a tradeoff between how much time is spent constructing
+     * other sieves, and how much time is wasted testing composite candidates
+     * for primality.  The length was chosen experimentally to yield good
+     * performance.
+     */
+    private BitSieve() {
+        length = 150 * 64;
+        bits = new long[(unitIndex(length - 1) + 1)];
+
+        // Mark 1 as composite
+        set(0);
+        int nextIndex = 1;
+        int nextPrime = 3;
+
+        // Find primes and remove their multiples from sieve
+        do {
+            sieveSingle(length, nextIndex + nextPrime, nextPrime);
+            nextIndex = sieveSearch(length, nextIndex + 1);
+            nextPrime = 2*nextIndex + 1;
+        } while((nextIndex > 0) && (nextPrime < length));
+    }
+
+    /**
+     * Construct a bit sieve of searchLen bits used for finding prime number
+     * candidates. The new sieve begins at the specified base, which must
+     * be even.
+     */
+    BitSieve(BigInteger base, int searchLen) {
+        /*
+         * Candidates are indicated by clear bits in the sieve. As a candidates
+         * nonprimality is calculated, a bit is set in the sieve to eliminate
+         * it. To reduce storage space and increase efficiency, no even numbers
+         * are represented in the sieve (each bit in the sieve represents an
+         * odd number).
+         */
+        bits = new long[(unitIndex(searchLen-1) + 1)];
+        length = searchLen;
+        int start = 0;
+
+        int step = smallSieve.sieveSearch(smallSieve.length, start);
+        int convertedStep = (step *2) + 1;
+
+        // Construct the large sieve at an even offset specified by base
+        MutableBigInteger b = new MutableBigInteger(base);
+        MutableBigInteger q = new MutableBigInteger();
+        do {
+            // Calculate base mod convertedStep
+            start = b.divideOneWord(convertedStep, q);
+
+            // Take each multiple of step out of sieve
+            start = convertedStep - start;
+            if (start%2 == 0)
+                start += convertedStep;
+            sieveSingle(searchLen, (start-1)/2, convertedStep);
+
+            // Find next prime from small sieve
+            step = smallSieve.sieveSearch(smallSieve.length, step+1);
+            convertedStep = (step *2) + 1;
+        } while (step > 0);
+    }
+
+    /**
+     * Given a bit index return unit index containing it.
+     */
+    private static int unitIndex(int bitIndex) {
+        return bitIndex >>> 6;
+    }
+
+    /**
+     * Return a unit that masks the specified bit in its unit.
+     */
+    private static long bit(int bitIndex) {
+        return 1L << (bitIndex & ((1<<6) - 1));
+    }
+
+    /**
+     * Get the value of the bit at the specified index.
+     */
+    private boolean get(int bitIndex) {
+        int unitIndex = unitIndex(bitIndex);
+        return ((bits[unitIndex] & bit(bitIndex)) != 0);
+    }
+
+    /**
+     * Set the bit at the specified index.
+     */
+    private void set(int bitIndex) {
+        int unitIndex = unitIndex(bitIndex);
+        bits[unitIndex] |= bit(bitIndex);
+    }
+
+    /**
+     * This method returns the index of the first clear bit in the search
+     * array that occurs at or after start. It will not search past the
+     * specified limit. It returns -1 if there is no such clear bit.
+     */
+    private int sieveSearch(int limit, int start) {
+        if (start >= limit)
+            return -1;
+
+        int index = start;
+        do {
+            if (!get(index))
+                return index;
+            index++;
+        } while(index < limit-1);
+        return -1;
+    }
+
+    /**
+     * Sieve a single set of multiples out of the sieve. Begin to remove
+     * multiples of the specified step starting at the specified start index,
+     * up to the specified limit.
+     */
+    private void sieveSingle(int limit, int start, int step) {
+        while(start < limit) {
+            set(start);
+            start += step;
+        }
+    }
+
+    /**
+     * Test probable primes in the sieve and return successful candidates.
+     */
+    BigInteger retrieve(BigInteger initValue, int certainty, java.util.Random random) {
+        // Examine the sieve one long at a time to find possible primes
+        int offset = 1;
+        for (int i=0; i<bits.length; i++) {
+            long nextLong = ~bits[i];
+            for (int j=0; j<64; j++) {
+                if ((nextLong & 1) == 1) {
+                    BigInteger candidate = initValue.add(
+                                           BigInteger.valueOf(offset));
+                    if (candidate.primeToCertainty(certainty, random))
+                        return candidate;
+                }
+                nextLong >>>= 1;
+                offset+=2;
+            }
+        }
+        return null;
+    }
+}

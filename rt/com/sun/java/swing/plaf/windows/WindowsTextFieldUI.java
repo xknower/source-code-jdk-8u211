@@ -1,177 +1,175 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.BoundedRangeModel;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JTextField;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.TextUI;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import javax.swing.plaf.basic.BasicTextFieldUI;
-/*     */ import javax.swing.text.BadLocationException;
-/*     */ import javax.swing.text.Caret;
-/*     */ import javax.swing.text.DefaultCaret;
-/*     */ import javax.swing.text.Highlighter;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ import javax.swing.text.Position;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsTextFieldUI
-/*     */   extends BasicTextFieldUI
-/*     */ {
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  75 */     return new WindowsTextFieldUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintBackground(Graphics paramGraphics) {
-/*  87 */     super.paintBackground(paramGraphics);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Caret createCaret() {
-/*  96 */     return new WindowsFieldCaret();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class WindowsFieldCaret
-/*     */     extends DefaultCaret
-/*     */     implements UIResource
-/*     */   {
-/*     */     protected void adjustVisibility(Rectangle param1Rectangle) {
-/* 116 */       SwingUtilities.invokeLater(new SafeScroller(param1Rectangle));
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected Highlighter.HighlightPainter getSelectionPainter() {
-/* 125 */       return WindowsTextUI.WindowsPainter;
-/*     */     }
-/*     */     
-/*     */     private class SafeScroller
-/*     */       implements Runnable {
-/*     */       SafeScroller(Rectangle param2Rectangle) {
-/* 131 */         this.r = param2Rectangle;
-/*     */       }
-/*     */       private Rectangle r;
-/*     */       public void run() {
-/* 135 */         JTextField jTextField = (JTextField)WindowsTextFieldUI.WindowsFieldCaret.this.getComponent();
-/* 136 */         if (jTextField != null) {
-/* 137 */           TextUI textUI = jTextField.getUI();
-/* 138 */           int i = WindowsTextFieldUI.WindowsFieldCaret.this.getDot();
-/*     */           
-/* 140 */           Position.Bias bias = Position.Bias.Forward;
-/* 141 */           Rectangle rectangle = null;
-/*     */           try {
-/* 143 */             rectangle = textUI.modelToView(jTextField, i, bias);
-/* 144 */           } catch (BadLocationException badLocationException) {}
-/*     */           
-/* 146 */           Insets insets = jTextField.getInsets();
-/* 147 */           BoundedRangeModel boundedRangeModel = jTextField.getHorizontalVisibility();
-/* 148 */           int j = this.r.x + boundedRangeModel.getValue() - insets.left;
-/* 149 */           int k = boundedRangeModel.getExtent() / 4;
-/* 150 */           if (this.r.x < insets.left) {
-/* 151 */             boundedRangeModel.setValue(j - k);
-/* 152 */           } else if (this.r.x + this.r.width > insets.left + boundedRangeModel.getExtent()) {
-/* 153 */             boundedRangeModel.setValue(j - 3 * k);
-/*     */           } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 159 */           if (rectangle != null)
-/*     */             
-/*     */             try {
-/* 162 */               Rectangle rectangle1 = textUI.modelToView(jTextField, i, bias);
-/* 163 */               if (rectangle1 != null && !rectangle1.equals(rectangle)) {
-/* 164 */                 WindowsTextFieldUI.WindowsFieldCaret.this.damage(rectangle1);
-/*     */               }
-/* 166 */             } catch (BadLocationException badLocationException) {} 
-/*     */         } 
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsTextFieldUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicTextFieldUI;
+import javax.swing.text.*;
+import javax.swing.*;
+import javax.swing.plaf.UIResource;
+import sun.swing.DefaultLookup;
+
+
+
+/**
+ * Provides the Windows look and feel for a text field.  This
+ * is basically the following customizations to the default
+ * look-and-feel.
+ * <ul>
+ * <li>The border is beveled (using the standard control color).
+ * <li>The background is white by default.
+ * <li>The highlight color is a dark color, blue by default.
+ * <li>The foreground color is high contrast in the selected
+ *  area, white by default.  The unselected foreground is black.
+ * <li>The cursor blinks at about 1/2 second intervals.
+ * <li>The entire value is selected when focus is gained.
+ * <li>Shift-left-arrow and shift-right-arrow extend selection
+ * <li>Ctrl-left-arrow and ctrl-right-arrow act like home and
+ *   end respectively.
+ * </ul>
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author  Timothy Prinzing
+ */
+public class WindowsTextFieldUI extends BasicTextFieldUI
+{
+    /**
+     * Creates a UI for a JTextField.
+     *
+     * @param c the text field
+     * @return the UI
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsTextFieldUI();
+    }
+
+    /**
+     * Paints a background for the view.  This will only be
+     * called if isOpaque() on the associated component is
+     * true.  The default is to paint the background color
+     * of the component.
+     *
+     * @param g the graphics context
+     */
+    protected void paintBackground(Graphics g) {
+        super.paintBackground(g);
+    }
+
+    /**
+     * Creates the caret for a field.
+     *
+     * @return the caret
+     */
+    protected Caret createCaret() {
+        return new WindowsFieldCaret();
+    }
+
+    /**
+     * WindowsFieldCaret has different scrolling behavior than
+     * DefaultCaret.
+     */
+    static class WindowsFieldCaret extends DefaultCaret implements UIResource {
+
+        public WindowsFieldCaret() {
+            super();
+        }
+
+        /**
+         * Adjusts the visibility of the caret according to
+         * the windows feel which seems to be to move the
+         * caret out into the field by about a quarter of
+         * a field length if not visible.
+         */
+        protected void adjustVisibility(Rectangle r) {
+            SwingUtilities.invokeLater(new SafeScroller(r));
+        }
+
+        /**
+         * Gets the painter for the Highlighter.
+         *
+         * @return the painter
+         */
+        protected Highlighter.HighlightPainter getSelectionPainter() {
+            return WindowsTextUI.WindowsPainter;
+        }
+
+
+        private class SafeScroller implements Runnable {
+            SafeScroller(Rectangle r) {
+                this.r = r;
+            }
+
+            public void run() {
+                JTextField field = (JTextField) getComponent();
+                if (field != null) {
+                    TextUI ui = field.getUI();
+                    int dot = getDot();
+                    // PENDING: We need to expose the bias in DefaultCaret.
+                    Position.Bias bias = Position.Bias.Forward;
+                    Rectangle startRect = null;
+                    try {
+                        startRect = ui.modelToView(field, dot, bias);
+                    } catch (BadLocationException ble) {}
+
+                    Insets i = field.getInsets();
+                    BoundedRangeModel vis = field.getHorizontalVisibility();
+                    int x = r.x + vis.getValue() - i.left;
+                    int quarterSpan = vis.getExtent() / 4;
+                    if (r.x < i.left) {
+                        vis.setValue(x - quarterSpan);
+                    } else if (r.x + r.width > i.left + vis.getExtent()) {
+                        vis.setValue(x - (3 * quarterSpan));
+                    }
+                    // If we scroll, our visual location will have changed,
+                    // but we won't have updated our internal location as
+                    // the model hasn't changed. This checks for the change,
+                    // and if necessary, resets the internal location.
+                    if (startRect != null) {
+                        try {
+                            Rectangle endRect;
+                            endRect = ui.modelToView(field, dot, bias);
+                            if (endRect != null && !endRect.equals(startRect)){
+                                damage(endRect);
+                            }
+                        } catch (BadLocationException ble) {}
+                    }
+                }
+            }
+
+            private Rectangle r;
+        }
+    }
+
+}

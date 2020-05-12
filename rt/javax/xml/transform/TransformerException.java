@@ -1,380 +1,374 @@
-/*     */ package javax.xml.transform;
-/*     */ 
-/*     */ import java.io.PrintStream;
-/*     */ import java.io.PrintWriter;
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.security.AccessControlContext;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.CodeSigner;
-/*     */ import java.security.CodeSource;
-/*     */ import java.security.PermissionCollection;
-/*     */ import java.security.Permissions;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.security.ProtectionDomain;
-/*     */ import java.util.Objects;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TransformerException
-/*     */   extends Exception
-/*     */ {
-/*     */   private static final long serialVersionUID = 975798773772956428L;
-/*     */   SourceLocator locator;
-/*     */   Throwable containedException;
-/*     */   
-/*     */   public SourceLocator getLocator() {
-/*  58 */     return this.locator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocator(SourceLocator location) {
-/*  68 */     this.locator = location;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getException() {
-/*  81 */     return this.containedException;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Throwable getCause() {
-/*  93 */     return (this.containedException == this) ? null : this.containedException;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized Throwable initCause(Throwable cause) {
-/* 125 */     if (this.containedException != null) {
-/* 126 */       throw new IllegalStateException("Can't overwrite cause");
-/*     */     }
-/*     */     
-/* 129 */     if (cause == this) {
-/* 130 */       throw new IllegalArgumentException("Self-causation not permitted");
-/*     */     }
-/*     */ 
-/*     */     
-/* 134 */     this.containedException = cause;
-/*     */     
-/* 136 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerException(String message) {
-/* 145 */     this(message, null, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerException(Throwable e) {
-/* 154 */     this(null, null, e);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerException(String message, Throwable e) {
-/* 168 */     this(message, null, e);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerException(String message, SourceLocator locator) {
-/* 182 */     this(message, locator, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TransformerException(String message, SourceLocator locator, Throwable e) {
-/* 195 */     super((message == null || message.length() == 0) ? ((e == null) ? "" : e
-/* 196 */         .toString()) : message);
-/*     */ 
-/*     */     
-/* 199 */     this.containedException = e;
-/* 200 */     this.locator = locator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getMessageAndLocation() {
-/* 211 */     StringBuilder sbuffer = new StringBuilder();
-/* 212 */     sbuffer.append(Objects.toString(getMessage(), ""));
-/* 213 */     sbuffer.append(Objects.toString(getLocationAsString(), ""));
-/*     */     
-/* 215 */     return sbuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocationAsString() {
-/* 225 */     if (this.locator == null) {
-/* 226 */       return null;
-/*     */     }
-/*     */     
-/* 229 */     if (System.getSecurityManager() == null) {
-/* 230 */       return getLocationString();
-/*     */     }
-/* 232 */     return AccessController.<String>doPrivileged(new PrivilegedAction<String>()
-/*     */         {
-/*     */           public String run() {
-/* 235 */             return TransformerException.this.getLocationString();
-/*     */           }
-/*     */         }, 
-/* 238 */         new AccessControlContext(new ProtectionDomain[] { getNonPrivDomain() }));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getLocationString() {
-/* 248 */     if (this.locator == null) {
-/* 249 */       return null;
-/*     */     }
-/*     */     
-/* 252 */     StringBuilder sbuffer = new StringBuilder();
-/* 253 */     String systemID = this.locator.getSystemId();
-/* 254 */     int line = this.locator.getLineNumber();
-/* 255 */     int column = this.locator.getColumnNumber();
-/*     */     
-/* 257 */     if (null != systemID) {
-/* 258 */       sbuffer.append("; SystemID: ");
-/* 259 */       sbuffer.append(systemID);
-/*     */     } 
-/*     */     
-/* 262 */     if (0 != line) {
-/* 263 */       sbuffer.append("; Line#: ");
-/* 264 */       sbuffer.append(line);
-/*     */     } 
-/*     */     
-/* 267 */     if (0 != column) {
-/* 268 */       sbuffer.append("; Column#: ");
-/* 269 */       sbuffer.append(column);
-/*     */     } 
-/*     */     
-/* 272 */     return sbuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace() {
-/* 282 */     printStackTrace(new PrintWriter(System.err, true));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintStream s) {
-/* 293 */     printStackTrace(new PrintWriter(s));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printStackTrace(PrintWriter s) {
-/* 305 */     if (s == null) {
-/* 306 */       s = new PrintWriter(System.err, true);
-/*     */     }
-/*     */     
-/*     */     try {
-/* 310 */       String locInfo = getLocationAsString();
-/*     */       
-/* 312 */       if (null != locInfo) {
-/* 313 */         s.println(locInfo);
-/*     */       }
-/*     */       
-/* 316 */       super.printStackTrace(s);
-/* 317 */     } catch (Throwable throwable) {}
-/*     */     
-/* 319 */     Throwable exception = getException();
-/*     */     
-/* 321 */     for (int i = 0; i < 10 && null != exception; i++) {
-/* 322 */       s.println("---------");
-/*     */       
-/*     */       try {
-/* 325 */         if (exception instanceof TransformerException) {
-/*     */ 
-/*     */           
-/* 328 */           String locInfo = ((TransformerException)exception).getLocationAsString();
-/*     */           
-/* 330 */           if (null != locInfo) {
-/* 331 */             s.println(locInfo);
-/*     */           }
-/*     */         } 
-/*     */         
-/* 335 */         exception.printStackTrace(s);
-/* 336 */       } catch (Throwable e) {
-/* 337 */         s.println("Could not print stack trace...");
-/*     */       } 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 342 */         Method meth = exception.getClass().getMethod("getException", (Class[])null);
-/*     */ 
-/*     */         
-/* 345 */         if (null != meth) {
-/* 346 */           Throwable prev = exception;
-/*     */           
-/* 348 */           exception = (Throwable)meth.invoke(exception, (Object[])null);
-/*     */           
-/* 350 */           if (prev == exception) {
-/*     */             break;
-/*     */           }
-/*     */         } else {
-/* 354 */           exception = null;
-/*     */         } 
-/* 356 */       } catch (InvocationTargetException|IllegalAccessException|NoSuchMethodException e) {
-/*     */         
-/* 358 */         exception = null;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 362 */     s.flush();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ProtectionDomain getNonPrivDomain() {
-/* 370 */     CodeSource nullSource = new CodeSource(null, (CodeSigner[])null);
-/* 371 */     PermissionCollection noPermission = new Permissions();
-/* 372 */     return new ProtectionDomain(nullSource, noPermission);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\transform\TransformerException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.transform;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.CodeSigner;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.Permissions;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.util.Objects;
+
+/**
+ * This class specifies an exceptional condition that occurred
+ * during the transformation process.
+ */
+public class TransformerException extends Exception {
+
+    private static final long serialVersionUID = 975798773772956428L;
+
+    /** Field locator specifies where the error occurred */
+    SourceLocator locator;
+
+    /**
+     * Method getLocator retrieves an instance of a SourceLocator
+     * object that specifies where an error occurred.
+     *
+     * @return A SourceLocator object, or null if none was specified.
+     */
+    public SourceLocator getLocator() {
+        return this.locator;
+    }
+
+    /**
+     * Method setLocator sets an instance of a SourceLocator
+     * object that specifies where an error occurred.
+     *
+     * @param location A SourceLocator object, or null to clear the location.
+     */
+    public void setLocator(SourceLocator location) {
+        this.locator = location;
+    }
+
+    /** Field containedException specifies a wrapped exception.  May be null. */
+    Throwable containedException;
+
+    /**
+     * This method retrieves an exception that this exception wraps.
+     *
+     * @return An Throwable object, or null.
+     * @see #getCause
+     */
+    public Throwable getException() {
+        return containedException;
+    }
+
+    /**
+     * Returns the cause of this throwable or <code>null</code> if the
+     * cause is nonexistent or unknown.  (The cause is the throwable that
+     * caused this throwable to get thrown.)
+     * @return the cause, or null if unknown
+     */
+    @Override
+    public Throwable getCause() {
+
+        return ((containedException == this)
+                ? null
+                : containedException);
+    }
+
+    /**
+     * Initializes the <i>cause</i> of this throwable to the specified value.
+     * (The cause is the throwable that caused this throwable to get thrown.)
+     *
+     * <p>This method can be called at most once.  It is generally called from
+     * within the constructor, or immediately after creating the
+     * throwable.  If this throwable was created
+     * with {@link #TransformerException(Throwable)} or
+     * {@link #TransformerException(String,Throwable)}, this method cannot be called
+     * even once.
+     *
+     * @param  cause the cause (which is saved for later retrieval by the
+     *         {@link #getCause()} method).  (A <code>null</code> value is
+     *         permitted, and indicates that the cause is nonexistent or
+     *         unknown.)
+     * @return  a reference to this <code>Throwable</code> instance.
+     * @throws IllegalArgumentException if <code>cause</code> is this
+     *         throwable.  (A throwable cannot
+     *         be its own cause.)
+     * @throws IllegalStateException if this throwable was
+     *         created with {@link #TransformerException(Throwable)} or
+     *         {@link #TransformerException(String,Throwable)}, or this method has already
+     *         been called on this throwable.
+     */
+    @Override
+    public synchronized Throwable initCause(Throwable cause) {
+
+        if (this.containedException != null) {
+            throw new IllegalStateException("Can't overwrite cause");
+        }
+
+        if (cause == this) {
+            throw new IllegalArgumentException(
+                "Self-causation not permitted");
+        }
+
+        this.containedException = cause;
+
+        return this;
+    }
+
+    /**
+     * Create a new TransformerException.
+     *
+     * @param message The error or warning message.
+     */
+    public TransformerException(String message) {
+        this(message, null, null);
+    }
+
+    /**
+     * Create a new TransformerException wrapping an existing exception.
+     *
+     * @param e The exception to be wrapped.
+     */
+    public TransformerException(Throwable e) {
+        this(null, null, e);
+    }
+
+    /**
+     * Wrap an existing exception in a TransformerException.
+     *
+     * <p>This is used for throwing processor exceptions before
+     * the processing has started.</p>
+     *
+     * @param message The error or warning message, or null to
+     *                use the message from the embedded exception.
+     * @param e Any exception
+     */
+    public TransformerException(String message, Throwable e) {
+        this(message, null, e);
+    }
+
+    /**
+     * Create a new TransformerException from a message and a Locator.
+     *
+     * <p>This constructor is especially useful when an application is
+     * creating its own exception from within a DocumentHandler
+     * callback.</p>
+     *
+     * @param message The error or warning message.
+     * @param locator The locator object for the error or warning.
+     */
+    public TransformerException(String message, SourceLocator locator) {
+        this(message, locator, null);
+    }
+
+    /**
+     * Wrap an existing exception in a TransformerException.
+     *
+     * @param message The error or warning message, or null to
+     *                use the message from the embedded exception.
+     * @param locator The locator object for the error or warning.
+     * @param e Any exception
+     */
+    public TransformerException(String message, SourceLocator locator,
+                                Throwable e) {
+        super(((message == null) || (message.length() == 0))
+              ? ((e == null) ? "" : e.toString())
+              : message);
+
+        this.containedException = e;
+        this.locator            = locator;
+    }
+
+    /**
+     * Get the error message with location information
+     * appended.
+     *
+     * @return A <code>String</code> representing the error message with
+     *         location information appended.
+     */
+    public String getMessageAndLocation() {
+        StringBuilder sbuffer = new StringBuilder();
+        sbuffer.append(Objects.toString(super.getMessage(), ""));
+        sbuffer.append(Objects.toString(getLocationAsString(), ""));
+
+        return sbuffer.toString();
+    }
+
+    /**
+     * Get the location information as a string.
+     *
+     * @return A string with location info, or null
+     * if there is no location information.
+     */
+    public String getLocationAsString() {
+        if (locator == null) {
+            return null;
+        }
+
+        if (System.getSecurityManager() == null) {
+            return getLocationString();
+        } else {
+            return (String) AccessController.doPrivileged(
+                new PrivilegedAction<String>() {
+                    public String run() {
+                        return getLocationString();
+                    }
+                },
+                new AccessControlContext(new ProtectionDomain[] {getNonPrivDomain()})
+            );
+        }
+    }
+
+    /**
+     * Constructs the location string.
+     * @return the location string
+     */
+    private String getLocationString() {
+        if (locator == null) {
+            return null;
+        }
+
+        StringBuilder sbuffer  = new StringBuilder();
+            String       systemID = locator.getSystemId();
+            int          line     = locator.getLineNumber();
+            int          column   = locator.getColumnNumber();
+
+            if (null != systemID) {
+                sbuffer.append("; SystemID: ");
+                sbuffer.append(systemID);
+            }
+
+            if (0 != line) {
+                sbuffer.append("; Line#: ");
+                sbuffer.append(line);
+            }
+
+            if (0 != column) {
+                sbuffer.append("; Column#: ");
+                sbuffer.append(column);
+            }
+
+            return sbuffer.toString();
+    }
+
+    /**
+     * Print the the trace of methods from where the error
+     * originated.  This will trace all nested exception
+     * objects, as well as this object.
+     */
+    @Override
+    public void printStackTrace() {
+        printStackTrace(new java.io.PrintWriter(System.err, true));
+    }
+
+    /**
+     * Print the the trace of methods from where the error
+     * originated.  This will trace all nested exception
+     * objects, as well as this object.
+     * @param s The stream where the dump will be sent to.
+     */
+    @Override
+    public void printStackTrace(java.io.PrintStream s) {
+        printStackTrace(new java.io.PrintWriter(s));
+    }
+
+    /**
+     * Print the the trace of methods from where the error
+     * originated.  This will trace all nested exception
+     * objects, as well as this object.
+     * @param s The writer where the dump will be sent to.
+     */
+    @Override
+    public void printStackTrace(java.io.PrintWriter s) {
+
+        if (s == null) {
+            s = new java.io.PrintWriter(System.err, true);
+        }
+
+        try {
+            String locInfo = getLocationAsString();
+
+            if (null != locInfo) {
+                s.println(locInfo);
+            }
+
+            super.printStackTrace(s);
+        } catch (Throwable e) {}
+
+        Throwable exception = getException();
+
+        for (int i = 0; (i < 10) && (null != exception); i++) {
+            s.println("---------");
+
+            try {
+                if (exception instanceof TransformerException) {
+                    String locInfo =
+                        ((TransformerException) exception)
+                            .getLocationAsString();
+
+                    if (null != locInfo) {
+                        s.println(locInfo);
+                    }
+                }
+
+                exception.printStackTrace(s);
+            } catch (Throwable e) {
+                s.println("Could not print stack trace...");
+            }
+
+            try {
+                Method meth =
+                    ((Object) exception).getClass().getMethod("getException",
+                        (Class[]) null);
+
+                if (null != meth) {
+                    Throwable prev = exception;
+
+                    exception = (Throwable) meth.invoke(exception, (Object[]) null);
+
+                    if (prev == exception) {
+                        break;
+                    }
+                } else {
+                    exception = null;
+                }
+                } catch (InvocationTargetException | IllegalAccessException
+                        | NoSuchMethodException e) {
+                exception = null;
+            }
+        }
+        // insure output is written
+        s.flush();
+    }
+
+    /**
+     * Creates a ProtectionDomain that has no permission.
+     * @return a ProtectionDomain
+     */
+    private ProtectionDomain getNonPrivDomain() {
+        CodeSource nullSource = new CodeSource(null, (CodeSigner[]) null);
+        PermissionCollection noPermission = new Permissions();
+        return new ProtectionDomain(nullSource, noPermission);
+}
+}

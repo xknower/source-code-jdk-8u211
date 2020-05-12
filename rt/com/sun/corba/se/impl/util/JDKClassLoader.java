@@ -1,198 +1,192 @@
-/*     */ package com.sun.corba.se.impl.util;
-/*     */ 
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Map;
-/*     */ import java.util.WeakHashMap;
-/*     */ import sun.corba.Bridge;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class JDKClassLoader
-/*     */ {
-/*  48 */   private static final JDKClassLoaderCache classCache = new JDKClassLoaderCache();
-/*     */ 
-/*     */ 
-/*     */   
-/*  52 */   private static final Bridge bridge = AccessController.<Bridge>doPrivileged(new PrivilegedAction<Bridge>()
-/*     */       {
-/*     */         public Object run() {
-/*  55 */           return Bridge.get();
-/*     */         }
-/*     */       });
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Class loadClass(Class paramClass, String paramString) throws ClassNotFoundException {
-/*     */     ClassLoader classLoader;
-/*  64 */     if (paramString == null) {
-/*  65 */       throw new NullPointerException();
-/*     */     }
-/*  67 */     if (paramString.length() == 0) {
-/*  68 */       throw new ClassNotFoundException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  82 */     if (paramClass != null) {
-/*  83 */       classLoader = paramClass.getClassLoader();
-/*     */     } else {
-/*  85 */       classLoader = bridge.getLatestUserDefinedLoader();
-/*     */     } 
-/*     */     
-/*  88 */     Object object = classCache.createKey(paramString, classLoader);
-/*     */     
-/*  90 */     if (classCache.knownToFail(object)) {
-/*  91 */       throw new ClassNotFoundException(paramString);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/*  97 */       return Class.forName(paramString, false, classLoader);
-/*  98 */     } catch (ClassNotFoundException classNotFoundException) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 102 */       classCache.recordFailure(object);
-/* 103 */       throw classNotFoundException;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class JDKClassLoaderCache
-/*     */   {
-/*     */     public final void recordFailure(Object param1Object) {
-/* 117 */       this.cache.put(param1Object, KNOWN_TO_FAIL);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public final Object createKey(String param1String, ClassLoader param1ClassLoader) {
-/* 127 */       return new CacheKey(param1String, param1ClassLoader);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public final boolean knownToFail(Object param1Object) {
-/* 133 */       return (this.cache.get(param1Object) == KNOWN_TO_FAIL);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 138 */     private final Map cache = Collections.synchronizedMap(new WeakHashMap<>());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 143 */     private static final Object KNOWN_TO_FAIL = new Object();
-/*     */     
-/*     */     private JDKClassLoaderCache() {}
-/*     */     
-/*     */     private static class CacheKey
-/*     */     {
-/*     */       String className;
-/*     */       ClassLoader loader;
-/*     */       
-/*     */       public CacheKey(String param2String, ClassLoader param2ClassLoader) {
-/* 153 */         this.className = param2String;
-/* 154 */         this.loader = param2ClassLoader;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       public int hashCode() {
-/* 160 */         if (this.loader == null) {
-/* 161 */           return this.className.hashCode();
-/*     */         }
-/* 163 */         return this.className.hashCode() ^ this.loader.hashCode();
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       public boolean equals(Object param2Object) {
-/*     */         try {
-/* 170 */           if (param2Object == null) {
-/* 171 */             return false;
-/*     */           }
-/* 173 */           CacheKey cacheKey = (CacheKey)param2Object;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 183 */           return (this.className.equals(cacheKey.className) && this.loader == cacheKey.loader);
-/*     */         
-/*     */         }
-/* 186 */         catch (ClassCastException classCastException) {
-/* 187 */           return false;
-/*     */         } 
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\imp\\util\JDKClassLoader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package com.sun.corba.se.impl.util;
+
+import sun.corba.Bridge ;
+
+import java.util.Map ;
+import java.util.WeakHashMap ;
+import java.util.Collections ;
+
+import java.security.AccessController ;
+import java.security.PrivilegedAction ;
+
+/**
+ *  Utility method for crawling call stack to load class
+ */
+class JDKClassLoader {
+
+    private static final JDKClassLoaderCache classCache
+        = new JDKClassLoaderCache();
+
+    private static final Bridge bridge =
+        (Bridge)AccessController.doPrivileged(
+            new PrivilegedAction() {
+                public Object run() {
+                    return Bridge.get() ;
+                }
+            }
+        ) ;
+
+    static Class loadClass(Class aClass, String className)
+        throws ClassNotFoundException {
+
+        // Maintain the same error semantics as Class.forName()
+        if (className == null) {
+            throw new NullPointerException();
+        }
+        if (className.length() == 0) {
+            throw new ClassNotFoundException();
+        }
+
+        // It would be nice to bypass JDKClassLoader's attempts completely
+        // if it's known that the latest user defined ClassLoader will
+        // fail.
+        //
+        // Otherwise, we end up calling Class.forName here as well as in
+        // the next step in JDKBridge.  That can take a long time depending
+        // on the length of the classpath.
+
+        // Note: Looking at the only place in JDKBridge where this code
+        // is invoked, it is clear that aClass will always be null.
+        ClassLoader loader;
+        if (aClass != null) {
+            loader = aClass.getClassLoader();
+        } else {
+            loader = bridge.getLatestUserDefinedLoader();
+        }
+        // See createKey for a description of what's involved
+        Object key = classCache.createKey(className, loader);
+
+        if (classCache.knownToFail(key)) {
+            throw new ClassNotFoundException(className);
+        } else {
+            try {
+                // Loading this class with the call stack
+                // loader isn't known to fail, so try
+                // to load it.
+                return Class.forName(className, false, loader);
+            } catch(ClassNotFoundException cnfe) {
+                // Record that we failed to find the class
+                // with this particular loader.  This way, we won't
+                // waste time looking with this loader, again.
+                classCache.recordFailure(key);
+                throw cnfe;
+            }
+        }
+    }
+
+    /**
+     * Private cache implementation specific to JDKClassLoader.
+     */
+    private static class JDKClassLoaderCache
+    {
+        // JDKClassLoader couldn't find the class with the located
+        // ClassLoader.  Note this in our cache so JDKClassLoader
+        // can abort early next time.
+        public final void recordFailure(Object key) {
+            cache.put(key, JDKClassLoaderCache.KNOWN_TO_FAIL);
+        }
+
+        // Factory for a key (CacheKey is an implementation detail
+        // of JDKClassLoaderCache).
+        //
+        // A key currently consists of the class name as well as
+        // the latest user defined class loader, so it's fairly
+        // expensive to create.
+        public final Object createKey(String className, ClassLoader latestLoader) {
+            return new CacheKey(className, latestLoader);
+        }
+
+        // Determine whether or not this combination of class name
+        // and ClassLoader is known to fail.
+        public final boolean knownToFail(Object key) {
+            return cache.get(key) == JDKClassLoaderCache.KNOWN_TO_FAIL;
+        }
+
+        // Synchronized WeakHashMap
+        private final Map cache
+            = Collections.synchronizedMap(new WeakHashMap());
+
+        // Cache result used to mark the caches when there is
+        // no way JDKClassLoader could succeed with the given
+        // key
+        private static final Object KNOWN_TO_FAIL = new Object();
+
+        // Key consisting of the class name and the latest
+        // user defined class loader
+        private static class CacheKey
+        {
+            String className;
+            ClassLoader loader;
+
+            public CacheKey(String className, ClassLoader loader) {
+                this.className = className;
+                this.loader = loader;
+            }
+
+            // Try to incorporate both class name and loader
+            // into the hashcode
+            public int hashCode() {
+                if (loader == null)
+                    return className.hashCode();
+                else
+                    return className.hashCode() ^ loader.hashCode();
+            }
+
+            public boolean equals(Object obj) {
+                try {
+
+                    // WeakHashMap may compare null keys
+                    if (obj == null)
+                        return false;
+
+                    CacheKey other = (CacheKey)obj;
+
+                    // I've made a decision to actually compare the
+                    // loader references.  I don't want a case when
+                    // two loader instances override their equals
+                    // methods and only compare code base.
+                    //
+                    // This way, at worst, our performance will
+                    // be slower, but we know we'll do the correct
+                    // loading.
+                    return (className.equals(other.className) &&
+                            loader == other.loader);
+
+                } catch (ClassCastException cce) {
+                    return false;
+                }
+            }
+        }
+    }
+}

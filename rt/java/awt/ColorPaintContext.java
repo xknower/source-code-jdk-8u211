@@ -1,89 +1,83 @@
-/*    */ package java.awt;
-/*    */ 
-/*    */ import java.awt.image.ColorModel;
-/*    */ import java.awt.image.Raster;
-/*    */ import java.awt.image.WritableRaster;
-/*    */ import java.util.Arrays;
-/*    */ import sun.awt.image.IntegerComponentRaster;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class ColorPaintContext
-/*    */   implements PaintContext
-/*    */ {
-/*    */   int color;
-/*    */   WritableRaster savedTile;
-/*    */   
-/*    */   protected ColorPaintContext(int paramInt, ColorModel paramColorModel) {
-/* 41 */     this.color = paramInt;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void dispose() {}
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   int getRGB() {
-/* 60 */     return this.color;
-/*    */   }
-/*    */   
-/*    */   public ColorModel getColorModel() {
-/* 64 */     return ColorModel.getRGBdefault();
-/*    */   }
-/*    */   
-/*    */   public synchronized Raster getRaster(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 68 */     WritableRaster writableRaster = this.savedTile;
-/*    */     
-/* 70 */     if (writableRaster == null || paramInt3 > writableRaster.getWidth() || paramInt4 > writableRaster.getHeight()) {
-/* 71 */       writableRaster = getColorModel().createCompatibleWritableRaster(paramInt3, paramInt4);
-/* 72 */       IntegerComponentRaster integerComponentRaster = (IntegerComponentRaster)writableRaster;
-/* 73 */       Arrays.fill(integerComponentRaster.getDataStorage(), this.color);
-/*    */       
-/* 75 */       integerComponentRaster.markDirty();
-/* 76 */       if (paramInt3 <= 64 && paramInt4 <= 64) {
-/* 77 */         this.savedTile = writableRaster;
-/*    */       }
-/*    */     } 
-/*    */     
-/* 81 */     return writableRaster;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\ColorPaintContext.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+
+package java.awt;
+
+import java.awt.image.ColorModel;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
+import sun.awt.image.IntegerComponentRaster;
+import java.util.Arrays;
+
+class ColorPaintContext implements PaintContext {
+    int color;
+    WritableRaster savedTile;
+
+    protected ColorPaintContext(int color, ColorModel cm) {
+        this.color = color;
+    }
+
+    public void dispose() {
+    }
+
+    /*
+     * Returns the RGB value representing the color in the default sRGB
+     * {@link ColorModel}.
+     * (Bits 24-31 are alpha, 16-23 are red, 8-15 are green, 0-7 are
+     * blue).
+     * @return the RGB value of the color in the default sRGB
+     *         <code>ColorModel</code>.
+     * @see java.awt.image.ColorModel#getRGBdefault
+     * @see #getRed
+     * @see #getGreen
+     * @see #getBlue
+     */
+    int getRGB() {
+        return color;
+    }
+
+    public ColorModel getColorModel() {
+        return ColorModel.getRGBdefault();
+    }
+
+    public synchronized Raster getRaster(int x, int y, int w, int h) {
+        WritableRaster t = savedTile;
+
+        if (t == null || w > t.getWidth() || h > t.getHeight()) {
+            t = getColorModel().createCompatibleWritableRaster(w, h);
+            IntegerComponentRaster icr = (IntegerComponentRaster) t;
+            Arrays.fill(icr.getDataStorage(), color);
+            // Note - markDirty is probably unnecessary since icr is brand new
+            icr.markDirty();
+            if (w <= 64 && h <= 64) {
+                savedTile = t;
+            }
+        }
+
+        return t;
+    }
+}

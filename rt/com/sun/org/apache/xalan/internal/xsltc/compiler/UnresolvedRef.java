@@ -1,109 +1,104 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class UnresolvedRef
-/*     */   extends VariableRefBase
-/*     */ {
-/*  37 */   private QName _variableName = null;
-/*  38 */   private VariableRefBase _ref = null;
-/*     */ 
-/*     */   
-/*     */   public UnresolvedRef(QName name) {
-/*  42 */     this._variableName = name;
-/*     */   }
-/*     */   
-/*     */   public QName getName() {
-/*  46 */     return this._variableName;
-/*     */   }
-/*     */   
-/*     */   private ErrorMsg reportError() {
-/*  50 */     ErrorMsg err = new ErrorMsg("VARIABLE_UNDEF_ERR", this._variableName, this);
-/*     */     
-/*  52 */     getParser().reportError(3, err);
-/*  53 */     return err;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private VariableRefBase resolve(Parser parser, SymbolTable stable) {
-/*  59 */     VariableBase ref = parser.lookupVariable(this._variableName);
-/*  60 */     if (ref == null) {
-/*  61 */       ref = (VariableBase)stable.lookupName(this._variableName);
-/*     */     }
-/*  63 */     if (ref == null) {
-/*  64 */       reportError();
-/*  65 */       return null;
-/*     */     } 
-/*     */ 
-/*     */     
-/*  69 */     this._variable = ref;
-/*  70 */     addParentDependency();
-/*     */     
-/*  72 */     if (ref instanceof Variable) {
-/*  73 */       return new VariableRef((Variable)ref);
-/*     */     }
-/*  75 */     if (ref instanceof Param) {
-/*  76 */       return new ParameterRef((Param)ref);
-/*     */     }
-/*  78 */     return null;
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  82 */     if (this._ref != null) {
-/*  83 */       String name = this._variableName.toString();
-/*  84 */       ErrorMsg errorMsg = new ErrorMsg("CIRCULAR_VARIABLE_ERR", name, this);
-/*     */     } 
-/*     */     
-/*  87 */     if ((this._ref = resolve(getParser(), stable)) != null) {
-/*  88 */       return this._type = this._ref.typeCheck(stable);
-/*     */     }
-/*  90 */     throw new TypeCheckError(reportError());
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  94 */     if (this._ref != null) {
-/*  95 */       this._ref.translate(classGen, methodGen);
-/*     */     } else {
-/*  97 */       reportError();
-/*     */     } 
-/*     */   }
-/*     */   public String toString() {
-/* 101 */     return "unresolved-ref()";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\UnresolvedRef.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: UnresolvedRef.java,v 1.5 2005/09/28 13:48:17 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Morten Jorgensen
+ */
+final class UnresolvedRef extends VariableRefBase {
+
+    private QName _variableName = null;
+    private VariableRefBase _ref = null;
+
+    public UnresolvedRef(QName name) {
+        super();
+        _variableName = name;
+    }
+
+    public QName getName() {
+        return(_variableName);
+    }
+
+    private ErrorMsg reportError() {
+        ErrorMsg err = new ErrorMsg(ErrorMsg.VARIABLE_UNDEF_ERR,
+                                    _variableName, this);
+        getParser().reportError(Constants.ERROR, err);
+        return(err);
+    }
+
+    private VariableRefBase resolve(Parser parser, SymbolTable stable) {
+        // At this point the AST is already built and we should be able to
+        // find any declared global variable or parameter
+        VariableBase ref = parser.lookupVariable(_variableName);
+        if (ref == null) {
+            ref = (VariableBase)stable.lookupName(_variableName);
+        }
+        if (ref == null) {
+            reportError();
+            return null;
+        }
+
+        // If in a top-level element, create dependency to the referenced var
+        _variable = ref;
+        addParentDependency();
+
+        if (ref instanceof Variable) {
+            return new VariableRef((Variable) ref);
+        }
+        else if (ref instanceof Param) {
+            return new ParameterRef((Param)ref);
+        }
+        return null;
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (_ref != null) {
+            final String name = _variableName.toString();
+            ErrorMsg err = new ErrorMsg(ErrorMsg.CIRCULAR_VARIABLE_ERR,
+                                        name, this);
+        }
+        if ((_ref = resolve(getParser(), stable)) != null) {
+            return (_type = _ref.typeCheck(stable));
+        }
+        throw new TypeCheckError(reportError());
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        if (_ref != null)
+            _ref.translate(classGen, methodGen);
+        else
+            reportError();
+    }
+
+    public String toString() {
+        return "unresolved-ref()";
+    }
+
+}

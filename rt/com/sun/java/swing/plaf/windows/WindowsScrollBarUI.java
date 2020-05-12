@@ -1,508 +1,502 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.awt.image.BufferedImage;
-/*     */ import java.awt.image.IndexColorModel;
-/*     */ import java.lang.ref.WeakReference;
-/*     */ import java.util.HashMap;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JScrollBar;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicArrowButton;
-/*     */ import javax.swing.plaf.basic.BasicScrollBarUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsScrollBarUI
-/*     */   extends BasicScrollBarUI
-/*     */ {
-/*     */   private Grid thumbGrid;
-/*     */   private Grid highlightGrid;
-/*     */   private Dimension horizontalThumbSize;
-/*     */   private Dimension verticalThumbSize;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  64 */     return new WindowsScrollBarUI();
-/*     */   }
-/*     */   
-/*     */   protected void installDefaults() {
-/*  68 */     super.installDefaults();
-/*     */     
-/*  70 */     XPStyle xPStyle = XPStyle.getXP();
-/*  71 */     if (xPStyle != null) {
-/*  72 */       this.scrollbar.setBorder((Border)null);
-/*  73 */       this.horizontalThumbSize = getSize(this.scrollbar, xPStyle, TMSchema.Part.SBP_THUMBBTNHORZ);
-/*  74 */       this.verticalThumbSize = getSize(this.scrollbar, xPStyle, TMSchema.Part.SBP_THUMBBTNVERT);
-/*     */     } else {
-/*  76 */       this.horizontalThumbSize = null;
-/*  77 */       this.verticalThumbSize = null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static Dimension getSize(Component paramComponent, XPStyle paramXPStyle, TMSchema.Part paramPart) {
-/*  82 */     XPStyle.Skin skin = paramXPStyle.getSkin(paramComponent, paramPart);
-/*  83 */     return new Dimension(skin.getWidth(), skin.getHeight());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Dimension getMinimumThumbSize() {
-/*  88 */     if (this.horizontalThumbSize == null || this.verticalThumbSize == null) {
-/*  89 */       return super.getMinimumThumbSize();
-/*     */     }
-/*  91 */     return (0 == this.scrollbar.getOrientation()) ? this.horizontalThumbSize : this.verticalThumbSize;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/*  97 */     super.uninstallUI(paramJComponent);
-/*  98 */     this.thumbGrid = this.highlightGrid = null;
-/*     */   }
-/*     */   
-/*     */   protected void configureScrollBarColors() {
-/* 102 */     super.configureScrollBarColors();
-/* 103 */     Color color = UIManager.getColor("ScrollBar.trackForeground");
-/* 104 */     if (color != null && this.trackColor != null) {
-/* 105 */       this.thumbGrid = Grid.getGrid(color, this.trackColor);
-/*     */     }
-/*     */     
-/* 108 */     color = UIManager.getColor("ScrollBar.trackHighlightForeground");
-/* 109 */     if (color != null && this.trackHighlightColor != null) {
-/* 110 */       this.highlightGrid = Grid.getGrid(color, this.trackHighlightColor);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected JButton createDecreaseButton(int paramInt) {
-/* 115 */     return new WindowsArrowButton(paramInt, 
-/* 116 */         UIManager.getColor("ScrollBar.thumb"), 
-/* 117 */         UIManager.getColor("ScrollBar.thumbShadow"), 
-/* 118 */         UIManager.getColor("ScrollBar.thumbDarkShadow"), 
-/* 119 */         UIManager.getColor("ScrollBar.thumbHighlight"));
-/*     */   }
-/*     */   
-/*     */   protected JButton createIncreaseButton(int paramInt) {
-/* 123 */     return new WindowsArrowButton(paramInt, 
-/* 124 */         UIManager.getColor("ScrollBar.thumb"), 
-/* 125 */         UIManager.getColor("ScrollBar.thumbShadow"), 
-/* 126 */         UIManager.getColor("ScrollBar.thumbDarkShadow"), 
-/* 127 */         UIManager.getColor("ScrollBar.thumbHighlight"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected BasicScrollBarUI.ArrowButtonListener createArrowButtonListener() {
-/* 138 */     if (XPStyle.isVista()) {
-/* 139 */       return new BasicScrollBarUI.ArrowButtonListener() {
-/*     */           public void mouseEntered(MouseEvent param1MouseEvent) {
-/* 141 */             repaint();
-/* 142 */             super.mouseEntered(param1MouseEvent);
-/*     */           }
-/*     */           public void mouseExited(MouseEvent param1MouseEvent) {
-/* 145 */             repaint();
-/* 146 */             super.mouseExited(param1MouseEvent);
-/*     */           }
-/*     */           private void repaint() {
-/* 149 */             WindowsScrollBarUI.this.scrollbar.repaint();
-/*     */           }
-/*     */         };
-/*     */     }
-/* 153 */     return super.createArrowButtonListener();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintTrack(Graphics paramGraphics, JComponent paramJComponent, Rectangle paramRectangle) {
-/* 158 */     boolean bool = (this.scrollbar.getOrientation() == 1) ? true : false;
-/*     */     
-/* 160 */     XPStyle xPStyle = XPStyle.getXP();
-/* 161 */     if (xPStyle != null) {
-/* 162 */       JScrollBar jScrollBar = (JScrollBar)paramJComponent;
-/* 163 */       TMSchema.State state = TMSchema.State.NORMAL;
-/*     */       
-/* 165 */       if (!jScrollBar.isEnabled()) {
-/* 166 */         state = TMSchema.State.DISABLED;
-/*     */       }
-/* 168 */       TMSchema.Part part = bool ? TMSchema.Part.SBP_LOWERTRACKVERT : TMSchema.Part.SBP_LOWERTRACKHORZ;
-/* 169 */       xPStyle.getSkin(jScrollBar, part).paintSkin(paramGraphics, paramRectangle, state);
-/* 170 */     } else if (this.thumbGrid == null) {
-/* 171 */       super.paintTrack(paramGraphics, paramJComponent, paramRectangle);
-/*     */     } else {
-/*     */       
-/* 174 */       this.thumbGrid.paint(paramGraphics, paramRectangle.x, paramRectangle.y, paramRectangle.width, paramRectangle.height);
-/*     */       
-/* 176 */       if (this.trackHighlight == 1) {
-/* 177 */         paintDecreaseHighlight(paramGraphics);
-/*     */       }
-/* 179 */       else if (this.trackHighlight == 2) {
-/* 180 */         paintIncreaseHighlight(paramGraphics);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void paintThumb(Graphics paramGraphics, JComponent paramJComponent, Rectangle paramRectangle) {
-/* 186 */     boolean bool = (this.scrollbar.getOrientation() == 1) ? true : false;
-/*     */     
-/* 188 */     XPStyle xPStyle = XPStyle.getXP();
-/* 189 */     if (xPStyle != null) {
-/* 190 */       JScrollBar jScrollBar = (JScrollBar)paramJComponent;
-/* 191 */       TMSchema.State state = TMSchema.State.NORMAL;
-/* 192 */       if (!jScrollBar.isEnabled()) {
-/* 193 */         state = TMSchema.State.DISABLED;
-/* 194 */       } else if (this.isDragging) {
-/* 195 */         state = TMSchema.State.PRESSED;
-/* 196 */       } else if (isThumbRollover()) {
-/* 197 */         state = TMSchema.State.HOT;
-/* 198 */       } else if (XPStyle.isVista() && ((
-/* 199 */         this.incrButton != null && this.incrButton.getModel().isRollover()) || (this.decrButton != null && this.decrButton
-/* 200 */         .getModel().isRollover()))) {
-/* 201 */         state = TMSchema.State.HOVER;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 205 */       TMSchema.Part part1 = bool ? TMSchema.Part.SBP_THUMBBTNVERT : TMSchema.Part.SBP_THUMBBTNHORZ;
-/* 206 */       xPStyle.getSkin(jScrollBar, part1).paintSkin(paramGraphics, paramRectangle, state);
-/*     */       
-/* 208 */       TMSchema.Part part2 = bool ? TMSchema.Part.SBP_GRIPPERVERT : TMSchema.Part.SBP_GRIPPERHORZ;
-/* 209 */       XPStyle.Skin skin = xPStyle.getSkin(jScrollBar, part2);
-/* 210 */       Insets insets = xPStyle.getMargin(paramJComponent, part1, null, TMSchema.Prop.CONTENTMARGINS);
-/* 211 */       if (insets == null || (bool && paramRectangle.height - insets.top - insets.bottom >= skin
-/*     */         
-/* 213 */         .getHeight()) || (!bool && paramRectangle.width - insets.left - insets.right >= skin
-/*     */         
-/* 215 */         .getWidth())) {
-/* 216 */         skin.paintSkin(paramGraphics, paramRectangle.x + (paramRectangle.width - skin
-/* 217 */             .getWidth()) / 2, paramRectangle.y + (paramRectangle.height - skin
-/* 218 */             .getHeight()) / 2, skin
-/* 219 */             .getWidth(), skin.getHeight(), state);
-/*     */       }
-/*     */     } else {
-/* 222 */       super.paintThumb(paramGraphics, paramJComponent, paramRectangle);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintDecreaseHighlight(Graphics paramGraphics) {
-/* 228 */     if (this.highlightGrid == null) {
-/* 229 */       super.paintDecreaseHighlight(paramGraphics);
-/*     */     } else {
-/*     */       int i, j, k, m;
-/* 232 */       Insets insets = this.scrollbar.getInsets();
-/* 233 */       Rectangle rectangle = getThumbBounds();
-/*     */ 
-/*     */       
-/* 236 */       if (this.scrollbar.getOrientation() == 1) {
-/* 237 */         i = insets.left;
-/* 238 */         j = this.decrButton.getY() + this.decrButton.getHeight();
-/* 239 */         k = this.scrollbar.getWidth() - insets.left + insets.right;
-/* 240 */         m = rectangle.y - j;
-/*     */       } else {
-/*     */         
-/* 243 */         i = this.decrButton.getX() + this.decrButton.getHeight();
-/* 244 */         j = insets.top;
-/* 245 */         k = rectangle.x - i;
-/* 246 */         m = this.scrollbar.getHeight() - insets.top + insets.bottom;
-/*     */       } 
-/* 248 */       this.highlightGrid.paint(paramGraphics, i, j, k, m);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintIncreaseHighlight(Graphics paramGraphics) {
-/* 254 */     if (this.highlightGrid == null) {
-/* 255 */       super.paintDecreaseHighlight(paramGraphics);
-/*     */     } else {
-/*     */       int i, j, k, m;
-/* 258 */       Insets insets = this.scrollbar.getInsets();
-/* 259 */       Rectangle rectangle = getThumbBounds();
-/*     */ 
-/*     */       
-/* 262 */       if (this.scrollbar.getOrientation() == 1) {
-/* 263 */         i = insets.left;
-/* 264 */         j = rectangle.y + rectangle.height;
-/* 265 */         k = this.scrollbar.getWidth() - insets.left + insets.right;
-/* 266 */         m = this.incrButton.getY() - j;
-/*     */       } else {
-/*     */         
-/* 269 */         i = rectangle.x + rectangle.width;
-/* 270 */         j = insets.top;
-/* 271 */         k = this.incrButton.getX() - i;
-/* 272 */         m = this.scrollbar.getHeight() - insets.top + insets.bottom;
-/*     */       } 
-/* 274 */       this.highlightGrid.paint(paramGraphics, i, j, k, m);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setThumbRollover(boolean paramBoolean) {
-/* 285 */     boolean bool = isThumbRollover();
-/* 286 */     super.setThumbRollover(paramBoolean);
-/*     */ 
-/*     */     
-/* 289 */     if (XPStyle.isVista() && paramBoolean != bool) {
-/* 290 */       this.scrollbar.repaint();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private class WindowsArrowButton
-/*     */     extends BasicArrowButton
-/*     */   {
-/*     */     public WindowsArrowButton(int param1Int, Color param1Color1, Color param1Color2, Color param1Color3, Color param1Color4) {
-/* 303 */       super(param1Int, param1Color1, param1Color2, param1Color3, param1Color4);
-/*     */     }
-/*     */     
-/*     */     public WindowsArrowButton(int param1Int) {
-/* 307 */       super(param1Int);
-/*     */     }
-/*     */     
-/*     */     public void paint(Graphics param1Graphics) {
-/* 311 */       XPStyle xPStyle = XPStyle.getXP();
-/* 312 */       if (xPStyle != null) {
-/* 313 */         ButtonModel buttonModel = getModel();
-/* 314 */         XPStyle.Skin skin = xPStyle.getSkin(this, TMSchema.Part.SBP_ARROWBTN);
-/* 315 */         TMSchema.State state = null;
-/*     */ 
-/*     */ 
-/*     */         
-/* 319 */         boolean bool = (XPStyle.isVista() && (WindowsScrollBarUI.this.isThumbRollover() || (this == WindowsScrollBarUI.this.incrButton && WindowsScrollBarUI.this.decrButton.getModel().isRollover()) || (this == WindowsScrollBarUI.this.decrButton && WindowsScrollBarUI.this.incrButton.getModel().isRollover()))) ? true : false;
-/*     */ 
-/*     */         
-/* 322 */         if (buttonModel.isArmed() && buttonModel.isPressed()) {
-/* 323 */           switch (this.direction) { case 1:
-/* 324 */               state = TMSchema.State.UPPRESSED; break;
-/* 325 */             case 5: state = TMSchema.State.DOWNPRESSED; break;
-/* 326 */             case 7: state = TMSchema.State.LEFTPRESSED; break;
-/* 327 */             case 3: state = TMSchema.State.RIGHTPRESSED; break; }
-/*     */         
-/* 329 */         } else if (!buttonModel.isEnabled()) {
-/* 330 */           switch (this.direction) { case 1:
-/* 331 */               state = TMSchema.State.UPDISABLED; break;
-/* 332 */             case 5: state = TMSchema.State.DOWNDISABLED; break;
-/* 333 */             case 7: state = TMSchema.State.LEFTDISABLED; break;
-/* 334 */             case 3: state = TMSchema.State.RIGHTDISABLED; break; }
-/*     */         
-/* 336 */         } else if (buttonModel.isRollover() || buttonModel.isPressed()) {
-/* 337 */           switch (this.direction) { case 1:
-/* 338 */               state = TMSchema.State.UPHOT; break;
-/* 339 */             case 5: state = TMSchema.State.DOWNHOT; break;
-/* 340 */             case 7: state = TMSchema.State.LEFTHOT; break;
-/* 341 */             case 3: state = TMSchema.State.RIGHTHOT; break; }
-/*     */         
-/* 343 */         } else if (bool) {
-/* 344 */           switch (this.direction) { case 1:
-/* 345 */               state = TMSchema.State.UPHOVER; break;
-/* 346 */             case 5: state = TMSchema.State.DOWNHOVER; break;
-/* 347 */             case 7: state = TMSchema.State.LEFTHOVER; break;
-/* 348 */             case 3: state = TMSchema.State.RIGHTHOVER; break; }
-/*     */         
-/*     */         } else {
-/* 351 */           switch (this.direction) { case 1:
-/* 352 */               state = TMSchema.State.UPNORMAL; break;
-/* 353 */             case 5: state = TMSchema.State.DOWNNORMAL; break;
-/* 354 */             case 7: state = TMSchema.State.LEFTNORMAL; break;
-/* 355 */             case 3: state = TMSchema.State.RIGHTNORMAL;
-/*     */               break; }
-/*     */         
-/*     */         } 
-/* 359 */         skin.paintSkin(param1Graphics, 0, 0, getWidth(), getHeight(), state);
-/*     */       } else {
-/* 361 */         super.paint(param1Graphics);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public Dimension getPreferredSize() {
-/* 366 */       int i = 16;
-/* 367 */       if (WindowsScrollBarUI.this.scrollbar != null) {
-/* 368 */         switch (WindowsScrollBarUI.this.scrollbar.getOrientation()) {
-/*     */           case 1:
-/* 370 */             i = WindowsScrollBarUI.this.scrollbar.getWidth();
-/*     */             break;
-/*     */           case 0:
-/* 373 */             i = WindowsScrollBarUI.this.scrollbar.getHeight();
-/*     */             break;
-/*     */         } 
-/* 376 */         i = Math.max(i, 5);
-/*     */       } 
-/* 378 */       return new Dimension(i, i);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class Grid
-/*     */   {
-/*     */     private static final int BUFFER_SIZE = 64;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 400 */     private static HashMap<String, WeakReference<Grid>> map = new HashMap<>();
-/*     */     private BufferedImage image;
-/*     */     
-/*     */     public static Grid getGrid(Color param1Color1, Color param1Color2) {
-/* 404 */       String str = param1Color1.getRGB() + " " + param1Color2.getRGB();
-/* 405 */       WeakReference<Grid> weakReference = map.get(str);
-/* 406 */       Grid grid = (weakReference == null) ? null : weakReference.get();
-/* 407 */       if (grid == null) {
-/* 408 */         grid = new Grid(param1Color1, param1Color2);
-/* 409 */         map.put(str, new WeakReference<>(grid));
-/*     */       } 
-/* 411 */       return grid;
-/*     */     }
-/*     */     
-/*     */     public Grid(Color param1Color1, Color param1Color2) {
-/* 415 */       int[] arrayOfInt = { param1Color1.getRGB(), param1Color2.getRGB() };
-/* 416 */       IndexColorModel indexColorModel = new IndexColorModel(8, 2, arrayOfInt, 0, false, -1, 0);
-/*     */       
-/* 418 */       this.image = new BufferedImage(64, 64, 13, indexColorModel);
-/*     */       
-/* 420 */       Graphics graphics = this.image.getGraphics();
-/*     */       try {
-/* 422 */         graphics.setClip(0, 0, 64, 64);
-/* 423 */         paintGrid(graphics, param1Color1, param1Color2);
-/*     */       } finally {
-/*     */         
-/* 426 */         graphics.dispose();
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void paint(Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 435 */       Rectangle rectangle = param1Graphics.getClipBounds();
-/* 436 */       int i = Math.max(param1Int1, rectangle.x);
-/* 437 */       int j = Math.max(param1Int2, rectangle.y);
-/* 438 */       int k = Math.min(rectangle.x + rectangle.width, param1Int1 + param1Int3);
-/* 439 */       int m = Math.min(rectangle.y + rectangle.height, param1Int2 + param1Int4);
-/*     */       
-/* 441 */       if (k <= i || m <= j) {
-/*     */         return;
-/*     */       }
-/* 444 */       int n = (i - param1Int1) % 2;
-/* 445 */       for (int i1 = i; i1 < k; 
-/* 446 */         i1 += 64) {
-/* 447 */         int i2 = (j - param1Int2) % 2;
-/* 448 */         int i3 = Math.min(64 - n, k - i1);
-/*     */ 
-/*     */         
-/* 451 */         for (int i4 = j; i4 < m; 
-/* 452 */           i4 += 64) {
-/* 453 */           int i5 = Math.min(64 - i2, m - i4);
-/*     */ 
-/*     */           
-/* 456 */           param1Graphics.drawImage(this.image, i1, i4, i1 + i3, i4 + i5, n, i2, n + i3, i2 + i5, null);
-/*     */ 
-/*     */ 
-/*     */           
-/* 460 */           if (i2 != 0) {
-/* 461 */             i4 -= i2;
-/* 462 */             i2 = 0;
-/*     */           } 
-/*     */         } 
-/* 465 */         if (n != 0) {
-/* 466 */           i1 -= n;
-/* 467 */           n = 0;
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private void paintGrid(Graphics param1Graphics, Color param1Color1, Color param1Color2) {
-/* 476 */       Rectangle rectangle = param1Graphics.getClipBounds();
-/* 477 */       param1Graphics.setColor(param1Color2);
-/* 478 */       param1Graphics.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-/*     */       
-/* 480 */       param1Graphics.setColor(param1Color1);
-/* 481 */       param1Graphics.translate(rectangle.x, rectangle.y);
-/* 482 */       int i = rectangle.width;
-/* 483 */       int j = rectangle.height;
-/* 484 */       int k = rectangle.x % 2; int m;
-/* 485 */       for (m = i - j; k < m; k += 2) {
-/* 486 */         param1Graphics.drawLine(k, 0, k + j, j);
-/*     */       }
-/* 488 */       for (m = i; k < m; k += 2) {
-/* 489 */         param1Graphics.drawLine(k, 0, i, i - k);
-/*     */       }
-/*     */       
-/* 492 */       m = (rectangle.x % 2 == 0) ? 2 : 1; int n;
-/* 493 */       for (n = j - i; m < n; m += 2) {
-/* 494 */         param1Graphics.drawLine(0, m, i, m + i);
-/*     */       }
-/* 496 */       for (n = j; m < n; m += 2) {
-/* 497 */         param1Graphics.drawLine(0, m, j - m, j);
-/*     */       }
-/* 499 */       param1Graphics.translate(-rectangle.x, -rectangle.y);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsScrollBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
+import java.lang.ref.*;
+import java.util.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+
+/**
+ * Windows rendition of the component.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsScrollBarUI extends BasicScrollBarUI {
+    private Grid thumbGrid;
+    private Grid highlightGrid;
+    private Dimension horizontalThumbSize;
+    private Dimension verticalThumbSize;
+
+    /**
+     * Creates a UI for a JScrollBar.
+     *
+     * @param c the text field
+     * @return the UI
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new WindowsScrollBarUI();
+    }
+
+    protected void installDefaults() {
+        super.installDefaults();
+
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            scrollbar.setBorder(null);
+            horizontalThumbSize = getSize(scrollbar, xp, Part.SBP_THUMBBTNHORZ);
+            verticalThumbSize = getSize(scrollbar, xp, Part.SBP_THUMBBTNVERT);
+        } else {
+            horizontalThumbSize = null;
+            verticalThumbSize = null;
+        }
+    }
+
+    private static Dimension getSize(Component component, XPStyle xp, Part part) {
+        Skin skin = xp.getSkin(component, part);
+        return new Dimension(skin.getWidth(), skin.getHeight());
+    }
+
+    @Override
+    protected Dimension getMinimumThumbSize() {
+        if ((horizontalThumbSize == null) || (verticalThumbSize == null)) {
+            return super.getMinimumThumbSize();
+        }
+        return JScrollBar.HORIZONTAL == scrollbar.getOrientation()
+                ? horizontalThumbSize
+                : verticalThumbSize;
+    }
+
+    public void uninstallUI(JComponent c) {
+        super.uninstallUI(c);
+        thumbGrid = highlightGrid = null;
+    }
+
+    protected void configureScrollBarColors() {
+        super.configureScrollBarColors();
+        Color color = UIManager.getColor("ScrollBar.trackForeground");
+        if (color != null && trackColor != null) {
+            thumbGrid = Grid.getGrid(color, trackColor);
+        }
+
+        color = UIManager.getColor("ScrollBar.trackHighlightForeground");
+        if (color != null && trackHighlightColor != null) {
+            highlightGrid = Grid.getGrid(color, trackHighlightColor);
+        }
+    }
+
+    protected JButton createDecreaseButton(int orientation)  {
+        return new WindowsArrowButton(orientation,
+                                    UIManager.getColor("ScrollBar.thumb"),
+                                    UIManager.getColor("ScrollBar.thumbShadow"),
+                                    UIManager.getColor("ScrollBar.thumbDarkShadow"),
+                                    UIManager.getColor("ScrollBar.thumbHighlight"));
+    }
+
+    protected JButton createIncreaseButton(int orientation)  {
+        return new WindowsArrowButton(orientation,
+                                    UIManager.getColor("ScrollBar.thumb"),
+                                    UIManager.getColor("ScrollBar.thumbShadow"),
+                                    UIManager.getColor("ScrollBar.thumbDarkShadow"),
+                                    UIManager.getColor("ScrollBar.thumbHighlight"));
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    @Override
+    protected ArrowButtonListener createArrowButtonListener(){
+        // we need to repaint the entire scrollbar because state change for each
+        // button causes a state change for the thumb and other button on Vista
+        if(XPStyle.isVista()) {
+            return new ArrowButtonListener() {
+                public void mouseEntered(MouseEvent evt) {
+                    repaint();
+                    super.mouseEntered(evt);
+                }
+                public void mouseExited(MouseEvent evt) {
+                    repaint();
+                    super.mouseExited(evt);
+                }
+                private void repaint() {
+                    scrollbar.repaint();
+                }
+            };
+        } else {
+            return super.createArrowButtonListener();
+        }
+    }
+
+    protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds){
+        boolean v = (scrollbar.getOrientation() == JScrollBar.VERTICAL);
+
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            JScrollBar sb = (JScrollBar)c;
+            State state = State.NORMAL;
+            // Pending: Implement rollover (hot) and pressed
+            if (!sb.isEnabled()) {
+                state = State.DISABLED;
+            }
+            Part part = v ? Part.SBP_LOWERTRACKVERT : Part.SBP_LOWERTRACKHORZ;
+            xp.getSkin(sb, part).paintSkin(g, trackBounds, state);
+        } else if (thumbGrid == null) {
+            super.paintTrack(g, c, trackBounds);
+        }
+        else {
+            thumbGrid.paint(g, trackBounds.x, trackBounds.y, trackBounds.width,
+                            trackBounds.height);
+            if (trackHighlight == DECREASE_HIGHLIGHT) {
+                paintDecreaseHighlight(g);
+            }
+            else if (trackHighlight == INCREASE_HIGHLIGHT) {
+                paintIncreaseHighlight(g);
+            }
+        }
+    }
+
+    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+        boolean v = (scrollbar.getOrientation() == JScrollBar.VERTICAL);
+
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            JScrollBar sb = (JScrollBar)c;
+            State state = State.NORMAL;
+            if (!sb.isEnabled()) {
+                state = State.DISABLED;
+            } else if (isDragging) {
+                state = State.PRESSED;
+            } else if (isThumbRollover()) {
+                state = State.HOT;
+            } else if (XPStyle.isVista()) {
+                if ((incrButton != null && incrButton.getModel().isRollover()) ||
+                    (decrButton != null && decrButton.getModel().isRollover())) {
+                    state = State.HOVER;
+                }
+            }
+            // Paint thumb
+            Part thumbPart = v ? Part.SBP_THUMBBTNVERT : Part.SBP_THUMBBTNHORZ;
+            xp.getSkin(sb, thumbPart).paintSkin(g, thumbBounds, state);
+            // Paint gripper
+            Part gripperPart = v ? Part.SBP_GRIPPERVERT : Part.SBP_GRIPPERHORZ;
+            Skin skin = xp.getSkin(sb, gripperPart);
+            Insets gripperInsets = xp.getMargin(c, thumbPart, null, Prop.CONTENTMARGINS);
+            if (gripperInsets == null ||
+                (v && (thumbBounds.height - gripperInsets.top -
+                       gripperInsets.bottom >= skin.getHeight())) ||
+                (!v && (thumbBounds.width - gripperInsets.left -
+                        gripperInsets.right >= skin.getWidth()))) {
+                skin.paintSkin(g,
+                               thumbBounds.x + (thumbBounds.width  - skin.getWidth()) / 2,
+                               thumbBounds.y + (thumbBounds.height - skin.getHeight()) / 2,
+                               skin.getWidth(), skin.getHeight(), state);
+            }
+        } else {
+            super.paintThumb(g, c, thumbBounds);
+        }
+    }
+
+
+    protected void paintDecreaseHighlight(Graphics g) {
+        if (highlightGrid == null) {
+            super.paintDecreaseHighlight(g);
+        }
+        else {
+            Insets insets = scrollbar.getInsets();
+            Rectangle thumbR = getThumbBounds();
+            int x, y, w, h;
+
+            if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
+                x = insets.left;
+                y = decrButton.getY() + decrButton.getHeight();
+                w = scrollbar.getWidth() - (insets.left + insets.right);
+                h = thumbR.y - y;
+            }
+            else {
+                x = decrButton.getX() + decrButton.getHeight();
+                y = insets.top;
+                w = thumbR.x - x;
+                h = scrollbar.getHeight() - (insets.top + insets.bottom);
+            }
+            highlightGrid.paint(g, x, y, w, h);
+        }
+    }
+
+
+    protected void paintIncreaseHighlight(Graphics g) {
+        if (highlightGrid == null) {
+            super.paintDecreaseHighlight(g);
+        }
+        else {
+            Insets insets = scrollbar.getInsets();
+            Rectangle thumbR = getThumbBounds();
+            int x, y, w, h;
+
+            if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
+                x = insets.left;
+                y = thumbR.y + thumbR.height;
+                w = scrollbar.getWidth() - (insets.left + insets.right);
+                h = incrButton.getY() - y;
+            }
+            else {
+                x = thumbR.x + thumbR.width;
+                y = insets.top;
+                w = incrButton.getX() - x;
+                h = scrollbar.getHeight() - (insets.top + insets.bottom);
+            }
+            highlightGrid.paint(g, x, y, w, h);
+        }
+    }
+
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    @Override
+    protected void setThumbRollover(boolean active) {
+        boolean old = isThumbRollover();
+        super.setThumbRollover(active);
+        // we need to repaint the entire scrollbar because state change for thumb
+        // causes state change for incr and decr buttons on Vista
+        if(XPStyle.isVista() && active != old) {
+            scrollbar.repaint();
+        }
+    }
+
+    /**
+     * WindowsArrowButton is used for the buttons to position the
+     * document up/down. It differs from BasicArrowButton in that the
+     * preferred size is always a square.
+     */
+    private class WindowsArrowButton extends BasicArrowButton {
+
+        public WindowsArrowButton(int direction, Color background, Color shadow,
+                         Color darkShadow, Color highlight) {
+            super(direction, background, shadow, darkShadow, highlight);
+        }
+
+        public WindowsArrowButton(int direction) {
+            super(direction);
+        }
+
+        public void paint(Graphics g) {
+            XPStyle xp = XPStyle.getXP();
+            if (xp != null) {
+                ButtonModel model = getModel();
+                Skin skin = xp.getSkin(this, Part.SBP_ARROWBTN);
+                State state = null;
+
+                boolean jointRollover = XPStyle.isVista() && (isThumbRollover() ||
+                    (this == incrButton && decrButton.getModel().isRollover()) ||
+                    (this == decrButton && incrButton.getModel().isRollover()));
+
+                // normal, rollover, pressed, disabled
+                if (model.isArmed() && model.isPressed()) {
+                    switch (direction) {
+                        case NORTH: state = State.UPPRESSED;    break;
+                        case SOUTH: state = State.DOWNPRESSED;  break;
+                        case WEST:  state = State.LEFTPRESSED;  break;
+                        case EAST:  state = State.RIGHTPRESSED; break;
+                    }
+                } else if (!model.isEnabled()) {
+                    switch (direction) {
+                        case NORTH: state = State.UPDISABLED;    break;
+                        case SOUTH: state = State.DOWNDISABLED;  break;
+                        case WEST:  state = State.LEFTDISABLED;  break;
+                        case EAST:  state = State.RIGHTDISABLED; break;
+                    }
+                } else if (model.isRollover() || model.isPressed()) {
+                    switch (direction) {
+                        case NORTH: state = State.UPHOT;    break;
+                        case SOUTH: state = State.DOWNHOT;  break;
+                        case WEST:  state = State.LEFTHOT;  break;
+                        case EAST:  state = State.RIGHTHOT; break;
+                    }
+                } else if (jointRollover) {
+                    switch (direction) {
+                        case NORTH: state = State.UPHOVER;    break;
+                        case SOUTH: state = State.DOWNHOVER;  break;
+                        case WEST:  state = State.LEFTHOVER;  break;
+                        case EAST:  state = State.RIGHTHOVER; break;
+                    }
+                } else {
+                    switch (direction) {
+                        case NORTH: state = State.UPNORMAL;    break;
+                        case SOUTH: state = State.DOWNNORMAL;  break;
+                        case WEST:  state = State.LEFTNORMAL;  break;
+                        case EAST:  state = State.RIGHTNORMAL; break;
+                    }
+                }
+
+                skin.paintSkin(g, 0, 0, getWidth(), getHeight(), state);
+            } else {
+                super.paint(g);
+            }
+        }
+
+        public Dimension getPreferredSize() {
+            int size = 16;
+            if (scrollbar != null) {
+                switch (scrollbar.getOrientation()) {
+                case JScrollBar.VERTICAL:
+                    size = scrollbar.getWidth();
+                    break;
+                case JScrollBar.HORIZONTAL:
+                    size = scrollbar.getHeight();
+                    break;
+                }
+                size = Math.max(size, 5);
+            }
+            return new Dimension(size, size);
+        }
+    }
+
+
+    /**
+     * This should be pulled out into its own class if more classes need to
+     * use it.
+     * <p>
+     * Grid is used to draw the track for windows scrollbars. Grids
+     * are cached in a HashMap, with the key being the rgb components
+     * of the foreground/background colors. Further the Grid is held through
+     * a WeakRef so that it can be freed when no longer needed. As the
+     * Grid is rather expensive to draw, it is drawn in a BufferedImage.
+     */
+    private static class Grid {
+        private static final int BUFFER_SIZE = 64;
+        private static HashMap<String, WeakReference<Grid>> map;
+
+        private BufferedImage image;
+
+        static {
+            map = new HashMap<String, WeakReference<Grid>>();
+        }
+
+        public static Grid getGrid(Color fg, Color bg) {
+            String key = fg.getRGB() + " " + bg.getRGB();
+            WeakReference<Grid> ref = map.get(key);
+            Grid grid = (ref == null) ? null : ref.get();
+            if (grid == null) {
+                grid = new Grid(fg, bg);
+                map.put(key, new WeakReference<Grid>(grid));
+            }
+            return grid;
+        }
+
+        public Grid(Color fg, Color bg) {
+            int cmap[] = { fg.getRGB(), bg.getRGB() };
+            IndexColorModel icm = new IndexColorModel(8, 2, cmap, 0, false, -1,
+                                                      DataBuffer.TYPE_BYTE);
+            image = new BufferedImage(BUFFER_SIZE, BUFFER_SIZE,
+                                      BufferedImage.TYPE_BYTE_INDEXED, icm);
+            Graphics g = image.getGraphics();
+            try {
+                g.setClip(0, 0, BUFFER_SIZE, BUFFER_SIZE);
+                paintGrid(g, fg, bg);
+            }
+            finally {
+                g.dispose();
+            }
+        }
+
+        /**
+         * Paints the grid into the specified Graphics at the specified
+         * location.
+         */
+        public void paint(Graphics g, int x, int y, int w, int h) {
+            Rectangle clipRect = g.getClipBounds();
+            int minX = Math.max(x, clipRect.x);
+            int minY = Math.max(y, clipRect.y);
+            int maxX = Math.min(clipRect.x + clipRect.width, x + w);
+            int maxY = Math.min(clipRect.y + clipRect.height, y + h);
+
+            if (maxX <= minX || maxY <= minY) {
+                return;
+            }
+            int xOffset = (minX - x) % 2;
+            for (int xCounter = minX; xCounter < maxX;
+                 xCounter += BUFFER_SIZE) {
+                int yOffset = (minY - y) % 2;
+                int width = Math.min(BUFFER_SIZE - xOffset,
+                                     maxX - xCounter);
+
+                for (int yCounter = minY; yCounter < maxY;
+                     yCounter += BUFFER_SIZE) {
+                    int height = Math.min(BUFFER_SIZE - yOffset,
+                                          maxY - yCounter);
+
+                    g.drawImage(image, xCounter, yCounter,
+                                xCounter + width, yCounter + height,
+                                xOffset, yOffset,
+                                xOffset + width, yOffset + height, null);
+                    if (yOffset != 0) {
+                        yCounter -= yOffset;
+                        yOffset = 0;
+                    }
+                }
+                if (xOffset != 0) {
+                    xCounter -= xOffset;
+                    xOffset = 0;
+                }
+            }
+        }
+
+        /**
+         * Actually renders the grid into the Graphics <code>g</code>.
+         */
+        private void paintGrid(Graphics g, Color fg, Color bg) {
+            Rectangle clipRect = g.getClipBounds();
+            g.setColor(bg);
+            g.fillRect(clipRect.x, clipRect.y, clipRect.width,
+                       clipRect.height);
+            g.setColor(fg);
+            g.translate(clipRect.x, clipRect.y);
+            int width = clipRect.width;
+            int height = clipRect.height;
+            int xCounter = clipRect.x % 2;
+            for (int end = width - height; xCounter < end; xCounter += 2) {
+                g.drawLine(xCounter, 0, xCounter + height, height);
+            }
+            for (int end = width; xCounter < end; xCounter += 2) {
+                g.drawLine(xCounter, 0, width, width - xCounter);
+            }
+
+            int yCounter = ((clipRect.x % 2) == 0) ? 2 : 1;
+            for (int end = height - width; yCounter < end; yCounter += 2) {
+                g.drawLine(0, yCounter, width, yCounter + width);
+            }
+            for (int end = height; yCounter < end; yCounter += 2) {
+                g.drawLine(0, yCounter, height - yCounter, height);
+            }
+            g.translate(-clipRect.x, -clipRect.y);
+        }
+    }
+}

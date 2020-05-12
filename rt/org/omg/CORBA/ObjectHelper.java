@@ -1,88 +1,83 @@
-/*    */ package org.omg.CORBA;
-/*    */ 
-/*    */ import org.omg.CORBA.portable.InputStream;
-/*    */ import org.omg.CORBA.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class ObjectHelper
-/*    */ {
-/* 43 */   private static String _id = "";
-/*    */ 
-/*    */   
-/*    */   public static void insert(Any paramAny, Object paramObject) {
-/* 47 */     OutputStream outputStream = paramAny.create_output_stream();
-/* 48 */     paramAny.type(type());
-/* 49 */     write(outputStream, paramObject);
-/* 50 */     paramAny.read_value(outputStream.create_input_stream(), type());
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static Object extract(Any paramAny) {
-/* 55 */     return read(paramAny.create_input_stream());
-/*    */   }
-/*    */   
-/* 58 */   private static TypeCode __typeCode = null;
-/*    */   
-/*    */   public static synchronized TypeCode type() {
-/* 61 */     if (__typeCode == null)
-/*    */     {
-/* 63 */       __typeCode = ORB.init().get_primitive_tc(TCKind.tk_objref);
-/*    */     }
-/* 65 */     return __typeCode;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static String id() {
-/* 70 */     return _id;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static Object read(InputStream paramInputStream) {
-/* 75 */     return paramInputStream.read_Object();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static void write(OutputStream paramOutputStream, Object paramObject) {
-/* 80 */     paramOutputStream.write_Object(paramObject);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\ObjectHelper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/**
+* The Helper for <tt>Object</tt>.  For more information on
+* Helper files, see <a href="doc-files/generatedfiles.html#helper">
+* "Generated Files: Helper Files"</a>.<P>
+*/
+
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
+
+package org.omg.CORBA;
+
+abstract public class ObjectHelper
+{
+    private static String  _id = "";
+
+    public static void insert (org.omg.CORBA.Any a, org.omg.CORBA.Object that)
+    {
+        org.omg.CORBA.portable.OutputStream out = a.create_output_stream ();
+        a.type (type ());
+        write (out, that);
+        a.read_value (out.create_input_stream (), type ());
+    }
+
+    public static org.omg.CORBA.Object extract (org.omg.CORBA.Any a)
+    {
+        return read (a.create_input_stream ());
+    }
+
+    private static org.omg.CORBA.TypeCode __typeCode = null;
+    synchronized public static org.omg.CORBA.TypeCode type ()
+    {
+        if (__typeCode == null)
+            {
+                __typeCode = org.omg.CORBA.ORB.init ().get_primitive_tc (TCKind.tk_objref);
+            }
+        return __typeCode;
+    }
+
+    public static String id ()
+    {
+        return _id;
+    }
+
+    public static org.omg.CORBA.Object read (org.omg.CORBA.portable.InputStream istream)
+    {
+        return istream.read_Object ();
+    }
+
+    public static void write (org.omg.CORBA.portable.OutputStream ostream, org.omg.CORBA.Object value)
+    {
+        ostream.write_Object (value);
+    }
+
+}

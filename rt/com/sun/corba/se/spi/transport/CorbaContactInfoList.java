@@ -1,25 +1,52 @@
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.transport;
 
-import com.sun.corba.se.pept.transport.ContactInfoList;
-import com.sun.corba.se.spi.ior.IOR;
-import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher;
+import com.sun.corba.se.spi.ior.IOR ;
 
-public interface CorbaContactInfoList extends ContactInfoList {
-  void setTargetIOR(IOR paramIOR);
-  
-  IOR getTargetIOR();
-  
-  void setEffectiveTargetIOR(IOR paramIOR);
-  
-  IOR getEffectiveTargetIOR();
-  
-  LocalClientRequestDispatcher getLocalClientRequestDispatcher();
-  
-  int hashCode();
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher ;
+
+import com.sun.corba.se.pept.transport.ContactInfoList ;
+
+/**
+ * @author Harold Carr
+ */
+public interface CorbaContactInfoList
+    extends
+        ContactInfoList
+{
+    public void setTargetIOR(IOR ior);
+    public IOR getTargetIOR();
+
+    public void setEffectiveTargetIOR(IOR locatedIor);
+    public IOR getEffectiveTargetIOR();
+
+    public LocalClientRequestDispatcher getLocalClientRequestDispatcher();
+
+    public int hashCode();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\transport\CorbaContactInfoList.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

@@ -1,880 +1,876 @@
-/*     */ package com.sun.org.apache.xml.internal.serialize;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.Writer;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.xml.sax.AttributeList;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class HTMLSerializer
-/*     */   extends BaseMarkupSerializer
-/*     */ {
-/*     */   private boolean _xhtml;
-/*     */   public static final String XHTMLNamespace = "http://www.w3.org/1999/xhtml";
-/* 108 */   private String fUserXHTMLNamespace = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected HTMLSerializer(boolean xhtml, OutputFormat format) {
-/* 120 */     super(format);
-/* 121 */     this._xhtml = xhtml;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public HTMLSerializer() {
-/* 132 */     this(false, new OutputFormat("html", "ISO-8859-1", false));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public HTMLSerializer(OutputFormat format) {
-/* 143 */     this(false, (format != null) ? format : new OutputFormat("html", "ISO-8859-1", false));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public HTMLSerializer(Writer writer, OutputFormat format) {
-/* 158 */     this(false, (format != null) ? format : new OutputFormat("html", "ISO-8859-1", false));
-/* 159 */     setOutputCharStream(writer);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public HTMLSerializer(OutputStream output, OutputFormat format) {
-/* 173 */     this(false, (format != null) ? format : new OutputFormat("html", "ISO-8859-1", false));
-/* 174 */     setOutputByteStream(output);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOutputFormat(OutputFormat format) {
-/* 180 */     super.setOutputFormat((format != null) ? format : new OutputFormat("html", "ISO-8859-1", false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setXHTMLNamespace(String newNamespace) {
-/* 185 */     this.fUserXHTMLNamespace = newNamespace;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String namespaceURI, String localName, String rawName, Attributes attrs) throws SAXException {
-/* 203 */     boolean addNSAttr = false;
-/*     */     try {
-/*     */       String htmlName;
-/* 206 */       if (this._printer == null) {
-/* 207 */         throw new IllegalStateException(
-/* 208 */             DOMMessageFormatter.formatMessage("http://apache.org/xml/serializer", "NoWriterSupplied", null));
-/*     */       }
-/*     */ 
-/*     */       
-/* 212 */       ElementState state = getElementState();
-/* 213 */       if (isDocumentState()) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 218 */         if (!this._started) {
-/* 219 */           startDocument((localName == null || localName.length() == 0) ? rawName : localName);
-/*     */         
-/*     */         }
-/*     */       }
-/*     */       else {
-/*     */         
-/* 225 */         if (state.empty) {
-/* 226 */           this._printer.printText('>');
-/*     */         }
-/*     */ 
-/*     */         
-/* 230 */         if (this._indenting && !state.preserveSpace && (state.empty || state.afterElement))
-/*     */         {
-/* 232 */           this._printer.breakLine(); } 
-/*     */       } 
-/* 234 */       boolean preserveSpace = state.preserveSpace;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 242 */       boolean hasNamespaceURI = (namespaceURI != null && namespaceURI.length() != 0);
-/*     */ 
-/*     */ 
-/*     */       
-/* 246 */       if (rawName == null || rawName.length() == 0) {
-/* 247 */         rawName = localName;
-/* 248 */         if (hasNamespaceURI) {
-/*     */           
-/* 250 */           String prefix = getPrefix(namespaceURI);
-/* 251 */           if (prefix != null && prefix.length() != 0)
-/* 252 */             rawName = prefix + ":" + localName; 
-/*     */         } 
-/* 254 */         addNSAttr = true;
-/*     */       } 
-/* 256 */       if (!hasNamespaceURI) {
-/* 257 */         htmlName = rawName;
-/*     */       }
-/* 259 */       else if (namespaceURI.equals("http://www.w3.org/1999/xhtml") || (this.fUserXHTMLNamespace != null && this.fUserXHTMLNamespace
-/* 260 */         .equals(namespaceURI))) {
-/* 261 */         htmlName = localName;
-/*     */       } else {
-/* 263 */         htmlName = null;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 267 */       this._printer.printText('<');
-/* 268 */       if (this._xhtml) {
-/* 269 */         this._printer.printText(rawName.toLowerCase(Locale.ENGLISH));
-/*     */       } else {
-/* 271 */         this._printer.printText(rawName);
-/* 272 */       }  this._printer.indent();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 277 */       if (attrs != null) {
-/* 278 */         for (int i = 0; i < attrs.getLength(); i++) {
-/* 279 */           this._printer.printSpace();
-/* 280 */           String name = attrs.getQName(i).toLowerCase(Locale.ENGLISH);
-/* 281 */           String value = attrs.getValue(i);
-/* 282 */           if (this._xhtml || hasNamespaceURI) {
-/*     */             
-/* 284 */             if (value == null) {
-/* 285 */               this._printer.printText(name);
-/* 286 */               this._printer.printText("=\"\"");
-/*     */             } else {
-/* 288 */               this._printer.printText(name);
-/* 289 */               this._printer.printText("=\"");
-/* 290 */               printEscaped(value);
-/* 291 */               this._printer.printText('"');
-/*     */             }
-/*     */           
-/*     */           } else {
-/*     */             
-/* 296 */             if (value == null) {
-/* 297 */               value = "";
-/*     */             }
-/* 299 */             if (!this._format.getPreserveEmptyAttributes() && value.length() == 0) {
-/* 300 */               this._printer.printText(name);
-/* 301 */             } else if (HTMLdtd.isURI(rawName, name)) {
-/* 302 */               this._printer.printText(name);
-/* 303 */               this._printer.printText("=\"");
-/* 304 */               this._printer.printText(escapeURI(value));
-/* 305 */               this._printer.printText('"');
-/* 306 */             } else if (HTMLdtd.isBoolean(rawName, name)) {
-/* 307 */               this._printer.printText(name);
-/*     */             } else {
-/* 309 */               this._printer.printText(name);
-/* 310 */               this._printer.printText("=\"");
-/* 311 */               printEscaped(value);
-/* 312 */               this._printer.printText('"');
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       }
-/* 317 */       if (htmlName != null && HTMLdtd.isPreserveSpace(htmlName)) {
-/* 318 */         preserveSpace = true;
-/*     */       }
-/* 320 */       if (addNSAttr) {
-/* 321 */         for (Map.Entry<String, String> entry : this._prefixes.entrySet()) {
-/* 322 */           this._printer.printSpace();
-/* 323 */           String value = entry.getKey();
-/* 324 */           String name = entry.getValue();
-/* 325 */           if (name.length() == 0) {
-/* 326 */             this._printer.printText("xmlns=\"");
-/* 327 */             printEscaped(value);
-/* 328 */             this._printer.printText('"'); continue;
-/*     */           } 
-/* 330 */           this._printer.printText("xmlns:");
-/* 331 */           this._printer.printText(name);
-/* 332 */           this._printer.printText("=\"");
-/* 333 */           printEscaped(value);
-/* 334 */           this._printer.printText('"');
-/*     */         } 
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 342 */       state = enterElementState(namespaceURI, localName, rawName, preserveSpace);
-/*     */ 
-/*     */ 
-/*     */       
-/* 346 */       if (htmlName != null && (htmlName.equalsIgnoreCase("A") || htmlName
-/* 347 */         .equalsIgnoreCase("TD"))) {
-/* 348 */         state.empty = false;
-/* 349 */         this._printer.printText('>');
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 355 */       if (htmlName != null && (rawName.equalsIgnoreCase("SCRIPT") || rawName
-/* 356 */         .equalsIgnoreCase("STYLE"))) {
-/* 357 */         if (this._xhtml) {
-/*     */           
-/* 359 */           state.doCData = true;
-/*     */         } else {
-/*     */           
-/* 362 */           state.unescaped = true;
-/*     */         } 
-/*     */       }
-/* 365 */     } catch (IOException except) {
-/* 366 */       throw new SAXException(except);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement(String namespaceURI, String localName, String rawName) throws SAXException {
-/*     */     try {
-/* 376 */       endElementIO(namespaceURI, localName, rawName);
-/* 377 */     } catch (IOException except) {
-/* 378 */       throw new SAXException(except);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElementIO(String namespaceURI, String localName, String rawName) throws IOException {
-/*     */     String htmlName;
-/* 393 */     this._printer.unindent();
-/* 394 */     ElementState state = getElementState();
-/*     */     
-/* 396 */     if (state.namespaceURI == null || state.namespaceURI.length() == 0) {
-/* 397 */       htmlName = state.rawName;
-/*     */     }
-/* 399 */     else if (state.namespaceURI.equals("http://www.w3.org/1999/xhtml") || (this.fUserXHTMLNamespace != null && this.fUserXHTMLNamespace
-/* 400 */       .equals(state.namespaceURI))) {
-/* 401 */       htmlName = state.localName;
-/*     */     } else {
-/* 403 */       htmlName = null;
-/*     */     } 
-/*     */     
-/* 406 */     if (this._xhtml) {
-/* 407 */       if (state.empty) {
-/* 408 */         this._printer.printText(" />");
-/*     */       } else {
-/*     */         
-/* 411 */         if (state.inCData) {
-/* 412 */           this._printer.printText("]]>");
-/*     */         }
-/* 414 */         this._printer.printText("</");
-/* 415 */         this._printer.printText(state.rawName.toLowerCase(Locale.ENGLISH));
-/* 416 */         this._printer.printText('>');
-/*     */       } 
-/*     */     } else {
-/* 419 */       if (state.empty) {
-/* 420 */         this._printer.printText('>');
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 426 */       if (htmlName == null || !HTMLdtd.isOnlyOpening(htmlName)) {
-/* 427 */         if (this._indenting && !state.preserveSpace && state.afterElement) {
-/* 428 */           this._printer.breakLine();
-/*     */         }
-/* 430 */         if (state.inCData)
-/* 431 */           this._printer.printText("]]>"); 
-/* 432 */         this._printer.printText("</");
-/* 433 */         this._printer.printText(state.rawName);
-/* 434 */         this._printer.printText('>');
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 439 */     state = leaveElementState();
-/*     */     
-/* 441 */     if (htmlName == null || (!htmlName.equalsIgnoreCase("A") && 
-/* 442 */       !htmlName.equalsIgnoreCase("TD")))
-/*     */     {
-/* 444 */       state.afterElement = true; } 
-/* 445 */     state.empty = false;
-/* 446 */     if (isDocumentState()) {
-/* 447 */       this._printer.flush();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(char[] chars, int start, int length) throws SAXException {
-/*     */     try {
-/* 463 */       ElementState state = content();
-/* 464 */       state.doCData = false;
-/* 465 */       super.characters(chars, start, length);
-/* 466 */     } catch (IOException except) {
-/* 467 */       throw new SAXException(except);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String tagName, AttributeList attrs) throws SAXException {
-/*     */     try {
-/* 482 */       if (this._printer == null) {
-/* 483 */         throw new IllegalStateException(
-/* 484 */             DOMMessageFormatter.formatMessage("http://apache.org/xml/serializer", "NoWriterSupplied", null));
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 489 */       ElementState state = getElementState();
-/* 490 */       if (isDocumentState()) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 495 */         if (!this._started) {
-/* 496 */           startDocument(tagName);
-/*     */         }
-/*     */       }
-/*     */       else {
-/*     */         
-/* 501 */         if (state.empty) {
-/* 502 */           this._printer.printText('>');
-/*     */         }
-/*     */ 
-/*     */         
-/* 506 */         if (this._indenting && !state.preserveSpace && (state.empty || state.afterElement))
-/*     */         {
-/* 508 */           this._printer.breakLine(); } 
-/*     */       } 
-/* 510 */       boolean preserveSpace = state.preserveSpace;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 516 */       this._printer.printText('<');
-/* 517 */       if (this._xhtml) {
-/* 518 */         this._printer.printText(tagName.toLowerCase(Locale.ENGLISH));
-/*     */       } else {
-/* 520 */         this._printer.printText(tagName);
-/* 521 */       }  this._printer.indent();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 526 */       if (attrs != null) {
-/* 527 */         for (int i = 0; i < attrs.getLength(); i++) {
-/* 528 */           this._printer.printSpace();
-/* 529 */           String name = attrs.getName(i).toLowerCase(Locale.ENGLISH);
-/* 530 */           String value = attrs.getValue(i);
-/* 531 */           if (this._xhtml) {
-/*     */             
-/* 533 */             if (value == null) {
-/* 534 */               this._printer.printText(name);
-/* 535 */               this._printer.printText("=\"\"");
-/*     */             } else {
-/* 537 */               this._printer.printText(name);
-/* 538 */               this._printer.printText("=\"");
-/* 539 */               printEscaped(value);
-/* 540 */               this._printer.printText('"');
-/*     */             }
-/*     */           
-/*     */           } else {
-/*     */             
-/* 545 */             if (value == null) {
-/* 546 */               value = "";
-/*     */             }
-/* 548 */             if (!this._format.getPreserveEmptyAttributes() && value.length() == 0) {
-/* 549 */               this._printer.printText(name);
-/* 550 */             } else if (HTMLdtd.isURI(tagName, name)) {
-/* 551 */               this._printer.printText(name);
-/* 552 */               this._printer.printText("=\"");
-/* 553 */               this._printer.printText(escapeURI(value));
-/* 554 */               this._printer.printText('"');
-/* 555 */             } else if (HTMLdtd.isBoolean(tagName, name)) {
-/* 556 */               this._printer.printText(name);
-/*     */             } else {
-/* 558 */               this._printer.printText(name);
-/* 559 */               this._printer.printText("=\"");
-/* 560 */               printEscaped(value);
-/* 561 */               this._printer.printText('"');
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       }
-/* 566 */       if (HTMLdtd.isPreserveSpace(tagName)) {
-/* 567 */         preserveSpace = true;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 572 */       state = enterElementState(null, null, tagName, preserveSpace);
-/*     */ 
-/*     */       
-/* 575 */       if (tagName.equalsIgnoreCase("A") || tagName.equalsIgnoreCase("TD")) {
-/* 576 */         state.empty = false;
-/* 577 */         this._printer.printText('>');
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 583 */       if (tagName.equalsIgnoreCase("SCRIPT") || tagName
-/* 584 */         .equalsIgnoreCase("STYLE")) {
-/* 585 */         if (this._xhtml) {
-/*     */           
-/* 587 */           state.doCData = true;
-/*     */         } else {
-/*     */           
-/* 590 */           state.unescaped = true;
-/*     */         } 
-/*     */       }
-/* 593 */     } catch (IOException except) {
-/* 594 */       throw new SAXException(except);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement(String tagName) throws SAXException {
-/* 602 */     endElement((String)null, (String)null, tagName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void startDocument(String rootTagName) throws IOException {
-/* 630 */     this._printer.leaveDTD();
-/* 631 */     if (!this._started) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 635 */       if (this._docTypePublicId == null && this._docTypeSystemId == null) {
-/* 636 */         if (this._xhtml) {
-/* 637 */           this._docTypePublicId = "-//W3C//DTD XHTML 1.0 Strict//EN";
-/* 638 */           this._docTypeSystemId = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
-/*     */         } else {
-/* 640 */           this._docTypePublicId = "-//W3C//DTD HTML 4.01//EN";
-/* 641 */           this._docTypeSystemId = "http://www.w3.org/TR/html4/strict.dtd";
-/*     */         } 
-/*     */       }
-/*     */       
-/* 645 */       if (!this._format.getOmitDocumentType())
-/*     */       {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 652 */         if (this._docTypePublicId != null && (!this._xhtml || this._docTypeSystemId != null)) {
-/* 653 */           if (this._xhtml) {
-/* 654 */             this._printer.printText("<!DOCTYPE html PUBLIC ");
-/*     */           } else {
-/*     */             
-/* 657 */             this._printer.printText("<!DOCTYPE HTML PUBLIC ");
-/*     */           } 
-/* 659 */           printDoctypeURL(this._docTypePublicId);
-/* 660 */           if (this._docTypeSystemId != null) {
-/* 661 */             if (this._indenting) {
-/* 662 */               this._printer.breakLine();
-/* 663 */               this._printer.printText("                      ");
-/*     */             } else {
-/* 665 */               this._printer.printText(' ');
-/* 666 */             }  printDoctypeURL(this._docTypeSystemId);
-/*     */           } 
-/* 668 */           this._printer.printText('>');
-/* 669 */           this._printer.breakLine();
-/* 670 */         } else if (this._docTypeSystemId != null) {
-/* 671 */           if (this._xhtml) {
-/* 672 */             this._printer.printText("<!DOCTYPE html SYSTEM ");
-/*     */           } else {
-/*     */             
-/* 675 */             this._printer.printText("<!DOCTYPE HTML SYSTEM ");
-/*     */           } 
-/* 677 */           printDoctypeURL(this._docTypeSystemId);
-/* 678 */           this._printer.printText('>');
-/* 679 */           this._printer.breakLine();
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */     
-/* 684 */     this._started = true;
-/*     */     
-/* 686 */     serializePreRoot();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void serializeElement(Element elem) throws IOException {
-/* 708 */     String tagName = elem.getTagName();
-/* 709 */     ElementState state = getElementState();
-/* 710 */     if (isDocumentState()) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 715 */       if (!this._started) {
-/* 716 */         startDocument(tagName);
-/*     */       }
-/*     */     }
-/*     */     else {
-/*     */       
-/* 721 */       if (state.empty) {
-/* 722 */         this._printer.printText('>');
-/*     */       }
-/*     */ 
-/*     */       
-/* 726 */       if (this._indenting && !state.preserveSpace && (state.empty || state.afterElement))
-/*     */       {
-/* 728 */         this._printer.breakLine(); } 
-/*     */     } 
-/* 730 */     boolean preserveSpace = state.preserveSpace;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 736 */     this._printer.printText('<');
-/* 737 */     if (this._xhtml) {
-/* 738 */       this._printer.printText(tagName.toLowerCase(Locale.ENGLISH));
-/*     */     } else {
-/* 740 */       this._printer.printText(tagName);
-/* 741 */     }  this._printer.indent();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 748 */     NamedNodeMap attrMap = elem.getAttributes();
-/* 749 */     if (attrMap != null) {
-/* 750 */       for (int i = 0; i < attrMap.getLength(); i++) {
-/* 751 */         Attr attr = (Attr)attrMap.item(i);
-/* 752 */         String name = attr.getName().toLowerCase(Locale.ENGLISH);
-/* 753 */         String value = attr.getValue();
-/* 754 */         if (attr.getSpecified()) {
-/* 755 */           this._printer.printSpace();
-/* 756 */           if (this._xhtml) {
-/*     */             
-/* 758 */             if (value == null) {
-/* 759 */               this._printer.printText(name);
-/* 760 */               this._printer.printText("=\"\"");
-/*     */             } else {
-/* 762 */               this._printer.printText(name);
-/* 763 */               this._printer.printText("=\"");
-/* 764 */               printEscaped(value);
-/* 765 */               this._printer.printText('"');
-/*     */             }
-/*     */           
-/*     */           } else {
-/*     */             
-/* 770 */             if (value == null) {
-/* 771 */               value = "";
-/*     */             }
-/* 773 */             if (!this._format.getPreserveEmptyAttributes() && value.length() == 0) {
-/* 774 */               this._printer.printText(name);
-/* 775 */             } else if (HTMLdtd.isURI(tagName, name)) {
-/* 776 */               this._printer.printText(name);
-/* 777 */               this._printer.printText("=\"");
-/* 778 */               this._printer.printText(escapeURI(value));
-/* 779 */               this._printer.printText('"');
-/* 780 */             } else if (HTMLdtd.isBoolean(tagName, name)) {
-/* 781 */               this._printer.printText(name);
-/*     */             } else {
-/* 783 */               this._printer.printText(name);
-/* 784 */               this._printer.printText("=\"");
-/* 785 */               printEscaped(value);
-/* 786 */               this._printer.printText('"');
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/*     */     }
-/* 792 */     if (HTMLdtd.isPreserveSpace(tagName)) {
-/* 793 */       preserveSpace = true;
-/*     */     }
-/*     */ 
-/*     */     
-/* 797 */     if (elem.hasChildNodes() || !HTMLdtd.isEmptyTag(tagName)) {
-/*     */ 
-/*     */       
-/* 800 */       state = enterElementState(null, null, tagName, preserveSpace);
-/*     */ 
-/*     */       
-/* 803 */       if (tagName.equalsIgnoreCase("A") || tagName.equalsIgnoreCase("TD")) {
-/* 804 */         state.empty = false;
-/* 805 */         this._printer.printText('>');
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 811 */       if (tagName.equalsIgnoreCase("SCRIPT") || tagName
-/* 812 */         .equalsIgnoreCase("STYLE")) {
-/* 813 */         if (this._xhtml) {
-/*     */           
-/* 815 */           state.doCData = true;
-/*     */         } else {
-/*     */           
-/* 818 */           state.unescaped = true;
-/*     */         } 
-/*     */       }
-/* 821 */       Node child = elem.getFirstChild();
-/* 822 */       while (child != null) {
-/* 823 */         serializeNode(child);
-/* 824 */         child = child.getNextSibling();
-/*     */       } 
-/* 826 */       endElementIO((String)null, (String)null, tagName);
-/*     */     } else {
-/* 828 */       this._printer.unindent();
-/*     */ 
-/*     */       
-/* 831 */       if (this._xhtml) {
-/* 832 */         this._printer.printText(" />");
-/*     */       } else {
-/* 834 */         this._printer.printText('>');
-/*     */       } 
-/* 836 */       state.afterElement = true;
-/* 837 */       state.empty = false;
-/* 838 */       if (isDocumentState()) {
-/* 839 */         this._printer.flush();
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void characters(String text) throws IOException {
-/* 851 */     ElementState state = content();
-/* 852 */     super.characters(text);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String getEntityRef(int ch) {
-/* 858 */     return HTMLdtd.fromChar(ch);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String escapeURI(String uri) {
-/* 868 */     int index = uri.indexOf("\"");
-/* 869 */     if (index >= 0) {
-/* 870 */       return uri.substring(0, index);
-/*     */     }
-/* 872 */     return uri;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serialize\HTMLSerializer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+// Sep 14, 2000:
+//  Fixed serializer to report IO exception directly, instead at
+//  the end of document processing.
+//  Reported by Patrick Higgins <phiggins@transzap.com>
+// Aug 21, 2000:
+//  Fixed bug in startDocument not calling prepare.
+//  Reported by Mikael Staldal <d96-mst-ingen-reklam@d.kth.se>
+// Aug 21, 2000:
+//  Added ability to omit DOCTYPE declaration.
+// Sep 1, 2000:
+//   If no output format is provided the serializer now defaults
+//   to ISO-8859-1 encoding. Reported by Mikael Staldal
+//   <d96-mst@d.kth.se>
+
+
+package com.sun.org.apache.xml.internal.serialize;
+
+import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.util.Locale;
+import java.util.Map;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.xml.sax.AttributeList;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
+
+/**
+ * Implements an HTML/XHTML serializer supporting both DOM and SAX
+ * pretty serializing. HTML/XHTML mode is determined in the
+ * constructor.  For usage instructions see {@link Serializer}.
+ * <p>
+ * If an output stream is used, the encoding is taken from the
+ * output format (defaults to <tt>UTF-8</tt>). If a writer is
+ * used, make sure the writer uses the same encoding (if applies)
+ * as specified in the output format.
+ * <p>
+ * The serializer supports both DOM and SAX. DOM serializing is done
+ * by calling {@link #serialize} and SAX serializing is done by firing
+ * SAX events and using the serializer as a document handler.
+ * <p>
+ * If an I/O exception occurs while serializing, the serializer
+ * will not throw an exception directly, but only throw it
+ * at the end of serializing (either DOM or SAX's {@link
+ * org.xml.sax.DocumentHandler#endDocument}.
+ * <p>
+ * For elements that are not specified as whitespace preserving,
+ * the serializer will potentially break long text lines at space
+ * boundaries, indent lines, and serialize elements on separate
+ * lines. Line terminators will be regarded as spaces, and
+ * spaces at beginning of line will be stripped.
+ * <p>
+ * XHTML is slightly different than HTML:
+ * <ul>
+ * <li>Element/attribute names are lower case and case matters
+ * <li>Attributes must specify value, even if empty string
+ * <li>Empty elements must have '/' in empty tag
+ * <li>Contents of SCRIPT and STYLE elements serialized as CDATA
+ * </ul>
+ *
+ * @deprecated This class was deprecated in Xerces 2.6.2. It is
+ * recommended that new applications use JAXP's Transformation API
+ * for XML (TrAX) for serializing HTML. See the Xerces documentation
+ * for more information.
+ * @author <a href="mailto:arkin@intalio.com">Assaf Arkin</a>
+ * @see Serializer
+ */
+public class HTMLSerializer
+    extends BaseMarkupSerializer
+{
+
+
+    /**
+     * True if serializing in XHTML format.
+     */
+    private boolean _xhtml;
+
+
+    public static final String XHTMLNamespace = "http://www.w3.org/1999/xhtml";
+
+    // for users to override XHTMLNamespace if need be.
+    private String fUserXHTMLNamespace = null;
+
+
+    /**
+     * Constructs a new HTML/XHTML serializer depending on the value of
+     * <tt>xhtml</tt>. The serializer cannot be used without calling
+     * {@link #setOutputCharStream} or {@link #setOutputByteStream} first.
+     *
+     * @param xhtml True if XHTML serializing
+     */
+    protected HTMLSerializer( boolean xhtml, OutputFormat format )
+    {
+        super( format );
+        _xhtml = xhtml;
+    }
+
+
+    /**
+     * Constructs a new serializer. The serializer cannot be used without
+     * calling {@link #setOutputCharStream} or {@link #setOutputByteStream}
+     * first.
+     */
+    public HTMLSerializer()
+    {
+        this( false, new OutputFormat( Method.HTML, "ISO-8859-1", false ) );
+    }
+
+
+    /**
+     * Constructs a new serializer. The serializer cannot be used without
+     * calling {@link #setOutputCharStream} or {@link #setOutputByteStream}
+     * first.
+     */
+    public HTMLSerializer( OutputFormat format )
+    {
+        this( false, format != null ? format : new OutputFormat( Method.HTML, "ISO-8859-1", false ) );
+    }
+
+
+
+    /**
+     * Constructs a new serializer that writes to the specified writer
+     * using the specified output format. If <tt>format</tt> is null,
+     * will use a default output format.
+     *
+     * @param writer The writer to use
+     * @param format The output format to use, null for the default
+     */
+    public HTMLSerializer( Writer writer, OutputFormat format )
+    {
+        this( false, format != null ? format : new OutputFormat( Method.HTML, "ISO-8859-1", false ) );
+        setOutputCharStream( writer );
+    }
+
+
+    /**
+     * Constructs a new serializer that writes to the specified output
+     * stream using the specified output format. If <tt>format</tt>
+     * is null, will use a default output format.
+     *
+     * @param output The output stream to use
+     * @param format The output format to use, null for the default
+     */
+    public HTMLSerializer( OutputStream output, OutputFormat format )
+    {
+        this( false, format != null ? format : new OutputFormat( Method.HTML, "ISO-8859-1", false ) );
+        setOutputByteStream( output );
+    }
+
+
+    public void setOutputFormat( OutputFormat format )
+    {
+        super.setOutputFormat( format != null ? format : new OutputFormat( Method.HTML, "ISO-8859-1", false ) );
+    }
+
+    // Set  value for alternate XHTML namespace.
+    public void setXHTMLNamespace(String newNamespace) {
+        fUserXHTMLNamespace = newNamespace;
+    } // setXHTMLNamespace(String)
+
+    //-----------------------------------------//
+    // SAX content handler serializing methods //
+    //-----------------------------------------//
+
+
+    public void startElement( String namespaceURI, String localName,
+                              String rawName, Attributes attrs )
+        throws SAXException
+    {
+        int          i;
+        boolean      preserveSpace;
+        ElementState state;
+        String       name;
+        String       value;
+        String       htmlName;
+        boolean      addNSAttr = false;
+
+        try {
+            if ( _printer == null )
+                throw new IllegalStateException(
+                                    DOMMessageFormatter.formatMessage(
+                                    DOMMessageFormatter.SERIALIZER_DOMAIN,
+                    "NoWriterSupplied", null));
+
+            state = getElementState();
+            if ( isDocumentState() ) {
+                // If this is the root element handle it differently.
+                // If the first root element in the document, serialize
+                // the document's DOCTYPE. Space preserving defaults
+                // to that of the output format.
+                if ( ! _started )
+                    startDocument( (localName == null || localName.length() == 0)
+                        ? rawName : localName );
+            } else {
+                // For any other element, if first in parent, then
+                // close parent's opening tag and use the parnet's
+                // space preserving.
+                if ( state.empty )
+                    _printer.printText( '>' );
+                // Indent this element on a new line if the first
+                // content of the parent element or immediately
+                // following an element.
+                if ( _indenting && ! state.preserveSpace &&
+                     ( state.empty || state.afterElement ) )
+                    _printer.breakLine();
+            }
+            preserveSpace = state.preserveSpace;
+
+            // Do not change the current element state yet.
+            // This only happens in endElement().
+
+            // As per SAX2, the namespace URI is an empty string if the element has no
+            // namespace URI, or namespaces is turned off. The check against null protects
+            // against broken SAX implementations, so I've left it there. - mrglavas
+            boolean hasNamespaceURI = (namespaceURI != null && namespaceURI.length() != 0);
+
+            // SAX2: rawName (QName) could be empty string if
+            // namespace-prefixes property is false.
+            if ( rawName == null || rawName.length() == 0) {
+                rawName = localName;
+                if ( hasNamespaceURI ) {
+                    String prefix;
+                    prefix = getPrefix( namespaceURI );
+                    if ( prefix != null && prefix.length() != 0 )
+                        rawName = prefix + ":" + localName;
+                }
+                addNSAttr = true;
+            }
+            if ( !hasNamespaceURI )
+                htmlName = rawName;
+            else {
+                if ( namespaceURI.equals( XHTMLNamespace ) ||
+                        (fUserXHTMLNamespace != null && fUserXHTMLNamespace.equals(namespaceURI)) )
+                    htmlName = localName;
+                else
+                    htmlName = null;
+            }
+
+            // XHTML: element names are lower case, DOM will be different
+            _printer.printText( '<' );
+            if ( _xhtml )
+                _printer.printText( rawName.toLowerCase(Locale.ENGLISH) );
+            else
+                _printer.printText( rawName );
+            _printer.indent();
+
+            // For each attribute serialize it's name and value as one part,
+            // separated with a space so the element can be broken on
+            // multiple lines.
+            if ( attrs != null ) {
+                for ( i = 0 ; i < attrs.getLength() ; ++i ) {
+                    _printer.printSpace();
+                    name = attrs.getQName( i ).toLowerCase(Locale.ENGLISH);
+                    value = attrs.getValue( i );
+                    if ( _xhtml || hasNamespaceURI ) {
+                        // XHTML: print empty string for null values.
+                        if ( value == null ) {
+                            _printer.printText( name );
+                            _printer.printText( "=\"\"" );
+                        } else {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            printEscaped( value );
+                            _printer.printText( '"' );
+                        }
+                    } else {
+                        // HTML: Empty values print as attribute name, no value.
+                        // HTML: URI attributes will print unescaped
+                        if ( value == null ) {
+                            value = "";
+                        }
+                        if ( !_format.getPreserveEmptyAttributes() && value.length() == 0 )
+                            _printer.printText( name );
+                        else if ( HTMLdtd.isURI( rawName, name ) ) {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            _printer.printText( escapeURI( value ) );
+                            _printer.printText( '"' );
+                        } else if ( HTMLdtd.isBoolean( rawName, name ) )
+                            _printer.printText( name );
+                        else {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            printEscaped( value );
+                            _printer.printText( '"' );
+                        }
+                    }
+                }
+            }
+            if ( htmlName != null && HTMLdtd.isPreserveSpace( htmlName ) )
+                preserveSpace = true;
+
+            if ( addNSAttr ) {
+                for (Map.Entry<String, String> entry : _prefixes.entrySet()) {
+                    _printer.printSpace();
+                    value = entry.getKey(); //The prefixes map uses the URI value as key.
+                    name = entry.getValue(); //and prefix name as value
+                    if ( name.length() == 0 ) {
+                        _printer.printText( "xmlns=\"" );
+                        printEscaped( value );
+                        _printer.printText( '"' );
+                    } else {
+                        _printer.printText( "xmlns:" );
+                        _printer.printText( name );
+                        _printer.printText( "=\"" );
+                        printEscaped( value );
+                        _printer.printText( '"' );
+                    }
+                }
+            }
+
+            // Now it's time to enter a new element state
+            // with the tag name and space preserving.
+            // We still do not change the curent element state.
+            state = enterElementState( namespaceURI, localName, rawName, preserveSpace );
+
+            // Prevents line breaks inside A/TD
+
+            if ( htmlName != null && ( htmlName.equalsIgnoreCase( "A" ) ||
+                                       htmlName.equalsIgnoreCase( "TD" ) ) ) {
+                state.empty = false;
+                _printer.printText( '>' );
+            }
+
+            // Handle SCRIPT and STYLE specifically by changing the
+            // state of the current element to CDATA (XHTML) or
+            // unescaped (HTML).
+            if ( htmlName != null && ( rawName.equalsIgnoreCase( "SCRIPT" ) ||
+                                       rawName.equalsIgnoreCase( "STYLE" ) ) ) {
+                if ( _xhtml ) {
+                    // XHTML: Print contents as CDATA section
+                    state.doCData = true;
+                } else {
+                    // HTML: Print contents unescaped
+                    state.unescaped = true;
+                }
+            }
+        } catch ( IOException except ) {
+            throw new SAXException( except );
+        }
+    }
+
+
+    public void endElement( String namespaceURI, String localName,
+                            String rawName )
+        throws SAXException
+    {
+        try {
+            endElementIO( namespaceURI, localName, rawName );
+        } catch ( IOException except ) {
+            throw new SAXException( except );
+        }
+    }
+
+
+    public void endElementIO( String namespaceURI, String localName,
+                              String rawName )
+        throws IOException
+    {
+        ElementState state;
+        String       htmlName;
+
+        // Works much like content() with additions for closing
+        // an element. Note the different checks for the closed
+        // element's state and the parent element's state.
+        _printer.unindent();
+        state = getElementState();
+
+        if ( state.namespaceURI == null || state.namespaceURI.length() == 0 )
+            htmlName = state.rawName;
+        else {
+            if ( state.namespaceURI.equals( XHTMLNamespace ) ||
+                        (fUserXHTMLNamespace != null && fUserXHTMLNamespace.equals(state.namespaceURI)) )
+                htmlName = state.localName;
+            else
+                htmlName = null;
+        }
+
+        if ( _xhtml) {
+            if ( state.empty ) {
+                _printer.printText( " />" );
+            } else {
+                // Must leave CData section first
+                if ( state.inCData )
+                    _printer.printText( "]]>" );
+                // XHTML: element names are lower case, DOM will be different
+                _printer.printText( "</" );
+                _printer.printText( state.rawName.toLowerCase(Locale.ENGLISH) );
+                _printer.printText( '>' );
+            }
+        } else {
+            if ( state.empty )
+                _printer.printText( '>' );
+            // This element is not empty and that last content was
+            // another element, so print a line break before that
+            // last element and this element's closing tag.
+            // [keith] Provided this is not an anchor.
+            // HTML: some elements do not print closing tag (e.g. LI)
+            if ( htmlName == null || ! HTMLdtd.isOnlyOpening( htmlName ) ) {
+                if ( _indenting && ! state.preserveSpace && state.afterElement )
+                    _printer.breakLine();
+                // Must leave CData section first (Illegal in HTML, but still)
+                if ( state.inCData )
+                    _printer.printText( "]]>" );
+                _printer.printText( "</" );
+                _printer.printText( state.rawName );
+                _printer.printText( '>' );
+            }
+        }
+        // Leave the element state and update that of the parent
+        // (if we're not root) to not empty and after element.
+        state = leaveElementState();
+        // Temporary hack to prevent line breaks inside A/TD
+        if ( htmlName == null || ( ! htmlName.equalsIgnoreCase( "A" ) &&
+                                   ! htmlName.equalsIgnoreCase( "TD" ) ) )
+
+            state.afterElement = true;
+        state.empty = false;
+        if ( isDocumentState() )
+            _printer.flush();
+    }
+
+
+    //------------------------------------------//
+    // SAX document handler serializing methods //
+    //------------------------------------------//
+
+
+    public void characters( char[] chars, int start, int length )
+        throws SAXException
+    {
+        ElementState state;
+
+        try {
+            // HTML: no CDATA section
+            state = content();
+            state.doCData = false;
+            super.characters( chars, start, length );
+        } catch ( IOException except ) {
+            throw new SAXException( except );
+        }
+    }
+
+
+    public void startElement( String tagName, AttributeList attrs )
+        throws SAXException
+    {
+        int          i;
+        boolean      preserveSpace;
+        ElementState state;
+        String       name;
+        String       value;
+
+        try {
+            if ( _printer == null )
+                throw new IllegalStateException(
+                                    DOMMessageFormatter.formatMessage(
+                                    DOMMessageFormatter.SERIALIZER_DOMAIN,
+                    "NoWriterSupplied", null));
+
+
+            state = getElementState();
+            if ( isDocumentState() ) {
+                // If this is the root element handle it differently.
+                // If the first root element in the document, serialize
+                // the document's DOCTYPE. Space preserving defaults
+                // to that of the output format.
+                if ( ! _started )
+                    startDocument( tagName );
+            } else {
+                // For any other element, if first in parent, then
+                // close parent's opening tag and use the parnet's
+                // space preserving.
+                if ( state.empty )
+                    _printer.printText( '>' );
+                // Indent this element on a new line if the first
+                // content of the parent element or immediately
+                // following an element.
+                if ( _indenting && ! state.preserveSpace &&
+                     ( state.empty || state.afterElement ) )
+                    _printer.breakLine();
+            }
+            preserveSpace = state.preserveSpace;
+
+            // Do not change the current element state yet.
+            // This only happens in endElement().
+
+            // XHTML: element names are lower case, DOM will be different
+            _printer.printText( '<' );
+            if ( _xhtml )
+                _printer.printText( tagName.toLowerCase(Locale.ENGLISH) );
+            else
+                _printer.printText( tagName );
+            _printer.indent();
+
+            // For each attribute serialize it's name and value as one part,
+            // separated with a space so the element can be broken on
+            // multiple lines.
+            if ( attrs != null ) {
+                for ( i = 0 ; i < attrs.getLength() ; ++i ) {
+                    _printer.printSpace();
+                    name = attrs.getName( i ).toLowerCase(Locale.ENGLISH);
+                    value = attrs.getValue( i );
+                    if ( _xhtml ) {
+                        // XHTML: print empty string for null values.
+                        if ( value == null ) {
+                            _printer.printText( name );
+                            _printer.printText( "=\"\"" );
+                        } else {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            printEscaped( value );
+                            _printer.printText( '"' );
+                        }
+                    } else {
+                        // HTML: Empty values print as attribute name, no value.
+                        // HTML: URI attributes will print unescaped
+                        if ( value == null ) {
+                            value = "";
+                        }
+                        if ( !_format.getPreserveEmptyAttributes() && value.length() == 0 )
+                            _printer.printText( name );
+                        else if ( HTMLdtd.isURI( tagName, name ) ) {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            _printer.printText( escapeURI( value ) );
+                            _printer.printText( '"' );
+                        } else if ( HTMLdtd.isBoolean( tagName, name ) )
+                            _printer.printText( name );
+                        else {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            printEscaped( value );
+                            _printer.printText( '"' );
+                        }
+                    }
+                }
+            }
+            if ( HTMLdtd.isPreserveSpace( tagName ) )
+                preserveSpace = true;
+
+            // Now it's time to enter a new element state
+            // with the tag name and space preserving.
+            // We still do not change the curent element state.
+            state = enterElementState( null, null, tagName, preserveSpace );
+
+            // Prevents line breaks inside A/TD
+            if ( tagName.equalsIgnoreCase( "A" ) || tagName.equalsIgnoreCase( "TD" ) ) {
+                state.empty = false;
+                _printer.printText( '>' );
+            }
+
+            // Handle SCRIPT and STYLE specifically by changing the
+            // state of the current element to CDATA (XHTML) or
+            // unescaped (HTML).
+            if ( tagName.equalsIgnoreCase( "SCRIPT" ) ||
+                 tagName.equalsIgnoreCase( "STYLE" ) ) {
+                if ( _xhtml ) {
+                    // XHTML: Print contents as CDATA section
+                    state.doCData = true;
+                } else {
+                    // HTML: Print contents unescaped
+                    state.unescaped = true;
+                }
+            }
+        } catch ( IOException except ) {
+            throw new SAXException( except );
+        }
+    }
+
+
+    public void endElement( String tagName )
+        throws SAXException
+    {
+        endElement( null, null, tagName );
+    }
+
+
+    //------------------------------------------//
+    // Generic node serializing methods methods //
+    //------------------------------------------//
+
+
+    /**
+     * Called to serialize the document's DOCTYPE by the root element.
+     * The document type declaration must name the root element,
+     * but the root element is only known when that element is serialized,
+     * and not at the start of the document.
+     * <p>
+     * This method will check if it has not been called before ({@link #_started}),
+     * will serialize the document type declaration, and will serialize all
+     * pre-root comments and PIs that were accumulated in the document
+     * (see {@link #serializePreRoot}). Pre-root will be serialized even if
+     * this is not the first root element of the document.
+     */
+    protected void startDocument( String rootTagName )
+        throws IOException
+    {
+        StringBuffer buffer;
+
+        // Not supported in HTML/XHTML, but we still have to switch
+        // out of DTD mode.
+        _printer.leaveDTD();
+        if ( ! _started ) {
+            // If the public and system identifiers were not specified
+            // in the output format, use the appropriate ones for HTML
+            // or XHTML.
+            if ( _docTypePublicId == null && _docTypeSystemId == null ) {
+                if ( _xhtml ) {
+                    _docTypePublicId = HTMLdtd.XHTMLPublicId;
+                    _docTypeSystemId = HTMLdtd.XHTMLSystemId;
+                } else {
+                    _docTypePublicId = HTMLdtd.HTMLPublicId;
+                    _docTypeSystemId = HTMLdtd.HTMLSystemId;
+                }
+            }
+
+            if ( ! _format.getOmitDocumentType() ) {
+                // XHTML: If public identifier and system identifier
+                //  specified, print them, else print just system identifier
+                // HTML: If public identifier specified, print it with
+                //  system identifier, if specified.
+                // XHTML requires that all element names are lower case, so the
+                // root on the DOCTYPE must be 'html'. - mrglavas
+                if ( _docTypePublicId != null && ( ! _xhtml || _docTypeSystemId != null )  ) {
+                    if (_xhtml) {
+                        _printer.printText( "<!DOCTYPE html PUBLIC " );
+                    }
+                    else {
+                        _printer.printText( "<!DOCTYPE HTML PUBLIC " );
+                    }
+                    printDoctypeURL( _docTypePublicId );
+                    if ( _docTypeSystemId != null ) {
+                        if ( _indenting ) {
+                            _printer.breakLine();
+                            _printer.printText( "                      " );
+                        } else
+                        _printer.printText( ' ' );
+                        printDoctypeURL( _docTypeSystemId );
+                    }
+                    _printer.printText( '>' );
+                    _printer.breakLine();
+                } else if ( _docTypeSystemId != null ) {
+                    if (_xhtml) {
+                        _printer.printText( "<!DOCTYPE html SYSTEM " );
+                    }
+                    else {
+                        _printer.printText( "<!DOCTYPE HTML SYSTEM " );
+                    }
+                    printDoctypeURL( _docTypeSystemId );
+                    _printer.printText( '>' );
+                    _printer.breakLine();
+                }
+            }
+        }
+
+        _started = true;
+        // Always serialize these, even if not te first root element.
+        serializePreRoot();
+    }
+
+
+    /**
+     * Called to serialize a DOM element. Equivalent to calling {@link
+     * #startElement}, {@link #endElement} and serializing everything
+     * inbetween, but better optimized.
+     */
+    protected void serializeElement( Element elem )
+        throws IOException
+    {
+        Attr         attr;
+        NamedNodeMap attrMap;
+        int          i;
+        Node         child;
+        ElementState state;
+        boolean      preserveSpace;
+        String       name;
+        String       value;
+        String       tagName;
+
+        tagName = elem.getTagName();
+        state = getElementState();
+        if ( isDocumentState() ) {
+            // If this is the root element handle it differently.
+            // If the first root element in the document, serialize
+            // the document's DOCTYPE. Space preserving defaults
+            // to that of the output format.
+            if ( ! _started )
+                startDocument( tagName );
+        } else {
+            // For any other element, if first in parent, then
+            // close parent's opening tag and use the parnet's
+            // space preserving.
+            if ( state.empty )
+                _printer.printText( '>' );
+            // Indent this element on a new line if the first
+            // content of the parent element or immediately
+            // following an element.
+            if ( _indenting && ! state.preserveSpace &&
+                 ( state.empty || state.afterElement ) )
+                _printer.breakLine();
+        }
+        preserveSpace = state.preserveSpace;
+
+        // Do not change the current element state yet.
+        // This only happens in endElement().
+
+        // XHTML: element names are lower case, DOM will be different
+        _printer.printText( '<' );
+        if ( _xhtml )
+            _printer.printText( tagName.toLowerCase(Locale.ENGLISH) );
+        else
+            _printer.printText( tagName );
+        _printer.indent();
+
+        // Lookup the element's attribute, but only print specified
+        // attributes. (Unspecified attributes are derived from the DTD.
+        // For each attribute print it's name and value as one part,
+        // separated with a space so the element can be broken on
+        // multiple lines.
+        attrMap = elem.getAttributes();
+        if ( attrMap != null ) {
+            for ( i = 0 ; i < attrMap.getLength() ; ++i ) {
+                attr = (Attr) attrMap.item( i );
+                name = attr.getName().toLowerCase(Locale.ENGLISH);
+                value = attr.getValue();
+                if ( attr.getSpecified() ) {
+                    _printer.printSpace();
+                    if ( _xhtml ) {
+                        // XHTML: print empty string for null values.
+                        if ( value == null ) {
+                            _printer.printText( name );
+                            _printer.printText( "=\"\"" );
+                        } else {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            printEscaped( value );
+                            _printer.printText( '"' );
+                        }
+                    } else {
+                        // HTML: Empty values print as attribute name, no value.
+                        // HTML: URI attributes will print unescaped
+                        if ( value == null ) {
+                            value = "";
+                        }
+                        if ( !_format.getPreserveEmptyAttributes() && value.length() == 0 )
+                            _printer.printText( name );
+                        else if ( HTMLdtd.isURI( tagName, name ) ) {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            _printer.printText( escapeURI( value ) );
+                            _printer.printText( '"' );
+                        } else if ( HTMLdtd.isBoolean( tagName, name ) )
+                            _printer.printText( name );
+                        else {
+                            _printer.printText( name );
+                            _printer.printText( "=\"" );
+                            printEscaped( value );
+                            _printer.printText( '"' );
+                        }
+                    }
+                }
+            }
+        }
+        if ( HTMLdtd.isPreserveSpace( tagName ) )
+            preserveSpace = true;
+
+        // If element has children, or if element is not an empty tag,
+        // serialize an opening tag.
+        if ( elem.hasChildNodes() || ! HTMLdtd.isEmptyTag( tagName ) ) {
+            // Enter an element state, and serialize the children
+            // one by one. Finally, end the element.
+            state = enterElementState( null, null, tagName, preserveSpace );
+
+            // Prevents line breaks inside A/TD
+            if ( tagName.equalsIgnoreCase( "A" ) || tagName.equalsIgnoreCase( "TD" ) ) {
+                state.empty = false;
+                _printer.printText( '>' );
+            }
+
+            // Handle SCRIPT and STYLE specifically by changing the
+            // state of the current element to CDATA (XHTML) or
+            // unescaped (HTML).
+            if ( tagName.equalsIgnoreCase( "SCRIPT" ) ||
+                 tagName.equalsIgnoreCase( "STYLE" ) ) {
+                if ( _xhtml ) {
+                    // XHTML: Print contents as CDATA section
+                    state.doCData = true;
+                } else {
+                    // HTML: Print contents unescaped
+                    state.unescaped = true;
+                }
+            }
+            child = elem.getFirstChild();
+            while ( child != null ) {
+                serializeNode( child );
+                child = child.getNextSibling();
+            }
+            endElementIO( null, null, tagName );
+        } else {
+            _printer.unindent();
+            // XHTML: Close empty tag with ' />' so it's XML and HTML compatible.
+            // HTML: Empty tags are defined as such in DTD no in document.
+            if ( _xhtml )
+                _printer.printText( " />" );
+            else
+                _printer.printText( '>' );
+            // After element but parent element is no longer empty.
+            state.afterElement = true;
+            state.empty = false;
+            if ( isDocumentState() )
+                _printer.flush();
+        }
+    }
+
+
+
+    protected void characters( String text )
+        throws IOException
+    {
+        ElementState state;
+
+        // HTML: no CDATA section
+        state = content();
+        super.characters( text );
+    }
+
+
+    protected String getEntityRef( int ch )
+    {
+        return HTMLdtd.fromChar( ch );
+    }
+
+
+    protected String escapeURI( String uri )
+    {
+        int index;
+
+        // XXX  Apparently Netscape doesn't like if we escape the URI
+        //      using %nn, so we leave it as is, just remove any quotes.
+        index = uri.indexOf( "\"" );
+        if ( index >= 0 )
+            return uri.substring( 0, index );
+        else
+            return uri;
+    }
+
+
+}

@@ -1,162 +1,161 @@
-/*     */ package com.sun.corba.se.spi.servicecontext;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.lang.reflect.InvocationTargetException;
-/*     */ import java.lang.reflect.Modifier;
-/*     */ import org.omg.CORBA.BAD_PARAM;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServiceContextData
-/*     */ {
-/*     */   private Class scClass;
-/*     */   private Constructor scConstructor;
-/*     */   private int scId;
-/*     */   
-/*     */   private void dprint(String paramString) {
-/*  44 */     ORBUtility.dprint(this, paramString);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void throwBadParam(String paramString, Throwable paramThrowable) {
-/*  49 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(paramString);
-/*  50 */     if (paramThrowable != null)
-/*  51 */       bAD_PARAM.initCause(paramThrowable); 
-/*  52 */     throw bAD_PARAM;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ServiceContextData(Class paramClass) {
-/*  57 */     if (ORB.ORBInitDebug) {
-/*  58 */       dprint("ServiceContextData constructor called for class " + paramClass);
-/*     */     }
-/*  60 */     this.scClass = paramClass;
-/*     */     
-/*     */     try {
-/*  63 */       if (ORB.ORBInitDebug) {
-/*  64 */         dprint("Finding constructor for " + paramClass);
-/*     */       }
-/*     */       
-/*  67 */       Class[] arrayOfClass = new Class[2];
-/*  68 */       arrayOfClass[0] = InputStream.class;
-/*  69 */       arrayOfClass[1] = GIOPVersion.class;
-/*     */       try {
-/*  71 */         this.scConstructor = paramClass.getConstructor(arrayOfClass);
-/*  72 */       } catch (NoSuchMethodException noSuchMethodException) {
-/*  73 */         throwBadParam("Class does not have an InputStream constructor", noSuchMethodException);
-/*     */       } 
-/*     */       
-/*  76 */       if (ORB.ORBInitDebug) {
-/*  77 */         dprint("Finding SERVICE_CONTEXT_ID field in " + paramClass);
-/*     */       }
-/*     */       
-/*  80 */       Field field = null;
-/*     */       try {
-/*  82 */         field = paramClass.getField("SERVICE_CONTEXT_ID");
-/*  83 */       } catch (NoSuchFieldException noSuchFieldException) {
-/*  84 */         throwBadParam("Class does not have a SERVICE_CONTEXT_ID member", noSuchFieldException);
-/*  85 */       } catch (SecurityException securityException) {
-/*  86 */         throwBadParam("Could not access SERVICE_CONTEXT_ID member", securityException);
-/*     */       } 
-/*     */       
-/*  89 */       if (ORB.ORBInitDebug) {
-/*  90 */         dprint("Checking modifiers of SERVICE_CONTEXT_ID field in " + paramClass);
-/*     */       }
-/*  92 */       int i = field.getModifiers();
-/*  93 */       if (!Modifier.isPublic(i) || !Modifier.isStatic(i) || 
-/*  94 */         !Modifier.isFinal(i)) {
-/*  95 */         throwBadParam("SERVICE_CONTEXT_ID field is not public static final", null);
-/*     */       }
-/*  97 */       if (ORB.ORBInitDebug) {
-/*  98 */         dprint("Getting value of SERVICE_CONTEXT_ID in " + paramClass);
-/*     */       }
-/*     */       try {
-/* 101 */         this.scId = field.getInt(null);
-/* 102 */       } catch (IllegalArgumentException illegalArgumentException) {
-/* 103 */         throwBadParam("SERVICE_CONTEXT_ID not convertible to int", illegalArgumentException);
-/* 104 */       } catch (IllegalAccessException illegalAccessException) {
-/* 105 */         throwBadParam("Could not access value of SERVICE_CONTEXT_ID", illegalAccessException);
-/*     */       } 
-/* 107 */     } catch (BAD_PARAM bAD_PARAM) {
-/* 108 */       if (ORB.ORBInitDebug)
-/* 109 */         dprint("Exception in ServiceContextData constructor: " + bAD_PARAM); 
-/* 110 */       throw bAD_PARAM;
-/* 111 */     } catch (Throwable throwable) {
-/* 112 */       if (ORB.ORBInitDebug) {
-/* 113 */         dprint("Unexpected Exception in ServiceContextData constructor: " + throwable);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 117 */     if (ORB.ORBInitDebug) {
-/* 118 */       dprint("ServiceContextData constructor completed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServiceContext makeServiceContext(InputStream paramInputStream, GIOPVersion paramGIOPVersion) {
-/* 126 */     Object[] arrayOfObject = new Object[2];
-/* 127 */     arrayOfObject[0] = paramInputStream;
-/* 128 */     arrayOfObject[1] = paramGIOPVersion;
-/* 129 */     ServiceContext serviceContext = null;
-/*     */     
-/*     */     try {
-/* 132 */       serviceContext = this.scConstructor.newInstance(arrayOfObject);
-/* 133 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 134 */       throwBadParam("InputStream constructor argument error", illegalArgumentException);
-/* 135 */     } catch (IllegalAccessException illegalAccessException) {
-/* 136 */       throwBadParam("InputStream constructor argument error", illegalAccessException);
-/* 137 */     } catch (InstantiationException instantiationException) {
-/* 138 */       throwBadParam("InputStream constructor called for abstract class", instantiationException);
-/* 139 */     } catch (InvocationTargetException invocationTargetException) {
-/* 140 */       throwBadParam("InputStream constructor threw exception " + invocationTargetException
-/* 141 */           .getTargetException(), invocationTargetException);
-/*     */     } 
-/*     */     
-/* 144 */     return serviceContext;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   int getId() {
-/* 149 */     return this.scId;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 154 */     return "ServiceContextData[ scClass=" + this.scClass + " scConstructor=" + this.scConstructor + " scId=" + this.scId + " ]";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\servicecontext\ServiceContextData.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.servicecontext;
+
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA_2_3.portable.InputStream ;
+import com.sun.corba.se.spi.servicecontext.ServiceContext ;
+import java.lang.reflect.InvocationTargetException ;
+import java.lang.reflect.Modifier ;
+import java.lang.reflect.Field ;
+import java.lang.reflect.Constructor ;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+
+/** Internal class used to hold data about a service context class.
+*/
+public class ServiceContextData {
+    private void dprint( String msg )
+    {
+        ORBUtility.dprint( this, msg ) ;
+    }
+
+    private void throwBadParam( String msg, Throwable exc )
+    {
+        BAD_PARAM error = new BAD_PARAM( msg ) ;
+        if (exc != null)
+            error.initCause( exc ) ;
+        throw error ;
+    }
+
+    public ServiceContextData( Class cls )
+    {
+        if (ORB.ORBInitDebug)
+            dprint( "ServiceContextData constructor called for class " + cls ) ;
+
+        scClass = cls ;
+
+        try {
+            if (ORB.ORBInitDebug)
+                dprint( "Finding constructor for " + cls ) ;
+
+            // Find the appropriate constructor in cls
+            Class[] args = new Class[2] ;
+            args[0] = InputStream.class ;
+            args[1] = GIOPVersion.class;
+            try {
+                scConstructor = cls.getConstructor( args ) ;
+            } catch (NoSuchMethodException nsme) {
+                throwBadParam( "Class does not have an InputStream constructor", nsme ) ;
+            }
+
+            if (ORB.ORBInitDebug)
+                dprint( "Finding SERVICE_CONTEXT_ID field in " + cls ) ;
+
+            // get the ID from the public static final int SERVICE_CONTEXT_ID
+            Field fld = null ;
+            try {
+                fld = cls.getField( "SERVICE_CONTEXT_ID" ) ;
+            } catch (NoSuchFieldException nsfe) {
+                throwBadParam( "Class does not have a SERVICE_CONTEXT_ID member", nsfe ) ;
+            } catch (SecurityException se) {
+                throwBadParam( "Could not access SERVICE_CONTEXT_ID member", se ) ;
+            }
+
+            if (ORB.ORBInitDebug)
+                dprint( "Checking modifiers of SERVICE_CONTEXT_ID field in " + cls ) ;
+
+            int mod = fld.getModifiers() ;
+            if (!Modifier.isPublic(mod) || !Modifier.isStatic(mod) ||
+                !Modifier.isFinal(mod) )
+                throwBadParam( "SERVICE_CONTEXT_ID field is not public static final", null ) ;
+
+            if (ORB.ORBInitDebug)
+                dprint( "Getting value of SERVICE_CONTEXT_ID in " + cls ) ;
+
+            try {
+                scId = fld.getInt( null ) ;
+            } catch (IllegalArgumentException iae) {
+                throwBadParam( "SERVICE_CONTEXT_ID not convertible to int", iae ) ;
+            } catch (IllegalAccessException iae2) {
+                throwBadParam( "Could not access value of SERVICE_CONTEXT_ID", iae2 ) ;
+            }
+        } catch (BAD_PARAM nssc) {
+            if (ORB.ORBInitDebug)
+                dprint( "Exception in ServiceContextData constructor: " + nssc ) ;
+            throw nssc ;
+        } catch (Throwable thr) {
+            if (ORB.ORBInitDebug)
+                dprint( "Unexpected Exception in ServiceContextData constructor: " +
+                        thr ) ;
+        }
+
+        if (ORB.ORBInitDebug)
+            dprint( "ServiceContextData constructor completed" ) ;
+    }
+
+    /** Factory method used to create a ServiceContext object by
+     * unmarshalling it from the InputStream.
+     */
+    public ServiceContext makeServiceContext(InputStream is, GIOPVersion gv)
+    {
+        Object[] args = new Object[2];
+        args[0] = is ;
+        args[1] = gv;
+        ServiceContext sc = null ;
+
+        try {
+            sc = (ServiceContext)(scConstructor.newInstance( args )) ;
+        } catch (IllegalArgumentException iae) {
+            throwBadParam( "InputStream constructor argument error", iae ) ;
+        } catch (IllegalAccessException iae2) {
+            throwBadParam( "InputStream constructor argument error", iae2 ) ;
+        } catch (InstantiationException ie) {
+            throwBadParam( "InputStream constructor called for abstract class", ie ) ;
+        } catch (InvocationTargetException ite) {
+            throwBadParam( "InputStream constructor threw exception " +
+                ite.getTargetException(), ite ) ;
+        }
+
+        return sc ;
+    }
+
+    int getId()
+    {
+        return scId ;
+    }
+
+    public String toString()
+    {
+        return "ServiceContextData[ scClass=" + scClass + " scConstructor=" +
+            scConstructor + " scId=" + scId + " ]" ;
+    }
+
+    private Class       scClass ;
+    private Constructor scConstructor ;
+    private int         scId ;
+}

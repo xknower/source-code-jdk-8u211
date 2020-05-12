@@ -1,511 +1,507 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.traversal.NodeFilter;
-/*     */ import org.w3c.dom.traversal.TreeWalker;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TreeWalkerImpl
-/*     */   implements TreeWalker
-/*     */ {
-/*     */   private boolean fEntityReferenceExpansion = false;
-/*  43 */   int fWhatToShow = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   NodeFilter fNodeFilter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node fCurrentNode;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node fRoot;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TreeWalkerImpl(Node root, int whatToShow, NodeFilter nodeFilter, boolean entityReferenceExpansion) {
-/*  67 */     this.fCurrentNode = root;
-/*  68 */     this.fRoot = root;
-/*  69 */     this.fWhatToShow = whatToShow;
-/*  70 */     this.fNodeFilter = nodeFilter;
-/*  71 */     this.fEntityReferenceExpansion = entityReferenceExpansion;
-/*     */   }
-/*     */   
-/*     */   public Node getRoot() {
-/*  75 */     return this.fRoot;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getWhatToShow() {
-/*  80 */     return this.fWhatToShow;
-/*     */   }
-/*     */   
-/*     */   public void setWhatShow(int whatToShow) {
-/*  84 */     this.fWhatToShow = whatToShow;
-/*     */   }
-/*     */   
-/*     */   public NodeFilter getFilter() {
-/*  88 */     return this.fNodeFilter;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean getExpandEntityReferences() {
-/*  93 */     return this.fEntityReferenceExpansion;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Node getCurrentNode() {
-/*  98 */     return this.fCurrentNode;
-/*     */   }
-/*     */   
-/*     */   public void setCurrentNode(Node node) {
-/* 102 */     if (node == null) {
-/* 103 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_SUPPORTED_ERR", null);
-/* 104 */       throw new DOMException((short)9, msg);
-/*     */     } 
-/*     */     
-/* 107 */     this.fCurrentNode = node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node parentNode() {
-/* 116 */     if (this.fCurrentNode == null) return null;
-/*     */     
-/* 118 */     Node node = getParentNode(this.fCurrentNode);
-/* 119 */     if (node != null) {
-/* 120 */       this.fCurrentNode = node;
-/*     */     }
-/* 122 */     return node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node firstChild() {
-/* 132 */     if (this.fCurrentNode == null) return null;
-/*     */     
-/* 134 */     Node node = getFirstChild(this.fCurrentNode);
-/* 135 */     if (node != null) {
-/* 136 */       this.fCurrentNode = node;
-/*     */     }
-/* 138 */     return node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node lastChild() {
-/* 146 */     if (this.fCurrentNode == null) return null;
-/*     */     
-/* 148 */     Node node = getLastChild(this.fCurrentNode);
-/* 149 */     if (node != null) {
-/* 150 */       this.fCurrentNode = node;
-/*     */     }
-/* 152 */     return node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node previousSibling() {
-/* 161 */     if (this.fCurrentNode == null) return null;
-/*     */     
-/* 163 */     Node node = getPreviousSibling(this.fCurrentNode);
-/* 164 */     if (node != null) {
-/* 165 */       this.fCurrentNode = node;
-/*     */     }
-/* 167 */     return node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node nextSibling() {
-/* 175 */     if (this.fCurrentNode == null) return null;
-/*     */     
-/* 177 */     Node node = getNextSibling(this.fCurrentNode);
-/* 178 */     if (node != null) {
-/* 179 */       this.fCurrentNode = node;
-/*     */     }
-/* 181 */     return node;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node previousNode() {
-/* 191 */     if (this.fCurrentNode == null) return null;
-/*     */ 
-/*     */     
-/* 194 */     Node result = getPreviousSibling(this.fCurrentNode);
-/* 195 */     if (result == null) {
-/* 196 */       result = getParentNode(this.fCurrentNode);
-/* 197 */       if (result != null) {
-/* 198 */         this.fCurrentNode = result;
-/* 199 */         return this.fCurrentNode;
-/*     */       } 
-/* 201 */       return null;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 205 */     Node lastChild = getLastChild(result);
-/*     */     
-/* 207 */     Node prev = lastChild;
-/* 208 */     while (lastChild != null) {
-/* 209 */       prev = lastChild;
-/* 210 */       lastChild = getLastChild(prev);
-/*     */     } 
-/*     */     
-/* 213 */     lastChild = prev;
-/*     */ 
-/*     */     
-/* 216 */     if (lastChild != null) {
-/* 217 */       this.fCurrentNode = lastChild;
-/* 218 */       return this.fCurrentNode;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 222 */     if (result != null) {
-/* 223 */       this.fCurrentNode = result;
-/* 224 */       return this.fCurrentNode;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 228 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node nextNode() {
-/* 237 */     if (this.fCurrentNode == null) return null;
-/*     */     
-/* 239 */     Node result = getFirstChild(this.fCurrentNode);
-/*     */     
-/* 241 */     if (result != null) {
-/* 242 */       this.fCurrentNode = result;
-/* 243 */       return result;
-/*     */     } 
-/*     */     
-/* 246 */     result = getNextSibling(this.fCurrentNode);
-/*     */     
-/* 248 */     if (result != null) {
-/* 249 */       this.fCurrentNode = result;
-/* 250 */       return result;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 254 */     Node parent = getParentNode(this.fCurrentNode);
-/* 255 */     while (parent != null) {
-/* 256 */       result = getNextSibling(parent);
-/* 257 */       if (result != null) {
-/* 258 */         this.fCurrentNode = result;
-/* 259 */         return result;
-/*     */       } 
-/* 261 */       parent = getParentNode(parent);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 266 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getParentNode(Node node) {
-/* 276 */     if (node == null || node == this.fRoot) return null;
-/*     */     
-/* 278 */     Node newNode = node.getParentNode();
-/* 279 */     if (newNode == null) return null;
-/*     */     
-/* 281 */     int accept = acceptNode(newNode);
-/*     */     
-/* 283 */     if (accept == 1) {
-/* 284 */       return newNode;
-/*     */     }
-/*     */ 
-/*     */     
-/* 288 */     return getParentNode(newNode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getNextSibling(Node node) {
-/* 300 */     return getNextSibling(node, this.fRoot);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getNextSibling(Node node, Node root) {
-/* 311 */     if (node == null || node == root) return null;
-/*     */     
-/* 313 */     Node newNode = node.getNextSibling();
-/* 314 */     if (newNode == null) {
-/*     */       
-/* 316 */       newNode = node.getParentNode();
-/*     */       
-/* 318 */       if (newNode == null || newNode == root) return null;
-/*     */       
-/* 320 */       int parentAccept = acceptNode(newNode);
-/*     */       
-/* 322 */       if (parentAccept == 3) {
-/* 323 */         return getNextSibling(newNode, root);
-/*     */       }
-/*     */       
-/* 326 */       return null;
-/*     */     } 
-/*     */     
-/* 329 */     int accept = acceptNode(newNode);
-/*     */     
-/* 331 */     if (accept == 1) {
-/* 332 */       return newNode;
-/*     */     }
-/* 334 */     if (accept == 3) {
-/* 335 */       Node fChild = getFirstChild(newNode);
-/* 336 */       if (fChild == null) {
-/* 337 */         return getNextSibling(newNode, root);
-/*     */       }
-/* 339 */       return fChild;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 344 */     return getNextSibling(newNode, root);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getPreviousSibling(Node node) {
-/* 355 */     return getPreviousSibling(node, this.fRoot);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getPreviousSibling(Node node, Node root) {
-/* 366 */     if (node == null || node == root) return null;
-/*     */     
-/* 368 */     Node newNode = node.getPreviousSibling();
-/* 369 */     if (newNode == null) {
-/*     */       
-/* 371 */       newNode = node.getParentNode();
-/* 372 */       if (newNode == null || newNode == root) return null;
-/*     */       
-/* 374 */       int parentAccept = acceptNode(newNode);
-/*     */       
-/* 376 */       if (parentAccept == 3) {
-/* 377 */         return getPreviousSibling(newNode, root);
-/*     */       }
-/*     */       
-/* 380 */       return null;
-/*     */     } 
-/*     */     
-/* 383 */     int accept = acceptNode(newNode);
-/*     */     
-/* 385 */     if (accept == 1) {
-/* 386 */       return newNode;
-/*     */     }
-/* 388 */     if (accept == 3) {
-/* 389 */       Node fChild = getLastChild(newNode);
-/* 390 */       if (fChild == null) {
-/* 391 */         return getPreviousSibling(newNode, root);
-/*     */       }
-/* 393 */       return fChild;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 398 */     return getPreviousSibling(newNode, root);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getFirstChild(Node node) {
-/* 409 */     if (node == null) return null;
-/*     */     
-/* 411 */     if (!this.fEntityReferenceExpansion && node
-/* 412 */       .getNodeType() == 5)
-/* 413 */       return null; 
-/* 414 */     Node newNode = node.getFirstChild();
-/* 415 */     if (newNode == null) return null; 
-/* 416 */     int accept = acceptNode(newNode);
-/*     */     
-/* 418 */     if (accept == 1) {
-/* 419 */       return newNode;
-/*     */     }
-/* 421 */     if (accept == 3 && newNode
-/* 422 */       .hasChildNodes()) {
-/*     */       
-/* 424 */       Node fChild = getFirstChild(newNode);
-/*     */       
-/* 426 */       if (fChild == null) {
-/* 427 */         return getNextSibling(newNode, node);
-/*     */       }
-/* 429 */       return fChild;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 434 */     return getNextSibling(newNode, node);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Node getLastChild(Node node) {
-/* 447 */     if (node == null) return null;
-/*     */     
-/* 449 */     if (!this.fEntityReferenceExpansion && node
-/* 450 */       .getNodeType() == 5) {
-/* 451 */       return null;
-/*     */     }
-/* 453 */     Node newNode = node.getLastChild();
-/* 454 */     if (newNode == null) return null;
-/*     */     
-/* 456 */     int accept = acceptNode(newNode);
-/*     */     
-/* 458 */     if (accept == 1) {
-/* 459 */       return newNode;
-/*     */     }
-/* 461 */     if (accept == 3 && newNode
-/* 462 */       .hasChildNodes()) {
-/*     */       
-/* 464 */       Node lChild = getLastChild(newNode);
-/* 465 */       if (lChild == null) {
-/* 466 */         return getPreviousSibling(newNode, node);
-/*     */       }
-/* 468 */       return lChild;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 473 */     return getPreviousSibling(newNode, node);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   short acceptNode(Node node) {
-/* 491 */     if (this.fNodeFilter == null) {
-/* 492 */       if ((this.fWhatToShow & 1 << node.getNodeType() - 1) != 0) {
-/* 493 */         return 1;
-/*     */       }
-/* 495 */       return 3;
-/*     */     } 
-/*     */     
-/* 498 */     if ((this.fWhatToShow & 1 << node.getNodeType() - 1) != 0) {
-/* 499 */       return this.fNodeFilter.acceptNode(node);
-/*     */     }
-/*     */ 
-/*     */     
-/* 503 */     return 3;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\TreeWalkerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Node;
+import org.w3c.dom.traversal.NodeFilter;
+import org.w3c.dom.traversal.TreeWalker;
+
+/** This class implements the TreeWalker interface.
+ *
+ * @xerces.internal
+ *
+ */
+
+public class TreeWalkerImpl implements TreeWalker {
+
+    //
+    // Data
+    //
+
+    /** When TRUE, the children of entites references are returned in the iterator. */
+    private boolean fEntityReferenceExpansion = false;
+    /** The whatToShow mask. */
+    int fWhatToShow = NodeFilter.SHOW_ALL;
+    /** The NodeFilter reference. */
+    NodeFilter fNodeFilter;
+    /** The current Node. */
+    Node fCurrentNode;
+    /** The root Node. */
+    Node fRoot;
+
+    //
+    // Implementation Note: No state is kept except the data above
+    // (fWhatToShow, fNodeFilter, fCurrentNode, fRoot) such that
+    // setters could be created for these data values and the
+    // implementation will still work.
+
+
+    //
+    // Constructor
+    //
+
+    /** Public constructor */
+    public TreeWalkerImpl(Node root,
+                          int whatToShow,
+                          NodeFilter nodeFilter,
+                          boolean entityReferenceExpansion) {
+        fCurrentNode = root;
+        fRoot = root;
+        fWhatToShow = whatToShow;
+        fNodeFilter = nodeFilter;
+        fEntityReferenceExpansion = entityReferenceExpansion;
+    }
+
+    public Node getRoot() {
+        return fRoot;
+    }
+
+    /** Return the whatToShow value */
+    public int                getWhatToShow() {
+        return fWhatToShow;
+    }
+
+    public void setWhatShow(int whatToShow){
+        fWhatToShow = whatToShow;
+    }
+    /** Return the NodeFilter */
+    public NodeFilter         getFilter() {
+        return fNodeFilter;
+    }
+
+    /** Return whether children entity references are included in the iterator. */
+    public boolean            getExpandEntityReferences() {
+        return fEntityReferenceExpansion;
+    }
+
+    /** Return the current Node. */
+    public Node               getCurrentNode() {
+        return fCurrentNode;
+    }
+    /** Return the current Node. */
+    public void               setCurrentNode(Node node) {
+        if (node == null) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_SUPPORTED_ERR", null);
+              throw new DOMException(DOMException.NOT_SUPPORTED_ERR, msg);
+        }
+
+        fCurrentNode = node;
+    }
+
+    /** Return the parent Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               parentNode() {
+
+        if (fCurrentNode == null) return null;
+
+        Node node = getParentNode(fCurrentNode);
+        if (node !=null) {
+            fCurrentNode = node;
+        }
+        return node;
+
+    }
+
+    /** Return the first child Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               firstChild() {
+
+        if (fCurrentNode == null) return null;
+
+        Node node = getFirstChild(fCurrentNode);
+        if (node !=null) {
+            fCurrentNode = node;
+        }
+        return node;
+    }
+    /** Return the last child Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               lastChild() {
+
+        if (fCurrentNode == null) return null;
+
+        Node node = getLastChild(fCurrentNode);
+        if (node !=null) {
+            fCurrentNode = node;
+        }
+        return node;
+    }
+
+    /** Return the previous sibling Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               previousSibling() {
+
+        if (fCurrentNode == null) return null;
+
+        Node node = getPreviousSibling(fCurrentNode);
+        if (node !=null) {
+            fCurrentNode = node;
+        }
+        return node;
+    }
+
+    /** Return the next sibling Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               nextSibling(){
+        if (fCurrentNode == null) return null;
+
+        Node node = getNextSibling(fCurrentNode);
+        if (node !=null) {
+            fCurrentNode = node;
+        }
+        return node;
+    }
+
+    /** Return the previous Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               previousNode() {
+        Node result;
+
+        if (fCurrentNode == null) return null;
+
+        // get sibling
+        result = getPreviousSibling(fCurrentNode);
+        if (result == null) {
+            result = getParentNode(fCurrentNode);
+            if (result != null) {
+                fCurrentNode = result;
+                return fCurrentNode;
+            }
+            return null;
+        }
+
+        // get the lastChild of result.
+        Node lastChild  = getLastChild(result);
+
+        Node prev = lastChild ;
+        while (lastChild != null) {
+          prev = lastChild ;
+          lastChild = getLastChild(prev) ;
+        }
+
+        lastChild = prev ;
+
+        // if there is a lastChild which passes filters return it.
+        if (lastChild != null) {
+            fCurrentNode = lastChild;
+            return fCurrentNode;
+        }
+
+        // otherwise return the previous sibling.
+        if (result != null) {
+            fCurrentNode = result;
+            return fCurrentNode;
+        }
+
+        // otherwise return null.
+        return null;
+    }
+
+    /** Return the next Node from the current node,
+     *  after applying filter, whatToshow.
+     *  If result is not null, set the current Node.
+     */
+    public Node               nextNode() {
+
+        if (fCurrentNode == null) return null;
+
+        Node result = getFirstChild(fCurrentNode);
+
+        if (result != null) {
+            fCurrentNode = result;
+            return result;
+        }
+
+        result = getNextSibling(fCurrentNode);
+
+        if (result != null) {
+            fCurrentNode = result;
+            return result;
+        }
+
+        // return parent's 1st sibling.
+        Node parent = getParentNode(fCurrentNode);
+        while (parent != null) {
+            result = getNextSibling(parent);
+            if (result != null) {
+                fCurrentNode = result;
+                return result;
+            } else {
+                parent = getParentNode(parent);
+            }
+        }
+
+        // end , return null
+        return null;
+    }
+
+    /** Internal function.
+     *  Return the parent Node, from the input node
+     *  after applying filter, whatToshow.
+     *  The current node is not consulted or set.
+     */
+    Node getParentNode(Node node) {
+
+        if (node == null || node == fRoot) return null;
+
+        Node newNode = node.getParentNode();
+        if (newNode == null)  return null;
+
+        int accept = acceptNode(newNode);
+
+        if (accept == NodeFilter.FILTER_ACCEPT)
+            return newNode;
+        else
+        //if (accept == NodeFilter.SKIP_NODE) // and REJECT too.
+        {
+            return getParentNode(newNode);
+        }
+
+
+    }
+
+    /** Internal function.
+     *  Return the nextSibling Node, from the input node
+     *  after applying filter, whatToshow.
+     *  The current node is not consulted or set.
+     */
+    Node getNextSibling(Node node) {
+                return getNextSibling(node, fRoot);
+        }
+
+    /** Internal function.
+     *  Return the nextSibling Node, from the input node
+     *  after applying filter, whatToshow.
+     *  NEVER TRAVERSES ABOVE THE SPECIFIED ROOT NODE.
+     *  The current node is not consulted or set.
+     */
+    Node getNextSibling(Node node, Node root) {
+
+        if (node == null || node == root) return null;
+
+        Node newNode = node.getNextSibling();
+        if (newNode == null) {
+
+            newNode = node.getParentNode();
+
+            if (newNode == null || newNode == root)  return null;
+
+            int parentAccept = acceptNode(newNode);
+
+            if (parentAccept==NodeFilter.FILTER_SKIP) {
+                return getNextSibling(newNode, root);
+            }
+
+            return null;
+        }
+
+        int accept = acceptNode(newNode);
+
+        if (accept == NodeFilter.FILTER_ACCEPT)
+            return newNode;
+        else
+        if (accept == NodeFilter.FILTER_SKIP) {
+            Node fChild = getFirstChild(newNode);
+            if (fChild == null) {
+                return getNextSibling(newNode, root);
+            }
+            return fChild;
+        }
+        else
+        //if (accept == NodeFilter.REJECT_NODE)
+        {
+            return getNextSibling(newNode, root);
+        }
+
+    } // getNextSibling(Node node) {
+
+    /** Internal function.
+     *  Return the previous sibling Node, from the input node
+     *  after applying filter, whatToshow.
+     *  The current node is not consulted or set.
+     */
+    Node getPreviousSibling(Node node) {
+                return getPreviousSibling(node, fRoot);
+        }
+
+    /** Internal function.
+     *  Return the previousSibling Node, from the input node
+     *  after applying filter, whatToshow.
+         *  NEVER TRAVERSES ABOVE THE SPECIFIED ROOT NODE.
+     *  The current node is not consulted or set.
+     */
+    Node getPreviousSibling(Node node, Node root) {
+
+        if (node == null || node == root) return null;
+
+        Node newNode = node.getPreviousSibling();
+        if (newNode == null) {
+
+            newNode = node.getParentNode();
+            if (newNode == null || newNode == root)  return null;
+
+            int parentAccept = acceptNode(newNode);
+
+            if (parentAccept==NodeFilter.FILTER_SKIP) {
+                return getPreviousSibling(newNode, root);
+            }
+
+            return null;
+        }
+
+        int accept = acceptNode(newNode);
+
+        if (accept == NodeFilter.FILTER_ACCEPT)
+            return newNode;
+        else
+        if (accept == NodeFilter.FILTER_SKIP) {
+            Node fChild =  getLastChild(newNode);
+            if (fChild == null) {
+                return getPreviousSibling(newNode, root);
+            }
+            return fChild;
+        }
+        else
+        //if (accept == NodeFilter.REJECT_NODE)
+        {
+            return getPreviousSibling(newNode, root);
+        }
+
+    } // getPreviousSibling(Node node) {
+
+    /** Internal function.
+     *  Return the first child Node, from the input node
+     *  after applying filter, whatToshow.
+     *  The current node is not consulted or set.
+     */
+    Node getFirstChild(Node node) {
+        if (node == null) return null;
+
+        if ( !fEntityReferenceExpansion
+             && node.getNodeType() == Node.ENTITY_REFERENCE_NODE)
+            return null;
+        Node newNode = node.getFirstChild();
+        if (newNode == null)  return null;
+        int accept = acceptNode(newNode);
+
+        if (accept == NodeFilter.FILTER_ACCEPT)
+            return newNode;
+        else
+        if (accept == NodeFilter.FILTER_SKIP
+            && newNode.hasChildNodes())
+        {
+            Node fChild = getFirstChild(newNode);
+
+            if (fChild == null) {
+                return getNextSibling(newNode, node);
+            }
+            return fChild;
+        }
+        else
+        //if (accept == NodeFilter.REJECT_NODE)
+        {
+            return getNextSibling(newNode, node);
+        }
+
+
+    }
+
+    /** Internal function.
+     *  Return the last child Node, from the input node
+     *  after applying filter, whatToshow.
+     *  The current node is not consulted or set.
+     */
+    Node getLastChild(Node node) {
+
+        if (node == null) return null;
+
+        if ( !fEntityReferenceExpansion
+             && node.getNodeType() == Node.ENTITY_REFERENCE_NODE)
+            return null;
+
+        Node newNode = node.getLastChild();
+        if (newNode == null)  return null;
+
+        int accept = acceptNode(newNode);
+
+        if (accept == NodeFilter.FILTER_ACCEPT)
+            return newNode;
+        else
+        if (accept == NodeFilter.FILTER_SKIP
+            && newNode.hasChildNodes())
+        {
+            Node lChild = getLastChild(newNode);
+            if (lChild == null) {
+                return getPreviousSibling(newNode, node);
+            }
+            return lChild;
+        }
+        else
+        //if (accept == NodeFilter.REJECT_NODE)
+        {
+            return getPreviousSibling(newNode, node);
+        }
+
+
+    }
+
+    /** Internal function.
+     *  The node whatToShow and the filter are combined into one result. */
+    short acceptNode(Node node) {
+        /***
+         7.1.2.4. Filters and whatToShow flags
+
+         Iterator and TreeWalker apply whatToShow flags before applying Filters. If a node is rejected by the
+         active whatToShow flags, a Filter will not be called to evaluate that node. When a node is rejected by
+         the active whatToShow flags, children of that node will still be considered, and Filters may be called to
+         evaluate them.
+         ***/
+
+        if (fNodeFilter == null) {
+            if ( ( fWhatToShow & (1 << node.getNodeType()-1)) != 0) {
+                return NodeFilter.FILTER_ACCEPT;
+            } else {
+                return NodeFilter.FILTER_SKIP;
+            }
+        } else {
+            if ((fWhatToShow & (1 << node.getNodeType()-1)) != 0 ) {
+                return fNodeFilter.acceptNode(node);
+            } else {
+                // What to show has failed. See above excerpt from spec.
+                // Equivalent to FILTER_SKIP.
+                return NodeFilter.FILTER_SKIP;
+            }
+        }
+    }
+}

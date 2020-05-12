@@ -1,155 +1,150 @@
-/*     */ package com.sun.org.apache.xml.internal.resolver.readers;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.ContentHandler;
-/*     */ import org.xml.sax.EntityResolver;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.Locator;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.helpers.DefaultHandler;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SAXParserHandler
-/*     */   extends DefaultHandler
-/*     */ {
-/*  42 */   private EntityResolver er = null;
-/*  43 */   private ContentHandler ch = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEntityResolver(EntityResolver er) {
-/*  50 */     this.er = er;
-/*     */   }
-/*     */   
-/*     */   public void setContentHandler(ContentHandler ch) {
-/*  54 */     this.ch = ch;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-/*  61 */     if (this.er != null) {
-/*     */       try {
-/*  63 */         return this.er.resolveEntity(publicId, systemId);
-/*  64 */       } catch (IOException e) {
-/*  65 */         System.out.println("resolveEntity threw IOException!");
-/*  66 */         return null;
-/*     */       } 
-/*     */     }
-/*  69 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(char[] ch, int start, int length) throws SAXException {
-/*  76 */     if (this.ch != null) {
-/*  77 */       this.ch.characters(ch, start, length);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void endDocument() throws SAXException {
-/*  83 */     if (this.ch != null) {
-/*  84 */       this.ch.endDocument();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
-/*  90 */     if (this.ch != null) {
-/*  91 */       this.ch.endElement(namespaceURI, localName, qName);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void endPrefixMapping(String prefix) throws SAXException {
-/*  97 */     if (this.ch != null) {
-/*  98 */       this.ch.endPrefixMapping(prefix);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
-/* 104 */     if (this.ch != null) {
-/* 105 */       this.ch.ignorableWhitespace(ch, start, length);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void processingInstruction(String target, String data) throws SAXException {
-/* 111 */     if (this.ch != null) {
-/* 112 */       this.ch.processingInstruction(target, data);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void setDocumentLocator(Locator locator) {
-/* 117 */     if (this.ch != null) {
-/* 118 */       this.ch.setDocumentLocator(locator);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void skippedEntity(String name) throws SAXException {
-/* 124 */     if (this.ch != null) {
-/* 125 */       this.ch.skippedEntity(name);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void startDocument() throws SAXException {
-/* 131 */     if (this.ch != null) {
-/* 132 */       this.ch.startDocument();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
-/* 139 */     if (this.ch != null) {
-/* 140 */       this.ch.startElement(namespaceURI, localName, qName, atts);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void startPrefixMapping(String prefix, String uri) throws SAXException {
-/* 146 */     if (this.ch != null)
-/* 147 */       this.ch.startPrefixMapping(prefix, uri); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\resolver\readers\SAXParserHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+// SAXParserHandler.java - An entity-resolving DefaultHandler
+
+/*
+ * Copyright 2001-2004 The Apache Software Foundation or its licensors,
+ * as applicable.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xml.internal.resolver.readers;
+
+import java.io.IOException;
+
+import org.xml.sax.*;
+import org.xml.sax.helpers.*;
+
+/**
+ * An entity-resolving DefaultHandler.
+ *
+ * <p>This class provides a SAXParser DefaultHandler that performs
+ * entity resolution.
+ * </p>
+ *
+ * @author Norman Walsh
+ * <a href="mailto:Norman.Walsh@Sun.COM">Norman.Walsh@Sun.COM</a>
+ */
+public class SAXParserHandler extends DefaultHandler {
+  private EntityResolver er = null;
+  private ContentHandler ch = null;
+
+  public SAXParserHandler() {
+    super();
+  }
+
+  public void setEntityResolver(EntityResolver er) {
+    this.er = er;
+  }
+
+  public void setContentHandler(ContentHandler ch) {
+    this.ch = ch;
+  }
+
+  // Entity Resolver
+  public InputSource resolveEntity(String publicId, String systemId)
+    throws SAXException {
+
+    if (er != null) {
+      try {
+        return er.resolveEntity(publicId, systemId);
+      } catch (IOException e) {
+          System.out.println("resolveEntity threw IOException!");
+          return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  // Content Handler
+  public void characters(char[] ch, int start, int length)
+    throws SAXException {
+    if (this.ch != null) {
+      this.ch.characters(ch, start, length);
+    }
+  }
+
+  public void endDocument()
+    throws SAXException {
+    if (ch != null) {
+      ch.endDocument();
+    }
+  }
+
+  public void endElement(String namespaceURI, String localName, String qName)
+    throws SAXException {
+    if (ch != null) {
+      ch.endElement(namespaceURI, localName, qName);
+    }
+  }
+
+  public void endPrefixMapping(String prefix)
+    throws SAXException {
+    if (ch != null) {
+      ch.endPrefixMapping(prefix);
+    }
+  }
+
+  public void ignorableWhitespace(char[] ch, int start, int length)
+    throws SAXException {
+    if (this.ch != null) {
+      this.ch.ignorableWhitespace(ch, start, length);
+    }
+  }
+
+  public void processingInstruction(String target, String data)
+    throws SAXException {
+    if (ch != null) {
+      ch.processingInstruction(target, data);
+    }
+  }
+
+  public void setDocumentLocator(Locator locator) {
+    if (ch != null) {
+      ch.setDocumentLocator(locator);
+    }
+  }
+
+  public void skippedEntity(String name)
+    throws SAXException {
+    if (ch != null) {
+      ch.skippedEntity(name);
+    }
+  }
+
+  public void startDocument()
+    throws SAXException {
+    if (ch != null) {
+      ch.startDocument();
+    }
+  }
+
+  public void startElement(String namespaceURI, String localName,
+                           String qName, Attributes atts)
+    throws SAXException {
+    if (ch != null) {
+      ch.startElement(namespaceURI, localName, qName, atts);
+    }
+  }
+
+  public void startPrefixMapping(String prefix, String uri)
+    throws SAXException {
+    if (ch != null) {
+      ch.startPrefixMapping(prefix, uri);
+    }
+  }
+}

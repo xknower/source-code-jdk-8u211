@@ -1,71 +1,65 @@
-/*    */ package com.sun.corba.se.spi.orbutil.proxy;
-/*    */ 
-/*    */ import com.sun.corba.se.impl.presentation.rmi.DynamicAccessPermission;
-/*    */ import java.lang.reflect.InvocationHandler;
-/*    */ import java.lang.reflect.InvocationTargetException;
-/*    */ import java.lang.reflect.Method;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public abstract class DelegateInvocationHandlerImpl
-/*    */ {
-/*    */   public static InvocationHandler create(final Object delegate) {
-/* 45 */     SecurityManager securityManager = System.getSecurityManager();
-/* 46 */     if (securityManager != null) {
-/* 47 */       securityManager.checkPermission(new DynamicAccessPermission("access"));
-/*    */     }
-/* 49 */     return new InvocationHandler()
-/*    */       {
-/*    */ 
-/*    */         
-/*    */         public Object invoke(Object param1Object, Method param1Method, Object[] param1ArrayOfObject) throws Throwable
-/*    */         {
-/*    */           try {
-/* 56 */             return param1Method.invoke(delegate, param1ArrayOfObject);
-/* 57 */           } catch (InvocationTargetException invocationTargetException) {
-/*    */ 
-/*    */             
-/* 60 */             throw invocationTargetException.getCause();
-/*    */           } 
-/*    */         }
-/*    */       };
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\orbutil\proxy\DelegateInvocationHandlerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.orbutil.proxy ;
+
+import java.io.Serializable ;
+
+import java.util.Map ;
+import java.util.LinkedHashMap ;
+
+import java.lang.reflect.Proxy ;
+import java.lang.reflect.Method ;
+import java.lang.reflect.InvocationHandler ;
+import java.lang.reflect.InvocationTargetException ;
+import com.sun.corba.se.impl.presentation.rmi.DynamicAccessPermission ;
+
+public abstract class DelegateInvocationHandlerImpl
+{
+    private DelegateInvocationHandlerImpl() {}
+
+    public static InvocationHandler create( final Object delegate )
+    {
+        SecurityManager s = System.getSecurityManager();
+        if (s != null) {
+            s.checkPermission(new DynamicAccessPermission("access"));
+        }
+        return new InvocationHandler() {
+            public Object invoke( Object proxy, Method method, Object[] args )
+                throws Throwable
+            {
+                // This throws an IllegalArgument exception if the delegate
+                // is not assignable from method.getDeclaring class.
+                try {
+                    return method.invoke( delegate, args ) ;
+                } catch (InvocationTargetException ite) {
+                    // Propagate the underlying exception as the
+                    // result of the invocation
+                    throw ite.getCause() ;
+                }
+            }
+        } ;
+    }
+}

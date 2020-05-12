@@ -1,277 +1,280 @@
-/*     */ package java.io;
-/*     */ 
-/*     */ import java.util.Arrays;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CharArrayWriter
-/*     */   extends Writer
-/*     */ {
-/*     */   protected char[] buf;
-/*     */   protected int count;
-/*     */   
-/*     */   public CharArrayWriter() {
-/*  58 */     this(32);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharArrayWriter(int paramInt) {
-/*  68 */     if (paramInt < 0) {
-/*  69 */       throw new IllegalArgumentException("Negative initial size: " + paramInt);
-/*     */     }
-/*     */     
-/*  72 */     this.buf = new char[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int paramInt) {
-/*  79 */     synchronized (this.lock) {
-/*  80 */       int i = this.count + 1;
-/*  81 */       if (i > this.buf.length) {
-/*  82 */         this.buf = Arrays.copyOf(this.buf, Math.max(this.buf.length << 1, i));
-/*     */       }
-/*  84 */       this.buf[this.count] = (char)paramInt;
-/*  85 */       this.count = i;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/*  96 */     if (paramInt1 < 0 || paramInt1 > paramArrayOfchar.length || paramInt2 < 0 || paramInt1 + paramInt2 > paramArrayOfchar.length || paramInt1 + paramInt2 < 0)
-/*     */     {
-/*  98 */       throw new IndexOutOfBoundsException(); } 
-/*  99 */     if (paramInt2 == 0) {
-/*     */       return;
-/*     */     }
-/* 102 */     synchronized (this.lock) {
-/* 103 */       int i = this.count + paramInt2;
-/* 104 */       if (i > this.buf.length) {
-/* 105 */         this.buf = Arrays.copyOf(this.buf, Math.max(this.buf.length << 1, i));
-/*     */       }
-/* 107 */       System.arraycopy(paramArrayOfchar, paramInt1, this.buf, this.count, paramInt2);
-/* 108 */       this.count = i;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(String paramString, int paramInt1, int paramInt2) {
-/* 119 */     synchronized (this.lock) {
-/* 120 */       int i = this.count + paramInt2;
-/* 121 */       if (i > this.buf.length) {
-/* 122 */         this.buf = Arrays.copyOf(this.buf, Math.max(this.buf.length << 1, i));
-/*     */       }
-/* 124 */       paramString.getChars(paramInt1, paramInt1 + paramInt2, this.buf, this.count);
-/* 125 */       this.count = i;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeTo(Writer paramWriter) throws IOException {
-/* 136 */     synchronized (this.lock) {
-/* 137 */       paramWriter.write(this.buf, 0, this.count);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharArrayWriter append(CharSequence paramCharSequence) {
-/* 166 */     String str = (paramCharSequence == null) ? "null" : paramCharSequence.toString();
-/* 167 */     write(str, 0, str.length());
-/* 168 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharArrayWriter append(CharSequence paramCharSequence, int paramInt1, int paramInt2) {
-/* 204 */     String str = ((paramCharSequence == null) ? "null" : paramCharSequence).subSequence(paramInt1, paramInt2).toString();
-/* 205 */     write(str, 0, str.length());
-/* 206 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CharArrayWriter append(char paramChar) {
-/* 226 */     write(paramChar);
-/* 227 */     return this;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 235 */     this.count = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public char[] toCharArray() {
-/* 244 */     synchronized (this.lock) {
-/* 245 */       return Arrays.copyOf(this.buf, this.count);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int size() {
-/* 255 */     return this.count;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 263 */     synchronized (this.lock) {
-/* 264 */       return new String(this.buf, 0, this.count);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void flush() {}
-/*     */   
-/*     */   public void close() {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\io\CharArrayWriter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.io;
+
+import java.util.Arrays;
+
+/**
+ * This class implements a character buffer that can be used as an Writer.
+ * The buffer automatically grows when data is written to the stream.  The data
+ * can be retrieved using toCharArray() and toString().
+ * <P>
+ * Note: Invoking close() on this class has no effect, and methods
+ * of this class can be called after the stream has closed
+ * without generating an IOException.
+ *
+ * @author      Herb Jellinek
+ * @since       JDK1.1
+ */
+public
+class CharArrayWriter extends Writer {
+    /**
+     * The buffer where data is stored.
+     */
+    protected char buf[];
+
+    /**
+     * The number of chars in the buffer.
+     */
+    protected int count;
+
+    /**
+     * Creates a new CharArrayWriter.
+     */
+    public CharArrayWriter() {
+        this(32);
+    }
+
+    /**
+     * Creates a new CharArrayWriter with the specified initial size.
+     *
+     * @param initialSize  an int specifying the initial buffer size.
+     * @exception IllegalArgumentException if initialSize is negative
+     */
+    public CharArrayWriter(int initialSize) {
+        if (initialSize < 0) {
+            throw new IllegalArgumentException("Negative initial size: "
+                                               + initialSize);
+        }
+        buf = new char[initialSize];
+    }
+
+    /**
+     * Writes a character to the buffer.
+     */
+    public void write(int c) {
+        synchronized (lock) {
+            int newcount = count + 1;
+            if (newcount > buf.length) {
+                buf = Arrays.copyOf(buf, Math.max(buf.length << 1, newcount));
+            }
+            buf[count] = (char)c;
+            count = newcount;
+        }
+    }
+
+    /**
+     * Writes characters to the buffer.
+     * @param c the data to be written
+     * @param off       the start offset in the data
+     * @param len       the number of chars that are written
+     */
+    public void write(char c[], int off, int len) {
+        if ((off < 0) || (off > c.length) || (len < 0) ||
+            ((off + len) > c.length) || ((off + len) < 0)) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return;
+        }
+        synchronized (lock) {
+            int newcount = count + len;
+            if (newcount > buf.length) {
+                buf = Arrays.copyOf(buf, Math.max(buf.length << 1, newcount));
+            }
+            System.arraycopy(c, off, buf, count, len);
+            count = newcount;
+        }
+    }
+
+    /**
+     * Write a portion of a string to the buffer.
+     * @param  str  String to be written from
+     * @param  off  Offset from which to start reading characters
+     * @param  len  Number of characters to be written
+     */
+    public void write(String str, int off, int len) {
+        synchronized (lock) {
+            int newcount = count + len;
+            if (newcount > buf.length) {
+                buf = Arrays.copyOf(buf, Math.max(buf.length << 1, newcount));
+            }
+            str.getChars(off, off + len, buf, count);
+            count = newcount;
+        }
+    }
+
+    /**
+     * Writes the contents of the buffer to another character stream.
+     *
+     * @param out       the output stream to write to
+     * @throws IOException If an I/O error occurs.
+     */
+    public void writeTo(Writer out) throws IOException {
+        synchronized (lock) {
+            out.write(buf, 0, count);
+        }
+    }
+
+    /**
+     * Appends the specified character sequence to this writer.
+     *
+     * <p> An invocation of this method of the form <tt>out.append(csq)</tt>
+     * behaves in exactly the same way as the invocation
+     *
+     * <pre>
+     *     out.write(csq.toString()) </pre>
+     *
+     * <p> Depending on the specification of <tt>toString</tt> for the
+     * character sequence <tt>csq</tt>, the entire sequence may not be
+     * appended. For instance, invoking the <tt>toString</tt> method of a
+     * character buffer will return a subsequence whose content depends upon
+     * the buffer's position and limit.
+     *
+     * @param  csq
+     *         The character sequence to append.  If <tt>csq</tt> is
+     *         <tt>null</tt>, then the four characters <tt>"null"</tt> are
+     *         appended to this writer.
+     *
+     * @return  This writer
+     *
+     * @since  1.5
+     */
+    public CharArrayWriter append(CharSequence csq) {
+        String s = (csq == null ? "null" : csq.toString());
+        write(s, 0, s.length());
+        return this;
+    }
+
+    /**
+     * Appends a subsequence of the specified character sequence to this writer.
+     *
+     * <p> An invocation of this method of the form <tt>out.append(csq, start,
+     * end)</tt> when <tt>csq</tt> is not <tt>null</tt>, behaves in
+     * exactly the same way as the invocation
+     *
+     * <pre>
+     *     out.write(csq.subSequence(start, end).toString()) </pre>
+     *
+     * @param  csq
+     *         The character sequence from which a subsequence will be
+     *         appended.  If <tt>csq</tt> is <tt>null</tt>, then characters
+     *         will be appended as if <tt>csq</tt> contained the four
+     *         characters <tt>"null"</tt>.
+     *
+     * @param  start
+     *         The index of the first character in the subsequence
+     *
+     * @param  end
+     *         The index of the character following the last character in the
+     *         subsequence
+     *
+     * @return  This writer
+     *
+     * @throws  IndexOutOfBoundsException
+     *          If <tt>start</tt> or <tt>end</tt> are negative, <tt>start</tt>
+     *          is greater than <tt>end</tt>, or <tt>end</tt> is greater than
+     *          <tt>csq.length()</tt>
+     *
+     * @since  1.5
+     */
+    public CharArrayWriter append(CharSequence csq, int start, int end) {
+        String s = (csq == null ? "null" : csq).subSequence(start, end).toString();
+        write(s, 0, s.length());
+        return this;
+    }
+
+    /**
+     * Appends the specified character to this writer.
+     *
+     * <p> An invocation of this method of the form <tt>out.append(c)</tt>
+     * behaves in exactly the same way as the invocation
+     *
+     * <pre>
+     *     out.write(c) </pre>
+     *
+     * @param  c
+     *         The 16-bit character to append
+     *
+     * @return  This writer
+     *
+     * @since 1.5
+     */
+    public CharArrayWriter append(char c) {
+        write(c);
+        return this;
+    }
+
+    /**
+     * Resets the buffer so that you can use it again without
+     * throwing away the already allocated buffer.
+     */
+    public void reset() {
+        count = 0;
+    }
+
+    /**
+     * Returns a copy of the input data.
+     *
+     * @return an array of chars copied from the input data.
+     */
+    public char toCharArray()[] {
+        synchronized (lock) {
+            return Arrays.copyOf(buf, count);
+        }
+    }
+
+    /**
+     * Returns the current size of the buffer.
+     *
+     * @return an int representing the current size of the buffer.
+     */
+    public int size() {
+        return count;
+    }
+
+    /**
+     * Converts input data to a string.
+     * @return the string.
+     */
+    public String toString() {
+        synchronized (lock) {
+            return new String(buf, 0, count);
+        }
+    }
+
+    /**
+     * Flush the stream.
+     */
+    public void flush() { }
+
+    /**
+     * Close the stream.  This method does not release the buffer, since its
+     * contents might still be required. Note: Invoking this method in this class
+     * will have no effect.
+     */
+    public void close() { }
+
+}

@@ -1,153 +1,147 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.POASystemException;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.EmptyStackException;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.PortableServer.POA;
-/*     */ import org.omg.PortableServer.POAPackage.ServantNotActive;
-/*     */ import org.omg.PortableServer.POAPackage.WrongPolicy;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ import org.omg.PortableServer.portable.Delegate;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DelegateImpl
-/*     */   implements Delegate
-/*     */ {
-/*     */   private ORB orb;
-/*     */   private POASystemException wrapper;
-/*     */   private POAFactory factory;
-/*     */   
-/*     */   public DelegateImpl(ORB paramORB, POAFactory paramPOAFactory) {
-/*  44 */     this.orb = paramORB;
-/*  45 */     this.wrapper = POASystemException.get(paramORB, "oa");
-/*     */     
-/*  47 */     this.factory = paramPOAFactory;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ORB orb(Servant paramServant) {
-/*  52 */     return this.orb;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object this_object(Servant paramServant) {
-/*     */     try {
-/*  60 */       byte[] arrayOfByte = this.orb.peekInvocationInfo().id();
-/*  61 */       POA pOA = (POA)this.orb.peekInvocationInfo().oa();
-/*  62 */       String str = paramServant._all_interfaces(pOA, arrayOfByte)[0];
-/*  63 */       return pOA.create_reference_with_id(arrayOfByte, str);
-/*  64 */     } catch (EmptyStackException emptyStackException) {
-/*     */       
-/*  66 */       POAImpl pOAImpl = null;
-/*     */       try {
-/*  68 */         pOAImpl = (POAImpl)paramServant._default_POA();
-/*  69 */       } catch (ClassCastException classCastException) {
-/*  70 */         throw this.wrapper.defaultPoaNotPoaimpl(classCastException);
-/*     */       } 
-/*     */       
-/*     */       try {
-/*  74 */         if (pOAImpl.getPolicies().isImplicitlyActivated() || (pOAImpl
-/*  75 */           .getPolicies().isUniqueIds() && pOAImpl
-/*  76 */           .getPolicies().retainServants())) {
-/*  77 */           return pOAImpl.servant_to_reference(paramServant);
-/*     */         }
-/*  79 */         throw this.wrapper.wrongPoliciesForThisObject();
-/*     */       }
-/*  81 */       catch (ServantNotActive servantNotActive) {
-/*  82 */         throw this.wrapper.thisObjectServantNotActive(servantNotActive);
-/*  83 */       } catch (WrongPolicy wrongPolicy) {
-/*  84 */         throw this.wrapper.thisObjectWrongPolicy(wrongPolicy);
-/*     */       } 
-/*  86 */     } catch (ClassCastException classCastException) {
-/*  87 */       throw this.wrapper.defaultPoaNotPoaimpl(classCastException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public POA poa(Servant paramServant) {
-/*     */     try {
-/*  94 */       return (POA)this.orb.peekInvocationInfo().oa();
-/*  95 */     } catch (EmptyStackException emptyStackException) {
-/*  96 */       POA pOA = this.factory.lookupPOA(paramServant);
-/*  97 */       if (pOA != null) {
-/*  98 */         return pOA;
-/*     */       }
-/*     */       
-/* 101 */       throw this.wrapper.noContext(emptyStackException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public byte[] object_id(Servant paramServant) {
-/*     */     try {
-/* 108 */       return this.orb.peekInvocationInfo().id();
-/* 109 */     } catch (EmptyStackException emptyStackException) {
-/* 110 */       throw this.wrapper.noContext(emptyStackException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public POA default_POA(Servant paramServant) {
-/* 116 */     return this.factory.getRootPOA();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean is_a(Servant paramServant, String paramString) {
-/* 121 */     String[] arrayOfString = paramServant._all_interfaces(poa(paramServant), object_id(paramServant));
-/* 122 */     for (byte b = 0; b < arrayOfString.length; b++) {
-/* 123 */       if (paramString.equals(arrayOfString[b]))
-/* 124 */         return true; 
-/*     */     } 
-/* 126 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean non_existent(Servant paramServant) {
-/*     */     try {
-/* 133 */       byte[] arrayOfByte = this.orb.peekInvocationInfo().id();
-/* 134 */       if (arrayOfByte == null) return true; 
-/* 135 */       return false;
-/* 136 */     } catch (EmptyStackException emptyStackException) {
-/* 137 */       throw this.wrapper.noContext(emptyStackException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get_interface_def(Servant paramServant) {
-/* 145 */     throw this.wrapper.methodNotImplemented();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\DelegateImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.oa.poa;
+
+import java.util.EmptyStackException;
+
+import org.omg.PortableServer.*;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.POASystemException ;
+
+public class DelegateImpl implements org.omg.PortableServer.portable.Delegate
+{
+    private ORB orb ;
+    private POASystemException wrapper ;
+    private POAFactory factory;
+
+    public DelegateImpl(ORB orb, POAFactory factory){
+        this.orb = orb ;
+        this.wrapper = POASystemException.get( orb,
+            CORBALogDomains.OA ) ;
+        this.factory = factory;
+    }
+
+    public org.omg.CORBA.ORB orb(Servant self)
+    {
+        return orb;
+    }
+
+    public org.omg.CORBA.Object this_object(Servant self)
+    {
+        byte[] oid;
+        POA poa;
+        try {
+            oid = orb.peekInvocationInfo().id();
+            poa = (POA)orb.peekInvocationInfo().oa();
+            String repId = self._all_interfaces(poa,oid)[0] ;
+            return poa.create_reference_with_id(oid, repId);
+        } catch (EmptyStackException notInInvocationE) {
+            //Not within an invocation context
+            POAImpl defaultPOA = null;
+            try {
+                defaultPOA = (POAImpl)self._default_POA();
+            } catch (ClassCastException exception){
+                throw wrapper.defaultPoaNotPoaimpl( exception ) ;
+            }
+
+            try {
+                if (defaultPOA.getPolicies().isImplicitlyActivated() ||
+                    (defaultPOA.getPolicies().isUniqueIds() &&
+                     defaultPOA.getPolicies().retainServants())) {
+                    return defaultPOA.servant_to_reference(self);
+                } else {
+                    throw wrapper.wrongPoliciesForThisObject() ;
+                }
+            } catch ( org.omg.PortableServer.POAPackage.ServantNotActive e) {
+                throw wrapper.thisObjectServantNotActive( e ) ;
+            } catch ( org.omg.PortableServer.POAPackage.WrongPolicy e) {
+                throw wrapper.thisObjectWrongPolicy( e ) ;
+            }
+        } catch (ClassCastException e) {
+            throw wrapper.defaultPoaNotPoaimpl( e ) ;
+        }
+    }
+
+    public POA poa(Servant self)
+    {
+        try {
+            return (POA)orb.peekInvocationInfo().oa();
+        } catch (EmptyStackException exception){
+            POA returnValue = factory.lookupPOA(self);
+            if (returnValue != null) {
+                return returnValue;
+            }
+
+            throw wrapper.noContext( exception ) ;
+        }
+    }
+
+    public byte[] object_id(Servant self)
+    {
+        try{
+            return orb.peekInvocationInfo().id();
+        } catch (EmptyStackException exception){
+            throw wrapper.noContext(exception) ;
+        }
+    }
+
+    public POA default_POA(Servant self)
+    {
+        return factory.getRootPOA();
+    }
+
+    public boolean is_a(Servant self, String repId)
+    {
+        String[] repositoryIds = self._all_interfaces(poa(self),object_id(self));
+        for ( int i=0; i<repositoryIds.length; i++ )
+            if ( repId.equals(repositoryIds[i]) )
+                return true;
+
+        return false;
+    }
+
+    public boolean non_existent(Servant self)
+    {
+        //REVISIT
+        try{
+            byte[] oid = orb.peekInvocationInfo().id();
+            if( oid == null) return true;
+            else return false;
+        } catch (EmptyStackException exception){
+            throw wrapper.noContext(exception) ;
+        }
+    }
+
+    // The get_interface() method has been replaced by get_interface_def()
+
+    public org.omg.CORBA.Object get_interface_def(Servant Self)
+    {
+        throw wrapper.methodNotImplemented() ;
+    }
+}

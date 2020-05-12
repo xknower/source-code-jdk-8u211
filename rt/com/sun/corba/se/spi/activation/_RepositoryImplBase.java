@@ -1,210 +1,206 @@
-/*     */ package com.sun.corba.se.spi.activation;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDefHelper;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.StringSeqHelper;
-/*     */ import java.util.Hashtable;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.InvokeHandler;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.ResponseHandler;
-/*     */ 
-/*     */ 
-/*     */ public abstract class _RepositoryImplBase
-/*     */   extends ObjectImpl
-/*     */   implements Repository, InvokeHandler
-/*     */ {
-/*  20 */   private static Hashtable _methods = new Hashtable<>();
-/*     */   
-/*     */   static {
-/*  23 */     _methods.put("registerServer", new Integer(0));
-/*  24 */     _methods.put("unregisterServer", new Integer(1));
-/*  25 */     _methods.put("getServer", new Integer(2));
-/*  26 */     _methods.put("isInstalled", new Integer(3));
-/*  27 */     _methods.put("install", new Integer(4));
-/*  28 */     _methods.put("uninstall", new Integer(5));
-/*  29 */     _methods.put("listRegisteredServers", new Integer(6));
-/*  30 */     _methods.put("getApplicationNames", new Integer(7));
-/*  31 */     _methods.put("getServerID", new Integer(8));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public OutputStream _invoke(String paramString, InputStream paramInputStream, ResponseHandler paramResponseHandler) {
-/*     */     int[] arrayOfInt;
-/*     */     String[] arrayOfString;
-/*  38 */     OutputStream outputStream = null;
-/*  39 */     Integer integer = (Integer)_methods.get(paramString);
-/*  40 */     if (integer == null) {
-/*  41 */       throw new BAD_OPERATION(0, CompletionStatus.COMPLETED_MAYBE);
-/*     */     }
-/*  43 */     switch (integer.intValue()) {
-/*     */       
-/*     */       case 0:
-/*     */         
-/*     */         try {
-/*     */ 
-/*     */           
-/*  50 */           ServerDef serverDef = ServerDefHelper.read(paramInputStream);
-/*  51 */           int i = 0;
-/*  52 */           i = registerServer(serverDef);
-/*  53 */           outputStream = paramResponseHandler.createReply();
-/*  54 */           outputStream.write_long(i);
-/*  55 */         } catch (ServerAlreadyRegistered serverAlreadyRegistered) {
-/*  56 */           outputStream = paramResponseHandler.createExceptionReply();
-/*  57 */           ServerAlreadyRegisteredHelper.write(outputStream, serverAlreadyRegistered);
-/*  58 */         } catch (BadServerDefinition badServerDefinition) {
-/*  59 */           outputStream = paramResponseHandler.createExceptionReply();
-/*  60 */           BadServerDefinitionHelper.write(outputStream, badServerDefinition);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 193 */         return outputStream;case 1: try { int i = ServerIdHelper.read(paramInputStream); unregisterServer(i); outputStream = paramResponseHandler.createReply(); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); }  return outputStream;case 2: try { int i = ServerIdHelper.read(paramInputStream); ServerDef serverDef = null; serverDef = getServer(i); outputStream = paramResponseHandler.createReply(); ServerDefHelper.write(outputStream, serverDef); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); }  return outputStream;case 3: try { int i = ServerIdHelper.read(paramInputStream); boolean bool = false; bool = isInstalled(i); outputStream = paramResponseHandler.createReply(); outputStream.write_boolean(bool); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); }  return outputStream;case 4: try { int i = ServerIdHelper.read(paramInputStream); install(i); outputStream = paramResponseHandler.createReply(); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); } catch (ServerAlreadyInstalled serverAlreadyInstalled) { outputStream = paramResponseHandler.createExceptionReply(); ServerAlreadyInstalledHelper.write(outputStream, serverAlreadyInstalled); }  return outputStream;case 5: try { int i = ServerIdHelper.read(paramInputStream); uninstall(i); outputStream = paramResponseHandler.createReply(); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); } catch (ServerAlreadyUninstalled serverAlreadyUninstalled) { outputStream = paramResponseHandler.createExceptionReply(); ServerAlreadyUninstalledHelper.write(outputStream, serverAlreadyUninstalled); }  return outputStream;case 6: arrayOfInt = null; arrayOfInt = listRegisteredServers(); outputStream = paramResponseHandler.createReply(); ServerIdsHelper.write(outputStream, arrayOfInt); return outputStream;case 7: arrayOfInt = null; arrayOfString = getApplicationNames(); outputStream = paramResponseHandler.createReply(); StringSeqHelper.write(outputStream, arrayOfString); return outputStream;case 8: try { String str = paramInputStream.read_string(); int i = 0; i = getServerID(str); outputStream = paramResponseHandler.createReply(); outputStream.write_long(i); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); }  return outputStream;
-/*     */     } 
-/*     */     throw new BAD_OPERATION(0, CompletionStatus.COMPLETED_MAYBE);
-/*     */   }
-/* 197 */   private static String[] __ids = new String[] { "IDL:activation/Repository:1.0" };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] _ids() {
-/* 202 */     return (String[])__ids.clone();
-/*     */   }
-/*     */ }
+package com.sun.corba.se.spi.activation;
 
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\activation\_RepositoryImplBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+/**
+* com/sun/corba/se/spi/activation/_RepositoryImplBase.java .
+* Generated by the IDL-to-Java compiler (portable), version "3.2"
+* from c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/com/sun/corba/se/spi/activation/activation.idl
+* Monday, April 1, 2019 8:55:57 PM PDT
+*/
+
+public abstract class _RepositoryImplBase extends org.omg.CORBA.portable.ObjectImpl
+                implements com.sun.corba.se.spi.activation.Repository, org.omg.CORBA.portable.InvokeHandler
+{
+
+  // Constructors
+  public _RepositoryImplBase ()
+  {
+  }
+
+  private static java.util.Hashtable _methods = new java.util.Hashtable ();
+  static
+  {
+    _methods.put ("registerServer", new java.lang.Integer (0));
+    _methods.put ("unregisterServer", new java.lang.Integer (1));
+    _methods.put ("getServer", new java.lang.Integer (2));
+    _methods.put ("isInstalled", new java.lang.Integer (3));
+    _methods.put ("install", new java.lang.Integer (4));
+    _methods.put ("uninstall", new java.lang.Integer (5));
+    _methods.put ("listRegisteredServers", new java.lang.Integer (6));
+    _methods.put ("getApplicationNames", new java.lang.Integer (7));
+    _methods.put ("getServerID", new java.lang.Integer (8));
+  }
+
+  public org.omg.CORBA.portable.OutputStream _invoke (String $method,
+                                org.omg.CORBA.portable.InputStream in,
+                                org.omg.CORBA.portable.ResponseHandler $rh)
+  {
+    org.omg.CORBA.portable.OutputStream out = null;
+    java.lang.Integer __method = (java.lang.Integer)_methods.get ($method);
+    if (__method == null)
+      throw new org.omg.CORBA.BAD_OPERATION (0, org.omg.CORBA.CompletionStatus.COMPLETED_MAYBE);
+
+    switch (__method.intValue ())
+    {
+
+  // always uninstalled.
+       case 0:  // activation/Repository/registerServer
+       {
+         try {
+           com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef serverDef = com.sun.corba.se.spi.activation.RepositoryPackage.ServerDefHelper.read (in);
+           int $result = (int)0;
+           $result = this.registerServer (serverDef);
+           out = $rh.createReply();
+           out.write_long ($result);
+         } catch (com.sun.corba.se.spi.activation.ServerAlreadyRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerAlreadyRegisteredHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.BadServerDefinition $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.BadServerDefinitionHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // unregister server definition
+       case 1:  // activation/Repository/unregisterServer
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           this.unregisterServer (serverId);
+           out = $rh.createReply();
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // get server definition
+       case 2:  // activation/Repository/getServer
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef $result = null;
+           $result = this.getServer (serverId);
+           out = $rh.createReply();
+           com.sun.corba.se.spi.activation.RepositoryPackage.ServerDefHelper.write (out, $result);
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // Return whether the server has been installed
+       case 3:  // activation/Repository/isInstalled
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           boolean $result = false;
+           $result = this.isInstalled (serverId);
+           out = $rh.createReply();
+           out.write_boolean ($result);
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // if the server is currently marked as installed.
+       case 4:  // activation/Repository/install
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           this.install (serverId);
+           out = $rh.createReply();
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.ServerAlreadyInstalled $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerAlreadyInstalledHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // if the server is currently marked as uninstalled.
+       case 5:  // activation/Repository/uninstall
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           this.uninstall (serverId);
+           out = $rh.createReply();
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.ServerAlreadyUninstalled $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerAlreadyUninstalledHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // list registered servers
+       case 6:  // activation/Repository/listRegisteredServers
+       {
+         int $result[] = null;
+         $result = this.listRegisteredServers ();
+         out = $rh.createReply();
+         com.sun.corba.se.spi.activation.ServerIdsHelper.write (out, $result);
+         break;
+       }
+
+
+  // servers.
+       case 7:  // activation/Repository/getApplicationNames
+       {
+         String $result[] = null;
+         $result = this.getApplicationNames ();
+         out = $rh.createReply();
+         com.sun.corba.se.spi.activation.RepositoryPackage.StringSeqHelper.write (out, $result);
+         break;
+       }
+
+
+  // Find the ServerID associated with the given application name.
+       case 8:  // activation/Repository/getServerID
+       {
+         try {
+           String applicationName = in.read_string ();
+           int $result = (int)0;
+           $result = this.getServerID (applicationName);
+           out = $rh.createReply();
+           out.write_long ($result);
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         }
+         break;
+       }
+
+       default:
+         throw new org.omg.CORBA.BAD_OPERATION (0, org.omg.CORBA.CompletionStatus.COMPLETED_MAYBE);
+    }
+
+    return out;
+  } // _invoke
+
+  // Type-specific CORBA::Object operations
+  private static String[] __ids = {
+    "IDL:activation/Repository:1.0"};
+
+  public String[] _ids ()
+  {
+    return (String[])__ids.clone ();
+  }
+
+
+} // class _RepositoryImplBase

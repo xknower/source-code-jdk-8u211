@@ -1,550 +1,547 @@
-/*     */ package com.sun.corba.se.impl.orbutil.threadpool;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.monitoring.LongMonitoredAttributeBase;
-/*     */ import com.sun.corba.se.spi.monitoring.MonitoredObject;
-/*     */ import com.sun.corba.se.spi.monitoring.MonitoringFactories;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.NoSuchWorkQueueException;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.ThreadPool;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.Work;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.WorkQueue;
-/*     */ import java.io.Closeable;
-/*     */ import java.io.IOException;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.List;
-/*     */ import java.util.concurrent.atomic.AtomicInteger;
-/*     */ import java.util.concurrent.atomic.AtomicLong;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ThreadPoolImpl
-/*     */   implements ThreadPool
-/*     */ {
-/*  61 */   private static AtomicInteger threadCounter = new AtomicInteger(0);
-/*     */   
-/*  63 */   private static final ORBUtilSystemException wrapper = ORBUtilSystemException.get("rpc.transport");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private WorkQueue workQueue;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  75 */   private int availableWorkerThreads = 0;
-/*     */ 
-/*     */   
-/*  78 */   private int currentThreadCount = 0;
-/*     */ 
-/*     */   
-/*  81 */   private int minWorkerThreads = 0;
-/*     */ 
-/*     */   
-/*  84 */   private int maxWorkerThreads = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private long inactivityTimeout;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean boundedThreadPool = false;
-/*     */ 
-/*     */   
-/*  95 */   private AtomicLong processedCount = new AtomicLong(1L);
-/*     */ 
-/*     */ 
-/*     */   
-/*  99 */   private AtomicLong totalTimeTaken = new AtomicLong(0L);
-/*     */ 
-/*     */   
-/*     */   private String name;
-/*     */ 
-/*     */   
-/*     */   private MonitoredObject threadpoolMonitoredObject;
-/*     */ 
-/*     */   
-/*     */   private ThreadGroup threadGroup;
-/*     */   
-/* 110 */   Object workersLock = new Object();
-/* 111 */   List<WorkerThread> workers = new ArrayList<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPoolImpl(ThreadGroup paramThreadGroup, String paramString) {
-/* 117 */     this.inactivityTimeout = 120000L;
-/* 118 */     this.maxWorkerThreads = Integer.MAX_VALUE;
-/* 119 */     this.workQueue = new WorkQueueImpl(this);
-/* 120 */     this.threadGroup = paramThreadGroup;
-/* 121 */     this.name = paramString;
-/* 122 */     initializeMonitoring();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPoolImpl(String paramString) {
-/* 130 */     this(Thread.currentThread().getThreadGroup(), paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPoolImpl(int paramInt1, int paramInt2, long paramLong, String paramString) {
-/* 139 */     this.minWorkerThreads = paramInt1;
-/* 140 */     this.maxWorkerThreads = paramInt2;
-/* 141 */     this.inactivityTimeout = paramLong;
-/* 142 */     this.boundedThreadPool = true;
-/* 143 */     this.workQueue = new WorkQueueImpl(this);
-/* 144 */     this.name = paramString;
-/* 145 */     for (byte b = 0; b < this.minWorkerThreads; b++) {
-/* 146 */       createWorkerThread();
-/*     */     }
-/* 148 */     initializeMonitoring();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() throws IOException {
-/* 155 */     ArrayList<WorkerThread> arrayList = null;
-/* 156 */     synchronized (this.workersLock) {
-/* 157 */       arrayList = new ArrayList<>(this.workers);
-/*     */     } 
-/*     */     
-/* 160 */     for (WorkerThread workerThread : arrayList) {
-/* 161 */       workerThread.close();
-/* 162 */       while (workerThread.getState() != Thread.State.TERMINATED) {
-/*     */         try {
-/* 164 */           workerThread.join();
-/* 165 */         } catch (InterruptedException interruptedException) {
-/* 166 */           wrapper.interruptedJoinCallWhileClosingThreadPool(interruptedException, workerThread, this);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 171 */     this.threadGroup = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void initializeMonitoring() {
-/* 180 */     MonitoredObject monitoredObject1 = MonitoringFactories.getMonitoringManagerFactory().createMonitoringManager("orb", null).getRootMonitoredObject();
-/*     */ 
-/*     */     
-/* 183 */     MonitoredObject monitoredObject2 = monitoredObject1.getChild("threadpool");
-/*     */     
-/* 185 */     if (monitoredObject2 == null) {
-/*     */       
-/* 187 */       monitoredObject2 = MonitoringFactories.getMonitoredObjectFactory().createMonitoredObject("threadpool", "Monitoring for all ThreadPool instances");
-/*     */ 
-/*     */       
-/* 190 */       monitoredObject1.addChild(monitoredObject2);
-/*     */     } 
-/* 192 */     this
-/*     */       
-/* 194 */       .threadpoolMonitoredObject = MonitoringFactories.getMonitoredObjectFactory().createMonitoredObject(this.name, "Monitoring for a ThreadPool");
-/*     */ 
-/*     */     
-/* 197 */     monitoredObject2.addChild(this.threadpoolMonitoredObject);
-/*     */     
-/* 199 */     LongMonitoredAttributeBase longMonitoredAttributeBase1 = new LongMonitoredAttributeBase("currentNumberOfThreads", "Current number of total threads in the ThreadPool")
-/*     */       {
-/*     */         public Object getValue()
-/*     */         {
-/* 203 */           return new Long(ThreadPoolImpl.this.currentNumberOfThreads());
-/*     */         }
-/*     */       };
-/* 206 */     this.threadpoolMonitoredObject.addAttribute(longMonitoredAttributeBase1);
-/* 207 */     LongMonitoredAttributeBase longMonitoredAttributeBase2 = new LongMonitoredAttributeBase("numberOfAvailableThreads", "Current number of total threads in the ThreadPool")
-/*     */       {
-/*     */         public Object getValue()
-/*     */         {
-/* 211 */           return new Long(ThreadPoolImpl.this.numberOfAvailableThreads());
-/*     */         }
-/*     */       };
-/* 214 */     this.threadpoolMonitoredObject.addAttribute(longMonitoredAttributeBase2);
-/* 215 */     LongMonitoredAttributeBase longMonitoredAttributeBase3 = new LongMonitoredAttributeBase("numberOfBusyThreads", "Number of busy threads in the ThreadPool")
-/*     */       {
-/*     */         public Object getValue()
-/*     */         {
-/* 219 */           return new Long(ThreadPoolImpl.this.numberOfBusyThreads());
-/*     */         }
-/*     */       };
-/* 222 */     this.threadpoolMonitoredObject.addAttribute(longMonitoredAttributeBase3);
-/* 223 */     LongMonitoredAttributeBase longMonitoredAttributeBase4 = new LongMonitoredAttributeBase("averageWorkCompletionTime", "Average elapsed time taken to complete a work item by the ThreadPool")
-/*     */       {
-/*     */         public Object getValue()
-/*     */         {
-/* 227 */           return new Long(ThreadPoolImpl.this.averageWorkCompletionTime());
-/*     */         }
-/*     */       };
-/* 230 */     this.threadpoolMonitoredObject.addAttribute(longMonitoredAttributeBase4);
-/* 231 */     LongMonitoredAttributeBase longMonitoredAttributeBase5 = new LongMonitoredAttributeBase("currentProcessedCount", "Number of Work items processed by the ThreadPool")
-/*     */       {
-/*     */         public Object getValue()
-/*     */         {
-/* 235 */           return new Long(ThreadPoolImpl.this.currentProcessedCount());
-/*     */         }
-/*     */       };
-/* 238 */     this.threadpoolMonitoredObject.addAttribute(longMonitoredAttributeBase5);
-/*     */ 
-/*     */ 
-/*     */     
-/* 242 */     this.threadpoolMonitoredObject.addChild(((WorkQueueImpl)this.workQueue)
-/* 243 */         .getMonitoredObject());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   MonitoredObject getMonitoredObject() {
-/* 249 */     return this.threadpoolMonitoredObject;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public WorkQueue getAnyWorkQueue() {
-/* 254 */     return this.workQueue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public WorkQueue getWorkQueue(int paramInt) throws NoSuchWorkQueueException {
-/* 260 */     if (paramInt != 0)
-/* 261 */       throw new NoSuchWorkQueueException(); 
-/* 262 */     return this.workQueue;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void notifyForAvailableWork(WorkQueue paramWorkQueue) {
-/* 271 */     synchronized (paramWorkQueue) {
-/* 272 */       if (this.availableWorkerThreads < paramWorkQueue.workItemsInQueue()) {
-/* 273 */         createWorkerThread();
-/*     */       } else {
-/* 275 */         paramWorkQueue.notify();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Thread createWorkerThreadHelper(String paramString) {
-/* 318 */     WorkerThread workerThread = new WorkerThread(this.threadGroup, paramString);
-/* 319 */     synchronized (this.workersLock) {
-/* 320 */       this.workers.add(workerThread);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 329 */     workerThread.setDaemon(true);
-/*     */     
-/* 331 */     wrapper.workerThreadCreated(workerThread, workerThread.getContextClassLoader());
-/*     */     
-/* 333 */     workerThread.start();
-/* 334 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void createWorkerThread() {
-/* 343 */     final String name = getName();
-/* 344 */     synchronized (this.workQueue) {
-/*     */       try {
-/* 346 */         if (System.getSecurityManager() == null) {
-/* 347 */           createWorkerThreadHelper(str);
-/*     */         } else {
-/*     */           
-/* 350 */           AccessController.doPrivileged(new PrivilegedAction()
-/*     */               {
-/*     */                 public Object run() {
-/* 353 */                   return ThreadPoolImpl.this.createWorkerThreadHelper(name);
-/*     */                 }
-/*     */               });
-/*     */         }
-/*     */       
-/* 358 */       } catch (Throwable throwable) {
-/*     */ 
-/*     */         
-/* 361 */         decrementCurrentNumberOfThreads();
-/* 362 */         wrapper.workerThreadCreationFailure(throwable);
-/*     */       } finally {
-/* 364 */         incrementCurrentNumberOfThreads();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int minimumNumberOfThreads() {
-/* 370 */     return this.minWorkerThreads;
-/*     */   }
-/*     */   
-/*     */   public int maximumNumberOfThreads() {
-/* 374 */     return this.maxWorkerThreads;
-/*     */   }
-/*     */   
-/*     */   public long idleTimeoutForThreads() {
-/* 378 */     return this.inactivityTimeout;
-/*     */   }
-/*     */   
-/*     */   public int currentNumberOfThreads() {
-/* 382 */     synchronized (this.workQueue) {
-/* 383 */       return this.currentThreadCount;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void decrementCurrentNumberOfThreads() {
-/* 388 */     synchronized (this.workQueue) {
-/* 389 */       this.currentThreadCount--;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void incrementCurrentNumberOfThreads() {
-/* 394 */     synchronized (this.workQueue) {
-/* 395 */       this.currentThreadCount++;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int numberOfAvailableThreads() {
-/* 400 */     synchronized (this.workQueue) {
-/* 401 */       return this.availableWorkerThreads;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int numberOfBusyThreads() {
-/* 406 */     synchronized (this.workQueue) {
-/* 407 */       return this.currentThreadCount - this.availableWorkerThreads;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public long averageWorkCompletionTime() {
-/* 412 */     synchronized (this.workQueue) {
-/* 413 */       return this.totalTimeTaken.get() / this.processedCount.get();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public long currentProcessedCount() {
-/* 418 */     synchronized (this.workQueue) {
-/* 419 */       return this.processedCount.get();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public String getName() {
-/* 424 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int numberOfWorkQueues() {
-/* 431 */     return 1;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static synchronized int getUniqueThreadId() {
-/* 436 */     return threadCounter.incrementAndGet();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void decrementNumberOfAvailableThreads() {
-/* 445 */     synchronized (this.workQueue) {
-/* 446 */       this.availableWorkerThreads--;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void incrementNumberOfAvailableThreads() {
-/* 456 */     synchronized (this.workQueue) {
-/* 457 */       this.availableWorkerThreads++;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private class WorkerThread
-/*     */     extends Thread
-/*     */     implements Closeable {
-/*     */     private Work currentWork;
-/* 465 */     private int threadId = 0;
-/*     */     
-/*     */     private volatile boolean closeCalled = false;
-/*     */     private String threadPoolName;
-/* 469 */     private StringBuffer workerThreadName = new StringBuffer();
-/*     */     
-/*     */     WorkerThread(ThreadGroup param1ThreadGroup, String param1String) {
-/* 472 */       super(param1ThreadGroup, "Idle");
-/* 473 */       this.threadId = ThreadPoolImpl.getUniqueThreadId();
-/* 474 */       this.threadPoolName = param1String;
-/* 475 */       setName(composeWorkerThreadName(param1String, "Idle"));
-/*     */     }
-/*     */     
-/*     */     public synchronized void close() {
-/* 479 */       this.closeCalled = true;
-/* 480 */       interrupt();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private void resetClassLoader() {}
-/*     */ 
-/*     */     
-/*     */     private void performWork() {
-/* 488 */       long l1 = System.currentTimeMillis();
-/*     */       try {
-/* 490 */         this.currentWork.doWork();
-/* 491 */       } catch (Throwable throwable) {
-/* 492 */         ThreadPoolImpl.wrapper.workerThreadDoWorkThrowable(this, throwable);
-/*     */       } 
-/* 494 */       long l2 = System.currentTimeMillis() - l1;
-/* 495 */       ThreadPoolImpl.this.totalTimeTaken.addAndGet(l2);
-/* 496 */       ThreadPoolImpl.this.processedCount.incrementAndGet();
-/*     */     }
-/*     */     
-/*     */     public void run() {
-/*     */       try {
-/* 501 */         while (!this.closeCalled) {
-/*     */           try {
-/* 503 */             this.currentWork = ((WorkQueueImpl)ThreadPoolImpl.this.workQueue).requestWork(ThreadPoolImpl.this
-/* 504 */                 .inactivityTimeout);
-/* 505 */             if (this.currentWork == null)
-/*     */               continue; 
-/* 507 */           } catch (InterruptedException interruptedException) {
-/* 508 */             ThreadPoolImpl.wrapper.workQueueThreadInterrupted(interruptedException, getName(), 
-/* 509 */                 Boolean.valueOf(this.closeCalled));
-/*     */             
-/*     */             continue;
-/* 512 */           } catch (Throwable throwable) {
-/* 513 */             ThreadPoolImpl.wrapper.workerThreadThrowableFromRequestWork(this, throwable, ThreadPoolImpl.this
-/* 514 */                 .workQueue.getName());
-/*     */             
-/*     */             continue;
-/*     */           } 
-/*     */           
-/* 519 */           performWork();
-/*     */ 
-/*     */ 
-/*     */           
-/* 523 */           this.currentWork = null;
-/*     */           
-/* 525 */           resetClassLoader();
-/*     */         } 
-/* 527 */       } catch (Throwable throwable) {
-/*     */         
-/* 529 */         ThreadPoolImpl.wrapper.workerThreadCaughtUnexpectedThrowable(this, throwable);
-/*     */       } finally {
-/* 531 */         synchronized (ThreadPoolImpl.this.workersLock) {
-/* 532 */           ThreadPoolImpl.this.workers.remove(this);
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private String composeWorkerThreadName(String param1String1, String param1String2) {
-/* 538 */       this.workerThreadName.setLength(0);
-/* 539 */       this.workerThreadName.append("p: ").append(param1String1);
-/* 540 */       this.workerThreadName.append("; w: ").append(param1String2);
-/* 541 */       return this.workerThreadName.toString();
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\threadpool\ThreadPoolImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil.threadpool;
+
+import java.io.IOException;
+import java.io.Closeable;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import com.sun.corba.se.spi.orbutil.threadpool.NoSuchWorkQueueException;
+import com.sun.corba.se.spi.orbutil.threadpool.ThreadPool;
+import com.sun.corba.se.spi.orbutil.threadpool.Work;
+import com.sun.corba.se.spi.orbutil.threadpool.WorkQueue;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.threadpool.WorkQueueImpl;
+
+import com.sun.corba.se.spi.monitoring.MonitoringConstants;
+import com.sun.corba.se.spi.monitoring.MonitoredObject;
+import com.sun.corba.se.spi.monitoring.MonitoringFactories;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.monitoring.LongMonitoredAttributeBase;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+public class ThreadPoolImpl implements ThreadPool
+{
+    // serial counter useful for debugging
+    private static AtomicInteger threadCounter = new AtomicInteger(0);
+    private static final ORBUtilSystemException wrapper =
+        ORBUtilSystemException.get(CORBALogDomains.RPC_TRANSPORT);
+
+
+    // Any time currentThreadCount and/or availableWorkerThreads is updated
+    // or accessed this ThreadPool's WorkQueue must be locked. And, it is
+    // expected that this ThreadPool's WorkQueue is the only object that
+    // updates and accesses these values directly and indirectly though a
+    // call to a method in this ThreadPool. If any call to update or access
+    // those values must synchronized on this ThreadPool's WorkQueue.
+    private WorkQueue workQueue;
+
+    // Stores the number of available worker threads
+    private int availableWorkerThreads = 0;
+
+    // Stores the number of threads in the threadpool currently
+    private int currentThreadCount = 0;
+
+    // Minimum number of worker threads created at instantiation of the threadpool
+    private int minWorkerThreads = 0;
+
+    // Maximum number of worker threads in the threadpool
+    private int maxWorkerThreads = 0;
+
+    // Inactivity timeout value for worker threads to exit and stop running
+    private long inactivityTimeout;
+
+    // Indicates if the threadpool is bounded or unbounded
+    private boolean boundedThreadPool = false;
+
+    // Running count of the work items processed
+    // Set the value to 1 so that divide by zero is avoided in
+    // averageWorkCompletionTime()
+    private AtomicLong processedCount = new AtomicLong(1);
+
+    // Running aggregate of the time taken in millis to execute work items
+    // processed by the threads in the threadpool
+    private AtomicLong totalTimeTaken = new AtomicLong(0);
+
+    // Name of the ThreadPool
+    private String name;
+
+    // MonitoredObject for ThreadPool
+    private MonitoredObject threadpoolMonitoredObject;
+
+    // ThreadGroup in which threads should be created
+    private ThreadGroup threadGroup;
+
+    Object workersLock = new Object();
+    List<WorkerThread> workers = new ArrayList<>();
+
+    /**
+     * This constructor is used to create an unbounded threadpool
+     */
+    public ThreadPoolImpl(ThreadGroup tg, String threadpoolName) {
+        inactivityTimeout = ORBConstants.DEFAULT_INACTIVITY_TIMEOUT;
+        maxWorkerThreads = Integer.MAX_VALUE;
+        workQueue = new WorkQueueImpl(this);
+        threadGroup = tg;
+        name = threadpoolName;
+        initializeMonitoring();
+    }
+
+    /**
+     * This constructor is used to create an unbounded threadpool
+     * in the ThreadGroup of the current thread
+     */
+    public ThreadPoolImpl(String threadpoolName) {
+        this( Thread.currentThread().getThreadGroup(), threadpoolName ) ;
+    }
+
+    /**
+     * This constructor is used to create bounded threadpool
+     */
+    public ThreadPoolImpl(int minSize, int maxSize, long timeout,
+                                            String threadpoolName)
+    {
+        minWorkerThreads = minSize;
+        maxWorkerThreads = maxSize;
+        inactivityTimeout = timeout;
+        boundedThreadPool = true;
+        workQueue = new WorkQueueImpl(this);
+        name = threadpoolName;
+        for (int i = 0; i < minWorkerThreads; i++) {
+            createWorkerThread();
+        }
+        initializeMonitoring();
+    }
+
+    // Note that this method should not return until AFTER all threads have died.
+    public void close() throws IOException {
+
+        // Copy to avoid concurrent modification problems.
+        List<WorkerThread> copy = null;
+        synchronized (workersLock) {
+            copy = new ArrayList<>(workers);
+        }
+
+        for (WorkerThread wt : copy) {
+            wt.close();
+            while (wt.getState() != Thread.State.TERMINATED) {
+                try {
+                    wt.join();
+                } catch (InterruptedException exc) {
+                    wrapper.interruptedJoinCallWhileClosingThreadPool(exc, wt, this);
+                }
+            }
+        }
+
+        threadGroup = null;
+    }
+
+
+    // Setup monitoring for this threadpool
+    private void initializeMonitoring() {
+        // Get root monitored object
+        MonitoredObject root = MonitoringFactories.getMonitoringManagerFactory().
+                createMonitoringManager(MonitoringConstants.DEFAULT_MONITORING_ROOT, null).
+                getRootMonitoredObject();
+
+        // Create the threadpool monitoring root
+        MonitoredObject threadPoolMonitoringObjectRoot = root.getChild(
+                    MonitoringConstants.THREADPOOL_MONITORING_ROOT);
+        if (threadPoolMonitoringObjectRoot == null) {
+            threadPoolMonitoringObjectRoot =  MonitoringFactories.
+                    getMonitoredObjectFactory().createMonitoredObject(
+                    MonitoringConstants.THREADPOOL_MONITORING_ROOT,
+                    MonitoringConstants.THREADPOOL_MONITORING_ROOT_DESCRIPTION);
+            root.addChild(threadPoolMonitoringObjectRoot);
+        }
+        threadpoolMonitoredObject = MonitoringFactories.
+                    getMonitoredObjectFactory().
+                    createMonitoredObject(name,
+                    MonitoringConstants.THREADPOOL_MONITORING_DESCRIPTION);
+
+        threadPoolMonitoringObjectRoot.addChild(threadpoolMonitoredObject);
+
+        LongMonitoredAttributeBase b1 = new
+            LongMonitoredAttributeBase(MonitoringConstants.THREADPOOL_CURRENT_NUMBER_OF_THREADS,
+                    MonitoringConstants.THREADPOOL_CURRENT_NUMBER_OF_THREADS_DESCRIPTION) {
+                public Object getValue() {
+                    return new Long(ThreadPoolImpl.this.currentNumberOfThreads());
+                }
+            };
+        threadpoolMonitoredObject.addAttribute(b1);
+        LongMonitoredAttributeBase b2 = new
+            LongMonitoredAttributeBase(MonitoringConstants.THREADPOOL_NUMBER_OF_AVAILABLE_THREADS,
+                    MonitoringConstants.THREADPOOL_CURRENT_NUMBER_OF_THREADS_DESCRIPTION) {
+                public Object getValue() {
+                    return new Long(ThreadPoolImpl.this.numberOfAvailableThreads());
+                }
+            };
+        threadpoolMonitoredObject.addAttribute(b2);
+        LongMonitoredAttributeBase b3 = new
+            LongMonitoredAttributeBase(MonitoringConstants.THREADPOOL_NUMBER_OF_BUSY_THREADS,
+                    MonitoringConstants.THREADPOOL_NUMBER_OF_BUSY_THREADS_DESCRIPTION) {
+                public Object getValue() {
+                    return new Long(ThreadPoolImpl.this.numberOfBusyThreads());
+                }
+            };
+        threadpoolMonitoredObject.addAttribute(b3);
+        LongMonitoredAttributeBase b4 = new
+            LongMonitoredAttributeBase(MonitoringConstants.THREADPOOL_AVERAGE_WORK_COMPLETION_TIME,
+                    MonitoringConstants.THREADPOOL_AVERAGE_WORK_COMPLETION_TIME_DESCRIPTION) {
+                public Object getValue() {
+                    return new Long(ThreadPoolImpl.this.averageWorkCompletionTime());
+                }
+            };
+        threadpoolMonitoredObject.addAttribute(b4);
+        LongMonitoredAttributeBase b5 = new
+            LongMonitoredAttributeBase(MonitoringConstants.THREADPOOL_CURRENT_PROCESSED_COUNT,
+                    MonitoringConstants.THREADPOOL_CURRENT_PROCESSED_COUNT_DESCRIPTION) {
+                public Object getValue() {
+                    return new Long(ThreadPoolImpl.this.currentProcessedCount());
+                }
+            };
+        threadpoolMonitoredObject.addAttribute(b5);
+
+        // Add the monitored object for the WorkQueue
+
+        threadpoolMonitoredObject.addChild(
+                ((WorkQueueImpl)workQueue).getMonitoredObject());
+    }
+
+    // Package private method to get the monitored object for this
+    // class
+    MonitoredObject getMonitoredObject() {
+        return threadpoolMonitoredObject;
+    }
+
+    public WorkQueue getAnyWorkQueue()
+    {
+        return workQueue;
+    }
+
+    public WorkQueue getWorkQueue(int queueId)
+        throws NoSuchWorkQueueException
+    {
+        if (queueId != 0)
+            throw new NoSuchWorkQueueException();
+        return workQueue;
+    }
+
+    /**
+     * To be called from the workqueue when work is added to the
+     * workQueue. This method would create new threads if required
+     * or notify waiting threads on the queue for available work
+     */
+    void notifyForAvailableWork(WorkQueue aWorkQueue) {
+        synchronized (aWorkQueue) {
+            if (availableWorkerThreads < aWorkQueue.workItemsInQueue()) {
+                createWorkerThread();
+            } else {
+                aWorkQueue.notify();
+            }
+        }
+    }
+
+
+    private Thread createWorkerThreadHelper( String name ) {
+        // Thread creation needs to be in a doPrivileged block
+        // if there is a non-null security manager for two reasons:
+        // 1. The creation of a thread in a specific ThreadGroup
+        //    is a privileged operation.  Lack of a doPrivileged
+        //    block here causes an AccessControlException
+        //    (see bug 6268145).
+        // 2. We want to make sure that the permissions associated
+        //    with this thread do NOT include the permissions of
+        //    the current thread that is calling this method.
+        //    This leads to problems in the app server where
+        //    some threads in the ThreadPool randomly get
+        //    bad permissions, leading to unpredictable
+        //    permission errors (see bug 6021011).
+        //
+        //    A Java thread contains a stack of call frames,
+        //    one for each method called that has not yet returned.
+        //    Each method comes from a particular class.  The class
+        //    was loaded by a ClassLoader which has an associated
+        //    CodeSource, and this determines the Permissions
+        //    for all methods in that class.  The current
+        //    Permissions for the thread are the intersection of
+        //    all Permissions for the methods on the stack.
+        //    This is part of the Security Context of the thread.
+        //
+        //    When a thread creates a new thread, the new thread
+        //    inherits the security context of the old thread.
+        //    This is bad in a ThreadPool, because different
+        //    creators of threads may have different security contexts.
+        //    This leads to occasional unpredictable errors when
+        //    a thread is re-used in a different security context.
+        //
+        //    Avoiding this problem is simple: just do the thread
+        //    creation in a doPrivileged block.  This sets the
+        //    inherited security context to that of the code source
+        //    for the ORB code itself, which contains all permissions
+        //    in either Java SE or Java EE.
+        WorkerThread thread = new WorkerThread(threadGroup, name);
+        synchronized (workersLock) {
+            workers.add(thread);
+        }
+
+        // The thread must be set to a daemon thread so the
+        // VM can exit if the only threads left are PooledThreads
+        // or other daemons.  We don't want to rely on the
+        // calling thread always being a daemon.
+        // Note that no exception is possible here since we
+        // are inside the doPrivileged block.
+        thread.setDaemon(true);
+
+        wrapper.workerThreadCreated(thread, thread.getContextClassLoader());
+
+        thread.start();
+        return null;
+    }
+
+
+    /**
+     * To be called from the workqueue to create worker threads when none
+     * available.
+     */
+    void createWorkerThread() {
+        final String name = getName();
+        synchronized (workQueue) {
+            try {
+                if (System.getSecurityManager() == null) {
+                    createWorkerThreadHelper(name);
+                } else {
+                    // If we get here, we need to create a thread.
+                    AccessController.doPrivileged(
+                            new PrivilegedAction() {
+                        public Object run() {
+                            return createWorkerThreadHelper(name);
+                        }
+                    }
+                    );
+                }
+            } catch (Throwable t) {
+                // Decrementing the count of current worker threads.
+                // But, it will be increased in the finally block.
+                decrementCurrentNumberOfThreads();
+                wrapper.workerThreadCreationFailure(t);
+            } finally {
+                incrementCurrentNumberOfThreads();
+            }
+        }
+    }
+
+    public int minimumNumberOfThreads() {
+        return minWorkerThreads;
+    }
+
+    public int maximumNumberOfThreads() {
+        return maxWorkerThreads;
+    }
+
+    public long idleTimeoutForThreads() {
+        return inactivityTimeout;
+    }
+
+    public int currentNumberOfThreads() {
+        synchronized (workQueue) {
+            return currentThreadCount;
+        }
+    }
+
+    void decrementCurrentNumberOfThreads() {
+        synchronized (workQueue) {
+            currentThreadCount--;
+        }
+    }
+
+    void incrementCurrentNumberOfThreads() {
+        synchronized (workQueue) {
+            currentThreadCount++;
+        }
+    }
+
+    public int numberOfAvailableThreads() {
+        synchronized (workQueue) {
+            return availableWorkerThreads;
+        }
+    }
+
+    public int numberOfBusyThreads() {
+        synchronized (workQueue) {
+            return (currentThreadCount - availableWorkerThreads);
+        }
+    }
+
+    public long averageWorkCompletionTime() {
+        synchronized (workQueue) {
+            return (totalTimeTaken.get() / processedCount.get());
+        }
+    }
+
+    public long currentProcessedCount() {
+        synchronized (workQueue) {
+            return processedCount.get();
+        }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    /**
+    * This method will return the number of WorkQueues serviced by the threadpool.
+    */
+    public int numberOfWorkQueues() {
+        return 1;
+    }
+
+
+    private static synchronized int getUniqueThreadId() {
+        return ThreadPoolImpl.threadCounter.incrementAndGet();
+    }
+
+    /**
+     * This method will decrement the number of available threads
+     * in the threadpool which are waiting for work. Called from
+     * WorkQueueImpl.requestWork()
+     */
+    void decrementNumberOfAvailableThreads() {
+        synchronized (workQueue) {
+            availableWorkerThreads--;
+        }
+    }
+
+    /**
+     * This method will increment the number of available threads
+     * in the threadpool which are waiting for work. Called from
+     * WorkQueueImpl.requestWork()
+     */
+    void incrementNumberOfAvailableThreads() {
+        synchronized (workQueue) {
+            availableWorkerThreads++;
+        }
+    }
+
+
+    private class WorkerThread extends Thread implements Closeable
+    {
+        private Work currentWork;
+        private int threadId = 0; // unique id for the thread
+        private volatile boolean closeCalled = false;
+        private String threadPoolName;
+        // name seen by Thread.getName()
+        private StringBuffer workerThreadName = new StringBuffer();
+
+        WorkerThread(ThreadGroup tg, String threadPoolName) {
+            super(tg, "Idle");
+            this.threadId = ThreadPoolImpl.getUniqueThreadId();
+            this.threadPoolName = threadPoolName;
+            setName(composeWorkerThreadName(threadPoolName, "Idle"));
+        }
+
+        public synchronized void close() {
+            closeCalled = true;
+            interrupt();
+        }
+
+        private void resetClassLoader() {
+
+        }
+
+        private void performWork() {
+            long start = System.currentTimeMillis();
+            try {
+                currentWork.doWork();
+            } catch (Throwable t) {
+                wrapper.workerThreadDoWorkThrowable(this, t);
+            }
+            long elapsedTime = System.currentTimeMillis() - start;
+            totalTimeTaken.addAndGet(elapsedTime);
+            processedCount.incrementAndGet();
+        }
+
+        public void run() {
+            try  {
+                while (!closeCalled) {
+                    try {
+                        currentWork = ((WorkQueueImpl)workQueue).requestWork(
+                            inactivityTimeout);
+                        if (currentWork == null)
+                            continue;
+                    } catch (InterruptedException exc) {
+                        wrapper.workQueueThreadInterrupted( exc, getName(),
+                           Boolean.valueOf(closeCalled));
+
+                        continue ;
+                    } catch (Throwable t) {
+                         wrapper.workerThreadThrowableFromRequestWork(this, t,
+                                workQueue.getName());
+
+                        continue;
+                    }
+
+                    performWork();
+
+                    // set currentWork to null so that the work item can be
+                    // garbage collected without waiting for the next work item.
+                    currentWork = null;
+
+                    resetClassLoader();
+                }
+            } catch (Throwable e) {
+                // This should not be possible
+                wrapper.workerThreadCaughtUnexpectedThrowable(this,e);
+            } finally {
+                synchronized (workersLock) {
+                    workers.remove(this);
+                }
+            }
+        }
+
+        private String composeWorkerThreadName(String poolName, String workerName) {
+            workerThreadName.setLength(0);
+            workerThreadName.append("p: ").append(poolName);
+            workerThreadName.append("; w: ").append(workerName);
+            return workerThreadName.toString();
+        }
+    } // End of WorkerThread class
+
+}
+
+// End of file.

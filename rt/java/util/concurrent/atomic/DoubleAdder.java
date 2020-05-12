@@ -1,340 +1,267 @@
-/*     */ package java.util.concurrent.atomic;
-/*     */ 
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DoubleAdder
-/*     */   extends Striped64
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 7249069246863182397L;
-/*     */   
-/*     */   public void add(double paramDouble) {
-/*     */     // Byte code:
-/*     */     //   0: aload_0
-/*     */     //   1: getfield cells : [Ljava/util/concurrent/atomic/Striped64$Cell;
-/*     */     //   4: dup
-/*     */     //   5: astore_3
-/*     */     //   6: ifnonnull -> 33
-/*     */     //   9: aload_0
-/*     */     //   10: aload_0
-/*     */     //   11: getfield base : J
-/*     */     //   14: dup2
-/*     */     //   15: lstore #4
-/*     */     //   17: lload #4
-/*     */     //   19: invokestatic longBitsToDouble : (J)D
-/*     */     //   22: dload_1
-/*     */     //   23: dadd
-/*     */     //   24: invokestatic doubleToRawLongBits : (D)J
-/*     */     //   27: invokevirtual casBase : (JJ)Z
-/*     */     //   30: ifne -> 101
-/*     */     //   33: iconst_1
-/*     */     //   34: istore #10
-/*     */     //   36: aload_3
-/*     */     //   37: ifnull -> 93
-/*     */     //   40: aload_3
-/*     */     //   41: arraylength
-/*     */     //   42: iconst_1
-/*     */     //   43: isub
-/*     */     //   44: dup
-/*     */     //   45: istore #8
-/*     */     //   47: iflt -> 93
-/*     */     //   50: aload_3
-/*     */     //   51: invokestatic getProbe : ()I
-/*     */     //   54: iload #8
-/*     */     //   56: iand
-/*     */     //   57: aaload
-/*     */     //   58: dup
-/*     */     //   59: astore #9
-/*     */     //   61: ifnull -> 93
-/*     */     //   64: aload #9
-/*     */     //   66: aload #9
-/*     */     //   68: getfield value : J
-/*     */     //   71: dup2
-/*     */     //   72: lstore #6
-/*     */     //   74: lload #6
-/*     */     //   76: invokestatic longBitsToDouble : (J)D
-/*     */     //   79: dload_1
-/*     */     //   80: dadd
-/*     */     //   81: invokestatic doubleToRawLongBits : (D)J
-/*     */     //   84: invokevirtual cas : (JJ)Z
-/*     */     //   87: dup
-/*     */     //   88: istore #10
-/*     */     //   90: ifne -> 101
-/*     */     //   93: aload_0
-/*     */     //   94: dload_1
-/*     */     //   95: aconst_null
-/*     */     //   96: iload #10
-/*     */     //   98: invokevirtual doubleAccumulate : (DLjava/util/function/DoubleBinaryOperator;Z)V
-/*     */     //   101: return
-/*     */     // Line number table:
-/*     */     //   Java source line number -> byte code offset
-/*     */     //   #90	-> 0
-/*     */     //   #93	-> 19
-/*     */     //   #91	-> 27
-/*     */     //   #94	-> 33
-/*     */     //   #95	-> 36
-/*     */     //   #96	-> 51
-/*     */     //   #99	-> 76
-/*     */     //   #97	-> 84
-/*     */     //   #100	-> 93
-/*     */     //   #102	-> 101
-/*     */   }
-/*     */   
-/*     */   public double sum() {
-/* 117 */     Striped64.Cell[] arrayOfCell = this.cells;
-/* 118 */     double d = Double.longBitsToDouble(this.base);
-/* 119 */     if (arrayOfCell != null)
-/* 120 */       for (byte b = 0; b < arrayOfCell.length; b++) {
-/* 121 */         Striped64.Cell cell; if ((cell = arrayOfCell[b]) != null) {
-/* 122 */           d += Double.longBitsToDouble(cell.value);
-/*     */         }
-/*     */       }  
-/* 125 */     return d;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 136 */     Striped64.Cell[] arrayOfCell = this.cells;
-/* 137 */     this.base = 0L;
-/* 138 */     if (arrayOfCell != null) {
-/* 139 */       for (byte b = 0; b < arrayOfCell.length; b++) {
-/* 140 */         Striped64.Cell cell; if ((cell = arrayOfCell[b]) != null) {
-/* 141 */           cell.value = 0L;
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double sumThenReset() {
-/* 157 */     Striped64.Cell[] arrayOfCell = this.cells;
-/* 158 */     double d = Double.longBitsToDouble(this.base);
-/* 159 */     this.base = 0L;
-/* 160 */     if (arrayOfCell != null) {
-/* 161 */       for (byte b = 0; b < arrayOfCell.length; b++) {
-/* 162 */         Striped64.Cell cell; if ((cell = arrayOfCell[b]) != null) {
-/* 163 */           long l = cell.value;
-/* 164 */           cell.value = 0L;
-/* 165 */           d += Double.longBitsToDouble(l);
-/*     */         } 
-/*     */       } 
-/*     */     }
-/* 169 */     return d;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 177 */     return Double.toString(sum());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public double doubleValue() {
-/* 186 */     return sum();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long longValue() {
-/* 194 */     return (long)sum();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int intValue() {
-/* 202 */     return (int)sum();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public float floatValue() {
-/* 210 */     return (float)sum();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static class SerializationProxy
-/*     */     implements Serializable
-/*     */   {
-/*     */     private static final long serialVersionUID = 7249069246863182397L;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final double value;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     SerializationProxy(DoubleAdder param1DoubleAdder) {
-/* 228 */       this.value = param1DoubleAdder.sum();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private Object readResolve() {
-/* 239 */       DoubleAdder doubleAdder = new DoubleAdder();
-/* 240 */       doubleAdder.base = Double.doubleToRawLongBits(this.value);
-/* 241 */       return doubleAdder;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object writeReplace() {
-/* 255 */     return new SerializationProxy(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws InvalidObjectException {
-/* 264 */     throw new InvalidObjectException("Proxy required");
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\atomic\DoubleAdder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent.atomic;
+import java.io.Serializable;
+
+/**
+ * One or more variables that together maintain an initially zero
+ * {@code double} sum.  When updates (method {@link #add}) are
+ * contended across threads, the set of variables may grow dynamically
+ * to reduce contention.  Method {@link #sum} (or, equivalently {@link
+ * #doubleValue}) returns the current total combined across the
+ * variables maintaining the sum. The order of accumulation within or
+ * across threads is not guaranteed. Thus, this class may not be
+ * applicable if numerical stability is required, especially when
+ * combining values of substantially different orders of magnitude.
+ *
+ * <p>This class is usually preferable to alternatives when multiple
+ * threads update a common value that is used for purposes such as
+ * summary statistics that are frequently updated but less frequently
+ * read.
+ *
+ * <p>This class extends {@link Number}, but does <em>not</em> define
+ * methods such as {@code equals}, {@code hashCode} and {@code
+ * compareTo} because instances are expected to be mutated, and so are
+ * not useful as collection keys.
+ *
+ * @since 1.8
+ * @author Doug Lea
+ */
+public class DoubleAdder extends Striped64 implements Serializable {
+    private static final long serialVersionUID = 7249069246863182397L;
+
+    /*
+     * Note that we must use "long" for underlying representations,
+     * because there is no compareAndSet for double, due to the fact
+     * that the bitwise equals used in any CAS implementation is not
+     * the same as double-precision equals.  However, we use CAS only
+     * to detect and alleviate contention, for which bitwise equals
+     * works best anyway. In principle, the long/double conversions
+     * used here should be essentially free on most platforms since
+     * they just re-interpret bits.
+     */
+
+    /**
+     * Creates a new adder with initial sum of zero.
+     */
+    public DoubleAdder() {
+    }
+
+    /**
+     * Adds the given value.
+     *
+     * @param x the value to add
+     */
+    public void add(double x) {
+        Cell[] as; long b, v; int m; Cell a;
+        if ((as = cells) != null ||
+            !casBase(b = base,
+                     Double.doubleToRawLongBits
+                     (Double.longBitsToDouble(b) + x))) {
+            boolean uncontended = true;
+            if (as == null || (m = as.length - 1) < 0 ||
+                (a = as[getProbe() & m]) == null ||
+                !(uncontended = a.cas(v = a.value,
+                                      Double.doubleToRawLongBits
+                                      (Double.longBitsToDouble(v) + x))))
+                doubleAccumulate(x, null, uncontended);
+        }
+    }
+
+    /**
+     * Returns the current sum.  The returned value is <em>NOT</em> an
+     * atomic snapshot; invocation in the absence of concurrent
+     * updates returns an accurate result, but concurrent updates that
+     * occur while the sum is being calculated might not be
+     * incorporated.  Also, because floating-point arithmetic is not
+     * strictly associative, the returned result need not be identical
+     * to the value that would be obtained in a sequential series of
+     * updates to a single variable.
+     *
+     * @return the sum
+     */
+    public double sum() {
+        Cell[] as = cells; Cell a;
+        double sum = Double.longBitsToDouble(base);
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null)
+                    sum += Double.longBitsToDouble(a.value);
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * Resets variables maintaining the sum to zero.  This method may
+     * be a useful alternative to creating a new adder, but is only
+     * effective if there are no concurrent updates.  Because this
+     * method is intrinsically racy, it should only be used when it is
+     * known that no threads are concurrently updating.
+     */
+    public void reset() {
+        Cell[] as = cells; Cell a;
+        base = 0L; // relies on fact that double 0 must have same rep as long
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null)
+                    a.value = 0L;
+            }
+        }
+    }
+
+    /**
+     * Equivalent in effect to {@link #sum} followed by {@link
+     * #reset}. This method may apply for example during quiescent
+     * points between multithreaded computations.  If there are
+     * updates concurrent with this method, the returned value is
+     * <em>not</em> guaranteed to be the final value occurring before
+     * the reset.
+     *
+     * @return the sum
+     */
+    public double sumThenReset() {
+        Cell[] as = cells; Cell a;
+        double sum = Double.longBitsToDouble(base);
+        base = 0L;
+        if (as != null) {
+            for (int i = 0; i < as.length; ++i) {
+                if ((a = as[i]) != null) {
+                    long v = a.value;
+                    a.value = 0L;
+                    sum += Double.longBitsToDouble(v);
+                }
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * Returns the String representation of the {@link #sum}.
+     * @return the String representation of the {@link #sum}
+     */
+    public String toString() {
+        return Double.toString(sum());
+    }
+
+    /**
+     * Equivalent to {@link #sum}.
+     *
+     * @return the sum
+     */
+    public double doubleValue() {
+        return sum();
+    }
+
+    /**
+     * Returns the {@link #sum} as a {@code long} after a
+     * narrowing primitive conversion.
+     */
+    public long longValue() {
+        return (long)sum();
+    }
+
+    /**
+     * Returns the {@link #sum} as an {@code int} after a
+     * narrowing primitive conversion.
+     */
+    public int intValue() {
+        return (int)sum();
+    }
+
+    /**
+     * Returns the {@link #sum} as a {@code float}
+     * after a narrowing primitive conversion.
+     */
+    public float floatValue() {
+        return (float)sum();
+    }
+
+    /**
+     * Serialization proxy, used to avoid reference to the non-public
+     * Striped64 superclass in serialized forms.
+     * @serial include
+     */
+    private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = 7249069246863182397L;
+
+        /**
+         * The current value returned by sum().
+         * @serial
+         */
+        private final double value;
+
+        SerializationProxy(DoubleAdder a) {
+            value = a.sum();
+        }
+
+        /**
+         * Returns a {@code DoubleAdder} object with initial state
+         * held by this proxy.
+         *
+         * @return a {@code DoubleAdder} object with initial state
+         * held by this proxy.
+         */
+        private Object readResolve() {
+            DoubleAdder a = new DoubleAdder();
+            a.base = Double.doubleToRawLongBits(value);
+            return a;
+        }
+    }
+
+    /**
+     * Returns a
+     * <a href="../../../../serialized-form.html#java.util.concurrent.atomic.DoubleAdder.SerializationProxy">
+     * SerializationProxy</a>
+     * representing the state of this instance.
+     *
+     * @return a {@link SerializationProxy}
+     * representing the state of this instance
+     */
+    private Object writeReplace() {
+        return new SerializationProxy(this);
+    }
+
+    /**
+     * @param s the stream
+     * @throws java.io.InvalidObjectException always
+     */
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.InvalidObjectException {
+        throw new java.io.InvalidObjectException("Proxy required");
+    }
+
+}

@@ -1,407 +1,414 @@
-/*     */ package com.sun.org.apache.xml.internal.serializer;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.Writer;
-/*     */ import java.util.Properties;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.xml.sax.Attributes;
-/*     */ import org.xml.sax.ContentHandler;
-/*     */ import org.xml.sax.Locator;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.ext.LexicalHandler;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ToTextSAXHandler
-/*     */   extends ToSAXHandler
-/*     */ {
-/*     */   public void endElement(String elemName) throws SAXException {
-/*  53 */     if (this.m_tracer != null) {
-/*  54 */       fireEndElem(elemName);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement(String arg0, String arg1, String arg2) throws SAXException {
-/*  63 */     if (this.m_tracer != null) {
-/*  64 */       fireEndElem(arg2);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public ToTextSAXHandler(ContentHandler hdlr, LexicalHandler lex, String encoding) {
-/*  69 */     super(hdlr, lex, encoding);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ToTextSAXHandler(ContentHandler handler, String encoding) {
-/*  77 */     super(handler, encoding);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void comment(char[] ch, int start, int length) throws SAXException {
-/*  83 */     if (this.m_tracer != null) {
-/*  84 */       fireCommentEvent(ch, start, length);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void comment(String data) throws SAXException {
-/*  89 */     int length = data.length();
-/*  90 */     if (length > this.m_charsBuff.length)
-/*     */     {
-/*  92 */       this.m_charsBuff = new char[length * 2 + 1];
-/*     */     }
-/*  94 */     data.getChars(0, length, this.m_charsBuff, 0);
-/*  95 */     comment(this.m_charsBuff, 0, length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Properties getOutputFormat() {
-/* 103 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutputStream getOutputStream() {
-/* 111 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Writer getWriter() {
-/* 119 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void indent(int n) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean reset() {
-/* 136 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void serialize(Node node) throws IOException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean setEscaping(boolean escape) {
-/* 151 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setIndent(boolean indent) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOutputFormat(Properties format) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOutputStream(OutputStream output) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setWriter(Writer writer) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAttribute(String uri, String localName, String rawName, String type, String value, boolean XSLAttribute) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void attributeDecl(String arg0, String arg1, String arg2, String arg3, String arg4) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void elementDecl(String arg0, String arg1) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void externalEntityDecl(String arg0, String arg1, String arg2) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void internalEntityDecl(String arg0, String arg1) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endPrefixMapping(String arg0) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void ignorableWhitespace(char[] arg0, int arg1, int arg2) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void processingInstruction(String arg0, String arg1) throws SAXException {
-/* 253 */     if (this.m_tracer != null) {
-/* 254 */       fireEscapingEvent(arg0, arg1);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDocumentLocator(Locator arg0) {
-/* 262 */     super.setDocumentLocator(arg0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void skippedEntity(String arg0) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String arg0, String arg1, String arg2, Attributes arg3) throws SAXException {
-/* 282 */     flushPending();
-/* 283 */     super.startElement(arg0, arg1, arg2, arg3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endCDATA() throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endDTD() throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startCDATA() throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startEntity(String arg0) throws SAXException {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String elementNamespaceURI, String elementLocalName, String elementName) throws SAXException {
-/* 325 */     super.startElement(elementNamespaceURI, elementLocalName, elementName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void startElement(String elementName) throws SAXException {
-/* 331 */     super.startElement(elementName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endDocument() throws SAXException {
-/* 341 */     flushPending();
-/* 342 */     this.m_saxHandler.endDocument();
-/*     */     
-/* 344 */     if (this.m_tracer != null) {
-/* 345 */       fireEndDoc();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(String characters) throws SAXException {
-/* 355 */     int length = characters.length();
-/* 356 */     if (length > this.m_charsBuff.length)
-/*     */     {
-/* 358 */       this.m_charsBuff = new char[length * 2 + 1];
-/*     */     }
-/* 360 */     characters.getChars(0, length, this.m_charsBuff, 0);
-/*     */     
-/* 362 */     this.m_saxHandler.characters(this.m_charsBuff, 0, length);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void characters(char[] characters, int offset, int length) throws SAXException {
-/* 372 */     this.m_saxHandler.characters(characters, offset, length);
-/*     */ 
-/*     */     
-/* 375 */     if (this.m_tracer != null) {
-/* 376 */       fireCharEvent(characters, offset, length);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAttribute(String name, String value) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean startPrefixMapping(String prefix, String uri, boolean shouldFlush) throws SAXException {
-/* 395 */     return false;
-/*     */   }
-/*     */   
-/*     */   public void startPrefixMapping(String prefix, String uri) throws SAXException {}
-/*     */   
-/*     */   public void namespaceAfterStartElement(String prefix, String uri) throws SAXException {}
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serializer\ToTextSAXHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ToTextSAXHandler.java,v 1.3 2005/09/28 13:49:08 pvedula Exp $
+ */
+package com.sun.org.apache.xml.internal.serializer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.util.Properties;
+
+import org.w3c.dom.Node;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.LexicalHandler;
+
+/**
+ * This class converts SAX-like event to SAX events for
+ * xsl:output method "text".
+ *
+ * This class is only to be used internally. This class is not a public API.
+ *
+ * @xsl.usage internal
+ */
+public final class ToTextSAXHandler extends ToSAXHandler
+{
+    /**
+     * From XSLTC
+     * @see ExtendedContentHandler#endElement(String)
+     */
+    public void endElement(String elemName) throws SAXException
+    {
+        if (m_tracer != null)
+            super.fireEndElem(elemName);
+    }
+
+    /**
+     * @see org.xml.sax.ContentHandler#endElement(String, String, String)
+     */
+    public void endElement(String arg0, String arg1, String arg2)
+        throws SAXException
+    {
+                if (m_tracer != null)
+            super.fireEndElem(arg2);
+    }
+
+    public ToTextSAXHandler(ContentHandler hdlr, LexicalHandler lex, String encoding)
+    {
+        super(hdlr, lex, encoding);
+    }
+
+        /**
+     * From XSLTC
+     */
+    public ToTextSAXHandler(ContentHandler handler, String encoding)
+    {
+        super(handler,encoding);
+    }
+
+    public void comment(char ch[], int start, int length)
+        throws org.xml.sax.SAXException
+    {
+        if (m_tracer != null)
+            super.fireCommentEvent(ch, start, length);
+    }
+
+    public void comment(String data) throws org.xml.sax.SAXException
+    {
+        final int length = data.length();
+        if (length > m_charsBuff.length)
+        {
+            m_charsBuff = new char[length*2 + 1];
+        }
+        data.getChars(0, length, m_charsBuff, 0);
+        comment(m_charsBuff, 0, length);
+    }
+
+    /**
+     * @see Serializer#getOutputFormat()
+     */
+    public Properties getOutputFormat()
+    {
+        return null;
+    }
+
+    /**
+     * @see Serializer#getOutputStream()
+     */
+    public OutputStream getOutputStream()
+    {
+        return null;
+    }
+
+    /**
+     * @see Serializer#getWriter()
+     */
+    public Writer getWriter()
+    {
+        return null;
+    }
+
+    /**
+     * Does nothing because
+     * the indent attribute is ignored for text output.
+     *
+     */
+    public void indent(int n) throws SAXException
+    {
+    }
+
+    /**
+     * @see Serializer#reset()
+     */
+    public boolean reset()
+    {
+        return false;
+    }
+
+    /**
+     * @see DOMSerializer#serialize(Node)
+     */
+    public void serialize(Node node) throws IOException
+    {
+    }
+
+    /**
+     * @see SerializationHandler#setEscaping(boolean)
+     */
+    public boolean setEscaping(boolean escape)
+    {
+        return false;
+    }
+
+    /**
+     * @see SerializationHandler#setIndent(boolean)
+     */
+    public void setIndent(boolean indent)
+    {
+    }
+
+    /**
+     * @see Serializer#setOutputFormat(Properties)
+     */
+    public void setOutputFormat(Properties format)
+    {
+    }
+
+    /**
+     * @see Serializer#setOutputStream(OutputStream)
+     */
+    public void setOutputStream(OutputStream output)
+    {
+    }
+
+    /**
+     * @see Serializer#setWriter(Writer)
+     */
+    public void setWriter(Writer writer)
+    {
+    }
+
+    /**
+     * @see ExtendedContentHandler#addAttribute(String, String, String, String, String)
+     */
+    public void addAttribute(
+        String uri,
+        String localName,
+        String rawName,
+        String type,
+        String value,
+        boolean XSLAttribute)
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ext.DeclHandler#attributeDecl(String, String, String, String, String)
+     */
+    public void attributeDecl(
+        String arg0,
+        String arg1,
+        String arg2,
+        String arg3,
+        String arg4)
+        throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ext.DeclHandler#elementDecl(String, String)
+     */
+    public void elementDecl(String arg0, String arg1) throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ext.DeclHandler#externalEntityDecl(String, String, String)
+     */
+    public void externalEntityDecl(String arg0, String arg1, String arg2)
+        throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ext.DeclHandler#internalEntityDecl(String, String)
+     */
+    public void internalEntityDecl(String arg0, String arg1)
+        throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ContentHandler#endPrefixMapping(String)
+     */
+    public void endPrefixMapping(String arg0) throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
+     */
+    public void ignorableWhitespace(char[] arg0, int arg1, int arg2)
+        throws SAXException
+    {
+    }
+
+    /**
+     * From XSLTC
+     * @see org.xml.sax.ContentHandler#processingInstruction(String, String)
+     */
+    public void processingInstruction(String arg0, String arg1)
+        throws SAXException
+    {
+        if (m_tracer != null)
+            super.fireEscapingEvent(arg0, arg1);
+    }
+
+    /**
+     * @see org.xml.sax.ContentHandler#setDocumentLocator(Locator)
+     */
+    public void setDocumentLocator(Locator arg0)
+    {
+        super.setDocumentLocator(arg0);
+    }
+
+    /**
+     * @see org.xml.sax.ContentHandler#skippedEntity(String)
+     */
+    public void skippedEntity(String arg0) throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ContentHandler#startElement(String, String, String, Attributes)
+     */
+    public void startElement(
+        String arg0,
+        String arg1,
+        String arg2,
+        Attributes arg3)
+        throws SAXException
+    {
+        flushPending();
+        super.startElement(arg0, arg1, arg2, arg3);
+    }
+
+    /**
+     * @see org.xml.sax.ext.LexicalHandler#endCDATA()
+     */
+    public void endCDATA() throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ext.LexicalHandler#endDTD()
+     */
+    public void endDTD() throws SAXException
+    {
+    }
+
+    /**
+     * @see org.xml.sax.ext.LexicalHandler#startCDATA()
+     */
+    public void startCDATA() throws SAXException
+    {
+    }
+
+
+    /**
+     * @see org.xml.sax.ext.LexicalHandler#startEntity(String)
+     */
+    public void startEntity(String arg0) throws SAXException
+    {
+    }
+
+
+    /**
+     * From XSLTC
+     * @see ExtendedContentHandler#startElement(String)
+     */
+    public void startElement(
+    String elementNamespaceURI,
+    String elementLocalName,
+    String elementName) throws SAXException
+    {
+        super.startElement(elementNamespaceURI, elementLocalName, elementName);
+    }
+
+    public void startElement(
+    String elementName) throws SAXException
+    {
+        super.startElement(elementName);
+    }
+
+
+    /**
+     * From XSLTC
+     * @see org.xml.sax.ContentHandler#endDocument()
+     */
+    public void endDocument() throws SAXException {
+
+        flushPending();
+        m_saxHandler.endDocument();
+
+        if (m_tracer != null)
+            super.fireEndDoc();
+    }
+
+    /**
+         *
+     * @see ExtendedContentHandler#characters(String)
+     */
+    public void characters(String characters)
+    throws SAXException
+    {
+        final int length = characters.length();
+        if (length > m_charsBuff.length)
+        {
+            m_charsBuff = new char[length*2 + 1];
+        }
+        characters.getChars(0, length, m_charsBuff, 0);
+
+        m_saxHandler.characters(m_charsBuff, 0, length);
+
+    }
+    /**
+         * @see org.xml.sax.ContentHandler#characters(char[], int, int)
+     */
+    public void characters(char[] characters, int offset, int length)
+    throws SAXException
+    {
+
+        m_saxHandler.characters(characters, offset, length);
+
+        // time to fire off characters event
+                if (m_tracer != null)
+            super.fireCharEvent(characters, offset, length);
+    }
+
+    /**
+     * From XSLTC
+     */
+    public void addAttribute(String name, String value)
+    {
+        // do nothing
+    }
+
+
+    public boolean startPrefixMapping(
+        String prefix,
+        String uri,
+        boolean shouldFlush)
+        throws SAXException
+    {
+        // no namespace support for HTML
+        return false;
+    }
+
+
+    public void startPrefixMapping(String prefix, String uri)
+        throws org.xml.sax.SAXException
+    {
+        // no namespace support for HTML
+    }
+
+
+    public void namespaceAfterStartElement(
+        final String prefix,
+        final String uri)
+        throws SAXException
+    {
+        // no namespace support for HTML
+    }
+
+}

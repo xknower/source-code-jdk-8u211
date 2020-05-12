@@ -1,127 +1,121 @@
-/*     */ package com.sun.org.apache.xpath.internal.axes;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMIterator;
-/*     */ import com.sun.org.apache.xml.internal.utils.WrappedRuntimeException;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.ArrayList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class IteratorPool
-/*     */   implements Serializable
-/*     */ {
-/*     */   static final long serialVersionUID = -460927331149566998L;
-/*     */   private final DTMIterator m_orig;
-/*     */   private final ArrayList m_freeStack;
-/*     */   
-/*     */   public IteratorPool(DTMIterator original) {
-/*  55 */     this.m_orig = original;
-/*  56 */     this.m_freeStack = new ArrayList();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized DTMIterator getInstanceOrThrow() throws CloneNotSupportedException {
-/*  68 */     if (this.m_freeStack.isEmpty())
-/*     */     {
-/*     */ 
-/*     */       
-/*  72 */       return (DTMIterator)this.m_orig.clone();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  77 */     DTMIterator result = this.m_freeStack.remove(this.m_freeStack.size() - 1);
-/*  78 */     return result;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized DTMIterator getInstance() {
-/*  90 */     if (this.m_freeStack.isEmpty()) {
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */ 
-/*     */         
-/*  96 */         return (DTMIterator)this.m_orig.clone();
-/*     */       }
-/*  98 */       catch (Exception ex) {
-/*     */         
-/* 100 */         throw new WrappedRuntimeException(ex);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 106 */     DTMIterator result = this.m_freeStack.remove(this.m_freeStack.size() - 1);
-/* 107 */     return result;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void freeInstance(DTMIterator obj) {
-/* 119 */     this.m_freeStack.add(obj);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\axes\IteratorPool.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: IteratorPool.java,v 1.2.4.1 2005/09/14 19:45:19 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.axes;
+
+import java.util.ArrayList;
+
+import com.sun.org.apache.xml.internal.dtm.DTMIterator;
+import com.sun.org.apache.xml.internal.utils.WrappedRuntimeException;
+
+/**
+ * Pool of object of a given type to pick from to help memory usage
+ * @xsl.usage internal
+ */
+public final class IteratorPool implements java.io.Serializable
+{
+    static final long serialVersionUID = -460927331149566998L;
+
+  /**
+   * Type of objects in this pool.
+   */
+  private final DTMIterator m_orig;
+
+  /**
+   * Stack of given objects this points to.
+   */
+  private final ArrayList m_freeStack;
+
+  /**
+   * Constructor IteratorPool
+   *
+   * @param original The original iterator from which all others will be cloned.
+   */
+  public IteratorPool(DTMIterator original)
+  {
+    m_orig = original;
+    m_freeStack = new ArrayList();
+  }
+
+  /**
+   * Get an instance of the given object in this pool
+   *
+   * @return An instance of the given object
+   */
+  public synchronized DTMIterator getInstanceOrThrow()
+    throws CloneNotSupportedException
+  {
+    // Check if the pool is empty.
+    if (m_freeStack.isEmpty())
+    {
+
+      // Create a new object if so.
+      return (DTMIterator)m_orig.clone();
+    }
+    else
+    {
+      // Remove object from end of free pool.
+      DTMIterator result = (DTMIterator)m_freeStack.remove(m_freeStack.size() - 1);
+      return result;
+    }
+  }
+
+  /**
+   * Get an instance of the given object in this pool
+   *
+   * @return An instance of the given object
+   */
+  public synchronized DTMIterator getInstance()
+  {
+    // Check if the pool is empty.
+    if (m_freeStack.isEmpty())
+    {
+
+      // Create a new object if so.
+      try
+      {
+        return (DTMIterator)m_orig.clone();
+      }
+      catch (Exception ex)
+      {
+        throw new WrappedRuntimeException(ex);
+      }
+    }
+    else
+    {
+      // Remove object from end of free pool.
+      DTMIterator result = (DTMIterator)m_freeStack.remove(m_freeStack.size() - 1);
+      return result;
+    }
+  }
+
+  /**
+   * Add an instance of the given object to the pool
+   *
+   *
+   * @param obj Object to add.
+   */
+  public synchronized void freeInstance(DTMIterator obj)
+  {
+    m_freeStack.add(obj);
+  }
+}

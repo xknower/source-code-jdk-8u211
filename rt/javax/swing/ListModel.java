@@ -1,19 +1,71 @@
+/*
+ * Copyright (c) 1997, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package javax.swing;
 
 import javax.swing.event.ListDataListener;
 
-public interface ListModel<E> {
-  int getSize();
-  
-  E getElementAt(int paramInt);
-  
-  void addListDataListener(ListDataListener paramListDataListener);
-  
-  void removeListDataListener(ListDataListener paramListDataListener);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\ListModel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * This interface defines the methods components like JList use
+ * to get the value of each cell in a list and the length of the list.
+ * Logically the model is a vector, indices vary from 0 to
+ * ListDataModel.getSize() - 1.  Any change to the contents or
+ * length of the data model must be reported to all of the
+ * ListDataListeners.
+ *
+ * @param <E> the type of the elements of this model
+ *
+ * @author Hans Muller
+ * @see JList
  */
+public interface ListModel<E>
+{
+  /**
+   * Returns the length of the list.
+   * @return the length of the list
+   */
+  int getSize();
+
+  /**
+   * Returns the value at the specified index.
+   * @param index the requested index
+   * @return the value at <code>index</code>
+   */
+  E getElementAt(int index);
+
+  /**
+   * Adds a listener to the list that's notified each time a change
+   * to the data model occurs.
+   * @param l the <code>ListDataListener</code> to be added
+   */
+  void addListDataListener(ListDataListener l);
+
+  /**
+   * Removes a listener from the list that's notified each time a
+   * change to the data model occurs.
+   * @param l the <code>ListDataListener</code> to be removed
+   */
+  void removeListDataListener(ListDataListener l);
+}

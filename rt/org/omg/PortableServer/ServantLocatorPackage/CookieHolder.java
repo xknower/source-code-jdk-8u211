@@ -1,63 +1,57 @@
-/*    */ package org.omg.PortableServer.ServantLocatorPackage;
-/*    */ 
-/*    */ import org.omg.CORBA.NO_IMPLEMENT;
-/*    */ import org.omg.CORBA.TypeCode;
-/*    */ import org.omg.CORBA.portable.InputStream;
-/*    */ import org.omg.CORBA.portable.OutputStream;
-/*    */ import org.omg.CORBA.portable.Streamable;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class CookieHolder
-/*    */   implements Streamable
-/*    */ {
-/*    */   public Object value;
-/*    */   
-/*    */   public CookieHolder() {}
-/*    */   
-/*    */   public CookieHolder(Object paramObject) {
-/* 43 */     this.value = paramObject;
-/*    */   }
-/*    */   
-/*    */   public void _read(InputStream paramInputStream) {
-/* 47 */     throw new NO_IMPLEMENT();
-/*    */   }
-/*    */   
-/*    */   public void _write(OutputStream paramOutputStream) {
-/* 51 */     throw new NO_IMPLEMENT();
-/*    */   }
-/*    */   
-/*    */   public TypeCode _type() {
-/* 55 */     throw new NO_IMPLEMENT();
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\PortableServer\ServantLocatorPackage\CookieHolder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package org.omg.PortableServer.ServantLocatorPackage;
+
+/**
+ * The native type PortableServer::ServantLocator::Cookie is mapped
+ * to java.lang.Object. A CookieHolder class is provided for passing
+ * the Cookie type as an out parameter. The CookieHolder class
+ * follows exactly the same pattern as the other holder classes
+ * for basic types.
+ */
+
+final public class CookieHolder implements org.omg.CORBA.portable.Streamable
+{
+    public java.lang.Object value;
+
+    public CookieHolder() { }
+
+    public CookieHolder(java.lang.Object initial) {
+        value = initial;
+    }
+
+    public void _read( org.omg.CORBA.portable.InputStream is) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    public void _write( org.omg.CORBA.portable.OutputStream os) {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+
+    public org.omg.CORBA.TypeCode _type() {
+        throw new org.omg.CORBA.NO_IMPLEMENT();
+    }
+}

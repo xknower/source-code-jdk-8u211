@@ -1,92 +1,86 @@
-/*    */ package javax.management;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class RuntimeOperationsException
-/*    */   extends JMRuntimeException
-/*    */ {
-/*    */   private static final long serialVersionUID = -8408923047489133588L;
-/*    */   private RuntimeException runtimeException;
-/*    */   
-/*    */   public RuntimeOperationsException(RuntimeException paramRuntimeException) {
-/* 54 */     this.runtimeException = paramRuntimeException;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public RuntimeOperationsException(RuntimeException paramRuntimeException, String paramString) {
-/* 65 */     super(paramString);
-/* 66 */     this.runtimeException = paramRuntimeException;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public RuntimeException getTargetException() {
-/* 75 */     return this.runtimeException;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Throwable getCause() {
-/* 84 */     return this.runtimeException;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\RuntimeOperationsException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+
+
+/**
+ * Represents runtime exceptions thrown in the agent when performing operations on MBeans.
+ * It wraps the actual <CODE>java.lang.RuntimeException</CODE> thrown.
+ *
+ * @since 1.5
+ */
+public class RuntimeOperationsException extends JMRuntimeException   {
+
+    /* Serial version */
+    private static final long serialVersionUID = -8408923047489133588L;
+
+    /**
+     * @serial The encapsulated {@link RuntimeException}
+     */
+    private java.lang.RuntimeException runtimeException ;
+
+
+    /**
+     * Creates a <CODE>RuntimeOperationsException</CODE> that wraps the actual <CODE>java.lang.RuntimeException</CODE>.
+     *
+     * @param e the wrapped exception.
+     */
+    public RuntimeOperationsException(java.lang.RuntimeException e) {
+        super() ;
+        runtimeException = e ;
+    }
+
+    /**
+     * Creates a <CODE>RuntimeOperationsException</CODE> that wraps the actual <CODE>java.lang.RuntimeException</CODE>
+     * with a detailed message.
+     *
+     * @param e the wrapped exception.
+     * @param message the detail message.
+     */
+    public RuntimeOperationsException(java.lang.RuntimeException e, String message) {
+        super(message);
+        runtimeException = e ;
+    }
+
+    /**
+     * Returns the actual {@link RuntimeException} thrown.
+     *
+     * @return the wrapped {@link RuntimeException}.
+     */
+    public java.lang.RuntimeException getTargetException()  {
+        return runtimeException ;
+    }
+
+    /**
+     * Returns the actual {@link RuntimeException} thrown.
+     *
+     * @return the wrapped {@link RuntimeException}.
+     */
+    public Throwable getCause() {
+        return runtimeException;
+    }
+}

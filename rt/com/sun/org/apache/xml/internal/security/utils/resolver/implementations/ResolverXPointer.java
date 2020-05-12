@@ -1,186 +1,180 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils.resolver.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverContext;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ResolverXPointer
-/*     */   extends ResourceResolverSpi
-/*     */ {
-/*  53 */   private static Logger log = Logger.getLogger(ResolverXPointer.class.getName());
-/*     */   
-/*     */   private static final String XP = "#xpointer(id(";
-/*  56 */   private static final int XP_LENGTH = "#xpointer(id(".length();
-/*     */ 
-/*     */   
-/*     */   public boolean engineIsThreadSafe() {
-/*  60 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureInput engineResolveURI(ResourceResolverContext paramResourceResolverContext) throws ResourceResolverException {
-/*     */     Element element;
-/*  70 */     Document document1 = null;
-/*  71 */     Document document2 = paramResourceResolverContext.attr.getOwnerElement().getOwnerDocument();
-/*     */     
-/*  73 */     if (isXPointerSlash(paramResourceResolverContext.uriToResolve)) {
-/*  74 */       document1 = document2;
-/*  75 */     } else if (isXPointerId(paramResourceResolverContext.uriToResolve)) {
-/*  76 */       String str = getXPointerId(paramResourceResolverContext.uriToResolve);
-/*  77 */       element = document2.getElementById(str);
-/*     */       
-/*  79 */       if (paramResourceResolverContext.secureValidation) {
-/*  80 */         Element element1 = paramResourceResolverContext.attr.getOwnerDocument().getDocumentElement();
-/*  81 */         if (!XMLUtils.protectAgainstWrappingAttack(element1, str)) {
-/*  82 */           Object[] arrayOfObject = { str };
-/*  83 */           throw new ResourceResolverException("signature.Verification.MultipleIDs", arrayOfObject, paramResourceResolverContext.attr, paramResourceResolverContext.baseUri);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/*  89 */       if (element == null) {
-/*  90 */         Object[] arrayOfObject = { str };
-/*     */         
-/*  92 */         throw new ResourceResolverException("signature.Verification.MissingID", arrayOfObject, paramResourceResolverContext.attr, paramResourceResolverContext.baseUri);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/*  98 */     XMLSignatureInput xMLSignatureInput = new XMLSignatureInput(element);
-/*     */     
-/* 100 */     xMLSignatureInput.setMIMEType("text/xml");
-/* 101 */     if (paramResourceResolverContext.baseUri != null && paramResourceResolverContext.baseUri.length() > 0) {
-/* 102 */       xMLSignatureInput.setSourceURI(paramResourceResolverContext.baseUri.concat(paramResourceResolverContext.uriToResolve));
-/*     */     } else {
-/* 104 */       xMLSignatureInput.setSourceURI(paramResourceResolverContext.uriToResolve);
-/*     */     } 
-/*     */     
-/* 107 */     return xMLSignatureInput;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean engineCanResolveURI(ResourceResolverContext paramResourceResolverContext) {
-/* 114 */     if (paramResourceResolverContext.uriToResolve == null) {
-/* 115 */       return false;
-/*     */     }
-/* 117 */     if (isXPointerSlash(paramResourceResolverContext.uriToResolve) || isXPointerId(paramResourceResolverContext.uriToResolve)) {
-/* 118 */       return true;
-/*     */     }
-/*     */     
-/* 121 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isXPointerSlash(String paramString) {
-/* 131 */     if (paramString.equals("#xpointer(/)")) {
-/* 132 */       return true;
-/*     */     }
-/*     */     
-/* 135 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isXPointerId(String paramString) {
-/* 145 */     if (paramString.startsWith("#xpointer(id(") && paramString.endsWith("))")) {
-/* 146 */       String str = paramString.substring(XP_LENGTH, paramString.length() - 2);
-/*     */       
-/* 148 */       int i = str.length() - 1;
-/* 149 */       if ((str.charAt(0) == '"' && str.charAt(i) == '"') || (str
-/* 150 */         .charAt(0) == '\'' && str.charAt(i) == '\'')) {
-/* 151 */         if (log.isLoggable(Level.FINE)) {
-/* 152 */           log.log(Level.FINE, "Id = " + str.substring(1, i));
-/*     */         }
-/* 154 */         return true;
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 158 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String getXPointerId(String paramString) {
-/* 168 */     if (paramString.startsWith("#xpointer(id(") && paramString.endsWith("))")) {
-/* 169 */       String str = paramString.substring(XP_LENGTH, paramString.length() - 2);
-/*     */       
-/* 171 */       int i = str.length() - 1;
-/* 172 */       if ((str.charAt(0) == '"' && str.charAt(i) == '"') || (str
-/* 173 */         .charAt(0) == '\'' && str.charAt(i) == '\'')) {
-/* 174 */         return str.substring(1, i);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 178 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\resolver\implementations\ResolverXPointer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils.resolver.implementations;
+
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverContext;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverException;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+/**
+ * Handles barename XPointer Reference URIs.
+ * <BR />
+ * To retain comments while selecting an element by an identifier ID,
+ * use the following full XPointer: URI='#xpointer(id('ID'))'.
+ * <BR />
+ * To retain comments while selecting the entire document,
+ * use the following full XPointer: URI='#xpointer(/)'.
+ * This XPointer contains a simple XPath expression that includes
+ * the root node, which the second to last step above replaces with all
+ * nodes of the parse tree (all descendants, plus all attributes,
+ * plus all namespaces nodes).
+ *
+ * @author $Author: coheigea $
+ */
+public class ResolverXPointer extends ResourceResolverSpi {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(ResolverXPointer.class.getName());
+
+    private static final String XP = "#xpointer(id(";
+    private static final int XP_LENGTH = XP.length();
+
+    @Override
+    public boolean engineIsThreadSafe() {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public XMLSignatureInput engineResolveURI(ResourceResolverContext context)
+        throws ResourceResolverException {
+
+        Node resultNode = null;
+        Document doc = context.attr.getOwnerElement().getOwnerDocument();
+
+        if (isXPointerSlash(context.uriToResolve)) {
+            resultNode = doc;
+        } else if (isXPointerId(context.uriToResolve)) {
+            String id = getXPointerId(context.uriToResolve);
+            resultNode = doc.getElementById(id);
+
+            if (context.secureValidation) {
+                Element start = context.attr.getOwnerDocument().getDocumentElement();
+                if (!XMLUtils.protectAgainstWrappingAttack(start, id)) {
+                    Object exArgs[] = { id };
+                    throw new ResourceResolverException(
+                        "signature.Verification.MultipleIDs", exArgs, context.attr, context.baseUri
+                    );
+                }
+            }
+
+            if (resultNode == null) {
+                Object exArgs[] = { id };
+
+                throw new ResourceResolverException(
+                    "signature.Verification.MissingID", exArgs, context.attr, context.baseUri
+                );
+            }
+        }
+
+        XMLSignatureInput result = new XMLSignatureInput(resultNode);
+
+        result.setMIMEType("text/xml");
+        if (context.baseUri != null && context.baseUri.length() > 0) {
+            result.setSourceURI(context.baseUri.concat(context.uriToResolve));
+        } else {
+            result.setSourceURI(context.uriToResolve);
+        }
+
+        return result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public boolean engineCanResolveURI(ResourceResolverContext context) {
+        if (context.uriToResolve == null) {
+            return false;
+        }
+        if (isXPointerSlash(context.uriToResolve) || isXPointerId(context.uriToResolve)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Method isXPointerSlash
+     *
+     * @param uri
+     * @return true if begins with xpointer
+     */
+    private static boolean isXPointerSlash(String uri) {
+        if (uri.equals("#xpointer(/)")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Method isXPointerId
+     *
+     * @param uri
+     * @return whether it has an xpointer id
+     */
+    private static boolean isXPointerId(String uri) {
+        if (uri.startsWith(XP) && uri.endsWith("))")) {
+            String idPlusDelim = uri.substring(XP_LENGTH, uri.length() - 2);
+
+            int idLen = idPlusDelim.length() -1;
+            if (((idPlusDelim.charAt(0) == '"') && (idPlusDelim.charAt(idLen) == '"'))
+                || ((idPlusDelim.charAt(0) == '\'') && (idPlusDelim.charAt(idLen) == '\''))) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Id = " + idPlusDelim.substring(1, idLen));
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Method getXPointerId
+     *
+     * @param uri
+     * @return xpointerId to search.
+     */
+    private static String getXPointerId(String uri) {
+        if (uri.startsWith(XP) && uri.endsWith("))")) {
+            String idPlusDelim = uri.substring(XP_LENGTH,uri.length() - 2);
+
+            int idLen = idPlusDelim.length() -1;
+            if (((idPlusDelim.charAt(0) == '"') && (idPlusDelim.charAt(idLen) == '"'))
+                || ((idPlusDelim.charAt(0) == '\'') && (idPlusDelim.charAt(idLen) == '\''))) {
+                return idPlusDelim.substring(1, idLen);
+            }
+        }
+
+        return null;
+    }
+}

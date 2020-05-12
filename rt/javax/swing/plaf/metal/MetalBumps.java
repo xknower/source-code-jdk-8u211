@@ -1,147 +1,235 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.GraphicsConfiguration;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.List;
-/*     */ import javax.swing.Icon;
-/*     */ import sun.awt.AppContext;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class MetalBumps
-/*     */   implements Icon
-/*     */ {
-/*  45 */   static final Color ALPHA = new Color(0, 0, 0, 0);
-/*     */   
-/*     */   protected int xBumps;
-/*     */   
-/*     */   protected int yBumps;
-/*     */   protected Color topColor;
-/*     */   protected Color shadowColor;
-/*     */   protected Color backColor;
-/*  53 */   private static final Object METAL_BUMPS = new Object();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected BumpBuffer buffer;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MetalBumps(int paramInt1, int paramInt2, Color paramColor1, Color paramColor2, Color paramColor3) {
-/*  63 */     setBumpArea(paramInt1, paramInt2);
-/*  64 */     setBumpColors(paramColor1, paramColor2, paramColor3);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static BumpBuffer createBuffer(GraphicsConfiguration paramGraphicsConfiguration, Color paramColor1, Color paramColor2, Color paramColor3) {
-/*  69 */     AppContext appContext = AppContext.getAppContext();
-/*  70 */     List<BumpBuffer> list = (List)appContext.get(METAL_BUMPS);
-/*  71 */     if (list == null) {
-/*  72 */       list = new ArrayList();
-/*  73 */       appContext.put(METAL_BUMPS, list);
-/*     */     } 
-/*  75 */     for (BumpBuffer bumpBuffer1 : list) {
-/*  76 */       if (bumpBuffer1.hasSameConfiguration(paramGraphicsConfiguration, paramColor1, paramColor2, paramColor3)) {
-/*  77 */         return bumpBuffer1;
-/*     */       }
-/*     */     } 
-/*  80 */     BumpBuffer bumpBuffer = new BumpBuffer(paramGraphicsConfiguration, paramColor1, paramColor2, paramColor3);
-/*  81 */     list.add(bumpBuffer);
-/*  82 */     return bumpBuffer;
-/*     */   }
-/*     */   
-/*     */   public void setBumpArea(Dimension paramDimension) {
-/*  86 */     setBumpArea(paramDimension.width, paramDimension.height);
-/*     */   }
-/*     */   
-/*     */   public void setBumpArea(int paramInt1, int paramInt2) {
-/*  90 */     this.xBumps = paramInt1 / 2;
-/*  91 */     this.yBumps = paramInt2 / 2;
-/*     */   }
-/*     */   
-/*     */   public void setBumpColors(Color paramColor1, Color paramColor2, Color paramColor3) {
-/*  95 */     this.topColor = paramColor1;
-/*  96 */     this.shadowColor = paramColor2;
-/*  97 */     if (paramColor3 == null) {
-/*  98 */       this.backColor = ALPHA;
-/*     */     } else {
-/*     */       
-/* 101 */       this.backColor = paramColor3;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void paintIcon(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2) {
-/* 107 */     GraphicsConfiguration graphicsConfiguration = (paramGraphics instanceof Graphics2D) ? ((Graphics2D)paramGraphics).getDeviceConfiguration() : null;
-/*     */     
-/* 109 */     if (this.buffer == null || !this.buffer.hasSameConfiguration(graphicsConfiguration, this.topColor, this.shadowColor, this.backColor)) {
-/* 110 */       this.buffer = createBuffer(graphicsConfiguration, this.topColor, this.shadowColor, this.backColor);
-/*     */     }
-/*     */     
-/* 113 */     byte b1 = 64;
-/* 114 */     byte b2 = 64;
-/* 115 */     int i = getIconWidth();
-/* 116 */     int j = getIconHeight();
-/* 117 */     int k = paramInt1 + i;
-/* 118 */     int m = paramInt2 + j;
-/* 119 */     int n = paramInt1;
-/*     */     
-/* 121 */     while (paramInt2 < m) {
-/* 122 */       int i1 = Math.min(m - paramInt2, b2);
-/* 123 */       for (paramInt1 = n; paramInt1 < k; paramInt1 += b1) {
-/* 124 */         int i2 = Math.min(k - paramInt1, b1);
-/* 125 */         paramGraphics.drawImage(this.buffer.getImage(), paramInt1, paramInt2, paramInt1 + i2, paramInt2 + i1, 0, 0, i2, i1, null);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 130 */       paramInt2 += b2;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int getIconWidth() {
-/* 135 */     return this.xBumps * 2;
-/*     */   }
-/*     */   
-/*     */   public int getIconHeight() {
-/* 139 */     return this.yBumps * 2;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalBumps.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import java.awt.*;
+import java.awt.image.*;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
+import sun.awt.AppContext;
+
+/**
+ * Implements the bumps used throughout the Metal Look and Feel.
+ *
+ * @author Tom Santos
+ * @author Steve Wilson
+ */
+
+
+class MetalBumps implements Icon {
+
+    static final Color ALPHA = new Color(0, 0, 0, 0);
+
+    protected int xBumps;
+    protected int yBumps;
+    protected Color topColor;
+    protected Color shadowColor;
+    protected Color backColor;
+
+    private static final Object METAL_BUMPS = new Object();
+    protected BumpBuffer buffer;
+
+    /**
+     * Creates MetalBumps of the specified size with the specified colors.
+     * If <code>newBackColor</code> is null, the background will be
+     * transparent.
+     */
+    public MetalBumps( int width, int height,
+                       Color newTopColor, Color newShadowColor, Color newBackColor ) {
+        setBumpArea( width, height );
+        setBumpColors( newTopColor, newShadowColor, newBackColor );
+    }
+
+    private static BumpBuffer createBuffer(GraphicsConfiguration gc,
+                                           Color topColor, Color shadowColor, Color backColor) {
+        AppContext context = AppContext.getAppContext();
+        List<BumpBuffer> buffers = (List<BumpBuffer>) context.get(METAL_BUMPS);
+        if (buffers == null) {
+            buffers = new ArrayList<BumpBuffer>();
+            context.put(METAL_BUMPS, buffers);
+        }
+        for (BumpBuffer buffer : buffers) {
+            if (buffer.hasSameConfiguration(gc, topColor, shadowColor, backColor)) {
+                return buffer;
+            }
+        }
+        BumpBuffer buffer = new BumpBuffer(gc, topColor, shadowColor, backColor);
+        buffers.add(buffer);
+        return buffer;
+    }
+
+    public void setBumpArea( Dimension bumpArea ) {
+        setBumpArea( bumpArea.width, bumpArea.height );
+    }
+
+    public void setBumpArea( int width, int height ) {
+        xBumps = width / 2;
+        yBumps = height / 2;
+    }
+
+    public void setBumpColors( Color newTopColor, Color newShadowColor, Color newBackColor ) {
+        topColor = newTopColor;
+        shadowColor = newShadowColor;
+        if (newBackColor == null) {
+            backColor = ALPHA;
+        }
+        else {
+            backColor = newBackColor;
+        }
+    }
+
+    public void paintIcon( Component c, Graphics g, int x, int y ) {
+        GraphicsConfiguration gc = (g instanceof Graphics2D) ?
+                ((Graphics2D) g).getDeviceConfiguration() : null;
+
+        if ((buffer == null) || !buffer.hasSameConfiguration(gc, topColor, shadowColor, backColor)) {
+            buffer = createBuffer(gc, topColor, shadowColor, backColor);
+        }
+
+        int bufferWidth = BumpBuffer.IMAGE_SIZE;
+        int bufferHeight = BumpBuffer.IMAGE_SIZE;
+        int iconWidth = getIconWidth();
+        int iconHeight = getIconHeight();
+        int x2 = x + iconWidth;
+        int y2 = y + iconHeight;
+        int savex = x;
+
+        while (y < y2) {
+            int h = Math.min(y2 - y, bufferHeight);
+            for (x = savex; x < x2; x += bufferWidth) {
+                int w = Math.min(x2 - x, bufferWidth);
+                g.drawImage(buffer.getImage(),
+                            x, y, x+w, y+h,
+                            0, 0, w, h,
+                            null);
+            }
+            y += bufferHeight;
+        }
+    }
+
+    public int getIconWidth() {
+        return xBumps * 2;
+    }
+
+    public int getIconHeight() {
+        return yBumps * 2;
+    }
+}
+
+
+class BumpBuffer {
+
+    static final int IMAGE_SIZE = 64;
+
+    transient Image image;
+    Color topColor;
+    Color shadowColor;
+    Color backColor;
+    private GraphicsConfiguration gc;
+
+    public BumpBuffer(GraphicsConfiguration gc, Color aTopColor,
+                      Color aShadowColor, Color aBackColor) {
+        this.gc = gc;
+        topColor = aTopColor;
+        shadowColor = aShadowColor;
+        backColor = aBackColor;
+        createImage();
+        fillBumpBuffer();
+    }
+
+    public boolean hasSameConfiguration(GraphicsConfiguration gc,
+                                        Color aTopColor, Color aShadowColor,
+                                        Color aBackColor) {
+        if (this.gc != null) {
+            if (!this.gc.equals(gc)) {
+                return false;
+            }
+        }
+        else if (gc != null) {
+            return false;
+        }
+        return topColor.equals( aTopColor )       &&
+               shadowColor.equals( aShadowColor ) &&
+               backColor.equals( aBackColor );
+    }
+
+    /**
+     * Returns the Image containing the bumps appropriate for the passed in
+     * <code>GraphicsConfiguration</code>.
+     */
+    public Image getImage() {
+        return image;
+    }
+
+    /**
+     * Paints the bumps into the current image.
+     */
+    private void fillBumpBuffer() {
+        Graphics g = image.getGraphics();
+
+        g.setColor( backColor );
+        g.fillRect( 0, 0, IMAGE_SIZE, IMAGE_SIZE );
+
+        g.setColor(topColor);
+        for (int x = 0; x < IMAGE_SIZE; x+=4) {
+            for (int y = 0; y < IMAGE_SIZE; y+=4) {
+                g.drawLine( x, y, x, y );
+                g.drawLine( x+2, y+2, x+2, y+2);
+            }
+        }
+
+        g.setColor(shadowColor);
+        for (int x = 0; x < IMAGE_SIZE; x+=4) {
+            for (int y = 0; y < IMAGE_SIZE; y+=4) {
+                g.drawLine( x+1, y+1, x+1, y+1 );
+                g.drawLine( x+3, y+3, x+3, y+3);
+            }
+        }
+        g.dispose();
+    }
+
+    /**
+     * Creates the image appropriate for the passed in
+     * <code>GraphicsConfiguration</code>, which may be null.
+     */
+    private void createImage() {
+        if (gc != null) {
+            image = gc.createCompatibleImage(IMAGE_SIZE, IMAGE_SIZE,
+                       (backColor != MetalBumps.ALPHA) ? Transparency.OPAQUE :
+                       Transparency.BITMASK);
+        }
+        else {
+            int cmap[] = { backColor.getRGB(), topColor.getRGB(),
+                           shadowColor.getRGB() };
+            IndexColorModel icm = new IndexColorModel(8, 3, cmap, 0, false,
+                      (backColor == MetalBumps.ALPHA) ? 0 : -1,
+                      DataBuffer.TYPE_BYTE);
+            image = new BufferedImage(IMAGE_SIZE, IMAGE_SIZE,
+                                      BufferedImage.TYPE_BYTE_INDEXED, icm);
+        }
+    }
+}

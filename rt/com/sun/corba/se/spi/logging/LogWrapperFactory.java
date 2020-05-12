@@ -1,13 +1,34 @@
-package com.sun.corba.se.spi.logging;
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 
-import java.util.logging.Logger;
+package com.sun.corba.se.spi.logging ;
+
+import java.util.logging.Logger ;
+
+import com.sun.corba.se.spi.logging.LogWrapperBase ;
 
 public interface LogWrapperFactory {
-  LogWrapperBase create(Logger paramLogger);
+    LogWrapperBase create( Logger logger ) ;
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\logging\LogWrapperFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

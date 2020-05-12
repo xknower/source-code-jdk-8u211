@@ -1,11 +1,41 @@
+/*
+ * Copyright (c) 1996, 1997, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.awt;
 
-public interface PrintGraphics {
-  PrintJob getPrintJob();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\PrintGraphics.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * An abstract class which provides a print graphics context for a page.
+ *
+ * @author      Amy Fowler
  */
+public interface PrintGraphics {
+
+    /**
+     * Returns the PrintJob object from which this PrintGraphics
+     * object originated.
+     */
+    public PrintJob getPrintJob();
+
+}

@@ -1,388 +1,382 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.LayoutManager;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.ComboBoxEditor;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComboBox;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JList;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicComboBoxUI;
-/*     */ import javax.swing.plaf.basic.BasicComboPopup;
-/*     */ import javax.swing.plaf.basic.ComboPopup;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalComboBoxUI
-/*     */   extends BasicComboBoxUI
-/*     */ {
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  57 */     return new MetalComboBoxUI();
-/*     */   }
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/*  61 */     if (MetalLookAndFeel.usingOcean()) {
-/*  62 */       super.paint(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintCurrentValue(Graphics paramGraphics, Rectangle paramRectangle, boolean paramBoolean) {
-/*  78 */     if (MetalLookAndFeel.usingOcean()) {
-/*  79 */       paramRectangle.x += 2;
-/*  80 */       paramRectangle.width -= 3;
-/*  81 */       if (this.arrowButton != null) {
-/*  82 */         Insets insets = this.arrowButton.getInsets();
-/*  83 */         paramRectangle.y += insets.top;
-/*  84 */         paramRectangle.height -= insets.top + insets.bottom;
-/*     */       } else {
-/*     */         
-/*  87 */         paramRectangle.y += 2;
-/*  88 */         paramRectangle.height -= 4;
-/*     */       } 
-/*  90 */       super.paintCurrentValue(paramGraphics, paramRectangle, paramBoolean);
-/*     */     }
-/*  92 */     else if (paramGraphics == null || paramRectangle == null) {
-/*  93 */       throw new NullPointerException("Must supply a non-null Graphics and Rectangle");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintCurrentValueBackground(Graphics paramGraphics, Rectangle paramRectangle, boolean paramBoolean) {
-/* 110 */     if (MetalLookAndFeel.usingOcean()) {
-/* 111 */       paramGraphics.setColor(MetalLookAndFeel.getControlDarkShadow());
-/* 112 */       paramGraphics.drawRect(paramRectangle.x, paramRectangle.y, paramRectangle.width, paramRectangle.height - 1);
-/* 113 */       paramGraphics.setColor(MetalLookAndFeel.getControlShadow());
-/* 114 */       paramGraphics.drawRect(paramRectangle.x + 1, paramRectangle.y + 1, paramRectangle.width - 2, paramRectangle.height - 3);
-/*     */       
-/* 116 */       if (paramBoolean && !isPopupVisible(this.comboBox) && this.arrowButton != null)
-/*     */       {
-/* 118 */         paramGraphics.setColor(this.listBox.getSelectionBackground());
-/* 119 */         Insets insets = this.arrowButton.getInsets();
-/* 120 */         if (insets.top > 2) {
-/* 121 */           paramGraphics.fillRect(paramRectangle.x + 2, paramRectangle.y + 2, paramRectangle.width - 3, insets.top - 2);
-/*     */         }
-/*     */         
-/* 124 */         if (insets.bottom > 2) {
-/* 125 */           paramGraphics.fillRect(paramRectangle.x + 2, paramRectangle.y + paramRectangle.height - insets.bottom, paramRectangle.width - 3, insets.bottom - 2);
-/*     */         
-/*     */         }
-/*     */       }
-/*     */     
-/*     */     }
-/* 131 */     else if (paramGraphics == null || paramRectangle == null) {
-/* 132 */       throw new NullPointerException("Must supply a non-null Graphics and Rectangle");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/*     */     int i;
-/* 147 */     if (MetalLookAndFeel.usingOcean() && paramInt2 >= 4) {
-/* 148 */       paramInt2 -= 4;
-/* 149 */       i = super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/* 150 */       if (i >= 0) {
-/* 151 */         i += 2;
-/*     */       }
-/*     */     } else {
-/*     */       
-/* 155 */       i = super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/*     */     } 
-/* 157 */     return i;
-/*     */   }
-/*     */   
-/*     */   protected ComboBoxEditor createEditor() {
-/* 161 */     return new MetalComboBoxEditor.UIResource();
-/*     */   }
-/*     */   
-/*     */   protected ComboPopup createPopup() {
-/* 165 */     return super.createPopup();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected JButton createArrowButton() {
-/* 170 */     boolean bool = (this.comboBox.isEditable() || MetalLookAndFeel.usingOcean()) ? true : false;
-/* 171 */     MetalComboBoxButton metalComboBoxButton = new MetalComboBoxButton(this.comboBox, new MetalComboBoxIcon(), bool, this.currentValuePane, this.listBox);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 176 */     metalComboBoxButton.setMargin(new Insets(0, 1, 1, 3));
-/* 177 */     if (MetalLookAndFeel.usingOcean())
-/*     */     {
-/* 179 */       metalComboBoxButton.putClientProperty(MetalBorders.NO_BUTTON_ROLLOVER, Boolean.TRUE);
-/*     */     }
-/*     */     
-/* 182 */     updateButtonForOcean(metalComboBoxButton);
-/* 183 */     return metalComboBoxButton;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void updateButtonForOcean(JButton paramJButton) {
-/* 190 */     if (MetalLookAndFeel.usingOcean())
-/*     */     {
-/*     */       
-/* 193 */       paramJButton.setFocusPainted(this.comboBox.isEditable());
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public PropertyChangeListener createPropertyChangeListener() {
-/* 198 */     return new MetalPropertyChangeListener();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public class MetalPropertyChangeListener
-/*     */     extends BasicComboBoxUI.PropertyChangeHandler
-/*     */   {
-/*     */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 207 */       super.propertyChange(param1PropertyChangeEvent);
-/* 208 */       String str = param1PropertyChangeEvent.getPropertyName();
-/*     */       
-/* 210 */       if (str == "editable") {
-/* 211 */         if (MetalComboBoxUI.this.arrowButton instanceof MetalComboBoxButton) {
-/* 212 */           MetalComboBoxButton metalComboBoxButton = (MetalComboBoxButton)MetalComboBoxUI.this.arrowButton;
-/* 213 */           metalComboBoxButton.setIconOnly((MetalComboBoxUI.this.comboBox.isEditable() || 
-/* 214 */               MetalLookAndFeel.usingOcean()));
-/*     */         } 
-/* 216 */         MetalComboBoxUI.this.comboBox.repaint();
-/* 217 */         MetalComboBoxUI.this.updateButtonForOcean(MetalComboBoxUI.this.arrowButton);
-/* 218 */       } else if (str == "background") {
-/* 219 */         Color color = (Color)param1PropertyChangeEvent.getNewValue();
-/* 220 */         MetalComboBoxUI.this.arrowButton.setBackground(color);
-/* 221 */         MetalComboBoxUI.this.listBox.setBackground(color);
-/*     */       }
-/* 223 */       else if (str == "foreground") {
-/* 224 */         Color color = (Color)param1PropertyChangeEvent.getNewValue();
-/* 225 */         MetalComboBoxUI.this.arrowButton.setForeground(color);
-/* 226 */         MetalComboBoxUI.this.listBox.setForeground(color);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   protected void editablePropertyChanged(PropertyChangeEvent paramPropertyChangeEvent) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected LayoutManager createLayoutManager() {
-/* 242 */     return new MetalComboBoxLayoutManager();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public class MetalComboBoxLayoutManager
-/*     */     extends BasicComboBoxUI.ComboBoxLayoutManager
-/*     */   {
-/*     */     public void layoutContainer(Container param1Container) {
-/* 251 */       MetalComboBoxUI.this.layoutComboBox(param1Container, this);
-/*     */     }
-/*     */     public void superLayout(Container param1Container) {
-/* 254 */       super.layoutContainer(param1Container);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void layoutComboBox(Container paramContainer, MetalComboBoxLayoutManager paramMetalComboBoxLayoutManager) {
-/* 262 */     if (this.comboBox.isEditable() && !MetalLookAndFeel.usingOcean()) {
-/* 263 */       paramMetalComboBoxLayoutManager.superLayout(paramContainer);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 267 */     if (this.arrowButton != null) {
-/* 268 */       if (MetalLookAndFeel.usingOcean()) {
-/* 269 */         Insets insets = this.comboBox.getInsets();
-/* 270 */         int i = (this.arrowButton.getMinimumSize()).width;
-/* 271 */         this.arrowButton.setBounds(MetalUtils.isLeftToRight(this.comboBox) ? (this.comboBox
-/* 272 */             .getWidth() - insets.right - i) : insets.left, insets.top, i, this.comboBox
-/*     */ 
-/*     */             
-/* 275 */             .getHeight() - insets.top - insets.bottom);
-/*     */       } else {
-/*     */         
-/* 278 */         Insets insets = this.comboBox.getInsets();
-/* 279 */         int i = this.comboBox.getWidth();
-/* 280 */         int j = this.comboBox.getHeight();
-/* 281 */         this.arrowButton.setBounds(insets.left, insets.top, i - insets.left + insets.right, j - insets.top + insets.bottom);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 287 */     if (this.editor != null && MetalLookAndFeel.usingOcean()) {
-/* 288 */       Rectangle rectangle = rectangleForCurrentValue();
-/* 289 */       this.editor.setBounds(rectangle);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   protected void removeListeners() {
-/* 301 */     if (this.propertyChangeListener != null) {
-/* 302 */       this.comboBox.removePropertyChangeListener(this.propertyChangeListener);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void configureEditor() {
-/* 312 */     super.configureEditor();
-/*     */   }
-/*     */   
-/*     */   public void unconfigureEditor() {
-/* 316 */     super.unconfigureEditor();
-/*     */   }
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 320 */     if (!this.isMinimumSizeDirty) {
-/* 321 */       return new Dimension(this.cachedMinimumSize);
-/*     */     }
-/*     */     
-/* 324 */     Dimension dimension = null;
-/*     */     
-/* 326 */     if (!this.comboBox.isEditable() && this.arrowButton != null) {
-/*     */       
-/* 328 */       Insets insets1 = this.arrowButton.getInsets();
-/* 329 */       Insets insets2 = this.comboBox.getInsets();
-/*     */       
-/* 331 */       dimension = getDisplaySize();
-/* 332 */       dimension.width += insets2.left + insets2.right;
-/* 333 */       dimension.width += insets1.right;
-/* 334 */       dimension.width += (this.arrowButton.getMinimumSize()).width;
-/* 335 */       dimension.height += insets2.top + insets2.bottom;
-/* 336 */       dimension.height += insets1.top + insets1.bottom;
-/*     */     }
-/* 338 */     else if (this.comboBox.isEditable() && this.arrowButton != null && this.editor != null) {
-/*     */ 
-/*     */       
-/* 341 */       dimension = super.getMinimumSize(paramJComponent);
-/* 342 */       Insets insets = this.arrowButton.getMargin();
-/* 343 */       dimension.height += insets.top + insets.bottom;
-/* 344 */       dimension.width += insets.left + insets.right;
-/*     */     } else {
-/*     */       
-/* 347 */       dimension = super.getMinimumSize(paramJComponent);
-/*     */     } 
-/*     */     
-/* 350 */     this.cachedMinimumSize.setSize(dimension.width, dimension.height);
-/* 351 */     this.isMinimumSizeDirty = false;
-/*     */     
-/* 353 */     return new Dimension(this.cachedMinimumSize);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @Deprecated
-/*     */   public class MetalComboPopup
-/*     */     extends BasicComboPopup
-/*     */   {
-/*     */     public MetalComboPopup(JComboBox param1JComboBox) {
-/* 370 */       super(param1JComboBox);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void delegateFocus(MouseEvent param1MouseEvent) {
-/* 379 */       super.delegateFocus(param1MouseEvent);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalComboBoxUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.border.*;
+import javax.swing.plaf.basic.*;
+import java.io.Serializable;
+import java.beans.*;
+
+
+/**
+ * Metal UI for JComboBox
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see MetalComboBoxEditor
+ * @see MetalComboBoxButton
+ * @author Tom Santos
+ */
+public class MetalComboBoxUI extends BasicComboBoxUI {
+
+    public static ComponentUI createUI(JComponent c) {
+        return new MetalComboBoxUI();
+    }
+
+    public void paint(Graphics g, JComponent c) {
+        if (MetalLookAndFeel.usingOcean()) {
+            super.paint(g, c);
+        }
+    }
+
+    /**
+     * If necessary paints the currently selected item.
+     *
+     * @param g Graphics to paint to
+     * @param bounds Region to paint current value to
+     * @param hasFocus whether or not the JComboBox has focus
+     * @throws NullPointerException if any of the arguments are null.
+     * @since 1.5
+     */
+    public void paintCurrentValue(Graphics g, Rectangle bounds,
+                                  boolean hasFocus) {
+        // This is really only called if we're using ocean.
+        if (MetalLookAndFeel.usingOcean()) {
+            bounds.x += 2;
+            bounds.width -= 3;
+            if (arrowButton != null) {
+                Insets buttonInsets = arrowButton.getInsets();
+                bounds.y += buttonInsets.top;
+                bounds.height -= (buttonInsets.top + buttonInsets.bottom);
+            }
+            else {
+                bounds.y += 2;
+                bounds.height -= 4;
+            }
+            super.paintCurrentValue(g, bounds, hasFocus);
+        }
+        else if (g == null || bounds == null) {
+            throw new NullPointerException(
+                "Must supply a non-null Graphics and Rectangle");
+        }
+    }
+
+    /**
+     * If necessary paints the background of the currently selected item.
+     *
+     * @param g Graphics to paint to
+     * @param bounds Region to paint background to
+     * @param hasFocus whether or not the JComboBox has focus
+     * @throws NullPointerException if any of the arguments are null.
+     * @since 1.5
+     */
+    public void paintCurrentValueBackground(Graphics g, Rectangle bounds,
+                                            boolean hasFocus) {
+        // This is really only called if we're using ocean.
+        if (MetalLookAndFeel.usingOcean()) {
+            g.setColor(MetalLookAndFeel.getControlDarkShadow());
+            g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height - 1);
+            g.setColor(MetalLookAndFeel.getControlShadow());
+            g.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 2,
+                       bounds.height - 3);
+            if (hasFocus && !isPopupVisible(comboBox) &&
+                    arrowButton != null) {
+                g.setColor(listBox.getSelectionBackground());
+                Insets buttonInsets = arrowButton.getInsets();
+                if (buttonInsets.top > 2) {
+                    g.fillRect(bounds.x + 2, bounds.y + 2, bounds.width - 3,
+                               buttonInsets.top - 2);
+                }
+                if (buttonInsets.bottom > 2) {
+                    g.fillRect(bounds.x + 2, bounds.y + bounds.height -
+                               buttonInsets.bottom, bounds.width - 3,
+                               buttonInsets.bottom - 2);
+                }
+            }
+        }
+        else if (g == null || bounds == null) {
+            throw new NullPointerException(
+                "Must supply a non-null Graphics and Rectangle");
+        }
+    }
+
+    /**
+     * Returns the baseline.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public int getBaseline(JComponent c, int width, int height) {
+        int baseline;
+        if (MetalLookAndFeel.usingOcean() && height >= 4) {
+            height -= 4;
+            baseline = super.getBaseline(c, width, height);
+            if (baseline >= 0) {
+                baseline += 2;
+            }
+        }
+        else {
+            baseline = super.getBaseline(c, width, height);
+        }
+        return baseline;
+    }
+
+    protected ComboBoxEditor createEditor() {
+        return new MetalComboBoxEditor.UIResource();
+    }
+
+    protected ComboPopup createPopup() {
+        return super.createPopup();
+    }
+
+    protected JButton createArrowButton() {
+        boolean iconOnly = (comboBox.isEditable() ||
+                            MetalLookAndFeel.usingOcean());
+        JButton button = new MetalComboBoxButton( comboBox,
+                                                  new MetalComboBoxIcon(),
+                                                  iconOnly,
+                                                  currentValuePane,
+                                                  listBox );
+        button.setMargin( new Insets( 0, 1, 1, 3 ) );
+        if (MetalLookAndFeel.usingOcean()) {
+            // Disabled rollover effect.
+            button.putClientProperty(MetalBorders.NO_BUTTON_ROLLOVER,
+                                     Boolean.TRUE);
+        }
+        updateButtonForOcean(button);
+        return button;
+    }
+
+    /**
+     * Resets the necessary state on the ComboBoxButton for ocean.
+     */
+    private void updateButtonForOcean(JButton button) {
+        if (MetalLookAndFeel.usingOcean()) {
+            // Ocean renders the focus in a different way, this
+            // would be redundant.
+            button.setFocusPainted(comboBox.isEditable());
+        }
+    }
+
+    public PropertyChangeListener createPropertyChangeListener() {
+        return new MetalPropertyChangeListener();
+    }
+
+    /**
+     * This class should be treated as a &quot;protected&quot; inner class.
+     * Instantiate it only within subclasses of {@code MetalComboBoxUI}.
+     */
+    public class MetalPropertyChangeListener extends BasicComboBoxUI.PropertyChangeHandler {
+        public void propertyChange(PropertyChangeEvent e) {
+            super.propertyChange( e );
+            String propertyName = e.getPropertyName();
+
+            if ( propertyName == "editable" ) {
+                if(arrowButton instanceof MetalComboBoxButton) {
+                            MetalComboBoxButton button = (MetalComboBoxButton)arrowButton;
+                            button.setIconOnly( comboBox.isEditable() ||
+                                    MetalLookAndFeel.usingOcean() );
+                }
+                        comboBox.repaint();
+                updateButtonForOcean(arrowButton);
+            } else if ( propertyName == "background" ) {
+                Color color = (Color)e.getNewValue();
+                arrowButton.setBackground(color);
+                listBox.setBackground(color);
+
+            } else if ( propertyName == "foreground" ) {
+                Color color = (Color)e.getNewValue();
+                arrowButton.setForeground(color);
+                listBox.setForeground(color);
+            }
+        }
+    }
+
+    /**
+     * As of Java 2 platform v1.4 this method is no longer used. Do not call or
+     * override. All the functionality of this method is in the
+     * MetalPropertyChangeListener.
+     *
+     * @deprecated As of Java 2 platform v1.4.
+     */
+    @Deprecated
+    protected void editablePropertyChanged( PropertyChangeEvent e ) { }
+
+    protected LayoutManager createLayoutManager() {
+        return new MetalComboBoxLayoutManager();
+    }
+
+    /**
+     * This class should be treated as a &quot;protected&quot; inner class.
+     * Instantiate it only within subclasses of {@code MetalComboBoxUI}.
+     */
+    public class MetalComboBoxLayoutManager extends BasicComboBoxUI.ComboBoxLayoutManager {
+        public void layoutContainer( Container parent ) {
+            layoutComboBox( parent, this );
+        }
+        public void superLayout( Container parent ) {
+            super.layoutContainer( parent );
+        }
+    }
+
+    // This is here because of a bug in the compiler.
+    // When a protected-inner-class-savvy compiler comes out we
+    // should move this into MetalComboBoxLayoutManager.
+    public void layoutComboBox( Container parent, MetalComboBoxLayoutManager manager ) {
+        if (comboBox.isEditable() && !MetalLookAndFeel.usingOcean()) {
+            manager.superLayout( parent );
+            return;
+        }
+
+        if (arrowButton != null) {
+            if (MetalLookAndFeel.usingOcean() ) {
+                Insets insets = comboBox.getInsets();
+                int buttonWidth = arrowButton.getMinimumSize().width;
+                arrowButton.setBounds(MetalUtils.isLeftToRight(comboBox)
+                                ? (comboBox.getWidth() - insets.right - buttonWidth)
+                                : insets.left,
+                            insets.top, buttonWidth,
+                            comboBox.getHeight() - insets.top - insets.bottom);
+            }
+            else {
+                Insets insets = comboBox.getInsets();
+                int width = comboBox.getWidth();
+                int height = comboBox.getHeight();
+                arrowButton.setBounds( insets.left, insets.top,
+                                       width - (insets.left + insets.right),
+                                       height - (insets.top + insets.bottom) );
+            }
+        }
+
+        if (editor != null && MetalLookAndFeel.usingOcean()) {
+            Rectangle cvb = rectangleForCurrentValue();
+            editor.setBounds(cvb);
+        }
+    }
+
+    /**
+     * As of Java 2 platform v1.4 this method is no
+     * longer used.
+     *
+     * @deprecated As of Java 2 platform v1.4.
+     */
+    @Deprecated
+    protected void removeListeners() {
+        if ( propertyChangeListener != null ) {
+            comboBox.removePropertyChangeListener( propertyChangeListener );
+        }
+    }
+
+    // These two methods were overloaded and made public. This was probably a
+    // mistake in the implementation. The functionality that they used to
+    // provide is no longer necessary and should be removed. However,
+    // removing them will create an uncompatible API change.
+
+    public void configureEditor() {
+        super.configureEditor();
+    }
+
+    public void unconfigureEditor() {
+        super.unconfigureEditor();
+    }
+
+    public Dimension getMinimumSize( JComponent c ) {
+        if ( !isMinimumSizeDirty ) {
+            return new Dimension( cachedMinimumSize );
+        }
+
+        Dimension size = null;
+
+        if ( !comboBox.isEditable() &&
+             arrowButton != null) {
+            Insets buttonInsets = arrowButton.getInsets();
+            Insets insets = comboBox.getInsets();
+
+            size = getDisplaySize();
+            size.width += insets.left + insets.right;
+            size.width += buttonInsets.right;
+            size.width += arrowButton.getMinimumSize().width;
+            size.height += insets.top + insets.bottom;
+            size.height += buttonInsets.top + buttonInsets.bottom;
+        }
+        else if ( comboBox.isEditable() &&
+                  arrowButton != null &&
+                  editor != null ) {
+            size = super.getMinimumSize( c );
+            Insets margin = arrowButton.getMargin();
+            size.height += margin.top + margin.bottom;
+            size.width += margin.left + margin.right;
+        }
+        else {
+            size = super.getMinimumSize( c );
+        }
+
+        cachedMinimumSize.setSize( size.width, size.height );
+        isMinimumSizeDirty = false;
+
+        return new Dimension( cachedMinimumSize );
+    }
+
+    /**
+     * This class should be treated as a &quot;protected&quot; inner class.
+     * Instantiate it only within subclasses of {@code MetalComboBoxUI}.
+     *
+     * This class is now obsolete and doesn't do anything and
+     * is only included for backwards API compatibility. Do not call or
+     * override.
+     *
+     * @deprecated As of Java 2 platform v1.4.
+     */
+    @Deprecated
+    public class MetalComboPopup extends BasicComboPopup {
+
+        public MetalComboPopup( JComboBox cBox) {
+            super( cBox );
+        }
+
+        // This method was overloaded and made public. This was probably
+        // mistake in the implementation. The functionality that they used to
+        // provide is no longer necessary and should be removed. However,
+        // removing them will create an uncompatible API change.
+
+        public void delegateFocus(MouseEvent e) {
+            super.delegateFocus(e);
+        }
+    }
+}

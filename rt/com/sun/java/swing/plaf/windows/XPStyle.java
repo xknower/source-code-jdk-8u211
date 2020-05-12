@@ -1,768 +1,762 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.GraphicsConfiguration;
-/*     */ import java.awt.Image;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Toolkit;
-/*     */ import java.awt.image.BufferedImage;
-/*     */ import java.awt.image.DataBufferInt;
-/*     */ import java.awt.image.WritableRaster;
-/*     */ import java.security.AccessController;
-/*     */ import java.util.HashMap;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.CellRendererPane;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComboBox;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JToolBar;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.AbstractBorder;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ import javax.swing.border.LineBorder;
-/*     */ import javax.swing.plaf.ColorUIResource;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ import sun.awt.image.SunWritableRaster;
-/*     */ import sun.awt.windows.ThemeReader;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ import sun.swing.CachedPainter;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class XPStyle
-/*     */ {
-/*     */   private static XPStyle xp;
-/*  71 */   private static SkinPainter skinPainter = new SkinPainter();
-/*     */   
-/*  73 */   private static Boolean themeActive = null;
-/*     */   
-/*     */   private HashMap<String, Border> borderMap;
-/*     */   
-/*     */   private HashMap<String, Color> colorMap;
-/*     */   private boolean flatMenus;
-/*     */   
-/*     */   static {
-/*  81 */     invalidateStyle();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static synchronized void invalidateStyle() {
-/*  88 */     xp = null;
-/*  89 */     themeActive = null;
-/*  90 */     skinPainter.flush();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static synchronized XPStyle getXP() {
-/*  99 */     if (themeActive == null) {
-/* 100 */       Toolkit toolkit = Toolkit.getDefaultToolkit();
-/*     */       
-/* 102 */       themeActive = (Boolean)toolkit.getDesktopProperty("win.xpstyle.themeActive");
-/* 103 */       if (themeActive == null) {
-/* 104 */         themeActive = Boolean.FALSE;
-/*     */       }
-/* 106 */       if (themeActive.booleanValue()) {
-/* 107 */         GetPropertyAction getPropertyAction = new GetPropertyAction("swing.noxp");
-/*     */         
-/* 109 */         if (AccessController.doPrivileged(getPropertyAction) == null && 
-/* 110 */           ThemeReader.isThemed() && 
-/* 111 */           !(UIManager.getLookAndFeel() instanceof WindowsClassicLookAndFeel))
-/*     */         {
-/*     */           
-/* 114 */           xp = new XPStyle();
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 118 */     return ThemeReader.isXPStyleEnabled() ? xp : null;
-/*     */   }
-/*     */   
-/*     */   static boolean isVista() {
-/* 122 */     XPStyle xPStyle = getXP();
-/* 123 */     return (xPStyle != null && xPStyle.isSkinDefined(null, TMSchema.Part.CP_DROPDOWNBUTTONRIGHT));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   String getString(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 138 */     return getTypeEnumName(paramComponent, paramPart, paramState, paramProp);
-/*     */   }
-/*     */   
-/*     */   TMSchema.TypeEnum getTypeEnum(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 142 */     int i = ThemeReader.getEnum(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 143 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 144 */         .getValue());
-/* 145 */     return TMSchema.TypeEnum.getTypeEnum(paramProp, i);
-/*     */   }
-/*     */   
-/*     */   private static String getTypeEnumName(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 149 */     int i = ThemeReader.getEnum(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 150 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 151 */         .getValue());
-/* 152 */     if (i == -1) {
-/* 153 */       return null;
-/*     */     }
-/* 155 */     return TMSchema.TypeEnum.getTypeEnum(paramProp, i).getName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int getInt(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp, int paramInt) {
-/* 168 */     return ThemeReader.getInt(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 169 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 170 */         .getValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Dimension getDimension(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 183 */     Dimension dimension = ThemeReader.getPosition(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 184 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 185 */         .getValue());
-/* 186 */     return (dimension != null) ? dimension : new Dimension();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Point getPoint(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 200 */     Dimension dimension = ThemeReader.getPosition(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 201 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 202 */         .getValue());
-/* 203 */     return (dimension != null) ? new Point(dimension.width, dimension.height) : new Point();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Insets getMargin(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 217 */     Insets insets = ThemeReader.getThemeMargins(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 218 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 219 */         .getValue());
-/* 220 */     return (insets != null) ? insets : new Insets(0, 0, 0, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized Color getColor(Skin paramSkin, TMSchema.Prop paramProp, Color paramColor) {
-/* 231 */     String str = paramSkin.toString() + "." + paramProp.name();
-/* 232 */     TMSchema.Part part = paramSkin.part;
-/* 233 */     Color color = this.colorMap.get(str);
-/* 234 */     if (color == null) {
-/* 235 */       color = ThemeReader.getColor(part.getControlName((Component)null), part.getValue(), 
-/* 236 */           TMSchema.State.getValue(part, paramSkin.state), paramProp
-/* 237 */           .getValue());
-/* 238 */       if (color != null) {
-/* 239 */         color = new ColorUIResource(color);
-/* 240 */         this.colorMap.put(str, color);
-/*     */       } 
-/*     */     } 
-/* 243 */     return (color != null) ? color : paramColor;
-/*     */   }
-/*     */   
-/*     */   Color getColor(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp, Color paramColor) {
-/* 247 */     return getColor(new Skin(paramComponent, paramPart, paramState), paramProp, paramColor);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized Border getBorder(Component paramComponent, TMSchema.Part paramPart) {
-/* 260 */     if (paramPart == TMSchema.Part.MENU) {
-/*     */       
-/* 262 */       if (this.flatMenus)
-/*     */       {
-/*     */ 
-/*     */         
-/* 266 */         return new XPFillBorder(UIManager.getColor("InternalFrame.borderShadow"), 1);
-/*     */       }
-/*     */       
-/* 269 */       return null;
-/*     */     } 
-/*     */     
-/* 272 */     Skin skin = new Skin(paramComponent, paramPart, null);
-/* 273 */     Border border = this.borderMap.get(skin.string);
-/* 274 */     if (border == null) {
-/* 275 */       String str = getTypeEnumName(paramComponent, paramPart, null, TMSchema.Prop.BGTYPE);
-/* 276 */       if ("borderfill".equalsIgnoreCase(str)) {
-/* 277 */         int i = getInt(paramComponent, paramPart, null, TMSchema.Prop.BORDERSIZE, 1);
-/* 278 */         Color color = getColor(skin, TMSchema.Prop.BORDERCOLOR, Color.black);
-/* 279 */         border = new XPFillBorder(color, i);
-/* 280 */         if (paramPart == TMSchema.Part.CP_COMBOBOX) {
-/* 281 */           border = new XPStatefulFillBorder(color, i, paramPart, TMSchema.Prop.BORDERCOLOR);
-/*     */         }
-/* 283 */       } else if ("imagefile".equalsIgnoreCase(str)) {
-/* 284 */         Insets insets = getMargin(paramComponent, paramPart, null, TMSchema.Prop.SIZINGMARGINS);
-/* 285 */         if (insets != null) {
-/* 286 */           if (getBoolean(paramComponent, paramPart, null, TMSchema.Prop.BORDERONLY)) {
-/* 287 */             border = new XPImageBorder(paramComponent, paramPart);
-/* 288 */           } else if (paramPart == TMSchema.Part.CP_COMBOBOX) {
-/* 289 */             border = new EmptyBorder(1, 1, 1, 1);
-/*     */           }
-/* 291 */           else if (paramPart == TMSchema.Part.TP_BUTTON) {
-/* 292 */             border = new XPEmptyBorder(new Insets(3, 3, 3, 3));
-/*     */           } else {
-/* 294 */             border = new XPEmptyBorder(insets);
-/*     */           } 
-/*     */         }
-/*     */       } 
-/*     */       
-/* 299 */       if (border != null) {
-/* 300 */         this.borderMap.put(skin.string, border);
-/*     */       }
-/*     */     } 
-/* 303 */     return border;
-/*     */   }
-/*     */   
-/*     */   private class XPFillBorder extends LineBorder implements UIResource {
-/*     */     XPFillBorder(Color param1Color, int param1Int) {
-/* 308 */       super(param1Color, param1Int);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 312 */       Insets insets = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 318 */       if (param1Component instanceof AbstractButton) {
-/* 319 */         insets = ((AbstractButton)param1Component).getMargin();
-/* 320 */       } else if (param1Component instanceof JToolBar) {
-/* 321 */         insets = ((JToolBar)param1Component).getMargin();
-/* 322 */       } else if (param1Component instanceof JTextComponent) {
-/* 323 */         insets = ((JTextComponent)param1Component).getMargin();
-/*     */       } 
-/* 325 */       param1Insets.top = ((insets != null) ? insets.top : 0) + this.thickness;
-/* 326 */       param1Insets.left = ((insets != null) ? insets.left : 0) + this.thickness;
-/* 327 */       param1Insets.bottom = ((insets != null) ? insets.bottom : 0) + this.thickness;
-/* 328 */       param1Insets.right = ((insets != null) ? insets.right : 0) + this.thickness;
-/*     */       
-/* 330 */       return param1Insets;
-/*     */     } }
-/*     */   
-/*     */   private class XPStatefulFillBorder extends XPFillBorder {
-/*     */     private final TMSchema.Part part;
-/*     */     private final TMSchema.Prop prop;
-/*     */     
-/*     */     XPStatefulFillBorder(Color param1Color, int param1Int, TMSchema.Part param1Part, TMSchema.Prop param1Prop) {
-/* 338 */       super(param1Color, param1Int);
-/* 339 */       this.part = param1Part;
-/* 340 */       this.prop = param1Prop;
-/*     */     }
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 344 */       TMSchema.State state = TMSchema.State.NORMAL;
-/*     */ 
-/*     */       
-/* 347 */       if (param1Component instanceof JComboBox) {
-/* 348 */         JComboBox jComboBox = (JComboBox)param1Component;
-/*     */ 
-/*     */         
-/* 351 */         if (jComboBox.getUI() instanceof WindowsComboBoxUI) {
-/* 352 */           WindowsComboBoxUI windowsComboBoxUI = (WindowsComboBoxUI)jComboBox.getUI();
-/* 353 */           state = windowsComboBoxUI.getXPComboBoxState(jComboBox);
-/*     */         } 
-/*     */       } 
-/* 356 */       this.lineColor = XPStyle.this.getColor(param1Component, this.part, state, this.prop, Color.black);
-/* 357 */       super.paintBorder(param1Component, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private class XPImageBorder extends AbstractBorder implements UIResource {
-/*     */     XPStyle.Skin skin;
-/*     */     
-/*     */     XPImageBorder(Component param1Component, TMSchema.Part param1Part) {
-/* 365 */       this.skin = XPStyle.this.getSkin(param1Component, param1Part);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 370 */       this.skin.paintSkin(param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, null);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 374 */       Insets insets1 = null;
-/* 375 */       Insets insets2 = this.skin.getContentMargin();
-/* 376 */       if (insets2 == null) {
-/* 377 */         insets2 = new Insets(0, 0, 0, 0);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 384 */       if (param1Component instanceof AbstractButton) {
-/* 385 */         insets1 = ((AbstractButton)param1Component).getMargin();
-/* 386 */       } else if (param1Component instanceof JToolBar) {
-/* 387 */         insets1 = ((JToolBar)param1Component).getMargin();
-/* 388 */       } else if (param1Component instanceof JTextComponent) {
-/* 389 */         insets1 = ((JTextComponent)param1Component).getMargin();
-/*     */       } 
-/* 391 */       param1Insets.top = ((insets1 != null) ? insets1.top : 0) + insets2.top;
-/* 392 */       param1Insets.left = ((insets1 != null) ? insets1.left : 0) + insets2.left;
-/* 393 */       param1Insets.bottom = ((insets1 != null) ? insets1.bottom : 0) + insets2.bottom;
-/* 394 */       param1Insets.right = ((insets1 != null) ? insets1.right : 0) + insets2.right;
-/*     */       
-/* 396 */       return param1Insets;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private class XPEmptyBorder extends EmptyBorder implements UIResource {
-/*     */     XPEmptyBorder(Insets param1Insets) {
-/* 402 */       super(param1Insets.top + 2, param1Insets.left + 2, param1Insets.bottom + 2, param1Insets.right + 2);
-/*     */     }
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 406 */       param1Insets = super.getBorderInsets(param1Component, param1Insets);
-/*     */       
-/* 408 */       Insets insets = null;
-/* 409 */       if (param1Component instanceof AbstractButton) {
-/* 410 */         Insets insets1 = ((AbstractButton)param1Component).getMargin();
-/*     */ 
-/*     */         
-/* 413 */         if (param1Component.getParent() instanceof JToolBar && !(param1Component instanceof javax.swing.JRadioButton) && !(param1Component instanceof javax.swing.JCheckBox) && insets1 instanceof javax.swing.plaf.InsetsUIResource) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 417 */           param1Insets.top -= 2;
-/* 418 */           param1Insets.left -= 2;
-/* 419 */           param1Insets.bottom -= 2;
-/* 420 */           param1Insets.right -= 2;
-/*     */         } else {
-/* 422 */           insets = insets1;
-/*     */         } 
-/* 424 */       } else if (param1Component instanceof JToolBar) {
-/* 425 */         insets = ((JToolBar)param1Component).getMargin();
-/* 426 */       } else if (param1Component instanceof JTextComponent) {
-/* 427 */         insets = ((JTextComponent)param1Component).getMargin();
-/*     */       } 
-/* 429 */       if (insets != null) {
-/* 430 */         insets.top += 2;
-/* 431 */         insets.left += 2;
-/* 432 */         insets.bottom += 2;
-/* 433 */         insets.right += 2;
-/*     */       } 
-/* 435 */       return param1Insets;
-/*     */     } }
-/*     */   
-/*     */   boolean isSkinDefined(Component paramComponent, TMSchema.Part paramPart) {
-/* 439 */     return (paramPart.getValue() == 0 || 
-/* 440 */       ThemeReader.isThemePartDefined(paramPart
-/* 441 */         .getControlName(paramComponent), paramPart.getValue(), 0));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   synchronized Skin getSkin(Component paramComponent, TMSchema.Part paramPart) {
-/* 452 */     assert isSkinDefined(paramComponent, paramPart) : "part " + paramPart + " is not defined";
-/* 453 */     return new Skin(paramComponent, paramPart, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   long getThemeTransitionDuration(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState1, TMSchema.State paramState2, TMSchema.Prop paramProp) {
-/* 459 */     return ThemeReader.getThemeTransitionDuration(paramPart.getControlName(paramComponent), paramPart
-/* 460 */         .getValue(), 
-/* 461 */         TMSchema.State.getValue(paramPart, paramState1), 
-/* 462 */         TMSchema.State.getValue(paramPart, paramState2), (paramProp != null) ? paramProp
-/* 463 */         .getValue() : 0);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static class Skin
-/*     */   {
-/*     */     final Component component;
-/*     */     
-/*     */     final TMSchema.Part part;
-/*     */     
-/*     */     final TMSchema.State state;
-/*     */     
-/*     */     private final String string;
-/*     */     
-/* 477 */     private Dimension size = null;
-/*     */     
-/*     */     Skin(Component param1Component, TMSchema.Part param1Part) {
-/* 480 */       this(param1Component, param1Part, null);
-/*     */     }
-/*     */     
-/*     */     Skin(TMSchema.Part param1Part, TMSchema.State param1State) {
-/* 484 */       this(null, param1Part, param1State);
-/*     */     }
-/*     */     
-/*     */     Skin(Component param1Component, TMSchema.Part param1Part, TMSchema.State param1State) {
-/* 488 */       this.component = param1Component;
-/* 489 */       this.part = param1Part;
-/* 490 */       this.state = param1State;
-/*     */       
-/* 492 */       String str = param1Part.getControlName(param1Component) + "." + param1Part.name();
-/* 493 */       if (param1State != null) {
-/* 494 */         str = str + "(" + param1State.name() + ")";
-/*     */       }
-/* 496 */       this.string = str;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Insets getContentMargin() {
-/* 503 */       byte b1 = 100;
-/* 504 */       byte b2 = 100;
-/*     */       
-/* 506 */       Insets insets = ThemeReader.getThemeBackgroundContentMargins(this.part
-/* 507 */           .getControlName((Component)null), this.part.getValue(), 0, b1, b2);
-/*     */       
-/* 509 */       return (insets != null) ? insets : new Insets(0, 0, 0, 0);
-/*     */     }
-/*     */     
-/*     */     private int getWidth(TMSchema.State param1State) {
-/* 513 */       if (this.size == null) {
-/* 514 */         this.size = XPStyle.getPartSize(this.part, param1State);
-/*     */       }
-/* 516 */       return (this.size != null) ? this.size.width : 0;
-/*     */     }
-/*     */     
-/*     */     int getWidth() {
-/* 520 */       return getWidth((this.state != null) ? this.state : TMSchema.State.NORMAL);
-/*     */     }
-/*     */     
-/*     */     private int getHeight(TMSchema.State param1State) {
-/* 524 */       if (this.size == null) {
-/* 525 */         this.size = XPStyle.getPartSize(this.part, param1State);
-/*     */       }
-/* 527 */       return (this.size != null) ? this.size.height : 0;
-/*     */     }
-/*     */     
-/*     */     int getHeight() {
-/* 531 */       return getHeight((this.state != null) ? this.state : TMSchema.State.NORMAL);
-/*     */     }
-/*     */     
-/*     */     public String toString() {
-/* 535 */       return this.string;
-/*     */     }
-/*     */     
-/*     */     public boolean equals(Object param1Object) {
-/* 539 */       return (param1Object instanceof Skin && ((Skin)param1Object).string.equals(this.string));
-/*     */     }
-/*     */     
-/*     */     public int hashCode() {
-/* 543 */       return this.string.hashCode();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void paintSkin(Graphics param1Graphics, int param1Int1, int param1Int2, TMSchema.State param1State) {
-/* 554 */       if (param1State == null) {
-/* 555 */         param1State = this.state;
-/*     */       }
-/* 557 */       paintSkin(param1Graphics, param1Int1, param1Int2, getWidth(param1State), getHeight(param1State), param1State);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void paintSkin(Graphics param1Graphics, Rectangle param1Rectangle, TMSchema.State param1State) {
-/* 568 */       paintSkin(param1Graphics, param1Rectangle.x, param1Rectangle.y, param1Rectangle.width, param1Rectangle.height, param1State);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void paintSkin(Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4, TMSchema.State param1State) {
-/* 584 */       if (XPStyle.getXP() == null) {
-/*     */         return;
-/*     */       }
-/* 587 */       if (ThemeReader.isGetThemeTransitionDurationDefined() && this.component instanceof JComponent && 
-/*     */         
-/* 589 */         SwingUtilities.getAncestorOfClass(CellRendererPane.class, this.component) == null) {
-/*     */         
-/* 591 */         AnimationController.paintSkin((JComponent)this.component, this, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, param1State);
-/*     */       } else {
-/*     */         
-/* 594 */         paintSkinRaw(param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, param1State);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void paintSkinRaw(Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4, TMSchema.State param1State) {
-/* 612 */       if (XPStyle.getXP() == null) {
-/*     */         return;
-/*     */       }
-/* 615 */       XPStyle.skinPainter.paint(null, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, new Object[] { this, param1State });
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     void paintSkin(Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4, TMSchema.State param1State, boolean param1Boolean) {
-/* 633 */       if (XPStyle.getXP() == null) {
-/*     */         return;
-/*     */       }
-/* 636 */       if (param1Boolean && "borderfill".equals(XPStyle.getTypeEnumName(this.component, this.part, param1State, TMSchema.Prop.BGTYPE))) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 640 */       XPStyle.skinPainter.paint(null, param1Graphics, param1Int1, param1Int2, param1Int3, param1Int4, new Object[] { this, param1State });
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class SkinPainter extends CachedPainter {
-/*     */     SkinPainter() {
-/* 646 */       super(30);
-/* 647 */       flush();
-/*     */     }
-/*     */     
-/*     */     public void flush() {
-/* 651 */       super.flush();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     protected void paintToImage(Component param1Component, Image param1Image, Graphics param1Graphics, int param1Int1, int param1Int2, Object[] param1ArrayOfObject) {
-/* 656 */       boolean bool = false;
-/* 657 */       XPStyle.Skin skin = (XPStyle.Skin)param1ArrayOfObject[0];
-/* 658 */       TMSchema.Part part = skin.part;
-/* 659 */       TMSchema.State state = (TMSchema.State)param1ArrayOfObject[1];
-/* 660 */       if (state == null) {
-/* 661 */         state = skin.state;
-/*     */       }
-/* 663 */       if (param1Component == null) {
-/* 664 */         param1Component = skin.component;
-/*     */       }
-/* 666 */       BufferedImage bufferedImage = (BufferedImage)param1Image;
-/*     */       
-/* 668 */       WritableRaster writableRaster = bufferedImage.getRaster();
-/* 669 */       DataBufferInt dataBufferInt = (DataBufferInt)writableRaster.getDataBuffer();
-/*     */ 
-/*     */       
-/* 672 */       ThemeReader.paintBackground(SunWritableRaster.stealData(dataBufferInt, 0), part
-/* 673 */           .getControlName(param1Component), part.getValue(), 
-/* 674 */           TMSchema.State.getValue(part, state), 0, 0, param1Int1, param1Int2, param1Int1);
-/*     */       
-/* 676 */       SunWritableRaster.markDirty(dataBufferInt);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     protected Image createImage(Component param1Component, int param1Int1, int param1Int2, GraphicsConfiguration param1GraphicsConfiguration, Object[] param1ArrayOfObject) {
-/* 681 */       return new BufferedImage(param1Int1, param1Int2, 2);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   static class GlyphButton extends JButton {
-/*     */     private XPStyle.Skin skin;
-/*     */     
-/*     */     public GlyphButton(Component param1Component, TMSchema.Part param1Part) {
-/* 689 */       XPStyle xPStyle = XPStyle.getXP();
-/* 690 */       this.skin = (xPStyle != null) ? xPStyle.getSkin(param1Component, param1Part) : null;
-/* 691 */       setBorder((Border)null);
-/* 692 */       setContentAreaFilled(false);
-/* 693 */       setMinimumSize(new Dimension(5, 5));
-/* 694 */       setPreferredSize(new Dimension(16, 16));
-/* 695 */       setMaximumSize(new Dimension(2147483647, 2147483647));
-/*     */     }
-/*     */     
-/*     */     public boolean isFocusTraversable() {
-/* 699 */       return false;
-/*     */     }
-/*     */     
-/*     */     protected TMSchema.State getState() {
-/* 703 */       TMSchema.State state = TMSchema.State.NORMAL;
-/* 704 */       if (!isEnabled()) {
-/* 705 */         state = TMSchema.State.DISABLED;
-/* 706 */       } else if (getModel().isPressed()) {
-/* 707 */         state = TMSchema.State.PRESSED;
-/* 708 */       } else if (getModel().isRollover()) {
-/* 709 */         state = TMSchema.State.HOT;
-/*     */       } 
-/* 711 */       return state;
-/*     */     }
-/*     */     
-/*     */     public void paintComponent(Graphics param1Graphics) {
-/* 715 */       if (XPStyle.getXP() == null || this.skin == null) {
-/*     */         return;
-/*     */       }
-/* 718 */       Dimension dimension = getSize();
-/* 719 */       this.skin.paintSkin(param1Graphics, 0, 0, dimension.width, dimension.height, getState());
-/*     */     }
-/*     */     
-/*     */     public void setPart(Component param1Component, TMSchema.Part param1Part) {
-/* 723 */       XPStyle xPStyle = XPStyle.getXP();
-/* 724 */       this.skin = (xPStyle != null) ? xPStyle.getSkin(param1Component, param1Part) : null;
-/* 725 */       revalidate();
-/* 726 */       repaint();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     protected void paintBorder(Graphics param1Graphics) {}
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private XPStyle() {
-/* 737 */     this.flatMenus = getSysBoolean(TMSchema.Prop.FLATMENUS);
-/*     */     
-/* 739 */     this.colorMap = new HashMap<>();
-/* 740 */     this.borderMap = new HashMap<>();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean getBoolean(Component paramComponent, TMSchema.Part paramPart, TMSchema.State paramState, TMSchema.Prop paramProp) {
-/* 746 */     return ThemeReader.getBoolean(paramPart.getControlName(paramComponent), paramPart.getValue(), 
-/* 747 */         TMSchema.State.getValue(paramPart, paramState), paramProp
-/* 748 */         .getValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Dimension getPartSize(TMSchema.Part paramPart, TMSchema.State paramState) {
-/* 754 */     return ThemeReader.getPartSize(paramPart.getControlName((Component)null), paramPart.getValue(), 
-/* 755 */         TMSchema.State.getValue(paramPart, paramState));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static boolean getSysBoolean(TMSchema.Prop paramProp) {
-/* 760 */     return ThemeReader.getSysBoolean("window", paramProp.getValue());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\XPStyle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * <p>These classes are designed to be used while the
+ * corresponding <code>LookAndFeel</code> class has been installed
+ * (<code>UIManager.setLookAndFeel(new <i>XXX</i>LookAndFeel())</code>).
+ * Using them while a different <code>LookAndFeel</code> is installed
+ * may produce unexpected results, including exceptions.
+ * Additionally, changing the <code>LookAndFeel</code>
+ * maintained by the <code>UIManager</code> without updating the
+ * corresponding <code>ComponentUI</code> of any
+ * <code>JComponent</code>s may also produce unexpected results,
+ * such as the wrong colors showing up, and is generally not
+ * encouraged.
+ *
+ */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import java.awt.image.*;
+import java.security.AccessController;
+import java.util.*;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.text.JTextComponent;
+
+import sun.awt.image.SunWritableRaster;
+import sun.awt.windows.ThemeReader;
+import sun.security.action.GetPropertyAction;
+import sun.swing.CachedPainter;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+
+
+/**
+ * Implements Windows XP Styles for the Windows Look and Feel.
+ *
+ * @author Leif Samuelsson
+ */
+class XPStyle {
+    // Singleton instance of this class
+    private static XPStyle xp;
+
+    // Singleton instance of SkinPainter
+    private static SkinPainter skinPainter = new SkinPainter();
+
+    private static Boolean themeActive = null;
+
+    private HashMap<String, Border> borderMap;
+    private HashMap<String, Color>  colorMap;
+
+    private boolean flatMenus;
+
+    static {
+        invalidateStyle();
+    }
+
+    /** Static method for clearing the hashmap and loading the
+     * current XP style and theme
+     */
+    static synchronized void invalidateStyle() {
+        xp = null;
+        themeActive = null;
+        skinPainter.flush();
+    }
+
+    /** Get the singleton instance of this class
+     *
+     * @return the singleton instance of this class or null if XP styles
+     * are not active or if this is not Windows XP
+     */
+    static synchronized XPStyle getXP() {
+        if (themeActive == null) {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            themeActive =
+                (Boolean)toolkit.getDesktopProperty("win.xpstyle.themeActive");
+            if (themeActive == null) {
+                themeActive = Boolean.FALSE;
+            }
+            if (themeActive.booleanValue()) {
+                GetPropertyAction propertyAction =
+                    new GetPropertyAction("swing.noxp");
+                if (AccessController.doPrivileged(propertyAction) == null &&
+                    ThemeReader.isThemed() &&
+                    !(UIManager.getLookAndFeel()
+                      instanceof WindowsClassicLookAndFeel)) {
+
+                    xp = new XPStyle();
+                }
+            }
+        }
+        return ThemeReader.isXPStyleEnabled() ? xp : null;
+    }
+
+    static boolean isVista() {
+        XPStyle xp = XPStyle.getXP();
+        return (xp != null && xp.isSkinDefined(null, Part.CP_DROPDOWNBUTTONRIGHT));
+    }
+
+    /** Get a named <code>String</code> value from the current style
+     *
+     * @param part a <code>Part</code>
+     * @param state a <code>String</code>
+     * @param attributeKey a <code>String</code>
+     * @return a <code>String</code> or null if key is not found
+     *    in the current style
+     *
+     * This is currently only used by WindowsInternalFrameTitlePane for painting
+     * title foregound and can be removed when no longer needed
+     */
+    String getString(Component c, Part part, State state, Prop prop) {
+        return getTypeEnumName(c, part, state, prop);
+    }
+
+    TypeEnum getTypeEnum(Component c, Part part, State state, Prop prop) {
+        int enumValue = ThemeReader.getEnum(part.getControlName(c), part.getValue(),
+                                            State.getValue(part, state),
+                                            prop.getValue());
+        return TypeEnum.getTypeEnum(prop, enumValue);
+    }
+
+    private static String getTypeEnumName(Component c, Part part, State state, Prop prop) {
+        int enumValue = ThemeReader.getEnum(part.getControlName(c), part.getValue(),
+                                            State.getValue(part, state),
+                                            prop.getValue());
+        if (enumValue == -1) {
+            return null;
+        }
+        return TypeEnum.getTypeEnum(prop, enumValue).getName();
+    }
+
+
+
+
+    /** Get a named <code>int</code> value from the current style
+     *
+     * @param part a <code>Part</code>
+     * @return an <code>int</code> or null if key is not found
+     *    in the current style
+     */
+    int getInt(Component c, Part part, State state, Prop prop, int fallback) {
+        return ThemeReader.getInt(part.getControlName(c), part.getValue(),
+                                  State.getValue(part, state),
+                                  prop.getValue());
+    }
+
+    /** Get a named <code>Dimension</code> value from the current style
+     *
+     * @param key a <code>String</code>
+     * @return a <code>Dimension</code> or null if key is not found
+     *    in the current style
+     *
+     * This is currently only used by WindowsProgressBarUI and the value
+     * should probably be cached there instead of here.
+     */
+    Dimension getDimension(Component c, Part part, State state, Prop prop) {
+        Dimension d = ThemeReader.getPosition(part.getControlName(c), part.getValue(),
+                                              State.getValue(part, state),
+                                              prop.getValue());
+        return (d != null) ? d : new Dimension();
+    }
+
+    /** Get a named <code>Point</code> (e.g. a location or an offset) value
+     *  from the current style
+     *
+     * @param key a <code>String</code>
+     * @return a <code>Point</code> or null if key is not found
+     *    in the current style
+     *
+     * This is currently only used by WindowsInternalFrameTitlePane for painting
+     * title foregound and can be removed when no longer needed
+     */
+    Point getPoint(Component c, Part part, State state, Prop prop) {
+        Dimension d = ThemeReader.getPosition(part.getControlName(c), part.getValue(),
+                                              State.getValue(part, state),
+                                              prop.getValue());
+        return (d != null) ? new Point(d.width, d.height) : new Point();
+    }
+
+    /** Get a named <code>Insets</code> value from the current style
+     *
+     * @param key a <code>String</code>
+     * @return an <code>Insets</code> object or null if key is not found
+     *    in the current style
+     *
+     * This is currently only used to create borders and by
+     * WindowsInternalFrameTitlePane for painting title foregound.
+     * The return value is already cached in those places.
+     */
+    Insets getMargin(Component c, Part part, State state, Prop prop) {
+        Insets insets = ThemeReader.getThemeMargins(part.getControlName(c), part.getValue(),
+                                                    State.getValue(part, state),
+                                                    prop.getValue());
+        return (insets != null) ? insets : new Insets(0, 0, 0, 0);
+    }
+
+
+    /** Get a named <code>Color</code> value from the current style
+     *
+     * @param part a <code>Part</code>
+     * @return a <code>Color</code> or null if key is not found
+     *    in the current style
+     */
+    synchronized Color getColor(Skin skin, Prop prop, Color fallback) {
+        String key = skin.toString() + "." + prop.name();
+        Part part = skin.part;
+        Color color = colorMap.get(key);
+        if (color == null) {
+            color = ThemeReader.getColor(part.getControlName(null), part.getValue(),
+                                         State.getValue(part, skin.state),
+                                         prop.getValue());
+            if (color != null) {
+                color = new ColorUIResource(color);
+                colorMap.put(key, color);
+            }
+        }
+        return (color != null) ? color : fallback;
+    }
+
+    Color getColor(Component c, Part part, State state, Prop prop, Color fallback) {
+        return getColor(new Skin(c, part, state), prop, fallback);
+    }
+
+
+
+    /** Get a named <code>Border</code> value from the current style
+     *
+     * @param part a <code>Part</code>
+     * @return a <code>Border</code> or null if key is not found
+     *    in the current style or if the style for the particular
+     *    part is not defined as "borderfill".
+     */
+    synchronized Border getBorder(Component c, Part part) {
+        if (part == Part.MENU) {
+            // Special case because XP has no skin for menus
+            if (flatMenus) {
+                // TODO: The classic border uses this color, but we should
+                // create a new UI property called "PopupMenu.borderColor"
+                // instead.
+                return new XPFillBorder(UIManager.getColor("InternalFrame.borderShadow"),
+                                        1);
+            } else {
+                return null;    // Will cause L&F to use classic border
+            }
+        }
+        Skin skin = new Skin(c, part, null);
+        Border border = borderMap.get(skin.string);
+        if (border == null) {
+            String bgType = getTypeEnumName(c, part, null, Prop.BGTYPE);
+            if ("borderfill".equalsIgnoreCase(bgType)) {
+                int thickness = getInt(c, part, null, Prop.BORDERSIZE, 1);
+                Color color = getColor(skin, Prop.BORDERCOLOR, Color.black);
+                border = new XPFillBorder(color, thickness);
+                if (part == Part.CP_COMBOBOX) {
+                    border = new XPStatefulFillBorder(color, thickness, part, Prop.BORDERCOLOR);
+                }
+            } else if ("imagefile".equalsIgnoreCase(bgType)) {
+                Insets m = getMargin(c, part, null, Prop.SIZINGMARGINS);
+                if (m != null) {
+                    if (getBoolean(c, part, null, Prop.BORDERONLY)) {
+                        border = new XPImageBorder(c, part);
+                    } else if (part == Part.CP_COMBOBOX) {
+                        border = new EmptyBorder(1, 1, 1, 1);
+                    } else {
+                        if(part == Part.TP_BUTTON) {
+                            border = new XPEmptyBorder(new Insets(3,3,3,3));
+                        } else {
+                            border = new XPEmptyBorder(m);
+                        }
+                    }
+                }
+            }
+            if (border != null) {
+                borderMap.put(skin.string, border);
+            }
+        }
+        return border;
+    }
+
+    private class XPFillBorder extends LineBorder implements UIResource {
+        XPFillBorder(Color color, int thickness) {
+            super(color, thickness);
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets)       {
+            Insets margin = null;
+            //
+            // Ideally we'd have an interface defined for classes which
+            // support margins (to avoid this hackery), but we've
+            // decided against it for simplicity
+            //
+           if (c instanceof AbstractButton) {
+               margin = ((AbstractButton)c).getMargin();
+           } else if (c instanceof JToolBar) {
+               margin = ((JToolBar)c).getMargin();
+           } else if (c instanceof JTextComponent) {
+               margin = ((JTextComponent)c).getMargin();
+           }
+           insets.top    = (margin != null? margin.top : 0)    + thickness;
+           insets.left   = (margin != null? margin.left : 0)   + thickness;
+           insets.bottom = (margin != null? margin.bottom : 0) + thickness;
+           insets.right =  (margin != null? margin.right : 0)  + thickness;
+
+           return insets;
+        }
+    }
+
+    private class XPStatefulFillBorder extends XPFillBorder {
+        private final Part part;
+        private final Prop prop;
+        XPStatefulFillBorder(Color color, int thickness, Part part, Prop prop) {
+            super(color, thickness);
+            this.part = part;
+            this.prop = prop;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            State state = State.NORMAL;
+            // special casing for comboboxes.
+            // there may be more special cases in the future
+            if(c instanceof JComboBox) {
+                JComboBox cb = (JComboBox)c;
+                // note. in the future this should be replaced with a call
+                // to BasicLookAndFeel.getUIOfType()
+                if(cb.getUI() instanceof WindowsComboBoxUI) {
+                    WindowsComboBoxUI wcb = (WindowsComboBoxUI)cb.getUI();
+                    state = wcb.getXPComboBoxState(cb);
+                }
+            }
+            lineColor = getColor(c, part, state, prop, Color.black);
+            super.paintBorder(c, g, x, y, width, height);
+        }
+    }
+
+    private class XPImageBorder extends AbstractBorder implements UIResource {
+        Skin skin;
+
+        XPImageBorder(Component c, Part part) {
+            this.skin = getSkin(c, part);
+        }
+
+        public void paintBorder(Component c, Graphics g,
+                                int x, int y, int width, int height) {
+            skin.paintSkin(g, x, y, width, height, null);
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets)       {
+            Insets margin = null;
+            Insets borderInsets = skin.getContentMargin();
+            if(borderInsets == null) {
+                borderInsets = new Insets(0, 0, 0, 0);
+            }
+            //
+            // Ideally we'd have an interface defined for classes which
+            // support margins (to avoid this hackery), but we've
+            // decided against it for simplicity
+            //
+           if (c instanceof AbstractButton) {
+               margin = ((AbstractButton)c).getMargin();
+           } else if (c instanceof JToolBar) {
+               margin = ((JToolBar)c).getMargin();
+           } else if (c instanceof JTextComponent) {
+               margin = ((JTextComponent)c).getMargin();
+           }
+           insets.top    = (margin != null? margin.top : 0)    + borderInsets.top;
+           insets.left   = (margin != null? margin.left : 0)   + borderInsets.left;
+           insets.bottom = (margin != null? margin.bottom : 0) + borderInsets.bottom;
+           insets.right  = (margin != null? margin.right : 0)  + borderInsets.right;
+
+           return insets;
+        }
+    }
+
+    private class XPEmptyBorder extends EmptyBorder implements UIResource {
+        XPEmptyBorder(Insets m) {
+            super(m.top+2, m.left+2, m.bottom+2, m.right+2);
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets)       {
+            insets = super.getBorderInsets(c, insets);
+
+            Insets margin = null;
+            if (c instanceof AbstractButton) {
+                Insets m = ((AbstractButton)c).getMargin();
+                // if this is a toolbar button then ignore getMargin()
+                // and subtract the padding added by the constructor
+                if(c.getParent() instanceof JToolBar
+                   && ! (c instanceof JRadioButton)
+                   && ! (c instanceof JCheckBox)
+                   && m instanceof InsetsUIResource) {
+                    insets.top -= 2;
+                    insets.left -= 2;
+                    insets.bottom -= 2;
+                    insets.right -= 2;
+                } else {
+                    margin = m;
+                }
+            } else if (c instanceof JToolBar) {
+                margin = ((JToolBar)c).getMargin();
+            } else if (c instanceof JTextComponent) {
+                margin = ((JTextComponent)c).getMargin();
+            }
+            if (margin != null) {
+                insets.top    = margin.top + 2;
+                insets.left   = margin.left + 2;
+                insets.bottom = margin.bottom + 2;
+                insets.right  = margin.right + 2;
+            }
+            return insets;
+        }
+    }
+    boolean isSkinDefined(Component c, Part part) {
+        return (part.getValue() == 0)
+            || ThemeReader.isThemePartDefined(
+                   part.getControlName(c), part.getValue(), 0);
+    }
+
+
+    /** Get a <code>Skin</code> object from the current style
+     * for a named part (component type)
+     *
+     * @param part a <code>Part</code>
+     * @return a <code>Skin</code> object
+     */
+    synchronized Skin getSkin(Component c, Part part) {
+        assert isSkinDefined(c, part) : "part " + part + " is not defined";
+        return new Skin(c, part, null);
+    }
+
+
+    long getThemeTransitionDuration(Component c, Part part, State stateFrom,
+                                    State stateTo, Prop prop) {
+         return ThemeReader.getThemeTransitionDuration(part.getControlName(c),
+                                          part.getValue(),
+                                          State.getValue(part, stateFrom),
+                                          State.getValue(part, stateTo),
+                                          (prop != null) ? prop.getValue() : 0);
+    }
+
+
+    /** A class which encapsulates attributes for a given part
+     * (component type) and which provides methods for painting backgrounds
+     * and glyphs
+     */
+    static class Skin {
+        final Component component;
+        final Part part;
+        final State state;
+
+        private final String string;
+        private Dimension size = null;
+
+        Skin(Component component, Part part) {
+            this(component, part, null);
+        }
+
+        Skin(Part part, State state) {
+            this(null, part, state);
+        }
+
+        Skin(Component component, Part part, State state) {
+            this.component = component;
+            this.part  = part;
+            this.state = state;
+
+            String str = part.getControlName(component) +"." + part.name();
+            if (state != null) {
+                str += "("+state.name()+")";
+            }
+            string = str;
+        }
+
+        Insets getContentMargin() {
+            /* idk: it seems margins are the same for all 'big enough'
+             * bounding rectangles.
+             */
+            int boundingWidth = 100;
+            int boundingHeight = 100;
+
+            Insets insets = ThemeReader.getThemeBackgroundContentMargins(
+                part.getControlName(null), part.getValue(),
+                0, boundingWidth, boundingHeight);
+            return (insets != null) ? insets : new Insets(0, 0, 0, 0);
+        }
+
+        private int getWidth(State state) {
+            if (size == null) {
+                size = getPartSize(part, state);
+            }
+            return (size != null) ? size.width : 0;
+        }
+
+        int getWidth() {
+            return getWidth((state != null) ? state : State.NORMAL);
+        }
+
+        private int getHeight(State state) {
+            if (size == null) {
+                size = getPartSize(part, state);
+            }
+            return (size != null) ? size.height : 0;
+        }
+
+        int getHeight() {
+            return getHeight((state != null) ? state : State.NORMAL);
+        }
+
+        public String toString() {
+            return string;
+        }
+
+        public boolean equals(Object obj) {
+            return (obj instanceof Skin && ((Skin)obj).string.equals(string));
+        }
+
+        public int hashCode() {
+            return string.hashCode();
+        }
+
+        /** Paint a skin at x, y.
+         *
+         * @param g   the graphics context to use for painting
+         * @param dx  the destination <i>x</i> coordinate
+         * @param dy  the destination <i>y</i> coordinate
+         * @param state which state to paint
+         */
+        void paintSkin(Graphics g, int dx, int dy, State state) {
+            if (state == null) {
+                state = this.state;
+            }
+            paintSkin(g, dx, dy, getWidth(state), getHeight(state), state);
+        }
+
+        /** Paint a skin in an area defined by a rectangle.
+         *
+         * @param g the graphics context to use for painting
+         * @param r     a <code>Rectangle</code> defining the area to fill,
+         *                     may cause the image to be stretched or tiled
+         * @param state which state to paint
+         */
+        void paintSkin(Graphics g, Rectangle r, State state) {
+            paintSkin(g, r.x, r.y, r.width, r.height, state);
+        }
+
+        /** Paint a skin at a defined position and size
+         *  This method supports animation.
+         *
+         * @param g   the graphics context to use for painting
+         * @param dx  the destination <i>x</i> coordinate
+         * @param dy  the destination <i>y</i> coordinate
+         * @param dw  the width of the area to fill, may cause
+         *                  the image to be stretched or tiled
+         * @param dh  the height of the area to fill, may cause
+         *                  the image to be stretched or tiled
+         * @param state which state to paint
+         */
+        void paintSkin(Graphics g, int dx, int dy, int dw, int dh, State state) {
+            if (XPStyle.getXP() == null) {
+                return;
+            }
+            if (ThemeReader.isGetThemeTransitionDurationDefined()
+                  && component instanceof JComponent
+                  && SwingUtilities.getAncestorOfClass(CellRendererPane.class,
+                                                       component) == null) {
+                AnimationController.paintSkin((JComponent) component, this,
+                                              g, dx, dy, dw, dh, state);
+            } else {
+                paintSkinRaw(g, dx, dy, dw, dh, state);
+            }
+        }
+
+        /** Paint a skin at a defined position and size. This method
+         *  does not trigger animation. It is needed for the animation
+         *  support.
+         *
+         * @param g   the graphics context to use for painting
+         * @param dx  the destination <i>x</i> coordinate.
+         * @param dy  the destination <i>y</i> coordinate.
+         * @param dw  the width of the area to fill, may cause
+         *                  the image to be stretched or tiled
+         * @param dh  the height of the area to fill, may cause
+         *                  the image to be stretched or tiled
+         * @param state which state to paint
+         */
+        void paintSkinRaw(Graphics g, int dx, int dy, int dw, int dh, State state) {
+            if (XPStyle.getXP() == null) {
+                return;
+            }
+            skinPainter.paint(null, g, dx, dy, dw, dh, this, state);
+        }
+
+        /** Paint a skin at a defined position and size
+         *
+         * @param g   the graphics context to use for painting
+         * @param dx  the destination <i>x</i> coordinate
+         * @param dy  the destination <i>y</i> coordinate
+         * @param dw  the width of the area to fill, may cause
+         *                  the image to be stretched or tiled
+         * @param dh  the height of the area to fill, may cause
+         *                  the image to be stretched or tiled
+         * @param state which state to paint
+         * @param borderFill should test if the component uses a border fill
+                            and skip painting if it is
+         */
+        void paintSkin(Graphics g, int dx, int dy, int dw, int dh, State state,
+                boolean borderFill) {
+            if (XPStyle.getXP() == null) {
+                return;
+            }
+            if(borderFill && "borderfill".equals(getTypeEnumName(component, part,
+                    state, Prop.BGTYPE))) {
+                return;
+            }
+            skinPainter.paint(null, g, dx, dy, dw, dh, this, state);
+        }
+    }
+
+    private static class SkinPainter extends CachedPainter {
+        SkinPainter() {
+            super(30);
+            flush();
+        }
+
+        public void flush() {
+            super.flush();
+        }
+
+        protected void paintToImage(Component c, Image image, Graphics g,
+                                    int w, int h, Object[] args) {
+            boolean accEnabled = false;
+            Skin skin = (Skin)args[0];
+            Part part = skin.part;
+            State state = (State)args[1];
+            if (state == null) {
+                state = skin.state;
+            }
+            if (c == null) {
+                c = skin.component;
+            }
+            BufferedImage bi = (BufferedImage)image;
+
+            WritableRaster raster = bi.getRaster();
+            DataBufferInt dbi = (DataBufferInt)raster.getDataBuffer();
+            // Note that stealData() requires a markDirty() afterwards
+            // since we modify the data in it.
+            ThemeReader.paintBackground(SunWritableRaster.stealData(dbi, 0),
+                                        part.getControlName(c), part.getValue(),
+                                        State.getValue(part, state),
+                                        0, 0, w, h, w);
+            SunWritableRaster.markDirty(dbi);
+        }
+
+        protected Image createImage(Component c, int w, int h,
+                                    GraphicsConfiguration config, Object[] args) {
+            return new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        }
+    }
+
+    static class GlyphButton extends JButton {
+        private Skin skin;
+
+        public GlyphButton(Component parent, Part part) {
+            XPStyle xp = getXP();
+            skin = xp != null ? xp.getSkin(parent, part) : null;
+            setBorder(null);
+            setContentAreaFilled(false);
+            setMinimumSize(new Dimension(5, 5));
+            setPreferredSize(new Dimension(16, 16));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        }
+
+        public boolean isFocusTraversable() {
+            return false;
+        }
+
+        protected State getState() {
+            State state = State.NORMAL;
+            if (!isEnabled()) {
+                state = State.DISABLED;
+            } else if (getModel().isPressed()) {
+                state = State.PRESSED;
+            } else if (getModel().isRollover()) {
+                state = State.HOT;
+            }
+            return state;
+        }
+
+        public void paintComponent(Graphics g) {
+            if (XPStyle.getXP() == null || skin == null) {
+                return;
+            }
+            Dimension d = getSize();
+            skin.paintSkin(g, 0, 0, d.width, d.height, getState());
+        }
+
+        public void setPart(Component parent, Part part) {
+            XPStyle xp = getXP();
+            skin = xp != null ? xp.getSkin(parent, part) : null;
+            revalidate();
+            repaint();
+        }
+
+        protected void paintBorder(Graphics g) {
+        }
+
+
+    }
+
+    // Private constructor
+    private XPStyle() {
+        flatMenus = getSysBoolean(Prop.FLATMENUS);
+
+        colorMap  = new HashMap<String, Color>();
+        borderMap = new HashMap<String, Border>();
+        // Note: All further access to the maps must be synchronized
+    }
+
+
+    private boolean getBoolean(Component c, Part part, State state, Prop prop) {
+        return ThemeReader.getBoolean(part.getControlName(c), part.getValue(),
+                                      State.getValue(part, state),
+                                      prop.getValue());
+    }
+
+
+
+    static Dimension getPartSize(Part part, State state) {
+        return ThemeReader.getPartSize(part.getControlName(null), part.getValue(),
+                                       State.getValue(part, state));
+    }
+
+    private static boolean getSysBoolean(Prop prop) {
+        // We can use any widget name here, I guess.
+        return ThemeReader.getSysBoolean("window", prop.getValue());
+    }
+}

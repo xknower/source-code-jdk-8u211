@@ -1,518 +1,513 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xpath.regex;
-/*     */ 
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ParserForXMLSchema
-/*     */   extends RegexParser
-/*     */ {
-/*     */   public ParserForXMLSchema() {}
-/*     */   
-/*     */   public ParserForXMLSchema(Locale locale) {
-/*  41 */     super(locale);
-/*     */   }
-/*     */   
-/*     */   Token processCaret() throws ParseException {
-/*  45 */     next();
-/*  46 */     return Token.createChar(94);
-/*     */   }
-/*     */   Token processDollar() throws ParseException {
-/*  49 */     next();
-/*  50 */     return Token.createChar(36);
-/*     */   }
-/*     */   Token processLookahead() throws ParseException {
-/*  53 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processNegativelookahead() throws ParseException {
-/*  56 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processLookbehind() throws ParseException {
-/*  59 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processNegativelookbehind() throws ParseException {
-/*  62 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_A() throws ParseException {
-/*  65 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_Z() throws ParseException {
-/*  68 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_z() throws ParseException {
-/*  71 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_b() throws ParseException {
-/*  74 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_B() throws ParseException {
-/*  77 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_lt() throws ParseException {
-/*  80 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_gt() throws ParseException {
-/*  83 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processStar(Token tok) throws ParseException {
-/*  86 */     next();
-/*  87 */     return Token.createClosure(tok);
-/*     */   }
-/*     */   
-/*     */   Token processPlus(Token tok) throws ParseException {
-/*  91 */     next();
-/*  92 */     return Token.createConcat(tok, Token.createClosure(tok));
-/*     */   }
-/*     */   
-/*     */   Token processQuestion(Token tok) throws ParseException {
-/*  96 */     next();
-/*  97 */     Token par = Token.createUnion();
-/*  98 */     par.addChild(tok);
-/*  99 */     par.addChild(Token.createEmpty());
-/* 100 */     return par;
-/*     */   }
-/*     */   boolean checkQuestion(int off) {
-/* 103 */     return false;
-/*     */   }
-/*     */   Token processParen() throws ParseException {
-/* 106 */     next();
-/* 107 */     Token tok = Token.createParen(parseRegex(), 0);
-/* 108 */     if (read() != 7) throw ex("parser.factor.1", this.offset - 1); 
-/* 109 */     next();
-/* 110 */     return tok;
-/*     */   }
-/*     */   Token processParen2() throws ParseException {
-/* 113 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processCondition() throws ParseException {
-/* 116 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processModifiers() throws ParseException {
-/* 119 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processIndependent() throws ParseException {
-/* 122 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   Token processBacksolidus_c() throws ParseException {
-/* 125 */     next();
-/* 126 */     return getTokenForShorthand(99);
-/*     */   }
-/*     */   Token processBacksolidus_C() throws ParseException {
-/* 129 */     next();
-/* 130 */     return getTokenForShorthand(67);
-/*     */   }
-/*     */   Token processBacksolidus_i() throws ParseException {
-/* 133 */     next();
-/* 134 */     return getTokenForShorthand(105);
-/*     */   }
-/*     */   Token processBacksolidus_I() throws ParseException {
-/* 137 */     next();
-/* 138 */     return getTokenForShorthand(73);
-/*     */   }
-/*     */   Token processBacksolidus_g() throws ParseException {
-/* 141 */     throw ex("parser.process.1", this.offset - 2);
-/*     */   }
-/*     */   Token processBacksolidus_X() throws ParseException {
-/* 144 */     throw ex("parser.process.1", this.offset - 2);
-/*     */   }
-/*     */   Token processBackreference() throws ParseException {
-/* 147 */     throw ex("parser.process.1", this.offset - 4);
-/*     */   }
-/*     */   
-/*     */   int processCIinCharacterClass(RangeToken tok, int c) {
-/* 151 */     tok.mergeRanges(getTokenForShorthand(c));
-/* 152 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected RangeToken parseCharacterClass(boolean useNrange) throws ParseException {
-/*     */     RangeToken tok;
-/* 174 */     setContext(1);
-/* 175 */     next();
-/* 176 */     boolean nrange = false;
-/* 177 */     boolean wasDecoded = false;
-/* 178 */     RangeToken base = null;
-/*     */     
-/* 180 */     if (read() == 0 && this.chardata == 94) {
-/* 181 */       nrange = true;
-/* 182 */       next();
-/* 183 */       base = Token.createRange();
-/* 184 */       base.addRange(0, 1114111);
-/* 185 */       tok = Token.createRange();
-/*     */     } else {
-/* 187 */       tok = Token.createRange();
-/*     */     } 
-/*     */     
-/* 190 */     boolean firstloop = true; int type;
-/* 191 */     while ((type = read()) != 1) {
-/*     */       
-/* 193 */       wasDecoded = false;
-/*     */       
-/* 195 */       if (type == 0 && this.chardata == 93 && !firstloop) {
-/* 196 */         if (nrange) {
-/* 197 */           base.subtractRanges(tok);
-/* 198 */           tok = base;
-/*     */         } 
-/*     */         break;
-/*     */       } 
-/* 202 */       int c = this.chardata;
-/* 203 */       boolean end = false;
-/* 204 */       if (type == 10) {
-/* 205 */         int pstart; RangeToken tok2; switch (c) { case 68: case 83: case 87:
-/*     */           case 100:
-/*     */           case 115:
-/*     */           case 119:
-/* 209 */             tok.mergeRanges(getTokenForShorthand(c));
-/* 210 */             end = true; break;
-/*     */           case 67:
-/*     */           case 73:
-/*     */           case 99:
-/*     */           case 105:
-/* 215 */             c = processCIinCharacterClass(tok, c);
-/* 216 */             if (c < 0) end = true;
-/*     */             
-/*     */             break;
-/*     */           case 80:
-/*     */           case 112:
-/* 221 */             pstart = this.offset;
-/* 222 */             tok2 = processBacksolidus_pP(c);
-/* 223 */             if (tok2 == null) throw ex("parser.atom.5", pstart); 
-/* 224 */             tok.mergeRanges(tok2);
-/* 225 */             end = true;
-/*     */             break;
-/*     */           
-/*     */           case 45:
-/* 229 */             c = decodeEscaped();
-/* 230 */             wasDecoded = true;
-/*     */             break;
-/*     */           
-/*     */           default:
-/* 234 */             c = decodeEscaped();
-/*     */             break; }
-/*     */       
-/* 237 */       } else if (type == 24 && !firstloop) {
-/*     */         
-/* 239 */         if (nrange) {
-/* 240 */           base.subtractRanges(tok);
-/* 241 */           tok = base;
-/*     */         } 
-/* 243 */         RangeToken range2 = parseCharacterClass(false);
-/* 244 */         tok.subtractRanges(range2);
-/* 245 */         if (read() != 0 || this.chardata != 93)
-/* 246 */           throw ex("parser.cc.5", this.offset); 
-/*     */         break;
-/*     */       } 
-/* 249 */       next();
-/* 250 */       if (!end) {
-/* 251 */         if (type == 0) {
-/* 252 */           if (c == 91) throw ex("parser.cc.6", this.offset - 2); 
-/* 253 */           if (c == 93) throw ex("parser.cc.7", this.offset - 2); 
-/* 254 */           if (c == 45 && this.chardata != 93 && !firstloop) throw ex("parser.cc.8", this.offset - 2); 
-/*     */         } 
-/* 256 */         if (read() != 0 || this.chardata != 45 || (c == 45 && firstloop)) {
-/* 257 */           if (!isSet(2) || c > 65535) {
-/* 258 */             tok.addRange(c, c);
-/*     */           } else {
-/*     */             
-/* 261 */             addCaseInsensitiveChar(tok, c);
-/*     */           } 
-/*     */         } else {
-/*     */           
-/* 265 */           next();
-/* 266 */           if ((type = read()) == 1) throw ex("parser.cc.2", this.offset);
-/*     */           
-/* 268 */           if (type == 0 && this.chardata == 93) {
-/* 269 */             if (!isSet(2) || c > 65535) {
-/* 270 */               tok.addRange(c, c);
-/*     */             } else {
-/*     */               
-/* 273 */               addCaseInsensitiveChar(tok, c);
-/*     */             } 
-/* 275 */             tok.addRange(45, 45);
-/*     */           } else {
-/* 277 */             if (type == 24) {
-/* 278 */               throw ex("parser.cc.8", this.offset - 1);
-/*     */             }
-/*     */             
-/* 281 */             int rangeend = this.chardata;
-/* 282 */             if (type == 0) {
-/* 283 */               if (rangeend == 91) throw ex("parser.cc.6", this.offset - 1); 
-/* 284 */               if (rangeend == 93) throw ex("parser.cc.7", this.offset - 1); 
-/* 285 */               if (rangeend == 45) throw ex("parser.cc.8", this.offset - 2);
-/*     */             
-/* 287 */             } else if (type == 10) {
-/* 288 */               rangeend = decodeEscaped();
-/* 289 */             }  next();
-/*     */             
-/* 291 */             if (c > rangeend) throw ex("parser.ope.3", this.offset - 1); 
-/* 292 */             if (!isSet(2) || (c > 65535 && rangeend > 65535)) {
-/*     */               
-/* 294 */               tok.addRange(c, rangeend);
-/*     */             } else {
-/*     */               
-/* 297 */               addCaseInsensitiveCharRange(tok, c, rangeend);
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 302 */       firstloop = false;
-/*     */     } 
-/* 304 */     if (read() == 1)
-/* 305 */       throw ex("parser.cc.2", this.offset); 
-/* 306 */     tok.sortRanges();
-/* 307 */     tok.compactRanges();
-/*     */     
-/* 309 */     setContext(0);
-/* 310 */     next();
-/*     */     
-/* 312 */     return tok;
-/*     */   }
-/*     */   
-/*     */   protected RangeToken parseSetOperations() throws ParseException {
-/* 316 */     throw ex("parser.process.1", this.offset);
-/*     */   }
-/*     */   
-/*     */   Token getTokenForShorthand(int ch) {
-/* 320 */     switch (ch) {
-/*     */       case 100:
-/* 322 */         return getRange("xml:isDigit", true);
-/*     */       case 68:
-/* 324 */         return getRange("xml:isDigit", false);
-/*     */       case 119:
-/* 326 */         return getRange("xml:isWord", true);
-/*     */       case 87:
-/* 328 */         return getRange("xml:isWord", false);
-/*     */       case 115:
-/* 330 */         return getRange("xml:isSpace", true);
-/*     */       case 83:
-/* 332 */         return getRange("xml:isSpace", false);
-/*     */       case 99:
-/* 334 */         return getRange("xml:isNameChar", true);
-/*     */       case 67:
-/* 336 */         return getRange("xml:isNameChar", false);
-/*     */       case 105:
-/* 338 */         return getRange("xml:isInitialNameChar", true);
-/*     */       case 73:
-/* 340 */         return getRange("xml:isInitialNameChar", false);
-/*     */     } 
-/* 342 */     throw new RuntimeException("Internal Error: shorthands: \\u" + Integer.toString(ch, 16));
-/*     */   }
-/*     */   
-/*     */   int decodeEscaped() throws ParseException {
-/* 346 */     if (read() != 10) throw ex("parser.next.1", this.offset - 1); 
-/* 347 */     int c = this.chardata;
-/* 348 */     switch (c) { case 110:
-/* 349 */         c = 10;
-/* 350 */       case 114: c = 13;
-/* 351 */       case 116: c = 9;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 40:
-/*     */       case 41:
-/*     */       case 42:
-/*     */       case 43:
-/*     */       case 45:
-/*     */       case 46:
-/*     */       case 63:
-/*     */       case 91:
-/*     */       case 92:
-/*     */       case 93:
-/*     */       case 94:
-/*     */       case 123:
-/*     */       case 124:
-/*     */       case 125:
-/* 370 */         return c; }
-/*     */     
-/*     */     throw ex("parser.process.1", this.offset - 2);
-/* 373 */   } private static Map<String, Token> ranges = null;
-/* 374 */   private static Map<String, Token> ranges2 = null; private static final String SPACES = "\t\n\r\r  ";
-/*     */   protected static synchronized RangeToken getRange(String name, boolean positive) {
-/* 376 */     if (ranges == null) {
-/* 377 */       ranges = new HashMap<>();
-/* 378 */       ranges2 = new HashMap<>();
-/*     */       
-/* 380 */       Token token = Token.createRange();
-/* 381 */       setupRange(token, "\t\n\r\r  ");
-/* 382 */       ranges.put("xml:isSpace", token);
-/* 383 */       ranges2.put("xml:isSpace", Token.complementRanges(token));
-/*     */       
-/* 385 */       token = Token.createRange();
-/* 386 */       setupRange(token, "09٠٩۰۹०९০৯੦੯૦૯୦୯௧௯౦౯೦೯൦൯๐๙໐໙༠༩၀၉፩፱០៩᠐᠙０９");
-/* 387 */       setupRange(token, DIGITS_INT);
-/* 388 */       ranges.put("xml:isDigit", token);
-/* 389 */       ranges2.put("xml:isDigit", Token.complementRanges(token));
-/*     */       
-/* 391 */       token = Token.createRange();
-/* 392 */       setupRange(token, "AZazÀÖØöøıĴľŁňŊžƀǰǴǵǺȗɐʨʻˁʰˑΆΆΈΊΌΌΎΡΣώϐϖϚϚϜϜϞϞϠϠϢϳЁЌЎяёќўҁҐӄӇӈӋӌӐӫӮӵӸӹԱՖՙՙաֆאתװײءغفيٱڷںھۀێېۓەەۥۦअहऽऽक़ॡঅঌএঐওনপরললশহড়ঢ়য়ৡৰৱਅਊਏਐਓਨਪਰਲਲ਼ਵਸ਼ਸਹਖ਼ੜਫ਼ਫ਼ੲੴઅઋઍઍએઑઓનપરલળવહઽઽૠૠଅଌଏଐଓନପରଲଳଶହଽଽଡ଼ଢ଼ୟୡஅஊஎஐஒகஙசஜஜஞடணதநபமவஷஹఅఌఎఐఒనపళవహౠౡಅಌಎಐಒನಪಳವಹೞೞೠೡഅഌഎഐഒനപഹൠൡกฮะะาำเๅກຂຄຄງຈຊຊຍຍດທນຟມຣລລວວສຫອຮະະາຳຽຽເໄཀཇཉཀྵႠჅაჶᄀᄀᄂᄃᄅᄇᄉᄉᄋᄌᄎᄒᄼᄼᄾᄾᅀᅀᅌᅌᅎᅎᅐᅐᅔᅕᅙᅙᅟᅡᅣᅣᅥᅥᅧᅧᅩᅩᅭᅮᅲᅳᅵᅵᆞᆞᆨᆨᆫᆫᆮᆯᆷᆸᆺᆺᆼᇂᇫᇫᇰᇰᇹᇹḀẛẠỹἀἕἘἝἠὅὈὍὐὗὙὙὛὛὝὝὟώᾀᾴᾶᾼιιῂῄῆῌῐΐῖΊῠῬῲῴῶῼΩΩKÅ℮℮ↀↂ〇〇〡〩ぁゔァヺㄅㄬ一龥가힣ｦﾟ");
-/* 393 */       setupRange(token, LETTERS_INT);
-/* 394 */       token.mergeRanges(ranges.get("xml:isDigit"));
-/* 395 */       ranges.put("xml:isWord", token);
-/* 396 */       ranges2.put("xml:isWord", Token.complementRanges(token));
-/*     */       
-/* 398 */       token = Token.createRange();
-/* 399 */       setupRange(token, "-.0:AZ__az··ÀÖØöøıĴľŁňŊžƀǃǍǰǴǵǺȗɐʨʻˁːˑ̀͠͡ͅΆΊΌΌΎΡΣώϐϖϚϚϜϜϞϞϠϠϢϳЁЌЎяёќўҁ҃҆ҐӄӇӈӋӌӐӫӮӵӸӹԱՖՙՙաֆֹֻֽֿֿׁׂ֑֣֡ׄׄאתװײءغـْ٠٩ٰڷںھۀێېۓە۪ۭۨ۰۹ँःअह़्॑॔क़ॣ०९ঁঃঅঌএঐওনপরললশহ়়াৄেৈো্ৗৗড়ঢ়য়ৣ০ৱਂਂਅਊਏਐਓਨਪਰਲਲ਼ਵਸ਼ਸਹ਼਼ਾੂੇੈੋ੍ਖ਼ੜਫ਼ਫ਼੦ੴઁઃઅઋઍઍએઑઓનપરલળવહ઼ૅેૉો્ૠૠ૦૯ଁଃଅଌଏଐଓନପରଲଳଶହ଼ୃେୈୋ୍ୖୗଡ଼ଢ଼ୟୡ୦୯ஂஃஅஊஎஐஒகஙசஜஜஞடணதநபமவஷஹாூெைொ்ௗௗ௧௯ఁఃఅఌఎఐఒనపళవహాౄెైొ్ౕౖౠౡ౦౯ಂಃಅಌಎಐಒನಪಳವಹಾೄೆೈೊ್ೕೖೞೞೠೡ೦೯ംഃഅഌഎഐഒനപഹാൃെൈൊ്ൗൗൠൡ൦൯กฮะฺเ๎๐๙ກຂຄຄງຈຊຊຍຍດທນຟມຣລລວວສຫອຮະູົຽເໄໆໆ່ໍ໐໙༘༙༠༩༹༹༵༵༷༷༾ཇཉཀྵ྄ཱ྆ྋྐྕྗྗྙྭྱྷྐྵྐྵႠჅაჶᄀᄀᄂᄃᄅᄇᄉᄉᄋᄌᄎᄒᄼᄼᄾᄾᅀᅀᅌᅌᅎᅎᅐᅐᅔᅕᅙᅙᅟᅡᅣᅣᅥᅥᅧᅧᅩᅩᅭᅮᅲᅳᅵᅵᆞᆞᆨᆨᆫᆫᆮᆯᆷᆸᆺᆺᆼᇂᇫᇫᇰᇰᇹᇹḀẛẠỹἀἕἘἝἠὅὈὍὐὗὙὙὛὛὝὝὟώᾀᾴᾶᾼιιῂῄῆῌῐΐῖΊῠῬῲῴῶῼ⃐⃜⃡⃡ΩΩKÅ℮℮ↀↂ々々〇〇〡〯〱〵ぁゔ゙゚ゝゞァヺーヾㄅㄬ一龥가힣");
-/* 400 */       ranges.put("xml:isNameChar", token);
-/* 401 */       ranges2.put("xml:isNameChar", Token.complementRanges(token));
-/*     */       
-/* 403 */       token = Token.createRange();
-/* 404 */       setupRange(token, "AZazÀÖØöøıĴľŁňŊžƀǰǴǵǺȗɐʨʻˁʰˑΆΆΈΊΌΌΎΡΣώϐϖϚϚϜϜϞϞϠϠϢϳЁЌЎяёќўҁҐӄӇӈӋӌӐӫӮӵӸӹԱՖՙՙաֆאתװײءغفيٱڷںھۀێېۓەەۥۦअहऽऽक़ॡঅঌএঐওনপরললশহড়ঢ়য়ৡৰৱਅਊਏਐਓਨਪਰਲਲ਼ਵਸ਼ਸਹਖ਼ੜਫ਼ਫ਼ੲੴઅઋઍઍએઑઓનપરલળવહઽઽૠૠଅଌଏଐଓନପରଲଳଶହଽଽଡ଼ଢ଼ୟୡஅஊஎஐஒகஙசஜஜஞடணதநபமவஷஹఅఌఎఐఒనపళవహౠౡಅಌಎಐಒನಪಳವಹೞೞೠೡഅഌഎഐഒനപഹൠൡกฮะะาำเๅກຂຄຄງຈຊຊຍຍດທນຟມຣລລວວສຫອຮະະາຳຽຽເໄཀཇཉཀྵႠჅაჶᄀᄀᄂᄃᄅᄇᄉᄉᄋᄌᄎᄒᄼᄼᄾᄾᅀᅀᅌᅌᅎᅎᅐᅐᅔᅕᅙᅙᅟᅡᅣᅣᅥᅥᅧᅧᅩᅩᅭᅮᅲᅳᅵᅵᆞᆞᆨᆨᆫᆫᆮᆯᆷᆸᆺᆺᆼᇂᇫᇫᇰᇰᇹᇹḀẛẠỹἀἕἘἝἠὅὈὍὐὗὙὙὛὛὝὝὟώᾀᾴᾶᾼιιῂῄῆῌῐΐῖΊῠῬῲῴῶῼΩΩKÅ℮℮ↀↂ〇〇〡〩ぁゔァヺㄅㄬ一龥가힣ｦﾟ");
-/* 405 */       token.addRange(95, 95);
-/* 406 */       token.addRange(58, 58);
-/* 407 */       ranges.put("xml:isInitialNameChar", token);
-/* 408 */       ranges2.put("xml:isInitialNameChar", Token.complementRanges(token));
-/*     */     } 
-/*     */     
-/* 411 */     RangeToken tok = positive ? (RangeToken)ranges.get(name) : (RangeToken)ranges2.get(name);
-/* 412 */     return tok;
-/*     */   }
-/*     */   private static final String NAMECHARS = "-.0:AZ__az··ÀÖØöøıĴľŁňŊžƀǃǍǰǴǵǺȗɐʨʻˁːˑ̀͠͡ͅΆΊΌΌΎΡΣώϐϖϚϚϜϜϞϞϠϠϢϳЁЌЎяёќўҁ҃҆ҐӄӇӈӋӌӐӫӮӵӸӹԱՖՙՙաֆֹֻֽֿֿׁׂ֑֣֡ׄׄאתװײءغـْ٠٩ٰڷںھۀێېۓە۪ۭۨ۰۹ँःअह़्॑॔क़ॣ०९ঁঃঅঌএঐওনপরললশহ়়াৄেৈো্ৗৗড়ঢ়য়ৣ০ৱਂਂਅਊਏਐਓਨਪਰਲਲ਼ਵਸ਼ਸਹ਼਼ਾੂੇੈੋ੍ਖ਼ੜਫ਼ਫ਼੦ੴઁઃઅઋઍઍએઑઓનપરલળવહ઼ૅેૉો્ૠૠ૦૯ଁଃଅଌଏଐଓନପରଲଳଶହ଼ୃେୈୋ୍ୖୗଡ଼ଢ଼ୟୡ୦୯ஂஃஅஊஎஐஒகஙசஜஜஞடணதநபமவஷஹாூெைொ்ௗௗ௧௯ఁఃఅఌఎఐఒనపళవహాౄెైొ్ౕౖౠౡ౦౯ಂಃಅಌಎಐಒನಪಳವಹಾೄೆೈೊ್ೕೖೞೞೠೡ೦೯ംഃഅഌഎഐഒനപഹാൃെൈൊ്ൗൗൠൡ൦൯กฮะฺเ๎๐๙ກຂຄຄງຈຊຊຍຍດທນຟມຣລລວວສຫອຮະູົຽເໄໆໆ່ໍ໐໙༘༙༠༩༹༹༵༵༷༷༾ཇཉཀྵ྄ཱ྆ྋྐྕྗྗྙྭྱྷྐྵྐྵႠჅაჶᄀᄀᄂᄃᄅᄇᄉᄉᄋᄌᄎᄒᄼᄼᄾᄾᅀᅀᅌᅌᅎᅎᅐᅐᅔᅕᅙᅙᅟᅡᅣᅣᅥᅥᅧᅧᅩᅩᅭᅮᅲᅳᅵᅵᆞᆞᆨᆨᆫᆫᆮᆯᆷᆸᆺᆺᆼᇂᇫᇫᇰᇰᇹᇹḀẛẠỹἀἕἘἝἠὅὈὍὐὗὙὙὛὛὝὝὟώᾀᾴᾶᾼιιῂῄῆῌῐΐῖΊῠῬῲῴῶῼ⃐⃜⃡⃡ΩΩKÅ℮℮ↀↂ々々〇〇〡〯〱〵ぁゔ゙゚ゝゞァヺーヾㄅㄬ一龥가힣"; private static final String LETTERS = "AZazÀÖØöøıĴľŁňŊžƀǰǴǵǺȗɐʨʻˁʰˑΆΆΈΊΌΌΎΡΣώϐϖϚϚϜϜϞϞϠϠϢϳЁЌЎяёќўҁҐӄӇӈӋӌӐӫӮӵӸӹԱՖՙՙաֆאתװײءغفيٱڷںھۀێېۓەەۥۦअहऽऽक़ॡঅঌএঐওনপরললশহড়ঢ়য়ৡৰৱਅਊਏਐਓਨਪਰਲਲ਼ਵਸ਼ਸਹਖ਼ੜਫ਼ਫ਼ੲੴઅઋઍઍએઑઓનપરલળવહઽઽૠૠଅଌଏଐଓନପରଲଳଶହଽଽଡ଼ଢ଼ୟୡஅஊஎஐஒகஙசஜஜஞடணதநபமவஷஹఅఌఎఐఒనపళవహౠౡಅಌಎಐಒನಪಳವಹೞೞೠೡഅഌഎഐഒനപഹൠൡกฮะะาำเๅກຂຄຄງຈຊຊຍຍດທນຟມຣລລວວສຫອຮະະາຳຽຽເໄཀཇཉཀྵႠჅაჶᄀᄀᄂᄃᄅᄇᄉᄉᄋᄌᄎᄒᄼᄼᄾᄾᅀᅀᅌᅌᅎᅎᅐᅐᅔᅕᅙᅙᅟᅡᅣᅣᅥᅥᅧᅧᅩᅩᅭᅮᅲᅳᅵᅵᆞᆞᆨᆨᆫᆫᆮᆯᆷᆸᆺᆺᆼᇂᇫᇫᇰᇰᇹᇹḀẛẠỹἀἕἘἝἠὅὈὍὐὗὙὙὛὛὝὝὟώᾀᾴᾶᾼιιῂῄῆῌῐΐῖΊῠῬῲῴῶῼΩΩKÅ℮℮ↀↂ〇〇〡〩ぁゔァヺㄅㄬ一龥가힣ｦﾟ";
-/*     */   static void setupRange(Token range, String src) {
-/* 416 */     int len = src.length();
-/* 417 */     for (int i = 0; i < len; i += 2)
-/* 418 */       range.addRange(src.charAt(i), src.charAt(i + 1)); 
-/*     */   }
-/*     */   
-/*     */   static void setupRange(Token range, int[] src) {
-/* 422 */     int len = src.length;
-/* 423 */     for (int i = 0; i < len; i += 2) {
-/* 424 */       range.addRange(src[i], src[i + 1]);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 504 */   private static final int[] LETTERS_INT = new int[] { 120720, 120744, 120746, 120777, 195099, 195101 };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final String DIGITS = "09٠٩۰۹०९০৯੦੯૦૯୦୯௧௯౦౯೦೯൦൯๐๙໐໙༠༩၀၉፩፱០៩᠐᠙０９";
-/*     */ 
-/*     */   
-/* 511 */   private static final int[] DIGITS_INT = new int[] { 120782, 120831 };
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xpath\regex\ParserForXMLSchema.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xpath.regex;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * A regular expression parser for the XML Schema.
+ *
+ * @xerces.internal
+ *
+ * @author TAMURA Kent &lt;kent@trl.ibm.co.jp&gt;
+ * @version $Id: ParserForXMLSchema.java,v 1.9 2010-11-12 18:09:45 joehw Exp $
+ */
+class ParserForXMLSchema extends RegexParser {
+
+    public ParserForXMLSchema() {
+        //this.setLocale(Locale.getDefault());
+    }
+    public ParserForXMLSchema(Locale locale) {
+        super(locale);
+    }
+
+    Token processCaret() throws ParseException {
+        this.next();
+        return Token.createChar('^');
+    }
+    Token processDollar() throws ParseException {
+        this.next();
+        return Token.createChar('$');
+     }
+    Token processLookahead() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processNegativelookahead() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processLookbehind() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processNegativelookbehind() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_A() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_Z() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_z() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_b() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_B() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_lt() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_gt() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processStar(Token tok) throws ParseException {
+        this.next();
+        return Token.createClosure(tok);
+    }
+    Token processPlus(Token tok) throws ParseException {
+        // X+ -> XX*
+        this.next();
+        return Token.createConcat(tok, Token.createClosure(tok));
+    }
+    Token processQuestion(Token tok) throws ParseException {
+        // X? -> X|
+        this.next();
+        Token par = Token.createUnion();
+        par.addChild(tok);
+        par.addChild(Token.createEmpty());
+        return par;
+    }
+    boolean checkQuestion(int off) {
+        return false;
+    }
+    Token processParen() throws ParseException {
+        this.next();
+        Token tok = Token.createParen(this.parseRegex(), 0);
+        if (this.read() != T_RPAREN)  throw ex("parser.factor.1", this.offset-1);
+        this.next();                            // Skips ')'
+        return tok;
+    }
+    Token processParen2() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processCondition() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processModifiers() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processIndependent() throws ParseException {
+        throw ex("parser.process.1", this.offset);
+    }
+    Token processBacksolidus_c() throws ParseException {
+        this.next();
+        return this.getTokenForShorthand('c');
+    }
+    Token processBacksolidus_C() throws ParseException {
+        this.next();
+        return this.getTokenForShorthand('C');
+    }
+    Token processBacksolidus_i() throws ParseException {
+        this.next();
+        return this.getTokenForShorthand('i');
+    }
+    Token processBacksolidus_I() throws ParseException {
+        this.next();
+        return this.getTokenForShorthand('I');
+    }
+    Token processBacksolidus_g() throws ParseException {
+        throw this.ex("parser.process.1", this.offset-2);
+    }
+    Token processBacksolidus_X() throws ParseException {
+        throw ex("parser.process.1", this.offset-2);
+    }
+    Token processBackreference() throws ParseException {
+        throw ex("parser.process.1", this.offset-4);
+    }
+
+    int processCIinCharacterClass(RangeToken tok, int c) {
+        tok.mergeRanges(this.getTokenForShorthand(c));
+        return -1;
+    }
+
+
+    /**
+     * Parses a character-class-expression, not a character-class-escape.
+     *
+     * c-c-expression   ::= '[' c-group ']'
+     * c-group          ::= positive-c-group | negative-c-group | c-c-subtraction
+     * positive-c-group ::= (c-range | c-c-escape)+
+     * negative-c-group ::= '^' positive-c-group
+     * c-c-subtraction  ::= (positive-c-group | negative-c-group) subtraction
+     * subtraction      ::= '-' c-c-expression
+     * c-range          ::= single-range | from-to-range
+     * single-range     ::= multi-c-escape | category-c-escape | block-c-escape | &lt;any XML char&gt;
+     * cc-normal-c      ::= &lt;any character except [, ], \&gt;
+     * from-to-range    ::= cc-normal-c '-' cc-normal-c
+     *
+     * @param useNrage Ignored.
+     * @return This returns no NrageToken.
+     */
+    protected RangeToken parseCharacterClass(boolean useNrange) throws ParseException {
+        this.setContext(S_INBRACKETS);
+        this.next();                            // '['
+        boolean nrange = false;
+        boolean wasDecoded = false;                     // used to detect if the last - was escaped.
+        RangeToken base = null;
+        RangeToken tok;
+        if (this.read() == T_CHAR && this.chardata == '^') {
+            nrange = true;
+            this.next();                        // '^'
+            base = Token.createRange();
+            base.addRange(0, Token.UTF16_MAX);
+            tok = Token.createRange();
+        } else {
+            tok = Token.createRange();
+        }
+        int type;
+        boolean firstloop = true;
+        while ((type = this.read()) != T_EOF) { // Don't use 'cotinue' for this loop.
+
+                wasDecoded = false;
+            // single-range | from-to-range | subtraction
+            if (type == T_CHAR && this.chardata == ']' && !firstloop) {
+                if (nrange) {
+                    base.subtractRanges(tok);
+                    tok = base;
+                }
+                break;
+            }
+            int c = this.chardata;
+            boolean end = false;
+            if (type == T_BACKSOLIDUS) {
+                switch (c) {
+                  case 'd':  case 'D':
+                  case 'w':  case 'W':
+                  case 's':  case 'S':
+                    tok.mergeRanges(this.getTokenForShorthand(c));
+                    end = true;
+                    break;
+
+                  case 'i':  case 'I':
+                  case 'c':  case 'C':
+                    c = this.processCIinCharacterClass(tok, c);
+                    if (c < 0)  end = true;
+                    break;
+
+                  case 'p':
+                  case 'P':
+                    int pstart = this.offset;
+                    RangeToken tok2 = this.processBacksolidus_pP(c);
+                    if (tok2 == null)  throw this.ex("parser.atom.5", pstart);
+                    tok.mergeRanges(tok2);
+                    end = true;
+                    break;
+
+                 case '-':
+                        c = this.decodeEscaped();
+                        wasDecoded = true;
+                        break;
+
+                  default:
+                    c = this.decodeEscaped();
+                } // \ + c
+            } // backsolidus
+            else if (type == T_XMLSCHEMA_CC_SUBTRACTION && !firstloop) {
+                                                // Subraction
+                if (nrange) {
+                    base.subtractRanges(tok);
+                    tok = base;
+                }
+                RangeToken range2 = this.parseCharacterClass(false);
+                tok.subtractRanges(range2);
+                if (this.read() != T_CHAR || this.chardata != ']')
+                    throw this.ex("parser.cc.5", this.offset);
+                break;                          // Exit this loop
+            }
+            this.next();
+            if (!end) {                         // if not shorthands...
+                if (type == T_CHAR) {
+                    if (c == '[')  throw this.ex("parser.cc.6", this.offset-2);
+                    if (c == ']')  throw this.ex("parser.cc.7", this.offset-2);
+                    if (c == '-' && this.chardata != ']' && !firstloop)  throw this.ex("parser.cc.8", this.offset-2);   // if regex = '[-]' then invalid
+                }
+                if (this.read() != T_CHAR || this.chardata != '-' || c == '-' && firstloop) { // Here is no '-'.
+                    if (!this.isSet(RegularExpression.IGNORE_CASE) || c > 0xffff) {
+                        tok.addRange(c, c);
+                    }
+                    else {
+                        addCaseInsensitiveChar(tok, c);
+                    }
+                } else {                        // Found '-'
+                                                // Is this '-' is a from-to token??
+                    this.next(); // Skips '-'
+                    if ((type = this.read()) == T_EOF)  throw this.ex("parser.cc.2", this.offset);
+                                                // c '-' ']' -> '-' is a single-range.
+                    if(type == T_CHAR && this.chardata == ']') {                                // if - is at the last position of the group
+                        if (!this.isSet(RegularExpression.IGNORE_CASE) || c > 0xffff) {
+                            tok.addRange(c, c);
+                        }
+                        else {
+                            addCaseInsensitiveChar(tok, c);
+                        }
+                        tok.addRange('-', '-');
+                    }
+                    else if (type == T_XMLSCHEMA_CC_SUBTRACTION) {
+                        throw this.ex("parser.cc.8", this.offset-1);
+                    } else {
+
+                        int rangeend = this.chardata;
+                        if (type == T_CHAR) {
+                            if (rangeend == '[')  throw this.ex("parser.cc.6", this.offset-1);
+                            if (rangeend == ']')  throw this.ex("parser.cc.7", this.offset-1);
+                            if (rangeend == '-')  throw this.ex("parser.cc.8", this.offset-2);
+                        }
+                        else if (type == T_BACKSOLIDUS)
+                            rangeend = this.decodeEscaped();
+                        this.next();
+
+                        if (c > rangeend)  throw this.ex("parser.ope.3", this.offset-1);
+                        if (!this.isSet(RegularExpression.IGNORE_CASE) ||
+                                (c > 0xffff && rangeend > 0xffff)) {
+                            tok.addRange(c, rangeend);
+                        }
+                        else {
+                            addCaseInsensitiveCharRange(tok, c, rangeend);
+                        }
+                    }
+                }
+            }
+            firstloop = false;
+        }
+        if (this.read() == T_EOF)
+            throw this.ex("parser.cc.2", this.offset);
+        tok.sortRanges();
+        tok.compactRanges();
+        //tok.dumpRanges();
+        this.setContext(S_NORMAL);
+        this.next();                    // Skips ']'
+
+        return tok;
+    }
+
+    protected RangeToken parseSetOperations() throws ParseException {
+        throw this.ex("parser.process.1", this.offset);
+    }
+
+    Token getTokenForShorthand(int ch) {
+        switch (ch) {
+          case 'd':
+            return ParserForXMLSchema.getRange("xml:isDigit", true);
+          case 'D':
+            return ParserForXMLSchema.getRange("xml:isDigit", false);
+          case 'w':
+            return ParserForXMLSchema.getRange("xml:isWord", true);
+          case 'W':
+            return ParserForXMLSchema.getRange("xml:isWord", false);
+          case 's':
+            return ParserForXMLSchema.getRange("xml:isSpace", true);
+          case 'S':
+            return ParserForXMLSchema.getRange("xml:isSpace", false);
+          case 'c':
+            return ParserForXMLSchema.getRange("xml:isNameChar", true);
+          case 'C':
+            return ParserForXMLSchema.getRange("xml:isNameChar", false);
+          case 'i':
+            return ParserForXMLSchema.getRange("xml:isInitialNameChar", true);
+          case 'I':
+            return ParserForXMLSchema.getRange("xml:isInitialNameChar", false);
+          default:
+            throw new RuntimeException("Internal Error: shorthands: \\u"+Integer.toString(ch, 16));
+        }
+    }
+    int decodeEscaped() throws ParseException {
+        if (this.read() != T_BACKSOLIDUS)  throw ex("parser.next.1", this.offset-1);
+        int c = this.chardata;
+        switch (c) {
+          case 'n':  c = '\n';  break; // LINE FEED U+000A
+          case 'r':  c = '\r';  break; // CRRIAGE RETURN U+000D
+          case 't':  c = '\t';  break; // HORIZONTAL TABULATION U+0009
+          case '\\':
+          case '|':
+          case '.':
+          case '^':
+          case '-':
+          case '?':
+          case '*':
+          case '+':
+          case '{':
+          case '}':
+          case '(':
+          case ')':
+          case '[':
+          case ']':
+            break; // return actucal char
+          default:
+            throw ex("parser.process.1", this.offset-2);
+        }
+        return c;
+    }
+
+    static private Map<String, Token> ranges = null;
+    static private Map<String, Token> ranges2 = null;
+    static synchronized protected RangeToken getRange(String name, boolean positive) {
+        if (ranges == null) {
+            ranges = new HashMap<>();
+            ranges2 = new HashMap<>();
+
+            Token tok = Token.createRange();
+            setupRange(tok, SPACES);
+            ranges.put("xml:isSpace", tok);
+            ranges2.put("xml:isSpace", Token.complementRanges(tok));
+
+            tok = Token.createRange();
+            setupRange(tok, DIGITS);
+            setupRange(tok, DIGITS_INT);
+            ranges.put("xml:isDigit", tok);
+            ranges2.put("xml:isDigit", Token.complementRanges(tok));
+
+            tok = Token.createRange();
+            setupRange(tok, LETTERS);
+            setupRange(tok, LETTERS_INT);
+            tok.mergeRanges(ranges.get("xml:isDigit"));
+            ranges.put("xml:isWord", tok);
+            ranges2.put("xml:isWord", Token.complementRanges(tok));
+
+            tok = Token.createRange();
+            setupRange(tok, NAMECHARS);
+            ranges.put("xml:isNameChar", tok);
+            ranges2.put("xml:isNameChar", Token.complementRanges(tok));
+
+            tok = Token.createRange();
+            setupRange(tok, LETTERS);
+            tok.addRange('_', '_');
+            tok.addRange(':', ':');
+            ranges.put("xml:isInitialNameChar", tok);
+            ranges2.put("xml:isInitialNameChar", Token.complementRanges(tok));
+        }
+        RangeToken tok = positive ? (RangeToken)ranges.get(name)
+            : (RangeToken)ranges2.get(name);
+        return tok;
+    }
+
+    static void setupRange(Token range, String src) {
+        int len = src.length();
+        for (int i = 0;  i < len;  i += 2)
+            range.addRange(src.charAt(i), src.charAt(i+1));
+    }
+
+    static void setupRange(Token range, int[] src) {
+        int len = src.length;
+        for (int i = 0;  i < len;  i += 2)
+            range.addRange(src[i], src[i+1]);
+    }
+
+    private static final String SPACES = "\t\n\r\r  ";
+    private static final String NAMECHARS =
+        "\u002d\u002e\u0030\u003a\u0041\u005a\u005f\u005f\u0061\u007a\u00b7\u00b7\u00c0\u00d6"
+        +"\u00d8\u00f6\u00f8\u0131\u0134\u013e\u0141\u0148\u014a\u017e\u0180\u01c3\u01cd\u01f0"
+        +"\u01f4\u01f5\u01fa\u0217\u0250\u02a8\u02bb\u02c1\u02d0\u02d1\u0300\u0345\u0360\u0361"
+        +"\u0386\u038a\u038c\u038c\u038e\u03a1\u03a3\u03ce\u03d0\u03d6\u03da\u03da\u03dc\u03dc"
+        +"\u03de\u03de\u03e0\u03e0\u03e2\u03f3\u0401\u040c\u040e\u044f\u0451\u045c\u045e\u0481"
+        +"\u0483\u0486\u0490\u04c4\u04c7\u04c8\u04cb\u04cc\u04d0\u04eb\u04ee\u04f5\u04f8\u04f9"
+        +"\u0531\u0556\u0559\u0559\u0561\u0586\u0591\u05a1\u05a3\u05b9\u05bb\u05bd\u05bf\u05bf"
+        +"\u05c1\u05c2\u05c4\u05c4\u05d0\u05ea\u05f0\u05f2\u0621\u063a\u0640\u0652\u0660\u0669"
+        +"\u0670\u06b7\u06ba\u06be\u06c0\u06ce\u06d0\u06d3\u06d5\u06e8\u06ea\u06ed\u06f0\u06f9"
+        +"\u0901\u0903\u0905\u0939\u093c\u094d\u0951\u0954\u0958\u0963\u0966\u096f\u0981\u0983"
+        +"\u0985\u098c\u098f\u0990\u0993\u09a8\u09aa\u09b0\u09b2\u09b2\u09b6\u09b9\u09bc\u09bc"
+        +"\u09be\u09c4\u09c7\u09c8\u09cb\u09cd\u09d7\u09d7\u09dc\u09dd\u09df\u09e3\u09e6\u09f1"
+        +"\u0a02\u0a02\u0a05\u0a0a\u0a0f\u0a10\u0a13\u0a28\u0a2a\u0a30\u0a32\u0a33\u0a35\u0a36"
+        +"\u0a38\u0a39\u0a3c\u0a3c\u0a3e\u0a42\u0a47\u0a48\u0a4b\u0a4d\u0a59\u0a5c\u0a5e\u0a5e"
+        +"\u0a66\u0a74\u0a81\u0a83\u0a85\u0a8b\u0a8d\u0a8d\u0a8f\u0a91\u0a93\u0aa8\u0aaa\u0ab0"
+        +"\u0ab2\u0ab3\u0ab5\u0ab9\u0abc\u0ac5\u0ac7\u0ac9\u0acb\u0acd\u0ae0\u0ae0\u0ae6\u0aef"
+        +"\u0b01\u0b03\u0b05\u0b0c\u0b0f\u0b10\u0b13\u0b28\u0b2a\u0b30\u0b32\u0b33\u0b36\u0b39"
+        +"\u0b3c\u0b43\u0b47\u0b48\u0b4b\u0b4d\u0b56\u0b57\u0b5c\u0b5d\u0b5f\u0b61\u0b66\u0b6f"
+        +"\u0b82\u0b83\u0b85\u0b8a\u0b8e\u0b90\u0b92\u0b95\u0b99\u0b9a\u0b9c\u0b9c\u0b9e\u0b9f"
+        +"\u0ba3\u0ba4\u0ba8\u0baa\u0bae\u0bb5\u0bb7\u0bb9\u0bbe\u0bc2\u0bc6\u0bc8\u0bca\u0bcd"
+        +"\u0bd7\u0bd7\u0be7\u0bef\u0c01\u0c03\u0c05\u0c0c\u0c0e\u0c10\u0c12\u0c28\u0c2a\u0c33"
+        +"\u0c35\u0c39\u0c3e\u0c44\u0c46\u0c48\u0c4a\u0c4d\u0c55\u0c56\u0c60\u0c61\u0c66\u0c6f"
+        +"\u0c82\u0c83\u0c85\u0c8c\u0c8e\u0c90\u0c92\u0ca8\u0caa\u0cb3\u0cb5\u0cb9\u0cbe\u0cc4"
+        +"\u0cc6\u0cc8\u0cca\u0ccd\u0cd5\u0cd6\u0cde\u0cde\u0ce0\u0ce1\u0ce6\u0cef\u0d02\u0d03"
+        +"\u0d05\u0d0c\u0d0e\u0d10\u0d12\u0d28\u0d2a\u0d39\u0d3e\u0d43\u0d46\u0d48\u0d4a\u0d4d"
+        +"\u0d57\u0d57\u0d60\u0d61\u0d66\u0d6f\u0e01\u0e2e\u0e30\u0e3a\u0e40\u0e4e\u0e50\u0e59"
+        +"\u0e81\u0e82\u0e84\u0e84\u0e87\u0e88\u0e8a\u0e8a\u0e8d\u0e8d\u0e94\u0e97\u0e99\u0e9f"
+        +"\u0ea1\u0ea3\u0ea5\u0ea5\u0ea7\u0ea7\u0eaa\u0eab\u0ead\u0eae\u0eb0\u0eb9\u0ebb\u0ebd"
+        +"\u0ec0\u0ec4\u0ec6\u0ec6\u0ec8\u0ecd\u0ed0\u0ed9\u0f18\u0f19\u0f20\u0f29\u0f35\u0f35"
+        +"\u0f37\u0f37\u0f39\u0f39\u0f3e\u0f47\u0f49\u0f69\u0f71\u0f84\u0f86\u0f8b\u0f90\u0f95"
+        +"\u0f97\u0f97\u0f99\u0fad\u0fb1\u0fb7\u0fb9\u0fb9\u10a0\u10c5\u10d0\u10f6\u1100\u1100"
+        +"\u1102\u1103\u1105\u1107\u1109\u1109\u110b\u110c\u110e\u1112\u113c\u113c\u113e\u113e"
+        +"\u1140\u1140\u114c\u114c\u114e\u114e\u1150\u1150\u1154\u1155\u1159\u1159\u115f\u1161"
+        +"\u1163\u1163\u1165\u1165\u1167\u1167\u1169\u1169\u116d\u116e\u1172\u1173\u1175\u1175"
+        +"\u119e\u119e\u11a8\u11a8\u11ab\u11ab\u11ae\u11af\u11b7\u11b8\u11ba\u11ba\u11bc\u11c2"
+        +"\u11eb\u11eb\u11f0\u11f0\u11f9\u11f9\u1e00\u1e9b\u1ea0\u1ef9\u1f00\u1f15\u1f18\u1f1d"
+        +"\u1f20\u1f45\u1f48\u1f4d\u1f50\u1f57\u1f59\u1f59\u1f5b\u1f5b\u1f5d\u1f5d\u1f5f\u1f7d"
+        +"\u1f80\u1fb4\u1fb6\u1fbc\u1fbe\u1fbe\u1fc2\u1fc4\u1fc6\u1fcc\u1fd0\u1fd3\u1fd6\u1fdb"
+        +"\u1fe0\u1fec\u1ff2\u1ff4\u1ff6\u1ffc\u20d0\u20dc\u20e1\u20e1\u2126\u2126\u212a\u212b"
+        +"\u212e\u212e\u2180\u2182\u3005\u3005\u3007\u3007\u3021\u302f\u3031\u3035\u3041\u3094"
+        +"\u3099\u309a\u309d\u309e\u30a1\u30fa\u30fc\u30fe\u3105\u312c\u4e00\u9fa5\uac00\ud7a3"
+        +"";
+    private static final String LETTERS =
+        "\u0041\u005a\u0061\u007a\u00c0\u00d6\u00d8\u00f6\u00f8\u0131\u0134\u013e\u0141\u0148"
+        +"\u014a\u017e\u0180\u01f0\u01f4\u01f5\u01fa\u0217\u0250\u02a8\u02bb\u02c1"
+        +"\u02b0\u02d1"
+        +"\u0386\u0386\u0388\u038a\u038c\u038c\u038e\u03a1\u03a3\u03ce\u03d0\u03d6\u03da\u03da"
+        +"\u03dc\u03dc\u03de\u03de\u03e0\u03e0\u03e2\u03f3\u0401\u040c\u040e\u044f\u0451\u045c"
+        +"\u045e\u0481\u0490\u04c4\u04c7\u04c8\u04cb\u04cc\u04d0\u04eb\u04ee\u04f5\u04f8\u04f9"
+        +"\u0531\u0556\u0559\u0559\u0561\u0586\u05d0\u05ea\u05f0\u05f2\u0621\u063a\u0641\u064a"
+        +"\u0671\u06b7\u06ba\u06be\u06c0\u06ce\u06d0\u06d3\u06d5\u06d5\u06e5\u06e6\u0905\u0939"
+        +"\u093d\u093d\u0958\u0961\u0985\u098c\u098f\u0990\u0993\u09a8\u09aa\u09b0\u09b2\u09b2"
+        +"\u09b6\u09b9\u09dc\u09dd\u09df\u09e1\u09f0\u09f1\u0a05\u0a0a\u0a0f\u0a10\u0a13\u0a28"
+        +"\u0a2a\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a59\u0a5c\u0a5e\u0a5e\u0a72\u0a74"
+        +"\u0a85\u0a8b\u0a8d\u0a8d\u0a8f\u0a91\u0a93\u0aa8\u0aaa\u0ab0\u0ab2\u0ab3\u0ab5\u0ab9"
+        +"\u0abd\u0abd\u0ae0\u0ae0\u0b05\u0b0c\u0b0f\u0b10\u0b13\u0b28\u0b2a\u0b30\u0b32\u0b33"
+        +"\u0b36\u0b39\u0b3d\u0b3d\u0b5c\u0b5d\u0b5f\u0b61\u0b85\u0b8a\u0b8e\u0b90\u0b92\u0b95"
+        +"\u0b99\u0b9a\u0b9c\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8\u0baa\u0bae\u0bb5\u0bb7\u0bb9"
+        +"\u0c05\u0c0c\u0c0e\u0c10\u0c12\u0c28\u0c2a\u0c33\u0c35\u0c39\u0c60\u0c61\u0c85\u0c8c"
+        +"\u0c8e\u0c90\u0c92\u0ca8\u0caa\u0cb3\u0cb5\u0cb9\u0cde\u0cde\u0ce0\u0ce1\u0d05\u0d0c"
+        +"\u0d0e\u0d10\u0d12\u0d28\u0d2a\u0d39\u0d60\u0d61\u0e01\u0e2e\u0e30\u0e30\u0e32\u0e33"
+        +"\u0e40\u0e45\u0e81\u0e82\u0e84\u0e84\u0e87\u0e88\u0e8a\u0e8a\u0e8d\u0e8d\u0e94\u0e97"
+        +"\u0e99\u0e9f\u0ea1\u0ea3\u0ea5\u0ea5\u0ea7\u0ea7\u0eaa\u0eab\u0ead\u0eae\u0eb0\u0eb0"
+        +"\u0eb2\u0eb3\u0ebd\u0ebd\u0ec0\u0ec4\u0f40\u0f47\u0f49\u0f69\u10a0\u10c5\u10d0\u10f6"
+        +"\u1100\u1100\u1102\u1103\u1105\u1107\u1109\u1109\u110b\u110c\u110e\u1112\u113c\u113c"
+        +"\u113e\u113e\u1140\u1140\u114c\u114c\u114e\u114e\u1150\u1150\u1154\u1155\u1159\u1159"
+        +"\u115f\u1161\u1163\u1163\u1165\u1165\u1167\u1167\u1169\u1169\u116d\u116e\u1172\u1173"
+        +"\u1175\u1175\u119e\u119e\u11a8\u11a8\u11ab\u11ab\u11ae\u11af\u11b7\u11b8\u11ba\u11ba"
+        +"\u11bc\u11c2\u11eb\u11eb\u11f0\u11f0\u11f9\u11f9\u1e00\u1e9b\u1ea0\u1ef9\u1f00\u1f15"
+        +"\u1f18\u1f1d\u1f20\u1f45\u1f48\u1f4d\u1f50\u1f57\u1f59\u1f59\u1f5b\u1f5b\u1f5d\u1f5d"
+        +"\u1f5f\u1f7d\u1f80\u1fb4\u1fb6\u1fbc\u1fbe\u1fbe\u1fc2\u1fc4\u1fc6\u1fcc\u1fd0\u1fd3"
+        +"\u1fd6\u1fdb\u1fe0\u1fec\u1ff2\u1ff4\u1ff6\u1ffc\u2126\u2126\u212a\u212b\u212e\u212e"
+        +"\u2180\u2182\u3007\u3007\u3021\u3029\u3041\u3094\u30a1\u30fa\u3105\u312c\u4e00\u9fa5"
+        +"\uac00\ud7a3\uff66\uff9f";
+
+    private static final int[] LETTERS_INT = {0x1d790, 0x1d7a8, 0x1d7aa, 0x1d7c9, 0x2fa1b, 0x2fa1d};
+
+    private static final String DIGITS =
+        "\u0030\u0039\u0660\u0669\u06F0\u06F9\u0966\u096F\u09E6\u09EF\u0A66\u0A6F\u0AE6\u0AEF"
+        +"\u0B66\u0B6F\u0BE7\u0BEF\u0C66\u0C6F\u0CE6\u0CEF\u0D66\u0D6F\u0E50\u0E59\u0ED0\u0ED9"
+        +"\u0F20\u0F29\u1040\u1049\u1369\u1371\u17E0\u17E9\u1810\u1819\uFF10\uFF19";
+
+    private static final int[] DIGITS_INT = {0x1D7CE, 0x1D7FF};
+
+}

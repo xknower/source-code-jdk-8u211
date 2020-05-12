@@ -1,288 +1,282 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SnmpInt
-/*     */   extends SnmpValue
-/*     */ {
-/*     */   private static final long serialVersionUID = -7163624758070343373L;
-/*     */   static final String name = "Integer32";
-/*     */   
-/*     */   public SnmpInt(int paramInt) throws IllegalArgumentException {
-/*  52 */     if (!isInitValueValid(paramInt)) {
-/*  53 */       throw new IllegalArgumentException();
-/*     */     }
-/*  55 */     this.value = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpInt(Integer paramInteger) throws IllegalArgumentException {
-/*  65 */     this(paramInteger.intValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpInt(long paramLong) throws IllegalArgumentException {
-/*  75 */     if (!isInitValueValid(paramLong)) {
-/*  76 */       throw new IllegalArgumentException();
-/*     */     }
-/*  78 */     this.value = paramLong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpInt(Long paramLong) throws IllegalArgumentException {
-/*  88 */     this(paramLong.longValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpInt(Enumerated paramEnumerated) throws IllegalArgumentException {
-/*  99 */     this(paramEnumerated.intValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpInt(boolean paramBoolean) {
-/* 115 */     this.value = paramBoolean ? 1L : 2L;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long longValue() {
-/* 125 */     return this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Long toLong() {
-/* 133 */     return new Long(this.value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int intValue() {
-/* 141 */     return (int)this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Integer toInteger() {
-/* 149 */     return new Integer((int)this.value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 157 */     return String.valueOf(this.value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SnmpOid toOid() {
-/* 165 */     return new SnmpOid(this.value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static SnmpOid toOid(long[] paramArrayOflong, int paramInt) throws SnmpStatusException {
-/*     */     try {
-/* 179 */       return new SnmpOid(paramArrayOflong[paramInt]);
-/*     */     }
-/* 181 */     catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-/* 182 */       throw new SnmpStatusException(2);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int nextOid(long[] paramArrayOflong, int paramInt) throws SnmpStatusException {
-/* 196 */     if (paramInt >= paramArrayOflong.length) {
-/* 197 */       throw new SnmpStatusException(2);
-/*     */     }
-/*     */     
-/* 200 */     return paramInt + 1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void appendToOid(SnmpOid paramSnmpOid1, SnmpOid paramSnmpOid2) {
-/* 210 */     if (paramSnmpOid1.getLength() != 1) {
-/* 211 */       throw new IllegalArgumentException();
-/*     */     }
-/* 213 */     paramSnmpOid2.append(paramSnmpOid1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final synchronized SnmpValue duplicate() {
-/* 222 */     return (SnmpValue)clone();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final synchronized Object clone() {
-/* 230 */     SnmpInt snmpInt = null;
-/*     */     try {
-/* 232 */       snmpInt = (SnmpInt)super.clone();
-/* 233 */       snmpInt.value = this.value;
-/* 234 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 235 */       throw new InternalError(cloneNotSupportedException);
-/*     */     } 
-/* 237 */     return snmpInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getTypeName() {
-/* 245 */     return "Integer32";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isInitValueValid(int paramInt) {
-/* 253 */     if (paramInt < Integer.MIN_VALUE || paramInt > Integer.MAX_VALUE) {
-/* 254 */       return false;
-/*     */     }
-/* 256 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isInitValueValid(long paramLong) {
-/* 264 */     if (paramLong < -2147483648L || paramLong > 2147483647L) {
-/* 265 */       return false;
-/*     */     }
-/* 267 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 281 */   protected long value = 0L;
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpInt.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp;
+
+
+
+import com.sun.jmx.snmp.Enumerated;
+
+/**
+ * Represents an SNMP integer.
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public class SnmpInt extends SnmpValue {
+    private static final long serialVersionUID = -7163624758070343373L;
+
+    // CONSTRUCTORS
+    //-------------
+    /**
+     * Constructs a new <CODE>SnmpInt</CODE> from the specified integer value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     */
+    public SnmpInt(int v) throws IllegalArgumentException {
+        if ( isInitValueValid(v) == false ) {
+            throw new IllegalArgumentException() ;
+        }
+        value = (long)v ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpInt</CODE> from the specified <CODE>Integer</CODE> value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     */
+    public SnmpInt(Integer v) throws IllegalArgumentException {
+        this(v.intValue()) ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpInt</CODE> from the specified long value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     */
+    public SnmpInt(long v) throws IllegalArgumentException {
+        if ( isInitValueValid(v) == false ) {
+            throw new IllegalArgumentException() ;
+        }
+        value = v ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpInt</CODE> from the specified <CODE>Long</CODE> value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     */
+    public SnmpInt(Long v) throws IllegalArgumentException {
+        this(v.longValue()) ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpInt</CODE> from the specified <CODE>Enumerated</CODE> value.
+     * @param v The initialization value.
+     * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     * @see Enumerated
+     */
+    public SnmpInt(Enumerated v) throws IllegalArgumentException {
+        this(v.intValue()) ;
+    }
+
+    /**
+     * Constructs a new <CODE>SnmpInt</CODE> from the specified boolean value.
+     * This constructor applies rfc1903 rule:
+     * <p><blockquote><pre>
+     * TruthValue ::= TEXTUAL-CONVENTION
+     *     STATUS       current
+     *     DESCRIPTION
+     *             "Represents a boolean value."
+     *     SYNTAX       INTEGER { true(1), false(2) }
+     * </pre></blockquote>
+     * @param v The initialization value.
+     */
+    public SnmpInt(boolean v) {
+        value = v ? 1 : 2 ;
+    }
+
+    // PUBLIC METHODS
+    //---------------
+    /**
+     * Returns the long value of this <CODE>SnmpInt</CODE>.
+     * @return The value.
+     */
+    public long longValue() {
+        return value ;
+    }
+
+    /**
+     * Converts the integer value to its <CODE>Long</CODE> form.
+     * @return The <CODE>Long</CODE> representation of the value.
+     */
+    public Long toLong() {
+        return new Long(value) ;
+    }
+
+    /**
+     * Converts the integer value to its integer form.
+     * @return The integer representation of the value.
+     */
+    public int intValue() {
+        return (int) value ;
+    }
+
+    /**
+     * Converts the integer value to its <CODE>Integer</CODE> form.
+     * @return The <CODE>Integer</CODE> representation of the value.
+     */
+    public Integer toInteger() {
+        return new Integer((int)value) ;
+    }
+
+    /**
+     * Converts the integer value to its <CODE>String</CODE> form.
+     * @return The <CODE>String</CODE> representation of the value.
+     */
+    public String toString() {
+        return String.valueOf(value) ;
+    }
+
+    /**
+     * Converts the integer value to its <CODE>SnmpOid</CODE> form.
+     * @return The OID representation of the value.
+     */
+    public SnmpOid toOid() {
+        return new SnmpOid(value) ;
+    }
+
+    /**
+     * Extracts the integer from an index OID and returns its
+     * value converted as an <CODE>SnmpOid</CODE>.
+     * @param index The index array.
+     * @param start The position in the index array.
+     * @return The OID representing the integer value.
+     * @exception SnmpStatusException There is no integer value
+     * available at the start position.
+     */
+    public static SnmpOid toOid(long[] index, int start) throws SnmpStatusException {
+        try {
+            return new SnmpOid(index[start]) ;
+        }
+        catch(IndexOutOfBoundsException e) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
+        }
+    }
+
+    /**
+     * Scans an index OID, skips the integer value and returns the position
+     * of the next value.
+     * @param index The index array.
+     * @param start The position in the index array.
+     * @return The position of the next value.
+     * @exception SnmpStatusException There is no integer value
+     * available at the start position.
+     */
+    public static int nextOid(long[] index, int start) throws SnmpStatusException {
+        if (start >= index.length) {
+            throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
+        }
+        else {
+            return start + 1 ;
+        }
+    }
+
+    /**
+     * Appends an <CODE>SnmpOid</CODE> representing an <CODE>SnmpInt</CODE> to another OID.
+     * @param source An OID representing an <CODE>SnmpInt</CODE> value.
+     * @param dest Where source should be appended.
+     */
+    public static void appendToOid(SnmpOid source, SnmpOid dest) {
+        if (source.getLength() != 1) {
+            throw new IllegalArgumentException() ;
+        }
+        dest.append(source) ;
+    }
+
+    /**
+     * Performs a clone action. This provides a workaround for the
+     * <CODE>SnmpValue</CODE> interface.
+     * @return The <CODE>SnmpValue</CODE> clone.
+     */
+    final synchronized public SnmpValue duplicate() {
+        return (SnmpValue) clone() ;
+    }
+
+    /**
+     * Clones the <CODE>SnmpInt</CODE> object, making a copy of its data.
+     * @return The object clone.
+     */
+    final synchronized public Object clone() {
+        SnmpInt  newclone = null ;
+        try {
+            newclone = (SnmpInt) super.clone() ;
+            newclone.value = value ;
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e) ; // vm bug.
+        }
+        return newclone ;
+    }
+
+    /**
+     * Returns a textual description of the type object.
+     * @return ASN.1 textual description.
+     */
+    public String getTypeName() {
+        return name ;
+    }
+
+    /**
+     * This method has been defined to allow the sub-classes
+     * of SnmpInt to perform their own control at intialization time.
+     */
+    boolean isInitValueValid(int v) {
+        if ((v < Integer.MIN_VALUE) || (v > Integer.MAX_VALUE)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * This method has been defined to allow the sub-classes
+     * of SnmpInt to perform their own control at intialization time.
+     */
+    boolean isInitValueValid(long v) {
+        if ((v < Integer.MIN_VALUE) || (v > Integer.MAX_VALUE)) {
+            return false;
+        }
+        return true;
+    }
+
+    // VARIABLES
+    //----------
+    /**
+     * Name of the type.
+     */
+    final static String name = "Integer32" ;
+
+    /**
+     * This is where the value is stored. This long is signed.
+     * @serial
+     */
+    protected long value = 0 ;
+}

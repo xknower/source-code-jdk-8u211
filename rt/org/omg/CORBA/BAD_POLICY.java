@@ -1,11 +1,39 @@
+/*
+ * Copyright (c) 1998, 2001, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package org.omg.CORBA;
+/**
+ * A <tt>PolicyErrorCode</tt> which would be filled in
+ * the <tt>PolicyError</tt> exception.
+ *
+ * @author rip-dev
+ */
 
 public interface BAD_POLICY {
-  public static final short value = 0;
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\BAD_POLICY.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+    /**
+     * The Error code in PolicyError exception.
+     */
+    final short value = (short) (0L);
+};

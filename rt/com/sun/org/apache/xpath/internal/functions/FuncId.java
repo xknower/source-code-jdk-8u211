@@ -1,159 +1,153 @@
-/*     */ package com.sun.org.apache.xpath.internal.functions;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTM;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMIterator;
-/*     */ import com.sun.org.apache.xml.internal.utils.StringVector;
-/*     */ import com.sun.org.apache.xpath.internal.NodeSetDTM;
-/*     */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*     */ import com.sun.org.apache.xpath.internal.objects.XNodeSet;
-/*     */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*     */ import java.util.StringTokenizer;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FuncId
-/*     */   extends FunctionOneArg
-/*     */ {
-/*     */   static final long serialVersionUID = 8930573966143567310L;
-/*     */   
-/*     */   private StringVector getNodesByID(XPathContext xctxt, int docContext, String refval, StringVector usedrefs, NodeSetDTM nodeSet, boolean mayBeMore) {
-/*  62 */     if (null != refval) {
-/*     */       
-/*  64 */       String ref = null;
-/*     */       
-/*  66 */       StringTokenizer tokenizer = new StringTokenizer(refval);
-/*  67 */       boolean hasMore = tokenizer.hasMoreTokens();
-/*  68 */       DTM dtm = xctxt.getDTM(docContext);
-/*     */       
-/*  70 */       while (hasMore) {
-/*     */         
-/*  72 */         ref = tokenizer.nextToken();
-/*  73 */         hasMore = tokenizer.hasMoreTokens();
-/*     */         
-/*  75 */         if (null != usedrefs && usedrefs.contains(ref)) {
-/*     */           
-/*  77 */           ref = null;
-/*     */           
-/*     */           continue;
-/*     */         } 
-/*     */         
-/*  82 */         int node = dtm.getElementById(ref);
-/*     */         
-/*  84 */         if (-1 != node) {
-/*  85 */           nodeSet.addNodeInDocOrder(node, xctxt);
-/*     */         }
-/*  87 */         if (null != ref && (hasMore || mayBeMore)) {
-/*     */           
-/*  89 */           if (null == usedrefs) {
-/*  90 */             usedrefs = new StringVector();
-/*     */           }
-/*  92 */           usedrefs.addElement(ref);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/*  97 */     return usedrefs;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/* 111 */     int context = xctxt.getCurrentNode();
-/* 112 */     DTM dtm = xctxt.getDTM(context);
-/* 113 */     int docContext = dtm.getDocument();
-/*     */     
-/* 115 */     if (-1 == docContext) {
-/* 116 */       error(xctxt, "ER_CONTEXT_HAS_NO_OWNERDOC", null);
-/*     */     }
-/* 118 */     XObject arg = this.m_arg0.execute(xctxt);
-/* 119 */     int argType = arg.getType();
-/* 120 */     XNodeSet nodes = new XNodeSet(xctxt.getDTMManager());
-/* 121 */     NodeSetDTM nodeSet = nodes.mutableNodeset();
-/*     */     
-/* 123 */     if (4 == argType) {
-/*     */       
-/* 125 */       DTMIterator ni = arg.iter();
-/* 126 */       StringVector usedrefs = null;
-/* 127 */       int pos = ni.nextNode();
-/*     */       
-/* 129 */       while (-1 != pos)
-/*     */       {
-/* 131 */         DTM ndtm = ni.getDTM(pos);
-/* 132 */         String refval = ndtm.getStringValue(pos).toString();
-/*     */         
-/* 134 */         pos = ni.nextNode();
-/* 135 */         usedrefs = getNodesByID(xctxt, docContext, refval, usedrefs, nodeSet, (-1 != pos));
-/*     */       }
-/*     */     
-/*     */     } else {
-/*     */       
-/* 140 */       if (-1 == argType)
-/*     */       {
-/* 142 */         return nodes;
-/*     */       }
-/*     */ 
-/*     */       
-/* 146 */       String refval = arg.str();
-/*     */       
-/* 148 */       getNodesByID(xctxt, docContext, refval, (StringVector)null, nodeSet, false);
-/*     */     } 
-/*     */     
-/* 151 */     return nodes;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\functions\FuncId.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: FuncId.java,v 1.2.4.1 2005/09/14 20:18:45 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.functions;
+
+import java.util.StringTokenizer;
+
+import com.sun.org.apache.xml.internal.dtm.DTM;
+import com.sun.org.apache.xml.internal.dtm.DTMIterator;
+import com.sun.org.apache.xml.internal.utils.StringVector;
+import com.sun.org.apache.xpath.internal.NodeSetDTM;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.objects.XNodeSet;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+import com.sun.org.apache.xpath.internal.res.XPATHErrorResources;
+
+/**
+ * Execute the Id() function.
+ * @xsl.usage advanced
+ */
+public class FuncId extends FunctionOneArg
+{
+    static final long serialVersionUID = 8930573966143567310L;
+
+  /**
+   * Fill in a list with nodes that match a space delimited list if ID
+   * ID references.
+   *
+   * @param xctxt The runtime XPath context.
+   * @param docContext The document where the nodes are being looked for.
+   * @param refval A space delimited list of ID references.
+   * @param usedrefs List of references for which nodes were found.
+   * @param nodeSet Node set where the nodes will be added to.
+   * @param mayBeMore true if there is another set of nodes to be looked for.
+   *
+   * @return The usedrefs value.
+   */
+  private StringVector getNodesByID(XPathContext xctxt, int docContext,
+                                    String refval, StringVector usedrefs,
+                                    NodeSetDTM nodeSet, boolean mayBeMore)
+  {
+
+    if (null != refval)
+    {
+      String ref = null;
+//      DOMHelper dh = xctxt.getDOMHelper();
+      StringTokenizer tokenizer = new StringTokenizer(refval);
+      boolean hasMore = tokenizer.hasMoreTokens();
+      DTM dtm = xctxt.getDTM(docContext);
+
+      while (hasMore)
+      {
+        ref = tokenizer.nextToken();
+        hasMore = tokenizer.hasMoreTokens();
+
+        if ((null != usedrefs) && usedrefs.contains(ref))
+        {
+          ref = null;
+
+          continue;
+        }
+
+        int node = dtm.getElementById(ref);
+
+        if (DTM.NULL != node)
+          nodeSet.addNodeInDocOrder(node, xctxt);
+
+        if ((null != ref) && (hasMore || mayBeMore))
+        {
+          if (null == usedrefs)
+            usedrefs = new StringVector();
+
+          usedrefs.addElement(ref);
+        }
+      }
+    }
+
+    return usedrefs;
+  }
+
+  /**
+   * Execute the function.  The function must return
+   * a valid object.
+   * @param xctxt The current execution context.
+   * @return A valid XObject.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt) throws javax.xml.transform.TransformerException
+  {
+
+    int context = xctxt.getCurrentNode();
+    DTM dtm = xctxt.getDTM(context);
+    int docContext = dtm.getDocument();
+
+    if (DTM.NULL == docContext)
+      error(xctxt, XPATHErrorResources.ER_CONTEXT_HAS_NO_OWNERDOC, null);
+
+    XObject arg = m_arg0.execute(xctxt);
+    int argType = arg.getType();
+    XNodeSet nodes = new XNodeSet(xctxt.getDTMManager());
+    NodeSetDTM nodeSet = nodes.mutableNodeset();
+
+    if (XObject.CLASS_NODESET == argType)
+    {
+      DTMIterator ni = arg.iter();
+      StringVector usedrefs = null;
+      int pos = ni.nextNode();
+
+      while (DTM.NULL != pos)
+      {
+        DTM ndtm = ni.getDTM(pos);
+        String refval = ndtm.getStringValue(pos).toString();
+
+        pos = ni.nextNode();
+        usedrefs = getNodesByID(xctxt, docContext, refval, usedrefs, nodeSet,
+                                DTM.NULL != pos);
+      }
+      // ni.detach();
+    }
+    else if (XObject.CLASS_NULL == argType)
+    {
+      return nodes;
+    }
+    else
+    {
+      String refval = arg.str();
+
+      getNodesByID(xctxt, docContext, refval, null, nodeSet, false);
+    }
+
+    return nodes;
+  }
+}

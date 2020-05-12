@@ -1,2090 +1,2085 @@
-/*      */ package com.sun.org.apache.xerces.internal.dom;
-/*      */ 
-/*      */ import java.util.Vector;
-/*      */ import org.w3c.dom.CharacterData;
-/*      */ import org.w3c.dom.DOMException;
-/*      */ import org.w3c.dom.DocumentFragment;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.ranges.Range;
-/*      */ import org.w3c.dom.ranges.RangeException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class RangeImpl
-/*      */   implements Range
-/*      */ {
-/*      */   DocumentImpl fDocument;
-/*      */   Node fStartContainer;
-/*      */   Node fEndContainer;
-/*      */   int fStartOffset;
-/*      */   int fEndOffset;
-/*      */   boolean fIsCollapsed;
-/*      */   boolean fDetach = false;
-/*   58 */   Node fInsertNode = null;
-/*   59 */   Node fDeleteNode = null;
-/*   60 */   Node fSplitNode = null;
-/*      */ 
-/*      */   
-/*      */   boolean fInsertedFromRange = false;
-/*      */ 
-/*      */   
-/*      */   Node fRemoveChild;
-/*      */ 
-/*      */   
-/*      */   static final int EXTRACT_CONTENTS = 1;
-/*      */ 
-/*      */   
-/*      */   static final int CLONE_CONTENTS = 2;
-/*      */   
-/*      */   static final int DELETE_CONTENTS = 3;
-/*      */ 
-/*      */   
-/*      */   public Node getStartContainer() {
-/*   78 */     if (this.fDetach) {
-/*   79 */       throw new DOMException((short)11, 
-/*      */           
-/*   81 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*   83 */     return this.fStartContainer;
-/*      */   }
-/*      */   
-/*      */   public int getStartOffset() {
-/*   87 */     if (this.fDetach) {
-/*   88 */       throw new DOMException((short)11, 
-/*      */           
-/*   90 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*   92 */     return this.fStartOffset;
-/*      */   }
-/*      */   
-/*      */   public Node getEndContainer() {
-/*   96 */     if (this.fDetach) {
-/*   97 */       throw new DOMException((short)11, 
-/*      */           
-/*   99 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*  101 */     return this.fEndContainer;
-/*      */   }
-/*      */   
-/*      */   public int getEndOffset() {
-/*  105 */     if (this.fDetach) {
-/*  106 */       throw new DOMException((short)11, 
-/*      */           
-/*  108 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*  110 */     return this.fEndOffset;
-/*      */   }
-/*      */   
-/*      */   public boolean getCollapsed() {
-/*  114 */     if (this.fDetach) {
-/*  115 */       throw new DOMException((short)11, 
-/*      */           
-/*  117 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*  119 */     return (this.fStartContainer == this.fEndContainer && this.fStartOffset == this.fEndOffset);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Node getCommonAncestorContainer() {
-/*  124 */     if (this.fDetach) {
-/*  125 */       throw new DOMException((short)11, 
-/*      */           
-/*  127 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*  129 */     Vector<Node> startV = new Vector();
-/*      */     Node node;
-/*  131 */     for (node = this.fStartContainer; node != null; 
-/*  132 */       node = node.getParentNode())
-/*      */     {
-/*  134 */       startV.addElement(node);
-/*      */     }
-/*  136 */     Vector<Node> endV = new Vector();
-/*  137 */     for (node = this.fEndContainer; node != null; 
-/*  138 */       node = node.getParentNode())
-/*      */     {
-/*  140 */       endV.addElement(node);
-/*      */     }
-/*  142 */     int s = startV.size() - 1;
-/*  143 */     int e = endV.size() - 1;
-/*  144 */     Object result = null;
-/*  145 */     while (s >= 0 && e >= 0 && 
-/*  146 */       startV.elementAt(s) == endV.elementAt(e)) {
-/*  147 */       result = startV.elementAt(s);
-/*      */ 
-/*      */ 
-/*      */       
-/*  151 */       s--;
-/*  152 */       e--;
-/*      */     } 
-/*  154 */     return (Node)result;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setStart(Node refNode, int offset) throws RangeException, DOMException {
-/*  161 */     if (this.fDocument.errorChecking) {
-/*  162 */       if (this.fDetach) {
-/*  163 */         throw new DOMException((short)11, 
-/*      */             
-/*  165 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  167 */       if (!isLegalContainer(refNode)) {
-/*  168 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  170 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  172 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  173 */         throw new DOMException((short)4, 
-/*      */             
-/*  175 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  179 */     checkIndex(refNode, offset);
-/*      */     
-/*  181 */     this.fStartContainer = refNode;
-/*  182 */     this.fStartOffset = offset;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  189 */     if (getCommonAncestorContainer() == null || (this.fStartContainer == this.fEndContainer && this.fEndOffset < this.fStartOffset))
-/*      */     {
-/*  191 */       collapse(true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEnd(Node refNode, int offset) throws RangeException, DOMException {
-/*  198 */     if (this.fDocument.errorChecking) {
-/*  199 */       if (this.fDetach) {
-/*  200 */         throw new DOMException((short)11, 
-/*      */             
-/*  202 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  204 */       if (!isLegalContainer(refNode)) {
-/*  205 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  207 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  209 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  210 */         throw new DOMException((short)4, 
-/*      */             
-/*  212 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  216 */     checkIndex(refNode, offset);
-/*      */     
-/*  218 */     this.fEndContainer = refNode;
-/*  219 */     this.fEndOffset = offset;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  226 */     if (getCommonAncestorContainer() == null || (this.fStartContainer == this.fEndContainer && this.fEndOffset < this.fStartOffset))
-/*      */     {
-/*  228 */       collapse(false);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setStartBefore(Node refNode) throws RangeException {
-/*  235 */     if (this.fDocument.errorChecking) {
-/*  236 */       if (this.fDetach) {
-/*  237 */         throw new DOMException((short)11, 
-/*      */             
-/*  239 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  241 */       if (!hasLegalRootContainer(refNode) || 
-/*  242 */         !isLegalContainedNode(refNode))
-/*      */       {
-/*  244 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  246 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  248 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  249 */         throw new DOMException((short)4, 
-/*      */             
-/*  251 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  255 */     this.fStartContainer = refNode.getParentNode();
-/*  256 */     int i = 0;
-/*  257 */     for (Node n = refNode; n != null; n = n.getPreviousSibling()) {
-/*  258 */       i++;
-/*      */     }
-/*  260 */     this.fStartOffset = i - 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  267 */     if (getCommonAncestorContainer() == null || (this.fStartContainer == this.fEndContainer && this.fEndOffset < this.fStartOffset))
-/*      */     {
-/*  269 */       collapse(true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setStartAfter(Node refNode) throws RangeException {
-/*  276 */     if (this.fDocument.errorChecking) {
-/*  277 */       if (this.fDetach) {
-/*  278 */         throw new DOMException((short)11, 
-/*      */             
-/*  280 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  282 */       if (!hasLegalRootContainer(refNode) || 
-/*  283 */         !isLegalContainedNode(refNode)) {
-/*  284 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  286 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  288 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  289 */         throw new DOMException((short)4, 
-/*      */             
-/*  291 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*  294 */     this.fStartContainer = refNode.getParentNode();
-/*  295 */     int i = 0;
-/*  296 */     for (Node n = refNode; n != null; n = n.getPreviousSibling()) {
-/*  297 */       i++;
-/*      */     }
-/*  299 */     this.fStartOffset = i;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  306 */     if (getCommonAncestorContainer() == null || (this.fStartContainer == this.fEndContainer && this.fEndOffset < this.fStartOffset))
-/*      */     {
-/*  308 */       collapse(true);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEndBefore(Node refNode) throws RangeException {
-/*  315 */     if (this.fDocument.errorChecking) {
-/*  316 */       if (this.fDetach) {
-/*  317 */         throw new DOMException((short)11, 
-/*      */             
-/*  319 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  321 */       if (!hasLegalRootContainer(refNode) || 
-/*  322 */         !isLegalContainedNode(refNode)) {
-/*  323 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  325 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  327 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  328 */         throw new DOMException((short)4, 
-/*      */             
-/*  330 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*  333 */     this.fEndContainer = refNode.getParentNode();
-/*  334 */     int i = 0;
-/*  335 */     for (Node n = refNode; n != null; n = n.getPreviousSibling()) {
-/*  336 */       i++;
-/*      */     }
-/*  338 */     this.fEndOffset = i - 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  345 */     if (getCommonAncestorContainer() == null || (this.fStartContainer == this.fEndContainer && this.fEndOffset < this.fStartOffset))
-/*      */     {
-/*  347 */       collapse(false);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEndAfter(Node refNode) throws RangeException {
-/*  354 */     if (this.fDocument.errorChecking) {
-/*  355 */       if (this.fDetach) {
-/*  356 */         throw new DOMException((short)11, 
-/*      */             
-/*  358 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  360 */       if (!hasLegalRootContainer(refNode) || 
-/*  361 */         !isLegalContainedNode(refNode)) {
-/*  362 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  364 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  366 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  367 */         throw new DOMException((short)4, 
-/*      */             
-/*  369 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*  372 */     this.fEndContainer = refNode.getParentNode();
-/*  373 */     int i = 0;
-/*  374 */     for (Node n = refNode; n != null; n = n.getPreviousSibling()) {
-/*  375 */       i++;
-/*      */     }
-/*  377 */     this.fEndOffset = i;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  384 */     if (getCommonAncestorContainer() == null || (this.fStartContainer == this.fEndContainer && this.fEndOffset < this.fStartOffset))
-/*      */     {
-/*  386 */       collapse(false);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public void collapse(boolean toStart) {
-/*  392 */     if (this.fDetach) {
-/*  393 */       throw new DOMException((short)11, 
-/*      */           
-/*  395 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*      */     
-/*  398 */     if (toStart) {
-/*  399 */       this.fEndContainer = this.fStartContainer;
-/*  400 */       this.fEndOffset = this.fStartOffset;
-/*      */     } else {
-/*  402 */       this.fStartContainer = this.fEndContainer;
-/*  403 */       this.fStartOffset = this.fEndOffset;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void selectNode(Node refNode) throws RangeException {
-/*  410 */     if (this.fDocument.errorChecking) {
-/*  411 */       if (this.fDetach) {
-/*  412 */         throw new DOMException((short)11, 
-/*      */             
-/*  414 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  416 */       if (!isLegalContainer(refNode.getParentNode()) || 
-/*  417 */         !isLegalContainedNode(refNode)) {
-/*  418 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  420 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  422 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  423 */         throw new DOMException((short)4, 
-/*      */             
-/*  425 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*  428 */     Node parent = refNode.getParentNode();
-/*  429 */     if (parent != null) {
-/*      */       
-/*  431 */       this.fStartContainer = parent;
-/*  432 */       this.fEndContainer = parent;
-/*  433 */       int i = 0;
-/*  434 */       for (Node n = refNode; n != null; n = n.getPreviousSibling()) {
-/*  435 */         i++;
-/*      */       }
-/*  437 */       this.fStartOffset = i - 1;
-/*  438 */       this.fEndOffset = this.fStartOffset + 1;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void selectNodeContents(Node refNode) throws RangeException {
-/*  445 */     if (this.fDocument.errorChecking) {
-/*  446 */       if (this.fDetach) {
-/*  447 */         throw new DOMException((short)11, 
-/*      */             
-/*  449 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  451 */       if (!isLegalContainer(refNode)) {
-/*  452 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  454 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*  456 */       if (this.fDocument != refNode.getOwnerDocument() && this.fDocument != refNode) {
-/*  457 */         throw new DOMException((short)4, 
-/*      */             
-/*  459 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*  462 */     this.fStartContainer = refNode;
-/*  463 */     this.fEndContainer = refNode;
-/*  464 */     Node first = refNode.getFirstChild();
-/*  465 */     this.fStartOffset = 0;
-/*  466 */     if (first == null) {
-/*  467 */       this.fEndOffset = 0;
-/*      */     } else {
-/*  469 */       int i = 0;
-/*  470 */       for (Node n = first; n != null; n = n.getNextSibling()) {
-/*  471 */         i++;
-/*      */       }
-/*  473 */       this.fEndOffset = i;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public short compareBoundaryPoints(short how, Range sourceRange) throws DOMException {
-/*      */     Node endPointA, endPointB;
-/*      */     int offsetA, offsetB;
-/*  481 */     if (this.fDocument.errorChecking) {
-/*  482 */       if (this.fDetach) {
-/*  483 */         throw new DOMException((short)11, 
-/*      */             
-/*  485 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*      */       
-/*  488 */       if ((this.fDocument != sourceRange.getStartContainer().getOwnerDocument() && this.fDocument != sourceRange
-/*  489 */         .getStartContainer() && sourceRange
-/*  490 */         .getStartContainer() != null) || (this.fDocument != sourceRange
-/*  491 */         .getEndContainer().getOwnerDocument() && this.fDocument != sourceRange
-/*  492 */         .getEndContainer() && sourceRange
-/*  493 */         .getStartContainer() != null)) {
-/*  494 */         throw new DOMException((short)4, 
-/*  495 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  504 */     if (how == 0) {
-/*  505 */       endPointA = sourceRange.getStartContainer();
-/*  506 */       endPointB = this.fStartContainer;
-/*  507 */       offsetA = sourceRange.getStartOffset();
-/*  508 */       offsetB = this.fStartOffset;
-/*      */     }
-/*  510 */     else if (how == 1) {
-/*  511 */       endPointA = sourceRange.getStartContainer();
-/*  512 */       endPointB = this.fEndContainer;
-/*  513 */       offsetA = sourceRange.getStartOffset();
-/*  514 */       offsetB = this.fEndOffset;
-/*      */     }
-/*  516 */     else if (how == 3) {
-/*  517 */       endPointA = sourceRange.getEndContainer();
-/*  518 */       endPointB = this.fStartContainer;
-/*  519 */       offsetA = sourceRange.getEndOffset();
-/*  520 */       offsetB = this.fStartOffset;
-/*      */     } else {
-/*  522 */       endPointA = sourceRange.getEndContainer();
-/*  523 */       endPointB = this.fEndContainer;
-/*  524 */       offsetA = sourceRange.getEndOffset();
-/*  525 */       offsetB = this.fEndOffset;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  536 */     if (endPointA == endPointB) {
-/*  537 */       if (offsetA < offsetB) return 1; 
-/*  538 */       if (offsetA == offsetB) return 0; 
-/*  539 */       return -1;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  543 */     Node c = endPointB, p = c.getParentNode();
-/*  544 */     for (; p != null; 
-/*  545 */       c = p, p = p.getParentNode()) {
-/*      */       
-/*  547 */       if (p == endPointA) {
-/*  548 */         int index = indexOf(c, endPointA);
-/*  549 */         if (offsetA <= index) return 1; 
-/*  550 */         return -1;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/*  556 */     c = endPointA; p = c.getParentNode();
-/*  557 */     for (; p != null; 
-/*  558 */       c = p, p = p.getParentNode()) {
-/*      */       
-/*  560 */       if (p == endPointB) {
-/*  561 */         int index = indexOf(c, endPointB);
-/*  562 */         if (index < offsetB) return 1; 
-/*  563 */         return -1;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  571 */     int depthDiff = 0; Node node1;
-/*  572 */     for (node1 = endPointA; node1 != null; node1 = node1.getParentNode())
-/*  573 */       depthDiff++; 
-/*  574 */     for (node1 = endPointB; node1 != null; node1 = node1.getParentNode())
-/*  575 */       depthDiff--; 
-/*  576 */     while (depthDiff > 0) {
-/*  577 */       endPointA = endPointA.getParentNode();
-/*  578 */       depthDiff--;
-/*      */     } 
-/*  580 */     while (depthDiff < 0) {
-/*  581 */       endPointB = endPointB.getParentNode();
-/*  582 */       depthDiff++;
-/*      */     } 
-/*  584 */     Node pA = endPointA.getParentNode();
-/*  585 */     Node pB = endPointB.getParentNode();
-/*  586 */     for (; pA != pB; 
-/*  587 */       pA = pA.getParentNode(), pB = pB.getParentNode()) {
-/*      */       
-/*  589 */       endPointA = pA;
-/*  590 */       endPointB = pB;
-/*      */     } 
-/*  592 */     Node n = endPointA.getNextSibling();
-/*  593 */     for (; n != null; 
-/*  594 */       n = n.getNextSibling()) {
-/*      */       
-/*  596 */       if (n == endPointB) {
-/*  597 */         return 1;
-/*      */       }
-/*      */     } 
-/*  600 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void deleteContents() throws DOMException {
-/*  606 */     traverseContents(3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DocumentFragment extractContents() throws DOMException {
-/*  612 */     return traverseContents(1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DocumentFragment cloneContents() throws DOMException {
-/*  618 */     return traverseContents(2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void insertNode(Node newNode) throws DOMException, RangeException {
-/*  624 */     if (newNode == null)
-/*      */       return; 
-/*  626 */     int type = newNode.getNodeType();
-/*      */     
-/*  628 */     if (this.fDocument.errorChecking) {
-/*  629 */       if (this.fDetach) {
-/*  630 */         throw new DOMException((short)11, 
-/*      */             
-/*  632 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  634 */       if (this.fDocument != newNode.getOwnerDocument()) {
-/*  635 */         throw new DOMException((short)4, 
-/*  636 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null));
-/*      */       }
-/*      */       
-/*  639 */       if (type == 2 || type == 6 || type == 12 || type == 9)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */         
-/*  644 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  646 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/*  651 */     int currentChildren = 0;
-/*  652 */     this.fInsertedFromRange = true;
-/*      */ 
-/*      */     
-/*  655 */     if (this.fStartContainer.getNodeType() == 3) {
-/*      */       
-/*  657 */       Node parent = this.fStartContainer.getParentNode();
-/*  658 */       currentChildren = parent.getChildNodes().getLength();
-/*      */       
-/*  660 */       Node cloneCurrent = this.fStartContainer.cloneNode(false);
-/*  661 */       ((TextImpl)cloneCurrent).setNodeValueInternal(cloneCurrent
-/*  662 */           .getNodeValue().substring(this.fStartOffset));
-/*  663 */       ((TextImpl)this.fStartContainer).setNodeValueInternal(this.fStartContainer
-/*  664 */           .getNodeValue().substring(0, this.fStartOffset));
-/*  665 */       Node next = this.fStartContainer.getNextSibling();
-/*  666 */       if (next != null) {
-/*  667 */         if (parent != null) {
-/*  668 */           parent.insertBefore(newNode, next);
-/*  669 */           parent.insertBefore(cloneCurrent, next);
-/*      */         }
-/*      */       
-/*  672 */       } else if (parent != null) {
-/*  673 */         parent.appendChild(newNode);
-/*  674 */         parent.appendChild(cloneCurrent);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  678 */       if (this.fEndContainer == this.fStartContainer) {
-/*  679 */         this.fEndContainer = cloneCurrent;
-/*  680 */         this.fEndOffset -= this.fStartOffset;
-/*      */       }
-/*  682 */       else if (this.fEndContainer == parent) {
-/*      */         
-/*  684 */         this.fEndOffset += parent.getChildNodes().getLength() - currentChildren;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  688 */       signalSplitData(this.fStartContainer, cloneCurrent, this.fStartOffset);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  692 */       if (this.fEndContainer == this.fStartContainer) {
-/*  693 */         currentChildren = this.fEndContainer.getChildNodes().getLength();
-/*      */       }
-/*  695 */       Node current = this.fStartContainer.getFirstChild();
-/*  696 */       int i = 0;
-/*  697 */       for (i = 0; i < this.fStartOffset && current != null; i++) {
-/*  698 */         current = current.getNextSibling();
-/*      */       }
-/*  700 */       if (current != null) {
-/*  701 */         this.fStartContainer.insertBefore(newNode, current);
-/*      */       } else {
-/*  703 */         this.fStartContainer.appendChild(newNode);
-/*      */       } 
-/*      */ 
-/*      */       
-/*  707 */       if (this.fEndContainer == this.fStartContainer && this.fEndOffset != 0) {
-/*  708 */         this.fEndOffset += this.fEndContainer.getChildNodes().getLength() - currentChildren;
-/*      */       }
-/*      */     } 
-/*  711 */     this.fInsertedFromRange = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void surroundContents(Node newParent) throws DOMException, RangeException {
-/*  717 */     if (newParent == null)
-/*  718 */       return;  int type = newParent.getNodeType();
-/*      */     
-/*  720 */     if (this.fDocument.errorChecking) {
-/*  721 */       if (this.fDetach) {
-/*  722 */         throw new DOMException((short)11, 
-/*      */             
-/*  724 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */       }
-/*  726 */       if (type == 2 || type == 6 || type == 12 || type == 10 || type == 9 || type == 11)
-/*      */       {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  733 */         throw new RangeExceptionImpl((short)2, 
-/*      */             
-/*  735 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_NODE_TYPE_ERR", null));
-/*      */       }
-/*      */     } 
-/*      */     
-/*  739 */     Node realStart = this.fStartContainer;
-/*  740 */     Node realEnd = this.fEndContainer;
-/*  741 */     if (this.fStartContainer.getNodeType() == 3) {
-/*  742 */       realStart = this.fStartContainer.getParentNode();
-/*      */     }
-/*  744 */     if (this.fEndContainer.getNodeType() == 3) {
-/*  745 */       realEnd = this.fEndContainer.getParentNode();
-/*      */     }
-/*      */     
-/*  748 */     if (realStart != realEnd) {
-/*  749 */       throw new RangeExceptionImpl((short)1, 
-/*      */           
-/*  751 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "BAD_BOUNDARYPOINTS_ERR", null));
-/*      */     }
-/*      */     
-/*  754 */     DocumentFragment frag = extractContents();
-/*  755 */     insertNode(newParent);
-/*  756 */     newParent.appendChild(frag);
-/*  757 */     selectNode(newParent);
-/*      */   }
-/*      */   
-/*      */   public Range cloneRange() {
-/*  761 */     if (this.fDetach) {
-/*  762 */       throw new DOMException((short)11, 
-/*      */           
-/*  764 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*      */     
-/*  767 */     Range range = this.fDocument.createRange();
-/*  768 */     range.setStart(this.fStartContainer, this.fStartOffset);
-/*  769 */     range.setEnd(this.fEndContainer, this.fEndOffset);
-/*  770 */     return range;
-/*      */   }
-/*      */   
-/*      */   public String toString() {
-/*  774 */     if (this.fDetach) {
-/*  775 */       throw new DOMException((short)11, 
-/*      */           
-/*  777 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*      */     
-/*  780 */     Node node = this.fStartContainer;
-/*  781 */     Node stopNode = this.fEndContainer;
-/*  782 */     StringBuffer sb = new StringBuffer();
-/*  783 */     if (this.fStartContainer.getNodeType() == 3 || this.fStartContainer
-/*  784 */       .getNodeType() == 4) {
-/*      */       
-/*  786 */       if (this.fStartContainer == this.fEndContainer) {
-/*  787 */         sb.append(this.fStartContainer.getNodeValue().substring(this.fStartOffset, this.fEndOffset));
-/*  788 */         return sb.toString();
-/*      */       } 
-/*  790 */       sb.append(this.fStartContainer.getNodeValue().substring(this.fStartOffset));
-/*  791 */       node = nextNode(node, true);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  795 */       node = node.getFirstChild();
-/*  796 */       if (this.fStartOffset > 0) {
-/*  797 */         int counter = 0;
-/*  798 */         while (counter < this.fStartOffset && node != null) {
-/*  799 */           node = node.getNextSibling();
-/*  800 */           counter++;
-/*      */         } 
-/*      */       } 
-/*  803 */       if (node == null) {
-/*  804 */         node = nextNode(this.fStartContainer, false);
-/*      */       }
-/*      */     } 
-/*  807 */     if (this.fEndContainer.getNodeType() != 3 && this.fEndContainer
-/*  808 */       .getNodeType() != 4) {
-/*  809 */       int i = this.fEndOffset;
-/*  810 */       stopNode = this.fEndContainer.getFirstChild();
-/*  811 */       while (i > 0 && stopNode != null) {
-/*  812 */         i--;
-/*  813 */         stopNode = stopNode.getNextSibling();
-/*      */       } 
-/*  815 */       if (stopNode == null)
-/*  816 */         stopNode = nextNode(this.fEndContainer, false); 
-/*      */     } 
-/*  818 */     while (node != stopNode && 
-/*  819 */       node != null) {
-/*  820 */       if (node.getNodeType() == 3 || node
-/*  821 */         .getNodeType() == 4) {
-/*  822 */         sb.append(node.getNodeValue());
-/*      */       }
-/*      */       
-/*  825 */       node = nextNode(node, true);
-/*      */     } 
-/*      */     
-/*  828 */     if (this.fEndContainer.getNodeType() == 3 || this.fEndContainer
-/*  829 */       .getNodeType() == 4) {
-/*  830 */       sb.append(this.fEndContainer.getNodeValue().substring(0, this.fEndOffset));
-/*      */     }
-/*  832 */     return sb.toString();
-/*      */   }
-/*      */   
-/*      */   public void detach() {
-/*  836 */     if (this.fDetach) {
-/*  837 */       throw new DOMException((short)11, 
-/*      */           
-/*  839 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*  841 */     this.fDetach = true;
-/*  842 */     this.fDocument.removeRange(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void signalSplitData(Node node, Node newNode, int offset) {
-/*  854 */     this.fSplitNode = node;
-/*      */     
-/*  856 */     this.fDocument.splitData(node, newNode, offset);
-/*  857 */     this.fSplitNode = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void receiveSplitData(Node node, Node newNode, int offset) {
-/*  864 */     if (node == null || newNode == null)
-/*  865 */       return;  if (this.fSplitNode == node)
-/*      */       return; 
-/*  867 */     if (node == this.fStartContainer && this.fStartContainer
-/*  868 */       .getNodeType() == 3 && 
-/*  869 */       this.fStartOffset > offset) {
-/*  870 */       this.fStartOffset -= offset;
-/*  871 */       this.fStartContainer = newNode;
-/*      */     } 
-/*      */     
-/*  874 */     if (node == this.fEndContainer && this.fEndContainer
-/*  875 */       .getNodeType() == 3 && 
-/*  876 */       this.fEndOffset > offset) {
-/*  877 */       this.fEndOffset -= offset;
-/*  878 */       this.fEndContainer = newNode;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void deleteData(CharacterData node, int offset, int count) {
-/*  888 */     this.fDeleteNode = node;
-/*  889 */     node.deleteData(offset, count);
-/*  890 */     this.fDeleteNode = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void receiveDeletedText(Node node, int offset, int count) {
-/*  899 */     if (node == null)
-/*  900 */       return;  if (this.fDeleteNode == node)
-/*  901 */       return;  if (node == this.fStartContainer && this.fStartContainer
-/*  902 */       .getNodeType() == 3) {
-/*  903 */       if (this.fStartOffset > offset + count) {
-/*  904 */         this.fStartOffset = offset + this.fStartOffset - offset + count;
-/*      */       }
-/*  906 */       else if (this.fStartOffset > offset) {
-/*  907 */         this.fStartOffset = offset;
-/*      */       } 
-/*      */     }
-/*  910 */     if (node == this.fEndContainer && this.fEndContainer
-/*  911 */       .getNodeType() == 3) {
-/*  912 */       if (this.fEndOffset > offset + count) {
-/*  913 */         this.fEndOffset = offset + this.fEndOffset - offset + count;
-/*      */       }
-/*  915 */       else if (this.fEndOffset > offset) {
-/*  916 */         this.fEndOffset = offset;
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void insertData(CharacterData node, int index, String insert) {
-/*  926 */     this.fInsertNode = node;
-/*  927 */     node.insertData(index, insert);
-/*  928 */     this.fInsertNode = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void receiveInsertedText(Node node, int index, int len) {
-/*  937 */     if (node == null)
-/*  938 */       return;  if (this.fInsertNode == node)
-/*  939 */       return;  if (node == this.fStartContainer && this.fStartContainer
-/*  940 */       .getNodeType() == 3 && 
-/*  941 */       index < this.fStartOffset) {
-/*  942 */       this.fStartOffset += len;
-/*      */     }
-/*      */     
-/*  945 */     if (node == this.fEndContainer && this.fEndContainer
-/*  946 */       .getNodeType() == 3 && 
-/*  947 */       index < this.fEndOffset) {
-/*  948 */       this.fEndOffset += len;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void receiveReplacedText(Node node) {
-/*  959 */     if (node == null)
-/*  960 */       return;  if (node == this.fStartContainer && this.fStartContainer
-/*  961 */       .getNodeType() == 3) {
-/*  962 */       this.fStartOffset = 0;
-/*      */     }
-/*  964 */     if (node == this.fEndContainer && this.fEndContainer
-/*  965 */       .getNodeType() == 3) {
-/*  966 */       this.fEndOffset = 0;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void insertedNodeFromDOM(Node node) {
-/*  976 */     if (node == null)
-/*  977 */       return;  if (this.fInsertNode == node)
-/*  978 */       return;  if (this.fInsertedFromRange)
-/*      */       return; 
-/*  980 */     Node parent = node.getParentNode();
-/*      */     
-/*  982 */     if (parent == this.fStartContainer) {
-/*  983 */       int index = indexOf(node, this.fStartContainer);
-/*  984 */       if (index < this.fStartOffset) {
-/*  985 */         this.fStartOffset++;
-/*      */       }
-/*      */     } 
-/*      */     
-/*  989 */     if (parent == this.fEndContainer) {
-/*  990 */       int index = indexOf(node, this.fEndContainer);
-/*  991 */       if (index < this.fEndOffset) {
-/*  992 */         this.fEndOffset++;
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RangeImpl(DocumentImpl document) {
-/* 1004 */     this.fRemoveChild = null; this.fDocument = document; this.fStartContainer = document; this.fEndContainer = document; this.fStartOffset = 0;
-/*      */     this.fEndOffset = 0;
-/* 1006 */     this.fDetach = false; } Node removeChild(Node parent, Node child) { this.fRemoveChild = child;
-/* 1007 */     Node n = parent.removeChild(child);
-/* 1008 */     this.fRemoveChild = null;
-/* 1009 */     return n; }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   void removeNode(Node node) {
-/* 1017 */     if (node == null)
-/* 1018 */       return;  if (this.fRemoveChild == node)
-/*      */       return; 
-/* 1020 */     Node parent = node.getParentNode();
-/*      */     
-/* 1022 */     if (parent == this.fStartContainer) {
-/* 1023 */       int index = indexOf(node, this.fStartContainer);
-/* 1024 */       if (index < this.fStartOffset) {
-/* 1025 */         this.fStartOffset--;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1029 */     if (parent == this.fEndContainer) {
-/* 1030 */       int index = indexOf(node, this.fEndContainer);
-/* 1031 */       if (index < this.fEndOffset) {
-/* 1032 */         this.fEndOffset--;
-/*      */       }
-/*      */     } 
-/*      */     
-/* 1036 */     if (parent != this.fStartContainer || parent != this.fEndContainer) {
-/*      */       
-/* 1038 */       if (isAncestorOf(node, this.fStartContainer)) {
-/* 1039 */         this.fStartContainer = parent;
-/* 1040 */         this.fStartOffset = indexOf(node, parent);
-/*      */       } 
-/* 1042 */       if (isAncestorOf(node, this.fEndContainer)) {
-/* 1043 */         this.fEndContainer = parent;
-/* 1044 */         this.fEndOffset = indexOf(node, parent);
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DocumentFragment traverseContents(int how) throws DOMException {
-/* 1093 */     if (this.fStartContainer == null || this.fEndContainer == null) {
-/* 1094 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1098 */     if (this.fDetach) {
-/* 1099 */       throw new DOMException((short)11, 
-/*      */           
-/* 1101 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1113 */     if (this.fStartContainer == this.fEndContainer) {
-/* 1114 */       return traverseSameContainer(how);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1120 */     int endContainerDepth = 0;
-/* 1121 */     Node c = this.fEndContainer, p = c.getParentNode();
-/* 1122 */     for (; p != null; 
-/* 1123 */       c = p, p = p.getParentNode()) {
-/*      */       
-/* 1125 */       if (p == this.fStartContainer)
-/* 1126 */         return traverseCommonStartContainer(c, how); 
-/* 1127 */       endContainerDepth++;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1132 */     int startContainerDepth = 0;
-/* 1133 */     Node node1 = this.fStartContainer, node2 = node1.getParentNode();
-/* 1134 */     for (; node2 != null; 
-/* 1135 */       node1 = node2, node2 = node2.getParentNode()) {
-/*      */       
-/* 1137 */       if (node2 == this.fEndContainer)
-/* 1138 */         return traverseCommonEndContainer(node1, how); 
-/* 1139 */       startContainerDepth++;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1144 */     int depthDiff = startContainerDepth - endContainerDepth;
-/*      */     
-/* 1146 */     Node startNode = this.fStartContainer;
-/* 1147 */     while (depthDiff > 0) {
-/* 1148 */       startNode = startNode.getParentNode();
-/* 1149 */       depthDiff--;
-/*      */     } 
-/*      */     
-/* 1152 */     Node endNode = this.fEndContainer;
-/* 1153 */     while (depthDiff < 0) {
-/* 1154 */       endNode = endNode.getParentNode();
-/* 1155 */       depthDiff++;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1159 */     Node sp = startNode.getParentNode(), ep = endNode.getParentNode();
-/* 1160 */     for (; sp != ep; 
-/* 1161 */       sp = sp.getParentNode(), ep = ep.getParentNode()) {
-/*      */       
-/* 1163 */       startNode = sp;
-/* 1164 */       endNode = ep;
-/*      */     } 
-/* 1166 */     return traverseCommonAncestors(startNode, endNode, how);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DocumentFragment traverseSameContainer(int how) {
-/* 1201 */     DocumentFragment frag = null;
-/* 1202 */     if (how != 3) {
-/* 1203 */       frag = this.fDocument.createDocumentFragment();
-/*      */     }
-/*      */     
-/* 1206 */     if (this.fStartOffset == this.fEndOffset) {
-/* 1207 */       return frag;
-/*      */     }
-/*      */     
-/* 1210 */     if (this.fStartContainer.getNodeType() == 3) {
-/*      */ 
-/*      */       
-/* 1213 */       String s = this.fStartContainer.getNodeValue();
-/* 1214 */       String sub = s.substring(this.fStartOffset, this.fEndOffset);
-/*      */ 
-/*      */       
-/* 1217 */       if (how != 2) {
-/*      */         
-/* 1219 */         ((TextImpl)this.fStartContainer).deleteData(this.fStartOffset, this.fEndOffset - this.fStartOffset);
-/*      */ 
-/*      */         
-/* 1222 */         collapse(true);
-/*      */       } 
-/* 1224 */       if (how == 3)
-/* 1225 */         return null; 
-/* 1226 */       frag.appendChild(this.fDocument.createTextNode(sub));
-/* 1227 */       return frag;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1231 */     Node n = getSelectedNode(this.fStartContainer, this.fStartOffset);
-/* 1232 */     int cnt = this.fEndOffset - this.fStartOffset;
-/* 1233 */     while (cnt > 0) {
-/*      */       
-/* 1235 */       Node sibling = n.getNextSibling();
-/* 1236 */       Node xferNode = traverseFullySelected(n, how);
-/* 1237 */       if (frag != null)
-/* 1238 */         frag.appendChild(xferNode); 
-/* 1239 */       cnt--;
-/* 1240 */       n = sibling;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1244 */     if (how != 2)
-/* 1245 */       collapse(true); 
-/* 1246 */     return frag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DocumentFragment traverseCommonStartContainer(Node endAncestor, int how) {
-/* 1287 */     DocumentFragment frag = null;
-/* 1288 */     if (how != 3)
-/* 1289 */       frag = this.fDocument.createDocumentFragment(); 
-/* 1290 */     Node n = traverseRightBoundary(endAncestor, how);
-/* 1291 */     if (frag != null) {
-/* 1292 */       frag.appendChild(n);
-/*      */     }
-/* 1294 */     int endIdx = indexOf(endAncestor, this.fStartContainer);
-/* 1295 */     int cnt = endIdx - this.fStartOffset;
-/* 1296 */     if (cnt <= 0) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1300 */       if (how != 2) {
-/*      */         
-/* 1302 */         setEndBefore(endAncestor);
-/* 1303 */         collapse(false);
-/*      */       } 
-/* 1305 */       return frag;
-/*      */     } 
-/*      */     
-/* 1308 */     n = endAncestor.getPreviousSibling();
-/* 1309 */     while (cnt > 0) {
-/*      */       
-/* 1311 */       Node sibling = n.getPreviousSibling();
-/* 1312 */       Node xferNode = traverseFullySelected(n, how);
-/* 1313 */       if (frag != null)
-/* 1314 */         frag.insertBefore(xferNode, frag.getFirstChild()); 
-/* 1315 */       cnt--;
-/* 1316 */       n = sibling;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1320 */     if (how != 2) {
-/*      */       
-/* 1322 */       setEndBefore(endAncestor);
-/* 1323 */       collapse(false);
-/*      */     } 
-/* 1325 */     return frag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DocumentFragment traverseCommonEndContainer(Node startAncestor, int how) {
-/* 1366 */     DocumentFragment frag = null;
-/* 1367 */     if (how != 3)
-/* 1368 */       frag = this.fDocument.createDocumentFragment(); 
-/* 1369 */     Node n = traverseLeftBoundary(startAncestor, how);
-/* 1370 */     if (frag != null)
-/* 1371 */       frag.appendChild(n); 
-/* 1372 */     int startIdx = indexOf(startAncestor, this.fEndContainer);
-/* 1373 */     startIdx++;
-/*      */     
-/* 1375 */     int cnt = this.fEndOffset - startIdx;
-/* 1376 */     n = startAncestor.getNextSibling();
-/* 1377 */     while (cnt > 0) {
-/*      */       
-/* 1379 */       Node sibling = n.getNextSibling();
-/* 1380 */       Node xferNode = traverseFullySelected(n, how);
-/* 1381 */       if (frag != null)
-/* 1382 */         frag.appendChild(xferNode); 
-/* 1383 */       cnt--;
-/* 1384 */       n = sibling;
-/*      */     } 
-/*      */     
-/* 1387 */     if (how != 2) {
-/*      */       
-/* 1389 */       setStartAfter(startAncestor);
-/* 1390 */       collapse(true);
-/*      */     } 
-/*      */     
-/* 1393 */     return frag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DocumentFragment traverseCommonAncestors(Node startAncestor, Node endAncestor, int how) {
-/* 1441 */     DocumentFragment frag = null;
-/* 1442 */     if (how != 3) {
-/* 1443 */       frag = this.fDocument.createDocumentFragment();
-/*      */     }
-/* 1445 */     Node n = traverseLeftBoundary(startAncestor, how);
-/* 1446 */     if (frag != null) {
-/* 1447 */       frag.appendChild(n);
-/*      */     }
-/* 1449 */     Node commonParent = startAncestor.getParentNode();
-/* 1450 */     int startOffset = indexOf(startAncestor, commonParent);
-/* 1451 */     int endOffset = indexOf(endAncestor, commonParent);
-/* 1452 */     startOffset++;
-/*      */     
-/* 1454 */     int cnt = endOffset - startOffset;
-/* 1455 */     Node sibling = startAncestor.getNextSibling();
-/*      */     
-/* 1457 */     while (cnt > 0) {
-/*      */       
-/* 1459 */       Node nextSibling = sibling.getNextSibling();
-/* 1460 */       n = traverseFullySelected(sibling, how);
-/* 1461 */       if (frag != null)
-/* 1462 */         frag.appendChild(n); 
-/* 1463 */       sibling = nextSibling;
-/* 1464 */       cnt--;
-/*      */     } 
-/*      */     
-/* 1467 */     n = traverseRightBoundary(endAncestor, how);
-/* 1468 */     if (frag != null) {
-/* 1469 */       frag.appendChild(n);
-/*      */     }
-/* 1471 */     if (how != 2) {
-/*      */       
-/* 1473 */       setStartAfter(startAncestor);
-/* 1474 */       collapse(true);
-/*      */     } 
-/* 1476 */     return frag;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node traverseRightBoundary(Node root, int how) {
-/* 1539 */     Node next = getSelectedNode(this.fEndContainer, this.fEndOffset - 1);
-/* 1540 */     boolean isFullySelected = (next != this.fEndContainer);
-/*      */     
-/* 1542 */     if (next == root) {
-/* 1543 */       return traverseNode(next, isFullySelected, false, how);
-/*      */     }
-/* 1545 */     Node parent = next.getParentNode();
-/* 1546 */     Node clonedParent = traverseNode(parent, false, false, how);
-/*      */     
-/* 1548 */     while (parent != null) {
-/*      */       
-/* 1550 */       while (next != null) {
-/*      */         
-/* 1552 */         Node prevSibling = next.getPreviousSibling();
-/*      */         
-/* 1554 */         Node clonedChild = traverseNode(next, isFullySelected, false, how);
-/* 1555 */         if (how != 3)
-/*      */         {
-/* 1557 */           clonedParent.insertBefore(clonedChild, clonedParent
-/*      */               
-/* 1559 */               .getFirstChild());
-/*      */         }
-/*      */         
-/* 1562 */         isFullySelected = true;
-/* 1563 */         next = prevSibling;
-/*      */       } 
-/* 1565 */       if (parent == root) {
-/* 1566 */         return clonedParent;
-/*      */       }
-/* 1568 */       next = parent.getPreviousSibling();
-/* 1569 */       parent = parent.getParentNode();
-/* 1570 */       Node clonedGrandParent = traverseNode(parent, false, false, how);
-/* 1571 */       if (how != 3)
-/* 1572 */         clonedGrandParent.appendChild(clonedParent); 
-/* 1573 */       clonedParent = clonedGrandParent;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1578 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node traverseLeftBoundary(Node root, int how) {
-/* 1642 */     Node next = getSelectedNode(getStartContainer(), getStartOffset());
-/* 1643 */     boolean isFullySelected = (next != getStartContainer());
-/*      */     
-/* 1645 */     if (next == root) {
-/* 1646 */       return traverseNode(next, isFullySelected, true, how);
-/*      */     }
-/* 1648 */     Node parent = next.getParentNode();
-/* 1649 */     Node clonedParent = traverseNode(parent, false, true, how);
-/*      */     
-/* 1651 */     while (parent != null) {
-/*      */       
-/* 1653 */       while (next != null) {
-/*      */         
-/* 1655 */         Node nextSibling = next.getNextSibling();
-/*      */         
-/* 1657 */         Node clonedChild = traverseNode(next, isFullySelected, true, how);
-/* 1658 */         if (how != 3)
-/* 1659 */           clonedParent.appendChild(clonedChild); 
-/* 1660 */         isFullySelected = true;
-/* 1661 */         next = nextSibling;
-/*      */       } 
-/* 1663 */       if (parent == root) {
-/* 1664 */         return clonedParent;
-/*      */       }
-/* 1666 */       next = parent.getNextSibling();
-/* 1667 */       parent = parent.getParentNode();
-/* 1668 */       Node clonedGrandParent = traverseNode(parent, false, true, how);
-/* 1669 */       if (how != 3)
-/* 1670 */         clonedGrandParent.appendChild(clonedParent); 
-/* 1671 */       clonedParent = clonedGrandParent;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1676 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node traverseNode(Node n, boolean isFullySelected, boolean isLeft, int how) {
-/* 1723 */     if (isFullySelected)
-/* 1724 */       return traverseFullySelected(n, how); 
-/* 1725 */     if (n.getNodeType() == 3)
-/* 1726 */       return traverseTextNode(n, isLeft, how); 
-/* 1727 */     return traversePartiallySelected(n, how);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node traverseFullySelected(Node n, int how) {
-/* 1759 */     switch (how) {
-/*      */       
-/*      */       case 2:
-/* 1762 */         return n.cloneNode(true);
-/*      */       case 1:
-/* 1764 */         if (n.getNodeType() == 10)
-/*      */         {
-/*      */           
-/* 1767 */           throw new DOMException((short)3, 
-/*      */               
-/* 1769 */               DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "HIERARCHY_REQUEST_ERR", null));
-/*      */         }
-/* 1771 */         return n;
-/*      */       case 3:
-/* 1773 */         n.getParentNode().removeChild(n);
-/* 1774 */         return null;
-/*      */     } 
-/* 1776 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node traversePartiallySelected(Node n, int how) {
-/* 1808 */     switch (how) {
-/*      */       
-/*      */       case 3:
-/* 1811 */         return null;
-/*      */       case 1:
-/*      */       case 2:
-/* 1814 */         return n.cloneNode(false);
-/*      */     } 
-/* 1816 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node traverseTextNode(Node n, boolean isLeft, int how) {
-/* 1854 */     String newNodeValue, oldNodeValue, txtValue = n.getNodeValue();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1858 */     if (isLeft) {
-/*      */       
-/* 1860 */       int offset = getStartOffset();
-/* 1861 */       newNodeValue = txtValue.substring(offset);
-/* 1862 */       oldNodeValue = txtValue.substring(0, offset);
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1866 */       int offset = getEndOffset();
-/* 1867 */       newNodeValue = txtValue.substring(0, offset);
-/* 1868 */       oldNodeValue = txtValue.substring(offset);
-/*      */     } 
-/*      */     
-/* 1871 */     if (how != 2)
-/* 1872 */       n.setNodeValue(oldNodeValue); 
-/* 1873 */     if (how == 3)
-/* 1874 */       return null; 
-/* 1875 */     Node newNode = n.cloneNode(false);
-/* 1876 */     newNode.setNodeValue(newNodeValue);
-/* 1877 */     return newNode;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   void checkIndex(Node refNode, int offset) throws DOMException {
-/* 1882 */     if (offset < 0) {
-/* 1883 */       throw new DOMException((short)1, 
-/*      */           
-/* 1885 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INDEX_SIZE_ERR", null));
-/*      */     }
-/*      */     
-/* 1888 */     int type = refNode.getNodeType();
-/*      */ 
-/*      */ 
-/*      */     
-/* 1892 */     if (type == 3 || type == 4 || type == 8 || type == 7) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 1896 */       if (offset > refNode.getNodeValue().length()) {
-/* 1897 */         throw new DOMException((short)1, 
-/* 1898 */             DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INDEX_SIZE_ERR", null));
-/*      */ 
-/*      */       
-/*      */       }
-/*      */     
-/*      */     }
-/* 1904 */     else if (offset > refNode.getChildNodes().getLength()) {
-/* 1905 */       throw new DOMException((short)1, 
-/* 1906 */           DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INDEX_SIZE_ERR", null));
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node getRootContainer(Node node) {
-/* 1917 */     if (node == null) {
-/* 1918 */       return null;
-/*      */     }
-/* 1920 */     while (node.getParentNode() != null)
-/* 1921 */       node = node.getParentNode(); 
-/* 1922 */     return node;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isLegalContainer(Node node) {
-/* 1931 */     if (node == null) {
-/* 1932 */       return false;
-/*      */     }
-/* 1934 */     while (node != null) {
-/*      */       
-/* 1936 */       switch (node.getNodeType()) {
-/*      */         
-/*      */         case 6:
-/*      */         case 10:
-/*      */         case 12:
-/* 1941 */           return false;
-/*      */       } 
-/* 1943 */       node = node.getParentNode();
-/*      */     } 
-/*      */     
-/* 1946 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean hasLegalRootContainer(Node node) {
-/* 1959 */     if (node == null) {
-/* 1960 */       return false;
-/*      */     }
-/* 1962 */     Node rootContainer = getRootContainer(node);
-/* 1963 */     switch (rootContainer.getNodeType()) {
-/*      */       
-/*      */       case 2:
-/*      */       case 9:
-/*      */       case 11:
-/* 1968 */         return true;
-/*      */     } 
-/* 1970 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean isLegalContainedNode(Node node) {
-/* 1979 */     if (node == null)
-/* 1980 */       return false; 
-/* 1981 */     switch (node.getNodeType()) {
-/*      */       
-/*      */       case 2:
-/*      */       case 6:
-/*      */       case 9:
-/*      */       case 11:
-/*      */       case 12:
-/* 1988 */         return false;
-/*      */     } 
-/* 1990 */     return true;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   Node nextNode(Node node, boolean visitChildren) {
-/* 1995 */     if (node == null) return null;
-/*      */ 
-/*      */     
-/* 1998 */     if (visitChildren) {
-/* 1999 */       Node node1 = node.getFirstChild();
-/* 2000 */       if (node1 != null) {
-/* 2001 */         return node1;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2006 */     Node result = node.getNextSibling();
-/* 2007 */     if (result != null) {
-/* 2008 */       return result;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2013 */     Node parent = node.getParentNode();
-/* 2014 */     while (parent != null && parent != this.fDocument) {
-/*      */ 
-/*      */       
-/* 2017 */       result = parent.getNextSibling();
-/* 2018 */       if (result != null) {
-/* 2019 */         return result;
-/*      */       }
-/* 2021 */       parent = parent.getParentNode();
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2027 */     return null;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   boolean isAncestorOf(Node a, Node b) {
-/* 2032 */     for (Node node = b; node != null; node = node.getParentNode()) {
-/* 2033 */       if (node == a) return true; 
-/*      */     } 
-/* 2035 */     return false;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   int indexOf(Node child, Node parent) {
-/* 2040 */     if (child.getParentNode() != parent) return -1; 
-/* 2041 */     int i = 0;
-/* 2042 */     for (Node node = parent.getFirstChild(); node != child; node = node.getNextSibling()) {
-/* 2043 */       i++;
-/*      */     }
-/* 2045 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Node getSelectedNode(Node container, int offset) {
-/* 2066 */     if (container.getNodeType() == 3) {
-/* 2067 */       return container;
-/*      */     }
-/*      */ 
-/*      */     
-/* 2071 */     if (offset < 0) {
-/* 2072 */       return container;
-/*      */     }
-/* 2074 */     Node child = container.getFirstChild();
-/* 2075 */     while (child != null && offset > 0) {
-/*      */       
-/* 2077 */       offset--;
-/* 2078 */       child = child.getNextSibling();
-/*      */     } 
-/* 2080 */     if (child != null)
-/* 2081 */       return child; 
-/* 2082 */     return container;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\RangeImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import java.util.Vector;
+
+import org.w3c.dom.CharacterData;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.DocumentFragment;
+import org.w3c.dom.Node;
+import org.w3c.dom.ranges.Range;
+import org.w3c.dom.ranges.RangeException;
+
+
+/** The RangeImpl class implements the org.w3c.dom.range.Range interface.
+ *  <p> Please see the API documentation for the interface classes
+ *  and use the interfaces in your client programs.
+ *
+ * @xerces.internal
+ *
+ */
+public class RangeImpl  implements Range {
+
+    //
+    // Constants
+    //
+
+
+    //
+    // Data
+    //
+
+    DocumentImpl fDocument;
+    Node fStartContainer;
+    Node fEndContainer;
+    int fStartOffset;
+    int fEndOffset;
+    boolean fIsCollapsed;
+    boolean fDetach = false;
+    Node fInsertNode = null;
+    Node fDeleteNode = null;
+    Node fSplitNode = null;
+    // Was the Node inserted from the Range or the Document
+    boolean fInsertedFromRange = false;
+
+    /** The constructor. Clients must use DocumentRange.createRange(),
+     *  because it registers the Range with the document, so it can
+     *  be fixed-up.
+     */
+    public RangeImpl(DocumentImpl document) {
+        fDocument = document;
+        fStartContainer = document;
+        fEndContainer = document;
+        fStartOffset = 0;
+        fEndOffset = 0;
+        fDetach = false;
+    }
+
+    public Node getStartContainer() {
+        if ( fDetach ) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        return fStartContainer;
+    }
+
+    public int getStartOffset() {
+        if ( fDetach ) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        return fStartOffset;
+    }
+
+    public Node getEndContainer() {
+        if ( fDetach ) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        return fEndContainer;
+    }
+
+    public int getEndOffset() {
+        if ( fDetach ) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        return fEndOffset;
+    }
+
+    public boolean getCollapsed() {
+        if ( fDetach ) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        return (fStartContainer == fEndContainer
+             && fStartOffset == fEndOffset);
+    }
+
+    public Node getCommonAncestorContainer() {
+        if ( fDetach ) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        Vector startV = new Vector();
+        Node node;
+        for (node=fStartContainer; node != null;
+             node=node.getParentNode())
+        {
+            startV.addElement(node);
+        }
+        Vector endV = new Vector();
+        for (node=fEndContainer; node != null;
+             node=node.getParentNode())
+        {
+            endV.addElement(node);
+        }
+        int s = startV.size()-1;
+        int e = endV.size()-1;
+        Object result = null;
+        while (s>=0 && e>=0) {
+            if (startV.elementAt(s) == endV.elementAt(e)) {
+                result = startV.elementAt(s);
+            } else {
+                break;
+            }
+            --s;
+            --e;
+        }
+        return (Node)result;
+    }
+
+
+    public void setStart(Node refNode, int offset)
+                         throws RangeException, DOMException
+    {
+        if (fDocument.errorChecking) {
+            if ( fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !isLegalContainer(refNode)) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+
+        checkIndex(refNode, offset);
+
+        fStartContainer = refNode;
+        fStartOffset = offset;
+
+        // If one boundary-point of a Range is set to have a root container
+        // other
+        // than the current one for the Range, the Range should be collapsed to
+        // the new position.
+        // The start position of a Range should never be after the end position.
+        if (getCommonAncestorContainer() == null
+                || (fStartContainer == fEndContainer && fEndOffset < fStartOffset)) {
+            collapse(true);
+        }
+    }
+
+    public void setEnd(Node refNode, int offset)
+                       throws RangeException, DOMException
+    {
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !isLegalContainer(refNode)) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+
+        checkIndex(refNode, offset);
+
+        fEndContainer = refNode;
+        fEndOffset = offset;
+
+        // If one boundary-point of a Range is set to have a root container
+        // other
+        // than the current one for the Range, the Range should be collapsed to
+        // the new position.
+        // The start position of a Range should never be after the end position.
+        if (getCommonAncestorContainer() == null
+                || (fStartContainer == fEndContainer && fEndOffset < fStartOffset)) {
+            collapse(false);
+        }
+    }
+
+    public void setStartBefore(Node refNode)
+        throws RangeException
+    {
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !hasLegalRootContainer(refNode) ||
+                    !isLegalContainedNode(refNode) )
+            {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+
+        fStartContainer = refNode.getParentNode();
+        int i = 0;
+        for (Node n = refNode; n!=null; n = n.getPreviousSibling()) {
+            i++;
+        }
+        fStartOffset = i-1;
+
+        // If one boundary-point of a Range is set to have a root container
+        // other
+        // than the current one for the Range, the Range should be collapsed to
+        // the new position.
+        // The start position of a Range should never be after the end position.
+        if (getCommonAncestorContainer() == null
+                || (fStartContainer == fEndContainer && fEndOffset < fStartOffset)) {
+            collapse(true);
+        }
+    }
+
+    public void setStartAfter(Node refNode)
+        throws RangeException
+    {
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !hasLegalRootContainer(refNode) ||
+                    !isLegalContainedNode(refNode)) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+        fStartContainer = refNode.getParentNode();
+        int i = 0;
+        for (Node n = refNode; n!=null; n = n.getPreviousSibling()) {
+            i++;
+        }
+        fStartOffset = i;
+
+        // If one boundary-point of a Range is set to have a root container
+        // other
+        // than the current one for the Range, the Range should be collapsed to
+        // the new position.
+        // The start position of a Range should never be after the end position.
+        if (getCommonAncestorContainer() == null
+                || (fStartContainer == fEndContainer && fEndOffset < fStartOffset)) {
+            collapse(true);
+        }
+    }
+
+    public void setEndBefore(Node refNode)
+        throws RangeException
+    {
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !hasLegalRootContainer(refNode) ||
+                    !isLegalContainedNode(refNode)) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+        fEndContainer = refNode.getParentNode();
+        int i = 0;
+        for (Node n = refNode; n!=null; n = n.getPreviousSibling()) {
+            i++;
+        }
+        fEndOffset = i-1;
+
+        // If one boundary-point of a Range is set to have a root container
+        // other
+        // than the current one for the Range, the Range should be collapsed to
+        // the new position.
+        // The start position of a Range should never be after the end position.
+        if (getCommonAncestorContainer() == null
+                || (fStartContainer == fEndContainer && fEndOffset < fStartOffset)) {
+            collapse(false);
+        }
+    }
+
+    public void setEndAfter(Node refNode)
+        throws RangeException
+    {
+        if (fDocument.errorChecking) {
+            if( fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !hasLegalRootContainer(refNode) ||
+                    !isLegalContainedNode(refNode)) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+        fEndContainer = refNode.getParentNode();
+        int i = 0;
+        for (Node n = refNode; n!=null; n = n.getPreviousSibling()) {
+            i++;
+        }
+        fEndOffset = i;
+
+        // If one boundary-point of a Range is set to have a root container
+        // other
+        // than the current one for the Range, the Range should be collapsed to
+        // the new position.
+        // The start position of a Range should never be after the end position.
+        if (getCommonAncestorContainer() == null
+                || (fStartContainer == fEndContainer && fEndOffset < fStartOffset)) {
+            collapse(false);
+        }
+    }
+
+    public void collapse(boolean toStart) {
+
+        if( fDetach) {
+                throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+
+        if (toStart) {
+            fEndContainer = fStartContainer;
+            fEndOffset = fStartOffset;
+        } else {
+            fStartContainer = fEndContainer;
+            fStartOffset = fEndOffset;
+        }
+    }
+
+    public void selectNode(Node refNode)
+        throws RangeException
+    {
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !isLegalContainer( refNode.getParentNode() ) ||
+                    !isLegalContainedNode( refNode ) ) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+        Node parent = refNode.getParentNode();
+        if (parent != null ) // REVIST: what to do if it IS null?
+        {
+            fStartContainer = parent;
+            fEndContainer = parent;
+            int i = 0;
+            for (Node n = refNode; n!=null; n = n.getPreviousSibling()) {
+                i++;
+            }
+            fStartOffset = i-1;
+            fEndOffset = fStartOffset+1;
+        }
+    }
+
+    public void selectNodeContents(Node refNode)
+        throws RangeException
+    {
+        if (fDocument.errorChecking) {
+            if( fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( !isLegalContainer(refNode)) {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+            if ( fDocument != refNode.getOwnerDocument() && fDocument != refNode) {
+                throw new DOMException(
+                        DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+        fStartContainer = refNode;
+        fEndContainer = refNode;
+        Node first = refNode.getFirstChild();
+        fStartOffset = 0;
+        if (first == null) {
+            fEndOffset = 0;
+        } else {
+            int i = 0;
+            for (Node n = first; n!=null; n = n.getNextSibling()) {
+                i++;
+            }
+            fEndOffset = i;
+        }
+
+    }
+
+    public short compareBoundaryPoints(short how, Range sourceRange)
+        throws DOMException
+    {
+        if (fDocument.errorChecking) {
+            if( fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            // WRONG_DOCUMENT_ERR: Raised if the two Ranges are not in the same Document or DocumentFragment.
+            if ((fDocument != sourceRange.getStartContainer().getOwnerDocument()
+                    && fDocument != sourceRange.getStartContainer()
+                    && sourceRange.getStartContainer() != null)
+                    || (fDocument != sourceRange.getEndContainer().getOwnerDocument()
+                            && fDocument != sourceRange.getEndContainer()
+                            && sourceRange.getStartContainer() != null)) {
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage( DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+        }
+
+        Node endPointA;
+        Node endPointB;
+        int offsetA;
+        int offsetB;
+
+        if (how == START_TO_START) {
+            endPointA = sourceRange.getStartContainer();
+            endPointB = fStartContainer;
+            offsetA = sourceRange.getStartOffset();
+            offsetB = fStartOffset;
+        } else
+        if (how == START_TO_END) {
+            endPointA = sourceRange.getStartContainer();
+            endPointB = fEndContainer;
+            offsetA = sourceRange.getStartOffset();
+            offsetB = fEndOffset;
+        } else
+        if (how == END_TO_START) {
+            endPointA = sourceRange.getEndContainer();
+            endPointB = fStartContainer;
+            offsetA = sourceRange.getEndOffset();
+            offsetB = fStartOffset;
+        } else {
+            endPointA = sourceRange.getEndContainer();
+            endPointB = fEndContainer;
+            offsetA = sourceRange.getEndOffset();
+            offsetB = fEndOffset;
+        }
+
+        // The DOM Spec outlines four cases that need to be tested
+        // to compare two range boundary points:
+        //   case 1: same container
+        //   case 2: Child C of container A is ancestor of B
+        //   case 3: Child C of container B is ancestor of A
+        //   case 4: preorder traversal of context tree.
+
+        // case 1: same container
+        if (endPointA == endPointB) {
+            if (offsetA < offsetB) return 1;
+            if (offsetA == offsetB) return 0;
+            return -1;
+        }
+        // case 2: Child C of container A is ancestor of B
+        // This can be quickly tested by walking the parent chain of B
+        for ( Node c = endPointB, p = c.getParentNode();
+             p != null;
+             c = p, p = p.getParentNode())
+        {
+            if (p == endPointA) {
+                int index = indexOf(c, endPointA);
+                if (offsetA <= index) return 1;
+                return -1;
+            }
+        }
+
+        // case 3: Child C of container B is ancestor of A
+        // This can be quickly tested by walking the parent chain of A
+        for ( Node c = endPointA, p = c.getParentNode();
+             p != null;
+             c = p, p = p.getParentNode())
+        {
+            if (p == endPointB) {
+                int index = indexOf(c, endPointB);
+                if (index < offsetB) return 1;
+                return -1;
+            }
+        }
+
+        // case 4: preorder traversal of context tree.
+        // Instead of literally walking the context tree in pre-order,
+        // we use relative node depth walking which is usually faster
+
+        int depthDiff = 0;
+        for ( Node n = endPointA; n != null; n = n.getParentNode() )
+            depthDiff++;
+        for ( Node n = endPointB; n != null; n = n.getParentNode() )
+            depthDiff--;
+        while (depthDiff > 0) {
+            endPointA = endPointA.getParentNode();
+            depthDiff--;
+        }
+        while (depthDiff < 0) {
+            endPointB = endPointB.getParentNode();
+            depthDiff++;
+        }
+        for (Node pA = endPointA.getParentNode(),
+             pB = endPointB.getParentNode();
+             pA != pB;
+             pA = pA.getParentNode(), pB = pB.getParentNode() )
+        {
+            endPointA = pA;
+            endPointB = pB;
+        }
+        for ( Node n = endPointA.getNextSibling();
+             n != null;
+             n = n.getNextSibling() )
+        {
+            if (n == endPointB) {
+                return 1;
+            }
+        }
+        return -1;
+    }
+
+    public void deleteContents()
+        throws DOMException
+    {
+        traverseContents(DELETE_CONTENTS);
+    }
+
+    public DocumentFragment extractContents()
+        throws DOMException
+    {
+        return traverseContents(EXTRACT_CONTENTS);
+    }
+
+    public DocumentFragment cloneContents()
+        throws DOMException
+    {
+        return traverseContents(CLONE_CONTENTS);
+    }
+
+    public void insertNode(Node newNode)
+        throws DOMException, RangeException
+    {
+        if ( newNode == null ) return; //throw exception?
+
+        int type = newNode.getNodeType();
+
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if ( fDocument != newNode.getOwnerDocument() ) {
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null));
+            }
+
+            if (type == Node.ATTRIBUTE_NODE
+                    || type == Node.ENTITY_NODE
+                    || type == Node.NOTATION_NODE
+                    || type == Node.DOCUMENT_NODE)
+            {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+        }
+        Node cloneCurrent;
+        Node current;
+        int currentChildren = 0;
+        fInsertedFromRange = true;
+
+        //boolean MULTIPLE_MODE = false;
+        if (fStartContainer.getNodeType() == Node.TEXT_NODE) {
+
+            Node parent = fStartContainer.getParentNode();
+            currentChildren = parent.getChildNodes().getLength(); //holds number of kids before insertion
+            // split text node: results is 3 nodes..
+            cloneCurrent = fStartContainer.cloneNode(false);
+            ((TextImpl)cloneCurrent).setNodeValueInternal(
+                    (cloneCurrent.getNodeValue()).substring(fStartOffset));
+            ((TextImpl)fStartContainer).setNodeValueInternal(
+                    (fStartContainer.getNodeValue()).substring(0,fStartOffset));
+            Node next = fStartContainer.getNextSibling();
+            if (next != null) {
+                    if (parent !=  null) {
+                        parent.insertBefore(newNode, next);
+                        parent.insertBefore(cloneCurrent, next);
+                    }
+            } else {
+                    if (parent != null) {
+                        parent.appendChild(newNode);
+                        parent.appendChild(cloneCurrent);
+                    }
+            }
+             //update ranges after the insertion
+             if ( fEndContainer == fStartContainer) {
+                  fEndContainer = cloneCurrent; //endContainer is the new Node created
+                  fEndOffset -= fStartOffset;
+             }
+             else if ( fEndContainer == parent ) {    //endContainer was not a text Node.
+                  //endOffset + = number_of_children_added
+                   fEndOffset += (parent.getChildNodes().getLength() - currentChildren);
+             }
+
+             // signal other Ranges to update their start/end containers/offsets
+             signalSplitData(fStartContainer, cloneCurrent, fStartOffset);
+
+
+        } else { // ! TEXT_NODE
+            if ( fEndContainer == fStartContainer )      //need to remember number of kids
+                currentChildren= fEndContainer.getChildNodes().getLength();
+
+            current = fStartContainer.getFirstChild();
+            int i = 0;
+            for(i = 0; i < fStartOffset && current != null; i++) {
+                current=current.getNextSibling();
+            }
+            if (current != null) {
+                fStartContainer.insertBefore(newNode, current);
+            } else {
+                fStartContainer.appendChild(newNode);
+            }
+            //update fEndOffset. ex:<body><p/></body>. Range(start;end): body,0; body,1
+            // insert <h1>: <body></h1><p/></body>. Range(start;end): body,0; body,2
+            if ( fEndContainer == fStartContainer && fEndOffset != 0 ) {     //update fEndOffset if not 0
+                fEndOffset += (fEndContainer.getChildNodes().getLength() - currentChildren);
+            }
+        }
+        fInsertedFromRange = false;
+    }
+
+    public void surroundContents(Node newParent)
+        throws DOMException, RangeException
+    {
+        if (newParent==null) return;
+        int type = newParent.getNodeType();
+
+        if (fDocument.errorChecking) {
+            if (fDetach) {
+                throw new DOMException(
+                        DOMException.INVALID_STATE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+            }
+            if (type == Node.ATTRIBUTE_NODE
+                    || type == Node.ENTITY_NODE
+                    || type == Node.NOTATION_NODE
+                    || type == Node.DOCUMENT_TYPE_NODE
+                    || type == Node.DOCUMENT_NODE
+                    || type == Node.DOCUMENT_FRAGMENT_NODE)
+            {
+                throw new RangeExceptionImpl(
+                        RangeException.INVALID_NODE_TYPE_ERR,
+                        DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_NODE_TYPE_ERR", null));
+            }
+        }
+
+        Node realStart = fStartContainer;
+        Node realEnd = fEndContainer;
+        if (fStartContainer.getNodeType() == Node.TEXT_NODE) {
+            realStart = fStartContainer.getParentNode();
+        }
+        if (fEndContainer.getNodeType() == Node.TEXT_NODE) {
+            realEnd = fEndContainer.getParentNode();
+        }
+
+        if (realStart != realEnd) {
+                throw new RangeExceptionImpl(
+                RangeException.BAD_BOUNDARYPOINTS_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "BAD_BOUNDARYPOINTS_ERR", null));
+        }
+
+        DocumentFragment frag = extractContents();
+        insertNode(newParent);
+        newParent.appendChild(frag);
+        selectNode(newParent);
+    }
+
+    public Range cloneRange(){
+        if( fDetach) {
+                throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+
+        Range range = fDocument.createRange();
+        range.setStart(fStartContainer, fStartOffset);
+        range.setEnd(fEndContainer, fEndOffset);
+        return range;
+    }
+
+    public String toString(){
+        if( fDetach) {
+                throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+
+        Node node = fStartContainer;
+        Node stopNode = fEndContainer;
+        StringBuffer sb = new StringBuffer();
+        if (fStartContainer.getNodeType() == Node.TEXT_NODE
+         || fStartContainer.getNodeType() == Node.CDATA_SECTION_NODE
+        ) {
+            if (fStartContainer == fEndContainer) {
+                sb.append(fStartContainer.getNodeValue().substring(fStartOffset, fEndOffset));
+                return sb.toString();
+            }
+            sb.append(fStartContainer.getNodeValue().substring(fStartOffset));
+            node=nextNode (node,true); //fEndContainer!=fStartContainer
+
+        }
+        else {  //fStartContainer is not a TextNode
+            node=node.getFirstChild();
+            if (fStartOffset>0) { //find a first node within a range, specified by fStartOffset
+               int counter=0;
+               while (counter<fStartOffset && node!=null) {
+                   node=node.getNextSibling();
+                   counter++;
+               }
+            }
+            if (node == null) {
+                   node = nextNode(fStartContainer,false);
+            }
+        }
+        if ( fEndContainer.getNodeType()!= Node.TEXT_NODE &&
+             fEndContainer.getNodeType()!= Node.CDATA_SECTION_NODE ){
+             int i=fEndOffset;
+             stopNode = fEndContainer.getFirstChild();
+             while( i>0 && stopNode!=null ){
+                 --i;
+                 stopNode = stopNode.getNextSibling();
+             }
+             if ( stopNode == null )
+                 stopNode = nextNode( fEndContainer, false );
+         }
+         while (node != stopNode) {  //look into all kids of the Range
+             if (node == null) break;
+             if (node.getNodeType() == Node.TEXT_NODE
+             ||  node.getNodeType() == Node.CDATA_SECTION_NODE) {
+                 sb.append(node.getNodeValue());
+             }
+
+             node = nextNode(node, true);
+         }
+
+        if (fEndContainer.getNodeType() == Node.TEXT_NODE
+         || fEndContainer.getNodeType() == Node.CDATA_SECTION_NODE) {
+            sb.append(fEndContainer.getNodeValue().substring(0,fEndOffset));
+        }
+        return sb.toString();
+    }
+
+    public void detach() {
+        if( fDetach) {
+            throw new DOMException(
+            DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+        fDetach = true;
+        fDocument.removeRange(this);
+    }
+
+    //
+    // Mutation functions
+    //
+
+    /** Signal other Ranges to update their start/end
+     *  containers/offsets. The data has already been split
+     *  into the two Nodes.
+     */
+    void signalSplitData(Node node, Node newNode, int offset) {
+        fSplitNode = node;
+        // notify document
+        fDocument.splitData(node, newNode, offset);
+        fSplitNode = null;
+    }
+
+    /** Fix up this Range if another Range has split a Text Node
+     *  into 2 Nodes.
+     */
+    void receiveSplitData(Node node, Node newNode, int offset) {
+        if (node == null || newNode == null) return;
+        if (fSplitNode == node) return;
+
+        if (node == fStartContainer
+        && fStartContainer.getNodeType() == Node.TEXT_NODE) {
+            if (fStartOffset > offset) {
+                fStartOffset = fStartOffset - offset;
+                fStartContainer = newNode;
+            }
+        }
+        if (node == fEndContainer
+        && fEndContainer.getNodeType() == Node.TEXT_NODE) {
+            if (fEndOffset > offset) {
+                fEndOffset = fEndOffset-offset;
+                fEndContainer = newNode;
+            }
+        }
+
+    }
+
+    /** This function inserts text into a Node and invokes
+     *  a method to fix-up all other Ranges.
+     */
+    void deleteData(CharacterData node, int offset, int count) {
+        fDeleteNode = node;
+        node.deleteData( offset,  count);
+        fDeleteNode = null;
+    }
+
+
+    /** This function is called from DOM.
+     *  The  text has already beeen inserted.
+     *  Fix-up any offsets.
+     */
+    void receiveDeletedText(Node node, int offset, int count) {
+        if (node == null) return;
+        if (fDeleteNode == node) return;
+        if (node == fStartContainer
+        && fStartContainer.getNodeType() == Node.TEXT_NODE) {
+            if (fStartOffset > offset+count) {
+                fStartOffset = offset+(fStartOffset-(offset+count));
+            } else
+            if (fStartOffset > offset) {
+                fStartOffset = offset;
+            }
+        }
+        if (node == fEndContainer
+        && fEndContainer.getNodeType() == Node.TEXT_NODE) {
+            if (fEndOffset > offset+count) {
+                fEndOffset = offset+(fEndOffset-(offset+count));
+            } else
+            if (fEndOffset > offset) {
+                fEndOffset = offset;
+            }
+        }
+
+    }
+
+    /** This function inserts text into a Node and invokes
+     *  a method to fix-up all other Ranges.
+     */
+    void insertData(CharacterData node, int index, String insert) {
+        fInsertNode = node;
+        node.insertData( index,  insert);
+        fInsertNode = null;
+    }
+
+
+    /** This function is called from DOM.
+     *  The  text has already beeen inserted.
+     *  Fix-up any offsets.
+     */
+    void receiveInsertedText(Node node, int index, int len) {
+        if (node == null) return;
+        if (fInsertNode == node) return;
+        if (node == fStartContainer
+        && fStartContainer.getNodeType() == Node.TEXT_NODE) {
+            if (index < fStartOffset) {
+                fStartOffset = fStartOffset+len;
+            }
+        }
+        if (node == fEndContainer
+        && fEndContainer.getNodeType() == Node.TEXT_NODE) {
+            if (index < fEndOffset) {
+                fEndOffset = fEndOffset+len;
+            }
+        }
+
+    }
+
+    /** This function is called from DOM.
+     *  The  text has already beeen replaced.
+     *  Fix-up any offsets.
+     */
+    void receiveReplacedText(Node node) {
+        if (node == null) return;
+        if (node == fStartContainer
+        && fStartContainer.getNodeType() == Node.TEXT_NODE) {
+            fStartOffset = 0;
+        }
+        if (node == fEndContainer
+        && fEndContainer.getNodeType() == Node.TEXT_NODE) {
+            fEndOffset = 0;
+        }
+
+    }
+
+    /** This function is called from the DOM.
+     *  This node has already been inserted into the DOM.
+     *  Fix-up any offsets.
+     */
+    public void insertedNodeFromDOM(Node node) {
+        if (node == null) return;
+        if (fInsertNode == node) return;
+        if (fInsertedFromRange) return; // Offsets are adjusted in Range.insertNode
+
+        Node parent = node.getParentNode();
+
+        if (parent == fStartContainer) {
+            int index = indexOf(node, fStartContainer);
+            if (index < fStartOffset) {
+                fStartOffset++;
+            }
+        }
+
+        if (parent == fEndContainer) {
+            int index = indexOf(node, fEndContainer);
+            if (index < fEndOffset) {
+                fEndOffset++;
+            }
+        }
+
+    }
+
+    /** This function is called within Range
+     *  instead of Node.removeChild,
+     *  so that the range can remember that it is actively
+     *  removing this child.
+     */
+
+    Node fRemoveChild = null;
+    Node removeChild(Node parent, Node child) {
+        fRemoveChild = child;
+        Node n = parent.removeChild(child);
+        fRemoveChild = null;
+        return n;
+    }
+
+    /** This function must be called by the DOM _BEFORE_
+     *  a node is deleted, because at that time it is
+     *  connected in the DOM tree, which we depend on.
+     */
+    void removeNode(Node node) {
+        if (node == null) return;
+        if (fRemoveChild == node) return;
+
+        Node parent = node.getParentNode();
+
+        if (parent == fStartContainer) {
+            int index = indexOf(node, fStartContainer);
+            if (index < fStartOffset) {
+                fStartOffset--;
+            }
+        }
+
+        if (parent == fEndContainer) {
+            int index = indexOf(node, fEndContainer);
+            if (index < fEndOffset) {
+                fEndOffset--;
+            }
+        }
+        //startContainer or endContainer or both is/are the ancestor(s) of the Node to be deleted
+        if (parent != fStartContainer
+        ||  parent != fEndContainer) {
+            if (isAncestorOf(node, fStartContainer)) {
+                fStartContainer = parent;
+                fStartOffset = indexOf( node, parent);
+            }
+            if (isAncestorOf(node, fEndContainer)) {
+                fEndContainer = parent;
+                fEndOffset = indexOf( node, parent);
+            }
+        }
+
+    }
+
+    //
+    // Utility functions.
+    //
+
+    // parameters for traverseContents(int)
+    //REVIST: use boolean, since there are only 2 now...
+    static final int EXTRACT_CONTENTS = 1;
+    static final int CLONE_CONTENTS = 2;
+    static final int DELETE_CONTENTS = 3;
+
+    /**
+     * This is the master routine invoked to visit the nodes
+     * selected by this range.  For each such node, different
+     * actions are taken depending on the value of the
+     * <code>how</code> argument.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a document fragment containing the range's content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but sill
+     *               produced cloned content in a document fragment
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes.
+     *               </ol>
+     *
+     * @return Returns a document fragment containing any
+     *         copied or extracted nodes.  If the <code>how</code>
+     *         parameter was <code>DELETE_CONTENTS</code>, the
+     *         return value is null.
+     */
+    private DocumentFragment traverseContents( int how )
+        throws DOMException
+    {
+        if (fStartContainer == null || fEndContainer == null) {
+            return null; // REVIST: Throw exception?
+        }
+
+        //Check for a detached range.
+        if( fDetach) {
+            throw new DOMException(
+                DOMException.INVALID_STATE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_STATE_ERR", null));
+        }
+
+        /*
+          Traversal is accomplished by first determining the
+          relationship between the endpoints of the range.
+          For each of four significant relationships, we will
+          delegate the traversal call to a method that
+          can make appropriate assumptions.
+         */
+
+        // case 1: same container
+        if ( fStartContainer == fEndContainer )
+            return traverseSameContainer( how );
+
+
+        // case 2: Child C of start container is ancestor of end container
+        // This can be quickly tested by walking the parent chain of
+        // end container
+        int endContainerDepth = 0;
+        for ( Node c = fEndContainer, p = c.getParentNode();
+             p != null;
+             c = p, p = p.getParentNode())
+        {
+            if (p == fStartContainer)
+                return traverseCommonStartContainer( c, how );
+            ++endContainerDepth;
+        }
+
+        // case 3: Child C of container B is ancestor of A
+        // This can be quickly tested by walking the parent chain of A
+        int startContainerDepth = 0;
+        for ( Node c = fStartContainer, p = c.getParentNode();
+             p != null;
+             c = p, p = p.getParentNode())
+        {
+            if (p == fEndContainer)
+                return traverseCommonEndContainer( c, how );
+            ++startContainerDepth;
+        }
+
+        // case 4: There is a common ancestor container.  Find the
+        // ancestor siblings that are children of that container.
+        int depthDiff = startContainerDepth - endContainerDepth;
+
+        Node startNode = fStartContainer;
+        while (depthDiff > 0) {
+            startNode = startNode.getParentNode();
+            depthDiff--;
+        }
+
+        Node endNode = fEndContainer;
+        while (depthDiff < 0) {
+            endNode = endNode.getParentNode();
+            depthDiff++;
+        }
+
+        // ascend the ancestor hierarchy until we have a common parent.
+        for( Node sp = startNode.getParentNode(), ep = endNode.getParentNode();
+             sp!=ep;
+             sp = sp.getParentNode(), ep = ep.getParentNode() )
+        {
+            startNode = sp;
+            endNode = ep;
+        }
+        return traverseCommonAncestors( startNode, endNode, how );
+    }
+
+    /**
+     * Visits the nodes selected by this range when we know
+     * a-priori that the start and end containers are the same.
+     * This method is invoked by the generic <code>traverse</code>
+     * method.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a document fragment containing the range's content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but sill
+     *               produced cloned content in a document fragment
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes.
+     *               </ol>
+     *
+     * @return Returns a document fragment containing any
+     *         copied or extracted nodes.  If the <code>how</code>
+     *         parameter was <code>DELETE_CONTENTS</code>, the
+     *         return value is null.
+     */
+    private DocumentFragment traverseSameContainer( int how )
+    {
+        DocumentFragment frag = null;
+        if ( how!=DELETE_CONTENTS)
+            frag = fDocument.createDocumentFragment();
+
+        // If selection is empty, just return the fragment
+        if ( fStartOffset==fEndOffset )
+            return frag;
+
+        // Text node needs special case handling
+        if ( fStartContainer.getNodeType()==Node.TEXT_NODE )
+        {
+            // get the substring
+            String s = fStartContainer.getNodeValue();
+            String sub = s.substring( fStartOffset, fEndOffset );
+
+            // set the original text node to its new value
+            if ( how != CLONE_CONTENTS )
+            {
+                ((TextImpl)fStartContainer).deleteData(fStartOffset,
+                     fEndOffset-fStartOffset) ;
+                // Nothing is partially selected, so collapse to start point
+                collapse( true );
+            }
+            if ( how==DELETE_CONTENTS)
+                return null;
+            frag.appendChild( fDocument.createTextNode(sub) );
+            return frag;
+        }
+
+        // Copy nodes between the start/end offsets.
+        Node n = getSelectedNode( fStartContainer, fStartOffset );
+        int cnt = fEndOffset - fStartOffset;
+        while( cnt > 0 )
+        {
+            Node sibling = n.getNextSibling();
+            Node xferNode = traverseFullySelected( n, how );
+            if ( frag!=null )
+                frag.appendChild( xferNode );
+            --cnt;
+            n = sibling;
+        }
+
+        // Nothing is partially selected, so collapse to start point
+        if ( how != CLONE_CONTENTS )
+            collapse( true );
+        return frag;
+    }
+
+    /**
+     * Visits the nodes selected by this range when we know
+     * a-priori that the start and end containers are not the
+     * same, but the start container is an ancestor of the
+     * end container. This method is invoked by the generic
+     * <code>traverse</code> method.
+     *
+     * @param endAncestor
+     *               The ancestor of the end container that is a direct child
+     *               of the start container.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a document fragment containing the range's content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but sill
+     *               produced cloned content in a document fragment
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes.
+     *               </ol>
+     *
+     * @return Returns a document fragment containing any
+     *         copied or extracted nodes.  If the <code>how</code>
+     *         parameter was <code>DELETE_CONTENTS</code>, the
+     *         return value is null.
+     */
+    private DocumentFragment
+        traverseCommonStartContainer( Node endAncestor, int how )
+    {
+        DocumentFragment frag = null;
+        if ( how!=DELETE_CONTENTS)
+            frag = fDocument.createDocumentFragment();
+        Node n = traverseRightBoundary( endAncestor, how );
+        if ( frag!=null )
+            frag.appendChild( n );
+
+        int endIdx = indexOf( endAncestor, fStartContainer );
+        int cnt = endIdx - fStartOffset;
+        if ( cnt <=0 )
+        {
+            // Collapse to just before the endAncestor, which
+            // is partially selected.
+            if ( how != CLONE_CONTENTS )
+            {
+                setEndBefore( endAncestor );
+                collapse( false );
+            }
+            return frag;
+        }
+
+        n = endAncestor.getPreviousSibling();
+        while( cnt > 0 )
+        {
+            Node sibling = n.getPreviousSibling();
+            Node xferNode = traverseFullySelected( n, how );
+            if ( frag!=null )
+                frag.insertBefore( xferNode, frag.getFirstChild() );
+            --cnt;
+            n = sibling;
+        }
+        // Collapse to just before the endAncestor, which
+        // is partially selected.
+        if ( how != CLONE_CONTENTS )
+        {
+            setEndBefore( endAncestor );
+            collapse( false );
+        }
+        return frag;
+    }
+
+    /**
+     * Visits the nodes selected by this range when we know
+     * a-priori that the start and end containers are not the
+     * same, but the end container is an ancestor of the
+     * start container. This method is invoked by the generic
+     * <code>traverse</code> method.
+     *
+     * @param startAncestor
+     *               The ancestor of the start container that is a direct
+     *               child of the end container.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a document fragment containing the range's content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but sill
+     *               produced cloned content in a document fragment
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes.
+     *               </ol>
+     *
+     * @return Returns a document fragment containing any
+     *         copied or extracted nodes.  If the <code>how</code>
+     *         parameter was <code>DELETE_CONTENTS</code>, the
+     *         return value is null.
+     */
+    private DocumentFragment
+        traverseCommonEndContainer( Node startAncestor, int how )
+    {
+        DocumentFragment frag = null;
+        if ( how!=DELETE_CONTENTS)
+            frag = fDocument.createDocumentFragment();
+        Node n = traverseLeftBoundary( startAncestor, how );
+        if ( frag!=null )
+            frag.appendChild( n );
+        int startIdx = indexOf( startAncestor, fEndContainer );
+        ++startIdx;  // Because we already traversed it....
+
+        int cnt = fEndOffset - startIdx;
+        n = startAncestor.getNextSibling();
+        while( cnt > 0 )
+        {
+            Node sibling = n.getNextSibling();
+            Node xferNode = traverseFullySelected( n, how );
+            if ( frag!=null )
+                frag.appendChild( xferNode );
+            --cnt;
+            n = sibling;
+        }
+
+        if ( how != CLONE_CONTENTS )
+        {
+            setStartAfter( startAncestor );
+            collapse( true );
+        }
+
+        return frag;
+    }
+
+    /**
+     * Visits the nodes selected by this range when we know
+     * a-priori that the start and end containers are not
+     * the same, and we also know that neither the start
+     * nor end container is an ancestor of the other.
+     * This method is invoked by
+     * the generic <code>traverse</code> method.
+     *
+     * @param startAncestor
+     *               Given a common ancestor of the start and end containers,
+     *               this parameter is the ancestor (or self) of the start
+     *               container that is a direct child of the common ancestor.
+     *
+     * @param endAncestor
+     *               Given a common ancestor of the start and end containers,
+     *               this parameter is the ancestor (or self) of the end
+     *               container that is a direct child of the common ancestor.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a document fragment containing the range's content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but sill
+     *               produced cloned content in a document fragment
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes.
+     *               </ol>
+     *
+     * @return Returns a document fragment containing any
+     *         copied or extracted nodes.  If the <code>how</code>
+     *         parameter was <code>DELETE_CONTENTS</code>, the
+     *         return value is null.
+     */
+    private DocumentFragment
+        traverseCommonAncestors( Node startAncestor, Node endAncestor, int how )
+    {
+        DocumentFragment frag = null;
+        if ( how!=DELETE_CONTENTS)
+            frag = fDocument.createDocumentFragment();
+
+        Node n = traverseLeftBoundary( startAncestor, how );
+        if ( frag!=null )
+            frag.appendChild( n );
+
+        Node commonParent = startAncestor.getParentNode();
+        int startOffset = indexOf( startAncestor, commonParent );
+        int endOffset = indexOf( endAncestor, commonParent );
+        ++startOffset;
+
+        int cnt = endOffset - startOffset;
+        Node sibling = startAncestor.getNextSibling();
+
+        while( cnt > 0 )
+        {
+            Node nextSibling = sibling.getNextSibling();
+            n = traverseFullySelected( sibling, how );
+            if ( frag!=null )
+                frag.appendChild( n );
+            sibling = nextSibling;
+            --cnt;
+        }
+
+        n = traverseRightBoundary( endAncestor, how );
+        if ( frag!=null )
+            frag.appendChild( n );
+
+        if ( how != CLONE_CONTENTS )
+        {
+            setStartAfter( startAncestor );
+            collapse( true );
+        }
+        return frag;
+    }
+
+    /**
+     * Traverses the "right boundary" of this range and
+     * operates on each "boundary node" according to the
+     * <code>how</code> parameter.  It is a-priori assumed
+     * by this method that the right boundary does
+     * not contain the range's start container.
+     * <p>
+     * A "right boundary" is best visualized by thinking
+     * of a sample tree:<pre>
+     *                 A
+     *                /|\
+     *               / | \
+     *              /  |  \
+     *             B   C   D
+     *            /|\     /|\
+     *           E F G   H I J
+     * </pre>
+     * Imagine first a range that begins between the
+     * "E" and "F" nodes and ends between the
+     * "I" and "J" nodes.  The start container is
+     * "B" and the end container is "D".  Given this setup,
+     * the following applies:
+     * <p>
+     * Partially Selected Nodes: B, D<br>
+     * Fully Selected Nodes: F, G, C, H, I
+     * <p>
+     * The "right boundary" is the highest subtree node
+     * that contains the ending container.  The root of
+     * this subtree is always partially selected.
+     * <p>
+     * In this example, the nodes that are traversed
+     * as "right boundary" nodes are: H, I, and D.
+     *
+     * @param root   The node that is the root of the "right boundary" subtree.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a node containing the boundaries content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but will
+     *               produced cloned content.
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes within the boundary.
+     *               </ol>
+     *
+     * @return Returns a node that is the result of visiting nodes.
+     *         If the traversal operation is
+     *         <code>DELETE_CONTENTS</code> the return value is null.
+     */
+    private Node traverseRightBoundary( Node root, int how )
+    {
+        Node next = getSelectedNode( fEndContainer, fEndOffset-1 );
+        boolean isFullySelected = ( next!=fEndContainer );
+
+        if ( next==root )
+            return traverseNode( next, isFullySelected, false, how );
+
+        Node parent = next.getParentNode();
+        Node clonedParent = traverseNode( parent, false, false, how );
+
+        while( parent!=null )
+        {
+            while( next!=null )
+            {
+                Node prevSibling = next.getPreviousSibling();
+                Node clonedChild =
+                    traverseNode( next, isFullySelected, false, how );
+                if ( how!=DELETE_CONTENTS )
+                {
+                    clonedParent.insertBefore(
+                        clonedChild,
+                        clonedParent.getFirstChild()
+                    );
+                }
+                isFullySelected = true;
+                next = prevSibling;
+            }
+            if ( parent==root )
+                return clonedParent;
+
+            next = parent.getPreviousSibling();
+            parent = parent.getParentNode();
+            Node clonedGrandParent = traverseNode( parent, false, false, how );
+            if ( how!=DELETE_CONTENTS )
+                clonedGrandParent.appendChild( clonedParent );
+            clonedParent = clonedGrandParent;
+
+        }
+
+        // should never occur
+        return null;
+    }
+
+    /**
+     * Traverses the "left boundary" of this range and
+     * operates on each "boundary node" according to the
+     * <code>how</code> parameter.  It is a-priori assumed
+     * by this method that the left boundary does
+     * not contain the range's end container.
+     * <p>
+     * A "left boundary" is best visualized by thinking
+     * of a sample tree:<pre>
+     *
+     *                 A
+     *                /|\
+     *               / | \
+     *              /  |  \
+     *             B   C   D
+     *            /|\     /|\
+     *           E F G   H I J
+     * </pre>
+     * Imagine first a range that begins between the
+     * "E" and "F" nodes and ends between the
+     * "I" and "J" nodes.  The start container is
+     * "B" and the end container is "D".  Given this setup,
+     * the following applies:
+     * <p>
+     * Partially Selected Nodes: B, D<br>
+     * Fully Selected Nodes: F, G, C, H, I
+     * <p>
+     * The "left boundary" is the highest subtree node
+     * that contains the starting container.  The root of
+     * this subtree is always partially selected.
+     * <p>
+     * In this example, the nodes that are traversed
+     * as "left boundary" nodes are: F, G, and B.
+     *
+     * @param root   The node that is the root of the "left boundary" subtree.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will produce
+     *               a node containing the boundaries content.
+     *               Partially selected nodes are copied, but fully
+     *               selected nodes are moved.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but will
+     *               produced cloned content.
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete from
+     *               the context tree of the range, all fully selected
+     *               nodes within the boundary.
+     *               </ol>
+     *
+     * @return Returns a node that is the result of visiting nodes.
+     *         If the traversal operation is
+     *         <code>DELETE_CONTENTS</code> the return value is null.
+     */
+    private Node traverseLeftBoundary( Node root, int how )
+    {
+        Node next = getSelectedNode( getStartContainer(), getStartOffset() );
+        boolean isFullySelected = ( next!=getStartContainer() );
+
+        if ( next==root )
+            return traverseNode( next, isFullySelected, true, how );
+
+        Node parent = next.getParentNode();
+        Node clonedParent = traverseNode( parent, false, true, how );
+
+        while( parent!=null )
+        {
+            while( next!=null )
+            {
+                Node nextSibling = next.getNextSibling();
+                Node clonedChild =
+                    traverseNode( next, isFullySelected, true, how );
+                if ( how!=DELETE_CONTENTS )
+                    clonedParent.appendChild(clonedChild);
+                isFullySelected = true;
+                next = nextSibling;
+            }
+            if ( parent==root )
+                return clonedParent;
+
+            next = parent.getNextSibling();
+            parent = parent.getParentNode();
+            Node clonedGrandParent = traverseNode( parent, false, true, how );
+            if ( how!=DELETE_CONTENTS )
+                clonedGrandParent.appendChild( clonedParent );
+            clonedParent = clonedGrandParent;
+
+        }
+
+        // should never occur
+        return null;
+
+    }
+
+    /**
+     * Utility method for traversing a single node.
+     * Does not properly handle a text node containing both the
+     * start and end offsets.  Such nodes should
+     * have been previously detected and been routed to traverseTextNode.
+     *
+     * @param n      The node to be traversed.
+     *
+     * @param isFullySelected
+     *               Set to true if the node is fully selected.  Should be
+     *               false otherwise.
+     *               Note that although the DOM 2 specification says that a
+     *               text node that is boththe start and end container is not
+     *               selected, we treat it here as if it were partially
+     *               selected.
+     *
+     * @param isLeft Is true if we are traversing the node as part of navigating
+     *               the "left boundary" of the range.  If this value is false,
+     *               it implies we are navigating the "right boundary" of the
+     *               range.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will simply
+     *               return the original node.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but will
+     *               return a cloned node.
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete the
+     *               node from it's parent, but will return null.
+     *               </ol>
+     *
+     * @return Returns a node that is the result of visiting the node.
+     *         If the traversal operation is
+     *         <code>DELETE_CONTENTS</code> the return value is null.
+     */
+    private Node traverseNode( Node n, boolean isFullySelected, boolean isLeft, int how )
+    {
+        if ( isFullySelected )
+            return traverseFullySelected( n, how );
+        if ( n.getNodeType()==Node.TEXT_NODE )
+            return traverseTextNode( n, isLeft, how );
+        return traversePartiallySelected( n, how );
+    }
+
+    /**
+     * Utility method for traversing a single node when
+     * we know a-priori that the node if fully
+     * selected.
+     *
+     * @param n      The node to be traversed.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will simply
+     *               return the original node.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but will
+     *               return a cloned node.
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete the
+     *               node from it's parent, but will return null.
+     *               </ol>
+     *
+     * @return Returns a node that is the result of visiting the node.
+     *         If the traversal operation is
+     *         <code>DELETE_CONTENTS</code> the return value is null.
+     */
+    private Node traverseFullySelected( Node n, int how )
+    {
+        switch( how )
+        {
+        case CLONE_CONTENTS:
+            return n.cloneNode( true );
+        case EXTRACT_CONTENTS:
+            if ( n.getNodeType()==Node.DOCUMENT_TYPE_NODE )
+            {
+                // TBD: This should be a HIERARCHY_REQUEST_ERR
+                throw new DOMException(
+                        DOMException.HIERARCHY_REQUEST_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "HIERARCHY_REQUEST_ERR", null));
+            }
+            return n;
+        case DELETE_CONTENTS:
+            n.getParentNode().removeChild(n);
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Utility method for traversing a single node when
+     * we know a-priori that the node if partially
+     * selected and is not a text node.
+     *
+     * @param n      The node to be traversed.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will simply
+     *               return the original node.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but will
+     *               return a cloned node.
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete the
+     *               node from it's parent, but will return null.
+     *               </ol>
+     *
+     * @return Returns a node that is the result of visiting the node.
+     *         If the traversal operation is
+     *         <code>DELETE_CONTENTS</code> the return value is null.
+     */
+    private Node traversePartiallySelected( Node n, int how )
+    {
+        switch( how )
+        {
+        case DELETE_CONTENTS:
+            return null;
+        case CLONE_CONTENTS:
+        case EXTRACT_CONTENTS:
+            return n.cloneNode( false );
+        }
+        return null;
+    }
+
+    /**
+     * Utility method for traversing a text node that we know
+     * a-priori to be on a left or right boundary of the range.
+     * This method does not properly handle text nodes that contain
+     * both the start and end points of the range.
+     *
+     * @param n      The node to be traversed.
+     *
+     * @param isLeft Is true if we are traversing the node as part of navigating
+     *               the "left boundary" of the range.  If this value is false,
+     *               it implies we are navigating the "right boundary" of the
+     *               range.
+     *
+     * @param how    Specifies what type of traversal is being
+     *               requested (extract, clone, or delete).
+     *               Legal values for this argument are:
+     *
+     *               <ol>
+     *               <li><code>EXTRACT_CONTENTS</code> - will simply
+     *               return the original node.
+     *
+     *               <li><code>CLONE_CONTENTS</code> - will leave the
+     *               context tree of the range undisturbed, but will
+     *               return a cloned node.
+     *
+     *               <li><code>DELETE_CONTENTS</code> - will delete the
+     *               node from it's parent, but will return null.
+     *               </ol>
+     *
+     * @return Returns a node that is the result of visiting the node.
+     *         If the traversal operation is
+     *         <code>DELETE_CONTENTS</code> the return value is null.
+     */
+    private Node traverseTextNode( Node n, boolean isLeft, int how )
+    {
+        String txtValue = n.getNodeValue();
+        String newNodeValue;
+        String oldNodeValue;
+
+        if ( isLeft )
+        {
+            int offset = getStartOffset();
+            newNodeValue = txtValue.substring( offset );
+            oldNodeValue = txtValue.substring( 0, offset );
+        }
+        else
+        {
+            int offset = getEndOffset();
+            newNodeValue = txtValue.substring( 0, offset );
+            oldNodeValue = txtValue.substring( offset );
+        }
+
+        if ( how != CLONE_CONTENTS )
+            n.setNodeValue( oldNodeValue );
+        if ( how==DELETE_CONTENTS )
+            return null;
+        Node newNode = n.cloneNode( false );
+        newNode.setNodeValue( newNodeValue );
+        return newNode;
+    }
+
+    void checkIndex(Node refNode, int offset) throws DOMException
+    {
+        if (offset < 0) {
+            throw new DOMException(
+                DOMException.INDEX_SIZE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INDEX_SIZE_ERR", null));
+        }
+
+        int type = refNode.getNodeType();
+
+        // If the node contains text, ensure that the
+        // offset of the range is <= to the length of the text
+        if (type == Node.TEXT_NODE
+            || type == Node.CDATA_SECTION_NODE
+            || type == Node.COMMENT_NODE
+            || type == Node.PROCESSING_INSTRUCTION_NODE) {
+            if (offset > refNode.getNodeValue().length()) {
+                throw new DOMException(DOMException.INDEX_SIZE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INDEX_SIZE_ERR", null));
+            }
+        }
+        else {
+            // Since the node is not text, ensure that the offset
+            // is valid with respect to the number of child nodes
+            if (offset > refNode.getChildNodes().getLength()) {
+                throw new DOMException(DOMException.INDEX_SIZE_ERR,
+                DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INDEX_SIZE_ERR", null));
+            }
+        }
+    }
+
+        /**
+         * Given a node, calculate what the Range's root container
+         * for that node would be.
+         */
+        private Node getRootContainer( Node node )
+        {
+                if ( node==null )
+                        return null;
+
+                while( node.getParentNode()!=null )
+                        node = node.getParentNode();
+                return node;
+        }
+
+        /**
+         * Returns true IFF the given node can serve as a container
+         * for a range's boundary points.
+         */
+        private boolean isLegalContainer( Node node )
+        {
+                if ( node==null )
+                        return false;
+
+                while( node!=null )
+                {
+                        switch( node.getNodeType() )
+                        {
+                        case Node.ENTITY_NODE:
+                        case Node.NOTATION_NODE:
+                        case Node.DOCUMENT_TYPE_NODE:
+                                return false;
+                        }
+                        node = node.getParentNode();
+                }
+
+                return true;
+        }
+
+
+        /**
+         * Finds the root container for the given node and determines
+         * if that root container is legal with respect to the
+         * DOM 2 specification.  At present, that means the root
+         * container must be either an attribute, a document,
+         * or a document fragment.
+         */
+        private boolean hasLegalRootContainer( Node node )
+        {
+                if ( node==null )
+                        return false;
+
+                Node rootContainer = getRootContainer( node );
+                switch( rootContainer.getNodeType() )
+                {
+                case Node.ATTRIBUTE_NODE:
+                case Node.DOCUMENT_NODE:
+                case Node.DOCUMENT_FRAGMENT_NODE:
+                        return true;
+                }
+                return false;
+        }
+
+        /**
+         * Returns true IFF the given node can be contained by
+         * a range.
+         */
+        private boolean isLegalContainedNode( Node node )
+        {
+                if ( node==null )
+                        return false;
+                switch( node.getNodeType() )
+                {
+                case Node.DOCUMENT_NODE:
+                case Node.DOCUMENT_FRAGMENT_NODE:
+                case Node.ATTRIBUTE_NODE:
+                case Node.ENTITY_NODE:
+                case Node.NOTATION_NODE:
+                        return false;
+                }
+                return true;
+        }
+
+    Node nextNode(Node node, boolean visitChildren) {
+
+        if (node == null) return null;
+
+        Node result;
+        if (visitChildren) {
+            result = node.getFirstChild();
+            if (result != null) {
+                return result;
+            }
+        }
+
+        // if hasSibling, return sibling
+        result = node.getNextSibling();
+        if (result != null) {
+            return result;
+        }
+
+
+        // return parent's 1st sibling.
+        Node parent = node.getParentNode();
+        while (parent != null
+               && parent != fDocument
+                ) {
+            result = parent.getNextSibling();
+            if (result != null) {
+                return result;
+            } else {
+                parent = parent.getParentNode();
+            }
+
+        } // while (parent != null && parent != fRoot) {
+
+        // end of list, return null
+        return null;
+    }
+
+    /** is a an ancestor of b ? */
+    boolean isAncestorOf(Node a, Node b) {
+        for (Node node=b; node != null; node=node.getParentNode()) {
+            if (node == a) return true;
+        }
+        return false;
+    }
+
+    /** what is the index of the child in the parent */
+    int indexOf(Node child, Node parent) {
+        if (child.getParentNode() != parent) return -1;
+        int i = 0;
+        for(Node node = parent.getFirstChild(); node!= child; node=node.getNextSibling()) {
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * Utility method to retrieve a child node by index.  This method
+     * assumes the caller is trying to find out which node is
+     * selected by the given index.  Note that if the index is
+     * greater than the number of children, this implies that the
+     * first node selected is the parent node itself.
+     *
+     * @param container A container node
+     *
+     * @param offset    An offset within the container for which a selected node should
+     *                  be computed.  If the offset is less than zero, or if the offset
+     *                  is greater than the number of children, the container is returned.
+     *
+     * @return Returns either a child node of the container or the
+     *         container itself.
+     */
+    private Node getSelectedNode( Node container, int offset )
+    {
+        if ( container.getNodeType() == Node.TEXT_NODE )
+            return container;
+
+        // This case is an important convenience for
+        // traverseRightBoundary()
+        if ( offset<0 )
+            return container;
+
+        Node child = container.getFirstChild();
+        while( child!=null && offset > 0 )
+        {
+            --offset;
+            child = child.getNextSibling();
+        }
+        if ( child!=null )
+            return child;
+        return container;
+    }
+
+}

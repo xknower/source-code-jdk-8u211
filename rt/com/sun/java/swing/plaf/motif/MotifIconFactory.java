@@ -1,467 +1,460 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.io.Serializable;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JCheckBox;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifIconFactory
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static Icon checkBoxIcon;
-/*     */   private static Icon radioButtonIcon;
-/*     */   private static Icon menuItemCheckIcon;
-/*     */   private static Icon menuItemArrowIcon;
-/*     */   private static Icon menuArrowIcon;
-/*     */   
-/*     */   public static Icon getMenuItemCheckIcon() {
-/*  62 */     return null;
-/*     */   }
-/*     */   
-/*     */   public static Icon getMenuItemArrowIcon() {
-/*  66 */     if (menuItemArrowIcon == null) {
-/*  67 */       menuItemArrowIcon = new MenuItemArrowIcon();
-/*     */     }
-/*  69 */     return menuItemArrowIcon;
-/*     */   }
-/*     */   
-/*     */   public static Icon getMenuArrowIcon() {
-/*  73 */     if (menuArrowIcon == null) {
-/*  74 */       menuArrowIcon = new MenuArrowIcon();
-/*     */     }
-/*  76 */     return menuArrowIcon;
-/*     */   }
-/*     */   
-/*     */   public static Icon getCheckBoxIcon() {
-/*  80 */     if (checkBoxIcon == null) {
-/*  81 */       checkBoxIcon = new CheckBoxIcon();
-/*     */     }
-/*  83 */     return checkBoxIcon;
-/*     */   }
-/*     */   
-/*     */   public static Icon getRadioButtonIcon() {
-/*  87 */     if (radioButtonIcon == null) {
-/*  88 */       radioButtonIcon = new RadioButtonIcon();
-/*     */     }
-/*  90 */     return radioButtonIcon;
-/*     */   }
-/*     */   
-/*     */   private static class CheckBoxIcon
-/*     */     implements Icon, UIResource, Serializable {
-/*     */     static final int csize = 13;
-/*  96 */     private Color control = UIManager.getColor("control");
-/*  97 */     private Color foreground = UIManager.getColor("CheckBox.foreground");
-/*  98 */     private Color shadow = UIManager.getColor("controlShadow");
-/*  99 */     private Color highlight = UIManager.getColor("controlHighlight");
-/* 100 */     private Color lightShadow = UIManager.getColor("controlLightShadow");
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {
-/* 103 */       AbstractButton abstractButton = (AbstractButton)param1Component;
-/* 104 */       ButtonModel buttonModel = abstractButton.getModel();
-/*     */       
-/* 106 */       boolean bool1 = false;
-/*     */       
-/* 108 */       if (abstractButton instanceof JCheckBox) {
-/* 109 */         bool1 = ((JCheckBox)abstractButton).isBorderPaintedFlat();
-/*     */       }
-/*     */       
-/* 112 */       boolean bool2 = buttonModel.isPressed();
-/* 113 */       boolean bool3 = buttonModel.isArmed();
-/* 114 */       boolean bool4 = buttonModel.isEnabled();
-/* 115 */       boolean bool5 = buttonModel.isSelected();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 122 */       boolean bool6 = ((bool2 && !bool3 && bool5) || (bool2 && bool3 && !bool5)) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 128 */       boolean bool7 = ((bool2 && !bool3 && !bool5) || (bool2 && bool3 && bool5)) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 135 */       boolean bool8 = ((!bool2 && bool3 && bool5) || (!bool2 && !bool3 && bool5)) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 143 */       if (bool1) {
-/* 144 */         param1Graphics.setColor(this.shadow);
-/* 145 */         param1Graphics.drawRect(param1Int1 + 2, param1Int2, 12, 12);
-/* 146 */         if (bool7 || bool6) {
-/* 147 */           param1Graphics.setColor(this.control);
-/* 148 */           param1Graphics.fillRect(param1Int1 + 3, param1Int2 + 1, 11, 11);
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 152 */       if (bool6) {
-/*     */         
-/* 154 */         drawCheckBezel(param1Graphics, param1Int1, param1Int2, 13, true, false, false, bool1);
-/* 155 */       } else if (bool7) {
-/*     */         
-/* 157 */         drawCheckBezel(param1Graphics, param1Int1, param1Int2, 13, true, true, false, bool1);
-/* 158 */       } else if (bool8) {
-/*     */         
-/* 160 */         drawCheckBezel(param1Graphics, param1Int1, param1Int2, 13, false, false, true, bool1);
-/* 161 */       } else if (!bool1) {
-/*     */         
-/* 163 */         drawCheckBezelOut(param1Graphics, param1Int1, param1Int2, 13);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public int getIconWidth() {
-/* 168 */       return 13;
-/*     */     }
-/*     */     
-/*     */     public int getIconHeight() {
-/* 172 */       return 13;
-/*     */     }
-/*     */     
-/*     */     public void drawCheckBezelOut(Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3) {
-/* 176 */       Color color1 = UIManager.getColor("controlShadow");
-/*     */       
-/* 178 */       int i = param1Int3;
-/* 179 */       int j = param1Int3;
-/* 180 */       Color color2 = param1Graphics.getColor();
-/*     */       
-/* 182 */       param1Graphics.translate(param1Int1, param1Int2);
-/* 183 */       param1Graphics.setColor(this.highlight);
-/* 184 */       param1Graphics.drawLine(0, 0, 0, j - 1);
-/* 185 */       param1Graphics.drawLine(1, 0, i - 1, 0);
-/*     */       
-/* 187 */       param1Graphics.setColor(this.shadow);
-/* 188 */       param1Graphics.drawLine(1, j - 1, i - 1, j - 1);
-/* 189 */       param1Graphics.drawLine(i - 1, j - 1, i - 1, 1);
-/* 190 */       param1Graphics.translate(-param1Int1, -param1Int2);
-/* 191 */       param1Graphics.setColor(color2);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void drawCheckBezel(Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, boolean param1Boolean1, boolean param1Boolean2, boolean param1Boolean3, boolean param1Boolean4) {
-/* 199 */       Color color = param1Graphics.getColor();
-/* 200 */       param1Graphics.translate(param1Int1, param1Int2);
-/*     */ 
-/*     */ 
-/*     */       
-/* 204 */       if (!param1Boolean4) {
-/* 205 */         if (param1Boolean2) {
-/* 206 */           param1Graphics.setColor(this.control);
-/* 207 */           param1Graphics.fillRect(1, 1, param1Int3 - 2, param1Int3 - 2);
-/* 208 */           param1Graphics.setColor(this.shadow);
-/*     */         } else {
-/* 210 */           param1Graphics.setColor(this.lightShadow);
-/* 211 */           param1Graphics.fillRect(0, 0, param1Int3, param1Int3);
-/* 212 */           param1Graphics.setColor(this.highlight);
-/*     */         } 
-/*     */         
-/* 215 */         param1Graphics.drawLine(1, param1Int3 - 1, param1Int3 - 2, param1Int3 - 1);
-/* 216 */         if (param1Boolean1) {
-/* 217 */           param1Graphics.drawLine(2, param1Int3 - 2, param1Int3 - 3, param1Int3 - 2);
-/* 218 */           param1Graphics.drawLine(param1Int3 - 2, 2, param1Int3 - 2, param1Int3 - 1);
-/* 219 */           if (param1Boolean2) {
-/* 220 */             param1Graphics.setColor(this.highlight);
-/*     */           } else {
-/* 222 */             param1Graphics.setColor(this.shadow);
-/*     */           } 
-/* 224 */           param1Graphics.drawLine(1, 2, 1, param1Int3 - 2);
-/* 225 */           param1Graphics.drawLine(1, 1, param1Int3 - 3, 1);
-/* 226 */           if (param1Boolean2) {
-/* 227 */             param1Graphics.setColor(this.shadow);
-/*     */           } else {
-/* 229 */             param1Graphics.setColor(this.highlight);
-/*     */           } 
-/*     */         } 
-/*     */         
-/* 233 */         param1Graphics.drawLine(param1Int3 - 1, 1, param1Int3 - 1, param1Int3 - 1);
-/*     */ 
-/*     */         
-/* 236 */         if (param1Boolean2) {
-/* 237 */           param1Graphics.setColor(this.highlight);
-/*     */         } else {
-/* 239 */           param1Graphics.setColor(this.shadow);
-/*     */         } 
-/* 241 */         param1Graphics.drawLine(0, 1, 0, param1Int3 - 1);
-/*     */ 
-/*     */         
-/* 244 */         param1Graphics.drawLine(0, 0, param1Int3 - 1, 0);
-/*     */       } 
-/*     */       
-/* 247 */       if (param1Boolean3) {
-/*     */         
-/* 249 */         param1Graphics.setColor(this.foreground);
-/* 250 */         param1Graphics.drawLine(param1Int3 - 2, 1, param1Int3 - 2, 2);
-/* 251 */         param1Graphics.drawLine(param1Int3 - 3, 2, param1Int3 - 3, 3);
-/* 252 */         param1Graphics.drawLine(param1Int3 - 4, 3, param1Int3 - 4, 4);
-/* 253 */         param1Graphics.drawLine(param1Int3 - 5, 4, param1Int3 - 5, 6);
-/* 254 */         param1Graphics.drawLine(param1Int3 - 6, 5, param1Int3 - 6, 8);
-/* 255 */         param1Graphics.drawLine(param1Int3 - 7, 6, param1Int3 - 7, 10);
-/* 256 */         param1Graphics.drawLine(param1Int3 - 8, 7, param1Int3 - 8, 10);
-/* 257 */         param1Graphics.drawLine(param1Int3 - 9, 6, param1Int3 - 9, 9);
-/* 258 */         param1Graphics.drawLine(param1Int3 - 10, 5, param1Int3 - 10, 8);
-/* 259 */         param1Graphics.drawLine(param1Int3 - 11, 5, param1Int3 - 11, 7);
-/* 260 */         param1Graphics.drawLine(param1Int3 - 12, 6, param1Int3 - 12, 6);
-/*     */       } 
-/* 262 */       param1Graphics.translate(-param1Int1, -param1Int2);
-/* 263 */       param1Graphics.setColor(color);
-/*     */     }
-/*     */     
-/*     */     private CheckBoxIcon() {} }
-/*     */   
-/* 268 */   private static class RadioButtonIcon implements Icon, UIResource, Serializable { private Color dot = UIManager.getColor("activeCaptionBorder");
-/* 269 */     private Color highlight = UIManager.getColor("controlHighlight");
-/* 270 */     private Color shadow = UIManager.getColor("controlShadow");
-/*     */ 
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {
-/* 274 */       AbstractButton abstractButton = (AbstractButton)param1Component;
-/* 275 */       ButtonModel buttonModel = abstractButton.getModel();
-/*     */       
-/* 277 */       int i = getIconWidth();
-/* 278 */       int j = getIconHeight();
-/*     */       
-/* 280 */       boolean bool1 = buttonModel.isPressed();
-/* 281 */       boolean bool2 = buttonModel.isArmed();
-/* 282 */       boolean bool3 = buttonModel.isEnabled();
-/* 283 */       boolean bool4 = buttonModel.isSelected();
-/*     */       
-/* 285 */       boolean bool = ((bool1 && !bool2 && bool4) || (bool1 && bool2 && !bool4) || (!bool1 && bool2 && bool4) || (!bool1 && !bool2 && bool4)) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 299 */       if (bool) {
-/* 300 */         param1Graphics.setColor(this.shadow);
-/* 301 */         param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 0, param1Int1 + 8, param1Int2 + 0);
-/* 302 */         param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 1, param1Int1 + 4, param1Int2 + 1);
-/* 303 */         param1Graphics.drawLine(param1Int1 + 9, param1Int2 + 1, param1Int1 + 9, param1Int2 + 1);
-/* 304 */         param1Graphics.drawLine(param1Int1 + 2, param1Int2 + 2, param1Int1 + 2, param1Int2 + 2);
-/* 305 */         param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 3, param1Int1 + 1, param1Int2 + 3);
-/* 306 */         param1Graphics.drawLine(param1Int1, param1Int2 + 4, param1Int1, param1Int2 + 9);
-/* 307 */         param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 10, param1Int1 + 1, param1Int2 + 10);
-/* 308 */         param1Graphics.drawLine(param1Int1 + 2, param1Int2 + 11, param1Int1 + 2, param1Int2 + 11);
-/* 309 */         param1Graphics.setColor(this.highlight);
-/* 310 */         param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 12, param1Int1 + 4, param1Int2 + 12);
-/* 311 */         param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 13, param1Int1 + 8, param1Int2 + 13);
-/* 312 */         param1Graphics.drawLine(param1Int1 + 9, param1Int2 + 12, param1Int1 + 10, param1Int2 + 12);
-/* 313 */         param1Graphics.drawLine(param1Int1 + 11, param1Int2 + 11, param1Int1 + 11, param1Int2 + 11);
-/* 314 */         param1Graphics.drawLine(param1Int1 + 12, param1Int2 + 10, param1Int1 + 12, param1Int2 + 10);
-/* 315 */         param1Graphics.drawLine(param1Int1 + 13, param1Int2 + 9, param1Int1 + 13, param1Int2 + 4);
-/* 316 */         param1Graphics.drawLine(param1Int1 + 12, param1Int2 + 3, param1Int1 + 12, param1Int2 + 3);
-/* 317 */         param1Graphics.drawLine(param1Int1 + 11, param1Int2 + 2, param1Int1 + 11, param1Int2 + 2);
-/* 318 */         param1Graphics.drawLine(param1Int1 + 10, param1Int2 + 1, param1Int1 + 10, param1Int2 + 1);
-/* 319 */         param1Graphics.setColor(this.dot);
-/* 320 */         param1Graphics.fillRect(param1Int1 + 4, param1Int2 + 5, 6, 4);
-/* 321 */         param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 4, param1Int1 + 8, param1Int2 + 4);
-/* 322 */         param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 9, param1Int1 + 8, param1Int2 + 9);
-/*     */       } else {
-/*     */         
-/* 325 */         param1Graphics.setColor(this.highlight);
-/* 326 */         param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 0, param1Int1 + 8, param1Int2 + 0);
-/* 327 */         param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 1, param1Int1 + 4, param1Int2 + 1);
-/* 328 */         param1Graphics.drawLine(param1Int1 + 9, param1Int2 + 1, param1Int1 + 9, param1Int2 + 1);
-/* 329 */         param1Graphics.drawLine(param1Int1 + 2, param1Int2 + 2, param1Int1 + 2, param1Int2 + 2);
-/* 330 */         param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 3, param1Int1 + 1, param1Int2 + 3);
-/* 331 */         param1Graphics.drawLine(param1Int1, param1Int2 + 4, param1Int1, param1Int2 + 9);
-/* 332 */         param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 10, param1Int1 + 1, param1Int2 + 10);
-/* 333 */         param1Graphics.drawLine(param1Int1 + 2, param1Int2 + 11, param1Int1 + 2, param1Int2 + 11);
-/*     */         
-/* 335 */         param1Graphics.setColor(this.shadow);
-/* 336 */         param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 12, param1Int1 + 4, param1Int2 + 12);
-/* 337 */         param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 13, param1Int1 + 8, param1Int2 + 13);
-/* 338 */         param1Graphics.drawLine(param1Int1 + 9, param1Int2 + 12, param1Int1 + 10, param1Int2 + 12);
-/* 339 */         param1Graphics.drawLine(param1Int1 + 11, param1Int2 + 11, param1Int1 + 11, param1Int2 + 11);
-/* 340 */         param1Graphics.drawLine(param1Int1 + 12, param1Int2 + 10, param1Int1 + 12, param1Int2 + 10);
-/* 341 */         param1Graphics.drawLine(param1Int1 + 13, param1Int2 + 9, param1Int1 + 13, param1Int2 + 4);
-/* 342 */         param1Graphics.drawLine(param1Int1 + 12, param1Int2 + 3, param1Int1 + 12, param1Int2 + 3);
-/* 343 */         param1Graphics.drawLine(param1Int1 + 11, param1Int2 + 2, param1Int1 + 11, param1Int2 + 2);
-/* 344 */         param1Graphics.drawLine(param1Int1 + 10, param1Int2 + 1, param1Int1 + 10, param1Int2 + 1);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public int getIconWidth() {
-/* 350 */       return 14;
-/*     */     }
-/*     */     
-/*     */     public int getIconHeight() {
-/* 354 */       return 14;
-/*     */     }
-/*     */     
-/*     */     private RadioButtonIcon() {} }
-/*     */ 
-/*     */   
-/*     */   private static class MenuItemCheckIcon implements Icon, UIResource, Serializable {
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {}
-/*     */     
-/* 363 */     public int getIconWidth() { return 0; } public int getIconHeight() {
-/* 364 */       return 0;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class MenuItemArrowIcon implements Icon, UIResource, Serializable {
-/*     */     private MenuItemArrowIcon() {}
-/*     */     
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {}
-/*     */     
-/* 373 */     public int getIconWidth() { return 0; } public int getIconHeight() {
-/* 374 */       return 0;
-/*     */     } }
-/*     */   private static class MenuArrowIcon implements Icon, UIResource, Serializable { private Color focus;
-/*     */     
-/*     */     private MenuArrowIcon() {
-/* 379 */       this.focus = UIManager.getColor("windowBorder");
-/* 380 */       this.shadow = UIManager.getColor("controlShadow");
-/* 381 */       this.highlight = UIManager.getColor("controlHighlight");
-/*     */     } private Color shadow; private Color highlight;
-/*     */     public void paintIcon(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2) {
-/* 384 */       AbstractButton abstractButton = (AbstractButton)param1Component;
-/* 385 */       ButtonModel buttonModel = abstractButton.getModel();
-/*     */ 
-/*     */ 
-/*     */       
-/* 389 */       int i = getIconWidth();
-/* 390 */       int j = getIconHeight();
-/*     */       
-/* 392 */       Color color = param1Graphics.getColor();
-/*     */       
-/* 394 */       if (buttonModel.isSelected()) {
-/* 395 */         if (MotifGraphicsUtils.isLeftToRight(param1Component)) {
-/* 396 */           param1Graphics.setColor(this.shadow);
-/* 397 */           param1Graphics.fillRect(param1Int1 + 1, param1Int2 + 1, 2, j);
-/* 398 */           param1Graphics.drawLine(param1Int1 + 4, param1Int2 + 2, param1Int1 + 4, param1Int2 + 2);
-/* 399 */           param1Graphics.drawLine(param1Int1 + 6, param1Int2 + 3, param1Int1 + 6, param1Int2 + 3);
-/* 400 */           param1Graphics.drawLine(param1Int1 + 8, param1Int2 + 4, param1Int1 + 8, param1Int2 + 5);
-/* 401 */           param1Graphics.setColor(this.focus);
-/* 402 */           param1Graphics.fillRect(param1Int1 + 2, param1Int2 + 2, 2, j - 2);
-/* 403 */           param1Graphics.fillRect(param1Int1 + 4, param1Int2 + 3, 2, j - 4);
-/* 404 */           param1Graphics.fillRect(param1Int1 + 6, param1Int2 + 4, 2, j - 6);
-/* 405 */           param1Graphics.setColor(this.highlight);
-/* 406 */           param1Graphics.drawLine(param1Int1 + 2, param1Int2 + j, param1Int1 + 2, param1Int2 + j);
-/* 407 */           param1Graphics.drawLine(param1Int1 + 4, param1Int2 + j - 1, param1Int1 + 4, param1Int2 + j - 1);
-/* 408 */           param1Graphics.drawLine(param1Int1 + 6, param1Int2 + j - 2, param1Int1 + 6, param1Int2 + j - 2);
-/* 409 */           param1Graphics.drawLine(param1Int1 + 8, param1Int2 + j - 4, param1Int1 + 8, param1Int2 + j - 3);
-/*     */         } else {
-/* 411 */           param1Graphics.setColor(this.highlight);
-/* 412 */           param1Graphics.fillRect(param1Int1 + 7, param1Int2 + 1, 2, 10);
-/* 413 */           param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 9, param1Int1 + 5, param1Int2 + 9);
-/* 414 */           param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 8, param1Int1 + 3, param1Int2 + 8);
-/* 415 */           param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 6, param1Int1 + 1, param1Int2 + 7);
-/* 416 */           param1Graphics.setColor(this.focus);
-/* 417 */           param1Graphics.fillRect(param1Int1 + 6, param1Int2 + 2, 2, 8);
-/* 418 */           param1Graphics.fillRect(param1Int1 + 4, param1Int2 + 3, 2, 6);
-/* 419 */           param1Graphics.fillRect(param1Int1 + 2, param1Int2 + 4, 2, 4);
-/* 420 */           param1Graphics.setColor(this.shadow);
-/* 421 */           param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 4, param1Int1 + 1, param1Int2 + 5);
-/* 422 */           param1Graphics.drawLine(param1Int1 + 3, param1Int2 + 3, param1Int1 + 3, param1Int2 + 3);
-/* 423 */           param1Graphics.drawLine(param1Int1 + 5, param1Int2 + 2, param1Int1 + 5, param1Int2 + 2);
-/* 424 */           param1Graphics.drawLine(param1Int1 + 7, param1Int2 + 1, param1Int1 + 7, param1Int2 + 1);
-/*     */         }
-/*     */       
-/* 427 */       } else if (MotifGraphicsUtils.isLeftToRight(param1Component)) {
-/* 428 */         param1Graphics.setColor(this.highlight);
-/* 429 */         param1Graphics.drawLine(param1Int1 + 1, param1Int2 + 1, param1Int1 + 1, param1Int2 + j);
-/* 430 */         param1Graphics.drawLine(param1Int1 + 2, param1Int2 + 1, param1Int1 + 2, param1Int2 + j - 2);
-/* 431 */         param1Graphics.fillRect(param1Int1 + 3, param1Int2 + 2, 2, 2);
-/* 432 */         param1Graphics.fillRect(param1Int1 + 5, param1Int2 + 3, 2, 2);
-/* 433 */         param1Graphics.fillRect(param1Int1 + 7, param1Int2 + 4, 2, 2);
-/* 434 */         param1Graphics.setColor(this.shadow);
-/* 435 */         param1Graphics.drawLine(param1Int1 + 2, param1Int2 + j - 1, param1Int1 + 2, param1Int2 + j);
-/* 436 */         param1Graphics.fillRect(param1Int1 + 3, param1Int2 + j - 2, 2, 2);
-/* 437 */         param1Graphics.fillRect(param1Int1 + 5, param1Int2 + j - 3, 2, 2);
-/* 438 */         param1Graphics.fillRect(param1Int1 + 7, param1Int2 + j - 4, 2, 2);
-/* 439 */         param1Graphics.setColor(color);
-/*     */       } else {
-/* 441 */         param1Graphics.setColor(this.highlight);
-/* 442 */         param1Graphics.fillRect(param1Int1 + 1, param1Int2 + 4, 2, 2);
-/* 443 */         param1Graphics.fillRect(param1Int1 + 3, param1Int2 + 3, 2, 2);
-/* 444 */         param1Graphics.fillRect(param1Int1 + 5, param1Int2 + 2, 2, 2);
-/* 445 */         param1Graphics.drawLine(param1Int1 + 7, param1Int2 + 1, param1Int1 + 7, param1Int2 + 2);
-/* 446 */         param1Graphics.setColor(this.shadow);
-/* 447 */         param1Graphics.fillRect(param1Int1 + 1, param1Int2 + j - 4, 2, 2);
-/* 448 */         param1Graphics.fillRect(param1Int1 + 3, param1Int2 + j - 3, 2, 2);
-/* 449 */         param1Graphics.fillRect(param1Int1 + 5, param1Int2 + j - 2, 2, 2);
-/* 450 */         param1Graphics.drawLine(param1Int1 + 7, param1Int2 + 3, param1Int1 + 7, param1Int2 + j);
-/* 451 */         param1Graphics.drawLine(param1Int1 + 8, param1Int2 + 1, param1Int1 + 8, param1Int2 + j);
-/* 452 */         param1Graphics.setColor(color);
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     public int getIconWidth() {
-/* 457 */       return 10; } public int getIconHeight() {
-/* 458 */       return 10;
-/*     */     } }
-/*     */ 
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifIconFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import javax.swing.*;
+
+import javax.swing.plaf.UIResource;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Polygon;
+
+import java.io.Serializable;
+
+/**
+ * Icon factory for the CDE/Motif Look and Feel
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * 1.20 04/27/99
+ * @author Georges Saab
+ */
+public class MotifIconFactory implements Serializable
+{
+    private static Icon checkBoxIcon;
+    private static Icon radioButtonIcon;
+    private static Icon menuItemCheckIcon;
+    private static Icon menuItemArrowIcon;
+    private static Icon menuArrowIcon;
+
+    public static Icon getMenuItemCheckIcon() {
+        return null;
+    }
+
+    public static Icon getMenuItemArrowIcon() {
+        if (menuItemArrowIcon == null) {
+            menuItemArrowIcon = new MenuItemArrowIcon();
+        }
+        return menuItemArrowIcon;
+    }
+
+    public static Icon getMenuArrowIcon() {
+        if (menuArrowIcon == null) {
+            menuArrowIcon = new MenuArrowIcon();
+        }
+        return menuArrowIcon;
+    }
+
+    public static Icon getCheckBoxIcon() {
+        if (checkBoxIcon == null) {
+            checkBoxIcon = new CheckBoxIcon();
+        }
+        return checkBoxIcon;
+    }
+
+    public static Icon getRadioButtonIcon() {
+        if (radioButtonIcon == null) {
+            radioButtonIcon = new RadioButtonIcon();
+        }
+        return radioButtonIcon;
+    }
+
+    private static class CheckBoxIcon implements Icon, UIResource, Serializable  {
+        final static int csize = 13;
+
+        private Color control = UIManager.getColor("control");
+        private Color foreground = UIManager.getColor("CheckBox.foreground");
+        private Color shadow = UIManager.getColor("controlShadow");
+        private Color highlight = UIManager.getColor("controlHighlight");
+        private Color lightShadow = UIManager.getColor("controlLightShadow");
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            AbstractButton b = (AbstractButton) c;
+            ButtonModel model = b.getModel();
+
+            boolean flat = false;
+
+            if(b instanceof JCheckBox) {
+                flat = ((JCheckBox)b).isBorderPaintedFlat();
+            }
+
+            boolean isPressed = model.isPressed();
+            boolean isArmed = model.isArmed();
+            boolean isEnabled = model.isEnabled();
+            boolean isSelected = model.isSelected();
+
+            // There are 4 "looks" to the Motif CheckBox:
+            //  drawCheckBezelOut  -  default unchecked state
+            //  drawBezel          -  when we uncheck in toggled state
+            //  drawCheckBezel     -  when we check in toggle state
+            //  drawCheckBezelIn   -  selected, mouseReleased
+            boolean checkToggleIn = ((isPressed &&
+                                      !isArmed   &&
+                                      isSelected) ||
+                                     (isPressed &&
+                                      isArmed   &&
+                                      !isSelected));
+            boolean uncheckToggleOut = ((isPressed &&
+                                         !isArmed &&
+                                         !isSelected) ||
+                                        (isPressed &&
+                                         isArmed &&
+                                         isSelected));
+
+            boolean checkIn = (!isPressed  &&
+                               isArmed    &&
+                               isSelected  ||
+                               (!isPressed &&
+                                !isArmed  &&
+                                isSelected));
+
+
+            if(flat) {
+                g.setColor(shadow);
+                g.drawRect(x+2,y,csize-1,csize-1);
+                if(uncheckToggleOut || checkToggleIn) {
+                    g.setColor(control);
+                    g.fillRect(x+3,y+1,csize-2,csize-2);
+                }
+            }
+
+            if (checkToggleIn) {
+                // toggled from unchecked to checked
+                drawCheckBezel(g,x,y,csize,true,false,false,flat);
+            } else if (uncheckToggleOut) {
+                // MotifBorderFactory.drawBezel(g,x,y,csize,csize,false,false);
+                drawCheckBezel(g,x,y,csize,true,true,false,flat);
+            } else if (checkIn) {
+                // show checked, unpressed state
+                drawCheckBezel(g,x,y,csize,false,false,true,flat);
+            } else if(!flat) {
+                //  show unchecked state
+                drawCheckBezelOut(g,x,y,csize);
+            }
+        }
+
+        public int getIconWidth() {
+            return csize;
+        }
+
+        public int getIconHeight() {
+            return csize;
+        }
+
+        public void drawCheckBezelOut(Graphics g, int x, int y, int csize){
+            Color controlShadow = UIManager.getColor("controlShadow");
+
+            int w = csize;
+            int h = csize;
+            Color oldColor = g.getColor();
+
+            g.translate(x,y);
+            g.setColor(highlight);    // inner 3D border
+            g.drawLine(0, 0, 0, h-1);
+            g.drawLine(1, 0, w-1, 0);
+
+            g.setColor(shadow);         // black drop shadow  __|
+            g.drawLine(1, h-1, w-1, h-1);
+            g.drawLine(w-1, h-1, w-1, 1);
+            g.translate(-x,-y);
+            g.setColor(oldColor);
+        }
+
+        public void drawCheckBezel(Graphics g, int x, int y, int csize,
+                                   boolean shade, boolean out, boolean check, boolean flat)
+            {
+
+
+                Color oldColor = g.getColor();
+                g.translate(x, y);
+
+
+                //bottom
+                if(!flat) {
+                    if (out) {
+                        g.setColor(control);
+                        g.fillRect(1,1,csize-2,csize-2);
+                        g.setColor(shadow);
+                    } else {
+                        g.setColor(lightShadow);
+                        g.fillRect(0,0,csize,csize);
+                        g.setColor(highlight);
+                    }
+
+                    g.drawLine(1,csize-1,csize-2,csize-1);
+                    if (shade) {
+                        g.drawLine(2,csize-2,csize-3,csize-2);
+                        g.drawLine(csize-2,2,csize-2 ,csize-1);
+                        if (out) {
+                            g.setColor(highlight);
+                        } else {
+                            g.setColor(shadow);
+                        }
+                        g.drawLine(1,2,1,csize-2);
+                        g.drawLine(1,1,csize-3,1);
+                        if (out) {
+                            g.setColor(shadow);
+                        } else {
+                            g.setColor(highlight);
+                        }
+                    }
+                    //right
+                    g.drawLine(csize-1,1,csize-1,csize-1);
+
+                    //left
+                    if (out) {
+                        g.setColor(highlight);
+                    } else {
+                        g.setColor(shadow);
+                    }
+                    g.drawLine(0,1,0,csize-1);
+
+                    //top
+                    g.drawLine(0,0,csize-1,0);
+                }
+
+                if (check) {
+                    // draw check
+                    g.setColor(foreground);
+                    g.drawLine(csize-2,1,csize-2,2);
+                    g.drawLine(csize-3,2,csize-3,3);
+                    g.drawLine(csize-4,3,csize-4,4);
+                    g.drawLine(csize-5,4,csize-5,6);
+                    g.drawLine(csize-6,5,csize-6,8);
+                    g.drawLine(csize-7,6,csize-7,10);
+                    g.drawLine(csize-8,7,csize-8,10);
+                    g.drawLine(csize-9,6,csize-9,9);
+                    g.drawLine(csize-10,5,csize-10,8);
+                    g.drawLine(csize-11,5,csize-11,7);
+                    g.drawLine(csize-12,6,csize-12,6);
+                }
+                g.translate(-x, -y);
+                g.setColor(oldColor);
+            }
+    } // end class CheckBoxIcon
+
+    private static class RadioButtonIcon implements Icon, UIResource, Serializable {
+        private Color dot = UIManager.getColor("activeCaptionBorder");
+        private Color highlight = UIManager.getColor("controlHighlight");
+        private Color shadow = UIManager.getColor("controlShadow");
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            // fill interior
+            AbstractButton b = (AbstractButton) c;
+            ButtonModel model = b.getModel();
+
+            int w = getIconWidth();
+            int h = getIconHeight();
+
+            boolean isPressed = model.isPressed();
+            boolean isArmed = model.isArmed();
+            boolean isEnabled = model.isEnabled();
+            boolean isSelected = model.isSelected();
+
+            boolean checkIn = ((isPressed &&
+                                !isArmed   &&
+                                isSelected) ||
+                               (isPressed &&
+                                isArmed   &&
+                                !isSelected)
+                               ||
+                               (!isPressed  &&
+                                isArmed    &&
+                                isSelected  ||
+                                (!isPressed &&
+                                 !isArmed  &&
+                                 isSelected)));
+
+            if (checkIn){
+                g.setColor(shadow);
+                g.drawLine(x+5,y+0,x+8,y+0);
+                g.drawLine(x+3,y+1,x+4,y+1);
+                g.drawLine(x+9,y+1,x+9,y+1);
+                g.drawLine(x+2,y+2,x+2,y+2);
+                g.drawLine(x+1,y+3,x+1,y+3);
+                g.drawLine(x,y+4,x,y+9);
+                g.drawLine(x+1,y+10,x+1,y+10);
+                g.drawLine(x+2,y+11,x+2,y+11);
+                g.setColor(highlight);
+                g.drawLine(x+3,y+12,x+4,y+12);
+                g.drawLine(x+5,y+13,x+8,y+13);
+                g.drawLine(x+9,y+12,x+10,y+12);
+                g.drawLine(x+11,y+11,x+11,y+11);
+                g.drawLine(x+12,y+10,x+12,y+10);
+                g.drawLine(x+13,y+9,x+13,y+4);
+                g.drawLine(x+12,y+3,x+12,y+3);
+                g.drawLine(x+11,y+2,x+11,y+2);
+                g.drawLine(x+10,y+1,x+10,y+1);
+                g.setColor(dot);
+                g.fillRect(x+4,y+5,6,4);
+                g.drawLine(x+5,y+4,x+8,y+4);
+                g.drawLine(x+5,y+9,x+8,y+9);
+            }
+            else {
+                g.setColor(highlight);
+                g.drawLine(x+5,y+0,x+8,y+0);
+                g.drawLine(x+3,y+1,x+4,y+1);
+                g.drawLine(x+9,y+1,x+9,y+1);
+                g.drawLine(x+2,y+2,x+2,y+2);
+                g.drawLine(x+1,y+3,x+1,y+3);
+                g.drawLine(x,y+4,x,y+9);
+                g.drawLine(x+1,y+10,x+1,y+10);
+                g.drawLine(x+2,y+11,x+2,y+11);
+
+                g.setColor(shadow);
+                g.drawLine(x+3,y+12,x+4,y+12);
+                g.drawLine(x+5,y+13,x+8,y+13);
+                g.drawLine(x+9,y+12,x+10,y+12);
+                g.drawLine(x+11,y+11,x+11,y+11);
+                g.drawLine(x+12,y+10,x+12,y+10);
+                g.drawLine(x+13,y+9,x+13,y+4);
+                g.drawLine(x+12,y+3,x+12,y+3);
+                g.drawLine(x+11,y+2,x+11,y+2);
+                g.drawLine(x+10,y+1,x+10,y+1);
+
+            }
+        }
+
+        public int getIconWidth() {
+            return 14;
+        }
+
+        public int getIconHeight() {
+            return 14;
+        }
+    } // end class RadioButtonIcon
+
+    private static class MenuItemCheckIcon implements Icon, UIResource, Serializable
+    {
+        public void paintIcon(Component c,Graphics g, int x, int y)
+            {
+            }
+        public int getIconWidth() { return 0; }
+        public int getIconHeight() { return 0; }
+    }  // end class MenuItemCheckIcon
+
+
+    private static class MenuItemArrowIcon implements Icon, UIResource, Serializable
+    {
+        public void paintIcon(Component c,Graphics g, int x, int y)
+            {
+            }
+        public int getIconWidth() { return 0; }
+        public int getIconHeight() { return 0; }
+    }  // end class MenuItemArrowIcon
+
+    private static class MenuArrowIcon implements Icon, UIResource, Serializable
+    {
+        private Color focus = UIManager.getColor("windowBorder");
+        private Color shadow = UIManager.getColor("controlShadow");
+        private Color highlight = UIManager.getColor("controlHighlight");
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            AbstractButton b = (AbstractButton) c;
+            ButtonModel model = b.getModel();
+
+            // These variables are kind of pointless as the following code
+            // assumes the icon will be 10 x 10 regardless of their value.
+            int w = getIconWidth();
+            int h = getIconHeight();
+
+            Color oldColor = g.getColor();
+
+            if (model.isSelected()){
+                if( MotifGraphicsUtils.isLeftToRight(c) ){
+                    g.setColor(shadow);
+                    g.fillRect(x+1,y+1,2,h);
+                    g.drawLine(x+4,y+2,x+4,y+2);
+                    g.drawLine(x+6,y+3,x+6,y+3);
+                    g.drawLine(x+8,y+4,x+8,y+5);
+                    g.setColor(focus);
+                    g.fillRect(x+2,y+2,2,h-2);
+                    g.fillRect(x+4,y+3,2,h-4);
+                    g.fillRect(x+6,y+4,2,h-6);
+                    g.setColor(highlight);
+                    g.drawLine(x+2,y+h,x+2,y+h);
+                    g.drawLine(x+4,y+h-1,x+4,y+h-1);
+                    g.drawLine(x+6,y+h-2,x+6,y+h-2);
+                    g.drawLine(x+8,y+h-4,x+8,y+h-3);
+                } else {
+                    g.setColor(highlight);
+                    g.fillRect(x+7,y+1,2,10);
+                    g.drawLine(x+5,y+9,x+5,y+9);
+                    g.drawLine(x+3,y+8,x+3,y+8);
+                    g.drawLine(x+1,y+6,x+1,y+7);
+                    g.setColor(focus);
+                    g.fillRect(x+6,y+2,2,8);
+                    g.fillRect(x+4,y+3,2,6);
+                    g.fillRect(x+2,y+4,2,4);
+                    g.setColor(shadow);
+                    g.drawLine(x+1,y+4,x+1,y+5);
+                    g.drawLine(x+3,y+3,x+3,y+3);
+                    g.drawLine(x+5,y+2,x+5,y+2);
+                    g.drawLine(x+7,y+1,x+7,y+1);
+                }
+            } else {
+                if( MotifGraphicsUtils.isLeftToRight(c) ){
+                    g.setColor(highlight);
+                    g.drawLine(x+1,y+1,x+1,y+h);
+                    g.drawLine(x+2,y+1,x+2,y+h-2);
+                    g.fillRect(x+3,y+2,2,2);
+                    g.fillRect(x+5,y+3,2,2);
+                    g.fillRect(x+7,y+4,2,2);
+                    g.setColor(shadow);
+                    g.drawLine(x+2,y+h-1,x+2,y+h);
+                    g.fillRect(x+3,y+h-2,2,2);
+                    g.fillRect(x+5,y+h-3,2,2);
+                    g.fillRect(x+7,y+h-4,2,2);
+                    g.setColor(oldColor);
+                } else {
+                    g.setColor(highlight);
+                    g.fillRect(x+1,y+4,2,2);
+                    g.fillRect(x+3,y+3,2,2);
+                    g.fillRect(x+5,y+2,2,2);
+                    g.drawLine(x+7,y+1,x+7,y+2);
+                    g.setColor(shadow);
+                    g.fillRect(x+1,y+h-4,2,2);
+                    g.fillRect(x+3,y+h-3,2,2);
+                    g.fillRect(x+5,y+h-2,2,2);
+                    g.drawLine(x+7,y+3,x+7,y+h);
+                    g.drawLine(x+8,y+1,x+8,y+h);
+                    g.setColor(oldColor);
+                }
+            }
+
+        }
+        public int getIconWidth() { return 10; }
+        public int getIconHeight() { return 10; }
+    } // End class MenuArrowIcon
+}

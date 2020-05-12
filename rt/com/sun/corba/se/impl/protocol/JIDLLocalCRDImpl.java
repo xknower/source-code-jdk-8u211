@@ -1,94 +1,90 @@
-/*    */ package com.sun.corba.se.impl.protocol;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.IOR;
-/*    */ import com.sun.corba.se.spi.orb.ORB;
-/*    */ import javax.rmi.CORBA.Tie;
-/*    */ import org.omg.CORBA.Object;
-/*    */ import org.omg.CORBA.portable.ServantObject;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JIDLLocalCRDImpl
-/*    */   extends LocalClientRequestDispatcherBase
-/*    */ {
-/*    */   protected ServantObject servant;
-/*    */   
-/*    */   public JIDLLocalCRDImpl(ORB paramORB, int paramInt, IOR paramIOR) {
-/* 47 */     super(paramORB, paramInt, paramIOR);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public ServantObject servant_preinvoke(Object paramObject, String paramString, Class paramClass) {
-/* 56 */     if (!checkForCompatibleServant(this.servant, paramClass)) {
-/* 57 */       return null;
-/*    */     }
-/* 59 */     return this.servant;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void servant_postinvoke(Object paramObject, ServantObject paramServantObject) {}
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void setServant(Object paramObject) {
-/* 71 */     if (paramObject != null && paramObject instanceof Tie) {
-/* 72 */       this.servant = new ServantObject();
-/* 73 */       this.servant.servant = ((Tie)paramObject).getTarget();
-/*    */     } else {
-/* 75 */       this.servant = null;
-/*    */     } 
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void unexport() {
-/* 86 */     this.servant = null;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\JIDLLocalCRDImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol;
+
+import javax.rmi.CORBA.Tie;
+
+import org.omg.CORBA.portable.ServantObject;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcherFactory ;
+import com.sun.corba.se.spi.protocol.LocalClientRequestDispatcher ;
+
+import com.sun.corba.se.spi.ior.IOR ;
+
+import com.sun.corba.se.impl.protocol.LocalClientRequestDispatcherBase ;
+
+import com.sun.corba.se.pept.broker.Broker;
+
+public class JIDLLocalCRDImpl extends LocalClientRequestDispatcherBase
+{
+    public JIDLLocalCRDImpl( ORB orb, int scid, IOR ior )
+    {
+        super( (com.sun.corba.se.spi.orb.ORB)orb, scid, ior ) ;
+    }
+
+    protected ServantObject servant;
+
+    public ServantObject servant_preinvoke(org.omg.CORBA.Object self,
+                                           String operation,
+                                           Class expectedType)
+    {
+        if (!checkForCompatibleServant( servant, expectedType ))
+            return null ;
+
+        return servant;
+    }
+
+    public void servant_postinvoke( org.omg.CORBA.Object self,
+        ServantObject servant )
+    {
+        // NO-OP
+    }
+
+    // REVISIT - This is called from TOAImpl.
+    public void setServant( java.lang.Object servant )
+    {
+        if (servant != null && servant instanceof Tie) {
+            this.servant = new ServantObject();
+            this.servant.servant = ((Tie)servant).getTarget();
+        } else {
+            this.servant = null;
+        }
+    }
+
+    public void unexport() {
+        // DO NOT set the IOR to null.  (Un)exporting is only concerns
+        // the servant not the IOR.  If the ior is set to null then
+        // null pointer exceptions happen during an colocated invocation.
+        // It is better to let the invocation proceed and get OBJECT_NOT_EXIST
+        // from the server side.
+        //ior = null;
+        servant = null;
+    }
+}
+
+// End of file.

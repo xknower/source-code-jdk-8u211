@@ -1,552 +1,601 @@
-/*     */ package java.nio;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class HeapByteBufferR
-/*     */   extends HeapByteBuffer
-/*     */ {
-/*     */   HeapByteBufferR(int paramInt1, int paramInt2) {
-/*  63 */     super(paramInt1, paramInt2);
-/*  64 */     this.isReadOnly = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   HeapByteBufferR(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/*  76 */     super(paramArrayOfbyte, paramInt1, paramInt2);
-/*  77 */     this.isReadOnly = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected HeapByteBufferR(byte[] paramArrayOfbyte, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  92 */     super(paramArrayOfbyte, paramInt1, paramInt2, paramInt3, paramInt4, paramInt5);
-/*  93 */     this.isReadOnly = true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer slice() {
-/*  98 */     return new HeapByteBufferR(this.hb, -1, 0, 
-/*     */ 
-/*     */         
-/* 101 */         remaining(), 
-/* 102 */         remaining(), 
-/* 103 */         position() + this.offset);
-/*     */   }
-/*     */   
-/*     */   public ByteBuffer duplicate() {
-/* 107 */     return new HeapByteBufferR(this.hb, 
-/* 108 */         markValue(), 
-/* 109 */         position(), 
-/* 110 */         limit(), 
-/* 111 */         capacity(), this.offset);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer asReadOnlyBuffer() {
-/* 124 */     return duplicate();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isReadOnly() {
-/* 164 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer put(byte paramByte) {
-/* 172 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer put(int paramInt, byte paramByte) {
-/* 181 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer put(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/* 194 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer put(ByteBuffer paramByteBuffer) {
-/* 222 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer compact() {
-/* 234 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   byte _get(int paramInt) {
-/* 243 */     return this.hb[paramInt];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void _put(int paramInt, byte paramByte) {
-/* 250 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putChar(char paramChar) {
-/* 273 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putChar(int paramInt, char paramChar) {
-/* 282 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public CharBuffer asCharBuffer() {
-/* 287 */     int i = remaining() >> 1;
-/* 288 */     int j = this.offset + position();
-/* 289 */     return this.bigEndian ? new ByteBufferAsCharBufferRB(this, -1, 0, i, i, j) : new ByteBufferAsCharBufferRL(this, -1, 0, i, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putShort(short paramShort) {
-/* 324 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putShort(int paramInt, short paramShort) {
-/* 333 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ShortBuffer asShortBuffer() {
-/* 338 */     int i = remaining() >> 1;
-/* 339 */     int j = this.offset + position();
-/* 340 */     return this.bigEndian ? new ByteBufferAsShortBufferRB(this, -1, 0, i, i, j) : new ByteBufferAsShortBufferRL(this, -1, 0, i, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putInt(int paramInt) {
-/* 375 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putInt(int paramInt1, int paramInt2) {
-/* 384 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IntBuffer asIntBuffer() {
-/* 389 */     int i = remaining() >> 2;
-/* 390 */     int j = this.offset + position();
-/* 391 */     return this.bigEndian ? new ByteBufferAsIntBufferRB(this, -1, 0, i, i, j) : new ByteBufferAsIntBufferRL(this, -1, 0, i, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putLong(long paramLong) {
-/* 426 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putLong(int paramInt, long paramLong) {
-/* 435 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public LongBuffer asLongBuffer() {
-/* 440 */     int i = remaining() >> 3;
-/* 441 */     int j = this.offset + position();
-/* 442 */     return this.bigEndian ? new ByteBufferAsLongBufferRB(this, -1, 0, i, i, j) : new ByteBufferAsLongBufferRL(this, -1, 0, i, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putFloat(float paramFloat) {
-/* 477 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putFloat(int paramInt, float paramFloat) {
-/* 486 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public FloatBuffer asFloatBuffer() {
-/* 491 */     int i = remaining() >> 2;
-/* 492 */     int j = this.offset + position();
-/* 493 */     return this.bigEndian ? new ByteBufferAsFloatBufferRB(this, -1, 0, i, i, j) : new ByteBufferAsFloatBufferRL(this, -1, 0, i, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putDouble(double paramDouble) {
-/* 528 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ByteBuffer putDouble(int paramInt, double paramDouble) {
-/* 537 */     throw new ReadOnlyBufferException();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public DoubleBuffer asDoubleBuffer() {
-/* 542 */     int i = remaining() >> 3;
-/* 543 */     int j = this.offset + position();
-/* 544 */     return this.bigEndian ? new ByteBufferAsDoubleBufferRB(this, -1, 0, i, i, j) : new ByteBufferAsDoubleBufferRL(this, -1, 0, i, i, j);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\HeapByteBufferR.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// -- This file was mechanically generated: Do not edit! -- //
+
+package java.nio;
+
+
+/**
+
+
+
+ * A read-only HeapByteBuffer.  This class extends the corresponding
+ * read/write class, overriding the mutation methods to throw a {@link
+ * ReadOnlyBufferException} and overriding the view-buffer methods to return an
+ * instance of this class rather than of the superclass.
+
+ */
+
+class HeapByteBufferR
+    extends HeapByteBuffer
+{
+
+    // For speed these fields are actually declared in X-Buffer;
+    // these declarations are here as documentation
+    /*
+
+
+
+
+    */
+
+    HeapByteBufferR(int cap, int lim) {            // package-private
+
+
+
+
+
+
+
+        super(cap, lim);
+        this.isReadOnly = true;
+
+    }
+
+    HeapByteBufferR(byte[] buf, int off, int len) { // package-private
+
+
+
+
+
+
+
+        super(buf, off, len);
+        this.isReadOnly = true;
+
+    }
+
+    protected HeapByteBufferR(byte[] buf,
+                                   int mark, int pos, int lim, int cap,
+                                   int off)
+    {
+
+
+
+
+
+
+
+        super(buf, mark, pos, lim, cap, off);
+        this.isReadOnly = true;
+
+    }
+
+    public ByteBuffer slice() {
+        return new HeapByteBufferR(hb,
+                                        -1,
+                                        0,
+                                        this.remaining(),
+                                        this.remaining(),
+                                        this.position() + offset);
+    }
+
+    public ByteBuffer duplicate() {
+        return new HeapByteBufferR(hb,
+                                        this.markValue(),
+                                        this.position(),
+                                        this.limit(),
+                                        this.capacity(),
+                                        offset);
+    }
+
+    public ByteBuffer asReadOnlyBuffer() {
+
+
+
+
+
+
+
+
+        return duplicate();
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public boolean isReadOnly() {
+        return true;
+    }
+
+    public ByteBuffer put(byte x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer put(int i, byte x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer put(byte[] src, int offset, int length) {
+
+
+
+
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer put(ByteBuffer src) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer compact() {
+
+
+
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+
+
+
+
+    byte _get(int i) {                          // package-private
+        return hb[i];
+    }
+
+    void _put(int i, byte b) {                  // package-private
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    // char
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteBuffer putChar(char x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer putChar(int i, char x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public CharBuffer asCharBuffer() {
+        int size = this.remaining() >> 1;
+        int off = offset + position();
+        return (bigEndian
+                ? (CharBuffer)(new ByteBufferAsCharBufferRB(this,
+                                                               -1,
+                                                               0,
+                                                               size,
+                                                               size,
+                                                               off))
+                : (CharBuffer)(new ByteBufferAsCharBufferRL(this,
+                                                               -1,
+                                                               0,
+                                                               size,
+                                                               size,
+                                                               off)));
+    }
+
+
+    // short
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteBuffer putShort(short x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer putShort(int i, short x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ShortBuffer asShortBuffer() {
+        int size = this.remaining() >> 1;
+        int off = offset + position();
+        return (bigEndian
+                ? (ShortBuffer)(new ByteBufferAsShortBufferRB(this,
+                                                                 -1,
+                                                                 0,
+                                                                 size,
+                                                                 size,
+                                                                 off))
+                : (ShortBuffer)(new ByteBufferAsShortBufferRL(this,
+                                                                 -1,
+                                                                 0,
+                                                                 size,
+                                                                 size,
+                                                                 off)));
+    }
+
+
+    // int
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteBuffer putInt(int x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer putInt(int i, int x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public IntBuffer asIntBuffer() {
+        int size = this.remaining() >> 2;
+        int off = offset + position();
+        return (bigEndian
+                ? (IntBuffer)(new ByteBufferAsIntBufferRB(this,
+                                                             -1,
+                                                             0,
+                                                             size,
+                                                             size,
+                                                             off))
+                : (IntBuffer)(new ByteBufferAsIntBufferRL(this,
+                                                             -1,
+                                                             0,
+                                                             size,
+                                                             size,
+                                                             off)));
+    }
+
+
+    // long
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteBuffer putLong(long x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer putLong(int i, long x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public LongBuffer asLongBuffer() {
+        int size = this.remaining() >> 3;
+        int off = offset + position();
+        return (bigEndian
+                ? (LongBuffer)(new ByteBufferAsLongBufferRB(this,
+                                                               -1,
+                                                               0,
+                                                               size,
+                                                               size,
+                                                               off))
+                : (LongBuffer)(new ByteBufferAsLongBufferRL(this,
+                                                               -1,
+                                                               0,
+                                                               size,
+                                                               size,
+                                                               off)));
+    }
+
+
+    // float
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteBuffer putFloat(float x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer putFloat(int i, float x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public FloatBuffer asFloatBuffer() {
+        int size = this.remaining() >> 2;
+        int off = offset + position();
+        return (bigEndian
+                ? (FloatBuffer)(new ByteBufferAsFloatBufferRB(this,
+                                                                 -1,
+                                                                 0,
+                                                                 size,
+                                                                 size,
+                                                                 off))
+                : (FloatBuffer)(new ByteBufferAsFloatBufferRL(this,
+                                                                 -1,
+                                                                 0,
+                                                                 size,
+                                                                 size,
+                                                                 off)));
+    }
+
+
+    // double
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ByteBuffer putDouble(double x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public ByteBuffer putDouble(int i, double x) {
+
+
+
+
+        throw new ReadOnlyBufferException();
+
+    }
+
+    public DoubleBuffer asDoubleBuffer() {
+        int size = this.remaining() >> 3;
+        int off = offset + position();
+        return (bigEndian
+                ? (DoubleBuffer)(new ByteBufferAsDoubleBufferRB(this,
+                                                                   -1,
+                                                                   0,
+                                                                   size,
+                                                                   size,
+                                                                   off))
+                : (DoubleBuffer)(new ByteBufferAsDoubleBufferRL(this,
+                                                                   -1,
+                                                                   0,
+                                                                   size,
+                                                                   size,
+                                                                   off)));
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}

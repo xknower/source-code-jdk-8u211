@@ -1,314 +1,308 @@
-/*     */ package com.sun.org.apache.xml.internal.dtm.ref;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.res.XMLMessages;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ChunkedIntArray
-/*     */ {
-/*  44 */   final int slotsize = 4;
-/*     */   
-/*     */   static final int lowbits = 10;
-/*     */   
-/*     */   static final int chunkalloc = 1024;
-/*     */   
-/*     */   static final int lowmask = 1023;
-/*  51 */   ChunksVector chunks = new ChunksVector();
-/*  52 */   final int[] fastArray = new int[1024];
-/*  53 */   int lastUsed = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ChunkedIntArray(int slotsize) {
-/*  61 */     getClass(); if (4 < slotsize)
-/*  62 */       throw new ArrayIndexOutOfBoundsException(XMLMessages.createXMLMessage("ER_CHUNKEDINTARRAY_NOT_SUPPORTED", new Object[] { Integer.toString(slotsize) })); 
-/*  63 */     getClass(); if (4 > slotsize) {
-/*  64 */       getClass(); System.out.println("*****WARNING: ChunkedIntArray(" + slotsize + ") wasting " + (4 - slotsize) + " words per slot");
-/*  65 */     }  this.chunks.addElement(this.fastArray);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int appendSlot(int w0, int w1, int w2, int w3) {
-/*  88 */     int slotsize = 4;
-/*  89 */     int newoffset = (this.lastUsed + 1) * 4;
-/*  90 */     int chunkpos = newoffset >> 10;
-/*  91 */     int slotpos = newoffset & 0x3FF;
-/*     */ 
-/*     */     
-/*  94 */     if (chunkpos > this.chunks.size() - 1)
-/*  95 */       this.chunks.addElement(new int[1024]); 
-/*  96 */     int[] chunk = this.chunks.elementAt(chunkpos);
-/*  97 */     chunk[slotpos] = w0;
-/*  98 */     chunk[slotpos + 1] = w1;
-/*  99 */     chunk[slotpos + 2] = w2;
-/* 100 */     chunk[slotpos + 3] = w3;
-/*     */     
-/* 102 */     return ++this.lastUsed;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int readEntry(int position, int offset) throws ArrayIndexOutOfBoundsException {
-/* 123 */     if (offset >= 4)
-/* 124 */       throw new ArrayIndexOutOfBoundsException(XMLMessages.createXMLMessage("ER_OFFSET_BIGGER_THAN_SLOT", null)); 
-/* 125 */     position *= 4;
-/* 126 */     int chunkpos = position >> 10;
-/* 127 */     int slotpos = position & 0x3FF;
-/* 128 */     int[] chunk = this.chunks.elementAt(chunkpos);
-/* 129 */     return chunk[slotpos + offset];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int specialFind(int startPos, int position) {
-/* 143 */     int ancestor = startPos;
-/* 144 */     while (ancestor > 0) {
-/*     */ 
-/*     */       
-/* 147 */       ancestor *= 4;
-/* 148 */       int chunkpos = ancestor >> 10;
-/* 149 */       int slotpos = ancestor & 0x3FF;
-/* 150 */       int[] chunk = this.chunks.elementAt(chunkpos);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 155 */       ancestor = chunk[slotpos + 1];
-/*     */       
-/* 157 */       if (ancestor == position) {
-/*     */         break;
-/*     */       }
-/*     */     } 
-/* 161 */     if (ancestor <= 0)
-/*     */     {
-/* 163 */       return position;
-/*     */     }
-/* 165 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   int slotsUsed() {
-/* 173 */     return this.lastUsed;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void discardLast() {
-/* 183 */     this.lastUsed--;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void writeEntry(int position, int offset, int value) throws ArrayIndexOutOfBoundsException {
-/* 204 */     if (offset >= 4)
-/* 205 */       throw new ArrayIndexOutOfBoundsException(XMLMessages.createXMLMessage("ER_OFFSET_BIGGER_THAN_SLOT", null)); 
-/* 206 */     position *= 4;
-/* 207 */     int chunkpos = position >> 10;
-/* 208 */     int slotpos = position & 0x3FF;
-/* 209 */     int[] chunk = this.chunks.elementAt(chunkpos);
-/* 210 */     chunk[slotpos + offset] = value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void writeSlot(int position, int w0, int w1, int w2, int w3) {
-/* 225 */     position *= 4;
-/* 226 */     int chunkpos = position >> 10;
-/* 227 */     int slotpos = position & 0x3FF;
-/*     */ 
-/*     */     
-/* 230 */     if (chunkpos > this.chunks.size() - 1)
-/* 231 */       this.chunks.addElement(new int[1024]); 
-/* 232 */     int[] chunk = this.chunks.elementAt(chunkpos);
-/* 233 */     chunk[slotpos] = w0;
-/* 234 */     chunk[slotpos + 1] = w1;
-/* 235 */     chunk[slotpos + 2] = w2;
-/* 236 */     chunk[slotpos + 3] = w3;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void readSlot(int position, int[] buffer) {
-/* 258 */     position *= 4;
-/* 259 */     int chunkpos = position >> 10;
-/* 260 */     int slotpos = position & 0x3FF;
-/*     */ 
-/*     */     
-/* 263 */     if (chunkpos > this.chunks.size() - 1)
-/* 264 */       this.chunks.addElement(new int[1024]); 
-/* 265 */     int[] chunk = this.chunks.elementAt(chunkpos);
-/* 266 */     System.arraycopy(chunk, slotpos, buffer, 0, 4);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   class ChunksVector
-/*     */   {
-/* 272 */     final int BLOCKSIZE = 64;
-/* 273 */     int[][] m_map = new int[64][];
-/* 274 */     int m_mapSize = 64;
-/* 275 */     int pos = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     final int size() {
-/* 283 */       return this.pos;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     void addElement(int[] value) {
-/* 288 */       if (this.pos >= this.m_mapSize) {
-/*     */         
-/* 290 */         int orgMapSize = this.m_mapSize;
-/* 291 */         while (this.pos >= this.m_mapSize)
-/* 292 */           this.m_mapSize += 64; 
-/* 293 */         int[][] newMap = new int[this.m_mapSize][];
-/* 294 */         System.arraycopy(this.m_map, 0, newMap, 0, orgMapSize);
-/* 295 */         this.m_map = newMap;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 299 */       this.m_map[this.pos] = value;
-/* 300 */       this.pos++;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final int[] elementAt(int pos) {
-/* 305 */       return this.m_map[pos];
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\dtm\ref\ChunkedIntArray.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ChunkedIntArray.java,v 1.2.4.1 2005/09/15 08:14:58 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.dtm.ref;
+
+import com.sun.org.apache.xml.internal.res.XMLErrorResources;
+import com.sun.org.apache.xml.internal.res.XMLMessages;
+
+/**
+ * <code>ChunkedIntArray</code> is an extensible array of blocks of integers.
+ * (I'd consider Vector, but it's unable to handle integers except by
+ * turning them into Objects.)
+
+ * <p>Making this a separate class means some call-and-return overhead. But
+ * doing it all inline tends to be fragile and expensive in coder time,
+ * not to mention driving up code size. If you want to inline it, feel free.
+ * The Java text suggest that private and Final methods may be inlined,
+ * and one can argue that this beast need not be made subclassable...</p>
+ *
+ * <p>%REVIEW% This has strong conceptual overlap with the IntVector class.
+ * It would probably be a good thing to merge the two, when time permits.<p>
+ */
+final class ChunkedIntArray
+{
+  final int slotsize=4; // Locked, MUST be power of two in current code
+  // Debugging tip: Cranking lowbits down to 4 or so is a good
+  // way to pound on the array addressing code.
+  static final int lowbits=10; // How many bits address within chunks
+  static final int chunkalloc=1<<lowbits;
+  static final int lowmask=chunkalloc-1;
+
+  ChunksVector chunks=new ChunksVector();
+  final int fastArray[] = new int[chunkalloc];
+  int lastUsed=0;
+
+  /**
+   * Create a new CIA with specified record size. Currently record size MUST
+   * be a power of two... and in fact is hardcoded to 4.
+   */
+  ChunkedIntArray(int slotsize)
+  {
+    if(this.slotsize<slotsize)
+      throw new ArrayIndexOutOfBoundsException(XMLMessages.createXMLMessage(XMLErrorResources.ER_CHUNKEDINTARRAY_NOT_SUPPORTED, new Object[]{Integer.toString(slotsize)})); //"ChunkedIntArray("+slotsize+") not currently supported");
+    else if (this.slotsize>slotsize)
+      System.out.println("*****WARNING: ChunkedIntArray("+slotsize+") wasting "+(this.slotsize-slotsize)+" words per slot");
+    chunks.addElement(fastArray);
+  }
+  /**
+   * Append a 4-integer record to the CIA, starting with record 1. (Since
+   * arrays are initialized to all-0, 0 has been reserved as the "unknown"
+   * value in DTM.)
+   * @return the index at which this record was inserted.
+   */
+  int appendSlot(int w0, int w1, int w2, int w3)
+  {
+    /*
+    try
+    {
+      int newoffset = (lastUsed+1)*slotsize;
+      fastArray[newoffset] = w0;
+      fastArray[newoffset+1] = w1;
+      fastArray[newoffset+2] = w2;
+      fastArray[newoffset+3] = w3;
+      return ++lastUsed;
+    }
+    catch(ArrayIndexOutOfBoundsException aioobe)
+    */
+    {
+      final int slotsize=4;
+      int newoffset = (lastUsed+1)*slotsize;
+      int chunkpos = newoffset >> lowbits;
+      int slotpos = (newoffset & lowmask);
+
+      // Grow if needed
+      if (chunkpos > chunks.size() - 1)
+        chunks.addElement(new int[chunkalloc]);
+      int[] chunk = chunks.elementAt(chunkpos);
+      chunk[slotpos] = w0;
+      chunk[slotpos+1] = w1;
+      chunk[slotpos+2] = w2;
+      chunk[slotpos+3] = w3;
+
+      return ++lastUsed;
+    }
+  }
+  /**
+   * Retrieve an integer from the CIA by record number and column within
+   * the record, both 0-based (though position 0 is reserved for special
+   * purposes).
+   * @param position int Record number
+   * @param slotpos int Column number
+   */
+  int readEntry(int position, int offset) throws ArrayIndexOutOfBoundsException
+  {
+    /*
+    try
+    {
+      return fastArray[(position*slotsize)+offset];
+    }
+    catch(ArrayIndexOutOfBoundsException aioobe)
+    */
+    {
+      // System.out.println("Using slow read (1)");
+      if (offset>=slotsize)
+        throw new ArrayIndexOutOfBoundsException(XMLMessages.createXMLMessage(XMLErrorResources.ER_OFFSET_BIGGER_THAN_SLOT, null)); //"Offset bigger than slot");
+      position*=slotsize;
+      int chunkpos = position >> lowbits;
+      int slotpos = position & lowmask;
+      int[] chunk = chunks.elementAt(chunkpos);
+      return chunk[slotpos + offset];
+    }
+  }
+
+  // Check that the node at index "position" is not an ancestor
+  // of the node at index "startPos". IF IT IS, DO NOT ACCEPT IT AND
+  // RETURN -1. If position is NOT an ancestor, return position.
+  // Special case: The Document node (position==0) is acceptable.
+  //
+  // This test supports DTM.getNextPreceding.
+  int specialFind(int startPos, int position)
+  {
+          // We have to look all the way up the ancestor chain
+          // to make sure we don't have an ancestor.
+          int ancestor = startPos;
+          while(ancestor > 0)
+          {
+                // Get the node whose index == ancestor
+                ancestor*=slotsize;
+                int chunkpos = ancestor >> lowbits;
+                int slotpos = ancestor & lowmask;
+                int[] chunk = chunks.elementAt(chunkpos);
+
+                // Get that node's parent (Note that this assumes w[1]
+                // is the parent node index. That's really a DTM feature
+                // rather than a ChunkedIntArray feature.)
+                ancestor = chunk[slotpos + 1];
+
+                if(ancestor == position)
+                         break;
+          }
+
+          if (ancestor <= 0)
+          {
+                  return position;
+          }
+          return -1;
+  }
+
+  /**
+   * @return int index of highest-numbered record currently in use
+   */
+  int slotsUsed()
+  {
+    return lastUsed;
+  }
+
+  /** Disard the highest-numbered record. This is used in the string-buffer
+   CIA; when only a single characters() chunk has been recieved, its index
+   is moved into the Text node rather than being referenced by indirection
+   into the text accumulator.
+   */
+  void discardLast()
+  {
+    --lastUsed;
+  }
+
+  /**
+   * Overwrite the integer found at a specific record and column.
+   * Used to back-patch existing records, most often changing their
+   * "next sibling" reference from 0 (unknown) to something meaningful
+   * @param position int Record number
+   * @param offset int Column number
+   * @param value int New contents
+   */
+  void writeEntry(int position, int offset, int value) throws ArrayIndexOutOfBoundsException
+  {
+    /*
+    try
+    {
+      fastArray[( position*slotsize)+offset] = value;
+    }
+    catch(ArrayIndexOutOfBoundsException aioobe)
+    */
+    {
+      if (offset >= slotsize)
+        throw new ArrayIndexOutOfBoundsException(XMLMessages.createXMLMessage(XMLErrorResources.ER_OFFSET_BIGGER_THAN_SLOT, null)); //"Offset bigger than slot");
+      position*=slotsize;
+      int chunkpos = position >> lowbits;
+      int slotpos = position & lowmask;
+      int[] chunk = chunks.elementAt(chunkpos);
+      chunk[slotpos + offset] = value; // ATOMIC!
+    }
+  }
+
+  /**
+   * Overwrite an entire (4-integer) record at the specified index.
+   * Mostly used to create record 0, the Document node.
+   * @param position integer Record number
+   * @param w0 int
+   * @param w1 int
+   * @param w2 int
+   * @param w3 int
+   */
+  void writeSlot(int position, int w0, int w1, int w2, int w3)
+  {
+      position *= slotsize;
+      int chunkpos = position >> lowbits;
+      int slotpos = (position & lowmask);
+
+    // Grow if needed
+    if (chunkpos > chunks.size() - 1)
+      chunks.addElement(new int[chunkalloc]);
+    int[] chunk = chunks.elementAt(chunkpos);
+    chunk[slotpos] = w0;
+    chunk[slotpos + 1] = w1;
+    chunk[slotpos + 2] = w2;
+    chunk[slotpos + 3] = w3;
+  }
+
+  /**
+   * Retrieve the contents of a record into a user-supplied buffer array.
+   * Used to reduce addressing overhead when code will access several
+   * columns of the record.
+   * @param position int Record number
+   * @param buffer int[] Integer array provided by user, must be large enough
+   * to hold a complete record.
+   */
+  void readSlot(int position, int[] buffer)
+  {
+    /*
+    try
+    {
+      System.arraycopy(fastArray, position*slotsize, buffer, 0, slotsize);
+    }
+    catch(ArrayIndexOutOfBoundsException aioobe)
+    */
+    {
+      // System.out.println("Using slow read (2): "+position);
+      position *= slotsize;
+      int chunkpos = position >> lowbits;
+      int slotpos = (position & lowmask);
+
+      // Grow if needed
+      if (chunkpos > chunks.size() - 1)
+        chunks.addElement(new int[chunkalloc]);
+      int[] chunk = chunks.elementAt(chunkpos);
+      System.arraycopy(chunk,slotpos,buffer,0,slotsize);
+    }
+  }
+
+  class ChunksVector
+  {
+    final int BLOCKSIZE = 64;
+    int[] m_map[] = new int[BLOCKSIZE][];
+    int m_mapSize = BLOCKSIZE;
+    int pos = 0;
+
+    ChunksVector()
+    {
+    }
+
+    final int size()
+    {
+      return pos;
+    }
+
+    void addElement(int[] value)
+    {
+      if(pos >= m_mapSize)
+      {
+        int orgMapSize = m_mapSize;
+        while(pos >= m_mapSize)
+          m_mapSize+=BLOCKSIZE;
+        int[] newMap[] = new int[m_mapSize][];
+        System.arraycopy(m_map, 0, newMap, 0, orgMapSize);
+        m_map = newMap;
+      }
+      // For now, just do a simple append.  A sorted insert only
+      // makes sense if we're doing an binary search or some such.
+      m_map[pos] = value;
+      pos++;
+    }
+
+    final int[] elementAt(int pos)
+    {
+      return m_map[pos];
+    }
+  }
+}

@@ -1,169 +1,164 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.Reader;
-/*     */ import org.xml.sax.InputSource;
-/*     */ import org.xml.sax.XMLReader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class SAXInputSource
-/*     */   extends XMLInputSource
-/*     */ {
-/*     */   private XMLReader fXMLReader;
-/*     */   private InputSource fInputSource;
-/*     */   
-/*     */   public SAXInputSource() {
-/*  40 */     this(null);
-/*     */   }
-/*     */   
-/*     */   public SAXInputSource(InputSource inputSource) {
-/*  44 */     this(null, inputSource);
-/*     */   }
-/*     */   
-/*     */   public SAXInputSource(XMLReader reader, InputSource inputSource) {
-/*  48 */     super((inputSource != null) ? inputSource.getPublicId() : null, (inputSource != null) ? inputSource
-/*  49 */         .getSystemId() : null, null);
-/*  50 */     if (inputSource != null) {
-/*  51 */       setByteStream(inputSource.getByteStream());
-/*  52 */       setCharacterStream(inputSource.getCharacterStream());
-/*  53 */       setEncoding(inputSource.getEncoding());
-/*     */     } 
-/*  55 */     this.fInputSource = inputSource;
-/*  56 */     this.fXMLReader = reader;
-/*     */   }
-/*     */   
-/*     */   public void setXMLReader(XMLReader reader) {
-/*  60 */     this.fXMLReader = reader;
-/*     */   }
-/*     */   
-/*     */   public XMLReader getXMLReader() {
-/*  64 */     return this.fXMLReader;
-/*     */   }
-/*     */   
-/*     */   public void setInputSource(InputSource inputSource) {
-/*  68 */     if (inputSource != null) {
-/*  69 */       setPublicId(inputSource.getPublicId());
-/*  70 */       setSystemId(inputSource.getSystemId());
-/*  71 */       setByteStream(inputSource.getByteStream());
-/*  72 */       setCharacterStream(inputSource.getCharacterStream());
-/*  73 */       setEncoding(inputSource.getEncoding());
-/*     */     } else {
-/*     */       
-/*  76 */       setPublicId(null);
-/*  77 */       setSystemId(null);
-/*  78 */       setByteStream(null);
-/*  79 */       setCharacterStream(null);
-/*  80 */       setEncoding(null);
-/*     */     } 
-/*  82 */     this.fInputSource = inputSource;
-/*     */   }
-/*     */   
-/*     */   public InputSource getInputSource() {
-/*  86 */     return this.fInputSource;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPublicId(String publicId) {
-/*  95 */     super.setPublicId(publicId);
-/*  96 */     if (this.fInputSource == null) {
-/*  97 */       this.fInputSource = new InputSource();
-/*     */     }
-/*  99 */     this.fInputSource.setPublicId(publicId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSystemId(String systemId) {
-/* 108 */     super.setSystemId(systemId);
-/* 109 */     if (this.fInputSource == null) {
-/* 110 */       this.fInputSource = new InputSource();
-/*     */     }
-/* 112 */     this.fInputSource.setSystemId(systemId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setByteStream(InputStream byteStream) {
-/* 125 */     super.setByteStream(byteStream);
-/* 126 */     if (this.fInputSource == null) {
-/* 127 */       this.fInputSource = new InputSource();
-/*     */     }
-/* 129 */     this.fInputSource.setByteStream(byteStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setCharacterStream(Reader charStream) {
-/* 144 */     super.setCharacterStream(charStream);
-/* 145 */     if (this.fInputSource == null) {
-/* 146 */       this.fInputSource = new InputSource();
-/*     */     }
-/* 148 */     this.fInputSource.setCharacterStream(charStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEncoding(String encoding) {
-/* 157 */     super.setEncoding(encoding);
-/* 158 */     if (this.fInputSource == null) {
-/* 159 */       this.fInputSource = new InputSource();
-/*     */     }
-/* 161 */     this.fInputSource.setEncoding(encoding);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\SAXInputSource.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import java.io.InputStream;
+import java.io.Reader;
+
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+
+/**
+ * <p>An <code>XMLInputSource</code> analogue to <code>javax.xml.transform.sax.SAXSource</code>.</p>
+ *
+ */
+public final class SAXInputSource extends XMLInputSource {
+
+    private XMLReader fXMLReader;
+    private InputSource fInputSource;
+
+    public SAXInputSource() {
+        this(null);
+    }
+
+    public SAXInputSource(InputSource inputSource) {
+        this(null, inputSource);
+    }
+
+    public SAXInputSource(XMLReader reader, InputSource inputSource) {
+        super(inputSource != null ? inputSource.getPublicId() : null,
+                inputSource != null ? inputSource.getSystemId() : null, null);
+        if (inputSource != null) {
+            setByteStream(inputSource.getByteStream());
+            setCharacterStream(inputSource.getCharacterStream());
+            setEncoding(inputSource.getEncoding());
+        }
+        fInputSource = inputSource;
+        fXMLReader = reader;
+    }
+
+    public void setXMLReader(XMLReader reader) {
+        fXMLReader = reader;
+    }
+
+    public XMLReader getXMLReader() {
+        return fXMLReader;
+    }
+
+    public void setInputSource(InputSource inputSource) {
+        if (inputSource != null) {
+            setPublicId(inputSource.getPublicId());
+            setSystemId(inputSource.getSystemId());
+            setByteStream(inputSource.getByteStream());
+            setCharacterStream(inputSource.getCharacterStream());
+            setEncoding(inputSource.getEncoding());
+        }
+        else {
+            setPublicId(null);
+            setSystemId(null);
+            setByteStream(null);
+            setCharacterStream(null);
+            setEncoding(null);
+        }
+        fInputSource = inputSource;
+    }
+
+    public InputSource getInputSource() {
+        return fInputSource;
+    }
+
+    /**
+     * Sets the public identifier.
+     *
+     * @param publicId The new public identifier.
+     */
+    public void setPublicId(String publicId) {
+        super.setPublicId(publicId);
+        if (fInputSource == null) {
+            fInputSource = new InputSource();
+        }
+        fInputSource.setPublicId(publicId);
+    } // setPublicId(String)
+
+    /**
+     * Sets the system identifier.
+     *
+     * @param systemId The new system identifier.
+     */
+    public void setSystemId(String systemId) {
+        super.setSystemId(systemId);
+        if (fInputSource == null) {
+            fInputSource = new InputSource();
+        }
+        fInputSource.setSystemId(systemId);
+    } // setSystemId(String)
+
+    /**
+     * Sets the byte stream. If the byte stream is not already opened
+     * when this object is instantiated, then the code that opens the
+     * stream should also set the byte stream on this object. Also, if
+     * the encoding is auto-detected, then the encoding should also be
+     * set on this object.
+     *
+     * @param byteStream The new byte stream.
+     */
+    public void setByteStream(InputStream byteStream) {
+        super.setByteStream(byteStream);
+        if (fInputSource == null) {
+            fInputSource = new InputSource();
+        }
+        fInputSource.setByteStream(byteStream);
+    } // setByteStream(InputStream)
+
+    /**
+     * Sets the character stream. If the character stream is not already
+     * opened when this object is instantiated, then the code that opens
+     * the stream should also set the character stream on this object.
+     * Also, the encoding of the byte stream used by the reader should
+     * also be set on this object, if known.
+     *
+     * @param charStream The new character stream.
+     *
+     * @see #setEncoding
+     */
+    public void setCharacterStream(Reader charStream) {
+        super.setCharacterStream(charStream);
+        if (fInputSource == null) {
+            fInputSource = new InputSource();
+        }
+        fInputSource.setCharacterStream(charStream);
+    } // setCharacterStream(Reader)
+
+    /**
+     * Sets the encoding of the stream.
+     *
+     * @param encoding The new encoding.
+     */
+    public void setEncoding(String encoding) {
+        super.setEncoding(encoding);
+        if (fInputSource == null) {
+            fInputSource = new InputSource();
+        }
+        fInputSource.setEncoding(encoding);
+    } // setEncoding(String)
+
+} // SAXInputSource

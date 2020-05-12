@@ -1,254 +1,248 @@
-/*     */ package com.sun.corba.se.impl.oa.poa;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.OMGSystemException;
-/*     */ import com.sun.corba.se.impl.logging.POASystemException;
-/*     */ import com.sun.corba.se.spi.ior.ObjectAdapterId;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapter;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapterFactory;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.orbutil.closure.Closure;
-/*     */ import com.sun.corba.se.spi.orbutil.closure.ClosureFactory;
-/*     */ import java.util.Collections;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ import java.util.WeakHashMap;
-/*     */ import org.omg.CORBA.OBJECT_NOT_EXIST;
-/*     */ import org.omg.CORBA.ORBPackage.InvalidName;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.TRANSIENT;
-/*     */ import org.omg.PortableServer.POA;
-/*     */ import org.omg.PortableServer.POAManager;
-/*     */ import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
-/*     */ import org.omg.PortableServer.POAPackage.AdapterNonExistent;
-/*     */ import org.omg.PortableServer.Servant;
-/*     */ import org.omg.PortableServer.portable.Delegate;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class POAFactory
-/*     */   implements ObjectAdapterFactory
-/*     */ {
-/*  69 */   private Map exportedServantsToPOA = new WeakHashMap<>();
-/*     */   
-/*     */   private Set poaManagers;
-/*     */   
-/*     */   private int poaManagerId;
-/*     */   private int poaId;
-/*     */   private POAImpl rootPOA;
-/*     */   private DelegateImpl delegateImpl;
-/*     */   private ORB orb;
-/*     */   private POASystemException wrapper;
-/*     */   private OMGSystemException omgWrapper;
-/*     */   private boolean isShuttingDown = false;
-/*     */   
-/*     */   public POASystemException getWrapper() {
-/*  83 */     return this.wrapper;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public POAFactory() {
-/*  90 */     this.poaManagers = Collections.synchronizedSet(new HashSet(4));
-/*  91 */     this.poaManagerId = 0;
-/*  92 */     this.poaId = 0;
-/*  93 */     this.rootPOA = null;
-/*  94 */     this.delegateImpl = null;
-/*  95 */     this.orb = null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized POA lookupPOA(Servant paramServant) {
-/* 100 */     return (POA)this.exportedServantsToPOA.get(paramServant);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized void registerPOAForServant(POA paramPOA, Servant paramServant) {
-/* 105 */     this.exportedServantsToPOA.put(paramServant, paramPOA);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized void unregisterPOAForServant(POA paramPOA, Servant paramServant) {
-/* 110 */     this.exportedServantsToPOA.remove(paramServant);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void init(ORB paramORB) {
-/* 117 */     this.orb = paramORB;
-/* 118 */     this.wrapper = POASystemException.get(paramORB, "oa.lifecycle");
-/*     */     
-/* 120 */     this.omgWrapper = OMGSystemException.get(paramORB, "oa.lifecycle");
-/*     */     
-/* 122 */     this.delegateImpl = new DelegateImpl(paramORB, this);
-/* 123 */     registerRootPOA();
-/*     */     
-/* 125 */     POACurrent pOACurrent = new POACurrent(paramORB);
-/* 126 */     paramORB.getLocalResolver().register("POACurrent", 
-/* 127 */         ClosureFactory.makeConstant(pOACurrent));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ObjectAdapter find(ObjectAdapterId paramObjectAdapterId) {
-/* 132 */     POA pOA = null;
-/*     */     try {
-/* 134 */       boolean bool = true;
-/* 135 */       Iterator<String> iterator = paramObjectAdapterId.iterator();
-/* 136 */       pOA = getRootPOA();
-/* 137 */       while (iterator.hasNext()) {
-/* 138 */         String str = iterator.next();
-/*     */         
-/* 140 */         if (bool) {
-/* 141 */           if (!str.equals("RootPOA"))
-/* 142 */             throw this.wrapper.makeFactoryNotPoa(str); 
-/* 143 */           bool = false; continue;
-/*     */         } 
-/* 145 */         pOA = pOA.find_POA(str, true);
-/*     */       }
-/*     */     
-/* 148 */     } catch (AdapterNonExistent adapterNonExistent) {
-/* 149 */       throw this.omgWrapper.noObjectAdaptor(adapterNonExistent);
-/* 150 */     } catch (OBJECT_NOT_EXIST oBJECT_NOT_EXIST) {
-/* 151 */       throw oBJECT_NOT_EXIST;
-/* 152 */     } catch (TRANSIENT tRANSIENT) {
-/* 153 */       throw tRANSIENT;
-/* 154 */     } catch (Exception exception) {
-/* 155 */       throw this.wrapper.poaLookupError(exception);
-/*     */     } 
-/*     */     
-/* 158 */     if (pOA == null) {
-/* 159 */       throw this.wrapper.poaLookupError();
-/*     */     }
-/* 161 */     return (ObjectAdapter)pOA;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void shutdown(boolean paramBoolean) {
-/* 168 */     Iterator<?> iterator = null;
-/* 169 */     synchronized (this) {
-/* 170 */       this.isShuttingDown = true;
-/* 171 */       iterator = (new HashSet(this.poaManagers)).iterator();
-/*     */     } 
-/*     */     
-/* 174 */     while (iterator.hasNext()) {
-/*     */       try {
-/* 176 */         ((POAManager)iterator.next()).deactivate(true, paramBoolean);
-/* 177 */       } catch (AdapterInactive adapterInactive) {}
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void removePoaManager(POAManager paramPOAManager) {
-/* 185 */     this.poaManagers.remove(paramPOAManager);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized void addPoaManager(POAManager paramPOAManager) {
-/* 190 */     this.poaManagers.add(paramPOAManager);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized int newPOAManagerId() {
-/* 195 */     return this.poaManagerId++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void registerRootPOA() {
-/* 203 */     Closure closure = new Closure() {
-/*     */         public Object evaluate() {
-/* 205 */           return POAImpl.makeRootPOA(POAFactory.this.orb);
-/*     */         }
-/*     */       };
-/*     */     
-/* 209 */     this.orb.getLocalResolver().register("RootPOA", 
-/* 210 */         ClosureFactory.makeFuture(closure));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized POA getRootPOA() {
-/* 216 */     if (this.rootPOA == null) {
-/*     */       
-/* 218 */       if (this.isShuttingDown) {
-/* 219 */         throw this.omgWrapper.noObjectAdaptor();
-/*     */       }
-/*     */       
-/*     */       try {
-/* 223 */         Object object = this.orb.resolve_initial_references("RootPOA");
-/*     */         
-/* 225 */         this.rootPOA = (POAImpl)object;
-/* 226 */       } catch (InvalidName invalidName) {
-/* 227 */         throw this.wrapper.cantResolveRootPoa(invalidName);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 231 */     return this.rootPOA;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Delegate getDelegateImpl() {
-/* 236 */     return this.delegateImpl;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public synchronized int newPOAId() {
-/* 241 */     return this.poaId++;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ORB getORB() {
-/* 246 */     return this.orb;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\oa\poa\POAFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.oa.poa ;
+
+import java.util.Set ;
+import java.util.HashSet ;
+import java.util.Collections ;
+import java.util.Iterator ;
+import java.util.Map ;
+import java.util.WeakHashMap ;
+
+import org.omg.CORBA.OBJECT_NOT_EXIST ;
+import org.omg.CORBA.TRANSIENT ;
+
+import org.omg.CORBA.ORBPackage.InvalidName ;
+
+import org.omg.PortableServer.Servant ;
+import org.omg.PortableServer.POA ;
+import org.omg.PortableServer.POAManager ;
+
+import com.sun.corba.se.spi.oa.ObjectAdapter ;
+import com.sun.corba.se.spi.oa.ObjectAdapterFactory ;
+
+import com.sun.corba.se.spi.ior.ObjectAdapterId ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.orbutil.closure.Closure ;
+import com.sun.corba.se.spi.orbutil.closure.ClosureFactory ;
+
+import com.sun.corba.se.spi.protocol.PIHandler ;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+
+import com.sun.corba.se.impl.logging.POASystemException ;
+import com.sun.corba.se.impl.logging.OMGSystemException ;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants ;
+
+import com.sun.corba.se.impl.oa.poa.POAManagerImpl ;
+
+public class POAFactory implements ObjectAdapterFactory
+{
+    // Maps servants to POAs for deactivating servants when unexportObject is called.
+    // Maintained by POAs activate_object and deactivate_object.
+    private Map exportedServantsToPOA = new WeakHashMap();
+
+    private Set poaManagers ;
+    private int poaManagerId ;
+    private int poaId ;
+    private POAImpl rootPOA ;
+    private DelegateImpl delegateImpl;
+    private ORB orb ;
+    private POASystemException wrapper ;
+    private OMGSystemException omgWrapper ;
+    private boolean isShuttingDown = false;
+
+    public POASystemException getWrapper()
+    {
+        return wrapper ;
+    }
+
+    /** All object adapter factories must have a no-arg constructor.
+    */
+    public POAFactory()
+    {
+        poaManagers = Collections.synchronizedSet(new HashSet(4));
+        poaManagerId = 0 ;
+        poaId = 0 ;
+        rootPOA = null ;
+        delegateImpl = null ;
+        orb = null ;
+    }
+
+    public synchronized POA lookupPOA (Servant servant)
+    {
+        return (POA)exportedServantsToPOA.get(servant);
+    }
+
+    public synchronized void registerPOAForServant(POA poa, Servant servant)
+    {
+        exportedServantsToPOA.put(servant, poa);
+    }
+
+    public synchronized void unregisterPOAForServant(POA poa, Servant servant)
+    {
+        exportedServantsToPOA.remove(servant);
+    }
+
+// Implementation of ObjectAdapterFactory interface
+
+    public void init( ORB orb )
+    {
+        this.orb = orb ;
+        wrapper = POASystemException.get( orb,
+            CORBALogDomains.OA_LIFECYCLE ) ;
+        omgWrapper = OMGSystemException.get( orb,
+            CORBALogDomains.OA_LIFECYCLE ) ;
+        delegateImpl = new DelegateImpl( orb, this ) ;
+        registerRootPOA() ;
+
+        POACurrent poaCurrent = new POACurrent(orb);
+        orb.getLocalResolver().register( ORBConstants.POA_CURRENT_NAME,
+            ClosureFactory.makeConstant( poaCurrent ) ) ;
+    }
+
+    public ObjectAdapter find( ObjectAdapterId oaid )
+    {
+        POA poa=null;
+        try {
+            boolean first = true ;
+            Iterator iter = oaid.iterator() ;
+            poa = getRootPOA();
+            while (iter.hasNext()) {
+                String name = (String)(iter.next()) ;
+
+                if (first) {
+                    if (!name.equals( ORBConstants.ROOT_POA_NAME ))
+                        throw wrapper.makeFactoryNotPoa( name ) ;
+                    first = false ;
+                } else {
+                    poa = poa.find_POA( name, true ) ;
+                }
+            }
+        } catch ( org.omg.PortableServer.POAPackage.AdapterNonExistent ex ){
+            throw omgWrapper.noObjectAdaptor( ex ) ;
+        } catch ( OBJECT_NOT_EXIST ex ) {
+            throw ex;
+        } catch ( TRANSIENT ex ) {
+            throw ex;
+        } catch ( Exception ex ) {
+            throw wrapper.poaLookupError( ex ) ;
+        }
+
+        if ( poa == null )
+            throw wrapper.poaLookupError() ;
+
+        return (ObjectAdapter)poa;
+    }
+
+    public void shutdown( boolean waitForCompletion )
+    {
+        // It is important to copy the list of POAManagers first because
+        // pm.deactivate removes itself from poaManagers!
+        Iterator managers = null ;
+        synchronized (this) {
+            isShuttingDown = true ;
+            managers = (new HashSet(poaManagers)).iterator();
+        }
+
+        while ( managers.hasNext() ) {
+            try {
+                ((POAManager)managers.next()).deactivate(true, waitForCompletion);
+            } catch ( org.omg.PortableServer.POAManagerPackage.AdapterInactive e ) {}
+        }
+    }
+
+// Special methods used to manipulate global POA related state
+
+    public synchronized void removePoaManager( POAManager manager )
+    {
+        poaManagers.remove(manager);
+    }
+
+    public synchronized void addPoaManager( POAManager manager )
+    {
+        poaManagers.add(manager);
+    }
+
+    synchronized public int newPOAManagerId()
+    {
+        return poaManagerId++ ;
+    }
+
+    public void registerRootPOA()
+    {
+        // We delay the evaluation of makeRootPOA until
+        // a call to resolve_initial_references( "RootPOA" ).
+        // The Future guarantees that makeRootPOA is only called once.
+        Closure rpClosure = new Closure() {
+            public Object evaluate() {
+                return POAImpl.makeRootPOA( orb ) ;
+            }
+        } ;
+
+        orb.getLocalResolver().register( ORBConstants.ROOT_POA_NAME,
+            ClosureFactory.makeFuture( rpClosure ) ) ;
+    }
+
+
+    public synchronized POA getRootPOA()
+    {
+        if (rootPOA == null) {
+            // See if we are trying to getRootPOA while shutting down the ORB.
+            if (isShuttingDown) {
+                throw omgWrapper.noObjectAdaptor( ) ;
+            }
+
+            try {
+                Object obj = orb.resolve_initial_references(
+                    ORBConstants.ROOT_POA_NAME ) ;
+                rootPOA = (POAImpl)obj ;
+            } catch (InvalidName inv) {
+                throw wrapper.cantResolveRootPoa( inv ) ;
+            }
+        }
+
+        return rootPOA;
+    }
+
+    public org.omg.PortableServer.portable.Delegate getDelegateImpl()
+    {
+        return delegateImpl ;
+    }
+
+    synchronized public int newPOAId()
+    {
+        return poaId++ ;
+    }
+
+    public ORB getORB()
+    {
+        return orb ;
+    }
+}

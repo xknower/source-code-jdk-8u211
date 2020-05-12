@@ -1,232 +1,227 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.ViewportUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthViewportUI
-/*     */   extends ViewportUI
-/*     */   implements PropertyChangeListener, SynthUI
-/*     */ {
-/*     */   private SynthStyle style;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  51 */     return new SynthViewportUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/*  59 */     super.installUI(paramJComponent);
-/*  60 */     installDefaults(paramJComponent);
-/*  61 */     installListeners(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/*  69 */     super.uninstallUI(paramJComponent);
-/*  70 */     uninstallListeners(paramJComponent);
-/*  71 */     uninstallDefaults(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults(JComponent paramJComponent) {
-/*  80 */     updateStyle(paramJComponent);
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JComponent paramJComponent) {
-/*  84 */     SynthContext synthContext = getContext(paramJComponent, 1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  90 */     SynthStyle synthStyle1 = SynthLookAndFeel.getStyle(synthContext.getComponent(), synthContext
-/*  91 */         .getRegion());
-/*  92 */     SynthStyle synthStyle2 = synthContext.getStyle();
-/*     */     
-/*  94 */     if (synthStyle1 != synthStyle2) {
-/*  95 */       if (synthStyle2 != null) {
-/*  96 */         synthStyle2.uninstallDefaults(synthContext);
-/*     */       }
-/*  98 */       synthContext.setStyle(synthStyle1);
-/*  99 */       synthStyle1.installDefaults(synthContext);
-/*     */     } 
-/* 101 */     this.style = synthStyle1;
-/* 102 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners(JComponent paramJComponent) {
-/* 111 */     paramJComponent.addPropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners(JComponent paramJComponent) {
-/* 120 */     paramJComponent.removePropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults(JComponent paramJComponent) {
-/* 129 */     SynthContext synthContext = getContext(paramJComponent, 1);
-/* 130 */     this.style.uninstallDefaults(synthContext);
-/* 131 */     synthContext.dispose();
-/* 132 */     this.style = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 140 */     return getContext(paramJComponent, SynthLookAndFeel.getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 144 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */   
-/*     */   private Region getRegion(JComponent paramJComponent) {
-/* 148 */     return SynthLookAndFeel.getRegion(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 165 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 167 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 168 */     synthContext.getPainter().paintViewportBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 169 */         .getWidth(), paramJComponent.getHeight());
-/* 170 */     paint(synthContext, paramGraphics);
-/* 171 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 202 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 204 */     paint(synthContext, paramGraphics);
-/* 205 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 223 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent))
-/* 224 */       updateStyle((JComponent)paramPropertyChangeEvent.getSource()); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthViewportUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.beans.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import java.awt.*;
+
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JViewport}.
+ *
+ * @since 1.7
+ */
+public class SynthViewportUI extends ViewportUI
+                             implements PropertyChangeListener, SynthUI {
+    private SynthStyle style;
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param c component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent c) {
+        return new SynthViewportUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void installUI(JComponent c) {
+        super.installUI(c);
+        installDefaults(c);
+        installListeners(c);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void uninstallUI(JComponent c) {
+        super.uninstallUI(c);
+        uninstallListeners(c);
+        uninstallDefaults(c);
+    }
+
+    /**
+     * Installs defaults for a viewport.
+     *
+     * @param c a {@code JViewport} object
+     */
+    protected void installDefaults(JComponent c) {
+        updateStyle(c);
+    }
+
+    private void updateStyle(JComponent c) {
+        SynthContext context = getContext(c, ENABLED);
+
+        // Note: JViewport is special cased as it does not allow for
+        // a border to be set. JViewport.setBorder is overriden to throw
+        // an IllegalArgumentException. Refer to SynthScrollPaneUI for
+        // details of this.
+        SynthStyle newStyle = SynthLookAndFeel.getStyle(context.getComponent(),
+                                                        context.getRegion());
+        SynthStyle oldStyle = context.getStyle();
+
+        if (newStyle != oldStyle) {
+            if (oldStyle != null) {
+                oldStyle.uninstallDefaults(context);
+            }
+            context.setStyle(newStyle);
+            newStyle.installDefaults(context);
+        }
+        this.style = newStyle;
+        context.dispose();
+    }
+
+    /**
+     * Installs listeners into the viewport.
+     *
+     * @param c a {@code JViewport} object
+     */
+    protected void installListeners(JComponent c) {
+        c.addPropertyChangeListener(this);
+    }
+
+    /**
+     * Uninstalls listeners from the viewport.
+     *
+     * @param c a {@code JViewport} object
+     */
+    protected void uninstallListeners(JComponent c) {
+        c.removePropertyChangeListener(this);
+    }
+
+    /**
+     * Uninstalls defaults from a viewport.
+     *
+     * @param c a {@code JViewport} object
+     */
+    protected void uninstallDefaults(JComponent c) {
+        SynthContext context = getContext(c, ENABLED);
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    private Region getRegion(JComponent c) {
+        return SynthLookAndFeel.getRegion(c);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintViewportBackground(context,
+                          g, 0, 0, c.getWidth(), c.getHeight());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the border. The method is never called,
+     * because the {@code JViewport} class does not support a border.
+     * This implementation does nothing.
+     *
+     * @param context a component context
+     * @param g the {@code Graphics} to paint on
+     * @param x the X coordinate
+     * @param y the Y coordinate
+     * @param w width of the border
+     * @param h height of the border
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component. This implementation does nothing.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent e) {
+        if (SynthLookAndFeel.shouldUpdateStyle(e)) {
+            updateStyle((JComponent)e.getSource());
+        }
+    }
+}

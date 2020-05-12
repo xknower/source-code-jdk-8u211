@@ -1,11 +1,49 @@
+/*
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package java.awt.peer;
 
-public interface CheckboxMenuItemPeer extends MenuItemPeer {
-  void setState(boolean paramBoolean);
-}
+import java.awt.CheckboxMenuItem;
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\peer\CheckboxMenuItemPeer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The peer interface for {@link CheckboxMenuItem}.
+ *
+ * The peer interfaces are intended only for use in porting
+ * the AWT. They are not intended for use by application
+ * developers, and developers should not implement peers
+ * nor invoke any of the peer methods directly on the peer
+ * instances.
  */
+public interface CheckboxMenuItemPeer extends MenuItemPeer {
+
+    /**
+     * Sets the state of the checkbox to be checked {@code true} or
+     * unchecked {@code false}.
+     *
+     * @param state the state to set on the checkbox
+     *
+     * @see CheckboxMenuItem#setState(boolean)
+     */
+    void setState(boolean state);
+}

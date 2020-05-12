@@ -1,128 +1,123 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.msg;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.util.MessageFormatter;
-/*     */ import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
-/*     */ import java.text.MessageFormat;
-/*     */ import java.util.Locale;
-/*     */ import java.util.MissingResourceException;
-/*     */ import java.util.ResourceBundle;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLMessageFormatter_it
-/*     */   implements MessageFormatter
-/*     */ {
-/*     */   public static final String XML_DOMAIN = "http://www.w3.org/TR/1998/REC-xml-19980210";
-/*     */   public static final String XMLNS_DOMAIN = "http://www.w3.org/TR/1999/REC-xml-names-19990114";
-/*  49 */   private Locale fLocale = null;
-/*  50 */   private ResourceBundle fResourceBundle = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String formatMessage(Locale locale, String key, Object[] arguments) throws MissingResourceException {
-/*     */     String msg;
-/*  74 */     if (this.fResourceBundle == null || locale != this.fLocale) {
-/*  75 */       if (locale != null) {
-/*  76 */         this.fResourceBundle = SecuritySupport.getResourceBundle("com.sun.org.apache.xerces.internal.impl.msg.XMLMessages", locale);
-/*     */         
-/*  78 */         this.fLocale = locale;
-/*     */       } 
-/*  80 */       if (this.fResourceBundle == null) {
-/*  81 */         this.fResourceBundle = SecuritySupport.getResourceBundle("com.sun.org.apache.xerces.internal.impl.msg.XMLMessages");
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/*  87 */       msg = this.fResourceBundle.getString(key);
-/*  88 */       if (arguments != null) {
-/*     */         try {
-/*  90 */           msg = MessageFormat.format(msg, arguments);
-/*     */         }
-/*  92 */         catch (Exception e) {
-/*  93 */           msg = this.fResourceBundle.getString("FormatFailed");
-/*  94 */           msg = msg + " " + this.fResourceBundle.getString(key);
-/*     */         
-/*     */         }
-/*     */       
-/*     */       }
-/*     */     }
-/* 100 */     catch (MissingResourceException e) {
-/* 101 */       msg = this.fResourceBundle.getString("BadMessageKey");
-/* 102 */       throw new MissingResourceException(key, msg, key);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 106 */     if (msg == null) {
-/* 107 */       msg = key;
-/* 108 */       if (arguments.length > 0) {
-/* 109 */         StringBuffer str = new StringBuffer(msg);
-/* 110 */         str.append('?');
-/* 111 */         for (int i = 0; i < arguments.length; i++) {
-/* 112 */           if (i > 0) {
-/* 113 */             str.append('&');
-/*     */           }
-/* 115 */           str.append(String.valueOf(arguments[i]));
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 120 */     return msg;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\msg\XMLMessageFormatter_it.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.msg;
+
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.PropertyResourceBundle;
+
+import com.sun.org.apache.xerces.internal.util.MessageFormatter;
+import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
+
+/**
+ * XMLMessageFormatter provides error messages for the XML 1.0 Recommendation and for
+ * the Namespaces Recommendation
+ *
+ * @xerces.internal
+ *
+ * @author Eric Ye, IBM
+ * @version $Id: XMLMessageFormatter_it.java 3094 2012-03-21 05:50:01Z joehw $
+ *
+ */
+public class XMLMessageFormatter_it implements MessageFormatter {
+    /**
+     * The domain of messages concerning the XML 1.0 specification.
+     */
+    public static final String XML_DOMAIN = "http://www.w3.org/TR/1998/REC-xml-19980210";
+    public static final String XMLNS_DOMAIN = "http://www.w3.org/TR/1999/REC-xml-names-19990114";
+
+    // private objects to cache the locale and resource bundle
+    private Locale fLocale = null;
+    private ResourceBundle fResourceBundle = null;
+
+    //
+    // MessageFormatter methods
+    //
+
+    /**
+     * Formats a message with the specified arguments using the given
+     * locale information.
+     *
+     * @param locale    The locale of the message.
+     * @param key       The message key.
+     * @param arguments The message replacement text arguments. The order
+     *                  of the arguments must match that of the placeholders
+     *                  in the actual message.
+     *
+     * @return Returns the formatted message.
+     *
+     * @throws MissingResourceException Thrown if the message with the
+     *                                  specified key cannot be found.
+     */
+    public String formatMessage(Locale locale, String key, Object[] arguments)
+        throws MissingResourceException {
+
+        if (fResourceBundle == null || locale != fLocale) {
+            if (locale != null) {
+                fResourceBundle = SecuritySupport.getResourceBundle("com.sun.org.apache.xerces.internal.impl.msg.XMLMessages", locale);
+                // memorize the most-recent locale
+                fLocale = locale;
+            }
+            if (fResourceBundle == null)
+                fResourceBundle = SecuritySupport.getResourceBundle("com.sun.org.apache.xerces.internal.impl.msg.XMLMessages");
+        }
+
+        // format message
+        String msg;
+        try {
+            msg = fResourceBundle.getString(key);
+            if (arguments != null) {
+                try {
+                    msg = java.text.MessageFormat.format(msg, arguments);
+                }
+                catch (Exception e) {
+                    msg = fResourceBundle.getString("FormatFailed");
+                    msg += " " + fResourceBundle.getString(key);
+                }
+            }
+        }
+
+        // error
+        catch (MissingResourceException e) {
+            msg = fResourceBundle.getString("BadMessageKey");
+            throw new MissingResourceException(key, msg, key);
+        }
+
+        // no message
+        if (msg == null) {
+            msg = key;
+            if (arguments.length > 0) {
+                StringBuffer str = new StringBuffer(msg);
+                str.append('?');
+                for (int i = 0; i < arguments.length; i++) {
+                    if (i > 0) {
+                        str.append('&');
+                    }
+                    str.append(String.valueOf(arguments[i]));
+                }
+            }
+        }
+
+        return msg;
+    }
+
+}

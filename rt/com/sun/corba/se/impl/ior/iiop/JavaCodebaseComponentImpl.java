@@ -1,92 +1,86 @@
-/*    */ package com.sun.corba.se.impl.ior.iiop;
-/*    */ 
-/*    */ import com.sun.corba.se.spi.ior.TaggedComponentBase;
-/*    */ import com.sun.corba.se.spi.ior.iiop.JavaCodebaseComponent;
-/*    */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class JavaCodebaseComponentImpl
-/*    */   extends TaggedComponentBase
-/*    */   implements JavaCodebaseComponent
-/*    */ {
-/*    */   private String URLs;
-/*    */   
-/*    */   public boolean equals(Object paramObject) {
-/* 46 */     if (paramObject == null) {
-/* 47 */       return false;
-/*    */     }
-/* 49 */     if (!(paramObject instanceof JavaCodebaseComponentImpl)) {
-/* 50 */       return false;
-/*    */     }
-/* 52 */     JavaCodebaseComponentImpl javaCodebaseComponentImpl = (JavaCodebaseComponentImpl)paramObject;
-/*    */     
-/* 54 */     return this.URLs.equals(javaCodebaseComponentImpl.getURLs());
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int hashCode() {
-/* 59 */     return this.URLs.hashCode();
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String toString() {
-/* 64 */     return "JavaCodebaseComponentImpl[URLs=" + this.URLs + "]";
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public String getURLs() {
-/* 69 */     return this.URLs;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public JavaCodebaseComponentImpl(String paramString) {
-/* 74 */     this.URLs = paramString;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public void writeContents(OutputStream paramOutputStream) {
-/* 79 */     paramOutputStream.write_string(this.URLs);
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getId() {
-/* 84 */     return 25;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\iiop\JavaCodebaseComponentImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior.iiop;
+
+import org.omg.IOP.TAG_JAVA_CODEBASE ;
+
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+import com.sun.corba.se.spi.ior.TaggedComponentBase ;
+
+import com.sun.corba.se.spi.ior.iiop.JavaCodebaseComponent ;
+
+/**
+ * @author
+ */
+public class JavaCodebaseComponentImpl extends TaggedComponentBase
+    implements JavaCodebaseComponent
+{
+    private String URLs ;
+
+    public boolean equals( Object obj )
+    {
+        if (obj == null)
+            return false ;
+
+        if (!(obj instanceof JavaCodebaseComponentImpl))
+            return false ;
+
+        JavaCodebaseComponentImpl other = (JavaCodebaseComponentImpl)obj ;
+
+        return URLs.equals( other.getURLs() ) ;
+    }
+
+    public int hashCode()
+    {
+        return URLs.hashCode() ;
+    }
+
+    public String toString()
+    {
+        return "JavaCodebaseComponentImpl[URLs=" + URLs + "]" ;
+    }
+
+    public String getURLs()
+    {
+        return URLs ;
+    }
+
+    public JavaCodebaseComponentImpl( String URLs )
+    {
+        this.URLs = URLs ;
+    }
+
+    public void writeContents(OutputStream os)
+    {
+        os.write_string( URLs ) ;
+    }
+
+    public int getId()
+    {
+        return TAG_JAVA_CODEBASE.value ; // 25 in CORBA 2.3.1 13.6.3
+    }
+}

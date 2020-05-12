@@ -1,56 +1,50 @@
-/*    */ package com.sun.corba.se.impl.ior;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ObjectAdapterIdNumber
-/*    */   extends ObjectAdapterIdArray
-/*    */ {
-/*    */   private int poaid;
-/*    */   
-/*    */   public ObjectAdapterIdNumber(int paramInt) {
-/* 42 */     super("OldRootPOA", Integer.toString(paramInt));
-/* 43 */     this.poaid = paramInt;
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public int getOldPOAId() {
-/* 48 */     return this.poaid;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\ObjectAdapterIdNumber.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior ;
+
+import java.util.Iterator ;
+import org.omg.CORBA_2_3.portable.OutputStream ;
+
+/** ObjectAdapterIdNumber is used to represent pre-JDK 1.4 POA adapter
+ * IDs.  The POA ID was simply represented as a single integer, which was
+ * mapped to the actual POA instance.  Here, we just represent these
+ * internally as arrays of the form { "OldRootPOA", "<number>" },
+ * and provide an extra method to get the number back.
+ */
+public class ObjectAdapterIdNumber extends ObjectAdapterIdArray {
+    private int poaid ;
+
+    public ObjectAdapterIdNumber( int poaid )
+    {
+        super( "OldRootPOA", Integer.toString( poaid ) ) ;
+        this.poaid = poaid ;
+    }
+
+    public int getOldPOAId()
+    {
+        return poaid ;
+    }
+}

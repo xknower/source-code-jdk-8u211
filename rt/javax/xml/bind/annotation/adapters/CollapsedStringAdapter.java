@@ -1,125 +1,119 @@
-/*     */ package javax.xml.bind.annotation.adapters;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CollapsedStringAdapter
-/*     */   extends XmlAdapter<String, String>
-/*     */ {
-/*     */   public String unmarshal(String text) {
-/*  47 */     if (text == null) return null;
-/*     */     
-/*  49 */     int len = text.length();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  54 */     int s = 0;
-/*  55 */     while (s < len && 
-/*  56 */       !isWhiteSpace(text.charAt(s)))
-/*     */     {
-/*  58 */       s++;
-/*     */     }
-/*  60 */     if (s == len)
-/*     */     {
-/*  62 */       return text;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  67 */     StringBuilder result = new StringBuilder(len);
-/*     */     
-/*  69 */     if (s != 0) {
-/*  70 */       for (int j = 0; j < s; j++)
-/*  71 */         result.append(text.charAt(j)); 
-/*  72 */       result.append(' ');
-/*     */     } 
-/*     */     
-/*  75 */     boolean inStripMode = true;
-/*  76 */     for (int i = s + 1; i < len; i++) {
-/*  77 */       char ch = text.charAt(i);
-/*  78 */       boolean b = isWhiteSpace(ch);
-/*  79 */       if (!inStripMode || !b) {
-/*     */ 
-/*     */         
-/*  82 */         inStripMode = b;
-/*  83 */         if (inStripMode) {
-/*  84 */           result.append(' ');
-/*     */         } else {
-/*  86 */           result.append(ch);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*  90 */     len = result.length();
-/*  91 */     if (len > 0 && result.charAt(len - 1) == ' ') {
-/*  92 */       result.setLength(len - 1);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*  97 */     return result.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String marshal(String s) {
-/* 106 */     return s;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected static boolean isWhiteSpace(char ch) {
-/* 114 */     if (ch > ' ') return false;
-/*     */ 
-/*     */     
-/* 117 */     return (ch == '\t' || ch == '\n' || ch == '\r' || ch == ' ');
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\bind\annotation\adapters\CollapsedStringAdapter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.bind.annotation.adapters;
+
+
+
+/**
+ * Built-in {@link XmlAdapter} to handle <tt>xs:token</tt> and its derived types.
+ *
+ * <p>
+ * This adapter removes leading and trailing whitespaces, then truncate any
+ * sequnce of tab, CR, LF, and SP by a single whitespace character ' '.
+ *
+ * @author Kohsuke Kawaguchi
+ * @since JAXB 2.0
+ */
+public class CollapsedStringAdapter extends XmlAdapter<String,String> {
+    /**
+     * Removes leading and trailing whitespaces of the string
+     * given as the parameter, then truncate any
+     * sequnce of tab, CR, LF, and SP by a single whitespace character ' '.
+     */
+    public String unmarshal(String text) {
+        if(text==null)  return null;        // be defensive
+
+        int len = text.length();
+
+        // most of the texts are already in the collapsed form.
+        // so look for the first whitespace in the hope that we will
+        // never see it.
+        int s=0;
+        while(s<len) {
+            if(isWhiteSpace(text.charAt(s)))
+                break;
+            s++;
+        }
+        if(s==len)
+            // the input happens to be already collapsed.
+            return text;
+
+        // we now know that the input contains spaces.
+        // let's sit down and do the collapsing normally.
+
+        StringBuilder result = new StringBuilder(len /*allocate enough size to avoid re-allocation*/ );
+
+        if(s!=0) {
+            for( int i=0; i<s; i++ )
+                result.append(text.charAt(i));
+            result.append(' ');
+        }
+
+        boolean inStripMode = true;
+        for (int i = s+1; i < len; i++) {
+            char ch = text.charAt(i);
+            boolean b = isWhiteSpace(ch);
+            if (inStripMode && b)
+                continue; // skip this character
+
+            inStripMode = b;
+            if (inStripMode)
+                result.append(' ');
+            else
+                result.append(ch);
+        }
+
+        // remove trailing whitespaces
+        len = result.length();
+        if (len > 0 && result.charAt(len - 1) == ' ')
+            result.setLength(len - 1);
+        // whitespaces are already collapsed,
+        // so all we have to do is to remove the last one character
+        // if it's a whitespace.
+
+        return result.toString();
+    }
+
+    /**
+     * No-op.
+     *
+     * Just return the same string given as the parameter.
+     */
+    public String marshal(String s) {
+        return s;
+    }
+
+
+    /** returns true if the specified char is a white space character. */
+    protected static boolean isWhiteSpace(char ch) {
+        // most of the characters are non-control characters.
+        // so check that first to quickly return false for most of the cases.
+        if( ch>0x20 )   return false;
+
+        // other than we have to do four comparisons.
+        return ch == 0x9 || ch == 0xA || ch == 0xD || ch == 0x20;
+    }
+}

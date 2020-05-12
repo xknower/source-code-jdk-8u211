@@ -1,15 +1,54 @@
+/*
+ * Copyright (c) 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.util.prefs;
 
-import java.util.EventListener;
-
-public interface NodeChangeListener extends EventListener {
-  void childAdded(NodeChangeEvent paramNodeChangeEvent);
-  
-  void childRemoved(NodeChangeEvent paramNodeChangeEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\prefs\NodeChangeListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * A listener for receiving preference node change events.
+ *
+ * @author  Josh Bloch
+ * @see     Preferences
+ * @see     NodeChangeEvent
+ * @see     PreferenceChangeListener
+ * @since   1.4
  */
+
+public interface NodeChangeListener extends java.util.EventListener {
+    /**
+     * This method gets called when a child node is added.
+     *
+     * @param evt A node change event object describing the parent
+     *            and child node.
+     */
+    void childAdded(NodeChangeEvent evt);
+
+    /**
+     * This method gets called when a child node is removed.
+     *
+     * @param evt A node change event object describing the parent
+     *            and child node.
+     */
+    void childRemoved(NodeChangeEvent evt);
+}

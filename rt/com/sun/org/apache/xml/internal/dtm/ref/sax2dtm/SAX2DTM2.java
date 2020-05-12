@@ -1,3390 +1,3385 @@
-/*      */ package com.sun.org.apache.xml.internal.dtm.ref.sax2dtm;
-/*      */ 
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMException;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMManager;
-/*      */ import com.sun.org.apache.xml.internal.dtm.DTMWSFilter;
-/*      */ import com.sun.org.apache.xml.internal.dtm.ref.DTMDefaultBaseIterators;
-/*      */ import com.sun.org.apache.xml.internal.dtm.ref.ExtendedType;
-/*      */ import com.sun.org.apache.xml.internal.res.XMLMessages;
-/*      */ import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
-/*      */ import com.sun.org.apache.xml.internal.utils.FastStringBuffer;
-/*      */ import com.sun.org.apache.xml.internal.utils.SuballocatedIntVector;
-/*      */ import com.sun.org.apache.xml.internal.utils.XMLString;
-/*      */ import com.sun.org.apache.xml.internal.utils.XMLStringDefault;
-/*      */ import com.sun.org.apache.xml.internal.utils.XMLStringFactory;
-/*      */ import java.util.Vector;
-/*      */ import javax.xml.transform.Source;
-/*      */ import org.xml.sax.Attributes;
-/*      */ import org.xml.sax.ContentHandler;
-/*      */ import org.xml.sax.SAXException;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class SAX2DTM2
-/*      */   extends SAX2DTM
-/*      */ {
-/*      */   private int[] m_exptype_map0;
-/*      */   private int[] m_nextsib_map0;
-/*      */   private int[] m_firstch_map0;
-/*      */   private int[] m_parent_map0;
-/*      */   private int[][] m_exptype_map;
-/*      */   private int[][] m_nextsib_map;
-/*      */   private int[][] m_firstch_map;
-/*      */   private int[][] m_parent_map;
-/*      */   protected ExtendedType[] m_extendedTypes;
-/*      */   protected Vector m_values;
-/*      */   
-/*      */   public final class ChildrenIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*   91 */       if (node == 0)
-/*   92 */         node = SAX2DTM2.this.getDocument(); 
-/*   93 */       if (this._isRestartable) {
-/*      */         
-/*   95 */         this._startNode = node;
-/*   96 */         this
-/*   97 */           ._currentNode = (node == -1) ? -1 : SAX2DTM2.this._firstch2(SAX2DTM2.this.makeNodeIdentity(node));
-/*      */         
-/*   99 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  102 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  113 */       if (this._currentNode != -1) {
-/*  114 */         int node = this._currentNode;
-/*  115 */         this._currentNode = SAX2DTM2.this._nextsib2(node);
-/*  116 */         return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */       } 
-/*      */       
-/*  119 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class ParentIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     private int _nodeType;
-/*      */ 
-/*      */     
-/*      */     public ParentIterator() {
-/*  132 */       this._nodeType = -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  145 */       if (node == 0)
-/*  146 */         node = SAX2DTM2.this.getDocument(); 
-/*  147 */       if (this._isRestartable) {
-/*      */         
-/*  149 */         this._startNode = node;
-/*      */         
-/*  151 */         if (node != -1) {
-/*  152 */           this._currentNode = SAX2DTM2.this._parent2(SAX2DTM2.this.makeNodeIdentity(node));
-/*      */         } else {
-/*  154 */           this._currentNode = -1;
-/*      */         } 
-/*  156 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  159 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setNodeType(int type) {
-/*  175 */       this._nodeType = type;
-/*      */       
-/*  177 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  188 */       int result = this._currentNode;
-/*  189 */       if (result == -1) {
-/*  190 */         return -1;
-/*      */       }
-/*      */       
-/*  193 */       if (this._nodeType == -1) {
-/*  194 */         this._currentNode = -1;
-/*  195 */         return returnNode(SAX2DTM2.this.makeNodeHandle(result));
-/*      */       } 
-/*  197 */       if (this._nodeType >= 14) {
-/*  198 */         if (this._nodeType == SAX2DTM2.this._exptype2(result)) {
-/*  199 */           this._currentNode = -1;
-/*  200 */           return returnNode(SAX2DTM2.this.makeNodeHandle(result));
-/*      */         }
-/*      */       
-/*      */       }
-/*  204 */       else if (this._nodeType == SAX2DTM2.this._type2(result)) {
-/*  205 */         this._currentNode = -1;
-/*  206 */         return returnNode(SAX2DTM2.this.makeNodeHandle(result));
-/*      */       } 
-/*      */ 
-/*      */       
-/*  210 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedChildrenIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedChildrenIterator(int nodeType) {
-/*  234 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  248 */       if (node == 0)
-/*  249 */         node = SAX2DTM2.this.getDocument(); 
-/*  250 */       if (this._isRestartable) {
-/*      */         
-/*  252 */         this._startNode = node;
-/*  253 */         this
-/*      */           
-/*  255 */           ._currentNode = (node == -1) ? -1 : SAX2DTM2.this._firstch2(SAX2DTM2.this.makeNodeIdentity(this._startNode));
-/*      */         
-/*  257 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  260 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  270 */       int node = this._currentNode;
-/*  271 */       if (node == -1) {
-/*  272 */         return -1;
-/*      */       }
-/*  274 */       int nodeType = this._nodeType;
-/*      */       
-/*  276 */       if (nodeType != 1) {
-/*  277 */         while (node != -1 && SAX2DTM2.this._exptype2(node) != nodeType) {
-/*  278 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */ 
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */ 
-/*      */         
-/*  288 */         while (node != -1) {
-/*  289 */           int eType = SAX2DTM2.this._exptype2(node);
-/*  290 */           if (eType >= 14) {
-/*      */             break;
-/*      */           }
-/*  293 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  297 */       if (node == -1) {
-/*  298 */         this._currentNode = -1;
-/*  299 */         return -1;
-/*      */       } 
-/*  301 */       this._currentNode = SAX2DTM2.this._nextsib2(node);
-/*  302 */       return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getNodeByPosition(int position) {
-/*  312 */       if (position <= 0) {
-/*  313 */         return -1;
-/*      */       }
-/*  315 */       int node = this._currentNode;
-/*  316 */       int pos = 0;
-/*      */       
-/*  318 */       int nodeType = this._nodeType;
-/*  319 */       if (nodeType != 1) {
-/*  320 */         while (node != -1) {
-/*      */           
-/*  322 */           pos++;
-/*  323 */           if (SAX2DTM2.this._exptype2(node) == nodeType && pos == position) {
-/*  324 */             return SAX2DTM2.this.makeNodeHandle(node);
-/*      */           }
-/*      */           
-/*  327 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */         } 
-/*  329 */         return -1;
-/*      */       } 
-/*      */       
-/*  332 */       while (node != -1) {
-/*      */         
-/*  334 */         pos++;
-/*  335 */         if (SAX2DTM2.this._exptype2(node) >= 14 && pos == position) {
-/*  336 */           return SAX2DTM2.this.makeNodeHandle(node);
-/*      */         }
-/*  338 */         node = SAX2DTM2.this._nextsib2(node);
-/*      */       } 
-/*  340 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class TypedRootIterator
-/*      */     extends DTMDefaultBaseIterators.RootIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedRootIterator(int nodeType) {
-/*  364 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  374 */       if (this._startNode == this._currentNode) {
-/*  375 */         return -1;
-/*      */       }
-/*  377 */       int node = this._startNode;
-/*  378 */       int expType = SAX2DTM2.this._exptype2(SAX2DTM2.this.makeNodeIdentity(node));
-/*      */       
-/*  380 */       this._currentNode = node;
-/*      */       
-/*  382 */       if (this._nodeType >= 14) {
-/*  383 */         if (this._nodeType == expType) {
-/*  384 */           return returnNode(node);
-/*      */         
-/*      */         }
-/*      */       }
-/*  388 */       else if (expType < 14) {
-/*  389 */         if (expType == this._nodeType) {
-/*  390 */           return returnNode(node);
-/*      */         
-/*      */         }
-/*      */       }
-/*  394 */       else if (SAX2DTM2.this.m_extendedTypes[expType].getNodeType() == this._nodeType) {
-/*  395 */         return returnNode(node);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  400 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class FollowingSiblingIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  421 */       if (node == 0)
-/*  422 */         node = SAX2DTM2.this.getDocument(); 
-/*  423 */       if (this._isRestartable) {
-/*      */         
-/*  425 */         this._startNode = node;
-/*  426 */         this._currentNode = SAX2DTM2.this.makeNodeIdentity(node);
-/*      */         
-/*  428 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  431 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  441 */       this
-/*  442 */         ._currentNode = (this._currentNode == -1) ? -1 : SAX2DTM2.this._nextsib2(this._currentNode);
-/*  443 */       return returnNode(SAX2DTM2.this.makeNodeHandle(this._currentNode));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedFollowingSiblingIterator
-/*      */     extends FollowingSiblingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedFollowingSiblingIterator(int type) {
-/*  465 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  475 */       if (this._currentNode == -1) {
-/*  476 */         return -1;
-/*      */       }
-/*      */       
-/*  479 */       int node = this._currentNode;
-/*  480 */       int nodeType = this._nodeType;
-/*      */       
-/*  482 */       if (nodeType != 1) {
-/*  483 */         while ((node = SAX2DTM2.this._nextsib2(node)) != -1 && SAX2DTM2.this._exptype2(node) != nodeType);
-/*      */       } else {
-/*      */         
-/*  486 */         while ((node = SAX2DTM2.this._nextsib2(node)) != -1 && SAX2DTM2.this._exptype2(node) < 14);
-/*      */       } 
-/*      */       
-/*  489 */       this._currentNode = node;
-/*      */       
-/*  491 */       return (node == -1) ? -1 : 
-/*      */         
-/*  493 */         returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class AttributeIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  517 */       if (node == 0)
-/*  518 */         node = SAX2DTM2.this.getDocument(); 
-/*  519 */       if (this._isRestartable) {
-/*      */         
-/*  521 */         this._startNode = node;
-/*  522 */         this._currentNode = SAX2DTM2.this.getFirstAttributeIdentity(SAX2DTM2.this.makeNodeIdentity(node));
-/*      */         
-/*  524 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  527 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  538 */       int node = this._currentNode;
-/*      */       
-/*  540 */       if (node != -1) {
-/*  541 */         this._currentNode = SAX2DTM2.this.getNextAttributeIdentity(node);
-/*  542 */         return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */       } 
-/*      */       
-/*  545 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedAttributeIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedAttributeIterator(int nodeType) {
-/*  566 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  581 */       if (this._isRestartable) {
-/*      */         
-/*  583 */         this._startNode = node;
-/*      */         
-/*  585 */         this._currentNode = SAX2DTM2.this.getTypedAttribute(node, this._nodeType);
-/*      */         
-/*  587 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  590 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  601 */       int node = this._currentNode;
-/*      */ 
-/*      */ 
-/*      */       
-/*  605 */       this._currentNode = -1;
-/*      */       
-/*  607 */       return returnNode(node);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class PrecedingSiblingIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     protected int _startNodeID;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isReverse() {
-/*  629 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  643 */       if (node == 0)
-/*  644 */         node = SAX2DTM2.this.getDocument(); 
-/*  645 */       if (this._isRestartable) {
-/*      */         
-/*  647 */         this._startNode = node;
-/*  648 */         node = this._startNodeID = SAX2DTM2.this.makeNodeIdentity(node);
-/*      */         
-/*  650 */         if (node == -1) {
-/*      */           
-/*  652 */           this._currentNode = node;
-/*  653 */           return resetPosition();
-/*      */         } 
-/*      */         
-/*  656 */         int type = SAX2DTM2.this._type2(node);
-/*  657 */         if (2 == type || 13 == type) {
-/*      */ 
-/*      */           
-/*  660 */           this._currentNode = node;
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */           
-/*  665 */           this._currentNode = SAX2DTM2.this._parent2(node);
-/*  666 */           if (-1 != this._currentNode) {
-/*  667 */             this._currentNode = SAX2DTM2.this._firstch2(this._currentNode);
-/*      */           } else {
-/*  669 */             this._currentNode = node;
-/*      */           } 
-/*      */         } 
-/*  672 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  675 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  686 */       if (this._currentNode == this._startNodeID || this._currentNode == -1)
-/*      */       {
-/*  688 */         return -1;
-/*      */       }
-/*      */ 
-/*      */       
-/*  692 */       int node = this._currentNode;
-/*  693 */       this._currentNode = SAX2DTM2.this._nextsib2(node);
-/*      */       
-/*  695 */       return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedPrecedingSiblingIterator
-/*      */     extends PrecedingSiblingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedPrecedingSiblingIterator(int type) {
-/*  719 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  729 */       int node = this._currentNode;
-/*      */       
-/*  731 */       int nodeType = this._nodeType;
-/*  732 */       int startNodeID = this._startNodeID;
-/*      */       
-/*  734 */       if (nodeType != 1) {
-/*  735 */         while (node != -1 && node != startNodeID && SAX2DTM2.this._exptype2(node) != nodeType) {
-/*  736 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */         }
-/*      */       } else {
-/*      */         
-/*  740 */         while (node != -1 && node != startNodeID && SAX2DTM2.this._exptype2(node) < 14) {
-/*  741 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */         }
-/*      */       } 
-/*      */       
-/*  745 */       if (node == -1 || node == startNodeID) {
-/*  746 */         this._currentNode = -1;
-/*  747 */         return -1;
-/*      */       } 
-/*      */       
-/*  750 */       this._currentNode = SAX2DTM2.this._nextsib2(node);
-/*  751 */       return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getLast() {
-/*  760 */       if (this._last != -1) {
-/*  761 */         return this._last;
-/*      */       }
-/*  763 */       setMark();
-/*      */       
-/*  765 */       int node = this._currentNode;
-/*  766 */       int nodeType = this._nodeType;
-/*  767 */       int startNodeID = this._startNodeID;
-/*      */       
-/*  769 */       int last = 0;
-/*  770 */       if (nodeType != 1) {
-/*  771 */         while (node != -1 && node != startNodeID) {
-/*  772 */           if (SAX2DTM2.this._exptype2(node) == nodeType) {
-/*  773 */             last++;
-/*      */           }
-/*  775 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */         } 
-/*      */       } else {
-/*      */         
-/*  779 */         while (node != -1 && node != startNodeID) {
-/*  780 */           if (SAX2DTM2.this._exptype2(node) >= 14) {
-/*  781 */             last++;
-/*      */           }
-/*  783 */           node = SAX2DTM2.this._nextsib2(node);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  787 */       gotoMark();
-/*      */       
-/*  789 */       return this._last = last;
-/*      */     } }
-/*      */   
-/*      */   public class PrecedingIterator extends DTMDefaultBaseIterators.InternalAxisIteratorBase {
-/*      */     private final int _maxAncestors = 8;
-/*      */     protected int[] _stack;
-/*      */     protected int _sp;
-/*      */     protected int _oldsp;
-/*      */     protected int _markedsp;
-/*      */     protected int _markedNode;
-/*      */     protected int _markedDescendant;
-/*      */     
-/*      */     public PrecedingIterator() {
-/*  802 */       this._maxAncestors = 8;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  808 */       this._stack = new int[8];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public boolean isReverse() {
-/*  824 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator cloneIterator() {
-/*  834 */       this._isRestartable = false;
-/*      */ 
-/*      */       
-/*      */       try {
-/*  838 */         PrecedingIterator clone = (PrecedingIterator)clone();
-/*  839 */         int[] stackCopy = new int[this._stack.length];
-/*  840 */         System.arraycopy(this._stack, 0, stackCopy, 0, this._stack.length);
-/*      */         
-/*  842 */         clone._stack = stackCopy;
-/*      */ 
-/*      */         
-/*  845 */         return clone;
-/*      */       }
-/*  847 */       catch (CloneNotSupportedException e) {
-/*      */         
-/*  849 */         throw new DTMException(XMLMessages.createXMLMessage("ER_ITERATOR_CLONE_NOT_SUPPORTED", null));
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/*  864 */       if (node == 0)
-/*  865 */         node = SAX2DTM2.this.getDocument(); 
-/*  866 */       if (this._isRestartable) {
-/*      */         
-/*  868 */         node = SAX2DTM2.this.makeNodeIdentity(node);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  873 */         if (SAX2DTM2.this._type2(node) == 2) {
-/*  874 */           node = SAX2DTM2.this._parent2(node);
-/*      */         }
-/*  876 */         this._startNode = node; int index;
-/*  877 */         this._stack[index = 0] = node;
-/*      */         
-/*  879 */         int parent = node;
-/*  880 */         while ((parent = SAX2DTM2.this._parent2(parent)) != -1) {
-/*      */           
-/*  882 */           if (++index == this._stack.length) {
-/*      */             
-/*  884 */             int[] stack = new int[index * 2];
-/*  885 */             System.arraycopy(this._stack, 0, stack, 0, index);
-/*  886 */             this._stack = stack;
-/*      */           } 
-/*  888 */           this._stack[index] = parent;
-/*      */         } 
-/*      */         
-/*  891 */         if (index > 0) {
-/*  892 */           index--;
-/*      */         }
-/*  894 */         this._currentNode = this._stack[index];
-/*      */         
-/*  896 */         this._oldsp = this._sp = index;
-/*      */         
-/*  898 */         return resetPosition();
-/*      */       } 
-/*      */       
-/*  901 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  914 */       this._currentNode++; for (; this._sp >= 0; this._currentNode++) {
-/*      */         
-/*  916 */         if (this._currentNode < this._stack[this._sp]) {
-/*      */           
-/*  918 */           int type = SAX2DTM2.this._type2(this._currentNode);
-/*  919 */           if (type != 2 && type != 13) {
-/*  920 */             return returnNode(SAX2DTM2.this.makeNodeHandle(this._currentNode));
-/*      */           }
-/*      */         } else {
-/*  923 */           this._sp--;
-/*      */         } 
-/*  925 */       }  return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/*  939 */       this._sp = this._oldsp;
-/*      */       
-/*  941 */       return resetPosition();
-/*      */     }
-/*      */     
-/*      */     public void setMark() {
-/*  945 */       this._markedsp = this._sp;
-/*  946 */       this._markedNode = this._currentNode;
-/*  947 */       this._markedDescendant = this._stack[0];
-/*      */     }
-/*      */     
-/*      */     public void gotoMark() {
-/*  951 */       this._sp = this._markedsp;
-/*  952 */       this._currentNode = this._markedNode;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedPrecedingIterator
-/*      */     extends PrecedingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedPrecedingIterator(int type) {
-/*  975 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/*  985 */       int node = this._currentNode;
-/*  986 */       int nodeType = this._nodeType;
-/*      */       
-/*  988 */       if (nodeType >= 14) {
-/*      */         while (true) {
-/*  990 */           node++;
-/*      */           
-/*  992 */           if (this._sp < 0) {
-/*  993 */             node = -1;
-/*      */             break;
-/*      */           } 
-/*  996 */           if (node >= this._stack[this._sp]) {
-/*  997 */             if (--this._sp < 0) {
-/*  998 */               node = -1; break;
-/*      */             } 
-/*      */             continue;
-/*      */           } 
-/* 1002 */           if (SAX2DTM2.this._exptype2(node) == nodeType) {
-/*      */             break;
-/*      */           }
-/*      */         }
-/*      */       
-/*      */       } else {
-/*      */         
-/*      */         while (true) {
-/*      */           
-/* 1011 */           node++;
-/*      */           
-/* 1013 */           if (this._sp < 0) {
-/* 1014 */             node = -1;
-/*      */             break;
-/*      */           } 
-/* 1017 */           if (node >= this._stack[this._sp]) {
-/* 1018 */             if (--this._sp < 0) {
-/* 1019 */               node = -1;
-/*      */               break;
-/*      */             } 
-/*      */             continue;
-/*      */           } 
-/* 1024 */           int expType = SAX2DTM2.this._exptype2(node);
-/* 1025 */           if ((expType < 14) ? (
-/* 1026 */             expType == nodeType) : (
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1031 */             SAX2DTM2.this.m_extendedTypes[expType].getNodeType() == nodeType)) {
-/*      */             break;
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1039 */       this._currentNode = node;
-/*      */       
-/* 1041 */       return (node == -1) ? -1 : returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class FollowingIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1068 */       if (node == 0)
-/* 1069 */         node = SAX2DTM2.this.getDocument(); 
-/* 1070 */       if (this._isRestartable) {
-/*      */         int first;
-/* 1072 */         this._startNode = node;
-/*      */ 
-/*      */ 
-/*      */         
-/* 1076 */         node = SAX2DTM2.this.makeNodeIdentity(node);
-/*      */ 
-/*      */         
-/* 1079 */         int type = SAX2DTM2.this._type2(node);
-/*      */         
-/* 1081 */         if (2 == type || 13 == type) {
-/*      */           
-/* 1083 */           node = SAX2DTM2.this._parent2(node);
-/* 1084 */           first = SAX2DTM2.this._firstch2(node);
-/*      */           
-/* 1086 */           if (-1 != first) {
-/* 1087 */             this._currentNode = SAX2DTM2.this.makeNodeHandle(first);
-/* 1088 */             return resetPosition();
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */         
-/*      */         do {
-/* 1094 */           first = SAX2DTM2.this._nextsib2(node);
-/*      */           
-/* 1096 */           if (-1 != first)
-/* 1097 */             continue;  node = SAX2DTM2.this._parent2(node);
-/*      */         }
-/* 1099 */         while (-1 == first && -1 != node);
-/*      */         
-/* 1101 */         this._currentNode = SAX2DTM2.this.makeNodeHandle(first);
-/*      */ 
-/*      */         
-/* 1104 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1107 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1118 */       int node = this._currentNode;
-/*      */ 
-/*      */       
-/* 1121 */       int current = SAX2DTM2.this.makeNodeIdentity(node);
-/*      */ 
-/*      */       
-/*      */       while (true) {
-/* 1125 */         current++;
-/*      */         
-/* 1127 */         int type = SAX2DTM2.this._type2(current);
-/* 1128 */         if (-1 == type) {
-/* 1129 */           this._currentNode = -1;
-/* 1130 */           return returnNode(node);
-/*      */         } 
-/*      */         
-/* 1133 */         if (2 == type || 13 == type)
-/*      */           continue;  break;
-/*      */       } 
-/* 1136 */       this._currentNode = SAX2DTM2.this.makeNodeHandle(current);
-/* 1137 */       return returnNode(node);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedFollowingIterator
-/*      */     extends FollowingIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedFollowingIterator(int type) {
-/* 1160 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1174 */       int node, nodeType = this._nodeType;
-/* 1175 */       int currentNodeID = SAX2DTM2.this.makeNodeIdentity(this._currentNode);
-/*      */       
-/* 1177 */       if (nodeType >= 14) {
-/*      */         do {
-/* 1179 */           int type; node = currentNodeID;
-/* 1180 */           int current = node;
-/*      */           
-/*      */           do {
-/* 1183 */             current++;
-/* 1184 */             type = SAX2DTM2.this._type2(current);
-/*      */           }
-/* 1186 */           while (type != -1 && (2 == type || 13 == type));
-/*      */           
-/* 1188 */           currentNodeID = (type != -1) ? current : -1;
-/*      */         }
-/* 1190 */         while (node != -1 && SAX2DTM2.this._exptype2(node) != nodeType);
-/*      */       } else {
-/*      */         do {
-/*      */           int type;
-/* 1194 */           node = currentNodeID;
-/* 1195 */           int current = node;
-/*      */           
-/*      */           do {
-/* 1198 */             current++;
-/* 1199 */             type = SAX2DTM2.this._type2(current);
-/*      */           }
-/* 1201 */           while (type != -1 && (2 == type || 13 == type));
-/*      */           
-/* 1203 */           currentNodeID = (type != -1) ? current : -1;
-/*      */         }
-/* 1205 */         while (node != -1 && SAX2DTM2.this
-/* 1206 */           ._exptype2(node) != nodeType && SAX2DTM2.this._type2(node) != nodeType);
-/*      */       } 
-/*      */       
-/* 1209 */       this._currentNode = SAX2DTM2.this.makeNodeHandle(currentNodeID);
-/* 1210 */       return (node == -1) ? -1 : returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public class AncestorIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase {
-/*      */     private static final int m_blocksize = 32;
-/*      */     int[] m_ancestors;
-/*      */     int m_size;
-/*      */     int m_ancestorsPos;
-/*      */     int m_markedPos;
-/*      */     int m_realStartNode;
-/*      */     
-/*      */     public AncestorIterator() {
-/* 1224 */       this.m_ancestors = new int[32];
-/*      */ 
-/*      */       
-/* 1227 */       this.m_size = 0;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getStartNode() {
-/* 1244 */       return this.m_realStartNode;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final boolean isReverse() {
-/* 1254 */       return true;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator cloneIterator() {
-/* 1264 */       this._isRestartable = false;
-/*      */ 
-/*      */       
-/*      */       try {
-/* 1268 */         AncestorIterator clone = (AncestorIterator)clone();
-/*      */         
-/* 1270 */         clone._startNode = this._startNode;
-/*      */ 
-/*      */         
-/* 1273 */         return clone;
-/*      */       }
-/* 1275 */       catch (CloneNotSupportedException e) {
-/*      */         
-/* 1277 */         throw new DTMException(XMLMessages.createXMLMessage("ER_ITERATOR_CLONE_NOT_SUPPORTED", null));
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1292 */       if (node == 0)
-/* 1293 */         node = SAX2DTM2.this.getDocument(); 
-/* 1294 */       this.m_realStartNode = node;
-/*      */       
-/* 1296 */       if (this._isRestartable) {
-/*      */         
-/* 1298 */         int nodeID = SAX2DTM2.this.makeNodeIdentity(node);
-/* 1299 */         this.m_size = 0;
-/*      */         
-/* 1301 */         if (nodeID == -1) {
-/* 1302 */           this._currentNode = -1;
-/* 1303 */           this.m_ancestorsPos = 0;
-/* 1304 */           return this;
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1309 */         if (!this._includeSelf) {
-/* 1310 */           nodeID = SAX2DTM2.this._parent2(nodeID);
-/* 1311 */           node = SAX2DTM2.this.makeNodeHandle(nodeID);
-/*      */         } 
-/*      */         
-/* 1314 */         this._startNode = node;
-/*      */         
-/* 1316 */         while (nodeID != -1) {
-/*      */           
-/* 1318 */           if (this.m_size >= this.m_ancestors.length) {
-/*      */             
-/* 1320 */             int[] newAncestors = new int[this.m_size * 2];
-/* 1321 */             System.arraycopy(this.m_ancestors, 0, newAncestors, 0, this.m_ancestors.length);
-/* 1322 */             this.m_ancestors = newAncestors;
-/*      */           } 
-/*      */           
-/* 1325 */           this.m_ancestors[this.m_size++] = node;
-/* 1326 */           nodeID = SAX2DTM2.this._parent2(nodeID);
-/* 1327 */           node = SAX2DTM2.this.makeNodeHandle(nodeID);
-/*      */         } 
-/*      */         
-/* 1330 */         this.m_ancestorsPos = this.m_size - 1;
-/*      */         
-/* 1332 */         this._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors[this.m_ancestorsPos] : -1;
-/*      */ 
-/*      */ 
-/*      */         
-/* 1336 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1339 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/* 1351 */       this.m_ancestorsPos = this.m_size - 1;
-/*      */       
-/* 1353 */       this._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors[this.m_ancestorsPos] : -1;
-/*      */ 
-/*      */       
-/* 1356 */       return resetPosition();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1367 */       int next = this._currentNode;
-/*      */       
-/* 1369 */       int pos = --this.m_ancestorsPos;
-/*      */       
-/* 1371 */       this._currentNode = (pos >= 0) ? this.m_ancestors[this.m_ancestorsPos] : -1;
-/*      */ 
-/*      */       
-/* 1374 */       return returnNode(next);
-/*      */     }
-/*      */     
-/*      */     public void setMark() {
-/* 1378 */       this.m_markedPos = this.m_ancestorsPos;
-/*      */     }
-/*      */     
-/*      */     public void gotoMark() {
-/* 1382 */       this.m_ancestorsPos = this.m_markedPos;
-/* 1383 */       this._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors[this.m_ancestorsPos] : -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedAncestorIterator
-/*      */     extends AncestorIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedAncestorIterator(int type) {
-/* 1405 */       this._nodeType = type;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1419 */       if (node == 0)
-/* 1420 */         node = SAX2DTM2.this.getDocument(); 
-/* 1421 */       this.m_realStartNode = node;
-/*      */       
-/* 1423 */       if (this._isRestartable) {
-/*      */         
-/* 1425 */         int nodeID = SAX2DTM2.this.makeNodeIdentity(node);
-/* 1426 */         this.m_size = 0;
-/*      */         
-/* 1428 */         if (nodeID == -1) {
-/* 1429 */           this._currentNode = -1;
-/* 1430 */           this.m_ancestorsPos = 0;
-/* 1431 */           return this;
-/*      */         } 
-/*      */         
-/* 1434 */         int nodeType = this._nodeType;
-/*      */         
-/* 1436 */         if (!this._includeSelf) {
-/* 1437 */           nodeID = SAX2DTM2.this._parent2(nodeID);
-/* 1438 */           node = SAX2DTM2.this.makeNodeHandle(nodeID);
-/*      */         } 
-/*      */         
-/* 1441 */         this._startNode = node;
-/*      */         
-/* 1443 */         if (nodeType >= 14) {
-/* 1444 */           while (nodeID != -1) {
-/* 1445 */             int eType = SAX2DTM2.this._exptype2(nodeID);
-/*      */             
-/* 1447 */             if (eType == nodeType) {
-/* 1448 */               if (this.m_size >= this.m_ancestors.length) {
-/*      */                 
-/* 1450 */                 int[] newAncestors = new int[this.m_size * 2];
-/* 1451 */                 System.arraycopy(this.m_ancestors, 0, newAncestors, 0, this.m_ancestors.length);
-/* 1452 */                 this.m_ancestors = newAncestors;
-/*      */               } 
-/* 1454 */               this.m_ancestors[this.m_size++] = SAX2DTM2.this.makeNodeHandle(nodeID);
-/*      */             } 
-/* 1456 */             nodeID = SAX2DTM2.this._parent2(nodeID);
-/*      */           } 
-/*      */         } else {
-/*      */           
-/* 1460 */           while (nodeID != -1) {
-/* 1461 */             int eType = SAX2DTM2.this._exptype2(nodeID);
-/*      */             
-/* 1463 */             if ((eType < 14 && eType == nodeType) || (eType >= 14 && SAX2DTM2.this.m_extendedTypes[eType]
-/*      */               
-/* 1465 */               .getNodeType() == nodeType)) {
-/* 1466 */               if (this.m_size >= this.m_ancestors.length) {
-/*      */                 
-/* 1468 */                 int[] newAncestors = new int[this.m_size * 2];
-/* 1469 */                 System.arraycopy(this.m_ancestors, 0, newAncestors, 0, this.m_ancestors.length);
-/* 1470 */                 this.m_ancestors = newAncestors;
-/*      */               } 
-/* 1472 */               this.m_ancestors[this.m_size++] = SAX2DTM2.this.makeNodeHandle(nodeID);
-/*      */             } 
-/* 1474 */             nodeID = SAX2DTM2.this._parent2(nodeID);
-/*      */           } 
-/*      */         } 
-/* 1477 */         this.m_ancestorsPos = this.m_size - 1;
-/*      */         
-/* 1479 */         this._currentNode = (this.m_ancestorsPos >= 0) ? this.m_ancestors[this.m_ancestorsPos] : -1;
-/*      */ 
-/*      */ 
-/*      */         
-/* 1483 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1486 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getNodeByPosition(int position) {
-/* 1494 */       if (position > 0 && position <= this.m_size) {
-/* 1495 */         return this.m_ancestors[position - 1];
-/*      */       }
-/*      */       
-/* 1498 */       return -1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getLast() {
-/* 1506 */       return this.m_size;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public class DescendantIterator
-/*      */     extends DTMDefaultBaseIterators.InternalAxisIteratorBase
-/*      */   {
-/*      */     public DTMAxisIterator setStartNode(int node) {
-/* 1527 */       if (node == 0)
-/* 1528 */         node = SAX2DTM2.this.getDocument(); 
-/* 1529 */       if (this._isRestartable) {
-/*      */         
-/* 1531 */         node = SAX2DTM2.this.makeNodeIdentity(node);
-/* 1532 */         this._startNode = node;
-/*      */         
-/* 1534 */         if (this._includeSelf) {
-/* 1535 */           node--;
-/*      */         }
-/* 1537 */         this._currentNode = node;
-/*      */         
-/* 1539 */         return resetPosition();
-/*      */       } 
-/*      */       
-/* 1542 */       return this;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected final boolean isDescendant(int identity) {
-/* 1561 */       return (SAX2DTM2.this._parent2(identity) >= this._startNode || this._startNode == identity);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1571 */       int startNode = this._startNode;
-/* 1572 */       if (startNode == -1) {
-/* 1573 */         return -1;
-/*      */       }
-/*      */       
-/* 1576 */       if (this._includeSelf && this._currentNode + 1 == startNode) {
-/* 1577 */         return returnNode(SAX2DTM2.this.makeNodeHandle(++this._currentNode));
-/*      */       }
-/* 1579 */       int node = this._currentNode;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1584 */       if (startNode == 0) {
-/*      */         int eType; int type;
-/*      */         do {
-/* 1587 */           node++;
-/* 1588 */           eType = SAX2DTM2.this._exptype2(node);
-/*      */           
-/* 1590 */           if (-1 == eType) {
-/* 1591 */             this._currentNode = -1;
-/* 1592 */             return -1;
-/*      */           } 
-/* 1594 */         } while (eType == 3 || (
-/* 1595 */           type = SAX2DTM2.this.m_extendedTypes[eType].getNodeType()) == 2 || type == 13);
-/*      */       } else {
-/*      */         int type;
-/*      */         
-/*      */         do {
-/* 1600 */           node++;
-/* 1601 */           type = SAX2DTM2.this._type2(node);
-/*      */           
-/* 1603 */           if (-1 == type || !isDescendant(node)) {
-/* 1604 */             this._currentNode = -1;
-/* 1605 */             return -1;
-/*      */           } 
-/* 1607 */         } while (2 == type || 3 == type || 13 == type);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1611 */       this._currentNode = node;
-/* 1612 */       return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public DTMAxisIterator reset() {
-/* 1622 */       boolean temp = this._isRestartable;
-/*      */       
-/* 1624 */       this._isRestartable = true;
-/*      */       
-/* 1626 */       setStartNode(SAX2DTM2.this.makeNodeHandle(this._startNode));
-/*      */       
-/* 1628 */       this._isRestartable = temp;
-/*      */       
-/* 1630 */       return this;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedDescendantIterator
-/*      */     extends DescendantIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedDescendantIterator(int nodeType) {
-/* 1652 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1662 */       int startNode = this._startNode;
-/* 1663 */       if (this._startNode == -1) {
-/* 1664 */         return -1;
-/*      */       }
-/*      */       
-/* 1667 */       int node = this._currentNode;
-/*      */ 
-/*      */       
-/* 1670 */       int nodeType = this._nodeType;
-/*      */       
-/* 1672 */       if (nodeType != 1) {
-/*      */         int expType;
-/*      */         
-/*      */         do {
-/* 1676 */           node++;
-/* 1677 */           expType = SAX2DTM2.this._exptype2(node);
-/*      */           
-/* 1679 */           if (-1 == expType || (SAX2DTM2.this._parent2(node) < startNode && startNode != node)) {
-/* 1680 */             this._currentNode = -1;
-/* 1681 */             return -1;
-/*      */           }
-/*      */         
-/* 1684 */         } while (expType != nodeType);
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/* 1689 */       else if (startNode == 0) {
-/*      */         int expType;
-/*      */         
-/*      */         do {
-/* 1693 */           node++;
-/* 1694 */           expType = SAX2DTM2.this._exptype2(node);
-/*      */           
-/* 1696 */           if (-1 == expType) {
-/* 1697 */             this._currentNode = -1;
-/* 1698 */             return -1;
-/*      */           } 
-/* 1700 */         } while (expType < 14 || SAX2DTM2.this.m_extendedTypes[expType]
-/* 1701 */           .getNodeType() != 1);
-/*      */       } else {
-/*      */         int expType;
-/*      */ 
-/*      */         
-/*      */         do {
-/* 1707 */           node++;
-/* 1708 */           expType = SAX2DTM2.this._exptype2(node);
-/*      */           
-/* 1710 */           if (-1 == expType || (SAX2DTM2.this._parent2(node) < startNode && startNode != node)) {
-/* 1711 */             this._currentNode = -1;
-/* 1712 */             return -1;
-/*      */           }
-/*      */         
-/* 1715 */         } while (expType < 14 || SAX2DTM2.this.m_extendedTypes[expType]
-/* 1716 */           .getNodeType() != 1);
-/*      */       } 
-/*      */       
-/* 1719 */       this._currentNode = node;
-/* 1720 */       return returnNode(SAX2DTM2.this.makeNodeHandle(node));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final class TypedSingletonIterator
-/*      */     extends DTMDefaultBaseIterators.SingletonIterator
-/*      */   {
-/*      */     private final int _nodeType;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public TypedSingletonIterator(int nodeType) {
-/* 1741 */       this._nodeType = nodeType;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int next() {
-/* 1752 */       int result = this._currentNode;
-/* 1753 */       if (result == -1) {
-/* 1754 */         return -1;
-/*      */       }
-/* 1756 */       this._currentNode = -1;
-/*      */       
-/* 1758 */       if (this._nodeType >= 14) {
-/* 1759 */         if (SAX2DTM2.this._exptype2(SAX2DTM2.this.makeNodeIdentity(result)) == this._nodeType) {
-/* 1760 */           return returnNode(result);
-/*      */         
-/*      */         }
-/*      */       }
-/* 1764 */       else if (SAX2DTM2.this._type2(SAX2DTM2.this.makeNodeIdentity(result)) == this._nodeType) {
-/* 1765 */         return returnNode(result);
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1769 */       return -1;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/* 1807 */   private int m_valueIndex = 0;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int m_maxNodeIndex;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int m_SHIFT;
-/*      */ 
-/*      */   
-/*      */   protected int m_MASK;
-/*      */ 
-/*      */   
-/*      */   protected int m_blocksize;
-/*      */ 
-/*      */   
-/*      */   protected static final int TEXT_LENGTH_BITS = 10;
-/*      */ 
-/*      */   
-/*      */   protected static final int TEXT_OFFSET_BITS = 21;
-/*      */ 
-/*      */   
-/*      */   protected static final int TEXT_LENGTH_MAX = 1023;
-/*      */ 
-/*      */   
-/*      */   protected static final int TEXT_OFFSET_MAX = 2097151;
-/*      */ 
-/*      */   
-/*      */   protected boolean m_buildIdIndex = true;
-/*      */ 
-/*      */   
-/*      */   private static final String EMPTY_STR = "";
-/*      */ 
-/*      */   
-/* 1842 */   private static final XMLString EMPTY_XML_STR = new XMLStringDefault("");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SAX2DTM2(DTMManager mgr, Source source, int dtmIdentity, DTMWSFilter whiteSpaceFilter, XMLStringFactory xstringfactory, boolean doIndexing) {
-/* 1853 */     this(mgr, source, dtmIdentity, whiteSpaceFilter, xstringfactory, doIndexing, 512, true, true, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SAX2DTM2(DTMManager mgr, Source source, int dtmIdentity, DTMWSFilter whiteSpaceFilter, XMLStringFactory xstringfactory, boolean doIndexing, int blocksize, boolean usePrevsib, boolean buildIdIndex, boolean newNameTable) {
-/* 1870 */     super(mgr, source, dtmIdentity, whiteSpaceFilter, xstringfactory, doIndexing, blocksize, usePrevsib, newNameTable);
-/*      */ 
-/*      */     
-/*      */     int shift;
-/*      */     
-/* 1875 */     for (shift = 0; (blocksize >>>= 1) != 0; shift++);
-/*      */     
-/* 1877 */     this.m_blocksize = 1 << shift;
-/* 1878 */     this.m_SHIFT = shift;
-/* 1879 */     this.m_MASK = this.m_blocksize - 1;
-/*      */     
-/* 1881 */     this.m_buildIdIndex = buildIdIndex;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1886 */     this.m_values = new Vector(32, 512);
-/*      */     
-/* 1888 */     this.m_maxNodeIndex = 65536;
-/*      */ 
-/*      */     
-/* 1891 */     this.m_exptype_map0 = this.m_exptype.getMap0();
-/* 1892 */     this.m_nextsib_map0 = this.m_nextsib.getMap0();
-/* 1893 */     this.m_firstch_map0 = this.m_firstch.getMap0();
-/* 1894 */     this.m_parent_map0 = this.m_parent.getMap0();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _exptype(int identity) {
-/* 1905 */     return this.m_exptype.elementAt(identity);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _exptype2(int identity) {
-/* 1928 */     if (identity < this.m_blocksize) {
-/* 1929 */       return this.m_exptype_map0[identity];
-/*      */     }
-/* 1931 */     return this.m_exptype_map[identity >>> this.m_SHIFT][identity & this.m_MASK];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _nextsib2(int identity) {
-/* 1944 */     if (identity < this.m_blocksize) {
-/* 1945 */       return this.m_nextsib_map0[identity];
-/*      */     }
-/* 1947 */     return this.m_nextsib_map[identity >>> this.m_SHIFT][identity & this.m_MASK];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _firstch2(int identity) {
-/* 1960 */     if (identity < this.m_blocksize) {
-/* 1961 */       return this.m_firstch_map0[identity];
-/*      */     }
-/* 1963 */     return this.m_firstch_map[identity >>> this.m_SHIFT][identity & this.m_MASK];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _parent2(int identity) {
-/* 1976 */     if (identity < this.m_blocksize) {
-/* 1977 */       return this.m_parent_map0[identity];
-/*      */     }
-/* 1979 */     return this.m_parent_map[identity >>> this.m_SHIFT][identity & this.m_MASK];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _type2(int identity) {
-/*      */     int eType;
-/* 1992 */     if (identity < this.m_blocksize) {
-/* 1993 */       eType = this.m_exptype_map0[identity];
-/*      */     } else {
-/* 1995 */       eType = this.m_exptype_map[identity >>> this.m_SHIFT][identity & this.m_MASK];
-/*      */     } 
-/* 1997 */     if (-1 != eType) {
-/* 1998 */       return this.m_extendedTypes[eType].getNodeType();
-/*      */     }
-/* 2000 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int getExpandedTypeID2(int nodeHandle) {
-/* 2011 */     int nodeID = makeNodeIdentity(nodeHandle);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2015 */     if (nodeID != -1) {
-/* 2016 */       if (nodeID < this.m_blocksize) {
-/* 2017 */         return this.m_exptype_map0[nodeID];
-/*      */       }
-/* 2019 */       return this.m_exptype_map[nodeID >>> this.m_SHIFT][nodeID & this.m_MASK];
-/*      */     } 
-/*      */     
-/* 2022 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int _exptype2Type(int exptype) {
-/* 2035 */     if (-1 != exptype) {
-/* 2036 */       return this.m_extendedTypes[exptype].getNodeType();
-/*      */     }
-/* 2038 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getIdForNamespace(String uri) {
-/* 2051 */     int index = this.m_values.indexOf(uri);
-/* 2052 */     if (index < 0) {
-/*      */       
-/* 2054 */       this.m_values.addElement(uri);
-/* 2055 */       return this.m_valueIndex++;
-/*      */     } 
-/*      */     
-/* 2058 */     return index;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-/* 2088 */     charactersFlush();
-/*      */     
-/* 2090 */     int exName = this.m_expandedNameTable.getExpandedTypeID(uri, localName, 1);
-/*      */ 
-/*      */     
-/* 2093 */     int prefixIndex = (qName.length() != localName.length()) ? this.m_valuesOrPrefixes.stringToIndex(qName) : 0;
-/*      */     
-/* 2095 */     int elemNode = addNode(1, exName, this.m_parents
-/* 2096 */         .peek(), this.m_previous, prefixIndex, true);
-/*      */     
-/* 2098 */     if (this.m_indexing) {
-/* 2099 */       indexNode(exName, elemNode);
-/*      */     }
-/* 2101 */     this.m_parents.push(elemNode);
-/*      */     
-/* 2103 */     int startDecls = this.m_contextIndexes.peek();
-/* 2104 */     int nDecls = this.m_prefixMappings.size();
-/*      */ 
-/*      */     
-/* 2107 */     if (!this.m_pastFirstElement) {
-/*      */ 
-/*      */       
-/* 2110 */       String prefix = "xml";
-/* 2111 */       String declURL = "http://www.w3.org/XML/1998/namespace";
-/* 2112 */       exName = this.m_expandedNameTable.getExpandedTypeID(null, prefix, 13);
-/* 2113 */       this.m_values.addElement(declURL);
-/* 2114 */       int val = this.m_valueIndex++;
-/* 2115 */       addNode(13, exName, elemNode, -1, val, false);
-/*      */       
-/* 2117 */       this.m_pastFirstElement = true;
-/*      */     } 
-/*      */     
-/* 2120 */     for (int i = startDecls; i < nDecls; i += 2) {
-/*      */       
-/* 2122 */       String prefix = this.m_prefixMappings.elementAt(i);
-/*      */       
-/* 2124 */       if (prefix != null) {
-/*      */ 
-/*      */         
-/* 2127 */         String declURL = this.m_prefixMappings.elementAt(i + 1);
-/*      */         
-/* 2129 */         exName = this.m_expandedNameTable.getExpandedTypeID(null, prefix, 13);
-/*      */         
-/* 2131 */         this.m_values.addElement(declURL);
-/* 2132 */         int val = this.m_valueIndex++;
-/*      */         
-/* 2134 */         addNode(13, exName, elemNode, -1, val, false);
-/*      */       } 
-/*      */     } 
-/* 2137 */     int n = attributes.getLength();
-/*      */     
-/* 2139 */     for (int j = 0; j < n; j++) {
-/*      */       int nodeType;
-/* 2141 */       String attrUri = attributes.getURI(j);
-/* 2142 */       String attrQName = attributes.getQName(j);
-/* 2143 */       String valString = attributes.getValue(j);
-/*      */ 
-/*      */ 
-/*      */       
-/* 2147 */       String attrLocalName = attributes.getLocalName(j);
-/*      */       
-/* 2149 */       if (null != attrQName && (attrQName
-/* 2150 */         .equals("xmlns") || attrQName
-/* 2151 */         .startsWith("xmlns:"))) {
-/*      */         
-/* 2153 */         String prefix = getPrefix(attrQName, attrUri);
-/* 2154 */         if (declAlreadyDeclared(prefix)) {
-/*      */           continue;
-/*      */         }
-/* 2157 */         nodeType = 13;
-/*      */       }
-/*      */       else {
-/*      */         
-/* 2161 */         nodeType = 2;
-/*      */         
-/* 2163 */         if (this.m_buildIdIndex && attributes.getType(j).equalsIgnoreCase("ID")) {
-/* 2164 */           setIDAttribute(valString, elemNode);
-/*      */         }
-/*      */       } 
-/*      */ 
-/*      */       
-/* 2169 */       if (null == valString) {
-/* 2170 */         valString = "";
-/*      */       }
-/* 2172 */       this.m_values.addElement(valString);
-/* 2173 */       int val = this.m_valueIndex++;
-/*      */       
-/* 2175 */       if (attrLocalName.length() != attrQName.length()) {
-/*      */ 
-/*      */         
-/* 2178 */         prefixIndex = this.m_valuesOrPrefixes.stringToIndex(attrQName);
-/*      */         
-/* 2180 */         int dataIndex = this.m_data.size();
-/*      */         
-/* 2182 */         this.m_data.addElement(prefixIndex);
-/* 2183 */         this.m_data.addElement(val);
-/*      */         
-/* 2185 */         val = -dataIndex;
-/*      */       } 
-/*      */       
-/* 2188 */       exName = this.m_expandedNameTable.getExpandedTypeID(attrUri, attrLocalName, nodeType);
-/* 2189 */       addNode(nodeType, exName, elemNode, -1, val, false);
-/*      */       
-/*      */       continue;
-/*      */     } 
-/* 2193 */     if (null != this.m_wsfilter) {
-/*      */       
-/* 2195 */       short wsv = this.m_wsfilter.getShouldStripSpace(makeNodeHandle(elemNode), this);
-/*      */       
-/* 2197 */       boolean shouldStrip = (3 == wsv) ? getShouldStripWhitespace() : ((2 == wsv));
-/*      */ 
-/*      */       
-/* 2200 */       pushShouldStripWhitespace(shouldStrip);
-/*      */     } 
-/*      */     
-/* 2203 */     this.m_previous = -1;
-/*      */     
-/* 2205 */     this.m_contextIndexes.push(this.m_prefixMappings.size());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endElement(String uri, String localName, String qName) throws SAXException {
-/* 2231 */     charactersFlush();
-/*      */ 
-/*      */ 
-/*      */     
-/* 2235 */     this.m_contextIndexes.quickPop(1);
-/*      */ 
-/*      */     
-/* 2238 */     int topContextIndex = this.m_contextIndexes.peek();
-/* 2239 */     if (topContextIndex != this.m_prefixMappings.size()) {
-/* 2240 */       this.m_prefixMappings.setSize(topContextIndex);
-/*      */     }
-/*      */     
-/* 2243 */     this.m_previous = this.m_parents.pop();
-/*      */     
-/* 2245 */     popShouldStripWhitespace();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void comment(char[] ch, int start, int length) throws SAXException {
-/* 2263 */     if (this.m_insideDTD) {
-/*      */       return;
-/*      */     }
-/* 2266 */     charactersFlush();
-/*      */ 
-/*      */ 
-/*      */     
-/* 2270 */     this.m_values.addElement(new String(ch, start, length));
-/* 2271 */     int dataIndex = this.m_valueIndex++;
-/*      */     
-/* 2273 */     this.m_previous = addNode(8, 8, this.m_parents
-/* 2274 */         .peek(), this.m_previous, dataIndex, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startDocument() throws SAXException {
-/* 2287 */     int doc = addNode(9, 9, -1, -1, 0, true);
-/*      */ 
-/*      */ 
-/*      */     
-/* 2291 */     this.m_parents.push(doc);
-/* 2292 */     this.m_previous = -1;
-/*      */     
-/* 2294 */     this.m_contextIndexes.push(this.m_prefixMappings.size());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void endDocument() throws SAXException {
-/* 2306 */     super.endDocument();
-/*      */ 
-/*      */ 
-/*      */     
-/* 2310 */     this.m_exptype.addElement(-1);
-/* 2311 */     this.m_parent.addElement(-1);
-/* 2312 */     this.m_nextsib.addElement(-1);
-/* 2313 */     this.m_firstch.addElement(-1);
-/*      */ 
-/*      */     
-/* 2316 */     this.m_extendedTypes = this.m_expandedNameTable.getExtendedTypes();
-/* 2317 */     this.m_exptype_map = this.m_exptype.getMap();
-/* 2318 */     this.m_nextsib_map = this.m_nextsib.getMap();
-/* 2319 */     this.m_firstch_map = this.m_firstch.getMap();
-/* 2320 */     this.m_parent_map = this.m_parent.getMap();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final int addNode(int type, int expandedTypeID, int parentIndex, int previousSibling, int dataOrPrefix, boolean canHaveFirstChild) {
-/* 2341 */     int nodeIndex = this.m_size++;
-/*      */ 
-/*      */ 
-/*      */     
-/* 2345 */     if (nodeIndex == this.m_maxNodeIndex) {
-/*      */       
-/* 2347 */       addNewDTMID(nodeIndex);
-/* 2348 */       this.m_maxNodeIndex += 65536;
-/*      */     } 
-/*      */     
-/* 2351 */     this.m_firstch.addElement(-1);
-/* 2352 */     this.m_nextsib.addElement(-1);
-/* 2353 */     this.m_parent.addElement(parentIndex);
-/* 2354 */     this.m_exptype.addElement(expandedTypeID);
-/* 2355 */     this.m_dataOrQName.addElement(dataOrPrefix);
-/*      */     
-/* 2357 */     if (this.m_prevsib != null) {
-/* 2358 */       this.m_prevsib.addElement(previousSibling);
-/*      */     }
-/*      */     
-/* 2361 */     if (this.m_locator != null && this.m_useSourceLocationProperty) {
-/* 2362 */       setSourceLocation();
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2369 */     switch (type) {
-/*      */       
-/*      */       case 13:
-/* 2372 */         declareNamespaceInContext(parentIndex, nodeIndex);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       case 2:
-/* 2386 */         return nodeIndex;
-/*      */     } 
-/*      */     if (-1 != previousSibling) {
-/*      */       this.m_nextsib.setElementAt(nodeIndex, previousSibling);
-/*      */     }
-/*      */     if (-1 != parentIndex)
-/*      */       this.m_firstch.setElementAt(nodeIndex, parentIndex); 
-/*      */   }
-/*      */   
-/*      */   protected final void charactersFlush() {
-/* 2396 */     if (this.m_textPendingStart >= 0) {
-/*      */       
-/* 2398 */       int length = this.m_chars.size() - this.m_textPendingStart;
-/* 2399 */       boolean doStrip = false;
-/*      */       
-/* 2401 */       if (getShouldStripWhitespace())
-/*      */       {
-/* 2403 */         doStrip = this.m_chars.isWhitespace(this.m_textPendingStart, length);
-/*      */       }
-/*      */       
-/* 2406 */       if (doStrip) {
-/* 2407 */         this.m_chars.setLength(this.m_textPendingStart);
-/*      */ 
-/*      */       
-/*      */       }
-/* 2411 */       else if (length > 0) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 2415 */         if (length <= 1023 && this.m_textPendingStart <= 2097151) {
-/*      */           
-/* 2417 */           this.m_previous = addNode(this.m_coalescedTextType, 3, this.m_parents
-/* 2418 */               .peek(), this.m_previous, length + (this.m_textPendingStart << 10), false);
-/*      */ 
-/*      */         
-/*      */         }
-/*      */         else {
-/*      */ 
-/*      */           
-/* 2425 */           int dataIndex = this.m_data.size();
-/* 2426 */           this.m_previous = addNode(this.m_coalescedTextType, 3, this.m_parents
-/* 2427 */               .peek(), this.m_previous, -dataIndex, false);
-/*      */           
-/* 2429 */           this.m_data.addElement(this.m_textPendingStart);
-/* 2430 */           this.m_data.addElement(length);
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2436 */       this.m_textPendingStart = -1;
-/* 2437 */       this.m_textType = this.m_coalescedTextType = 3;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void processingInstruction(String target, String data) throws SAXException {
-/* 2461 */     charactersFlush();
-/*      */     
-/* 2463 */     int dataIndex = this.m_data.size();
-/* 2464 */     this.m_previous = addNode(7, 7, this.m_parents
-/*      */         
-/* 2466 */         .peek(), this.m_previous, -dataIndex, false);
-/*      */ 
-/*      */     
-/* 2469 */     this.m_data.addElement(this.m_valuesOrPrefixes.stringToIndex(target));
-/* 2470 */     this.m_values.addElement(data);
-/* 2471 */     this.m_data.addElement(this.m_valueIndex++);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int getFirstAttribute(int nodeHandle) {
-/* 2485 */     int nodeID = makeNodeIdentity(nodeHandle);
-/*      */     
-/* 2487 */     if (nodeID == -1) {
-/* 2488 */       return -1;
-/*      */     }
-/* 2490 */     int type = _type2(nodeID);
-/*      */     
-/* 2492 */     if (1 == type) {
-/*      */       
-/*      */       do {
-/*      */ 
-/*      */         
-/* 2497 */         nodeID++;
-/*      */         
-/* 2499 */         type = _type2(nodeID);
-/*      */         
-/* 2501 */         if (type == 2)
-/*      */         {
-/* 2503 */           return makeNodeHandle(nodeID);
-/*      */         }
-/* 2505 */       } while (13 == type);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2512 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getFirstAttributeIdentity(int identity) {
-/* 2524 */     if (identity == -1) {
-/* 2525 */       return -1;
-/*      */     }
-/* 2527 */     int type = _type2(identity);
-/*      */     
-/* 2529 */     if (1 == type) {
-/*      */       
-/*      */       do {
-/*      */ 
-/*      */         
-/* 2534 */         identity++;
-/*      */ 
-/*      */         
-/* 2537 */         type = _type2(identity);
-/*      */         
-/* 2539 */         if (type == 2)
-/*      */         {
-/* 2541 */           return identity;
-/*      */         }
-/* 2543 */       } while (13 == type);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2550 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getNextAttributeIdentity(int identity) {
-/*      */     int type;
-/*      */     do {
-/* 2568 */       identity++;
-/* 2569 */       type = _type2(identity);
-/*      */       
-/* 2571 */       if (type == 2)
-/* 2572 */         return identity; 
-/* 2573 */     } while (type == 13);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2578 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final int getTypedAttribute(int nodeHandle, int attType) {
-/* 2595 */     int nodeID = makeNodeIdentity(nodeHandle);
-/*      */     
-/* 2597 */     if (nodeID == -1) {
-/* 2598 */       return -1;
-/*      */     }
-/* 2600 */     int type = _type2(nodeID);
-/*      */     
-/* 2602 */     if (1 == type)
-/*      */     {
-/*      */       while (true) {
-/*      */ 
-/*      */         
-/* 2607 */         nodeID++;
-/* 2608 */         int expType = _exptype2(nodeID);
-/*      */         
-/* 2610 */         if (expType != -1) {
-/* 2611 */           type = this.m_extendedTypes[expType].getNodeType();
-/*      */         } else {
-/* 2613 */           return -1;
-/*      */         } 
-/* 2615 */         if (type == 2) {
-/*      */           
-/* 2617 */           if (expType == attType) return makeNodeHandle(nodeID);  continue;
-/*      */         } 
-/* 2619 */         if (13 != type) {
-/*      */           break;
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */     
-/* 2626 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getLocalName(int nodeHandle) {
-/* 2641 */     int expType = _exptype(makeNodeIdentity(nodeHandle));
-/*      */     
-/* 2643 */     if (expType == 7) {
-/*      */       
-/* 2645 */       int dataIndex = _dataOrQName(makeNodeIdentity(nodeHandle));
-/* 2646 */       dataIndex = this.m_data.elementAt(-dataIndex);
-/* 2647 */       return this.m_valuesOrPrefixes.indexToString(dataIndex);
-/*      */     } 
-/*      */     
-/* 2650 */     return this.m_expandedNameTable.getLocalName(expType);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final String getNodeNameX(int nodeHandle) {
-/* 2665 */     int nodeID = makeNodeIdentity(nodeHandle);
-/* 2666 */     int eType = _exptype2(nodeID);
-/*      */     
-/* 2668 */     if (eType == 7) {
-/*      */       
-/* 2670 */       int dataIndex = _dataOrQName(nodeID);
-/* 2671 */       dataIndex = this.m_data.elementAt(-dataIndex);
-/* 2672 */       return this.m_valuesOrPrefixes.indexToString(dataIndex);
-/*      */     } 
-/*      */     
-/* 2675 */     ExtendedType extType = this.m_extendedTypes[eType];
-/*      */     
-/* 2677 */     if (extType.getNamespace().length() == 0)
-/*      */     {
-/* 2679 */       return extType.getLocalName();
-/*      */     }
-/*      */ 
-/*      */     
-/* 2683 */     int qnameIndex = this.m_dataOrQName.elementAt(nodeID);
-/*      */     
-/* 2685 */     if (qnameIndex == 0) {
-/* 2686 */       return extType.getLocalName();
-/*      */     }
-/* 2688 */     if (qnameIndex < 0) {
-/*      */       
-/* 2690 */       qnameIndex = -qnameIndex;
-/* 2691 */       qnameIndex = this.m_data.elementAt(qnameIndex);
-/*      */     } 
-/*      */     
-/* 2694 */     return this.m_valuesOrPrefixes.indexToString(qnameIndex);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNodeName(int nodeHandle) {
-/* 2712 */     int nodeID = makeNodeIdentity(nodeHandle);
-/* 2713 */     int eType = _exptype2(nodeID);
-/*      */     
-/* 2715 */     ExtendedType extType = this.m_extendedTypes[eType];
-/* 2716 */     if (extType.getNamespace().length() == 0) {
-/*      */       
-/* 2718 */       int type = extType.getNodeType();
-/*      */       
-/* 2720 */       String localName = extType.getLocalName();
-/* 2721 */       if (type == 13) {
-/*      */         
-/* 2723 */         if (localName.length() == 0) {
-/* 2724 */           return "xmlns";
-/*      */         }
-/* 2726 */         return "xmlns:" + localName;
-/*      */       } 
-/* 2728 */       if (type == 7) {
-/*      */         
-/* 2730 */         int dataIndex = _dataOrQName(nodeID);
-/* 2731 */         dataIndex = this.m_data.elementAt(-dataIndex);
-/* 2732 */         return this.m_valuesOrPrefixes.indexToString(dataIndex);
-/*      */       } 
-/* 2734 */       if (localName.length() == 0)
-/*      */       {
-/* 2736 */         return getFixedNames(type);
-/*      */       }
-/*      */       
-/* 2739 */       return localName;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2743 */     int qnameIndex = this.m_dataOrQName.elementAt(nodeID);
-/*      */     
-/* 2745 */     if (qnameIndex == 0) {
-/* 2746 */       return extType.getLocalName();
-/*      */     }
-/* 2748 */     if (qnameIndex < 0) {
-/*      */       
-/* 2750 */       qnameIndex = -qnameIndex;
-/* 2751 */       qnameIndex = this.m_data.elementAt(qnameIndex);
-/*      */     } 
-/*      */     
-/* 2754 */     return this.m_valuesOrPrefixes.indexToString(qnameIndex);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public XMLString getStringValue(int nodeHandle) {
-/* 2777 */     int identity = makeNodeIdentity(nodeHandle);
-/* 2778 */     if (identity == -1) {
-/* 2779 */       return EMPTY_XML_STR;
-/*      */     }
-/* 2781 */     int type = _type2(identity);
-/*      */     
-/* 2783 */     if (type == 1 || type == 9) {
-/*      */       
-/* 2785 */       int startNode = identity;
-/* 2786 */       identity = _firstch2(identity);
-/* 2787 */       if (-1 != identity) {
-/*      */         
-/* 2789 */         int offset = -1;
-/* 2790 */         int length = 0;
-/*      */ 
-/*      */         
-/*      */         do {
-/* 2794 */           type = _exptype2(identity);
-/*      */           
-/* 2796 */           if (type == 3 || type == 4) {
-/*      */             
-/* 2798 */             int i = this.m_dataOrQName.elementAt(identity);
-/* 2799 */             if (i >= 0) {
-/*      */               
-/* 2801 */               if (-1 == offset)
-/*      */               {
-/* 2803 */                 offset = i >>> 10;
-/*      */               }
-/*      */               
-/* 2806 */               length += i & 0x3FF;
-/*      */             }
-/*      */             else {
-/*      */               
-/* 2810 */               if (-1 == offset)
-/*      */               {
-/* 2812 */                 offset = this.m_data.elementAt(-i);
-/*      */               }
-/*      */               
-/* 2815 */               length += this.m_data.elementAt(-i + 1);
-/*      */             } 
-/*      */           } 
-/*      */           
-/* 2819 */           identity++;
-/* 2820 */         } while (_parent2(identity) >= startNode);
-/*      */         
-/* 2822 */         if (length > 0) {
-/*      */           
-/* 2824 */           if (this.m_xstrf != null) {
-/* 2825 */             return this.m_xstrf.newstr(this.m_chars, offset, length);
-/*      */           }
-/* 2827 */           return new XMLStringDefault(this.m_chars.getString(offset, length));
-/*      */         } 
-/*      */         
-/* 2830 */         return EMPTY_XML_STR;
-/*      */       } 
-/*      */       
-/* 2833 */       return EMPTY_XML_STR;
-/*      */     } 
-/* 2835 */     if (3 == type || 4 == type) {
-/*      */       
-/* 2837 */       int i = this.m_dataOrQName.elementAt(identity);
-/* 2838 */       if (i >= 0) {
-/*      */         
-/* 2840 */         if (this.m_xstrf != null) {
-/* 2841 */           return this.m_xstrf.newstr(this.m_chars, i >>> 10, i & 0x3FF);
-/*      */         }
-/*      */         
-/* 2844 */         return new XMLStringDefault(this.m_chars.getString(i >>> 10, i & 0x3FF));
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2849 */       if (this.m_xstrf != null) {
-/* 2850 */         return this.m_xstrf.newstr(this.m_chars, this.m_data.elementAt(-i), this.m_data
-/* 2851 */             .elementAt(-i + 1));
-/*      */       }
-/* 2853 */       return new XMLStringDefault(this.m_chars.getString(this.m_data.elementAt(-i), this.m_data
-/* 2854 */             .elementAt(-i + 1)));
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2859 */     int dataIndex = this.m_dataOrQName.elementAt(identity);
-/*      */     
-/* 2861 */     if (dataIndex < 0) {
-/*      */       
-/* 2863 */       dataIndex = -dataIndex;
-/* 2864 */       dataIndex = this.m_data.elementAt(dataIndex + 1);
-/*      */     } 
-/*      */     
-/* 2867 */     if (this.m_xstrf != null) {
-/* 2868 */       return this.m_xstrf.newstr(this.m_values.elementAt(dataIndex));
-/*      */     }
-/* 2870 */     return new XMLStringDefault(this.m_values.elementAt(dataIndex));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final String getStringValueX(int nodeHandle) {
-/* 2890 */     int identity = makeNodeIdentity(nodeHandle);
-/* 2891 */     if (identity == -1) {
-/* 2892 */       return "";
-/*      */     }
-/* 2894 */     int type = _type2(identity);
-/*      */     
-/* 2896 */     if (type == 1 || type == 9) {
-/*      */       
-/* 2898 */       int startNode = identity;
-/* 2899 */       identity = _firstch2(identity);
-/* 2900 */       if (-1 != identity) {
-/*      */         
-/* 2902 */         int offset = -1;
-/* 2903 */         int length = 0;
-/*      */ 
-/*      */         
-/*      */         do {
-/* 2907 */           type = _exptype2(identity);
-/*      */           
-/* 2909 */           if (type == 3 || type == 4) {
-/*      */             
-/* 2911 */             int i = this.m_dataOrQName.elementAt(identity);
-/* 2912 */             if (i >= 0) {
-/*      */               
-/* 2914 */               if (-1 == offset)
-/*      */               {
-/* 2916 */                 offset = i >>> 10;
-/*      */               }
-/*      */               
-/* 2919 */               length += i & 0x3FF;
-/*      */             }
-/*      */             else {
-/*      */               
-/* 2923 */               if (-1 == offset)
-/*      */               {
-/* 2925 */                 offset = this.m_data.elementAt(-i);
-/*      */               }
-/*      */               
-/* 2928 */               length += this.m_data.elementAt(-i + 1);
-/*      */             } 
-/*      */           } 
-/*      */           
-/* 2932 */           identity++;
-/* 2933 */         } while (_parent2(identity) >= startNode);
-/*      */         
-/* 2935 */         if (length > 0)
-/*      */         {
-/* 2937 */           return this.m_chars.getString(offset, length);
-/*      */         }
-/*      */         
-/* 2940 */         return "";
-/*      */       } 
-/*      */       
-/* 2943 */       return "";
-/*      */     } 
-/* 2945 */     if (3 == type || 4 == type) {
-/*      */       
-/* 2947 */       int i = this.m_dataOrQName.elementAt(identity);
-/* 2948 */       if (i >= 0)
-/*      */       {
-/* 2950 */         return this.m_chars.getString(i >>> 10, i & 0x3FF);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 2955 */       return this.m_chars.getString(this.m_data.elementAt(-i), this.m_data
-/* 2956 */           .elementAt(-i + 1));
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2961 */     int dataIndex = this.m_dataOrQName.elementAt(identity);
-/*      */     
-/* 2963 */     if (dataIndex < 0) {
-/*      */       
-/* 2965 */       dataIndex = -dataIndex;
-/* 2966 */       dataIndex = this.m_data.elementAt(dataIndex + 1);
-/*      */     } 
-/*      */     
-/* 2969 */     return this.m_values.elementAt(dataIndex);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getStringValue() {
-/* 2978 */     int child = _firstch2(0);
-/* 2979 */     if (child == -1) return "";
-/*      */ 
-/*      */     
-/* 2982 */     if (_exptype2(child) == 3 && _nextsib2(child) == -1) {
-/*      */       
-/* 2984 */       int dataIndex = this.m_dataOrQName.elementAt(child);
-/* 2985 */       if (dataIndex >= 0) {
-/* 2986 */         return this.m_chars.getString(dataIndex >>> 10, dataIndex & 0x3FF);
-/*      */       }
-/* 2988 */       return this.m_chars.getString(this.m_data.elementAt(-dataIndex), this.m_data
-/* 2989 */           .elementAt(-dataIndex + 1));
-/*      */     } 
-/*      */     
-/* 2992 */     return getStringValueX(getDocument());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void dispatchCharactersEvents(int nodeHandle, ContentHandler ch, boolean normalize) throws SAXException {
-/* 3020 */     int identity = makeNodeIdentity(nodeHandle);
-/*      */     
-/* 3022 */     if (identity == -1) {
-/*      */       return;
-/*      */     }
-/* 3025 */     int type = _type2(identity);
-/*      */     
-/* 3027 */     if (type == 1 || type == 9) {
-/*      */       
-/* 3029 */       int startNode = identity;
-/* 3030 */       identity = _firstch2(identity);
-/* 3031 */       if (-1 != identity) {
-/*      */         
-/* 3033 */         int offset = -1;
-/* 3034 */         int length = 0;
-/*      */ 
-/*      */         
-/*      */         do {
-/* 3038 */           type = _exptype2(identity);
-/*      */           
-/* 3040 */           if (type == 3 || type == 4) {
-/*      */             
-/* 3042 */             int dataIndex = this.m_dataOrQName.elementAt(identity);
-/*      */             
-/* 3044 */             if (dataIndex >= 0) {
-/*      */               
-/* 3046 */               if (-1 == offset)
-/*      */               {
-/* 3048 */                 offset = dataIndex >>> 10;
-/*      */               }
-/*      */               
-/* 3051 */               length += dataIndex & 0x3FF;
-/*      */             }
-/*      */             else {
-/*      */               
-/* 3055 */               if (-1 == offset)
-/*      */               {
-/* 3057 */                 offset = this.m_data.elementAt(-dataIndex);
-/*      */               }
-/*      */               
-/* 3060 */               length += this.m_data.elementAt(-dataIndex + 1);
-/*      */             } 
-/*      */           } 
-/*      */           
-/* 3064 */           identity++;
-/* 3065 */         } while (_parent2(identity) >= startNode);
-/*      */         
-/* 3067 */         if (length > 0)
-/*      */         {
-/* 3069 */           if (normalize) {
-/* 3070 */             this.m_chars.sendNormalizedSAXcharacters(ch, offset, length);
-/*      */           } else {
-/* 3072 */             this.m_chars.sendSAXcharacters(ch, offset, length);
-/*      */           } 
-/*      */         }
-/*      */       } 
-/* 3076 */     } else if (3 == type || 4 == type) {
-/*      */       
-/* 3078 */       int dataIndex = this.m_dataOrQName.elementAt(identity);
-/*      */       
-/* 3080 */       if (dataIndex >= 0) {
-/*      */         
-/* 3082 */         if (normalize) {
-/* 3083 */           this.m_chars.sendNormalizedSAXcharacters(ch, dataIndex >>> 10, dataIndex & 0x3FF);
-/*      */         } else {
-/*      */           
-/* 3086 */           this.m_chars.sendSAXcharacters(ch, dataIndex >>> 10, dataIndex & 0x3FF);
-/*      */         
-/*      */         }
-/*      */       
-/*      */       }
-/* 3091 */       else if (normalize) {
-/* 3092 */         this.m_chars.sendNormalizedSAXcharacters(ch, this.m_data.elementAt(-dataIndex), this.m_data
-/* 3093 */             .elementAt(-dataIndex + 1));
-/*      */       } else {
-/* 3095 */         this.m_chars.sendSAXcharacters(ch, this.m_data.elementAt(-dataIndex), this.m_data
-/* 3096 */             .elementAt(-dataIndex + 1));
-/*      */       }
-/*      */     
-/*      */     } else {
-/*      */       
-/* 3101 */       int dataIndex = this.m_dataOrQName.elementAt(identity);
-/*      */       
-/* 3103 */       if (dataIndex < 0) {
-/*      */         
-/* 3105 */         dataIndex = -dataIndex;
-/* 3106 */         dataIndex = this.m_data.elementAt(dataIndex + 1);
-/*      */       } 
-/*      */       
-/* 3109 */       String str = this.m_values.elementAt(dataIndex);
-/*      */       
-/* 3111 */       if (normalize) {
-/* 3112 */         FastStringBuffer.sendNormalizedSAXcharacters(str.toCharArray(), 0, str
-/* 3113 */             .length(), ch);
-/*      */       } else {
-/* 3115 */         ch.characters(str.toCharArray(), 0, str.length());
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getNodeValue(int nodeHandle) {
-/* 3131 */     int identity = makeNodeIdentity(nodeHandle);
-/* 3132 */     int type = _type2(identity);
-/*      */     
-/* 3134 */     if (type == 3 || type == 4) {
-/*      */       
-/* 3136 */       int i = _dataOrQName(identity);
-/* 3137 */       if (i > 0)
-/*      */       {
-/* 3139 */         return this.m_chars.getString(i >>> 10, i & 0x3FF);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/* 3144 */       return this.m_chars.getString(this.m_data.elementAt(-i), this.m_data
-/* 3145 */           .elementAt(-i + 1));
-/*      */     } 
-/*      */     
-/* 3148 */     if (1 == type || 11 == type || 9 == type)
-/*      */     {
-/*      */       
-/* 3151 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/* 3155 */     int dataIndex = this.m_dataOrQName.elementAt(identity);
-/*      */     
-/* 3157 */     if (dataIndex < 0) {
-/*      */       
-/* 3159 */       dataIndex = -dataIndex;
-/* 3160 */       dataIndex = this.m_data.elementAt(dataIndex + 1);
-/*      */     } 
-/*      */     
-/* 3163 */     return this.m_values.elementAt(dataIndex);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void copyTextNode(int nodeID, SerializationHandler handler) throws SAXException {
-/* 3173 */     if (nodeID != -1) {
-/* 3174 */       int dataIndex = this.m_dataOrQName.elementAt(nodeID);
-/* 3175 */       if (dataIndex >= 0) {
-/* 3176 */         this.m_chars.sendSAXcharacters(handler, dataIndex >>> 10, dataIndex & 0x3FF);
-/*      */       }
-/*      */       else {
-/*      */         
-/* 3180 */         this.m_chars.sendSAXcharacters(handler, this.m_data.elementAt(-dataIndex), this.m_data
-/* 3181 */             .elementAt(-dataIndex + 1));
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final String copyElement(int nodeID, int exptype, SerializationHandler handler) throws SAXException {
-/*      */     String prefix;
-/* 3198 */     ExtendedType extType = this.m_extendedTypes[exptype];
-/* 3199 */     String uri = extType.getNamespace();
-/* 3200 */     String name = extType.getLocalName();
-/*      */     
-/* 3202 */     if (uri.length() == 0) {
-/* 3203 */       handler.startElement(name);
-/* 3204 */       return name;
-/*      */     } 
-/*      */     
-/* 3207 */     int qnameIndex = this.m_dataOrQName.elementAt(nodeID);
-/*      */     
-/* 3209 */     if (qnameIndex == 0) {
-/* 3210 */       handler.startElement(name);
-/* 3211 */       handler.namespaceAfterStartElement("", uri);
-/* 3212 */       return name;
-/*      */     } 
-/*      */     
-/* 3215 */     if (qnameIndex < 0) {
-/* 3216 */       qnameIndex = -qnameIndex;
-/* 3217 */       qnameIndex = this.m_data.elementAt(qnameIndex);
-/*      */     } 
-/*      */     
-/* 3220 */     String qName = this.m_valuesOrPrefixes.indexToString(qnameIndex);
-/* 3221 */     handler.startElement(qName);
-/* 3222 */     int prefixIndex = qName.indexOf(':');
-/*      */     
-/* 3224 */     if (prefixIndex > 0) {
-/* 3225 */       prefix = qName.substring(0, prefixIndex);
-/*      */     } else {
-/*      */       
-/* 3228 */       prefix = null;
-/*      */     } 
-/* 3230 */     handler.namespaceAfterStartElement(prefix, uri);
-/* 3231 */     return qName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void copyNS(int nodeID, SerializationHandler handler, boolean inScope) throws SAXException {
-/*      */     int nextNSNode;
-/* 3253 */     if (this.m_namespaceDeclSetElements != null && this.m_namespaceDeclSetElements
-/* 3254 */       .size() == 1 && this.m_namespaceDeclSets != null && ((SuballocatedIntVector)this.m_namespaceDeclSets
-/*      */       
-/* 3256 */       .elementAt(0))
-/* 3257 */       .size() == 1) {
-/*      */       return;
-/*      */     }
-/* 3260 */     SuballocatedIntVector nsContext = null;
-/*      */ 
-/*      */ 
-/*      */     
-/* 3264 */     if (inScope) {
-/* 3265 */       nsContext = findNamespaceContext(nodeID);
-/* 3266 */       if (nsContext == null || nsContext.size() < 1) {
-/*      */         return;
-/*      */       }
-/* 3269 */       nextNSNode = makeNodeIdentity(nsContext.elementAt(0));
-/*      */     } else {
-/*      */       
-/* 3272 */       nextNSNode = getNextNamespaceNode2(nodeID);
-/*      */     } 
-/* 3274 */     int nsIndex = 1;
-/* 3275 */     while (nextNSNode != -1) {
-/*      */       
-/* 3277 */       int eType = _exptype2(nextNSNode);
-/* 3278 */       String nodeName = this.m_extendedTypes[eType].getLocalName();
-/*      */ 
-/*      */       
-/* 3281 */       int dataIndex = this.m_dataOrQName.elementAt(nextNSNode);
-/*      */       
-/* 3283 */       if (dataIndex < 0) {
-/* 3284 */         dataIndex = -dataIndex;
-/* 3285 */         dataIndex = this.m_data.elementAt(dataIndex + 1);
-/*      */       } 
-/*      */       
-/* 3288 */       String nodeValue = this.m_values.elementAt(dataIndex);
-/*      */       
-/* 3290 */       handler.namespaceAfterStartElement(nodeName, nodeValue);
-/*      */       
-/* 3292 */       if (inScope) {
-/* 3293 */         if (nsIndex < nsContext.size()) {
-/* 3294 */           nextNSNode = makeNodeIdentity(nsContext.elementAt(nsIndex));
-/* 3295 */           nsIndex++;
-/*      */           
-/*      */           continue;
-/*      */         } 
-/*      */         return;
-/*      */       } 
-/* 3301 */       nextNSNode = getNextNamespaceNode2(nextNSNode);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final int getNextNamespaceNode2(int baseID) {
-/*      */     int type;
-/* 3314 */     while ((type = _type2(++baseID)) == 2);
-/*      */     
-/* 3316 */     if (type == 13) {
-/* 3317 */       return baseID;
-/*      */     }
-/* 3319 */     return -1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void copyAttributes(int nodeID, SerializationHandler handler) throws SAXException {
-/* 3331 */     for (int current = getFirstAttributeIdentity(nodeID); current != -1; current = getNextAttributeIdentity(current)) {
-/* 3332 */       int eType = _exptype2(current);
-/* 3333 */       copyAttribute(current, eType, handler);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected final void copyAttribute(int nodeID, int exptype, SerializationHandler handler) throws SAXException {
-/* 3358 */     ExtendedType extType = this.m_extendedTypes[exptype];
-/* 3359 */     String uri = extType.getNamespace();
-/* 3360 */     String localName = extType.getLocalName();
-/*      */     
-/* 3362 */     String prefix = null;
-/* 3363 */     String qname = null;
-/* 3364 */     int dataIndex = _dataOrQName(nodeID);
-/* 3365 */     int valueIndex = dataIndex;
-/* 3366 */     if (dataIndex <= 0) {
-/* 3367 */       int prefixIndex = this.m_data.elementAt(-dataIndex);
-/* 3368 */       valueIndex = this.m_data.elementAt(-dataIndex + 1);
-/* 3369 */       qname = this.m_valuesOrPrefixes.indexToString(prefixIndex);
-/* 3370 */       int colonIndex = qname.indexOf(':');
-/* 3371 */       if (colonIndex > 0) {
-/* 3372 */         prefix = qname.substring(0, colonIndex);
-/*      */       }
-/*      */     } 
-/* 3375 */     if (uri.length() != 0) {
-/* 3376 */       handler.namespaceAfterStartElement(prefix, uri);
-/*      */     }
-/*      */     
-/* 3379 */     String nodeName = (prefix != null) ? qname : localName;
-/* 3380 */     String nodeValue = this.m_values.elementAt(valueIndex);
-/*      */     
-/* 3382 */     handler.addAttribute(uri, localName, nodeName, "CDATA", nodeValue);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\dtm\ref\sax2dtm\SAX2DTM2.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: SAX2DTM2.java,v 1.2.4.1 2005/09/15 08:15:12 suresh_emailid Exp $
+ */
+package com.sun.org.apache.xml.internal.dtm.ref.sax2dtm;
+
+import com.sun.org.apache.xml.internal.dtm.*;
+import com.sun.org.apache.xml.internal.dtm.ref.*;
+import com.sun.org.apache.xml.internal.utils.FastStringBuffer;
+import com.sun.org.apache.xml.internal.utils.XMLString;
+import com.sun.org.apache.xml.internal.utils.XMLStringDefault;
+import com.sun.org.apache.xml.internal.utils.XMLStringFactory;
+import com.sun.org.apache.xml.internal.res.XMLMessages;
+import com.sun.org.apache.xml.internal.res.XMLErrorResources;
+import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
+
+import javax.xml.transform.Source;
+import java.util.Vector;
+import com.sun.org.apache.xml.internal.utils.SuballocatedIntVector;
+import org.xml.sax.*;
+
+/**
+ * SAX2DTM2 is an optimized version of SAX2DTM which is used in non-incremental situation.
+ * It is used as the super class of the XSLTC SAXImpl. Many of the interfaces in SAX2DTM
+ * and DTMDefaultBase are overridden in SAX2DTM2 in order to allow fast, efficient
+ * access to the DTM model. Some nested iterators in DTMDefaultBaseIterators
+ * are also overridden in SAX2DTM2 for performance reasons.
+ * <p>
+ * Performance is the biggest consideration in the design of SAX2DTM2. To make the code most
+ * efficient, the incremental support is dropped in SAX2DTM2, which means that you should not
+ * use it in incremental situation. To reduce the overhead of pulling data from the DTM model,
+ * a few core interfaces in SAX2DTM2 have direct access to the internal arrays of the
+ * SuballocatedIntVectors.
+ * <p>
+ * The design of SAX2DTM2 may limit its extensibilty. If you have a reason to extend the
+ * SAX2DTM model, please extend from SAX2DTM instead of this class.
+ * <p>
+ * TODO: This class is currently only used by XSLTC. We need to investigate the possibility
+ * of also using it in Xalan-J Interpretive. Xalan's performance is likely to get an instant
+ * boost if we use SAX2DTM2 instead of SAX2DTM in non-incremental case.
+ * <p>
+ * %MK% The code in this class is critical to the XSLTC_DTM performance. Be very careful
+ * when making changes here!
+ */
+public class SAX2DTM2 extends SAX2DTM
+{
+
+  /****************************************************************
+   *       Optimized version of the nested iterators
+   ****************************************************************/
+
+  /**
+   * Iterator that returns all immediate children of a given node
+   */
+  public final class ChildrenIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Setting start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     * <p>
+     * If the iterator is not restartable, this has no effect.
+     * %REVIEW% Should it return/throw something in that case,
+     * or set current node to END, to indicate request-not-honored?
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = (node == DTM.NULL) ? DTM.NULL
+                                          : _firstch2(makeNodeIdentity(node));
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END if no more
+     * are available.
+     */
+    public int next()
+    {
+      if (_currentNode != NULL) {
+        int node = _currentNode;
+        _currentNode = _nextsib2(node);
+        return returnNode(makeNodeHandle(node));
+      }
+
+      return END;
+    }
+  }  // end of ChildrenIterator
+
+  /**
+   * Iterator that returns the parent of a given node. Note that
+   * this delivers only a single node; if you want all the ancestors,
+   * see AncestorIterator.
+   */
+  public final class ParentIterator extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID that was requested. */
+    private int _nodeType = DTM.NULL;
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+
+        if (node != DTM.NULL)
+          _currentNode = _parent2(makeNodeIdentity(node));
+        else
+          _currentNode = DTM.NULL;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Set the node type of the parent that we're looking for.
+     * Note that this does _not_ mean "find the nearest ancestor of
+     * this type", but "yield the parent if it is of this type".
+     *
+     *
+     * @param type extended type ID.
+     *
+     * @return ParentIterator configured with the type filter set.
+     */
+    public DTMAxisIterator setNodeType(final int type)
+    {
+
+      _nodeType = type;
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration. In this case, we return
+     * only the immediate parent, _if_ it matches the requested nodeType.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int result = _currentNode;
+      if (result == END)
+        return DTM.NULL;
+
+      // %OPT% The most common case is handled first.
+      if (_nodeType == NULL) {
+        _currentNode = END;
+        return returnNode(makeNodeHandle(result));
+      }
+      else if (_nodeType >= DTM.NTYPES) {
+        if (_nodeType == _exptype2(result)) {
+          _currentNode = END;
+          return returnNode(makeNodeHandle(result));
+        }
+      }
+      else {
+        if (_nodeType == _type2(result)) {
+          _currentNode = END;
+          return returnNode(makeNodeHandle(result));
+        }
+      }
+
+      return DTM.NULL;
+    }
+  }  // end of ParentIterator
+
+  /**
+   * Iterator that returns children of a given type for a given node.
+   * The functionality chould be achieved by putting a filter on top
+   * of a basic child iterator, but a specialised iterator is used
+   * for efficiency (both speed and size of translet).
+   */
+  public final class TypedChildrenIterator extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedChildrenIterator
+     *
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedChildrenIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = (node == DTM.NULL)
+                                   ? DTM.NULL
+                                   : _firstch2(makeNodeIdentity(_startNode));
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int node = _currentNode;
+      if (node == DTM.NULL)
+        return DTM.NULL;
+
+      final int nodeType = _nodeType;
+
+      if (nodeType != DTM.ELEMENT_NODE) {
+        while (node != DTM.NULL && _exptype2(node) != nodeType) {
+          node = _nextsib2(node);
+        }
+      }
+      // %OPT% If the nodeType is element (matching child::*), we only
+      // need to compare the expType with DTM.NTYPES. A child node of
+      // an element can be either an element, text, comment or
+      // processing instruction node. Only element node has an extended
+      // type greater than or equal to DTM.NTYPES.
+      else {
+        int eType;
+        while (node != DTM.NULL) {
+          eType = _exptype2(node);
+          if (eType >= DTM.NTYPES)
+            break;
+          else
+            node = _nextsib2(node);
+        }
+      }
+
+      if (node == DTM.NULL) {
+        _currentNode = DTM.NULL;
+        return DTM.NULL;
+      } else {
+        _currentNode = _nextsib2(node);
+        return returnNode(makeNodeHandle(node));
+      }
+
+    }
+
+    /**
+     * Return the node at the given position.
+     */
+    public int getNodeByPosition(int position)
+    {
+      if (position <= 0)
+        return DTM.NULL;
+
+      int node = _currentNode;
+      int pos = 0;
+
+      final int nodeType = _nodeType;
+      if (nodeType != DTM.ELEMENT_NODE) {
+        while (node != DTM.NULL) {
+          if (_exptype2(node) == nodeType) {
+            pos++;
+            if (pos == position)
+              return makeNodeHandle(node);
+          }
+
+          node = _nextsib2(node);
+        }
+        return NULL;
+      }
+      else {
+        while (node != DTM.NULL) {
+          if (_exptype2(node) >= DTM.NTYPES) {
+            pos++;
+            if (pos == position)
+              return makeNodeHandle(node);
+          }
+          node = _nextsib2(node);
+        }
+        return NULL;
+      }
+    }
+
+  }  // end of TypedChildrenIterator
+
+  /**
+   * Iterator that returns the namespace nodes as defined by the XPath data model
+   * for a given node, filtered by extended type ID.
+   */
+  public class TypedRootIterator extends RootIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedRootIterator
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedRootIterator(int nodeType)
+    {
+      super();
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      if(_startNode == _currentNode)
+        return NULL;
+
+      final int node = _startNode;
+      int expType = _exptype2(makeNodeIdentity(node));
+
+      _currentNode = node;
+
+      if (_nodeType >= DTM.NTYPES) {
+        if (_nodeType == expType) {
+          return returnNode(node);
+        }
+      }
+      else {
+        if (expType < DTM.NTYPES) {
+          if (expType == _nodeType) {
+            return returnNode(node);
+          }
+        }
+        else {
+          if (m_extendedTypes[expType].getNodeType() == _nodeType) {
+            return returnNode(node);
+          }
+        }
+      }
+
+      return NULL;
+    }
+  }  // end of TypedRootIterator
+
+  /**
+   * Iterator that returns all siblings of a given node.
+   */
+  public class FollowingSiblingIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = makeNodeIdentity(node);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      _currentNode = (_currentNode == DTM.NULL) ? DTM.NULL
+                                                : _nextsib2(_currentNode);
+      return returnNode(makeNodeHandle(_currentNode));
+    }
+  }  // end of FollowingSiblingIterator
+
+  /**
+   * Iterator that returns all following siblings of a given node.
+   */
+  public final class TypedFollowingSiblingIterator
+          extends FollowingSiblingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedFollowingSiblingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedFollowingSiblingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      if (_currentNode == DTM.NULL) {
+        return DTM.NULL;
+      }
+
+      int node = _currentNode;
+      final int nodeType = _nodeType;
+
+      if (nodeType != DTM.ELEMENT_NODE) {
+        while ((node = _nextsib2(node)) != DTM.NULL && _exptype2(node) != nodeType) {}
+      }
+      else {
+        while ((node = _nextsib2(node)) != DTM.NULL && _exptype2(node) < DTM.NTYPES) {}
+      }
+
+      _currentNode = node;
+
+      return (node == DTM.NULL)
+                      ? DTM.NULL
+                      : returnNode(makeNodeHandle(node));
+    }
+
+  }  // end of TypedFollowingSiblingIterator
+
+  /**
+   * Iterator that returns attribute nodes (of what nodes?)
+   */
+  public final class AttributeIterator extends InternalAxisIteratorBase
+  {
+
+    // assumes caller will pass element nodes
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        _currentNode = getFirstAttributeIdentity(makeNodeIdentity(node));
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      final int node = _currentNode;
+
+      if (node != NULL) {
+        _currentNode = getNextAttributeIdentity(node);
+        return returnNode(makeNodeHandle(node));
+      }
+
+      return NULL;
+    }
+  }  // end of AttributeIterator
+
+  /**
+   * Iterator that returns attribute nodes of a given type
+   */
+  public final class TypedAttributeIterator extends InternalAxisIteratorBase
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedAttributeIterator
+     *
+     *
+     * @param nodeType The extended type ID that is requested.
+     */
+    public TypedAttributeIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    // assumes caller will pass element nodes
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+      if (_isRestartable)
+      {
+        _startNode = node;
+
+        _currentNode = getTypedAttribute(node, _nodeType);
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      final int node = _currentNode;
+
+      // singleton iterator, since there can only be one attribute of
+      // a given type.
+      _currentNode = NULL;
+
+      return returnNode(node);
+    }
+  }  // end of TypedAttributeIterator
+
+  /**
+   * Iterator that returns preceding siblings of a given node
+   */
+  public class PrecedingSiblingIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * The node identity of _startNode for this iterator
+     */
+    protected int _startNodeID;
+
+    /**
+     * True if this iterator has a reversed axis.
+     *
+     * @return true.
+     */
+    public boolean isReverse()
+    {
+      return true;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+        node = _startNodeID = makeNodeIdentity(node);
+
+        if(node == NULL)
+        {
+          _currentNode = node;
+          return resetPosition();
+        }
+
+        int type = _type2(node);
+        if(ExpandedNameTable.ATTRIBUTE == type
+           || ExpandedNameTable.NAMESPACE == type )
+        {
+          _currentNode = node;
+        }
+        else
+        {
+          // Be careful to handle the Document node properly
+          _currentNode = _parent2(node);
+          if(NULL!=_currentNode)
+            _currentNode = _firstch2(_currentNode);
+          else
+            _currentNode = node;
+        }
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      if (_currentNode == _startNodeID || _currentNode == DTM.NULL)
+      {
+        return NULL;
+      }
+      else
+      {
+        final int node = _currentNode;
+        _currentNode = _nextsib2(node);
+
+        return returnNode(makeNodeHandle(node));
+      }
+    }
+  }  // end of PrecedingSiblingIterator
+
+  /**
+   * Iterator that returns preceding siblings of a given type for
+   * a given node
+   */
+  public final class TypedPrecedingSiblingIterator
+          extends PrecedingSiblingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedPrecedingSiblingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedPrecedingSiblingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int node = _currentNode;
+
+      final int nodeType = _nodeType;
+      final int startNodeID = _startNodeID;
+
+      if (nodeType != DTM.ELEMENT_NODE) {
+        while (node != NULL && node != startNodeID && _exptype2(node) != nodeType) {
+          node = _nextsib2(node);
+        }
+      }
+      else {
+        while (node != NULL && node != startNodeID && _exptype2(node) < DTM.NTYPES) {
+          node = _nextsib2(node);
+        }
+      }
+
+      if (node == DTM.NULL || node == startNodeID) {
+        _currentNode = NULL;
+        return NULL;
+      }
+      else {
+        _currentNode = _nextsib2(node);
+        return returnNode(makeNodeHandle(node));
+      }
+    }
+
+    /**
+     * Return the index of the last node in this iterator.
+     */
+    public int getLast()
+    {
+      if (_last != -1)
+        return _last;
+
+      setMark();
+
+      int node = _currentNode;
+      final int nodeType = _nodeType;
+      final int startNodeID = _startNodeID;
+
+      int last = 0;
+      if (nodeType != DTM.ELEMENT_NODE) {
+        while (node != NULL && node != startNodeID) {
+          if (_exptype2(node) == nodeType) {
+            last++;
+          }
+          node = _nextsib2(node);
+        }
+      }
+      else {
+        while (node != NULL && node != startNodeID) {
+          if (_exptype2(node) >= DTM.NTYPES) {
+            last++;
+          }
+          node = _nextsib2(node);
+        }
+      }
+
+      gotoMark();
+
+      return (_last = last);
+    }
+  }  // end of TypedPrecedingSiblingIterator
+
+  /**
+   * Iterator that returns preceding nodes of a given node.
+   * This includes the node set {root+1, start-1}, but excludes
+   * all ancestors, attributes, and namespace nodes.
+   */
+  public class PrecedingIterator extends InternalAxisIteratorBase
+  {
+
+    /** The max ancestors, but it can grow... */
+    private final int _maxAncestors = 8;
+
+    /**
+     * The stack of start node + ancestors up to the root of the tree,
+     *  which we must avoid.
+     */
+    protected int[] _stack = new int[_maxAncestors];
+
+    /** (not sure yet... -sb) */
+    protected int _sp, _oldsp;
+
+    protected int _markedsp, _markedNode, _markedDescendant;
+
+    /* _currentNode precedes candidates.  This is the identity, not the handle! */
+
+    /**
+     * True if this iterator has a reversed axis.
+     *
+     * @return true since this iterator is a reversed axis.
+     */
+    public boolean isReverse()
+    {
+      return true;
+    }
+
+    /**
+     * Returns a deep copy of this iterator.   The cloned iterator is not reset.
+     *
+     * @return a deep copy of this iterator.
+     */
+    public DTMAxisIterator cloneIterator()
+    {
+      _isRestartable = false;
+
+      try
+      {
+        final PrecedingIterator clone = (PrecedingIterator) super.clone();
+        final int[] stackCopy = new int[_stack.length];
+        System.arraycopy(_stack, 0, stackCopy, 0, _stack.length);
+
+        clone._stack = stackCopy;
+
+        // return clone.reset();
+        return clone;
+      }
+      catch (CloneNotSupportedException e)
+      {
+        throw new DTMException(XMLMessages.createXMLMessage(XMLErrorResources.ER_ITERATOR_CLONE_NOT_SUPPORTED, null)); //"Iterator clone not supported.");
+      }
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        node = makeNodeIdentity(node);
+
+        // iterator is not a clone
+        int parent, index;
+
+       if (_type2(node) == DTM.ATTRIBUTE_NODE)
+         node = _parent2(node);
+
+        _startNode = node;
+        _stack[index = 0] = node;
+
+        parent=node;
+        while ((parent = _parent2(parent)) != NULL)
+        {
+          if (++index == _stack.length)
+          {
+            final int[] stack = new int[index*2];
+            System.arraycopy(_stack, 0, stack, 0, index);
+            _stack = stack;
+          }
+          _stack[index] = parent;
+        }
+
+        if(index>0)
+          --index; // Pop actual root node (if not start) back off the stack
+
+        _currentNode=_stack[index]; // Last parent before root node
+
+        _oldsp = _sp = index;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+        // Bugzilla 8324: We were forgetting to skip Attrs and NS nodes.
+        // Also recoded the loop controls for clarity and to flatten out
+        // the tail-recursion.
+        for(++_currentNode; _sp>=0; ++_currentNode)
+        {
+          if(_currentNode < _stack[_sp])
+          {
+            int type = _type2(_currentNode);
+            if(type != ATTRIBUTE_NODE && type != NAMESPACE_NODE)
+              return returnNode(makeNodeHandle(_currentNode));
+          }
+          else
+            --_sp;
+        }
+        return NULL;
+    }
+
+    // redefine DTMAxisIteratorBase's reset
+
+    /**
+     * Resets the iterator to the last start node.
+     *
+     * @return A DTMAxisIterator, which may or may not be the same as this
+     *         iterator.
+     */
+    public DTMAxisIterator reset()
+    {
+
+      _sp = _oldsp;
+
+      return resetPosition();
+    }
+
+    public void setMark() {
+        _markedsp = _sp;
+        _markedNode = _currentNode;
+        _markedDescendant = _stack[0];
+    }
+
+    public void gotoMark() {
+        _sp = _markedsp;
+        _currentNode = _markedNode;
+    }
+  }  // end of PrecedingIterator
+
+  /**
+   * Iterator that returns preceding nodes of agiven type for a
+   * given node. This includes the node set {root+1, start-1}, but
+   * excludes all ancestors.
+   */
+  public final class TypedPrecedingIterator extends PrecedingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedPrecedingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedPrecedingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int node = _currentNode;
+      final int nodeType = _nodeType;
+
+      if (nodeType >= DTM.NTYPES) {
+        while (true) {
+          node++;
+
+          if (_sp < 0) {
+            node = NULL;
+            break;
+          }
+          else if (node >= _stack[_sp]) {
+            if (--_sp < 0) {
+              node = NULL;
+              break;
+            }
+          }
+          else if (_exptype2(node) == nodeType) {
+            break;
+          }
+        }
+      }
+      else {
+        int expType;
+
+        while (true) {
+          node++;
+
+          if (_sp < 0) {
+            node = NULL;
+            break;
+          }
+          else if (node >= _stack[_sp]) {
+            if (--_sp < 0) {
+              node = NULL;
+              break;
+            }
+          }
+          else {
+            expType = _exptype2(node);
+            if (expType < DTM.NTYPES) {
+              if (expType == nodeType) {
+                break;
+              }
+            }
+            else {
+              if (m_extendedTypes[expType].getNodeType() == nodeType) {
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      _currentNode = node;
+
+      return (node == NULL) ? NULL : returnNode(makeNodeHandle(node));
+    }
+  }  // end of TypedPrecedingIterator
+
+  /**
+   * Iterator that returns following nodes of for a given node.
+   */
+  public class FollowingIterator extends InternalAxisIteratorBase
+  {
+    //DTMAxisTraverser m_traverser; // easier for now
+
+    public FollowingIterator()
+    {
+      //m_traverser = getAxisTraverser(Axis.FOLLOWING);
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        _startNode = node;
+
+        //_currentNode = m_traverser.first(node);
+
+        node = makeNodeIdentity(node);
+
+        int first;
+        int type = _type2(node);
+
+        if ((DTM.ATTRIBUTE_NODE == type) || (DTM.NAMESPACE_NODE == type))
+        {
+          node = _parent2(node);
+          first = _firstch2(node);
+
+          if (NULL != first) {
+            _currentNode = makeNodeHandle(first);
+            return resetPosition();
+          }
+        }
+
+        do
+        {
+          first = _nextsib2(node);
+
+          if (NULL == first)
+            node = _parent2(node);
+        }
+        while (NULL == first && NULL != node);
+
+        _currentNode = makeNodeHandle(first);
+
+        // _currentNode precedes possible following(node) nodes
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int node = _currentNode;
+
+      //_currentNode = m_traverser.next(_startNode, _currentNode);
+      int current = makeNodeIdentity(node);
+
+      while (true)
+      {
+        current++;
+
+        int type = _type2(current);
+        if (NULL == type) {
+          _currentNode = NULL;
+          return returnNode(node);
+        }
+
+        if (ATTRIBUTE_NODE == type || NAMESPACE_NODE == type)
+          continue;
+
+        _currentNode = makeNodeHandle(current);
+        return returnNode(node);
+      }
+    }
+
+  }  // end of FollowingIterator
+
+  /**
+   * Iterator that returns following nodes of a given type for a given node.
+   */
+  public final class TypedFollowingIterator extends FollowingIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedFollowingIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedFollowingIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      int current;
+      int node;
+      int type;
+
+      final int nodeType = _nodeType;
+      int currentNodeID = makeNodeIdentity(_currentNode);
+
+      if (nodeType >= DTM.NTYPES) {
+        do {
+          node = currentNodeID;
+          current = node;
+
+          do {
+            current++;
+            type = _type2(current);
+          }
+          while (type != NULL && (ATTRIBUTE_NODE == type || NAMESPACE_NODE == type));
+
+          currentNodeID = (type != NULL) ? current : NULL;
+        }
+        while (node != DTM.NULL && _exptype2(node) != nodeType);
+      }
+      else {
+        do {
+          node = currentNodeID;
+          current = node;
+
+          do {
+            current++;
+            type = _type2(current);
+          }
+          while (type != NULL && (ATTRIBUTE_NODE == type || NAMESPACE_NODE == type));
+
+          currentNodeID = (type != NULL) ? current : NULL;
+        }
+        while (node != DTM.NULL
+               && (_exptype2(node) != nodeType && _type2(node) != nodeType));
+      }
+
+      _currentNode = makeNodeHandle(currentNodeID);
+      return (node == DTM.NULL ? DTM.NULL :returnNode(makeNodeHandle(node)));
+    }
+  }  // end of TypedFollowingIterator
+
+  /**
+   * Iterator that returns the ancestors of a given node in document
+   * order.  (NOTE!  This was changed from the XSLTC code!)
+   */
+  public class AncestorIterator extends InternalAxisIteratorBase
+  {
+    // The initial size of the ancestor array
+    private static final int m_blocksize = 32;
+
+    // The array for ancestor nodes. This array will grow dynamically.
+    int[] m_ancestors = new int[m_blocksize];
+
+    // Number of ancestor nodes in the array
+    int m_size = 0;
+
+    int m_ancestorsPos;
+
+    int m_markedPos;
+
+    /** The real start node for this axes, since _startNode will be adjusted. */
+    int m_realStartNode;
+
+    /**
+     * Get start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @return The root node of the iteration.
+     */
+    public int getStartNode()
+    {
+      return m_realStartNode;
+    }
+
+    /**
+     * True if this iterator has a reversed axis.
+     *
+     * @return true since this iterator is a reversed axis.
+     */
+    public final boolean isReverse()
+    {
+      return true;
+    }
+
+    /**
+     * Returns a deep copy of this iterator.  The cloned iterator is not reset.
+     *
+     * @return a deep copy of this iterator.
+     */
+    public DTMAxisIterator cloneIterator()
+    {
+      _isRestartable = false;  // must set to false for any clone
+
+      try
+      {
+        final AncestorIterator clone = (AncestorIterator) super.clone();
+
+        clone._startNode = _startNode;
+
+        // return clone.reset();
+        return clone;
+      }
+      catch (CloneNotSupportedException e)
+      {
+        throw new DTMException(XMLMessages.createXMLMessage(XMLErrorResources.ER_ITERATOR_CLONE_NOT_SUPPORTED, null)); //"Iterator clone not supported.");
+      }
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      m_realStartNode = node;
+
+      if (_isRestartable)
+      {
+        int nodeID = makeNodeIdentity(node);
+        m_size = 0;
+
+        if (nodeID == DTM.NULL) {
+          _currentNode = DTM.NULL;
+          m_ancestorsPos = 0;
+          return this;
+        }
+
+        // Start from the current node's parent if
+        // _includeSelf is false.
+        if (!_includeSelf) {
+          nodeID = _parent2(nodeID);
+          node = makeNodeHandle(nodeID);
+        }
+
+        _startNode = node;
+
+        while (nodeID != END) {
+          //m_ancestors.addElement(node);
+          if (m_size >= m_ancestors.length)
+          {
+            int[] newAncestors = new int[m_size * 2];
+            System.arraycopy(m_ancestors, 0, newAncestors, 0, m_ancestors.length);
+            m_ancestors = newAncestors;
+          }
+
+          m_ancestors[m_size++] = node;
+          nodeID = _parent2(nodeID);
+          node = makeNodeHandle(nodeID);
+        }
+
+        m_ancestorsPos = m_size - 1;
+
+        _currentNode = (m_ancestorsPos>=0)
+                               ? m_ancestors[m_ancestorsPos]
+                               : DTM.NULL;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Resets the iterator to the last start node.
+     *
+     * @return A DTMAxisIterator, which may or may not be the same as this
+     *         iterator.
+     */
+    public DTMAxisIterator reset()
+    {
+
+      m_ancestorsPos = m_size - 1;
+
+      _currentNode = (m_ancestorsPos >= 0) ? m_ancestors[m_ancestorsPos]
+                                         : DTM.NULL;
+
+      return resetPosition();
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      int next = _currentNode;
+
+      int pos = --m_ancestorsPos;
+
+      _currentNode = (pos >= 0) ? m_ancestors[m_ancestorsPos]
+                                : DTM.NULL;
+
+      return returnNode(next);
+    }
+
+    public void setMark() {
+        m_markedPos = m_ancestorsPos;
+    }
+
+    public void gotoMark() {
+        m_ancestorsPos = m_markedPos;
+        _currentNode = m_ancestorsPos>=0 ? m_ancestors[m_ancestorsPos]
+                                         : DTM.NULL;
+    }
+  }  // end of AncestorIterator
+
+  /**
+   * Typed iterator that returns the ancestors of a given node.
+   */
+  public final class TypedAncestorIterator extends AncestorIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedAncestorIterator
+     *
+     *
+     * @param type The extended type ID being requested.
+     */
+    public TypedAncestorIterator(int type)
+    {
+      _nodeType = type;
+    }
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      m_realStartNode = node;
+
+      if (_isRestartable)
+      {
+        int nodeID = makeNodeIdentity(node);
+        m_size = 0;
+
+        if (nodeID == DTM.NULL) {
+          _currentNode = DTM.NULL;
+          m_ancestorsPos = 0;
+          return this;
+        }
+
+        final int nodeType = _nodeType;
+
+        if (!_includeSelf) {
+          nodeID = _parent2(nodeID);
+          node = makeNodeHandle(nodeID);
+        }
+
+        _startNode = node;
+
+        if (nodeType >= DTM.NTYPES) {
+          while (nodeID != END) {
+            int eType = _exptype2(nodeID);
+
+            if (eType == nodeType) {
+              if (m_size >= m_ancestors.length)
+              {
+                int[] newAncestors = new int[m_size * 2];
+                System.arraycopy(m_ancestors, 0, newAncestors, 0, m_ancestors.length);
+                m_ancestors = newAncestors;
+              }
+              m_ancestors[m_size++] = makeNodeHandle(nodeID);
+            }
+            nodeID = _parent2(nodeID);
+          }
+        }
+        else {
+          while (nodeID != END) {
+            int eType = _exptype2(nodeID);
+
+            if ((eType < DTM.NTYPES && eType == nodeType)
+                || (eType >= DTM.NTYPES
+                    && m_extendedTypes[eType].getNodeType() == nodeType)) {
+              if (m_size >= m_ancestors.length)
+              {
+                int[] newAncestors = new int[m_size * 2];
+                System.arraycopy(m_ancestors, 0, newAncestors, 0, m_ancestors.length);
+                m_ancestors = newAncestors;
+              }
+              m_ancestors[m_size++] = makeNodeHandle(nodeID);
+            }
+            nodeID = _parent2(nodeID);
+          }
+        }
+        m_ancestorsPos = m_size - 1;
+
+        _currentNode = (m_ancestorsPos>=0)
+                               ? m_ancestors[m_ancestorsPos]
+                               : DTM.NULL;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Return the node at the given position.
+     */
+    public int getNodeByPosition(int position)
+    {
+      if (position > 0 && position <= m_size) {
+        return m_ancestors[position-1];
+      }
+      else
+        return DTM.NULL;
+    }
+
+    /**
+     * Returns the position of the last node within the iteration, as
+     * defined by XPath.
+     */
+    public int getLast() {
+      return m_size;
+    }
+  }  // end of TypedAncestorIterator
+
+  /**
+   * Iterator that returns the descendants of a given node.
+   */
+  public class DescendantIterator extends InternalAxisIteratorBase
+  {
+
+    /**
+     * Set start to END should 'close' the iterator,
+     * i.e. subsequent call to next() should return END.
+     *
+     * @param node Sets the root of the iteration.
+     *
+     * @return A DTMAxisIterator set to the start of the iteration.
+     */
+    public DTMAxisIterator setStartNode(int node)
+    {
+//%HZ%: Added reference to DTMDefaultBase.ROOTNODE back in, temporarily
+      if (node == DTMDefaultBase.ROOTNODE)
+        node = getDocument();
+      if (_isRestartable)
+      {
+        node = makeNodeIdentity(node);
+        _startNode = node;
+
+        if (_includeSelf)
+          node--;
+
+        _currentNode = node;
+
+        return resetPosition();
+      }
+
+      return this;
+    }
+
+    /**
+     * Tell if this node identity is a descendant.  Assumes that
+     * the node info for the element has already been obtained.
+     *
+     * This one-sided test works only if the parent has been
+     * previously tested and is known to be a descendent. It fails if
+     * the parent is the _startNode's next sibling, or indeed any node
+     * that follows _startNode in document order.  That may suffice
+     * for this iterator, but it's not really an isDescendent() test.
+     * %REVIEW% rename?
+     *
+     * @param identity The index number of the node in question.
+     * @return true if the index is a descendant of _startNode.
+     */
+    protected final boolean isDescendant(int identity)
+    {
+      return (_parent2(identity) >= _startNode) || (_startNode == identity);
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      final int startNode = _startNode;
+      if (startNode == NULL) {
+        return NULL;
+      }
+
+      if (_includeSelf && (_currentNode + 1) == startNode)
+          return returnNode(makeNodeHandle(++_currentNode)); // | m_dtmIdent);
+
+      int node = _currentNode;
+      int type;
+
+      // %OPT% If the startNode is the root node, do not need
+      // to do the isDescendant() check.
+      if (startNode == ROOTNODE) {
+        int eType;
+        do {
+          node++;
+          eType = _exptype2(node);
+
+          if (NULL == eType) {
+            _currentNode = NULL;
+            return END;
+          }
+        } while (eType == TEXT_NODE
+                 || (type = m_extendedTypes[eType].getNodeType()) == ATTRIBUTE_NODE
+                 || type == NAMESPACE_NODE);
+      }
+      else {
+        do {
+          node++;
+          type = _type2(node);
+
+          if (NULL == type ||!isDescendant(node)) {
+            _currentNode = NULL;
+            return END;
+          }
+        } while(ATTRIBUTE_NODE == type || TEXT_NODE == type
+                 || NAMESPACE_NODE == type);
+      }
+
+      _currentNode = node;
+      return returnNode(makeNodeHandle(node));  // make handle.
+    }
+
+    /**
+     * Reset.
+     *
+     */
+  public DTMAxisIterator reset()
+  {
+
+    final boolean temp = _isRestartable;
+
+    _isRestartable = true;
+
+    setStartNode(makeNodeHandle(_startNode));
+
+    _isRestartable = temp;
+
+    return this;
+  }
+
+  }  // end of DescendantIterator
+
+  /**
+   * Typed iterator that returns the descendants of a given node.
+   */
+  public final class TypedDescendantIterator extends DescendantIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedDescendantIterator
+     *
+     *
+     * @param nodeType Extended type ID being requested.
+     */
+    public TypedDescendantIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+      final int startNode = _startNode;
+      if (_startNode == NULL) {
+        return NULL;
+      }
+
+      int node = _currentNode;
+
+      int expType;
+      final int nodeType = _nodeType;
+
+      if (nodeType != DTM.ELEMENT_NODE)
+      {
+        do
+        {
+          node++;
+          expType = _exptype2(node);
+
+          if (NULL == expType || _parent2(node) < startNode && startNode != node) {
+            _currentNode = NULL;
+            return END;
+          }
+        }
+        while (expType != nodeType);
+      }
+      // %OPT% If the start node is root (e.g. in the case of //node),
+      // we can save the isDescendant() check, because all nodes are
+      // descendants of root.
+      else if (startNode == DTMDefaultBase.ROOTNODE)
+      {
+        do
+        {
+          node++;
+          expType = _exptype2(node);
+
+          if (NULL == expType) {
+            _currentNode = NULL;
+            return END;
+          }
+        } while (expType < DTM.NTYPES
+                || m_extendedTypes[expType].getNodeType() != DTM.ELEMENT_NODE);
+      }
+      else
+      {
+        do
+        {
+          node++;
+          expType = _exptype2(node);
+
+          if (NULL == expType || _parent2(node) < startNode && startNode != node) {
+            _currentNode = NULL;
+            return END;
+          }
+        }
+        while (expType < DTM.NTYPES
+               || m_extendedTypes[expType].getNodeType() != DTM.ELEMENT_NODE);
+      }
+
+      _currentNode = node;
+      return returnNode(makeNodeHandle(node));
+    }
+  }  // end of TypedDescendantIterator
+
+  /**
+   * Iterator that returns a given node only if it is of a given type.
+   */
+  public final class TypedSingletonIterator extends SingletonIterator
+  {
+
+    /** The extended type ID that was requested. */
+    private final int _nodeType;
+
+    /**
+     * Constructor TypedSingletonIterator
+     *
+     *
+     * @param nodeType The extended type ID being requested.
+     */
+    public TypedSingletonIterator(int nodeType)
+    {
+      _nodeType = nodeType;
+    }
+
+    /**
+     * Get the next node in the iteration.
+     *
+     * @return The next node handle in the iteration, or END.
+     */
+    public int next()
+    {
+
+      final int result = _currentNode;
+      if (result == END)
+        return DTM.NULL;
+
+      _currentNode = END;
+
+      if (_nodeType >= DTM.NTYPES) {
+        if (_exptype2(makeNodeIdentity(result)) == _nodeType) {
+          return returnNode(result);
+        }
+      }
+      else {
+        if (_type2(makeNodeIdentity(result)) == _nodeType) {
+          return returnNode(result);
+        }
+      }
+
+      return NULL;
+    }
+  }  // end of TypedSingletonIterator
+
+  /*******************************************************************
+   *                End of nested iterators
+   *******************************************************************/
+
+
+  // %OPT% Array references which are used to cache the map0 arrays in
+  // SuballocatedIntVectors. Using the cached arrays reduces the level
+  // of indirection and results in better performance than just calling
+  // SuballocatedIntVector.elementAt().
+  private int[] m_exptype_map0;
+  private int[] m_nextsib_map0;
+  private int[] m_firstch_map0;
+  private int[] m_parent_map0;
+
+  // Double array references to the map arrays in SuballocatedIntVectors.
+  private int[][] m_exptype_map;
+  private int[][] m_nextsib_map;
+  private int[][] m_firstch_map;
+  private int[][] m_parent_map;
+
+  // %OPT% Cache the array of extended types in this class
+  protected ExtendedType[] m_extendedTypes;
+
+  // A Vector which is used to store the values of attribute, namespace,
+  // comment and PI nodes.
+  //
+  // %OPT% These values are unlikely to be equal. Storing
+  // them in a plain Vector is more efficient than storing in the
+  // DTMStringPool because we can save the cost for hash calculation.
+  //
+  // %REVISIT% Do we need a custom class (e.g. StringVector) here?
+  protected Vector m_values;
+
+  // The current index into the m_values Vector.
+  private int m_valueIndex = 0;
+
+  // The maximum value of the current node index.
+  private int m_maxNodeIndex;
+
+  // Cache the shift and mask values for the SuballocatedIntVectors.
+  protected int m_SHIFT;
+  protected int m_MASK;
+  protected int m_blocksize;
+
+  /** %OPT% If the offset and length of a Text node are within certain limits,
+   * we store a bitwise encoded value into an int, using 10 bits (max. 1024)
+   * for length and 21 bits for offset. We can save two SuballocatedIntVector
+   * calls for each getStringValueX() and dispatchCharacterEvents() call by
+   * doing this.
+   */
+  // The number of bits for the length of a Text node.
+  protected final static int TEXT_LENGTH_BITS = 10;
+
+  // The number of bits for the offset of a Text node.
+  protected final static int TEXT_OFFSET_BITS = 21;
+
+  // The maximum length value
+  protected final static int TEXT_LENGTH_MAX = (1<<TEXT_LENGTH_BITS) - 1;
+
+  // The maximum offset value
+  protected final static int TEXT_OFFSET_MAX = (1<<TEXT_OFFSET_BITS) - 1;
+
+  // True if we want to build the ID index table.
+  protected boolean m_buildIdIndex = true;
+
+  // Constant for empty String
+  private static final String EMPTY_STR = "";
+
+  // Constant for empty XMLString
+  private static final XMLString EMPTY_XML_STR = new XMLStringDefault("");
+
+  /**
+   * Construct a SAX2DTM2 object using the default block size.
+   */
+  public SAX2DTM2(DTMManager mgr, Source source, int dtmIdentity,
+                 DTMWSFilter whiteSpaceFilter,
+                 XMLStringFactory xstringfactory,
+                 boolean doIndexing)
+  {
+
+    this(mgr, source, dtmIdentity, whiteSpaceFilter,
+          xstringfactory, doIndexing, DEFAULT_BLOCKSIZE, true, true, false);
+  }
+
+  /**
+   * Construct a SAX2DTM2 object using the given block size.
+   */
+  public SAX2DTM2(DTMManager mgr, Source source, int dtmIdentity,
+                 DTMWSFilter whiteSpaceFilter,
+                 XMLStringFactory xstringfactory,
+                 boolean doIndexing,
+                 int blocksize,
+                 boolean usePrevsib,
+                 boolean buildIdIndex,
+                 boolean newNameTable)
+  {
+
+    super(mgr, source, dtmIdentity, whiteSpaceFilter,
+          xstringfactory, doIndexing, blocksize, usePrevsib, newNameTable);
+
+    // Initialize the values of m_SHIFT and m_MASK.
+    int shift;
+    for(shift=0; (blocksize>>>=1) != 0; ++shift);
+
+    m_blocksize = 1<<shift;
+    m_SHIFT = shift;
+    m_MASK = m_blocksize - 1;
+
+    m_buildIdIndex = buildIdIndex;
+
+    // Some documents do not have attribute nodes. That is why
+    // we set the initial size of this Vector to be small and set
+    // the increment to a bigger number.
+    m_values = new Vector(32, 512);
+
+    m_maxNodeIndex = 1 << DTMManager.IDENT_DTM_NODE_BITS;
+
+    // Set the map0 values in the constructor.
+    m_exptype_map0 = m_exptype.getMap0();
+    m_nextsib_map0 = m_nextsib.getMap0();
+    m_firstch_map0 = m_firstch.getMap0();
+    m_parent_map0  = m_parent.getMap0();
+  }
+
+  /**
+   * Override DTMDefaultBase._exptype() by dropping the incremental code.
+   *
+   * <p>This one is less efficient than _exptype2. It is only used during
+   * DTM building. _exptype2 is used after the document is fully built.
+   */
+  public final int _exptype(int identity)
+  {
+    return m_exptype.elementAt(identity);
+  }
+
+  /************************************************************************
+   *             DTM base accessor interfaces
+   *
+   * %OPT% The code in the following interfaces (e.g. _exptype2, etc.) are
+   * very important to the DTM performance. To have the best performace,
+   * these several interfaces have direct access to the internal arrays of
+   * the SuballocatedIntVectors. The final modifier also has a noticeable
+   * impact on performance.
+   ***********************************************************************/
+
+  /**
+   * The optimized version of DTMDefaultBase._exptype().
+   *
+   * @param identity A node identity, which <em>must not</em> be equal to
+   *        <code>DTM.NULL</code>
+   */
+  public final int _exptype2(int identity)
+  {
+    //return m_exptype.elementAt(identity);
+
+    if (identity < m_blocksize)
+      return m_exptype_map0[identity];
+    else
+      return m_exptype_map[identity>>>m_SHIFT][identity&m_MASK];
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase._nextsib().
+   *
+   * @param identity A node identity, which <em>must not</em> be equal to
+   *        <code>DTM.NULL</code>
+   */
+  public final int _nextsib2(int identity)
+  {
+    //return m_nextsib.elementAt(identity);
+
+    if (identity < m_blocksize)
+      return m_nextsib_map0[identity];
+    else
+      return m_nextsib_map[identity>>>m_SHIFT][identity&m_MASK];
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase._firstch().
+   *
+   * @param identity A node identity, which <em>must not</em> be equal to
+   *        <code>DTM.NULL</code>
+   */
+  public final int _firstch2(int identity)
+  {
+    //return m_firstch.elementAt(identity);
+
+    if (identity < m_blocksize)
+      return m_firstch_map0[identity];
+    else
+      return m_firstch_map[identity>>>m_SHIFT][identity&m_MASK];
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase._parent().
+   *
+   * @param identity A node identity, which <em>must not</em> be equal to
+   *        <code>DTM.NULL</code>
+   */
+  public final int _parent2(int identity)
+  {
+    //return m_parent.elementAt(identity);
+
+    if (identity < m_blocksize)
+      return m_parent_map0[identity];
+    else
+      return m_parent_map[identity>>>m_SHIFT][identity&m_MASK];
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase._type().
+   *
+   * @param identity A node identity, which <em>must not</em> be equal to
+   *        <code>DTM.NULL</code>
+   */
+  public final int _type2(int identity)
+  {
+    //int eType = _exptype2(identity);
+    int eType;
+    if (identity < m_blocksize)
+      eType = m_exptype_map0[identity];
+    else
+      eType = m_exptype_map[identity>>>m_SHIFT][identity&m_MASK];
+
+    if (NULL != eType)
+      return m_extendedTypes[eType].getNodeType();
+    else
+      return NULL;
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase.getExpandedTypeID(int).
+   *
+   * <p>This one is only used by DOMAdapter.getExpandedTypeID(int), which
+   * is mostly called from the compiled translets.
+   */
+  public final int getExpandedTypeID2(int nodeHandle)
+  {
+    int nodeID = makeNodeIdentity(nodeHandle);
+
+    //return (nodeID != NULL) ? _exptype2(nodeID) : NULL;
+
+    if (nodeID != NULL) {
+      if (nodeID < m_blocksize)
+        return m_exptype_map0[nodeID];
+      else
+        return m_exptype_map[nodeID>>>m_SHIFT][nodeID&m_MASK];
+    }
+    else
+      return NULL;
+  }
+
+  /*************************************************************************
+   *                 END of DTM base accessor interfaces
+   *************************************************************************/
+
+
+  /**
+   * Return the node type from the expanded type
+   */
+  public final int _exptype2Type(int exptype)
+  {
+    if (NULL != exptype)
+      return m_extendedTypes[exptype].getNodeType();
+    else
+      return NULL;
+  }
+
+  /**
+   * Get a prefix either from the uri mapping, or just make
+   * one up!
+   *
+   * @param uri The namespace URI, which may be null.
+   *
+   * @return The prefix if there is one, or null.
+   */
+  public int getIdForNamespace(String uri)
+  {
+     int index = m_values.indexOf(uri);
+     if (index < 0)
+     {
+       m_values.addElement(uri);
+       return m_valueIndex++;
+     }
+     else
+       return index;
+  }
+
+  /**
+   * Override SAX2DTM.startElement()
+   *
+   * <p>Receive notification of the start of an element.
+   *
+   * <p>By default, do nothing.  Application writers may override this
+   * method in a subclass to take specific actions at the start of
+   * each element (such as allocating a new tree node or writing
+   * output to a file).</p>
+   *
+   * @param uri The Namespace URI, or the empty string if the
+   *        element has no Namespace URI or if Namespace
+   *        processing is not being performed.
+   * @param localName The local name (without prefix), or the
+   *        empty string if Namespace processing is not being
+   *        performed.
+   * @param qName The qualified name (with prefix), or the
+   *        empty string if qualified names are not available.
+   * @param attributes The specified or defaulted attributes.
+   * @throws SAXException Any SAX exception, possibly
+   *            wrapping another exception.
+   * @see org.xml.sax.ContentHandler#startElement
+   */
+  public void startElement(String uri, String localName, String qName, Attributes attributes)
+      throws SAXException
+  {
+
+    charactersFlush();
+
+    int exName = m_expandedNameTable.getExpandedTypeID(uri, localName, DTM.ELEMENT_NODE);
+
+    int prefixIndex = (qName.length() != localName.length())
+                      ? m_valuesOrPrefixes.stringToIndex(qName) : 0;
+
+    int elemNode = addNode(DTM.ELEMENT_NODE, exName,
+                           m_parents.peek(), m_previous, prefixIndex, true);
+
+    if(m_indexing)
+      indexNode(exName, elemNode);
+
+    m_parents.push(elemNode);
+
+    int startDecls = m_contextIndexes.peek();
+    int nDecls = m_prefixMappings.size();
+    String prefix;
+
+    if(!m_pastFirstElement)
+    {
+      // SPECIAL CASE: Implied declaration at root element
+      prefix="xml";
+      String declURL = "http://www.w3.org/XML/1998/namespace";
+      exName = m_expandedNameTable.getExpandedTypeID(null, prefix, DTM.NAMESPACE_NODE);
+      m_values.addElement(declURL);
+      int val = m_valueIndex++;
+      addNode(DTM.NAMESPACE_NODE, exName, elemNode,
+                     DTM.NULL, val, false);
+      m_pastFirstElement=true;
+    }
+
+    for (int i = startDecls; i < nDecls; i += 2)
+    {
+      prefix = (String) m_prefixMappings.elementAt(i);
+
+      if (prefix == null)
+        continue;
+
+      String declURL = (String) m_prefixMappings.elementAt(i + 1);
+
+      exName = m_expandedNameTable.getExpandedTypeID(null, prefix, DTM.NAMESPACE_NODE);
+
+      m_values.addElement(declURL);
+      int val = m_valueIndex++;
+
+      addNode(DTM.NAMESPACE_NODE, exName, elemNode, DTM.NULL, val, false);
+    }
+
+    int n = attributes.getLength();
+
+    for (int i = 0; i < n; i++)
+    {
+      String attrUri = attributes.getURI(i);
+      String attrQName = attributes.getQName(i);
+      String valString = attributes.getValue(i);
+
+      int nodeType;
+
+      String attrLocalName = attributes.getLocalName(i);
+
+      if ((null != attrQName)
+              && (attrQName.equals("xmlns")
+                  || attrQName.startsWith("xmlns:")))
+      {
+        prefix = getPrefix(attrQName, attrUri);
+        if (declAlreadyDeclared(prefix))
+          continue;  // go to the next attribute.
+
+        nodeType = DTM.NAMESPACE_NODE;
+      }
+      else
+      {
+        nodeType = DTM.ATTRIBUTE_NODE;
+
+        if (m_buildIdIndex && attributes.getType(i).equalsIgnoreCase("ID"))
+          setIDAttribute(valString, elemNode);
+      }
+
+      // Bit of a hack... if somehow valString is null, stringToIndex will
+      // return -1, which will make things very unhappy.
+      if(null == valString)
+        valString = "";
+
+      m_values.addElement(valString);
+      int val = m_valueIndex++;
+
+      if (attrLocalName.length() != attrQName.length())
+      {
+
+        prefixIndex = m_valuesOrPrefixes.stringToIndex(attrQName);
+
+        int dataIndex = m_data.size();
+
+        m_data.addElement(prefixIndex);
+        m_data.addElement(val);
+
+        val = -dataIndex;
+      }
+
+      exName = m_expandedNameTable.getExpandedTypeID(attrUri, attrLocalName, nodeType);
+      addNode(nodeType, exName, elemNode, DTM.NULL, val,
+                     false);
+    }
+
+    if (null != m_wsfilter)
+    {
+      short wsv = m_wsfilter.getShouldStripSpace(makeNodeHandle(elemNode), this);
+      boolean shouldStrip = (DTMWSFilter.INHERIT == wsv)
+                            ? getShouldStripWhitespace()
+                            : (DTMWSFilter.STRIP == wsv);
+
+      pushShouldStripWhitespace(shouldStrip);
+    }
+
+    m_previous = DTM.NULL;
+
+    m_contextIndexes.push(m_prefixMappings.size());  // for the children.
+  }
+
+  /**
+   * Receive notification of the end of an element.
+   *
+   * <p>By default, do nothing.  Application writers may override this
+   * method in a subclass to take specific actions at the end of
+   * each element (such as finalising a tree node or writing
+   * output to a file).</p>
+   *
+   * @param uri The Namespace URI, or the empty string if the
+   *        element has no Namespace URI or if Namespace
+   *        processing is not being performed.
+   * @param localName The local name (without prefix), or the
+   *        empty string if Namespace processing is not being
+   *        performed.
+   * @param qName The qualified XML 1.0 name (with prefix), or the
+   *        empty string if qualified names are not available.
+   * @throws SAXException Any SAX exception, possibly
+   *            wrapping another exception.
+   * @see org.xml.sax.ContentHandler#endElement
+   */
+  public void endElement(String uri, String localName, String qName)
+          throws SAXException
+  {
+    charactersFlush();
+
+    // If no one noticed, startPrefixMapping is a drag.
+    // Pop the context for the last child (the one pushed by startElement)
+    m_contextIndexes.quickPop(1);
+
+    // Do it again for this one (the one pushed by the last endElement).
+    int topContextIndex = m_contextIndexes.peek();
+    if (topContextIndex != m_prefixMappings.size()) {
+      m_prefixMappings.setSize(topContextIndex);
+    }
+
+    m_previous = m_parents.pop();
+
+    popShouldStripWhitespace();
+  }
+
+  /**
+   * Report an XML comment anywhere in the document.
+   *
+   * <p>This callback will be used for comments inside or outside the
+   * document element, including comments in the external DTD
+   * subset (if read).</p>
+   *
+   * @param ch An array holding the characters in the comment.
+   * @param start The starting position in the array.
+   * @param length The number of characters to use from the array.
+   * @throws SAXException The application may raise an exception.
+   */
+  public void comment(char ch[], int start, int length) throws SAXException
+  {
+
+    if (m_insideDTD)      // ignore comments if we're inside the DTD
+      return;
+
+    charactersFlush();
+
+    // %OPT% Saving the comment string in a Vector has a lower cost than
+    // saving it in DTMStringPool.
+    m_values.addElement(new String(ch, start, length));
+    int dataIndex = m_valueIndex++;
+
+    m_previous = addNode(DTM.COMMENT_NODE, DTM.COMMENT_NODE,
+                         m_parents.peek(), m_previous, dataIndex, false);
+  }
+
+  /**
+   * Receive notification of the beginning of the document.
+   *
+   * @throws SAXException Any SAX exception, possibly
+   *            wrapping another exception.
+   * @see org.xml.sax.ContentHandler#startDocument
+   */
+  public void startDocument() throws SAXException
+  {
+
+    int doc = addNode(DTM.DOCUMENT_NODE,
+                      DTM.DOCUMENT_NODE,
+                      DTM.NULL, DTM.NULL, 0, true);
+
+    m_parents.push(doc);
+    m_previous = DTM.NULL;
+
+    m_contextIndexes.push(m_prefixMappings.size());  // for the next element.
+  }
+
+  /**
+   * Receive notification of the end of the document.
+   *
+   * @throws SAXException Any SAX exception, possibly
+   *            wrapping another exception.
+   * @see org.xml.sax.ContentHandler#endDocument
+   */
+  public void endDocument() throws SAXException
+  {
+    super.endDocument();
+
+    // Add a NULL entry to the end of the node arrays as
+    // the end indication.
+    m_exptype.addElement(NULL);
+    m_parent.addElement(NULL);
+    m_nextsib.addElement(NULL);
+    m_firstch.addElement(NULL);
+
+    // Set the cached references after the document is built.
+    m_extendedTypes = m_expandedNameTable.getExtendedTypes();
+    m_exptype_map = m_exptype.getMap();
+    m_nextsib_map = m_nextsib.getMap();
+    m_firstch_map = m_firstch.getMap();
+    m_parent_map  = m_parent.getMap();
+  }
+
+  /**
+   * Construct the node map from the node.
+   *
+   * @param type raw type ID, one of DTM.XXX_NODE.
+   * @param expandedTypeID The expended type ID.
+   * @param parentIndex The current parent index.
+   * @param previousSibling The previous sibling index.
+   * @param dataOrPrefix index into m_data table, or string handle.
+   * @param canHaveFirstChild true if the node can have a first child, false
+   *                          if it is atomic.
+   *
+   * @return The index identity of the node that was added.
+   */
+  protected final int addNode(int type, int expandedTypeID,
+                        int parentIndex, int previousSibling,
+                        int dataOrPrefix, boolean canHaveFirstChild)
+  {
+    // Common to all nodes:
+    int nodeIndex = m_size++;
+
+    // Have we overflowed a DTM Identity's addressing range?
+    //if(m_dtmIdent.size() == (nodeIndex>>>DTMManager.IDENT_DTM_NODE_BITS))
+    if (nodeIndex == m_maxNodeIndex)
+    {
+      addNewDTMID(nodeIndex);
+      m_maxNodeIndex += (1 << DTMManager.IDENT_DTM_NODE_BITS);
+    }
+
+    m_firstch.addElement(DTM.NULL);
+    m_nextsib.addElement(DTM.NULL);
+    m_parent.addElement(parentIndex);
+    m_exptype.addElement(expandedTypeID);
+    m_dataOrQName.addElement(dataOrPrefix);
+
+    if (m_prevsib != null) {
+      m_prevsib.addElement(previousSibling);
+    }
+
+    if (m_locator != null && m_useSourceLocationProperty) {
+      setSourceLocation();
+    }
+
+    // Note that nextSibling is not processed until charactersFlush()
+    // is called, to handle successive characters() events.
+
+    // Special handling by type: Declare namespaces, attach first child
+    switch(type)
+    {
+    case DTM.NAMESPACE_NODE:
+      declareNamespaceInContext(parentIndex,nodeIndex);
+      break;
+    case DTM.ATTRIBUTE_NODE:
+      break;
+    default:
+      if (DTM.NULL != previousSibling) {
+        m_nextsib.setElementAt(nodeIndex,previousSibling);
+      }
+      else if (DTM.NULL != parentIndex) {
+        m_firstch.setElementAt(nodeIndex,parentIndex);
+      }
+      break;
+    }
+
+    return nodeIndex;
+  }
+
+  /**
+   * Check whether accumulated text should be stripped; if not,
+   * append the appropriate flavor of text/cdata node.
+   */
+  protected final void charactersFlush()
+  {
+
+    if (m_textPendingStart >= 0)  // -1 indicates no-text-in-progress
+    {
+      int length = m_chars.size() - m_textPendingStart;
+      boolean doStrip = false;
+
+      if (getShouldStripWhitespace())
+      {
+        doStrip = m_chars.isWhitespace(m_textPendingStart, length);
+      }
+
+      if (doStrip) {
+        m_chars.setLength(m_textPendingStart);  // Discard accumulated text
+      } else {
+        // Guard against characters/ignorableWhitespace events that
+        // contained no characters.  They should not result in a node.
+        if (length > 0) {
+          // If the offset and length do not exceed the given limits
+          // (offset < 2^21 and length < 2^10), then save both the offset
+          // and length in a bitwise encoded value.
+          if (length <= TEXT_LENGTH_MAX
+                  && m_textPendingStart <= TEXT_OFFSET_MAX) {
+            m_previous = addNode(m_coalescedTextType, DTM.TEXT_NODE,
+                             m_parents.peek(), m_previous,
+                             length + (m_textPendingStart << TEXT_LENGTH_BITS),
+                             false);
+
+          } else {
+            // Store offset and length in the m_data array if one exceeds
+            // the given limits. Use a negative dataIndex as an indication.
+            int dataIndex = m_data.size();
+            m_previous = addNode(m_coalescedTextType, DTM.TEXT_NODE,
+                               m_parents.peek(), m_previous, -dataIndex, false);
+
+            m_data.addElement(m_textPendingStart);
+            m_data.addElement(length);
+          }
+        }
+      }
+
+      // Reset for next text block
+      m_textPendingStart = -1;
+      m_textType = m_coalescedTextType = DTM.TEXT_NODE;
+    }
+  }
+
+  /**
+   * Override the processingInstruction() interface in SAX2DTM2.
+   * <p>
+   * %OPT% This one is different from SAX2DTM.processingInstruction()
+   * in that we do not use extended types for PI nodes. The name of
+   * the PI is saved in the DTMStringPool.
+   *
+   * Receive notification of a processing instruction.
+   *
+   * @param target The processing instruction target.
+   * @param data The processing instruction data, or null if
+   *             none is supplied.
+   * @throws SAXException Any SAX exception, possibly
+   *            wrapping another exception.
+   * @see org.xml.sax.ContentHandler#processingInstruction
+   */
+  public void processingInstruction(String target, String data)
+          throws SAXException
+  {
+
+    charactersFlush();
+
+    int dataIndex = m_data.size();
+    m_previous = addNode(DTM.PROCESSING_INSTRUCTION_NODE,
+                         DTM.PROCESSING_INSTRUCTION_NODE,
+                         m_parents.peek(), m_previous,
+                         -dataIndex, false);
+
+    m_data.addElement(m_valuesOrPrefixes.stringToIndex(target));
+    m_values.addElement(data);
+    m_data.addElement(m_valueIndex++);
+
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase.getFirstAttribute().
+   * <p>
+   * Given a node handle, get the index of the node's first attribute.
+   *
+   * @param nodeHandle int Handle of the node.
+   * @return Handle of first attribute, or DTM.NULL to indicate none exists.
+   */
+  public final int getFirstAttribute(int nodeHandle)
+  {
+    int nodeID = makeNodeIdentity(nodeHandle);
+
+    if (nodeID == DTM.NULL)
+      return DTM.NULL;
+
+    int type = _type2(nodeID);
+
+    if (DTM.ELEMENT_NODE == type)
+    {
+      // Assume that attributes and namespaces immediately follow the element.
+      while (true)
+      {
+        nodeID++;
+        // Assume this can not be null.
+        type = _type2(nodeID);
+
+        if (type == DTM.ATTRIBUTE_NODE)
+        {
+          return makeNodeHandle(nodeID);
+        }
+        else if (DTM.NAMESPACE_NODE != type)
+        {
+          break;
+        }
+      }
+    }
+
+    return DTM.NULL;
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase.getFirstAttributeIdentity(int).
+   * <p>
+   * Given a node identity, get the index of the node's first attribute.
+   *
+   * @param identity int identity of the node.
+   * @return Identity of first attribute, or DTM.NULL to indicate none exists.
+   */
+  protected int getFirstAttributeIdentity(int identity) {
+    if (identity == NULL) {
+        return NULL;
+    }
+    int type = _type2(identity);
+
+    if (DTM.ELEMENT_NODE == type)
+    {
+      // Assume that attributes and namespaces immediately follow the element.
+      while (true)
+      {
+        identity++;
+
+        // Assume this can not be null.
+        type = _type2(identity);
+
+        if (type == DTM.ATTRIBUTE_NODE)
+        {
+          return identity;
+        }
+        else if (DTM.NAMESPACE_NODE != type)
+        {
+          break;
+        }
+      }
+    }
+
+    return DTM.NULL;
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase.getNextAttributeIdentity(int).
+   * <p>
+   * Given a node identity for an attribute, advance to the next attribute.
+   *
+   * @param identity int identity of the attribute node.  This
+   * <strong>must</strong> be an attribute node.
+   *
+   * @return int DTM node-identity of the resolved attr,
+   * or DTM.NULL to indicate none exists.
+   *
+   */
+  protected int getNextAttributeIdentity(int identity) {
+    // Assume that attributes and namespace nodes immediately follow the element
+    while (true) {
+      identity++;
+      int type = _type2(identity);
+
+      if (type == DTM.ATTRIBUTE_NODE) {
+        return identity;
+      } else if (type != DTM.NAMESPACE_NODE) {
+        break;
+      }
+    }
+
+    return DTM.NULL;
+  }
+
+  /**
+   * The optimized version of DTMDefaultBase.getTypedAttribute(int, int).
+   * <p>
+   * Given a node handle and an expanded type ID, get the index of the node's
+   * attribute of that type, if any.
+   *
+   * @param nodeHandle int Handle of the node.
+   * @param attType int expanded type ID of the required attribute.
+   * @return Handle of attribute of the required type, or DTM.NULL to indicate
+   * none exists.
+   */
+  protected final int getTypedAttribute(int nodeHandle, int attType)
+  {
+
+    int nodeID = makeNodeIdentity(nodeHandle);
+
+    if (nodeID == DTM.NULL)
+      return DTM.NULL;
+
+    int type = _type2(nodeID);
+
+    if (DTM.ELEMENT_NODE == type)
+    {
+      int expType;
+      while (true)
+      {
+        nodeID++;
+        expType = _exptype2(nodeID);
+
+        if (expType != DTM.NULL)
+          type = m_extendedTypes[expType].getNodeType();
+        else
+          return DTM.NULL;
+
+        if (type == DTM.ATTRIBUTE_NODE)
+        {
+          if (expType == attType) return makeNodeHandle(nodeID);
+        }
+        else if (DTM.NAMESPACE_NODE != type)
+        {
+          break;
+        }
+      }
+    }
+
+    return DTM.NULL;
+  }
+
+  /**
+   * Override SAX2DTM.getLocalName() in SAX2DTM2.
+   * <p>Processing for PIs is different.
+   *
+   * Given a node handle, return its XPath- style localname. (As defined in
+   * Namespaces, this is the portion of the name after any colon character).
+   *
+   * @param nodeHandle the id of the node.
+   * @return String Local name of this node.
+   */
+  public String getLocalName(int nodeHandle)
+  {
+    int expType = _exptype(makeNodeIdentity(nodeHandle));
+
+    if (expType == DTM.PROCESSING_INSTRUCTION_NODE)
+    {
+      int dataIndex = _dataOrQName(makeNodeIdentity(nodeHandle));
+      dataIndex = m_data.elementAt(-dataIndex);
+      return m_valuesOrPrefixes.indexToString(dataIndex);
+    }
+    else
+      return m_expandedNameTable.getLocalName(expType);
+  }
+
+  /**
+   * The optimized version of SAX2DTM.getNodeNameX().
+   * <p>
+   * Given a node handle, return the XPath node name. This should be the name
+   * as described by the XPath data model, NOT the DOM- style name.
+   *
+   * @param nodeHandle the id of the node.
+   * @return String Name of this node, which may be an empty string.
+   */
+  public final String getNodeNameX(int nodeHandle)
+  {
+
+    int nodeID = makeNodeIdentity(nodeHandle);
+    int eType = _exptype2(nodeID);
+
+    if (eType == DTM.PROCESSING_INSTRUCTION_NODE)
+    {
+      int dataIndex = _dataOrQName(nodeID);
+      dataIndex = m_data.elementAt(-dataIndex);
+      return m_valuesOrPrefixes.indexToString(dataIndex);
+    }
+
+    final ExtendedType extType = m_extendedTypes[eType];
+
+    if (extType.getNamespace().length() == 0)
+    {
+      return extType.getLocalName();
+    }
+    else
+    {
+      int qnameIndex = m_dataOrQName.elementAt(nodeID);
+
+      if (qnameIndex == 0)
+        return extType.getLocalName();
+
+      if (qnameIndex < 0)
+      {
+        qnameIndex = -qnameIndex;
+        qnameIndex = m_data.elementAt(qnameIndex);
+      }
+
+      return m_valuesOrPrefixes.indexToString(qnameIndex);
+    }
+  }
+
+  /**
+   * The optimized version of SAX2DTM.getNodeName().
+   * <p>
+   * Given a node handle, return its DOM-style node name. This will include
+   * names such as #text or #document.
+   *
+   * @param nodeHandle the id of the node.
+   * @return String Name of this node, which may be an empty string.
+   * %REVIEW% Document when empty string is possible...
+   * %REVIEW-COMMENT% It should never be empty, should it?
+   */
+  public String getNodeName(int nodeHandle)
+  {
+
+    int nodeID = makeNodeIdentity(nodeHandle);
+    int eType = _exptype2(nodeID);
+
+    final ExtendedType extType = m_extendedTypes[eType];
+    if (extType.getNamespace().length() == 0)
+    {
+      int type = extType.getNodeType();
+
+      String localName = extType.getLocalName();
+      if (type == DTM.NAMESPACE_NODE)
+      {
+        if (localName.length() == 0)
+          return "xmlns";
+        else
+          return "xmlns:" + localName;
+      }
+      else if (type == DTM.PROCESSING_INSTRUCTION_NODE)
+      {
+        int dataIndex = _dataOrQName(nodeID);
+        dataIndex = m_data.elementAt(-dataIndex);
+        return m_valuesOrPrefixes.indexToString(dataIndex);
+      }
+      else if (localName.length() == 0)
+      {
+        return getFixedNames(type);
+      }
+      else
+        return localName;
+    }
+    else
+    {
+      int qnameIndex = m_dataOrQName.elementAt(nodeID);
+
+      if (qnameIndex == 0)
+        return extType.getLocalName();
+
+      if (qnameIndex < 0)
+      {
+        qnameIndex = -qnameIndex;
+        qnameIndex = m_data.elementAt(qnameIndex);
+      }
+
+      return m_valuesOrPrefixes.indexToString(qnameIndex);
+    }
+  }
+
+  /**
+   * Override SAX2DTM.getStringValue(int)
+   * <p>
+   * This method is only used by Xalan-J Interpretive. It is not used by XSLTC.
+   * <p>
+   * If the caller supplies an XMLStringFactory, the getStringValue() interface
+   * in SAX2DTM will be called. Otherwise just calls getStringValueX() and
+   * wraps the returned String in an XMLString.
+   *
+   * Get the string-value of a node as a String object
+   * (see http://www.w3.org/TR/xpath#data-model
+   * for the definition of a node's string-value).
+   *
+   * @param nodeHandle The node ID.
+   *
+   * @return A string object that represents the string-value of the given node.
+   */
+  public XMLString getStringValue(int nodeHandle)
+  {
+    int identity = makeNodeIdentity(nodeHandle);
+    if (identity == DTM.NULL)
+      return EMPTY_XML_STR;
+
+    int type= _type2(identity);
+
+    if (type == DTM.ELEMENT_NODE || type == DTM.DOCUMENT_NODE)
+    {
+      int startNode = identity;
+      identity = _firstch2(identity);
+      if (DTM.NULL != identity)
+      {
+        int offset = -1;
+        int length = 0;
+
+        do
+        {
+          type = _exptype2(identity);
+
+          if (type == DTM.TEXT_NODE || type == DTM.CDATA_SECTION_NODE)
+          {
+            int dataIndex = m_dataOrQName.elementAt(identity);
+            if (dataIndex >= 0)
+            {
+              if (-1 == offset)
+              {
+                offset = dataIndex >>> TEXT_LENGTH_BITS;
+              }
+
+              length += dataIndex & TEXT_LENGTH_MAX;
+            }
+            else
+            {
+              if (-1 == offset)
+              {
+                offset = m_data.elementAt(-dataIndex);
+              }
+
+              length += m_data.elementAt(-dataIndex + 1);
+            }
+          }
+
+          identity++;
+        } while (_parent2(identity) >= startNode);
+
+        if (length > 0)
+        {
+          if (m_xstrf != null)
+            return m_xstrf.newstr(m_chars, offset, length);
+          else
+            return new XMLStringDefault(m_chars.getString(offset, length));
+        }
+        else
+          return EMPTY_XML_STR;
+      }
+      else
+        return EMPTY_XML_STR;
+    }
+    else if (DTM.TEXT_NODE == type || DTM.CDATA_SECTION_NODE == type)
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+      if (dataIndex >= 0)
+      {
+        if (m_xstrf != null)
+          return m_xstrf.newstr(m_chars, dataIndex >>> TEXT_LENGTH_BITS,
+                         dataIndex & TEXT_LENGTH_MAX);
+        else
+          return new XMLStringDefault(m_chars.getString(dataIndex >>> TEXT_LENGTH_BITS,
+                                      dataIndex & TEXT_LENGTH_MAX));
+      }
+      else
+      {
+        if (m_xstrf != null)
+          return m_xstrf.newstr(m_chars, m_data.elementAt(-dataIndex),
+                                m_data.elementAt(-dataIndex+1));
+        else
+          return new XMLStringDefault(m_chars.getString(m_data.elementAt(-dataIndex),
+                                   m_data.elementAt(-dataIndex+1)));
+      }
+    }
+    else
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+
+      if (dataIndex < 0)
+      {
+        dataIndex = -dataIndex;
+        dataIndex = m_data.elementAt(dataIndex + 1);
+      }
+
+      if (m_xstrf != null)
+        return m_xstrf.newstr((String)m_values.elementAt(dataIndex));
+      else
+        return new XMLStringDefault((String)m_values.elementAt(dataIndex));
+    }
+  }
+
+  /**
+   * The optimized version of SAX2DTM.getStringValue(int).
+   * <p>
+   * %OPT% This is one of the most often used interfaces. Performance is
+   * critical here. This one is different from SAX2DTM.getStringValue(int) in
+   * that it returns a String instead of a XMLString.
+   *
+   * Get the string- value of a node as a String object (see http: //www. w3.
+   * org/TR/xpath#data- model for the definition of a node's string- value).
+   *
+   * @param nodeHandle The node ID.
+   *
+   * @return A string object that represents the string-value of the given node.
+   */
+  public final String getStringValueX(final int nodeHandle)
+  {
+    int identity = makeNodeIdentity(nodeHandle);
+    if (identity == DTM.NULL)
+      return EMPTY_STR;
+
+    int type= _type2(identity);
+
+    if (type == DTM.ELEMENT_NODE || type == DTM.DOCUMENT_NODE)
+    {
+      int startNode = identity;
+      identity = _firstch2(identity);
+      if (DTM.NULL != identity)
+      {
+        int offset = -1;
+        int length = 0;
+
+        do
+        {
+          type = _exptype2(identity);
+
+          if (type == DTM.TEXT_NODE || type == DTM.CDATA_SECTION_NODE)
+          {
+            int dataIndex = m_dataOrQName.elementAt(identity);
+            if (dataIndex >= 0)
+            {
+              if (-1 == offset)
+              {
+                offset = dataIndex >>> TEXT_LENGTH_BITS;
+              }
+
+              length += dataIndex & TEXT_LENGTH_MAX;
+            }
+            else
+            {
+              if (-1 == offset)
+              {
+                offset = m_data.elementAt(-dataIndex);
+              }
+
+              length += m_data.elementAt(-dataIndex + 1);
+            }
+          }
+
+          identity++;
+        } while (_parent2(identity) >= startNode);
+
+        if (length > 0)
+        {
+          return m_chars.getString(offset, length);
+        }
+        else
+          return EMPTY_STR;
+      }
+      else
+        return EMPTY_STR;
+    }
+    else if (DTM.TEXT_NODE == type || DTM.CDATA_SECTION_NODE == type)
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+      if (dataIndex >= 0)
+      {
+        return m_chars.getString(dataIndex >>> TEXT_LENGTH_BITS,
+                                  dataIndex & TEXT_LENGTH_MAX);
+      }
+      else
+      {
+        return m_chars.getString(m_data.elementAt(-dataIndex),
+                                  m_data.elementAt(-dataIndex+1));
+      }
+    }
+    else
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+
+      if (dataIndex < 0)
+      {
+        dataIndex = -dataIndex;
+        dataIndex = m_data.elementAt(dataIndex + 1);
+      }
+
+      return (String)m_values.elementAt(dataIndex);
+    }
+  }
+
+  /**
+   * Returns the string value of the entire tree
+   */
+  public String getStringValue()
+  {
+    int child = _firstch2(ROOTNODE);
+    if (child == DTM.NULL) return EMPTY_STR;
+
+    // optimization: only create StringBuffer if > 1 child
+    if ((_exptype2(child) == DTM.TEXT_NODE) && (_nextsib2(child) == DTM.NULL))
+    {
+      int dataIndex = m_dataOrQName.elementAt(child);
+      if (dataIndex >= 0)
+        return m_chars.getString(dataIndex >>> TEXT_LENGTH_BITS, dataIndex & TEXT_LENGTH_MAX);
+      else
+        return m_chars.getString(m_data.elementAt(-dataIndex),
+                                  m_data.elementAt(-dataIndex + 1));
+    }
+    else
+      return getStringValueX(getDocument());
+
+  }
+
+  /**
+   * The optimized version of SAX2DTM.dispatchCharactersEvents(int, ContentHandler, boolean).
+   * <p>
+   * Directly call the
+   * characters method on the passed ContentHandler for the
+   * string-value of the given node (see http://www.w3.org/TR/xpath#data-model
+   * for the definition of a node's string-value). Multiple calls to the
+   * ContentHandler's characters methods may well occur for a single call to
+   * this method.
+   *
+   * @param nodeHandle The node ID.
+   * @param ch A non-null reference to a ContentHandler.
+   * @param normalize true if the content should be normalized according to
+   * the rules for the XPath
+   * <a href="http://www.w3.org/TR/xpath#function-normalize-space">normalize-space</a>
+   * function.
+   *
+   * @throws SAXException
+   */
+  public final void dispatchCharactersEvents(int nodeHandle, ContentHandler ch,
+                                             boolean normalize)
+          throws SAXException
+  {
+
+    int identity = makeNodeIdentity(nodeHandle);
+
+    if (identity == DTM.NULL)
+      return;
+
+    int type = _type2(identity);
+
+    if (type == DTM.ELEMENT_NODE || type == DTM.DOCUMENT_NODE)
+    {
+      int startNode = identity;
+      identity = _firstch2(identity);
+      if (DTM.NULL != identity)
+      {
+        int offset = -1;
+        int length = 0;
+
+        do
+        {
+          type = _exptype2(identity);
+
+          if (type == DTM.TEXT_NODE || type == DTM.CDATA_SECTION_NODE)
+          {
+            int dataIndex = m_dataOrQName.elementAt(identity);
+
+            if (dataIndex >= 0)
+            {
+              if (-1 == offset)
+              {
+                offset = dataIndex >>> TEXT_LENGTH_BITS;
+              }
+
+              length += dataIndex & TEXT_LENGTH_MAX;
+            }
+            else
+            {
+              if (-1 == offset)
+              {
+                offset = m_data.elementAt(-dataIndex);
+              }
+
+              length += m_data.elementAt(-dataIndex + 1);
+            }
+          }
+
+          identity++;
+        } while (_parent2(identity) >= startNode);
+
+        if (length > 0)
+        {
+          if(normalize)
+            m_chars.sendNormalizedSAXcharacters(ch, offset, length);
+          else
+            m_chars.sendSAXcharacters(ch, offset, length);
+        }
+      }
+    }
+    else if (DTM.TEXT_NODE == type || DTM.CDATA_SECTION_NODE == type)
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+
+      if (dataIndex >= 0)
+      {
+        if (normalize)
+          m_chars.sendNormalizedSAXcharacters(ch, dataIndex >>> TEXT_LENGTH_BITS,
+                                              dataIndex & TEXT_LENGTH_MAX);
+        else
+          m_chars.sendSAXcharacters(ch, dataIndex >>> TEXT_LENGTH_BITS,
+                                    dataIndex & TEXT_LENGTH_MAX);
+      }
+      else
+      {
+        if (normalize)
+          m_chars.sendNormalizedSAXcharacters(ch, m_data.elementAt(-dataIndex),
+                                              m_data.elementAt(-dataIndex+1));
+        else
+          m_chars.sendSAXcharacters(ch, m_data.elementAt(-dataIndex),
+                                    m_data.elementAt(-dataIndex+1));
+      }
+    }
+    else
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+
+      if (dataIndex < 0)
+      {
+        dataIndex = -dataIndex;
+        dataIndex = m_data.elementAt(dataIndex + 1);
+      }
+
+      String str = (String)m_values.elementAt(dataIndex);
+
+      if(normalize)
+        FastStringBuffer.sendNormalizedSAXcharacters(str.toCharArray(),
+                                                     0, str.length(), ch);
+      else
+        ch.characters(str.toCharArray(), 0, str.length());
+    }
+  }
+
+  /**
+   * Given a node handle, return its node value. This is mostly
+   * as defined by the DOM, but may ignore some conveniences.
+   * <p>
+   *
+   * @param nodeHandle The node id.
+   * @return String Value of this node, or null if not
+   * meaningful for this node type.
+   */
+  public String getNodeValue(int nodeHandle)
+  {
+
+    int identity = makeNodeIdentity(nodeHandle);
+    int type = _type2(identity);
+
+    if (type == DTM.TEXT_NODE || type == DTM.CDATA_SECTION_NODE)
+    {
+      int dataIndex = _dataOrQName(identity);
+      if (dataIndex > 0)
+      {
+        return m_chars.getString(dataIndex >>> TEXT_LENGTH_BITS,
+                                  dataIndex & TEXT_LENGTH_MAX);
+      }
+      else
+      {
+        return m_chars.getString(m_data.elementAt(-dataIndex),
+                                  m_data.elementAt(-dataIndex+1));
+      }
+    }
+    else if (DTM.ELEMENT_NODE == type || DTM.DOCUMENT_FRAGMENT_NODE == type
+             || DTM.DOCUMENT_NODE == type)
+    {
+      return null;
+    }
+    else
+    {
+      int dataIndex = m_dataOrQName.elementAt(identity);
+
+      if (dataIndex < 0)
+      {
+        dataIndex = -dataIndex;
+        dataIndex = m_data.elementAt(dataIndex + 1);
+      }
+
+      return (String)m_values.elementAt(dataIndex);
+    }
+  }
+
+    /**
+     * Copy the String value of a Text node to a SerializationHandler
+     */
+    protected final void copyTextNode(final int nodeID, SerializationHandler handler)
+        throws SAXException
+    {
+        if (nodeID != DTM.NULL) {
+            int dataIndex = m_dataOrQName.elementAt(nodeID);
+            if (dataIndex >= 0) {
+                m_chars.sendSAXcharacters(handler,
+                                          dataIndex >>> TEXT_LENGTH_BITS,
+                                          dataIndex & TEXT_LENGTH_MAX);
+            } else {
+                m_chars.sendSAXcharacters(handler, m_data.elementAt(-dataIndex),
+                                          m_data.elementAt(-dataIndex+1));
+            }
+        }
+    }
+
+    /**
+     * Copy an Element node to a SerializationHandler.
+     *
+     * @param nodeID The node identity
+     * @param exptype The expanded type of the Element node
+     * @param handler The SerializationHandler
+     * @return The qualified name of the Element node.
+     */
+    protected final String copyElement(int nodeID, int exptype,
+                               SerializationHandler handler)
+        throws SAXException
+    {
+        final ExtendedType extType = m_extendedTypes[exptype];
+        String uri = extType.getNamespace();
+        String name = extType.getLocalName();
+
+        if (uri.length() == 0) {
+            handler.startElement(name);
+            return name;
+        }
+        else {
+            int qnameIndex = m_dataOrQName.elementAt(nodeID);
+
+            if (qnameIndex == 0) {
+                handler.startElement(name);
+                handler.namespaceAfterStartElement(EMPTY_STR, uri);
+                return name;
+            }
+
+            if (qnameIndex < 0) {
+                qnameIndex = -qnameIndex;
+                qnameIndex = m_data.elementAt(qnameIndex);
+            }
+
+            String qName = m_valuesOrPrefixes.indexToString(qnameIndex);
+            handler.startElement(qName);
+            int prefixIndex = qName.indexOf(':');
+            String prefix;
+            if (prefixIndex > 0) {
+                prefix = qName.substring(0, prefixIndex);
+            }
+            else {
+                prefix = null;
+            }
+            handler.namespaceAfterStartElement(prefix, uri);
+            return qName;
+        }
+
+    }
+
+    /**
+     * Copy  namespace nodes.
+     *
+     * @param nodeID The Element node identity
+     * @param handler The SerializationHandler
+     * @param inScope  true if all namespaces in scope should be copied,
+     *  false if only the namespace declarations should be copied.
+     */
+    protected final void copyNS(final int nodeID, SerializationHandler handler, boolean inScope)
+        throws SAXException
+    {
+        // %OPT% Optimization for documents which does not have any explicit
+        // namespace nodes. For these documents, there is an implicit
+        // namespace node (xmlns:xml="http://www.w3.org/XML/1998/namespace")
+        // declared on the root element node. In this case, there is no
+        // need to do namespace copying. We can safely return without
+        // doing anything.
+        if (m_namespaceDeclSetElements != null &&
+            m_namespaceDeclSetElements.size() == 1 &&
+            m_namespaceDeclSets != null &&
+            ((SuballocatedIntVector)m_namespaceDeclSets.elementAt(0))
+            .size() == 1)
+            return;
+
+        SuballocatedIntVector nsContext = null;
+        int nextNSNode;
+
+        // Find the first namespace node
+        if (inScope) {
+            nsContext = findNamespaceContext(nodeID);
+            if (nsContext == null || nsContext.size() < 1)
+                return;
+            else
+                nextNSNode = makeNodeIdentity(nsContext.elementAt(0));
+        }
+        else
+            nextNSNode = getNextNamespaceNode2(nodeID);
+
+        int nsIndex = 1;
+        while (nextNSNode != DTM.NULL) {
+            // Retrieve the name of the namespace node
+            int eType = _exptype2(nextNSNode);
+            String nodeName = m_extendedTypes[eType].getLocalName();
+
+            // Retrieve the node value of the namespace node
+            int dataIndex = m_dataOrQName.elementAt(nextNSNode);
+
+            if (dataIndex < 0) {
+                dataIndex = -dataIndex;
+                dataIndex = m_data.elementAt(dataIndex + 1);
+            }
+
+            String nodeValue = (String)m_values.elementAt(dataIndex);
+
+            handler.namespaceAfterStartElement(nodeName, nodeValue);
+
+            if (inScope) {
+                if (nsIndex < nsContext.size()) {
+                    nextNSNode = makeNodeIdentity(nsContext.elementAt(nsIndex));
+                    nsIndex++;
+                }
+                else
+                    return;
+            }
+            else
+                nextNSNode = getNextNamespaceNode2(nextNSNode);
+        }
+    }
+
+    /**
+     * Return the next namespace node following the given base node.
+     *
+     * @baseID The node identity of the base node, which can be an
+     * element, attribute or namespace node.
+     * @return The namespace node immediately following the base node.
+     */
+    protected final int getNextNamespaceNode2(int baseID) {
+        int type;
+        while ((type = _type2(++baseID)) == DTM.ATTRIBUTE_NODE);
+
+        if (type == DTM.NAMESPACE_NODE)
+            return baseID;
+        else
+            return NULL;
+    }
+
+    /**
+     * Copy  attribute nodes from an element .
+     *
+     * @param nodeID The Element node identity
+     * @param handler The SerializationHandler
+     */
+    protected final void copyAttributes(final int nodeID, SerializationHandler handler)
+        throws SAXException{
+
+       for(int current = getFirstAttributeIdentity(nodeID); current != DTM.NULL; current = getNextAttributeIdentity(current)){
+            int eType = _exptype2(current);
+            copyAttribute(current, eType, handler);
+       }
+    }
+
+
+
+    /**
+     * Copy an Attribute node to a SerializationHandler
+     *
+     * @param nodeID The node identity
+     * @param exptype The expanded type of the Element node
+     * @param handler The SerializationHandler
+     */
+    protected final void copyAttribute(int nodeID, int exptype,
+        SerializationHandler handler)
+        throws SAXException
+    {
+        /*
+            final String uri = getNamespaceName(node);
+            if (uri.length() != 0) {
+                final String prefix = getPrefix(node);
+                handler.namespaceAfterStartElement(prefix, uri);
+            }
+            handler.addAttribute(getNodeName(node), getNodeValue(node));
+        */
+        final ExtendedType extType = m_extendedTypes[exptype];
+        final String uri = extType.getNamespace();
+        final String localName = extType.getLocalName();
+
+        String prefix = null;
+        String qname = null;
+        int dataIndex = _dataOrQName(nodeID);
+        int valueIndex = dataIndex;
+            if (dataIndex <= 0) {
+                int prefixIndex = m_data.elementAt(-dataIndex);
+                valueIndex = m_data.elementAt(-dataIndex+1);
+                qname = m_valuesOrPrefixes.indexToString(prefixIndex);
+                int colonIndex = qname.indexOf(':');
+                if (colonIndex > 0) {
+                    prefix = qname.substring(0, colonIndex);
+                }
+            }
+            if (uri.length() != 0) {
+                handler.namespaceAfterStartElement(prefix, uri);
+            }
+
+        String nodeName = (prefix != null) ? qname : localName;
+        String nodeValue = (String)m_values.elementAt(valueIndex);
+
+        handler.addAttribute(uri, localName, nodeName, "CDATA", nodeValue);
+    }
+
+}

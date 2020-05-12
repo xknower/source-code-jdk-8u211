@@ -1,818 +1,812 @@
-/*     */ package java.beans;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.OutputStreamWriter;
-/*     */ import java.lang.reflect.Array;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.nio.charset.Charset;
-/*     */ import java.nio.charset.CharsetEncoder;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.IdentityHashMap;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class XMLEncoder
-/*     */   extends Encoder
-/*     */   implements AutoCloseable
-/*     */ {
-/*     */   private final CharsetEncoder encoder;
-/*     */   private final String charset;
-/*     */   private final boolean declaration;
-/*     */   private OutputStreamWriter out;
-/*     */   private Object owner;
-/* 215 */   private int indentation = 0;
-/*     */   private boolean internal = false;
-/*     */   private Map<Object, ValueData> valueToExpression;
-/*     */   private Map<Object, List<Statement>> targetToStatementList;
-/*     */   private boolean preambleWritten = false;
-/*     */   private NameGenerator nameGenerator;
-/*     */   
-/*     */   private class ValueData {
-/* 223 */     public int refs = 0;
-/*     */     private ValueData() {}
-/* 225 */     public boolean marked = false; public String name = null;
-/* 226 */     public Expression exp = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLEncoder(OutputStream paramOutputStream) {
-/* 242 */     this(paramOutputStream, "UTF-8", true, 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLEncoder(OutputStream paramOutputStream, String paramString, boolean paramBoolean, int paramInt) {
-/* 278 */     if (paramOutputStream == null) {
-/* 279 */       throw new IllegalArgumentException("the output stream cannot be null");
-/*     */     }
-/* 281 */     if (paramInt < 0) {
-/* 282 */       throw new IllegalArgumentException("the indentation must be >= 0");
-/*     */     }
-/* 284 */     Charset charset = Charset.forName(paramString);
-/* 285 */     this.encoder = charset.newEncoder();
-/* 286 */     this.charset = paramString;
-/* 287 */     this.declaration = paramBoolean;
-/* 288 */     this.indentation = paramInt;
-/* 289 */     this.out = new OutputStreamWriter(paramOutputStream, charset.newEncoder());
-/* 290 */     this.valueToExpression = new IdentityHashMap<>();
-/* 291 */     this.targetToStatementList = new IdentityHashMap<>();
-/* 292 */     this.nameGenerator = new NameGenerator();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setOwner(Object paramObject) {
-/* 303 */     this.owner = paramObject;
-/* 304 */     writeExpression(new Expression(this, "getOwner", new Object[0]));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getOwner() {
-/* 315 */     return this.owner;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeObject(Object paramObject) {
-/* 326 */     if (this.internal) {
-/* 327 */       super.writeObject(paramObject);
-/*     */     } else {
-/*     */       
-/* 330 */       writeStatement(new Statement(this, "writeObject", new Object[] { paramObject }));
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private List<Statement> statementList(Object paramObject) {
-/* 335 */     List<Statement> list = this.targetToStatementList.get(paramObject);
-/* 336 */     if (list == null) {
-/* 337 */       list = new ArrayList();
-/* 338 */       this.targetToStatementList.put(paramObject, list);
-/*     */     } 
-/* 340 */     return list;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void mark(Object paramObject, boolean paramBoolean) {
-/* 345 */     if (paramObject == null || paramObject == this) {
-/*     */       return;
-/*     */     }
-/* 348 */     ValueData valueData = getValueData(paramObject);
-/* 349 */     Expression expression = valueData.exp;
-/*     */ 
-/*     */     
-/* 352 */     if (paramObject.getClass() == String.class && expression == null) {
-/*     */       return;
-/*     */     }
-/*     */ 
-/*     */     
-/* 357 */     if (paramBoolean) {
-/* 358 */       valueData.refs++;
-/*     */     }
-/* 360 */     if (valueData.marked) {
-/*     */       return;
-/*     */     }
-/* 363 */     valueData.marked = true;
-/* 364 */     Object object = expression.getTarget();
-/* 365 */     mark(expression);
-/* 366 */     if (!(object instanceof Class)) {
-/* 367 */       statementList(object).add(expression);
-/*     */ 
-/*     */       
-/* 370 */       valueData.refs++;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void mark(Statement paramStatement) {
-/* 375 */     Object[] arrayOfObject = paramStatement.getArguments();
-/* 376 */     for (byte b = 0; b < arrayOfObject.length; b++) {
-/* 377 */       Object object = arrayOfObject[b];
-/* 378 */       mark(object, true);
-/*     */     } 
-/* 380 */     mark(paramStatement.getTarget(), paramStatement instanceof Expression);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeStatement(Statement paramStatement) {
-/* 397 */     boolean bool = this.internal;
-/* 398 */     this.internal = true;
-/*     */     try {
-/* 400 */       super.writeStatement(paramStatement);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 409 */       mark(paramStatement);
-/* 410 */       Object object = paramStatement.getTarget();
-/* 411 */       if (object instanceof Field) {
-/* 412 */         String str = paramStatement.getMethodName();
-/* 413 */         Object[] arrayOfObject = paramStatement.getArguments();
-/* 414 */         if (str != null && arrayOfObject != null)
-/*     */         {
-/* 416 */           if (str.equals("get") && arrayOfObject.length == 1) {
-/* 417 */             object = arrayOfObject[0];
-/*     */           }
-/* 419 */           else if (str.equals("set") && arrayOfObject.length == 2) {
-/* 420 */             object = arrayOfObject[0];
-/*     */           }  } 
-/*     */       } 
-/* 423 */       statementList(object).add(paramStatement);
-/*     */     }
-/* 425 */     catch (Exception exception) {
-/* 426 */       getExceptionListener().exceptionThrown(new Exception("XMLEncoder: discarding statement " + paramStatement, exception));
-/*     */     } 
-/* 428 */     this.internal = bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeExpression(Expression paramExpression) {
-/* 449 */     boolean bool = this.internal;
-/* 450 */     this.internal = true;
-/* 451 */     Object object = getValue(paramExpression);
-/* 452 */     if (get(object) == null || (object instanceof String && !bool)) {
-/* 453 */       (getValueData(object)).exp = paramExpression;
-/* 454 */       super.writeExpression(paramExpression);
-/*     */     } 
-/* 456 */     this.internal = bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void flush() {
-/* 468 */     if (!this.preambleWritten) {
-/* 469 */       if (this.declaration) {
-/* 470 */         writeln("<?xml version=" + quote("1.0") + " encoding=" + 
-/* 471 */             quote(this.charset) + "?>");
-/*     */       }
-/* 473 */       writeln("<java version=" + quote(System.getProperty("java.version")) + " class=" + 
-/* 474 */           quote(XMLDecoder.class.getName()) + ">");
-/* 475 */       this.preambleWritten = true;
-/*     */     } 
-/* 477 */     this.indentation++;
-/* 478 */     List<Statement> list = statementList(this);
-/* 479 */     while (!list.isEmpty()) {
-/* 480 */       Statement statement1 = list.remove(0);
-/* 481 */       if ("writeObject".equals(statement1.getMethodName())) {
-/* 482 */         outputValue(statement1.getArguments()[0], this, true);
-/*     */         continue;
-/*     */       } 
-/* 485 */       outputStatement(statement1, this, false);
-/*     */     } 
-/*     */     
-/* 488 */     this.indentation--;
-/*     */     
-/* 490 */     Statement statement = getMissedStatement();
-/* 491 */     while (statement != null) {
-/* 492 */       outputStatement(statement, this, false);
-/* 493 */       statement = getMissedStatement();
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 497 */       this.out.flush();
-/*     */     }
-/* 499 */     catch (IOException iOException) {
-/* 500 */       getExceptionListener().exceptionThrown(iOException);
-/*     */     } 
-/* 502 */     clear();
-/*     */   }
-/*     */   
-/*     */   void clear() {
-/* 506 */     super.clear();
-/* 507 */     this.nameGenerator.clear();
-/* 508 */     this.valueToExpression.clear();
-/* 509 */     this.targetToStatementList.clear();
-/*     */   }
-/*     */   
-/*     */   Statement getMissedStatement() {
-/* 513 */     for (List<Statement> list : this.targetToStatementList.values()) {
-/* 514 */       for (byte b = 0; b < list.size(); b++) {
-/* 515 */         if (Statement.class == ((Statement)list.get(b)).getClass()) {
-/* 516 */           return list.remove(b);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 520 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void close() {
-/* 530 */     flush();
-/* 531 */     writeln("</java>");
-/*     */     try {
-/* 533 */       this.out.close();
-/*     */     }
-/* 535 */     catch (IOException iOException) {
-/* 536 */       getExceptionListener().exceptionThrown(iOException);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private String quote(String paramString) {
-/* 541 */     return "\"" + paramString + "\"";
-/*     */   }
-/*     */   
-/*     */   private ValueData getValueData(Object paramObject) {
-/* 545 */     ValueData valueData = this.valueToExpression.get(paramObject);
-/* 546 */     if (valueData == null) {
-/* 547 */       valueData = new ValueData();
-/* 548 */       this.valueToExpression.put(paramObject, valueData);
-/*     */     } 
-/* 550 */     return valueData;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isValidCharCode(int paramInt) {
-/* 573 */     return ((32 <= paramInt && paramInt <= 55295) || 10 == paramInt || 9 == paramInt || 13 == paramInt || (57344 <= paramInt && paramInt <= 65533) || (65536 <= paramInt && paramInt <= 1114111));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void writeln(String paramString) {
-/*     */     try {
-/* 583 */       StringBuilder stringBuilder = new StringBuilder();
-/* 584 */       for (byte b = 0; b < this.indentation; b++) {
-/* 585 */         stringBuilder.append(' ');
-/*     */       }
-/* 587 */       stringBuilder.append(paramString);
-/* 588 */       stringBuilder.append('\n');
-/* 589 */       this.out.write(stringBuilder.toString());
-/*     */     }
-/* 591 */     catch (IOException iOException) {
-/* 592 */       getExceptionListener().exceptionThrown(iOException);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private void outputValue(Object paramObject1, Object paramObject2, boolean paramBoolean) {
-/* 597 */     if (paramObject1 == null) {
-/* 598 */       writeln("<null/>");
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 602 */     if (paramObject1 instanceof Class) {
-/* 603 */       writeln("<class>" + ((Class)paramObject1).getName() + "</class>");
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 607 */     ValueData valueData = getValueData(paramObject1);
-/* 608 */     if (valueData.exp != null) {
-/* 609 */       Object object = valueData.exp.getTarget();
-/* 610 */       String str = valueData.exp.getMethodName();
-/*     */       
-/* 612 */       if (object == null || str == null) {
-/* 613 */         throw new NullPointerException(((object == null) ? "target" : "methodName") + " should not be null");
-/*     */       }
-/*     */ 
-/*     */       
-/* 617 */       if (paramBoolean && object instanceof Field && str.equals("get")) {
-/* 618 */         Field field = (Field)object;
-/* 619 */         writeln("<object class=" + quote(field.getDeclaringClass().getName()) + " field=" + 
-/* 620 */             quote(field.getName()) + "/>");
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 624 */       Class<char> clazz = primitiveTypeFor(paramObject1.getClass());
-/* 625 */       if (clazz != null && object == paramObject1.getClass() && str
-/* 626 */         .equals("new")) {
-/* 627 */         String str1 = clazz.getName();
-/*     */         
-/* 629 */         if (clazz == char.class) {
-/* 630 */           char c = ((Character)paramObject1).charValue();
-/* 631 */           if (!isValidCharCode(c)) {
-/* 632 */             writeln(createString(c));
-/*     */             return;
-/*     */           } 
-/* 635 */           paramObject1 = quoteCharCode(c);
-/* 636 */           if (paramObject1 == null) {
-/* 637 */             paramObject1 = Character.valueOf(c);
-/*     */           }
-/*     */         } 
-/* 640 */         writeln("<" + str1 + ">" + paramObject1 + "</" + str1 + ">");
-/*     */ 
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 645 */     } else if (paramObject1 instanceof String) {
-/* 646 */       writeln(createString((String)paramObject1));
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 650 */     if (valueData.name != null) {
-/* 651 */       if (paramBoolean) {
-/* 652 */         writeln("<object idref=" + quote(valueData.name) + "/>");
-/*     */       } else {
-/*     */         
-/* 655 */         outputXML("void", " idref=" + quote(valueData.name), paramObject1, new Object[0]);
-/*     */       }
-/*     */     
-/* 658 */     } else if (valueData.exp != null) {
-/* 659 */       outputStatement(valueData.exp, paramObject2, paramBoolean);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static String quoteCharCode(int paramInt) {
-/* 664 */     switch (paramInt) { case 38:
-/* 665 */         return "&amp;";
-/* 666 */       case 60: return "&lt;";
-/* 667 */       case 62: return "&gt;";
-/* 668 */       case 34: return "&quot;";
-/* 669 */       case 39: return "&apos;";
-/* 670 */       case 13: return "&#13;"; }
-/* 671 */      return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static String createString(int paramInt) {
-/* 676 */     return "<char code=\"#" + Integer.toString(paramInt, 16) + "\"/>";
-/*     */   }
-/*     */   
-/*     */   private String createString(String paramString) {
-/* 680 */     StringBuilder stringBuilder = new StringBuilder();
-/* 681 */     stringBuilder.append("<string>");
-/* 682 */     int i = 0;
-/* 683 */     while (i < paramString.length()) {
-/* 684 */       int j = paramString.codePointAt(i);
-/* 685 */       int k = Character.charCount(j);
-/*     */       
-/* 687 */       if (isValidCharCode(j) && this.encoder.canEncode(paramString.substring(i, i + k))) {
-/* 688 */         String str = quoteCharCode(j);
-/* 689 */         if (str != null) {
-/* 690 */           stringBuilder.append(str);
-/*     */         } else {
-/* 692 */           stringBuilder.appendCodePoint(j);
-/*     */         } 
-/* 694 */         i += k; continue;
-/*     */       } 
-/* 696 */       stringBuilder.append(createString(paramString.charAt(i)));
-/* 697 */       i++;
-/*     */     } 
-/*     */     
-/* 700 */     stringBuilder.append("</string>");
-/* 701 */     return stringBuilder.toString();
-/*     */   }
-/*     */   
-/*     */   private void outputStatement(Statement paramStatement, Object paramObject, boolean paramBoolean) {
-/* 705 */     Object object1 = paramStatement.getTarget();
-/* 706 */     String str1 = paramStatement.getMethodName();
-/*     */     
-/* 708 */     if (object1 == null || str1 == null) {
-/* 709 */       throw new NullPointerException(((object1 == null) ? "target" : "methodName") + " should not be null");
-/*     */     }
-/*     */ 
-/*     */     
-/* 713 */     Object[] arrayOfObject = paramStatement.getArguments();
-/* 714 */     boolean bool = (paramStatement.getClass() == Expression.class) ? true : false;
-/* 715 */     Object object2 = bool ? getValue((Expression)paramStatement) : null;
-/*     */     
-/* 717 */     String str2 = (bool && paramBoolean) ? "object" : "void";
-/* 718 */     String str3 = "";
-/* 719 */     ValueData valueData = getValueData(object2);
-/*     */ 
-/*     */     
-/* 722 */     if (object1 != paramObject)
-/*     */     {
-/* 724 */       if (object1 == Array.class && str1.equals("newInstance")) {
-/* 725 */         str2 = "array";
-/* 726 */         str3 = str3 + " class=" + quote(((Class)arrayOfObject[0]).getName());
-/* 727 */         str3 = str3 + " length=" + quote(arrayOfObject[1].toString());
-/* 728 */         arrayOfObject = new Object[0];
-/*     */       }
-/* 730 */       else if (object1.getClass() == Class.class) {
-/* 731 */         str3 = str3 + " class=" + quote(((Class)object1).getName());
-/*     */       } else {
-/*     */         
-/* 734 */         valueData.refs = 2;
-/* 735 */         if (valueData.name == null) {
-/* 736 */           (getValueData(object1)).refs++;
-/* 737 */           List<Statement> list = statementList(object1);
-/* 738 */           if (!list.contains(paramStatement)) {
-/* 739 */             list.add(paramStatement);
-/*     */           }
-/* 741 */           outputValue(object1, paramObject, false);
-/*     */         } 
-/* 743 */         if (bool)
-/* 744 */           outputValue(object2, paramObject, paramBoolean); 
-/*     */         return;
-/*     */       } 
-/*     */     }
-/* 748 */     if (bool && valueData.refs > 1) {
-/* 749 */       String str = this.nameGenerator.instanceName(object2);
-/* 750 */       valueData.name = str;
-/* 751 */       str3 = str3 + " id=" + quote(str);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 755 */     if ((!bool && str1.equals("set") && arrayOfObject.length == 2 && arrayOfObject[0] instanceof Integer) || (bool && str1
-/*     */       
-/* 757 */       .equals("get") && arrayOfObject.length == 1 && arrayOfObject[0] instanceof Integer)) {
-/*     */       
-/* 759 */       str3 = str3 + " index=" + quote(arrayOfObject[0].toString());
-/* 760 */       (new Object[1])[0] = arrayOfObject[1]; arrayOfObject = (arrayOfObject.length == 1) ? new Object[0] : new Object[1];
-/*     */     }
-/* 762 */     else if ((!bool && str1.startsWith("set") && arrayOfObject.length == 1) || (bool && str1
-/* 763 */       .startsWith("get") && arrayOfObject.length == 0)) {
-/* 764 */       if (3 < str1.length())
-/*     */       {
-/* 766 */         str3 = str3 + " property=" + quote(Introspector.decapitalize(str1.substring(3)));
-/*     */       }
-/*     */     }
-/* 769 */     else if (!str1.equals("new") && !str1.equals("newInstance")) {
-/* 770 */       str3 = str3 + " method=" + quote(str1);
-/*     */     } 
-/* 772 */     outputXML(str2, str3, object2, arrayOfObject);
-/*     */   }
-/*     */   
-/*     */   private void outputXML(String paramString1, String paramString2, Object paramObject, Object... paramVarArgs) {
-/* 776 */     List<Statement> list = statementList(paramObject);
-/*     */     
-/* 778 */     if (paramVarArgs.length == 0 && list.size() == 0) {
-/* 779 */       writeln("<" + paramString1 + paramString2 + "/>");
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 783 */     writeln("<" + paramString1 + paramString2 + ">");
-/* 784 */     this.indentation++;
-/*     */     
-/* 786 */     for (byte b = 0; b < paramVarArgs.length; b++) {
-/* 787 */       outputValue(paramVarArgs[b], (Object)null, true);
-/*     */     }
-/*     */     
-/* 790 */     while (!list.isEmpty()) {
-/* 791 */       Statement statement = list.remove(0);
-/* 792 */       outputStatement(statement, paramObject, false);
-/*     */     } 
-/*     */     
-/* 795 */     this.indentation--;
-/* 796 */     writeln("</" + paramString1 + ">");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static Class primitiveTypeFor(Class<Boolean> paramClass) {
-/* 801 */     if (paramClass == Boolean.class) return boolean.class; 
-/* 802 */     if (paramClass == Byte.class) return byte.class; 
-/* 803 */     if (paramClass == Character.class) return char.class; 
-/* 804 */     if (paramClass == Short.class) return short.class; 
-/* 805 */     if (paramClass == Integer.class) return int.class; 
-/* 806 */     if (paramClass == Long.class) return long.class; 
-/* 807 */     if (paramClass == Float.class) return float.class; 
-/* 808 */     if (paramClass == Double.class) return double.class; 
-/* 809 */     if (paramClass == Void.class) return void.class; 
-/* 810 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\beans\XMLEncoder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.beans;
+
+import java.io.*;
+import java.util.*;
+import java.lang.reflect.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
+
+/**
+ * The <code>XMLEncoder</code> class is a complementary alternative to
+ * the <code>ObjectOutputStream</code> and can used to generate
+ * a textual representation of a <em>JavaBean</em> in the same
+ * way that the <code>ObjectOutputStream</code> can
+ * be used to create binary representation of <code>Serializable</code>
+ * objects. For example, the following fragment can be used to create
+ * a textual representation the supplied <em>JavaBean</em>
+ * and all its properties:
+ * <pre>
+ *       XMLEncoder e = new XMLEncoder(
+ *                          new BufferedOutputStream(
+ *                              new FileOutputStream("Test.xml")));
+ *       e.writeObject(new JButton("Hello, world"));
+ *       e.close();
+ * </pre>
+ * Despite the similarity of their APIs, the <code>XMLEncoder</code>
+ * class is exclusively designed for the purpose of archiving graphs
+ * of <em>JavaBean</em>s as textual representations of their public
+ * properties. Like Java source files, documents written this way
+ * have a natural immunity to changes in the implementations of the classes
+ * involved. The <code>ObjectOutputStream</code> continues to be recommended
+ * for interprocess communication and general purpose serialization.
+ * <p>
+ * The <code>XMLEncoder</code> class provides a default denotation for
+ * <em>JavaBean</em>s in which they are represented as XML documents
+ * complying with version 1.0 of the XML specification and the
+ * UTF-8 character encoding of the Unicode/ISO 10646 character set.
+ * The XML documents produced by the <code>XMLEncoder</code> class are:
+ * <ul>
+ * <li>
+ * <em>Portable and version resilient</em>: they have no dependencies
+ * on the private implementation of any class and so, like Java source
+ * files, they may be exchanged between environments which may have
+ * different versions of some of the classes and between VMs from
+ * different vendors.
+ * <li>
+ * <em>Structurally compact</em>: The <code>XMLEncoder</code> class
+ * uses a <em>redundancy elimination</em> algorithm internally so that the
+ * default values of a Bean's properties are not written to the stream.
+ * <li>
+ * <em>Fault tolerant</em>: Non-structural errors in the file,
+ * caused either by damage to the file or by API changes
+ * made to classes in an archive remain localized
+ * so that a reader can report the error and continue to load the parts
+ * of the document which were not affected by the error.
+ * </ul>
+ * <p>
+ * Below is an example of an XML archive containing
+ * some user interface components from the <em>swing</em> toolkit:
+ * <pre>
+ * &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+ * &lt;java version="1.0" class="java.beans.XMLDecoder"&gt;
+ * &lt;object class="javax.swing.JFrame"&gt;
+ *   &lt;void property="name"&gt;
+ *     &lt;string&gt;frame1&lt;/string&gt;
+ *   &lt;/void&gt;
+ *   &lt;void property="bounds"&gt;
+ *     &lt;object class="java.awt.Rectangle"&gt;
+ *       &lt;int&gt;0&lt;/int&gt;
+ *       &lt;int&gt;0&lt;/int&gt;
+ *       &lt;int&gt;200&lt;/int&gt;
+ *       &lt;int&gt;200&lt;/int&gt;
+ *     &lt;/object&gt;
+ *   &lt;/void&gt;
+ *   &lt;void property="contentPane"&gt;
+ *     &lt;void method="add"&gt;
+ *       &lt;object class="javax.swing.JButton"&gt;
+ *         &lt;void property="label"&gt;
+ *           &lt;string&gt;Hello&lt;/string&gt;
+ *         &lt;/void&gt;
+ *       &lt;/object&gt;
+ *     &lt;/void&gt;
+ *   &lt;/void&gt;
+ *   &lt;void property="visible"&gt;
+ *     &lt;boolean&gt;true&lt;/boolean&gt;
+ *   &lt;/void&gt;
+ * &lt;/object&gt;
+ * &lt;/java&gt;
+ * </pre>
+ * The XML syntax uses the following conventions:
+ * <ul>
+ * <li>
+ * Each element represents a method call.
+ * <li>
+ * The "object" tag denotes an <em>expression</em> whose value is
+ * to be used as the argument to the enclosing element.
+ * <li>
+ * The "void" tag denotes a <em>statement</em> which will
+ * be executed, but whose result will not be used as an
+ * argument to the enclosing method.
+ * <li>
+ * Elements which contain elements use those elements as arguments,
+ * unless they have the tag: "void".
+ * <li>
+ * The name of the method is denoted by the "method" attribute.
+ * <li>
+ * XML's standard "id" and "idref" attributes are used to make
+ * references to previous expressions - so as to deal with
+ * circularities in the object graph.
+ * <li>
+ * The "class" attribute is used to specify the target of a static
+ * method or constructor explicitly; its value being the fully
+ * qualified name of the class.
+ * <li>
+ * Elements with the "void" tag are executed using
+ * the outer context as the target if no target is defined
+ * by a "class" attribute.
+ * <li>
+ * Java's String class is treated specially and is
+ * written &lt;string&gt;Hello, world&lt;/string&gt; where
+ * the characters of the string are converted to bytes
+ * using the UTF-8 character encoding.
+ * </ul>
+ * <p>
+ * Although all object graphs may be written using just these three
+ * tags, the following definitions are included so that common
+ * data structures can be expressed more concisely:
+ * <p>
+ * <ul>
+ * <li>
+ * The default method name is "new".
+ * <li>
+ * A reference to a java class is written in the form
+ *  &lt;class&gt;javax.swing.JButton&lt;/class&gt;.
+ * <li>
+ * Instances of the wrapper classes for Java's primitive types are written
+ * using the name of the primitive type as the tag. For example, an
+ * instance of the <code>Integer</code> class could be written:
+ * &lt;int&gt;123&lt;/int&gt;. Note that the <code>XMLEncoder</code> class
+ * uses Java's reflection package in which the conversion between
+ * Java's primitive types and their associated "wrapper classes"
+ * is handled internally. The API for the <code>XMLEncoder</code> class
+ * itself deals only with <code>Object</code>s.
+ * <li>
+ * In an element representing a nullary method whose name
+ * starts with "get", the "method" attribute is replaced
+ * with a "property" attribute whose value is given by removing
+ * the "get" prefix and decapitalizing the result.
+ * <li>
+ * In an element representing a monadic method whose name
+ * starts with "set", the "method" attribute is replaced
+ * with a "property" attribute whose value is given by removing
+ * the "set" prefix and decapitalizing the result.
+ * <li>
+ * In an element representing a method named "get" taking one
+ * integer argument, the "method" attribute is replaced
+ * with an "index" attribute whose value the value of the
+ * first argument.
+ * <li>
+ * In an element representing a method named "set" taking two arguments,
+ * the first of which is an integer, the "method" attribute is replaced
+ * with an "index" attribute whose value the value of the
+ * first argument.
+ * <li>
+ * A reference to an array is written using the "array"
+ * tag. The "class" and "length" attributes specify the
+ * sub-type of the array and its length respectively.
+ * </ul>
+ *
+ *<p>
+ * For more information you might also want to check out
+ * <a
+ href="http://java.sun.com/products/jfc/tsc/articles/persistence4">Using XMLEncoder</a>,
+ * an article in <em>The Swing Connection.</em>
+ * @see XMLDecoder
+ * @see java.io.ObjectOutputStream
+ *
+ * @since 1.4
+ *
+ * @author Philip Milne
+ */
+public class XMLEncoder extends Encoder implements AutoCloseable {
+
+    private final CharsetEncoder encoder;
+    private final String charset;
+    private final boolean declaration;
+
+    private OutputStreamWriter out;
+    private Object owner;
+    private int indentation = 0;
+    private boolean internal = false;
+    private Map<Object, ValueData> valueToExpression;
+    private Map<Object, List<Statement>> targetToStatementList;
+    private boolean preambleWritten = false;
+    private NameGenerator nameGenerator;
+
+    private class ValueData {
+        public int refs = 0;
+        public boolean marked = false; // Marked -> refs > 0 unless ref was a target.
+        public String name = null;
+        public Expression exp = null;
+    }
+
+    /**
+     * Creates a new XML encoder to write out <em>JavaBeans</em>
+     * to the stream <code>out</code> using an XML encoding.
+     *
+     * @param out  the stream to which the XML representation of
+     *             the objects will be written
+     *
+     * @throws  IllegalArgumentException
+     *          if <code>out</code> is <code>null</code>
+     *
+     * @see XMLDecoder#XMLDecoder(InputStream)
+     */
+    public XMLEncoder(OutputStream out) {
+        this(out, "UTF-8", true, 0);
+    }
+
+    /**
+     * Creates a new XML encoder to write out <em>JavaBeans</em>
+     * to the stream <code>out</code> using the given <code>charset</code>
+     * starting from the given <code>indentation</code>.
+     *
+     * @param out          the stream to which the XML representation of
+     *                     the objects will be written
+     * @param charset      the name of the requested charset;
+     *                     may be either a canonical name or an alias
+     * @param declaration  whether the XML declaration should be generated;
+     *                     set this to <code>false</code>
+     *                     when embedding the contents in another XML document
+     * @param indentation  the number of space characters to indent the entire XML document by
+     *
+     * @throws  IllegalArgumentException
+     *          if <code>out</code> or <code>charset</code> is <code>null</code>,
+     *          or if <code>indentation</code> is less than 0
+     *
+     * @throws  IllegalCharsetNameException
+     *          if <code>charset</code> name is illegal
+     *
+     * @throws  UnsupportedCharsetException
+     *          if no support for the named charset is available
+     *          in this instance of the Java virtual machine
+     *
+     * @throws  UnsupportedOperationException
+     *          if loaded charset does not support encoding
+     *
+     * @see Charset#forName(String)
+     *
+     * @since 1.7
+     */
+    public XMLEncoder(OutputStream out, String charset, boolean declaration, int indentation) {
+        if (out == null) {
+            throw new IllegalArgumentException("the output stream cannot be null");
+        }
+        if (indentation < 0) {
+            throw new IllegalArgumentException("the indentation must be >= 0");
+        }
+        Charset cs = Charset.forName(charset);
+        this.encoder = cs.newEncoder();
+        this.charset = charset;
+        this.declaration = declaration;
+        this.indentation = indentation;
+        this.out = new OutputStreamWriter(out, cs.newEncoder());
+        valueToExpression = new IdentityHashMap<>();
+        targetToStatementList = new IdentityHashMap<>();
+        nameGenerator = new NameGenerator();
+    }
+
+    /**
+     * Sets the owner of this encoder to <code>owner</code>.
+     *
+     * @param owner The owner of this encoder.
+     *
+     * @see #getOwner
+     */
+    public void setOwner(Object owner) {
+        this.owner = owner;
+        writeExpression(new Expression(this, "getOwner", new Object[0]));
+    }
+
+    /**
+     * Gets the owner of this encoder.
+     *
+     * @return The owner of this encoder.
+     *
+     * @see #setOwner
+     */
+    public Object getOwner() {
+        return owner;
+    }
+
+    /**
+     * Write an XML representation of the specified object to the output.
+     *
+     * @param o The object to be written to the stream.
+     *
+     * @see XMLDecoder#readObject
+     */
+    public void writeObject(Object o) {
+        if (internal) {
+            super.writeObject(o);
+        }
+        else {
+            writeStatement(new Statement(this, "writeObject", new Object[]{o}));
+        }
+    }
+
+    private List<Statement> statementList(Object target) {
+        List<Statement> list = targetToStatementList.get(target);
+        if (list == null) {
+            list = new ArrayList<>();
+            targetToStatementList.put(target, list);
+        }
+        return list;
+    }
+
+
+    private void mark(Object o, boolean isArgument) {
+        if (o == null || o == this) {
+            return;
+        }
+        ValueData d = getValueData(o);
+        Expression exp = d.exp;
+        // Do not mark liternal strings. Other strings, which might,
+        // for example, come from resource bundles should still be marked.
+        if (o.getClass() == String.class && exp == null) {
+            return;
+        }
+
+        // Bump the reference counts of all arguments
+        if (isArgument) {
+            d.refs++;
+        }
+        if (d.marked) {
+            return;
+        }
+        d.marked = true;
+        Object target = exp.getTarget();
+        mark(exp);
+        if (!(target instanceof Class)) {
+            statementList(target).add(exp);
+            // Pending: Why does the reference count need to
+            // be incremented here?
+            d.refs++;
+        }
+    }
+
+    private void mark(Statement stm) {
+        Object[] args = stm.getArguments();
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
+            mark(arg, true);
+        }
+        mark(stm.getTarget(), stm instanceof Expression);
+    }
+
+
+    /**
+     * Records the Statement so that the Encoder will
+     * produce the actual output when the stream is flushed.
+     * <P>
+     * This method should only be invoked within the context
+     * of initializing a persistence delegate.
+     *
+     * @param oldStm The statement that will be written
+     *               to the stream.
+     * @see java.beans.PersistenceDelegate#initialize
+     */
+    public void writeStatement(Statement oldStm) {
+        // System.out.println("XMLEncoder::writeStatement: " + oldStm);
+        boolean internal = this.internal;
+        this.internal = true;
+        try {
+            super.writeStatement(oldStm);
+            /*
+               Note we must do the mark first as we may
+               require the results of previous values in
+               this context for this statement.
+               Test case is:
+                   os.setOwner(this);
+                   os.writeObject(this);
+            */
+            mark(oldStm);
+            Object target = oldStm.getTarget();
+            if (target instanceof Field) {
+                String method = oldStm.getMethodName();
+                Object[] args = oldStm.getArguments();
+                if ((method == null) || (args == null)) {
+                }
+                else if (method.equals("get") && (args.length == 1)) {
+                    target = args[0];
+                }
+                else if (method.equals("set") && (args.length == 2)) {
+                    target = args[0];
+                }
+            }
+            statementList(target).add(oldStm);
+        }
+        catch (Exception e) {
+            getExceptionListener().exceptionThrown(new Exception("XMLEncoder: discarding statement " + oldStm, e));
+        }
+        this.internal = internal;
+    }
+
+
+    /**
+     * Records the Expression so that the Encoder will
+     * produce the actual output when the stream is flushed.
+     * <P>
+     * This method should only be invoked within the context of
+     * initializing a persistence delegate or setting up an encoder to
+     * read from a resource bundle.
+     * <P>
+     * For more information about using resource bundles with the
+     * XMLEncoder, see
+     * http://java.sun.com/products/jfc/tsc/articles/persistence4/#i18n
+     *
+     * @param oldExp The expression that will be written
+     *               to the stream.
+     * @see java.beans.PersistenceDelegate#initialize
+     */
+    public void writeExpression(Expression oldExp) {
+        boolean internal = this.internal;
+        this.internal = true;
+        Object oldValue = getValue(oldExp);
+        if (get(oldValue) == null || (oldValue instanceof String && !internal)) {
+            getValueData(oldValue).exp = oldExp;
+            super.writeExpression(oldExp);
+        }
+        this.internal = internal;
+    }
+
+    /**
+     * This method writes out the preamble associated with the
+     * XML encoding if it has not been written already and
+     * then writes out all of the values that been
+     * written to the stream since the last time <code>flush</code>
+     * was called. After flushing, all internal references to the
+     * values that were written to this stream are cleared.
+     */
+    public void flush() {
+        if (!preambleWritten) { // Don't do this in constructor - it throws ... pending.
+            if (this.declaration) {
+                writeln("<?xml version=" + quote("1.0") +
+                            " encoding=" + quote(this.charset) + "?>");
+            }
+            writeln("<java version=" + quote(System.getProperty("java.version")) +
+                           " class=" + quote(XMLDecoder.class.getName()) + ">");
+            preambleWritten = true;
+        }
+        indentation++;
+        List<Statement> statements = statementList(this);
+        while (!statements.isEmpty()) {
+            Statement s = statements.remove(0);
+            if ("writeObject".equals(s.getMethodName())) {
+                outputValue(s.getArguments()[0], this, true);
+            }
+            else {
+                outputStatement(s, this, false);
+            }
+        }
+        indentation--;
+
+        Statement statement = getMissedStatement();
+        while (statement != null) {
+            outputStatement(statement, this, false);
+            statement = getMissedStatement();
+        }
+
+        try {
+            out.flush();
+        }
+        catch (IOException e) {
+            getExceptionListener().exceptionThrown(e);
+        }
+        clear();
+    }
+
+    void clear() {
+        super.clear();
+        nameGenerator.clear();
+        valueToExpression.clear();
+        targetToStatementList.clear();
+    }
+
+    Statement getMissedStatement() {
+        for (List<Statement> statements : this.targetToStatementList.values()) {
+            for (int i = 0; i < statements.size(); i++) {
+                if (Statement.class == statements.get(i).getClass()) {
+                    return statements.remove(i);
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * This method calls <code>flush</code>, writes the closing
+     * postamble and then closes the output stream associated
+     * with this stream.
+     */
+    public void close() {
+        flush();
+        writeln("</java>");
+        try {
+            out.close();
+        }
+        catch (IOException e) {
+            getExceptionListener().exceptionThrown(e);
+        }
+    }
+
+    private String quote(String s) {
+        return "\"" + s + "\"";
+    }
+
+    private ValueData getValueData(Object o) {
+        ValueData d = valueToExpression.get(o);
+        if (d == null) {
+            d = new ValueData();
+            valueToExpression.put(o, d);
+        }
+        return d;
+    }
+
+    /**
+     * Returns <code>true</code> if the argument,
+     * a Unicode code point, is valid in XML documents.
+     * Unicode characters fit into the low sixteen bits of a Unicode code point,
+     * and pairs of Unicode <em>surrogate characters</em> can be combined
+     * to encode Unicode code point in documents containing only Unicode.
+     * (The <code>char</code> datatype in the Java Programming Language
+     * represents Unicode characters, including unpaired surrogates.)
+     * <par>
+     * [2] Char ::= #x0009 | #x000A | #x000D
+     *            | [#x0020-#xD7FF]
+     *            | [#xE000-#xFFFD]
+     *            | [#x10000-#x10ffff]
+     * </par>
+     *
+     * @param code  the 32-bit Unicode code point being tested
+     * @return  <code>true</code> if the Unicode code point is valid,
+     *          <code>false</code> otherwise
+     */
+    private static boolean isValidCharCode(int code) {
+        return (0x0020 <= code && code <= 0xD7FF)
+            || (0x000A == code)
+            || (0x0009 == code)
+            || (0x000D == code)
+            || (0xE000 <= code && code <= 0xFFFD)
+            || (0x10000 <= code && code <= 0x10ffff);
+    }
+
+    private void writeln(String exp) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0; i < indentation; i++) {
+                sb.append(' ');
+            }
+            sb.append(exp);
+            sb.append('\n');
+            this.out.write(sb.toString());
+        }
+        catch (IOException e) {
+            getExceptionListener().exceptionThrown(e);
+        }
+    }
+
+    private void outputValue(Object value, Object outer, boolean isArgument) {
+        if (value == null) {
+            writeln("<null/>");
+            return;
+        }
+
+        if (value instanceof Class) {
+            writeln("<class>" + ((Class)value).getName() + "</class>");
+            return;
+        }
+
+        ValueData d = getValueData(value);
+        if (d.exp != null) {
+            Object target = d.exp.getTarget();
+            String methodName = d.exp.getMethodName();
+
+            if (target == null || methodName == null) {
+                throw new NullPointerException((target == null ? "target" :
+                                                "methodName") + " should not be null");
+            }
+
+            if (isArgument && target instanceof Field && methodName.equals("get")) {
+                Field f = (Field)target;
+                writeln("<object class=" + quote(f.getDeclaringClass().getName()) +
+                        " field=" + quote(f.getName()) + "/>");
+                return;
+            }
+
+            Class<?> primitiveType = primitiveTypeFor(value.getClass());
+            if (primitiveType != null && target == value.getClass() &&
+                methodName.equals("new")) {
+                String primitiveTypeName = primitiveType.getName();
+                // Make sure that character types are quoted correctly.
+                if (primitiveType == Character.TYPE) {
+                    char code = ((Character) value).charValue();
+                    if (!isValidCharCode(code)) {
+                        writeln(createString(code));
+                        return;
+                    }
+                    value = quoteCharCode(code);
+                    if (value == null) {
+                        value = Character.valueOf(code);
+                    }
+                }
+                writeln("<" + primitiveTypeName + ">" + value + "</" +
+                        primitiveTypeName + ">");
+                return;
+            }
+
+        } else if (value instanceof String) {
+            writeln(createString((String) value));
+            return;
+        }
+
+        if (d.name != null) {
+            if (isArgument) {
+                writeln("<object idref=" + quote(d.name) + "/>");
+            }
+            else {
+                outputXML("void", " idref=" + quote(d.name), value);
+            }
+        }
+        else if (d.exp != null) {
+            outputStatement(d.exp, outer, isArgument);
+        }
+    }
+
+    private static String quoteCharCode(int code) {
+        switch(code) {
+          case '&':  return "&amp;";
+          case '<':  return "&lt;";
+          case '>':  return "&gt;";
+          case '"':  return "&quot;";
+          case '\'': return "&apos;";
+          case '\r': return "&#13;";
+          default:   return null;
+        }
+    }
+
+    private static String createString(int code) {
+        return "<char code=\"#" + Integer.toString(code, 16) + "\"/>";
+    }
+
+    private String createString(String string) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<string>");
+        int index = 0;
+        while (index < string.length()) {
+            int point = string.codePointAt(index);
+            int count = Character.charCount(point);
+
+            if (isValidCharCode(point) && this.encoder.canEncode(string.substring(index, index + count))) {
+                String value = quoteCharCode(point);
+                if (value != null) {
+                    sb.append(value);
+                } else {
+                    sb.appendCodePoint(point);
+                }
+                index += count;
+            } else {
+                sb.append(createString(string.charAt(index)));
+                index++;
+            }
+        }
+        sb.append("</string>");
+        return sb.toString();
+    }
+
+    private void outputStatement(Statement exp, Object outer, boolean isArgument) {
+        Object target = exp.getTarget();
+        String methodName = exp.getMethodName();
+
+        if (target == null || methodName == null) {
+            throw new NullPointerException((target == null ? "target" :
+                                            "methodName") + " should not be null");
+        }
+
+        Object[] args = exp.getArguments();
+        boolean expression = exp.getClass() == Expression.class;
+        Object value = (expression) ? getValue((Expression)exp) : null;
+
+        String tag = (expression && isArgument) ? "object" : "void";
+        String attributes = "";
+        ValueData d = getValueData(value);
+
+        // Special cases for targets.
+        if (target == outer) {
+        }
+        else if (target == Array.class && methodName.equals("newInstance")) {
+            tag = "array";
+            attributes = attributes + " class=" + quote(((Class)args[0]).getName());
+            attributes = attributes + " length=" + quote(args[1].toString());
+            args = new Object[]{};
+        }
+        else if (target.getClass() == Class.class) {
+            attributes = attributes + " class=" + quote(((Class)target).getName());
+        }
+        else {
+            d.refs = 2;
+            if (d.name == null) {
+                getValueData(target).refs++;
+                List<Statement> statements = statementList(target);
+                if (!statements.contains(exp)) {
+                    statements.add(exp);
+                }
+                outputValue(target, outer, false);
+            }
+            if (expression) {
+                outputValue(value, outer, isArgument);
+            }
+            return;
+        }
+        if (expression && (d.refs > 1)) {
+            String instanceName = nameGenerator.instanceName(value);
+            d.name = instanceName;
+            attributes = attributes + " id=" + quote(instanceName);
+        }
+
+        // Special cases for methods.
+        if ((!expression && methodName.equals("set") && args.length == 2 &&
+             args[0] instanceof Integer) ||
+             (expression && methodName.equals("get") && args.length == 1 &&
+              args[0] instanceof Integer)) {
+            attributes = attributes + " index=" + quote(args[0].toString());
+            args = (args.length == 1) ? new Object[]{} : new Object[]{args[1]};
+        }
+        else if ((!expression && methodName.startsWith("set") && args.length == 1) ||
+                 (expression && methodName.startsWith("get") && args.length == 0)) {
+            if (3 < methodName.length()) {
+                attributes = attributes + " property=" +
+                    quote(Introspector.decapitalize(methodName.substring(3)));
+            }
+        }
+        else if (!methodName.equals("new") && !methodName.equals("newInstance")) {
+            attributes = attributes + " method=" + quote(methodName);
+        }
+        outputXML(tag, attributes, value, args);
+    }
+
+    private void outputXML(String tag, String attributes, Object value, Object... args) {
+        List<Statement> statements = statementList(value);
+        // Use XML's short form when there is no body.
+        if (args.length == 0 && statements.size() == 0) {
+            writeln("<" + tag + attributes + "/>");
+            return;
+        }
+
+        writeln("<" + tag + attributes + ">");
+        indentation++;
+
+        for(int i = 0; i < args.length; i++) {
+            outputValue(args[i], null, true);
+        }
+
+        while (!statements.isEmpty()) {
+            Statement s = statements.remove(0);
+            outputStatement(s, value, false);
+        }
+
+        indentation--;
+        writeln("</" + tag + ">");
+    }
+
+    @SuppressWarnings("rawtypes")
+    static Class primitiveTypeFor(Class wrapper) {
+        if (wrapper == Boolean.class) return Boolean.TYPE;
+        if (wrapper == Byte.class) return Byte.TYPE;
+        if (wrapper == Character.class) return Character.TYPE;
+        if (wrapper == Short.class) return Short.TYPE;
+        if (wrapper == Integer.class) return Integer.TYPE;
+        if (wrapper == Long.class) return Long.TYPE;
+        if (wrapper == Float.class) return Float.TYPE;
+        if (wrapper == Double.class) return Double.TYPE;
+        if (wrapper == Void.class) return Void.TYPE;
+        return null;
+    }
+}

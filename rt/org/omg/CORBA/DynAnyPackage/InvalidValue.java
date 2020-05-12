@@ -1,59 +1,53 @@
-/*    */ package org.omg.CORBA.DynAnyPackage;
-/*    */ 
-/*    */ import org.omg.CORBA.UserException;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class InvalidValue
-/*    */   extends UserException
-/*    */ {
-/*    */   public InvalidValue() {}
-/*    */   
-/*    */   public InvalidValue(String paramString) {
-/* 51 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\omg\CORBA\DynAnyPackage\InvalidValue.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package org.omg.CORBA.DynAnyPackage;
+
+/**
+ * @author unattributed
+ *
+ * Dynamic Any insert operations raise the <code>InvalidValue</code>
+ * exception if the value inserted is not consistent with the type
+ * of the accessed component in the <code>DynAny</code> object.
+ */
+public final class InvalidValue
+    extends org.omg.CORBA.UserException {
+
+    /**
+     * Constructs an <code>InvalidValue</code> object.
+     */
+    public InvalidValue() {
+        super();
+    }
+
+    /**
+     * Constructs an <code>InvalidValue</code> object.
+     * @param reason  a <code>String</code> giving more information
+     * regarding the exception.
+     */
+    public InvalidValue(String reason) {
+        super(reason);
+    }
+}

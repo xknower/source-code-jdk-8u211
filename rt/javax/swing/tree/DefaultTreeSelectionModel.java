@@ -1,1221 +1,1228 @@
-/*      */ package javax.swing.tree;
-/*      */ 
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.BitSet;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.Hashtable;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.DefaultListSelectionModel;
-/*      */ import javax.swing.event.EventListenerList;
-/*      */ import javax.swing.event.SwingPropertyChangeSupport;
-/*      */ import javax.swing.event.TreeSelectionEvent;
-/*      */ import javax.swing.event.TreeSelectionListener;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class DefaultTreeSelectionModel
-/*      */   implements Cloneable, Serializable, TreeSelectionModel
-/*      */ {
-/*      */   public static final String SELECTION_MODE_PROPERTY = "selectionMode";
-/*      */   protected SwingPropertyChangeSupport changeSupport;
-/*      */   protected TreePath[] selection;
-/*   78 */   protected EventListenerList listenerList = new EventListenerList();
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected transient RowMapper rowMapper;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected DefaultListSelectionModel listSelectionModel;
-/*      */ 
-/*      */   
-/*      */   protected int selectionMode;
-/*      */ 
-/*      */   
-/*      */   protected TreePath leadPath;
-/*      */ 
-/*      */   
-/*      */   protected int leadIndex;
-/*      */ 
-/*      */   
-/*      */   protected int leadRow;
-/*      */ 
-/*      */   
-/*      */   private Hashtable<TreePath, Boolean> uniquePaths;
-/*      */ 
-/*      */   
-/*      */   private Hashtable<TreePath, Boolean> lastPaths;
-/*      */ 
-/*      */   
-/*      */   private TreePath[] tempPaths;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DefaultTreeSelectionModel() {
-/*  112 */     this.listSelectionModel = new DefaultListSelectionModel();
-/*  113 */     this.selectionMode = 4;
-/*  114 */     this.leadIndex = this.leadRow = -1;
-/*  115 */     this.uniquePaths = new Hashtable<>();
-/*  116 */     this.lastPaths = new Hashtable<>();
-/*  117 */     this.tempPaths = new TreePath[1];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setRowMapper(RowMapper paramRowMapper) {
-/*  125 */     this.rowMapper = paramRowMapper;
-/*  126 */     resetRowSelection();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public RowMapper getRowMapper() {
-/*  134 */     return this.rowMapper;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectionMode(int paramInt) {
-/*  152 */     int i = this.selectionMode;
-/*      */     
-/*  154 */     this.selectionMode = paramInt;
-/*  155 */     if (this.selectionMode != 1 && this.selectionMode != 2 && this.selectionMode != 4)
-/*      */     {
-/*      */       
-/*  158 */       this.selectionMode = 4; } 
-/*  159 */     if (i != this.selectionMode && this.changeSupport != null) {
-/*  160 */       this.changeSupport.firePropertyChange("selectionMode", 
-/*  161 */           Integer.valueOf(i), 
-/*  162 */           Integer.valueOf(this.selectionMode));
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getSelectionMode() {
-/*  171 */     return this.selectionMode;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectionPath(TreePath paramTreePath) {
-/*  182 */     if (paramTreePath == null) {
-/*  183 */       setSelectionPaths(null);
-/*      */     } else {
-/*  185 */       TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */       
-/*  187 */       arrayOfTreePath[0] = paramTreePath;
-/*  188 */       setSelectionPaths(arrayOfTreePath);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setSelectionPaths(TreePath[] paramArrayOfTreePath) {
-/*      */     int i, j;
-/*  217 */     TreePath[] arrayOfTreePath = paramArrayOfTreePath;
-/*      */     
-/*  219 */     if (arrayOfTreePath == null) {
-/*  220 */       i = 0;
-/*      */     } else {
-/*  222 */       i = arrayOfTreePath.length;
-/*  223 */     }  if (this.selection == null) {
-/*  224 */       j = 0;
-/*      */     } else {
-/*  226 */       j = this.selection.length;
-/*  227 */     }  if (i + j != 0) {
-/*  228 */       if (this.selectionMode == 1) {
-/*      */ 
-/*      */         
-/*  231 */         if (i > 1) {
-/*  232 */           arrayOfTreePath = new TreePath[1];
-/*  233 */           arrayOfTreePath[0] = paramArrayOfTreePath[0];
-/*  234 */           i = 1;
-/*      */         }
-/*      */       
-/*  237 */       } else if (this.selectionMode == 2) {
-/*      */ 
-/*      */ 
-/*      */         
-/*  241 */         if (i > 0 && !arePathsContiguous(arrayOfTreePath)) {
-/*  242 */           arrayOfTreePath = new TreePath[1];
-/*  243 */           arrayOfTreePath[0] = paramArrayOfTreePath[0];
-/*  244 */           i = 1;
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  248 */       TreePath treePath = this.leadPath;
-/*  249 */       Vector<PathPlaceHolder> vector = new Vector(i + j);
-/*  250 */       ArrayList<TreePath> arrayList = new ArrayList(i);
-/*      */ 
-/*      */       
-/*  253 */       this.lastPaths.clear();
-/*  254 */       this.leadPath = null;
-/*      */       
-/*  256 */       for (byte b1 = 0; b1 < i; b1++) {
-/*  257 */         TreePath treePath1 = arrayOfTreePath[b1];
-/*  258 */         if (treePath1 != null && this.lastPaths.get(treePath1) == null) {
-/*  259 */           this.lastPaths.put(treePath1, Boolean.TRUE);
-/*  260 */           if (this.uniquePaths.get(treePath1) == null) {
-/*  261 */             vector.addElement(new PathPlaceHolder(treePath1, true));
-/*      */           }
-/*  263 */           this.leadPath = treePath1;
-/*  264 */           arrayList.add(treePath1);
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  268 */       TreePath[] arrayOfTreePath1 = arrayList.<TreePath>toArray(
-/*  269 */           new TreePath[arrayList.size()]);
-/*      */ 
-/*      */       
-/*  272 */       for (byte b2 = 0; b2 < j; b2++) {
-/*  273 */         if (this.selection[b2] != null && this.lastPaths
-/*  274 */           .get(this.selection[b2]) == null) {
-/*  275 */           vector.addElement(new PathPlaceHolder(this.selection[b2], false));
-/*      */         }
-/*      */       } 
-/*  278 */       this.selection = arrayOfTreePath1;
-/*      */       
-/*  280 */       Hashtable<TreePath, Boolean> hashtable = this.uniquePaths;
-/*      */       
-/*  282 */       this.uniquePaths = this.lastPaths;
-/*  283 */       this.lastPaths = hashtable;
-/*  284 */       this.lastPaths.clear();
-/*      */ 
-/*      */       
-/*  287 */       insureUniqueness();
-/*      */       
-/*  289 */       updateLeadIndex();
-/*      */       
-/*  291 */       resetRowSelection();
-/*      */       
-/*  293 */       if (vector.size() > 0) {
-/*  294 */         notifyPathChange(vector, treePath);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addSelectionPath(TreePath paramTreePath) {
-/*  306 */     if (paramTreePath != null) {
-/*  307 */       TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */       
-/*  309 */       arrayOfTreePath[0] = paramTreePath;
-/*  310 */       addSelectionPaths(arrayOfTreePath);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addSelectionPaths(TreePath[] paramArrayOfTreePath) {
-/*  330 */     byte b = (paramArrayOfTreePath == null) ? 0 : paramArrayOfTreePath.length;
-/*      */     
-/*  332 */     if (b) {
-/*  333 */       if (this.selectionMode == 1) {
-/*  334 */         setSelectionPaths(paramArrayOfTreePath);
-/*      */       }
-/*  336 */       else if (this.selectionMode == 2 && 
-/*  337 */         !canPathsBeAdded(paramArrayOfTreePath)) {
-/*  338 */         if (arePathsContiguous(paramArrayOfTreePath)) {
-/*  339 */           setSelectionPaths(paramArrayOfTreePath);
-/*      */         } else {
-/*      */           
-/*  342 */           TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */           
-/*  344 */           arrayOfTreePath[0] = paramArrayOfTreePath[0];
-/*  345 */           setSelectionPaths(arrayOfTreePath);
-/*      */         } 
-/*      */       } else {
-/*      */         int j;
-/*      */ 
-/*      */         
-/*  351 */         TreePath treePath = this.leadPath;
-/*  352 */         Vector<PathPlaceHolder> vector = null;
-/*      */         
-/*  354 */         if (this.selection == null) {
-/*  355 */           j = 0;
-/*      */         } else {
-/*  357 */           j = this.selection.length;
-/*      */         } 
-/*      */         
-/*  360 */         this.lastPaths.clear(); int i; byte b1;
-/*  361 */         for (i = 0, b1 = 0; i < b; 
-/*  362 */           i++) {
-/*  363 */           if (paramArrayOfTreePath[i] != null) {
-/*  364 */             if (this.uniquePaths.get(paramArrayOfTreePath[i]) == null) {
-/*  365 */               b1++;
-/*  366 */               if (vector == null)
-/*  367 */                 vector = new Vector(); 
-/*  368 */               vector.addElement(new PathPlaceHolder(paramArrayOfTreePath[i], true));
-/*      */               
-/*  370 */               this.uniquePaths.put(paramArrayOfTreePath[i], Boolean.TRUE);
-/*  371 */               this.lastPaths.put(paramArrayOfTreePath[i], Boolean.TRUE);
-/*      */             } 
-/*  373 */             this.leadPath = paramArrayOfTreePath[i];
-/*      */           } 
-/*      */         } 
-/*      */         
-/*  377 */         if (this.leadPath == null) {
-/*  378 */           this.leadPath = treePath;
-/*      */         }
-/*      */         
-/*  381 */         if (b1 > 0) {
-/*  382 */           TreePath[] arrayOfTreePath = new TreePath[j + b1];
-/*      */ 
-/*      */ 
-/*      */           
-/*  386 */           if (j > 0) {
-/*  387 */             System.arraycopy(this.selection, 0, arrayOfTreePath, 0, j);
-/*      */           }
-/*  389 */           if (b1 != paramArrayOfTreePath.length) {
-/*      */ 
-/*      */             
-/*  392 */             Enumeration<TreePath> enumeration = this.lastPaths.keys();
-/*      */             
-/*  394 */             i = j;
-/*  395 */             while (enumeration.hasMoreElements()) {
-/*  396 */               arrayOfTreePath[i++] = enumeration.nextElement();
-/*      */             }
-/*      */           } else {
-/*      */             
-/*  400 */             System.arraycopy(paramArrayOfTreePath, 0, arrayOfTreePath, j, b1);
-/*      */           } 
-/*      */ 
-/*      */           
-/*  404 */           this.selection = arrayOfTreePath;
-/*      */           
-/*  406 */           insureUniqueness();
-/*      */           
-/*  408 */           updateLeadIndex();
-/*      */           
-/*  410 */           resetRowSelection();
-/*      */           
-/*  412 */           notifyPathChange(vector, treePath);
-/*      */         } else {
-/*      */           
-/*  415 */           this.leadPath = treePath;
-/*  416 */         }  this.lastPaths.clear();
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeSelectionPath(TreePath paramTreePath) {
-/*  429 */     if (paramTreePath != null) {
-/*  430 */       TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */       
-/*  432 */       arrayOfTreePath[0] = paramTreePath;
-/*  433 */       removeSelectionPaths(arrayOfTreePath);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeSelectionPaths(TreePath[] paramArrayOfTreePath) {
-/*  445 */     if (paramArrayOfTreePath != null && this.selection != null && paramArrayOfTreePath.length > 0) {
-/*  446 */       if (!canPathsBeRemoved(paramArrayOfTreePath)) {
-/*      */         
-/*  448 */         clearSelection();
-/*      */       } else {
-/*      */         
-/*  451 */         Vector<PathPlaceHolder> vector = null;
-/*      */         
-/*      */         int i;
-/*  454 */         for (i = paramArrayOfTreePath.length - 1; i >= 0; 
-/*  455 */           i--) {
-/*  456 */           if (paramArrayOfTreePath[i] != null && 
-/*  457 */             this.uniquePaths.get(paramArrayOfTreePath[i]) != null) {
-/*  458 */             if (vector == null)
-/*  459 */               vector = new Vector(paramArrayOfTreePath.length); 
-/*  460 */             this.uniquePaths.remove(paramArrayOfTreePath[i]);
-/*  461 */             vector.addElement(new PathPlaceHolder(paramArrayOfTreePath[i], false));
-/*      */           } 
-/*      */         } 
-/*      */ 
-/*      */         
-/*  466 */         if (vector != null) {
-/*  467 */           i = vector.size();
-/*  468 */           TreePath treePath = this.leadPath;
-/*      */           
-/*  470 */           if (i == this.selection.length) {
-/*  471 */             this.selection = null;
-/*      */           } else {
-/*      */             
-/*  474 */             Enumeration<TreePath> enumeration = this.uniquePaths.keys();
-/*  475 */             byte b = 0;
-/*      */             
-/*  477 */             this.selection = new TreePath[this.selection.length - i];
-/*      */             
-/*  479 */             while (enumeration.hasMoreElements()) {
-/*  480 */               this.selection[b++] = enumeration.nextElement();
-/*      */             }
-/*      */           } 
-/*  483 */           if (this.leadPath != null && this.uniquePaths
-/*  484 */             .get(this.leadPath) == null) {
-/*  485 */             if (this.selection != null) {
-/*  486 */               this.leadPath = this.selection[this.selection.length - 1];
-/*      */             } else {
-/*      */               
-/*  489 */               this.leadPath = null;
-/*      */             }
-/*      */           
-/*  492 */           } else if (this.selection != null) {
-/*  493 */             this.leadPath = this.selection[this.selection.length - 1];
-/*      */           } else {
-/*      */             
-/*  496 */             this.leadPath = null;
-/*      */           } 
-/*  498 */           updateLeadIndex();
-/*      */           
-/*  500 */           resetRowSelection();
-/*      */           
-/*  502 */           notifyPathChange(vector, treePath);
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TreePath getSelectionPath() {
-/*  513 */     if (this.selection != null && this.selection.length > 0) {
-/*  514 */       return this.selection[0];
-/*      */     }
-/*  516 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TreePath[] getSelectionPaths() {
-/*  525 */     if (this.selection != null) {
-/*  526 */       int i = this.selection.length;
-/*  527 */       TreePath[] arrayOfTreePath = new TreePath[i];
-/*      */       
-/*  529 */       System.arraycopy(this.selection, 0, arrayOfTreePath, 0, i);
-/*  530 */       return arrayOfTreePath;
-/*      */     } 
-/*  532 */     return new TreePath[0];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getSelectionCount() {
-/*  539 */     return (this.selection == null) ? 0 : this.selection.length;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isPathSelected(TreePath paramTreePath) {
-/*  547 */     return (paramTreePath != null) ? ((this.uniquePaths.get(paramTreePath) != null)) : false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSelectionEmpty() {
-/*  554 */     return (this.selection == null || this.selection.length == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clearSelection() {
-/*  562 */     if (this.selection != null && this.selection.length > 0) {
-/*  563 */       int i = this.selection.length;
-/*  564 */       boolean[] arrayOfBoolean = new boolean[i];
-/*      */       
-/*  566 */       for (byte b = 0; b < i; b++) {
-/*  567 */         arrayOfBoolean[b] = false;
-/*      */       }
-/*  569 */       TreeSelectionEvent treeSelectionEvent = new TreeSelectionEvent(this, this.selection, arrayOfBoolean, this.leadPath, null);
-/*      */ 
-/*      */       
-/*  572 */       this.leadPath = null;
-/*  573 */       this.leadIndex = this.leadRow = -1;
-/*  574 */       this.uniquePaths.clear();
-/*  575 */       this.selection = null;
-/*  576 */       resetRowSelection();
-/*  577 */       fireValueChanged(treeSelectionEvent);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addTreeSelectionListener(TreeSelectionListener paramTreeSelectionListener) {
-/*  588 */     this.listenerList.add(TreeSelectionListener.class, paramTreeSelectionListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeTreeSelectionListener(TreeSelectionListener paramTreeSelectionListener) {
-/*  598 */     this.listenerList.remove(TreeSelectionListener.class, paramTreeSelectionListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TreeSelectionListener[] getTreeSelectionListeners() {
-/*  615 */     return this.listenerList.<TreeSelectionListener>getListeners(TreeSelectionListener.class);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void fireValueChanged(TreeSelectionEvent paramTreeSelectionEvent) {
-/*  626 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*      */ 
-/*      */ 
-/*      */     
-/*  630 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/*  631 */       if (arrayOfObject[i] == TreeSelectionListener.class)
-/*      */       {
-/*      */ 
-/*      */         
-/*  635 */         ((TreeSelectionListener)arrayOfObject[i + 1]).valueChanged(paramTreeSelectionEvent);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public <T extends java.util.EventListener> T[] getListeners(Class<T> paramClass) {
-/*  678 */     return this.listenerList.getListeners(paramClass);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int[] getSelectionRows() {
-/*  698 */     if (this.rowMapper != null && this.selection != null && this.selection.length > 0) {
-/*  699 */       int[] arrayOfInt = this.rowMapper.getRowsForPaths(this.selection);
-/*      */       
-/*  701 */       if (arrayOfInt != null) {
-/*  702 */         byte b = 0;
-/*      */         
-/*  704 */         for (int i = arrayOfInt.length - 1; i >= 0; i--) {
-/*  705 */           if (arrayOfInt[i] == -1) {
-/*  706 */             b++;
-/*      */           }
-/*      */         } 
-/*  709 */         if (b > 0) {
-/*  710 */           if (b == arrayOfInt.length) {
-/*  711 */             arrayOfInt = null;
-/*      */           } else {
-/*      */             
-/*  714 */             int[] arrayOfInt1 = new int[arrayOfInt.length - b];
-/*      */             
-/*  716 */             int j = arrayOfInt.length - 1; byte b1 = 0;
-/*  717 */             for (; j >= 0; j--) {
-/*  718 */               if (arrayOfInt[j] != -1) {
-/*  719 */                 arrayOfInt1[b1++] = arrayOfInt[j];
-/*      */               }
-/*      */             } 
-/*  722 */             arrayOfInt = arrayOfInt1;
-/*      */           } 
-/*      */         }
-/*      */       } 
-/*  726 */       return arrayOfInt;
-/*      */     } 
-/*  728 */     return new int[0];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMinSelectionRow() {
-/*  737 */     return this.listSelectionModel.getMinSelectionIndex();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMaxSelectionRow() {
-/*  746 */     return this.listSelectionModel.getMaxSelectionIndex();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isRowSelected(int paramInt) {
-/*  753 */     return this.listSelectionModel.isSelectedIndex(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void resetRowSelection() {
-/*  768 */     this.listSelectionModel.clearSelection();
-/*  769 */     if (this.selection != null && this.rowMapper != null) {
-/*      */       
-/*  771 */       boolean bool = false;
-/*  772 */       int[] arrayOfInt = this.rowMapper.getRowsForPaths(this.selection);
-/*      */       
-/*  774 */       byte b = 0; int i = this.selection.length;
-/*  775 */       for (; b < i; b++) {
-/*  776 */         int j = arrayOfInt[b];
-/*  777 */         if (j != -1) {
-/*  778 */           this.listSelectionModel.addSelectionInterval(j, j);
-/*      */         }
-/*      */       } 
-/*  781 */       if (this.leadIndex != -1 && arrayOfInt != null) {
-/*  782 */         this.leadRow = arrayOfInt[this.leadIndex];
-/*      */       }
-/*  784 */       else if (this.leadPath != null) {
-/*      */         
-/*  786 */         this.tempPaths[0] = this.leadPath;
-/*  787 */         arrayOfInt = this.rowMapper.getRowsForPaths(this.tempPaths);
-/*  788 */         this.leadRow = (arrayOfInt != null) ? arrayOfInt[0] : -1;
-/*      */       } else {
-/*      */         
-/*  791 */         this.leadRow = -1;
-/*      */       } 
-/*  793 */       insureRowContinuity();
-/*      */     }
-/*      */     else {
-/*      */       
-/*  797 */       this.leadRow = -1;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getLeadSelectionRow() {
-/*  805 */     return this.leadRow;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public TreePath getLeadSelectionPath() {
-/*  813 */     return this.leadPath;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void addPropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/*  827 */     if (this.changeSupport == null) {
-/*  828 */       this.changeSupport = new SwingPropertyChangeSupport(this);
-/*      */     }
-/*  830 */     this.changeSupport.addPropertyChangeListener(paramPropertyChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void removePropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/*  843 */     if (this.changeSupport == null) {
-/*      */       return;
-/*      */     }
-/*  846 */     this.changeSupport.removePropertyChangeListener(paramPropertyChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PropertyChangeListener[] getPropertyChangeListeners() {
-/*  863 */     if (this.changeSupport == null) {
-/*  864 */       return new PropertyChangeListener[0];
-/*      */     }
-/*  866 */     return this.changeSupport.getPropertyChangeListeners();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void insureRowContinuity() {
-/*  884 */     if (this.selectionMode == 2 && this.selection != null && this.rowMapper != null) {
-/*      */       
-/*  886 */       DefaultListSelectionModel defaultListSelectionModel = this.listSelectionModel;
-/*  887 */       int i = defaultListSelectionModel.getMinSelectionIndex();
-/*      */       
-/*  889 */       if (i != -1) {
-/*  890 */         int j = i;
-/*  891 */         int k = defaultListSelectionModel.getMaxSelectionIndex();
-/*  892 */         for (; j <= k; j++) {
-/*  893 */           if (!defaultListSelectionModel.isSelectedIndex(j)) {
-/*  894 */             if (j == i) {
-/*  895 */               clearSelection();
-/*      */             } else {
-/*      */               
-/*  898 */               TreePath[] arrayOfTreePath = new TreePath[j - i];
-/*  899 */               int[] arrayOfInt = this.rowMapper.getRowsForPaths(this.selection);
-/*      */ 
-/*      */               
-/*  902 */               for (byte b = 0; b < arrayOfInt.length; b++) {
-/*  903 */                 if (arrayOfInt[b] < j) {
-/*  904 */                   arrayOfTreePath[arrayOfInt[b] - i] = this.selection[b];
-/*      */                 }
-/*      */               } 
-/*  907 */               setSelectionPaths(arrayOfTreePath);
-/*      */               
-/*      */               break;
-/*      */             } 
-/*      */           }
-/*      */         } 
-/*      */       } 
-/*  914 */     } else if (this.selectionMode == 1 && this.selection != null && this.selection.length > 1) {
-/*      */       
-/*  916 */       setSelectionPath(this.selection[0]);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean arePathsContiguous(TreePath[] paramArrayOfTreePath) {
-/*  925 */     if (this.rowMapper == null || paramArrayOfTreePath.length < 2) {
-/*  926 */       return true;
-/*      */     }
-/*  928 */     BitSet bitSet = new BitSet(32);
-/*      */     
-/*  930 */     int k = paramArrayOfTreePath.length;
-/*  931 */     byte b = 0;
-/*  932 */     TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */     
-/*  934 */     arrayOfTreePath[0] = paramArrayOfTreePath[0];
-/*  935 */     int j = this.rowMapper.getRowsForPaths(arrayOfTreePath)[0]; int i;
-/*  936 */     for (i = 0; i < k; i++) {
-/*  937 */       if (paramArrayOfTreePath[i] != null) {
-/*  938 */         arrayOfTreePath[0] = paramArrayOfTreePath[i];
-/*  939 */         int[] arrayOfInt = this.rowMapper.getRowsForPaths(arrayOfTreePath);
-/*  940 */         if (arrayOfInt == null) {
-/*  941 */           return false;
-/*      */         }
-/*  943 */         int n = arrayOfInt[0];
-/*  944 */         if (n == -1 || n < j - k || n > j + k)
-/*      */         {
-/*  946 */           return false; } 
-/*  947 */         if (n < j)
-/*  948 */           j = n; 
-/*  949 */         if (!bitSet.get(n)) {
-/*  950 */           bitSet.set(n);
-/*  951 */           b++;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*  955 */     int m = b + j;
-/*      */     
-/*  957 */     for (i = j; i < m; i++) {
-/*  958 */       if (!bitSet.get(i))
-/*  959 */         return false; 
-/*      */     } 
-/*  961 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean canPathsBeAdded(TreePath[] paramArrayOfTreePath) {
-/*  973 */     if (paramArrayOfTreePath == null || paramArrayOfTreePath.length == 0 || this.rowMapper == null || this.selection == null || this.selectionMode == 4)
-/*      */     {
-/*      */       
-/*  976 */       return true;
-/*      */     }
-/*  978 */     BitSet bitSet = new BitSet();
-/*  979 */     DefaultListSelectionModel defaultListSelectionModel = this.listSelectionModel;
-/*      */ 
-/*      */     
-/*  982 */     int j = defaultListSelectionModel.getMinSelectionIndex();
-/*  983 */     int k = defaultListSelectionModel.getMaxSelectionIndex();
-/*  984 */     TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */     
-/*  986 */     if (j != -1) {
-/*  987 */       for (int m = j; m <= k; m++) {
-/*  988 */         if (defaultListSelectionModel.isSelectedIndex(m)) {
-/*  989 */           bitSet.set(m);
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/*  993 */       arrayOfTreePath[0] = paramArrayOfTreePath[0];
-/*  994 */       j = k = this.rowMapper.getRowsForPaths(arrayOfTreePath)[0];
-/*      */     }  int i;
-/*  996 */     for (i = paramArrayOfTreePath.length - 1; i >= 0; i--) {
-/*  997 */       if (paramArrayOfTreePath[i] != null) {
-/*  998 */         arrayOfTreePath[0] = paramArrayOfTreePath[i];
-/*  999 */         int[] arrayOfInt = this.rowMapper.getRowsForPaths(arrayOfTreePath);
-/* 1000 */         if (arrayOfInt == null) {
-/* 1001 */           return false;
-/*      */         }
-/* 1003 */         int m = arrayOfInt[0];
-/* 1004 */         j = Math.min(m, j);
-/* 1005 */         k = Math.max(m, k);
-/* 1006 */         if (m == -1)
-/* 1007 */           return false; 
-/* 1008 */         bitSet.set(m);
-/*      */       } 
-/*      */     } 
-/* 1011 */     for (i = j; i <= k; i++) {
-/* 1012 */       if (!bitSet.get(i))
-/* 1013 */         return false; 
-/*      */     } 
-/* 1015 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected boolean canPathsBeRemoved(TreePath[] paramArrayOfTreePath) {
-/* 1024 */     if (this.rowMapper == null || this.selection == null || this.selectionMode == 4)
-/*      */     {
-/* 1026 */       return true;
-/*      */     }
-/* 1028 */     BitSet bitSet = new BitSet();
-/*      */     
-/* 1030 */     int j = paramArrayOfTreePath.length;
-/*      */     
-/* 1032 */     int k = -1;
-/* 1033 */     byte b = 0;
-/* 1034 */     TreePath[] arrayOfTreePath = new TreePath[1];
-/*      */ 
-/*      */ 
-/*      */     
-/* 1038 */     this.lastPaths.clear(); int i;
-/* 1039 */     for (i = 0; i < j; i++) {
-/* 1040 */       if (paramArrayOfTreePath[i] != null) {
-/* 1041 */         this.lastPaths.put(paramArrayOfTreePath[i], Boolean.TRUE);
-/*      */       }
-/*      */     } 
-/* 1044 */     for (i = this.selection.length - 1; i >= 0; i--) {
-/* 1045 */       if (this.lastPaths.get(this.selection[i]) == null) {
-/* 1046 */         arrayOfTreePath[0] = this.selection[i];
-/* 1047 */         int[] arrayOfInt = this.rowMapper.getRowsForPaths(arrayOfTreePath);
-/* 1048 */         if (arrayOfInt != null && arrayOfInt[0] != -1 && !bitSet.get(arrayOfInt[0])) {
-/* 1049 */           b++;
-/* 1050 */           if (k == -1) {
-/* 1051 */             k = arrayOfInt[0];
-/*      */           } else {
-/* 1053 */             k = Math.min(k, arrayOfInt[0]);
-/* 1054 */           }  bitSet.set(arrayOfInt[0]);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/* 1058 */     this.lastPaths.clear();
-/*      */     
-/* 1060 */     if (b > 1)
-/* 1061 */       for (i = k + b - 1; i >= k; 
-/* 1062 */         i--) {
-/* 1063 */         if (!bitSet.get(i)) {
-/* 1064 */           return false;
-/*      */         }
-/*      */       }  
-/* 1067 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   @Deprecated
-/*      */   protected void notifyPathChange(Vector<?> paramVector, TreePath paramTreePath) {
-/* 1079 */     int i = paramVector.size();
-/* 1080 */     boolean[] arrayOfBoolean = new boolean[i];
-/* 1081 */     TreePath[] arrayOfTreePath = new TreePath[i];
-/*      */ 
-/*      */     
-/* 1084 */     for (byte b = 0; b < i; b++) {
-/* 1085 */       PathPlaceHolder pathPlaceHolder = (PathPlaceHolder)paramVector.elementAt(b);
-/* 1086 */       arrayOfBoolean[b] = pathPlaceHolder.isNew;
-/* 1087 */       arrayOfTreePath[b] = pathPlaceHolder.path;
-/*      */     } 
-/*      */     
-/* 1090 */     TreeSelectionEvent treeSelectionEvent = new TreeSelectionEvent(this, arrayOfTreePath, arrayOfBoolean, paramTreePath, this.leadPath);
-/*      */ 
-/*      */     
-/* 1093 */     fireValueChanged(treeSelectionEvent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void updateLeadIndex() {
-/* 1100 */     if (this.leadPath != null) {
-/* 1101 */       if (this.selection == null) {
-/* 1102 */         this.leadPath = null;
-/* 1103 */         this.leadIndex = this.leadRow = -1;
-/*      */       } else {
-/*      */         
-/* 1106 */         this.leadRow = this.leadIndex = -1;
-/* 1107 */         for (int i = this.selection.length - 1; i >= 0; 
-/* 1108 */           i--) {
-/*      */ 
-/*      */           
-/* 1111 */           if (this.selection[i] == this.leadPath) {
-/* 1112 */             this.leadIndex = i;
-/*      */             
-/*      */             break;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/* 1119 */       this.leadIndex = -1;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void insureUniqueness() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/*      */     Object object;
-/* 1139 */     int i = getSelectionCount();
-/* 1140 */     StringBuffer stringBuffer = new StringBuffer();
-/*      */ 
-/*      */     
-/* 1143 */     if (this.rowMapper != null) {
-/* 1144 */       object = this.rowMapper.getRowsForPaths(this.selection);
-/*      */     } else {
-/* 1146 */       object = null;
-/* 1147 */     }  stringBuffer.append(getClass().getName() + " " + hashCode() + " [ ");
-/* 1148 */     for (byte b = 0; b < i; b++) {
-/* 1149 */       if (object != null) {
-/* 1150 */         stringBuffer.append(this.selection[b].toString() + "@" + 
-/* 1151 */             Integer.toString(object[b]) + " ");
-/*      */       } else {
-/* 1153 */         stringBuffer.append(this.selection[b].toString() + " ");
-/*      */       } 
-/* 1155 */     }  stringBuffer.append("]");
-/* 1156 */     return stringBuffer.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() throws CloneNotSupportedException {
-/* 1169 */     DefaultTreeSelectionModel defaultTreeSelectionModel = (DefaultTreeSelectionModel)super.clone();
-/*      */     
-/* 1171 */     defaultTreeSelectionModel.changeSupport = null;
-/* 1172 */     if (this.selection != null) {
-/* 1173 */       int i = this.selection.length;
-/*      */       
-/* 1175 */       defaultTreeSelectionModel.selection = new TreePath[i];
-/* 1176 */       System.arraycopy(this.selection, 0, defaultTreeSelectionModel.selection, 0, i);
-/*      */     } 
-/* 1178 */     defaultTreeSelectionModel.listenerList = new EventListenerList();
-/* 1179 */     defaultTreeSelectionModel
-/* 1180 */       .listSelectionModel = (DefaultListSelectionModel)this.listSelectionModel.clone();
-/* 1181 */     defaultTreeSelectionModel.uniquePaths = new Hashtable<>();
-/* 1182 */     defaultTreeSelectionModel.lastPaths = new Hashtable<>();
-/* 1183 */     defaultTreeSelectionModel.tempPaths = new TreePath[1];
-/* 1184 */     return defaultTreeSelectionModel;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/*      */     Object[] arrayOfObject;
-/* 1191 */     paramObjectOutputStream.defaultWriteObject();
-/*      */     
-/* 1193 */     if (this.rowMapper != null && this.rowMapper instanceof Serializable) {
-/* 1194 */       arrayOfObject = new Object[2];
-/* 1195 */       arrayOfObject[0] = "rowMapper";
-/* 1196 */       arrayOfObject[1] = this.rowMapper;
-/*      */     } else {
-/*      */       
-/* 1199 */       arrayOfObject = new Object[0];
-/* 1200 */     }  paramObjectOutputStream.writeObject(arrayOfObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1208 */     paramObjectInputStream.defaultReadObject();
-/*      */     
-/* 1210 */     Object[] arrayOfObject = (Object[])paramObjectInputStream.readObject();
-/*      */     
-/* 1212 */     if (arrayOfObject.length > 0 && arrayOfObject[0].equals("rowMapper"))
-/* 1213 */       this.rowMapper = (RowMapper)arrayOfObject[1]; 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\tree\DefaultTreeSelectionModel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.tree;
+
+import java.beans.PropertyChangeListener;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Enumeration;
+import java.util.EventListener;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Vector;
+import javax.swing.event.*;
+import javax.swing.DefaultListSelectionModel;
+
+/**
+ * Default implementation of TreeSelectionModel.  Listeners are notified
+ * whenever
+ * the paths in the selection change, not the rows. In order
+ * to be able to track row changes you may wish to become a listener
+ * for expansion events on the tree and test for changes from there.
+ * <p>resetRowSelection is called from any of the methods that update
+ * the selected paths. If you subclass any of these methods to
+ * filter what is allowed to be selected, be sure and message
+ * <code>resetRowSelection</code> if you do not message super.
+ *
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see javax.swing.JTree
+ *
+ * @author Scott Violet
+ */
+@SuppressWarnings("serial")
+public class DefaultTreeSelectionModel implements Cloneable, Serializable, TreeSelectionModel
+{
+    /** Property name for selectionMode. */
+    public static final String          SELECTION_MODE_PROPERTY = "selectionMode";
+
+    /** Used to messaged registered listeners. */
+    protected SwingPropertyChangeSupport     changeSupport;
+
+    /** Paths that are currently selected.  Will be null if nothing is
+      * currently selected. */
+    protected TreePath[]                selection;
+
+    /** Event listener list. */
+    protected EventListenerList   listenerList = new EventListenerList();
+
+    /** Provides a row for a given path. */
+    transient protected RowMapper               rowMapper;
+
+    /** Handles maintaining the list selection model. The RowMapper is used
+     * to map from a TreePath to a row, and the value is then placed here. */
+    protected DefaultListSelectionModel     listSelectionModel;
+
+    /** Mode for the selection, will be either SINGLE_TREE_SELECTION,
+     * CONTIGUOUS_TREE_SELECTION or DISCONTIGUOUS_TREE_SELECTION.
+     */
+    protected int                           selectionMode;
+
+    /** Last path that was added. */
+    protected TreePath                      leadPath;
+    /** Index of the lead path in selection. */
+    protected int                           leadIndex;
+    /** Lead row. */
+    protected int                           leadRow;
+
+    /** Used to make sure the paths are unique, will contain all the paths
+     * in <code>selection</code>.
+     */
+    private Hashtable<TreePath, Boolean>    uniquePaths;
+    private Hashtable<TreePath, Boolean>    lastPaths;
+    private TreePath[]                      tempPaths;
+
+
+    /**
+     * Creates a new instance of DefaultTreeSelectionModel that is
+     * empty, with a selection mode of DISCONTIGUOUS_TREE_SELECTION.
+     */
+    public DefaultTreeSelectionModel() {
+        listSelectionModel = new DefaultListSelectionModel();
+        selectionMode = DISCONTIGUOUS_TREE_SELECTION;
+        leadIndex = leadRow = -1;
+        uniquePaths = new Hashtable<TreePath, Boolean>();
+        lastPaths = new Hashtable<TreePath, Boolean>();
+        tempPaths = new TreePath[1];
+    }
+
+    /**
+     * Sets the RowMapper instance. This instance is used to determine
+     * the row for a particular TreePath.
+     */
+    public void setRowMapper(RowMapper newMapper) {
+        rowMapper = newMapper;
+        resetRowSelection();
+    }
+
+    /**
+     * Returns the RowMapper instance that is able to map a TreePath to a
+     * row.
+     */
+    public RowMapper getRowMapper() {
+        return rowMapper;
+    }
+
+    /**
+     * Sets the selection model, which must be one of SINGLE_TREE_SELECTION,
+     * CONTIGUOUS_TREE_SELECTION or DISCONTIGUOUS_TREE_SELECTION. If mode
+     * is not one of the defined value,
+     * <code>DISCONTIGUOUS_TREE_SELECTION</code> is assumed.
+     * <p>This may change the selection if the current selection is not valid
+     * for the new mode. For example, if three TreePaths are
+     * selected when the mode is changed to <code>SINGLE_TREE_SELECTION</code>,
+     * only one TreePath will remain selected. It is up to the particular
+     * implementation to decide what TreePath remains selected.
+     * <p>
+     * Setting the mode to something other than the defined types will
+     * result in the mode becoming <code>DISCONTIGUOUS_TREE_SELECTION</code>.
+     */
+    public void setSelectionMode(int mode) {
+        int            oldMode = selectionMode;
+
+        selectionMode = mode;
+        if(selectionMode != TreeSelectionModel.SINGLE_TREE_SELECTION &&
+           selectionMode != TreeSelectionModel.CONTIGUOUS_TREE_SELECTION &&
+           selectionMode != TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION)
+            selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
+        if(oldMode != selectionMode && changeSupport != null)
+            changeSupport.firePropertyChange(SELECTION_MODE_PROPERTY,
+                                             Integer.valueOf(oldMode),
+                                             Integer.valueOf(selectionMode));
+    }
+
+    /**
+     * Returns the selection mode, one of <code>SINGLE_TREE_SELECTION</code>,
+     * <code>DISCONTIGUOUS_TREE_SELECTION</code> or
+     * <code>CONTIGUOUS_TREE_SELECTION</code>.
+     */
+    public int getSelectionMode() {
+        return selectionMode;
+    }
+
+    /**
+      * Sets the selection to path. If this represents a change, then
+      * the TreeSelectionListeners are notified. If <code>path</code> is
+      * null, this has the same effect as invoking <code>clearSelection</code>.
+      *
+      * @param path new path to select
+      */
+    public void setSelectionPath(TreePath path) {
+        if(path == null)
+            setSelectionPaths(null);
+        else {
+            TreePath[]          newPaths = new TreePath[1];
+
+            newPaths[0] = path;
+            setSelectionPaths(newPaths);
+        }
+    }
+
+    /**
+     * Sets the selection. Whether the supplied paths are taken as the
+     * new selection depends upon the selection mode. If the supplied
+     * array is {@code null}, or empty, the selection is cleared. If
+     * the selection mode is {@code SINGLE_TREE_SELECTION}, only the
+     * first path in {@code pPaths} is used. If the selection
+     * mode is {@code CONTIGUOUS_TREE_SELECTION} and the supplied paths
+     * are not contiguous, then only the first path in {@code pPaths} is
+     * used. If the selection mode is
+     * {@code DISCONTIGUOUS_TREE_SELECTION}, then all paths are used.
+     * <p>
+     * All {@code null} paths in {@code pPaths} are ignored.
+     * <p>
+     * If this represents a change, all registered {@code
+     * TreeSelectionListener}s are notified.
+     * <p>
+     * The lead path is set to the last unique path.
+     * <p>
+     * The paths returned from {@code getSelectionPaths} are in the same
+     * order as those supplied to this method.
+     *
+     * @param pPaths the new selection
+     */
+    public void setSelectionPaths(TreePath[] pPaths) {
+        int            newCount, newCounter, oldCount, oldCounter;
+        TreePath[]     paths = pPaths;
+
+        if(paths == null)
+            newCount = 0;
+        else
+            newCount = paths.length;
+        if(selection == null)
+            oldCount = 0;
+        else
+            oldCount = selection.length;
+        if((newCount + oldCount) != 0) {
+            if(selectionMode == TreeSelectionModel.SINGLE_TREE_SELECTION) {
+                /* If single selection and more than one path, only allow
+                   first. */
+                if(newCount > 1) {
+                    paths = new TreePath[1];
+                    paths[0] = pPaths[0];
+                    newCount = 1;
+                }
+            }
+            else if(selectionMode ==
+                    TreeSelectionModel.CONTIGUOUS_TREE_SELECTION) {
+                /* If contiguous selection and paths aren't contiguous,
+                   only select the first path item. */
+                if(newCount > 0 && !arePathsContiguous(paths)) {
+                    paths = new TreePath[1];
+                    paths[0] = pPaths[0];
+                    newCount = 1;
+                }
+            }
+
+            TreePath         beginLeadPath = leadPath;
+            Vector<PathPlaceHolder> cPaths = new Vector<PathPlaceHolder>(newCount + oldCount);
+            List<TreePath> newSelectionAsList =
+                    new ArrayList<TreePath>(newCount);
+
+            lastPaths.clear();
+            leadPath = null;
+            /* Find the paths that are new. */
+            for(newCounter = 0; newCounter < newCount; newCounter++) {
+                TreePath path = paths[newCounter];
+                if (path != null && lastPaths.get(path) == null) {
+                    lastPaths.put(path, Boolean.TRUE);
+                    if (uniquePaths.get(path) == null) {
+                        cPaths.addElement(new PathPlaceHolder(path, true));
+                    }
+                    leadPath = path;
+                    newSelectionAsList.add(path);
+                }
+            }
+
+            TreePath[] newSelection = newSelectionAsList.toArray(
+                    new TreePath[newSelectionAsList.size()]);
+
+            /* Get the paths that were selected but no longer selected. */
+            for(oldCounter = 0; oldCounter < oldCount; oldCounter++)
+                if(selection[oldCounter] != null &&
+                    lastPaths.get(selection[oldCounter]) == null)
+                    cPaths.addElement(new PathPlaceHolder
+                                      (selection[oldCounter], false));
+
+            selection = newSelection;
+
+            Hashtable<TreePath, Boolean>  tempHT = uniquePaths;
+
+            uniquePaths = lastPaths;
+            lastPaths = tempHT;
+            lastPaths.clear();
+
+            // No reason to do this now, but will still call it.
+            insureUniqueness();
+
+            updateLeadIndex();
+
+            resetRowSelection();
+            /* Notify of the change. */
+            if(cPaths.size() > 0)
+                notifyPathChange(cPaths, beginLeadPath);
+        }
+    }
+
+    /**
+      * Adds path to the current selection. If path is not currently
+      * in the selection the TreeSelectionListeners are notified. This has
+      * no effect if <code>path</code> is null.
+      *
+      * @param path the new path to add to the current selection
+      */
+    public void addSelectionPath(TreePath path) {
+        if(path != null) {
+            TreePath[]            toAdd = new TreePath[1];
+
+            toAdd[0] = path;
+            addSelectionPaths(toAdd);
+        }
+    }
+
+    /**
+      * Adds paths to the current selection. If any of the paths in
+      * paths are not currently in the selection the TreeSelectionListeners
+      * are notified. This has
+      * no effect if <code>paths</code> is null.
+      * <p>The lead path is set to the last element in <code>paths</code>.
+      * <p>If the selection mode is <code>CONTIGUOUS_TREE_SELECTION</code>,
+      * and adding the new paths would make the selection discontiguous.
+      * Then two things can result: if the TreePaths in <code>paths</code>
+      * are contiguous, then the selection becomes these TreePaths,
+      * otherwise the TreePaths aren't contiguous and the selection becomes
+      * the first TreePath in <code>paths</code>.
+      *
+      * @param paths the new path to add to the current selection
+      */
+    public void addSelectionPaths(TreePath[] paths) {
+        int       newPathLength = ((paths == null) ? 0 : paths.length);
+
+        if(newPathLength > 0) {
+            if(selectionMode == TreeSelectionModel.SINGLE_TREE_SELECTION) {
+                setSelectionPaths(paths);
+            }
+            else if(selectionMode == TreeSelectionModel.
+                    CONTIGUOUS_TREE_SELECTION && !canPathsBeAdded(paths)) {
+                if(arePathsContiguous(paths)) {
+                    setSelectionPaths(paths);
+                }
+                else {
+                    TreePath[]          newPaths = new TreePath[1];
+
+                    newPaths[0] = paths[0];
+                    setSelectionPaths(newPaths);
+                }
+            }
+            else {
+                int               counter, validCount;
+                int               oldCount;
+                TreePath          beginLeadPath = leadPath;
+                Vector<PathPlaceHolder>  cPaths = null;
+
+                if(selection == null)
+                    oldCount = 0;
+                else
+                    oldCount = selection.length;
+                /* Determine the paths that aren't currently in the
+                   selection. */
+                lastPaths.clear();
+                for(counter = 0, validCount = 0; counter < newPathLength;
+                    counter++) {
+                    if(paths[counter] != null) {
+                        if (uniquePaths.get(paths[counter]) == null) {
+                            validCount++;
+                            if(cPaths == null)
+                                cPaths = new Vector<PathPlaceHolder>();
+                            cPaths.addElement(new PathPlaceHolder
+                                              (paths[counter], true));
+                            uniquePaths.put(paths[counter], Boolean.TRUE);
+                            lastPaths.put(paths[counter], Boolean.TRUE);
+                        }
+                        leadPath = paths[counter];
+                    }
+                }
+
+                if(leadPath == null) {
+                    leadPath = beginLeadPath;
+                }
+
+                if(validCount > 0) {
+                    TreePath         newSelection[] = new TreePath[oldCount +
+                                                                  validCount];
+
+                    /* And build the new selection. */
+                    if(oldCount > 0)
+                        System.arraycopy(selection, 0, newSelection, 0,
+                                         oldCount);
+                    if(validCount != paths.length) {
+                        /* Some of the paths in paths are already in
+                           the selection. */
+                        Enumeration<TreePath> newPaths = lastPaths.keys();
+
+                        counter = oldCount;
+                        while (newPaths.hasMoreElements()) {
+                            newSelection[counter++] = newPaths.nextElement();
+                        }
+                    }
+                    else {
+                        System.arraycopy(paths, 0, newSelection, oldCount,
+                                         validCount);
+                    }
+
+                    selection = newSelection;
+
+                    insureUniqueness();
+
+                    updateLeadIndex();
+
+                    resetRowSelection();
+
+                    notifyPathChange(cPaths, beginLeadPath);
+                }
+                else
+                    leadPath = beginLeadPath;
+                lastPaths.clear();
+            }
+        }
+    }
+
+    /**
+      * Removes path from the selection. If path is in the selection
+      * The TreeSelectionListeners are notified. This has no effect if
+      * <code>path</code> is null.
+      *
+      * @param path the path to remove from the selection
+      */
+    public void removeSelectionPath(TreePath path) {
+        if(path != null) {
+            TreePath[]             rPath = new TreePath[1];
+
+            rPath[0] = path;
+            removeSelectionPaths(rPath);
+        }
+    }
+
+    /**
+      * Removes paths from the selection.  If any of the paths in paths
+      * are in the selection the TreeSelectionListeners are notified.
+      * This has no effect if <code>paths</code> is null.
+      *
+      * @param paths the paths to remove from the selection
+      */
+    public void removeSelectionPaths(TreePath[] paths) {
+        if (paths != null && selection != null && paths.length > 0) {
+            if(!canPathsBeRemoved(paths)) {
+                /* Could probably do something more interesting here! */
+                clearSelection();
+            }
+            else {
+                Vector<PathPlaceHolder> pathsToRemove = null;
+
+                /* Find the paths that can be removed. */
+                for (int removeCounter = paths.length - 1; removeCounter >= 0;
+                     removeCounter--) {
+                    if(paths[removeCounter] != null) {
+                        if (uniquePaths.get(paths[removeCounter]) != null) {
+                            if(pathsToRemove == null)
+                                pathsToRemove = new Vector<PathPlaceHolder>(paths.length);
+                            uniquePaths.remove(paths[removeCounter]);
+                            pathsToRemove.addElement(new PathPlaceHolder
+                                         (paths[removeCounter], false));
+                        }
+                    }
+                }
+                if(pathsToRemove != null) {
+                    int         removeCount = pathsToRemove.size();
+                    TreePath    beginLeadPath = leadPath;
+
+                    if(removeCount == selection.length) {
+                        selection = null;
+                    }
+                    else {
+                        Enumeration<TreePath> pEnum = uniquePaths.keys();
+                        int                  validCount = 0;
+
+                        selection = new TreePath[selection.length -
+                                                removeCount];
+                        while (pEnum.hasMoreElements()) {
+                            selection[validCount++] = pEnum.nextElement();
+                        }
+                    }
+                    if (leadPath != null &&
+                        uniquePaths.get(leadPath) == null) {
+                        if (selection != null) {
+                            leadPath = selection[selection.length - 1];
+                        }
+                        else {
+                            leadPath = null;
+                        }
+                    }
+                    else if (selection != null) {
+                        leadPath = selection[selection.length - 1];
+                    }
+                    else {
+                        leadPath = null;
+                    }
+                    updateLeadIndex();
+
+                    resetRowSelection();
+
+                    notifyPathChange(pathsToRemove, beginLeadPath);
+                }
+            }
+        }
+    }
+
+    /**
+      * Returns the first path in the selection. This is useful if there
+      * if only one item currently selected.
+      */
+    public TreePath getSelectionPath() {
+        if (selection != null && selection.length > 0) {
+            return selection[0];
+        }
+        return null;
+    }
+
+    /**
+      * Returns the selection.
+      *
+      * @return the selection
+      */
+    public TreePath[] getSelectionPaths() {
+        if(selection != null) {
+            int                 pathSize = selection.length;
+            TreePath[]          result = new TreePath[pathSize];
+
+            System.arraycopy(selection, 0, result, 0, pathSize);
+            return result;
+        }
+        return new TreePath[0];
+    }
+
+    /**
+     * Returns the number of paths that are selected.
+     */
+    public int getSelectionCount() {
+        return (selection == null) ? 0 : selection.length;
+    }
+
+    /**
+      * Returns true if the path, <code>path</code>,
+      * is in the current selection.
+      */
+    public boolean isPathSelected(TreePath path) {
+        return (path != null) ? (uniquePaths.get(path) != null) : false;
+    }
+
+    /**
+      * Returns true if the selection is currently empty.
+      */
+    public boolean isSelectionEmpty() {
+        return (selection == null || selection.length == 0);
+    }
+
+    /**
+      * Empties the current selection.  If this represents a change in the
+      * current selection, the selection listeners are notified.
+      */
+    public void clearSelection() {
+        if (selection != null && selection.length > 0) {
+            int                    selSize = selection.length;
+            boolean[]              newness = new boolean[selSize];
+
+            for(int counter = 0; counter < selSize; counter++)
+                newness[counter] = false;
+
+            TreeSelectionEvent     event = new TreeSelectionEvent
+                (this, selection, newness, leadPath, null);
+
+            leadPath = null;
+            leadIndex = leadRow = -1;
+            uniquePaths.clear();
+            selection = null;
+            resetRowSelection();
+            fireValueChanged(event);
+        }
+    }
+
+    /**
+      * Adds x to the list of listeners that are notified each time the
+      * set of selected TreePaths changes.
+      *
+      * @param x the new listener to be added
+      */
+    public void addTreeSelectionListener(TreeSelectionListener x) {
+        listenerList.add(TreeSelectionListener.class, x);
+    }
+
+    /**
+      * Removes x from the list of listeners that are notified each time
+      * the set of selected TreePaths changes.
+      *
+      * @param x the listener to remove
+      */
+    public void removeTreeSelectionListener(TreeSelectionListener x) {
+        listenerList.remove(TreeSelectionListener.class, x);
+    }
+
+    /**
+     * Returns an array of all the tree selection listeners
+     * registered on this model.
+     *
+     * @return all of this model's <code>TreeSelectionListener</code>s
+     *         or an empty
+     *         array if no tree selection listeners are currently registered
+     *
+     * @see #addTreeSelectionListener
+     * @see #removeTreeSelectionListener
+     *
+     * @since 1.4
+     */
+    public TreeSelectionListener[] getTreeSelectionListeners() {
+        return listenerList.getListeners(TreeSelectionListener.class);
+    }
+
+    /**
+     * Notifies all listeners that are registered for
+     * tree selection events on this object.
+     * @see #addTreeSelectionListener
+     * @see EventListenerList
+     */
+    protected void fireValueChanged(TreeSelectionEvent e) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // TreeSelectionEvent e = null;
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==TreeSelectionListener.class) {
+                // Lazily create the event:
+                // if (e == null)
+                // e = new ListSelectionEvent(this, firstIndex, lastIndex);
+                ((TreeSelectionListener)listeners[i+1]).valueChanged(e);
+            }
+        }
+    }
+
+    /**
+     * Returns an array of all the objects currently registered
+     * as <code><em>Foo</em>Listener</code>s
+     * upon this model.
+     * <code><em>Foo</em>Listener</code>s are registered using the
+     * <code>add<em>Foo</em>Listener</code> method.
+     *
+     * <p>
+     *
+     * You can specify the <code>listenerType</code> argument
+     * with a class literal,
+     * such as
+     * <code><em>Foo</em>Listener.class</code>.
+     * For example, you can query a
+     * <code>DefaultTreeSelectionModel</code> <code>m</code>
+     * for its tree selection listeners with the following code:
+     *
+     * <pre>TreeSelectionListener[] tsls = (TreeSelectionListener[])(m.getListeners(TreeSelectionListener.class));</pre>
+     *
+     * If no such listeners exist, this method returns an empty array.
+     *
+     * @param listenerType the type of listeners requested; this parameter
+     *          should specify an interface that descends from
+     *          <code>java.util.EventListener</code>
+     * @return an array of all objects registered as
+     *          <code><em>Foo</em>Listener</code>s on this component,
+     *          or an empty array if no such
+     *          listeners have been added
+     * @exception ClassCastException if <code>listenerType</code>
+     *          doesn't specify a class or interface that implements
+     *          <code>java.util.EventListener</code>
+     *
+     * @see #getTreeSelectionListeners
+     * @see #getPropertyChangeListeners
+     *
+     * @since 1.3
+     */
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+        return listenerList.getListeners(listenerType);
+    }
+
+    /**
+     * Returns the selection in terms of rows. There is not
+     * necessarily a one-to-one mapping between the {@code TreePath}s
+     * returned from {@code getSelectionPaths} and this method. In
+     * particular, if a {@code TreePath} is not viewable (the {@code
+     * RowMapper} returns {@code -1} for the row corresponding to the
+     * {@code TreePath}), then the corresponding row is not included
+     * in the returned array. For example, if the selection consists
+     * of two paths, {@code A} and {@code B}, with {@code A} at row
+     * {@code 10}, and {@code B} not currently viewable, then this method
+     * returns an array with the single entry {@code 10}.
+     *
+     * @return the selection in terms of rows
+     */
+    public int[] getSelectionRows() {
+        // This is currently rather expensive.  Needs
+        // to be better support from ListSelectionModel to speed this up.
+        if (rowMapper != null && selection != null && selection.length > 0) {
+            int[]      rows = rowMapper.getRowsForPaths(selection);
+
+            if (rows != null) {
+                int       invisCount = 0;
+
+                for (int counter = rows.length - 1; counter >= 0; counter--) {
+                    if (rows[counter] == -1) {
+                        invisCount++;
+                    }
+                }
+                if (invisCount > 0) {
+                    if (invisCount == rows.length) {
+                        rows = null;
+                    }
+                    else {
+                        int[]    tempRows = new int[rows.length - invisCount];
+
+                        for (int counter = rows.length - 1, visCounter = 0;
+                             counter >= 0; counter--) {
+                            if (rows[counter] != -1) {
+                                tempRows[visCounter++] = rows[counter];
+                            }
+                        }
+                        rows = tempRows;
+                    }
+                }
+            }
+            return rows;
+        }
+        return new int[0];
+    }
+
+    /**
+     * Returns the smallest value obtained from the RowMapper for the
+     * current set of selected TreePaths. If nothing is selected,
+     * or there is no RowMapper, this will return -1.
+      */
+    public int getMinSelectionRow() {
+        return listSelectionModel.getMinSelectionIndex();
+    }
+
+    /**
+     * Returns the largest value obtained from the RowMapper for the
+     * current set of selected TreePaths. If nothing is selected,
+     * or there is no RowMapper, this will return -1.
+      */
+    public int getMaxSelectionRow() {
+        return listSelectionModel.getMaxSelectionIndex();
+    }
+
+    /**
+      * Returns true if the row identified by <code>row</code> is selected.
+      */
+    public boolean isRowSelected(int row) {
+        return listSelectionModel.isSelectedIndex(row);
+    }
+
+    /**
+     * Updates this object's mapping from TreePath to rows. This should
+     * be invoked when the mapping from TreePaths to integers has changed
+     * (for example, a node has been expanded).
+     * <p>You do not normally have to call this, JTree and its associated
+     * Listeners will invoke this for you. If you are implementing your own
+     * View class, then you will have to invoke this.
+     * <p>This will invoke <code>insureRowContinuity</code> to make sure
+     * the currently selected TreePaths are still valid based on the
+     * selection mode.
+     */
+    public void resetRowSelection() {
+        listSelectionModel.clearSelection();
+        if(selection != null && rowMapper != null) {
+            int               aRow;
+            int               validCount = 0;
+            int[]             rows = rowMapper.getRowsForPaths(selection);
+
+            for(int counter = 0, maxCounter = selection.length;
+                counter < maxCounter; counter++) {
+                aRow = rows[counter];
+                if(aRow != -1) {
+                    listSelectionModel.addSelectionInterval(aRow, aRow);
+                }
+            }
+            if(leadIndex != -1 && rows != null) {
+                leadRow = rows[leadIndex];
+            }
+            else if (leadPath != null) {
+                // Lead selection path doesn't have to be in the selection.
+                tempPaths[0] = leadPath;
+                rows = rowMapper.getRowsForPaths(tempPaths);
+                leadRow = (rows != null) ? rows[0] : -1;
+            }
+            else {
+                leadRow = -1;
+            }
+            insureRowContinuity();
+
+        }
+        else
+            leadRow = -1;
+    }
+
+    /**
+     * Returns the lead selection index. That is the last index that was
+     * added.
+     */
+    public int getLeadSelectionRow() {
+        return leadRow;
+    }
+
+    /**
+     * Returns the last path that was added. This may differ from the
+     * leadSelectionPath property maintained by the JTree.
+     */
+    public TreePath getLeadSelectionPath() {
+        return leadPath;
+    }
+
+    /**
+     * Adds a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * <p>
+     * A PropertyChangeEvent will get fired when the selection mode
+     * changes.
+     *
+     * @param listener  the PropertyChangeListener to be added
+     */
+    public synchronized void addPropertyChangeListener(
+                                PropertyChangeListener listener) {
+        if (changeSupport == null) {
+            changeSupport = new SwingPropertyChangeSupport(this);
+        }
+        changeSupport.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Removes a PropertyChangeListener from the listener list.
+     * This removes a PropertyChangeListener that was registered
+     * for all properties.
+     *
+     * @param listener  the PropertyChangeListener to be removed
+     */
+
+    public synchronized void removePropertyChangeListener(
+                                PropertyChangeListener listener) {
+        if (changeSupport == null) {
+            return;
+        }
+        changeSupport.removePropertyChangeListener(listener);
+    }
+
+    /**
+     * Returns an array of all the property change listeners
+     * registered on this <code>DefaultTreeSelectionModel</code>.
+     *
+     * @return all of this model's <code>PropertyChangeListener</code>s
+     *         or an empty
+     *         array if no property change listeners are currently registered
+     *
+     * @see #addPropertyChangeListener
+     * @see #removePropertyChangeListener
+     *
+     * @since 1.4
+     */
+    public PropertyChangeListener[] getPropertyChangeListeners() {
+        if (changeSupport == null) {
+            return new PropertyChangeListener[0];
+        }
+        return changeSupport.getPropertyChangeListeners();
+    }
+
+    /**
+     * Makes sure the currently selected <code>TreePath</code>s are valid
+     * for the current selection mode.
+     * If the selection mode is <code>CONTIGUOUS_TREE_SELECTION</code>
+     * and a <code>RowMapper</code> exists, this will make sure all
+     * the rows are contiguous, that is, when sorted all the rows are
+     * in order with no gaps.
+     * If the selection isn't contiguous, the selection is
+     * reset to contain the first set, when sorted, of contiguous rows.
+     * <p>
+     * If the selection mode is <code>SINGLE_TREE_SELECTION</code> and
+     * more than one TreePath is selected, the selection is reset to
+     * contain the first path currently selected.
+     */
+    protected void insureRowContinuity() {
+        if(selectionMode == TreeSelectionModel.CONTIGUOUS_TREE_SELECTION &&
+           selection != null && rowMapper != null) {
+            DefaultListSelectionModel lModel = listSelectionModel;
+            int                       min = lModel.getMinSelectionIndex();
+
+            if(min != -1) {
+                for(int counter = min,
+                        maxCounter = lModel.getMaxSelectionIndex();
+                        counter <= maxCounter; counter++) {
+                    if(!lModel.isSelectedIndex(counter)) {
+                        if(counter == min) {
+                            clearSelection();
+                        }
+                        else {
+                            TreePath[] newSel = new TreePath[counter - min];
+                            int selectionIndex[] = rowMapper.getRowsForPaths(selection);
+                            // find the actual selection pathes corresponded to the
+                            // rows of the new selection
+                            for (int i = 0; i < selectionIndex.length; i++) {
+                                if (selectionIndex[i]<counter) {
+                                    newSel[selectionIndex[i]-min] = selection[i];
+                                }
+                            }
+                            setSelectionPaths(newSel);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else if(selectionMode == TreeSelectionModel.SINGLE_TREE_SELECTION &&
+                selection != null && selection.length > 1) {
+            setSelectionPath(selection[0]);
+        }
+    }
+
+    /**
+     * Returns true if the paths are contiguous,
+     * or this object has no RowMapper.
+     */
+    protected boolean arePathsContiguous(TreePath[] paths) {
+        if(rowMapper == null || paths.length < 2)
+            return true;
+        else {
+            BitSet                             bitSet = new BitSet(32);
+            int                                anIndex, counter, min;
+            int                                pathCount = paths.length;
+            int                                validCount = 0;
+            TreePath[]                         tempPath = new TreePath[1];
+
+            tempPath[0] = paths[0];
+            min = rowMapper.getRowsForPaths(tempPath)[0];
+            for(counter = 0; counter < pathCount; counter++) {
+                if(paths[counter] != null) {
+                    tempPath[0] = paths[counter];
+                    int[] rows = rowMapper.getRowsForPaths(tempPath);
+                    if (rows == null) {
+                        return false;
+                    }
+                    anIndex = rows[0];
+                    if(anIndex == -1 || anIndex < (min - pathCount) ||
+                       anIndex > (min + pathCount))
+                        return false;
+                    if(anIndex < min)
+                        min = anIndex;
+                    if(!bitSet.get(anIndex)) {
+                        bitSet.set(anIndex);
+                        validCount++;
+                    }
+                }
+            }
+            int          maxCounter = validCount + min;
+
+            for(counter = min; counter < maxCounter; counter++)
+                if(!bitSet.get(counter))
+                    return false;
+        }
+        return true;
+    }
+
+    /**
+     * Used to test if a particular set of <code>TreePath</code>s can
+     * be added. This will return true if <code>paths</code> is null (or
+     * empty), or this object has no RowMapper, or nothing is currently selected,
+     * or the selection mode is <code>DISCONTIGUOUS_TREE_SELECTION</code>, or
+     * adding the paths to the current selection still results in a
+     * contiguous set of <code>TreePath</code>s.
+     */
+    protected boolean canPathsBeAdded(TreePath[] paths) {
+        if(paths == null || paths.length == 0 || rowMapper == null ||
+           selection == null || selectionMode ==
+           TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION)
+            return true;
+        else {
+            BitSet                       bitSet = new BitSet();
+            DefaultListSelectionModel    lModel = listSelectionModel;
+            int                          anIndex;
+            int                          counter;
+            int                          min = lModel.getMinSelectionIndex();
+            int                          max = lModel.getMaxSelectionIndex();
+            TreePath[]                   tempPath = new TreePath[1];
+
+            if(min != -1) {
+                for(counter = min; counter <= max; counter++) {
+                    if(lModel.isSelectedIndex(counter))
+                        bitSet.set(counter);
+                }
+            }
+            else {
+                tempPath[0] = paths[0];
+                min = max = rowMapper.getRowsForPaths(tempPath)[0];
+            }
+            for(counter = paths.length - 1; counter >= 0; counter--) {
+                if(paths[counter] != null) {
+                    tempPath[0] = paths[counter];
+                    int[]   rows = rowMapper.getRowsForPaths(tempPath);
+                    if (rows == null) {
+                        return false;
+                    }
+                    anIndex = rows[0];
+                    min = Math.min(anIndex, min);
+                    max = Math.max(anIndex, max);
+                    if(anIndex == -1)
+                        return false;
+                    bitSet.set(anIndex);
+                }
+            }
+            for(counter = min; counter <= max; counter++)
+                if(!bitSet.get(counter))
+                    return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the paths can be removed without breaking the
+     * continuity of the model.
+     * This is rather expensive.
+     */
+    protected boolean canPathsBeRemoved(TreePath[] paths) {
+        if(rowMapper == null || selection == null ||
+           selectionMode == TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION)
+            return true;
+        else {
+            BitSet               bitSet = new BitSet();
+            int                  counter;
+            int                  pathCount = paths.length;
+            int                  anIndex;
+            int                  min = -1;
+            int                  validCount = 0;
+            TreePath[]           tempPath = new TreePath[1];
+            int[]                rows;
+
+            /* Determine the rows for the removed entries. */
+            lastPaths.clear();
+            for (counter = 0; counter < pathCount; counter++) {
+                if (paths[counter] != null) {
+                    lastPaths.put(paths[counter], Boolean.TRUE);
+                }
+            }
+            for(counter = selection.length - 1; counter >= 0; counter--) {
+                if(lastPaths.get(selection[counter]) == null) {
+                    tempPath[0] = selection[counter];
+                    rows = rowMapper.getRowsForPaths(tempPath);
+                    if(rows != null && rows[0] != -1 && !bitSet.get(rows[0])) {
+                        validCount++;
+                        if(min == -1)
+                            min = rows[0];
+                        else
+                            min = Math.min(min, rows[0]);
+                        bitSet.set(rows[0]);
+                    }
+                }
+            }
+            lastPaths.clear();
+            /* Make sure they are contiguous. */
+            if(validCount > 1) {
+                for(counter = min + validCount - 1; counter >= min;
+                    counter--)
+                    if(!bitSet.get(counter))
+                        return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Notifies listeners of a change in path. changePaths should contain
+     * instances of PathPlaceHolder.
+     *
+     * @deprecated As of JDK version 1.7
+     */
+    @Deprecated
+    protected void notifyPathChange(Vector<?> changedPaths,
+                                    TreePath oldLeadSelection) {
+        int                    cPathCount = changedPaths.size();
+        boolean[]              newness = new boolean[cPathCount];
+        TreePath[]            paths = new TreePath[cPathCount];
+        PathPlaceHolder        placeholder;
+
+        for(int counter = 0; counter < cPathCount; counter++) {
+            placeholder = (PathPlaceHolder) changedPaths.elementAt(counter);
+            newness[counter] = placeholder.isNew;
+            paths[counter] = placeholder.path;
+        }
+
+        TreeSelectionEvent     event = new TreeSelectionEvent
+                          (this, paths, newness, oldLeadSelection, leadPath);
+
+        fireValueChanged(event);
+    }
+
+    /**
+     * Updates the leadIndex instance variable.
+     */
+    protected void updateLeadIndex() {
+        if(leadPath != null) {
+            if(selection == null) {
+                leadPath = null;
+                leadIndex = leadRow = -1;
+            }
+            else {
+                leadRow = leadIndex = -1;
+                for(int counter = selection.length - 1; counter >= 0;
+                    counter--) {
+                    // Can use == here since we know leadPath came from
+                    // selection
+                    if(selection[counter] == leadPath) {
+                        leadIndex = counter;
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            leadIndex = -1;
+        }
+    }
+
+    /**
+     * This method is obsolete and its implementation is now a noop.  It's
+     * still called by setSelectionPaths and addSelectionPaths, but only
+     * for backwards compatibility.
+     */
+    protected void insureUniqueness() {
+    }
+
+
+    /**
+     * Returns a string that displays and identifies this
+     * object's properties.
+     *
+     * @return a String representation of this object
+     */
+    public String toString() {
+        int                selCount = getSelectionCount();
+        StringBuffer       retBuffer = new StringBuffer();
+        int[]              rows;
+
+        if(rowMapper != null)
+            rows = rowMapper.getRowsForPaths(selection);
+        else
+            rows = null;
+        retBuffer.append(getClass().getName() + " " + hashCode() + " [ ");
+        for(int counter = 0; counter < selCount; counter++) {
+            if(rows != null)
+                retBuffer.append(selection[counter].toString() + "@" +
+                                 Integer.toString(rows[counter])+ " ");
+            else
+                retBuffer.append(selection[counter].toString() + " ");
+        }
+        retBuffer.append("]");
+        return retBuffer.toString();
+    }
+
+    /**
+     * Returns a clone of this object with the same selection.
+     * This method does not duplicate
+     * selection listeners and property listeners.
+     *
+     * @exception CloneNotSupportedException never thrown by instances of
+     *                                       this class
+     */
+    public Object clone() throws CloneNotSupportedException {
+        DefaultTreeSelectionModel        clone = (DefaultTreeSelectionModel)
+                            super.clone();
+
+        clone.changeSupport = null;
+        if(selection != null) {
+            int              selLength = selection.length;
+
+            clone.selection = new TreePath[selLength];
+            System.arraycopy(selection, 0, clone.selection, 0, selLength);
+        }
+        clone.listenerList = new EventListenerList();
+        clone.listSelectionModel = (DefaultListSelectionModel)
+            listSelectionModel.clone();
+        clone.uniquePaths = new Hashtable<TreePath, Boolean>();
+        clone.lastPaths = new Hashtable<TreePath, Boolean>();
+        clone.tempPaths = new TreePath[1];
+        return clone;
+    }
+
+    // Serialization support.
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        Object[]             tValues;
+
+        s.defaultWriteObject();
+        // Save the rowMapper, if it implements Serializable
+        if(rowMapper != null && rowMapper instanceof Serializable) {
+            tValues = new Object[2];
+            tValues[0] = "rowMapper";
+            tValues[1] = rowMapper;
+        }
+        else
+            tValues = new Object[0];
+        s.writeObject(tValues);
+    }
+
+
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException {
+        Object[]      tValues;
+
+        s.defaultReadObject();
+
+        tValues = (Object[])s.readObject();
+
+        if(tValues.length > 0 && tValues[0].equals("rowMapper"))
+            rowMapper = (RowMapper)tValues[1];
+    }
+}
+
+/**
+ * Holds a path and whether or not it is new.
+ */
+class PathPlaceHolder {
+    protected boolean             isNew;
+    protected TreePath           path;
+
+    PathPlaceHolder(TreePath path, boolean isNew) {
+        this.path = path;
+        this.isNew = isNew;
+    }
+}

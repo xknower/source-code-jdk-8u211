@@ -1,269 +1,264 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils;
-/*     */ 
-/*     */ import java.io.File;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.io.FileNotFoundException;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.security.SecurityPermission;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class JavaUtils
-/*     */ {
-/*  41 */   private static Logger log = Logger.getLogger(JavaUtils.class.getName());
-/*     */   
-/*  43 */   private static final SecurityPermission REGISTER_PERMISSION = new SecurityPermission("com.sun.org.apache.xml.internal.security.register");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte[] getBytesFromFile(String paramString) throws FileNotFoundException, IOException {
-/*  63 */     byte[] arrayOfByte = null;
-/*     */     
-/*  65 */     FileInputStream fileInputStream = null;
-/*  66 */     UnsyncByteArrayOutputStream unsyncByteArrayOutputStream = null;
-/*     */     try {
-/*  68 */       fileInputStream = new FileInputStream(paramString);
-/*  69 */       unsyncByteArrayOutputStream = new UnsyncByteArrayOutputStream();
-/*  70 */       byte[] arrayOfByte1 = new byte[1024];
-/*     */       
-/*     */       int i;
-/*  73 */       while ((i = fileInputStream.read(arrayOfByte1)) > 0) {
-/*  74 */         unsyncByteArrayOutputStream.write(arrayOfByte1, 0, i);
-/*     */       }
-/*     */       
-/*  77 */       arrayOfByte = unsyncByteArrayOutputStream.toByteArray();
-/*     */     } finally {
-/*  79 */       if (unsyncByteArrayOutputStream != null) {
-/*  80 */         unsyncByteArrayOutputStream.close();
-/*     */       }
-/*  82 */       if (fileInputStream != null) {
-/*  83 */         fileInputStream.close();
-/*     */       }
-/*     */     } 
-/*     */     
-/*  87 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void writeBytesToFilename(String paramString, byte[] paramArrayOfbyte) {
-/*  97 */     FileOutputStream fileOutputStream = null;
-/*     */     try {
-/*  99 */       if (paramString != null && paramArrayOfbyte != null) {
-/* 100 */         File file = new File(paramString);
-/*     */         
-/* 102 */         fileOutputStream = new FileOutputStream(file);
-/*     */         
-/* 104 */         fileOutputStream.write(paramArrayOfbyte);
-/* 105 */         fileOutputStream.close();
-/*     */       }
-/* 107 */       else if (log.isLoggable(Level.FINE)) {
-/* 108 */         log.log(Level.FINE, "writeBytesToFilename got null byte[] pointed");
-/*     */       }
-/*     */     
-/* 111 */     } catch (IOException iOException) {
-/* 112 */       if (fileOutputStream != null) {
-/*     */         try {
-/* 114 */           fileOutputStream.close();
-/* 115 */         } catch (IOException iOException1) {
-/* 116 */           if (log.isLoggable(Level.FINE)) {
-/* 117 */             log.log(Level.FINE, iOException1.getMessage(), iOException1);
-/*     */           }
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte[] getBytesFromStream(InputStream paramInputStream) throws IOException {
-/* 135 */     UnsyncByteArrayOutputStream unsyncByteArrayOutputStream = null;
-/*     */     
-/* 137 */     byte[] arrayOfByte = null;
-/*     */     try {
-/* 139 */       unsyncByteArrayOutputStream = new UnsyncByteArrayOutputStream();
-/* 140 */       byte[] arrayOfByte1 = new byte[4096];
-/*     */       
-/*     */       int i;
-/* 143 */       while ((i = paramInputStream.read(arrayOfByte1)) > 0) {
-/* 144 */         unsyncByteArrayOutputStream.write(arrayOfByte1, 0, i);
-/*     */       }
-/* 146 */       arrayOfByte = unsyncByteArrayOutputStream.toByteArray();
-/*     */     } finally {
-/* 148 */       unsyncByteArrayOutputStream.close();
-/*     */     } 
-/*     */     
-/* 151 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte[] convertDsaASN1toXMLDSIG(byte[] paramArrayOfbyte, int paramInt) throws IOException {
-/* 170 */     if (paramArrayOfbyte[0] != 48 || paramArrayOfbyte[1] != paramArrayOfbyte.length - 2 || paramArrayOfbyte[2] != 2)
-/*     */     {
-/* 172 */       throw new IOException("Invalid ASN.1 format of DSA signature");
-/*     */     }
-/*     */     
-/* 175 */     byte b1 = paramArrayOfbyte[3];
-/*     */     byte b2;
-/* 177 */     for (b2 = b1; b2 > 0 && paramArrayOfbyte[4 + b1 - b2] == 0; b2--);
-/*     */     
-/* 179 */     byte b3 = paramArrayOfbyte[5 + b1];
-/*     */     
-/* 181 */     byte b4 = b3;
-/* 182 */     for (; b4 > 0 && paramArrayOfbyte[6 + b1 + b3 - b4] == 0; b4--);
-/*     */     
-/* 184 */     if (b2 > paramInt || paramArrayOfbyte[4 + b1] != 2 || b4 > paramInt) {
-/* 185 */       throw new IOException("Invalid ASN.1 format of DSA signature");
-/*     */     }
-/* 187 */     byte[] arrayOfByte = new byte[paramInt * 2];
-/* 188 */     System.arraycopy(paramArrayOfbyte, 4 + b1 - b2, arrayOfByte, paramInt - b2, b2);
-/*     */     
-/* 190 */     System.arraycopy(paramArrayOfbyte, 6 + b1 + b3 - b4, arrayOfByte, paramInt * 2 - b4, b4);
-/*     */     
-/* 192 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static byte[] convertDsaXMLDSIGtoASN1(byte[] paramArrayOfbyte, int paramInt) throws IOException {
-/* 212 */     int i = paramInt * 2;
-/* 213 */     if (paramArrayOfbyte.length != i) {
-/* 214 */       throw new IOException("Invalid XMLDSIG format of DSA signature");
-/*     */     }
-/*     */     
-/*     */     int j;
-/* 218 */     for (j = paramInt; j > 0 && paramArrayOfbyte[paramInt - j] == 0; j--);
-/*     */     
-/* 220 */     int k = j;
-/* 221 */     if (paramArrayOfbyte[paramInt - j] < 0) {
-/* 222 */       k++;
-/*     */     }
-/*     */     
-/*     */     int m;
-/* 226 */     for (m = paramInt; m > 0 && paramArrayOfbyte[i - m] == 0; m--);
-/*     */     
-/* 228 */     int n = m;
-/* 229 */     if (paramArrayOfbyte[i - m] < 0) {
-/* 230 */       n++;
-/*     */     }
-/*     */     
-/* 233 */     byte[] arrayOfByte = new byte[6 + k + n];
-/* 234 */     arrayOfByte[0] = 48;
-/* 235 */     arrayOfByte[1] = (byte)(4 + k + n);
-/* 236 */     arrayOfByte[2] = 2;
-/* 237 */     arrayOfByte[3] = (byte)k;
-/* 238 */     System.arraycopy(paramArrayOfbyte, paramInt - j, arrayOfByte, 4 + k - j, j);
-/*     */     
-/* 240 */     arrayOfByte[4 + k] = 2;
-/* 241 */     arrayOfByte[5 + k] = (byte)n;
-/* 242 */     System.arraycopy(paramArrayOfbyte, i - m, arrayOfByte, 6 + k + n - m, m);
-/*     */ 
-/*     */     
-/* 245 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void checkRegisterPermission() {
-/* 259 */     SecurityManager securityManager = System.getSecurityManager();
-/* 260 */     if (securityManager != null)
-/* 261 */       securityManager.checkPermission(REGISTER_PERMISSION); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\JavaUtils.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.SecurityPermission;
+
+/**
+ * A collection of different, general-purpose methods for JAVA-specific things
+ * @author Christian Geuer-Pollmann
+ */
+public class JavaUtils {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(JavaUtils.class.getName());
+
+    private static final SecurityPermission REGISTER_PERMISSION =
+        new SecurityPermission(
+            "com.sun.org.apache.xml.internal.security.register");
+
+    private JavaUtils() {
+        // we don't allow instantiation
+    }
+
+    /**
+     * Method getBytesFromFile
+     *
+     * @param fileName
+     * @return the bytes read from the file
+     *
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static byte[] getBytesFromFile(String fileName)
+        throws FileNotFoundException, IOException {
+
+        byte refBytes[] = null;
+
+        FileInputStream fisRef = null;
+        UnsyncByteArrayOutputStream baos = null;
+        try {
+            fisRef = new FileInputStream(fileName);
+            baos = new UnsyncByteArrayOutputStream();
+            byte buf[] = new byte[1024];
+            int len;
+
+            while ((len = fisRef.read(buf)) > 0) {
+                baos.write(buf, 0, len);
+            }
+
+            refBytes = baos.toByteArray();
+        } finally {
+            if (baos != null) {
+                baos.close();
+            }
+            if (fisRef != null) {
+                fisRef.close();
+            }
+        }
+
+        return refBytes;
+    }
+
+    /**
+     * Method writeBytesToFilename
+     *
+     * @param filename
+     * @param bytes
+     */
+    public static void writeBytesToFilename(String filename, byte[] bytes) {
+        FileOutputStream fos = null;
+        try {
+            if (filename != null && bytes != null) {
+                File f = new File(filename);
+
+                fos = new FileOutputStream(f);
+
+                fos.write(bytes);
+                fos.close();
+            } else {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "writeBytesToFilename got null byte[] pointed");
+                }
+            }
+        } catch (IOException ex) {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException ioe) {
+                    if (log.isLoggable(java.util.logging.Level.FINE)) {
+                        log.log(java.util.logging.Level.FINE, ioe.getMessage(), ioe);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * This method reads all bytes from the given InputStream till EOF and
+     * returns them as a byte array.
+     *
+     * @param inputStream
+     * @return the bytes read from the stream
+     *
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public static byte[] getBytesFromStream(InputStream inputStream) throws IOException {
+        UnsyncByteArrayOutputStream baos = null;
+
+        byte[] retBytes = null;
+        try {
+            baos = new UnsyncByteArrayOutputStream();
+            byte buf[] = new byte[4 * 1024];
+            int len;
+
+            while ((len = inputStream.read(buf)) > 0) {
+                baos.write(buf, 0, len);
+            }
+            retBytes = baos.toByteArray();
+        } finally {
+            baos.close();
+        }
+
+        return retBytes;
+    }
+
+    /**
+     * Converts an ASN.1 DSA value to a XML Signature DSA Value.
+     *
+     * The JCE DSA Signature algorithm creates ASN.1 encoded (r,s) value
+     * pairs (see section 2.2.2 of RFC 3279); the XML Signature requires the
+     * core BigInteger values.
+     *
+     * @param asn1Bytes the ASN.1 encoded bytes
+     * @param size size of r and s in bytes
+     * @return the XML Signature encoded bytes
+     * @throws IOException if the bytes are not encoded correctly
+     * @see <A HREF="http://www.w3.org/TR/xmldsig-core1/#sec-DSA">6.4.1 DSA</A>
+     */
+    public static byte[] convertDsaASN1toXMLDSIG(byte[] asn1Bytes, int size)
+        throws IOException
+    {
+        if (asn1Bytes[0] != 48 || asn1Bytes[1] != asn1Bytes.length - 2
+            || asn1Bytes[2] != 2) {
+            throw new IOException("Invalid ASN.1 format of DSA signature");
+        }
+
+        byte rLength = asn1Bytes[3];
+        int i;
+        for (i = rLength; i > 0 && asn1Bytes[4 + rLength - i] == 0; i--);
+
+        byte sLength = asn1Bytes[5 + rLength];
+        int j;
+        for (j = sLength;
+             j > 0 && asn1Bytes[6 + rLength + sLength - j] == 0; j--);
+
+        if (i > size || asn1Bytes[4 + rLength] != 2 || j > size) {
+            throw new IOException("Invalid ASN.1 format of DSA signature");
+        } else {
+            byte[] xmldsigBytes = new byte[size * 2];
+            System.arraycopy(asn1Bytes, 4 + rLength - i, xmldsigBytes,
+                             size - i, i);
+            System.arraycopy(asn1Bytes, 6 + rLength + sLength - j,
+                             xmldsigBytes, size * 2 - j, j);
+            return xmldsigBytes;
+        }
+    }
+
+    /**
+     * Converts an XML Signature DSA Value to a ASN.1 DSA value.
+     *
+     * The JCE DSA Signature algorithm creates ASN.1 encoded (r,s) value
+     * pairs (see section 2.2.2 of RFC 3279); the XML Signature requires the
+     * core BigInteger values.
+     *
+     * @param xmldsigBytes the XML Signature encoded bytes
+     * @param size size of r and s in bytes
+     * @return the ASN.1 encoded bytes
+     * @throws IOException if the bytes are not encoded correctly
+     * @see <A HREF="http://www.w3.org/TR/xmldsig-core1/#sec-DSA">6.4.1 DSA</A>
+     */
+    public static byte[] convertDsaXMLDSIGtoASN1(byte[] xmldsigBytes, int size)
+        throws IOException
+    {
+        int totalSize = size * 2;
+        if (xmldsigBytes.length != totalSize) {
+            throw new IOException("Invalid XMLDSIG format of DSA signature");
+        }
+
+        int i;
+        for (i = size; i > 0 && xmldsigBytes[size - i] == 0; i--);
+
+        int j = i;
+        if (xmldsigBytes[size - i] < 0) {
+            j++;
+        }
+
+        int k;
+        for (k = size; k > 0 && xmldsigBytes[totalSize - k] == 0; k--);
+
+        int l = k;
+        if (xmldsigBytes[totalSize - k] < 0) {
+            l++;
+        }
+
+        byte[] asn1Bytes = new byte[6 + j + l];
+        asn1Bytes[0] = 48;
+        asn1Bytes[1] = (byte)(4 + j + l);
+        asn1Bytes[2] = 2;
+        asn1Bytes[3] = (byte)j;
+        System.arraycopy(xmldsigBytes, size - i, asn1Bytes, 4 + j - i, i);
+
+        asn1Bytes[4 + j] = 2;
+        asn1Bytes[5 + j] = (byte) l;
+        System.arraycopy(xmldsigBytes, totalSize - k, asn1Bytes,
+                         6 + j + l - k, k);
+
+        return asn1Bytes;
+    }
+
+    /**
+     * Throws a {@code SecurityException} if a security manager is installed
+     * and the caller is not allowed to register an implementation of an
+     * algorithm, transform, or other security sensitive XML Signature function.
+     *
+     * @throws SecurityException if a security manager is installed and the
+     *    caller has not been granted the
+     *    {@literal "com.sun.org.apache.xml.internal.security.register"}
+     *    {@code SecurityPermission}
+     */
+    public static void checkRegisterPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(REGISTER_PERMISSION);
+        }
+    }
+}

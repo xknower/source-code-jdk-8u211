@@ -1,61 +1,56 @@
-/*    */ package javax.xml.parsers;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ParserConfigurationException
-/*    */   extends Exception
-/*    */ {
-/*    */   public ParserConfigurationException() {}
-/*    */   
-/*    */   public ParserConfigurationException(String msg) {
-/* 53 */     super(msg);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\xml\parsers\ParserConfigurationException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.xml.parsers;
+
+/**
+ * Indicates a serious configuration error.
+ *
+ * @author <a href="mailto:Jeff.Suttor@Sun.com">Jeff Suttor</a>
+ */
+
+public class ParserConfigurationException extends Exception {
+
+    /**
+     * Create a new <code>ParserConfigurationException</code> with no
+     * detail mesage.
+     */
+
+    public ParserConfigurationException() {
+        super();
+    }
+
+    /**
+     * Create a new <code>ParserConfigurationException</code> with
+     * the <code>String</code> specified as an error message.
+     *
+     * @param msg The error message for the exception.
+     */
+
+    public ParserConfigurationException(String msg) {
+        super(msg);
+    }
+
+}

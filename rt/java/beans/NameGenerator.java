@@ -1,122 +1,117 @@
-/*     */ package java.beans;
-/*     */ 
-/*     */ import java.util.HashMap;
-/*     */ import java.util.IdentityHashMap;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class NameGenerator
-/*     */ {
-/*  50 */   private Map<Object, String> valueToName = new IdentityHashMap<>();
-/*  51 */   private Map<String, Integer> nameToCount = new HashMap<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/*  59 */     this.valueToName.clear();
-/*  60 */     this.nameToCount.clear();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String unqualifiedClassName(Class paramClass) {
-/*  68 */     if (paramClass.isArray()) {
-/*  69 */       return unqualifiedClassName(paramClass.getComponentType()) + "Array";
-/*     */     }
-/*  71 */     String str = paramClass.getName();
-/*  72 */     return str.substring(str.lastIndexOf('.') + 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String capitalize(String paramString) {
-/*  79 */     if (paramString == null || paramString.length() == 0) {
-/*  80 */       return paramString;
-/*     */     }
-/*  82 */     return paramString.substring(0, 1).toUpperCase(Locale.ENGLISH) + paramString.substring(1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String instanceName(Object paramObject) {
-/*  94 */     if (paramObject == null) {
-/*  95 */       return "null";
-/*     */     }
-/*  97 */     if (paramObject instanceof Class) {
-/*  98 */       return unqualifiedClassName((Class)paramObject);
-/*     */     }
-/*     */     
-/* 101 */     String str1 = this.valueToName.get(paramObject);
-/* 102 */     if (str1 != null) {
-/* 103 */       return str1;
-/*     */     }
-/* 105 */     Class<?> clazz = paramObject.getClass();
-/* 106 */     String str2 = unqualifiedClassName(clazz);
-/*     */     
-/* 108 */     Integer integer = this.nameToCount.get(str2);
-/* 109 */     boolean bool = (integer == null) ? false : (integer.intValue() + 1);
-/* 110 */     this.nameToCount.put(str2, new Integer(bool));
-/*     */     
-/* 112 */     str1 = str2 + bool;
-/* 113 */     this.valueToName.put(paramObject, str1);
-/* 114 */     return str1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\beans\NameGenerator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.beans;
+
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
+import static java.util.Locale.ENGLISH;
+
+/**
+ * A utility class which generates unique names for object instances.
+ * The name will be a concatenation of the unqualified class name
+ * and an instance number.
+ * <p>
+ * For example, if the first object instance javax.swing.JButton
+ * is passed into <code>instanceName</code> then the returned
+ * string identifier will be &quot;JButton0&quot;.
+ *
+ * @author Philip Milne
+ */
+class NameGenerator {
+
+    private Map<Object, String> valueToName;
+    private Map<String, Integer> nameToCount;
+
+    public NameGenerator() {
+        valueToName = new IdentityHashMap<>();
+        nameToCount = new HashMap<>();
+    }
+
+    /**
+     * Clears the name cache. Should be called to near the end of
+     * the encoding cycle.
+     */
+    public void clear() {
+        valueToName.clear();
+        nameToCount.clear();
+    }
+
+    /**
+     * Returns the root name of the class.
+     */
+    @SuppressWarnings("rawtypes")
+    public static String unqualifiedClassName(Class type) {
+        if (type.isArray()) {
+            return unqualifiedClassName(type.getComponentType())+"Array";
+        }
+        String name = type.getName();
+        return name.substring(name.lastIndexOf('.')+1);
+    }
+
+    /**
+     * Returns a String which capitalizes the first letter of the string.
+     */
+    public static String capitalize(String name) {
+        if (name == null || name.length() == 0) {
+            return name;
+        }
+        return name.substring(0, 1).toUpperCase(ENGLISH) + name.substring(1);
+    }
+
+    /**
+     * Returns a unique string which identifies the object instance.
+     * Invocations are cached so that if an object has been previously
+     * passed into this method then the same identifier is returned.
+     *
+     * @param instance object used to generate string
+     * @return a unique string representing the object
+     */
+    public String instanceName(Object instance) {
+        if (instance == null) {
+            return "null";
+        }
+        if (instance instanceof Class) {
+            return unqualifiedClassName((Class)instance);
+        }
+        else {
+            String result = valueToName.get(instance);
+            if (result != null) {
+                return result;
+            }
+            Class<?> type = instance.getClass();
+            String className = unqualifiedClassName(type);
+
+            Integer size = nameToCount.get(className);
+            int instanceNumber = (size == null) ? 0 : (size).intValue() + 1;
+            nameToCount.put(className, new Integer(instanceNumber));
+
+            result = className + instanceNumber;
+            valueToName.put(instance, result);
+            return result;
+        }
+    }
+}

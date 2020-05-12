@@ -1,328 +1,322 @@
-/*     */ package com.sun.imageio.plugins.wbmp;
-/*     */ 
-/*     */ import com.sun.imageio.plugins.common.I18N;
-/*     */ import com.sun.imageio.plugins.common.ReaderUtil;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.image.BufferedImage;
-/*     */ import java.awt.image.DataBufferByte;
-/*     */ import java.awt.image.MultiPixelPackedSampleModel;
-/*     */ import java.awt.image.Raster;
-/*     */ import java.awt.image.WritableRaster;
-/*     */ import java.io.IOException;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Iterator;
-/*     */ import javax.imageio.IIOException;
-/*     */ import javax.imageio.ImageReadParam;
-/*     */ import javax.imageio.ImageReader;
-/*     */ import javax.imageio.ImageTypeSpecifier;
-/*     */ import javax.imageio.metadata.IIOMetadata;
-/*     */ import javax.imageio.spi.ImageReaderSpi;
-/*     */ import javax.imageio.stream.ImageInputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WBMPImageReader
-/*     */   extends ImageReader
-/*     */ {
-/*  57 */   private ImageInputStream iis = null;
-/*     */ 
-/*     */   
-/*     */   private boolean gotHeader = false;
-/*     */ 
-/*     */   
-/*     */   private int width;
-/*     */ 
-/*     */   
-/*     */   private int height;
-/*     */ 
-/*     */   
-/*     */   private int wbmpType;
-/*     */ 
-/*     */   
-/*     */   private WBMPMetadata metadata;
-/*     */ 
-/*     */   
-/*     */   public WBMPImageReader(ImageReaderSpi paramImageReaderSpi) {
-/*  76 */     super(paramImageReaderSpi);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setInput(Object paramObject, boolean paramBoolean1, boolean paramBoolean2) {
-/*  83 */     super.setInput(paramObject, paramBoolean1, paramBoolean2);
-/*  84 */     this.iis = (ImageInputStream)paramObject;
-/*  85 */     this.gotHeader = false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getNumImages(boolean paramBoolean) throws IOException {
-/*  90 */     if (this.iis == null) {
-/*  91 */       throw new IllegalStateException(I18N.getString("GetNumImages0"));
-/*     */     }
-/*  93 */     if (this.seekForwardOnly && paramBoolean) {
-/*  94 */       throw new IllegalStateException(I18N.getString("GetNumImages1"));
-/*     */     }
-/*  96 */     return 1;
-/*     */   }
-/*     */   
-/*     */   public int getWidth(int paramInt) throws IOException {
-/* 100 */     checkIndex(paramInt);
-/* 101 */     readHeader();
-/* 102 */     return this.width;
-/*     */   }
-/*     */   
-/*     */   public int getHeight(int paramInt) throws IOException {
-/* 106 */     checkIndex(paramInt);
-/* 107 */     readHeader();
-/* 108 */     return this.height;
-/*     */   }
-/*     */   
-/*     */   public boolean isRandomAccessEasy(int paramInt) throws IOException {
-/* 112 */     checkIndex(paramInt);
-/* 113 */     return true;
-/*     */   }
-/*     */   
-/*     */   private void checkIndex(int paramInt) {
-/* 117 */     if (paramInt != 0) {
-/* 118 */       throw new IndexOutOfBoundsException(I18N.getString("WBMPImageReader0"));
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public void readHeader() throws IOException {
-/* 123 */     if (this.gotHeader) {
-/*     */       return;
-/*     */     }
-/* 126 */     if (this.iis == null) {
-/* 127 */       throw new IllegalStateException("Input source not set!");
-/*     */     }
-/*     */     
-/* 130 */     this.metadata = new WBMPMetadata();
-/*     */     
-/* 132 */     this.wbmpType = this.iis.readByte();
-/* 133 */     byte b = this.iis.readByte();
-/*     */ 
-/*     */     
-/* 136 */     if (b != 0 || 
-/* 137 */       !isValidWbmpType(this.wbmpType))
-/*     */     {
-/* 139 */       throw new IIOException(I18N.getString("WBMPImageReader2"));
-/*     */     }
-/*     */     
-/* 142 */     this.metadata.wbmpType = this.wbmpType;
-/*     */ 
-/*     */     
-/* 145 */     this.width = ReaderUtil.readMultiByteInteger(this.iis);
-/* 146 */     this.metadata.width = this.width;
-/*     */ 
-/*     */     
-/* 149 */     this.height = ReaderUtil.readMultiByteInteger(this.iis);
-/* 150 */     this.metadata.height = this.height;
-/*     */     
-/* 152 */     this.gotHeader = true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Iterator getImageTypes(int paramInt) throws IOException {
-/* 157 */     checkIndex(paramInt);
-/* 158 */     readHeader();
-/*     */     
-/* 160 */     BufferedImage bufferedImage = new BufferedImage(1, 1, 12);
-/*     */     
-/* 162 */     ArrayList<ImageTypeSpecifier> arrayList = new ArrayList(1);
-/* 163 */     arrayList.add(new ImageTypeSpecifier(bufferedImage));
-/* 164 */     return arrayList.iterator();
-/*     */   }
-/*     */   
-/*     */   public ImageReadParam getDefaultReadParam() {
-/* 168 */     return new ImageReadParam();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IIOMetadata getImageMetadata(int paramInt) throws IOException {
-/* 173 */     checkIndex(paramInt);
-/* 174 */     if (this.metadata == null) {
-/* 175 */       readHeader();
-/*     */     }
-/* 177 */     return this.metadata;
-/*     */   }
-/*     */   
-/*     */   public IIOMetadata getStreamMetadata() throws IOException {
-/* 181 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BufferedImage read(int paramInt, ImageReadParam paramImageReadParam) throws IOException {
-/* 187 */     if (this.iis == null) {
-/* 188 */       throw new IllegalStateException(I18N.getString("WBMPImageReader1"));
-/*     */     }
-/*     */     
-/* 191 */     checkIndex(paramInt);
-/* 192 */     clearAbortRequest();
-/* 193 */     processImageStarted(paramInt);
-/* 194 */     if (paramImageReadParam == null) {
-/* 195 */       paramImageReadParam = getDefaultReadParam();
-/*     */     }
-/*     */     
-/* 198 */     readHeader();
-/*     */     
-/* 200 */     Rectangle rectangle1 = new Rectangle(0, 0, 0, 0);
-/* 201 */     Rectangle rectangle2 = new Rectangle(0, 0, 0, 0);
-/*     */     
-/* 203 */     computeRegions(paramImageReadParam, this.width, this.height, paramImageReadParam
-/* 204 */         .getDestination(), rectangle1, rectangle2);
-/*     */ 
-/*     */ 
-/*     */     
-/* 208 */     int i = paramImageReadParam.getSourceXSubsampling();
-/* 209 */     int j = paramImageReadParam.getSourceYSubsampling();
-/* 210 */     int k = paramImageReadParam.getSubsamplingXOffset();
-/* 211 */     int m = paramImageReadParam.getSubsamplingYOffset();
-/*     */ 
-/*     */     
-/* 214 */     BufferedImage bufferedImage = paramImageReadParam.getDestination();
-/*     */     
-/* 216 */     if (bufferedImage == null) {
-/* 217 */       bufferedImage = new BufferedImage(rectangle2.x + rectangle2.width, rectangle2.y + rectangle2.height, 12);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 223 */     boolean bool = (rectangle2.equals(new Rectangle(0, 0, this.width, this.height)) && rectangle2.equals(new Rectangle(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight()))) ? true : false;
-/*     */ 
-/*     */     
-/* 226 */     WritableRaster writableRaster = bufferedImage.getWritableTile(0, 0);
-/*     */ 
-/*     */ 
-/*     */     
-/* 230 */     MultiPixelPackedSampleModel multiPixelPackedSampleModel = (MultiPixelPackedSampleModel)bufferedImage.getSampleModel();
-/*     */     
-/* 232 */     if (bool) {
-/* 233 */       if (abortRequested()) {
-/* 234 */         processReadAborted();
-/* 235 */         return bufferedImage;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 239 */       this.iis.read(((DataBufferByte)writableRaster.getDataBuffer()).getData(), 0, this.height * multiPixelPackedSampleModel
-/* 240 */           .getScanlineStride());
-/* 241 */       processImageUpdate(bufferedImage, 0, 0, this.width, this.height, 1, 1, new int[] { 0 });
-/*     */ 
-/*     */ 
-/*     */       
-/* 245 */       processImageProgress(100.0F);
-/*     */     } else {
-/* 247 */       int n = (this.width + 7) / 8;
-/* 248 */       byte[] arrayOfByte1 = new byte[n];
-/* 249 */       byte[] arrayOfByte2 = ((DataBufferByte)writableRaster.getDataBuffer()).getData();
-/* 250 */       int i1 = multiPixelPackedSampleModel.getScanlineStride();
-/* 251 */       this.iis.skipBytes(n * rectangle1.y);
-/* 252 */       int i2 = n * (j - 1);
-/*     */ 
-/*     */       
-/* 255 */       int[] arrayOfInt1 = new int[rectangle2.width];
-/* 256 */       int[] arrayOfInt2 = new int[rectangle2.width];
-/* 257 */       int[] arrayOfInt3 = new int[rectangle2.width];
-/* 258 */       int[] arrayOfInt4 = new int[rectangle2.width];
-/*     */       
-/* 260 */       int i3 = rectangle2.x, i4 = rectangle1.x, i5 = 0;
-/* 261 */       for (; i3 < rectangle2.x + rectangle2.width; 
-/* 262 */         i3++, i5++, i4 += i) {
-/* 263 */         arrayOfInt3[i5] = i4 >> 3;
-/* 264 */         arrayOfInt1[i5] = 7 - (i4 & 0x7);
-/* 265 */         arrayOfInt4[i5] = i3 >> 3;
-/* 266 */         arrayOfInt2[i5] = 7 - (i3 & 0x7);
-/*     */       } 
-/*     */       
-/* 269 */       i3 = 0; i4 = rectangle1.y;
-/* 270 */       i5 = rectangle2.y * i1;
-/* 271 */       for (; i3 < rectangle2.height; i3++, i4 += j) {
-/*     */         
-/* 273 */         if (abortRequested())
-/*     */           break; 
-/* 275 */         this.iis.read(arrayOfByte1, 0, n);
-/* 276 */         for (byte b = 0; b < rectangle2.width; b++) {
-/*     */           
-/* 278 */           int i6 = arrayOfByte1[arrayOfInt3[b]] >> arrayOfInt1[b] & 0x1;
-/* 279 */           arrayOfByte2[i5 + arrayOfInt4[b]] = (byte)(arrayOfByte2[i5 + arrayOfInt4[b]] | i6 << arrayOfInt2[b]);
-/*     */         } 
-/*     */         
-/* 282 */         i5 += i1;
-/* 283 */         this.iis.skipBytes(i2);
-/* 284 */         processImageUpdate(bufferedImage, 0, i3, rectangle2.width, 1, 1, 1, new int[] { 0 });
-/*     */ 
-/*     */ 
-/*     */         
-/* 288 */         processImageProgress(100.0F * i3 / rectangle2.height);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 292 */     if (abortRequested()) {
-/* 293 */       processReadAborted();
-/*     */     } else {
-/* 295 */       processImageComplete();
-/* 296 */     }  return bufferedImage;
-/*     */   }
-/*     */   
-/*     */   public boolean canReadRaster() {
-/* 300 */     return true;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Raster readRaster(int paramInt, ImageReadParam paramImageReadParam) throws IOException {
-/* 305 */     BufferedImage bufferedImage = read(paramInt, paramImageReadParam);
-/* 306 */     return bufferedImage.getData();
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/* 310 */     super.reset();
-/* 311 */     this.iis = null;
-/* 312 */     this.gotHeader = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean isValidWbmpType(int paramInt) {
-/* 320 */     return (paramInt == 0);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\wbmp\WBMPImageReader.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.wbmp;
+
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.MultiPixelPackedSampleModel;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
+
+import javax.imageio.IIOException;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.stream.ImageInputStream;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import com.sun.imageio.plugins.common.I18N;
+import com.sun.imageio.plugins.common.ReaderUtil;
+
+/** This class is the Java Image IO plugin reader for WBMP images.
+ *  It may subsample the image, clip the image,
+ *  and shift the decoded image origin if the proper decoding parameter
+ *  are set in the provided <code>WBMPImageReadParam</code>.
+ */
+public class WBMPImageReader extends ImageReader {
+    /** The input stream where reads from */
+    private ImageInputStream iis = null;
+
+    /** Indicates whether the header is read. */
+    private boolean gotHeader = false;
+
+    /** The original image width. */
+    private int width;
+
+    /** The original image height. */
+    private int height;
+
+    private int wbmpType;
+
+    private WBMPMetadata metadata;
+
+    /** Constructs <code>WBMPImageReader</code> from the provided
+     *  <code>ImageReaderSpi</code>.
+     */
+    public WBMPImageReader(ImageReaderSpi originator) {
+        super(originator);
+    }
+
+    /** Overrides the method defined in the superclass. */
+    public void setInput(Object input,
+                         boolean seekForwardOnly,
+                         boolean ignoreMetadata) {
+        super.setInput(input, seekForwardOnly, ignoreMetadata);
+        iis = (ImageInputStream) input; // Always works
+        gotHeader = false;
+    }
+
+    /** Overrides the method defined in the superclass. */
+    public int getNumImages(boolean allowSearch) throws IOException {
+        if (iis == null) {
+            throw new IllegalStateException(I18N.getString("GetNumImages0"));
+        }
+        if (seekForwardOnly && allowSearch) {
+            throw new IllegalStateException(I18N.getString("GetNumImages1"));
+        }
+        return 1;
+    }
+
+    public int getWidth(int imageIndex) throws IOException {
+        checkIndex(imageIndex);
+        readHeader();
+        return width;
+    }
+
+    public int getHeight(int imageIndex) throws IOException {
+        checkIndex(imageIndex);
+        readHeader();
+        return height;
+    }
+
+    public boolean isRandomAccessEasy(int imageIndex) throws IOException {
+        checkIndex(imageIndex);
+        return true;
+    }
+
+    private void checkIndex(int imageIndex) {
+        if (imageIndex != 0) {
+            throw new IndexOutOfBoundsException(I18N.getString("WBMPImageReader0"));
+        }
+    }
+
+    public void readHeader() throws IOException {
+        if (gotHeader)
+            return;
+
+        if (iis == null) {
+            throw new IllegalStateException("Input source not set!");
+        }
+
+        metadata = new WBMPMetadata();
+
+        wbmpType = iis.readByte();   // TypeField
+        byte fixHeaderField = iis.readByte();
+
+        // check for valid wbmp image
+        if (fixHeaderField != 0
+            || !isValidWbmpType(wbmpType))
+        {
+            throw new IIOException(I18N.getString("WBMPImageReader2"));
+        }
+
+        metadata.wbmpType = wbmpType;
+
+        // Read image width
+        width = ReaderUtil.readMultiByteInteger(iis);
+        metadata.width = width;
+
+        // Read image height
+        height = ReaderUtil.readMultiByteInteger(iis);
+        metadata.height = height;
+
+        gotHeader = true;
+    }
+
+    public Iterator getImageTypes(int imageIndex)
+        throws IOException {
+        checkIndex(imageIndex);
+        readHeader();
+
+        BufferedImage bi =
+            new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
+        ArrayList list = new ArrayList(1);
+        list.add(new ImageTypeSpecifier(bi));
+        return list.iterator();
+    }
+
+    public ImageReadParam getDefaultReadParam() {
+        return new ImageReadParam();
+    }
+
+    public IIOMetadata getImageMetadata(int imageIndex)
+        throws IOException {
+        checkIndex(imageIndex);
+        if (metadata == null) {
+            readHeader();
+        }
+        return metadata;
+    }
+
+    public IIOMetadata getStreamMetadata() throws IOException {
+        return null;
+    }
+
+    public BufferedImage read(int imageIndex, ImageReadParam param)
+        throws IOException {
+
+        if (iis == null) {
+            throw new IllegalStateException(I18N.getString("WBMPImageReader1"));
+        }
+
+        checkIndex(imageIndex);
+        clearAbortRequest();
+        processImageStarted(imageIndex);
+        if (param == null)
+            param = getDefaultReadParam();
+
+        //read header
+        readHeader();
+
+        Rectangle sourceRegion = new Rectangle(0, 0, 0, 0);
+        Rectangle destinationRegion = new Rectangle(0, 0, 0, 0);
+
+        computeRegions(param, this.width, this.height,
+                       param.getDestination(),
+                       sourceRegion,
+                       destinationRegion);
+
+        int scaleX = param.getSourceXSubsampling();
+        int scaleY = param.getSourceYSubsampling();
+        int xOffset = param.getSubsamplingXOffset();
+        int yOffset = param.getSubsamplingYOffset();
+
+        // If the destination is provided, then use it.  Otherwise, create new one
+        BufferedImage bi = param.getDestination();
+
+        if (bi == null)
+            bi = new BufferedImage(destinationRegion.x + destinationRegion.width,
+                              destinationRegion.y + destinationRegion.height,
+                              BufferedImage.TYPE_BYTE_BINARY);
+
+        boolean noTransform =
+            destinationRegion.equals(new Rectangle(0, 0, width, height)) &&
+            destinationRegion.equals(new Rectangle(0, 0, bi.getWidth(), bi.getHeight()));
+
+        // Get the image data.
+        WritableRaster tile = bi.getWritableTile(0, 0);
+
+        // Get the SampleModel.
+        MultiPixelPackedSampleModel sm =
+            (MultiPixelPackedSampleModel)bi.getSampleModel();
+
+        if (noTransform) {
+            if (abortRequested()) {
+                processReadAborted();
+                return bi;
+            }
+
+            // If noTransform is necessary, read the data.
+            iis.read(((DataBufferByte)tile.getDataBuffer()).getData(),
+                     0, height*sm.getScanlineStride());
+            processImageUpdate(bi,
+                               0, 0,
+                               width, height, 1, 1,
+                               new int[]{0});
+            processImageProgress(100.0F);
+        } else {
+            int len = (this.width + 7) / 8;
+            byte[] buf = new byte[len];
+            byte[] data = ((DataBufferByte)tile.getDataBuffer()).getData();
+            int lineStride = sm.getScanlineStride();
+            iis.skipBytes(len * sourceRegion.y);
+            int skipLength = len * (scaleY - 1);
+
+            // cache the values to avoid duplicated computation
+            int[] srcOff = new int[destinationRegion.width];
+            int[] destOff = new int[destinationRegion.width];
+            int[] srcPos = new int[destinationRegion.width];
+            int[] destPos = new int[destinationRegion.width];
+
+            for (int i = destinationRegion.x, x = sourceRegion.x, j = 0;
+                i < destinationRegion.x + destinationRegion.width;
+                    i++, j++, x += scaleX) {
+                srcPos[j] = x >> 3;
+                srcOff[j] = 7 - (x & 7);
+                destPos[j] = i >> 3;
+                destOff[j] = 7 - (i & 7);
+            }
+
+            for (int j = 0, y = sourceRegion.y,
+                k = destinationRegion.y * lineStride;
+                j < destinationRegion.height; j++, y+=scaleY) {
+
+                if (abortRequested())
+                    break;
+                iis.read(buf, 0, len);
+                for (int i = 0; i < destinationRegion.width; i++) {
+                    //get the bit and assign to the data buffer of the raster
+                    int v = (buf[srcPos[i]] >> srcOff[i]) & 1;
+                    data[k + destPos[i]] |= v << destOff[i];
+                }
+
+                k += lineStride;
+                iis.skipBytes(skipLength);
+                        processImageUpdate(bi,
+                                           0, j,
+                                           destinationRegion.width, 1, 1, 1,
+                                           new int[]{0});
+                        processImageProgress(100.0F*j/destinationRegion.height);
+            }
+        }
+
+        if (abortRequested())
+            processReadAborted();
+        else
+            processImageComplete();
+        return bi;
+    }
+
+    public boolean canReadRaster() {
+        return true;
+    }
+
+    public Raster readRaster(int imageIndex,
+                             ImageReadParam param) throws IOException {
+        BufferedImage bi = read(imageIndex, param);
+        return bi.getData();
+    }
+
+    public void reset() {
+        super.reset();
+        iis = null;
+        gotHeader = false;
+    }
+
+    /*
+     * This method verifies that given byte is valid wbmp type marker.
+     * At the moment only 0x0 marker is described by wbmp spec.
+     */
+    boolean isValidWbmpType(int type) {
+        return type == 0;
+    }
+}

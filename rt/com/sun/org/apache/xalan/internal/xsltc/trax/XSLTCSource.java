@@ -1,147 +1,142 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.trax;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.DOM;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.DOMWSFilter;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.SAXImpl;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-/*     */ import javax.xml.transform.Source;
-/*     */ import javax.xml.transform.stream.StreamSource;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class XSLTCSource
-/*     */   implements Source
-/*     */ {
-/*  45 */   private String _systemId = null;
-/*  46 */   private Source _source = null;
-/*  47 */   private ThreadLocal _dom = new ThreadLocal();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSLTCSource(String systemId) {
-/*  54 */     this._systemId = systemId;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XSLTCSource(Source source) {
-/*  62 */     this._source = source;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setSystemId(String systemId) {
-/*  74 */     this._systemId = systemId;
-/*  75 */     if (this._source != null) {
-/*  76 */       this._source.setSystemId(systemId);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getSystemId() {
-/*  87 */     if (this._source != null) {
-/*  88 */       return this._source.getSystemId();
-/*     */     }
-/*     */     
-/*  91 */     return this._systemId;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected DOM getDOM(XSLTCDTMManager dtmManager, AbstractTranslet translet) throws SAXException {
-/* 101 */     SAXImpl idom = this._dom.get();
-/*     */     
-/* 103 */     if (idom != null) {
-/* 104 */       if (dtmManager != null) {
-/* 105 */         idom.migrateTo(dtmManager);
-/*     */       }
-/*     */     } else {
-/*     */       
-/* 109 */       Source source = this._source;
-/* 110 */       if (source == null) {
-/* 111 */         if (this._systemId != null && this._systemId.length() > 0) {
-/* 112 */           source = new StreamSource(this._systemId);
-/*     */         } else {
-/*     */           
-/* 115 */           ErrorMsg err = new ErrorMsg("XSLTC_SOURCE_ERR");
-/* 116 */           throw new SAXException(err.toString());
-/*     */         } 
-/*     */       }
-/*     */       
-/* 120 */       DOMWSFilter wsfilter = null;
-/* 121 */       if (translet != null && translet instanceof com.sun.org.apache.xalan.internal.xsltc.StripFilter) {
-/* 122 */         wsfilter = new DOMWSFilter(translet);
-/*     */       }
-/*     */       
-/* 125 */       boolean hasIdCall = (translet != null) ? translet.hasIdCall() : false;
-/*     */       
-/* 127 */       if (dtmManager == null) {
-/* 128 */         dtmManager = XSLTCDTMManager.newInstance();
-/*     */       }
-/*     */       
-/* 131 */       idom = (SAXImpl)dtmManager.getDTM(source, true, wsfilter, false, false, hasIdCall);
-/*     */       
-/* 133 */       String systemId = getSystemId();
-/* 134 */       if (systemId != null) {
-/* 135 */         idom.setDocumentURI(systemId);
-/*     */       }
-/* 137 */       this._dom.set(idom);
-/*     */     } 
-/* 139 */     return idom;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\trax\XSLTCSource.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XSLTCSource.java,v 1.2.4.1 2005/09/06 12:43:28 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.trax;
+
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.StripFilter;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.dom.DOMWSFilter;
+import com.sun.org.apache.xalan.internal.xsltc.dom.SAXImpl;
+import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+
+import org.xml.sax.SAXException;
+
+/**
+ * @author Morten Jorgensen
+ */
+public final class XSLTCSource implements Source {
+
+    private String     _systemId = null;
+    private Source     _source   = null;
+    private ThreadLocal _dom     = new ThreadLocal();
+
+    /**
+     * Create a new XSLTC-specific source from a system ID
+     */
+    public XSLTCSource(String systemId)
+    {
+        _systemId = systemId;
+    }
+
+    /**
+     * Create a new XSLTC-specific source from a JAXP Source
+     */
+    public XSLTCSource(Source source)
+    {
+        _source = source;
+    }
+
+    /**
+     * Implements javax.xml.transform.Source.setSystemId()
+     * Set the system identifier for this Source.
+     * This Source can get its input either directly from a file (in this case
+     * it will instanciate and use a JAXP parser) or it can receive it through
+     * ContentHandler/LexicalHandler interfaces.
+     * @param systemId The system Id for this Source
+     */
+    public void setSystemId(String systemId) {
+        _systemId = systemId;
+        if (_source != null) {
+            _source.setSystemId(systemId);
+        }
+    }
+
+    /**
+     * Implements javax.xml.transform.Source.getSystemId()
+     * Get the system identifier that was set with setSystemId.
+     * @return The system identifier that was set with setSystemId,
+     *         or null if setSystemId was not called.
+     */
+    public String getSystemId() {
+        if (_source != null) {
+            return _source.getSystemId();
+        }
+        else {
+            return(_systemId);
+        }
+    }
+
+    /**
+     * Internal interface which returns a DOM for a given DTMManager and translet.
+     */
+    protected DOM getDOM(XSLTCDTMManager dtmManager, AbstractTranslet translet)
+        throws SAXException
+    {
+        SAXImpl idom = (SAXImpl)_dom.get();
+
+        if (idom != null) {
+            if (dtmManager != null) {
+                idom.migrateTo(dtmManager);
+            }
+        }
+        else {
+            Source source = _source;
+            if (source == null) {
+                if (_systemId != null && _systemId.length() > 0) {
+                    source = new StreamSource(_systemId);
+                }
+                else {
+                    ErrorMsg err = new ErrorMsg(ErrorMsg.XSLTC_SOURCE_ERR);
+                    throw new SAXException(err.toString());
+                }
+            }
+
+            DOMWSFilter wsfilter = null;
+            if (translet != null && translet instanceof StripFilter) {
+                wsfilter = new DOMWSFilter(translet);
+            }
+
+            boolean hasIdCall = (translet != null) ? translet.hasIdCall() : false;
+
+            if (dtmManager == null) {
+                dtmManager = XSLTCDTMManager.newInstance();
+            }
+
+            idom = (SAXImpl)dtmManager.getDTM(source, true, wsfilter, false, false, hasIdCall);
+
+            String systemId = getSystemId();
+            if (systemId != null) {
+                idom.setDocumentURI(systemId);
+            }
+            _dom.set(idom);
+        }
+        return idom;
+    }
+
+}

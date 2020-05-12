@@ -1,146 +1,140 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ValueOf
-/*     */   extends Instruction
-/*     */ {
-/*     */   private Expression _select;
-/*     */   private boolean _escaping = true;
-/*     */   private boolean _isString = false;
-/*     */   
-/*     */   public void display(int indent) {
-/*  49 */     indent(indent);
-/*  50 */     Util.println("ValueOf");
-/*  51 */     indent(indent + 4);
-/*  52 */     Util.println("select " + this._select.toString());
-/*     */   }
-/*     */   
-/*     */   public void parseContents(Parser parser) {
-/*  56 */     this._select = parser.parseExpression(this, "select", null);
-/*     */ 
-/*     */     
-/*  59 */     if (this._select.isDummy()) {
-/*  60 */       reportError(this, parser, "REQUIRED_ATTR_ERR", "select");
-/*     */       return;
-/*     */     } 
-/*  63 */     String str = getAttribute("disable-output-escaping");
-/*  64 */     if (str != null && str.equals("yes")) this._escaping = false; 
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  68 */     Type type = this._select.typeCheck(stable);
-/*     */ 
-/*     */     
-/*  71 */     if (type != null && !type.identicalTo(Type.Node))
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  81 */       if (type.identicalTo(Type.NodeSet)) {
-/*  82 */         this._select = new CastExpr(this._select, Type.Node);
-/*     */       } else {
-/*  84 */         this._isString = true;
-/*  85 */         if (!type.identicalTo(Type.String)) {
-/*  86 */           this._select = new CastExpr(this._select, Type.String);
-/*     */         }
-/*  88 */         this._isString = true;
-/*     */       } 
-/*     */     }
-/*  91 */     return Type.Void;
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  95 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  96 */     InstructionList il = methodGen.getInstructionList();
-/*  97 */     int setEscaping = cpg.addInterfaceMethodref("com/sun/org/apache/xml/internal/serializer/SerializationHandler", "setEscaping", "(Z)Z");
-/*     */ 
-/*     */ 
-/*     */     
-/* 101 */     if (!this._escaping) {
-/* 102 */       il.append(methodGen.loadHandler());
-/* 103 */       il.append(new PUSH(cpg, false));
-/* 104 */       il.append(new INVOKEINTERFACE(setEscaping, 2));
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 112 */     if (this._isString) {
-/* 113 */       int characters = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet", "characters", "(Ljava/lang/String;Lcom/sun/org/apache/xml/internal/serializer/SerializationHandler;)V");
-/*     */ 
-/*     */ 
-/*     */       
-/* 117 */       il.append(classGen.loadTranslet());
-/* 118 */       this._select.translate(classGen, methodGen);
-/* 119 */       il.append(methodGen.loadHandler());
-/* 120 */       il.append(new INVOKEVIRTUAL(characters));
-/*     */     } else {
-/* 122 */       int characters = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "characters", "(ILcom/sun/org/apache/xml/internal/serializer/SerializationHandler;)V");
-/*     */ 
-/*     */ 
-/*     */       
-/* 126 */       il.append(methodGen.loadDOM());
-/* 127 */       this._select.translate(classGen, methodGen);
-/* 128 */       il.append(methodGen.loadHandler());
-/* 129 */       il.append(new INVOKEINTERFACE(characters, 3));
-/*     */     } 
-/*     */ 
-/*     */     
-/* 133 */     if (!this._escaping) {
-/* 134 */       il.append(methodGen.loadHandler());
-/* 135 */       il.append(SWAP);
-/* 136 */       il.append(new INVOKEINTERFACE(setEscaping, 2));
-/* 137 */       il.append(POP);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\ValueOf.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ValueOf.java,v 1.2.4.1 2005/09/05 09:30:04 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKEVIRTUAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class ValueOf extends Instruction {
+    private Expression _select;
+    private boolean _escaping = true;
+    private boolean _isString = false;
+
+    public void display(int indent) {
+        indent(indent);
+        Util.println("ValueOf");
+        indent(indent + IndentIncrement);
+        Util.println("select " + _select.toString());
+    }
+
+    public void parseContents(Parser parser) {
+        _select = parser.parseExpression(this, "select", null);
+
+        // make sure required attribute(s) have been set
+        if (_select.isDummy()) {
+            reportError(this, parser, ErrorMsg.REQUIRED_ATTR_ERR, "select");
+            return;
+        }
+        final String str = getAttribute("disable-output-escaping");
+        if ((str != null) && (str.equals("yes"))) _escaping = false;
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        Type type = _select.typeCheck(stable);
+
+        // Prefer to handle the value as a node; fall back to String, otherwise
+        if (type != null && !type.identicalTo(Type.Node)) {
+            /***
+             *** %HZ% Would like to treat result-tree fragments in the same
+             *** %HZ% way as node sets for value-of, but that's running into
+             *** %HZ% some snags.  Instead, they'll be converted to String
+            if (type.identicalTo(Type.ResultTree)) {
+                _select = new CastExpr(new CastExpr(_select, Type.NodeSet),
+                                       Type.Node);
+            } else
+            ***/
+            if (type.identicalTo(Type.NodeSet)) {
+                _select = new CastExpr(_select, Type.Node);
+            } else {
+                _isString = true;
+                if (!type.identicalTo(Type.String)) {
+                    _select = new CastExpr(_select, Type.String);
+                }
+                _isString = true;
+            }
+        }
+        return Type.Void;
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        final int setEscaping = cpg.addInterfaceMethodref(OUTPUT_HANDLER,
+                                                          "setEscaping","(Z)Z");
+
+        // Turn off character escaping if so is wanted.
+        if (!_escaping) {
+            il.append(methodGen.loadHandler());
+            il.append(new PUSH(cpg,false));
+            il.append(new INVOKEINTERFACE(setEscaping,2));
+        }
+
+        // Translate the contents.  If the value is a string, use the
+        // translet.characters(String, TranslatOutputHandler) method.
+        // Otherwise, the value is a node, and the
+        // dom.characters(int node, TransletOutputHandler) method can dispatch
+        // the string value of the node to the output handler more efficiently.
+        if (_isString) {
+            final int characters = cpg.addMethodref(TRANSLET_CLASS,
+                                                    CHARACTERSW,
+                                                    CHARACTERSW_SIG);
+
+            il.append(classGen.loadTranslet());
+            _select.translate(classGen, methodGen);
+            il.append(methodGen.loadHandler());
+            il.append(new INVOKEVIRTUAL(characters));
+        } else {
+            final int characters = cpg.addInterfaceMethodref(DOM_INTF,
+                                                             CHARACTERS,
+                                                             CHARACTERS_SIG);
+
+            il.append(methodGen.loadDOM());
+            _select.translate(classGen, methodGen);
+            il.append(methodGen.loadHandler());
+            il.append(new INVOKEINTERFACE(characters, 3));
+        }
+
+        // Restore character escaping setting to whatever it was.
+        if (!_escaping) {
+            il.append(methodGen.loadHandler());
+            il.append(SWAP);
+            il.append(new INVOKEINTERFACE(setEscaping,2));
+            il.append(POP);
+        }
+    }
+}

@@ -1,1248 +1,1248 @@
-/*      */ package java.util;
-/*      */ 
-/*      */ import java.io.IOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.ObjectStreamField;
-/*      */ import java.io.Serializable;
-/*      */ import java.nio.ByteBuffer;
-/*      */ import java.nio.ByteOrder;
-/*      */ import java.nio.LongBuffer;
-/*      */ import java.util.stream.IntStream;
-/*      */ import java.util.stream.StreamSupport;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class BitSet
-/*      */   implements Cloneable, Serializable
-/*      */ {
-/*      */   private static final int ADDRESS_BITS_PER_WORD = 6;
-/*      */   private static final int BITS_PER_WORD = 64;
-/*      */   private static final int BIT_INDEX_MASK = 63;
-/*      */   private static final long WORD_MASK = -1L;
-/*   85 */   private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[] { new ObjectStreamField("bits", long[].class) };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private long[] words;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*   97 */   private transient int wordsInUse = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient boolean sizeIsSticky = false;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static final long serialVersionUID = 7997698588986878753L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int wordIndex(int paramInt) {
-/*  112 */     return paramInt >> 6;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void checkInvariants() {
-/*  119 */     assert this.wordsInUse == 0 || this.words[this.wordsInUse - 1] != 0L;
-/*  120 */     assert this.wordsInUse >= 0 && this.wordsInUse <= this.words.length;
-/*  121 */     assert this.wordsInUse == this.words.length || this.words[this.wordsInUse] == 0L;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void recalculateWordsInUse() {
-/*      */     int i;
-/*  132 */     for (i = this.wordsInUse - 1; i >= 0 && 
-/*  133 */       this.words[i] == 0L; i--);
-/*      */ 
-/*      */     
-/*  136 */     this.wordsInUse = i + 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BitSet() {
-/*  143 */     initWords(64);
-/*  144 */     this.sizeIsSticky = false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BitSet(int paramInt) {
-/*  158 */     if (paramInt < 0) {
-/*  159 */       throw new NegativeArraySizeException("nbits < 0: " + paramInt);
-/*      */     }
-/*  161 */     initWords(paramInt);
-/*  162 */     this.sizeIsSticky = true;
-/*      */   }
-/*      */   
-/*      */   private void initWords(int paramInt) {
-/*  166 */     this.words = new long[wordIndex(paramInt - 1) + 1];
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private BitSet(long[] paramArrayOflong) {
-/*  174 */     this.words = paramArrayOflong;
-/*  175 */     this.wordsInUse = paramArrayOflong.length;
-/*  176 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static BitSet valueOf(long[] paramArrayOflong) {
-/*      */     int i;
-/*  197 */     for (i = paramArrayOflong.length; i > 0 && paramArrayOflong[i - 1] == 0L; i--);
-/*      */     
-/*  199 */     return new BitSet(Arrays.copyOf(paramArrayOflong, i));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static BitSet valueOf(LongBuffer paramLongBuffer) {
-/*  221 */     paramLongBuffer = paramLongBuffer.slice();
-/*      */     int i;
-/*  223 */     for (i = paramLongBuffer.remaining(); i > 0 && paramLongBuffer.get(i - 1) == 0L; i--);
-/*      */     
-/*  225 */     long[] arrayOfLong = new long[i];
-/*  226 */     paramLongBuffer.get(arrayOfLong);
-/*  227 */     return new BitSet(arrayOfLong);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static BitSet valueOf(byte[] paramArrayOfbyte) {
-/*  247 */     return valueOf(ByteBuffer.wrap(paramArrayOfbyte));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static BitSet valueOf(ByteBuffer paramByteBuffer) {
-/*  269 */     paramByteBuffer = paramByteBuffer.slice().order(ByteOrder.LITTLE_ENDIAN);
-/*      */     int i;
-/*  271 */     for (i = paramByteBuffer.remaining(); i > 0 && paramByteBuffer.get(i - 1) == 0; i--);
-/*      */     
-/*  273 */     long[] arrayOfLong = new long[(i + 7) / 8];
-/*  274 */     paramByteBuffer.limit(i);
-/*  275 */     byte b1 = 0;
-/*  276 */     while (paramByteBuffer.remaining() >= 8)
-/*  277 */       arrayOfLong[b1++] = paramByteBuffer.getLong();  int j; byte b2;
-/*  278 */     for (j = paramByteBuffer.remaining(), b2 = 0; b2 < j; b2++)
-/*  279 */       arrayOfLong[b1] = arrayOfLong[b1] | (paramByteBuffer.get() & 0xFFL) << 8 * b2; 
-/*  280 */     return new BitSet(arrayOfLong);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public byte[] toByteArray() {
-/*  297 */     int i = this.wordsInUse;
-/*  298 */     if (i == 0)
-/*  299 */       return new byte[0]; 
-/*  300 */     int j = 8 * (i - 1);
-/*  301 */     for (long l1 = this.words[i - 1]; l1 != 0L; l1 >>>= 8L)
-/*  302 */       j++; 
-/*  303 */     byte[] arrayOfByte = new byte[j];
-/*  304 */     ByteBuffer byteBuffer = ByteBuffer.wrap(arrayOfByte).order(ByteOrder.LITTLE_ENDIAN);
-/*  305 */     for (byte b = 0; b < i - 1; b++)
-/*  306 */       byteBuffer.putLong(this.words[b]);  long l2;
-/*  307 */     for (l2 = this.words[i - 1]; l2 != 0L; l2 >>>= 8L)
-/*  308 */       byteBuffer.put((byte)(int)(l2 & 0xFFL)); 
-/*  309 */     return arrayOfByte;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public long[] toLongArray() {
-/*  326 */     return Arrays.copyOf(this.words, this.wordsInUse);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void ensureCapacity(int paramInt) {
-/*  334 */     if (this.words.length < paramInt) {
-/*      */       
-/*  336 */       int i = Math.max(2 * this.words.length, paramInt);
-/*  337 */       this.words = Arrays.copyOf(this.words, i);
-/*  338 */       this.sizeIsSticky = false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void expandTo(int paramInt) {
-/*  350 */     int i = paramInt + 1;
-/*  351 */     if (this.wordsInUse < i) {
-/*  352 */       ensureCapacity(i);
-/*  353 */       this.wordsInUse = i;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void checkRange(int paramInt1, int paramInt2) {
-/*  361 */     if (paramInt1 < 0)
-/*  362 */       throw new IndexOutOfBoundsException("fromIndex < 0: " + paramInt1); 
-/*  363 */     if (paramInt2 < 0)
-/*  364 */       throw new IndexOutOfBoundsException("toIndex < 0: " + paramInt2); 
-/*  365 */     if (paramInt1 > paramInt2) {
-/*  366 */       throw new IndexOutOfBoundsException("fromIndex: " + paramInt1 + " > toIndex: " + paramInt2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void flip(int paramInt) {
-/*  379 */     if (paramInt < 0) {
-/*  380 */       throw new IndexOutOfBoundsException("bitIndex < 0: " + paramInt);
-/*      */     }
-/*  382 */     int i = wordIndex(paramInt);
-/*  383 */     expandTo(i);
-/*      */     
-/*  385 */     this.words[i] = this.words[i] ^ 1L << paramInt;
-/*      */     
-/*  387 */     recalculateWordsInUse();
-/*  388 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void flip(int paramInt1, int paramInt2) {
-/*  404 */     checkRange(paramInt1, paramInt2);
-/*      */     
-/*  406 */     if (paramInt1 == paramInt2) {
-/*      */       return;
-/*      */     }
-/*  409 */     int i = wordIndex(paramInt1);
-/*  410 */     int j = wordIndex(paramInt2 - 1);
-/*  411 */     expandTo(j);
-/*      */     
-/*  413 */     long l1 = -1L << paramInt1;
-/*  414 */     long l2 = -1L >>> -paramInt2;
-/*  415 */     if (i == j) {
-/*      */       
-/*  417 */       this.words[i] = this.words[i] ^ l1 & l2;
-/*      */     }
-/*      */     else {
-/*      */       
-/*  421 */       this.words[i] = this.words[i] ^ l1;
-/*      */ 
-/*      */       
-/*  424 */       for (int k = i + 1; k < j; k++) {
-/*  425 */         this.words[k] = this.words[k] ^ 0xFFFFFFFFFFFFFFFFL;
-/*      */       }
-/*      */       
-/*  428 */       this.words[j] = this.words[j] ^ l2;
-/*      */     } 
-/*      */     
-/*  431 */     recalculateWordsInUse();
-/*  432 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void set(int paramInt) {
-/*  443 */     if (paramInt < 0) {
-/*  444 */       throw new IndexOutOfBoundsException("bitIndex < 0: " + paramInt);
-/*      */     }
-/*  446 */     int i = wordIndex(paramInt);
-/*  447 */     expandTo(i);
-/*      */     
-/*  449 */     this.words[i] = this.words[i] | 1L << paramInt;
-/*      */     
-/*  451 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void set(int paramInt, boolean paramBoolean) {
-/*  463 */     if (paramBoolean) {
-/*  464 */       set(paramInt);
-/*      */     } else {
-/*  466 */       clear(paramInt);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void set(int paramInt1, int paramInt2) {
-/*  481 */     checkRange(paramInt1, paramInt2);
-/*      */     
-/*  483 */     if (paramInt1 == paramInt2) {
-/*      */       return;
-/*      */     }
-/*      */     
-/*  487 */     int i = wordIndex(paramInt1);
-/*  488 */     int j = wordIndex(paramInt2 - 1);
-/*  489 */     expandTo(j);
-/*      */     
-/*  491 */     long l1 = -1L << paramInt1;
-/*  492 */     long l2 = -1L >>> -paramInt2;
-/*  493 */     if (i == j) {
-/*      */       
-/*  495 */       this.words[i] = this.words[i] | l1 & l2;
-/*      */     }
-/*      */     else {
-/*      */       
-/*  499 */       this.words[i] = this.words[i] | l1;
-/*      */ 
-/*      */       
-/*  502 */       for (int k = i + 1; k < j; k++) {
-/*  503 */         this.words[k] = -1L;
-/*      */       }
-/*      */       
-/*  506 */       this.words[j] = this.words[j] | l2;
-/*      */     } 
-/*      */     
-/*  509 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void set(int paramInt1, int paramInt2, boolean paramBoolean) {
-/*  525 */     if (paramBoolean) {
-/*  526 */       set(paramInt1, paramInt2);
-/*      */     } else {
-/*  528 */       clear(paramInt1, paramInt2);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear(int paramInt) {
-/*  539 */     if (paramInt < 0) {
-/*  540 */       throw new IndexOutOfBoundsException("bitIndex < 0: " + paramInt);
-/*      */     }
-/*  542 */     int i = wordIndex(paramInt);
-/*  543 */     if (i >= this.wordsInUse) {
-/*      */       return;
-/*      */     }
-/*  546 */     this.words[i] = this.words[i] & (1L << paramInt ^ 0xFFFFFFFFFFFFFFFFL);
-/*      */     
-/*  548 */     recalculateWordsInUse();
-/*  549 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear(int paramInt1, int paramInt2) {
-/*  564 */     checkRange(paramInt1, paramInt2);
-/*      */     
-/*  566 */     if (paramInt1 == paramInt2) {
-/*      */       return;
-/*      */     }
-/*  569 */     int i = wordIndex(paramInt1);
-/*  570 */     if (i >= this.wordsInUse) {
-/*      */       return;
-/*      */     }
-/*  573 */     int j = wordIndex(paramInt2 - 1);
-/*  574 */     if (j >= this.wordsInUse) {
-/*  575 */       paramInt2 = length();
-/*  576 */       j = this.wordsInUse - 1;
-/*      */     } 
-/*      */     
-/*  579 */     long l1 = -1L << paramInt1;
-/*  580 */     long l2 = -1L >>> -paramInt2;
-/*  581 */     if (i == j) {
-/*      */       
-/*  583 */       this.words[i] = this.words[i] & (l1 & l2 ^ 0xFFFFFFFFFFFFFFFFL);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  587 */       this.words[i] = this.words[i] & (l1 ^ 0xFFFFFFFFFFFFFFFFL);
-/*      */ 
-/*      */       
-/*  590 */       for (int k = i + 1; k < j; k++) {
-/*  591 */         this.words[k] = 0L;
-/*      */       }
-/*      */       
-/*  594 */       this.words[j] = this.words[j] & (l2 ^ 0xFFFFFFFFFFFFFFFFL);
-/*      */     } 
-/*      */     
-/*  597 */     recalculateWordsInUse();
-/*  598 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void clear() {
-/*  607 */     while (this.wordsInUse > 0) {
-/*  608 */       this.words[--this.wordsInUse] = 0L;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean get(int paramInt) {
-/*  622 */     if (paramInt < 0) {
-/*  623 */       throw new IndexOutOfBoundsException("bitIndex < 0: " + paramInt);
-/*      */     }
-/*  625 */     checkInvariants();
-/*      */     
-/*  627 */     int i = wordIndex(paramInt);
-/*  628 */     return (i < this.wordsInUse && (this.words[i] & 1L << paramInt) != 0L);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public BitSet get(int paramInt1, int paramInt2) {
-/*  645 */     checkRange(paramInt1, paramInt2);
-/*      */     
-/*  647 */     checkInvariants();
-/*      */     
-/*  649 */     int i = length();
-/*      */ 
-/*      */     
-/*  652 */     if (i <= paramInt1 || paramInt1 == paramInt2) {
-/*  653 */       return new BitSet(0);
-/*      */     }
-/*      */     
-/*  656 */     if (paramInt2 > i) {
-/*  657 */       paramInt2 = i;
-/*      */     }
-/*  659 */     BitSet bitSet = new BitSet(paramInt2 - paramInt1);
-/*  660 */     int j = wordIndex(paramInt2 - paramInt1 - 1) + 1;
-/*  661 */     int k = wordIndex(paramInt1);
-/*  662 */     boolean bool = ((paramInt1 & 0x3F) == 0) ? true : false;
-/*      */ 
-/*      */     
-/*  665 */     for (byte b = 0; b < j - 1; b++, k++) {
-/*  666 */       bitSet.words[b] = bool ? this.words[k] : (this.words[k] >>> paramInt1 | this.words[k + 1] << -paramInt1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  671 */     long l = -1L >>> -paramInt2;
-/*  672 */     bitSet.words[j - 1] = ((paramInt2 - 1 & 0x3F) < (paramInt1 & 0x3F)) ? (this.words[k] >>> paramInt1 | (this.words[k + 1] & l) << -paramInt1) : ((this.words[k] & l) >>> paramInt1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  681 */     bitSet.wordsInUse = j;
-/*  682 */     bitSet.recalculateWordsInUse();
-/*  683 */     bitSet.checkInvariants();
-/*      */     
-/*  685 */     return bitSet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int nextSetBit(int paramInt) {
-/*  711 */     if (paramInt < 0) {
-/*  712 */       throw new IndexOutOfBoundsException("fromIndex < 0: " + paramInt);
-/*      */     }
-/*  714 */     checkInvariants();
-/*      */     
-/*  716 */     int i = wordIndex(paramInt);
-/*  717 */     if (i >= this.wordsInUse) {
-/*  718 */       return -1;
-/*      */     }
-/*  720 */     long l = this.words[i] & -1L << paramInt;
-/*      */     
-/*      */     while (true) {
-/*  723 */       if (l != 0L)
-/*  724 */         return i * 64 + Long.numberOfTrailingZeros(l); 
-/*  725 */       if (++i == this.wordsInUse)
-/*  726 */         return -1; 
-/*  727 */       l = this.words[i];
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int nextClearBit(int paramInt) {
-/*  743 */     if (paramInt < 0) {
-/*  744 */       throw new IndexOutOfBoundsException("fromIndex < 0: " + paramInt);
-/*      */     }
-/*  746 */     checkInvariants();
-/*      */     
-/*  748 */     int i = wordIndex(paramInt);
-/*  749 */     if (i >= this.wordsInUse) {
-/*  750 */       return paramInt;
-/*      */     }
-/*  752 */     long l = (this.words[i] ^ 0xFFFFFFFFFFFFFFFFL) & -1L << paramInt;
-/*      */     
-/*      */     while (true) {
-/*  755 */       if (l != 0L)
-/*  756 */         return i * 64 + Long.numberOfTrailingZeros(l); 
-/*  757 */       if (++i == this.wordsInUse)
-/*  758 */         return this.wordsInUse * 64; 
-/*  759 */       l = this.words[i] ^ 0xFFFFFFFFFFFFFFFFL;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int previousSetBit(int paramInt) {
-/*  785 */     if (paramInt < 0) {
-/*  786 */       if (paramInt == -1)
-/*  787 */         return -1; 
-/*  788 */       throw new IndexOutOfBoundsException("fromIndex < -1: " + paramInt);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  792 */     checkInvariants();
-/*      */     
-/*  794 */     int i = wordIndex(paramInt);
-/*  795 */     if (i >= this.wordsInUse) {
-/*  796 */       return length() - 1;
-/*      */     }
-/*  798 */     long l = this.words[i] & -1L >>> -(paramInt + 1);
-/*      */     
-/*      */     while (true) {
-/*  801 */       if (l != 0L)
-/*  802 */         return (i + 1) * 64 - 1 - Long.numberOfLeadingZeros(l); 
-/*  803 */       if (i-- == 0)
-/*  804 */         return -1; 
-/*  805 */       l = this.words[i];
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int previousClearBit(int paramInt) {
-/*  823 */     if (paramInt < 0) {
-/*  824 */       if (paramInt == -1)
-/*  825 */         return -1; 
-/*  826 */       throw new IndexOutOfBoundsException("fromIndex < -1: " + paramInt);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  830 */     checkInvariants();
-/*      */     
-/*  832 */     int i = wordIndex(paramInt);
-/*  833 */     if (i >= this.wordsInUse) {
-/*  834 */       return paramInt;
-/*      */     }
-/*  836 */     long l = (this.words[i] ^ 0xFFFFFFFFFFFFFFFFL) & -1L >>> -(paramInt + 1);
-/*      */     
-/*      */     while (true) {
-/*  839 */       if (l != 0L)
-/*  840 */         return (i + 1) * 64 - 1 - Long.numberOfLeadingZeros(l); 
-/*  841 */       if (i-- == 0)
-/*  842 */         return -1; 
-/*  843 */       l = this.words[i] ^ 0xFFFFFFFFFFFFFFFFL;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int length() {
-/*  856 */     if (this.wordsInUse == 0) {
-/*  857 */       return 0;
-/*      */     }
-/*  859 */     return 64 * (this.wordsInUse - 1) + 64 - 
-/*  860 */       Long.numberOfLeadingZeros(this.words[this.wordsInUse - 1]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isEmpty() {
-/*  871 */     return (this.wordsInUse == 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean intersects(BitSet paramBitSet) {
-/*  884 */     for (int i = Math.min(this.wordsInUse, paramBitSet.wordsInUse) - 1; i >= 0; i--) {
-/*  885 */       if ((this.words[i] & paramBitSet.words[i]) != 0L)
-/*  886 */         return true; 
-/*  887 */     }  return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int cardinality() {
-/*  897 */     int i = 0;
-/*  898 */     for (byte b = 0; b < this.wordsInUse; b++)
-/*  899 */       i += Long.bitCount(this.words[b]); 
-/*  900 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void and(BitSet paramBitSet) {
-/*  913 */     if (this == paramBitSet) {
-/*      */       return;
-/*      */     }
-/*  916 */     while (this.wordsInUse > paramBitSet.wordsInUse) {
-/*  917 */       this.words[--this.wordsInUse] = 0L;
-/*      */     }
-/*      */     
-/*  920 */     for (byte b = 0; b < this.wordsInUse; b++) {
-/*  921 */       this.words[b] = this.words[b] & paramBitSet.words[b];
-/*      */     }
-/*  923 */     recalculateWordsInUse();
-/*  924 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void or(BitSet paramBitSet) {
-/*  937 */     if (this == paramBitSet) {
-/*      */       return;
-/*      */     }
-/*  940 */     int i = Math.min(this.wordsInUse, paramBitSet.wordsInUse);
-/*      */     
-/*  942 */     if (this.wordsInUse < paramBitSet.wordsInUse) {
-/*  943 */       ensureCapacity(paramBitSet.wordsInUse);
-/*  944 */       this.wordsInUse = paramBitSet.wordsInUse;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  948 */     for (byte b = 0; b < i; b++) {
-/*  949 */       this.words[b] = this.words[b] | paramBitSet.words[b];
-/*      */     }
-/*      */     
-/*  952 */     if (i < paramBitSet.wordsInUse) {
-/*  953 */       System.arraycopy(paramBitSet.words, i, this.words, i, this.wordsInUse - i);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  958 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void xor(BitSet paramBitSet) {
-/*  976 */     int i = Math.min(this.wordsInUse, paramBitSet.wordsInUse);
-/*      */     
-/*  978 */     if (this.wordsInUse < paramBitSet.wordsInUse) {
-/*  979 */       ensureCapacity(paramBitSet.wordsInUse);
-/*  980 */       this.wordsInUse = paramBitSet.wordsInUse;
-/*      */     } 
-/*      */ 
-/*      */     
-/*  984 */     for (byte b = 0; b < i; b++) {
-/*  985 */       this.words[b] = this.words[b] ^ paramBitSet.words[b];
-/*      */     }
-/*      */     
-/*  988 */     if (i < paramBitSet.wordsInUse) {
-/*  989 */       System.arraycopy(paramBitSet.words, i, this.words, i, paramBitSet.wordsInUse - i);
-/*      */     }
-/*      */ 
-/*      */     
-/*  993 */     recalculateWordsInUse();
-/*  994 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void andNot(BitSet paramBitSet) {
-/* 1007 */     for (int i = Math.min(this.wordsInUse, paramBitSet.wordsInUse) - 1; i >= 0; i--) {
-/* 1008 */       this.words[i] = this.words[i] & (paramBitSet.words[i] ^ 0xFFFFFFFFFFFFFFFFL);
-/*      */     }
-/* 1010 */     recalculateWordsInUse();
-/* 1011 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int hashCode() {
-/* 1033 */     long l = 1234L;
-/* 1034 */     for (int i = this.wordsInUse; --i >= 0;) {
-/* 1035 */       l ^= this.words[i] * (i + 1);
-/*      */     }
-/* 1037 */     return (int)(l >> 32L ^ l);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int size() {
-/* 1048 */     return this.words.length * 64;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean equals(Object paramObject) {
-/* 1066 */     if (!(paramObject instanceof BitSet))
-/* 1067 */       return false; 
-/* 1068 */     if (this == paramObject) {
-/* 1069 */       return true;
-/*      */     }
-/* 1071 */     BitSet bitSet = (BitSet)paramObject;
-/*      */     
-/* 1073 */     checkInvariants();
-/* 1074 */     bitSet.checkInvariants();
-/*      */     
-/* 1076 */     if (this.wordsInUse != bitSet.wordsInUse) {
-/* 1077 */       return false;
-/*      */     }
-/*      */     
-/* 1080 */     for (byte b = 0; b < this.wordsInUse; b++) {
-/* 1081 */       if (this.words[b] != bitSet.words[b])
-/* 1082 */         return false; 
-/*      */     } 
-/* 1084 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/* 1097 */     if (!this.sizeIsSticky) {
-/* 1098 */       trimToSize();
-/*      */     }
-/*      */     try {
-/* 1101 */       BitSet bitSet = (BitSet)super.clone();
-/* 1102 */       bitSet.words = (long[])this.words.clone();
-/* 1103 */       bitSet.checkInvariants();
-/* 1104 */       return bitSet;
-/* 1105 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/* 1106 */       throw new InternalError(cloneNotSupportedException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void trimToSize() {
-/* 1116 */     if (this.wordsInUse != this.words.length) {
-/* 1117 */       this.words = Arrays.copyOf(this.words, this.wordsInUse);
-/* 1118 */       checkInvariants();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException {
-/* 1129 */     checkInvariants();
-/*      */     
-/* 1131 */     if (!this.sizeIsSticky) {
-/* 1132 */       trimToSize();
-/*      */     }
-/* 1134 */     ObjectOutputStream.PutField putField = paramObjectOutputStream.putFields();
-/* 1135 */     putField.put("bits", this.words);
-/* 1136 */     paramObjectOutputStream.writeFields();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 1146 */     ObjectInputStream.GetField getField = paramObjectInputStream.readFields();
-/* 1147 */     this.words = (long[])getField.get("bits", (Object)null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1152 */     this.wordsInUse = this.words.length;
-/* 1153 */     recalculateWordsInUse();
-/* 1154 */     this.sizeIsSticky = (this.words.length > 0 && this.words[this.words.length - 1] == 0L);
-/* 1155 */     checkInvariants();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String toString() {
-/* 1182 */     checkInvariants();
-/*      */ 
-/*      */     
-/* 1185 */     int i = (this.wordsInUse > 128) ? cardinality() : (this.wordsInUse * 64);
-/* 1186 */     StringBuilder stringBuilder = new StringBuilder(6 * i + 2);
-/* 1187 */     stringBuilder.append('{');
-/*      */     
-/* 1189 */     int j = nextSetBit(0);
-/* 1190 */     if (j != -1) {
-/* 1191 */       stringBuilder.append(j);
-/*      */       
-/* 1193 */       label20: while (++j >= 0 && (
-/* 1194 */         j = nextSetBit(j)) >= 0) {
-/* 1195 */         int k = nextClearBit(j); while (true) {
-/* 1196 */           stringBuilder.append(", ").append(j);
-/* 1197 */           if (++j == k)
-/*      */             continue label20; 
-/*      */         } 
-/*      */       } 
-/* 1201 */     }  stringBuilder.append('}');
-/* 1202 */     return stringBuilder.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public IntStream stream() {
-/*      */     class BitSetIterator
-/*      */       implements PrimitiveIterator.OfInt
-/*      */     {
-/* 1221 */       int next = BitSet.this.nextSetBit(0);
-/*      */ 
-/*      */       
-/*      */       public boolean hasNext() {
-/* 1225 */         return (this.next != -1);
-/*      */       }
-/*      */ 
-/*      */       
-/*      */       public int nextInt() {
-/* 1230 */         if (this.next != -1) {
-/* 1231 */           int i = this.next;
-/* 1232 */           this.next = BitSet.this.nextSetBit(this.next + 1);
-/* 1233 */           return i;
-/*      */         } 
-/* 1235 */         throw new NoSuchElementException();
-/*      */       }
-/*      */     };
-/*      */ 
-/*      */     
-/* 1240 */     return StreamSupport.intStream(() -> Spliterators.spliterator(new BitSetIterator(), cardinality(), 21), 16469, false);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\BitSet.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.LongBuffer;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
+
+/**
+ * This class implements a vector of bits that grows as needed. Each
+ * component of the bit set has a {@code boolean} value. The
+ * bits of a {@code BitSet} are indexed by nonnegative integers.
+ * Individual indexed bits can be examined, set, or cleared. One
+ * {@code BitSet} may be used to modify the contents of another
+ * {@code BitSet} through logical AND, logical inclusive OR, and
+ * logical exclusive OR operations.
+ *
+ * <p>By default, all bits in the set initially have the value
+ * {@code false}.
+ *
+ * <p>Every bit set has a current size, which is the number of bits
+ * of space currently in use by the bit set. Note that the size is
+ * related to the implementation of a bit set, so it may change with
+ * implementation. The length of a bit set relates to logical length
+ * of a bit set and is defined independently of implementation.
+ *
+ * <p>Unless otherwise noted, passing a null parameter to any of the
+ * methods in a {@code BitSet} will result in a
+ * {@code NullPointerException}.
+ *
+ * <p>A {@code BitSet} is not safe for multithreaded use without
+ * external synchronization.
+ *
+ * @author  Arthur van Hoff
+ * @author  Michael McCloskey
+ * @author  Martin Buchholz
+ * @since   JDK1.0
+ */
+public class BitSet implements Cloneable, java.io.Serializable {
+    /*
+     * BitSets are packed into arrays of "words."  Currently a word is
+     * a long, which consists of 64 bits, requiring 6 address bits.
+     * The choice of word size is determined purely by performance concerns.
+     */
+    private final static int ADDRESS_BITS_PER_WORD = 6;
+    private final static int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+    private final static int BIT_INDEX_MASK = BITS_PER_WORD - 1;
+
+    /* Used to shift left or right for a partial word mask */
+    private static final long WORD_MASK = 0xffffffffffffffffL;
+
+    /**
+     * @serialField bits long[]
+     *
+     * The bits in this BitSet.  The ith bit is stored in bits[i/64] at
+     * bit position i % 64 (where bit position 0 refers to the least
+     * significant bit and 63 refers to the most significant bit).
+     */
+    private static final ObjectStreamField[] serialPersistentFields = {
+        new ObjectStreamField("bits", long[].class),
+    };
+
+    /**
+     * The internal field corresponding to the serialField "bits".
+     */
+    private long[] words;
+
+    /**
+     * The number of words in the logical size of this BitSet.
+     */
+    private transient int wordsInUse = 0;
+
+    /**
+     * Whether the size of "words" is user-specified.  If so, we assume
+     * the user knows what he's doing and try harder to preserve it.
+     */
+    private transient boolean sizeIsSticky = false;
+
+    /* use serialVersionUID from JDK 1.0.2 for interoperability */
+    private static final long serialVersionUID = 7997698588986878753L;
+
+    /**
+     * Given a bit index, return word index containing it.
+     */
+    private static int wordIndex(int bitIndex) {
+        return bitIndex >> ADDRESS_BITS_PER_WORD;
+    }
+
+    /**
+     * Every public method must preserve these invariants.
+     */
+    private void checkInvariants() {
+        assert(wordsInUse == 0 || words[wordsInUse - 1] != 0);
+        assert(wordsInUse >= 0 && wordsInUse <= words.length);
+        assert(wordsInUse == words.length || words[wordsInUse] == 0);
+    }
+
+    /**
+     * Sets the field wordsInUse to the logical size in words of the bit set.
+     * WARNING:This method assumes that the number of words actually in use is
+     * less than or equal to the current value of wordsInUse!
+     */
+    private void recalculateWordsInUse() {
+        // Traverse the bitset until a used word is found
+        int i;
+        for (i = wordsInUse-1; i >= 0; i--)
+            if (words[i] != 0)
+                break;
+
+        wordsInUse = i+1; // The new logical size
+    }
+
+    /**
+     * Creates a new bit set. All bits are initially {@code false}.
+     */
+    public BitSet() {
+        initWords(BITS_PER_WORD);
+        sizeIsSticky = false;
+    }
+
+    /**
+     * Creates a bit set whose initial size is large enough to explicitly
+     * represent bits with indices in the range {@code 0} through
+     * {@code nbits-1}. All bits are initially {@code false}.
+     *
+     * @param  nbits the initial size of the bit set
+     * @throws NegativeArraySizeException if the specified initial size
+     *         is negative
+     */
+    public BitSet(int nbits) {
+        // nbits can't be negative; size 0 is OK
+        if (nbits < 0)
+            throw new NegativeArraySizeException("nbits < 0: " + nbits);
+
+        initWords(nbits);
+        sizeIsSticky = true;
+    }
+
+    private void initWords(int nbits) {
+        words = new long[wordIndex(nbits-1) + 1];
+    }
+
+    /**
+     * Creates a bit set using words as the internal representation.
+     * The last word (if there is one) must be non-zero.
+     */
+    private BitSet(long[] words) {
+        this.words = words;
+        this.wordsInUse = words.length;
+        checkInvariants();
+    }
+
+    /**
+     * Returns a new bit set containing all the bits in the given long array.
+     *
+     * <p>More precisely,
+     * <br>{@code BitSet.valueOf(longs).get(n) == ((longs[n/64] & (1L<<(n%64))) != 0)}
+     * <br>for all {@code n < 64 * longs.length}.
+     *
+     * <p>This method is equivalent to
+     * {@code BitSet.valueOf(LongBuffer.wrap(longs))}.
+     *
+     * @param longs a long array containing a little-endian representation
+     *        of a sequence of bits to be used as the initial bits of the
+     *        new bit set
+     * @return a {@code BitSet} containing all the bits in the long array
+     * @since 1.7
+     */
+    public static BitSet valueOf(long[] longs) {
+        int n;
+        for (n = longs.length; n > 0 && longs[n - 1] == 0; n--)
+            ;
+        return new BitSet(Arrays.copyOf(longs, n));
+    }
+
+    /**
+     * Returns a new bit set containing all the bits in the given long
+     * buffer between its position and limit.
+     *
+     * <p>More precisely,
+     * <br>{@code BitSet.valueOf(lb).get(n) == ((lb.get(lb.position()+n/64) & (1L<<(n%64))) != 0)}
+     * <br>for all {@code n < 64 * lb.remaining()}.
+     *
+     * <p>The long buffer is not modified by this method, and no
+     * reference to the buffer is retained by the bit set.
+     *
+     * @param lb a long buffer containing a little-endian representation
+     *        of a sequence of bits between its position and limit, to be
+     *        used as the initial bits of the new bit set
+     * @return a {@code BitSet} containing all the bits in the buffer in the
+     *         specified range
+     * @since 1.7
+     */
+    public static BitSet valueOf(LongBuffer lb) {
+        lb = lb.slice();
+        int n;
+        for (n = lb.remaining(); n > 0 && lb.get(n - 1) == 0; n--)
+            ;
+        long[] words = new long[n];
+        lb.get(words);
+        return new BitSet(words);
+    }
+
+    /**
+     * Returns a new bit set containing all the bits in the given byte array.
+     *
+     * <p>More precisely,
+     * <br>{@code BitSet.valueOf(bytes).get(n) == ((bytes[n/8] & (1<<(n%8))) != 0)}
+     * <br>for all {@code n <  8 * bytes.length}.
+     *
+     * <p>This method is equivalent to
+     * {@code BitSet.valueOf(ByteBuffer.wrap(bytes))}.
+     *
+     * @param bytes a byte array containing a little-endian
+     *        representation of a sequence of bits to be used as the
+     *        initial bits of the new bit set
+     * @return a {@code BitSet} containing all the bits in the byte array
+     * @since 1.7
+     */
+    public static BitSet valueOf(byte[] bytes) {
+        return BitSet.valueOf(ByteBuffer.wrap(bytes));
+    }
+
+    /**
+     * Returns a new bit set containing all the bits in the given byte
+     * buffer between its position and limit.
+     *
+     * <p>More precisely,
+     * <br>{@code BitSet.valueOf(bb).get(n) == ((bb.get(bb.position()+n/8) & (1<<(n%8))) != 0)}
+     * <br>for all {@code n < 8 * bb.remaining()}.
+     *
+     * <p>The byte buffer is not modified by this method, and no
+     * reference to the buffer is retained by the bit set.
+     *
+     * @param bb a byte buffer containing a little-endian representation
+     *        of a sequence of bits between its position and limit, to be
+     *        used as the initial bits of the new bit set
+     * @return a {@code BitSet} containing all the bits in the buffer in the
+     *         specified range
+     * @since 1.7
+     */
+    public static BitSet valueOf(ByteBuffer bb) {
+        bb = bb.slice().order(ByteOrder.LITTLE_ENDIAN);
+        int n;
+        for (n = bb.remaining(); n > 0 && bb.get(n - 1) == 0; n--)
+            ;
+        long[] words = new long[(n + 7) / 8];
+        bb.limit(n);
+        int i = 0;
+        while (bb.remaining() >= 8)
+            words[i++] = bb.getLong();
+        for (int remaining = bb.remaining(), j = 0; j < remaining; j++)
+            words[i] |= (bb.get() & 0xffL) << (8 * j);
+        return new BitSet(words);
+    }
+
+    /**
+     * Returns a new byte array containing all the bits in this bit set.
+     *
+     * <p>More precisely, if
+     * <br>{@code byte[] bytes = s.toByteArray();}
+     * <br>then {@code bytes.length == (s.length()+7)/8} and
+     * <br>{@code s.get(n) == ((bytes[n/8] & (1<<(n%8))) != 0)}
+     * <br>for all {@code n < 8 * bytes.length}.
+     *
+     * @return a byte array containing a little-endian representation
+     *         of all the bits in this bit set
+     * @since 1.7
+    */
+    public byte[] toByteArray() {
+        int n = wordsInUse;
+        if (n == 0)
+            return new byte[0];
+        int len = 8 * (n-1);
+        for (long x = words[n - 1]; x != 0; x >>>= 8)
+            len++;
+        byte[] bytes = new byte[len];
+        ByteBuffer bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        for (int i = 0; i < n - 1; i++)
+            bb.putLong(words[i]);
+        for (long x = words[n - 1]; x != 0; x >>>= 8)
+            bb.put((byte) (x & 0xff));
+        return bytes;
+    }
+
+    /**
+     * Returns a new long array containing all the bits in this bit set.
+     *
+     * <p>More precisely, if
+     * <br>{@code long[] longs = s.toLongArray();}
+     * <br>then {@code longs.length == (s.length()+63)/64} and
+     * <br>{@code s.get(n) == ((longs[n/64] & (1L<<(n%64))) != 0)}
+     * <br>for all {@code n < 64 * longs.length}.
+     *
+     * @return a long array containing a little-endian representation
+     *         of all the bits in this bit set
+     * @since 1.7
+    */
+    public long[] toLongArray() {
+        return Arrays.copyOf(words, wordsInUse);
+    }
+
+    /**
+     * Ensures that the BitSet can hold enough words.
+     * @param wordsRequired the minimum acceptable number of words.
+     */
+    private void ensureCapacity(int wordsRequired) {
+        if (words.length < wordsRequired) {
+            // Allocate larger of doubled size or required size
+            int request = Math.max(2 * words.length, wordsRequired);
+            words = Arrays.copyOf(words, request);
+            sizeIsSticky = false;
+        }
+    }
+
+    /**
+     * Ensures that the BitSet can accommodate a given wordIndex,
+     * temporarily violating the invariants.  The caller must
+     * restore the invariants before returning to the user,
+     * possibly using recalculateWordsInUse().
+     * @param wordIndex the index to be accommodated.
+     */
+    private void expandTo(int wordIndex) {
+        int wordsRequired = wordIndex+1;
+        if (wordsInUse < wordsRequired) {
+            ensureCapacity(wordsRequired);
+            wordsInUse = wordsRequired;
+        }
+    }
+
+    /**
+     * Checks that fromIndex ... toIndex is a valid range of bit indices.
+     */
+    private static void checkRange(int fromIndex, int toIndex) {
+        if (fromIndex < 0)
+            throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+        if (toIndex < 0)
+            throw new IndexOutOfBoundsException("toIndex < 0: " + toIndex);
+        if (fromIndex > toIndex)
+            throw new IndexOutOfBoundsException("fromIndex: " + fromIndex +
+                                                " > toIndex: " + toIndex);
+    }
+
+    /**
+     * Sets the bit at the specified index to the complement of its
+     * current value.
+     *
+     * @param  bitIndex the index of the bit to flip
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @since  1.4
+     */
+    public void flip(int bitIndex) {
+        if (bitIndex < 0)
+            throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
+
+        int wordIndex = wordIndex(bitIndex);
+        expandTo(wordIndex);
+
+        words[wordIndex] ^= (1L << bitIndex);
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Sets each bit from the specified {@code fromIndex} (inclusive) to the
+     * specified {@code toIndex} (exclusive) to the complement of its current
+     * value.
+     *
+     * @param  fromIndex index of the first bit to flip
+     * @param  toIndex index after the last bit to flip
+     * @throws IndexOutOfBoundsException if {@code fromIndex} is negative,
+     *         or {@code toIndex} is negative, or {@code fromIndex} is
+     *         larger than {@code toIndex}
+     * @since  1.4
+     */
+    public void flip(int fromIndex, int toIndex) {
+        checkRange(fromIndex, toIndex);
+
+        if (fromIndex == toIndex)
+            return;
+
+        int startWordIndex = wordIndex(fromIndex);
+        int endWordIndex   = wordIndex(toIndex - 1);
+        expandTo(endWordIndex);
+
+        long firstWordMask = WORD_MASK << fromIndex;
+        long lastWordMask  = WORD_MASK >>> -toIndex;
+        if (startWordIndex == endWordIndex) {
+            // Case 1: One word
+            words[startWordIndex] ^= (firstWordMask & lastWordMask);
+        } else {
+            // Case 2: Multiple words
+            // Handle first word
+            words[startWordIndex] ^= firstWordMask;
+
+            // Handle intermediate words, if any
+            for (int i = startWordIndex+1; i < endWordIndex; i++)
+                words[i] ^= WORD_MASK;
+
+            // Handle last word
+            words[endWordIndex] ^= lastWordMask;
+        }
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Sets the bit at the specified index to {@code true}.
+     *
+     * @param  bitIndex a bit index
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @since  JDK1.0
+     */
+    public void set(int bitIndex) {
+        if (bitIndex < 0)
+            throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
+
+        int wordIndex = wordIndex(bitIndex);
+        expandTo(wordIndex);
+
+        words[wordIndex] |= (1L << bitIndex); // Restores invariants
+
+        checkInvariants();
+    }
+
+    /**
+     * Sets the bit at the specified index to the specified value.
+     *
+     * @param  bitIndex a bit index
+     * @param  value a boolean value to set
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @since  1.4
+     */
+    public void set(int bitIndex, boolean value) {
+        if (value)
+            set(bitIndex);
+        else
+            clear(bitIndex);
+    }
+
+    /**
+     * Sets the bits from the specified {@code fromIndex} (inclusive) to the
+     * specified {@code toIndex} (exclusive) to {@code true}.
+     *
+     * @param  fromIndex index of the first bit to be set
+     * @param  toIndex index after the last bit to be set
+     * @throws IndexOutOfBoundsException if {@code fromIndex} is negative,
+     *         or {@code toIndex} is negative, or {@code fromIndex} is
+     *         larger than {@code toIndex}
+     * @since  1.4
+     */
+    public void set(int fromIndex, int toIndex) {
+        checkRange(fromIndex, toIndex);
+
+        if (fromIndex == toIndex)
+            return;
+
+        // Increase capacity if necessary
+        int startWordIndex = wordIndex(fromIndex);
+        int endWordIndex   = wordIndex(toIndex - 1);
+        expandTo(endWordIndex);
+
+        long firstWordMask = WORD_MASK << fromIndex;
+        long lastWordMask  = WORD_MASK >>> -toIndex;
+        if (startWordIndex == endWordIndex) {
+            // Case 1: One word
+            words[startWordIndex] |= (firstWordMask & lastWordMask);
+        } else {
+            // Case 2: Multiple words
+            // Handle first word
+            words[startWordIndex] |= firstWordMask;
+
+            // Handle intermediate words, if any
+            for (int i = startWordIndex+1; i < endWordIndex; i++)
+                words[i] = WORD_MASK;
+
+            // Handle last word (restores invariants)
+            words[endWordIndex] |= lastWordMask;
+        }
+
+        checkInvariants();
+    }
+
+    /**
+     * Sets the bits from the specified {@code fromIndex} (inclusive) to the
+     * specified {@code toIndex} (exclusive) to the specified value.
+     *
+     * @param  fromIndex index of the first bit to be set
+     * @param  toIndex index after the last bit to be set
+     * @param  value value to set the selected bits to
+     * @throws IndexOutOfBoundsException if {@code fromIndex} is negative,
+     *         or {@code toIndex} is negative, or {@code fromIndex} is
+     *         larger than {@code toIndex}
+     * @since  1.4
+     */
+    public void set(int fromIndex, int toIndex, boolean value) {
+        if (value)
+            set(fromIndex, toIndex);
+        else
+            clear(fromIndex, toIndex);
+    }
+
+    /**
+     * Sets the bit specified by the index to {@code false}.
+     *
+     * @param  bitIndex the index of the bit to be cleared
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @since  JDK1.0
+     */
+    public void clear(int bitIndex) {
+        if (bitIndex < 0)
+            throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
+
+        int wordIndex = wordIndex(bitIndex);
+        if (wordIndex >= wordsInUse)
+            return;
+
+        words[wordIndex] &= ~(1L << bitIndex);
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Sets the bits from the specified {@code fromIndex} (inclusive) to the
+     * specified {@code toIndex} (exclusive) to {@code false}.
+     *
+     * @param  fromIndex index of the first bit to be cleared
+     * @param  toIndex index after the last bit to be cleared
+     * @throws IndexOutOfBoundsException if {@code fromIndex} is negative,
+     *         or {@code toIndex} is negative, or {@code fromIndex} is
+     *         larger than {@code toIndex}
+     * @since  1.4
+     */
+    public void clear(int fromIndex, int toIndex) {
+        checkRange(fromIndex, toIndex);
+
+        if (fromIndex == toIndex)
+            return;
+
+        int startWordIndex = wordIndex(fromIndex);
+        if (startWordIndex >= wordsInUse)
+            return;
+
+        int endWordIndex = wordIndex(toIndex - 1);
+        if (endWordIndex >= wordsInUse) {
+            toIndex = length();
+            endWordIndex = wordsInUse - 1;
+        }
+
+        long firstWordMask = WORD_MASK << fromIndex;
+        long lastWordMask  = WORD_MASK >>> -toIndex;
+        if (startWordIndex == endWordIndex) {
+            // Case 1: One word
+            words[startWordIndex] &= ~(firstWordMask & lastWordMask);
+        } else {
+            // Case 2: Multiple words
+            // Handle first word
+            words[startWordIndex] &= ~firstWordMask;
+
+            // Handle intermediate words, if any
+            for (int i = startWordIndex+1; i < endWordIndex; i++)
+                words[i] = 0;
+
+            // Handle last word
+            words[endWordIndex] &= ~lastWordMask;
+        }
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Sets all of the bits in this BitSet to {@code false}.
+     *
+     * @since 1.4
+     */
+    public void clear() {
+        while (wordsInUse > 0)
+            words[--wordsInUse] = 0;
+    }
+
+    /**
+     * Returns the value of the bit with the specified index. The value
+     * is {@code true} if the bit with the index {@code bitIndex}
+     * is currently set in this {@code BitSet}; otherwise, the result
+     * is {@code false}.
+     *
+     * @param  bitIndex   the bit index
+     * @return the value of the bit with the specified index
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     */
+    public boolean get(int bitIndex) {
+        if (bitIndex < 0)
+            throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
+
+        checkInvariants();
+
+        int wordIndex = wordIndex(bitIndex);
+        return (wordIndex < wordsInUse)
+            && ((words[wordIndex] & (1L << bitIndex)) != 0);
+    }
+
+    /**
+     * Returns a new {@code BitSet} composed of bits from this {@code BitSet}
+     * from {@code fromIndex} (inclusive) to {@code toIndex} (exclusive).
+     *
+     * @param  fromIndex index of the first bit to include
+     * @param  toIndex index after the last bit to include
+     * @return a new {@code BitSet} from a range of this {@code BitSet}
+     * @throws IndexOutOfBoundsException if {@code fromIndex} is negative,
+     *         or {@code toIndex} is negative, or {@code fromIndex} is
+     *         larger than {@code toIndex}
+     * @since  1.4
+     */
+    public BitSet get(int fromIndex, int toIndex) {
+        checkRange(fromIndex, toIndex);
+
+        checkInvariants();
+
+        int len = length();
+
+        // If no set bits in range return empty bitset
+        if (len <= fromIndex || fromIndex == toIndex)
+            return new BitSet(0);
+
+        // An optimization
+        if (toIndex > len)
+            toIndex = len;
+
+        BitSet result = new BitSet(toIndex - fromIndex);
+        int targetWords = wordIndex(toIndex - fromIndex - 1) + 1;
+        int sourceIndex = wordIndex(fromIndex);
+        boolean wordAligned = ((fromIndex & BIT_INDEX_MASK) == 0);
+
+        // Process all words but the last word
+        for (int i = 0; i < targetWords - 1; i++, sourceIndex++)
+            result.words[i] = wordAligned ? words[sourceIndex] :
+                (words[sourceIndex] >>> fromIndex) |
+                (words[sourceIndex+1] << -fromIndex);
+
+        // Process the last word
+        long lastWordMask = WORD_MASK >>> -toIndex;
+        result.words[targetWords - 1] =
+            ((toIndex-1) & BIT_INDEX_MASK) < (fromIndex & BIT_INDEX_MASK)
+            ? /* straddles source words */
+            ((words[sourceIndex] >>> fromIndex) |
+             (words[sourceIndex+1] & lastWordMask) << -fromIndex)
+            :
+            ((words[sourceIndex] & lastWordMask) >>> fromIndex);
+
+        // Set wordsInUse correctly
+        result.wordsInUse = targetWords;
+        result.recalculateWordsInUse();
+        result.checkInvariants();
+
+        return result;
+    }
+
+    /**
+     * Returns the index of the first bit that is set to {@code true}
+     * that occurs on or after the specified starting index. If no such
+     * bit exists then {@code -1} is returned.
+     *
+     * <p>To iterate over the {@code true} bits in a {@code BitSet},
+     * use the following loop:
+     *
+     *  <pre> {@code
+     * for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
+     *     // operate on index i here
+     *     if (i == Integer.MAX_VALUE) {
+     *         break; // or (i+1) would overflow
+     *     }
+     * }}</pre>
+     *
+     * @param  fromIndex the index to start checking from (inclusive)
+     * @return the index of the next set bit, or {@code -1} if there
+     *         is no such bit
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @since  1.4
+     */
+    public int nextSetBit(int fromIndex) {
+        if (fromIndex < 0)
+            throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+
+        checkInvariants();
+
+        int u = wordIndex(fromIndex);
+        if (u >= wordsInUse)
+            return -1;
+
+        long word = words[u] & (WORD_MASK << fromIndex);
+
+        while (true) {
+            if (word != 0)
+                return (u * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
+            if (++u == wordsInUse)
+                return -1;
+            word = words[u];
+        }
+    }
+
+    /**
+     * Returns the index of the first bit that is set to {@code false}
+     * that occurs on or after the specified starting index.
+     *
+     * @param  fromIndex the index to start checking from (inclusive)
+     * @return the index of the next clear bit
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @since  1.4
+     */
+    public int nextClearBit(int fromIndex) {
+        // Neither spec nor implementation handle bitsets of maximal length.
+        // See 4816253.
+        if (fromIndex < 0)
+            throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
+
+        checkInvariants();
+
+        int u = wordIndex(fromIndex);
+        if (u >= wordsInUse)
+            return fromIndex;
+
+        long word = ~words[u] & (WORD_MASK << fromIndex);
+
+        while (true) {
+            if (word != 0)
+                return (u * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
+            if (++u == wordsInUse)
+                return wordsInUse * BITS_PER_WORD;
+            word = ~words[u];
+        }
+    }
+
+    /**
+     * Returns the index of the nearest bit that is set to {@code true}
+     * that occurs on or before the specified starting index.
+     * If no such bit exists, or if {@code -1} is given as the
+     * starting index, then {@code -1} is returned.
+     *
+     * <p>To iterate over the {@code true} bits in a {@code BitSet},
+     * use the following loop:
+     *
+     *  <pre> {@code
+     * for (int i = bs.length(); (i = bs.previousSetBit(i-1)) >= 0; ) {
+     *     // operate on index i here
+     * }}</pre>
+     *
+     * @param  fromIndex the index to start checking from (inclusive)
+     * @return the index of the previous set bit, or {@code -1} if there
+     *         is no such bit
+     * @throws IndexOutOfBoundsException if the specified index is less
+     *         than {@code -1}
+     * @since  1.7
+     */
+    public int previousSetBit(int fromIndex) {
+        if (fromIndex < 0) {
+            if (fromIndex == -1)
+                return -1;
+            throw new IndexOutOfBoundsException(
+                "fromIndex < -1: " + fromIndex);
+        }
+
+        checkInvariants();
+
+        int u = wordIndex(fromIndex);
+        if (u >= wordsInUse)
+            return length() - 1;
+
+        long word = words[u] & (WORD_MASK >>> -(fromIndex+1));
+
+        while (true) {
+            if (word != 0)
+                return (u+1) * BITS_PER_WORD - 1 - Long.numberOfLeadingZeros(word);
+            if (u-- == 0)
+                return -1;
+            word = words[u];
+        }
+    }
+
+    /**
+     * Returns the index of the nearest bit that is set to {@code false}
+     * that occurs on or before the specified starting index.
+     * If no such bit exists, or if {@code -1} is given as the
+     * starting index, then {@code -1} is returned.
+     *
+     * @param  fromIndex the index to start checking from (inclusive)
+     * @return the index of the previous clear bit, or {@code -1} if there
+     *         is no such bit
+     * @throws IndexOutOfBoundsException if the specified index is less
+     *         than {@code -1}
+     * @since  1.7
+     */
+    public int previousClearBit(int fromIndex) {
+        if (fromIndex < 0) {
+            if (fromIndex == -1)
+                return -1;
+            throw new IndexOutOfBoundsException(
+                "fromIndex < -1: " + fromIndex);
+        }
+
+        checkInvariants();
+
+        int u = wordIndex(fromIndex);
+        if (u >= wordsInUse)
+            return fromIndex;
+
+        long word = ~words[u] & (WORD_MASK >>> -(fromIndex+1));
+
+        while (true) {
+            if (word != 0)
+                return (u+1) * BITS_PER_WORD -1 - Long.numberOfLeadingZeros(word);
+            if (u-- == 0)
+                return -1;
+            word = ~words[u];
+        }
+    }
+
+    /**
+     * Returns the "logical size" of this {@code BitSet}: the index of
+     * the highest set bit in the {@code BitSet} plus one. Returns zero
+     * if the {@code BitSet} contains no set bits.
+     *
+     * @return the logical size of this {@code BitSet}
+     * @since  1.2
+     */
+    public int length() {
+        if (wordsInUse == 0)
+            return 0;
+
+        return BITS_PER_WORD * (wordsInUse - 1) +
+            (BITS_PER_WORD - Long.numberOfLeadingZeros(words[wordsInUse - 1]));
+    }
+
+    /**
+     * Returns true if this {@code BitSet} contains no bits that are set
+     * to {@code true}.
+     *
+     * @return boolean indicating whether this {@code BitSet} is empty
+     * @since  1.4
+     */
+    public boolean isEmpty() {
+        return wordsInUse == 0;
+    }
+
+    /**
+     * Returns true if the specified {@code BitSet} has any bits set to
+     * {@code true} that are also set to {@code true} in this {@code BitSet}.
+     *
+     * @param  set {@code BitSet} to intersect with
+     * @return boolean indicating whether this {@code BitSet} intersects
+     *         the specified {@code BitSet}
+     * @since  1.4
+     */
+    public boolean intersects(BitSet set) {
+        for (int i = Math.min(wordsInUse, set.wordsInUse) - 1; i >= 0; i--)
+            if ((words[i] & set.words[i]) != 0)
+                return true;
+        return false;
+    }
+
+    /**
+     * Returns the number of bits set to {@code true} in this {@code BitSet}.
+     *
+     * @return the number of bits set to {@code true} in this {@code BitSet}
+     * @since  1.4
+     */
+    public int cardinality() {
+        int sum = 0;
+        for (int i = 0; i < wordsInUse; i++)
+            sum += Long.bitCount(words[i]);
+        return sum;
+    }
+
+    /**
+     * Performs a logical <b>AND</b> of this target bit set with the
+     * argument bit set. This bit set is modified so that each bit in it
+     * has the value {@code true} if and only if it both initially
+     * had the value {@code true} and the corresponding bit in the
+     * bit set argument also had the value {@code true}.
+     *
+     * @param set a bit set
+     */
+    public void and(BitSet set) {
+        if (this == set)
+            return;
+
+        while (wordsInUse > set.wordsInUse)
+            words[--wordsInUse] = 0;
+
+        // Perform logical AND on words in common
+        for (int i = 0; i < wordsInUse; i++)
+            words[i] &= set.words[i];
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Performs a logical <b>OR</b> of this bit set with the bit set
+     * argument. This bit set is modified so that a bit in it has the
+     * value {@code true} if and only if it either already had the
+     * value {@code true} or the corresponding bit in the bit set
+     * argument has the value {@code true}.
+     *
+     * @param set a bit set
+     */
+    public void or(BitSet set) {
+        if (this == set)
+            return;
+
+        int wordsInCommon = Math.min(wordsInUse, set.wordsInUse);
+
+        if (wordsInUse < set.wordsInUse) {
+            ensureCapacity(set.wordsInUse);
+            wordsInUse = set.wordsInUse;
+        }
+
+        // Perform logical OR on words in common
+        for (int i = 0; i < wordsInCommon; i++)
+            words[i] |= set.words[i];
+
+        // Copy any remaining words
+        if (wordsInCommon < set.wordsInUse)
+            System.arraycopy(set.words, wordsInCommon,
+                             words, wordsInCommon,
+                             wordsInUse - wordsInCommon);
+
+        // recalculateWordsInUse() is unnecessary
+        checkInvariants();
+    }
+
+    /**
+     * Performs a logical <b>XOR</b> of this bit set with the bit set
+     * argument. This bit set is modified so that a bit in it has the
+     * value {@code true} if and only if one of the following
+     * statements holds:
+     * <ul>
+     * <li>The bit initially has the value {@code true}, and the
+     *     corresponding bit in the argument has the value {@code false}.
+     * <li>The bit initially has the value {@code false}, and the
+     *     corresponding bit in the argument has the value {@code true}.
+     * </ul>
+     *
+     * @param  set a bit set
+     */
+    public void xor(BitSet set) {
+        int wordsInCommon = Math.min(wordsInUse, set.wordsInUse);
+
+        if (wordsInUse < set.wordsInUse) {
+            ensureCapacity(set.wordsInUse);
+            wordsInUse = set.wordsInUse;
+        }
+
+        // Perform logical XOR on words in common
+        for (int i = 0; i < wordsInCommon; i++)
+            words[i] ^= set.words[i];
+
+        // Copy any remaining words
+        if (wordsInCommon < set.wordsInUse)
+            System.arraycopy(set.words, wordsInCommon,
+                             words, wordsInCommon,
+                             set.wordsInUse - wordsInCommon);
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Clears all of the bits in this {@code BitSet} whose corresponding
+     * bit is set in the specified {@code BitSet}.
+     *
+     * @param  set the {@code BitSet} with which to mask this
+     *         {@code BitSet}
+     * @since  1.2
+     */
+    public void andNot(BitSet set) {
+        // Perform logical (a & !b) on words in common
+        for (int i = Math.min(wordsInUse, set.wordsInUse) - 1; i >= 0; i--)
+            words[i] &= ~set.words[i];
+
+        recalculateWordsInUse();
+        checkInvariants();
+    }
+
+    /**
+     * Returns the hash code value for this bit set. The hash code depends
+     * only on which bits are set within this {@code BitSet}.
+     *
+     * <p>The hash code is defined to be the result of the following
+     * calculation:
+     *  <pre> {@code
+     * public int hashCode() {
+     *     long h = 1234;
+     *     long[] words = toLongArray();
+     *     for (int i = words.length; --i >= 0; )
+     *         h ^= words[i] * (i + 1);
+     *     return (int)((h >> 32) ^ h);
+     * }}</pre>
+     * Note that the hash code changes if the set of bits is altered.
+     *
+     * @return the hash code value for this bit set
+     */
+    public int hashCode() {
+        long h = 1234;
+        for (int i = wordsInUse; --i >= 0; )
+            h ^= words[i] * (i + 1);
+
+        return (int)((h >> 32) ^ h);
+    }
+
+    /**
+     * Returns the number of bits of space actually in use by this
+     * {@code BitSet} to represent bit values.
+     * The maximum element in the set is the size - 1st element.
+     *
+     * @return the number of bits currently in this bit set
+     */
+    public int size() {
+        return words.length * BITS_PER_WORD;
+    }
+
+    /**
+     * Compares this object against the specified object.
+     * The result is {@code true} if and only if the argument is
+     * not {@code null} and is a {@code Bitset} object that has
+     * exactly the same set of bits set to {@code true} as this bit
+     * set. That is, for every nonnegative {@code int} index {@code k},
+     * <pre>((BitSet)obj).get(k) == this.get(k)</pre>
+     * must be true. The current sizes of the two bit sets are not compared.
+     *
+     * @param  obj the object to compare with
+     * @return {@code true} if the objects are the same;
+     *         {@code false} otherwise
+     * @see    #size()
+     */
+    public boolean equals(Object obj) {
+        if (!(obj instanceof BitSet))
+            return false;
+        if (this == obj)
+            return true;
+
+        BitSet set = (BitSet) obj;
+
+        checkInvariants();
+        set.checkInvariants();
+
+        if (wordsInUse != set.wordsInUse)
+            return false;
+
+        // Check words in use by both BitSets
+        for (int i = 0; i < wordsInUse; i++)
+            if (words[i] != set.words[i])
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Cloning this {@code BitSet} produces a new {@code BitSet}
+     * that is equal to it.
+     * The clone of the bit set is another bit set that has exactly the
+     * same bits set to {@code true} as this bit set.
+     *
+     * @return a clone of this bit set
+     * @see    #size()
+     */
+    public Object clone() {
+        if (! sizeIsSticky)
+            trimToSize();
+
+        try {
+            BitSet result = (BitSet) super.clone();
+            result.words = words.clone();
+            result.checkInvariants();
+            return result;
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
+    }
+
+    /**
+     * Attempts to reduce internal storage used for the bits in this bit set.
+     * Calling this method may, but is not required to, affect the value
+     * returned by a subsequent call to the {@link #size()} method.
+     */
+    private void trimToSize() {
+        if (wordsInUse != words.length) {
+            words = Arrays.copyOf(words, wordsInUse);
+            checkInvariants();
+        }
+    }
+
+    /**
+     * Save the state of the {@code BitSet} instance to a stream (i.e.,
+     * serialize it).
+     */
+    private void writeObject(ObjectOutputStream s)
+        throws IOException {
+
+        checkInvariants();
+
+        if (! sizeIsSticky)
+            trimToSize();
+
+        ObjectOutputStream.PutField fields = s.putFields();
+        fields.put("bits", words);
+        s.writeFields();
+    }
+
+    /**
+     * Reconstitute the {@code BitSet} instance from a stream (i.e.,
+     * deserialize it).
+     */
+    private void readObject(ObjectInputStream s)
+        throws IOException, ClassNotFoundException {
+
+        ObjectInputStream.GetField fields = s.readFields();
+        words = (long[]) fields.get("bits", null);
+
+        // Assume maximum length then find real length
+        // because recalculateWordsInUse assumes maintenance
+        // or reduction in logical size
+        wordsInUse = words.length;
+        recalculateWordsInUse();
+        sizeIsSticky = (words.length > 0 && words[words.length-1] == 0L); // heuristic
+        checkInvariants();
+    }
+
+    /**
+     * Returns a string representation of this bit set. For every index
+     * for which this {@code BitSet} contains a bit in the set
+     * state, the decimal representation of that index is included in
+     * the result. Such indices are listed in order from lowest to
+     * highest, separated by ",&nbsp;" (a comma and a space) and
+     * surrounded by braces, resulting in the usual mathematical
+     * notation for a set of integers.
+     *
+     * <p>Example:
+     * <pre>
+     * BitSet drPepper = new BitSet();</pre>
+     * Now {@code drPepper.toString()} returns "{@code {}}".
+     * <pre>
+     * drPepper.set(2);</pre>
+     * Now {@code drPepper.toString()} returns "{@code {2}}".
+     * <pre>
+     * drPepper.set(4);
+     * drPepper.set(10);</pre>
+     * Now {@code drPepper.toString()} returns "{@code {2, 4, 10}}".
+     *
+     * @return a string representation of this bit set
+     */
+    public String toString() {
+        checkInvariants();
+
+        int numBits = (wordsInUse > 128) ?
+            cardinality() : wordsInUse * BITS_PER_WORD;
+        StringBuilder b = new StringBuilder(6*numBits + 2);
+        b.append('{');
+
+        int i = nextSetBit(0);
+        if (i != -1) {
+            b.append(i);
+            while (true) {
+                if (++i < 0) break;
+                if ((i = nextSetBit(i)) < 0) break;
+                int endOfRun = nextClearBit(i);
+                do { b.append(", ").append(i); }
+                while (++i != endOfRun);
+            }
+        }
+
+        b.append('}');
+        return b.toString();
+    }
+
+    /**
+     * Returns a stream of indices for which this {@code BitSet}
+     * contains a bit in the set state. The indices are returned
+     * in order, from lowest to highest. The size of the stream
+     * is the number of bits in the set state, equal to the value
+     * returned by the {@link #cardinality()} method.
+     *
+     * <p>The bit set must remain constant during the execution of the
+     * terminal stream operation.  Otherwise, the result of the terminal
+     * stream operation is undefined.
+     *
+     * @return a stream of integers representing set indices
+     * @since 1.8
+     */
+    public IntStream stream() {
+        class BitSetIterator implements PrimitiveIterator.OfInt {
+            int next = nextSetBit(0);
+
+            @Override
+            public boolean hasNext() {
+                return next != -1;
+            }
+
+            @Override
+            public int nextInt() {
+                if (next != -1) {
+                    int ret = next;
+                    next = nextSetBit(next+1);
+                    return ret;
+                } else {
+                    throw new NoSuchElementException();
+                }
+            }
+        }
+
+        return StreamSupport.intStream(
+                () -> Spliterators.spliterator(
+                        new BitSetIterator(), cardinality(),
+                        Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.SORTED),
+                Spliterator.SIZED | Spliterator.SUBSIZED |
+                        Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.SORTED,
+                false);
+    }
+}

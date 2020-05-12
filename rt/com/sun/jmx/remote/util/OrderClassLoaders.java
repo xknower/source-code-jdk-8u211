@@ -1,54 +1,51 @@
-/*    */ package com.sun.jmx.remote.util;
-/*    */ 
-/*    */ import sun.reflect.misc.ReflectUtil;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class OrderClassLoaders
-/*    */   extends ClassLoader
-/*    */ {
-/*    */   private ClassLoader cl2;
-/*    */   
-/*    */   public OrderClassLoaders(ClassLoader paramClassLoader1, ClassLoader paramClassLoader2) {
-/* 32 */     super(paramClassLoader1);
-/*    */     
-/* 34 */     this.cl2 = paramClassLoader2;
-/*    */   }
-/*    */   
-/*    */   protected Class<?> loadClass(String paramString, boolean paramBoolean) throws ClassNotFoundException {
-/* 38 */     ReflectUtil.checkPackageAccess(paramString);
-/*    */     try {
-/* 40 */       return super.loadClass(paramString, paramBoolean);
-/* 41 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 42 */       if (this.cl2 != null) {
-/* 43 */         return this.cl2.loadClass(paramString);
-/*    */       }
-/* 45 */       throw classNotFoundException;
-/*    */     } 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remot\\util\OrderClassLoaders.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.util;
+
+import sun.reflect.misc.ReflectUtil;
+
+public class OrderClassLoaders extends ClassLoader {
+    public OrderClassLoaders(ClassLoader cl1, ClassLoader cl2) {
+        super(cl1);
+
+        this.cl2 = cl2;
+    }
+
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        ReflectUtil.checkPackageAccess(name);
+        try {
+            return super.loadClass(name, resolve);
+        } catch (ClassNotFoundException cne) {
+            if (cl2 != null) {
+                return cl2.loadClass(name);
+            } else {
+                throw cne;
+            }
+        }
+    }
+
+    private ClassLoader cl2;
+}

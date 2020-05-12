@@ -1,13 +1,43 @@
+/*
+ * Copyright (c) 1996, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package java.awt.event;
 
 import java.util.EventListener;
 
-public interface AdjustmentListener extends EventListener {
-  void adjustmentValueChanged(AdjustmentEvent paramAdjustmentEvent);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\event\AdjustmentListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * The listener interface for receiving adjustment events.
+ *
+ * @author Amy Fowler
+ * @since 1.1
  */
+public interface AdjustmentListener extends EventListener {
+
+    /**
+     * Invoked when the value of the adjustable has changed.
+     */
+    public void adjustmentValueChanged(AdjustmentEvent e);
+
+}

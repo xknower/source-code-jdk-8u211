@@ -1,172 +1,166 @@
-/*     */ package javax.tools;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ForwardingJavaFileManager<M extends JavaFileManager>
-/*     */   implements JavaFileManager
-/*     */ {
-/*     */   protected final M fileManager;
-/*     */   
-/*     */   protected ForwardingJavaFileManager(M paramM) {
-/*  54 */     paramM.getClass();
-/*  55 */     this.fileManager = paramM;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ClassLoader getClassLoader(JavaFileManager.Location paramLocation) {
-/*  63 */     return this.fileManager.getClassLoader(paramLocation);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterable<JavaFileObject> list(JavaFileManager.Location paramLocation, String paramString, Set<JavaFileObject.Kind> paramSet, boolean paramBoolean) throws IOException {
-/*  76 */     return this.fileManager.list(paramLocation, paramString, paramSet, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String inferBinaryName(JavaFileManager.Location paramLocation, JavaFileObject paramJavaFileObject) {
-/*  83 */     return this.fileManager.inferBinaryName(paramLocation, paramJavaFileObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isSameFile(FileObject paramFileObject1, FileObject paramFileObject2) {
-/*  90 */     return this.fileManager.isSameFile(paramFileObject1, paramFileObject2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean handleOption(String paramString, Iterator<String> paramIterator) {
-/*  98 */     return this.fileManager.handleOption(paramString, paramIterator);
-/*     */   }
-/*     */   
-/*     */   public boolean hasLocation(JavaFileManager.Location paramLocation) {
-/* 102 */     return this.fileManager.hasLocation(paramLocation);
-/*     */   }
-/*     */   
-/*     */   public int isSupportedOption(String paramString) {
-/* 106 */     return this.fileManager.isSupportedOption(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaFileObject getJavaFileForInput(JavaFileManager.Location paramLocation, String paramString, JavaFileObject.Kind paramKind) throws IOException {
-/* 118 */     return this.fileManager.getJavaFileForInput(paramLocation, paramString, paramKind);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JavaFileObject getJavaFileForOutput(JavaFileManager.Location paramLocation, String paramString, JavaFileObject.Kind paramKind, FileObject paramFileObject) throws IOException {
-/* 131 */     return this.fileManager.getJavaFileForOutput(paramLocation, paramString, paramKind, paramFileObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileObject getFileForInput(JavaFileManager.Location paramLocation, String paramString1, String paramString2) throws IOException {
-/* 143 */     return this.fileManager.getFileForInput(paramLocation, paramString1, paramString2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileObject getFileForOutput(JavaFileManager.Location paramLocation, String paramString1, String paramString2, FileObject paramFileObject) throws IOException {
-/* 156 */     return this.fileManager.getFileForOutput(paramLocation, paramString1, paramString2, paramFileObject);
-/*     */   }
-/*     */   
-/*     */   public void flush() throws IOException {
-/* 160 */     this.fileManager.flush();
-/*     */   }
-/*     */   
-/*     */   public void close() throws IOException {
-/* 164 */     this.fileManager.close();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\tools\ForwardingJavaFileManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.tools;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Set;
+import javax.tools.JavaFileObject.Kind;
+
+/**
+ * Forwards calls to a given file manager.  Subclasses of this class
+ * might override some of these methods and might also provide
+ * additional fields and methods.
+ *
+ * @param <M> the kind of file manager forwarded to by this object
+ * @author Peter von der Ah&eacute;
+ * @since 1.6
+ */
+public class ForwardingJavaFileManager<M extends JavaFileManager> implements JavaFileManager {
+
+    /**
+     * The file manager which all methods are delegated to.
+     */
+    protected final M fileManager;
+
+    /**
+     * Creates a new instance of ForwardingJavaFileManager.
+     * @param fileManager delegate to this file manager
+     */
+    protected ForwardingJavaFileManager(M fileManager) {
+        fileManager.getClass(); // null check
+        this.fileManager = fileManager;
+    }
+
+    /**
+     * @throws SecurityException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public ClassLoader getClassLoader(Location location) {
+        return fileManager.getClassLoader(location);
+    }
+
+    /**
+     * @throws IOException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public Iterable<JavaFileObject> list(Location location,
+                                         String packageName,
+                                         Set<Kind> kinds,
+                                         boolean recurse)
+        throws IOException
+    {
+        return fileManager.list(location, packageName, kinds, recurse);
+    }
+
+    /**
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public String inferBinaryName(Location location, JavaFileObject file) {
+        return fileManager.inferBinaryName(location, file);
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     */
+    public boolean isSameFile(FileObject a, FileObject b) {
+        return fileManager.isSameFile(a, b);
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public boolean handleOption(String current, Iterator<String> remaining) {
+        return fileManager.handleOption(current, remaining);
+    }
+
+    public boolean hasLocation(Location location) {
+        return fileManager.hasLocation(location);
+    }
+
+    public int isSupportedOption(String option) {
+        return fileManager.isSupportedOption(option);
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public JavaFileObject getJavaFileForInput(Location location,
+                                              String className,
+                                              Kind kind)
+        throws IOException
+    {
+        return fileManager.getJavaFileForInput(location, className, kind);
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public JavaFileObject getJavaFileForOutput(Location location,
+                                               String className,
+                                               Kind kind,
+                                               FileObject sibling)
+        throws IOException
+    {
+        return fileManager.getJavaFileForOutput(location, className, kind, sibling);
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public FileObject getFileForInput(Location location,
+                                      String packageName,
+                                      String relativeName)
+        throws IOException
+    {
+        return fileManager.getFileForInput(location, packageName, relativeName);
+    }
+
+    /**
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @throws IllegalStateException {@inheritDoc}
+     */
+    public FileObject getFileForOutput(Location location,
+                                       String packageName,
+                                       String relativeName,
+                                       FileObject sibling)
+        throws IOException
+    {
+        return fileManager.getFileForOutput(location, packageName, relativeName, sibling);
+    }
+
+    public void flush() throws IOException {
+        fileManager.flush();
+    }
+
+    public void close() throws IOException {
+        fileManager.close();
+    }
+}

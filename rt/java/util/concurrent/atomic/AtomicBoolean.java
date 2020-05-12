@@ -1,169 +1,164 @@
-/*     */ package java.util.concurrent.atomic;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import sun.misc.Unsafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AtomicBoolean
-/*     */   implements Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = 4654671469794556979L;
-/*  53 */   private static final Unsafe unsafe = Unsafe.getUnsafe();
-/*     */   private static final long valueOffset;
-/*     */   private volatile int value;
-/*     */   
-/*     */   static {
-/*     */     
-/*  59 */     try { valueOffset = unsafe.objectFieldOffset(AtomicBoolean.class.getDeclaredField("value")); }
-/*  60 */     catch (Exception exception) { throw new Error(exception); }
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AtomicBoolean(boolean paramBoolean) {
-/*  71 */     this.value = paramBoolean ? 1 : 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AtomicBoolean() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean get() {
-/*  86 */     return (this.value != 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean compareAndSet(boolean paramBoolean1, boolean paramBoolean2) {
-/*  99 */     boolean bool1 = paramBoolean1 ? true : false;
-/* 100 */     boolean bool2 = paramBoolean2 ? true : false;
-/* 101 */     return unsafe.compareAndSwapInt(this, valueOffset, bool1, bool2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean weakCompareAndSet(boolean paramBoolean1, boolean paramBoolean2) {
-/* 117 */     boolean bool1 = paramBoolean1 ? true : false;
-/* 118 */     boolean bool2 = paramBoolean2 ? true : false;
-/* 119 */     return unsafe.compareAndSwapInt(this, valueOffset, bool1, bool2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void set(boolean paramBoolean) {
-/* 128 */     this.value = paramBoolean ? 1 : 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void lazySet(boolean paramBoolean) {
-/* 138 */     boolean bool = paramBoolean ? true : false;
-/* 139 */     unsafe.putOrderedInt(this, valueOffset, bool);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean getAndSet(boolean paramBoolean) {
-/*     */     while (true) {
-/* 151 */       boolean bool = get();
-/* 152 */       if (compareAndSet(bool, paramBoolean)) {
-/* 153 */         return bool;
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 161 */     return Boolean.toString(get());
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\atomic\AtomicBoolean.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent.atomic;
+import sun.misc.Unsafe;
+
+/**
+ * A {@code boolean} value that may be updated atomically. See the
+ * {@link java.util.concurrent.atomic} package specification for
+ * description of the properties of atomic variables. An
+ * {@code AtomicBoolean} is used in applications such as atomically
+ * updated flags, and cannot be used as a replacement for a
+ * {@link java.lang.Boolean}.
+ *
+ * @since 1.5
+ * @author Doug Lea
+ */
+public class AtomicBoolean implements java.io.Serializable {
+    private static final long serialVersionUID = 4654671469794556979L;
+    // setup to use Unsafe.compareAndSwapInt for updates
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final long valueOffset;
+
+    static {
+        try {
+            valueOffset = unsafe.objectFieldOffset
+                (AtomicBoolean.class.getDeclaredField("value"));
+        } catch (Exception ex) { throw new Error(ex); }
+    }
+
+    private volatile int value;
+
+    /**
+     * Creates a new {@code AtomicBoolean} with the given initial value.
+     *
+     * @param initialValue the initial value
+     */
+    public AtomicBoolean(boolean initialValue) {
+        value = initialValue ? 1 : 0;
+    }
+
+    /**
+     * Creates a new {@code AtomicBoolean} with initial value {@code false}.
+     */
+    public AtomicBoolean() {
+    }
+
+    /**
+     * Returns the current value.
+     *
+     * @return the current value
+     */
+    public final boolean get() {
+        return value != 0;
+    }
+
+    /**
+     * Atomically sets the value to the given updated value
+     * if the current value {@code ==} the expected value.
+     *
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful. False return indicates that
+     * the actual value was not equal to the expected value.
+     */
+    public final boolean compareAndSet(boolean expect, boolean update) {
+        int e = expect ? 1 : 0;
+        int u = update ? 1 : 0;
+        return unsafe.compareAndSwapInt(this, valueOffset, e, u);
+    }
+
+    /**
+     * Atomically sets the value to the given updated value
+     * if the current value {@code ==} the expected value.
+     *
+     * <p><a href="package-summary.html#weakCompareAndSet">May fail
+     * spuriously and does not provide ordering guarantees</a>, so is
+     * only rarely an appropriate alternative to {@code compareAndSet}.
+     *
+     * @param expect the expected value
+     * @param update the new value
+     * @return {@code true} if successful
+     */
+    public boolean weakCompareAndSet(boolean expect, boolean update) {
+        int e = expect ? 1 : 0;
+        int u = update ? 1 : 0;
+        return unsafe.compareAndSwapInt(this, valueOffset, e, u);
+    }
+
+    /**
+     * Unconditionally sets to the given value.
+     *
+     * @param newValue the new value
+     */
+    public final void set(boolean newValue) {
+        value = newValue ? 1 : 0;
+    }
+
+    /**
+     * Eventually sets to the given value.
+     *
+     * @param newValue the new value
+     * @since 1.6
+     */
+    public final void lazySet(boolean newValue) {
+        int v = newValue ? 1 : 0;
+        unsafe.putOrderedInt(this, valueOffset, v);
+    }
+
+    /**
+     * Atomically sets to the given value and returns the previous value.
+     *
+     * @param newValue the new value
+     * @return the previous value
+     */
+    public final boolean getAndSet(boolean newValue) {
+        boolean prev;
+        do {
+            prev = get();
+        } while (!compareAndSet(prev, newValue));
+        return prev;
+    }
+
+    /**
+     * Returns the String representation of the current value.
+     * @return the String representation of the current value
+     */
+    public String toString() {
+        return Boolean.toString(get());
+    }
+
+}

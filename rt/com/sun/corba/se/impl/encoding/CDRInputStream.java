@@ -1,550 +1,544 @@
-/*     */ package com.sun.corba.se.impl.encoding;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.pept.protocol.MessageMediator;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
-/*     */ import com.sun.org.omg.SendingContext.CodeBase;
-/*     */ import java.io.IOException;
-/*     */ import java.io.Serializable;
-/*     */ import java.math.BigDecimal;
-/*     */ import java.nio.ByteBuffer;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.AnySeqHolder;
-/*     */ import org.omg.CORBA.BooleanSeqHolder;
-/*     */ import org.omg.CORBA.CharSeqHolder;
-/*     */ import org.omg.CORBA.Context;
-/*     */ import org.omg.CORBA.DataInputStream;
-/*     */ import org.omg.CORBA.DoubleSeqHolder;
-/*     */ import org.omg.CORBA.FloatSeqHolder;
-/*     */ import org.omg.CORBA.LongLongSeqHolder;
-/*     */ import org.omg.CORBA.LongSeqHolder;
-/*     */ import org.omg.CORBA.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.OctetSeqHolder;
-/*     */ import org.omg.CORBA.Principal;
-/*     */ import org.omg.CORBA.ShortSeqHolder;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.ULongLongSeqHolder;
-/*     */ import org.omg.CORBA.ULongSeqHolder;
-/*     */ import org.omg.CORBA.UShortSeqHolder;
-/*     */ import org.omg.CORBA.WCharSeqHolder;
-/*     */ import org.omg.CORBA.portable.BoxedValueHelper;
-/*     */ import org.omg.CORBA.portable.ValueInputStream;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class CDRInputStream
-/*     */   extends InputStream
-/*     */   implements MarshalInputStream, DataInputStream, ValueInputStream
-/*     */ {
-/*     */   protected CorbaMessageMediator messageMediator;
-/*     */   private CDRInputStreamBase impl;
-/*     */   
-/*     */   private static class InputStreamFactory
-/*     */   {
-/*     */     public static CDRInputStreamBase newInputStream(ORB param1ORB, GIOPVersion param1GIOPVersion, byte param1Byte) {
-/*  73 */       switch (param1GIOPVersion.intValue()) {
-/*     */         case 256:
-/*  75 */           return new CDRInputStream_1_0();
-/*     */         case 257:
-/*  77 */           return new CDRInputStream_1_1();
-/*     */         case 258:
-/*  79 */           if (param1Byte != 0) {
-/*  80 */             return new IDLJavaSerializationInputStream(param1Byte);
-/*     */           }
-/*     */           
-/*  83 */           return new CDRInputStream_1_2();
-/*     */       } 
-/*     */       
-/*  86 */       ORBUtilSystemException oRBUtilSystemException = ORBUtilSystemException.get(param1ORB, "rpc.encoding");
-/*     */       
-/*  88 */       throw oRBUtilSystemException.unsupportedGiopVersion(param1GIOPVersion);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CDRInputStream() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CDRInputStream(CDRInputStream paramCDRInputStream) {
-/* 105 */     this.impl = paramCDRInputStream.impl.dup();
-/* 106 */     this.impl.setParent(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CDRInputStream(ORB paramORB, ByteBuffer paramByteBuffer, int paramInt, boolean paramBoolean, GIOPVersion paramGIOPVersion, byte paramByte, BufferManagerRead paramBufferManagerRead) {
-/* 117 */     this.impl = InputStreamFactory.newInputStream((ORB)paramORB, paramGIOPVersion, paramByte);
-/*     */ 
-/*     */     
-/* 120 */     this.impl.init(paramORB, paramByteBuffer, paramInt, paramBoolean, paramBufferManagerRead);
-/*     */     
-/* 122 */     this.impl.setParent(this);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean read_boolean() {
-/* 127 */     return this.impl.read_boolean();
-/*     */   }
-/*     */   
-/*     */   public final char read_char() {
-/* 131 */     return this.impl.read_char();
-/*     */   }
-/*     */   
-/*     */   public final char read_wchar() {
-/* 135 */     return this.impl.read_wchar();
-/*     */   }
-/*     */   
-/*     */   public final byte read_octet() {
-/* 139 */     return this.impl.read_octet();
-/*     */   }
-/*     */   
-/*     */   public final short read_short() {
-/* 143 */     return this.impl.read_short();
-/*     */   }
-/*     */   
-/*     */   public final short read_ushort() {
-/* 147 */     return this.impl.read_ushort();
-/*     */   }
-/*     */   
-/*     */   public final int read_long() {
-/* 151 */     return this.impl.read_long();
-/*     */   }
-/*     */   
-/*     */   public final int read_ulong() {
-/* 155 */     return this.impl.read_ulong();
-/*     */   }
-/*     */   
-/*     */   public final long read_longlong() {
-/* 159 */     return this.impl.read_longlong();
-/*     */   }
-/*     */   
-/*     */   public final long read_ulonglong() {
-/* 163 */     return this.impl.read_ulonglong();
-/*     */   }
-/*     */   
-/*     */   public final float read_float() {
-/* 167 */     return this.impl.read_float();
-/*     */   }
-/*     */   
-/*     */   public final double read_double() {
-/* 171 */     return this.impl.read_double();
-/*     */   }
-/*     */   
-/*     */   public final String read_string() {
-/* 175 */     return this.impl.read_string();
-/*     */   }
-/*     */   
-/*     */   public final String read_wstring() {
-/* 179 */     return this.impl.read_wstring();
-/*     */   }
-/*     */   
-/*     */   public final void read_boolean_array(boolean[] paramArrayOfboolean, int paramInt1, int paramInt2) {
-/* 183 */     this.impl.read_boolean_array(paramArrayOfboolean, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_char_array(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 187 */     this.impl.read_char_array(paramArrayOfchar, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_wchar_array(char[] paramArrayOfchar, int paramInt1, int paramInt2) {
-/* 191 */     this.impl.read_wchar_array(paramArrayOfchar, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_octet_array(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) {
-/* 195 */     this.impl.read_octet_array(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_short_array(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/* 199 */     this.impl.read_short_array(paramArrayOfshort, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_ushort_array(short[] paramArrayOfshort, int paramInt1, int paramInt2) {
-/* 203 */     this.impl.read_ushort_array(paramArrayOfshort, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_long_array(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 207 */     this.impl.read_long_array(paramArrayOfint, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_ulong_array(int[] paramArrayOfint, int paramInt1, int paramInt2) {
-/* 211 */     this.impl.read_ulong_array(paramArrayOfint, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_longlong_array(long[] paramArrayOflong, int paramInt1, int paramInt2) {
-/* 215 */     this.impl.read_longlong_array(paramArrayOflong, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_ulonglong_array(long[] paramArrayOflong, int paramInt1, int paramInt2) {
-/* 219 */     this.impl.read_ulonglong_array(paramArrayOflong, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_float_array(float[] paramArrayOffloat, int paramInt1, int paramInt2) {
-/* 223 */     this.impl.read_float_array(paramArrayOffloat, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_double_array(double[] paramArrayOfdouble, int paramInt1, int paramInt2) {
-/* 227 */     this.impl.read_double_array(paramArrayOfdouble, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final Object read_Object() {
-/* 231 */     return this.impl.read_Object();
-/*     */   }
-/*     */   
-/*     */   public final TypeCode read_TypeCode() {
-/* 235 */     return this.impl.read_TypeCode();
-/*     */   }
-/*     */   public final Any read_any() {
-/* 238 */     return this.impl.read_any();
-/*     */   }
-/*     */   
-/*     */   public final Principal read_Principal() {
-/* 242 */     return this.impl.read_Principal();
-/*     */   }
-/*     */   
-/*     */   public final int read() throws IOException {
-/* 246 */     return this.impl.read();
-/*     */   }
-/*     */   
-/*     */   public final BigDecimal read_fixed() {
-/* 250 */     return this.impl.read_fixed();
-/*     */   }
-/*     */   
-/*     */   public final Context read_Context() {
-/* 254 */     return this.impl.read_Context();
-/*     */   }
-/*     */   
-/*     */   public final Object read_Object(Class paramClass) {
-/* 258 */     return this.impl.read_Object(paramClass);
-/*     */   }
-/*     */   
-/*     */   public final ORB orb() {
-/* 262 */     return this.impl.orb();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Serializable read_value() {
-/* 267 */     return this.impl.read_value();
-/*     */   }
-/*     */   
-/*     */   public final Serializable read_value(Class paramClass) {
-/* 271 */     return this.impl.read_value(paramClass);
-/*     */   }
-/*     */   
-/*     */   public final Serializable read_value(BoxedValueHelper paramBoxedValueHelper) {
-/* 275 */     return this.impl.read_value(paramBoxedValueHelper);
-/*     */   }
-/*     */   
-/*     */   public final Serializable read_value(String paramString) {
-/* 279 */     return this.impl.read_value(paramString);
-/*     */   }
-/*     */   
-/*     */   public final Serializable read_value(Serializable paramSerializable) {
-/* 283 */     return this.impl.read_value(paramSerializable);
-/*     */   }
-/*     */   
-/*     */   public final Object read_abstract_interface() {
-/* 287 */     return this.impl.read_abstract_interface();
-/*     */   }
-/*     */   
-/*     */   public final Object read_abstract_interface(Class paramClass) {
-/* 291 */     return this.impl.read_abstract_interface(paramClass);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final void consumeEndian() {
-/* 296 */     this.impl.consumeEndian();
-/*     */   }
-/*     */   
-/*     */   public final int getPosition() {
-/* 300 */     return this.impl.getPosition();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Object read_Abstract() {
-/* 306 */     return this.impl.read_Abstract();
-/*     */   }
-/*     */   
-/*     */   public final Serializable read_Value() {
-/* 310 */     return this.impl.read_Value();
-/*     */   }
-/*     */   
-/*     */   public final void read_any_array(AnySeqHolder paramAnySeqHolder, int paramInt1, int paramInt2) {
-/* 314 */     this.impl.read_any_array(paramAnySeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_boolean_array(BooleanSeqHolder paramBooleanSeqHolder, int paramInt1, int paramInt2) {
-/* 318 */     this.impl.read_boolean_array(paramBooleanSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_char_array(CharSeqHolder paramCharSeqHolder, int paramInt1, int paramInt2) {
-/* 322 */     this.impl.read_char_array(paramCharSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_wchar_array(WCharSeqHolder paramWCharSeqHolder, int paramInt1, int paramInt2) {
-/* 326 */     this.impl.read_wchar_array(paramWCharSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_octet_array(OctetSeqHolder paramOctetSeqHolder, int paramInt1, int paramInt2) {
-/* 330 */     this.impl.read_octet_array(paramOctetSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_short_array(ShortSeqHolder paramShortSeqHolder, int paramInt1, int paramInt2) {
-/* 334 */     this.impl.read_short_array(paramShortSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_ushort_array(UShortSeqHolder paramUShortSeqHolder, int paramInt1, int paramInt2) {
-/* 338 */     this.impl.read_ushort_array(paramUShortSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_long_array(LongSeqHolder paramLongSeqHolder, int paramInt1, int paramInt2) {
-/* 342 */     this.impl.read_long_array(paramLongSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_ulong_array(ULongSeqHolder paramULongSeqHolder, int paramInt1, int paramInt2) {
-/* 346 */     this.impl.read_ulong_array(paramULongSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_ulonglong_array(ULongLongSeqHolder paramULongLongSeqHolder, int paramInt1, int paramInt2) {
-/* 350 */     this.impl.read_ulonglong_array(paramULongLongSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_longlong_array(LongLongSeqHolder paramLongLongSeqHolder, int paramInt1, int paramInt2) {
-/* 354 */     this.impl.read_longlong_array(paramLongLongSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_float_array(FloatSeqHolder paramFloatSeqHolder, int paramInt1, int paramInt2) {
-/* 358 */     this.impl.read_float_array(paramFloatSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final void read_double_array(DoubleSeqHolder paramDoubleSeqHolder, int paramInt1, int paramInt2) {
-/* 362 */     this.impl.read_double_array(paramDoubleSeqHolder, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final String[] _truncatable_ids() {
-/* 367 */     return this.impl._truncatable_ids();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final int read(byte[] paramArrayOfbyte) throws IOException {
-/* 372 */     return this.impl.read(paramArrayOfbyte);
-/*     */   }
-/*     */   
-/*     */   public final int read(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 376 */     return this.impl.read(paramArrayOfbyte, paramInt1, paramInt2);
-/*     */   }
-/*     */   
-/*     */   public final long skip(long paramLong) throws IOException {
-/* 380 */     return this.impl.skip(paramLong);
-/*     */   }
-/*     */   
-/*     */   public final int available() throws IOException {
-/* 384 */     return this.impl.available();
-/*     */   }
-/*     */   
-/*     */   public final void close() throws IOException {
-/* 388 */     this.impl.close();
-/*     */   }
-/*     */   
-/*     */   public final void mark(int paramInt) {
-/* 392 */     this.impl.mark(paramInt);
-/*     */   }
-/*     */   
-/*     */   public final void reset() {
-/* 396 */     this.impl.reset();
-/*     */   }
-/*     */   
-/*     */   public final boolean markSupported() {
-/* 400 */     return this.impl.markSupported();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public abstract CDRInputStream dup();
-/*     */   
-/*     */   public final BigDecimal read_fixed(short paramShort1, short paramShort2) {
-/* 407 */     return this.impl.read_fixed(paramShort1, paramShort2);
-/*     */   }
-/*     */   
-/*     */   public final boolean isLittleEndian() {
-/* 411 */     return this.impl.isLittleEndian();
-/*     */   }
-/*     */   
-/*     */   protected final ByteBuffer getByteBuffer() {
-/* 415 */     return this.impl.getByteBuffer();
-/*     */   }
-/*     */   
-/*     */   protected final void setByteBuffer(ByteBuffer paramByteBuffer) {
-/* 419 */     this.impl.setByteBuffer(paramByteBuffer);
-/*     */   }
-/*     */   
-/*     */   protected final void setByteBufferWithInfo(ByteBufferWithInfo paramByteBufferWithInfo) {
-/* 423 */     this.impl.setByteBufferWithInfo(paramByteBufferWithInfo);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected final boolean isSharing(ByteBuffer paramByteBuffer) {
-/* 430 */     return (getByteBuffer() == paramByteBuffer);
-/*     */   }
-/*     */   
-/*     */   public final int getBufferLength() {
-/* 434 */     return this.impl.getBufferLength();
-/*     */   }
-/*     */   
-/*     */   protected final void setBufferLength(int paramInt) {
-/* 438 */     this.impl.setBufferLength(paramInt);
-/*     */   }
-/*     */   
-/*     */   protected final int getIndex() {
-/* 442 */     return this.impl.getIndex();
-/*     */   }
-/*     */   
-/*     */   protected final void setIndex(int paramInt) {
-/* 446 */     this.impl.setIndex(paramInt);
-/*     */   }
-/*     */   
-/*     */   public final void orb(ORB paramORB) {
-/* 450 */     this.impl.orb(paramORB);
-/*     */   }
-/*     */   
-/*     */   public final GIOPVersion getGIOPVersion() {
-/* 454 */     return this.impl.getGIOPVersion();
-/*     */   }
-/*     */   
-/*     */   public final BufferManagerRead getBufferManager() {
-/* 458 */     return this.impl.getBufferManager();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public CodeBase getCodeBase() {
-/* 465 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected CodeSetConversion.BTCConverter createCharBTCConverter() {
-/* 471 */     return CodeSetConversion.impl().getBTCConverter(OSFCodeSetRegistry.ISO_8859_1, this.impl
-/* 472 */         .isLittleEndian());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected abstract CodeSetConversion.BTCConverter createWCharBTCConverter();
-/*     */ 
-/*     */   
-/*     */   void printBuffer() {
-/* 481 */     this.impl.printBuffer();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void alignOnBoundary(int paramInt) {
-/* 491 */     this.impl.alignOnBoundary(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setHeaderPadding(boolean paramBoolean) {
-/* 496 */     this.impl.setHeaderPadding(paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void performORBVersionSpecificInit() {
-/* 511 */     if (this.impl != null) {
-/* 512 */       this.impl.performORBVersionSpecificInit();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void resetCodeSetConverters() {
-/* 522 */     this.impl.resetCodeSetConverters();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setMessageMediator(MessageMediator paramMessageMediator) {
-/* 527 */     this.messageMediator = (CorbaMessageMediator)paramMessageMediator;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public MessageMediator getMessageMediator() {
-/* 532 */     return this.messageMediator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void start_value() {
-/* 538 */     this.impl.start_value();
-/*     */   }
-/*     */   
-/*     */   public void end_value() {
-/* 542 */     this.impl.end_value();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\CDRInputStream.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.encoding;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.Principal;
+import org.omg.CORBA.Any;
+
+import com.sun.org.omg.SendingContext.CodeBase;
+
+import com.sun.corba.se.pept.protocol.MessageMediator;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.encoding.CodeSetConversion;
+import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+
+/**
+ * This is delegates to the real implementation.
+ *
+ * NOTE:
+ *
+ * Before using the stream for valuetype unmarshaling, one must call
+ * performORBVersionSpecificInit().
+ */
+public abstract class CDRInputStream
+    extends org.omg.CORBA_2_3.portable.InputStream
+    implements com.sun.corba.se.impl.encoding.MarshalInputStream,
+               org.omg.CORBA.DataInputStream, org.omg.CORBA.portable.ValueInputStream
+{
+    protected CorbaMessageMediator messageMediator;
+    private CDRInputStreamBase impl;
+
+    // We can move this out somewhere later.  For now, it serves its purpose
+    // to create a concrete CDR delegate based on the GIOP version.
+    private static class InputStreamFactory {
+
+        public static CDRInputStreamBase newInputStream(
+                ORB orb, GIOPVersion version, byte encodingVersion) {
+            switch(version.intValue()) {
+                case GIOPVersion.VERSION_1_0:
+                    return new CDRInputStream_1_0();
+                case GIOPVersion.VERSION_1_1:
+                    return new CDRInputStream_1_1();
+                case GIOPVersion.VERSION_1_2:
+                    if (encodingVersion != Message.CDR_ENC_VERSION) {
+                        return
+                          new IDLJavaSerializationInputStream(encodingVersion);
+                    }
+                    return new CDRInputStream_1_2();
+                    // else fall through and report exception.
+                default:
+                    ORBUtilSystemException wrapper = ORBUtilSystemException.get( orb,
+                        CORBALogDomains.RPC_ENCODING ) ;
+                    throw wrapper.unsupportedGiopVersion( version ) ;
+            }
+        }
+    }
+
+    // Required for the case when a ClientResponseImpl is
+    // created with a SystemException due to a dead server/closed
+    // connection with no warning.  Note that the stream will
+    // not be initialized in this case.
+    //
+    // Probably also required by ServerRequestImpl.
+    //
+    // REVISIT.
+    public CDRInputStream() {
+    }
+
+    public CDRInputStream(CDRInputStream is) {
+        impl = is.impl.dup();
+        impl.setParent(this);
+    }
+
+    public CDRInputStream(org.omg.CORBA.ORB orb,
+                          ByteBuffer byteBuffer,
+                          int size,
+                          boolean littleEndian,
+                          GIOPVersion version,
+                          byte encodingVersion,
+                          BufferManagerRead bufMgr)
+    {
+        impl = InputStreamFactory.newInputStream((ORB)orb, version,
+                                                 encodingVersion);
+
+        impl.init(orb, byteBuffer, size, littleEndian, bufMgr);
+
+        impl.setParent(this);
+    }
+
+    // org.omg.CORBA.portable.InputStream
+    public final boolean read_boolean() {
+        return impl.read_boolean();
+    }
+
+    public final char read_char() {
+        return impl.read_char();
+    }
+
+    public final char read_wchar() {
+        return impl.read_wchar();
+    }
+
+    public final byte read_octet() {
+        return impl.read_octet();
+    }
+
+    public final short read_short() {
+        return impl.read_short();
+    }
+
+    public final short read_ushort() {
+        return impl.read_ushort();
+    }
+
+    public final int read_long() {
+        return impl.read_long();
+    }
+
+    public final int read_ulong() {
+        return impl.read_ulong();
+    }
+
+    public final long read_longlong() {
+        return impl.read_longlong();
+    }
+
+    public final long read_ulonglong() {
+        return impl.read_ulonglong();
+    }
+
+    public final float read_float() {
+        return impl.read_float();
+    }
+
+    public final double read_double() {
+        return impl.read_double();
+    }
+
+    public final String read_string() {
+        return impl.read_string();
+    }
+
+    public final String read_wstring() {
+        return impl.read_wstring();
+    }
+
+    public final void read_boolean_array(boolean[] value, int offset, int length) {
+        impl.read_boolean_array(value, offset, length);
+    }
+
+    public final void read_char_array(char[] value, int offset, int length) {
+        impl.read_char_array(value, offset, length);
+    }
+
+    public final void read_wchar_array(char[] value, int offset, int length) {
+        impl.read_wchar_array(value, offset, length);
+    }
+
+    public final void read_octet_array(byte[] value, int offset, int length) {
+        impl.read_octet_array(value, offset, length);
+    }
+
+    public final void read_short_array(short[] value, int offset, int length) {
+        impl.read_short_array(value, offset, length);
+    }
+
+    public final void read_ushort_array(short[] value, int offset, int length) {
+        impl.read_ushort_array(value, offset, length);
+    }
+
+    public final void read_long_array(int[] value, int offset, int length) {
+        impl.read_long_array(value, offset, length);
+    }
+
+    public final void read_ulong_array(int[] value, int offset, int length) {
+        impl.read_ulong_array(value, offset, length);
+    }
+
+    public final void read_longlong_array(long[] value, int offset, int length) {
+        impl.read_longlong_array(value, offset, length);
+    }
+
+    public final void read_ulonglong_array(long[] value, int offset, int length) {
+        impl.read_ulonglong_array(value, offset, length);
+    }
+
+    public final void read_float_array(float[] value, int offset, int length) {
+        impl.read_float_array(value, offset, length);
+    }
+
+    public final void read_double_array(double[] value, int offset, int length) {
+        impl.read_double_array(value, offset, length);
+    }
+
+    public final org.omg.CORBA.Object read_Object() {
+        return impl.read_Object();
+    }
+
+    public final TypeCode read_TypeCode() {
+        return impl.read_TypeCode();
+    }
+    public final Any read_any() {
+        return impl.read_any();
+    }
+
+    public final Principal read_Principal() {
+        return impl.read_Principal();
+    }
+
+    public final int read() throws java.io.IOException {
+        return impl.read();
+    }
+
+    public final java.math.BigDecimal read_fixed() {
+        return impl.read_fixed();
+    }
+
+    public final org.omg.CORBA.Context read_Context() {
+        return impl.read_Context();
+    }
+
+    public final org.omg.CORBA.Object read_Object(java.lang.Class clz) {
+        return impl.read_Object(clz);
+    }
+
+    public final org.omg.CORBA.ORB orb() {
+        return impl.orb();
+    }
+
+    // org.omg.CORBA_2_3.portable.InputStream
+    public final java.io.Serializable read_value() {
+        return impl.read_value();
+    }
+
+    public final java.io.Serializable read_value(java.lang.Class clz) {
+        return impl.read_value(clz);
+    }
+
+    public final java.io.Serializable read_value(org.omg.CORBA.portable.BoxedValueHelper factory) {
+        return impl.read_value(factory);
+    }
+
+    public final java.io.Serializable read_value(java.lang.String rep_id) {
+        return impl.read_value(rep_id);
+    }
+
+    public final java.io.Serializable read_value(java.io.Serializable value) {
+        return impl.read_value(value);
+    }
+
+    public final java.lang.Object read_abstract_interface() {
+        return impl.read_abstract_interface();
+    }
+
+    public final java.lang.Object read_abstract_interface(java.lang.Class clz) {
+        return impl.read_abstract_interface(clz);
+    }
+    // com.sun.corba.se.impl.encoding.MarshalInputStream
+
+    public final void consumeEndian() {
+        impl.consumeEndian();
+    }
+
+    public final int getPosition() {
+        return impl.getPosition();
+    }
+
+    // org.omg.CORBA.DataInputStream
+
+    public final java.lang.Object read_Abstract () {
+        return impl.read_Abstract();
+    }
+
+    public final java.io.Serializable read_Value () {
+        return impl.read_Value();
+    }
+
+    public final void read_any_array (org.omg.CORBA.AnySeqHolder seq, int offset, int length) {
+        impl.read_any_array(seq, offset, length);
+    }
+
+    public final void read_boolean_array (org.omg.CORBA.BooleanSeqHolder seq, int offset, int length) {
+        impl.read_boolean_array(seq, offset, length);
+    }
+
+    public final void read_char_array (org.omg.CORBA.CharSeqHolder seq, int offset, int length) {
+        impl.read_char_array(seq, offset, length);
+    }
+
+    public final void read_wchar_array (org.omg.CORBA.WCharSeqHolder seq, int offset, int length) {
+        impl.read_wchar_array(seq, offset, length);
+    }
+
+    public final void read_octet_array (org.omg.CORBA.OctetSeqHolder seq, int offset, int length) {
+        impl.read_octet_array(seq, offset, length);
+    }
+
+    public final void read_short_array (org.omg.CORBA.ShortSeqHolder seq, int offset, int length) {
+        impl.read_short_array(seq, offset, length);
+    }
+
+    public final void read_ushort_array (org.omg.CORBA.UShortSeqHolder seq, int offset, int length) {
+        impl.read_ushort_array(seq, offset, length);
+    }
+
+    public final void read_long_array (org.omg.CORBA.LongSeqHolder seq, int offset, int length) {
+        impl.read_long_array(seq, offset, length);
+    }
+
+    public final void read_ulong_array (org.omg.CORBA.ULongSeqHolder seq, int offset, int length) {
+        impl.read_ulong_array(seq, offset, length);
+    }
+
+    public final void read_ulonglong_array (org.omg.CORBA.ULongLongSeqHolder seq, int offset, int length) {
+        impl.read_ulonglong_array(seq, offset, length);
+    }
+
+    public final void read_longlong_array (org.omg.CORBA.LongLongSeqHolder seq, int offset, int length) {
+        impl.read_longlong_array(seq, offset, length);
+    }
+
+    public final void read_float_array (org.omg.CORBA.FloatSeqHolder seq, int offset, int length) {
+        impl.read_float_array(seq, offset, length);
+    }
+
+    public final void read_double_array (org.omg.CORBA.DoubleSeqHolder seq, int offset, int length) {
+        impl.read_double_array(seq, offset, length);
+    }
+
+    // org.omg.CORBA.portable.ValueBase
+    public final String[] _truncatable_ids() {
+        return impl._truncatable_ids();
+    }
+
+    // java.io.InputStream
+    public final int read(byte b[]) throws IOException {
+        return impl.read(b);
+    }
+
+    public final int read(byte b[], int off, int len) throws IOException {
+        return impl.read(b, off, len);
+    }
+
+    public final long skip(long n) throws IOException {
+        return impl.skip(n);
+    }
+
+    public final int available() throws IOException {
+        return impl.available();
+    }
+
+    public final void close() throws IOException {
+        impl.close();
+    }
+
+    public final void mark(int readlimit) {
+        impl.mark(readlimit);
+    }
+
+    public final void reset() {
+        impl.reset();
+    }
+
+    public final boolean markSupported() {
+        return impl.markSupported();
+    }
+
+    public abstract CDRInputStream dup();
+
+    // Needed by TCUtility
+    public final java.math.BigDecimal read_fixed(short digits, short scale) {
+        return impl.read_fixed(digits, scale);
+    }
+
+    public final boolean isLittleEndian() {
+        return impl.isLittleEndian();
+    }
+
+    protected final ByteBuffer getByteBuffer() {
+        return impl.getByteBuffer();
+    }
+
+    protected final void setByteBuffer(ByteBuffer byteBuffer) {
+        impl.setByteBuffer(byteBuffer);
+    }
+
+    protected final void setByteBufferWithInfo(ByteBufferWithInfo bbwi) {
+        impl.setByteBufferWithInfo(bbwi);
+    }
+
+    /**
+     * return true if our ByteBuffer is sharing/equal to bb
+     */
+    protected final boolean isSharing(ByteBuffer bb) {
+        return (getByteBuffer() ==  bb);
+    }
+
+    public final int getBufferLength() {
+        return impl.getBufferLength();
+    }
+
+    protected final void setBufferLength(int value) {
+        impl.setBufferLength(value);
+    }
+
+    protected final int getIndex() {
+        return impl.getIndex();
+    }
+
+    protected final void setIndex(int value) {
+        impl.setIndex(value);
+    }
+
+    public final void orb(org.omg.CORBA.ORB orb) {
+        impl.orb(orb);
+    }
+
+    public final GIOPVersion getGIOPVersion() {
+        return impl.getGIOPVersion();
+    }
+
+    public final BufferManagerRead getBufferManager() {
+        return impl.getBufferManager();
+    }
+
+    // This should be overridden by any stream (ex: IIOPInputStream)
+    // which wants to read values.  Thus, TypeCodeInputStream doesn't
+    // have to do this.
+    public CodeBase getCodeBase() {
+        return null;
+    }
+
+    // Use Latin-1 for GIOP 1.0 or when code set negotiation was not
+    // performed.
+    protected CodeSetConversion.BTCConverter createCharBTCConverter() {
+        return CodeSetConversion.impl().getBTCConverter(OSFCodeSetRegistry.ISO_8859_1,
+                                                        impl.isLittleEndian());
+    }
+
+    // Subclasses must decide what to do here.  It's inconvenient to
+    // make the class and this method abstract because of dup().
+    protected abstract CodeSetConversion.BTCConverter createWCharBTCConverter();
+
+    // Prints the current buffer in a human readable form
+    void printBuffer() {
+        impl.printBuffer();
+    }
+
+    /**
+     * Aligns the current position on the given octet boundary
+     * if there are enough bytes available to do so.  Otherwise,
+     * it just returns.  This is used for some (but not all)
+     * GIOP 1.2 message headers.
+     */
+    public void alignOnBoundary(int octetBoundary) {
+        impl.alignOnBoundary(octetBoundary);
+    }
+
+    // Needed by request and reply messages for GIOP versions >= 1.2 only.
+    public void setHeaderPadding(boolean headerPadding) {
+        impl.setHeaderPadding(headerPadding);
+    }
+
+    /**
+     * This must be called after determining the proper ORB version,
+     * and setting it on the stream's ORB instance.  It can be called
+     * after reading the service contexts, since that is the only place
+     * we can get the ORB version info.
+     *
+     * Trying to unmarshal things requiring repository IDs before calling
+     * this will result in NullPtrExceptions.
+     */
+    public void performORBVersionSpecificInit() {
+        // In the case of SystemExceptions, a stream is created
+        // with its default constructor (and thus no impl is set).
+        if (impl != null)
+            impl.performORBVersionSpecificInit();
+    }
+
+    /**
+     * Resets any internal references to code set converters.
+     * This is useful for forcing the CDR stream to reacquire
+     * converters (probably from its subclasses) when state
+     * has changed.
+     */
+    public void resetCodeSetConverters() {
+        impl.resetCodeSetConverters();
+    }
+
+    public void setMessageMediator(MessageMediator messageMediator)
+    {
+        this.messageMediator = (CorbaMessageMediator) messageMediator;
+    }
+
+    public MessageMediator getMessageMediator()
+    {
+        return messageMediator;
+    }
+
+    // ValueInputStream -----------------------------
+
+    public void start_value() {
+        impl.start_value();
+    }
+
+    public void end_value() {
+        impl.end_value();
+    }
+}

@@ -1,290 +1,284 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.BorderLayout;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.GridBagConstraints;
-/*     */ import java.awt.GridBagLayout;
-/*     */ import java.awt.Insets;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.Box;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JOptionPane;
-/*     */ import javax.swing.JPanel;
-/*     */ import javax.swing.JSeparator;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicOptionPaneUI;
-/*     */ import sun.swing.DefaultLookup;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthOptionPaneUI
-/*     */   extends BasicOptionPaneUI
-/*     */   implements PropertyChangeListener, SynthUI
-/*     */ {
-/*     */   private SynthStyle style;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  55 */     return new SynthOptionPaneUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  63 */     updateStyle(this.optionPane);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners() {
-/*  71 */     super.installListeners();
-/*  72 */     this.optionPane.addPropertyChangeListener(this);
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JComponent paramJComponent) {
-/*  76 */     SynthContext synthContext = getContext(paramJComponent, 1);
-/*  77 */     SynthStyle synthStyle = this.style;
-/*     */     
-/*  79 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*  80 */     if (this.style != synthStyle) {
-/*  81 */       this.minimumSize = (Dimension)this.style.get(synthContext, "OptionPane.minimumSize");
-/*     */       
-/*  83 */       if (this.minimumSize == null) {
-/*  84 */         this.minimumSize = new Dimension(262, 90);
-/*     */       }
-/*  86 */       if (synthStyle != null) {
-/*  87 */         uninstallKeyboardActions();
-/*  88 */         installKeyboardActions();
-/*     */       } 
-/*     */     } 
-/*  91 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/*  99 */     SynthContext synthContext = getContext(this.optionPane, 1);
-/*     */     
-/* 101 */     this.style.uninstallDefaults(synthContext);
-/* 102 */     synthContext.dispose();
-/* 103 */     this.style = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/* 111 */     super.uninstallListeners();
-/* 112 */     this.optionPane.removePropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installComponents() {
-/* 120 */     this.optionPane.add(createMessageArea());
-/*     */     
-/* 122 */     Container container = createSeparator();
-/* 123 */     if (container != null) {
-/* 124 */       this.optionPane.add(container);
-/* 125 */       SynthContext synthContext = getContext(this.optionPane, 1);
-/* 126 */       this.optionPane.add(Box.createVerticalStrut(synthContext.getStyle()
-/* 127 */             .getInt(synthContext, "OptionPane.separatorPadding", 6)));
-/* 128 */       synthContext.dispose();
-/*     */     } 
-/* 130 */     this.optionPane.add(createButtonArea());
-/* 131 */     this.optionPane.applyComponentOrientation(this.optionPane.getComponentOrientation());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 139 */     return getContext(paramJComponent, getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 143 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getComponentState(JComponent paramJComponent) {
-/* 147 */     return SynthLookAndFeel.getComponentState(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 164 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 166 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 167 */     synthContext.getPainter().paintOptionPaneBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 168 */         .getWidth(), paramJComponent.getHeight());
-/* 169 */     paint(synthContext, paramGraphics);
-/* 170 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 184 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 186 */     paint(synthContext, paramGraphics);
-/* 187 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 206 */     paramSynthContext.getPainter().paintOptionPaneBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 214 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent)) {
-/* 215 */       updateStyle((JOptionPane)paramPropertyChangeEvent.getSource());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean getSizeButtonsToSameWidth() {
-/* 224 */     return DefaultLookup.getBoolean(this.optionPane, this, "OptionPane.sameSizeButtons", true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Container createMessageArea() {
-/* 235 */     JPanel jPanel1 = new JPanel();
-/* 236 */     jPanel1.setName("OptionPane.messageArea");
-/* 237 */     jPanel1.setLayout(new BorderLayout());
-/*     */ 
-/*     */     
-/* 240 */     JPanel jPanel2 = new JPanel(new GridBagLayout());
-/* 241 */     JPanel jPanel3 = new JPanel(new BorderLayout());
-/*     */     
-/* 243 */     jPanel2.setName("OptionPane.body");
-/* 244 */     jPanel3.setName("OptionPane.realBody");
-/*     */     
-/* 246 */     if (getIcon() != null) {
-/* 247 */       JPanel jPanel = new JPanel();
-/* 248 */       jPanel.setName("OptionPane.separator");
-/* 249 */       jPanel.setPreferredSize(new Dimension(15, 1));
-/* 250 */       jPanel3.add(jPanel, "Before");
-/*     */     } 
-/* 252 */     jPanel3.add(jPanel2, "Center");
-/*     */     
-/* 254 */     GridBagConstraints gridBagConstraints = new GridBagConstraints();
-/* 255 */     gridBagConstraints.gridx = gridBagConstraints.gridy = 0;
-/* 256 */     gridBagConstraints.gridwidth = 0;
-/* 257 */     gridBagConstraints.gridheight = 1;
-/*     */     
-/* 259 */     SynthContext synthContext = getContext(this.optionPane, 1);
-/* 260 */     gridBagConstraints.anchor = synthContext.getStyle().getInt(synthContext, "OptionPane.messageAnchor", 10);
-/*     */     
-/* 262 */     synthContext.dispose();
-/*     */     
-/* 264 */     gridBagConstraints.insets = new Insets(0, 0, 3, 0);
-/*     */     
-/* 266 */     addMessageComponents(jPanel2, gridBagConstraints, getMessage(), 
-/* 267 */         getMaxCharactersPerLineCount(), false);
-/* 268 */     jPanel1.add(jPanel3, "Center");
-/*     */     
-/* 270 */     addIcon(jPanel1);
-/* 271 */     return jPanel1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Container createSeparator() {
-/* 279 */     JSeparator jSeparator = new JSeparator(0);
-/*     */     
-/* 281 */     jSeparator.setName("OptionPane.separator");
-/* 282 */     return jSeparator;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthOptionPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import java.beans.*;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+import sun.swing.DefaultLookup;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JOptionPane}.
+ *
+ * @author James Gosling
+ * @author Scott Violet
+ * @author Amy Fowler
+ * @since 1.7
+ */
+public class SynthOptionPaneUI extends BasicOptionPaneUI implements
+                                PropertyChangeListener, SynthUI {
+    private SynthStyle style;
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param x component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent x) {
+        return new SynthOptionPaneUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        updateStyle(optionPane);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installListeners() {
+        super.installListeners();
+        optionPane.addPropertyChangeListener(this);
+    }
+
+    private void updateStyle(JComponent c) {
+        SynthContext context = getContext(c, ENABLED);
+        SynthStyle oldStyle = style;
+
+        style = SynthLookAndFeel.updateStyle(context, this);
+        if (style != oldStyle) {
+            minimumSize = (Dimension)style.get(context,
+                                               "OptionPane.minimumSize");
+            if (minimumSize == null) {
+                minimumSize = new Dimension(262, 90);
+            }
+            if (oldStyle != null) {
+                uninstallKeyboardActions();
+                installKeyboardActions();
+            }
+        }
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(optionPane, ENABLED);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallListeners() {
+        super.uninstallListeners();
+        optionPane.removePropertyChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installComponents() {
+        optionPane.add(createMessageArea());
+
+        Container separator = createSeparator();
+        if (separator != null) {
+            optionPane.add(separator);
+            SynthContext context = getContext(optionPane, ENABLED);
+            optionPane.add(Box.createVerticalStrut(context.getStyle().
+                       getInt(context, "OptionPane.separatorPadding", 6)));
+            context.dispose();
+        }
+        optionPane.add(createButtonArea());
+        optionPane.applyComponentOrientation(optionPane.getComponentOrientation());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    private int getComponentState(JComponent c) {
+        return SynthLookAndFeel.getComponentState(c);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintOptionPaneBackground(context,
+                          g, 0, 0, c.getWidth(), c.getHeight());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component. This implementation does nothing.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintOptionPaneBorder(context, g, x, y, w, h);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent e) {
+        if (SynthLookAndFeel.shouldUpdateStyle(e)) {
+            updateStyle((JOptionPane)e.getSource());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean getSizeButtonsToSameWidth() {
+        return DefaultLookup.getBoolean(optionPane, this,
+                                        "OptionPane.sameSizeButtons", true);
+    }
+
+    /**
+     * Called from {@link #installComponents} to create a {@code Container}
+     * containing the body of the message. The icon is the created by calling
+     * {@link #addIcon}.
+     */
+    @Override
+    protected Container createMessageArea() {
+        JPanel top = new JPanel();
+        top.setName("OptionPane.messageArea");
+        top.setLayout(new BorderLayout());
+
+        /* Fill the body. */
+        Container          body = new JPanel(new GridBagLayout());
+        Container          realBody = new JPanel(new BorderLayout());
+
+        body.setName("OptionPane.body");
+        realBody.setName("OptionPane.realBody");
+
+        if (getIcon() != null) {
+            JPanel sep = new JPanel();
+            sep.setName("OptionPane.separator");
+            sep.setPreferredSize(new Dimension(15, 1));
+            realBody.add(sep, BorderLayout.BEFORE_LINE_BEGINS);
+        }
+        realBody.add(body, BorderLayout.CENTER);
+
+        GridBagConstraints cons = new GridBagConstraints();
+        cons.gridx = cons.gridy = 0;
+        cons.gridwidth = GridBagConstraints.REMAINDER;
+        cons.gridheight = 1;
+
+        SynthContext context = getContext(optionPane, ENABLED);
+        cons.anchor = context.getStyle().getInt(context,
+                      "OptionPane.messageAnchor", GridBagConstraints.CENTER);
+        context.dispose();
+
+        cons.insets = new Insets(0,0,3,0);
+
+        addMessageComponents(body, cons, getMessage(),
+                          getMaxCharactersPerLineCount(), false);
+        top.add(realBody, BorderLayout.CENTER);
+
+        addIcon(top);
+        return top;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Container createSeparator() {
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+
+        separator.setName("OptionPane.separator");
+        return separator;
+    }
+}

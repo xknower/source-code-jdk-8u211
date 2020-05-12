@@ -1,2571 +1,2435 @@
-/*      */ package javax.swing.plaf.metal;
-/*      */ 
-/*      */ import java.awt.Component;
-/*      */ import java.awt.Container;
-/*      */ import java.awt.Frame;
-/*      */ import java.awt.Insets;
-/*      */ import java.awt.Toolkit;
-/*      */ import java.awt.Window;
-/*      */ import java.beans.PropertyChangeEvent;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.lang.ref.ReferenceQueue;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.security.AccessController;
-/*      */ import javax.swing.Icon;
-/*      */ import javax.swing.ImageIcon;
-/*      */ import javax.swing.JComponent;
-/*      */ import javax.swing.LayoutStyle;
-/*      */ import javax.swing.LookAndFeel;
-/*      */ import javax.swing.SwingUtilities;
-/*      */ import javax.swing.UIDefaults;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.plaf.ColorUIResource;
-/*      */ import javax.swing.plaf.FontUIResource;
-/*      */ import javax.swing.plaf.InsetsUIResource;
-/*      */ import javax.swing.plaf.basic.BasicLookAndFeel;
-/*      */ import sun.awt.AppContext;
-/*      */ import sun.awt.OSInfo;
-/*      */ import sun.security.action.GetPropertyAction;
-/*      */ import sun.swing.DefaultLayoutStyle;
-/*      */ import sun.swing.SwingLazyValue;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class MetalLookAndFeel
-/*      */   extends BasicLookAndFeel
-/*      */ {
-/*      */   private static boolean METAL_LOOK_AND_FEEL_INITED = false;
-/*      */   private static boolean checkedWindows;
-/*      */   private static boolean isWindows;
-/*      */   private static boolean checkedSystemFontSettings;
-/*      */   private static boolean useSystemFonts;
-/*      */   
-/*      */   static boolean isWindows() {
-/*  114 */     if (!checkedWindows) {
-/*  115 */       OSInfo.OSType oSType = AccessController.<OSInfo.OSType>doPrivileged(OSInfo.getOSTypeAction());
-/*  116 */       if (oSType == OSInfo.OSType.WINDOWS) {
-/*  117 */         isWindows = true;
-/*  118 */         String str = AccessController.<String>doPrivileged(new GetPropertyAction("swing.useSystemFontSettings"));
-/*      */ 
-/*      */         
-/*  121 */         useSystemFonts = (str != null && Boolean.valueOf(str).booleanValue());
-/*      */       } 
-/*  123 */       checkedWindows = true;
-/*      */     } 
-/*  125 */     return isWindows;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static boolean useSystemFonts() {
-/*  133 */     if (isWindows() && useSystemFonts) {
-/*  134 */       if (METAL_LOOK_AND_FEEL_INITED) {
-/*  135 */         Object object = UIManager.get("Application.useSystemFontSettings");
-/*      */ 
-/*      */         
-/*  138 */         return (object == null || Boolean.TRUE.equals(object));
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  145 */       return true;
-/*      */     } 
-/*  147 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static boolean useHighContrastTheme() {
-/*  155 */     if (isWindows() && useSystemFonts()) {
-/*      */       
-/*  157 */       Boolean bool = (Boolean)Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on");
-/*      */       
-/*  159 */       return (bool == null) ? false : bool
-/*  160 */         .booleanValue();
-/*      */     } 
-/*  162 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   static boolean usingOcean() {
-/*  169 */     return getCurrentTheme() instanceof OceanTheme;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getName() {
-/*  179 */     return "Metal";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getID() {
-/*  189 */     return "Metal";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getDescription() {
-/*  199 */     return "The Java(tm) Look and Feel";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isNativeLookAndFeel() {
-/*  209 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isSupportedLookAndFeel() {
-/*  219 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getSupportsWindowDecorations() {
-/*  234 */     return true;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void initClassDefaults(UIDefaults paramUIDefaults) {
-/*  257 */     super.initClassDefaults(paramUIDefaults);
-/*      */ 
-/*      */     
-/*  260 */     Object[] arrayOfObject = { "ButtonUI", "javax.swing.plaf.metal.MetalButtonUI", "CheckBoxUI", "javax.swing.plaf.metal.MetalCheckBoxUI", "ComboBoxUI", "javax.swing.plaf.metal.MetalComboBoxUI", "DesktopIconUI", "javax.swing.plaf.metal.MetalDesktopIconUI", "FileChooserUI", "javax.swing.plaf.metal.MetalFileChooserUI", "InternalFrameUI", "javax.swing.plaf.metal.MetalInternalFrameUI", "LabelUI", "javax.swing.plaf.metal.MetalLabelUI", "PopupMenuSeparatorUI", "javax.swing.plaf.metal.MetalPopupMenuSeparatorUI", "ProgressBarUI", "javax.swing.plaf.metal.MetalProgressBarUI", "RadioButtonUI", "javax.swing.plaf.metal.MetalRadioButtonUI", "ScrollBarUI", "javax.swing.plaf.metal.MetalScrollBarUI", "ScrollPaneUI", "javax.swing.plaf.metal.MetalScrollPaneUI", "SeparatorUI", "javax.swing.plaf.metal.MetalSeparatorUI", "SliderUI", "javax.swing.plaf.metal.MetalSliderUI", "SplitPaneUI", "javax.swing.plaf.metal.MetalSplitPaneUI", "TabbedPaneUI", "javax.swing.plaf.metal.MetalTabbedPaneUI", "TextFieldUI", "javax.swing.plaf.metal.MetalTextFieldUI", "ToggleButtonUI", "javax.swing.plaf.metal.MetalToggleButtonUI", "ToolBarUI", "javax.swing.plaf.metal.MetalToolBarUI", "ToolTipUI", "javax.swing.plaf.metal.MetalToolTipUI", "TreeUI", "javax.swing.plaf.metal.MetalTreeUI", "RootPaneUI", "javax.swing.plaf.metal.MetalRootPaneUI" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  285 */     paramUIDefaults.putDefaults(arrayOfObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void initSystemColorDefaults(UIDefaults paramUIDefaults) {
-/*  382 */     MetalTheme metalTheme = getCurrentTheme();
-/*  383 */     ColorUIResource colorUIResource = metalTheme.getControl();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  410 */     Object[] arrayOfObject = { "desktop", metalTheme.getDesktopColor(), "activeCaption", metalTheme.getWindowTitleBackground(), "activeCaptionText", metalTheme.getWindowTitleForeground(), "activeCaptionBorder", metalTheme.getPrimaryControlShadow(), "inactiveCaption", metalTheme.getWindowTitleInactiveBackground(), "inactiveCaptionText", metalTheme.getWindowTitleInactiveForeground(), "inactiveCaptionBorder", metalTheme.getControlShadow(), "window", metalTheme.getWindowBackground(), "windowBorder", colorUIResource, "windowText", metalTheme.getUserTextColor(), "menu", metalTheme.getMenuBackground(), "menuText", metalTheme.getMenuForeground(), "text", metalTheme.getWindowBackground(), "textText", metalTheme.getUserTextColor(), "textHighlight", metalTheme.getTextHighlightColor(), "textHighlightText", metalTheme.getHighlightedTextColor(), "textInactiveText", metalTheme.getInactiveSystemTextColor(), "control", colorUIResource, "controlText", metalTheme.getControlTextColor(), "controlHighlight", metalTheme.getControlHighlight(), "controlLtHighlight", metalTheme.getControlHighlight(), "controlShadow", metalTheme.getControlShadow(), "controlDkShadow", metalTheme.getControlDarkShadow(), "scrollbar", colorUIResource, "info", metalTheme.getPrimaryControl(), "infoText", metalTheme.getPrimaryControlInfo() };
-/*      */ 
-/*      */     
-/*  413 */     paramUIDefaults.putDefaults(arrayOfObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void initResourceBundle(UIDefaults paramUIDefaults) {
-/*  421 */     paramUIDefaults.addResourceBundle("com.sun.swing.internal.plaf.metal.resources.metal");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void initComponentDefaults(UIDefaults paramUIDefaults) {
-/*  431 */     super.initComponentDefaults(paramUIDefaults);
-/*      */     
-/*  433 */     initResourceBundle(paramUIDefaults);
-/*      */     
-/*  435 */     ColorUIResource colorUIResource1 = getAcceleratorForeground();
-/*  436 */     ColorUIResource colorUIResource2 = getAcceleratorSelectedForeground();
-/*  437 */     ColorUIResource colorUIResource3 = getControl();
-/*  438 */     ColorUIResource colorUIResource4 = getControlHighlight();
-/*  439 */     ColorUIResource colorUIResource5 = getControlShadow();
-/*  440 */     ColorUIResource colorUIResource6 = getControlDarkShadow();
-/*  441 */     ColorUIResource colorUIResource7 = getControlTextColor();
-/*  442 */     ColorUIResource colorUIResource8 = getFocusColor();
-/*  443 */     ColorUIResource colorUIResource9 = getInactiveControlTextColor();
-/*  444 */     ColorUIResource colorUIResource10 = getMenuBackground();
-/*  445 */     ColorUIResource colorUIResource11 = getMenuSelectedBackground();
-/*  446 */     ColorUIResource colorUIResource12 = getMenuDisabledForeground();
-/*  447 */     ColorUIResource colorUIResource13 = getMenuSelectedForeground();
-/*  448 */     ColorUIResource colorUIResource14 = getPrimaryControl();
-/*  449 */     ColorUIResource colorUIResource15 = getPrimaryControlDarkShadow();
-/*  450 */     ColorUIResource colorUIResource16 = getPrimaryControlShadow();
-/*  451 */     ColorUIResource colorUIResource17 = getSystemTextColor();
-/*      */     
-/*  453 */     InsetsUIResource insetsUIResource1 = new InsetsUIResource(0, 0, 0, 0);
-/*      */     
-/*  455 */     Integer integer = Integer.valueOf(0);
-/*      */     
-/*  457 */     SwingLazyValue swingLazyValue1 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders", "getTextFieldBorder");
-/*      */ 
-/*      */ 
-/*      */     
-/*  461 */     UIDefaults.LazyValue lazyValue1 = paramUIDefaults -> new MetalBorders.DialogBorder();
-/*      */     
-/*  463 */     UIDefaults.LazyValue lazyValue2 = paramUIDefaults -> new MetalBorders.QuestionDialogBorder();
-/*      */     
-/*  465 */     UIDefaults.LazyInputMap lazyInputMap1 = new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-previous-word", "ctrl KP_LEFT", "caret-previous-word", "ctrl RIGHT", "caret-next-word", "ctrl KP_RIGHT", "caret-next-word", "ctrl shift LEFT", "selection-previous-word", "ctrl shift KP_LEFT", "selection-previous-word", "ctrl shift RIGHT", "selection-next-word", "ctrl shift KP_RIGHT", "selection-next-word", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "ctrl DELETE", "delete-next-word", "ctrl BACK_SPACE", "delete-previous-word", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "ENTER", "notify-field-accept", "ctrl BACK_SLASH", "unselect", "control shift O", "toggle-componentOrientation" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  507 */     UIDefaults.LazyInputMap lazyInputMap2 = new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-begin-line", "ctrl KP_LEFT", "caret-begin-line", "ctrl RIGHT", "caret-end-line", "ctrl KP_RIGHT", "caret-end-line", "ctrl shift LEFT", "selection-begin-line", "ctrl shift KP_LEFT", "selection-begin-line", "ctrl shift RIGHT", "selection-end-line", "ctrl shift KP_RIGHT", "selection-end-line", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "ENTER", "notify-field-accept", "ctrl BACK_SLASH", "unselect", "control shift O", "toggle-componentOrientation" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  547 */     UIDefaults.LazyInputMap lazyInputMap3 = new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-previous-word", "ctrl KP_LEFT", "caret-previous-word", "ctrl RIGHT", "caret-next-word", "ctrl KP_RIGHT", "caret-next-word", "ctrl shift LEFT", "selection-previous-word", "ctrl shift KP_LEFT", "selection-previous-word", "ctrl shift RIGHT", "selection-next-word", "ctrl shift KP_RIGHT", "selection-next-word", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "UP", "caret-up", "KP_UP", "caret-up", "DOWN", "caret-down", "KP_DOWN", "caret-down", "PAGE_UP", "page-up", "PAGE_DOWN", "page-down", "shift PAGE_UP", "selection-page-up", "shift PAGE_DOWN", "selection-page-down", "ctrl shift PAGE_UP", "selection-page-left", "ctrl shift PAGE_DOWN", "selection-page-right", "shift UP", "selection-up", "shift KP_UP", "selection-up", "shift DOWN", "selection-down", "shift KP_DOWN", "selection-down", "ENTER", "insert-break", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "ctrl DELETE", "delete-next-word", "ctrl BACK_SPACE", "delete-previous-word", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "TAB", "insert-tab", "ctrl BACK_SLASH", "unselect", "ctrl HOME", "caret-begin", "ctrl END", "caret-end", "ctrl shift HOME", "selection-begin", "ctrl shift END", "selection-end", "ctrl T", "next-link-action", "ctrl shift T", "previous-link-action", "ctrl SPACE", "activate-link-action", "control shift O", "toggle-componentOrientation" });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  612 */     SwingLazyValue swingLazyValue2 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$ScrollPaneBorder");
-/*  613 */     SwingLazyValue swingLazyValue3 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders", "getButtonBorder");
-/*      */ 
-/*      */ 
-/*      */     
-/*  617 */     SwingLazyValue swingLazyValue4 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders", "getToggleButtonBorder");
-/*      */ 
-/*      */ 
-/*      */     
-/*  621 */     SwingLazyValue swingLazyValue5 = new SwingLazyValue("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new Object[] { colorUIResource5 });
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  626 */     SwingLazyValue swingLazyValue6 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders", "getDesktopIconBorder");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  631 */     SwingLazyValue swingLazyValue7 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$MenuBarBorder");
-/*      */ 
-/*      */ 
-/*      */     
-/*  635 */     SwingLazyValue swingLazyValue8 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$PopupMenuBorder");
-/*      */ 
-/*      */     
-/*  638 */     SwingLazyValue swingLazyValue9 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$MenuItemBorder");
-/*      */ 
-/*      */ 
-/*      */     
-/*  642 */     String str = "-";
-/*  643 */     SwingLazyValue swingLazyValue10 = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$ToolBarBorder");
-/*      */     
-/*  645 */     SwingLazyValue swingLazyValue11 = new SwingLazyValue("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new Object[] { colorUIResource6, new Integer(1) });
-/*      */ 
-/*      */ 
-/*      */     
-/*  649 */     SwingLazyValue swingLazyValue12 = new SwingLazyValue("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new Object[] { colorUIResource15 });
-/*      */ 
-/*      */ 
-/*      */     
-/*  653 */     SwingLazyValue swingLazyValue13 = new SwingLazyValue("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new Object[] { colorUIResource6 });
-/*      */ 
-/*      */ 
-/*      */     
-/*  657 */     SwingLazyValue swingLazyValue14 = new SwingLazyValue("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new Object[] { colorUIResource8 });
-/*      */ 
-/*      */ 
-/*      */     
-/*  661 */     InsetsUIResource insetsUIResource2 = new InsetsUIResource(4, 2, 0, 6);
-/*      */     
-/*  663 */     InsetsUIResource insetsUIResource3 = new InsetsUIResource(0, 9, 1, 9);
-/*      */     
-/*  665 */     Object[] arrayOfObject1 = new Object[1];
-/*  666 */     arrayOfObject1[0] = new Integer(16);
-/*      */     
-/*  668 */     Object[] arrayOfObject2 = { "OptionPane.errorSound", "OptionPane.informationSound", "OptionPane.questionSound", "OptionPane.warningSound" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  674 */     MetalTheme metalTheme = getCurrentTheme();
-/*  675 */     FontActiveValue fontActiveValue1 = new FontActiveValue(metalTheme, 3);
-/*      */     
-/*  677 */     FontActiveValue fontActiveValue2 = new FontActiveValue(metalTheme, 0);
-/*      */     
-/*  679 */     FontActiveValue fontActiveValue3 = new FontActiveValue(metalTheme, 2);
-/*      */     
-/*  681 */     FontActiveValue fontActiveValue4 = new FontActiveValue(metalTheme, 4);
-/*      */     
-/*  683 */     FontActiveValue fontActiveValue5 = new FontActiveValue(metalTheme, 5);
-/*      */     
-/*  685 */     FontActiveValue fontActiveValue6 = new FontActiveValue(metalTheme, 1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1487 */     Object[] arrayOfObject3 = { "AuditoryCues.defaultCueList", arrayOfObject2, "AuditoryCues.playList", null, "TextField.border", swingLazyValue1, "TextField.font", fontActiveValue3, "PasswordField.border", swingLazyValue1, "PasswordField.font", fontActiveValue3, "PasswordField.echoChar", Character.valueOf('•'), "TextArea.font", fontActiveValue3, "TextPane.background", paramUIDefaults.get("window"), "TextPane.font", fontActiveValue3, "EditorPane.background", paramUIDefaults.get("window"), "EditorPane.font", fontActiveValue3, "TextField.focusInputMap", lazyInputMap1, "PasswordField.focusInputMap", lazyInputMap2, "TextArea.focusInputMap", lazyInputMap3, "TextPane.focusInputMap", lazyInputMap3, "EditorPane.focusInputMap", lazyInputMap3, "FormattedTextField.border", swingLazyValue1, "FormattedTextField.font", fontActiveValue3, "FormattedTextField.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy-to-clipboard", "ctrl V", "paste-from-clipboard", "ctrl X", "cut-to-clipboard", "COPY", "copy-to-clipboard", "PASTE", "paste-from-clipboard", "CUT", "cut-to-clipboard", "control INSERT", "copy-to-clipboard", "shift INSERT", "paste-from-clipboard", "shift DELETE", "cut-to-clipboard", "shift LEFT", "selection-backward", "shift KP_LEFT", "selection-backward", "shift RIGHT", "selection-forward", "shift KP_RIGHT", "selection-forward", "ctrl LEFT", "caret-previous-word", "ctrl KP_LEFT", "caret-previous-word", "ctrl RIGHT", "caret-next-word", "ctrl KP_RIGHT", "caret-next-word", "ctrl shift LEFT", "selection-previous-word", "ctrl shift KP_LEFT", "selection-previous-word", "ctrl shift RIGHT", "selection-next-word", "ctrl shift KP_RIGHT", "selection-next-word", "ctrl A", "select-all", "HOME", "caret-begin-line", "END", "caret-end-line", "shift HOME", "selection-begin-line", "shift END", "selection-end-line", "BACK_SPACE", "delete-previous", "shift BACK_SPACE", "delete-previous", "ctrl H", "delete-previous", "DELETE", "delete-next", "ctrl DELETE", "delete-next-word", "ctrl BACK_SPACE", "delete-previous-word", "RIGHT", "caret-forward", "LEFT", "caret-backward", "KP_RIGHT", "caret-forward", "KP_LEFT", "caret-backward", "ENTER", "notify-field-accept", "ctrl BACK_SLASH", "unselect", "control shift O", "toggle-componentOrientation", "ESCAPE", "reset-field-edit", "UP", "increment", "KP_UP", "increment", "DOWN", "decrement", "KP_DOWN", "decrement" }), "Button.defaultButtonFollowsFocus", Boolean.FALSE, "Button.disabledText", colorUIResource9, "Button.select", colorUIResource5, "Button.border", swingLazyValue3, "Button.font", fontActiveValue2, "Button.focus", colorUIResource8, "Button.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "SPACE", "pressed", "released SPACE", "released" }), "CheckBox.disabledText", colorUIResource9, "Checkbox.select", colorUIResource5, "CheckBox.font", fontActiveValue2, "CheckBox.focus", colorUIResource8, "CheckBox.icon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getCheckBoxIcon"), "CheckBox.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "SPACE", "pressed", "released SPACE", "released" }), "CheckBox.totalInsets", new Insets(4, 4, 4, 4), "RadioButton.disabledText", colorUIResource9, "RadioButton.select", colorUIResource5, "RadioButton.icon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getRadioButtonIcon"), "RadioButton.font", fontActiveValue2, "RadioButton.focus", colorUIResource8, "RadioButton.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "SPACE", "pressed", "released SPACE", "released" }), "RadioButton.totalInsets", new Insets(4, 4, 4, 4), "ToggleButton.select", colorUIResource5, "ToggleButton.disabledText", colorUIResource9, "ToggleButton.focus", colorUIResource8, "ToggleButton.border", swingLazyValue4, "ToggleButton.font", fontActiveValue2, "ToggleButton.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "SPACE", "pressed", "released SPACE", "released" }), "FileView.directoryIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFolderIcon"), "FileView.fileIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeLeafIcon"), "FileView.computerIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeComputerIcon"), "FileView.hardDriveIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeHardDriveIcon"), "FileView.floppyDriveIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFloppyDriveIcon"), "FileChooser.detailsViewIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserDetailViewIcon"), "FileChooser.homeFolderIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserHomeFolderIcon"), "FileChooser.listViewIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserListViewIcon"), "FileChooser.newFolderIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserNewFolderIcon"), "FileChooser.upFolderIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserUpFolderIcon"), "FileChooser.usesSingleFilePane", Boolean.TRUE, "FileChooser.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ESCAPE", "cancelSelection", "F2", "editFileName", "F5", "refresh", "BACK_SPACE", "Go Up" }), "ToolTip.font", fontActiveValue6, "ToolTip.border", swingLazyValue12, "ToolTip.borderInactive", swingLazyValue13, "ToolTip.backgroundInactive", colorUIResource3, "ToolTip.foregroundInactive", colorUIResource6, "ToolTip.hideAccelerator", Boolean.FALSE, "ToolTipManager.enableToolTipMode", "activeApplication", "Slider.font", fontActiveValue2, "Slider.border", null, "Slider.foreground", colorUIResource16, "Slider.focus", colorUIResource8, "Slider.focusInsets", insetsUIResource1, "Slider.trackWidth", new Integer(7), "Slider.majorTickLength", new Integer(6), "Slider.horizontalThumbIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getHorizontalSliderThumbIcon"), "Slider.verticalThumbIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getVerticalSliderThumbIcon"), "Slider.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "positiveUnitIncrement", "KP_RIGHT", "positiveUnitIncrement", "DOWN", "negativeUnitIncrement", "KP_DOWN", "negativeUnitIncrement", "PAGE_DOWN", "negativeBlockIncrement", "ctrl PAGE_DOWN", "negativeBlockIncrement", "LEFT", "negativeUnitIncrement", "KP_LEFT", "negativeUnitIncrement", "UP", "positiveUnitIncrement", "KP_UP", "positiveUnitIncrement", "PAGE_UP", "positiveBlockIncrement", "ctrl PAGE_UP", "positiveBlockIncrement", "HOME", "minScroll", "END", "maxScroll" }), "ProgressBar.font", fontActiveValue2, "ProgressBar.foreground", colorUIResource16, "ProgressBar.selectionBackground", colorUIResource15, "ProgressBar.border", swingLazyValue11, "ProgressBar.cellSpacing", integer, "ProgressBar.cellLength", Integer.valueOf(1), "ComboBox.background", colorUIResource3, "ComboBox.foreground", colorUIResource7, "ComboBox.selectionBackground", colorUIResource16, "ComboBox.selectionForeground", colorUIResource7, "ComboBox.font", fontActiveValue2, "ComboBox.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ESCAPE", "hidePopup", "PAGE_UP", "pageUpPassThrough", "PAGE_DOWN", "pageDownPassThrough", "HOME", "homePassThrough", "END", "endPassThrough", "DOWN", "selectNext", "KP_DOWN", "selectNext", "alt DOWN", "togglePopup", "alt KP_DOWN", "togglePopup", "alt UP", "togglePopup", "alt KP_UP", "togglePopup", "SPACE", "spacePopup", "ENTER", "enterPressed", "UP", "selectPrevious", "KP_UP", "selectPrevious" }), "InternalFrame.icon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getInternalFrameDefaultMenuIcon"), "InternalFrame.border", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$InternalFrameBorder"), "InternalFrame.optionDialogBorder", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$OptionDialogBorder"), "InternalFrame.paletteBorder", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$PaletteBorder"), "InternalFrame.paletteTitleHeight", new Integer(11), "InternalFrame.paletteCloseIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory$PaletteCloseIcon"), "InternalFrame.closeIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getInternalFrameCloseIcon", arrayOfObject1), "InternalFrame.maximizeIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getInternalFrameMaximizeIcon", arrayOfObject1), "InternalFrame.iconifyIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getInternalFrameMinimizeIcon", arrayOfObject1), "InternalFrame.minimizeIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getInternalFrameAltMaximizeIcon", arrayOfObject1), "InternalFrame.titleFont", fontActiveValue4, "InternalFrame.windowBindings", null, "InternalFrame.closeSound", "sounds/FrameClose.wav", "InternalFrame.maximizeSound", "sounds/FrameMaximize.wav", "InternalFrame.minimizeSound", "sounds/FrameMinimize.wav", "InternalFrame.restoreDownSound", "sounds/FrameRestoreDown.wav", "InternalFrame.restoreUpSound", "sounds/FrameRestoreUp.wav", "DesktopIcon.border", swingLazyValue6, "DesktopIcon.font", fontActiveValue2, "DesktopIcon.foreground", colorUIResource7, "DesktopIcon.background", colorUIResource3, "DesktopIcon.width", Integer.valueOf(160), "Desktop.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl F5", "restore", "ctrl F4", "close", "ctrl F7", "move", "ctrl F8", "resize", "RIGHT", "right", "KP_RIGHT", "right", "shift RIGHT", "shrinkRight", "shift KP_RIGHT", "shrinkRight", "LEFT", "left", "KP_LEFT", "left", "shift LEFT", "shrinkLeft", "shift KP_LEFT", "shrinkLeft", "UP", "up", "KP_UP", "up", "shift UP", "shrinkUp", "shift KP_UP", "shrinkUp", "DOWN", "down", "KP_DOWN", "down", "shift DOWN", "shrinkDown", "shift KP_DOWN", "shrinkDown", "ESCAPE", "escape", "ctrl F9", "minimize", "ctrl F10", "maximize", "ctrl F6", "selectNextFrame", "ctrl TAB", "selectNextFrame", "ctrl alt F6", "selectNextFrame", "shift ctrl alt F6", "selectPreviousFrame", "ctrl F12", "navigateNext", "shift ctrl F12", "navigatePrevious" }), "TitledBorder.font", fontActiveValue2, "TitledBorder.titleColor", colorUIResource17, "TitledBorder.border", swingLazyValue5, "Label.font", fontActiveValue2, "Label.foreground", colorUIResource17, "Label.disabledForeground", getInactiveSystemTextColor(), "List.font", fontActiveValue2, "List.focusCellHighlightBorder", swingLazyValue14, "List.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy", "ctrl V", "paste", "ctrl X", "cut", "COPY", "copy", "PASTE", "paste", "CUT", "cut", "control INSERT", "copy", "shift INSERT", "paste", "shift DELETE", "cut", "UP", "selectPreviousRow", "KP_UP", "selectPreviousRow", "shift UP", "selectPreviousRowExtendSelection", "shift KP_UP", "selectPreviousRowExtendSelection", "ctrl shift UP", "selectPreviousRowExtendSelection", "ctrl shift KP_UP", "selectPreviousRowExtendSelection", "ctrl UP", "selectPreviousRowChangeLead", "ctrl KP_UP", "selectPreviousRowChangeLead", "DOWN", "selectNextRow", "KP_DOWN", "selectNextRow", "shift DOWN", "selectNextRowExtendSelection", "shift KP_DOWN", "selectNextRowExtendSelection", "ctrl shift DOWN", "selectNextRowExtendSelection", "ctrl shift KP_DOWN", "selectNextRowExtendSelection", "ctrl DOWN", "selectNextRowChangeLead", "ctrl KP_DOWN", "selectNextRowChangeLead", "LEFT", "selectPreviousColumn", "KP_LEFT", "selectPreviousColumn", "shift LEFT", "selectPreviousColumnExtendSelection", "shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl shift LEFT", "selectPreviousColumnExtendSelection", "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl LEFT", "selectPreviousColumnChangeLead", "ctrl KP_LEFT", "selectPreviousColumnChangeLead", "RIGHT", "selectNextColumn", "KP_RIGHT", "selectNextColumn", "shift RIGHT", "selectNextColumnExtendSelection", "shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl shift RIGHT", "selectNextColumnExtendSelection", "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl RIGHT", "selectNextColumnChangeLead", "ctrl KP_RIGHT", "selectNextColumnChangeLead", "HOME", "selectFirstRow", "shift HOME", "selectFirstRowExtendSelection", "ctrl shift HOME", "selectFirstRowExtendSelection", "ctrl HOME", "selectFirstRowChangeLead", "END", "selectLastRow", "shift END", "selectLastRowExtendSelection", "ctrl shift END", "selectLastRowExtendSelection", "ctrl END", "selectLastRowChangeLead", "PAGE_UP", "scrollUp", "shift PAGE_UP", "scrollUpExtendSelection", "ctrl shift PAGE_UP", "scrollUpExtendSelection", "ctrl PAGE_UP", "scrollUpChangeLead", "PAGE_DOWN", "scrollDown", "shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl PAGE_DOWN", "scrollDownChangeLead", "ctrl A", "selectAll", "ctrl SLASH", "selectAll", "ctrl BACK_SLASH", "clearSelection", "SPACE", "addToSelection", "ctrl SPACE", "toggleAndAnchor", "shift SPACE", "extendTo", "ctrl shift SPACE", "moveSelectionTo" }), "ScrollBar.background", colorUIResource3, "ScrollBar.highlight", colorUIResource4, "ScrollBar.shadow", colorUIResource5, "ScrollBar.darkShadow", colorUIResource6, "ScrollBar.thumb", colorUIResource16, "ScrollBar.thumbShadow", colorUIResource15, "ScrollBar.thumbHighlight", colorUIResource14, "ScrollBar.width", new Integer(17), "ScrollBar.allowsAbsolutePositioning", Boolean.TRUE, "ScrollBar.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "positiveUnitIncrement", "KP_RIGHT", "positiveUnitIncrement", "DOWN", "positiveUnitIncrement", "KP_DOWN", "positiveUnitIncrement", "PAGE_DOWN", "positiveBlockIncrement", "LEFT", "negativeUnitIncrement", "KP_LEFT", "negativeUnitIncrement", "UP", "negativeUnitIncrement", "KP_UP", "negativeUnitIncrement", "PAGE_UP", "negativeBlockIncrement", "HOME", "minScroll", "END", "maxScroll" }), "ScrollPane.border", swingLazyValue2, "ScrollPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "unitScrollRight", "KP_RIGHT", "unitScrollRight", "DOWN", "unitScrollDown", "KP_DOWN", "unitScrollDown", "LEFT", "unitScrollLeft", "KP_LEFT", "unitScrollLeft", "UP", "unitScrollUp", "KP_UP", "unitScrollUp", "PAGE_UP", "scrollUp", "PAGE_DOWN", "scrollDown", "ctrl PAGE_UP", "scrollLeft", "ctrl PAGE_DOWN", "scrollRight", "ctrl HOME", "scrollHome", "ctrl END", "scrollEnd" }), "TabbedPane.font", fontActiveValue2, "TabbedPane.tabAreaBackground", colorUIResource3, "TabbedPane.background", colorUIResource5, "TabbedPane.light", colorUIResource3, "TabbedPane.focus", colorUIResource15, "TabbedPane.selected", colorUIResource3, "TabbedPane.selectHighlight", colorUIResource4, "TabbedPane.tabAreaInsets", insetsUIResource2, "TabbedPane.tabInsets", insetsUIResource3, "TabbedPane.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "RIGHT", "navigateRight", "KP_RIGHT", "navigateRight", "LEFT", "navigateLeft", "KP_LEFT", "navigateLeft", "UP", "navigateUp", "KP_UP", "navigateUp", "DOWN", "navigateDown", "KP_DOWN", "navigateDown", "ctrl DOWN", "requestFocusForVisibleComponent", "ctrl KP_DOWN", "requestFocusForVisibleComponent" }), "TabbedPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl PAGE_DOWN", "navigatePageDown", "ctrl PAGE_UP", "navigatePageUp", "ctrl UP", "requestFocus", "ctrl KP_UP", "requestFocus" }), "Table.font", fontActiveValue3, "Table.focusCellHighlightBorder", swingLazyValue14, "Table.scrollPaneBorder", swingLazyValue2, "Table.dropLineColor", colorUIResource8, "Table.dropLineShortColor", colorUIResource15, "Table.gridColor", colorUIResource5, "Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ctrl C", "copy", "ctrl V", "paste", "ctrl X", "cut", "COPY", "copy", "PASTE", "paste", "CUT", "cut", "control INSERT", "copy", "shift INSERT", "paste", "shift DELETE", "cut", "RIGHT", "selectNextColumn", "KP_RIGHT", "selectNextColumn", "shift RIGHT", "selectNextColumnExtendSelection", "shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl shift RIGHT", "selectNextColumnExtendSelection", "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection", "ctrl RIGHT", "selectNextColumnChangeLead", "ctrl KP_RIGHT", "selectNextColumnChangeLead", "LEFT", "selectPreviousColumn", "KP_LEFT", "selectPreviousColumn", "shift LEFT", "selectPreviousColumnExtendSelection", "shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl shift LEFT", "selectPreviousColumnExtendSelection", "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection", "ctrl LEFT", "selectPreviousColumnChangeLead", "ctrl KP_LEFT", "selectPreviousColumnChangeLead", "DOWN", "selectNextRow", "KP_DOWN", "selectNextRow", "shift DOWN", "selectNextRowExtendSelection", "shift KP_DOWN", "selectNextRowExtendSelection", "ctrl shift DOWN", "selectNextRowExtendSelection", "ctrl shift KP_DOWN", "selectNextRowExtendSelection", "ctrl DOWN", "selectNextRowChangeLead", "ctrl KP_DOWN", "selectNextRowChangeLead", "UP", "selectPreviousRow", "KP_UP", "selectPreviousRow", "shift UP", "selectPreviousRowExtendSelection", "shift KP_UP", "selectPreviousRowExtendSelection", "ctrl shift UP", "selectPreviousRowExtendSelection", "ctrl shift KP_UP", "selectPreviousRowExtendSelection", "ctrl UP", "selectPreviousRowChangeLead", "ctrl KP_UP", "selectPreviousRowChangeLead", "HOME", "selectFirstColumn", "shift HOME", "selectFirstColumnExtendSelection", "ctrl shift HOME", "selectFirstRowExtendSelection", "ctrl HOME", "selectFirstRow", "END", "selectLastColumn", "shift END", "selectLastColumnExtendSelection", "ctrl shift END", "selectLastRowExtendSelection", "ctrl END", "selectLastRow", "PAGE_UP", "scrollUpChangeSelection", "shift PAGE_UP", "scrollUpExtendSelection", "ctrl shift PAGE_UP", "scrollLeftExtendSelection", "ctrl PAGE_UP", "scrollLeftChangeSelection", "PAGE_DOWN", "scrollDownChangeSelection", "shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl shift PAGE_DOWN", "scrollRightExtendSelection", "ctrl PAGE_DOWN", "scrollRightChangeSelection", "TAB", "selectNextColumnCell", "shift TAB", "selectPreviousColumnCell", "ENTER", "selectNextRowCell", "shift ENTER", "selectPreviousRowCell", "ctrl A", "selectAll", "ctrl SLASH", "selectAll", "ctrl BACK_SLASH", "clearSelection", "ESCAPE", "cancel", "F2", "startEditing", "SPACE", "addToSelection", "ctrl SPACE", "toggleAndAnchor", "shift SPACE", "extendTo", "ctrl shift SPACE", "moveSelectionTo", "F8", "focusHeader" }), "Table.ascendingSortIcon", SwingUtilities2.makeIcon(getClass(), MetalLookAndFeel.class, "icons/sortUp.png"), "Table.descendingSortIcon", SwingUtilities2.makeIcon(getClass(), MetalLookAndFeel.class, "icons/sortDown.png"), "TableHeader.font", fontActiveValue3, "TableHeader.cellBorder", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$TableHeaderBorder"), "MenuBar.border", swingLazyValue7, "MenuBar.font", fontActiveValue1, "MenuBar.windowBindings", { "F10", "takeFocus" }, "Menu.border", swingLazyValue9, "Menu.borderPainted", Boolean.TRUE, "Menu.menuPopupOffsetX", integer, "Menu.menuPopupOffsetY", integer, "Menu.submenuPopupOffsetX", new Integer(-4), "Menu.submenuPopupOffsetY", new Integer(-3), "Menu.font", fontActiveValue1, "Menu.selectionForeground", colorUIResource13, "Menu.selectionBackground", colorUIResource11, "Menu.disabledForeground", colorUIResource12, "Menu.acceleratorFont", fontActiveValue5, "Menu.acceleratorForeground", colorUIResource1, "Menu.acceleratorSelectionForeground", colorUIResource2, "Menu.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemCheckIcon"), "Menu.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuArrowIcon"), "MenuItem.border", swingLazyValue9, "MenuItem.borderPainted", Boolean.TRUE, "MenuItem.font", fontActiveValue1, "MenuItem.selectionForeground", colorUIResource13, "MenuItem.selectionBackground", colorUIResource11, "MenuItem.disabledForeground", colorUIResource12, "MenuItem.acceleratorFont", fontActiveValue5, "MenuItem.acceleratorForeground", colorUIResource1, "MenuItem.acceleratorSelectionForeground", colorUIResource2, "MenuItem.acceleratorDelimiter", str, "MenuItem.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemCheckIcon"), "MenuItem.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemArrowIcon"), "MenuItem.commandSound", "sounds/MenuItemCommand.wav", "OptionPane.windowBindings", { "ESCAPE", "close" }, "OptionPane.informationSound", "sounds/OptionPaneInformation.wav", "OptionPane.warningSound", "sounds/OptionPaneWarning.wav", "OptionPane.errorSound", "sounds/OptionPaneError.wav", "OptionPane.questionSound", "sounds/OptionPaneQuestion.wav", "OptionPane.errorDialog.border.background", new ColorUIResource(153, 51, 51), "OptionPane.errorDialog.titlePane.foreground", new ColorUIResource(51, 0, 0), "OptionPane.errorDialog.titlePane.background", new ColorUIResource(255, 153, 153), "OptionPane.errorDialog.titlePane.shadow", new ColorUIResource(204, 102, 102), "OptionPane.questionDialog.border.background", new ColorUIResource(51, 102, 51), "OptionPane.questionDialog.titlePane.foreground", new ColorUIResource(0, 51, 0), "OptionPane.questionDialog.titlePane.background", new ColorUIResource(153, 204, 153), "OptionPane.questionDialog.titlePane.shadow", new ColorUIResource(102, 153, 102), "OptionPane.warningDialog.border.background", new ColorUIResource(153, 102, 51), "OptionPane.warningDialog.titlePane.foreground", new ColorUIResource(102, 51, 0), "OptionPane.warningDialog.titlePane.background", new ColorUIResource(255, 204, 153), "OptionPane.warningDialog.titlePane.shadow", new ColorUIResource(204, 153, 102), "Separator.background", getSeparatorBackground(), "Separator.foreground", getSeparatorForeground(), "PopupMenu.border", swingLazyValue8, "PopupMenu.popupSound", "sounds/PopupMenuPopup.wav", "PopupMenu.font", fontActiveValue1, "CheckBoxMenuItem.border", swingLazyValue9, "CheckBoxMenuItem.borderPainted", Boolean.TRUE, "CheckBoxMenuItem.font", fontActiveValue1, "CheckBoxMenuItem.selectionForeground", colorUIResource13, "CheckBoxMenuItem.selectionBackground", colorUIResource11, "CheckBoxMenuItem.disabledForeground", colorUIResource12, "CheckBoxMenuItem.acceleratorFont", fontActiveValue5, "CheckBoxMenuItem.acceleratorForeground", colorUIResource1, "CheckBoxMenuItem.acceleratorSelectionForeground", colorUIResource2, "CheckBoxMenuItem.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getCheckBoxMenuItemIcon"), "CheckBoxMenuItem.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemArrowIcon"), "CheckBoxMenuItem.commandSound", "sounds/MenuItemCommand.wav", "RadioButtonMenuItem.border", swingLazyValue9, "RadioButtonMenuItem.borderPainted", Boolean.TRUE, "RadioButtonMenuItem.font", fontActiveValue1, "RadioButtonMenuItem.selectionForeground", colorUIResource13, "RadioButtonMenuItem.selectionBackground", colorUIResource11, "RadioButtonMenuItem.disabledForeground", colorUIResource12, "RadioButtonMenuItem.acceleratorFont", fontActiveValue5, "RadioButtonMenuItem.acceleratorForeground", colorUIResource1, "RadioButtonMenuItem.acceleratorSelectionForeground", colorUIResource2, "RadioButtonMenuItem.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getRadioButtonMenuItemIcon"), "RadioButtonMenuItem.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemArrowIcon"), "RadioButtonMenuItem.commandSound", "sounds/MenuItemCommand.wav", "Spinner.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "UP", "increment", "KP_UP", "increment", "DOWN", "decrement", "KP_DOWN", "decrement" }), "Spinner.arrowButtonInsets", insetsUIResource1, "Spinner.border", swingLazyValue1, "Spinner.arrowButtonBorder", swingLazyValue3, "Spinner.font", fontActiveValue2, "SplitPane.dividerSize", new Integer(10), "SplitPane.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "UP", "negativeIncrement", "DOWN", "positiveIncrement", "LEFT", "negativeIncrement", "RIGHT", "positiveIncrement", "KP_UP", "negativeIncrement", "KP_DOWN", "positiveIncrement", "KP_LEFT", "negativeIncrement", "KP_RIGHT", "positiveIncrement", "HOME", "selectMin", "END", "selectMax", "F8", "startResize", "F6", "toggleFocus", "ctrl TAB", "focusOutForward", "ctrl shift TAB", "focusOutBackward" }), "SplitPane.centerOneTouchButtons", Boolean.FALSE, "SplitPane.dividerFocusColor", colorUIResource14, "Tree.font", fontActiveValue3, "Tree.textBackground", getWindowBackground(), "Tree.selectionBorderColor", colorUIResource8, "Tree.openIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFolderIcon"), "Tree.closedIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFolderIcon"), "Tree.leafIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeLeafIcon"), "Tree.expandedIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeControlIcon", new Object[] { Boolean.valueOf(false) }), "Tree.collapsedIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeControlIcon", new Object[] { Boolean.valueOf(true) }), "Tree.line", colorUIResource14, "Tree.hash", colorUIResource14, "Tree.rowHeight", integer, "Tree.focusInputMap", new UIDefaults.LazyInputMap(new Object[] { "ADD", "expand", "SUBTRACT", "collapse", "ctrl C", "copy", "ctrl V", "paste", "ctrl X", "cut", "COPY", "copy", "PASTE", "paste", "CUT", "cut", "control INSERT", "copy", "shift INSERT", "paste", "shift DELETE", "cut", "UP", "selectPrevious", "KP_UP", "selectPrevious", "shift UP", "selectPreviousExtendSelection", "shift KP_UP", "selectPreviousExtendSelection", "ctrl shift UP", "selectPreviousExtendSelection", "ctrl shift KP_UP", "selectPreviousExtendSelection", "ctrl UP", "selectPreviousChangeLead", "ctrl KP_UP", "selectPreviousChangeLead", "DOWN", "selectNext", "KP_DOWN", "selectNext", "shift DOWN", "selectNextExtendSelection", "shift KP_DOWN", "selectNextExtendSelection", "ctrl shift DOWN", "selectNextExtendSelection", "ctrl shift KP_DOWN", "selectNextExtendSelection", "ctrl DOWN", "selectNextChangeLead", "ctrl KP_DOWN", "selectNextChangeLead", "RIGHT", "selectChild", "KP_RIGHT", "selectChild", "LEFT", "selectParent", "KP_LEFT", "selectParent", "PAGE_UP", "scrollUpChangeSelection", "shift PAGE_UP", "scrollUpExtendSelection", "ctrl shift PAGE_UP", "scrollUpExtendSelection", "ctrl PAGE_UP", "scrollUpChangeLead", "PAGE_DOWN", "scrollDownChangeSelection", "shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl shift PAGE_DOWN", "scrollDownExtendSelection", "ctrl PAGE_DOWN", "scrollDownChangeLead", "HOME", "selectFirst", "shift HOME", "selectFirstExtendSelection", "ctrl shift HOME", "selectFirstExtendSelection", "ctrl HOME", "selectFirstChangeLead", "END", "selectLast", "shift END", "selectLastExtendSelection", "ctrl shift END", "selectLastExtendSelection", "ctrl END", "selectLastChangeLead", "F2", "startEditing", "ctrl A", "selectAll", "ctrl SLASH", "selectAll", "ctrl BACK_SLASH", "clearSelection", "ctrl LEFT", "scrollLeft", "ctrl KP_LEFT", "scrollLeft", "ctrl RIGHT", "scrollRight", "ctrl KP_RIGHT", "scrollRight", "SPACE", "addToSelection", "ctrl SPACE", "toggleAndAnchor", "shift SPACE", "extendTo", "ctrl shift SPACE", "moveSelectionTo" }), "Tree.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "ESCAPE", "cancel" }), "ToolBar.border", swingLazyValue10, "ToolBar.background", colorUIResource10, "ToolBar.foreground", getMenuForeground(), "ToolBar.font", fontActiveValue1, "ToolBar.dockingBackground", colorUIResource10, "ToolBar.floatingBackground", colorUIResource10, "ToolBar.dockingForeground", colorUIResource15, "ToolBar.floatingForeground", colorUIResource14, "ToolBar.rolloverBorder", paramUIDefaults -> MetalBorders.getToolBarRolloverBorder(), "ToolBar.nonrolloverBorder", paramUIDefaults -> MetalBorders.getToolBarNonrolloverBorder(), "ToolBar.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] { "UP", "navigateUp", "KP_UP", "navigateUp", "DOWN", "navigateDown", "KP_DOWN", "navigateDown", "LEFT", "navigateLeft", "KP_LEFT", "navigateLeft", "RIGHT", "navigateRight", "KP_RIGHT", "navigateRight" }), "RootPane.frameBorder", paramUIDefaults -> new MetalBorders.FrameBorder(), "RootPane.plainDialogBorder", lazyValue1, "RootPane.informationDialogBorder", lazyValue1, "RootPane.errorDialogBorder", paramUIDefaults -> new MetalBorders.ErrorDialogBorder(), "RootPane.colorChooserDialogBorder", lazyValue2, "RootPane.fileChooserDialogBorder", lazyValue2, "RootPane.questionDialogBorder", lazyValue2, "RootPane.warningDialogBorder", paramUIDefaults -> new MetalBorders.WarningDialogBorder(), "RootPane.defaultButtonWindowKeyBindings", { "ENTER", "press", "released ENTER", "release", "ctrl ENTER", "press", "ctrl released ENTER", "release" } };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1526 */     paramUIDefaults.putDefaults(arrayOfObject3);
-/*      */     
-/* 1528 */     if (isWindows() && useSystemFonts() && metalTheme.isSystemTheme()) {
-/* 1529 */       MetalFontDesktopProperty metalFontDesktopProperty = new MetalFontDesktopProperty("win.messagebox.font.height", 0);
-/*      */ 
-/*      */       
-/* 1532 */       arrayOfObject3 = new Object[] { "OptionPane.messageFont", metalFontDesktopProperty, "OptionPane.buttonFont", metalFontDesktopProperty };
-/*      */ 
-/*      */ 
-/*      */       
-/* 1536 */       paramUIDefaults.putDefaults(arrayOfObject3);
-/*      */     } 
-/*      */     
-/* 1539 */     flushUnreferenced();
-/*      */     
-/* 1541 */     boolean bool = SwingUtilities2.isLocalDisplay();
-/* 1542 */     SwingUtilities2.AATextInfo aATextInfo = SwingUtilities2.AATextInfo.getAATextInfo(bool);
-/* 1543 */     paramUIDefaults.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aATextInfo);
-/* 1544 */     new AATextListener(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void createDefaultTheme() {
-/* 1554 */     getCurrentTheme();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UIDefaults getDefaults() {
-/* 1574 */     METAL_LOOK_AND_FEEL_INITED = true;
-/*      */     
-/* 1576 */     createDefaultTheme();
-/* 1577 */     UIDefaults uIDefaults = super.getDefaults();
-/* 1578 */     MetalTheme metalTheme = getCurrentTheme();
-/* 1579 */     metalTheme.addCustomEntriesToTable(uIDefaults);
-/* 1580 */     metalTheme.install();
-/* 1581 */     return uIDefaults;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void provideErrorFeedback(Component paramComponent) {
-/* 1590 */     super.provideErrorFeedback(paramComponent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void setCurrentTheme(MetalTheme paramMetalTheme) {
-/* 1619 */     if (paramMetalTheme == null) {
-/* 1620 */       throw new NullPointerException("Can't have null theme");
-/*      */     }
-/* 1622 */     AppContext.getAppContext().put("currentMetalTheme", paramMetalTheme);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static MetalTheme getCurrentTheme() {
-/* 1635 */     AppContext appContext = AppContext.getAppContext();
-/* 1636 */     MetalTheme metalTheme = (MetalTheme)appContext.get("currentMetalTheme");
-/* 1637 */     if (metalTheme == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1645 */       if (useHighContrastTheme()) {
-/* 1646 */         metalTheme = new MetalHighContrastTheme();
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/* 1651 */         String str = AccessController.<String>doPrivileged(new GetPropertyAction("swing.metalTheme"));
-/*      */         
-/* 1653 */         if ("steel".equals(str)) {
-/* 1654 */           metalTheme = new DefaultMetalTheme();
-/*      */         } else {
-/*      */           
-/* 1657 */           metalTheme = new OceanTheme();
-/*      */         } 
-/*      */       } 
-/* 1660 */       setCurrentTheme(metalTheme);
-/*      */     } 
-/* 1662 */     return metalTheme;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getDisabledIcon(JComponent paramJComponent, Icon paramIcon) {
-/* 1684 */     if (paramIcon instanceof ImageIcon && usingOcean()) {
-/* 1685 */       return MetalUtils.getOceanDisabledButtonIcon(((ImageIcon)paramIcon)
-/* 1686 */           .getImage());
-/*      */     }
-/* 1688 */     return super.getDisabledIcon(paramJComponent, paramIcon);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getDisabledSelectedIcon(JComponent paramJComponent, Icon paramIcon) {
-/* 1712 */     if (paramIcon instanceof ImageIcon && usingOcean()) {
-/* 1713 */       return MetalUtils.getOceanDisabledButtonIcon(((ImageIcon)paramIcon)
-/* 1714 */           .getImage());
-/*      */     }
-/* 1716 */     return super.getDisabledSelectedIcon(paramJComponent, paramIcon);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static FontUIResource getControlTextFont() {
-/* 1727 */     return getCurrentTheme().getControlTextFont();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static FontUIResource getSystemTextFont() {
-/* 1737 */     return getCurrentTheme().getSystemTextFont();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static FontUIResource getUserTextFont() {
-/* 1747 */     return getCurrentTheme().getUserTextFont();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static FontUIResource getMenuTextFont() {
-/* 1757 */     return getCurrentTheme().getMenuTextFont();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static FontUIResource getWindowTitleFont() {
-/* 1767 */     return getCurrentTheme().getWindowTitleFont();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static FontUIResource getSubTextFont() {
-/* 1777 */     return getCurrentTheme().getSubTextFont();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getDesktopColor() {
-/* 1787 */     return getCurrentTheme().getDesktopColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getFocusColor() {
-/* 1797 */     return getCurrentTheme().getFocusColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getWhite() {
-/* 1807 */     return getCurrentTheme().getWhite();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getBlack() {
-/* 1817 */     return getCurrentTheme().getBlack();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControl() {
-/* 1827 */     return getCurrentTheme().getControl();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControlShadow() {
-/* 1837 */     return getCurrentTheme().getControlShadow();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControlDarkShadow() {
-/* 1847 */     return getCurrentTheme().getControlDarkShadow();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControlInfo() {
-/* 1857 */     return getCurrentTheme().getControlInfo();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControlHighlight() {
-/* 1867 */     return getCurrentTheme().getControlHighlight();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControlDisabled() {
-/* 1877 */     return getCurrentTheme().getControlDisabled();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getPrimaryControl() {
-/* 1887 */     return getCurrentTheme().getPrimaryControl();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getPrimaryControlShadow() {
-/* 1897 */     return getCurrentTheme().getPrimaryControlShadow();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getPrimaryControlDarkShadow() {
-/* 1908 */     return getCurrentTheme().getPrimaryControlDarkShadow();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getPrimaryControlInfo() {
-/* 1918 */     return getCurrentTheme().getPrimaryControlInfo();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getPrimaryControlHighlight() {
-/* 1929 */     return getCurrentTheme().getPrimaryControlHighlight();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getSystemTextColor() {
-/* 1939 */     return getCurrentTheme().getSystemTextColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getControlTextColor() {
-/* 1949 */     return getCurrentTheme().getControlTextColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getInactiveControlTextColor() {
-/* 1960 */     return getCurrentTheme().getInactiveControlTextColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getInactiveSystemTextColor() {
-/* 1971 */     return getCurrentTheme().getInactiveSystemTextColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getUserTextColor() {
-/* 1981 */     return getCurrentTheme().getUserTextColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getTextHighlightColor() {
-/* 1991 */     return getCurrentTheme().getTextHighlightColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getHighlightedTextColor() {
-/* 2001 */     return getCurrentTheme().getHighlightedTextColor();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getWindowBackground() {
-/* 2011 */     return getCurrentTheme().getWindowBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getWindowTitleBackground() {
-/* 2022 */     return getCurrentTheme().getWindowTitleBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getWindowTitleForeground() {
-/* 2033 */     return getCurrentTheme().getWindowTitleForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getWindowTitleInactiveBackground() {
-/* 2044 */     return getCurrentTheme().getWindowTitleInactiveBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getWindowTitleInactiveForeground() {
-/* 2055 */     return getCurrentTheme().getWindowTitleInactiveForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getMenuBackground() {
-/* 2065 */     return getCurrentTheme().getMenuBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getMenuForeground() {
-/* 2075 */     return getCurrentTheme().getMenuForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getMenuSelectedBackground() {
-/* 2086 */     return getCurrentTheme().getMenuSelectedBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getMenuSelectedForeground() {
-/* 2097 */     return getCurrentTheme().getMenuSelectedForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getMenuDisabledForeground() {
-/* 2108 */     return getCurrentTheme().getMenuDisabledForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getSeparatorBackground() {
-/* 2118 */     return getCurrentTheme().getSeparatorBackground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getSeparatorForeground() {
-/* 2128 */     return getCurrentTheme().getSeparatorForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getAcceleratorForeground() {
-/* 2138 */     return getCurrentTheme().getAcceleratorForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static ColorUIResource getAcceleratorSelectedForeground() {
-/* 2149 */     return getCurrentTheme().getAcceleratorSelectedForeground();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LayoutStyle getLayoutStyle() {
-/* 2162 */     return MetalLayoutStyle.INSTANCE;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static class FontActiveValue
-/*      */     implements UIDefaults.ActiveValue
-/*      */   {
-/*      */     private int type;
-/*      */     
-/*      */     private MetalTheme theme;
-/*      */     
-/*      */     FontActiveValue(MetalTheme param1MetalTheme, int param1Int) {
-/* 2174 */       this.theme = param1MetalTheme;
-/* 2175 */       this.type = param1Int;
-/*      */     }
-/*      */     
-/*      */     public Object createValue(UIDefaults param1UIDefaults) {
-/* 2179 */       FontUIResource fontUIResource = null;
-/* 2180 */       switch (this.type) {
-/*      */         case 0:
-/* 2182 */           fontUIResource = this.theme.getControlTextFont();
-/*      */           break;
-/*      */         case 1:
-/* 2185 */           fontUIResource = this.theme.getSystemTextFont();
-/*      */           break;
-/*      */         case 2:
-/* 2188 */           fontUIResource = this.theme.getUserTextFont();
-/*      */           break;
-/*      */         case 3:
-/* 2191 */           fontUIResource = this.theme.getMenuTextFont();
-/*      */           break;
-/*      */         case 4:
-/* 2194 */           fontUIResource = this.theme.getWindowTitleFont();
-/*      */           break;
-/*      */         case 5:
-/* 2197 */           fontUIResource = this.theme.getSubTextFont();
-/*      */           break;
-/*      */       } 
-/* 2200 */       return fontUIResource;
-/*      */     }
-/*      */   }
-/*      */   
-/* 2204 */   static ReferenceQueue<LookAndFeel> queue = new ReferenceQueue<>();
-/*      */   
-/*      */   static void flushUnreferenced() {
-/*      */     AATextListener aATextListener;
-/* 2208 */     while ((aATextListener = (AATextListener)queue.poll()) != null)
-/* 2209 */       aATextListener.dispose(); 
-/*      */   }
-/*      */   
-/*      */   static class AATextListener
-/*      */     extends WeakReference<LookAndFeel>
-/*      */     implements PropertyChangeListener
-/*      */   {
-/* 2216 */     private String key = "awt.font.desktophints"; private static boolean updatePending;
-/*      */     
-/*      */     AATextListener(LookAndFeel param1LookAndFeel) {
-/* 2219 */       super(param1LookAndFeel, MetalLookAndFeel.queue);
-/* 2220 */       Toolkit toolkit = Toolkit.getDefaultToolkit();
-/* 2221 */       toolkit.addPropertyChangeListener(this.key, this);
-/*      */     }
-/*      */     
-/*      */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 2225 */       LookAndFeel lookAndFeel = get();
-/* 2226 */       if (lookAndFeel == null || lookAndFeel != UIManager.getLookAndFeel()) {
-/* 2227 */         dispose();
-/*      */         return;
-/*      */       } 
-/* 2230 */       UIDefaults uIDefaults = UIManager.getLookAndFeelDefaults();
-/* 2231 */       boolean bool = SwingUtilities2.isLocalDisplay();
-/*      */       
-/* 2233 */       SwingUtilities2.AATextInfo aATextInfo = SwingUtilities2.AATextInfo.getAATextInfo(bool);
-/* 2234 */       uIDefaults.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aATextInfo);
-/* 2235 */       updateUI();
-/*      */     }
-/*      */     
-/*      */     void dispose() {
-/* 2239 */       Toolkit toolkit = Toolkit.getDefaultToolkit();
-/* 2240 */       toolkit.removePropertyChangeListener(this.key, this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static void updateWindowUI(Window param1Window) {
-/* 2247 */       SwingUtilities.updateComponentTreeUI(param1Window);
-/* 2248 */       Window[] arrayOfWindow = param1Window.getOwnedWindows();
-/* 2249 */       for (Window window : arrayOfWindow) {
-/* 2250 */         updateWindowUI(window);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static void updateAllUIs() {
-/* 2258 */       Frame[] arrayOfFrame = Frame.getFrames();
-/* 2259 */       for (Frame frame : arrayOfFrame) {
-/* 2260 */         updateWindowUI(frame);
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static synchronized void setUpdatePending(boolean param1Boolean) {
-/* 2273 */       updatePending = param1Boolean;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static synchronized boolean isUpdatePending() {
-/* 2280 */       return updatePending;
-/*      */     }
-/*      */     
-/*      */     protected void updateUI() {
-/* 2284 */       if (!isUpdatePending()) {
-/* 2285 */         setUpdatePending(true);
-/* 2286 */         Runnable runnable = new Runnable() {
-/*      */             public void run() {
-/* 2288 */               MetalLookAndFeel.AATextListener.updateAllUIs();
-/* 2289 */               MetalLookAndFeel.AATextListener.setUpdatePending(false);
-/*      */             }
-/*      */           };
-/* 2292 */         SwingUtilities.invokeLater(runnable);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   private static class MetalLayoutStyle
-/*      */     extends DefaultLayoutStyle
-/*      */   {
-/* 2300 */     private static MetalLayoutStyle INSTANCE = new MetalLayoutStyle();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getPreferredGap(JComponent param1JComponent1, JComponent param1JComponent2, LayoutStyle.ComponentPlacement param1ComponentPlacement, int param1Int, Container param1Container) {
-/*      */       // Byte code:
-/*      */       //   0: aload_0
-/*      */       //   1: aload_1
-/*      */       //   2: aload_2
-/*      */       //   3: aload_3
-/*      */       //   4: iload #4
-/*      */       //   6: aload #5
-/*      */       //   8: invokespecial getPreferredGap : (Ljavax/swing/JComponent;Ljavax/swing/JComponent;Ljavax/swing/LayoutStyle$ComponentPlacement;ILjava/awt/Container;)I
-/*      */       //   11: pop
-/*      */       //   12: iconst_0
-/*      */       //   13: istore #6
-/*      */       //   15: getstatic javax/swing/plaf/metal/MetalLookAndFeel$1.$SwitchMap$javax$swing$LayoutStyle$ComponentPlacement : [I
-/*      */       //   18: aload_3
-/*      */       //   19: invokevirtual ordinal : ()I
-/*      */       //   22: iaload
-/*      */       //   23: tableswitch default -> 187, 1 -> 48, 2 -> 81, 3 -> 183
-/*      */       //   48: iload #4
-/*      */       //   50: iconst_3
-/*      */       //   51: if_icmpeq -> 61
-/*      */       //   54: iload #4
-/*      */       //   56: bipush #7
-/*      */       //   58: if_icmpne -> 81
-/*      */       //   61: aload_0
-/*      */       //   62: aload_1
-/*      */       //   63: iload #4
-/*      */       //   65: invokevirtual getIndent : (Ljavax/swing/JComponent;I)I
-/*      */       //   68: istore #7
-/*      */       //   70: iload #7
-/*      */       //   72: ifle -> 78
-/*      */       //   75: iload #7
-/*      */       //   77: ireturn
-/*      */       //   78: bipush #12
-/*      */       //   80: ireturn
-/*      */       //   81: aload_1
-/*      */       //   82: invokevirtual getUIClassID : ()Ljava/lang/String;
-/*      */       //   85: ldc 'ToggleButtonUI'
-/*      */       //   87: if_acmpne -> 176
-/*      */       //   90: aload_2
-/*      */       //   91: invokevirtual getUIClassID : ()Ljava/lang/String;
-/*      */       //   94: ldc 'ToggleButtonUI'
-/*      */       //   96: if_acmpne -> 176
-/*      */       //   99: aload_1
-/*      */       //   100: checkcast javax/swing/JToggleButton
-/*      */       //   103: invokevirtual getModel : ()Ljavax/swing/ButtonModel;
-/*      */       //   106: astore #7
-/*      */       //   108: aload_2
-/*      */       //   109: checkcast javax/swing/JToggleButton
-/*      */       //   112: invokevirtual getModel : ()Ljavax/swing/ButtonModel;
-/*      */       //   115: astore #8
-/*      */       //   117: aload #7
-/*      */       //   119: instanceof javax/swing/DefaultButtonModel
-/*      */       //   122: ifeq -> 165
-/*      */       //   125: aload #8
-/*      */       //   127: instanceof javax/swing/DefaultButtonModel
-/*      */       //   130: ifeq -> 165
-/*      */       //   133: aload #7
-/*      */       //   135: checkcast javax/swing/DefaultButtonModel
-/*      */       //   138: invokevirtual getGroup : ()Ljavax/swing/ButtonGroup;
-/*      */       //   141: aload #8
-/*      */       //   143: checkcast javax/swing/DefaultButtonModel
-/*      */       //   146: invokevirtual getGroup : ()Ljavax/swing/ButtonGroup;
-/*      */       //   149: if_acmpne -> 165
-/*      */       //   152: aload #7
-/*      */       //   154: checkcast javax/swing/DefaultButtonModel
-/*      */       //   157: invokevirtual getGroup : ()Ljavax/swing/ButtonGroup;
-/*      */       //   160: ifnull -> 165
-/*      */       //   163: iconst_2
-/*      */       //   164: ireturn
-/*      */       //   165: invokestatic usingOcean : ()Z
-/*      */       //   168: ifeq -> 174
-/*      */       //   171: bipush #6
-/*      */       //   173: ireturn
-/*      */       //   174: iconst_5
-/*      */       //   175: ireturn
-/*      */       //   176: bipush #6
-/*      */       //   178: istore #6
-/*      */       //   180: goto -> 187
-/*      */       //   183: bipush #12
-/*      */       //   185: istore #6
-/*      */       //   187: aload_0
-/*      */       //   188: aload_1
-/*      */       //   189: aload_2
-/*      */       //   190: iload #4
-/*      */       //   192: invokevirtual isLabelAndNonlabel : (Ljavax/swing/JComponent;Ljavax/swing/JComponent;I)Z
-/*      */       //   195: ifeq -> 212
-/*      */       //   198: aload_0
-/*      */       //   199: aload_1
-/*      */       //   200: aload_2
-/*      */       //   201: iload #4
-/*      */       //   203: iload #6
-/*      */       //   205: bipush #6
-/*      */       //   207: iadd
-/*      */       //   208: invokevirtual getButtonGap : (Ljavax/swing/JComponent;Ljavax/swing/JComponent;II)I
-/*      */       //   211: ireturn
-/*      */       //   212: aload_0
-/*      */       //   213: aload_1
-/*      */       //   214: aload_2
-/*      */       //   215: iload #4
-/*      */       //   217: iload #6
-/*      */       //   219: invokevirtual getButtonGap : (Ljavax/swing/JComponent;Ljavax/swing/JComponent;II)I
-/*      */       //   222: ireturn
-/*      */       // Line number table:
-/*      */       //   Java source line number -> byte code offset
-/*      */       //   #2307	-> 0
-/*      */       //   #2310	-> 12
-/*      */       //   #2312	-> 15
-/*      */       //   #2315	-> 48
-/*      */       //   #2317	-> 61
-/*      */       //   #2318	-> 70
-/*      */       //   #2319	-> 75
-/*      */       //   #2321	-> 78
-/*      */       //   #2325	-> 81
-/*      */       //   #2326	-> 91
-/*      */       //   #2327	-> 99
-/*      */       //   #2328	-> 103
-/*      */       //   #2329	-> 108
-/*      */       //   #2330	-> 112
-/*      */       //   #2331	-> 117
-/*      */       //   #2333	-> 138
-/*      */       //   #2334	-> 146
-/*      */       //   #2335	-> 157
-/*      */       //   #2344	-> 163
-/*      */       //   #2349	-> 165
-/*      */       //   #2350	-> 171
-/*      */       //   #2352	-> 174
-/*      */       //   #2354	-> 176
-/*      */       //   #2355	-> 180
-/*      */       //   #2357	-> 183
-/*      */       //   #2360	-> 187
-/*      */       //   #2368	-> 198
-/*      */       //   #2371	-> 212
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int getContainerGap(JComponent param1JComponent, int param1Int, Container param1Container) {
-/* 2377 */       super.getContainerGap(param1JComponent, param1Int, param1Container);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2394 */       return getButtonGap(param1JComponent, param1Int, 12 - 
-/* 2395 */           getButtonAdjustment(param1JComponent, param1Int));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     protected int getButtonGap(JComponent param1JComponent1, JComponent param1JComponent2, int param1Int1, int param1Int2) {
-/* 2401 */       param1Int2 = super.getButtonGap(param1JComponent1, param1JComponent2, param1Int1, param1Int2);
-/* 2402 */       if (param1Int2 > 0) {
-/* 2403 */         int i = getButtonAdjustment(param1JComponent1, param1Int1);
-/* 2404 */         if (i == 0) {
-/* 2405 */           i = getButtonAdjustment(param1JComponent2, 
-/* 2406 */               flipDirection(param1Int1));
-/*      */         }
-/* 2408 */         param1Int2 -= i;
-/*      */       } 
-/* 2410 */       if (param1Int2 < 0) {
-/* 2411 */         return 0;
-/*      */       }
-/* 2413 */       return param1Int2;
-/*      */     }
-/*      */     
-/*      */     private int getButtonAdjustment(JComponent param1JComponent, int param1Int) {
-/* 2417 */       String str = param1JComponent.getUIClassID();
-/* 2418 */       if (str == "ButtonUI" || str == "ToggleButtonUI") {
-/* 2419 */         if (!MetalLookAndFeel.usingOcean() && (param1Int == 3 || param1Int == 5))
-/*      */         {
-/* 2421 */           if (param1JComponent.getBorder() instanceof javax.swing.plaf.UIResource) {
-/* 2422 */             return 1;
-/*      */           }
-/*      */         }
-/*      */       }
-/* 2426 */       else if (param1Int == 5 && (
-/* 2427 */         str == "RadioButtonUI" || str == "CheckBoxUI") && 
-/* 2428 */         !MetalLookAndFeel.usingOcean()) {
-/* 2429 */         return 1;
-/*      */       } 
-/*      */       
-/* 2432 */       return 0;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalLookAndFeel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.plaf.*;
+import javax.swing.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.UIDefaults.LazyValue;
+
+import java.awt.Color;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+
+import java.security.AccessController;
+
+import sun.awt.*;
+import sun.security.action.GetPropertyAction;
+import sun.swing.DefaultLayoutStyle;
+import sun.swing.SwingLazyValue;
+import sun.swing.SwingUtilities2;
+
+/**
+ * The Java Look and Feel, otherwise known as Metal.
+ * <p>
+ * Each of the {@code ComponentUI}s provided by {@code
+ * MetalLookAndFeel} derives its behavior from the defaults
+ * table. Unless otherwise noted each of the {@code ComponentUI}
+ * implementations in this package document the set of defaults they
+ * use. Unless otherwise noted the defaults are installed at the time
+ * {@code installUI} is invoked, and follow the recommendations
+ * outlined in {@code LookAndFeel} for installing defaults.
+ * <p>
+ * {@code MetalLookAndFeel} derives it's color palette and fonts from
+ * {@code MetalTheme}. The default theme is {@code OceanTheme}. The theme
+ * can be changed using the {@code setCurrentTheme} method, refer to it
+ * for details on changing the theme. Prior to 1.5 the default
+ * theme was {@code DefaultMetalTheme}. The system property
+ * {@code "swing.metalTheme"} can be set to {@code "steel"} to indicate
+ * the default should be {@code DefaultMetalTheme}.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see MetalTheme
+ * @see DefaultMetalTheme
+ * @see OceanTheme
+ *
+ * @author Steve Wilson
+ */
+public class MetalLookAndFeel extends BasicLookAndFeel
+{
+
+    private static boolean METAL_LOOK_AND_FEEL_INITED = false;
+
+
+    /**
+     * True if checked for windows yet.
+     */
+    private static boolean checkedWindows;
+    /**
+     * True if running on Windows.
+     */
+    private static boolean isWindows;
+
+    /**
+     * Set to true first time we've checked swing.useSystemFontSettings.
+     */
+    private static boolean checkedSystemFontSettings;
+
+    /**
+     * True indicates we should use system fonts, unless the developer has
+     * specified otherwise with Application.useSystemFontSettings.
+     */
+    private static boolean useSystemFonts;
+
+
+    /**
+     * Returns true if running on Windows.
+     */
+    static boolean isWindows() {
+        if (!checkedWindows) {
+            OSInfo.OSType osType = AccessController.doPrivileged(OSInfo.getOSTypeAction());
+            if (osType == OSInfo.OSType.WINDOWS) {
+                isWindows = true;
+                String systemFonts = AccessController.doPrivileged(
+                    new GetPropertyAction("swing.useSystemFontSettings"));
+                useSystemFonts = (systemFonts != null &&
+                               (Boolean.valueOf(systemFonts).booleanValue()));
+            }
+            checkedWindows = true;
+        }
+        return isWindows;
+    }
+
+    /**
+     * Returns true if system fonts should be used, this is only useful
+     * for windows.
+     */
+    static boolean useSystemFonts() {
+        if (isWindows() && useSystemFonts) {
+            if (METAL_LOOK_AND_FEEL_INITED) {
+                Object value = UIManager.get(
+                                 "Application.useSystemFontSettings");
+
+                return (value == null || Boolean.TRUE.equals(value));
+            }
+            // If an instanceof MetalLookAndFeel hasn't been inited yet, we
+            // don't want to trigger loading of a UI by asking the UIManager
+            // for a property, assume the user wants system fonts. This will
+            // be properly adjusted when install is invoked on the
+            // MetalTheme
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the high contrast theme should be used as the default
+     * theme.
+     */
+    private static boolean useHighContrastTheme() {
+        if (isWindows() && useSystemFonts()) {
+            Boolean highContrast = (Boolean)Toolkit.getDefaultToolkit().
+                                  getDesktopProperty("win.highContrast.on");
+
+            return (highContrast == null) ? false : highContrast.
+                                            booleanValue();
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if we're using the Ocean Theme.
+     */
+    static boolean usingOcean() {
+        return (getCurrentTheme() instanceof OceanTheme);
+    }
+
+    /**
+     * Returns the name of this look and feel. This returns
+     * {@code "Metal"}.
+     *
+     * @return the name of this look and feel
+     */
+    public String getName() {
+        return "Metal";
+    }
+
+    /**
+     * Returns an identifier for this look and feel. This returns
+     * {@code "Metal"}.
+     *
+     * @return the identifier of this look and feel
+     */
+    public String getID() {
+        return "Metal";
+    }
+
+    /**
+     * Returns a short description of this look and feel. This returns
+     * {@code "The Java(tm) Look and Feel"}.
+
+     * @return a short description for the look and feel
+     */
+    public String getDescription() {
+        return "The Java(tm) Look and Feel";
+    }
+
+    /**
+     * Returns {@code false}; {@code MetalLookAndFeel} is not a native
+     * look and feel.
+     *
+     * @return {@code false}
+     */
+    public boolean isNativeLookAndFeel() {
+        return false;
+    }
+
+    /**
+     * Returns {@code true}; {@code MetalLookAndFeel} can be run on
+     * any platform.
+     *
+     * @return {@code true}
+     */
+    public boolean isSupportedLookAndFeel() {
+        return true;
+    }
+
+    /**
+     * Returns {@code true}; metal can provide {@code Window}
+     * decorations.
+     *
+     * @return {@code true}
+     *
+     * @see JDialog#setDefaultLookAndFeelDecorated
+     * @see JFrame#setDefaultLookAndFeelDecorated
+     * @see JRootPane#setWindowDecorationStyle
+     * @since 1.4
+     */
+    public boolean getSupportsWindowDecorations() {
+        return true;
+    }
+
+    /**
+     * Populates {@code table} with mappings from {@code uiClassID} to
+     * the fully qualified name of the ui class. {@code
+     * MetalLookAndFeel} registers an entry for each of the classes in
+     * the package {@code javax.swing.plaf.metal} that are named
+     * MetalXXXUI. The string {@code XXX} is one of Swing's uiClassIDs. For
+     * the {@code uiClassIDs} that do not have a class in metal, the
+     * corresponding class in {@code javax.swing.plaf.basic} is
+     * used. For example, metal does not have a class named {@code
+     * "MetalColorChooserUI"}, as such, {@code
+     * javax.swing.plaf.basic.BasicColorChooserUI} is used.
+     *
+     * @param table the {@code UIDefaults} instance the entries are
+     *        added to
+     * @throws NullPointerException if {@code table} is {@code null}
+     *
+     * @see javax.swing.plaf.basic.BasicLookAndFeel#initClassDefaults
+     */
+    protected void initClassDefaults(UIDefaults table)
+    {
+        super.initClassDefaults(table);
+        final String metalPackageName = "javax.swing.plaf.metal.";
+
+        Object[] uiDefaults = {
+                   "ButtonUI", metalPackageName + "MetalButtonUI",
+                 "CheckBoxUI", metalPackageName + "MetalCheckBoxUI",
+                 "ComboBoxUI", metalPackageName + "MetalComboBoxUI",
+              "DesktopIconUI", metalPackageName + "MetalDesktopIconUI",
+              "FileChooserUI", metalPackageName + "MetalFileChooserUI",
+            "InternalFrameUI", metalPackageName + "MetalInternalFrameUI",
+                    "LabelUI", metalPackageName + "MetalLabelUI",
+       "PopupMenuSeparatorUI", metalPackageName + "MetalPopupMenuSeparatorUI",
+              "ProgressBarUI", metalPackageName + "MetalProgressBarUI",
+              "RadioButtonUI", metalPackageName + "MetalRadioButtonUI",
+                "ScrollBarUI", metalPackageName + "MetalScrollBarUI",
+               "ScrollPaneUI", metalPackageName + "MetalScrollPaneUI",
+                "SeparatorUI", metalPackageName + "MetalSeparatorUI",
+                   "SliderUI", metalPackageName + "MetalSliderUI",
+                "SplitPaneUI", metalPackageName + "MetalSplitPaneUI",
+               "TabbedPaneUI", metalPackageName + "MetalTabbedPaneUI",
+                "TextFieldUI", metalPackageName + "MetalTextFieldUI",
+             "ToggleButtonUI", metalPackageName + "MetalToggleButtonUI",
+                  "ToolBarUI", metalPackageName + "MetalToolBarUI",
+                  "ToolTipUI", metalPackageName + "MetalToolTipUI",
+                     "TreeUI", metalPackageName + "MetalTreeUI",
+                 "RootPaneUI", metalPackageName + "MetalRootPaneUI",
+        };
+
+        table.putDefaults(uiDefaults);
+    }
+
+    /**
+     * Populates {@code table} with system colors. The following values are
+     * added to {@code table}:
+     * <table border="1" cellpadding="1" cellspacing="0"
+     *         summary="Metal's system color mapping">
+     *  <tr valign="top"  align="left">
+     *    <th style="background-color:#CCCCFF" align="left">Key
+     *    <th style="background-color:#CCCCFF" align="left">Value
+     *  <tr valign="top"  align="left">
+     *    <td>"desktop"
+     *    <td>{@code theme.getDesktopColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"activeCaption"
+     *    <td>{@code theme.getWindowTitleBackground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"activeCaptionText"
+     *    <td>{@code theme.getWindowTitleForeground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"activeCaptionBorder"
+     *    <td>{@code theme.getPrimaryControlShadow()}
+     *  <tr valign="top"  align="left">
+     *    <td>"inactiveCaption"
+     *    <td>{@code theme.getWindowTitleInactiveBackground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"inactiveCaptionText"
+     *    <td>{@code theme.getWindowTitleInactiveForeground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"inactiveCaptionBorder"
+     *    <td>{@code theme.getControlShadow()}
+     *  <tr valign="top"  align="left">
+     *    <td>"window"
+     *    <td>{@code theme.getWindowBackground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"windowBorder"
+     *    <td>{@code theme.getControl()}
+     *  <tr valign="top"  align="left">
+     *    <td>"windowText"
+     *    <td>{@code theme.getUserTextColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"menu"
+     *    <td>{@code theme.getMenuBackground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"menuText"
+     *    <td>{@code theme.getMenuForeground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"text"
+     *    <td>{@code theme.getWindowBackground()}
+     *  <tr valign="top"  align="left">
+     *    <td>"textText"
+     *    <td>{@code theme.getUserTextColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"textHighlight"
+     *    <td>{@code theme.getTextHighlightColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"textHighlightText"
+     *    <td>{@code theme.getHighlightedTextColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"textInactiveText"
+     *    <td>{@code theme.getInactiveSystemTextColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"control"
+     *    <td>{@code theme.getControl()}
+     *  <tr valign="top"  align="left">
+     *    <td>"controlText"
+     *    <td>{@code theme.getControlTextColor()}
+     *  <tr valign="top"  align="left">
+     *    <td>"controlHighlight"
+     *    <td>{@code theme.getControlHighlight()}
+     *  <tr valign="top"  align="left">
+     *    <td>"controlLtHighlight"
+     *    <td>{@code theme.getControlHighlight()}
+     *  <tr valign="top"  align="left">
+     *    <td>"controlShadow"
+     *    <td>{@code theme.getControlShadow()}
+     *  <tr valign="top"  align="left">
+     *    <td>"controlDkShadow"
+     *    <td>{@code theme.getControlDarkShadow()}
+     *  <tr valign="top"  align="left">
+     *    <td>"scrollbar"
+     *    <td>{@code theme.getControl()}
+     *  <tr valign="top"  align="left">
+     *    <td>"info"
+     *    <td>{@code theme.getPrimaryControl()}
+     *  <tr valign="top"  align="left">
+     *    <td>"infoText"
+     *    <td>{@code theme.getPrimaryControlInfo()}
+     * </table>
+     * The value {@code theme} corresponds to the current {@code MetalTheme}.
+     *
+     * @param table the {@code UIDefaults} object the values are added to
+     * @throws NullPointerException if {@code table} is {@code null}
+     */
+    protected void initSystemColorDefaults(UIDefaults table)
+    {
+        MetalTheme theme = getCurrentTheme();
+        Color control = theme.getControl();
+        Object[] systemColors = {
+                "desktop", theme.getDesktopColor(), /* Color of the desktop background */
+          "activeCaption", theme.getWindowTitleBackground(), /* Color for captions (title bars) when they are active. */
+      "activeCaptionText", theme.getWindowTitleForeground(), /* Text color for text in captions (title bars). */
+    "activeCaptionBorder", theme.getPrimaryControlShadow(), /* Border color for caption (title bar) window borders. */
+        "inactiveCaption", theme.getWindowTitleInactiveBackground(), /* Color for captions (title bars) when not active. */
+    "inactiveCaptionText", theme.getWindowTitleInactiveForeground(), /* Text color for text in inactive captions (title bars). */
+  "inactiveCaptionBorder", theme.getControlShadow(), /* Border color for inactive caption (title bar) window borders. */
+                 "window", theme.getWindowBackground(), /* Default color for the interior of windows */
+           "windowBorder", control, /* ??? */
+             "windowText", theme.getUserTextColor(), /* ??? */
+                   "menu", theme.getMenuBackground(), /* Background color for menus */
+               "menuText", theme.getMenuForeground(), /* Text color for menus  */
+                   "text", theme.getWindowBackground(), /* Text background color */
+               "textText", theme.getUserTextColor(), /* Text foreground color */
+          "textHighlight", theme.getTextHighlightColor(), /* Text background color when selected */
+      "textHighlightText", theme.getHighlightedTextColor(), /* Text color when selected */
+       "textInactiveText", theme.getInactiveSystemTextColor(), /* Text color when disabled */
+                "control", control, /* Default color for controls (buttons, sliders, etc) */
+            "controlText", theme.getControlTextColor(), /* Default color for text in controls */
+       "controlHighlight", theme.getControlHighlight(), /* Specular highlight (opposite of the shadow) */
+     "controlLtHighlight", theme.getControlHighlight(), /* Highlight color for controls */
+          "controlShadow", theme.getControlShadow(), /* Shadow color for controls */
+        "controlDkShadow", theme.getControlDarkShadow(), /* Dark shadow color for controls */
+              "scrollbar", control, /* Scrollbar background (usually the "track") */
+                   "info", theme.getPrimaryControl(), /* ToolTip Background */
+               "infoText", theme.getPrimaryControlInfo()  /* ToolTip Text */
+        };
+
+        table.putDefaults(systemColors);
+    }
+
+    /**
+     * Initialize the defaults table with the name of the ResourceBundle
+     * used for getting localized defaults.
+     */
+    private void initResourceBundle(UIDefaults table) {
+        table.addResourceBundle( "com.sun.swing.internal.plaf.metal.resources.metal" );
+    }
+
+    /**
+     * Populates {@code table} with the defaults for metal.
+     *
+     * @param table the {@code UIDefaults} to add the values to
+     * @throws NullPointerException if {@code table} is {@code null}
+     */
+    protected void initComponentDefaults(UIDefaults table) {
+        super.initComponentDefaults( table );
+
+        initResourceBundle(table);
+
+        Color acceleratorForeground = getAcceleratorForeground();
+        Color acceleratorSelectedForeground = getAcceleratorSelectedForeground();
+        Color control = getControl();
+        Color controlHighlight = getControlHighlight();
+        Color controlShadow = getControlShadow();
+        Color controlDarkShadow = getControlDarkShadow();
+        Color controlTextColor = getControlTextColor();
+        Color focusColor = getFocusColor();
+        Color inactiveControlTextColor = getInactiveControlTextColor();
+        Color menuBackground = getMenuBackground();
+        Color menuSelectedBackground = getMenuSelectedBackground();
+        Color menuDisabledForeground = getMenuDisabledForeground();
+        Color menuSelectedForeground = getMenuSelectedForeground();
+        Color primaryControl = getPrimaryControl();
+        Color primaryControlDarkShadow = getPrimaryControlDarkShadow();
+        Color primaryControlShadow = getPrimaryControlShadow();
+        Color systemTextColor = getSystemTextColor();
+
+        Insets zeroInsets = new InsetsUIResource(0, 0, 0, 0);
+
+        Integer zero = Integer.valueOf(0);
+
+        Object textFieldBorder =
+            new SwingLazyValue("javax.swing.plaf.metal.MetalBorders",
+                                          "getTextFieldBorder");
+
+        LazyValue dialogBorder = t -> new MetalBorders.DialogBorder();
+
+        LazyValue questionDialogBorder = t -> new MetalBorders.QuestionDialogBorder();
+
+        Object fieldInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                      "ctrl DELETE", DefaultEditorKit.deleteNextWordAction,
+                  "ctrl BACK_SPACE", DefaultEditorKit.deletePrevWordAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                            "ENTER", JTextField.notifyAction,
+                  "ctrl BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                   "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
+        });
+
+        Object passwordInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.beginLineAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.beginLineAction,
+                       "ctrl RIGHT", DefaultEditorKit.endLineAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.endLineAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionBeginLineAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionBeginLineAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionEndLineAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionEndLineAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                            "ENTER", JTextField.notifyAction,
+                  "ctrl BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                   "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
+        });
+
+        Object multilineInputMap = new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+
+                               "UP", DefaultEditorKit.upAction,
+                            "KP_UP", DefaultEditorKit.upAction,
+                             "DOWN", DefaultEditorKit.downAction,
+                          "KP_DOWN", DefaultEditorKit.downAction,
+                          "PAGE_UP", DefaultEditorKit.pageUpAction,
+                        "PAGE_DOWN", DefaultEditorKit.pageDownAction,
+                    "shift PAGE_UP", "selection-page-up",
+                  "shift PAGE_DOWN", "selection-page-down",
+               "ctrl shift PAGE_UP", "selection-page-left",
+             "ctrl shift PAGE_DOWN", "selection-page-right",
+                         "shift UP", DefaultEditorKit.selectionUpAction,
+                      "shift KP_UP", DefaultEditorKit.selectionUpAction,
+                       "shift DOWN", DefaultEditorKit.selectionDownAction,
+                    "shift KP_DOWN", DefaultEditorKit.selectionDownAction,
+                            "ENTER", DefaultEditorKit.insertBreakAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                      "ctrl DELETE", DefaultEditorKit.deleteNextWordAction,
+                  "ctrl BACK_SPACE", DefaultEditorKit.deletePrevWordAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                              "TAB", DefaultEditorKit.insertTabAction,
+                  "ctrl BACK_SLASH", "unselect"/*DefaultEditorKit.unselectAction*/,
+                        "ctrl HOME", DefaultEditorKit.beginAction,
+                         "ctrl END", DefaultEditorKit.endAction,
+                  "ctrl shift HOME", DefaultEditorKit.selectionBeginAction,
+                   "ctrl shift END", DefaultEditorKit.selectionEndAction,
+                           "ctrl T", "next-link-action",
+                     "ctrl shift T", "previous-link-action",
+                       "ctrl SPACE", "activate-link-action",
+                   "control shift O", "toggle-componentOrientation"/*DefaultEditorKit.toggleComponentOrientation*/
+        });
+
+        Object scrollPaneBorder = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$ScrollPaneBorder");
+        Object buttonBorder =
+                    new SwingLazyValue("javax.swing.plaf.metal.MetalBorders",
+                                          "getButtonBorder");
+
+        Object toggleButtonBorder =
+            new SwingLazyValue("javax.swing.plaf.metal.MetalBorders",
+                                          "getToggleButtonBorder");
+
+        Object titledBorderBorder =
+            new SwingLazyValue(
+                          "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                          new Object[] {controlShadow});
+
+        Object desktopIconBorder =
+            new SwingLazyValue(
+                          "javax.swing.plaf.metal.MetalBorders",
+                          "getDesktopIconBorder");
+
+        Object menuBarBorder =
+            new SwingLazyValue(
+                          "javax.swing.plaf.metal.MetalBorders$MenuBarBorder");
+
+        Object popupMenuBorder =
+            new SwingLazyValue(
+                         "javax.swing.plaf.metal.MetalBorders$PopupMenuBorder");
+        Object menuItemBorder =
+            new SwingLazyValue(
+                         "javax.swing.plaf.metal.MetalBorders$MenuItemBorder");
+
+        Object menuItemAcceleratorDelimiter = "-";
+        Object toolBarBorder = new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$ToolBarBorder");
+
+        Object progressBarBorder = new SwingLazyValue(
+                          "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                          new Object[] {controlDarkShadow, new Integer(1)});
+
+        Object toolTipBorder = new SwingLazyValue(
+                          "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                          new Object[] {primaryControlDarkShadow});
+
+        Object toolTipBorderInactive = new SwingLazyValue(
+                          "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                          new Object[] {controlDarkShadow});
+
+        Object focusCellHighlightBorder = new SwingLazyValue(
+                          "javax.swing.plaf.BorderUIResource$LineBorderUIResource",
+                          new Object[] {focusColor});
+
+        Object tabbedPaneTabAreaInsets = new InsetsUIResource(4, 2, 0, 6);
+
+        Object tabbedPaneTabInsets = new InsetsUIResource(0, 9, 1, 9);
+
+        final Object[] internalFrameIconArgs = new Object[1];
+        internalFrameIconArgs[0] = new Integer(16);
+
+        Object[] defaultCueList = new Object[] {
+                "OptionPane.errorSound",
+                "OptionPane.informationSound",
+                "OptionPane.questionSound",
+                "OptionPane.warningSound" };
+
+        MetalTheme theme = getCurrentTheme();
+        Object menuTextValue = new FontActiveValue(theme,
+                                                   MetalTheme.MENU_TEXT_FONT);
+        Object controlTextValue = new FontActiveValue(theme,
+                               MetalTheme.CONTROL_TEXT_FONT);
+        Object userTextValue = new FontActiveValue(theme,
+                                                   MetalTheme.USER_TEXT_FONT);
+        Object windowTitleValue = new FontActiveValue(theme,
+                               MetalTheme.WINDOW_TITLE_FONT);
+        Object subTextValue = new FontActiveValue(theme,
+                                                  MetalTheme.SUB_TEXT_FONT);
+        Object systemTextValue = new FontActiveValue(theme,
+                                                 MetalTheme.SYSTEM_TEXT_FONT);
+        //
+        // DEFAULTS TABLE
+        //
+
+        Object[] defaults = {
+            // *** Auditory Feedback
+            "AuditoryCues.defaultCueList", defaultCueList,
+            // this key defines which of the various cues to render
+            // This is disabled until sound bugs can be resolved.
+            "AuditoryCues.playList", null, // defaultCueList,
+
+            // Text (Note: many are inherited)
+            "TextField.border", textFieldBorder,
+            "TextField.font", userTextValue,
+
+            "PasswordField.border", textFieldBorder,
+            // passwordField.font should actually map to
+            // win.ansiFixed.font.height on windows.
+            "PasswordField.font", userTextValue,
+            "PasswordField.echoChar", (char)0x2022,
+
+            // TextArea.font should actually map to win.ansiFixed.font.height
+            // on windows.
+            "TextArea.font", userTextValue,
+
+            "TextPane.background", table.get("window"),
+            "TextPane.font", userTextValue,
+
+            "EditorPane.background", table.get("window"),
+            "EditorPane.font", userTextValue,
+
+            "TextField.focusInputMap", fieldInputMap,
+            "PasswordField.focusInputMap", passwordInputMap,
+            "TextArea.focusInputMap", multilineInputMap,
+            "TextPane.focusInputMap", multilineInputMap,
+            "EditorPane.focusInputMap", multilineInputMap,
+
+            // FormattedTextFields
+            "FormattedTextField.border", textFieldBorder,
+            "FormattedTextField.font", userTextValue,
+            "FormattedTextField.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", DefaultEditorKit.copyAction,
+                           "ctrl V", DefaultEditorKit.pasteAction,
+                           "ctrl X", DefaultEditorKit.cutAction,
+                             "COPY", DefaultEditorKit.copyAction,
+                            "PASTE", DefaultEditorKit.pasteAction,
+                              "CUT", DefaultEditorKit.cutAction,
+                   "control INSERT", DefaultEditorKit.copyAction,
+                     "shift INSERT", DefaultEditorKit.pasteAction,
+                     "shift DELETE", DefaultEditorKit.cutAction,
+                       "shift LEFT", DefaultEditorKit.selectionBackwardAction,
+                    "shift KP_LEFT", DefaultEditorKit.selectionBackwardAction,
+                      "shift RIGHT", DefaultEditorKit.selectionForwardAction,
+                   "shift KP_RIGHT", DefaultEditorKit.selectionForwardAction,
+                        "ctrl LEFT", DefaultEditorKit.previousWordAction,
+                     "ctrl KP_LEFT", DefaultEditorKit.previousWordAction,
+                       "ctrl RIGHT", DefaultEditorKit.nextWordAction,
+                    "ctrl KP_RIGHT", DefaultEditorKit.nextWordAction,
+                  "ctrl shift LEFT", DefaultEditorKit.selectionPreviousWordAction,
+               "ctrl shift KP_LEFT", DefaultEditorKit.selectionPreviousWordAction,
+                 "ctrl shift RIGHT", DefaultEditorKit.selectionNextWordAction,
+              "ctrl shift KP_RIGHT", DefaultEditorKit.selectionNextWordAction,
+                           "ctrl A", DefaultEditorKit.selectAllAction,
+                             "HOME", DefaultEditorKit.beginLineAction,
+                              "END", DefaultEditorKit.endLineAction,
+                       "shift HOME", DefaultEditorKit.selectionBeginLineAction,
+                        "shift END", DefaultEditorKit.selectionEndLineAction,
+                       "BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                 "shift BACK_SPACE", DefaultEditorKit.deletePrevCharAction,
+                           "ctrl H", DefaultEditorKit.deletePrevCharAction,
+                           "DELETE", DefaultEditorKit.deleteNextCharAction,
+                      "ctrl DELETE", DefaultEditorKit.deleteNextWordAction,
+                  "ctrl BACK_SPACE", DefaultEditorKit.deletePrevWordAction,
+                            "RIGHT", DefaultEditorKit.forwardAction,
+                             "LEFT", DefaultEditorKit.backwardAction,
+                         "KP_RIGHT", DefaultEditorKit.forwardAction,
+                          "KP_LEFT", DefaultEditorKit.backwardAction,
+                            "ENTER", JTextField.notifyAction,
+                  "ctrl BACK_SLASH", "unselect",
+                   "control shift O", "toggle-componentOrientation",
+                           "ESCAPE", "reset-field-edit",
+                               "UP", "increment",
+                            "KP_UP", "increment",
+                             "DOWN", "decrement",
+                          "KP_DOWN", "decrement",
+              }),
+
+
+            // Buttons
+            "Button.defaultButtonFollowsFocus", Boolean.FALSE,
+            "Button.disabledText", inactiveControlTextColor,
+            "Button.select", controlShadow,
+            "Button.border", buttonBorder,
+            "Button.font", controlTextValue,
+            "Button.focus", focusColor,
+            "Button.focusInputMap", new UIDefaults.LazyInputMap(new Object[] {
+                          "SPACE", "pressed",
+                 "released SPACE", "released"
+              }),
+
+            "CheckBox.disabledText", inactiveControlTextColor,
+            "Checkbox.select", controlShadow,
+            "CheckBox.font", controlTextValue,
+            "CheckBox.focus", focusColor,
+            "CheckBox.icon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getCheckBoxIcon"),
+            "CheckBox.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                            "SPACE", "pressed",
+                   "released SPACE", "released"
+                 }),
+            // margin is 2 all the way around, BasicBorders.RadioButtonBorder
+            // (checkbox uses RadioButtonBorder) is 2 all the way around too.
+            "CheckBox.totalInsets", new Insets(4, 4, 4, 4),
+
+            "RadioButton.disabledText", inactiveControlTextColor,
+            "RadioButton.select", controlShadow,
+            "RadioButton.icon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getRadioButtonIcon"),
+            "RadioButton.font", controlTextValue,
+            "RadioButton.focus", focusColor,
+            "RadioButton.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                          "SPACE", "pressed",
+                 "released SPACE", "released"
+              }),
+            // margin is 2 all the way around, BasicBorders.RadioButtonBorder
+            // is 2 all the way around too.
+            "RadioButton.totalInsets", new Insets(4, 4, 4, 4),
+
+            "ToggleButton.select", controlShadow,
+            "ToggleButton.disabledText", inactiveControlTextColor,
+            "ToggleButton.focus", focusColor,
+            "ToggleButton.border", toggleButtonBorder,
+            "ToggleButton.font", controlTextValue,
+            "ToggleButton.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                            "SPACE", "pressed",
+                   "released SPACE", "released"
+                }),
+
+
+            // File View
+            "FileView.directoryIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFolderIcon"),
+            "FileView.fileIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeLeafIcon"),
+            "FileView.computerIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeComputerIcon"),
+            "FileView.hardDriveIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeHardDriveIcon"),
+            "FileView.floppyDriveIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFloppyDriveIcon"),
+
+            // File Chooser
+            "FileChooser.detailsViewIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserDetailViewIcon"),
+            "FileChooser.homeFolderIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserHomeFolderIcon"),
+            "FileChooser.listViewIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserListViewIcon"),
+            "FileChooser.newFolderIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserNewFolderIcon"),
+            "FileChooser.upFolderIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getFileChooserUpFolderIcon"),
+
+            "FileChooser.usesSingleFilePane", Boolean.TRUE,
+            "FileChooser.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "cancelSelection",
+                     "F2", "editFileName",
+                     "F5", "refresh",
+                     "BACK_SPACE", "Go Up"
+                 }),
+
+
+            // ToolTip
+            "ToolTip.font", systemTextValue,
+            "ToolTip.border", toolTipBorder,
+            "ToolTip.borderInactive", toolTipBorderInactive,
+            "ToolTip.backgroundInactive", control,
+            "ToolTip.foregroundInactive", controlDarkShadow,
+            "ToolTip.hideAccelerator", Boolean.FALSE,
+
+            // ToolTipManager
+            "ToolTipManager.enableToolTipMode", "activeApplication",
+
+            // Slider Defaults
+            "Slider.font", controlTextValue,
+            "Slider.border", null,
+            "Slider.foreground", primaryControlShadow,
+            "Slider.focus", focusColor,
+            "Slider.focusInsets", zeroInsets,
+            "Slider.trackWidth", new Integer( 7 ),
+            "Slider.majorTickLength", new Integer( 6 ),
+            "Slider.horizontalThumbIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getHorizontalSliderThumbIcon"),
+            "Slider.verticalThumbIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getVerticalSliderThumbIcon"),
+            "Slider.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "positiveUnitIncrement",
+                    "KP_RIGHT", "positiveUnitIncrement",
+                        "DOWN", "negativeUnitIncrement",
+                     "KP_DOWN", "negativeUnitIncrement",
+                   "PAGE_DOWN", "negativeBlockIncrement",
+              "ctrl PAGE_DOWN", "negativeBlockIncrement",
+                        "LEFT", "negativeUnitIncrement",
+                     "KP_LEFT", "negativeUnitIncrement",
+                          "UP", "positiveUnitIncrement",
+                       "KP_UP", "positiveUnitIncrement",
+                     "PAGE_UP", "positiveBlockIncrement",
+                "ctrl PAGE_UP", "positiveBlockIncrement",
+                        "HOME", "minScroll",
+                         "END", "maxScroll"
+                 }),
+
+            // Progress Bar
+            "ProgressBar.font", controlTextValue,
+            "ProgressBar.foreground", primaryControlShadow,
+            "ProgressBar.selectionBackground", primaryControlDarkShadow,
+            "ProgressBar.border", progressBarBorder,
+            "ProgressBar.cellSpacing", zero,
+            "ProgressBar.cellLength", Integer.valueOf(1),
+
+            // Combo Box
+            "ComboBox.background", control,
+            "ComboBox.foreground", controlTextColor,
+            "ComboBox.selectionBackground", primaryControlShadow,
+            "ComboBox.selectionForeground", controlTextColor,
+            "ComboBox.font", controlTextValue,
+            "ComboBox.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "hidePopup",
+                    "PAGE_UP", "pageUpPassThrough",
+                  "PAGE_DOWN", "pageDownPassThrough",
+                       "HOME", "homePassThrough",
+                        "END", "endPassThrough",
+                       "DOWN", "selectNext",
+                    "KP_DOWN", "selectNext",
+                   "alt DOWN", "togglePopup",
+                "alt KP_DOWN", "togglePopup",
+                     "alt UP", "togglePopup",
+                  "alt KP_UP", "togglePopup",
+                      "SPACE", "spacePopup",
+                     "ENTER", "enterPressed",
+                         "UP", "selectPrevious",
+                      "KP_UP", "selectPrevious"
+              }),
+
+            // Internal Frame Defaults
+            "InternalFrame.icon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getInternalFrameDefaultMenuIcon"),
+            "InternalFrame.border", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$InternalFrameBorder"),
+            "InternalFrame.optionDialogBorder", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$OptionDialogBorder"),
+            "InternalFrame.paletteBorder", new SwingLazyValue("javax.swing.plaf.metal.MetalBorders$PaletteBorder"),
+            "InternalFrame.paletteTitleHeight", new Integer(11),
+            "InternalFrame.paletteCloseIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory$PaletteCloseIcon"),
+            "InternalFrame.closeIcon",
+                  new SwingLazyValue(
+                                     "javax.swing.plaf.metal.MetalIconFactory",
+                                     "getInternalFrameCloseIcon",
+                                     internalFrameIconArgs),
+            "InternalFrame.maximizeIcon",
+                  new SwingLazyValue(
+                                     "javax.swing.plaf.metal.MetalIconFactory",
+                                     "getInternalFrameMaximizeIcon",
+                                     internalFrameIconArgs),
+            "InternalFrame.iconifyIcon",
+                  new SwingLazyValue(
+                                     "javax.swing.plaf.metal.MetalIconFactory",
+                                     "getInternalFrameMinimizeIcon",
+                                     internalFrameIconArgs),
+            "InternalFrame.minimizeIcon",
+                  new SwingLazyValue(
+                                     "javax.swing.plaf.metal.MetalIconFactory",
+                                     "getInternalFrameAltMaximizeIcon",
+                                     internalFrameIconArgs),
+            "InternalFrame.titleFont",  windowTitleValue,
+            "InternalFrame.windowBindings", null,
+            // Internal Frame Auditory Cue Mappings
+            "InternalFrame.closeSound", "sounds/FrameClose.wav",
+            "InternalFrame.maximizeSound", "sounds/FrameMaximize.wav",
+            "InternalFrame.minimizeSound", "sounds/FrameMinimize.wav",
+            "InternalFrame.restoreDownSound", "sounds/FrameRestoreDown.wav",
+            "InternalFrame.restoreUpSound", "sounds/FrameRestoreUp.wav",
+
+            // Desktop Icon
+            "DesktopIcon.border", desktopIconBorder,
+            "DesktopIcon.font", controlTextValue,
+            "DesktopIcon.foreground", controlTextColor,
+            "DesktopIcon.background", control,
+            "DesktopIcon.width", Integer.valueOf(160),
+
+            "Desktop.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                 "ctrl F5", "restore",
+                 "ctrl F4", "close",
+                 "ctrl F7", "move",
+                 "ctrl F8", "resize",
+                   "RIGHT", "right",
+                "KP_RIGHT", "right",
+             "shift RIGHT", "shrinkRight",
+          "shift KP_RIGHT", "shrinkRight",
+                    "LEFT", "left",
+                 "KP_LEFT", "left",
+              "shift LEFT", "shrinkLeft",
+           "shift KP_LEFT", "shrinkLeft",
+                      "UP", "up",
+                   "KP_UP", "up",
+                "shift UP", "shrinkUp",
+             "shift KP_UP", "shrinkUp",
+                    "DOWN", "down",
+                 "KP_DOWN", "down",
+              "shift DOWN", "shrinkDown",
+           "shift KP_DOWN", "shrinkDown",
+                  "ESCAPE", "escape",
+                 "ctrl F9", "minimize",
+                "ctrl F10", "maximize",
+                 "ctrl F6", "selectNextFrame",
+                "ctrl TAB", "selectNextFrame",
+             "ctrl alt F6", "selectNextFrame",
+       "shift ctrl alt F6", "selectPreviousFrame",
+                "ctrl F12", "navigateNext",
+           "shift ctrl F12", "navigatePrevious"
+              }),
+
+            // Titled Border
+            "TitledBorder.font", controlTextValue,
+            "TitledBorder.titleColor", systemTextColor,
+            "TitledBorder.border", titledBorderBorder,
+
+            // Label
+            "Label.font", controlTextValue,
+            "Label.foreground", systemTextColor,
+            "Label.disabledForeground", getInactiveSystemTextColor(),
+
+            // List
+            "List.font", controlTextValue,
+            "List.focusCellHighlightBorder", focusCellHighlightBorder,
+            "List.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                           "ctrl C", "copy",
+                           "ctrl V", "paste",
+                           "ctrl X", "cut",
+                             "COPY", "copy",
+                            "PASTE", "paste",
+                              "CUT", "cut",
+                   "control INSERT", "copy",
+                     "shift INSERT", "paste",
+                     "shift DELETE", "cut",
+                               "UP", "selectPreviousRow",
+                            "KP_UP", "selectPreviousRow",
+                         "shift UP", "selectPreviousRowExtendSelection",
+                      "shift KP_UP", "selectPreviousRowExtendSelection",
+                    "ctrl shift UP", "selectPreviousRowExtendSelection",
+                 "ctrl shift KP_UP", "selectPreviousRowExtendSelection",
+                          "ctrl UP", "selectPreviousRowChangeLead",
+                       "ctrl KP_UP", "selectPreviousRowChangeLead",
+                             "DOWN", "selectNextRow",
+                          "KP_DOWN", "selectNextRow",
+                       "shift DOWN", "selectNextRowExtendSelection",
+                    "shift KP_DOWN", "selectNextRowExtendSelection",
+                  "ctrl shift DOWN", "selectNextRowExtendSelection",
+               "ctrl shift KP_DOWN", "selectNextRowExtendSelection",
+                        "ctrl DOWN", "selectNextRowChangeLead",
+                     "ctrl KP_DOWN", "selectNextRowChangeLead",
+                             "LEFT", "selectPreviousColumn",
+                          "KP_LEFT", "selectPreviousColumn",
+                       "shift LEFT", "selectPreviousColumnExtendSelection",
+                    "shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                  "ctrl shift LEFT", "selectPreviousColumnExtendSelection",
+               "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                        "ctrl LEFT", "selectPreviousColumnChangeLead",
+                     "ctrl KP_LEFT", "selectPreviousColumnChangeLead",
+                            "RIGHT", "selectNextColumn",
+                         "KP_RIGHT", "selectNextColumn",
+                      "shift RIGHT", "selectNextColumnExtendSelection",
+                   "shift KP_RIGHT", "selectNextColumnExtendSelection",
+                 "ctrl shift RIGHT", "selectNextColumnExtendSelection",
+              "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection",
+                       "ctrl RIGHT", "selectNextColumnChangeLead",
+                    "ctrl KP_RIGHT", "selectNextColumnChangeLead",
+                             "HOME", "selectFirstRow",
+                       "shift HOME", "selectFirstRowExtendSelection",
+                  "ctrl shift HOME", "selectFirstRowExtendSelection",
+                        "ctrl HOME", "selectFirstRowChangeLead",
+                              "END", "selectLastRow",
+                        "shift END", "selectLastRowExtendSelection",
+                   "ctrl shift END", "selectLastRowExtendSelection",
+                         "ctrl END", "selectLastRowChangeLead",
+                          "PAGE_UP", "scrollUp",
+                    "shift PAGE_UP", "scrollUpExtendSelection",
+               "ctrl shift PAGE_UP", "scrollUpExtendSelection",
+                     "ctrl PAGE_UP", "scrollUpChangeLead",
+                        "PAGE_DOWN", "scrollDown",
+                  "shift PAGE_DOWN", "scrollDownExtendSelection",
+             "ctrl shift PAGE_DOWN", "scrollDownExtendSelection",
+                   "ctrl PAGE_DOWN", "scrollDownChangeLead",
+                           "ctrl A", "selectAll",
+                       "ctrl SLASH", "selectAll",
+                  "ctrl BACK_SLASH", "clearSelection",
+                            "SPACE", "addToSelection",
+                       "ctrl SPACE", "toggleAndAnchor",
+                      "shift SPACE", "extendTo",
+                 "ctrl shift SPACE", "moveSelectionTo"
+                 }),
+
+            // ScrollBar
+            "ScrollBar.background", control,
+            "ScrollBar.highlight", controlHighlight,
+            "ScrollBar.shadow", controlShadow,
+            "ScrollBar.darkShadow", controlDarkShadow,
+            "ScrollBar.thumb", primaryControlShadow,
+            "ScrollBar.thumbShadow", primaryControlDarkShadow,
+            "ScrollBar.thumbHighlight", primaryControl,
+            "ScrollBar.width", new Integer( 17 ),
+            "ScrollBar.allowsAbsolutePositioning", Boolean.TRUE,
+            "ScrollBar.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                       "RIGHT", "positiveUnitIncrement",
+                    "KP_RIGHT", "positiveUnitIncrement",
+                        "DOWN", "positiveUnitIncrement",
+                     "KP_DOWN", "positiveUnitIncrement",
+                   "PAGE_DOWN", "positiveBlockIncrement",
+                        "LEFT", "negativeUnitIncrement",
+                     "KP_LEFT", "negativeUnitIncrement",
+                          "UP", "negativeUnitIncrement",
+                       "KP_UP", "negativeUnitIncrement",
+                     "PAGE_UP", "negativeBlockIncrement",
+                        "HOME", "minScroll",
+                         "END", "maxScroll"
+                 }),
+
+            // ScrollPane
+            "ScrollPane.border", scrollPaneBorder,
+            "ScrollPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                           "RIGHT", "unitScrollRight",
+                        "KP_RIGHT", "unitScrollRight",
+                            "DOWN", "unitScrollDown",
+                         "KP_DOWN", "unitScrollDown",
+                            "LEFT", "unitScrollLeft",
+                         "KP_LEFT", "unitScrollLeft",
+                              "UP", "unitScrollUp",
+                           "KP_UP", "unitScrollUp",
+                         "PAGE_UP", "scrollUp",
+                       "PAGE_DOWN", "scrollDown",
+                    "ctrl PAGE_UP", "scrollLeft",
+                  "ctrl PAGE_DOWN", "scrollRight",
+                       "ctrl HOME", "scrollHome",
+                        "ctrl END", "scrollEnd"
+                 }),
+
+            // Tabbed Pane
+            "TabbedPane.font", controlTextValue,
+            "TabbedPane.tabAreaBackground", control,
+            "TabbedPane.background", controlShadow,
+            "TabbedPane.light", control,
+            "TabbedPane.focus", primaryControlDarkShadow,
+            "TabbedPane.selected", control,
+            "TabbedPane.selectHighlight", controlHighlight,
+            "TabbedPane.tabAreaInsets", tabbedPaneTabAreaInsets,
+            "TabbedPane.tabInsets", tabbedPaneTabInsets,
+            "TabbedPane.focusInputMap",
+              new UIDefaults.LazyInputMap(new Object[] {
+                         "RIGHT", "navigateRight",
+                      "KP_RIGHT", "navigateRight",
+                          "LEFT", "navigateLeft",
+                       "KP_LEFT", "navigateLeft",
+                            "UP", "navigateUp",
+                         "KP_UP", "navigateUp",
+                          "DOWN", "navigateDown",
+                       "KP_DOWN", "navigateDown",
+                     "ctrl DOWN", "requestFocusForVisibleComponent",
+                  "ctrl KP_DOWN", "requestFocusForVisibleComponent",
+                }),
+            "TabbedPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                   "ctrl PAGE_DOWN", "navigatePageDown",
+                     "ctrl PAGE_UP", "navigatePageUp",
+                          "ctrl UP", "requestFocus",
+                       "ctrl KP_UP", "requestFocus",
+                 }),
+
+            // Table
+            "Table.font", userTextValue,
+            "Table.focusCellHighlightBorder", focusCellHighlightBorder,
+            "Table.scrollPaneBorder", scrollPaneBorder,
+            "Table.dropLineColor", focusColor,
+            "Table.dropLineShortColor", primaryControlDarkShadow,
+            "Table.gridColor", controlShadow,  // grid line color
+            "Table.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                               "ctrl C", "copy",
+                               "ctrl V", "paste",
+                               "ctrl X", "cut",
+                                 "COPY", "copy",
+                                "PASTE", "paste",
+                                  "CUT", "cut",
+                       "control INSERT", "copy",
+                         "shift INSERT", "paste",
+                         "shift DELETE", "cut",
+                                "RIGHT", "selectNextColumn",
+                             "KP_RIGHT", "selectNextColumn",
+                          "shift RIGHT", "selectNextColumnExtendSelection",
+                       "shift KP_RIGHT", "selectNextColumnExtendSelection",
+                     "ctrl shift RIGHT", "selectNextColumnExtendSelection",
+                  "ctrl shift KP_RIGHT", "selectNextColumnExtendSelection",
+                           "ctrl RIGHT", "selectNextColumnChangeLead",
+                        "ctrl KP_RIGHT", "selectNextColumnChangeLead",
+                                 "LEFT", "selectPreviousColumn",
+                              "KP_LEFT", "selectPreviousColumn",
+                           "shift LEFT", "selectPreviousColumnExtendSelection",
+                        "shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                      "ctrl shift LEFT", "selectPreviousColumnExtendSelection",
+                   "ctrl shift KP_LEFT", "selectPreviousColumnExtendSelection",
+                            "ctrl LEFT", "selectPreviousColumnChangeLead",
+                         "ctrl KP_LEFT", "selectPreviousColumnChangeLead",
+                                 "DOWN", "selectNextRow",
+                              "KP_DOWN", "selectNextRow",
+                           "shift DOWN", "selectNextRowExtendSelection",
+                        "shift KP_DOWN", "selectNextRowExtendSelection",
+                      "ctrl shift DOWN", "selectNextRowExtendSelection",
+                   "ctrl shift KP_DOWN", "selectNextRowExtendSelection",
+                            "ctrl DOWN", "selectNextRowChangeLead",
+                         "ctrl KP_DOWN", "selectNextRowChangeLead",
+                                   "UP", "selectPreviousRow",
+                                "KP_UP", "selectPreviousRow",
+                             "shift UP", "selectPreviousRowExtendSelection",
+                          "shift KP_UP", "selectPreviousRowExtendSelection",
+                        "ctrl shift UP", "selectPreviousRowExtendSelection",
+                     "ctrl shift KP_UP", "selectPreviousRowExtendSelection",
+                              "ctrl UP", "selectPreviousRowChangeLead",
+                           "ctrl KP_UP", "selectPreviousRowChangeLead",
+                                 "HOME", "selectFirstColumn",
+                           "shift HOME", "selectFirstColumnExtendSelection",
+                      "ctrl shift HOME", "selectFirstRowExtendSelection",
+                            "ctrl HOME", "selectFirstRow",
+                                  "END", "selectLastColumn",
+                            "shift END", "selectLastColumnExtendSelection",
+                       "ctrl shift END", "selectLastRowExtendSelection",
+                             "ctrl END", "selectLastRow",
+                              "PAGE_UP", "scrollUpChangeSelection",
+                        "shift PAGE_UP", "scrollUpExtendSelection",
+                   "ctrl shift PAGE_UP", "scrollLeftExtendSelection",
+                         "ctrl PAGE_UP", "scrollLeftChangeSelection",
+                            "PAGE_DOWN", "scrollDownChangeSelection",
+                      "shift PAGE_DOWN", "scrollDownExtendSelection",
+                 "ctrl shift PAGE_DOWN", "scrollRightExtendSelection",
+                       "ctrl PAGE_DOWN", "scrollRightChangeSelection",
+                                  "TAB", "selectNextColumnCell",
+                            "shift TAB", "selectPreviousColumnCell",
+                                "ENTER", "selectNextRowCell",
+                          "shift ENTER", "selectPreviousRowCell",
+                               "ctrl A", "selectAll",
+                           "ctrl SLASH", "selectAll",
+                      "ctrl BACK_SLASH", "clearSelection",
+                               "ESCAPE", "cancel",
+                                   "F2", "startEditing",
+                                "SPACE", "addToSelection",
+                           "ctrl SPACE", "toggleAndAnchor",
+                          "shift SPACE", "extendTo",
+                     "ctrl shift SPACE", "moveSelectionTo",
+                                   "F8", "focusHeader"
+                 }),
+            "Table.ascendingSortIcon",
+                SwingUtilities2.makeIcon(getClass(), MetalLookAndFeel.class,
+                "icons/sortUp.png"),
+            "Table.descendingSortIcon",
+                SwingUtilities2.makeIcon(getClass(), MetalLookAndFeel.class,
+                "icons/sortDown.png"),
+
+            "TableHeader.font", userTextValue,
+            "TableHeader.cellBorder", new SwingLazyValue(
+                                          "javax.swing.plaf.metal.MetalBorders$TableHeaderBorder"),
+
+            // MenuBar
+            "MenuBar.border", menuBarBorder,
+            "MenuBar.font", menuTextValue,
+            "MenuBar.windowBindings", new Object[] {
+                "F10", "takeFocus" },
+
+            // Menu
+            "Menu.border", menuItemBorder,
+            "Menu.borderPainted", Boolean.TRUE,
+            "Menu.menuPopupOffsetX", zero,
+            "Menu.menuPopupOffsetY", zero,
+            "Menu.submenuPopupOffsetX", new Integer(-4),
+            "Menu.submenuPopupOffsetY", new Integer(-3),
+            "Menu.font", menuTextValue,
+            "Menu.selectionForeground", menuSelectedForeground,
+            "Menu.selectionBackground", menuSelectedBackground,
+            "Menu.disabledForeground", menuDisabledForeground,
+            "Menu.acceleratorFont", subTextValue,
+            "Menu.acceleratorForeground", acceleratorForeground,
+            "Menu.acceleratorSelectionForeground", acceleratorSelectedForeground,
+            "Menu.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemCheckIcon"),
+            "Menu.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuArrowIcon"),
+
+            // Menu Item
+            "MenuItem.border", menuItemBorder,
+            "MenuItem.borderPainted", Boolean.TRUE,
+            "MenuItem.font", menuTextValue,
+            "MenuItem.selectionForeground", menuSelectedForeground,
+            "MenuItem.selectionBackground", menuSelectedBackground,
+            "MenuItem.disabledForeground", menuDisabledForeground,
+            "MenuItem.acceleratorFont", subTextValue,
+            "MenuItem.acceleratorForeground", acceleratorForeground,
+            "MenuItem.acceleratorSelectionForeground", acceleratorSelectedForeground,
+            "MenuItem.acceleratorDelimiter", menuItemAcceleratorDelimiter,
+            "MenuItem.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemCheckIcon"),
+            "MenuItem.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemArrowIcon"),
+                 // Menu Item Auditory Cue Mapping
+            "MenuItem.commandSound", "sounds/MenuItemCommand.wav",
+
+            // OptionPane.
+            "OptionPane.windowBindings", new Object[] {
+                "ESCAPE", "close" },
+            // Option Pane Auditory Cue Mappings
+            "OptionPane.informationSound", "sounds/OptionPaneInformation.wav",
+            "OptionPane.warningSound", "sounds/OptionPaneWarning.wav",
+            "OptionPane.errorSound", "sounds/OptionPaneError.wav",
+            "OptionPane.questionSound", "sounds/OptionPaneQuestion.wav",
+
+            // Option Pane Special Dialog Colors, used when MetalRootPaneUI
+            // is providing window manipulation widgets.
+            "OptionPane.errorDialog.border.background",
+                        new ColorUIResource(153, 51, 51),
+            "OptionPane.errorDialog.titlePane.foreground",
+                        new ColorUIResource(51, 0, 0),
+            "OptionPane.errorDialog.titlePane.background",
+                        new ColorUIResource(255, 153, 153),
+            "OptionPane.errorDialog.titlePane.shadow",
+                        new ColorUIResource(204, 102, 102),
+            "OptionPane.questionDialog.border.background",
+                        new ColorUIResource(51, 102, 51),
+            "OptionPane.questionDialog.titlePane.foreground",
+                        new ColorUIResource(0, 51, 0),
+            "OptionPane.questionDialog.titlePane.background",
+                        new ColorUIResource(153, 204, 153),
+            "OptionPane.questionDialog.titlePane.shadow",
+                        new ColorUIResource(102, 153, 102),
+            "OptionPane.warningDialog.border.background",
+                        new ColorUIResource(153, 102, 51),
+            "OptionPane.warningDialog.titlePane.foreground",
+                        new ColorUIResource(102, 51, 0),
+            "OptionPane.warningDialog.titlePane.background",
+                        new ColorUIResource(255, 204, 153),
+            "OptionPane.warningDialog.titlePane.shadow",
+                        new ColorUIResource(204, 153, 102),
+            // OptionPane fonts are defined below
+
+            // Separator
+            "Separator.background", getSeparatorBackground(),
+            "Separator.foreground", getSeparatorForeground(),
+
+            // Popup Menu
+            "PopupMenu.border", popupMenuBorder,
+                 // Popup Menu Auditory Cue Mappings
+            "PopupMenu.popupSound", "sounds/PopupMenuPopup.wav",
+            "PopupMenu.font", menuTextValue,
+
+            // CB & RB Menu Item
+            "CheckBoxMenuItem.border", menuItemBorder,
+            "CheckBoxMenuItem.borderPainted", Boolean.TRUE,
+            "CheckBoxMenuItem.font", menuTextValue,
+            "CheckBoxMenuItem.selectionForeground", menuSelectedForeground,
+            "CheckBoxMenuItem.selectionBackground", menuSelectedBackground,
+            "CheckBoxMenuItem.disabledForeground", menuDisabledForeground,
+            "CheckBoxMenuItem.acceleratorFont", subTextValue,
+            "CheckBoxMenuItem.acceleratorForeground", acceleratorForeground,
+            "CheckBoxMenuItem.acceleratorSelectionForeground", acceleratorSelectedForeground,
+            "CheckBoxMenuItem.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getCheckBoxMenuItemIcon"),
+            "CheckBoxMenuItem.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemArrowIcon"),
+            "CheckBoxMenuItem.commandSound", "sounds/MenuItemCommand.wav",
+
+            "RadioButtonMenuItem.border", menuItemBorder,
+            "RadioButtonMenuItem.borderPainted", Boolean.TRUE,
+            "RadioButtonMenuItem.font", menuTextValue,
+            "RadioButtonMenuItem.selectionForeground", menuSelectedForeground,
+            "RadioButtonMenuItem.selectionBackground", menuSelectedBackground,
+            "RadioButtonMenuItem.disabledForeground", menuDisabledForeground,
+            "RadioButtonMenuItem.acceleratorFont", subTextValue,
+            "RadioButtonMenuItem.acceleratorForeground", acceleratorForeground,
+            "RadioButtonMenuItem.acceleratorSelectionForeground", acceleratorSelectedForeground,
+            "RadioButtonMenuItem.checkIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getRadioButtonMenuItemIcon"),
+            "RadioButtonMenuItem.arrowIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getMenuItemArrowIcon"),
+            "RadioButtonMenuItem.commandSound", "sounds/MenuItemCommand.wav",
+
+            "Spinner.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                               "UP", "increment",
+                            "KP_UP", "increment",
+                             "DOWN", "decrement",
+                          "KP_DOWN", "decrement",
+               }),
+            "Spinner.arrowButtonInsets", zeroInsets,
+            "Spinner.border", textFieldBorder,
+            "Spinner.arrowButtonBorder", buttonBorder,
+            "Spinner.font", controlTextValue,
+
+            // SplitPane
+
+            "SplitPane.dividerSize", new Integer(10),
+            "SplitPane.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                        "UP", "negativeIncrement",
+                      "DOWN", "positiveIncrement",
+                      "LEFT", "negativeIncrement",
+                     "RIGHT", "positiveIncrement",
+                     "KP_UP", "negativeIncrement",
+                   "KP_DOWN", "positiveIncrement",
+                   "KP_LEFT", "negativeIncrement",
+                  "KP_RIGHT", "positiveIncrement",
+                      "HOME", "selectMin",
+                       "END", "selectMax",
+                        "F8", "startResize",
+                        "F6", "toggleFocus",
+                  "ctrl TAB", "focusOutForward",
+            "ctrl shift TAB", "focusOutBackward"
+                 }),
+            "SplitPane.centerOneTouchButtons", Boolean.FALSE,
+            "SplitPane.dividerFocusColor", primaryControl,
+
+            // Tree
+            // Tree.font was mapped to system font pre 1.4.1
+            "Tree.font", userTextValue,
+            "Tree.textBackground", getWindowBackground(),
+            "Tree.selectionBorderColor", focusColor,
+            "Tree.openIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFolderIcon"),
+            "Tree.closedIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeFolderIcon"),
+            "Tree.leafIcon", new SwingLazyValue("javax.swing.plaf.metal.MetalIconFactory", "getTreeLeafIcon"),
+            "Tree.expandedIcon", new SwingLazyValue(
+                                     "javax.swing.plaf.metal.MetalIconFactory",
+                                     "getTreeControlIcon",
+                                     new Object[] {Boolean.valueOf(MetalIconFactory.DARK)}),
+            "Tree.collapsedIcon", new SwingLazyValue(
+                                     "javax.swing.plaf.metal.MetalIconFactory",
+                                     "getTreeControlIcon",
+                                     new Object[] {Boolean.valueOf( MetalIconFactory.LIGHT )}),
+
+            "Tree.line", primaryControl, // horiz lines
+            "Tree.hash", primaryControl,  // legs
+            "Tree.rowHeight", zero,
+            "Tree.focusInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                                    "ADD", "expand",
+                               "SUBTRACT", "collapse",
+                                 "ctrl C", "copy",
+                                 "ctrl V", "paste",
+                                 "ctrl X", "cut",
+                                   "COPY", "copy",
+                                  "PASTE", "paste",
+                                    "CUT", "cut",
+                         "control INSERT", "copy",
+                           "shift INSERT", "paste",
+                           "shift DELETE", "cut",
+                                     "UP", "selectPrevious",
+                                  "KP_UP", "selectPrevious",
+                               "shift UP", "selectPreviousExtendSelection",
+                            "shift KP_UP", "selectPreviousExtendSelection",
+                          "ctrl shift UP", "selectPreviousExtendSelection",
+                       "ctrl shift KP_UP", "selectPreviousExtendSelection",
+                                "ctrl UP", "selectPreviousChangeLead",
+                             "ctrl KP_UP", "selectPreviousChangeLead",
+                                   "DOWN", "selectNext",
+                                "KP_DOWN", "selectNext",
+                             "shift DOWN", "selectNextExtendSelection",
+                          "shift KP_DOWN", "selectNextExtendSelection",
+                        "ctrl shift DOWN", "selectNextExtendSelection",
+                     "ctrl shift KP_DOWN", "selectNextExtendSelection",
+                              "ctrl DOWN", "selectNextChangeLead",
+                           "ctrl KP_DOWN", "selectNextChangeLead",
+                                  "RIGHT", "selectChild",
+                               "KP_RIGHT", "selectChild",
+                                   "LEFT", "selectParent",
+                                "KP_LEFT", "selectParent",
+                                "PAGE_UP", "scrollUpChangeSelection",
+                          "shift PAGE_UP", "scrollUpExtendSelection",
+                     "ctrl shift PAGE_UP", "scrollUpExtendSelection",
+                           "ctrl PAGE_UP", "scrollUpChangeLead",
+                              "PAGE_DOWN", "scrollDownChangeSelection",
+                        "shift PAGE_DOWN", "scrollDownExtendSelection",
+                   "ctrl shift PAGE_DOWN", "scrollDownExtendSelection",
+                         "ctrl PAGE_DOWN", "scrollDownChangeLead",
+                                   "HOME", "selectFirst",
+                             "shift HOME", "selectFirstExtendSelection",
+                        "ctrl shift HOME", "selectFirstExtendSelection",
+                              "ctrl HOME", "selectFirstChangeLead",
+                                    "END", "selectLast",
+                              "shift END", "selectLastExtendSelection",
+                         "ctrl shift END", "selectLastExtendSelection",
+                               "ctrl END", "selectLastChangeLead",
+                                     "F2", "startEditing",
+                                 "ctrl A", "selectAll",
+                             "ctrl SLASH", "selectAll",
+                        "ctrl BACK_SLASH", "clearSelection",
+                              "ctrl LEFT", "scrollLeft",
+                           "ctrl KP_LEFT", "scrollLeft",
+                             "ctrl RIGHT", "scrollRight",
+                          "ctrl KP_RIGHT", "scrollRight",
+                                  "SPACE", "addToSelection",
+                             "ctrl SPACE", "toggleAndAnchor",
+                            "shift SPACE", "extendTo",
+                       "ctrl shift SPACE", "moveSelectionTo"
+                 }),
+            "Tree.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                     "ESCAPE", "cancel"
+                 }),
+
+            // ToolBar
+            "ToolBar.border", toolBarBorder,
+            "ToolBar.background", menuBackground,
+            "ToolBar.foreground", getMenuForeground(),
+            "ToolBar.font", menuTextValue,
+            "ToolBar.dockingBackground", menuBackground,
+            "ToolBar.floatingBackground", menuBackground,
+            "ToolBar.dockingForeground", primaryControlDarkShadow,
+            "ToolBar.floatingForeground", primaryControl,
+            "ToolBar.rolloverBorder", (LazyValue) t -> MetalBorders.getToolBarRolloverBorder(),
+            "ToolBar.nonrolloverBorder", (LazyValue) t -> MetalBorders.getToolBarNonrolloverBorder(),
+            "ToolBar.ancestorInputMap",
+               new UIDefaults.LazyInputMap(new Object[] {
+                        "UP", "navigateUp",
+                     "KP_UP", "navigateUp",
+                      "DOWN", "navigateDown",
+                   "KP_DOWN", "navigateDown",
+                      "LEFT", "navigateLeft",
+                   "KP_LEFT", "navigateLeft",
+                     "RIGHT", "navigateRight",
+                  "KP_RIGHT", "navigateRight"
+                 }),
+
+            // RootPane
+            "RootPane.frameBorder", (LazyValue) t -> new MetalBorders.FrameBorder(),
+            "RootPane.plainDialogBorder", dialogBorder,
+            "RootPane.informationDialogBorder", dialogBorder,
+            "RootPane.errorDialogBorder", (LazyValue) t -> new MetalBorders.ErrorDialogBorder(),
+            "RootPane.colorChooserDialogBorder", questionDialogBorder,
+            "RootPane.fileChooserDialogBorder", questionDialogBorder,
+            "RootPane.questionDialogBorder", questionDialogBorder,
+            "RootPane.warningDialogBorder", (LazyValue) t -> new MetalBorders.WarningDialogBorder(),
+            // These bindings are only enabled when there is a default
+            // button set on the rootpane.
+            "RootPane.defaultButtonWindowKeyBindings", new Object[] {
+                             "ENTER", "press",
+                    "released ENTER", "release",
+                        "ctrl ENTER", "press",
+               "ctrl released ENTER", "release"
+              },
+        };
+
+        table.putDefaults(defaults);
+
+        if (isWindows() && useSystemFonts() && theme.isSystemTheme()) {
+            Object messageFont = new MetalFontDesktopProperty(
+                "win.messagebox.font.height", MetalTheme.CONTROL_TEXT_FONT);
+
+            defaults = new Object[] {
+                "OptionPane.messageFont", messageFont,
+                "OptionPane.buttonFont", messageFont,
+            };
+            table.putDefaults(defaults);
+        }
+
+        flushUnreferenced(); // Remove old listeners
+
+        boolean lafCond = SwingUtilities2.isLocalDisplay();
+        Object aaTextInfo = SwingUtilities2.AATextInfo.getAATextInfo(lafCond);
+        table.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
+        new AATextListener(this);
+    }
+
+    /**
+     * Ensures the current {@code MetalTheme} is {@code non-null}. This is
+     * a cover method for {@code getCurrentTheme}.
+     *
+     * @see #getCurrentTheme
+     */
+    protected void createDefaultTheme() {
+        getCurrentTheme();
+    }
+
+    /**
+     * Returns the look and feel defaults. This invokes, in order,
+     * {@code createDefaultTheme()}, {@code super.getDefaults()} and
+     * {@code getCurrentTheme().addCustomEntriesToTable(table)}.
+     * <p>
+     * While this method is public, it should only be invoked by the
+     * {@code UIManager} when the look and feel is set as the current
+     * look and feel and after {@code initialize} has been invoked.
+     *
+     * @return the look and feel defaults
+     *
+     * @see #createDefaultTheme
+     * @see javax.swing.plaf.basic.BasicLookAndFeel#getDefaults()
+     * @see MetalTheme#addCustomEntriesToTable(UIDefaults)
+     */
+    public UIDefaults getDefaults() {
+        // PENDING: move this to initialize when API changes are allowed
+        METAL_LOOK_AND_FEEL_INITED = true;
+
+        createDefaultTheme();
+        UIDefaults table = super.getDefaults();
+        MetalTheme currentTheme = getCurrentTheme();
+        currentTheme.addCustomEntriesToTable(table);
+        currentTheme.install();
+        return table;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since 1.4
+     */
+    public void provideErrorFeedback(Component component) {
+        super.provideErrorFeedback(component);
+    }
+
+    /**
+     * Set the theme used by <code>MetalLookAndFeel</code>.
+     * <p>
+     * After the theme is set, {@code MetalLookAndFeel} needs to be
+     * re-installed and the uis need to be recreated. The following
+     * shows how to do this:
+     * <pre>
+     *   MetalLookAndFeel.setCurrentTheme(theme);
+     *
+     *   // re-install the Metal Look and Feel
+     *   UIManager.setLookAndFeel(new MetalLookAndFeel());
+     *
+     *   // Update the ComponentUIs for all Components. This
+     *   // needs to be invoked for all windows.
+     *   SwingUtilities.updateComponentTreeUI(rootComponent);
+     * </pre>
+     * If this is not done the results are undefined.
+     *
+     * @param theme the theme to use
+     * @throws NullPointerException if {@code theme} is {@code null}
+     * @see #getCurrentTheme
+     */
+    public static void setCurrentTheme(MetalTheme theme) {
+        // NOTE: because you need to recreate the look and feel after
+        // this step, we don't bother blowing away any potential windows
+        // values.
+        if (theme == null) {
+            throw new NullPointerException("Can't have null theme");
+        }
+        AppContext.getAppContext().put( "currentMetalTheme", theme );
+    }
+
+    /**
+     * Return the theme currently being used by <code>MetalLookAndFeel</code>.
+     * If the current theme is {@code null}, the default theme is created.
+     *
+     * @return the current theme
+     * @see #setCurrentTheme
+     * @since 1.5
+     */
+    public static MetalTheme getCurrentTheme() {
+        MetalTheme currentTheme;
+        AppContext context = AppContext.getAppContext();
+        currentTheme = (MetalTheme) context.get( "currentMetalTheme" );
+        if (currentTheme == null) {
+            // This will happen in two cases:
+            // . When MetalLookAndFeel is first being initialized.
+            // . When a new AppContext has been created that hasn't
+            //   triggered UIManager to load a LAF. Rather than invoke
+            //   a method on the UIManager, which would trigger the loading
+            //   of a potentially different LAF, we directly set the
+            //   Theme here.
+            if (useHighContrastTheme()) {
+                currentTheme = new MetalHighContrastTheme();
+            }
+            else {
+                // Create the default theme. We prefer Ocean, but will
+                // use DefaultMetalTheme if told to.
+                String theme = AccessController.doPrivileged(
+                               new GetPropertyAction("swing.metalTheme"));
+                if ("steel".equals(theme)) {
+                    currentTheme = new DefaultMetalTheme();
+                }
+                else {
+                    currentTheme = new OceanTheme();
+                }
+            }
+            setCurrentTheme(currentTheme);
+        }
+        return currentTheme;
+    }
+
+    /**
+     * Returns an <code>Icon</code> with a disabled appearance.
+     * This method is used to generate a disabled <code>Icon</code> when
+     * one has not been specified.  For example, if you create a
+     * <code>JButton</code> and only specify an <code>Icon</code> via
+     * <code>setIcon</code> this method will be called to generate the
+     * disabled <code>Icon</code>. If null is passed as <code>icon</code>
+     * this method returns null.
+     * <p>
+     * Some look and feels might not render the disabled Icon, in which
+     * case they will ignore this.
+     *
+     * @param component JComponent that will display the Icon, may be null
+     * @param icon Icon to generate disable icon from.
+     * @return Disabled icon, or null if a suitable Icon can not be
+     *         generated.
+     * @since 1.5
+     */
+    public Icon getDisabledIcon(JComponent component, Icon icon) {
+        if ((icon instanceof ImageIcon) && MetalLookAndFeel.usingOcean()) {
+            return MetalUtils.getOceanDisabledButtonIcon(
+                                  ((ImageIcon)icon).getImage());
+        }
+        return super.getDisabledIcon(component, icon);
+    }
+
+    /**
+     * Returns an <code>Icon</code> for use by disabled
+     * components that are also selected. This method is used to generate an
+     * <code>Icon</code> for components that are in both the disabled and
+     * selected states but do not have a specific <code>Icon</code> for this
+     * state.  For example, if you create a <code>JButton</code> and only
+     * specify an <code>Icon</code> via <code>setIcon</code> this method
+     * will be called to generate the disabled and selected
+     * <code>Icon</code>. If null is passed as <code>icon</code> this method
+     * returns null.
+     * <p>
+     * Some look and feels might not render the disabled and selected Icon,
+     * in which case they will ignore this.
+     *
+     * @param component JComponent that will display the Icon, may be null
+     * @param icon Icon to generate disabled and selected icon from.
+     * @return Disabled and Selected icon, or null if a suitable Icon can not
+     *         be generated.
+     * @since 1.5
+     */
+    public Icon getDisabledSelectedIcon(JComponent component, Icon icon) {
+        if ((icon instanceof ImageIcon) && MetalLookAndFeel.usingOcean()) {
+            return MetalUtils.getOceanDisabledButtonIcon(
+                                  ((ImageIcon)icon).getImage());
+        }
+        return super.getDisabledSelectedIcon(component, icon);
+    }
+
+    /**
+     * Returns the control text font of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlTextColor()}.
+     *
+     * @return the control text font
+     *
+     * @see MetalTheme
+     */
+    public static FontUIResource getControlTextFont() { return getCurrentTheme().getControlTextFont();}
+
+    /**
+     * Returns the system text font of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getSystemTextFont()}.
+     *
+     * @return the system text font
+     *
+     * @see MetalTheme
+     */
+    public static FontUIResource getSystemTextFont() { return getCurrentTheme().getSystemTextFont();}
+
+    /**
+     * Returns the user text font of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getUserTextFont()}.
+     *
+     * @return the user text font
+     *
+     * @see MetalTheme
+     */
+    public static FontUIResource getUserTextFont() { return getCurrentTheme().getUserTextFont();}
+
+    /**
+     * Returns the menu text font of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getMenuTextFont()}.
+     *
+     * @return the menu text font
+     *
+     * @see MetalTheme
+     */
+    public static FontUIResource getMenuTextFont() { return getCurrentTheme().getMenuTextFont();}
+
+    /**
+     * Returns the window title font of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getWindowTitleFont()}.
+     *
+     * @return the window title font
+     *
+     * @see MetalTheme
+     */
+    public static FontUIResource getWindowTitleFont() { return getCurrentTheme().getWindowTitleFont();}
+
+    /**
+     * Returns the sub-text font of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getSubTextFont()}.
+     *
+     * @return the sub-text font
+     *
+     * @see MetalTheme
+     */
+    public static FontUIResource getSubTextFont() { return getCurrentTheme().getSubTextFont();}
+
+    /**
+     * Returns the desktop color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getDesktopColor()}.
+     *
+     * @return the desktop color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getDesktopColor() { return getCurrentTheme().getDesktopColor(); }
+
+    /**
+     * Returns the focus color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getFocusColor()}.
+     *
+     * @return the focus color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getFocusColor() { return getCurrentTheme().getFocusColor(); }
+
+    /**
+     * Returns the white color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getWhite()}.
+     *
+     * @return the white color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getWhite() { return getCurrentTheme().getWhite(); }
+
+    /**
+     * Returns the black color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getBlack()}.
+     *
+     * @return the black color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getBlack() { return getCurrentTheme().getBlack(); }
+
+    /**
+     * Returns the control color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControl()}.
+     *
+     * @return the control color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControl() { return getCurrentTheme().getControl(); }
+
+    /**
+     * Returns the control shadow color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlShadow()}.
+     *
+     * @return the control shadow color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControlShadow() { return getCurrentTheme().getControlShadow(); }
+
+    /**
+     * Returns the control dark shadow color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlDarkShadow()}.
+     *
+     * @return the control dark shadow color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControlDarkShadow() { return getCurrentTheme().getControlDarkShadow(); }
+
+    /**
+     * Returns the control info color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlInfo()}.
+     *
+     * @return the control info color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControlInfo() { return getCurrentTheme().getControlInfo(); }
+
+    /**
+     * Returns the control highlight color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlHighlight()}.
+     *
+     * @return the control highlight color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControlHighlight() { return getCurrentTheme().getControlHighlight(); }
+
+    /**
+     * Returns the control disabled color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlDisabled()}.
+     *
+     * @return the control disabled color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControlDisabled() { return getCurrentTheme().getControlDisabled(); }
+
+    /**
+     * Returns the primary control color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getPrimaryControl()}.
+     *
+     * @return the primary control color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getPrimaryControl() { return getCurrentTheme().getPrimaryControl(); }
+
+    /**
+     * Returns the primary control shadow color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getPrimaryControlShadow()}.
+     *
+     * @return the primary control shadow color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getPrimaryControlShadow() { return getCurrentTheme().getPrimaryControlShadow(); }
+
+    /**
+     * Returns the primary control dark shadow color of the current
+     * theme. This is a cover method for {@code
+     * getCurrentTheme().getPrimaryControlDarkShadow()}.
+     *
+     * @return the primary control dark shadow color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getPrimaryControlDarkShadow() { return getCurrentTheme().getPrimaryControlDarkShadow(); }
+
+    /**
+     * Returns the primary control info color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getPrimaryControlInfo()}.
+     *
+     * @return the primary control info color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getPrimaryControlInfo() { return getCurrentTheme().getPrimaryControlInfo(); }
+
+    /**
+     * Returns the primary control highlight color of the current
+     * theme. This is a cover method for {@code
+     * getCurrentTheme().getPrimaryControlHighlight()}.
+     *
+     * @return the primary control highlight color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getPrimaryControlHighlight() { return getCurrentTheme().getPrimaryControlHighlight(); }
+
+    /**
+     * Returns the system text color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getSystemTextColor()}.
+     *
+     * @return the system text color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getSystemTextColor() { return getCurrentTheme().getSystemTextColor(); }
+
+    /**
+     * Returns the control text color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getControlTextColor()}.
+     *
+     * @return the control text color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getControlTextColor() { return getCurrentTheme().getControlTextColor(); }
+
+    /**
+     * Returns the inactive control text color of the current theme. This is a
+     * cover method for {@code
+     * getCurrentTheme().getInactiveControlTextColor()}.
+     *
+     * @return the inactive control text color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getInactiveControlTextColor() { return getCurrentTheme().getInactiveControlTextColor(); }
+
+    /**
+     * Returns the inactive system text color of the current theme. This is a
+     * cover method for {@code
+     * getCurrentTheme().getInactiveSystemTextColor()}.
+     *
+     * @return the inactive system text color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getInactiveSystemTextColor() { return getCurrentTheme().getInactiveSystemTextColor(); }
+
+    /**
+     * Returns the user text color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getUserTextColor()}.
+     *
+     * @return the user text color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getUserTextColor() { return getCurrentTheme().getUserTextColor(); }
+
+    /**
+     * Returns the text highlight color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getTextHighlightColor()}.
+     *
+     * @return the text highlight color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getTextHighlightColor() { return getCurrentTheme().getTextHighlightColor(); }
+
+    /**
+     * Returns the highlighted text color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getHighlightedTextColor()}.
+     *
+     * @return the highlighted text color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getHighlightedTextColor() { return getCurrentTheme().getHighlightedTextColor(); }
+
+    /**
+     * Returns the window background color of the current theme. This is a
+     * cover method for {@code getCurrentTheme().getWindowBackground()}.
+     *
+     * @return the window background color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getWindowBackground() { return getCurrentTheme().getWindowBackground(); }
+
+    /**
+     * Returns the window title background color of the current
+     * theme. This is a cover method for {@code
+     * getCurrentTheme().getWindowTitleBackground()}.
+     *
+     * @return the window title background color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getWindowTitleBackground() { return getCurrentTheme().getWindowTitleBackground(); }
+
+    /**
+     * Returns the window title foreground color of the current
+     * theme. This is a cover method for {@code
+     * getCurrentTheme().getWindowTitleForeground()}.
+     *
+     * @return the window title foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getWindowTitleForeground() { return getCurrentTheme().getWindowTitleForeground(); }
+
+    /**
+     * Returns the window title inactive background color of the current
+     * theme. This is a cover method for {@code
+     * getCurrentTheme().getWindowTitleInactiveBackground()}.
+     *
+     * @return the window title inactive background color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getWindowTitleInactiveBackground() { return getCurrentTheme().getWindowTitleInactiveBackground(); }
+
+    /**
+     * Returns the window title inactive foreground color of the current
+     * theme. This is a cover method for {@code
+     * getCurrentTheme().getWindowTitleInactiveForeground()}.
+     *
+     * @return the window title inactive foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getWindowTitleInactiveForeground() { return getCurrentTheme().getWindowTitleInactiveForeground(); }
+
+    /**
+     * Returns the menu background color of the current theme. This is
+     * a cover method for {@code getCurrentTheme().getMenuBackground()}.
+     *
+     * @return the menu background color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getMenuBackground() { return getCurrentTheme().getMenuBackground(); }
+
+    /**
+     * Returns the menu foreground color of the current theme. This is
+     * a cover method for {@code getCurrentTheme().getMenuForeground()}.
+     *
+     * @return the menu foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getMenuForeground() { return getCurrentTheme().getMenuForeground(); }
+
+    /**
+     * Returns the menu selected background color of the current theme. This is
+     * a cover method for
+     * {@code getCurrentTheme().getMenuSelectedBackground()}.
+     *
+     * @return the menu selected background color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getMenuSelectedBackground() { return getCurrentTheme().getMenuSelectedBackground(); }
+
+    /**
+     * Returns the menu selected foreground color of the current theme. This is
+     * a cover method for
+     * {@code getCurrentTheme().getMenuSelectedForeground()}.
+     *
+     * @return the menu selected foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getMenuSelectedForeground() { return getCurrentTheme().getMenuSelectedForeground(); }
+
+    /**
+     * Returns the menu disabled foreground color of the current theme. This is
+     * a cover method for
+     * {@code getCurrentTheme().getMenuDisabledForeground()}.
+     *
+     * @return the menu disabled foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getMenuDisabledForeground() { return getCurrentTheme().getMenuDisabledForeground(); }
+
+    /**
+     * Returns the separator background color of the current theme. This is
+     * a cover method for {@code getCurrentTheme().getSeparatorBackground()}.
+     *
+     * @return the separator background color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getSeparatorBackground() { return getCurrentTheme().getSeparatorBackground(); }
+
+    /**
+     * Returns the separator foreground color of the current theme. This is
+     * a cover method for {@code getCurrentTheme().getSeparatorForeground()}.
+     *
+     * @return the separator foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getSeparatorForeground() { return getCurrentTheme().getSeparatorForeground(); }
+
+    /**
+     * Returns the accelerator foreground color of the current theme. This is
+     * a cover method for {@code getCurrentTheme().getAcceleratorForeground()}.
+     *
+     * @return the separator accelerator foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getAcceleratorForeground() { return getCurrentTheme().getAcceleratorForeground(); }
+
+    /**
+     * Returns the accelerator selected foreground color of the
+     * current theme. This is a cover method for {@code
+     * getCurrentTheme().getAcceleratorSelectedForeground()}.
+     *
+     * @return the accelerator selected foreground color
+     *
+     * @see MetalTheme
+     */
+    public static ColorUIResource getAcceleratorSelectedForeground() { return getCurrentTheme().getAcceleratorSelectedForeground(); }
+
+
+    /**
+     * Returns a {@code LayoutStyle} implementing the Java look and feel
+     * design guidelines as specified at
+     * <a href="http://www.oracle.com/technetwork/java/hig-136467.html">http://www.oracle.com/technetwork/java/hig-136467.html</a>.
+     *
+     * @return LayoutStyle implementing the Java look and feel design
+     *         guidelines
+     * @since 1.6
+     */
+    public LayoutStyle getLayoutStyle() {
+        return MetalLayoutStyle.INSTANCE;
+    }
+
+
+    /**
+     * FontActiveValue redirects to the appropriate metal theme method.
+     */
+    private static class FontActiveValue implements UIDefaults.ActiveValue {
+        private int type;
+        private MetalTheme theme;
+
+        FontActiveValue(MetalTheme theme, int type) {
+            this.theme = theme;
+            this.type = type;
+        }
+
+        public Object createValue(UIDefaults table) {
+            Object value = null;
+            switch (type) {
+            case MetalTheme.CONTROL_TEXT_FONT:
+                value = theme.getControlTextFont();
+                break;
+            case MetalTheme.SYSTEM_TEXT_FONT:
+                value = theme.getSystemTextFont();
+                break;
+            case MetalTheme.USER_TEXT_FONT:
+                value = theme.getUserTextFont();
+                break;
+            case MetalTheme.MENU_TEXT_FONT:
+                value = theme.getMenuTextFont();
+                break;
+            case MetalTheme.WINDOW_TITLE_FONT:
+                value = theme.getWindowTitleFont();
+                break;
+            case MetalTheme.SUB_TEXT_FONT:
+                value = theme.getSubTextFont();
+                break;
+            }
+            return value;
+        }
+    }
+
+    static ReferenceQueue<LookAndFeel> queue = new ReferenceQueue<LookAndFeel>();
+
+    static void flushUnreferenced() {
+        AATextListener aatl;
+        while ((aatl = (AATextListener)queue.poll()) != null) {
+            aatl.dispose();
+        }
+    }
+
+    static class AATextListener
+        extends WeakReference<LookAndFeel> implements PropertyChangeListener {
+
+        private String key = SunToolkit.DESKTOPFONTHINTS;
+
+        AATextListener(LookAndFeel laf) {
+            super(laf, queue);
+            Toolkit tk = Toolkit.getDefaultToolkit();
+            tk.addPropertyChangeListener(key, this);
+        }
+
+        public void propertyChange(PropertyChangeEvent pce) {
+            LookAndFeel laf = get();
+            if (laf == null || laf != UIManager.getLookAndFeel()) {
+                dispose();
+                return;
+            }
+            UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+            boolean lafCond = SwingUtilities2.isLocalDisplay();
+            Object aaTextInfo =
+                SwingUtilities2.AATextInfo.getAATextInfo(lafCond);
+            defaults.put(SwingUtilities2.AA_TEXT_PROPERTY_KEY, aaTextInfo);
+            updateUI();
+        }
+
+        void dispose() {
+            Toolkit tk = Toolkit.getDefaultToolkit();
+            tk.removePropertyChangeListener(key, this);
+        }
+
+        /**
+         * Updates the UI of the passed in window and all its children.
+         */
+        private static void updateWindowUI(Window window) {
+            SwingUtilities.updateComponentTreeUI(window);
+            Window ownedWins[] = window.getOwnedWindows();
+            for (Window w : ownedWins) {
+                updateWindowUI(w);
+            }
+        }
+
+        /**
+         * Updates the UIs of all the known Frames.
+         */
+        private static void updateAllUIs() {
+            Frame appFrames[] = Frame.getFrames();
+            for (Frame frame : appFrames) {
+                updateWindowUI(frame);
+            }
+        }
+
+        /**
+         * Indicates if an updateUI call is pending.
+         */
+        private static boolean updatePending;
+
+        /**
+         * Sets whether or not an updateUI call is pending.
+         */
+        private static synchronized void setUpdatePending(boolean update) {
+            updatePending = update;
+        }
+
+        /**
+         * Returns true if a UI update is pending.
+         */
+        private static synchronized boolean isUpdatePending() {
+            return updatePending;
+    }
+
+        protected void updateUI() {
+            if (!isUpdatePending()) {
+                setUpdatePending(true);
+                Runnable uiUpdater = new Runnable() {
+                        public void run() {
+                            updateAllUIs();
+                            setUpdatePending(false);
+                        }
+                    };
+                SwingUtilities.invokeLater(uiUpdater);
+            }
+        }
+    }
+
+    // From the JLF Design Guidelines:
+    // http://www.oracle.com/technetwork/java/jlf-135985.html
+    private static class MetalLayoutStyle extends DefaultLayoutStyle {
+        private static MetalLayoutStyle INSTANCE = new MetalLayoutStyle();
+
+        @Override
+        public int getPreferredGap(JComponent component1,
+                JComponent component2, ComponentPlacement type, int position,
+                Container parent) {
+            // Checks args
+            super.getPreferredGap(component1, component2, type, position,
+                                  parent);
+
+            int offset = 0;
+
+            switch(type) {
+            case INDENT:
+                // Metal doesn't spec this.
+                if (position == SwingConstants.EAST ||
+                        position == SwingConstants.WEST) {
+                    int indent = getIndent(component1, position);
+                    if (indent > 0) {
+                        return indent;
+                    }
+                    return 12;
+                }
+                // Fall through to related.
+            case RELATED:
+                if (component1.getUIClassID() == "ToggleButtonUI" &&
+                        component2.getUIClassID() == "ToggleButtonUI") {
+                    ButtonModel sourceModel = ((JToggleButton)component1).
+                            getModel();
+                    ButtonModel targetModel = ((JToggleButton)component2).
+                            getModel();
+                    if ((sourceModel instanceof DefaultButtonModel) &&
+                        (targetModel instanceof DefaultButtonModel) &&
+                        (((DefaultButtonModel)sourceModel).getGroup() ==
+                         ((DefaultButtonModel)targetModel).getGroup()) &&
+                        ((DefaultButtonModel)sourceModel).getGroup() != null) {
+                        // When toggle buttons are exclusive (that is,
+                        // they form a radio button set), separate
+                        // them with 2 pixels. This rule applies
+                        // whether the toggle buttons appear in a
+                        // toolbar or elsewhere in the interface.
+                        // Note: this number does not appear to
+                        // include any borders and so is not adjusted
+                        // by the border of the toggle button
+                        return 2;
+                    }
+                    // When toggle buttons are independent (like
+                    // checkboxes) and used outside a toolbar,
+                    // separate them with 5 pixels.
+                    if (usingOcean()) {
+                        return 6;
+                    }
+                    return 5;
+                }
+                offset = 6;
+                break;
+            case UNRELATED:
+                offset = 12;
+                break;
+            }
+            if (isLabelAndNonlabel(component1, component2, position)) {
+                // Insert 12 pixels between the trailing edge of a
+                // label and any associated components. Insert 12
+                // pixels between the trailing edge of a label and the
+                // component it describes when labels are
+                // right-aligned. When labels are left-aligned, insert
+                // 12 pixels between the trailing edge of the longest
+                // label and its associated component
+                return getButtonGap(component1, component2, position,
+                                    offset + 6);
+            }
+            return getButtonGap(component1, component2, position, offset);
+        }
+
+        @Override
+        public int getContainerGap(JComponent component, int position,
+                                   Container parent) {
+            super.getContainerGap(component, position, parent);
+            // Include 11 pixels between the bottom and right
+            // borders of a dialog box and its command
+            // buttons. (To the eye, the 11-pixel spacing appears
+            // to be 12 pixels because the white borders on the
+            // lower and right edges of the button components are
+            // not visually significant.)
+            // NOTE: this last text was designed with Steel in mind,
+            // not Ocean.
+            //
+            // Insert 12 pixels between the edges of the panel and the
+            // titled border. Insert 11 pixels between the top of the
+            // title and the component above the titled border. Insert 12
+            // pixels between the bottom of the title and the top of the
+            // first label in the panel. Insert 11 pixels between
+            // component groups and between the bottom of the last
+            // component and the lower border.
+            return getButtonGap(component, position, 12 -
+                                getButtonAdjustment(component, position));
+        }
+
+        @Override
+        protected int getButtonGap(JComponent source, JComponent target,
+                                   int position, int offset) {
+            offset = super.getButtonGap(source, target, position, offset);
+            if (offset > 0) {
+                int buttonAdjustment = getButtonAdjustment(source, position);
+                if (buttonAdjustment == 0) {
+                    buttonAdjustment = getButtonAdjustment(
+                            target, flipDirection(position));
+                }
+                offset -= buttonAdjustment;
+            }
+            if (offset < 0) {
+                return 0;
+            }
+            return offset;
+        }
+
+        private int getButtonAdjustment(JComponent source, int edge) {
+            String classID = source.getUIClassID();
+            if (classID == "ButtonUI" || classID == "ToggleButtonUI") {
+                if (!usingOcean() && (edge == SwingConstants.EAST ||
+                                      edge == SwingConstants.SOUTH)) {
+                    if (source.getBorder() instanceof UIResource) {
+                        return 1;
+                    }
+                }
+            }
+            else if (edge == SwingConstants.SOUTH) {
+                if ((classID == "RadioButtonUI" || classID == "CheckBoxUI") &&
+                        !usingOcean()) {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+    }
+}

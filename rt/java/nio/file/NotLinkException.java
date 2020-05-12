@@ -1,69 +1,63 @@
-/*    */ package java.nio.file;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NotLinkException
-/*    */   extends FileSystemException
-/*    */ {
-/*    */   static final long serialVersionUID = -388655596416518021L;
-/*    */   
-/*    */   public NotLinkException(String paramString) {
-/* 47 */     super(paramString);
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public NotLinkException(String paramString1, String paramString2, String paramString3) {
-/* 61 */     super(paramString1, paramString2, paramString3);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\NotLinkException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file;
+
+/**
+ * Checked exception thrown when a file system operation fails because a file
+ * is not a symbolic link.
+ *
+ * @since 1.7
+ */
+
+public class NotLinkException
+    extends FileSystemException
+{
+    static final long serialVersionUID = -388655596416518021L;
+
+    /**
+     * Constructs an instance of this class.
+     *
+     * @param   file
+     *          a string identifying the file or {@code null} if not known
+     */
+    public NotLinkException(String file) {
+        super(file);
+    }
+
+    /**
+     * Constructs an instance of this class.
+     *
+     * @param   file
+     *          a string identifying the file or {@code null} if not known
+     * @param   other
+     *          a string identifying the other file or {@code null} if not known
+     * @param   reason
+     *          a reason message with additional information or {@code null}
+     */
+    public NotLinkException(String file, String other, String reason) {
+        super(file, other, reason);
+    }
+}

@@ -1,51 +1,45 @@
-/*    */ package java.net;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public enum StandardProtocolFamily
-/*    */   implements ProtocolFamily
-/*    */ {
-/* 39 */   INET,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 44 */   INET6;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\net\StandardProtocolFamily.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.net;
+
+/**
+ * Defines the standard families of communication protocols.
+ *
+ * @since 1.7
+ */
+
+public enum StandardProtocolFamily implements ProtocolFamily {
+
+    /**
+     * Internet Protocol Version 4 (IPv4)
+     */
+    INET,
+
+    /**
+     * Internet Protocol Version 6 (IPv6)
+     */
+    INET6
+}

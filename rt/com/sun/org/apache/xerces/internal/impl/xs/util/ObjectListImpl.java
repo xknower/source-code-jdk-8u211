@@ -1,124 +1,119 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xs.datatypes.ObjectList;
-/*     */ import java.lang.reflect.Array;
-/*     */ import java.util.AbstractList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ObjectListImpl
-/*     */   extends AbstractList
-/*     */   implements ObjectList
-/*     */ {
-/*  41 */   public static final ObjectListImpl EMPTY_LIST = new ObjectListImpl(new Object[0], 0);
-/*     */ 
-/*     */   
-/*     */   private final Object[] fArray;
-/*     */   
-/*     */   private final int fLength;
-/*     */ 
-/*     */   
-/*     */   public ObjectListImpl(Object[] array, int length) {
-/*  50 */     this.fArray = array;
-/*  51 */     this.fLength = length;
-/*     */   }
-/*     */   
-/*     */   public int getLength() {
-/*  55 */     return this.fLength;
-/*     */   }
-/*     */   
-/*     */   public boolean contains(Object item) {
-/*  59 */     if (item == null) {
-/*  60 */       for (int i = 0; i < this.fLength; i++) {
-/*  61 */         if (this.fArray[i] == null) {
-/*  62 */           return true;
-/*     */         }
-/*     */       } 
-/*     */     } else {
-/*  66 */       for (int i = 0; i < this.fLength; i++) {
-/*  67 */         if (item.equals(this.fArray[i]))
-/*  68 */           return true; 
-/*     */       } 
-/*     */     } 
-/*  71 */     return false;
-/*     */   }
-/*     */   
-/*     */   public Object item(int index) {
-/*  75 */     if (index < 0 || index >= this.fLength) {
-/*  76 */       return null;
-/*     */     }
-/*  78 */     return this.fArray[index];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object get(int index) {
-/*  85 */     if (index >= 0 && index < this.fLength) {
-/*  86 */       return this.fArray[index];
-/*     */     }
-/*  88 */     throw new IndexOutOfBoundsException("Index: " + index);
-/*     */   }
-/*     */   
-/*     */   public int size() {
-/*  92 */     return getLength();
-/*     */   }
-/*     */   
-/*     */   public Object[] toArray() {
-/*  96 */     Object[] a = new Object[this.fLength];
-/*  97 */     toArray0(a);
-/*  98 */     return a;
-/*     */   }
-/*     */   
-/*     */   public Object[] toArray(Object[] a) {
-/* 102 */     if (a.length < this.fLength) {
-/* 103 */       Class<?> arrayClass = a.getClass();
-/* 104 */       Class<?> componentType = arrayClass.getComponentType();
-/* 105 */       a = (Object[])Array.newInstance(componentType, this.fLength);
-/*     */     } 
-/* 107 */     toArray0(a);
-/* 108 */     if (a.length > this.fLength) {
-/* 109 */       a[this.fLength] = null;
-/*     */     }
-/* 111 */     return a;
-/*     */   }
-/*     */   
-/*     */   private void toArray0(Object[] a) {
-/* 115 */     if (this.fLength > 0)
-/* 116 */       System.arraycopy(this.fArray, 0, a, 0, this.fLength); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\x\\util\ObjectListImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.util;
+
+import java.lang.reflect.Array;
+import java.util.AbstractList;
+
+import com.sun.org.apache.xerces.internal.xs.datatypes.ObjectList;
+
+/**
+ * Contains a list of Objects.
+ *
+ * @xerces.internal
+ *
+ * @version $Id: ObjectListImpl.java,v 1.2 2010-10-26 23:01:04 joehw Exp $
+ */
+public final class ObjectListImpl extends AbstractList implements ObjectList {
+
+    /**
+     * An immutable empty list.
+     */
+    public static final ObjectListImpl EMPTY_LIST = new ObjectListImpl(new Object[0], 0);
+
+    // The array to hold all data
+    private final Object[] fArray;
+
+    // Number of elements in this list
+    private final int fLength;
+
+    public ObjectListImpl(Object[] array, int length) {
+        fArray = array;
+        fLength = length;
+    }
+
+    public int getLength() {
+        return fLength;
+    }
+
+    public boolean contains(Object item) {
+        if (item == null) {
+            for (int i = 0; i < fLength; i++) {
+                if (fArray[i] == null)
+                    return true;
+            }
+        }
+        else {
+            for (int i = 0; i < fLength; i++) {
+                if (item.equals(fArray[i]))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    public Object item(int index) {
+        if (index < 0 || index >= fLength) {
+            return null;
+        }
+        return fArray[index];
+    }
+
+    /*
+     * List methods
+     */
+    public Object get(int index) {
+        if (index >= 0 && index < fLength) {
+            return fArray[index];
+        }
+        throw new IndexOutOfBoundsException("Index: " + index);
+    }
+
+    public int size() {
+        return getLength();
+    }
+
+    public Object[] toArray() {
+        Object[] a = new Object[fLength];
+        toArray0(a);
+        return a;
+    }
+
+    public Object[] toArray(Object[] a) {
+        if (a.length < fLength) {
+            Class arrayClass = a.getClass();
+            Class componentType = arrayClass.getComponentType();
+            a = (Object[]) Array.newInstance(componentType, fLength);
+        }
+        toArray0(a);
+        if (a.length > fLength) {
+            a[fLength] = null;
+        }
+        return a;
+    }
+
+    private void toArray0(Object[] a) {
+        if (fLength > 0) {
+            System.arraycopy(fArray, 0, a, 0, fLength);
+        }
+    }
+}

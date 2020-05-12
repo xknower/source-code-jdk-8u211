@@ -1,273 +1,267 @@
-/*     */ package com.sun.imageio.plugins.gif;
-/*     */ 
-/*     */ import javax.imageio.metadata.IIOInvalidTreeException;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class GIFWritableStreamMetadata
-/*     */   extends GIFStreamMetadata
-/*     */ {
-/*     */   static final String NATIVE_FORMAT_NAME = "javax_imageio_gif_stream_1.0";
-/*     */   
-/*     */   public GIFWritableStreamMetadata() {
-/*  49 */     super(true, "javax_imageio_gif_stream_1.0", "com.sun.imageio.plugins.gif.GIFStreamMetadataFormat", (String[])null, (String[])null);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  55 */     reset();
-/*     */   }
-/*     */   
-/*     */   public boolean isReadOnly() {
-/*  59 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void mergeTree(String paramString, Node paramNode) throws IIOInvalidTreeException {
-/*  64 */     if (paramString.equals("javax_imageio_gif_stream_1.0")) {
-/*  65 */       if (paramNode == null) {
-/*  66 */         throw new IllegalArgumentException("root == null!");
-/*     */       }
-/*  68 */       mergeNativeTree(paramNode);
-/*  69 */     } else if (paramString
-/*  70 */       .equals("javax_imageio_1.0")) {
-/*  71 */       if (paramNode == null) {
-/*  72 */         throw new IllegalArgumentException("root == null!");
-/*     */       }
-/*  74 */       mergeStandardTree(paramNode);
-/*     */     } else {
-/*  76 */       throw new IllegalArgumentException("Not a recognized format!");
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/*  81 */     this.version = null;
-/*     */     
-/*  83 */     this.logicalScreenWidth = -1;
-/*  84 */     this.logicalScreenHeight = -1;
-/*  85 */     this.colorResolution = -1;
-/*  86 */     this.pixelAspectRatio = 0;
-/*     */     
-/*  88 */     this.backgroundColorIndex = 0;
-/*  89 */     this.sortFlag = false;
-/*  90 */     this.globalColorTable = null;
-/*     */   }
-/*     */   
-/*     */   protected void mergeNativeTree(Node paramNode) throws IIOInvalidTreeException {
-/*  94 */     Node node = paramNode;
-/*  95 */     if (!node.getNodeName().equals("javax_imageio_gif_stream_1.0")) {
-/*  96 */       fatal(node, "Root must be javax_imageio_gif_stream_1.0");
-/*     */     }
-/*     */     
-/*  99 */     node = node.getFirstChild();
-/* 100 */     while (node != null) {
-/* 101 */       String str = node.getNodeName();
-/*     */       
-/* 103 */       if (str.equals("Version")) {
-/* 104 */         this.version = getStringAttribute(node, "value", null, true, versionStrings);
-/*     */       }
-/* 106 */       else if (str.equals("LogicalScreenDescriptor")) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 112 */         this.logicalScreenWidth = getIntAttribute(node, "logicalScreenWidth", -1, true, true, 1, 65535);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 118 */         this.logicalScreenHeight = getIntAttribute(node, "logicalScreenHeight", -1, true, true, 1, 65535);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 124 */         this.colorResolution = getIntAttribute(node, "colorResolution", -1, true, true, 1, 8);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 130 */         this.pixelAspectRatio = getIntAttribute(node, "pixelAspectRatio", 0, true, true, 0, 255);
-/*     */ 
-/*     */       
-/*     */       }
-/* 134 */       else if (str.equals("GlobalColorTable")) {
-/*     */         
-/* 136 */         int i = getIntAttribute(node, "sizeOfGlobalColorTable", true, 2, 256);
-/*     */         
-/* 138 */         if (i != 2 && i != 4 && i != 8 && i != 16 && i != 32 && i != 64 && i != 128 && i != 256)
-/*     */         {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 146 */           fatal(node, "Bad value for GlobalColorTable attribute sizeOfGlobalColorTable!");
-/*     */         }
-/*     */ 
-/*     */         
-/* 150 */         this.backgroundColorIndex = getIntAttribute(node, "backgroundColorIndex", 0, true, true, 0, 255);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 155 */         this.sortFlag = getBooleanAttribute(node, "sortFlag", false, true);
-/*     */         
-/* 157 */         this.globalColorTable = getColorTable(node, "ColorTableEntry", true, i);
-/*     */       } else {
-/*     */         
-/* 160 */         fatal(node, "Unknown child of root node!");
-/*     */       } 
-/*     */       
-/* 163 */       node = node.getNextSibling();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void mergeStandardTree(Node paramNode) throws IIOInvalidTreeException {
-/* 169 */     Node node = paramNode;
-/*     */     
-/* 171 */     if (!node.getNodeName().equals("javax_imageio_1.0")) {
-/* 172 */       fatal(node, "Root must be javax_imageio_1.0");
-/*     */     }
-/*     */ 
-/*     */     
-/* 176 */     node = node.getFirstChild();
-/* 177 */     while (node != null) {
-/* 178 */       String str = node.getNodeName();
-/*     */       
-/* 180 */       if (str.equals("Chroma")) {
-/* 181 */         Node node1 = node.getFirstChild();
-/* 182 */         while (node1 != null) {
-/* 183 */           String str1 = node1.getNodeName();
-/* 184 */           if (str1.equals("Palette")) {
-/* 185 */             this.globalColorTable = getColorTable(node1, "PaletteEntry", false, -1);
-/*     */ 
-/*     */           
-/*     */           }
-/* 189 */           else if (str1.equals("BackgroundIndex")) {
-/* 190 */             this.backgroundColorIndex = getIntAttribute(node1, "value", -1, true, true, 0, 255);
-/*     */           } 
-/*     */ 
-/*     */ 
-/*     */           
-/* 195 */           node1 = node1.getNextSibling();
-/*     */         } 
-/* 197 */       } else if (str.equals("Data")) {
-/* 198 */         Node node1 = node.getFirstChild();
-/* 199 */         while (node1 != null) {
-/* 200 */           String str1 = node1.getNodeName();
-/* 201 */           if (str1.equals("BitsPerSample")) {
-/* 202 */             this.colorResolution = getIntAttribute(node1, "value", -1, true, true, 1, 8);
-/*     */ 
-/*     */             
-/*     */             break;
-/*     */           } 
-/*     */           
-/* 208 */           node1 = node1.getNextSibling();
-/*     */         } 
-/* 210 */       } else if (str.equals("Dimension")) {
-/* 211 */         Node node1 = node.getFirstChild();
-/* 212 */         while (node1 != null) {
-/* 213 */           String str1 = node1.getNodeName();
-/* 214 */           if (str1.equals("PixelAspectRatio")) {
-/* 215 */             float f = getFloatAttribute(node1, "value");
-/*     */             
-/* 217 */             if (f == 1.0F) {
-/* 218 */               this.pixelAspectRatio = 0;
-/*     */             } else {
-/* 220 */               int i = (int)(f * 64.0F - 15.0F);
-/* 221 */               this
-/* 222 */                 .pixelAspectRatio = Math.max(Math.min(i, 255), 0);
-/*     */             } 
-/* 224 */           } else if (str1.equals("HorizontalScreenSize")) {
-/* 225 */             this.logicalScreenWidth = getIntAttribute(node1, "value", -1, true, true, 1, 65535);
-/*     */ 
-/*     */           
-/*     */           }
-/* 229 */           else if (str1.equals("VerticalScreenSize")) {
-/* 230 */             this.logicalScreenHeight = getIntAttribute(node1, "value", -1, true, true, 1, 65535);
-/*     */           } 
-/*     */ 
-/*     */ 
-/*     */           
-/* 235 */           node1 = node1.getNextSibling();
-/*     */         } 
-/* 237 */       } else if (str.equals("Document")) {
-/* 238 */         Node node1 = node.getFirstChild();
-/* 239 */         while (node1 != null) {
-/* 240 */           String str1 = node1.getNodeName();
-/* 241 */           if (str1.equals("FormatVersion")) {
-/*     */             
-/* 243 */             String str2 = getStringAttribute(node1, "value", null, true, null);
-/*     */             
-/* 245 */             for (byte b = 0; b < versionStrings.length; b++) {
-/* 246 */               if (str2.equals(versionStrings[b])) {
-/* 247 */                 this.version = str2;
-/*     */                 break;
-/*     */               } 
-/*     */             } 
-/*     */             break;
-/*     */           } 
-/* 253 */           node1 = node1.getNextSibling();
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 257 */       node = node.getNextSibling();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setFromTree(String paramString, Node paramNode) throws IIOInvalidTreeException {
-/* 264 */     reset();
-/* 265 */     mergeTree(paramString, paramNode);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\imageio\plugins\gif\GIFWritableStreamMetadata.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.imageio.plugins.gif;
+
+/*
+ * The source for this class was copied verbatim from the source for
+ * package com.sun.imageio.plugins.gif.GIFImageMetadata and then modified
+ * to make the class read-write capable.
+ */
+
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.metadata.IIOInvalidTreeException;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.metadata.IIOMetadataFormat;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
+import org.w3c.dom.Node;
+
+class GIFWritableStreamMetadata extends GIFStreamMetadata {
+
+    // package scope
+    static final String
+    NATIVE_FORMAT_NAME = "javax_imageio_gif_stream_1.0";
+
+    public GIFWritableStreamMetadata() {
+        super(true,
+              NATIVE_FORMAT_NAME,
+              "com.sun.imageio.plugins.gif.GIFStreamMetadataFormat", // XXX J2SE
+              null, null);
+
+        // initialize metadata fields by default values
+        reset();
+    }
+
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    public void mergeTree(String formatName, Node root)
+      throws IIOInvalidTreeException {
+        if (formatName.equals(nativeMetadataFormatName)) {
+            if (root == null) {
+                throw new IllegalArgumentException("root == null!");
+            }
+            mergeNativeTree(root);
+        } else if (formatName.equals
+                   (IIOMetadataFormatImpl.standardMetadataFormatName)) {
+            if (root == null) {
+                throw new IllegalArgumentException("root == null!");
+            }
+            mergeStandardTree(root);
+        } else {
+            throw new IllegalArgumentException("Not a recognized format!");
+        }
+    }
+
+    public void reset() {
+        version = null;
+
+        logicalScreenWidth = UNDEFINED_INTEGER_VALUE;
+        logicalScreenHeight = UNDEFINED_INTEGER_VALUE;
+        colorResolution = UNDEFINED_INTEGER_VALUE;
+        pixelAspectRatio = 0;
+
+        backgroundColorIndex = 0;
+        sortFlag = false;
+        globalColorTable = null;
+    }
+
+    protected void mergeNativeTree(Node root) throws IIOInvalidTreeException {
+        Node node = root;
+        if (!node.getNodeName().equals(nativeMetadataFormatName)) {
+            fatal(node, "Root must be " + nativeMetadataFormatName);
+        }
+
+        node = node.getFirstChild();
+        while (node != null) {
+            String name = node.getNodeName();
+
+            if (name.equals("Version")) {
+                version = getStringAttribute(node, "value", null,
+                                             true, versionStrings);
+            } else if (name.equals("LogicalScreenDescriptor")) {
+                /* NB: At the moment we use empty strings to support undefined
+                 * integer values in tree representation.
+                 * We need to add better support for undefined/default values
+                 * later.
+                 */
+                logicalScreenWidth = getIntAttribute(node,
+                                                     "logicalScreenWidth",
+                                                     UNDEFINED_INTEGER_VALUE,
+                                                     true,
+                                                     true, 1, 65535);
+
+                logicalScreenHeight = getIntAttribute(node,
+                                                      "logicalScreenHeight",
+                                                      UNDEFINED_INTEGER_VALUE,
+                                                      true,
+                                                      true, 1, 65535);
+
+                colorResolution = getIntAttribute(node,
+                                                  "colorResolution",
+                                                  UNDEFINED_INTEGER_VALUE,
+                                                  true,
+                                                  true, 1, 8);
+
+                pixelAspectRatio = getIntAttribute(node,
+                                                   "pixelAspectRatio",
+                                                   0, true,
+                                                   true, 0, 255);
+            } else if (name.equals("GlobalColorTable")) {
+                int sizeOfGlobalColorTable =
+                    getIntAttribute(node, "sizeOfGlobalColorTable",
+                                    true, 2, 256);
+                if (sizeOfGlobalColorTable != 2 &&
+                   sizeOfGlobalColorTable != 4 &&
+                   sizeOfGlobalColorTable != 8 &&
+                   sizeOfGlobalColorTable != 16 &&
+                   sizeOfGlobalColorTable != 32 &&
+                   sizeOfGlobalColorTable != 64 &&
+                   sizeOfGlobalColorTable != 128 &&
+                   sizeOfGlobalColorTable != 256) {
+                    fatal(node,
+                          "Bad value for GlobalColorTable attribute sizeOfGlobalColorTable!");
+                }
+
+                backgroundColorIndex = getIntAttribute(node,
+                                                       "backgroundColorIndex",
+                                                       0, true,
+                                                       true, 0, 255);
+
+                sortFlag = getBooleanAttribute(node, "sortFlag", false, true);
+
+                globalColorTable = getColorTable(node, "ColorTableEntry",
+                                                 true, sizeOfGlobalColorTable);
+            } else {
+                fatal(node, "Unknown child of root node!");
+            }
+
+            node = node.getNextSibling();
+        }
+    }
+
+    protected void mergeStandardTree(Node root)
+      throws IIOInvalidTreeException {
+        Node node = root;
+        if (!node.getNodeName()
+            .equals(IIOMetadataFormatImpl.standardMetadataFormatName)) {
+            fatal(node, "Root must be " +
+                  IIOMetadataFormatImpl.standardMetadataFormatName);
+        }
+
+        node = node.getFirstChild();
+        while (node != null) {
+            String name = node.getNodeName();
+
+            if (name.equals("Chroma")) {
+                Node childNode = node.getFirstChild();
+                while(childNode != null) {
+                    String childName = childNode.getNodeName();
+                    if (childName.equals("Palette")) {
+                        globalColorTable = getColorTable(childNode,
+                                                         "PaletteEntry",
+                                                         false, -1);
+
+                    } else if (childName.equals("BackgroundIndex")) {
+                        backgroundColorIndex = getIntAttribute(childNode,
+                                                               "value",
+                                                               -1, true,
+                                                               true, 0, 255);
+                    }
+                    childNode = childNode.getNextSibling();
+                }
+            } else if (name.equals("Data")) {
+                Node childNode = node.getFirstChild();
+                while(childNode != null) {
+                    String childName = childNode.getNodeName();
+                    if (childName.equals("BitsPerSample")) {
+                        colorResolution = getIntAttribute(childNode,
+                                                          "value",
+                                                          -1, true,
+                                                          true, 1, 8);
+                        break;
+                    }
+                    childNode = childNode.getNextSibling();
+                }
+            } else if (name.equals("Dimension")) {
+                Node childNode = node.getFirstChild();
+                while(childNode != null) {
+                    String childName = childNode.getNodeName();
+                    if (childName.equals("PixelAspectRatio")) {
+                        float aspectRatio = getFloatAttribute(childNode,
+                                                              "value");
+                        if (aspectRatio == 1.0F) {
+                            pixelAspectRatio = 0;
+                        } else {
+                            int ratio = (int)(aspectRatio*64.0F - 15.0F);
+                            pixelAspectRatio =
+                                Math.max(Math.min(ratio, 255), 0);
+                        }
+                    } else if (childName.equals("HorizontalScreenSize")) {
+                        logicalScreenWidth = getIntAttribute(childNode,
+                                                             "value",
+                                                             -1, true,
+                                                             true, 1, 65535);
+                    } else if (childName.equals("VerticalScreenSize")) {
+                        logicalScreenHeight = getIntAttribute(childNode,
+                                                              "value",
+                                                              -1, true,
+                                                              true, 1, 65535);
+                    }
+                    childNode = childNode.getNextSibling();
+                }
+            } else if (name.equals("Document")) {
+                Node childNode = node.getFirstChild();
+                while(childNode != null) {
+                    String childName = childNode.getNodeName();
+                    if (childName.equals("FormatVersion")) {
+                        String formatVersion =
+                            getStringAttribute(childNode, "value", null,
+                                               true, null);
+                        for (int i = 0; i < versionStrings.length; i++) {
+                            if (formatVersion.equals(versionStrings[i])) {
+                                version = formatVersion;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    childNode = childNode.getNextSibling();
+                }
+            }
+
+            node = node.getNextSibling();
+        }
+    }
+
+    public void setFromTree(String formatName, Node root)
+        throws IIOInvalidTreeException
+    {
+        reset();
+        mergeTree(formatName, root);
+    }
+}

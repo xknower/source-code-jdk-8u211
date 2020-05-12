@@ -1,636 +1,633 @@
-/*     */ package java.util.stream;
-/*     */ 
-/*     */ import java.util.IntSummaryStatistics;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Objects;
-/*     */ import java.util.OptionalDouble;
-/*     */ import java.util.OptionalInt;
-/*     */ import java.util.PrimitiveIterator;
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.Spliterators;
-/*     */ import java.util.function.BiConsumer;
-/*     */ import java.util.function.BinaryOperator;
-/*     */ import java.util.function.IntBinaryOperator;
-/*     */ import java.util.function.IntConsumer;
-/*     */ import java.util.function.IntFunction;
-/*     */ import java.util.function.IntPredicate;
-/*     */ import java.util.function.IntToDoubleFunction;
-/*     */ import java.util.function.IntToLongFunction;
-/*     */ import java.util.function.IntUnaryOperator;
-/*     */ import java.util.function.ObjIntConsumer;
-/*     */ import java.util.function.Supplier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class IntPipeline<E_IN>
-/*     */   extends AbstractPipeline<E_IN, Integer, IntStream>
-/*     */   implements IntStream
-/*     */ {
-/*     */   IntPipeline(Supplier<? extends Spliterator<Integer>> paramSupplier, int paramInt, boolean paramBoolean) {
-/*  67 */     super(paramSupplier, paramInt, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   IntPipeline(Spliterator<Integer> paramSpliterator, int paramInt, boolean paramBoolean) {
-/*  80 */     super(paramSpliterator, paramInt, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   IntPipeline(AbstractPipeline<?, E_IN, ?> paramAbstractPipeline, int paramInt) {
-/*  91 */     super(paramAbstractPipeline, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static IntConsumer adapt(Sink<Integer> paramSink) {
-/*  99 */     if (paramSink instanceof IntConsumer) {
-/* 100 */       return (IntConsumer)paramSink;
-/*     */     }
-/*     */     
-/* 103 */     if (Tripwire.ENABLED) {
-/* 104 */       Tripwire.trip(AbstractPipeline.class, "using IntStream.adapt(Sink<Integer> s)");
-/*     */     }
-/* 106 */     return paramSink::accept;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Spliterator.OfInt adapt(Spliterator<Integer> paramSpliterator) {
-/* 118 */     if (paramSpliterator instanceof Spliterator.OfInt) {
-/* 119 */       return (Spliterator.OfInt)paramSpliterator;
-/*     */     }
-/*     */     
-/* 122 */     if (Tripwire.ENABLED) {
-/* 123 */       Tripwire.trip(AbstractPipeline.class, "using IntStream.adapt(Spliterator<Integer> s)");
-/*     */     }
-/* 125 */     throw new UnsupportedOperationException("IntStream.adapt(Spliterator<Integer> s)");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final StreamShape getOutputShape() {
-/* 134 */     return StreamShape.INT_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final <P_IN> Node<Integer> evaluateToNode(PipelineHelper<Integer> paramPipelineHelper, Spliterator<P_IN> paramSpliterator, boolean paramBoolean, IntFunction<Integer[]> paramIntFunction) {
-/* 142 */     return Nodes.collectInt(paramPipelineHelper, paramSpliterator, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final <P_IN> Spliterator<Integer> wrap(PipelineHelper<Integer> paramPipelineHelper, Supplier<Spliterator<P_IN>> paramSupplier, boolean paramBoolean) {
-/* 149 */     return new StreamSpliterators.IntWrappingSpliterator<>(paramPipelineHelper, paramSupplier, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final Spliterator.OfInt lazySpliterator(Supplier<? extends Spliterator<Integer>> paramSupplier) {
-/* 155 */     return new StreamSpliterators.DelegatingSpliterator.OfInt((Supplier)paramSupplier);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final void forEachWithCancel(Spliterator<Integer> paramSpliterator, Sink<Integer> paramSink) {
-/* 160 */     Spliterator.OfInt ofInt = adapt(paramSpliterator);
-/* 161 */     IntConsumer intConsumer = adapt(paramSink); do {  }
-/* 162 */     while (!paramSink.cancellationRequested() && ofInt.tryAdvance(intConsumer));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final Node.Builder<Integer> makeNodeBuilder(long paramLong, IntFunction<Integer[]> paramIntFunction) {
-/* 168 */     return Nodes.intBuilder(paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final PrimitiveIterator.OfInt iterator() {
-/* 176 */     return Spliterators.iterator(spliterator());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Spliterator.OfInt spliterator() {
-/* 181 */     return adapt(super.spliterator());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final LongStream asLongStream() {
-/* 188 */     return new LongPipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Long> param1Sink)
-/*     */         {
-/* 192 */           return new Sink.ChainedInt<Long>(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 195 */                 this.downstream.accept(param2Int);
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream asDoubleStream() {
-/* 204 */     return new DoublePipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 208 */           return new Sink.ChainedInt<Double>(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 211 */                 this.downstream.accept(param2Int);
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Stream<Integer> boxed() {
-/* 220 */     return mapToObj(Integer::valueOf);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream map(final IntUnaryOperator mapper) {
-/* 225 */     Objects.requireNonNull(mapper);
-/* 226 */     return new StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 230 */           return new Sink.ChainedInt<Integer>(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 233 */                 this.downstream.accept(mapper.applyAsInt(param2Int));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final <U> Stream<U> mapToObj(final IntFunction<? extends U> mapper) {
-/* 242 */     Objects.requireNonNull(mapper);
-/* 243 */     return new ReferencePipeline.StatelessOp<Integer, U>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<U> param1Sink)
-/*     */         {
-/* 247 */           return new Sink.ChainedInt(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 250 */                 this.downstream.accept(mapper.apply(param2Int));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final LongStream mapToLong(final IntToLongFunction mapper) {
-/* 259 */     Objects.requireNonNull(mapper);
-/* 260 */     return new LongPipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Long> param1Sink)
-/*     */         {
-/* 264 */           return new Sink.ChainedInt<Long>(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 267 */                 this.downstream.accept(mapper.applyAsLong(param2Int));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream mapToDouble(final IntToDoubleFunction mapper) {
-/* 276 */     Objects.requireNonNull(mapper);
-/* 277 */     return new DoublePipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 281 */           return new Sink.ChainedInt<Double>(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 284 */                 this.downstream.accept(mapper.applyAsDouble(param2Int));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream flatMap(final IntFunction<? extends IntStream> mapper) {
-/* 293 */     return new StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 297 */           return new Sink.ChainedInt<Integer>(param1Sink)
-/*     */             {
-/*     */               public void begin(long param2Long) {
-/* 300 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(int param2Int) {
-/* 305 */                 try (IntStream null = (IntStream)mapper.apply(param2Int)) {
-/*     */                   
-/* 307 */                   if (intStream != null) {
-/* 308 */                     intStream.sequential().forEach(param2Int -> this.downstream.accept(param2Int));
-/*     */                   }
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public IntStream unordered() {
-/* 318 */     if (!isOrdered())
-/* 319 */       return this; 
-/* 320 */     return new StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_ORDERED)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Integer> param1Sink) {
-/* 323 */           return param1Sink;
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream filter(final IntPredicate predicate) {
-/* 330 */     Objects.requireNonNull(predicate);
-/* 331 */     return new StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 335 */           return new Sink.ChainedInt<Integer>(param1Sink)
-/*     */             {
-/*     */               public void begin(long param2Long) {
-/* 338 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(int param2Int) {
-/* 343 */                 if (predicate.test(param2Int)) {
-/* 344 */                   this.downstream.accept(param2Int);
-/*     */                 }
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public final IntStream peek(final IntConsumer action) {
-/* 353 */     Objects.requireNonNull(action);
-/* 354 */     return new StatelessOp<Integer>(this, StreamShape.INT_VALUE, 0)
-/*     */       {
-/*     */         Sink<Integer> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 358 */           return new Sink.ChainedInt<Integer>(param1Sink)
-/*     */             {
-/*     */               public void accept(int param2Int) {
-/* 361 */                 action.accept(param2Int);
-/* 362 */                 this.downstream.accept(param2Int);
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final IntStream limit(long paramLong) {
-/* 373 */     if (paramLong < 0L)
-/* 374 */       throw new IllegalArgumentException(Long.toString(paramLong)); 
-/* 375 */     return SliceOps.makeInt(this, 0L, paramLong);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream skip(long paramLong) {
-/* 380 */     if (paramLong < 0L)
-/* 381 */       throw new IllegalArgumentException(Long.toString(paramLong)); 
-/* 382 */     if (paramLong == 0L) {
-/* 383 */       return this;
-/*     */     }
-/* 385 */     return SliceOps.makeInt(this, paramLong, -1L);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream sorted() {
-/* 390 */     return SortedOps.makeInt(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final IntStream distinct() {
-/* 397 */     return boxed().distinct().mapToInt(paramInteger -> paramInteger.intValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void forEach(IntConsumer paramIntConsumer) {
-/* 404 */     evaluate(ForEachOps.makeInt(paramIntConsumer, false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void forEachOrdered(IntConsumer paramIntConsumer) {
-/* 409 */     evaluate(ForEachOps.makeInt(paramIntConsumer, true));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final int sum() {
-/* 414 */     return reduce(0, Integer::sum);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalInt min() {
-/* 419 */     return reduce(Math::min);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalInt max() {
-/* 424 */     return reduce(Math::max);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final long count() {
-/* 429 */     return mapToLong(paramInt -> 1L).sum();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble average() {
-/* 434 */     long[] arrayOfLong = collect(() -> new long[2], (paramArrayOflong, paramInt) -> {
-/*     */           paramArrayOflong[0] = paramArrayOflong[0] + 1L;
-/*     */           
-/*     */           paramArrayOflong[1] = paramArrayOflong[1] + paramInt;
-/*     */         }(paramArrayOflong1, paramArrayOflong2) -> {
-/*     */           paramArrayOflong1[0] = paramArrayOflong1[0] + paramArrayOflong2[0];
-/*     */           
-/*     */           paramArrayOflong1[1] = paramArrayOflong1[1] + paramArrayOflong2[1];
-/*     */         });
-/* 443 */     return (arrayOfLong[0] > 0L) ? 
-/* 444 */       OptionalDouble.of(arrayOfLong[1] / arrayOfLong[0]) : 
-/* 445 */       OptionalDouble.empty();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntSummaryStatistics summaryStatistics() {
-/* 450 */     return collect(IntSummaryStatistics::new, IntSummaryStatistics::accept, IntSummaryStatistics::combine);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final int reduce(int paramInt, IntBinaryOperator paramIntBinaryOperator) {
-/* 456 */     return ((Integer)evaluate(ReduceOps.makeInt(paramInt, paramIntBinaryOperator))).intValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalInt reduce(IntBinaryOperator paramIntBinaryOperator) {
-/* 461 */     return (OptionalInt)evaluate(ReduceOps.makeInt(paramIntBinaryOperator));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final <R> R collect(Supplier<R> paramSupplier, ObjIntConsumer<R> paramObjIntConsumer, BiConsumer<R, R> paramBiConsumer) {
-/* 468 */     BinaryOperator<R> binaryOperator = (paramObject1, paramObject2) -> {
-/*     */         paramBiConsumer.accept(paramObject1, paramObject2);
-/*     */         return paramObject1;
-/*     */       };
-/* 472 */     return (R)evaluate(ReduceOps.makeInt(paramSupplier, paramObjIntConsumer, binaryOperator));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean anyMatch(IntPredicate paramIntPredicate) {
-/* 477 */     return ((Boolean)evaluate(MatchOps.makeInt(paramIntPredicate, MatchOps.MatchKind.ANY))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean allMatch(IntPredicate paramIntPredicate) {
-/* 482 */     return ((Boolean)evaluate(MatchOps.makeInt(paramIntPredicate, MatchOps.MatchKind.ALL))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean noneMatch(IntPredicate paramIntPredicate) {
-/* 487 */     return ((Boolean)evaluate(MatchOps.makeInt(paramIntPredicate, MatchOps.MatchKind.NONE))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalInt findFirst() {
-/* 492 */     return (OptionalInt)evaluate(FindOps.makeInt(true));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalInt findAny() {
-/* 497 */     return (OptionalInt)evaluate(FindOps.makeInt(false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final int[] toArray() {
-/* 502 */     return Nodes.flattenInt((Node.OfInt)evaluateToArrayNode(paramInt -> new Integer[paramInt]))
-/* 503 */       .asPrimitiveArray();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class Head<E_IN>
-/*     */     extends IntPipeline<E_IN>
-/*     */   {
-/*     */     Head(Supplier<? extends Spliterator<Integer>> param1Supplier, int param1Int, boolean param1Boolean) {
-/* 526 */       super(param1Supplier, param1Int, param1Boolean);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Head(Spliterator<Integer> param1Spliterator, int param1Int, boolean param1Boolean) {
-/* 539 */       super(param1Spliterator, param1Int, param1Boolean);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 544 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final Sink<E_IN> opWrapSink(int param1Int, Sink<Integer> param1Sink) {
-/* 549 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void forEach(IntConsumer param1IntConsumer) {
-/* 556 */       if (!isParallel()) {
-/* 557 */         IntPipeline.adapt(sourceStageSpliterator()).forEachRemaining(param1IntConsumer);
-/*     */       } else {
-/*     */         
-/* 560 */         super.forEach(param1IntConsumer);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void forEachOrdered(IntConsumer param1IntConsumer) {
-/* 566 */       if (!isParallel()) {
-/* 567 */         IntPipeline.adapt(sourceStageSpliterator()).forEachRemaining(param1IntConsumer);
-/*     */       } else {
-/*     */         
-/* 570 */         super.forEachOrdered(param1IntConsumer);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StatelessOp<E_IN>
-/*     */     extends IntPipeline<E_IN>
-/*     */   {
-/*     */     StatelessOp(AbstractPipeline<?, E_IN, ?> param1AbstractPipeline, StreamShape param1StreamShape, int param1Int) {
-/* 592 */       super(param1AbstractPipeline, param1Int);
-/* 593 */       assert param1AbstractPipeline.getOutputShape() == param1StreamShape;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 598 */       return false;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StatefulOp<E_IN>
-/*     */     extends IntPipeline<E_IN>
-/*     */   {
-/*     */     StatefulOp(AbstractPipeline<?, E_IN, ?> param1AbstractPipeline, StreamShape param1StreamShape, int param1Int) {
-/* 619 */       super(param1AbstractPipeline, param1Int);
-/* 620 */       assert param1AbstractPipeline.getOutputShape() == param1StreamShape;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 625 */       return true;
-/*     */     }
-/*     */     
-/*     */     abstract <P_IN> Node<Integer> opEvaluateParallel(PipelineHelper<Integer> param1PipelineHelper, Spliterator<P_IN> param1Spliterator, IntFunction<Integer[]> param1IntFunction);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\stream\IntPipeline.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.stream;
+
+import java.util.IntSummaryStatistics;
+import java.util.Objects;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.PrimitiveIterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.IntBinaryOperator;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
+import java.util.function.IntToDoubleFunction;
+import java.util.function.IntToLongFunction;
+import java.util.function.IntUnaryOperator;
+import java.util.function.ObjIntConsumer;
+import java.util.function.Supplier;
+
+/**
+ * Abstract base class for an intermediate pipeline stage or pipeline source
+ * stage implementing whose elements are of type {@code int}.
+ *
+ * @param <E_IN> type of elements in the upstream source
+ * @since 1.8
+ */
+abstract class IntPipeline<E_IN>
+        extends AbstractPipeline<E_IN, Integer, IntStream>
+        implements IntStream {
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Supplier<Spliterator>} describing the stream source
+     * @param sourceFlags The source flags for the stream source, described in
+     *        {@link StreamOpFlag}
+     * @param parallel {@code true} if the pipeline is parallel
+     */
+    IntPipeline(Supplier<? extends Spliterator<Integer>> source,
+                int sourceFlags, boolean parallel) {
+        super(source, sourceFlags, parallel);
+    }
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Spliterator} describing the stream source
+     * @param sourceFlags The source flags for the stream source, described in
+     *        {@link StreamOpFlag}
+     * @param parallel {@code true} if the pipeline is parallel
+     */
+    IntPipeline(Spliterator<Integer> source,
+                int sourceFlags, boolean parallel) {
+        super(source, sourceFlags, parallel);
+    }
+
+    /**
+     * Constructor for appending an intermediate operation onto an existing
+     * pipeline.
+     *
+     * @param upstream the upstream element source
+     * @param opFlags the operation flags for the new operation
+     */
+    IntPipeline(AbstractPipeline<?, E_IN, ?> upstream, int opFlags) {
+        super(upstream, opFlags);
+    }
+
+    /**
+     * Adapt a {@code Sink<Integer> to an {@code IntConsumer}, ideally simply
+     * by casting.
+     */
+    private static IntConsumer adapt(Sink<Integer> sink) {
+        if (sink instanceof IntConsumer) {
+            return (IntConsumer) sink;
+        }
+        else {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(AbstractPipeline.class,
+                              "using IntStream.adapt(Sink<Integer> s)");
+            return sink::accept;
+        }
+    }
+
+    /**
+     * Adapt a {@code Spliterator<Integer>} to a {@code Spliterator.OfInt}.
+     *
+     * @implNote
+     * The implementation attempts to cast to a Spliterator.OfInt, and throws an
+     * exception if this cast is not possible.
+     */
+    private static Spliterator.OfInt adapt(Spliterator<Integer> s) {
+        if (s instanceof Spliterator.OfInt) {
+            return (Spliterator.OfInt) s;
+        }
+        else {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(AbstractPipeline.class,
+                              "using IntStream.adapt(Spliterator<Integer> s)");
+            throw new UnsupportedOperationException("IntStream.adapt(Spliterator<Integer> s)");
+        }
+    }
+
+
+    // Shape-specific methods
+
+    @Override
+    final StreamShape getOutputShape() {
+        return StreamShape.INT_VALUE;
+    }
+
+    @Override
+    final <P_IN> Node<Integer> evaluateToNode(PipelineHelper<Integer> helper,
+                                              Spliterator<P_IN> spliterator,
+                                              boolean flattenTree,
+                                              IntFunction<Integer[]> generator) {
+        return Nodes.collectInt(helper, spliterator, flattenTree);
+    }
+
+    @Override
+    final <P_IN> Spliterator<Integer> wrap(PipelineHelper<Integer> ph,
+                                           Supplier<Spliterator<P_IN>> supplier,
+                                           boolean isParallel) {
+        return new StreamSpliterators.IntWrappingSpliterator<>(ph, supplier, isParallel);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    final Spliterator.OfInt lazySpliterator(Supplier<? extends Spliterator<Integer>> supplier) {
+        return new StreamSpliterators.DelegatingSpliterator.OfInt((Supplier<Spliterator.OfInt>) supplier);
+    }
+
+    @Override
+    final void forEachWithCancel(Spliterator<Integer> spliterator, Sink<Integer> sink) {
+        Spliterator.OfInt spl = adapt(spliterator);
+        IntConsumer adaptedSink = adapt(sink);
+        do { } while (!sink.cancellationRequested() && spl.tryAdvance(adaptedSink));
+    }
+
+    @Override
+    final Node.Builder<Integer> makeNodeBuilder(long exactSizeIfKnown,
+                                                IntFunction<Integer[]> generator) {
+        return Nodes.intBuilder(exactSizeIfKnown);
+    }
+
+
+    // IntStream
+
+    @Override
+    public final PrimitiveIterator.OfInt iterator() {
+        return Spliterators.iterator(spliterator());
+    }
+
+    @Override
+    public final Spliterator.OfInt spliterator() {
+        return adapt(super.spliterator());
+    }
+
+    // Stateless intermediate ops from IntStream
+
+    @Override
+    public final LongStream asLongStream() {
+        return new LongPipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                                     StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Long> sink) {
+                return new Sink.ChainedInt<Long>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        downstream.accept((long) t);
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream asDoubleStream() {
+        return new DoublePipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                                       StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedInt<Double>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        downstream.accept((double) t);
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final Stream<Integer> boxed() {
+        return mapToObj(Integer::valueOf);
+    }
+
+    @Override
+    public final IntStream map(IntUnaryOperator mapper) {
+        Objects.requireNonNull(mapper);
+        return new StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                        StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedInt<Integer>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        downstream.accept(mapper.applyAsInt(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final <U> Stream<U> mapToObj(IntFunction<? extends U> mapper) {
+        Objects.requireNonNull(mapper);
+        return new ReferencePipeline.StatelessOp<Integer, U>(this, StreamShape.INT_VALUE,
+                                                             StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<U> sink) {
+                return new Sink.ChainedInt<U>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        downstream.accept(mapper.apply(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final LongStream mapToLong(IntToLongFunction mapper) {
+        Objects.requireNonNull(mapper);
+        return new LongPipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                                     StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Long> sink) {
+                return new Sink.ChainedInt<Long>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        downstream.accept(mapper.applyAsLong(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream mapToDouble(IntToDoubleFunction mapper) {
+        Objects.requireNonNull(mapper);
+        return new DoublePipeline.StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                                       StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedInt<Double>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        downstream.accept(mapper.applyAsDouble(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final IntStream flatMap(IntFunction<? extends IntStream> mapper) {
+        return new StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                        StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedInt<Integer>(sink) {
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(int t) {
+                        try (IntStream result = mapper.apply(t)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(i -> downstream.accept(i));
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public IntStream unordered() {
+        if (!isOrdered())
+            return this;
+        return new StatelessOp<Integer>(this, StreamShape.INT_VALUE, StreamOpFlag.NOT_ORDERED) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Integer> sink) {
+                return sink;
+            }
+        };
+    }
+
+    @Override
+    public final IntStream filter(IntPredicate predicate) {
+        Objects.requireNonNull(predicate);
+        return new StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                        StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedInt<Integer>(sink) {
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(int t) {
+                        if (predicate.test(t))
+                            downstream.accept(t);
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final IntStream peek(IntConsumer action) {
+        Objects.requireNonNull(action);
+        return new StatelessOp<Integer>(this, StreamShape.INT_VALUE,
+                                        0) {
+            @Override
+            Sink<Integer> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedInt<Integer>(sink) {
+                    @Override
+                    public void accept(int t) {
+                        action.accept(t);
+                        downstream.accept(t);
+                    }
+                };
+            }
+        };
+    }
+
+    // Stateful intermediate ops from IntStream
+
+    @Override
+    public final IntStream limit(long maxSize) {
+        if (maxSize < 0)
+            throw new IllegalArgumentException(Long.toString(maxSize));
+        return SliceOps.makeInt(this, 0, maxSize);
+    }
+
+    @Override
+    public final IntStream skip(long n) {
+        if (n < 0)
+            throw new IllegalArgumentException(Long.toString(n));
+        if (n == 0)
+            return this;
+        else
+            return SliceOps.makeInt(this, n, -1);
+    }
+
+    @Override
+    public final IntStream sorted() {
+        return SortedOps.makeInt(this);
+    }
+
+    @Override
+    public final IntStream distinct() {
+        // While functional and quick to implement, this approach is not very efficient.
+        // An efficient version requires an int-specific map/set implementation.
+        return boxed().distinct().mapToInt(i -> i);
+    }
+
+    // Terminal ops from IntStream
+
+    @Override
+    public void forEach(IntConsumer action) {
+        evaluate(ForEachOps.makeInt(action, false));
+    }
+
+    @Override
+    public void forEachOrdered(IntConsumer action) {
+        evaluate(ForEachOps.makeInt(action, true));
+    }
+
+    @Override
+    public final int sum() {
+        return reduce(0, Integer::sum);
+    }
+
+    @Override
+    public final OptionalInt min() {
+        return reduce(Math::min);
+    }
+
+    @Override
+    public final OptionalInt max() {
+        return reduce(Math::max);
+    }
+
+    @Override
+    public final long count() {
+        return mapToLong(e -> 1L).sum();
+    }
+
+    @Override
+    public final OptionalDouble average() {
+        long[] avg = collect(() -> new long[2],
+                             (ll, i) -> {
+                                 ll[0]++;
+                                 ll[1] += i;
+                             },
+                             (ll, rr) -> {
+                                 ll[0] += rr[0];
+                                 ll[1] += rr[1];
+                             });
+        return avg[0] > 0
+               ? OptionalDouble.of((double) avg[1] / avg[0])
+               : OptionalDouble.empty();
+    }
+
+    @Override
+    public final IntSummaryStatistics summaryStatistics() {
+        return collect(IntSummaryStatistics::new, IntSummaryStatistics::accept,
+                       IntSummaryStatistics::combine);
+    }
+
+    @Override
+    public final int reduce(int identity, IntBinaryOperator op) {
+        return evaluate(ReduceOps.makeInt(identity, op));
+    }
+
+    @Override
+    public final OptionalInt reduce(IntBinaryOperator op) {
+        return evaluate(ReduceOps.makeInt(op));
+    }
+
+    @Override
+    public final <R> R collect(Supplier<R> supplier,
+                               ObjIntConsumer<R> accumulator,
+                               BiConsumer<R, R> combiner) {
+        BinaryOperator<R> operator = (left, right) -> {
+            combiner.accept(left, right);
+            return left;
+        };
+        return evaluate(ReduceOps.makeInt(supplier, accumulator, operator));
+    }
+
+    @Override
+    public final boolean anyMatch(IntPredicate predicate) {
+        return evaluate(MatchOps.makeInt(predicate, MatchOps.MatchKind.ANY));
+    }
+
+    @Override
+    public final boolean allMatch(IntPredicate predicate) {
+        return evaluate(MatchOps.makeInt(predicate, MatchOps.MatchKind.ALL));
+    }
+
+    @Override
+    public final boolean noneMatch(IntPredicate predicate) {
+        return evaluate(MatchOps.makeInt(predicate, MatchOps.MatchKind.NONE));
+    }
+
+    @Override
+    public final OptionalInt findFirst() {
+        return evaluate(FindOps.makeInt(true));
+    }
+
+    @Override
+    public final OptionalInt findAny() {
+        return evaluate(FindOps.makeInt(false));
+    }
+
+    @Override
+    public final int[] toArray() {
+        return Nodes.flattenInt((Node.OfInt) evaluateToArrayNode(Integer[]::new))
+                        .asPrimitiveArray();
+    }
+
+    //
+
+    /**
+     * Source stage of an IntStream.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @since 1.8
+     */
+    static class Head<E_IN> extends IntPipeline<E_IN> {
+        /**
+         * Constructor for the source stage of an IntStream.
+         *
+         * @param source {@code Supplier<Spliterator>} describing the stream
+         *               source
+         * @param sourceFlags the source flags for the stream source, described
+         *                    in {@link StreamOpFlag}
+         * @param parallel {@code true} if the pipeline is parallel
+         */
+        Head(Supplier<? extends Spliterator<Integer>> source,
+             int sourceFlags, boolean parallel) {
+            super(source, sourceFlags, parallel);
+        }
+
+        /**
+         * Constructor for the source stage of an IntStream.
+         *
+         * @param source {@code Spliterator} describing the stream source
+         * @param sourceFlags the source flags for the stream source, described
+         *                    in {@link StreamOpFlag}
+         * @param parallel {@code true} if the pipeline is parallel
+         */
+        Head(Spliterator<Integer> source,
+             int sourceFlags, boolean parallel) {
+            super(source, sourceFlags, parallel);
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        final Sink<E_IN> opWrapSink(int flags, Sink<Integer> sink) {
+            throw new UnsupportedOperationException();
+        }
+
+        // Optimized sequential terminal operations for the head of the pipeline
+
+        @Override
+        public void forEach(IntConsumer action) {
+            if (!isParallel()) {
+                adapt(sourceStageSpliterator()).forEachRemaining(action);
+            }
+            else {
+                super.forEach(action);
+            }
+        }
+
+        @Override
+        public void forEachOrdered(IntConsumer action) {
+            if (!isParallel()) {
+                adapt(sourceStageSpliterator()).forEachRemaining(action);
+            }
+            else {
+                super.forEachOrdered(action);
+            }
+        }
+    }
+
+    /**
+     * Base class for a stateless intermediate stage of an IntStream
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @since 1.8
+     */
+    abstract static class StatelessOp<E_IN> extends IntPipeline<E_IN> {
+        /**
+         * Construct a new IntStream by appending a stateless intermediate
+         * operation to an existing stream.
+         * @param upstream The upstream pipeline stage
+         * @param inputShape The stream shape for the upstream pipeline stage
+         * @param opFlags Operation flags for the new stage
+         */
+        StatelessOp(AbstractPipeline<?, E_IN, ?> upstream,
+                    StreamShape inputShape,
+                    int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return false;
+        }
+    }
+
+    /**
+     * Base class for a stateful intermediate stage of an IntStream.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @since 1.8
+     */
+    abstract static class StatefulOp<E_IN> extends IntPipeline<E_IN> {
+        /**
+         * Construct a new IntStream by appending a stateful intermediate
+         * operation to an existing stream.
+         * @param upstream The upstream pipeline stage
+         * @param inputShape The stream shape for the upstream pipeline stage
+         * @param opFlags Operation flags for the new stage
+         */
+        StatefulOp(AbstractPipeline<?, E_IN, ?> upstream,
+                   StreamShape inputShape,
+                   int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return true;
+        }
+
+        @Override
+        abstract <P_IN> Node<Integer> opEvaluateParallel(PipelineHelper<Integer> helper,
+                                                         Spliterator<P_IN> spliterator,
+                                                         IntFunction<Integer[]> generator);
+    }
+}

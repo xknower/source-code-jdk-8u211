@@ -1,183 +1,177 @@
-/*     */ package com.sun.org.apache.xml.internal.security.transforms.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
-/*     */ import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.Transform;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.TransformSpi;
-/*     */ import com.sun.org.apache.xml.internal.security.transforms.TransformationException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.Base64;
-/*     */ import java.io.BufferedInputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import javax.xml.parsers.DocumentBuilderFactory;
-/*     */ import javax.xml.parsers.ParserConfigurationException;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.Text;
-/*     */ import org.xml.sax.SAXException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class TransformBase64Decode
-/*     */   extends TransformSpi
-/*     */ {
-/*     */   public static final String implementedTransformURI = "http://www.w3.org/2000/09/xmldsig#base64";
-/*     */   
-/*     */   protected String engineGetURI() {
-/*  85 */     return "http://www.w3.org/2000/09/xmldsig#base64";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected XMLSignatureInput enginePerformTransform(XMLSignatureInput paramXMLSignatureInput, Transform paramTransform) throws IOException, CanonicalizationException, TransformationException {
-/* 101 */     return enginePerformTransform(paramXMLSignatureInput, null, paramTransform);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected XMLSignatureInput enginePerformTransform(XMLSignatureInput paramXMLSignatureInput, OutputStream paramOutputStream, Transform paramTransform) throws IOException, CanonicalizationException, TransformationException {
-/*     */     try {
-/* 108 */       if (paramXMLSignatureInput.isElement()) {
-/* 109 */         Node node = paramXMLSignatureInput.getSubNode();
-/* 110 */         if (paramXMLSignatureInput.getSubNode().getNodeType() == 3) {
-/* 111 */           node = node.getParentNode();
-/*     */         }
-/* 113 */         StringBuilder stringBuilder = new StringBuilder();
-/* 114 */         traverseElement((Element)node, stringBuilder);
-/* 115 */         if (paramOutputStream == null) {
-/* 116 */           byte[] arrayOfByte = Base64.decode(stringBuilder.toString());
-/* 117 */           return new XMLSignatureInput(arrayOfByte);
-/*     */         } 
-/* 119 */         Base64.decode(stringBuilder.toString(), paramOutputStream);
-/* 120 */         XMLSignatureInput xMLSignatureInput = new XMLSignatureInput((byte[])null);
-/* 121 */         xMLSignatureInput.setOutputStream(paramOutputStream);
-/* 122 */         return xMLSignatureInput;
-/*     */       } 
-/*     */       
-/* 125 */       if (paramXMLSignatureInput.isOctetStream() || paramXMLSignatureInput.isNodeSet()) {
-/* 126 */         if (paramOutputStream == null) {
-/* 127 */           byte[] arrayOfByte1 = paramXMLSignatureInput.getBytes();
-/* 128 */           byte[] arrayOfByte2 = Base64.decode(arrayOfByte1);
-/* 129 */           return new XMLSignatureInput(arrayOfByte2);
-/*     */         } 
-/* 131 */         if (paramXMLSignatureInput.isByteArray() || paramXMLSignatureInput.isNodeSet()) {
-/* 132 */           Base64.decode(paramXMLSignatureInput.getBytes(), paramOutputStream);
-/*     */         } else {
-/* 134 */           Base64.decode(new BufferedInputStream(paramXMLSignatureInput.getOctetStreamReal()), paramOutputStream);
-/*     */         } 
-/* 136 */         XMLSignatureInput xMLSignatureInput = new XMLSignatureInput((byte[])null);
-/* 137 */         xMLSignatureInput.setOutputStream(paramOutputStream);
-/* 138 */         return xMLSignatureInput;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       try {
-/* 144 */         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-/* 145 */         documentBuilderFactory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", Boolean.TRUE.booleanValue());
-/*     */         
-/* 147 */         Document document = documentBuilderFactory.newDocumentBuilder().parse(paramXMLSignatureInput.getOctetStream());
-/*     */         
-/* 149 */         Element element = document.getDocumentElement();
-/* 150 */         StringBuilder stringBuilder = new StringBuilder();
-/* 151 */         traverseElement(element, stringBuilder);
-/* 152 */         byte[] arrayOfByte = Base64.decode(stringBuilder.toString());
-/* 153 */         return new XMLSignatureInput(arrayOfByte);
-/* 154 */       } catch (ParserConfigurationException parserConfigurationException) {
-/* 155 */         throw new TransformationException("c14n.Canonicalizer.Exception", parserConfigurationException);
-/* 156 */       } catch (SAXException sAXException) {
-/* 157 */         throw new TransformationException("SAX exception", sAXException);
-/*     */       } 
-/* 159 */     } catch (Base64DecodingException base64DecodingException) {
-/* 160 */       throw new TransformationException("Base64Decoding", base64DecodingException);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   void traverseElement(Element paramElement, StringBuilder paramStringBuilder) {
-/* 165 */     Node node = paramElement.getFirstChild();
-/* 166 */     while (node != null) {
-/* 167 */       switch (node.getNodeType()) {
-/*     */         case 1:
-/* 169 */           traverseElement((Element)node, paramStringBuilder);
-/*     */           break;
-/*     */         case 3:
-/* 172 */           paramStringBuilder.append(((Text)node).getData()); break;
-/*     */       } 
-/* 174 */       node = node.getNextSibling();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\transforms\implementations\TransformBase64Decode.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.transforms.implementations;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import com.sun.org.apache.xml.internal.security.c14n.CanonicalizationException;
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
+import com.sun.org.apache.xml.internal.security.transforms.Transform;
+import com.sun.org.apache.xml.internal.security.transforms.TransformSpi;
+import com.sun.org.apache.xml.internal.security.transforms.TransformationException;
+import com.sun.org.apache.xml.internal.security.transforms.Transforms;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
+import org.xml.sax.SAXException;
+
+/**
+ * Implements the <CODE>http://www.w3.org/2000/09/xmldsig#base64</CODE> decoding
+ * transform.
+ *
+ * <p>The normative specification for base64 decoding transforms is
+ * <A HREF="http://www.w3.org/TR/2001/CR-xmldsig-core-20010419/#ref-MIME">[MIME]</A>.
+ * The base64 Transform element has no content. The input
+ * is decoded by the algorithms. This transform is useful if an
+ * application needs to sign the raw data associated with the encoded
+ * content of an element. </p>
+ *
+ * <p>This transform requires an octet stream for input.
+ * If an XPath node-set (or sufficiently functional alternative) is
+ * given as input, then it is converted to an octet stream by
+ * performing operations logically equivalent to 1) applying an XPath
+ * transform with expression self::text(), then 2) taking the string-value
+ * of the node-set. Thus, if an XML element is identified by a barename
+ * XPointer in the Reference URI, and its content consists solely of base64
+ * encoded character data, then this transform automatically strips away the
+ * start and end tags of the identified element and any of its descendant
+ * elements as well as any descendant comments and processing instructions.
+ * The output of this transform is an octet stream.</p>
+ *
+ * @author Christian Geuer-Pollmann
+ * @see com.sun.org.apache.xml.internal.security.utils.Base64
+ */
+public class TransformBase64Decode extends TransformSpi {
+
+    /** Field implementedTransformURI */
+    public static final String implementedTransformURI =
+        Transforms.TRANSFORM_BASE64_DECODE;
+
+    /**
+     * Method engineGetURI
+     *
+     * @inheritDoc
+     */
+    protected String engineGetURI() {
+        return TransformBase64Decode.implementedTransformURI;
+    }
+
+    /**
+     * Method enginePerformTransform
+     *
+     * @param input
+     * @return {@link XMLSignatureInput} as the result of transformation
+     * @inheritDoc
+     * @throws CanonicalizationException
+     * @throws IOException
+     * @throws TransformationException
+     */
+    protected XMLSignatureInput enginePerformTransform(
+        XMLSignatureInput input, Transform transformObject
+    ) throws IOException, CanonicalizationException, TransformationException {
+        return enginePerformTransform(input, null, transformObject);
+    }
+
+    protected XMLSignatureInput enginePerformTransform(
+        XMLSignatureInput input, OutputStream os, Transform transformObject
+    ) throws IOException, CanonicalizationException, TransformationException {
+        try {
+            if (input.isElement()) {
+                Node el = input.getSubNode();
+                if (input.getSubNode().getNodeType() == Node.TEXT_NODE) {
+                    el = el.getParentNode();
+                }
+                StringBuilder sb = new StringBuilder();
+                traverseElement((Element)el, sb);
+                if (os == null) {
+                    byte[] decodedBytes = Base64.decode(sb.toString());
+                    return new XMLSignatureInput(decodedBytes);
+                }
+                Base64.decode(sb.toString(), os);
+                XMLSignatureInput output = new XMLSignatureInput((byte[])null);
+                output.setOutputStream(os);
+                return output;
+            }
+
+            if (input.isOctetStream() || input.isNodeSet()) {
+                if (os == null) {
+                    byte[] base64Bytes = input.getBytes();
+                    byte[] decodedBytes = Base64.decode(base64Bytes);
+                    return new XMLSignatureInput(decodedBytes);
+                }
+                if (input.isByteArray() || input.isNodeSet()) {
+                    Base64.decode(input.getBytes(), os);
+                } else {
+                    Base64.decode(new BufferedInputStream(input.getOctetStreamReal()), os);
+                }
+                XMLSignatureInput output = new XMLSignatureInput((byte[])null);
+                output.setOutputStream(os);
+                return output;
+            }
+
+            try {
+                //Exceptional case there is current not text case testing this(Before it was a
+                //a common case).
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+                Document doc =
+                    dbf.newDocumentBuilder().parse(input.getOctetStream());
+
+                Element rootNode = doc.getDocumentElement();
+                StringBuilder sb = new StringBuilder();
+                traverseElement(rootNode, sb);
+                byte[] decodedBytes = Base64.decode(sb.toString());
+                return new XMLSignatureInput(decodedBytes);
+            } catch (ParserConfigurationException e) {
+                throw new TransformationException("c14n.Canonicalizer.Exception",e);
+            } catch (SAXException e) {
+                throw new TransformationException("SAX exception", e);
+            }
+        } catch (Base64DecodingException e) {
+            throw new TransformationException("Base64Decoding", e);
+        }
+    }
+
+    void traverseElement(org.w3c.dom.Element node, StringBuilder sb) {
+        Node sibling = node.getFirstChild();
+        while (sibling != null) {
+            switch (sibling.getNodeType()) {
+            case Node.ELEMENT_NODE:
+                traverseElement((Element)sibling, sb);
+                break;
+            case Node.TEXT_NODE:
+                sb.append(((Text)sibling).getData());
+            }
+            sibling = sibling.getNextSibling();
+        }
+    }
+}

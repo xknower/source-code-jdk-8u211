@@ -1,214 +1,208 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.KeyEventPostProcessor;
-/*     */ import java.awt.Toolkit;
-/*     */ import java.awt.Window;
-/*     */ import java.awt.event.KeyEvent;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JFrame;
-/*     */ import javax.swing.JMenu;
-/*     */ import javax.swing.JMenuBar;
-/*     */ import javax.swing.JRootPane;
-/*     */ import javax.swing.MenuElement;
-/*     */ import javax.swing.MenuSelectionManager;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicRootPaneUI;
-/*     */ import sun.awt.AWTAccessor;
-/*     */ import sun.awt.SunToolkit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsRootPaneUI
-/*     */   extends BasicRootPaneUI
-/*     */ {
-/*  73 */   private static final WindowsRootPaneUI windowsRootPaneUI = new WindowsRootPaneUI();
-/*  74 */   static final AltProcessor altProcessor = new AltProcessor();
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  77 */     return windowsRootPaneUI;
-/*     */   }
-/*     */   
-/*     */   static class AltProcessor implements KeyEventPostProcessor {
-/*     */     static boolean altKeyPressed = false;
-/*     */     static boolean menuCanceledOnPress = false;
-/*  83 */     static JRootPane root = null;
-/*  84 */     static Window winAncestor = null;
-/*     */ 
-/*     */     
-/*     */     void altPressed(KeyEvent param1KeyEvent) {
-/*  88 */       MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-/*  89 */       MenuElement[] arrayOfMenuElement = menuSelectionManager.getSelectedPath();
-/*  90 */       if (arrayOfMenuElement.length > 0 && !(arrayOfMenuElement[0] instanceof javax.swing.plaf.basic.ComboPopup)) {
-/*  91 */         menuSelectionManager.clearSelectedPath();
-/*  92 */         menuCanceledOnPress = true;
-/*  93 */         param1KeyEvent.consume();
-/*  94 */       } else if (arrayOfMenuElement.length > 0) {
-/*  95 */         menuCanceledOnPress = false;
-/*  96 */         WindowsLookAndFeel.setMnemonicHidden(false);
-/*  97 */         WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
-/*  98 */         param1KeyEvent.consume();
-/*     */       } else {
-/* 100 */         menuCanceledOnPress = false;
-/* 101 */         WindowsLookAndFeel.setMnemonicHidden(false);
-/* 102 */         WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
-/* 103 */         JMenuBar jMenuBar = (root != null) ? root.getJMenuBar() : null;
-/* 104 */         if (jMenuBar == null && winAncestor instanceof JFrame) {
-/* 105 */           jMenuBar = ((JFrame)winAncestor).getJMenuBar();
-/*     */         }
-/* 107 */         JMenu jMenu = (jMenuBar != null) ? jMenuBar.getMenu(0) : null;
-/* 108 */         if (jMenu != null) {
-/* 109 */           param1KeyEvent.consume();
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     void altReleased(KeyEvent param1KeyEvent) {
-/* 115 */       if (menuCanceledOnPress) {
-/* 116 */         WindowsLookAndFeel.setMnemonicHidden(true);
-/* 117 */         WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
-/*     */         
-/*     */         return;
-/*     */       } 
-/*     */       
-/* 122 */       MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-/* 123 */       if ((menuSelectionManager.getSelectedPath()).length == 0) {
-/*     */ 
-/*     */         
-/* 126 */         JMenuBar jMenuBar = (root != null) ? root.getJMenuBar() : null;
-/* 127 */         if (jMenuBar == null && winAncestor instanceof JFrame) {
-/* 128 */           jMenuBar = ((JFrame)winAncestor).getJMenuBar();
-/*     */         }
-/* 130 */         JMenu jMenu = (jMenuBar != null) ? jMenuBar.getMenu(0) : null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 140 */         boolean bool = false;
-/* 141 */         Toolkit toolkit = Toolkit.getDefaultToolkit();
-/* 142 */         if (toolkit instanceof SunToolkit) {
-/*     */           
-/* 144 */           Component component = AWTAccessor.getKeyEventAccessor().getOriginalSource(param1KeyEvent);
-/*     */           
-/* 146 */           bool = (SunToolkit.getContainingWindow(component) != winAncestor || param1KeyEvent.getWhen() <= ((SunToolkit)toolkit).getWindowDeactivationTime(winAncestor)) ? true : false;
-/*     */         } 
-/*     */         
-/* 149 */         if (jMenu != null && !bool) {
-/* 150 */           MenuElement[] arrayOfMenuElement = new MenuElement[2];
-/* 151 */           arrayOfMenuElement[0] = jMenuBar;
-/* 152 */           arrayOfMenuElement[1] = jMenu;
-/* 153 */           menuSelectionManager.setSelectedPath(arrayOfMenuElement);
-/* 154 */         } else if (!WindowsLookAndFeel.isMnemonicHidden()) {
-/* 155 */           WindowsLookAndFeel.setMnemonicHidden(true);
-/* 156 */           WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
-/*     */         }
-/*     */       
-/* 159 */       } else if (menuSelectionManager.getSelectedPath()[0] instanceof javax.swing.plaf.basic.ComboPopup) {
-/* 160 */         WindowsLookAndFeel.setMnemonicHidden(true);
-/* 161 */         WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public boolean postProcessKeyEvent(KeyEvent param1KeyEvent) {
-/* 168 */       if (param1KeyEvent.isConsumed() && param1KeyEvent.getKeyCode() != 18) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 172 */         altKeyPressed = false;
-/* 173 */         return false;
-/*     */       } 
-/* 175 */       if (param1KeyEvent.getKeyCode() == 18) {
-/* 176 */         root = SwingUtilities.getRootPane(param1KeyEvent.getComponent());
-/*     */         
-/* 178 */         winAncestor = (root == null) ? null : SwingUtilities.getWindowAncestor(root);
-/*     */         
-/* 180 */         if (param1KeyEvent.getID() == 401) {
-/* 181 */           if (!altKeyPressed) {
-/* 182 */             altPressed(param1KeyEvent);
-/*     */           }
-/* 184 */           altKeyPressed = true;
-/* 185 */           return true;
-/* 186 */         }  if (param1KeyEvent.getID() == 402) {
-/* 187 */           if (altKeyPressed) {
-/* 188 */             altReleased(param1KeyEvent);
-/*     */           } else {
-/*     */             
-/* 191 */             MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-/* 192 */             MenuElement[] arrayOfMenuElement = menuSelectionManager.getSelectedPath();
-/* 193 */             if (arrayOfMenuElement.length <= 0) {
-/* 194 */               WindowsLookAndFeel.setMnemonicHidden(true);
-/* 195 */               WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
-/*     */             } 
-/*     */           } 
-/* 198 */           altKeyPressed = false;
-/*     */         } 
-/* 200 */         root = null;
-/* 201 */         winAncestor = null;
-/*     */       } else {
-/* 203 */         altKeyPressed = false;
-/*     */       } 
-/* 205 */       return false;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsRootPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Event;
+import java.awt.KeyEventPostProcessor;
+import java.awt.Window;
+import java.awt.Toolkit;
+
+import sun.awt.AWTAccessor;
+import sun.awt.SunToolkit;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.KeyStroke;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.AbstractButton;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.MenuElement;
+import javax.swing.MenuSelectionManager;
+
+import javax.swing.plaf.ActionMapUIResource;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.InputMapUIResource;
+
+import javax.swing.plaf.basic.BasicRootPaneUI;
+import javax.swing.plaf.basic.ComboPopup;
+
+/**
+ * Windows implementation of RootPaneUI, there is one shared between all
+ * JRootPane instances.
+ *
+ * @author Mark Davidson
+ * @since 1.4
+ */
+public class WindowsRootPaneUI extends BasicRootPaneUI {
+
+    private final static WindowsRootPaneUI windowsRootPaneUI = new WindowsRootPaneUI();
+    static final AltProcessor altProcessor = new AltProcessor();
+
+    public static ComponentUI createUI(JComponent c) {
+        return windowsRootPaneUI;
+    }
+
+    static class AltProcessor implements KeyEventPostProcessor {
+        static boolean altKeyPressed = false;
+        static boolean menuCanceledOnPress = false;
+        static JRootPane root = null;
+        static Window winAncestor = null;
+
+        void altPressed(KeyEvent ev) {
+            MenuSelectionManager msm =
+                MenuSelectionManager.defaultManager();
+            MenuElement[] path = msm.getSelectedPath();
+            if (path.length > 0 && ! (path[0] instanceof ComboPopup)) {
+                msm.clearSelectedPath();
+                menuCanceledOnPress = true;
+                ev.consume();
+            } else if(path.length > 0) { // We are in ComboBox
+                menuCanceledOnPress = false;
+                WindowsLookAndFeel.setMnemonicHidden(false);
+                WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
+                ev.consume();
+            } else {
+                menuCanceledOnPress = false;
+                WindowsLookAndFeel.setMnemonicHidden(false);
+                WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
+                JMenuBar mbar = root != null ? root.getJMenuBar() : null;
+                if(mbar == null && winAncestor instanceof JFrame) {
+                    mbar = ((JFrame)winAncestor).getJMenuBar();
+                }
+                JMenu menu = mbar != null ? mbar.getMenu(0) : null;
+                if(menu != null) {
+                    ev.consume();
+                }
+            }
+        }
+
+        void altReleased(KeyEvent ev) {
+            if (menuCanceledOnPress) {
+                WindowsLookAndFeel.setMnemonicHidden(true);
+                WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
+                return;
+            }
+
+            MenuSelectionManager msm =
+                MenuSelectionManager.defaultManager();
+            if (msm.getSelectedPath().length == 0) {
+                // if no menu is active, we try activating the menubar
+
+                JMenuBar mbar = root != null ? root.getJMenuBar() : null;
+                if(mbar == null && winAncestor instanceof JFrame) {
+                    mbar = ((JFrame)winAncestor).getJMenuBar();
+                }
+                JMenu menu = mbar != null ? mbar.getMenu(0) : null;
+
+                // It might happen that the altRelease event is processed
+                // with a reasonable delay since it has been generated.
+                // Here we check the last deactivation time of the containing
+                // window. If this time appears to be greater than the altRelease
+                // event time the event is skipped to avoid unexpected menu
+                // activation. See 7121442.
+                // Also we must ensure that original source of key event belongs
+                // to the same window object as winAncestor. See 8001633.
+                boolean skip = false;
+                Toolkit tk = Toolkit.getDefaultToolkit();
+                if (tk instanceof SunToolkit) {
+                    Component originalSource = AWTAccessor.getKeyEventAccessor()
+                            .getOriginalSource(ev);
+                    skip = SunToolkit.getContainingWindow(originalSource) != winAncestor ||
+                            ev.getWhen() <= ((SunToolkit) tk).getWindowDeactivationTime(winAncestor);
+                }
+
+                if (menu != null && !skip) {
+                    MenuElement[] path = new MenuElement[2];
+                    path[0] = mbar;
+                    path[1] = menu;
+                    msm.setSelectedPath(path);
+                } else if(!WindowsLookAndFeel.isMnemonicHidden()) {
+                    WindowsLookAndFeel.setMnemonicHidden(true);
+                    WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
+                }
+            } else {
+                if((msm.getSelectedPath())[0] instanceof ComboPopup) {
+                    WindowsLookAndFeel.setMnemonicHidden(true);
+                    WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
+                }
+            }
+
+        }
+
+        public boolean postProcessKeyEvent(KeyEvent ev) {
+            if(ev.isConsumed() && ev.getKeyCode() != KeyEvent.VK_ALT) {
+                // mnemonic combination, it's consumed, but we need
+                // set altKeyPressed to false, otherwise after selection
+                // component by mnemonic combination a menu will be open
+                altKeyPressed = false;
+                return false;
+            }
+            if (ev.getKeyCode() == KeyEvent.VK_ALT) {
+                root = SwingUtilities.getRootPane(ev.getComponent());
+                winAncestor = (root == null ? null :
+                        SwingUtilities.getWindowAncestor(root));
+
+                if (ev.getID() == KeyEvent.KEY_PRESSED) {
+                    if (!altKeyPressed) {
+                        altPressed(ev);
+                    }
+                    altKeyPressed = true;
+                    return true;
+                } else if (ev.getID() == KeyEvent.KEY_RELEASED) {
+                    if (altKeyPressed) {
+                        altReleased(ev);
+                    } else {
+                        MenuSelectionManager msm =
+                            MenuSelectionManager.defaultManager();
+                        MenuElement[] path = msm.getSelectedPath();
+                        if (path.length <= 0) {
+                            WindowsLookAndFeel.setMnemonicHidden(true);
+                            WindowsGraphicsUtils.repaintMnemonicsInWindow(winAncestor);
+                        }
+                    }
+                    altKeyPressed = false;
+                }
+                root = null;
+                winAncestor = null;
+            } else {
+                altKeyPressed = false;
+            }
+            return false;
+        }
+    }
+}

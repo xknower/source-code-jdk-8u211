@@ -1,405 +1,399 @@
-/*     */ package com.sun.security.auth.module;
-/*     */ 
-/*     */ import com.sun.security.auth.NTDomainPrincipal;
-/*     */ import com.sun.security.auth.NTNumericCredential;
-/*     */ import com.sun.security.auth.NTSidDomainPrincipal;
-/*     */ import com.sun.security.auth.NTSidGroupPrincipal;
-/*     */ import com.sun.security.auth.NTSidPrimaryGroupPrincipal;
-/*     */ import com.sun.security.auth.NTSidUserPrincipal;
-/*     */ import com.sun.security.auth.NTUserPrincipal;
-/*     */ import java.security.Principal;
-/*     */ import java.util.Map;
-/*     */ import java.util.Set;
-/*     */ import javax.security.auth.Subject;
-/*     */ import javax.security.auth.callback.CallbackHandler;
-/*     */ import javax.security.auth.login.FailedLoginException;
-/*     */ import javax.security.auth.login.LoginException;
-/*     */ import javax.security.auth.spi.LoginModule;
-/*     */ import jdk.Exported;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ @Exported
-/*     */ public class NTLoginModule
-/*     */   implements LoginModule
-/*     */ {
-/*     */   private NTSystem ntSystem;
-/*     */   private Subject subject;
-/*     */   private CallbackHandler callbackHandler;
-/*     */   private Map<String, ?> sharedState;
-/*     */   private Map<String, ?> options;
-/*     */   private boolean debug = false;
-/*     */   private boolean debugNative = false;
-/*     */   private boolean succeeded = false;
-/*     */   private boolean commitSucceeded = false;
-/*     */   private NTUserPrincipal userPrincipal;
-/*     */   private NTSidUserPrincipal userSID;
-/*     */   private NTDomainPrincipal userDomain;
-/*     */   private NTSidDomainPrincipal domainSID;
-/*     */   private NTSidPrimaryGroupPrincipal primaryGroup;
-/*     */   private NTSidGroupPrincipal[] groups;
-/*     */   private NTNumericCredential iToken;
-/*     */   
-/*     */   public void initialize(Subject paramSubject, CallbackHandler paramCallbackHandler, Map<String, ?> paramMap1, Map<String, ?> paramMap2) {
-/* 111 */     this.subject = paramSubject;
-/* 112 */     this.callbackHandler = paramCallbackHandler;
-/* 113 */     this.sharedState = paramMap1;
-/* 114 */     this.options = paramMap2;
-/*     */ 
-/*     */     
-/* 117 */     this.debug = "true".equalsIgnoreCase((String)paramMap2.get("debug"));
-/* 118 */     this.debugNative = "true".equalsIgnoreCase((String)paramMap2.get("debugNative"));
-/*     */     
-/* 120 */     if (this.debugNative == true) {
-/* 121 */       this.debug = true;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean login() throws LoginException {
-/* 140 */     this.succeeded = false;
-/*     */     
-/* 142 */     this.ntSystem = new NTSystem(this.debugNative);
-/* 143 */     if (this.ntSystem == null) {
-/* 144 */       if (this.debug) {
-/* 145 */         System.out.println("\t\t[NTLoginModule] Failed in NT login");
-/*     */       }
-/*     */       
-/* 148 */       throw new FailedLoginException("Failed in attempt to import the underlying NT system identity information");
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 153 */     if (this.ntSystem.getName() == null) {
-/* 154 */       throw new FailedLoginException("Failed in attempt to import the underlying NT system identity information");
-/*     */     }
-/*     */ 
-/*     */     
-/* 158 */     this.userPrincipal = new NTUserPrincipal(this.ntSystem.getName());
-/* 159 */     if (this.debug) {
-/* 160 */       System.out.println("\t\t[NTLoginModule] succeeded importing info: ");
-/*     */       
-/* 162 */       System.out.println("\t\t\tuser name = " + this.userPrincipal
-/* 163 */           .getName());
-/*     */     } 
-/*     */     
-/* 166 */     if (this.ntSystem.getUserSID() != null) {
-/* 167 */       this.userSID = new NTSidUserPrincipal(this.ntSystem.getUserSID());
-/* 168 */       if (this.debug) {
-/* 169 */         System.out.println("\t\t\tuser SID = " + this.userSID
-/* 170 */             .getName());
-/*     */       }
-/*     */     } 
-/* 173 */     if (this.ntSystem.getDomain() != null) {
-/* 174 */       this.userDomain = new NTDomainPrincipal(this.ntSystem.getDomain());
-/* 175 */       if (this.debug) {
-/* 176 */         System.out.println("\t\t\tuser domain = " + this.userDomain
-/* 177 */             .getName());
-/*     */       }
-/*     */     } 
-/* 180 */     if (this.ntSystem.getDomainSID() != null) {
-/* 181 */       this
-/* 182 */         .domainSID = new NTSidDomainPrincipal(this.ntSystem.getDomainSID());
-/* 183 */       if (this.debug) {
-/* 184 */         System.out.println("\t\t\tuser domain SID = " + this.domainSID
-/* 185 */             .getName());
-/*     */       }
-/*     */     } 
-/* 188 */     if (this.ntSystem.getPrimaryGroupID() != null) {
-/* 189 */       this
-/* 190 */         .primaryGroup = new NTSidPrimaryGroupPrincipal(this.ntSystem.getPrimaryGroupID());
-/* 191 */       if (this.debug) {
-/* 192 */         System.out.println("\t\t\tuser primary group = " + this.primaryGroup
-/* 193 */             .getName());
-/*     */       }
-/*     */     } 
-/* 196 */     if (this.ntSystem.getGroupIDs() != null && (this.ntSystem
-/* 197 */       .getGroupIDs()).length > 0) {
-/*     */       
-/* 199 */       String[] arrayOfString = this.ntSystem.getGroupIDs();
-/* 200 */       this.groups = new NTSidGroupPrincipal[arrayOfString.length];
-/* 201 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/* 202 */         this.groups[b] = new NTSidGroupPrincipal(arrayOfString[b]);
-/* 203 */         if (this.debug) {
-/* 204 */           System.out.println("\t\t\tuser group = " + this.groups[b]
-/* 205 */               .getName());
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 209 */     if (this.ntSystem.getImpersonationToken() != 0L) {
-/* 210 */       this.iToken = new NTNumericCredential(this.ntSystem.getImpersonationToken());
-/* 211 */       if (this.debug) {
-/* 212 */         System.out.println("\t\t\timpersonation token = " + this.ntSystem
-/* 213 */             .getImpersonationToken());
-/*     */       }
-/*     */     } 
-/*     */     
-/* 217 */     this.succeeded = true;
-/* 218 */     return this.succeeded;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean commit() throws LoginException {
-/* 244 */     if (!this.succeeded) {
-/* 245 */       if (this.debug) {
-/* 246 */         System.out.println("\t\t[NTLoginModule]: did not add any Principals to Subject because own authentication failed.");
-/*     */       }
-/*     */ 
-/*     */       
-/* 250 */       return false;
-/*     */     } 
-/* 252 */     if (this.subject.isReadOnly()) {
-/* 253 */       throw new LoginException("Subject is ReadOnly");
-/*     */     }
-/* 255 */     Set<Principal> set = this.subject.getPrincipals();
-/*     */ 
-/*     */     
-/* 258 */     if (!set.contains(this.userPrincipal)) {
-/* 259 */       set.add(this.userPrincipal);
-/*     */     }
-/* 261 */     if (this.userSID != null && !set.contains(this.userSID)) {
-/* 262 */       set.add(this.userSID);
-/*     */     }
-/*     */     
-/* 265 */     if (this.userDomain != null && !set.contains(this.userDomain)) {
-/* 266 */       set.add(this.userDomain);
-/*     */     }
-/* 268 */     if (this.domainSID != null && !set.contains(this.domainSID)) {
-/* 269 */       set.add(this.domainSID);
-/*     */     }
-/*     */     
-/* 272 */     if (this.primaryGroup != null && !set.contains(this.primaryGroup)) {
-/* 273 */       set.add(this.primaryGroup);
-/*     */     }
-/* 275 */     for (byte b = 0; this.groups != null && b < this.groups.length; b++) {
-/* 276 */       if (!set.contains(this.groups[b])) {
-/* 277 */         set.add(this.groups[b]);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 281 */     Set<Object> set1 = this.subject.getPublicCredentials();
-/* 282 */     if (this.iToken != null && !set1.contains(this.iToken)) {
-/* 283 */       set1.add(this.iToken);
-/*     */     }
-/* 285 */     this.commitSucceeded = true;
-/* 286 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean abort() throws LoginException {
-/* 309 */     if (this.debug) {
-/* 310 */       System.out.println("\t\t[NTLoginModule]: aborted authentication attempt");
-/*     */     }
-/*     */ 
-/*     */     
-/* 314 */     if (!this.succeeded)
-/* 315 */       return false; 
-/* 316 */     if (this.succeeded == true && !this.commitSucceeded) {
-/* 317 */       this.ntSystem = null;
-/* 318 */       this.userPrincipal = null;
-/* 319 */       this.userSID = null;
-/* 320 */       this.userDomain = null;
-/* 321 */       this.domainSID = null;
-/* 322 */       this.primaryGroup = null;
-/* 323 */       this.groups = null;
-/* 324 */       this.iToken = null;
-/* 325 */       this.succeeded = false;
-/*     */     }
-/*     */     else {
-/*     */       
-/* 329 */       logout();
-/*     */     } 
-/* 331 */     return this.succeeded;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean logout() throws LoginException {
-/* 352 */     if (this.subject.isReadOnly()) {
-/* 353 */       throw new LoginException("Subject is ReadOnly");
-/*     */     }
-/* 355 */     Set<Principal> set = this.subject.getPrincipals();
-/* 356 */     if (set.contains(this.userPrincipal)) {
-/* 357 */       set.remove(this.userPrincipal);
-/*     */     }
-/* 359 */     if (set.contains(this.userSID)) {
-/* 360 */       set.remove(this.userSID);
-/*     */     }
-/* 362 */     if (set.contains(this.userDomain)) {
-/* 363 */       set.remove(this.userDomain);
-/*     */     }
-/* 365 */     if (set.contains(this.domainSID)) {
-/* 366 */       set.remove(this.domainSID);
-/*     */     }
-/* 368 */     if (set.contains(this.primaryGroup)) {
-/* 369 */       set.remove(this.primaryGroup);
-/*     */     }
-/* 371 */     for (byte b = 0; this.groups != null && b < this.groups.length; b++) {
-/* 372 */       if (set.contains(this.groups[b])) {
-/* 373 */         set.remove(this.groups[b]);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 377 */     Set<Object> set1 = this.subject.getPublicCredentials();
-/* 378 */     if (set1.contains(this.iToken)) {
-/* 379 */       set1.remove(this.iToken);
-/*     */     }
-/*     */     
-/* 382 */     this.succeeded = false;
-/* 383 */     this.commitSucceeded = false;
-/* 384 */     this.userPrincipal = null;
-/* 385 */     this.userDomain = null;
-/* 386 */     this.userSID = null;
-/* 387 */     this.domainSID = null;
-/* 388 */     this.groups = null;
-/* 389 */     this.primaryGroup = null;
-/* 390 */     this.iToken = null;
-/* 391 */     this.ntSystem = null;
-/*     */     
-/* 393 */     if (this.debug) {
-/* 394 */       System.out.println("\t\t[NTLoginModule] completed logout processing");
-/*     */     }
-/*     */     
-/* 397 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\security\auth\module\NTLoginModule.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.security.auth.module;
+
+import java.util.*;
+import java.io.IOException;
+import javax.security.auth.*;
+import javax.security.auth.callback.*;
+import javax.security.auth.login.*;
+import javax.security.auth.spi.*;
+import java.security.Principal;
+import com.sun.security.auth.NTUserPrincipal;
+import com.sun.security.auth.NTSidUserPrincipal;
+import com.sun.security.auth.NTDomainPrincipal;
+import com.sun.security.auth.NTSidDomainPrincipal;
+import com.sun.security.auth.NTSidPrimaryGroupPrincipal;
+import com.sun.security.auth.NTSidGroupPrincipal;
+import com.sun.security.auth.NTNumericCredential;
+
+/**
+ * <p> This <code>LoginModule</code>
+ * renders a user's NT security information as some number of
+ * <code>Principal</code>s
+ * and associates them with a <code>Subject</code>.
+ *
+ * <p> This LoginModule recognizes the debug option.
+ * If set to true in the login Configuration,
+ * debug messages will be output to the output stream, System.out.
+ *
+ * <p> This LoginModule also recognizes the debugNative option.
+ * If set to true in the login Configuration,
+ * debug messages from the native component of the module
+ * will be output to the output stream, System.out.
+ *
+ * @see javax.security.auth.spi.LoginModule
+ */
+@jdk.Exported
+public class NTLoginModule implements LoginModule {
+
+    private NTSystem ntSystem;
+
+    // initial state
+    private Subject subject;
+    private CallbackHandler callbackHandler;
+    private Map<String, ?> sharedState;
+    private Map<String, ?> options;
+
+    // configurable option
+    private boolean debug = false;
+    private boolean debugNative = false;
+
+    // the authentication status
+    private boolean succeeded = false;
+    private boolean commitSucceeded = false;
+
+    private NTUserPrincipal userPrincipal;              // user name
+    private NTSidUserPrincipal userSID;                 // user SID
+    private NTDomainPrincipal userDomain;               // user domain
+    private NTSidDomainPrincipal domainSID;             // domain SID
+    private NTSidPrimaryGroupPrincipal primaryGroup;    // primary group
+    private NTSidGroupPrincipal groups[];               // supplementary groups
+    private NTNumericCredential iToken;                 // impersonation token
+
+    /**
+     * Initialize this <code>LoginModule</code>.
+     *
+     * <p>
+     *
+     * @param subject the <code>Subject</code> to be authenticated. <p>
+     *
+     * @param callbackHandler a <code>CallbackHandler</code> for communicating
+     *          with the end user (prompting for usernames and
+     *          passwords, for example). This particular LoginModule only
+     *          extracts the underlying NT system information, so this
+     *          parameter is ignored.<p>
+     *
+     * @param sharedState shared <code>LoginModule</code> state. <p>
+     *
+     * @param options options specified in the login
+     *                  <code>Configuration</code> for this particular
+     *                  <code>LoginModule</code>.
+     */
+    public void initialize(Subject subject, CallbackHandler callbackHandler,
+                           Map<String,?> sharedState,
+                           Map<String,?> options)
+    {
+
+        this.subject = subject;
+        this.callbackHandler = callbackHandler;
+        this.sharedState = sharedState;
+        this.options = options;
+
+        // initialize any configured options
+        debug = "true".equalsIgnoreCase((String)options.get("debug"));
+        debugNative="true".equalsIgnoreCase((String)options.get("debugNative"));
+
+        if (debugNative == true) {
+            debug = true;
+        }
+    }
+
+    /**
+     * Import underlying NT system identity information.
+     *
+     * <p>
+     *
+     * @return true in all cases since this <code>LoginModule</code>
+     *          should not be ignored.
+     *
+     * @exception FailedLoginException if the authentication fails. <p>
+     *
+     * @exception LoginException if this <code>LoginModule</code>
+     *          is unable to perform the authentication.
+     */
+    public boolean login() throws LoginException {
+
+        succeeded = false; // Indicate not yet successful
+
+        ntSystem = new NTSystem(debugNative);
+        if (ntSystem == null) {
+            if (debug) {
+                System.out.println("\t\t[NTLoginModule] " +
+                                   "Failed in NT login");
+            }
+            throw new FailedLoginException
+                ("Failed in attempt to import the " +
+                 "underlying NT system identity information");
+        }
+
+        if (ntSystem.getName() == null) {
+            throw new FailedLoginException
+                ("Failed in attempt to import the " +
+                 "underlying NT system identity information");
+        }
+        userPrincipal = new NTUserPrincipal(ntSystem.getName());
+        if (debug) {
+            System.out.println("\t\t[NTLoginModule] " +
+                               "succeeded importing info: ");
+            System.out.println("\t\t\tuser name = " +
+                userPrincipal.getName());
+        }
+
+        if (ntSystem.getUserSID() != null) {
+            userSID = new NTSidUserPrincipal(ntSystem.getUserSID());
+            if (debug) {
+                System.out.println("\t\t\tuser SID = " +
+                        userSID.getName());
+            }
+        }
+        if (ntSystem.getDomain() != null) {
+            userDomain = new NTDomainPrincipal(ntSystem.getDomain());
+            if (debug) {
+                System.out.println("\t\t\tuser domain = " +
+                        userDomain.getName());
+            }
+        }
+        if (ntSystem.getDomainSID() != null) {
+            domainSID =
+                new NTSidDomainPrincipal(ntSystem.getDomainSID());
+            if (debug) {
+                System.out.println("\t\t\tuser domain SID = " +
+                        domainSID.getName());
+            }
+        }
+        if (ntSystem.getPrimaryGroupID() != null) {
+            primaryGroup =
+                new NTSidPrimaryGroupPrincipal(ntSystem.getPrimaryGroupID());
+            if (debug) {
+                System.out.println("\t\t\tuser primary group = " +
+                        primaryGroup.getName());
+            }
+        }
+        if (ntSystem.getGroupIDs() != null &&
+            ntSystem.getGroupIDs().length > 0) {
+
+            String groupSIDs[] = ntSystem.getGroupIDs();
+            groups = new NTSidGroupPrincipal[groupSIDs.length];
+            for (int i = 0; i < groupSIDs.length; i++) {
+                groups[i] = new NTSidGroupPrincipal(groupSIDs[i]);
+                if (debug) {
+                    System.out.println("\t\t\tuser group = " +
+                        groups[i].getName());
+                }
+            }
+        }
+        if (ntSystem.getImpersonationToken() != 0) {
+            iToken = new NTNumericCredential(ntSystem.getImpersonationToken());
+            if (debug) {
+                System.out.println("\t\t\timpersonation token = " +
+                        ntSystem.getImpersonationToken());
+            }
+        }
+
+        succeeded = true;
+        return succeeded;
+    }
+
+    /**
+     * <p> This method is called if the LoginContext's
+     * overall authentication succeeded
+     * (the relevant REQUIRED, REQUISITE, SUFFICIENT and OPTIONAL LoginModules
+     * succeeded).
+     *
+     * <p> If this LoginModule's own authentication attempt
+     * succeeded (checked by retrieving the private state saved by the
+     * <code>login</code> method), then this method associates some
+     * number of various <code>Principal</code>s
+     * with the <code>Subject</code> located in the
+     * <code>LoginModuleContext</code>.  If this LoginModule's own
+     * authentication attempted failed, then this method removes
+     * any state that was originally saved.
+     *
+     * <p>
+     *
+     * @exception LoginException if the commit fails.
+     *
+     * @return true if this LoginModule's own login and commit
+     *          attempts succeeded, or false otherwise.
+     */
+    public boolean commit() throws LoginException {
+        if (succeeded == false) {
+            if (debug) {
+                System.out.println("\t\t[NTLoginModule]: " +
+                    "did not add any Principals to Subject " +
+                    "because own authentication failed.");
+            }
+            return false;
+        }
+        if (subject.isReadOnly()) {
+            throw new LoginException ("Subject is ReadOnly");
+        }
+        Set<Principal> principals = subject.getPrincipals();
+
+        // we must have a userPrincipal - everything else is optional
+        if (!principals.contains(userPrincipal)) {
+            principals.add(userPrincipal);
+        }
+        if (userSID != null && !principals.contains(userSID)) {
+            principals.add(userSID);
+        }
+
+        if (userDomain != null && !principals.contains(userDomain)) {
+            principals.add(userDomain);
+        }
+        if (domainSID != null && !principals.contains(domainSID)) {
+            principals.add(domainSID);
+        }
+
+        if (primaryGroup != null && !principals.contains(primaryGroup)) {
+            principals.add(primaryGroup);
+        }
+        for (int i = 0; groups != null && i < groups.length; i++) {
+            if (!principals.contains(groups[i])) {
+                principals.add(groups[i]);
+            }
+        }
+
+        Set<Object> pubCreds = subject.getPublicCredentials();
+        if (iToken != null && !pubCreds.contains(iToken)) {
+            pubCreds.add(iToken);
+        }
+        commitSucceeded = true;
+        return true;
+    }
+
+
+    /**
+     * <p> This method is called if the LoginContext's
+     * overall authentication failed.
+     * (the relevant REQUIRED, REQUISITE, SUFFICIENT and OPTIONAL LoginModules
+     * did not succeed).
+     *
+     * <p> If this LoginModule's own authentication attempt
+     * succeeded (checked by retrieving the private state saved by the
+     * <code>login</code> and <code>commit</code> methods),
+     * then this method cleans up any state that was originally saved.
+     *
+     * <p>
+     *
+     * @exception LoginException if the abort fails.
+     *
+     * @return false if this LoginModule's own login and/or commit attempts
+     *          failed, and true otherwise.
+     */
+    public boolean abort() throws LoginException {
+        if (debug) {
+            System.out.println("\t\t[NTLoginModule]: " +
+                "aborted authentication attempt");
+        }
+
+        if (succeeded == false) {
+            return false;
+        } else if (succeeded == true && commitSucceeded == false) {
+            ntSystem = null;
+            userPrincipal = null;
+            userSID = null;
+            userDomain = null;
+            domainSID = null;
+            primaryGroup = null;
+            groups = null;
+            iToken = null;
+            succeeded = false;
+        } else {
+            // overall authentication succeeded and commit succeeded,
+            // but someone else's commit failed
+            logout();
+        }
+        return succeeded;
+    }
+
+    /**
+     * Logout the user.
+     *
+     * <p> This method removes the <code>NTUserPrincipal</code>,
+     * <code>NTDomainPrincipal</code>, <code>NTSidUserPrincipal</code>,
+     * <code>NTSidDomainPrincipal</code>, <code>NTSidGroupPrincipal</code>s,
+     * and <code>NTSidPrimaryGroupPrincipal</code>
+     * that may have been added by the <code>commit</code> method.
+     *
+     * <p>
+     *
+     * @exception LoginException if the logout fails.
+     *
+     * @return true in all cases since this <code>LoginModule</code>
+     *          should not be ignored.
+     */
+    public boolean logout() throws LoginException {
+
+        if (subject.isReadOnly()) {
+            throw new LoginException ("Subject is ReadOnly");
+        }
+        Set<Principal> principals = subject.getPrincipals();
+        if (principals.contains(userPrincipal)) {
+            principals.remove(userPrincipal);
+        }
+        if (principals.contains(userSID)) {
+            principals.remove(userSID);
+        }
+        if (principals.contains(userDomain)) {
+            principals.remove(userDomain);
+        }
+        if (principals.contains(domainSID)) {
+            principals.remove(domainSID);
+        }
+        if (principals.contains(primaryGroup)) {
+            principals.remove(primaryGroup);
+        }
+        for (int i = 0; groups != null && i < groups.length; i++) {
+            if (principals.contains(groups[i])) {
+                principals.remove(groups[i]);
+            }
+        }
+
+        Set<Object> pubCreds = subject.getPublicCredentials();
+        if (pubCreds.contains(iToken)) {
+            pubCreds.remove(iToken);
+        }
+
+        succeeded = false;
+        commitSucceeded = false;
+        userPrincipal = null;
+        userDomain = null;
+        userSID = null;
+        domainSID = null;
+        groups = null;
+        primaryGroup = null;
+        iToken = null;
+        ntSystem = null;
+
+        if (debug) {
+                System.out.println("\t\t[NTLoginModule] " +
+                                "completed logout processing");
+        }
+        return true;
+    }
+}

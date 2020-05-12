@@ -1,675 +1,477 @@
-/*     */ package com.sun.jmx.snmp;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BerEncoder
-/*     */ {
-/*     */   public static final int BooleanTag = 1;
-/*     */   public static final int IntegerTag = 2;
-/*     */   public static final int OctetStringTag = 4;
-/*     */   public static final int NullTag = 5;
-/*     */   public static final int OidTag = 6;
-/*     */   public static final int SequenceTag = 48;
-/*     */   protected final byte[] bytes;
-/*     */   protected int start;
-/*     */   protected final int[] stackBuf;
-/*     */   protected int stackTop;
-/*     */   
-/*     */   public BerEncoder(byte[] paramArrayOfbyte) {
-/* 466 */     this.start = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 474 */     this.stackBuf = new int[200];
-/* 475 */     this.stackTop = 0;
-/*     */     this.bytes = paramArrayOfbyte;
-/*     */     this.start = paramArrayOfbyte.length;
-/*     */     this.stackTop = 0;
-/*     */   }
-/*     */   
-/*     */   public int trim() {
-/*     */     int i = this.bytes.length - this.start;
-/*     */     if (i > 0)
-/*     */       System.arraycopy(this.bytes, this.start, this.bytes, 0, i); 
-/*     */     this.start = this.bytes.length;
-/*     */     this.stackTop = 0;
-/*     */     return i;
-/*     */   }
-/*     */   
-/*     */   public void putInteger(int paramInt) {
-/*     */     putInteger(paramInt, 2);
-/*     */   }
-/*     */   
-/*     */   public void putInteger(int paramInt1, int paramInt2) {
-/*     */     putIntegerValue(paramInt1);
-/*     */     putTag(paramInt2);
-/*     */   }
-/*     */   
-/*     */   public void putInteger(long paramLong) {
-/*     */     putInteger(paramLong, 2);
-/*     */   }
-/*     */   
-/*     */   public void putInteger(long paramLong, int paramInt) {
-/*     */     putIntegerValue(paramLong);
-/*     */     putTag(paramInt);
-/*     */   }
-/*     */   
-/*     */   public void putOctetString(byte[] paramArrayOfbyte) {
-/*     */     putOctetString(paramArrayOfbyte, 4);
-/*     */   }
-/*     */   
-/*     */   public void putOctetString(byte[] paramArrayOfbyte, int paramInt) {
-/*     */     putStringValue(paramArrayOfbyte);
-/*     */     putTag(paramInt);
-/*     */   }
-/*     */   
-/*     */   public void putOid(long[] paramArrayOflong) {
-/*     */     putOid(paramArrayOflong, 6);
-/*     */   }
-/*     */   
-/*     */   public void putOid(long[] paramArrayOflong, int paramInt) {
-/*     */     putOidValue(paramArrayOflong);
-/*     */     putTag(paramInt);
-/*     */   }
-/*     */   
-/*     */   public void putNull() {
-/*     */     putNull(5);
-/*     */   }
-/*     */   
-/*     */   public void putNull(int paramInt) {
-/*     */     putLength(0);
-/*     */     putTag(paramInt);
-/*     */   }
-/*     */   
-/*     */   public void putAny(byte[] paramArrayOfbyte) {
-/*     */     putAny(paramArrayOfbyte, paramArrayOfbyte.length);
-/*     */   }
-/*     */   
-/*     */   public void putAny(byte[] paramArrayOfbyte, int paramInt) {
-/*     */     System.arraycopy(paramArrayOfbyte, 0, this.bytes, this.start - paramInt, paramInt);
-/*     */     this.start -= paramInt;
-/*     */   }
-/*     */   
-/*     */   public void openSequence() {
-/*     */     this.stackBuf[this.stackTop++] = this.start;
-/*     */   }
-/*     */   
-/*     */   public void closeSequence() {
-/*     */     closeSequence(48);
-/*     */   }
-/*     */   
-/*     */   public void closeSequence(int paramInt) {
-/*     */     int i = this.stackBuf[--this.stackTop];
-/*     */     putLength(i - this.start);
-/*     */     putTag(paramInt);
-/*     */   }
-/*     */   
-/*     */   protected final void putTag(int paramInt) {
-/*     */     if (paramInt < 256) {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */     } else {
-/*     */       while (paramInt != 0) {
-/*     */         this.bytes[--this.start] = (byte)(paramInt & 0x7F);
-/*     */         paramInt <<= 7;
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected final void putLength(int paramInt) {
-/*     */     if (paramInt < 0)
-/*     */       throw new IllegalArgumentException(); 
-/*     */     if (paramInt < 128) {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */     } else if (paramInt < 256) {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */       this.bytes[--this.start] = -127;
-/*     */     } else if (paramInt < 65536) {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */       this.bytes[--this.start] = (byte)(paramInt >> 8);
-/*     */       this.bytes[--this.start] = -126;
-/*     */     } else if (paramInt < 16777126) {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */       this.bytes[--this.start] = (byte)(paramInt >> 8);
-/*     */       this.bytes[--this.start] = (byte)(paramInt >> 16);
-/*     */       this.bytes[--this.start] = -125;
-/*     */     } else {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */       this.bytes[--this.start] = (byte)(paramInt >> 8);
-/*     */       this.bytes[--this.start] = (byte)(paramInt >> 16);
-/*     */       this.bytes[--this.start] = (byte)(paramInt >> 24);
-/*     */       this.bytes[--this.start] = -124;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected final void putIntegerValue(int paramInt) {
-/*     */     int i = this.start;
-/*     */     int j = 2139095040;
-/*     */     byte b1 = 4;
-/*     */     if (paramInt < 0) {
-/*     */       while ((j & paramInt) == j && b1 > 1) {
-/*     */         j >>= 8;
-/*     */         b1--;
-/*     */       } 
-/*     */     } else {
-/*     */       while ((j & paramInt) == 0 && b1 > 1) {
-/*     */         j >>= 8;
-/*     */         b1--;
-/*     */       } 
-/*     */     } 
-/*     */     for (byte b2 = 0; b2 < b1; b2++) {
-/*     */       this.bytes[--this.start] = (byte)paramInt;
-/*     */       paramInt >>= 8;
-/*     */     } 
-/*     */     putLength(i - this.start);
-/*     */   }
-/*     */   
-/*     */   protected final void putIntegerValue(long paramLong) {
-/*     */     int i = this.start;
-/*     */     long l = 9187343239835811840L;
-/*     */     byte b1 = 8;
-/*     */     if (paramLong < 0L) {
-/*     */       while ((l & paramLong) == l && b1 > 1) {
-/*     */         l >>= 8L;
-/*     */         b1--;
-/*     */       } 
-/*     */     } else {
-/*     */       while ((l & paramLong) == 0L && b1 > 1) {
-/*     */         l >>= 8L;
-/*     */         b1--;
-/*     */       } 
-/*     */     } 
-/*     */     for (byte b2 = 0; b2 < b1; b2++) {
-/*     */       this.bytes[--this.start] = (byte)(int)paramLong;
-/*     */       paramLong >>= 8L;
-/*     */     } 
-/*     */     putLength(i - this.start);
-/*     */   }
-/*     */   
-/*     */   protected final void putStringValue(byte[] paramArrayOfbyte) {
-/*     */     int i = paramArrayOfbyte.length;
-/*     */     System.arraycopy(paramArrayOfbyte, 0, this.bytes, this.start - i, i);
-/*     */     this.start -= i;
-/*     */     putLength(i);
-/*     */   }
-/*     */   
-/*     */   protected final void putOidValue(long[] paramArrayOflong) {
-/*     */     int i = this.start;
-/*     */     int j = paramArrayOflong.length;
-/*     */     if (j < 2 || paramArrayOflong[0] > 2L || paramArrayOflong[1] >= 40L)
-/*     */       throw new IllegalArgumentException(); 
-/*     */     for (int k = j - 1; k >= 2; k--) {
-/*     */       long l = paramArrayOflong[k];
-/*     */       if (l < 0L)
-/*     */         throw new IllegalArgumentException(); 
-/*     */       if (l < 128L) {
-/*     */         this.bytes[--this.start] = (byte)(int)l;
-/*     */       } else {
-/*     */         this.bytes[--this.start] = (byte)(int)(l & 0x7FL);
-/*     */         l >>= 7L;
-/*     */         while (l != 0L) {
-/*     */           this.bytes[--this.start] = (byte)(int)(l | 0x80L);
-/*     */           l >>= 7L;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */     this.bytes[--this.start] = (byte)(int)(paramArrayOflong[0] * 40L + paramArrayOflong[1]);
-/*     */     putLength(i - this.start);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\BerEncoder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp;
+
+
+/**
+ * The <CODE>BerEncoder</CODE> class is used for encoding data using BER.
+ *
+ * A <CODE>BerEncoder</CODE> needs to be set up with a byte buffer. The encoded
+ * data are stored in this byte buffer.
+ * <P>
+ * NOTE : the buffer is filled from end to start. This means the caller
+ * needs to encode its data in the reverse order.
+ *
+ *
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ *
+ * @since 1.5
+ */
+
+public class BerEncoder {
+
+  /**
+  * Constructs a new encoder and attaches it to the specified byte string.
+  *
+  * @param b The byte string containing the encoded data.
+  */
+
+  public BerEncoder(byte b[]) {
+    bytes = b ;
+    start = b.length ;
+    stackTop = 0 ;
+  }
+
+
+  /**
+  * Trim the encoding data and returns the length of the encoding.
+  *
+  * The encoder does backward encoding : so the bytes buffer is
+  * filled from end to start. The encoded data must be shift before
+  * the buffer can be used. This is the purpose of the <CODE>trim</CODE> method.
+  *
+  * After a call to the <CODE>trim</CODE> method, the encoder is reinitialized and <CODE>putXXX</CODE>
+  * overwrite any existing encoded data.
+  *
+  * @return The length of the encoded data.
+  */
+
+  public int trim() {
+    final int result = bytes.length - start ;
+
+    // for (int i = start ; i < bytes.length ; i++) {
+    //  bytes[i-start] = bytes[i] ;
+    // }
+    if (result > 0)
+        java.lang.System.arraycopy(bytes,start,bytes,0,result);
+
+    start = bytes.length ;
+    stackTop = 0 ;
+
+    return result ;
+  }
+
+  /**
+  * Put an integer.
+  *
+  * @param v The integer to encode.
+  */
+
+  public void putInteger(int v) {
+    putInteger(v, IntegerTag) ;
+  }
+
+
+  /**
+  * Put an integer with the specified tag.
+  *
+  * @param v The integer to encode.
+  * @param tag The tag to encode.
+  */
+
+  public void putInteger(int v, int tag) {
+    putIntegerValue(v) ;
+    putTag(tag) ;
+  }
+
+
+
+  /**
+  * Put an integer expressed as a long.
+  *
+  * @param v The long to encode.
+  */
+
+  public void putInteger(long v) {
+    putInteger(v, IntegerTag) ;
+  }
+
+
+  /**
+  * Put an integer expressed as a long with the specified tag.
+  *
+  * @param v The long to encode
+  * @param tag The tag to encode.
+  */
+
+  public void putInteger(long v, int tag) {
+    putIntegerValue(v) ;
+    putTag(tag) ;
+  }
+
+
+
+  /**
+  * Put an octet string.
+  *
+  * @param s The bytes to encode
+  */
+
+  public void putOctetString(byte[] s) {
+    putOctetString(s, OctetStringTag) ;
+  }
+
+
+  /**
+  * Put an octet string with a specified tag.
+  *
+  * @param s The bytes to encode
+  * @param tag The tag to encode.
+  */
+
+  public void putOctetString(byte[] s, int tag) {
+    putStringValue(s) ;
+    putTag(tag) ;
+  }
+
+
+  /**
+  * Put an object identifier.
+  *
+  * @param s The oid to encode.
+  */
+
+  public void putOid(long[] s) {
+    putOid(s, OidTag) ;
+  }
+
+
+  /**
+  * Put an object identifier with a specified tag.
+  *
+  * @param s The integer to encode.
+  * @param tag The tag to encode.
+  */
+
+  public void putOid(long[] s, int tag) {
+    putOidValue(s) ;
+    putTag(tag) ;
+  }
+
+
+  /**
+  * Put a <CODE>NULL</CODE> value.
+  */
+
+  public void putNull() {
+    putNull(NullTag) ;
+  }
+
+
+  /**
+  * Put a <CODE>NULL</CODE> value with a specified tag.
+  *
+  * @param tag The tag to encode.
+  */
+
+  public void putNull(int tag) {
+    putLength(0) ;
+    putTag(tag) ;
+  }
+
+
+
+  /**
+  * Put an <CODE>ANY</CODE> value. In fact, this method does not encode anything.
+  * It simply copies the specified bytes into the encoding.
+  *
+  * @param s The encoding of the <CODE>ANY</CODE> value.
+  */
+
+  public void putAny(byte[] s) {
+        putAny(s, s.length) ;
+  }
+
+
+  /**
+  * Put an <CODE>ANY</CODE> value. Only the first <CODE>byteCount</CODE> are considered.
+  *
+  * @param s The encoding of the <CODE>ANY</CODE> value.
+  * @param byteCount The number of bytes of the encoding.
+  */
+
+  public void putAny(byte[] s, int byteCount) {
+      java.lang.System.arraycopy(s,0,bytes,start-byteCount,byteCount);
+      start -= byteCount;
+      //    for (int i = byteCount - 1 ; i >= 0 ; i--) {
+      //      bytes[--start] = s[i] ;
+      //    }
+  }
+
+
+  /**
+  * Open a sequence.
+  * The encoder push the current position on its stack.
+  */
+
+  public void openSequence() {
+    stackBuf[stackTop++] = start ;
+  }
+
+
+  /**
+  * Close a sequence.
+  * The decode pull the stack to know the end of the current sequence.
+  */
+
+  public void closeSequence() {
+    closeSequence(SequenceTag) ;
+  }
+
+
+  /**
+  * Close a sequence with the specified tag.
+  */
+
+  public void closeSequence(int tag) {
+    final int end = stackBuf[--stackTop] ;
+    putLength(end - start) ;
+    putTag(tag) ;
+  }
+
+
+  //
+  // Some standard tags
+  //
+  public final static int BooleanTag      = 1 ;
+  public final static int IntegerTag      = 2 ;
+  public final static int OctetStringTag  = 4 ;
+  public final static int NullTag          = 5 ;
+  public final static int OidTag          = 6 ;
+  public final static int SequenceTag      = 0x30 ;
+
+
+
+
+  ////////////////////////// PROTECTED ///////////////////////////////
+
+
+
+  /**
+  * Put a tag and move the current position backward.
+  *
+  * @param tag The tag to encode.
+  */
+
+  protected final void putTag(int tag) {
+    if (tag < 256) {
+      bytes[--start] = (byte)tag ;
+    }
+    else {
+      while (tag != 0) {
+        bytes[--start] = (byte)(tag & 127) ;
+        tag = tag << 7 ;
+      }
+    }
+  }
+
+
+  /**
+  * Put a length and move the current position backward.
+  *
+  * @param length The length to encode.
+  */
+
+  protected final void putLength(final int length) {
+    if (length < 0) {
+      throw new IllegalArgumentException() ;
+    }
+    else if (length < 128) {
+      bytes[--start] = (byte)length ;
+    }
+    else if (length < 256) {
+      bytes[--start] = (byte)length ;
+      bytes[--start] = (byte)0x81 ;
+    }
+    else if (length < 65536) {
+      bytes[--start] = (byte)(length) ;
+      bytes[--start] = (byte)(length >> 8) ;
+      bytes[--start] = (byte)0x82 ;
+    }
+    else if (length < 16777126) {
+      bytes[--start] = (byte)(length) ;
+      bytes[--start] = (byte)(length >> 8) ;
+      bytes[--start] = (byte)(length >> 16) ;
+      bytes[--start] = (byte)0x83 ;
+    }
+    else {
+      bytes[--start] = (byte)(length) ;
+      bytes[--start] = (byte)(length >> 8) ;
+      bytes[--start] = (byte)(length >> 16) ;
+      bytes[--start] = (byte)(length >> 24) ;
+      bytes[--start] = (byte)0x84 ;
+    }
+  }
+
+
+  /**
+  * Put an integer value and move the current position backward.
+  *
+  * @param v The integer to encode.
+  */
+
+  protected final void putIntegerValue(int v) {
+    final int end = start ;
+    int mask = 0x7f800000 ;
+    int byteNeeded = 4 ;
+    if (v < 0) {
+      while (((mask & v) == mask) && (byteNeeded > 1)) {
+        mask = mask >> 8 ;
+        byteNeeded-- ;
+      }
+    }
+    else {
+      while (((mask & v) == 0) && (byteNeeded > 1)) {
+        mask = mask >> 8 ;
+        byteNeeded-- ;
+      }
+    }
+    for (int i = 0 ; i < byteNeeded ; i++) {
+      bytes[--start] = (byte)v ;
+      v =  v >> 8 ;
+    }
+    putLength(end - start) ;
+  }
+
+
+  /**
+  * Put an integer value expressed as a long.
+  *
+  * @param v The integer to encode.
+  */
+
+  protected final void putIntegerValue(long v) {
+    final int end = start ;
+    long mask = 0x7f80000000000000L ;
+    int byteNeeded = 8 ;
+    if (v < 0) {
+      while (((mask & v) == mask) && (byteNeeded > 1)) {
+        mask = mask >> 8 ;
+        byteNeeded-- ;
+      }
+    }
+    else {
+      while (((mask & v) == 0) && (byteNeeded > 1)) {
+        mask = mask >> 8 ;
+        byteNeeded-- ;
+      }
+    }
+    for (int i = 0 ; i < byteNeeded ; i++) {
+      bytes[--start] = (byte)v ;
+      v =  v >> 8 ;
+    }
+    putLength(end - start) ;
+  }
+
+
+  /**
+  * Put a byte string and move the current position backward.
+  *
+  * @param s The byte string to encode.
+  */
+
+  protected final void putStringValue(byte[] s) {
+      final int datalen = s.length;
+      java.lang.System.arraycopy(s,0,bytes,start-datalen,datalen);
+      start -= datalen;
+      // for (int i = s.length - 1 ; i >= 0 ; i--) {
+      //   bytes[--start] = s[i] ;
+      // }
+      putLength(datalen) ;
+  }
+
+
+
+  /**
+  * Put an oid and move the current position backward.
+  *
+  * @param s The oid to encode.
+  */
+
+  protected final void putOidValue(final long[] s) {
+      final int end = start ;
+      final int slength = s.length;
+
+      // bugId 4641746: 0, 1, and 2 are legal values.
+      if ((slength < 2) || (s[0] > 2) || (s[1] >= 40)) {
+          throw new IllegalArgumentException() ;
+      }
+      for (int i = slength - 1 ; i >= 2 ; i--) {
+          long c = s[i] ;
+          if (c < 0) {
+              throw new IllegalArgumentException() ;
+          }
+          else if (c < 128) {
+              bytes[--start] = (byte)c ;
+          }
+          else {
+              bytes[--start] = (byte)(c & 127) ;
+              c = c >> 7 ;
+              while (c != 0) {
+                  bytes[--start] = (byte)(c | 128) ;
+                  c = c >> 7 ;
+              }
+          }
+      }
+      bytes[--start] = (byte)(s[0] * 40 + s[1]) ;
+      putLength(end - start) ;
+  }
+
+
+  //
+  // This is the byte array containing the encoding.
+  //
+  protected final byte bytes[];
+
+  //
+  // This is the index of the first byte of the encoding.
+  // It is initialized to <CODE>bytes.length</CODE> and decrease each time
+  // an value is put in the encoder.
+  //
+  protected int start = -1 ;
+
+  //
+  // This is the stack where end of sequences are kept.
+  // A value is computed and pushed in it each time the <CODE>openSequence</CODE> method
+  // is invoked.
+  // A value is pulled and checked each time the <CODE>closeSequence</CODE> method is called.
+  //
+  protected final int stackBuf[] = new int[200] ;
+  protected int stackTop = 0 ;
+
+}

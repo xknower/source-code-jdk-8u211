@@ -1,600 +1,598 @@
-/*     */ package com.sun.corba.se.impl.presentation.rmi;
-/*     */ 
-/*     */ import java.io.Externalizable;
-/*     */ import java.io.IOException;
-/*     */ import java.io.Serializable;
-/*     */ import java.lang.reflect.Field;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.rmi.Remote;
-/*     */ import java.rmi.RemoteException;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedActionException;
-/*     */ import java.security.PrivilegedExceptionAction;
-/*     */ import java.util.HashSet;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.portable.IDLEntity;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class IDLTypesUtil
-/*     */ {
-/*     */   private static final String GET_PROPERTY_PREFIX = "get";
-/*     */   private static final String SET_PROPERTY_PREFIX = "set";
-/*     */   private static final String IS_PROPERTY_PREFIX = "is";
-/*     */   public static final int VALID_TYPE = 0;
-/*     */   public static final int INVALID_TYPE = 1;
-/*     */   public static final boolean FOLLOW_RMIC = true;
-/*     */   
-/*     */   public void validateRemoteInterface(Class<?> paramClass) throws IDLTypeException {
-/*  66 */     if (paramClass == null) {
-/*  67 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/*  70 */     if (!paramClass.isInterface()) {
-/*  71 */       String str = "Class " + paramClass + " must be a java interface.";
-/*  72 */       throw new IDLTypeException(str);
-/*     */     } 
-/*     */     
-/*  75 */     if (!Remote.class.isAssignableFrom(paramClass)) {
-/*  76 */       String str = "Class " + paramClass + " must extend java.rmi.Remote, either directly or indirectly.";
-/*     */       
-/*  78 */       throw new IDLTypeException(str);
-/*     */     } 
-/*     */ 
-/*     */     
-/*  82 */     Method[] arrayOfMethod = paramClass.getMethods();
-/*     */     
-/*  84 */     for (byte b = 0; b < arrayOfMethod.length; b++) {
-/*  85 */       Method method = arrayOfMethod[b];
-/*  86 */       validateExceptions(method);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/*  91 */     validateConstants(paramClass);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isRemoteInterface(Class paramClass) {
-/*  98 */     boolean bool = true;
-/*     */     try {
-/* 100 */       validateRemoteInterface(paramClass);
-/* 101 */     } catch (IDLTypeException iDLTypeException) {
-/* 102 */       bool = false;
-/*     */     } 
-/*     */     
-/* 105 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isPrimitive(Class paramClass) {
-/* 113 */     if (paramClass == null) {
-/* 114 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 117 */     return paramClass.isPrimitive();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isValue(Class<?> paramClass) {
-/* 125 */     if (paramClass == null) {
-/* 126 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 129 */     return (
-/* 130 */       !paramClass.isInterface() && Serializable.class
-/* 131 */       .isAssignableFrom(paramClass) && 
-/* 132 */       !Remote.class.isAssignableFrom(paramClass));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isArray(Class paramClass) {
-/* 140 */     boolean bool = false;
-/*     */     
-/* 142 */     if (paramClass == null) {
-/* 143 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 146 */     if (paramClass.isArray()) {
-/* 147 */       Class<?> clazz = paramClass.getComponentType();
-/*     */ 
-/*     */ 
-/*     */       
-/* 151 */       bool = (isPrimitive(clazz) || isRemoteInterface(clazz) || isEntity(clazz) || isException(clazz) || isValue(clazz) || isObjectReference(clazz)) ? true : false;
-/*     */     } 
-/*     */     
-/* 154 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isException(Class paramClass) {
-/* 162 */     if (paramClass == null) {
-/* 163 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 168 */     return (isCheckedException(paramClass) && !isRemoteException(paramClass) && isValue(paramClass));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isRemoteException(Class<?> paramClass) {
-/* 173 */     if (paramClass == null) {
-/* 174 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 177 */     return RemoteException.class.isAssignableFrom(paramClass);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isCheckedException(Class<?> paramClass) {
-/* 182 */     if (paramClass == null) {
-/* 183 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 186 */     return (Throwable.class.isAssignableFrom(paramClass) && 
-/* 187 */       !RuntimeException.class.isAssignableFrom(paramClass) && 
-/* 188 */       !Error.class.isAssignableFrom(paramClass));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isObjectReference(Class<?> paramClass) {
-/* 196 */     if (paramClass == null) {
-/* 197 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 200 */     return (paramClass.isInterface() && Object.class
-/* 201 */       .isAssignableFrom(paramClass));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isEntity(Class<?> paramClass) {
-/* 209 */     if (paramClass == null) {
-/* 210 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 213 */     Class clazz = paramClass.getSuperclass();
-/* 214 */     return (!paramClass.isInterface() && clazz != null && IDLEntity.class
-/*     */       
-/* 216 */       .isAssignableFrom(paramClass));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isPropertyAccessorMethod(Method paramMethod, Class paramClass) {
-/* 225 */     String str1 = paramMethod.getName();
-/* 226 */     Class<?> clazz = paramMethod.getReturnType();
-/* 227 */     Class[] arrayOfClass1 = paramMethod.getParameterTypes();
-/* 228 */     Class[] arrayOfClass2 = paramMethod.getExceptionTypes();
-/* 229 */     String str2 = null;
-/*     */     
-/* 231 */     if (str1.startsWith("get")) {
-/*     */       
-/* 233 */       if (arrayOfClass1.length == 0 && clazz != void.class && 
-/* 234 */         !readHasCorrespondingIsProperty(paramMethod, paramClass)) {
-/* 235 */         str2 = "get";
-/*     */       }
-/*     */     }
-/* 238 */     else if (str1.startsWith("set")) {
-/*     */       
-/* 240 */       if (clazz == void.class && arrayOfClass1.length == 1 && (
-/* 241 */         hasCorrespondingReadProperty(paramMethod, paramClass, "get") || 
-/* 242 */         hasCorrespondingReadProperty(paramMethod, paramClass, "is"))) {
-/* 243 */         str2 = "set";
-/*     */       
-/*     */       }
-/*     */     }
-/* 247 */     else if (str1.startsWith("is") && 
-/* 248 */       arrayOfClass1.length == 0 && clazz == boolean.class && 
-/* 249 */       !isHasCorrespondingReadProperty(paramMethod, paramClass)) {
-/* 250 */       str2 = "is";
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 255 */     if (str2 != null && (
-/* 256 */       !validPropertyExceptions(paramMethod) || str1
-/* 257 */       .length() <= str2.length())) {
-/* 258 */       str2 = null;
-/*     */     }
-/*     */ 
-/*     */     
-/* 262 */     return (str2 != null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean hasCorrespondingReadProperty(Method paramMethod, Class paramClass, String paramString) {
-/* 268 */     String str = paramMethod.getName();
-/* 269 */     Class[] arrayOfClass = paramMethod.getParameterTypes();
-/* 270 */     boolean bool = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 276 */       String str1 = str.replaceFirst("set", paramString);
-/* 277 */       Method method = paramClass.getMethod(str1, new Class[0]);
-/*     */ 
-/*     */ 
-/*     */       
-/* 281 */       bool = (isPropertyAccessorMethod(method, paramClass) && method.getReturnType() == arrayOfClass[0]) ? true : false;
-/*     */     }
-/* 283 */     catch (Exception exception) {}
-/*     */ 
-/*     */ 
-/*     */     
-/* 287 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean readHasCorrespondingIsProperty(Method paramMethod, Class paramClass) {
-/* 294 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isHasCorrespondingReadProperty(Method paramMethod, Class paramClass) {
-/* 321 */     String str = paramMethod.getName();
-/* 322 */     boolean bool = false;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 327 */       String str1 = str.replaceFirst("is", "get");
-/*     */       
-/* 329 */       Method method = paramClass.getMethod(str1, new Class[0]);
-/*     */       
-/* 331 */       bool = isPropertyAccessorMethod(method, paramClass);
-/*     */     }
-/* 333 */     catch (Exception exception) {}
-/*     */ 
-/*     */ 
-/*     */     
-/* 337 */     return bool;
-/*     */   }
-/*     */   
-/*     */   public String getAttributeNameForProperty(String paramString) {
-/* 341 */     String str1 = null;
-/* 342 */     String str2 = null;
-/*     */     
-/* 344 */     if (paramString.startsWith("get")) {
-/* 345 */       str2 = "get";
-/* 346 */     } else if (paramString.startsWith("set")) {
-/* 347 */       str2 = "set";
-/* 348 */     } else if (paramString.startsWith("is")) {
-/* 349 */       str2 = "is";
-/*     */     } 
-/*     */     
-/* 352 */     if (str2 != null && str2.length() < paramString.length()) {
-/* 353 */       String str = paramString.substring(str2.length());
-/* 354 */       if (str.length() >= 2 && 
-/* 355 */         Character.isUpperCase(str.charAt(0)) && 
-/* 356 */         Character.isUpperCase(str.charAt(1))) {
-/*     */ 
-/*     */         
-/* 359 */         str1 = str;
-/*     */       } else {
-/*     */         
-/* 362 */         str1 = Character.toLowerCase(str.charAt(0)) + str.substring(1);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 366 */     return str1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IDLType getPrimitiveIDLTypeMapping(Class<void> paramClass) {
-/* 375 */     if (paramClass == null) {
-/* 376 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 379 */     if (paramClass.isPrimitive()) {
-/* 380 */       if (paramClass == void.class)
-/* 381 */         return new IDLType(paramClass, "void"); 
-/* 382 */       if (paramClass == boolean.class)
-/* 383 */         return new IDLType(paramClass, "boolean"); 
-/* 384 */       if (paramClass == char.class)
-/* 385 */         return new IDLType(paramClass, "wchar"); 
-/* 386 */       if (paramClass == byte.class)
-/* 387 */         return new IDLType(paramClass, "octet"); 
-/* 388 */       if (paramClass == short.class)
-/* 389 */         return new IDLType(paramClass, "short"); 
-/* 390 */       if (paramClass == int.class)
-/* 391 */         return new IDLType(paramClass, "long"); 
-/* 392 */       if (paramClass == long.class)
-/* 393 */         return new IDLType(paramClass, "long_long"); 
-/* 394 */       if (paramClass == float.class)
-/* 395 */         return new IDLType(paramClass, "float"); 
-/* 396 */       if (paramClass == double.class) {
-/* 397 */         return new IDLType(paramClass, "double");
-/*     */       }
-/*     */     } 
-/*     */     
-/* 401 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IDLType getSpecialCaseIDLTypeMapping(Class<Object> paramClass) {
-/* 411 */     if (paramClass == null) {
-/* 412 */       throw new IllegalArgumentException();
-/*     */     }
-/*     */     
-/* 415 */     if (paramClass == Object.class) {
-/* 416 */       return new IDLType(paramClass, new String[] { "java", "lang" }, "Object");
-/*     */     }
-/* 418 */     if (paramClass == String.class) {
-/* 419 */       return new IDLType(paramClass, new String[] { "CORBA" }, "WStringValue");
-/*     */     }
-/* 421 */     if (paramClass == Class.class) {
-/* 422 */       return new IDLType(paramClass, new String[] { "javax", "rmi", "CORBA" }, "ClassDesc");
-/*     */     }
-/* 424 */     if (paramClass == Serializable.class) {
-/* 425 */       return new IDLType(paramClass, new String[] { "java", "io" }, "Serializable");
-/*     */     }
-/* 427 */     if (paramClass == Externalizable.class) {
-/* 428 */       return new IDLType(paramClass, new String[] { "java", "io" }, "Externalizable");
-/*     */     }
-/* 430 */     if (paramClass == Remote.class) {
-/* 431 */       return new IDLType(paramClass, new String[] { "java", "rmi" }, "Remote");
-/*     */     }
-/* 433 */     if (paramClass == Object.class) {
-/* 434 */       return new IDLType(paramClass, "Object");
-/*     */     }
-/* 436 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void validateExceptions(Method paramMethod) throws IDLTypeException {
-/* 445 */     Class[] arrayOfClass = paramMethod.getExceptionTypes();
-/*     */     
-/* 447 */     boolean bool = false;
-/*     */     
-/*     */     byte b;
-/* 450 */     for (b = 0; b < arrayOfClass.length; b++) {
-/* 451 */       Class clazz = arrayOfClass[b];
-/* 452 */       if (isRemoteExceptionOrSuperClass(clazz)) {
-/* 453 */         bool = true;
-/*     */         
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/* 458 */     if (!bool) {
-/* 459 */       String str = "Method '" + paramMethod + "' must throw at least one exception of type java.rmi.RemoteException or one of its super-classes";
-/*     */ 
-/*     */       
-/* 462 */       throw new IDLTypeException(str);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 469 */     for (b = 0; b < arrayOfClass.length; b++) {
-/* 470 */       Class clazz = arrayOfClass[b];
-/*     */       
-/* 472 */       if (isCheckedException(clazz) && !isValue(clazz) && 
-/* 473 */         !isRemoteException(clazz)) {
-/*     */         
-/* 475 */         String str = "Exception '" + clazz + "' on method '" + paramMethod + "' is not a allowed RMI/IIOP exception type";
-/*     */         
-/* 477 */         throw new IDLTypeException(str);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean validPropertyExceptions(Method paramMethod) {
-/* 492 */     Class[] arrayOfClass = paramMethod.getExceptionTypes();
-/*     */     
-/* 494 */     for (byte b = 0; b < arrayOfClass.length; b++) {
-/* 495 */       Class clazz = arrayOfClass[b];
-/*     */       
-/* 497 */       if (isCheckedException(clazz) && !isRemoteException(clazz)) {
-/* 498 */         return false;
-/*     */       }
-/*     */     } 
-/* 501 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isRemoteExceptionOrSuperClass(Class<RemoteException> paramClass) {
-/* 508 */     return (paramClass == RemoteException.class || paramClass == IOException.class || paramClass == Exception.class || paramClass == Throwable.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void validateDirectInterfaces(Class paramClass) throws IDLTypeException {
-/* 520 */     Class[] arrayOfClass = paramClass.getInterfaces();
-/*     */     
-/* 522 */     if (arrayOfClass.length < 2) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 526 */     HashSet<String> hashSet1 = new HashSet();
-/* 527 */     HashSet<String> hashSet2 = new HashSet();
-/*     */     
-/* 529 */     for (byte b = 0; b < arrayOfClass.length; b++) {
-/* 530 */       Class clazz = arrayOfClass[b];
-/* 531 */       Method[] arrayOfMethod = clazz.getMethods();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 536 */       hashSet2.clear();
-/* 537 */       for (byte b1 = 0; b1 < arrayOfMethod.length; b1++) {
-/* 538 */         hashSet2.add(arrayOfMethod[b1].getName());
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 543 */       for (String str : hashSet2) {
-/*     */         
-/* 545 */         if (hashSet1.contains(str)) {
-/* 546 */           String str1 = "Class " + paramClass + " inherits method " + str + " from multiple direct interfaces.";
-/*     */           
-/* 548 */           throw new IDLTypeException(str1);
-/*     */         } 
-/* 550 */         hashSet1.add(str);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void validateConstants(final Class c) throws IDLTypeException {
-/* 564 */     Field[] arrayOfField = null;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 569 */       arrayOfField = AccessController.<Field[]>doPrivileged(new PrivilegedExceptionAction<Field>() {
-/*     */             public Object run() throws Exception {
-/* 571 */               return c.getFields();
-/*     */             }
-/*     */           });
-/* 574 */     } catch (PrivilegedActionException privilegedActionException) {
-/* 575 */       IDLTypeException iDLTypeException = new IDLTypeException();
-/* 576 */       iDLTypeException.initCause(privilegedActionException);
-/* 577 */       throw iDLTypeException;
-/*     */     } 
-/*     */     
-/* 580 */     for (byte b = 0; b < arrayOfField.length; b++) {
-/* 581 */       Field field = arrayOfField[b];
-/* 582 */       Class<?> clazz = field.getType();
-/* 583 */       if (clazz != String.class && 
-/* 584 */         !isPrimitive(clazz)) {
-/*     */ 
-/*     */         
-/* 587 */         String str = "Constant field '" + field.getName() + "' in class '" + field.getDeclaringClass().getName() + "' has invalid type' " + field.getType() + "'. Constants in RMI/IIOP interfaces can only have primitive types and java.lang.String types.";
-/*     */ 
-/*     */         
-/* 590 */         throw new IDLTypeException(str);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\presentation\rmi\IDLTypesUtil.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.corba.se.impl.presentation.rmi ;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
+
+/**
+ * Utility class for testing RMI/IDL Types as defined in
+ * Section 1.2 of The Java Language to IDL Mapping.  Note that
+ * these are static checks only.  Runtime checks, such as those
+ * described in Section 1.2.3, #3, are not covered.
+ */
+public final class IDLTypesUtil {
+
+    private static final String GET_PROPERTY_PREFIX = "get";
+    private static final String SET_PROPERTY_PREFIX = "set";
+    private static final String IS_PROPERTY_PREFIX  = "is";
+
+    public static final int VALID_TYPE   = 0;
+    public static final int INVALID_TYPE = 1;
+
+    /* rmic -iiop does not correctly implement the clause in 1.3.4.3
+     * about is<NAME>/get<NAME> conflicts.  The spec says that
+     * is<NAME> is the property and get<NAME> is left alone,
+     * but rmic does the opposite.  We will follow rmic in this,
+     * but it's easy to change.
+     */
+    public static final boolean FOLLOW_RMIC = true ;
+
+    /**
+     * Validate a class to ensure it conforms to the rules for a
+     * Java RMI/IIOP interface.
+     *
+     * @throws IDLTypeException if not a valid RMI/IIOP interface.
+     */
+    public void validateRemoteInterface(Class c) throws IDLTypeException
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        if( !c.isInterface() ) {
+            String msg = "Class " + c + " must be a java interface.";
+            throw new IDLTypeException(msg);
+        }
+
+        if( !java.rmi.Remote.class.isAssignableFrom(c) ) {
+            String msg = "Class " + c + " must extend java.rmi.Remote, " +
+                "either directly or indirectly.";
+            throw new IDLTypeException(msg);
+        }
+
+        // Get all methods, including super-interface methods.
+        Method[] methods = c.getMethods();
+
+        for(int i = 0; i < methods.length; i++) {
+            Method next = methods[i];
+            validateExceptions(next);
+        }
+
+        // Removed because of bug 4989053
+        // validateDirectInterfaces(c);
+        validateConstants(c);
+
+        return;
+    }
+
+    public boolean isRemoteInterface(Class c)
+    {
+        boolean remoteInterface = true;
+        try {
+            validateRemoteInterface(c);
+        } catch(IDLTypeException ite) {
+            remoteInterface = false;
+        }
+
+        return remoteInterface;
+    }
+
+    /**
+     * Section 1.2.2 Primitive Types
+     */
+    public boolean isPrimitive(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        return c.isPrimitive();
+    }
+
+    /**
+     * Section 1.2.4
+     */
+    public boolean isValue(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        return
+            (!c.isInterface() &&
+             java.io.Serializable.class.isAssignableFrom(c) &&
+             !java.rmi.Remote.class.isAssignableFrom(c));
+    }
+
+    /**
+     * Section 1.2.5
+     */
+    public boolean isArray(Class c)
+    {
+        boolean arrayType = false;
+
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        if( c.isArray() ) {
+            Class componentType = c.getComponentType();
+            arrayType =
+                (isPrimitive(componentType) || isRemoteInterface(componentType) ||
+                 isEntity(componentType) || isException(componentType) ||
+                 isValue(componentType) || isObjectReference(componentType) );
+        }
+
+        return arrayType;
+    }
+
+    /**
+     * Section 1.2.6
+     */
+    public boolean isException(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        // Must be a checked exception, not including RemoteException or
+        // its subclasses.
+        return isCheckedException(c) && !isRemoteException(c) && isValue(c);
+    }
+
+    public boolean isRemoteException(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        return java.rmi.RemoteException.class.isAssignableFrom(c) ;
+    }
+
+    public boolean isCheckedException(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        return Throwable.class.isAssignableFrom(c) &&
+            !RuntimeException.class.isAssignableFrom(c) &&
+            !Error.class.isAssignableFrom(c) ;
+    }
+
+    /**
+     * Section 1.2.7
+     */
+    public boolean isObjectReference(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        return (c.isInterface() &&
+                org.omg.CORBA.Object.class.isAssignableFrom(c));
+    }
+
+    /**
+     * Section 1.2.8
+     */
+    public boolean isEntity(Class c)
+    {
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        Class superClass = c.getSuperclass();
+        return (!c.isInterface() &&
+                (superClass != null) &&
+                (org.omg.CORBA.portable.IDLEntity.class.isAssignableFrom(c)));
+    }
+
+    /**
+     * Return true if given method is legal property accessor as defined in
+     * Section 1.3.4.3 of Java2IDL spec.
+     */
+    public boolean isPropertyAccessorMethod(Method m, Class c) {
+
+        String methodName = m.getName();
+        Class returnType  = m.getReturnType();
+        Class[] parameters = m.getParameterTypes();
+        Class[] exceptionTypes = m.getExceptionTypes();
+        String propertyType = null;
+
+        if( methodName.startsWith(GET_PROPERTY_PREFIX) ) {
+
+            if((parameters.length == 0) && (returnType != Void.TYPE) &&
+                !readHasCorrespondingIsProperty(m, c)) {
+                propertyType = GET_PROPERTY_PREFIX;
+            }
+
+        } else if( methodName.startsWith(SET_PROPERTY_PREFIX) ) {
+
+            if((returnType == Void.TYPE) && (parameters.length == 1)) {
+                if (hasCorrespondingReadProperty(m, c, GET_PROPERTY_PREFIX) ||
+                    hasCorrespondingReadProperty(m, c, IS_PROPERTY_PREFIX)) {
+                    propertyType = SET_PROPERTY_PREFIX;
+                }
+            }
+
+        } else if( methodName.startsWith(IS_PROPERTY_PREFIX) ) {
+            if((parameters.length == 0) && (returnType == Boolean.TYPE) &&
+                !isHasCorrespondingReadProperty(m, c)) {
+                propertyType = IS_PROPERTY_PREFIX;
+            }
+        }
+
+        // Some final checks that apply to all properties.
+        if( propertyType != null ) {
+            if(!validPropertyExceptions(m) ||
+               (methodName.length() <= propertyType.length())) {
+                propertyType = null;
+            }
+        }
+
+        return (propertyType != null);
+    }
+
+    private boolean hasCorrespondingReadProperty
+        (Method writeProperty, Class c, String readPropertyPrefix)
+    {
+        String writePropertyMethodName = writeProperty.getName();
+        Class[] writePropertyParameters = writeProperty.getParameterTypes();
+        boolean foundReadProperty = false;
+
+        try {
+            // Look for a valid corresponding Read property
+            String readPropertyMethodName =
+                writePropertyMethodName.replaceFirst
+                    (SET_PROPERTY_PREFIX, readPropertyPrefix);
+            Method readPropertyMethod = c.getMethod(readPropertyMethodName,
+                                                    new Class[] {});
+            foundReadProperty =
+                ( isPropertyAccessorMethod(readPropertyMethod, c) &&
+                  (readPropertyMethod.getReturnType() ==
+                   writePropertyParameters[0]) );
+        } catch(Exception e) {
+            // ignore. this means we didn't find a corresponding get property.
+        }
+
+        return foundReadProperty;
+    }
+
+    private boolean readHasCorrespondingIsProperty(Method readProperty,
+        Class c)
+    {
+        if (FOLLOW_RMIC)
+            return false ;
+
+        String readPropertyMethodName = readProperty.getName();
+        boolean foundIsProperty = false;
+
+        try {
+            // Look for a valid corresponding Is property
+            String isPropertyMethodName =
+                readPropertyMethodName.replaceFirst(GET_PROPERTY_PREFIX,
+                    IS_PROPERTY_PREFIX);
+            Method isPropertyMethod = c.getMethod( isPropertyMethodName,
+                                                    new Class[] {});
+            foundIsProperty = isPropertyAccessorMethod(isPropertyMethod,
+                c) ;
+        } catch(Exception e) {
+            // ignore. this means we didn't find a corresponding Is property.
+        }
+
+        return foundIsProperty;
+    }
+
+    private boolean isHasCorrespondingReadProperty(Method readProperty,
+        Class c)
+    {
+        if (!FOLLOW_RMIC)
+            return false ;
+
+        String readPropertyMethodName = readProperty.getName();
+        boolean foundIsProperty = false;
+
+        try {
+            // Look for a valid corresponding Read property
+            String isPropertyMethodName =
+                readPropertyMethodName.replaceFirst(IS_PROPERTY_PREFIX,
+                    GET_PROPERTY_PREFIX);
+            Method isPropertyMethod = c.getMethod( isPropertyMethodName,
+                                                    new Class[] {});
+            foundIsProperty = isPropertyAccessorMethod(isPropertyMethod,
+                c) ;
+        } catch(Exception e) {
+            // ignore. this means we didn't find a corresponding read property.
+        }
+
+        return foundIsProperty;
+    }
+
+    public String getAttributeNameForProperty(String propertyName) {
+        String attributeName = null;
+        String prefix = null;
+
+        if( propertyName.startsWith(GET_PROPERTY_PREFIX) ) {
+            prefix = GET_PROPERTY_PREFIX;
+        } else if( propertyName.startsWith(SET_PROPERTY_PREFIX) ) {
+            prefix = SET_PROPERTY_PREFIX;
+        } else if( propertyName.startsWith(IS_PROPERTY_PREFIX) ) {
+            prefix = IS_PROPERTY_PREFIX;
+        }
+
+        if( (prefix != null) && (prefix.length() < propertyName.length()) ) {
+            String remainder = propertyName.substring(prefix.length());
+            if( (remainder.length() >= 2) &&
+                Character.isUpperCase(remainder.charAt(0)) &&
+                Character.isUpperCase(remainder.charAt(1)) ) {
+                // don't set the first letter to lower-case if the
+                // first two are upper-case
+                attributeName = remainder;
+            } else {
+                attributeName = Character.toLowerCase(remainder.charAt(0)) +
+                    remainder.substring(1);
+            }
+        }
+
+        return attributeName;
+    }
+
+    /**
+     * Return IDL Type name for primitive types as defined in
+     * Section 1.3.3 of Java2IDL spec or null if not a primitive type.
+     */
+    public IDLType getPrimitiveIDLTypeMapping(Class c) {
+
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        if( c.isPrimitive() ) {
+            if( c == Void.TYPE ) {
+                return new IDLType( c, "void" ) ;
+            } else if( c == Boolean.TYPE ) {
+                return new IDLType( c, "boolean" ) ;
+            } else if( c == Character.TYPE ) {
+                return new IDLType( c, "wchar" ) ;
+            } else if( c == Byte.TYPE ) {
+                return new IDLType( c, "octet" ) ;
+            } else if( c == Short.TYPE ) {
+                return new IDLType( c, "short" ) ;
+            } else if( c == Integer.TYPE ) {
+                return new IDLType( c, "long" ) ;
+            } else if( c == Long.TYPE ) {
+                return new IDLType( c, "long_long" ) ;
+            } else if( c == Float.TYPE ) {
+                return new IDLType( c, "float" ) ;
+            } else if( c == Double.TYPE ) {
+                return new IDLType( c, "double" ) ;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Return IDL Type name for special case type mappings as defined in
+     * Table 1-1 of Java2IDL spec or null if given class is not a special
+     * type.
+     */
+    public IDLType getSpecialCaseIDLTypeMapping(Class c) {
+
+        if( c == null ) {
+            throw new IllegalArgumentException();
+        }
+
+        if( c == java.lang.Object.class ) {
+            return new IDLType( c, new String[] { "java", "lang" },
+                "Object" ) ;
+        } else if( c == java.lang.String.class ) {
+            return new IDLType( c, new String[] { "CORBA" },
+                "WStringValue" ) ;
+        } else if( c == java.lang.Class.class ) {
+            return new IDLType( c, new String[] { "javax", "rmi", "CORBA" },
+                "ClassDesc" ) ;
+        } else if( c == java.io.Serializable.class ) {
+            return new IDLType( c, new String[] { "java", "io" },
+                "Serializable" ) ;
+        } else if( c == java.io.Externalizable.class ) {
+            return new IDLType( c, new String[] { "java", "io" },
+                "Externalizable" ) ;
+        } else if( c == java.rmi.Remote.class ) {
+            return new IDLType( c, new String[] { "java", "rmi" },
+                "Remote" ) ;
+        } else if( c == org.omg.CORBA.Object.class ) {
+            return new IDLType( c, "Object" ) ;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Implements 1.2.3 #2 and #4
+     */
+    private void validateExceptions(Method method) throws IDLTypeException {
+
+        Class[] exceptions = method.getExceptionTypes();
+
+        boolean declaresRemoteExceptionOrSuperClass = false;
+
+        // Section 1.2.3, #2
+        for(int eIndex = 0; eIndex < exceptions.length; eIndex++) {
+            Class exception = exceptions[eIndex];
+            if( isRemoteExceptionOrSuperClass(exception) ) {
+                declaresRemoteExceptionOrSuperClass = true;
+                break;
+            }
+        }
+
+        if( !declaresRemoteExceptionOrSuperClass ) {
+            String msg = "Method '" + method + "' must throw at least one " +
+                "exception of type java.rmi.RemoteException or one of its " +
+                "super-classes";
+            throw new IDLTypeException(msg);
+        }
+
+        // Section 1.2.3, #4
+        // See also bug 4972402
+        // For all exceptions E in exceptions,
+        // (isCheckedException(E) => (isValue(E) || RemoteException.isAssignableFrom( E ) )
+        for(int eIndex = 0; eIndex < exceptions.length; eIndex++) {
+            Class exception = exceptions[eIndex];
+
+            if (isCheckedException(exception) && !isValue(exception) &&
+                !isRemoteException(exception))
+            {
+                String msg = "Exception '" + exception + "' on method '" +
+                    method + "' is not a allowed RMI/IIOP exception type";
+                throw new IDLTypeException(msg);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Returns true if the method's throw clause conforms to the exception
+     * restrictions for properties as defined in Section 1.3.4.3 of
+     * Java2IDL spec.  This means that for all exceptions E declared on the
+     * method, E isChecked => RemoteException.isAssignableFrom( E ).
+     */
+    private boolean validPropertyExceptions(Method method)
+    {
+        Class[] exceptions = method.getExceptionTypes();
+
+        for(int eIndex = 0; eIndex < exceptions.length; eIndex++) {
+            Class exception = exceptions[eIndex];
+
+            if (isCheckedException(exception) && !isRemoteException(exception))
+                return false ;
+        }
+
+        return true;
+    }
+
+    /**
+     * Implements Section 1.2.3, #2.
+     */
+    private boolean isRemoteExceptionOrSuperClass(Class c) {
+        return
+            ((c == java.rmi.RemoteException.class) ||
+             (c == java.io.IOException.class) ||
+             (c == java.lang.Exception.class) ||
+             (c == java.lang.Throwable.class));
+    }
+
+    /**
+     * Implements Section 1.2.3, #5.
+     */
+    private void validateDirectInterfaces(Class c) throws IDLTypeException {
+
+        Class[] directInterfaces = c.getInterfaces();
+
+        if( directInterfaces.length < 2 ) {
+            return;
+        }
+
+        Set allMethodNames = new HashSet();
+        Set currentMethodNames = new HashSet();
+
+        for(int i = 0; i < directInterfaces.length; i++) {
+            Class next = directInterfaces[i];
+            Method[] methods = next.getMethods();
+
+            // Comparison is based on method names only.  First collect
+            // all methods from current interface, eliminating duplicate
+            // names.
+            currentMethodNames.clear();
+            for(int m = 0; m < methods.length; m++) {
+                currentMethodNames.add(methods[m].getName());
+            }
+
+            // Now check each method against list of all unique method
+            // names processed so far.
+            for(Iterator iter=currentMethodNames.iterator(); iter.hasNext();) {
+                String methodName = (String) iter.next();
+                if( allMethodNames.contains(methodName) ) {
+                    String msg = "Class " + c + " inherits method " +
+                        methodName + " from multiple direct interfaces.";
+                    throw new IDLTypeException(msg);
+                } else {
+                    allMethodNames.add(methodName);
+                }
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Implements 1.2.3 #6
+     */
+    private void validateConstants(final Class c)
+        throws IDLTypeException {
+
+        Field[] fields = null;
+
+        try {
+            fields = (Field[])
+                java.security.AccessController.doPrivileged
+                (new java.security.PrivilegedExceptionAction() {
+                        public java.lang.Object run() throws Exception {
+                            return c.getFields();
+                        }
+                    });
+        } catch(java.security.PrivilegedActionException pae) {
+            IDLTypeException ite = new IDLTypeException();
+            ite.initCause(pae);
+            throw ite;
+        }
+
+        for(int i = 0; i < fields.length; i++) {
+            Field next = fields[i];
+            Class fieldType = next.getType();
+            if( (fieldType != java.lang.String.class) &&
+                !isPrimitive(fieldType) ) {
+                String msg = "Constant field '" + next.getName() +
+                    "' in class '" + next.getDeclaringClass().getName() +
+                    "' has invalid type' " + next.getType() + "'. Constants" +
+                    " in RMI/IIOP interfaces can only have primitive" +
+                    " types and java.lang.String types.";
+                throw new IDLTypeException(msg);
+            }
+        }
+
+
+        return;
+    }
+
+}

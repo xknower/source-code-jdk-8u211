@@ -1,525 +1,521 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Shape;
-/*     */ import java.awt.geom.AffineTransform;
-/*     */ import java.awt.geom.Rectangle2D;
-/*     */ import java.awt.print.PageFormat;
-/*     */ import java.awt.print.Printable;
-/*     */ import java.awt.print.PrinterException;
-/*     */ import java.text.MessageFormat;
-/*     */ import javax.swing.table.JTableHeader;
-/*     */ import javax.swing.table.TableColumnModel;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class TablePrintable
-/*     */   implements Printable
-/*     */ {
-/*     */   private JTable table;
-/*     */   private JTableHeader header;
-/*     */   private TableColumnModel colModel;
-/*     */   private int totalColWidth;
-/*     */   private JTable.PrintMode printMode;
-/*     */   private MessageFormat headerFormat;
-/*     */   private MessageFormat footerFormat;
-/* 121 */   private int last = -1;
-/*     */ 
-/*     */   
-/* 124 */   private int row = 0;
-/*     */ 
-/*     */   
-/* 127 */   private int col = 0;
-/*     */ 
-/*     */   
-/* 130 */   private final Rectangle clip = new Rectangle(0, 0, 0, 0);
-/*     */ 
-/*     */   
-/* 133 */   private final Rectangle hclip = new Rectangle(0, 0, 0, 0);
-/*     */ 
-/*     */   
-/* 136 */   private final Rectangle tempRect = new Rectangle(0, 0, 0, 0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int H_F_SPACE = 8;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final float HEADER_FONT_SIZE = 18.0F;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final float FOOTER_FONT_SIZE = 12.0F;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Font headerFont;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Font footerFont;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public TablePrintable(JTable paramJTable, JTable.PrintMode paramPrintMode, MessageFormat paramMessageFormat1, MessageFormat paramMessageFormat2) {
-/* 172 */     this.table = paramJTable;
-/*     */     
-/* 174 */     this.header = paramJTable.getTableHeader();
-/* 175 */     this.colModel = paramJTable.getColumnModel();
-/* 176 */     this.totalColWidth = this.colModel.getTotalColumnWidth();
-/*     */     
-/* 178 */     if (this.header != null)
-/*     */     {
-/* 180 */       this.hclip.height = this.header.getHeight();
-/*     */     }
-/*     */     
-/* 183 */     this.printMode = paramPrintMode;
-/*     */     
-/* 185 */     this.headerFormat = paramMessageFormat1;
-/* 186 */     this.footerFormat = paramMessageFormat2;
-/*     */ 
-/*     */     
-/* 189 */     this.headerFont = paramJTable.getFont().deriveFont(1, 18.0F);
-/*     */     
-/* 191 */     this.footerFont = paramJTable.getFont().deriveFont(0, 12.0F);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int print(Graphics paramGraphics, PageFormat paramPageFormat, int paramInt) throws PrinterException {
-/* 210 */     int i = (int)paramPageFormat.getImageableWidth();
-/* 211 */     int j = (int)paramPageFormat.getImageableHeight();
-/*     */     
-/* 213 */     if (i <= 0) {
-/* 214 */       throw new PrinterException("Width of printable area is too small.");
-/*     */     }
-/*     */ 
-/*     */     
-/* 218 */     Object[] arrayOfObject = { Integer.valueOf(paramInt + 1) };
-/*     */ 
-/*     */     
-/* 221 */     String str1 = null;
-/* 222 */     if (this.headerFormat != null) {
-/* 223 */       str1 = this.headerFormat.format(arrayOfObject);
-/*     */     }
-/*     */ 
-/*     */     
-/* 227 */     String str2 = null;
-/* 228 */     if (this.footerFormat != null) {
-/* 229 */       str2 = this.footerFormat.format(arrayOfObject);
-/*     */     }
-/*     */ 
-/*     */     
-/* 233 */     Rectangle2D rectangle2D1 = null;
-/* 234 */     Rectangle2D rectangle2D2 = null;
-/*     */ 
-/*     */     
-/* 237 */     int k = 0;
-/* 238 */     int m = 0;
-/*     */ 
-/*     */     
-/* 241 */     int n = j;
-/*     */ 
-/*     */ 
-/*     */     
-/* 245 */     if (str1 != null) {
-/* 246 */       paramGraphics.setFont(this.headerFont);
-/* 247 */       rectangle2D1 = paramGraphics.getFontMetrics().getStringBounds(str1, paramGraphics);
-/*     */ 
-/*     */       
-/* 250 */       k = (int)Math.ceil(rectangle2D1.getHeight());
-/* 251 */       n -= k + 8;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 256 */     if (str2 != null) {
-/* 257 */       paramGraphics.setFont(this.footerFont);
-/* 258 */       rectangle2D2 = paramGraphics.getFontMetrics().getStringBounds(str2, paramGraphics);
-/*     */ 
-/*     */       
-/* 261 */       m = (int)Math.ceil(rectangle2D2.getHeight());
-/* 262 */       n -= m + 8;
-/*     */     } 
-/*     */     
-/* 265 */     if (n <= 0) {
-/* 266 */       throw new PrinterException("Height of printable area is too small.");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 271 */     double d = 1.0D;
-/* 272 */     if (this.printMode == JTable.PrintMode.FIT_WIDTH && this.totalColWidth > i) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 276 */       assert i > 0;
-/*     */ 
-/*     */       
-/* 279 */       assert this.totalColWidth > 1;
-/*     */       
-/* 281 */       d = i / this.totalColWidth;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 285 */     assert d > 0.0D;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 294 */     while (this.last < paramInt) {
-/*     */       
-/* 296 */       if (this.row >= this.table.getRowCount() && this.col == 0) {
-/* 297 */         return 1;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 303 */       int i1 = (int)(i / d);
-/* 304 */       int i2 = (int)((n - this.hclip.height) / d);
-/*     */ 
-/*     */       
-/* 307 */       findNextClip(i1, i2);
-/*     */       
-/* 309 */       this.last++;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 313 */     Graphics2D graphics2D = (Graphics2D)paramGraphics.create();
-/*     */ 
-/*     */     
-/* 316 */     graphics2D.translate(paramPageFormat.getImageableX(), paramPageFormat.getImageableY());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 322 */     if (str2 != null) {
-/* 323 */       AffineTransform affineTransform1 = graphics2D.getTransform();
-/*     */       
-/* 325 */       graphics2D.translate(0, j - m);
-/*     */       
-/* 327 */       printText(graphics2D, str2, rectangle2D2, this.footerFont, i);
-/*     */       
-/* 329 */       graphics2D.setTransform(affineTransform1);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 334 */     if (str1 != null) {
-/* 335 */       printText(graphics2D, str1, rectangle2D1, this.headerFont, i);
-/*     */       
-/* 337 */       graphics2D.translate(0, k + 8);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 341 */     this.tempRect.x = 0;
-/* 342 */     this.tempRect.y = 0;
-/* 343 */     this.tempRect.width = i;
-/* 344 */     this.tempRect.height = n;
-/* 345 */     graphics2D.clip(this.tempRect);
-/*     */ 
-/*     */ 
-/*     */     
-/* 349 */     if (d != 1.0D) {
-/* 350 */       graphics2D.scale(d, d);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 355 */       int i1 = (i - this.clip.width) / 2;
-/* 356 */       graphics2D.translate(i1, 0);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 360 */     AffineTransform affineTransform = graphics2D.getTransform();
-/* 361 */     Shape shape = graphics2D.getClip();
-/*     */ 
-/*     */ 
-/*     */     
-/* 365 */     if (this.header != null) {
-/* 366 */       this.hclip.x = this.clip.x;
-/* 367 */       this.hclip.width = this.clip.width;
-/*     */       
-/* 369 */       graphics2D.translate(-this.hclip.x, 0);
-/* 370 */       graphics2D.clip(this.hclip);
-/* 371 */       this.header.print(graphics2D);
-/*     */ 
-/*     */       
-/* 374 */       graphics2D.setTransform(affineTransform);
-/* 375 */       graphics2D.setClip(shape);
-/*     */ 
-/*     */       
-/* 378 */       graphics2D.translate(0, this.hclip.height);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 382 */     graphics2D.translate(-this.clip.x, -this.clip.y);
-/* 383 */     graphics2D.clip(this.clip);
-/* 384 */     this.table.print(graphics2D);
-/*     */ 
-/*     */     
-/* 387 */     graphics2D.setTransform(affineTransform);
-/* 388 */     graphics2D.setClip(shape);
-/*     */ 
-/*     */     
-/* 391 */     graphics2D.setColor(Color.BLACK);
-/* 392 */     graphics2D.drawRect(0, 0, this.clip.width, this.hclip.height + this.clip.height);
-/*     */ 
-/*     */     
-/* 395 */     graphics2D.dispose();
-/*     */     
-/* 397 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void printText(Graphics2D paramGraphics2D, String paramString, Rectangle2D paramRectangle2D, Font paramFont, int paramInt) {
-/*     */     int i;
-/* 420 */     if (paramRectangle2D.getWidth() < paramInt) {
-/* 421 */       i = (int)((paramInt - paramRectangle2D.getWidth()) / 2.0D);
-/*     */ 
-/*     */     
-/*     */     }
-/* 425 */     else if (this.table.getComponentOrientation().isLeftToRight()) {
-/* 426 */       i = 0;
-/*     */     }
-/*     */     else {
-/*     */       
-/* 430 */       i = -((int)(Math.ceil(paramRectangle2D.getWidth()) - paramInt));
-/*     */     } 
-/*     */     
-/* 433 */     int j = (int)Math.ceil(Math.abs(paramRectangle2D.getY()));
-/* 434 */     paramGraphics2D.setColor(Color.BLACK);
-/* 435 */     paramGraphics2D.setFont(paramFont);
-/* 436 */     paramGraphics2D.drawString(paramString, i, j);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void findNextClip(int paramInt1, int paramInt2) {
-/* 451 */     boolean bool = this.table.getComponentOrientation().isLeftToRight();
-/*     */ 
-/*     */     
-/* 454 */     if (this.col == 0) {
-/* 455 */       if (bool) {
-/*     */         
-/* 457 */         this.clip.x = 0;
-/*     */       } else {
-/*     */         
-/* 460 */         this.clip.x = this.totalColWidth;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 464 */       this.clip.y += this.clip.height;
-/*     */ 
-/*     */       
-/* 467 */       this.clip.width = 0;
-/* 468 */       this.clip.height = 0;
-/*     */ 
-/*     */       
-/* 471 */       int k = this.table.getRowCount();
-/* 472 */       int m = this.table.getRowHeight(this.row);
-/*     */       
-/* 474 */       this.clip.height += m;
-/*     */       
-/* 476 */       while (++this.row < k) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 480 */         m = this.table.getRowHeight(this.row);
-/* 481 */         if (this.clip.height + m > paramInt2) {
-/*     */           break;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/* 486 */     if (this.printMode == JTable.PrintMode.FIT_WIDTH) {
-/* 487 */       this.clip.x = 0;
-/* 488 */       this.clip.width = this.totalColWidth;
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 492 */     if (bool)
-/*     */     {
-/* 494 */       this.clip.x += this.clip.width;
-/*     */     }
-/*     */ 
-/*     */     
-/* 498 */     this.clip.width = 0;
-/*     */ 
-/*     */     
-/* 501 */     int i = this.table.getColumnCount();
-/* 502 */     int j = this.colModel.getColumn(this.col).getWidth();
-/*     */     do {
-/* 504 */       this.clip.width += j;
-/* 505 */       if (!bool) {
-/* 506 */         this.clip.x -= j;
-/*     */       }
-/*     */       
-/* 509 */       if (++this.col >= i) {
-/*     */         
-/* 511 */         this.col = 0;
-/*     */         
-/*     */         break;
-/*     */       } 
-/*     */       
-/* 516 */       j = this.colModel.getColumn(this.col).getWidth();
-/* 517 */     } while (this.clip.width + j <= paramInt1);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\TablePrintable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.print.*;
+import java.awt.geom.*;
+import java.text.MessageFormat;
+
+/**
+ * An implementation of <code>Printable</code> for printing
+ * <code>JTable</code>s.
+ * <p>
+ * This implementation spreads table rows naturally in sequence
+ * across multiple pages, fitting as many rows as possible per page.
+ * The distribution of columns, on the other hand, is controlled by a
+ * printing mode parameter passed to the constructor. When
+ * <code>JTable.PrintMode.NORMAL</code> is used, the implementation
+ * handles columns in a similar manner to how it handles rows, spreading them
+ * across multiple pages (in an order consistent with the table's
+ * <code>ComponentOrientation</code>).
+ * When <code>JTable.PrintMode.FIT_WIDTH</code> is given, the implementation
+ * scales the output smaller if necessary, to ensure that all columns fit on
+ * the page. (Note that width and height are scaled equally, ensuring that the
+ * aspect ratio remains the same).
+ * <p>
+ * The portion of table printed on each page is headed by the
+ * appropriate section of the table's <code>JTableHeader</code>.
+ * <p>
+ * Header and footer text can be added to the output by providing
+ * <code>MessageFormat</code> instances to the constructor. The
+ * printing code requests Strings from the formats by calling
+ * their <code>format</code> method with a single parameter:
+ * an <code>Object</code> array containing a single element of type
+ * <code>Integer</code>, representing the current page number.
+ * <p>
+ * There are certain circumstances where this <code>Printable</code>
+ * cannot fit items appropriately, resulting in clipped output.
+ * These are:
+ * <ul>
+ *   <li>In any mode, when the header or footer text is too wide to
+ *       fit completely in the printable area. The implementation
+ *       prints as much of the text as possible starting from the beginning,
+ *       as determined by the table's <code>ComponentOrientation</code>.
+ *   <li>In any mode, when a row is too tall to fit in the
+ *       printable area. The upper most portion of the row
+ *       is printed and no lower border is shown.
+ *   <li>In <code>JTable.PrintMode.NORMAL</code> when a column
+ *       is too wide to fit in the printable area. The center of the
+ *       column is printed and no left and right borders are shown.
+ * </ul>
+ * <p>
+ * It is entirely valid for a developer to wrap this <code>Printable</code>
+ * inside another in order to create complex reports and documents. They may
+ * even request that different pages be rendered into different sized
+ * printable areas. The implementation was designed to handle this by
+ * performing most of its calculations on the fly. However, providing different
+ * sizes works best when <code>JTable.PrintMode.FIT_WIDTH</code> is used, or
+ * when only the printable width is changed between pages. This is because when
+ * it is printing a set of rows in <code>JTable.PrintMode.NORMAL</code> and the
+ * implementation determines a need to distribute columns across pages,
+ * it assumes that all of those rows will fit on each subsequent page needed
+ * to fit the columns.
+ * <p>
+ * It is the responsibility of the developer to ensure that the table is not
+ * modified in any way after this <code>Printable</code> is created (invalid
+ * modifications include changes in: size, renderers, or underlying data).
+ * The behavior of this <code>Printable</code> is undefined if the table is
+ * changed at any time after creation.
+ *
+ * @author  Shannon Hickey
+ */
+class TablePrintable implements Printable {
+
+    /** The table to print. */
+    private JTable table;
+
+    /** For quick reference to the table's header. */
+    private JTableHeader header;
+
+    /** For quick reference to the table's column model. */
+    private TableColumnModel colModel;
+
+    /** To save multiple calculations of total column width. */
+    private int totalColWidth;
+
+    /** The printing mode of this printable. */
+    private JTable.PrintMode printMode;
+
+    /** Provides the header text for the table. */
+    private MessageFormat headerFormat;
+
+    /** Provides the footer text for the table. */
+    private MessageFormat footerFormat;
+
+    /** The most recent page index asked to print. */
+    private int last = -1;
+
+    /** The next row to print. */
+    private int row = 0;
+
+    /** The next column to print. */
+    private int col = 0;
+
+    /** Used to store an area of the table to be printed. */
+    private final Rectangle clip = new Rectangle(0, 0, 0, 0);
+
+    /** Used to store an area of the table's header to be printed. */
+    private final Rectangle hclip = new Rectangle(0, 0, 0, 0);
+
+    /** Saves the creation of multiple rectangles. */
+    private final Rectangle tempRect = new Rectangle(0, 0, 0, 0);
+
+    /** Vertical space to leave between table and header/footer text. */
+    private static final int H_F_SPACE = 8;
+
+    /** Font size for the header text. */
+    private static final float HEADER_FONT_SIZE = 18.0f;
+
+    /** Font size for the footer text. */
+    private static final float FOOTER_FONT_SIZE = 12.0f;
+
+    /** The font to use in rendering header text. */
+    private Font headerFont;
+
+    /** The font to use in rendering footer text. */
+    private Font footerFont;
+
+    /**
+     * Create a new <code>TablePrintable</code> for the given
+     * <code>JTable</code>. Header and footer text can be specified using the
+     * two <code>MessageFormat</code> parameters. When called upon to provide
+     * a String, each format is given the current page number.
+     *
+     * @param  table         the table to print
+     * @param  printMode     the printing mode for this printable
+     * @param  headerFormat  a <code>MessageFormat</code> specifying the text to
+     *                       be used in printing a header, or null for none
+     * @param  footerFormat  a <code>MessageFormat</code> specifying the text to
+     *                       be used in printing a footer, or null for none
+     * @throws IllegalArgumentException if passed an invalid print mode
+     */
+    public TablePrintable(JTable table,
+                          JTable.PrintMode printMode,
+                          MessageFormat headerFormat,
+                          MessageFormat footerFormat) {
+
+        this.table = table;
+
+        header = table.getTableHeader();
+        colModel = table.getColumnModel();
+        totalColWidth = colModel.getTotalColumnWidth();
+
+        if (header != null) {
+            // the header clip height can be set once since it's unchanging
+            hclip.height = header.getHeight();
+        }
+
+        this.printMode = printMode;
+
+        this.headerFormat = headerFormat;
+        this.footerFormat = footerFormat;
+
+        // derive the header and footer font from the table's font
+        headerFont = table.getFont().deriveFont(Font.BOLD,
+                                                HEADER_FONT_SIZE);
+        footerFont = table.getFont().deriveFont(Font.PLAIN,
+                                                FOOTER_FONT_SIZE);
+    }
+
+    /**
+     * Prints the specified page of the table into the given {@link Graphics}
+     * context, in the specified format.
+     *
+     * @param   graphics    the context into which the page is drawn
+     * @param   pageFormat  the size and orientation of the page being drawn
+     * @param   pageIndex   the zero based index of the page to be drawn
+     * @return  PAGE_EXISTS if the page is rendered successfully, or
+     *          NO_SUCH_PAGE if a non-existent page index is specified
+     * @throws  PrinterException if an error causes printing to be aborted
+     */
+    public int print(Graphics graphics, PageFormat pageFormat, int pageIndex)
+                                                       throws PrinterException {
+
+        // for easy access to these values
+        final int imgWidth = (int)pageFormat.getImageableWidth();
+        final int imgHeight = (int)pageFormat.getImageableHeight();
+
+        if (imgWidth <= 0) {
+            throw new PrinterException("Width of printable area is too small.");
+        }
+
+        // to pass the page number when formatting the header and footer text
+        Object[] pageNumber = new Object[]{Integer.valueOf(pageIndex + 1)};
+
+        // fetch the formatted header text, if any
+        String headerText = null;
+        if (headerFormat != null) {
+            headerText = headerFormat.format(pageNumber);
+        }
+
+        // fetch the formatted footer text, if any
+        String footerText = null;
+        if (footerFormat != null) {
+            footerText = footerFormat.format(pageNumber);
+        }
+
+        // to store the bounds of the header and footer text
+        Rectangle2D hRect = null;
+        Rectangle2D fRect = null;
+
+        // the amount of vertical space needed for the header and footer text
+        int headerTextSpace = 0;
+        int footerTextSpace = 0;
+
+        // the amount of vertical space available for printing the table
+        int availableSpace = imgHeight;
+
+        // if there's header text, find out how much space is needed for it
+        // and subtract that from the available space
+        if (headerText != null) {
+            graphics.setFont(headerFont);
+            hRect = graphics.getFontMetrics().getStringBounds(headerText,
+                                                              graphics);
+
+            headerTextSpace = (int)Math.ceil(hRect.getHeight());
+            availableSpace -= headerTextSpace + H_F_SPACE;
+        }
+
+        // if there's footer text, find out how much space is needed for it
+        // and subtract that from the available space
+        if (footerText != null) {
+            graphics.setFont(footerFont);
+            fRect = graphics.getFontMetrics().getStringBounds(footerText,
+                                                              graphics);
+
+            footerTextSpace = (int)Math.ceil(fRect.getHeight());
+            availableSpace -= footerTextSpace + H_F_SPACE;
+        }
+
+        if (availableSpace <= 0) {
+            throw new PrinterException("Height of printable area is too small.");
+        }
+
+        // depending on the print mode, we may need a scale factor to
+        // fit the table's entire width on the page
+        double sf = 1.0D;
+        if (printMode == JTable.PrintMode.FIT_WIDTH &&
+                totalColWidth > imgWidth) {
+
+            // if not, we would have thrown an acception previously
+            assert imgWidth > 0;
+
+            // it must be, according to the if-condition, since imgWidth > 0
+            assert totalColWidth > 1;
+
+            sf = (double)imgWidth / (double)totalColWidth;
+        }
+
+        // dictated by the previous two assertions
+        assert sf > 0;
+
+        // This is in a loop for two reasons:
+        // First, it allows us to catch up in case we're called starting
+        // with a non-zero pageIndex. Second, we know that we can be called
+        // for the same page multiple times. The condition of this while
+        // loop acts as a check, ensuring that we don't attempt to do the
+        // calculations again when we are called subsequent times for the
+        // same page.
+        while (last < pageIndex) {
+            // if we are finished all columns in all rows
+            if (row >= table.getRowCount() && col == 0) {
+                return NO_SUCH_PAGE;
+            }
+
+            // rather than multiplying every row and column by the scale factor
+            // in findNextClip, just pass a width and height that have already
+            // been divided by it
+            int scaledWidth = (int)(imgWidth / sf);
+            int scaledHeight = (int)((availableSpace - hclip.height) / sf);
+
+            // calculate the area of the table to be printed for this page
+            findNextClip(scaledWidth, scaledHeight);
+
+            last++;
+        }
+
+        // create a copy of the graphics so we don't affect the one given to us
+        Graphics2D g2d = (Graphics2D)graphics.create();
+
+        // translate into the co-ordinate system of the pageFormat
+        g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+
+        // to save and store the transform
+        AffineTransform oldTrans;
+
+        // if there's footer text, print it at the bottom of the imageable area
+        if (footerText != null) {
+            oldTrans = g2d.getTransform();
+
+            g2d.translate(0, imgHeight - footerTextSpace);
+
+            printText(g2d, footerText, fRect, footerFont, imgWidth);
+
+            g2d.setTransform(oldTrans);
+        }
+
+        // if there's header text, print it at the top of the imageable area
+        // and then translate downwards
+        if (headerText != null) {
+            printText(g2d, headerText, hRect, headerFont, imgWidth);
+
+            g2d.translate(0, headerTextSpace + H_F_SPACE);
+        }
+
+        // constrain the table output to the available space
+        tempRect.x = 0;
+        tempRect.y = 0;
+        tempRect.width = imgWidth;
+        tempRect.height = availableSpace;
+        g2d.clip(tempRect);
+
+        // if we have a scale factor, scale the graphics object to fit
+        // the entire width
+        if (sf != 1.0D) {
+            g2d.scale(sf, sf);
+
+        // otherwise, ensure that the current portion of the table is
+        // centered horizontally
+        } else {
+            int diff = (imgWidth - clip.width) / 2;
+            g2d.translate(diff, 0);
+        }
+
+        // store the old transform and clip for later restoration
+        oldTrans = g2d.getTransform();
+        Shape oldClip = g2d.getClip();
+
+        // if there's a table header, print the current section and
+        // then translate downwards
+        if (header != null) {
+            hclip.x = clip.x;
+            hclip.width = clip.width;
+
+            g2d.translate(-hclip.x, 0);
+            g2d.clip(hclip);
+            header.print(g2d);
+
+            // restore the original transform and clip
+            g2d.setTransform(oldTrans);
+            g2d.setClip(oldClip);
+
+            // translate downwards
+            g2d.translate(0, hclip.height);
+        }
+
+        // print the current section of the table
+        g2d.translate(-clip.x, -clip.y);
+        g2d.clip(clip);
+        table.print(g2d);
+
+        // restore the original transform and clip
+        g2d.setTransform(oldTrans);
+        g2d.setClip(oldClip);
+
+        // draw a box around the table
+        g2d.setColor(Color.BLACK);
+        g2d.drawRect(0, 0, clip.width, hclip.height + clip.height);
+
+        // dispose the graphics copy
+        g2d.dispose();
+
+        return PAGE_EXISTS;
+    }
+
+    /**
+     * A helper method that encapsulates common code for rendering the
+     * header and footer text.
+     *
+     * @param  g2d       the graphics to draw into
+     * @param  text      the text to draw, non null
+     * @param  rect      the bounding rectangle for this text,
+     *                   as calculated at the given font, non null
+     * @param  font      the font to draw the text in, non null
+     * @param  imgWidth  the width of the area to draw into
+     */
+    private void printText(Graphics2D g2d,
+                           String text,
+                           Rectangle2D rect,
+                           Font font,
+                           int imgWidth) {
+
+            int tx;
+
+            // if the text is small enough to fit, center it
+            if (rect.getWidth() < imgWidth) {
+                tx = (int)((imgWidth - rect.getWidth()) / 2);
+
+            // otherwise, if the table is LTR, ensure the left side of
+            // the text shows; the right can be clipped
+            } else if (table.getComponentOrientation().isLeftToRight()) {
+                tx = 0;
+
+            // otherwise, ensure the right side of the text shows
+            } else {
+                tx = -(int)(Math.ceil(rect.getWidth()) - imgWidth);
+            }
+
+            int ty = (int)Math.ceil(Math.abs(rect.getY()));
+            g2d.setColor(Color.BLACK);
+            g2d.setFont(font);
+            g2d.drawString(text, tx, ty);
+    }
+
+    /**
+     * Calculate the area of the table to be printed for
+     * the next page. This should only be called if there
+     * are rows and columns left to print.
+     *
+     * To avoid an infinite loop in printing, this will
+     * always put at least one cell on each page.
+     *
+     * @param  pw  the width of the area to print in
+     * @param  ph  the height of the area to print in
+     */
+    private void findNextClip(int pw, int ph) {
+        final boolean ltr = table.getComponentOrientation().isLeftToRight();
+
+        // if we're ready to start a new set of rows
+        if (col == 0) {
+            if (ltr) {
+                // adjust clip to the left of the first column
+                clip.x = 0;
+            } else {
+                // adjust clip to the right of the first column
+                clip.x = totalColWidth;
+            }
+
+            // adjust clip to the top of the next set of rows
+            clip.y += clip.height;
+
+            // adjust clip width and height to be zero
+            clip.width = 0;
+            clip.height = 0;
+
+            // fit as many rows as possible, and at least one
+            int rowCount = table.getRowCount();
+            int rowHeight = table.getRowHeight(row);
+            do {
+                clip.height += rowHeight;
+
+                if (++row >= rowCount) {
+                    break;
+                }
+
+                rowHeight = table.getRowHeight(row);
+            } while (clip.height + rowHeight <= ph);
+        }
+
+        // we can short-circuit for JTable.PrintMode.FIT_WIDTH since
+        // we'll always fit all columns on the page
+        if (printMode == JTable.PrintMode.FIT_WIDTH) {
+            clip.x = 0;
+            clip.width = totalColWidth;
+            return;
+        }
+
+        if (ltr) {
+            // adjust clip to the left of the next set of columns
+            clip.x += clip.width;
+        }
+
+        // adjust clip width to be zero
+        clip.width = 0;
+
+        // fit as many columns as possible, and at least one
+        int colCount = table.getColumnCount();
+        int colWidth = colModel.getColumn(col).getWidth();
+        do {
+            clip.width += colWidth;
+            if (!ltr) {
+                clip.x -= colWidth;
+            }
+
+            if (++col >= colCount) {
+                // reset col to 0 to indicate we're finished all columns
+                col = 0;
+
+                break;
+            }
+
+            colWidth = colModel.getColumn(col).getWidth();
+        } while (clip.width + colWidth <= pw);
+
+    }
+
+}

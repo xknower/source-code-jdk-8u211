@@ -1,636 +1,630 @@
-/*     */ package com.sun.jmx.snmp.daemon;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import com.sun.jmx.snmp.SnmpDefinitions;
-/*     */ import com.sun.jmx.snmp.SnmpEngine;
-/*     */ import com.sun.jmx.snmp.SnmpPdu;
-/*     */ import com.sun.jmx.snmp.SnmpStatusException;
-/*     */ import com.sun.jmx.snmp.SnmpVarBind;
-/*     */ import com.sun.jmx.snmp.ThreadContext;
-/*     */ import com.sun.jmx.snmp.agent.SnmpMibAgent;
-/*     */ import com.sun.jmx.snmp.agent.SnmpMibRequest;
-/*     */ import com.sun.jmx.snmp.internal.SnmpIncomingRequest;
-/*     */ import java.util.Vector;
-/*     */ import java.util.logging.Level;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class SnmpSubRequestHandler
-/*     */   implements SnmpDefinitions, Runnable
-/*     */ {
-/*  54 */   protected SnmpIncomingRequest incRequest = null;
-/*  55 */   protected SnmpEngine engine = null;
-/*     */   protected int version;
-/*     */   protected int type;
-/*     */   protected SnmpMibAgent agent;
-/*     */   protected int errorStatus;
-/*     */   protected int errorIndex;
-/*     */   
-/*     */   protected SnmpSubRequestHandler(SnmpEngine paramSnmpEngine, SnmpIncomingRequest paramSnmpIncomingRequest, SnmpMibAgent paramSnmpMibAgent, SnmpPdu paramSnmpPdu) {
-/*  63 */     this(paramSnmpMibAgent, paramSnmpPdu);
-/*  64 */     init(paramSnmpEngine, paramSnmpIncomingRequest);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Vector<SnmpVarBind> varBind;
-/*     */   protected int[] translation;
-/*     */   protected Object data;
-/*     */   private SnmpMibRequest mibRequest;
-/*     */   private SnmpPdu reqPdu;
-/*     */   
-/*     */   protected SnmpSubRequestHandler(SnmpEngine paramSnmpEngine, SnmpIncomingRequest paramSnmpIncomingRequest, SnmpMibAgent paramSnmpMibAgent, SnmpPdu paramSnmpPdu, boolean paramBoolean) {
-/*  75 */     this(paramSnmpMibAgent, paramSnmpPdu, paramBoolean);
-/*  76 */     init(paramSnmpEngine, paramSnmpIncomingRequest);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SnmpSubRequestHandler(SnmpMibAgent paramSnmpMibAgent, SnmpPdu paramSnmpPdu, boolean paramBoolean) {
-/* 109 */     this(paramSnmpMibAgent, paramSnmpPdu);
-/*     */ 
-/*     */ 
-/*     */     
-/* 113 */     int i = this.translation.length;
-/* 114 */     SnmpVarBind[] arrayOfSnmpVarBind = paramSnmpPdu.varBindList;
-/* 115 */     for (byte b = 0; b < i; b++) {
-/* 116 */       this.translation[b] = b;
-/* 117 */       ((NonSyncVector<SnmpVarBind>)this.varBind).addNonSyncElement(arrayOfSnmpVarBind[b]);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   SnmpMibRequest createMibRequest(Vector<SnmpVarBind> paramVector, int paramInt, Object paramObject) {
-/* 129 */     if (this.type == 163 && this.mibRequest != null) {
-/* 130 */       return this.mibRequest;
-/*     */     }
-/*     */ 
-/*     */     
-/* 134 */     SnmpMibRequest snmpMibRequest = null;
-/* 135 */     if (this.incRequest != null) {
-/* 136 */       snmpMibRequest = SnmpMibAgent.newMibRequest(this.engine, this.reqPdu, paramVector, paramInt, paramObject, this.incRequest
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 141 */           .getPrincipal(), this.incRequest
-/* 142 */           .getSecurityLevel(), this.incRequest
-/* 143 */           .getSecurityModel(), this.incRequest
-/* 144 */           .getContextName(), this.incRequest
-/* 145 */           .getAccessContext());
-/*     */     } else {
-/* 147 */       snmpMibRequest = SnmpMibAgent.newMibRequest(this.reqPdu, paramVector, paramInt, paramObject);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 155 */     if (this.type == 253) {
-/* 156 */       this.mibRequest = snmpMibRequest;
-/*     */     }
-/* 158 */     return snmpMibRequest;
-/*     */   }
-/*     */   
-/*     */   void setUserData(Object paramObject) {
-/* 162 */     this.data = paramObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void run() {
-/*     */     try {
-/* 169 */       ThreadContext threadContext = ThreadContext.push("SnmpUserData", this.data);
-/*     */       try {
-/* 171 */         switch (this.type) {
-/*     */ 
-/*     */           
-/*     */           case 160:
-/* 175 */             if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 176 */               JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 177 */                   Thread.currentThread() + "]:get operation on " + this.agent
-/* 178 */                   .getMibName());
-/*     */             }
-/*     */             
-/* 181 */             this.agent.get(createMibRequest(this.varBind, this.version, this.data));
-/*     */             break;
-/*     */           
-/*     */           case 161:
-/* 185 */             if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 186 */               JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 187 */                   Thread.currentThread() + "]:getNext operation on " + this.agent
-/* 188 */                   .getMibName());
-/*     */             }
-/*     */             
-/* 191 */             this.agent.getNext(createMibRequest(this.varBind, this.version, this.data));
-/*     */             break;
-/*     */           
-/*     */           case 163:
-/* 195 */             if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 196 */               JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 197 */                   Thread.currentThread() + "]:set operation on " + this.agent
-/* 198 */                   .getMibName());
-/*     */             }
-/* 200 */             this.agent.set(createMibRequest(this.varBind, this.version, this.data));
-/*     */             break;
-/*     */           
-/*     */           case 253:
-/* 204 */             if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 205 */               JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 206 */                   Thread.currentThread() + "]:check operation on " + this.agent
-/* 207 */                   .getMibName());
-/*     */             }
-/* 209 */             this.agent.check(createMibRequest(this.varBind, this.version, this.data));
-/*     */             break;
-/*     */           
-/*     */           default:
-/* 213 */             if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 214 */               JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 215 */                   Thread.currentThread() + "]:unknown operation (" + this.type + ") on " + this.agent
-/*     */                   
-/* 217 */                   .getMibName());
-/*     */             }
-/* 219 */             this.errorStatus = 5;
-/* 220 */             this.errorIndex = 1;
-/*     */             break;
-/*     */         } 
-/*     */ 
-/*     */       
-/*     */       } finally {
-/* 226 */         ThreadContext.restore(threadContext);
-/*     */       } 
-/* 228 */     } catch (SnmpStatusException snmpStatusException) {
-/* 229 */       this.errorStatus = snmpStatusException.getStatus();
-/* 230 */       this.errorIndex = snmpStatusException.getErrorIndex();
-/* 231 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 232 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 233 */             Thread.currentThread() + "]:an Snmp error occurred during the operation", snmpStatusException);
-/*     */       
-/*     */       }
-/*     */     }
-/* 237 */     catch (Exception exception) {
-/* 238 */       this.errorStatus = 5;
-/* 239 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 240 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 241 */             Thread.currentThread() + "]:a generic error occurred during the operation", exception);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 245 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 246 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(), "run", "[" + 
-/* 247 */           Thread.currentThread() + "]:operation completed");
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final int mapErrorStatusToV1(int paramInt1, int paramInt2) {
-/* 285 */     if (paramInt1 == 0) {
-/* 286 */       return 0;
-/*     */     }
-/* 288 */     if (paramInt1 == 5) {
-/* 289 */       return 5;
-/*     */     }
-/* 291 */     if (paramInt1 == 2) {
-/* 292 */       return 2;
-/*     */     }
-/* 294 */     if (paramInt1 == 224 || paramInt1 == 225 || paramInt1 == 6 || paramInt1 == 18 || paramInt1 == 16)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 300 */       return 2;
-/*     */     }
-/* 302 */     if (paramInt1 == 16 || paramInt1 == 17) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 306 */       if (paramInt2 == 253) {
-/* 307 */         return 4;
-/*     */       }
-/* 309 */       return 2;
-/*     */     } 
-/* 311 */     if (paramInt1 == 11)
-/*     */     {
-/* 313 */       return 2;
-/*     */     }
-/* 315 */     if (paramInt1 == 7 || paramInt1 == 8 || paramInt1 == 9 || paramInt1 == 10 || paramInt1 == 8 || paramInt1 == 12) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 323 */       if (paramInt2 == 163 || paramInt2 == 253)
-/*     */       {
-/* 325 */         return 3;
-/*     */       }
-/* 327 */       return 2;
-/*     */     } 
-/* 329 */     if (paramInt1 == 13 || paramInt1 == 14 || paramInt1 == 15)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 335 */       return 5;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 341 */     if (paramInt1 == 1) {
-/* 342 */       return 1;
-/*     */     }
-/* 344 */     if (paramInt1 == 3 || paramInt1 == 4) {
-/*     */       
-/* 346 */       if (paramInt2 == 163 || paramInt2 == 253)
-/*     */       {
-/* 348 */         return paramInt1;
-/*     */       }
-/* 350 */       return 2;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 356 */     return 5;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final int mapErrorStatusToV2(int paramInt1, int paramInt2) {
-/* 399 */     if (paramInt1 == 0) {
-/* 400 */       return 0;
-/*     */     }
-/* 402 */     if (paramInt1 == 5) {
-/* 403 */       return 5;
-/*     */     }
-/* 405 */     if (paramInt1 == 1) {
-/* 406 */       return 1;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 411 */     if (paramInt2 != 163 && paramInt2 != 253) {
-/*     */       
-/* 413 */       if (paramInt1 == 16) {
-/* 414 */         return paramInt1;
-/*     */       }
-/* 416 */       return 5;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 428 */     if (paramInt1 == 2) {
-/* 429 */       return 6;
-/*     */     }
-/*     */     
-/* 432 */     if (paramInt1 == 4) {
-/* 433 */       return 17;
-/*     */     }
-/*     */     
-/* 436 */     if (paramInt1 == 3) {
-/* 437 */       return 10;
-/*     */     }
-/*     */     
-/* 440 */     if (paramInt1 == 6 || paramInt1 == 18 || paramInt1 == 16 || paramInt1 == 17 || paramInt1 == 11 || paramInt1 == 7 || paramInt1 == 8 || paramInt1 == 9 || paramInt1 == 10 || paramInt1 == 8 || paramInt1 == 12 || paramInt1 == 13 || paramInt1 == 14 || paramInt1 == 15)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 454 */       return paramInt1;
-/*     */     }
-/*     */     
-/* 457 */     return 5;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final int mapErrorStatus(int paramInt1, int paramInt2, int paramInt3) {
-/* 463 */     if (paramInt1 == 0) {
-/* 464 */       return 0;
-/*     */     }
-/*     */ 
-/*     */     
-/* 468 */     if (paramInt2 == 0)
-/* 469 */       return mapErrorStatusToV1(paramInt1, paramInt3); 
-/* 470 */     if (paramInt2 == 1 || paramInt2 == 3)
-/*     */     {
-/* 472 */       return mapErrorStatusToV2(paramInt1, paramInt3);
-/*     */     }
-/* 474 */     return 5;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int getErrorStatus() {
-/* 482 */     if (this.errorStatus == 0) {
-/* 483 */       return 0;
-/*     */     }
-/* 485 */     return mapErrorStatus(this.errorStatus, this.version, this.type);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int getErrorIndex() {
-/* 494 */     if (this.errorStatus == 0) {
-/* 495 */       return -1;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 501 */     if (this.errorIndex == 0 || this.errorIndex == -1) {
-/* 502 */       this.errorIndex = 1;
-/*     */     }
-/* 504 */     return this.translation[this.errorIndex - 1];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void updateRequest(SnmpVarBind paramSnmpVarBind, int paramInt) {
-/* 511 */     int i = this.varBind.size();
-/* 512 */     this.translation[i] = paramInt;
-/* 513 */     this.varBind.addElement(paramSnmpVarBind);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void updateResult(SnmpVarBind[] paramArrayOfSnmpVarBind) {
-/* 525 */     if (paramArrayOfSnmpVarBind == null)
-/* 526 */       return;  int i = this.varBind.size();
-/* 527 */     int j = paramArrayOfSnmpVarBind.length;
-/* 528 */     for (byte b = 0; b < i; b++) {
-/*     */ 
-/*     */       
-/* 531 */       int k = this.translation[b];
-/* 532 */       if (k < j) {
-/* 533 */         paramArrayOfSnmpVarBind[k] = ((NonSyncVector<SnmpVarBind>)this.varBind)
-/* 534 */           .elementAtNonSync(b);
-/*     */       }
-/* 536 */       else if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 537 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(), "updateResult", "Position `" + k + "' is out of bound...");
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void init(SnmpEngine paramSnmpEngine, SnmpIncomingRequest paramSnmpIncomingRequest) {
-/* 546 */     this.incRequest = paramSnmpIncomingRequest;
-/* 547 */     this.engine = paramSnmpEngine;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected SnmpSubRequestHandler(SnmpMibAgent paramSnmpMibAgent, SnmpPdu paramSnmpPdu)
-/*     */   {
-/* 556 */     this.version = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 562 */     this.type = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 572 */     this.errorStatus = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 578 */     this.errorIndex = -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 601 */     this.mibRequest = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 607 */     this.reqPdu = null;
-/*     */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER))
-/*     */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(), "constructor", "creating instance for request " + String.valueOf(paramSnmpPdu.requestId)); 
-/*     */     this.version = paramSnmpPdu.version;
-/*     */     this.type = paramSnmpPdu.type;
-/*     */     this.agent = paramSnmpMibAgent;
-/*     */     this.reqPdu = paramSnmpPdu;
-/*     */     int i = paramSnmpPdu.varBindList.length;
-/*     */     this.translation = new int[i];
-/*     */     this.varBind = new NonSyncVector<>(i); } class NonSyncVector<E> extends Vector<E> { public NonSyncVector(int param1Int) {
-/* 617 */       super(param1Int);
-/*     */     }
-/*     */     
-/*     */     final void addNonSyncElement(E param1E) {
-/* 621 */       ensureCapacity(this.elementCount + 1);
-/* 622 */       this.elementData[this.elementCount++] = param1E;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final E elementAtNonSync(int param1Int) {
-/* 627 */       return (E)this.elementData[param1Int];
-/*     */     } }
-/*     */ 
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\daemon\SnmpSubRequestHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp.daemon;
+
+
+
+// java import
+//
+import java.util.logging.Level;
+import java.util.Vector;
+
+// jmx imports
+//
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+import com.sun.jmx.snmp.SnmpPdu;
+import com.sun.jmx.snmp.SnmpVarBind;
+import com.sun.jmx.snmp.SnmpDefinitions;
+import com.sun.jmx.snmp.SnmpStatusException;
+import com.sun.jmx.snmp.SnmpEngine;
+
+// SNMP Runtime import
+//
+import com.sun.jmx.snmp.agent.SnmpMibAgent;
+import com.sun.jmx.snmp.agent.SnmpMibRequest;
+import com.sun.jmx.snmp.ThreadContext;
+import com.sun.jmx.snmp.internal.SnmpIncomingRequest;
+
+class SnmpSubRequestHandler implements SnmpDefinitions, Runnable {
+
+    protected SnmpIncomingRequest incRequest = null;
+    protected SnmpEngine engine = null;
+    /**
+     * V3 enabled Adaptor. Each Oid is added using updateRequest method.
+     */
+    protected SnmpSubRequestHandler(SnmpEngine engine,
+                                    SnmpIncomingRequest incRequest,
+                                    SnmpMibAgent agent,
+                                    SnmpPdu req) {
+        this(agent, req);
+        init(engine, incRequest);
+    }
+
+    /**
+     * V3 enabled Adaptor.
+     */
+    protected SnmpSubRequestHandler(SnmpEngine engine,
+                                    SnmpIncomingRequest incRequest,
+                                    SnmpMibAgent agent,
+                                    SnmpPdu req,
+                                    boolean nouse) {
+        this(agent, req, nouse);
+        init(engine, incRequest);
+    }
+    /**
+     * SNMP V1/V2 . To be called with updateRequest.
+     */
+    protected SnmpSubRequestHandler(SnmpMibAgent agent, SnmpPdu req) {
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(),
+                "constructor", "creating instance for request " + String.valueOf(req.requestId));
+        }
+
+        version= req.version;
+        type= req.type;
+        this.agent= agent;
+
+        // We get a ref on the pdu in order to pass it to SnmpMibRequest.
+        reqPdu = req;
+
+        //Pre-allocate room for storing varbindlist and translation table.
+        //
+        int length= req.varBindList.length;
+        translation= new int[length];
+        varBind= new NonSyncVector<SnmpVarBind>(length);
+    }
+
+    /**
+     * SNMP V1/V2 The constructor initialize the subrequest with the whole varbind list contained
+     * in the original request.
+     */
+    @SuppressWarnings("unchecked")  // cast to NonSyncVector<SnmpVarBind>
+    protected SnmpSubRequestHandler(SnmpMibAgent agent,
+                                    SnmpPdu req,
+                                    boolean nouse) {
+        this(agent,req);
+
+        // The translation table is easy in this case ...
+        //
+        int max= translation.length;
+        SnmpVarBind[] list= req.varBindList;
+        for(int i=0; i < max; i++) {
+            translation[i]= i;
+            ((NonSyncVector<SnmpVarBind>)varBind).addNonSyncElement(list[i]);
+        }
+    }
+
+    SnmpMibRequest createMibRequest(Vector<SnmpVarBind> vblist,
+                                    int protocolVersion,
+                                    Object userData) {
+
+        // This is an optimization:
+        //    The SnmpMibRequest created in the check() phase is
+        //    reused in the set() phase.
+        //
+        if (type == pduSetRequestPdu && mibRequest != null)
+            return mibRequest;
+
+        //This is a request comming from an SnmpV3AdaptorServer.
+        //Full power.
+        SnmpMibRequest result = null;
+        if(incRequest != null) {
+            result = SnmpMibAgent.newMibRequest(engine,
+                                                reqPdu,
+                                                vblist,
+                                                protocolVersion,
+                                                userData,
+                                                incRequest.getPrincipal(),
+                                                incRequest.getSecurityLevel(),
+                                                incRequest.getSecurityModel(),
+                                                incRequest.getContextName(),
+                                                incRequest.getAccessContext());
+        } else {
+            result = SnmpMibAgent.newMibRequest(reqPdu,
+                                                vblist,
+                                                protocolVersion,
+                                                userData);
+        }
+        // If we're doing the check() phase, we store the SnmpMibRequest
+        // so that we can reuse it in the set() phase.
+        //
+        if (type == pduWalkRequest)
+            mibRequest = result;
+
+        return result;
+    }
+
+    void setUserData(Object userData) {
+        data = userData;
+    }
+
+    public void run() {
+
+        try {
+            final ThreadContext oldContext =
+                ThreadContext.push("SnmpUserData",data);
+            try {
+                switch(type) {
+                case pduGetRequestPdu:
+                    // Invoke a get operation
+                    //
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(),
+                            "run", "[" + Thread.currentThread() +
+                              "]:get operation on " + agent.getMibName());
+                    }
+
+                    agent.get(createMibRequest(varBind,version,data));
+                    break;
+
+                case pduGetNextRequestPdu:
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(),
+                            "run", "[" + Thread.currentThread() +
+                              "]:getNext operation on " + agent.getMibName());
+                    }
+                    //#ifdef DEBUG
+                    agent.getNext(createMibRequest(varBind,version,data));
+                    break;
+
+                case pduSetRequestPdu:
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(),
+                            "run", "[" + Thread.currentThread() +
+                            "]:set operation on " + agent.getMibName());
+                    }
+                    agent.set(createMibRequest(varBind,version,data));
+                    break;
+
+                case pduWalkRequest:
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(),
+                            "run", "[" + Thread.currentThread() +
+                            "]:check operation on " + agent.getMibName());
+                    }
+                    agent.check(createMibRequest(varBind,version,data));
+                    break;
+
+                default:
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(),
+                            "run", "[" + Thread.currentThread() +
+                              "]:unknown operation (" +  type + ") on " +
+                              agent.getMibName());
+                    }
+                    errorStatus= snmpRspGenErr;
+                    errorIndex= 1;
+                    break;
+
+                }// end of switch
+
+            } finally {
+                ThreadContext.restore(oldContext);
+            }
+        } catch(SnmpStatusException x) {
+            errorStatus = x.getStatus() ;
+            errorIndex=  x.getErrorIndex();
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(),
+                    "run", "[" + Thread.currentThread() +
+                      "]:an Snmp error occurred during the operation", x);
+            }
+        }
+        catch(Exception x) {
+            errorStatus = SnmpDefinitions.snmpRspGenErr ;
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(),
+                    "run", "[" + Thread.currentThread() +
+                      "]:a generic error occurred during the operation", x);
+            }
+        }
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpSubRequestHandler.class.getName(),
+                "run", "[" + Thread.currentThread() + "]:operation completed");
+        }
+    }
+
+    // -------------------------------------------------------------
+    //
+    // This function does a best-effort to map global error status
+    // to SNMP v1 valid global error status.
+    //
+    // An SnmpStatusException can contain either:
+    // <li> v2 local error codes (that should be stored in the varbind)</li>
+    // <li> v2 global error codes </li>
+    // <li> v1 global error codes </li>
+    //
+    // v2 local error codes (noSuchInstance, noSuchObject) are
+    // transformed in a global v1 snmpRspNoSuchName error.
+    //
+    // v2 global error codes are transformed in the following way:
+    //
+    //    If the request was a GET/GETNEXT then either
+    //         snmpRspNoSuchName or snmpRspGenErr is returned.
+    //
+    //    Otherwise:
+    //      snmpRspNoAccess, snmpRspInconsistentName
+    //               => snmpRspNoSuchName
+    //      snmpRspAuthorizationError, snmpRspNotWritable, snmpRspNoCreation
+    //               => snmpRspReadOnly  (snmpRspNoSuchName for GET/GETNEXT)
+    //      snmpRspWrong*
+    //               => snmpRspBadValue  (snmpRspNoSuchName for GET/GETNEXT)
+    //      snmpRspResourceUnavailable, snmpRspRspCommitFailed,
+    //      snmpRspUndoFailed
+    //                  => snmpRspGenErr
+    //
+    // -------------------------------------------------------------
+    //
+    static final int mapErrorStatusToV1(int errorStatus, int reqPduType) {
+        // Map v2 codes onto v1 codes
+        //
+        if (errorStatus == SnmpDefinitions.snmpRspNoError)
+            return SnmpDefinitions.snmpRspNoError;
+
+        if (errorStatus == SnmpDefinitions.snmpRspGenErr)
+            return SnmpDefinitions.snmpRspGenErr;
+
+        if (errorStatus == SnmpDefinitions.snmpRspNoSuchName)
+            return SnmpDefinitions.snmpRspNoSuchName;
+
+        if ((errorStatus == SnmpStatusException.noSuchInstance) ||
+            (errorStatus == SnmpStatusException.noSuchObject)   ||
+            (errorStatus == SnmpDefinitions.snmpRspNoAccess)    ||
+            (errorStatus == SnmpDefinitions.snmpRspInconsistentName) ||
+            (errorStatus == SnmpDefinitions.snmpRspAuthorizationError)){
+
+            return SnmpDefinitions.snmpRspNoSuchName;
+
+        } else if ((errorStatus ==
+                    SnmpDefinitions.snmpRspAuthorizationError)         ||
+                   (errorStatus == SnmpDefinitions.snmpRspNotWritable)) {
+
+            if (reqPduType == SnmpDefinitions.pduWalkRequest)
+                return SnmpDefinitions.snmpRspReadOnly;
+            else
+                return SnmpDefinitions.snmpRspNoSuchName;
+
+        } else if ((errorStatus == SnmpDefinitions.snmpRspNoCreation)) {
+
+                return SnmpDefinitions.snmpRspNoSuchName;
+
+        } else if ((errorStatus == SnmpDefinitions.snmpRspWrongType)      ||
+                   (errorStatus == SnmpDefinitions.snmpRspWrongLength)    ||
+                   (errorStatus == SnmpDefinitions.snmpRspWrongEncoding)  ||
+                   (errorStatus == SnmpDefinitions.snmpRspWrongValue)     ||
+                   (errorStatus == SnmpDefinitions.snmpRspWrongLength)    ||
+                   (errorStatus ==
+                    SnmpDefinitions.snmpRspInconsistentValue)) {
+
+            if ((reqPduType == SnmpDefinitions.pduSetRequestPdu) ||
+                (reqPduType == SnmpDefinitions.pduWalkRequest))
+                return SnmpDefinitions.snmpRspBadValue;
+            else
+                return SnmpDefinitions.snmpRspNoSuchName;
+
+        } else if ((errorStatus ==
+                    SnmpDefinitions.snmpRspResourceUnavailable) ||
+                   (errorStatus ==
+                    SnmpDefinitions.snmpRspCommitFailed)        ||
+                   (errorStatus == SnmpDefinitions.snmpRspUndoFailed)) {
+
+            return SnmpDefinitions.snmpRspGenErr;
+
+        }
+
+        // At this point we should have a V1 error code
+        //
+        if (errorStatus == SnmpDefinitions.snmpRspTooBig)
+            return SnmpDefinitions.snmpRspTooBig;
+
+        if( (errorStatus == SnmpDefinitions.snmpRspBadValue) ||
+            (errorStatus == SnmpDefinitions.snmpRspReadOnly)) {
+            if ((reqPduType == SnmpDefinitions.pduSetRequestPdu) ||
+                (reqPduType == SnmpDefinitions.pduWalkRequest))
+                return errorStatus;
+            else
+                return SnmpDefinitions.snmpRspNoSuchName;
+        }
+
+        // We have a snmpRspGenErr, or something which is not defined
+        // in RFC1905 => return a snmpRspGenErr
+        //
+        return SnmpDefinitions.snmpRspGenErr;
+
+    }
+
+    // -------------------------------------------------------------
+    //
+    // This function does a best-effort to map global error status
+    // to SNMP v2 valid global error status.
+    //
+    // An SnmpStatusException can contain either:
+    // <li> v2 local error codes (that should be stored in the varbind)</li>
+    // <li> v2 global error codes </li>
+    // <li> v1 global error codes </li>
+    //
+    // v2 local error codes (noSuchInstance, noSuchObject)
+    // should not raise this level: they should have been stored in the
+    // varbind earlier. If they, do there is nothing much we can do except
+    // to transform them into:
+    // <li> a global snmpRspGenErr (if the request is a GET/GETNEXT) </li>
+    // <li> a global snmpRspNoSuchName otherwise. </li>
+    //
+    // v2 global error codes are transformed in the following way:
+    //
+    //    If the request was a GET/GETNEXT then snmpRspGenErr is returned.
+    //    (snmpRspGenErr is the only global error that is expected to be
+    //     raised by a GET/GETNEXT request).
+    //
+    //    Otherwise the v2 code itself is returned
+    //
+    // v1 global error codes are transformed in the following way:
+    //
+    //      snmpRspNoSuchName
+    //               => snmpRspNoAccess  (snmpRspGenErr for GET/GETNEXT)
+    //      snmpRspReadOnly
+    //               => snmpRspNotWritable (snmpRspGenErr for GET/GETNEXT)
+    //      snmpRspBadValue
+    //               => snmpRspWrongValue  (snmpRspGenErr for GET/GETNEXT)
+    //
+    // -------------------------------------------------------------
+    //
+    static final int mapErrorStatusToV2(int errorStatus, int reqPduType) {
+        // Map v1 codes onto v2 codes
+        //
+        if (errorStatus == SnmpDefinitions.snmpRspNoError)
+            return SnmpDefinitions.snmpRspNoError;
+
+        if (errorStatus == SnmpDefinitions.snmpRspGenErr)
+            return SnmpDefinitions.snmpRspGenErr;
+
+        if (errorStatus == SnmpDefinitions.snmpRspTooBig)
+            return SnmpDefinitions.snmpRspTooBig;
+
+        // For get / getNext / getBulk the only global error
+        // (PDU-level) possible is genErr.
+        //
+        if ((reqPduType != SnmpDefinitions.pduSetRequestPdu) &&
+            (reqPduType != SnmpDefinitions.pduWalkRequest)) {
+            if(errorStatus == SnmpDefinitions.snmpRspAuthorizationError)
+                return errorStatus;
+            else
+                return SnmpDefinitions.snmpRspGenErr;
+        }
+
+        // Map to noSuchName
+        //      if ((errorStatus == SnmpDefinitions.snmpRspNoSuchName) ||
+        //   (errorStatus == SnmpStatusException.noSuchInstance) ||
+        //  (errorStatus == SnmpStatusException.noSuchObject))
+        //  return SnmpDefinitions.snmpRspNoSuchName;
+
+        // SnmpStatusException.noSuchInstance and
+        // SnmpStatusException.noSuchObject can't happen...
+
+        if (errorStatus == SnmpDefinitions.snmpRspNoSuchName)
+            return SnmpDefinitions.snmpRspNoAccess;
+
+        // Map to notWritable
+        if (errorStatus == SnmpDefinitions.snmpRspReadOnly)
+                return SnmpDefinitions.snmpRspNotWritable;
+
+        // Map to wrongValue
+        if (errorStatus == SnmpDefinitions.snmpRspBadValue)
+            return SnmpDefinitions.snmpRspWrongValue;
+
+        // Other valid V2 codes
+        if ((errorStatus == SnmpDefinitions.snmpRspNoAccess) ||
+            (errorStatus == SnmpDefinitions.snmpRspInconsistentName) ||
+            (errorStatus == SnmpDefinitions.snmpRspAuthorizationError) ||
+            (errorStatus == SnmpDefinitions.snmpRspNotWritable) ||
+            (errorStatus == SnmpDefinitions.snmpRspNoCreation) ||
+            (errorStatus == SnmpDefinitions.snmpRspWrongType) ||
+            (errorStatus == SnmpDefinitions.snmpRspWrongLength) ||
+            (errorStatus == SnmpDefinitions.snmpRspWrongEncoding) ||
+            (errorStatus == SnmpDefinitions.snmpRspWrongValue) ||
+            (errorStatus == SnmpDefinitions.snmpRspWrongLength) ||
+            (errorStatus == SnmpDefinitions.snmpRspInconsistentValue) ||
+            (errorStatus == SnmpDefinitions.snmpRspResourceUnavailable) ||
+            (errorStatus == SnmpDefinitions.snmpRspCommitFailed) ||
+            (errorStatus == SnmpDefinitions.snmpRspUndoFailed))
+            return errorStatus;
+
+        // Ivalid V2 code => genErr
+        return SnmpDefinitions.snmpRspGenErr;
+    }
+
+    static final int mapErrorStatus(int errorStatus,
+                                    int protocolVersion,
+                                    int reqPduType) {
+        if (errorStatus == SnmpDefinitions.snmpRspNoError)
+            return SnmpDefinitions.snmpRspNoError;
+
+        // Too bad, an error occurs ... we need to translate it ...
+        //
+        if (protocolVersion == SnmpDefinitions.snmpVersionOne)
+            return mapErrorStatusToV1(errorStatus,reqPduType);
+        if (protocolVersion == SnmpDefinitions.snmpVersionTwo ||
+            protocolVersion == SnmpDefinitions.snmpVersionThree)
+            return mapErrorStatusToV2(errorStatus,reqPduType);
+
+        return SnmpDefinitions.snmpRspGenErr;
+    }
+
+    /**
+     * The method returns the error status of the operation.
+     * The method takes into account the protocol version.
+     */
+    protected int getErrorStatus() {
+        if (errorStatus == snmpRspNoError)
+            return snmpRspNoError;
+
+        return mapErrorStatus(errorStatus,version,type);
+    }
+
+    /**
+     * The method returns the error index as a position in the var bind list.
+     * The value returned by the method corresponds to the index in the original
+     * var bind list as received by the SNMP protocol adaptor.
+     */
+    protected int getErrorIndex() {
+        if  (errorStatus == snmpRspNoError)
+            return -1;
+
+        // An error occurs. We need to be carefull because the index
+        // we are getting is a valid SNMP index (so range starts at 1).
+        // FIX ME: Shall we double-check the range here ?
+        // The response is : YES :
+        if ((errorIndex == 0) || (errorIndex == -1))
+            errorIndex = 1;
+
+        return translation[errorIndex -1];
+    }
+
+    /**
+     * The method updates the varbind list of the subrequest.
+     */
+    protected  void updateRequest(SnmpVarBind var, int pos) {
+        int size= varBind.size();
+        translation[size]= pos;
+        varBind.addElement(var);
+    }
+
+    /**
+     * The method updates a given var bind list with the result of a
+     * previsouly invoked operation.
+     * Prior to calling the method, one must make sure that the operation was
+     * successful. As such the method getErrorIndex or getErrorStatus should be
+     * called.
+     */
+    protected void updateResult(SnmpVarBind[] result) {
+
+        if (result == null) return;
+        final int max=varBind.size();
+        final int len=result.length;
+        for(int i= 0; i< max ; i++) {
+            // bugId 4641694: must check position in order to avoid
+            //       ArrayIndexOutOfBoundException
+            final int pos=translation[i];
+            if (pos < len) {
+                result[pos] =
+                    (SnmpVarBind)((NonSyncVector)varBind).elementAtNonSync(i);
+            } else {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, SnmpSubRequestHandler.class.getName(),
+                        "updateResult","Position `"+pos+"' is out of bound...");
+                }
+            }
+        }
+    }
+
+    private void init(SnmpEngine engine,
+                      SnmpIncomingRequest incRequest) {
+        this.incRequest = incRequest;
+        this.engine = engine;
+    }
+
+    // PRIVATE VARIABLES
+    //------------------
+
+    /**
+     * Store the protocol version to handle
+     */
+    protected int version= snmpVersionOne;
+
+    /**
+     * Store the operation type. Remember if the type is Walk, it means
+     * that we have to invoke the check method ...
+     */
+    protected int type= 0;
+
+    /**
+     * Agent directly handled by the sub-request handler.
+     */
+    protected SnmpMibAgent agent;
+
+    /**
+     * Error status.
+     */
+    protected int errorStatus= snmpRspNoError;
+
+    /**
+     * Index of error.
+     * A value of -1 means no error.
+     */
+    protected int errorIndex= -1;
+
+    /**
+     * The varbind list specific to the current sub request.
+     * The vector must contain object of type SnmpVarBind.
+     */
+    protected Vector<SnmpVarBind> varBind;
+
+    /**
+     * The array giving the index translation between the content of
+     * <VAR>varBind</VAR> and the varbind list as specified in the request.
+     */
+    protected int[] translation;
+
+    /**
+     * Contextual object allocated by the SnmpUserDataFactory.
+     **/
+    protected Object data;
+
+    /**
+     * The SnmpMibRequest that will be passed to the agent.
+     *
+     **/
+    private   SnmpMibRequest mibRequest = null;
+
+    /**
+     * The SnmpPdu that will be passed to the request.
+     *
+     **/
+    private   SnmpPdu reqPdu = null;
+
+    // All the methods of the Vector class are synchronized.
+    // Synchronization is a very expensive operation. In our case it is not always
+    // required...
+    //
+    @SuppressWarnings("serial")  // we never serialize this
+    class NonSyncVector<E> extends Vector<E> {
+
+        public NonSyncVector(int size) {
+            super(size);
+        }
+
+        final void addNonSyncElement(E obj) {
+            ensureCapacity(elementCount + 1);
+            elementData[elementCount++] = obj;
+        }
+
+        @SuppressWarnings("unchecked")  // cast to E
+        final E elementAtNonSync(int index) {
+            return (E) elementData[index];
+        }
+    };
+}

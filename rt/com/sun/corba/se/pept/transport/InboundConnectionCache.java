@@ -1,17 +1,43 @@
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.pept.transport;
 
-public interface InboundConnectionCache extends ConnectionCache {
-  Connection get(Acceptor paramAcceptor);
-  
-  void put(Acceptor paramAcceptor, Connection paramConnection);
-  
-  void remove(Connection paramConnection);
-  
-  Acceptor getAcceptor();
+/**
+ * @author Harold Carr
+ */
+public interface InboundConnectionCache
+    extends ConnectionCache
+{
+    public Connection get(Acceptor acceptor); // REVISIT
+
+    public void put(Acceptor acceptor, Connection connection);
+
+    public void remove(Connection connection);
+
+    public Acceptor getAcceptor();
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\pept\transport\InboundConnectionCache.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

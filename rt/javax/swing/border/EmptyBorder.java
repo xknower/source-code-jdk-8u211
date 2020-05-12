@@ -1,119 +1,113 @@
-/*     */ package javax.swing.border;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class EmptyBorder
-/*     */   extends AbstractBorder
-/*     */   implements Serializable
-/*     */ {
-/*     */   protected int left;
-/*     */   protected int right;
-/*     */   protected int top;
-/*     */   protected int bottom;
-/*     */   
-/*     */   public EmptyBorder(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  62 */     this.top = paramInt1;
-/*  63 */     this.right = paramInt4;
-/*  64 */     this.bottom = paramInt3;
-/*  65 */     this.left = paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ConstructorProperties({"borderInsets"})
-/*     */   public EmptyBorder(Insets paramInsets) {
-/*  74 */     this.top = paramInsets.top;
-/*  75 */     this.right = paramInsets.right;
-/*  76 */     this.bottom = paramInsets.bottom;
-/*  77 */     this.left = paramInsets.left;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/*  92 */     paramInsets.left = this.left;
-/*  93 */     paramInsets.top = this.top;
-/*  94 */     paramInsets.right = this.right;
-/*  95 */     paramInsets.bottom = this.bottom;
-/*  96 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets() {
-/* 104 */     return new Insets(this.top, this.left, this.bottom, this.right);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isBorderOpaque() {
-/* 111 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\border\EmptyBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.border;
+
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Component;
+import java.io.Serializable;
+import java.beans.ConstructorProperties;
+
+/**
+ * A class which provides an empty, transparent border which
+ * takes up space but does no drawing.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author David Kloba
+ */
+@SuppressWarnings("serial")
+public class EmptyBorder extends AbstractBorder implements Serializable
+{
+    protected int left, right, top, bottom;
+
+    /**
+     * Creates an empty border with the specified insets.
+     * @param top the top inset of the border
+     * @param left the left inset of the border
+     * @param bottom the bottom inset of the border
+     * @param right the right inset of the border
+     */
+    public EmptyBorder(int top, int left, int bottom, int right)   {
+        this.top = top;
+        this.right = right;
+        this.bottom = bottom;
+        this.left = left;
+    }
+
+    /**
+     * Creates an empty border with the specified insets.
+     * @param borderInsets the insets of the border
+     */
+    @ConstructorProperties({"borderInsets"})
+    public EmptyBorder(Insets borderInsets)   {
+        this.top = borderInsets.top;
+        this.right = borderInsets.right;
+        this.bottom = borderInsets.bottom;
+        this.left = borderInsets.left;
+    }
+
+    /**
+     * Does no drawing by default.
+     */
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    }
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
+     * @param c the component for which this border insets value applies
+     * @param insets the object to be reinitialized
+     */
+    public Insets getBorderInsets(Component c, Insets insets) {
+        insets.left = left;
+        insets.top = top;
+        insets.right = right;
+        insets.bottom = bottom;
+        return insets;
+    }
+
+    /**
+     * Returns the insets of the border.
+     * @since 1.3
+     */
+    public Insets getBorderInsets() {
+        return new Insets(top, left, bottom, right);
+    }
+
+    /**
+     * Returns whether or not the border is opaque.
+     * Returns false by default.
+     */
+    public boolean isBorderOpaque() { return false; }
+
+}

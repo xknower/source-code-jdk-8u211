@@ -1,252 +1,246 @@
-/*     */ package java.util.regex;
-/*     */ 
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Locale;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ enum UnicodeProp
-/*     */ {
-/*  33 */   ALPHABETIC {
-/*     */     public boolean is(int param1Int) {
-/*  35 */       return Character.isAlphabetic(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/*  39 */   LETTER {
-/*     */     public boolean is(int param1Int) {
-/*  41 */       return Character.isLetter(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/*  45 */   IDEOGRAPHIC {
-/*     */     public boolean is(int param1Int) {
-/*  47 */       return Character.isIdeographic(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/*  51 */   LOWERCASE {
-/*     */     public boolean is(int param1Int) {
-/*  53 */       return Character.isLowerCase(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/*  57 */   UPPERCASE {
-/*     */     public boolean is(int param1Int) {
-/*  59 */       return Character.isUpperCase(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/*  63 */   TITLECASE {
-/*     */     public boolean is(int param1Int) {
-/*  65 */       return Character.isTitleCase(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/*  69 */   WHITE_SPACE
-/*     */   {
-/*     */     public boolean is(int param1Int) {
-/*  72 */       return ((28672 >> 
-/*     */         
-/*  74 */         Character.getType(param1Int) & 0x1) != 0 || (param1Int >= 9 && param1Int <= 13) || param1Int == 133);
-/*     */     }
-/*     */   },
-/*     */ 
-/*     */   
-/*  79 */   CONTROL
-/*     */   {
-/*     */     public boolean is(int param1Int) {
-/*  82 */       return (Character.getType(param1Int) == 15);
-/*     */     }
-/*     */   },
-/*     */   
-/*  86 */   PUNCTUATION
-/*     */   {
-/*     */     public boolean is(int param1Int) {
-/*  89 */       return 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*  95 */         ((1643118592 >> Character.getType(param1Int) & 0x1) != 0);
-/*     */     }
-/*     */   },
-/*     */ 
-/*     */   
-/* 100 */   HEX_DIGIT
-/*     */   {
-/*     */     public boolean is(int param1Int)
-/*     */     {
-/* 104 */       return (DIGIT.is(param1Int) || (param1Int >= 48 && param1Int <= 57) || (param1Int >= 65 && param1Int <= 70) || (param1Int >= 97 && param1Int <= 102) || (param1Int >= 65296 && param1Int <= 65305) || (param1Int >= 65313 && param1Int <= 65318) || (param1Int >= 65345 && param1Int <= 65350));
-/*     */     }
-/*     */   },
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 114 */   ASSIGNED {
-/*     */     public boolean is(int param1Int) {
-/* 116 */       return (Character.getType(param1Int) != 0);
-/*     */     }
-/*     */   },
-/*     */   
-/* 120 */   NONCHARACTER_CODE_POINT
-/*     */   {
-/*     */     public boolean is(int param1Int) {
-/* 123 */       return ((param1Int & 0xFFFE) == 65534 || (param1Int >= 64976 && param1Int <= 65007));
-/*     */     }
-/*     */   },
-/*     */   
-/* 127 */   DIGIT
-/*     */   {
-/*     */     public boolean is(int param1Int) {
-/* 130 */       return Character.isDigit(param1Int);
-/*     */     }
-/*     */   },
-/*     */   
-/* 134 */   ALNUM
-/*     */   {
-/*     */     public boolean is(int param1Int)
-/*     */     {
-/* 138 */       return (ALPHABETIC.is(param1Int) || DIGIT.is(param1Int));
-/*     */     }
-/*     */   },
-/*     */   
-/* 142 */   BLANK
-/*     */   {
-/*     */ 
-/*     */     
-/*     */     public boolean is(int param1Int)
-/*     */     {
-/* 148 */       return (Character.getType(param1Int) == 12 || param1Int == 9);
-/*     */     }
-/*     */   },
-/*     */ 
-/*     */   
-/* 153 */   GRAPH
-/*     */   {
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public boolean is(int param1Int)
-/*     */     {
-/* 160 */       return 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 165 */         ((585729 >> Character.getType(param1Int) & 0x1) == 0);
-/*     */     }
-/*     */   },
-/*     */ 
-/*     */   
-/* 170 */   PRINT
-/*     */   {
-/*     */     
-/*     */     public boolean is(int param1Int)
-/*     */     {
-/* 175 */       return ((GRAPH.is(param1Int) || BLANK.is(param1Int)) && !CONTROL.is(param1Int));
-/*     */     }
-/*     */   },
-/*     */   
-/* 179 */   WORD
-/*     */   {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public boolean is(int param1Int)
-/*     */     {
-/* 187 */       return (ALPHABETIC.is(param1Int) || (8389568 >> 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 192 */         Character.getType(param1Int) & 0x1) != 0 || JOIN_CONTROL
-/*     */         
-/* 194 */         .is(param1Int));
-/*     */     }
-/*     */   },
-/*     */   
-/* 198 */   JOIN_CONTROL
-/*     */   {
-/*     */     public boolean is(int param1Int) {
-/* 201 */       return (param1Int == 8204 || param1Int == 8205);
-/*     */     } };
-/*     */   private static final HashMap<String, String> posix;
-/*     */   static {
-/* 205 */     posix = new HashMap<>();
-/* 206 */     aliases = new HashMap<>();
-/*     */     
-/* 208 */     posix.put("ALPHA", "ALPHABETIC");
-/* 209 */     posix.put("LOWER", "LOWERCASE");
-/* 210 */     posix.put("UPPER", "UPPERCASE");
-/* 211 */     posix.put("SPACE", "WHITE_SPACE");
-/* 212 */     posix.put("PUNCT", "PUNCTUATION");
-/* 213 */     posix.put("XDIGIT", "HEX_DIGIT");
-/* 214 */     posix.put("ALNUM", "ALNUM");
-/* 215 */     posix.put("CNTRL", "CONTROL");
-/* 216 */     posix.put("DIGIT", "DIGIT");
-/* 217 */     posix.put("BLANK", "BLANK");
-/* 218 */     posix.put("GRAPH", "GRAPH");
-/* 219 */     posix.put("PRINT", "PRINT");
-/*     */     
-/* 221 */     aliases.put("WHITESPACE", "WHITE_SPACE");
-/* 222 */     aliases.put("HEXDIGIT", "HEX_DIGIT");
-/* 223 */     aliases.put("NONCHARACTERCODEPOINT", "NONCHARACTER_CODE_POINT");
-/* 224 */     aliases.put("JOINCONTROL", "JOIN_CONTROL");
-/*     */   }
-/*     */   private static final HashMap<String, String> aliases;
-/*     */   public static UnicodeProp forName(String paramString) {
-/* 228 */     paramString = paramString.toUpperCase(Locale.ENGLISH);
-/* 229 */     String str = aliases.get(paramString);
-/* 230 */     if (str != null)
-/* 231 */       paramString = str; 
-/*     */     try {
-/* 233 */       return valueOf(paramString);
-/* 234 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 235 */       return null;
-/*     */     } 
-/*     */   }
-/*     */   public static UnicodeProp forPOSIXName(String paramString) {
-/* 239 */     paramString = posix.get(paramString.toUpperCase(Locale.ENGLISH));
-/* 240 */     if (paramString == null)
-/* 241 */       return null; 
-/* 242 */     return valueOf(paramString);
-/*     */   }
-/*     */   
-/*     */   public abstract boolean is(int paramInt);
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\regex\UnicodeProp.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.regex;
+
+import java.util.HashMap;
+import java.util.Locale;
+
+enum UnicodeProp {
+
+    ALPHABETIC {
+        public boolean is(int ch) {
+            return Character.isAlphabetic(ch);
+        }
+    },
+
+    LETTER {
+        public boolean is(int ch) {
+            return Character.isLetter(ch);
+        }
+    },
+
+    IDEOGRAPHIC {
+        public boolean is(int ch) {
+            return Character.isIdeographic(ch);
+        }
+    },
+
+    LOWERCASE {
+        public boolean is(int ch) {
+            return Character.isLowerCase(ch);
+        }
+    },
+
+    UPPERCASE {
+        public boolean is(int ch) {
+            return Character.isUpperCase(ch);
+        }
+    },
+
+    TITLECASE {
+        public boolean is(int ch) {
+            return Character.isTitleCase(ch);
+        }
+    },
+
+    WHITE_SPACE {
+        // \p{Whitespace}
+        public boolean is(int ch) {
+            return ((((1 << Character.SPACE_SEPARATOR) |
+                      (1 << Character.LINE_SEPARATOR) |
+                      (1 << Character.PARAGRAPH_SEPARATOR)) >> Character.getType(ch)) & 1)
+                   != 0 || (ch >= 0x9 && ch <= 0xd) || (ch == 0x85);
+        }
+    },
+
+    CONTROL {
+        // \p{gc=Control}
+        public boolean is(int ch) {
+            return Character.getType(ch) == Character.CONTROL;
+        }
+    },
+
+    PUNCTUATION {
+        // \p{gc=Punctuation}
+        public boolean is(int ch) {
+            return ((((1 << Character.CONNECTOR_PUNCTUATION) |
+                      (1 << Character.DASH_PUNCTUATION) |
+                      (1 << Character.START_PUNCTUATION) |
+                      (1 << Character.END_PUNCTUATION) |
+                      (1 << Character.OTHER_PUNCTUATION) |
+                      (1 << Character.INITIAL_QUOTE_PUNCTUATION) |
+                      (1 << Character.FINAL_QUOTE_PUNCTUATION)) >> Character.getType(ch)) & 1)
+                   != 0;
+        }
+    },
+
+    HEX_DIGIT {
+        // \p{gc=Decimal_Number}
+        // \p{Hex_Digit}    -> PropList.txt: Hex_Digit
+        public boolean is(int ch) {
+            return DIGIT.is(ch) ||
+                   (ch >= 0x0030 && ch <= 0x0039) ||
+                   (ch >= 0x0041 && ch <= 0x0046) ||
+                   (ch >= 0x0061 && ch <= 0x0066) ||
+                   (ch >= 0xFF10 && ch <= 0xFF19) ||
+                   (ch >= 0xFF21 && ch <= 0xFF26) ||
+                   (ch >= 0xFF41 && ch <= 0xFF46);
+        }
+    },
+
+    ASSIGNED {
+        public boolean is(int ch) {
+            return Character.getType(ch) != Character.UNASSIGNED;
+        }
+    },
+
+    NONCHARACTER_CODE_POINT {
+        // PropList.txt:Noncharacter_Code_Point
+        public boolean is(int ch) {
+            return (ch & 0xfffe) == 0xfffe || (ch >= 0xfdd0 && ch <= 0xfdef);
+        }
+    },
+
+    DIGIT {
+        // \p{gc=Decimal_Number}
+        public boolean is(int ch) {
+            return Character.isDigit(ch);
+        }
+    },
+
+    ALNUM {
+        // \p{alpha}
+        // \p{digit}
+        public boolean is(int ch) {
+            return ALPHABETIC.is(ch) || DIGIT.is(ch);
+        }
+    },
+
+    BLANK {
+        // \p{Whitespace} --
+        // [\N{LF} \N{VT} \N{FF} \N{CR} \N{NEL}  -> 0xa, 0xb, 0xc, 0xd, 0x85
+        //  \p{gc=Line_Separator}
+        //  \p{gc=Paragraph_Separator}]
+        public boolean is(int ch) {
+            return Character.getType(ch) == Character.SPACE_SEPARATOR ||
+                   ch == 0x9; // \N{HT}
+        }
+    },
+
+    GRAPH {
+        // [^
+        //  \p{space}
+        //  \p{gc=Control}
+        //  \p{gc=Surrogate}
+        //  \p{gc=Unassigned}]
+        public boolean is(int ch) {
+            return ((((1 << Character.SPACE_SEPARATOR) |
+                      (1 << Character.LINE_SEPARATOR) |
+                      (1 << Character.PARAGRAPH_SEPARATOR) |
+                      (1 << Character.CONTROL) |
+                      (1 << Character.SURROGATE) |
+                      (1 << Character.UNASSIGNED)) >> Character.getType(ch)) & 1)
+                   == 0;
+        }
+    },
+
+    PRINT {
+        // \p{graph}
+        // \p{blank}
+        // -- \p{cntrl}
+        public boolean is(int ch) {
+            return (GRAPH.is(ch) || BLANK.is(ch)) && !CONTROL.is(ch);
+        }
+    },
+
+    WORD {
+        //  \p{alpha}
+        //  \p{gc=Mark}
+        //  \p{digit}
+        //  \p{gc=Connector_Punctuation}
+        //  \p{Join_Control}    200C..200D
+
+        public boolean is(int ch) {
+            return ALPHABETIC.is(ch) ||
+                   ((((1 << Character.NON_SPACING_MARK) |
+                      (1 << Character.ENCLOSING_MARK) |
+                      (1 << Character.COMBINING_SPACING_MARK) |
+                      (1 << Character.DECIMAL_DIGIT_NUMBER) |
+                      (1 << Character.CONNECTOR_PUNCTUATION)) >> Character.getType(ch)) & 1)
+                   != 0 ||
+                   JOIN_CONTROL.is(ch);
+        }
+    },
+
+    JOIN_CONTROL {
+        //  200C..200D    PropList.txt:Join_Control
+        public boolean is(int ch) {
+           return (ch == 0x200C || ch == 0x200D);
+        }
+    };
+
+    private final static HashMap<String, String> posix = new HashMap<>();
+    private final static HashMap<String, String> aliases = new HashMap<>();
+    static {
+        posix.put("ALPHA", "ALPHABETIC");
+        posix.put("LOWER", "LOWERCASE");
+        posix.put("UPPER", "UPPERCASE");
+        posix.put("SPACE", "WHITE_SPACE");
+        posix.put("PUNCT", "PUNCTUATION");
+        posix.put("XDIGIT","HEX_DIGIT");
+        posix.put("ALNUM", "ALNUM");
+        posix.put("CNTRL", "CONTROL");
+        posix.put("DIGIT", "DIGIT");
+        posix.put("BLANK", "BLANK");
+        posix.put("GRAPH", "GRAPH");
+        posix.put("PRINT", "PRINT");
+
+        aliases.put("WHITESPACE", "WHITE_SPACE");
+        aliases.put("HEXDIGIT","HEX_DIGIT");
+        aliases.put("NONCHARACTERCODEPOINT", "NONCHARACTER_CODE_POINT");
+        aliases.put("JOINCONTROL", "JOIN_CONTROL");
+    }
+
+    public static UnicodeProp forName(String propName) {
+        propName = propName.toUpperCase(Locale.ENGLISH);
+        String alias = aliases.get(propName);
+        if (alias != null)
+            propName = alias;
+        try {
+            return valueOf (propName);
+        } catch (IllegalArgumentException x) {}
+        return null;
+    }
+
+    public static UnicodeProp forPOSIXName(String propName) {
+        propName = posix.get(propName.toUpperCase(Locale.ENGLISH));
+        if (propName == null)
+            return null;
+        return valueOf (propName);
+    }
+
+    public abstract boolean is(int ch);
+}

@@ -1,239 +1,233 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JSlider;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicSliderUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsSliderUI
-/*     */   extends BasicSliderUI
-/*     */ {
-/*     */   private boolean rollover = false;
-/*     */   private boolean pressed = false;
-/*     */   
-/*     */   public WindowsSliderUI(JSlider paramJSlider) {
-/*  55 */     super(paramJSlider);
-/*     */   }
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  59 */     return new WindowsSliderUI((JSlider)paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected BasicSliderUI.TrackListener createTrackListener(JSlider paramJSlider) {
-/*  69 */     return new WindowsTrackListener();
-/*     */   }
-/*     */   
-/*     */   private class WindowsTrackListener
-/*     */     extends BasicSliderUI.TrackListener {
-/*     */     public void mouseMoved(MouseEvent param1MouseEvent) {
-/*  75 */       updateRollover(WindowsSliderUI.this.thumbRect.contains(param1MouseEvent.getX(), param1MouseEvent.getY()));
-/*  76 */       super.mouseMoved(param1MouseEvent);
-/*     */     }
-/*     */     private WindowsTrackListener() {}
-/*     */     public void mouseEntered(MouseEvent param1MouseEvent) {
-/*  80 */       updateRollover(WindowsSliderUI.this.thumbRect.contains(param1MouseEvent.getX(), param1MouseEvent.getY()));
-/*  81 */       super.mouseEntered(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseExited(MouseEvent param1MouseEvent) {
-/*  85 */       updateRollover(false);
-/*  86 */       super.mouseExited(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mousePressed(MouseEvent param1MouseEvent) {
-/*  90 */       updatePressed(WindowsSliderUI.this.thumbRect.contains(param1MouseEvent.getX(), param1MouseEvent.getY()));
-/*  91 */       super.mousePressed(param1MouseEvent);
-/*     */     }
-/*     */     
-/*     */     public void mouseReleased(MouseEvent param1MouseEvent) {
-/*  95 */       updatePressed(false);
-/*  96 */       super.mouseReleased(param1MouseEvent);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void updatePressed(boolean param1Boolean) {
-/* 101 */       if (!WindowsSliderUI.this.slider.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 104 */       if (WindowsSliderUI.this.pressed != param1Boolean) {
-/* 105 */         WindowsSliderUI.this.pressed = param1Boolean;
-/* 106 */         WindowsSliderUI.this.slider.repaint(WindowsSliderUI.this.thumbRect);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void updateRollover(boolean param1Boolean) {
-/* 112 */       if (!WindowsSliderUI.this.slider.isEnabled()) {
-/*     */         return;
-/*     */       }
-/* 115 */       if (WindowsSliderUI.this.rollover != param1Boolean) {
-/* 116 */         WindowsSliderUI.this.rollover = param1Boolean;
-/* 117 */         WindowsSliderUI.this.slider.repaint(WindowsSliderUI.this.thumbRect);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintTrack(Graphics paramGraphics) {
-/* 125 */     XPStyle xPStyle = XPStyle.getXP();
-/* 126 */     if (xPStyle != null) {
-/* 127 */       boolean bool = (this.slider.getOrientation() == 1) ? true : false;
-/* 128 */       TMSchema.Part part = bool ? TMSchema.Part.TKP_TRACKVERT : TMSchema.Part.TKP_TRACK;
-/* 129 */       XPStyle.Skin skin = xPStyle.getSkin(this.slider, part);
-/*     */       
-/* 131 */       if (bool) {
-/* 132 */         int i = (this.trackRect.width - skin.getWidth()) / 2;
-/* 133 */         skin.paintSkin(paramGraphics, this.trackRect.x + i, this.trackRect.y, skin
-/* 134 */             .getWidth(), this.trackRect.height, null);
-/*     */       } else {
-/* 136 */         int i = (this.trackRect.height - skin.getHeight()) / 2;
-/* 137 */         skin.paintSkin(paramGraphics, this.trackRect.x, this.trackRect.y + i, this.trackRect.width, skin
-/* 138 */             .getHeight(), null);
-/*     */       } 
-/*     */     } else {
-/* 141 */       super.paintTrack(paramGraphics);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintMinorTickForHorizSlider(Graphics paramGraphics, Rectangle paramRectangle, int paramInt) {
-/* 147 */     XPStyle xPStyle = XPStyle.getXP();
-/* 148 */     if (xPStyle != null) {
-/* 149 */       paramGraphics.setColor(xPStyle.getColor(this.slider, TMSchema.Part.TKP_TICS, null, TMSchema.Prop.COLOR, Color.black));
-/*     */     }
-/* 151 */     super.paintMinorTickForHorizSlider(paramGraphics, paramRectangle, paramInt);
-/*     */   }
-/*     */   
-/*     */   protected void paintMajorTickForHorizSlider(Graphics paramGraphics, Rectangle paramRectangle, int paramInt) {
-/* 155 */     XPStyle xPStyle = XPStyle.getXP();
-/* 156 */     if (xPStyle != null) {
-/* 157 */       paramGraphics.setColor(xPStyle.getColor(this.slider, TMSchema.Part.TKP_TICS, null, TMSchema.Prop.COLOR, Color.black));
-/*     */     }
-/* 159 */     super.paintMajorTickForHorizSlider(paramGraphics, paramRectangle, paramInt);
-/*     */   }
-/*     */   
-/*     */   protected void paintMinorTickForVertSlider(Graphics paramGraphics, Rectangle paramRectangle, int paramInt) {
-/* 163 */     XPStyle xPStyle = XPStyle.getXP();
-/* 164 */     if (xPStyle != null) {
-/* 165 */       paramGraphics.setColor(xPStyle.getColor(this.slider, TMSchema.Part.TKP_TICSVERT, null, TMSchema.Prop.COLOR, Color.black));
-/*     */     }
-/* 167 */     super.paintMinorTickForVertSlider(paramGraphics, paramRectangle, paramInt);
-/*     */   }
-/*     */   
-/*     */   protected void paintMajorTickForVertSlider(Graphics paramGraphics, Rectangle paramRectangle, int paramInt) {
-/* 171 */     XPStyle xPStyle = XPStyle.getXP();
-/* 172 */     if (xPStyle != null) {
-/* 173 */       paramGraphics.setColor(xPStyle.getColor(this.slider, TMSchema.Part.TKP_TICSVERT, null, TMSchema.Prop.COLOR, Color.black));
-/*     */     }
-/* 175 */     super.paintMajorTickForVertSlider(paramGraphics, paramRectangle, paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void paintThumb(Graphics paramGraphics) {
-/* 180 */     XPStyle xPStyle = XPStyle.getXP();
-/* 181 */     if (xPStyle != null) {
-/* 182 */       TMSchema.Part part = getXPThumbPart();
-/* 183 */       TMSchema.State state = TMSchema.State.NORMAL;
-/*     */       
-/* 185 */       if (this.slider.hasFocus()) {
-/* 186 */         state = TMSchema.State.FOCUSED;
-/*     */       }
-/* 188 */       if (this.rollover) {
-/* 189 */         state = TMSchema.State.HOT;
-/*     */       }
-/* 191 */       if (this.pressed) {
-/* 192 */         state = TMSchema.State.PRESSED;
-/*     */       }
-/* 194 */       if (!this.slider.isEnabled()) {
-/* 195 */         state = TMSchema.State.DISABLED;
-/*     */       }
-/*     */       
-/* 198 */       xPStyle.getSkin(this.slider, part).paintSkin(paramGraphics, this.thumbRect.x, this.thumbRect.y, state);
-/*     */     } else {
-/* 200 */       super.paintThumb(paramGraphics);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected Dimension getThumbSize() {
-/* 205 */     XPStyle xPStyle = XPStyle.getXP();
-/* 206 */     if (xPStyle != null) {
-/* 207 */       Dimension dimension = new Dimension();
-/* 208 */       XPStyle.Skin skin = xPStyle.getSkin(this.slider, getXPThumbPart());
-/* 209 */       dimension.width = skin.getWidth();
-/* 210 */       dimension.height = skin.getHeight();
-/* 211 */       return dimension;
-/*     */     } 
-/* 213 */     return super.getThumbSize();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private TMSchema.Part getXPThumbPart() {
-/*     */     TMSchema.Part part;
-/* 219 */     boolean bool = (this.slider.getOrientation() == 1) ? true : false;
-/* 220 */     boolean bool1 = this.slider.getComponentOrientation().isLeftToRight();
-/*     */     
-/* 222 */     Boolean bool2 = (Boolean)this.slider.getClientProperty("Slider.paintThumbArrowShape");
-/* 223 */     if ((!this.slider.getPaintTicks() && bool2 == null) || bool2 == Boolean.FALSE) {
-/*     */       
-/* 225 */       part = bool ? TMSchema.Part.TKP_THUMBVERT : TMSchema.Part.TKP_THUMB;
-/*     */     } else {
-/*     */       
-/* 228 */       part = bool ? (bool1 ? TMSchema.Part.TKP_THUMBRIGHT : TMSchema.Part.TKP_THUMBLEFT) : TMSchema.Part.TKP_THUMBBOTTOM;
-/*     */     } 
-/*     */     
-/* 231 */     return part;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsSliderUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import java.awt.event.MouseEvent;
+
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.*;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+
+/**
+ * Windows rendition of the component.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsSliderUI extends BasicSliderUI
+{
+    private boolean rollover = false;
+    private boolean pressed = false;
+
+    public WindowsSliderUI(JSlider b){
+        super(b);
+    }
+
+    public static ComponentUI createUI(JComponent b) {
+        return new WindowsSliderUI((JSlider)b);
+    }
+
+
+    /**
+     * Overrides to return a private track listener subclass which handles
+     * the HOT, PRESSED, and FOCUSED states.
+     * @since 1.6
+     */
+    protected TrackListener createTrackListener(JSlider slider) {
+        return new WindowsTrackListener();
+    }
+
+    private class WindowsTrackListener extends TrackListener {
+
+        public void mouseMoved(MouseEvent e) {
+            updateRollover(thumbRect.contains(e.getX(), e.getY()));
+            super.mouseMoved(e);
+        }
+
+        public void mouseEntered(MouseEvent e) {
+            updateRollover(thumbRect.contains(e.getX(), e.getY()));
+            super.mouseEntered(e);
+        }
+
+        public void mouseExited(MouseEvent e) {
+            updateRollover(false);
+            super.mouseExited(e);
+        }
+
+        public void mousePressed(MouseEvent e) {
+            updatePressed(thumbRect.contains(e.getX(), e.getY()));
+            super.mousePressed(e);
+        }
+
+        public void mouseReleased(MouseEvent e) {
+            updatePressed(false);
+            super.mouseReleased(e);
+        }
+
+        public void updatePressed(boolean newPressed) {
+            // You can't press a disabled slider
+            if (!slider.isEnabled()) {
+                return;
+            }
+            if (pressed != newPressed) {
+                pressed = newPressed;
+                slider.repaint(thumbRect);
+            }
+        }
+
+        public void updateRollover(boolean newRollover) {
+            // You can't have a rollover on a disabled slider
+            if (!slider.isEnabled()) {
+                return;
+            }
+            if (rollover != newRollover) {
+                rollover = newRollover;
+                slider.repaint(thumbRect);
+            }
+        }
+
+    }
+
+
+    public void paintTrack(Graphics g)  {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            boolean vertical = (slider.getOrientation() == JSlider.VERTICAL);
+            Part part = vertical ? Part.TKP_TRACKVERT : Part.TKP_TRACK;
+            Skin skin = xp.getSkin(slider, part);
+
+            if (vertical) {
+                int x = (trackRect.width - skin.getWidth()) / 2;
+                skin.paintSkin(g, trackRect.x + x, trackRect.y,
+                               skin.getWidth(), trackRect.height, null);
+            } else {
+                int y = (trackRect.height - skin.getHeight()) / 2;
+                skin.paintSkin(g, trackRect.x, trackRect.y + y,
+                               trackRect.width, skin.getHeight(), null);
+            }
+        } else {
+            super.paintTrack(g);
+        }
+    }
+
+
+    protected void paintMinorTickForHorizSlider( Graphics g, Rectangle tickBounds, int x ) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            g.setColor(xp.getColor(slider, Part.TKP_TICS, null, Prop.COLOR, Color.black));
+        }
+        super.paintMinorTickForHorizSlider(g, tickBounds, x);
+    }
+
+    protected void paintMajorTickForHorizSlider( Graphics g, Rectangle tickBounds, int x ) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            g.setColor(xp.getColor(slider, Part.TKP_TICS, null, Prop.COLOR, Color.black));
+        }
+        super.paintMajorTickForHorizSlider(g, tickBounds, x);
+    }
+
+    protected void paintMinorTickForVertSlider( Graphics g, Rectangle tickBounds, int y ) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            g.setColor(xp.getColor(slider, Part.TKP_TICSVERT, null, Prop.COLOR, Color.black));
+        }
+        super.paintMinorTickForVertSlider(g, tickBounds, y);
+    }
+
+    protected void paintMajorTickForVertSlider( Graphics g, Rectangle tickBounds, int y ) {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            g.setColor(xp.getColor(slider, Part.TKP_TICSVERT, null, Prop.COLOR, Color.black));
+        }
+        super.paintMajorTickForVertSlider(g, tickBounds, y);
+    }
+
+
+    public void paintThumb(Graphics g)  {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            Part part = getXPThumbPart();
+            State state = State.NORMAL;
+
+            if (slider.hasFocus()) {
+                state = State.FOCUSED;
+            }
+            if (rollover) {
+                state = State.HOT;
+            }
+            if (pressed) {
+                state = State.PRESSED;
+            }
+            if(!slider.isEnabled()) {
+                state = State.DISABLED;
+            }
+
+            xp.getSkin(slider, part).paintSkin(g, thumbRect.x, thumbRect.y, state);
+        } else {
+            super.paintThumb(g);
+        }
+    }
+
+    protected Dimension getThumbSize() {
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            Dimension size = new Dimension();
+            Skin s = xp.getSkin(slider, getXPThumbPart());
+            size.width = s.getWidth();
+            size.height = s.getHeight();
+            return size;
+        } else {
+            return super.getThumbSize();
+        }
+    }
+
+    private Part getXPThumbPart() {
+        Part part;
+        boolean vertical = (slider.getOrientation() == JSlider.VERTICAL);
+        boolean leftToRight = slider.getComponentOrientation().isLeftToRight();
+        Boolean paintThumbArrowShape =
+                (Boolean)slider.getClientProperty("Slider.paintThumbArrowShape");
+        if ((!slider.getPaintTicks() && paintThumbArrowShape == null) ||
+            paintThumbArrowShape == Boolean.FALSE) {
+                part = vertical ? Part.TKP_THUMBVERT
+                                : Part.TKP_THUMB;
+        } else {
+                part = vertical ? (leftToRight ? Part.TKP_THUMBRIGHT : Part.TKP_THUMBLEFT)
+                                : Part.TKP_THUMBBOTTOM;
+        }
+        return part;
+    }
+}

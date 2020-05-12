@@ -1,139 +1,133 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.io.Serializable;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.TCKind;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ import org.omg.DynamicAny.DynValueBox;
-/*     */ import org.omg.DynamicAny.NameDynAnyPair;
-/*     */ import org.omg.DynamicAny.NameValuePair;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DynValueBoxImpl
-/*     */   extends DynValueCommonImpl
-/*     */   implements DynValueBox
-/*     */ {
-/*     */   private DynValueBoxImpl() {
-/*  49 */     this((ORB)null, (Any)null, false);
-/*     */   }
-/*     */   
-/*     */   protected DynValueBoxImpl(ORB paramORB, Any paramAny, boolean paramBoolean) {
-/*  53 */     super(paramORB, paramAny, paramBoolean);
-/*     */   }
-/*     */   
-/*     */   protected DynValueBoxImpl(ORB paramORB, TypeCode paramTypeCode) {
-/*  57 */     super(paramORB, paramTypeCode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Any get_boxed_value() throws InvalidValue {
-/*  67 */     if (this.isNull) {
-/*  68 */       throw new InvalidValue();
-/*     */     }
-/*  70 */     checkInitAny();
-/*  71 */     return this.any;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_boxed_value(Any paramAny) throws TypeMismatch {
-/*  77 */     if (!this.isNull && !paramAny.type().equal(type())) {
-/*  78 */       throw new TypeMismatch();
-/*     */     }
-/*  80 */     clearData();
-/*  81 */     this.any = paramAny;
-/*  82 */     this.representations = 2;
-/*  83 */     this.index = 0;
-/*  84 */     this.isNull = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public DynAny get_boxed_value_as_dyn_any() throws InvalidValue {
-/*  90 */     if (this.isNull) {
-/*  91 */       throw new InvalidValue();
-/*     */     }
-/*  93 */     checkInitComponents();
-/*  94 */     return this.components[0];
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void set_boxed_value_as_dyn_any(DynAny paramDynAny) throws TypeMismatch {
-/* 100 */     if (!this.isNull && !paramDynAny.type().equal(type())) {
-/* 101 */       throw new TypeMismatch();
-/*     */     }
-/* 103 */     clearData();
-/* 104 */     this.components = new DynAny[] { paramDynAny };
-/* 105 */     this.representations = 4;
-/* 106 */     this.index = 0;
-/* 107 */     this.isNull = false;
-/*     */   }
-/*     */   
-/*     */   protected boolean initializeComponentsFromAny() {
-/*     */     try {
-/* 112 */       this.components = new DynAny[] { DynAnyUtil.createMostDerivedDynAny(this.any, this.orb, false) };
-/* 113 */     } catch (InconsistentTypeCode inconsistentTypeCode) {
-/* 114 */       return false;
-/*     */     } 
-/* 116 */     return true;
-/*     */   }
-/*     */   
-/*     */   protected boolean initializeComponentsFromTypeCode() {
-/*     */     try {
-/* 121 */       this.any = DynAnyUtil.createDefaultAnyOfType(this.any.type(), this.orb);
-/* 122 */       this.components = new DynAny[] { DynAnyUtil.createMostDerivedDynAny(this.any, this.orb, false) };
-/* 123 */     } catch (InconsistentTypeCode inconsistentTypeCode) {
-/* 124 */       return false;
-/*     */     } 
-/* 126 */     return true;
-/*     */   }
-/*     */   
-/*     */   protected boolean initializeAnyFromComponents() {
-/* 130 */     this.any = getAny(this.components[0]);
-/* 131 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynValueBoxImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.TCKind;
+import org.omg.CORBA.Any;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import org.omg.CORBA.TypeCodePackage.Bounds;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
+import org.omg.DynamicAny.DynAnyPackage.InvalidValue;
+import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public class DynValueBoxImpl extends DynValueCommonImpl implements DynValueBox
+{
+    //
+    // Constructors
+    //
+
+    private DynValueBoxImpl() {
+        this(null, (Any)null, false);
+    }
+
+    protected DynValueBoxImpl(ORB orb, Any any, boolean copyValue) {
+        super(orb, any, copyValue);
+    }
+
+    protected DynValueBoxImpl(ORB orb, TypeCode typeCode) {
+        super(orb, typeCode);
+    }
+
+    //
+    // DynValueBox methods
+    //
+
+    public Any get_boxed_value()
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (isNull) {
+            throw new InvalidValue();
+        }
+        checkInitAny();
+        return any;
+    }
+
+    public void set_boxed_value(org.omg.CORBA.Any boxed)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch
+    {
+        if ( ! isNull && ! boxed.type().equal(this.type())) {
+            throw new TypeMismatch();
+        }
+        clearData();
+        any = boxed;
+        representations = REPRESENTATION_ANY;
+        index = 0;
+        isNull = false;
+    }
+
+    public DynAny get_boxed_value_as_dyn_any()
+        throws org.omg.DynamicAny.DynAnyPackage.InvalidValue
+    {
+        if (isNull) {
+            throw new InvalidValue();
+        }
+        checkInitComponents();
+        return components[0];
+    }
+
+    public void set_boxed_value_as_dyn_any(DynAny boxed)
+        throws org.omg.DynamicAny.DynAnyPackage.TypeMismatch
+    {
+        if ( ! isNull && ! boxed.type().equal(this.type())) {
+            throw new TypeMismatch();
+        }
+        clearData();
+        components = new DynAny[] {boxed};
+        representations = REPRESENTATION_COMPONENTS;
+        index = 0;
+        isNull = false;
+    }
+
+    protected boolean initializeComponentsFromAny() {
+        try {
+            components = new DynAny[] {DynAnyUtil.createMostDerivedDynAny(any, orb, false)};
+        } catch (InconsistentTypeCode ictc) {
+            return false; // impossible
+        }
+        return true;
+    }
+
+    protected boolean initializeComponentsFromTypeCode() {
+        try {
+            any = DynAnyUtil.createDefaultAnyOfType(any.type(), orb);
+            components = new DynAny[] {DynAnyUtil.createMostDerivedDynAny(any, orb, false)};
+        } catch (InconsistentTypeCode ictc) {
+            return false; // impossible
+        }
+        return true;
+    }
+
+    protected boolean initializeAnyFromComponents() {
+        any = getAny(components[0]);
+        return true;
+    }
+}

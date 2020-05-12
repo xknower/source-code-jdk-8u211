@@ -1,242 +1,238 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicTreeUI;
-/*     */ import javax.swing.tree.TreePath;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalTreeUI
-/*     */   extends BasicTreeUI
-/*     */ {
-/*     */   private static Color lineColor;
-/*     */   private static final String LINE_STYLE = "JTree.lineStyle";
-/*     */   private static final String LEG_LINE_STYLE_STRING = "Angled";
-/*     */   private static final String HORIZ_STYLE_STRING = "Horizontal";
-/*     */   private static final String NO_STYLE_STRING = "None";
-/*     */   private static final int LEG_LINE_STYLE = 2;
-/*     */   private static final int HORIZ_LINE_STYLE = 1;
-/*     */   private static final int NO_LINE_STYLE = 0;
-/*  93 */   private int lineStyle = 2;
-/*  94 */   private PropertyChangeListener lineStyleListener = new LineListener();
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  98 */     return new MetalTreeUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int getHorizontalLegBuffer() {
-/* 108 */     return 3;
-/*     */   }
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 112 */     super.installUI(paramJComponent);
-/* 113 */     lineColor = UIManager.getColor("Tree.line");
-/*     */     
-/* 115 */     Object object = paramJComponent.getClientProperty("JTree.lineStyle");
-/* 116 */     decodeLineStyle(object);
-/* 117 */     paramJComponent.addPropertyChangeListener(this.lineStyleListener);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/* 122 */     paramJComponent.removePropertyChangeListener(this.lineStyleListener);
-/* 123 */     super.uninstallUI(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void decodeLineStyle(Object paramObject) {
-/* 131 */     if (paramObject == null || paramObject
-/* 132 */       .equals("Angled")) {
-/* 133 */       this.lineStyle = 2;
-/*     */     }
-/* 135 */     else if (paramObject.equals("None")) {
-/* 136 */       this.lineStyle = 0;
-/* 137 */     } else if (paramObject.equals("Horizontal")) {
-/* 138 */       this.lineStyle = 1;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean isLocationInExpandControl(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 146 */     if (this.tree != null && !isLeaf(paramInt1)) {
-/*     */       byte b;
-/*     */       
-/* 149 */       if (getExpandedIcon() != null) {
-/* 150 */         b = getExpandedIcon().getIconWidth() + 6;
-/*     */       } else {
-/* 152 */         b = 8;
-/*     */       } 
-/* 154 */       Insets insets = this.tree.getInsets();
-/* 155 */       int i = (insets != null) ? insets.left : 0;
-/*     */ 
-/*     */       
-/* 158 */       i += (paramInt2 + this.depthOffset - 1) * this.totalChildIndent + 
-/* 159 */         getLeftChildIndent() - b / 2;
-/*     */       
-/* 161 */       int j = i + b;
-/*     */       
-/* 163 */       return (paramInt3 >= i && paramInt3 <= j);
-/*     */     } 
-/* 165 */     return false;
-/*     */   }
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 169 */     super.paint(paramGraphics, paramJComponent);
-/*     */ 
-/*     */ 
-/*     */     
-/* 173 */     if (this.lineStyle == 1 && !this.largeModel) {
-/* 174 */       paintHorizontalSeparators(paramGraphics, paramJComponent);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   protected void paintHorizontalSeparators(Graphics paramGraphics, JComponent paramJComponent) {
-/* 179 */     paramGraphics.setColor(lineColor);
-/*     */     
-/* 181 */     Rectangle rectangle = paramGraphics.getClipBounds();
-/*     */     
-/* 183 */     int i = getRowForPath(this.tree, 
-/* 184 */         getClosestPathForLocation(this.tree, 0, rectangle.y));
-/* 185 */     int j = getRowForPath(this.tree, 
-/* 186 */         getClosestPathForLocation(this.tree, 0, rectangle.y + rectangle.height - 1));
-/*     */     
-/* 188 */     if (i <= -1 || j <= -1) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 192 */     for (int k = i; k <= j; k++) {
-/* 193 */       TreePath treePath = getPathForRow(this.tree, k);
-/*     */       
-/* 195 */       if (treePath != null && treePath.getPathCount() == 2) {
-/* 196 */         Rectangle rectangle1 = getPathBounds(this.tree, 
-/* 197 */             getPathForRow(this.tree, k));
-/*     */ 
-/*     */         
-/* 200 */         if (rectangle1 != null) {
-/* 201 */           paramGraphics.drawLine(rectangle.x, rectangle1.y, rectangle.x + rectangle.width, rectangle1.y);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintVerticalPartOfLeg(Graphics paramGraphics, Rectangle paramRectangle, Insets paramInsets, TreePath paramTreePath) {
-/* 210 */     if (this.lineStyle == 2) {
-/* 211 */       super.paintVerticalPartOfLeg(paramGraphics, paramRectangle, paramInsets, paramTreePath);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintHorizontalPartOfLeg(Graphics paramGraphics, Rectangle paramRectangle1, Insets paramInsets, Rectangle paramRectangle2, TreePath paramTreePath, int paramInt, boolean paramBoolean1, boolean paramBoolean2, boolean paramBoolean3) {
-/* 221 */     if (this.lineStyle == 2) {
-/* 222 */       super.paintHorizontalPartOfLeg(paramGraphics, paramRectangle1, paramInsets, paramRectangle2, paramTreePath, paramInt, paramBoolean1, paramBoolean2, paramBoolean3);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   class LineListener
-/*     */     implements PropertyChangeListener
-/*     */   {
-/*     */     public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/* 231 */       String str = param1PropertyChangeEvent.getPropertyName();
-/* 232 */       if (str.equals("JTree.lineStyle"))
-/* 233 */         MetalTreeUI.this.decodeLineStyle(param1PropertyChangeEvent.getNewValue()); 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalTreeUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.*;
+import java.io.*;
+import java.util.*;
+import javax.swing.plaf.*;
+import javax.swing.tree.*;
+
+import javax.swing.plaf.basic.*;
+
+/**
+ * The metal look and feel implementation of <code>TreeUI</code>.
+ * <p>
+ * <code>MetalTreeUI</code> allows for configuring how to
+ * visually render the spacing and delineation between nodes. The following
+ * hints are supported:
+ *
+ * <table summary="Descriptions of supported hints: Angled, Horizontal, and None">
+ *  <tr>
+ *    <th><p style="text-align:left">Angled</p></th>
+ *    <td>A line is drawn connecting the child to the parent. For handling
+ *          of the root node refer to
+ *          {@link javax.swing.JTree#setRootVisible} and
+ *          {@link javax.swing.JTree#setShowsRootHandles}.
+ *    </td>
+ *  </tr>
+ *  <tr>
+ *     <th><p style="text-align:left">Horizontal</p></th>
+ *     <td>A horizontal line is drawn dividing the children of the root node.</td>
+ *  </tr>
+ *  <tr>
+ *      <th><p style="text-align:left">None</p></th>
+ *      <td>Do not draw any visual indication between nodes.</td>
+ *  </tr>
+ * </table>
+ *
+ * <p>
+ * As it is typically impractical to obtain the <code>TreeUI</code> from
+ * the <code>JTree</code> and cast to an instance of <code>MetalTreeUI</code>
+ * you enable this property via the client property
+ * <code>JTree.lineStyle</code>. For example, to switch to
+ * <code>Horizontal</code> style you would do:
+ * <code>tree.putClientProperty("JTree.lineStyle", "Horizontal");</code>
+ * <p>
+ * The default is <code>Angled</code>.
+ *
+ * @author Tom Santos
+ * @author Steve Wilson (value add stuff)
+ */
+public class MetalTreeUI extends BasicTreeUI {
+
+    private static Color lineColor;
+
+    private static final String LINE_STYLE = "JTree.lineStyle";
+
+    private static final String LEG_LINE_STYLE_STRING = "Angled";
+    private static final String HORIZ_STYLE_STRING = "Horizontal";
+    private static final String NO_STYLE_STRING = "None";
+
+    private static final int LEG_LINE_STYLE = 2;
+    private static final int HORIZ_LINE_STYLE = 1;
+    private static final int NO_LINE_STYLE = 0;
+
+    private int lineStyle = LEG_LINE_STYLE;
+    private PropertyChangeListener lineStyleListener = new LineListener();
+
+    // Boilerplate
+    public static ComponentUI createUI(JComponent x) {
+        return new MetalTreeUI();
+    }
+
+    public MetalTreeUI()
+    {
+        super();
+    }
+
+    protected int getHorizontalLegBuffer()
+      {
+          return 3;
+      }
+
+    public void installUI( JComponent c ) {
+        super.installUI( c );
+        lineColor = UIManager.getColor( "Tree.line" );
+
+        Object lineStyleFlag = c.getClientProperty( LINE_STYLE );
+        decodeLineStyle(lineStyleFlag);
+        c.addPropertyChangeListener(lineStyleListener);
+
+    }
+
+    public void uninstallUI( JComponent c) {
+         c.removePropertyChangeListener(lineStyleListener);
+         super.uninstallUI(c);
+    }
+
+    /** this function converts between the string passed into the client property
+      * and the internal representation (currently and int)
+      *
+      */
+    protected void decodeLineStyle(Object lineStyleFlag) {
+      if ( lineStyleFlag == null ||
+                    lineStyleFlag.equals(LEG_LINE_STYLE_STRING)){
+        lineStyle = LEG_LINE_STYLE; // default case
+      } else {
+          if ( lineStyleFlag.equals(NO_STYLE_STRING) ) {
+              lineStyle = NO_LINE_STYLE;
+          } else if ( lineStyleFlag.equals(HORIZ_STYLE_STRING) ) {
+              lineStyle = HORIZ_LINE_STYLE;
+          }
+      }
+
+    }
+
+    protected boolean isLocationInExpandControl(int row, int rowLevel,
+                                                int mouseX, int mouseY) {
+        if(tree != null && !isLeaf(row)) {
+            int                     boxWidth;
+
+            if(getExpandedIcon() != null)
+                boxWidth = getExpandedIcon().getIconWidth() + 6;
+            else
+                boxWidth = 8;
+
+            Insets i = tree.getInsets();
+            int    boxLeftX = (i != null) ? i.left : 0;
+
+
+            boxLeftX += (((rowLevel + depthOffset - 1) * totalChildIndent) +
+                        getLeftChildIndent()) - boxWidth/2;
+
+            int boxRightX = boxLeftX + boxWidth;
+
+            return mouseX >= boxLeftX && mouseX <= boxRightX;
+        }
+        return false;
+    }
+
+    public void paint(Graphics g, JComponent c) {
+        super.paint( g, c );
+
+
+        // Paint the lines
+        if (lineStyle == HORIZ_LINE_STYLE && !largeModel) {
+            paintHorizontalSeparators(g,c);
+        }
+    }
+
+    protected void paintHorizontalSeparators(Graphics g, JComponent c) {
+        g.setColor( lineColor );
+
+        Rectangle clipBounds = g.getClipBounds();
+
+        int beginRow = getRowForPath(tree, getClosestPathForLocation
+                                     (tree, 0, clipBounds.y));
+        int endRow = getRowForPath(tree, getClosestPathForLocation
+                             (tree, 0, clipBounds.y + clipBounds.height - 1));
+
+        if ( beginRow <= -1 || endRow <= -1 ) {
+            return;
+        }
+
+        for ( int i = beginRow; i <= endRow; ++i ) {
+            TreePath        path = getPathForRow(tree, i);
+
+            if(path != null && path.getPathCount() == 2) {
+                Rectangle       rowBounds = getPathBounds(tree,getPathForRow
+                                                          (tree, i));
+
+                // Draw a line at the top
+                if(rowBounds != null)
+                    g.drawLine(clipBounds.x, rowBounds.y,
+                               clipBounds.x + clipBounds.width, rowBounds.y);
+            }
+        }
+
+    }
+
+    protected void paintVerticalPartOfLeg(Graphics g, Rectangle clipBounds,
+                                          Insets insets, TreePath path) {
+        if (lineStyle == LEG_LINE_STYLE) {
+            super.paintVerticalPartOfLeg(g, clipBounds, insets, path);
+        }
+    }
+
+    protected void paintHorizontalPartOfLeg(Graphics g, Rectangle clipBounds,
+                                            Insets insets, Rectangle bounds,
+                                            TreePath path, int row,
+                                            boolean isExpanded,
+                                            boolean hasBeenExpanded, boolean
+                                            isLeaf) {
+        if (lineStyle == LEG_LINE_STYLE) {
+            super.paintHorizontalPartOfLeg(g, clipBounds, insets, bounds,
+                                           path, row, isExpanded,
+                                           hasBeenExpanded, isLeaf);
+        }
+    }
+
+    /** This class listens for changes in line style */
+    class LineListener implements PropertyChangeListener {
+        public void propertyChange(PropertyChangeEvent e) {
+            String name = e.getPropertyName();
+            if ( name.equals( LINE_STYLE ) ) {
+                decodeLineStyle(e.getNewValue());
+            }
+        }
+    } // end class PaletteListener
+
+}

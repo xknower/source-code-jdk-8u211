@@ -1,2751 +1,2746 @@
-/*      */ package com.sun.jmx.snmp.daemon;
-/*      */ 
-/*      */ import com.sun.jmx.defaults.JmxProperties;
-/*      */ import com.sun.jmx.snmp.IPAcl.SnmpAcl;
-/*      */ import com.sun.jmx.snmp.InetAddressAcl;
-/*      */ import com.sun.jmx.snmp.SnmpDefinitions;
-/*      */ import com.sun.jmx.snmp.SnmpIpAddress;
-/*      */ import com.sun.jmx.snmp.SnmpMessage;
-/*      */ import com.sun.jmx.snmp.SnmpOid;
-/*      */ import com.sun.jmx.snmp.SnmpParameters;
-/*      */ import com.sun.jmx.snmp.SnmpPduFactory;
-/*      */ import com.sun.jmx.snmp.SnmpPduFactoryBER;
-/*      */ import com.sun.jmx.snmp.SnmpPduPacket;
-/*      */ import com.sun.jmx.snmp.SnmpPduRequest;
-/*      */ import com.sun.jmx.snmp.SnmpPduTrap;
-/*      */ import com.sun.jmx.snmp.SnmpPeer;
-/*      */ import com.sun.jmx.snmp.SnmpStatusException;
-/*      */ import com.sun.jmx.snmp.SnmpTimeticks;
-/*      */ import com.sun.jmx.snmp.SnmpTooBigException;
-/*      */ import com.sun.jmx.snmp.SnmpVarBind;
-/*      */ import com.sun.jmx.snmp.SnmpVarBindList;
-/*      */ import com.sun.jmx.snmp.agent.SnmpErrorHandlerAgent;
-/*      */ import com.sun.jmx.snmp.agent.SnmpMibAgent;
-/*      */ import com.sun.jmx.snmp.agent.SnmpMibHandler;
-/*      */ import com.sun.jmx.snmp.agent.SnmpUserDataFactory;
-/*      */ import com.sun.jmx.snmp.tasks.ThreadService;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InterruptedIOException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.net.DatagramPacket;
-/*      */ import java.net.DatagramSocket;
-/*      */ import java.net.InetAddress;
-/*      */ import java.net.SocketException;
-/*      */ import java.net.UnknownHostException;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.Vector;
-/*      */ import java.util.logging.Level;
-/*      */ import javax.management.MBeanRegistration;
-/*      */ import javax.management.MBeanServer;
-/*      */ import javax.management.ObjectName;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class SnmpAdaptorServer
-/*      */   extends CommunicatorServer
-/*      */   implements SnmpAdaptorServerMBean, MBeanRegistration, SnmpDefinitions, SnmpMibHandler
-/*      */ {
-/*  141 */   private int trapPort = 162;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  147 */   private int informPort = 162;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  154 */   InetAddress address = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  159 */   private InetAddressAcl ipacl = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  164 */   private SnmpPduFactory pduFactory = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  169 */   private SnmpUserDataFactory userDataFactory = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean authRespEnabled = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean authTrapEnabled = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  186 */   private SnmpOid enterpriseOid = new SnmpOid("1.3.6.1.4.1.42");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  194 */   int bufferSize = 1024;
-/*      */   
-/*  196 */   private transient long startUpTime = 0L;
-/*  197 */   private transient DatagramSocket socket = null;
-/*  198 */   transient DatagramSocket trapSocket = null;
-/*  199 */   private transient SnmpSession informSession = null;
-/*  200 */   private transient DatagramPacket packet = null;
-/*  201 */   transient Vector<SnmpMibAgent> mibs = new Vector<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient SnmpMibTree root;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private transient boolean useAcl = true;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  217 */   private int maxTries = 3;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  223 */   private int timeout = 3000;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  231 */   int snmpOutTraps = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  236 */   private int snmpOutGetResponses = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  241 */   private int snmpOutGenErrs = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  246 */   private int snmpOutBadValues = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  251 */   private int snmpOutNoSuchNames = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  256 */   private int snmpOutTooBigs = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  261 */   int snmpOutPkts = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  266 */   private int snmpInASNParseErrs = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  271 */   private int snmpInBadCommunityUses = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  276 */   private int snmpInBadCommunityNames = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  281 */   private int snmpInBadVersions = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  286 */   private int snmpInGetRequests = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  291 */   private int snmpInGetNexts = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  296 */   private int snmpInSetRequests = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  301 */   private int snmpInPkts = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  306 */   private int snmpInTotalReqVars = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  311 */   private int snmpInTotalSetVars = 0;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  316 */   private int snmpSilentDrops = 0;
-/*      */   
-/*      */   private static final String InterruptSysCallMsg = "Interrupted system call";
-/*      */   
-/*  320 */   static final SnmpOid sysUpTimeOid = new SnmpOid("1.3.6.1.2.1.1.3.0");
-/*  321 */   static final SnmpOid snmpTrapOidOid = new SnmpOid("1.3.6.1.6.3.1.1.4.1.0");
-/*      */   
-/*      */   private ThreadService threadService;
-/*      */   
-/*  325 */   private static int threadNumber = 6;
-/*      */   
-/*      */   static {
-/*  328 */     String str = System.getProperty("com.sun.jmx.snmp.threadnumber");
-/*      */     
-/*  330 */     if (str != null) {
-/*      */       try {
-/*  332 */         threadNumber = Integer.parseInt(System.getProperty(str));
-/*  333 */       } catch (Exception exception) {
-/*  334 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, SnmpAdaptorServer.class
-/*  335 */             .getName(), "<static init>", "Got wrong value for com.sun.jmx.snmp.threadnumber: " + str + ". Use the default value: " + threadNumber);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer() {
-/*  352 */     this(true, (InetAddressAcl)null, 161, (InetAddress)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(int paramInt) {
-/*  364 */     this(true, (InetAddressAcl)null, paramInt, (InetAddress)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(InetAddressAcl paramInetAddressAcl) {
-/*  377 */     this(false, paramInetAddressAcl, 161, (InetAddress)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(InetAddress paramInetAddress) {
-/*  391 */     this(true, (InetAddressAcl)null, 161, paramInetAddress);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(InetAddressAcl paramInetAddressAcl, int paramInt) {
-/*  406 */     this(false, paramInetAddressAcl, paramInt, (InetAddress)null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(int paramInt, InetAddress paramInetAddress) {
-/*  419 */     this(true, (InetAddressAcl)null, paramInt, paramInetAddress);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(InetAddressAcl paramInetAddressAcl, InetAddress paramInetAddress) {
-/*  433 */     this(false, paramInetAddressAcl, 161, paramInetAddress);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(InetAddressAcl paramInetAddressAcl, int paramInt, InetAddress paramInetAddress) {
-/*  449 */     this(false, paramInetAddressAcl, paramInt, paramInetAddress);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpAdaptorServer(boolean paramBoolean, int paramInt, InetAddress paramInetAddress) {
-/*  469 */     this(paramBoolean, (InetAddressAcl)null, paramInt, paramInetAddress);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private SnmpAdaptorServer(boolean paramBoolean, InetAddressAcl paramInetAddressAcl, int paramInt, InetAddress paramInetAddress) {
-/*  477 */     super(4);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  482 */     if (paramInetAddressAcl == null && paramBoolean) {
-/*      */       try {
-/*  484 */         paramInetAddressAcl = new SnmpAcl("SNMP protocol adaptor IP ACL");
-/*  485 */       } catch (UnknownHostException unknownHostException) {
-/*  486 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/*  487 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "constructor", "UnknowHostException when creating ACL", unknownHostException);
-/*      */         }
-/*      */       } 
-/*      */     } else {
-/*      */       
-/*  492 */       this.useAcl = (paramInetAddressAcl != null || paramBoolean);
-/*      */     } 
-/*      */     
-/*  495 */     init(paramInetAddressAcl, paramInt, paramInetAddress);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getServedClientCount() {
-/*  511 */     return super.getServedClientCount();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getActiveClientCount() {
-/*  523 */     return super.getActiveClientCount();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getMaxActiveClientCount() {
-/*  535 */     return super.getMaxActiveClientCount();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setMaxActiveClientCount(int paramInt) throws IllegalStateException {
-/*  550 */     super.setMaxActiveClientCount(paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public InetAddressAcl getInetAddressAcl() {
-/*  561 */     return this.ipacl;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Integer getTrapPort() {
-/*  572 */     return new Integer(this.trapPort);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTrapPort(Integer paramInteger) {
-/*  582 */     setTrapPort(paramInteger.intValue());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setTrapPort(int paramInt) {
-/*  591 */     int i = paramInt;
-/*  592 */     if (i < 0) throw new IllegalArgumentException("Trap port cannot be a negative value");
-/*      */     
-/*  594 */     this.trapPort = i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getInformPort() {
-/*  605 */     return this.informPort;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setInformPort(int paramInt) {
-/*  616 */     if (paramInt < 0) {
-/*  617 */       throw new IllegalArgumentException("Inform request port cannot be a negative value");
-/*      */     }
-/*  619 */     this.informPort = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getProtocol() {
-/*  629 */     return "snmp";
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Integer getBufferSize() {
-/*  642 */     return new Integer(this.bufferSize);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setBufferSize(Integer paramInteger) throws IllegalStateException {
-/*  658 */     if (this.state == 0 || this.state == 3) {
-/*  659 */       throw new IllegalStateException("Stop server before carrying out this operation");
-/*      */     }
-/*      */     
-/*  662 */     this.bufferSize = paramInteger.intValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int getMaxTries() {
-/*  673 */     return this.maxTries;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized void setMaxTries(int paramInt) {
-/*  683 */     if (paramInt < 0)
-/*  684 */       throw new IllegalArgumentException(); 
-/*  685 */     this.maxTries = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final int getTimeout() {
-/*  695 */     return this.timeout;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized void setTimeout(int paramInt) {
-/*  704 */     if (paramInt < 0)
-/*  705 */       throw new IllegalArgumentException(); 
-/*  706 */     this.timeout = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpPduFactory getPduFactory() {
-/*  716 */     return this.pduFactory;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setPduFactory(SnmpPduFactory paramSnmpPduFactory) {
-/*  726 */     if (paramSnmpPduFactory == null) {
-/*  727 */       this.pduFactory = new SnmpPduFactoryBER();
-/*      */     } else {
-/*  729 */       this.pduFactory = paramSnmpPduFactory;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setUserDataFactory(SnmpUserDataFactory paramSnmpUserDataFactory) {
-/*  740 */     this.userDataFactory = paramSnmpUserDataFactory;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpUserDataFactory getUserDataFactory() {
-/*  751 */     return this.userDataFactory;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getAuthTrapEnabled() {
-/*  768 */     return this.authTrapEnabled;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAuthTrapEnabled(boolean paramBoolean) {
-/*  779 */     this.authTrapEnabled = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getAuthRespEnabled() {
-/*  797 */     return this.authRespEnabled;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAuthRespEnabled(boolean paramBoolean) {
-/*  808 */     this.authRespEnabled = paramBoolean;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getEnterpriseOid() {
-/*  820 */     return this.enterpriseOid.toString();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setEnterpriseOid(String paramString) throws IllegalArgumentException {
-/*  832 */     this.enterpriseOid = new SnmpOid(paramString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String[] getMibs() {
-/*  842 */     String[] arrayOfString = new String[this.mibs.size()];
-/*  843 */     byte b = 0;
-/*  844 */     for (Enumeration<SnmpMibAgent> enumeration = this.mibs.elements(); enumeration.hasMoreElements(); ) {
-/*  845 */       SnmpMibAgent snmpMibAgent = enumeration.nextElement();
-/*  846 */       arrayOfString[b++] = snmpMibAgent.getMibName();
-/*      */     } 
-/*  848 */     return arrayOfString;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutTraps() {
-/*  861 */     return new Long(this.snmpOutTraps);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutGetResponses() {
-/*  871 */     return new Long(this.snmpOutGetResponses);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutGenErrs() {
-/*  881 */     return new Long(this.snmpOutGenErrs);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutBadValues() {
-/*  891 */     return new Long(this.snmpOutBadValues);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutNoSuchNames() {
-/*  901 */     return new Long(this.snmpOutNoSuchNames);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutTooBigs() {
-/*  911 */     return new Long(this.snmpOutTooBigs);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInASNParseErrs() {
-/*  921 */     return new Long(this.snmpInASNParseErrs);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInBadCommunityUses() {
-/*  931 */     return new Long(this.snmpInBadCommunityUses);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInBadCommunityNames() {
-/*  942 */     return new Long(this.snmpInBadCommunityNames);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInBadVersions() {
-/*  952 */     return new Long(this.snmpInBadVersions);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpOutPkts() {
-/*  962 */     return new Long(this.snmpOutPkts);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInPkts() {
-/*  972 */     return new Long(this.snmpInPkts);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInGetRequests() {
-/*  982 */     return new Long(this.snmpInGetRequests);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInGetNexts() {
-/*  992 */     return new Long(this.snmpInGetNexts);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInSetRequests() {
-/* 1002 */     return new Long(this.snmpInSetRequests);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInTotalSetVars() {
-/* 1012 */     return new Long(this.snmpInTotalSetVars);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpInTotalReqVars() {
-/* 1022 */     return new Long(this.snmpInTotalReqVars);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpSilentDrops() {
-/* 1035 */     return new Long(this.snmpSilentDrops);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Long getSnmpProxyDrops() {
-/* 1048 */     return new Long(0L);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectName preRegister(MBeanServer paramMBeanServer, ObjectName paramObjectName) throws Exception {
-/* 1078 */     if (paramObjectName == null) {
-/* 1079 */       paramObjectName = new ObjectName(paramMBeanServer.getDefaultDomain() + ":" + "name=SnmpAdaptorServer");
-/*      */     }
-/*      */     
-/* 1082 */     return super.preRegister(paramMBeanServer, paramObjectName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void postRegister(Boolean paramBoolean) {
-/* 1090 */     super.postRegister(paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void preDeregister() throws Exception {
-/* 1098 */     super.preDeregister();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void postDeregister() {
-/* 1106 */     super.postDeregister();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpMibHandler addMib(SnmpMibAgent paramSnmpMibAgent) throws IllegalArgumentException {
-/* 1121 */     if (paramSnmpMibAgent == null) {
-/* 1122 */       throw new IllegalArgumentException();
-/*      */     }
-/*      */     
-/* 1125 */     if (!this.mibs.contains(paramSnmpMibAgent)) {
-/* 1126 */       this.mibs.addElement(paramSnmpMibAgent);
-/*      */     }
-/* 1128 */     this.root.register(paramSnmpMibAgent);
-/*      */     
-/* 1130 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpMibHandler addMib(SnmpMibAgent paramSnmpMibAgent, SnmpOid[] paramArrayOfSnmpOid) throws IllegalArgumentException {
-/* 1152 */     if (paramSnmpMibAgent == null) {
-/* 1153 */       throw new IllegalArgumentException();
-/*      */     }
-/*      */ 
-/*      */     
-/* 1157 */     if (paramArrayOfSnmpOid == null) {
-/* 1158 */       return addMib(paramSnmpMibAgent);
-/*      */     }
-/* 1160 */     if (!this.mibs.contains(paramSnmpMibAgent)) {
-/* 1161 */       this.mibs.addElement(paramSnmpMibAgent);
-/*      */     }
-/* 1163 */     for (byte b = 0; b < paramArrayOfSnmpOid.length; b++) {
-/* 1164 */       this.root.register(paramSnmpMibAgent, paramArrayOfSnmpOid[b].longValue());
-/*      */     }
-/* 1166 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpMibHandler addMib(SnmpMibAgent paramSnmpMibAgent, String paramString) throws IllegalArgumentException {
-/* 1185 */     return addMib(paramSnmpMibAgent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpMibHandler addMib(SnmpMibAgent paramSnmpMibAgent, String paramString, SnmpOid[] paramArrayOfSnmpOid) throws IllegalArgumentException {
-/* 1210 */     return addMib(paramSnmpMibAgent, paramArrayOfSnmpOid);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeMib(SnmpMibAgent paramSnmpMibAgent, String paramString) {
-/* 1229 */     return removeMib(paramSnmpMibAgent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeMib(SnmpMibAgent paramSnmpMibAgent) {
-/* 1242 */     this.root.unregister(paramSnmpMibAgent);
-/* 1243 */     return this.mibs.removeElement(paramSnmpMibAgent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeMib(SnmpMibAgent paramSnmpMibAgent, SnmpOid[] paramArrayOfSnmpOid) {
-/* 1259 */     this.root.unregister(paramSnmpMibAgent, paramArrayOfSnmpOid);
-/* 1260 */     return this.mibs.removeElement(paramSnmpMibAgent);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean removeMib(SnmpMibAgent paramSnmpMibAgent, String paramString, SnmpOid[] paramArrayOfSnmpOid) {
-/* 1279 */     return removeMib(paramSnmpMibAgent, paramArrayOfSnmpOid);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void doBind() throws CommunicationException, InterruptedException {
-/*      */     try {
-/* 1293 */       synchronized (this) {
-/* 1294 */         this.socket = new DatagramSocket(this.port, this.address);
-/*      */       } 
-/* 1296 */       this.dbgTag = makeDebugTag();
-/* 1297 */     } catch (SocketException socketException) {
-/* 1298 */       if (socketException.getMessage().equals("Interrupted system call")) {
-/* 1299 */         throw new InterruptedException(socketException.toString());
-/*      */       }
-/* 1301 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 1302 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "doBind", "cannot bind on port " + this.port);
-/*      */       }
-/*      */       
-/* 1305 */       throw new CommunicationException(socketException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getPort() {
-/* 1318 */     synchronized (this) {
-/* 1319 */       if (this.socket != null) return this.socket.getLocalPort(); 
-/*      */     } 
-/* 1321 */     return super.getPort();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void doUnbind() throws CommunicationException, InterruptedException {
-/* 1330 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1331 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "doUnbind", "Finally close the socket");
-/*      */     }
-/*      */     
-/* 1334 */     synchronized (this) {
-/* 1335 */       if (this.socket != null) {
-/* 1336 */         this.socket.close();
-/* 1337 */         this.socket = null;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1341 */     closeTrapSocketIfNeeded();
-/* 1342 */     closeInformSocketIfNeeded();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void createSnmpRequestHandler(SnmpAdaptorServer paramSnmpAdaptorServer, int paramInt, DatagramSocket paramDatagramSocket, DatagramPacket paramDatagramPacket, SnmpMibTree paramSnmpMibTree, Vector<SnmpMibAgent> paramVector, InetAddressAcl paramInetAddressAcl, SnmpPduFactory paramSnmpPduFactory, SnmpUserDataFactory paramSnmpUserDataFactory, MBeanServer paramMBeanServer, ObjectName paramObjectName) {
-/* 1356 */     SnmpRequestHandler snmpRequestHandler = new SnmpRequestHandler(this, paramInt, paramDatagramSocket, paramDatagramPacket, paramSnmpMibTree, paramVector, paramInetAddressAcl, paramSnmpPduFactory, paramSnmpUserDataFactory, paramMBeanServer, paramObjectName);
-/*      */ 
-/*      */     
-/* 1359 */     this.threadService.submitTask(snmpRequestHandler);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void doReceive() throws CommunicationException, InterruptedException {
-/*      */     try {
-/* 1373 */       this.packet = new DatagramPacket(new byte[this.bufferSize], this.bufferSize);
-/* 1374 */       this.socket.receive(this.packet);
-/* 1375 */       int i = getState();
-/*      */       
-/* 1377 */       if (i != 0) {
-/* 1378 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1379 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "doReceive", "received a message but state not online, returning.");
-/*      */         }
-/*      */         
-/*      */         return;
-/*      */       } 
-/*      */       
-/* 1385 */       createSnmpRequestHandler(this, this.servedClientCount, this.socket, this.packet, this.root, this.mibs, this.ipacl, this.pduFactory, this.userDataFactory, this.topMBS, this.objectName);
-/*      */     
-/*      */     }
-/* 1388 */     catch (SocketException socketException) {
-/*      */ 
-/*      */       
-/* 1391 */       if (socketException.getMessage().equals("Interrupted system call")) {
-/* 1392 */         throw new InterruptedException(socketException.toString());
-/*      */       }
-/* 1394 */       throw new CommunicationException(socketException);
-/* 1395 */     } catch (InterruptedIOException interruptedIOException) {
-/* 1396 */       throw new InterruptedException(interruptedIOException.toString());
-/* 1397 */     } catch (CommunicationException communicationException) {
-/* 1398 */       throw communicationException;
-/* 1399 */     } catch (Exception exception) {
-/* 1400 */       throw new CommunicationException(exception);
-/*      */     } 
-/* 1402 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1403 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "doReceive", "received a message");
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void doError(Exception paramException) throws CommunicationException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void doProcess() throws CommunicationException, InterruptedException {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected int getBindTries() {
-/* 1429 */     return 1;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void stop() {
-/* 1442 */     int i = getPort();
-/* 1443 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1444 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "stop", "Stopping: using port " + i);
-/*      */     }
-/*      */     
-/* 1447 */     if (this.state == 0 || this.state == 3) {
-/* 1448 */       super.stop();
-/*      */       try {
-/* 1450 */         DatagramSocket datagramSocket = new DatagramSocket(0); try {
-/*      */           DatagramPacket datagramPacket;
-/* 1452 */           byte[] arrayOfByte = new byte[1];
-/*      */ 
-/*      */           
-/* 1455 */           if (this.address != null) {
-/* 1456 */             datagramPacket = new DatagramPacket(arrayOfByte, 1, this.address, i);
-/*      */           } else {
-/*      */             
-/* 1459 */             datagramPacket = new DatagramPacket(arrayOfByte, 1, InetAddress.getLocalHost(), i);
-/*      */           } 
-/* 1461 */           if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1462 */             JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "stop", "Sending: using port " + i);
-/*      */           }
-/*      */           
-/* 1465 */           datagramSocket.send(datagramPacket);
-/*      */         } finally {
-/* 1467 */           datagramSocket.close();
-/*      */         } 
-/* 1469 */       } catch (Throwable throwable) {
-/* 1470 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 1471 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "stop", "Got unexpected Throwable", throwable);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV1Trap(int paramInt1, int paramInt2, SnmpVarBindList paramSnmpVarBindList) throws IOException, SnmpStatusException {
-/* 1501 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1502 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpV1Trap", "generic=" + paramInt1 + ", specific=" + paramInt2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1509 */     SnmpPduTrap snmpPduTrap = new SnmpPduTrap();
-/* 1510 */     snmpPduTrap.address = null;
-/* 1511 */     snmpPduTrap.port = this.trapPort;
-/* 1512 */     snmpPduTrap.type = 164;
-/* 1513 */     snmpPduTrap.version = 0;
-/* 1514 */     snmpPduTrap.community = null;
-/* 1515 */     snmpPduTrap.enterprise = this.enterpriseOid;
-/* 1516 */     snmpPduTrap.genericTrap = paramInt1;
-/* 1517 */     snmpPduTrap.specificTrap = paramInt2;
-/* 1518 */     snmpPduTrap.timeStamp = getSysUpTime();
-/*      */     
-/* 1520 */     if (paramSnmpVarBindList != null) {
-/* 1521 */       snmpPduTrap.varBindList = new SnmpVarBind[paramSnmpVarBindList.size()];
-/* 1522 */       paramSnmpVarBindList.copyInto((Object[])snmpPduTrap.varBindList);
-/*      */     } else {
-/*      */       
-/* 1525 */       snmpPduTrap.varBindList = null;
-/*      */     } 
-/*      */     
-/*      */     try {
-/* 1529 */       if (this.address != null)
-/* 1530 */       { snmpPduTrap.agentAddr = handleMultipleIpVersion(this.address.getAddress()); }
-/* 1531 */       else { snmpPduTrap
-/* 1532 */           .agentAddr = handleMultipleIpVersion(InetAddress.getLocalHost().getAddress()); } 
-/* 1533 */     } catch (UnknownHostException unknownHostException) {
-/* 1534 */       byte[] arrayOfByte = new byte[4];
-/* 1535 */       snmpPduTrap.agentAddr = handleMultipleIpVersion(arrayOfByte);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1540 */     sendTrapPdu(snmpPduTrap);
-/*      */   }
-/*      */   
-/*      */   private SnmpIpAddress handleMultipleIpVersion(byte[] paramArrayOfbyte) {
-/* 1544 */     if (paramArrayOfbyte.length == 4) {
-/* 1545 */       return new SnmpIpAddress(paramArrayOfbyte);
-/*      */     }
-/* 1547 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 1548 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "handleMultipleIPVersion", "Not an IPv4 address, return null");
-/*      */     }
-/*      */ 
-/*      */     
-/* 1552 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV1Trap(InetAddress paramInetAddress, String paramString, int paramInt1, int paramInt2, SnmpVarBindList paramSnmpVarBindList) throws IOException, SnmpStatusException {
-/* 1577 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1578 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpV1Trap", "generic=" + paramInt1 + ", specific=" + paramInt2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1585 */     SnmpPduTrap snmpPduTrap = new SnmpPduTrap();
-/* 1586 */     snmpPduTrap.address = null;
-/* 1587 */     snmpPduTrap.port = this.trapPort;
-/* 1588 */     snmpPduTrap.type = 164;
-/* 1589 */     snmpPduTrap.version = 0;
-/*      */     
-/* 1591 */     if (paramString != null) {
-/* 1592 */       snmpPduTrap.community = paramString.getBytes();
-/*      */     } else {
-/* 1594 */       snmpPduTrap.community = null;
-/*      */     } 
-/* 1596 */     snmpPduTrap.enterprise = this.enterpriseOid;
-/* 1597 */     snmpPduTrap.genericTrap = paramInt1;
-/* 1598 */     snmpPduTrap.specificTrap = paramInt2;
-/* 1599 */     snmpPduTrap.timeStamp = getSysUpTime();
-/*      */     
-/* 1601 */     if (paramSnmpVarBindList != null) {
-/* 1602 */       snmpPduTrap.varBindList = new SnmpVarBind[paramSnmpVarBindList.size()];
-/* 1603 */       paramSnmpVarBindList.copyInto((Object[])snmpPduTrap.varBindList);
-/*      */     } else {
-/*      */       
-/* 1606 */       snmpPduTrap.varBindList = null;
-/*      */     } 
-/*      */     
-/*      */     try {
-/* 1610 */       if (this.address != null)
-/* 1611 */       { snmpPduTrap.agentAddr = handleMultipleIpVersion(this.address.getAddress()); }
-/* 1612 */       else { snmpPduTrap
-/* 1613 */           .agentAddr = handleMultipleIpVersion(InetAddress.getLocalHost().getAddress()); } 
-/* 1614 */     } catch (UnknownHostException unknownHostException) {
-/* 1615 */       byte[] arrayOfByte = new byte[4];
-/* 1616 */       snmpPduTrap.agentAddr = handleMultipleIpVersion(arrayOfByte);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1621 */     if (paramInetAddress != null) {
-/* 1622 */       sendTrapPdu(paramInetAddress, snmpPduTrap);
-/*      */     } else {
-/* 1624 */       sendTrapPdu(snmpPduTrap);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV1Trap(InetAddress paramInetAddress, SnmpIpAddress paramSnmpIpAddress, String paramString, SnmpOid paramSnmpOid, int paramInt1, int paramInt2, SnmpVarBindList paramSnmpVarBindList, SnmpTimeticks paramSnmpTimeticks) throws IOException, SnmpStatusException {
-/* 1659 */     snmpV1Trap(paramInetAddress, this.trapPort, paramSnmpIpAddress, paramString, paramSnmpOid, paramInt1, paramInt2, paramSnmpVarBindList, paramSnmpTimeticks);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV1Trap(SnmpPeer paramSnmpPeer, SnmpIpAddress paramSnmpIpAddress, SnmpOid paramSnmpOid, int paramInt1, int paramInt2, SnmpVarBindList paramSnmpVarBindList, SnmpTimeticks paramSnmpTimeticks) throws IOException, SnmpStatusException {
-/* 1701 */     SnmpParameters snmpParameters = (SnmpParameters)paramSnmpPeer.getParams();
-/* 1702 */     snmpV1Trap(paramSnmpPeer.getDestAddr(), paramSnmpPeer
-/* 1703 */         .getDestPort(), paramSnmpIpAddress, snmpParameters
-/*      */         
-/* 1705 */         .getRdCommunity(), paramSnmpOid, paramInt1, paramInt2, paramSnmpVarBindList, paramSnmpTimeticks);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void snmpV1Trap(InetAddress paramInetAddress, int paramInt1, SnmpIpAddress paramSnmpIpAddress, String paramString, SnmpOid paramSnmpOid, int paramInt2, int paramInt3, SnmpVarBindList paramSnmpVarBindList, SnmpTimeticks paramSnmpTimeticks) throws IOException, SnmpStatusException {
-/* 1724 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1725 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpV1Trap", "generic=" + paramInt2 + ", specific=" + paramInt3);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1732 */     SnmpPduTrap snmpPduTrap = new SnmpPduTrap();
-/* 1733 */     snmpPduTrap.address = null;
-/* 1734 */     snmpPduTrap.port = paramInt1;
-/* 1735 */     snmpPduTrap.type = 164;
-/* 1736 */     snmpPduTrap.version = 0;
-/*      */ 
-/*      */     
-/* 1739 */     if (paramString != null) {
-/* 1740 */       snmpPduTrap.community = paramString.getBytes();
-/*      */     } else {
-/* 1742 */       snmpPduTrap.community = null;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1746 */     if (paramSnmpOid != null) {
-/* 1747 */       snmpPduTrap.enterprise = paramSnmpOid;
-/*      */     } else {
-/* 1749 */       snmpPduTrap.enterprise = this.enterpriseOid;
-/*      */     } 
-/* 1751 */     snmpPduTrap.genericTrap = paramInt2;
-/* 1752 */     snmpPduTrap.specificTrap = paramInt3;
-/*      */     
-/* 1754 */     if (paramSnmpTimeticks != null) {
-/* 1755 */       snmpPduTrap.timeStamp = paramSnmpTimeticks.longValue();
-/*      */     } else {
-/* 1757 */       snmpPduTrap.timeStamp = getSysUpTime();
-/*      */     } 
-/*      */     
-/* 1760 */     if (paramSnmpVarBindList != null) {
-/* 1761 */       snmpPduTrap.varBindList = new SnmpVarBind[paramSnmpVarBindList.size()];
-/* 1762 */       paramSnmpVarBindList.copyInto((Object[])snmpPduTrap.varBindList);
-/*      */     } else {
-/*      */       
-/* 1765 */       snmpPduTrap.varBindList = null;
-/*      */     } 
-/* 1767 */     if (paramSnmpIpAddress == null) {
-/*      */       
-/*      */       try {
-/*      */ 
-/*      */         
-/* 1772 */         InetAddress inetAddress = (this.address != null) ? this.address : InetAddress.getLocalHost();
-/* 1773 */         paramSnmpIpAddress = handleMultipleIpVersion(inetAddress.getAddress());
-/* 1774 */       } catch (UnknownHostException unknownHostException) {
-/* 1775 */         byte[] arrayOfByte = new byte[4];
-/* 1776 */         paramSnmpIpAddress = handleMultipleIpVersion(arrayOfByte);
-/*      */       } 
-/*      */     }
-/*      */     
-/* 1780 */     snmpPduTrap.agentAddr = paramSnmpIpAddress;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1785 */     if (paramInetAddress != null) {
-/* 1786 */       sendTrapPdu(paramInetAddress, snmpPduTrap);
-/*      */     } else {
-/* 1788 */       sendTrapPdu(snmpPduTrap);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV2Trap(SnmpPeer paramSnmpPeer, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList, SnmpTimeticks paramSnmpTimeticks) throws IOException, SnmpStatusException {
-/* 1828 */     SnmpParameters snmpParameters = (SnmpParameters)paramSnmpPeer.getParams();
-/* 1829 */     snmpV2Trap(paramSnmpPeer.getDestAddr(), paramSnmpPeer
-/* 1830 */         .getDestPort(), snmpParameters
-/* 1831 */         .getRdCommunity(), paramSnmpOid, paramSnmpVarBindList, paramSnmpTimeticks);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV2Trap(SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList) throws IOException, SnmpStatusException {
-/*      */     SnmpVarBindList snmpVarBindList;
-/* 1863 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1864 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpV2Trap", "trapOid=" + paramSnmpOid);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1871 */     SnmpPduRequest snmpPduRequest = new SnmpPduRequest();
-/* 1872 */     snmpPduRequest.address = null;
-/* 1873 */     snmpPduRequest.port = this.trapPort;
-/* 1874 */     snmpPduRequest.type = 167;
-/* 1875 */     snmpPduRequest.version = 1;
-/* 1876 */     snmpPduRequest.community = null;
-/*      */ 
-/*      */     
-/* 1879 */     if (paramSnmpVarBindList != null) {
-/* 1880 */       snmpVarBindList = paramSnmpVarBindList.clone();
-/*      */     } else {
-/* 1882 */       snmpVarBindList = new SnmpVarBindList(2);
-/* 1883 */     }  SnmpTimeticks snmpTimeticks = new SnmpTimeticks(getSysUpTime());
-/* 1884 */     snmpVarBindList.insertElementAt(new SnmpVarBind(snmpTrapOidOid, paramSnmpOid), 0);
-/* 1885 */     snmpVarBindList.insertElementAt(new SnmpVarBind(sysUpTimeOid, snmpTimeticks), 0);
-/*      */     
-/* 1887 */     snmpPduRequest.varBindList = new SnmpVarBind[snmpVarBindList.size()];
-/* 1888 */     snmpVarBindList.copyInto((Object[])snmpPduRequest.varBindList);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1892 */     sendTrapPdu(snmpPduRequest);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV2Trap(InetAddress paramInetAddress, String paramString, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList) throws IOException, SnmpStatusException {
-/*      */     SnmpVarBindList snmpVarBindList;
-/* 1924 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 1925 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpV2Trap", "trapOid=" + paramSnmpOid);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1932 */     SnmpPduRequest snmpPduRequest = new SnmpPduRequest();
-/* 1933 */     snmpPduRequest.address = null;
-/* 1934 */     snmpPduRequest.port = this.trapPort;
-/* 1935 */     snmpPduRequest.type = 167;
-/* 1936 */     snmpPduRequest.version = 1;
-/*      */     
-/* 1938 */     if (paramString != null) {
-/* 1939 */       snmpPduRequest.community = paramString.getBytes();
-/*      */     } else {
-/* 1941 */       snmpPduRequest.community = null;
-/*      */     } 
-/*      */     
-/* 1944 */     if (paramSnmpVarBindList != null) {
-/* 1945 */       snmpVarBindList = paramSnmpVarBindList.clone();
-/*      */     } else {
-/* 1947 */       snmpVarBindList = new SnmpVarBindList(2);
-/* 1948 */     }  SnmpTimeticks snmpTimeticks = new SnmpTimeticks(getSysUpTime());
-/* 1949 */     snmpVarBindList.insertElementAt(new SnmpVarBind(snmpTrapOidOid, paramSnmpOid), 0);
-/* 1950 */     snmpVarBindList.insertElementAt(new SnmpVarBind(sysUpTimeOid, snmpTimeticks), 0);
-/*      */     
-/* 1952 */     snmpPduRequest.varBindList = new SnmpVarBind[snmpVarBindList.size()];
-/* 1953 */     snmpVarBindList.copyInto((Object[])snmpPduRequest.varBindList);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1957 */     if (paramInetAddress != null) {
-/* 1958 */       sendTrapPdu(paramInetAddress, snmpPduRequest);
-/*      */     } else {
-/* 1960 */       sendTrapPdu(snmpPduRequest);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpV2Trap(InetAddress paramInetAddress, String paramString, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList, SnmpTimeticks paramSnmpTimeticks) throws IOException, SnmpStatusException {
-/* 2000 */     snmpV2Trap(paramInetAddress, this.trapPort, paramString, paramSnmpOid, paramSnmpVarBindList, paramSnmpTimeticks);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void snmpV2Trap(InetAddress paramInetAddress, int paramInt, String paramString, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList, SnmpTimeticks paramSnmpTimeticks) throws IOException, SnmpStatusException {
-/*      */     SnmpVarBindList snmpVarBindList;
-/*      */     SnmpTimeticks snmpTimeticks;
-/* 2016 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2023 */       StringBuilder stringBuilder = (new StringBuilder()).append("trapOid=").append(paramSnmpOid).append("\ncommunity=").append(paramString).append("\naddr=").append(paramInetAddress).append("\nvarBindList=").append(paramSnmpVarBindList).append("\ntime=").append(paramSnmpTimeticks).append("\ntrapPort=").append(paramInt);
-/* 2024 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpV2Trap", stringBuilder
-/* 2025 */           .toString());
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2031 */     SnmpPduRequest snmpPduRequest = new SnmpPduRequest();
-/* 2032 */     snmpPduRequest.address = null;
-/* 2033 */     snmpPduRequest.port = paramInt;
-/* 2034 */     snmpPduRequest.type = 167;
-/* 2035 */     snmpPduRequest.version = 1;
-/*      */     
-/* 2037 */     if (paramString != null) {
-/* 2038 */       snmpPduRequest.community = paramString.getBytes();
-/*      */     } else {
-/* 2040 */       snmpPduRequest.community = null;
-/*      */     } 
-/*      */     
-/* 2043 */     if (paramSnmpVarBindList != null) {
-/* 2044 */       snmpVarBindList = paramSnmpVarBindList.clone();
-/*      */     } else {
-/* 2046 */       snmpVarBindList = new SnmpVarBindList(2);
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2050 */     if (paramSnmpTimeticks != null) {
-/* 2051 */       snmpTimeticks = paramSnmpTimeticks;
-/*      */     } else {
-/* 2053 */       snmpTimeticks = new SnmpTimeticks(getSysUpTime());
-/*      */     } 
-/*      */     
-/* 2056 */     snmpVarBindList.insertElementAt(new SnmpVarBind(snmpTrapOidOid, paramSnmpOid), 0);
-/* 2057 */     snmpVarBindList.insertElementAt(new SnmpVarBind(sysUpTimeOid, snmpTimeticks), 0);
-/*      */     
-/* 2059 */     snmpPduRequest.varBindList = new SnmpVarBind[snmpVarBindList.size()];
-/* 2060 */     snmpVarBindList.copyInto((Object[])snmpPduRequest.varBindList);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2065 */     if (paramInetAddress != null) {
-/* 2066 */       sendTrapPdu(paramInetAddress, snmpPduRequest);
-/*      */     } else {
-/* 2068 */       sendTrapPdu(snmpPduRequest);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpPduTrap(InetAddress paramInetAddress, SnmpPduPacket paramSnmpPduPacket) throws IOException, SnmpStatusException {
-/* 2086 */     if (paramInetAddress != null) {
-/* 2087 */       sendTrapPdu(paramInetAddress, paramSnmpPduPacket);
-/*      */     } else {
-/* 2089 */       sendTrapPdu(paramSnmpPduPacket);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void snmpPduTrap(SnmpPeer paramSnmpPeer, SnmpPduPacket paramSnmpPduPacket) throws IOException, SnmpStatusException {
-/* 2106 */     if (paramSnmpPeer != null) {
-/* 2107 */       paramSnmpPduPacket.port = paramSnmpPeer.getDestPort();
-/* 2108 */       sendTrapPdu(paramSnmpPeer.getDestAddr(), paramSnmpPduPacket);
-/*      */     } else {
-/*      */       
-/* 2111 */       paramSnmpPduPacket.port = getTrapPort().intValue();
-/* 2112 */       sendTrapPdu(paramSnmpPduPacket);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sendTrapPdu(SnmpPduPacket paramSnmpPduPacket) throws SnmpStatusException, IOException {
-/* 2124 */     SnmpMessage snmpMessage = null;
-/*      */     try {
-/* 2126 */       snmpMessage = (SnmpMessage)this.pduFactory.encodeSnmpPdu(paramSnmpPduPacket, this.bufferSize);
-/* 2127 */       if (snmpMessage == null) {
-/* 2128 */         throw new SnmpStatusException(16);
-/*      */       
-/*      */       }
-/*      */     }
-/* 2132 */     catch (SnmpTooBigException snmpTooBigException) {
-/* 2133 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 2134 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendTrapPdu", "Trap pdu is too big. Trap hasn't been sent to anyone");
-/*      */       }
-/*      */ 
-/*      */       
-/* 2138 */       throw new SnmpStatusException(1);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2145 */     byte b = 0;
-/* 2146 */     openTrapSocketIfNeeded();
-/* 2147 */     if (this.ipacl != null) {
-/* 2148 */       Enumeration<InetAddress> enumeration = this.ipacl.getTrapDestinations();
-/* 2149 */       while (enumeration.hasMoreElements()) {
-/* 2150 */         snmpMessage.address = enumeration.nextElement();
-/* 2151 */         Enumeration<String> enumeration1 = this.ipacl.getTrapCommunities(snmpMessage.address);
-/* 2152 */         while (enumeration1.hasMoreElements()) {
-/* 2153 */           snmpMessage.community = ((String)enumeration1.nextElement()).getBytes();
-/*      */           try {
-/* 2155 */             sendTrapMessage(snmpMessage);
-/* 2156 */             b++;
-/*      */           }
-/* 2158 */           catch (SnmpTooBigException snmpTooBigException) {
-/* 2159 */             if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 2160 */               JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendTrapPdu", "Trap pdu is too big. Trap hasn't been sent to " + snmpMessage.address);
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2173 */     if (b == 0) {
-/*      */       try {
-/* 2175 */         snmpMessage.address = InetAddress.getLocalHost();
-/* 2176 */         sendTrapMessage(snmpMessage);
-/* 2177 */       } catch (SnmpTooBigException snmpTooBigException) {
-/* 2178 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 2179 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendTrapPdu", "Trap pdu is too big. Trap hasn't been sent.");
-/*      */         
-/*      */         }
-/*      */       }
-/* 2183 */       catch (UnknownHostException unknownHostException) {
-/* 2184 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 2185 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendTrapPdu", "Trap pdu is too big. Trap hasn't been sent.");
-/*      */         }
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 2192 */     closeTrapSocketIfNeeded();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sendTrapPdu(InetAddress paramInetAddress, SnmpPduPacket paramSnmpPduPacket) throws SnmpStatusException, IOException {
-/* 2203 */     SnmpMessage snmpMessage = null;
-/*      */     try {
-/* 2205 */       snmpMessage = (SnmpMessage)this.pduFactory.encodeSnmpPdu(paramSnmpPduPacket, this.bufferSize);
-/* 2206 */       if (snmpMessage == null) {
-/* 2207 */         throw new SnmpStatusException(16);
-/*      */       }
-/*      */     }
-/* 2210 */     catch (SnmpTooBigException snmpTooBigException) {
-/* 2211 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 2212 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendTrapPdu", "Trap pdu is too big. Trap hasn't been sent to the specified host.");
-/*      */       }
-/*      */ 
-/*      */       
-/* 2216 */       throw new SnmpStatusException(1);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2223 */     openTrapSocketIfNeeded();
-/* 2224 */     if (paramInetAddress != null) {
-/* 2225 */       snmpMessage.address = paramInetAddress;
-/*      */       try {
-/* 2227 */         sendTrapMessage(snmpMessage);
-/* 2228 */       } catch (SnmpTooBigException snmpTooBigException) {
-/* 2229 */         if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
-/* 2230 */           JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, this.dbgTag, "sendTrapPdu", "Trap pdu is too big. Trap hasn't been sent to " + snmpMessage.address);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2237 */     closeTrapSocketIfNeeded();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sendTrapMessage(SnmpMessage paramSnmpMessage) throws IOException, SnmpTooBigException {
-/* 2246 */     byte[] arrayOfByte = new byte[this.bufferSize];
-/* 2247 */     DatagramPacket datagramPacket = new DatagramPacket(arrayOfByte, arrayOfByte.length);
-/* 2248 */     int i = paramSnmpMessage.encodeMessage(arrayOfByte);
-/* 2249 */     datagramPacket.setLength(i);
-/* 2250 */     datagramPacket.setAddress(paramSnmpMessage.address);
-/* 2251 */     datagramPacket.setPort(paramSnmpMessage.port);
-/* 2252 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2253 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "sendTrapMessage", "sending trap to " + paramSnmpMessage.address + ":" + paramSnmpMessage.port);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2257 */     this.trapSocket.send(datagramPacket);
-/* 2258 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2259 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "sendTrapMessage", "sent to " + paramSnmpMessage.address + ":" + paramSnmpMessage.port);
-/*      */     }
-/*      */ 
-/*      */     
-/* 2263 */     this.snmpOutTraps++;
-/* 2264 */     this.snmpOutPkts++;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   synchronized void openTrapSocketIfNeeded() throws SocketException {
-/* 2271 */     if (this.trapSocket == null) {
-/* 2272 */       this.trapSocket = new DatagramSocket(0, this.address);
-/* 2273 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2274 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "openTrapSocketIfNeeded", "using port " + this.trapSocket
-/*      */             
-/* 2276 */             .getLocalPort() + " to send traps");
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   synchronized void closeTrapSocketIfNeeded() {
-/* 2285 */     if (this.trapSocket != null && this.state != 0) {
-/* 2286 */       this.trapSocket.close();
-/* 2287 */       this.trapSocket = null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Vector<SnmpInformRequest> snmpInformRequest(SnmpInformHandler paramSnmpInformHandler, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList) throws IllegalStateException, IOException, SnmpStatusException {
-/*      */     SnmpVarBindList snmpVarBindList;
-/* 2333 */     if (!isActive()) {
-/* 2334 */       throw new IllegalStateException("Start SNMP adaptor server before carrying out this operation");
-/*      */     }
-/*      */     
-/* 2337 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2338 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpInformRequest", "trapOid=" + paramSnmpOid);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2346 */     if (paramSnmpVarBindList != null) {
-/* 2347 */       snmpVarBindList = paramSnmpVarBindList.clone();
-/*      */     } else {
-/* 2349 */       snmpVarBindList = new SnmpVarBindList(2);
-/* 2350 */     }  SnmpTimeticks snmpTimeticks = new SnmpTimeticks(getSysUpTime());
-/* 2351 */     snmpVarBindList.insertElementAt(new SnmpVarBind(snmpTrapOidOid, paramSnmpOid), 0);
-/* 2352 */     snmpVarBindList.insertElementAt(new SnmpVarBind(sysUpTimeOid, snmpTimeticks), 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2357 */     openInformSocketIfNeeded();
-/*      */ 
-/*      */ 
-/*      */     
-/* 2361 */     Vector<SnmpInformRequest> vector = new Vector();
-/*      */ 
-/*      */     
-/* 2364 */     if (this.ipacl != null) {
-/* 2365 */       Enumeration<InetAddress> enumeration = this.ipacl.getInformDestinations();
-/* 2366 */       while (enumeration.hasMoreElements()) {
-/* 2367 */         InetAddress inetAddress = enumeration.nextElement();
-/* 2368 */         Enumeration<String> enumeration1 = this.ipacl.getInformCommunities(inetAddress);
-/* 2369 */         while (enumeration1.hasMoreElements()) {
-/* 2370 */           String str = enumeration1.nextElement();
-/* 2371 */           vector.addElement(this.informSession
-/* 2372 */               .makeAsyncRequest(inetAddress, str, paramSnmpInformHandler, snmpVarBindList, 
-/* 2373 */                 getInformPort()));
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2378 */     return vector;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpInformRequest snmpInformRequest(InetAddress paramInetAddress, String paramString, SnmpInformHandler paramSnmpInformHandler, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList) throws IllegalStateException, IOException, SnmpStatusException {
-/* 2421 */     return snmpInformRequest(paramInetAddress, 
-/* 2422 */         getInformPort(), paramString, paramSnmpInformHandler, paramSnmpOid, paramSnmpVarBindList);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SnmpInformRequest snmpInformRequest(SnmpPeer paramSnmpPeer, SnmpInformHandler paramSnmpInformHandler, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList) throws IllegalStateException, IOException, SnmpStatusException {
-/* 2471 */     SnmpParameters snmpParameters = (SnmpParameters)paramSnmpPeer.getParams();
-/* 2472 */     return snmpInformRequest(paramSnmpPeer.getDestAddr(), paramSnmpPeer
-/* 2473 */         .getDestPort(), snmpParameters
-/* 2474 */         .getInformCommunity(), paramSnmpInformHandler, paramSnmpOid, paramSnmpVarBindList);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int mapErrorStatus(int paramInt1, int paramInt2, int paramInt3) {
-/* 2490 */     return SnmpSubRequestHandler.mapErrorStatus(paramInt1, paramInt2, paramInt3);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private SnmpInformRequest snmpInformRequest(InetAddress paramInetAddress, int paramInt, String paramString, SnmpInformHandler paramSnmpInformHandler, SnmpOid paramSnmpOid, SnmpVarBindList paramSnmpVarBindList) throws IllegalStateException, IOException, SnmpStatusException {
-/*      */     SnmpVarBindList snmpVarBindList;
-/* 2503 */     if (!isActive()) {
-/* 2504 */       throw new IllegalStateException("Start SNMP adaptor server before carrying out this operation");
-/*      */     }
-/*      */     
-/* 2507 */     if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2508 */       JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "snmpInformRequest", "trapOid=" + paramSnmpOid);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2516 */     if (paramSnmpVarBindList != null) {
-/* 2517 */       snmpVarBindList = paramSnmpVarBindList.clone();
-/*      */     } else {
-/* 2519 */       snmpVarBindList = new SnmpVarBindList(2);
-/* 2520 */     }  SnmpTimeticks snmpTimeticks = new SnmpTimeticks(getSysUpTime());
-/* 2521 */     snmpVarBindList.insertElementAt(new SnmpVarBind(snmpTrapOidOid, paramSnmpOid), 0);
-/* 2522 */     snmpVarBindList.insertElementAt(new SnmpVarBind(sysUpTimeOid, snmpTimeticks), 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2527 */     openInformSocketIfNeeded();
-/* 2528 */     return this.informSession.makeAsyncRequest(paramInetAddress, paramString, paramSnmpInformHandler, snmpVarBindList, paramInt);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   synchronized void openInformSocketIfNeeded() throws SocketException {
-/* 2536 */     if (this.informSession == null) {
-/* 2537 */       this.informSession = new SnmpSession(this);
-/* 2538 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2539 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "openInformSocketIfNeeded", "to send inform requests and receive inform responses");
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   synchronized void closeInformSocketIfNeeded() {
-/* 2550 */     if (this.informSession != null && this.state != 0) {
-/* 2551 */       this.informSession.destroySession();
-/* 2552 */       this.informSession = null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   InetAddress getAddress() {
-/* 2562 */     return this.address;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void finalize() {
-/*      */     try {
-/* 2579 */       if (this.socket != null) {
-/* 2580 */         this.socket.close();
-/* 2581 */         this.socket = null;
-/*      */       } 
-/*      */       
-/* 2584 */       this.threadService.terminate();
-/* 2585 */     } catch (Exception exception) {
-/* 2586 */       if (JmxProperties.SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
-/* 2587 */         JmxProperties.SNMP_ADAPTOR_LOGGER.logp(Level.FINER, this.dbgTag, "finalize", "Exception in finalizer", exception);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   String makeDebugTag() {
-/* 2601 */     return "SnmpAdaptorServer[" + getProtocol() + ":" + getPort() + "]";
-/*      */   }
-/*      */   
-/*      */   void updateRequestCounters(int paramInt) {
-/* 2605 */     switch (paramInt) {
-/*      */       
-/*      */       case 160:
-/* 2608 */         this.snmpInGetRequests++;
-/*      */         break;
-/*      */       case 161:
-/* 2611 */         this.snmpInGetNexts++;
-/*      */         break;
-/*      */       case 163:
-/* 2614 */         this.snmpInSetRequests++;
-/*      */         break;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2619 */     this.snmpInPkts++;
-/*      */   }
-/*      */   
-/*      */   void updateErrorCounters(int paramInt) {
-/* 2623 */     switch (paramInt) {
-/*      */       
-/*      */       case 0:
-/* 2626 */         this.snmpOutGetResponses++;
-/*      */         break;
-/*      */       case 5:
-/* 2629 */         this.snmpOutGenErrs++;
-/*      */         break;
-/*      */       case 3:
-/* 2632 */         this.snmpOutBadValues++;
-/*      */         break;
-/*      */       case 2:
-/* 2635 */         this.snmpOutNoSuchNames++;
-/*      */         break;
-/*      */       case 1:
-/* 2638 */         this.snmpOutTooBigs++;
-/*      */         break;
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2643 */     this.snmpOutPkts++;
-/*      */   }
-/*      */   
-/*      */   void updateVarCounters(int paramInt1, int paramInt2) {
-/* 2647 */     switch (paramInt1) {
-/*      */       
-/*      */       case 160:
-/*      */       case 161:
-/*      */       case 165:
-/* 2652 */         this.snmpInTotalReqVars += paramInt2;
-/*      */         break;
-/*      */       case 163:
-/* 2655 */         this.snmpInTotalSetVars += paramInt2;
-/*      */         break;
-/*      */     } 
-/*      */   }
-/*      */   
-/*      */   void incSnmpInASNParseErrs(int paramInt) {
-/* 2661 */     this.snmpInASNParseErrs += paramInt;
-/*      */   }
-/*      */   
-/*      */   void incSnmpInBadVersions(int paramInt) {
-/* 2665 */     this.snmpInBadVersions += paramInt;
-/*      */   }
-/*      */   
-/*      */   void incSnmpInBadCommunityUses(int paramInt) {
-/* 2669 */     this.snmpInBadCommunityUses += paramInt;
-/*      */   }
-/*      */   
-/*      */   void incSnmpInBadCommunityNames(int paramInt) {
-/* 2673 */     this.snmpInBadCommunityNames += paramInt;
-/*      */   }
-/*      */   
-/*      */   void incSnmpSilentDrops(int paramInt) {
-/* 2677 */     this.snmpSilentDrops += paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   long getSysUpTime() {
-/* 2687 */     return (System.currentTimeMillis() - this.startUpTime) / 10L;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void readObject(ObjectInputStream paramObjectInputStream) throws IOException, ClassNotFoundException {
-/* 2698 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2704 */     this.mibs = new Vector<>();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void init(InetAddressAcl paramInetAddressAcl, int paramInt, InetAddress paramInetAddress) {
-/* 2712 */     this.root = new SnmpMibTree();
-/*      */ 
-/*      */     
-/* 2715 */     this.root.setDefaultAgent(new SnmpErrorHandlerAgent());
-/*      */ 
-/*      */ 
-/*      */     
-/* 2719 */     this.startUpTime = System.currentTimeMillis();
-/* 2720 */     this.maxActiveClientCount = 10;
-/*      */ 
-/*      */     
-/* 2723 */     this.pduFactory = new SnmpPduFactoryBER();
-/*      */     
-/* 2725 */     this.port = paramInt;
-/* 2726 */     this.ipacl = paramInetAddressAcl;
-/* 2727 */     this.address = paramInetAddress;
-/*      */     
-/* 2729 */     if (this.ipacl == null && this.useAcl == true) {
-/* 2730 */       throw new IllegalArgumentException("ACL object cannot be null");
-/*      */     }
-/* 2732 */     this.threadService = new ThreadService(threadNumber);
-/*      */   }
-/*      */   
-/*      */   SnmpMibAgent getAgentMib(SnmpOid paramSnmpOid) {
-/* 2736 */     return this.root.getAgentMib(paramSnmpOid);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   protected Thread createMainThread() {
-/* 2741 */     Thread thread = super.createMainThread();
-/* 2742 */     thread.setDaemon(true);
-/* 2743 */     return thread;
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\daemon\SnmpAdaptorServer.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.jmx.snmp.daemon;
+
+
+// java imports
+//
+import java.util.Vector;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+
+
+// jmx imports
+//
+import javax.management.MBeanServer;
+import javax.management.MBeanRegistration;
+import javax.management.ObjectName;
+import static com.sun.jmx.defaults.JmxProperties.SNMP_ADAPTOR_LOGGER;
+import com.sun.jmx.snmp.SnmpIpAddress;
+import com.sun.jmx.snmp.SnmpMessage;
+import com.sun.jmx.snmp.SnmpOid;
+import com.sun.jmx.snmp.SnmpPduFactory;
+import com.sun.jmx.snmp.SnmpPduPacket;
+import com.sun.jmx.snmp.SnmpPduRequest;
+import com.sun.jmx.snmp.SnmpPduTrap;
+import com.sun.jmx.snmp.SnmpTimeticks;
+import com.sun.jmx.snmp.SnmpVarBind;
+import com.sun.jmx.snmp.SnmpVarBindList;
+import com.sun.jmx.snmp.SnmpDefinitions;
+import com.sun.jmx.snmp.SnmpStatusException;
+import com.sun.jmx.snmp.SnmpTooBigException;
+import com.sun.jmx.snmp.InetAddressAcl;
+import com.sun.jmx.snmp.SnmpPeer;
+import com.sun.jmx.snmp.SnmpParameters;
+// SNMP Runtime imports
+//
+import com.sun.jmx.snmp.SnmpPduFactoryBER;
+import com.sun.jmx.snmp.agent.SnmpMibAgent;
+import com.sun.jmx.snmp.agent.SnmpMibHandler;
+import com.sun.jmx.snmp.agent.SnmpUserDataFactory;
+import com.sun.jmx.snmp.agent.SnmpErrorHandlerAgent;
+
+import com.sun.jmx.snmp.IPAcl.SnmpAcl;
+
+import com.sun.jmx.snmp.tasks.ThreadService;
+
+/**
+ * Implements an adaptor on top of the SNMP protocol.
+ * <P>
+ * When this SNMP protocol adaptor is started it creates a datagram socket
+ * and is able to receive requests and send traps or inform requests.
+ * When it is stopped, the socket is closed and neither requests
+ * and nor traps/inform request are processed.
+ * <P>
+ * The default port number of the socket is 161. This default value can be
+ * changed by specifying a port number:
+ * <UL>
+ * <LI>in the object constructor</LI>
+ * <LI>using the {@link com.sun.jmx.snmp.daemon.CommunicatorServer#setPort
+ *     setPort} method before starting the adaptor</LI>
+ * </UL>
+ * The default object name is defined by {@link
+ * com.sun.jmx.snmp.ServiceName#DOMAIN com.sun.jmx.snmp.ServiceName.DOMAIN}
+ * and {@link com.sun.jmx.snmp.ServiceName#SNMP_ADAPTOR_SERVER
+ * com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_SERVER}.
+ * <P>
+ * The SNMP protocol adaptor supports versions 1 and 2 of the SNMP protocol
+ * in a stateless way: when it receives a v1 request, it replies with a v1
+ * response, when it receives a v2 request it replies with a v2 response.
+ * <BR>The method {@link #snmpV1Trap snmpV1Trap} sends traps using SNMP v1
+ * format.
+ * The method {@link #snmpV2Trap snmpV2Trap} sends traps using SNMP v2 format.
+ * The method {@link #snmpInformRequest snmpInformRequest} sends inform
+ * requests using SNMP v2 format.
+ * <P>
+ * To receive data packets, the SNMP protocol adaptor uses a buffer
+ * which size can be configured using the property <CODE>bufferSize</CODE>
+ * (default value is 1024).
+ * Packets which do not fit into the buffer are rejected.
+ * Increasing <CODE>bufferSize</CODE> allows the exchange of bigger packets.
+ * However, the underlying networking system may impose a limit on the size
+ * of UDP packets.
+ * Packets which size exceed this limit will be rejected, no matter what
+ * the value of <CODE>bufferSize</CODE> actually is.
+ * <P>
+ * An SNMP protocol adaptor may serve several managers concurrently. The
+ * number of concurrent managers can be limited using the property
+ * <CODE>maxActiveClientCount</CODE>.
+ * <p>
+ * The SNMP protocol adaptor specifies a default value (10) for the
+ * <CODE>maxActiveClientCount</CODE> property. When the adaptor is stopped,
+ * the active requests are interrupted and an error result is sent to
+ * the managers.
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ */
+
+public class SnmpAdaptorServer extends CommunicatorServer
+    implements SnmpAdaptorServerMBean, MBeanRegistration, SnmpDefinitions,
+               SnmpMibHandler {
+
+    // PRIVATE VARIABLES
+    //------------------
+
+    /**
+     * Port number for sending SNMP traps.
+     * <BR>The default value is 162.
+     */
+    private int                 trapPort = 162;
+
+    /**
+     * Port number for sending SNMP inform requests.
+     * <BR>The default value is 162.
+     */
+    private int                 informPort = 162;
+
+    /**
+     * The <CODE>InetAddress</CODE> used when creating the datagram socket.
+     * <BR>It is specified when creating the SNMP protocol adaptor.
+     * If not specified, the local host machine is used.
+     */
+    InetAddress address = null;
+
+    /**
+     * The IP address based ACL used by this SNMP protocol adaptor.
+     */
+    private InetAddressAcl ipacl = null;
+
+    /**
+     * The factory object.
+     */
+    private SnmpPduFactory pduFactory = null;
+
+    /**
+     * The user-data factory object.
+     */
+    private SnmpUserDataFactory userDataFactory = null;
+
+    /**
+     * Indicates if the SNMP protocol adaptor sends a response in case
+     * of authentication failure
+     */
+    private boolean authRespEnabled = true;
+
+    /**
+     * Indicates if authentication traps are enabled.
+     */
+    private boolean authTrapEnabled = true;
+
+    /**
+     * The enterprise OID.
+     * <BR>The default value is "1.3.6.1.4.1.42".
+     */
+    private SnmpOid enterpriseOid = new SnmpOid("1.3.6.1.4.1.42");
+
+    /**
+     * The buffer size of the SNMP protocol adaptor.
+     * This buffer size is used for both incoming request and outgoing
+     * inform requests.
+     * <BR>The default value is 1024.
+     */
+    int bufferSize = 1024;
+
+    private transient long            startUpTime     = 0;
+    private transient DatagramSocket  socket          = null;
+    transient DatagramSocket          trapSocket      = null;
+    private transient SnmpSession     informSession   = null;
+    private transient DatagramPacket  packet          = null;
+    transient Vector<SnmpMibAgent>    mibs            = new Vector<>();
+    private transient SnmpMibTree     root;
+
+    /**
+     * Whether ACL must be used.
+     */
+    private transient boolean         useAcl = true;
+
+
+    // SENDING SNMP INFORMS STUFF
+    //---------------------------
+
+    /**
+     * Number of times to try an inform request before giving up.
+     * The default number is 3.
+     */
+    private int maxTries = 3 ;
+
+    /**
+     * The amount of time to wait for an inform response from the manager.
+     * The default amount of time is 3000 millisec.
+     */
+    private int timeout = 3 * 1000 ;
+
+    // VARIABLES REQUIRED FOR IMPLEMENTING SNMP GROUP (MIBII)
+    //-------------------------------------------------------
+
+    /**
+     * The <CODE>snmpOutTraps</CODE> value defined in MIB-II.
+     */
+    int snmpOutTraps=0;
+
+    /**
+     * The <CODE>snmpOutGetResponses</CODE> value defined in MIB-II.
+     */
+    private int snmpOutGetResponses=0;
+
+    /**
+     * The <CODE>snmpOutGenErrs</CODE> value defined in MIB-II.
+     */
+    private int snmpOutGenErrs=0;
+
+    /**
+     * The <CODE>snmpOutBadValues</CODE> value defined in MIB-II.
+     */
+    private int snmpOutBadValues=0;
+
+    /**
+     * The <CODE>snmpOutNoSuchNames</CODE> value defined in MIB-II.
+     */
+    private int snmpOutNoSuchNames=0;
+
+    /**
+     * The <CODE>snmpOutTooBigs</CODE> value defined in MIB-II.
+     */
+    private int snmpOutTooBigs=0;
+
+    /**
+     * The <CODE>snmpOutPkts</CODE> value defined in MIB-II.
+     */
+    int snmpOutPkts=0;
+
+    /**
+     * The <CODE>snmpInASNParseErrs</CODE> value defined in MIB-II.
+     */
+    private int snmpInASNParseErrs=0;
+
+    /**
+     * The <CODE>snmpInBadCommunityUses</CODE> value defined in MIB-II.
+     */
+    private int snmpInBadCommunityUses=0;
+
+    /**
+     * The <CODE>snmpInBadCommunityNames</CODE> value defined in MIB-II.
+     */
+    private int snmpInBadCommunityNames=0;
+
+    /**
+     * The <CODE>snmpInBadVersions</CODE> value defined in MIB-II.
+     */
+    private int snmpInBadVersions=0;
+
+    /**
+     * The <CODE>snmpInGetRequests</CODE> value defined in MIB-II.
+     */
+    private int snmpInGetRequests=0;
+
+    /**
+     * The <CODE>snmpInGetNexts</CODE> value defined in MIB-II.
+     */
+    private int snmpInGetNexts=0;
+
+    /**
+     * The <CODE>snmpInSetRequests</CODE> value defined in MIB-II.
+     */
+    private int snmpInSetRequests=0;
+
+    /**
+     * The <CODE>snmpInPkts</CODE> value defined in MIB-II.
+     */
+    private int snmpInPkts=0;
+
+    /**
+     * The <CODE>snmpInTotalReqVars</CODE> value defined in MIB-II.
+     */
+    private int snmpInTotalReqVars=0;
+
+    /**
+     * The <CODE>snmpInTotalSetVars</CODE> value defined in MIB-II.
+     */
+    private int snmpInTotalSetVars=0;
+
+    /**
+     * The <CODE>snmpInTotalSetVars</CODE> value defined in rfc 1907 MIB-II.
+     */
+    private int snmpSilentDrops=0;
+
+    private static final String InterruptSysCallMsg =
+        "Interrupted system call";
+    static final SnmpOid sysUpTimeOid = new SnmpOid("1.3.6.1.2.1.1.3.0") ;
+    static final SnmpOid snmpTrapOidOid = new SnmpOid("1.3.6.1.6.3.1.1.4.1.0");
+
+    private ThreadService threadService;
+
+    private static int threadNumber = 6;
+
+    static {
+        String s = System.getProperty("com.sun.jmx.snmp.threadnumber");
+
+        if (s != null) {
+            try {
+                threadNumber = Integer.parseInt(System.getProperty(s));
+            } catch (Exception e) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER,
+                        SnmpAdaptorServer.class.getName(),
+                        "<static init>",
+                        "Got wrong value for com.sun.jmx.snmp.threadnumber: " +
+                        s + ". Use the default value: " + threadNumber);
+            }
+        }
+    }
+
+    // PUBLIC CONSTRUCTORS
+    //--------------------
+
+    /**
+     * Initializes this SNMP protocol adaptor using the default port (161).
+     * Use the {@link com.sun.jmx.snmp.IPAcl.SnmpAcl} default
+     * implementation of the <CODE>InetAddressAcl</CODE> interface.
+     */
+    public SnmpAdaptorServer() {
+        this(true, null, com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_PORT,
+             null) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the specified port.
+     * Use the {@link com.sun.jmx.snmp.IPAcl.SnmpAcl} default
+     * implementation of the <CODE>InetAddressAcl</CODE> interface.
+     *
+     * @param port The port number for sending SNMP responses.
+     */
+    public SnmpAdaptorServer(int port) {
+        this(true, null, port, null) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the default port (161)
+     * and the specified IP address based ACL implementation.
+     *
+     * @param acl The <CODE>InetAddressAcl</CODE> implementation.
+     *        <code>null</code> means no ACL - everybody is authorized.
+     *
+     * @since 1.5
+     */
+    public SnmpAdaptorServer(InetAddressAcl acl) {
+        this(false, acl, com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_PORT,
+             null) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the default port (161)
+     * and the
+     * specified <CODE>InetAddress</CODE>.
+     * Use the {@link com.sun.jmx.snmp.IPAcl.SnmpAcl} default
+     * implementation of the <CODE>InetAddressAcl</CODE> interface.
+     *
+     * @param addr The IP address to bind.
+     */
+    public SnmpAdaptorServer(InetAddress addr) {
+        this(true, null, com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_PORT,
+             addr) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the specified port and the
+     * specified IP address based ACL implementation.
+     *
+     * @param acl The <CODE>InetAddressAcl</CODE> implementation.
+     *        <code>null</code> means no ACL - everybody is authorized.
+     * @param port The port number for sending SNMP responses.
+     *
+     * @since 1.5
+     */
+    public SnmpAdaptorServer(InetAddressAcl acl, int port) {
+        this(false, acl, port, null) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the specified port and the
+     * specified <CODE>InetAddress</CODE>.
+     * Use the {@link com.sun.jmx.snmp.IPAcl.SnmpAcl} default
+     * implementation of the <CODE>InetAddressAcl</CODE> interface.
+     *
+     * @param port The port number for sending SNMP responses.
+     * @param addr The IP address to bind.
+     */
+    public SnmpAdaptorServer(int port, InetAddress addr) {
+        this(true, null, port, addr) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the specified IP
+     * address based ACL implementation and the specified
+     * <CODE>InetAddress</CODE>.
+     *
+     * @param acl The <CODE>InetAddressAcl</CODE> implementation.
+     * @param addr The IP address to bind.
+     *
+     * @since 1.5
+     */
+    public SnmpAdaptorServer(InetAddressAcl acl, InetAddress addr) {
+        this(false, acl, com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_PORT,
+             addr) ;
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the specified port, the
+     * specified  address based ACL implementation and the specified
+     * <CODE>InetAddress</CODE>.
+     *
+     * @param acl The <CODE>InetAddressAcl</CODE> implementation.
+     * @param port The port number for sending SNMP responses.
+     * @param addr The IP address to bind.
+     *
+     * @since 1.5
+     */
+    public SnmpAdaptorServer(InetAddressAcl acl, int port, InetAddress addr) {
+        this(false, acl, port, addr);
+    }
+
+    /**
+     * Initializes this SNMP protocol adaptor using the specified port and the
+     * specified <CODE>InetAddress</CODE>.
+     * This constructor allows to initialize an SNMP adaptor without using
+     * the ACL mechanism (by setting the <CODE>useAcl</CODE> parameter to
+     * false).
+     * <br>This constructor must be used in particular with a platform that
+     * does not support the <CODE>java.security.acl</CODE> package like pJava.
+     *
+     * @param useAcl Specifies if this new SNMP adaptor uses the ACL mechanism.
+     * If the specified parameter is set to <CODE>true</CODE>, this
+     * constructor is equivalent to
+     * <CODE>SnmpAdaptorServer((int)port,(InetAddress)addr)</CODE>.
+     * @param port The port number for sending SNMP responses.
+     * @param addr The IP address to bind.
+     */
+    public SnmpAdaptorServer(boolean useAcl, int port, InetAddress addr) {
+        this(useAcl,null,port,addr);
+    }
+
+    // If forceAcl is `true' and InetAddressAcl is null, then a default
+    // SnmpAcl object is created.
+    //
+    private SnmpAdaptorServer(boolean forceAcl, InetAddressAcl acl,
+                              int port, InetAddress addr) {
+        super(CommunicatorServer.SNMP_TYPE) ;
+
+
+        // Initialize the ACL implementation.
+        //
+        if (acl == null && forceAcl) {
+            try {
+                acl = new SnmpAcl("SNMP protocol adaptor IP ACL");
+            } catch (UnknownHostException e) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "constructor", "UnknowHostException when creating ACL",e);
+                }
+            }
+        } else {
+            this.useAcl = (acl!=null) || forceAcl;
+        }
+
+        init(acl, port, addr) ;
+    }
+
+    // GETTERS AND SETTERS
+    //--------------------
+
+    /**
+     * Gets the number of managers that have been processed by this
+     * SNMP protocol adaptor  since its creation.
+     *
+     * @return The number of managers handled by this SNMP protocol adaptor
+     * since its creation. This counter is not reset by the <CODE>stop</CODE>
+     * method.
+     */
+    @Override
+    public int getServedClientCount() {
+        return super.getServedClientCount();
+    }
+
+    /**
+     * Gets the number of managers currently being processed by this
+     * SNMP protocol adaptor.
+     *
+     * @return The number of managers currently being processed by this
+     * SNMP protocol adaptor.
+     */
+    @Override
+    public int getActiveClientCount() {
+        return super.getActiveClientCount();
+    }
+
+    /**
+     * Gets the maximum number of managers that this SNMP protocol adaptor can
+     * process concurrently.
+     *
+     * @return The maximum number of managers that this SNMP protocol adaptor
+     *         can process concurrently.
+     */
+    @Override
+    public int getMaxActiveClientCount() {
+        return super.getMaxActiveClientCount();
+    }
+
+    /**
+     * Sets the maximum number of managers this SNMP protocol adaptor can
+     * process concurrently.
+     *
+     * @param c The number of managers.
+     *
+     * @exception java.lang.IllegalStateException This method has been invoked
+     * while the communicator was <CODE>ONLINE</CODE> or <CODE>STARTING</CODE>.
+     */
+    @Override
+    public void setMaxActiveClientCount(int c)
+        throws java.lang.IllegalStateException {
+        super.setMaxActiveClientCount(c);
+    }
+
+    /**
+     * Returns the Ip address based ACL used by this SNMP protocol adaptor.
+     * @return The <CODE>InetAddressAcl</CODE> implementation.
+     *
+     * @since 1.5
+     */
+    @Override
+    public InetAddressAcl getInetAddressAcl() {
+        return ipacl;
+    }
+
+    /**
+     * Returns the port used by this SNMP protocol adaptor for sending traps.
+     * By default, port 162 is used.
+     *
+     * @return The port number for sending SNMP traps.
+     */
+    @Override
+    public Integer getTrapPort() {
+        return new Integer(trapPort) ;
+    }
+
+    /**
+     * Sets the port used by this SNMP protocol adaptor for sending traps.
+     *
+     * @param port The port number for sending SNMP traps.
+     */
+    @Override
+    public void setTrapPort(Integer port) {
+        setTrapPort(port.intValue());
+    }
+
+    /**
+     * Sets the port used by this SNMP protocol adaptor for sending traps.
+     *
+     * @param port The port number for sending SNMP traps.
+     */
+    public void setTrapPort(int port) {
+        int val= port ;
+        if (val < 0) throw new
+            IllegalArgumentException("Trap port cannot be a negative value");
+        trapPort= val ;
+    }
+
+    /**
+     * Returns the port used by this SNMP protocol adaptor for sending
+     * inform requests. By default, port 162 is used.
+     *
+     * @return The port number for sending SNMP inform requests.
+     */
+    @Override
+    public int getInformPort() {
+        return informPort;
+    }
+
+    /**
+     * Sets the port used by this SNMP protocol adaptor for sending
+     * inform requests.
+     *
+     * @param port The port number for sending SNMP inform requests.
+     */
+    @Override
+    public void setInformPort(int port) {
+        if (port < 0)
+            throw new IllegalArgumentException("Inform request port "+
+                                               "cannot be a negative value");
+        informPort= port ;
+    }
+
+    /**
+     * Returns the protocol of this SNMP protocol adaptor.
+     *
+     * @return The string "snmp".
+     */
+    @Override
+    public String getProtocol() {
+        return "snmp";
+    }
+
+    /**
+     * Returns the buffer size of this SNMP protocol adaptor.
+     * This buffer size is used for both incoming request and outgoing
+     * inform requests.
+     * By default, buffer size 1024 is used.
+     *
+     * @return The buffer size.
+     */
+    @Override
+    public Integer getBufferSize() {
+        return new Integer(bufferSize) ;
+    }
+
+    /**
+     * Sets the buffer size of this SNMP protocol adaptor.
+     * This buffer size is used for both incoming request and outgoing
+     * inform requests.
+     *
+     * @param s The buffer size.
+     *
+     * @exception java.lang.IllegalStateException This method has been invoked
+     * while the communicator was <CODE>ONLINE</CODE> or <CODE>STARTING</CODE>.
+     */
+    @Override
+    public void setBufferSize(Integer s)
+        throws java.lang.IllegalStateException {
+        if ((state == ONLINE) || (state == STARTING)) {
+            throw new IllegalStateException("Stop server before carrying out"+
+                                            " this operation");
+        }
+        bufferSize = s.intValue() ;
+    }
+
+    /**
+     * Gets the number of times to try sending an inform request before
+     * giving up.
+     * By default, a maximum of 3 tries is used.
+     * @return The maximun number of tries.
+     */
+    @Override
+    final public int getMaxTries() {
+        return maxTries;
+    }
+
+    /**
+     * Changes the maximun number of times to try sending an inform
+     * request before giving up.
+     * @param newMaxTries The maximun number of tries.
+     */
+    @Override
+    final public synchronized void setMaxTries(int newMaxTries) {
+        if (newMaxTries < 0)
+            throw new IllegalArgumentException();
+        maxTries = newMaxTries;
+    }
+
+    /**
+     * Gets the timeout to wait for an inform response from the manager.
+     * By default, a timeout of 3 seconds is used.
+     * @return The value of the timeout property.
+     */
+    @Override
+    final public int getTimeout() {
+        return timeout;
+    }
+
+    /**
+     * Changes the timeout to wait for an inform response from the manager.
+     * @param newTimeout The timeout (in milliseconds).
+     */
+    @Override
+    final public synchronized void setTimeout(int newTimeout) {
+        if (newTimeout < 0)
+            throw new IllegalArgumentException();
+        timeout= newTimeout;
+    }
+
+    /**
+     * Returns the message factory of this SNMP protocol adaptor.
+     *
+     * @return The factory object.
+     */
+    @Override
+    public SnmpPduFactory getPduFactory() {
+        return pduFactory ;
+    }
+
+    /**
+     * Sets the message factory of this SNMP protocol adaptor.
+     *
+     * @param factory The factory object (null means the default factory).
+     */
+    @Override
+    public void setPduFactory(SnmpPduFactory factory) {
+        if (factory == null)
+            pduFactory = new SnmpPduFactoryBER() ;
+        else
+            pduFactory = factory ;
+    }
+
+    /**
+     * Set the user-data factory of this SNMP protocol adaptor.
+     *
+     * @param factory The factory object (null means no factory).
+     * @see com.sun.jmx.snmp.agent.SnmpUserDataFactory
+     */
+    @Override
+    public void setUserDataFactory(SnmpUserDataFactory factory) {
+        userDataFactory = factory ;
+    }
+
+    /**
+     * Get the user-data factory associated with this SNMP protocol adaptor.
+     *
+     * @return The factory object (null means no factory).
+     * @see com.sun.jmx.snmp.agent.SnmpUserDataFactory
+     */
+    @Override
+    public SnmpUserDataFactory getUserDataFactory() {
+        return userDataFactory;
+    }
+
+    /**
+     * Returns <CODE>true</CODE> if authentication traps are enabled.
+     * <P>
+     * When this feature is enabled, the SNMP protocol adaptor sends
+     * an <CODE>authenticationFailure</CODE> trap each time an
+     * authentication fails.
+     * <P>
+     * The default behaviour is to send authentication traps.
+     *
+     * @return <CODE>true</CODE> if authentication traps are enabled,
+     *         <CODE>false</CODE> otherwise.
+     */
+    @Override
+    public boolean getAuthTrapEnabled() {
+        return authTrapEnabled ;
+    }
+
+    /**
+     * Sets the flag indicating if traps need to be sent in case of
+     * authentication failure.
+     *
+     * @param enabled Flag indicating if traps need to be sent.
+     */
+    @Override
+    public void setAuthTrapEnabled(boolean enabled) {
+        authTrapEnabled = enabled ;
+    }
+
+    /**
+     * Returns <code>true</code> if this SNMP protocol adaptor sends a
+     * response in case of authentication failure.
+     * <P>
+     * When this feature is enabled, the SNMP protocol adaptor sends a
+     * response with <CODE>noSuchName</CODE> or <CODE>readOnly</CODE> when
+     * the authentication failed. If the flag is disabled, the
+     * SNMP protocol adaptor trashes the PDU silently.
+     * <P>
+     * The default behavior is to send responses.
+     *
+     * @return <CODE>true</CODE> if responses are sent.
+     */
+    @Override
+    public boolean getAuthRespEnabled() {
+        return authRespEnabled ;
+    }
+
+    /**
+     * Sets the flag indicating if responses need to be sent in case of
+     * authentication failure.
+     *
+     * @param enabled Flag indicating if responses need to be sent.
+     */
+    @Override
+    public void setAuthRespEnabled(boolean enabled) {
+        authRespEnabled = enabled ;
+    }
+
+    /**
+     * Returns the enterprise OID. It is used by
+     * {@link #snmpV1Trap snmpV1Trap} to fill the 'enterprise' field of the
+     * trap request.
+     *
+     * @return The OID in string format "x.x.x.x".
+     */
+    @Override
+    public String getEnterpriseOid() {
+        return enterpriseOid.toString() ;
+    }
+
+    /**
+     * Sets the enterprise OID.
+     *
+     * @param oid The OID in string format "x.x.x.x".
+     *
+     * @exception IllegalArgumentException The string format is incorrect
+     */
+    @Override
+    public void setEnterpriseOid(String oid) throws IllegalArgumentException {
+        enterpriseOid = new SnmpOid(oid) ;
+    }
+
+    /**
+     * Returns the names of the MIBs available in this SNMP protocol adaptor.
+     *
+     * @return An array of MIB names.
+     */
+    @Override
+    public String[] getMibs() {
+        String[] result = new String[mibs.size()] ;
+        int i = 0 ;
+        for (Enumeration<SnmpMibAgent> e = mibs.elements() ; e.hasMoreElements() ;) {
+            SnmpMibAgent mib = e.nextElement() ;
+            result[i++] = mib.getMibName();
+        }
+        return result ;
+    }
+
+    // GETTERS FOR SNMP GROUP (MIBII)
+    //-------------------------------
+
+    /**
+     * Returns the <CODE>snmpOutTraps</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutTraps</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutTraps() {
+        return new Long(snmpOutTraps);
+    }
+
+    /**
+     * Returns the <CODE>snmpOutGetResponses</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutGetResponses</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutGetResponses() {
+        return new Long(snmpOutGetResponses);
+    }
+
+    /**
+     * Returns the <CODE>snmpOutGenErrs</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutGenErrs</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutGenErrs() {
+        return new Long(snmpOutGenErrs);
+    }
+
+    /**
+     * Returns the <CODE>snmpOutBadValues</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutBadValues</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutBadValues() {
+        return new Long(snmpOutBadValues);
+    }
+
+    /**
+     * Returns the <CODE>snmpOutNoSuchNames</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutNoSuchNames</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutNoSuchNames() {
+        return new Long(snmpOutNoSuchNames);
+    }
+
+    /**
+     * Returns the <CODE>snmpOutTooBigs</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutTooBigs</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutTooBigs() {
+        return new Long(snmpOutTooBigs);
+    }
+
+    /**
+     * Returns the <CODE>snmpInASNParseErrs</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInASNParseErrs</CODE> value.
+     */
+    @Override
+    public Long getSnmpInASNParseErrs() {
+        return new Long(snmpInASNParseErrs);
+    }
+
+    /**
+     * Returns the <CODE>snmpInBadCommunityUses</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInBadCommunityUses</CODE> value.
+     */
+    @Override
+    public Long getSnmpInBadCommunityUses() {
+        return new Long(snmpInBadCommunityUses);
+    }
+
+    /**
+     * Returns the <CODE>snmpInBadCommunityNames</CODE> value defined in
+     * MIB-II.
+     *
+     * @return The <CODE>snmpInBadCommunityNames</CODE> value.
+     */
+    @Override
+    public Long getSnmpInBadCommunityNames() {
+        return new Long(snmpInBadCommunityNames);
+    }
+
+    /**
+     * Returns the <CODE>snmpInBadVersions</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInBadVersions</CODE> value.
+     */
+    @Override
+    public Long getSnmpInBadVersions() {
+        return new Long(snmpInBadVersions);
+    }
+
+    /**
+     * Returns the <CODE>snmpOutPkts</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpOutPkts</CODE> value.
+     */
+    @Override
+    public Long getSnmpOutPkts() {
+        return new Long(snmpOutPkts);
+    }
+
+    /**
+     * Returns the <CODE>snmpInPkts</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInPkts</CODE> value.
+     */
+    @Override
+    public Long getSnmpInPkts() {
+        return new Long(snmpInPkts);
+    }
+
+    /**
+     * Returns the <CODE>snmpInGetRequests</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInGetRequests</CODE> value.
+     */
+    @Override
+    public Long getSnmpInGetRequests() {
+        return new Long(snmpInGetRequests);
+    }
+
+    /**
+     * Returns the <CODE>snmpInGetNexts</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInGetNexts</CODE> value.
+     */
+    @Override
+    public Long getSnmpInGetNexts() {
+        return new Long(snmpInGetNexts);
+    }
+
+    /**
+     * Returns the <CODE>snmpInSetRequests</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInSetRequests</CODE> value.
+     */
+    @Override
+    public Long getSnmpInSetRequests() {
+        return new Long(snmpInSetRequests);
+    }
+
+    /**
+     * Returns the <CODE>snmpInTotalSetVars</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInTotalSetVars</CODE> value.
+     */
+    @Override
+    public Long getSnmpInTotalSetVars() {
+        return new Long(snmpInTotalSetVars);
+    }
+
+    /**
+     * Returns the <CODE>snmpInTotalReqVars</CODE> value defined in MIB-II.
+     *
+     * @return The <CODE>snmpInTotalReqVars</CODE> value.
+     */
+    @Override
+    public Long getSnmpInTotalReqVars() {
+        return new Long(snmpInTotalReqVars);
+    }
+
+    /**
+     * Returns the <CODE>snmpSilentDrops</CODE> value defined in RFC
+     * 1907 NMPv2-MIB .
+     *
+     * @return The <CODE>snmpSilentDrops</CODE> value.
+     *
+     * @since 1.5
+     */
+    @Override
+    public Long getSnmpSilentDrops() {
+        return new Long(snmpSilentDrops);
+    }
+
+    /**
+     * Returns the <CODE>snmpProxyDrops</CODE> value defined in RFC
+     * 1907 NMPv2-MIB .
+     *
+     * @return The <CODE>snmpProxyDrops</CODE> value.
+     *
+     * @since 1.5
+     */
+    @Override
+    public Long getSnmpProxyDrops() {
+        return new Long(0);
+    }
+
+
+    // PUBLIC METHODS
+    //---------------
+
+    /**
+     * Allows the MBean to perform any operations it needs before being
+     * registered in the MBean server.
+     * If the name of the SNMP protocol adaptor MBean is not specified,
+     * it is initialized with the default value:
+     * {@link com.sun.jmx.snmp.ServiceName#DOMAIN
+     *   com.sun.jmx.snmp.ServiceName.DOMAIN}:{@link
+     * com.sun.jmx.snmp.ServiceName#SNMP_ADAPTOR_SERVER
+     * com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_SERVER}.
+     * If any exception is raised, the SNMP protocol adaptor MBean will
+     * not be registered in the MBean server.
+     *
+     * @param server The MBean server to register the service with.
+     * @param name The object name.
+     *
+     * @return The name of the SNMP protocol adaptor registered.
+     *
+     * @exception java.lang.Exception
+     */
+    @Override
+    public ObjectName preRegister(MBeanServer server, ObjectName name)
+        throws java.lang.Exception {
+
+        if (name == null) {
+            name = new ObjectName(server.getDefaultDomain() + ":" +
+                             com.sun.jmx.snmp.ServiceName.SNMP_ADAPTOR_SERVER);
+        }
+        return (super.preRegister(server, name));
+    }
+
+    /**
+     * Not used in this context.
+     */
+    @Override
+    public void postRegister (Boolean registrationDone) {
+        super.postRegister(registrationDone);
+    }
+
+    /**
+     * Not used in this context.
+     */
+    @Override
+    public void preDeregister() throws java.lang.Exception {
+        super.preDeregister();
+    }
+
+    /**
+     * Not used in this context.
+     */
+    @Override
+    public void postDeregister() {
+        super.postDeregister();
+    }
+
+    /**
+     * Adds a new MIB in the SNMP MIB handler.
+     *
+     * @param mib The MIB to add.
+     *
+     * @return A reference to the SNMP MIB handler.
+     *
+     * @exception IllegalArgumentException If the parameter is null.
+     */
+    @Override
+    public SnmpMibHandler addMib(SnmpMibAgent mib)
+        throws IllegalArgumentException {
+        if (mib == null) {
+            throw new IllegalArgumentException() ;
+        }
+
+        if(!mibs.contains(mib))
+            mibs.addElement(mib);
+
+        root.register(mib);
+
+        return this;
+    }
+
+    /**
+     * Adds a new MIB in the SNMP MIB handler.
+     * This method is to be called to set a specific agent to a specific OID.
+     * This can be useful when dealing with MIB overlapping.
+     * Some OID can be implemented in more than one MIB. In this case,
+     * the OID nearer agent will be used on SNMP operations.
+     *
+     * @param mib The MIB to add.
+     * @param oids The set of OIDs this agent implements.
+     *
+     * @return A reference to the SNMP MIB handler.
+     *
+     * @exception IllegalArgumentException If the parameter is null.
+     *
+     * @since 1.5
+     */
+    @Override
+    public SnmpMibHandler addMib(SnmpMibAgent mib, SnmpOid[] oids)
+        throws IllegalArgumentException {
+        if (mib == null) {
+            throw new IllegalArgumentException() ;
+        }
+
+        //If null oid array, just add it to the mib.
+        if(oids == null)
+            return addMib(mib);
+
+        if(!mibs.contains(mib))
+            mibs.addElement(mib);
+
+        for (int i = 0; i < oids.length; i++) {
+            root.register(mib, oids[i].longValue());
+        }
+        return this;
+    }
+
+    /**
+     * Adds a new MIB in the SNMP MIB handler. In SNMP V1 and V2 the
+     * <CODE>contextName</CODE> is useless and this method
+     * is equivalent to <CODE>addMib(SnmpMibAgent mib)</CODE>.
+     *
+     * @param mib The MIB to add.
+     * @param contextName The MIB context name.
+     * @return A reference on the SNMP MIB handler.
+     *
+     * @exception IllegalArgumentException If the parameter is null.
+     *
+     * @since 1.5
+     */
+    @Override
+    public SnmpMibHandler addMib(SnmpMibAgent mib, String contextName)
+        throws IllegalArgumentException {
+        return addMib(mib);
+    }
+
+    /**
+     * Adds a new MIB in the SNMP MIB handler. In SNMP V1 and V2 the
+     * <CODE>contextName</CODE> is useless and this method
+     * is equivalent to <CODE>addMib(SnmpMibAgent mib, SnmpOid[] oids)</CODE>.
+     *
+     * @param mib The MIB to add.
+     * @param contextName The MIB context. If null is passed, will be
+     *        registered in the default context.
+     * @param oids The set of OIDs this agent implements.
+     *
+     * @return A reference to the SNMP MIB handler.
+     *
+     * @exception IllegalArgumentException If the parameter is null.
+     *
+     * @since 1.5
+     */
+    @Override
+    public SnmpMibHandler addMib(SnmpMibAgent mib,
+                                 String contextName,
+                                 SnmpOid[] oids)
+        throws IllegalArgumentException {
+
+        return addMib(mib, oids);
+    }
+
+    /**
+     * Removes the specified MIB from the SNMP protocol adaptor.
+     * In SNMP V1 and V2 the <CODE>contextName</CODE> is useless and this
+     * method is equivalent to <CODE>removeMib(SnmpMibAgent mib)</CODE>.
+     *
+     * @param mib The MIB to be removed.
+     * @param contextName The context name used at registration time.
+     *
+     * @return <CODE>true</CODE> if the specified <CODE>mib</CODE> was
+     * a MIB included in the SNMP MIB handler, <CODE>false</CODE>
+     * otherwise.
+     *
+     * @since 1.5
+     */
+    @Override
+    public boolean removeMib(SnmpMibAgent mib, String contextName) {
+        return removeMib(mib);
+    }
+
+    /**
+     * Removes the specified MIB from the SNMP protocol adaptor.
+     *
+     * @param mib The MIB to be removed.
+     *
+     * @return <CODE>true</CODE> if the specified <CODE>mib</CODE> was a MIB
+     *         included in the SNMP MIB handler, <CODE>false</CODE> otherwise.
+     */
+    @Override
+    public boolean removeMib(SnmpMibAgent mib) {
+        root.unregister(mib);
+        return (mibs.removeElement(mib)) ;
+    }
+
+    /**
+     * Removes the specified MIB from the SNMP protocol adaptor.
+     *
+     * @param mib The MIB to be removed.
+     * @param oids The oid the MIB was previously registered for.
+     * @return <CODE>true</CODE> if the specified <CODE>mib</CODE> was
+     * a MIB included in the SNMP MIB handler, <CODE>false</CODE>
+     * otherwise.
+     *
+     * @since 1.5
+     */
+    @Override
+    public boolean removeMib(SnmpMibAgent mib, SnmpOid[] oids) {
+        root.unregister(mib, oids);
+        return (mibs.removeElement(mib)) ;
+    }
+
+     /**
+     * Removes the specified MIB from the SNMP protocol adaptor.
+     *
+     * @param mib The MIB to be removed.
+     * @param contextName The context name used at registration time.
+     * @param oids The oid the MIB was previously registered for.
+     * @return <CODE>true</CODE> if the specified <CODE>mib</CODE> was
+     * a MIB included in the SNMP MIB handler, <CODE>false</CODE>
+     * otherwise.
+     *
+     * @since 1.5
+     */
+    @Override
+    public boolean removeMib(SnmpMibAgent mib,
+                             String contextName,
+                             SnmpOid[] oids) {
+        return removeMib(mib, oids);
+    }
+
+    // SUBCLASSING OF COMMUNICATOR SERVER
+    //-----------------------------------
+
+    /**
+     * Creates the datagram socket.
+     */
+    @Override
+    protected void doBind()
+        throws CommunicationException, InterruptedException {
+
+        try {
+            synchronized (this) {
+                socket = new DatagramSocket(port, address) ;
+            }
+            dbgTag = makeDebugTag();
+        } catch (SocketException e) {
+            if (e.getMessage().equals(InterruptSysCallMsg))
+                throw new InterruptedException(e.toString()) ;
+            else {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "doBind", "cannot bind on port " + port);
+                }
+                throw new CommunicationException(e) ;
+            }
+        }
+    }
+
+    /**
+     * Return the actual port to which the adaptor is bound.
+     * Can be different from the port given at construction time if
+     * that port number was 0.
+     * @return the actual port to which the adaptor is bound.
+     **/
+    @Override
+    public int getPort() {
+        synchronized (this) {
+            if (socket != null) return socket.getLocalPort();
+        }
+        return super.getPort();
+    }
+
+    /**
+     * Closes the datagram socket.
+     */
+    @Override
+    protected void doUnbind()
+        throws CommunicationException, InterruptedException {
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "doUnbind","Finally close the socket");
+        }
+        synchronized (this) {
+            if (socket != null) {
+                socket.close() ;
+                socket = null ;
+                // Important to inform finalize() that the socket is closed...
+            }
+        }
+        closeTrapSocketIfNeeded() ;
+        closeInformSocketIfNeeded() ;
+    }
+
+    private void createSnmpRequestHandler(SnmpAdaptorServer server,
+                                          int id,
+                                          DatagramSocket s,
+                                          DatagramPacket p,
+                                          SnmpMibTree tree,
+                                          Vector<SnmpMibAgent> m,
+                                          InetAddressAcl a,
+                                          SnmpPduFactory factory,
+                                          SnmpUserDataFactory dataFactory,
+                                          MBeanServer f,
+                                          ObjectName n) {
+        final SnmpRequestHandler handler =
+            new SnmpRequestHandler(this, id, s, p, tree, m, a, factory,
+                                   dataFactory, f, n);
+        threadService.submitTask(handler);
+    }
+
+    /**
+     * Reads a packet from the datagram socket and creates a request
+     * handler which decodes and processes the request.
+     */
+    @Override
+    protected void doReceive()
+        throws CommunicationException, InterruptedException {
+
+        // Let's wait for something to be received.
+        //
+        try {
+            packet = new DatagramPacket(new byte[bufferSize], bufferSize) ;
+            socket.receive(packet);
+            int state = getState();
+
+            if(state != ONLINE) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                        "doReceive","received a message but state not online, returning.");
+                }
+                return;
+            }
+
+            createSnmpRequestHandler(this, servedClientCount, socket,
+                                     packet, root, mibs, ipacl, pduFactory,
+                                     userDataFactory, topMBS, objectName);
+        } catch (SocketException e) {
+            // Let's check if we have been interrupted by stop().
+            //
+            if (e.getMessage().equals(InterruptSysCallMsg))
+                throw new InterruptedException(e.toString()) ;
+            else
+                throw new CommunicationException(e) ;
+        } catch (InterruptedIOException e) {
+            throw new InterruptedException(e.toString()) ;
+        } catch (CommunicationException e) {
+            throw e ;
+        } catch (Exception e) {
+            throw new CommunicationException(e) ;
+        }
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "doReceive", "received a message");
+        }
+    }
+
+    @Override
+    protected void doError(Exception e) throws CommunicationException {
+    }
+
+    /**
+     * Not used in this context.
+     */
+    @Override
+    protected void doProcess()
+        throws CommunicationException, InterruptedException {
+    }
+
+
+    /**
+     * The number of times the communicator server will attempt
+     * to bind before giving up.
+     * We attempt only once...
+     * @return 1
+     **/
+    @Override
+    protected int getBindTries() {
+        return 1;
+    }
+
+    /**
+     * Stops this SNMP protocol adaptor.
+     * Closes the datagram socket.
+     * <p>
+     * Has no effect if this SNMP protocol adaptor is <CODE>OFFLINE</CODE> or
+     * <CODE>STOPPING</CODE>.
+     */
+    @Override
+    public void stop(){
+
+        final int port = getPort();
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "stop", "Stopping: using port " + port);
+        }
+        if ((state == ONLINE) || (state == STARTING)){
+            super.stop();
+            try {
+                DatagramSocket sn = new DatagramSocket(0);
+                try {
+                    byte[] ob = new byte[1];
+
+                    DatagramPacket pk;
+                    if (address != null)
+                        pk = new DatagramPacket(ob , 1, address, port);
+                    else
+                        pk = new DatagramPacket(ob , 1,
+                                 java.net.InetAddress.getLocalHost(), port);
+
+                    if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                        SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                            "stop", "Sending: using port " + port);
+                    }
+                    sn.send(pk);
+                } finally {
+                    sn.close();
+                }
+            } catch (Throwable e){
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "stop", "Got unexpected Throwable", e);
+                }
+            }
+        }
+    }
+
+    // SENDING SNMP TRAPS STUFF
+    //-------------------------
+
+    /**
+     * Sends a trap using SNMP V1 trap format.
+     * <BR>The trap is sent to each destination defined in the ACL file
+     * (if available).
+     * If no ACL file or no destinations are available, the trap is sent
+     * to the local host.
+     *
+     * @param generic The generic number of the trap.
+     * @param specific The specific number of the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit defined
+     *            by <CODE>bufferSize</CODE>.
+     */
+    @Override
+    public void snmpV1Trap(int generic, int specific,
+                           SnmpVarBindList varBindList)
+        throws IOException, SnmpStatusException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpV1Trap", "generic=" + generic +
+                  ", specific=" + specific);
+        }
+
+        // First, make an SNMP V1 trap pdu
+        //
+        SnmpPduTrap pdu = new SnmpPduTrap() ;
+        pdu.address = null ;
+        pdu.port = trapPort ;
+        pdu.type = pduV1TrapPdu ;
+        pdu.version = snmpVersionOne ;
+        pdu.community = null ;
+        pdu.enterprise = enterpriseOid ;
+        pdu.genericTrap = generic ;
+        pdu.specificTrap = specific ;
+        pdu.timeStamp = getSysUpTime();
+
+        if (varBindList != null) {
+            pdu.varBindList = new SnmpVarBind[varBindList.size()] ;
+            varBindList.copyInto(pdu.varBindList);
+        }
+        else
+            pdu.varBindList = null ;
+
+        // If the local host cannot be determined, we put 0.0.0.0 in agentAddr
+        try {
+            if (address != null)
+                pdu.agentAddr = handleMultipleIpVersion(address.getAddress());
+            else pdu.agentAddr =
+              handleMultipleIpVersion(InetAddress.getLocalHost().getAddress());
+        } catch (UnknownHostException e) {
+            byte[] zeroedAddr = new byte[4];
+            pdu.agentAddr = handleMultipleIpVersion(zeroedAddr) ;
+        }
+
+        // Next, send the pdu to all destinations defined in ACL
+        //
+        sendTrapPdu(pdu) ;
+    }
+
+    private SnmpIpAddress handleMultipleIpVersion(byte[] address) {
+        if(address.length == 4)
+          return new SnmpIpAddress(address);
+        else {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                    "handleMultipleIPVersion",
+                      "Not an IPv4 address, return null");
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Sends a trap using SNMP V1 trap format.
+     * <BR>The trap is sent to the specified <CODE>InetAddress</CODE>
+     * destination using the specified community string (and the ACL file
+     * is not used).
+     *
+     * @param addr The <CODE>InetAddress</CODE> destination of the trap.
+     * @param cs The community string to be used for the trap.
+     * @param generic The generic number of the trap.
+     * @param specific The specific number of the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit defined
+     *            by <CODE>bufferSize</CODE>.
+     */
+    @Override
+    public void snmpV1Trap(InetAddress addr, String cs, int generic,
+                           int specific, SnmpVarBindList varBindList)
+        throws IOException, SnmpStatusException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpV1Trap", "generic=" + generic + ", specific=" +
+                  specific);
+        }
+
+        // First, make an SNMP V1 trap pdu
+        //
+        SnmpPduTrap pdu = new SnmpPduTrap() ;
+        pdu.address = null ;
+        pdu.port = trapPort ;
+        pdu.type = pduV1TrapPdu ;
+        pdu.version = snmpVersionOne ;
+
+        if(cs != null)
+            pdu.community = cs.getBytes();
+        else
+            pdu.community = null ;
+
+        pdu.enterprise = enterpriseOid ;
+        pdu.genericTrap = generic ;
+        pdu.specificTrap = specific ;
+        pdu.timeStamp = getSysUpTime();
+
+        if (varBindList != null) {
+            pdu.varBindList = new SnmpVarBind[varBindList.size()] ;
+            varBindList.copyInto(pdu.varBindList);
+        }
+        else
+            pdu.varBindList = null ;
+
+        // If the local host cannot be determined, we put 0.0.0.0 in agentAddr
+        try {
+            if (address != null)
+                pdu.agentAddr = handleMultipleIpVersion(address.getAddress());
+            else pdu.agentAddr =
+              handleMultipleIpVersion(InetAddress.getLocalHost().getAddress());
+        } catch (UnknownHostException e) {
+            byte[] zeroedAddr = new byte[4];
+            pdu.agentAddr = handleMultipleIpVersion(zeroedAddr) ;
+        }
+
+        // Next, send the pdu to the specified destination
+        //
+        if(addr != null)
+            sendTrapPdu(addr, pdu) ;
+        else
+            sendTrapPdu(pdu);
+    }
+
+    /**
+     * Sends a trap using SNMP V1 trap format.
+     * <BR>The trap is sent to the specified <CODE>InetAddress</CODE>
+     * destination using the specified parameters (and the ACL file is not
+     * used).
+     * Note that if the specified <CODE>InetAddress</CODE> destination is null,
+     * then the ACL file mechanism is used.
+     *
+     * @param addr The <CODE>InetAddress</CODE> destination of the trap.
+     * @param agentAddr The agent address to be used for the trap.
+     * @param cs The community string to be used for the trap.
+     * @param enterpOid The enterprise OID to be used for the trap.
+     * @param generic The generic number of the trap.
+     * @param specific The specific number of the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     * @param time The time stamp (overwrite the current time).
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit defined
+     *            by <CODE>bufferSize</CODE>.
+     *
+     * @since 1.5
+     */
+    public void snmpV1Trap(InetAddress addr,
+                           SnmpIpAddress agentAddr,
+                           String cs,
+                           SnmpOid enterpOid,
+                           int generic,
+                           int specific,
+                           SnmpVarBindList varBindList,
+                           SnmpTimeticks time)
+        throws IOException, SnmpStatusException {
+        snmpV1Trap(addr,
+                   trapPort,
+                   agentAddr,
+                   cs,
+                   enterpOid,
+                   generic,
+                   specific,
+                   varBindList,
+                   time);
+    }
+
+    /**
+     * Sends a trap using SNMP V1 trap format.
+     * <BR>The trap is sent to the specified <CODE>SnmpPeer</CODE> destination.
+     * The community string used is the one located in the
+     * <CODE>SnmpPeer</CODE> parameters
+     * (<CODE>SnmpParameters.getRdCommunity() </CODE>).
+     *
+     * @param peer The <CODE>SnmpPeer</CODE> destination of the trap.
+     * @param agentAddr The agent address to be used for the trap.
+     * @param enterpOid The enterprise OID to be used for the trap.
+     * @param generic The generic number of the trap.
+     * @param specific The specific number of the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     * @param time The time stamp (overwrite the current time).
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit
+     * defined by <CODE>bufferSize</CODE>.
+     *
+     * @since 1.5
+     */
+    @Override
+    public void snmpV1Trap(SnmpPeer peer,
+                           SnmpIpAddress agentAddr,
+                           SnmpOid enterpOid,
+                           int generic,
+                           int specific,
+                           SnmpVarBindList varBindList,
+                           SnmpTimeticks time)
+        throws IOException, SnmpStatusException {
+
+        SnmpParameters p = (SnmpParameters) peer.getParams();
+        snmpV1Trap(peer.getDestAddr(),
+                   peer.getDestPort(),
+                   agentAddr,
+                   p.getRdCommunity(),
+                   enterpOid,
+                   generic,
+                   specific,
+                   varBindList,
+                   time);
+    }
+
+    private void snmpV1Trap(InetAddress addr,
+                            int port,
+                            SnmpIpAddress agentAddr,
+                            String cs,
+                            SnmpOid enterpOid,
+                            int generic,
+                            int specific,
+                            SnmpVarBindList varBindList,
+                            SnmpTimeticks time)
+        throws IOException, SnmpStatusException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpV1Trap", "generic=" + generic + ", specific=" +
+                  specific);
+        }
+
+        // First, make an SNMP V1 trap pdu
+        //
+        SnmpPduTrap pdu = new SnmpPduTrap() ;
+        pdu.address = null ;
+        pdu.port = port ;
+        pdu.type = pduV1TrapPdu ;
+        pdu.version = snmpVersionOne ;
+
+        //Diff start
+        if(cs != null)
+            pdu.community = cs.getBytes();
+        else
+            pdu.community = null ;
+        //Diff end
+
+        // Diff start
+        if(enterpOid != null)
+            pdu.enterprise = enterpOid;
+        else
+            pdu.enterprise = enterpriseOid ;
+        //Diff end
+        pdu.genericTrap = generic ;
+        pdu.specificTrap = specific ;
+        //Diff start
+        if(time != null)
+            pdu.timeStamp = time.longValue();
+        else
+            pdu.timeStamp = getSysUpTime();
+        //Diff end
+
+        if (varBindList != null) {
+            pdu.varBindList = new SnmpVarBind[varBindList.size()] ;
+            varBindList.copyInto(pdu.varBindList);
+        }
+        else
+            pdu.varBindList = null ;
+
+        if (agentAddr == null) {
+            // If the local host cannot be determined,
+            // we put 0.0.0.0 in agentAddr
+            try {
+                final InetAddress inetAddr =
+                    (address!=null)?address:InetAddress.getLocalHost();
+                agentAddr = handleMultipleIpVersion(inetAddr.getAddress());
+            }  catch (UnknownHostException e) {
+                byte[] zeroedAddr = new byte[4];
+                agentAddr = handleMultipleIpVersion(zeroedAddr);
+            }
+        }
+
+        pdu.agentAddr = agentAddr;
+
+        // Next, send the pdu to the specified destination
+        //
+        // Diff start
+        if(addr != null)
+            sendTrapPdu(addr, pdu) ;
+        else
+            sendTrapPdu(pdu);
+
+        //End diff
+    }
+
+    /**
+     * Sends a trap using SNMP V2 trap format.
+     * <BR>The trap is sent to the specified <CODE>SnmpPeer</CODE> destination.
+     * <BR>The community string used is the one located in the
+     * <CODE>SnmpPeer</CODE> parameters
+     * (<CODE>SnmpParameters.getRdCommunity() </CODE>).
+     * <BR>The variable list included in the outgoing trap is composed of
+     * the following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with the value specified by
+     *     <CODE>time</CODE></LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *     <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     *
+     * @param peer The <CODE>SnmpPeer</CODE> destination of the trap.
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     * @param time The time stamp (overwrite the current time).
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit
+     * defined by <CODE>bufferSize</CODE>.
+     *
+     * @since 1.5
+     */
+    @Override
+    public void snmpV2Trap(SnmpPeer peer,
+                           SnmpOid trapOid,
+                           SnmpVarBindList varBindList,
+                           SnmpTimeticks time)
+        throws IOException, SnmpStatusException {
+
+        SnmpParameters p = (SnmpParameters) peer.getParams();
+        snmpV2Trap(peer.getDestAddr(),
+                   peer.getDestPort(),
+                   p.getRdCommunity(),
+                   trapOid,
+                   varBindList,
+                   time);
+    }
+
+    /**
+     * Sends a trap using SNMP V2 trap format.
+     * <BR>The trap is sent to each destination defined in the ACL file
+     * (if available). If no ACL file or no destinations are available,
+     * the trap is sent to the local host.
+     * <BR>The variable list included in the outgoing trap is composed of
+     * the following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with its current value</LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *     <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     *
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit defined
+     *            by <CODE>bufferSize</CODE>.
+     */
+    @Override
+    public void snmpV2Trap(SnmpOid trapOid, SnmpVarBindList varBindList)
+        throws IOException, SnmpStatusException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpV2Trap", "trapOid=" + trapOid);
+        }
+
+        // First, make an SNMP V2 trap pdu
+        // We clone varBindList and insert sysUpTime and snmpTrapOid
+        //
+        SnmpPduRequest pdu = new SnmpPduRequest() ;
+        pdu.address = null ;
+        pdu.port = trapPort ;
+        pdu.type = pduV2TrapPdu ;
+        pdu.version = snmpVersionTwo ;
+        pdu.community = null ;
+
+        SnmpVarBindList fullVbl ;
+        if (varBindList != null)
+            fullVbl = varBindList.clone() ;
+        else
+            fullVbl = new SnmpVarBindList(2) ;
+        SnmpTimeticks sysUpTimeValue = new SnmpTimeticks(getSysUpTime()) ;
+        fullVbl.insertElementAt(new SnmpVarBind(snmpTrapOidOid, trapOid), 0) ;
+        fullVbl.insertElementAt(new SnmpVarBind(sysUpTimeOid, sysUpTimeValue),
+                                0);
+        pdu.varBindList = new SnmpVarBind[fullVbl.size()] ;
+        fullVbl.copyInto(pdu.varBindList) ;
+
+        // Next, send the pdu to all destinations defined in ACL
+        //
+        sendTrapPdu(pdu) ;
+    }
+
+    /**
+     * Sends a trap using SNMP V2 trap format.
+     * <BR>The trap is sent to the specified <CODE>InetAddress</CODE>
+     * destination using the specified community string (and the ACL file
+     * is not used).
+     * <BR>The variable list included in the outgoing trap is composed of
+     * the following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with its current value</LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *     <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     *
+     * @param addr The <CODE>InetAddress</CODE> destination of the trap.
+     * @param cs The community string to be used for the trap.
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit
+     *            defined by <CODE>bufferSize</CODE>.
+     */
+    @Override
+    public void snmpV2Trap(InetAddress addr, String cs, SnmpOid trapOid,
+                           SnmpVarBindList varBindList)
+        throws IOException, SnmpStatusException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpV2Trap", "trapOid=" + trapOid);
+        }
+
+        // First, make an SNMP V2 trap pdu
+        // We clone varBindList and insert sysUpTime and snmpTrapOid
+        //
+        SnmpPduRequest pdu = new SnmpPduRequest() ;
+        pdu.address = null ;
+        pdu.port = trapPort ;
+        pdu.type = pduV2TrapPdu ;
+        pdu.version = snmpVersionTwo ;
+
+        if(cs != null)
+            pdu.community = cs.getBytes();
+        else
+            pdu.community = null;
+
+        SnmpVarBindList fullVbl ;
+        if (varBindList != null)
+            fullVbl = varBindList.clone() ;
+        else
+            fullVbl = new SnmpVarBindList(2) ;
+        SnmpTimeticks sysUpTimeValue = new SnmpTimeticks(getSysUpTime()) ;
+        fullVbl.insertElementAt(new SnmpVarBind(snmpTrapOidOid, trapOid), 0) ;
+        fullVbl.insertElementAt(new SnmpVarBind(sysUpTimeOid, sysUpTimeValue),
+                                0);
+        pdu.varBindList = new SnmpVarBind[fullVbl.size()] ;
+        fullVbl.copyInto(pdu.varBindList) ;
+
+        // Next, send the pdu to the specified destination
+        //
+        if(addr != null)
+            sendTrapPdu(addr, pdu);
+        else
+            sendTrapPdu(pdu);
+    }
+
+    /**
+     * Sends a trap using SNMP V2 trap format.
+     * <BR>The trap is sent to the specified <CODE>InetAddress</CODE>
+     * destination using the specified parameters (and the ACL file is not
+     * used).
+     * Note that if the specified <CODE>InetAddress</CODE> destination is null,
+     * then the ACL file mechanism is used.
+     * <BR>The variable list included in the outgoing trap is composed of the
+     * following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with the value specified by
+     *     <CODE>time</CODE></LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *     <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     *
+     * @param addr The <CODE>InetAddress</CODE> destination of the trap.
+     * @param cs The community string to be used for the trap.
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     * @param time The time stamp (overwrite the current time).
+     *
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit
+     * defined by <CODE>bufferSize</CODE>.
+     *
+     * @since 1.5
+     */
+    public void snmpV2Trap(InetAddress addr,
+                           String cs,
+                           SnmpOid trapOid,
+                           SnmpVarBindList varBindList,
+                           SnmpTimeticks time)
+        throws IOException, SnmpStatusException {
+
+        snmpV2Trap(addr,
+                   trapPort,
+                   cs,
+                   trapOid,
+                   varBindList,
+                   time);
+    }
+
+    private void snmpV2Trap(InetAddress addr,
+                            int port,
+                            String cs,
+                            SnmpOid trapOid,
+                            SnmpVarBindList varBindList,
+                            SnmpTimeticks time)
+        throws IOException, SnmpStatusException {
+
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            final StringBuilder strb = new StringBuilder()
+                .append("trapOid=").append(trapOid)
+                .append("\ncommunity=").append(cs)
+                .append("\naddr=").append(addr)
+                .append("\nvarBindList=").append(varBindList)
+                .append("\ntime=").append(time)
+                .append("\ntrapPort=").append(port);
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpV2Trap", strb.toString());
+        }
+
+        // First, make an SNMP V2 trap pdu
+        // We clone varBindList and insert sysUpTime and snmpTrapOid
+        //
+        SnmpPduRequest pdu = new SnmpPduRequest() ;
+        pdu.address = null ;
+        pdu.port = port ;
+        pdu.type = pduV2TrapPdu ;
+        pdu.version = snmpVersionTwo ;
+
+        if(cs != null)
+            pdu.community = cs.getBytes();
+        else
+            pdu.community = null;
+
+        SnmpVarBindList fullVbl ;
+        if (varBindList != null)
+            fullVbl = varBindList.clone() ;
+        else
+            fullVbl = new SnmpVarBindList(2) ;
+
+        // Only difference with other
+        SnmpTimeticks sysUpTimeValue;
+        if(time != null)
+            sysUpTimeValue = time;
+        else
+            sysUpTimeValue = new SnmpTimeticks(getSysUpTime()) ;
+        //End of diff
+
+        fullVbl.insertElementAt(new SnmpVarBind(snmpTrapOidOid, trapOid), 0) ;
+        fullVbl.insertElementAt(new SnmpVarBind(sysUpTimeOid, sysUpTimeValue),
+                                0);
+        pdu.varBindList = new SnmpVarBind[fullVbl.size()] ;
+        fullVbl.copyInto(pdu.varBindList) ;
+
+        // Next, send the pdu to the specified destination
+        //
+        // Diff start
+        if(addr != null)
+            sendTrapPdu(addr, pdu) ;
+        else
+            sendTrapPdu(pdu);
+        //End diff
+    }
+
+    /**
+     * Send the specified trap PDU to the passed <CODE>InetAddress</CODE>.
+     * @param address The destination address.
+     * @param pdu The pdu to send.
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit
+     * defined by <CODE>bufferSize</CODE>.
+     *
+     * @since 1.5
+     */
+    @Override
+    public void snmpPduTrap(InetAddress address, SnmpPduPacket pdu)
+            throws IOException, SnmpStatusException {
+
+        if(address != null)
+            sendTrapPdu(address, pdu);
+        else
+            sendTrapPdu(pdu);
+    }
+
+    /**
+     * Send the specified trap PDU to the passed <CODE>SnmpPeer</CODE>.
+     * @param peer The destination peer. The Read community string is used of
+     * <CODE>SnmpParameters</CODE> is used as the trap community string.
+     * @param pdu The pdu to send.
+     * @exception IOException An I/O error occurred while sending the trap.
+     * @exception SnmpStatusException If the trap exceeds the limit defined
+     * by <CODE>bufferSize</CODE>.
+     * @since 1.5
+     */
+    @Override
+    public void snmpPduTrap(SnmpPeer peer,
+                            SnmpPduPacket pdu)
+        throws IOException, SnmpStatusException {
+        if(peer != null) {
+            pdu.port = peer.getDestPort();
+            sendTrapPdu(peer.getDestAddr(), pdu);
+        }
+        else {
+            pdu.port = getTrapPort().intValue();
+            sendTrapPdu(pdu);
+        }
+    }
+
+    /**
+     * Send the specified trap PDU to every destinations from the ACL file.
+     */
+    private void sendTrapPdu(SnmpPduPacket pdu)
+     throws SnmpStatusException, IOException {
+
+        // Make an SNMP message from the pdu
+        //
+        SnmpMessage msg = null ;
+        try {
+            msg = (SnmpMessage)pduFactory.encodeSnmpPdu(pdu, bufferSize) ;
+            if (msg == null) {
+                throw new SnmpStatusException(
+                          SnmpDefinitions.snmpRspAuthorizationError) ;
+            }
+        }
+        catch (SnmpTooBigException x) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                    "sendTrapPdu", "Trap pdu is too big. " +
+                     "Trap hasn't been sent to anyone" );
+            }
+            throw new SnmpStatusException(SnmpDefinitions.snmpRspTooBig) ;
+            // FIXME: is the right exception to throw ?
+            // We could simply forward SnmpTooBigException ?
+        }
+
+        // Now send the SNMP message to each destination
+        //
+        int sendingCount = 0 ;
+        openTrapSocketIfNeeded() ;
+        if (ipacl != null) {
+            Enumeration<InetAddress> ed = ipacl.getTrapDestinations() ;
+            while (ed.hasMoreElements()) {
+                msg.address = ed.nextElement() ;
+                Enumeration<String> ec = ipacl.getTrapCommunities(msg.address) ;
+                while (ec.hasMoreElements()) {
+                    msg.community = ec.nextElement().getBytes() ;
+                    try {
+                        sendTrapMessage(msg) ;
+                        sendingCount++ ;
+                    }
+                    catch (SnmpTooBigException x) {
+                        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                            SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                                "sendTrapPdu", "Trap pdu is too big. " +
+                                 "Trap hasn't been sent to "+msg.address);
+                        }
+                    }
+                }
+            }
+        }
+
+        // If there is no destination defined or if everything has failed
+        // we tried to send the trap to the local host (as suggested by
+        // mister Olivier Reisacher).
+        //
+        if (sendingCount == 0) {
+            try {
+                msg.address = InetAddress.getLocalHost() ;
+                sendTrapMessage(msg) ;
+            } catch (SnmpTooBigException x) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "sendTrapPdu", "Trap pdu is too big. " +
+                         "Trap hasn't been sent.");
+                }
+            } catch (UnknownHostException e) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "sendTrapPdu", "Trap pdu is too big. " +
+                         "Trap hasn't been sent.");
+                }
+            }
+        }
+
+        closeTrapSocketIfNeeded() ;
+    }
+
+    /**
+     * Send the specified trap PDU to the specified destination.
+     */
+    private void sendTrapPdu(InetAddress addr, SnmpPduPacket pdu)
+        throws SnmpStatusException, IOException {
+
+        // Make an SNMP message from the pdu
+        //
+        SnmpMessage msg = null ;
+        try {
+            msg = (SnmpMessage)pduFactory.encodeSnmpPdu(pdu, bufferSize) ;
+            if (msg == null) {
+                throw new SnmpStatusException(
+                          SnmpDefinitions.snmpRspAuthorizationError) ;
+            }
+        } catch (SnmpTooBigException x) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                    "sendTrapPdu", "Trap pdu is too big. " +
+                     "Trap hasn't been sent to the specified host.");
+            }
+            throw new SnmpStatusException(SnmpDefinitions.snmpRspTooBig) ;
+            // FIXME: is the right exception to throw ?
+            // We could simply forward SnmpTooBigException ?
+        }
+
+        // Now send the SNMP message to specified destination
+        //
+        openTrapSocketIfNeeded() ;
+        if (addr != null) {
+            msg.address = addr;
+            try {
+                sendTrapMessage(msg) ;
+            } catch (SnmpTooBigException x) {
+                if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_ADAPTOR_LOGGER.logp(Level.FINEST, dbgTag,
+                        "sendTrapPdu", "Trap pdu is too big. " +
+                         "Trap hasn't been sent to " +  msg.address);
+                }
+            }
+        }
+
+        closeTrapSocketIfNeeded() ;
+    }
+
+    /**
+     * Send the specified message on trapSocket.
+     */
+    private void sendTrapMessage(SnmpMessage msg)
+        throws IOException, SnmpTooBigException {
+
+        byte[] buffer = new byte[bufferSize] ;
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length) ;
+        int encodingLength = msg.encodeMessage(buffer) ;
+        packet.setLength(encodingLength) ;
+        packet.setAddress(msg.address) ;
+        packet.setPort(msg.port) ;
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "sendTrapMessage", "sending trap to " + msg.address + ":" +
+                  msg.port);
+        }
+        trapSocket.send(packet) ;
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "sendTrapMessage", "sent to " + msg.address + ":" +
+                  msg.port);
+        }
+        snmpOutTraps++;
+        snmpOutPkts++;
+    }
+
+    /**
+     * Open trapSocket if it's not already done.
+     */
+    synchronized void openTrapSocketIfNeeded() throws SocketException {
+        if (trapSocket == null) {
+            trapSocket = new DatagramSocket(0, address) ;
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                    "openTrapSocketIfNeeded", "using port " +
+                      trapSocket.getLocalPort() + " to send traps");
+            }
+        }
+    }
+
+    /**
+     * Close trapSocket if the SNMP protocol adaptor is not ONLINE.
+     */
+    synchronized void closeTrapSocketIfNeeded() {
+        if ((trapSocket != null) && (state != ONLINE)) {
+            trapSocket.close() ;
+            trapSocket = null ;
+        }
+    }
+
+    // SENDING SNMP INFORMS STUFF
+    //---------------------------
+
+    /**
+     * Sends an inform using SNMP V2 inform request format.
+     * <BR>The inform request is sent to each destination defined in the ACL
+     * file (if available).
+     * If no ACL file or no destinations are available, the inform request is
+     * sent to the local host.
+     * <BR>The variable list included in the outgoing inform is composed of
+     * the following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with its current value</LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *     <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     * To send an inform request, the SNMP adaptor server must be active.
+     *
+     * @param cb The callback that is invoked when a request is complete.
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @return A vector of {@link com.sun.jmx.snmp.daemon.SnmpInformRequest}
+     *         objects.
+     *         <P>If there is no destination host for this inform request,
+     *         the returned vector will be empty.
+     *
+     * @exception IllegalStateException  This method has been invoked while
+     *            the SNMP adaptor server was not active.
+     * @exception IOException An I/O error occurred while sending the
+     *            inform request.
+     * @exception SnmpStatusException If the inform request exceeds the
+     *            limit defined by <CODE>bufferSize</CODE>.
+     */
+    @Override
+    public Vector<SnmpInformRequest> snmpInformRequest(SnmpInformHandler cb,
+                                                       SnmpOid trapOid,
+                                                       SnmpVarBindList varBindList)
+        throws IllegalStateException, IOException, SnmpStatusException {
+
+        if (!isActive()) {
+            throw new IllegalStateException(
+               "Start SNMP adaptor server before carrying out this operation");
+        }
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpInformRequest", "trapOid=" + trapOid);
+        }
+
+        // First, make an SNMP inform pdu:
+        // We clone varBindList and insert sysUpTime and snmpTrapOid variables.
+        //
+        SnmpVarBindList fullVbl ;
+        if (varBindList != null)
+            fullVbl = varBindList.clone() ;
+        else
+            fullVbl = new SnmpVarBindList(2) ;
+        SnmpTimeticks sysUpTimeValue = new SnmpTimeticks(getSysUpTime()) ;
+        fullVbl.insertElementAt(new SnmpVarBind(snmpTrapOidOid, trapOid), 0) ;
+        fullVbl.insertElementAt(new SnmpVarBind(sysUpTimeOid, sysUpTimeValue),
+                                0);
+
+        // Next, send the pdu to the specified destination
+        //
+        openInformSocketIfNeeded() ;
+
+        // Now send the SNMP message to each destination
+        //
+        Vector<SnmpInformRequest> informReqList = new Vector<>();
+        InetAddress addr;
+        String cs;
+        if (ipacl != null) {
+            Enumeration<InetAddress> ed = ipacl.getInformDestinations() ;
+            while (ed.hasMoreElements()) {
+                addr = ed.nextElement() ;
+                Enumeration<String> ec = ipacl.getInformCommunities(addr) ;
+                while (ec.hasMoreElements()) {
+                    cs = ec.nextElement() ;
+                    informReqList.addElement(
+                       informSession.makeAsyncRequest(addr, cs, cb,
+                                              fullVbl,getInformPort())) ;
+                }
+            }
+        }
+
+        return informReqList ;
+    }
+
+    /**
+     * Sends an inform using SNMP V2 inform request format.
+     * <BR>The inform is sent to the specified <CODE>InetAddress</CODE>
+     * destination
+     * using the specified community string.
+     * <BR>The variable list included in the outgoing inform is composed
+     *     of the following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with its current value</LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *      <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     * To send an inform request, the SNMP adaptor server must be active.
+     *
+     * @param addr The <CODE>InetAddress</CODE> destination for this inform
+     *             request.
+     * @param cs The community string to be used for the inform request.
+     * @param cb The callback that is invoked when a request is complete.
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @return The inform request object.
+     *
+     * @exception IllegalStateException  This method has been invoked
+     *            while the SNMP adaptor server was not active.
+     * @exception IOException An I/O error occurred while sending the
+     *            inform request.
+     * @exception SnmpStatusException If the inform request exceeds the
+     *            limit defined by <CODE>bufferSize</CODE>.
+     */
+    @Override
+    public SnmpInformRequest snmpInformRequest(InetAddress addr,
+                                               String cs,
+                                               SnmpInformHandler cb,
+                                               SnmpOid trapOid,
+                                               SnmpVarBindList varBindList)
+        throws IllegalStateException, IOException, SnmpStatusException {
+
+        return snmpInformRequest(addr,
+                                 getInformPort(),
+                                 cs,
+                                 cb,
+                                 trapOid,
+                                 varBindList);
+    }
+
+    /**
+     * Sends an inform using SNMP V2 inform request format.
+     * <BR>The inform is sent to the specified <CODE>SnmpPeer</CODE>
+     *     destination.
+     * <BR>The community string used is the one located in the
+     *     <CODE>SnmpPeer</CODE> parameters
+     *     (<CODE>SnmpParameters.getInformCommunity() </CODE>).
+     * <BR>The variable list included in the outgoing inform is composed
+     *     of the following items:
+     * <UL>
+     * <LI><CODE>sysUpTime.0</CODE> with its current value</LI>
+     * <LI><CODE>snmpTrapOid.0</CODE> with the value specified by
+     *     <CODE>trapOid</CODE></LI>
+     * <LI><CODE>all the (oid,values)</CODE> from the specified
+     *     <CODE>varBindList</CODE></LI>
+     * </UL>
+     * To send an inform request, the SNMP adaptor server must be active.
+     *
+     * @param peer The <CODE>SnmpPeer</CODE> destination for this inform
+     *             request.
+     * @param cb The callback that is invoked when a request is complete.
+     * @param trapOid The OID identifying the trap.
+     * @param varBindList A list of <CODE>SnmpVarBind</CODE> instances or null.
+     *
+     * @return The inform request object.
+     *
+     * @exception IllegalStateException  This method has been invoked while
+     *            the SNMP adaptor server was not active.
+     * @exception IOException An I/O error occurred while sending the
+     *            inform request.
+     * @exception SnmpStatusException If the inform request exceeds the
+     *            limit defined by <CODE>bufferSize</CODE>.
+     *
+     * @since 1.5
+     */
+    @Override
+    public SnmpInformRequest snmpInformRequest(SnmpPeer peer,
+                                               SnmpInformHandler cb,
+                                               SnmpOid trapOid,
+                                               SnmpVarBindList varBindList)
+        throws IllegalStateException, IOException, SnmpStatusException {
+
+        SnmpParameters p = (SnmpParameters) peer.getParams();
+        return snmpInformRequest(peer.getDestAddr(),
+                                 peer.getDestPort(),
+                                 p.getInformCommunity(),
+                                 cb,
+                                 trapOid,
+                                 varBindList);
+    }
+
+    /**
+     * Method that maps an SNMP error status in the passed protocolVersion
+     * according to the provided pdu type.
+     * @param errorStatus The error status to convert.
+     * @param protocolVersion The protocol version.
+     * @param reqPduType The pdu type.
+     */
+    public static int mapErrorStatus(int errorStatus,
+                                     int protocolVersion,
+                                     int reqPduType) {
+        return SnmpSubRequestHandler.mapErrorStatus(errorStatus,
+                                                    protocolVersion,
+                                                    reqPduType);
+    }
+
+    private SnmpInformRequest snmpInformRequest(InetAddress addr,
+                                                int port,
+                                                String cs,
+                                                SnmpInformHandler cb,
+                                                SnmpOid trapOid,
+                                                SnmpVarBindList varBindList)
+        throws IllegalStateException, IOException, SnmpStatusException {
+
+        if (!isActive()) {
+            throw new IllegalStateException(
+              "Start SNMP adaptor server before carrying out this operation");
+        }
+        if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+            SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                "snmpInformRequest", "trapOid=" + trapOid);
+        }
+
+        // First, make an SNMP inform pdu:
+        // We clone varBindList and insert sysUpTime and snmpTrapOid variables.
+        //
+        SnmpVarBindList fullVbl ;
+        if (varBindList != null)
+            fullVbl = varBindList.clone() ;
+        else
+            fullVbl = new SnmpVarBindList(2) ;
+        SnmpTimeticks sysUpTimeValue = new SnmpTimeticks(getSysUpTime()) ;
+        fullVbl.insertElementAt(new SnmpVarBind(snmpTrapOidOid, trapOid), 0) ;
+        fullVbl.insertElementAt(new SnmpVarBind(sysUpTimeOid, sysUpTimeValue),
+                                0);
+
+        // Next, send the pdu to the specified destination
+        //
+        openInformSocketIfNeeded() ;
+        return informSession.makeAsyncRequest(addr, cs, cb, fullVbl, port) ;
+    }
+
+
+    /**
+     * Open informSocket if it's not already done.
+     */
+    synchronized void openInformSocketIfNeeded() throws SocketException {
+        if (informSession == null) {
+            informSession = new SnmpSession(this) ;
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                   "openInformSocketIfNeeded",
+                      "to send inform requests and receive inform responses");
+            }
+        }
+    }
+
+    /**
+     * Close informSocket if the SNMP protocol adaptor is not ONLINE.
+     */
+    synchronized void closeInformSocketIfNeeded() {
+        if ((informSession != null) && (state != ONLINE)) {
+            informSession.destroySession() ;
+            informSession = null ;
+        }
+    }
+
+    /**
+     * Gets the IP address to bind.
+     * This getter is used to initialize the DatagramSocket in the
+     * SnmpSocket object created for the inform request stuff.
+     */
+    InetAddress getAddress() {
+        return address;
+    }
+
+
+    // PROTECTED METHODS
+    //------------------
+
+    /**
+     * Finalizer of the SNMP protocol adaptor objects.
+     * This method is called by the garbage collector on an object
+     * when garbage collection determines that there are no more
+     * references to the object.
+     * <P>Closes the datagram socket associated to this SNMP protocol adaptor.
+     */
+    @Override
+    protected void finalize() {
+        try {
+            if (socket != null) {
+                socket.close() ;
+                socket = null ;
+            }
+
+            threadService.terminate();
+        } catch (Exception e) {
+            if (SNMP_ADAPTOR_LOGGER.isLoggable(Level.FINER)) {
+                SNMP_ADAPTOR_LOGGER.logp(Level.FINER, dbgTag,
+                   "finalize", "Exception in finalizer", e);
+            }
+        }
+    }
+
+    // PACKAGE METHODS
+    //----------------
+
+    /**
+     * Returns the string used in debug traces.
+     */
+    @Override
+    String makeDebugTag() {
+        return "SnmpAdaptorServer["+ getProtocol() + ":" + getPort() + "]";
+    }
+
+    void updateRequestCounters(int pduType) {
+        switch(pduType)  {
+
+        case pduGetRequestPdu:
+            snmpInGetRequests++;
+            break;
+        case pduGetNextRequestPdu:
+            snmpInGetNexts++;
+            break;
+        case pduSetRequestPdu:
+            snmpInSetRequests++;
+            break;
+        default:
+            break;
+        }
+        snmpInPkts++ ;
+    }
+
+    void updateErrorCounters(int errorStatus) {
+        switch(errorStatus) {
+
+        case snmpRspNoError:
+            snmpOutGetResponses++;
+            break;
+        case snmpRspGenErr:
+            snmpOutGenErrs++;
+            break;
+        case snmpRspBadValue:
+            snmpOutBadValues++;
+            break;
+        case snmpRspNoSuchName:
+            snmpOutNoSuchNames++;
+            break;
+        case snmpRspTooBig:
+            snmpOutTooBigs++;
+            break;
+        default:
+            break;
+        }
+        snmpOutPkts++ ;
+    }
+
+    void updateVarCounters(int pduType, int n) {
+        switch(pduType) {
+
+        case pduGetRequestPdu:
+        case pduGetNextRequestPdu:
+        case pduGetBulkRequestPdu:
+            snmpInTotalReqVars += n ;
+            break ;
+        case pduSetRequestPdu:
+            snmpInTotalSetVars += n ;
+            break ;
+        }
+    }
+
+    void incSnmpInASNParseErrs(int n) {
+        snmpInASNParseErrs += n ;
+    }
+
+    void incSnmpInBadVersions(int n) {
+        snmpInBadVersions += n ;
+    }
+
+    void incSnmpInBadCommunityUses(int n) {
+        snmpInBadCommunityUses += n ;
+    }
+
+    void incSnmpInBadCommunityNames(int n) {
+        snmpInBadCommunityNames += n ;
+    }
+
+    void incSnmpSilentDrops(int n) {
+        snmpSilentDrops += n ;
+    }
+    // PRIVATE METHODS
+    //----------------
+
+    /**
+     * Returns the time (in hundreths of second) elapsed since the SNMP
+     * protocol adaptor startup.
+     */
+    long getSysUpTime() {
+        return (System.currentTimeMillis() - startUpTime) / 10 ;
+    }
+
+    /**
+     * Control the way the SnmpAdaptorServer service is deserialized.
+     */
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+
+        // Call the default deserialization of the object.
+        //
+        stream.defaultReadObject();
+
+        // Call the specific initialization for the SnmpAdaptorServer service.
+        // This is for transient structures to be initialized to specific
+        // default values.
+        //
+        mibs      = new Vector<>() ;
+    }
+
+    /**
+     * Common initializations.
+     */
+    private void init(InetAddressAcl acl, int p, InetAddress a) {
+
+        root= new SnmpMibTree();
+
+        // The default Agent is initialized with a SnmpErrorHandlerAgent agent.
+        root.setDefaultAgent(new SnmpErrorHandlerAgent());
+
+        // For the trap time, use the time the agent started ...
+        //
+        startUpTime= java.lang.System.currentTimeMillis();
+        maxActiveClientCount = 10;
+
+        // Create the default message factory
+        pduFactory = new SnmpPduFactoryBER() ;
+
+        port = p ;
+        ipacl = acl ;
+        address = a ;
+
+        if ((ipacl == null) && (useAcl == true))
+            throw new IllegalArgumentException("ACL object cannot be null") ;
+
+        threadService = new ThreadService(threadNumber);
+    }
+
+    SnmpMibAgent getAgentMib(SnmpOid oid) {
+        return root.getAgentMib(oid);
+    }
+
+    @Override
+    protected Thread createMainThread() {
+        final Thread t = super.createMainThread();
+        t.setDaemon(true);
+        return t;
+    }
+
+}

@@ -1,181 +1,175 @@
-/*     */ package java.nio.file;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.nio.file.attribute.FileAttribute;
-/*     */ import java.nio.file.attribute.PosixFilePermission;
-/*     */ import java.nio.file.attribute.PosixFilePermissions;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.SecureRandom;
-/*     */ import java.util.EnumSet;
-/*     */ import java.util.Set;
-/*     */ import sun.security.action.GetPropertyAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class TempFileHelper
-/*     */ {
-/*  50 */   private static final Path tmpdir = Paths.get(AccessController.<String>doPrivileged(new GetPropertyAction("java.io.tmpdir")), new String[0]);
-/*     */ 
-/*     */   
-/*  53 */   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
-/*     */ 
-/*     */   
-/*  56 */   private static final SecureRandom random = new SecureRandom();
-/*     */   private static Path generatePath(String paramString1, String paramString2, Path paramPath) {
-/*  58 */     long l = random.nextLong();
-/*  59 */     l = (l == Long.MIN_VALUE) ? 0L : Math.abs(l);
-/*  60 */     Path path = paramPath.getFileSystem().getPath(paramString1 + Long.toString(l) + paramString2, new String[0]);
-/*     */     
-/*  62 */     if (path.getParent() != null)
-/*  63 */       throw new IllegalArgumentException("Invalid prefix or suffix"); 
-/*  64 */     return paramPath.resolve(path);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class PosixPermissions
-/*     */   {
-/*  70 */     static final FileAttribute<Set<PosixFilePermission>> filePermissions = PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-/*     */     
-/*  72 */     static final FileAttribute<Set<PosixFilePermission>> dirPermissions = PosixFilePermissions.asFileAttribute(
-/*  73 */         EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Path create(Path paramPath, String paramString1, String paramString2, boolean paramBoolean, FileAttribute<?>[] paramArrayOfFileAttribute) throws IOException {
-/*     */     FileAttribute[] arrayOfFileAttribute;
-/*  87 */     if (paramString1 == null)
-/*  88 */       paramString1 = ""; 
-/*  89 */     if (paramString2 == null)
-/*  90 */       paramString2 = paramBoolean ? "" : ".tmp"; 
-/*  91 */     if (paramPath == null) {
-/*  92 */       paramPath = tmpdir;
-/*     */     }
-/*     */ 
-/*     */     
-/*  96 */     if (isPosix && paramPath.getFileSystem() == FileSystems.getDefault()) {
-/*  97 */       if (paramArrayOfFileAttribute.length == 0) {
-/*     */         
-/*  99 */         arrayOfFileAttribute = new FileAttribute[1];
-/* 100 */         arrayOfFileAttribute[0] = paramBoolean ? PosixPermissions.dirPermissions : PosixPermissions.filePermissions;
-/*     */       }
-/*     */       else {
-/*     */         
-/* 104 */         boolean bool = false;
-/* 105 */         for (byte b = 0; b < arrayOfFileAttribute.length; b++) {
-/* 106 */           if (arrayOfFileAttribute[b].name().equals("posix:permissions")) {
-/* 107 */             bool = true;
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 111 */         if (!bool) {
-/* 112 */           FileAttribute[] arrayOfFileAttribute1 = new FileAttribute[arrayOfFileAttribute.length + 1];
-/* 113 */           System.arraycopy(arrayOfFileAttribute, 0, arrayOfFileAttribute1, 0, arrayOfFileAttribute.length);
-/* 114 */           arrayOfFileAttribute = arrayOfFileAttribute1;
-/* 115 */           arrayOfFileAttribute[arrayOfFileAttribute.length - 1] = paramBoolean ? PosixPermissions.dirPermissions : PosixPermissions.filePermissions;
-/*     */         } 
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 123 */     SecurityManager securityManager = System.getSecurityManager();
-/*     */     while (true) {
-/*     */       Path path;
-/*     */       try {
-/* 127 */         path = generatePath(paramString1, paramString2, paramPath);
-/* 128 */       } catch (InvalidPathException invalidPathException) {
-/*     */         
-/* 130 */         if (securityManager != null)
-/* 131 */           throw new IllegalArgumentException("Invalid prefix or suffix"); 
-/* 132 */         throw invalidPathException;
-/*     */       } 
-/*     */       try {
-/* 135 */         if (paramBoolean) {
-/* 136 */           return Files.createDirectory(path, (FileAttribute<?>[])arrayOfFileAttribute);
-/*     */         }
-/* 138 */         return Files.createFile(path, (FileAttribute<?>[])arrayOfFileAttribute);
-/*     */       }
-/* 140 */       catch (SecurityException securityException) {
-/*     */         
-/* 142 */         if (paramPath == tmpdir && securityManager != null)
-/* 143 */           throw new SecurityException("Unable to create temporary file or directory"); 
-/* 144 */         throw securityException;
-/* 145 */       } catch (FileAlreadyExistsException fileAlreadyExistsException) {}
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Path createTempFile(Path paramPath, String paramString1, String paramString2, FileAttribute<?>[] paramArrayOfFileAttribute) throws IOException {
-/* 161 */     return create(paramPath, paramString1, paramString2, false, paramArrayOfFileAttribute);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Path createTempDirectory(Path paramPath, String paramString, FileAttribute<?>[] paramArrayOfFileAttribute) throws IOException {
-/* 173 */     return create(paramPath, paramString, null, true, paramArrayOfFileAttribute);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\file\TempFileHelper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.nio.file;
+
+import java.util.Set;
+import java.util.EnumSet;
+import java.security.SecureRandom;
+import static java.security.AccessController.*;
+import java.io.IOException;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import static java.nio.file.attribute.PosixFilePermission.*;
+import sun.security.action.GetPropertyAction;
+
+
+/**
+ * Helper class to support creation of temporary files and directories with
+ * initial attributes.
+ */
+
+class TempFileHelper {
+    private TempFileHelper() { }
+
+    // temporary directory location
+    private static final Path tmpdir =
+        Paths.get(doPrivileged(new GetPropertyAction("java.io.tmpdir")));
+
+    private static final boolean isPosix =
+        FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+
+    // file name generation, same as java.io.File for now
+    private static final SecureRandom random = new SecureRandom();
+    private static Path generatePath(String prefix, String suffix, Path dir) {
+        long n = random.nextLong();
+        n = (n == Long.MIN_VALUE) ? 0 : Math.abs(n);
+        Path name = dir.getFileSystem().getPath(prefix + Long.toString(n) + suffix);
+        // the generated name should be a simple file name
+        if (name.getParent() != null)
+            throw new IllegalArgumentException("Invalid prefix or suffix");
+        return dir.resolve(name);
+    }
+
+    // default file and directory permissions (lazily initialized)
+    private static class PosixPermissions {
+        static final FileAttribute<Set<PosixFilePermission>> filePermissions =
+            PosixFilePermissions.asFileAttribute(EnumSet.of(OWNER_READ, OWNER_WRITE));
+        static final FileAttribute<Set<PosixFilePermission>> dirPermissions =
+            PosixFilePermissions.asFileAttribute(EnumSet
+                .of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
+    }
+
+    /**
+     * Creates a file or directory in in the given given directory (or in the
+     * temporary directory if dir is {@code null}).
+     */
+    private static Path create(Path dir,
+                               String prefix,
+                               String suffix,
+                               boolean createDirectory,
+                               FileAttribute<?>[] attrs)
+        throws IOException
+    {
+        if (prefix == null)
+            prefix = "";
+        if (suffix == null)
+            suffix = (createDirectory) ? "" : ".tmp";
+        if (dir == null)
+            dir = tmpdir;
+
+        // in POSIX environments use default file and directory permissions
+        // if initial permissions not given by caller.
+        if (isPosix && (dir.getFileSystem() == FileSystems.getDefault())) {
+            if (attrs.length == 0) {
+                // no attributes so use default permissions
+                attrs = new FileAttribute<?>[1];
+                attrs[0] = (createDirectory) ? PosixPermissions.dirPermissions :
+                                               PosixPermissions.filePermissions;
+            } else {
+                // check if posix permissions given; if not use default
+                boolean hasPermissions = false;
+                for (int i=0; i<attrs.length; i++) {
+                    if (attrs[i].name().equals("posix:permissions")) {
+                        hasPermissions = true;
+                        break;
+                    }
+                }
+                if (!hasPermissions) {
+                    FileAttribute<?>[] copy = new FileAttribute<?>[attrs.length+1];
+                    System.arraycopy(attrs, 0, copy, 0, attrs.length);
+                    attrs = copy;
+                    attrs[attrs.length-1] = (createDirectory) ?
+                        PosixPermissions.dirPermissions :
+                        PosixPermissions.filePermissions;
+                }
+            }
+        }
+
+        // loop generating random names until file or directory can be created
+        SecurityManager sm = System.getSecurityManager();
+        for (;;) {
+            Path f;
+            try {
+                f = generatePath(prefix, suffix, dir);
+            } catch (InvalidPathException e) {
+                // don't reveal temporary directory location
+                if (sm != null)
+                    throw new IllegalArgumentException("Invalid prefix or suffix");
+                throw e;
+            }
+            try {
+                if (createDirectory) {
+                    return Files.createDirectory(f, attrs);
+                } else {
+                    return Files.createFile(f, attrs);
+                }
+            } catch (SecurityException e) {
+                // don't reveal temporary directory location
+                if (dir == tmpdir && sm != null)
+                    throw new SecurityException("Unable to create temporary file or directory");
+                throw e;
+            } catch (FileAlreadyExistsException e) {
+                // ignore
+            }
+        }
+    }
+
+    /**
+     * Creates a temporary file in the given directory, or in in the
+     * temporary directory if dir is {@code null}.
+     */
+    static Path createTempFile(Path dir,
+                               String prefix,
+                               String suffix,
+                               FileAttribute<?>[] attrs)
+        throws IOException
+    {
+        return create(dir, prefix, suffix, false, attrs);
+    }
+
+    /**
+     * Creates a temporary directory in the given directory, or in in the
+     * temporary directory if dir is {@code null}.
+     */
+    static Path createTempDirectory(Path dir,
+                                    String prefix,
+                                    FileAttribute<?>[] attrs)
+        throws IOException
+    {
+        return create(dir, prefix, null, true, attrs);
+    }
+}

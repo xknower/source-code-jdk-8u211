@@ -1,271 +1,266 @@
-/*     */ package com.sun.jmx.snmp.IPAcl;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.io.Serializable;
-/*     */ import java.net.InetAddress;
-/*     */ import java.net.UnknownHostException;
-/*     */ import java.security.Principal;
-/*     */ import java.security.acl.Group;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.Vector;
-/*     */ import java.util.logging.Level;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class NetMaskImpl
-/*     */   extends PrincipalImpl
-/*     */   implements Group, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -7332541893877932896L;
-/*  51 */   protected byte[] subnet = null;
-/*  52 */   protected int prefix = -1;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NetMaskImpl() throws UnknownHostException {}
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private byte[] extractSubNet(byte[] paramArrayOfbyte) {
-/*  61 */     int i = paramArrayOfbyte.length;
-/*  62 */     byte[] arrayOfByte = null;
-/*  63 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/*  64 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "BINARY ARRAY :");
-/*     */       
-/*  66 */       StringBuffer stringBuffer = new StringBuffer();
-/*  67 */       for (byte b4 = 0; b4 < i; b4++) {
-/*  68 */         stringBuffer.append((paramArrayOfbyte[b4] & 0xFF) + ":");
-/*     */       }
-/*  70 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", stringBuffer
-/*  71 */           .toString());
-/*     */     } 
-/*     */ 
-/*     */     
-/*  75 */     int j = this.prefix / 8;
-/*  76 */     if (j == i) {
-/*  77 */       if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/*  78 */         JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "The mask is the complete address, strange..." + i);
-/*     */       }
-/*     */       
-/*  81 */       arrayOfByte = paramArrayOfbyte;
-/*  82 */       return arrayOfByte;
-/*     */     } 
-/*  84 */     if (j > i) {
-/*  85 */       if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/*  86 */         JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "The number of covered byte is longer than the address. BUG");
-/*     */       }
-/*     */       
-/*  89 */       throw new IllegalArgumentException("The number of covered byte is longer than the address.");
-/*     */     } 
-/*  91 */     int k = j;
-/*  92 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/*  93 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Partially covered index : " + k);
-/*     */     }
-/*     */     
-/*  96 */     byte b = paramArrayOfbyte[k];
-/*  97 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/*  98 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Partially covered byte : " + b);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 103 */     int m = this.prefix % 8;
-/* 104 */     int n = 0;
-/*     */     
-/* 106 */     if (m == 0) {
-/* 107 */       n = k;
-/*     */     } else {
-/* 109 */       n = k + 1;
-/*     */     } 
-/* 111 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 112 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Remains : " + m);
-/*     */     }
-/*     */ 
-/*     */     
-/* 116 */     byte b1 = 0; byte b2;
-/* 117 */     for (b2 = 0; b2 < m; b2++) {
-/* 118 */       b1 = (byte)(b1 | 1 << 7 - b2);
-/*     */     }
-/* 120 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 121 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Mask value : " + (b1 & 0xFF));
-/*     */     }
-/*     */ 
-/*     */     
-/* 125 */     b2 = (byte)(b & b1);
-/*     */     
-/* 127 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 128 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Masked byte : " + (b2 & 0xFF));
-/*     */     }
-/*     */     
-/* 131 */     arrayOfByte = new byte[n];
-/* 132 */     if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 133 */       JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Resulting subnet : ");
-/*     */     }
-/*     */     
-/* 136 */     for (byte b3 = 0; b3 < k; b3++) {
-/* 137 */       arrayOfByte[b3] = paramArrayOfbyte[b3];
-/*     */       
-/* 139 */       if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 140 */         JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", (arrayOfByte[b3] & 0xFF) + ":");
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 145 */     if (m != 0) {
-/* 146 */       arrayOfByte[k] = b2;
-/* 147 */       if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 148 */         JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet", "Last subnet byte : " + (arrayOfByte[k] & 0xFF));
-/*     */       }
-/*     */     } 
-/*     */     
-/* 152 */     return arrayOfByte;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NetMaskImpl(String paramString, int paramInt) throws UnknownHostException {
-/* 162 */     super(paramString);
-/* 163 */     this.prefix = paramInt;
-/* 164 */     this.subnet = extractSubNet(getAddress().getAddress());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean addMember(Principal paramPrincipal) {
-/* 176 */     return true;
-/*     */   }
-/*     */   
-/*     */   public int hashCode() {
-/* 180 */     return super.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 192 */     if (paramObject instanceof PrincipalImpl || paramObject instanceof NetMaskImpl) {
-/* 193 */       PrincipalImpl principalImpl = (PrincipalImpl)paramObject;
-/* 194 */       InetAddress inetAddress = principalImpl.getAddress();
-/* 195 */       if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 196 */         JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals", "Received Address : " + inetAddress);
-/*     */       }
-/*     */       
-/* 199 */       byte[] arrayOfByte = inetAddress.getAddress();
-/* 200 */       for (byte b = 0; b < this.subnet.length; b++) {
-/* 201 */         if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 202 */           JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals", "(recAddr[i]) : " + (arrayOfByte[b] & 0xFF));
-/*     */           
-/* 204 */           JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals", "(recAddr[i] & subnet[i]) : " + (arrayOfByte[b] & this.subnet[b] & 0xFF) + " subnet[i] : " + (this.subnet[b] & 0xFF));
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 209 */         if ((arrayOfByte[b] & this.subnet[b]) != this.subnet[b]) {
-/* 210 */           if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 211 */             JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals", "FALSE");
-/*     */           }
-/*     */           
-/* 214 */           return false;
-/*     */         } 
-/*     */       } 
-/* 217 */       if (JmxProperties.SNMP_LOGGER.isLoggable(Level.FINEST)) {
-/* 218 */         JmxProperties.SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals", "TRUE");
-/*     */       }
-/*     */       
-/* 221 */       return true;
-/*     */     } 
-/* 223 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isMember(Principal paramPrincipal) {
-/* 232 */     if ((paramPrincipal.hashCode() & super.hashCode()) == paramPrincipal.hashCode()) return true; 
-/* 233 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Enumeration<? extends Principal> members() {
-/* 242 */     Vector<NetMaskImpl> vector = new Vector(1);
-/* 243 */     vector.addElement(this);
-/* 244 */     return vector.elements();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean removeMember(Principal paramPrincipal) {
-/* 254 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 263 */     return "NetMaskImpl :" + getAddress().toString() + "/" + this.prefix;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\IPAcl\NetMaskImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.snmp.IPAcl;
+
+import static com.sun.jmx.defaults.JmxProperties.SNMP_LOGGER;
+
+import java.util.logging.Level;
+import java.util.Vector;
+import java.util.Enumeration;
+import java.io.Serializable;
+import java.net.UnknownHostException;
+import java.net.InetAddress;
+
+import java.security.Principal;
+import java.security.acl.Group;
+
+
+/**
+ * This class is used to represent a subnet mask (a group of hosts matching the same
+ * IP mask).
+ *
+ * @see java.security.acl.Group
+ */
+
+class NetMaskImpl extends PrincipalImpl implements Group, Serializable {
+    private static final long serialVersionUID = -7332541893877932896L;
+
+    protected byte[] subnet = null;
+    protected int prefix = -1;
+    /**
+     * Constructs an empty group.
+     * @exception UnknownHostException Not implemented
+     */
+    public NetMaskImpl () throws UnknownHostException {
+    }
+
+    private byte[] extractSubNet(byte[] b) {
+        int addrLength = b.length;
+        byte[] subnet = null;
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(),
+                "extractSubNet", "BINARY ARRAY :");
+            StringBuffer buff = new StringBuffer();
+            for(int i =0; i < addrLength; i++) {
+                buff.append((b[i] &0xFF) +":");
+            }
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(),
+                "extractSubNet", buff.toString());
+        }
+
+        // 8 is a byte size. Common to any InetAddress (V4 or V6).
+        int fullyCoveredByte = prefix / 8;
+        if(fullyCoveredByte == addrLength) {
+            if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+                   "The mask is the complete address, strange..." + addrLength);
+            }
+            subnet = b;
+            return subnet;
+        }
+        if(fullyCoveredByte > addrLength) {
+            if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+                   "The number of covered byte is longer than the address. BUG");
+            }
+            throw new IllegalArgumentException("The number of covered byte is longer than the address.");
+        }
+        int partialyCoveredIndex = fullyCoveredByte;
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+               "Partially covered index : " + partialyCoveredIndex);
+        }
+        byte toDeal = b[partialyCoveredIndex];
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+               "Partially covered byte : " + toDeal);
+        }
+
+        // 8 is a byte size. Common to any InetAddress (V4 or V6).
+        int nbbits = prefix % 8;
+        int subnetSize = 0;
+
+        if(nbbits == 0)
+        subnetSize = partialyCoveredIndex;
+        else
+        subnetSize = partialyCoveredIndex + 1;
+
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+               "Remains : " + nbbits);
+        }
+
+        byte mask = 0;
+        for(int i = 0; i < nbbits; i++) {
+            mask |= (1 << (7 - i));
+        }
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+               "Mask value : " + (mask & 0xFF));
+        }
+
+        byte maskedValue = (byte) ((int)toDeal & (int)mask);
+
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+               "Masked byte : "  + (maskedValue &0xFF));
+        }
+        subnet = new byte[subnetSize];
+        if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+            SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+               "Resulting subnet : ");
+        }
+        for(int i = 0; i < partialyCoveredIndex; i++) {
+            subnet[i] = b[i];
+
+            if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+                   (subnet[i] & 0xFF) +":");
+            }
+        }
+
+        if(nbbits != 0) {
+            subnet[partialyCoveredIndex] = maskedValue;
+            if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "extractSubNet",
+                    "Last subnet byte : " + (subnet[partialyCoveredIndex] &0xFF));
+            }
+        }
+        return subnet;
+    }
+
+  /**
+   * Constructs a group using the specified subnet mask.
+   * THIS ALGORITHM IS V4 and V6 compatible.
+   *
+   * @exception UnknownHostException if the subnet mask cann't be built.
+   */
+  public NetMaskImpl (String a, int prefix) throws UnknownHostException {
+        super(a);
+        this.prefix = prefix;
+        subnet = extractSubNet(getAddress().getAddress());
+  }
+
+  /**
+   * Adds the specified member to the group.
+   *
+   * @param p the principal to add to this group.
+   * @return true if the member was successfully added, false if the
+   *      principal was already a member.
+   */
+  public boolean addMember(Principal p) {
+        // we don't need to add members because the ip address is a subnet mask
+        return true;
+  }
+
+  public int hashCode() {
+        return super.hashCode();
+  }
+
+  /**
+   * Compares this group to the specified object. Returns true if the object
+   * passed in matches the group represented.
+   *
+   * @param p the object to compare with.
+   * @return true if the object passed in matches the subnet mask,
+   *    false otherwise.
+   */
+    public boolean equals (Object p) {
+        if (p instanceof PrincipalImpl || p instanceof NetMaskImpl){
+            PrincipalImpl received = (PrincipalImpl) p;
+            InetAddress addr = received.getAddress();
+            if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals",
+                    "Received Address : " + addr);
+            }
+            byte[] recAddr = addr.getAddress();
+            for(int i = 0; i < subnet.length; i++) {
+                if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                    SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals",
+                        "(recAddr[i]) : " + (recAddr[i] & 0xFF));
+                    SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals",
+                        "(recAddr[i] & subnet[i]) : " +
+                         ((recAddr[i] & (int)subnet[i]) &0xFF) +
+                         " subnet[i] : " + (subnet[i] &0xFF));
+                }
+                if((recAddr[i] & subnet[i]) != subnet[i]) {
+                    if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                        SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals",
+                            "FALSE");
+                    }
+                    return false;
+                }
+            }
+            if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
+                SNMP_LOGGER.logp(Level.FINEST, NetMaskImpl.class.getName(), "equals",
+                    "TRUE");
+            }
+            return true;
+        } else
+            return false;
+    }
+  /**
+   * Returns true if the passed principal is a member of the group.
+   *
+   * @param p the principal whose membership is to be checked.
+   * @return true if the principal is a member of this group, false otherwise.
+   */
+  public boolean isMember(Principal p) {
+        if ((p.hashCode() & super.hashCode()) == p.hashCode()) return true;
+        else return false;
+  }
+
+  /**
+   * Returns an enumeration which contains the subnet mask.
+   *
+   * @return an enumeration which contains the subnet mask.
+   */
+  public Enumeration<? extends Principal> members(){
+        Vector<Principal> v = new Vector<Principal>(1);
+        v.addElement(this);
+        return v.elements();
+  }
+
+  /**
+   * Removes the specified member from the group. (Not implemented)
+   *
+   * @param p the principal to remove from this group.
+   * @return allways return true.
+   */
+  public boolean removeMember(Principal p) {
+        return true;
+  }
+
+  /**
+   * Prints a string representation of this group.
+   *
+   * @return  a string representation of this group.
+   */
+  public String toString() {
+        return ("NetMaskImpl :"+ super.getAddress().toString() + "/" + prefix);
+  }
+
+}

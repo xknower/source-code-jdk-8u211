@@ -1,246 +1,241 @@
-/*     */ package com.sun.org.apache.xalan.internal.lib;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.utils.DOM2Helper;
-/*     */ import com.sun.org.apache.xpath.internal.NodeSet;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.NodeList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ExsltSets
-/*     */   extends ExsltBase
-/*     */ {
-/*     */   public static NodeList leading(NodeList nl1, NodeList nl2) {
-/*  63 */     if (nl2.getLength() == 0) {
-/*  64 */       return nl1;
-/*     */     }
-/*  66 */     NodeSet ns1 = new NodeSet(nl1);
-/*  67 */     NodeSet leadNodes = new NodeSet();
-/*  68 */     Node endNode = nl2.item(0);
-/*  69 */     if (!ns1.contains(endNode)) {
-/*  70 */       return leadNodes;
-/*     */     }
-/*  72 */     for (int i = 0; i < nl1.getLength(); i++) {
-/*     */       
-/*  74 */       Node testNode = nl1.item(i);
-/*  75 */       if (DOM2Helper.isNodeAfter(testNode, endNode) && 
-/*  76 */         !DOM2Helper.isNodeTheSame(testNode, endNode))
-/*  77 */         leadNodes.addElement(testNode); 
-/*     */     } 
-/*  79 */     return leadNodes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static NodeList trailing(NodeList nl1, NodeList nl2) {
-/*  98 */     if (nl2.getLength() == 0) {
-/*  99 */       return nl1;
-/*     */     }
-/* 101 */     NodeSet ns1 = new NodeSet(nl1);
-/* 102 */     NodeSet trailNodes = new NodeSet();
-/* 103 */     Node startNode = nl2.item(0);
-/* 104 */     if (!ns1.contains(startNode)) {
-/* 105 */       return trailNodes;
-/*     */     }
-/* 107 */     for (int i = 0; i < nl1.getLength(); i++) {
-/*     */       
-/* 109 */       Node testNode = nl1.item(i);
-/* 110 */       if (DOM2Helper.isNodeAfter(startNode, testNode) && 
-/* 111 */         !DOM2Helper.isNodeTheSame(startNode, testNode))
-/* 112 */         trailNodes.addElement(testNode); 
-/*     */     } 
-/* 114 */     return trailNodes;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static NodeList intersection(NodeList nl1, NodeList nl2) {
-/* 130 */     NodeSet ns1 = new NodeSet(nl1);
-/* 131 */     NodeSet ns2 = new NodeSet(nl2);
-/* 132 */     NodeSet inter = new NodeSet();
-/*     */     
-/* 134 */     inter.setShouldCacheNodes(true);
-/*     */     
-/* 136 */     for (int i = 0; i < ns1.getLength(); i++) {
-/*     */       
-/* 138 */       Node n = ns1.elementAt(i);
-/*     */       
-/* 140 */       if (ns2.contains(n)) {
-/* 141 */         inter.addElement(n);
-/*     */       }
-/*     */     } 
-/* 144 */     return inter;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static NodeList difference(NodeList nl1, NodeList nl2) {
-/* 160 */     NodeSet ns1 = new NodeSet(nl1);
-/* 161 */     NodeSet ns2 = new NodeSet(nl2);
-/*     */     
-/* 163 */     NodeSet diff = new NodeSet();
-/*     */     
-/* 165 */     diff.setShouldCacheNodes(true);
-/*     */     
-/* 167 */     for (int i = 0; i < ns1.getLength(); i++) {
-/*     */       
-/* 169 */       Node n = ns1.elementAt(i);
-/*     */       
-/* 171 */       if (!ns2.contains(n)) {
-/* 172 */         diff.addElement(n);
-/*     */       }
-/*     */     } 
-/* 175 */     return diff;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static NodeList distinct(NodeList nl) {
-/* 192 */     NodeSet dist = new NodeSet();
-/* 193 */     dist.setShouldCacheNodes(true);
-/*     */     
-/* 195 */     Map<String, Node> stringTable = new HashMap<>();
-/*     */     
-/* 197 */     for (int i = 0; i < nl.getLength(); i++) {
-/*     */       
-/* 199 */       Node currNode = nl.item(i);
-/* 200 */       String key = toString(currNode);
-/*     */       
-/* 202 */       if (key == null) {
-/* 203 */         dist.addElement(currNode);
-/* 204 */       } else if (!stringTable.containsKey(key)) {
-/*     */         
-/* 206 */         stringTable.put(key, currNode);
-/* 207 */         dist.addElement(currNode);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 211 */     return dist;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean hasSameNode(NodeList nl1, NodeList nl2) {
-/* 230 */     NodeSet ns1 = new NodeSet(nl1);
-/* 231 */     NodeSet ns2 = new NodeSet(nl2);
-/*     */     
-/* 233 */     for (int i = 0; i < ns1.getLength(); i++) {
-/*     */       
-/* 235 */       if (ns2.contains(ns1.elementAt(i)))
-/* 236 */         return true; 
-/*     */     } 
-/* 238 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\lib\ExsltSets.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ExsltSets.java,v 1.1.2.1 2005/08/01 02:08:50 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xalan.internal.lib;
+
+import com.sun.org.apache.xml.internal.utils.DOM2Helper;
+import com.sun.org.apache.xpath.internal.NodeSet;
+import java.util.HashMap;
+import java.util.Map;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+/**
+ * This class contains EXSLT set extension functions.
+ * It is accessed by specifying a namespace URI as follows:
+ * <pre>
+ *    xmlns:set="http://exslt.org/sets"
+ * </pre>
+ *
+ * The documentation for each function has been copied from the relevant
+ * EXSLT Implementer page.
+ *
+ * @see <a href="http://www.exslt.org/">EXSLT</a>
+ * @xsl.usage general
+ */
+public class ExsltSets extends ExsltBase
+{
+  /**
+   * The set:leading function returns the nodes in the node set passed as the first argument that
+   * precede, in document order, the first node in the node set passed as the second argument. If
+   * the first node in the second node set is not contained in the first node set, then an empty
+   * node set is returned. If the second node set is empty, then the first node set is returned.
+   *
+   * @param nl1 NodeList for first node-set.
+   * @param nl2 NodeList for second node-set.
+   * @return a NodeList containing the nodes in nl1 that precede in document order the first
+   * node in nl2; an empty node-set if the first node in nl2 is not in nl1; all of nl1 if nl2
+   * is empty.
+   *
+   * @see <a href="http://www.exslt.org/">EXSLT</a>
+   */
+  public static NodeList leading (NodeList nl1, NodeList nl2)
+  {
+    if (nl2.getLength() == 0)
+      return nl1;
+
+    NodeSet ns1 = new NodeSet(nl1);
+    NodeSet leadNodes = new NodeSet();
+    Node endNode = nl2.item(0);
+    if (!ns1.contains(endNode))
+      return leadNodes; // empty NodeSet
+
+    for (int i = 0; i < nl1.getLength(); i++)
+    {
+      Node testNode = nl1.item(i);
+      if (DOM2Helper.isNodeAfter(testNode, endNode)
+          && !DOM2Helper.isNodeTheSame(testNode, endNode))
+        leadNodes.addElement(testNode);
+    }
+    return leadNodes;
+  }
+
+  /**
+   * The set:trailing function returns the nodes in the node set passed as the first argument that
+   * follow, in document order, the first node in the node set passed as the second argument. If
+   * the first node in the second node set is not contained in the first node set, then an empty
+   * node set is returned. If the second node set is empty, then the first node set is returned.
+   *
+   * @param nl1 NodeList for first node-set.
+   * @param nl2 NodeList for second node-set.
+   * @return a NodeList containing the nodes in nl1 that follow in document order the first
+   * node in nl2; an empty node-set if the first node in nl2 is not in nl1; all of nl1 if nl2
+   * is empty.
+   *
+   * @see <a href="http://www.exslt.org/">EXSLT</a>
+   */
+  public static NodeList trailing (NodeList nl1, NodeList nl2)
+  {
+    if (nl2.getLength() == 0)
+      return nl1;
+
+    NodeSet ns1 = new NodeSet(nl1);
+    NodeSet trailNodes = new NodeSet();
+    Node startNode = nl2.item(0);
+    if (!ns1.contains(startNode))
+      return trailNodes; // empty NodeSet
+
+    for (int i = 0; i < nl1.getLength(); i++)
+    {
+      Node testNode = nl1.item(i);
+      if (DOM2Helper.isNodeAfter(startNode, testNode)
+          && !DOM2Helper.isNodeTheSame(startNode, testNode))
+        trailNodes.addElement(testNode);
+    }
+    return trailNodes;
+  }
+
+  /**
+   * The set:intersection function returns a node set comprising the nodes that are within
+   * both the node sets passed as arguments to it.
+   *
+   * @param nl1 NodeList for first node-set.
+   * @param nl2 NodeList for second node-set.
+   * @return a NodeList containing the nodes in nl1 that are also
+   * in nl2.
+   *
+   * @see <a href="http://www.exslt.org/">EXSLT</a>
+   */
+  public static NodeList intersection(NodeList nl1, NodeList nl2)
+  {
+    NodeSet ns1 = new NodeSet(nl1);
+    NodeSet ns2 = new NodeSet(nl2);
+    NodeSet inter = new NodeSet();
+
+    inter.setShouldCacheNodes(true);
+
+    for (int i = 0; i < ns1.getLength(); i++)
+    {
+      Node n = ns1.elementAt(i);
+
+      if (ns2.contains(n))
+        inter.addElement(n);
+    }
+
+    return inter;
+  }
+
+  /**
+   * The set:difference function returns the difference between two node sets - those nodes that
+   * are in the node set passed as the first argument that are not in the node set passed as the
+   * second argument.
+   *
+   * @param nl1 NodeList for first node-set.
+   * @param nl2 NodeList for second node-set.
+   * @return a NodeList containing the nodes in nl1 that are not in nl2.
+   *
+   * @see <a href="http://www.exslt.org/">EXSLT</a>
+   */
+  public static NodeList difference(NodeList nl1, NodeList nl2)
+  {
+    NodeSet ns1 = new NodeSet(nl1);
+    NodeSet ns2 = new NodeSet(nl2);
+
+    NodeSet diff = new NodeSet();
+
+    diff.setShouldCacheNodes(true);
+
+    for (int i = 0; i < ns1.getLength(); i++)
+    {
+      Node n = ns1.elementAt(i);
+
+      if (!ns2.contains(n))
+        diff.addElement(n);
+    }
+
+    return diff;
+  }
+
+  /**
+   * The set:distinct function returns a subset of the nodes contained in the node-set NS passed
+   * as the first argument. Specifically, it selects a node N if there is no node in NS that has
+   * the same string value as N, and that precedes N in document order.
+   *
+   * @param nl NodeList for the node-set.
+   * @return a NodeList with nodes from nl containing distinct string values.
+   * In other words, if more than one node in nl contains the same string value,
+   * only include the first such node found.
+   *
+   * @see <a href="http://www.exslt.org/">EXSLT</a>
+   */
+  public static NodeList distinct(NodeList nl)
+  {
+    NodeSet dist = new NodeSet();
+    dist.setShouldCacheNodes(true);
+
+    Map<String, Node> stringTable = new HashMap<>();
+
+    for (int i = 0; i < nl.getLength(); i++)
+    {
+      Node currNode = nl.item(i);
+      String key = toString(currNode);
+
+      if (key == null)
+        dist.addElement(currNode);
+      else if (!stringTable.containsKey(key))
+      {
+        stringTable.put(key, currNode);
+        dist.addElement(currNode);
+      }
+    }
+
+    return dist;
+  }
+
+  /**
+   * The set:has-same-node function returns true if the node set passed as the first argument shares
+   * any nodes with the node set passed as the second argument. If there are no nodes that are in both
+   * node sets, then it returns false.
+   *
+   * The Xalan extensions MethodResolver converts 'has-same-node' to 'hasSameNode'.
+   *
+   * Note: Not to be confused with hasSameNodes in the Xalan namespace, which returns true if
+   * the two node sets contain the exactly the same nodes (perhaps in a different order),
+   * otherwise false.
+   *
+   * @see <a href="http://www.exslt.org/">EXSLT</a>
+   */
+  public static boolean hasSameNode(NodeList nl1, NodeList nl2)
+  {
+
+    NodeSet ns1 = new NodeSet(nl1);
+    NodeSet ns2 = new NodeSet(nl2);
+
+    for (int i = 0; i < ns1.getLength(); i++)
+    {
+      if (ns2.contains(ns1.elementAt(i)))
+        return true;
+    }
+    return false;
+  }
+
+}

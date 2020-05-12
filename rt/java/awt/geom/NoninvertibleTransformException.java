@@ -1,52 +1,46 @@
-/*    */ package java.awt.geom;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class NoninvertibleTransformException
-/*    */   extends Exception
-/*    */ {
-/*    */   public NoninvertibleTransformException(String paramString) {
-/* 44 */     super(paramString);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\NoninvertibleTransformException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 1999, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+/**
+ * The <code>NoninvertibleTransformException</code> class represents
+ * an exception that is thrown if an operation is performed requiring
+ * the inverse of an {@link AffineTransform} object but the
+ * <code>AffineTransform</code> is in a non-invertible state.
+ */
+
+public class NoninvertibleTransformException extends java.lang.Exception {
+    /**
+     * Constructs an instance of
+     * <code>NoninvertibleTransformException</code>
+     * with the specified detail message.
+     * @param   s     the detail message
+     * @since   1.2
+     */
+    public NoninvertibleTransformException(String s) {
+        super (s);
+    }
+}

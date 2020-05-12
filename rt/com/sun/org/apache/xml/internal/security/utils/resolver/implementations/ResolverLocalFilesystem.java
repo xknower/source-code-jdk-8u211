@@ -1,167 +1,161 @@
-/*     */ package com.sun.org.apache.xml.internal.security.utils.resolver.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverContext;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
-/*     */ import java.io.FileInputStream;
-/*     */ import java.net.URI;
-/*     */ import java.net.URISyntaxException;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ResolverLocalFilesystem
-/*     */   extends ResourceResolverSpi
-/*     */ {
-/*  39 */   private static final int FILE_URI_LENGTH = "file:/".length();
-/*     */ 
-/*     */ 
-/*     */   
-/*  43 */   private static Logger log = Logger.getLogger(ResolverLocalFilesystem.class.getName());
-/*     */ 
-/*     */   
-/*     */   public boolean engineIsThreadSafe() {
-/*  47 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLSignatureInput engineResolveURI(ResourceResolverContext paramResourceResolverContext) throws ResourceResolverException {
-/*     */     try {
-/*  58 */       URI uRI = getNewURI(paramResourceResolverContext.uriToResolve, paramResourceResolverContext.baseUri);
-/*     */ 
-/*     */       
-/*  61 */       String str = translateUriToFilename(uRI.toString());
-/*  62 */       FileInputStream fileInputStream = new FileInputStream(str);
-/*  63 */       XMLSignatureInput xMLSignatureInput = new XMLSignatureInput(fileInputStream);
-/*     */       
-/*  65 */       xMLSignatureInput.setSourceURI(uRI.toString());
-/*     */       
-/*  67 */       return xMLSignatureInput;
-/*  68 */     } catch (Exception exception) {
-/*  69 */       throw new ResourceResolverException("generic.EmptyMessage", exception, paramResourceResolverContext.attr, paramResourceResolverContext.baseUri);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static String translateUriToFilename(String paramString) {
-/*  81 */     String str = paramString.substring(FILE_URI_LENGTH);
-/*     */     
-/*  83 */     if (str.indexOf("%20") > -1) {
-/*  84 */       int i = 0;
-/*  85 */       int j = 0;
-/*  86 */       StringBuilder stringBuilder = new StringBuilder(str.length());
-/*     */       while (true) {
-/*  88 */         j = str.indexOf("%20", i);
-/*  89 */         if (j == -1) {
-/*  90 */           stringBuilder.append(str.substring(i));
-/*     */         } else {
-/*  92 */           stringBuilder.append(str.substring(i, j));
-/*  93 */           stringBuilder.append(' ');
-/*  94 */           i = j + 3;
-/*     */         } 
-/*  96 */         if (j == -1) {
-/*  97 */           str = stringBuilder.toString(); break;
-/*     */         } 
-/*     */       } 
-/* 100 */     }  if (str.charAt(1) == ':')
-/*     */     {
-/* 102 */       return str;
-/*     */     }
-/*     */     
-/* 105 */     return "/" + str;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean engineCanResolveURI(ResourceResolverContext paramResourceResolverContext) {
-/* 112 */     if (paramResourceResolverContext.uriToResolve == null) {
-/* 113 */       return false;
-/*     */     }
-/*     */     
-/* 116 */     if (paramResourceResolverContext.uriToResolve.equals("") || paramResourceResolverContext.uriToResolve.charAt(0) == '#' || paramResourceResolverContext.uriToResolve
-/* 117 */       .startsWith("http:")) {
-/* 118 */       return false;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 122 */       if (log.isLoggable(Level.FINE)) {
-/* 123 */         log.log(Level.FINE, "I was asked whether I can resolve " + paramResourceResolverContext.uriToResolve);
-/*     */       }
-/*     */       
-/* 126 */       if (paramResourceResolverContext.uriToResolve.startsWith("file:") || paramResourceResolverContext.baseUri.startsWith("file:")) {
-/* 127 */         if (log.isLoggable(Level.FINE)) {
-/* 128 */           log.log(Level.FINE, "I state that I can resolve " + paramResourceResolverContext.uriToResolve);
-/*     */         }
-/* 130 */         return true;
-/*     */       } 
-/* 132 */     } catch (Exception exception) {
-/* 133 */       if (log.isLoggable(Level.FINE)) {
-/* 134 */         log.log(Level.FINE, exception.getMessage(), exception);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 138 */     if (log.isLoggable(Level.FINE)) {
-/* 139 */       log.log(Level.FINE, "But I can't");
-/*     */     }
-/*     */     
-/* 142 */     return false;
-/*     */   }
-/*     */   
-/*     */   private static URI getNewURI(String paramString1, String paramString2) throws URISyntaxException {
-/* 146 */     URI uRI = null;
-/* 147 */     if (paramString2 == null || "".equals(paramString2)) {
-/* 148 */       uRI = new URI(paramString1);
-/*     */     } else {
-/* 150 */       uRI = (new URI(paramString2)).resolve(paramString1);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 154 */     if (uRI.getFragment() != null) {
-/* 155 */       return new URI(uRI
-/* 156 */           .getScheme(), uRI.getSchemeSpecificPart(), null);
-/*     */     }
-/*     */     
-/* 159 */     return uRI;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\securit\\utils\resolver\implementations\ResolverLocalFilesystem.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.utils.resolver.implementations;
+
+import java.io.FileInputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverContext;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverException;
+import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
+
+/**
+ * A simple ResourceResolver for requests into the local filesystem.
+ */
+public class ResolverLocalFilesystem extends ResourceResolverSpi {
+
+    private static final int FILE_URI_LENGTH = "file:/".length();
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(ResolverLocalFilesystem.class.getName());
+
+    @Override
+    public boolean engineIsThreadSafe() {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public XMLSignatureInput engineResolveURI(ResourceResolverContext context)
+        throws ResourceResolverException {
+        try {
+            // calculate new URI
+            URI uriNew = getNewURI(context.uriToResolve, context.baseUri);
+
+            String fileName =
+                ResolverLocalFilesystem.translateUriToFilename(uriNew.toString());
+            FileInputStream inputStream = new FileInputStream(fileName);
+            XMLSignatureInput result = new XMLSignatureInput(inputStream);
+
+            result.setSourceURI(uriNew.toString());
+
+            return result;
+        } catch (Exception e) {
+            throw new ResourceResolverException("generic.EmptyMessage", e, context.attr, context.baseUri);
+        }
+    }
+
+    /**
+     * Method translateUriToFilename
+     *
+     * @param uri
+     * @return the string of the filename
+     */
+    private static String translateUriToFilename(String uri) {
+
+        String subStr = uri.substring(FILE_URI_LENGTH);
+
+        if (subStr.indexOf("%20") > -1) {
+            int offset = 0;
+            int index = 0;
+            StringBuilder temp = new StringBuilder(subStr.length());
+            do {
+                index = subStr.indexOf("%20",offset);
+                if (index == -1) {
+                    temp.append(subStr.substring(offset));
+                } else {
+                    temp.append(subStr.substring(offset, index));
+                    temp.append(' ');
+                    offset = index + 3;
+                }
+            } while(index != -1);
+            subStr = temp.toString();
+        }
+
+        if (subStr.charAt(1) == ':') {
+            // we're running M$ Windows, so this works fine
+            return subStr;
+        }
+        // we're running some UNIX, so we have to prepend a slash
+        return "/" + subStr;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public boolean engineCanResolveURI(ResourceResolverContext context) {
+        if (context.uriToResolve == null) {
+            return false;
+        }
+
+        if (context.uriToResolve.equals("") || (context.uriToResolve.charAt(0)=='#') ||
+            context.uriToResolve.startsWith("http:")) {
+            return false;
+        }
+
+        try {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, "I was asked whether I can resolve " + context.uriToResolve);
+            }
+
+            if (context.uriToResolve.startsWith("file:") || context.baseUri.startsWith("file:")) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "I state that I can resolve " + context.uriToResolve);
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+            }
+        }
+
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "But I can't");
+        }
+
+        return false;
+    }
+
+    private static URI getNewURI(String uri, String baseURI) throws URISyntaxException {
+        URI newUri = null;
+        if (baseURI == null || "".equals(baseURI)) {
+            newUri = new URI(uri);
+        } else {
+            newUri = new URI(baseURI).resolve(uri);
+        }
+
+        // if the URI contains a fragment, ignore it
+        if (newUri.getFragment() != null) {
+            URI uriNewNoFrag =
+                new URI(newUri.getScheme(), newUri.getSchemeSpecificPart(), null);
+            return uriNewNoFrag;
+        }
+        return newUri;
+    }
+}

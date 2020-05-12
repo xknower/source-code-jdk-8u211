@@ -1,635 +1,641 @@
-/*     */ package org.xml.sax.helpers;
-/*     */ 
-/*     */ import org.xml.sax.Attributes;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class AttributesImpl
-/*     */   implements Attributes
-/*     */ {
-/*     */   int length;
-/*     */   String[] data;
-/*     */   
-/*     */   public AttributesImpl() {
-/*  84 */     this.length = 0;
-/*  85 */     this.data = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public AttributesImpl(Attributes atts) {
-/*  99 */     setAttributes(atts);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/* 117 */     return this.length;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getURI(int index) {
-/* 131 */     if (index >= 0 && index < this.length) {
-/* 132 */       return this.data[index * 5];
-/*     */     }
-/* 134 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocalName(int index) {
-/* 149 */     if (index >= 0 && index < this.length) {
-/* 150 */       return this.data[index * 5 + 1];
-/*     */     }
-/* 152 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getQName(int index) {
-/* 167 */     if (index >= 0 && index < this.length) {
-/* 168 */       return this.data[index * 5 + 2];
-/*     */     }
-/* 170 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType(int index) {
-/* 185 */     if (index >= 0 && index < this.length) {
-/* 186 */       return this.data[index * 5 + 3];
-/*     */     }
-/* 188 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(int index) {
-/* 202 */     if (index >= 0 && index < this.length) {
-/* 203 */       return this.data[index * 5 + 4];
-/*     */     }
-/* 205 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex(String uri, String localName) {
-/* 225 */     int max = this.length * 5;
-/* 226 */     for (int i = 0; i < max; i += 5) {
-/* 227 */       if (this.data[i].equals(uri) && this.data[i + 1].equals(localName)) {
-/* 228 */         return i / 5;
-/*     */       }
-/*     */     } 
-/* 231 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getIndex(String qName) {
-/* 244 */     int max = this.length * 5;
-/* 245 */     for (int i = 0; i < max; i += 5) {
-/* 246 */       if (this.data[i + 2].equals(qName)) {
-/* 247 */         return i / 5;
-/*     */       }
-/*     */     } 
-/* 250 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType(String uri, String localName) {
-/* 266 */     int max = this.length * 5;
-/* 267 */     for (int i = 0; i < max; i += 5) {
-/* 268 */       if (this.data[i].equals(uri) && this.data[i + 1].equals(localName)) {
-/* 269 */         return this.data[i + 3];
-/*     */       }
-/*     */     } 
-/* 272 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getType(String qName) {
-/* 286 */     int max = this.length * 5;
-/* 287 */     for (int i = 0; i < max; i += 5) {
-/* 288 */       if (this.data[i + 2].equals(qName)) {
-/* 289 */         return this.data[i + 3];
-/*     */       }
-/*     */     } 
-/* 292 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(String uri, String localName) {
-/* 308 */     int max = this.length * 5;
-/* 309 */     for (int i = 0; i < max; i += 5) {
-/* 310 */       if (this.data[i].equals(uri) && this.data[i + 1].equals(localName)) {
-/* 311 */         return this.data[i + 4];
-/*     */       }
-/*     */     } 
-/* 314 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getValue(String qName) {
-/* 328 */     int max = this.length * 5;
-/* 329 */     for (int i = 0; i < max; i += 5) {
-/* 330 */       if (this.data[i + 2].equals(qName)) {
-/* 331 */         return this.data[i + 4];
-/*     */       }
-/*     */     } 
-/* 334 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void clear() {
-/* 353 */     if (this.data != null)
-/* 354 */       for (int i = 0; i < this.length * 5; i++) {
-/* 355 */         this.data[i] = null;
-/*     */       } 
-/* 357 */     this.length = 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAttributes(Attributes atts) {
-/* 371 */     clear();
-/* 372 */     this.length = atts.getLength();
-/* 373 */     if (this.length > 0) {
-/* 374 */       this.data = new String[this.length * 5];
-/* 375 */       for (int i = 0; i < this.length; i++) {
-/* 376 */         this.data[i * 5] = atts.getURI(i);
-/* 377 */         this.data[i * 5 + 1] = atts.getLocalName(i);
-/* 378 */         this.data[i * 5 + 2] = atts.getQName(i);
-/* 379 */         this.data[i * 5 + 3] = atts.getType(i);
-/* 380 */         this.data[i * 5 + 4] = atts.getValue(i);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addAttribute(String uri, String localName, String qName, String type, String value) {
-/* 406 */     ensureCapacity(this.length + 1);
-/* 407 */     this.data[this.length * 5] = uri;
-/* 408 */     this.data[this.length * 5 + 1] = localName;
-/* 409 */     this.data[this.length * 5 + 2] = qName;
-/* 410 */     this.data[this.length * 5 + 3] = type;
-/* 411 */     this.data[this.length * 5 + 4] = value;
-/* 412 */     this.length++;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAttribute(int index, String uri, String localName, String qName, String type, String value) {
-/* 440 */     if (index >= 0 && index < this.length) {
-/* 441 */       this.data[index * 5] = uri;
-/* 442 */       this.data[index * 5 + 1] = localName;
-/* 443 */       this.data[index * 5 + 2] = qName;
-/* 444 */       this.data[index * 5 + 3] = type;
-/* 445 */       this.data[index * 5 + 4] = value;
-/*     */     } else {
-/* 447 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeAttribute(int index) {
-/* 462 */     if (index >= 0 && index < this.length) {
-/* 463 */       if (index < this.length - 1) {
-/* 464 */         System.arraycopy(this.data, (index + 1) * 5, this.data, index * 5, (this.length - index - 1) * 5);
-/*     */       }
-/*     */       
-/* 467 */       index = (this.length - 1) * 5;
-/* 468 */       this.data[index++] = null;
-/* 469 */       this.data[index++] = null;
-/* 470 */       this.data[index++] = null;
-/* 471 */       this.data[index++] = null;
-/* 472 */       this.data[index] = null;
-/* 473 */       this.length--;
-/*     */     } else {
-/* 475 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setURI(int index, String uri) {
-/* 492 */     if (index >= 0 && index < this.length) {
-/* 493 */       this.data[index * 5] = uri;
-/*     */     } else {
-/* 495 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLocalName(int index, String localName) {
-/* 512 */     if (index >= 0 && index < this.length) {
-/* 513 */       this.data[index * 5 + 1] = localName;
-/*     */     } else {
-/* 515 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setQName(int index, String qName) {
-/* 532 */     if (index >= 0 && index < this.length) {
-/* 533 */       this.data[index * 5 + 2] = qName;
-/*     */     } else {
-/* 535 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setType(int index, String type) {
-/* 551 */     if (index >= 0 && index < this.length) {
-/* 552 */       this.data[index * 5 + 3] = type;
-/*     */     } else {
-/* 554 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setValue(int index, String value) {
-/* 570 */     if (index >= 0 && index < this.length) {
-/* 571 */       this.data[index * 5 + 4] = value;
-/*     */     } else {
-/* 573 */       badIndex(index);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void ensureCapacity(int n) {
-/*     */     int max;
-/* 591 */     if (n <= 0) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 595 */     if (this.data == null || this.data.length == 0) {
-/* 596 */       max = 25;
-/*     */     } else {
-/* 598 */       if (this.data.length >= n * 5) {
-/*     */         return;
-/*     */       }
-/*     */       
-/* 602 */       max = this.data.length;
-/*     */     } 
-/* 604 */     while (max < n * 5) {
-/* 605 */       max *= 2;
-/*     */     }
-/*     */     
-/* 608 */     String[] newData = new String[max];
-/* 609 */     if (this.length > 0) {
-/* 610 */       System.arraycopy(this.data, 0, newData, 0, this.length * 5);
-/*     */     }
-/* 612 */     this.data = newData;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void badIndex(int index) throws ArrayIndexOutOfBoundsException {
-/* 625 */     String msg = "Attempt to modify attribute at illegal index: " + index;
-/*     */     
-/* 627 */     throw new ArrayIndexOutOfBoundsException(msg);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\org\xml\sax\helpers\AttributesImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+// AttributesImpl.java - default implementation of Attributes.
+// http://www.saxproject.org
+// Written by David Megginson
+// NO WARRANTY!  This class is in the public domain.
+// $Id: AttributesImpl.java,v 1.2 2004/11/03 22:53:08 jsuttor Exp $
+
+package org.xml.sax.helpers;
+
+import org.xml.sax.Attributes;
+
+
+/**
+ * Default implementation of the Attributes interface.
+ *
+ * <blockquote>
+ * <em>This module, both source code and documentation, is in the
+ * Public Domain, and comes with <strong>NO WARRANTY</strong>.</em>
+ * See <a href='http://www.saxproject.org'>http://www.saxproject.org</a>
+ * for further information.
+ * </blockquote>
+ *
+ * <p>This class provides a default implementation of the SAX2
+ * {@link org.xml.sax.Attributes Attributes} interface, with the
+ * addition of manipulators so that the list can be modified or
+ * reused.</p>
+ *
+ * <p>There are two typical uses of this class:</p>
+ *
+ * <ol>
+ * <li>to take a persistent snapshot of an Attributes object
+ *  in a {@link org.xml.sax.ContentHandler#startElement startElement} event; or</li>
+ * <li>to construct or modify an Attributes object in a SAX2 driver or filter.</li>
+ * </ol>
+ *
+ * <p>This class replaces the now-deprecated SAX1 {@link
+ * org.xml.sax.helpers.AttributeListImpl AttributeListImpl}
+ * class; in addition to supporting the updated Attributes
+ * interface rather than the deprecated {@link org.xml.sax.AttributeList
+ * AttributeList} interface, it also includes a much more efficient
+ * implementation using a single array rather than a set of Vectors.</p>
+ *
+ * @since SAX 2.0
+ * @author David Megginson
+ */
+public class AttributesImpl implements Attributes
+{
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Constructors.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Construct a new, empty AttributesImpl object.
+     */
+    public AttributesImpl ()
+    {
+        length = 0;
+        data = null;
+    }
+
+
+    /**
+     * Copy an existing Attributes object.
+     *
+     * <p>This constructor is especially useful inside a
+     * {@link org.xml.sax.ContentHandler#startElement startElement} event.</p>
+     *
+     * @param atts The existing Attributes object.
+     */
+    public AttributesImpl (Attributes atts)
+    {
+        setAttributes(atts);
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Implementation of org.xml.sax.Attributes.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Return the number of attributes in the list.
+     *
+     * @return The number of attributes in the list.
+     * @see org.xml.sax.Attributes#getLength
+     */
+    public int getLength ()
+    {
+        return length;
+    }
+
+
+    /**
+     * Return an attribute's Namespace URI.
+     *
+     * @param index The attribute's index (zero-based).
+     * @return The Namespace URI, the empty string if none is
+     *         available, or null if the index is out of range.
+     * @see org.xml.sax.Attributes#getURI
+     */
+    public String getURI (int index)
+    {
+        if (index >= 0 && index < length) {
+            return data[index*5];
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Return an attribute's local name.
+     *
+     * @param index The attribute's index (zero-based).
+     * @return The attribute's local name, the empty string if
+     *         none is available, or null if the index if out of range.
+     * @see org.xml.sax.Attributes#getLocalName
+     */
+    public String getLocalName (int index)
+    {
+        if (index >= 0 && index < length) {
+            return data[index*5+1];
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Return an attribute's qualified (prefixed) name.
+     *
+     * @param index The attribute's index (zero-based).
+     * @return The attribute's qualified name, the empty string if
+     *         none is available, or null if the index is out of bounds.
+     * @see org.xml.sax.Attributes#getQName
+     */
+    public String getQName (int index)
+    {
+        if (index >= 0 && index < length) {
+            return data[index*5+2];
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Return an attribute's type by index.
+     *
+     * @param index The attribute's index (zero-based).
+     * @return The attribute's type, "CDATA" if the type is unknown, or null
+     *         if the index is out of bounds.
+     * @see org.xml.sax.Attributes#getType(int)
+     */
+    public String getType (int index)
+    {
+        if (index >= 0 && index < length) {
+            return data[index*5+3];
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Return an attribute's value by index.
+     *
+     * @param index The attribute's index (zero-based).
+     * @return The attribute's value or null if the index is out of bounds.
+     * @see org.xml.sax.Attributes#getValue(int)
+     */
+    public String getValue (int index)
+    {
+        if (index >= 0 && index < length) {
+            return data[index*5+4];
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Look up an attribute's index by Namespace name.
+     *
+     * <p>In many cases, it will be more efficient to look up the name once and
+     * use the index query methods rather than using the name query methods
+     * repeatedly.</p>
+     *
+     * @param uri The attribute's Namespace URI, or the empty
+     *        string if none is available.
+     * @param localName The attribute's local name.
+     * @return The attribute's index, or -1 if none matches.
+     * @see org.xml.sax.Attributes#getIndex(java.lang.String,java.lang.String)
+     */
+    public int getIndex (String uri, String localName)
+    {
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i].equals(uri) && data[i+1].equals(localName)) {
+                return i / 5;
+            }
+        }
+        return -1;
+    }
+
+
+    /**
+     * Look up an attribute's index by qualified (prefixed) name.
+     *
+     * @param qName The qualified name.
+     * @return The attribute's index, or -1 if none matches.
+     * @see org.xml.sax.Attributes#getIndex(java.lang.String)
+     */
+    public int getIndex (String qName)
+    {
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i+2].equals(qName)) {
+                return i / 5;
+            }
+        }
+        return -1;
+    }
+
+
+    /**
+     * Look up an attribute's type by Namespace-qualified name.
+     *
+     * @param uri The Namespace URI, or the empty string for a name
+     *        with no explicit Namespace URI.
+     * @param localName The local name.
+     * @return The attribute's type, or null if there is no
+     *         matching attribute.
+     * @see org.xml.sax.Attributes#getType(java.lang.String,java.lang.String)
+     */
+    public String getType (String uri, String localName)
+    {
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i].equals(uri) && data[i+1].equals(localName)) {
+                return data[i+3];
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Look up an attribute's type by qualified (prefixed) name.
+     *
+     * @param qName The qualified name.
+     * @return The attribute's type, or null if there is no
+     *         matching attribute.
+     * @see org.xml.sax.Attributes#getType(java.lang.String)
+     */
+    public String getType (String qName)
+    {
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i+2].equals(qName)) {
+                return data[i+3];
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Look up an attribute's value by Namespace-qualified name.
+     *
+     * @param uri The Namespace URI, or the empty string for a name
+     *        with no explicit Namespace URI.
+     * @param localName The local name.
+     * @return The attribute's value, or null if there is no
+     *         matching attribute.
+     * @see org.xml.sax.Attributes#getValue(java.lang.String,java.lang.String)
+     */
+    public String getValue (String uri, String localName)
+    {
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i].equals(uri) && data[i+1].equals(localName)) {
+                return data[i+4];
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Look up an attribute's value by qualified (prefixed) name.
+     *
+     * @param qName The qualified name.
+     * @return The attribute's value, or null if there is no
+     *         matching attribute.
+     * @see org.xml.sax.Attributes#getValue(java.lang.String)
+     */
+    public String getValue (String qName)
+    {
+        int max = length * 5;
+        for (int i = 0; i < max; i += 5) {
+            if (data[i+2].equals(qName)) {
+                return data[i+4];
+            }
+        }
+        return null;
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Manipulators.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Clear the attribute list for reuse.
+     *
+     * <p>Note that little memory is freed by this call:
+     * the current array is kept so it can be
+     * reused.</p>
+     */
+    public void clear ()
+    {
+        if (data != null) {
+            for (int i = 0; i < (length * 5); i++)
+                data [i] = null;
+        }
+        length = 0;
+    }
+
+
+    /**
+     * Copy an entire Attributes object.
+     *
+     * <p>It may be more efficient to reuse an existing object
+     * rather than constantly allocating new ones.</p>
+     *
+     * @param atts The attributes to copy.
+     */
+    public void setAttributes (Attributes atts)
+    {
+        clear();
+        length = atts.getLength();
+        if (length > 0) {
+            data = new String[length*5];
+            for (int i = 0; i < length; i++) {
+                data[i*5] = atts.getURI(i);
+                data[i*5+1] = atts.getLocalName(i);
+                data[i*5+2] = atts.getQName(i);
+                data[i*5+3] = atts.getType(i);
+                data[i*5+4] = atts.getValue(i);
+            }
+        }
+    }
+
+
+    /**
+     * Add an attribute to the end of the list.
+     *
+     * <p>For the sake of speed, this method does no checking
+     * to see if the attribute is already in the list: that is
+     * the responsibility of the application.</p>
+     *
+     * @param uri The Namespace URI, or the empty string if
+     *        none is available or Namespace processing is not
+     *        being performed.
+     * @param localName The local name, or the empty string if
+     *        Namespace processing is not being performed.
+     * @param qName The qualified (prefixed) name, or the empty string
+     *        if qualified names are not available.
+     * @param type The attribute type as a string.
+     * @param value The attribute value.
+     */
+    public void addAttribute (String uri, String localName, String qName,
+                              String type, String value)
+    {
+        ensureCapacity(length+1);
+        data[length*5] = uri;
+        data[length*5+1] = localName;
+        data[length*5+2] = qName;
+        data[length*5+3] = type;
+        data[length*5+4] = value;
+        length++;
+    }
+
+
+    /**
+     * Set an attribute in the list.
+     *
+     * <p>For the sake of speed, this method does no checking
+     * for name conflicts or well-formedness: such checks are the
+     * responsibility of the application.</p>
+     *
+     * @param index The index of the attribute (zero-based).
+     * @param uri The Namespace URI, or the empty string if
+     *        none is available or Namespace processing is not
+     *        being performed.
+     * @param localName The local name, or the empty string if
+     *        Namespace processing is not being performed.
+     * @param qName The qualified name, or the empty string
+     *        if qualified names are not available.
+     * @param type The attribute type as a string.
+     * @param value The attribute value.
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void setAttribute (int index, String uri, String localName,
+                              String qName, String type, String value)
+    {
+        if (index >= 0 && index < length) {
+            data[index*5] = uri;
+            data[index*5+1] = localName;
+            data[index*5+2] = qName;
+            data[index*5+3] = type;
+            data[index*5+4] = value;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+    /**
+     * Remove an attribute from the list.
+     *
+     * @param index The index of the attribute (zero-based).
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void removeAttribute (int index)
+    {
+        if (index >= 0 && index < length) {
+            if (index < length - 1) {
+                System.arraycopy(data, (index+1)*5, data, index*5,
+                                 (length-index-1)*5);
+            }
+            index = (length - 1) * 5;
+            data [index++] = null;
+            data [index++] = null;
+            data [index++] = null;
+            data [index++] = null;
+            data [index] = null;
+            length--;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+    /**
+     * Set the Namespace URI of a specific attribute.
+     *
+     * @param index The index of the attribute (zero-based).
+     * @param uri The attribute's Namespace URI, or the empty
+     *        string for none.
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void setURI (int index, String uri)
+    {
+        if (index >= 0 && index < length) {
+            data[index*5] = uri;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+    /**
+     * Set the local name of a specific attribute.
+     *
+     * @param index The index of the attribute (zero-based).
+     * @param localName The attribute's local name, or the empty
+     *        string for none.
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void setLocalName (int index, String localName)
+    {
+        if (index >= 0 && index < length) {
+            data[index*5+1] = localName;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+    /**
+     * Set the qualified name of a specific attribute.
+     *
+     * @param index The index of the attribute (zero-based).
+     * @param qName The attribute's qualified name, or the empty
+     *        string for none.
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void setQName (int index, String qName)
+    {
+        if (index >= 0 && index < length) {
+            data[index*5+2] = qName;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+    /**
+     * Set the type of a specific attribute.
+     *
+     * @param index The index of the attribute (zero-based).
+     * @param type The attribute's type.
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void setType (int index, String type)
+    {
+        if (index >= 0 && index < length) {
+            data[index*5+3] = type;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+    /**
+     * Set the value of a specific attribute.
+     *
+     * @param index The index of the attribute (zero-based).
+     * @param value The attribute's value.
+     * @exception java.lang.ArrayIndexOutOfBoundsException When the
+     *            supplied index does not point to an attribute
+     *            in the list.
+     */
+    public void setValue (int index, String value)
+    {
+        if (index >= 0 && index < length) {
+            data[index*5+4] = value;
+        } else {
+            badIndex(index);
+        }
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Internal methods.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Ensure the internal array's capacity.
+     *
+     * @param n The minimum number of attributes that the array must
+     *        be able to hold.
+     */
+    private void ensureCapacity (int n)    {
+        if (n <= 0) {
+            return;
+        }
+        int max;
+        if (data == null || data.length == 0) {
+            max = 25;
+        }
+        else if (data.length >= n * 5) {
+            return;
+        }
+        else {
+            max = data.length;
+        }
+        while (max < n * 5) {
+            max *= 2;
+        }
+
+        String newData[] = new String[max];
+        if (length > 0) {
+            System.arraycopy(data, 0, newData, 0, length*5);
+        }
+        data = newData;
+    }
+
+
+    /**
+     * Report a bad array index in a manipulator.
+     *
+     * @param index The index to report.
+     * @exception java.lang.ArrayIndexOutOfBoundsException Always.
+     */
+    private void badIndex (int index)
+        throws ArrayIndexOutOfBoundsException
+    {
+        String msg =
+            "Attempt to modify attribute at illegal index: " + index;
+        throw new ArrayIndexOutOfBoundsException(msg);
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Internal state.
+    ////////////////////////////////////////////////////////////////////
+
+    int length;
+    String data [];
+
+}
+
+// end of AttributesImpl.java

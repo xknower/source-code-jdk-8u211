@@ -1,72 +1,66 @@
-/*    */ package java.security.cert;
-/*    */ 
-/*    */ import java.util.Date;
-/*    */ import java.util.Set;
-/*    */ import sun.security.provider.certpath.CertPathHelper;
-/*    */ import sun.security.x509.GeneralNameInterface;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class CertPathHelperImpl
-/*    */   extends CertPathHelper
-/*    */ {
-/*    */   static synchronized void initialize() {
-/* 53 */     if (CertPathHelper.instance == null) {
-/* 54 */       CertPathHelper.instance = new CertPathHelperImpl();
-/*    */     }
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   protected void implSetPathToNames(X509CertSelector paramX509CertSelector, Set<GeneralNameInterface> paramSet) {
-/* 60 */     paramX509CertSelector.setPathToNamesInternal(paramSet);
-/*    */   }
-/*    */   
-/*    */   protected void implSetDateAndTime(X509CRLSelector paramX509CRLSelector, Date paramDate, long paramLong) {
-/* 64 */     paramX509CRLSelector.setDateAndTime(paramDate, paramLong);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\cert\CertPathHelperImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security.cert;
+
+import java.util.*;
+
+import sun.security.provider.certpath.CertPathHelper;
+
+import sun.security.x509.GeneralNameInterface;
+
+/**
+ * Helper class that allows the Sun CertPath provider to access
+ * implementation dependent APIs in CertPath framework.
+ *
+ * @author Andreas Sterbenz
+ */
+class CertPathHelperImpl extends CertPathHelper {
+
+    private CertPathHelperImpl() {
+        // empty
+    }
+
+    /**
+     * Initialize the helper framework. This method must be called from
+     * the static initializer of each class that is the target of one of
+     * the methods in this class. This ensures that the helper is initialized
+     * prior to a tunneled call from the Sun provider.
+     */
+    synchronized static void initialize() {
+        if (CertPathHelper.instance == null) {
+            CertPathHelper.instance = new CertPathHelperImpl();
+        }
+    }
+
+    protected void implSetPathToNames(X509CertSelector sel,
+            Set<GeneralNameInterface> names) {
+        sel.setPathToNamesInternal(names);
+    }
+
+    protected void implSetDateAndTime(X509CRLSelector sel, Date date, long skew) {
+        sel.setDateAndTime(date, skew);
+    }
+}

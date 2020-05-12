@@ -1,19 +1,65 @@
+/*
+ * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
 package javax.swing.event;
+
 
 import java.util.EventListener;
 
-public interface MenuDragMouseListener extends EventListener {
-  void menuDragMouseEntered(MenuDragMouseEvent paramMenuDragMouseEvent);
-  
-  void menuDragMouseExited(MenuDragMouseEvent paramMenuDragMouseEvent);
-  
-  void menuDragMouseDragged(MenuDragMouseEvent paramMenuDragMouseEvent);
-  
-  void menuDragMouseReleased(MenuDragMouseEvent paramMenuDragMouseEvent);
-}
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\event\MenuDragMouseListener.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * Defines a menu mouse-drag listener.
+ *
+ * @author Georges Saab
  */
+public interface MenuDragMouseListener extends EventListener {
+    /**
+     * Invoked when the dragged mouse has entered a menu component's
+     * display area.
+     *
+     * @param e  a MenuDragMouseEvent object
+     */
+    void menuDragMouseEntered(MenuDragMouseEvent e);
+    /**
+     * Invoked when the dragged mouse has left a menu component's
+     * display area.
+     *
+     * @param e  a MenuDragMouseEvent object
+     */
+    void menuDragMouseExited(MenuDragMouseEvent e);
+    /**
+     * Invoked when the mouse is being dragged in a menu component's
+     * display area.
+     *
+     * @param e  a MenuDragMouseEvent object
+     */
+    void menuDragMouseDragged(MenuDragMouseEvent e);
+    /**
+     * Invoked when a dragged mouse is release in a menu component's
+     * display area.
+     *
+     * @param e  a MenuDragMouseEvent object
+     */
+    void menuDragMouseReleased(MenuDragMouseEvent e);
+}

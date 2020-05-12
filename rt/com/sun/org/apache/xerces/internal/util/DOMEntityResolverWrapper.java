@@ -1,175 +1,170 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*     */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
-/*     */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.Reader;
-/*     */ import java.io.StringReader;
-/*     */ import org.w3c.dom.ls.LSInput;
-/*     */ import org.w3c.dom.ls.LSResourceResolver;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DOMEntityResolverWrapper
-/*     */   implements XMLEntityResolver
-/*     */ {
-/*     */   private static final String XML_TYPE = "http://www.w3.org/TR/REC-xml";
-/*     */   private static final String XSD_TYPE = "http://www.w3.org/2001/XMLSchema";
-/*     */   protected LSResourceResolver fEntityResolver;
-/*     */   
-/*     */   public DOMEntityResolverWrapper() {}
-/*     */   
-/*     */   public DOMEntityResolverWrapper(LSResourceResolver entityResolver) {
-/*  73 */     setEntityResolver(entityResolver);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setEntityResolver(LSResourceResolver entityResolver) {
-/*  82 */     this.fEntityResolver = entityResolver;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public LSResourceResolver getEntityResolver() {
-/*  87 */     return this.fEntityResolver;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XMLInputSource resolveEntity(XMLResourceIdentifier resourceIdentifier) throws XNIException, IOException {
-/* 106 */     if (this.fEntityResolver != null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 117 */       LSInput inputSource = (resourceIdentifier == null) ? this.fEntityResolver.resolveResource(null, null, null, null, null) : this.fEntityResolver.resolveResource(
-/* 118 */           getType(resourceIdentifier), resourceIdentifier
-/* 119 */           .getNamespace(), resourceIdentifier
-/* 120 */           .getPublicId(), resourceIdentifier
-/* 121 */           .getLiteralSystemId(), resourceIdentifier
-/* 122 */           .getBaseSystemId());
-/* 123 */       if (inputSource != null) {
-/* 124 */         String publicId = inputSource.getPublicId();
-/* 125 */         String systemId = inputSource.getSystemId();
-/* 126 */         String baseSystemId = inputSource.getBaseURI();
-/* 127 */         InputStream byteStream = inputSource.getByteStream();
-/* 128 */         Reader charStream = inputSource.getCharacterStream();
-/* 129 */         String encoding = inputSource.getEncoding();
-/* 130 */         String data = inputSource.getStringData();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 137 */         XMLInputSource xmlInputSource = new XMLInputSource(publicId, systemId, baseSystemId);
-/*     */ 
-/*     */         
-/* 140 */         if (charStream != null) {
-/* 141 */           xmlInputSource.setCharacterStream(charStream);
-/*     */         }
-/* 143 */         else if (byteStream != null) {
-/* 144 */           xmlInputSource.setByteStream(byteStream);
-/*     */         }
-/* 146 */         else if (data != null && data.length() != 0) {
-/* 147 */           xmlInputSource.setCharacterStream(new StringReader(data));
-/*     */         } 
-/* 149 */         xmlInputSource.setEncoding(encoding);
-/* 150 */         return xmlInputSource;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 155 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private String getType(XMLResourceIdentifier resourceIdentifier) {
-/* 161 */     if (resourceIdentifier instanceof XMLGrammarDescription) {
-/* 162 */       XMLGrammarDescription desc = (XMLGrammarDescription)resourceIdentifier;
-/* 163 */       if ("http://www.w3.org/2001/XMLSchema".equals(desc.getGrammarType())) {
-/* 164 */         return "http://www.w3.org/2001/XMLSchema";
-/*     */       }
-/*     */     } 
-/* 167 */     return "http://www.w3.org/TR/REC-xml";
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\DOMEntityResolverWrapper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+
+import org.w3c.dom.ls.LSResourceResolver;
+import org.w3c.dom.ls.LSInput;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+
+
+/**
+ * This class wraps DOM entity resolver to XNI entity resolver.
+ *
+ * @see LSResourceResolver
+ *
+ * @author Gopal Sharma, SUN MicroSystems Inc.
+ * @author Elena Litani, IBM
+ * @author Ramesh Mandava, Sun Microsystems
+ */
+public class DOMEntityResolverWrapper
+    implements XMLEntityResolver {
+
+    //
+    // Data
+    //
+
+    /** XML 1.0 type constant according to DOM L3 LS CR spec "http://www.w3.org/TR/2003/CR-DOM-Level-3-LS-20031107" */
+    private static final String XML_TYPE = "http://www.w3.org/TR/REC-xml";
+
+    /** XML Schema constant according to DOM L3 LS CR spec "http://www.w3.org/TR/2003/CR-DOM-Level-3-LS-20031107" */
+    private static final String XSD_TYPE = "http://www.w3.org/2001/XMLSchema";
+
+    /** The DOM entity resolver. */
+    protected LSResourceResolver fEntityResolver;
+
+    //
+    // Constructors
+    //
+
+    /** Default constructor. */
+    public DOMEntityResolverWrapper() {}
+
+    /** Wraps the specified DOM entity resolver. */
+    public DOMEntityResolverWrapper(LSResourceResolver entityResolver) {
+        setEntityResolver(entityResolver);
+    } // LSResourceResolver
+
+    //
+    // Public methods
+    //
+
+    /** Sets the DOM entity resolver. */
+    public void setEntityResolver(LSResourceResolver entityResolver) {
+        fEntityResolver = entityResolver;
+    } // setEntityResolver(LSResourceResolver)
+
+    /** Returns the DOM entity resolver. */
+    public LSResourceResolver getEntityResolver() {
+        return fEntityResolver;
+    } // getEntityResolver():LSResourceResolver
+
+    //
+    // XMLEntityResolver methods
+    //
+
+    /**
+     * Resolves an external parsed entity. If the entity cannot be
+     * resolved, this method should return null.
+     *
+     * @param resourceIdentifier        description of the resource to be revsoved
+     * @throws XNIException Thrown on general error.
+     * @throws IOException  Thrown if resolved entity stream cannot be
+     *                      opened or some other i/o error occurs.
+     */
+    public XMLInputSource resolveEntity(XMLResourceIdentifier resourceIdentifier)
+        throws XNIException, IOException {
+        // resolve entity using DOM entity resolver
+        if (fEntityResolver != null) {
+            // For entity resolution the type of the resource would be  XML TYPE
+            // DOM L3 LS spec mention only the XML 1.0 recommendation right now
+            LSInput inputSource =
+                resourceIdentifier == null
+                    ? fEntityResolver.resolveResource(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null)
+                    : fEntityResolver.resolveResource(
+                        getType(resourceIdentifier),
+                        resourceIdentifier.getNamespace(),
+                        resourceIdentifier.getPublicId(),
+                        resourceIdentifier.getLiteralSystemId(),
+                        resourceIdentifier.getBaseSystemId());
+            if (inputSource != null) {
+                String publicId = inputSource.getPublicId();
+                String systemId = inputSource.getSystemId();
+                String baseSystemId = inputSource.getBaseURI();
+                InputStream byteStream = inputSource.getByteStream();
+                Reader charStream = inputSource.getCharacterStream();
+                String encoding = inputSource.getEncoding();
+                String data = inputSource.getStringData();
+
+                /**
+                 * An LSParser looks at inputs specified in LSInput in
+                 * the following order: characterStream, byteStream,
+                 * stringData, systemId, publicId.
+                 */
+                XMLInputSource xmlInputSource =
+                    new XMLInputSource(publicId, systemId, baseSystemId);
+
+                if (charStream != null) {
+                    xmlInputSource.setCharacterStream(charStream);
+                }
+                else if (byteStream != null) {
+                    xmlInputSource.setByteStream((InputStream) byteStream);
+                }
+                else if (data != null && data.length() != 0) {
+                    xmlInputSource.setCharacterStream(new StringReader(data));
+                }
+                xmlInputSource.setEncoding(encoding);
+                return xmlInputSource;
+            }
+        }
+
+        // unable to resolve entity
+        return null;
+
+    } // resolveEntity(String,String,String):XMLInputSource
+
+    /** Determines the type of resource being resolved **/
+    private String getType(XMLResourceIdentifier resourceIdentifier) {
+        if (resourceIdentifier instanceof XMLGrammarDescription) {
+            XMLGrammarDescription desc = (XMLGrammarDescription) resourceIdentifier;
+            if (XMLGrammarDescription.XML_SCHEMA.equals(desc.getGrammarType())) {
+                return XSD_TYPE;
+            }
+        }
+        return XML_TYPE;
+    } // getType(XMLResourceIdentifier):String
+
+} // DOMEntityResolverWrapper

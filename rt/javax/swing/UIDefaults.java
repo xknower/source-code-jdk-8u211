@@ -1,1342 +1,1329 @@
-/*      */ package javax.swing;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Dimension;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Insets;
-/*      */ import java.beans.PropertyChangeListener;
-/*      */ import java.lang.reflect.Constructor;
-/*      */ import java.lang.reflect.Method;
-/*      */ import java.security.AccessControlContext;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.util.Enumeration;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Hashtable;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Map;
-/*      */ import java.util.MissingResourceException;
-/*      */ import java.util.ResourceBundle;
-/*      */ import java.util.Vector;
-/*      */ import javax.swing.border.Border;
-/*      */ import javax.swing.event.SwingPropertyChangeSupport;
-/*      */ import javax.swing.plaf.ComponentUI;
-/*      */ import sun.reflect.misc.MethodUtil;
-/*      */ import sun.reflect.misc.ReflectUtil;
-/*      */ import sun.swing.SwingUtilities2;
-/*      */ import sun.util.CoreResourceBundleControl;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class UIDefaults
-/*      */   extends Hashtable<Object, Object>
-/*      */ {
-/*   75 */   private static final Object PENDING = new Object();
-/*      */   
-/*      */   private SwingPropertyChangeSupport changeSupport;
-/*      */   
-/*      */   private Vector<String> resourceBundles;
-/*      */   
-/*   81 */   private Locale defaultLocale = Locale.getDefault();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Map<Locale, Map<String, Object>> resourceCache;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UIDefaults() {
-/*   95 */     this(700, 0.75F);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UIDefaults(int paramInt, float paramFloat) {
-/*  108 */     super(paramInt, paramFloat);
-/*  109 */     this.resourceCache = new HashMap<>();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public UIDefaults(Object[] paramArrayOfObject) {
-/*  128 */     super(paramArrayOfObject.length / 2);
-/*  129 */     for (byte b = 0; b < paramArrayOfObject.length; b += 2) {
-/*  130 */       super.put(paramArrayOfObject[b], paramArrayOfObject[b + 1]);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object get(Object paramObject) {
-/*  161 */     Object object = getFromHashtable(paramObject);
-/*  162 */     return (object != null) ? object : getFromResourceBundle(paramObject, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Object getFromHashtable(Object paramObject) {
-/*  173 */     Object object = super.get(paramObject);
-/*  174 */     if (object != PENDING && !(object instanceof ActiveValue) && !(object instanceof LazyValue))
-/*      */     {
-/*      */       
-/*  177 */       return object;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  186 */     synchronized (this) {
-/*  187 */       object = super.get(paramObject);
-/*  188 */       if (object == PENDING)
-/*      */         while (true) {
-/*      */           try {
-/*  191 */             wait();
-/*      */           }
-/*  193 */           catch (InterruptedException interruptedException) {}
-/*      */           
-/*  195 */           object = super.get(paramObject);
-/*      */           
-/*  197 */           if (object != PENDING)
-/*  198 */             return object; 
-/*      */         }  
-/*  200 */       if (object instanceof LazyValue) {
-/*  201 */         super.put(paramObject, PENDING);
-/*      */       }
-/*  203 */       else if (!(object instanceof ActiveValue)) {
-/*  204 */         return object;
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  211 */     if (object instanceof LazyValue) {
-/*      */ 
-/*      */       
-/*      */       try {
-/*      */         
-/*  216 */         object = ((LazyValue)object).createValue(this);
-/*      */       } finally {
-/*      */         
-/*  219 */         synchronized (this) {
-/*  220 */           if (object == null) {
-/*  221 */             remove(paramObject);
-/*      */           } else {
-/*      */             
-/*  224 */             super.put(paramObject, object);
-/*      */           } 
-/*  226 */           notifyAll();
-/*      */         } 
-/*      */       } 
-/*      */     } else {
-/*      */       
-/*  231 */       object = ((ActiveValue)object).createValue(this);
-/*      */     } 
-/*      */     
-/*  234 */     return object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object get(Object paramObject, Locale paramLocale) {
-/*  264 */     Object object = getFromHashtable(paramObject);
-/*  265 */     return (object != null) ? object : getFromResourceBundle(paramObject, paramLocale);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Object getFromResourceBundle(Object paramObject, Locale paramLocale) {
-/*  273 */     if (this.resourceBundles == null || this.resourceBundles
-/*  274 */       .isEmpty() || !(paramObject instanceof String))
-/*      */     {
-/*  276 */       return null;
-/*      */     }
-/*      */ 
-/*      */     
-/*  280 */     if (paramLocale == null) {
-/*  281 */       if (this.defaultLocale == null) {
-/*  282 */         return null;
-/*      */       }
-/*  284 */       paramLocale = this.defaultLocale;
-/*      */     } 
-/*      */     
-/*  287 */     synchronized (this) {
-/*  288 */       return getResourceCache(paramLocale).get(paramObject);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Map<String, Object> getResourceCache(Locale paramLocale) {
-/*  296 */     Map<String, Object> map = this.resourceCache.get(paramLocale);
-/*      */     
-/*  298 */     if (map == null) {
-/*  299 */       map = new TextAndMnemonicHashMap();
-/*  300 */       for (int i = this.resourceBundles.size() - 1; i >= 0; i--) {
-/*  301 */         String str = this.resourceBundles.get(i); try {
-/*      */           ResourceBundle resourceBundle;
-/*  303 */           CoreResourceBundleControl coreResourceBundleControl = CoreResourceBundleControl.getRBControlInstance(str);
-/*      */           
-/*  305 */           if (coreResourceBundleControl != null) {
-/*  306 */             resourceBundle = ResourceBundle.getBundle(str, paramLocale, coreResourceBundleControl);
-/*      */           } else {
-/*  308 */             resourceBundle = ResourceBundle.getBundle(str, paramLocale, 
-/*  309 */                 ClassLoader.getSystemClassLoader());
-/*      */           } 
-/*  311 */           Enumeration<String> enumeration = resourceBundle.getKeys();
-/*      */           
-/*  313 */           while (enumeration.hasMoreElements()) {
-/*  314 */             String str1 = enumeration.nextElement();
-/*      */             
-/*  316 */             if (map.get(str1) == null) {
-/*  317 */               Object object = resourceBundle.getObject(str1);
-/*      */               
-/*  319 */               map.put(str1, object);
-/*      */             } 
-/*      */           } 
-/*  322 */         } catch (MissingResourceException missingResourceException) {}
-/*      */       } 
-/*      */ 
-/*      */       
-/*  326 */       this.resourceCache.put(paramLocale, map);
-/*      */     } 
-/*  328 */     return map;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object put(Object paramObject1, Object paramObject2) {
-/*  346 */     V v = (paramObject2 == null) ? remove(paramObject1) : (V)super.put(paramObject1, paramObject2);
-/*  347 */     if (paramObject1 instanceof String) {
-/*  348 */       firePropertyChange((String)paramObject1, v, paramObject2);
-/*      */     }
-/*  350 */     return v;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void putDefaults(Object[] paramArrayOfObject) {
-/*      */     byte b;
-/*      */     int i;
-/*  366 */     for (b = 0, i = paramArrayOfObject.length; b < i; b += 2) {
-/*  367 */       Object object = paramArrayOfObject[b + 1];
-/*  368 */       if (object == null) {
-/*  369 */         remove(paramArrayOfObject[b]);
-/*      */       } else {
-/*      */         
-/*  372 */         super.put(paramArrayOfObject[b], object);
-/*      */       } 
-/*      */     } 
-/*  375 */     firePropertyChange("UIDefaults", null, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Font getFont(Object paramObject) {
-/*  388 */     Object object = get(paramObject);
-/*  389 */     return (object instanceof Font) ? (Font)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Font getFont(Object paramObject, Locale paramLocale) {
-/*  405 */     Object object = get(paramObject, paramLocale);
-/*  406 */     return (object instanceof Font) ? (Font)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getColor(Object paramObject) {
-/*  418 */     Object object = get(paramObject);
-/*  419 */     return (object instanceof Color) ? (Color)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Color getColor(Object paramObject, Locale paramLocale) {
-/*  435 */     Object object = get(paramObject, paramLocale);
-/*  436 */     return (object instanceof Color) ? (Color)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getIcon(Object paramObject) {
-/*  449 */     Object object = get(paramObject);
-/*  450 */     return (object instanceof Icon) ? (Icon)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Icon getIcon(Object paramObject, Locale paramLocale) {
-/*  466 */     Object object = get(paramObject, paramLocale);
-/*  467 */     return (object instanceof Icon) ? (Icon)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Border getBorder(Object paramObject) {
-/*  480 */     Object object = get(paramObject);
-/*  481 */     return (object instanceof Border) ? (Border)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Border getBorder(Object paramObject, Locale paramLocale) {
-/*  497 */     Object object = get(paramObject, paramLocale);
-/*  498 */     return (object instanceof Border) ? (Border)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getString(Object paramObject) {
-/*  511 */     Object object = get(paramObject);
-/*  512 */     return (object instanceof String) ? (String)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public String getString(Object paramObject, Locale paramLocale) {
-/*  527 */     Object object = get(paramObject, paramLocale);
-/*  528 */     return (object instanceof String) ? (String)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getInt(Object paramObject) {
-/*  539 */     Object object = get(paramObject);
-/*  540 */     return (object instanceof Integer) ? ((Integer)object).intValue() : 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public int getInt(Object paramObject, Locale paramLocale) {
-/*  555 */     Object object = get(paramObject, paramLocale);
-/*  556 */     return (object instanceof Integer) ? ((Integer)object).intValue() : 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getBoolean(Object paramObject) {
-/*  570 */     Object object = get(paramObject);
-/*  571 */     return (object instanceof Boolean) ? ((Boolean)object).booleanValue() : false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getBoolean(Object paramObject, Locale paramLocale) {
-/*  587 */     Object object = get(paramObject, paramLocale);
-/*  588 */     return (object instanceof Boolean) ? ((Boolean)object).booleanValue() : false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Insets getInsets(Object paramObject) {
-/*  601 */     Object object = get(paramObject);
-/*  602 */     return (object instanceof Insets) ? (Insets)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Insets getInsets(Object paramObject, Locale paramLocale) {
-/*  618 */     Object object = get(paramObject, paramLocale);
-/*  619 */     return (object instanceof Insets) ? (Insets)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getDimension(Object paramObject) {
-/*  632 */     Object object = get(paramObject);
-/*  633 */     return (object instanceof Dimension) ? (Dimension)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Dimension getDimension(Object paramObject, Locale paramLocale) {
-/*  649 */     Object object = get(paramObject, paramLocale);
-/*  650 */     return (object instanceof Dimension) ? (Dimension)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Class<? extends ComponentUI> getUIClass(String paramString, ClassLoader paramClassLoader) {
-/*      */     try {
-/*  678 */       String str = (String)get(paramString);
-/*  679 */       if (str != null) {
-/*  680 */         ReflectUtil.checkPackageAccess(str);
-/*      */         
-/*  682 */         Class<?> clazz = (Class)get(str);
-/*  683 */         if (clazz == null) {
-/*  684 */           if (paramClassLoader == null) {
-/*  685 */             clazz = SwingUtilities.loadSystemClass(str);
-/*      */           } else {
-/*      */             
-/*  688 */             clazz = paramClassLoader.loadClass(str);
-/*      */           } 
-/*  690 */           if (clazz != null)
-/*      */           {
-/*  692 */             put(str, clazz);
-/*      */           }
-/*      */         } 
-/*  695 */         return (Class)clazz;
-/*      */       }
-/*      */     
-/*  698 */     } catch (ClassNotFoundException classNotFoundException) {
-/*  699 */       return null;
-/*      */     }
-/*  701 */     catch (ClassCastException classCastException) {
-/*  702 */       return null;
-/*      */     } 
-/*  704 */     return null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Class<? extends ComponentUI> getUIClass(String paramString) {
-/*  716 */     return getUIClass(paramString, null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void getUIError(String paramString) {
-/*  729 */     System.err.println("UIDefaults.getUI() failed: " + paramString);
-/*      */     try {
-/*  731 */       throw new Error();
-/*      */     }
-/*  733 */     catch (Throwable throwable) {
-/*  734 */       throwable.printStackTrace();
-/*      */       return;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ComponentUI getUI(JComponent paramJComponent) {
-/*  754 */     Object object1 = get("ClassLoader");
-/*      */     
-/*  756 */     ClassLoader classLoader = (object1 != null) ? (ClassLoader)object1 : paramJComponent.getClass().getClassLoader();
-/*  757 */     Class<? extends ComponentUI> clazz = getUIClass(paramJComponent.getUIClassID(), classLoader);
-/*  758 */     Object object2 = null;
-/*      */     
-/*  760 */     if (clazz == null) {
-/*  761 */       getUIError("no ComponentUI class for: " + paramJComponent);
-/*      */     } else {
-/*      */       
-/*      */       try {
-/*  765 */         Method method = (Method)get(clazz);
-/*  766 */         if (method == null) {
-/*  767 */           method = clazz.getMethod("createUI", new Class[] { JComponent.class });
-/*  768 */           put(clazz, method);
-/*      */         } 
-/*  770 */         object2 = MethodUtil.invoke(method, null, new Object[] { paramJComponent });
-/*      */       }
-/*  772 */       catch (NoSuchMethodException noSuchMethodException) {
-/*  773 */         getUIError("static createUI() method not found in " + clazz);
-/*      */       }
-/*  775 */       catch (Exception exception) {
-/*  776 */         getUIError("createUI() failed for " + paramJComponent + " " + exception);
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  780 */     return (ComponentUI)object2;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void addPropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/*  794 */     if (this.changeSupport == null) {
-/*  795 */       this.changeSupport = new SwingPropertyChangeSupport(this);
-/*      */     }
-/*  797 */     this.changeSupport.addPropertyChangeListener(paramPropertyChangeListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void removePropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) {
-/*  810 */     if (this.changeSupport != null) {
-/*  811 */       this.changeSupport.removePropertyChangeListener(paramPropertyChangeListener);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized PropertyChangeListener[] getPropertyChangeListeners() {
-/*  825 */     if (this.changeSupport == null) {
-/*  826 */       return new PropertyChangeListener[0];
-/*      */     }
-/*  828 */     return this.changeSupport.getPropertyChangeListeners();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected void firePropertyChange(String paramString, Object paramObject1, Object paramObject2) {
-/*  845 */     if (this.changeSupport != null) {
-/*  846 */       this.changeSupport.firePropertyChange(paramString, paramObject1, paramObject2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void addResourceBundle(String paramString) {
-/*  863 */     if (paramString == null) {
-/*      */       return;
-/*      */     }
-/*  866 */     if (this.resourceBundles == null) {
-/*  867 */       this.resourceBundles = new Vector<>(5);
-/*      */     }
-/*  869 */     if (!this.resourceBundles.contains(paramString)) {
-/*  870 */       this.resourceBundles.add(paramString);
-/*  871 */       this.resourceCache.clear();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public synchronized void removeResourceBundle(String paramString) {
-/*  886 */     if (this.resourceBundles != null) {
-/*  887 */       this.resourceBundles.remove(paramString);
-/*      */     }
-/*  889 */     this.resourceCache.clear();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setDefaultLocale(Locale paramLocale) {
-/*  907 */     this.defaultLocale = paramLocale;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Locale getDefaultLocale() {
-/*  925 */     return this.defaultLocale;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class ProxyLazyValue
-/*      */     implements LazyValue
-/*      */   {
-/*      */     private AccessControlContext acc;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private String className;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private String methodName;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Object[] args;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ProxyLazyValue(String param1String) {
-/* 1023 */       this(param1String, (String)null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ProxyLazyValue(String param1String1, String param1String2) {
-/* 1037 */       this(param1String1, param1String2, null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ProxyLazyValue(String param1String, Object[] param1ArrayOfObject) {
-/* 1049 */       this(param1String, null, param1ArrayOfObject);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public ProxyLazyValue(String param1String1, String param1String2, Object[] param1ArrayOfObject) {
-/* 1065 */       this.acc = AccessController.getContext();
-/* 1066 */       this.className = param1String1;
-/* 1067 */       this.methodName = param1String2;
-/* 1068 */       if (param1ArrayOfObject != null) {
-/* 1069 */         this.args = (Object[])param1ArrayOfObject.clone();
-/*      */       }
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object createValue(final UIDefaults table) {
-/* 1084 */       if (this.acc == null && System.getSecurityManager() != null) {
-/* 1085 */         throw new SecurityException("null AccessControlContext");
-/*      */       }
-/* 1087 */       return AccessController.doPrivileged(new PrivilegedAction()
-/*      */           {
-/*      */             public Object run()
-/*      */             {
-/*      */               try {
-/*      */                 Object object;
-/* 1093 */                 if (table == null || !(object = table.get("ClassLoader") instanceof ClassLoader)) {
-/*      */ 
-/*      */                   
-/* 1096 */                   object = Thread.currentThread().getContextClassLoader();
-/* 1097 */                   if (object == null)
-/*      */                   {
-/* 1099 */                     object = ClassLoader.getSystemClassLoader();
-/*      */                   }
-/*      */                 } 
-/* 1102 */                 ReflectUtil.checkPackageAccess(UIDefaults.ProxyLazyValue.this.className);
-/* 1103 */                 Class<?> clazz = Class.forName(UIDefaults.ProxyLazyValue.this.className, true, (ClassLoader)object);
-/* 1104 */                 SwingUtilities2.checkAccess(clazz.getModifiers());
-/* 1105 */                 if (UIDefaults.ProxyLazyValue.this.methodName != null) {
-/* 1106 */                   Class[] arrayOfClass1 = UIDefaults.ProxyLazyValue.this.getClassArray(UIDefaults.ProxyLazyValue.this.args);
-/* 1107 */                   Method method = clazz.getMethod(UIDefaults.ProxyLazyValue.this.methodName, arrayOfClass1);
-/* 1108 */                   return MethodUtil.invoke(method, clazz, UIDefaults.ProxyLazyValue.this.args);
-/*      */                 } 
-/* 1110 */                 Class[] arrayOfClass = UIDefaults.ProxyLazyValue.this.getClassArray(UIDefaults.ProxyLazyValue.this.args);
-/* 1111 */                 Constructor<?> constructor = clazz.getConstructor(arrayOfClass);
-/* 1112 */                 SwingUtilities2.checkAccess(constructor.getModifiers());
-/* 1113 */                 return constructor.newInstance(UIDefaults.ProxyLazyValue.this.args);
-/*      */               }
-/* 1115 */               catch (Exception exception) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */                 
-/* 1122 */                 return null;
-/*      */               } 
-/*      */             }
-/*      */           }this.acc);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private Class[] getClassArray(Object[] param1ArrayOfObject) {
-/* 1135 */       Class[] arrayOfClass = null;
-/* 1136 */       if (param1ArrayOfObject != null) {
-/* 1137 */         arrayOfClass = new Class[param1ArrayOfObject.length];
-/* 1138 */         for (byte b = 0; b < param1ArrayOfObject.length; b++) {
-/*      */ 
-/*      */ 
-/*      */           
-/* 1142 */           if (param1ArrayOfObject[b] instanceof Integer) {
-/* 1143 */             arrayOfClass[b] = int.class;
-/* 1144 */           } else if (param1ArrayOfObject[b] instanceof Boolean) {
-/* 1145 */             arrayOfClass[b] = boolean.class;
-/* 1146 */           } else if (param1ArrayOfObject[b] instanceof javax.swing.plaf.ColorUIResource) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1155 */             arrayOfClass[b] = Color.class;
-/*      */           } else {
-/* 1157 */             arrayOfClass[b] = param1ArrayOfObject[b].getClass();
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/* 1161 */       return arrayOfClass;
-/*      */     }
-/*      */     
-/*      */     private String printArgs(Object[] param1ArrayOfObject) {
-/* 1165 */       String str = "{";
-/* 1166 */       if (param1ArrayOfObject != null) {
-/* 1167 */         for (byte b = 0; b < param1ArrayOfObject.length - 1; b++) {
-/* 1168 */           str = str.concat(param1ArrayOfObject[b] + ",");
-/*      */         }
-/* 1170 */         str = str.concat(param1ArrayOfObject[param1ArrayOfObject.length - 1] + "}");
-/*      */       } else {
-/* 1172 */         str = str.concat("}");
-/*      */       } 
-/* 1174 */       return str;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class LazyInputMap
-/*      */     implements LazyValue
-/*      */   {
-/*      */     private Object[] bindings;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public LazyInputMap(Object[] param1ArrayOfObject) {
-/* 1195 */       this.bindings = param1ArrayOfObject;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object createValue(UIDefaults param1UIDefaults) {
-/* 1206 */       if (this.bindings != null) {
-/* 1207 */         return LookAndFeel.makeInputMap(this.bindings);
-/*      */       }
-/*      */       
-/* 1210 */       return null;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static class TextAndMnemonicHashMap
-/*      */     extends HashMap<String, Object>
-/*      */   {
-/*      */     static final String AND_MNEMONIC = "AndMnemonic";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     static final String TITLE_SUFFIX = ".titleAndMnemonic";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     static final String TEXT_SUFFIX = ".textAndMnemonic";
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private TextAndMnemonicHashMap() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Object get(Object param1Object) {
-/* 1245 */       Object object = super.get(param1Object);
-/*      */       
-/* 1247 */       if (object == null) {
-/*      */         
-/* 1249 */         boolean bool = false;
-/*      */         
-/* 1251 */         String str1 = param1Object.toString();
-/* 1252 */         String str2 = null;
-/*      */         
-/* 1254 */         if (str1.endsWith("AndMnemonic")) {
-/* 1255 */           return null;
-/*      */         }
-/*      */         
-/* 1258 */         if (str1.endsWith(".mnemonic")) {
-/* 1259 */           str2 = composeKey(str1, 9, ".textAndMnemonic");
-/* 1260 */         } else if (str1.endsWith("NameMnemonic")) {
-/* 1261 */           str2 = composeKey(str1, 12, ".textAndMnemonic");
-/* 1262 */         } else if (str1.endsWith("Mnemonic")) {
-/* 1263 */           str2 = composeKey(str1, 8, ".textAndMnemonic");
-/* 1264 */           bool = true;
-/*      */         } 
-/*      */         
-/* 1267 */         if (str2 != null) {
-/* 1268 */           object = super.get(str2);
-/* 1269 */           if (object == null && bool) {
-/* 1270 */             str2 = composeKey(str1, 8, ".titleAndMnemonic");
-/* 1271 */             object = super.get(str2);
-/*      */           } 
-/*      */           
-/* 1274 */           return (object == null) ? null : getMnemonicFromProperty(object.toString());
-/*      */         } 
-/*      */         
-/* 1277 */         if (str1.endsWith("NameText")) {
-/* 1278 */           str2 = composeKey(str1, 8, ".textAndMnemonic");
-/* 1279 */         } else if (str1.endsWith(".nameText")) {
-/* 1280 */           str2 = composeKey(str1, 9, ".textAndMnemonic");
-/* 1281 */         } else if (str1.endsWith("Text")) {
-/* 1282 */           str2 = composeKey(str1, 4, ".textAndMnemonic");
-/* 1283 */         } else if (str1.endsWith("Title")) {
-/* 1284 */           str2 = composeKey(str1, 5, ".titleAndMnemonic");
-/*      */         } 
-/*      */         
-/* 1287 */         if (str2 != null) {
-/* 1288 */           object = super.get(str2);
-/* 1289 */           return (object == null) ? null : getTextFromProperty(object.toString());
-/*      */         } 
-/*      */         
-/* 1292 */         if (str1.endsWith("DisplayedMnemonicIndex")) {
-/* 1293 */           str2 = composeKey(str1, 22, ".textAndMnemonic");
-/* 1294 */           object = super.get(str2);
-/* 1295 */           if (object == null) {
-/* 1296 */             str2 = composeKey(str1, 22, ".titleAndMnemonic");
-/* 1297 */             object = super.get(str2);
-/*      */           } 
-/* 1299 */           return (object == null) ? null : getIndexFromProperty(object.toString());
-/*      */         } 
-/*      */       } 
-/*      */       
-/* 1303 */       return object;
-/*      */     }
-/*      */     
-/*      */     String composeKey(String param1String1, int param1Int, String param1String2) {
-/* 1307 */       return param1String1.substring(0, param1String1.length() - param1Int) + param1String2;
-/*      */     }
-/*      */     
-/*      */     String getTextFromProperty(String param1String) {
-/* 1311 */       return param1String.replace("&", "");
-/*      */     }
-/*      */     
-/*      */     String getMnemonicFromProperty(String param1String) {
-/* 1315 */       int i = param1String.indexOf('&');
-/* 1316 */       if (0 <= i && i < param1String.length() - 1) {
-/* 1317 */         char c = param1String.charAt(i + 1);
-/* 1318 */         return Integer.toString(Character.toUpperCase(c));
-/*      */       } 
-/* 1320 */       return null;
-/*      */     }
-/*      */     
-/*      */     String getIndexFromProperty(String param1String) {
-/* 1324 */       int i = param1String.indexOf('&');
-/* 1325 */       return (i == -1) ? null : Integer.toString(i);
-/*      */     }
-/*      */   }
-/*      */   
-/*      */   public static interface ActiveValue {
-/*      */     Object createValue(UIDefaults param1UIDefaults);
-/*      */   }
-/*      */   
-/*      */   public static interface LazyValue {
-/*      */     Object createValue(UIDefaults param1UIDefaults);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\UIDefaults.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+
+import javax.swing.plaf.ComponentUI;
+import javax.swing.border.*;
+import javax.swing.event.SwingPropertyChangeSupport;
+
+import java.lang.reflect.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.ResourceBundle;
+import java.util.ResourceBundle.Control;
+import java.util.Locale;
+import java.util.Vector;
+import java.util.MissingResourceException;
+import java.awt.Font;
+import java.awt.Color;
+import java.awt.Insets;
+import java.awt.Dimension;
+import java.beans.PropertyChangeListener;
+import java.security.AccessController;
+import java.security.AccessControlContext;
+import java.security.PrivilegedAction;
+
+import sun.reflect.misc.MethodUtil;
+import sun.reflect.misc.ReflectUtil;
+import sun.swing.SwingUtilities2;
+import sun.util.CoreResourceBundleControl;
+
+/**
+ * A table of defaults for Swing components.  Applications can set/get
+ * default values via the <code>UIManager</code>.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @see UIManager
+ * @author Hans Muller
+ */
+public class UIDefaults extends Hashtable<Object,Object>
+{
+    private static final Object PENDING = new Object();
+
+    private SwingPropertyChangeSupport changeSupport;
+
+    private Vector<String> resourceBundles;
+
+    private Locale defaultLocale = Locale.getDefault();
+
+    /**
+     * Maps from a Locale to a cached Map of the ResourceBundle. This is done
+     * so as to avoid an exception being thrown when a value is asked for.
+     * Access to this should be done while holding a lock on the
+     * UIDefaults, eg synchronized(this).
+     */
+    private Map<Locale, Map<String, Object>> resourceCache;
+
+    /**
+     * Creates an empty defaults table.
+     */
+    public UIDefaults() {
+        this(700, .75f);
+    }
+
+    /**
+     * Creates an empty defaults table with the specified initial capacity and
+     * load factor.
+     *
+     * @param initialCapacity   the initial capacity of the defaults table
+     * @param loadFactor        the load factor of the defaults table
+     * @see java.util.Hashtable
+     * @since 1.6
+     */
+    public UIDefaults(int initialCapacity, float loadFactor) {
+        super(initialCapacity, loadFactor);
+        resourceCache = new HashMap<Locale, Map<String, Object>>();
+    }
+
+
+    /**
+     * Creates a defaults table initialized with the specified
+     * key/value pairs.  For example:
+     * <pre>
+        Object[] uiDefaults = {
+             "Font", new Font("Dialog", Font.BOLD, 12),
+            "Color", Color.red,
+             "five", new Integer(5)
+        }
+        UIDefaults myDefaults = new UIDefaults(uiDefaults);
+     * </pre>
+     * @param keyValueList  an array of objects containing the key/value
+     *          pairs
+     */
+    public UIDefaults(Object[] keyValueList) {
+        super(keyValueList.length / 2);
+        for(int i = 0; i < keyValueList.length; i += 2) {
+            super.put(keyValueList[i], keyValueList[i + 1]);
+        }
+    }
+
+    /**
+     * Returns the value for key.  If the value is a
+     * <code>UIDefaults.LazyValue</code> then the real
+     * value is computed with <code>LazyValue.createValue()</code>,
+     * the table entry is replaced, and the real value is returned.
+     * If the value is an <code>UIDefaults.ActiveValue</code>
+     * the table entry is not replaced - the value is computed
+     * with <code>ActiveValue.createValue()</code> for each
+     * <code>get()</code> call.
+     *
+     * If the key is not found in the table then it is searched for in the list
+     * of resource bundles maintained by this object.  The resource bundles are
+     * searched most recently added first using the locale returned by
+     * <code>getDefaultLocale</code>.  <code>LazyValues</code> and
+     * <code>ActiveValues</code> are not supported in the resource bundles.
+
+     *
+     * @param key the desired key
+     * @return the value for <code>key</code>
+     * @see LazyValue
+     * @see ActiveValue
+     * @see java.util.Hashtable#get
+     * @see #getDefaultLocale
+     * @see #addResourceBundle
+     * @since 1.4
+     */
+    public Object get(Object key) {
+        Object value = getFromHashtable( key );
+        return (value != null) ? value : getFromResourceBundle(key, null);
+    }
+
+    /**
+     * Looks up up the given key in our Hashtable and resolves LazyValues
+     * or ActiveValues.
+     */
+    private Object getFromHashtable(final Object key) {
+        /* Quickly handle the common case, without grabbing
+         * a lock.
+         */
+        Object value = super.get(key);
+        if ((value != PENDING) &&
+            !(value instanceof ActiveValue) &&
+            !(value instanceof LazyValue)) {
+            return value;
+        }
+
+        /* If the LazyValue for key is being constructed by another
+         * thread then wait and then return the new value, otherwise drop
+         * the lock and construct the ActiveValue or the LazyValue.
+         * We use the special value PENDING to mark LazyValues that
+         * are being constructed.
+         */
+        synchronized(this) {
+            value = super.get(key);
+            if (value == PENDING) {
+                do {
+                    try {
+                        this.wait();
+                    }
+                    catch (InterruptedException e) {
+                    }
+                    value = super.get(key);
+                }
+                while(value == PENDING);
+                return value;
+            }
+            else if (value instanceof LazyValue) {
+                super.put(key, PENDING);
+            }
+            else if (!(value instanceof ActiveValue)) {
+                return value;
+            }
+        }
+
+        /* At this point we know that the value of key was
+         * a LazyValue or an ActiveValue.
+         */
+        if (value instanceof LazyValue) {
+            try {
+                /* If an exception is thrown we'll just put the LazyValue
+                 * back in the table.
+                 */
+                value = ((LazyValue)value).createValue(this);
+            }
+            finally {
+                synchronized(this) {
+                    if (value == null) {
+                        super.remove(key);
+                    }
+                    else {
+                        super.put(key, value);
+                    }
+                    this.notifyAll();
+                }
+            }
+        }
+        else {
+            value = ((ActiveValue)value).createValue(this);
+        }
+
+        return value;
+    }
+
+
+    /**
+     * Returns the value for key associated with the given locale.
+     * If the value is a <code>UIDefaults.LazyValue</code> then the real
+     * value is computed with <code>LazyValue.createValue()</code>,
+     * the table entry is replaced, and the real value is returned.
+     * If the value is an <code>UIDefaults.ActiveValue</code>
+     * the table entry is not replaced - the value is computed
+     * with <code>ActiveValue.createValue()</code> for each
+     * <code>get()</code> call.
+     *
+     * If the key is not found in the table then it is searched for in the list
+     * of resource bundles maintained by this object.  The resource bundles are
+     * searched most recently added first using the given locale.
+     * <code>LazyValues</code> and <code>ActiveValues</code> are not supported
+     * in the resource bundles.
+     *
+     * @param key the desired key
+     * @param l the desired <code>locale</code>
+     * @return the value for <code>key</code>
+     * @see LazyValue
+     * @see ActiveValue
+     * @see java.util.Hashtable#get
+     * @see #addResourceBundle
+     * @since 1.4
+     */
+    public Object get(Object key, Locale l) {
+        Object value = getFromHashtable( key );
+        return (value != null) ? value : getFromResourceBundle(key, l);
+    }
+
+    /**
+     * Looks up given key in our resource bundles.
+     */
+    private Object getFromResourceBundle(Object key, Locale l) {
+
+        if( resourceBundles == null ||
+            resourceBundles.isEmpty() ||
+            !(key instanceof String) ) {
+            return null;
+        }
+
+        // A null locale means use the default locale.
+        if( l == null ) {
+            if( defaultLocale == null )
+                return null;
+            else
+                l = defaultLocale;
+        }
+
+        synchronized(this) {
+            return getResourceCache(l).get(key);
+        }
+    }
+
+    /**
+     * Returns a Map of the known resources for the given locale.
+     */
+    private Map<String, Object> getResourceCache(Locale l) {
+        Map<String, Object> values = resourceCache.get(l);
+
+        if (values == null) {
+            values = new TextAndMnemonicHashMap();
+            for (int i=resourceBundles.size()-1; i >= 0; i--) {
+                String bundleName = resourceBundles.get(i);
+                try {
+                    Control c = CoreResourceBundleControl.getRBControlInstance(bundleName);
+                    ResourceBundle b;
+                    if (c != null) {
+                        b = ResourceBundle.getBundle(bundleName, l, c);
+                    } else {
+                        b = ResourceBundle.getBundle(bundleName, l,
+                                ClassLoader.getSystemClassLoader());
+                    }
+                    Enumeration keys = b.getKeys();
+
+                    while (keys.hasMoreElements()) {
+                        String key = (String)keys.nextElement();
+
+                        if (values.get(key) == null) {
+                            Object value = b.getObject(key);
+
+                            values.put(key, value);
+                        }
+                    }
+                } catch( MissingResourceException mre ) {
+                    // Keep looking
+                }
+            }
+            resourceCache.put(l, values);
+        }
+        return values;
+    }
+
+    /**
+     * Sets the value of <code>key</code> to <code>value</code> for all locales.
+     * If <code>key</code> is a string and the new value isn't
+     * equal to the old one, fire a <code>PropertyChangeEvent</code>.
+     * If value is <code>null</code>, the key is removed from the table.
+     *
+     * @param key    the unique <code>Object</code> who's value will be used
+     *          to retrieve the data value associated with it
+     * @param value  the new <code>Object</code> to store as data under
+     *          that key
+     * @return the previous <code>Object</code> value, or <code>null</code>
+     * @see #putDefaults
+     * @see java.util.Hashtable#put
+     */
+    public Object put(Object key, Object value) {
+        Object oldValue = (value == null) ? super.remove(key) : super.put(key, value);
+        if (key instanceof String) {
+            firePropertyChange((String)key, oldValue, value);
+        }
+        return oldValue;
+    }
+
+
+    /**
+     * Puts all of the key/value pairs in the database and
+     * unconditionally generates one <code>PropertyChangeEvent</code>.
+     * The events oldValue and newValue will be <code>null</code> and its
+     * <code>propertyName</code> will be "UIDefaults".  The key/value pairs are
+     * added for all locales.
+     *
+     * @param keyValueList  an array of key/value pairs
+     * @see #put
+     * @see java.util.Hashtable#put
+     */
+    public void putDefaults(Object[] keyValueList) {
+        for(int i = 0, max = keyValueList.length; i < max; i += 2) {
+            Object value = keyValueList[i + 1];
+            if (value == null) {
+                super.remove(keyValueList[i]);
+            }
+            else {
+                super.put(keyValueList[i], value);
+            }
+        }
+        firePropertyChange("UIDefaults", null, null);
+    }
+
+
+    /**
+     * If the value of <code>key</code> is a <code>Font</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is a <code>Font</code>,
+     *          return the <code>Font</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public Font getFont(Object key) {
+        Object value = get(key);
+        return (value instanceof Font) ? (Font)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is a <code>Font</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is a <code>Font</code>,
+     *          return the <code>Font</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public Font getFont(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Font) ? (Font)value : null;
+    }
+
+    /**
+     * If the value of <code>key</code> is a <code>Color</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is a <code>Color</code>,
+     *          return the <code>Color</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public Color getColor(Object key) {
+        Object value = get(key);
+        return (value instanceof Color) ? (Color)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is a <code>Color</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is a <code>Color</code>,
+     *          return the <code>Color</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public Color getColor(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Color) ? (Color)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> is an <code>Icon</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is an <code>Icon</code>,
+     *          return the <code>Icon</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public Icon getIcon(Object key) {
+        Object value = get(key);
+        return (value instanceof Icon) ? (Icon)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is an <code>Icon</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is an <code>Icon</code>,
+     *          return the <code>Icon</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public Icon getIcon(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Icon) ? (Icon)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> is a <code>Border</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is a <code>Border</code>,
+     *          return the <code>Border</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public Border getBorder(Object key) {
+        Object value = get(key);
+        return (value instanceof Border) ? (Border)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is a <code>Border</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is a <code>Border</code>,
+     *          return the <code>Border</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public Border getBorder(Object key, Locale l)  {
+        Object value = get(key,l);
+        return (value instanceof Border) ? (Border)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> is a <code>String</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is a <code>String</code>,
+     *          return the <code>String</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public String getString(Object key) {
+        Object value = get(key);
+        return (value instanceof String) ? (String)value : null;
+    }
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is a <code>String</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired <code>Locale</code>
+     * @return if the value for <code>key</code> for the given
+     *          <code>Locale</code> is a <code>String</code>,
+     *          return the <code>String</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public String getString(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof String) ? (String)value : null;
+    }
+
+    /**
+     * If the value of <code>key</code> is an <code>Integer</code> return its
+     * integer value, otherwise return 0.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is an <code>Integer</code>,
+     *          return its value, otherwise return 0
+     */
+    public int getInt(Object key) {
+        Object value = get(key);
+        return (value instanceof Integer) ? ((Integer)value).intValue() : 0;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is an <code>Integer</code> return its integer value, otherwise return 0.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is an <code>Integer</code>,
+     *          return its value, otherwise return 0
+     * @since 1.4
+     */
+    public int getInt(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Integer) ? ((Integer)value).intValue() : 0;
+    }
+
+
+    /**
+     * If the value of <code>key</code> is boolean, return the
+     * boolean value, otherwise return false.
+     *
+     * @param key an <code>Object</code> specifying the key for the desired boolean value
+     * @return if the value of <code>key</code> is boolean, return the
+     *         boolean value, otherwise return false.
+     * @since 1.4
+     */
+    public boolean getBoolean(Object key) {
+        Object value = get(key);
+        return (value instanceof Boolean) ? ((Boolean)value).booleanValue() : false;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is boolean, return the boolean value, otherwise return false.
+     *
+     * @param key an <code>Object</code> specifying the key for the desired boolean value
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *         is boolean, return the
+     *         boolean value, otherwise return false.
+     * @since 1.4
+     */
+    public boolean getBoolean(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Boolean) ? ((Boolean)value).booleanValue() : false;
+    }
+
+
+    /**
+     * If the value of <code>key</code> is an <code>Insets</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is an <code>Insets</code>,
+     *          return the <code>Insets</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public Insets getInsets(Object key) {
+        Object value = get(key);
+        return (value instanceof Insets) ? (Insets)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is an <code>Insets</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is an <code>Insets</code>,
+     *          return the <code>Insets</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public Insets getInsets(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Insets) ? (Insets)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> is a <code>Dimension</code> return it,
+     * otherwise return <code>null</code>.
+     * @param key the desired key
+     * @return if the value for <code>key</code> is a <code>Dimension</code>,
+     *          return the <code>Dimension</code> object; otherwise return
+     *          <code>null</code>
+     */
+    public Dimension getDimension(Object key) {
+        Object value = get(key);
+        return (value instanceof Dimension) ? (Dimension)value : null;
+    }
+
+
+    /**
+     * If the value of <code>key</code> for the given <code>Locale</code>
+     * is a <code>Dimension</code> return it, otherwise return <code>null</code>.
+     * @param key the desired key
+     * @param l the desired locale
+     * @return if the value for <code>key</code> and <code>Locale</code>
+     *          is a <code>Dimension</code>,
+     *          return the <code>Dimension</code> object; otherwise return
+     *          <code>null</code>
+     * @since 1.4
+     */
+    public Dimension getDimension(Object key, Locale l) {
+        Object value = get(key,l);
+        return (value instanceof Dimension) ? (Dimension)value : null;
+    }
+
+
+    /**
+     * The value of <code>get(uidClassID)</code> must be the
+     * <code>String</code> name of a
+     * class that implements the corresponding <code>ComponentUI</code>
+     * class.  If the class hasn't been loaded before, this method looks
+     * up the class with <code>uiClassLoader.loadClass()</code> if a non
+     * <code>null</code>
+     * class loader is provided, <code>classForName()</code> otherwise.
+     * <p>
+     * If a mapping for <code>uiClassID</code> exists or if the specified
+     * class can't be found, return <code>null</code>.
+     * <p>
+     * This method is used by <code>getUI</code>, it's usually
+     * not necessary to call it directly.
+     *
+     * @param uiClassID  a string containing the class ID
+     * @param uiClassLoader the object which will load the class
+     * @return the value of <code>Class.forName(get(uidClassID))</code>
+     * @see #getUI
+     */
+    public Class<? extends ComponentUI>
+        getUIClass(String uiClassID, ClassLoader uiClassLoader)
+    {
+        try {
+            String className = (String)get(uiClassID);
+            if (className != null) {
+                ReflectUtil.checkPackageAccess(className);
+
+                Class cls = (Class)get(className);
+                if (cls == null) {
+                    if (uiClassLoader == null) {
+                        cls = SwingUtilities.loadSystemClass(className);
+                    }
+                    else {
+                        cls = uiClassLoader.loadClass(className);
+                    }
+                    if (cls != null) {
+                        // Save lookup for future use, as forName is slow.
+                        put(className, cls);
+                    }
+                }
+                return cls;
+            }
+        }
+        catch (ClassNotFoundException e) {
+            return null;
+        }
+        catch (ClassCastException e) {
+            return null;
+        }
+        return null;
+    }
+
+
+    /**
+     * Returns the L&amp;F class that renders this component.
+     *
+     * @param uiClassID a string containing the class ID
+     * @return the Class object returned by
+     *          <code>getUIClass(uiClassID, null)</code>
+     */
+    public Class<? extends ComponentUI> getUIClass(String uiClassID) {
+        return getUIClass(uiClassID, null);
+    }
+
+
+    /**
+     * If <code>getUI()</code> fails for any reason,
+     * it calls this method before returning <code>null</code>.
+     * Subclasses may choose to do more or less here.
+     *
+     * @param msg message string to print
+     * @see #getUI
+     */
+    protected void getUIError(String msg) {
+        System.err.println("UIDefaults.getUI() failed: " + msg);
+        try {
+            throw new Error();
+        }
+        catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Creates an <code>ComponentUI</code> implementation for the
+     * specified component.  In other words create the look
+     * and feel specific delegate object for <code>target</code>.
+     * This is done in two steps:
+     * <ul>
+     * <li> Look up the name of the <code>ComponentUI</code> implementation
+     * class under the value returned by <code>target.getUIClassID()</code>.
+     * <li> Use the implementation classes static <code>createUI()</code>
+     * method to construct a look and feel delegate.
+     * </ul>
+     * @param target  the <code>JComponent</code> which needs a UI
+     * @return the <code>ComponentUI</code> object
+     */
+    public ComponentUI getUI(JComponent target) {
+
+        Object cl = get("ClassLoader");
+        ClassLoader uiClassLoader =
+            (cl != null) ? (ClassLoader)cl : target.getClass().getClassLoader();
+        Class<? extends ComponentUI> uiClass = getUIClass(target.getUIClassID(), uiClassLoader);
+        Object uiObject = null;
+
+        if (uiClass == null) {
+            getUIError("no ComponentUI class for: " + target);
+        }
+        else {
+            try {
+                Method m = (Method)get(uiClass);
+                if (m == null) {
+                    m = uiClass.getMethod("createUI", new Class[]{JComponent.class});
+                    put(uiClass, m);
+                }
+                uiObject = MethodUtil.invoke(m, null, new Object[]{target});
+            }
+            catch (NoSuchMethodException e) {
+                getUIError("static createUI() method not found in " + uiClass);
+            }
+            catch (Exception e) {
+                getUIError("createUI() failed for " + target + " " + e);
+            }
+        }
+
+        return (ComponentUI)uiObject;
+    }
+
+    /**
+     * Adds a <code>PropertyChangeListener</code> to the listener list.
+     * The listener is registered for all properties.
+     * <p>
+     * A <code>PropertyChangeEvent</code> will get fired whenever a default
+     * is changed.
+     *
+     * @param listener  the <code>PropertyChangeListener</code> to be added
+     * @see java.beans.PropertyChangeSupport
+     */
+    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+        if (changeSupport == null) {
+            changeSupport = new SwingPropertyChangeSupport(this);
+        }
+        changeSupport.addPropertyChangeListener(listener);
+    }
+
+
+    /**
+     * Removes a <code>PropertyChangeListener</code> from the listener list.
+     * This removes a <code>PropertyChangeListener</code> that was registered
+     * for all properties.
+     *
+     * @param listener  the <code>PropertyChangeListener</code> to be removed
+     * @see java.beans.PropertyChangeSupport
+     */
+    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+        if (changeSupport != null) {
+            changeSupport.removePropertyChangeListener(listener);
+        }
+    }
+
+
+    /**
+     * Returns an array of all the <code>PropertyChangeListener</code>s added
+     * to this UIDefaults with addPropertyChangeListener().
+     *
+     * @return all of the <code>PropertyChangeListener</code>s added or an empty
+     *         array if no listeners have been added
+     * @since 1.4
+     */
+    public synchronized PropertyChangeListener[] getPropertyChangeListeners() {
+        if (changeSupport == null) {
+            return new PropertyChangeListener[0];
+        }
+        return changeSupport.getPropertyChangeListeners();
+    }
+
+
+    /**
+     * Support for reporting bound property changes.  If oldValue and
+     * newValue are not equal and the <code>PropertyChangeEvent</code>x
+     * listener list isn't empty, then fire a
+     * <code>PropertyChange</code> event to each listener.
+     *
+     * @param propertyName  the programmatic name of the property
+     *          that was changed
+     * @param oldValue  the old value of the property
+     * @param newValue  the new value of the property
+     * @see java.beans.PropertyChangeSupport
+     */
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        if (changeSupport != null) {
+            changeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
+    }
+
+
+    /**
+     * Adds a resource bundle to the list of resource bundles that are
+     * searched for localized values.  Resource bundles are searched in the
+     * reverse order they were added.  In other words, the most recently added
+     * bundle is searched first.
+     *
+     * @param bundleName  the base name of the resource bundle to be added
+     * @see java.util.ResourceBundle
+     * @see #removeResourceBundle
+     * @since 1.4
+     */
+    public synchronized void addResourceBundle( String bundleName ) {
+        if( bundleName == null ) {
+            return;
+        }
+        if( resourceBundles == null ) {
+            resourceBundles = new Vector<String>(5);
+        }
+        if (!resourceBundles.contains(bundleName)) {
+            resourceBundles.add( bundleName );
+            resourceCache.clear();
+        }
+    }
+
+
+    /**
+     * Removes a resource bundle from the list of resource bundles that are
+     * searched for localized defaults.
+     *
+     * @param bundleName  the base name of the resource bundle to be removed
+     * @see java.util.ResourceBundle
+     * @see #addResourceBundle
+     * @since 1.4
+     */
+    public synchronized void removeResourceBundle( String bundleName ) {
+        if( resourceBundles != null ) {
+            resourceBundles.remove( bundleName );
+        }
+        resourceCache.clear();
+    }
+
+    /**
+     * Sets the default locale.  The default locale is used in retrieving
+     * localized values via <code>get</code> methods that do not take a
+     * locale argument.  As of release 1.4, Swing UI objects should retrieve
+     * localized values using the locale of their component rather than the
+     * default locale.  The default locale exists to provide compatibility with
+     * pre 1.4 behaviour.
+     *
+     * @param l the new default locale
+     * @see #getDefaultLocale
+     * @see #get(Object)
+     * @see #get(Object,Locale)
+     * @since 1.4
+     */
+    public void setDefaultLocale( Locale l ) {
+        defaultLocale = l;
+    }
+
+    /**
+     * Returns the default locale.  The default locale is used in retrieving
+     * localized values via <code>get</code> methods that do not take a
+     * locale argument.  As of release 1.4, Swing UI objects should retrieve
+     * localized values using the locale of their component rather than the
+     * default locale.  The default locale exists to provide compatibility with
+     * pre 1.4 behaviour.
+     *
+     * @return the default locale
+     * @see #setDefaultLocale
+     * @see #get(Object)
+     * @see #get(Object,Locale)
+     * @since 1.4
+     */
+    public Locale getDefaultLocale() {
+        return defaultLocale;
+    }
+
+    /**
+     * This class enables one to store an entry in the defaults
+     * table that isn't constructed until the first time it's
+     * looked up with one of the <code>getXXX(key)</code> methods.
+     * Lazy values are useful for defaults that are expensive
+     * to construct or are seldom retrieved.  The first time
+     * a <code>LazyValue</code> is retrieved its "real value" is computed
+     * by calling <code>LazyValue.createValue()</code> and the real
+     * value is used to replace the <code>LazyValue</code> in the
+     * <code>UIDefaults</code>
+     * table.  Subsequent lookups for the same key return
+     * the real value.  Here's an example of a <code>LazyValue</code>
+     * that constructs a <code>Border</code>:
+     * <pre>
+     *  Object borderLazyValue = new UIDefaults.LazyValue() {
+     *      public Object createValue(UIDefaults table) {
+     *          return new BorderFactory.createLoweredBevelBorder();
+     *      }
+     *  };
+     *
+     *  uiDefaultsTable.put("MyBorder", borderLazyValue);
+     * </pre>
+     *
+     * @see UIDefaults#get
+     */
+    public interface LazyValue {
+        /**
+         * Creates the actual value retrieved from the <code>UIDefaults</code>
+         * table. When an object that implements this interface is
+         * retrieved from the table, this method is used to create
+         * the real value, which is then stored in the table and
+         * returned to the calling method.
+         *
+         * @param table  a <code>UIDefaults</code> table
+         * @return the created <code>Object</code>
+         */
+        Object createValue(UIDefaults table);
+    }
+
+
+    /**
+     * This class enables one to store an entry in the defaults
+     * table that's constructed each time it's looked up with one of
+     * the <code>getXXX(key)</code> methods. Here's an example of
+     * an <code>ActiveValue</code> that constructs a
+     * <code>DefaultListCellRenderer</code>:
+     * <pre>
+     *  Object cellRendererActiveValue = new UIDefaults.ActiveValue() {
+     *      public Object createValue(UIDefaults table) {
+     *          return new DefaultListCellRenderer();
+     *      }
+     *  };
+     *
+     *  uiDefaultsTable.put("MyRenderer", cellRendererActiveValue);
+     * </pre>
+     *
+     * @see UIDefaults#get
+     */
+    public interface ActiveValue {
+        /**
+         * Creates the value retrieved from the <code>UIDefaults</code> table.
+         * The object is created each time it is accessed.
+         *
+         * @param table  a <code>UIDefaults</code> table
+         * @return the created <code>Object</code>
+         */
+        Object createValue(UIDefaults table);
+    }
+
+    /**
+     * This class provides an implementation of <code>LazyValue</code>
+     * which can be
+     * used to delay loading of the Class for the instance to be created.
+     * It also avoids creation of an anonymous inner class for the
+     * <code>LazyValue</code>
+     * subclass.  Both of these improve performance at the time that a
+     * a Look and Feel is loaded, at the cost of a slight performance
+     * reduction the first time <code>createValue</code> is called
+     * (since Reflection APIs are used).
+     * @since 1.3
+     */
+    public static class ProxyLazyValue implements LazyValue {
+        private AccessControlContext acc;
+        private String className;
+        private String methodName;
+        private Object[] args;
+
+        /**
+         * Creates a <code>LazyValue</code> which will construct an instance
+         * when asked.
+         *
+         * @param c    a <code>String</code> specifying the classname
+         *             of the instance to be created on demand
+         */
+        public ProxyLazyValue(String c) {
+            this(c, (String)null);
+        }
+        /**
+         * Creates a <code>LazyValue</code> which will construct an instance
+         * when asked.
+         *
+         * @param c    a <code>String</code> specifying the classname of
+         *              the class
+         *              containing a static method to be called for
+         *              instance creation
+         * @param m    a <code>String</code> specifying the static
+         *              method to be called on class c
+         */
+        public ProxyLazyValue(String c, String m) {
+            this(c, m, null);
+        }
+        /**
+         * Creates a <code>LazyValue</code> which will construct an instance
+         * when asked.
+         *
+         * @param c    a <code>String</code> specifying the classname
+         *              of the instance to be created on demand
+         * @param o    an array of <code>Objects</code> to be passed as
+         *              paramaters to the constructor in class c
+         */
+        public ProxyLazyValue(String c, Object[] o) {
+            this(c, null, o);
+        }
+        /**
+         * Creates a <code>LazyValue</code> which will construct an instance
+         * when asked.
+         *
+         * @param c    a <code>String</code> specifying the classname
+         *              of the class
+         *              containing a static method to be called for
+         *              instance creation.
+         * @param m    a <code>String</code> specifying the static method
+         *              to be called on class c
+         * @param o    an array of <code>Objects</code> to be passed as
+         *              paramaters to the static method in class c
+         */
+        public ProxyLazyValue(String c, String m, Object[] o) {
+            acc = AccessController.getContext();
+            className = c;
+            methodName = m;
+            if (o != null) {
+                args = o.clone();
+            }
+        }
+
+        /**
+         * Creates the value retrieved from the <code>UIDefaults</code> table.
+         * The object is created each time it is accessed.
+         *
+         * @param table  a <code>UIDefaults</code> table
+         * @return the created <code>Object</code>
+         */
+        public Object createValue(final UIDefaults table) {
+            // In order to pick up the security policy in effect at the
+            // time of creation we use a doPrivileged with the
+            // AccessControlContext that was in place when this was created.
+            if (acc == null && System.getSecurityManager() != null) {
+                throw new SecurityException("null AccessControlContext");
+            }
+            return AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                public Object run() {
+                    try {
+                        Class<?> c;
+                        Object cl;
+                        // See if we should use a separate ClassLoader
+                        if (table == null || !((cl = table.get("ClassLoader"))
+                                               instanceof ClassLoader)) {
+                            cl = Thread.currentThread().
+                                        getContextClassLoader();
+                            if (cl == null) {
+                                // Fallback to the system class loader.
+                                cl = ClassLoader.getSystemClassLoader();
+                            }
+                        }
+                        ReflectUtil.checkPackageAccess(className);
+                        c = Class.forName(className, true, (ClassLoader)cl);
+                        SwingUtilities2.checkAccess(c.getModifiers());
+                        if (methodName != null) {
+                            Class[] types = getClassArray(args);
+                            Method m = c.getMethod(methodName, types);
+                            return MethodUtil.invoke(m, c, args);
+                        } else {
+                            Class[] types = getClassArray(args);
+                            Constructor constructor = c.getConstructor(types);
+                            SwingUtilities2.checkAccess(constructor.getModifiers());
+                            return constructor.newInstance(args);
+                        }
+                    } catch(Exception e) {
+                        // Ideally we would throw an exception, unfortunately
+                        // often times there are errors as an initial look and
+                        // feel is loaded before one can be switched. Perhaps a
+                        // flag should be added for debugging, so that if true
+                        // the exception would be thrown.
+                    }
+                    return null;
+                }
+            }, acc);
+        }
+
+        /*
+         * Coerce the array of class types provided into one which
+         * looks the way the Reflection APIs expect.  This is done
+         * by substituting primitive types for their Object counterparts,
+         * and superclasses for subclasses used to add the
+         * <code>UIResource</code> tag.
+         */
+        private Class[] getClassArray(Object[] args) {
+            Class[] types = null;
+            if (args!=null) {
+                types = new Class[args.length];
+                for (int i = 0; i< args.length; i++) {
+                    /* PENDING(ges): At present only the primitive types
+                       used are handled correctly; this should eventually
+                       handle all primitive types */
+                    if (args[i] instanceof java.lang.Integer) {
+                        types[i]=Integer.TYPE;
+                    } else if (args[i] instanceof java.lang.Boolean) {
+                        types[i]=Boolean.TYPE;
+                    } else if (args[i] instanceof javax.swing.plaf.ColorUIResource) {
+                        /* PENDING(ges) Currently the Reflection APIs do not
+                           search superclasses of parameters supplied for
+                           constructor/method lookup.  Since we only have
+                           one case where this is needed, we substitute
+                           directly instead of adding a massive amount
+                           of mechanism for this.  Eventually this will
+                           probably need to handle the general case as well.
+                           */
+                        types[i]=java.awt.Color.class;
+                    } else {
+                        types[i]=args[i].getClass();
+                    }
+                }
+            }
+            return types;
+        }
+
+        private String printArgs(Object[] array) {
+            String s = "{";
+            if (array !=null) {
+                for (int i = 0 ; i < array.length-1; i++) {
+                    s = s.concat(array[i] + ",");
+                }
+                s = s.concat(array[array.length-1] + "}");
+            } else {
+                s = s.concat("}");
+            }
+            return s;
+        }
+    }
+
+
+    /**
+     * <code>LazyInputMap</code> will create a <code>InputMap</code>
+     * in its <code>createValue</code>
+     * method. The bindings are passed in in the constructor.
+     * The bindings are an array with
+     * the even number entries being string <code>KeyStrokes</code>
+     * (eg "alt SPACE") and
+     * the odd number entries being the value to use in the
+     * <code>InputMap</code> (and the key in the <code>ActionMap</code>).
+     * @since 1.3
+     */
+    public static class LazyInputMap implements LazyValue {
+        /** Key bindings are registered under. */
+        private Object[] bindings;
+
+        public LazyInputMap(Object[] bindings) {
+            this.bindings = bindings;
+        }
+
+        /**
+         * Creates an <code>InputMap</code> with the bindings that are
+         * passed in.
+         *
+         * @param table a <code>UIDefaults</code> table
+         * @return the <code>InputMap</code>
+         */
+        public Object createValue(UIDefaults table) {
+            if (bindings != null) {
+                InputMap km = LookAndFeel.makeInputMap(bindings);
+                return km;
+            }
+            return null;
+        }
+    }
+
+    /**
+     * <code>TextAndMnemonicHashMap</code> stores swing resource strings. Many of strings
+     * can have a mnemonic. For example:
+     *   FileChooser.saveButton.textAndMnemonic=&Save
+     * For this case method get returns "Save" for the key "FileChooser.saveButtonText" and
+     * mnemonic "S" for the key "FileChooser.saveButtonMnemonic"
+     *
+     * There are several patterns for the text and mnemonic suffixes which are checked by the
+     * <code>TextAndMnemonicHashMap</code> class.
+     * Patterns which are converted to the xxx.textAndMnemonic key:
+     * (xxxNameText, xxxNameMnemonic)
+     * (xxxNameText, xxxMnemonic)
+     * (xxx.nameText, xxx.mnemonic)
+     * (xxxText, xxxMnemonic)
+     *
+     * These patterns can have a mnemonic index in format
+     * (xxxDisplayedMnemonicIndex)
+     *
+     * Pattern which is converted to the xxx.titleAndMnemonic key:
+     * (xxxTitle, xxxMnemonic)
+     *
+     */
+    private static class TextAndMnemonicHashMap extends HashMap<String, Object> {
+
+        static final String AND_MNEMONIC = "AndMnemonic";
+        static final String TITLE_SUFFIX = ".titleAndMnemonic";
+        static final String TEXT_SUFFIX = ".textAndMnemonic";
+
+        @Override
+        public Object get(Object key) {
+
+            Object value = super.get(key);
+
+            if (value == null) {
+
+                boolean checkTitle = false;
+
+                String stringKey = key.toString();
+                String compositeKey = null;
+
+                if (stringKey.endsWith(AND_MNEMONIC)) {
+                    return null;
+                }
+
+                if (stringKey.endsWith(".mnemonic")) {
+                    compositeKey = composeKey(stringKey, 9, TEXT_SUFFIX);
+                } else if (stringKey.endsWith("NameMnemonic")) {
+                    compositeKey = composeKey(stringKey, 12, TEXT_SUFFIX);
+                } else if (stringKey.endsWith("Mnemonic")) {
+                    compositeKey = composeKey(stringKey, 8, TEXT_SUFFIX);
+                    checkTitle = true;
+                }
+
+                if (compositeKey != null) {
+                    value = super.get(compositeKey);
+                    if (value == null && checkTitle) {
+                        compositeKey = composeKey(stringKey, 8, TITLE_SUFFIX);
+                        value = super.get(compositeKey);
+                    }
+
+                    return value == null ? null : getMnemonicFromProperty(value.toString());
+                }
+
+                if (stringKey.endsWith("NameText")) {
+                    compositeKey = composeKey(stringKey, 8, TEXT_SUFFIX);
+                } else if (stringKey.endsWith(".nameText")) {
+                    compositeKey = composeKey(stringKey, 9, TEXT_SUFFIX);
+                } else if (stringKey.endsWith("Text")) {
+                    compositeKey = composeKey(stringKey, 4, TEXT_SUFFIX);
+                } else if (stringKey.endsWith("Title")) {
+                    compositeKey = composeKey(stringKey, 5, TITLE_SUFFIX);
+                }
+
+                if (compositeKey != null) {
+                    value = super.get(compositeKey);
+                    return value == null ? null : getTextFromProperty(value.toString());
+                }
+
+                if (stringKey.endsWith("DisplayedMnemonicIndex")) {
+                    compositeKey = composeKey(stringKey, 22, TEXT_SUFFIX);
+                    value = super.get(compositeKey);
+                    if (value == null) {
+                        compositeKey = composeKey(stringKey, 22, TITLE_SUFFIX);
+                        value = super.get(compositeKey);
+                    }
+                    return value == null ? null : getIndexFromProperty(value.toString());
+                }
+            }
+
+            return value;
+        }
+
+        String composeKey(String key, int reduce, String sufix) {
+            return key.substring(0, key.length() - reduce) + sufix;
+        }
+
+        String getTextFromProperty(String text) {
+            return text.replace("&", "");
+        }
+
+        String getMnemonicFromProperty(String text) {
+            int index = text.indexOf('&');
+            if (0 <= index && index < text.length() - 1) {
+                char c = text.charAt(index + 1);
+                return Integer.toString((int) Character.toUpperCase(c));
+            }
+            return null;
+        }
+
+        String getIndexFromProperty(String text) {
+            int index = text.indexOf('&');
+            return (index == -1) ? null : Integer.toString(index);
+        }
+    }
+
+}

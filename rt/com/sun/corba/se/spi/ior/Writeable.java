@@ -1,13 +1,38 @@
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.ior;
 
-import org.omg.CORBA_2_3.portable.OutputStream;
+import org.omg.CORBA_2_3.portable.OutputStream ;
 
-public interface Writeable {
-  void write(OutputStream paramOutputStream);
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\Writeable.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/** This interface represents an entity that can be written to an OutputStream.
+ * @author Ken Cavanaugh
  */
+public interface Writeable
+{
+    /** Write this object directly to the output stream.
+     */
+    void write(OutputStream arg0);
+}

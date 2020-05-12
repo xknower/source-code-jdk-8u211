@@ -1,125 +1,121 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ElementDefinitionImpl
-/*     */   extends ParentNode
-/*     */ {
-/*     */   static final long serialVersionUID = -8373890672670022714L;
-/*     */   protected String name;
-/*     */   protected NamedNodeMapImpl attributes;
-/*     */   
-/*     */   public ElementDefinitionImpl(CoreDocumentImpl ownerDocument, String name) {
-/*  62 */     super(ownerDocument);
-/*  63 */     this.name = name;
-/*  64 */     this.attributes = new NamedNodeMapImpl(ownerDocument);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public short getNodeType() {
-/*  76 */     return 21;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNodeName() {
-/*  83 */     if (needsSyncData()) {
-/*  84 */       synchronizeData();
-/*     */     }
-/*  86 */     return this.name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node cloneNode(boolean deep) {
-/*  95 */     ElementDefinitionImpl newnode = (ElementDefinitionImpl)super.cloneNode(deep);
-/*     */     
-/*  97 */     newnode.attributes = this.attributes.cloneMap(newnode);
-/*  98 */     return newnode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamedNodeMap getAttributes() {
-/* 114 */     if (needsSyncChildren()) {
-/* 115 */       synchronizeChildren();
-/*     */     }
-/* 117 */     return this.attributes;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\ElementDefinitionImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+
+/**
+ * NON-DOM CLASS: Describe one of the Elements (and its associated
+ * Attributes) defined in this Document Type.
+ * <p>
+ * I've included this in Level 1 purely as an anchor point for default
+ * attributes. In Level 2 it should enable the ChildRule support.
+ *
+ * @xerces.internal
+ *
+ */
+public class ElementDefinitionImpl
+    extends ParentNode {
+
+    //
+    // Constants
+    //
+
+    /** Serialization version. */
+    static final long serialVersionUID = -8373890672670022714L;
+
+    //
+    // Data
+    //
+
+    /** Element definition name. */
+    protected String name;
+
+    /** Default attributes. */
+    protected NamedNodeMapImpl attributes;
+
+    //
+    // Constructors
+    //
+
+    /** Factory constructor. */
+    public ElementDefinitionImpl(CoreDocumentImpl ownerDocument, String name) {
+        super(ownerDocument);
+        this.name = name;
+        attributes = new NamedNodeMapImpl(ownerDocument);
+    }
+
+    //
+    // Node methods
+    //
+
+    /**
+     * A short integer indicating what type of node this is. The named
+     * constants for this value are defined in the org.w3c.dom.Node interface.
+     */
+    public short getNodeType() {
+        return NodeImpl.ELEMENT_DEFINITION_NODE;
+    }
+
+    /**
+     * Returns the element definition name
+     */
+    public String getNodeName() {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return name;
+    }
+
+    /**
+     * Replicate this object.
+     */
+    public Node cloneNode(boolean deep) {
+
+        ElementDefinitionImpl newnode =
+            (ElementDefinitionImpl) super.cloneNode(deep);
+        // NamedNodeMap must be explicitly replicated to avoid sharing
+        newnode.attributes = attributes.cloneMap(newnode);
+        return newnode;
+
+    } // cloneNode(boolean):Node
+
+    /**
+     * Query the attributes defined on this Element.
+     * <p>
+     * In the base implementation this Map simply contains Attribute objects
+     * representing the defaults. In a more serious implementation, it would
+     * contain AttributeDefinitionImpl objects for all declared Attributes,
+     * indicating which are Default, DefaultFixed, Implicit and/or Required.
+     *
+     * @return org.w3c.dom.NamedNodeMap containing org.w3c.dom.Attribute
+     */
+    public NamedNodeMap getAttributes() {
+
+        if (needsSyncChildren()) {
+            synchronizeChildren();
+        }
+        return attributes;
+
+    } // getAttributes():NamedNodeMap
+
+} // class ElementDefinitionImpl

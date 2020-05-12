@@ -1,148 +1,142 @@
-/*     */ package com.sun.corba.se.impl.ior;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.ior.IORFactories;
-/*     */ import com.sun.corba.se.spi.ior.IORFactory;
-/*     */ import com.sun.corba.se.spi.ior.IORTemplateList;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.StreamableValue;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceFactory;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceFactoryHelper;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ObjectReferenceFactoryImpl
-/*     */   extends ObjectReferenceProducerBase
-/*     */   implements ObjectReferenceFactory, StreamableValue
-/*     */ {
-/*     */   private transient IORTemplateList iorTemplates;
-/*     */   public static final String repositoryId = "IDL:com/sun/corba/se/impl/ior/ObjectReferenceFactoryImpl:1.0";
-/*     */   
-/*     */   public ObjectReferenceFactoryImpl(InputStream paramInputStream) {
-/*  68 */     super((ORB)paramInputStream.orb());
-/*  69 */     _read(paramInputStream);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ObjectReferenceFactoryImpl(ORB paramORB, IORTemplateList paramIORTemplateList) {
-/*  74 */     super(paramORB);
-/*  75 */     this.iorTemplates = paramIORTemplateList;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*  80 */     if (!(paramObject instanceof ObjectReferenceFactoryImpl)) {
-/*  81 */       return false;
-/*     */     }
-/*  83 */     ObjectReferenceFactoryImpl objectReferenceFactoryImpl = (ObjectReferenceFactoryImpl)paramObject;
-/*     */     
-/*  85 */     return (this.iorTemplates != null && this.iorTemplates
-/*  86 */       .equals(objectReferenceFactoryImpl.iorTemplates));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/*  91 */     return this.iorTemplates.hashCode();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] _truncatable_ids() {
-/* 104 */     return new String[] { "IDL:com/sun/corba/se/impl/ior/ObjectReferenceFactoryImpl:1.0" };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public TypeCode _type() {
-/* 109 */     return ObjectReferenceFactoryHelper.type();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void _read(InputStream paramInputStream) {
-/* 117 */     InputStream inputStream = (InputStream)paramInputStream;
-/*     */ 
-/*     */     
-/* 120 */     this.iorTemplates = IORFactories.makeIORTemplateList(inputStream);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void _write(OutputStream paramOutputStream) {
-/* 127 */     OutputStream outputStream = (OutputStream)paramOutputStream;
-/*     */ 
-/*     */     
-/* 130 */     this.iorTemplates.write(outputStream);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IORFactory getIORFactory() {
-/* 135 */     return this.iorTemplates;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public IORTemplateList getIORTemplateList() {
-/* 140 */     return this.iorTemplates;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\ior\ObjectReferenceFactoryImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.ior ;
+
+import java.util.Iterator ;
+
+import org.omg.CORBA.portable.InputStream ;
+import org.omg.CORBA.portable.OutputStream ;
+import org.omg.CORBA.portable.StreamableValue ;
+
+import org.omg.CORBA.TypeCode ;
+
+import org.omg.PortableInterceptor.ObjectReferenceFactory ;
+import org.omg.PortableInterceptor.ObjectReferenceFactoryHelper ;
+
+import com.sun.corba.se.spi.oa.ObjectAdapter ;
+
+import com.sun.corba.se.spi.ior.ObjectId ;
+import com.sun.corba.se.spi.ior.ObjectKeyTemplate ;
+import com.sun.corba.se.spi.ior.ObjectAdapterId ;
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.ior.IORFactory;
+import com.sun.corba.se.spi.ior.IORTemplateList;
+import com.sun.corba.se.spi.ior.IORFactories;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+/** This is an implementation of the ObjectReferenceFactory abstract value
+* type defined by the portable interceptors IDL.
+* Note that this is a direct Java implementation
+* of the abstract value type: there is no stateful value type defined in IDL,
+* since defining the state in IDL is awkward and inefficient.  The best way
+* to define the state is to use internal data structures that can be written
+* to and read from CORBA streams.
+*/
+public class ObjectReferenceFactoryImpl extends ObjectReferenceProducerBase
+    implements ObjectReferenceFactory, StreamableValue
+{
+    transient private IORTemplateList iorTemplates ;
+
+    public ObjectReferenceFactoryImpl( InputStream is )
+    {
+        super( (ORB)(is.orb()) ) ;
+        _read( is ) ;
+    }
+
+    public ObjectReferenceFactoryImpl( ORB orb, IORTemplateList iortemps )
+    {
+        super( orb ) ;
+        iorTemplates = iortemps ;
+    }
+
+    public boolean equals( Object obj )
+    {
+        if (!(obj instanceof ObjectReferenceFactoryImpl))
+            return false ;
+
+        ObjectReferenceFactoryImpl other = (ObjectReferenceFactoryImpl)obj ;
+
+        return (iorTemplates != null) &&
+            iorTemplates.equals( other.iorTemplates ) ;
+    }
+
+    public int hashCode()
+    {
+        return iorTemplates.hashCode() ;
+    }
+
+    // Note that this repository ID must reflect the implementation
+    // of the abstract valuetype (that is, this class), not the
+    // repository ID of the org.omg.PortableInterceptor.ObjectReferenceFactory
+    // class.  This allows for multiple independent implementations
+    // of the abstract valuetype, should that become necessary.
+    public static final String repositoryId =
+        "IDL:com/sun/corba/se/impl/ior/ObjectReferenceFactoryImpl:1.0" ;
+
+    public String[] _truncatable_ids()
+    {
+        return new String[] { repositoryId } ;
+    }
+
+    public TypeCode _type()
+    {
+        return ObjectReferenceFactoryHelper.type() ;
+    }
+
+    /** Read the data into a (presumably) empty ObjectReferenceFactoryImpl.
+    * This sets the orb to the ORB of the InputStream.
+    */
+    public void _read( InputStream is )
+    {
+        org.omg.CORBA_2_3.portable.InputStream istr =
+            (org.omg.CORBA_2_3.portable.InputStream)is ;
+
+        iorTemplates = IORFactories.makeIORTemplateList( istr ) ;
+    }
+
+    /** Write the state to the OutputStream.
+     */
+    public void _write( OutputStream os )
+    {
+        org.omg.CORBA_2_3.portable.OutputStream ostr =
+            (org.omg.CORBA_2_3.portable.OutputStream)os ;
+
+        iorTemplates.write( ostr ) ;
+    }
+
+    public IORFactory getIORFactory()
+    {
+        return iorTemplates ;
+    }
+
+    public IORTemplateList getIORTemplateList()
+    {
+        return iorTemplates ;
+    }
+}

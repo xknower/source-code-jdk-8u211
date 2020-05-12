@@ -1,234 +1,228 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.util;
-/*     */ 
-/*     */ import java.io.PrintStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class IntegerArray
-/*     */ {
-/*     */   private static final int InitialSize = 32;
-/*     */   private int[] _array;
-/*     */   private int _size;
-/*  34 */   private int _free = 0;
-/*     */   
-/*     */   public IntegerArray() {
-/*  37 */     this(32);
-/*     */   }
-/*     */   
-/*     */   public IntegerArray(int size) {
-/*  41 */     this._array = new int[this._size = size];
-/*     */   }
-/*     */   
-/*     */   public IntegerArray(int[] array) {
-/*  45 */     this(array.length);
-/*  46 */     System.arraycopy(array, 0, this._array, 0, this._free = this._size);
-/*     */   }
-/*     */   
-/*     */   public void clear() {
-/*  50 */     this._free = 0;
-/*     */   }
-/*     */   
-/*     */   public Object clone() {
-/*  54 */     IntegerArray clone = new IntegerArray((this._free > 0) ? this._free : 1);
-/*  55 */     System.arraycopy(this._array, 0, clone._array, 0, this._free);
-/*  56 */     clone._free = this._free;
-/*  57 */     return clone;
-/*     */   }
-/*     */   
-/*     */   public int[] toIntArray() {
-/*  61 */     int[] result = new int[cardinality()];
-/*  62 */     System.arraycopy(this._array, 0, result, 0, cardinality());
-/*  63 */     return result;
-/*     */   }
-/*     */   
-/*     */   public final int at(int index) {
-/*  67 */     return this._array[index];
-/*     */   }
-/*     */   
-/*     */   public final void set(int index, int value) {
-/*  71 */     this._array[index] = value;
-/*     */   }
-/*     */   
-/*     */   public int indexOf(int n) {
-/*  75 */     for (int i = 0; i < this._free; i++) {
-/*  76 */       if (n == this._array[i]) return i; 
-/*     */     } 
-/*  78 */     return -1;
-/*     */   }
-/*     */   
-/*     */   public final void add(int value) {
-/*  82 */     if (this._free == this._size) {
-/*  83 */       growArray(this._size * 2);
-/*     */     }
-/*  85 */     this._array[this._free++] = value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addNew(int value) {
-/*  92 */     for (int i = 0; i < this._free; i++) {
-/*  93 */       if (this._array[i] == value)
-/*     */         return; 
-/*  95 */     }  add(value);
-/*     */   }
-/*     */   
-/*     */   public void reverse() {
-/*  99 */     int left = 0;
-/* 100 */     int right = this._free - 1;
-/*     */     
-/* 102 */     while (left < right) {
-/* 103 */       int temp = this._array[left];
-/* 104 */       this._array[left++] = this._array[right];
-/* 105 */       this._array[right--] = temp;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void merge(IntegerArray other) {
-/* 114 */     int newSize = this._free + other._free;
-/*     */     
-/* 116 */     int[] newArray = new int[newSize];
-/*     */ 
-/*     */     
-/* 119 */     int i = 0, j = 0; int k;
-/* 120 */     for (k = 0; i < this._free && j < other._free; k++) {
-/* 121 */       int x = this._array[i];
-/* 122 */       int y = other._array[j];
-/*     */       
-/* 124 */       if (x < y) {
-/* 125 */         newArray[k] = x;
-/* 126 */         i++;
-/*     */       }
-/* 128 */       else if (x > y) {
-/* 129 */         newArray[k] = y;
-/* 130 */         j++;
-/*     */       } else {
-/*     */         
-/* 133 */         newArray[k] = x;
-/* 134 */         i++; j++;
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 139 */     if (i >= this._free) {
-/* 140 */       while (j < other._free) {
-/* 141 */         newArray[k++] = other._array[j++];
-/*     */       }
-/*     */     } else {
-/*     */       
-/* 145 */       while (i < this._free) {
-/* 146 */         newArray[k++] = this._array[i++];
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 151 */     this._array = newArray;
-/* 152 */     this._free = this._size = newSize;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void sort() {
-/* 157 */     quicksort(this._array, 0, this._free - 1);
-/*     */   }
-/*     */   
-/*     */   private static void quicksort(int[] array, int p, int r) {
-/* 161 */     if (p < r) {
-/* 162 */       int q = partition(array, p, r);
-/* 163 */       quicksort(array, p, q);
-/* 164 */       quicksort(array, q + 1, r);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   private static int partition(int[] array, int p, int r) {
-/* 169 */     int x = array[p + r >>> 1];
-/* 170 */     int i = p - 1, j = r + 1;
-/*     */     
-/*     */     while (true) {
-/* 173 */       if (x < array[--j])
-/* 174 */         continue;  while (x > array[++i]);
-/* 175 */       if (i < j) {
-/* 176 */         int temp = array[i];
-/* 177 */         array[i] = array[j];
-/* 178 */         array[j] = temp; continue;
-/*     */       }  break;
-/*     */     } 
-/* 181 */     return j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void growArray(int size) {
-/* 187 */     int[] newArray = new int[this._size = size];
-/* 188 */     System.arraycopy(this._array, 0, newArray, 0, this._free);
-/* 189 */     this._array = newArray;
-/*     */   }
-/*     */   
-/*     */   public int popLast() {
-/* 193 */     return this._array[--this._free];
-/*     */   }
-/*     */   
-/*     */   public int last() {
-/* 197 */     return this._array[this._free - 1];
-/*     */   }
-/*     */   
-/*     */   public void setLast(int n) {
-/* 201 */     this._array[this._free - 1] = n;
-/*     */   }
-/*     */   
-/*     */   public void pop() {
-/* 205 */     this._free--;
-/*     */   }
-/*     */   
-/*     */   public void pop(int n) {
-/* 209 */     this._free -= n;
-/*     */   }
-/*     */   
-/*     */   public final int cardinality() {
-/* 213 */     return this._free;
-/*     */   }
-/*     */   
-/*     */   public void print(PrintStream out) {
-/* 217 */     if (this._free > 0) {
-/* 218 */       for (int i = 0; i < this._free - 1; i++) {
-/* 219 */         out.print(this._array[i]);
-/* 220 */         out.print(' ');
-/*     */       } 
-/* 222 */       out.println(this._array[this._free - 1]);
-/*     */     } else {
-/*     */       
-/* 225 */       out.println("IntegerArray: empty");
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xslt\\util\IntegerArray.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: IntegerArray.java,v 1.2.4.1 2005/09/06 11:44:56 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.util;
+
+/**
+ * @author Jacek Ambroziak
+ */
+public final class IntegerArray {
+    private static final int InitialSize = 32;
+
+    private int[] _array;
+    private int   _size;
+    private int   _free = 0;
+
+    public IntegerArray() {
+        this(InitialSize);
+    }
+
+    public IntegerArray(int size) {
+        _array = new int[_size = size];
+    }
+
+    public IntegerArray(int[] array) {
+        this(array.length);
+        System.arraycopy(array, 0, _array, 0, _free = _size);
+    }
+
+    public void clear() {
+        _free = 0;
+    }
+
+    public Object clone() {
+        final IntegerArray clone = new IntegerArray(_free > 0 ? _free : 1);
+        System.arraycopy(_array, 0, clone._array, 0, _free);
+        clone._free = _free;
+        return clone;
+    }
+
+    public int[] toIntArray() {
+        final int[] result = new int[cardinality()];
+        System.arraycopy(_array, 0, result, 0, cardinality());
+        return result;
+    }
+
+    public final int at(int index) {
+        return _array[index];
+    }
+
+    public final void set(int index, int value) {
+        _array[index] = value;
+    }
+
+    public int indexOf(int n) {
+        for (int i = 0; i < _free; i++) {
+            if (n == _array[i]) return i;
+        }
+        return -1;
+    }
+
+    public final void add(int value) {
+        if (_free == _size) {
+            growArray(_size * 2);
+        }
+        _array[_free++] = value;
+    }
+
+    /**
+     * Adds new int at the end if not already present.
+     */
+    public void addNew(int value) {
+        for (int i = 0; i < _free; i++) {
+            if (_array[i] == value) return;  // already in array
+        }
+        add(value);
+    }
+
+    public void reverse() {
+        int left = 0;
+        int right = _free - 1;
+
+        while (left < right) {
+            int temp = _array[left];
+            _array[left++] = _array[right];
+            _array[right--] = temp;
+        }
+    }
+
+    /**
+     * Merge two sorted arrays and eliminate duplicates.
+     * Elements of the other IntegerArray must not be changed.
+     */
+    public void merge(final IntegerArray other) {
+        final int newSize = _free + other._free;
+// System.out.println("IntegerArray.merge() begin newSize = " + newSize);
+        int[] newArray = new int[newSize];
+
+        // Merge the two arrays
+        int i = 0, j = 0, k;
+        for (k = 0; i < _free && j < other._free; k++) {
+            int x = _array[i];
+            int y = other._array[j];
+
+            if (x < y) {
+                newArray[k] = x;
+                i++;
+            }
+            else if (x > y) {
+                newArray[k] = y;
+                j++;
+            }
+            else {
+                newArray[k] = x;
+                i++; j++;
+            }
+        }
+
+        // Copy the rest if of different lengths
+        if (i >= _free) {
+            while (j < other._free) {
+                newArray[k++] = other._array[j++];
+            }
+        }
+        else {
+            while (i < _free) {
+                newArray[k++] = _array[i++];
+            }
+        }
+
+        // Update reference to this array
+        _array = newArray;
+        _free = _size = newSize;
+// System.out.println("IntegerArray.merge() end");
+    }
+
+    public void sort() {
+        quicksort(_array, 0, _free - 1);
+    }
+
+    private static void quicksort(int[] array, int p, int r) {
+        if (p < r) {
+            final int q = partition(array, p, r);
+            quicksort(array, p, q);
+            quicksort(array, q + 1, r);
+        }
+    }
+
+    private static int partition(int[] array, int p, int r) {
+        final int x = array[(p + r) >>> 1];
+        int i = p - 1; int j = r + 1;
+
+        while (true) {
+            while (x < array[--j]);
+            while (x > array[++i]);
+            if (i < j) {
+                int temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            else {
+                return j;
+            }
+        }
+    }
+
+    private void growArray(int size) {
+        final int[] newArray = new int[_size = size];
+        System.arraycopy(_array, 0, newArray, 0, _free);
+        _array = newArray;
+    }
+
+    public int popLast() {
+        return _array[--_free];
+    }
+
+    public int last() {
+        return _array[_free - 1];
+    }
+
+    public void setLast(int n) {
+        _array[_free - 1] = n;
+    }
+
+    public void pop() {
+        _free--;
+    }
+
+    public void pop(int n) {
+        _free -= n;
+    }
+
+    public final int cardinality() {
+        return _free;
+    }
+
+    public void print(java.io.PrintStream out) {
+        if (_free > 0) {
+            for (int i = 0; i < _free - 1; i++) {
+                out.print(_array[i]);
+                out.print(' ');
+            }
+            out.println(_array[_free - 1]);
+        }
+        else {
+            out.println("IntegerArray: empty");
+        }
+    }
+}

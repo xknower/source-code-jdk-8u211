@@ -1,221 +1,215 @@
-/*     */ package javax.management;
-/*     */ 
-/*     */ import com.sun.jmx.mbeanserver.Introspector;
-/*     */ import java.lang.annotation.Annotation;
-/*     */ import java.lang.reflect.Constructor;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Objects;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MBeanConstructorInfo
-/*     */   extends MBeanFeatureInfo
-/*     */   implements Cloneable
-/*     */ {
-/*     */   static final long serialVersionUID = 4433990064191844427L;
-/*  46 */   static final MBeanConstructorInfo[] NO_CONSTRUCTORS = new MBeanConstructorInfo[0];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final transient boolean arrayGettersSafe;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final MBeanParameterInfo[] signature;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanConstructorInfo(String paramString, Constructor<?> paramConstructor) {
-/*  69 */     this(paramConstructor.getName(), paramString, 
-/*  70 */         constructorSignature(paramConstructor), 
-/*  71 */         Introspector.descriptorForElement(paramConstructor));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanConstructorInfo(String paramString1, String paramString2, MBeanParameterInfo[] paramArrayOfMBeanParameterInfo) {
-/*  86 */     this(paramString1, paramString2, paramArrayOfMBeanParameterInfo, (Descriptor)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanConstructorInfo(String paramString1, String paramString2, MBeanParameterInfo[] paramArrayOfMBeanParameterInfo, Descriptor paramDescriptor) {
-/* 106 */     super(paramString1, paramString2, paramDescriptor);
-/*     */     
-/* 108 */     if (paramArrayOfMBeanParameterInfo == null || paramArrayOfMBeanParameterInfo.length == 0) {
-/* 109 */       paramArrayOfMBeanParameterInfo = MBeanParameterInfo.NO_PARAMS;
-/*     */     } else {
-/* 111 */       paramArrayOfMBeanParameterInfo = (MBeanParameterInfo[])paramArrayOfMBeanParameterInfo.clone();
-/* 112 */     }  this.signature = paramArrayOfMBeanParameterInfo;
-/* 113 */     this
-/* 114 */       .arrayGettersSafe = MBeanInfo.arrayGettersSafe(getClass(), MBeanConstructorInfo.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object clone() {
-/*     */     try {
-/* 131 */       return super.clone();
-/* 132 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*     */       
-/* 134 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public MBeanParameterInfo[] getSignature() {
-/* 152 */     if (this.signature.length == 0) {
-/* 153 */       return this.signature;
-/*     */     }
-/* 155 */     return (MBeanParameterInfo[])this.signature.clone();
-/*     */   }
-/*     */   
-/*     */   private MBeanParameterInfo[] fastGetSignature() {
-/* 159 */     if (this.arrayGettersSafe) {
-/* 160 */       return this.signature;
-/*     */     }
-/* 162 */     return getSignature();
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 166 */     return 
-/* 167 */       getClass().getName() + "[description=" + 
-/* 168 */       getDescription() + ", name=" + 
-/* 169 */       getName() + ", signature=" + 
-/* 170 */       Arrays.<MBeanParameterInfo>asList(fastGetSignature()) + ", descriptor=" + 
-/* 171 */       getDescriptor() + "]";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 189 */     if (paramObject == this)
-/* 190 */       return true; 
-/* 191 */     if (!(paramObject instanceof MBeanConstructorInfo))
-/* 192 */       return false; 
-/* 193 */     MBeanConstructorInfo mBeanConstructorInfo = (MBeanConstructorInfo)paramObject;
-/* 194 */     return (Objects.equals(mBeanConstructorInfo.getName(), getName()) && 
-/* 195 */       Objects.equals(mBeanConstructorInfo.getDescription(), getDescription()) && 
-/* 196 */       Arrays.equals((Object[])mBeanConstructorInfo.fastGetSignature(), (Object[])fastGetSignature()) && 
-/* 197 */       Objects.equals(mBeanConstructorInfo.getDescriptor(), getDescriptor()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 207 */     return Objects.hash(new Object[] { getName() }) ^ Arrays.hashCode((Object[])fastGetSignature());
-/*     */   }
-/*     */   
-/*     */   private static MBeanParameterInfo[] constructorSignature(Constructor<?> paramConstructor) {
-/* 211 */     Class[] arrayOfClass = paramConstructor.getParameterTypes();
-/* 212 */     Annotation[][] arrayOfAnnotation = paramConstructor.getParameterAnnotations();
-/* 213 */     return MBeanOperationInfo.parameters(arrayOfClass, arrayOfAnnotation);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\management\MBeanConstructorInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.management;
+
+import com.sun.jmx.mbeanserver.Introspector;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.Objects;
+
+/**
+ * Describes a constructor exposed by an MBean.  Instances of this
+ * class are immutable.  Subclasses may be mutable but this is not
+ * recommended.
+ *
+ * @since 1.5
+ */
+public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable {
+
+    /* Serial version */
+    static final long serialVersionUID = 4433990064191844427L;
+
+    static final MBeanConstructorInfo[] NO_CONSTRUCTORS =
+        new MBeanConstructorInfo[0];
+
+    /** @see MBeanInfo#arrayGettersSafe */
+    private final transient boolean arrayGettersSafe;
+
+    /**
+     * @serial The signature of the method, that is, the class names of the arguments.
+     */
+    private final MBeanParameterInfo[] signature;
+
+    /**
+     * Constructs an <CODE>MBeanConstructorInfo</CODE> object.  The
+     * {@link Descriptor} of the constructed object will include
+     * fields contributed by any annotations on the {@code
+     * Constructor} object that contain the {@link DescriptorKey}
+     * meta-annotation.
+     *
+     * @param description A human readable description of the operation.
+     * @param constructor The <CODE>java.lang.reflect.Constructor</CODE>
+     * object describing the MBean constructor.
+     */
+    public MBeanConstructorInfo(String description, Constructor<?> constructor) {
+        this(constructor.getName(), description,
+             constructorSignature(constructor),
+             Introspector.descriptorForElement(constructor));
+    }
+
+    /**
+     * Constructs an <CODE>MBeanConstructorInfo</CODE> object.
+     *
+     * @param name The name of the constructor.
+     * @param signature <CODE>MBeanParameterInfo</CODE> objects
+     * describing the parameters(arguments) of the constructor.  This
+     * may be null with the same effect as a zero-length array.
+     * @param description A human readable description of the constructor.
+     */
+    public MBeanConstructorInfo(String name,
+                                String description,
+                                MBeanParameterInfo[] signature) {
+        this(name, description, signature, null);
+    }
+
+    /**
+     * Constructs an <CODE>MBeanConstructorInfo</CODE> object.
+     *
+     * @param name The name of the constructor.
+     * @param signature <CODE>MBeanParameterInfo</CODE> objects
+     * describing the parameters(arguments) of the constructor.  This
+     * may be null with the same effect as a zero-length array.
+     * @param description A human readable description of the constructor.
+     * @param descriptor The descriptor for the constructor.  This may be null
+     * which is equivalent to an empty descriptor.
+     *
+     * @since 1.6
+     */
+    public MBeanConstructorInfo(String name,
+                                String description,
+                                MBeanParameterInfo[] signature,
+                                Descriptor descriptor) {
+        super(name, description, descriptor);
+
+        if (signature == null || signature.length == 0)
+            signature = MBeanParameterInfo.NO_PARAMS;
+        else
+            signature = signature.clone();
+        this.signature = signature;
+        this.arrayGettersSafe =
+            MBeanInfo.arrayGettersSafe(this.getClass(),
+                                       MBeanConstructorInfo.class);
+    }
+
+
+    /**
+     * <p>Returns a shallow clone of this instance.  The clone is
+     * obtained by simply calling <tt>super.clone()</tt>, thus calling
+     * the default native shallow cloning mechanism implemented by
+     * <tt>Object.clone()</tt>.  No deeper cloning of any internal
+     * field is made.</p>
+     *
+     * <p>Since this class is immutable, cloning is chiefly of
+     * interest to subclasses.</p>
+     */
+     public Object clone () {
+         try {
+             return super.clone() ;
+         } catch (CloneNotSupportedException e) {
+             // should not happen as this class is cloneable
+             return null;
+         }
+     }
+
+    /**
+     * <p>Returns the list of parameters for this constructor.  Each
+     * parameter is described by an <CODE>MBeanParameterInfo</CODE>
+     * object.</p>
+     *
+     * <p>The returned array is a shallow copy of the internal array,
+     * which means that it is a copy of the internal array of
+     * references to the <CODE>MBeanParameterInfo</CODE> objects but
+     * that each referenced <CODE>MBeanParameterInfo</CODE> object is
+     * not copied.</p>
+     *
+     * @return  An array of <CODE>MBeanParameterInfo</CODE> objects.
+     */
+    public MBeanParameterInfo[] getSignature() {
+        if (signature.length == 0)
+            return signature;
+        else
+            return signature.clone();
+    }
+
+    private MBeanParameterInfo[] fastGetSignature() {
+        if (arrayGettersSafe)
+            return signature;
+        else
+            return getSignature();
+    }
+
+    public String toString() {
+        return
+            getClass().getName() + "[" +
+            "description=" + getDescription() + ", " +
+            "name=" + getName() + ", " +
+            "signature=" + Arrays.asList(fastGetSignature()) + ", " +
+            "descriptor=" + getDescriptor() +
+            "]";
+    }
+
+    /**
+     * Compare this MBeanConstructorInfo to another.
+     *
+     * @param o the object to compare to.
+     *
+     * @return true if and only if <code>o</code> is an MBeanConstructorInfo such
+     * that its {@link #getName()}, {@link #getDescription()},
+     * {@link #getSignature()}, and {@link #getDescriptor()}
+     * values are equal (not necessarily
+     * identical) to those of this MBeanConstructorInfo.  Two
+     * signature arrays are equal if their elements are pairwise
+     * equal.
+     */
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof MBeanConstructorInfo))
+            return false;
+        MBeanConstructorInfo p = (MBeanConstructorInfo) o;
+        return (Objects.equals(p.getName(), getName()) &&
+                Objects.equals(p.getDescription(), getDescription()) &&
+                Arrays.equals(p.fastGetSignature(), fastGetSignature()) &&
+                Objects.equals(p.getDescriptor(), getDescriptor()));
+    }
+
+    /* Unlike attributes and operations, it's quite likely we'll have
+       more than one constructor with the same name and even
+       description, so we include the parameter array in the hashcode.
+       We don't include the description, though, because it could be
+       quite long and yet the same between constructors.  Likewise for
+       the descriptor.  */
+    public int hashCode() {
+        return Objects.hash(getName()) ^ Arrays.hashCode(fastGetSignature());
+    }
+
+    private static MBeanParameterInfo[] constructorSignature(Constructor<?> cn) {
+        final Class<?>[] classes = cn.getParameterTypes();
+        final Annotation[][] annots = cn.getParameterAnnotations();
+        return MBeanOperationInfo.parameters(classes, annots);
+    }
+}

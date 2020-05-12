@@ -1,162 +1,159 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.ComponentOrientation;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.Comparator;
-/*     */ import java.util.LinkedList;
-/*     */ import java.util.ListIterator;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class LayoutComparator
-/*     */   implements Comparator<Component>, Serializable
-/*     */ {
-/*     */   private static final int ROW_TOLERANCE = 10;
-/*     */   private boolean horizontal = true;
-/*     */   private boolean leftToRight = true;
-/*     */   
-/*     */   void setComponentOrientation(ComponentOrientation paramComponentOrientation) {
-/*  50 */     this.horizontal = paramComponentOrientation.isHorizontal();
-/*  51 */     this.leftToRight = paramComponentOrientation.isLeftToRight();
-/*     */   }
-/*     */   
-/*     */   public int compare(Component paramComponent1, Component paramComponent2) {
-/*  55 */     if (paramComponent1 == paramComponent2) {
-/*  56 */       return 0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  64 */     if (paramComponent1.getParent() != paramComponent2.getParent()) {
-/*  65 */       LinkedList<Component> linkedList1 = new LinkedList();
-/*     */       
-/*  67 */       for (; paramComponent1 != null; paramComponent1 = paramComponent1.getParent()) {
-/*  68 */         linkedList1.add(paramComponent1);
-/*  69 */         if (paramComponent1 instanceof java.awt.Window) {
-/*     */           break;
-/*     */         }
-/*     */       } 
-/*  73 */       if (paramComponent1 == null)
-/*     */       {
-/*  75 */         throw new ClassCastException();
-/*     */       }
-/*     */       
-/*  78 */       LinkedList<Component> linkedList2 = new LinkedList();
-/*     */       
-/*  80 */       for (; paramComponent2 != null; paramComponent2 = paramComponent2.getParent()) {
-/*  81 */         linkedList2.add(paramComponent2);
-/*  82 */         if (paramComponent2 instanceof java.awt.Window) {
-/*     */           break;
-/*     */         }
-/*     */       } 
-/*  86 */       if (paramComponent2 == null)
-/*     */       {
-/*  88 */         throw new ClassCastException();
-/*     */       }
-/*     */ 
-/*     */       
-/*  92 */       ListIterator<Component> listIterator1 = linkedList1.listIterator(linkedList1.size());
-/*  93 */       ListIterator<Component> listIterator2 = linkedList2.listIterator(linkedList2.size()); do {
-/*  94 */         if (listIterator1.hasPrevious()) {
-/*  95 */           paramComponent1 = listIterator1.previous();
-/*     */         } else {
-/*     */           
-/*  98 */           return -1;
-/*     */         } 
-/*     */         
-/* 101 */         if (listIterator2.hasPrevious()) {
-/* 102 */           paramComponent2 = listIterator2.previous();
-/*     */         } else {
-/*     */           
-/* 105 */           return 1;
-/*     */         }
-/*     */       
-/* 108 */       } while (paramComponent1 == paramComponent2);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 114 */     int i = paramComponent1.getX(), j = paramComponent1.getY(), k = paramComponent2.getX(), m = paramComponent2.getY();
-/*     */     
-/* 116 */     int n = paramComponent1.getParent().getComponentZOrder(paramComponent1) - paramComponent2.getParent().getComponentZOrder(paramComponent2);
-/* 117 */     if (this.horizontal) {
-/* 118 */       if (this.leftToRight) {
-/*     */ 
-/*     */ 
-/*     */         
-/* 122 */         if (Math.abs(j - m) < 10) {
-/* 123 */           return (i < k) ? -1 : ((i > k) ? 1 : n);
-/*     */         }
-/* 125 */         return (j < m) ? -1 : 1;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 131 */       if (Math.abs(j - m) < 10) {
-/* 132 */         return (i > k) ? -1 : ((i < k) ? 1 : n);
-/*     */       }
-/* 134 */       return (j < m) ? -1 : 1;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 138 */     if (this.leftToRight) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 142 */       if (Math.abs(i - k) < 10) {
-/* 143 */         return (j < m) ? -1 : ((j > m) ? 1 : n);
-/*     */       }
-/* 145 */       return (i < k) ? -1 : 1;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 151 */     if (Math.abs(i - k) < 10) {
-/* 152 */       return (j < m) ? -1 : ((j > m) ? 1 : n);
-/*     */     }
-/* 154 */     return (i > k) ? -1 : 1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\LayoutComparator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing;
+
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Window;
+
+
+/**
+ * Comparator which attempts to sort Components based on their size and
+ * position. Code adapted from original javax.swing.DefaultFocusManager
+ * implementation.
+ *
+ * @author David Mendenhall
+ */
+final class LayoutComparator implements Comparator<Component>, java.io.Serializable {
+
+    private static final int ROW_TOLERANCE = 10;
+
+    private boolean horizontal = true;
+    private boolean leftToRight = true;
+
+    void setComponentOrientation(ComponentOrientation orientation) {
+        horizontal = orientation.isHorizontal();
+        leftToRight = orientation.isLeftToRight();
+    }
+
+    public int compare(Component a, Component b) {
+        if (a == b) {
+            return 0;
+        }
+
+        // Row/Column algorithm only applies to siblings. If 'a' and 'b'
+        // aren't siblings, then we need to find their most inferior
+        // ancestors which share a parent. Compute the ancestory lists for
+        // each Component and then search from the Window down until the
+        // hierarchy branches.
+        if (a.getParent() != b.getParent()) {
+            LinkedList<Component> aAncestory = new LinkedList<Component>();
+
+            for(; a != null; a = a.getParent()) {
+                aAncestory.add(a);
+                if (a instanceof Window) {
+                    break;
+                }
+            }
+            if (a == null) {
+                // 'a' is not part of a Window hierarchy. Can't cope.
+                throw new ClassCastException();
+            }
+
+            LinkedList<Component> bAncestory = new LinkedList<Component>();
+
+            for(; b != null; b = b.getParent()) {
+                bAncestory.add(b);
+                if (b instanceof Window) {
+                    break;
+                }
+            }
+            if (b == null) {
+                // 'b' is not part of a Window hierarchy. Can't cope.
+                throw new ClassCastException();
+            }
+
+            for (ListIterator<Component>
+                     aIter = aAncestory.listIterator(aAncestory.size()),
+                     bIter = bAncestory.listIterator(bAncestory.size()); ;) {
+                if (aIter.hasPrevious()) {
+                    a = aIter.previous();
+                } else {
+                    // a is an ancestor of b
+                    return -1;
+                }
+
+                if (bIter.hasPrevious()) {
+                    b = bIter.previous();
+                } else {
+                    // b is an ancestor of a
+                    return 1;
+                }
+
+                if (a != b) {
+                    break;
+                }
+            }
+        }
+
+        int ax = a.getX(), ay = a.getY(), bx = b.getX(), by = b.getY();
+
+        int zOrder = a.getParent().getComponentZOrder(a) - b.getParent().getComponentZOrder(b);
+        if (horizontal) {
+            if (leftToRight) {
+
+                // LT - Western Europe (optional for Japanese, Chinese, Korean)
+
+                if (Math.abs(ay - by) < ROW_TOLERANCE) {
+                    return (ax < bx) ? -1 : ((ax > bx) ? 1 : zOrder);
+                } else {
+                    return (ay < by) ? -1 : 1;
+                }
+            } else { // !leftToRight
+
+                // RT - Middle East (Arabic, Hebrew)
+
+                if (Math.abs(ay - by) < ROW_TOLERANCE) {
+                    return (ax > bx) ? -1 : ((ax < bx) ? 1 : zOrder);
+                } else {
+                    return (ay < by) ? -1 : 1;
+                }
+            }
+        } else { // !horizontal
+            if (leftToRight) {
+
+                // TL - Mongolian
+
+                if (Math.abs(ax - bx) < ROW_TOLERANCE) {
+                    return (ay < by) ? -1 : ((ay > by) ? 1 : zOrder);
+                } else {
+                    return (ax < bx) ? -1 : 1;
+                }
+            } else { // !leftToRight
+
+                // TR - Japanese, Chinese, Korean
+
+                if (Math.abs(ax - bx) < ROW_TOLERANCE) {
+                    return (ay < by) ? -1 : ((ay > by) ? 1 : zOrder);
+                } else {
+                    return (ax > bx) ? -1 : 1;
+                }
+            }
+        }
+    }
+}

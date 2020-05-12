@@ -1,347 +1,342 @@
-/*     */ package java.text;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class MergeCollation
-/*     */ {
-/*     */   public MergeCollation(String paramString) throws ParseException {
-/*  71 */     for (byte b = 0; b < this.statusArray.length; b++)
-/*  72 */       this.statusArray[b] = 0; 
-/*  73 */     setPattern(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPattern() {
-/*  80 */     return getPattern(true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPattern(boolean paramBoolean) {
-/*  89 */     StringBuffer stringBuffer = new StringBuffer();
-/*  90 */     PatternEntry patternEntry = null;
-/*  91 */     ArrayList<PatternEntry> arrayList = null;
-/*     */     byte b;
-/*  93 */     for (b = 0; b < this.patterns.size(); b++) {
-/*  94 */       PatternEntry patternEntry1 = this.patterns.get(b);
-/*  95 */       if (patternEntry1.extension.length() != 0) {
-/*  96 */         if (arrayList == null)
-/*  97 */           arrayList = new ArrayList(); 
-/*  98 */         arrayList.add(patternEntry1);
-/*     */       } else {
-/* 100 */         if (arrayList != null) {
-/* 101 */           PatternEntry patternEntry2 = findLastWithNoExtension(b - 1);
-/* 102 */           for (int i = arrayList.size() - 1; i >= 0; i--) {
-/* 103 */             patternEntry = arrayList.get(i);
-/* 104 */             patternEntry.addToBuffer(stringBuffer, false, paramBoolean, patternEntry2);
-/*     */           } 
-/* 106 */           arrayList = null;
-/*     */         } 
-/* 108 */         patternEntry1.addToBuffer(stringBuffer, false, paramBoolean, null);
-/*     */       } 
-/*     */     } 
-/* 111 */     if (arrayList != null) {
-/* 112 */       PatternEntry patternEntry1 = findLastWithNoExtension(b - 1);
-/* 113 */       for (int i = arrayList.size() - 1; i >= 0; i--) {
-/* 114 */         patternEntry = arrayList.get(i);
-/* 115 */         patternEntry.addToBuffer(stringBuffer, false, paramBoolean, patternEntry1);
-/*     */       } 
-/* 117 */       arrayList = null;
-/*     */     } 
-/* 119 */     return stringBuffer.toString();
-/*     */   }
-/*     */   
-/*     */   private final PatternEntry findLastWithNoExtension(int paramInt) {
-/* 123 */     for (; --paramInt >= 0; paramInt--) {
-/* 124 */       PatternEntry patternEntry = this.patterns.get(paramInt);
-/* 125 */       if (patternEntry.extension.length() == 0) {
-/* 126 */         return patternEntry;
-/*     */       }
-/*     */     } 
-/* 129 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String emitPattern() {
-/* 138 */     return emitPattern(true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String emitPattern(boolean paramBoolean) {
-/* 149 */     StringBuffer stringBuffer = new StringBuffer();
-/* 150 */     for (byte b = 0; b < this.patterns.size(); b++) {
-/*     */       
-/* 152 */       PatternEntry patternEntry = this.patterns.get(b);
-/* 153 */       if (patternEntry != null) {
-/* 154 */         patternEntry.addToBuffer(stringBuffer, true, paramBoolean, null);
-/*     */       }
-/*     */     } 
-/* 157 */     return stringBuffer.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPattern(String paramString) throws ParseException {
-/* 165 */     this.patterns.clear();
-/* 166 */     addPattern(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addPattern(String paramString) throws ParseException {
-/* 175 */     if (paramString == null) {
-/*     */       return;
-/*     */     }
-/* 178 */     PatternEntry.Parser parser = new PatternEntry.Parser(paramString);
-/*     */     
-/* 180 */     PatternEntry patternEntry = parser.next();
-/* 181 */     while (patternEntry != null) {
-/* 182 */       fixEntry(patternEntry);
-/* 183 */       patternEntry = parser.next();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getCount() {
-/* 192 */     return this.patterns.size();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public PatternEntry getItemAt(int paramInt) {
-/* 201 */     return this.patterns.get(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 207 */   ArrayList<PatternEntry> patterns = new ArrayList<>();
-/*     */   
-/* 209 */   private transient PatternEntry saveEntry = null;
-/* 210 */   private transient PatternEntry lastEntry = null;
-/*     */ 
-/*     */ 
-/*     */   
-/* 214 */   private transient StringBuffer excess = new StringBuffer();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 224 */   private transient byte[] statusArray = new byte[8192];
-/* 225 */   private final byte BITARRAYMASK = 1;
-/* 226 */   private final int BYTEPOWER = 3;
-/* 227 */   private final int BYTEMASK = 7;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final void fixEntry(PatternEntry paramPatternEntry) throws ParseException {
-/* 242 */     if (this.lastEntry != null && paramPatternEntry.chars.equals(this.lastEntry.chars) && paramPatternEntry.extension
-/* 243 */       .equals(this.lastEntry.extension)) {
-/* 244 */       if (paramPatternEntry.strength != 3 && paramPatternEntry.strength != -2)
-/*     */       {
-/* 246 */         throw new ParseException("The entries " + this.lastEntry + " and " + paramPatternEntry + " are adjacent in the rules, but have conflicting strengths: A character can't be unequal to itself.", -1);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 255 */     boolean bool = true;
-/* 256 */     if (paramPatternEntry.strength != -2) {
-/* 257 */       int i = -1;
-/*     */       
-/* 259 */       if (paramPatternEntry.chars.length() == 1) {
-/*     */         
-/* 261 */         char c = paramPatternEntry.chars.charAt(0);
-/* 262 */         int k = c >> 3;
-/* 263 */         byte b1 = this.statusArray[k];
-/* 264 */         byte b2 = (byte)(1 << (c & 0x7));
-/*     */         
-/* 266 */         if (b1 != 0 && (b1 & b2) != 0) {
-/* 267 */           i = this.patterns.lastIndexOf(paramPatternEntry);
-/*     */         }
-/*     */         else {
-/*     */           
-/* 271 */           this.statusArray[k] = (byte)(b1 | b2);
-/*     */         } 
-/*     */       } else {
-/* 274 */         i = this.patterns.lastIndexOf(paramPatternEntry);
-/*     */       } 
-/* 276 */       if (i != -1) {
-/* 277 */         this.patterns.remove(i);
-/*     */       }
-/*     */       
-/* 280 */       this.excess.setLength(0);
-/* 281 */       int j = findLastEntry(this.lastEntry, this.excess);
-/*     */       
-/* 283 */       if (this.excess.length() != 0) {
-/* 284 */         paramPatternEntry.extension = this.excess + paramPatternEntry.extension;
-/* 285 */         if (j != this.patterns.size()) {
-/* 286 */           this.lastEntry = this.saveEntry;
-/* 287 */           bool = false;
-/*     */         } 
-/*     */       } 
-/* 290 */       if (j == this.patterns.size()) {
-/* 291 */         this.patterns.add(paramPatternEntry);
-/* 292 */         this.saveEntry = paramPatternEntry;
-/*     */       } else {
-/* 294 */         this.patterns.add(j, paramPatternEntry);
-/*     */       } 
-/*     */     } 
-/* 297 */     if (bool) {
-/* 298 */       this.lastEntry = paramPatternEntry;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private final int findLastEntry(PatternEntry paramPatternEntry, StringBuffer paramStringBuffer) throws ParseException {
-/* 305 */     if (paramPatternEntry == null) {
-/* 306 */       return 0;
-/*     */     }
-/* 308 */     if (paramPatternEntry.strength != -2) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 312 */       int j = -1;
-/* 313 */       if (paramPatternEntry.chars.length() == 1) {
-/* 314 */         int k = paramPatternEntry.chars.charAt(0) >> 3;
-/* 315 */         if ((this.statusArray[k] & 1 << (paramPatternEntry.chars
-/* 316 */           .charAt(0) & 0x7)) != 0) {
-/* 317 */           j = this.patterns.lastIndexOf(paramPatternEntry);
-/*     */         }
-/*     */       } else {
-/* 320 */         j = this.patterns.lastIndexOf(paramPatternEntry);
-/*     */       } 
-/* 322 */       if (j == -1) {
-/* 323 */         throw new ParseException("couldn't find last entry: " + paramPatternEntry, j);
-/*     */       }
-/* 325 */       return j + 1;
-/*     */     } 
-/*     */     int i;
-/* 328 */     for (i = this.patterns.size() - 1; i >= 0; i--) {
-/* 329 */       PatternEntry patternEntry = this.patterns.get(i);
-/* 330 */       if (patternEntry.chars.regionMatches(0, paramPatternEntry.chars, 0, patternEntry.chars
-/* 331 */           .length())) {
-/* 332 */         paramStringBuffer.append(paramPatternEntry.chars.substring(patternEntry.chars.length(), paramPatternEntry.chars
-/* 333 */               .length()));
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/* 337 */     if (i == -1)
-/* 338 */       throw new ParseException("couldn't find: " + paramPatternEntry, i); 
-/* 339 */     return i + 1;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\text\MergeCollation.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1996, 1997 - All Rights Reserved
+ *
+ *   The original version of this source code and documentation is copyrighted
+ * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These
+ * materials are provided under terms of a License Agreement between Taligent
+ * and Sun. This technology is protected by multiple US and International
+ * patents. This notice and attribution to Taligent may not be removed.
+ *   Taligent is a registered trademark of Taligent, Inc.
+ *
+ */
+
+package java.text;
+
+import java.util.ArrayList;
+
+/**
+ * Utility class for normalizing and merging patterns for collation.
+ * Patterns are strings of the form <entry>*, where <entry> has the
+ * form:
+ * <pattern> := <entry>*
+ * <entry> := <separator><chars>{"/"<extension>}
+ * <separator> := "=", ",", ";", "<", "&"
+ * <chars>, and <extension> are both arbitrary strings.
+ * unquoted whitespaces are ignored.
+ * 'xxx' can be used to quote characters
+ * One difference from Collator is that & is used to reset to a current
+ * point. Or, in other words, it introduces a new sequence which is to
+ * be added to the old.
+ * That is: "a < b < c < d" is the same as "a < b & b < c & c < d" OR
+ * "a < b < d & b < c"
+ * XXX: make '' be a single quote.
+ * @see PatternEntry
+ * @author             Mark Davis, Helena Shih
+ */
+
+final class MergeCollation {
+
+    /**
+     * Creates from a pattern
+     * @exception ParseException If the input pattern is incorrect.
+     */
+    public MergeCollation(String pattern) throws ParseException
+    {
+        for (int i = 0; i < statusArray.length; i++)
+            statusArray[i] = 0;
+        setPattern(pattern);
+    }
+
+    /**
+     * recovers current pattern
+     */
+    public String getPattern() {
+        return getPattern(true);
+    }
+
+    /**
+     * recovers current pattern.
+     * @param withWhiteSpace puts spacing around the entries, and \n
+     * before & and <
+     */
+    public String getPattern(boolean withWhiteSpace) {
+        StringBuffer result = new StringBuffer();
+        PatternEntry tmp = null;
+        ArrayList<PatternEntry> extList = null;
+        int i;
+        for (i = 0; i < patterns.size(); ++i) {
+            PatternEntry entry = patterns.get(i);
+            if (entry.extension.length() != 0) {
+                if (extList == null)
+                    extList = new ArrayList<>();
+                extList.add(entry);
+            } else {
+                if (extList != null) {
+                    PatternEntry last = findLastWithNoExtension(i-1);
+                    for (int j = extList.size() - 1; j >= 0 ; j--) {
+                        tmp = extList.get(j);
+                        tmp.addToBuffer(result, false, withWhiteSpace, last);
+                    }
+                    extList = null;
+                }
+                entry.addToBuffer(result, false, withWhiteSpace, null);
+            }
+        }
+        if (extList != null) {
+            PatternEntry last = findLastWithNoExtension(i-1);
+            for (int j = extList.size() - 1; j >= 0 ; j--) {
+                tmp = extList.get(j);
+                tmp.addToBuffer(result, false, withWhiteSpace, last);
+            }
+            extList = null;
+        }
+        return result.toString();
+    }
+
+    private final PatternEntry findLastWithNoExtension(int i) {
+        for (--i;i >= 0; --i) {
+            PatternEntry entry = patterns.get(i);
+            if (entry.extension.length() == 0) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * emits the pattern for collation builder.
+     * @return emits the string in the format understable to the collation
+     * builder.
+     */
+    public String emitPattern() {
+        return emitPattern(true);
+    }
+
+    /**
+     * emits the pattern for collation builder.
+     * @param withWhiteSpace puts spacing around the entries, and \n
+     * before & and <
+     * @return emits the string in the format understable to the collation
+     * builder.
+     */
+    public String emitPattern(boolean withWhiteSpace) {
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < patterns.size(); ++i)
+        {
+            PatternEntry entry = patterns.get(i);
+            if (entry != null) {
+                entry.addToBuffer(result, true, withWhiteSpace, null);
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * sets the pattern.
+     */
+    public void setPattern(String pattern) throws ParseException
+    {
+        patterns.clear();
+        addPattern(pattern);
+    }
+
+    /**
+     * adds a pattern to the current one.
+     * @param pattern the new pattern to be added
+     */
+    public void addPattern(String pattern) throws ParseException
+    {
+        if (pattern == null)
+            return;
+
+        PatternEntry.Parser parser = new PatternEntry.Parser(pattern);
+
+        PatternEntry entry = parser.next();
+        while (entry != null) {
+            fixEntry(entry);
+            entry = parser.next();
+        }
+    }
+
+    /**
+     * gets count of separate entries
+     * @return the size of pattern entries
+     */
+    public int getCount() {
+        return patterns.size();
+    }
+
+    /**
+     * gets count of separate entries
+     * @param index the offset of the desired pattern entry
+     * @return the requested pattern entry
+     */
+    public PatternEntry getItemAt(int index) {
+        return patterns.get(index);
+    }
+
+    //============================================================
+    // privates
+    //============================================================
+    ArrayList<PatternEntry> patterns = new ArrayList<>(); // a list of PatternEntries
+
+    private transient PatternEntry saveEntry = null;
+    private transient PatternEntry lastEntry = null;
+
+    // This is really used as a local variable inside fixEntry, but we cache
+    // it here to avoid newing it up every time the method is called.
+    private transient StringBuffer excess = new StringBuffer();
+
+    //
+    // When building a MergeCollation, we need to do lots of searches to see
+    // whether a given entry is already in the table.  Since we're using an
+    // array, this would make the algorithm O(N*N).  To speed things up, we
+    // use this bit array to remember whether the array contains any entries
+    // starting with each Unicode character.  If not, we can avoid the search.
+    // Using BitSet would make this easier, but it's significantly slower.
+    //
+    private transient byte[] statusArray = new byte[8192];
+    private final byte BITARRAYMASK = (byte)0x1;
+    private final int  BYTEPOWER = 3;
+    private final int  BYTEMASK = (1 << BYTEPOWER) - 1;
+
+    /*
+      If the strength is RESET, then just change the lastEntry to
+      be the current. (If the current is not in patterns, signal an error).
+      If not, then remove the current entry, and add it after lastEntry
+      (which is usually at the end).
+      */
+    private final void fixEntry(PatternEntry newEntry) throws ParseException
+    {
+        // check to see whether the new entry has the same characters as the previous
+        // entry did (this can happen when a pattern declaring a difference between two
+        // strings that are canonically equivalent is normalized).  If so, and the strength
+        // is anything other than IDENTICAL or RESET, throw an exception (you can't
+        // declare a string to be unequal to itself).       --rtg 5/24/99
+        if (lastEntry != null && newEntry.chars.equals(lastEntry.chars)
+                && newEntry.extension.equals(lastEntry.extension)) {
+            if (newEntry.strength != Collator.IDENTICAL
+                && newEntry.strength != PatternEntry.RESET) {
+                    throw new ParseException("The entries " + lastEntry + " and "
+                            + newEntry + " are adjacent in the rules, but have conflicting "
+                            + "strengths: A character can't be unequal to itself.", -1);
+            } else {
+                // otherwise, just skip this entry and behave as though you never saw it
+                return;
+            }
+        }
+
+        boolean changeLastEntry = true;
+        if (newEntry.strength != PatternEntry.RESET) {
+            int oldIndex = -1;
+
+            if ((newEntry.chars.length() == 1)) {
+
+                char c = newEntry.chars.charAt(0);
+                int statusIndex = c >> BYTEPOWER;
+                byte bitClump = statusArray[statusIndex];
+                byte setBit = (byte)(BITARRAYMASK << (c & BYTEMASK));
+
+                if (bitClump != 0 && (bitClump & setBit) != 0) {
+                    oldIndex = patterns.lastIndexOf(newEntry);
+                } else {
+                    // We're going to add an element that starts with this
+                    // character, so go ahead and set its bit.
+                    statusArray[statusIndex] = (byte)(bitClump | setBit);
+                }
+            } else {
+                oldIndex = patterns.lastIndexOf(newEntry);
+            }
+            if (oldIndex != -1) {
+                patterns.remove(oldIndex);
+            }
+
+            excess.setLength(0);
+            int lastIndex = findLastEntry(lastEntry, excess);
+
+            if (excess.length() != 0) {
+                newEntry.extension = excess + newEntry.extension;
+                if (lastIndex != patterns.size()) {
+                    lastEntry = saveEntry;
+                    changeLastEntry = false;
+                }
+            }
+            if (lastIndex == patterns.size()) {
+                patterns.add(newEntry);
+                saveEntry = newEntry;
+            } else {
+                patterns.add(lastIndex, newEntry);
+            }
+        }
+        if (changeLastEntry) {
+            lastEntry = newEntry;
+        }
+    }
+
+    private final int findLastEntry(PatternEntry entry,
+                              StringBuffer excessChars) throws ParseException
+    {
+        if (entry == null)
+            return 0;
+
+        if (entry.strength != PatternEntry.RESET) {
+            // Search backwards for string that contains this one;
+            // most likely entry is last one
+
+            int oldIndex = -1;
+            if ((entry.chars.length() == 1)) {
+                int index = entry.chars.charAt(0) >> BYTEPOWER;
+                if ((statusArray[index] &
+                    (BITARRAYMASK << (entry.chars.charAt(0) & BYTEMASK))) != 0) {
+                    oldIndex = patterns.lastIndexOf(entry);
+                }
+            } else {
+                oldIndex = patterns.lastIndexOf(entry);
+            }
+            if ((oldIndex == -1))
+                throw new ParseException("couldn't find last entry: "
+                                          + entry, oldIndex);
+            return oldIndex + 1;
+        } else {
+            int i;
+            for (i = patterns.size() - 1; i >= 0; --i) {
+                PatternEntry e = patterns.get(i);
+                if (e.chars.regionMatches(0,entry.chars,0,
+                                              e.chars.length())) {
+                    excessChars.append(entry.chars.substring(e.chars.length(),
+                                                            entry.chars.length()));
+                    break;
+                }
+            }
+            if (i == -1)
+                throw new ParseException("couldn't find: " + entry, i);
+            return i + 1;
+        }
+    }
+}

@@ -1,667 +1,662 @@
-/*     */ package com.sun.corba.se.impl.interceptors;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.orbutil.ORBUtility;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.oa.ObjectAdapter;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import org.omg.CORBA.Object;
-/*     */ import org.omg.CORBA.SystemException;
-/*     */ import org.omg.PortableInterceptor.ClientRequestInterceptor;
-/*     */ import org.omg.PortableInterceptor.ForwardRequest;
-/*     */ import org.omg.PortableInterceptor.IORInterceptor;
-/*     */ import org.omg.PortableInterceptor.IORInterceptor_3_0;
-/*     */ import org.omg.PortableInterceptor.ObjectReferenceTemplate;
-/*     */ import org.omg.PortableInterceptor.ServerRequestInterceptor;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class InterceptorInvoker
-/*     */ {
-/*     */   private ORB orb;
-/*     */   private InterceptorList interceptorList;
-/*     */   private boolean enabled = false;
-/*     */   private PICurrent current;
-/*     */   
-/*     */   InterceptorInvoker(ORB paramORB, InterceptorList paramInterceptorList, PICurrent paramPICurrent) {
-/*  85 */     this.orb = paramORB;
-/*  86 */     this.interceptorList = paramInterceptorList;
-/*  87 */     this.enabled = false;
-/*  88 */     this.current = paramPICurrent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setEnabled(boolean paramBoolean) {
-/*  95 */     this.enabled = paramBoolean;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void objectAdapterCreated(ObjectAdapter paramObjectAdapter) {
-/* 110 */     if (this.enabled) {
-/*     */       
-/* 112 */       IORInfoImpl iORInfoImpl = new IORInfoImpl(paramObjectAdapter);
-/*     */ 
-/*     */ 
-/*     */       
-/* 116 */       IORInterceptor[] arrayOfIORInterceptor = (IORInterceptor[])this.interceptorList.getInterceptors(2);
-/*     */       
-/* 118 */       int i = arrayOfIORInterceptor.length;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       int j;
-/*     */ 
-/*     */ 
-/*     */       
-/* 127 */       for (j = i - 1; j >= 0; j--) {
-/* 128 */         IORInterceptor iORInterceptor = arrayOfIORInterceptor[j];
-/*     */         try {
-/* 130 */           iORInterceptor.establish_components(iORInfoImpl);
-/*     */         }
-/* 132 */         catch (Exception exception) {}
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 139 */       iORInfoImpl.makeStateEstablished();
-/*     */       
-/* 141 */       for (j = i - 1; j >= 0; j--) {
-/* 142 */         IORInterceptor iORInterceptor = arrayOfIORInterceptor[j];
-/* 143 */         if (iORInterceptor instanceof IORInterceptor_3_0) {
-/* 144 */           IORInterceptor_3_0 iORInterceptor_3_0 = (IORInterceptor_3_0)iORInterceptor;
-/*     */ 
-/*     */           
-/* 147 */           iORInterceptor_3_0.components_established(iORInfoImpl);
-/*     */         } 
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 155 */       iORInfoImpl.makeStateDone();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void adapterManagerStateChanged(int paramInt, short paramShort) {
-/* 161 */     if (this.enabled) {
-/*     */       
-/* 163 */       IORInterceptor[] arrayOfIORInterceptor = (IORInterceptor[])this.interceptorList.getInterceptors(2);
-/*     */       
-/* 165 */       int i = arrayOfIORInterceptor.length;
-/*     */       
-/* 167 */       for (int j = i - 1; j >= 0; j--) {
-/*     */         try {
-/* 169 */           IORInterceptor iORInterceptor = arrayOfIORInterceptor[j];
-/* 170 */           if (iORInterceptor instanceof IORInterceptor_3_0) {
-/* 171 */             IORInterceptor_3_0 iORInterceptor_3_0 = (IORInterceptor_3_0)iORInterceptor;
-/* 172 */             iORInterceptor_3_0.adapter_manager_state_changed(paramInt, paramShort);
-/*     */           }
-/*     */         
-/* 175 */         } catch (Exception exception) {}
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void adapterStateChanged(ObjectReferenceTemplate[] paramArrayOfObjectReferenceTemplate, short paramShort) {
-/* 185 */     if (this.enabled) {
-/*     */       
-/* 187 */       IORInterceptor[] arrayOfIORInterceptor = (IORInterceptor[])this.interceptorList.getInterceptors(2);
-/*     */       
-/* 189 */       int i = arrayOfIORInterceptor.length;
-/*     */       
-/* 191 */       for (int j = i - 1; j >= 0; j--) {
-/*     */         try {
-/* 193 */           IORInterceptor iORInterceptor = arrayOfIORInterceptor[j];
-/* 194 */           if (iORInterceptor instanceof IORInterceptor_3_0) {
-/* 195 */             IORInterceptor_3_0 iORInterceptor_3_0 = (IORInterceptor_3_0)iORInterceptor;
-/* 196 */             iORInterceptor_3_0.adapter_state_changed(paramArrayOfObjectReferenceTemplate, paramShort);
-/*     */           } 
-/* 198 */         } catch (Exception exception) {}
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void invokeClientInterceptorStartingPoint(ClientRequestInfoImpl paramClientRequestInfoImpl) {
-/* 216 */     if (this.enabled) {
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */         
-/* 221 */         this.current.pushSlotTable();
-/* 222 */         paramClientRequestInfoImpl.setPICurrentPushed(true);
-/* 223 */         paramClientRequestInfoImpl.setCurrentExecutionPoint(0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 228 */         ClientRequestInterceptor[] arrayOfClientRequestInterceptor = (ClientRequestInterceptor[])this.interceptorList.getInterceptors(0);
-/* 229 */         int i = arrayOfClientRequestInterceptor.length;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 234 */         int j = i;
-/* 235 */         boolean bool = true;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 243 */         for (byte b = 0; bool && b < i; b++) {
-/*     */           try {
-/* 245 */             arrayOfClientRequestInterceptor[b].send_request(paramClientRequestInfoImpl);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/*     */           }
-/* 261 */           catch (ForwardRequest forwardRequest) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 266 */             j = b;
-/* 267 */             paramClientRequestInfoImpl.setForwardRequest(forwardRequest);
-/* 268 */             paramClientRequestInfoImpl.setEndingPointCall(2);
-/*     */             
-/* 270 */             paramClientRequestInfoImpl.setReplyStatus((short)3);
-/*     */             
-/* 272 */             updateClientRequestDispatcherForward(paramClientRequestInfoImpl);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 279 */             bool = false;
-/*     */           }
-/* 281 */           catch (SystemException systemException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 286 */             j = b;
-/* 287 */             paramClientRequestInfoImpl.setEndingPointCall(1);
-/*     */             
-/* 289 */             paramClientRequestInfoImpl.setReplyStatus((short)1);
-/* 290 */             paramClientRequestInfoImpl.setException(systemException);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 297 */             bool = false;
-/*     */           } 
-/*     */         } 
-/*     */ 
-/*     */         
-/* 302 */         paramClientRequestInfoImpl.setFlowStackIndex(j);
-/*     */       }
-/*     */       finally {
-/*     */         
-/* 306 */         this.current.resetSlotTable();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void invokeClientInterceptorEndingPoint(ClientRequestInfoImpl paramClientRequestInfoImpl) {
-/* 317 */     if (this.enabled) {
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */         
-/* 322 */         paramClientRequestInfoImpl.setCurrentExecutionPoint(2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 327 */         ClientRequestInterceptor[] arrayOfClientRequestInterceptor = (ClientRequestInterceptor[])this.interceptorList.getInterceptors(0);
-/* 328 */         int i = paramClientRequestInfoImpl.getFlowStackIndex();
-/*     */ 
-/*     */ 
-/*     */         
-/* 332 */         int j = paramClientRequestInfoImpl.getEndingPointCall();
-/*     */ 
-/*     */ 
-/*     */         
-/* 336 */         if (j == 0 && paramClientRequestInfoImpl
-/*     */           
-/* 338 */           .getIsOneWay()) {
-/*     */           
-/* 340 */           j = 2;
-/* 341 */           paramClientRequestInfoImpl.setEndingPointCall(j);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 349 */         for (int k = i - 1; k >= 0; k--)
-/*     */         {
-/*     */           try {
-/* 352 */             switch (j) {
-/*     */               case 0:
-/* 354 */                 arrayOfClientRequestInterceptor[k].receive_reply(paramClientRequestInfoImpl);
-/*     */                 break;
-/*     */               case 1:
-/* 357 */                 arrayOfClientRequestInterceptor[k].receive_exception(paramClientRequestInfoImpl);
-/*     */                 break;
-/*     */               case 2:
-/* 360 */                 arrayOfClientRequestInterceptor[k].receive_other(paramClientRequestInfoImpl);
-/*     */                 break;
-/*     */             } 
-/*     */           
-/* 364 */           } catch (ForwardRequest forwardRequest) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 369 */             j = 2;
-/*     */             
-/* 371 */             paramClientRequestInfoImpl.setEndingPointCall(j);
-/* 372 */             paramClientRequestInfoImpl.setReplyStatus((short)3);
-/* 373 */             paramClientRequestInfoImpl.setForwardRequest(forwardRequest);
-/* 374 */             updateClientRequestDispatcherForward(paramClientRequestInfoImpl);
-/*     */           }
-/* 376 */           catch (SystemException systemException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 381 */             j = 1;
-/*     */             
-/* 383 */             paramClientRequestInfoImpl.setEndingPointCall(j);
-/* 384 */             paramClientRequestInfoImpl.setReplyStatus((short)1);
-/* 385 */             paramClientRequestInfoImpl.setException(systemException);
-/*     */           }
-/*     */         
-/*     */         }
-/*     */       
-/*     */       } finally {
-/*     */         
-/* 392 */         if (paramClientRequestInfoImpl != null && paramClientRequestInfoImpl.isPICurrentPushed()) {
-/* 393 */           this.current.popSlotTable();
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void invokeServerInterceptorStartingPoint(ServerRequestInfoImpl paramServerRequestInfoImpl) {
-/* 411 */     if (this.enabled) {
-/*     */       
-/*     */       try {
-/* 414 */         this.current.pushSlotTable();
-/* 415 */         paramServerRequestInfoImpl.setSlotTable(this.current.getSlotTable());
-/*     */ 
-/*     */ 
-/*     */         
-/* 419 */         this.current.pushSlotTable();
-/*     */         
-/* 421 */         paramServerRequestInfoImpl.setCurrentExecutionPoint(0);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 426 */         ServerRequestInterceptor[] arrayOfServerRequestInterceptor = (ServerRequestInterceptor[])this.interceptorList.getInterceptors(1);
-/* 427 */         int i = arrayOfServerRequestInterceptor.length;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 432 */         int j = i;
-/* 433 */         boolean bool = true;
-/*     */ 
-/*     */ 
-/*     */         
-/* 437 */         for (byte b = 0; bool && b < i; b++) {
-/*     */           
-/*     */           try {
-/* 440 */             arrayOfServerRequestInterceptor[b]
-/* 441 */               .receive_request_service_contexts(paramServerRequestInfoImpl);
-/*     */           }
-/* 443 */           catch (ForwardRequest forwardRequest) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 448 */             j = b;
-/* 449 */             paramServerRequestInfoImpl.setForwardRequest(forwardRequest);
-/* 450 */             paramServerRequestInfoImpl.setIntermediatePointCall(1);
-/*     */             
-/* 452 */             paramServerRequestInfoImpl.setEndingPointCall(2);
-/*     */             
-/* 454 */             paramServerRequestInfoImpl.setReplyStatus((short)3);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 461 */             bool = false;
-/*     */           }
-/* 463 */           catch (SystemException systemException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 469 */             j = b;
-/* 470 */             paramServerRequestInfoImpl.setException(systemException);
-/* 471 */             paramServerRequestInfoImpl.setIntermediatePointCall(1);
-/*     */             
-/* 473 */             paramServerRequestInfoImpl.setEndingPointCall(1);
-/*     */             
-/* 475 */             paramServerRequestInfoImpl.setReplyStatus((short)1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */             
-/* 482 */             bool = false;
-/*     */           } 
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 488 */         paramServerRequestInfoImpl.setFlowStackIndex(j);
-/*     */       
-/*     */       }
-/*     */       finally {
-/*     */         
-/* 493 */         this.current.popSlotTable();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void invokeServerInterceptorIntermediatePoint(ServerRequestInfoImpl paramServerRequestInfoImpl) {
-/* 505 */     int i = paramServerRequestInfoImpl.getIntermediatePointCall();
-/*     */     
-/* 507 */     if (this.enabled && i != 1) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 513 */       paramServerRequestInfoImpl.setCurrentExecutionPoint(1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 518 */       ServerRequestInterceptor[] arrayOfServerRequestInterceptor = (ServerRequestInterceptor[])this.interceptorList.getInterceptors(1);
-/*     */       
-/* 520 */       int j = arrayOfServerRequestInterceptor.length;
-/*     */ 
-/*     */ 
-/*     */       
-/* 524 */       for (byte b = 0; b < j; b++) {
-/*     */         
-/*     */         try {
-/* 527 */           arrayOfServerRequestInterceptor[b].receive_request(paramServerRequestInfoImpl);
-/*     */         }
-/* 529 */         catch (ForwardRequest forwardRequest) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 535 */           paramServerRequestInfoImpl.setForwardRequest(forwardRequest);
-/* 536 */           paramServerRequestInfoImpl.setEndingPointCall(2);
-/*     */           
-/* 538 */           paramServerRequestInfoImpl.setReplyStatus((short)3);
-/*     */           
-/*     */           break;
-/* 541 */         } catch (SystemException systemException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 547 */           paramServerRequestInfoImpl.setException(systemException);
-/* 548 */           paramServerRequestInfoImpl.setEndingPointCall(1);
-/*     */           
-/* 550 */           paramServerRequestInfoImpl.setReplyStatus((short)1);
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void invokeServerInterceptorEndingPoint(ServerRequestInfoImpl paramServerRequestInfoImpl) {
-/* 563 */     if (this.enabled) {
-/*     */       
-/*     */       try {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 578 */         ServerRequestInterceptor[] arrayOfServerRequestInterceptor = (ServerRequestInterceptor[])this.interceptorList.getInterceptors(1);
-/* 579 */         int i = paramServerRequestInfoImpl.getFlowStackIndex();
-/*     */ 
-/*     */ 
-/*     */         
-/* 583 */         int j = paramServerRequestInfoImpl.getEndingPointCall();
-/*     */ 
-/*     */ 
-/*     */         
-/* 587 */         for (int k = i - 1; k >= 0; k--) {
-/*     */           try {
-/* 589 */             switch (j) {
-/*     */               case 0:
-/* 591 */                 arrayOfServerRequestInterceptor[k].send_reply(paramServerRequestInfoImpl);
-/*     */                 break;
-/*     */               case 1:
-/* 594 */                 arrayOfServerRequestInterceptor[k].send_exception(paramServerRequestInfoImpl);
-/*     */                 break;
-/*     */               case 2:
-/* 597 */                 arrayOfServerRequestInterceptor[k].send_other(paramServerRequestInfoImpl);
-/*     */                 break;
-/*     */             } 
-/*     */           
-/* 601 */           } catch (ForwardRequest forwardRequest) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 605 */             j = 2;
-/*     */             
-/* 607 */             paramServerRequestInfoImpl.setEndingPointCall(j);
-/* 608 */             paramServerRequestInfoImpl.setForwardRequest(forwardRequest);
-/* 609 */             paramServerRequestInfoImpl.setReplyStatus((short)3);
-/* 610 */             paramServerRequestInfoImpl.setForwardRequestRaisedInEnding();
-/*     */           }
-/* 612 */           catch (SystemException systemException) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 616 */             j = 1;
-/*     */             
-/* 618 */             paramServerRequestInfoImpl.setEndingPointCall(j);
-/* 619 */             paramServerRequestInfoImpl.setException(systemException);
-/* 620 */             paramServerRequestInfoImpl.setReplyStatus((short)1);
-/*     */           } 
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 626 */         paramServerRequestInfoImpl.setAlreadyExecuted(true);
-/*     */       }
-/*     */       finally {
-/*     */         
-/* 630 */         this.current.popSlotTable();
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void updateClientRequestDispatcherForward(ClientRequestInfoImpl paramClientRequestInfoImpl) {
-/* 647 */     ForwardRequest forwardRequest = paramClientRequestInfoImpl.getForwardRequestException();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 653 */     if (forwardRequest != null) {
-/* 654 */       Object object = forwardRequest.forward;
-/*     */ 
-/*     */       
-/* 657 */       IOR iOR = ORBUtility.getIOR(object);
-/* 658 */       paramClientRequestInfoImpl.setLocatedIOR(iOR);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\interceptors\InterceptorInvoker.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.interceptors;
+
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.portable.Delegate;
+import org.omg.PortableInterceptor.LOCATION_FORWARD;
+import org.omg.PortableInterceptor.SUCCESSFUL;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+import org.omg.PortableInterceptor.TRANSPORT_RETRY;
+import org.omg.PortableInterceptor.USER_EXCEPTION;
+import org.omg.PortableInterceptor.ClientRequestInfo;
+import org.omg.PortableInterceptor.ClientRequestInterceptor;
+import org.omg.PortableInterceptor.ForwardRequest;
+import org.omg.PortableInterceptor.IORInterceptor;
+import org.omg.PortableInterceptor.IORInterceptor_3_0;
+import org.omg.PortableInterceptor.ServerRequestInfo;
+import org.omg.PortableInterceptor.ServerRequestInterceptor;
+import org.omg.PortableInterceptor.ObjectReferenceTemplate;
+
+import com.sun.corba.se.spi.ior.IOR;
+import com.sun.corba.se.spi.oa.ObjectAdapter;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+
+/**
+ * Handles invocation of interceptors.  Has specific knowledge of how to
+ * invoke IOR, ClientRequest, and ServerRequest interceptors.
+ * Makes use of the InterceptorList to retrieve the list of interceptors to
+ * be invoked.  Most methods in this class are package scope so that they
+ * may only be called from the PIHandlerImpl.
+ */
+public class InterceptorInvoker {
+
+    // The ORB
+    private ORB orb;
+
+    // The list of interceptors to be invoked
+    private InterceptorList interceptorList;
+
+    // True if interceptors are to be invoked, or false if not
+    // Note: This is a global enable/disable flag, whereas the enable flag
+    // in the RequestInfoStack in PIHandlerImpl is only for a particular Thread.
+    private boolean enabled = false;
+
+    // PICurrent variable.
+    private PICurrent current;
+
+    // NOTE: Be careful about adding additional attributes to this class.
+    // Multiple threads may be calling methods on this invoker at the same
+    // time.
+
+    /**
+     * Creates a new Interceptor Invoker.  Constructor is package scope so
+     * only the ORB can create it.  The invoker is initially disabled, and
+     * must be explicitly enabled using setEnabled().
+     */
+    InterceptorInvoker( ORB orb, InterceptorList interceptorList,
+                        PICurrent piCurrent )
+    {
+        this.orb = orb;
+        this.interceptorList = interceptorList;
+        this.enabled = false;
+        this.current = piCurrent;
+    }
+
+    /**
+     * Enables or disables the interceptor invoker
+     */
+    void setEnabled( boolean enabled ) {
+        this.enabled = enabled;
+    }
+
+    /*
+     **********************************************************************
+     * IOR Interceptor invocation
+     **********************************************************************/
+
+    /**
+     * Called when a new POA is created.
+     *
+     * @param oa The Object Adapter associated with the IOR interceptor.
+     */
+    void objectAdapterCreated( ObjectAdapter oa ) {
+        // If invocation is not yet enabled, don't do anything.
+        if( enabled ) {
+            // Create IORInfo object to pass to IORInterceptors:
+            IORInfoImpl info = new IORInfoImpl( oa );
+
+            // Call each IORInterceptor:
+            IORInterceptor[] iorInterceptors =
+                (IORInterceptor[])interceptorList.getInterceptors(
+                InterceptorList.INTERCEPTOR_TYPE_IOR );
+            int size = iorInterceptors.length;
+
+            // Implementation note:
+            // This loop counts backwards for greater efficiency.
+            // Benchmarks have shown that counting down is more efficient
+            // than counting up in Java for loops, as a compare to zero is
+            // faster than a subtract and compare to zero.  In this case,
+            // it doesn't really matter much, but it's simply a force of habit.
+
+            for( int i = (size - 1); i >= 0; i-- ) {
+                IORInterceptor interceptor = iorInterceptors[i];
+                try {
+                    interceptor.establish_components( info );
+                }
+                catch( Exception e ) {
+                    // as per PI spec (orbos/99-12-02 sec 7.2.1), if
+                    // establish_components throws an exception, ignore it.
+                }
+            }
+
+            // Change the state so that only template operations are valid
+            info.makeStateEstablished() ;
+
+            for( int i = (size - 1); i >= 0; i-- ) {
+                IORInterceptor interceptor = iorInterceptors[i];
+                if (interceptor instanceof IORInterceptor_3_0) {
+                    IORInterceptor_3_0 interceptor30 = (IORInterceptor_3_0)interceptor ;
+                    // Note that exceptions here are NOT ignored, as per the
+                    // ORT spec (orbos/01-01-04)
+                    interceptor30.components_established( info );
+                }
+            }
+
+            // Change the state so that no operations are valid,
+            // in case a reference to info escapes this scope.
+            // This also completes the actions associated with the
+            // template interceptors on this POA.
+            info.makeStateDone() ;
+        }
+    }
+
+    void adapterManagerStateChanged( int managerId, short newState )
+    {
+        if (enabled) {
+            IORInterceptor[] interceptors =
+                (IORInterceptor[])interceptorList.getInterceptors(
+                InterceptorList.INTERCEPTOR_TYPE_IOR );
+            int size = interceptors.length;
+
+            for( int i = (size - 1); i >= 0; i-- ) {
+                try {
+                    IORInterceptor interceptor = interceptors[i];
+                    if (interceptor instanceof IORInterceptor_3_0) {
+                        IORInterceptor_3_0 interceptor30 = (IORInterceptor_3_0)interceptor ;
+                        interceptor30.adapter_manager_state_changed( managerId,
+                            newState );
+                    }
+                } catch (Exception exc) {
+                    // No-op: ignore exception in this case
+                }
+            }
+        }
+    }
+
+    void adapterStateChanged( ObjectReferenceTemplate[] templates,
+        short newState )
+    {
+        if (enabled) {
+            IORInterceptor[] interceptors =
+                (IORInterceptor[])interceptorList.getInterceptors(
+                InterceptorList.INTERCEPTOR_TYPE_IOR );
+            int size = interceptors.length;
+
+            for( int i = (size - 1); i >= 0; i-- ) {
+                try {
+                    IORInterceptor interceptor = interceptors[i];
+                    if (interceptor instanceof IORInterceptor_3_0) {
+                        IORInterceptor_3_0 interceptor30 = (IORInterceptor_3_0)interceptor ;
+                        interceptor30.adapter_state_changed( templates, newState );
+                    }
+                } catch (Exception exc) {
+                    // No-op: ignore exception in this case
+                }
+            }
+        }
+    }
+
+    /*
+     **********************************************************************
+     * Client Interceptor invocation
+     **********************************************************************/
+
+    /**
+     * Invokes either send_request, or send_poll, depending on the value
+     * of info.getStartingPointCall()
+     */
+    void invokeClientInterceptorStartingPoint( ClientRequestInfoImpl info ) {
+        // If invocation is not yet enabled, don't do anything.
+        if( enabled ) {
+            try {
+                // Make a a fresh slot table available to TSC in case
+                // interceptors need to make out calls.
+                // Client's TSC is now RSC via RequestInfo.
+                current.pushSlotTable( );
+                info.setPICurrentPushed( true );
+                info.setCurrentExecutionPoint( info.EXECUTION_POINT_STARTING );
+
+                // Get all ClientRequestInterceptors:
+                ClientRequestInterceptor[] clientInterceptors =
+                    (ClientRequestInterceptor[])interceptorList.
+                    getInterceptors( InterceptorList.INTERCEPTOR_TYPE_CLIENT );
+                int size = clientInterceptors.length;
+
+                // We will assume that all interceptors returned successfully,
+                // and adjust the flowStackIndex to the appropriate value if
+                // we later discover otherwise.
+                int flowStackIndex = size;
+                boolean continueProcessing = true;
+
+                // Determine whether we are calling send_request or send_poll:
+                // (This is currently commented out because our ORB does not
+                // yet support the Messaging specification, so send_poll will
+                // never occur.  Once we have implemented messaging, this may
+                // be uncommented.)
+                // int startingPointCall = info.getStartingPointCall();
+                for( int i = 0; continueProcessing && (i < size); i++ ) {
+                    try {
+                        clientInterceptors[i].send_request( info );
+
+                        // Again, it is not necessary for a switch here, since
+                        // there is only one starting point call type (see
+                        // above comment).
+
+                        //switch( startingPointCall ) {
+                        //case ClientRequestInfoImpl.CALL_SEND_REQUEST:
+                            //clientInterceptors[i].send_request( info );
+                            //break;
+                        //case ClientRequestInfoImpl.CALL_SEND_POLL:
+                            //clientInterceptors[i].send_poll( info );
+                            //break;
+                        //}
+
+                    }
+                    catch( ForwardRequest e ) {
+                        // as per PI spec (orbos/99-12-02 sec 5.2.1.), if
+                        // interception point throws a ForwardRequest,
+                        // no other Interceptors' send_request operations are
+                        // called.
+                        flowStackIndex = i;
+                        info.setForwardRequest( e );
+                        info.setEndingPointCall(
+                            ClientRequestInfoImpl.CALL_RECEIVE_OTHER );
+                        info.setReplyStatus( LOCATION_FORWARD.value );
+
+                        updateClientRequestDispatcherForward( info );
+
+                        // For some reason, using break here causes the VM on
+                        // NT to lose track of the value of flowStackIndex
+                        // after exiting the for loop.  I changed this to
+                        // check a boolean value instead and it seems to work
+                        // fine.
+                        continueProcessing = false;
+                    }
+                    catch( SystemException e ) {
+                        // as per PI spec (orbos/99-12-02 sec 5.2.1.), if
+                        // interception point throws a SystemException,
+                        // no other Interceptors' send_request operations are
+                        // called.
+                        flowStackIndex = i;
+                        info.setEndingPointCall(
+                            ClientRequestInfoImpl.CALL_RECEIVE_EXCEPTION );
+                        info.setReplyStatus( SYSTEM_EXCEPTION.value );
+                        info.setException( e );
+
+                        // For some reason, using break here causes the VM on
+                        // NT to lose track of the value of flowStackIndex
+                        // after exiting the for loop.  I changed this to
+                        // check a boolean value instead and it seems to
+                        // work fine.
+                        continueProcessing = false;
+                    }
+                }
+
+                // Remember where we left off in the flow stack:
+                info.setFlowStackIndex( flowStackIndex );
+            }
+            finally {
+                // Make the SlotTable fresh for the next interception point.
+                current.resetSlotTable( );
+            }
+        } // end enabled check
+    }
+
+    /**
+     * Invokes either receive_reply, receive_exception, or receive_other,
+     * depending on the value of info.getEndingPointCall()
+     */
+    void invokeClientInterceptorEndingPoint( ClientRequestInfoImpl info ) {
+        // If invocation is not yet enabled, don't do anything.
+        if( enabled ) {
+            try {
+                // NOTE: It is assumed someplace else prepared a
+                // fresh TSC slot table.
+
+                info.setCurrentExecutionPoint( info.EXECUTION_POINT_ENDING );
+
+                // Get all ClientRequestInterceptors:
+                ClientRequestInterceptor[] clientInterceptors =
+                    (ClientRequestInterceptor[])interceptorList.
+                    getInterceptors( InterceptorList.INTERCEPTOR_TYPE_CLIENT );
+                int flowStackIndex = info.getFlowStackIndex();
+
+                // Determine whether we are calling receive_reply,
+                // receive_exception, or receive_other:
+                int endingPointCall = info.getEndingPointCall();
+
+                // If we would be calling RECEIVE_REPLY, but this is a
+                // one-way call, override this and call receive_other:
+                if( ( endingPointCall ==
+                      ClientRequestInfoImpl.CALL_RECEIVE_REPLY ) &&
+                    info.getIsOneWay() )
+                {
+                    endingPointCall = ClientRequestInfoImpl.CALL_RECEIVE_OTHER;
+                    info.setEndingPointCall( endingPointCall );
+                }
+
+                // Only step through the interceptors whose starting points
+                // have successfully returned.
+                // Unlike the previous loop, this one counts backwards for a
+                // reason - we must execute these in the reverse order of the
+                // starting points.
+                for( int i = (flowStackIndex - 1); i >= 0; i-- ) {
+
+                    try {
+                        switch( endingPointCall ) {
+                        case ClientRequestInfoImpl.CALL_RECEIVE_REPLY:
+                            clientInterceptors[i].receive_reply( info );
+                            break;
+                        case ClientRequestInfoImpl.CALL_RECEIVE_EXCEPTION:
+                            clientInterceptors[i].receive_exception( info );
+                            break;
+                        case ClientRequestInfoImpl.CALL_RECEIVE_OTHER:
+                            clientInterceptors[i].receive_other( info );
+                            break;
+                        }
+                    }
+                    catch( ForwardRequest e ) {
+
+                        // as per PI spec (orbos/99-12-02 sec 5.2.1.), if
+                        // interception point throws a ForwardException,
+                        // ending point call changes to receive_other.
+                        endingPointCall =
+                            ClientRequestInfoImpl.CALL_RECEIVE_OTHER;
+                        info.setEndingPointCall( endingPointCall );
+                        info.setReplyStatus( LOCATION_FORWARD.value );
+                        info.setForwardRequest( e );
+                        updateClientRequestDispatcherForward( info );
+                    }
+                    catch( SystemException e ) {
+
+                        // as per PI spec (orbos/99-12-02 sec 5.2.1.), if
+                        // interception point throws a SystemException,
+                        // ending point call changes to receive_exception.
+                        endingPointCall =
+                            ClientRequestInfoImpl.CALL_RECEIVE_EXCEPTION;
+                        info.setEndingPointCall( endingPointCall );
+                        info.setReplyStatus( SYSTEM_EXCEPTION.value );
+                        info.setException( e );
+                    }
+                }
+            }
+            finally {
+                // See doc for setPICurrentPushed as to why this is necessary.
+                // Check info for null in case errors happen before initiate.
+                if (info != null && info.isPICurrentPushed()) {
+                    current.popSlotTable( );
+                    // After the pop, original client's TSC slot table
+                    // remains avaiable via PICurrent.
+                }
+            }
+        } // end enabled check
+    }
+
+    /*
+     **********************************************************************
+     * Server Interceptor invocation
+     **********************************************************************/
+
+    /**
+     * Invokes receive_request_service_context interception points.
+     */
+    void invokeServerInterceptorStartingPoint( ServerRequestInfoImpl info ) {
+        // If invocation is not yet enabled, don't do anything.
+        if( enabled ) {
+            try {
+                // Make a fresh slot table for RSC.
+                current.pushSlotTable();
+                info.setSlotTable(current.getSlotTable());
+
+                // Make a fresh slot table for TSC in case
+                // interceptors need to make out calls.
+                current.pushSlotTable( );
+
+                info.setCurrentExecutionPoint( info.EXECUTION_POINT_STARTING );
+
+                // Get all ServerRequestInterceptors:
+                ServerRequestInterceptor[] serverInterceptors =
+                    (ServerRequestInterceptor[])interceptorList.
+                    getInterceptors( InterceptorList.INTERCEPTOR_TYPE_SERVER );
+                int size = serverInterceptors.length;
+
+                // We will assume that all interceptors returned successfully,
+                // and adjust the flowStackIndex to the appropriate value if
+                // we later discover otherwise.
+                int flowStackIndex = size;
+                boolean continueProcessing = true;
+
+                // Currently, there is only one server-side starting point
+                // interceptor called receive_request_service_contexts.
+                for( int i = 0; continueProcessing && (i < size); i++ ) {
+
+                    try {
+                        serverInterceptors[i].
+                            receive_request_service_contexts( info );
+                    }
+                    catch( ForwardRequest e ) {
+                        // as per PI spec (orbos/99-12-02 sec 5.3.1.), if
+                        // interception point throws a ForwardRequest,
+                        // no other Interceptors' starting points are
+                        // called and send_other is called.
+                        flowStackIndex = i;
+                        info.setForwardRequest( e );
+                        info.setIntermediatePointCall(
+                            ServerRequestInfoImpl.CALL_INTERMEDIATE_NONE );
+                        info.setEndingPointCall(
+                            ServerRequestInfoImpl.CALL_SEND_OTHER );
+                        info.setReplyStatus( LOCATION_FORWARD.value );
+
+                        // For some reason, using break here causes the VM on
+                        // NT to lose track of the value of flowStackIndex
+                        // after exiting the for loop.  I changed this to
+                        // check a boolean value instead and it seems to work
+                        // fine.
+                        continueProcessing = false;
+                    }
+                    catch( SystemException e ) {
+
+                        // as per PI spec (orbos/99-12-02 sec 5.3.1.), if
+                        // interception point throws a SystemException,
+                        // no other Interceptors' starting points are
+                        // called.
+                        flowStackIndex = i;
+                        info.setException( e );
+                        info.setIntermediatePointCall(
+                            ServerRequestInfoImpl.CALL_INTERMEDIATE_NONE );
+                        info.setEndingPointCall(
+                            ServerRequestInfoImpl.CALL_SEND_EXCEPTION );
+                        info.setReplyStatus( SYSTEM_EXCEPTION.value );
+
+                        // For some reason, using break here causes the VM on
+                        // NT to lose track of the value of flowStackIndex
+                        // after exiting the for loop.  I changed this to
+                        // check a boolean value instead and it seems to
+                        // work fine.
+                        continueProcessing = false;
+                    }
+
+                }
+
+                // Remember where we left off in the flow stack:
+                info.setFlowStackIndex( flowStackIndex );
+            }
+            finally {
+                // The remaining points, ServantManager and Servant
+                // all run in the same logical thread.
+                current.popSlotTable( );
+                // Now TSC and RSC are equivalent.
+            }
+        } // end enabled check
+    }
+
+    /**
+     * Invokes receive_request interception points
+     */
+    void invokeServerInterceptorIntermediatePoint(
+        ServerRequestInfoImpl info )
+    {
+        int intermediatePointCall = info.getIntermediatePointCall();
+        // If invocation is not yet enabled, don't do anything.
+        if( enabled && ( intermediatePointCall !=
+                         ServerRequestInfoImpl.CALL_INTERMEDIATE_NONE ) )
+        {
+            // NOTE: do not touch the slotStack.  The RSC and TSC are
+            // equivalent at this point.
+
+            info.setCurrentExecutionPoint( info.EXECUTION_POINT_INTERMEDIATE );
+
+            // Get all ServerRequestInterceptors:
+            ServerRequestInterceptor[] serverInterceptors =
+                (ServerRequestInterceptor[])
+                interceptorList.getInterceptors(
+                InterceptorList.INTERCEPTOR_TYPE_SERVER );
+            int size = serverInterceptors.length;
+
+            // Currently, there is only one server-side intermediate point
+            // interceptor called receive_request.
+            for( int i = 0; i < size; i++ ) {
+
+                try {
+                    serverInterceptors[i].receive_request( info );
+                }
+                catch( ForwardRequest e ) {
+
+                    // as per PI spec (orbos/99-12-02 sec 5.3.1.), if
+                    // interception point throws a ForwardRequest,
+                    // no other Interceptors' intermediate points are
+                    // called and send_other is called.
+                    info.setForwardRequest( e );
+                    info.setEndingPointCall(
+                        ServerRequestInfoImpl.CALL_SEND_OTHER );
+                    info.setReplyStatus( LOCATION_FORWARD.value );
+                    break;
+                }
+                catch( SystemException e ) {
+
+                    // as per PI spec (orbos/99-12-02 sec 5.3.1.), if
+                    // interception point throws a SystemException,
+                    // no other Interceptors' starting points are
+                    // called.
+                    info.setException( e );
+                    info.setEndingPointCall(
+                        ServerRequestInfoImpl.CALL_SEND_EXCEPTION );
+                    info.setReplyStatus( SYSTEM_EXCEPTION.value );
+                    break;
+                }
+            }
+        } // end enabled check
+    }
+
+    /**
+     * Invokes either send_reply, send_exception, or send_other,
+     * depending on the value of info.getEndingPointCall()
+     */
+    void invokeServerInterceptorEndingPoint( ServerRequestInfoImpl info ) {
+        // If invocation is not yet enabled, don't do anything.
+        if( enabled ) {
+            try {
+                // NOTE: do not touch the slotStack.  The RSC and TSC are
+                // equivalent at this point.
+
+                // REVISIT: This is moved out to PIHandlerImpl until dispatch
+                // path is rearchitected.  It must be there so that
+                // it always gets executed so if an interceptor raises
+                // an exception any service contexts added in earlier points
+                // this point get put in the exception reply (via the SC Q).
+                //info.setCurrentExecutionPoint( info.EXECUTION_POINT_ENDING );
+
+                // Get all ServerRequestInterceptors:
+                ServerRequestInterceptor[] serverInterceptors =
+                    (ServerRequestInterceptor[])interceptorList.
+                    getInterceptors( InterceptorList.INTERCEPTOR_TYPE_SERVER );
+                int flowStackIndex = info.getFlowStackIndex();
+
+                // Determine whether we are calling
+                // send_exception, or send_other:
+                int endingPointCall = info.getEndingPointCall();
+
+                // Only step through the interceptors whose starting points
+                // have successfully returned.
+                for( int i = (flowStackIndex - 1); i >= 0; i-- ) {
+                    try {
+                        switch( endingPointCall ) {
+                        case ServerRequestInfoImpl.CALL_SEND_REPLY:
+                            serverInterceptors[i].send_reply( info );
+                            break;
+                        case ServerRequestInfoImpl.CALL_SEND_EXCEPTION:
+                            serverInterceptors[i].send_exception( info );
+                            break;
+                        case ServerRequestInfoImpl.CALL_SEND_OTHER:
+                            serverInterceptors[i].send_other( info );
+                            break;
+                        }
+                    }
+                    catch( ForwardRequest e ) {
+                        // as per PI spec (orbos/99-12-02 sec 5.3.1.), if
+                        // interception point throws a ForwardException,
+                        // ending point call changes to receive_other.
+                        endingPointCall =
+                            ServerRequestInfoImpl.CALL_SEND_OTHER;
+                        info.setEndingPointCall( endingPointCall );
+                        info.setForwardRequest( e );
+                        info.setReplyStatus( LOCATION_FORWARD.value );
+                        info.setForwardRequestRaisedInEnding();
+                    }
+                    catch( SystemException e ) {
+                        // as per PI spec (orbos/99-12-02 sec 5.3.1.), if
+                        // interception point throws a SystemException,
+                        // ending point call changes to send_exception.
+                        endingPointCall =
+                            ServerRequestInfoImpl.CALL_SEND_EXCEPTION;
+                        info.setEndingPointCall( endingPointCall );
+                        info.setException( e );
+                        info.setReplyStatus( SYSTEM_EXCEPTION.value );
+                    }
+                }
+
+                // Remember that all interceptors' starting and ending points
+                // have already been executed so we need not do anything.
+                info.setAlreadyExecuted( true );
+            }
+            finally {
+                // Get rid of the Server side RSC.
+                current.popSlotTable();
+            }
+        } // end enabled check
+    }
+
+    /*
+     **********************************************************************
+     * Private utility methods
+     **********************************************************************/
+
+    /**
+     * Update the client delegate in the event of a ForwardRequest, given the
+     * information in the passed-in info object.
+     */
+    private void updateClientRequestDispatcherForward(
+        ClientRequestInfoImpl info )
+    {
+        ForwardRequest forwardRequest = info.getForwardRequestException();
+
+        // ForwardRequest may be null if the forwarded IOR is set internal
+        // to the ClientRequestDispatcher rather than explicitly through Portable
+        // Interceptors.  In this case, we need not update the client
+        // delegate ForwardRequest object.
+        if( forwardRequest != null ) {
+            org.omg.CORBA.Object object = forwardRequest.forward;
+
+            // Convert the forward object into an IOR:
+            IOR ior = ORBUtility.getIOR( object ) ;
+            info.setLocatedIOR( ior );
+        }
+    }
+
+}

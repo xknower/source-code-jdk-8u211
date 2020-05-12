@@ -1,540 +1,534 @@
-/*     */ package java.time.chrono;
-/*     */ 
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.time.Clock;
-/*     */ import java.time.DateTimeException;
-/*     */ import java.time.Instant;
-/*     */ import java.time.LocalDate;
-/*     */ import java.time.ZoneId;
-/*     */ import java.time.format.ResolverStyle;
-/*     */ import java.time.temporal.ChronoField;
-/*     */ import java.time.temporal.ChronoUnit;
-/*     */ import java.time.temporal.TemporalAccessor;
-/*     */ import java.time.temporal.TemporalAdjusters;
-/*     */ import java.time.temporal.TemporalField;
-/*     */ import java.time.temporal.UnsupportedTemporalTypeException;
-/*     */ import java.time.temporal.ValueRange;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Calendar;
-/*     */ import java.util.List;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ import java.util.TimeZone;
-/*     */ import sun.util.calendar.CalendarSystem;
-/*     */ import sun.util.calendar.LocalGregorianCalendar;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class JapaneseChronology
-/*     */   extends AbstractChronology
-/*     */   implements Serializable
-/*     */ {
-/* 126 */   static final LocalGregorianCalendar JCAL = (LocalGregorianCalendar)CalendarSystem.forName("japanese");
-/*     */ 
-/*     */   
-/* 129 */   static final Locale LOCALE = Locale.forLanguageTag("ja-JP-u-ca-japanese");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 134 */   public static final JapaneseChronology INSTANCE = new JapaneseChronology();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final long serialVersionUID = 459996390165777884L;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getId() {
-/* 160 */     return "Japanese";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getCalendarType() {
-/* 177 */     return "japanese";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate date(Era paramEra, int paramInt1, int paramInt2, int paramInt3) {
-/* 205 */     if (!(paramEra instanceof JapaneseEra)) {
-/* 206 */       throw new ClassCastException("Era must be JapaneseEra");
-/*     */     }
-/* 208 */     return JapaneseDate.of((JapaneseEra)paramEra, paramInt1, paramInt2, paramInt3);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate date(int paramInt1, int paramInt2, int paramInt3) {
-/* 226 */     return new JapaneseDate(LocalDate.of(paramInt1, paramInt2, paramInt3));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate dateYearDay(Era paramEra, int paramInt1, int paramInt2) {
-/* 253 */     return JapaneseDate.ofYearDay((JapaneseEra)paramEra, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate dateYearDay(int paramInt1, int paramInt2) {
-/* 271 */     return new JapaneseDate(LocalDate.ofYearDay(paramInt1, paramInt2));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate dateEpochDay(long paramLong) {
-/* 283 */     return new JapaneseDate(LocalDate.ofEpochDay(paramLong));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate dateNow() {
-/* 288 */     return dateNow(Clock.systemDefaultZone());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate dateNow(ZoneId paramZoneId) {
-/* 293 */     return dateNow(Clock.system(paramZoneId));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate dateNow(Clock paramClock) {
-/* 298 */     return date(LocalDate.now(paramClock));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate date(TemporalAccessor paramTemporalAccessor) {
-/* 303 */     if (paramTemporalAccessor instanceof JapaneseDate) {
-/* 304 */       return (JapaneseDate)paramTemporalAccessor;
-/*     */     }
-/* 306 */     return new JapaneseDate(LocalDate.from(paramTemporalAccessor));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ChronoLocalDateTime<JapaneseDate> localDateTime(TemporalAccessor paramTemporalAccessor) {
-/* 312 */     return (ChronoLocalDateTime)super.localDateTime(paramTemporalAccessor);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ChronoZonedDateTime<JapaneseDate> zonedDateTime(TemporalAccessor paramTemporalAccessor) {
-/* 318 */     return (ChronoZonedDateTime)super.zonedDateTime(paramTemporalAccessor);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ChronoZonedDateTime<JapaneseDate> zonedDateTime(Instant paramInstant, ZoneId paramZoneId) {
-/* 324 */     return (ChronoZonedDateTime)super.zonedDateTime(paramInstant, paramZoneId);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isLeapYear(long paramLong) {
-/* 340 */     return IsoChronology.INSTANCE.isLeapYear(paramLong);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int prolepticYear(Era paramEra, int paramInt) {
-/* 345 */     if (!(paramEra instanceof JapaneseEra)) {
-/* 346 */       throw new ClassCastException("Era must be JapaneseEra");
-/*     */     }
-/*     */     
-/* 349 */     JapaneseEra japaneseEra = (JapaneseEra)paramEra;
-/* 350 */     int i = japaneseEra.getPrivateEra().getSinceDate().getYear() + paramInt - 1;
-/* 351 */     if (paramInt == 1) {
-/* 352 */       return i;
-/*     */     }
-/* 354 */     if (i >= -999999999 && i <= 999999999) {
-/* 355 */       LocalGregorianCalendar.Date date = JCAL.newCalendarDate((TimeZone)null);
-/* 356 */       date.setEra(japaneseEra.getPrivateEra()).setDate(paramInt, 1, 1);
-/* 357 */       if (JCAL.validate(date)) {
-/* 358 */         return i;
-/*     */       }
-/*     */     } 
-/* 361 */     throw new DateTimeException("Invalid yearOfEra value");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseEra eraOf(int paramInt) {
-/* 377 */     return JapaneseEra.of(paramInt);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public List<Era> eras() {
-/* 382 */     return Arrays.asList((Era[])JapaneseEra.values());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   JapaneseEra getCurrentEra() {
-/* 387 */     JapaneseEra[] arrayOfJapaneseEra = JapaneseEra.values();
-/* 388 */     return arrayOfJapaneseEra[arrayOfJapaneseEra.length - 1];
-/*     */   }
-/*     */   
-/*     */   public ValueRange range(ChronoField paramChronoField) {
-/*     */     Calendar calendar;
-/*     */     int i;
-/* 394 */     switch (paramChronoField) {
-/*     */       case ALIGNED_DAY_OF_WEEK_IN_MONTH:
-/*     */       case ALIGNED_DAY_OF_WEEK_IN_YEAR:
-/*     */       case ALIGNED_WEEK_OF_MONTH:
-/*     */       case ALIGNED_WEEK_OF_YEAR:
-/* 399 */         throw new UnsupportedTemporalTypeException("Unsupported field: " + paramChronoField);
-/*     */       case YEAR_OF_ERA:
-/* 401 */         calendar = Calendar.getInstance(LOCALE);
-/* 402 */         i = getCurrentEra().getPrivateEra().getSinceDate().getYear();
-/* 403 */         return ValueRange.of(1L, calendar.getGreatestMinimum(1), (calendar
-/* 404 */             .getLeastMaximum(1) + 1), (999999999 - i));
-/*     */ 
-/*     */       
-/*     */       case DAY_OF_YEAR:
-/* 408 */         calendar = Calendar.getInstance(LOCALE);
-/* 409 */         i = 6;
-/* 410 */         return ValueRange.of(calendar.getMinimum(i), calendar.getGreatestMinimum(i), calendar
-/* 411 */             .getLeastMaximum(i), calendar.getMaximum(i));
-/*     */       
-/*     */       case YEAR:
-/* 414 */         return ValueRange.of(JapaneseDate.MEIJI_6_ISODATE.getYear(), 999999999L);
-/*     */       case ERA:
-/* 416 */         return ValueRange.of(JapaneseEra.MEIJI.getValue(), getCurrentEra().getValue());
-/*     */     } 
-/* 418 */     return paramChronoField.range();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public JapaneseDate resolveDate(Map<TemporalField, Long> paramMap, ResolverStyle paramResolverStyle) {
-/* 425 */     return (JapaneseDate)super.resolveDate(paramMap, paramResolverStyle);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ChronoLocalDate resolveYearOfEra(Map<TemporalField, Long> paramMap, ResolverStyle paramResolverStyle) {
-/* 431 */     Long long_1 = paramMap.get(ChronoField.ERA);
-/* 432 */     JapaneseEra japaneseEra = null;
-/* 433 */     if (long_1 != null) {
-/* 434 */       japaneseEra = eraOf(range(ChronoField.ERA).checkValidIntValue(long_1.longValue(), ChronoField.ERA));
-/*     */     }
-/* 436 */     Long long_2 = paramMap.get(ChronoField.YEAR_OF_ERA);
-/* 437 */     int i = 0;
-/* 438 */     if (long_2 != null) {
-/* 439 */       i = range(ChronoField.YEAR_OF_ERA).checkValidIntValue(long_2.longValue(), ChronoField.YEAR_OF_ERA);
-/*     */     }
-/*     */     
-/* 442 */     if (japaneseEra == null && long_2 != null && !paramMap.containsKey(ChronoField.YEAR) && paramResolverStyle != ResolverStyle.STRICT) {
-/* 443 */       japaneseEra = JapaneseEra.values()[(JapaneseEra.values()).length - 1];
-/*     */     }
-/*     */     
-/* 446 */     if (long_2 != null && japaneseEra != null) {
-/* 447 */       if (paramMap.containsKey(ChronoField.MONTH_OF_YEAR) && 
-/* 448 */         paramMap.containsKey(ChronoField.DAY_OF_MONTH)) {
-/* 449 */         return resolveYMD(japaneseEra, i, paramMap, paramResolverStyle);
-/*     */       }
-/*     */       
-/* 452 */       if (paramMap.containsKey(ChronoField.DAY_OF_YEAR)) {
-/* 453 */         return resolveYD(japaneseEra, i, paramMap, paramResolverStyle);
-/*     */       }
-/*     */     } 
-/* 456 */     return null;
-/*     */   }
-/*     */   
-/*     */   private int prolepticYearLenient(JapaneseEra paramJapaneseEra, int paramInt) {
-/* 460 */     return paramJapaneseEra.getPrivateEra().getSinceDate().getYear() + paramInt - 1;
-/*     */   }
-/*     */   
-/*     */   private ChronoLocalDate resolveYMD(JapaneseEra paramJapaneseEra, int paramInt, Map<TemporalField, Long> paramMap, ResolverStyle paramResolverStyle) {
-/* 464 */     paramMap.remove(ChronoField.ERA);
-/* 465 */     paramMap.remove(ChronoField.YEAR_OF_ERA);
-/* 466 */     if (paramResolverStyle == ResolverStyle.LENIENT) {
-/* 467 */       int k = prolepticYearLenient(paramJapaneseEra, paramInt);
-/* 468 */       long l1 = Math.subtractExact(((Long)paramMap.remove(ChronoField.MONTH_OF_YEAR)).longValue(), 1L);
-/* 469 */       long l2 = Math.subtractExact(((Long)paramMap.remove(ChronoField.DAY_OF_MONTH)).longValue(), 1L);
-/* 470 */       return date(k, 1, 1).plus(l1, ChronoUnit.MONTHS).plus(l2, ChronoUnit.DAYS);
-/*     */     } 
-/* 472 */     int i = range(ChronoField.MONTH_OF_YEAR).checkValidIntValue(((Long)paramMap.remove(ChronoField.MONTH_OF_YEAR)).longValue(), ChronoField.MONTH_OF_YEAR);
-/* 473 */     int j = range(ChronoField.DAY_OF_MONTH).checkValidIntValue(((Long)paramMap.remove(ChronoField.DAY_OF_MONTH)).longValue(), ChronoField.DAY_OF_MONTH);
-/* 474 */     if (paramResolverStyle == ResolverStyle.SMART) {
-/* 475 */       JapaneseDate japaneseDate; if (paramInt < 1) {
-/* 476 */         throw new DateTimeException("Invalid YearOfEra: " + paramInt);
-/*     */       }
-/* 478 */       int k = prolepticYearLenient(paramJapaneseEra, paramInt);
-/*     */       
-/*     */       try {
-/* 481 */         japaneseDate = date(k, i, j);
-/* 482 */       } catch (DateTimeException dateTimeException) {
-/* 483 */         japaneseDate = date(k, i, 1).with(TemporalAdjusters.lastDayOfMonth());
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 488 */       if (japaneseDate.getEra() != paramJapaneseEra && japaneseDate.get(ChronoField.YEAR_OF_ERA) > 1 && paramInt > 1) {
-/* 489 */         throw new DateTimeException("Invalid YearOfEra for Era: " + paramJapaneseEra + " " + paramInt);
-/*     */       }
-/* 491 */       return japaneseDate;
-/*     */     } 
-/* 493 */     return date(paramJapaneseEra, paramInt, i, j);
-/*     */   }
-/*     */   
-/*     */   private ChronoLocalDate resolveYD(JapaneseEra paramJapaneseEra, int paramInt, Map<TemporalField, Long> paramMap, ResolverStyle paramResolverStyle) {
-/* 497 */     paramMap.remove(ChronoField.ERA);
-/* 498 */     paramMap.remove(ChronoField.YEAR_OF_ERA);
-/* 499 */     if (paramResolverStyle == ResolverStyle.LENIENT) {
-/* 500 */       int j = prolepticYearLenient(paramJapaneseEra, paramInt);
-/* 501 */       long l = Math.subtractExact(((Long)paramMap.remove(ChronoField.DAY_OF_YEAR)).longValue(), 1L);
-/* 502 */       return dateYearDay(j, 1).plus(l, ChronoUnit.DAYS);
-/*     */     } 
-/* 504 */     int i = range(ChronoField.DAY_OF_YEAR).checkValidIntValue(((Long)paramMap.remove(ChronoField.DAY_OF_YEAR)).longValue(), ChronoField.DAY_OF_YEAR);
-/* 505 */     return dateYearDay(paramJapaneseEra, paramInt, i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   Object writeReplace() {
-/* 522 */     return super.writeReplace();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws InvalidObjectException {
-/* 532 */     throw new InvalidObjectException("Deserialization via serialization delegate");
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\chrono\JapaneseChronology.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ * Copyright (c) 2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.chrono;
+
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.DAY_OF_YEAR;
+import static java.time.temporal.ChronoField.ERA;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
+import static java.time.temporal.ChronoField.YEAR_OF_ERA;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static java.time.temporal.ChronoUnit.MONTHS;
+
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.time.Clock;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.ZoneId;
+import java.time.format.ResolverStyle;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.TemporalField;
+import java.time.temporal.UnsupportedTemporalTypeException;
+import java.time.temporal.ValueRange;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import sun.util.calendar.CalendarSystem;
+import sun.util.calendar.LocalGregorianCalendar;
+
+/**
+ * The Japanese Imperial calendar system.
+ * <p>
+ * This chronology defines the rules of the Japanese Imperial calendar system.
+ * This calendar system is primarily used in Japan.
+ * The Japanese Imperial calendar system is the same as the ISO calendar system
+ * apart from the era-based year numbering.
+ * <p>
+ * Japan introduced the Gregorian calendar starting with Meiji 6.
+ * Only Meiji and later eras are supported;
+ * dates before Meiji 6, January 1 are not supported.
+ * <p>
+ * The supported {@code ChronoField} instances are:
+ * <ul>
+ * <li>{@code DAY_OF_WEEK}
+ * <li>{@code DAY_OF_MONTH}
+ * <li>{@code DAY_OF_YEAR}
+ * <li>{@code EPOCH_DAY}
+ * <li>{@code MONTH_OF_YEAR}
+ * <li>{@code PROLEPTIC_MONTH}
+ * <li>{@code YEAR_OF_ERA}
+ * <li>{@code YEAR}
+ * <li>{@code ERA}
+ * </ul>
+ *
+ * @implSpec
+ * This class is immutable and thread-safe.
+ *
+ * @since 1.8
+ */
+public final class JapaneseChronology extends AbstractChronology implements Serializable {
+
+    static final LocalGregorianCalendar JCAL =
+        (LocalGregorianCalendar) CalendarSystem.forName("japanese");
+
+    // Locale for creating a JapaneseImpericalCalendar.
+    static final Locale LOCALE = Locale.forLanguageTag("ja-JP-u-ca-japanese");
+
+    /**
+     * Singleton instance for Japanese chronology.
+     */
+    public static final JapaneseChronology INSTANCE = new JapaneseChronology();
+
+    /**
+     * Serialization version.
+     */
+    private static final long serialVersionUID = 459996390165777884L;
+
+    //-----------------------------------------------------------------------
+    /**
+     * Restricted constructor.
+     */
+    private JapaneseChronology() {
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Gets the ID of the chronology - 'Japanese'.
+     * <p>
+     * The ID uniquely identifies the {@code Chronology}.
+     * It can be used to lookup the {@code Chronology} using {@link Chronology#of(String)}.
+     *
+     * @return the chronology ID - 'Japanese'
+     * @see #getCalendarType()
+     */
+    @Override
+    public String getId() {
+        return "Japanese";
+    }
+
+    /**
+     * Gets the calendar type of the underlying calendar system - 'japanese'.
+     * <p>
+     * The calendar type is an identifier defined by the
+     * <em>Unicode Locale Data Markup Language (LDML)</em> specification.
+     * It can be used to lookup the {@code Chronology} using {@link Chronology#of(String)}.
+     * It can also be used as part of a locale, accessible via
+     * {@link Locale#getUnicodeLocaleType(String)} with the key 'ca'.
+     *
+     * @return the calendar system type - 'japanese'
+     * @see #getId()
+     */
+    @Override
+    public String getCalendarType() {
+        return "japanese";
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Obtains a local date in Japanese calendar system from the
+     * era, year-of-era, month-of-year and day-of-month fields.
+     * <p>
+     * The Japanese month and day-of-month are the same as those in the
+     * ISO calendar system. They are not reset when the era changes.
+     * For example:
+     * <pre>
+     *  6th Jan Showa 64 = ISO 1989-01-06
+     *  7th Jan Showa 64 = ISO 1989-01-07
+     *  8th Jan Heisei 1 = ISO 1989-01-08
+     *  9th Jan Heisei 1 = ISO 1989-01-09
+     * </pre>
+     *
+     * @param era  the Japanese era, not null
+     * @param yearOfEra  the year-of-era
+     * @param month  the month-of-year
+     * @param dayOfMonth  the day-of-month
+     * @return the Japanese local date, not null
+     * @throws DateTimeException if unable to create the date
+     * @throws ClassCastException if the {@code era} is not a {@code JapaneseEra}
+     */
+    @Override
+    public JapaneseDate date(Era era, int yearOfEra, int month, int dayOfMonth) {
+        if (era instanceof JapaneseEra == false) {
+            throw new ClassCastException("Era must be JapaneseEra");
+        }
+        return JapaneseDate.of((JapaneseEra) era, yearOfEra, month, dayOfMonth);
+    }
+
+    /**
+     * Obtains a local date in Japanese calendar system from the
+     * proleptic-year, month-of-year and day-of-month fields.
+     * <p>
+     * The Japanese proleptic year, month and day-of-month are the same as those
+     * in the ISO calendar system. They are not reset when the era changes.
+     *
+     * @param prolepticYear  the proleptic-year
+     * @param month  the month-of-year
+     * @param dayOfMonth  the day-of-month
+     * @return the Japanese local date, not null
+     * @throws DateTimeException if unable to create the date
+     */
+    @Override
+    public JapaneseDate date(int prolepticYear, int month, int dayOfMonth) {
+        return new JapaneseDate(LocalDate.of(prolepticYear, month, dayOfMonth));
+    }
+
+    /**
+     * Obtains a local date in Japanese calendar system from the
+     * era, year-of-era and day-of-year fields.
+     * <p>
+     * The day-of-year in this factory is expressed relative to the start of the year-of-era.
+     * This definition changes the normal meaning of day-of-year only in those years
+     * where the year-of-era is reset to one due to a change in the era.
+     * For example:
+     * <pre>
+     *  6th Jan Showa 64 = day-of-year 6
+     *  7th Jan Showa 64 = day-of-year 7
+     *  8th Jan Heisei 1 = day-of-year 1
+     *  9th Jan Heisei 1 = day-of-year 2
+     * </pre>
+     *
+     * @param era  the Japanese era, not null
+     * @param yearOfEra  the year-of-era
+     * @param dayOfYear  the day-of-year
+     * @return the Japanese local date, not null
+     * @throws DateTimeException if unable to create the date
+     * @throws ClassCastException if the {@code era} is not a {@code JapaneseEra}
+     */
+    @Override
+    public JapaneseDate dateYearDay(Era era, int yearOfEra, int dayOfYear) {
+        return JapaneseDate.ofYearDay((JapaneseEra) era, yearOfEra, dayOfYear);
+    }
+
+    /**
+     * Obtains a local date in Japanese calendar system from the
+     * proleptic-year and day-of-year fields.
+     * <p>
+     * The day-of-year in this factory is expressed relative to the start of the proleptic year.
+     * The Japanese proleptic year and day-of-year are the same as those in the ISO calendar system.
+     * They are not reset when the era changes.
+     *
+     * @param prolepticYear  the proleptic-year
+     * @param dayOfYear  the day-of-year
+     * @return the Japanese local date, not null
+     * @throws DateTimeException if unable to create the date
+     */
+    @Override
+    public JapaneseDate dateYearDay(int prolepticYear, int dayOfYear) {
+        return new JapaneseDate(LocalDate.ofYearDay(prolepticYear, dayOfYear));
+    }
+
+    /**
+     * Obtains a local date in the Japanese calendar system from the epoch-day.
+     *
+     * @param epochDay  the epoch day
+     * @return the Japanese local date, not null
+     * @throws DateTimeException if unable to create the date
+     */
+    @Override  // override with covariant return type
+    public JapaneseDate dateEpochDay(long epochDay) {
+        return new JapaneseDate(LocalDate.ofEpochDay(epochDay));
+    }
+
+    @Override
+    public JapaneseDate dateNow() {
+        return dateNow(Clock.systemDefaultZone());
+    }
+
+    @Override
+    public JapaneseDate dateNow(ZoneId zone) {
+        return dateNow(Clock.system(zone));
+    }
+
+    @Override
+    public JapaneseDate dateNow(Clock clock) {
+        return date(LocalDate.now(clock));
+    }
+
+    @Override
+    public JapaneseDate date(TemporalAccessor temporal) {
+        if (temporal instanceof JapaneseDate) {
+            return (JapaneseDate) temporal;
+        }
+        return new JapaneseDate(LocalDate.from(temporal));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ChronoLocalDateTime<JapaneseDate> localDateTime(TemporalAccessor temporal) {
+        return (ChronoLocalDateTime<JapaneseDate>)super.localDateTime(temporal);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ChronoZonedDateTime<JapaneseDate> zonedDateTime(TemporalAccessor temporal) {
+        return (ChronoZonedDateTime<JapaneseDate>)super.zonedDateTime(temporal);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ChronoZonedDateTime<JapaneseDate> zonedDateTime(Instant instant, ZoneId zone) {
+        return (ChronoZonedDateTime<JapaneseDate>)super.zonedDateTime(instant, zone);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Checks if the specified year is a leap year.
+     * <p>
+     * Japanese calendar leap years occur exactly in line with ISO leap years.
+     * This method does not validate the year passed in, and only has a
+     * well-defined result for years in the supported range.
+     *
+     * @param prolepticYear  the proleptic-year to check, not validated for range
+     * @return true if the year is a leap year
+     */
+    @Override
+    public boolean isLeapYear(long prolepticYear) {
+        return IsoChronology.INSTANCE.isLeapYear(prolepticYear);
+    }
+
+    @Override
+    public int prolepticYear(Era era, int yearOfEra) {
+        if (era instanceof JapaneseEra == false) {
+            throw new ClassCastException("Era must be JapaneseEra");
+        }
+
+        JapaneseEra jera = (JapaneseEra) era;
+        int gregorianYear = jera.getPrivateEra().getSinceDate().getYear() + yearOfEra - 1;
+        if (yearOfEra == 1) {
+            return gregorianYear;
+        }
+        if (gregorianYear >= Year.MIN_VALUE && gregorianYear <= Year.MAX_VALUE) {
+            LocalGregorianCalendar.Date jdate = JCAL.newCalendarDate(null);
+            jdate.setEra(jera.getPrivateEra()).setDate(yearOfEra, 1, 1);
+            if (JapaneseChronology.JCAL.validate(jdate)) {
+                return gregorianYear;
+            }
+        }
+        throw new DateTimeException("Invalid yearOfEra value");
+    }
+
+    /**
+     * Returns the calendar system era object from the given numeric value.
+     *
+     * See the description of each Era for the numeric values of:
+     * {@link JapaneseEra#HEISEI}, {@link JapaneseEra#SHOWA},{@link JapaneseEra#TAISHO},
+     * {@link JapaneseEra#MEIJI}), only Meiji and later eras are supported.
+     *
+     * @param eraValue  the era value
+     * @return the Japanese {@code Era} for the given numeric era value
+     * @throws DateTimeException if {@code eraValue} is invalid
+     */
+    @Override
+    public JapaneseEra eraOf(int eraValue) {
+        return JapaneseEra.of(eraValue);
+    }
+
+    @Override
+    public List<Era> eras() {
+        return Arrays.<Era>asList(JapaneseEra.values());
+    }
+
+    JapaneseEra getCurrentEra() {
+        // Assume that the last JapaneseEra is the current one.
+        JapaneseEra[] eras = JapaneseEra.values();
+        return eras[eras.length - 1];
+    }
+
+    //-----------------------------------------------------------------------
+    @Override
+    public ValueRange range(ChronoField field) {
+        switch (field) {
+            case ALIGNED_DAY_OF_WEEK_IN_MONTH:
+            case ALIGNED_DAY_OF_WEEK_IN_YEAR:
+            case ALIGNED_WEEK_OF_MONTH:
+            case ALIGNED_WEEK_OF_YEAR:
+                throw new UnsupportedTemporalTypeException("Unsupported field: " + field);
+            case YEAR_OF_ERA: {
+                Calendar jcal = Calendar.getInstance(LOCALE);
+                int startYear = getCurrentEra().getPrivateEra().getSinceDate().getYear();
+                return ValueRange.of(1, jcal.getGreatestMinimum(Calendar.YEAR),
+                        jcal.getLeastMaximum(Calendar.YEAR) + 1, // +1 due to the different definitions
+                        Year.MAX_VALUE - startYear);
+            }
+            case DAY_OF_YEAR: {
+                Calendar jcal = Calendar.getInstance(LOCALE);
+                int fieldIndex = Calendar.DAY_OF_YEAR;
+                return ValueRange.of(jcal.getMinimum(fieldIndex), jcal.getGreatestMinimum(fieldIndex),
+                        jcal.getLeastMaximum(fieldIndex), jcal.getMaximum(fieldIndex));
+            }
+            case YEAR:
+                return ValueRange.of(JapaneseDate.MEIJI_6_ISODATE.getYear(), Year.MAX_VALUE);
+            case ERA:
+                return ValueRange.of(JapaneseEra.MEIJI.getValue(), getCurrentEra().getValue());
+            default:
+                return field.range();
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    @Override  // override for return type
+    public JapaneseDate resolveDate(Map <TemporalField, Long> fieldValues, ResolverStyle resolverStyle) {
+        return (JapaneseDate) super.resolveDate(fieldValues, resolverStyle);
+    }
+
+    @Override  // override for special Japanese behavior
+    ChronoLocalDate resolveYearOfEra(Map<TemporalField, Long> fieldValues, ResolverStyle resolverStyle) {
+        // validate era and year-of-era
+        Long eraLong = fieldValues.get(ERA);
+        JapaneseEra era = null;
+        if (eraLong != null) {
+            era = eraOf(range(ERA).checkValidIntValue(eraLong, ERA));  // always validated
+        }
+        Long yoeLong = fieldValues.get(YEAR_OF_ERA);
+        int yoe = 0;
+        if (yoeLong != null) {
+            yoe = range(YEAR_OF_ERA).checkValidIntValue(yoeLong, YEAR_OF_ERA);  // always validated
+        }
+        // if only year-of-era and no year then invent era unless strict
+        if (era == null && yoeLong != null && fieldValues.containsKey(YEAR) == false && resolverStyle != ResolverStyle.STRICT) {
+            era = JapaneseEra.values()[JapaneseEra.values().length - 1];
+        }
+        // if both present, then try to create date
+        if (yoeLong != null && era != null) {
+            if (fieldValues.containsKey(MONTH_OF_YEAR)) {
+                if (fieldValues.containsKey(DAY_OF_MONTH)) {
+                    return resolveYMD(era, yoe, fieldValues, resolverStyle);
+                }
+            }
+            if (fieldValues.containsKey(DAY_OF_YEAR)) {
+                return resolveYD(era, yoe, fieldValues, resolverStyle);
+            }
+        }
+        return null;
+    }
+
+    private int prolepticYearLenient(JapaneseEra era, int yearOfEra) {
+        return era.getPrivateEra().getSinceDate().getYear() + yearOfEra - 1;
+    }
+
+     private ChronoLocalDate resolveYMD(JapaneseEra era, int yoe, Map<TemporalField,Long> fieldValues, ResolverStyle resolverStyle) {
+         fieldValues.remove(ERA);
+         fieldValues.remove(YEAR_OF_ERA);
+         if (resolverStyle == ResolverStyle.LENIENT) {
+             int y = prolepticYearLenient(era, yoe);
+             long months = Math.subtractExact(fieldValues.remove(MONTH_OF_YEAR), 1);
+             long days = Math.subtractExact(fieldValues.remove(DAY_OF_MONTH), 1);
+             return date(y, 1, 1).plus(months, MONTHS).plus(days, DAYS);
+         }
+         int moy = range(MONTH_OF_YEAR).checkValidIntValue(fieldValues.remove(MONTH_OF_YEAR), MONTH_OF_YEAR);
+         int dom = range(DAY_OF_MONTH).checkValidIntValue(fieldValues.remove(DAY_OF_MONTH), DAY_OF_MONTH);
+         if (resolverStyle == ResolverStyle.SMART) {  // previous valid
+             if (yoe < 1) {
+                 throw new DateTimeException("Invalid YearOfEra: " + yoe);
+             }
+             int y = prolepticYearLenient(era, yoe);
+             JapaneseDate result;
+             try {
+                 result = date(y, moy, dom);
+             } catch (DateTimeException ex) {
+                 result = date(y, moy, 1).with(TemporalAdjusters.lastDayOfMonth());
+             }
+             // handle the era being changed
+             // only allow if the new date is in the same Jan-Dec as the era change
+             // determine by ensuring either original yoe or result yoe is 1
+             if (result.getEra() != era && result.get(YEAR_OF_ERA) > 1 && yoe > 1) {
+                 throw new DateTimeException("Invalid YearOfEra for Era: " + era + " " + yoe);
+             }
+             return result;
+         }
+         return date(era, yoe, moy, dom);
+     }
+
+    private ChronoLocalDate resolveYD(JapaneseEra era, int yoe, Map <TemporalField,Long> fieldValues, ResolverStyle resolverStyle) {
+        fieldValues.remove(ERA);
+        fieldValues.remove(YEAR_OF_ERA);
+        if (resolverStyle == ResolverStyle.LENIENT) {
+            int y = prolepticYearLenient(era, yoe);
+            long days = Math.subtractExact(fieldValues.remove(DAY_OF_YEAR), 1);
+            return dateYearDay(y, 1).plus(days, DAYS);
+        }
+        int doy = range(DAY_OF_YEAR).checkValidIntValue(fieldValues.remove(DAY_OF_YEAR), DAY_OF_YEAR);
+        return dateYearDay(era, yoe, doy);  // smart is same as strict
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Writes the Chronology using a
+     * <a href="../../../serialized-form.html#java.time.chrono.Ser">dedicated serialized form</a>.
+     * @serialData
+     * <pre>
+     *  out.writeByte(1);     // identifies a Chronology
+     *  out.writeUTF(getId());
+     * </pre>
+     *
+     * @return the instance of {@code Ser}, not null
+     */
+    @Override
+    Object writeReplace() {
+        return super.writeReplace();
+    }
+
+    /**
+     * Defend against malicious streams.
+     *
+     * @param s the stream to read
+     * @throws InvalidObjectException always
+     */
+    private void readObject(ObjectInputStream s) throws InvalidObjectException {
+        throw new InvalidObjectException("Deserialization via serialization delegate");
+    }
+}

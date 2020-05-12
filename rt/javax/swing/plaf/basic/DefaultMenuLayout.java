@@ -1,68 +1,62 @@
-/*    */ package javax.swing.plaf.basic;
-/*    */ 
-/*    */ import java.awt.Container;
-/*    */ import java.awt.Dimension;
-/*    */ import javax.swing.BoxLayout;
-/*    */ import javax.swing.JPopupMenu;
-/*    */ import javax.swing.plaf.UIResource;
-/*    */ import sun.swing.MenuItemLayoutHelper;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class DefaultMenuLayout
-/*    */   extends BoxLayout
-/*    */   implements UIResource
-/*    */ {
-/*    */   public DefaultMenuLayout(Container paramContainer, int paramInt) {
-/* 45 */     super(paramContainer, paramInt);
-/*    */   }
-/*    */   
-/*    */   public Dimension preferredLayoutSize(Container paramContainer) {
-/* 49 */     if (paramContainer instanceof JPopupMenu) {
-/* 50 */       JPopupMenu jPopupMenu = (JPopupMenu)paramContainer;
-/* 51 */       MenuItemLayoutHelper.clearUsedClientProperties(jPopupMenu);
-/* 52 */       if (jPopupMenu.getComponentCount() == 0) {
-/* 53 */         return new Dimension(0, 0);
-/*    */       }
-/*    */     } 
-/*    */ 
-/*    */     
-/* 58 */     invalidateLayout(paramContainer);
-/*    */     
-/* 60 */     return super.preferredLayoutSize(paramContainer);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\DefaultMenuLayout.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import javax.swing.*;
+import javax.swing.plaf.UIResource;
+
+import java.awt.Container;
+import java.awt.Dimension;
+
+/**
+ * The default layout manager for Popup menus and menubars.  This
+ * class is an extension of BoxLayout which adds the UIResource tag
+ * so that pluggable L&amp;Fs can distinguish it from user-installed
+ * layout managers on menus.
+ *
+ * @author Georges Saab
+ */
+
+public class DefaultMenuLayout extends BoxLayout implements UIResource {
+    public DefaultMenuLayout(Container target, int axis) {
+        super(target, axis);
+    }
+
+    public Dimension preferredLayoutSize(Container target) {
+        if (target instanceof JPopupMenu) {
+            JPopupMenu popupMenu = (JPopupMenu) target;
+            sun.swing.MenuItemLayoutHelper.clearUsedClientProperties(popupMenu);
+            if (popupMenu.getComponentCount() == 0) {
+                return new Dimension(0, 0);
+            }
+        }
+
+        // Make BoxLayout recalculate cached preferred sizes
+        super.invalidateLayout(target);
+
+        return super.preferredLayoutSize(target);
+    }
+}

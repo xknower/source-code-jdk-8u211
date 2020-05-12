@@ -1,1397 +1,1392 @@
-/*      */ package com.sun.org.apache.xerces.internal.parsers;
-/*      */ 
-/*      */ import com.sun.org.apache.xerces.internal.dom.DOMErrorImpl;
-/*      */ import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
-/*      */ import com.sun.org.apache.xerces.internal.dom.DOMStringListImpl;
-/*      */ import com.sun.org.apache.xerces.internal.impl.Constants;
-/*      */ import com.sun.org.apache.xerces.internal.util.DOMEntityResolverWrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.DOMErrorHandlerWrapper;
-/*      */ import com.sun.org.apache.xerces.internal.util.DOMUtil;
-/*      */ import com.sun.org.apache.xerces.internal.util.SymbolTable;
-/*      */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*      */ import com.sun.org.apache.xerces.internal.xni.Augmentations;
-/*      */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*      */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLDTDContentModelHandler;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLDTDHandler;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLLocator;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*      */ import com.sun.org.apache.xerces.internal.xni.XNIException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDContentModelSource;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDSource;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-/*      */ import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
-/*      */ import java.io.StringReader;
-/*      */ import java.util.Locale;
-/*      */ import java.util.Stack;
-/*      */ import java.util.StringTokenizer;
-/*      */ import java.util.Vector;
-/*      */ import org.w3c.dom.DOMConfiguration;
-/*      */ import org.w3c.dom.DOMErrorHandler;
-/*      */ import org.w3c.dom.DOMException;
-/*      */ import org.w3c.dom.DOMStringList;
-/*      */ import org.w3c.dom.Document;
-/*      */ import org.w3c.dom.Node;
-/*      */ import org.w3c.dom.ls.LSException;
-/*      */ import org.w3c.dom.ls.LSInput;
-/*      */ import org.w3c.dom.ls.LSParser;
-/*      */ import org.w3c.dom.ls.LSParserFilter;
-/*      */ import org.w3c.dom.ls.LSResourceResolver;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class DOMParserImpl
-/*      */   extends AbstractDOMParser
-/*      */   implements LSParser, DOMConfiguration
-/*      */ {
-/*      */   protected static final String NAMESPACES = "http://xml.org/sax/features/namespaces";
-/*      */   protected static final String VALIDATION_FEATURE = "http://xml.org/sax/features/validation";
-/*      */   protected static final String XMLSCHEMA = "http://apache.org/xml/features/validation/schema";
-/*      */   protected static final String XMLSCHEMA_FULL_CHECKING = "http://apache.org/xml/features/validation/schema-full-checking";
-/*      */   protected static final String DYNAMIC_VALIDATION = "http://apache.org/xml/features/validation/dynamic";
-/*      */   protected static final String NORMALIZE_DATA = "http://apache.org/xml/features/validation/schema/normalized-value";
-/*      */   protected static final String DISALLOW_DOCTYPE_DECL_FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
-/*      */   protected static final String NAMESPACE_GROWTH = "http://apache.org/xml/features/namespace-growth";
-/*      */   protected static final String TOLERATE_DUPLICATES = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*      */   protected static final String SYMBOL_TABLE = "http://apache.org/xml/properties/internal/symbol-table";
-/*      */   protected static final String PSVI_AUGMENT = "http://apache.org/xml/features/validation/schema/augment-psvi";
-/*      */   protected boolean fNamespaceDeclarations = true;
-/*  146 */   protected String fSchemaType = null;
-/*      */   
-/*      */   protected boolean fBusy = false;
-/*      */   
-/*      */   private boolean abortNow = false;
-/*      */   
-/*      */   private Thread currentThread;
-/*      */   
-/*      */   protected static final boolean DEBUG = false;
-/*      */   
-/*  156 */   private Vector fSchemaLocations = new Vector();
-/*  157 */   private String fSchemaLocation = null;
-/*      */   
-/*      */   private DOMStringList fRecognizedParameters;
-/*  160 */   private AbortHandler abortHandler = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMParserImpl(XMLParserConfiguration config, String schemaType) {
-/*  170 */     this(config);
-/*  171 */     if (schemaType != null) {
-/*  172 */       if (schemaType.equals(Constants.NS_DTD)) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  178 */         this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", Constants.NS_DTD);
-/*      */ 
-/*      */         
-/*  181 */         this.fSchemaType = Constants.NS_DTD;
-/*      */       }
-/*  183 */       else if (schemaType.equals(Constants.NS_XMLSCHEMA)) {
-/*      */         
-/*  185 */         this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", Constants.NS_XMLSCHEMA);
-/*      */       } 
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMParserImpl(XMLParserConfiguration config) {
-/*  197 */     super(config);
-/*      */ 
-/*      */     
-/*  200 */     String[] domRecognizedFeatures = { "canonical-form", "cdata-sections", "charset-overrides-xml-encoding", "infoset", "namespace-declarations", "split-cdata-sections", "supported-media-types-only", "certified", "well-formed", "ignore-unknown-character-denormalizations" };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  213 */     this.fConfiguration.addRecognizedFeatures(domRecognizedFeatures);
-/*      */ 
-/*      */     
-/*  216 */     this.fConfiguration.setFeature("http://apache.org/xml/features/dom/defer-node-expansion", false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  227 */     this.fConfiguration.setFeature("namespace-declarations", true);
-/*  228 */     this.fConfiguration.setFeature("well-formed", true);
-/*  229 */     this.fConfiguration.setFeature("http://apache.org/xml/features/include-comments", true);
-/*  230 */     this.fConfiguration.setFeature("http://apache.org/xml/features/dom/include-ignorable-whitespace", true);
-/*  231 */     this.fConfiguration.setFeature("http://xml.org/sax/features/namespaces", true);
-/*      */     
-/*  233 */     this.fConfiguration.setFeature("http://apache.org/xml/features/validation/dynamic", false);
-/*  234 */     this.fConfiguration.setFeature("http://apache.org/xml/features/dom/create-entity-ref-nodes", false);
-/*  235 */     this.fConfiguration.setFeature("http://apache.org/xml/features/create-cdata-nodes", false);
-/*      */ 
-/*      */     
-/*  238 */     this.fConfiguration.setFeature("canonical-form", false);
-/*  239 */     this.fConfiguration.setFeature("charset-overrides-xml-encoding", true);
-/*  240 */     this.fConfiguration.setFeature("split-cdata-sections", true);
-/*  241 */     this.fConfiguration.setFeature("supported-media-types-only", false);
-/*  242 */     this.fConfiguration.setFeature("ignore-unknown-character-denormalizations", true);
-/*      */ 
-/*      */ 
-/*      */     
-/*  246 */     this.fConfiguration.setFeature("certified", true);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  252 */       this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema/normalized-value", false);
-/*      */     }
-/*  254 */     catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMParserImpl(SymbolTable symbolTable) {
-/*  262 */     this(new XIncludeAwareParserConfiguration());
-/*  263 */     this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/symbol-table", symbolTable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMParserImpl(SymbolTable symbolTable, XMLGrammarPool grammarPool) {
-/*  274 */     this(new XIncludeAwareParserConfiguration());
-/*  275 */     this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/symbol-table", symbolTable);
-/*      */ 
-/*      */     
-/*  278 */     this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/grammar-pool", grammarPool);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void reset() {
-/*  290 */     super.reset();
-/*      */ 
-/*      */     
-/*  293 */     this
-/*  294 */       .fNamespaceDeclarations = this.fConfiguration.getFeature("namespace-declarations");
-/*      */ 
-/*      */     
-/*  297 */     if (this.fSkippedElemStack != null) {
-/*  298 */       this.fSkippedElemStack.removeAllElements();
-/*      */     }
-/*  300 */     this.fSchemaLocations.clear();
-/*  301 */     this.fRejectedElementDepth = 0;
-/*  302 */     this.fFilterReject = false;
-/*  303 */     this.fSchemaType = null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMConfiguration getDomConfig() {
-/*  312 */     return this;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public LSParserFilter getFilter() {
-/*  326 */     return this.fDOMFilter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setFilter(LSParserFilter filter) {
-/*  339 */     this.fDOMFilter = filter;
-/*  340 */     if (this.fSkippedElemStack == null) {
-/*  341 */       this.fSkippedElemStack = new Stack();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setParameter(String name, Object value) throws DOMException {
-/*  351 */     if (value instanceof Boolean) {
-/*  352 */       boolean state = ((Boolean)value).booleanValue();
-/*      */       try {
-/*  354 */         if (name.equalsIgnoreCase("comments")) {
-/*  355 */           this.fConfiguration.setFeature("http://apache.org/xml/features/include-comments", state);
-/*      */         }
-/*  357 */         else if (name.equalsIgnoreCase("datatype-normalization")) {
-/*  358 */           this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema/normalized-value", state);
-/*      */         }
-/*  360 */         else if (name.equalsIgnoreCase("entities")) {
-/*  361 */           this.fConfiguration.setFeature("http://apache.org/xml/features/dom/create-entity-ref-nodes", state);
-/*      */         }
-/*  363 */         else if (name.equalsIgnoreCase("disallow-doctype")) {
-/*  364 */           this.fConfiguration.setFeature("http://apache.org/xml/features/disallow-doctype-decl", state);
-/*      */         }
-/*  366 */         else if (name.equalsIgnoreCase("supported-media-types-only") || name
-/*  367 */           .equalsIgnoreCase("normalize-characters") || name
-/*  368 */           .equalsIgnoreCase("check-character-normalization") || name
-/*  369 */           .equalsIgnoreCase("canonical-form")) {
-/*  370 */           if (state)
-/*      */           {
-/*  372 */             String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */             
-/*  376 */             throw new DOMException((short)9, msg);
-/*      */           }
-/*      */         
-/*      */         }
-/*  380 */         else if (name.equalsIgnoreCase("namespaces")) {
-/*  381 */           this.fConfiguration.setFeature("http://xml.org/sax/features/namespaces", state);
-/*      */         }
-/*  383 */         else if (name.equalsIgnoreCase("infoset")) {
-/*      */           
-/*  385 */           if (state)
-/*      */           {
-/*      */             
-/*  388 */             this.fConfiguration.setFeature("http://xml.org/sax/features/namespaces", true);
-/*  389 */             this.fConfiguration.setFeature("namespace-declarations", true);
-/*  390 */             this.fConfiguration.setFeature("http://apache.org/xml/features/include-comments", true);
-/*  391 */             this.fConfiguration.setFeature("http://apache.org/xml/features/dom/include-ignorable-whitespace", true);
-/*      */ 
-/*      */ 
-/*      */             
-/*  395 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/dynamic", false);
-/*  396 */             this.fConfiguration.setFeature("http://apache.org/xml/features/dom/create-entity-ref-nodes", false);
-/*  397 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema/normalized-value", false);
-/*  398 */             this.fConfiguration.setFeature("http://apache.org/xml/features/create-cdata-nodes", false);
-/*      */           }
-/*      */         
-/*  401 */         } else if (name.equalsIgnoreCase("cdata-sections")) {
-/*  402 */           this.fConfiguration.setFeature("http://apache.org/xml/features/create-cdata-nodes", state);
-/*      */         }
-/*  404 */         else if (name.equalsIgnoreCase("namespace-declarations")) {
-/*  405 */           this.fConfiguration.setFeature("namespace-declarations", state);
-/*      */         }
-/*  407 */         else if (name.equalsIgnoreCase("well-formed") || name
-/*  408 */           .equalsIgnoreCase("ignore-unknown-character-denormalizations")) {
-/*  409 */           if (!state)
-/*      */           {
-/*  411 */             String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_SUPPORTED", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */             
-/*  415 */             throw new DOMException((short)9, msg);
-/*      */           
-/*      */           }
-/*      */         
-/*      */         }
-/*  420 */         else if (name.equalsIgnoreCase("validate")) {
-/*  421 */           this.fConfiguration.setFeature("http://xml.org/sax/features/validation", state);
-/*  422 */           if (this.fSchemaType != Constants.NS_DTD) {
-/*  423 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema", state);
-/*  424 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema-full-checking", state);
-/*      */           } 
-/*  426 */           if (state) {
-/*  427 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/dynamic", false);
-/*      */           }
-/*      */         }
-/*  430 */         else if (name.equalsIgnoreCase("validate-if-schema")) {
-/*  431 */           this.fConfiguration.setFeature("http://apache.org/xml/features/validation/dynamic", state);
-/*      */           
-/*  433 */           if (state) {
-/*  434 */             this.fConfiguration.setFeature("http://xml.org/sax/features/validation", false);
-/*      */           }
-/*      */         }
-/*  437 */         else if (name.equalsIgnoreCase("element-content-whitespace")) {
-/*  438 */           this.fConfiguration.setFeature("http://apache.org/xml/features/dom/include-ignorable-whitespace", state);
-/*      */         }
-/*  440 */         else if (name.equalsIgnoreCase("psvi")) {
-/*      */           
-/*  442 */           this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema/augment-psvi", true);
-/*  443 */           this.fConfiguration.setProperty("http://apache.org/xml/properties/dom/document-class-name", "com.sun.org.apache.xerces.internal.dom.PSVIDocumentImpl");
-/*      */         } else {
-/*      */           String normalizedName;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  451 */           if (name.equals("http://apache.org/xml/features/namespace-growth")) {
-/*  452 */             normalizedName = "http://apache.org/xml/features/namespace-growth";
-/*      */           }
-/*  454 */           else if (name.equals("http://apache.org/xml/features/internal/tolerate-duplicates")) {
-/*  455 */             normalizedName = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*      */           } else {
-/*      */             
-/*  458 */             normalizedName = name.toLowerCase(Locale.ENGLISH);
-/*      */           } 
-/*  460 */           this.fConfiguration.setFeature(normalizedName, state);
-/*      */         }
-/*      */       
-/*      */       }
-/*  464 */       catch (XMLConfigurationException e) {
-/*      */         
-/*  466 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_FOUND", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/*  470 */         throw new DOMException((short)8, msg);
-/*      */       }
-/*      */     
-/*      */     }
-/*  474 */     else if (name.equalsIgnoreCase("error-handler")) {
-/*  475 */       if (value instanceof DOMErrorHandler || value == null) {
-/*      */         try {
-/*  477 */           this.fErrorHandler = new DOMErrorHandlerWrapper((DOMErrorHandler)value);
-/*  478 */           this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/error-handler", this.fErrorHandler);
-/*      */         }
-/*  480 */         catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/*  485 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "TYPE_MISMATCH_ERR", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/*  489 */         throw new DOMException((short)17, msg);
-/*      */       }
-/*      */     
-/*      */     }
-/*  493 */     else if (name.equalsIgnoreCase("resource-resolver")) {
-/*  494 */       if (value instanceof LSResourceResolver || value == null) {
-/*      */         try {
-/*  496 */           this.fConfiguration.setProperty("http://apache.org/xml/properties/internal/entity-resolver", new DOMEntityResolverWrapper((LSResourceResolver)value));
-/*      */         }
-/*  498 */         catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/*  503 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "TYPE_MISMATCH_ERR", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/*  507 */         throw new DOMException((short)17, msg);
-/*      */       }
-/*      */     
-/*      */     }
-/*  511 */     else if (name.equalsIgnoreCase("schema-location")) {
-/*  512 */       if (value instanceof String || value == null) {
-/*      */         try {
-/*  514 */           if (value == null) {
-/*  515 */             this.fSchemaLocation = null;
-/*  516 */             this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaSource", null);
-/*      */           
-/*      */           }
-/*      */           else {
-/*      */             
-/*  521 */             this.fSchemaLocation = (String)value;
-/*      */ 
-/*      */             
-/*  524 */             StringTokenizer t = new StringTokenizer(this.fSchemaLocation, " \n\t\r");
-/*  525 */             if (t.hasMoreTokens()) {
-/*  526 */               this.fSchemaLocations.clear();
-/*  527 */               this.fSchemaLocations.add(t.nextToken());
-/*  528 */               while (t.hasMoreTokens()) {
-/*  529 */                 this.fSchemaLocations.add(t.nextToken());
-/*      */               }
-/*  531 */               this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaSource", this.fSchemaLocations
-/*      */                   
-/*  533 */                   .toArray());
-/*      */             } else {
-/*      */               
-/*  536 */               this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaSource", value);
-/*      */             }
-/*      */           
-/*      */           }
-/*      */         
-/*      */         }
-/*  542 */         catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */       
-/*      */       }
-/*      */       else {
-/*      */         
-/*  547 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "TYPE_MISMATCH_ERR", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/*  551 */         throw new DOMException((short)17, msg);
-/*      */       }
-/*      */     
-/*      */     }
-/*  555 */     else if (name.equalsIgnoreCase("schema-type")) {
-/*  556 */       if (value instanceof String || value == null) {
-/*      */         try {
-/*  558 */           if (value == null)
-/*      */           {
-/*  560 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema", false);
-/*  561 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema-full-checking", false);
-/*      */             
-/*  563 */             this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", null);
-/*      */ 
-/*      */             
-/*  566 */             this.fSchemaType = null;
-/*      */           }
-/*  568 */           else if (value.equals(Constants.NS_XMLSCHEMA))
-/*      */           {
-/*  570 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema", true);
-/*  571 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema-full-checking", true);
-/*      */             
-/*  573 */             this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", Constants.NS_XMLSCHEMA);
-/*      */ 
-/*      */             
-/*  576 */             this.fSchemaType = Constants.NS_XMLSCHEMA;
-/*      */           }
-/*  578 */           else if (value.equals(Constants.NS_DTD))
-/*      */           {
-/*  580 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema", false);
-/*  581 */             this.fConfiguration.setFeature("http://apache.org/xml/features/validation/schema-full-checking", false);
-/*      */             
-/*  583 */             this.fConfiguration.setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", Constants.NS_DTD);
-/*      */ 
-/*      */             
-/*  586 */             this.fSchemaType = Constants.NS_DTD;
-/*      */           }
-/*      */         
-/*  589 */         } catch (XMLConfigurationException xMLConfigurationException) {}
-/*      */       }
-/*      */       else {
-/*      */         
-/*  593 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "TYPE_MISMATCH_ERR", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */         
-/*  597 */         throw new DOMException((short)17, msg);
-/*      */       }
-/*      */     
-/*      */     }
-/*  601 */     else if (name.equalsIgnoreCase("http://apache.org/xml/properties/dom/document-class-name")) {
-/*  602 */       this.fConfiguration.setProperty("http://apache.org/xml/properties/dom/document-class-name", value);
-/*      */     }
-/*      */     else {
-/*      */       
-/*  606 */       String normalizedName = name.toLowerCase(Locale.ENGLISH);
-/*      */       try {
-/*  608 */         this.fConfiguration.setProperty(normalizedName, value);
-/*      */         
-/*      */         return;
-/*  611 */       } catch (XMLConfigurationException xMLConfigurationException) {
-/*      */ 
-/*      */         
-/*      */         try {
-/*  615 */           if (name.equals("http://apache.org/xml/features/namespace-growth")) {
-/*  616 */             normalizedName = "http://apache.org/xml/features/namespace-growth";
-/*      */           }
-/*  618 */           else if (name.equals("http://apache.org/xml/features/internal/tolerate-duplicates")) {
-/*  619 */             normalizedName = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*      */           } 
-/*  621 */           this.fConfiguration.getFeature(normalizedName);
-/*  622 */           throw newTypeMismatchError(name);
-/*      */         
-/*      */         }
-/*  625 */         catch (XMLConfigurationException xMLConfigurationException1) {
-/*      */ 
-/*      */           
-/*  628 */           throw newFeatureNotFoundError(name);
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Object getParameter(String name) throws DOMException {
-/*      */     String normalizedName;
-/*  637 */     if (name.equalsIgnoreCase("comments")) {
-/*  638 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/include-comments") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  642 */     if (name.equalsIgnoreCase("datatype-normalization")) {
-/*  643 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/validation/schema/normalized-value") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  647 */     if (name.equalsIgnoreCase("entities")) {
-/*  648 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/dom/create-entity-ref-nodes") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  652 */     if (name.equalsIgnoreCase("namespaces")) {
-/*  653 */       return this.fConfiguration.getFeature("http://xml.org/sax/features/namespaces") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  657 */     if (name.equalsIgnoreCase("validate")) {
-/*  658 */       return this.fConfiguration.getFeature("http://xml.org/sax/features/validation") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  662 */     if (name.equalsIgnoreCase("validate-if-schema")) {
-/*  663 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/validation/dynamic") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  667 */     if (name.equalsIgnoreCase("element-content-whitespace")) {
-/*  668 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/dom/include-ignorable-whitespace") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  672 */     if (name.equalsIgnoreCase("disallow-doctype")) {
-/*  673 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/disallow-doctype-decl") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  677 */     if (name.equalsIgnoreCase("infoset")) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  689 */       boolean infoset = (this.fConfiguration.getFeature("http://xml.org/sax/features/namespaces") && this.fConfiguration.getFeature("namespace-declarations") && this.fConfiguration.getFeature("http://apache.org/xml/features/include-comments") && this.fConfiguration.getFeature("http://apache.org/xml/features/dom/include-ignorable-whitespace") && !this.fConfiguration.getFeature("http://apache.org/xml/features/validation/dynamic") && !this.fConfiguration.getFeature("http://apache.org/xml/features/dom/create-entity-ref-nodes") && !this.fConfiguration.getFeature("http://apache.org/xml/features/validation/schema/normalized-value") && !this.fConfiguration.getFeature("http://apache.org/xml/features/create-cdata-nodes"));
-/*  690 */       return infoset ? Boolean.TRUE : Boolean.FALSE;
-/*      */     } 
-/*  692 */     if (name.equalsIgnoreCase("cdata-sections")) {
-/*  693 */       return this.fConfiguration.getFeature("http://apache.org/xml/features/create-cdata-nodes") ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */     
-/*  696 */     if (name.equalsIgnoreCase("check-character-normalization") || name
-/*  697 */       .equalsIgnoreCase("normalize-characters")) {
-/*  698 */       return Boolean.FALSE;
-/*      */     }
-/*  700 */     if (name.equalsIgnoreCase("namespace-declarations") || name
-/*  701 */       .equalsIgnoreCase("well-formed") || name
-/*  702 */       .equalsIgnoreCase("ignore-unknown-character-denormalizations") || name
-/*  703 */       .equalsIgnoreCase("canonical-form") || name
-/*  704 */       .equalsIgnoreCase("supported-media-types-only") || name
-/*  705 */       .equalsIgnoreCase("split-cdata-sections") || name
-/*  706 */       .equalsIgnoreCase("charset-overrides-xml-encoding")) {
-/*  707 */       return this.fConfiguration.getFeature(name.toLowerCase(Locale.ENGLISH)) ? Boolean.TRUE : Boolean.FALSE;
-/*      */     }
-/*      */ 
-/*      */     
-/*  711 */     if (name.equalsIgnoreCase("error-handler")) {
-/*  712 */       if (this.fErrorHandler != null) {
-/*  713 */         return this.fErrorHandler.getErrorHandler();
-/*      */       }
-/*  715 */       return null;
-/*      */     } 
-/*  717 */     if (name.equalsIgnoreCase("resource-resolver"))
-/*      */ 
-/*      */       
-/*  720 */       try { XMLEntityResolver entityResolver = (XMLEntityResolver)this.fConfiguration.getProperty("http://apache.org/xml/properties/internal/entity-resolver");
-/*  721 */         if (entityResolver != null && entityResolver instanceof DOMEntityResolverWrapper)
-/*      */         {
-/*  723 */           return ((DOMEntityResolverWrapper)entityResolver).getEntityResolver();
-/*      */         }
-/*  725 */         return null; }
-/*      */       
-/*  727 */       catch (XMLConfigurationException xMLConfigurationException)
-/*      */       
-/*      */       { 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  769 */         return null; }   if (name.equalsIgnoreCase("schema-type"))
-/*      */       return this.fConfiguration.getProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage");  if (name.equalsIgnoreCase("schema-location"))
-/*      */       return this.fSchemaLocation;  if (name.equalsIgnoreCase("http://apache.org/xml/properties/internal/symbol-table"))
-/*      */       return this.fConfiguration.getProperty("http://apache.org/xml/properties/internal/symbol-table");  if (name.equalsIgnoreCase("http://apache.org/xml/properties/dom/document-class-name"))
-/*  773 */       return this.fConfiguration.getProperty("http://apache.org/xml/properties/dom/document-class-name");  if (name.equals("http://apache.org/xml/features/namespace-growth")) { normalizedName = "http://apache.org/xml/features/namespace-growth"; } else if (name.equals("http://apache.org/xml/features/internal/tolerate-duplicates")) { normalizedName = "http://apache.org/xml/features/internal/tolerate-duplicates"; } else { normalizedName = name.toLowerCase(Locale.ENGLISH); }  try { return this.fConfiguration.getFeature(normalizedName) ? Boolean.TRUE : Boolean.FALSE; } catch (XMLConfigurationException xMLConfigurationException) { try { return this.fConfiguration.getProperty(normalizedName); } catch (XMLConfigurationException xMLConfigurationException1) { throw newFeatureNotFoundError(name); }  }  } public boolean canSetParameter(String name, Object value) { if (value == null) {
-/*  774 */       return true;
-/*      */     }
-/*      */     
-/*  777 */     if (value instanceof Boolean) {
-/*  778 */       boolean state = ((Boolean)value).booleanValue();
-/*  779 */       if (name.equalsIgnoreCase("supported-media-types-only") || name
-/*  780 */         .equalsIgnoreCase("normalize-characters") || name
-/*  781 */         .equalsIgnoreCase("check-character-normalization") || name
-/*  782 */         .equalsIgnoreCase("canonical-form"))
-/*      */       {
-/*  784 */         return !state;
-/*      */       }
-/*  786 */       if (name.equalsIgnoreCase("well-formed") || name
-/*  787 */         .equalsIgnoreCase("ignore-unknown-character-denormalizations"))
-/*      */       {
-/*  789 */         return state;
-/*      */       }
-/*  791 */       if (name.equalsIgnoreCase("cdata-sections") || name
-/*  792 */         .equalsIgnoreCase("charset-overrides-xml-encoding") || name
-/*  793 */         .equalsIgnoreCase("comments") || name
-/*  794 */         .equalsIgnoreCase("datatype-normalization") || name
-/*  795 */         .equalsIgnoreCase("disallow-doctype") || name
-/*  796 */         .equalsIgnoreCase("entities") || name
-/*  797 */         .equalsIgnoreCase("infoset") || name
-/*  798 */         .equalsIgnoreCase("namespaces") || name
-/*  799 */         .equalsIgnoreCase("namespace-declarations") || name
-/*  800 */         .equalsIgnoreCase("validate") || name
-/*  801 */         .equalsIgnoreCase("validate-if-schema") || name
-/*  802 */         .equalsIgnoreCase("element-content-whitespace") || name
-/*  803 */         .equalsIgnoreCase("xml-declaration")) {
-/*  804 */         return true;
-/*      */       }
-/*      */       
-/*      */       try {
-/*      */         String normalizedName;
-/*      */         
-/*  810 */         if (name.equalsIgnoreCase("http://apache.org/xml/features/namespace-growth")) {
-/*  811 */           normalizedName = "http://apache.org/xml/features/namespace-growth";
-/*      */         }
-/*  813 */         else if (name.equalsIgnoreCase("http://apache.org/xml/features/internal/tolerate-duplicates")) {
-/*  814 */           normalizedName = "http://apache.org/xml/features/internal/tolerate-duplicates";
-/*      */         } else {
-/*      */           
-/*  817 */           normalizedName = name.toLowerCase(Locale.ENGLISH);
-/*      */         } 
-/*  819 */         this.fConfiguration.getFeature(normalizedName);
-/*  820 */         return true;
-/*      */       }
-/*  822 */       catch (XMLConfigurationException e) {
-/*  823 */         return false;
-/*      */       } 
-/*      */     } 
-/*      */     
-/*  827 */     if (name.equalsIgnoreCase("error-handler")) {
-/*  828 */       if (value instanceof DOMErrorHandler || value == null) {
-/*  829 */         return true;
-/*      */       }
-/*  831 */       return false;
-/*      */     } 
-/*  833 */     if (name.equalsIgnoreCase("resource-resolver")) {
-/*  834 */       if (value instanceof LSResourceResolver || value == null) {
-/*  835 */         return true;
-/*      */       }
-/*  837 */       return false;
-/*      */     } 
-/*  839 */     if (name.equalsIgnoreCase("schema-type")) {
-/*  840 */       if ((value instanceof String && (value
-/*  841 */         .equals(Constants.NS_XMLSCHEMA) || value
-/*  842 */         .equals(Constants.NS_DTD))) || value == null) {
-/*  843 */         return true;
-/*      */       }
-/*  845 */       return false;
-/*      */     } 
-/*  847 */     if (name.equalsIgnoreCase("schema-location")) {
-/*  848 */       if (value instanceof String || value == null)
-/*  849 */         return true; 
-/*  850 */       return false;
-/*      */     } 
-/*  852 */     if (name.equalsIgnoreCase("http://apache.org/xml/properties/dom/document-class-name")) {
-/*  853 */       return true;
-/*      */     }
-/*  855 */     return false; }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public DOMStringList getParameterNames() {
-/*  868 */     if (this.fRecognizedParameters == null) {
-/*  869 */       Vector<String> parameters = new Vector();
-/*      */ 
-/*      */       
-/*  872 */       parameters.add("namespaces");
-/*  873 */       parameters.add("cdata-sections");
-/*  874 */       parameters.add("canonical-form");
-/*  875 */       parameters.add("namespace-declarations");
-/*  876 */       parameters.add("split-cdata-sections");
-/*      */       
-/*  878 */       parameters.add("entities");
-/*  879 */       parameters.add("validate-if-schema");
-/*  880 */       parameters.add("validate");
-/*  881 */       parameters.add("datatype-normalization");
-/*      */       
-/*  883 */       parameters.add("charset-overrides-xml-encoding");
-/*  884 */       parameters.add("check-character-normalization");
-/*  885 */       parameters.add("supported-media-types-only");
-/*  886 */       parameters.add("ignore-unknown-character-denormalizations");
-/*      */       
-/*  888 */       parameters.add("normalize-characters");
-/*  889 */       parameters.add("well-formed");
-/*  890 */       parameters.add("infoset");
-/*  891 */       parameters.add("disallow-doctype");
-/*  892 */       parameters.add("element-content-whitespace");
-/*  893 */       parameters.add("comments");
-/*      */       
-/*  895 */       parameters.add("error-handler");
-/*  896 */       parameters.add("resource-resolver");
-/*  897 */       parameters.add("schema-location");
-/*  898 */       parameters.add("schema-type");
-/*      */       
-/*  900 */       this.fRecognizedParameters = new DOMStringListImpl(parameters);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  904 */     return this.fRecognizedParameters;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document parseURI(String uri) throws LSException {
-/*  917 */     if (this.fBusy) {
-/*  918 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null);
-/*      */ 
-/*      */       
-/*  921 */       throw new DOMException((short)11, msg);
-/*      */     } 
-/*      */     
-/*  924 */     XMLInputSource source = new XMLInputSource(null, uri, null);
-/*      */     try {
-/*  926 */       this.currentThread = Thread.currentThread();
-/*  927 */       this.fBusy = true;
-/*  928 */       parse(source);
-/*  929 */       this.fBusy = false;
-/*  930 */       if (this.abortNow && this.currentThread.isInterrupted()) {
-/*      */         
-/*  932 */         this.abortNow = false;
-/*  933 */         Thread.interrupted();
-/*      */       } 
-/*  935 */     } catch (Exception e) {
-/*  936 */       this.fBusy = false;
-/*  937 */       if (this.abortNow && this.currentThread.isInterrupted()) {
-/*  938 */         Thread.interrupted();
-/*      */       }
-/*  940 */       if (this.abortNow) {
-/*  941 */         this.abortNow = false;
-/*  942 */         restoreHandlers();
-/*  943 */         return null;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  947 */       if (e != AbstractDOMParser.Abort.INSTANCE) {
-/*  948 */         if (!(e instanceof com.sun.org.apache.xerces.internal.xni.parser.XMLParseException) && this.fErrorHandler != null) {
-/*  949 */           DOMErrorImpl error = new DOMErrorImpl();
-/*  950 */           error.fException = e;
-/*  951 */           error.fMessage = e.getMessage();
-/*  952 */           error.fSeverity = 3;
-/*  953 */           this.fErrorHandler.getErrorHandler().handleError(error);
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/*  958 */         throw (LSException)DOMUtil.createLSException((short)81, e).fillInStackTrace();
-/*      */       } 
-/*      */     } 
-/*  961 */     Document doc = getDocument();
-/*  962 */     dropDocumentReferences();
-/*  963 */     return doc;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Document parse(LSInput is) throws LSException {
-/*  974 */     XMLInputSource xmlInputSource = dom2xmlInputSource(is);
-/*  975 */     if (this.fBusy) {
-/*  976 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_STATE_ERR", null);
-/*      */ 
-/*      */       
-/*  979 */       throw new DOMException((short)11, msg);
-/*      */     } 
-/*      */     
-/*      */     try {
-/*  983 */       this.currentThread = Thread.currentThread();
-/*  984 */       this.fBusy = true;
-/*  985 */       parse(xmlInputSource);
-/*  986 */       this.fBusy = false;
-/*  987 */       if (this.abortNow && this.currentThread.isInterrupted()) {
-/*      */         
-/*  989 */         this.abortNow = false;
-/*  990 */         Thread.interrupted();
-/*      */       } 
-/*  992 */     } catch (Exception e) {
-/*  993 */       this.fBusy = false;
-/*  994 */       if (this.abortNow && this.currentThread.isInterrupted()) {
-/*  995 */         Thread.interrupted();
-/*      */       }
-/*  997 */       if (this.abortNow) {
-/*  998 */         this.abortNow = false;
-/*  999 */         restoreHandlers();
-/* 1000 */         return null;
-/*      */       } 
-/*      */ 
-/*      */       
-/* 1004 */       if (e != AbstractDOMParser.Abort.INSTANCE) {
-/* 1005 */         if (!(e instanceof com.sun.org.apache.xerces.internal.xni.parser.XMLParseException) && this.fErrorHandler != null) {
-/* 1006 */           DOMErrorImpl error = new DOMErrorImpl();
-/* 1007 */           error.fException = e;
-/* 1008 */           error.fMessage = e.getMessage();
-/* 1009 */           error.fSeverity = 3;
-/* 1010 */           this.fErrorHandler.getErrorHandler().handleError(error);
-/*      */         } 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1015 */         throw (LSException)DOMUtil.createLSException((short)81, e).fillInStackTrace();
-/*      */       } 
-/*      */     } 
-/* 1018 */     Document doc = getDocument();
-/* 1019 */     dropDocumentReferences();
-/* 1020 */     return doc;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private void restoreHandlers() {
-/* 1025 */     this.fConfiguration.setDocumentHandler(this);
-/* 1026 */     this.fConfiguration.setDTDHandler(this);
-/* 1027 */     this.fConfiguration.setDTDContentModelHandler(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Node parseWithContext(LSInput is, Node cnode, short action) throws DOMException, LSException {
-/* 1052 */     throw new DOMException((short)9, "Not supported");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   XMLInputSource dom2xmlInputSource(LSInput is) {
-/* 1064 */     XMLInputSource xis = null;
-/*      */ 
-/*      */     
-/* 1067 */     if (is.getCharacterStream() != null) {
-/*      */       
-/* 1069 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI(), is.getCharacterStream(), "UTF-16");
-/*      */ 
-/*      */     
-/*      */     }
-/* 1073 */     else if (is.getByteStream() != null) {
-/*      */ 
-/*      */       
-/* 1076 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI(), is.getByteStream(), is.getEncoding());
-/*      */ 
-/*      */     
-/*      */     }
-/* 1080 */     else if (is.getStringData() != null && is.getStringData().length() > 0) {
-/*      */       
-/* 1082 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI(), new StringReader(is.getStringData()), "UTF-16");
-/*      */ 
-/*      */     
-/*      */     }
-/* 1086 */     else if ((is.getSystemId() != null && is.getSystemId().length() > 0) || (is
-/* 1087 */       .getPublicId() != null && is.getPublicId().length() > 0)) {
-/*      */       
-/* 1089 */       xis = new XMLInputSource(is.getPublicId(), is.getSystemId(), is.getBaseURI());
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1093 */       if (this.fErrorHandler != null) {
-/* 1094 */         DOMErrorImpl error = new DOMErrorImpl();
-/* 1095 */         error.fType = "no-input-specified";
-/* 1096 */         error.fMessage = "no-input-specified";
-/* 1097 */         error.fSeverity = 3;
-/* 1098 */         this.fErrorHandler.getErrorHandler().handleError(error);
-/*      */       } 
-/* 1100 */       throw new LSException((short)81, "no-input-specified");
-/*      */     } 
-/* 1102 */     return xis;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getAsync() {
-/* 1109 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean getBusy() {
-/* 1116 */     return this.fBusy;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void abort() {
-/* 1124 */     if (this.fBusy) {
-/* 1125 */       this.fBusy = false;
-/* 1126 */       if (this.currentThread != null) {
-/* 1127 */         this.abortNow = true;
-/* 1128 */         if (this.abortHandler == null) {
-/* 1129 */           this.abortHandler = new AbortHandler();
-/*      */         }
-/* 1131 */         this.fConfiguration.setDocumentHandler(this.abortHandler);
-/* 1132 */         this.fConfiguration.setDTDHandler(this.abortHandler);
-/* 1133 */         this.fConfiguration.setDTDContentModelHandler(this.abortHandler);
-/*      */         
-/* 1135 */         if (this.currentThread == Thread.currentThread()) {
-/* 1136 */           throw AbstractDOMParser.Abort.INSTANCE;
-/*      */         }
-/* 1138 */         this.currentThread.interrupt();
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void startElement(QName element, XMLAttributes attributes, Augmentations augs) {
-/* 1158 */     if (!this.fNamespaceDeclarations && this.fNamespaceAware) {
-/* 1159 */       int len = attributes.getLength();
-/* 1160 */       for (int i = len - 1; i >= 0; i--) {
-/* 1161 */         if (XMLSymbols.PREFIX_XMLNS == attributes.getPrefix(i) || XMLSymbols.PREFIX_XMLNS == attributes
-/* 1162 */           .getQName(i)) {
-/* 1163 */           attributes.removeAttributeAt(i);
-/*      */         }
-/*      */       } 
-/*      */     } 
-/* 1167 */     super.startElement(element, attributes, augs);
-/*      */   }
-/*      */   
-/*      */   private class AbortHandler implements XMLDocumentHandler, XMLDTDHandler, XMLDTDContentModelHandler { private XMLDocumentSource documentSource;
-/*      */     private XMLDTDContentModelSource dtdContentSource;
-/*      */     private XMLDTDSource dtdSource;
-/*      */     
-/*      */     private AbortHandler() {}
-/*      */     
-/*      */     public void startDocument(XMLLocator locator, String encoding, NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
-/* 1177 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void xmlDecl(String version, String encoding, String standalone, Augmentations augs) throws XNIException {
-/* 1181 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void doctypeDecl(String rootElement, String publicId, String systemId, Augmentations augs) throws XNIException {
-/* 1185 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void comment(XMLString text, Augmentations augs) throws XNIException {
-/* 1189 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
-/* 1193 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/* 1197 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void emptyElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
-/* 1201 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startGeneralEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs) throws XNIException {
-/* 1205 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void textDecl(String version, String encoding, Augmentations augs) throws XNIException {
-/* 1209 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
-/* 1213 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void characters(XMLString text, Augmentations augs) throws XNIException {
-/* 1217 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
-/* 1221 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endElement(QName element, Augmentations augs) throws XNIException {
-/* 1225 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startCDATA(Augmentations augs) throws XNIException {
-/* 1229 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endCDATA(Augmentations augs) throws XNIException {
-/* 1233 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endDocument(Augmentations augs) throws XNIException {
-/* 1237 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void setDocumentSource(XMLDocumentSource source) {
-/* 1241 */       this.documentSource = source;
-/*      */     }
-/*      */     
-/*      */     public XMLDocumentSource getDocumentSource() {
-/* 1245 */       return this.documentSource;
-/*      */     }
-/*      */     
-/*      */     public void startDTD(XMLLocator locator, Augmentations augmentations) throws XNIException {
-/* 1249 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startParameterEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augmentations) throws XNIException {
-/* 1253 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endParameterEntity(String name, Augmentations augmentations) throws XNIException {
-/* 1257 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startExternalSubset(XMLResourceIdentifier identifier, Augmentations augmentations) throws XNIException {
-/* 1261 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endExternalSubset(Augmentations augmentations) throws XNIException {
-/* 1265 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void elementDecl(String name, String contentModel, Augmentations augmentations) throws XNIException {
-/* 1269 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startAttlist(String elementName, Augmentations augmentations) throws XNIException {
-/* 1273 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void attributeDecl(String elementName, String attributeName, String type, String[] enumeration, String defaultType, XMLString defaultValue, XMLString nonNormalizedDefaultValue, Augmentations augmentations) throws XNIException {
-/* 1277 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endAttlist(Augmentations augmentations) throws XNIException {
-/* 1281 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void internalEntityDecl(String name, XMLString text, XMLString nonNormalizedText, Augmentations augmentations) throws XNIException {
-/* 1285 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void externalEntityDecl(String name, XMLResourceIdentifier identifier, Augmentations augmentations) throws XNIException {
-/* 1289 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void unparsedEntityDecl(String name, XMLResourceIdentifier identifier, String notation, Augmentations augmentations) throws XNIException {
-/* 1293 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void notationDecl(String name, XMLResourceIdentifier identifier, Augmentations augmentations) throws XNIException {
-/* 1297 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startConditional(short type, Augmentations augmentations) throws XNIException {
-/* 1301 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void ignoredCharacters(XMLString text, Augmentations augmentations) throws XNIException {
-/* 1305 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endConditional(Augmentations augmentations) throws XNIException {
-/* 1309 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endDTD(Augmentations augmentations) throws XNIException {
-/* 1313 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void setDTDSource(XMLDTDSource source) {
-/* 1317 */       this.dtdSource = source;
-/*      */     }
-/*      */     
-/*      */     public XMLDTDSource getDTDSource() {
-/* 1321 */       return this.dtdSource;
-/*      */     }
-/*      */     
-/*      */     public void startContentModel(String elementName, Augmentations augmentations) throws XNIException {
-/* 1325 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void any(Augmentations augmentations) throws XNIException {
-/* 1329 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void empty(Augmentations augmentations) throws XNIException {
-/* 1333 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void startGroup(Augmentations augmentations) throws XNIException {
-/* 1337 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void pcdata(Augmentations augmentations) throws XNIException {
-/* 1341 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void element(String elementName, Augmentations augmentations) throws XNIException {
-/* 1345 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void separator(short separator, Augmentations augmentations) throws XNIException {
-/* 1349 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void occurrence(short occurrence, Augmentations augmentations) throws XNIException {
-/* 1353 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endGroup(Augmentations augmentations) throws XNIException {
-/* 1357 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void endContentModel(Augmentations augmentations) throws XNIException {
-/* 1361 */       throw AbstractDOMParser.Abort.INSTANCE;
-/*      */     }
-/*      */     
-/*      */     public void setDTDContentModelSource(XMLDTDContentModelSource source) {
-/* 1365 */       this.dtdContentSource = source;
-/*      */     }
-/*      */     
-/*      */     public XMLDTDContentModelSource getDTDContentModelSource() {
-/* 1369 */       return this.dtdContentSource;
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static DOMException newFeatureNotFoundError(String name) {
-/* 1376 */     String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "FEATURE_NOT_FOUND", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */     
-/* 1380 */     return new DOMException((short)8, msg);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static DOMException newTypeMismatchError(String name) {
-/* 1385 */     String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "TYPE_MISMATCH_ERR", new Object[] { name });
-/*      */ 
-/*      */ 
-/*      */     
-/* 1389 */     return new DOMException((short)17, msg);
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\parsers\DOMParserImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2000-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.parsers;
+
+import java.io.StringReader;
+import java.util.Locale;
+import java.util.Stack;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import com.sun.org.apache.xerces.internal.dom.DOMErrorImpl;
+import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
+import com.sun.org.apache.xerces.internal.dom.DOMStringListImpl;
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.util.DOMEntityResolverWrapper;
+import com.sun.org.apache.xerces.internal.util.DOMErrorHandlerWrapper;
+import com.sun.org.apache.xerces.internal.util.DOMUtil;
+import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.xni.Augmentations;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
+import com.sun.org.apache.xerces.internal.xni.XMLDTDContentModelHandler;
+import com.sun.org.apache.xerces.internal.xni.XMLDTDHandler;
+import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
+import com.sun.org.apache.xerces.internal.xni.XMLLocator;
+import com.sun.org.apache.xerces.internal.xni.XMLResourceIdentifier;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDContentModelSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
+import com.sun.org.apache.xerces.internal.parsers.XIncludeAwareParserConfiguration;
+import org.w3c.dom.DOMConfiguration;
+import org.w3c.dom.DOMError;
+import org.w3c.dom.DOMErrorHandler;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.DOMStringList;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.ls.LSException;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSParser;
+import org.w3c.dom.ls.LSParserFilter;
+import org.w3c.dom.ls.LSResourceResolver;
+import org.xml.sax.SAXException;
+
+
+/**
+ * This is Xerces DOM Builder class. It uses the abstract DOM
+ * parser with a document scanner, a dtd scanner, and a validator, as
+ * well as a grammar pool.
+ *
+ * @author Pavani Mukthipudi, Sun Microsystems Inc.
+ * @author Elena Litani, IBM
+ * @author Rahul Srivastava, Sun Microsystems Inc.
+ * @version $Id: DOMParserImpl.java,v 1.8 2010-11-01 04:40:09 joehw Exp $
+ */
+
+
+public class DOMParserImpl
+extends AbstractDOMParser implements LSParser, DOMConfiguration {
+
+
+
+    // SAX & Xerces feature ids
+
+    /** Feature identifier: namespaces. */
+    protected static final String NAMESPACES =
+    Constants.SAX_FEATURE_PREFIX + Constants.NAMESPACES_FEATURE;
+
+    /** Feature id: validation. */
+    protected static final String VALIDATION_FEATURE =
+    Constants.SAX_FEATURE_PREFIX+Constants.VALIDATION_FEATURE;
+
+    /** XML Schema validation */
+    protected static final String XMLSCHEMA =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_VALIDATION_FEATURE;
+
+    /** XML Schema full checking */
+    protected static final String XMLSCHEMA_FULL_CHECKING =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_FULL_CHECKING;
+
+    /** Dynamic validation */
+    protected static final String DYNAMIC_VALIDATION =
+    Constants.XERCES_FEATURE_PREFIX + Constants.DYNAMIC_VALIDATION_FEATURE;
+
+    /** Feature identifier: expose schema normalized value */
+    protected static final String NORMALIZE_DATA =
+    Constants.XERCES_FEATURE_PREFIX + Constants.SCHEMA_NORMALIZED_VALUE;
+
+    /** Feature identifier: disallow docType Decls. */
+    protected static final String DISALLOW_DOCTYPE_DECL_FEATURE =
+        Constants.XERCES_FEATURE_PREFIX + Constants.DISALLOW_DOCTYPE_DECL_FEATURE;
+
+    /** Feature identifier: namespace growth */
+    protected static final String NAMESPACE_GROWTH =
+        Constants.XERCES_FEATURE_PREFIX + Constants.NAMESPACE_GROWTH_FEATURE;
+
+    /** Feature identifier: tolerate duplicates */
+    protected static final String TOLERATE_DUPLICATES =
+        Constants.XERCES_FEATURE_PREFIX + Constants.TOLERATE_DUPLICATES_FEATURE;
+
+    // internal properties
+    protected static final String SYMBOL_TABLE =
+    Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY;
+
+    protected static final String PSVI_AUGMENT =
+    Constants.XERCES_FEATURE_PREFIX +Constants.SCHEMA_AUGMENT_PSVI;
+
+
+    //
+    // Data
+    //
+
+    /** Include namespace declaration attributes in the document. **/
+    protected boolean fNamespaceDeclarations = true;
+
+    // REVISIT: this value should be null by default and should be set during creation of
+    //          LSParser
+    protected String fSchemaType = null;
+
+    protected boolean fBusy = false;
+
+    private boolean abortNow = false;
+
+    private Thread currentThread;
+
+    protected final static boolean DEBUG = false;
+
+    private Vector fSchemaLocations = new Vector ();
+    private String fSchemaLocation = null;
+        private DOMStringList fRecognizedParameters;
+
+    private AbortHandler abortHandler = null;
+
+    //
+    // Constructors
+    //
+
+    /**
+     * Constructs a DOM Builder using the standard parser configuration.
+     */
+    public DOMParserImpl (XMLParserConfiguration config, String schemaType) {
+        this (config);
+        if (schemaType != null) {
+            if (schemaType.equals (Constants.NS_DTD)) {
+                //Schema validation is false by default and hence there is no
+                //need to set it to false here.  Also, schema validation is
+                //not a recognized feature for DTDConfiguration's and so
+                //setting this feature here would result in a Configuration
+                //Exception.
+                fConfiguration.setProperty (
+                Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_LANGUAGE,
+                Constants.NS_DTD);
+                fSchemaType = Constants.NS_DTD;
+            }
+            else if (schemaType.equals (Constants.NS_XMLSCHEMA)) {
+                // XML Schem validation
+                fConfiguration.setProperty (
+                Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_LANGUAGE,
+                Constants.NS_XMLSCHEMA);
+            }
+        }
+
+    }
+
+    /**
+     * Constructs a DOM Builder using the specified parser configuration.
+     */
+    public DOMParserImpl (XMLParserConfiguration config) {
+        super (config);
+
+        // add recognized features
+        final String[] domRecognizedFeatures = {
+            Constants.DOM_CANONICAL_FORM,
+            Constants.DOM_CDATA_SECTIONS,
+            Constants.DOM_CHARSET_OVERRIDES_XML_ENCODING,
+            Constants.DOM_INFOSET,
+            Constants.DOM_NAMESPACE_DECLARATIONS,
+            Constants.DOM_SPLIT_CDATA,
+            Constants.DOM_SUPPORTED_MEDIATYPES_ONLY,
+            Constants.DOM_CERTIFIED,
+            Constants.DOM_WELLFORMED,
+            Constants.DOM_IGNORE_UNKNOWN_CHARACTER_DENORMALIZATIONS,
+        };
+
+        fConfiguration.addRecognizedFeatures (domRecognizedFeatures);
+
+        // turn off deferred DOM
+        fConfiguration.setFeature (DEFER_NODE_EXPANSION, false);
+
+        // Set values so that the value of the
+        // infoset parameter is true (its default value).
+        //
+        // true: namespace-declarations, well-formed,
+        // element-content-whitespace, comments, namespaces
+        //
+        // false: validate-if-schema, entities,
+        // datatype-normalization, cdata-sections
+
+        fConfiguration.setFeature(Constants.DOM_NAMESPACE_DECLARATIONS, true);
+        fConfiguration.setFeature(Constants.DOM_WELLFORMED, true);
+        fConfiguration.setFeature(INCLUDE_COMMENTS_FEATURE, true);
+        fConfiguration.setFeature(INCLUDE_IGNORABLE_WHITESPACE, true);
+        fConfiguration.setFeature(NAMESPACES, true);
+
+        fConfiguration.setFeature(DYNAMIC_VALIDATION, false);
+        fConfiguration.setFeature(CREATE_ENTITY_REF_NODES, false);
+        fConfiguration.setFeature(CREATE_CDATA_NODES_FEATURE, false);
+
+        // set other default values
+        fConfiguration.setFeature (Constants.DOM_CANONICAL_FORM, false);
+        fConfiguration.setFeature (Constants.DOM_CHARSET_OVERRIDES_XML_ENCODING, true);
+        fConfiguration.setFeature (Constants.DOM_SPLIT_CDATA, true);
+        fConfiguration.setFeature (Constants.DOM_SUPPORTED_MEDIATYPES_ONLY, false);
+        fConfiguration.setFeature (Constants.DOM_IGNORE_UNKNOWN_CHARACTER_DENORMALIZATIONS, true);
+
+        // REVISIT: by default Xerces assumes that input is certified.
+        //          default is different from the one specified in the DOM spec
+        fConfiguration.setFeature (Constants.DOM_CERTIFIED, true);
+
+        // Xerces datatype-normalization feature is on by default
+        // This is a recognized feature only for XML Schemas. If the
+        // configuration doesn't support this feature, ignore it.
+        try {
+            fConfiguration.setFeature ( NORMALIZE_DATA, false );
+        }
+        catch (XMLConfigurationException exc) {}
+
+    } // <init>(XMLParserConfiguration)
+
+    /**
+     * Constructs a DOM Builder using the specified symbol table.
+     */
+    public DOMParserImpl (SymbolTable symbolTable) {
+        this (new XIncludeAwareParserConfiguration());
+        fConfiguration.setProperty (
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY,
+        symbolTable);
+    } // <init>(SymbolTable)
+
+
+    /**
+     * Constructs a DOM Builder using the specified symbol table and
+     * grammar pool.
+     */
+    public DOMParserImpl (SymbolTable symbolTable, XMLGrammarPool grammarPool) {
+        this (new XIncludeAwareParserConfiguration());
+        fConfiguration.setProperty (
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SYMBOL_TABLE_PROPERTY,
+        symbolTable);
+        fConfiguration.setProperty (
+        Constants.XERCES_PROPERTY_PREFIX
+        + Constants.XMLGRAMMAR_POOL_PROPERTY,
+        grammarPool);
+    }
+
+    /**
+     * Resets the parser state.
+     *
+     * @throws SAXException Thrown on initialization error.
+     */
+    public void reset () {
+        super.reset ();
+
+        // get state of namespace-declarations parameter.
+        fNamespaceDeclarations =
+            fConfiguration.getFeature(Constants.DOM_NAMESPACE_DECLARATIONS);
+
+        // DOM Filter
+        if (fSkippedElemStack!=null) {
+            fSkippedElemStack.removeAllElements ();
+        }
+        fSchemaLocations.clear ();
+        fRejectedElementDepth = 0;
+        fFilterReject = false;
+        fSchemaType = null;
+
+    } // reset()
+
+    //
+    // DOMParser methods
+    //
+
+    public DOMConfiguration getDomConfig (){
+        return this;
+    }
+
+
+    /**
+     *  When the application provides a filter, the parser will call out to
+     * the filter at the completion of the construction of each
+     * <code>Element</code> node. The filter implementation can choose to
+     * remove the element from the document being constructed (unless the
+     * element is the document element) or to terminate the parse early. If
+     * the document is being validated when it's loaded the validation
+     * happens before the filter is called.
+     */
+    public LSParserFilter getFilter () {
+        return fDOMFilter;
+    }
+
+    /**
+     *  When the application provides a filter, the parser will call out to
+     * the filter at the completion of the construction of each
+     * <code>Element</code> node. The filter implementation can choose to
+     * remove the element from the document being constructed (unless the
+     * element is the document element) or to terminate the parse early. If
+     * the document is being validated when it's loaded the validation
+     * happens before the filter is called.
+     */
+    public void setFilter (LSParserFilter filter) {
+        fDOMFilter = filter;
+        if (fSkippedElemStack == null) {
+            fSkippedElemStack = new Stack ();
+        }
+    }
+
+    /**
+     * Set parameters and properties
+     */
+    public void setParameter (String name, Object value) throws DOMException {
+        // set features
+
+        if(value instanceof Boolean){
+            boolean state = ((Boolean)value).booleanValue ();
+            try {
+                if (name.equalsIgnoreCase (Constants.DOM_COMMENTS)) {
+                    fConfiguration.setFeature (INCLUDE_COMMENTS_FEATURE, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_DATATYPE_NORMALIZATION)) {
+                    fConfiguration.setFeature (NORMALIZE_DATA, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_ENTITIES)) {
+                    fConfiguration.setFeature (CREATE_ENTITY_REF_NODES, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_DISALLOW_DOCTYPE)) {
+                    fConfiguration.setFeature (DISALLOW_DOCTYPE_DECL_FEATURE, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_SUPPORTED_MEDIATYPES_ONLY)
+                || name.equalsIgnoreCase(Constants.DOM_NORMALIZE_CHARACTERS)
+                || name.equalsIgnoreCase (Constants.DOM_CHECK_CHAR_NORMALIZATION)
+                || name.equalsIgnoreCase (Constants.DOM_CANONICAL_FORM)) {
+                    if (state) { // true is not supported
+                        String msg =
+                        DOMMessageFormatter.formatMessage (
+                        DOMMessageFormatter.DOM_DOMAIN,
+                        "FEATURE_NOT_SUPPORTED",
+                        new Object[] { name });
+                        throw new DOMException (DOMException.NOT_SUPPORTED_ERR, msg);
+                    }
+                    // setting those features to false is no-op
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_NAMESPACES)) {
+                    fConfiguration.setFeature (NAMESPACES, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_INFOSET)) {
+                    // Setting false has no effect.
+                    if (state) {
+                        // true: namespaces, namespace-declarations,
+                        // comments, element-content-whitespace
+                        fConfiguration.setFeature(NAMESPACES, true);
+                        fConfiguration.setFeature(Constants.DOM_NAMESPACE_DECLARATIONS, true);
+                        fConfiguration.setFeature(INCLUDE_COMMENTS_FEATURE, true);
+                        fConfiguration.setFeature(INCLUDE_IGNORABLE_WHITESPACE, true);
+
+                        // false: validate-if-schema, entities,
+                        // datatype-normalization, cdata-sections
+                        fConfiguration.setFeature(DYNAMIC_VALIDATION, false);
+                        fConfiguration.setFeature(CREATE_ENTITY_REF_NODES, false);
+                        fConfiguration.setFeature(NORMALIZE_DATA, false);
+                        fConfiguration.setFeature(CREATE_CDATA_NODES_FEATURE, false);
+                    }
+                }
+                else if (name.equalsIgnoreCase(Constants.DOM_CDATA_SECTIONS)) {
+                    fConfiguration.setFeature(CREATE_CDATA_NODES_FEATURE, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_NAMESPACE_DECLARATIONS)) {
+                    fConfiguration.setFeature(Constants.DOM_NAMESPACE_DECLARATIONS, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_WELLFORMED)
+                || name.equalsIgnoreCase (Constants.DOM_IGNORE_UNKNOWN_CHARACTER_DENORMALIZATIONS)) {
+                    if (!state) { // false is not supported
+                        String msg =
+                        DOMMessageFormatter.formatMessage (
+                        DOMMessageFormatter.DOM_DOMAIN,
+                        "FEATURE_NOT_SUPPORTED",
+                        new Object[] { name });
+                        throw new DOMException (DOMException.NOT_SUPPORTED_ERR, msg);
+                    }
+                    // setting these features to true is no-op
+                    // REVISIT: implement "namespace-declaration" feature
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_VALIDATE)) {
+                    fConfiguration.setFeature (VALIDATION_FEATURE, state);
+                    if (fSchemaType != Constants.NS_DTD) {
+                        fConfiguration.setFeature (XMLSCHEMA, state);
+                        fConfiguration.setFeature (XMLSCHEMA_FULL_CHECKING, state);
+                    }
+                    if (state){
+                        fConfiguration.setFeature (DYNAMIC_VALIDATION, false);
+                    }
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_VALIDATE_IF_SCHEMA)) {
+                    fConfiguration.setFeature (DYNAMIC_VALIDATION, state);
+                    // Note: validation and dynamic validation are mutually exclusive
+                    if (state){
+                        fConfiguration.setFeature (VALIDATION_FEATURE, false);
+                    }
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_ELEMENT_CONTENT_WHITESPACE)) {
+                    fConfiguration.setFeature (INCLUDE_IGNORABLE_WHITESPACE, state);
+                }
+                else if (name.equalsIgnoreCase (Constants.DOM_PSVI)){
+                    //XSModel - turn on PSVI augmentation
+                    fConfiguration.setFeature (PSVI_AUGMENT, true);
+                    fConfiguration.setProperty (DOCUMENT_CLASS_NAME,
+                    "com.sun.org.apache.xerces.internal.dom.PSVIDocumentImpl");
+                }
+                else {
+                    // Constants.DOM_CHARSET_OVERRIDES_XML_ENCODING feature,
+                    // Constants.DOM_SPLIT_CDATA feature,
+                    // or any Xerces feature
+                    String normalizedName;
+                    if (name.equals(NAMESPACE_GROWTH)) {
+                        normalizedName = NAMESPACE_GROWTH;
+                    }
+                    else if (name.equals(TOLERATE_DUPLICATES)) {
+                        normalizedName = TOLERATE_DUPLICATES;
+                    }
+                    else {
+                        normalizedName = name.toLowerCase(Locale.ENGLISH);
+                    }
+                    fConfiguration.setFeature (normalizedName, state);
+                }
+
+            }
+            catch (XMLConfigurationException e) {
+                String msg =
+                DOMMessageFormatter.formatMessage (
+                DOMMessageFormatter.DOM_DOMAIN,
+                "FEATURE_NOT_FOUND",
+                new Object[] { name });
+                throw new DOMException (DOMException.NOT_FOUND_ERR, msg);
+            }
+        }
+        else { // set properties
+            if (name.equalsIgnoreCase (Constants.DOM_ERROR_HANDLER)) {
+                if (value instanceof DOMErrorHandler || value == null) {
+                    try {
+                        fErrorHandler = new DOMErrorHandlerWrapper ((DOMErrorHandler) value);
+                        fConfiguration.setProperty (ERROR_HANDLER, fErrorHandler);
+                    }
+                    catch (XMLConfigurationException e) {}
+                }
+                else {
+                    // REVISIT: type mismatch
+                    String msg =
+                    DOMMessageFormatter.formatMessage (
+                    DOMMessageFormatter.DOM_DOMAIN,
+                    "TYPE_MISMATCH_ERR",
+                    new Object[] { name });
+                    throw new DOMException (DOMException.TYPE_MISMATCH_ERR, msg);
+                }
+
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_RESOURCE_RESOLVER)) {
+                if (value instanceof LSResourceResolver || value == null) {
+                    try {
+                        fConfiguration.setProperty (ENTITY_RESOLVER, new DOMEntityResolverWrapper ((LSResourceResolver) value));
+                    }
+                    catch (XMLConfigurationException e) {}
+                }
+                else {
+                    // REVISIT: type mismatch
+                    String msg =
+                    DOMMessageFormatter.formatMessage (
+                    DOMMessageFormatter.DOM_DOMAIN,
+                    "TYPE_MISMATCH_ERR",
+                    new Object[] { name });
+                    throw new DOMException (DOMException.TYPE_MISMATCH_ERR, msg);
+                }
+
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_SCHEMA_LOCATION)) {
+                if (value instanceof String || value == null) {
+                    try {
+                        if (value == null) {
+                            fSchemaLocation = null;
+                            fConfiguration.setProperty (
+                                Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_SOURCE,
+                                null);
+                        }
+                        else {
+                            fSchemaLocation = (String)value;
+                            // map DOM schema-location to JAXP schemaSource property
+                            // tokenize location string
+                            StringTokenizer t = new StringTokenizer (fSchemaLocation, " \n\t\r");
+                            if (t.hasMoreTokens ()){
+                                fSchemaLocations.clear ();
+                                fSchemaLocations.add (t.nextToken ());
+                                while (t.hasMoreTokens ()) {
+                                    fSchemaLocations.add (t.nextToken ());
+                                }
+                                fConfiguration.setProperty (
+                                Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_SOURCE,
+                                fSchemaLocations.toArray ());
+                            }
+                            else {
+                                fConfiguration.setProperty (
+                                Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_SOURCE,
+                                value);
+                            }
+                        }
+                    }
+                    catch (XMLConfigurationException e) {}
+                }
+                else {
+                    // REVISIT: type mismatch
+                    String msg =
+                    DOMMessageFormatter.formatMessage (
+                    DOMMessageFormatter.DOM_DOMAIN,
+                    "TYPE_MISMATCH_ERR",
+                    new Object[] { name });
+                    throw new DOMException (DOMException.TYPE_MISMATCH_ERR, msg);
+                }
+
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_SCHEMA_TYPE)) {
+                if (value instanceof String || value == null) {
+                    try {
+                        if (value == null) {
+                            // turn off schema features
+                            fConfiguration.setFeature (XMLSCHEMA, false);
+                            fConfiguration.setFeature (XMLSCHEMA_FULL_CHECKING, false);
+                            // map to JAXP schemaLanguage
+                            fConfiguration.setProperty ( Constants.JAXP_PROPERTY_PREFIX
+                            + Constants.SCHEMA_LANGUAGE,
+                            null);
+                            fSchemaType = null;
+                        }
+                        else if (value.equals (Constants.NS_XMLSCHEMA)) {
+                            // turn on schema features
+                            fConfiguration.setFeature (XMLSCHEMA, true);
+                            fConfiguration.setFeature (XMLSCHEMA_FULL_CHECKING, true);
+                            // map to JAXP schemaLanguage
+                            fConfiguration.setProperty ( Constants.JAXP_PROPERTY_PREFIX
+                            + Constants.SCHEMA_LANGUAGE,
+                            Constants.NS_XMLSCHEMA);
+                            fSchemaType = Constants.NS_XMLSCHEMA;
+                        }
+                        else if (value.equals (Constants.NS_DTD)) {
+                            // turn off schema features
+                            fConfiguration.setFeature (XMLSCHEMA, false);
+                            fConfiguration.setFeature (XMLSCHEMA_FULL_CHECKING, false);
+                            // map to JAXP schemaLanguage
+                            fConfiguration.setProperty ( Constants.JAXP_PROPERTY_PREFIX
+                            + Constants.SCHEMA_LANGUAGE,
+                            Constants.NS_DTD);
+                            fSchemaType = Constants.NS_DTD;
+                        }
+                    }
+                    catch (XMLConfigurationException e) {}
+                }
+                else {
+                    String msg =
+                    DOMMessageFormatter.formatMessage (
+                    DOMMessageFormatter.DOM_DOMAIN,
+                    "TYPE_MISMATCH_ERR",
+                    new Object[] { name });
+                    throw new DOMException (DOMException.TYPE_MISMATCH_ERR, msg);
+                }
+
+            }
+            else if (name.equalsIgnoreCase (DOCUMENT_CLASS_NAME)) {
+                fConfiguration.setProperty (DOCUMENT_CLASS_NAME, value);
+            }
+            else {
+                // Try to set the property.
+                String normalizedName = name.toLowerCase(Locale.ENGLISH);
+                try {
+                    fConfiguration.setProperty(normalizedName, value);
+                    return;
+                }
+                catch (XMLConfigurationException e) {}
+
+                // If this is a boolean parameter a type mismatch should be thrown.
+                try {
+                    if (name.equals(NAMESPACE_GROWTH)) {
+                        normalizedName = NAMESPACE_GROWTH;
+                    }
+                    else if (name.equals(TOLERATE_DUPLICATES)) {
+                        normalizedName = TOLERATE_DUPLICATES;
+                    }
+                    fConfiguration.getFeature(normalizedName);
+                    throw newTypeMismatchError(name);
+
+                }
+                catch (XMLConfigurationException e) {}
+
+                // Parameter is not recognized
+                throw newFeatureNotFoundError(name);
+            }
+        }
+    }
+
+    /**
+     * Look up the value of a feature or a property.
+     */
+    public Object getParameter (String name) throws DOMException {
+        if (name.equalsIgnoreCase (Constants.DOM_COMMENTS)) {
+            return (fConfiguration.getFeature (INCLUDE_COMMENTS_FEATURE))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_DATATYPE_NORMALIZATION)) {
+            return (fConfiguration.getFeature (NORMALIZE_DATA))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_ENTITIES)) {
+            return (fConfiguration.getFeature (CREATE_ENTITY_REF_NODES))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_NAMESPACES)) {
+            return (fConfiguration.getFeature (NAMESPACES))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_VALIDATE)) {
+            return (fConfiguration.getFeature (VALIDATION_FEATURE))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_VALIDATE_IF_SCHEMA)) {
+            return (fConfiguration.getFeature (DYNAMIC_VALIDATION))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_ELEMENT_CONTENT_WHITESPACE)) {
+            return (fConfiguration.getFeature (INCLUDE_IGNORABLE_WHITESPACE))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_DISALLOW_DOCTYPE)) {
+            return (fConfiguration.getFeature (DISALLOW_DOCTYPE_DECL_FEATURE))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_INFOSET)) {
+            // REVISIT: This is somewhat expensive to compute
+            // but it's possible that the user has a reference
+            // to the configuration and is changing the values
+            // of these features directly on it.
+            boolean infoset = fConfiguration.getFeature(NAMESPACES) &&
+                fConfiguration.getFeature(Constants.DOM_NAMESPACE_DECLARATIONS) &&
+                fConfiguration.getFeature(INCLUDE_COMMENTS_FEATURE) &&
+                fConfiguration.getFeature(INCLUDE_IGNORABLE_WHITESPACE) &&
+                !fConfiguration.getFeature(DYNAMIC_VALIDATION) &&
+                !fConfiguration.getFeature(CREATE_ENTITY_REF_NODES) &&
+                !fConfiguration.getFeature(NORMALIZE_DATA) &&
+                !fConfiguration.getFeature(CREATE_CDATA_NODES_FEATURE);
+            return (infoset) ? Boolean.TRUE : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase(Constants.DOM_CDATA_SECTIONS)) {
+            return (fConfiguration.getFeature(CREATE_CDATA_NODES_FEATURE))
+                ? Boolean.TRUE : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase(Constants.DOM_CHECK_CHAR_NORMALIZATION ) ||
+                 name.equalsIgnoreCase(Constants.DOM_NORMALIZE_CHARACTERS)){
+            return Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase(Constants.DOM_NAMESPACE_DECLARATIONS)
+        || name.equalsIgnoreCase (Constants.DOM_WELLFORMED)
+        || name.equalsIgnoreCase (Constants.DOM_IGNORE_UNKNOWN_CHARACTER_DENORMALIZATIONS)
+        || name.equalsIgnoreCase (Constants.DOM_CANONICAL_FORM)
+        || name.equalsIgnoreCase (Constants.DOM_SUPPORTED_MEDIATYPES_ONLY)
+        || name.equalsIgnoreCase (Constants.DOM_SPLIT_CDATA)
+        || name.equalsIgnoreCase (Constants.DOM_CHARSET_OVERRIDES_XML_ENCODING)) {
+            return (fConfiguration.getFeature (name.toLowerCase(Locale.ENGLISH)))
+            ? Boolean.TRUE
+            : Boolean.FALSE;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_ERROR_HANDLER)) {
+            if (fErrorHandler != null) {
+                return fErrorHandler.getErrorHandler ();
+            }
+            return null;
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_RESOURCE_RESOLVER)) {
+            try {
+                XMLEntityResolver entityResolver =
+                (XMLEntityResolver) fConfiguration.getProperty (ENTITY_RESOLVER);
+                if (entityResolver != null
+                && entityResolver instanceof DOMEntityResolverWrapper) {
+                    return ((DOMEntityResolverWrapper) entityResolver).getEntityResolver ();
+                }
+                return null;
+            }
+            catch (XMLConfigurationException e) {}
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_SCHEMA_TYPE)) {
+            return fConfiguration.getProperty (
+            Constants.JAXP_PROPERTY_PREFIX + Constants.SCHEMA_LANGUAGE);
+        }
+        else if (name.equalsIgnoreCase (Constants.DOM_SCHEMA_LOCATION)) {
+            return fSchemaLocation;
+        }
+        else if (name.equalsIgnoreCase (SYMBOL_TABLE)){
+            return fConfiguration.getProperty (SYMBOL_TABLE);
+        }
+        else if (name.equalsIgnoreCase (DOCUMENT_CLASS_NAME)) {
+            return fConfiguration.getProperty (DOCUMENT_CLASS_NAME);
+        }
+        else {
+            // This could be a recognized feature or property.
+            String normalizedName;
+
+            if (name.equals(NAMESPACE_GROWTH)) {
+                normalizedName = NAMESPACE_GROWTH;
+            }
+            else if (name.equals(TOLERATE_DUPLICATES)) {
+                normalizedName = TOLERATE_DUPLICATES;
+            }
+            else {
+                normalizedName = name.toLowerCase(Locale.ENGLISH);
+            }
+            try {
+                return fConfiguration.getFeature(normalizedName)
+                    ? Boolean.TRUE : Boolean.FALSE;
+            }
+            catch (XMLConfigurationException e) {}
+
+            // This isn't a feature; perhaps it's a property
+            try {
+                return fConfiguration.getProperty(normalizedName);
+            }
+            catch (XMLConfigurationException e) {}
+
+            throw newFeatureNotFoundError(name);
+        }
+        return null;
+    }
+
+    public boolean canSetParameter (String name, Object value) {
+        if (value == null){
+                return true;
+        }
+
+        if(value instanceof Boolean){
+            boolean state = ((Boolean)value).booleanValue ();
+            if ( name.equalsIgnoreCase (Constants.DOM_SUPPORTED_MEDIATYPES_ONLY)
+            || name.equalsIgnoreCase(Constants.DOM_NORMALIZE_CHARACTERS)
+            || name.equalsIgnoreCase(Constants.DOM_CHECK_CHAR_NORMALIZATION )
+            || name.equalsIgnoreCase (Constants.DOM_CANONICAL_FORM) ) {
+                // true is not supported
+                return (state) ? false : true;
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_WELLFORMED)
+            || name.equalsIgnoreCase (Constants.DOM_IGNORE_UNKNOWN_CHARACTER_DENORMALIZATIONS)) {
+                // false is not supported
+                return (state) ? true : false;
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_CDATA_SECTIONS)
+            || name.equalsIgnoreCase (Constants.DOM_CHARSET_OVERRIDES_XML_ENCODING)
+            || name.equalsIgnoreCase (Constants.DOM_COMMENTS)
+            || name.equalsIgnoreCase (Constants.DOM_DATATYPE_NORMALIZATION)
+            || name.equalsIgnoreCase (Constants.DOM_DISALLOW_DOCTYPE)
+            || name.equalsIgnoreCase (Constants.DOM_ENTITIES)
+            || name.equalsIgnoreCase (Constants.DOM_INFOSET)
+            || name.equalsIgnoreCase (Constants.DOM_NAMESPACES)
+            || name.equalsIgnoreCase (Constants.DOM_NAMESPACE_DECLARATIONS)
+            || name.equalsIgnoreCase (Constants.DOM_VALIDATE)
+            || name.equalsIgnoreCase (Constants.DOM_VALIDATE_IF_SCHEMA)
+            || name.equalsIgnoreCase (Constants.DOM_ELEMENT_CONTENT_WHITESPACE)
+            || name.equalsIgnoreCase (Constants.DOM_XMLDECL)) {
+                return true;
+            }
+
+            // Recognize Xerces features.
+            try {
+                String normalizedName;
+                if (name.equalsIgnoreCase(NAMESPACE_GROWTH)) {
+                    normalizedName = NAMESPACE_GROWTH;
+                }
+                else if (name.equalsIgnoreCase(TOLERATE_DUPLICATES)) {
+                    normalizedName = TOLERATE_DUPLICATES;
+                }
+                else {
+                    normalizedName = name.toLowerCase(Locale.ENGLISH);
+                }
+                fConfiguration.getFeature(normalizedName);
+                return true;
+            }
+            catch (XMLConfigurationException e) {
+                return false;
+            }
+        }
+        else { // check properties
+            if (name.equalsIgnoreCase (Constants.DOM_ERROR_HANDLER)) {
+                if (value instanceof DOMErrorHandler || value == null) {
+                    return true;
+                }
+                return false;
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_RESOURCE_RESOLVER)) {
+                if (value instanceof LSResourceResolver || value == null) {
+                    return true;
+                }
+                return false;
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_SCHEMA_TYPE)) {
+                if ((value instanceof String
+                && (value.equals (Constants.NS_XMLSCHEMA)
+                || value.equals (Constants.NS_DTD))) || value == null) {
+                    return true;
+                }
+                return false;
+            }
+            else if (name.equalsIgnoreCase (Constants.DOM_SCHEMA_LOCATION)) {
+                if (value instanceof String || value == null)
+                    return true;
+                return false;
+            }
+            else if (name.equalsIgnoreCase (DOCUMENT_CLASS_NAME)){
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     *  DOM Level 3 CR - Experimental.
+     *
+     *  The list of the parameters supported by this
+     * <code>DOMConfiguration</code> object and for which at least one value
+     * can be set by the application. Note that this list can also contain
+     * parameter names defined outside this specification.
+     */
+    public DOMStringList getParameterNames () {
+        if (fRecognizedParameters == null){
+            Vector parameters = new Vector();
+
+            // REVISIT: add Xerces recognized properties/features
+            parameters.add(Constants.DOM_NAMESPACES);
+            parameters.add(Constants.DOM_CDATA_SECTIONS);
+            parameters.add(Constants.DOM_CANONICAL_FORM);
+            parameters.add(Constants.DOM_NAMESPACE_DECLARATIONS);
+            parameters.add(Constants.DOM_SPLIT_CDATA);
+
+            parameters.add(Constants.DOM_ENTITIES);
+            parameters.add(Constants.DOM_VALIDATE_IF_SCHEMA);
+            parameters.add(Constants.DOM_VALIDATE);
+            parameters.add(Constants.DOM_DATATYPE_NORMALIZATION);
+
+            parameters.add(Constants.DOM_CHARSET_OVERRIDES_XML_ENCODING);
+            parameters.add(Constants.DOM_CHECK_CHAR_NORMALIZATION);
+            parameters.add(Constants.DOM_SUPPORTED_MEDIATYPES_ONLY);
+            parameters.add(Constants.DOM_IGNORE_UNKNOWN_CHARACTER_DENORMALIZATIONS);
+
+            parameters.add(Constants.DOM_NORMALIZE_CHARACTERS);
+            parameters.add(Constants.DOM_WELLFORMED);
+            parameters.add(Constants.DOM_INFOSET);
+            parameters.add(Constants.DOM_DISALLOW_DOCTYPE);
+            parameters.add(Constants.DOM_ELEMENT_CONTENT_WHITESPACE);
+            parameters.add(Constants.DOM_COMMENTS);
+
+            parameters.add(Constants.DOM_ERROR_HANDLER);
+            parameters.add(Constants.DOM_RESOURCE_RESOLVER);
+            parameters.add(Constants.DOM_SCHEMA_LOCATION);
+            parameters.add(Constants.DOM_SCHEMA_TYPE);
+
+            fRecognizedParameters = new DOMStringListImpl(parameters);
+
+        }
+
+        return fRecognizedParameters;
+    }
+
+    /**
+     * Parse an XML document from a location identified by an URI reference.
+     * If the URI contains a fragment identifier (see section 4.1 in ), the
+     * behavior is not defined by this specification.
+     *
+     */
+    public Document parseURI (String uri) throws LSException {
+
+        //If DOMParser insstance is already busy parsing another document when this
+        // method is called, then raise INVALID_STATE_ERR according to DOM L3 LS spec
+        if ( fBusy ) {
+            String msg = DOMMessageFormatter.formatMessage (
+            DOMMessageFormatter.DOM_DOMAIN,
+            "INVALID_STATE_ERR",null);
+            throw new DOMException ( DOMException.INVALID_STATE_ERR,msg);
+        }
+
+        XMLInputSource source = new XMLInputSource (null, uri, null);
+        try {
+            currentThread = Thread.currentThread();
+                        fBusy = true;
+            parse (source);
+            fBusy = false;
+            if (abortNow && currentThread.isInterrupted()) {
+                //reset interrupt state
+                abortNow = false;
+                Thread.interrupted();
+            }
+        } catch (Exception e){
+            fBusy = false;
+            if (abortNow && currentThread.isInterrupted()) {
+                Thread.interrupted();
+            }
+            if (abortNow) {
+                abortNow = false;
+                restoreHandlers();
+                return null;
+            }
+            // Consume this exception if the user
+            // issued an interrupt or an abort.
+            if (e != Abort.INSTANCE) {
+                if (!(e instanceof XMLParseException) && fErrorHandler != null) {
+                    DOMErrorImpl error = new DOMErrorImpl ();
+                    error.fException = e;
+                    error.fMessage = e.getMessage ();
+                    error.fSeverity = DOMError.SEVERITY_FATAL_ERROR;
+                    fErrorHandler.getErrorHandler ().handleError (error);
+                }
+                if (DEBUG) {
+                    e.printStackTrace ();
+                }
+                throw (LSException) DOMUtil.createLSException(LSException.PARSE_ERR, e).fillInStackTrace();
+            }
+        }
+        Document doc = getDocument();
+        dropDocumentReferences();
+        return doc;
+    }
+
+    /**
+     * Parse an XML document from a resource identified by an
+     * <code>LSInput</code>.
+     *
+     */
+    public Document parse (LSInput is) throws LSException {
+
+        // need to wrap the LSInput with an XMLInputSource
+        XMLInputSource xmlInputSource = dom2xmlInputSource (is);
+        if ( fBusy ) {
+            String msg = DOMMessageFormatter.formatMessage (
+            DOMMessageFormatter.DOM_DOMAIN,
+            "INVALID_STATE_ERR",null);
+            throw new DOMException ( DOMException.INVALID_STATE_ERR,msg);
+        }
+
+        try {
+            currentThread = Thread.currentThread();
+                        fBusy = true;
+            parse (xmlInputSource);
+            fBusy = false;
+            if (abortNow && currentThread.isInterrupted()) {
+                //reset interrupt state
+                abortNow = false;
+                Thread.interrupted();
+            }
+        } catch (Exception e) {
+            fBusy = false;
+            if (abortNow && currentThread.isInterrupted()) {
+                Thread.interrupted();
+            }
+            if (abortNow) {
+                abortNow = false;
+                restoreHandlers();
+                return null;
+            }
+            // Consume this exception if the user
+            // issued an interrupt or an abort.
+            if (e != Abort.INSTANCE) {
+                if (!(e instanceof XMLParseException) && fErrorHandler != null) {
+                   DOMErrorImpl error = new DOMErrorImpl ();
+                   error.fException = e;
+                   error.fMessage = e.getMessage ();
+                   error.fSeverity = DOMError.SEVERITY_FATAL_ERROR;
+                   fErrorHandler.getErrorHandler().handleError (error);
+                }
+                if (DEBUG) {
+                   e.printStackTrace ();
+                }
+                throw (LSException) DOMUtil.createLSException(LSException.PARSE_ERR, e).fillInStackTrace();
+            }
+        }
+        Document doc = getDocument();
+        dropDocumentReferences();
+        return doc;
+    }
+
+
+    private void restoreHandlers() {
+        fConfiguration.setDocumentHandler(this);
+        fConfiguration.setDTDHandler(this);
+        fConfiguration.setDTDContentModelHandler(this);
+    }
+
+    /**
+     *  Parse an XML document or fragment from a resource identified by an
+     * <code>LSInput</code> and insert the content into an existing
+     * document at the position epcified with the <code>contextNode</code>
+     * and <code>action</code> arguments. When parsing the input stream the
+     * context node is used for resolving unbound namespace prefixes.
+     *
+     * @param is  The <code>LSInput</code> from which the source
+     *   document is to be read.
+     * @param cnode  The <code>Node</code> that is used as the context for
+     *   the data that is being parsed.
+     * @param action This parameter describes which action should be taken
+     *   between the new set of node being inserted and the existing
+     *   children of the context node. The set of possible actions is
+     *   defined above.
+     * @exception DOMException
+     *   HIERARCHY_REQUEST_ERR: Thrown if this action results in an invalid
+     *   hierarchy (i.e. a Document with more than one document element).
+     */
+    public Node parseWithContext (LSInput is, Node cnode,
+    short action) throws DOMException, LSException {
+        // REVISIT: need to implement.
+        throw new DOMException (DOMException.NOT_SUPPORTED_ERR, "Not supported");
+    }
+
+
+    /**
+     * NON-DOM: convert LSInput to XNIInputSource
+     *
+     * @param is
+     * @return
+     */
+    XMLInputSource dom2xmlInputSource (LSInput is) {
+        // need to wrap the LSInput with an XMLInputSource
+        XMLInputSource xis = null;
+        // check whether there is a Reader
+        // according to DOM, we need to treat such reader as "UTF-16".
+        if (is.getCharacterStream () != null) {
+            xis = new XMLInputSource (is.getPublicId (), is.getSystemId (),
+            is.getBaseURI (), is.getCharacterStream (),
+            "UTF-16");
+        }
+        // check whether there is an InputStream
+        else if (is.getByteStream () != null) {
+            xis = new XMLInputSource (is.getPublicId (), is.getSystemId (),
+            is.getBaseURI (), is.getByteStream (),
+            is.getEncoding ());
+        }
+        // if there is a string data, use a StringReader
+        // according to DOM, we need to treat such data as "UTF-16".
+        else if (is.getStringData () != null && is.getStringData().length() > 0) {
+            xis = new XMLInputSource (is.getPublicId (), is.getSystemId (),
+            is.getBaseURI (), new StringReader (is.getStringData ()),
+            "UTF-16");
+        }
+        // otherwise, just use the public/system/base Ids
+        else if ((is.getSystemId() != null && is.getSystemId().length() > 0) ||
+            (is.getPublicId() != null && is.getPublicId().length() > 0)) {
+            xis = new XMLInputSource (is.getPublicId (), is.getSystemId (),
+            is.getBaseURI ());
+        }
+        else {
+            // all inputs are null
+            if (fErrorHandler != null) {
+                DOMErrorImpl error = new DOMErrorImpl();
+                error.fType = "no-input-specified";
+                error.fMessage = "no-input-specified";
+                error.fSeverity = DOMError.SEVERITY_FATAL_ERROR;
+                fErrorHandler.getErrorHandler().handleError(error);
+            }
+            throw new LSException(LSException.PARSE_ERR, "no-input-specified");
+        }
+        return xis;
+    }
+
+    /**
+     * @see org.w3c.dom.ls.LSParser#getAsync()
+     */
+    public boolean getAsync () {
+        return false;
+    }
+
+    /**
+     * @see org.w3c.dom.ls.LSParser#getBusy()
+     */
+    public boolean getBusy () {
+        return fBusy;
+    }
+
+    /**
+     * @see org.w3c.dom.ls.DOMParser#abort()
+     */
+    public void abort () {
+        // If parse operation is in progress then reset it
+        if ( fBusy ) {
+            fBusy = false;
+            if(currentThread != null) {
+                abortNow = true;
+                if (abortHandler == null) {
+                    abortHandler = new AbortHandler();
+                }
+                fConfiguration.setDocumentHandler(abortHandler);
+                fConfiguration.setDTDHandler(abortHandler);
+                fConfiguration.setDTDContentModelHandler(abortHandler);
+
+                if(currentThread == Thread.currentThread())
+                    throw Abort.INSTANCE;
+
+                currentThread.interrupt();
+            }
+        }
+        return; // If not busy then this is noop
+    }
+
+    /**
+     * The start of an element. If the document specifies the start element
+     * by using an empty tag, then the startElement method will immediately
+     * be followed by the endElement method, with no intervening methods.
+     * Overriding the parent to handle DOM_NAMESPACE_DECLARATIONS=false.
+     *
+     * @param element    The name of the element.
+     * @param attributes The element attributes.
+     * @param augs     Additional information that may include infoset augmentations
+     *
+     * @throws XNIException Thrown by handler to signal an error.
+     */
+    public void startElement (QName element, XMLAttributes attributes, Augmentations augs) {
+        // namespace declarations parameter has no effect if namespaces is false.
+        if (!fNamespaceDeclarations && fNamespaceAware) {
+            int len = attributes.getLength();
+            for (int i = len - 1; i >= 0; --i) {
+                if (XMLSymbols.PREFIX_XMLNS == attributes.getPrefix(i) ||
+                    XMLSymbols.PREFIX_XMLNS == attributes.getQName(i)) {
+                    attributes.removeAttributeAt(i);
+                }
+            }
+        }
+        super.startElement(element, attributes, augs);
+    }
+
+    private class AbortHandler implements XMLDocumentHandler, XMLDTDHandler, XMLDTDContentModelHandler  {
+
+        private XMLDocumentSource documentSource;
+        private XMLDTDContentModelSource dtdContentSource;
+        private XMLDTDSource dtdSource;
+
+        public void startDocument(XMLLocator locator, String encoding, NamespaceContext namespaceContext, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void xmlDecl(String version, String encoding, String standalone, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void doctypeDecl(String rootElement, String publicId, String systemId, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void comment(XMLString text, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void processingInstruction(String target, XMLString data, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void emptyElement(QName element, XMLAttributes attributes, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startGeneralEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void textDecl(String version, String encoding, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endGeneralEntity(String name, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void characters(XMLString text, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void ignorableWhitespace(XMLString text, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endElement(QName element, Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startCDATA(Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endCDATA(Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endDocument(Augmentations augs) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void setDocumentSource(XMLDocumentSource source) {
+            documentSource = source;
+        }
+
+        public XMLDocumentSource getDocumentSource() {
+            return documentSource;
+        }
+
+        public void startDTD(XMLLocator locator, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startParameterEntity(String name, XMLResourceIdentifier identifier, String encoding, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endParameterEntity(String name, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startExternalSubset(XMLResourceIdentifier identifier, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endExternalSubset(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void elementDecl(String name, String contentModel, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startAttlist(String elementName, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void attributeDecl(String elementName, String attributeName, String type, String[] enumeration, String defaultType, XMLString defaultValue, XMLString nonNormalizedDefaultValue, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endAttlist(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void internalEntityDecl(String name, XMLString text, XMLString nonNormalizedText, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void externalEntityDecl(String name, XMLResourceIdentifier identifier, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void unparsedEntityDecl(String name, XMLResourceIdentifier identifier, String notation, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void notationDecl(String name, XMLResourceIdentifier identifier, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startConditional(short type, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void ignoredCharacters(XMLString text, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endConditional(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endDTD(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void setDTDSource(XMLDTDSource source) {
+            dtdSource = source;
+        }
+
+        public XMLDTDSource getDTDSource() {
+            return dtdSource;
+        }
+
+        public void startContentModel(String elementName, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void any(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void empty(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void startGroup(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void pcdata(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void element(String elementName, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void separator(short separator, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void occurrence(short occurrence, Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endGroup(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void endContentModel(Augmentations augmentations) throws XNIException {
+            throw Abort.INSTANCE;
+        }
+
+        public void setDTDContentModelSource(XMLDTDContentModelSource source) {
+            dtdContentSource = source;
+        }
+
+        public XMLDTDContentModelSource getDTDContentModelSource() {
+            return dtdContentSource;
+        }
+
+    }
+
+    private static DOMException newFeatureNotFoundError(String name) {
+        String msg =
+            DOMMessageFormatter.formatMessage (
+                    DOMMessageFormatter.DOM_DOMAIN,
+                    "FEATURE_NOT_FOUND",
+                    new Object[] { name });
+        return new DOMException (DOMException.NOT_FOUND_ERR, msg);
+    }
+
+    private static DOMException newTypeMismatchError(String name) {
+        String msg =
+            DOMMessageFormatter.formatMessage (
+                    DOMMessageFormatter.DOM_DOMAIN,
+                    "TYPE_MISMATCH_ERR",
+                    new Object[] { name });
+        return new DOMException (DOMException.TYPE_MISMATCH_ERR, msg);
+    }
+
+} // class DOMParserImpl

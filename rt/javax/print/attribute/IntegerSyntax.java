@@ -1,140 +1,134 @@
-/*     */ package javax.print.attribute;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class IntegerSyntax
-/*     */   implements Serializable, Cloneable
-/*     */ {
-/*     */   private static final long serialVersionUID = 3644574816328081943L;
-/*     */   private int value;
-/*     */   
-/*     */   protected IntegerSyntax(int paramInt) {
-/*  61 */     this.value = paramInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected IntegerSyntax(int paramInt1, int paramInt2, int paramInt3) {
-/*  78 */     if (paramInt2 > paramInt1 || paramInt1 > paramInt3) {
-/*  79 */       throw new IllegalArgumentException("Value " + paramInt1 + " not in range " + paramInt2 + ".." + paramInt3);
-/*     */     }
-/*     */ 
-/*     */     
-/*  83 */     this.value = paramInt1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getValue() {
-/*  91 */     return this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 114 */     return (paramObject != null && paramObject instanceof IntegerSyntax && this.value == ((IntegerSyntax)paramObject).value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 123 */     return this.value;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 132 */     return "" + this.value;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\print\attribute\IntegerSyntax.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.print.attribute;
+
+import java.io.Serializable;
+
+/**
+ * Class IntegerSyntax is an abstract base class providing the common
+ * implementation of all attributes with integer values.
+ * <P>
+ * Under the hood, an integer attribute is just an integer. You can get an
+ * integer attribute's integer value by calling {@link #getValue()
+ * getValue()}. An integer attribute's integer value is
+ * established when it is constructed (see {@link #IntegerSyntax(int)
+ * IntegerSyntax(int)}). Once constructed, an integer attribute's
+ * value is immutable.
+ * <P>
+ *
+ * @author  David Mendenhall
+ * @author  Alan Kaminsky
+ */
+public abstract class IntegerSyntax implements Serializable, Cloneable {
+
+    private static final long serialVersionUID = 3644574816328081943L;
+
+    /**
+     * This integer attribute's integer value.
+     * @serial
+     */
+    private int value;
+
+    /**
+     * Construct a new integer attribute with the given integer value.
+     *
+     * @param  value  Integer value.
+     */
+    protected IntegerSyntax(int value) {
+        this.value = value;
+    }
+
+    /**
+     * Construct a new integer attribute with the given integer value, which
+     * must lie within the given range.
+     *
+     * @param  value       Integer value.
+     * @param  lowerBound  Lower bound.
+     * @param  upperBound  Upper bound.
+     *
+     * @exception  IllegalArgumentException
+     *     (Unchecked exception) Thrown if <CODE>value</CODE> is less than
+     *     <CODE>lowerBound</CODE> or greater than
+     *     <CODE>upperBound</CODE>.
+     */
+    protected IntegerSyntax(int value, int lowerBound, int upperBound) {
+        if (lowerBound > value || value > upperBound) {
+            throw new IllegalArgumentException("Value " + value +
+                                               " not in range " + lowerBound +
+                                               ".." + upperBound);
+        }
+        this.value = value;
+    }
+
+    /**
+     * Returns this integer attribute's integer value.
+     * @return the integer value
+     */
+    public int getValue() {
+        return value;
+    }
+
+    /**
+     * Returns whether this integer attribute is equivalent to the passed in
+     * object. To be equivalent, all of the following conditions must be true:
+     * <OL TYPE=1>
+     * <LI>
+     * <CODE>object</CODE> is not null.
+     * <LI>
+     * <CODE>object</CODE> is an instance of class IntegerSyntax.
+     * <LI>
+     * This integer attribute's value and <CODE>object</CODE>'s value are
+     * equal.
+     * </OL>
+     *
+     * @param  object  Object to compare to.
+     *
+     * @return  True if <CODE>object</CODE> is equivalent to this integer
+     *          attribute, false otherwise.
+     */
+    public boolean equals(Object object) {
+
+        return (object != null && object instanceof IntegerSyntax &&
+                value == ((IntegerSyntax) object).value);
+    }
+
+    /**
+     * Returns a hash code value for this integer attribute. The hash code is
+     * just this integer attribute's integer value.
+     */
+    public int hashCode() {
+        return value;
+    }
+
+    /**
+     * Returns a string value corresponding to this integer attribute. The
+     * string value is just this integer attribute's integer value converted to
+     * a string.
+     */
+    public String toString() {
+        return "" + value;
+    }
+}

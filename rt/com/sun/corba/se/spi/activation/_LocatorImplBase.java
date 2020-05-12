@@ -1,144 +1,140 @@
-/*     */ package com.sun.corba.se.spi.activation;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocation;
-/*     */ import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationHelper;
-/*     */ import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORB;
-/*     */ import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORBHelper;
-/*     */ import java.util.Hashtable;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.InvokeHandler;
-/*     */ import org.omg.CORBA.portable.ObjectImpl;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA.portable.ResponseHandler;
-/*     */ 
-/*     */ public abstract class _LocatorImplBase
-/*     */   extends ObjectImpl
-/*     */   implements Locator, InvokeHandler
-/*     */ {
-/*  20 */   private static Hashtable _methods = new Hashtable<>();
-/*     */   
-/*     */   static {
-/*  23 */     _methods.put("locateServer", new Integer(0));
-/*  24 */     _methods.put("locateServerForORB", new Integer(1));
-/*  25 */     _methods.put("getEndpoint", new Integer(2));
-/*  26 */     _methods.put("getServerPortForType", new Integer(3));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public OutputStream _invoke(String paramString, InputStream paramInputStream, ResponseHandler paramResponseHandler) {
-/*  33 */     OutputStream outputStream = null;
-/*  34 */     Integer integer = (Integer)_methods.get(paramString);
-/*  35 */     if (integer == null) {
-/*  36 */       throw new BAD_OPERATION(0, CompletionStatus.COMPLETED_MAYBE);
-/*     */     }
-/*  38 */     switch (integer.intValue()) {
-/*     */       
-/*     */       case 0:
-/*     */         
-/*     */         try {
-/*     */ 
-/*     */           
-/*  45 */           int i = ServerIdHelper.read(paramInputStream);
-/*  46 */           String str = paramInputStream.read_string();
-/*  47 */           ServerLocation serverLocation = null;
-/*  48 */           serverLocation = locateServer(i, str);
-/*  49 */           outputStream = paramResponseHandler.createReply();
-/*  50 */           ServerLocationHelper.write(outputStream, serverLocation);
-/*  51 */         } catch (NoSuchEndPoint noSuchEndPoint) {
-/*  52 */           outputStream = paramResponseHandler.createExceptionReply();
-/*  53 */           NoSuchEndPointHelper.write(outputStream, noSuchEndPoint);
-/*  54 */         } catch (ServerNotRegistered serverNotRegistered) {
-/*  55 */           outputStream = paramResponseHandler.createExceptionReply();
-/*  56 */           ServerNotRegisteredHelper.write(outputStream, serverNotRegistered);
-/*  57 */         } catch (ServerHeldDown serverHeldDown) {
-/*  58 */           outputStream = paramResponseHandler.createExceptionReply();
-/*  59 */           ServerHeldDownHelper.write(outputStream, serverHeldDown);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 127 */         return outputStream;case 1: try { int i = ServerIdHelper.read(paramInputStream); String str = ORBidHelper.read(paramInputStream); ServerLocationPerORB serverLocationPerORB = null; serverLocationPerORB = locateServerForORB(i, str); outputStream = paramResponseHandler.createReply(); ServerLocationPerORBHelper.write(outputStream, serverLocationPerORB); } catch (InvalidORBid invalidORBid) { outputStream = paramResponseHandler.createExceptionReply(); InvalidORBidHelper.write(outputStream, invalidORBid); } catch (ServerNotRegistered serverNotRegistered) { outputStream = paramResponseHandler.createExceptionReply(); ServerNotRegisteredHelper.write(outputStream, serverNotRegistered); } catch (ServerHeldDown serverHeldDown) { outputStream = paramResponseHandler.createExceptionReply(); ServerHeldDownHelper.write(outputStream, serverHeldDown); }  return outputStream;case 2: try { String str = paramInputStream.read_string(); int i = 0; i = getEndpoint(str); outputStream = paramResponseHandler.createReply(); outputStream.write_long(i); } catch (NoSuchEndPoint noSuchEndPoint) { outputStream = paramResponseHandler.createExceptionReply(); NoSuchEndPointHelper.write(outputStream, noSuchEndPoint); }  return outputStream;case 3: try { ServerLocationPerORB serverLocationPerORB = ServerLocationPerORBHelper.read(paramInputStream); String str = paramInputStream.read_string(); int i = 0; i = getServerPortForType(serverLocationPerORB, str); outputStream = paramResponseHandler.createReply(); outputStream.write_long(i); } catch (NoSuchEndPoint noSuchEndPoint) { outputStream = paramResponseHandler.createExceptionReply(); NoSuchEndPointHelper.write(outputStream, noSuchEndPoint); }  return outputStream;
-/*     */     } 
-/*     */     throw new BAD_OPERATION(0, CompletionStatus.COMPLETED_MAYBE);
-/*     */   }
-/* 131 */   private static String[] __ids = new String[] { "IDL:activation/Locator:1.0" };
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] _ids() {
-/* 136 */     return (String[])__ids.clone();
-/*     */   }
-/*     */ }
+package com.sun.corba.se.spi.activation;
 
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\activation\_LocatorImplBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+/**
+* com/sun/corba/se/spi/activation/_LocatorImplBase.java .
+* Generated by the IDL-to-Java compiler (portable), version "3.2"
+* from c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/com/sun/corba/se/spi/activation/activation.idl
+* Monday, April 1, 2019 8:55:57 PM PDT
+*/
+
+public abstract class _LocatorImplBase extends org.omg.CORBA.portable.ObjectImpl
+                implements com.sun.corba.se.spi.activation.Locator, org.omg.CORBA.portable.InvokeHandler
+{
+
+  // Constructors
+  public _LocatorImplBase ()
+  {
+  }
+
+  private static java.util.Hashtable _methods = new java.util.Hashtable ();
+  static
+  {
+    _methods.put ("locateServer", new java.lang.Integer (0));
+    _methods.put ("locateServerForORB", new java.lang.Integer (1));
+    _methods.put ("getEndpoint", new java.lang.Integer (2));
+    _methods.put ("getServerPortForType", new java.lang.Integer (3));
+  }
+
+  public org.omg.CORBA.portable.OutputStream _invoke (String $method,
+                                org.omg.CORBA.portable.InputStream in,
+                                org.omg.CORBA.portable.ResponseHandler $rh)
+  {
+    org.omg.CORBA.portable.OutputStream out = null;
+    java.lang.Integer __method = (java.lang.Integer)_methods.get ($method);
+    if (__method == null)
+      throw new org.omg.CORBA.BAD_OPERATION (0, org.omg.CORBA.CompletionStatus.COMPLETED_MAYBE);
+
+    switch (__method.intValue ())
+    {
+
+  // Starts the server if it is not already running.
+       case 0:  // activation/Locator/locateServer
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           String endPoint = in.read_string ();
+           com.sun.corba.se.spi.activation.LocatorPackage.ServerLocation $result = null;
+           $result = this.locateServer (serverId, endPoint);
+           out = $rh.createReply();
+           com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationHelper.write (out, $result);
+         } catch (com.sun.corba.se.spi.activation.NoSuchEndPoint $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.NoSuchEndPointHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.ServerHeldDown $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerHeldDownHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // Starts the server if it is not already running.
+       case 1:  // activation/Locator/locateServerForORB
+       {
+         try {
+           int serverId = com.sun.corba.se.spi.activation.ServerIdHelper.read (in);
+           String orbId = com.sun.corba.se.spi.activation.ORBidHelper.read (in);
+           com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORB $result = null;
+           $result = this.locateServerForORB (serverId, orbId);
+           out = $rh.createReply();
+           com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORBHelper.write (out, $result);
+         } catch (com.sun.corba.se.spi.activation.InvalidORBid $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.InvalidORBidHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.ServerNotRegistered $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerNotRegisteredHelper.write (out, $ex);
+         } catch (com.sun.corba.se.spi.activation.ServerHeldDown $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.ServerHeldDownHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // get the port for the endpoint of the locator
+       case 2:  // activation/Locator/getEndpoint
+       {
+         try {
+           String endPointType = in.read_string ();
+           int $result = (int)0;
+           $result = this.getEndpoint (endPointType);
+           out = $rh.createReply();
+           out.write_long ($result);
+         } catch (com.sun.corba.se.spi.activation.NoSuchEndPoint $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.NoSuchEndPointHelper.write (out, $ex);
+         }
+         break;
+       }
+
+
+  // to pick a particular port type.
+       case 3:  // activation/Locator/getServerPortForType
+       {
+         try {
+           com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORB location = com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORBHelper.read (in);
+           String endPointType = in.read_string ();
+           int $result = (int)0;
+           $result = this.getServerPortForType (location, endPointType);
+           out = $rh.createReply();
+           out.write_long ($result);
+         } catch (com.sun.corba.se.spi.activation.NoSuchEndPoint $ex) {
+           out = $rh.createExceptionReply ();
+           com.sun.corba.se.spi.activation.NoSuchEndPointHelper.write (out, $ex);
+         }
+         break;
+       }
+
+       default:
+         throw new org.omg.CORBA.BAD_OPERATION (0, org.omg.CORBA.CompletionStatus.COMPLETED_MAYBE);
+    }
+
+    return out;
+  } // _invoke
+
+  // Type-specific CORBA::Object operations
+  private static String[] __ids = {
+    "IDL:activation/Locator:1.0"};
+
+  public String[] _ids ()
+  {
+    return (String[])__ids.clone ();
+  }
+
+
+} // class _LocatorImplBase

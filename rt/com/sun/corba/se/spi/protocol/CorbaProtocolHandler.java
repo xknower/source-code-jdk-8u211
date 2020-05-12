@@ -1,34 +1,78 @@
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.spi.protocol;
 
-import com.sun.corba.se.impl.protocol.giopmsgheaders.LocateRequestMessage;
-import com.sun.corba.se.impl.protocol.giopmsgheaders.RequestMessage;
-import com.sun.corba.se.pept.protocol.ProtocolHandler;
-import com.sun.corba.se.spi.ior.IOR;
-import com.sun.corba.se.spi.servicecontext.ServiceContexts;
 import org.omg.CORBA.CompletionStatus;
 import org.omg.CORBA.SystemException;
 import org.omg.CORBA.portable.UnknownException;
 
-public interface CorbaProtocolHandler extends ProtocolHandler {
-  void handleRequest(RequestMessage paramRequestMessage, CorbaMessageMediator paramCorbaMessageMediator);
-  
-  void handleRequest(LocateRequestMessage paramLocateRequestMessage, CorbaMessageMediator paramCorbaMessageMediator);
-  
-  CorbaMessageMediator createResponse(CorbaMessageMediator paramCorbaMessageMediator, ServiceContexts paramServiceContexts);
-  
-  CorbaMessageMediator createUserExceptionResponse(CorbaMessageMediator paramCorbaMessageMediator, ServiceContexts paramServiceContexts);
-  
-  CorbaMessageMediator createUnknownExceptionResponse(CorbaMessageMediator paramCorbaMessageMediator, UnknownException paramUnknownException);
-  
-  CorbaMessageMediator createSystemExceptionResponse(CorbaMessageMediator paramCorbaMessageMediator, SystemException paramSystemException, ServiceContexts paramServiceContexts);
-  
-  CorbaMessageMediator createLocationForward(CorbaMessageMediator paramCorbaMessageMediator, IOR paramIOR, ServiceContexts paramServiceContexts);
-  
-  void handleThrowableDuringServerDispatch(CorbaMessageMediator paramCorbaMessageMediator, Throwable paramThrowable, CompletionStatus paramCompletionStatus);
+import com.sun.corba.se.pept.protocol.ProtocolHandler;
+
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.protocol.CorbaMessageMediator;
+
+import com.sun.corba.se.spi.servicecontext.ServiceContexts;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.LocateRequestMessage;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.RequestMessage;
+
+/**
+ * @author Harold Carr
+ */
+public interface CorbaProtocolHandler
+    extends ProtocolHandler
+{
+    public void handleRequest(RequestMessage header,
+                              CorbaMessageMediator messageMediator);
+
+    public void handleRequest(LocateRequestMessage header,
+                              CorbaMessageMediator messageMediator);
+
+    public CorbaMessageMediator createResponse(
+        CorbaMessageMediator messageMediator,
+        ServiceContexts svc);
+    public CorbaMessageMediator createUserExceptionResponse(
+        CorbaMessageMediator messageMediator,
+        ServiceContexts svc);
+    public CorbaMessageMediator createUnknownExceptionResponse(
+        CorbaMessageMediator messageMediator,
+        UnknownException ex);
+    public CorbaMessageMediator createSystemExceptionResponse(
+        CorbaMessageMediator messageMediator,
+        SystemException ex,
+        ServiceContexts svc);
+    public CorbaMessageMediator createLocationForward(
+        CorbaMessageMediator messageMediator,
+        IOR ior,
+        ServiceContexts svc);
+
+    public void handleThrowableDuringServerDispatch(
+        CorbaMessageMediator request,
+        Throwable exception,
+        CompletionStatus completionStatus);
+
 }
 
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\protocol\CorbaProtocolHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+// End of file.

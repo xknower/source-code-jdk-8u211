@@ -1,650 +1,645 @@
-/*     */ package com.sun.corba.se.impl.activation;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ActivationSystemException;
-/*     */ import com.sun.corba.se.impl.oa.poa.BadServerIdHandler;
-/*     */ import com.sun.corba.se.spi.activation.EndPointInfo;
-/*     */ import com.sun.corba.se.spi.activation.InvalidORBid;
-/*     */ import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocation;
-/*     */ import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORB;
-/*     */ import com.sun.corba.se.spi.activation.NoSuchEndPoint;
-/*     */ import com.sun.corba.se.spi.activation.ORBAlreadyRegistered;
-/*     */ import com.sun.corba.se.spi.activation.ORBPortInfo;
-/*     */ import com.sun.corba.se.spi.activation.Repository;
-/*     */ import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
-/*     */ import com.sun.corba.se.spi.activation.Server;
-/*     */ import com.sun.corba.se.spi.activation.ServerAlreadyActive;
-/*     */ import com.sun.corba.se.spi.activation.ServerAlreadyInstalled;
-/*     */ import com.sun.corba.se.spi.activation.ServerAlreadyUninstalled;
-/*     */ import com.sun.corba.se.spi.activation.ServerHeldDown;
-/*     */ import com.sun.corba.se.spi.activation.ServerNotActive;
-/*     */ import com.sun.corba.se.spi.activation.ServerNotRegistered;
-/*     */ import com.sun.corba.se.spi.activation._ServerManagerImplBase;
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.ior.IORFactories;
-/*     */ import com.sun.corba.se.spi.ior.IORTemplate;
-/*     */ import com.sun.corba.se.spi.ior.ObjectKey;
-/*     */ import com.sun.corba.se.spi.ior.ObjectKeyTemplate;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.ior.iiop.IIOPAddress;
-/*     */ import com.sun.corba.se.spi.ior.iiop.IIOPFactories;
-/*     */ import com.sun.corba.se.spi.ior.iiop.IIOPProfileTemplate;
-/*     */ import com.sun.corba.se.spi.legacy.connection.LegacyServerSocketEndPointInfo;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.protocol.ForwardException;
-/*     */ import com.sun.corba.se.spi.transport.CorbaTransportManager;
-/*     */ import com.sun.corba.se.spi.transport.SocketOrChannelAcceptor;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.NoSuchElementException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ServerManagerImpl
-/*     */   extends _ServerManagerImplBase
-/*     */   implements BadServerIdHandler
-/*     */ {
-/*     */   HashMap serverTable;
-/*     */   Repository repository;
-/*     */   CorbaTransportManager transportManager;
-/*     */   int initialPort;
-/*     */   ORB orb;
-/*     */   ActivationSystemException wrapper;
-/*     */   String dbDirName;
-/*     */   boolean debug = false;
-/*     */   private int serverStartupDelay;
-/*     */   
-/*     */   ServerManagerImpl(ORB paramORB, CorbaTransportManager paramCorbaTransportManager, Repository paramRepository, String paramString, boolean paramBoolean) {
-/* 107 */     this.orb = paramORB;
-/* 108 */     this.wrapper = ActivationSystemException.get(paramORB, "orbd.activator");
-/*     */     
-/* 110 */     this.transportManager = paramCorbaTransportManager;
-/* 111 */     this.repository = paramRepository;
-/* 112 */     this.dbDirName = paramString;
-/* 113 */     this.debug = paramBoolean;
-/*     */ 
-/*     */ 
-/*     */     
-/* 117 */     LegacyServerSocketEndPointInfo legacyServerSocketEndPointInfo = paramORB.getLegacyServerSocketManager().legacyGetEndpoint("BOOT_NAMING");
-/*     */     
-/* 119 */     this
-/* 120 */       .initialPort = ((SocketOrChannelAcceptor)legacyServerSocketEndPointInfo).getServerSocket().getLocalPort();
-/* 121 */     this.serverTable = new HashMap<>(256);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 126 */     this.serverStartupDelay = 1000;
-/* 127 */     String str = System.getProperty("com.sun.CORBA.activation.ServerStartupDelay");
-/* 128 */     if (str != null) {
-/*     */       try {
-/* 130 */         this.serverStartupDelay = Integer.parseInt(str);
-/* 131 */       } catch (Exception exception) {}
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 136 */     Class clazz = paramORB.getORBData().getBadServerIdHandler();
-/* 137 */     if (clazz == null) {
-/* 138 */       paramORB.setBadServerIdHandler(this);
-/*     */     } else {
-/* 140 */       paramORB.initBadServerIdHandler();
-/*     */     } 
-/*     */     
-/* 143 */     paramORB.connect(this);
-/* 144 */     ProcessMonitorThread.start(this.serverTable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void activate(int paramInt) throws ServerAlreadyActive, ServerNotRegistered, ServerHeldDown {
-/*     */     ServerTableEntry serverTableEntry;
-/* 153 */     Integer integer = new Integer(paramInt);
-/*     */     
-/* 155 */     synchronized (this.serverTable) {
-/* 156 */       serverTableEntry = (ServerTableEntry)this.serverTable.get(integer);
-/*     */     } 
-/*     */     
-/* 159 */     if (serverTableEntry != null && serverTableEntry.isActive()) {
-/* 160 */       if (this.debug) {
-/* 161 */         System.out.println("ServerManagerImpl: activate for server Id " + paramInt + " failed because server is already active. entry = " + serverTableEntry);
-/*     */       }
-/*     */ 
-/*     */       
-/* 165 */       throw new ServerAlreadyActive(paramInt);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 174 */       serverTableEntry = getEntry(paramInt);
-/*     */       
-/* 176 */       if (this.debug) {
-/* 177 */         System.out.println("ServerManagerImpl: locateServer called with  serverId=" + paramInt + " endpointType=" + "IIOP_CLEAR_TEXT" + " block=false");
-/*     */       }
-/*     */ 
-/*     */       
-/* 181 */       ServerLocation serverLocation = locateServer(serverTableEntry, "IIOP_CLEAR_TEXT", false);
-/*     */       
-/* 183 */       if (this.debug) {
-/* 184 */         System.out.println("ServerManagerImpl: activate for server Id " + paramInt + " found location " + serverLocation.hostname + " and activated it");
-/*     */       }
-/*     */     }
-/* 187 */     catch (NoSuchEndPoint noSuchEndPoint) {
-/* 188 */       if (this.debug) {
-/* 189 */         System.out.println("ServerManagerImpl: activate for server Id  threw NoSuchEndpoint exception, which was ignored");
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void active(int paramInt, Server paramServer) throws ServerNotRegistered {
-/* 197 */     Integer integer = new Integer(paramInt);
-/*     */     
-/* 199 */     synchronized (this.serverTable) {
-/* 200 */       ServerTableEntry serverTableEntry = (ServerTableEntry)this.serverTable.get(integer);
-/*     */       
-/* 202 */       if (serverTableEntry == null) {
-/* 203 */         if (this.debug) {
-/* 204 */           System.out.println("ServerManagerImpl: active for server Id " + paramInt + " called, but no such server is registered.");
-/*     */         }
-/*     */         
-/* 207 */         throw this.wrapper.serverNotExpectedToRegister();
-/*     */       } 
-/* 209 */       if (this.debug) {
-/* 210 */         System.out.println("ServerManagerImpl: active for server Id " + paramInt + " called.  This server is now active.");
-/*     */       }
-/*     */       
-/* 213 */       serverTableEntry.register(paramServer);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void registerEndpoints(int paramInt, String paramString, EndPointInfo[] paramArrayOfEndPointInfo) throws NoSuchEndPoint, ServerNotRegistered, ORBAlreadyRegistered {
-/* 224 */     Integer integer = new Integer(paramInt);
-/*     */     
-/* 226 */     synchronized (this.serverTable) {
-/* 227 */       ServerTableEntry serverTableEntry = (ServerTableEntry)this.serverTable.get(integer);
-/*     */       
-/* 229 */       if (serverTableEntry == null) {
-/* 230 */         if (this.debug) {
-/* 231 */           System.out.println("ServerManagerImpl: registerEndpoint for server Id " + paramInt + " called, but no such server is registered.");
-/*     */         }
-/*     */ 
-/*     */         
-/* 235 */         throw this.wrapper.serverNotExpectedToRegister();
-/*     */       } 
-/* 237 */       if (this.debug) {
-/* 238 */         System.out.println("ServerManagerImpl: registerEndpoints for server Id " + paramInt + " called.  This server is now active.");
-/*     */       }
-/*     */ 
-/*     */       
-/* 242 */       serverTableEntry.registerPorts(paramString, paramArrayOfEndPointInfo);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int[] getActiveServers() {
-/* 251 */     int[] arrayOfInt = null;
-/*     */     
-/* 253 */     synchronized (this.serverTable) {
-/*     */ 
-/*     */       
-/* 256 */       ArrayList<ServerTableEntry> arrayList = new ArrayList(0);
-/*     */       
-/* 258 */       Iterator<Integer> iterator = this.serverTable.keySet().iterator();
-/*     */       
-/*     */       try {
-/* 261 */         while (iterator.hasNext()) {
-/* 262 */           Integer integer = iterator.next();
-/*     */           
-/* 264 */           ServerTableEntry serverTableEntry = (ServerTableEntry)this.serverTable.get(integer);
-/*     */           
-/* 266 */           if (serverTableEntry.isValid() && serverTableEntry.isActive()) {
-/* 267 */             arrayList.add(serverTableEntry);
-/*     */           }
-/*     */         } 
-/* 270 */       } catch (NoSuchElementException noSuchElementException) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 275 */       arrayOfInt = new int[arrayList.size()];
-/* 276 */       for (byte b = 0; b < arrayList.size(); b++) {
-/* 277 */         ServerTableEntry serverTableEntry = arrayList.get(b);
-/* 278 */         arrayOfInt[b] = serverTableEntry.getServerId();
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 282 */     if (this.debug) {
-/* 283 */       StringBuffer stringBuffer = new StringBuffer();
-/* 284 */       for (byte b = 0; b < arrayOfInt.length; b++) {
-/* 285 */         stringBuffer.append(' ');
-/* 286 */         stringBuffer.append(arrayOfInt[b]);
-/*     */       } 
-/*     */       
-/* 289 */       System.out.println("ServerManagerImpl: getActiveServers returns" + stringBuffer
-/* 290 */           .toString());
-/*     */     } 
-/*     */     
-/* 293 */     return arrayOfInt;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void shutdown(int paramInt) throws ServerNotActive {
-/* 299 */     Integer integer = new Integer(paramInt);
-/*     */     
-/* 301 */     synchronized (this.serverTable) {
-/* 302 */       ServerTableEntry serverTableEntry = (ServerTableEntry)this.serverTable.remove(integer);
-/*     */       
-/* 304 */       if (serverTableEntry == null) {
-/* 305 */         if (this.debug) {
-/* 306 */           System.out.println("ServerManagerImpl: shutdown for server Id " + paramInt + " throws ServerNotActive.");
-/*     */         }
-/*     */         
-/* 309 */         throw new ServerNotActive(paramInt);
-/*     */       } 
-/*     */       
-/*     */       try {
-/* 313 */         serverTableEntry.destroy();
-/*     */         
-/* 315 */         if (this.debug) {
-/* 316 */           System.out.println("ServerManagerImpl: shutdown for server Id " + paramInt + " completed.");
-/*     */         }
-/* 318 */       } catch (Exception exception) {
-/* 319 */         if (this.debug) {
-/* 320 */           System.out.println("ServerManagerImpl: shutdown for server Id " + paramInt + " threw exception " + exception);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ServerTableEntry getEntry(int paramInt) throws ServerNotRegistered {
-/* 329 */     Integer integer = new Integer(paramInt);
-/* 330 */     ServerTableEntry serverTableEntry = null;
-/*     */     
-/* 332 */     synchronized (this.serverTable) {
-/* 333 */       serverTableEntry = (ServerTableEntry)this.serverTable.get(integer);
-/*     */       
-/* 335 */       if (this.debug) {
-/* 336 */         if (serverTableEntry == null) {
-/* 337 */           System.out.println("ServerManagerImpl: getEntry: no active server found.");
-/*     */         } else {
-/*     */           
-/* 340 */           System.out.println("ServerManagerImpl: getEntry:  active server found " + serverTableEntry + ".");
-/*     */         } 
-/*     */       }
-/*     */       
-/* 344 */       if (serverTableEntry != null && !serverTableEntry.isValid()) {
-/* 345 */         this.serverTable.remove(integer);
-/* 346 */         serverTableEntry = null;
-/*     */       } 
-/*     */       
-/* 349 */       if (serverTableEntry == null) {
-/* 350 */         ServerDef serverDef = this.repository.getServer(paramInt);
-/*     */         
-/* 352 */         serverTableEntry = new ServerTableEntry(this.wrapper, paramInt, serverDef, this.initialPort, this.dbDirName, false, this.debug);
-/*     */         
-/* 354 */         this.serverTable.put(integer, serverTableEntry);
-/* 355 */         serverTableEntry.activate();
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 359 */     return serverTableEntry;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ServerLocation locateServer(ServerTableEntry paramServerTableEntry, String paramString, boolean paramBoolean) throws NoSuchEndPoint, ServerNotRegistered, ServerHeldDown {
-/* 366 */     ServerLocation serverLocation = new ServerLocation();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 372 */     if (paramBoolean) {
-/*     */       ORBPortInfo[] arrayOfORBPortInfo; byte b1; try {
-/* 374 */         arrayOfORBPortInfo = paramServerTableEntry.lookup(paramString);
-/* 375 */       } catch (Exception exception) {
-/* 376 */         if (this.debug) {
-/* 377 */           System.out.println("ServerManagerImpl: locateServer: server held down");
-/*     */         }
-/*     */         
-/* 380 */         throw new ServerHeldDown(paramServerTableEntry.getServerId());
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 385 */       String str = this.orb.getLegacyServerSocketManager().legacyGetEndpoint("DEFAULT_ENDPOINT").getHostName();
-/* 386 */       serverLocation.hostname = str;
-/*     */       
-/* 388 */       if (arrayOfORBPortInfo != null) {
-/* 389 */         b1 = arrayOfORBPortInfo.length;
-/*     */       } else {
-/* 391 */         b1 = 0;
-/*     */       } 
-/* 393 */       serverLocation.ports = new ORBPortInfo[b1];
-/* 394 */       for (byte b2 = 0; b2 < b1; b2++) {
-/* 395 */         serverLocation.ports[b2] = new ORBPortInfo((arrayOfORBPortInfo[b2]).orbId, (arrayOfORBPortInfo[b2]).port);
-/*     */ 
-/*     */         
-/* 398 */         if (this.debug) {
-/* 399 */           System.out.println("ServerManagerImpl: locateServer: server located at location " + serverLocation.hostname + " ORBid  " + (arrayOfORBPortInfo[b2]).orbId + " Port " + (arrayOfORBPortInfo[b2]).port);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 407 */     return serverLocation;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ServerLocationPerORB locateServerForORB(ServerTableEntry paramServerTableEntry, String paramString, boolean paramBoolean) throws InvalidORBid, ServerNotRegistered, ServerHeldDown {
-/* 414 */     ServerLocationPerORB serverLocationPerORB = new ServerLocationPerORB();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 420 */     if (paramBoolean) {
-/*     */       EndPointInfo[] arrayOfEndPointInfo; byte b1; try {
-/* 422 */         arrayOfEndPointInfo = paramServerTableEntry.lookupForORB(paramString);
-/* 423 */       } catch (InvalidORBid invalidORBid) {
-/* 424 */         throw invalidORBid;
-/* 425 */       } catch (Exception exception) {
-/* 426 */         if (this.debug) {
-/* 427 */           System.out.println("ServerManagerImpl: locateServerForORB: server held down");
-/*     */         }
-/*     */         
-/* 430 */         throw new ServerHeldDown(paramServerTableEntry.getServerId());
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 435 */       String str = this.orb.getLegacyServerSocketManager().legacyGetEndpoint("DEFAULT_ENDPOINT").getHostName();
-/* 436 */       serverLocationPerORB.hostname = str;
-/*     */       
-/* 438 */       if (arrayOfEndPointInfo != null) {
-/* 439 */         b1 = arrayOfEndPointInfo.length;
-/*     */       } else {
-/* 441 */         b1 = 0;
-/*     */       } 
-/* 443 */       serverLocationPerORB.ports = new EndPointInfo[b1];
-/* 444 */       for (byte b2 = 0; b2 < b1; b2++) {
-/* 445 */         serverLocationPerORB.ports[b2] = new EndPointInfo((arrayOfEndPointInfo[b2]).endpointType, (arrayOfEndPointInfo[b2]).port);
-/*     */ 
-/*     */         
-/* 448 */         if (this.debug) {
-/* 449 */           System.out.println("ServerManagerImpl: locateServer: server located at location " + serverLocationPerORB.hostname + " endpointType  " + (arrayOfEndPointInfo[b2]).endpointType + " Port " + (arrayOfEndPointInfo[b2]).port);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 457 */     return serverLocationPerORB;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String[] getORBNames(int paramInt) throws ServerNotRegistered {
-/*     */     try {
-/* 464 */       ServerTableEntry serverTableEntry = getEntry(paramInt);
-/* 465 */       return serverTableEntry.getORBList();
-/* 466 */     } catch (Exception exception) {
-/* 467 */       throw new ServerNotRegistered(paramInt);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ServerTableEntry getRunningEntry(int paramInt) throws ServerNotRegistered {
-/* 474 */     ServerTableEntry serverTableEntry = getEntry(paramInt);
-/*     */ 
-/*     */     
-/*     */     try {
-/* 478 */       ORBPortInfo[] arrayOfORBPortInfo = serverTableEntry.lookup("IIOP_CLEAR_TEXT");
-/* 479 */     } catch (Exception exception) {
-/* 480 */       return null;
-/*     */     } 
-/* 482 */     return serverTableEntry;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void install(int paramInt) throws ServerNotRegistered, ServerHeldDown, ServerAlreadyInstalled {
-/* 489 */     ServerTableEntry serverTableEntry = getRunningEntry(paramInt);
-/* 490 */     if (serverTableEntry != null) {
-/* 491 */       this.repository.install(paramInt);
-/* 492 */       serverTableEntry.install();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void uninstall(int paramInt) throws ServerNotRegistered, ServerHeldDown, ServerAlreadyUninstalled {
-/* 500 */     ServerTableEntry serverTableEntry = (ServerTableEntry)this.serverTable.get(new Integer(paramInt));
-/*     */     
-/* 502 */     if (serverTableEntry != null) {
-/*     */ 
-/*     */       
-/* 505 */       serverTableEntry = (ServerTableEntry)this.serverTable.remove(new Integer(paramInt));
-/*     */       
-/* 507 */       if (serverTableEntry == null) {
-/* 508 */         if (this.debug) {
-/* 509 */           System.out.println("ServerManagerImpl: shutdown for server Id " + paramInt + " throws ServerNotActive.");
-/*     */         }
-/*     */         
-/* 512 */         throw new ServerHeldDown(paramInt);
-/*     */       } 
-/*     */       
-/* 515 */       serverTableEntry.uninstall();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServerLocation locateServer(int paramInt, String paramString) throws NoSuchEndPoint, ServerNotRegistered, ServerHeldDown {
-/* 522 */     ServerTableEntry serverTableEntry = getEntry(paramInt);
-/* 523 */     if (this.debug) {
-/* 524 */       System.out.println("ServerManagerImpl: locateServer called with  serverId=" + paramInt + " endpointType=" + paramString + " block=true");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 531 */     return locateServer(serverTableEntry, paramString, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ServerLocationPerORB locateServerForORB(int paramInt, String paramString) throws InvalidORBid, ServerNotRegistered, ServerHeldDown {
-/* 540 */     ServerTableEntry serverTableEntry = getEntry(paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 545 */     if (this.debug) {
-/* 546 */       System.out.println("ServerManagerImpl: locateServerForORB called with  serverId=" + paramInt + " orbId=" + paramString + " block=true");
-/*     */     }
-/*     */     
-/* 549 */     return locateServerForORB(serverTableEntry, paramString, true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void handle(ObjectKey paramObjectKey) {
-/* 555 */     IOR iOR = null;
-/*     */ 
-/*     */ 
-/*     */     
-/* 559 */     ObjectKeyTemplate objectKeyTemplate = paramObjectKey.getTemplate();
-/* 560 */     int i = objectKeyTemplate.getServerId();
-/* 561 */     String str = objectKeyTemplate.getORBId();
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 566 */       ServerTableEntry serverTableEntry = getEntry(i);
-/* 567 */       ServerLocationPerORB serverLocationPerORB = locateServerForORB(serverTableEntry, str, true);
-/*     */       
-/* 569 */       if (this.debug) {
-/* 570 */         System.out.println("ServerManagerImpl: handle called for server id" + i + "  orbid  " + str);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 578 */       int j = 0;
-/* 579 */       EndPointInfo[] arrayOfEndPointInfo = serverLocationPerORB.ports;
-/* 580 */       for (byte b = 0; b < arrayOfEndPointInfo.length; b++) {
-/* 581 */         if ((arrayOfEndPointInfo[b]).endpointType.equals("IIOP_CLEAR_TEXT")) {
-/* 582 */           j = (arrayOfEndPointInfo[b]).port;
-/*     */ 
-/*     */           
-/*     */           break;
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 589 */       IIOPAddress iIOPAddress = IIOPFactories.makeIIOPAddress(this.orb, serverLocationPerORB.hostname, j);
-/*     */ 
-/*     */       
-/* 592 */       IIOPProfileTemplate iIOPProfileTemplate = IIOPFactories.makeIIOPProfileTemplate(this.orb, GIOPVersion.V1_2, iIOPAddress);
-/*     */       
-/* 594 */       if (GIOPVersion.V1_2.supportsIORIIOPProfileComponents()) {
-/* 595 */         iIOPProfileTemplate.add((E)IIOPFactories.makeCodeSetsComponent(this.orb));
-/* 596 */         iIOPProfileTemplate.add((E)IIOPFactories.makeMaxStreamFormatVersionComponent());
-/*     */       } 
-/* 598 */       IORTemplate iORTemplate = IORFactories.makeIORTemplate(objectKeyTemplate);
-/* 599 */       iORTemplate.add((E)iIOPProfileTemplate);
-/*     */       
-/* 601 */       iOR = iORTemplate.makeIOR(this.orb, "IDL:org/omg/CORBA/Object:1.0", paramObjectKey
-/* 602 */           .getId());
-/* 603 */     } catch (Exception exception) {
-/* 604 */       throw this.wrapper.errorInBadServerIdHandler(exception);
-/*     */     } 
-/*     */     
-/* 607 */     if (this.debug) {
-/* 608 */       System.out.println("ServerManagerImpl: handle throws ForwardException");
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 617 */       Thread.sleep(this.serverStartupDelay);
-/* 618 */     } catch (Exception exception) {
-/* 619 */       System.out.println("Exception = " + exception);
-/* 620 */       exception.printStackTrace();
-/*     */     } 
-/*     */     
-/* 623 */     throw new ForwardException(this.orb, iOR);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int getEndpoint(String paramString) throws NoSuchEndPoint {
-/* 628 */     return this.orb.getLegacyServerSocketManager()
-/* 629 */       .legacyGetTransientServerPort(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getServerPortForType(ServerLocationPerORB paramServerLocationPerORB, String paramString) throws NoSuchEndPoint {
-/* 636 */     EndPointInfo[] arrayOfEndPointInfo = paramServerLocationPerORB.ports;
-/* 637 */     for (byte b = 0; b < arrayOfEndPointInfo.length; b++) {
-/* 638 */       if ((arrayOfEndPointInfo[b]).endpointType.equals(paramString)) {
-/* 639 */         return (arrayOfEndPointInfo[b]).port;
-/*     */       }
-/*     */     } 
-/* 642 */     throw new NoSuchEndPoint();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\activation\ServerManagerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.activation;
+
+/**
+ *
+ * @author      Rohit Garg
+ * @author      Ken Cavanaugh
+ * @author      Hemanth Puttaswamy
+ * @since       JDK1.2
+ */
+
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+import org.omg.CORBA.OBJECT_NOT_EXIST;
+import org.omg.CORBA.SystemException;
+
+import com.sun.corba.se.spi.activation.EndPointInfo;
+import com.sun.corba.se.spi.activation.IIOP_CLEAR_TEXT;
+import com.sun.corba.se.spi.activation.ORBPortInfo;
+import com.sun.corba.se.spi.activation.Repository;
+import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocation;
+import com.sun.corba.se.spi.activation.LocatorPackage.ServerLocationPerORB;
+import com.sun.corba.se.spi.activation.RepositoryPackage.ServerDef;
+import com.sun.corba.se.spi.activation._ServerManagerImplBase;
+import com.sun.corba.se.spi.activation.ServerAlreadyActive;
+import com.sun.corba.se.spi.activation.ServerAlreadyInstalled;
+import com.sun.corba.se.spi.activation.ServerAlreadyUninstalled;
+import com.sun.corba.se.spi.activation.ServerNotRegistered;
+import com.sun.corba.se.spi.activation.ORBAlreadyRegistered;
+import com.sun.corba.se.spi.activation.ServerHeldDown;
+import com.sun.corba.se.spi.activation.ServerNotActive;
+import com.sun.corba.se.spi.activation.NoSuchEndPoint;
+import com.sun.corba.se.spi.activation.InvalidORBid;
+import com.sun.corba.se.spi.activation.Server;
+import com.sun.corba.se.spi.activation.IIOP_CLEAR_TEXT;
+import com.sun.corba.se.spi.ior.IORTemplate ;
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.ior.ObjectKey ;
+import com.sun.corba.se.spi.ior.ObjectKeyTemplate ;
+import com.sun.corba.se.spi.ior.IORFactories ;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion ;
+import com.sun.corba.se.spi.ior.iiop.IIOPAddress ;
+import com.sun.corba.se.spi.ior.iiop.IIOPProfileTemplate ;
+import com.sun.corba.se.spi.ior.iiop.IIOPFactories ;
+import com.sun.corba.se.spi.legacy.connection.LegacyServerSocketEndPointInfo;
+import com.sun.corba.se.spi.transport.SocketOrChannelAcceptor;
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.protocol.ForwardException;
+import com.sun.corba.se.spi.transport.CorbaTransportManager;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ActivationSystemException ;
+
+import com.sun.corba.se.impl.oa.poa.BadServerIdHandler;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.util.Utility;
+
+public class ServerManagerImpl extends _ServerManagerImplBase
+    implements BadServerIdHandler
+{
+    // Using HashMap, since synchronization should be done by the calling
+    // routines
+    HashMap serverTable;
+    Repository repository;
+
+    CorbaTransportManager transportManager;
+    int initialPort;
+    ORB orb;
+    ActivationSystemException wrapper;
+    String dbDirName;
+    boolean debug = false ;
+
+    private int serverStartupDelay;
+
+    ServerManagerImpl(ORB orb, CorbaTransportManager transportManager,
+                      Repository repository, String dbDirName, boolean debug)
+    {
+        this.orb = orb;
+        wrapper = ActivationSystemException.get( orb, CORBALogDomains.ORBD_ACTIVATOR ) ;
+
+        this.transportManager = transportManager; // REVISIT - NOT USED.
+        this.repository = repository;
+        this.dbDirName = dbDirName;
+        this.debug = debug ;
+
+        LegacyServerSocketEndPointInfo endpoint =
+            orb.getLegacyServerSocketManager()
+                .legacyGetEndpoint(LegacyServerSocketEndPointInfo.BOOT_NAMING);
+
+        initialPort = ((SocketOrChannelAcceptor)endpoint)
+            .getServerSocket().getLocalPort();
+        serverTable = new HashMap(256);
+
+        // The ServerStartupDelay is the delay added after the Server registers
+        // end point information. This is to allow the server to completely
+        // initialize after ORB is instantiated.
+        serverStartupDelay = ORBConstants.DEFAULT_SERVER_STARTUP_DELAY;
+        String  delay = System.getProperty( ORBConstants.SERVER_STARTUP_DELAY);
+        if( delay != null ) {
+            try {
+                serverStartupDelay = Integer.parseInt( delay );
+            } catch ( Exception e ) {
+                // Just use the default 1000 milliseconds as the default
+            }
+        }
+
+        Class cls = orb.getORBData( ).getBadServerIdHandler();
+        if( cls == null ) {
+            orb.setBadServerIdHandler( this );
+        } else {
+            orb.initBadServerIdHandler() ;
+        }
+
+        orb.connect(this);
+        ProcessMonitorThread.start( serverTable );
+    }
+
+    public void activate(int serverId)
+        throws ServerAlreadyActive, ServerNotRegistered, ServerHeldDown
+    {
+
+        ServerLocation   location;
+        ServerTableEntry entry;
+        Integer key = new Integer(serverId);
+
+        synchronized(serverTable) {
+            entry = (ServerTableEntry) serverTable.get(key);
+        }
+
+        if (entry != null && entry.isActive()) {
+            if (debug)
+                System.out.println( "ServerManagerImpl: activate for server Id " +
+                                    serverId + " failed because server is already active. " +
+                                    "entry = " + entry ) ;
+
+            throw new ServerAlreadyActive( serverId );
+        }
+
+        // locate the server
+        try {
+
+            // We call getEntry here so that state of the entry is
+            // checked for validity before we actually go and locate a server
+
+            entry = getEntry(serverId);
+
+            if (debug)
+                System.out.println( "ServerManagerImpl: locateServer called with " +
+                                " serverId=" + serverId + " endpointType="
+                                + IIOP_CLEAR_TEXT.value + " block=false" ) ;
+
+            location = locateServer(entry, IIOP_CLEAR_TEXT.value, false);
+
+            if (debug)
+                System.out.println( "ServerManagerImpl: activate for server Id " +
+                                    serverId + " found location " +
+                                    location.hostname + " and activated it" ) ;
+        } catch (NoSuchEndPoint ex) {
+            if (debug)
+                System.out.println( "ServerManagerImpl: activate for server Id " +
+                                    " threw NoSuchEndpoint exception, which was ignored" );
+        }
+    }
+
+    public void active(int serverId, Server server) throws ServerNotRegistered
+    {
+        ServerTableEntry entry;
+        Integer key = new Integer(serverId);
+
+        synchronized (serverTable) {
+            entry = (ServerTableEntry) serverTable.get(key);
+
+            if (entry == null) {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: active for server Id " +
+                                        serverId + " called, but no such server is registered." ) ;
+
+                throw wrapper.serverNotExpectedToRegister() ;
+            } else {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: active for server Id " +
+                                        serverId + " called.  This server is now active." ) ;
+
+                entry.register(server);
+            }
+        }
+    }
+
+    public void registerEndpoints( int serverId, String orbId,
+        EndPointInfo [] endpointList ) throws NoSuchEndPoint, ServerNotRegistered,
+        ORBAlreadyRegistered
+    {
+        // orbId is ignored for now
+        ServerTableEntry entry;
+        Integer key = new Integer(serverId);
+
+        synchronized (serverTable) {
+            entry = (ServerTableEntry) serverTable.get(key);
+
+            if (entry == null) {
+                if (debug)
+                    System.out.println(
+                        "ServerManagerImpl: registerEndpoint for server Id " +
+                        serverId + " called, but no such server is registered." ) ;
+
+                throw wrapper.serverNotExpectedToRegister() ;
+            } else {
+                if (debug)
+                    System.out.println(
+                        "ServerManagerImpl: registerEndpoints for server Id " +
+                        serverId + " called.  This server is now active." ) ;
+
+                entry.registerPorts( orbId, endpointList );
+
+            }
+        }
+    }
+
+    public int[] getActiveServers()
+    {
+        ServerTableEntry entry;
+        int[] list = null;
+
+        synchronized (serverTable) {
+            // unlike vectors, list is not synchronized
+
+            ArrayList servers = new ArrayList(0);
+
+            Iterator serverList = serverTable.keySet().iterator();
+
+            try {
+                while (serverList.hasNext()) {
+                    Integer key = (Integer) serverList.next();
+                    // get an entry
+                    entry = (ServerTableEntry) serverTable.get(key);
+
+                    if (entry.isValid() && entry.isActive()) {
+                        servers.add(entry);
+                    }
+                }
+            } catch (NoSuchElementException e) {
+                // all done
+            }
+
+            // collect the active entries
+            list = new int[servers.size()];
+            for (int i = 0; i < servers.size(); i++) {
+                entry = (ServerTableEntry) servers.get(i);
+                list[i] = entry.getServerId();
+            }
+        }
+
+        if (debug) {
+            StringBuffer sb = new StringBuffer() ;
+            for (int ctr=0; ctr<list.length; ctr++) {
+                sb.append( ' ' ) ;
+                sb.append( list[ctr] ) ;
+            }
+
+            System.out.println( "ServerManagerImpl: getActiveServers returns" +
+                                sb.toString() ) ;
+        }
+
+        return list;
+    }
+
+    public void shutdown(int serverId) throws ServerNotActive
+    {
+        ServerTableEntry entry;
+        Integer key = new Integer(serverId);
+
+        synchronized(serverTable) {
+            entry = (ServerTableEntry) serverTable.remove(key);
+
+            if (entry == null) {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: shutdown for server Id " +
+                                    serverId + " throws ServerNotActive." ) ;
+
+                throw new ServerNotActive( serverId );
+            }
+
+            try {
+                entry.destroy();
+
+                if (debug)
+                    System.out.println( "ServerManagerImpl: shutdown for server Id " +
+                                    serverId + " completed." ) ;
+            } catch (Exception e) {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: shutdown for server Id " +
+                                    serverId + " threw exception " + e ) ;
+            }
+        }
+    }
+
+    private ServerTableEntry getEntry( int serverId )
+        throws ServerNotRegistered
+    {
+        Integer key = new Integer(serverId);
+        ServerTableEntry entry = null ;
+
+        synchronized (serverTable) {
+            entry = (ServerTableEntry) serverTable.get(key);
+
+            if (debug)
+                if (entry == null) {
+                    System.out.println( "ServerManagerImpl: getEntry: " +
+                                        "no active server found." ) ;
+                } else {
+                    System.out.println( "ServerManagerImpl: getEntry: " +
+                                        " active server found " + entry + "." ) ;
+                }
+
+            if ((entry != null) && (!entry.isValid())) {
+                serverTable.remove(key);
+                entry = null;
+            }
+
+            if (entry == null) {
+                ServerDef serverDef = repository.getServer(serverId);
+
+                entry = new ServerTableEntry( wrapper,
+                    serverId, serverDef, initialPort, dbDirName, false, debug);
+                serverTable.put(key, entry);
+                entry.activate() ;
+            }
+        }
+
+        return entry ;
+    }
+
+    private ServerLocation locateServer (ServerTableEntry entry, String endpointType,
+                                        boolean block)
+        throws NoSuchEndPoint, ServerNotRegistered, ServerHeldDown
+    {
+        ServerLocation location = new ServerLocation() ;
+
+        // if server location is desired, then wait for the server
+        // to register back, then return location
+
+        ORBPortInfo [] serverORBAndPortList;
+        if (block) {
+            try {
+                    serverORBAndPortList = entry.lookup(endpointType);
+            } catch (Exception ex) {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: locateServer: " +
+                                        "server held down" ) ;
+
+                throw new ServerHeldDown( entry.getServerId() );
+            }
+
+            String host =
+                orb.getLegacyServerSocketManager()
+                    .legacyGetEndpoint(LegacyServerSocketEndPointInfo.DEFAULT_ENDPOINT).getHostName();
+            location.hostname = host ;
+            int listLength;
+            if (serverORBAndPortList != null) {
+                listLength = serverORBAndPortList.length;
+            } else {
+                listLength = 0;
+            }
+            location.ports = new ORBPortInfo[listLength];
+            for (int i = 0; i < listLength; i++) {
+                location.ports[i] = new ORBPortInfo(serverORBAndPortList[i].orbId,
+                        serverORBAndPortList[i].port) ;
+
+                if (debug)
+                    System.out.println( "ServerManagerImpl: locateServer: " +
+                                    "server located at location " +
+                                    location.hostname + " ORBid  " +
+                                    serverORBAndPortList[i].orbId +
+                                    " Port " + serverORBAndPortList[i].port) ;
+            }
+        }
+
+        return location;
+    }
+
+    private ServerLocationPerORB locateServerForORB (ServerTableEntry entry, String orbId,
+                                        boolean block)
+        throws InvalidORBid, ServerNotRegistered, ServerHeldDown
+    {
+        ServerLocationPerORB location = new ServerLocationPerORB() ;
+
+        // if server location is desired, then wait for the server
+        // to register back, then return location
+
+        EndPointInfo [] endpointInfoList;
+        if (block) {
+            try {
+                endpointInfoList = entry.lookupForORB(orbId);
+            } catch (InvalidORBid ex) {
+                throw ex;
+            } catch (Exception ex) {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: locateServerForORB: " +
+                                        "server held down" ) ;
+
+                throw new ServerHeldDown( entry.getServerId() );
+            }
+
+            String host =
+                orb.getLegacyServerSocketManager()
+                    .legacyGetEndpoint(LegacyServerSocketEndPointInfo.DEFAULT_ENDPOINT).getHostName();
+            location.hostname = host ;
+            int listLength;
+            if (endpointInfoList != null) {
+                listLength = endpointInfoList.length;
+            } else {
+                listLength = 0;
+            }
+            location.ports = new EndPointInfo[listLength];
+            for (int i = 0; i < listLength; i++) {
+                location.ports[i] = new EndPointInfo(endpointInfoList[i].endpointType,
+                        endpointInfoList[i].port) ;
+
+                if (debug)
+                    System.out.println( "ServerManagerImpl: locateServer: " +
+                                    "server located at location " +
+                                    location.hostname + " endpointType  " +
+                                    endpointInfoList[i].endpointType +
+                                    " Port " + endpointInfoList[i].port) ;
+            }
+        }
+
+        return location;
+    }
+
+    public String[] getORBNames(int serverId)
+        throws ServerNotRegistered
+    {
+        try {
+            ServerTableEntry entry = getEntry( serverId ) ;
+            return (entry.getORBList());
+        } catch (Exception ex) {
+            throw new ServerNotRegistered(serverId);
+        }
+    }
+
+    private ServerTableEntry getRunningEntry( int serverId )
+        throws ServerNotRegistered
+    {
+        ServerTableEntry entry = getEntry( serverId ) ;
+
+        try {
+            // this is to see if the server has any listeners
+            ORBPortInfo [] serverORBAndPortList = entry.lookup(IIOP_CLEAR_TEXT.value) ;
+        } catch (Exception exc) {
+            return null ;
+        }
+        return entry;
+
+    }
+
+    public void install( int serverId )
+        throws ServerNotRegistered, ServerHeldDown, ServerAlreadyInstalled
+    {
+        ServerTableEntry entry = getRunningEntry( serverId ) ;
+        if (entry != null) {
+            repository.install( serverId ) ;
+            entry.install() ;
+        }
+    }
+
+    public void uninstall( int serverId )
+        throws ServerNotRegistered, ServerHeldDown, ServerAlreadyUninstalled
+    {
+        ServerTableEntry entry =
+            (ServerTableEntry) serverTable.get( new Integer(serverId) );
+
+        if (entry != null) {
+
+            entry =
+                (ServerTableEntry) serverTable.remove(new Integer(serverId));
+
+            if (entry == null) {
+                if (debug)
+                    System.out.println( "ServerManagerImpl: shutdown for server Id " +
+                                    serverId + " throws ServerNotActive." ) ;
+
+                throw new ServerHeldDown( serverId );
+            }
+
+            entry.uninstall();
+        }
+    }
+
+    public ServerLocation locateServer (int serverId, String endpointType)
+        throws NoSuchEndPoint, ServerNotRegistered, ServerHeldDown
+    {
+        ServerTableEntry entry = getEntry( serverId ) ;
+        if (debug)
+            System.out.println( "ServerManagerImpl: locateServer called with " +
+                                " serverId=" + serverId + " endpointType=" +
+                                endpointType + " block=true" ) ;
+
+        // passing in entry to eliminate multiple lookups for
+        // the same entry in some cases
+
+        return locateServer(entry, endpointType, true);
+    }
+
+    /** This method is used to obtain the registered ports for an ORB.
+    * This is useful for custom Bad server ID handlers in ORBD.
+    */
+    public ServerLocationPerORB locateServerForORB (int serverId, String orbId)
+        throws InvalidORBid, ServerNotRegistered, ServerHeldDown
+    {
+        ServerTableEntry entry = getEntry( serverId ) ;
+
+        // passing in entry to eliminate multiple lookups for
+        // the same entry in some cases
+
+        if (debug)
+            System.out.println( "ServerManagerImpl: locateServerForORB called with " +
+                                " serverId=" + serverId + " orbId=" + orbId +
+                                " block=true" ) ;
+        return locateServerForORB(entry, orbId, true);
+    }
+
+
+    public void handle(ObjectKey okey)
+    {
+        IOR newIOR = null;
+        ServerLocationPerORB location;
+
+        // we need to get the serverid and the orbid from the object key
+        ObjectKeyTemplate oktemp = okey.getTemplate();
+        int serverId = oktemp.getServerId() ;
+        String orbId = oktemp.getORBId() ;
+
+        try {
+            // get the ORBName corresponding to the orbMapid, that was
+            // first registered by the server
+            ServerTableEntry entry = getEntry( serverId ) ;
+            location = locateServerForORB(entry, orbId, true);
+
+            if (debug)
+                System.out.println( "ServerManagerImpl: handle called for server id" +
+                        serverId + "  orbid  " + orbId) ;
+
+            // we received a list of ports corresponding to an ORB in a
+            // particular server, now retrieve the one corresponding
+            // to IIOP_CLEAR_TEXT, and for other created the tagged
+            // components to be added to the IOR
+
+            int clearPort = 0;
+            EndPointInfo[] listenerPorts = location.ports;
+            for (int i = 0; i < listenerPorts.length; i++) {
+                if ((listenerPorts[i].endpointType).equals(IIOP_CLEAR_TEXT.value)) {
+                    clearPort = listenerPorts[i].port;
+                    break;
+                }
+            }
+
+            // create a new IOR with the correct port and correct tagged
+            // components
+            IIOPAddress addr = IIOPFactories.makeIIOPAddress( orb,
+                location.hostname, clearPort ) ;
+            IIOPProfileTemplate iptemp =
+                IIOPFactories.makeIIOPProfileTemplate(
+                    orb, GIOPVersion.V1_2, addr ) ;
+            if (GIOPVersion.V1_2.supportsIORIIOPProfileComponents()) {
+                iptemp.add(IIOPFactories.makeCodeSetsComponent(orb));
+                iptemp.add(IIOPFactories.makeMaxStreamFormatVersionComponent());
+            }
+            IORTemplate iortemp = IORFactories.makeIORTemplate(oktemp) ;
+            iortemp.add( iptemp ) ;
+
+            newIOR = iortemp.makeIOR(orb, "IDL:org/omg/CORBA/Object:1.0",
+                okey.getId() );
+        } catch (Exception e) {
+            throw wrapper.errorInBadServerIdHandler( e ) ;
+        }
+
+        if (debug)
+            System.out.println( "ServerManagerImpl: handle " +
+                                "throws ForwardException" ) ;
+
+
+        try {
+            // This delay is required in case of Server is activated or
+            // re-activated the first time. Server needs some time before
+            // handling all the requests.
+            // (Talk to Ken to see whether there is a better way of doing this).
+            Thread.sleep( serverStartupDelay );
+        } catch ( Exception e ) {
+            System.out.println( "Exception = " + e );
+            e.printStackTrace();
+        }
+
+        throw new ForwardException(orb, newIOR);
+    }
+
+    public int getEndpoint(String endpointType) throws NoSuchEndPoint
+    {
+        return orb.getLegacyServerSocketManager()
+            .legacyGetTransientServerPort(endpointType);
+    }
+
+    public int getServerPortForType(ServerLocationPerORB location,
+                                    String endPointType)
+        throws NoSuchEndPoint
+    {
+        EndPointInfo[] listenerPorts = location.ports;
+        for (int i = 0; i < listenerPorts.length; i++) {
+            if ((listenerPorts[i].endpointType).equals(endPointType)) {
+                return listenerPorts[i].port;
+            }
+        }
+        throw new NoSuchEndPoint();
+    }
+
+}

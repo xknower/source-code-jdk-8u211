@@ -1,17 +1,73 @@
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: XMLStringFactory.java,v 1.2.4.1 2005/09/15 08:16:03 suresh_emailid Exp $
+ */
 package com.sun.org.apache.xml.internal.utils;
 
-public abstract class XMLStringFactory {
-  public abstract XMLString newstr(String paramString);
-  
-  public abstract XMLString newstr(FastStringBuffer paramFastStringBuffer, int paramInt1, int paramInt2);
-  
-  public abstract XMLString newstr(char[] paramArrayOfchar, int paramInt1, int paramInt2);
-  
+/**
+ * A concrete class that implements this interface creates XMLString objects.
+ */
+public abstract class XMLStringFactory
+{
+
+  /**
+   * Create a new XMLString from a Java string.
+   *
+   *
+   * @param string Java String reference, which must be non-null.
+   *
+   * @return An XMLString object that wraps the String reference.
+   */
+  public abstract XMLString newstr(String string);
+
+  /**
+   * Create a XMLString from a FastStringBuffer.
+   *
+   *
+   * @param string FastStringBuffer reference, which must be non-null.
+   * @param start The start position in the array.
+   * @param length The number of characters to read from the array.
+   *
+   * @return An XMLString object that wraps the FastStringBuffer reference.
+   */
+  public abstract XMLString newstr(FastStringBuffer string, int start,
+                                   int length);
+
+  /**
+   * Create a XMLString from a FastStringBuffer.
+   *
+   *
+   * @param string FastStringBuffer reference, which must be non-null.
+   * @param start The start position in the array.
+   * @param length The number of characters to read from the array.
+   *
+   * @return An XMLString object that wraps the FastStringBuffer reference.
+   */
+  public abstract XMLString newstr(char[] string, int start,
+                                   int length);
+
+  /**
+   * Get a cheap representation of an empty string.
+   *
+   * @return An non-null reference to an XMLString that represents "".
+   */
   public abstract XMLString emptystr();
 }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\interna\\utils\XMLStringFactory.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */

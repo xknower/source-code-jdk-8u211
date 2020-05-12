@@ -1,251 +1,246 @@
-/*     */ package com.sun.jmx.remote.util;
-/*     */ 
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ClassLogger
-/*     */ {
-/*     */   private static final boolean ok;
-/*     */   private final String className;
-/*     */   private final Logger logger;
-/*     */   
-/*     */   static {
-/*  42 */     boolean bool = false;
-/*     */     try {
-/*  44 */       Class<Logger> clazz = Logger.class;
-/*  45 */       bool = true;
-/*  46 */     } catch (Error error) {}
-/*     */ 
-/*     */ 
-/*     */     
-/*  50 */     ok = bool;
-/*     */   }
-/*     */   
-/*     */   public ClassLogger(String paramString1, String paramString2) {
-/*  54 */     if (ok) {
-/*  55 */       this.logger = Logger.getLogger(paramString1);
-/*     */     } else {
-/*  57 */       this.logger = null;
-/*  58 */     }  this.className = paramString2;
-/*     */   }
-/*     */   
-/*     */   public final boolean traceOn() {
-/*  62 */     return finerOn();
-/*     */   }
-/*     */   
-/*     */   public final boolean debugOn() {
-/*  66 */     return finestOn();
-/*     */   }
-/*     */   
-/*     */   public final boolean warningOn() {
-/*  70 */     return (ok && this.logger.isLoggable(Level.WARNING));
-/*     */   }
-/*     */   
-/*     */   public final boolean infoOn() {
-/*  74 */     return (ok && this.logger.isLoggable(Level.INFO));
-/*     */   }
-/*     */   
-/*     */   public final boolean configOn() {
-/*  78 */     return (ok && this.logger.isLoggable(Level.CONFIG));
-/*     */   }
-/*     */   
-/*     */   public final boolean fineOn() {
-/*  82 */     return (ok && this.logger.isLoggable(Level.FINE));
-/*     */   }
-/*     */   
-/*     */   public final boolean finerOn() {
-/*  86 */     return (ok && this.logger.isLoggable(Level.FINER));
-/*     */   }
-/*     */   
-/*     */   public final boolean finestOn() {
-/*  90 */     return (ok && this.logger.isLoggable(Level.FINEST));
-/*     */   }
-/*     */   
-/*     */   public final void debug(String paramString1, String paramString2) {
-/*  94 */     finest(paramString1, paramString2);
-/*     */   }
-/*     */   
-/*     */   public final void debug(String paramString, Throwable paramThrowable) {
-/*  98 */     finest(paramString, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public final void debug(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 102 */     finest(paramString1, paramString2, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public final void trace(String paramString1, String paramString2) {
-/* 106 */     finer(paramString1, paramString2);
-/*     */   }
-/*     */   
-/*     */   public final void trace(String paramString, Throwable paramThrowable) {
-/* 110 */     finer(paramString, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public final void trace(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 114 */     finer(paramString1, paramString2, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public final void error(String paramString1, String paramString2) {
-/* 118 */     severe(paramString1, paramString2);
-/*     */   }
-/*     */   
-/*     */   public final void error(String paramString, Throwable paramThrowable) {
-/* 122 */     severe(paramString, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public final void error(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 126 */     severe(paramString1, paramString2, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public final void finest(String paramString1, String paramString2) {
-/* 130 */     if (ok)
-/* 131 */       this.logger.logp(Level.FINEST, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void finest(String paramString, Throwable paramThrowable) {
-/* 135 */     if (ok)
-/* 136 */       this.logger.logp(Level.FINEST, this.className, paramString, paramThrowable
-/* 137 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void finest(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 141 */     if (ok) {
-/* 142 */       this.logger.logp(Level.FINEST, this.className, paramString1, paramString2, paramThrowable);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public final void finer(String paramString1, String paramString2) {
-/* 147 */     if (ok)
-/* 148 */       this.logger.logp(Level.FINER, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void finer(String paramString, Throwable paramThrowable) {
-/* 152 */     if (ok)
-/* 153 */       this.logger.logp(Level.FINER, this.className, paramString, paramThrowable
-/* 154 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void finer(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 158 */     if (ok)
-/* 159 */       this.logger.logp(Level.FINER, this.className, paramString1, paramString2, paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void fine(String paramString1, String paramString2) {
-/* 163 */     if (ok)
-/* 164 */       this.logger.logp(Level.FINE, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void fine(String paramString, Throwable paramThrowable) {
-/* 168 */     if (ok)
-/* 169 */       this.logger.logp(Level.FINE, this.className, paramString, paramThrowable
-/* 170 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void fine(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 174 */     if (ok) {
-/* 175 */       this.logger.logp(Level.FINE, this.className, paramString1, paramString2, paramThrowable);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public final void config(String paramString1, String paramString2) {
-/* 180 */     if (ok)
-/* 181 */       this.logger.logp(Level.CONFIG, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void config(String paramString, Throwable paramThrowable) {
-/* 185 */     if (ok)
-/* 186 */       this.logger.logp(Level.CONFIG, this.className, paramString, paramThrowable
-/* 187 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void config(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 191 */     if (ok) {
-/* 192 */       this.logger.logp(Level.CONFIG, this.className, paramString1, paramString2, paramThrowable);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public final void info(String paramString1, String paramString2) {
-/* 197 */     if (ok)
-/* 198 */       this.logger.logp(Level.INFO, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void info(String paramString, Throwable paramThrowable) {
-/* 202 */     if (ok)
-/* 203 */       this.logger.logp(Level.INFO, this.className, paramString, paramThrowable
-/* 204 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void info(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 208 */     if (ok) {
-/* 209 */       this.logger.logp(Level.INFO, this.className, paramString1, paramString2, paramThrowable);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public final void warning(String paramString1, String paramString2) {
-/* 214 */     if (ok)
-/* 215 */       this.logger.logp(Level.WARNING, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void warning(String paramString, Throwable paramThrowable) {
-/* 219 */     if (ok)
-/* 220 */       this.logger.logp(Level.WARNING, this.className, paramString, paramThrowable
-/* 221 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void warning(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 225 */     if (ok) {
-/* 226 */       this.logger.logp(Level.WARNING, this.className, paramString1, paramString2, paramThrowable);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public final void severe(String paramString1, String paramString2) {
-/* 231 */     if (ok)
-/* 232 */       this.logger.logp(Level.SEVERE, this.className, paramString1, paramString2); 
-/*     */   }
-/*     */   
-/*     */   public final void severe(String paramString, Throwable paramThrowable) {
-/* 236 */     if (ok)
-/* 237 */       this.logger.logp(Level.SEVERE, this.className, paramString, paramThrowable
-/* 238 */           .toString(), paramThrowable); 
-/*     */   }
-/*     */   
-/*     */   public final void severe(String paramString1, String paramString2, Throwable paramThrowable) {
-/* 242 */     if (ok)
-/* 243 */       this.logger.logp(Level.SEVERE, this.className, paramString1, paramString2, paramThrowable); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\remot\\util\ClassLogger.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.remote.util;
+
+import java.util.logging.Logger;
+
+public class ClassLogger {
+
+    private static final boolean ok;
+    private final String className;
+    private final Logger logger;
+
+    static {
+        /* We attempt to work even if we are running in J2SE 1.3, where
+           there is no java.util.logging.  The technique we use here is
+           not strictly portable, but it does work with Sun's J2SE 1.3
+           at least.  This is just a best effort: the Right Thing is for
+           people to use at least J2SE 1.4.  */
+        boolean loaded = false;
+        try {
+            Class<?> c = java.util.logging.Logger.class;
+            loaded = true;
+        } catch (Error e) {
+            // OK.
+            // java.util.logger package is not available in this jvm.
+        }
+        ok = loaded;
+    }
+
+    public ClassLogger(String subsystem, String className) {
+        if (ok)
+            logger = Logger.getLogger(subsystem);
+        else
+            logger = null;
+        this.className = className;
+    }
+
+    public final boolean traceOn() {
+        return finerOn();
+    }
+
+    public final boolean debugOn() {
+        return finestOn();
+    }
+
+    public final boolean warningOn() {
+        return ok && logger.isLoggable(java.util.logging.Level.WARNING);
+    }
+
+    public final boolean infoOn() {
+        return ok && logger.isLoggable(java.util.logging.Level.INFO);
+    }
+
+    public final boolean configOn() {
+        return ok && logger.isLoggable(java.util.logging.Level.CONFIG);
+    }
+
+    public final boolean fineOn() {
+        return ok && logger.isLoggable(java.util.logging.Level.FINE);
+    }
+
+    public final boolean finerOn() {
+        return ok && logger.isLoggable(java.util.logging.Level.FINER);
+    }
+
+    public final boolean finestOn() {
+        return ok && logger.isLoggable(java.util.logging.Level.FINEST);
+    }
+
+    public final void debug(String func, String msg) {
+        finest(func,msg);
+    }
+
+    public final void debug(String func, Throwable t) {
+        finest(func,t);
+    }
+
+    public final void debug(String func, String msg, Throwable t) {
+        finest(func,msg,t);
+    }
+
+    public final void trace(String func, String msg) {
+        finer(func,msg);
+    }
+
+    public final void trace(String func, Throwable t) {
+        finer(func,t);
+    }
+
+    public final void trace(String func, String msg, Throwable t) {
+        finer(func,msg,t);
+    }
+
+    public final void error(String func, String msg) {
+        severe(func,msg);
+    }
+
+    public final void error(String func, Throwable t) {
+        severe(func,t);
+    }
+
+    public final void error(String func, String msg, Throwable t) {
+        severe(func,msg,t);
+    }
+
+    public final void finest(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINEST, className, func, msg);
+    }
+
+    public final void finest(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINEST, className, func,
+                        t.toString(), t);
+    }
+
+    public final void finest(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINEST, className, func, msg,
+                        t);
+    }
+
+    public final void finer(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINER, className, func, msg);
+    }
+
+    public final void finer(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINER, className, func,
+                        t.toString(), t);
+    }
+
+    public final void finer(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINER, className, func, msg,t);
+    }
+
+    public final void fine(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINE, className, func, msg);
+    }
+
+    public final void fine(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINE, className, func,
+                        t.toString(), t);
+    }
+
+    public final void fine(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.FINE, className, func, msg,
+                        t);
+    }
+
+    public final void config(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.CONFIG, className, func, msg);
+    }
+
+    public final void config(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.CONFIG, className, func,
+                        t.toString(), t);
+    }
+
+    public final void config(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.CONFIG, className, func, msg,
+                        t);
+    }
+
+    public final void info(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.INFO, className, func, msg);
+    }
+
+    public final void info(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.INFO, className, func,
+                        t.toString(), t);
+    }
+
+    public final void info(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.INFO, className, func, msg,
+                        t);
+    }
+
+    public final void warning(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.WARNING, className, func, msg);
+    }
+
+    public final void warning(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.WARNING, className, func,
+                        t.toString(), t);
+    }
+
+    public final void warning(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.WARNING, className, func, msg,
+                        t);
+    }
+
+    public final void severe(String func, String msg) {
+        if (ok)
+            logger.logp(java.util.logging.Level.SEVERE, className, func, msg);
+    }
+
+    public final void severe(String func, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.SEVERE, className, func,
+                        t.toString(), t);
+    }
+
+    public final void severe(String func, String msg, Throwable t) {
+        if (ok)
+            logger.logp(java.util.logging.Level.SEVERE, className, func, msg,
+                        t);
+    }
+}

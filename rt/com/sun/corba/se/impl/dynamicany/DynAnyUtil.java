@@ -1,344 +1,338 @@
-/*     */ package com.sun.corba.se.impl.dynamicany;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.corba.AnyImpl;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.math.BigDecimal;
-/*     */ import org.omg.CORBA.Any;
-/*     */ import org.omg.CORBA.TypeCode;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.DynamicAny.DynAny;
-/*     */ import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
-/*     */ import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DynAnyUtil
-/*     */ {
-/*     */   static boolean isConsistentType(TypeCode paramTypeCode) {
-/*  49 */     int i = paramTypeCode.kind().value();
-/*  50 */     return (i != 13 && i != 31 && i != 32);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean isConstructedDynAny(DynAny paramDynAny) {
-/*  58 */     int i = paramDynAny.type().kind().value();
-/*  59 */     return (i == 19 || i == 15 || i == 20 || i == 16 || i == 17 || i == 28 || i == 29 || i == 30);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static DynAny createMostDerivedDynAny(Any paramAny, ORB paramORB, boolean paramBoolean) throws InconsistentTypeCode {
-/*  72 */     if (paramAny == null || !isConsistentType(paramAny.type())) {
-/*  73 */       throw new InconsistentTypeCode();
-/*     */     }
-/*  75 */     switch (paramAny.type().kind().value()) {
-/*     */       case 19:
-/*  77 */         return new DynSequenceImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 15:
-/*  79 */         return new DynStructImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 20:
-/*  81 */         return new DynArrayImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 16:
-/*  83 */         return new DynUnionImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 17:
-/*  85 */         return new DynEnumImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 28:
-/*  87 */         return new DynFixedImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 29:
-/*  89 */         return new DynValueImpl(paramORB, paramAny, paramBoolean);
-/*     */       case 30:
-/*  91 */         return new DynValueBoxImpl(paramORB, paramAny, paramBoolean);
-/*     */     } 
-/*  93 */     return new DynAnyBasicImpl(paramORB, paramAny, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static DynAny createMostDerivedDynAny(TypeCode paramTypeCode, ORB paramORB) throws InconsistentTypeCode {
-/* 100 */     if (paramTypeCode == null || !isConsistentType(paramTypeCode)) {
-/* 101 */       throw new InconsistentTypeCode();
-/*     */     }
-/* 103 */     switch (paramTypeCode.kind().value()) {
-/*     */       case 19:
-/* 105 */         return new DynSequenceImpl(paramORB, paramTypeCode);
-/*     */       case 15:
-/* 107 */         return new DynStructImpl(paramORB, paramTypeCode);
-/*     */       case 20:
-/* 109 */         return new DynArrayImpl(paramORB, paramTypeCode);
-/*     */       case 16:
-/* 111 */         return new DynUnionImpl(paramORB, paramTypeCode);
-/*     */       case 17:
-/* 113 */         return new DynEnumImpl(paramORB, paramTypeCode);
-/*     */       case 28:
-/* 115 */         return new DynFixedImpl(paramORB, paramTypeCode);
-/*     */       case 29:
-/* 117 */         return new DynValueImpl(paramORB, paramTypeCode);
-/*     */       case 30:
-/* 119 */         return new DynValueBoxImpl(paramORB, paramTypeCode);
-/*     */     } 
-/* 121 */     return new DynAnyBasicImpl(paramORB, paramTypeCode);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Any extractAnyFromStream(TypeCode paramTypeCode, InputStream paramInputStream, ORB paramORB) {
-/* 139 */     return AnyImpl.extractAnyFromStream(paramTypeCode, paramInputStream, paramORB);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   static Any createDefaultAnyOfType(TypeCode paramTypeCode, ORB paramORB) {
-/* 144 */     ORBUtilSystemException oRBUtilSystemException = ORBUtilSystemException.get(paramORB, "rpc.presentation");
-/*     */ 
-/*     */     
-/* 147 */     Any any = paramORB.create_any();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 157 */     switch (paramTypeCode.kind().value()) {
-/*     */       
-/*     */       case 8:
-/* 160 */         any.insert_boolean(false);
-/*     */ 
-/*     */       
-/*     */       case 2:
-/* 164 */         any.insert_short((short)0);
-/*     */ 
-/*     */       
-/*     */       case 4:
-/* 168 */         any.insert_ushort((short)0);
-/*     */ 
-/*     */       
-/*     */       case 3:
-/* 172 */         any.insert_long(0);
-/*     */ 
-/*     */       
-/*     */       case 5:
-/* 176 */         any.insert_ulong(0);
-/*     */ 
-/*     */       
-/*     */       case 23:
-/* 180 */         any.insert_longlong(0L);
-/*     */ 
-/*     */       
-/*     */       case 24:
-/* 184 */         any.insert_ulonglong(0L);
-/*     */ 
-/*     */       
-/*     */       case 6:
-/* 188 */         any.insert_float(0.0F);
-/*     */ 
-/*     */       
-/*     */       case 7:
-/* 192 */         any.insert_double(0.0D);
-/*     */ 
-/*     */       
-/*     */       case 10:
-/* 196 */         any.insert_octet((byte)0);
-/*     */ 
-/*     */       
-/*     */       case 9:
-/* 200 */         any.insert_char(false);
-/*     */ 
-/*     */       
-/*     */       case 26:
-/* 204 */         any.insert_wchar(false);
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 18:
-/* 209 */         any.type(paramTypeCode);
-/*     */         
-/* 211 */         any.insert_string("");
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 27:
-/* 216 */         any.type(paramTypeCode);
-/*     */         
-/* 218 */         any.insert_wstring("");
-/*     */ 
-/*     */       
-/*     */       case 14:
-/* 222 */         any.insert_Object(null);
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 12:
-/* 227 */         any.insert_TypeCode(any.type());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 11:
-/* 234 */         any.insert_any(paramORB.create_any());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 15:
-/*     */       case 16:
-/*     */       case 17:
-/*     */       case 19:
-/*     */       case 20:
-/*     */       case 22:
-/*     */       case 29:
-/*     */       case 30:
-/* 249 */         any.type(paramTypeCode);
-/*     */       
-/*     */       case 28:
-/* 252 */         any.insert_fixed(new BigDecimal("0.0"), paramTypeCode);
-/*     */       
-/*     */       case 1:
-/*     */       case 13:
-/*     */       case 21:
-/*     */       case 31:
-/*     */       case 32:
-/* 259 */         any.type(paramTypeCode);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       case 0:
-/* 270 */         return any;
-/*     */       case 25:
-/*     */         throw oRBUtilSystemException.tkLongDoubleNotSupported();
-/*     */     } 
-/*     */     throw oRBUtilSystemException.typecodeNotSupported();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Any copy(Any paramAny, ORB paramORB) {
-/* 281 */     return new AnyImpl(paramORB, paramAny);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static DynAny convertToNative(DynAny paramDynAny, ORB paramORB) {
-/* 297 */     if (paramDynAny instanceof DynAnyImpl) {
-/* 298 */       return paramDynAny;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     try {
-/* 303 */       return createMostDerivedDynAny(paramDynAny.to_any(), paramORB, true);
-/* 304 */     } catch (InconsistentTypeCode inconsistentTypeCode) {
-/* 305 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean isInitialized(Any paramAny) {
-/* 314 */     boolean bool = ((AnyImpl)paramAny).isInitialized();
-/* 315 */     switch (paramAny.type().kind().value()) {
-/*     */       case 18:
-/* 317 */         return (bool && paramAny.extract_string() != null);
-/*     */       case 27:
-/* 319 */         return (bool && paramAny.extract_wstring() != null);
-/*     */     } 
-/* 321 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static boolean set_current_component(DynAny paramDynAny1, DynAny paramDynAny2) {
-/* 327 */     if (paramDynAny2 != null) {
-/*     */       try {
-/* 329 */         paramDynAny1.rewind();
-/*     */         do {
-/* 331 */           if (paramDynAny1.current_component() == paramDynAny2)
-/* 332 */             return true; 
-/* 333 */         } while (paramDynAny1.next());
-/* 334 */       } catch (TypeMismatch typeMismatch) {}
-/*     */     }
-/* 336 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\dynamicany\DynAnyUtil.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.dynamicany;
+
+import org.omg.CORBA.Any;
+import org.omg.CORBA.TypeCode;
+import org.omg.CORBA.TCKind;
+import org.omg.CORBA.portable.OutputStream;
+//import org.omg.CORBA.ORBPackage.*;
+import org.omg.CORBA.TypeCodePackage.BadKind;
+import org.omg.CORBA.TypeCodePackage.Bounds;
+import org.omg.CORBA.portable.InputStream;
+import org.omg.DynamicAny.*;
+import org.omg.DynamicAny.DynAnyPackage.TypeMismatch;
+import org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode;
+import java.math.BigDecimal;
+import com.sun.corba.se.impl.corba.AnyImpl;
+
+import com.sun.corba.se.spi.orb.ORB ;
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+public class DynAnyUtil
+{
+    static boolean isConsistentType(TypeCode typeCode) {
+        int kind = typeCode.kind().value();
+        return (kind != TCKind._tk_Principal &&
+                kind != TCKind._tk_native &&
+                kind != TCKind._tk_abstract_interface);
+    }
+
+    static boolean isConstructedDynAny(DynAny dynAny) {
+        // DynFixed is constructed but not a subclass of DynAnyConstructedImpl
+        //return (dynAny instanceof DynAnyConstructedImpl);
+        int kind = dynAny.type().kind().value();
+        return (kind == TCKind._tk_sequence ||
+                kind == TCKind._tk_struct ||
+                kind == TCKind._tk_array ||
+                kind == TCKind._tk_union ||
+                kind == TCKind._tk_enum ||
+                kind == TCKind._tk_fixed ||
+                kind == TCKind._tk_value ||
+                kind == TCKind._tk_value_box);
+    }
+
+    static DynAny createMostDerivedDynAny(Any any, ORB orb, boolean copyValue)
+        throws org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode
+    {
+        if (any == null || ! DynAnyUtil.isConsistentType(any.type()))
+            throw new org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode();
+
+        switch (any.type().kind().value()) {
+            case TCKind._tk_sequence:
+                return new DynSequenceImpl(orb, any, copyValue);
+            case TCKind._tk_struct:
+                return new DynStructImpl(orb, any, copyValue);
+            case TCKind._tk_array:
+                return new DynArrayImpl(orb, any, copyValue);
+            case TCKind._tk_union:
+                return new DynUnionImpl(orb, any, copyValue);
+            case TCKind._tk_enum:
+                return new DynEnumImpl(orb, any, copyValue);
+            case TCKind._tk_fixed:
+                return new DynFixedImpl(orb, any, copyValue);
+            case TCKind._tk_value:
+                return new DynValueImpl(orb, any, copyValue);
+            case TCKind._tk_value_box:
+                return new DynValueBoxImpl(orb, any, copyValue);
+            default:
+                return new DynAnyBasicImpl(orb, any, copyValue);
+        }
+    }
+
+    static DynAny createMostDerivedDynAny(TypeCode typeCode, ORB orb)
+        throws org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode
+    {
+        if (typeCode == null || ! DynAnyUtil.isConsistentType(typeCode))
+            throw new org.omg.DynamicAny.DynAnyFactoryPackage.InconsistentTypeCode();
+
+        switch (typeCode.kind().value()) {
+            case TCKind._tk_sequence:
+                return new DynSequenceImpl(orb, typeCode);
+            case TCKind._tk_struct:
+                return new DynStructImpl(orb, typeCode);
+            case TCKind._tk_array:
+                return new DynArrayImpl(orb, typeCode);
+            case TCKind._tk_union:
+                return new DynUnionImpl(orb, typeCode);
+            case TCKind._tk_enum:
+                return new DynEnumImpl(orb, typeCode);
+            case TCKind._tk_fixed:
+                return new DynFixedImpl(orb, typeCode);
+            case TCKind._tk_value:
+                return new DynValueImpl(orb, typeCode);
+            case TCKind._tk_value_box:
+                return new DynValueBoxImpl(orb, typeCode);
+            default:
+                return new DynAnyBasicImpl(orb, typeCode);
+        }
+    }
+
+    // Extracts a member value according to the given TypeCode from the given complex Any
+    // (at the Anys current internal stream position, consuming the anys stream on the way)
+    // and returns it wrapped into a new Any
+/*
+    static Any extractAnyFromAny(TypeCode memberType, Any any, ORB orb) {
+        // Moved this functionality into AnyImpl because it is needed for Any.equal()
+        return ((AnyImpl)any).extractAny(memberType, orb);
+    }
+*/
+
+    // Extracts a member value according to the given TypeCode from the given complex Any
+    // (at the Anys current internal stream position, consuming the anys stream on the way)
+    // and returns it wrapped into a new Any
+    static Any extractAnyFromStream(TypeCode memberType, InputStream input, ORB orb) {
+        return AnyImpl.extractAnyFromStream(memberType, input, orb);
+    }
+
+    // Creates a default Any of the given type.
+    static Any createDefaultAnyOfType(TypeCode typeCode, ORB orb) {
+        ORBUtilSystemException wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PRESENTATION ) ;
+
+        Any returnValue = orb.create_any();
+        // The spec for DynAny differs from Any on initialization via type code:
+        // - false for boolean
+        // - zero for numeric types
+        // - zero for types octet, char, and wchar
+        // - the empty string for string and wstring
+        // - nil for object references
+        // - a type code with a TCKind value of tk_null for type codes
+        // - for Any values, an Any containing a type code with a TCKind value of tk_null
+        //   type and no value
+        switch (typeCode.kind().value()) {
+            case TCKind._tk_boolean:
+                // false for boolean
+                returnValue.insert_boolean(false);
+                break;
+            case TCKind._tk_short:
+                // zero for numeric types
+                returnValue.insert_short((short)0);
+                break;
+            case TCKind._tk_ushort:
+                // zero for numeric types
+                returnValue.insert_ushort((short)0);
+                break;
+            case TCKind._tk_long:
+                // zero for numeric types
+                returnValue.insert_long(0);
+                break;
+            case TCKind._tk_ulong:
+                // zero for numeric types
+                returnValue.insert_ulong(0);
+                break;
+            case TCKind._tk_longlong:
+                // zero for numeric types
+                returnValue.insert_longlong((long)0);
+                break;
+            case TCKind._tk_ulonglong:
+                // zero for numeric types
+                returnValue.insert_ulonglong((long)0);
+                break;
+            case TCKind._tk_float:
+                // zero for numeric types
+                returnValue.insert_float((float)0.0);
+                break;
+            case TCKind._tk_double:
+                // zero for numeric types
+                returnValue.insert_double((double)0.0);
+                break;
+            case TCKind._tk_octet:
+                // zero for types octet, char, and wchar
+                returnValue.insert_octet((byte)0);
+                break;
+            case TCKind._tk_char:
+                // zero for types octet, char, and wchar
+                returnValue.insert_char((char)0);
+                break;
+            case TCKind._tk_wchar:
+                // zero for types octet, char, and wchar
+                returnValue.insert_wchar((char)0);
+                break;
+            case TCKind._tk_string:
+                // the empty string for string and wstring
+                // Make sure that type code for bounded strings gets respected
+                returnValue.type(typeCode);
+                // Doesn't erase the type of bounded string
+                returnValue.insert_string("");
+                break;
+            case TCKind._tk_wstring:
+                // the empty string for string and wstring
+                // Make sure that type code for bounded strings gets respected
+                returnValue.type(typeCode);
+                // Doesn't erase the type of bounded string
+                returnValue.insert_wstring("");
+                break;
+            case TCKind._tk_objref:
+                // nil for object references
+                returnValue.insert_Object(null);
+                break;
+            case TCKind._tk_TypeCode:
+                // a type code with a TCKind value of tk_null for type codes
+                // We can reuse the type code that's already in the any.
+                returnValue.insert_TypeCode(returnValue.type());
+                break;
+            case TCKind._tk_any:
+                // for Any values, an Any containing a type code with a TCKind value
+                // of tk_null type and no value.
+                // This is exactly what the default AnyImpl constructor provides.
+                // _REVISIT_ Note that this inner Any is considered uninitialized.
+                returnValue.insert_any(orb.create_any());
+                break;
+            case TCKind._tk_struct:
+            case TCKind._tk_union:
+            case TCKind._tk_enum:
+            case TCKind._tk_sequence:
+            case TCKind._tk_array:
+            case TCKind._tk_except:
+            case TCKind._tk_value:
+            case TCKind._tk_value_box:
+                // There are no default value for complex types since there is no
+                // concept of a hierarchy of Anys. Only DynAnys can be arrange in
+                // a hierarchy to mirror the TypeCode hierarchy.
+                // See DynAnyConstructedImpl.initializeComponentsFromTypeCode()
+                // on how this DynAny hierarchy is created from TypeCodes.
+                returnValue.type(typeCode);
+                break;
+            case TCKind._tk_fixed:
+                returnValue.insert_fixed(new BigDecimal("0.0"), typeCode);
+                break;
+            case TCKind._tk_native:
+            case TCKind._tk_alias:
+            case TCKind._tk_void:
+            case TCKind._tk_Principal:
+            case TCKind._tk_abstract_interface:
+                returnValue.type(typeCode);
+                break;
+            case TCKind._tk_null:
+                // Any is already initialized to null
+                break;
+            case TCKind._tk_longdouble:
+                // Unspecified for Java
+                throw wrapper.tkLongDoubleNotSupported() ;
+            default:
+                throw wrapper.typecodeNotSupported() ;
+        }
+        return returnValue;
+    }
+/*
+    static Any setTypeOfAny(TypeCode typeCode, Any value) {
+        if (value != null) {
+            value.read_value(value.create_input_stream(), typeCode);
+        }
+        return value;
+    }
+*/
+    static Any copy(Any inAny, ORB orb) {
+        return new AnyImpl(orb, inAny);
+    }
+
+/*
+    static Any copy(Any inAny, ORB orb) {
+        Any outAny = null;
+        if (inAny != null && orb != null) {
+            outAny = orb.create_any();
+            outAny.read_value(inAny.create_input_stream(), inAny.type());
+            // isInitialized is set to true
+        }
+        return outAny;
+    }
+*/
+
+    static DynAny convertToNative(DynAny dynAny, ORB orb) {
+        if (dynAny instanceof DynAnyImpl) {
+            return dynAny;
+        } else {
+            // if copy flag wasn't true we would be using our DynAny with
+            // a foreign Any in it.
+            try {
+                return createMostDerivedDynAny(dynAny.to_any(), orb, true);
+            } catch (InconsistentTypeCode ictc) {
+                return null;
+            }
+        }
+    }
+
+    static boolean isInitialized(Any any) {
+        // Returning simply the value of Any.isInitialized() is not enough.
+        // The DynAny spec says that Anys containing null strings do not contain
+        // a "legal value" (see ptc 99-10-07, 9.2.3.3)
+        boolean isInitialized = ((AnyImpl)any).isInitialized();
+        switch (any.type().kind().value()) {
+            case TCKind._tk_string:
+                return (isInitialized && (any.extract_string() != null));
+            case TCKind._tk_wstring:
+                return (isInitialized && (any.extract_wstring() != null));
+        }
+        return isInitialized;
+    }
+
+    // This is a convenient method to reset the current component to where it was
+    // before we changed it. See DynAnyConstructedImpl.equal for use.
+    static boolean set_current_component(DynAny dynAny, DynAny currentComponent) {
+        if (currentComponent != null) {
+            try {
+                dynAny.rewind();
+                do {
+                    if (dynAny.current_component() == currentComponent)
+                        return true;
+                } while (dynAny.next());
+            } catch (TypeMismatch tm) { /* impossible */ }
+        }
+        return false;
+    }
+}

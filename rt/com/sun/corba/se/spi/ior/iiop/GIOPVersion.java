@@ -1,225 +1,219 @@
-/*     */ package com.sun.corba.se.spi.ior.iiop;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.ior.IOR;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.orb.ORBVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORBVersionFactory;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class GIOPVersion
-/*     */ {
-/*  41 */   public static final GIOPVersion V1_0 = new GIOPVersion((byte)1, (byte)0);
-/*  42 */   public static final GIOPVersion V1_1 = new GIOPVersion((byte)1, (byte)1);
-/*  43 */   public static final GIOPVersion V1_2 = new GIOPVersion((byte)1, (byte)2);
-/*  44 */   public static final GIOPVersion V1_3 = new GIOPVersion((byte)1, (byte)3);
-/*     */ 
-/*     */ 
-/*     */   
-/*  48 */   public static final GIOPVersion V13_XX = new GIOPVersion((byte)13, (byte)1);
-/*     */ 
-/*     */   
-/*  51 */   public static final GIOPVersion DEFAULT_VERSION = V1_2;
-/*     */   
-/*     */   public static final int VERSION_1_0 = 256;
-/*     */   
-/*     */   public static final int VERSION_1_1 = 257;
-/*     */   
-/*     */   public static final int VERSION_1_2 = 258;
-/*     */   
-/*     */   public static final int VERSION_1_3 = 259;
-/*     */   
-/*     */   public static final int VERSION_13_XX = 3329;
-/*  62 */   private byte major = 0;
-/*  63 */   private byte minor = 0;
-/*     */ 
-/*     */   
-/*     */   public GIOPVersion() {}
-/*     */ 
-/*     */   
-/*     */   public GIOPVersion(byte paramByte1, byte paramByte2) {
-/*  70 */     this.major = paramByte1;
-/*  71 */     this.minor = paramByte2;
-/*     */   }
-/*     */   
-/*     */   public GIOPVersion(int paramInt1, int paramInt2) {
-/*  75 */     this.major = (byte)paramInt1;
-/*  76 */     this.minor = (byte)paramInt2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public byte getMajor() {
-/*  82 */     return this.major;
-/*     */   }
-/*     */   
-/*     */   public byte getMinor() {
-/*  86 */     return this.minor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(GIOPVersion paramGIOPVersion) {
-/*  92 */     return (paramGIOPVersion.major == this.major && paramGIOPVersion.minor == this.minor);
-/*     */   }
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/*  96 */     if (paramObject != null && paramObject instanceof GIOPVersion) {
-/*  97 */       return equals((GIOPVersion)paramObject);
-/*     */     }
-/*  99 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 104 */     return 37 * this.major + this.minor;
-/*     */   }
-/*     */   
-/*     */   public boolean lessThan(GIOPVersion paramGIOPVersion) {
-/* 108 */     if (this.major < paramGIOPVersion.major)
-/* 109 */       return true; 
-/* 110 */     if (this.major == paramGIOPVersion.major && 
-/* 111 */       this.minor < paramGIOPVersion.minor) {
-/* 112 */       return true;
-/*     */     }
-/*     */ 
-/*     */     
-/* 116 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int intValue() {
-/* 121 */     return this.major << 8 | this.minor;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 126 */     return this.major + "." + this.minor;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static GIOPVersion getInstance(byte paramByte1, byte paramByte2) {
-/* 131 */     switch (paramByte1 << 8 | paramByte2) {
-/*     */       case 256:
-/* 133 */         return V1_0;
-/*     */       case 257:
-/* 135 */         return V1_1;
-/*     */       case 258:
-/* 137 */         return V1_2;
-/*     */       case 259:
-/* 139 */         return V1_3;
-/*     */       case 3329:
-/* 141 */         return V13_XX;
-/*     */     } 
-/* 143 */     return new GIOPVersion(paramByte1, paramByte2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static GIOPVersion parseVersion(String paramString) {
-/* 149 */     int i = paramString.indexOf('.');
-/*     */     
-/* 151 */     if (i < 1 || i == paramString.length() - 1) {
-/* 152 */       throw new NumberFormatException("GIOP major, minor, and decimal point required: " + paramString);
-/*     */     }
-/* 154 */     int j = Integer.parseInt(paramString.substring(0, i));
-/* 155 */     int k = Integer.parseInt(paramString.substring(i + 1, paramString.length()));
-/*     */     
-/* 157 */     return getInstance((byte)j, (byte)k);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static GIOPVersion chooseRequestVersion(ORB paramORB, IOR paramIOR) {
-/* 168 */     GIOPVersion gIOPVersion1 = paramORB.getORBData().getGIOPVersion();
-/* 169 */     IIOPProfile iIOPProfile = paramIOR.getProfile();
-/* 170 */     GIOPVersion gIOPVersion2 = iIOPProfile.getGIOPVersion();
-/*     */ 
-/*     */ 
-/*     */     
-/* 174 */     ORBVersion oRBVersion = iIOPProfile.getORBVersion();
-/* 175 */     if (!oRBVersion.equals(ORBVersionFactory.getFOREIGN()) && oRBVersion
-/* 176 */       .lessThan(ORBVersionFactory.getNEWER()))
-/*     */     {
-/*     */       
-/* 179 */       return V1_0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 184 */     byte b1 = gIOPVersion2.getMajor();
-/* 185 */     byte b2 = gIOPVersion2.getMinor();
-/*     */     
-/* 187 */     byte b3 = gIOPVersion1.getMajor();
-/* 188 */     byte b4 = gIOPVersion1.getMinor();
-/*     */     
-/* 190 */     if (b3 < b1)
-/* 191 */       return gIOPVersion1; 
-/* 192 */     if (b3 > b1) {
-/* 193 */       return gIOPVersion2;
-/*     */     }
-/* 195 */     if (b4 <= b2) {
-/* 196 */       return gIOPVersion1;
-/*     */     }
-/* 198 */     return gIOPVersion2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean supportsIORIIOPProfileComponents() {
-/* 205 */     return (getMinor() > 0 || getMajor() > 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void read(InputStream paramInputStream) {
-/* 211 */     this.major = paramInputStream.read_octet();
-/* 212 */     this.minor = paramInputStream.read_octet();
-/*     */   }
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream) {
-/* 216 */     paramOutputStream.write_octet(this.major);
-/* 217 */     paramOutputStream.write_octet(this.minor);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\spi\ior\iiop\GIOPVersion.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.spi.ior.iiop ;
+
+import com.sun.corba.se.spi.ior.IOR ;
+import com.sun.corba.se.spi.ior.iiop.IIOPProfile;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.orb.ORBVersion;
+import com.sun.corba.se.spi.orb.ORBVersionFactory;
+
+import com.sun.corba.se.impl.orbutil.ORBUtility;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+
+public class GIOPVersion {
+
+    // Static fields
+
+    public static final GIOPVersion V1_0 = new GIOPVersion((byte)1, (byte)0);
+    public static final GIOPVersion V1_1 = new GIOPVersion((byte)1, (byte)1);
+    public static final GIOPVersion V1_2 = new GIOPVersion((byte)1, (byte)2);
+    public static final GIOPVersion V1_3 = new GIOPVersion((byte)1, (byte)3);
+
+    // Major version 13 indicates Java serialization,
+    // Minor version [00-FF] is the version number.
+    public static final GIOPVersion V13_XX =
+        new GIOPVersion((byte)13, (byte)Message.JAVA_ENC_VERSION);
+
+    public static final GIOPVersion DEFAULT_VERSION = V1_2;
+
+    public static final int VERSION_1_0 = 0x0100;
+    public static final int VERSION_1_1 = 0x0101;
+    public static final int VERSION_1_2 = 0x0102;
+    public static final int VERSION_1_3 = 0x0103;
+    public static final int VERSION_13_XX =
+        ((0x0D << 8) & 0x0000FF00) | Message.JAVA_ENC_VERSION;
+
+    // Instance variables
+
+    private byte major = (byte) 0;
+    private byte minor = (byte) 0;
+
+    // Constructor
+
+    public GIOPVersion() {}
+
+    public GIOPVersion(byte majorB, byte minorB) {
+        this.major = majorB;
+        this.minor = minorB;
+    }
+
+    public GIOPVersion(int major, int minor) {
+        this.major = (byte)major;
+        this.minor = (byte)minor;
+    }
+
+    // Accessor methods
+
+    public byte getMajor() {
+        return this.major;
+    }
+
+    public byte getMinor() {
+        return this.minor;
+    }
+
+    // General methods
+
+    public boolean equals(GIOPVersion gv){
+        return gv.major == this.major && gv.minor == this.minor ;
+    }
+
+    public boolean equals(Object obj) {
+        if (obj != null && (obj instanceof GIOPVersion))
+            return equals((GIOPVersion)obj);
+        else
+            return false;
+    }
+
+    public int hashCode()
+    {
+        return 37*major + minor ;
+    }
+
+    public boolean lessThan(GIOPVersion gv) {
+        if (this.major < gv.major) {
+            return true;
+        } else if (this.major == gv.major) {
+            if (this.minor < gv.minor) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public int intValue()
+    {
+        return (major << 8 | minor);
+    }
+
+    public String toString()
+    {
+        return major + "." + minor;
+    }
+
+    public static GIOPVersion getInstance(byte major, byte minor)
+    {
+        switch(((major << 8) | minor)) {
+            case VERSION_1_0:
+                return GIOPVersion.V1_0;
+            case VERSION_1_1:
+                return GIOPVersion.V1_1;
+            case VERSION_1_2:
+                return GIOPVersion.V1_2;
+            case VERSION_1_3:
+                return GIOPVersion.V1_3;
+            case VERSION_13_XX:
+                return GIOPVersion.V13_XX;
+            default:
+                return new GIOPVersion(major, minor);
+        }
+    }
+
+    public static GIOPVersion parseVersion(String s)
+    {
+        int dotIdx = s.indexOf('.');
+
+        if (dotIdx < 1 || dotIdx == s.length() - 1)
+            throw new NumberFormatException("GIOP major, minor, and decimal point required: " + s);
+
+        int major = Integer.parseInt(s.substring(0, dotIdx));
+        int minor = Integer.parseInt(s.substring(dotIdx + 1, s.length()));
+
+        return GIOPVersion.getInstance((byte)major, (byte)minor);
+    }
+
+    /**
+     * This chooses the appropriate GIOP version.
+     *
+     * @return the GIOP version 13.00 if Java serialization is enabled, or
+     *         smallest(profGIOPVersion, orbGIOPVersion)
+     */
+    public static GIOPVersion chooseRequestVersion(ORB orb, IOR ior ) {
+
+        GIOPVersion orbVersion = orb.getORBData().getGIOPVersion();
+        IIOPProfile prof = ior.getProfile() ;
+        GIOPVersion profVersion = prof.getGIOPVersion();
+
+        // Check if the profile is from a legacy Sun ORB.
+
+        ORBVersion targetOrbVersion = prof.getORBVersion();
+        if (!(targetOrbVersion.equals(ORBVersionFactory.getFOREIGN())) &&
+                targetOrbVersion.lessThan(ORBVersionFactory.getNEWER())) {
+            // we are dealing with a SUN legacy orb which emits 1.1 IORs,
+            // in spite of being able to handle only GIOP 1.0 messages.
+            return V1_0;
+        }
+
+        // Now the target has to be (FOREIGN | NEWER*)
+
+        byte prof_major = profVersion.getMajor();
+        byte prof_minor = profVersion.getMinor();
+
+        byte orb_major = orbVersion.getMajor();
+        byte orb_minor = orbVersion.getMinor();
+
+        if (orb_major < prof_major) {
+            return orbVersion;
+        } else if (orb_major > prof_major) {
+            return profVersion;
+        } else { // both major version are the same
+            if (orb_minor <= prof_minor) {
+                return orbVersion;
+            } else {
+                return profVersion;
+            }
+        }
+    }
+
+    public boolean supportsIORIIOPProfileComponents()
+    {
+        return getMinor() > 0 || getMajor() > 1;
+    }
+
+    // IO methods
+
+    public void read(org.omg.CORBA.portable.InputStream istream) {
+        this.major = istream.read_octet();
+        this.minor = istream.read_octet();
+    }
+
+    public void write(org.omg.CORBA.portable.OutputStream ostream) {
+        ostream.write_octet(this.major);
+        ostream.write_octet(this.minor);
+    }
+}

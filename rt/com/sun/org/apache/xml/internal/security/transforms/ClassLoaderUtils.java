@@ -1,286 +1,280 @@
-/*     */ package com.sun.org.apache.xml.internal.security.transforms;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.net.URL;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Enumeration;
-/*     */ import java.util.List;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ClassLoaderUtils
-/*     */ {
-/*  46 */   private static final Logger log = Logger.getLogger(ClassLoaderUtils.class.getName());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static URL getResource(String paramString, Class<?> paramClass) {
-/*  64 */     URL uRL = Thread.currentThread().getContextClassLoader().getResource(paramString);
-/*  65 */     if (uRL == null && paramString.startsWith("/"))
-/*     */     {
-/*     */       
-/*  68 */       uRL = Thread.currentThread().getContextClassLoader().getResource(paramString
-/*  69 */           .substring(1));
-/*     */     }
-/*     */ 
-/*     */     
-/*  73 */     ClassLoader classLoader = ClassLoaderUtils.class.getClassLoader();
-/*  74 */     if (classLoader == null) {
-/*  75 */       classLoader = ClassLoader.getSystemClassLoader();
-/*     */     }
-/*  77 */     if (uRL == null) {
-/*  78 */       uRL = classLoader.getResource(paramString);
-/*     */     }
-/*  80 */     if (uRL == null && paramString.startsWith("/"))
-/*     */     {
-/*  82 */       uRL = classLoader.getResource(paramString.substring(1));
-/*     */     }
-/*     */     
-/*  85 */     if (uRL == null) {
-/*  86 */       ClassLoader classLoader1 = paramClass.getClassLoader();
-/*     */       
-/*  88 */       if (classLoader1 != null) {
-/*  89 */         uRL = classLoader1.getResource(paramString);
-/*     */       }
-/*     */     } 
-/*     */     
-/*  93 */     if (uRL == null) {
-/*  94 */       uRL = paramClass.getResource(paramString);
-/*     */     }
-/*     */     
-/*  97 */     if (uRL == null && paramString != null && paramString.charAt(0) != '/') {
-/*  98 */       return getResource('/' + paramString, paramClass);
-/*     */     }
-/*     */     
-/* 101 */     return uRL;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static List<URL> getResources(String paramString, Class<?> paramClass) {
-/* 117 */     ArrayList<URL> arrayList = new ArrayList();
-/* 118 */     Enumeration<URL> enumeration = new Enumeration<URL>() {
-/*     */         public boolean hasMoreElements() {
-/* 120 */           return false;
-/*     */         }
-/*     */         public URL nextElement() {
-/* 123 */           return null;
-/*     */         }
-/*     */       };
-/*     */     
-/*     */     try {
-/* 128 */       enumeration = Thread.currentThread().getContextClassLoader().getResources(paramString);
-/* 129 */     } catch (IOException iOException) {
-/* 130 */       if (log.isLoggable(Level.FINE)) {
-/* 131 */         log.log(Level.FINE, iOException.getMessage(), iOException);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 135 */     if (!enumeration.hasMoreElements() && paramString.startsWith("/")) {
-/*     */       
-/*     */       try {
-/*     */         
-/* 139 */         enumeration = Thread.currentThread().getContextClassLoader().getResources(paramString
-/* 140 */             .substring(1));
-/*     */       }
-/* 142 */       catch (IOException iOException) {
-/* 143 */         if (log.isLoggable(Level.FINE)) {
-/* 144 */           log.log(Level.FINE, iOException.getMessage(), iOException);
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 150 */     ClassLoader classLoader = ClassLoaderUtils.class.getClassLoader();
-/* 151 */     if (classLoader == null) {
-/* 152 */       classLoader = ClassLoader.getSystemClassLoader();
-/*     */     }
-/* 154 */     if (!enumeration.hasMoreElements()) {
-/*     */       try {
-/* 156 */         enumeration = classLoader.getResources(paramString);
-/* 157 */       } catch (IOException iOException) {
-/* 158 */         if (log.isLoggable(Level.FINE)) {
-/* 159 */           log.log(Level.FINE, iOException.getMessage(), iOException);
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */     
-/* 164 */     if (!enumeration.hasMoreElements() && paramString.startsWith("/")) {
-/*     */       
-/*     */       try {
-/* 167 */         enumeration = classLoader.getResources(paramString.substring(1));
-/* 168 */       } catch (IOException iOException) {
-/* 169 */         if (log.isLoggable(Level.FINE)) {
-/* 170 */           log.log(Level.FINE, iOException.getMessage(), iOException);
-/*     */         }
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 176 */     if (!enumeration.hasMoreElements()) {
-/* 177 */       ClassLoader classLoader1 = paramClass.getClassLoader();
-/*     */       
-/* 179 */       if (classLoader1 != null) {
-/*     */         try {
-/* 181 */           enumeration = classLoader1.getResources(paramString);
-/* 182 */         } catch (IOException iOException) {
-/* 183 */           if (log.isLoggable(Level.FINE)) {
-/* 184 */             log.log(Level.FINE, iOException.getMessage(), iOException);
-/*     */           }
-/*     */         } 
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 191 */     if (!enumeration.hasMoreElements()) {
-/* 192 */       URL uRL = paramClass.getResource(paramString);
-/* 193 */       if (uRL != null) {
-/* 194 */         arrayList.add(uRL);
-/*     */       }
-/*     */     } 
-/* 197 */     while (enumeration.hasMoreElements()) {
-/* 198 */       arrayList.add(enumeration.nextElement());
-/*     */     }
-/*     */ 
-/*     */     
-/* 202 */     if (arrayList.isEmpty() && paramString != null && paramString.charAt(0) != '/') {
-/* 203 */       return getResources('/' + paramString, paramClass);
-/*     */     }
-/* 205 */     return arrayList;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static InputStream getResourceAsStream(String paramString, Class<?> paramClass) {
-/* 217 */     URL uRL = getResource(paramString, paramClass);
-/*     */     
-/*     */     try {
-/* 220 */       return (uRL != null) ? uRL.openStream() : null;
-/* 221 */     } catch (IOException iOException) {
-/* 222 */       if (log.isLoggable(Level.FINE)) {
-/* 223 */         log.log(Level.FINE, iOException.getMessage(), iOException);
-/*     */       }
-/* 225 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static Class<?> loadClass(String paramString, Class<?> paramClass) throws ClassNotFoundException {
-/*     */     try {
-/* 246 */       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-/*     */       
-/* 248 */       if (classLoader != null) {
-/* 249 */         return classLoader.loadClass(paramString);
-/*     */       }
-/* 251 */     } catch (ClassNotFoundException classNotFoundException) {
-/* 252 */       if (log.isLoggable(Level.FINE)) {
-/* 253 */         log.log(Level.FINE, classNotFoundException.getMessage(), classNotFoundException);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 257 */     return loadClass2(paramString, paramClass);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static Class<?> loadClass2(String paramString, Class<?> paramClass) throws ClassNotFoundException {
-/*     */     try {
-/* 263 */       return Class.forName(paramString);
-/* 264 */     } catch (ClassNotFoundException classNotFoundException) {
-/*     */       try {
-/* 266 */         if (ClassLoaderUtils.class.getClassLoader() != null) {
-/* 267 */           return ClassLoaderUtils.class.getClassLoader().loadClass(paramString);
-/*     */         }
-/* 269 */       } catch (ClassNotFoundException classNotFoundException1) {
-/* 270 */         if (paramClass != null && paramClass.getClassLoader() != null) {
-/* 271 */           return paramClass.getClassLoader().loadClass(paramString);
-/*     */         }
-/*     */       } 
-/* 274 */       if (log.isLoggable(Level.FINE)) {
-/* 275 */         log.log(Level.FINE, classNotFoundException.getMessage(), classNotFoundException);
-/*     */       }
-/* 277 */       throw classNotFoundException;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\transforms\ClassLoaderUtils.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package com.sun.org.apache.xml.internal.security.transforms;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+/**
+ * This class is extremely useful for loading resources and classes in a fault
+ * tolerant manner that works across different applications servers. Do not
+ * touch this unless you're a grizzled classloading guru veteran who is going to
+ * verify any change on 6 different application servers.
+ */
+// NOTE! This is a duplicate of utils.ClassLoaderUtils with public
+// modifiers changed to package-private. Make sure to integrate any future
+// changes to utils.ClassLoaderUtils to this file.
+final class ClassLoaderUtils {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static final java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(ClassLoaderUtils.class.getName());
+
+    private ClassLoaderUtils() {
+    }
+
+    /**
+     * Load a given resource. <p/> This method will try to load the resource
+     * using the following methods (in order):
+     * <ul>
+     * <li>From Thread.currentThread().getContextClassLoader()
+     * <li>From ClassLoaderUtil.class.getClassLoader()
+     * <li>callingClass.getClassLoader()
+     * </ul>
+     *
+     * @param resourceName The name of the resource to load
+     * @param callingClass The Class object of the calling object
+     */
+    static URL getResource(String resourceName, Class<?> callingClass) {
+        URL url = Thread.currentThread().getContextClassLoader().getResource(resourceName);
+        if (url == null && resourceName.startsWith("/")) {
+            //certain classloaders need it without the leading /
+            url =
+                Thread.currentThread().getContextClassLoader().getResource(
+                    resourceName.substring(1)
+                );
+        }
+
+        ClassLoader cluClassloader = ClassLoaderUtils.class.getClassLoader();
+        if (cluClassloader == null) {
+            cluClassloader = ClassLoader.getSystemClassLoader();
+        }
+        if (url == null) {
+            url = cluClassloader.getResource(resourceName);
+        }
+        if (url == null && resourceName.startsWith("/")) {
+            //certain classloaders need it without the leading /
+            url = cluClassloader.getResource(resourceName.substring(1));
+        }
+
+        if (url == null) {
+            ClassLoader cl = callingClass.getClassLoader();
+
+            if (cl != null) {
+                url = cl.getResource(resourceName);
+            }
+        }
+
+        if (url == null) {
+            url = callingClass.getResource(resourceName);
+        }
+
+        if ((url == null) && (resourceName != null) && (resourceName.charAt(0) != '/')) {
+            return getResource('/' + resourceName, callingClass);
+        }
+
+        return url;
+    }
+
+    /**
+     * Load a given resources. <p/> This method will try to load the resources
+     * using the following methods (in order):
+     * <ul>
+     * <li>From Thread.currentThread().getContextClassLoader()
+     * <li>From ClassLoaderUtil.class.getClassLoader()
+     * <li>callingClass.getClassLoader()
+     * </ul>
+     *
+     * @param resourceName The name of the resource to load
+     * @param callingClass The Class object of the calling object
+     */
+    static List<URL> getResources(String resourceName, Class<?> callingClass) {
+        List<URL> ret = new ArrayList<URL>();
+        Enumeration<URL> urls = new Enumeration<URL>() {
+            public boolean hasMoreElements() {
+                return false;
+            }
+            public URL nextElement() {
+                return null;
+            }
+
+        };
+        try {
+            urls = Thread.currentThread().getContextClassLoader().getResources(resourceName);
+        } catch (IOException e) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+            }
+            //ignore
+        }
+        if (!urls.hasMoreElements() && resourceName.startsWith("/")) {
+            //certain classloaders need it without the leading /
+            try {
+                urls =
+                    Thread.currentThread().getContextClassLoader().getResources(
+                        resourceName.substring(1)
+                    );
+            } catch (IOException e) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+                }
+                // ignore
+            }
+        }
+
+        ClassLoader cluClassloader = ClassLoaderUtils.class.getClassLoader();
+        if (cluClassloader == null) {
+            cluClassloader = ClassLoader.getSystemClassLoader();
+        }
+        if (!urls.hasMoreElements()) {
+            try {
+                urls = cluClassloader.getResources(resourceName);
+            } catch (IOException e) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+                }
+                // ignore
+            }
+        }
+        if (!urls.hasMoreElements() && resourceName.startsWith("/")) {
+            //certain classloaders need it without the leading /
+            try {
+                urls = cluClassloader.getResources(resourceName.substring(1));
+            } catch (IOException e) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+                }
+                // ignore
+            }
+        }
+
+        if (!urls.hasMoreElements()) {
+            ClassLoader cl = callingClass.getClassLoader();
+
+            if (cl != null) {
+                try {
+                    urls = cl.getResources(resourceName);
+                } catch (IOException e) {
+                    if (log.isLoggable(java.util.logging.Level.FINE)) {
+                        log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+                    }
+                    // ignore
+                }
+            }
+        }
+
+        if (!urls.hasMoreElements()) {
+            URL url = callingClass.getResource(resourceName);
+            if (url != null) {
+                ret.add(url);
+            }
+        }
+        while (urls.hasMoreElements()) {
+            ret.add(urls.nextElement());
+        }
+
+
+        if (ret.isEmpty() && (resourceName != null) && (resourceName.charAt(0) != '/')) {
+            return getResources('/' + resourceName, callingClass);
+        }
+        return ret;
+    }
+
+
+    /**
+     * This is a convenience method to load a resource as a stream. <p/> The
+     * algorithm used to find the resource is given in getResource()
+     *
+     * @param resourceName The name of the resource to load
+     * @param callingClass The Class object of the calling object
+     */
+    static InputStream getResourceAsStream(String resourceName, Class<?> callingClass) {
+        URL url = getResource(resourceName, callingClass);
+
+        try {
+            return (url != null) ? url.openStream() : null;
+        } catch (IOException e) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Load a class with a given name. <p/> It will try to load the class in the
+     * following order:
+     * <ul>
+     * <li>From Thread.currentThread().getContextClassLoader()
+     * <li>Using the basic Class.forName()
+     * <li>From ClassLoaderUtil.class.getClassLoader()
+     * <li>From the callingClass.getClassLoader()
+     * </ul>
+     *
+     * @param className The name of the class to load
+     * @param callingClass The Class object of the calling object
+     * @throws ClassNotFoundException If the class cannot be found anywhere.
+     */
+    static Class<?> loadClass(String className, Class<?> callingClass)
+        throws ClassNotFoundException {
+        try {
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
+            if (cl != null) {
+                return cl.loadClass(className);
+            }
+        } catch (ClassNotFoundException e) {
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, e.getMessage(), e);
+            }
+            //ignore
+        }
+        return loadClass2(className, callingClass);
+    }
+
+    private static Class<?> loadClass2(String className, Class<?> callingClass)
+        throws ClassNotFoundException {
+        try {
+            return Class.forName(className);
+        } catch (ClassNotFoundException ex) {
+            try {
+                if (ClassLoaderUtils.class.getClassLoader() != null) {
+                    return ClassLoaderUtils.class.getClassLoader().loadClass(className);
+                }
+            } catch (ClassNotFoundException exc) {
+                if (callingClass != null && callingClass.getClassLoader() != null) {
+                    return callingClass.getClassLoader().loadClass(className);
+                }
+            }
+            if (log.isLoggable(java.util.logging.Level.FINE)) {
+                log.log(java.util.logging.Level.FINE, ex.getMessage(), ex);
+            }
+            throw ex;
+        }
+    }
+}

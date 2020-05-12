@@ -1,540 +1,534 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.classfile.Field;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.BranchHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GETFIELD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GOTO_W;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFLT;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFNE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IFNONNULL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IF_ICMPEQ;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IF_ICMPLT;
-/*     */ import com.sun.org.apache.bcel.internal.generic.IF_ICMPNE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ILOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ISTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import com.sun.org.apache.xml.internal.dtm.Axis;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class StepPattern
-/*     */   extends RelativePathPattern
-/*     */ {
-/*     */   private static final int NO_CONTEXT = 0;
-/*     */   private static final int SIMPLE_CONTEXT = 1;
-/*     */   private static final int GENERAL_CONTEXT = 2;
-/*     */   protected final int _axis;
-/*     */   protected final int _nodeType;
-/*     */   protected Vector _predicates;
-/*  75 */   private Step _step = null;
-/*     */   
-/*     */   private boolean _isEpsilon = false;
-/*     */   private int _contextCase;
-/*  79 */   private double _priority = Double.MAX_VALUE;
-/*     */   
-/*     */   public StepPattern(int axis, int nodeType, Vector predicates) {
-/*  82 */     this._axis = axis;
-/*  83 */     this._nodeType = nodeType;
-/*  84 */     this._predicates = predicates;
-/*     */   }
-/*     */   
-/*     */   public void setParser(Parser parser) {
-/*  88 */     super.setParser(parser);
-/*  89 */     if (this._predicates != null) {
-/*  90 */       int n = this._predicates.size();
-/*  91 */       for (int i = 0; i < n; i++) {
-/*  92 */         Predicate exp = this._predicates.elementAt(i);
-/*  93 */         exp.setParser(parser);
-/*  94 */         exp.setParent(this);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int getNodeType() {
-/* 100 */     return this._nodeType;
-/*     */   }
-/*     */   
-/*     */   public void setPriority(double priority) {
-/* 104 */     this._priority = priority;
-/*     */   }
-/*     */   
-/*     */   public StepPattern getKernelPattern() {
-/* 108 */     return this;
-/*     */   }
-/*     */   
-/*     */   public boolean isWildcard() {
-/* 112 */     return (this._isEpsilon && !hasPredicates());
-/*     */   }
-/*     */   
-/*     */   public StepPattern setPredicates(Vector predicates) {
-/* 116 */     this._predicates = predicates;
-/* 117 */     return this;
-/*     */   }
-/*     */   
-/*     */   protected boolean hasPredicates() {
-/* 121 */     return (this._predicates != null && this._predicates.size() > 0);
-/*     */   }
-/*     */   
-/*     */   public double getDefaultPriority() {
-/* 125 */     if (this._priority != Double.MAX_VALUE) {
-/* 126 */       return this._priority;
-/*     */     }
-/*     */     
-/* 129 */     if (hasPredicates()) {
-/* 130 */       return 0.5D;
-/*     */     }
-/*     */     
-/* 133 */     switch (this._nodeType) {
-/*     */       case -1:
-/* 135 */         return -0.5D;
-/*     */       case 0:
-/* 137 */         return 0.0D;
-/*     */     } 
-/* 139 */     return (this._nodeType >= 14) ? 0.0D : -0.5D;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAxis() {
-/* 145 */     return this._axis;
-/*     */   }
-/*     */   
-/*     */   public void reduceKernelPattern() {
-/* 149 */     this._isEpsilon = true;
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 153 */     StringBuffer buffer = new StringBuffer("stepPattern(\"");
-/* 154 */     buffer.append(Axis.getNames(this._axis))
-/* 155 */       .append("\", ")
-/* 156 */       .append(this._isEpsilon ? ("epsilon{" + 
-/* 157 */         Integer.toString(this._nodeType) + "}") : 
-/* 158 */         Integer.toString(this._nodeType));
-/* 159 */     if (this._predicates != null)
-/* 160 */       buffer.append(", ").append(this._predicates.toString()); 
-/* 161 */     return buffer.append(')').toString();
-/*     */   }
-/*     */   
-/*     */   private int analyzeCases() {
-/* 165 */     boolean noContext = true;
-/* 166 */     int n = this._predicates.size();
-/*     */     
-/* 168 */     for (int i = 0; i < n && noContext; i++) {
-/* 169 */       Predicate pred = this._predicates.elementAt(i);
-/* 170 */       if (pred.isNthPositionFilter() || pred
-/* 171 */         .hasPositionCall() || pred
-/* 172 */         .hasLastCall())
-/*     */       {
-/* 174 */         noContext = false;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 178 */     if (noContext) {
-/* 179 */       return 0;
-/*     */     }
-/* 181 */     if (n == 1) {
-/* 182 */       return 1;
-/*     */     }
-/* 184 */     return 2;
-/*     */   }
-/*     */   
-/*     */   private String getNextFieldName() {
-/* 188 */     return "__step_pattern_iter_" + getXSLTC().nextStepPatternSerial();
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 192 */     if (hasPredicates()) {
-/*     */       
-/* 194 */       int n = this._predicates.size();
-/* 195 */       for (int i = 0; i < n; i++) {
-/* 196 */         Predicate pred = this._predicates.elementAt(i);
-/* 197 */         pred.typeCheck(stable);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 201 */       this._contextCase = analyzeCases();
-/*     */       
-/* 203 */       Step step = null;
-/*     */ 
-/*     */       
-/* 206 */       if (this._contextCase == 1) {
-/* 207 */         Predicate pred = this._predicates.elementAt(0);
-/* 208 */         if (pred.isNthPositionFilter()) {
-/* 209 */           this._contextCase = 2;
-/* 210 */           step = new Step(this._axis, this._nodeType, this._predicates);
-/*     */         } else {
-/* 212 */           step = new Step(this._axis, this._nodeType, null);
-/*     */         } 
-/* 214 */       } else if (this._contextCase == 2) {
-/* 215 */         int len = this._predicates.size();
-/* 216 */         for (int j = 0; j < len; j++) {
-/* 217 */           ((Predicate)this._predicates.elementAt(j)).dontOptimize();
-/*     */         }
-/*     */         
-/* 220 */         step = new Step(this._axis, this._nodeType, this._predicates);
-/*     */       } 
-/*     */       
-/* 223 */       if (step != null) {
-/* 224 */         step.setParser(getParser());
-/* 225 */         step.typeCheck(stable);
-/* 226 */         this._step = step;
-/*     */       } 
-/*     */     } 
-/* 229 */     return (this._axis == 3) ? Type.Element : Type.Attribute;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void translateKernel(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 234 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 235 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 237 */     if (this._nodeType == 1) {
-/* 238 */       int check = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "isElement", "(I)Z");
-/*     */       
-/* 240 */       il.append(methodGen.loadDOM());
-/* 241 */       il.append(SWAP);
-/* 242 */       il.append(new INVOKEINTERFACE(check, 2));
-/*     */ 
-/*     */       
-/* 245 */       BranchHandle icmp = il.append(new IFNE(null));
-/* 246 */       this._falseList.add(il.append(new GOTO_W(null)));
-/* 247 */       icmp.setTarget(il.append(NOP));
-/*     */     }
-/* 249 */     else if (this._nodeType == 2) {
-/* 250 */       int check = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "isAttribute", "(I)Z");
-/*     */       
-/* 252 */       il.append(methodGen.loadDOM());
-/* 253 */       il.append(SWAP);
-/* 254 */       il.append(new INVOKEINTERFACE(check, 2));
-/*     */ 
-/*     */       
-/* 257 */       BranchHandle icmp = il.append(new IFNE(null));
-/* 258 */       this._falseList.add(il.append(new GOTO_W(null)));
-/* 259 */       icmp.setTarget(il.append(NOP));
-/*     */     }
-/*     */     else {
-/*     */       
-/* 263 */       int getEType = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getExpandedTypeID", "(I)I");
-/*     */ 
-/*     */       
-/* 266 */       il.append(methodGen.loadDOM());
-/* 267 */       il.append(SWAP);
-/* 268 */       il.append(new INVOKEINTERFACE(getEType, 2));
-/* 269 */       il.append(new PUSH(cpg, this._nodeType));
-/*     */ 
-/*     */       
-/* 272 */       BranchHandle icmp = il.append(new IF_ICMPEQ(null));
-/* 273 */       this._falseList.add(il.append(new GOTO_W(null)));
-/* 274 */       icmp.setTarget(il.append(NOP));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void translateNoContext(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 280 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 281 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */     
-/* 284 */     il.append(methodGen.loadCurrentNode());
-/* 285 */     il.append(SWAP);
-/*     */ 
-/*     */     
-/* 288 */     il.append(methodGen.storeCurrentNode());
-/*     */ 
-/*     */     
-/* 291 */     if (!this._isEpsilon) {
-/* 292 */       il.append(methodGen.loadCurrentNode());
-/* 293 */       translateKernel(classGen, methodGen);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 297 */     int n = this._predicates.size();
-/* 298 */     for (int i = 0; i < n; i++) {
-/* 299 */       Predicate pred = this._predicates.elementAt(i);
-/* 300 */       Expression exp = pred.getExpr();
-/* 301 */       exp.translateDesynthesized(classGen, methodGen);
-/* 302 */       this._trueList.append(exp._trueList);
-/* 303 */       this._falseList.append(exp._falseList);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 308 */     InstructionHandle restore = il.append(methodGen.storeCurrentNode());
-/* 309 */     backPatchTrueList(restore);
-/* 310 */     BranchHandle skipFalse = il.append(new GOTO(null));
-/*     */ 
-/*     */     
-/* 313 */     restore = il.append(methodGen.storeCurrentNode());
-/* 314 */     backPatchFalseList(restore);
-/* 315 */     this._falseList.add(il.append(new GOTO(null)));
-/*     */ 
-/*     */     
-/* 318 */     skipFalse.setTarget(il.append(NOP));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void translateSimpleContext(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 324 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 325 */     InstructionList il = methodGen.getInstructionList();
-/*     */ 
-/*     */ 
-/*     */     
-/* 329 */     LocalVariableGen match = methodGen.addLocalVariable("step_pattern_tmp1", 
-/* 330 */         Util.getJCRefType("I"), null, null);
-/*     */     
-/* 332 */     match.setStart(il.append(new ISTORE(match.getIndex())));
-/*     */ 
-/*     */     
-/* 335 */     if (!this._isEpsilon) {
-/* 336 */       il.append(new ILOAD(match.getIndex()));
-/* 337 */       translateKernel(classGen, methodGen);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 341 */     il.append(methodGen.loadCurrentNode());
-/* 342 */     il.append(methodGen.loadIterator());
-/*     */ 
-/*     */     
-/* 345 */     int index = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.MatchingIterator", "<init>", "(ILcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 357 */     this._step.translate(classGen, methodGen);
-/*     */     
-/* 359 */     LocalVariableGen stepIteratorTemp = methodGen.addLocalVariable("step_pattern_tmp2", 
-/* 360 */         Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */     
-/* 362 */     stepIteratorTemp.setStart(il
-/* 363 */         .append(new ASTORE(stepIteratorTemp.getIndex())));
-/*     */     
-/* 365 */     il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.MatchingIterator")));
-/* 366 */     il.append(DUP);
-/* 367 */     il.append(new ILOAD(match.getIndex()));
-/* 368 */     stepIteratorTemp.setEnd(il
-/* 369 */         .append(new ALOAD(stepIteratorTemp.getIndex())));
-/* 370 */     il.append(new INVOKESPECIAL(index));
-/*     */ 
-/*     */     
-/* 373 */     il.append(methodGen.loadDOM());
-/* 374 */     il.append(new ILOAD(match.getIndex()));
-/* 375 */     index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getParent", "(I)I");
-/* 376 */     il.append(new INVOKEINTERFACE(index, 2));
-/*     */ 
-/*     */     
-/* 379 */     il.append(methodGen.setStartNode());
-/*     */ 
-/*     */     
-/* 382 */     il.append(methodGen.storeIterator());
-/* 383 */     match.setEnd(il.append(new ILOAD(match.getIndex())));
-/* 384 */     il.append(methodGen.storeCurrentNode());
-/*     */ 
-/*     */     
-/* 387 */     Predicate pred = this._predicates.elementAt(0);
-/* 388 */     Expression exp = pred.getExpr();
-/* 389 */     exp.translateDesynthesized(classGen, methodGen);
-/*     */ 
-/*     */     
-/* 392 */     InstructionHandle restore = il.append(methodGen.storeIterator());
-/* 393 */     il.append(methodGen.storeCurrentNode());
-/* 394 */     exp.backPatchTrueList(restore);
-/* 395 */     BranchHandle skipFalse = il.append(new GOTO(null));
-/*     */ 
-/*     */     
-/* 398 */     restore = il.append(methodGen.storeIterator());
-/* 399 */     il.append(methodGen.storeCurrentNode());
-/* 400 */     exp.backPatchFalseList(restore);
-/* 401 */     this._falseList.add(il.append(new GOTO(null)));
-/*     */ 
-/*     */     
-/* 404 */     skipFalse.setTarget(il.append(NOP));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void translateGeneralContext(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 409 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 410 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 412 */     int iteratorIndex = 0;
-/* 413 */     BranchHandle ifBlock = null;
-/*     */     
-/* 415 */     String iteratorName = getNextFieldName();
-/*     */ 
-/*     */     
-/* 418 */     LocalVariableGen node = methodGen.addLocalVariable("step_pattern_tmp1", 
-/* 419 */         Util.getJCRefType("I"), null, null);
-/*     */     
-/* 421 */     node.setStart(il.append(new ISTORE(node.getIndex())));
-/*     */ 
-/*     */     
-/* 424 */     LocalVariableGen iter = methodGen.addLocalVariable("step_pattern_tmp2", 
-/* 425 */         Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */ 
-/*     */ 
-/*     */     
-/* 429 */     if (!classGen.isExternal()) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 434 */       Field iterator = new Field(2, cpg.addUtf8(iteratorName), cpg.addUtf8("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, cpg.getConstantPool());
-/* 435 */       classGen.addField(iterator);
-/* 436 */       iteratorIndex = cpg.addFieldref(classGen.getClassName(), iteratorName, "Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */ 
-/*     */       
-/* 440 */       il.append(classGen.loadTranslet());
-/* 441 */       il.append(new GETFIELD(iteratorIndex));
-/* 442 */       il.append(DUP);
-/* 443 */       iter.setStart(il.append(new ASTORE(iter.getIndex())));
-/* 444 */       ifBlock = il.append(new IFNONNULL(null));
-/* 445 */       il.append(classGen.loadTranslet());
-/*     */     } 
-/*     */ 
-/*     */     
-/* 449 */     this._step.translate(classGen, methodGen);
-/* 450 */     InstructionHandle iterStore = il.append(new ASTORE(iter.getIndex()));
-/*     */ 
-/*     */     
-/* 453 */     if (!classGen.isExternal()) {
-/* 454 */       il.append(new ALOAD(iter.getIndex()));
-/* 455 */       il.append(new PUTFIELD(iteratorIndex));
-/* 456 */       ifBlock.setTarget(il.append(NOP));
-/*     */     }
-/*     */     else {
-/*     */       
-/* 460 */       iter.setStart(iterStore);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 464 */     il.append(methodGen.loadDOM());
-/* 465 */     il.append(new ILOAD(node.getIndex()));
-/* 466 */     int index = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getParent", "(I)I");
-/*     */     
-/* 468 */     il.append(new INVOKEINTERFACE(index, 2));
-/*     */ 
-/*     */     
-/* 471 */     il.append(new ALOAD(iter.getIndex()));
-/* 472 */     il.append(SWAP);
-/* 473 */     il.append(methodGen.setStartNode());
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 485 */     LocalVariableGen node2 = methodGen.addLocalVariable("step_pattern_tmp3", 
-/* 486 */         Util.getJCRefType("I"), null, null);
-/*     */ 
-/*     */     
-/* 489 */     BranchHandle skipNext = il.append(new GOTO(null));
-/* 490 */     InstructionHandle next = il.append(new ALOAD(iter.getIndex()));
-/* 491 */     node2.setStart(next);
-/* 492 */     InstructionHandle begin = il.append(methodGen.nextNode());
-/* 493 */     il.append(DUP);
-/* 494 */     il.append(new ISTORE(node2.getIndex()));
-/* 495 */     this._falseList.add(il.append(new IFLT(null)));
-/*     */     
-/* 497 */     il.append(new ILOAD(node2.getIndex()));
-/* 498 */     il.append(new ILOAD(node.getIndex()));
-/* 499 */     iter.setEnd(il.append(new IF_ICMPLT(next)));
-/*     */     
-/* 501 */     node2.setEnd(il.append(new ILOAD(node2.getIndex())));
-/* 502 */     node.setEnd(il.append(new ILOAD(node.getIndex())));
-/* 503 */     this._falseList.add(il.append(new IF_ICMPNE(null)));
-/*     */     
-/* 505 */     skipNext.setTarget(begin);
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 509 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 510 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 512 */     if (hasPredicates()) {
-/* 513 */       switch (this._contextCase) {
-/*     */         case 0:
-/* 515 */           translateNoContext(classGen, methodGen);
-/*     */           return;
-/*     */         
-/*     */         case 1:
-/* 519 */           translateSimpleContext(classGen, methodGen);
-/*     */           return;
-/*     */       } 
-/*     */       
-/* 523 */       translateGeneralContext(classGen, methodGen);
-/*     */ 
-/*     */     
-/*     */     }
-/* 527 */     else if (isWildcard()) {
-/* 528 */       il.append(POP);
-/*     */     } else {
-/*     */       
-/* 531 */       translateKernel(classGen, methodGen);
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\StepPattern.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StepPattern.java,v 1.2.4.1 2005/09/12 11:13:19 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.classfile.Field;
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.BranchHandle;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
+import com.sun.org.apache.bcel.internal.generic.GOTO;
+import com.sun.org.apache.bcel.internal.generic.GOTO_W;
+import com.sun.org.apache.bcel.internal.generic.IFLT;
+import com.sun.org.apache.bcel.internal.generic.IFNE;
+import com.sun.org.apache.bcel.internal.generic.IFNONNULL;
+import com.sun.org.apache.bcel.internal.generic.IF_ICMPEQ;
+import com.sun.org.apache.bcel.internal.generic.IF_ICMPLT;
+import com.sun.org.apache.bcel.internal.generic.IF_ICMPNE;
+import com.sun.org.apache.bcel.internal.generic.ILOAD;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import com.sun.org.apache.xml.internal.dtm.Axis;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ */
+class StepPattern extends RelativePathPattern {
+
+    private static final int NO_CONTEXT = 0;
+    private static final int SIMPLE_CONTEXT = 1;
+    private static final int GENERAL_CONTEXT = 2;
+
+    protected final int _axis;
+    protected final int _nodeType;
+    protected Vector _predicates;
+
+    private Step    _step = null;
+    private boolean _isEpsilon = false;
+    private int     _contextCase;
+
+    private double  _priority = Double.MAX_VALUE;
+
+    public StepPattern(int axis, int nodeType, Vector predicates) {
+        _axis = axis;
+        _nodeType = nodeType;
+        _predicates = predicates;
+    }
+
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        if (_predicates != null) {
+            final int n = _predicates.size();
+            for (int i = 0; i < n; i++) {
+                final Predicate exp = (Predicate)_predicates.elementAt(i);
+                exp.setParser(parser);
+                exp.setParent(this);
+            }
+        }
+    }
+
+    public int getNodeType() {
+        return _nodeType;
+    }
+
+    public void setPriority(double priority) {
+        _priority = priority;
+    }
+
+    public StepPattern getKernelPattern() {
+        return this;
+    }
+
+    public boolean isWildcard() {
+        return _isEpsilon && hasPredicates() == false;
+    }
+
+    public StepPattern setPredicates(Vector predicates) {
+        _predicates = predicates;
+        return(this);
+    }
+
+    protected boolean hasPredicates() {
+        return _predicates != null && _predicates.size() > 0;
+    }
+
+    public double getDefaultPriority() {
+        if (_priority != Double.MAX_VALUE) {
+            return _priority;
+        }
+
+        if (hasPredicates()) {
+            return 0.5;
+        }
+        else {
+            switch(_nodeType) {
+            case -1:
+                return -0.5;    // node()
+            case 0:
+                return 0.0;
+            default:
+                return (_nodeType >= NodeTest.GTYPE) ? 0.0 : -0.5;
+            }
+        }
+    }
+
+    public int getAxis() {
+        return _axis;
+    }
+
+    public void reduceKernelPattern() {
+        _isEpsilon = true;
+    }
+
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer("stepPattern(\"");
+    buffer.append(Axis.getNames(_axis))
+            .append("\", ")
+            .append(_isEpsilon ?
+                        ("epsilon{" + Integer.toString(_nodeType) + "}") :
+                         Integer.toString(_nodeType));
+        if (_predicates != null)
+            buffer.append(", ").append(_predicates.toString());
+        return buffer.append(')').toString();
+    }
+
+    private int analyzeCases() {
+        boolean noContext = true;
+        final int n = _predicates.size();
+
+        for (int i = 0; i < n && noContext; i++) {
+            Predicate pred = (Predicate) _predicates.elementAt(i);
+            if (pred.isNthPositionFilter() ||
+                pred.hasPositionCall() ||
+                pred.hasLastCall())
+            {
+                noContext = false;
+            }
+        }
+
+        if (noContext) {
+            return NO_CONTEXT;
+        }
+        else if (n == 1) {
+            return SIMPLE_CONTEXT;
+        }
+        return GENERAL_CONTEXT;
+    }
+
+    private String getNextFieldName() {
+        return  "__step_pattern_iter_" + getXSLTC().nextStepPatternSerial();
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        if (hasPredicates()) {
+            // Type check all the predicates (e -> position() = e)
+            final int n = _predicates.size();
+            for (int i = 0; i < n; i++) {
+                final Predicate pred = (Predicate)_predicates.elementAt(i);
+                pred.typeCheck(stable);
+            }
+
+            // Analyze context cases
+            _contextCase = analyzeCases();
+
+            Step step = null;
+
+            // Create an instance of Step to do the translation
+            if (_contextCase == SIMPLE_CONTEXT) {
+                Predicate pred = (Predicate)_predicates.elementAt(0);
+                if (pred.isNthPositionFilter()) {
+                    _contextCase = GENERAL_CONTEXT;
+                    step = new Step(_axis, _nodeType, _predicates);
+                } else {
+                    step = new Step(_axis, _nodeType, null);
+                }
+            } else if (_contextCase == GENERAL_CONTEXT) {
+                final int len = _predicates.size();
+                for (int i = 0; i < len; i++) {
+                    ((Predicate)_predicates.elementAt(i)).dontOptimize();
+                }
+
+                step = new Step(_axis, _nodeType, _predicates);
+            }
+
+            if (step != null) {
+                step.setParser(getParser());
+                step.typeCheck(stable);
+                _step = step;
+            }
+        }
+        return _axis == Axis.CHILD ? Type.Element : Type.Attribute;
+    }
+
+    private void translateKernel(ClassGenerator classGen,
+                                 MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (_nodeType == DTM.ELEMENT_NODE) {
+            final int check = cpg.addInterfaceMethodref(DOM_INTF,
+                                                        "isElement", "(I)Z");
+            il.append(methodGen.loadDOM());
+            il.append(SWAP);
+            il.append(new INVOKEINTERFACE(check, 2));
+
+            // Need to allow for long jumps here
+            final BranchHandle icmp = il.append(new IFNE(null));
+            _falseList.add(il.append(new GOTO_W(null)));
+            icmp.setTarget(il.append(NOP));
+        }
+        else if (_nodeType == DTM.ATTRIBUTE_NODE) {
+            final int check = cpg.addInterfaceMethodref(DOM_INTF,
+                                                        "isAttribute", "(I)Z");
+            il.append(methodGen.loadDOM());
+            il.append(SWAP);
+            il.append(new INVOKEINTERFACE(check, 2));
+
+            // Need to allow for long jumps here
+            final BranchHandle icmp = il.append(new IFNE(null));
+            _falseList.add(il.append(new GOTO_W(null)));
+            icmp.setTarget(il.append(NOP));
+        }
+        else {
+            // context node is on the stack
+            final int getEType = cpg.addInterfaceMethodref(DOM_INTF,
+                                                          "getExpandedTypeID",
+                                                          "(I)I");
+            il.append(methodGen.loadDOM());
+            il.append(SWAP);
+            il.append(new INVOKEINTERFACE(getEType, 2));
+            il.append(new PUSH(cpg, _nodeType));
+
+            // Need to allow for long jumps here
+            final BranchHandle icmp = il.append(new IF_ICMPEQ(null));
+            _falseList.add(il.append(new GOTO_W(null)));
+            icmp.setTarget(il.append(NOP));
+        }
+    }
+
+    private void translateNoContext(ClassGenerator classGen,
+                                    MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Push current node on the stack
+        il.append(methodGen.loadCurrentNode());
+        il.append(SWAP);
+
+        // Overwrite current node with matching node
+        il.append(methodGen.storeCurrentNode());
+
+        // If pattern not reduced then check kernel
+        if (!_isEpsilon) {
+            il.append(methodGen.loadCurrentNode());
+            translateKernel(classGen, methodGen);
+        }
+
+        // Compile the expressions within the predicates
+        final int n = _predicates.size();
+        for (int i = 0; i < n; i++) {
+            Predicate pred = (Predicate)_predicates.elementAt(i);
+            Expression exp = pred.getExpr();
+            exp.translateDesynthesized(classGen, methodGen);
+            _trueList.append(exp._trueList);
+            _falseList.append(exp._falseList);
+        }
+
+        // Backpatch true list and restore current iterator/node
+        InstructionHandle restore;
+        restore = il.append(methodGen.storeCurrentNode());
+        backPatchTrueList(restore);
+        BranchHandle skipFalse = il.append(new GOTO(null));
+
+        // Backpatch false list and restore current iterator/node
+        restore = il.append(methodGen.storeCurrentNode());
+        backPatchFalseList(restore);
+        _falseList.add(il.append(new GOTO(null)));
+
+        // True list falls through
+        skipFalse.setTarget(il.append(NOP));
+    }
+
+    private void translateSimpleContext(ClassGenerator classGen,
+                                        MethodGenerator methodGen) {
+        int index;
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        // Store matching node into a local variable
+        LocalVariableGen match;
+        match = methodGen.addLocalVariable("step_pattern_tmp1",
+                                           Util.getJCRefType(NODE_SIG),
+                                           null, null);
+        match.setStart(il.append(new ISTORE(match.getIndex())));
+
+        // If pattern not reduced then check kernel
+        if (!_isEpsilon) {
+            il.append(new ILOAD(match.getIndex()));
+            translateKernel(classGen, methodGen);
+        }
+
+        // Push current iterator and current node on the stack
+        il.append(methodGen.loadCurrentNode());
+        il.append(methodGen.loadIterator());
+
+        // Create a new matching iterator using the matching node
+        index = cpg.addMethodref(MATCHING_ITERATOR, "<init>",
+                                 "(I" + NODE_ITERATOR_SIG + ")V");
+
+        // Backwards branches are prohibited if an uninitialized object is
+        // on the stack by section 4.9.4 of the JVM Specification, 2nd Ed.
+        // We don't know whether this code might contain backwards branches,
+        // so we mustn't create the new object until after we've created
+        // the suspect arguments to its constructor.  Instead we calculate
+        // the values of the arguments to the constructor first, store them
+        // in temporary variables, create the object and reload the
+        // arguments from the temporaries to avoid the problem.
+
+        _step.translate(classGen, methodGen);
+        LocalVariableGen stepIteratorTemp =
+                methodGen.addLocalVariable("step_pattern_tmp2",
+                                           Util.getJCRefType(NODE_ITERATOR_SIG),
+                                           null, null);
+        stepIteratorTemp.setStart(
+                il.append(new ASTORE(stepIteratorTemp.getIndex())));
+
+        il.append(new NEW(cpg.addClass(MATCHING_ITERATOR)));
+        il.append(DUP);
+        il.append(new ILOAD(match.getIndex()));
+        stepIteratorTemp.setEnd(
+                il.append(new ALOAD(stepIteratorTemp.getIndex())));
+        il.append(new INVOKESPECIAL(index));
+
+        // Get the parent of the matching node
+        il.append(methodGen.loadDOM());
+        il.append(new ILOAD(match.getIndex()));
+        index = cpg.addInterfaceMethodref(DOM_INTF, GET_PARENT, GET_PARENT_SIG);
+        il.append(new INVOKEINTERFACE(index, 2));
+
+        // Start the iterator with the parent
+        il.append(methodGen.setStartNode());
+
+        // Overwrite current iterator and current node
+        il.append(methodGen.storeIterator());
+        match.setEnd(il.append(new ILOAD(match.getIndex())));
+        il.append(methodGen.storeCurrentNode());
+
+        // Translate the expression of the predicate
+        Predicate pred = (Predicate) _predicates.elementAt(0);
+        Expression exp = pred.getExpr();
+        exp.translateDesynthesized(classGen, methodGen);
+
+        // Backpatch true list and restore current iterator/node
+        InstructionHandle restore = il.append(methodGen.storeIterator());
+        il.append(methodGen.storeCurrentNode());
+        exp.backPatchTrueList(restore);
+        BranchHandle skipFalse = il.append(new GOTO(null));
+
+        // Backpatch false list and restore current iterator/node
+        restore = il.append(methodGen.storeIterator());
+        il.append(methodGen.storeCurrentNode());
+        exp.backPatchFalseList(restore);
+        _falseList.add(il.append(new GOTO(null)));
+
+        // True list falls through
+        skipFalse.setTarget(il.append(NOP));
+    }
+
+    private void translateGeneralContext(ClassGenerator classGen,
+                                         MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        int iteratorIndex = 0;
+        BranchHandle ifBlock = null;
+        LocalVariableGen iter, node, node2;
+        final String iteratorName = getNextFieldName();
+
+        // Store node on the stack into a local variable
+        node = methodGen.addLocalVariable("step_pattern_tmp1",
+                                          Util.getJCRefType(NODE_SIG),
+                                          null, null);
+        node.setStart(il.append(new ISTORE(node.getIndex())));
+
+        // Create a new local to store the iterator
+        iter = methodGen.addLocalVariable("step_pattern_tmp2",
+                                          Util.getJCRefType(NODE_ITERATOR_SIG),
+                                          null, null);
+
+        // Add a new private field if this is the main class
+        if (!classGen.isExternal()) {
+            final Field iterator =
+                new Field(ACC_PRIVATE,
+                          cpg.addUtf8(iteratorName),
+                          cpg.addUtf8(NODE_ITERATOR_SIG),
+                          null, cpg.getConstantPool());
+            classGen.addField(iterator);
+            iteratorIndex = cpg.addFieldref(classGen.getClassName(),
+                                            iteratorName,
+                                            NODE_ITERATOR_SIG);
+
+            il.append(classGen.loadTranslet());
+            il.append(new GETFIELD(iteratorIndex));
+            il.append(DUP);
+            iter.setStart(il.append(new ASTORE(iter.getIndex())));
+            ifBlock = il.append(new IFNONNULL(null));
+            il.append(classGen.loadTranslet());
+        }
+
+        // Compile the step created at type checking time
+        _step.translate(classGen, methodGen);
+        InstructionHandle iterStore = il.append(new ASTORE(iter.getIndex()));
+
+        // If in the main class update the field too
+        if (!classGen.isExternal()) {
+            il.append(new ALOAD(iter.getIndex()));
+            il.append(new PUTFIELD(iteratorIndex));
+            ifBlock.setTarget(il.append(NOP));
+        } else {
+            // If class is not external, start of range for iter variable was
+            // set above
+            iter.setStart(iterStore);
+        }
+
+        // Get the parent of the node on the stack
+        il.append(methodGen.loadDOM());
+        il.append(new ILOAD(node.getIndex()));
+        int index = cpg.addInterfaceMethodref(DOM_INTF,
+                                              GET_PARENT, GET_PARENT_SIG);
+        il.append(new INVOKEINTERFACE(index, 2));
+
+        // Initialize the iterator with the parent
+        il.append(new ALOAD(iter.getIndex()));
+        il.append(SWAP);
+        il.append(methodGen.setStartNode());
+
+        /*
+         * Inline loop:
+         *
+         * int node2;
+         * while ((node2 = iter.next()) != NodeIterator.END
+         *                && node2 < node);
+         * return node2 == node;
+         */
+        BranchHandle skipNext;
+        InstructionHandle begin, next;
+        node2 = methodGen.addLocalVariable("step_pattern_tmp3",
+                                           Util.getJCRefType(NODE_SIG),
+                                           null, null);
+
+        skipNext = il.append(new GOTO(null));
+        next = il.append(new ALOAD(iter.getIndex()));
+        node2.setStart(next);
+        begin = il.append(methodGen.nextNode());
+        il.append(DUP);
+        il.append(new ISTORE(node2.getIndex()));
+        _falseList.add(il.append(new IFLT(null)));      // NodeIterator.END
+
+        il.append(new ILOAD(node2.getIndex()));
+        il.append(new ILOAD(node.getIndex()));
+        iter.setEnd(il.append(new IF_ICMPLT(next)));
+
+        node2.setEnd(il.append(new ILOAD(node2.getIndex())));
+        node.setEnd(il.append(new ILOAD(node.getIndex())));
+        _falseList.add(il.append(new IF_ICMPNE(null)));
+
+        skipNext.setTarget(begin);
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (hasPredicates()) {
+            switch (_contextCase) {
+            case NO_CONTEXT:
+                translateNoContext(classGen, methodGen);
+                break;
+
+            case SIMPLE_CONTEXT:
+                translateSimpleContext(classGen, methodGen);
+                break;
+
+            default:
+                translateGeneralContext(classGen, methodGen);
+                break;
+            }
+        }
+        else if (isWildcard()) {
+            il.append(POP);     // true list falls through
+        }
+        else {
+            translateKernel(classGen, methodGen);
+        }
+    }
+}

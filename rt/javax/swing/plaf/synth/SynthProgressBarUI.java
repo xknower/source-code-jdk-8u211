@@ -1,487 +1,481 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Graphics2D;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.Shape;
-/*     */ import java.awt.geom.AffineTransform;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JProgressBar;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicProgressBarUI;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthProgressBarUI
-/*     */   extends BasicProgressBarUI
-/*     */   implements SynthUI, PropertyChangeListener
-/*     */ {
-/*     */   private SynthStyle style;
-/*     */   private int progressPadding;
-/*     */   private boolean rotateText;
-/*     */   private boolean paintOutsideClip;
-/*     */   private boolean tileWhenIndeterminate;
-/*     */   private int tileWidth;
-/*     */   private Dimension minBarSize;
-/*     */   private int glowWidth;
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  62 */     return new SynthProgressBarUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners() {
-/*  70 */     super.installListeners();
-/*  71 */     this.progressBar.addPropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners() {
-/*  79 */     super.uninstallListeners();
-/*  80 */     this.progressBar.removePropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  88 */     updateStyle(this.progressBar);
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JProgressBar paramJProgressBar) {
-/*  92 */     SynthContext synthContext = getContext(paramJProgressBar, 1);
-/*  93 */     SynthStyle synthStyle = this.style;
-/*  94 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*  95 */     setCellLength(this.style.getInt(synthContext, "ProgressBar.cellLength", 1));
-/*  96 */     setCellSpacing(this.style.getInt(synthContext, "ProgressBar.cellSpacing", 0));
-/*  97 */     this.progressPadding = this.style.getInt(synthContext, "ProgressBar.progressPadding", 0);
-/*     */     
-/*  99 */     this.paintOutsideClip = this.style.getBoolean(synthContext, "ProgressBar.paintOutsideClip", false);
-/*     */     
-/* 101 */     this.rotateText = this.style.getBoolean(synthContext, "ProgressBar.rotateText", false);
-/*     */     
-/* 103 */     this.tileWhenIndeterminate = this.style.getBoolean(synthContext, "ProgressBar.tileWhenIndeterminate", false);
-/* 104 */     this.tileWidth = this.style.getInt(synthContext, "ProgressBar.tileWidth", 15);
-/*     */ 
-/*     */ 
-/*     */     
-/* 108 */     String str = (String)this.progressBar.getClientProperty("JComponent.sizeVariant");
-/*     */     
-/* 110 */     if (str != null) {
-/* 111 */       if ("large".equals(str)) {
-/* 112 */         this.tileWidth = (int)(this.tileWidth * 1.15D);
-/* 113 */       } else if ("small".equals(str)) {
-/* 114 */         this.tileWidth = (int)(this.tileWidth * 0.857D);
-/* 115 */       } else if ("mini".equals(str)) {
-/* 116 */         this.tileWidth = (int)(this.tileWidth * 0.784D);
-/*     */       } 
-/*     */     }
-/* 119 */     this.minBarSize = (Dimension)this.style.get(synthContext, "ProgressBar.minBarSize");
-/* 120 */     this.glowWidth = this.style.getInt(synthContext, "ProgressBar.glowWidth", 0);
-/* 121 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/* 129 */     SynthContext synthContext = getContext(this.progressBar, 1);
-/*     */     
-/* 131 */     this.style.uninstallDefaults(synthContext);
-/* 132 */     synthContext.dispose();
-/* 133 */     this.style = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 141 */     return getContext(paramJComponent, getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 145 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */   
-/*     */   private int getComponentState(JComponent paramJComponent) {
-/* 149 */     return SynthLookAndFeel.getComponentState(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/* 157 */     super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/* 158 */     if (this.progressBar.isStringPainted() && this.progressBar
-/* 159 */       .getOrientation() == 0) {
-/* 160 */       SynthContext synthContext = getContext(paramJComponent);
-/* 161 */       Font font = synthContext.getStyle().getFont(synthContext);
-/* 162 */       FontMetrics fontMetrics = this.progressBar.getFontMetrics(font);
-/* 163 */       synthContext.dispose();
-/* 164 */       return (paramInt2 - fontMetrics.getAscent() - fontMetrics.getDescent()) / 2 + fontMetrics
-/* 165 */         .getAscent();
-/*     */     } 
-/* 167 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected Rectangle getBox(Rectangle paramRectangle) {
-/* 175 */     if (this.tileWhenIndeterminate) {
-/* 176 */       return SwingUtilities.calculateInnerArea(this.progressBar, paramRectangle);
-/*     */     }
-/* 178 */     return super.getBox(paramRectangle);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setAnimationIndex(int paramInt) {
-/* 187 */     if (this.paintOutsideClip) {
-/* 188 */       if (getAnimationIndex() == paramInt) {
-/*     */         return;
-/*     */       }
-/* 191 */       super.setAnimationIndex(paramInt);
-/* 192 */       this.progressBar.repaint();
-/*     */     } else {
-/* 194 */       super.setAnimationIndex(paramInt);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 212 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 214 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 215 */     synthContext.getPainter().paintProgressBarBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 216 */         .getWidth(), paramJComponent.getHeight(), this.progressBar
-/* 217 */         .getOrientation());
-/* 218 */     paint(synthContext, paramGraphics);
-/* 219 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 233 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 235 */     paint(synthContext, paramGraphics);
-/* 236 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 247 */     JProgressBar jProgressBar = (JProgressBar)paramSynthContext.getComponent();
-/* 248 */     int i = 0, j = 0, k = 0, m = 0;
-/* 249 */     if (!jProgressBar.isIndeterminate()) {
-/* 250 */       Insets insets = jProgressBar.getInsets();
-/* 251 */       double d = jProgressBar.getPercentComplete();
-/* 252 */       if (d != 0.0D) {
-/* 253 */         if (jProgressBar.getOrientation() == 0) {
-/* 254 */           i = insets.left + this.progressPadding;
-/* 255 */           j = insets.top + this.progressPadding;
-/* 256 */           k = (int)(d * (jProgressBar.getWidth() - insets.left + this.progressPadding + insets.right + this.progressPadding));
-/*     */ 
-/*     */           
-/* 259 */           m = jProgressBar.getHeight() - insets.top + this.progressPadding + insets.bottom + this.progressPadding;
-/*     */ 
-/*     */ 
-/*     */           
-/* 263 */           if (!SynthLookAndFeel.isLeftToRight(jProgressBar)) {
-/* 264 */             i = jProgressBar.getWidth() - insets.right - k - this.progressPadding - this.glowWidth;
-/*     */           }
-/*     */         } else {
-/*     */           
-/* 268 */           i = insets.left + this.progressPadding;
-/* 269 */           k = jProgressBar.getWidth() - insets.left + this.progressPadding + insets.right + this.progressPadding;
-/*     */ 
-/*     */           
-/* 272 */           m = (int)(d * (jProgressBar.getHeight() - insets.top + this.progressPadding + insets.bottom + this.progressPadding));
-/*     */ 
-/*     */           
-/* 275 */           j = jProgressBar.getHeight() - insets.bottom - m - this.progressPadding;
-/*     */ 
-/*     */           
-/* 278 */           if (SynthLookAndFeel.isLeftToRight(jProgressBar)) {
-/* 279 */             j -= this.glowWidth;
-/*     */           }
-/*     */         } 
-/*     */       }
-/*     */     } else {
-/* 284 */       this.boxRect = getBox(this.boxRect);
-/* 285 */       i = this.boxRect.x + this.progressPadding;
-/* 286 */       j = this.boxRect.y + this.progressPadding;
-/* 287 */       k = this.boxRect.width - this.progressPadding - this.progressPadding;
-/* 288 */       m = this.boxRect.height - this.progressPadding - this.progressPadding;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 294 */     if (this.tileWhenIndeterminate && jProgressBar.isIndeterminate()) {
-/* 295 */       double d = getAnimationIndex() / getFrameCount();
-/* 296 */       int n = (int)(d * this.tileWidth);
-/* 297 */       Shape shape = paramGraphics.getClip();
-/* 298 */       paramGraphics.clipRect(i, j, k, m);
-/* 299 */       if (jProgressBar.getOrientation() == 0) {
-/*     */         int i1;
-/* 301 */         for (i1 = i - this.tileWidth + n; i1 <= k; i1 += this.tileWidth) {
-/* 302 */           paramSynthContext.getPainter().paintProgressBarForeground(paramSynthContext, paramGraphics, i1, j, this.tileWidth, m, jProgressBar
-/* 303 */               .getOrientation());
-/*     */         }
-/*     */       } else {
-/*     */         int i1;
-/* 307 */         for (i1 = j - n; i1 < m + this.tileWidth; i1 += this.tileWidth) {
-/* 308 */           paramSynthContext.getPainter().paintProgressBarForeground(paramSynthContext, paramGraphics, i, i1, k, this.tileWidth, jProgressBar
-/* 309 */               .getOrientation());
-/*     */         }
-/*     */       } 
-/* 312 */       paramGraphics.setClip(shape);
-/*     */     }
-/* 314 */     else if (this.minBarSize == null || (k >= this.minBarSize.width && m >= this.minBarSize.height)) {
-/*     */       
-/* 316 */       paramSynthContext.getPainter().paintProgressBarForeground(paramSynthContext, paramGraphics, i, j, k, m, jProgressBar
-/* 317 */           .getOrientation());
-/*     */     } 
-/*     */ 
-/*     */     
-/* 321 */     if (jProgressBar.isStringPainted()) {
-/* 322 */       paintText(paramSynthContext, paramGraphics, jProgressBar.getString());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintText(SynthContext paramSynthContext, Graphics paramGraphics, String paramString) {
-/* 334 */     if (this.progressBar.isStringPainted()) {
-/* 335 */       SynthStyle synthStyle = paramSynthContext.getStyle();
-/* 336 */       Font font = synthStyle.getFont(paramSynthContext);
-/* 337 */       FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(this.progressBar, paramGraphics, font);
-/*     */ 
-/*     */       
-/* 340 */       int i = synthStyle.getGraphicsUtils(paramSynthContext).computeStringWidth(paramSynthContext, font, fontMetrics, paramString);
-/* 341 */       Rectangle rectangle = this.progressBar.getBounds();
-/*     */       
-/* 343 */       if (this.rotateText && this.progressBar
-/* 344 */         .getOrientation() == 1) {
-/* 345 */         Point point; AffineTransform affineTransform; Graphics2D graphics2D = (Graphics2D)paramGraphics;
-/*     */ 
-/*     */ 
-/*     */         
-/* 349 */         if (this.progressBar.getComponentOrientation().isLeftToRight()) {
-/* 350 */           affineTransform = AffineTransform.getRotateInstance(-1.5707963267948966D);
-/*     */           
-/* 352 */           point = new Point((rectangle.width + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2, (rectangle.height + i) / 2);
-/*     */         } else {
-/*     */           
-/* 355 */           affineTransform = AffineTransform.getRotateInstance(1.5707963267948966D);
-/*     */           
-/* 357 */           point = new Point((rectangle.width - fontMetrics.getAscent() + fontMetrics.getDescent()) / 2, (rectangle.height - i) / 2);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 362 */         if (point.x < 0) {
-/*     */           return;
-/*     */         }
-/*     */ 
-/*     */         
-/* 367 */         font = font.deriveFont(affineTransform);
-/* 368 */         graphics2D.setFont(font);
-/* 369 */         graphics2D.setColor(synthStyle.getColor(paramSynthContext, ColorType.TEXT_FOREGROUND));
-/* 370 */         synthStyle.getGraphicsUtils(paramSynthContext).paintText(paramSynthContext, paramGraphics, paramString, point.x, point.y, -1);
-/*     */ 
-/*     */       
-/*     */       }
-/*     */       else {
-/*     */ 
-/*     */         
-/* 377 */         Rectangle rectangle1 = new Rectangle(rectangle.width / 2 - i / 2, (rectangle.height - fontMetrics.getAscent() + fontMetrics.getDescent()) / 2, 0, 0);
-/*     */ 
-/*     */ 
-/*     */         
-/* 381 */         if (rectangle1.y < 0) {
-/*     */           return;
-/*     */         }
-/*     */ 
-/*     */         
-/* 386 */         paramGraphics.setColor(synthStyle.getColor(paramSynthContext, ColorType.TEXT_FOREGROUND));
-/* 387 */         paramGraphics.setFont(font);
-/* 388 */         synthStyle.getGraphicsUtils(paramSynthContext).paintText(paramSynthContext, paramGraphics, paramString, rectangle1.x, rectangle1.y, -1);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 400 */     paramSynthContext.getPainter().paintProgressBarBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4, this.progressBar
-/* 401 */         .getOrientation());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 409 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent) || "indeterminate"
-/* 410 */       .equals(paramPropertyChangeEvent.getPropertyName())) {
-/* 411 */       updateStyle((JProgressBar)paramPropertyChangeEvent.getSource());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 420 */     Dimension dimension = null;
-/* 421 */     Insets insets = this.progressBar.getInsets();
-/* 422 */     FontMetrics fontMetrics = this.progressBar.getFontMetrics(this.progressBar.getFont());
-/* 423 */     String str1 = this.progressBar.getString();
-/* 424 */     int i = fontMetrics.getHeight() + fontMetrics.getDescent();
-/*     */     
-/* 426 */     if (this.progressBar.getOrientation() == 0) {
-/* 427 */       dimension = new Dimension(getPreferredInnerHorizontal());
-/* 428 */       if (this.progressBar.isStringPainted()) {
-/*     */         
-/* 430 */         if (i > dimension.height) {
-/* 431 */           dimension.height = i;
-/*     */         }
-/*     */ 
-/*     */         
-/* 435 */         int j = SwingUtilities2.stringWidth(this.progressBar, fontMetrics, str1);
-/*     */         
-/* 437 */         if (j > dimension.width) {
-/* 438 */           dimension.width = j;
-/*     */         }
-/*     */       } 
-/*     */     } else {
-/* 442 */       dimension = new Dimension(getPreferredInnerVertical());
-/* 443 */       if (this.progressBar.isStringPainted()) {
-/*     */         
-/* 445 */         if (i > dimension.width) {
-/* 446 */           dimension.width = i;
-/*     */         }
-/*     */ 
-/*     */         
-/* 450 */         int j = SwingUtilities2.stringWidth(this.progressBar, fontMetrics, str1);
-/*     */         
-/* 452 */         if (j > dimension.height) {
-/* 453 */           dimension.height = j;
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 461 */     String str2 = (String)this.progressBar.getClientProperty("JComponent.sizeVariant");
-/*     */     
-/* 463 */     if (str2 != null) {
-/* 464 */       if ("large".equals(str2)) {
-/* 465 */         dimension.width = (int)(dimension.width * 1.15F);
-/* 466 */         dimension.height = (int)(dimension.height * 1.15F);
-/* 467 */       } else if ("small".equals(str2)) {
-/* 468 */         dimension.width = (int)(dimension.width * 0.9F);
-/* 469 */         dimension.height = (int)(dimension.height * 0.9F);
-/* 470 */       } else if ("mini".equals(str2)) {
-/* 471 */         dimension.width = (int)(dimension.width * 0.784F);
-/* 472 */         dimension.height = (int)(dimension.height * 0.784F);
-/*     */       } 
-/*     */     }
-/*     */     
-/* 476 */     dimension.width += insets.left + insets.right;
-/* 477 */     dimension.height += insets.top + insets.bottom;
-/*     */     
-/* 479 */     return dimension;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthProgressBarUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicProgressBarUI;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
+import sun.swing.SwingUtilities2;
+
+/**
+ * Provides the Synth L&amp;F UI delegate for
+ * {@link javax.swing.JProgressBar}.
+ *
+ * @author Joshua Outwater
+ * @since 1.7
+ */
+public class SynthProgressBarUI extends BasicProgressBarUI
+                                implements SynthUI, PropertyChangeListener {
+    private SynthStyle style;
+    private int progressPadding;
+    private boolean rotateText; // added for Nimbus LAF
+    private boolean paintOutsideClip;
+    private boolean tileWhenIndeterminate; //whether to tile indeterminate painting
+    private int tileWidth; //the width of each tile
+    private Dimension minBarSize; // minimal visible bar size
+    private int glowWidth; // Glow around the bar foreground
+
+    /**
+     * Creates a new UI object for the given component.
+     *
+     * @param x component to create UI object for
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent x) {
+        return new SynthProgressBarUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installListeners() {
+        super.installListeners();
+        progressBar.addPropertyChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallListeners() {
+        super.uninstallListeners();
+        progressBar.removePropertyChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        updateStyle(progressBar);
+    }
+
+    private void updateStyle(JProgressBar c) {
+        SynthContext context = getContext(c, ENABLED);
+        SynthStyle oldStyle = style;
+        style = SynthLookAndFeel.updateStyle(context, this);
+        setCellLength(style.getInt(context, "ProgressBar.cellLength", 1));
+        setCellSpacing(style.getInt(context, "ProgressBar.cellSpacing", 0));
+        progressPadding = style.getInt(context,
+                "ProgressBar.progressPadding", 0);
+        paintOutsideClip = style.getBoolean(context,
+                "ProgressBar.paintOutsideClip", false);
+        rotateText = style.getBoolean(context,
+                "ProgressBar.rotateText", false);
+        tileWhenIndeterminate = style.getBoolean(context, "ProgressBar.tileWhenIndeterminate", false);
+        tileWidth = style.getInt(context, "ProgressBar.tileWidth", 15);
+        // handle scaling for sizeVarients for special case components. The
+        // key "JComponent.sizeVariant" scales for large/small/mini
+        // components are based on Apples LAF
+        String scaleKey = (String)progressBar.getClientProperty(
+                "JComponent.sizeVariant");
+        if (scaleKey != null){
+            if ("large".equals(scaleKey)){
+                tileWidth *= 1.15;
+            } else if ("small".equals(scaleKey)){
+                tileWidth *= 0.857;
+            } else if ("mini".equals(scaleKey)){
+                tileWidth *= 0.784;
+            }
+        }
+        minBarSize = (Dimension)style.get(context, "ProgressBar.minBarSize");
+        glowWidth = style.getInt(context, "ProgressBar.glowWidth", 0);
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(progressBar, ENABLED);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    private int getComponentState(JComponent c) {
+        return SynthLookAndFeel.getComponentState(c);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getBaseline(JComponent c, int width, int height) {
+        super.getBaseline(c, width, height);
+        if (progressBar.isStringPainted() &&
+                progressBar.getOrientation() == JProgressBar.HORIZONTAL) {
+            SynthContext context = getContext(c);
+            Font font = context.getStyle().getFont(context);
+            FontMetrics metrics = progressBar.getFontMetrics(font);
+            context.dispose();
+            return (height - metrics.getAscent() - metrics.getDescent()) / 2 +
+                    metrics.getAscent();
+        }
+        return -1;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Rectangle getBox(Rectangle r) {
+        if (tileWhenIndeterminate) {
+            return SwingUtilities.calculateInnerArea(progressBar, r);
+        } else {
+            return super.getBox(r);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void setAnimationIndex(int newValue) {
+        if (paintOutsideClip) {
+            if (getAnimationIndex() == newValue) {
+                return;
+            }
+            super.setAnimationIndex(newValue);
+            progressBar.repaint();
+        } else {
+            super.setAnimationIndex(newValue);
+        }
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintProgressBarBackground(context,
+                          g, 0, 0, c.getWidth(), c.getHeight(),
+                          progressBar.getOrientation());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component according to the Look and Feel.
+     * <p>This method is not used by Synth Look and Feel.
+     * Painting is handled by the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+        JProgressBar pBar = (JProgressBar)context.getComponent();
+        int x = 0, y = 0, width = 0, height = 0;
+        if (!pBar.isIndeterminate()) {
+            Insets pBarInsets = pBar.getInsets();
+            double percentComplete = pBar.getPercentComplete();
+            if (percentComplete != 0.0) {
+                if (pBar.getOrientation() == JProgressBar.HORIZONTAL) {
+                    x = pBarInsets.left + progressPadding;
+                    y = pBarInsets.top + progressPadding;
+                    width = (int)(percentComplete * (pBar.getWidth()
+                            - (pBarInsets.left + progressPadding
+                             + pBarInsets.right + progressPadding)));
+                    height = pBar.getHeight()
+                            - (pBarInsets.top + progressPadding
+                             + pBarInsets.bottom + progressPadding);
+
+                    if (!SynthLookAndFeel.isLeftToRight(pBar)) {
+                        x = pBar.getWidth() - pBarInsets.right - width
+                                - progressPadding - glowWidth;
+                    }
+                } else {  // JProgressBar.VERTICAL
+                    x = pBarInsets.left + progressPadding;
+                    width = pBar.getWidth()
+                            - (pBarInsets.left + progressPadding
+                            + pBarInsets.right + progressPadding);
+                    height = (int)(percentComplete * (pBar.getHeight()
+                            - (pBarInsets.top + progressPadding
+                             + pBarInsets.bottom + progressPadding)));
+                    y = pBar.getHeight() - pBarInsets.bottom - height
+                            - progressPadding;
+
+                    if (SynthLookAndFeel.isLeftToRight(pBar)) {
+                        y -= glowWidth;
+                    }
+                }
+            }
+        } else {
+            boxRect = getBox(boxRect);
+            x = boxRect.x + progressPadding;
+            y = boxRect.y + progressPadding;
+            width = boxRect.width - progressPadding - progressPadding;
+            height = boxRect.height - progressPadding - progressPadding;
+        }
+
+        //if tiling and indeterminate, then paint the progress bar foreground a
+        //bit wider than it should be. Shift as needed to ensure that there is
+        //an animated effect
+        if (tileWhenIndeterminate && pBar.isIndeterminate()) {
+            double percentComplete = (double)getAnimationIndex() / (double)getFrameCount();
+            int offset = (int)(percentComplete * tileWidth);
+            Shape clip = g.getClip();
+            g.clipRect(x, y, width, height);
+            if (pBar.getOrientation() == JProgressBar.HORIZONTAL) {
+                //paint each tile horizontally
+                for (int i=x-tileWidth+offset; i<=width; i+=tileWidth) {
+                    context.getPainter().paintProgressBarForeground(
+                            context, g, i, y, tileWidth, height, pBar.getOrientation());
+                }
+            } else { //JProgressBar.VERTICAL
+                //paint each tile vertically
+                for (int i=y-offset; i<height+tileWidth; i+=tileWidth) {
+                    context.getPainter().paintProgressBarForeground(
+                            context, g, x, i, width, tileWidth, pBar.getOrientation());
+                }
+            }
+            g.setClip(clip);
+        } else {
+            if (minBarSize == null || (width >= minBarSize.width
+                    && height >= minBarSize.height)) {
+                context.getPainter().paintProgressBarForeground(context, g,
+                        x, y, width, height, pBar.getOrientation());
+            }
+        }
+
+        if (pBar.isStringPainted()) {
+            paintText(context, g, pBar.getString());
+        }
+    }
+
+    /**
+     * Paints the component's text.
+     *
+     * @param context context for the component being painted
+     * @param g {@code Graphics} object used for painting
+     * @param title the text to paint
+     */
+    protected void paintText(SynthContext context, Graphics g, String title) {
+        if (progressBar.isStringPainted()) {
+            SynthStyle style = context.getStyle();
+            Font font = style.getFont(context);
+            FontMetrics fm = SwingUtilities2.getFontMetrics(
+                    progressBar, g, font);
+            int strLength = style.getGraphicsUtils(context).
+                computeStringWidth(context, font, fm, title);
+            Rectangle bounds = progressBar.getBounds();
+
+            if (rotateText &&
+                    progressBar.getOrientation() == JProgressBar.VERTICAL){
+                Graphics2D g2 = (Graphics2D)g;
+                // Calculate the position for the text.
+                Point textPos;
+                AffineTransform rotation;
+                if (progressBar.getComponentOrientation().isLeftToRight()){
+                    rotation = AffineTransform.getRotateInstance(-Math.PI/2);
+                    textPos = new Point(
+                        (bounds.width+fm.getAscent()-fm.getDescent())/2,
+                           (bounds.height+strLength)/2);
+                } else {
+                    rotation = AffineTransform.getRotateInstance(Math.PI/2);
+                    textPos = new Point(
+                        (bounds.width-fm.getAscent()+fm.getDescent())/2,
+                           (bounds.height-strLength)/2);
+                }
+
+                // Progress bar isn't wide enough for the font.  Don't paint it.
+                if (textPos.x < 0) {
+                    return;
+                }
+
+                // Paint the text.
+                font = font.deriveFont(rotation);
+                g2.setFont(font);
+                g2.setColor(style.getColor(context, ColorType.TEXT_FOREGROUND));
+                style.getGraphicsUtils(context).paintText(context, g, title,
+                                                     textPos.x, textPos.y, -1);
+            } else {
+                // Calculate the bounds for the text.
+                Rectangle textRect = new Rectangle(
+                    (bounds.width / 2) - (strLength / 2),
+                    (bounds.height -
+                        (fm.getAscent() + fm.getDescent())) / 2,
+                    0, 0);
+
+                // Progress bar isn't tall enough for the font.  Don't paint it.
+                if (textRect.y < 0) {
+                    return;
+                }
+
+                // Paint the text.
+                g.setColor(style.getColor(context, ColorType.TEXT_FOREGROUND));
+                g.setFont(font);
+                style.getGraphicsUtils(context).paintText(context, g, title,
+                                                     textRect.x, textRect.y, -1);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintProgressBarBorder(context, g, x, y, w, h,
+                                                    progressBar.getOrientation());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent e) {
+        if (SynthLookAndFeel.shouldUpdateStyle(e) ||
+                "indeterminate".equals(e.getPropertyName())) {
+            updateStyle((JProgressBar)e.getSource());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Dimension getPreferredSize(JComponent c) {
+        Dimension size = null;
+        Insets border = progressBar.getInsets();
+        FontMetrics fontSizer = progressBar.getFontMetrics(progressBar.getFont());
+        String progString = progressBar.getString();
+        int stringHeight = fontSizer.getHeight() + fontSizer.getDescent();
+
+        if (progressBar.getOrientation() == JProgressBar.HORIZONTAL) {
+            size = new Dimension(getPreferredInnerHorizontal());
+            if (progressBar.isStringPainted()) {
+                // adjust the height if necessary to make room for the string
+                if (stringHeight > size.height) {
+                    size.height = stringHeight;
+                }
+
+                // adjust the width if necessary to make room for the string
+                int stringWidth = SwingUtilities2.stringWidth(
+                                       progressBar, fontSizer, progString);
+                if (stringWidth > size.width) {
+                    size.width = stringWidth;
+                }
+            }
+        } else {
+            size = new Dimension(getPreferredInnerVertical());
+            if (progressBar.isStringPainted()) {
+                // make sure the width is big enough for the string
+                if (stringHeight > size.width) {
+                    size.width = stringHeight;
+                }
+
+                // make sure the height is big enough for the string
+                int stringWidth = SwingUtilities2.stringWidth(
+                                       progressBar, fontSizer, progString);
+                if (stringWidth > size.height) {
+                    size.height = stringWidth;
+                }
+            }
+        }
+
+        // handle scaling for sizeVarients for special case components. The
+        // key "JComponent.sizeVariant" scales for large/small/mini
+        // components are based on Apples LAF
+        String scaleKey = (String)progressBar.getClientProperty(
+                "JComponent.sizeVariant");
+        if (scaleKey != null){
+            if ("large".equals(scaleKey)){
+                size.width *= 1.15f;
+                size.height *= 1.15f;
+            } else if ("small".equals(scaleKey)){
+                size.width *= 0.90f;
+                size.height *= 0.90f;
+            } else if ("mini".equals(scaleKey)){
+                size.width *= 0.784f;
+                size.height *= 0.784f;
+            }
+        }
+
+        size.width += border.left + border.right;
+        size.height += border.top + border.bottom;
+
+        return size;
+    }
+}

@@ -1,503 +1,499 @@
-/*     */ package com.sun.corba.se.impl.logging;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.logging.LogWrapperBase;
-/*     */ import com.sun.corba.se.spi.logging.LogWrapperFactory;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import org.omg.CORBA.BAD_OPERATION;
-/*     */ import org.omg.CORBA.BAD_PARAM;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.INTERNAL;
-/*     */ import org.omg.CORBA.INV_OBJREF;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class IORSystemException
-/*     */   extends LogWrapperBase
-/*     */ {
-/*     */   public IORSystemException(Logger paramLogger) {
-/*  31 */     super(paramLogger);
-/*     */   }
-/*     */   
-/*  34 */   private static LogWrapperFactory factory = new LogWrapperFactory()
-/*     */     {
-/*     */       public LogWrapperBase create(Logger param1Logger) {
-/*  37 */         return new IORSystemException(param1Logger);
-/*     */       }
-/*     */     };
-/*     */   public static final int ORT_NOT_INITIALIZED = 1398080689; public static final int NULL_POA = 1398080690; public static final int BAD_MAGIC = 1398080691;
-/*     */   
-/*     */   public static IORSystemException get(ORB paramORB, String paramString) {
-/*  43 */     return (IORSystemException)paramORB
-/*  44 */       .getLogWrapper(paramString, "IOR", factory);
-/*     */   }
-/*     */   public static final int STRINGIFY_WRITE_ERROR = 1398080692; public static final int TAGGED_PROFILE_TEMPLATE_FACTORY_NOT_FOUND = 1398080693; public static final int INVALID_JDK1_3_1_PATCH_LEVEL = 1398080694; public static final int GET_LOCAL_SERVANT_FAILURE = 1398080695; public static final int ADAPTER_ID_NOT_AVAILABLE = 1398080689; public static final int SERVER_ID_NOT_AVAILABLE = 1398080690; public static final int ORB_ID_NOT_AVAILABLE = 1398080691; public static final int OBJECT_ADAPTER_ID_NOT_AVAILABLE = 1398080692; public static final int BAD_OID_IN_IOR_TEMPLATE_LIST = 1398080689;
-/*     */   public static final int INVALID_TAGGED_PROFILE = 1398080690;
-/*     */   public static final int BAD_IIOP_ADDRESS_PORT = 1398080691;
-/*     */   public static final int IOR_MUST_HAVE_IIOP_PROFILE = 1398080689;
-/*     */   
-/*     */   public static IORSystemException get(String paramString) {
-/*  52 */     return (IORSystemException)ORB.staticGetLogWrapper(paramString, "IOR", factory);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL ortNotInitialized(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  64 */     INTERNAL iNTERNAL = new INTERNAL(1398080689, paramCompletionStatus);
-/*  65 */     if (paramThrowable != null) {
-/*  66 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/*  68 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  69 */       Object[] arrayOfObject = null;
-/*  70 */       doLog(Level.WARNING, "IOR.ortNotInitialized", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/*  74 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL ortNotInitialized(CompletionStatus paramCompletionStatus) {
-/*  78 */     return ortNotInitialized(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL ortNotInitialized(Throwable paramThrowable) {
-/*  82 */     return ortNotInitialized(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL ortNotInitialized() {
-/*  86 */     return ortNotInitialized(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL nullPoa(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/*  92 */     INTERNAL iNTERNAL = new INTERNAL(1398080690, paramCompletionStatus);
-/*  93 */     if (paramThrowable != null) {
-/*  94 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/*  96 */     if (this.logger.isLoggable(Level.WARNING)) {
-/*  97 */       Object[] arrayOfObject = null;
-/*  98 */       doLog(Level.WARNING, "IOR.nullPoa", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 102 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL nullPoa(CompletionStatus paramCompletionStatus) {
-/* 106 */     return nullPoa(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL nullPoa(Throwable paramThrowable) {
-/* 110 */     return nullPoa(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL nullPoa() {
-/* 114 */     return nullPoa(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL badMagic(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 120 */     INTERNAL iNTERNAL = new INTERNAL(1398080691, paramCompletionStatus);
-/* 121 */     if (paramThrowable != null) {
-/* 122 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/* 124 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 125 */       Object[] arrayOfObject = new Object[1];
-/* 126 */       arrayOfObject[0] = paramObject;
-/* 127 */       doLog(Level.WARNING, "IOR.badMagic", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 131 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL badMagic(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 135 */     return badMagic(paramCompletionStatus, (Throwable)null, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL badMagic(Throwable paramThrowable, Object paramObject) {
-/* 139 */     return badMagic(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL badMagic(Object paramObject) {
-/* 143 */     return badMagic(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL stringifyWriteError(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 149 */     INTERNAL iNTERNAL = new INTERNAL(1398080692, paramCompletionStatus);
-/* 150 */     if (paramThrowable != null) {
-/* 151 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/* 153 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 154 */       Object[] arrayOfObject = null;
-/* 155 */       doLog(Level.WARNING, "IOR.stringifyWriteError", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 159 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL stringifyWriteError(CompletionStatus paramCompletionStatus) {
-/* 163 */     return stringifyWriteError(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL stringifyWriteError(Throwable paramThrowable) {
-/* 167 */     return stringifyWriteError(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL stringifyWriteError() {
-/* 171 */     return stringifyWriteError(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL taggedProfileTemplateFactoryNotFound(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 177 */     INTERNAL iNTERNAL = new INTERNAL(1398080693, paramCompletionStatus);
-/* 178 */     if (paramThrowable != null) {
-/* 179 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/* 181 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 182 */       Object[] arrayOfObject = new Object[1];
-/* 183 */       arrayOfObject[0] = paramObject;
-/* 184 */       doLog(Level.WARNING, "IOR.taggedProfileTemplateFactoryNotFound", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 188 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL taggedProfileTemplateFactoryNotFound(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 192 */     return taggedProfileTemplateFactoryNotFound(paramCompletionStatus, (Throwable)null, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL taggedProfileTemplateFactoryNotFound(Throwable paramThrowable, Object paramObject) {
-/* 196 */     return taggedProfileTemplateFactoryNotFound(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL taggedProfileTemplateFactoryNotFound(Object paramObject) {
-/* 200 */     return taggedProfileTemplateFactoryNotFound(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL invalidJdk131PatchLevel(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 206 */     INTERNAL iNTERNAL = new INTERNAL(1398080694, paramCompletionStatus);
-/* 207 */     if (paramThrowable != null) {
-/* 208 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/* 210 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 211 */       Object[] arrayOfObject = new Object[1];
-/* 212 */       arrayOfObject[0] = paramObject;
-/* 213 */       doLog(Level.WARNING, "IOR.invalidJdk131PatchLevel", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 217 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL invalidJdk131PatchLevel(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 221 */     return invalidJdk131PatchLevel(paramCompletionStatus, (Throwable)null, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL invalidJdk131PatchLevel(Throwable paramThrowable, Object paramObject) {
-/* 225 */     return invalidJdk131PatchLevel(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL invalidJdk131PatchLevel(Object paramObject) {
-/* 229 */     return invalidJdk131PatchLevel(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INTERNAL getLocalServantFailure(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 235 */     INTERNAL iNTERNAL = new INTERNAL(1398080695, paramCompletionStatus);
-/* 236 */     if (paramThrowable != null) {
-/* 237 */       iNTERNAL.initCause(paramThrowable);
-/*     */     }
-/* 239 */     if (this.logger.isLoggable(Level.FINE)) {
-/* 240 */       Object[] arrayOfObject = new Object[1];
-/* 241 */       arrayOfObject[0] = paramObject;
-/* 242 */       doLog(Level.FINE, "IOR.getLocalServantFailure", arrayOfObject, IORSystemException.class, iNTERNAL);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 246 */     return iNTERNAL;
-/*     */   }
-/*     */   
-/*     */   public INTERNAL getLocalServantFailure(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 250 */     return getLocalServantFailure(paramCompletionStatus, (Throwable)null, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL getLocalServantFailure(Throwable paramThrowable, Object paramObject) {
-/* 254 */     return getLocalServantFailure(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*     */   }
-/*     */   
-/*     */   public INTERNAL getLocalServantFailure(Object paramObject) {
-/* 258 */     return getLocalServantFailure(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_OPERATION adapterIdNotAvailable(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 268 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080689, paramCompletionStatus);
-/* 269 */     if (paramThrowable != null) {
-/* 270 */       bAD_OPERATION.initCause(paramThrowable);
-/*     */     }
-/* 272 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 273 */       Object[] arrayOfObject = null;
-/* 274 */       doLog(Level.WARNING, "IOR.adapterIdNotAvailable", arrayOfObject, IORSystemException.class, bAD_OPERATION);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 278 */     return bAD_OPERATION;
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION adapterIdNotAvailable(CompletionStatus paramCompletionStatus) {
-/* 282 */     return adapterIdNotAvailable(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION adapterIdNotAvailable(Throwable paramThrowable) {
-/* 286 */     return adapterIdNotAvailable(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION adapterIdNotAvailable() {
-/* 290 */     return adapterIdNotAvailable(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_OPERATION serverIdNotAvailable(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 296 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080690, paramCompletionStatus);
-/* 297 */     if (paramThrowable != null) {
-/* 298 */       bAD_OPERATION.initCause(paramThrowable);
-/*     */     }
-/* 300 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 301 */       Object[] arrayOfObject = null;
-/* 302 */       doLog(Level.WARNING, "IOR.serverIdNotAvailable", arrayOfObject, IORSystemException.class, bAD_OPERATION);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 306 */     return bAD_OPERATION;
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION serverIdNotAvailable(CompletionStatus paramCompletionStatus) {
-/* 310 */     return serverIdNotAvailable(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION serverIdNotAvailable(Throwable paramThrowable) {
-/* 314 */     return serverIdNotAvailable(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION serverIdNotAvailable() {
-/* 318 */     return serverIdNotAvailable(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_OPERATION orbIdNotAvailable(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 324 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080691, paramCompletionStatus);
-/* 325 */     if (paramThrowable != null) {
-/* 326 */       bAD_OPERATION.initCause(paramThrowable);
-/*     */     }
-/* 328 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 329 */       Object[] arrayOfObject = null;
-/* 330 */       doLog(Level.WARNING, "IOR.orbIdNotAvailable", arrayOfObject, IORSystemException.class, bAD_OPERATION);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 334 */     return bAD_OPERATION;
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION orbIdNotAvailable(CompletionStatus paramCompletionStatus) {
-/* 338 */     return orbIdNotAvailable(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION orbIdNotAvailable(Throwable paramThrowable) {
-/* 342 */     return orbIdNotAvailable(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION orbIdNotAvailable() {
-/* 346 */     return orbIdNotAvailable(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_OPERATION objectAdapterIdNotAvailable(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 352 */     BAD_OPERATION bAD_OPERATION = new BAD_OPERATION(1398080692, paramCompletionStatus);
-/* 353 */     if (paramThrowable != null) {
-/* 354 */       bAD_OPERATION.initCause(paramThrowable);
-/*     */     }
-/* 356 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 357 */       Object[] arrayOfObject = null;
-/* 358 */       doLog(Level.WARNING, "IOR.objectAdapterIdNotAvailable", arrayOfObject, IORSystemException.class, bAD_OPERATION);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 362 */     return bAD_OPERATION;
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION objectAdapterIdNotAvailable(CompletionStatus paramCompletionStatus) {
-/* 366 */     return objectAdapterIdNotAvailable(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION objectAdapterIdNotAvailable(Throwable paramThrowable) {
-/* 370 */     return objectAdapterIdNotAvailable(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public BAD_OPERATION objectAdapterIdNotAvailable() {
-/* 374 */     return objectAdapterIdNotAvailable(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_PARAM badOidInIorTemplateList(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 384 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1398080689, paramCompletionStatus);
-/* 385 */     if (paramThrowable != null) {
-/* 386 */       bAD_PARAM.initCause(paramThrowable);
-/*     */     }
-/* 388 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 389 */       Object[] arrayOfObject = null;
-/* 390 */       doLog(Level.WARNING, "IOR.badOidInIorTemplateList", arrayOfObject, IORSystemException.class, bAD_PARAM);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 394 */     return bAD_PARAM;
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM badOidInIorTemplateList(CompletionStatus paramCompletionStatus) {
-/* 398 */     return badOidInIorTemplateList(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM badOidInIorTemplateList(Throwable paramThrowable) {
-/* 402 */     return badOidInIorTemplateList(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM badOidInIorTemplateList() {
-/* 406 */     return badOidInIorTemplateList(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_PARAM invalidTaggedProfile(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 412 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1398080690, paramCompletionStatus);
-/* 413 */     if (paramThrowable != null) {
-/* 414 */       bAD_PARAM.initCause(paramThrowable);
-/*     */     }
-/* 416 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 417 */       Object[] arrayOfObject = null;
-/* 418 */       doLog(Level.WARNING, "IOR.invalidTaggedProfile", arrayOfObject, IORSystemException.class, bAD_PARAM);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 422 */     return bAD_PARAM;
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM invalidTaggedProfile(CompletionStatus paramCompletionStatus) {
-/* 426 */     return invalidTaggedProfile(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM invalidTaggedProfile(Throwable paramThrowable) {
-/* 430 */     return invalidTaggedProfile(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM invalidTaggedProfile() {
-/* 434 */     return invalidTaggedProfile(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public BAD_PARAM badIiopAddressPort(CompletionStatus paramCompletionStatus, Throwable paramThrowable, Object paramObject) {
-/* 440 */     BAD_PARAM bAD_PARAM = new BAD_PARAM(1398080691, paramCompletionStatus);
-/* 441 */     if (paramThrowable != null) {
-/* 442 */       bAD_PARAM.initCause(paramThrowable);
-/*     */     }
-/* 444 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 445 */       Object[] arrayOfObject = new Object[1];
-/* 446 */       arrayOfObject[0] = paramObject;
-/* 447 */       doLog(Level.WARNING, "IOR.badIiopAddressPort", arrayOfObject, IORSystemException.class, bAD_PARAM);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 451 */     return bAD_PARAM;
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM badIiopAddressPort(CompletionStatus paramCompletionStatus, Object paramObject) {
-/* 455 */     return badIiopAddressPort(paramCompletionStatus, (Throwable)null, paramObject);
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM badIiopAddressPort(Throwable paramThrowable, Object paramObject) {
-/* 459 */     return badIiopAddressPort(CompletionStatus.COMPLETED_NO, paramThrowable, paramObject);
-/*     */   }
-/*     */   
-/*     */   public BAD_PARAM badIiopAddressPort(Object paramObject) {
-/* 463 */     return badIiopAddressPort(CompletionStatus.COMPLETED_NO, (Throwable)null, paramObject);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public INV_OBJREF iorMustHaveIiopProfile(CompletionStatus paramCompletionStatus, Throwable paramThrowable) {
-/* 473 */     INV_OBJREF iNV_OBJREF = new INV_OBJREF(1398080689, paramCompletionStatus);
-/* 474 */     if (paramThrowable != null) {
-/* 475 */       iNV_OBJREF.initCause(paramThrowable);
-/*     */     }
-/* 477 */     if (this.logger.isLoggable(Level.WARNING)) {
-/* 478 */       Object[] arrayOfObject = null;
-/* 479 */       doLog(Level.WARNING, "IOR.iorMustHaveIiopProfile", arrayOfObject, IORSystemException.class, iNV_OBJREF);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 483 */     return iNV_OBJREF;
-/*     */   }
-/*     */   
-/*     */   public INV_OBJREF iorMustHaveIiopProfile(CompletionStatus paramCompletionStatus) {
-/* 487 */     return iorMustHaveIiopProfile(paramCompletionStatus, (Throwable)null);
-/*     */   }
-/*     */   
-/*     */   public INV_OBJREF iorMustHaveIiopProfile(Throwable paramThrowable) {
-/* 491 */     return iorMustHaveIiopProfile(CompletionStatus.COMPLETED_NO, paramThrowable);
-/*     */   }
-/*     */   
-/*     */   public INV_OBJREF iorMustHaveIiopProfile() {
-/* 495 */     return iorMustHaveIiopProfile(CompletionStatus.COMPLETED_NO, (Throwable)null);
-/*     */   }
-/*     */ }
+// Log wrapper class for Sun private system exceptions in group IOR
+//
+// Generated by MC.java version 1.0, DO NOT EDIT BY HAND!
+// Generated from input file c:/re/workspace/8-2-build-windows-amd64-cygwin/jdk8u211/12973/corba/src/share/classes/com/sun/corba/se/spi/logging/data/IOR.mc on Mon Apr 01 20:55:43 PDT 2019
 
+package com.sun.corba.se.impl.logging ;
 
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\logging\IORSystemException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
- */
+import java.util.logging.Logger ;
+import java.util.logging.Level ;
+
+import org.omg.CORBA.OMGVMCID ;
+import com.sun.corba.se.impl.util.SUNVMCID ;
+import org.omg.CORBA.CompletionStatus ;
+import org.omg.CORBA.SystemException ;
+
+import com.sun.corba.se.spi.orb.ORB ;
+
+import com.sun.corba.se.spi.logging.LogWrapperFactory;
+
+import com.sun.corba.se.spi.logging.LogWrapperBase;
+
+import org.omg.CORBA.INTERNAL ;
+import org.omg.CORBA.BAD_OPERATION ;
+import org.omg.CORBA.BAD_PARAM ;
+import org.omg.CORBA.INV_OBJREF ;
+
+public class IORSystemException extends LogWrapperBase {
+    
+    public IORSystemException( Logger logger )
+    {
+        super( logger ) ;
+    }
+    
+    private static LogWrapperFactory factory = new LogWrapperFactory() {
+        public LogWrapperBase create( Logger logger )
+        {
+            return new IORSystemException( logger ) ;
+        }
+    } ;
+    
+    public static IORSystemException get( ORB orb, String logDomain )
+    {
+        IORSystemException wrapper = 
+            (IORSystemException) orb.getLogWrapper( logDomain, 
+                "IOR", factory ) ;
+        return wrapper ;
+    } 
+    
+    public static IORSystemException get( String logDomain )
+    {
+        IORSystemException wrapper = 
+            (IORSystemException) ORB.staticGetLogWrapper( logDomain, 
+                "IOR", factory ) ;
+        return wrapper ;
+    } 
+    
+    ///////////////////////////////////////////////////////////
+    // INTERNAL
+    ///////////////////////////////////////////////////////////
+    
+    public static final int ORT_NOT_INITIALIZED = SUNVMCID.value + 1201 ;
+    
+    public INTERNAL ortNotInitialized( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( ORT_NOT_INITIALIZED, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.ortNotInitialized",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL ortNotInitialized( CompletionStatus cs ) {
+        return ortNotInitialized( cs, null  ) ;
+    }
+    
+    public INTERNAL ortNotInitialized( Throwable t ) {
+        return ortNotInitialized( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL ortNotInitialized(  ) {
+        return ortNotInitialized( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int NULL_POA = SUNVMCID.value + 1202 ;
+    
+    public INTERNAL nullPoa( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( NULL_POA, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.nullPoa",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL nullPoa( CompletionStatus cs ) {
+        return nullPoa( cs, null  ) ;
+    }
+    
+    public INTERNAL nullPoa( Throwable t ) {
+        return nullPoa( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL nullPoa(  ) {
+        return nullPoa( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_MAGIC = SUNVMCID.value + 1203 ;
+    
+    public INTERNAL badMagic( CompletionStatus cs, Throwable t, Object arg0) {
+        INTERNAL exc = new INTERNAL( BAD_MAGIC, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "IOR.badMagic",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL badMagic( CompletionStatus cs, Object arg0) {
+        return badMagic( cs, null, arg0 ) ;
+    }
+    
+    public INTERNAL badMagic( Throwable t, Object arg0) {
+        return badMagic( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public INTERNAL badMagic(  Object arg0) {
+        return badMagic( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int STRINGIFY_WRITE_ERROR = SUNVMCID.value + 1204 ;
+    
+    public INTERNAL stringifyWriteError( CompletionStatus cs, Throwable t ) {
+        INTERNAL exc = new INTERNAL( STRINGIFY_WRITE_ERROR, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.stringifyWriteError",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL stringifyWriteError( CompletionStatus cs ) {
+        return stringifyWriteError( cs, null  ) ;
+    }
+    
+    public INTERNAL stringifyWriteError( Throwable t ) {
+        return stringifyWriteError( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INTERNAL stringifyWriteError(  ) {
+        return stringifyWriteError( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int TAGGED_PROFILE_TEMPLATE_FACTORY_NOT_FOUND = SUNVMCID.value + 1205 ;
+    
+    public INTERNAL taggedProfileTemplateFactoryNotFound( CompletionStatus cs, Throwable t, Object arg0) {
+        INTERNAL exc = new INTERNAL( TAGGED_PROFILE_TEMPLATE_FACTORY_NOT_FOUND, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "IOR.taggedProfileTemplateFactoryNotFound",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL taggedProfileTemplateFactoryNotFound( CompletionStatus cs, Object arg0) {
+        return taggedProfileTemplateFactoryNotFound( cs, null, arg0 ) ;
+    }
+    
+    public INTERNAL taggedProfileTemplateFactoryNotFound( Throwable t, Object arg0) {
+        return taggedProfileTemplateFactoryNotFound( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public INTERNAL taggedProfileTemplateFactoryNotFound(  Object arg0) {
+        return taggedProfileTemplateFactoryNotFound( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int INVALID_JDK1_3_1_PATCH_LEVEL = SUNVMCID.value + 1206 ;
+    
+    public INTERNAL invalidJdk131PatchLevel( CompletionStatus cs, Throwable t, Object arg0) {
+        INTERNAL exc = new INTERNAL( INVALID_JDK1_3_1_PATCH_LEVEL, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "IOR.invalidJdk131PatchLevel",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL invalidJdk131PatchLevel( CompletionStatus cs, Object arg0) {
+        return invalidJdk131PatchLevel( cs, null, arg0 ) ;
+    }
+    
+    public INTERNAL invalidJdk131PatchLevel( Throwable t, Object arg0) {
+        return invalidJdk131PatchLevel( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public INTERNAL invalidJdk131PatchLevel(  Object arg0) {
+        return invalidJdk131PatchLevel( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    public static final int GET_LOCAL_SERVANT_FAILURE = SUNVMCID.value + 1207 ;
+    
+    public INTERNAL getLocalServantFailure( CompletionStatus cs, Throwable t, Object arg0) {
+        INTERNAL exc = new INTERNAL( GET_LOCAL_SERVANT_FAILURE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.FINE )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.FINE, "IOR.getLocalServantFailure",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INTERNAL getLocalServantFailure( CompletionStatus cs, Object arg0) {
+        return getLocalServantFailure( cs, null, arg0 ) ;
+    }
+    
+    public INTERNAL getLocalServantFailure( Throwable t, Object arg0) {
+        return getLocalServantFailure( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public INTERNAL getLocalServantFailure(  Object arg0) {
+        return getLocalServantFailure( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_OPERATION
+    ///////////////////////////////////////////////////////////
+    
+    public static final int ADAPTER_ID_NOT_AVAILABLE = SUNVMCID.value + 1201 ;
+    
+    public BAD_OPERATION adapterIdNotAvailable( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( ADAPTER_ID_NOT_AVAILABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.adapterIdNotAvailable",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION adapterIdNotAvailable( CompletionStatus cs ) {
+        return adapterIdNotAvailable( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION adapterIdNotAvailable( Throwable t ) {
+        return adapterIdNotAvailable( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION adapterIdNotAvailable(  ) {
+        return adapterIdNotAvailable( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int SERVER_ID_NOT_AVAILABLE = SUNVMCID.value + 1202 ;
+    
+    public BAD_OPERATION serverIdNotAvailable( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( SERVER_ID_NOT_AVAILABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.serverIdNotAvailable",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION serverIdNotAvailable( CompletionStatus cs ) {
+        return serverIdNotAvailable( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION serverIdNotAvailable( Throwable t ) {
+        return serverIdNotAvailable( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION serverIdNotAvailable(  ) {
+        return serverIdNotAvailable( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int ORB_ID_NOT_AVAILABLE = SUNVMCID.value + 1203 ;
+    
+    public BAD_OPERATION orbIdNotAvailable( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( ORB_ID_NOT_AVAILABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.orbIdNotAvailable",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION orbIdNotAvailable( CompletionStatus cs ) {
+        return orbIdNotAvailable( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION orbIdNotAvailable( Throwable t ) {
+        return orbIdNotAvailable( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION orbIdNotAvailable(  ) {
+        return orbIdNotAvailable( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int OBJECT_ADAPTER_ID_NOT_AVAILABLE = SUNVMCID.value + 1204 ;
+    
+    public BAD_OPERATION objectAdapterIdNotAvailable( CompletionStatus cs, Throwable t ) {
+        BAD_OPERATION exc = new BAD_OPERATION( OBJECT_ADAPTER_ID_NOT_AVAILABLE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.objectAdapterIdNotAvailable",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_OPERATION objectAdapterIdNotAvailable( CompletionStatus cs ) {
+        return objectAdapterIdNotAvailable( cs, null  ) ;
+    }
+    
+    public BAD_OPERATION objectAdapterIdNotAvailable( Throwable t ) {
+        return objectAdapterIdNotAvailable( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_OPERATION objectAdapterIdNotAvailable(  ) {
+        return objectAdapterIdNotAvailable( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // BAD_PARAM
+    ///////////////////////////////////////////////////////////
+    
+    public static final int BAD_OID_IN_IOR_TEMPLATE_LIST = SUNVMCID.value + 1201 ;
+    
+    public BAD_PARAM badOidInIorTemplateList( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( BAD_OID_IN_IOR_TEMPLATE_LIST, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.badOidInIorTemplateList",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM badOidInIorTemplateList( CompletionStatus cs ) {
+        return badOidInIorTemplateList( cs, null  ) ;
+    }
+    
+    public BAD_PARAM badOidInIorTemplateList( Throwable t ) {
+        return badOidInIorTemplateList( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM badOidInIorTemplateList(  ) {
+        return badOidInIorTemplateList( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int INVALID_TAGGED_PROFILE = SUNVMCID.value + 1202 ;
+    
+    public BAD_PARAM invalidTaggedProfile( CompletionStatus cs, Throwable t ) {
+        BAD_PARAM exc = new BAD_PARAM( INVALID_TAGGED_PROFILE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.invalidTaggedProfile",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM invalidTaggedProfile( CompletionStatus cs ) {
+        return invalidTaggedProfile( cs, null  ) ;
+    }
+    
+    public BAD_PARAM invalidTaggedProfile( Throwable t ) {
+        return invalidTaggedProfile( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public BAD_PARAM invalidTaggedProfile(  ) {
+        return invalidTaggedProfile( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    public static final int BAD_IIOP_ADDRESS_PORT = SUNVMCID.value + 1203 ;
+    
+    public BAD_PARAM badIiopAddressPort( CompletionStatus cs, Throwable t, Object arg0) {
+        BAD_PARAM exc = new BAD_PARAM( BAD_IIOP_ADDRESS_PORT, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = new Object[1] ;
+            parameters[0] = arg0 ;
+            doLog( Level.WARNING, "IOR.badIiopAddressPort",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public BAD_PARAM badIiopAddressPort( CompletionStatus cs, Object arg0) {
+        return badIiopAddressPort( cs, null, arg0 ) ;
+    }
+    
+    public BAD_PARAM badIiopAddressPort( Throwable t, Object arg0) {
+        return badIiopAddressPort( CompletionStatus.COMPLETED_NO, t, arg0 ) ;
+    }
+    
+    public BAD_PARAM badIiopAddressPort(  Object arg0) {
+        return badIiopAddressPort( CompletionStatus.COMPLETED_NO, null, arg0 ) ;
+    }
+    
+    ///////////////////////////////////////////////////////////
+    // INV_OBJREF
+    ///////////////////////////////////////////////////////////
+    
+    public static final int IOR_MUST_HAVE_IIOP_PROFILE = SUNVMCID.value + 1201 ;
+    
+    public INV_OBJREF iorMustHaveIiopProfile( CompletionStatus cs, Throwable t ) {
+        INV_OBJREF exc = new INV_OBJREF( IOR_MUST_HAVE_IIOP_PROFILE, cs ) ;
+        if (t != null)
+            exc.initCause( t ) ;
+        
+        if (logger.isLoggable( Level.WARNING )) {
+            Object[] parameters = null ;
+            doLog( Level.WARNING, "IOR.iorMustHaveIiopProfile",
+                parameters, IORSystemException.class, exc ) ;
+        }
+        
+        return exc ;
+    }
+    
+    public INV_OBJREF iorMustHaveIiopProfile( CompletionStatus cs ) {
+        return iorMustHaveIiopProfile( cs, null  ) ;
+    }
+    
+    public INV_OBJREF iorMustHaveIiopProfile( Throwable t ) {
+        return iorMustHaveIiopProfile( CompletionStatus.COMPLETED_NO, t  ) ;
+    }
+    
+    public INV_OBJREF iorMustHaveIiopProfile(  ) {
+        return iorMustHaveIiopProfile( CompletionStatus.COMPLETED_NO, null  ) ;
+    }
+    
+    
+}

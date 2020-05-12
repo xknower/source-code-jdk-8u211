@@ -1,495 +1,489 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.impl.dv.xs.XSSimpleTypeDecl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.XSComplexTypeDecl;
-/*     */ import com.sun.org.apache.xerces.internal.util.URI;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.DOMException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ElementNSImpl
-/*     */   extends ElementImpl
-/*     */ {
-/*     */   static final long serialVersionUID = -9142310625494392642L;
-/*     */   static final String xmlURI = "http://www.w3.org/XML/1998/namespace";
-/*     */   protected String namespaceURI;
-/*     */   protected String localName;
-/*     */   transient XSTypeDefinition type;
-/*     */   
-/*     */   protected ElementNSImpl() {}
-/*     */   
-/*     */   protected ElementNSImpl(CoreDocumentImpl ownerDocument, String namespaceURI, String qualifiedName) throws DOMException {
-/*  83 */     super(ownerDocument, qualifiedName);
-/*  84 */     setName(namespaceURI, qualifiedName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void setName(String namespaceURI, String qname) {
-/*  91 */     this.namespaceURI = namespaceURI;
-/*  92 */     if (namespaceURI != null)
-/*     */     {
-/*  94 */       this.namespaceURI = (namespaceURI.length() == 0) ? null : namespaceURI;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 103 */     if (qname == null) {
-/*     */       
-/* 105 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NAMESPACE_ERR", null);
-/*     */ 
-/*     */ 
-/*     */       
-/* 109 */       throw new DOMException((short)14, msg);
-/*     */     } 
-/*     */     
-/* 112 */     int colon1 = qname.indexOf(':');
-/* 113 */     int colon2 = qname.lastIndexOf(':');
-/*     */ 
-/*     */     
-/* 116 */     this.ownerDocument.checkNamespaceWF(qname, colon1, colon2);
-/* 117 */     if (colon1 < 0) {
-/*     */       
-/* 119 */       this.localName = qname;
-/* 120 */       if (this.ownerDocument.errorChecking) {
-/* 121 */         this.ownerDocument.checkQName(null, this.localName);
-/* 122 */         if ((qname.equals("xmlns") && (namespaceURI == null || 
-/*     */           
-/* 124 */           !namespaceURI.equals(NamespaceContext.XMLNS_URI))) || (namespaceURI != null && namespaceURI
-/* 125 */           .equals(NamespaceContext.XMLNS_URI) && 
-/* 126 */           !qname.equals("xmlns"))) {
-/*     */           
-/* 128 */           String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NAMESPACE_ERR", null);
-/*     */ 
-/*     */ 
-/*     */           
-/* 132 */           throw new DOMException((short)14, msg);
-/*     */         } 
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 137 */       String prefix = qname.substring(0, colon1);
-/* 138 */       this.localName = qname.substring(colon2 + 1);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 146 */       if (this.ownerDocument.errorChecking) {
-/* 147 */         if (namespaceURI == null || (prefix.equals("xml") && !namespaceURI.equals(NamespaceContext.XML_URI))) {
-/*     */           
-/* 149 */           String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NAMESPACE_ERR", null);
-/*     */ 
-/*     */ 
-/*     */           
-/* 153 */           throw new DOMException((short)14, msg);
-/*     */         } 
-/*     */         
-/* 156 */         this.ownerDocument.checkQName(prefix, this.localName);
-/* 157 */         this.ownerDocument.checkDOMNSErr(prefix, namespaceURI);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ElementNSImpl(CoreDocumentImpl ownerDocument, String namespaceURI, String qualifiedName, String localName) throws DOMException {
-/* 168 */     super(ownerDocument, qualifiedName);
-/*     */     
-/* 170 */     this.localName = localName;
-/* 171 */     this.namespaceURI = namespaceURI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ElementNSImpl(CoreDocumentImpl ownerDocument, String value) {
-/* 177 */     super(ownerDocument, value);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void rename(String namespaceURI, String qualifiedName) {
-/* 185 */     if (needsSyncData()) {
-/* 186 */       synchronizeData();
-/*     */     }
-/* 188 */     this.name = qualifiedName;
-/* 189 */     setName(namespaceURI, qualifiedName);
-/* 190 */     reconcileDefaultAttributes();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setValues(CoreDocumentImpl ownerDocument, String namespaceURI, String qualifiedName, String localName) {
-/* 206 */     this.firstChild = null;
-/* 207 */     this.previousSibling = null;
-/* 208 */     this.nextSibling = null;
-/* 209 */     this.fNodeListCache = null;
-/*     */ 
-/*     */     
-/* 212 */     this.attributes = null;
-/* 213 */     this.flags = 0;
-/* 214 */     setOwnerDocument(ownerDocument);
-/*     */ 
-/*     */     
-/* 217 */     needsSyncData(true);
-/* 218 */     this.name = qualifiedName;
-/* 219 */     this.localName = localName;
-/* 220 */     this.namespaceURI = namespaceURI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getNamespaceURI() {
-/* 249 */     if (needsSyncData()) {
-/* 250 */       synchronizeData();
-/*     */     }
-/* 252 */     return this.namespaceURI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getPrefix() {
-/* 268 */     if (needsSyncData()) {
-/* 269 */       synchronizeData();
-/*     */     }
-/* 271 */     int index = this.name.indexOf(':');
-/* 272 */     return (index < 0) ? null : this.name.substring(0, index);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPrefix(String prefix) throws DOMException {
-/* 293 */     if (needsSyncData()) {
-/* 294 */       synchronizeData();
-/*     */     }
-/* 296 */     if (this.ownerDocument.errorChecking) {
-/* 297 */       if (isReadOnly()) {
-/* 298 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 299 */         throw new DOMException((short)7, msg);
-/*     */       } 
-/*     */ 
-/*     */       
-/* 303 */       if (prefix != null && prefix.length() != 0) {
-/* 304 */         if (!CoreDocumentImpl.isXMLName(prefix, this.ownerDocument.isXML11Version())) {
-/* 305 */           String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "INVALID_CHARACTER_ERR", null);
-/* 306 */           throw new DOMException((short)5, msg);
-/*     */         } 
-/* 308 */         if (this.namespaceURI == null || prefix.indexOf(':') >= 0) {
-/* 309 */           String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NAMESPACE_ERR", null);
-/* 310 */           throw new DOMException((short)14, msg);
-/* 311 */         }  if (prefix.equals("xml") && 
-/* 312 */           !this.namespaceURI.equals("http://www.w3.org/XML/1998/namespace")) {
-/* 313 */           String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NAMESPACE_ERR", null);
-/* 314 */           throw new DOMException((short)14, msg);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 321 */     if (prefix != null && prefix.length() != 0) {
-/* 322 */       this.name = prefix + ":" + this.localName;
-/*     */     } else {
-/*     */       
-/* 325 */       this.name = this.localName;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getLocalName() {
-/* 337 */     if (needsSyncData()) {
-/* 338 */       synchronizeData();
-/*     */     }
-/* 340 */     return this.localName;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getBaseURI() {
-/* 350 */     if (needsSyncData()) {
-/* 351 */       synchronizeData();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 357 */     if (this.attributes != null) {
-/* 358 */       Attr attrNode = (Attr)this.attributes.getNamedItemNS("http://www.w3.org/XML/1998/namespace", "base");
-/* 359 */       if (attrNode != null) {
-/* 360 */         String uri = attrNode.getNodeValue();
-/* 361 */         if (uri.length() != 0) {
-/*     */           try {
-/* 363 */             uri = (new URI(uri)).toString();
-/*     */           }
-/* 365 */           catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*     */ 
-/*     */ 
-/*     */             
-/* 369 */             NodeImpl parentOrOwner = (parentNode() != null) ? parentNode() : this.ownerNode;
-/*     */ 
-/*     */             
-/* 372 */             String parentBaseURI = (parentOrOwner != null) ? parentOrOwner.getBaseURI() : null;
-/*     */             
-/* 374 */             if (parentBaseURI != null) {
-/*     */               try {
-/* 376 */                 uri = (new URI(new URI(parentBaseURI), uri)).toString();
-/*     */               }
-/* 378 */               catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException ex) {
-/*     */                 
-/* 380 */                 return null;
-/*     */               } 
-/* 382 */               return uri;
-/*     */             } 
-/*     */             
-/* 385 */             return null;
-/*     */           } 
-/* 387 */           return uri;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 394 */     String parentElementBaseURI = (parentNode() != null) ? parentNode().getBaseURI() : null;
-/*     */     
-/* 396 */     if (parentElementBaseURI != null) {
-/*     */       
-/*     */       try {
-/* 399 */         return (new URI(parentElementBaseURI)).toString();
-/*     */       }
-/* 401 */       catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*     */         
-/* 403 */         return null;
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/* 408 */     String baseURI = (this.ownerNode != null) ? this.ownerNode.getBaseURI() : null;
-/*     */     
-/* 410 */     if (baseURI != null) {
-/*     */       
-/*     */       try {
-/* 413 */         return (new URI(baseURI)).toString();
-/*     */       }
-/* 415 */       catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
-/*     */         
-/* 417 */         return null;
-/*     */       } 
-/*     */     }
-/*     */     
-/* 421 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getTypeName() {
-/* 430 */     if (this.type != null) {
-/* 431 */       if (this.type instanceof XSSimpleTypeDecl)
-/* 432 */         return ((XSSimpleTypeDecl)this.type).getTypeName(); 
-/* 433 */       if (this.type instanceof XSComplexTypeDecl) {
-/* 434 */         return ((XSComplexTypeDecl)this.type).getTypeName();
-/*     */       }
-/*     */     } 
-/* 437 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getTypeNamespace() {
-/* 444 */     if (this.type != null) {
-/* 445 */       return this.type.getNamespace();
-/*     */     }
-/* 447 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg, int derivationMethod) {
-/* 467 */     if (needsSyncData()) {
-/* 468 */       synchronizeData();
-/*     */     }
-/* 470 */     if (this.type != null) {
-/* 471 */       if (this.type instanceof XSSimpleTypeDecl) {
-/* 472 */         return ((XSSimpleTypeDecl)this.type).isDOMDerivedFrom(typeNamespaceArg, typeNameArg, derivationMethod);
-/*     */       }
-/* 474 */       if (this.type instanceof XSComplexTypeDecl) {
-/* 475 */         return ((XSComplexTypeDecl)this.type).isDOMDerivedFrom(typeNamespaceArg, typeNameArg, derivationMethod);
-/*     */       }
-/*     */     } 
-/*     */     
-/* 479 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setType(XSTypeDefinition type) {
-/* 487 */     this.type = type;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\ElementNSImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2002,2004,2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import com.sun.org.apache.xerces.internal.xs.XSSimpleTypeDefinition;
+import com.sun.org.apache.xerces.internal.xs.XSTypeDefinition;
+import com.sun.org.apache.xerces.internal.impl.dv.xs.XSSimpleTypeDecl;
+import com.sun.org.apache.xerces.internal.impl.xs.XSComplexTypeDecl;
+import com.sun.org.apache.xerces.internal.util.URI;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import org.w3c.dom.Attr;
+import org.w3c.dom.DOMException;
+
+
+
+/**
+ * ElementNSImpl inherits from ElementImpl and adds namespace support.
+ * <P>
+ * The qualified name is the node name, and we store localName which is also
+ * used in all queries. On the other hand we recompute the prefix when
+ * necessary.
+ *
+ * @xerces.internal
+ *
+ * @author Elena litani, IBM
+ * @author Neeraj Bajaj, Sun Microsystems
+ * @version $Id: ElementNSImpl.java,v 1.7 2010-11-01 04:39:39 joehw Exp $
+ */
+public class ElementNSImpl
+    extends ElementImpl {
+
+    //
+    // Constants
+    //
+
+    /** Serialization version. */
+    static final long serialVersionUID = -9142310625494392642L;
+    static final String xmlURI = "http://www.w3.org/XML/1998/namespace";
+
+    //
+    // Data
+    //
+
+    /** DOM2: Namespace URI. */
+    protected String namespaceURI;
+
+    /** DOM2: localName. */
+    protected String localName;
+
+    /** DOM3: type information */
+    // REVISIT: we are losing the type information in DOM during serialization
+    transient XSTypeDefinition type;
+
+    protected ElementNSImpl() {
+        super();
+    }
+    /**
+     * DOM2: Constructor for Namespace implementation.
+     */
+    protected ElementNSImpl(CoreDocumentImpl ownerDocument,
+                            String namespaceURI,
+                            String qualifiedName)
+        throws DOMException
+    {
+        super(ownerDocument, qualifiedName);
+        setName(namespaceURI, qualifiedName);
+    }
+
+        private void setName(String namespaceURI, String qname) {
+
+                String prefix;
+                // DOM Level 3: namespace URI is never empty string.
+                this.namespaceURI = namespaceURI;
+                if (namespaceURI != null) {
+            //convert the empty string to 'null'
+                        this.namespaceURI =     (namespaceURI.length() == 0) ? null : namespaceURI;
+                }
+
+        int colon1, colon2 ;
+
+        //NAMESPACE_ERR:
+        //1. if the qualified name is 'null' it is malformed.
+        //2. or if the qualifiedName is null and the namespaceURI is different from null,
+        // We dont need to check for namespaceURI != null, if qualified name is null throw DOMException.
+        if(qname == null){
+                                String msg =
+                                        DOMMessageFormatter.formatMessage(
+                                                DOMMessageFormatter.DOM_DOMAIN,
+                                                "NAMESPACE_ERR",
+                                                null);
+                                throw new DOMException(DOMException.NAMESPACE_ERR, msg);
+        }
+        else{
+                    colon1 = qname.indexOf(':');
+                    colon2 = qname.lastIndexOf(':');
+        }
+
+                ownerDocument.checkNamespaceWF(qname, colon1, colon2);
+                if (colon1 < 0) {
+                        // there is no prefix
+                        localName = qname;
+                        if (ownerDocument.errorChecking) {
+                            ownerDocument.checkQName(null, localName);
+                            if (qname.equals("xmlns")
+                                && (namespaceURI == null
+                                || !namespaceURI.equals(NamespaceContext.XMLNS_URI))
+                                || (namespaceURI!=null && namespaceURI.equals(NamespaceContext.XMLNS_URI)
+                                && !qname.equals("xmlns"))) {
+                                String msg =
+                                    DOMMessageFormatter.formatMessage(
+                                            DOMMessageFormatter.DOM_DOMAIN,
+                                            "NAMESPACE_ERR",
+                                            null);
+                                throw new DOMException(DOMException.NAMESPACE_ERR, msg);
+                            }
+                        }
+                }//there is a prefix
+                else {
+                    prefix = qname.substring(0, colon1);
+                    localName = qname.substring(colon2 + 1);
+
+                    //NAMESPACE_ERR:
+                    //1. if the qualifiedName has a prefix and the namespaceURI is null,
+
+                    //2. or if the qualifiedName has a prefix that is "xml" and the namespaceURI
+                    //is different from " http://www.w3.org/XML/1998/namespace"
+
+                    if (ownerDocument.errorChecking) {
+                        if( namespaceURI == null || ( prefix.equals("xml") && !namespaceURI.equals(NamespaceContext.XML_URI) )){
+                            String msg =
+                                DOMMessageFormatter.formatMessage(
+                                        DOMMessageFormatter.DOM_DOMAIN,
+                                        "NAMESPACE_ERR",
+                                        null);
+                            throw new DOMException(DOMException.NAMESPACE_ERR, msg);
+                        }
+
+                        ownerDocument.checkQName(prefix, localName);
+                        ownerDocument.checkDOMNSErr(prefix, namespaceURI);
+                    }
+                }
+        }
+
+    // when local name is known
+    protected ElementNSImpl(CoreDocumentImpl ownerDocument,
+                            String namespaceURI, String qualifiedName,
+                            String localName)
+        throws DOMException
+    {
+        super(ownerDocument, qualifiedName);
+
+        this.localName = localName;
+        this.namespaceURI = namespaceURI;
+    }
+
+    // for DeferredElementImpl
+    protected ElementNSImpl(CoreDocumentImpl ownerDocument,
+                            String value) {
+        super(ownerDocument, value);
+    }
+
+    // Support for DOM Level 3 renameNode method.
+    // Note: This only deals with part of the pb. CoreDocumentImpl
+    // does all the work.
+    void rename(String namespaceURI, String qualifiedName)
+    {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+                this.name = qualifiedName;
+        setName(namespaceURI, qualifiedName);
+        reconcileDefaultAttributes();
+    }
+
+    /**
+     * NON-DOM: resets this node and sets specified values for the node
+     *
+     * @param ownerDocument
+     * @param namespaceURI
+     * @param qualifiedName
+     * @param localName
+     */
+    protected void setValues (CoreDocumentImpl ownerDocument,
+                            String namespaceURI, String qualifiedName,
+                            String localName){
+
+        // remove children first
+        firstChild = null;
+        previousSibling = null;
+        nextSibling = null;
+        fNodeListCache = null;
+
+        // set owner document
+        attributes = null;
+        super.flags = 0;
+        setOwnerDocument(ownerDocument);
+
+        // synchronizeData will initialize attributes
+        needsSyncData(true);
+        super.name = qualifiedName;
+        this.localName = localName;
+        this.namespaceURI = namespaceURI;
+
+    }
+
+    //
+    // Node methods
+    //
+
+
+
+    //
+    //DOM2: Namespace methods.
+    //
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * The namespace URI of this node, or null if it is unspecified.<p>
+     *
+     * This is not a computed value that is the result of a namespace lookup based on
+     * an examination of the namespace declarations in scope. It is merely the
+     * namespace URI given at creation time.<p>
+     *
+     * For nodes created with a DOM Level 1 method, such as createElement
+     * from the Document interface, this is null.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public String getNamespaceURI()
+    {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return namespaceURI;
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * The namespace prefix of this node, or null if it is unspecified. <p>
+     *
+     * For nodes created with a DOM Level 1 method, such as createElement
+     * from the Document interface, this is null. <p>
+     *
+     * @since WD-DOM-Level-2-19990923
+     */
+    public String getPrefix()
+    {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        int index = name.indexOf(':');
+        return index < 0 ? null : name.substring(0, index);
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Note that setting this attribute changes the nodeName attribute, which holds the
+     * qualified name, as well as the tagName and name attributes of the Element
+     * and Attr interfaces, when applicable.<p>
+     *
+     * @param prefix The namespace prefix of this node, or null(empty string) if it is unspecified.
+     *
+     * @exception INVALID_CHARACTER_ERR
+     *                   Raised if the specified
+     *                   prefix contains an invalid character.
+     * @exception DOMException
+     * @since WD-DOM-Level-2-19990923
+     */
+    public void setPrefix(String prefix)
+        throws DOMException
+    {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(
+                                     DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                                     msg);
+            }
+            if (prefix != null && prefix.length() != 0) {
+                if (!CoreDocumentImpl.isXMLName(prefix,ownerDocument.isXML11Version())) {
+                    String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "INVALID_CHARACTER_ERR", null);
+                    throw new DOMException(DOMException.INVALID_CHARACTER_ERR, msg);
+                }
+                if (namespaceURI == null || prefix.indexOf(':') >=0) {
+                    String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NAMESPACE_ERR", null);
+                    throw new DOMException(DOMException.NAMESPACE_ERR, msg);
+                } else if (prefix.equals("xml")) {
+                     if (!namespaceURI.equals(xmlURI)) {
+                         String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NAMESPACE_ERR", null);
+                         throw new DOMException(DOMException.NAMESPACE_ERR, msg);
+                     }
+                }
+            }
+
+        }
+        // update node name with new qualifiedName
+        if (prefix !=null && prefix.length() != 0) {
+            name = prefix + ":" + localName;
+        }
+        else {
+            name = localName;
+        }
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     *
+     * Returns the local part of the qualified name of this node.
+     * @since WD-DOM-Level-2-19990923
+     */
+    public String getLocalName()
+    {
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        return localName;
+    }
+
+
+   /**
+     * DOM Level 3 WD - Experimental.
+     * Retrieve baseURI
+     */
+    public String getBaseURI() {
+
+        if (needsSyncData()) {
+            synchronizeData();
+        }
+        // Absolute base URI is computed according to XML Base (http://www.w3.org/TR/xmlbase/#granularity)
+
+        // 1.  the base URI specified by an xml:base attribute on the element, if one exists
+
+        if (attributes != null) {
+            Attr attrNode = (Attr)attributes.getNamedItemNS("http://www.w3.org/XML/1998/namespace", "base");
+            if (attrNode != null) {
+                String uri =  attrNode.getNodeValue();
+                if (uri.length() != 0 ) {// attribute value is always empty string
+                    try {
+                        uri = new URI(uri).toString();
+                    }
+                    catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e) {
+                        // This may be a relative URI.
+
+                        // Start from the base URI of the parent, or if this node has no parent, the owner node.
+                        NodeImpl parentOrOwner = (parentNode() != null) ? parentNode() : ownerNode;
+
+                        // Make any parentURI into a URI object to use with the URI(URI, String) constructor.
+                        String parentBaseURI = (parentOrOwner != null) ? parentOrOwner.getBaseURI() : null;
+
+                        if (parentBaseURI != null) {
+                            try {
+                                uri = new URI(new URI(parentBaseURI), uri).toString();
+                            }
+                            catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException ex){
+                                // This should never happen: parent should have checked the URI and returned null if invalid.
+                                return null;
+                            }
+                            return uri;
+                        }
+                        // REVISIT: what should happen in this case?
+                        return null;
+                    }
+                    return uri;
+                }
+            }
+        }
+
+        //2.the base URI of the element's parent element within the document or external entity,
+        //if one exists
+        String parentElementBaseURI = (this.parentNode() != null) ? this.parentNode().getBaseURI() : null ;
+        //base URI of parent element is not null
+        if(parentElementBaseURI != null){
+            try {
+                //return valid absolute base URI
+               return new URI(parentElementBaseURI).toString();
+            }
+            catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e){
+                // REVISIT: what should happen in this case?
+                return null;
+            }
+        }
+        //3. the base URI of the document entity or external entity containing the element
+
+        String baseURI = (this.ownerNode != null) ? this.ownerNode.getBaseURI() : null ;
+
+        if(baseURI != null){
+            try {
+                //return valid absolute base URI
+               return new URI(baseURI).toString();
+            }
+            catch (com.sun.org.apache.xerces.internal.util.URI.MalformedURIException e){
+                // REVISIT: what should happen in this case?
+                return null;
+            }
+        }
+
+        return null;
+
+    }
+
+
+    /**
+     * @see org.w3c.dom.TypeInfo#getTypeName()
+     */
+    public String getTypeName() {
+        if (type !=null){
+            if (type instanceof XSSimpleTypeDecl) {
+                return ((XSSimpleTypeDecl) type).getTypeName();
+            } else if (type instanceof XSComplexTypeDecl) {
+                return ((XSComplexTypeDecl) type).getTypeName();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @see org.w3c.dom.TypeInfo#getTypeNamespace()
+     */
+    public String getTypeNamespace() {
+        if (type !=null){
+            return type.getNamespace();
+        }
+        return null;
+    }
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     * Checks if a type is derived from another by restriction. See:
+     * http://www.w3.org/TR/DOM-Level-3-Core/core.html#TypeInfo-isDerivedFrom
+     *
+     * @param ancestorNS
+     *        The namspace of the ancestor type declaration
+     * @param ancestorName
+     *        The name of the ancestor type declaration
+     * @param type
+     *        The reference type definition
+     *
+     * @return boolean True if the type is derived by restriciton for the
+     *         reference type
+     */
+    public boolean isDerivedFrom(String typeNamespaceArg, String typeNameArg,
+            int derivationMethod) {
+        if(needsSyncData()) {
+            synchronizeData();
+        }
+        if (type != null) {
+            if (type instanceof XSSimpleTypeDecl) {
+                return ((XSSimpleTypeDecl) type).isDOMDerivedFrom(
+                        typeNamespaceArg, typeNameArg, derivationMethod);
+            } else if (type instanceof XSComplexTypeDecl) {
+                return ((XSComplexTypeDecl) type).isDOMDerivedFrom(
+                        typeNamespaceArg, typeNameArg, derivationMethod);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * NON-DOM: setting type used by the DOM parser
+     * @see NodeImpl#setReadOnly
+     */
+    public void setType(XSTypeDefinition type) {
+        this.type = type;
+    }
+}

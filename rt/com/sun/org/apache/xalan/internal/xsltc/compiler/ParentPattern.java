@@ -1,159 +1,153 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ILOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ISTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.Instruction;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ParentPattern
-/*     */   extends RelativePathPattern
-/*     */ {
-/*     */   private final Pattern _left;
-/*     */   private final RelativePathPattern _right;
-/*     */   
-/*     */   public ParentPattern(Pattern left, RelativePathPattern right) {
-/*  48 */     (this._left = left).setParent(this);
-/*  49 */     (this._right = right).setParent(this);
-/*     */   }
-/*     */   
-/*     */   public void setParser(Parser parser) {
-/*  53 */     super.setParser(parser);
-/*  54 */     this._left.setParser(parser);
-/*  55 */     this._right.setParser(parser);
-/*     */   }
-/*     */   
-/*     */   public boolean isWildcard() {
-/*  59 */     return false;
-/*     */   }
-/*     */   
-/*     */   public StepPattern getKernelPattern() {
-/*  63 */     return this._right.getKernelPattern();
-/*     */   }
-/*     */   
-/*     */   public void reduceKernelPattern() {
-/*  67 */     this._right.reduceKernelPattern();
-/*     */   }
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  71 */     this._left.typeCheck(stable);
-/*  72 */     return this._right.typeCheck(stable);
-/*     */   }
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/*  76 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/*  77 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/*  79 */     LocalVariableGen local = methodGen.addLocalVariable2("ppt", 
-/*  80 */         Util.getJCRefType("I"), null);
-/*     */ 
-/*     */ 
-/*     */     
-/*  84 */     Instruction loadLocal = new ILOAD(local.getIndex());
-/*     */     
-/*  86 */     Instruction storeLocal = new ISTORE(local.getIndex());
-/*     */     
-/*  88 */     if (this._right.isWildcard()) {
-/*  89 */       il.append(methodGen.loadDOM());
-/*  90 */       il.append(SWAP);
-/*     */     }
-/*  92 */     else if (this._right instanceof StepPattern) {
-/*  93 */       il.append(DUP);
-/*  94 */       local.setStart(il.append(storeLocal));
-/*     */       
-/*  96 */       this._right.translate(classGen, methodGen);
-/*     */       
-/*  98 */       il.append(methodGen.loadDOM());
-/*  99 */       local.setEnd(il.append(loadLocal));
-/*     */     } else {
-/*     */       
-/* 102 */       this._right.translate(classGen, methodGen);
-/*     */       
-/* 104 */       if (this._right instanceof AncestorPattern) {
-/* 105 */         il.append(methodGen.loadDOM());
-/* 106 */         il.append(SWAP);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 110 */     int getParent = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getParent", "(I)I");
-/*     */ 
-/*     */     
-/* 113 */     il.append(new INVOKEINTERFACE(getParent, 2));
-/*     */     
-/* 115 */     SyntaxTreeNode p = getParent();
-/* 116 */     if (p == null || p instanceof Instruction || p instanceof TopLevelElement) {
-/*     */ 
-/*     */       
-/* 119 */       this._left.translate(classGen, methodGen);
-/*     */     } else {
-/*     */       
-/* 122 */       il.append(DUP);
-/* 123 */       InstructionHandle storeInst = il.append(storeLocal);
-/*     */       
-/* 125 */       if (local.getStart() == null) {
-/* 126 */         local.setStart(storeInst);
-/*     */       }
-/*     */       
-/* 129 */       this._left.translate(classGen, methodGen);
-/*     */       
-/* 131 */       il.append(methodGen.loadDOM());
-/* 132 */       local.setEnd(il.append(loadLocal));
-/*     */     } 
-/*     */     
-/* 135 */     methodGen.removeLocalVariable(local);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 141 */     if (this._right instanceof AncestorPattern) {
-/* 142 */       AncestorPattern ancestor = (AncestorPattern)this._right;
-/* 143 */       this._left.backPatchFalseList(ancestor.getLoopHandle());
-/*     */     } 
-/*     */     
-/* 146 */     this._trueList.append(this._right._trueList.append(this._left._trueList));
-/* 147 */     this._falseList.append(this._right._falseList.append(this._left._falseList));
-/*     */   }
-/*     */   
-/*     */   public String toString() {
-/* 151 */     return "Parent(" + this._left + ", " + this._right + ')';
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\ParentPattern.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: ParentPattern.java,v 1.2.4.1 2005/09/02 11:10:09 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.ILOAD;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
+import com.sun.org.apache.bcel.internal.generic.InstructionHandle;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ */
+final class ParentPattern extends RelativePathPattern {
+    private final Pattern _left;
+    private final RelativePathPattern _right;
+
+    public ParentPattern(Pattern left, RelativePathPattern right) {
+        (_left = left).setParent(this);
+        (_right = right).setParent(this);
+    }
+
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        _left.setParser(parser);
+        _right.setParser(parser);
+    }
+
+    public boolean isWildcard() {
+        return false;
+    }
+
+    public StepPattern getKernelPattern() {
+        return _right.getKernelPattern();
+    }
+
+    public void reduceKernelPattern() {
+        _right.reduceKernelPattern();
+    }
+
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        _left.typeCheck(stable);
+        return _right.typeCheck(stable);
+    }
+
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        final LocalVariableGen local =
+            methodGen.addLocalVariable2("ppt",
+                                        Util.getJCRefType(NODE_SIG),
+                                        null);
+
+        final com.sun.org.apache.bcel.internal.generic.Instruction loadLocal =
+            new ILOAD(local.getIndex());
+        final com.sun.org.apache.bcel.internal.generic.Instruction storeLocal =
+            new ISTORE(local.getIndex());
+
+        if (_right.isWildcard()) {
+            il.append(methodGen.loadDOM());
+            il.append(SWAP);
+        }
+        else if (_right instanceof StepPattern) {
+            il.append(DUP);
+            local.setStart(il.append(storeLocal));
+
+            _right.translate(classGen, methodGen);
+
+            il.append(methodGen.loadDOM());
+            local.setEnd(il.append(loadLocal));
+        }
+        else {
+            _right.translate(classGen, methodGen);
+
+            if (_right instanceof AncestorPattern) {
+                il.append(methodGen.loadDOM());
+                il.append(SWAP);
+            }
+        }
+
+        final int getParent = cpg.addInterfaceMethodref(DOM_INTF,
+                                                        GET_PARENT,
+                                                        GET_PARENT_SIG);
+        il.append(new INVOKEINTERFACE(getParent, 2));
+
+        final SyntaxTreeNode p = getParent();
+        if (p == null || p instanceof Instruction ||
+            p instanceof TopLevelElement)
+        {
+            _left.translate(classGen, methodGen);
+        }
+        else {
+            il.append(DUP);
+            InstructionHandle storeInst = il.append(storeLocal);
+
+            if (local.getStart() == null) {
+                local.setStart(storeInst);
+            }
+
+            _left.translate(classGen, methodGen);
+
+            il.append(methodGen.loadDOM());
+            local.setEnd(il.append(loadLocal));
+        }
+
+        methodGen.removeLocalVariable(local);
+
+        /*
+         * If _right is an ancestor pattern, backpatch _left false
+         * list to the loop that searches for more ancestors.
+         */
+        if (_right instanceof AncestorPattern) {
+            final AncestorPattern ancestor = (AncestorPattern) _right;
+            _left.backPatchFalseList(ancestor.getLoopHandle());    // clears list
+        }
+
+        _trueList.append(_right._trueList.append(_left._trueList));
+        _falseList.append(_right._falseList.append(_left._falseList));
+    }
+
+    public String toString() {
+        return "Parent(" + _left + ", " + _right + ')';
+    }
+}

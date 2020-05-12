@@ -1,545 +1,539 @@
-/*     */ package com.sun.org.apache.xml.internal.security.algorithms.implementations;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.security.algorithms.JCEMapper;
-/*     */ import com.sun.org.apache.xml.internal.security.algorithms.MessageDigestAlgorithm;
-/*     */ import com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithmSpi;
-/*     */ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureException;
-/*     */ import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
-/*     */ import java.security.InvalidAlgorithmParameterException;
-/*     */ import java.security.InvalidKeyException;
-/*     */ import java.security.Key;
-/*     */ import java.security.NoSuchAlgorithmException;
-/*     */ import java.security.SecureRandom;
-/*     */ import java.security.spec.AlgorithmParameterSpec;
-/*     */ import java.util.logging.Level;
-/*     */ import java.util.logging.Logger;
-/*     */ import javax.crypto.Mac;
-/*     */ import javax.crypto.SecretKey;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.Text;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class IntegrityHmac
-/*     */   extends SignatureAlgorithmSpi
-/*     */ {
-/*  49 */   private static Logger log = Logger.getLogger(IntegrityHmac.class.getName());
-/*     */ 
-/*     */   
-/*  52 */   private Mac macAlgorithm = null;
-/*     */ 
-/*     */   
-/*  55 */   private int HMACOutputLength = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean HMACOutputLengthSet = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public abstract String engineGetURI();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   abstract int getDigestLength();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public IntegrityHmac() throws XMLSignatureException {
-/*  76 */     String str = JCEMapper.translateURItoJCEID(engineGetURI());
-/*  77 */     if (log.isLoggable(Level.FINE)) {
-/*  78 */       log.log(Level.FINE, "Created IntegrityHmacSHA1 using " + str);
-/*     */     }
-/*     */     
-/*     */     try {
-/*  82 */       this.macAlgorithm = Mac.getInstance(str);
-/*  83 */     } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-/*  84 */       Object[] arrayOfObject = { str, noSuchAlgorithmException.getLocalizedMessage() };
-/*     */       
-/*  86 */       throw new XMLSignatureException("algorithms.NoSuchAlgorithm", arrayOfObject);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineSetParameter(AlgorithmParameterSpec paramAlgorithmParameterSpec) throws XMLSignatureException {
-/*  99 */     throw new XMLSignatureException("empty");
-/*     */   }
-/*     */   
-/*     */   public void reset() {
-/* 103 */     this.HMACOutputLength = 0;
-/* 104 */     this.HMACOutputLengthSet = false;
-/* 105 */     this.macAlgorithm.reset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean engineVerify(byte[] paramArrayOfbyte) throws XMLSignatureException {
-/*     */     try {
-/* 118 */       if (this.HMACOutputLengthSet && this.HMACOutputLength < getDigestLength()) {
-/* 119 */         if (log.isLoggable(Level.FINE)) {
-/* 120 */           log.log(Level.FINE, "HMACOutputLength must not be less than " + getDigestLength());
-/*     */         }
-/* 122 */         Object[] arrayOfObject = { String.valueOf(getDigestLength()) };
-/* 123 */         throw new XMLSignatureException("algorithms.HMACOutputLengthMin", arrayOfObject);
-/*     */       } 
-/* 125 */       byte[] arrayOfByte = this.macAlgorithm.doFinal();
-/* 126 */       return MessageDigestAlgorithm.isEqual(arrayOfByte, paramArrayOfbyte);
-/*     */     }
-/* 128 */     catch (IllegalStateException illegalStateException) {
-/* 129 */       throw new XMLSignatureException("empty", illegalStateException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineInitVerify(Key paramKey) throws XMLSignatureException {
-/* 141 */     if (!(paramKey instanceof SecretKey)) {
-/* 142 */       String str1 = paramKey.getClass().getName();
-/* 143 */       String str2 = SecretKey.class.getName();
-/* 144 */       Object[] arrayOfObject = { str1, str2 };
-/*     */       
-/* 146 */       throw new XMLSignatureException("algorithms.WrongKeyForThisOperation", arrayOfObject);
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 150 */       this.macAlgorithm.init(paramKey);
-/* 151 */     } catch (InvalidKeyException invalidKeyException) {
-/*     */ 
-/*     */       
-/* 154 */       Mac mac = this.macAlgorithm;
-/*     */       try {
-/* 156 */         this.macAlgorithm = Mac.getInstance(this.macAlgorithm.getAlgorithm());
-/* 157 */       } catch (Exception exception) {
-/*     */         
-/* 159 */         if (log.isLoggable(Level.FINE)) {
-/* 160 */           log.log(Level.FINE, "Exception when reinstantiating Mac:" + exception);
-/*     */         }
-/* 162 */         this.macAlgorithm = mac;
-/*     */       } 
-/* 164 */       throw new XMLSignatureException("empty", invalidKeyException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected byte[] engineSign() throws XMLSignatureException {
-/*     */     try {
-/* 177 */       if (this.HMACOutputLengthSet && this.HMACOutputLength < getDigestLength()) {
-/* 178 */         if (log.isLoggable(Level.FINE)) {
-/* 179 */           log.log(Level.FINE, "HMACOutputLength must not be less than " + getDigestLength());
-/*     */         }
-/* 181 */         Object[] arrayOfObject = { String.valueOf(getDigestLength()) };
-/* 182 */         throw new XMLSignatureException("algorithms.HMACOutputLengthMin", arrayOfObject);
-/*     */       } 
-/* 184 */       return this.macAlgorithm.doFinal();
-/*     */     }
-/* 186 */     catch (IllegalStateException illegalStateException) {
-/* 187 */       throw new XMLSignatureException("empty", illegalStateException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineInitSign(Key paramKey) throws XMLSignatureException {
-/* 198 */     if (!(paramKey instanceof SecretKey)) {
-/* 199 */       String str1 = paramKey.getClass().getName();
-/* 200 */       String str2 = SecretKey.class.getName();
-/* 201 */       Object[] arrayOfObject = { str1, str2 };
-/*     */       
-/* 203 */       throw new XMLSignatureException("algorithms.WrongKeyForThisOperation", arrayOfObject);
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 207 */       this.macAlgorithm.init(paramKey);
-/* 208 */     } catch (InvalidKeyException invalidKeyException) {
-/* 209 */       throw new XMLSignatureException("empty", invalidKeyException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineInitSign(Key paramKey, AlgorithmParameterSpec paramAlgorithmParameterSpec) throws XMLSignatureException {
-/* 223 */     if (!(paramKey instanceof SecretKey)) {
-/* 224 */       String str1 = paramKey.getClass().getName();
-/* 225 */       String str2 = SecretKey.class.getName();
-/* 226 */       Object[] arrayOfObject = { str1, str2 };
-/*     */       
-/* 228 */       throw new XMLSignatureException("algorithms.WrongKeyForThisOperation", arrayOfObject);
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 232 */       this.macAlgorithm.init(paramKey, paramAlgorithmParameterSpec);
-/* 233 */     } catch (InvalidKeyException invalidKeyException) {
-/* 234 */       throw new XMLSignatureException("empty", invalidKeyException);
-/* 235 */     } catch (InvalidAlgorithmParameterException invalidAlgorithmParameterException) {
-/* 236 */       throw new XMLSignatureException("empty", invalidAlgorithmParameterException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineInitSign(Key paramKey, SecureRandom paramSecureRandom) throws XMLSignatureException {
-/* 249 */     throw new XMLSignatureException("algorithms.CannotUseSecureRandomOnMAC");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineUpdate(byte[] paramArrayOfbyte) throws XMLSignatureException {
-/*     */     try {
-/* 261 */       this.macAlgorithm.update(paramArrayOfbyte);
-/* 262 */     } catch (IllegalStateException illegalStateException) {
-/* 263 */       throw new XMLSignatureException("empty", illegalStateException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineUpdate(byte paramByte) throws XMLSignatureException {
-/*     */     try {
-/* 276 */       this.macAlgorithm.update(paramByte);
-/* 277 */     } catch (IllegalStateException illegalStateException) {
-/* 278 */       throw new XMLSignatureException("empty", illegalStateException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineUpdate(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws XMLSignatureException {
-/*     */     try {
-/* 293 */       this.macAlgorithm.update(paramArrayOfbyte, paramInt1, paramInt2);
-/* 294 */     } catch (IllegalStateException illegalStateException) {
-/* 295 */       throw new XMLSignatureException("empty", illegalStateException);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String engineGetJCEAlgorithmString() {
-/* 305 */     return this.macAlgorithm.getAlgorithm();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String engineGetJCEProviderName() {
-/* 314 */     return this.macAlgorithm.getProvider().getName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineSetHMACOutputLength(int paramInt) {
-/* 323 */     this.HMACOutputLength = paramInt;
-/* 324 */     this.HMACOutputLengthSet = true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void engineGetContextFromElement(Element paramElement) {
-/* 333 */     super.engineGetContextFromElement(paramElement);
-/*     */     
-/* 335 */     if (paramElement == null) {
-/* 336 */       throw new IllegalArgumentException("element null");
-/*     */     }
-/*     */ 
-/*     */     
-/* 340 */     Text text = XMLUtils.selectDsNodeText(paramElement.getFirstChild(), "HMACOutputLength", 0);
-/*     */     
-/* 342 */     if (text != null) {
-/* 343 */       this.HMACOutputLength = Integer.parseInt(text.getData());
-/* 344 */       this.HMACOutputLengthSet = true;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void engineAddContextToElement(Element paramElement) {
-/* 354 */     if (paramElement == null) {
-/* 355 */       throw new IllegalArgumentException("null element");
-/*     */     }
-/*     */     
-/* 358 */     if (this.HMACOutputLengthSet) {
-/* 359 */       Document document = paramElement.getOwnerDocument();
-/*     */       
-/* 361 */       Element element = XMLUtils.createElementInSignatureSpace(document, "HMACOutputLength");
-/*     */       
-/* 363 */       Text text = document.createTextNode(Integer.valueOf(this.HMACOutputLength).toString());
-/*     */       
-/* 365 */       element.appendChild(text);
-/* 366 */       XMLUtils.addReturnToElement(paramElement);
-/* 367 */       paramElement.appendChild(element);
-/* 368 */       XMLUtils.addReturnToElement(paramElement);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class IntegrityHmacSHA1
-/*     */     extends IntegrityHmac
-/*     */   {
-/*     */     public String engineGetURI() {
-/* 392 */       return "http://www.w3.org/2000/09/xmldsig#hmac-sha1";
-/*     */     }
-/*     */     
-/*     */     int getDigestLength() {
-/* 396 */       return 160;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class IntegrityHmacSHA256
-/*     */     extends IntegrityHmac
-/*     */   {
-/*     */     public String engineGetURI() {
-/* 420 */       return "http://www.w3.org/2001/04/xmldsig-more#hmac-sha256";
-/*     */     }
-/*     */     
-/*     */     int getDigestLength() {
-/* 424 */       return 256;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class IntegrityHmacSHA384
-/*     */     extends IntegrityHmac
-/*     */   {
-/*     */     public String engineGetURI() {
-/* 448 */       return "http://www.w3.org/2001/04/xmldsig-more#hmac-sha384";
-/*     */     }
-/*     */     
-/*     */     int getDigestLength() {
-/* 452 */       return 384;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class IntegrityHmacSHA512
-/*     */     extends IntegrityHmac
-/*     */   {
-/*     */     public String engineGetURI() {
-/* 476 */       return "http://www.w3.org/2001/04/xmldsig-more#hmac-sha512";
-/*     */     }
-/*     */     
-/*     */     int getDigestLength() {
-/* 480 */       return 512;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class IntegrityHmacRIPEMD160
-/*     */     extends IntegrityHmac
-/*     */   {
-/*     */     public String engineGetURI() {
-/* 504 */       return "http://www.w3.org/2001/04/xmldsig-more#hmac-ripemd160";
-/*     */     }
-/*     */     
-/*     */     int getDigestLength() {
-/* 508 */       return 160;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static class IntegrityHmacMD5
-/*     */     extends IntegrityHmac
-/*     */   {
-/*     */     public String engineGetURI() {
-/* 532 */       return "http://www.w3.org/2001/04/xmldsig-more#hmac-md5";
-/*     */     }
-/*     */     
-/*     */     int getDigestLength() {
-/* 536 */       return 128;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\security\algorithms\implementations\IntegrityHmac.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.sun.org.apache.xml.internal.security.algorithms.implementations;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.SecureRandom;
+import java.security.spec.AlgorithmParameterSpec;
+
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+
+import com.sun.org.apache.xml.internal.security.algorithms.JCEMapper;
+import com.sun.org.apache.xml.internal.security.algorithms.MessageDigestAlgorithm;
+import com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithmSpi;
+import com.sun.org.apache.xml.internal.security.signature.XMLSignature;
+import com.sun.org.apache.xml.internal.security.signature.XMLSignatureException;
+import com.sun.org.apache.xml.internal.security.utils.Constants;
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
+
+public abstract class IntegrityHmac extends SignatureAlgorithmSpi {
+
+    /** {@link org.apache.commons.logging} logging facility */
+    private static java.util.logging.Logger log =
+        java.util.logging.Logger.getLogger(IntegrityHmac.class.getName());
+
+    /** Field macAlgorithm */
+    private Mac macAlgorithm = null;
+
+    /** Field HMACOutputLength */
+    private int HMACOutputLength = 0;
+    private boolean HMACOutputLengthSet = false;
+
+    /**
+     * Method engineGetURI
+     *
+     *@inheritDoc
+     */
+    public abstract String engineGetURI();
+
+    /**
+     * Returns the output length of the hash/digest.
+     */
+    abstract int getDigestLength();
+
+    /**
+     * Method IntegrityHmac
+     *
+     * @throws XMLSignatureException
+     */
+    public IntegrityHmac() throws XMLSignatureException {
+        String algorithmID = JCEMapper.translateURItoJCEID(this.engineGetURI());
+        if (log.isLoggable(java.util.logging.Level.FINE)) {
+            log.log(java.util.logging.Level.FINE, "Created IntegrityHmacSHA1 using " + algorithmID);
+        }
+
+        try {
+            this.macAlgorithm = Mac.getInstance(algorithmID);
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            Object[] exArgs = { algorithmID, ex.getLocalizedMessage() };
+
+            throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
+        }
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#setParameter(
+     * java.security.spec.AlgorithmParameterSpec)}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @param params
+     * @throws XMLSignatureException
+     */
+    protected void engineSetParameter(AlgorithmParameterSpec params) throws XMLSignatureException {
+        throw new XMLSignatureException("empty");
+    }
+
+    public void reset() {
+        HMACOutputLength = 0;
+        HMACOutputLengthSet = false;
+        this.macAlgorithm.reset();
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#verify(byte[])}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @param signature
+     * @return true if the signature is correct
+     * @throws XMLSignatureException
+     */
+    protected boolean engineVerify(byte[] signature) throws XMLSignatureException {
+        try {
+            if (this.HMACOutputLengthSet && this.HMACOutputLength < getDigestLength()) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "HMACOutputLength must not be less than " + getDigestLength());
+                }
+                Object[] exArgs = { String.valueOf(getDigestLength()) };
+                throw new XMLSignatureException("algorithms.HMACOutputLengthMin", exArgs);
+            } else {
+                byte[] completeResult = this.macAlgorithm.doFinal();
+                return MessageDigestAlgorithm.isEqual(completeResult, signature);
+            }
+        } catch (IllegalStateException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#initVerify(java.security.PublicKey)}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @param secretKey
+     * @throws XMLSignatureException
+     */
+    protected void engineInitVerify(Key secretKey) throws XMLSignatureException {
+        if (!(secretKey instanceof SecretKey)) {
+            String supplied = secretKey.getClass().getName();
+            String needed = SecretKey.class.getName();
+            Object exArgs[] = { supplied, needed };
+
+            throw new XMLSignatureException("algorithms.WrongKeyForThisOperation", exArgs);
+        }
+
+        try {
+            this.macAlgorithm.init(secretKey);
+        } catch (InvalidKeyException ex) {
+            // reinstantiate Mac object to work around bug in JDK
+            // see: http://bugs.sun.com/view_bug.do?bug_id=4953555
+            Mac mac = this.macAlgorithm;
+            try {
+                this.macAlgorithm = Mac.getInstance(macAlgorithm.getAlgorithm());
+            } catch (Exception e) {
+                // this shouldn't occur, but if it does, restore previous Mac
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "Exception when reinstantiating Mac:" + e);
+                }
+                this.macAlgorithm = mac;
+            }
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#sign()}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @return the result of the {@link java.security.Signature#sign()} method
+     * @throws XMLSignatureException
+     */
+    protected byte[] engineSign() throws XMLSignatureException {
+        try {
+            if (this.HMACOutputLengthSet && this.HMACOutputLength < getDigestLength()) {
+                if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.log(java.util.logging.Level.FINE, "HMACOutputLength must not be less than " + getDigestLength());
+                }
+                Object[] exArgs = { String.valueOf(getDigestLength()) };
+                throw new XMLSignatureException("algorithms.HMACOutputLengthMin", exArgs);
+            } else {
+                return this.macAlgorithm.doFinal();
+            }
+        } catch (IllegalStateException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Method engineInitSign
+     *
+     * @param secretKey
+     * @throws XMLSignatureException
+     */
+    protected void engineInitSign(Key secretKey) throws XMLSignatureException {
+        if (!(secretKey instanceof SecretKey)) {
+            String supplied = secretKey.getClass().getName();
+            String needed = SecretKey.class.getName();
+            Object exArgs[] = { supplied, needed };
+
+            throw new XMLSignatureException("algorithms.WrongKeyForThisOperation", exArgs);
+        }
+
+        try {
+            this.macAlgorithm.init(secretKey);
+        } catch (InvalidKeyException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Method engineInitSign
+     *
+     * @param secretKey
+     * @param algorithmParameterSpec
+     * @throws XMLSignatureException
+     */
+    protected void engineInitSign(
+        Key secretKey, AlgorithmParameterSpec algorithmParameterSpec
+    ) throws XMLSignatureException {
+        if (!(secretKey instanceof SecretKey)) {
+            String supplied = secretKey.getClass().getName();
+            String needed = SecretKey.class.getName();
+            Object exArgs[] = { supplied, needed };
+
+            throw new XMLSignatureException("algorithms.WrongKeyForThisOperation", exArgs);
+        }
+
+        try {
+            this.macAlgorithm.init(secretKey, algorithmParameterSpec);
+        } catch (InvalidKeyException ex) {
+            throw new XMLSignatureException("empty", ex);
+        } catch (InvalidAlgorithmParameterException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Method engineInitSign
+     *
+     * @param secretKey
+     * @param secureRandom
+     * @throws XMLSignatureException
+     */
+    protected void engineInitSign(Key secretKey, SecureRandom secureRandom)
+        throws XMLSignatureException {
+        throw new XMLSignatureException("algorithms.CannotUseSecureRandomOnMAC");
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#update(byte[])}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @param input
+     * @throws XMLSignatureException
+     */
+    protected void engineUpdate(byte[] input) throws XMLSignatureException {
+        try {
+            this.macAlgorithm.update(input);
+        } catch (IllegalStateException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#update(byte)}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @param input
+     * @throws XMLSignatureException
+     */
+    protected void engineUpdate(byte input) throws XMLSignatureException {
+        try {
+            this.macAlgorithm.update(input);
+        } catch (IllegalStateException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Proxy method for {@link java.security.Signature#update(byte[], int, int)}
+     * which is executed on the internal {@link java.security.Signature} object.
+     *
+     * @param buf
+     * @param offset
+     * @param len
+     * @throws XMLSignatureException
+     */
+    protected void engineUpdate(byte buf[], int offset, int len) throws XMLSignatureException {
+        try {
+            this.macAlgorithm.update(buf, offset, len);
+        } catch (IllegalStateException ex) {
+            throw new XMLSignatureException("empty", ex);
+        }
+    }
+
+    /**
+     * Method engineGetJCEAlgorithmString
+     * @inheritDoc
+     *
+     */
+    protected String engineGetJCEAlgorithmString() {
+        return this.macAlgorithm.getAlgorithm();
+    }
+
+    /**
+     * Method engineGetJCEAlgorithmString
+     *
+     * @inheritDoc
+     */
+    protected String engineGetJCEProviderName() {
+        return this.macAlgorithm.getProvider().getName();
+    }
+
+    /**
+     * Method engineSetHMACOutputLength
+     *
+     * @param HMACOutputLength
+     */
+    protected void engineSetHMACOutputLength(int HMACOutputLength) {
+        this.HMACOutputLength = HMACOutputLength;
+        this.HMACOutputLengthSet = true;
+    }
+
+    /**
+     * Method engineGetContextFromElement
+     *
+     * @param element
+     */
+    protected void engineGetContextFromElement(Element element) {
+        super.engineGetContextFromElement(element);
+
+        if (element == null) {
+            throw new IllegalArgumentException("element null");
+        }
+
+        Text hmaclength =
+            XMLUtils.selectDsNodeText(element.getFirstChild(), Constants._TAG_HMACOUTPUTLENGTH, 0);
+
+        if (hmaclength != null) {
+            this.HMACOutputLength = Integer.parseInt(hmaclength.getData());
+            this.HMACOutputLengthSet = true;
+        }
+    }
+
+    /**
+     * Method engineAddContextToElement
+     *
+     * @param element
+     */
+    public void engineAddContextToElement(Element element) {
+        if (element == null) {
+            throw new IllegalArgumentException("null element");
+        }
+
+        if (this.HMACOutputLengthSet) {
+            Document doc = element.getOwnerDocument();
+            Element HMElem =
+                XMLUtils.createElementInSignatureSpace(doc, Constants._TAG_HMACOUTPUTLENGTH);
+            Text HMText =
+                doc.createTextNode(Integer.valueOf(this.HMACOutputLength).toString());
+
+            HMElem.appendChild(HMText);
+            XMLUtils.addReturnToElement(element);
+            element.appendChild(HMElem);
+            XMLUtils.addReturnToElement(element);
+        }
+    }
+
+    /**
+     * Class IntegrityHmacSHA1
+     */
+    public static class IntegrityHmacSHA1 extends IntegrityHmac {
+
+        /**
+         * Constructor IntegrityHmacSHA1
+         *
+         * @throws XMLSignatureException
+         */
+        public IntegrityHmacSHA1() throws XMLSignatureException {
+            super();
+        }
+
+        /**
+         * Method engineGetURI
+         * @inheritDoc
+         *
+         */
+        public String engineGetURI() {
+            return XMLSignature.ALGO_ID_MAC_HMAC_SHA1;
+        }
+
+        int getDigestLength() {
+            return 160;
+        }
+    }
+
+    /**
+     * Class IntegrityHmacSHA256
+     */
+    public static class IntegrityHmacSHA256 extends IntegrityHmac {
+
+        /**
+         * Constructor IntegrityHmacSHA256
+         *
+         * @throws XMLSignatureException
+         */
+        public IntegrityHmacSHA256() throws XMLSignatureException {
+            super();
+        }
+
+        /**
+         * Method engineGetURI
+         *
+         * @inheritDoc
+         */
+        public String engineGetURI() {
+            return XMLSignature.ALGO_ID_MAC_HMAC_SHA256;
+        }
+
+        int getDigestLength() {
+            return 256;
+        }
+    }
+
+    /**
+     * Class IntegrityHmacSHA384
+     */
+    public static class IntegrityHmacSHA384 extends IntegrityHmac {
+
+        /**
+         * Constructor IntegrityHmacSHA384
+         *
+         * @throws XMLSignatureException
+         */
+        public IntegrityHmacSHA384() throws XMLSignatureException {
+            super();
+        }
+
+        /**
+         * Method engineGetURI
+         * @inheritDoc
+         *
+         */
+        public String engineGetURI() {
+            return XMLSignature.ALGO_ID_MAC_HMAC_SHA384;
+        }
+
+        int getDigestLength() {
+            return 384;
+        }
+    }
+
+    /**
+     * Class IntegrityHmacSHA512
+     */
+    public static class IntegrityHmacSHA512 extends IntegrityHmac {
+
+        /**
+         * Constructor IntegrityHmacSHA512
+         *
+         * @throws XMLSignatureException
+         */
+        public IntegrityHmacSHA512() throws XMLSignatureException {
+            super();
+        }
+
+        /**
+         * Method engineGetURI
+         * @inheritDoc
+         *
+         */
+        public String engineGetURI() {
+            return XMLSignature.ALGO_ID_MAC_HMAC_SHA512;
+        }
+
+        int getDigestLength() {
+            return 512;
+        }
+    }
+
+    /**
+     * Class IntegrityHmacRIPEMD160
+     */
+    public static class IntegrityHmacRIPEMD160 extends IntegrityHmac {
+
+        /**
+         * Constructor IntegrityHmacRIPEMD160
+         *
+         * @throws XMLSignatureException
+         */
+        public IntegrityHmacRIPEMD160() throws XMLSignatureException {
+            super();
+        }
+
+        /**
+         * Method engineGetURI
+         *
+         * @inheritDoc
+         */
+        public String engineGetURI() {
+            return XMLSignature.ALGO_ID_MAC_HMAC_RIPEMD160;
+        }
+
+        int getDigestLength() {
+            return 160;
+        }
+    }
+
+    /**
+     * Class IntegrityHmacMD5
+     */
+    public static class IntegrityHmacMD5 extends IntegrityHmac {
+
+        /**
+         * Constructor IntegrityHmacMD5
+         *
+         * @throws XMLSignatureException
+         */
+        public IntegrityHmacMD5() throws XMLSignatureException {
+            super();
+        }
+
+        /**
+         * Method engineGetURI
+         *
+         * @inheritDoc
+         */
+        public String engineGetURI() {
+            return XMLSignature.ALGO_ID_MAC_HMAC_NOT_RECOMMENDED_MD5;
+        }
+
+        int getDigestLength() {
+            return 128;
+        }
+    }
+}

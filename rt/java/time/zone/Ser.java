@@ -1,285 +1,281 @@
-/*     */ package java.time.zone;
-/*     */ 
-/*     */ import java.io.DataInput;
-/*     */ import java.io.DataOutput;
-/*     */ import java.io.Externalizable;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InvalidClassException;
-/*     */ import java.io.ObjectInput;
-/*     */ import java.io.ObjectOutput;
-/*     */ import java.io.StreamCorruptedException;
-/*     */ import java.time.ZoneOffset;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Ser
-/*     */   implements Externalizable
-/*     */ {
-/*     */   private static final long serialVersionUID = -8885321777449118786L;
-/*     */   static final byte ZRULES = 1;
-/*     */   static final byte ZOT = 2;
-/*     */   static final byte ZOTRULE = 3;
-/*     */   private byte type;
-/*     */   private Object object;
-/*     */   
-/*     */   public Ser() {}
-/*     */   
-/*     */   Ser(byte paramByte, Object paramObject) {
-/* 115 */     this.type = paramByte;
-/* 116 */     this.object = paramObject;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void writeExternal(ObjectOutput paramObjectOutput) throws IOException {
-/* 137 */     writeInternal(this.type, this.object, paramObjectOutput);
-/*     */   }
-/*     */   
-/*     */   static void write(Object paramObject, DataOutput paramDataOutput) throws IOException {
-/* 141 */     writeInternal((byte)1, paramObject, paramDataOutput);
-/*     */   }
-/*     */   
-/*     */   private static void writeInternal(byte paramByte, Object paramObject, DataOutput paramDataOutput) throws IOException {
-/* 145 */     paramDataOutput.writeByte(paramByte);
-/* 146 */     switch (paramByte) {
-/*     */       case 1:
-/* 148 */         ((ZoneRules)paramObject).writeExternal(paramDataOutput);
-/*     */         return;
-/*     */       case 2:
-/* 151 */         ((ZoneOffsetTransition)paramObject).writeExternal(paramDataOutput);
-/*     */         return;
-/*     */       case 3:
-/* 154 */         ((ZoneOffsetTransitionRule)paramObject).writeExternal(paramDataOutput);
-/*     */         return;
-/*     */     } 
-/* 157 */     throw new InvalidClassException("Unknown serialized type");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void readExternal(ObjectInput paramObjectInput) throws IOException, ClassNotFoundException {
-/* 182 */     this.type = paramObjectInput.readByte();
-/* 183 */     this.object = readInternal(this.type, paramObjectInput);
-/*     */   }
-/*     */   
-/*     */   static Object read(DataInput paramDataInput) throws IOException, ClassNotFoundException {
-/* 187 */     byte b = paramDataInput.readByte();
-/* 188 */     return readInternal(b, paramDataInput);
-/*     */   }
-/*     */   
-/*     */   private static Object readInternal(byte paramByte, DataInput paramDataInput) throws IOException, ClassNotFoundException {
-/* 192 */     switch (paramByte) {
-/*     */       case 1:
-/* 194 */         return ZoneRules.readExternal(paramDataInput);
-/*     */       case 2:
-/* 196 */         return ZoneOffsetTransition.readExternal(paramDataInput);
-/*     */       case 3:
-/* 198 */         return ZoneOffsetTransitionRule.readExternal(paramDataInput);
-/*     */     } 
-/* 200 */     throw new StreamCorruptedException("Unknown serialized type");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object readResolve() {
-/* 210 */     return this.object;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void writeOffset(ZoneOffset paramZoneOffset, DataOutput paramDataOutput) throws IOException {
-/* 222 */     int i = paramZoneOffset.getTotalSeconds();
-/* 223 */     boolean bool = (i % 900 == 0) ? (i / 900) : true;
-/* 224 */     paramDataOutput.writeByte(bool);
-/* 225 */     if (bool == 127) {
-/* 226 */       paramDataOutput.writeInt(i);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static ZoneOffset readOffset(DataInput paramDataInput) throws IOException {
-/* 238 */     byte b = paramDataInput.readByte();
-/* 239 */     return (b == Byte.MAX_VALUE) ? ZoneOffset.ofTotalSeconds(paramDataInput.readInt()) : ZoneOffset.ofTotalSeconds(b * 900);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void writeEpochSec(long paramLong, DataOutput paramDataOutput) throws IOException {
-/* 251 */     if (paramLong >= -4575744000L && paramLong < 10413792000L && paramLong % 900L == 0L) {
-/* 252 */       int i = (int)((paramLong + 4575744000L) / 900L);
-/* 253 */       paramDataOutput.writeByte(i >>> 16 & 0xFF);
-/* 254 */       paramDataOutput.writeByte(i >>> 8 & 0xFF);
-/* 255 */       paramDataOutput.writeByte(i & 0xFF);
-/*     */     } else {
-/* 257 */       paramDataOutput.writeByte(255);
-/* 258 */       paramDataOutput.writeLong(paramLong);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static long readEpochSec(DataInput paramDataInput) throws IOException {
-/* 270 */     int i = paramDataInput.readByte() & 0xFF;
-/* 271 */     if (i == 255) {
-/* 272 */       return paramDataInput.readLong();
-/*     */     }
-/* 274 */     int j = paramDataInput.readByte() & 0xFF;
-/* 275 */     int k = paramDataInput.readByte() & 0xFF;
-/* 276 */     long l = ((i << 16) + (j << 8) + k);
-/* 277 */     return l * 900L - 4575744000L;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\zone\Ser.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2011-2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.zone;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InvalidClassException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.StreamCorruptedException;
+import java.time.ZoneOffset;
+
+/**
+ * The shared serialization delegate for this package.
+ *
+ * @implNote
+ * This class is mutable and should be created once per serialization.
+ *
+ * @serial include
+ * @since 1.8
+ */
+final class Ser implements Externalizable {
+
+    /**
+     * Serialization version.
+     */
+    private static final long serialVersionUID = -8885321777449118786L;
+
+    /** Type for ZoneRules. */
+    static final byte ZRULES = 1;
+    /** Type for ZoneOffsetTransition. */
+    static final byte ZOT = 2;
+    /** Type for ZoneOffsetTransition. */
+    static final byte ZOTRULE = 3;
+
+    /** The type being serialized. */
+    private byte type;
+    /** The object being serialized. */
+    private Object object;
+
+    /**
+     * Constructor for deserialization.
+     */
+    public Ser() {
+    }
+
+    /**
+     * Creates an instance for serialization.
+     *
+     * @param type  the type
+     * @param object  the object
+     */
+    Ser(byte type, Object object) {
+        this.type = type;
+        this.object = object;
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Implements the {@code Externalizable} interface to write the object.
+     * @serialData
+     * Each serializable class is mapped to a type that is the first byte
+     * in the stream.  Refer to each class {@code writeReplace}
+     * serialized form for the value of the type and sequence of values for the type.
+     *
+     * <ul>
+     * <li><a href="../../../serialized-form.html#java.time.zone.ZoneRules">ZoneRules.writeReplace</a>
+     * <li><a href="../../../serialized-form.html#java.time.zone.ZoneOffsetTransition">ZoneOffsetTransition.writeReplace</a>
+     * <li><a href="../../../serialized-form.html#java.time.zone.ZoneOffsetTransitionRule">ZoneOffsetTransitionRule.writeReplace</a>
+     * </ul>
+     *
+     * @param out  the data stream to write to, not null
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        writeInternal(type, object, out);
+    }
+
+    static void write(Object object, DataOutput out) throws IOException {
+        writeInternal(ZRULES, object, out);
+    }
+
+    private static void writeInternal(byte type, Object object, DataOutput out) throws IOException {
+        out.writeByte(type);
+        switch (type) {
+            case ZRULES:
+                ((ZoneRules) object).writeExternal(out);
+                break;
+            case ZOT:
+                ((ZoneOffsetTransition) object).writeExternal(out);
+                break;
+            case ZOTRULE:
+                ((ZoneOffsetTransitionRule) object).writeExternal(out);
+                break;
+            default:
+                throw new InvalidClassException("Unknown serialized type");
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Implements the {@code Externalizable} interface to read the object.
+     * @serialData
+     * The streamed type and parameters defined by the type's {@code writeReplace}
+     * method are read and passed to the corresponding static factory for the type
+     * to create a new instance.  That instance is returned as the de-serialized
+     * {@code Ser} object.
+     *
+     * <ul>
+     * <li><a href="../../../serialized-form.html#java.time.zone.ZoneRules">ZoneRules</a>
+     * - {@code ZoneRules.of(standardTransitions, standardOffsets, savingsInstantTransitions, wallOffsets, lastRules);}
+     * <li><a href="../../../serialized-form.html#java.time.zone.ZoneOffsetTransition">ZoneOffsetTransition</a>
+     * - {@code ZoneOffsetTransition of(LocalDateTime.ofEpochSecond(epochSecond), offsetBefore, offsetAfter);}
+     * <li><a href="../../../serialized-form.html#java.time.zone.ZoneOffsetTransitionRule">ZoneOffsetTransitionRule</a>
+     * - {@code ZoneOffsetTransitionRule.of(month, dom, dow, time, timeEndOfDay, timeDefinition, standardOffset, offsetBefore, offsetAfter);}
+     * </ul>
+     * @param in  the data to read, not null
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        type = in.readByte();
+        object = readInternal(type, in);
+    }
+
+    static Object read(DataInput in) throws IOException, ClassNotFoundException {
+        byte type = in.readByte();
+        return readInternal(type, in);
+    }
+
+    private static Object readInternal(byte type, DataInput in) throws IOException, ClassNotFoundException {
+        switch (type) {
+            case ZRULES:
+                return ZoneRules.readExternal(in);
+            case ZOT:
+                return ZoneOffsetTransition.readExternal(in);
+            case ZOTRULE:
+                return ZoneOffsetTransitionRule.readExternal(in);
+            default:
+                throw new StreamCorruptedException("Unknown serialized type");
+        }
+    }
+
+    /**
+     * Returns the object that will replace this one.
+     *
+     * @return the read object, should never be null
+     */
+    private Object readResolve() {
+         return object;
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Writes the state to the stream.
+     *
+     * @param offset  the offset, not null
+     * @param out  the output stream, not null
+     * @throws IOException if an error occurs
+     */
+    static void writeOffset(ZoneOffset offset, DataOutput out) throws IOException {
+        final int offsetSecs = offset.getTotalSeconds();
+        int offsetByte = offsetSecs % 900 == 0 ? offsetSecs / 900 : 127;  // compress to -72 to +72
+        out.writeByte(offsetByte);
+        if (offsetByte == 127) {
+            out.writeInt(offsetSecs);
+        }
+    }
+
+    /**
+     * Reads the state from the stream.
+     *
+     * @param in  the input stream, not null
+     * @return the created object, not null
+     * @throws IOException if an error occurs
+     */
+    static ZoneOffset readOffset(DataInput in) throws IOException {
+        int offsetByte = in.readByte();
+        return (offsetByte == 127 ? ZoneOffset.ofTotalSeconds(in.readInt()) : ZoneOffset.ofTotalSeconds(offsetByte * 900));
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Writes the state to the stream.
+     *
+     * @param epochSec  the epoch seconds, not null
+     * @param out  the output stream, not null
+     * @throws IOException if an error occurs
+     */
+    static void writeEpochSec(long epochSec, DataOutput out) throws IOException {
+        if (epochSec >= -4575744000L && epochSec < 10413792000L && epochSec % 900 == 0) {  // quarter hours between 1825 and 2300
+            int store = (int) ((epochSec + 4575744000L) / 900);
+            out.writeByte((store >>> 16) & 255);
+            out.writeByte((store >>> 8) & 255);
+            out.writeByte(store & 255);
+        } else {
+            out.writeByte(255);
+            out.writeLong(epochSec);
+        }
+    }
+
+    /**
+     * Reads the state from the stream.
+     *
+     * @param in  the input stream, not null
+     * @return the epoch seconds, not null
+     * @throws IOException if an error occurs
+     */
+    static long readEpochSec(DataInput in) throws IOException {
+        int hiByte = in.readByte() & 255;
+        if (hiByte == 255) {
+            return in.readLong();
+        } else {
+            int midByte = in.readByte() & 255;
+            int loByte = in.readByte() & 255;
+            long tot = ((hiByte << 16) + (midByte << 8) + loByte);
+            return (tot * 900) - 4575744000L;
+        }
+    }
+
+}

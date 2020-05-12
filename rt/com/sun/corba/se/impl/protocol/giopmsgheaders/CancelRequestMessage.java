@@ -1,13 +1,37 @@
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 package com.sun.corba.se.impl.protocol.giopmsgheaders;
 
-public interface CancelRequestMessage extends Message {
-  public static final int CANCEL_REQ_MSG_SIZE = 4;
-  
-  int getRequestId();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\giopmsgheaders\CancelRequestMessage.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/**
+ * This interface captures the CancelRequestMessage contract.
+ *
+ * @author Ram Jeyaraman 05/14/2000
  */
+
+public interface CancelRequestMessage extends Message {
+    int CANCEL_REQ_MSG_SIZE = 4;
+    int getRequestId();
+}

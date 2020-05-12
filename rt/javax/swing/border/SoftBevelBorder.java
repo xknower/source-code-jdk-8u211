@@ -1,171 +1,165 @@
-/*     */ package javax.swing.border;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SoftBevelBorder
-/*     */   extends BevelBorder
-/*     */ {
-/*     */   public SoftBevelBorder(int paramInt) {
-/*  60 */     super(paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SoftBevelBorder(int paramInt, Color paramColor1, Color paramColor2) {
-/*  71 */     super(paramInt, paramColor1, paramColor2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
-/*     */   public SoftBevelBorder(int paramInt, Color paramColor1, Color paramColor2, Color paramColor3, Color paramColor4) {
-/*  87 */     super(paramInt, paramColor1, paramColor2, paramColor3, paramColor4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 102 */     Color color = paramGraphics.getColor();
-/* 103 */     paramGraphics.translate(paramInt1, paramInt2);
-/*     */     
-/* 105 */     if (this.bevelType == 0) {
-/* 106 */       paramGraphics.setColor(getHighlightOuterColor(paramComponent));
-/* 107 */       paramGraphics.drawLine(0, 0, paramInt3 - 2, 0);
-/* 108 */       paramGraphics.drawLine(0, 0, 0, paramInt4 - 2);
-/* 109 */       paramGraphics.drawLine(1, 1, 1, 1);
-/*     */       
-/* 111 */       paramGraphics.setColor(getHighlightInnerColor(paramComponent));
-/* 112 */       paramGraphics.drawLine(2, 1, paramInt3 - 2, 1);
-/* 113 */       paramGraphics.drawLine(1, 2, 1, paramInt4 - 2);
-/* 114 */       paramGraphics.drawLine(2, 2, 2, 2);
-/* 115 */       paramGraphics.drawLine(0, paramInt4 - 1, 0, paramInt4 - 2);
-/* 116 */       paramGraphics.drawLine(paramInt3 - 1, 0, paramInt3 - 1, 0);
-/*     */       
-/* 118 */       paramGraphics.setColor(getShadowOuterColor(paramComponent));
-/* 119 */       paramGraphics.drawLine(2, paramInt4 - 1, paramInt3 - 1, paramInt4 - 1);
-/* 120 */       paramGraphics.drawLine(paramInt3 - 1, 2, paramInt3 - 1, paramInt4 - 1);
-/*     */       
-/* 122 */       paramGraphics.setColor(getShadowInnerColor(paramComponent));
-/* 123 */       paramGraphics.drawLine(paramInt3 - 2, paramInt4 - 2, paramInt3 - 2, paramInt4 - 2);
-/*     */     
-/*     */     }
-/* 126 */     else if (this.bevelType == 1) {
-/* 127 */       paramGraphics.setColor(getShadowOuterColor(paramComponent));
-/* 128 */       paramGraphics.drawLine(0, 0, paramInt3 - 2, 0);
-/* 129 */       paramGraphics.drawLine(0, 0, 0, paramInt4 - 2);
-/* 130 */       paramGraphics.drawLine(1, 1, 1, 1);
-/*     */       
-/* 132 */       paramGraphics.setColor(getShadowInnerColor(paramComponent));
-/* 133 */       paramGraphics.drawLine(2, 1, paramInt3 - 2, 1);
-/* 134 */       paramGraphics.drawLine(1, 2, 1, paramInt4 - 2);
-/* 135 */       paramGraphics.drawLine(2, 2, 2, 2);
-/* 136 */       paramGraphics.drawLine(0, paramInt4 - 1, 0, paramInt4 - 2);
-/* 137 */       paramGraphics.drawLine(paramInt3 - 1, 0, paramInt3 - 1, 0);
-/*     */       
-/* 139 */       paramGraphics.setColor(getHighlightOuterColor(paramComponent));
-/* 140 */       paramGraphics.drawLine(2, paramInt4 - 1, paramInt3 - 1, paramInt4 - 1);
-/* 141 */       paramGraphics.drawLine(paramInt3 - 1, 2, paramInt3 - 1, paramInt4 - 1);
-/*     */       
-/* 143 */       paramGraphics.setColor(getHighlightInnerColor(paramComponent));
-/* 144 */       paramGraphics.drawLine(paramInt3 - 2, paramInt4 - 2, paramInt3 - 2, paramInt4 - 2);
-/*     */     } 
-/* 146 */     paramGraphics.translate(-paramInt1, -paramInt2);
-/* 147 */     paramGraphics.setColor(color);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/* 156 */     paramInsets.set(3, 3, 3, 3);
-/* 157 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isBorderOpaque() {
-/* 163 */     return false;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\border\SoftBevelBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.border;
+
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Color;
+import java.awt.Component;
+import java.beans.ConstructorProperties;
+
+/**
+ * A class which implements a raised or lowered bevel with
+ * softened corners.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Amy Fowler
+ * @author Chester Rose
+ */
+public class SoftBevelBorder extends BevelBorder
+{
+
+    /**
+     * Creates a bevel border with the specified type and whose
+     * colors will be derived from the background color of the
+     * component passed into the paintBorder method.
+     * @param bevelType the type of bevel for the border
+     */
+    public SoftBevelBorder(int bevelType) {
+        super(bevelType);
+    }
+
+    /**
+     * Creates a bevel border with the specified type, highlight and
+     * shadow colors.
+     * @param bevelType the type of bevel for the border
+     * @param highlight the color to use for the bevel highlight
+     * @param shadow the color to use for the bevel shadow
+     */
+    public SoftBevelBorder(int bevelType, Color highlight, Color shadow) {
+        super(bevelType, highlight, shadow);
+    }
+
+    /**
+     * Creates a bevel border with the specified type, highlight
+     * shadow colors.
+     * @param bevelType the type of bevel for the border
+     * @param highlightOuterColor the color to use for the bevel outer highlight
+     * @param highlightInnerColor the color to use for the bevel inner highlight
+     * @param shadowOuterColor the color to use for the bevel outer shadow
+     * @param shadowInnerColor the color to use for the bevel inner shadow
+     */
+    @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
+    public SoftBevelBorder(int bevelType, Color highlightOuterColor,
+                        Color highlightInnerColor, Color shadowOuterColor,
+                        Color shadowInnerColor) {
+        super(bevelType, highlightOuterColor, highlightInnerColor,
+              shadowOuterColor, shadowInnerColor);
+    }
+
+    /**
+     * Paints the border for the specified component with the specified
+     * position and size.
+     * @param c the component for which this border is being painted
+     * @param g the paint graphics
+     * @param x the x position of the painted border
+     * @param y the y position of the painted border
+     * @param width the width of the painted border
+     * @param height the height of the painted border
+     */
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Color oldColor = g.getColor();
+        g.translate(x, y);
+
+        if (bevelType == RAISED) {
+            g.setColor(getHighlightOuterColor(c));
+            g.drawLine(0, 0, width-2, 0);
+            g.drawLine(0, 0, 0, height-2);
+            g.drawLine(1, 1, 1, 1);
+
+            g.setColor(getHighlightInnerColor(c));
+            g.drawLine(2, 1, width-2, 1);
+            g.drawLine(1, 2, 1, height-2);
+            g.drawLine(2, 2, 2, 2);
+            g.drawLine(0, height-1, 0, height-2);
+            g.drawLine(width-1, 0, width-1, 0);
+
+            g.setColor(getShadowOuterColor(c));
+            g.drawLine(2, height-1, width-1, height-1);
+            g.drawLine(width-1, 2, width-1, height-1);
+
+            g.setColor(getShadowInnerColor(c));
+            g.drawLine(width-2, height-2, width-2, height-2);
+
+
+        } else if (bevelType == LOWERED) {
+            g.setColor(getShadowOuterColor(c));
+            g.drawLine(0, 0, width-2, 0);
+            g.drawLine(0, 0, 0, height-2);
+            g.drawLine(1, 1, 1, 1);
+
+            g.setColor(getShadowInnerColor(c));
+            g.drawLine(2, 1, width-2, 1);
+            g.drawLine(1, 2, 1, height-2);
+            g.drawLine(2, 2, 2, 2);
+            g.drawLine(0, height-1, 0, height-2);
+            g.drawLine(width-1, 0, width-1, 0);
+
+            g.setColor(getHighlightOuterColor(c));
+            g.drawLine(2, height-1, width-1, height-1);
+            g.drawLine(width-1, 2, width-1, height-1);
+
+            g.setColor(getHighlightInnerColor(c));
+            g.drawLine(width-2, height-2, width-2, height-2);
+        }
+        g.translate(-x, -y);
+        g.setColor(oldColor);
+    }
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
+     * @param c the component for which this border insets value applies
+     * @param insets the object to be reinitialized
+     */
+    public Insets getBorderInsets(Component c, Insets insets)       {
+        insets.set(3, 3, 3, 3);
+        return insets;
+    }
+
+    /**
+     * Returns whether or not the border is opaque.
+     */
+    public boolean isBorderOpaque() { return false; }
+
+}

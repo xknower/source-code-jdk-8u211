@@ -1,240 +1,237 @@
-/*     */ package com.sun.corba.se.impl.orbutil.threadpool;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.NoSuchThreadPoolException;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.ThreadPool;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolChooser;
-/*     */ import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
-/*     */ import java.io.IOException;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.concurrent.atomic.AtomicInteger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class ThreadPoolManagerImpl
-/*     */   implements ThreadPoolManager
-/*     */ {
-/*  56 */   private static final ORBUtilSystemException wrapper = ORBUtilSystemException.get("rpc.transport");
-/*     */ 
-/*     */   
-/*  59 */   private ThreadGroup threadGroup = getThreadGroup();
-/*  60 */   private ThreadPool threadPool = new ThreadPoolImpl(this.threadGroup, "default-threadpool");
-/*     */ 
-/*     */ 
-/*     */   
-/*  64 */   private static AtomicInteger tgCount = new AtomicInteger();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private ThreadGroup getThreadGroup() {
-/*     */     ThreadGroup threadGroup;
-/*     */     try {
-/*  88 */       threadGroup = AccessController.<ThreadGroup>doPrivileged(new PrivilegedAction<ThreadGroup>()
-/*     */           {
-/*     */             public ThreadGroup run() {
-/*  91 */               ThreadGroup threadGroup1 = Thread.currentThread().getThreadGroup();
-/*  92 */               ThreadGroup threadGroup2 = threadGroup1;
-/*     */               try {
-/*  94 */                 while (threadGroup2 != null) {
-/*  95 */                   threadGroup1 = threadGroup2;
-/*  96 */                   threadGroup2 = threadGroup1.getParent();
-/*     */                 } 
-/*  98 */               } catch (SecurityException securityException) {}
-/*     */ 
-/*     */               
-/* 101 */               return new ThreadGroup(threadGroup1, "ORB ThreadGroup " + ThreadPoolManagerImpl.tgCount.getAndIncrement());
-/*     */             }
-/*     */           });
-/*     */     }
-/* 105 */     catch (SecurityException securityException) {
-/*     */       
-/* 107 */       threadGroup = Thread.currentThread().getThreadGroup();
-/*     */     } 
-/*     */     
-/* 110 */     return threadGroup;
-/*     */   }
-/*     */   
-/*     */   public void close() {
-/*     */     try {
-/* 115 */       this.threadPool.close();
-/* 116 */     } catch (IOException iOException) {
-/* 117 */       wrapper.threadPoolCloseError();
-/*     */     } 
-/*     */     
-/*     */     try {
-/* 121 */       boolean bool = this.threadGroup.isDestroyed();
-/* 122 */       int i = this.threadGroup.activeCount();
-/* 123 */       int j = this.threadGroup.activeGroupCount();
-/*     */       
-/* 125 */       if (bool) {
-/* 126 */         wrapper.threadGroupIsDestroyed(this.threadGroup);
-/*     */       } else {
-/* 128 */         if (i > 0) {
-/* 129 */           wrapper.threadGroupHasActiveThreadsInClose(this.threadGroup, Integer.valueOf(i));
-/*     */         }
-/* 131 */         if (j > 0) {
-/* 132 */           wrapper.threadGroupHasSubGroupsInClose(this.threadGroup, Integer.valueOf(j));
-/*     */         }
-/* 134 */         this.threadGroup.destroy();
-/*     */       } 
-/* 136 */     } catch (IllegalThreadStateException illegalThreadStateException) {
-/* 137 */       wrapper.threadGroupDestroyFailed(illegalThreadStateException, this.threadGroup);
-/*     */     } 
-/*     */     
-/* 140 */     this.threadGroup = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPool getThreadPool(String paramString) throws NoSuchThreadPoolException {
-/* 153 */     return this.threadPool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPool getThreadPool(int paramInt) throws NoSuchThreadPoolException {
-/* 167 */     return this.threadPool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getThreadPoolNumericId(String paramString) {
-/* 177 */     return 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getThreadPoolStringId(int paramInt) {
-/* 185 */     return "";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPool getDefaultThreadPool() {
-/* 192 */     return this.threadPool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPoolChooser getThreadPoolChooser(String paramString) {
-/* 202 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ThreadPoolChooser getThreadPoolChooser(int paramInt) {
-/* 212 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setThreadPoolChooser(String paramString, ThreadPoolChooser paramThreadPoolChooser) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getThreadPoolChooserNumericId(String paramString) {
-/* 232 */     return 0;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\orbutil\threadpool\ThreadPoolManagerImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.orbutil.threadpool;
+
+import java.io.IOException;
+
+import java.security.PrivilegedAction;
+import java.security.AccessController;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.sun.corba.se.spi.orb.ORB;
+
+import com.sun.corba.se.spi.orbutil.threadpool.NoSuchThreadPoolException;
+import com.sun.corba.se.spi.orbutil.threadpool.ThreadPool;
+import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
+import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolChooser;
+
+import com.sun.corba.se.impl.orbutil.threadpool.ThreadPoolImpl;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.spi.logging.CORBALogDomains;
+
+
+public class ThreadPoolManagerImpl implements ThreadPoolManager
+{
+    private ThreadPool threadPool;
+    private ThreadGroup threadGroup;
+
+    private static final ORBUtilSystemException wrapper =
+        ORBUtilSystemException.get(CORBALogDomains.RPC_TRANSPORT);
+
+    public ThreadPoolManagerImpl() {
+        threadGroup = getThreadGroup();
+        threadPool = new ThreadPoolImpl(threadGroup,
+            ORBConstants.THREADPOOL_DEFAULT_NAME);
+    }
+
+    private static AtomicInteger tgCount = new AtomicInteger();
+
+
+    private ThreadGroup getThreadGroup() {
+        ThreadGroup tg;
+
+        // See bugs 4916766 and 4936203
+        // We intend to create new threads in a reliable thread group.
+        // This avoids problems if the application/applet
+        // creates a thread group, makes JavaIDL calls which create a new
+        // connection and ReaderThread, and then destroys the thread
+        // group. If our ReaderThreads were to be part of such destroyed thread
+        // group then it might get killed and cause other invoking threads
+        // sharing the same connection to get a non-restartable
+        // CommunicationFailure. We'd like to avoid that.
+        //
+        // Our solution is to create all of our threads in the highest thread
+        // group that we have access to, given our own security clearance.
+        //
+        try {
+            // try to get a thread group that's as high in the threadgroup
+            // parent-child hierarchy, as we can get to.
+            // this will prevent an ORB thread created during applet-init from
+            // being killed when an applet dies.
+            tg = AccessController.doPrivileged(
+                new PrivilegedAction<ThreadGroup>() {
+                    public ThreadGroup run() {
+                        ThreadGroup tg = Thread.currentThread().getThreadGroup();
+                        ThreadGroup ptg = tg;
+                        try {
+                            while (ptg != null) {
+                                tg = ptg;
+                                ptg = tg.getParent();
+                            }
+                        } catch (SecurityException se) {
+                            // Discontinue going higher on a security exception.
+                        }
+                        return new ThreadGroup(tg, "ORB ThreadGroup " + tgCount.getAndIncrement());
+                    }
+                }
+            );
+        } catch (SecurityException e) {
+            // something wrong, we go back to the original code
+            tg = Thread.currentThread().getThreadGroup();
+        }
+
+        return tg;
+    }
+
+    public void close() {
+        try {
+            threadPool.close();
+        } catch (IOException exc) {
+            wrapper.threadPoolCloseError();
+        }
+
+        try {
+            boolean isDestroyed = threadGroup.isDestroyed();
+            int numThreads = threadGroup.activeCount();
+            int numGroups = threadGroup.activeGroupCount();
+
+            if (isDestroyed) {
+                wrapper.threadGroupIsDestroyed(threadGroup);
+            } else {
+                if (numThreads > 0)
+                    wrapper.threadGroupHasActiveThreadsInClose(threadGroup, numThreads);
+
+                if (numGroups > 0)
+                    wrapper.threadGroupHasSubGroupsInClose(threadGroup, numGroups);
+
+                threadGroup.destroy();
+            }
+        } catch (IllegalThreadStateException exc) {
+            wrapper.threadGroupDestroyFailed(exc, threadGroup);
+        }
+
+        threadGroup = null;
+    }
+
+    /**
+    * This method will return an instance of the threadpool given a threadpoolId,
+    * that can be used by any component in the app. server.
+    *
+    * @throws NoSuchThreadPoolException thrown when invalid threadpoolId is passed
+    * as a parameter
+    */
+    public ThreadPool getThreadPool(String threadpoolId)
+        throws NoSuchThreadPoolException {
+
+        return threadPool;
+    }
+
+    /**
+    * This method will return an instance of the threadpool given a numeric threadpoolId.
+    * This method will be used by the ORB to support the functionality of
+    * dedicated threadpool for EJB beans
+    *
+    * @throws NoSuchThreadPoolException thrown when invalidnumericIdForThreadpool is passed
+    * as a parameter
+    */
+    public ThreadPool getThreadPool(int numericIdForThreadpool)
+        throws NoSuchThreadPoolException {
+
+        return threadPool;
+    }
+
+    /**
+    * This method is used to return the numeric id of the threadpool, given a String
+    * threadpoolId. This is used by the POA interceptors to add the numeric threadpool
+    * Id, as a tagged component in the IOR. This is used to provide the functionality of
+    * dedicated threadpool for EJB beans
+    */
+    public int  getThreadPoolNumericId(String threadpoolId) {
+        return 0;
+    }
+
+    /**
+    * Return a String Id for a numericId of a threadpool managed by the threadpool
+    * manager
+    */
+    public String getThreadPoolStringId(int numericIdForThreadpool) {
+       return "";
+    }
+
+    /**
+    * Returns the first instance of ThreadPool in the ThreadPoolManager
+    */
+    public ThreadPool getDefaultThreadPool() {
+        return threadPool;
+    }
+
+    /**
+     * Return an instance of ThreadPoolChooser based on the componentId that was
+     * passed as argument
+     */
+    public ThreadPoolChooser getThreadPoolChooser(String componentId) {
+        //FIXME: This method is not used, but should be fixed once
+        //nio select starts working and we start using ThreadPoolChooser
+        return null;
+    }
+    /**
+     * Return an instance of ThreadPoolChooser based on the componentIndex that was
+     * passed as argument. This is added for improved performance so that the caller
+     * does not have to pay the cost of computing hashcode for the componentId
+     */
+    public ThreadPoolChooser getThreadPoolChooser(int componentIndex) {
+        //FIXME: This method is not used, but should be fixed once
+        //nio select starts working and we start using ThreadPoolChooser
+        return null;
+    }
+
+    /**
+     * Sets a ThreadPoolChooser for a particular componentId in the ThreadPoolManager. This
+     * would enable any component to add a ThreadPoolChooser for their specific use
+     */
+    public void setThreadPoolChooser(String componentId, ThreadPoolChooser aThreadPoolChooser) {
+        //FIXME: This method is not used, but should be fixed once
+        //nio select starts working and we start using ThreadPoolChooser
+    }
+
+    /**
+     * Gets the numeric index associated with the componentId specified for a
+     * ThreadPoolChooser. This method would help the component call the more
+     * efficient implementation i.e. getThreadPoolChooser(int componentIndex)
+     */
+    public int getThreadPoolChooserNumericId(String componentId) {
+        //FIXME: This method is not used, but should be fixed once
+        //nio select starts working and we start using ThreadPoolChooser
+        return 0;
+    }
+
+}
+
+// End of file.

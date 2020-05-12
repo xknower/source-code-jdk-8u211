@@ -1,228 +1,222 @@
-/*     */ package com.sun.org.apache.xerces.internal.jaxp;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.parsers.DOMParser;
-/*     */ import com.sun.org.apache.xerces.internal.util.SAXMessageFormatter;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Map;
-/*     */ import javax.xml.parsers.DocumentBuilder;
-/*     */ import javax.xml.parsers.DocumentBuilderFactory;
-/*     */ import javax.xml.parsers.ParserConfigurationException;
-/*     */ import javax.xml.validation.Schema;
-/*     */ import org.xml.sax.SAXException;
-/*     */ import org.xml.sax.SAXNotRecognizedException;
-/*     */ import org.xml.sax.SAXNotSupportedException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DocumentBuilderFactoryImpl
-/*     */   extends DocumentBuilderFactory
-/*     */ {
-/*     */   private Map<String, Object> attributes;
-/*     */   private Map<String, Boolean> features;
-/*     */   private Schema grammar;
-/*     */   private boolean isXIncludeAware;
-/*     */   private boolean fSecureProcess = true;
-/*     */   
-/*     */   public DocumentBuilder newDocumentBuilder() throws ParserConfigurationException {
-/*  61 */     if (this.grammar != null && this.attributes != null) {
-/*  62 */       if (this.attributes.containsKey("http://java.sun.com/xml/jaxp/properties/schemaLanguage")) {
-/*  63 */         throw new ParserConfigurationException(
-/*  64 */             SAXMessageFormatter.formatMessage(null, "schema-already-specified", new Object[] { "http://java.sun.com/xml/jaxp/properties/schemaLanguage" }));
-/*     */       }
-/*     */       
-/*  67 */       if (this.attributes.containsKey("http://java.sun.com/xml/jaxp/properties/schemaSource")) {
-/*  68 */         throw new ParserConfigurationException(
-/*  69 */             SAXMessageFormatter.formatMessage(null, "schema-already-specified", new Object[] { "http://java.sun.com/xml/jaxp/properties/schemaSource" }));
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/*     */     try {
-/*  75 */       return new DocumentBuilderImpl(this, this.attributes, this.features, this.fSecureProcess);
-/*  76 */     } catch (SAXException se) {
-/*     */       
-/*  78 */       throw new ParserConfigurationException(se.getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAttribute(String name, Object value) throws IllegalArgumentException {
-/*  92 */     if (value == null) {
-/*  93 */       if (this.attributes != null) {
-/*  94 */         this.attributes.remove(name);
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 104 */     if (this.attributes == null) {
-/* 105 */       this.attributes = new HashMap<>();
-/*     */     }
-/*     */     
-/* 108 */     this.attributes.put(name, value);
-/*     */ 
-/*     */     
-/*     */     try {
-/* 112 */       new DocumentBuilderImpl(this, this.attributes, this.features);
-/* 113 */     } catch (Exception e) {
-/* 114 */       this.attributes.remove(name);
-/* 115 */       throw new IllegalArgumentException(e.getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Object getAttribute(String name) throws IllegalArgumentException {
-/* 127 */     if (this.attributes != null) {
-/* 128 */       Object val = this.attributes.get(name);
-/* 129 */       if (val != null) {
-/* 130 */         return val;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 134 */     DOMParser domParser = null;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     try {
-/* 139 */       domParser = (new DocumentBuilderImpl(this, this.attributes, this.features)).getDOMParser();
-/* 140 */       return domParser.getProperty(name);
-/* 141 */     } catch (SAXException se1) {
-/*     */       
-/*     */       try {
-/* 144 */         boolean result = domParser.getFeature(name);
-/*     */         
-/* 146 */         return result ? Boolean.TRUE : Boolean.FALSE;
-/* 147 */       } catch (SAXException se2) {
-/*     */         
-/* 149 */         throw new IllegalArgumentException(se1.getMessage());
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public Schema getSchema() {
-/* 155 */     return this.grammar;
-/*     */   }
-/*     */   
-/*     */   public void setSchema(Schema grammar) {
-/* 159 */     this.grammar = grammar;
-/*     */   }
-/*     */   
-/*     */   public boolean isXIncludeAware() {
-/* 163 */     return this.isXIncludeAware;
-/*     */   }
-/*     */   
-/*     */   public void setXIncludeAware(boolean state) {
-/* 167 */     this.isXIncludeAware = state;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean getFeature(String name) throws ParserConfigurationException {
-/* 172 */     if (name.equals("http://javax.xml.XMLConstants/feature/secure-processing")) {
-/* 173 */       return this.fSecureProcess;
-/*     */     }
-/*     */     
-/* 176 */     if (this.features != null) {
-/* 177 */       Boolean val = this.features.get(name);
-/* 178 */       if (val != null) {
-/* 179 */         return val.booleanValue();
-/*     */       }
-/*     */     } 
-/*     */     try {
-/* 183 */       DOMParser domParser = (new DocumentBuilderImpl(this, this.attributes, this.features)).getDOMParser();
-/* 184 */       return domParser.getFeature(name);
-/*     */     }
-/* 186 */     catch (SAXException e) {
-/* 187 */       throw new ParserConfigurationException(e.getMessage());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setFeature(String name, boolean value) throws ParserConfigurationException {
-/* 193 */     if (this.features == null) {
-/* 194 */       this.features = new HashMap<>();
-/*     */     }
-/*     */     
-/* 197 */     if (name.equals("http://javax.xml.XMLConstants/feature/secure-processing")) {
-/* 198 */       if (System.getSecurityManager() != null && !value) {
-/* 199 */         throw new ParserConfigurationException(
-/* 200 */             SAXMessageFormatter.formatMessage(null, "jaxp-secureprocessing-feature", null));
-/*     */       }
-/*     */       
-/* 203 */       this.fSecureProcess = value;
-/* 204 */       this.features.put(name, value ? Boolean.TRUE : Boolean.FALSE);
-/*     */       
-/*     */       return;
-/*     */     } 
-/* 208 */     this.features.put(name, value ? Boolean.TRUE : Boolean.FALSE);
-/*     */     
-/*     */     try {
-/* 211 */       new DocumentBuilderImpl(this, this.attributes, this.features);
-/*     */     }
-/* 213 */     catch (SAXNotSupportedException e) {
-/* 214 */       this.features.remove(name);
-/* 215 */       throw new ParserConfigurationException(e.getMessage());
-/*     */     }
-/* 217 */     catch (SAXNotRecognizedException e) {
-/* 218 */       this.features.remove(name);
-/* 219 */       throw new ParserConfigurationException(e.getMessage());
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\jaxp\DocumentBuilderFactoryImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.jaxp;
+
+import com.sun.org.apache.xerces.internal.parsers.DOMParser;
+import com.sun.org.apache.xerces.internal.util.SAXMessageFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.validation.Schema;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+
+/**
+ * @author Rajiv Mordani
+ * @author Edwin Goei
+ * @version $Id: DocumentBuilderFactoryImpl.java,v 1.8 2010-11-01 04:40:06 joehw Exp $
+ */
+public class DocumentBuilderFactoryImpl extends DocumentBuilderFactory {
+    /** These are DocumentBuilderFactory attributes not DOM attributes */
+    private Map<String, Object> attributes;
+    private Map<String, Boolean> features;
+    private Schema grammar;
+    private boolean isXIncludeAware;
+
+    /**
+     * State of the secure processing feature, initially <code>false</code>
+     */
+    private boolean fSecureProcess = true;
+
+    /**
+     * Creates a new instance of a {@link javax.xml.parsers.DocumentBuilder}
+     * using the currently configured parameters.
+     */
+    public DocumentBuilder newDocumentBuilder()
+        throws ParserConfigurationException
+    {
+        /** Check that if a Schema has been specified that neither of the schema properties have been set. */
+        if (grammar != null && attributes != null) {
+            if (attributes.containsKey(JAXPConstants.JAXP_SCHEMA_LANGUAGE)) {
+                throw new ParserConfigurationException(
+                        SAXMessageFormatter.formatMessage(null,
+                        "schema-already-specified", new Object[] {JAXPConstants.JAXP_SCHEMA_LANGUAGE}));
+            }
+            else if (attributes.containsKey(JAXPConstants.JAXP_SCHEMA_SOURCE)) {
+                throw new ParserConfigurationException(
+                        SAXMessageFormatter.formatMessage(null,
+                        "schema-already-specified", new Object[] {JAXPConstants.JAXP_SCHEMA_SOURCE}));
+            }
+        }
+
+        try {
+            return new DocumentBuilderImpl(this, attributes, features, fSecureProcess);
+        } catch (SAXException se) {
+            // Handles both SAXNotSupportedException, SAXNotRecognizedException
+            throw new ParserConfigurationException(se.getMessage());
+        }
+    }
+
+    /**
+     * Allows the user to set specific attributes on the underlying
+     * implementation.
+     * @param name    name of attribute
+     * @param value   null means to remove attribute
+     */
+    public void setAttribute(String name, Object value)
+        throws IllegalArgumentException
+    {
+        // This handles removal of attributes
+        if (value == null) {
+            if (attributes != null) {
+                attributes.remove(name);
+            }
+            // Unrecognized attributes do not cause an exception
+            return;
+        }
+
+        // This is ugly.  We have to collect the attributes and then
+        // later create a DocumentBuilderImpl to verify the attributes.
+
+        // Create the Map if none existed before
+        if (attributes == null) {
+            attributes = new HashMap<>();
+        }
+
+        attributes.put(name, value);
+
+        // Test the attribute name by possibly throwing an exception
+        try {
+            new DocumentBuilderImpl(this, attributes, features);
+        } catch (Exception e) {
+            attributes.remove(name);
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+    /**
+     * Allows the user to retrieve specific attributes on the underlying
+     * implementation.
+     */
+    public Object getAttribute(String name)
+        throws IllegalArgumentException
+    {
+        // See if it's in the attributes Map
+        if (attributes != null) {
+            Object val = attributes.get(name);
+            if (val != null) {
+                return val;
+            }
+        }
+
+        DOMParser domParser = null;
+        try {
+            // We create a dummy DocumentBuilderImpl in case the attribute
+            // name is not one that is in the attributes map.
+            domParser =
+                new DocumentBuilderImpl(this, attributes, features).getDOMParser();
+            return domParser.getProperty(name);
+        } catch (SAXException se1) {
+            // assert(name is not recognized or not supported), try feature
+            try {
+                boolean result = domParser.getFeature(name);
+                // Must have been a feature
+                return result ? Boolean.TRUE : Boolean.FALSE;
+            } catch (SAXException se2) {
+                // Not a property or a feature
+                throw new IllegalArgumentException(se1.getMessage());
+            }
+        }
+    }
+
+    public Schema getSchema() {
+        return grammar;
+    }
+
+    public void setSchema(Schema grammar) {
+        this.grammar = grammar;
+    }
+
+    public boolean isXIncludeAware() {
+        return this.isXIncludeAware;
+    }
+
+    public void setXIncludeAware(boolean state) {
+        this.isXIncludeAware = state;
+    }
+
+    public boolean getFeature(String name)
+        throws ParserConfigurationException {
+        if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING)) {
+            return fSecureProcess;
+        }
+        // See if it's in the features map
+        if (features != null) {
+            Boolean val = features.get(name);
+            if (val != null) {
+                return val;
+            }
+        }
+        try {
+            DOMParser domParser = new DocumentBuilderImpl(this, attributes, features).getDOMParser();
+            return domParser.getFeature(name);
+        }
+        catch (SAXException e) {
+            throw new ParserConfigurationException(e.getMessage());
+        }
+    }
+
+    public void setFeature(String name, boolean value)
+        throws ParserConfigurationException {
+        if (features == null) {
+            features = new HashMap<>();
+        }
+        // If this is the secure processing feature, save it then return.
+        if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING)) {
+            if (System.getSecurityManager() != null && (!value)) {
+                throw new ParserConfigurationException(
+                        SAXMessageFormatter.formatMessage(null,
+                        "jaxp-secureprocessing-feature", null));
+            }
+            fSecureProcess = value;
+            features.put(name, value ? Boolean.TRUE : Boolean.FALSE);
+            return;
+        }
+
+        features.put(name, value ? Boolean.TRUE : Boolean.FALSE);
+        // Test the feature by possibly throwing SAX exceptions
+        try {
+            new DocumentBuilderImpl(this, attributes, features);
+        }
+        catch (SAXNotSupportedException e) {
+            features.remove(name);
+            throw new ParserConfigurationException(e.getMessage());
+        }
+        catch (SAXNotRecognizedException e) {
+            features.remove(name);
+            throw new ParserConfigurationException(e.getMessage());
+        }
+    }
+}

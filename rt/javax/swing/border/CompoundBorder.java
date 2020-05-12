@@ -1,175 +1,169 @@
-/*     */ package javax.swing.border;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.beans.ConstructorProperties;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CompoundBorder
-/*     */   extends AbstractBorder
-/*     */ {
-/*     */   protected Border outsideBorder;
-/*     */   protected Border insideBorder;
-/*     */   
-/*     */   public CompoundBorder() {
-/*  66 */     this.outsideBorder = null;
-/*  67 */     this.insideBorder = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   @ConstructorProperties({"outsideBorder", "insideBorder"})
-/*     */   public CompoundBorder(Border paramBorder1, Border paramBorder2) {
-/*  78 */     this.outsideBorder = paramBorder1;
-/*  79 */     this.insideBorder = paramBorder2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isBorderOpaque() {
-/*  91 */     return ((this.outsideBorder == null || this.outsideBorder.isBorderOpaque()) && (this.insideBorder == null || this.insideBorder
-/*  92 */       .isBorderOpaque()));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 111 */     int i = paramInt1;
-/* 112 */     int j = paramInt2;
-/* 113 */     int k = paramInt3;
-/* 114 */     int m = paramInt4;
-/*     */     
-/* 116 */     if (this.outsideBorder != null) {
-/* 117 */       this.outsideBorder.paintBorder(paramComponent, paramGraphics, i, j, k, m);
-/*     */       
-/* 119 */       Insets insets = this.outsideBorder.getBorderInsets(paramComponent);
-/* 120 */       i += insets.left;
-/* 121 */       j += insets.top;
-/* 122 */       k = k - insets.right - insets.left;
-/* 123 */       m = m - insets.bottom - insets.top;
-/*     */     } 
-/* 125 */     if (this.insideBorder != null) {
-/* 126 */       this.insideBorder.paintBorder(paramComponent, paramGraphics, i, j, k, m);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Insets getBorderInsets(Component paramComponent, Insets paramInsets) {
-/* 138 */     paramInsets.top = paramInsets.left = paramInsets.right = paramInsets.bottom = 0;
-/* 139 */     if (this.outsideBorder != null) {
-/* 140 */       Insets insets = this.outsideBorder.getBorderInsets(paramComponent);
-/* 141 */       paramInsets.top += insets.top;
-/* 142 */       paramInsets.left += insets.left;
-/* 143 */       paramInsets.right += insets.right;
-/* 144 */       paramInsets.bottom += insets.bottom;
-/*     */     } 
-/* 146 */     if (this.insideBorder != null) {
-/* 147 */       Insets insets = this.insideBorder.getBorderInsets(paramComponent);
-/* 148 */       paramInsets.top += insets.top;
-/* 149 */       paramInsets.left += insets.left;
-/* 150 */       paramInsets.right += insets.right;
-/* 151 */       paramInsets.bottom += insets.bottom;
-/*     */     } 
-/* 153 */     return paramInsets;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Border getOutsideBorder() {
-/* 160 */     return this.outsideBorder;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Border getInsideBorder() {
-/* 167 */     return this.insideBorder;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\border\CompoundBorder.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.border;
+
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Component;
+import java.beans.ConstructorProperties;
+
+/**
+ * A composite Border class used to compose two Border objects
+ * into a single border by nesting an inside Border object within
+ * the insets of an outside Border object.
+ *
+ * For example, this class may be used to add blank margin space
+ * to a component with an existing decorative border:
+ *
+ * <pre>
+ *    Border border = comp.getBorder();
+ *    Border margin = new EmptyBorder(10,10,10,10);
+ *    comp.setBorder(new CompoundBorder(border, margin));
+ * </pre>
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author David Kloba
+ */
+@SuppressWarnings("serial")
+public class CompoundBorder extends AbstractBorder {
+    protected Border outsideBorder;
+    protected Border insideBorder;
+
+    /**
+     * Creates a compound border with null outside and inside borders.
+     */
+    public CompoundBorder() {
+        this.outsideBorder = null;
+        this.insideBorder = null;
+    }
+
+    /**
+     * Creates a compound border with the specified outside and
+     * inside borders.  Either border may be null.
+     * @param outsideBorder the outside border
+     * @param insideBorder the inside border to be nested
+     */
+    @ConstructorProperties({"outsideBorder", "insideBorder"})
+    public CompoundBorder(Border outsideBorder, Border insideBorder) {
+        this.outsideBorder = outsideBorder;
+        this.insideBorder = insideBorder;
+    }
+
+    /**
+     * Returns whether or not the compound border is opaque.
+     *
+     * @return {@code true} if the inside and outside borders
+     *         are each either {@code null} or opaque;
+     *         or {@code false} otherwise
+     */
+    @Override
+    public boolean isBorderOpaque() {
+        return (outsideBorder == null || outsideBorder.isBorderOpaque()) &&
+               (insideBorder == null || insideBorder.isBorderOpaque());
+    }
+
+    /**
+     * Paints the compound border by painting the outside border
+     * with the specified position and size and then painting the
+     * inside border at the specified position and size offset by
+     * the insets of the outside border.
+     * @param c the component for which this border is being painted
+     * @param g the paint graphics
+     * @param x the x position of the painted border
+     * @param y the y position of the painted border
+     * @param width the width of the painted border
+     * @param height the height of the painted border
+     */
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Insets  nextInsets;
+        int px, py, pw, ph;
+
+        px = x;
+        py = y;
+        pw = width;
+        ph = height;
+
+        if(outsideBorder != null) {
+            outsideBorder.paintBorder(c, g, px, py, pw, ph);
+
+            nextInsets = outsideBorder.getBorderInsets(c);
+            px += nextInsets.left;
+            py += nextInsets.top;
+            pw = pw - nextInsets.right - nextInsets.left;
+            ph = ph - nextInsets.bottom - nextInsets.top;
+        }
+        if(insideBorder != null)
+            insideBorder.paintBorder(c, g, px, py, pw, ph);
+
+    }
+
+    /**
+     * Reinitialize the insets parameter with this Border's current Insets.
+     * @param c the component for which this border insets value applies
+     * @param insets the object to be reinitialized
+     */
+    public Insets getBorderInsets(Component c, Insets insets) {
+        Insets  nextInsets;
+
+        insets.top = insets.left = insets.right = insets.bottom = 0;
+        if(outsideBorder != null) {
+            nextInsets = outsideBorder.getBorderInsets(c);
+            insets.top += nextInsets.top;
+            insets.left += nextInsets.left;
+            insets.right += nextInsets.right;
+            insets.bottom += nextInsets.bottom;
+        }
+        if(insideBorder != null) {
+            nextInsets = insideBorder.getBorderInsets(c);
+            insets.top += nextInsets.top;
+            insets.left += nextInsets.left;
+            insets.right += nextInsets.right;
+            insets.bottom += nextInsets.bottom;
+        }
+        return insets;
+    }
+
+    /**
+     * Returns the outside border object.
+     */
+    public Border getOutsideBorder() {
+        return outsideBorder;
+    }
+
+    /**
+     * Returns the inside border object.
+     */
+    public Border getInsideBorder() {
+        return insideBorder;
+    }
+}

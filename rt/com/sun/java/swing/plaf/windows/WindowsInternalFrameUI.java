@@ -1,141 +1,134 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import javax.swing.DesktopManager;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JInternalFrame;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.AbstractBorder;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
-/*     */ import javax.swing.plaf.basic.BasicInternalFrameUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsInternalFrameUI
-/*     */   extends BasicInternalFrameUI
-/*     */ {
-/*  50 */   XPStyle xp = XPStyle.getXP();
-/*     */   
-/*     */   public void installDefaults() {
-/*  53 */     super.installDefaults();
-/*     */     
-/*  55 */     if (this.xp != null) {
-/*  56 */       this.frame.setBorder(new XPBorder());
-/*     */     } else {
-/*  58 */       this.frame.setBorder(UIManager.getBorder("InternalFrame.border"));
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/*  63 */     super.installUI(paramJComponent);
-/*     */     
-/*  65 */     LookAndFeel.installProperty(paramJComponent, "opaque", (this.xp == null) ? Boolean.TRUE : Boolean.FALSE);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void uninstallDefaults() {
-/*  70 */     this.frame.setBorder(null);
-/*  71 */     super.uninstallDefaults();
-/*     */   }
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  75 */     return new WindowsInternalFrameUI((JInternalFrame)paramJComponent);
-/*     */   }
-/*     */   
-/*     */   public WindowsInternalFrameUI(JInternalFrame paramJInternalFrame) {
-/*  79 */     super(paramJInternalFrame);
-/*     */   }
-/*     */   
-/*     */   protected DesktopManager createDesktopManager() {
-/*  83 */     return new WindowsDesktopManager();
-/*     */   }
-/*     */   
-/*     */   protected JComponent createNorthPane(JInternalFrame paramJInternalFrame) {
-/*  87 */     this.titlePane = new WindowsInternalFrameTitlePane(paramJInternalFrame);
-/*  88 */     return this.titlePane;
-/*     */   }
-/*     */   
-/*     */   private class XPBorder extends AbstractBorder {
-/*  92 */     private XPStyle.Skin leftSkin = WindowsInternalFrameUI.this.xp.getSkin(WindowsInternalFrameUI.this.frame, TMSchema.Part.WP_FRAMELEFT);
-/*  93 */     private XPStyle.Skin rightSkin = WindowsInternalFrameUI.this.xp.getSkin(WindowsInternalFrameUI.this.frame, TMSchema.Part.WP_FRAMERIGHT);
-/*  94 */     private XPStyle.Skin bottomSkin = WindowsInternalFrameUI.this.xp.getSkin(WindowsInternalFrameUI.this.frame, TMSchema.Part.WP_FRAMEBOTTOM);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void paintBorder(Component param1Component, Graphics param1Graphics, int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/* 103 */       TMSchema.State state = ((JInternalFrame)param1Component).isSelected() ? TMSchema.State.ACTIVE : TMSchema.State.INACTIVE;
-/* 104 */       byte b = (WindowsInternalFrameUI.this.titlePane != null) ? (WindowsInternalFrameUI.this.titlePane.getSize()).height : 0;
-/*     */       
-/* 106 */       this.bottomSkin.paintSkin(param1Graphics, 0, param1Int4 - this.bottomSkin.getHeight(), param1Int3, this.bottomSkin
-/* 107 */           .getHeight(), state);
-/*     */ 
-/*     */       
-/* 110 */       this.leftSkin.paintSkin(param1Graphics, 0, b - 1, this.leftSkin
-/* 111 */           .getWidth(), param1Int4 - b - this.bottomSkin.getHeight() + 2, state);
-/*     */ 
-/*     */       
-/* 114 */       this.rightSkin.paintSkin(param1Graphics, param1Int3 - this.rightSkin.getWidth(), b - 1, this.rightSkin
-/* 115 */           .getWidth(), param1Int4 - b - this.bottomSkin.getHeight() + 2, state);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public Insets getBorderInsets(Component param1Component, Insets param1Insets) {
-/* 121 */       param1Insets.top = 4;
-/* 122 */       param1Insets.left = this.leftSkin.getWidth();
-/* 123 */       param1Insets.right = this.rightSkin.getWidth();
-/* 124 */       param1Insets.bottom = this.bottomSkin.getHeight();
-/*     */       
-/* 126 */       return param1Insets;
-/*     */     }
-/*     */     
-/*     */     public boolean isBorderOpaque() {
-/* 130 */       return true;
-/*     */     }
-/*     */     
-/*     */     private XPBorder() {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsInternalFrameUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import java.awt.*;
+import java.beans.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.plaf.ComponentUI;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+
+/**
+ * Windows rendition of the component.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ */
+public class WindowsInternalFrameUI extends BasicInternalFrameUI
+{
+    XPStyle xp = XPStyle.getXP();
+
+    public void installDefaults() {
+        super.installDefaults();
+
+        if (xp != null) {
+            frame.setBorder(new XPBorder());
+        } else {
+            frame.setBorder(UIManager.getBorder("InternalFrame.border"));
+        }
+    }
+
+    public void installUI(JComponent c)   {
+        super.installUI(c);
+
+        LookAndFeel.installProperty(c, "opaque",
+                                    xp == null? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    public void uninstallDefaults() {
+        frame.setBorder(null);
+        super.uninstallDefaults();
+    }
+
+    public static ComponentUI createUI(JComponent b)    {
+        return new WindowsInternalFrameUI((JInternalFrame)b);
+    }
+
+    public WindowsInternalFrameUI(JInternalFrame w){
+        super(w);
+    }
+
+    protected DesktopManager createDesktopManager(){
+        return new WindowsDesktopManager();
+    }
+
+    protected JComponent createNorthPane(JInternalFrame w) {
+        titlePane = new WindowsInternalFrameTitlePane(w);
+        return titlePane;
+    }
+
+    private class XPBorder extends AbstractBorder {
+        private Skin leftSkin   = xp.getSkin(frame, Part.WP_FRAMELEFT);
+        private Skin rightSkin  = xp.getSkin(frame, Part.WP_FRAMERIGHT);
+        private Skin bottomSkin = xp.getSkin(frame, Part.WP_FRAMEBOTTOM);
+
+        /**
+         * @param x the x position of the painted border
+         * @param y the y position of the painted border
+         * @param width the width of the painted border
+         * @param height the height of the painted border
+         */
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            State state = ((JInternalFrame)c).isSelected() ? State.ACTIVE : State.INACTIVE;
+            int topBorderHeight  = (titlePane != null) ? titlePane.getSize().height : 0;
+
+            bottomSkin.paintSkin(g, 0, height-bottomSkin.getHeight(),
+                                 width, bottomSkin.getHeight(),
+                                 state);
+
+            leftSkin.paintSkin(g, 0, topBorderHeight-1,
+                               leftSkin.getWidth(), height-topBorderHeight-bottomSkin.getHeight()+2,
+                               state);
+
+            rightSkin.paintSkin(g, width-rightSkin.getWidth(), topBorderHeight-1,
+                                rightSkin.getWidth(), height-topBorderHeight-bottomSkin.getHeight()+2,
+                                state);
+
+        }
+
+        public Insets getBorderInsets(Component c, Insets insets) {
+            insets.top    = 4;
+            insets.left   = leftSkin.getWidth();
+            insets.right  = rightSkin.getWidth();
+            insets.bottom = bottomSkin.getHeight();
+
+            return insets;
+        }
+
+        public boolean isBorderOpaque() {
+            return true;
+        }
+    }
+
+}

@@ -1,152 +1,147 @@
-/*     */ package java.lang.invoke;
-/*     */ 
-/*     */ import java.io.FilePermission;
-/*     */ import java.lang.invoke.ProxyClassesDumper;
-/*     */ import java.nio.file.Files;
-/*     */ import java.nio.file.InvalidPathException;
-/*     */ import java.nio.file.Path;
-/*     */ import java.nio.file.Paths;
-/*     */ import java.nio.file.attribute.FileAttribute;
-/*     */ import java.security.AccessControlContext;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.Permission;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.Objects;
-/*     */ import sun.util.logging.PlatformLogger;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ProxyClassesDumper
-/*     */ {
-/*  47 */   private static final char[] HEX = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-/*     */ 
-/*     */ 
-/*     */   
-/*  51 */   private static final char[] BAD_CHARS = new char[] { '\\', ':', '*', '?', '"', '<', '>', '|' };
-/*     */ 
-/*     */   
-/*  54 */   private static final String[] REPLACEMENT = new String[] { "%5C", "%3A", "%2A", "%3F", "%22", "%3C", "%3E", "%7C" };
-/*     */ 
-/*     */   
-/*     */   private final Path dumpDir;
-/*     */ 
-/*     */   
-/*     */   public static ProxyClassesDumper getInstance(String paramString) {
-/*  61 */     if (null == paramString) {
-/*  62 */       return null;
-/*     */     }
-/*     */     try {
-/*  65 */       paramString = paramString.trim();
-/*  66 */       final Path dir = Paths.get((paramString.length() == 0) ? "." : paramString, new String[0]);
-/*  67 */       AccessController.doPrivileged(new PrivilegedAction<Void>()
-/*     */           {
-/*     */             public Void run() {
-/*  70 */               ProxyClassesDumper.validateDumpDir(dir);
-/*  71 */               return null;
-/*     */             }
-/*     */           },  (AccessControlContext)null, new Permission[] { new FilePermission("<<ALL FILES>>", "read, write") });
-/*  74 */       return new ProxyClassesDumper(path);
-/*  75 */     } catch (InvalidPathException invalidPathException) {
-/*  76 */       PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
-/*  77 */         .warning("Path " + paramString + " is not valid - dumping disabled", invalidPathException);
-/*  78 */     } catch (IllegalArgumentException illegalArgumentException) {
-/*  79 */       PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
-/*  80 */         .warning(illegalArgumentException.getMessage() + " - dumping disabled");
-/*     */     } 
-/*  82 */     return null;
-/*     */   }
-/*     */   
-/*     */   private ProxyClassesDumper(Path paramPath) {
-/*  86 */     this.dumpDir = Objects.<Path>requireNonNull(paramPath);
-/*     */   }
-/*     */   
-/*     */   private static void validateDumpDir(Path paramPath) {
-/*  90 */     if (!Files.exists(paramPath, new java.nio.file.LinkOption[0]))
-/*  91 */       throw new IllegalArgumentException("Directory " + paramPath + " does not exist"); 
-/*  92 */     if (!Files.isDirectory(paramPath, new java.nio.file.LinkOption[0]))
-/*  93 */       throw new IllegalArgumentException("Path " + paramPath + " is not a directory"); 
-/*  94 */     if (!Files.isWritable(paramPath)) {
-/*  95 */       throw new IllegalArgumentException("Directory " + paramPath + " is not writable");
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   public static String encodeForFilename(String paramString) {
-/* 100 */     int i = paramString.length();
-/* 101 */     StringBuilder stringBuilder = new StringBuilder(i);
-/*     */     
-/* 103 */     for (byte b = 0; b < i; b++) {
-/* 104 */       char c = paramString.charAt(b);
-/*     */       
-/* 106 */       if (c <= '\037') {
-/* 107 */         stringBuilder.append('%');
-/* 108 */         stringBuilder.append(HEX[c >> 4 & 0xF]);
-/* 109 */         stringBuilder.append(HEX[c & 0xF]);
-/*     */       } else {
-/* 111 */         byte b1 = 0;
-/* 112 */         for (; b1 < BAD_CHARS.length; b1++) {
-/* 113 */           if (c == BAD_CHARS[b1]) {
-/* 114 */             stringBuilder.append(REPLACEMENT[b1]);
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/* 118 */         if (b1 >= BAD_CHARS.length) {
-/* 119 */           stringBuilder.append(c);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 124 */     return stringBuilder.toString();
-/*     */   }
-/*     */   
-/*     */   public void dumpClass(String paramString, byte[] paramArrayOfbyte) {
-/*     */     Path path;
-/*     */     try {
-/* 130 */       path = this.dumpDir.resolve(encodeForFilename(paramString) + ".class");
-/* 131 */     } catch (InvalidPathException invalidPathException) {
-/* 132 */       PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
-/* 133 */         .warning("Invalid path for class " + paramString);
-/*     */       
-/*     */       return;
-/*     */     } 
-/*     */     try {
-/* 138 */       Path path1 = path.getParent();
-/* 139 */       Files.createDirectories(path1, (FileAttribute<?>[])new FileAttribute[0]);
-/* 140 */       Files.write(path, paramArrayOfbyte, new java.nio.file.OpenOption[0]);
-/* 141 */     } catch (Exception exception) {
-/* 142 */       PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
-/* 143 */         .warning("Exception writing to path at " + path.toString());
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\invoke\ProxyClassesDumper.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.lang.invoke;
+
+import sun.util.logging.PlatformLogger;
+
+import java.io.FilePermission;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * Helper class used by InnerClassLambdaMetafactory to log generated classes
+ *
+ * @implNote
+ * <p> Because this class is called by LambdaMetafactory, make use
+ * of lambda lead to recursive calls cause stack overflow.
+ */
+final class ProxyClassesDumper {
+    private static final char[] HEX = {
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+    };
+    private static final char[] BAD_CHARS = {
+        '\\', ':', '*', '?', '"', '<', '>', '|'
+    };
+    private static final String[] REPLACEMENT = {
+        "%5C", "%3A", "%2A", "%3F", "%22", "%3C", "%3E", "%7C"
+    };
+
+    private final Path dumpDir;
+
+    public static ProxyClassesDumper getInstance(String path) {
+        if (null == path) {
+            return null;
+        }
+        try {
+            path = path.trim();
+            final Path dir = Paths.get(path.length() == 0 ? "." : path);
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    @Override
+                    public Void run() {
+                        validateDumpDir(dir);
+                        return null;
+                    }
+                }, null, new FilePermission("<<ALL FILES>>", "read, write"));
+            return new ProxyClassesDumper(dir);
+        } catch (InvalidPathException ex) {
+            PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
+                          .warning("Path " + path + " is not valid - dumping disabled", ex);
+        } catch (IllegalArgumentException iae) {
+            PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
+                          .warning(iae.getMessage() + " - dumping disabled");
+        }
+        return null;
+    }
+
+    private ProxyClassesDumper(Path path) {
+        dumpDir = Objects.requireNonNull(path);
+    }
+
+    private static void validateDumpDir(Path path) {
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Directory " + path + " does not exist");
+        } else if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException("Path " + path + " is not a directory");
+        } else if (!Files.isWritable(path)) {
+            throw new IllegalArgumentException("Directory " + path + " is not writable");
+        }
+    }
+
+    public static String encodeForFilename(String className) {
+        final int len = className.length();
+        StringBuilder sb = new StringBuilder(len);
+
+        for (int i = 0; i < len; i++) {
+            char c = className.charAt(i);
+            // control characters
+            if (c <= 31) {
+                sb.append('%');
+                sb.append(HEX[c >> 4 & 0x0F]);
+                sb.append(HEX[c & 0x0F]);
+            } else {
+                int j = 0;
+                for (; j < BAD_CHARS.length; j++) {
+                    if (c == BAD_CHARS[j]) {
+                        sb.append(REPLACEMENT[j]);
+                        break;
+                    }
+                }
+                if (j >= BAD_CHARS.length) {
+                    sb.append(c);
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public void dumpClass(String className, final byte[] classBytes) {
+        Path file;
+        try {
+            file = dumpDir.resolve(encodeForFilename(className) + ".class");
+        } catch (InvalidPathException ex) {
+            PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
+                          .warning("Invalid path for class " + className);
+            return;
+        }
+
+        try {
+            Path dir = file.getParent();
+            Files.createDirectories(dir);
+            Files.write(file, classBytes);
+        } catch (Exception ignore) {
+            PlatformLogger.getLogger(ProxyClassesDumper.class.getName())
+                          .warning("Exception writing to path at " + file.toString());
+            // simply don't care if this operation failed
+        }
+    }
+}

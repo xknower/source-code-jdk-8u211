@@ -1,11 +1,39 @@
-package com.sun.jmx.snmp;
-
-public interface SnmpAckPdu {
-  SnmpPdu getResponsePdu();
-}
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\SnmpAckPdu.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.jmx.snmp;
+/**
+ * Interface to be implemented by PDUs that are acknowledged (eg:
+ * request, bulk).
+ * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * to change without notice.</b></p>
+ * @since 1.5
+ */
+public interface SnmpAckPdu {
+    /**
+     * Returns the PDU to use for the response.
+     * @return The response PDU.
+     */
+    public SnmpPdu getResponsePdu();
+}

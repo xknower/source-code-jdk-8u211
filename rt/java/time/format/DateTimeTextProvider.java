@@ -1,564 +1,558 @@
-/*     */ package java.time.format;
-/*     */ 
-/*     */ import java.time.chrono.Chronology;
-/*     */ import java.time.chrono.IsoChronology;
-/*     */ import java.time.chrono.JapaneseChronology;
-/*     */ import java.time.temporal.ChronoField;
-/*     */ import java.time.temporal.IsoFields;
-/*     */ import java.time.temporal.TemporalField;
-/*     */ import java.util.AbstractMap;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collections;
-/*     */ import java.util.Comparator;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.List;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ import java.util.ResourceBundle;
-/*     */ import java.util.concurrent.ConcurrentHashMap;
-/*     */ import java.util.concurrent.ConcurrentMap;
-/*     */ import sun.util.locale.provider.CalendarDataUtility;
-/*     */ import sun.util.locale.provider.LocaleProviderAdapter;
-/*     */ import sun.util.locale.provider.LocaleResources;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class DateTimeTextProvider
-/*     */ {
-/* 106 */   private static final ConcurrentMap<Map.Entry<TemporalField, Locale>, Object> CACHE = new ConcurrentHashMap<>(16, 0.75F, 2);
-/*     */   
-/* 108 */   private static final Comparator<Map.Entry<String, Long>> COMPARATOR = new Comparator<Map.Entry<String, Long>>()
-/*     */     {
-/*     */       public int compare(Map.Entry<String, Long> param1Entry1, Map.Entry<String, Long> param1Entry2) {
-/* 111 */         return ((String)param1Entry2.getKey()).length() - ((String)param1Entry1.getKey()).length();
-/*     */       }
-/*     */     };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static DateTimeTextProvider getInstance() {
-/* 123 */     return new DateTimeTextProvider();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getText(TemporalField paramTemporalField, long paramLong, TextStyle paramTextStyle, Locale paramLocale) {
-/* 141 */     Object object = findStore(paramTemporalField, paramLocale);
-/* 142 */     if (object instanceof LocaleStore) {
-/* 143 */       return ((LocaleStore)object).getText(paramLong, paramTextStyle);
-/*     */     }
-/* 145 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getText(Chronology paramChronology, TemporalField paramTemporalField, long paramLong, TextStyle paramTextStyle, Locale paramLocale) {
-/*     */     byte b;
-/*     */     int i;
-/* 165 */     if (paramChronology == IsoChronology.INSTANCE || !(paramTemporalField instanceof ChronoField))
-/*     */     {
-/* 167 */       return getText(paramTemporalField, paramLong, paramTextStyle, paramLocale);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 172 */     if (paramTemporalField == ChronoField.ERA) {
-/* 173 */       b = 0;
-/* 174 */       if (paramChronology == JapaneseChronology.INSTANCE) {
-/* 175 */         if (paramLong == -999L) {
-/* 176 */           i = 0;
-/*     */         } else {
-/* 178 */           i = (int)paramLong + 2;
-/*     */         } 
-/*     */       } else {
-/* 181 */         i = (int)paramLong;
-/*     */       } 
-/* 183 */     } else if (paramTemporalField == ChronoField.MONTH_OF_YEAR) {
-/* 184 */       b = 2;
-/* 185 */       i = (int)paramLong - 1;
-/* 186 */     } else if (paramTemporalField == ChronoField.DAY_OF_WEEK) {
-/* 187 */       b = 7;
-/* 188 */       i = (int)paramLong + 1;
-/* 189 */       if (i > 7) {
-/* 190 */         i = 1;
-/*     */       }
-/* 192 */     } else if (paramTemporalField == ChronoField.AMPM_OF_DAY) {
-/* 193 */       b = 9;
-/* 194 */       i = (int)paramLong;
-/*     */     } else {
-/* 196 */       return null;
-/*     */     } 
-/* 198 */     return CalendarDataUtility.retrieveJavaTimeFieldValueName(paramChronology
-/* 199 */         .getCalendarType(), b, i, paramTextStyle.toCalendarStyle(), paramLocale);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator<Map.Entry<String, Long>> getTextIterator(TemporalField paramTemporalField, TextStyle paramTextStyle, Locale paramLocale) {
-/* 219 */     Object object = findStore(paramTemporalField, paramLocale);
-/* 220 */     if (object instanceof LocaleStore) {
-/* 221 */       return ((LocaleStore)object).getTextIterator(paramTextStyle);
-/*     */     }
-/* 223 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Iterator<Map.Entry<String, Long>> getTextIterator(Chronology paramChronology, TemporalField paramTemporalField, TextStyle paramTextStyle, Locale paramLocale) {
-/*     */     byte b;
-/* 245 */     if (paramChronology == IsoChronology.INSTANCE || !(paramTemporalField instanceof ChronoField))
-/*     */     {
-/* 247 */       return getTextIterator(paramTemporalField, paramTextStyle, paramLocale);
-/*     */     }
-/*     */ 
-/*     */     
-/* 251 */     switch ((ChronoField)paramTemporalField) {
-/*     */       case ERA:
-/* 253 */         b = 0;
-/*     */         break;
-/*     */       case MONTH_OF_YEAR:
-/* 256 */         b = 2;
-/*     */         break;
-/*     */       case DAY_OF_WEEK:
-/* 259 */         b = 7;
-/*     */         break;
-/*     */       case AMPM_OF_DAY:
-/* 262 */         b = 9;
-/*     */         break;
-/*     */       default:
-/* 265 */         return null;
-/*     */     } 
-/*     */     
-/* 268 */     boolean bool = (paramTextStyle == null) ? false : paramTextStyle.toCalendarStyle();
-/* 269 */     Map<String, Integer> map = CalendarDataUtility.retrieveJavaTimeFieldValueNames(paramChronology
-/* 270 */         .getCalendarType(), b, bool, paramLocale);
-/* 271 */     if (map == null) {
-/* 272 */       return null;
-/*     */     }
-/* 274 */     ArrayList<Map.Entry<String, Long>> arrayList = new ArrayList(map.size());
-/* 275 */     switch (b)
-/*     */     { case 0:
-/* 277 */         for (Map.Entry<String, Integer> entry : map.entrySet()) {
-/* 278 */           int i = ((Integer)entry.getValue()).intValue();
-/* 279 */           if (paramChronology == JapaneseChronology.INSTANCE) {
-/* 280 */             if (i == 0) {
-/* 281 */               i = -999;
-/*     */             } else {
-/* 283 */               i -= 2;
-/*     */             } 
-/*     */           }
-/* 286 */           arrayList.add(createEntry(entry.getKey(), Long.valueOf(i)));
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 305 */         return arrayList.iterator();case 2: for (Map.Entry<String, Integer> entry : map.entrySet()) arrayList.add(createEntry((String)entry.getKey(), Long.valueOf((((Integer)entry.getValue()).intValue() + 1))));  return arrayList.iterator();case 7: for (Map.Entry<String, Integer> entry : map.entrySet()) arrayList.add(createEntry((String)entry.getKey(), Long.valueOf(toWeekDay(((Integer)entry.getValue()).intValue()))));  return arrayList.iterator(); }  for (Map.Entry<String, Integer> entry : map.entrySet()) arrayList.add(createEntry((String)entry.getKey(), Long.valueOf(((Integer)entry.getValue()).intValue())));  return arrayList.iterator();
-/*     */   }
-/*     */   
-/*     */   private Object findStore(TemporalField paramTemporalField, Locale paramLocale) {
-/* 309 */     Map.Entry<TemporalField, Locale> entry = createEntry(paramTemporalField, paramLocale);
-/* 310 */     Object object = CACHE.get(entry);
-/* 311 */     if (object == null) {
-/* 312 */       object = createStore(paramTemporalField, paramLocale);
-/* 313 */       CACHE.putIfAbsent(entry, object);
-/* 314 */       object = CACHE.get(entry);
-/*     */     } 
-/* 316 */     return object;
-/*     */   }
-/*     */   
-/*     */   private static int toWeekDay(int paramInt) {
-/* 320 */     if (paramInt == 1) {
-/* 321 */       return 7;
-/*     */     }
-/* 323 */     return paramInt - 1;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private Object createStore(TemporalField paramTemporalField, Locale paramLocale) {
-/* 328 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/* 329 */     if (paramTemporalField == ChronoField.ERA) {
-/* 330 */       for (TextStyle textStyle : TextStyle.values()) {
-/* 331 */         if (!textStyle.isStandalone()) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 335 */           Map<String, Integer> map = CalendarDataUtility.retrieveJavaTimeFieldValueNames("gregory", 0, textStyle
-/* 336 */               .toCalendarStyle(), paramLocale);
-/* 337 */           if (map != null) {
-/* 338 */             HashMap<Object, Object> hashMap1 = new HashMap<>();
-/* 339 */             for (Map.Entry<String, Integer> entry : map.entrySet()) {
-/* 340 */               hashMap1.put(Long.valueOf(((Integer)entry.getValue()).intValue()), entry.getKey());
-/*     */             }
-/* 342 */             if (!hashMap1.isEmpty())
-/* 343 */               hashMap.put(textStyle, hashMap1); 
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 347 */       return new LocaleStore((Map)hashMap);
-/*     */     } 
-/*     */     
-/* 350 */     if (paramTemporalField == ChronoField.MONTH_OF_YEAR) {
-/* 351 */       for (TextStyle textStyle : TextStyle.values()) {
-/* 352 */         Map<String, Integer> map = CalendarDataUtility.retrieveJavaTimeFieldValueNames("gregory", 2, textStyle
-/* 353 */             .toCalendarStyle(), paramLocale);
-/* 354 */         HashMap<Object, Object> hashMap1 = new HashMap<>();
-/* 355 */         if (map != null) {
-/* 356 */           for (Map.Entry<String, Integer> entry : map.entrySet()) {
-/* 357 */             hashMap1.put(Long.valueOf((((Integer)entry.getValue()).intValue() + 1)), entry.getKey());
-/*     */           
-/*     */           }
-/*     */         }
-/*     */         else {
-/*     */           
-/* 363 */           for (byte b = 0; b <= 11; b++) {
-/*     */             
-/* 365 */             String str = CalendarDataUtility.retrieveJavaTimeFieldValueName("gregory", 2, b, textStyle
-/* 366 */                 .toCalendarStyle(), paramLocale);
-/* 367 */             if (str == null) {
-/*     */               break;
-/*     */             }
-/* 370 */             hashMap1.put(Long.valueOf((b + 1)), str);
-/*     */           } 
-/*     */         } 
-/* 373 */         if (!hashMap1.isEmpty()) {
-/* 374 */           hashMap.put(textStyle, hashMap1);
-/*     */         }
-/*     */       } 
-/* 377 */       return new LocaleStore((Map)hashMap);
-/*     */     } 
-/*     */     
-/* 380 */     if (paramTemporalField == ChronoField.DAY_OF_WEEK) {
-/* 381 */       for (TextStyle textStyle : TextStyle.values()) {
-/* 382 */         Map<String, Integer> map = CalendarDataUtility.retrieveJavaTimeFieldValueNames("gregory", 7, textStyle
-/* 383 */             .toCalendarStyle(), paramLocale);
-/* 384 */         HashMap<Object, Object> hashMap1 = new HashMap<>();
-/* 385 */         if (map != null) {
-/* 386 */           for (Map.Entry<String, Integer> entry : map.entrySet()) {
-/* 387 */             hashMap1.put(Long.valueOf(toWeekDay(((Integer)entry.getValue()).intValue())), entry.getKey());
-/*     */           
-/*     */           }
-/*     */         }
-/*     */         else {
-/*     */           
-/* 393 */           for (byte b = 1; b <= 7; b++) {
-/*     */             
-/* 395 */             String str = CalendarDataUtility.retrieveJavaTimeFieldValueName("gregory", 7, b, textStyle
-/* 396 */                 .toCalendarStyle(), paramLocale);
-/* 397 */             if (str == null) {
-/*     */               break;
-/*     */             }
-/* 400 */             hashMap1.put(Long.valueOf(toWeekDay(b)), str);
-/*     */           } 
-/*     */         } 
-/* 403 */         if (!hashMap1.isEmpty()) {
-/* 404 */           hashMap.put(textStyle, hashMap1);
-/*     */         }
-/*     */       } 
-/* 407 */       return new LocaleStore((Map)hashMap);
-/*     */     } 
-/*     */     
-/* 410 */     if (paramTemporalField == ChronoField.AMPM_OF_DAY) {
-/* 411 */       for (TextStyle textStyle : TextStyle.values()) {
-/* 412 */         if (!textStyle.isStandalone()) {
-/*     */ 
-/*     */ 
-/*     */           
-/* 416 */           Map<String, Integer> map = CalendarDataUtility.retrieveJavaTimeFieldValueNames("gregory", 9, textStyle
-/* 417 */               .toCalendarStyle(), paramLocale);
-/* 418 */           if (map != null) {
-/* 419 */             HashMap<Object, Object> hashMap1 = new HashMap<>();
-/* 420 */             for (Map.Entry<String, Integer> entry : map.entrySet()) {
-/* 421 */               hashMap1.put(Long.valueOf(((Integer)entry.getValue()).intValue()), entry.getKey());
-/*     */             }
-/* 423 */             if (!hashMap1.isEmpty())
-/* 424 */               hashMap.put(textStyle, hashMap1); 
-/*     */           } 
-/*     */         } 
-/*     */       } 
-/* 428 */       return new LocaleStore((Map)hashMap);
-/*     */     } 
-/*     */     
-/* 431 */     if (paramTemporalField == IsoFields.QUARTER_OF_YEAR) {
-/*     */       
-/* 433 */       String[] arrayOfString = { "QuarterNames", "standalone.QuarterNames", "QuarterAbbreviations", "standalone.QuarterAbbreviations", "QuarterNarrows", "standalone.QuarterNarrows" };
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 441 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/* 442 */         String[] arrayOfString1 = getLocalizedResource(arrayOfString[b], paramLocale);
-/* 443 */         if (arrayOfString1 != null) {
-/* 444 */           HashMap<Object, Object> hashMap1 = new HashMap<>();
-/* 445 */           for (byte b1 = 0; b1 < arrayOfString1.length; b1++) {
-/* 446 */             hashMap1.put(Long.valueOf((b1 + 1)), arrayOfString1[b1]);
-/*     */           }
-/* 448 */           hashMap.put(TextStyle.values()[b], hashMap1);
-/*     */         } 
-/*     */       } 
-/* 451 */       return new LocaleStore((Map)hashMap);
-/*     */     } 
-/*     */     
-/* 454 */     return "";
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static <A, B> Map.Entry<A, B> createEntry(A paramA, B paramB) {
-/* 465 */     return new AbstractMap.SimpleImmutableEntry<>(paramA, paramB);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static <T> T getLocalizedResource(String paramString, Locale paramLocale) {
-/* 480 */     LocaleResources localeResources = LocaleProviderAdapter.getResourceBundleBased().getLocaleResources(paramLocale);
-/* 481 */     ResourceBundle resourceBundle = localeResources.getJavaTimeFormatData();
-/* 482 */     return resourceBundle.containsKey(paramString) ? (T)resourceBundle.getObject(paramString) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static final class LocaleStore
-/*     */   {
-/*     */     private final Map<TextStyle, Map<Long, String>> valueTextMap;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private final Map<TextStyle, List<Map.Entry<String, Long>>> parsable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     LocaleStore(Map<TextStyle, Map<Long, String>> param1Map) {
-/* 510 */       this.valueTextMap = param1Map;
-/* 511 */       HashMap<Object, Object> hashMap = new HashMap<>();
-/* 512 */       ArrayList<?> arrayList = new ArrayList();
-/* 513 */       for (Map.Entry<TextStyle, Map<Long, String>> entry : param1Map.entrySet()) {
-/* 514 */         HashMap<Object, Object> hashMap1 = new HashMap<>();
-/* 515 */         for (Map.Entry entry1 : ((Map)entry.getValue()).entrySet()) {
-/* 516 */           if (hashMap1.put(entry1.getValue(), DateTimeTextProvider.createEntry((A)entry1.getValue(), (B)entry1.getKey())) != null);
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 521 */         ArrayList<?> arrayList1 = new ArrayList(hashMap1.values());
-/* 522 */         Collections.sort(arrayList1, DateTimeTextProvider.COMPARATOR);
-/* 523 */         hashMap.put(entry.getKey(), arrayList1);
-/* 524 */         arrayList.addAll(arrayList1);
-/* 525 */         hashMap.put(null, arrayList);
-/*     */       } 
-/* 527 */       Collections.sort(arrayList, DateTimeTextProvider.COMPARATOR);
-/* 528 */       this.parsable = (Map)hashMap;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     String getText(long param1Long, TextStyle param1TextStyle) {
-/* 540 */       Map map = this.valueTextMap.get(param1TextStyle);
-/* 541 */       return (map != null) ? (String)map.get(Long.valueOf(param1Long)) : null;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Iterator<Map.Entry<String, Long>> getTextIterator(TextStyle param1TextStyle) {
-/* 554 */       List<Map.Entry<String, Long>> list = this.parsable.get(param1TextStyle);
-/* 555 */       return (list != null) ? list.iterator() : null;
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\format\DateTimeTextProvider.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2011-2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.format;
+
+import static java.time.temporal.ChronoField.AMPM_OF_DAY;
+import static java.time.temporal.ChronoField.DAY_OF_WEEK;
+import static java.time.temporal.ChronoField.ERA;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+
+import java.time.chrono.Chronology;
+import java.time.chrono.IsoChronology;
+import java.time.chrono.JapaneseChronology;
+import java.time.temporal.ChronoField;
+import java.time.temporal.IsoFields;
+import java.time.temporal.TemporalField;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.ResourceBundle;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import sun.util.locale.provider.CalendarDataUtility;
+import sun.util.locale.provider.LocaleProviderAdapter;
+import sun.util.locale.provider.LocaleResources;
+
+/**
+ * A provider to obtain the textual form of a date-time field.
+ *
+ * @implSpec
+ * Implementations must be thread-safe.
+ * Implementations should cache the textual information.
+ *
+ * @since 1.8
+ */
+class DateTimeTextProvider {
+
+    /** Cache. */
+    private static final ConcurrentMap<Entry<TemporalField, Locale>, Object> CACHE = new ConcurrentHashMap<>(16, 0.75f, 2);
+    /** Comparator. */
+    private static final Comparator<Entry<String, Long>> COMPARATOR = new Comparator<Entry<String, Long>>() {
+        @Override
+        public int compare(Entry<String, Long> obj1, Entry<String, Long> obj2) {
+            return obj2.getKey().length() - obj1.getKey().length();  // longest to shortest
+        }
+    };
+
+    DateTimeTextProvider() {}
+
+    /**
+     * Gets the provider of text.
+     *
+     * @return the provider, not null
+     */
+    static DateTimeTextProvider getInstance() {
+        return new DateTimeTextProvider();
+    }
+
+    /**
+     * Gets the text for the specified field, locale and style
+     * for the purpose of formatting.
+     * <p>
+     * The text associated with the value is returned.
+     * The null return value should be used if there is no applicable text, or
+     * if the text would be a numeric representation of the value.
+     *
+     * @param field  the field to get text for, not null
+     * @param value  the field value to get text for, not null
+     * @param style  the style to get text for, not null
+     * @param locale  the locale to get text for, not null
+     * @return the text for the field value, null if no text found
+     */
+    public String getText(TemporalField field, long value, TextStyle style, Locale locale) {
+        Object store = findStore(field, locale);
+        if (store instanceof LocaleStore) {
+            return ((LocaleStore) store).getText(value, style);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the text for the specified chrono, field, locale and style
+     * for the purpose of formatting.
+     * <p>
+     * The text associated with the value is returned.
+     * The null return value should be used if there is no applicable text, or
+     * if the text would be a numeric representation of the value.
+     *
+     * @param chrono  the Chronology to get text for, not null
+     * @param field  the field to get text for, not null
+     * @param value  the field value to get text for, not null
+     * @param style  the style to get text for, not null
+     * @param locale  the locale to get text for, not null
+     * @return the text for the field value, null if no text found
+     */
+    public String getText(Chronology chrono, TemporalField field, long value,
+                                    TextStyle style, Locale locale) {
+        if (chrono == IsoChronology.INSTANCE
+                || !(field instanceof ChronoField)) {
+            return getText(field, value, style, locale);
+        }
+
+        int fieldIndex;
+        int fieldValue;
+        if (field == ERA) {
+            fieldIndex = Calendar.ERA;
+            if (chrono == JapaneseChronology.INSTANCE) {
+                if (value == -999) {
+                    fieldValue = 0;
+                } else {
+                    fieldValue = (int) value + 2;
+                }
+            } else {
+                fieldValue = (int) value;
+            }
+        } else if (field == MONTH_OF_YEAR) {
+            fieldIndex = Calendar.MONTH;
+            fieldValue = (int) value - 1;
+        } else if (field == DAY_OF_WEEK) {
+            fieldIndex = Calendar.DAY_OF_WEEK;
+            fieldValue = (int) value + 1;
+            if (fieldValue > 7) {
+                fieldValue = Calendar.SUNDAY;
+            }
+        } else if (field == AMPM_OF_DAY) {
+            fieldIndex = Calendar.AM_PM;
+            fieldValue = (int) value;
+        } else {
+            return null;
+        }
+        return CalendarDataUtility.retrieveJavaTimeFieldValueName(
+                chrono.getCalendarType(), fieldIndex, fieldValue, style.toCalendarStyle(), locale);
+    }
+
+    /**
+     * Gets an iterator of text to field for the specified field, locale and style
+     * for the purpose of parsing.
+     * <p>
+     * The iterator must be returned in order from the longest text to the shortest.
+     * <p>
+     * The null return value should be used if there is no applicable parsable text, or
+     * if the text would be a numeric representation of the value.
+     * Text can only be parsed if all the values for that field-style-locale combination are unique.
+     *
+     * @param field  the field to get text for, not null
+     * @param style  the style to get text for, null for all parsable text
+     * @param locale  the locale to get text for, not null
+     * @return the iterator of text to field pairs, in order from longest text to shortest text,
+     *  null if the field or style is not parsable
+     */
+    public Iterator<Entry<String, Long>> getTextIterator(TemporalField field, TextStyle style, Locale locale) {
+        Object store = findStore(field, locale);
+        if (store instanceof LocaleStore) {
+            return ((LocaleStore) store).getTextIterator(style);
+        }
+        return null;
+    }
+
+    /**
+     * Gets an iterator of text to field for the specified chrono, field, locale and style
+     * for the purpose of parsing.
+     * <p>
+     * The iterator must be returned in order from the longest text to the shortest.
+     * <p>
+     * The null return value should be used if there is no applicable parsable text, or
+     * if the text would be a numeric representation of the value.
+     * Text can only be parsed if all the values for that field-style-locale combination are unique.
+     *
+     * @param chrono  the Chronology to get text for, not null
+     * @param field  the field to get text for, not null
+     * @param style  the style to get text for, null for all parsable text
+     * @param locale  the locale to get text for, not null
+     * @return the iterator of text to field pairs, in order from longest text to shortest text,
+     *  null if the field or style is not parsable
+     */
+    public Iterator<Entry<String, Long>> getTextIterator(Chronology chrono, TemporalField field,
+                                                         TextStyle style, Locale locale) {
+        if (chrono == IsoChronology.INSTANCE
+                || !(field instanceof ChronoField)) {
+            return getTextIterator(field, style, locale);
+        }
+
+        int fieldIndex;
+        switch ((ChronoField)field) {
+        case ERA:
+            fieldIndex = Calendar.ERA;
+            break;
+        case MONTH_OF_YEAR:
+            fieldIndex = Calendar.MONTH;
+            break;
+        case DAY_OF_WEEK:
+            fieldIndex = Calendar.DAY_OF_WEEK;
+            break;
+        case AMPM_OF_DAY:
+            fieldIndex = Calendar.AM_PM;
+            break;
+        default:
+            return null;
+        }
+
+        int calendarStyle = (style == null) ? Calendar.ALL_STYLES : style.toCalendarStyle();
+        Map<String, Integer> map = CalendarDataUtility.retrieveJavaTimeFieldValueNames(
+                chrono.getCalendarType(), fieldIndex, calendarStyle, locale);
+        if (map == null) {
+            return null;
+        }
+        List<Entry<String, Long>> list = new ArrayList<>(map.size());
+        switch (fieldIndex) {
+        case Calendar.ERA:
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                int era = entry.getValue();
+                if (chrono == JapaneseChronology.INSTANCE) {
+                    if (era == 0) {
+                        era = -999;
+                    } else {
+                        era -= 2;
+                    }
+                }
+                list.add(createEntry(entry.getKey(), (long)era));
+            }
+            break;
+        case Calendar.MONTH:
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                list.add(createEntry(entry.getKey(), (long)(entry.getValue() + 1)));
+            }
+            break;
+        case Calendar.DAY_OF_WEEK:
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                list.add(createEntry(entry.getKey(), (long)toWeekDay(entry.getValue())));
+            }
+            break;
+        default:
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                list.add(createEntry(entry.getKey(), (long)entry.getValue()));
+            }
+            break;
+        }
+        return list.iterator();
+    }
+
+    private Object findStore(TemporalField field, Locale locale) {
+        Entry<TemporalField, Locale> key = createEntry(field, locale);
+        Object store = CACHE.get(key);
+        if (store == null) {
+            store = createStore(field, locale);
+            CACHE.putIfAbsent(key, store);
+            store = CACHE.get(key);
+        }
+        return store;
+    }
+
+    private static int toWeekDay(int calWeekDay) {
+        if (calWeekDay == Calendar.SUNDAY) {
+            return 7;
+        } else {
+            return calWeekDay - 1;
+        }
+    }
+
+    private Object createStore(TemporalField field, Locale locale) {
+        Map<TextStyle, Map<Long, String>> styleMap = new HashMap<>();
+        if (field == ERA) {
+            for (TextStyle textStyle : TextStyle.values()) {
+                if (textStyle.isStandalone()) {
+                    // Stand-alone isn't applicable to era names.
+                    continue;
+                }
+                Map<String, Integer> displayNames = CalendarDataUtility.retrieveJavaTimeFieldValueNames(
+                        "gregory", Calendar.ERA, textStyle.toCalendarStyle(), locale);
+                if (displayNames != null) {
+                    Map<Long, String> map = new HashMap<>();
+                    for (Entry<String, Integer> entry : displayNames.entrySet()) {
+                        map.put((long) entry.getValue(), entry.getKey());
+                    }
+                    if (!map.isEmpty()) {
+                        styleMap.put(textStyle, map);
+                    }
+                }
+            }
+            return new LocaleStore(styleMap);
+        }
+
+        if (field == MONTH_OF_YEAR) {
+            for (TextStyle textStyle : TextStyle.values()) {
+                Map<String, Integer> displayNames = CalendarDataUtility.retrieveJavaTimeFieldValueNames(
+                        "gregory", Calendar.MONTH, textStyle.toCalendarStyle(), locale);
+                Map<Long, String> map = new HashMap<>();
+                if (displayNames != null) {
+                    for (Entry<String, Integer> entry : displayNames.entrySet()) {
+                        map.put((long) (entry.getValue() + 1), entry.getKey());
+                    }
+
+                } else {
+                    // Narrow names may have duplicated names, such as "J" for January, Jun, July.
+                    // Get names one by one in that case.
+                    for (int month = Calendar.JANUARY; month <= Calendar.DECEMBER; month++) {
+                        String name;
+                        name = CalendarDataUtility.retrieveJavaTimeFieldValueName(
+                                "gregory", Calendar.MONTH, month, textStyle.toCalendarStyle(), locale);
+                        if (name == null) {
+                            break;
+                        }
+                        map.put((long) (month + 1), name);
+                    }
+                }
+                if (!map.isEmpty()) {
+                    styleMap.put(textStyle, map);
+                }
+            }
+            return new LocaleStore(styleMap);
+        }
+
+        if (field == DAY_OF_WEEK) {
+            for (TextStyle textStyle : TextStyle.values()) {
+                Map<String, Integer> displayNames = CalendarDataUtility.retrieveJavaTimeFieldValueNames(
+                        "gregory", Calendar.DAY_OF_WEEK, textStyle.toCalendarStyle(), locale);
+                Map<Long, String> map = new HashMap<>();
+                if (displayNames != null) {
+                    for (Entry<String, Integer> entry : displayNames.entrySet()) {
+                        map.put((long)toWeekDay(entry.getValue()), entry.getKey());
+                    }
+
+                } else {
+                    // Narrow names may have duplicated names, such as "S" for Sunday and Saturday.
+                    // Get names one by one in that case.
+                    for (int wday = Calendar.SUNDAY; wday <= Calendar.SATURDAY; wday++) {
+                        String name;
+                        name = CalendarDataUtility.retrieveJavaTimeFieldValueName(
+                            "gregory", Calendar.DAY_OF_WEEK, wday, textStyle.toCalendarStyle(), locale);
+                        if (name == null) {
+                            break;
+                        }
+                        map.put((long)toWeekDay(wday), name);
+                    }
+                }
+                if (!map.isEmpty()) {
+                    styleMap.put(textStyle, map);
+                }
+            }
+            return new LocaleStore(styleMap);
+        }
+
+        if (field == AMPM_OF_DAY) {
+            for (TextStyle textStyle : TextStyle.values()) {
+                if (textStyle.isStandalone()) {
+                    // Stand-alone isn't applicable to AM/PM.
+                    continue;
+                }
+                Map<String, Integer> displayNames = CalendarDataUtility.retrieveJavaTimeFieldValueNames(
+                        "gregory", Calendar.AM_PM, textStyle.toCalendarStyle(), locale);
+                if (displayNames != null) {
+                    Map<Long, String> map = new HashMap<>();
+                    for (Entry<String, Integer> entry : displayNames.entrySet()) {
+                        map.put((long) entry.getValue(), entry.getKey());
+                    }
+                    if (!map.isEmpty()) {
+                        styleMap.put(textStyle, map);
+                    }
+                }
+            }
+            return new LocaleStore(styleMap);
+        }
+
+        if (field == IsoFields.QUARTER_OF_YEAR) {
+            // The order of keys must correspond to the TextStyle.values() order.
+            final String[] keys = {
+                "QuarterNames",
+                "standalone.QuarterNames",
+                "QuarterAbbreviations",
+                "standalone.QuarterAbbreviations",
+                "QuarterNarrows",
+                "standalone.QuarterNarrows",
+            };
+            for (int i = 0; i < keys.length; i++) {
+                String[] names = getLocalizedResource(keys[i], locale);
+                if (names != null) {
+                    Map<Long, String> map = new HashMap<>();
+                    for (int q = 0; q < names.length; q++) {
+                        map.put((long) (q + 1), names[q]);
+                    }
+                    styleMap.put(TextStyle.values()[i], map);
+                }
+            }
+            return new LocaleStore(styleMap);
+        }
+
+        return "";  // null marker for map
+    }
+
+    /**
+     * Helper method to create an immutable entry.
+     *
+     * @param text  the text, not null
+     * @param field  the field, not null
+     * @return the entry, not null
+     */
+    private static <A, B> Entry<A, B> createEntry(A text, B field) {
+        return new SimpleImmutableEntry<>(text, field);
+    }
+
+    /**
+     * Returns the localized resource of the given key and locale, or null
+     * if no localized resource is available.
+     *
+     * @param key  the key of the localized resource, not null
+     * @param locale  the locale, not null
+     * @return the localized resource, or null if not available
+     * @throws NullPointerException if key or locale is null
+     */
+    @SuppressWarnings("unchecked")
+    static <T> T getLocalizedResource(String key, Locale locale) {
+        LocaleResources lr = LocaleProviderAdapter.getResourceBundleBased()
+                                    .getLocaleResources(locale);
+        ResourceBundle rb = lr.getJavaTimeFormatData();
+        return rb.containsKey(key) ? (T) rb.getObject(key) : null;
+    }
+
+    /**
+     * Stores the text for a single locale.
+     * <p>
+     * Some fields have a textual representation, such as day-of-week or month-of-year.
+     * These textual representations can be captured in this class for printing
+     * and parsing.
+     * <p>
+     * This class is immutable and thread-safe.
+     */
+    static final class LocaleStore {
+        /**
+         * Map of value to text.
+         */
+        private final Map<TextStyle, Map<Long, String>> valueTextMap;
+        /**
+         * Parsable data.
+         */
+        private final Map<TextStyle, List<Entry<String, Long>>> parsable;
+
+        /**
+         * Constructor.
+         *
+         * @param valueTextMap  the map of values to text to store, assigned and not altered, not null
+         */
+        LocaleStore(Map<TextStyle, Map<Long, String>> valueTextMap) {
+            this.valueTextMap = valueTextMap;
+            Map<TextStyle, List<Entry<String, Long>>> map = new HashMap<>();
+            List<Entry<String, Long>> allList = new ArrayList<>();
+            for (Map.Entry<TextStyle, Map<Long, String>> vtmEntry : valueTextMap.entrySet()) {
+                Map<String, Entry<String, Long>> reverse = new HashMap<>();
+                for (Map.Entry<Long, String> entry : vtmEntry.getValue().entrySet()) {
+                    if (reverse.put(entry.getValue(), createEntry(entry.getValue(), entry.getKey())) != null) {
+                        // TODO: BUG: this has no effect
+                        continue;  // not parsable, try next style
+                    }
+                }
+                List<Entry<String, Long>> list = new ArrayList<>(reverse.values());
+                Collections.sort(list, COMPARATOR);
+                map.put(vtmEntry.getKey(), list);
+                allList.addAll(list);
+                map.put(null, allList);
+            }
+            Collections.sort(allList, COMPARATOR);
+            this.parsable = map;
+        }
+
+        /**
+         * Gets the text for the specified field value, locale and style
+         * for the purpose of printing.
+         *
+         * @param value  the value to get text for, not null
+         * @param style  the style to get text for, not null
+         * @return the text for the field value, null if no text found
+         */
+        String getText(long value, TextStyle style) {
+            Map<Long, String> map = valueTextMap.get(style);
+            return map != null ? map.get(value) : null;
+        }
+
+        /**
+         * Gets an iterator of text to field for the specified style for the purpose of parsing.
+         * <p>
+         * The iterator must be returned in order from the longest text to the shortest.
+         *
+         * @param style  the style to get text for, null for all parsable text
+         * @return the iterator of text to field pairs, in order from longest text to shortest text,
+         *  null if the style is not parsable
+         */
+        Iterator<Entry<String, Long>> getTextIterator(TextStyle style) {
+            List<Entry<String, Long>> list = parsable.get(style);
+            return list != null ? list.iterator() : null;
+        }
+    }
+}

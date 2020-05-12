@@ -1,95 +1,89 @@
-/*    */ package java.security.spec;
-/*    */ 
-/*    */ import java.math.BigInteger;
-/*    */ import java.security.interfaces.DSAParams;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class DSAParameterSpec
-/*    */   implements AlgorithmParameterSpec, DSAParams
-/*    */ {
-/*    */   BigInteger p;
-/*    */   BigInteger q;
-/*    */   BigInteger g;
-/*    */   
-/*    */   public DSAParameterSpec(BigInteger paramBigInteger1, BigInteger paramBigInteger2, BigInteger paramBigInteger3) {
-/* 58 */     this.p = paramBigInteger1;
-/* 59 */     this.q = paramBigInteger2;
-/* 60 */     this.g = paramBigInteger3;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public BigInteger getP() {
-/* 69 */     return this.p;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public BigInteger getQ() {
-/* 78 */     return this.q;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public BigInteger getG() {
-/* 87 */     return this.g;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\security\spec\DSAParameterSpec.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.security.spec;
+
+import java.math.BigInteger;
+
+/**
+ * This class specifies the set of parameters used with the DSA algorithm.
+ *
+ * @author Jan Luehe
+ *
+ *
+ * @see AlgorithmParameterSpec
+ *
+ * @since 1.2
+ */
+
+public class DSAParameterSpec implements AlgorithmParameterSpec,
+java.security.interfaces.DSAParams {
+
+    BigInteger p;
+    BigInteger q;
+    BigInteger g;
+
+    /**
+     * Creates a new DSAParameterSpec with the specified parameter values.
+     *
+     * @param p the prime.
+     *
+     * @param q the sub-prime.
+     *
+     * @param g the base.
+     */
+    public DSAParameterSpec(BigInteger p, BigInteger q, BigInteger g) {
+        this.p = p;
+        this.q = q;
+        this.g = g;
+    }
+
+    /**
+     * Returns the prime {@code p}.
+     *
+     * @return the prime {@code p}.
+     */
+    public BigInteger getP() {
+        return this.p;
+    }
+
+    /**
+     * Returns the sub-prime {@code q}.
+     *
+     * @return the sub-prime {@code q}.
+     */
+    public BigInteger getQ() {
+        return this.q;
+    }
+
+    /**
+     * Returns the base {@code g}.
+     *
+     * @return the base {@code g}.
+     */
+    public BigInteger getG() {
+        return this.g;
+    }
+}

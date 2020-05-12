@@ -1,210 +1,204 @@
-/*     */ package javax.swing.plaf.synth;
-/*     */ 
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.event.FocusEvent;
-/*     */ import java.awt.event.FocusListener;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicTextAreaUI;
-/*     */ import javax.swing.text.JTextComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SynthTextAreaUI
-/*     */   extends BasicTextAreaUI
-/*     */   implements SynthUI
-/*     */ {
-/*  55 */   private Handler handler = new Handler();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private SynthStyle style;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  65 */     return new SynthTextAreaUI();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults() {
-/*  74 */     super.installDefaults();
-/*  75 */     updateStyle(getComponent());
-/*  76 */     getComponent().addFocusListener(this.handler);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults() {
-/*  84 */     SynthContext synthContext = getContext(getComponent(), 1);
-/*     */     
-/*  86 */     getComponent().putClientProperty("caretAspectRatio", (Object)null);
-/*  87 */     getComponent().removeFocusListener(this.handler);
-/*     */     
-/*  89 */     this.style.uninstallDefaults(synthContext);
-/*  90 */     synthContext.dispose();
-/*  91 */     this.style = null;
-/*  92 */     super.uninstallDefaults();
-/*     */   }
-/*     */   
-/*     */   private void updateStyle(JTextComponent paramJTextComponent) {
-/*  96 */     SynthContext synthContext = getContext(paramJTextComponent, 1);
-/*  97 */     SynthStyle synthStyle = this.style;
-/*     */     
-/*  99 */     this.style = SynthLookAndFeel.updateStyle(synthContext, this);
-/*     */     
-/* 101 */     if (this.style != synthStyle) {
-/* 102 */       SynthTextFieldUI.updateStyle(paramJTextComponent, synthContext, getPropertyPrefix());
-/*     */       
-/* 104 */       if (synthStyle != null) {
-/* 105 */         uninstallKeyboardActions();
-/* 106 */         installKeyboardActions();
-/*     */       } 
-/*     */     } 
-/* 109 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SynthContext getContext(JComponent paramJComponent) {
-/* 117 */     return getContext(paramJComponent, SynthLookAndFeel.getComponentState(paramJComponent));
-/*     */   }
-/*     */   
-/*     */   private SynthContext getContext(JComponent paramJComponent, int paramInt) {
-/* 121 */     return SynthContext.getContext(paramJComponent, this.style, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void update(Graphics paramGraphics, JComponent paramJComponent) {
-/* 138 */     SynthContext synthContext = getContext(paramJComponent);
-/*     */     
-/* 140 */     SynthLookAndFeel.update(synthContext, paramGraphics);
-/* 141 */     synthContext.getPainter().paintTextAreaBackground(synthContext, paramGraphics, 0, 0, paramJComponent
-/* 142 */         .getWidth(), paramJComponent.getHeight());
-/* 143 */     paint(synthContext, paramGraphics);
-/* 144 */     synthContext.dispose();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paint(SynthContext paramSynthContext, Graphics paramGraphics) {
-/* 155 */     paint(paramGraphics, getComponent());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintBackground(Graphics paramGraphics) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paintBorder(SynthContext paramSynthContext, Graphics paramGraphics, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/* 174 */     paramSynthContext.getPainter().paintTextAreaBorder(paramSynthContext, paramGraphics, paramInt1, paramInt2, paramInt3, paramInt4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 189 */     if (SynthLookAndFeel.shouldUpdateStyle(paramPropertyChangeEvent)) {
-/* 190 */       updateStyle((JTextComponent)paramPropertyChangeEvent.getSource());
-/*     */     }
-/* 192 */     super.propertyChange(paramPropertyChangeEvent);
-/*     */   }
-/*     */   
-/*     */   private final class Handler implements FocusListener {
-/*     */     public void focusGained(FocusEvent param1FocusEvent) {
-/* 197 */       SynthTextAreaUI.this.getComponent().repaint();
-/*     */     }
-/*     */     private Handler() {}
-/*     */     public void focusLost(FocusEvent param1FocusEvent) {
-/* 201 */       SynthTextAreaUI.this.getComponent().repaint();
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\synth\SynthTextAreaUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.synth;
+
+import javax.swing.*;
+import javax.swing.text.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicTextAreaUI;
+import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeEvent;
+
+/**
+ * Provides the look and feel for a plain text editor in the
+ * Synth look and feel. In this implementation the default UI
+ * is extended to act as a simple view factory.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author  Shannon Hickey
+ * @since 1.7
+ */
+public class SynthTextAreaUI extends BasicTextAreaUI implements SynthUI {
+    private Handler handler = new Handler();
+    private SynthStyle style;
+
+    /**
+     * Creates a UI object for a JTextArea.
+     *
+     * @param ta a text area
+     * @return the UI object
+     */
+    public static ComponentUI createUI(JComponent ta) {
+        return new SynthTextAreaUI();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void installDefaults() {
+        // Installs the text cursor on the component
+        super.installDefaults();
+        updateStyle(getComponent());
+        getComponent().addFocusListener(handler);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void uninstallDefaults() {
+        SynthContext context = getContext(getComponent(), ENABLED);
+
+        getComponent().putClientProperty("caretAspectRatio", null);
+        getComponent().removeFocusListener(handler);
+
+        style.uninstallDefaults(context);
+        context.dispose();
+        style = null;
+        super.uninstallDefaults();
+    }
+
+    private void updateStyle(JTextComponent comp) {
+        SynthContext context = getContext(comp, ENABLED);
+        SynthStyle oldStyle = style;
+
+        style = SynthLookAndFeel.updateStyle(context, this);
+
+        if (style != oldStyle) {
+            SynthTextFieldUI.updateStyle(comp, context, getPropertyPrefix());
+
+            if (oldStyle != null) {
+                uninstallKeyboardActions();
+                installKeyboardActions();
+            }
+        }
+        context.dispose();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SynthContext getContext(JComponent c) {
+        return getContext(c, SynthLookAndFeel.getComponentState(c));
+    }
+
+    private SynthContext getContext(JComponent c, int state) {
+        return SynthContext.getContext(c, style, state);
+    }
+
+    /**
+     * Notifies this UI delegate to repaint the specified component.
+     * This method paints the component background, then calls
+     * the {@link #paint(SynthContext,Graphics)} method.
+     *
+     * <p>In general, this method does not need to be overridden by subclasses.
+     * All Look and Feel rendering code should reside in the {@code paint} method.
+     *
+     * @param g the {@code Graphics} object used for painting
+     * @param c the component being painted
+     * @see #paint(SynthContext,Graphics)
+     */
+    @Override
+    public void update(Graphics g, JComponent c) {
+        SynthContext context = getContext(c);
+
+        SynthLookAndFeel.update(context, g);
+        context.getPainter().paintTextAreaBackground(context,
+                          g, 0, 0, c.getWidth(), c.getHeight());
+        paint(context, g);
+        context.dispose();
+    }
+
+    /**
+     * Paints the specified component.
+     *
+     * @param context context for the component being painted
+     * @param g the {@code Graphics} object used for painting
+     * @see #update(Graphics,JComponent)
+     */
+    protected void paint(SynthContext context, Graphics g) {
+        super.paint(g, getComponent());
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overridden to do nothing.
+     */
+    @Override
+    protected void paintBackground(Graphics g) {
+        // Overriden to do nothing, all our painting is done from update/paint.
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void paintBorder(SynthContext context, Graphics g, int x,
+                            int y, int w, int h) {
+        context.getPainter().paintTextAreaBorder(context, g, x, y, w, h);
+    }
+
+    /**
+     * This method gets called when a bound property is changed
+     * on the associated JTextComponent.  This is a hook
+     * which UI implementations may change to reflect how the
+     * UI displays bound properties of JTextComponent subclasses.
+     * This is implemented to rebuild the View when the
+     * <em>WrapLine</em> or the <em>WrapStyleWord</em> property changes.
+     *
+     * @param evt the property change event
+     */
+    @Override
+    protected void propertyChange(PropertyChangeEvent evt) {
+        if (SynthLookAndFeel.shouldUpdateStyle(evt)) {
+            updateStyle((JTextComponent)evt.getSource());
+        }
+        super.propertyChange(evt);
+    }
+
+    private final class Handler implements FocusListener {
+        public void focusGained(FocusEvent e) {
+            getComponent().repaint();
+        }
+
+        public void focusLost(FocusEvent e) {
+            getComponent().repaint();
+        }
+    }
+}

@@ -1,170 +1,165 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import java.util.Objects;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class VariableRefBase
-/*     */   extends Expression
-/*     */ {
-/*     */   protected VariableBase _variable;
-/*  45 */   protected Closure _closure = null;
-/*     */   
-/*     */   public VariableRefBase(VariableBase variable) {
-/*  48 */     this._variable = variable;
-/*  49 */     variable.addReference(this);
-/*     */   }
-/*     */   
-/*     */   public VariableRefBase() {
-/*  53 */     this._variable = null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public VariableBase getVariable() {
-/*  60 */     return this._variable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addParentDependency() {
-/*  76 */     SyntaxTreeNode node = this;
-/*  77 */     while (node != null && !(node instanceof TopLevelElement)) {
-/*  78 */       node = node.getParent();
-/*     */     }
-/*     */     
-/*  81 */     TopLevelElement parent = (TopLevelElement)node;
-/*  82 */     if (parent != null) {
-/*  83 */       VariableBase var = this._variable;
-/*  84 */       if (this._variable._ignore) {
-/*  85 */         if (this._variable instanceof Variable) {
-/*     */           
-/*  87 */           var = parent.getSymbolTable().lookupVariable(this._variable._name);
-/*  88 */         } else if (this._variable instanceof Param) {
-/*  89 */           var = parent.getSymbolTable().lookupParam(this._variable._name);
-/*     */         } 
-/*     */       }
-/*     */       
-/*  93 */       parent.addDependency(var);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object obj) {
-/* 103 */     return (obj == this || (obj instanceof VariableRefBase && this._variable == ((VariableRefBase)obj)._variable));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 109 */     return Objects.hashCode(this._variable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 119 */     return "variable-ref(" + this._variable.getName() + '/' + this._variable.getType() + ')';
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 127 */     if (this._type != null) return this._type;
-/*     */ 
-/*     */     
-/* 130 */     if (this._variable.isLocal()) {
-/* 131 */       SyntaxTreeNode node = getParent();
-/*     */       do {
-/* 133 */         if (node instanceof Closure) {
-/* 134 */           this._closure = (Closure)node;
-/*     */           break;
-/*     */         } 
-/* 137 */         if (node instanceof TopLevelElement) {
-/*     */           break;
-/*     */         }
-/* 140 */         node = node.getParent();
-/* 141 */       } while (node != null);
-/*     */       
-/* 143 */       if (this._closure != null) {
-/* 144 */         this._closure.addVariable(this);
-/*     */       }
-/*     */     } 
-/*     */ 
-/*     */     
-/* 149 */     this._type = this._variable.getType();
-/*     */ 
-/*     */ 
-/*     */     
-/* 153 */     if (this._type == null) {
-/* 154 */       this._variable.typeCheck(stable);
-/* 155 */       this._type = this._variable.getType();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 159 */     addParentDependency();
-/*     */ 
-/*     */     
-/* 162 */     return this._type;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\VariableRefBase.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: VariableRefBase.java,v 1.5 2005/09/28 13:48:18 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import java.util.Objects;
+
+/**
+ * @author Morten Jorgensen
+ * @author Santiago Pericas-Geertsen
+ */
+class VariableRefBase extends Expression {
+
+    /**
+     * A reference to the associated variable.
+     */
+    protected VariableBase _variable;
+
+    /**
+     * A reference to the enclosing expression/instruction for which a
+     * closure is needed (Predicate, Number or Sort).
+     */
+    protected Closure _closure = null;
+
+    public VariableRefBase(VariableBase variable) {
+        _variable = variable;
+        variable.addReference(this);
+    }
+
+    public VariableRefBase() {
+        _variable = null;
+    }
+
+    /**
+     * Returns a reference to the associated variable
+     */
+    public VariableBase getVariable() {
+        return _variable;
+    }
+
+    /**
+     * If this variable reference is in a top-level element like
+     * another variable, param or key, add a dependency between
+     * that top-level element and the referenced variable. For
+     * example,
+     *
+     *   <xsl:variable name="x" .../>
+     *   <xsl:variable name="y" select="$x + 1"/>
+     *
+     * and assuming this class represents "$x", add a reference
+     * between variable y and variable x.
+     */
+    public void addParentDependency() {
+        SyntaxTreeNode node = this;
+        while (node != null && node instanceof TopLevelElement == false) {
+            node = node.getParent();
+        }
+
+        TopLevelElement parent = (TopLevelElement) node;
+        if (parent != null) {
+            VariableBase var = _variable;
+            if (_variable._ignore) {
+                if (_variable instanceof Variable) {
+                    var = parent.getSymbolTable()
+                                .lookupVariable(_variable._name);
+                } else if (_variable instanceof Param) {
+                    var = parent.getSymbolTable().lookupParam(_variable._name);
+                }
+            }
+
+            parent.addDependency(var);
+        }
+    }
+
+    /**
+     * Two variable references are deemed equal if they refer to the
+     * same variable.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || (obj instanceof VariableRefBase)
+            && (_variable == ((VariableRefBase) obj)._variable);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this._variable);
+    }
+
+    /**
+     * Returns a string representation of this variable reference on the
+     * format 'variable-ref(<var-name>)'.
+     * @return Variable reference description
+     */
+    @Override
+    public String toString() {
+        return "variable-ref("+_variable.getName()+'/'+_variable.getType()+')';
+    }
+
+    @Override
+    public Type typeCheck(SymbolTable stable)
+        throws TypeCheckError
+    {
+        // Returned cached type if available
+        if (_type != null) return _type;
+
+        // Find nearest closure to add a variable reference
+        if (_variable.isLocal()) {
+            SyntaxTreeNode node = getParent();
+            do {
+                if (node instanceof Closure) {
+                    _closure = (Closure) node;
+                    break;
+                }
+                if (node instanceof TopLevelElement) {
+                    break;      // way up in the tree
+                }
+                node = node.getParent();
+            } while (node != null);
+
+            if (_closure != null) {
+                _closure.addVariable(this);
+            }
+        }
+
+        // Attempt to get the cached variable type
+        _type = _variable.getType();
+
+        // If that does not work we must force a type-check (this is normally
+        // only needed for globals in included/imported stylesheets
+        if (_type == null) {
+            _variable.typeCheck(stable);
+            _type = _variable.getType();
+        }
+
+        // If in a top-level element, create dependency to the referenced var
+        addParentDependency();
+
+        // Return the type of the referenced variable
+        return _type;
+    }
+
+}

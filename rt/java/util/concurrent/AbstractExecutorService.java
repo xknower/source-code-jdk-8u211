@@ -1,313 +1,307 @@
-/*     */ package java.util.concurrent;
-/*     */ 
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Collection;
-/*     */ import java.util.List;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public abstract class AbstractExecutorService
-/*     */   implements ExecutorService
-/*     */ {
-/*     */   protected <T> RunnableFuture<T> newTaskFor(Runnable paramRunnable, T paramT) {
-/*  87 */     return new FutureTask<>(paramRunnable, paramT);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected <T> RunnableFuture<T> newTaskFor(Callable<T> paramCallable) {
-/* 102 */     return new FutureTask<>(paramCallable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Future<?> submit(Runnable paramRunnable) {
-/* 110 */     if (paramRunnable == null) throw new NullPointerException(); 
-/* 111 */     RunnableFuture<?> runnableFuture = newTaskFor(paramRunnable, null);
-/* 112 */     execute(runnableFuture);
-/* 113 */     return runnableFuture;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> Future<T> submit(Runnable paramRunnable, T paramT) {
-/* 121 */     if (paramRunnable == null) throw new NullPointerException(); 
-/* 122 */     RunnableFuture<T> runnableFuture = newTaskFor(paramRunnable, paramT);
-/* 123 */     execute(runnableFuture);
-/* 124 */     return runnableFuture;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> Future<T> submit(Callable<T> paramCallable) {
-/* 132 */     if (paramCallable == null) throw new NullPointerException(); 
-/* 133 */     RunnableFuture<T> runnableFuture = newTaskFor(paramCallable);
-/* 134 */     execute(runnableFuture);
-/* 135 */     return runnableFuture;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private <T> T doInvokeAny(Collection<? extends Callable<T>> paramCollection, boolean paramBoolean, long paramLong) throws InterruptedException, ExecutionException, TimeoutException {
-/* 144 */     if (paramCollection == null)
-/* 145 */       throw new NullPointerException(); 
-/* 146 */     int i = paramCollection.size();
-/* 147 */     if (i == 0)
-/* 148 */       throw new IllegalArgumentException(); 
-/* 149 */     ArrayList<Future> arrayList = new ArrayList(i);
-/* 150 */     ExecutorCompletionService executorCompletionService = new ExecutorCompletionService(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> T invokeAny(Collection<? extends Callable<T>> paramCollection) throws InterruptedException, ExecutionException {
-/*     */     try {
-/* 215 */       return doInvokeAny(paramCollection, false, 0L);
-/* 216 */     } catch (TimeoutException timeoutException) {
-/*     */       assert false;
-/* 218 */       return null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T> T invokeAny(Collection<? extends Callable<T>> paramCollection, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException, ExecutionException, TimeoutException {
-/* 225 */     return doInvokeAny(paramCollection, true, paramTimeUnit.toNanos(paramLong));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> paramCollection) throws InterruptedException {
-/* 230 */     if (paramCollection == null)
-/* 231 */       throw new NullPointerException(); 
-/* 232 */     ArrayList<RunnableFuture<?>> arrayList = new ArrayList(paramCollection.size());
-/* 233 */     boolean bool = false;
-/*     */     try {
-/* 235 */       for (Callable<?> callable : paramCollection) {
-/* 236 */         RunnableFuture<?> runnableFuture = newTaskFor(callable);
-/* 237 */         arrayList.add(runnableFuture);
-/* 238 */         execute(runnableFuture);
-/*     */       }  int i;
-/* 240 */       for (byte b = 0; b < i; b++) {
-/* 241 */         Future future = arrayList.get(b);
-/* 242 */         if (!future.isDone()) {
-/*     */           
-/* 244 */           try { future.get(); }
-/* 245 */           catch (CancellationException cancellationException) {  }
-/* 246 */           catch (ExecutionException executionException) {}
-/*     */         }
-/*     */       } 
-/*     */       
-/* 250 */       bool = true;
-/* 251 */       return (List)arrayList;
-/*     */     } finally {
-/* 253 */       if (!bool) {
-/* 254 */         byte b; int i; for (b = 0, i = arrayList.size(); b < i; b++) {
-/* 255 */           ((Future)arrayList.get(b)).cancel(true);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> paramCollection, long paramLong, TimeUnit paramTimeUnit) throws InterruptedException {
-/* 262 */     if (paramCollection == null)
-/* 263 */       throw new NullPointerException(); 
-/* 264 */     long l = paramTimeUnit.toNanos(paramLong);
-/* 265 */     ArrayList<Runnable> arrayList = new ArrayList(paramCollection.size());
-/* 266 */     boolean bool = false;
-/*     */     try {
-/* 268 */       for (Callable<?> callable : paramCollection) {
-/* 269 */         arrayList.add(newTaskFor(callable));
-/*     */       }
-/* 271 */       long l1 = System.nanoTime() + l;
-/* 272 */       int i = arrayList.size();
-/*     */       
-/*     */       byte b;
-/*     */       
-/* 276 */       for (b = 0; b < i; b++) {
-/* 277 */         execute(arrayList.get(b));
-/* 278 */         l = l1 - System.nanoTime();
-/* 279 */         if (l <= 0L) {
-/* 280 */           return (List)arrayList;
-/*     */         }
-/*     */       } 
-/* 283 */       for (b = 0; b < i; b++) {
-/* 284 */         Future future = (Future)arrayList.get(b);
-/* 285 */         if (!future.isDone()) {
-/* 286 */           if (l <= 0L)
-/* 287 */             return (List)arrayList; 
-/*     */           
-/* 289 */           try { future.get(l, TimeUnit.NANOSECONDS); }
-/* 290 */           catch (CancellationException cancellationException) {  }
-/* 291 */           catch (ExecutionException executionException) {  }
-/* 292 */           catch (TimeoutException timeoutException)
-/* 293 */           { return (List)arrayList; }
-/*     */           
-/* 295 */           l = l1 - System.nanoTime();
-/*     */         } 
-/*     */       } 
-/* 298 */       bool = true;
-/* 299 */       return (List)arrayList;
-/*     */     } finally {
-/* 301 */       if (!bool) {
-/* 302 */         byte b; int i; for (b = 0, i = arrayList.size(); b < i; b++)
-/* 303 */           ((Future)arrayList.get(b)).cancel(true); 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\concurrent\AbstractExecutorService.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Written by Doug Lea with assistance from members of JCP JSR-166
+ * Expert Group and released to the public domain, as explained at
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+package java.util.concurrent;
+import java.util.*;
+
+/**
+ * Provides default implementations of {@link ExecutorService}
+ * execution methods. This class implements the {@code submit},
+ * {@code invokeAny} and {@code invokeAll} methods using a
+ * {@link RunnableFuture} returned by {@code newTaskFor}, which defaults
+ * to the {@link FutureTask} class provided in this package.  For example,
+ * the implementation of {@code submit(Runnable)} creates an
+ * associated {@code RunnableFuture} that is executed and
+ * returned. Subclasses may override the {@code newTaskFor} methods
+ * to return {@code RunnableFuture} implementations other than
+ * {@code FutureTask}.
+ *
+ * <p><b>Extension example</b>. Here is a sketch of a class
+ * that customizes {@link ThreadPoolExecutor} to use
+ * a {@code CustomTask} class instead of the default {@code FutureTask}:
+ *  <pre> {@code
+ * public class CustomThreadPoolExecutor extends ThreadPoolExecutor {
+ *
+ *   static class CustomTask<V> implements RunnableFuture<V> {...}
+ *
+ *   protected <V> RunnableFuture<V> newTaskFor(Callable<V> c) {
+ *       return new CustomTask<V>(c);
+ *   }
+ *   protected <V> RunnableFuture<V> newTaskFor(Runnable r, V v) {
+ *       return new CustomTask<V>(r, v);
+ *   }
+ *   // ... add constructors, etc.
+ * }}</pre>
+ *
+ * @since 1.5
+ * @author Doug Lea
+ */
+public abstract class AbstractExecutorService implements ExecutorService {
+
+    /**
+     * Returns a {@code RunnableFuture} for the given runnable and default
+     * value.
+     *
+     * @param runnable the runnable task being wrapped
+     * @param value the default value for the returned future
+     * @param <T> the type of the given value
+     * @return a {@code RunnableFuture} which, when run, will run the
+     * underlying runnable and which, as a {@code Future}, will yield
+     * the given value as its result and provide for cancellation of
+     * the underlying task
+     * @since 1.6
+     */
+    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+        return new FutureTask<T>(runnable, value);
+    }
+
+    /**
+     * Returns a {@code RunnableFuture} for the given callable task.
+     *
+     * @param callable the callable task being wrapped
+     * @param <T> the type of the callable's result
+     * @return a {@code RunnableFuture} which, when run, will call the
+     * underlying callable and which, as a {@code Future}, will yield
+     * the callable's result as its result and provide for
+     * cancellation of the underlying task
+     * @since 1.6
+     */
+    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+        return new FutureTask<T>(callable);
+    }
+
+    /**
+     * @throws RejectedExecutionException {@inheritDoc}
+     * @throws NullPointerException       {@inheritDoc}
+     */
+    public Future<?> submit(Runnable task) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<Void> ftask = newTaskFor(task, null);
+        execute(ftask);
+        return ftask;
+    }
+
+    /**
+     * @throws RejectedExecutionException {@inheritDoc}
+     * @throws NullPointerException       {@inheritDoc}
+     */
+    public <T> Future<T> submit(Runnable task, T result) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<T> ftask = newTaskFor(task, result);
+        execute(ftask);
+        return ftask;
+    }
+
+    /**
+     * @throws RejectedExecutionException {@inheritDoc}
+     * @throws NullPointerException       {@inheritDoc}
+     */
+    public <T> Future<T> submit(Callable<T> task) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<T> ftask = newTaskFor(task);
+        execute(ftask);
+        return ftask;
+    }
+
+    /**
+     * the main mechanics of invokeAny.
+     */
+    private <T> T doInvokeAny(Collection<? extends Callable<T>> tasks,
+                              boolean timed, long nanos)
+        throws InterruptedException, ExecutionException, TimeoutException {
+        if (tasks == null)
+            throw new NullPointerException();
+        int ntasks = tasks.size();
+        if (ntasks == 0)
+            throw new IllegalArgumentException();
+        ArrayList<Future<T>> futures = new ArrayList<Future<T>>(ntasks);
+        ExecutorCompletionService<T> ecs =
+            new ExecutorCompletionService<T>(this);
+
+        // For efficiency, especially in executors with limited
+        // parallelism, check to see if previously submitted tasks are
+        // done before submitting more of them. This interleaving
+        // plus the exception mechanics account for messiness of main
+        // loop.
+
+        try {
+            // Record exceptions so that if we fail to obtain any
+            // result, we can throw the last exception we got.
+            ExecutionException ee = null;
+            final long deadline = timed ? System.nanoTime() + nanos : 0L;
+            Iterator<? extends Callable<T>> it = tasks.iterator();
+
+            // Start one task for sure; the rest incrementally
+            futures.add(ecs.submit(it.next()));
+            --ntasks;
+            int active = 1;
+
+            for (;;) {
+                Future<T> f = ecs.poll();
+                if (f == null) {
+                    if (ntasks > 0) {
+                        --ntasks;
+                        futures.add(ecs.submit(it.next()));
+                        ++active;
+                    }
+                    else if (active == 0)
+                        break;
+                    else if (timed) {
+                        f = ecs.poll(nanos, TimeUnit.NANOSECONDS);
+                        if (f == null)
+                            throw new TimeoutException();
+                        nanos = deadline - System.nanoTime();
+                    }
+                    else
+                        f = ecs.take();
+                }
+                if (f != null) {
+                    --active;
+                    try {
+                        return f.get();
+                    } catch (ExecutionException eex) {
+                        ee = eex;
+                    } catch (RuntimeException rex) {
+                        ee = new ExecutionException(rex);
+                    }
+                }
+            }
+
+            if (ee == null)
+                ee = new ExecutionException();
+            throw ee;
+
+        } finally {
+            for (int i = 0, size = futures.size(); i < size; i++)
+                futures.get(i).cancel(true);
+        }
+    }
+
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+        throws InterruptedException, ExecutionException {
+        try {
+            return doInvokeAny(tasks, false, 0);
+        } catch (TimeoutException cannotHappen) {
+            assert false;
+            return null;
+        }
+    }
+
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks,
+                           long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException {
+        return doInvokeAny(tasks, true, unit.toNanos(timeout));
+    }
+
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
+        throws InterruptedException {
+        if (tasks == null)
+            throw new NullPointerException();
+        ArrayList<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
+        boolean done = false;
+        try {
+            for (Callable<T> t : tasks) {
+                RunnableFuture<T> f = newTaskFor(t);
+                futures.add(f);
+                execute(f);
+            }
+            for (int i = 0, size = futures.size(); i < size; i++) {
+                Future<T> f = futures.get(i);
+                if (!f.isDone()) {
+                    try {
+                        f.get();
+                    } catch (CancellationException ignore) {
+                    } catch (ExecutionException ignore) {
+                    }
+                }
+            }
+            done = true;
+            return futures;
+        } finally {
+            if (!done)
+                for (int i = 0, size = futures.size(); i < size; i++)
+                    futures.get(i).cancel(true);
+        }
+    }
+
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
+                                         long timeout, TimeUnit unit)
+        throws InterruptedException {
+        if (tasks == null)
+            throw new NullPointerException();
+        long nanos = unit.toNanos(timeout);
+        ArrayList<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
+        boolean done = false;
+        try {
+            for (Callable<T> t : tasks)
+                futures.add(newTaskFor(t));
+
+            final long deadline = System.nanoTime() + nanos;
+            final int size = futures.size();
+
+            // Interleave time checks and calls to execute in case
+            // executor doesn't have any/much parallelism.
+            for (int i = 0; i < size; i++) {
+                execute((Runnable)futures.get(i));
+                nanos = deadline - System.nanoTime();
+                if (nanos <= 0L)
+                    return futures;
+            }
+
+            for (int i = 0; i < size; i++) {
+                Future<T> f = futures.get(i);
+                if (!f.isDone()) {
+                    if (nanos <= 0L)
+                        return futures;
+                    try {
+                        f.get(nanos, TimeUnit.NANOSECONDS);
+                    } catch (CancellationException ignore) {
+                    } catch (ExecutionException ignore) {
+                    } catch (TimeoutException toe) {
+                        return futures;
+                    }
+                    nanos = deadline - System.nanoTime();
+                }
+            }
+            done = true;
+            return futures;
+        } finally {
+            if (!done)
+                for (int i = 0, size = futures.size(); i < size; i++)
+                    futures.get(i).cancel(true);
+        }
+    }
+
+}

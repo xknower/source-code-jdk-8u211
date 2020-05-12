@@ -1,1124 +1,1118 @@
-/*      */ package javax.swing.plaf.nimbus;
-/*      */ 
-/*      */ import java.awt.Color;
-/*      */ import java.awt.Font;
-/*      */ import java.awt.Insets;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.Collections;
-/*      */ import java.util.Comparator;
-/*      */ import java.util.HashMap;
-/*      */ import java.util.Map;
-/*      */ import java.util.TreeMap;
-/*      */ import javax.swing.JComponent;
-/*      */ import javax.swing.Painter;
-/*      */ import javax.swing.UIDefaults;
-/*      */ import javax.swing.UIManager;
-/*      */ import javax.swing.plaf.ColorUIResource;
-/*      */ import javax.swing.plaf.synth.ColorType;
-/*      */ import javax.swing.plaf.synth.SynthContext;
-/*      */ import javax.swing.plaf.synth.SynthPainter;
-/*      */ import javax.swing.plaf.synth.SynthStyle;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public final class NimbusStyle
-/*      */   extends SynthStyle
-/*      */ {
-/*      */   public static final String LARGE_KEY = "large";
-/*      */   public static final String SMALL_KEY = "small";
-/*      */   public static final String MINI_KEY = "mini";
-/*      */   public static final double LARGE_SCALE = 1.15D;
-/*      */   public static final double SMALL_SCALE = 0.857D;
-/*      */   public static final double MINI_SCALE = 0.714D;
-/*  137 */   private static final Object NULL = Character.valueOf(false);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  150 */   private static final Color DEFAULT_COLOR = new ColorUIResource(Color.BLACK);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  155 */   private static final Comparator<RuntimeState> STATE_COMPARATOR = new Comparator<RuntimeState>()
-/*      */     {
-/*      */       public int compare(NimbusStyle.RuntimeState param1RuntimeState1, NimbusStyle.RuntimeState param1RuntimeState2)
-/*      */       {
-/*  159 */         return param1RuntimeState1.state - param1RuntimeState2.state;
-/*      */       }
-/*      */     };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private String prefix;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private SynthPainter painter;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Values values;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*  189 */   private CacheKey tmpKey = new CacheKey("", 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private WeakReference<JComponent> component;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   NimbusStyle(String paramString, JComponent paramJComponent) {
-/*  213 */     if (paramJComponent != null) {
-/*  214 */       this.component = new WeakReference<>(paramJComponent);
-/*      */     }
-/*  216 */     this.prefix = paramString;
-/*  217 */     this.painter = new SynthPainterImpl(this);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void installDefaults(SynthContext paramSynthContext) {
-/*  227 */     validate();
-/*      */ 
-/*      */ 
-/*      */     
-/*  231 */     super.installDefaults(paramSynthContext);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void validate() {
-/*      */     TreeMap<Object, Object> treeMap;
-/*  241 */     if (this.values != null) {
-/*      */       return;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  247 */     this.values = new Values();
-/*      */ 
-/*      */ 
-/*      */     
-/*  251 */     Map<String, Object> map = ((NimbusLookAndFeel)UIManager.getLookAndFeel()).getDefaultsForPrefix(this.prefix);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  256 */     if (this.component != null) {
-/*      */ 
-/*      */       
-/*  259 */       Object object = ((JComponent)this.component.get()).getClientProperty("Nimbus.Overrides");
-/*  260 */       if (object instanceof UIDefaults) {
-/*  261 */         Object object1 = ((JComponent)this.component.get()).getClientProperty("Nimbus.Overrides.InheritDefaults");
-/*      */         
-/*  263 */         boolean bool = (object1 instanceof Boolean) ? ((Boolean)object1).booleanValue() : true;
-/*  264 */         UIDefaults uIDefaults = (UIDefaults)object;
-/*  265 */         TreeMap<Object, Object> treeMap1 = new TreeMap<>();
-/*  266 */         for (String str1 : uIDefaults.keySet()) {
-/*  267 */           if (str1 instanceof String) {
-/*  268 */             String str2 = str1;
-/*  269 */             if (str2.startsWith(this.prefix)) {
-/*  270 */               treeMap1.put(str2, uIDefaults.get(str2));
-/*      */             }
-/*      */           } 
-/*      */         } 
-/*  274 */         if (bool) {
-/*  275 */           map.putAll(treeMap1);
-/*      */         } else {
-/*  277 */           treeMap = treeMap1;
-/*      */         } 
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  286 */     ArrayList<State> arrayList = new ArrayList();
-/*      */     
-/*  288 */     HashMap<Object, Object> hashMap = new HashMap<>();
-/*      */ 
-/*      */     
-/*  291 */     ArrayList<RuntimeState> arrayList1 = new ArrayList();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  298 */     String str = (String)treeMap.get(this.prefix + ".States");
-/*  299 */     if (str != null) {
-/*  300 */       String[] arrayOfString = str.split(","); int i;
-/*  301 */       for (i = 0; i < arrayOfString.length; i++) {
-/*  302 */         arrayOfString[i] = arrayOfString[i].trim();
-/*  303 */         if (!State.isStandardStateName(arrayOfString[i])) {
-/*      */ 
-/*      */           
-/*  306 */           String str1 = this.prefix + "." + arrayOfString[i];
-/*  307 */           State state = (State)treeMap.get(str1);
-/*  308 */           if (state != null) {
-/*  309 */             arrayList.add(state);
-/*      */           }
-/*      */         } else {
-/*  312 */           arrayList.add(State.getStandardState(arrayOfString[i]));
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  319 */       if (arrayList.size() > 0) {
-/*  320 */         this.values.stateTypes = arrayList.<State>toArray(new State[arrayList.size()]);
-/*      */       }
-/*      */ 
-/*      */       
-/*  324 */       i = 1;
-/*  325 */       for (State state : arrayList) {
-/*  326 */         hashMap.put(state.getName(), Integer.valueOf(i));
-/*  327 */         i <<= 1;
-/*      */       
-/*      */       }
-/*      */ 
-/*      */     
-/*      */     }
-/*      */     else {
-/*      */ 
-/*      */       
-/*  336 */       arrayList.add(State.Enabled);
-/*  337 */       arrayList.add(State.MouseOver);
-/*  338 */       arrayList.add(State.Pressed);
-/*  339 */       arrayList.add(State.Disabled);
-/*  340 */       arrayList.add(State.Focused);
-/*  341 */       arrayList.add(State.Selected);
-/*  342 */       arrayList.add(State.Default);
-/*      */ 
-/*      */       
-/*  345 */       hashMap.put("Enabled", Integer.valueOf(1));
-/*  346 */       hashMap.put("MouseOver", Integer.valueOf(2));
-/*  347 */       hashMap.put("Pressed", Integer.valueOf(4));
-/*  348 */       hashMap.put("Disabled", Integer.valueOf(8));
-/*  349 */       hashMap.put("Focused", Integer.valueOf(256));
-/*  350 */       hashMap.put("Selected", Integer.valueOf(512));
-/*  351 */       hashMap.put("Default", Integer.valueOf(1024));
-/*      */     } 
-/*      */ 
-/*      */     
-/*  355 */     for (String str1 : treeMap.keySet()) {
-/*      */ 
-/*      */ 
-/*      */       
-/*  359 */       String str2 = str1.substring(this.prefix.length());
-/*      */ 
-/*      */       
-/*  362 */       if (str2.indexOf('"') != -1 || str2.indexOf(':') != -1)
-/*      */         continue; 
-/*  364 */       str2 = str2.substring(1);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  372 */       String str3 = null;
-/*  373 */       String str4 = null;
-/*  374 */       int i = str2.indexOf(']');
-/*  375 */       if (i < 0) {
-/*      */         
-/*  377 */         str4 = str2;
-/*      */       } else {
-/*  379 */         str3 = str2.substring(0, i);
-/*  380 */         str4 = str2.substring(i + 2);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  385 */       if (str3 == null) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*  392 */         if ("contentMargins".equals(str4)) {
-/*  393 */           this.values.contentMargins = (Insets)treeMap.get(str1); continue;
-/*  394 */         }  if ("States".equals(str4)) {
-/*      */           continue;
-/*      */         }
-/*  397 */         this.values.defaults.put(str4, treeMap.get(str1));
-/*      */ 
-/*      */         
-/*      */         continue;
-/*      */       } 
-/*      */ 
-/*      */       
-/*  404 */       boolean bool = false;
-/*      */ 
-/*      */       
-/*  407 */       int j = 0;
-/*      */ 
-/*      */       
-/*  410 */       String[] arrayOfString = str3.split("\\+");
-/*      */ 
-/*      */       
-/*  413 */       for (String str5 : arrayOfString) {
-/*  414 */         if (hashMap.containsKey(str5)) {
-/*  415 */           j |= ((Integer)hashMap.get(str5)).intValue();
-/*      */         }
-/*      */         else {
-/*      */           
-/*  419 */           bool = true;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*  424 */       if (bool) {
-/*      */         continue;
-/*      */       }
-/*  427 */       RuntimeState runtimeState = null;
-/*  428 */       for (RuntimeState runtimeState1 : arrayList1) {
-/*  429 */         if (runtimeState1.state == j) {
-/*  430 */           runtimeState = runtimeState1;
-/*      */           
-/*      */           break;
-/*      */         } 
-/*      */       } 
-/*      */       
-/*  436 */       if (runtimeState == null) {
-/*  437 */         runtimeState = new RuntimeState(j, str3);
-/*  438 */         arrayList1.add(runtimeState);
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  446 */       if ("backgroundPainter".equals(str4)) {
-/*  447 */         runtimeState.backgroundPainter = getPainter((Map)treeMap, str1); continue;
-/*  448 */       }  if ("foregroundPainter".equals(str4)) {
-/*  449 */         runtimeState.foregroundPainter = getPainter((Map)treeMap, str1); continue;
-/*  450 */       }  if ("borderPainter".equals(str4)) {
-/*  451 */         runtimeState.borderPainter = getPainter((Map)treeMap, str1); continue;
-/*      */       } 
-/*  453 */       runtimeState.defaults.put(str4, treeMap.get(str1));
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  460 */     Collections.sort(arrayList1, STATE_COMPARATOR);
-/*      */ 
-/*      */     
-/*  463 */     this.values.states = arrayList1.<RuntimeState>toArray(new RuntimeState[arrayList1.size()]);
-/*      */   }
-/*      */   
-/*      */   private Painter getPainter(Map<String, Object> paramMap, String paramString) {
-/*  467 */     Object object = paramMap.get(paramString);
-/*  468 */     if (object instanceof UIDefaults.LazyValue) {
-/*  469 */       object = ((UIDefaults.LazyValue)object).createValue(UIManager.getDefaults());
-/*      */     }
-/*  471 */     return (object instanceof Painter) ? (Painter)object : null;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Insets getInsets(SynthContext paramSynthContext, Insets paramInsets) {
-/*  481 */     if (paramInsets == null) {
-/*  482 */       paramInsets = new Insets(0, 0, 0, 0);
-/*      */     }
-/*      */     
-/*  485 */     Values values = getValues(paramSynthContext);
-/*      */     
-/*  487 */     if (values.contentMargins == null) {
-/*  488 */       paramInsets.bottom = paramInsets.top = paramInsets.left = paramInsets.right = 0;
-/*  489 */       return paramInsets;
-/*      */     } 
-/*  491 */     paramInsets.bottom = values.contentMargins.bottom;
-/*  492 */     paramInsets.top = values.contentMargins.top;
-/*  493 */     paramInsets.left = values.contentMargins.left;
-/*  494 */     paramInsets.right = values.contentMargins.right;
-/*      */ 
-/*      */     
-/*  497 */     String str = (String)paramSynthContext.getComponent().getClientProperty("JComponent.sizeVariant");
-/*      */     
-/*  499 */     if (str != null) {
-/*  500 */       if ("large".equals(str)) {
-/*  501 */         paramInsets.bottom = (int)(paramInsets.bottom * 1.15D);
-/*  502 */         paramInsets.top = (int)(paramInsets.top * 1.15D);
-/*  503 */         paramInsets.left = (int)(paramInsets.left * 1.15D);
-/*  504 */         paramInsets.right = (int)(paramInsets.right * 1.15D);
-/*  505 */       } else if ("small".equals(str)) {
-/*  506 */         paramInsets.bottom = (int)(paramInsets.bottom * 0.857D);
-/*  507 */         paramInsets.top = (int)(paramInsets.top * 0.857D);
-/*  508 */         paramInsets.left = (int)(paramInsets.left * 0.857D);
-/*  509 */         paramInsets.right = (int)(paramInsets.right * 0.857D);
-/*  510 */       } else if ("mini".equals(str)) {
-/*  511 */         paramInsets.bottom = (int)(paramInsets.bottom * 0.714D);
-/*  512 */         paramInsets.top = (int)(paramInsets.top * 0.714D);
-/*  513 */         paramInsets.left = (int)(paramInsets.left * 0.714D);
-/*  514 */         paramInsets.right = (int)(paramInsets.right * 0.714D);
-/*      */       } 
-/*      */     }
-/*  517 */     return paramInsets;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Color getColorForState(SynthContext paramSynthContext, ColorType paramColorType) {
-/*  541 */     String str = null;
-/*  542 */     if (paramColorType == ColorType.BACKGROUND) {
-/*  543 */       str = "background";
-/*  544 */     } else if (paramColorType == ColorType.FOREGROUND) {
-/*      */       
-/*  546 */       str = "textForeground";
-/*  547 */     } else if (paramColorType == ColorType.TEXT_BACKGROUND) {
-/*  548 */       str = "textBackground";
-/*  549 */     } else if (paramColorType == ColorType.TEXT_FOREGROUND) {
-/*  550 */       str = "textForeground";
-/*  551 */     } else if (paramColorType == ColorType.FOCUS) {
-/*  552 */       str = "focus";
-/*  553 */     } else if (paramColorType != null) {
-/*  554 */       str = paramColorType.toString();
-/*      */     } else {
-/*  556 */       return DEFAULT_COLOR;
-/*      */     } 
-/*  558 */     Color color = (Color)get(paramSynthContext, str);
-/*      */     
-/*  560 */     if (color == null) color = DEFAULT_COLOR; 
-/*  561 */     return color;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   protected Font getFontForState(SynthContext paramSynthContext) {
-/*  573 */     Font font = (Font)get(paramSynthContext, "font");
-/*  574 */     if (font == null) font = UIManager.getFont("defaultFont");
-/*      */ 
-/*      */ 
-/*      */     
-/*  578 */     String str = (String)paramSynthContext.getComponent().getClientProperty("JComponent.sizeVariant");
-/*      */     
-/*  580 */     if (str != null) {
-/*  581 */       if ("large".equals(str)) {
-/*  582 */         font = font.deriveFont((float)Math.round(font.getSize2D() * 1.15D));
-/*  583 */       } else if ("small".equals(str)) {
-/*  584 */         font = font.deriveFont((float)Math.round(font.getSize2D() * 0.857D));
-/*  585 */       } else if ("mini".equals(str)) {
-/*  586 */         font = font.deriveFont((float)Math.round(font.getSize2D() * 0.714D));
-/*      */       } 
-/*      */     }
-/*  589 */     return font;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public SynthPainter getPainter(SynthContext paramSynthContext) {
-/*  599 */     return this.painter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isOpaque(SynthContext paramSynthContext) {
-/*  611 */     if ("Table.cellRenderer".equals(paramSynthContext.getComponent().getName())) {
-/*  612 */       return true;
-/*      */     }
-/*  614 */     Boolean bool = (Boolean)get(paramSynthContext, "opaque");
-/*  615 */     return (bool == null) ? false : bool.booleanValue();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object get(SynthContext paramSynthContext, Object paramObject) {
-/*  652 */     Values values = getValues(paramSynthContext);
-/*      */ 
-/*      */     
-/*  655 */     String str1 = paramObject.toString();
-/*  656 */     String str2 = str1.substring(str1.indexOf(".") + 1);
-/*      */     
-/*  658 */     Object object = null;
-/*  659 */     int i = getExtendedState(paramSynthContext, values);
-/*      */ 
-/*      */     
-/*  662 */     this.tmpKey.init(str2, i);
-/*  663 */     object = values.cache.get(this.tmpKey);
-/*  664 */     boolean bool = (object != null) ? true : false;
-/*  665 */     if (!bool) {
-/*      */       
-/*  667 */       RuntimeState runtimeState = null;
-/*  668 */       int[] arrayOfInt = { -1 };
-/*  669 */       while (object == null && (
-/*  670 */         runtimeState = getNextState(values.states, arrayOfInt, i)) != null) {
-/*  671 */         object = runtimeState.defaults.get(str2);
-/*      */       }
-/*      */       
-/*  674 */       if (object == null && values.defaults != null) {
-/*  675 */         object = values.defaults.get(str2);
-/*      */       }
-/*      */ 
-/*      */       
-/*  679 */       if (object == null) object = UIManager.get(str1);
-/*      */       
-/*  681 */       if (object == null && str2.equals("focusInputMap")) {
-/*  682 */         object = super.get(paramSynthContext, str1);
-/*      */       }
-/*      */       
-/*  685 */       values.cache.put(new CacheKey(str2, i), (object == null) ? NULL : object);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  689 */     return (object == NULL) ? null : object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Painter getBackgroundPainter(SynthContext paramSynthContext) {
-/*  702 */     Values values = getValues(paramSynthContext);
-/*  703 */     int i = getExtendedState(paramSynthContext, values);
-/*  704 */     Painter painter = null;
-/*      */ 
-/*      */     
-/*  707 */     this.tmpKey.init("backgroundPainter$$instance", i);
-/*  708 */     painter = (Painter)values.cache.get(this.tmpKey);
-/*  709 */     if (painter != null) return painter;
-/*      */ 
-/*      */     
-/*  712 */     RuntimeState runtimeState = null;
-/*  713 */     int[] arrayOfInt = { -1 };
-/*  714 */     while ((runtimeState = getNextState(values.states, arrayOfInt, i)) != null) {
-/*  715 */       if (runtimeState.backgroundPainter != null) {
-/*  716 */         painter = runtimeState.backgroundPainter;
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/*  720 */     if (painter == null) painter = (Painter)get(paramSynthContext, "backgroundPainter"); 
-/*  721 */     if (painter != null) {
-/*  722 */       values.cache.put(new CacheKey("backgroundPainter$$instance", i), painter);
-/*      */     }
-/*  724 */     return painter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Painter getForegroundPainter(SynthContext paramSynthContext) {
-/*  737 */     Values values = getValues(paramSynthContext);
-/*  738 */     int i = getExtendedState(paramSynthContext, values);
-/*  739 */     Painter painter = null;
-/*      */ 
-/*      */     
-/*  742 */     this.tmpKey.init("foregroundPainter$$instance", i);
-/*  743 */     painter = (Painter)values.cache.get(this.tmpKey);
-/*  744 */     if (painter != null) return painter;
-/*      */ 
-/*      */     
-/*  747 */     RuntimeState runtimeState = null;
-/*  748 */     int[] arrayOfInt = { -1 };
-/*  749 */     while ((runtimeState = getNextState(values.states, arrayOfInt, i)) != null) {
-/*  750 */       if (runtimeState.foregroundPainter != null) {
-/*  751 */         painter = runtimeState.foregroundPainter;
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/*  755 */     if (painter == null) painter = (Painter)get(paramSynthContext, "foregroundPainter"); 
-/*  756 */     if (painter != null) {
-/*  757 */       values.cache.put(new CacheKey("foregroundPainter$$instance", i), painter);
-/*      */     }
-/*  759 */     return painter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Painter getBorderPainter(SynthContext paramSynthContext) {
-/*  772 */     Values values = getValues(paramSynthContext);
-/*  773 */     int i = getExtendedState(paramSynthContext, values);
-/*  774 */     Painter painter = null;
-/*      */ 
-/*      */     
-/*  777 */     this.tmpKey.init("borderPainter$$instance", i);
-/*  778 */     painter = (Painter)values.cache.get(this.tmpKey);
-/*  779 */     if (painter != null) return painter;
-/*      */ 
-/*      */     
-/*  782 */     RuntimeState runtimeState = null;
-/*  783 */     int[] arrayOfInt = { -1 };
-/*  784 */     while ((runtimeState = getNextState(values.states, arrayOfInt, i)) != null) {
-/*  785 */       if (runtimeState.borderPainter != null) {
-/*  786 */         painter = runtimeState.borderPainter;
-/*      */         break;
-/*      */       } 
-/*      */     } 
-/*  790 */     if (painter == null) painter = (Painter)get(paramSynthContext, "borderPainter"); 
-/*  791 */     if (painter != null) {
-/*  792 */       values.cache.put(new CacheKey("borderPainter$$instance", i), painter);
-/*      */     }
-/*  794 */     return painter;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Values getValues(SynthContext paramSynthContext) {
-/*  806 */     validate();
-/*  807 */     return this.values;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private boolean contains(String[] paramArrayOfString, String paramString) {
-/*  822 */     assert paramString != null;
-/*  823 */     for (byte b = 0; b < paramArrayOfString.length; b++) {
-/*  824 */       if (paramString.equals(paramArrayOfString[b])) {
-/*  825 */         return true;
-/*      */       }
-/*      */     } 
-/*  828 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private int getExtendedState(SynthContext paramSynthContext, Values paramValues) {
-/*  855 */     JComponent jComponent = paramSynthContext.getComponent();
-/*  856 */     int i = 0;
-/*  857 */     int j = 1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  862 */     Object object = jComponent.getClientProperty("Nimbus.State");
-/*  863 */     if (object != null) {
-/*  864 */       String str = object.toString();
-/*  865 */       String[] arrayOfString = str.split("\\+");
-/*  866 */       if (paramValues.stateTypes == null) {
-/*      */         
-/*  868 */         for (String str1 : arrayOfString) {
-/*  869 */           State.StandardState standardState = State.getStandardState(str1);
-/*  870 */           if (standardState != null) i |= standardState.getState();
-/*      */         
-/*      */         } 
-/*      */       } else {
-/*  874 */         for (State state : paramValues.stateTypes) {
-/*  875 */           if (contains(arrayOfString, state.getName())) {
-/*  876 */             i |= j;
-/*      */           }
-/*  878 */           j <<= 1;
-/*      */         }
-/*      */       
-/*      */       } 
-/*      */     } else {
-/*      */       
-/*  884 */       if (paramValues.stateTypes == null) return paramSynthContext.getComponentState();
-/*      */ 
-/*      */ 
-/*      */       
-/*  888 */       int k = paramSynthContext.getComponentState();
-/*  889 */       for (State<JComponent> state : paramValues.stateTypes) {
-/*  890 */         if (state.isInState(jComponent, k)) {
-/*  891 */           i |= j;
-/*      */         }
-/*  893 */         j <<= 1;
-/*      */       } 
-/*      */     } 
-/*  896 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private RuntimeState getNextState(RuntimeState[] paramArrayOfRuntimeState, int[] paramArrayOfint, int paramInt) {
-/*  944 */     if (paramArrayOfRuntimeState != null && paramArrayOfRuntimeState.length > 0) {
-/*  945 */       int i = 0;
-/*  946 */       int j = -1;
-/*  947 */       int k = -1;
-/*      */ 
-/*      */ 
-/*      */       
-/*  951 */       if (paramInt == 0) {
-/*  952 */         for (int i1 = paramArrayOfRuntimeState.length - 1; i1 >= 0; i1--) {
-/*  953 */           if ((paramArrayOfRuntimeState[i1]).state == 0) {
-/*  954 */             paramArrayOfint[0] = i1;
-/*  955 */             return paramArrayOfRuntimeState[i1];
-/*      */           } 
-/*      */         } 
-/*      */         
-/*  959 */         paramArrayOfint[0] = -1;
-/*  960 */         return null;
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  968 */       int m = (paramArrayOfint == null || paramArrayOfint[0] == -1) ? paramArrayOfRuntimeState.length : paramArrayOfint[0];
-/*      */ 
-/*      */       
-/*  971 */       for (int n = m - 1; n >= 0; n--) {
-/*  972 */         int i1 = (paramArrayOfRuntimeState[n]).state;
-/*      */         
-/*  974 */         if (i1 == 0) {
-/*  975 */           if (k == -1) {
-/*  976 */             k = n;
-/*      */           }
-/*  978 */         } else if ((paramInt & i1) == i1) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */           
-/*  985 */           int i2 = i1;
-/*  986 */           i2 -= (0xAAAAAAAA & i2) >>> 1;
-/*  987 */           i2 = (i2 & 0x33333333) + (i2 >>> 2 & 0x33333333);
-/*      */           
-/*  989 */           i2 = i2 + (i2 >>> 4) & 0xF0F0F0F;
-/*  990 */           i2 += i2 >>> 8;
-/*  991 */           i2 += i2 >>> 16;
-/*  992 */           i2 &= 0xFF;
-/*  993 */           if (i2 > i) {
-/*  994 */             j = n;
-/*  995 */             i = i2;
-/*      */           } 
-/*      */         } 
-/*      */       } 
-/*  999 */       if (j != -1) {
-/* 1000 */         paramArrayOfint[0] = j;
-/* 1001 */         return paramArrayOfRuntimeState[j];
-/*      */       } 
-/* 1003 */       if (k != -1) {
-/* 1004 */         paramArrayOfint[0] = k;
-/* 1005 */         return paramArrayOfRuntimeState[k];
-/*      */       } 
-/*      */     } 
-/* 1008 */     paramArrayOfint[0] = -1;
-/* 1009 */     return null;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private final class RuntimeState
-/*      */     implements Cloneable
-/*      */   {
-/*      */     int state;
-/*      */     
-/*      */     Painter backgroundPainter;
-/*      */     
-/*      */     Painter foregroundPainter;
-/*      */     
-/*      */     Painter borderPainter;
-/*      */     
-/*      */     String stateName;
-/* 1025 */     UIDefaults defaults = new UIDefaults(10, 0.7F);
-/*      */     
-/*      */     private RuntimeState(int param1Int, String param1String) {
-/* 1028 */       this.state = param1Int;
-/* 1029 */       this.stateName = param1String;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public String toString() {
-/* 1034 */       return this.stateName;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public RuntimeState clone() {
-/* 1039 */       RuntimeState runtimeState = new RuntimeState(this.state, this.stateName);
-/* 1040 */       runtimeState.backgroundPainter = this.backgroundPainter;
-/* 1041 */       runtimeState.foregroundPainter = this.foregroundPainter;
-/* 1042 */       runtimeState.borderPainter = this.borderPainter;
-/* 1043 */       runtimeState.defaults.putAll(this.defaults);
-/* 1044 */       return runtimeState;
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static final class Values
-/*      */   {
-/*      */     State[] stateTypes;
-/*      */     NimbusStyle.RuntimeState[] states;
-/*      */     Insets contentMargins;
-/*      */     UIDefaults defaults;
-/*      */     Map<NimbusStyle.CacheKey, Object> cache;
-/*      */     
-/*      */     private Values() {
-/* 1058 */       this.stateTypes = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1064 */       this.states = null;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1072 */       this.defaults = new UIDefaults(10, 0.7F);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1081 */       this.cache = new HashMap<>();
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static final class CacheKey
-/*      */   {
-/*      */     private String key;
-/*      */     
-/*      */     private int xstate;
-/*      */     
-/*      */     CacheKey(Object param1Object, int param1Int) {
-/* 1093 */       init(param1Object, param1Int);
-/*      */     }
-/*      */     
-/*      */     void init(Object param1Object, int param1Int) {
-/* 1097 */       this.key = param1Object.toString();
-/* 1098 */       this.xstate = param1Int;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean equals(Object param1Object) {
-/* 1103 */       CacheKey cacheKey = (CacheKey)param1Object;
-/* 1104 */       if (param1Object == null) return false; 
-/* 1105 */       if (this.xstate != cacheKey.xstate) return false; 
-/* 1106 */       if (!this.key.equals(cacheKey.key)) return false; 
-/* 1107 */       return true;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public int hashCode() {
-/* 1112 */       int i = 3;
-/* 1113 */       i = 29 * i + this.key.hashCode();
-/* 1114 */       i = 29 * i + this.xstate;
-/* 1115 */       return i;
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\NimbusStyle.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import javax.swing.Painter;
+
+import javax.swing.JComponent;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.synth.ColorType;
+import static javax.swing.plaf.synth.SynthConstants.*;
+import javax.swing.plaf.synth.SynthContext;
+import javax.swing.plaf.synth.SynthPainter;
+import javax.swing.plaf.synth.SynthStyle;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * <p>A SynthStyle implementation used by Nimbus. Each Region that has been
+ * registered with the NimbusLookAndFeel will have an associated NimbusStyle.
+ * Third party components that are registered with the NimbusLookAndFeel will
+ * therefore be handed a NimbusStyle from the look and feel from the
+ * #getStyle(JComponent, Region) method.</p>
+ *
+ * <p>This class properly reads and retrieves values placed in the UIDefaults
+ * according to the standard Nimbus naming conventions. It will create and
+ * retrieve painters, fonts, colors, and other data stored there.</p>
+ *
+ * <p>NimbusStyle also supports the ability to override settings on a per
+ * component basis. NimbusStyle checks the component's client property map for
+ * "Nimbus.Overrides". If the value associated with this key is an instance of
+ * UIDefaults, then the values in that defaults table will override the standard
+ * Nimbus defaults in UIManager, but for that component instance only.</p>
+ *
+ * <p>Optionally, you may specify the client property
+ * "Nimbus.Overrides.InheritDefaults". If true, this client property indicates
+ * that the defaults located in UIManager should first be read, and then
+ * replaced with defaults located in the component client properties. If false,
+ * then only the defaults located in the component client property map will
+ * be used. If not specified, it is assumed to be true.</p>
+ *
+ * <p>You must specify "Nimbus.Overrides" for "Nimbus.Overrides.InheritDefaults"
+ * to have any effect. "Nimbus.Overrides" indicates whether there are any
+ * overrides, while "Nimbus.Overrides.InheritDefaults" indicates whether those
+ * overrides should first be initialized with the defaults from UIManager.</p>
+ *
+ * <p>The NimbusStyle is reloaded whenever a property change event is fired
+ * for a component for "Nimbus.Overrides" or "Nimbus.Overrides.InheritDefaults".
+ * So for example, setting a new UIDefaults on a component would cause the
+ * style to be reloaded.</p>
+ *
+ * <p>The values are only read out of UIManager once, and then cached. If
+ * you need to read the values again (for example, if the UI is being reloaded),
+ * then discard this NimbusStyle and read a new one from NimbusLookAndFeel
+ * using NimbusLookAndFeel.getStyle.</p>
+ *
+ * <p>The primary API of interest in this class for 3rd party component authors
+ * are the three methods which retrieve painters: #getBackgroundPainter,
+ * #getForegroundPainter, and #getBorderPainter.</p>
+ *
+ * <p>NimbusStyle allows you to specify custom states, or modify the order of
+ * states. Synth (and thus Nimbus) has the concept of a "state". For example,
+ * a JButton might be in the "MOUSE_OVER" state, or the "ENABLED" state, or the
+ * "DISABLED" state. These are all "standard" states which are defined in synth,
+ * and which apply to all synth Regions.</p>
+ *
+ * <p>Sometimes, however, you need to have a custom state. For example, you
+ * want JButton to render differently if it's parent is a JToolbar. In Nimbus,
+ * you specify these custom states by including a special key in UIDefaults.
+ * The following UIDefaults entries define three states for this button:</p>
+ *
+ * <pre><code>
+ *     JButton.States = Enabled, Disabled, Toolbar
+ *     JButton[Enabled].backgroundPainter = somePainter
+ *     JButton[Disabled].background = BLUE
+ *     JButton[Toolbar].backgroundPainter = someOtherPaint
+ * </code></pre>
+ *
+ * <p>As you can see, the <code>JButton.States</code> entry lists the states
+ * that the JButton style will support. You then specify the settings for
+ * each state. If you do not specify the <code>JButton.States</code> entry,
+ * then the standard Synth states will be assumed. If you specify the entry
+ * but the list of states is empty or null, then the standard synth states
+ * will be assumed.</p>
+ *
+ * @author Richard Bair
+ * @author Jasper Potts
+ */
+public final class NimbusStyle extends SynthStyle {
+    /* Keys and scales for large/small/mini components, based on Apples sizes */
+    public static final String LARGE_KEY = "large";
+    public static final String SMALL_KEY = "small";
+    public static final String MINI_KEY = "mini";
+    public static final double LARGE_SCALE = 1.15;
+    public static final double SMALL_SCALE = 0.857;
+    public static final double MINI_SCALE = 0.714;
+
+    /**
+     * Special constant used for performance reasons during the get() method.
+     * If get() runs through all of the search locations and determines that
+     * there is no value, then NULL will be placed into the values map. This way
+     * on subsequent lookups it will simply extract NULL, see it, and return
+     * null rather than continuing the lookup procedure.
+     */
+    private static final Object NULL = '\0';
+    /**
+     * <p>The Color to return from getColorForState if it would otherwise have
+     * returned null.</p>
+     *
+     * <p>Returning null from getColorForState is a very bad thing, as it causes
+     * the AWT peer for the component to install a SystemColor, which is not a
+     * UIResource. As a result, if <code>null</code> is returned from
+     * getColorForState, then thereafter the color is not updated for other
+     * states or on LAF changes or updates. This DEFAULT_COLOR is used to
+     * ensure that a ColorUIResource is always returned from
+     * getColorForState.</p>
+     */
+    private static final Color DEFAULT_COLOR = new ColorUIResource(Color.BLACK);
+    /**
+     * Simple Comparator for ordering the RuntimeStates according to their
+     * rank.
+     */
+    private static final Comparator<RuntimeState> STATE_COMPARATOR =
+        new Comparator<RuntimeState>() {
+            @Override
+            public int compare(RuntimeState a, RuntimeState b) {
+                return a.state - b.state;
+            }
+        };
+    /**
+     * The prefix for the component or region that this NimbusStyle
+     * represents. This prefix is used to lookup state in the UIManager.
+     * It should be something like Button or Slider.Thumb or "MyButton" or
+     * ComboBox."ComboBox.arrowButton" or "MyComboBox"."ComboBox.arrowButton"
+     */
+    private String prefix;
+    /**
+     * The SynthPainter that will be returned from this NimbusStyle. The
+     * SynthPainter returned will be a SynthPainterImpl, which will in turn
+     * delegate back to this NimbusStyle for the proper Painter (not
+     * SynthPainter) to use for painting the foreground, background, or border.
+     */
+    private SynthPainter painter;
+    /**
+     * Data structure containing all of the defaults, insets, states, and other
+     * values associated with this style. This instance refers to default
+     * values, and are used when no overrides are discovered in the client
+     * properties of a component. These values are lazily created on first
+     * access.
+     */
+    private Values values;
+
+    /**
+     * A temporary CacheKey used to perform lookups. This pattern avoids
+     * creating useless garbage keys, or concatenating strings, etc.
+     */
+    private CacheKey tmpKey = new CacheKey("", 0);
+
+    /**
+     * Some NimbusStyles are created for a specific component only. In Nimbus,
+     * this happens whenever the component has as a client property a
+     * UIDefaults which overrides (or supplements) those defaults found in
+     * UIManager.
+     */
+    private WeakReference<JComponent> component;
+
+    /**
+     * Create a new NimbusStyle. Only the prefix must be supplied. At the
+     * appropriate time, installDefaults will be called. At that point, all of
+     * the state information will be pulled from UIManager and stored locally
+     * within this style.
+     *
+     * @param prefix Something like Button or Slider.Thumb or
+     *        org.jdesktop.swingx.JXStatusBar or ComboBox."ComboBox.arrowButton"
+     * @param c an optional reference to a component that this NimbusStyle
+     *        should be associated with. This is only used when the component
+     *        has Nimbus overrides registered in its client properties and
+     *        should be null otherwise.
+     */
+    NimbusStyle(String prefix, JComponent c) {
+        if (c != null) {
+            this.component = new WeakReference<JComponent>(c);
+        }
+        this.prefix = prefix;
+        this.painter = new SynthPainterImpl(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overridden to cause this style to populate itself with data from
+     * UIDefaults, if necessary.
+     */
+    @Override public void installDefaults(SynthContext ctx) {
+        validate();
+
+        //delegate to the superclass to install defaults such as background,
+        //foreground, font, and opaque onto the swing component.
+        super.installDefaults(ctx);
+    }
+
+    /**
+     * Pulls data out of UIDefaults, if it has not done so already, and sets
+     * up the internal state.
+     */
+    private void validate() {
+        // a non-null values object is the flag we use to determine whether
+        // to reparse from UIManager.
+        if (values != null) return;
+
+        // reconstruct this NimbusStyle based on the entries in the UIManager
+        // and possibly based on any overrides within the component's
+        // client properties (assuming such a component exists and contains
+        // any Nimbus.Overrides)
+        values = new Values();
+
+        Map<String, Object> defaults =
+                ((NimbusLookAndFeel) UIManager.getLookAndFeel()).
+                        getDefaultsForPrefix(prefix);
+
+        // inspect the client properties for the key "Nimbus.Overrides". If the
+        // value is an instance of UIDefaults, then these defaults are used
+        // in place of, or in addition to, the defaults in UIManager.
+        if (component != null) {
+            // We know component.get() is non-null here, as if the component
+            // were GC'ed, we wouldn't be processing its style.
+            Object o = component.get().getClientProperty("Nimbus.Overrides");
+            if (o instanceof UIDefaults) {
+                Object i = component.get().getClientProperty(
+                        "Nimbus.Overrides.InheritDefaults");
+                boolean inherit = i instanceof Boolean ? (Boolean)i : true;
+                UIDefaults d = (UIDefaults)o;
+                TreeMap<String, Object> map = new TreeMap<String, Object>();
+                for (Object obj : d.keySet()) {
+                    if (obj instanceof String) {
+                        String key = (String)obj;
+                        if (key.startsWith(prefix)) {
+                            map.put(key, d.get(key));
+                        }
+                    }
+                }
+                if (inherit) {
+                    defaults.putAll(map);
+                } else {
+                    defaults = map;
+                }
+            }
+        }
+
+        //a list of the different types of states used by this style. This
+        //list may contain only "standard" states (those defined by Synth),
+        //or it may contain custom states, or it may contain only "standard"
+        //states but list them in a non-standard order.
+        List<State> states = new ArrayList<State>();
+        //a map of state name to code
+        Map<String,Integer> stateCodes = new HashMap<String,Integer>();
+        //This is a list of runtime "state" context objects. These contain
+        //the values associated with each state.
+        List<RuntimeState> runtimeStates = new ArrayList<RuntimeState>();
+
+        //determine whether there are any custom states, or custom state
+        //order. If so, then read all those custom states and define the
+        //"values" stateTypes to be a non-null array.
+        //Otherwise, let the "values" stateTypes be null to indicate that
+        //there are no custom states or custom state ordering
+        String statesString = (String)defaults.get(prefix + ".States");
+        if (statesString != null) {
+            String s[] = statesString.split(",");
+            for (int i=0; i<s.length; i++) {
+                s[i] = s[i].trim();
+                if (!State.isStandardStateName(s[i])) {
+                    //this is a non-standard state name, so look for the
+                    //custom state associated with it
+                    String stateName = prefix + "." + s[i];
+                    State customState = (State)defaults.get(stateName);
+                    if (customState != null) {
+                        states.add(customState);
+                    }
+                } else {
+                    states.add(State.getStandardState(s[i]));
+                }
+            }
+
+            //if there were any states defined, then set the stateTypes array
+            //to be non-null. Otherwise, leave it null (meaning, use the
+            //standard synth states).
+            if (states.size() > 0) {
+                values.stateTypes = states.toArray(new State[states.size()]);
+            }
+
+            //assign codes for each of the state types
+            int code = 1;
+            for (State state : states) {
+                stateCodes.put(state.getName(), code);
+                code <<= 1;
+            }
+        } else {
+            //since there were no custom states defined, setup the list of
+            //standard synth states. Note that the "v.stateTypes" is not
+            //being set here, indicating that at runtime the state selection
+            //routines should use standard synth states instead of custom
+            //states. I do need to popuplate this temp list now though, so that
+            //the remainder of this method will function as expected.
+            states.add(State.Enabled);
+            states.add(State.MouseOver);
+            states.add(State.Pressed);
+            states.add(State.Disabled);
+            states.add(State.Focused);
+            states.add(State.Selected);
+            states.add(State.Default);
+
+            //assign codes for the states
+            stateCodes.put("Enabled", ENABLED);
+            stateCodes.put("MouseOver", MOUSE_OVER);
+            stateCodes.put("Pressed", PRESSED);
+            stateCodes.put("Disabled", DISABLED);
+            stateCodes.put("Focused", FOCUSED);
+            stateCodes.put("Selected", SELECTED);
+            stateCodes.put("Default", DEFAULT);
+        }
+
+        //Now iterate over all the keys in the defaults table
+        for (String key : defaults.keySet()) {
+            //The key is something like JButton.Enabled.backgroundPainter,
+            //or JButton.States, or JButton.background.
+            //Remove the "JButton." portion of the key
+            String temp = key.substring(prefix.length());
+            //if there is a " or : then we skip it because it is a subregion
+            //of some kind
+            if (temp.indexOf('"') != -1 || temp.indexOf(':') != -1) continue;
+            //remove the separator
+            temp = temp.substring(1);
+            //At this point, temp may be any of the following:
+            //background
+            //[Enabled].background
+            //[Enabled+MouseOver].background
+            //property.foo
+
+            //parse out the states and the property
+            String stateString = null;
+            String property = null;
+            int bracketIndex = temp.indexOf(']');
+            if (bracketIndex < 0) {
+                //there is not a state string, so property = temp
+                property = temp;
+            } else {
+                stateString = temp.substring(0, bracketIndex);
+                property = temp.substring(bracketIndex + 2);
+            }
+
+            //now that I have the state (if any) and the property, get the
+            //value for this property and install it where it belongs
+            if (stateString == null) {
+                //there was no state, just a property. Check for the custom
+                //"contentMargins" property (which is handled specially by
+                //Synth/Nimbus). Also check for the property being "States",
+                //in which case it is not a real property and should be ignored.
+                //otherwise, assume it is a property and install it on the
+                //values object
+                if ("contentMargins".equals(property)) {
+                    values.contentMargins = (Insets)defaults.get(key);
+                } else if ("States".equals(property)) {
+                    //ignore
+                } else {
+                    values.defaults.put(property, defaults.get(key));
+                }
+            } else {
+                //it is possible that the developer has a malformed UIDefaults
+                //entry, such that something was specified in the place of
+                //the State portion of the key but it wasn't a state. In this
+                //case, skip will be set to true
+                boolean skip = false;
+                //this variable keeps track of the int value associated with
+                //the state. See SynthState for details.
+                int componentState = 0;
+                //Multiple states may be specified in the string, such as
+                //Enabled+MouseOver
+                String[] stateParts = stateString.split("\\+");
+                //For each state, we need to find the State object associated
+                //with it, or skip it if it cannot be found.
+                for (String s : stateParts) {
+                    if (stateCodes.containsKey(s)) {
+                        componentState |= stateCodes.get(s);
+                    } else {
+                        //Was not a state. Maybe it was a subregion or something
+                        //skip it.
+                        skip = true;
+                        break;
+                    }
+                }
+
+                if (skip) continue;
+
+                //find the RuntimeState for this State
+                RuntimeState rs = null;
+                for (RuntimeState s : runtimeStates) {
+                    if (s.state == componentState) {
+                        rs = s;
+                        break;
+                    }
+                }
+
+                //couldn't find the runtime state, so create a new one
+                if (rs == null) {
+                    rs = new RuntimeState(componentState, stateString);
+                    runtimeStates.add(rs);
+                }
+
+                //check for a couple special properties, such as for the
+                //painters. If these are found, then set the specially on
+                //the runtime state. Else, it is just a normal property,
+                //so put it in the UIDefaults associated with that runtime
+                //state
+                if ("backgroundPainter".equals(property)) {
+                    rs.backgroundPainter = getPainter(defaults, key);
+                } else if ("foregroundPainter".equals(property)) {
+                    rs.foregroundPainter = getPainter(defaults, key);
+                } else if ("borderPainter".equals(property)) {
+                    rs.borderPainter = getPainter(defaults, key);
+                } else {
+                    rs.defaults.put(property, defaults.get(key));
+                }
+            }
+        }
+
+        //now that I've collected all the runtime states, I'll sort them based
+        //on their integer "state" (see SynthState for how this works).
+        Collections.sort(runtimeStates, STATE_COMPARATOR);
+
+        //finally, set the array of runtime states on the values object
+        values.states = runtimeStates.toArray(new RuntimeState[runtimeStates.size()]);
+    }
+
+    private Painter getPainter(Map<String, Object> defaults, String key) {
+        Object p = defaults.get(key);
+        if (p instanceof UIDefaults.LazyValue) {
+            p = ((UIDefaults.LazyValue)p).createValue(UIManager.getDefaults());
+        }
+        return (p instanceof Painter ? (Painter)p : null);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overridden to cause this style to populate itself with data from
+     * UIDefaults, if necessary.
+     */
+    @Override public Insets getInsets(SynthContext ctx, Insets in) {
+        if (in == null) {
+            in = new Insets(0, 0, 0, 0);
+        }
+
+        Values v = getValues(ctx);
+
+        if (v.contentMargins == null) {
+            in.bottom = in.top = in.left = in.right = 0;
+            return in;
+        } else {
+            in.bottom = v.contentMargins.bottom;
+            in.top = v.contentMargins.top;
+            in.left = v.contentMargins.left;
+            in.right = v.contentMargins.right;
+            // Account for scale
+            // The key "JComponent.sizeVariant" is used to match Apple's LAF
+            String scaleKey = (String)ctx.getComponent().getClientProperty(
+                    "JComponent.sizeVariant");
+            if (scaleKey != null){
+                if (LARGE_KEY.equals(scaleKey)){
+                    in.bottom *= LARGE_SCALE;
+                    in.top *= LARGE_SCALE;
+                    in.left *= LARGE_SCALE;
+                    in.right *= LARGE_SCALE;
+                } else if (SMALL_KEY.equals(scaleKey)){
+                    in.bottom *= SMALL_SCALE;
+                    in.top *= SMALL_SCALE;
+                    in.left *= SMALL_SCALE;
+                    in.right *= SMALL_SCALE;
+                } else if (MINI_KEY.equals(scaleKey)){
+                    in.bottom *= MINI_SCALE;
+                    in.top *= MINI_SCALE;
+                    in.left *= MINI_SCALE;
+                    in.right *= MINI_SCALE;
+                }
+            }
+            return in;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overridden to cause this style to populate itself with data from
+     * UIDefaults, if necessary.</p>
+     *
+     * <p>In addition, NimbusStyle handles ColorTypes slightly differently from
+     * Synth.</p>
+     * <ul>
+     *  <li>ColorType.BACKGROUND will equate to the color stored in UIDefaults
+     *      named "background".</li>
+     *  <li>ColorType.TEXT_BACKGROUND will equate to the color stored in
+     *      UIDefaults named "textBackground".</li>
+     *  <li>ColorType.FOREGROUND will equate to the color stored in UIDefaults
+     *      named "textForeground".</li>
+     *  <li>ColorType.TEXT_FOREGROUND will equate to the color stored in
+     *      UIDefaults named "textForeground".</li>
+     * </ul>
+     */
+    @Override protected Color getColorForState(SynthContext ctx, ColorType type) {
+        String key = null;
+        if (type == ColorType.BACKGROUND) {
+            key = "background";
+        } else if (type == ColorType.FOREGROUND) {
+            //map FOREGROUND as TEXT_FOREGROUND
+            key = "textForeground";
+        } else if (type == ColorType.TEXT_BACKGROUND) {
+            key = "textBackground";
+        } else if (type == ColorType.TEXT_FOREGROUND) {
+            key = "textForeground";
+        } else if (type == ColorType.FOCUS) {
+            key = "focus";
+        } else if (type != null) {
+            key = type.toString();
+        } else {
+            return DEFAULT_COLOR;
+        }
+        Color c = (Color) get(ctx, key);
+        //if all else fails, return a default color (which is a ColorUIResource)
+        if (c == null) c = DEFAULT_COLOR;
+        return c;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overridden to cause this style to populate itself with data from
+     * UIDefaults, if necessary. If a value named "font" is not found in
+     * UIDefaults, then the "defaultFont" font in UIDefaults will be returned
+     * instead.
+     */
+    @Override protected Font getFontForState(SynthContext ctx) {
+        Font f = (Font)get(ctx, "font");
+        if (f == null) f = UIManager.getFont("defaultFont");
+
+        // Account for scale
+        // The key "JComponent.sizeVariant" is used to match Apple's LAF
+        String scaleKey = (String)ctx.getComponent().getClientProperty(
+                "JComponent.sizeVariant");
+        if (scaleKey != null){
+            if (LARGE_KEY.equals(scaleKey)){
+                f = f.deriveFont(Math.round(f.getSize2D()*LARGE_SCALE));
+            } else if (SMALL_KEY.equals(scaleKey)){
+                f = f.deriveFont(Math.round(f.getSize2D()*SMALL_SCALE));
+            } else if (MINI_KEY.equals(scaleKey)){
+                f = f.deriveFont(Math.round(f.getSize2D()*MINI_SCALE));
+            }
+        }
+        return f;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Returns the SynthPainter for this style, which ends up delegating to
+     * the Painters installed in this style.
+     */
+    @Override public SynthPainter getPainter(SynthContext ctx) {
+        return painter;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overridden to cause this style to populate itself with data from
+     * UIDefaults, if necessary. If opacity is not specified in UI defaults,
+     * then it defaults to being non-opaque.
+     */
+    @Override public boolean isOpaque(SynthContext ctx) {
+        // Force Table CellRenderers to be opaque
+        if ("Table.cellRenderer".equals(ctx.getComponent().getName())) {
+            return true;
+        }
+        Boolean opaque = (Boolean)get(ctx, "opaque");
+        return opaque == null ? false : opaque;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Overridden to cause this style to populate itself with data from
+     * UIDefaults, if necessary.</p>
+     *
+     * <p>Properties in UIDefaults may be specified in a chained manner. For
+     * example:
+     * <pre>
+     * background
+     * Button.opacity
+     * Button.Enabled.foreground
+     * Button.Enabled+Selected.background
+     * </pre>
+     *
+     * <p>In this example, suppose you were in the Enabled+Selected state and
+     * searched for "foreground". In this case, we first check for
+     * Button.Enabled+Selected.foreground, but no such color exists. We then
+     * fall back to the next valid state, in this case,
+     * Button.Enabled.foreground, and have a match. So we return it.</p>
+     *
+     * <p>Again, if we were in the state Enabled and looked for "background", we
+     * wouldn't find it in Button.Enabled, or in Button, but would at the top
+     * level in UIManager. So we return that value.</p>
+     *
+     * <p>One special note: the "key" passed to this method could be of the form
+     * "background" or "Button.background" where "Button" equals the prefix
+     * passed to the NimbusStyle constructor. In either case, it looks for
+     * "background".</p>
+     *
+     * @param ctx
+     * @param key must not be null
+     */
+    @Override public Object get(SynthContext ctx, Object key) {
+        Values v = getValues(ctx);
+
+        // strip off the prefix, if there is one.
+        String fullKey = key.toString();
+        String partialKey = fullKey.substring(fullKey.indexOf(".") + 1);
+
+        Object obj = null;
+        int xstate = getExtendedState(ctx, v);
+
+        // check the cache
+        tmpKey.init(partialKey, xstate);
+        obj = v.cache.get(tmpKey);
+        boolean wasInCache = obj != null;
+        if (!wasInCache){
+            // Search exact matching states and then lesser matching states
+            RuntimeState s = null;
+            int[] lastIndex = new int[] {-1};
+            while (obj == null &&
+                    (s = getNextState(v.states, lastIndex, xstate)) != null) {
+                obj = s.defaults.get(partialKey);
+            }
+            // Search Region Defaults
+            if (obj == null && v.defaults != null) {
+                obj = v.defaults.get(partialKey);
+            }
+            // return found object
+            // Search UIManager Defaults
+            if (obj == null) obj = UIManager.get(fullKey);
+            // Search Synth Defaults for InputMaps
+            if (obj == null && partialKey.equals("focusInputMap")) {
+                obj = super.get(ctx, fullKey);
+            }
+            // if all we got was a null, store this fact for later use
+            v.cache.put(new CacheKey(partialKey, xstate),
+                    obj == null ? NULL : obj);
+        }
+        // return found object
+        return obj == NULL ? null : obj;
+    }
+
+    /**
+     * Gets the appropriate background Painter, if there is one, for the state
+     * specified in the given SynthContext. This method does appropriate
+     * fallback searching, as described in #get.
+     *
+     * @param ctx The SynthContext. Must not be null.
+     * @return The background painter associated for the given state, or null if
+     * none could be found.
+     */
+    public Painter getBackgroundPainter(SynthContext ctx) {
+        Values v = getValues(ctx);
+        int xstate = getExtendedState(ctx, v);
+        Painter p = null;
+
+        // check the cache
+        tmpKey.init("backgroundPainter$$instance", xstate);
+        p = (Painter)v.cache.get(tmpKey);
+        if (p != null) return p;
+
+        // not in cache, so lookup and store in cache
+        RuntimeState s = null;
+        int[] lastIndex = new int[] {-1};
+        while ((s = getNextState(v.states, lastIndex, xstate)) != null) {
+            if (s.backgroundPainter != null) {
+                p = s.backgroundPainter;
+                break;
+            }
+        }
+        if (p == null) p = (Painter)get(ctx, "backgroundPainter");
+        if (p != null) {
+            v.cache.put(new CacheKey("backgroundPainter$$instance", xstate), p);
+        }
+        return p;
+    }
+
+    /**
+     * Gets the appropriate foreground Painter, if there is one, for the state
+     * specified in the given SynthContext. This method does appropriate
+     * fallback searching, as described in #get.
+     *
+     * @param ctx The SynthContext. Must not be null.
+     * @return The foreground painter associated for the given state, or null if
+     * none could be found.
+     */
+    public Painter getForegroundPainter(SynthContext ctx) {
+        Values v = getValues(ctx);
+        int xstate = getExtendedState(ctx, v);
+        Painter p = null;
+
+        // check the cache
+        tmpKey.init("foregroundPainter$$instance", xstate);
+        p = (Painter)v.cache.get(tmpKey);
+        if (p != null) return p;
+
+        // not in cache, so lookup and store in cache
+        RuntimeState s = null;
+        int[] lastIndex = new int[] {-1};
+        while ((s = getNextState(v.states, lastIndex, xstate)) != null) {
+            if (s.foregroundPainter != null) {
+                p = s.foregroundPainter;
+                break;
+            }
+        }
+        if (p == null) p = (Painter)get(ctx, "foregroundPainter");
+        if (p != null) {
+            v.cache.put(new CacheKey("foregroundPainter$$instance", xstate), p);
+        }
+        return p;
+    }
+
+    /**
+     * Gets the appropriate border Painter, if there is one, for the state
+     * specified in the given SynthContext. This method does appropriate
+     * fallback searching, as described in #get.
+     *
+     * @param ctx The SynthContext. Must not be null.
+     * @return The border painter associated for the given state, or null if
+     * none could be found.
+     */
+    public Painter getBorderPainter(SynthContext ctx) {
+        Values v = getValues(ctx);
+        int xstate = getExtendedState(ctx, v);
+        Painter p = null;
+
+        // check the cache
+        tmpKey.init("borderPainter$$instance", xstate);
+        p = (Painter)v.cache.get(tmpKey);
+        if (p != null) return p;
+
+        // not in cache, so lookup and store in cache
+        RuntimeState s = null;
+        int[] lastIndex = new int[] {-1};
+        while ((s = getNextState(v.states, lastIndex, xstate)) != null) {
+            if (s.borderPainter != null) {
+                p = s.borderPainter;
+                break;
+            }
+        }
+        if (p == null) p = (Painter)get(ctx, "borderPainter");
+        if (p != null) {
+            v.cache.put(new CacheKey("borderPainter$$instance", xstate), p);
+        }
+        return p;
+    }
+
+    /**
+     * Utility method which returns the proper Values based on the given
+     * SynthContext. Ensures that parsing of the values has occurred, or
+     * reoccurs as necessary.
+     *
+     * @param ctx The SynthContext
+     * @return a non-null values reference
+     */
+    private Values getValues(SynthContext ctx) {
+        validate();
+        return values;
+    }
+
+    /**
+     * Simple utility method that searches the given array of Strings for the
+     * given string. This method is only called from getExtendedState if
+     * the developer has specified a specific state for the component to be
+     * in (ie, has "wedged" the component in that state) by specifying
+     * they client property "Nimbus.State".
+     *
+     * @param names a non-null array of strings
+     * @param name the name to look for in the array
+     * @return true or false based on whether the given name is in the array
+     */
+    private boolean contains(String[] names, String name) {
+        assert name != null;
+        for (int i=0; i<names.length; i++) {
+            if (name.equals(names[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * <p>Gets the extended state for a given synth context. Nimbus supports the
+     * ability to define custom states. The algorithm used for choosing what
+     * style information to use for a given state requires a single integer
+     * bit string where each bit in the integer represents a different state
+     * that the component is in. This method uses the componentState as
+     * reported in the SynthContext, in addition to custom states, to determine
+     * what this extended state is.</p>
+     *
+     * <p>In addition, this method checks the component in the given context
+     * for a client property called "Nimbus.State". If one exists, then it will
+     * decompose the String associated with that property to determine what
+     * state to return. In this way, the developer can force a component to be
+     * in a specific state, regardless of what the "real" state of the component
+     * is.</p>
+     *
+     * <p>The string associated with "Nimbus.State" would be of the form:
+     * <pre>Enabled+CustomState+MouseOver</pre></p>
+     *
+     * @param ctx
+     * @param v
+     * @return
+     */
+    private int getExtendedState(SynthContext ctx, Values v) {
+        JComponent c = ctx.getComponent();
+        int xstate = 0;
+        int mask = 1;
+        //check for the Nimbus.State client property
+        //Performance NOTE: getClientProperty ends up inside a synchronized
+        //block, so there is some potential for performance issues here, however
+        //I'm not certain that there is one on a modern VM.
+        Object property = c.getClientProperty("Nimbus.State");
+        if (property != null) {
+            String stateNames = property.toString();
+            String[] states = stateNames.split("\\+");
+            if (v.stateTypes == null){
+                // standard states only
+                for (String stateStr : states) {
+                    State.StandardState s = State.getStandardState(stateStr);
+                    if (s != null) xstate |= s.getState();
+                }
+            } else {
+                // custom states
+                for (State s : v.stateTypes) {
+                    if (contains(states, s.getName())) {
+                        xstate |= mask;
+                    }
+                    mask <<= 1;
+                }
+            }
+        } else {
+            //if there are no custom states defined, then simply return the
+            //state that Synth reported
+            if (v.stateTypes == null) return ctx.getComponentState();
+
+            //there are custom states on this values, so I'll have to iterate
+            //over them all and return a custom extended state
+            int state = ctx.getComponentState();
+            for (State s : v.stateTypes) {
+                if (s.isInState(c, state)) {
+                    xstate |= mask;
+                }
+                mask <<= 1;
+            }
+        }
+        return xstate;
+    }
+
+    /**
+     * <p>Gets the RuntimeState that most closely matches the state in the given
+     * context, but is less specific than the given "lastState". Essentially,
+     * this allows you to search for the next best state.</p>
+     *
+     * <p>For example, if you had the following three states:
+     * <pre>
+     * Enabled
+     * Enabled+Pressed
+     * Disabled
+     * </pre>
+     * And you wanted to find the state that best represented
+     * ENABLED+PRESSED+FOCUSED and <code>lastState</code> was null (or an
+     * empty array, or an array with a single int with index == -1), then
+     * Enabled+Pressed would be returned. If you then call this method again but
+     * pass the index of Enabled+Pressed as the "lastState", then
+     * Enabled would be returned. If you call this method a third time and pass
+     * the index of Enabled in as the <code>lastState</code>, then null would be
+     * returned.</p>
+     *
+     * <p>The actual code path for determining the proper state is the same as
+     * in Synth.</p>
+     *
+     * @param ctx
+     * @param lastState a 1 element array, allowing me to do pass-by-reference.
+     * @return
+     */
+    private RuntimeState getNextState(RuntimeState[] states,
+                                      int[] lastState,
+                                      int xstate) {
+        // Use the StateInfo with the most bits that matches that of state.
+        // If there are none, then fallback to
+        // the StateInfo with a state of 0, indicating it'll match anything.
+
+        // Consider if we have 3 StateInfos a, b and c with states:
+        // SELECTED, SELECTED | ENABLED, 0
+        //
+        // Input                          Return Value
+        // -----                          ------------
+        // SELECTED                       a
+        // SELECTED | ENABLED             b
+        // MOUSE_OVER                     c
+        // SELECTED | ENABLED | FOCUSED   b
+        // ENABLED                        c
+
+        if (states != null && states.length > 0) {
+            int bestCount = 0;
+            int bestIndex = -1;
+            int wildIndex = -1;
+
+            //if xstate is 0, then search for the runtime state with component
+            //state of 0. That is, find the exact match and return it.
+            if (xstate == 0) {
+                for (int counter = states.length - 1; counter >= 0; counter--) {
+                    if (states[counter].state == 0) {
+                        lastState[0] = counter;
+                        return states[counter];
+                    }
+                }
+                //an exact match couldn't be found, so there was no match.
+                lastState[0] = -1;
+                return null;
+            }
+
+            //xstate is some value != 0
+
+            //determine from which index to start looking. If lastState[0] is -1
+            //then we know to start from the end of the state array. Otherwise,
+            //we start at the lastIndex - 1.
+            int lastStateIndex = lastState == null || lastState[0] == -1 ?
+                states.length : lastState[0];
+
+            for (int counter = lastStateIndex - 1; counter >= 0; counter--) {
+                int oState = states[counter].state;
+
+                if (oState == 0) {
+                    if (wildIndex == -1) {
+                        wildIndex = counter;
+                    }
+                } else if ((xstate & oState) == oState) {
+                    // This is key, we need to make sure all bits of the
+                    // StateInfo match, otherwise a StateInfo with
+                    // SELECTED | ENABLED would match ENABLED, which we
+                    // don't want.
+
+                    // This comes from BigInteger.bitCnt
+                    int bitCount = oState;
+                    bitCount -= (0xaaaaaaaa & bitCount) >>> 1;
+                    bitCount = (bitCount & 0x33333333) + ((bitCount >>> 2) &
+                            0x33333333);
+                    bitCount = bitCount + (bitCount >>> 4) & 0x0f0f0f0f;
+                    bitCount += bitCount >>> 8;
+                    bitCount += bitCount >>> 16;
+                    bitCount = bitCount & 0xff;
+                    if (bitCount > bestCount) {
+                        bestIndex = counter;
+                        bestCount = bitCount;
+                    }
+                }
+            }
+            if (bestIndex != -1) {
+                lastState[0] = bestIndex;
+                return states[bestIndex];
+            }
+            if (wildIndex != -1) {
+                lastState[0] = wildIndex;
+                return states[wildIndex];
+            }
+        }
+        lastState[0] = -1;
+        return null;
+    }
+
+    /**
+     * Contains values such as the UIDefaults and painters associated with
+     * a state. Whereas <code>State</code> represents a distinct state that a
+     * component can be in (such as Enabled), this class represents the colors,
+     * fonts, painters, etc associated with some state for this
+     * style.
+     */
+    private final class RuntimeState implements Cloneable {
+        int state;
+        Painter backgroundPainter;
+        Painter foregroundPainter;
+        Painter borderPainter;
+        String stateName;
+        UIDefaults defaults = new UIDefaults(10, .7f);
+
+        private RuntimeState(int state, String stateName) {
+            this.state = state;
+            this.stateName = stateName;
+        }
+
+        @Override
+        public String toString() {
+            return stateName;
+        }
+
+        @Override
+        public RuntimeState clone() {
+            RuntimeState clone = new RuntimeState(state, stateName);
+            clone.backgroundPainter = backgroundPainter;
+            clone.foregroundPainter = foregroundPainter;
+            clone.borderPainter = borderPainter;
+            clone.defaults.putAll(defaults);
+            return clone;
+        }
+    }
+
+    /**
+     * Essentially a struct of data for a style. A default instance of this
+     * class is used by NimbusStyle. Additional instances exist for each
+     * component that has overrides.
+     */
+    private static final class Values {
+        /**
+         * The list of State types. A State represents a type of state, such
+         * as Enabled, Default, WindowFocused, etc. These can be custom states.
+         */
+        State[] stateTypes = null;
+        /**
+         * The list of actual runtime state representations. These can represent things such
+         * as Enabled + Focused. Thus, they differ from States in that they contain
+         * several states together, and have associated properties, data, etc.
+         */
+        RuntimeState[] states = null;
+        /**
+         * The content margins for this region.
+         */
+        Insets contentMargins;
+        /**
+         * Defaults on the region/component level.
+         */
+        UIDefaults defaults = new UIDefaults(10, .7f);
+        /**
+         * Simple cache. After a value has been looked up, it is stored
+         * in this cache for later retrieval. The key is a concatenation of
+         * the property being looked up, two dollar signs, and the extended
+         * state. So for example:
+         *
+         * foo.bar$$2353
+         */
+        Map<CacheKey,Object> cache = new HashMap<CacheKey,Object>();
+    }
+
+    /**
+     * This implementation presupposes that key is never null and that
+     * the two keys being checked for equality are never null
+     */
+    private static final class CacheKey {
+        private String key;
+        private int xstate;
+
+        CacheKey(Object key, int xstate) {
+            init(key, xstate);
+        }
+
+        void init(Object key, int xstate) {
+            this.key = key.toString();
+            this.xstate = xstate;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            final CacheKey other = (CacheKey) obj;
+            if (obj == null) return false;
+            if (this.xstate != other.xstate) return false;
+            if (!this.key.equals(other.key)) return false;
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 29 * hash + this.key.hashCode();
+            hash = 29 * hash + this.xstate;
+            return hash;
+        }
+    }
+}

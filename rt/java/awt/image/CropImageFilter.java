@@ -1,199 +1,193 @@
-/*     */ package java.awt.image;
-/*     */ 
-/*     */ import java.awt.Rectangle;
-/*     */ import java.util.Hashtable;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CropImageFilter
-/*     */   extends ImageFilter
-/*     */ {
-/*     */   int cropX;
-/*     */   int cropY;
-/*     */   int cropW;
-/*     */   int cropH;
-/*     */   
-/*     */   public CropImageFilter(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  62 */     this.cropX = paramInt1;
-/*  63 */     this.cropY = paramInt2;
-/*  64 */     this.cropW = paramInt3;
-/*  65 */     this.cropH = paramInt4;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setProperties(Hashtable<?, ?> paramHashtable) {
-/*  82 */     Hashtable<String, Rectangle> hashtable = (Hashtable)paramHashtable.clone();
-/*  83 */     hashtable.put("croprect", new Rectangle(this.cropX, this.cropY, this.cropW, this.cropH));
-/*  84 */     super.setProperties(hashtable);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setDimensions(int paramInt1, int paramInt2) {
-/* 100 */     this.consumer.setDimensions(this.cropW, this.cropH);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, byte[] paramArrayOfbyte, int paramInt5, int paramInt6) {
-/* 118 */     int i = paramInt1;
-/* 119 */     if (i < this.cropX) {
-/* 120 */       i = this.cropX;
-/*     */     }
-/* 122 */     int j = addWithoutOverflow(paramInt1, paramInt3);
-/* 123 */     if (j > this.cropX + this.cropW) {
-/* 124 */       j = this.cropX + this.cropW;
-/*     */     }
-/* 126 */     int k = paramInt2;
-/* 127 */     if (k < this.cropY) {
-/* 128 */       k = this.cropY;
-/*     */     }
-/*     */     
-/* 131 */     int m = addWithoutOverflow(paramInt2, paramInt4);
-/* 132 */     if (m > this.cropY + this.cropH) {
-/* 133 */       m = this.cropY + this.cropH;
-/*     */     }
-/* 135 */     if (i >= j || k >= m) {
-/*     */       return;
-/*     */     }
-/* 138 */     this.consumer.setPixels(i - this.cropX, k - this.cropY, j - i, m - k, paramColorModel, paramArrayOfbyte, paramInt5 + (k - paramInt2) * paramInt6 + i - paramInt1, paramInt6);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setPixels(int paramInt1, int paramInt2, int paramInt3, int paramInt4, ColorModel paramColorModel, int[] paramArrayOfint, int paramInt5, int paramInt6) {
-/* 158 */     int i = paramInt1;
-/* 159 */     if (i < this.cropX) {
-/* 160 */       i = this.cropX;
-/*     */     }
-/* 162 */     int j = addWithoutOverflow(paramInt1, paramInt3);
-/* 163 */     if (j > this.cropX + this.cropW) {
-/* 164 */       j = this.cropX + this.cropW;
-/*     */     }
-/* 166 */     int k = paramInt2;
-/* 167 */     if (k < this.cropY) {
-/* 168 */       k = this.cropY;
-/*     */     }
-/*     */     
-/* 171 */     int m = addWithoutOverflow(paramInt2, paramInt4);
-/* 172 */     if (m > this.cropY + this.cropH) {
-/* 173 */       m = this.cropY + this.cropH;
-/*     */     }
-/* 175 */     if (i >= j || k >= m) {
-/*     */       return;
-/*     */     }
-/* 178 */     this.consumer.setPixels(i - this.cropX, k - this.cropY, j - i, m - k, paramColorModel, paramArrayOfint, paramInt5 + (k - paramInt2) * paramInt6 + i - paramInt1, paramInt6);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int addWithoutOverflow(int paramInt1, int paramInt2) {
-/* 185 */     int i = paramInt1 + paramInt2;
-/* 186 */     if (paramInt1 > 0 && paramInt2 > 0 && i < 0) {
-/* 187 */       i = Integer.MAX_VALUE;
-/* 188 */     } else if (paramInt1 < 0 && paramInt2 < 0 && i > 0) {
-/* 189 */       i = Integer.MIN_VALUE;
-/*     */     } 
-/* 191 */     return i;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\image\CropImageFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.image;
+
+import java.awt.image.ImageConsumer;
+import java.awt.image.ColorModel;
+import java.util.Hashtable;
+import java.awt.Rectangle;
+
+/**
+ * An ImageFilter class for cropping images.
+ * This class extends the basic ImageFilter Class to extract a given
+ * rectangular region of an existing Image and provide a source for a
+ * new image containing just the extracted region.  It is meant to
+ * be used in conjunction with a FilteredImageSource object to produce
+ * cropped versions of existing images.
+ *
+ * @see FilteredImageSource
+ * @see ImageFilter
+ *
+ * @author      Jim Graham
+ */
+public class CropImageFilter extends ImageFilter {
+    int cropX;
+    int cropY;
+    int cropW;
+    int cropH;
+
+    /**
+     * Constructs a CropImageFilter that extracts the absolute rectangular
+     * region of pixels from its source Image as specified by the x, y,
+     * w, and h parameters.
+     * @param x the x location of the top of the rectangle to be extracted
+     * @param y the y location of the top of the rectangle to be extracted
+     * @param w the width of the rectangle to be extracted
+     * @param h the height of the rectangle to be extracted
+     */
+    public CropImageFilter(int x, int y, int w, int h) {
+        cropX = x;
+        cropY = y;
+        cropW = w;
+        cropH = h;
+    }
+
+    /**
+     * Passes along  the properties from the source object after adding a
+     * property indicating the cropped region.
+     * This method invokes <code>super.setProperties</code>,
+     * which might result in additional properties being added.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     */
+    public void setProperties(Hashtable<?,?> props) {
+        Hashtable<Object,Object> p = (Hashtable<Object,Object>)props.clone();
+        p.put("croprect", new Rectangle(cropX, cropY, cropW, cropH));
+        super.setProperties(p);
+    }
+
+    /**
+     * Override the source image's dimensions and pass the dimensions
+     * of the rectangular cropped region to the ImageConsumer.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose
+     * pixels are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     * @see ImageConsumer
+     */
+    public void setDimensions(int w, int h) {
+        consumer.setDimensions(cropW, cropH);
+    }
+
+    /**
+     * Determine whether the delivered byte pixels intersect the region to
+     * be extracted and passes through only that subset of pixels that
+     * appear in the output region.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose
+     * pixels are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, byte pixels[], int off,
+                          int scansize) {
+        int x1 = x;
+        if (x1 < cropX) {
+            x1 = cropX;
+        }
+    int x2 = addWithoutOverflow(x, w);
+        if (x2 > cropX + cropW) {
+            x2 = cropX + cropW;
+        }
+        int y1 = y;
+        if (y1 < cropY) {
+            y1 = cropY;
+        }
+
+    int y2 = addWithoutOverflow(y, h);
+        if (y2 > cropY + cropH) {
+            y2 = cropY + cropH;
+        }
+        if (x1 >= x2 || y1 >= y2) {
+            return;
+        }
+        consumer.setPixels(x1 - cropX, y1 - cropY, (x2 - x1), (y2 - y1),
+                           model, pixels,
+                           off + (y1 - y) * scansize + (x1 - x), scansize);
+    }
+
+    /**
+     * Determine if the delivered int pixels intersect the region to
+     * be extracted and pass through only that subset of pixels that
+     * appear in the output region.
+     * <p>
+     * Note: This method is intended to be called by the
+     * <code>ImageProducer</code> of the <code>Image</code> whose
+     * pixels are being filtered. Developers using
+     * this class to filter pixels from an image should avoid calling
+     * this method directly since that operation could interfere
+     * with the filtering operation.
+     */
+    public void setPixels(int x, int y, int w, int h,
+                          ColorModel model, int pixels[], int off,
+                          int scansize) {
+        int x1 = x;
+        if (x1 < cropX) {
+            x1 = cropX;
+        }
+    int x2 = addWithoutOverflow(x, w);
+        if (x2 > cropX + cropW) {
+            x2 = cropX + cropW;
+        }
+        int y1 = y;
+        if (y1 < cropY) {
+            y1 = cropY;
+        }
+
+    int y2 = addWithoutOverflow(y, h);
+        if (y2 > cropY + cropH) {
+            y2 = cropY + cropH;
+        }
+        if (x1 >= x2 || y1 >= y2) {
+            return;
+        }
+        consumer.setPixels(x1 - cropX, y1 - cropY, (x2 - x1), (y2 - y1),
+                           model, pixels,
+                           off + (y1 - y) * scansize + (x1 - x), scansize);
+    }
+
+    //check for potential overflow (see bug 4801285)
+    private int addWithoutOverflow(int x, int w) {
+        int x2 = x + w;
+        if ( x > 0 && w > 0 && x2 < 0 ) {
+            x2 = Integer.MAX_VALUE;
+        } else if( x < 0 && w < 0 && x2 > 0 ) {
+            x2 = Integer.MIN_VALUE;
+        }
+        return x2;
+    }
+}

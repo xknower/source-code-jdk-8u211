@@ -1,598 +1,593 @@
-/*     */ package javax.swing.plaf.basic;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Container;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Font;
-/*     */ import java.awt.FontMetrics;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.InputMap;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JLabel;
-/*     */ import javax.swing.KeyStroke;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.plaf.ComponentInputMapUIResource;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.InputMapUIResource;
-/*     */ import javax.swing.plaf.LabelUI;
-/*     */ import javax.swing.text.View;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.swing.SwingUtilities2;
-/*     */ import sun.swing.UIAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BasicLabelUI
-/*     */   extends LabelUI
-/*     */   implements PropertyChangeListener
-/*     */ {
-/*  67 */   protected static BasicLabelUI labelUI = new BasicLabelUI();
-/*  68 */   private static final Object BASIC_LABEL_UI_KEY = new Object();
-/*     */   
-/*  70 */   private Rectangle paintIconR = new Rectangle();
-/*  71 */   private Rectangle paintTextR = new Rectangle();
-/*     */   
-/*     */   static void loadActionMap(LazyActionMap paramLazyActionMap) {
-/*  74 */     paramLazyActionMap.put(new Actions("press"));
-/*  75 */     paramLazyActionMap.put(new Actions("release"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String layoutCL(JLabel paramJLabel, FontMetrics paramFontMetrics, String paramString, Icon paramIcon, Rectangle paramRectangle1, Rectangle paramRectangle2, Rectangle paramRectangle3) {
-/* 102 */     return SwingUtilities.layoutCompoundLabel(paramJLabel, paramFontMetrics, paramString, paramIcon, paramJLabel
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 107 */         .getVerticalAlignment(), paramJLabel
-/* 108 */         .getHorizontalAlignment(), paramJLabel
-/* 109 */         .getVerticalTextPosition(), paramJLabel
-/* 110 */         .getHorizontalTextPosition(), paramRectangle1, paramRectangle2, paramRectangle3, paramJLabel
-/*     */ 
-/*     */ 
-/*     */         
-/* 114 */         .getIconTextGap());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintEnabledText(JLabel paramJLabel, Graphics paramGraphics, String paramString, int paramInt1, int paramInt2) {
-/* 130 */     int i = paramJLabel.getDisplayedMnemonicIndex();
-/* 131 */     paramGraphics.setColor(paramJLabel.getForeground());
-/* 132 */     SwingUtilities2.drawStringUnderlineCharAt(paramJLabel, paramGraphics, paramString, i, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintDisabledText(JLabel paramJLabel, Graphics paramGraphics, String paramString, int paramInt1, int paramInt2) {
-/* 151 */     int i = paramJLabel.getDisplayedMnemonicIndex();
-/* 152 */     Color color = paramJLabel.getBackground();
-/* 153 */     paramGraphics.setColor(color.brighter());
-/* 154 */     SwingUtilities2.drawStringUnderlineCharAt(paramJLabel, paramGraphics, paramString, i, paramInt1 + 1, paramInt2 + 1);
-/*     */     
-/* 156 */     paramGraphics.setColor(color.darker());
-/* 157 */     SwingUtilities2.drawStringUnderlineCharAt(paramJLabel, paramGraphics, paramString, i, paramInt1, paramInt2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 173 */     JLabel jLabel = (JLabel)paramJComponent;
-/* 174 */     String str1 = jLabel.getText();
-/* 175 */     Icon icon = jLabel.isEnabled() ? jLabel.getIcon() : jLabel.getDisabledIcon();
-/*     */     
-/* 177 */     if (icon == null && str1 == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/* 181 */     FontMetrics fontMetrics = SwingUtilities2.getFontMetrics(jLabel, paramGraphics);
-/* 182 */     String str2 = layout(jLabel, fontMetrics, paramJComponent.getWidth(), paramJComponent.getHeight());
-/*     */     
-/* 184 */     if (icon != null) {
-/* 185 */       icon.paintIcon(paramJComponent, paramGraphics, this.paintIconR.x, this.paintIconR.y);
-/*     */     }
-/*     */     
-/* 188 */     if (str1 != null) {
-/* 189 */       View view = (View)paramJComponent.getClientProperty("html");
-/* 190 */       if (view != null) {
-/* 191 */         view.paint(paramGraphics, this.paintTextR);
-/*     */       } else {
-/* 193 */         int i = this.paintTextR.x;
-/* 194 */         int j = this.paintTextR.y + fontMetrics.getAscent();
-/*     */         
-/* 196 */         if (jLabel.isEnabled()) {
-/* 197 */           paintEnabledText(jLabel, paramGraphics, str2, i, j);
-/*     */         } else {
-/*     */           
-/* 200 */           paintDisabledText(jLabel, paramGraphics, str2, i, j);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private String layout(JLabel paramJLabel, FontMetrics paramFontMetrics, int paramInt1, int paramInt2) {
-/* 208 */     Insets insets = paramJLabel.getInsets((Insets)null);
-/* 209 */     String str = paramJLabel.getText();
-/*     */     
-/* 211 */     Icon icon = paramJLabel.isEnabled() ? paramJLabel.getIcon() : paramJLabel.getDisabledIcon();
-/* 212 */     Rectangle rectangle = new Rectangle();
-/* 213 */     rectangle.x = insets.left;
-/* 214 */     rectangle.y = insets.top;
-/* 215 */     rectangle.width = paramInt1 - insets.left + insets.right;
-/* 216 */     rectangle.height = paramInt2 - insets.top + insets.bottom;
-/* 217 */     this.paintIconR.x = this.paintIconR.y = this.paintIconR.width = this.paintIconR.height = 0;
-/* 218 */     this.paintTextR.x = this.paintTextR.y = this.paintTextR.width = this.paintTextR.height = 0;
-/* 219 */     return layoutCL(paramJLabel, paramFontMetrics, str, icon, rectangle, this.paintIconR, this.paintTextR);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 225 */     JLabel jLabel = (JLabel)paramJComponent;
-/* 226 */     String str = jLabel.getText();
-/*     */     
-/* 228 */     Icon icon = jLabel.isEnabled() ? jLabel.getIcon() : jLabel.getDisabledIcon();
-/* 229 */     Insets insets = jLabel.getInsets((Insets)null);
-/* 230 */     Font font = jLabel.getFont();
-/*     */     
-/* 232 */     int i = insets.left + insets.right;
-/* 233 */     int j = insets.top + insets.bottom;
-/*     */     
-/* 235 */     if (icon == null && (str == null || (str != null && font == null)))
-/*     */     {
-/*     */       
-/* 238 */       return new Dimension(i, j);
-/*     */     }
-/* 240 */     if (str == null || (icon != null && font == null)) {
-/* 241 */       return new Dimension(icon.getIconWidth() + i, icon
-/* 242 */           .getIconHeight() + j);
-/*     */     }
-/*     */     
-/* 245 */     FontMetrics fontMetrics = jLabel.getFontMetrics(font);
-/* 246 */     Rectangle rectangle1 = new Rectangle();
-/* 247 */     Rectangle rectangle2 = new Rectangle();
-/* 248 */     Rectangle rectangle3 = new Rectangle();
-/*     */     
-/* 250 */     rectangle1.x = rectangle1.y = rectangle1.width = rectangle1.height = 0;
-/* 251 */     rectangle2.x = rectangle2.y = rectangle2.width = rectangle2.height = 0;
-/* 252 */     rectangle3.x = i;
-/* 253 */     rectangle3.y = j;
-/* 254 */     rectangle3.width = rectangle3.height = 32767;
-/*     */     
-/* 256 */     layoutCL(jLabel, fontMetrics, str, icon, rectangle3, rectangle1, rectangle2);
-/* 257 */     int k = Math.min(rectangle1.x, rectangle2.x);
-/* 258 */     int m = Math.max(rectangle1.x + rectangle1.width, rectangle2.x + rectangle2.width);
-/* 259 */     int n = Math.min(rectangle1.y, rectangle2.y);
-/* 260 */     int i1 = Math.max(rectangle1.y + rectangle1.height, rectangle2.y + rectangle2.height);
-/* 261 */     Dimension dimension = new Dimension(m - k, i1 - n);
-/*     */     
-/* 263 */     dimension.width += i;
-/* 264 */     dimension.height += j;
-/* 265 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMinimumSize(JComponent paramJComponent) {
-/* 274 */     Dimension dimension = getPreferredSize(paramJComponent);
-/* 275 */     View view = (View)paramJComponent.getClientProperty("html");
-/* 276 */     if (view != null) {
-/* 277 */       dimension.width = (int)(dimension.width - view.getPreferredSpan(0) - view.getMinimumSpan(0));
-/*     */     }
-/* 279 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getMaximumSize(JComponent paramJComponent) {
-/* 286 */     Dimension dimension = getPreferredSize(paramJComponent);
-/* 287 */     View view = (View)paramJComponent.getClientProperty("html");
-/* 288 */     if (view != null) {
-/* 289 */       dimension.width = (int)(dimension.width + view.getMaximumSpan(0) - view.getPreferredSpan(0));
-/*     */     }
-/* 291 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getBaseline(JComponent paramJComponent, int paramInt1, int paramInt2) {
-/* 303 */     super.getBaseline(paramJComponent, paramInt1, paramInt2);
-/* 304 */     JLabel jLabel = (JLabel)paramJComponent;
-/* 305 */     String str = jLabel.getText();
-/* 306 */     if (str == null || "".equals(str) || jLabel.getFont() == null) {
-/* 307 */       return -1;
-/*     */     }
-/* 309 */     FontMetrics fontMetrics = jLabel.getFontMetrics(jLabel.getFont());
-/* 310 */     layout(jLabel, fontMetrics, paramInt1, paramInt2);
-/* 311 */     return BasicHTML.getBaseline(jLabel, this.paintTextR.y, fontMetrics.getAscent(), this.paintTextR.width, this.paintTextR.height);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Component.BaselineResizeBehavior getBaselineResizeBehavior(JComponent paramJComponent) {
-/* 325 */     super.getBaselineResizeBehavior(paramJComponent);
-/* 326 */     if (paramJComponent.getClientProperty("html") != null) {
-/* 327 */       return Component.BaselineResizeBehavior.OTHER;
-/*     */     }
-/* 329 */     switch (((JLabel)paramJComponent).getVerticalAlignment()) {
-/*     */       case 1:
-/* 331 */         return Component.BaselineResizeBehavior.CONSTANT_ASCENT;
-/*     */       case 3:
-/* 333 */         return Component.BaselineResizeBehavior.CONSTANT_DESCENT;
-/*     */       case 0:
-/* 335 */         return Component.BaselineResizeBehavior.CENTER_OFFSET;
-/*     */     } 
-/* 337 */     return Component.BaselineResizeBehavior.OTHER;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/* 342 */     installDefaults((JLabel)paramJComponent);
-/* 343 */     installComponents((JLabel)paramJComponent);
-/* 344 */     installListeners((JLabel)paramJComponent);
-/* 345 */     installKeyboardActions((JLabel)paramJComponent);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/* 350 */     uninstallDefaults((JLabel)paramJComponent);
-/* 351 */     uninstallComponents((JLabel)paramJComponent);
-/* 352 */     uninstallListeners((JLabel)paramJComponent);
-/* 353 */     uninstallKeyboardActions((JLabel)paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults(JLabel paramJLabel) {
-/* 362 */     LookAndFeel.installColorsAndFont(paramJLabel, "Label.background", "Label.foreground", "Label.font");
-/* 363 */     LookAndFeel.installProperty(paramJLabel, "opaque", Boolean.FALSE);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installListeners(JLabel paramJLabel) {
-/* 372 */     paramJLabel.addPropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installComponents(JLabel paramJLabel) {
-/* 381 */     BasicHTML.updateRenderer(paramJLabel, paramJLabel.getText());
-/* 382 */     paramJLabel.setInheritsPopupMenu(true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installKeyboardActions(JLabel paramJLabel) {
-/* 391 */     int i = paramJLabel.getDisplayedMnemonic();
-/* 392 */     Component component = paramJLabel.getLabelFor();
-/* 393 */     if (i != 0 && component != null) {
-/* 394 */       LazyActionMap.installLazyActionMap(paramJLabel, BasicLabelUI.class, "Label.actionMap");
-/*     */ 
-/*     */       
-/* 397 */       InputMap inputMap = SwingUtilities.getUIInputMap(paramJLabel, 2);
-/* 398 */       if (inputMap == null) {
-/* 399 */         inputMap = new ComponentInputMapUIResource(paramJLabel);
-/* 400 */         SwingUtilities.replaceUIInputMap(paramJLabel, 2, inputMap);
-/*     */       } 
-/*     */       
-/* 403 */       inputMap.clear();
-/* 404 */       inputMap.put(KeyStroke.getKeyStroke(i, BasicLookAndFeel.getFocusAcceleratorKeyMask(), false), "press");
-/*     */     }
-/*     */     else {
-/*     */       
-/* 408 */       InputMap inputMap = SwingUtilities.getUIInputMap(paramJLabel, 2);
-/* 409 */       if (inputMap != null) {
-/* 410 */         inputMap.clear();
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults(JLabel paramJLabel) {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners(JLabel paramJLabel) {
-/* 429 */     paramJLabel.removePropertyChangeListener(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallComponents(JLabel paramJLabel) {
-/* 438 */     BasicHTML.updateRenderer(paramJLabel, "");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void uninstallKeyboardActions(JLabel paramJLabel) {
-/* 447 */     SwingUtilities.replaceUIInputMap(paramJLabel, 0, null);
-/* 448 */     SwingUtilities.replaceUIInputMap(paramJLabel, 2, null);
-/*     */     
-/* 450 */     SwingUtilities.replaceUIActionMap(paramJLabel, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 460 */     if (System.getSecurityManager() != null) {
-/* 461 */       AppContext appContext = AppContext.getAppContext();
-/*     */       
-/* 463 */       BasicLabelUI basicLabelUI = (BasicLabelUI)appContext.get(BASIC_LABEL_UI_KEY);
-/* 464 */       if (basicLabelUI == null) {
-/* 465 */         basicLabelUI = new BasicLabelUI();
-/* 466 */         appContext.put(BASIC_LABEL_UI_KEY, basicLabelUI);
-/*     */       } 
-/* 468 */       return basicLabelUI;
-/*     */     } 
-/* 470 */     return labelUI;
-/*     */   }
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 474 */     String str = paramPropertyChangeEvent.getPropertyName();
-/* 475 */     if (str == "text" || "font" == str || "foreground" == str) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 479 */       JLabel jLabel = (JLabel)paramPropertyChangeEvent.getSource();
-/* 480 */       String str1 = jLabel.getText();
-/* 481 */       BasicHTML.updateRenderer(jLabel, str1);
-/*     */     }
-/* 483 */     else if (str == "labelFor" || str == "displayedMnemonic") {
-/* 484 */       installKeyboardActions((JLabel)paramPropertyChangeEvent.getSource());
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class Actions
-/*     */     extends UIAction
-/*     */   {
-/*     */     private static final String PRESS = "press";
-/*     */     
-/*     */     private static final String RELEASE = "release";
-/*     */     
-/*     */     Actions(String param1String) {
-/* 497 */       super(param1String);
-/*     */     }
-/*     */     
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 501 */       JLabel jLabel = (JLabel)param1ActionEvent.getSource();
-/* 502 */       String str = getName();
-/* 503 */       if (str == "press") {
-/* 504 */         doPress(jLabel);
-/*     */       }
-/* 506 */       else if (str == "release") {
-/* 507 */         doRelease(jLabel, (param1ActionEvent.getActionCommand() != null));
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private void doPress(JLabel param1JLabel) {
-/* 512 */       Component component = param1JLabel.getLabelFor();
-/* 513 */       if (component != null && component.isEnabled()) {
-/* 514 */         InputMap inputMap = SwingUtilities.getUIInputMap(param1JLabel, 0);
-/* 515 */         if (inputMap == null) {
-/* 516 */           inputMap = new InputMapUIResource();
-/* 517 */           SwingUtilities.replaceUIInputMap(param1JLabel, 0, inputMap);
-/*     */         } 
-/* 519 */         int i = param1JLabel.getDisplayedMnemonic();
-/* 520 */         putOnRelease(inputMap, i, 
-/* 521 */             BasicLookAndFeel.getFocusAcceleratorKeyMask());
-/*     */         
-/* 523 */         putOnRelease(inputMap, i, 0);
-/*     */         
-/* 525 */         putOnRelease(inputMap, 18, 0);
-/* 526 */         param1JLabel.requestFocus();
-/*     */       } 
-/*     */     }
-/*     */     
-/*     */     private void doRelease(JLabel param1JLabel, boolean param1Boolean) {
-/* 531 */       Component component = param1JLabel.getLabelFor();
-/* 532 */       if (component != null && component.isEnabled()) {
-/* 533 */         if (param1JLabel.hasFocus()) {
-/* 534 */           InputMap inputMap = SwingUtilities.getUIInputMap(param1JLabel, 0);
-/*     */           
-/* 536 */           if (inputMap != null) {
-/*     */             
-/* 538 */             int j = param1JLabel.getDisplayedMnemonic();
-/* 539 */             removeOnRelease(inputMap, j, 
-/* 540 */                 BasicLookAndFeel.getFocusAcceleratorKeyMask());
-/* 541 */             removeOnRelease(inputMap, j, 0);
-/* 542 */             removeOnRelease(inputMap, 18, 0);
-/*     */           } 
-/* 544 */           inputMap = SwingUtilities.getUIInputMap(param1JLabel, 2);
-/*     */           
-/* 546 */           if (inputMap == null) {
-/* 547 */             inputMap = new InputMapUIResource();
-/* 548 */             SwingUtilities.replaceUIInputMap(param1JLabel, 2, inputMap);
-/*     */           } 
-/*     */           
-/* 551 */           int i = param1JLabel.getDisplayedMnemonic();
-/* 552 */           if (param1Boolean) {
-/* 553 */             putOnRelease(inputMap, 18, 0);
-/*     */           } else {
-/* 555 */             putOnRelease(inputMap, i, 
-/* 556 */                 BasicLookAndFeel.getFocusAcceleratorKeyMask());
-/*     */             
-/* 558 */             putOnRelease(inputMap, i, 0);
-/*     */           } 
-/* 560 */           if (component instanceof Container && ((Container)component)
-/* 561 */             .isFocusCycleRoot()) {
-/* 562 */             component.requestFocus();
-/*     */           } else {
-/* 564 */             SwingUtilities2.compositeRequestFocus(component);
-/*     */           } 
-/*     */         } else {
-/* 567 */           InputMap inputMap = SwingUtilities.getUIInputMap(param1JLabel, 2);
-/*     */           
-/* 569 */           int i = param1JLabel.getDisplayedMnemonic();
-/* 570 */           if (inputMap != null) {
-/* 571 */             if (param1Boolean) {
-/* 572 */               removeOnRelease(inputMap, i, 
-/* 573 */                   BasicLookAndFeel.getFocusAcceleratorKeyMask());
-/* 574 */               removeOnRelease(inputMap, i, 0);
-/*     */             } else {
-/* 576 */               removeOnRelease(inputMap, 18, 0);
-/*     */             } 
-/*     */           }
-/*     */         } 
-/*     */       }
-/*     */     }
-/*     */     
-/*     */     private void putOnRelease(InputMap param1InputMap, int param1Int1, int param1Int2) {
-/* 584 */       param1InputMap.put(KeyStroke.getKeyStroke(param1Int1, param1Int2, true), "release");
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     private void removeOnRelease(InputMap param1InputMap, int param1Int1, int param1Int2) {
-/* 589 */       param1InputMap.remove(KeyStroke.getKeyStroke(param1Int1, param1Int2, true));
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicLabelUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import sun.swing.SwingUtilities2;
+import sun.swing.DefaultLookup;
+import sun.swing.UIAction;
+import sun.awt.AppContext;
+
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.text.View;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Insets;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+/**
+ * A Windows L&amp;F implementation of LabelUI.  This implementation
+ * is completely static, i.e. there's only one UIView implementation
+ * that's shared by all JLabel objects.
+ *
+ * @author Hans Muller
+ */
+public class BasicLabelUI extends LabelUI implements  PropertyChangeListener
+{
+   /**
+    * The default <code>BasicLabelUI</code> instance. This field might
+    * not be used. To change the default instance use a subclass which
+    * overrides the <code>createUI</code> method, and place that class
+    * name in defaults table under the key "LabelUI".
+    */
+    protected static BasicLabelUI labelUI = new BasicLabelUI();
+    private static final Object BASIC_LABEL_UI_KEY = new Object();
+
+    private Rectangle paintIconR = new Rectangle();
+    private Rectangle paintTextR = new Rectangle();
+
+    static void loadActionMap(LazyActionMap map) {
+        map.put(new Actions(Actions.PRESS));
+        map.put(new Actions(Actions.RELEASE));
+    }
+
+    /**
+     * Forwards the call to SwingUtilities.layoutCompoundLabel().
+     * This method is here so that a subclass could do Label specific
+     * layout and to shorten the method name a little.
+     *
+     * @param label an instance of {@code JLabel}
+     * @param fontMetrics a font metrics
+     * @param text a text
+     * @param icon an icon
+     * @param viewR a bounding rectangle to lay out label
+     * @param iconR a bounding rectangle to lay out icon
+     * @param textR a bounding rectangle to lay out text
+     * @return a possibly clipped version of the compound labels string
+     * @see SwingUtilities#layoutCompoundLabel
+     */
+    protected String layoutCL(
+        JLabel label,
+        FontMetrics fontMetrics,
+        String text,
+        Icon icon,
+        Rectangle viewR,
+        Rectangle iconR,
+        Rectangle textR)
+    {
+        return SwingUtilities.layoutCompoundLabel(
+            (JComponent) label,
+            fontMetrics,
+            text,
+            icon,
+            label.getVerticalAlignment(),
+            label.getHorizontalAlignment(),
+            label.getVerticalTextPosition(),
+            label.getHorizontalTextPosition(),
+            viewR,
+            iconR,
+            textR,
+            label.getIconTextGap());
+    }
+
+    /**
+     * Paint clippedText at textX, textY with the labels foreground color.
+     *
+     * @param l an instance of {@code JLabel}
+     * @param g an instance of {@code Graphics}
+     * @param s a text
+     * @param textX an X coordinate
+     * @param textY an Y coordinate
+     * @see #paint
+     * @see #paintDisabledText
+     */
+    protected void paintEnabledText(JLabel l, Graphics g, String s, int textX, int textY)
+    {
+        int mnemIndex = l.getDisplayedMnemonicIndex();
+        g.setColor(l.getForeground());
+        SwingUtilities2.drawStringUnderlineCharAt(l, g, s, mnemIndex,
+                                                     textX, textY);
+    }
+
+
+    /**
+     * Paint clippedText at textX, textY with background.lighter() and then
+     * shifted down and to the right by one pixel with background.darker().
+     *
+     * @param l an instance of {@code JLabel}
+     * @param g an instance of {@code Graphics}
+     * @param s a text
+     * @param textX an X coordinate
+     * @param textY an Y coordinate
+     * @see #paint
+     * @see #paintEnabledText
+     */
+    protected void paintDisabledText(JLabel l, Graphics g, String s, int textX, int textY)
+    {
+        int accChar = l.getDisplayedMnemonicIndex();
+        Color background = l.getBackground();
+        g.setColor(background.brighter());
+        SwingUtilities2.drawStringUnderlineCharAt(l, g, s, accChar,
+                                                   textX + 1, textY + 1);
+        g.setColor(background.darker());
+        SwingUtilities2.drawStringUnderlineCharAt(l, g, s, accChar,
+                                                   textX, textY);
+    }
+
+    /**
+     * Paints the label text with the foreground color, if the label is opaque
+     * then paints the entire background with the background color. The Label
+     * text is drawn by {@link #paintEnabledText} or {@link #paintDisabledText}.
+     * The locations of the label parts are computed by {@link #layoutCL}.
+     *
+     * @see #paintEnabledText
+     * @see #paintDisabledText
+     * @see #layoutCL
+     */
+    public void paint(Graphics g, JComponent c)
+    {
+        JLabel label = (JLabel)c;
+        String text = label.getText();
+        Icon icon = (label.isEnabled()) ? label.getIcon() : label.getDisabledIcon();
+
+        if ((icon == null) && (text == null)) {
+            return;
+        }
+
+        FontMetrics fm = SwingUtilities2.getFontMetrics(label, g);
+        String clippedText = layout(label, fm, c.getWidth(), c.getHeight());
+
+        if (icon != null) {
+            icon.paintIcon(c, g, paintIconR.x, paintIconR.y);
+        }
+
+        if (text != null) {
+            View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+            if (v != null) {
+                v.paint(g, paintTextR);
+            } else {
+                int textX = paintTextR.x;
+                int textY = paintTextR.y + fm.getAscent();
+
+                if (label.isEnabled()) {
+                    paintEnabledText(label, g, clippedText, textX, textY);
+                }
+                else {
+                    paintDisabledText(label, g, clippedText, textX, textY);
+                }
+            }
+        }
+    }
+
+    private String layout(JLabel label, FontMetrics fm,
+                          int width, int height) {
+        Insets insets = label.getInsets(null);
+        String text = label.getText();
+        Icon icon = (label.isEnabled()) ? label.getIcon() :
+                                          label.getDisabledIcon();
+        Rectangle paintViewR = new Rectangle();
+        paintViewR.x = insets.left;
+        paintViewR.y = insets.top;
+        paintViewR.width = width - (insets.left + insets.right);
+        paintViewR.height = height - (insets.top + insets.bottom);
+        paintIconR.x = paintIconR.y = paintIconR.width = paintIconR.height = 0;
+        paintTextR.x = paintTextR.y = paintTextR.width = paintTextR.height = 0;
+        return layoutCL(label, fm, text, icon, paintViewR, paintIconR,
+                        paintTextR);
+    }
+
+    public Dimension getPreferredSize(JComponent c)
+    {
+        JLabel label = (JLabel)c;
+        String text = label.getText();
+        Icon icon = (label.isEnabled()) ? label.getIcon() :
+                                          label.getDisabledIcon();
+        Insets insets = label.getInsets(null);
+        Font font = label.getFont();
+
+        int dx = insets.left + insets.right;
+        int dy = insets.top + insets.bottom;
+
+        if ((icon == null) &&
+            ((text == null) ||
+             ((text != null) && (font == null)))) {
+            return new Dimension(dx, dy);
+        }
+        else if ((text == null) || ((icon != null) && (font == null))) {
+            return new Dimension(icon.getIconWidth() + dx,
+                                 icon.getIconHeight() + dy);
+        }
+        else {
+            FontMetrics fm = label.getFontMetrics(font);
+            Rectangle iconR = new Rectangle();
+            Rectangle textR = new Rectangle();
+            Rectangle viewR = new Rectangle();
+
+            iconR.x = iconR.y = iconR.width = iconR.height = 0;
+            textR.x = textR.y = textR.width = textR.height = 0;
+            viewR.x = dx;
+            viewR.y = dy;
+            viewR.width = viewR.height = Short.MAX_VALUE;
+
+            layoutCL(label, fm, text, icon, viewR, iconR, textR);
+            int x1 = Math.min(iconR.x, textR.x);
+            int x2 = Math.max(iconR.x + iconR.width, textR.x + textR.width);
+            int y1 = Math.min(iconR.y, textR.y);
+            int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
+            Dimension rv = new Dimension(x2 - x1, y2 - y1);
+
+            rv.width += dx;
+            rv.height += dy;
+            return rv;
+        }
+    }
+
+
+    /**
+     * @return getPreferredSize(c)
+     */
+    public Dimension getMinimumSize(JComponent c) {
+        Dimension d = getPreferredSize(c);
+        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+        if (v != null) {
+            d.width -= v.getPreferredSpan(View.X_AXIS) - v.getMinimumSpan(View.X_AXIS);
+        }
+        return d;
+    }
+
+    /**
+     * @return getPreferredSize(c)
+     */
+    public Dimension getMaximumSize(JComponent c) {
+        Dimension d = getPreferredSize(c);
+        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+        if (v != null) {
+            d.width += v.getMaximumSpan(View.X_AXIS) - v.getPreferredSpan(View.X_AXIS);
+        }
+        return d;
+    }
+
+    /**
+     * Returns the baseline.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @throws IllegalArgumentException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public int getBaseline(JComponent c, int width, int height) {
+        super.getBaseline(c, width, height);
+        JLabel label = (JLabel)c;
+        String text = label.getText();
+        if (text == null || "".equals(text) || label.getFont() == null) {
+            return -1;
+        }
+        FontMetrics fm = label.getFontMetrics(label.getFont());
+        layout(label, fm, width, height);
+        return BasicHTML.getBaseline(label, paintTextR.y, fm.getAscent(),
+                                     paintTextR.width, paintTextR.height);
+    }
+
+    /**
+     * Returns an enum indicating how the baseline of the component
+     * changes as the size changes.
+     *
+     * @throws NullPointerException {@inheritDoc}
+     * @see javax.swing.JComponent#getBaseline(int, int)
+     * @since 1.6
+     */
+    public Component.BaselineResizeBehavior getBaselineResizeBehavior(
+            JComponent c) {
+        super.getBaselineResizeBehavior(c);
+        if (c.getClientProperty(BasicHTML.propertyKey) != null) {
+            return Component.BaselineResizeBehavior.OTHER;
+        }
+        switch(((JLabel)c).getVerticalAlignment()) {
+        case JLabel.TOP:
+            return Component.BaselineResizeBehavior.CONSTANT_ASCENT;
+        case JLabel.BOTTOM:
+            return Component.BaselineResizeBehavior.CONSTANT_DESCENT;
+        case JLabel.CENTER:
+            return Component.BaselineResizeBehavior.CENTER_OFFSET;
+        }
+        return Component.BaselineResizeBehavior.OTHER;
+    }
+
+
+    public void installUI(JComponent c) {
+        installDefaults((JLabel)c);
+        installComponents((JLabel)c);
+        installListeners((JLabel)c);
+        installKeyboardActions((JLabel)c);
+    }
+
+
+    public void uninstallUI(JComponent c) {
+        uninstallDefaults((JLabel) c);
+        uninstallComponents((JLabel) c);
+        uninstallListeners((JLabel) c);
+        uninstallKeyboardActions((JLabel) c);
+    }
+
+    /**
+     * Installs default properties.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void installDefaults(JLabel c){
+        LookAndFeel.installColorsAndFont(c, "Label.background", "Label.foreground", "Label.font");
+        LookAndFeel.installProperty(c, "opaque", Boolean.FALSE);
+    }
+
+    /**
+     * Registers listeners.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void installListeners(JLabel c){
+        c.addPropertyChangeListener(this);
+    }
+
+    /**
+     * Registers components.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void installComponents(JLabel c){
+        BasicHTML.updateRenderer(c, c.getText());
+        c.setInheritsPopupMenu(true);
+    }
+
+    /**
+     * Registers keyboard actions.
+     *
+     * @param l an instance of {@code JLabel}
+     */
+    protected void installKeyboardActions(JLabel l) {
+        int dka = l.getDisplayedMnemonic();
+        Component lf = l.getLabelFor();
+        if ((dka != 0) && (lf != null)) {
+            LazyActionMap.installLazyActionMap(l, BasicLabelUI.class,
+                                               "Label.actionMap");
+            InputMap inputMap = SwingUtilities.getUIInputMap
+                            (l, JComponent.WHEN_IN_FOCUSED_WINDOW);
+            if (inputMap == null) {
+                inputMap = new ComponentInputMapUIResource(l);
+                SwingUtilities.replaceUIInputMap(l,
+                                JComponent.WHEN_IN_FOCUSED_WINDOW, inputMap);
+            }
+            inputMap.clear();
+            inputMap.put(KeyStroke.getKeyStroke(dka, BasicLookAndFeel.getFocusAcceleratorKeyMask(), false), "press");
+        }
+        else {
+            InputMap inputMap = SwingUtilities.getUIInputMap
+                            (l, JComponent.WHEN_IN_FOCUSED_WINDOW);
+            if (inputMap != null) {
+                inputMap.clear();
+            }
+        }
+    }
+
+    /**
+     * Uninstalls default properties.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void uninstallDefaults(JLabel c){
+    }
+
+    /**
+     * Unregisters listeners.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void uninstallListeners(JLabel c){
+        c.removePropertyChangeListener(this);
+    }
+
+    /**
+     * Unregisters components.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void uninstallComponents(JLabel c){
+        BasicHTML.updateRenderer(c, "");
+    }
+
+    /**
+     * Unregisters keyboard actions.
+     *
+     * @param c an instance of {@code JLabel}
+     */
+    protected void uninstallKeyboardActions(JLabel c) {
+        SwingUtilities.replaceUIInputMap(c, JComponent.WHEN_FOCUSED, null);
+        SwingUtilities.replaceUIInputMap(c, JComponent.WHEN_IN_FOCUSED_WINDOW,
+                                       null);
+        SwingUtilities.replaceUIActionMap(c, null);
+    }
+
+    /**
+     * Returns an instance of {@code BasicLabelUI}.
+     *
+     * @param c a component
+     * @return an instance of {@code BasicLabelUI}
+     */
+    public static ComponentUI createUI(JComponent c) {
+        if (System.getSecurityManager() != null) {
+            AppContext appContext = AppContext.getAppContext();
+            BasicLabelUI safeBasicLabelUI =
+                    (BasicLabelUI) appContext.get(BASIC_LABEL_UI_KEY);
+            if (safeBasicLabelUI == null) {
+                safeBasicLabelUI = new BasicLabelUI();
+                appContext.put(BASIC_LABEL_UI_KEY, safeBasicLabelUI);
+            }
+            return safeBasicLabelUI;
+        }
+        return labelUI;
+    }
+
+    public void propertyChange(PropertyChangeEvent e) {
+        String name = e.getPropertyName();
+        if (name == "text" || "font" == name || "foreground" == name) {
+            // remove the old html view client property if one
+            // existed, and install a new one if the text installed
+            // into the JLabel is html source.
+            JLabel lbl = ((JLabel) e.getSource());
+            String text = lbl.getText();
+            BasicHTML.updateRenderer(lbl, text);
+        }
+        else if (name == "labelFor" || name == "displayedMnemonic") {
+            installKeyboardActions((JLabel) e.getSource());
+        }
+    }
+
+    // When the accelerator is pressed, temporarily make the JLabel
+    // focusTraversable by registering a WHEN_FOCUSED action for the
+    // release of the accelerator.  Then give it focus so it can
+    // prevent unwanted keyTyped events from getting to other components.
+    private static class Actions extends UIAction {
+        private static final String PRESS = "press";
+        private static final String RELEASE = "release";
+
+        Actions(String key) {
+            super(key);
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            JLabel label = (JLabel)e.getSource();
+            String key = getName();
+            if (key == PRESS) {
+                doPress(label);
+            }
+            else if (key == RELEASE) {
+                doRelease(label, e.getActionCommand() != null);
+            }
+        }
+
+        private void doPress(JLabel label) {
+            Component labelFor = label.getLabelFor();
+            if (labelFor != null && labelFor.isEnabled()) {
+                InputMap inputMap = SwingUtilities.getUIInputMap(label, JComponent.WHEN_FOCUSED);
+                if (inputMap == null) {
+                    inputMap = new InputMapUIResource();
+                    SwingUtilities.replaceUIInputMap(label, JComponent.WHEN_FOCUSED, inputMap);
+                }
+                int dka = label.getDisplayedMnemonic();
+                putOnRelease(inputMap, dka, BasicLookAndFeel
+                        .getFocusAcceleratorKeyMask());
+                // Need this when the sticky keys are enabled
+                putOnRelease(inputMap, dka, 0);
+                // Need this if ALT is released before the accelerator
+                putOnRelease(inputMap, KeyEvent.VK_ALT, 0);
+                label.requestFocus();
+            }
+        }
+
+        private void doRelease(JLabel label, boolean isCommand) {
+            Component labelFor = label.getLabelFor();
+            if (labelFor != null && labelFor.isEnabled()) {
+                if (label.hasFocus()) {
+                    InputMap inputMap = SwingUtilities.getUIInputMap(label,
+                            JComponent.WHEN_FOCUSED);
+                    if (inputMap != null) {
+                        // inputMap should never be null.
+                        int dka = label.getDisplayedMnemonic();
+                        removeOnRelease(inputMap, dka, BasicLookAndFeel
+                                .getFocusAcceleratorKeyMask());
+                        removeOnRelease(inputMap, dka, 0);
+                        removeOnRelease(inputMap, KeyEvent.VK_ALT, 0);
+                    }
+                    inputMap = SwingUtilities.getUIInputMap(label,
+                            JComponent.WHEN_IN_FOCUSED_WINDOW);
+                    if (inputMap == null) {
+                        inputMap = new InputMapUIResource();
+                        SwingUtilities.replaceUIInputMap(label,
+                                JComponent.WHEN_IN_FOCUSED_WINDOW, inputMap);
+                    }
+                    int dka = label.getDisplayedMnemonic();
+                    if (isCommand) {
+                        putOnRelease(inputMap, KeyEvent.VK_ALT, 0);
+                    } else {
+                        putOnRelease(inputMap, dka, BasicLookAndFeel
+                                .getFocusAcceleratorKeyMask());
+                        // Need this when the sticky keys are enabled
+                        putOnRelease(inputMap, dka, 0);
+                    }
+                    if (labelFor instanceof Container &&
+                            ((Container) labelFor).isFocusCycleRoot()) {
+                        labelFor.requestFocus();
+                    } else {
+                        SwingUtilities2.compositeRequestFocus(labelFor);
+                    }
+                } else {
+                    InputMap inputMap = SwingUtilities.getUIInputMap(label,
+                            JComponent.WHEN_IN_FOCUSED_WINDOW);
+                    int dka = label.getDisplayedMnemonic();
+                    if (inputMap != null) {
+                        if (isCommand) {
+                            removeOnRelease(inputMap, dka, BasicLookAndFeel
+                                    .getFocusAcceleratorKeyMask());
+                            removeOnRelease(inputMap, dka, 0);
+                        } else {
+                            removeOnRelease(inputMap, KeyEvent.VK_ALT, 0);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void putOnRelease(InputMap inputMap, int keyCode, int modifiers) {
+            inputMap.put(KeyStroke.getKeyStroke(keyCode, modifiers, true),
+                    RELEASE);
+        }
+
+        private void removeOnRelease(InputMap inputMap, int keyCode, int modifiers) {
+            inputMap.remove(KeyStroke.getKeyStroke(keyCode, modifiers, true));
+        }
+
+    }
+}

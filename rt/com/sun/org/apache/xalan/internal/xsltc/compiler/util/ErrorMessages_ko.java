@@ -1,104 +1,974 @@
-/*    */ package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
-/*    */ 
-/*    */ import java.util.ListResourceBundle;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class ErrorMessages_ko
-/*    */   extends ListResourceBundle
-/*    */ {
-/*    */   public Object[][] getContents() {
-/* 96 */     return new Object[][] { { "MULTIPLE_STYLESHEET_ERR", "동일한 파일에 스타일시트가 두 개 이상 정의되었습니다." }, { "TEMPLATE_REDEF_ERR", "이 스타일시트에는 ''{0}'' 템플리트가 이미 정의되었습니다." }, { "TEMPLATE_UNDEF_ERR", "이 스타일시트에는 ''{0}'' 템플리트가 정의되지 않았습니다." }, { "VARIABLE_REDEF_ERR", "동일한 범위에서 ''{0}'' 변수가 여러 개 정의되었습니다." }, { "VARIABLE_UNDEF_ERR", "변수 또는 매개변수 ''{0}''이(가) 정의되지 않았습니다." }, { "CLASS_NOT_FOUND_ERR", "''{0}'' 클래스를 찾을 수 없습니다." }, { "METHOD_NOT_FOUND_ERR", "외부 메소드 ''{0}''을(를) 찾을 수 없습니다. 이 메소드는 public이어야 합니다." }, { "ARGUMENT_CONVERSION_ERR", "''{0}'' 메소드에 대한 호출에서 인수/반환 유형을 변환할 수 없습니다." }, { "FILE_NOT_FOUND_ERR", "파일 또는 URI ''{0}''을(를) 찾을 수 없습니다." }, { "INVALID_URI_ERR", "URI ''{0}''이(가) 부적합합니다." }, { "FILE_ACCESS_ERR", "파일 또는 URI ''{0}''을(를) 열 수 없습니다." }, { "MISSING_ROOT_ERR", "<xsl:stylesheet> 또는 <xsl:transform> 요소가 필요합니다." }, { "NAMESPACE_UNDEF_ERR", "네임스페이스 접두어 ''{0}''이(가) 선언되지 않았습니다." }, { "FUNCTION_RESOLVE_ERR", "''{0}'' 함수에 대한 호출을 분석할 수 없습니다." }, { "NEED_LITERAL_ERR", "''{0}''에 대한 인수는 리터럴 문자열이어야 합니다." }, { "XPATH_PARSER_ERR", "XPath 표현식 ''{0}''의 구문을 분석하는 중 오류가 발생했습니다." }, { "REQUIRED_ATTR_ERR", "필수 속성 ''{0}''이(가) 누락되었습니다." }, { "ILLEGAL_CHAR_ERR", "XPath 표현식에 잘못된 문자 ''{0}''이(가) 있습니다." }, { "ILLEGAL_PI_ERR", "''{0}''은(는) 명령 처리에 잘못된 이름입니다." }, { "STRAY_ATTRIBUTE_ERR", "''{0}'' 속성이 요소에 포함되어 있지 않습니다." }, { "ILLEGAL_ATTRIBUTE_ERR", "''{0}''은(는) 잘못된 속성입니다." }, { "CIRCULAR_INCLUDE_ERR", "순환 import/include입니다. ''{0}'' 스타일시트가 이미 로드되었습니다." }, { "RESULT_TREE_SORT_ERR", "Result-tree 부분을 정렬할 수 없습니다(<xsl:sort> 요소가 무시됨). 결과 트리를 생성할 때는 노드를 정렬해야 합니다." }, { "SYMBOLS_REDEF_ERR", "십진수 형식 ''{0}''이(가) 이미 정의되었습니다." }, { "XSL_VERSION_ERR", "XSLTC는 XSL 버전 ''{0}''을(를) 지원하지 않습니다." }, { "CIRCULAR_VARIABLE_ERR", "''{0}''에 순환 변수/매개변수 참조가 있습니다." }, { "ILLEGAL_BINARY_OP_ERR", "바이너리 표현식에 대해 알 수 없는 연산자입니다." }, { "ILLEGAL_ARG_ERR", "함수 호출에 대한 인수가 잘못되었습니다." }, { "DOCUMENT_ARG_ERR", "document() 함수에 대한 두번째 인수는 node-set여야 합니다." }, { "MISSING_WHEN_ERR", "<xsl:choose>에는 <xsl:when> 요소가 하나 이상 필요합니다." }, { "MULTIPLE_OTHERWISE_ERR", "<xsl:choose>에서는 <xsl:otherwise> 요소가 하나만 허용됩니다." }, { "STRAY_OTHERWISE_ERR", "<xsl:otherwise>는 <xsl:choose>에서만 사용할 수 있습니다." }, { "STRAY_WHEN_ERR", "<xsl:when>은 <xsl:choose>에서만 사용할 수 있습니다." }, { "WHEN_ELEMENT_ERR", "<xsl:choose>에서는 <xsl:when> 및 <xsl:otherwise> 요소만 허용됩니다." }, { "UNNAMED_ATTRIBSET_ERR", "<xsl:attribute-set>에 'name' 속성이 누락되었습니다." }, { "ILLEGAL_CHILD_ERR", "하위 요소가 잘못되었습니다." }, { "ILLEGAL_ELEM_NAME_ERR", "''{0}'' 요소를 호출할 수 없습니다." }, { "ILLEGAL_ATTR_NAME_ERR", "''{0}'' 속성을 호출할 수 없습니다." }, { "ILLEGAL_TEXT_NODE_ERR", "텍스트 데이터가 최상위 레벨 <xsl:stylesheet> 요소에 포함되어 있지 않습니다." }, { "SAX_PARSER_CONFIG_ERR", "JAXP 구문 분석기가 제대로 구성되지 않았습니다." }, { "INTERNAL_ERR", "복구할 수 없는 XSLTC 내부 오류: ''{0}''" }, { "UNSUPPORTED_XSL_ERR", "''{0}''은(는) 지원되지 않는 XSL 요소입니다." }, { "UNSUPPORTED_EXT_ERR", "''{0}''은(는) 알 수 없는 XSLTC 확장입니다." }, { "MISSING_XSLT_URI_ERR", "입력 문서는 스타일시트가 아닙니다. XSL 네임스페이스가 루트 요소에 선언되지 않았습니다." }, { "MISSING_XSLT_TARGET_ERR", "스타일시트 대상 ''{0}''을(를) 찾을 수 없습니다." }, { "ACCESSING_XSLT_TARGET_ERR", "accessExternalStylesheet 속성으로 설정된 제한으로 인해 ''{1}'' 액세스가 허용되지 않으므로 스타일시트 대상 ''{0}''을(를) 읽을 수 없습니다." }, { "NOT_IMPLEMENTED_ERR", "구현되지 않음: ''{0}''." }, { "NOT_STYLESHEET_ERR", "입력 문서에 XSL 스타일시트가 포함되어 있지 않습니다." }, { "ELEMENT_PARSE_ERR", "''{0}'' 요소의 구문을 분석할 수 없습니다." }, { "KEY_USE_ATTR_ERR", "<key>의 use 속성은 node, node-set, string 또는 number여야 합니다." }, { "OUTPUT_VERSION_ERR", "출력 XML 문서 버전은 1.0이어야 합니다." }, { "ILLEGAL_RELAT_OP_ERR", "관계 표현식에 대해 알 수 없는 연산자입니다." }, { "ATTRIBSET_UNDEF_ERR", "존재하지 않는 속성 집합 ''{0}''을(를) 사용하려고 시도하는 중입니다." }, { "ATTR_VAL_TEMPLATE_ERR", "속성값 템플리트 ''{0}''의 구문을 분석할 수 없습니다." }, { "UNKNOWN_SIG_TYPE_ERR", "''{0}'' 클래스에 대한 서명에 알 수 없는 데이터 유형이 있습니다." }, { "DATA_CONVERSION_ERR", "데이터 유형 ''{0}''을(를) ''{1}''(으)로 변환할 수 없습니다." }, { "NO_TRANSLET_CLASS_ERR", "이 Templates에는 적합한 translet 클래스 정의가 포함되어 있지 않습니다." }, { "NO_MAIN_TRANSLET_ERR", "이 Templates에는 이름이 ''{0}''인 클래스가 포함되어 있지 않습니다." }, { "TRANSLET_CLASS_ERR", "Translet 클래스 ''{0}''을(를) 로드할 수 없습니다." }, { "TRANSLET_OBJECT_ERR", "Translet 클래스가 로드되었지만 translet 인스턴스를 생성할 수 없습니다." }, { "ERROR_LISTENER_NULL_ERR", "''{0}''에 대한 ErrorListener를 null로 설정하려고 시도하는 중" }, { "JAXP_UNKNOWN_SOURCE_ERR", "XSLTC는 StreamSource, SAXSource 및 DOMSource만 지원합니다." }, { "JAXP_NO_SOURCE_ERR", "''{0}''(으)로 전달된 Source 객체에 콘텐츠가 없습니다." }, { "JAXP_COMPILE_ERR", "스타일시트를 컴파일할 수 없습니다." }, { "JAXP_INVALID_ATTR_ERR", "TransformerFactory에서 ''{0}'' 속성을 인식하지 못했습니다." }, { "JAXP_INVALID_ATTR_VALUE_ERR", "''{0}'' 속성에 대해 올바르지 않은 값이 지정되었습니다." }, { "JAXP_SET_RESULT_ERR", "setResult()는 startDocument() 앞에 호출되어야 합니다." }, { "JAXP_NO_TRANSLET_ERR", "Transformer에 캡슐화된 translet 객체가 없습니다." }, { "JAXP_NO_HANDLER_ERR", "변환 결과에 대해 정의된 출력 처리기가 없습니다." }, { "JAXP_NO_RESULT_ERR", "''{0}''(으)로 전달된 Result 객체가 부적합합니다." }, { "JAXP_UNKNOWN_PROP_ERR", "부적합한 Transformer 속성 ''{0}''에 액세스하려고 시도하는 중입니다." }, { "SAX2DOM_ADAPTER_ERR", "SAX2DOM 어댑터를 생성할 수 없음: ''{0}''." }, { "XSLTC_SOURCE_ERR", "systemId를 설정하지 않은 상태로 XSLTCSource.build()가 호출되었습니다." }, { "ER_RESULT_NULL", "결과는 널이 아니어야 합니다." }, { "JAXP_INVALID_SET_PARAM_VALUE", "{0} 매개변수의 값은 적합한 Java 객체여야 합니다." }, { "COMPILE_STDIN_ERR", "-i 옵션은 -o 옵션과 함께 사용해야 합니다." }, { "COMPILE_USAGE_STR", "사용법\n   java com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile [-o <output>]\n      [-d <directory>] [-j <jarfile>] [-p <package>]\n      [-n] [-x] [-u] [-v] [-h] { <stylesheet> | -i }\n\n옵션\n   -o <output>    생성된 translet에 <output> 이름을\n                  지정합니다. 기본적으로 translet 이름은\n                  <stylesheet> 이름에서 파생됩니다. 여러 스타일시트를\n                  컴파일하는 경우 이 옵션은 무시됩니다.\n   -d <directory> translet에 대한 대상 디렉토리를 지정합니다.\n   -j <jarfile>   translet 클래스를 <jarfile>이라는 이름이 지정된 jar 파일에\n                  패키지화합니다.\n   -p <package>   생성된 모든 translet 클래스에 대해 패키지 이름 접두어를\n                  지정합니다.\n   -n             템플리트 인라인을 사용으로 설정합니다. 일반적으로 기본 동작을\n                  사용하는 것이 좋습니다.\n   -x             추가 디버깅 메시지 출력을 설정합니다.\n   -u             <stylesheet> 인수를 URL로 해석합니다.\n   -i             컴파일러가 stdin에서 스타일시트를 강제로 읽도록 합니다.\n   -v             컴파일러의 버전을 인쇄합니다.\n   -h             이 사용법 지침을 인쇄합니다.\n" }, { "TRANSFORM_USAGE_STR", "사용법 \n   java com.sun.org.apache.xalan.internal.xsltc.cmdline.Transform [-j <jarfile>]\n      [-x] [-n <iterations>] {-u <document_url> | <document>}\n      <class> [<param1>=<value1> ...]\n\n   translet <class>를 사용하여 <document>로 지정된 XML 문서를 \n   변환합니다. translet <class>는 \n   사용자의 CLASSPATH 또는 선택적으로 지정된 <jarfile>에 있습니다.\n옵션\n   -j <jarfile>    translet을 로드해 올 jarfile을 지정합니다.\n   -x              추가 디버깅 메시지 출력을 설정합니다.\n   -n <iterations> 변환을 <iterations>회 실행하고\n                   프로파일 작성 정보를 표시합니다.\n   -u <document_url> XML 입력 문서를 URL로 지정합니다.\n" }, { "STRAY_SORT_ERR", "<xsl:sort>는 <xsl:for-each> 또는 <xsl:apply-templates>에서만 사용할 수 있습니다." }, { "UNSUPPORTED_ENCODING", "이 JVM에서는 출력 인코딩 ''{0}''이(가) 지원되지 않습니다." }, { "SYNTAX_ERR", "''{0}''에 구문 오류가 있습니다." }, { "CONSTRUCTOR_NOT_FOUND", "외부 constructor ''{0}''을(를) 찾을 수 없습니다." }, { "NO_JAVA_FUNCT_THIS_REF", "비static Java 함수 ''{0}''에 대한 첫번째 인수는 적합한 객체 참조가 아닙니다." }, { "TYPE_CHECK_ERR", "''{0}'' 표현식의 유형을 확인하는 중 오류가 발생했습니다." }, { "TYPE_CHECK_UNK_LOC_ERR", "알 수 없는 위치에서 표현식의 유형을 확인하는 중 오류가 발생했습니다." }, { "ILLEGAL_CMDLINE_OPTION_ERR", "명령행 옵션 ''{0}''이(가) 부적합합니다." }, { "CMDLINE_OPT_MISSING_ARG_ERR", "명령행 옵션 ''{0}''에 필수 인수가 누락되었습니다." }, { "WARNING_PLUS_WRAPPED_MSG", "WARNING:  ''{0}''\n       :{1}" }, { "WARNING_MSG", "WARNING:  ''{0}''" }, { "FATAL_ERR_PLUS_WRAPPED_MSG", "FATAL ERROR:  ''{0}''\n           :{1}" }, { "FATAL_ERR_MSG", "FATAL ERROR:  ''{0}''" }, { "ERROR_PLUS_WRAPPED_MSG", "ERROR:  ''{0}''\n     :{1}" }, { "ERROR_MSG", "ERROR:  ''{0}''" }, { "TRANSFORM_WITH_TRANSLET_STR", "translet ''{0}''을(를) 사용하여 변환하십시오. " }, { "TRANSFORM_WITH_JAR_STR", "jar 파일 ''{1}''의 translet ''{0}''을(를) 사용하여 변환하십시오." }, { "COULD_NOT_CREATE_TRANS_FACT", "TransformerFactory 클래스 ''{0}''의 인스턴스를 생성할 수 없습니다." }, { "TRANSLET_NAME_JAVA_CONFLICT", "''{0}'' 이름에는 Java 클래스 이름에 허용되지 않는 문자가 포함되어 있어 이 이름을 translet 클래스의 이름으로 사용할 수 없습니다. 대신 ''{1}'' 이름이 사용되었습니다." }, { "COMPILER_ERROR_KEY", "컴파일러 오류:" }, { "COMPILER_WARNING_KEY", "컴파일러 경고:" }, { "RUNTIME_ERROR_KEY", "Translet 오류:" }, { "INVALID_QNAME_ERR", "값이 QName 또는 공백으로 구분된 QName 목록이어야 하는 속성의 값이 ''{0}''입니다." }, { "INVALID_NCNAME_ERR", "값이 NCName이어야 하는 속성의 값이 ''{0}''입니다." }, { "INVALID_METHOD_IN_OUTPUT", "<xsl:output> 요소에 대한 method 속성의 값이 ''{0}''입니다. 값은 ''xml'', ''html'', ''text'' 또는 qname-but-not-ncname 중 하나여야 합니다." }, { "JAXP_GET_FEATURE_NULL_NAME", "기능 이름은 TransformerFactory.getFeature(문자열 이름)에서 널일 수 없습니다." }, { "JAXP_SET_FEATURE_NULL_NAME", "기능 이름은 TransformerFactory.setFeature(문자열 이름, 부울 값)에서 널일 수 없습니다." }, { "JAXP_UNSUPPORTED_FEATURE", "이 TransformerFactory에서 ''{0}'' 기능을 설정할 수 없습니다." }, { "JAXP_SECUREPROCESSING_FEATURE", "FEATURE_SECURE_PROCESSING: 보안 관리자가 있을 경우 기능을 false로 설정할 수 없습니다." }, { "OUTLINE_ERR_TRY_CATCH", "내부 XSLTC 오류: 생성된 바이트 코드가 try-catch-finally 블록을 포함하므로 outlined 처리할 수 없습니다." }, { "OUTLINE_ERR_UNBALANCED_MARKERS", "내부 XSLTC 오류: OutlineableChunkStart 및 OutlineableChunkEnd 표시자의 짝이 맞아야 하고 올바르게 중첩되어야 합니다." }, { "OUTLINE_ERR_DELETED_TARGET", "내부 XSLTC 오류: outlined 처리된 바이트 코드 블록에 속한 명령이 여전히 원래 메소드에서 참조됩니다." }, { "OUTLINE_ERR_METHOD_TOO_BIG", "내부 XSLTC 오류: translet의 메소드가 Java Virtual Machine의 메소드 길이 제한인 64KB를 초과합니다. 대개 스타일시트의 템플리트가 매우 크기 때문에 발생합니다. 더 작은 템플리트를 사용하도록 스타일시트를 재구성해 보십시오." }, { "DESERIALIZE_TEMPLATES_ERR", "Java 보안이 사용으로 설정된 경우 TemplatesImpl 직렬화 해제에 대한 지원이 사용 안함으로 설정됩니다. jdk.xml.enableTemplatesImplDeserialization 시스템 속성을 true로 설정하면 이를 무효화할 수 있습니다." } };
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compile\\util\ErrorMessages_ko.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
+
+import java.util.ListResourceBundle;
+
+/**
+ * @author Morten Jorgensen
+ */
+public class ErrorMessages_ko extends ListResourceBundle {
+
+/*
+ * XSLTC compile-time error messages.
+ *
+ * General notes to translators and definitions:
+ *
+ *   1) XSLTC is the name of the product.  It is an acronym for "XSLT Compiler".
+ *      XSLT is an acronym for "XML Stylesheet Language: Transformations".
+ *
+ *   2) A stylesheet is a description of how to transform an input XML document
+ *      into a resultant XML document (or HTML document or text).  The
+ *      stylesheet itself is described in the form of an XML document.
+ *
+ *   3) A template is a component of a stylesheet that is used to match a
+ *      particular portion of an input document and specifies the form of the
+ *      corresponding portion of the output document.
+ *
+ *   4) An axis is a particular "dimension" in a tree representation of an XML
+ *      document; the nodes in the tree are divided along different axes.
+ *      Traversing the "child" axis, for instance, means that the program
+ *      would visit each child of a particular node; traversing the "descendant"
+ *      axis means that the program would visit the child nodes of a particular
+ *      node, their children, and so on until the leaf nodes of the tree are
+ *      reached.
+ *
+ *   5) An iterator is an object that traverses nodes in a tree along a
+ *      particular axis, one at a time.
+ *
+ *   6) An element is a mark-up tag in an XML document; an attribute is a
+ *      modifier on the tag.  For example, in <elem attr='val' attr2='val2'>
+ *      "elem" is an element name, "attr" and "attr2" are attribute names with
+ *      the values "val" and "val2", respectively.
+ *
+ *   7) A namespace declaration is a special attribute that is used to associate
+ *      a prefix with a URI (the namespace).  The meanings of element names and
+ *      attribute names that use that prefix are defined with respect to that
+ *      namespace.
+ *
+ *   8) DOM is an acronym for Document Object Model.  It is a tree
+ *      representation of an XML document.
+ *
+ *      SAX is an acronym for the Simple API for XML processing.  It is an API
+ *      used inform an XML processor (in this case XSLTC) of the structure and
+ *      content of an XML document.
+ *
+ *      Input to the stylesheet processor can come from an XML parser in the
+ *      form of a DOM tree or through the SAX API.
+ *
+ *   9) DTD is a document type declaration.  It is a way of specifying the
+ *      grammar for an XML file, the names and types of elements, attributes,
+ *      etc.
+ *
+ *  10) XPath is a specification that describes a notation for identifying
+ *      nodes in a tree-structured representation of an XML document.  An
+ *      instance of that notation is referred to as an XPath expression.
+ *
+ *  11) Translet is an invented term that refers to the class file that contains
+ *      the compiled form of a stylesheet.
+ */
+
+    // These message should be read from a locale-specific resource bundle
+    /** Get the lookup table for error messages.
+     *
+     * @return The message lookup table.
+     */
+    public Object[][] getContents()
+    {
+      return new Object[][] {
+        {ErrorMsg.MULTIPLE_STYLESHEET_ERR,
+        "\uB3D9\uC77C\uD55C \uD30C\uC77C\uC5D0 \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uAC00 \uB450 \uAC1C \uC774\uC0C1 \uC815\uC758\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a
+         * template.  The same name was used on two different templates in the
+         * same stylesheet.
+         */
+        {ErrorMsg.TEMPLATE_REDEF_ERR,
+        "\uC774 \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uC5D0\uB294 ''{0}'' \uD15C\uD50C\uB9AC\uD2B8\uAC00 \uC774\uBBF8 \uC815\uC758\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+
+        /*
+         * Note to translators:  The substitution text is the name of a
+         * template.  A reference to the template name was encountered, but the
+         * template is undefined.
+         */
+        {ErrorMsg.TEMPLATE_UNDEF_ERR,
+        "\uC774 \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uC5D0\uB294 ''{0}'' \uD15C\uD50C\uB9AC\uD2B8\uAC00 \uC815\uC758\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a variable
+         * that was defined more than once.
+         */
+        {ErrorMsg.VARIABLE_REDEF_ERR,
+        "\uB3D9\uC77C\uD55C \uBC94\uC704\uC5D0\uC11C ''{0}'' \uBCC0\uC218\uAC00 \uC5EC\uB7EC \uAC1C \uC815\uC758\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a variable
+         * or parameter.  A reference to the variable or parameter was found,
+         * but it was never defined.
+         */
+        {ErrorMsg.VARIABLE_UNDEF_ERR,
+        "\uBCC0\uC218 \uB610\uB294 \uB9E4\uAC1C\uBCC0\uC218 ''{0}''\uC774(\uAC00) \uC815\uC758\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The word "class" here refers to a Java class.
+         * Processing the stylesheet required a class to be loaded, but it could
+         * not be found.  The substitution text is the name of the class.
+         */
+        {ErrorMsg.CLASS_NOT_FOUND_ERR,
+        "''{0}'' \uD074\uB798\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The word "method" here refers to a Java method.
+         * Processing the stylesheet required a reference to the method named by
+         * the substitution text, but it could not be found.  "public" is the
+         * Java keyword.
+         */
+        {ErrorMsg.METHOD_NOT_FOUND_ERR,
+        "\uC678\uBD80 \uBA54\uC18C\uB4DC ''{0}''\uC744(\uB97C) \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC774 \uBA54\uC18C\uB4DC\uB294 public\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The word "method" here refers to a Java method.
+         * Processing the stylesheet required a reference to the method named by
+         * the substitution text, but no method with the required types of
+         * arguments or return type could be found.
+         */
+        {ErrorMsg.ARGUMENT_CONVERSION_ERR,
+        "''{0}'' \uBA54\uC18C\uB4DC\uC5D0 \uB300\uD55C \uD638\uCD9C\uC5D0\uC11C \uC778\uC218/\uBC18\uD658 \uC720\uD615\uC744 \uBCC0\uD658\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The file or URI named in the substitution text
+         * is missing.
+         */
+        {ErrorMsg.FILE_NOT_FOUND_ERR,
+        "\uD30C\uC77C \uB610\uB294 URI ''{0}''\uC744(\uB97C) \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message is displayed when the URI
+         * mentioned in the substitution text is not well-formed syntactically.
+         */
+        {ErrorMsg.INVALID_URI_ERR,
+        "URI ''{0}''\uC774(\uAC00) \uBD80\uC801\uD569\uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The file or URI named in the substitution text
+         * exists but could not be opened.
+         */
+        {ErrorMsg.FILE_ACCESS_ERR,
+        "\uD30C\uC77C \uB610\uB294 URI ''{0}''\uC744(\uB97C) \uC5F4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators: <xsl:stylesheet> and <xsl:transform> are
+         * keywords that should not be translated.
+         */
+        {ErrorMsg.MISSING_ROOT_ERR,
+        "<xsl:stylesheet> \uB610\uB294 <xsl:transform> \uC694\uC18C\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The stylesheet contained a reference to a
+         * namespace prefix that was undefined.  The value of the substitution
+         * text is the name of the prefix.
+         */
+        {ErrorMsg.NAMESPACE_UNDEF_ERR,
+        "\uB124\uC784\uC2A4\uD398\uC774\uC2A4 \uC811\uB450\uC5B4 ''{0}''\uC774(\uAC00) \uC120\uC5B8\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The Java function named in the stylesheet could
+         * not be found.
+         */
+        {ErrorMsg.FUNCTION_RESOLVE_ERR,
+        "''{0}'' \uD568\uC218\uC5D0 \uB300\uD55C \uD638\uCD9C\uC744 \uBD84\uC11D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a
+         * function.  A literal string here means a constant string value.
+         */
+        {ErrorMsg.NEED_LITERAL_ERR,
+        "''{0}''\uC5D0 \uB300\uD55C \uC778\uC218\uB294 \uB9AC\uD130\uB7F4 \uBB38\uC790\uC5F4\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message indicates there was a syntactic
+         * error in the form of an XPath expression.  The substitution text is
+         * the expression.
+         */
+        {ErrorMsg.XPATH_PARSER_ERR,
+        "XPath \uD45C\uD604\uC2DD ''{0}''\uC758 \uAD6C\uBB38\uC744 \uBD84\uC11D\uD558\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An element in the stylesheet requires a
+         * particular attribute named by the substitution text, but that
+         * attribute was not specified in the stylesheet.
+         */
+        {ErrorMsg.REQUIRED_ATTR_ERR,
+        "\uD544\uC218 \uC18D\uC131 ''{0}''\uC774(\uAC00) \uB204\uB77D\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message indicates that a character not
+         * permitted in an XPath expression was encountered.  The substitution
+         * text is the offending character.
+         */
+        {ErrorMsg.ILLEGAL_CHAR_ERR,
+        "XPath \uD45C\uD604\uC2DD\uC5D0 \uC798\uBABB\uB41C \uBB38\uC790 ''{0}''\uC774(\uAC00) \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  A processing instruction is a mark-up item in
+         * an XML document that request some behaviour of an XML processor.  The
+         * form of the name of was invalid in this case, and the substitution
+         * text is the name.
+         */
+        {ErrorMsg.ILLEGAL_PI_ERR,
+        "''{0}''\uC740(\uB294) \uBA85\uB839 \uCC98\uB9AC\uC5D0 \uC798\uBABB\uB41C \uC774\uB984\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message is reported if the stylesheet
+         * being processed attempted to construct an XML document with an
+         * attribute in a place other than on an element.  The substitution text
+         * specifies the name of the attribute.
+         */
+        {ErrorMsg.STRAY_ATTRIBUTE_ERR,
+        "''{0}'' \uC18D\uC131\uC774 \uC694\uC18C\uC5D0 \uD3EC\uD568\uB418\uC5B4 \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An attribute that wasn't recognized was
+         * specified on an element in the stylesheet.  The attribute is named
+         * by the substitution
+         * text.
+         */
+        {ErrorMsg.ILLEGAL_ATTRIBUTE_ERR,
+        "''{0}''\uC740(\uB294) \uC798\uBABB\uB41C \uC18D\uC131\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "import" and "include" are keywords that should
+         * not be translated.  This messages indicates that the stylesheet
+         * named in the substitution text imported or included itself either
+         * directly or indirectly.
+         */
+        {ErrorMsg.CIRCULAR_INCLUDE_ERR,
+        "\uC21C\uD658 import/include\uC785\uB2C8\uB2E4. ''{0}'' \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uAC00 \uC774\uBBF8 \uB85C\uB4DC\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  A result-tree fragment is a portion of a
+         * resulting XML document represented as a tree.  "<xsl:sort>" is a
+         * keyword and should not be translated.
+         */
+        {ErrorMsg.RESULT_TREE_SORT_ERR,
+        "Result-tree \uBD80\uBD84\uC744 \uC815\uB82C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4(<xsl:sort> \uC694\uC18C\uAC00 \uBB34\uC2DC\uB428). \uACB0\uACFC \uD2B8\uB9AC\uB97C \uC0DD\uC131\uD560 \uB54C\uB294 \uB178\uB4DC\uB97C \uC815\uB82C\uD574\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  A name can be given to a particular style to be
+         * used to format decimal values.  The substitution text gives the name
+         * of such a style for which more than one declaration was encountered.
+         */
+        {ErrorMsg.SYMBOLS_REDEF_ERR,
+        "\uC2ED\uC9C4\uC218 \uD615\uC2DD ''{0}''\uC774(\uAC00) \uC774\uBBF8 \uC815\uC758\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The stylesheet version named in the
+         * substitution text is not supported.
+         */
+        {ErrorMsg.XSL_VERSION_ERR,
+        "XSLTC\uB294 XSL \uBC84\uC804 ''{0}''\uC744(\uB97C) \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The definitions of one or more variables or
+         * parameters depend on one another.
+         */
+        {ErrorMsg.CIRCULAR_VARIABLE_ERR,
+        "''{0}''\uC5D0 \uC21C\uD658 \uBCC0\uC218/\uB9E4\uAC1C\uBCC0\uC218 \uCC38\uC870\uAC00 \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The operator in an expresion with two operands was
+         * not recognized.
+         */
+        {ErrorMsg.ILLEGAL_BINARY_OP_ERR,
+        "\uBC14\uC774\uB108\uB9AC \uD45C\uD604\uC2DD\uC5D0 \uB300\uD574 \uC54C \uC218 \uC5C6\uB294 \uC5F0\uC0B0\uC790\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message is produced if a reference to a
+         * function has too many or too few arguments.
+         */
+        {ErrorMsg.ILLEGAL_ARG_ERR,
+        "\uD568\uC218 \uD638\uCD9C\uC5D0 \uB300\uD55C \uC778\uC218\uAC00 \uC798\uBABB\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "document()" is the name of function and must
+         * not be translated.  A node-set is a set of the nodes in the tree
+         * representation of an XML document.
+         */
+        {ErrorMsg.DOCUMENT_ARG_ERR,
+        "document() \uD568\uC218\uC5D0 \uB300\uD55C \uB450\uBC88\uC9F8 \uC778\uC218\uB294 node-set\uC5EC\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "<xsl:when>" and "<xsl:choose>" are keywords
+         * and should not be translated.  This message describes a syntax error
+         * in the stylesheet.
+         */
+        {ErrorMsg.MISSING_WHEN_ERR,
+        "<xsl:choose>\uC5D0\uB294 <xsl:when> \uC694\uC18C\uAC00 \uD558\uB098 \uC774\uC0C1 \uD544\uC694\uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "<xsl:otherwise>" and "<xsl:choose>" are
+         * keywords and should not be translated.  This message describes a
+         * syntax error in the stylesheet.
+         */
+        {ErrorMsg.MULTIPLE_OTHERWISE_ERR,
+        "<xsl:choose>\uC5D0\uC11C\uB294 <xsl:otherwise> \uC694\uC18C\uAC00 \uD558\uB098\uB9CC \uD5C8\uC6A9\uB429\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "<xsl:otherwise>" and "<xsl:choose>" are
+         * keywords and should not be translated.  This message describes a
+         * syntax error in the stylesheet.
+         */
+        {ErrorMsg.STRAY_OTHERWISE_ERR,
+        "<xsl:otherwise>\uB294 <xsl:choose>\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "<xsl:when>" and "<xsl:choose>" are keywords
+         * and should not be translated.  This message describes a syntax error
+         * in the stylesheet.
+         */
+        {ErrorMsg.STRAY_WHEN_ERR,
+        "<xsl:when>\uC740 <xsl:choose>\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "<xsl:when>", "<xsl:otherwise>" and
+         * "<xsl:choose>" are keywords and should not be translated.  This
+         * message describes a syntax error in the stylesheet.
+         */
+        {ErrorMsg.WHEN_ELEMENT_ERR,
+        "<xsl:choose>\uC5D0\uC11C\uB294 <xsl:when> \uBC0F <xsl:otherwise> \uC694\uC18C\uB9CC \uD5C8\uC6A9\uB429\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "<xsl:attribute-set>" and "name" are keywords
+         * that should not be translated.
+         */
+        {ErrorMsg.UNNAMED_ATTRIBSET_ERR,
+        "<xsl:attribute-set>\uC5D0 'name' \uC18D\uC131\uC774 \uB204\uB77D\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An element in the stylesheet contained an
+         * element of a type that it was not permitted to contain.
+         */
+        {ErrorMsg.ILLEGAL_CHILD_ERR,
+        "\uD558\uC704 \uC694\uC18C\uAC00 \uC798\uBABB\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The stylesheet tried to create an element with
+         * a name that was not a valid XML name.  The substitution text contains
+         * the name.
+         */
+        {ErrorMsg.ILLEGAL_ELEM_NAME_ERR,
+        "''{0}'' \uC694\uC18C\uB97C \uD638\uCD9C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The stylesheet tried to create an attribute
+         * with a name that was not a valid XML name.  The substitution text
+         * contains the name.
+         */
+        {ErrorMsg.ILLEGAL_ATTR_NAME_ERR,
+        "''{0}'' \uC18D\uC131\uC744 \uD638\uCD9C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The children of the outermost element of a
+         * stylesheet are referred to as top-level elements.  No text should
+         * occur within that outermost element unless it is within a top-level
+         * element.  This message indicates that that constraint was violated.
+         * "<xsl:stylesheet>" is a keyword that should not be translated.
+         */
+        {ErrorMsg.ILLEGAL_TEXT_NODE_ERR,
+        "\uD14D\uC2A4\uD2B8 \uB370\uC774\uD130\uAC00 \uCD5C\uC0C1\uC704 \uB808\uBCA8 <xsl:stylesheet> \uC694\uC18C\uC5D0 \uD3EC\uD568\uB418\uC5B4 \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  JAXP is an acronym for the Java API for XML
+         * Processing.  This message indicates that the XML parser provided to
+         * XSLTC to process the XML input document had a configuration problem.
+         */
+        {ErrorMsg.SAX_PARSER_CONFIG_ERR,
+        "JAXP \uAD6C\uBB38 \uBD84\uC11D\uAE30\uAC00 \uC81C\uB300\uB85C \uAD6C\uC131\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text names the internal error
+         * encountered.
+         */
+        {ErrorMsg.INTERNAL_ERR,
+        "\uBCF5\uAD6C\uD560 \uC218 \uC5C6\uB294 XSLTC \uB0B4\uBD80 \uC624\uB958: ''{0}''"},
+
+        /*
+         * Note to translators:  The stylesheet contained an element that was
+         * not recognized as part of the XSL syntax.  The substitution text
+         * gives the element name.
+         */
+        {ErrorMsg.UNSUPPORTED_XSL_ERR,
+        "''{0}''\uC740(\uB294) \uC9C0\uC6D0\uB418\uC9C0 \uC54A\uB294 XSL \uC694\uC18C\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The stylesheet referred to an extension to the
+         * XSL syntax and indicated that it was defined by XSLTC, but XSTLC does
+         * not recognized the particular extension named.  The substitution text
+         * gives the extension name.
+         */
+        {ErrorMsg.UNSUPPORTED_EXT_ERR,
+        "''{0}''\uC740(\uB294) \uC54C \uC218 \uC5C6\uB294 XSLTC \uD655\uC7A5\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The XML document given to XSLTC as a stylesheet
+         * was not, in fact, a stylesheet.  XSLTC is able to detect that in this
+         * case because the outermost element in the stylesheet has to be
+         * declared with respect to the XSL namespace URI, but no declaration
+         * for that namespace was seen.
+         */
+        {ErrorMsg.MISSING_XSLT_URI_ERR,
+        "\uC785\uB825 \uBB38\uC11C\uB294 \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uAC00 \uC544\uB2D9\uB2C8\uB2E4. XSL \uB124\uC784\uC2A4\uD398\uC774\uC2A4\uAC00 \uB8E8\uD2B8 \uC694\uC18C\uC5D0 \uC120\uC5B8\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  XSLTC could not find the stylesheet document
+         * with the name specified by the substitution text.
+         */
+        {ErrorMsg.MISSING_XSLT_TARGET_ERR,
+        "\uC2A4\uD0C0\uC77C\uC2DC\uD2B8 \uB300\uC0C1 ''{0}''\uC744(\uB97C) \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  access to the stylesheet target is denied
+         */
+        {ErrorMsg.ACCESSING_XSLT_TARGET_ERR,
+        "accessExternalStylesheet \uC18D\uC131\uC73C\uB85C \uC124\uC815\uB41C \uC81C\uD55C\uC73C\uB85C \uC778\uD574 ''{1}'' \uC561\uC138\uC2A4\uAC00 \uD5C8\uC6A9\uB418\uC9C0 \uC54A\uC73C\uBBC0\uB85C \uC2A4\uD0C0\uC77C\uC2DC\uD2B8 \uB300\uC0C1 ''{0}''\uC744(\uB97C) \uC77D\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message represents an internal error in
+         * condition in XSLTC.  The substitution text is the class name in XSLTC
+         * that is missing some functionality.
+         */
+        {ErrorMsg.NOT_IMPLEMENTED_ERR,
+        "\uAD6C\uD604\uB418\uC9C0 \uC54A\uC74C: ''{0}''."},
+
+        /*
+         * Note to translators:  The XML document given to XSLTC as a stylesheet
+         * was not, in fact, a stylesheet.
+         */
+        {ErrorMsg.NOT_STYLESHEET_ERR,
+        "\uC785\uB825 \uBB38\uC11C\uC5D0 XSL \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uAC00 \uD3EC\uD568\uB418\uC5B4 \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The element named in the substitution text was
+         * encountered in the stylesheet but is not recognized.
+         */
+        {ErrorMsg.ELEMENT_PARSE_ERR,
+        "''{0}'' \uC694\uC18C\uC758 \uAD6C\uBB38\uC744 \uBD84\uC11D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "use", "<key>", "node", "node-set", "string"
+         * and "number" are keywords in this context and should not be
+         * translated.  This message indicates that the value of the "use"
+         * attribute was not one of the permitted values.
+         */
+        {ErrorMsg.KEY_USE_ATTR_ERR,
+        "<key>\uC758 use \uC18D\uC131\uC740 node, node-set, string \uB610\uB294 number\uC5EC\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An XML document can specify the version of the
+         * XML specification to which it adheres.  This message indicates that
+         * the version specified for the output document was not valid.
+         */
+        {ErrorMsg.OUTPUT_VERSION_ERR,
+        "\uCD9C\uB825 XML \uBB38\uC11C \uBC84\uC804\uC740 1.0\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The operator in a comparison operation was
+         * not recognized.
+         */
+        {ErrorMsg.ILLEGAL_RELAT_OP_ERR,
+        "\uAD00\uACC4 \uD45C\uD604\uC2DD\uC5D0 \uB300\uD574 \uC54C \uC218 \uC5C6\uB294 \uC5F0\uC0B0\uC790\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An attribute set defines as a set of XML
+         * attributes that can be added to an element in the output XML document
+         * as a group.  This message is reported if the name specified was not
+         * used to declare an attribute set.  The substitution text is the name
+         * that is in error.
+         */
+        {ErrorMsg.ATTRIBSET_UNDEF_ERR,
+        "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC18D\uC131 \uC9D1\uD569 ''{0}''\uC744(\uB97C) \uC0AC\uC6A9\uD558\uB824\uACE0 \uC2DC\uB3C4\uD558\uB294 \uC911\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The term "attribute value template" is a term
+         * defined by XSLT which describes the value of an attribute that is
+         * determined by an XPath expression.  The message indicates that the
+         * expression was syntactically incorrect; the substitution text
+         * contains the expression that was in error.
+         */
+        {ErrorMsg.ATTR_VAL_TEMPLATE_ERR,
+        "\uC18D\uC131\uAC12 \uD15C\uD50C\uB9AC\uD2B8 ''{0}''\uC758 \uAD6C\uBB38\uC744 \uBD84\uC11D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  ???
+         */
+        {ErrorMsg.UNKNOWN_SIG_TYPE_ERR,
+        "''{0}'' \uD074\uB798\uC2A4\uC5D0 \uB300\uD55C \uC11C\uBA85\uC5D0 \uC54C \uC218 \uC5C6\uB294 \uB370\uC774\uD130 \uC720\uD615\uC774 \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text refers to data types.
+         * The message is displayed if a value in a particular context needs to
+         * be converted to type {1}, but that's not possible for a value of
+         * type {0}.
+         */
+        {ErrorMsg.DATA_CONVERSION_ERR,
+        "\uB370\uC774\uD130 \uC720\uD615 ''{0}''\uC744(\uB97C) ''{1}''(\uC73C)\uB85C \uBCC0\uD658\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "Templates" is a Java class name that should
+         * not be translated.
+         */
+        {ErrorMsg.NO_TRANSLET_CLASS_ERR,
+        "\uC774 Templates\uC5D0\uB294 \uC801\uD569\uD55C translet \uD074\uB798\uC2A4 \uC815\uC758\uAC00 \uD3EC\uD568\uB418\uC5B4 \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "Templates" is a Java class name that should
+         * not be translated.
+         */
+        {ErrorMsg.NO_MAIN_TRANSLET_ERR,
+        "\uC774 Templates\uC5D0\uB294 \uC774\uB984\uC774 ''{0}''\uC778 \uD074\uB798\uC2A4\uAC00 \uD3EC\uD568\uB418\uC5B4 \uC788\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a class.
+         */
+        {ErrorMsg.TRANSLET_CLASS_ERR,
+        "Translet \uD074\uB798\uC2A4 ''{0}''\uC744(\uB97C) \uB85C\uB4DC\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        {ErrorMsg.TRANSLET_OBJECT_ERR,
+        "Translet \uD074\uB798\uC2A4\uAC00 \uB85C\uB4DC\uB418\uC5C8\uC9C0\uB9CC translet \uC778\uC2A4\uD134\uC2A4\uB97C \uC0DD\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "ErrorListener" is a Java interface name that
+         * should not be translated.  The message indicates that the user tried
+         * to set an ErrorListener object on object of the class named in the
+         * substitution text with "null" Java value.
+         */
+        {ErrorMsg.ERROR_LISTENER_NULL_ERR,
+        "''{0}''\uC5D0 \uB300\uD55C ErrorListener\uB97C null\uB85C \uC124\uC815\uD558\uB824\uACE0 \uC2DC\uB3C4\uD558\uB294 \uC911"},
+
+        /*
+         * Note to translators:  StreamSource, SAXSource and DOMSource are Java
+         * interface names that should not be translated.
+         */
+        {ErrorMsg.JAXP_UNKNOWN_SOURCE_ERR,
+        "XSLTC\uB294 StreamSource, SAXSource \uBC0F DOMSource\uB9CC \uC9C0\uC6D0\uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "Source" is a Java class name that should not
+         * be translated.  The substitution text is the name of Java method.
+         */
+        {ErrorMsg.JAXP_NO_SOURCE_ERR,
+        "''{0}''(\uC73C)\uB85C \uC804\uB2EC\uB41C Source \uAC1D\uCCB4\uC5D0 \uCF58\uD150\uCE20\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The message indicates that XSLTC failed to
+         * compile the stylesheet into a translet (class file).
+         */
+        {ErrorMsg.JAXP_COMPILE_ERR,
+        "\uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uB97C \uCEF4\uD30C\uC77C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "TransformerFactory" is a class name.  In this
+         * context, an attribute is a property or setting of the
+         * TransformerFactory object.  The substitution text is the name of the
+         * unrecognised attribute.  The method used to retrieve the attribute is
+         * "getAttribute", so it's not clear whether it would be best to
+         * translate the term "attribute".
+         */
+        {ErrorMsg.JAXP_INVALID_ATTR_ERR,
+        "TransformerFactory\uC5D0\uC11C ''{0}'' \uC18D\uC131\uC744 \uC778\uC2DD\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4."},
+
+        {ErrorMsg.JAXP_INVALID_ATTR_VALUE_ERR,
+        "''{0}'' \uC18D\uC131\uC5D0 \uB300\uD574 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC740 \uAC12\uC774 \uC9C0\uC815\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "setResult()" and "startDocument()" are Java
+         * method names that should not be translated.
+         */
+        {ErrorMsg.JAXP_SET_RESULT_ERR,
+        "setResult()\uB294 startDocument() \uC55E\uC5D0 \uD638\uCD9C\uB418\uC5B4\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "Transformer" is a Java interface name that
+         * should not be translated.  A Transformer object should contained a
+         * reference to a translet object in order to be used for
+         * transformations; this message is produced if that requirement is not
+         * met.
+         */
+        {ErrorMsg.JAXP_NO_TRANSLET_ERR,
+        "Transformer\uC5D0 \uCEA1\uC290\uD654\uB41C translet \uAC1D\uCCB4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The XML document that results from a
+         * transformation needs to be sent to an output handler object; this
+         * message is produced if that requirement is not met.
+         */
+        {ErrorMsg.JAXP_NO_HANDLER_ERR,
+        "\uBCC0\uD658 \uACB0\uACFC\uC5D0 \uB300\uD574 \uC815\uC758\uB41C \uCD9C\uB825 \uCC98\uB9AC\uAE30\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "Result" is a Java interface name in this
+         * context.  The substitution text is a method name.
+         */
+        {ErrorMsg.JAXP_NO_RESULT_ERR,
+        "''{0}''(\uC73C)\uB85C \uC804\uB2EC\uB41C Result \uAC1D\uCCB4\uAC00 \uBD80\uC801\uD569\uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "Transformer" is a Java interface name.  The
+         * user's program attempted to access an unrecognized property with the
+         * name specified in the substitution text.  The method used to retrieve
+         * the property is "getOutputProperty", so it's not clear whether it
+         * would be best to translate the term "property".
+         */
+        {ErrorMsg.JAXP_UNKNOWN_PROP_ERR,
+        "\uBD80\uC801\uD569\uD55C Transformer \uC18D\uC131 ''{0}''\uC5D0 \uC561\uC138\uC2A4\uD558\uB824\uACE0 \uC2DC\uB3C4\uD558\uB294 \uC911\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  SAX2DOM is the name of a Java class that should
+         * not be translated.  This is an adapter in the sense that it takes a
+         * DOM object and converts it to something that uses the SAX API.
+         */
+        {ErrorMsg.SAX2DOM_ADAPTER_ERR,
+        "SAX2DOM \uC5B4\uB311\uD130\uB97C \uC0DD\uC131\uD560 \uC218 \uC5C6\uC74C: ''{0}''."},
+
+        /*
+         * Note to translators:  "XSLTCSource.build()" is a Java method name.
+         * "systemId" is an XML term that is short for "system identification".
+         */
+        {ErrorMsg.XSLTC_SOURCE_ERR,
+        "systemId\uB97C \uC124\uC815\uD558\uC9C0 \uC54A\uC740 \uC0C1\uD0DC\uB85C XSLTCSource.build()\uAC00 \uD638\uCD9C\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        { ErrorMsg.ER_RESULT_NULL,
+            "\uACB0\uACFC\uB294 \uB110\uC774 \uC544\uB2C8\uC5B4\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message indicates that the value argument
+         * of setParameter must be a valid Java Object.
+         */
+        {ErrorMsg.JAXP_INVALID_SET_PARAM_VALUE,
+        "{0} \uB9E4\uAC1C\uBCC0\uC218\uC758 \uAC12\uC740 \uC801\uD569\uD55C Java \uAC1D\uCCB4\uC5EC\uC57C \uD569\uB2C8\uB2E4."},
+
+
+        {ErrorMsg.COMPILE_STDIN_ERR,
+        "-i \uC635\uC158\uC740 -o \uC635\uC158\uACFC \uD568\uAED8 \uC0AC\uC6A9\uD574\uC57C \uD569\uB2C8\uB2E4."},
+
+
+        /*
+         * Note to translators:  This message contains usage information for a
+         * means of invoking XSLTC from the command-line.  The message is
+         * formatted for presentation in English.  The strings <output>,
+         * <directory>, etc. indicate user-specified argument values, and can
+         * be translated - the argument <package> refers to a Java package, so
+         * it should be handled in the same way the term is handled for JDK
+         * documentation.
+         */
+        {ErrorMsg.COMPILE_USAGE_STR,
+        "\uC0AC\uC6A9\uBC95\n   java com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile [-o <output>]\n      [-d <directory>] [-j <jarfile>] [-p <package>]\n      [-n] [-x] [-u] [-v] [-h] { <stylesheet> | -i }\n\n\uC635\uC158\n   -o <output>    \uC0DD\uC131\uB41C translet\uC5D0 <output> \uC774\uB984\uC744\n                  \uC9C0\uC815\uD569\uB2C8\uB2E4. \uAE30\uBCF8\uC801\uC73C\uB85C translet \uC774\uB984\uC740\n                  <stylesheet> \uC774\uB984\uC5D0\uC11C \uD30C\uC0DD\uB429\uB2C8\uB2E4. \uC5EC\uB7EC \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uB97C\n                  \uCEF4\uD30C\uC77C\uD558\uB294 \uACBD\uC6B0 \uC774 \uC635\uC158\uC740 \uBB34\uC2DC\uB429\uB2C8\uB2E4.\n   -d <directory> translet\uC5D0 \uB300\uD55C \uB300\uC0C1 \uB514\uB809\uD1A0\uB9AC\uB97C \uC9C0\uC815\uD569\uB2C8\uB2E4.\n   -j <jarfile>   translet \uD074\uB798\uC2A4\uB97C <jarfile>\uC774\uB77C\uB294 \uC774\uB984\uC774 \uC9C0\uC815\uB41C jar \uD30C\uC77C\uC5D0\n                  \uD328\uD0A4\uC9C0\uD654\uD569\uB2C8\uB2E4.\n   -p <package>   \uC0DD\uC131\uB41C \uBAA8\uB4E0 translet \uD074\uB798\uC2A4\uC5D0 \uB300\uD574 \uD328\uD0A4\uC9C0 \uC774\uB984 \uC811\uB450\uC5B4\uB97C\n                  \uC9C0\uC815\uD569\uB2C8\uB2E4.\n   -n             \uD15C\uD50C\uB9AC\uD2B8 \uC778\uB77C\uC778\uC744 \uC0AC\uC6A9\uC73C\uB85C \uC124\uC815\uD569\uB2C8\uB2E4. \uC77C\uBC18\uC801\uC73C\uB85C \uAE30\uBCF8 \uB3D9\uC791\uC744\n                  \uC0AC\uC6A9\uD558\uB294 \uAC83\uC774 \uC88B\uC2B5\uB2C8\uB2E4.\n   -x             \uCD94\uAC00 \uB514\uBC84\uAE45 \uBA54\uC2DC\uC9C0 \uCD9C\uB825\uC744 \uC124\uC815\uD569\uB2C8\uB2E4.\n   -u             <stylesheet> \uC778\uC218\uB97C URL\uB85C \uD574\uC11D\uD569\uB2C8\uB2E4.\n   -i             \uCEF4\uD30C\uC77C\uB7EC\uAC00 stdin\uC5D0\uC11C \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uB97C \uAC15\uC81C\uB85C \uC77D\uB3C4\uB85D \uD569\uB2C8\uB2E4.\n   -v             \uCEF4\uD30C\uC77C\uB7EC\uC758 \uBC84\uC804\uC744 \uC778\uC1C4\uD569\uB2C8\uB2E4.\n   -h             \uC774 \uC0AC\uC6A9\uBC95 \uC9C0\uCE68\uC744 \uC778\uC1C4\uD569\uB2C8\uB2E4.\n"},
+
+        /*
+         * Note to translators:  This message contains usage information for a
+         * means of invoking XSLTC from the command-line.  The message is
+         * formatted for presentation in English.  The strings <jarfile>,
+         * <document>, etc. indicate user-specified argument values, and can
+         * be translated - the argument <class> refers to a Java class, so it
+         * should be handled in the same way the term is handled for JDK
+         * documentation.
+         */
+        {ErrorMsg.TRANSFORM_USAGE_STR,
+        "\uC0AC\uC6A9\uBC95 \n   java com.sun.org.apache.xalan.internal.xsltc.cmdline.Transform [-j <jarfile>]\n      [-x] [-n <iterations>] {-u <document_url> | <document>}\n      <class> [<param1>=<value1> ...]\n\n   translet <class>\uB97C \uC0AC\uC6A9\uD558\uC5EC <document>\uB85C \uC9C0\uC815\uB41C XML \uBB38\uC11C\uB97C \n   \uBCC0\uD658\uD569\uB2C8\uB2E4. translet <class>\uB294 \n   \uC0AC\uC6A9\uC790\uC758 CLASSPATH \uB610\uB294 \uC120\uD0DD\uC801\uC73C\uB85C \uC9C0\uC815\uB41C <jarfile>\uC5D0 \uC788\uC2B5\uB2C8\uB2E4.\n\uC635\uC158\n   -j <jarfile>    translet\uC744 \uB85C\uB4DC\uD574 \uC62C jarfile\uC744 \uC9C0\uC815\uD569\uB2C8\uB2E4.\n   -x              \uCD94\uAC00 \uB514\uBC84\uAE45 \uBA54\uC2DC\uC9C0 \uCD9C\uB825\uC744 \uC124\uC815\uD569\uB2C8\uB2E4.\n   -n <iterations> \uBCC0\uD658\uC744 <iterations>\uD68C \uC2E4\uD589\uD558\uACE0\n                   \uD504\uB85C\uD30C\uC77C \uC791\uC131 \uC815\uBCF4\uB97C \uD45C\uC2DC\uD569\uB2C8\uB2E4.\n   -u <document_url> XML \uC785\uB825 \uBB38\uC11C\uB97C URL\uB85C \uC9C0\uC815\uD569\uB2C8\uB2E4.\n"},
+
+
+
+        /*
+         * Note to translators:  "<xsl:sort>", "<xsl:for-each>" and
+         * "<xsl:apply-templates>" are keywords that should not be translated.
+         * The message indicates that an xsl:sort element must be a child of
+         * one of the other kinds of elements mentioned.
+         */
+        {ErrorMsg.STRAY_SORT_ERR,
+        "<xsl:sort>\uB294 <xsl:for-each> \uB610\uB294 <xsl:apply-templates>\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The message indicates that the encoding
+         * requested for the output document was on that requires support that
+         * is not available from the Java Virtual Machine being used to execute
+         * the program.
+         */
+        {ErrorMsg.UNSUPPORTED_ENCODING,
+        "\uC774 JVM\uC5D0\uC11C\uB294 \uCD9C\uB825 \uC778\uCF54\uB529 ''{0}''\uC774(\uAC00) \uC9C0\uC6D0\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The message indicates that the XPath expression
+         * named in the substitution text was not well formed syntactically.
+         */
+        {ErrorMsg.SYNTAX_ERR,
+        "''{0}''\uC5D0 \uAD6C\uBB38 \uC624\uB958\uAC00 \uC788\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a Java
+         * class.  The term "constructor" here is the Java term.  The message is
+         * displayed if XSLTC could not find a constructor for the specified
+         * class.
+         */
+        {ErrorMsg.CONSTRUCTOR_NOT_FOUND,
+        "\uC678\uBD80 constructor ''{0}''\uC744(\uB97C) \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  "static" is the Java keyword.  The substitution
+         * text is the name of a function.  The first argument of that function
+         * is not of the required type.
+         */
+        {ErrorMsg.NO_JAVA_FUNCT_THIS_REF,
+        "\uBE44static Java \uD568\uC218 ''{0}''\uC5D0 \uB300\uD55C \uCCAB\uBC88\uC9F8 \uC778\uC218\uB294 \uC801\uD569\uD55C \uAC1D\uCCB4 \uCC38\uC870\uAC00 \uC544\uB2D9\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An XPath expression was not of the type
+         * required in a particular context.  The substitution text is the
+         * expression that was in error.
+         */
+        {ErrorMsg.TYPE_CHECK_ERR,
+        "''{0}'' \uD45C\uD604\uC2DD\uC758 \uC720\uD615\uC744 \uD655\uC778\uD558\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An XPath expression was not of the type
+         * required in a particular context.  However, the location of the
+         * problematic expression is unknown.
+         */
+        {ErrorMsg.TYPE_CHECK_UNK_LOC_ERR,
+        "\uC54C \uC218 \uC5C6\uB294 \uC704\uCE58\uC5D0\uC11C \uD45C\uD604\uC2DD\uC758 \uC720\uD615\uC744 \uD655\uC778\uD558\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a command-
+         * line option that was not recognized.
+         */
+        {ErrorMsg.ILLEGAL_CMDLINE_OPTION_ERR,
+        "\uBA85\uB839\uD589 \uC635\uC158 ''{0}''\uC774(\uAC00) \uBD80\uC801\uD569\uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The substitution text is the name of a command-
+         * line option.
+         */
+        {ErrorMsg.CMDLINE_OPT_MISSING_ARG_ERR,
+        "\uBA85\uB839\uD589 \uC635\uC158 ''{0}''\uC5D0 \uD544\uC218 \uC778\uC218\uAC00 \uB204\uB77D\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message is used to indicate the severity
+         * of another message.  The substitution text contains two error
+         * messages.  The spacing before the second substitution text indents
+         * it the same amount as the first in English.
+         */
+        {ErrorMsg.WARNING_PLUS_WRAPPED_MSG,
+        "WARNING:  ''{0}''\n       :{1}"},
+
+        /*
+         * Note to translators:  This message is used to indicate the severity
+         * of another message.  The substitution text is an error message.
+         */
+        {ErrorMsg.WARNING_MSG,
+        "WARNING:  ''{0}''"},
+
+        /*
+         * Note to translators:  This message is used to indicate the severity
+         * of another message.  The substitution text contains two error
+         * messages.  The spacing before the second substitution text indents
+         * it the same amount as the first in English.
+         */
+        {ErrorMsg.FATAL_ERR_PLUS_WRAPPED_MSG,
+        "FATAL ERROR:  ''{0}''\n           :{1}"},
+
+        /*
+         * Note to translators:  This message is used to indicate the severity
+         * of another message.  The substitution text is an error message.
+         */
+        {ErrorMsg.FATAL_ERR_MSG,
+        "FATAL ERROR:  ''{0}''"},
+
+        /*
+         * Note to translators:  This message is used to indicate the severity
+         * of another message.  The substitution text contains two error
+         * messages.  The spacing before the second substitution text indents
+         * it the same amount as the first in English.
+         */
+        {ErrorMsg.ERROR_PLUS_WRAPPED_MSG,
+        "ERROR:  ''{0}''\n     :{1}"},
+
+        /*
+         * Note to translators:  This message is used to indicate the severity
+         * of another message.  The substitution text is an error message.
+         */
+        {ErrorMsg.ERROR_MSG,
+        "ERROR:  ''{0}''"},
+
+        /*
+         * Note to translators:  The substitution text is the name of a class.
+         */
+        {ErrorMsg.TRANSFORM_WITH_TRANSLET_STR,
+        "translet ''{0}''\uC744(\uB97C) \uC0AC\uC6A9\uD558\uC5EC \uBCC0\uD658\uD558\uC2ED\uC2DC\uC624. "},
+
+        /*
+         * Note to translators:  The first substitution is the name of a class,
+         * while the second substitution is the name of a jar file.
+         */
+        {ErrorMsg.TRANSFORM_WITH_JAR_STR,
+        "jar \uD30C\uC77C ''{1}''\uC758 translet ''{0}''\uC744(\uB97C) \uC0AC\uC6A9\uD558\uC5EC \uBCC0\uD658\uD558\uC2ED\uC2DC\uC624."},
+
+        /*
+         * Note to translators:  "TransformerFactory" is the name of a Java
+         * interface and must not be translated.  The substitution text is
+         * the name of the class that could not be instantiated.
+         */
+        {ErrorMsg.COULD_NOT_CREATE_TRANS_FACT,
+        "TransformerFactory \uD074\uB798\uC2A4 ''{0}''\uC758 \uC778\uC2A4\uD134\uC2A4\uB97C \uC0DD\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message is produced when the user
+         * specified a name for the translet class that contains characters
+         * that are not permitted in a Java class name.  The substitution
+         * text "{0}" specifies the name the user requested, while "{1}"
+         * specifies the name the processor used instead.
+         */
+        {ErrorMsg.TRANSLET_NAME_JAVA_CONFLICT,
+         "''{0}'' \uC774\uB984\uC5D0\uB294 Java \uD074\uB798\uC2A4 \uC774\uB984\uC5D0 \uD5C8\uC6A9\uB418\uC9C0 \uC54A\uB294 \uBB38\uC790\uAC00 \uD3EC\uD568\uB418\uC5B4 \uC788\uC5B4 \uC774 \uC774\uB984\uC744 translet \uD074\uB798\uC2A4\uC758 \uC774\uB984\uC73C\uB85C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uB300\uC2E0 ''{1}'' \uC774\uB984\uC774 \uC0AC\uC6A9\uB418\uC5C8\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  The following message is used as a header.
+         * All the error messages are collected together and displayed beneath
+         * this message.
+         */
+        {ErrorMsg.COMPILER_ERROR_KEY,
+        "\uCEF4\uD30C\uC77C\uB7EC \uC624\uB958:"},
+
+        /*
+         * Note to translators:  The following message is used as a header.
+         * All the warning messages are collected together and displayed
+         * beneath this message.
+         */
+        {ErrorMsg.COMPILER_WARNING_KEY,
+        "\uCEF4\uD30C\uC77C\uB7EC \uACBD\uACE0:"},
+
+        /*
+         * Note to translators:  The following message is used as a header.
+         * All the error messages that are produced when the stylesheet is
+         * applied to an input document are collected together and displayed
+         * beneath this message.  A 'translet' is the compiled form of a
+         * stylesheet (see above).
+         */
+        {ErrorMsg.RUNTIME_ERROR_KEY,
+        "Translet \uC624\uB958:"},
+
+        /*
+         * Note to translators:  An attribute whose value is constrained to
+         * be a "QName" or a list of "QNames" had a value that was incorrect.
+         * 'QName' is an XML syntactic term that must not be translated.  The
+         * substitution text contains the actual value of the attribute.
+         */
+        {ErrorMsg.INVALID_QNAME_ERR,
+        "\uAC12\uC774 QName \uB610\uB294 \uACF5\uBC31\uC73C\uB85C \uAD6C\uBD84\uB41C QName \uBAA9\uB85D\uC774\uC5B4\uC57C \uD558\uB294 \uC18D\uC131\uC758 \uAC12\uC774 ''{0}''\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An attribute whose value is required to
+         * be an "NCName".
+         * 'NCName' is an XML syntactic term that must not be translated.  The
+         * substitution text contains the actual value of the attribute.
+         */
+        {ErrorMsg.INVALID_NCNAME_ERR,
+        "\uAC12\uC774 NCName\uC774\uC5B4\uC57C \uD558\uB294 \uC18D\uC131\uC758 \uAC12\uC774 ''{0}''\uC785\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  An attribute with an incorrect value was
+         * encountered.  The permitted value is one of the literal values
+         * "xml", "html" or "text"; it is also permitted to have the form of
+         * a QName that is not also an NCName.  The terms "method",
+         * "xsl:output", "xml", "html" and "text" are keywords that must not
+         * be translated.  The term "qname-but-not-ncname" is an XML syntactic
+         * term.  The substitution text contains the actual value of the
+         * attribute.
+         */
+        {ErrorMsg.INVALID_METHOD_IN_OUTPUT,
+        "<xsl:output> \uC694\uC18C\uC5D0 \uB300\uD55C method \uC18D\uC131\uC758 \uAC12\uC774 ''{0}''\uC785\uB2C8\uB2E4. \uAC12\uC740 ''xml'', ''html'', ''text'' \uB610\uB294 qname-but-not-ncname \uC911 \uD558\uB098\uC5EC\uC57C \uD569\uB2C8\uB2E4."},
+
+        {ErrorMsg.JAXP_GET_FEATURE_NULL_NAME,
+        "\uAE30\uB2A5 \uC774\uB984\uC740 TransformerFactory.getFeature(\uBB38\uC790\uC5F4 \uC774\uB984)\uC5D0\uC11C \uB110\uC77C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        {ErrorMsg.JAXP_SET_FEATURE_NULL_NAME,
+        "\uAE30\uB2A5 \uC774\uB984\uC740 TransformerFactory.setFeature(\uBB38\uC790\uC5F4 \uC774\uB984, \uBD80\uC6B8 \uAC12)\uC5D0\uC11C \uB110\uC77C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        {ErrorMsg.JAXP_UNSUPPORTED_FEATURE,
+        "\uC774 TransformerFactory\uC5D0\uC11C ''{0}'' \uAE30\uB2A5\uC744 \uC124\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        {ErrorMsg.JAXP_SECUREPROCESSING_FEATURE,
+        "FEATURE_SECURE_PROCESSING: \uBCF4\uC548 \uAD00\uB9AC\uC790\uAC00 \uC788\uC744 \uACBD\uC6B0 \uAE30\uB2A5\uC744 false\uB85C \uC124\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The term "byte code" is a Java technical term for the
+         * executable code in a Java method, and "try-catch-finally block"
+         * refers to the Java keywords with those names.  "Outlined" is a
+         * technical term internal to XSLTC and should not be translated.
+         */
+        {ErrorMsg.OUTLINE_ERR_TRY_CATCH,
+         "\uB0B4\uBD80 XSLTC \uC624\uB958: \uC0DD\uC131\uB41C \uBC14\uC774\uD2B8 \uCF54\uB4DC\uAC00 try-catch-finally \uBE14\uB85D\uC744 \uD3EC\uD568\uD558\uBBC0\uB85C outlined \uCC98\uB9AC\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The terms "OutlineableChunkStart" and
+         * "OutlineableChunkEnd" are the names of classes internal to XSLTC and
+         * should not be translated.  The message indicates that for every
+         * "start" there must be a corresponding "end", and vice versa, and
+         * that if one of a pair of "start" and "end" appears between another
+         * pair of corresponding "start" and "end", then the other half of the
+         * pair must also be between that same enclosing pair.
+         */
+        {ErrorMsg.OUTLINE_ERR_UNBALANCED_MARKERS,
+         "\uB0B4\uBD80 XSLTC \uC624\uB958: OutlineableChunkStart \uBC0F OutlineableChunkEnd \uD45C\uC2DC\uC790\uC758 \uC9DD\uC774 \uB9DE\uC544\uC57C \uD558\uACE0 \uC62C\uBC14\uB974\uAC8C \uC911\uCCA9\uB418\uC5B4\uC57C \uD569\uB2C8\uB2E4."},
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The term "byte code" is a Java technical term for the
+         * executable code in a Java method.  The "method" that is being
+         * referred to is a Java method in a translet that XSLTC is generating
+         * in processing a stylesheet.  The "instruction" that is being
+         * referred to is one of the instrutions in the Java byte code in that
+         * method.  "Outlined" is a technical term internal to XSLTC and
+         * should not be translated.
+         */
+        {ErrorMsg.OUTLINE_ERR_DELETED_TARGET,
+         "\uB0B4\uBD80 XSLTC \uC624\uB958: outlined \uCC98\uB9AC\uB41C \uBC14\uC774\uD2B8 \uCF54\uB4DC \uBE14\uB85D\uC5D0 \uC18D\uD55C \uBA85\uB839\uC774 \uC5EC\uC804\uD788 \uC6D0\uB798 \uBA54\uC18C\uB4DC\uC5D0\uC11C \uCC38\uC870\uB429\uB2C8\uB2E4."
+        },
+
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The "method" that is being referred to is a Java method
+         * in a translet that XSLTC is generating.
+         *
+         */
+        {ErrorMsg.OUTLINE_ERR_METHOD_TOO_BIG,
+         "\uB0B4\uBD80 XSLTC \uC624\uB958: translet\uC758 \uBA54\uC18C\uB4DC\uAC00 Java Virtual Machine\uC758 \uBA54\uC18C\uB4DC \uAE38\uC774 \uC81C\uD55C\uC778 64KB\uB97C \uCD08\uACFC\uD569\uB2C8\uB2E4. \uB300\uAC1C \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uC758 \uD15C\uD50C\uB9AC\uD2B8\uAC00 \uB9E4\uC6B0 \uD06C\uAE30 \uB54C\uBB38\uC5D0 \uBC1C\uC0DD\uD569\uB2C8\uB2E4. \uB354 \uC791\uC740 \uD15C\uD50C\uB9AC\uD2B8\uB97C \uC0AC\uC6A9\uD558\uB3C4\uB85D \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uB97C \uC7AC\uAD6C\uC131\uD574 \uBCF4\uC2ED\uC2DC\uC624."
+        },
+
+         {ErrorMsg.DESERIALIZE_TRANSLET_ERR, "Java \uBCF4\uC548\uC774 \uC0AC\uC6A9\uC73C\uB85C \uC124\uC815\uB41C \uACBD\uC6B0 TemplatesImpl \uC9C1\uB82C\uD654 \uD574\uC81C\uC5D0 \uB300\uD55C \uC9C0\uC6D0\uC774 \uC0AC\uC6A9 \uC548\uD568\uC73C\uB85C \uC124\uC815\uB429\uB2C8\uB2E4. jdk.xml.enableTemplatesImplDeserialization \uC2DC\uC2A4\uD15C \uC18D\uC131\uC744 true\uB85C \uC124\uC815\uD558\uBA74 \uC774\uB97C \uBB34\uD6A8\uD654\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
+
+    };
+
+    }
+}

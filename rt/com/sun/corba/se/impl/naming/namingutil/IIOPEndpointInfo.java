@@ -1,98 +1,92 @@
-/*    */ package com.sun.corba.se.impl.naming.namingutil;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class IIOPEndpointInfo
-/*    */ {
-/* 48 */   private int major = 1;
-/* 49 */   private int minor = 0;
-/*    */   
-/* 51 */   private String host = "localhost";
-/*    */   
-/* 53 */   private int port = 2089;
-/*    */ 
-/*    */   
-/*    */   public void setHost(String paramString) {
-/* 57 */     this.host = paramString;
-/*    */   }
-/*    */   
-/*    */   public String getHost() {
-/* 61 */     return this.host;
-/*    */   }
-/*    */   
-/*    */   public void setPort(int paramInt) {
-/* 65 */     this.port = paramInt;
-/*    */   }
-/*    */   
-/*    */   public int getPort() {
-/* 69 */     return this.port;
-/*    */   }
-/*    */   
-/*    */   public void setVersion(int paramInt1, int paramInt2) {
-/* 73 */     this.major = paramInt1;
-/* 74 */     this.minor = paramInt2;
-/*    */   }
-/*    */   
-/*    */   public int getMajor() {
-/* 78 */     return this.major;
-/*    */   }
-/*    */   
-/*    */   public int getMinor() {
-/* 82 */     return this.minor;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public void dump() {
-/* 88 */     System.out.println(" Major -> " + this.major + " Minor -> " + this.minor);
-/* 89 */     System.out.println("host -> " + this.host);
-/* 90 */     System.out.println("port -> " + this.port);
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\naming\namingutil\IIOPEndpointInfo.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.naming.namingutil;
+
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+
+/**
+ *  EndpointInfo is used internally by CorbaLoc object to store the
+ *  host information used in creating the Service Object reference
+ *  from the -ORBInitDef and -ORBDefaultInitDef definitions.
+ *
+ *  @Author Hemanth
+ */
+public class IIOPEndpointInfo
+{
+    // Version information
+    private int major, minor;
+
+    // Host Name and Port Number
+    private String host;
+    private int port;
+
+    IIOPEndpointInfo( ) {
+        // Default IIOP Version
+        major = ORBConstants.DEFAULT_INS_GIOP_MAJOR_VERSION;
+        minor = ORBConstants.DEFAULT_INS_GIOP_MINOR_VERSION;
+        // Default host is localhost
+        host = ORBConstants.DEFAULT_INS_HOST;
+        // Default INS Port
+        port = ORBConstants.DEFAULT_INS_PORT;
+    }
+
+    public void setHost( String theHost ) {
+        host = theHost;
+    }
+
+    public String getHost( ) {
+        return host;
+    }
+
+    public void setPort( int thePort ) {
+        port = thePort;
+    }
+
+    public int getPort( ) {
+        return port;
+    }
+
+    public void setVersion( int theMajor, int theMinor ) {
+        major = theMajor;
+        minor = theMinor;
+    }
+
+    public int getMajor( ) {
+        return major;
+    }
+
+    public int getMinor( ) {
+        return minor;
+    }
+
+    /** Internal Debug Method.
+     */
+    public void dump( ) {
+        System.out.println( " Major -> " + major + " Minor -> " + minor );
+        System.out.println( "host -> " + host );
+        System.out.println( "port -> " + port );
+    }
+}

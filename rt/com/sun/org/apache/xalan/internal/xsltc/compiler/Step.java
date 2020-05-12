@@ -1,544 +1,538 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ALOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ASTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ICONST;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ILOAD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
-/*     */ import com.sun.org.apache.bcel.internal.generic.ISTORE;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.NEW;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
-/*     */ import com.sun.org.apache.xml.internal.dtm.Axis;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class Step
-/*     */   extends RelativeLocationPath
-/*     */ {
-/*     */   private int _axis;
-/*     */   private Vector _predicates;
-/*     */   private boolean _hadPredicates = false;
-/*     */   private int _nodeType;
-/*     */   
-/*     */   public Step(int axis, int nodeType, Vector predicates) {
-/*  80 */     this._axis = axis;
-/*  81 */     this._nodeType = nodeType;
-/*  82 */     this._predicates = predicates;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setParser(Parser parser) {
-/*  89 */     super.setParser(parser);
-/*  90 */     if (this._predicates != null) {
-/*  91 */       int n = this._predicates.size();
-/*  92 */       for (int i = 0; i < n; i++) {
-/*  93 */         Predicate exp = this._predicates.elementAt(i);
-/*  94 */         exp.setParser(parser);
-/*  95 */         exp.setParent(this);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getAxis() {
-/* 104 */     return this._axis;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setAxis(int axis) {
-/* 111 */     this._axis = axis;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getNodeType() {
-/* 118 */     return this._nodeType;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Vector getPredicates() {
-/* 125 */     return this._predicates;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addPredicates(Vector predicates) {
-/* 132 */     if (this._predicates == null) {
-/* 133 */       this._predicates = predicates;
-/*     */     } else {
-/*     */       
-/* 136 */       this._predicates.addAll(predicates);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean hasParentPattern() {
-/* 146 */     SyntaxTreeNode parent = getParent();
-/* 147 */     return (parent instanceof ParentPattern || parent instanceof ParentLocationPath || parent instanceof UnionPathExpr || parent instanceof FilterParentPath);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean hasParentLocationPath() {
-/* 157 */     return getParent() instanceof ParentLocationPath;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean hasPredicates() {
-/* 164 */     return (this._predicates != null && this._predicates.size() > 0);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean isPredicate() {
-/* 171 */     SyntaxTreeNode parent = this;
-/* 172 */     while (parent != null) {
-/* 173 */       parent = parent.getParent();
-/* 174 */       if (parent instanceof Predicate) return true; 
-/*     */     } 
-/* 176 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isAbbreviatedDot() {
-/* 183 */     return (this._nodeType == -1 && this._axis == 13);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isAbbreviatedDDot() {
-/* 191 */     return (this._nodeType == -1 && this._axis == 10);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/* 203 */     this._hadPredicates = hasPredicates();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 208 */     if (isAbbreviatedDot()) {
-/* 209 */       this._type = (hasParentPattern() || hasPredicates() || hasParentLocationPath()) ? Type.NodeSet : Type.Node;
-/*     */     }
-/*     */     else {
-/*     */       
-/* 213 */       this._type = Type.NodeSet;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 217 */     if (this._predicates != null) {
-/* 218 */       int n = this._predicates.size();
-/* 219 */       for (int i = 0; i < n; i++) {
-/* 220 */         Expression pred = this._predicates.elementAt(i);
-/* 221 */         pred.typeCheck(stable);
-/*     */       } 
-/*     */     } 
-/*     */ 
-/*     */     
-/* 226 */     return this._type;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 237 */     translateStep(classGen, methodGen, hasPredicates() ? (this._predicates.size() - 1) : -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void translateStep(ClassGenerator classGen, MethodGenerator methodGen, int predicateIndex) {
-/* 243 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 244 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 246 */     if (predicateIndex >= 0) {
-/* 247 */       translatePredicates(classGen, methodGen, predicateIndex);
-/*     */     } else {
-/* 249 */       int git, star = 0;
-/* 250 */       String name = null;
-/* 251 */       XSLTC xsltc = getParser().getXSLTC();
-/*     */       
-/* 253 */       if (this._nodeType >= 14) {
-/* 254 */         Vector<String> ni = xsltc.getNamesIndex();
-/*     */         
-/* 256 */         name = ni.elementAt(this._nodeType - 14);
-/* 257 */         star = name.lastIndexOf('*');
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */       
-/* 262 */       if (this._axis == 2 && this._nodeType != 2 && this._nodeType != -1 && 
-/* 263 */         !hasParentPattern() && star == 0) {
-/*     */ 
-/*     */         
-/* 266 */         int iter = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getTypedAxisIterator", "(II)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */         
-/* 269 */         il.append(methodGen.loadDOM());
-/* 270 */         il.append(new PUSH(cpg, 2));
-/* 271 */         il.append(new PUSH(cpg, this._nodeType));
-/* 272 */         il.append(new INVOKEINTERFACE(iter, 3));
-/*     */         
-/*     */         return;
-/*     */       } 
-/* 276 */       SyntaxTreeNode parent = getParent();
-/*     */       
-/* 278 */       if (isAbbreviatedDot()) {
-/* 279 */         if (this._type == Type.Node) {
-/*     */           
-/* 281 */           il.append(methodGen.loadContextNode());
-/*     */         
-/*     */         }
-/* 284 */         else if (parent instanceof ParentLocationPath) {
-/*     */           
-/* 286 */           int init = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.SingletonIterator", "<init>", "(I)V");
-/*     */ 
-/*     */           
-/* 289 */           il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.SingletonIterator")));
-/* 290 */           il.append(DUP);
-/* 291 */           il.append(methodGen.loadContextNode());
-/* 292 */           il.append(new INVOKESPECIAL(init));
-/*     */         } else {
-/*     */           
-/* 295 */           int i = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getAxisIterator", "(I)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */           
-/* 298 */           il.append(methodGen.loadDOM());
-/* 299 */           il.append(new PUSH(cpg, this._axis));
-/* 300 */           il.append(new INVOKEINTERFACE(i, 2));
-/*     */         } 
-/*     */ 
-/*     */         
-/*     */         return;
-/*     */       } 
-/*     */       
-/* 307 */       if (parent instanceof ParentLocationPath && parent
-/* 308 */         .getParent() instanceof ParentLocationPath && 
-/* 309 */         this._nodeType == 1 && !this._hadPredicates) {
-/* 310 */         this._nodeType = -1;
-/*     */       }
-/*     */ 
-/*     */ 
-/*     */       
-/* 315 */       switch (this._nodeType) {
-/*     */         case 2:
-/* 317 */           this._axis = 2;
-/*     */         
-/*     */         case -1:
-/* 320 */           git = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getAxisIterator", "(I)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */           
-/* 323 */           il.append(methodGen.loadDOM());
-/* 324 */           il.append(new PUSH(cpg, this._axis));
-/* 325 */           il.append(new INVOKEINTERFACE(git, 2));
-/*     */           return;
-/*     */         default:
-/* 328 */           if (star > 1) {
-/*     */             String namespace;
-/* 330 */             if (this._axis == 2) {
-/* 331 */               namespace = name.substring(0, star - 2);
-/*     */             } else {
-/* 333 */               namespace = name.substring(0, star - 1);
-/*     */             } 
-/* 335 */             int nsType = xsltc.registerNamespace(namespace);
-/* 336 */             int ns = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getNamespaceAxisIterator", "(II)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */             
-/* 339 */             il.append(methodGen.loadDOM());
-/* 340 */             il.append(new PUSH(cpg, this._axis));
-/* 341 */             il.append(new PUSH(cpg, nsType));
-/* 342 */             il.append(new INVOKEINTERFACE(ns, 3)); return;
-/*     */           }  break;
-/*     */         case 1:
-/*     */           break;
-/*     */       } 
-/* 347 */       int ty = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getTypedAxisIterator", "(II)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */ 
-/*     */       
-/* 351 */       il.append(methodGen.loadDOM());
-/* 352 */       il.append(new PUSH(cpg, this._axis));
-/* 353 */       il.append(new PUSH(cpg, this._nodeType));
-/* 354 */       il.append(new INVOKEINTERFACE(ty, 3));
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translatePredicates(ClassGenerator classGen, MethodGenerator methodGen, int predicateIndex) {
-/* 371 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 372 */     InstructionList il = methodGen.getInstructionList();
-/*     */     
-/* 374 */     int idx = 0;
-/*     */     
-/* 376 */     if (predicateIndex < 0) {
-/* 377 */       translateStep(classGen, methodGen, predicateIndex);
-/*     */     } else {
-/*     */       
-/* 380 */       Predicate predicate = this._predicates.get(predicateIndex--);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 389 */       if (predicate.isNodeValueTest()) {
-/* 390 */         Step step = predicate.getStep();
-/*     */         
-/* 392 */         il.append(methodGen.loadDOM());
-/*     */ 
-/*     */         
-/* 395 */         if (step.isAbbreviatedDot()) {
-/* 396 */           translateStep(classGen, methodGen, predicateIndex);
-/* 397 */           il.append(new ICONST(0));
-/*     */         
-/*     */         }
-/*     */         else {
-/*     */           
-/* 402 */           ParentLocationPath path = new ParentLocationPath(this, step);
-/* 403 */           step._parent = path;
-/*     */           
-/*     */           try {
-/* 406 */             path.typeCheck(getParser().getSymbolTable());
-/*     */           }
-/* 408 */           catch (TypeCheckError typeCheckError) {}
-/* 409 */           translateStep(classGen, methodGen, predicateIndex);
-/* 410 */           path.translateStep(classGen, methodGen);
-/* 411 */           il.append(new ICONST(1));
-/*     */         } 
-/* 413 */         predicate.translate(classGen, methodGen);
-/* 414 */         idx = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getNodeValueIterator", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;ILjava/lang/String;Z)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */         
-/* 417 */         il.append(new INVOKEINTERFACE(idx, 5));
-/*     */       
-/*     */       }
-/* 420 */       else if (predicate.isNthDescendant()) {
-/* 421 */         il.append(methodGen.loadDOM());
-/*     */         
-/* 423 */         il.append(new PUSH(cpg, predicate.getPosType()));
-/* 424 */         predicate.translate(classGen, methodGen);
-/* 425 */         il.append(new ICONST(0));
-/* 426 */         idx = cpg.addInterfaceMethodref("com.sun.org.apache.xalan.internal.xsltc.DOM", "getNthDescendant", "(IIZ)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;");
-/*     */ 
-/*     */         
-/* 429 */         il.append(new INVOKEINTERFACE(idx, 4));
-/*     */       
-/*     */       }
-/* 432 */       else if (predicate.isNthPositionFilter()) {
-/* 433 */         idx = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.NthIterator", "<init>", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;I)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 446 */         translatePredicates(classGen, methodGen, predicateIndex);
-/*     */         
-/* 448 */         LocalVariableGen iteratorTemp = methodGen.addLocalVariable("step_tmp1", 
-/* 449 */             Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */         
-/* 451 */         iteratorTemp.setStart(il
-/* 452 */             .append(new ASTORE(iteratorTemp.getIndex())));
-/*     */         
-/* 454 */         predicate.translate(classGen, methodGen);
-/*     */         
-/* 456 */         LocalVariableGen predicateValueTemp = methodGen.addLocalVariable("step_tmp2", 
-/* 457 */             Util.getJCRefType("I"), null, null);
-/*     */         
-/* 459 */         predicateValueTemp.setStart(il
-/* 460 */             .append(new ISTORE(predicateValueTemp.getIndex())));
-/*     */         
-/* 462 */         il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.NthIterator")));
-/* 463 */         il.append(DUP);
-/* 464 */         iteratorTemp.setEnd(il
-/* 465 */             .append(new ALOAD(iteratorTemp.getIndex())));
-/* 466 */         predicateValueTemp.setEnd(il
-/* 467 */             .append(new ILOAD(predicateValueTemp.getIndex())));
-/* 468 */         il.append(new INVOKESPECIAL(idx));
-/*     */       } else {
-/*     */         
-/* 471 */         idx = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.CurrentNodeListIterator", "<init>", "(Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;Lcom/sun/org/apache/xalan/internal/xsltc/dom/CurrentNodeListFilter;ILcom/sun/org/apache/xalan/internal/xsltc/runtime/AbstractTranslet;)V");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 489 */         translatePredicates(classGen, methodGen, predicateIndex);
-/*     */         
-/* 491 */         LocalVariableGen iteratorTemp = methodGen.addLocalVariable("step_tmp1", 
-/* 492 */             Util.getJCRefType("Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;"), null, null);
-/*     */         
-/* 494 */         iteratorTemp.setStart(il
-/* 495 */             .append(new ASTORE(iteratorTemp.getIndex())));
-/*     */         
-/* 497 */         predicate.translateFilter(classGen, methodGen);
-/*     */         
-/* 499 */         LocalVariableGen filterTemp = methodGen.addLocalVariable("step_tmp2", 
-/* 500 */             Util.getJCRefType("Lcom/sun/org/apache/xalan/internal/xsltc/dom/CurrentNodeListFilter;"), null, null);
-/*     */         
-/* 502 */         filterTemp.setStart(il
-/* 503 */             .append(new ASTORE(filterTemp.getIndex())));
-/*     */         
-/* 505 */         il.append(new NEW(cpg.addClass("com.sun.org.apache.xalan.internal.xsltc.dom.CurrentNodeListIterator")));
-/* 506 */         il.append(DUP);
-/*     */         
-/* 508 */         iteratorTemp.setEnd(il
-/* 509 */             .append(new ALOAD(iteratorTemp.getIndex())));
-/* 510 */         filterTemp.setEnd(il.append(new ALOAD(filterTemp.getIndex())));
-/*     */         
-/* 512 */         il.append(methodGen.loadCurrentNode());
-/* 513 */         il.append(classGen.loadTranslet());
-/* 514 */         if (classGen.isExternal()) {
-/* 515 */           String className = classGen.getClassName();
-/* 516 */           il.append(new CHECKCAST(cpg.addClass(className)));
-/*     */         } 
-/* 518 */         il.append(new INVOKESPECIAL(idx));
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 527 */     StringBuffer buffer = new StringBuffer("step(\"");
-/* 528 */     buffer.append(Axis.getNames(this._axis)).append("\", ").append(this._nodeType);
-/* 529 */     if (this._predicates != null) {
-/* 530 */       int n = this._predicates.size();
-/* 531 */       for (int i = 0; i < n; i++) {
-/* 532 */         Predicate pred = this._predicates.elementAt(i);
-/* 533 */         buffer.append(", ").append(pred.toString());
-/*     */       } 
-/*     */     } 
-/* 536 */     return buffer.append(')').toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\Step.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Step.java,v 1.6 2006/06/06 22:34:34 spericas Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+import com.sun.org.apache.bcel.internal.generic.ASTORE;
+import com.sun.org.apache.bcel.internal.generic.CHECKCAST;
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.ICONST;
+import com.sun.org.apache.bcel.internal.generic.ILOAD;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.LocalVariableGen;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
+import com.sun.org.apache.xml.internal.dtm.Axis;
+import com.sun.org.apache.xml.internal.dtm.DTM;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Morten Jorgensen
+ */
+final class Step extends RelativeLocationPath {
+
+    /**
+     * This step's axis as defined in class Axis.
+     */
+    private int _axis;
+
+    /**
+     * A vector of predicates (filters) defined on this step - may be null
+     */
+    private Vector _predicates;
+
+    /**
+     * Some simple predicates can be handled by this class (and not by the
+     * Predicate class) and will be removed from the above vector as they are
+     * handled. We use this boolean to remember if we did have any predicates.
+     */
+    private boolean _hadPredicates = false;
+
+    /**
+     * Type of the node test.
+     */
+    private int _nodeType;
+
+    public Step(int axis, int nodeType, Vector predicates) {
+        _axis = axis;
+        _nodeType = nodeType;
+        _predicates = predicates;
+    }
+
+    /**
+     * Set the parser for this element and all child predicates
+     */
+    public void setParser(Parser parser) {
+        super.setParser(parser);
+        if (_predicates != null) {
+            final int n = _predicates.size();
+            for (int i = 0; i < n; i++) {
+                final Predicate exp = (Predicate)_predicates.elementAt(i);
+                exp.setParser(parser);
+                exp.setParent(this);
+            }
+        }
+    }
+
+    /**
+     * Define the axis (defined in Axis class) for this step
+     */
+    public int getAxis() {
+        return _axis;
+    }
+
+    /**
+     * Get the axis (defined in Axis class) for this step
+     */
+    public void setAxis(int axis) {
+        _axis = axis;
+    }
+
+    /**
+     * Returns the node-type for this step
+     */
+    public int getNodeType() {
+        return _nodeType;
+    }
+
+    /**
+     * Returns the vector containing all predicates for this step.
+     */
+    public Vector getPredicates() {
+        return _predicates;
+    }
+
+    /**
+     * Returns the vector containing all predicates for this step.
+     */
+    public void addPredicates(Vector predicates) {
+        if (_predicates == null) {
+            _predicates = predicates;
+        }
+        else {
+            _predicates.addAll(predicates);
+        }
+    }
+
+    /**
+     * Returns 'true' if this step has a parent pattern.
+     * This method will return 'false' if this step occurs on its own under
+     * an element like <xsl:for-each> or <xsl:apply-templates>.
+     */
+    private boolean hasParentPattern() {
+        final SyntaxTreeNode parent = getParent();
+        return (parent instanceof ParentPattern ||
+                parent instanceof ParentLocationPath ||
+                parent instanceof UnionPathExpr ||
+                parent instanceof FilterParentPath);
+    }
+
+    /**
+     * Returns 'true' if this step has a parent location path.
+     */
+    private boolean hasParentLocationPath() {
+        return getParent() instanceof ParentLocationPath;
+    }
+
+    /**
+     * Returns 'true' if this step has any predicates
+     */
+    private boolean hasPredicates() {
+        return _predicates != null && _predicates.size() > 0;
+    }
+
+    /**
+     * Returns 'true' if this step is used within a predicate
+     */
+    private boolean isPredicate() {
+        SyntaxTreeNode parent = this;
+        while (parent != null) {
+            parent = parent.getParent();
+            if (parent instanceof Predicate) return true;
+        }
+        return false;
+    }
+
+    /**
+     * True if this step is the abbreviated step '.'
+     */
+    public boolean isAbbreviatedDot() {
+        return _nodeType == NodeTest.ANODE && _axis == Axis.SELF;
+    }
+
+
+    /**
+     * True if this step is the abbreviated step '..'
+     */
+    public boolean isAbbreviatedDDot() {
+        return _nodeType == NodeTest.ANODE && _axis == Axis.PARENT;
+    }
+
+    /**
+     * Type check this step. The abbreviated steps '.' and '@attr' are
+     * assigned type node if they have no predicates. All other steps
+     * have type node-set.
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+
+        // Save this value for later - important for testing for special
+        // combinations of steps and patterns than can be optimised
+        _hadPredicates = hasPredicates();
+
+        // Special case for '.'
+        //   in the case where '.' has a context such as book/.
+        //   or .[false()] we can not optimize the nodeset to a single node.
+        if (isAbbreviatedDot()) {
+            _type = (hasParentPattern() || hasPredicates() || hasParentLocationPath()) ?
+                Type.NodeSet : Type.Node;
+        }
+        else {
+            _type = Type.NodeSet;
+        }
+
+        // Type check all predicates (expressions applied to the step)
+        if (_predicates != null) {
+            final int n = _predicates.size();
+            for (int i = 0; i < n; i++) {
+                final Expression pred = (Expression)_predicates.elementAt(i);
+                pred.typeCheck(stable);
+            }
+        }
+
+        // Return either Type.Node or Type.NodeSet
+        return _type;
+    }
+
+    /**
+     * Translate a step by pushing the appropriate iterator onto the stack.
+     * The abbreviated steps '.' and '@attr' do not create new iterators
+     * if they are not part of a LocationPath and have no filters.
+     * In these cases a node index instead of an iterator is pushed
+     * onto the stack.
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        translateStep(classGen, methodGen, hasPredicates() ? _predicates.size() - 1 : -1);
+    }
+
+    private void translateStep(ClassGenerator classGen,
+                               MethodGenerator methodGen,
+                               int predicateIndex) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        if (predicateIndex >= 0) {
+            translatePredicates(classGen, methodGen, predicateIndex);
+        } else {
+            int star = 0;
+            String name = null;
+            final XSLTC xsltc = getParser().getXSLTC();
+
+            if (_nodeType >= DTM.NTYPES) {
+                final Vector ni = xsltc.getNamesIndex();
+
+                name = (String)ni.elementAt(_nodeType-DTM.NTYPES);
+                star = name.lastIndexOf('*');
+            }
+
+            // If it is an attribute, but not '@*', '@pre:*' or '@node()',
+            // and has no parent
+            if (_axis == Axis.ATTRIBUTE && _nodeType != NodeTest.ATTRIBUTE
+                && _nodeType != NodeTest.ANODE && !hasParentPattern()
+                && star == 0)
+            {
+                int iter = cpg.addInterfaceMethodref(DOM_INTF,
+                                                     "getTypedAxisIterator",
+                                                     "(II)"+NODE_ITERATOR_SIG);
+                il.append(methodGen.loadDOM());
+                il.append(new PUSH(cpg, Axis.ATTRIBUTE));
+                il.append(new PUSH(cpg, _nodeType));
+                il.append(new INVOKEINTERFACE(iter, 3));
+                return;
+            }
+
+            SyntaxTreeNode parent = getParent();
+            // Special case for '.'
+            if (isAbbreviatedDot()) {
+                if (_type == Type.Node) {
+                    // Put context node on stack if using Type.Node
+                    il.append(methodGen.loadContextNode());
+                }
+                else {
+                    if (parent instanceof ParentLocationPath){
+                        // Wrap the context node in a singleton iterator if not.
+                        int init = cpg.addMethodref(SINGLETON_ITERATOR,
+                                                    "<init>",
+                                                    "("+NODE_SIG+")V");
+                        il.append(new NEW(cpg.addClass(SINGLETON_ITERATOR)));
+                        il.append(DUP);
+                        il.append(methodGen.loadContextNode());
+                        il.append(new INVOKESPECIAL(init));
+                    } else {
+                        // DOM.getAxisIterator(int axis);
+                        int git = cpg.addInterfaceMethodref(DOM_INTF,
+                                                "getAxisIterator",
+                                                "(I)"+NODE_ITERATOR_SIG);
+                        il.append(methodGen.loadDOM());
+                        il.append(new PUSH(cpg, _axis));
+                        il.append(new INVOKEINTERFACE(git, 2));
+                    }
+                }
+                return;
+            }
+
+            // Special case for /foo/*/bar
+            if ((parent instanceof ParentLocationPath) &&
+                (parent.getParent() instanceof ParentLocationPath)) {
+                if ((_nodeType == NodeTest.ELEMENT) && (!_hadPredicates)) {
+                    _nodeType = NodeTest.ANODE;
+                }
+            }
+
+            // "ELEMENT" or "*" or "@*" or ".." or "@attr" with a parent.
+            switch (_nodeType) {
+            case NodeTest.ATTRIBUTE:
+                _axis = Axis.ATTRIBUTE;
+            case NodeTest.ANODE:
+                // DOM.getAxisIterator(int axis);
+                int git = cpg.addInterfaceMethodref(DOM_INTF,
+                                                    "getAxisIterator",
+                                                    "(I)"+NODE_ITERATOR_SIG);
+                il.append(methodGen.loadDOM());
+                il.append(new PUSH(cpg, _axis));
+                il.append(new INVOKEINTERFACE(git, 2));
+                break;
+            default:
+                if (star > 1) {
+                    final String namespace;
+                    if (_axis == Axis.ATTRIBUTE)
+                        namespace = name.substring(0,star-2);
+                    else
+                        namespace = name.substring(0,star-1);
+
+                    final int nsType = xsltc.registerNamespace(namespace);
+                    final int ns = cpg.addInterfaceMethodref(DOM_INTF,
+                                                    "getNamespaceAxisIterator",
+                                                    "(II)"+NODE_ITERATOR_SIG);
+                    il.append(methodGen.loadDOM());
+                    il.append(new PUSH(cpg, _axis));
+                    il.append(new PUSH(cpg, nsType));
+                    il.append(new INVOKEINTERFACE(ns, 3));
+                    break;
+                }
+            case NodeTest.ELEMENT:
+                // DOM.getTypedAxisIterator(int axis, int type);
+                final int ty = cpg.addInterfaceMethodref(DOM_INTF,
+                                                "getTypedAxisIterator",
+                                                "(II)"+NODE_ITERATOR_SIG);
+                // Get the typed iterator we're after
+                il.append(methodGen.loadDOM());
+                il.append(new PUSH(cpg, _axis));
+                il.append(new PUSH(cpg, _nodeType));
+                il.append(new INVOKEINTERFACE(ty, 3));
+
+                break;
+            }
+        }
+    }
+
+
+    /**
+     * Translate a sequence of predicates. Each predicate is translated
+     * by constructing an instance of <code>CurrentNodeListIterator</code>
+     * which is initialized from another iterator (recursive call),
+     * a filter and a closure (call to translate on the predicate) and "this".
+     */
+    public void translatePredicates(ClassGenerator classGen,
+                                    MethodGenerator methodGen,
+                                    int predicateIndex) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+
+        int idx = 0;
+
+        if (predicateIndex < 0) {
+            translateStep(classGen, methodGen, predicateIndex);
+        }
+        else {
+            final Predicate predicate = (Predicate) _predicates.get(predicateIndex--);
+
+            // Special case for predicates that can use the NodeValueIterator
+            // instead of an auxiliary class. Certain path/predicates pairs
+            // are translated into a base path, on top of which we place a
+            // node value iterator that tests for the desired value:
+            //   foo[@attr = 'str']  ->  foo/@attr + test(value='str')
+            //   foo[bar = 'str']    ->  foo/bar + test(value='str')
+            //   foo/bar[. = 'str']  ->  foo/bar + test(value='str')
+            if (predicate.isNodeValueTest()) {
+                Step step = predicate.getStep();
+
+                il.append(methodGen.loadDOM());
+                // If the predicate's Step is simply '.' we translate this Step
+                // and place the node test on top of the resulting iterator
+                if (step.isAbbreviatedDot()) {
+                    translateStep(classGen, methodGen, predicateIndex);
+                    il.append(new ICONST(DOM.RETURN_CURRENT));
+                }
+                // Otherwise we create a parent location path with this Step and
+                // the predicates Step, and place the node test on top of that
+                else {
+                    ParentLocationPath path = new ParentLocationPath(this, step);
+                    _parent = step._parent = path;      // Force re-parenting
+
+                    try {
+                        path.typeCheck(getParser().getSymbolTable());
+                    }
+                    catch (TypeCheckError e) { }
+                    translateStep(classGen, methodGen, predicateIndex);
+                    path.translateStep(classGen, methodGen);
+                    il.append(new ICONST(DOM.RETURN_PARENT));
+                }
+                predicate.translate(classGen, methodGen);
+                idx = cpg.addInterfaceMethodref(DOM_INTF,
+                                                GET_NODE_VALUE_ITERATOR,
+                                                GET_NODE_VALUE_ITERATOR_SIG);
+                il.append(new INVOKEINTERFACE(idx, 5));
+            }
+            // Handle '//*[n]' expression
+            else if (predicate.isNthDescendant()) {
+                il.append(methodGen.loadDOM());
+                // il.append(new ICONST(NodeTest.ELEMENT));
+                il.append(new PUSH(cpg, predicate.getPosType()));
+                predicate.translate(classGen, methodGen);
+                il.append(new ICONST(0));
+                idx = cpg.addInterfaceMethodref(DOM_INTF,
+                                                "getNthDescendant",
+                                                "(IIZ)"+NODE_ITERATOR_SIG);
+                il.append(new INVOKEINTERFACE(idx, 4));
+            }
+            // Handle 'elem[n]' expression
+            else if (predicate.isNthPositionFilter()) {
+                idx = cpg.addMethodref(NTH_ITERATOR_CLASS,
+                                       "<init>",
+                                       "("+NODE_ITERATOR_SIG+"I)V");
+
+                // Backwards branches are prohibited if an uninitialized object
+                // is on the stack by section 4.9.4 of the JVM Specification,
+                // 2nd Ed.  We don't know whether this code might contain
+                // backwards branches, so we mustn't create the new object until
+                // after we've created the suspect arguments to its constructor.
+                // Instead we calculate the values of the arguments to the
+                // constructor first, store them in temporary variables, create
+                // the object and reload the arguments from the temporaries to
+                // avoid the problem.
+                translatePredicates(classGen, methodGen, predicateIndex); // recursive call
+                LocalVariableGen iteratorTemp
+                        = methodGen.addLocalVariable("step_tmp1",
+                                         Util.getJCRefType(NODE_ITERATOR_SIG),
+                                         null, null);
+                iteratorTemp.setStart(
+                        il.append(new ASTORE(iteratorTemp.getIndex())));
+
+                predicate.translate(classGen, methodGen);
+                LocalVariableGen predicateValueTemp
+                        = methodGen.addLocalVariable("step_tmp2",
+                                         Util.getJCRefType("I"),
+                                         null, null);
+                predicateValueTemp.setStart(
+                        il.append(new ISTORE(predicateValueTemp.getIndex())));
+
+                il.append(new NEW(cpg.addClass(NTH_ITERATOR_CLASS)));
+                il.append(DUP);
+                iteratorTemp.setEnd(
+                        il.append(new ALOAD(iteratorTemp.getIndex())));
+                predicateValueTemp.setEnd(
+                        il.append(new ILOAD(predicateValueTemp.getIndex())));
+                il.append(new INVOKESPECIAL(idx));
+            }
+            else {
+                idx = cpg.addMethodref(CURRENT_NODE_LIST_ITERATOR,
+                                       "<init>",
+                                       "("
+                                       + NODE_ITERATOR_SIG
+                                       + CURRENT_NODE_LIST_FILTER_SIG
+                                       + NODE_SIG
+                                       + TRANSLET_SIG
+                                       + ")V");
+
+                // Backwards branches are prohibited if an uninitialized object
+                // is on the stack by section 4.9.4 of the JVM Specification,
+                // 2nd Ed.  We don't know whether this code might contain
+                // backwards branches, so we mustn't create the new object until
+                // after we've created the suspect arguments to its constructor.
+                // Instead we calculate the values of the arguments to the
+                // constructor first, store them in temporary variables, create
+                // the object and reload the arguments from the temporaries to
+                // avoid the problem.
+                translatePredicates(classGen, methodGen, predicateIndex); // recursive call
+                LocalVariableGen iteratorTemp
+                        = methodGen.addLocalVariable("step_tmp1",
+                                         Util.getJCRefType(NODE_ITERATOR_SIG),
+                                         null, null);
+                iteratorTemp.setStart(
+                        il.append(new ASTORE(iteratorTemp.getIndex())));
+
+                predicate.translateFilter(classGen, methodGen);
+                LocalVariableGen filterTemp
+                        = methodGen.addLocalVariable("step_tmp2",
+                              Util.getJCRefType(CURRENT_NODE_LIST_FILTER_SIG),
+                              null, null);
+                filterTemp.setStart(
+                        il.append(new ASTORE(filterTemp.getIndex())));
+                // create new CurrentNodeListIterator
+                il.append(new NEW(cpg.addClass(CURRENT_NODE_LIST_ITERATOR)));
+                il.append(DUP);
+
+                iteratorTemp.setEnd(
+                        il.append(new ALOAD(iteratorTemp.getIndex())));
+                filterTemp.setEnd(il.append(new ALOAD(filterTemp.getIndex())));
+
+                il.append(methodGen.loadCurrentNode());
+                il.append(classGen.loadTranslet());
+                if (classGen.isExternal()) {
+                    final String className = classGen.getClassName();
+                    il.append(new CHECKCAST(cpg.addClass(className)));
+                }
+                il.append(new INVOKESPECIAL(idx));
+            }
+        }
+    }
+
+    /**
+     * Returns a string representation of this step.
+     */
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer("step(\"");
+        buffer.append(Axis.getNames(_axis)).append("\", ").append(_nodeType);
+        if (_predicates != null) {
+            final int n = _predicates.size();
+            for (int i = 0; i < n; i++) {
+                final Predicate pred = (Predicate)_predicates.elementAt(i);
+                buffer.append(", ").append(pred.toString());
+            }
+        }
+        return buffer.append(')').toString();
+    }
+}

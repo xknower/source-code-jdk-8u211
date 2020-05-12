@@ -1,76 +1,70 @@
-/*    */ package java.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class MissingFormatArgumentException
-/*    */   extends IllegalFormatException
-/*    */ {
-/*    */   private static final long serialVersionUID = 19190115L;
-/*    */   private String s;
-/*    */   
-/*    */   public MissingFormatArgumentException(String paramString) {
-/* 53 */     if (paramString == null)
-/* 54 */       throw new NullPointerException(); 
-/* 55 */     this.s = paramString;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getFormatSpecifier() {
-/* 64 */     return this.s;
-/*    */   }
-/*    */   
-/*    */   public String getMessage() {
-/* 68 */     return "Format specifier '" + this.s + "'";
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\MissingFormatArgumentException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util;
+
+/**
+ * Unchecked exception thrown when there is a format specifier which does not
+ * have a corresponding argument or if an argument index refers to an argument
+ * that does not exist.
+ *
+ * <p> Unless otherwise specified, passing a <tt>null</tt> argument to any
+ * method or constructor in this class will cause a {@link
+ * NullPointerException} to be thrown.
+ *
+ * @since 1.5
+ */
+public class MissingFormatArgumentException extends IllegalFormatException {
+
+    private static final long serialVersionUID = 19190115L;
+
+    private String s;
+
+    /**
+     * Constructs an instance of this class with the unmatched format
+     * specifier.
+     *
+     * @param  s
+     *         Format specifier which does not have a corresponding argument
+     */
+    public MissingFormatArgumentException(String s) {
+        if (s == null)
+            throw new NullPointerException();
+        this.s = s;
+    }
+
+    /**
+     * Returns the unmatched format specifier.
+     *
+     * @return  The unmatched format specifier
+     */
+    public String getFormatSpecifier() {
+        return s;
+    }
+
+    public String getMessage() {
+        return "Format specifier '" + s + "'";
+    }
+}

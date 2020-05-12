@@ -1,906 +1,901 @@
-/*     */ package com.sun.org.apache.xerces.internal.util;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.dom.AttrImpl;
-/*     */ import com.sun.org.apache.xerces.internal.dom.NodeImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.opti.ElementImpl;
-/*     */ import com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl;
-/*     */ import java.lang.reflect.Method;
-/*     */ import java.util.Map;
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.Document;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ import org.w3c.dom.ls.LSException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DOMUtil
-/*     */ {
-/*     */   public static void copyInto(Node src, Node dest) throws DOMException {
-/*  69 */     Document factory = dest.getOwnerDocument();
-/*  70 */     boolean domimpl = factory instanceof com.sun.org.apache.xerces.internal.dom.DocumentImpl;
-/*     */ 
-/*     */     
-/*  73 */     Node start = src;
-/*  74 */     Node parent = src;
-/*  75 */     Node place = src;
-/*     */ 
-/*     */     
-/*  78 */     while (place != null) {
-/*     */       Element element; NamedNodeMap attrs;
-/*     */       int attrCount, i;
-/*  81 */       Node node = null;
-/*  82 */       int type = place.getNodeType();
-/*  83 */       switch (type) {
-/*     */         case 4:
-/*  85 */           node = factory.createCDATASection(place.getNodeValue());
-/*     */           break;
-/*     */         
-/*     */         case 8:
-/*  89 */           node = factory.createComment(place.getNodeValue());
-/*     */           break;
-/*     */         
-/*     */         case 1:
-/*  93 */           element = factory.createElement(place.getNodeName());
-/*  94 */           node = element;
-/*  95 */           attrs = place.getAttributes();
-/*  96 */           attrCount = attrs.getLength();
-/*  97 */           for (i = 0; i < attrCount; i++) {
-/*  98 */             Attr attr = (Attr)attrs.item(i);
-/*  99 */             String attrName = attr.getNodeName();
-/* 100 */             String attrValue = attr.getNodeValue();
-/* 101 */             element.setAttribute(attrName, attrValue);
-/* 102 */             if (domimpl && !attr.getSpecified()) {
-/* 103 */               ((AttrImpl)element.getAttributeNode(attrName)).setSpecified(false);
-/*     */             }
-/*     */           } 
-/*     */           break;
-/*     */         
-/*     */         case 5:
-/* 109 */           node = factory.createEntityReference(place.getNodeName());
-/*     */           break;
-/*     */         
-/*     */         case 7:
-/* 113 */           node = factory.createProcessingInstruction(place.getNodeName(), place
-/* 114 */               .getNodeValue());
-/*     */           break;
-/*     */         
-/*     */         case 3:
-/* 118 */           node = factory.createTextNode(place.getNodeValue());
-/*     */           break;
-/*     */         
-/*     */         default:
-/* 122 */           throw new IllegalArgumentException("can't copy node type, " + type + " (" + place
-/*     */               
-/* 124 */               .getNodeName() + ')');
-/*     */       } 
-/*     */       
-/* 127 */       dest.appendChild(node);
-/*     */ 
-/*     */       
-/* 130 */       if (place.hasChildNodes()) {
-/* 131 */         parent = place;
-/* 132 */         place = place.getFirstChild();
-/* 133 */         dest = node;
-/*     */         
-/*     */         continue;
-/*     */       } 
-/*     */       
-/* 138 */       place = place.getNextSibling();
-/* 139 */       while (place == null && parent != start) {
-/* 140 */         place = parent.getNextSibling();
-/* 141 */         parent = parent.getParentNode();
-/* 142 */         dest = dest.getParentNode();
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstChildElement(Node parent) {
-/* 154 */     Node child = parent.getFirstChild();
-/* 155 */     while (child != null) {
-/* 156 */       if (child.getNodeType() == 1) {
-/* 157 */         return (Element)child;
-/*     */       }
-/* 159 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 163 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstVisibleChildElement(Node parent) {
-/* 171 */     Node child = parent.getFirstChild();
-/* 172 */     while (child != null) {
-/* 173 */       if (child.getNodeType() == 1 && 
-/* 174 */         !isHidden(child)) {
-/* 175 */         return (Element)child;
-/*     */       }
-/* 177 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 181 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstVisibleChildElement(Node parent, Map<Node, String> hiddenNodes) {
-/* 189 */     Node child = parent.getFirstChild();
-/* 190 */     while (child != null) {
-/* 191 */       if (child.getNodeType() == 1 && 
-/* 192 */         !isHidden(child, hiddenNodes)) {
-/* 193 */         return (Element)child;
-/*     */       }
-/* 195 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 199 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastChildElement(Node parent) {
-/* 209 */     Node child = parent.getLastChild();
-/* 210 */     while (child != null) {
-/* 211 */       if (child.getNodeType() == 1) {
-/* 212 */         return (Element)child;
-/*     */       }
-/* 214 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 218 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastVisibleChildElement(Node parent) {
-/* 226 */     Node child = parent.getLastChild();
-/* 227 */     while (child != null) {
-/* 228 */       if (child.getNodeType() == 1 && 
-/* 229 */         !isHidden(child)) {
-/* 230 */         return (Element)child;
-/*     */       }
-/* 232 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 236 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastVisibleChildElement(Node parent, Map<Node, String> hiddenNodes) {
-/* 246 */     Node child = parent.getLastChild();
-/* 247 */     while (child != null) {
-/* 248 */       if (child.getNodeType() == 1 && 
-/* 249 */         !isHidden(child, hiddenNodes)) {
-/* 250 */         return (Element)child;
-/*     */       }
-/* 252 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 256 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextSiblingElement(Node node) {
-/* 263 */     Node sibling = node.getNextSibling();
-/* 264 */     while (sibling != null) {
-/* 265 */       if (sibling.getNodeType() == 1) {
-/* 266 */         return (Element)sibling;
-/*     */       }
-/* 268 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 272 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextVisibleSiblingElement(Node node) {
-/* 280 */     Node sibling = node.getNextSibling();
-/* 281 */     while (sibling != null) {
-/* 282 */       if (sibling.getNodeType() == 1 && 
-/* 283 */         !isHidden(sibling)) {
-/* 284 */         return (Element)sibling;
-/*     */       }
-/* 286 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 290 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextVisibleSiblingElement(Node node, Map<Node, String> hiddenNodes) {
-/* 298 */     Node sibling = node.getNextSibling();
-/* 299 */     while (sibling != null) {
-/* 300 */       if (sibling.getNodeType() == 1 && 
-/* 301 */         !isHidden(sibling, hiddenNodes)) {
-/* 302 */         return (Element)sibling;
-/*     */       }
-/* 304 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 308 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void setHidden(Node node) {
-/* 314 */     if (node instanceof NodeImpl) {
-/* 315 */       ((NodeImpl)node).setReadOnly(true, false);
-/* 316 */     } else if (node instanceof NodeImpl) {
-/* 317 */       ((NodeImpl)node).setReadOnly(true, false);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public static void setHidden(Node node, Map<Node, String> hiddenNodes) {
-/* 322 */     if (node instanceof NodeImpl) {
-/* 323 */       ((NodeImpl)node).setReadOnly(true, false);
-/*     */     } else {
-/*     */       
-/* 326 */       hiddenNodes.put(node, "");
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static void setVisible(Node node) {
-/* 332 */     if (node instanceof NodeImpl) {
-/* 333 */       ((NodeImpl)node).setReadOnly(false, false);
-/* 334 */     } else if (node instanceof NodeImpl) {
-/* 335 */       ((NodeImpl)node).setReadOnly(false, false);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public static void setVisible(Node node, Map<Node, String> hiddenNodes) {
-/* 340 */     if (node instanceof NodeImpl) {
-/* 341 */       ((NodeImpl)node).setReadOnly(false, false);
-/*     */     } else {
-/*     */       
-/* 344 */       hiddenNodes.remove(node);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static boolean isHidden(Node node) {
-/* 350 */     if (node instanceof NodeImpl)
-/* 351 */       return ((NodeImpl)node).getReadOnly(); 
-/* 352 */     if (node instanceof NodeImpl)
-/* 353 */       return ((NodeImpl)node).getReadOnly(); 
-/* 354 */     return false;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static boolean isHidden(Node node, Map<Node, String> hiddenNodes) {
-/* 359 */     if (node instanceof NodeImpl) {
-/* 360 */       return ((NodeImpl)node).getReadOnly();
-/*     */     }
-/*     */     
-/* 363 */     return hiddenNodes.containsKey(node);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstChildElement(Node parent, String elemName) {
-/* 371 */     Node child = parent.getFirstChild();
-/* 372 */     while (child != null) {
-/* 373 */       if (child.getNodeType() == 1 && 
-/* 374 */         child.getNodeName().equals(elemName)) {
-/* 375 */         return (Element)child;
-/*     */       }
-/*     */       
-/* 378 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 382 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastChildElement(Node parent, String elemName) {
-/* 390 */     Node child = parent.getLastChild();
-/* 391 */     while (child != null) {
-/* 392 */       if (child.getNodeType() == 1 && 
-/* 393 */         child.getNodeName().equals(elemName)) {
-/* 394 */         return (Element)child;
-/*     */       }
-/*     */       
-/* 397 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 401 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextSiblingElement(Node node, String elemName) {
-/* 409 */     Node sibling = node.getNextSibling();
-/* 410 */     while (sibling != null) {
-/* 411 */       if (sibling.getNodeType() == 1 && 
-/* 412 */         sibling.getNodeName().equals(elemName)) {
-/* 413 */         return (Element)sibling;
-/*     */       }
-/*     */       
-/* 416 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 420 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstChildElementNS(Node parent, String uri, String localpart) {
-/* 429 */     Node child = parent.getFirstChild();
-/* 430 */     while (child != null) {
-/* 431 */       if (child.getNodeType() == 1) {
-/* 432 */         String childURI = child.getNamespaceURI();
-/* 433 */         if (childURI != null && childURI.equals(uri) && child
-/* 434 */           .getLocalName().equals(localpart)) {
-/* 435 */           return (Element)child;
-/*     */         }
-/*     */       } 
-/* 438 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 442 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastChildElementNS(Node parent, String uri, String localpart) {
-/* 451 */     Node child = parent.getLastChild();
-/* 452 */     while (child != null) {
-/* 453 */       if (child.getNodeType() == 1) {
-/* 454 */         String childURI = child.getNamespaceURI();
-/* 455 */         if (childURI != null && childURI.equals(uri) && child
-/* 456 */           .getLocalName().equals(localpart)) {
-/* 457 */           return (Element)child;
-/*     */         }
-/*     */       } 
-/* 460 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 464 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextSiblingElementNS(Node node, String uri, String localpart) {
-/* 473 */     Node sibling = node.getNextSibling();
-/* 474 */     while (sibling != null) {
-/* 475 */       if (sibling.getNodeType() == 1) {
-/* 476 */         String siblingURI = sibling.getNamespaceURI();
-/* 477 */         if (siblingURI != null && siblingURI.equals(uri) && sibling
-/* 478 */           .getLocalName().equals(localpart)) {
-/* 479 */           return (Element)sibling;
-/*     */         }
-/*     */       } 
-/* 482 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 486 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstChildElement(Node parent, String[] elemNames) {
-/* 494 */     Node child = parent.getFirstChild();
-/* 495 */     while (child != null) {
-/* 496 */       if (child.getNodeType() == 1) {
-/* 497 */         for (int i = 0; i < elemNames.length; i++) {
-/* 498 */           if (child.getNodeName().equals(elemNames[i])) {
-/* 499 */             return (Element)child;
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 503 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 507 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastChildElement(Node parent, String[] elemNames) {
-/* 515 */     Node child = parent.getLastChild();
-/* 516 */     while (child != null) {
-/* 517 */       if (child.getNodeType() == 1) {
-/* 518 */         for (int i = 0; i < elemNames.length; i++) {
-/* 519 */           if (child.getNodeName().equals(elemNames[i])) {
-/* 520 */             return (Element)child;
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 524 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 528 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextSiblingElement(Node node, String[] elemNames) {
-/* 536 */     Node sibling = node.getNextSibling();
-/* 537 */     while (sibling != null) {
-/* 538 */       if (sibling.getNodeType() == 1) {
-/* 539 */         for (int i = 0; i < elemNames.length; i++) {
-/* 540 */           if (sibling.getNodeName().equals(elemNames[i])) {
-/* 541 */             return (Element)sibling;
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 545 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 549 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstChildElementNS(Node parent, String[][] elemNames) {
-/* 558 */     Node child = parent.getFirstChild();
-/* 559 */     while (child != null) {
-/* 560 */       if (child.getNodeType() == 1) {
-/* 561 */         for (int i = 0; i < elemNames.length; i++) {
-/* 562 */           String uri = child.getNamespaceURI();
-/* 563 */           if (uri != null && uri.equals(elemNames[i][0]) && child
-/* 564 */             .getLocalName().equals(elemNames[i][1])) {
-/* 565 */             return (Element)child;
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 569 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 573 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastChildElementNS(Node parent, String[][] elemNames) {
-/* 582 */     Node child = parent.getLastChild();
-/* 583 */     while (child != null) {
-/* 584 */       if (child.getNodeType() == 1) {
-/* 585 */         for (int i = 0; i < elemNames.length; i++) {
-/* 586 */           String uri = child.getNamespaceURI();
-/* 587 */           if (uri != null && uri.equals(elemNames[i][0]) && child
-/* 588 */             .getLocalName().equals(elemNames[i][1])) {
-/* 589 */             return (Element)child;
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 593 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 597 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextSiblingElementNS(Node node, String[][] elemNames) {
-/* 606 */     Node sibling = node.getNextSibling();
-/* 607 */     while (sibling != null) {
-/* 608 */       if (sibling.getNodeType() == 1) {
-/* 609 */         for (int i = 0; i < elemNames.length; i++) {
-/* 610 */           String uri = sibling.getNamespaceURI();
-/* 611 */           if (uri != null && uri.equals(elemNames[i][0]) && sibling
-/* 612 */             .getLocalName().equals(elemNames[i][1])) {
-/* 613 */             return (Element)sibling;
-/*     */           }
-/*     */         } 
-/*     */       }
-/* 617 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 621 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getFirstChildElement(Node parent, String elemName, String attrName, String attrValue) {
-/* 635 */     Node child = parent.getFirstChild();
-/* 636 */     while (child != null) {
-/* 637 */       if (child.getNodeType() == 1) {
-/* 638 */         Element element = (Element)child;
-/* 639 */         if (element.getNodeName().equals(elemName) && element
-/* 640 */           .getAttribute(attrName).equals(attrValue)) {
-/* 641 */           return element;
-/*     */         }
-/*     */       } 
-/* 644 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 648 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getLastChildElement(Node parent, String elemName, String attrName, String attrValue) {
-/* 662 */     Node child = parent.getLastChild();
-/* 663 */     while (child != null) {
-/* 664 */       if (child.getNodeType() == 1) {
-/* 665 */         Element element = (Element)child;
-/* 666 */         if (element.getNodeName().equals(elemName) && element
-/* 667 */           .getAttribute(attrName).equals(attrValue)) {
-/* 668 */           return element;
-/*     */         }
-/*     */       } 
-/* 671 */       child = child.getPreviousSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 675 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Element getNextSiblingElement(Node node, String elemName, String attrName, String attrValue) {
-/* 690 */     Node sibling = node.getNextSibling();
-/* 691 */     while (sibling != null) {
-/* 692 */       if (sibling.getNodeType() == 1) {
-/* 693 */         Element element = (Element)sibling;
-/* 694 */         if (element.getNodeName().equals(elemName) && element
-/* 695 */           .getAttribute(attrName).equals(attrValue)) {
-/* 696 */           return element;
-/*     */         }
-/*     */       } 
-/* 699 */       sibling = sibling.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 703 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getChildText(Node node) {
-/* 719 */     if (node == null) {
-/* 720 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/* 724 */     StringBuffer str = new StringBuffer();
-/* 725 */     Node child = node.getFirstChild();
-/* 726 */     while (child != null) {
-/* 727 */       short type = child.getNodeType();
-/* 728 */       if (type == 3) {
-/* 729 */         str.append(child.getNodeValue());
-/*     */       }
-/* 731 */       else if (type == 4) {
-/* 732 */         str.append(getChildText(child));
-/*     */       } 
-/* 734 */       child = child.getNextSibling();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 738 */     return str.toString();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getName(Node node) {
-/* 744 */     return node.getNodeName();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getLocalName(Node node) {
-/* 751 */     String name = node.getLocalName();
-/* 752 */     return (name != null) ? name : node.getNodeName();
-/*     */   }
-/*     */   
-/*     */   public static Element getParent(Element elem) {
-/* 756 */     Node parent = elem.getParentNode();
-/* 757 */     if (parent instanceof Element)
-/* 758 */       return (Element)parent; 
-/* 759 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static Document getDocument(Node node) {
-/* 764 */     return node.getOwnerDocument();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static Element getRoot(Document doc) {
-/* 769 */     return doc.getDocumentElement();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Attr getAttr(Element elem, String name) {
-/* 776 */     return elem.getAttributeNode(name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static Attr getAttrNS(Element elem, String nsUri, String localName) {
-/* 782 */     return elem.getAttributeNodeNS(nsUri, localName);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static Attr[] getAttrs(Element elem) {
-/* 787 */     NamedNodeMap attrMap = elem.getAttributes();
-/* 788 */     Attr[] attrArray = new Attr[attrMap.getLength()];
-/* 789 */     for (int i = 0; i < attrMap.getLength(); i++)
-/* 790 */       attrArray[i] = (Attr)attrMap.item(i); 
-/* 791 */     return attrArray;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String getValue(Attr attribute) {
-/* 796 */     return attribute.getValue();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getAttrValue(Element elem, String name) {
-/* 807 */     return elem.getAttribute(name);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String getAttrValueNS(Element elem, String nsUri, String localName) {
-/* 814 */     return elem.getAttributeNS(nsUri, localName);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String getPrefix(Node node) {
-/* 819 */     return node.getPrefix();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String getNamespaceURI(Node node) {
-/* 824 */     return node.getNamespaceURI();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String getAnnotation(Node node) {
-/* 829 */     if (node instanceof ElementImpl) {
-/* 830 */       return ((ElementImpl)node).getAnnotation();
-/*     */     }
-/* 832 */     return null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static String getSyntheticAnnotation(Node node) {
-/* 837 */     if (node instanceof ElementImpl) {
-/* 838 */       return ((ElementImpl)node).getSyntheticAnnotation();
-/*     */     }
-/* 840 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static DOMException createDOMException(short code, Throwable cause) {
-/* 847 */     DOMException de = new DOMException(code, (cause != null) ? cause.getMessage() : null);
-/* 848 */     if (cause != null && ThrowableMethods.fgThrowableMethodsAvailable) {
-/*     */       try {
-/* 850 */         ThrowableMethods.fgThrowableInitCauseMethod.invoke(de, new Object[] { cause });
-/*     */       
-/*     */       }
-/* 853 */       catch (Exception exception) {}
-/*     */     }
-/* 855 */     return de;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static LSException createLSException(short code, Throwable cause) {
-/* 862 */     LSException lse = new LSException(code, (cause != null) ? cause.getMessage() : null);
-/* 863 */     if (cause != null && ThrowableMethods.fgThrowableMethodsAvailable) {
-/*     */       try {
-/* 865 */         ThrowableMethods.fgThrowableInitCauseMethod.invoke(lse, new Object[] { cause });
-/*     */       
-/*     */       }
-/* 868 */       catch (Exception exception) {}
-/*     */     }
-/* 870 */     return lse;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class ThrowableMethods
-/*     */   {
-/* 879 */     private static Method fgThrowableInitCauseMethod = null;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     private static boolean fgThrowableMethodsAvailable = false;
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     static {
-/*     */       try {
-/* 889 */         fgThrowableInitCauseMethod = Throwable.class.getMethod("initCause", new Class[] { Throwable.class });
-/* 890 */         fgThrowableMethodsAvailable = true;
-/*     */ 
-/*     */       
-/*     */       }
-/* 894 */       catch (Exception exc) {
-/* 895 */         fgThrowableInitCauseMethod = null;
-/* 896 */         fgThrowableMethodsAvailable = false;
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\interna\\util\DOMUtil.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.util;
+
+import com.sun.org.apache.xerces.internal.dom.AttrImpl;
+import com.sun.org.apache.xerces.internal.dom.DocumentImpl;
+import com.sun.org.apache.xerces.internal.impl.xs.opti.ElementImpl;
+import java.util.Map;
+import org.w3c.dom.Attr;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.ls.LSException;
+
+/**
+ * Some useful utility methods.
+ * This class was modified in Xerces2 with a view to abstracting as
+ * much as possible away from the representation of the underlying
+ * parsed structure (i.e., the DOM).  This was done so that, if Xerces
+ * ever adopts an in-memory representation more efficient than the DOM
+ * (such as a DTM), we should easily be able to convert our schema
+ * parsing to utilize it.
+ *
+ * @version $Id: DOMUtil.java,v 1.7 2010-11-01 04:40:14 joehw Exp $
+ */
+public class DOMUtil {
+
+    //
+    // Constructors
+    //
+
+    /** This class cannot be instantiated. */
+    protected DOMUtil() {}
+
+    //
+    // Public static methods
+    //
+
+    /**
+     * Copies the source tree into the specified place in a destination
+     * tree. The source node and its children are appended as children
+     * of the destination node.
+     * <p>
+     * <em>Note:</em> This is an iterative implementation.
+     */
+    public static void copyInto(Node src, Node dest) throws DOMException {
+
+        // get node factory
+        Document factory = dest.getOwnerDocument();
+        boolean domimpl = factory instanceof DocumentImpl;
+
+        // placement variables
+        Node start  = src;
+        Node parent = src;
+        Node place  = src;
+
+        // traverse source tree
+        while (place != null) {
+
+            // copy this node
+            Node node = null;
+            int  type = place.getNodeType();
+            switch (type) {
+            case Node.CDATA_SECTION_NODE: {
+                node = factory.createCDATASection(place.getNodeValue());
+                break;
+            }
+            case Node.COMMENT_NODE: {
+                node = factory.createComment(place.getNodeValue());
+                break;
+            }
+            case Node.ELEMENT_NODE: {
+                Element element = factory.createElement(place.getNodeName());
+                node = element;
+                NamedNodeMap attrs  = place.getAttributes();
+                int attrCount = attrs.getLength();
+                for (int i = 0; i < attrCount; i++) {
+                    Attr attr = (Attr)attrs.item(i);
+                    String attrName = attr.getNodeName();
+                    String attrValue = attr.getNodeValue();
+                    element.setAttribute(attrName, attrValue);
+                    if (domimpl && !attr.getSpecified()) {
+                        ((AttrImpl)element.getAttributeNode(attrName)).setSpecified(false);
+                    }
+                }
+                break;
+            }
+            case Node.ENTITY_REFERENCE_NODE: {
+                node = factory.createEntityReference(place.getNodeName());
+                break;
+            }
+            case Node.PROCESSING_INSTRUCTION_NODE: {
+                node = factory.createProcessingInstruction(place.getNodeName(),
+                        place.getNodeValue());
+                break;
+            }
+            case Node.TEXT_NODE: {
+                node = factory.createTextNode(place.getNodeValue());
+                break;
+            }
+            default: {
+                throw new IllegalArgumentException("can't copy node type, "+
+                        type+" ("+
+                        place.getNodeName()+')');
+            }
+            }
+            dest.appendChild(node);
+
+            // iterate over children
+            if (place.hasChildNodes()) {
+                parent = place;
+                place  = place.getFirstChild();
+                dest   = node;
+            }
+
+            // advance
+            else {
+                place = place.getNextSibling();
+                while (place == null && parent != start) {
+                    place  = parent.getNextSibling();
+                    parent = parent.getParentNode();
+                    dest   = dest.getParentNode();
+                }
+            }
+
+        }
+
+    } // copyInto(Node,Node)
+
+    /** Finds and returns the first child element node. */
+    public static Element getFirstChildElement(Node parent) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                return (Element)child;
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElement(Node):Element
+
+    /** Finds and returns the first visible child element node. */
+    public static Element getFirstVisibleChildElement(Node parent) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE &&
+                    !isHidden(child)) {
+                return (Element)child;
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElement(Node):Element
+
+    /** Finds and returns the first visible child element node. */
+    public static Element getFirstVisibleChildElement(Node parent, Map<Node, String> hiddenNodes) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE &&
+                    !isHidden(child, hiddenNodes)) {
+                return (Element)child;
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElement(Node):Element
+
+    /** Finds and returns the last child element node.
+     *  Overload previous method for non-Xerces node impl.
+     */
+    public static Element getLastChildElement(Node parent) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                return (Element)child;
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElement(Node):Element
+
+    /** Finds and returns the last visible child element node. */
+    public static Element getLastVisibleChildElement(Node parent) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE &&
+                    !isHidden(child)) {
+                return (Element)child;
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElement(Node):Element
+
+    /** Finds and returns the last visible child element node.
+     *  Overload previous method for non-Xerces node impl
+     */
+    public static Element getLastVisibleChildElement(Node parent, Map<Node, String> hiddenNodes) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE &&
+                    !isHidden(child, hiddenNodes)) {
+                return (Element)child;
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElement(Node):Element
+    /** Finds and returns the next sibling element node. */
+    public static Element getNextSiblingElement(Node node) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE) {
+                return (Element)sibling;
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingElement(Node):Element
+
+    // get next visible (un-hidden) node.
+    public static Element getNextVisibleSiblingElement(Node node) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE &&
+                    !isHidden(sibling)) {
+                return (Element)sibling;
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingdElement(Node):Element
+
+    // get next visible (un-hidden) node, overload previous method for non Xerces node impl
+    public static Element getNextVisibleSiblingElement(Node node, Map<Node, String> hiddenNodes) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE &&
+                    !isHidden(sibling, hiddenNodes)) {
+                return (Element)sibling;
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingdElement(Node):Element
+
+    // set this Node as being hidden
+    public static void setHidden(Node node) {
+        if (node instanceof com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)
+            ((com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)node).setReadOnly(true, false);
+        else if (node instanceof com.sun.org.apache.xerces.internal.dom.NodeImpl)
+            ((com.sun.org.apache.xerces.internal.dom.NodeImpl)node).setReadOnly(true, false);
+    } // setHidden(node):void
+
+    // set this Node as being hidden, overloaded method
+    public static void setHidden(Node node, Map<Node, String> hiddenNodes) {
+        if (node instanceof com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl) {
+            ((com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)node).setReadOnly(true, false);
+        }
+        else {
+                hiddenNodes.put(node, "");
+        }
+    } // setHidden(node):void
+
+    // set this Node as being visible
+    public static void setVisible(Node node) {
+        if (node instanceof com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)
+            ((com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)node).setReadOnly(false, false);
+        else if (node instanceof com.sun.org.apache.xerces.internal.dom.NodeImpl)
+            ((com.sun.org.apache.xerces.internal.dom.NodeImpl)node).setReadOnly(false, false);
+    } // setVisible(node):void
+
+    // set this Node as being visible, overloaded method
+    public static void setVisible(Node node, Map<Node, String> hiddenNodes) {
+        if (node instanceof com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl) {
+            ((com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)node).setReadOnly(false, false);
+        }
+        else {
+            hiddenNodes.remove(node);
+        }
+    } // setVisible(node):void
+
+    // is this node hidden?
+    public static boolean isHidden(Node node) {
+        if (node instanceof com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)
+            return ((com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)node).getReadOnly();
+        else if (node instanceof com.sun.org.apache.xerces.internal.dom.NodeImpl)
+            return ((com.sun.org.apache.xerces.internal.dom.NodeImpl)node).getReadOnly();
+        return false;
+    } // isHidden(Node):boolean
+
+    // is this node hidden? overloaded method
+    public static boolean isHidden(Node node, Map<Node, String> hiddenNodes) {
+        if (node instanceof com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl) {
+            return ((com.sun.org.apache.xerces.internal.impl.xs.opti.NodeImpl)node).getReadOnly();
+        }
+        else {
+            return hiddenNodes.containsKey(node);
+        }
+    } // isHidden(Node):boolean
+
+    /** Finds and returns the first child node with the given name. */
+    public static Element getFirstChildElement(Node parent, String elemName) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                if (child.getNodeName().equals(elemName)) {
+                    return (Element)child;
+                }
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElement(Node,String):Element
+
+    /** Finds and returns the last child node with the given name. */
+    public static Element getLastChildElement(Node parent, String elemName) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                if (child.getNodeName().equals(elemName)) {
+                    return (Element)child;
+                }
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElement(Node,String):Element
+
+    /** Finds and returns the next sibling node with the given name. */
+    public static Element getNextSiblingElement(Node node, String elemName) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE) {
+                if (sibling.getNodeName().equals(elemName)) {
+                    return (Element)sibling;
+                }
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingdElement(Node,String):Element
+
+    /** Finds and returns the first child node with the given qualified name. */
+    public static Element getFirstChildElementNS(Node parent,
+            String uri, String localpart) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                String childURI = child.getNamespaceURI();
+                if (childURI != null && childURI.equals(uri) &&
+                        child.getLocalName().equals(localpart)) {
+                    return (Element)child;
+                }
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElementNS(Node,String,String):Element
+
+    /** Finds and returns the last child node with the given qualified name. */
+    public static Element getLastChildElementNS(Node parent,
+            String uri, String localpart) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                String childURI = child.getNamespaceURI();
+                if (childURI != null && childURI.equals(uri) &&
+                        child.getLocalName().equals(localpart)) {
+                    return (Element)child;
+                }
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElementNS(Node,String,String):Element
+
+    /** Finds and returns the next sibling node with the given qualified name. */
+    public static Element getNextSiblingElementNS(Node node,
+            String uri, String localpart) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE) {
+                String siblingURI = sibling.getNamespaceURI();
+                if (siblingURI != null && siblingURI.equals(uri) &&
+                        sibling.getLocalName().equals(localpart)) {
+                    return (Element)sibling;
+                }
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingdElementNS(Node,String,String):Element
+
+    /** Finds and returns the first child node with the given name. */
+    public static Element getFirstChildElement(Node parent, String elemNames[]) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                for (int i = 0; i < elemNames.length; i++) {
+                    if (child.getNodeName().equals(elemNames[i])) {
+                        return (Element)child;
+                    }
+                }
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElement(Node,String[]):Element
+
+    /** Finds and returns the last child node with the given name. */
+    public static Element getLastChildElement(Node parent, String elemNames[]) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                for (int i = 0; i < elemNames.length; i++) {
+                    if (child.getNodeName().equals(elemNames[i])) {
+                        return (Element)child;
+                    }
+                }
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElement(Node,String[]):Element
+
+    /** Finds and returns the next sibling node with the given name. */
+    public static Element getNextSiblingElement(Node node, String elemNames[]) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE) {
+                for (int i = 0; i < elemNames.length; i++) {
+                    if (sibling.getNodeName().equals(elemNames[i])) {
+                        return (Element)sibling;
+                    }
+                }
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingdElement(Node,String[]):Element
+
+    /** Finds and returns the first child node with the given qualified name. */
+    public static Element getFirstChildElementNS(Node parent,
+            String[][] elemNames) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                for (int i = 0; i < elemNames.length; i++) {
+                    String uri = child.getNamespaceURI();
+                    if (uri != null && uri.equals(elemNames[i][0]) &&
+                            child.getLocalName().equals(elemNames[i][1])) {
+                        return (Element)child;
+                    }
+                }
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElementNS(Node,String[][]):Element
+
+    /** Finds and returns the last child node with the given qualified name. */
+    public static Element getLastChildElementNS(Node parent,
+            String[][] elemNames) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                for (int i = 0; i < elemNames.length; i++) {
+                    String uri = child.getNamespaceURI();
+                    if (uri != null && uri.equals(elemNames[i][0]) &&
+                            child.getLocalName().equals(elemNames[i][1])) {
+                        return (Element)child;
+                    }
+                }
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElementNS(Node,String[][]):Element
+
+    /** Finds and returns the next sibling node with the given qualified name. */
+    public static Element getNextSiblingElementNS(Node node,
+            String[][] elemNames) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE) {
+                for (int i = 0; i < elemNames.length; i++) {
+                    String uri = sibling.getNamespaceURI();
+                    if (uri != null && uri.equals(elemNames[i][0]) &&
+                            sibling.getLocalName().equals(elemNames[i][1])) {
+                        return (Element)sibling;
+                    }
+                }
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingdElementNS(Node,String[][]):Element
+
+    /**
+     * Finds and returns the first child node with the given name and
+     * attribute name, value pair.
+     */
+    public static Element getFirstChildElement(Node   parent,
+            String elemName,
+            String attrName,
+            String attrValue) {
+
+        // search for node
+        Node child = parent.getFirstChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element)child;
+                if (element.getNodeName().equals(elemName) &&
+                        element.getAttribute(attrName).equals(attrValue)) {
+                    return element;
+                }
+            }
+            child = child.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getFirstChildElement(Node,String,String,String):Element
+
+    /**
+     * Finds and returns the last child node with the given name and
+     * attribute name, value pair.
+     */
+    public static Element getLastChildElement(Node   parent,
+            String elemName,
+            String attrName,
+            String attrValue) {
+
+        // search for node
+        Node child = parent.getLastChild();
+        while (child != null) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element)child;
+                if (element.getNodeName().equals(elemName) &&
+                        element.getAttribute(attrName).equals(attrValue)) {
+                    return element;
+                }
+            }
+            child = child.getPreviousSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getLastChildElement(Node,String,String,String):Element
+
+    /**
+     * Finds and returns the next sibling node with the given name and
+     * attribute name, value pair. Since only elements have attributes,
+     * the node returned will be of type Node.ELEMENT_NODE.
+     */
+    public static Element getNextSiblingElement(Node   node,
+            String elemName,
+            String attrName,
+            String attrValue) {
+
+        // search for node
+        Node sibling = node.getNextSibling();
+        while (sibling != null) {
+            if (sibling.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element)sibling;
+                if (element.getNodeName().equals(elemName) &&
+                        element.getAttribute(attrName).equals(attrValue)) {
+                    return element;
+                }
+            }
+            sibling = sibling.getNextSibling();
+        }
+
+        // not found
+        return null;
+
+    } // getNextSiblingElement(Node,String,String,String):Element
+
+    /**
+     * Returns the concatenated child text of the specified node.
+     * This method only looks at the immediate children of type
+     * <code>Node.TEXT_NODE</code> or the children of any child
+     * node that is of type <code>Node.CDATA_SECTION_NODE</code>
+     * for the concatenation.
+     *
+     * @param node The node to look at.
+     */
+    public static String getChildText(Node node) {
+
+        // is there anything to do?
+        if (node == null) {
+            return null;
+        }
+
+        // concatenate children text
+        StringBuffer str = new StringBuffer();
+        Node child = node.getFirstChild();
+        while (child != null) {
+            short type = child.getNodeType();
+            if (type == Node.TEXT_NODE) {
+                str.append(child.getNodeValue());
+            }
+            else if (type == Node.CDATA_SECTION_NODE) {
+                str.append(getChildText(child));
+            }
+            child = child.getNextSibling();
+        }
+
+        // return text value
+        return str.toString();
+
+    } // getChildText(Node):String
+
+    // return the name of this element
+    public static String getName(Node node) {
+        return node.getNodeName();
+    } // getLocalName(Element):  String
+
+    /** returns local name of this element if not null, otherwise
+     returns the name of the node
+     */
+    public static String getLocalName(Node node) {
+        String name = node.getLocalName();
+        return (name!=null)? name:node.getNodeName();
+    } // getLocalName(Element):  String
+
+    public static Element getParent(Element elem) {
+        Node parent = elem.getParentNode();
+        if (parent instanceof Element)
+            return (Element)parent;
+        return null;
+    } // getParent(Element):Element
+
+    // get the Document of which this Node is a part
+    public static Document getDocument(Node node) {
+        return node.getOwnerDocument();
+    } // getDocument(Node):Document
+
+    // return this Document's root node
+    public static Element getRoot(Document doc) {
+        return doc.getDocumentElement();
+    } // getRoot(Document(:  Element
+
+    // some methods for handling attributes:
+
+    // return the right attribute node
+    public static Attr getAttr(Element elem, String name) {
+        return elem.getAttributeNode(name);
+    } // getAttr(Element, String):Attr
+
+    // return the right attribute node
+    public static Attr getAttrNS(Element elem, String nsUri,
+            String localName) {
+        return elem.getAttributeNodeNS(nsUri, localName);
+    } // getAttrNS(Element, String):Attr
+
+    // get all the attributes for an Element
+    public static Attr[] getAttrs(Element elem) {
+        NamedNodeMap attrMap = elem.getAttributes();
+        Attr [] attrArray = new Attr[attrMap.getLength()];
+        for (int i=0; i<attrMap.getLength(); i++)
+            attrArray[i] = (Attr)attrMap.item(i);
+        return attrArray;
+    } // getAttrs(Element):  Attr[]
+
+    // get attribute's value
+    public static String getValue(Attr attribute) {
+        return attribute.getValue();
+    } // getValue(Attr):String
+
+    // It is noteworthy that, because of the way the DOM specs
+    // work, the next two methods return the empty string (not
+    // null!) when the attribute with the specified name does not
+    // exist on an element.  Beware!
+
+    // return the value of the attribute of the given element
+    // with the given name
+    public static String getAttrValue(Element elem, String name) {
+        return elem.getAttribute(name);
+    } // getAttr(Element, String):Attr
+
+    // return the value of the attribute of the given element
+    // with the given name
+    public static String getAttrValueNS(Element elem, String nsUri,
+            String localName) {
+        return elem.getAttributeNS(nsUri, localName);
+    } // getAttrValueNS(Element, String):Attr
+
+    // return the prefix
+    public static String getPrefix(Node node) {
+        return node.getPrefix();
+    }
+
+    // return the namespace URI
+    public static String getNamespaceURI(Node node) {
+        return node.getNamespaceURI();
+    }
+
+    // return annotation
+    public static String getAnnotation(Node node) {
+        if (node instanceof ElementImpl) {
+            return ((ElementImpl)node).getAnnotation();
+        }
+        return null;
+    }
+
+    // return synthetic annotation
+    public static String getSyntheticAnnotation(Node node) {
+        if (node instanceof ElementImpl) {
+            return ((ElementImpl)node).getSyntheticAnnotation();
+        }
+        return null;
+    }
+
+    /**
+     * Creates a DOMException. On J2SE 1.4 and above the cause for the exception will be set.
+     */
+    public static DOMException createDOMException(short code, Throwable cause) {
+        DOMException de = new DOMException(code, cause != null ? cause.getMessage() : null);
+        if (cause != null && ThrowableMethods.fgThrowableMethodsAvailable) {
+            try {
+                ThrowableMethods.fgThrowableInitCauseMethod.invoke(de, new Object [] {cause});
+            }
+            // Something went wrong. There's not much we can do about it.
+            catch (Exception e) {}
+        }
+        return de;
+    }
+
+    /**
+     * Creates an LSException. On J2SE 1.4 and above the cause for the exception will be set.
+     */
+    public static LSException createLSException(short code, Throwable cause) {
+        LSException lse = new LSException(code, cause != null ? cause.getMessage() : null);
+        if (cause != null && ThrowableMethods.fgThrowableMethodsAvailable) {
+            try {
+                ThrowableMethods.fgThrowableInitCauseMethod.invoke(lse, new Object [] {cause});
+            }
+            // Something went wrong. There's not much we can do about it.
+            catch (Exception e) {}
+        }
+        return lse;
+    }
+
+    /**
+     * Holder of methods from java.lang.Throwable.
+     */
+    static class ThrowableMethods {
+
+        // Method: java.lang.Throwable.initCause(java.lang.Throwable)
+        private static java.lang.reflect.Method fgThrowableInitCauseMethod = null;
+
+        // Flag indicating whether or not Throwable methods available.
+        private static boolean fgThrowableMethodsAvailable = false;
+
+        private ThrowableMethods() {}
+
+        // Attempt to get methods for java.lang.Throwable on class initialization.
+        static {
+            try {
+                fgThrowableInitCauseMethod = Throwable.class.getMethod("initCause", new Class [] {Throwable.class});
+                fgThrowableMethodsAvailable = true;
+            }
+            // ClassNotFoundException, NoSuchMethodException or SecurityException
+            // Whatever the case, we cannot use java.lang.Throwable.initCause(java.lang.Throwable).
+            catch (Exception exc) {
+                fgThrowableInitCauseMethod = null;
+                fgThrowableMethodsAvailable = false;
+            }
+        }
+    }
+
+} // class DOMUtil

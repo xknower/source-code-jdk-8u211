@@ -1,113 +1,107 @@
-/*     */ package javax.swing.plaf.metal;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Graphics;
-/*     */ import java.io.Serializable;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.Icon;
-/*     */ import javax.swing.JCheckBox;
-/*     */ import javax.swing.plaf.UIResource;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MetalCheckBoxIcon
-/*     */   implements Icon, UIResource, Serializable
-/*     */ {
-/*     */   protected int getControlSize() {
-/*  51 */     return 13;
-/*     */   }
-/*     */   
-/*     */   public void paintIcon(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2) {
-/*  55 */     JCheckBox jCheckBox = (JCheckBox)paramComponent;
-/*  56 */     ButtonModel buttonModel = jCheckBox.getModel();
-/*  57 */     int i = getControlSize();
-/*     */     
-/*  59 */     boolean bool = buttonModel.isSelected();
-/*     */     
-/*  61 */     if (buttonModel.isEnabled()) {
-/*  62 */       if (jCheckBox.isBorderPaintedFlat()) {
-/*  63 */         paramGraphics.setColor(MetalLookAndFeel.getControlDarkShadow());
-/*  64 */         paramGraphics.drawRect(paramInt1 + 1, paramInt2, i - 1, i - 1);
-/*     */       } 
-/*  66 */       if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/*  67 */         if (jCheckBox.isBorderPaintedFlat()) {
-/*  68 */           paramGraphics.setColor(MetalLookAndFeel.getControlShadow());
-/*  69 */           paramGraphics.fillRect(paramInt1 + 2, paramInt2 + 1, i - 2, i - 2);
-/*     */         } else {
-/*  71 */           paramGraphics.setColor(MetalLookAndFeel.getControlShadow());
-/*  72 */           paramGraphics.fillRect(paramInt1, paramInt2, i - 1, i - 1);
-/*  73 */           MetalUtils.drawPressed3DBorder(paramGraphics, paramInt1, paramInt2, i, i);
-/*     */         } 
-/*  75 */       } else if (!jCheckBox.isBorderPaintedFlat()) {
-/*  76 */         MetalUtils.drawFlush3DBorder(paramGraphics, paramInt1, paramInt2, i, i);
-/*     */       } 
-/*  78 */       paramGraphics.setColor(MetalLookAndFeel.getControlInfo());
-/*     */     } else {
-/*  80 */       paramGraphics.setColor(MetalLookAndFeel.getControlShadow());
-/*  81 */       paramGraphics.drawRect(paramInt1, paramInt2, i - 1, i - 1);
-/*     */     } 
-/*     */ 
-/*     */     
-/*  85 */     if (bool) {
-/*  86 */       if (jCheckBox.isBorderPaintedFlat()) {
-/*  87 */         paramInt1++;
-/*     */       }
-/*  89 */       drawCheck(paramComponent, paramGraphics, paramInt1, paramInt2);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void drawCheck(Component paramComponent, Graphics paramGraphics, int paramInt1, int paramInt2) {
-/*  94 */     int i = getControlSize();
-/*  95 */     paramGraphics.fillRect(paramInt1 + 3, paramInt2 + 5, 2, i - 8);
-/*  96 */     paramGraphics.drawLine(paramInt1 + i - 4, paramInt2 + 3, paramInt1 + 5, paramInt2 + i - 6);
-/*  97 */     paramGraphics.drawLine(paramInt1 + i - 4, paramInt2 + 4, paramInt1 + 5, paramInt2 + i - 5);
-/*     */   }
-/*     */   
-/*     */   public int getIconWidth() {
-/* 101 */     return getControlSize();
-/*     */   }
-/*     */   
-/*     */   public int getIconHeight() {
-/* 105 */     return getControlSize();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\metal\MetalCheckBoxIcon.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.metal;
+
+import javax.swing.*;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import javax.swing.plaf.*;
+
+/**
+ * CheckboxIcon implementation for OrganicCheckBoxUI
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Steve Wilson
+ */
+public class MetalCheckBoxIcon implements Icon, UIResource, Serializable {
+
+    protected int getControlSize() { return 13; }
+
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+
+        JCheckBox cb = (JCheckBox)c;
+        ButtonModel model = cb.getModel();
+        int controlSize = getControlSize();
+
+        boolean drawCheck = model.isSelected();
+
+        if (model.isEnabled()) {
+            if(cb.isBorderPaintedFlat()) {
+                g.setColor(MetalLookAndFeel.getControlDarkShadow());
+                g.drawRect(x+1, y, controlSize-1, controlSize-1);
+            }
+            if (model.isPressed() && model.isArmed()) {
+                if(cb.isBorderPaintedFlat()) {
+                    g.setColor(MetalLookAndFeel.getControlShadow());
+                    g.fillRect(x+2, y+1, controlSize-2, controlSize-2);
+                } else {
+                    g.setColor(MetalLookAndFeel.getControlShadow());
+                    g.fillRect(x, y, controlSize-1, controlSize-1);
+                    MetalUtils.drawPressed3DBorder(g, x, y, controlSize, controlSize);
+                }
+            } else if(!cb.isBorderPaintedFlat()) {
+                MetalUtils.drawFlush3DBorder(g, x, y, controlSize, controlSize);
+            }
+            g.setColor( MetalLookAndFeel.getControlInfo() );
+        } else {
+            g.setColor( MetalLookAndFeel.getControlShadow() );
+            g.drawRect( x, y, controlSize-1, controlSize-1);
+        }
+
+
+        if(drawCheck) {
+            if (cb.isBorderPaintedFlat()) {
+                x++;
+            }
+            drawCheck(c,g,x,y);
+        }
+    }
+
+    protected void drawCheck(Component c, Graphics g, int x, int y) {
+        int controlSize = getControlSize();
+        g.fillRect( x+3, y+5, 2, controlSize-8 );
+        g.drawLine( x+(controlSize-4), y+3, x+5, y+(controlSize-6) );
+        g.drawLine( x+(controlSize-4), y+4, x+5, y+(controlSize-5) );
+    }
+
+    public int getIconWidth() {
+        return getControlSize();
+    }
+
+    public int getIconHeight() {
+        return getControlSize();
+    }
+ }

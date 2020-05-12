@@ -1,254 +1,248 @@
-/*     */ package javax.swing.plaf.basic;
-/*     */ 
-/*     */ import java.awt.Component;
-/*     */ import java.awt.KeyboardFocusManager;
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.ComponentInputMap;
-/*     */ import javax.swing.InputMap;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JPopupMenu;
-/*     */ import javax.swing.JRootPane;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.MenuElement;
-/*     */ import javax.swing.MenuSelectionManager;
-/*     */ import javax.swing.SwingUtilities;
-/*     */ import javax.swing.plaf.ComponentInputMapUIResource;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.RootPaneUI;
-/*     */ import sun.swing.DefaultLookup;
-/*     */ import sun.swing.UIAction;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class BasicRootPaneUI
-/*     */   extends RootPaneUI
-/*     */   implements PropertyChangeListener
-/*     */ {
-/*  49 */   private static RootPaneUI rootPaneUI = new BasicRootPaneUI();
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  52 */     return rootPaneUI;
-/*     */   }
-/*     */   
-/*     */   public void installUI(JComponent paramJComponent) {
-/*  56 */     installDefaults((JRootPane)paramJComponent);
-/*  57 */     installComponents((JRootPane)paramJComponent);
-/*  58 */     installListeners((JRootPane)paramJComponent);
-/*  59 */     installKeyboardActions((JRootPane)paramJComponent);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void uninstallUI(JComponent paramJComponent) {
-/*  64 */     uninstallDefaults((JRootPane)paramJComponent);
-/*  65 */     uninstallComponents((JRootPane)paramJComponent);
-/*  66 */     uninstallListeners((JRootPane)paramJComponent);
-/*  67 */     uninstallKeyboardActions((JRootPane)paramJComponent);
-/*     */   }
-/*     */   
-/*     */   protected void installDefaults(JRootPane paramJRootPane) {
-/*  71 */     LookAndFeel.installProperty(paramJRootPane, "opaque", Boolean.FALSE);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void installComponents(JRootPane paramJRootPane) {}
-/*     */   
-/*     */   protected void installListeners(JRootPane paramJRootPane) {
-/*  78 */     paramJRootPane.addPropertyChangeListener(this);
-/*     */   }
-/*     */   
-/*     */   protected void installKeyboardActions(JRootPane paramJRootPane) {
-/*  82 */     InputMap inputMap = getInputMap(2, paramJRootPane);
-/*  83 */     SwingUtilities.replaceUIInputMap(paramJRootPane, 2, inputMap);
-/*     */     
-/*  85 */     inputMap = getInputMap(1, paramJRootPane);
-/*     */     
-/*  87 */     SwingUtilities.replaceUIInputMap(paramJRootPane, 1, inputMap);
-/*     */ 
-/*     */     
-/*  90 */     LazyActionMap.installLazyActionMap(paramJRootPane, BasicRootPaneUI.class, "RootPane.actionMap");
-/*     */     
-/*  92 */     updateDefaultButtonBindings(paramJRootPane);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults(JRootPane paramJRootPane) {}
-/*     */ 
-/*     */   
-/*     */   protected void uninstallComponents(JRootPane paramJRootPane) {}
-/*     */   
-/*     */   protected void uninstallListeners(JRootPane paramJRootPane) {
-/* 102 */     paramJRootPane.removePropertyChangeListener(this);
-/*     */   }
-/*     */   
-/*     */   protected void uninstallKeyboardActions(JRootPane paramJRootPane) {
-/* 106 */     SwingUtilities.replaceUIInputMap(paramJRootPane, 2, null);
-/*     */     
-/* 108 */     SwingUtilities.replaceUIActionMap(paramJRootPane, null);
-/*     */   }
-/*     */   
-/*     */   InputMap getInputMap(int paramInt, JComponent paramJComponent) {
-/* 112 */     if (paramInt == 1) {
-/* 113 */       return (InputMap)DefaultLookup.get(paramJComponent, this, "RootPane.ancestorInputMap");
-/*     */     }
-/*     */ 
-/*     */     
-/* 117 */     if (paramInt == 2) {
-/* 118 */       return createInputMap(paramInt, paramJComponent);
-/*     */     }
-/* 120 */     return null;
-/*     */   }
-/*     */   
-/*     */   ComponentInputMap createInputMap(int paramInt, JComponent paramJComponent) {
-/* 124 */     return new RootPaneInputMap(paramJComponent);
-/*     */   }
-/*     */   
-/*     */   static void loadActionMap(LazyActionMap paramLazyActionMap) {
-/* 128 */     paramLazyActionMap.put(new Actions("press"));
-/* 129 */     paramLazyActionMap.put(new Actions("release"));
-/* 130 */     paramLazyActionMap.put(new Actions("postPopup"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void updateDefaultButtonBindings(JRootPane paramJRootPane) {
-/* 139 */     InputMap inputMap = SwingUtilities.getUIInputMap(paramJRootPane, 2);
-/*     */     
-/* 141 */     while (inputMap != null && !(inputMap instanceof RootPaneInputMap)) {
-/* 142 */       inputMap = inputMap.getParent();
-/*     */     }
-/* 144 */     if (inputMap != null) {
-/* 145 */       inputMap.clear();
-/* 146 */       if (paramJRootPane.getDefaultButton() != null) {
-/* 147 */         Object[] arrayOfObject = (Object[])DefaultLookup.get(paramJRootPane, this, "RootPane.defaultButtonWindowKeyBindings");
-/*     */         
-/* 149 */         if (arrayOfObject != null) {
-/* 150 */           LookAndFeel.loadKeyBindings(inputMap, arrayOfObject);
-/*     */         }
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void propertyChange(PropertyChangeEvent paramPropertyChangeEvent) {
-/* 162 */     if (paramPropertyChangeEvent.getPropertyName().equals("defaultButton")) {
-/* 163 */       JRootPane jRootPane = (JRootPane)paramPropertyChangeEvent.getSource();
-/* 164 */       updateDefaultButtonBindings(jRootPane);
-/* 165 */       if (jRootPane.getClientProperty("temporaryDefaultButton") == null)
-/* 166 */         jRootPane.putClientProperty("initialDefaultButton", paramPropertyChangeEvent.getNewValue()); 
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   static class Actions
-/*     */     extends UIAction
-/*     */   {
-/*     */     public static final String PRESS = "press";
-/*     */     public static final String RELEASE = "release";
-/*     */     public static final String POST_POPUP = "postPopup";
-/*     */     
-/*     */     Actions(String param1String) {
-/* 178 */       super(param1String);
-/*     */     }
-/*     */     
-/*     */     public void actionPerformed(ActionEvent param1ActionEvent) {
-/* 182 */       JRootPane jRootPane = (JRootPane)param1ActionEvent.getSource();
-/* 183 */       JButton jButton = jRootPane.getDefaultButton();
-/* 184 */       String str = getName();
-/*     */       
-/* 186 */       if (str == "postPopup") {
-/*     */ 
-/*     */         
-/* 189 */         Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-/*     */         
-/* 191 */         if (component instanceof JComponent) {
-/* 192 */           JComponent jComponent = (JComponent)component;
-/* 193 */           JPopupMenu jPopupMenu = jComponent.getComponentPopupMenu();
-/* 194 */           if (jPopupMenu != null) {
-/* 195 */             Point point = jComponent.getPopupLocation((MouseEvent)null);
-/* 196 */             if (point == null) {
-/* 197 */               Rectangle rectangle = jComponent.getVisibleRect();
-/* 198 */               point = new Point(rectangle.x + rectangle.width / 2, rectangle.y + rectangle.height / 2);
-/*     */             } 
-/*     */             
-/* 201 */             jPopupMenu.show(component, point.x, point.y);
-/*     */           }
-/*     */         
-/*     */         } 
-/* 205 */       } else if (jButton != null && 
-/* 206 */         SwingUtilities.getRootPane(jButton) == jRootPane && 
-/* 207 */         str == "press") {
-/* 208 */         jButton.doClick(20);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public boolean isEnabled(Object param1Object) {
-/* 214 */       String str = getName();
-/* 215 */       if (str == "postPopup") {
-/*     */ 
-/*     */         
-/* 218 */         MenuElement[] arrayOfMenuElement = MenuSelectionManager.defaultManager().getSelectedPath();
-/* 219 */         if (arrayOfMenuElement != null && arrayOfMenuElement.length != 0) {
-/* 220 */           return false;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 226 */         Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-/* 227 */         if (component instanceof JComponent) {
-/* 228 */           JComponent jComponent = (JComponent)component;
-/* 229 */           return (jComponent.getComponentPopupMenu() != null);
-/*     */         } 
-/*     */         
-/* 232 */         return false;
-/*     */       } 
-/*     */       
-/* 235 */       if (param1Object != null && param1Object instanceof JRootPane) {
-/* 236 */         JButton jButton = ((JRootPane)param1Object).getDefaultButton();
-/* 237 */         return (jButton != null && jButton.getModel().isEnabled());
-/*     */       } 
-/* 239 */       return true;
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private static class RootPaneInputMap extends ComponentInputMapUIResource {
-/*     */     public RootPaneInputMap(JComponent param1JComponent) {
-/* 245 */       super(param1JComponent);
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\basic\BasicRootPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.plaf.basic;
+
+import java.awt.event.ActionEvent;
+import java.awt.KeyboardFocusManager;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.*;
+import javax.swing.plaf.*;
+import sun.swing.DefaultLookup;
+import sun.swing.UIAction;
+
+/**
+ * Basic implementation of RootPaneUI, there is one shared between all
+ * JRootPane instances.
+ *
+ * @author Scott Violet
+ * @since 1.3
+ */
+public class BasicRootPaneUI extends RootPaneUI implements
+                  PropertyChangeListener {
+    private static RootPaneUI rootPaneUI = new BasicRootPaneUI();
+
+    public static ComponentUI createUI(JComponent c) {
+        return rootPaneUI;
+    }
+
+    public void installUI(JComponent c) {
+        installDefaults((JRootPane)c);
+        installComponents((JRootPane)c);
+        installListeners((JRootPane)c);
+        installKeyboardActions((JRootPane)c);
+    }
+
+
+    public void uninstallUI(JComponent c) {
+        uninstallDefaults((JRootPane)c);
+        uninstallComponents((JRootPane)c);
+        uninstallListeners((JRootPane)c);
+        uninstallKeyboardActions((JRootPane)c);
+    }
+
+    protected void installDefaults(JRootPane c){
+        LookAndFeel.installProperty(c, "opaque", Boolean.FALSE);
+    }
+
+    protected void installComponents(JRootPane root) {
+    }
+
+    protected void installListeners(JRootPane root) {
+        root.addPropertyChangeListener(this);
+    }
+
+    protected void installKeyboardActions(JRootPane root) {
+        InputMap km = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW, root);
+        SwingUtilities.replaceUIInputMap(root,
+                JComponent.WHEN_IN_FOCUSED_WINDOW, km);
+        km = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
+                root);
+        SwingUtilities.replaceUIInputMap(root,
+                JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, km);
+
+        LazyActionMap.installLazyActionMap(root, BasicRootPaneUI.class,
+                "RootPane.actionMap");
+        updateDefaultButtonBindings(root);
+    }
+
+    protected void uninstallDefaults(JRootPane root) {
+    }
+
+    protected void uninstallComponents(JRootPane root) {
+    }
+
+    protected void uninstallListeners(JRootPane root) {
+        root.removePropertyChangeListener(this);
+    }
+
+    protected void uninstallKeyboardActions(JRootPane root) {
+        SwingUtilities.replaceUIInputMap(root, JComponent.
+                                       WHEN_IN_FOCUSED_WINDOW, null);
+        SwingUtilities.replaceUIActionMap(root, null);
+    }
+
+    InputMap getInputMap(int condition, JComponent c) {
+        if (condition == JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT) {
+            return (InputMap)DefaultLookup.get(c, this,
+                                       "RootPane.ancestorInputMap");
+        }
+
+        if (condition == JComponent.WHEN_IN_FOCUSED_WINDOW) {
+            return createInputMap(condition, c);
+        }
+        return null;
+    }
+
+    ComponentInputMap createInputMap(int condition, JComponent c) {
+        return new RootPaneInputMap(c);
+    }
+
+    static void loadActionMap(LazyActionMap map) {
+        map.put(new Actions(Actions.PRESS));
+        map.put(new Actions(Actions.RELEASE));
+        map.put(new Actions(Actions.POST_POPUP));
+    }
+
+    /**
+     * Invoked when the default button property has changed. This reloads
+     * the bindings from the defaults table with name
+     * <code>RootPane.defaultButtonWindowKeyBindings</code>.
+     */
+    void updateDefaultButtonBindings(JRootPane root) {
+        InputMap km = SwingUtilities.getUIInputMap(root, JComponent.
+                                               WHEN_IN_FOCUSED_WINDOW);
+        while (km != null && !(km instanceof RootPaneInputMap)) {
+            km = km.getParent();
+        }
+        if (km != null) {
+            km.clear();
+            if (root.getDefaultButton() != null) {
+                Object[] bindings = (Object[])DefaultLookup.get(root, this,
+                           "RootPane.defaultButtonWindowKeyBindings");
+                if (bindings != null) {
+                    LookAndFeel.loadKeyBindings(km, bindings);
+                }
+            }
+        }
+    }
+
+    /**
+     * Invoked when a property changes on the root pane. If the event
+     * indicates the <code>defaultButton</code> has changed, this will
+     * reinstall the keyboard actions.
+     */
+    public void propertyChange(PropertyChangeEvent e) {
+        if(e.getPropertyName().equals("defaultButton")) {
+            JRootPane rootpane = (JRootPane)e.getSource();
+            updateDefaultButtonBindings(rootpane);
+            if (rootpane.getClientProperty("temporaryDefaultButton") == null) {
+                rootpane.putClientProperty("initialDefaultButton", e.getNewValue());
+            }
+        }
+    }
+
+
+    static class Actions extends UIAction {
+        public static final String PRESS = "press";
+        public static final String RELEASE = "release";
+        public static final String POST_POPUP = "postPopup";
+
+        Actions(String name) {
+            super(name);
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            JRootPane root = (JRootPane)evt.getSource();
+            JButton owner = root.getDefaultButton();
+            String key = getName();
+
+            if (key == POST_POPUP) { // Action to post popup
+                Component c = KeyboardFocusManager
+                        .getCurrentKeyboardFocusManager()
+                         .getFocusOwner();
+
+                if(c instanceof JComponent) {
+                    JComponent src = (JComponent) c;
+                    JPopupMenu jpm = src.getComponentPopupMenu();
+                    if(jpm != null) {
+                        Point pt = src.getPopupLocation(null);
+                        if(pt == null) {
+                            Rectangle vis = src.getVisibleRect();
+                            pt = new Point(vis.x+vis.width/2,
+                                           vis.y+vis.height/2);
+                        }
+                        jpm.show(c, pt.x, pt.y);
+                    }
+                }
+            }
+            else if (owner != null
+                     && SwingUtilities.getRootPane(owner) == root) {
+                if (key == PRESS) {
+                    owner.doClick(20);
+                }
+            }
+        }
+
+        public boolean isEnabled(Object sender) {
+            String key = getName();
+            if(key == POST_POPUP) {
+                MenuElement[] elems = MenuSelectionManager
+                        .defaultManager()
+                        .getSelectedPath();
+                if(elems != null && elems.length != 0) {
+                    return false;
+                    // We shall not interfere with already opened menu
+                }
+
+                Component c = KeyboardFocusManager
+                       .getCurrentKeyboardFocusManager()
+                        .getFocusOwner();
+                if(c instanceof JComponent) {
+                    JComponent src = (JComponent) c;
+                    return src.getComponentPopupMenu() != null;
+                }
+
+                return false;
+            }
+
+            if (sender != null && sender instanceof JRootPane) {
+                JButton owner = ((JRootPane)sender).getDefaultButton();
+                return (owner != null && owner.getModel().isEnabled());
+            }
+            return true;
+        }
+    }
+
+    private static class RootPaneInputMap extends ComponentInputMapUIResource {
+        public RootPaneInputMap(JComponent c) {
+            super(c);
+        }
+    }
+}

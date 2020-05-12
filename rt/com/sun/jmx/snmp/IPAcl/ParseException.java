@@ -1,258 +1,217 @@
-/*     */ package com.sun.jmx.snmp.IPAcl;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ParseException
-/*     */   extends Exception
-/*     */ {
-/*     */   private static final long serialVersionUID = -3695190720704845876L;
-/*     */   protected boolean specialConstructor;
-/*     */   public Token currentToken;
-/*     */   public int[][] expectedTokenSequences;
-/*     */   public String[] tokenImage;
-/*     */   protected String eol;
-/*     */   
-/*     */   public ParseException(Token paramToken, int[][] paramArrayOfint, String[] paramArrayOfString) {
-/*  58 */     super("");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 165 */     this.eol = System.getProperty("line.separator", "\n"); this.specialConstructor = true; this.currentToken = paramToken; this.expectedTokenSequences = paramArrayOfint; this.tokenImage = paramArrayOfString; } public ParseException() { this.eol = System.getProperty("line.separator", "\n"); this.specialConstructor = false; } public ParseException(String paramString) { super(paramString); this.eol = System.getProperty("line.separator", "\n");
-/*     */     this.specialConstructor = false; }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected String add_escapes(String paramString) {
-/* 173 */     StringBuffer stringBuffer = new StringBuffer();
-/*     */     
-/* 175 */     for (byte b = 0; b < paramString.length(); b++) {
-/* 176 */       char c; switch (paramString.charAt(b)) {
-/*     */         case '\000':
-/*     */           break;
-/*     */         
-/*     */         case '\b':
-/* 181 */           stringBuffer.append("\\b");
-/*     */           break;
-/*     */         case '\t':
-/* 184 */           stringBuffer.append("\\t");
-/*     */           break;
-/*     */         case '\n':
-/* 187 */           stringBuffer.append("\\n");
-/*     */           break;
-/*     */         case '\f':
-/* 190 */           stringBuffer.append("\\f");
-/*     */           break;
-/*     */         case '\r':
-/* 193 */           stringBuffer.append("\\r");
-/*     */           break;
-/*     */         case '"':
-/* 196 */           stringBuffer.append("\\\"");
-/*     */           break;
-/*     */         case '\'':
-/* 199 */           stringBuffer.append("\\'");
-/*     */           break;
-/*     */         case '\\':
-/* 202 */           stringBuffer.append("\\\\");
-/*     */           break;
-/*     */         default:
-/* 205 */           if ((c = paramString.charAt(b)) < ' ' || c > '~') {
-/* 206 */             String str = "0000" + Integer.toString(c, 16);
-/* 207 */             stringBuffer.append("\\u" + str.substring(str.length() - 4, str.length())); break;
-/*     */           } 
-/* 209 */           stringBuffer.append(c);
-/*     */           break;
-/*     */       } 
-/*     */     
-/*     */     } 
-/* 214 */     return stringBuffer.toString();
-/*     */   }
-/*     */   
-/*     */   public String getMessage() {
-/*     */     if (!this.specialConstructor)
-/*     */       return super.getMessage(); 
-/*     */     String str1 = "";
-/*     */     int i = 0;
-/*     */     for (byte b1 = 0; b1 < this.expectedTokenSequences.length; b1++) {
-/*     */       if (i < (this.expectedTokenSequences[b1]).length)
-/*     */         i = (this.expectedTokenSequences[b1]).length; 
-/*     */       for (byte b = 0; b < (this.expectedTokenSequences[b1]).length; b++)
-/*     */         str1 = str1 + this.tokenImage[this.expectedTokenSequences[b1][b]] + " "; 
-/*     */       if (this.expectedTokenSequences[b1][(this.expectedTokenSequences[b1]).length - 1] != 0)
-/*     */         str1 = str1 + "..."; 
-/*     */       str1 = str1 + this.eol + "    ";
-/*     */     } 
-/*     */     String str2 = "Encountered \"";
-/*     */     Token token = this.currentToken.next;
-/*     */     for (byte b2 = 0; b2 < i; b2++) {
-/*     */       if (b2 != 0)
-/*     */         str2 = str2 + " "; 
-/*     */       if (token.kind == 0) {
-/*     */         str2 = str2 + this.tokenImage[0];
-/*     */         break;
-/*     */       } 
-/*     */       str2 = str2 + add_escapes(token.image);
-/*     */       token = token.next;
-/*     */     } 
-/*     */     str2 = str2 + "\" at line " + this.currentToken.next.beginLine + ", column " + this.currentToken.next.beginColumn + "." + this.eol;
-/*     */     if (this.expectedTokenSequences.length == 1) {
-/*     */       str2 = str2 + "Was expecting:" + this.eol + "    ";
-/*     */     } else {
-/*     */       str2 = str2 + "Was expecting one of:" + this.eol + "    ";
-/*     */     } 
-/*     */     str2 = str2 + str1;
-/*     */     return str2;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\snmp\IPAcl\ParseException.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/* Generated By:JavaCC: Do not edit this line. ParseException.java Version 0.7pre6 */
+package com.sun.jmx.snmp.IPAcl;
+
+/**
+ * This exception is thrown when parse errors are encountered.
+ * You can explicitly create objects of this exception type by
+ * calling the method generateParseException in the generated
+ * parser.
+ *
+ * You can modify this class to customize your error reporting
+ * mechanisms so long as you retain the public fields.
+ */
+class ParseException extends Exception {
+  private static final long serialVersionUID = -3695190720704845876L;
+
+  /**
+   * This constructor is used by the method "generateParseException"
+   * in the generated parser.  Calling this constructor generates
+   * a new object of this type with the fields "currentToken",
+   * "expectedTokenSequences", and "tokenImage" set.  The boolean
+   * flag "specialConstructor" is also set to true to indicate that
+   * this constructor was used to create this object.
+   * This constructor calls its super class with the empty string
+   * to force the "toString" method of parent class "Throwable" to
+   * print the error message in the form:
+   *     ParseException: <result of getMessage>
+   */
+  public ParseException(Token currentTokenVal,
+                        int[][] expectedTokenSequencesVal,
+                        String[] tokenImageVal
+                       )
+  {
+    super("");
+    specialConstructor = true;
+    currentToken = currentTokenVal;
+    expectedTokenSequences = expectedTokenSequencesVal;
+    tokenImage = tokenImageVal;
+  }
+
+  /**
+   * The following constructors are for use by you for whatever
+   * purpose you can think of.  Constructing the exception in this
+   * manner makes the exception behave in the normal way - i.e., as
+   * documented in the class "Throwable".  The fields "errorToken",
+   * "expectedTokenSequences", and "tokenImage" do not contain
+   * relevant information.  The JavaCC generated code does not use
+   * these constructors.
+   */
+
+  public ParseException() {
+    super();
+    specialConstructor = false;
+  }
+
+  public ParseException(String message) {
+    super(message);
+    specialConstructor = false;
+  }
+
+  /**
+   * This variable determines which constructor was used to create
+   * this object and thereby affects the semantics of the
+   * "getMessage" method (see below).
+   */
+  protected boolean specialConstructor;
+
+  /**
+   * This is the last token that has been consumed successfully.  If
+   * this object has been created due to a parse error, the token
+   * followng this token will (therefore) be the first error token.
+   */
+  public Token currentToken;
+
+  /**
+   * Each entry in this array is an array of integers.  Each array
+   * of integers represents a sequence of tokens (by their ordinal
+   * values) that is expected at this point of the parse.
+   */
+  public int[][] expectedTokenSequences;
+
+  /**
+   * This is a reference to the "tokenImage" array of the generated
+   * parser within which the parse error occurred.  This array is
+   * defined in the generated ...Constants interface.
+   */
+  public String[] tokenImage;
+
+  /**
+   * This method has the standard behavior when this object has been
+   * created using the standard constructors.  Otherwise, it uses
+   * "currentToken" and "expectedTokenSequences" to generate a parse
+   * error message and returns it.  If this object has been created
+   * due to a parse error, and you do not catch it (it gets thrown
+   * from the parser), then this method is called during the printing
+   * of the final stack trace, and hence the correct error message
+   * gets displayed.
+   */
+  public String getMessage() {
+    if (!specialConstructor) {
+      return super.getMessage();
+    }
+    String expected = "";
+    int maxSize = 0;
+    for (int i = 0; i < expectedTokenSequences.length; i++) {
+      if (maxSize < expectedTokenSequences[i].length) {
+        maxSize = expectedTokenSequences[i].length;
+      }
+      for (int j = 0; j < expectedTokenSequences[i].length; j++) {
+        expected += tokenImage[expectedTokenSequences[i][j]] + " ";
+      }
+      if (expectedTokenSequences[i][expectedTokenSequences[i].length - 1] != 0) {
+        expected += "...";
+      }
+      expected += eol + "    ";
+    }
+    String retval = "Encountered \"";
+    Token tok = currentToken.next;
+    for (int i = 0; i < maxSize; i++) {
+      if (i != 0) retval += " ";
+      if (tok.kind == 0) {
+        retval += tokenImage[0];
+        break;
+      }
+      retval += add_escapes(tok.image);
+      tok = tok.next;
+    }
+    retval += "\" at line " + currentToken.next.beginLine + ", column " + currentToken.next.beginColumn + "." + eol;
+    if (expectedTokenSequences.length == 1) {
+      retval += "Was expecting:" + eol + "    ";
+    } else {
+      retval += "Was expecting one of:" + eol + "    ";
+    }
+    retval += expected;
+    return retval;
+  }
+
+  /**
+   * The end of line string for this machine.
+   */
+  protected String eol = System.getProperty("line.separator", "\n");
+
+  /**
+   * Used to convert raw characters to their escaped version
+   * when these raw version cannot be used as part of an ASCII
+   * string literal.
+   */
+  protected String add_escapes(String str) {
+      StringBuffer retval = new StringBuffer();
+      char ch;
+      for (int i = 0; i < str.length(); i++) {
+        switch (str.charAt(i))
+        {
+           case 0 :
+              continue;
+           case '\b':
+              retval.append("\\b");
+              continue;
+           case '\t':
+              retval.append("\\t");
+              continue;
+           case '\n':
+              retval.append("\\n");
+              continue;
+           case '\f':
+              retval.append("\\f");
+              continue;
+           case '\r':
+              retval.append("\\r");
+              continue;
+           case '\"':
+              retval.append("\\\"");
+              continue;
+           case '\'':
+              retval.append("\\\'");
+              continue;
+           case '\\':
+              retval.append("\\\\");
+              continue;
+           default:
+              if ((ch = str.charAt(i)) < 0x20 || ch > 0x7e) {
+                 String s = "0000" + Integer.toString(ch, 16);
+                 retval.append("\\u" + s.substring(s.length() - 4, s.length()));
+              } else {
+                 retval.append(ch);
+              }
+              continue;
+        }
+      }
+      return retval.toString();
+   }
+
+}

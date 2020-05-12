@@ -1,325 +1,320 @@
-/*     */ package com.sun.java.swing.plaf.windows;
-/*     */ 
-/*     */ import java.awt.Color;
-/*     */ import java.awt.Component;
-/*     */ import java.awt.Dimension;
-/*     */ import java.awt.Graphics;
-/*     */ import java.awt.Insets;
-/*     */ import java.awt.Rectangle;
-/*     */ import javax.swing.AbstractButton;
-/*     */ import javax.swing.ButtonModel;
-/*     */ import javax.swing.JButton;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.LookAndFeel;
-/*     */ import javax.swing.UIManager;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.border.CompoundBorder;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicButtonUI;
-/*     */ import javax.swing.plaf.basic.BasicGraphicsUtils;
-/*     */ import sun.awt.AppContext;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class WindowsButtonUI
-/*     */   extends BasicButtonUI
-/*     */ {
-/*     */   protected int dashedRectGapX;
-/*     */   protected int dashedRectGapY;
-/*     */   protected int dashedRectGapWidth;
-/*     */   protected int dashedRectGapHeight;
-/*     */   protected Color focusColor;
-/*     */   private boolean defaults_initialized = false;
-/*  65 */   private static final Object WINDOWS_BUTTON_UI_KEY = new Object();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/*  71 */     AppContext appContext = AppContext.getAppContext();
-/*     */     
-/*  73 */     WindowsButtonUI windowsButtonUI = (WindowsButtonUI)appContext.get(WINDOWS_BUTTON_UI_KEY);
-/*  74 */     if (windowsButtonUI == null) {
-/*  75 */       windowsButtonUI = new WindowsButtonUI();
-/*  76 */       appContext.put(WINDOWS_BUTTON_UI_KEY, windowsButtonUI);
-/*     */     } 
-/*  78 */     return windowsButtonUI;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void installDefaults(AbstractButton paramAbstractButton) {
-/*  86 */     super.installDefaults(paramAbstractButton);
-/*  87 */     if (!this.defaults_initialized) {
-/*  88 */       String str = getPropertyPrefix();
-/*  89 */       this.dashedRectGapX = UIManager.getInt(str + "dashedRectGapX");
-/*  90 */       this.dashedRectGapY = UIManager.getInt(str + "dashedRectGapY");
-/*  91 */       this.dashedRectGapWidth = UIManager.getInt(str + "dashedRectGapWidth");
-/*  92 */       this.dashedRectGapHeight = UIManager.getInt(str + "dashedRectGapHeight");
-/*  93 */       this.focusColor = UIManager.getColor(str + "focus");
-/*  94 */       this.defaults_initialized = true;
-/*     */     } 
-/*     */     
-/*  97 */     XPStyle xPStyle = XPStyle.getXP();
-/*  98 */     if (xPStyle != null) {
-/*  99 */       paramAbstractButton.setBorder(xPStyle.getBorder(paramAbstractButton, getXPButtonType(paramAbstractButton)));
-/* 100 */       LookAndFeel.installProperty(paramAbstractButton, "rolloverEnabled", Boolean.TRUE);
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   protected void uninstallDefaults(AbstractButton paramAbstractButton) {
-/* 105 */     super.uninstallDefaults(paramAbstractButton);
-/* 106 */     this.defaults_initialized = false;
-/*     */   }
-/*     */   
-/*     */   protected Color getFocusColor() {
-/* 110 */     return this.focusColor;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintText(Graphics paramGraphics, AbstractButton paramAbstractButton, Rectangle paramRectangle, String paramString) {
-/* 121 */     WindowsGraphicsUtils.paintText(paramGraphics, paramAbstractButton, paramRectangle, paramString, getTextShiftOffset());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void paintFocus(Graphics paramGraphics, AbstractButton paramAbstractButton, Rectangle paramRectangle1, Rectangle paramRectangle2, Rectangle paramRectangle3) {
-/* 127 */     int i = paramAbstractButton.getWidth();
-/* 128 */     int j = paramAbstractButton.getHeight();
-/* 129 */     paramGraphics.setColor(getFocusColor());
-/* 130 */     BasicGraphicsUtils.drawDashedRect(paramGraphics, this.dashedRectGapX, this.dashedRectGapY, i - this.dashedRectGapWidth, j - this.dashedRectGapHeight);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void paintButtonPressed(Graphics paramGraphics, AbstractButton paramAbstractButton) {
-/* 135 */     setTextShiftOffset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Dimension getPreferredSize(JComponent paramJComponent) {
-/* 142 */     Dimension dimension = super.getPreferredSize(paramJComponent);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 147 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/* 148 */     if (dimension != null && abstractButton.isFocusPainted()) {
-/* 149 */       if (dimension.width % 2 == 0) dimension.width++; 
-/* 150 */       if (dimension.height % 2 == 0) dimension.height++; 
-/*     */     } 
-/* 152 */     return dimension;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 161 */   private Rectangle viewRect = new Rectangle();
-/*     */   
-/*     */   public void paint(Graphics paramGraphics, JComponent paramJComponent) {
-/* 164 */     if (XPStyle.getXP() != null) {
-/* 165 */       paintXPButtonBackground(paramGraphics, paramJComponent);
-/*     */     }
-/* 167 */     super.paint(paramGraphics, paramJComponent);
-/*     */   }
-/*     */   
-/*     */   static TMSchema.Part getXPButtonType(AbstractButton paramAbstractButton) {
-/* 171 */     if (paramAbstractButton instanceof javax.swing.JCheckBox) {
-/* 172 */       return TMSchema.Part.BP_CHECKBOX;
-/*     */     }
-/* 174 */     if (paramAbstractButton instanceof javax.swing.JRadioButton) {
-/* 175 */       return TMSchema.Part.BP_RADIOBUTTON;
-/*     */     }
-/* 177 */     boolean bool = paramAbstractButton.getParent() instanceof javax.swing.JToolBar;
-/* 178 */     return bool ? TMSchema.Part.TP_BUTTON : TMSchema.Part.BP_PUSHBUTTON;
-/*     */   }
-/*     */   static TMSchema.State getXPButtonState(AbstractButton paramAbstractButton) {
-/*     */     boolean bool;
-/* 182 */     TMSchema.Part part = getXPButtonType(paramAbstractButton);
-/* 183 */     ButtonModel buttonModel = paramAbstractButton.getModel();
-/* 184 */     TMSchema.State state = TMSchema.State.NORMAL;
-/* 185 */     switch (part)
-/*     */     
-/*     */     { case BP_RADIOBUTTON:
-/*     */       case BP_CHECKBOX:
-/* 189 */         if (!buttonModel.isEnabled()) {
-/* 190 */           state = buttonModel.isSelected() ? TMSchema.State.CHECKEDDISABLED : TMSchema.State.UNCHECKEDDISABLED;
-/*     */         }
-/* 192 */         else if (buttonModel.isPressed() && buttonModel.isArmed()) {
-/* 193 */           state = buttonModel.isSelected() ? TMSchema.State.CHECKEDPRESSED : TMSchema.State.UNCHECKEDPRESSED;
-/*     */         }
-/* 195 */         else if (buttonModel.isRollover()) {
-/* 196 */           state = buttonModel.isSelected() ? TMSchema.State.CHECKEDHOT : TMSchema.State.UNCHECKEDHOT;
-/*     */         } else {
-/*     */           
-/* 199 */           state = buttonModel.isSelected() ? TMSchema.State.CHECKEDNORMAL : TMSchema.State.UNCHECKEDNORMAL;
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 241 */         return state;case BP_PUSHBUTTON: case TP_BUTTON: bool = paramAbstractButton.getParent() instanceof javax.swing.JToolBar; if (bool) { if (buttonModel.isArmed() && buttonModel.isPressed()) { state = TMSchema.State.PRESSED; } else if (!buttonModel.isEnabled()) { state = TMSchema.State.DISABLED; } else if (buttonModel.isSelected() && buttonModel.isRollover()) { state = TMSchema.State.HOTCHECKED; } else if (buttonModel.isSelected()) { state = TMSchema.State.CHECKED; } else if (buttonModel.isRollover()) { state = TMSchema.State.HOT; } else if (paramAbstractButton.hasFocus()) { state = TMSchema.State.HOT; }  } else if ((buttonModel.isArmed() && buttonModel.isPressed()) || buttonModel.isSelected()) { state = TMSchema.State.PRESSED; } else if (!buttonModel.isEnabled()) { state = TMSchema.State.DISABLED; } else if (buttonModel.isRollover() || buttonModel.isPressed()) { state = TMSchema.State.HOT; } else if (paramAbstractButton instanceof JButton && ((JButton)paramAbstractButton).isDefaultButton()) { state = TMSchema.State.DEFAULTED; } else if (paramAbstractButton.hasFocus()) { state = TMSchema.State.HOT; }  return state; }  state = TMSchema.State.NORMAL; return state;
-/*     */   }
-/*     */   
-/*     */   static void paintXPButtonBackground(Graphics paramGraphics, JComponent paramJComponent) {
-/* 245 */     AbstractButton abstractButton = (AbstractButton)paramJComponent;
-/*     */     
-/* 247 */     XPStyle xPStyle = XPStyle.getXP();
-/*     */     
-/* 249 */     TMSchema.Part part = getXPButtonType(abstractButton);
-/*     */     
-/* 251 */     if (abstractButton.isContentAreaFilled() && xPStyle != null) {
-/*     */       Insets insets;
-/* 253 */       XPStyle.Skin skin = xPStyle.getSkin(abstractButton, part);
-/*     */       
-/* 255 */       TMSchema.State state = getXPButtonState(abstractButton);
-/* 256 */       Dimension dimension = paramJComponent.getSize();
-/* 257 */       int i = 0;
-/* 258 */       int j = 0;
-/* 259 */       int k = dimension.width;
-/* 260 */       int m = dimension.height;
-/*     */       
-/* 262 */       Border border = paramJComponent.getBorder();
-/*     */       
-/* 264 */       if (border != null) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 270 */         insets = getOpaqueInsets(border, paramJComponent);
-/*     */       } else {
-/* 272 */         insets = paramJComponent.getInsets();
-/*     */       } 
-/* 274 */       if (insets != null) {
-/* 275 */         i += insets.left;
-/* 276 */         j += insets.top;
-/* 277 */         k -= insets.left + insets.right;
-/* 278 */         m -= insets.top + insets.bottom;
-/*     */       } 
-/* 280 */       skin.paintSkin(paramGraphics, i, j, k, m, state);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Insets getOpaqueInsets(Border paramBorder, Component paramComponent) {
-/* 291 */     if (paramBorder == null) {
-/* 292 */       return null;
-/*     */     }
-/* 294 */     if (paramBorder.isBorderOpaque())
-/* 295 */       return paramBorder.getBorderInsets(paramComponent); 
-/* 296 */     if (paramBorder instanceof CompoundBorder) {
-/* 297 */       CompoundBorder compoundBorder = (CompoundBorder)paramBorder;
-/* 298 */       Insets insets = getOpaqueInsets(compoundBorder.getOutsideBorder(), paramComponent);
-/* 299 */       if (insets != null && insets.equals(compoundBorder.getOutsideBorder().getBorderInsets(paramComponent))) {
-/*     */         
-/* 301 */         Insets insets1 = getOpaqueInsets(compoundBorder.getInsideBorder(), paramComponent);
-/* 302 */         if (insets1 == null)
-/*     */         {
-/* 304 */           return insets;
-/*     */         }
-/*     */ 
-/*     */         
-/* 308 */         return new Insets(insets.top + insets1.top, insets.left + insets1.left, insets.bottom + insets1.bottom, insets.right + insets1.right);
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 314 */       return insets;
-/*     */     } 
-/*     */     
-/* 317 */     return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsButtonUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.windows;
+
+import javax.swing.plaf.basic.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.*;
+
+import java.awt.*;
+
+import static com.sun.java.swing.plaf.windows.TMSchema.*;
+import static com.sun.java.swing.plaf.windows.TMSchema.Part.*;
+import static com.sun.java.swing.plaf.windows.XPStyle.Skin;
+import sun.awt.AppContext;
+
+
+/**
+ * Windows button.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Jeff Dinkins
+ *
+ */
+public class WindowsButtonUI extends BasicButtonUI
+{
+    protected int dashedRectGapX;
+    protected int dashedRectGapY;
+    protected int dashedRectGapWidth;
+    protected int dashedRectGapHeight;
+
+    protected Color focusColor;
+
+    private boolean defaults_initialized = false;
+
+    private static final Object WINDOWS_BUTTON_UI_KEY = new Object();
+
+    // ********************************
+    //          Create PLAF
+    // ********************************
+    public static ComponentUI createUI(JComponent c) {
+        AppContext appContext = AppContext.getAppContext();
+        WindowsButtonUI windowsButtonUI =
+                (WindowsButtonUI) appContext.get(WINDOWS_BUTTON_UI_KEY);
+        if (windowsButtonUI == null) {
+            windowsButtonUI = new WindowsButtonUI();
+            appContext.put(WINDOWS_BUTTON_UI_KEY, windowsButtonUI);
+        }
+        return windowsButtonUI;
+    }
+
+
+    // ********************************
+    //            Defaults
+    // ********************************
+    protected void installDefaults(AbstractButton b) {
+        super.installDefaults(b);
+        if(!defaults_initialized) {
+            String pp = getPropertyPrefix();
+            dashedRectGapX = UIManager.getInt(pp + "dashedRectGapX");
+            dashedRectGapY = UIManager.getInt(pp + "dashedRectGapY");
+            dashedRectGapWidth = UIManager.getInt(pp + "dashedRectGapWidth");
+            dashedRectGapHeight = UIManager.getInt(pp + "dashedRectGapHeight");
+            focusColor = UIManager.getColor(pp + "focus");
+            defaults_initialized = true;
+        }
+
+        XPStyle xp = XPStyle.getXP();
+        if (xp != null) {
+            b.setBorder(xp.getBorder(b, getXPButtonType(b)));
+            LookAndFeel.installProperty(b, "rolloverEnabled", Boolean.TRUE);
+        }
+    }
+
+    protected void uninstallDefaults(AbstractButton b) {
+        super.uninstallDefaults(b);
+        defaults_initialized = false;
+    }
+
+    protected Color getFocusColor() {
+        return focusColor;
+    }
+
+    // ********************************
+    //         Paint Methods
+    // ********************************
+
+    /**
+     * Overridden method to render the text without the mnemonic
+     */
+    protected void paintText(Graphics g, AbstractButton b, Rectangle textRect, String text) {
+        WindowsGraphicsUtils.paintText(g, b, textRect, text, getTextShiftOffset());
+    }
+
+    protected void paintFocus(Graphics g, AbstractButton b, Rectangle viewRect, Rectangle textRect, Rectangle iconRect){
+
+        // focus painted same color as text on Basic??
+        int width = b.getWidth();
+        int height = b.getHeight();
+        g.setColor(getFocusColor());
+        BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
+                                          width - dashedRectGapWidth, height - dashedRectGapHeight);
+    }
+
+    protected void paintButtonPressed(Graphics g, AbstractButton b){
+        setTextShiftOffset();
+    }
+
+    // ********************************
+    //          Layout Methods
+    // ********************************
+    public Dimension getPreferredSize(JComponent c) {
+        Dimension d = super.getPreferredSize(c);
+
+        /* Ensure that the width and height of the button is odd,
+         * to allow for the focus line if focus is painted
+         */
+        AbstractButton b = (AbstractButton)c;
+        if (d != null && b.isFocusPainted()) {
+            if(d.width % 2 == 0) { d.width += 1; }
+            if(d.height % 2 == 0) { d.height += 1; }
+        }
+        return d;
+    }
+
+
+    /* These rectangles/insets are allocated once for all
+     * ButtonUI.paint() calls.  Re-using rectangles rather than
+     * allocating them in each paint call substantially reduced the time
+     * it took paint to run.  Obviously, this method can't be re-entered.
+     */
+    private Rectangle viewRect = new Rectangle();
+
+    public void paint(Graphics g, JComponent c) {
+        if (XPStyle.getXP() != null) {
+            WindowsButtonUI.paintXPButtonBackground(g, c);
+        }
+        super.paint(g, c);
+    }
+
+    static Part getXPButtonType(AbstractButton b) {
+        if(b instanceof JCheckBox) {
+            return Part.BP_CHECKBOX;
+        }
+        if(b instanceof JRadioButton) {
+            return Part.BP_RADIOBUTTON;
+        }
+        boolean toolbar = (b.getParent() instanceof JToolBar);
+        return toolbar ? Part.TP_BUTTON : Part.BP_PUSHBUTTON;
+    }
+
+    static State getXPButtonState(AbstractButton b) {
+        Part part = getXPButtonType(b);
+        ButtonModel model = b.getModel();
+        State state = State.NORMAL;
+        switch (part) {
+        case BP_RADIOBUTTON:
+            /* falls through */
+        case BP_CHECKBOX:
+            if (! model.isEnabled()) {
+                state = (model.isSelected()) ? State.CHECKEDDISABLED
+                    : State.UNCHECKEDDISABLED;
+            } else if (model.isPressed() && model.isArmed()) {
+                state = (model.isSelected()) ? State.CHECKEDPRESSED
+                    : State.UNCHECKEDPRESSED;
+            } else if (model.isRollover()) {
+                state = (model.isSelected()) ? State.CHECKEDHOT
+                    : State.UNCHECKEDHOT;
+            } else {
+                state = (model.isSelected()) ? State.CHECKEDNORMAL
+                    : State.UNCHECKEDNORMAL;
+            }
+            break;
+        case BP_PUSHBUTTON:
+            /* falls through */
+        case TP_BUTTON:
+            boolean toolbar = (b.getParent() instanceof JToolBar);
+            if (toolbar) {
+                if (model.isArmed() && model.isPressed()) {
+                    state = State.PRESSED;
+                } else if (!model.isEnabled()) {
+                    state = State.DISABLED;
+                } else if (model.isSelected() && model.isRollover()) {
+                    state = State.HOTCHECKED;
+                } else if (model.isSelected()) {
+                    state = State.CHECKED;
+                } else if (model.isRollover()) {
+                    state = State.HOT;
+                } else if (b.hasFocus()) {
+                    state = State.HOT;
+                }
+            } else {
+                if ((model.isArmed() && model.isPressed())
+                      || model.isSelected()) {
+                    state = State.PRESSED;
+                } else if (!model.isEnabled()) {
+                    state = State.DISABLED;
+                } else if (model.isRollover() || model.isPressed()) {
+                    state = State.HOT;
+                } else if (b instanceof JButton
+                           && ((JButton)b).isDefaultButton()) {
+                    state = State.DEFAULTED;
+                } else if (b.hasFocus()) {
+                    state = State.HOT;
+                }
+            }
+            break;
+        default :
+            state = State.NORMAL;
+        }
+
+        return state;
+    }
+
+    static void paintXPButtonBackground(Graphics g, JComponent c) {
+        AbstractButton b = (AbstractButton)c;
+
+        XPStyle xp = XPStyle.getXP();
+
+        Part part = getXPButtonType(b);
+
+        if (b.isContentAreaFilled() && xp != null) {
+
+            Skin skin = xp.getSkin(b, part);
+
+            State state = getXPButtonState(b);
+            Dimension d = c.getSize();
+            int dx = 0;
+            int dy = 0;
+            int dw = d.width;
+            int dh = d.height;
+
+            Border border = c.getBorder();
+            Insets insets;
+            if (border != null) {
+                // Note: The border may be compound, containing an outer
+                // opaque border (supplied by the application), plus an
+                // inner transparent margin border. We want to size the
+                // background to fill the transparent part, but stay
+                // inside the opaque part.
+                insets = WindowsButtonUI.getOpaqueInsets(border, c);
+            } else {
+                insets = c.getInsets();
+            }
+            if (insets != null) {
+                dx += insets.left;
+                dy += insets.top;
+                dw -= (insets.left + insets.right);
+                dh -= (insets.top + insets.bottom);
+            }
+            skin.paintSkin(g, dx, dy, dw, dh, state);
+        }
+    }
+
+    /**
+     * returns - b.getBorderInsets(c) if border is opaque
+     *         - null if border is completely non-opaque
+     *         - somewhere inbetween if border is compound and
+     *              outside border is opaque and inside isn't
+     */
+    private static Insets getOpaqueInsets(Border b, Component c) {
+        if (b == null) {
+            return null;
+        }
+        if (b.isBorderOpaque()) {
+            return b.getBorderInsets(c);
+        } else if (b instanceof CompoundBorder) {
+            CompoundBorder cb = (CompoundBorder)b;
+            Insets iOut = getOpaqueInsets(cb.getOutsideBorder(), c);
+            if (iOut != null && iOut.equals(cb.getOutsideBorder().getBorderInsets(c))) {
+                // Outside border is opaque, keep looking
+                Insets iIn = getOpaqueInsets(cb.getInsideBorder(), c);
+                if (iIn == null) {
+                    // Inside is non-opaque, use outside insets
+                    return iOut;
+                } else {
+                    // Found non-opaque somewhere in the inside (which is
+                    // also compound).
+                    return new Insets(iOut.top + iIn.top, iOut.left + iIn.left,
+                                      iOut.bottom + iIn.bottom, iOut.right + iIn.right);
+                }
+            } else {
+                // Outside is either all non-opaque or has non-opaque
+                // border inside another compound border
+                return iOut;
+            }
+        } else {
+            return null;
+        }
+    }
+}

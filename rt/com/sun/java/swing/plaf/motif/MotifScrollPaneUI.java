@@ -1,153 +1,147 @@
-/*     */ package com.sun.java.swing.plaf.motif;
-/*     */ 
-/*     */ import java.beans.PropertyChangeEvent;
-/*     */ import java.beans.PropertyChangeListener;
-/*     */ import javax.swing.JComponent;
-/*     */ import javax.swing.JScrollBar;
-/*     */ import javax.swing.JScrollPane;
-/*     */ import javax.swing.border.Border;
-/*     */ import javax.swing.border.CompoundBorder;
-/*     */ import javax.swing.border.EmptyBorder;
-/*     */ import javax.swing.plaf.ComponentUI;
-/*     */ import javax.swing.plaf.basic.BasicScrollPaneUI;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class MotifScrollPaneUI
-/*     */   extends BasicScrollPaneUI
-/*     */ {
-/*  50 */   private static final Border vsbMarginBorderR = new EmptyBorder(0, 4, 0, 0);
-/*  51 */   private static final Border vsbMarginBorderL = new EmptyBorder(0, 0, 0, 4);
-/*  52 */   private static final Border hsbMarginBorder = new EmptyBorder(4, 0, 0, 0);
-/*     */   
-/*     */   private CompoundBorder vsbBorder;
-/*     */   
-/*     */   private CompoundBorder hsbBorder;
-/*     */   
-/*     */   private PropertyChangeListener propertyChangeHandler;
-/*     */   
-/*     */   protected void installListeners(JScrollPane paramJScrollPane) {
-/*  61 */     super.installListeners(paramJScrollPane);
-/*  62 */     this.propertyChangeHandler = createPropertyChangeHandler();
-/*  63 */     paramJScrollPane.addPropertyChangeListener(this.propertyChangeHandler);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void uninstallListeners(JComponent paramJComponent) {
-/*  68 */     super.uninstallListeners(paramJComponent);
-/*  69 */     paramJComponent.removePropertyChangeListener(this.propertyChangeHandler);
-/*     */   }
-/*     */   
-/*     */   private PropertyChangeListener createPropertyChangeHandler() {
-/*  73 */     return new PropertyChangeListener()
-/*     */       {
-/*     */         public void propertyChange(PropertyChangeEvent param1PropertyChangeEvent) {
-/*  76 */           String str = param1PropertyChangeEvent.getPropertyName();
-/*     */           
-/*  78 */           if (str.equals("componentOrientation")) {
-/*  79 */             JScrollPane jScrollPane = (JScrollPane)param1PropertyChangeEvent.getSource();
-/*  80 */             JScrollBar jScrollBar = jScrollPane.getVerticalScrollBar();
-/*  81 */             if (jScrollBar != null && MotifScrollPaneUI.this.vsbBorder != null && jScrollBar
-/*  82 */               .getBorder() == MotifScrollPaneUI.this.vsbBorder) {
-/*     */ 
-/*     */               
-/*  85 */               if (MotifGraphicsUtils.isLeftToRight(jScrollPane)) {
-/*  86 */                 MotifScrollPaneUI.this.vsbBorder = new CompoundBorder(MotifScrollPaneUI.vsbMarginBorderR, MotifScrollPaneUI.this
-/*  87 */                     .vsbBorder.getInsideBorder());
-/*     */               } else {
-/*  89 */                 MotifScrollPaneUI.this.vsbBorder = new CompoundBorder(MotifScrollPaneUI.vsbMarginBorderL, MotifScrollPaneUI.this
-/*  90 */                     .vsbBorder.getInsideBorder());
-/*     */               } 
-/*  92 */               jScrollBar.setBorder(MotifScrollPaneUI.this.vsbBorder);
-/*     */             } 
-/*     */           } 
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   protected void installDefaults(JScrollPane paramJScrollPane) {
-/* 100 */     super.installDefaults(paramJScrollPane);
-/*     */     
-/* 102 */     JScrollBar jScrollBar1 = paramJScrollPane.getVerticalScrollBar();
-/* 103 */     if (jScrollBar1 != null) {
-/* 104 */       if (MotifGraphicsUtils.isLeftToRight(paramJScrollPane)) {
-/* 105 */         this
-/* 106 */           .vsbBorder = new CompoundBorder(vsbMarginBorderR, jScrollBar1.getBorder());
-/*     */       } else {
-/*     */         
-/* 109 */         this
-/* 110 */           .vsbBorder = new CompoundBorder(vsbMarginBorderL, jScrollBar1.getBorder());
-/*     */       } 
-/* 112 */       jScrollBar1.setBorder(this.vsbBorder);
-/*     */     } 
-/*     */     
-/* 115 */     JScrollBar jScrollBar2 = paramJScrollPane.getHorizontalScrollBar();
-/* 116 */     if (jScrollBar2 != null) {
-/* 117 */       this.hsbBorder = new CompoundBorder(hsbMarginBorder, jScrollBar2.getBorder());
-/* 118 */       jScrollBar2.setBorder(this.hsbBorder);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void uninstallDefaults(JScrollPane paramJScrollPane) {
-/* 124 */     super.uninstallDefaults(paramJScrollPane);
-/*     */     
-/* 126 */     JScrollBar jScrollBar1 = this.scrollpane.getVerticalScrollBar();
-/* 127 */     if (jScrollBar1 != null) {
-/* 128 */       if (jScrollBar1.getBorder() == this.vsbBorder) {
-/* 129 */         jScrollBar1.setBorder((Border)null);
-/*     */       }
-/* 131 */       this.vsbBorder = null;
-/*     */     } 
-/*     */     
-/* 134 */     JScrollBar jScrollBar2 = this.scrollpane.getHorizontalScrollBar();
-/* 135 */     if (jScrollBar2 != null) {
-/* 136 */       if (jScrollBar2.getBorder() == this.hsbBorder) {
-/* 137 */         jScrollBar2.setBorder((Border)null);
-/*     */       }
-/* 139 */       this.hsbBorder = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public static ComponentUI createUI(JComponent paramJComponent) {
-/* 145 */     return new MotifScrollPaneUI();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\motif\MotifScrollPaneUI.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.java.swing.plaf.motif;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.BasicScrollPaneUI;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+/**
+ * A CDE/Motif L&F implementation of ScrollPaneUI.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases.  The current serialization support is appropriate
+ * for short term storage or RMI between applications running the same
+ * version of Swing.  A future release of Swing will provide support for
+ * long term persistence.
+ *
+ * @author Hans Muller
+ */
+public class MotifScrollPaneUI extends BasicScrollPaneUI
+{
+    private final static Border vsbMarginBorderR = new EmptyBorder(0, 4, 0, 0);
+    private final static Border vsbMarginBorderL = new EmptyBorder(0, 0, 0, 4);
+    private final static Border hsbMarginBorder = new EmptyBorder(4, 0, 0, 0);
+
+    private CompoundBorder vsbBorder;
+    private CompoundBorder hsbBorder;
+
+    private PropertyChangeListener propertyChangeHandler;
+
+    @Override
+    protected void installListeners(JScrollPane scrollPane) {
+        super.installListeners(scrollPane);
+        propertyChangeHandler = createPropertyChangeHandler();
+        scrollPane.addPropertyChangeListener(propertyChangeHandler);
+    }
+
+    @Override
+    protected void uninstallListeners(JComponent scrollPane) {
+        super.uninstallListeners(scrollPane);
+        scrollPane.removePropertyChangeListener(propertyChangeHandler);
+    }
+
+    private PropertyChangeListener createPropertyChangeHandler() {
+        return new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent e) {
+                  String propertyName = e.getPropertyName();
+
+                  if (propertyName.equals("componentOrientation")) {
+                        JScrollPane pane = (JScrollPane)e.getSource();
+                        JScrollBar vsb = pane.getVerticalScrollBar();
+                        if (vsb != null && vsbBorder != null &&
+                            vsb.getBorder() == vsbBorder) {
+                            // The Border on the verticall scrollbar matches
+                            // what we installed, reset it.
+                            if (MotifGraphicsUtils.isLeftToRight(pane)) {
+                                vsbBorder = new CompoundBorder(vsbMarginBorderR,
+                                                vsbBorder.getInsideBorder());
+                            } else {
+                                vsbBorder = new CompoundBorder(vsbMarginBorderL,
+                                                vsbBorder.getInsideBorder());
+                            }
+                            vsb.setBorder(vsbBorder);
+                        }
+                  }
+        }};
+    }
+
+    @Override
+    protected void installDefaults(JScrollPane scrollpane) {
+        super.installDefaults(scrollpane);
+
+        JScrollBar vsb = scrollpane.getVerticalScrollBar();
+        if (vsb != null) {
+            if (MotifGraphicsUtils.isLeftToRight(scrollpane)) {
+                vsbBorder = new CompoundBorder(vsbMarginBorderR,
+                                               vsb.getBorder());
+            }
+            else {
+                vsbBorder = new CompoundBorder(vsbMarginBorderL,
+                                               vsb.getBorder());
+            }
+            vsb.setBorder(vsbBorder);
+        }
+
+        JScrollBar hsb = scrollpane.getHorizontalScrollBar();
+        if (hsb != null) {
+            hsbBorder = new CompoundBorder(hsbMarginBorder, hsb.getBorder());
+            hsb.setBorder(hsbBorder);
+        }
+    }
+
+    @Override
+    protected void uninstallDefaults(JScrollPane c) {
+        super.uninstallDefaults(c);
+
+        JScrollBar vsb = scrollpane.getVerticalScrollBar();
+        if (vsb != null) {
+            if (vsb.getBorder() == vsbBorder) {
+                vsb.setBorder(null);
+            }
+            vsbBorder = null;
+        }
+
+        JScrollBar hsb = scrollpane.getHorizontalScrollBar();
+        if (hsb != null) {
+            if (hsb.getBorder() == hsbBorder) {
+                hsb.setBorder(null);
+            }
+            hsbBorder = null;
+        }
+    }
+
+
+    public static ComponentUI createUI(JComponent x) {
+        return new MotifScrollPaneUI();
+    }
+}

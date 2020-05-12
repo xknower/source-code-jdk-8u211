@@ -1,107 +1,103 @@
-/*    */ package com.sun.java.swing.plaf.windows;
-/*    */ 
-/*    */ import java.beans.PropertyVetoException;
-/*    */ import java.io.Serializable;
-/*    */ import java.lang.ref.WeakReference;
-/*    */ import javax.swing.DefaultDesktopManager;
-/*    */ import javax.swing.JInternalFrame;
-/*    */ import javax.swing.plaf.UIResource;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class WindowsDesktopManager
-/*    */   extends DefaultDesktopManager
-/*    */   implements Serializable, UIResource
-/*    */ {
-/*    */   private WeakReference<JInternalFrame> currentFrameRef;
-/*    */   
-/*    */   public void activateFrame(JInternalFrame paramJInternalFrame) {
-/* 64 */     JInternalFrame jInternalFrame = (this.currentFrameRef != null) ? this.currentFrameRef.get() : null;
-/*    */     try {
-/* 66 */       super.activateFrame(paramJInternalFrame);
-/* 67 */       if (jInternalFrame != null && paramJInternalFrame != jInternalFrame) {
-/*    */ 
-/*    */         
-/* 70 */         if (jInternalFrame.isMaximum() && paramJInternalFrame
-/* 71 */           .getClientProperty("JInternalFrame.frameType") != "optionDialog")
-/*    */         {
-/*    */ 
-/*    */ 
-/*    */           
-/* 76 */           if (!jInternalFrame.isIcon()) {
-/* 77 */             jInternalFrame.setMaximum(false);
-/* 78 */             if (paramJInternalFrame.isMaximizable()) {
-/* 79 */               if (!paramJInternalFrame.isMaximum()) {
-/* 80 */                 paramJInternalFrame.setMaximum(true);
-/* 81 */               } else if (paramJInternalFrame.isMaximum() && paramJInternalFrame.isIcon()) {
-/* 82 */                 paramJInternalFrame.setIcon(false);
-/*    */               } else {
-/* 84 */                 paramJInternalFrame.setMaximum(false);
-/*    */               } 
-/*    */             }
-/*    */           } 
-/*    */         }
-/* 89 */         if (jInternalFrame.isSelected()) {
-/* 90 */           jInternalFrame.setSelected(false);
-/*    */         }
-/*    */       } 
-/*    */       
-/* 94 */       if (!paramJInternalFrame.isSelected()) {
-/* 95 */         paramJInternalFrame.setSelected(true);
-/*    */       }
-/* 97 */     } catch (PropertyVetoException propertyVetoException) {}
-/* 98 */     if (paramJInternalFrame != jInternalFrame)
-/* 99 */       this.currentFrameRef = new WeakReference<>(paramJInternalFrame); 
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\java\swing\plaf\windows\WindowsDesktopManager.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
+package com.sun.java.swing.plaf.windows;
+
+import javax.swing.DefaultDesktopManager;
+import javax.swing.JInternalFrame;
+import javax.swing.JLayeredPane;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.beans.PropertyVetoException;
+import java.util.Vector;
+import java.lang.ref.WeakReference;
+
+/**
+ * This class implements a DesktopManager which more closely follows
+ * the MDI model than the DefaultDesktopManager.  Unlike the
+ * DefaultDesktopManager policy, MDI requires that the selected
+ * and activated child frames are the same, and that that frame
+ * always be the top-most window.
+ * <p>
+ * The maximized state is managed by the DesktopManager with MDI,
+ * instead of just being a property of the individual child frame.
+ * This means that if the currently selected window is maximized
+ * and another window is selected, that new window will be maximized.
+ *
+ * @see javax.swing.DefaultDesktopManager
+ * @author Thomas Ball
+ */
+public class WindowsDesktopManager extends DefaultDesktopManager
+        implements java.io.Serializable, javax.swing.plaf.UIResource {
+
+    /* The frame which is currently selected/activated.
+     * We store this value to enforce MDI's single-selection model.
+     */
+    private WeakReference<JInternalFrame> currentFrameRef;
+
+    public void activateFrame(JInternalFrame f) {
+        JInternalFrame currentFrame = currentFrameRef != null ?
+            currentFrameRef.get() : null;
+        try {
+            super.activateFrame(f);
+            if (currentFrame != null && f != currentFrame) {
+                // If the current frame is maximized, transfer that
+                // attribute to the frame being activated.
+                if (currentFrame.isMaximum() &&
+                    (f.getClientProperty("JInternalFrame.frameType") !=
+                    "optionDialog") ) {
+                    //Special case.  If key binding was used to select next
+                    //frame instead of minimizing the icon via the minimize
+                    //icon.
+                    if (!currentFrame.isIcon()) {
+                        currentFrame.setMaximum(false);
+                        if (f.isMaximizable()) {
+                            if (!f.isMaximum()) {
+                                f.setMaximum(true);
+                            } else if (f.isMaximum() && f.isIcon()) {
+                                f.setIcon(false);
+                            } else {
+                                f.setMaximum(false);
+                            }
+                        }
+                    }
+                }
+                if (currentFrame.isSelected()) {
+                    currentFrame.setSelected(false);
+                }
+            }
+
+            if (!f.isSelected()) {
+                f.setSelected(true);
+            }
+        } catch (PropertyVetoException e) {}
+        if (f != currentFrame) {
+            currentFrameRef = new WeakReference<JInternalFrame>(f);
+        }
+    }
+
+}

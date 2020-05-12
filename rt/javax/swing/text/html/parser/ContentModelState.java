@@ -1,301 +1,295 @@
-/*     */ package javax.swing.text.html.parser;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ContentModelState
-/*     */ {
-/*     */   ContentModel model;
-/*     */   long value;
-/*     */   ContentModelState next;
-/*     */   
-/*     */   public ContentModelState(ContentModel paramContentModel) {
-/*  54 */     this(paramContentModel, null, 0L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ContentModelState(Object paramObject, ContentModelState paramContentModelState) {
-/*  62 */     this(paramObject, paramContentModelState, 0L);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ContentModelState(Object paramObject, ContentModelState paramContentModelState, long paramLong) {
-/*  70 */     this.model = (ContentModel)paramObject;
-/*  71 */     this.next = paramContentModelState;
-/*  72 */     this.value = paramLong;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ContentModel getModel() {
-/*  79 */     ContentModel contentModel = this.model;
-/*  80 */     for (byte b = 0; b < this.value; b++) {
-/*  81 */       if (contentModel.next != null) {
-/*  82 */         contentModel = contentModel.next;
-/*     */       } else {
-/*  84 */         return null;
-/*     */       } 
-/*     */     } 
-/*  87 */     return contentModel;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean terminate() {
-/*     */     ContentModel contentModel;
-/*     */     byte b;
-/*  96 */     switch (this.model.type) {
-/*     */       case 43:
-/*  98 */         if (this.value == 0L && !this.model.empty()) {
-/*  99 */           return false;
-/*     */         }
-/*     */       case 42:
-/*     */       case 63:
-/* 103 */         return (this.next == null || this.next.terminate());
-/*     */       
-/*     */       case 124:
-/* 106 */         for (contentModel = (ContentModel)this.model.content; contentModel != null; contentModel = contentModel.next) {
-/* 107 */           if (contentModel.empty()) {
-/* 108 */             return (this.next == null || this.next.terminate());
-/*     */           }
-/*     */         } 
-/* 111 */         return false;
-/*     */       
-/*     */       case 38:
-/* 114 */         contentModel = (ContentModel)this.model.content;
-/*     */         
-/* 116 */         for (b = 0; contentModel != null; b++, contentModel = contentModel.next) {
-/* 117 */           if ((this.value & 1L << b) == 0L && 
-/* 118 */             !contentModel.empty()) {
-/* 119 */             return false;
-/*     */           }
-/*     */         } 
-/*     */         
-/* 123 */         return (this.next == null || this.next.terminate());
-/*     */ 
-/*     */       
-/*     */       case 44:
-/* 127 */         contentModel = (ContentModel)this.model.content;
-/* 128 */         for (b = 0; b < this.value; ) { b++; contentModel = contentModel.next; }
-/*     */         
-/* 130 */         for (; contentModel != null && contentModel.empty(); contentModel = contentModel.next);
-/* 131 */         if (contentModel != null) {
-/* 132 */           return false;
-/*     */         }
-/* 134 */         return (this.next == null || this.next.terminate());
-/*     */     } 
-/*     */ 
-/*     */     
-/* 138 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Element first() {
-/*     */     ContentModel contentModel;
-/*     */     byte b;
-/* 148 */     switch (this.model.type) {
-/*     */       case 38:
-/*     */       case 42:
-/*     */       case 63:
-/*     */       case 124:
-/* 153 */         return null;
-/*     */       
-/*     */       case 43:
-/* 156 */         return this.model.first();
-/*     */       
-/*     */       case 44:
-/* 159 */         contentModel = (ContentModel)this.model.content;
-/* 160 */         for (b = 0; b < this.value; ) { b++; contentModel = contentModel.next; }
-/* 161 */          return contentModel.first();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 165 */     return this.model.first();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ContentModelState advance(Object paramObject) {
-/*     */     ContentModel contentModel;
-/*     */     byte b1;
-/*     */     byte b2;
-/* 175 */     switch (this.model.type)
-/*     */     { case 43:
-/* 177 */         if (this.model.first(paramObject)) {
-/* 178 */           return (new ContentModelState(this.model.content, new ContentModelState(this.model, this.next, this.value + 1L)))
-/* 179 */             .advance(paramObject);
-/*     */         }
-/* 181 */         if (this.value != 0L) {
-/* 182 */           if (this.next != null) {
-/* 183 */             return this.next.advance(paramObject);
-/*     */           }
-/* 185 */           return null;
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/* 293 */         return null;case 42: if (this.model.first(paramObject)) return (new ContentModelState(this.model.content, this)).advance(paramObject);  if (this.next != null) return this.next.advance(paramObject);  return null;case 63: if (this.model.first(paramObject)) return (new ContentModelState(this.model.content, this.next)).advance(paramObject);  if (this.next != null) return this.next.advance(paramObject);  return null;case 124: for (contentModel = (ContentModel)this.model.content; contentModel != null; contentModel = contentModel.next) { if (contentModel.first(paramObject)) return (new ContentModelState(contentModel, this.next)).advance(paramObject);  }  return null;case 44: contentModel = (ContentModel)this.model.content; for (b1 = 0; b1 < this.value; ) { b1++; contentModel = contentModel.next; }  if (contentModel.first(paramObject) || contentModel.empty()) { if (contentModel.next == null) return (new ContentModelState(contentModel, this.next)).advance(paramObject);  return (new ContentModelState(contentModel, new ContentModelState(this.model, this.next, this.value + 1L))).advance(paramObject); }  return null;case 38: contentModel = (ContentModel)this.model.content; b1 = 1; for (b2 = 0; contentModel != null; b2++, contentModel = contentModel.next) { if ((this.value & 1L << b2) == 0L) { if (contentModel.first(paramObject)) return (new ContentModelState(contentModel, new ContentModelState(this.model, this.next, this.value | 1L << b2))).advance(paramObject);  if (!contentModel.empty()) b1 = 0;  }  }  if (b1 != 0) { if (this.next != null) return this.next.advance(paramObject);  return null; }  return null; }  if (this.model.content == paramObject) { if (this.next == null && paramObject instanceof Element && ((Element)paramObject).content != null) return new ContentModelState(((Element)paramObject).content);  return this.next; }  return null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\parser\ContentModelState.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1998, 2000, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing.text.html.parser;
+
+/**
+ * A content model state. This is basically a list of pointers to
+ * the BNF expression representing the model (the ContentModel).
+ * Each element in a DTD has a content model which describes the
+ * elements that may occur inside, and the order in which they can
+ * occur.
+ * <p>
+ * Each time a token is reduced a new state is created.
+ * <p>
+ * See Annex H on page 556 of the SGML handbook for more information.
+ *
+ * @see Parser
+ * @see DTD
+ * @see Element
+ * @see ContentModel
+ * @author Arthur van Hoff
+ */
+class ContentModelState {
+    ContentModel model;
+    long value;
+    ContentModelState next;
+
+    /**
+     * Create a content model state for a content model.
+     */
+    public ContentModelState(ContentModel model) {
+        this(model, null, 0);
+    }
+
+    /**
+     * Create a content model state for a content model given the
+     * remaining state that needs to be reduce.
+     */
+    ContentModelState(Object content, ContentModelState next) {
+        this(content, next, 0);
+    }
+
+    /**
+     * Create a content model state for a content model given the
+     * remaining state that needs to be reduce.
+     */
+    ContentModelState(Object content, ContentModelState next, long value) {
+        this.model = (ContentModel)content;
+        this.next = next;
+        this.value = value;
+    }
+
+    /**
+     * Return the content model that is relevant to the current state.
+     */
+    public ContentModel getModel() {
+        ContentModel m = model;
+        for (int i = 0; i < value; i++) {
+            if (m.next != null) {
+                m = m.next;
+            } else {
+                return null;
+            }
+        }
+        return m;
+    }
+
+    /**
+     * Check if the state can be terminated. That is there are no more
+     * tokens required in the input stream.
+     * @return true if the model can terminate without further input
+     */
+    public boolean terminate() {
+        switch (model.type) {
+          case '+':
+            if ((value == 0) && !(model).empty()) {
+                return false;
+            }
+          case '*':
+          case '?':
+            return (next == null) || next.terminate();
+
+          case '|':
+            for (ContentModel m = (ContentModel)model.content ; m != null ; m = m.next) {
+                if (m.empty()) {
+                    return (next == null) || next.terminate();
+                }
+            }
+            return false;
+
+          case '&': {
+            ContentModel m = (ContentModel)model.content;
+
+            for (int i = 0 ; m != null ; i++, m = m.next) {
+                if ((value & (1L << i)) == 0) {
+                    if (!m.empty()) {
+                        return false;
+                    }
+                }
+            }
+            return (next == null) || next.terminate();
+          }
+
+          case ',': {
+            ContentModel m = (ContentModel)model.content;
+            for (int i = 0 ; i < value ; i++, m = m.next);
+
+            for (; (m != null) && m.empty() ; m = m.next);
+            if (m != null) {
+                return false;
+            }
+            return (next == null) || next.terminate();
+          }
+
+        default:
+          return false;
+        }
+    }
+
+    /**
+     * Check if the state can be terminated. That is there are no more
+     * tokens required in the input stream.
+     * @return the only possible element that can occur next
+     */
+    public Element first() {
+        switch (model.type) {
+          case '*':
+          case '?':
+          case '|':
+          case '&':
+            return null;
+
+          case '+':
+            return model.first();
+
+          case ',': {
+              ContentModel m = (ContentModel)model.content;
+              for (int i = 0 ; i < value ; i++, m = m.next);
+              return m.first();
+          }
+
+          default:
+            return model.first();
+        }
+    }
+
+    /**
+     * Advance this state to a new state. An exception is thrown if the
+     * token is illegal at this point in the content model.
+     * @return next state after reducing a token
+     */
+    public ContentModelState advance(Object token) {
+        switch (model.type) {
+          case '+':
+            if (model.first(token)) {
+                return new ContentModelState(model.content,
+                        new ContentModelState(model, next, value + 1)).advance(token);
+            }
+            if (value != 0) {
+                if (next != null) {
+                    return next.advance(token);
+                } else {
+                    return null;
+                }
+            }
+            break;
+
+          case '*':
+            if (model.first(token)) {
+                return new ContentModelState(model.content, this).advance(token);
+            }
+            if (next != null) {
+                return next.advance(token);
+            } else {
+                return null;
+            }
+
+          case '?':
+            if (model.first(token)) {
+                return new ContentModelState(model.content, next).advance(token);
+            }
+            if (next != null) {
+                return next.advance(token);
+            } else {
+                return null;
+            }
+
+          case '|':
+            for (ContentModel m = (ContentModel)model.content ; m != null ; m = m.next) {
+                if (m.first(token)) {
+                    return new ContentModelState(m, next).advance(token);
+                }
+            }
+            break;
+
+          case ',': {
+            ContentModel m = (ContentModel)model.content;
+            for (int i = 0 ; i < value ; i++, m = m.next);
+
+            if (m.first(token) || m.empty()) {
+                if (m.next == null) {
+                    return new ContentModelState(m, next).advance(token);
+                } else {
+                    return new ContentModelState(m,
+                            new ContentModelState(model, next, value + 1)).advance(token);
+                }
+            }
+            break;
+          }
+
+          case '&': {
+            ContentModel m = (ContentModel)model.content;
+            boolean complete = true;
+
+            for (int i = 0 ; m != null ; i++, m = m.next) {
+                if ((value & (1L << i)) == 0) {
+                    if (m.first(token)) {
+                        return new ContentModelState(m,
+                                new ContentModelState(model, next, value | (1L << i))).advance(token);
+                    }
+                    if (!m.empty()) {
+                        complete = false;
+                    }
+                }
+            }
+            if (complete) {
+                if (next != null) {
+                    return next.advance(token);
+                } else {
+                    return null;
+                }
+            }
+            break;
+          }
+
+          default:
+            if (model.content == token) {
+                if (next == null && (token instanceof Element) &&
+                    ((Element)token).content != null) {
+                    return new ContentModelState(((Element)token).content);
+                }
+                return next;
+            }
+            // PENDING: Currently we don't correctly deal with optional start
+            // tags. This can most notably be seen with the 4.01 spec where
+            // TBODY's start and end tags are optional.
+            // Uncommenting this and the PENDING in ContentModel will
+            // correctly skip the omit tags, but the delegate is not notified.
+            // Some additional API needs to be added to track skipped tags,
+            // and this can then be added back.
+/*
+            if ((model.content instanceof Element)) {
+                Element e = (Element)model.content;
+
+                if (e.omitStart() && e.content != null) {
+                    return new ContentModelState(e.content, next).advance(
+                                           token);
+                }
+            }
+*/
+        }
+
+        // We used to throw this exception at this point.  However, it
+        // was determined that throwing this exception was more expensive
+        // than returning null, and we could not justify to ourselves why
+        // it was necessary to throw an exception, rather than simply
+        // returning null.  I'm leaving it in a commented out state so
+        // that it can be easily restored if the situation ever arises.
+        //
+        // throw new IllegalArgumentException("invalid token: " + token);
+        return null;
+    }
+}

@@ -1,325 +1,320 @@
-/*     */ package com.sun.jmx.mbeanserver;
-/*     */ 
-/*     */ import com.sun.jmx.defaults.JmxProperties;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Hashtable;
-/*     */ import java.util.List;
-/*     */ import java.util.Map;
-/*     */ import java.util.logging.Level;
-/*     */ import javax.management.MBeanPermission;
-/*     */ import javax.management.ObjectName;
-/*     */ import sun.reflect.misc.ReflectUtil;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class ClassLoaderRepositorySupport
-/*     */   implements ModifiableClassLoaderRepository
-/*     */ {
-/*     */   private static class LoaderEntry
-/*     */   {
-/*     */     ObjectName name;
-/*     */     ClassLoader loader;
-/*     */     
-/*     */     LoaderEntry(ObjectName param1ObjectName, ClassLoader param1ClassLoader) {
-/*  64 */       this.name = param1ObjectName;
-/*  65 */       this.loader = param1ClassLoader;
-/*     */     }
-/*     */   }
-/*     */   
-/*  69 */   private static final LoaderEntry[] EMPTY_LOADER_ARRAY = new LoaderEntry[0];
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*  81 */   private LoaderEntry[] loaders = EMPTY_LOADER_ARRAY;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized boolean add(ObjectName paramObjectName, ClassLoader paramClassLoader) {
-/*  90 */     ArrayList<LoaderEntry> arrayList = new ArrayList(Arrays.asList((Object[])this.loaders));
-/*  91 */     arrayList.add(new LoaderEntry(paramObjectName, paramClassLoader));
-/*  92 */     this.loaders = arrayList.<LoaderEntry>toArray(EMPTY_LOADER_ARRAY);
-/*  93 */     return true;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized boolean remove(ObjectName paramObjectName, ClassLoader paramClassLoader) {
-/* 109 */     int i = this.loaders.length;
-/* 110 */     for (byte b = 0; b < i; b++) {
-/* 111 */       LoaderEntry loaderEntry = this.loaders[b];
-/*     */ 
-/*     */ 
-/*     */       
-/* 115 */       boolean bool = (paramObjectName == null) ? ((paramClassLoader == loaderEntry.loader) ? true : false) : paramObjectName.equals(loaderEntry.name);
-/* 116 */       if (bool) {
-/* 117 */         LoaderEntry[] arrayOfLoaderEntry = new LoaderEntry[i - 1];
-/* 118 */         System.arraycopy(this.loaders, 0, arrayOfLoaderEntry, 0, b);
-/* 119 */         System.arraycopy(this.loaders, b + 1, arrayOfLoaderEntry, b, i - 1 - b);
-/*     */         
-/* 121 */         this.loaders = arrayOfLoaderEntry;
-/* 122 */         return true;
-/*     */       } 
-/*     */     } 
-/* 125 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 132 */   private final Map<String, List<ClassLoader>> search = new Hashtable<>(10);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 138 */   private final Map<ObjectName, ClassLoader> loadersWithNames = new Hashtable<>(10);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Class<?> loadClass(String paramString) throws ClassNotFoundException {
-/* 144 */     return loadClass(this.loaders, paramString, null, null);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Class<?> loadClassWithout(ClassLoader paramClassLoader, String paramString) throws ClassNotFoundException {
-/* 151 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 152 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, ClassLoaderRepositorySupport.class
-/* 153 */           .getName(), "loadClassWithout", paramString + " without " + paramClassLoader);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 159 */     if (paramClassLoader == null) {
-/* 160 */       return loadClass(this.loaders, paramString, null, null);
-/*     */     }
-/*     */ 
-/*     */     
-/* 164 */     startValidSearch(paramClassLoader, paramString);
-/*     */     try {
-/* 166 */       return loadClass(this.loaders, paramString, paramClassLoader, null);
-/*     */     } finally {
-/* 168 */       stopValidSearch(paramClassLoader, paramString);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Class<?> loadClassBefore(ClassLoader paramClassLoader, String paramString) throws ClassNotFoundException {
-/* 175 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 176 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, ClassLoaderRepositorySupport.class
-/* 177 */           .getName(), "loadClassBefore", paramString + " before " + paramClassLoader);
-/*     */     }
-/*     */ 
-/*     */     
-/* 181 */     if (paramClassLoader == null) {
-/* 182 */       return loadClass(this.loaders, paramString, null, null);
-/*     */     }
-/* 184 */     startValidSearch(paramClassLoader, paramString);
-/*     */     try {
-/* 186 */       return loadClass(this.loaders, paramString, null, paramClassLoader);
-/*     */     } finally {
-/* 188 */       stopValidSearch(paramClassLoader, paramString);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Class<?> loadClass(LoaderEntry[] paramArrayOfLoaderEntry, String paramString, ClassLoader paramClassLoader1, ClassLoader paramClassLoader2) throws ClassNotFoundException {
-/* 198 */     ReflectUtil.checkPackageAccess(paramString);
-/* 199 */     int i = paramArrayOfLoaderEntry.length;
-/* 200 */     for (byte b = 0; b < i; b++) {
-/*     */       try {
-/* 202 */         ClassLoader classLoader = (paramArrayOfLoaderEntry[b]).loader;
-/* 203 */         if (classLoader == null)
-/* 204 */           return Class.forName(paramString, false, null); 
-/* 205 */         if (classLoader != paramClassLoader1)
-/*     */         
-/* 207 */         { if (classLoader == paramClassLoader2)
-/*     */             break; 
-/* 209 */           if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 210 */             JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, ClassLoaderRepositorySupport.class
-/* 211 */                 .getName(), "loadClass", "Trying loader = " + classLoader);
-/*     */           }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 226 */           return Class.forName(paramString, false, classLoader); } 
-/* 227 */       } catch (ClassNotFoundException classNotFoundException) {}
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 232 */     throw new ClassNotFoundException(paramString);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized void startValidSearch(ClassLoader paramClassLoader, String paramString) throws ClassNotFoundException {
-/* 240 */     List<ClassLoader> list = this.search.get(paramString);
-/* 241 */     if (list != null && list.contains(paramClassLoader)) {
-/* 242 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 243 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, ClassLoaderRepositorySupport.class
-/* 244 */             .getName(), "startValidSearch", "Already requested loader = " + paramClassLoader + " class = " + paramString);
-/*     */       }
-/*     */ 
-/*     */       
-/* 248 */       throw new ClassNotFoundException(paramString);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 253 */     if (list == null) {
-/* 254 */       list = new ArrayList(1);
-/* 255 */       this.search.put(paramString, list);
-/*     */     } 
-/* 257 */     list.add(paramClassLoader);
-/* 258 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 259 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, ClassLoaderRepositorySupport.class
-/* 260 */           .getName(), "startValidSearch", "loader = " + paramClassLoader + " class = " + paramString);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized void stopValidSearch(ClassLoader paramClassLoader, String paramString) {
-/* 271 */     List list = this.search.get(paramString);
-/* 272 */     if (list != null) {
-/* 273 */       list.remove(paramClassLoader);
-/* 274 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 275 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, ClassLoaderRepositorySupport.class
-/* 276 */             .getName(), "stopValidSearch", "loader = " + paramClassLoader + " class = " + paramString);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void addClassLoader(ClassLoader paramClassLoader) {
-/* 284 */     add(null, paramClassLoader);
-/*     */   }
-/*     */   
-/*     */   public final void removeClassLoader(ClassLoader paramClassLoader) {
-/* 288 */     remove(null, paramClassLoader);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final synchronized void addClassLoader(ObjectName paramObjectName, ClassLoader paramClassLoader) {
-/* 293 */     this.loadersWithNames.put(paramObjectName, paramClassLoader);
-/* 294 */     if (!(paramClassLoader instanceof javax.management.loading.PrivateClassLoader))
-/* 295 */       add(paramObjectName, paramClassLoader); 
-/*     */   }
-/*     */   
-/*     */   public final synchronized void removeClassLoader(ObjectName paramObjectName) {
-/* 299 */     ClassLoader classLoader = this.loadersWithNames.remove(paramObjectName);
-/* 300 */     if (!(classLoader instanceof javax.management.loading.PrivateClassLoader))
-/* 301 */       remove(paramObjectName, classLoader); 
-/*     */   }
-/*     */   
-/*     */   public final ClassLoader getClassLoader(ObjectName paramObjectName) {
-/* 305 */     ClassLoader classLoader = this.loadersWithNames.get(paramObjectName);
-/* 306 */     if (classLoader != null) {
-/* 307 */       SecurityManager securityManager = System.getSecurityManager();
-/* 308 */       if (securityManager != null) {
-/*     */         
-/* 310 */         MBeanPermission mBeanPermission = new MBeanPermission(classLoader.getClass().getName(), null, paramObjectName, "getClassLoader");
-/*     */ 
-/*     */ 
-/*     */         
-/* 314 */         securityManager.checkPermission(mBeanPermission);
-/*     */       } 
-/*     */     } 
-/* 317 */     return classLoader;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\mbeanserver\ClassLoaderRepositorySupport.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.mbeanserver;
+
+
+import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
+import java.security.Permission;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import javax.management.MBeanPermission;
+
+import javax.management.ObjectName;
+import javax.management.loading.PrivateClassLoader;
+import sun.reflect.misc.ReflectUtil;
+
+/**
+ * This class keeps the list of Class Loaders registered in the MBean Server.
+ * It provides the necessary methods to load classes using the
+ * registered Class Loaders.
+ *
+ * @since 1.5
+ */
+final class ClassLoaderRepositorySupport
+    implements ModifiableClassLoaderRepository {
+
+    /* We associate an optional ObjectName with each entry so that
+       we can remove the correct entry when unregistering an MBean
+       that is a ClassLoader.  The same object could be registered
+       under two different names (even though this is not recommended)
+       so if we did not do this we could disturb the defined
+       semantics for the order of ClassLoaders in the repository.  */
+    private static class LoaderEntry {
+        ObjectName name; // can be null
+        ClassLoader loader;
+
+        LoaderEntry(ObjectName name,  ClassLoader loader) {
+            this.name = name;
+            this.loader = loader;
+        }
+    }
+
+    private static final LoaderEntry[] EMPTY_LOADER_ARRAY = new LoaderEntry[0];
+
+    /**
+     * List of class loaders
+     * Only read-only actions should be performed on this object.
+     *
+     * We do O(n) operations on this array, e.g. when removing
+     * a ClassLoader.  The assumption is that the number of elements
+     * is small, probably less than ten, and that the vast majority
+     * of operations are searches (loadClass) which are by definition
+     * linear.
+     */
+    private LoaderEntry[] loaders = EMPTY_LOADER_ARRAY;
+
+    /**
+     * Same behavior as add(Object o) in {@link java.util.List}.
+     * Replace the loader list with a new one in which the new
+     * loader has been added.
+     **/
+    private synchronized boolean add(ObjectName name, ClassLoader cl) {
+        List<LoaderEntry> l =
+            new ArrayList<LoaderEntry>(Arrays.asList(loaders));
+        l.add(new LoaderEntry(name, cl));
+        loaders = l.toArray(EMPTY_LOADER_ARRAY);
+        return true;
+    }
+
+    /**
+     * Same behavior as remove(Object o) in {@link java.util.List}.
+     * Replace the loader list with a new one in which the old loader
+     * has been removed.
+     *
+     * The ObjectName may be null, in which case the entry to
+     * be removed must also have a null ObjectName and the ClassLoader
+     * values must match.  If the ObjectName is not null, then
+     * the first entry with a matching ObjectName is removed,
+     * regardless of whether ClassLoader values match.  (In fact,
+     * the ClassLoader parameter will usually be null in this case.)
+     **/
+    private synchronized boolean remove(ObjectName name, ClassLoader cl) {
+        final int size = loaders.length;
+        for (int i = 0; i < size; i++) {
+            LoaderEntry entry = loaders[i];
+            boolean match =
+                (name == null) ?
+                cl == entry.loader :
+                name.equals(entry.name);
+            if (match) {
+                LoaderEntry[] newloaders = new LoaderEntry[size - 1];
+                System.arraycopy(loaders, 0, newloaders, 0, i);
+                System.arraycopy(loaders, i + 1, newloaders, i,
+                                 size - 1 - i);
+                loaders = newloaders;
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * List of valid search
+     */
+    private final Map<String,List<ClassLoader>> search =
+        new Hashtable<String,List<ClassLoader>>(10);
+
+    /**
+     * List of named class loaders.
+     */
+    private final Map<ObjectName,ClassLoader> loadersWithNames =
+        new Hashtable<ObjectName,ClassLoader>(10);
+
+    // from javax.management.loading.DefaultLoaderRepository
+    public final Class<?> loadClass(String className)
+        throws ClassNotFoundException {
+        return  loadClass(loaders, className, null, null);
+    }
+
+
+    // from javax.management.loading.DefaultLoaderRepository
+    public final Class<?> loadClassWithout(ClassLoader without, String className)
+            throws ClassNotFoundException {
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    ClassLoaderRepositorySupport.class.getName(),
+                    "loadClassWithout", className + " without " + without);
+        }
+
+        // without is null => just behave as loadClass
+        //
+        if (without == null)
+            return loadClass(loaders, className, null, null);
+
+        // We must try to load the class without the given loader.
+        //
+        startValidSearch(without, className);
+        try {
+            return loadClass(loaders, className, without, null);
+        } finally {
+            stopValidSearch(without, className);
+        }
+    }
+
+
+    public final Class<?> loadClassBefore(ClassLoader stop, String className)
+            throws ClassNotFoundException {
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    ClassLoaderRepositorySupport.class.getName(),
+                    "loadClassBefore", className + " before " + stop);
+        }
+
+        if (stop == null)
+            return loadClass(loaders, className, null, null);
+
+        startValidSearch(stop, className);
+        try {
+            return loadClass(loaders, className, null, stop);
+        } finally {
+            stopValidSearch(stop, className);
+        }
+    }
+
+
+    private Class<?> loadClass(final LoaderEntry list[],
+                               final String className,
+                               final ClassLoader without,
+                               final ClassLoader stop)
+            throws ClassNotFoundException {
+        ReflectUtil.checkPackageAccess(className);
+        final int size = list.length;
+        for(int i=0; i<size; i++) {
+            try {
+                final ClassLoader cl = list[i].loader;
+                if (cl == null) // bootstrap class loader
+                    return Class.forName(className, false, null);
+                if (cl == without)
+                    continue;
+                if (cl == stop)
+                    break;
+                if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                    MBEANSERVER_LOGGER.logp(Level.FINER,
+                            ClassLoaderRepositorySupport.class.getName(),
+                            "loadClass", "Trying loader = " + cl);
+                }
+                /* We used to have a special case for "instanceof
+                   MLet" here, where we invoked the method
+                   loadClass(className, null) to prevent infinite
+                   recursion.  But the rule whereby the MLet only
+                   consults loaders that precede it in the CLR (via
+                   loadClassBefore) means that the recursion can't
+                   happen, and the test here caused some legitimate
+                   classloading to fail.  For example, if you have
+                   dependencies C->D->E with loaders {E D C} in the
+                   CLR in that order, you would expect to be able to
+                   load C.  The problem is that while resolving D, CLR
+                   delegation is disabled, so it can't find E.  */
+                return Class.forName(className, false, cl);
+            } catch (ClassNotFoundException e) {
+                // OK: continue with next class
+            }
+        }
+
+        throw new ClassNotFoundException(className);
+    }
+
+    private synchronized void startValidSearch(ClassLoader aloader,
+                                               String className)
+        throws ClassNotFoundException {
+        // Check if we have such a current search
+        //
+        List<ClassLoader> excluded = search.get(className);
+        if ((excluded!= null) && (excluded.contains(aloader))) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                MBEANSERVER_LOGGER.logp(Level.FINER,
+                        ClassLoaderRepositorySupport.class.getName(),
+                        "startValidSearch", "Already requested loader = " +
+                        aloader + " class = " + className);
+            }
+            throw new ClassNotFoundException(className);
+        }
+
+        // Add an entry
+        //
+        if (excluded == null) {
+            excluded = new ArrayList<ClassLoader>(1);
+            search.put(className, excluded);
+        }
+        excluded.add(aloader);
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    ClassLoaderRepositorySupport.class.getName(),
+                    "startValidSearch",
+                    "loader = " + aloader + " class = " + className);
+        }
+    }
+
+    private synchronized void stopValidSearch(ClassLoader aloader,
+                                              String className) {
+
+        // Retrieve the search.
+        //
+        List<ClassLoader> excluded = search.get(className);
+        if (excluded != null) {
+            excluded.remove(aloader);
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                MBEANSERVER_LOGGER.logp(Level.FINER,
+                        ClassLoaderRepositorySupport.class.getName(),
+                        "stopValidSearch",
+                        "loader = " + aloader + " class = " + className);
+            }
+        }
+    }
+
+    public final void addClassLoader(ClassLoader loader) {
+        add(null, loader);
+    }
+
+    public final void removeClassLoader(ClassLoader loader) {
+        remove(null, loader);
+    }
+
+    public final synchronized void addClassLoader(ObjectName name,
+                                                  ClassLoader loader) {
+        loadersWithNames.put(name, loader);
+        if (!(loader instanceof PrivateClassLoader))
+            add(name, loader);
+    }
+
+    public final synchronized void removeClassLoader(ObjectName name) {
+        ClassLoader loader = loadersWithNames.remove(name);
+        if (!(loader instanceof PrivateClassLoader))
+            remove(name, loader);
+    }
+
+    public final ClassLoader getClassLoader(ObjectName name) {
+        ClassLoader instance = loadersWithNames.get(name);
+        if (instance != null) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                Permission perm =
+                        new MBeanPermission(instance.getClass().getName(),
+                        null,
+                        name,
+                        "getClassLoader");
+                sm.checkPermission(perm);
+            }
+        }
+        return instance;
+    }
+
+}

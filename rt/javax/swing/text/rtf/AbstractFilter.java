@@ -1,221 +1,229 @@
-/*     */ package javax.swing.text.rtf;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.OutputStream;
-/*     */ import java.io.Reader;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class AbstractFilter
-/*     */   extends OutputStream
-/*     */ {
-/*     */   protected char[] translationTable;
-/*     */   protected boolean[] specialsTable;
-/*     */   static final char[] latin1TranslationTable;
-/*  67 */   static final boolean[] noSpecialsTable = new boolean[256]; static { byte b;
-/*  68 */     for (b = 0; b < 'Ā'; b++)
-/*  69 */       noSpecialsTable[b] = false;  }
-/*     */   
-/*  71 */   static final boolean[] allSpecialsTable = new boolean[256]; static {
-/*  72 */     for (b = 0; b < 'Ā'; b++) {
-/*  73 */       allSpecialsTable[b] = true;
-/*     */     }
-/*  75 */     latin1TranslationTable = new char[256];
-/*  76 */     for (b = 0; b < 'Ā'; b++) {
-/*  77 */       latin1TranslationTable[b] = (char)b;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void readFromStream(InputStream paramInputStream) throws IOException {
-/*  99 */     byte[] arrayOfByte = new byte[16384];
-/*     */     
-/*     */     while (true) {
-/* 102 */       int i = paramInputStream.read(arrayOfByte);
-/* 103 */       if (i < 0) {
-/*     */         break;
-/*     */       }
-/* 106 */       write(arrayOfByte, 0, i);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void readFromReader(Reader paramReader) throws IOException {
-/* 116 */     char[] arrayOfChar = new char[2048];
-/*     */     
-/*     */     while (true) {
-/* 119 */       int i = paramReader.read(arrayOfChar);
-/* 120 */       if (i < 0)
-/*     */         break; 
-/* 122 */       for (byte b = 0; b < i; b++) {
-/* 123 */         write(arrayOfChar[b]);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public AbstractFilter() {
-/* 130 */     this.translationTable = latin1TranslationTable;
-/* 131 */     this.specialsTable = noSpecialsTable;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(int paramInt) throws IOException {
-/* 141 */     if (paramInt < 0)
-/* 142 */       paramInt += 256; 
-/* 143 */     if (this.specialsTable[paramInt]) {
-/* 144 */       writeSpecial(paramInt);
-/*     */     } else {
-/* 146 */       char c = this.translationTable[paramInt];
-/* 147 */       if (c != '\000') {
-/* 148 */         write(c);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(byte[] paramArrayOfbyte, int paramInt1, int paramInt2) throws IOException {
-/* 163 */     StringBuilder stringBuilder = null;
-/* 164 */     while (paramInt2 > 0) {
-/* 165 */       short s = (short)paramArrayOfbyte[paramInt1];
-/*     */ 
-/*     */       
-/* 168 */       if (s < 0) {
-/* 169 */         s = (short)(s + 256);
-/*     */       }
-/* 171 */       if (this.specialsTable[s]) {
-/* 172 */         if (stringBuilder != null) {
-/* 173 */           write(stringBuilder.toString());
-/* 174 */           stringBuilder = null;
-/*     */         } 
-/* 176 */         writeSpecial(s);
-/*     */       } else {
-/* 178 */         char c = this.translationTable[s];
-/* 179 */         if (c != '\000') {
-/* 180 */           if (stringBuilder == null)
-/* 181 */             stringBuilder = new StringBuilder(); 
-/* 182 */           stringBuilder.append(c);
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 186 */       paramInt2--;
-/* 187 */       paramInt1++;
-/*     */     } 
-/*     */     
-/* 190 */     if (stringBuilder != null) {
-/* 191 */       write(stringBuilder.toString());
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write(String paramString) throws IOException {
-/* 207 */     int i = paramString.length();
-/* 208 */     for (byte b = 0; b < i; b++)
-/* 209 */       write(paramString.charAt(b)); 
-/*     */   }
-/*     */   
-/*     */   protected abstract void write(char paramChar) throws IOException;
-/*     */   
-/*     */   protected abstract void writeSpecial(int paramInt) throws IOException;
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\rtf\AbstractFilter.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.rtf;
+
+import java.io.*;
+import java.lang.*;
+
+/**
+ * A generic superclass for streams which read and parse text
+ * consisting of runs of characters interspersed with occasional
+ * ``specials'' (formatting characters).
+ *
+ * <p> Most of the functionality
+ * of this class would be redundant except that the
+ * <code>ByteToChar</code> converters
+ * are suddenly private API. Presumably this class will disappear
+ * when the API is made public again. (sigh) That will also let us handle
+ * multibyte character sets...
+ *
+ * <P> A subclass should override at least <code>write(char)</code>
+ * and <code>writeSpecial(int)</code>. For efficiency's sake it's a
+ * good idea to override <code>write(String)</code> as well. The subclass'
+ * initializer may also install appropriate translation and specials tables.
+ *
+ * @see OutputStream
+ */
+abstract class AbstractFilter extends OutputStream
+{
+    /** A table mapping bytes to characters */
+    protected char translationTable[];
+    /** A table indicating which byte values should be interpreted as
+     *  characters and which should be treated as formatting codes */
+    protected boolean specialsTable[];
+
+    /** A translation table which does ISO Latin-1 (trivial) */
+    static final char latin1TranslationTable[];
+    /** A specials table which indicates that no characters are special */
+    static final boolean noSpecialsTable[];
+    /** A specials table which indicates that all characters are special */
+    static final boolean allSpecialsTable[];
+
+    static {
+      int i;
+
+      noSpecialsTable = new boolean[256];
+      for (i = 0; i < 256; i++)
+        noSpecialsTable[i] = false;
+
+      allSpecialsTable = new boolean[256];
+      for (i = 0; i < 256; i++)
+        allSpecialsTable[i] = true;
+
+      latin1TranslationTable = new char[256];
+      for (i = 0; i < 256; i++)
+        latin1TranslationTable[i] = (char)i;
+    }
+
+    /**
+     * A convenience method that reads text from a FileInputStream
+     * and writes it to the receiver.
+     * The format in which the file
+     * is read is determined by the concrete subclass of
+     * AbstractFilter to which this method is sent.
+     * <p>This method does not close the receiver after reaching EOF on
+     * the input stream.
+     * The user must call <code>close()</code> to ensure that all
+     * data are processed.
+     *
+     * @param in      An InputStream providing text.
+     */
+    public void readFromStream(InputStream in)
+      throws IOException
+    {
+        byte buf[];
+        int count;
+
+        buf = new byte[16384];
+
+        while(true) {
+            count = in.read(buf);
+            if (count < 0)
+                break;
+
+            this.write(buf, 0, count);
+        }
+    }
+
+    public void readFromReader(Reader in)
+      throws IOException
+    {
+        char buf[];
+        int count;
+
+        buf = new char[2048];
+
+        while(true) {
+            count = in.read(buf);
+            if (count < 0)
+                break;
+            for (int i = 0; i < count; i++) {
+              this.write(buf[i]);
+            }
+        }
+    }
+
+    public AbstractFilter()
+    {
+        translationTable = latin1TranslationTable;
+        specialsTable = noSpecialsTable;
+    }
+
+    /**
+     * Implements the abstract method of OutputStream, of which this class
+     * is a subclass.
+     */
+    public void write(int b)
+      throws IOException
+    {
+      if (b < 0)
+        b += 256;
+      if (specialsTable[b])
+        writeSpecial(b);
+      else {
+        char ch = translationTable[b];
+        if (ch != (char)0)
+          write(ch);
+      }
+    }
+
+    /**
+     * Implements the buffer-at-a-time write method for greater
+     * efficiency.
+     *
+     * <p> <strong>PENDING:</strong> Does <code>write(byte[])</code>
+     * call <code>write(byte[], int, int)</code> or is it the other way
+     * around?
+     */
+    public void write(byte[] buf, int off, int len)
+      throws IOException
+    {
+      StringBuilder accumulator = null;
+      while (len > 0) {
+        short b = (short)buf[off];
+
+        // stupid signed bytes
+        if (b < 0)
+            b += 256;
+
+        if (specialsTable[b]) {
+          if (accumulator != null) {
+            write(accumulator.toString());
+            accumulator = null;
+          }
+          writeSpecial(b);
+        } else {
+          char ch = translationTable[b];
+          if (ch != (char)0) {
+            if (accumulator == null)
+              accumulator = new StringBuilder();
+            accumulator.append(ch);
+          }
+        }
+
+        len --;
+        off ++;
+      }
+
+      if (accumulator != null)
+        write(accumulator.toString());
+    }
+
+    /**
+     * Hopefully, all subclasses will override this method to accept strings
+     * of text, but if they don't, AbstractFilter's implementation
+     * will spoon-feed them via <code>write(char)</code>.
+     *
+     * @param s The string of non-special characters written to the
+     *          OutputStream.
+     */
+    public void write(String s)
+      throws IOException
+    {
+      int index, length;
+
+      length = s.length();
+      for(index = 0; index < length; index ++) {
+        write(s.charAt(index));
+      }
+    }
+
+    /**
+     * Subclasses must provide an implementation of this method which
+     * accepts a single (non-special) character.
+     *
+     * @param ch The character written to the OutputStream.
+     */
+    protected abstract void write(char ch) throws IOException;
+
+    /**
+     * Subclasses must provide an implementation of this method which
+     * accepts a single special byte. No translation is performed
+     * on specials.
+     *
+     * @param b The byte written to the OutputStream.
+     */
+    protected abstract void writeSpecial(int b) throws IOException;
+}

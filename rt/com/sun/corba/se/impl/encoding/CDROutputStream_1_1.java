@@ -1,155 +1,149 @@
-/*     */ package com.sun.corba.se.impl.encoding;
-/*     */ 
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class CDROutputStream_1_1
-/*     */   extends CDROutputStream_1_0
-/*     */ {
-/*  46 */   protected int fragmentOffset = 0;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void alignAndReserve(int paramInt1, int paramInt2) {
-/*  58 */     int i = computeAlignment(paramInt1);
-/*     */     
-/*  60 */     if (this.bbwi.position() + paramInt2 + i > this.bbwi.buflen) {
-/*  61 */       grow(paramInt1, paramInt2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  70 */       i = computeAlignment(paramInt1);
-/*     */     } 
-/*     */     
-/*  73 */     this.bbwi.position(this.bbwi.position() + i);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected void grow(int paramInt1, int paramInt2) {
-/*  78 */     int i = this.bbwi.position();
-/*     */     
-/*  80 */     super.grow(paramInt1, paramInt2);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*  85 */     if (this.bbwi.fragmented) {
-/*     */ 
-/*     */       
-/*  88 */       this.bbwi.fragmented = false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/*  94 */       this.fragmentOffset += i - this.bbwi.position();
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public int get_offset() {
-/*  99 */     return this.bbwi.position() + this.fragmentOffset;
-/*     */   }
-/*     */   
-/*     */   public GIOPVersion getGIOPVersion() {
-/* 103 */     return GIOPVersion.V1_1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void write_wchar(char paramChar) {
-/* 112 */     CodeSetConversion.CTBConverter cTBConverter = getWCharConverter();
-/*     */     
-/* 114 */     cTBConverter.convert(paramChar);
-/*     */     
-/* 116 */     if (cTBConverter.getNumBytes() != 2) {
-/* 117 */       throw this.wrapper.badGiop11Ctb(CompletionStatus.COMPLETED_MAYBE);
-/*     */     }
-/* 119 */     alignAndReserve(cTBConverter.getAlignment(), cTBConverter
-/* 120 */         .getNumBytes());
-/*     */     
-/* 122 */     this.parent.write_octet_array(cTBConverter.getBytes(), 0, cTBConverter
-/*     */         
-/* 124 */         .getNumBytes());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void write_wstring(String paramString) {
-/* 129 */     if (paramString == null) {
-/* 130 */       throw this.wrapper.nullParam(CompletionStatus.COMPLETED_MAYBE);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 136 */     int i = paramString.length() + 1;
-/*     */     
-/* 138 */     write_long(i);
-/*     */     
-/* 140 */     CodeSetConversion.CTBConverter cTBConverter = getWCharConverter();
-/*     */     
-/* 142 */     cTBConverter.convert(paramString);
-/*     */     
-/* 144 */     internalWriteOctetArray(cTBConverter.getBytes(), 0, cTBConverter.getNumBytes());
-/*     */ 
-/*     */     
-/* 147 */     write_short((short)0);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\encoding\CDROutputStream_1_1.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.encoding;
+
+import org.omg.CORBA.CompletionStatus;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.impl.encoding.CodeSetConversion;
+
+public class CDROutputStream_1_1 extends CDROutputStream_1_0
+{
+    // This is used to keep indirections working across fragments.  When added
+    // to the current bbwi.position(), the result is the current position
+    // in the byte stream without any fragment headers.
+    //
+    // It is equal to the following:
+    //
+    // n = number of buffers (0 is original buffer, 1 is first fragment, etc)
+    //
+    // n == 0, fragmentOffset = 0
+    //
+    // n > 0, fragmentOffset
+    //          = sum i=[1,n] { bbwi_i-1_.size - buffer i header length }
+    //
+    protected int fragmentOffset = 0;
+
+    protected void alignAndReserve(int align, int n) {
+
+        // Notice that in 1.1, we won't end a fragment with
+        // alignment padding.  We also won't guarantee that
+        // our fragments end on evenly divisible 8 byte
+        // boundaries.  There may be alignment
+        // necessary with the header of the next fragment
+        // since the header isn't aligned on an 8 byte
+        // boundary, so we have to calculate it twice.
+
+        int alignment = computeAlignment(align);
+
+        if (bbwi.position() + n + alignment > bbwi.buflen) {
+            grow(align, n);
+
+            // Must recompute the alignment after a grow.
+            // In the case of fragmentation, the alignment
+            // calculation may no longer be correct.
+
+            // People shouldn't be able to set their fragment
+            // sizes so small that the fragment header plus
+            // this alignment fills the entire buffer.
+            alignment = computeAlignment(align);
+        }
+
+        bbwi.position(bbwi.position() + alignment);
+    }
+
+    protected void grow(int align, int n) {
+        // Save the current size for possible post-fragmentation calculation
+        int oldSize = bbwi.position();
+
+        super.grow(align, n);
+
+        // At this point, if we fragmented, we should have a ByteBufferWithInfo
+        // with the fragment header already marshalled.  The size and length fields
+        // should be updated accordingly, and the fragmented flag should be set.
+        if (bbwi.fragmented) {
+
+            // Clear the flag
+            bbwi.fragmented = false;
+
+            // Update fragmentOffset so indirections work properly.
+            // At this point, oldSize is the entire length of the
+            // previous buffer.  bbwi.position() is the length of the
+            // fragment header of this buffer.
+            fragmentOffset += (oldSize - bbwi.position());
+        }
+    }
+
+    public int get_offset() {
+        return bbwi.position() + fragmentOffset;
+    }
+
+    public GIOPVersion getGIOPVersion() {
+        return GIOPVersion.V1_1;
+    }
+
+    public void write_wchar(char x)
+    {
+        // In GIOP 1.1, interoperability with wchar is limited
+        // to 2 byte fixed width encodings.  CORBA formal 99-10-07 15.3.1.6.
+        // Note that the following code prohibits UTF-16 with a byte
+        // order marker (which would result in 4 bytes).
+        CodeSetConversion.CTBConverter converter = getWCharConverter();
+
+        converter.convert(x);
+
+        if (converter.getNumBytes() != 2)
+            throw wrapper.badGiop11Ctb(CompletionStatus.COMPLETED_MAYBE);
+
+        alignAndReserve(converter.getAlignment(),
+                        converter.getNumBytes());
+
+        parent.write_octet_array(converter.getBytes(),
+                                 0,
+                                 converter.getNumBytes());
+    }
+
+    public void write_wstring(String value)
+    {
+        if (value == null) {
+            throw wrapper.nullParam(CompletionStatus.COMPLETED_MAYBE);
+        }
+
+        // The length is the number of code points (which are 2 bytes each)
+        // including the 2 byte null.  See CORBA formal 99-10-07 15.3.2.7.
+
+        int len = value.length() + 1;
+
+        write_long(len);
+
+        CodeSetConversion.CTBConverter converter = getWCharConverter();
+
+        converter.convert(value);
+
+        internalWriteOctetArray(converter.getBytes(), 0, converter.getNumBytes());
+
+        // Write the 2 byte null ending
+        write_short((short)0);
+    }
+}

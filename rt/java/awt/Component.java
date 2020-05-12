@@ -1,10168 +1,10161 @@
-/*       */ package java.awt;
-/*       */ 
-/*       */ import java.applet.Applet;
-/*       */ import java.awt.dnd.DropTarget;
-/*       */ import java.awt.event.ComponentEvent;
-/*       */ import java.awt.event.ComponentListener;
-/*       */ import java.awt.event.FocusEvent;
-/*       */ import java.awt.event.FocusListener;
-/*       */ import java.awt.event.HierarchyBoundsListener;
-/*       */ import java.awt.event.HierarchyEvent;
-/*       */ import java.awt.event.HierarchyListener;
-/*       */ import java.awt.event.InputMethodEvent;
-/*       */ import java.awt.event.InputMethodListener;
-/*       */ import java.awt.event.KeyEvent;
-/*       */ import java.awt.event.KeyListener;
-/*       */ import java.awt.event.MouseEvent;
-/*       */ import java.awt.event.MouseListener;
-/*       */ import java.awt.event.MouseMotionListener;
-/*       */ import java.awt.event.MouseWheelEvent;
-/*       */ import java.awt.event.MouseWheelListener;
-/*       */ import java.awt.event.PaintEvent;
-/*       */ import java.awt.event.WindowEvent;
-/*       */ import java.awt.im.InputContext;
-/*       */ import java.awt.im.InputMethodRequests;
-/*       */ import java.awt.image.BufferStrategy;
-/*       */ import java.awt.image.ColorModel;
-/*       */ import java.awt.image.ImageObserver;
-/*       */ import java.awt.image.ImageProducer;
-/*       */ import java.awt.image.VolatileImage;
-/*       */ import java.awt.peer.ComponentPeer;
-/*       */ import java.awt.peer.ContainerPeer;
-/*       */ import java.beans.PropertyChangeListener;
-/*       */ import java.beans.PropertyChangeSupport;
-/*       */ import java.beans.Transient;
-/*       */ import java.io.IOException;
-/*       */ import java.io.ObjectInputStream;
-/*       */ import java.io.ObjectOutputStream;
-/*       */ import java.io.OptionalDataException;
-/*       */ import java.io.PrintStream;
-/*       */ import java.io.PrintWriter;
-/*       */ import java.io.Serializable;
-/*       */ import java.lang.reflect.InvocationTargetException;
-/*       */ import java.lang.reflect.Method;
-/*       */ import java.security.AccessControlContext;
-/*       */ import java.security.AccessController;
-/*       */ import java.security.PrivilegedAction;
-/*       */ import java.util.Collections;
-/*       */ import java.util.HashSet;
-/*       */ import java.util.Locale;
-/*       */ import java.util.Map;
-/*       */ import java.util.Objects;
-/*       */ import java.util.Set;
-/*       */ import java.util.Vector;
-/*       */ import java.util.WeakHashMap;
-/*       */ import javax.accessibility.Accessible;
-/*       */ import javax.accessibility.AccessibleComponent;
-/*       */ import javax.accessibility.AccessibleContext;
-/*       */ import javax.accessibility.AccessibleRole;
-/*       */ import javax.accessibility.AccessibleSelection;
-/*       */ import javax.accessibility.AccessibleState;
-/*       */ import javax.accessibility.AccessibleStateSet;
-/*       */ import javax.swing.JComponent;
-/*       */ import sun.awt.AWTAccessor;
-/*       */ import sun.awt.AppContext;
-/*       */ import sun.awt.CausedFocusEvent;
-/*       */ import sun.awt.ConstrainableGraphics;
-/*       */ import sun.awt.EmbeddedFrame;
-/*       */ import sun.awt.EventQueueItem;
-/*       */ import sun.awt.RequestFocusController;
-/*       */ import sun.awt.SubRegionShowable;
-/*       */ import sun.awt.SunToolkit;
-/*       */ import sun.awt.WindowClosingListener;
-/*       */ import sun.awt.dnd.SunDropTargetEvent;
-/*       */ import sun.awt.im.InputContext;
-/*       */ import sun.awt.image.VSyncedBSManager;
-/*       */ import sun.font.FontDesignMetrics;
-/*       */ import sun.font.FontManager;
-/*       */ import sun.font.FontManagerFactory;
-/*       */ import sun.font.SunFontManager;
-/*       */ import sun.java2d.SunGraphics2D;
-/*       */ import sun.java2d.SunGraphicsEnvironment;
-/*       */ import sun.java2d.pipe.Region;
-/*       */ import sun.java2d.pipe.hw.ExtendedBufferCapabilities;
-/*       */ import sun.security.action.GetPropertyAction;
-/*       */ import sun.util.logging.PlatformLogger;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ public abstract class Component
-/*       */   implements ImageObserver, MenuContainer, Serializable
-/*       */ {
-/*   190 */   private static final PlatformLogger log = PlatformLogger.getLogger("java.awt.Component");
-/*   191 */   private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.Component");
-/*   192 */   private static final PlatformLogger focusLog = PlatformLogger.getLogger("java.awt.focus.Component");
-/*   193 */   private static final PlatformLogger mixingLog = PlatformLogger.getLogger("java.awt.mixing.Component");
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   transient ComponentPeer peer;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   transient Container parent;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   transient AppContext appContext;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int x;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int y;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int width;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int height;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Color foreground;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Color background;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   volatile Font font;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Font peerFont;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Cursor cursor;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Locale locale;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private volatile transient GraphicsConfiguration graphicsConfig;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*   325 */   transient BufferStrategy bufferStrategy = null;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean ignoreRepaint = false;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean visible = true;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean enabled = true;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private volatile boolean valid = false;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   DropTarget dropTarget;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Vector<PopupMenu> popups;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private String name;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private boolean nameExplicitlySet = false;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private boolean focusable = true;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private static final int FOCUS_TRAVERSABLE_UNKNOWN = 0;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private static final int FOCUS_TRAVERSABLE_DEFAULT = 1;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private static final int FOCUS_TRAVERSABLE_SET = 2;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*   427 */   private int isFocusTraversableOverridden = 0;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Set<AWTKeyStroke>[] focusTraversalKeys;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*   444 */   private static final String[] focusTraversalKeyPropertyNames = new String[] { "forwardFocusTraversalKeys", "backwardFocusTraversalKeys", "upCycleFocusTraversalKeys", "downCycleFocusTraversalKeys" };
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private boolean focusTraversalKeysEnabled = true;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*   470 */   static final Object LOCK = new AWTTreeLock();
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   static class AWTTreeLock {}
-/*       */ 
-/*       */   
-/*   477 */   private volatile transient AccessControlContext acc = AccessController.getContext();
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Dimension minSize;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean minSizeSet;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Dimension prefSize;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean prefSizeSet;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Dimension maxSize;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean maxSizeSet;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*   522 */   transient ComponentOrientation componentOrientation = ComponentOrientation.UNKNOWN;
-/*       */ 
-/*       */   
-/*       */   boolean newEventsOnly = false;
-/*       */ 
-/*       */   
-/*       */   transient ComponentListener componentListener;
-/*       */ 
-/*       */   
-/*       */   transient FocusListener focusListener;
-/*       */   
-/*       */   transient HierarchyListener hierarchyListener;
-/*       */   
-/*       */   transient HierarchyBoundsListener hierarchyBoundsListener;
-/*       */   
-/*       */   transient KeyListener keyListener;
-/*       */   
-/*       */   transient MouseListener mouseListener;
-/*       */   
-/*       */   transient MouseMotionListener mouseMotionListener;
-/*       */   
-/*       */   transient MouseWheelListener mouseWheelListener;
-/*       */   
-/*       */   transient InputMethodListener inputMethodListener;
-/*       */   
-/*   547 */   transient RuntimeException windowClosingException = null;
-/*       */   
-/*       */   static final String actionListenerK = "actionL";
-/*       */   
-/*       */   static final String adjustmentListenerK = "adjustmentL";
-/*       */   
-/*       */   static final String componentListenerK = "componentL";
-/*       */   
-/*       */   static final String containerListenerK = "containerL";
-/*       */   
-/*       */   static final String focusListenerK = "focusL";
-/*       */   
-/*       */   static final String itemListenerK = "itemL";
-/*       */   
-/*       */   static final String keyListenerK = "keyL";
-/*       */   
-/*       */   static final String mouseListenerK = "mouseL";
-/*       */   
-/*       */   static final String mouseMotionListenerK = "mouseMotionL";
-/*       */   
-/*       */   static final String mouseWheelListenerK = "mouseWheelL";
-/*       */   
-/*       */   static final String textListenerK = "textL";
-/*       */   
-/*       */   static final String ownedWindowK = "ownedL";
-/*       */   
-/*       */   static final String windowListenerK = "windowL";
-/*       */   
-/*       */   static final String inputMethodListenerK = "inputMethodL";
-/*       */   
-/*       */   static final String hierarchyListenerK = "hierarchyL";
-/*       */   
-/*       */   static final String hierarchyBoundsListenerK = "hierarchyBoundsL";
-/*       */   
-/*       */   static final String windowStateListenerK = "windowStateL";
-/*       */   static final String windowFocusListenerK = "windowFocusL";
-/*   583 */   long eventMask = 4096L; static boolean isInc;
-/*       */   static int incRate;
-/*       */   public static final float TOP_ALIGNMENT = 0.0F;
-/*       */   public static final float CENTER_ALIGNMENT = 0.5F;
-/*       */   public static final float BOTTOM_ALIGNMENT = 1.0F;
-/*       */   public static final float LEFT_ALIGNMENT = 0.0F;
-/*       */   public static final float RIGHT_ALIGNMENT = 1.0F;
-/*       */   private static final long serialVersionUID = -7644114512714619750L;
-/*       */   private PropertyChangeSupport changeSupport;
-/*       */   
-/*   593 */   static { Toolkit.loadLibraries();
-/*       */     
-/*   595 */     if (!GraphicsEnvironment.isHeadless()) {
-/*   596 */       initIDs();
-/*       */     }
-/*       */     
-/*   599 */     String str = AccessController.<String>doPrivileged(new GetPropertyAction("awt.image.incrementaldraw"));
-/*       */     
-/*   601 */     isInc = (str == null || str.equals("true"));
-/*       */     
-/*   603 */     str = AccessController.<String>doPrivileged(new GetPropertyAction("awt.image.redrawrate"));
-/*       */     
-/*   605 */     incRate = (str != null) ? Integer.parseInt(str) : 100;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*   839 */     AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
-/*       */           public void setBackgroundEraseDisabled(Component param1Component, boolean param1Boolean) {
-/*   841 */             param1Component.backgroundEraseDisabled = param1Boolean;
-/*       */           }
-/*       */           public boolean getBackgroundEraseDisabled(Component param1Component) {
-/*   844 */             return param1Component.backgroundEraseDisabled;
-/*       */           }
-/*       */           public Rectangle getBounds(Component param1Component) {
-/*   847 */             return new Rectangle(param1Component.x, param1Component.y, param1Component.width, param1Component.height);
-/*       */           }
-/*       */           
-/*       */           public void setMixingCutoutShape(Component param1Component, Shape param1Shape) {
-/*   851 */             Region region = (param1Shape == null) ? null : Region.getInstance(param1Shape, null);
-/*       */             
-/*   853 */             synchronized (param1Component.getTreeLock()) {
-/*   854 */               boolean bool1 = false;
-/*   855 */               boolean bool2 = false;
-/*       */               
-/*   857 */               if (!param1Component.isNonOpaqueForMixing()) {
-/*   858 */                 bool2 = true;
-/*       */               }
-/*       */               
-/*   861 */               param1Component.mixingCutoutRegion = region;
-/*       */               
-/*   863 */               if (!param1Component.isNonOpaqueForMixing()) {
-/*   864 */                 bool1 = true;
-/*       */               }
-/*       */               
-/*   867 */               if (param1Component.isMixingNeeded()) {
-/*   868 */                 if (bool2) {
-/*   869 */                   param1Component.mixOnHiding(param1Component.isLightweight());
-/*       */                 }
-/*   871 */                 if (bool1) {
-/*   872 */                   param1Component.mixOnShowing();
-/*       */                 }
-/*       */               } 
-/*       */             } 
-/*       */           }
-/*       */ 
-/*       */ 
-/*       */           
-/*       */           public void setGraphicsConfiguration(Component param1Component, GraphicsConfiguration param1GraphicsConfiguration) {
-/*   881 */             param1Component.setGraphicsConfiguration(param1GraphicsConfiguration);
-/*       */           }
-/*       */           public boolean requestFocus(Component param1Component, CausedFocusEvent.Cause param1Cause) {
-/*   884 */             return param1Component.requestFocus(param1Cause);
-/*       */           }
-/*       */           public boolean canBeFocusOwner(Component param1Component) {
-/*   887 */             return param1Component.canBeFocusOwner();
-/*       */           }
-/*       */           
-/*       */           public boolean isVisible(Component param1Component) {
-/*   891 */             return param1Component.isVisible_NoClientCode();
-/*       */           }
-/*       */ 
-/*       */           
-/*       */           public void setRequestFocusController(RequestFocusController param1RequestFocusController) {
-/*   896 */             Component.setRequestFocusController(param1RequestFocusController);
-/*       */           }
-/*       */           public AppContext getAppContext(Component param1Component) {
-/*   899 */             return param1Component.appContext;
-/*       */           }
-/*       */           public void setAppContext(Component param1Component, AppContext param1AppContext) {
-/*   902 */             param1Component.appContext = param1AppContext;
-/*       */           }
-/*       */           public Container getParent(Component param1Component) {
-/*   905 */             return param1Component.getParent_NoClientCode();
-/*       */           }
-/*       */           public void setParent(Component param1Component, Container param1Container) {
-/*   908 */             param1Component.parent = param1Container;
-/*       */           }
-/*       */           public void setSize(Component param1Component, int param1Int1, int param1Int2) {
-/*   911 */             param1Component.width = param1Int1;
-/*   912 */             param1Component.height = param1Int2;
-/*       */           }
-/*       */           public Point getLocation(Component param1Component) {
-/*   915 */             return param1Component.location_NoClientCode();
-/*       */           }
-/*       */           public void setLocation(Component param1Component, int param1Int1, int param1Int2) {
-/*   918 */             param1Component.x = param1Int1;
-/*   919 */             param1Component.y = param1Int2;
-/*       */           }
-/*       */           public boolean isEnabled(Component param1Component) {
-/*   922 */             return param1Component.isEnabledImpl();
-/*       */           }
-/*       */           public boolean isDisplayable(Component param1Component) {
-/*   925 */             return (param1Component.peer != null);
-/*       */           }
-/*       */           public Cursor getCursor(Component param1Component) {
-/*   928 */             return param1Component.getCursor_NoClientCode();
-/*       */           }
-/*       */           public ComponentPeer getPeer(Component param1Component) {
-/*   931 */             return param1Component.peer;
-/*       */           }
-/*       */           public void setPeer(Component param1Component, ComponentPeer param1ComponentPeer) {
-/*   934 */             param1Component.peer = param1ComponentPeer;
-/*       */           }
-/*       */           public boolean isLightweight(Component param1Component) {
-/*   937 */             return param1Component.peer instanceof java.awt.peer.LightweightPeer;
-/*       */           }
-/*       */           public boolean getIgnoreRepaint(Component param1Component) {
-/*   940 */             return param1Component.ignoreRepaint;
-/*       */           }
-/*       */           public int getWidth(Component param1Component) {
-/*   943 */             return param1Component.width;
-/*       */           }
-/*       */           public int getHeight(Component param1Component) {
-/*   946 */             return param1Component.height;
-/*       */           }
-/*       */           public int getX(Component param1Component) {
-/*   949 */             return param1Component.x;
-/*       */           }
-/*       */           public int getY(Component param1Component) {
-/*   952 */             return param1Component.y;
-/*       */           }
-/*       */           public Color getForeground(Component param1Component) {
-/*   955 */             return param1Component.foreground;
-/*       */           }
-/*       */           public Color getBackground(Component param1Component) {
-/*   958 */             return param1Component.background;
-/*       */           }
-/*       */           public void setBackground(Component param1Component, Color param1Color) {
-/*   961 */             param1Component.background = param1Color;
-/*       */           }
-/*       */           public Font getFont(Component param1Component) {
-/*   964 */             return param1Component.getFont_NoClientCode();
-/*       */           }
-/*       */           public void processEvent(Component param1Component, AWTEvent param1AWTEvent) {
-/*   967 */             param1Component.processEvent(param1AWTEvent);
-/*       */           }
-/*       */           
-/*       */           public AccessControlContext getAccessControlContext(Component param1Component) {
-/*   971 */             return param1Component.getAccessControlContext();
-/*       */           }
-/*       */           
-/*       */           public void revalidateSynchronously(Component param1Component) {
-/*   975 */             param1Component.revalidateSynchronously();
-/*       */           }
-/*       */         }); } private transient Object objectLock = new Object(); Object getObjectLock() { return this.objectLock; } final AccessControlContext getAccessControlContext() {
-/*       */     if (this.acc == null)
-/*       */       throw new SecurityException("Component is missing AccessControlContext"); 
-/*       */     return this.acc;
-/*       */   } boolean isPacked = false; private int boundsOp = 3; public enum BaselineResizeBehavior {
-/*       */     CONSTANT_ASCENT, CONSTANT_DESCENT, CENTER_OFFSET, OTHER; } private transient Region compoundShape = null; private transient Region mixingCutoutRegion = null; private transient boolean isAddNotifyComplete = false; transient boolean backgroundEraseDisabled; transient EventQueueItem[] eventCache; private transient boolean coalescingEnabled; int getBoundsOp() {
-/*       */     assert Thread.holdsLock(getTreeLock());
-/*       */     return this.boundsOp;
-/*       */   } void setBoundsOp(int paramInt) {
-/*       */     assert Thread.holdsLock(getTreeLock());
-/*       */     if (paramInt == 5) {
-/*       */       this.boundsOp = 3;
-/*       */     } else if (this.boundsOp == 3) {
-/*       */       this.boundsOp = paramInt;
-/*       */     } 
-/*       */   } void initializeFocusTraversalKeys() {
-/*   993 */     this.focusTraversalKeys = (Set<AWTKeyStroke>[])new Set[3];
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   String constructComponentName() {
-/*  1001 */     return null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public String getName() {
-/*  1013 */     if (this.name == null && !this.nameExplicitlySet)
-/*  1014 */       synchronized (getObjectLock()) {
-/*  1015 */         if (this.name == null && !this.nameExplicitlySet) {
-/*  1016 */           this.name = constructComponentName();
-/*       */         }
-/*       */       }  
-/*  1019 */     return this.name;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setName(String paramString) {
-/*       */     String str;
-/*  1031 */     synchronized (getObjectLock()) {
-/*  1032 */       str = this.name;
-/*  1033 */       this.name = paramString;
-/*  1034 */       this.nameExplicitlySet = true;
-/*       */     } 
-/*  1036 */     firePropertyChange("name", str, paramString);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Container getParent() {
-/*  1045 */     return getParent_NoClientCode();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final Container getParent_NoClientCode() {
-/*  1053 */     return this.parent;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Container getContainer() {
-/*  1060 */     return getParent_NoClientCode();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public ComponentPeer getPeer() {
-/*  1070 */     return this.peer;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void setDropTarget(DropTarget paramDropTarget) {
-/*  1083 */     if (paramDropTarget == this.dropTarget || (this.dropTarget != null && this.dropTarget.equals(paramDropTarget))) {
-/*       */       return;
-/*       */     }
-/*       */     
-/*       */     DropTarget dropTarget;
-/*  1088 */     if ((dropTarget = this.dropTarget) != null) {
-/*  1089 */       if (this.peer != null) this.dropTarget.removeNotify(this.peer);
-/*       */       
-/*  1091 */       DropTarget dropTarget1 = this.dropTarget;
-/*       */       
-/*  1093 */       this.dropTarget = null;
-/*       */       
-/*       */       try {
-/*  1096 */         dropTarget1.setComponent(null);
-/*  1097 */       } catch (IllegalArgumentException illegalArgumentException) {}
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  1104 */     if ((this.dropTarget = paramDropTarget) != null) {
-/*       */       try {
-/*  1106 */         this.dropTarget.setComponent(this);
-/*  1107 */         if (this.peer != null) this.dropTarget.addNotify(this.peer); 
-/*  1108 */       } catch (IllegalArgumentException illegalArgumentException) {
-/*  1109 */         if (dropTarget != null) {
-/*       */           try {
-/*  1111 */             dropTarget.setComponent(this);
-/*  1112 */             if (this.peer != null) this.dropTarget.addNotify(this.peer); 
-/*  1113 */           } catch (IllegalArgumentException illegalArgumentException1) {}
-/*       */         }
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized DropTarget getDropTarget() {
-/*  1126 */     return this.dropTarget;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public GraphicsConfiguration getGraphicsConfiguration() {
-/*  1144 */     return getGraphicsConfiguration_NoClientCode();
-/*       */   }
-/*       */   
-/*       */   final GraphicsConfiguration getGraphicsConfiguration_NoClientCode() {
-/*  1148 */     return this.graphicsConfig;
-/*       */   }
-/*       */   
-/*       */   void setGraphicsConfiguration(GraphicsConfiguration paramGraphicsConfiguration) {
-/*  1152 */     synchronized (getTreeLock()) {
-/*  1153 */       if (updateGraphicsData(paramGraphicsConfiguration)) {
-/*  1154 */         removeNotify();
-/*  1155 */         addNotify();
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */   
-/*       */   boolean updateGraphicsData(GraphicsConfiguration paramGraphicsConfiguration) {
-/*  1161 */     checkTreeLock();
-/*       */     
-/*  1163 */     if (this.graphicsConfig == paramGraphicsConfiguration) {
-/*  1164 */       return false;
-/*       */     }
-/*       */     
-/*  1167 */     this.graphicsConfig = paramGraphicsConfiguration;
-/*       */     
-/*  1169 */     ComponentPeer componentPeer = getPeer();
-/*  1170 */     if (componentPeer != null) {
-/*  1171 */       return componentPeer.updateGraphicsData(paramGraphicsConfiguration);
-/*       */     }
-/*  1173 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void checkGD(String paramString) {
-/*  1181 */     if (this.graphicsConfig != null && 
-/*  1182 */       !this.graphicsConfig.getDevice().getIDstring().equals(paramString)) {
-/*  1183 */       throw new IllegalArgumentException("adding a container to a container on a different GraphicsDevice");
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public final Object getTreeLock() {
-/*  1196 */     return LOCK;
-/*       */   }
-/*       */   
-/*       */   final void checkTreeLock() {
-/*  1200 */     if (!Thread.holdsLock(getTreeLock())) {
-/*  1201 */       throw new IllegalStateException("This function should be called while holding treeLock");
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Toolkit getToolkit() {
-/*  1214 */     return getToolkitImpl();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final Toolkit getToolkitImpl() {
-/*  1222 */     Container container = this.parent;
-/*  1223 */     if (container != null) {
-/*  1224 */       return container.getToolkitImpl();
-/*       */     }
-/*  1226 */     return Toolkit.getDefaultToolkit();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isValid() {
-/*  1243 */     return (this.peer != null && this.valid);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isDisplayable() {
-/*  1271 */     return (getPeer() != null);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Transient
-/*       */   public boolean isVisible() {
-/*  1286 */     return isVisible_NoClientCode();
-/*       */   }
-/*       */   final boolean isVisible_NoClientCode() {
-/*  1289 */     return this.visible;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean isRecursivelyVisible() {
-/*  1299 */     return (this.visible && (this.parent == null || this.parent.isRecursivelyVisible()));
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private Rectangle getRecursivelyVisibleBounds() {
-/*  1309 */     Container container = getContainer();
-/*  1310 */     Rectangle rectangle1 = getBounds();
-/*  1311 */     if (container == null)
-/*       */     {
-/*  1313 */       return rectangle1;
-/*       */     }
-/*       */     
-/*  1316 */     Rectangle rectangle2 = container.getRecursivelyVisibleBounds();
-/*  1317 */     rectangle2.setLocation(0, 0);
-/*  1318 */     return rectangle2.intersection(rectangle1);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Point pointRelativeToComponent(Point paramPoint) {
-/*  1326 */     Point point = getLocationOnScreen();
-/*  1327 */     return new Point(paramPoint.x - point.x, paramPoint.y - point.y);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Component findUnderMouseInWindow(PointerInfo paramPointerInfo) {
-/*  1341 */     if (!isShowing()) {
-/*  1342 */       return null;
-/*       */     }
-/*  1344 */     Window window = getContainingWindow();
-/*  1345 */     if (!Toolkit.getDefaultToolkit().getMouseInfoPeer().isWindowUnderMouse(window)) {
-/*  1346 */       return null;
-/*       */     }
-/*       */     
-/*  1349 */     Point point = window.pointRelativeToComponent(paramPointerInfo.getLocation());
-/*  1350 */     return window.findComponentAt(point.x, point.y, true);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Point getMousePosition() throws HeadlessException {
-/*  1384 */     if (GraphicsEnvironment.isHeadless()) {
-/*  1385 */       throw new HeadlessException();
-/*       */     }
-/*       */     
-/*  1388 */     PointerInfo pointerInfo = AccessController.<PointerInfo>doPrivileged(new PrivilegedAction<PointerInfo>()
-/*       */         {
-/*       */           public PointerInfo run() {
-/*  1391 */             return MouseInfo.getPointerInfo();
-/*       */           }
-/*       */         });
-/*       */ 
-/*       */     
-/*  1396 */     synchronized (getTreeLock()) {
-/*  1397 */       Component component = findUnderMouseInWindow(pointerInfo);
-/*  1398 */       if (!isSameOrAncestorOf(component, true)) {
-/*  1399 */         return null;
-/*       */       }
-/*  1401 */       return pointRelativeToComponent(pointerInfo.getLocation());
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean isSameOrAncestorOf(Component paramComponent, boolean paramBoolean) {
-/*  1409 */     return (paramComponent == this);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isShowing() {
-/*  1431 */     if (this.visible && this.peer != null) {
-/*  1432 */       Container container = this.parent;
-/*  1433 */       return (container == null || container.isShowing());
-/*       */     } 
-/*  1435 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isEnabled() {
-/*  1449 */     return isEnabledImpl();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final boolean isEnabledImpl() {
-/*  1457 */     return this.enabled;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setEnabled(boolean paramBoolean) {
-/*  1478 */     enable(paramBoolean);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void enable() {
-/*  1487 */     if (!this.enabled) {
-/*  1488 */       synchronized (getTreeLock()) {
-/*  1489 */         this.enabled = true;
-/*  1490 */         ComponentPeer componentPeer = this.peer;
-/*  1491 */         if (componentPeer != null) {
-/*  1492 */           componentPeer.setEnabled(true);
-/*  1493 */           if (this.visible && !getRecursivelyVisibleBounds().isEmpty()) {
-/*  1494 */             updateCursorImmediately();
-/*       */           }
-/*       */         } 
-/*       */       } 
-/*  1498 */       if (this.accessibleContext != null) {
-/*  1499 */         this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.ENABLED);
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void enable(boolean paramBoolean) {
-/*  1512 */     if (paramBoolean) {
-/*  1513 */       enable();
-/*       */     } else {
-/*  1515 */       disable();
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void disable() {
-/*  1525 */     if (this.enabled) {
-/*  1526 */       KeyboardFocusManager.clearMostRecentFocusOwner(this);
-/*  1527 */       synchronized (getTreeLock()) {
-/*  1528 */         this.enabled = false;
-/*       */         
-/*  1530 */         if ((isFocusOwner() || (containsFocus() && !isLightweight())) && 
-/*  1531 */           KeyboardFocusManager.isAutoFocusTransferEnabled())
-/*       */         {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */           
-/*  1537 */           transferFocus(false);
-/*       */         }
-/*  1539 */         ComponentPeer componentPeer = this.peer;
-/*  1540 */         if (componentPeer != null) {
-/*  1541 */           componentPeer.setEnabled(false);
-/*  1542 */           if (this.visible && !getRecursivelyVisibleBounds().isEmpty()) {
-/*  1543 */             updateCursorImmediately();
-/*       */           }
-/*       */         } 
-/*       */       } 
-/*  1547 */       if (this.accessibleContext != null) {
-/*  1548 */         this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.ENABLED);
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isDoubleBuffered() {
-/*  1564 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void enableInputMethods(boolean paramBoolean) {
-/*  1580 */     if (paramBoolean) {
-/*  1581 */       if ((this.eventMask & 0x1000L) != 0L) {
-/*       */         return;
-/*       */       }
-/*       */ 
-/*       */ 
-/*       */       
-/*  1587 */       if (isFocusOwner()) {
-/*  1588 */         InputContext inputContext = getInputContext();
-/*  1589 */         if (inputContext != null) {
-/*  1590 */           FocusEvent focusEvent = new FocusEvent(this, 1004);
-/*       */           
-/*  1592 */           inputContext.dispatchEvent(focusEvent);
-/*       */         } 
-/*       */       } 
-/*       */       
-/*  1596 */       this.eventMask |= 0x1000L;
-/*       */     } else {
-/*  1598 */       if ((this.eventMask & 0x1000L) != 0L) {
-/*  1599 */         InputContext inputContext = getInputContext();
-/*  1600 */         if (inputContext != null) {
-/*  1601 */           inputContext.endComposition();
-/*  1602 */           inputContext.removeNotify(this);
-/*       */         } 
-/*       */       } 
-/*  1605 */       this.eventMask &= 0xFFFFFFFFFFFFEFFFL;
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setVisible(boolean paramBoolean) {
-/*  1623 */     show(paramBoolean);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void show() {
-/*  1632 */     if (!this.visible) {
-/*  1633 */       synchronized (getTreeLock()) {
-/*  1634 */         this.visible = true;
-/*  1635 */         mixOnShowing();
-/*  1636 */         ComponentPeer componentPeer = this.peer;
-/*  1637 */         if (componentPeer != null) {
-/*  1638 */           componentPeer.setVisible(true);
-/*  1639 */           createHierarchyEvents(1400, this, this.parent, 4L, 
-/*       */ 
-/*       */               
-/*  1642 */               Toolkit.enabledOnToolkit(32768L));
-/*  1643 */           if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*  1644 */             repaint();
-/*       */           }
-/*  1646 */           updateCursorImmediately();
-/*       */         } 
-/*       */         
-/*  1649 */         if (this.componentListener != null || (this.eventMask & 0x1L) != 0L || 
-/*       */           
-/*  1651 */           Toolkit.enabledOnToolkit(1L)) {
-/*  1652 */           ComponentEvent componentEvent = new ComponentEvent(this, 102);
-/*       */           
-/*  1654 */           Toolkit.getEventQueue().postEvent(componentEvent);
-/*       */         } 
-/*       */       } 
-/*  1657 */       Container container = this.parent;
-/*  1658 */       if (container != null) {
-/*  1659 */         container.invalidate();
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void show(boolean paramBoolean) {
-/*  1670 */     if (paramBoolean) {
-/*  1671 */       show();
-/*       */     } else {
-/*  1673 */       hide();
-/*       */     } 
-/*       */   }
-/*       */   
-/*       */   boolean containsFocus() {
-/*  1678 */     return isFocusOwner();
-/*       */   }
-/*       */   
-/*       */   void clearMostRecentFocusOwnerOnHide() {
-/*  1682 */     KeyboardFocusManager.clearMostRecentFocusOwner(this);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void clearCurrentFocusCycleRootOnHide() {}
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void hide() {
-/*  1695 */     this.isPacked = false;
-/*       */     
-/*  1697 */     if (this.visible) {
-/*  1698 */       clearCurrentFocusCycleRootOnHide();
-/*  1699 */       clearMostRecentFocusOwnerOnHide();
-/*  1700 */       synchronized (getTreeLock()) {
-/*  1701 */         this.visible = false;
-/*  1702 */         mixOnHiding(isLightweight());
-/*  1703 */         if (containsFocus() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
-/*  1704 */           transferFocus(true);
-/*       */         }
-/*  1706 */         ComponentPeer componentPeer = this.peer;
-/*  1707 */         if (componentPeer != null) {
-/*  1708 */           componentPeer.setVisible(false);
-/*  1709 */           createHierarchyEvents(1400, this, this.parent, 4L, 
-/*       */ 
-/*       */               
-/*  1712 */               Toolkit.enabledOnToolkit(32768L));
-/*  1713 */           if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*  1714 */             repaint();
-/*       */           }
-/*  1716 */           updateCursorImmediately();
-/*       */         } 
-/*  1718 */         if (this.componentListener != null || (this.eventMask & 0x1L) != 0L || 
-/*       */           
-/*  1720 */           Toolkit.enabledOnToolkit(1L)) {
-/*  1721 */           ComponentEvent componentEvent = new ComponentEvent(this, 103);
-/*       */           
-/*  1723 */           Toolkit.getEventQueue().postEvent(componentEvent);
-/*       */         } 
-/*       */       } 
-/*  1726 */       Container container = this.parent;
-/*  1727 */       if (container != null) {
-/*  1728 */         container.invalidate();
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Transient
-/*       */   public Color getForeground() {
-/*  1745 */     Color color = this.foreground;
-/*  1746 */     if (color != null) {
-/*  1747 */       return color;
-/*       */     }
-/*  1749 */     Container container = this.parent;
-/*  1750 */     return (container != null) ? container.getForeground() : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setForeground(Color paramColor) {
-/*  1763 */     Color color = this.foreground;
-/*  1764 */     ComponentPeer componentPeer = this.peer;
-/*  1765 */     this.foreground = paramColor;
-/*  1766 */     if (componentPeer != null) {
-/*  1767 */       paramColor = getForeground();
-/*  1768 */       if (paramColor != null) {
-/*  1769 */         componentPeer.setForeground(paramColor);
-/*       */       }
-/*       */     } 
-/*       */ 
-/*       */     
-/*  1774 */     firePropertyChange("foreground", color, paramColor);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isForegroundSet() {
-/*  1787 */     return (this.foreground != null);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Transient
-/*       */   public Color getBackground() {
-/*  1800 */     Color color = this.background;
-/*  1801 */     if (color != null) {
-/*  1802 */       return color;
-/*       */     }
-/*  1804 */     Container container = this.parent;
-/*  1805 */     return (container != null) ? container.getBackground() : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setBackground(Color paramColor) {
-/*  1824 */     Color color = this.background;
-/*  1825 */     ComponentPeer componentPeer = this.peer;
-/*  1826 */     this.background = paramColor;
-/*  1827 */     if (componentPeer != null) {
-/*  1828 */       paramColor = getBackground();
-/*  1829 */       if (paramColor != null) {
-/*  1830 */         componentPeer.setBackground(paramColor);
-/*       */       }
-/*       */     } 
-/*       */ 
-/*       */     
-/*  1835 */     firePropertyChange("background", color, paramColor);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isBackgroundSet() {
-/*  1848 */     return (this.background != null);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Transient
-/*       */   public Font getFont() {
-/*  1860 */     return getFont_NoClientCode();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final Font getFont_NoClientCode() {
-/*  1868 */     Font font = this.font;
-/*  1869 */     if (font != null) {
-/*  1870 */       return font;
-/*       */     }
-/*  1872 */     Container container = this.parent;
-/*  1873 */     return (container != null) ? container.getFont_NoClientCode() : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setFont(Font paramFont) {
-/*       */     Font font1, font2;
-/*  1893 */     synchronized (getTreeLock()) {
-/*  1894 */       font1 = this.font;
-/*  1895 */       font2 = this.font = paramFont;
-/*  1896 */       ComponentPeer componentPeer = this.peer;
-/*  1897 */       if (componentPeer != null) {
-/*  1898 */         paramFont = getFont();
-/*  1899 */         if (paramFont != null) {
-/*  1900 */           componentPeer.setFont(paramFont);
-/*  1901 */           this.peerFont = paramFont;
-/*       */         } 
-/*       */       } 
-/*       */     } 
-/*       */ 
-/*       */     
-/*  1907 */     firePropertyChange("font", font1, font2);
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  1912 */     if (paramFont != font1 && (font1 == null || 
-/*  1913 */       !font1.equals(paramFont))) {
-/*  1914 */       invalidateIfValid();
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isFontSet() {
-/*  1928 */     return (this.font != null);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Locale getLocale() {
-/*  1943 */     Locale locale = this.locale;
-/*  1944 */     if (locale != null) {
-/*  1945 */       return locale;
-/*       */     }
-/*  1947 */     Container container = this.parent;
-/*       */     
-/*  1949 */     if (container == null) {
-/*  1950 */       throw new IllegalComponentStateException("This component must have a parent in order to determine its locale");
-/*       */     }
-/*  1952 */     return container.getLocale();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setLocale(Locale paramLocale) {
-/*  1968 */     Locale locale = this.locale;
-/*  1969 */     this.locale = paramLocale;
-/*       */ 
-/*       */ 
-/*       */     
-/*  1973 */     firePropertyChange("locale", locale, paramLocale);
-/*       */ 
-/*       */     
-/*  1976 */     invalidateIfValid();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public ColorModel getColorModel() {
-/*  1989 */     ComponentPeer componentPeer = this.peer;
-/*  1990 */     if (componentPeer != null && !(componentPeer instanceof java.awt.peer.LightweightPeer))
-/*  1991 */       return componentPeer.getColorModel(); 
-/*  1992 */     if (GraphicsEnvironment.isHeadless()) {
-/*  1993 */       return ColorModel.getRGBdefault();
-/*       */     }
-/*  1995 */     return getToolkit().getColorModel();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Point getLocation() {
-/*  2019 */     return location();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Point getLocationOnScreen() {
-/*  2035 */     synchronized (getTreeLock()) {
-/*  2036 */       return getLocationOnScreen_NoTreeLock();
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final Point getLocationOnScreen_NoTreeLock() {
-/*  2046 */     if (this.peer != null && isShowing()) {
-/*  2047 */       if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*       */ 
-/*       */         
-/*  2050 */         Container container = getNativeContainer();
-/*  2051 */         Point point = container.peer.getLocationOnScreen();
-/*  2052 */         for (Component component = this; component != container; component = component.getParent()) {
-/*  2053 */           point.x += component.x;
-/*  2054 */           point.y += component.y;
-/*       */         } 
-/*  2056 */         return point;
-/*       */       } 
-/*  2058 */       return this.peer.getLocationOnScreen();
-/*       */     } 
-/*       */ 
-/*       */     
-/*  2062 */     throw new IllegalComponentStateException("component must be showing on the screen to determine its location");
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public Point location() {
-/*  2073 */     return location_NoClientCode();
-/*       */   }
-/*       */   
-/*       */   private Point location_NoClientCode() {
-/*  2077 */     return new Point(this.x, this.y);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setLocation(int paramInt1, int paramInt2) {
-/*  2098 */     move(paramInt1, paramInt2);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void move(int paramInt1, int paramInt2) {
-/*  2107 */     synchronized (getTreeLock()) {
-/*  2108 */       setBoundsOp(1);
-/*  2109 */       setBounds(paramInt1, paramInt2, this.width, this.height);
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setLocation(Point paramPoint) {
-/*  2130 */     setLocation(paramPoint.x, paramPoint.y);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Dimension getSize() {
-/*  2146 */     return size();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public Dimension size() {
-/*  2155 */     return new Dimension(this.width, this.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setSize(int paramInt1, int paramInt2) {
-/*  2173 */     resize(paramInt1, paramInt2);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void resize(int paramInt1, int paramInt2) {
-/*  2182 */     synchronized (getTreeLock()) {
-/*  2183 */       setBoundsOp(2);
-/*  2184 */       setBounds(this.x, this.y, paramInt1, paramInt2);
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setSize(Dimension paramDimension) {
-/*  2204 */     resize(paramDimension);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void resize(Dimension paramDimension) {
-/*  2213 */     setSize(paramDimension.width, paramDimension.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Rectangle getBounds() {
-/*  2227 */     return bounds();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public Rectangle bounds() {
-/*  2236 */     return new Rectangle(this.x, this.y, this.width, this.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setBounds(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  2261 */     reshape(paramInt1, paramInt2, paramInt3, paramInt4);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void reshape(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  2270 */     synchronized (getTreeLock()) {
-/*       */       try {
-/*  2272 */         setBoundsOp(3);
-/*  2273 */         boolean bool1 = (this.width != paramInt3 || this.height != paramInt4) ? true : false;
-/*  2274 */         boolean bool2 = (this.x != paramInt1 || this.y != paramInt2) ? true : false;
-/*  2275 */         if (!bool1 && !bool2) {
-/*       */           return;
-/*       */         }
-/*  2278 */         int i = this.x;
-/*  2279 */         int j = this.y;
-/*  2280 */         int k = this.width;
-/*  2281 */         int m = this.height;
-/*  2282 */         this.x = paramInt1;
-/*  2283 */         this.y = paramInt2;
-/*  2284 */         this.width = paramInt3;
-/*  2285 */         this.height = paramInt4;
-/*       */         
-/*  2287 */         if (bool1) {
-/*  2288 */           this.isPacked = false;
-/*       */         }
-/*       */         
-/*  2291 */         boolean bool3 = true;
-/*  2292 */         mixOnReshaping();
-/*  2293 */         if (this.peer != null) {
-/*       */           
-/*  2295 */           if (!(this.peer instanceof java.awt.peer.LightweightPeer)) {
-/*  2296 */             reshapeNativePeer(paramInt1, paramInt2, paramInt3, paramInt4, getBoundsOp());
-/*       */             
-/*  2298 */             bool1 = (k != this.width || m != this.height) ? true : false;
-/*  2299 */             bool2 = (i != this.x || j != this.y) ? true : false;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */             
-/*  2304 */             if (this instanceof Window) {
-/*  2305 */               bool3 = false;
-/*       */             }
-/*       */           } 
-/*  2308 */           if (bool1) {
-/*  2309 */             invalidate();
-/*       */           }
-/*  2311 */           if (this.parent != null) {
-/*  2312 */             this.parent.invalidateIfValid();
-/*       */           }
-/*       */         } 
-/*  2315 */         if (bool3) {
-/*  2316 */           notifyNewBounds(bool1, bool2);
-/*       */         }
-/*  2318 */         repaintParentIfNeeded(i, j, k, m);
-/*       */       } finally {
-/*  2320 */         setBoundsOp(5);
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private void repaintParentIfNeeded(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  2328 */     if (this.parent != null && this.peer instanceof java.awt.peer.LightweightPeer && isShowing()) {
-/*       */       
-/*  2330 */       this.parent.repaint(paramInt1, paramInt2, paramInt3, paramInt4);
-/*       */       
-/*  2332 */       repaint();
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private void reshapeNativePeer(int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  2339 */     int i = paramInt1;
-/*  2340 */     int j = paramInt2;
-/*  2341 */     Container container = this.parent;
-/*  2342 */     for (; container != null && container.peer instanceof java.awt.peer.LightweightPeer; 
-/*  2343 */       container = container.parent) {
-/*       */       
-/*  2345 */       i += container.x;
-/*  2346 */       j += container.y;
-/*       */     } 
-/*  2348 */     this.peer.setBounds(i, j, paramInt3, paramInt4, paramInt5);
-/*       */   }
-/*       */ 
-/*       */   
-/*       */   private void notifyNewBounds(boolean paramBoolean1, boolean paramBoolean2) {
-/*  2353 */     if (this.componentListener != null || (this.eventMask & 0x1L) != 0L || 
-/*       */       
-/*  2355 */       Toolkit.enabledOnToolkit(1L)) {
-/*       */       
-/*  2357 */       if (paramBoolean1) {
-/*  2358 */         ComponentEvent componentEvent = new ComponentEvent(this, 101);
-/*       */         
-/*  2360 */         Toolkit.getEventQueue().postEvent(componentEvent);
-/*       */       } 
-/*  2362 */       if (paramBoolean2) {
-/*  2363 */         ComponentEvent componentEvent = new ComponentEvent(this, 100);
-/*       */         
-/*  2365 */         Toolkit.getEventQueue().postEvent(componentEvent);
-/*       */       }
-/*       */     
-/*  2368 */     } else if (this instanceof Container && ((Container)this).countComponents() > 0) {
-/*       */       
-/*  2370 */       boolean bool = Toolkit.enabledOnToolkit(65536L);
-/*  2371 */       if (paramBoolean1)
-/*       */       {
-/*  2373 */         ((Container)this).createChildHierarchyEvents(1402, 0L, bool);
-/*       */       }
-/*       */       
-/*  2376 */       if (paramBoolean2) {
-/*  2377 */         ((Container)this).createChildHierarchyEvents(1401, 0L, bool);
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setBounds(Rectangle paramRectangle) {
-/*  2405 */     setBounds(paramRectangle.x, paramRectangle.y, paramRectangle.width, paramRectangle.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int getX() {
-/*  2420 */     return this.x;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int getY() {
-/*  2435 */     return this.y;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int getWidth() {
-/*  2450 */     return this.width;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int getHeight() {
-/*  2465 */     return this.height;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Rectangle getBounds(Rectangle paramRectangle) {
-/*  2480 */     if (paramRectangle == null) {
-/*  2481 */       return new Rectangle(getX(), getY(), getWidth(), getHeight());
-/*       */     }
-/*       */     
-/*  2484 */     paramRectangle.setBounds(getX(), getY(), getWidth(), getHeight());
-/*  2485 */     return paramRectangle;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Dimension getSize(Dimension paramDimension) {
-/*  2500 */     if (paramDimension == null) {
-/*  2501 */       return new Dimension(getWidth(), getHeight());
-/*       */     }
-/*       */     
-/*  2504 */     paramDimension.setSize(getWidth(), getHeight());
-/*  2505 */     return paramDimension;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Point getLocation(Point paramPoint) {
-/*  2521 */     if (paramPoint == null) {
-/*  2522 */       return new Point(getX(), getY());
-/*       */     }
-/*       */     
-/*  2525 */     paramPoint.setLocation(getX(), getY());
-/*  2526 */     return paramPoint;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isOpaque() {
-/*  2548 */     if (getPeer() == null) {
-/*  2549 */       return false;
-/*       */     }
-/*       */     
-/*  2552 */     return !isLightweight();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isLightweight() {
-/*  2574 */     return getPeer() instanceof java.awt.peer.LightweightPeer;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setPreferredSize(Dimension paramDimension) {
-/*       */     Object object;
-/*  2594 */     if (this.prefSizeSet) {
-/*  2595 */       object = this.prefSize;
-/*       */     } else {
-/*       */       
-/*  2598 */       object = null;
-/*       */     } 
-/*  2600 */     this.prefSize = paramDimension;
-/*  2601 */     this.prefSizeSet = (paramDimension != null);
-/*  2602 */     firePropertyChange("preferredSize", object, paramDimension);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isPreferredSizeSet() {
-/*  2615 */     return this.prefSizeSet;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Dimension getPreferredSize() {
-/*  2626 */     return preferredSize();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public Dimension preferredSize() {
-/*  2639 */     Dimension dimension = this.prefSize;
-/*  2640 */     if (dimension == null || (!isPreferredSizeSet() && !isValid())) {
-/*  2641 */       synchronized (getTreeLock()) {
-/*  2642 */         this
-/*       */           
-/*  2644 */           .prefSize = (this.peer != null) ? this.peer.getPreferredSize() : getMinimumSize();
-/*  2645 */         dimension = this.prefSize;
-/*       */       } 
-/*       */     }
-/*  2648 */     return new Dimension(dimension);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setMinimumSize(Dimension paramDimension) {
-/*       */     Object object;
-/*  2667 */     if (this.minSizeSet) {
-/*  2668 */       object = this.minSize;
-/*       */     } else {
-/*       */       
-/*  2671 */       object = null;
-/*       */     } 
-/*  2673 */     this.minSize = paramDimension;
-/*  2674 */     this.minSizeSet = (paramDimension != null);
-/*  2675 */     firePropertyChange("minimumSize", object, paramDimension);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isMinimumSizeSet() {
-/*  2687 */     return this.minSizeSet;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Dimension getMinimumSize() {
-/*  2697 */     return minimumSize();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public Dimension minimumSize() {
-/*  2709 */     Dimension dimension = this.minSize;
-/*  2710 */     if (dimension == null || (!isMinimumSizeSet() && !isValid())) {
-/*  2711 */       synchronized (getTreeLock()) {
-/*  2712 */         this
-/*       */           
-/*  2714 */           .minSize = (this.peer != null) ? this.peer.getMinimumSize() : size();
-/*  2715 */         dimension = this.minSize;
-/*       */       } 
-/*       */     }
-/*  2718 */     return new Dimension(dimension);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setMaximumSize(Dimension paramDimension) {
-/*       */     Object object;
-/*  2738 */     if (this.maxSizeSet) {
-/*  2739 */       object = this.maxSize;
-/*       */     } else {
-/*       */       
-/*  2742 */       object = null;
-/*       */     } 
-/*  2744 */     this.maxSize = paramDimension;
-/*  2745 */     this.maxSizeSet = (paramDimension != null);
-/*  2746 */     firePropertyChange("maximumSize", object, paramDimension);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isMaximumSizeSet() {
-/*  2758 */     return this.maxSizeSet;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Dimension getMaximumSize() {
-/*  2769 */     if (isMaximumSizeSet()) {
-/*  2770 */       return new Dimension(this.maxSize);
-/*       */     }
-/*  2772 */     return new Dimension(32767, 32767);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public float getAlignmentX() {
-/*  2783 */     return 0.5F;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public float getAlignmentY() {
-/*  2794 */     return 0.5F;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int getBaseline(int paramInt1, int paramInt2) {
-/*  2822 */     if (paramInt1 < 0 || paramInt2 < 0) {
-/*  2823 */       throw new IllegalArgumentException("Width and height must be >= 0");
-/*       */     }
-/*       */     
-/*  2826 */     return -1;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public BaselineResizeBehavior getBaselineResizeBehavior() {
-/*  2851 */     return BaselineResizeBehavior.OTHER;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void doLayout() {
-/*  2862 */     layout();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void layout() {}
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void validate() {
-/*  2886 */     synchronized (getTreeLock()) {
-/*  2887 */       ComponentPeer componentPeer = this.peer;
-/*  2888 */       boolean bool = isValid();
-/*  2889 */       if (!bool && componentPeer != null) {
-/*  2890 */         Font font1 = getFont();
-/*  2891 */         Font font2 = this.peerFont;
-/*  2892 */         if (font1 != font2 && (font2 == null || 
-/*  2893 */           !font2.equals(font1))) {
-/*  2894 */           componentPeer.setFont(font1);
-/*  2895 */           this.peerFont = font1;
-/*       */         } 
-/*  2897 */         componentPeer.layout();
-/*       */       } 
-/*  2899 */       this.valid = true;
-/*  2900 */       if (!bool) {
-/*  2901 */         mixOnValidating();
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void invalidate() {
-/*  2929 */     synchronized (getTreeLock()) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  2934 */       this.valid = false;
-/*  2935 */       if (!isPreferredSizeSet()) {
-/*  2936 */         this.prefSize = null;
-/*       */       }
-/*  2938 */       if (!isMinimumSizeSet()) {
-/*  2939 */         this.minSize = null;
-/*       */       }
-/*  2941 */       if (!isMaximumSizeSet()) {
-/*  2942 */         this.maxSize = null;
-/*       */       }
-/*  2944 */       invalidateParent();
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void invalidateParent() {
-/*  2954 */     if (this.parent != null) {
-/*  2955 */       this.parent.invalidateIfValid();
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final void invalidateIfValid() {
-/*  2962 */     if (isValid()) {
-/*  2963 */       invalidate();
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void revalidate() {
-/*  2984 */     revalidateSynchronously();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final void revalidateSynchronously() {
-/*  2991 */     synchronized (getTreeLock()) {
-/*  2992 */       invalidate();
-/*       */       
-/*  2994 */       Container container = getContainer();
-/*  2995 */       if (container == null) {
-/*       */         
-/*  2997 */         validate();
-/*       */       } else {
-/*  2999 */         while (!container.isValidateRoot() && 
-/*  3000 */           container.getContainer() != null)
-/*       */         {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */           
-/*  3006 */           container = container.getContainer();
-/*       */         }
-/*       */         
-/*  3009 */         container.validate();
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Graphics getGraphics() {
-/*  3024 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*       */ 
-/*       */ 
-/*       */       
-/*  3028 */       if (this.parent == null) return null; 
-/*  3029 */       Graphics graphics = this.parent.getGraphics();
-/*  3030 */       if (graphics == null) return null; 
-/*  3031 */       if (graphics instanceof ConstrainableGraphics) {
-/*  3032 */         ((ConstrainableGraphics)graphics).constrain(this.x, this.y, this.width, this.height);
-/*       */       } else {
-/*  3034 */         graphics.translate(this.x, this.y);
-/*  3035 */         graphics.setClip(0, 0, this.width, this.height);
-/*       */       } 
-/*  3037 */       graphics.setFont(getFont());
-/*  3038 */       return graphics;
-/*       */     } 
-/*  3040 */     ComponentPeer componentPeer = this.peer;
-/*  3041 */     return (componentPeer != null) ? componentPeer.getGraphics() : null;
-/*       */   }
-/*       */ 
-/*       */   
-/*       */   final Graphics getGraphics_NoClientCode() {
-/*  3046 */     ComponentPeer componentPeer = this.peer;
-/*  3047 */     if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*       */ 
-/*       */ 
-/*       */       
-/*  3051 */       Container container = this.parent;
-/*  3052 */       if (container == null) return null; 
-/*  3053 */       Graphics graphics = container.getGraphics_NoClientCode();
-/*  3054 */       if (graphics == null) return null; 
-/*  3055 */       if (graphics instanceof ConstrainableGraphics) {
-/*  3056 */         ((ConstrainableGraphics)graphics).constrain(this.x, this.y, this.width, this.height);
-/*       */       } else {
-/*  3058 */         graphics.translate(this.x, this.y);
-/*  3059 */         graphics.setClip(0, 0, this.width, this.height);
-/*       */       } 
-/*  3061 */       graphics.setFont(getFont_NoClientCode());
-/*  3062 */       return graphics;
-/*       */     } 
-/*  3064 */     return (componentPeer != null) ? componentPeer.getGraphics() : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public FontMetrics getFontMetrics(Font paramFont) {
-/*  3090 */     FontManager fontManager = FontManagerFactory.getInstance();
-/*  3091 */     if (fontManager instanceof SunFontManager && ((SunFontManager)fontManager)
-/*  3092 */       .usePlatformFontMetrics())
-/*       */     {
-/*  3094 */       if (this.peer != null && !(this.peer instanceof java.awt.peer.LightweightPeer))
-/*       */       {
-/*  3096 */         return this.peer.getFontMetrics(paramFont);
-/*       */       }
-/*       */     }
-/*  3099 */     return FontDesignMetrics.getMetrics(paramFont);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setCursor(Cursor paramCursor) {
-/*  3128 */     this.cursor = paramCursor;
-/*  3129 */     updateCursorImmediately();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final void updateCursorImmediately() {
-/*  3137 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  3138 */       Container container = getNativeContainer();
-/*       */       
-/*  3140 */       if (container == null)
-/*       */         return; 
-/*  3142 */       ComponentPeer componentPeer = container.getPeer();
-/*       */       
-/*  3144 */       if (componentPeer != null) {
-/*  3145 */         componentPeer.updateCursorImmediately();
-/*       */       }
-/*  3147 */     } else if (this.peer != null) {
-/*  3148 */       this.peer.updateCursorImmediately();
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Cursor getCursor() {
-/*  3161 */     return getCursor_NoClientCode();
-/*       */   }
-/*       */   
-/*       */   final Cursor getCursor_NoClientCode() {
-/*  3165 */     Cursor cursor = this.cursor;
-/*  3166 */     if (cursor != null) {
-/*  3167 */       return cursor;
-/*       */     }
-/*  3169 */     Container container = this.parent;
-/*  3170 */     if (container != null) {
-/*  3171 */       return container.getCursor_NoClientCode();
-/*       */     }
-/*  3173 */     return Cursor.getPredefinedCursor(0);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean isCursorSet() {
-/*  3187 */     return (this.cursor != null);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void paint(Graphics paramGraphics) {}
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void update(Graphics paramGraphics) {
-/*  3251 */     paint(paramGraphics);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void paintAll(Graphics paramGraphics) {
-/*  3267 */     if (isShowing()) {
-/*  3268 */       GraphicsCallback.PeerPaintCallback.getInstance()
-/*  3269 */         .runOneComponent(this, new Rectangle(0, 0, this.width, this.height), paramGraphics, paramGraphics
-/*  3270 */           .getClip(), 3);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void lightweightPaint(Graphics paramGraphics) {
-/*  3283 */     paint(paramGraphics);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void paintHeavyweightComponents(Graphics paramGraphics) {}
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void repaint() {
-/*  3311 */     repaint(0L, 0, 0, this.width, this.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void repaint(long paramLong) {
-/*  3330 */     repaint(paramLong, 0, 0, this.width, this.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void repaint(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  3354 */     repaint(0L, paramInt1, paramInt2, paramInt3, paramInt4);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void repaint(long paramLong, int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
-/*  3380 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  3385 */       if (this.parent != null) {
-/*  3386 */         if (paramInt1 < 0) {
-/*  3387 */           paramInt3 += paramInt1;
-/*  3388 */           paramInt1 = 0;
-/*       */         } 
-/*  3390 */         if (paramInt2 < 0) {
-/*  3391 */           paramInt4 += paramInt2;
-/*  3392 */           paramInt2 = 0;
-/*       */         } 
-/*       */         
-/*  3395 */         int i = (paramInt3 > this.width) ? this.width : paramInt3;
-/*  3396 */         int j = (paramInt4 > this.height) ? this.height : paramInt4;
-/*       */         
-/*  3398 */         if (i <= 0 || j <= 0) {
-/*       */           return;
-/*       */         }
-/*       */         
-/*  3402 */         int k = this.x + paramInt1;
-/*  3403 */         int m = this.y + paramInt2;
-/*  3404 */         this.parent.repaint(paramLong, k, m, i, j);
-/*       */       }
-/*       */     
-/*  3407 */     } else if (isVisible() && this.peer != null && paramInt3 > 0 && paramInt4 > 0) {
-/*       */       
-/*  3409 */       PaintEvent paintEvent = new PaintEvent(this, 801, new Rectangle(paramInt1, paramInt2, paramInt3, paramInt4));
-/*       */       
-/*  3411 */       SunToolkit.postEvent(SunToolkit.targetToAppContext(this), paintEvent);
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void print(Graphics paramGraphics) {
-/*  3433 */     paint(paramGraphics);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void printAll(Graphics paramGraphics) {
-/*  3448 */     if (isShowing()) {
-/*  3449 */       GraphicsCallback.PeerPrintCallback.getInstance()
-/*  3450 */         .runOneComponent(this, new Rectangle(0, 0, this.width, this.height), paramGraphics, paramGraphics
-/*  3451 */           .getClip(), 3);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void lightweightPrint(Graphics paramGraphics) {
-/*  3464 */     print(paramGraphics);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void printHeavyweightComponents(Graphics paramGraphics) {}
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private Insets getInsets_NoClientCode() {
-/*  3474 */     ComponentPeer componentPeer = this.peer;
-/*  3475 */     if (componentPeer instanceof ContainerPeer) {
-/*  3476 */       return (Insets)((ContainerPeer)componentPeer).getInsets().clone();
-/*       */     }
-/*  3478 */     return new Insets(0, 0, 0, 0);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean imageUpdate(Image paramImage, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5) {
-/*  3529 */     int i = -1;
-/*  3530 */     if ((paramInt1 & 0x30) != 0) {
-/*  3531 */       i = 0;
-/*  3532 */     } else if ((paramInt1 & 0x8) != 0 && 
-/*  3533 */       isInc) {
-/*  3534 */       i = incRate;
-/*  3535 */       if (i < 0) {
-/*  3536 */         i = 0;
-/*       */       }
-/*       */     } 
-/*       */     
-/*  3540 */     if (i >= 0) {
-/*  3541 */       repaint(i, 0, 0, this.width, this.height);
-/*       */     }
-/*  3543 */     return ((paramInt1 & 0xA0) == 0);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Image createImage(ImageProducer paramImageProducer) {
-/*  3553 */     ComponentPeer componentPeer = this.peer;
-/*  3554 */     if (componentPeer != null && !(componentPeer instanceof java.awt.peer.LightweightPeer)) {
-/*  3555 */       return componentPeer.createImage(paramImageProducer);
-/*       */     }
-/*  3557 */     return getToolkit().createImage(paramImageProducer);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Image createImage(int paramInt1, int paramInt2) {
-/*  3575 */     ComponentPeer componentPeer = this.peer;
-/*  3576 */     if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*  3577 */       if (this.parent != null) return this.parent.createImage(paramInt1, paramInt2); 
-/*  3578 */       return null;
-/*       */     } 
-/*  3580 */     return (componentPeer != null) ? componentPeer.createImage(paramInt1, paramInt2) : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public VolatileImage createVolatileImage(int paramInt1, int paramInt2) {
-/*  3600 */     ComponentPeer componentPeer = this.peer;
-/*  3601 */     if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*  3602 */       if (this.parent != null) {
-/*  3603 */         return this.parent.createVolatileImage(paramInt1, paramInt2);
-/*       */       }
-/*  3605 */       return null;
-/*       */     } 
-/*  3607 */     return (componentPeer != null) ? componentPeer
-/*  3608 */       .createVolatileImage(paramInt1, paramInt2) : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public VolatileImage createVolatileImage(int paramInt1, int paramInt2, ImageCapabilities paramImageCapabilities) throws AWTException {
-/*  3630 */     return createVolatileImage(paramInt1, paramInt2);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean prepareImage(Image paramImage, ImageObserver paramImageObserver) {
-/*  3646 */     return prepareImage(paramImage, -1, -1, paramImageObserver);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean prepareImage(Image paramImage, int paramInt1, int paramInt2, ImageObserver paramImageObserver) {
-/*  3669 */     ComponentPeer componentPeer = this.peer;
-/*  3670 */     if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*  3671 */       return (this.parent != null) ? this.parent
-/*  3672 */         .prepareImage(paramImage, paramInt1, paramInt2, paramImageObserver) : 
-/*  3673 */         getToolkit().prepareImage(paramImage, paramInt1, paramInt2, paramImageObserver);
-/*       */     }
-/*  3675 */     return (componentPeer != null) ? componentPeer
-/*  3676 */       .prepareImage(paramImage, paramInt1, paramInt2, paramImageObserver) : 
-/*  3677 */       getToolkit().prepareImage(paramImage, paramInt1, paramInt2, paramImageObserver);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int checkImage(Image paramImage, ImageObserver paramImageObserver) {
-/*  3704 */     return checkImage(paramImage, -1, -1, paramImageObserver);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public int checkImage(Image paramImage, int paramInt1, int paramInt2, ImageObserver paramImageObserver) {
-/*  3741 */     ComponentPeer componentPeer = this.peer;
-/*  3742 */     if (componentPeer instanceof java.awt.peer.LightweightPeer) {
-/*  3743 */       return (this.parent != null) ? this.parent
-/*  3744 */         .checkImage(paramImage, paramInt1, paramInt2, paramImageObserver) : 
-/*  3745 */         getToolkit().checkImage(paramImage, paramInt1, paramInt2, paramImageObserver);
-/*       */     }
-/*  3747 */     return (componentPeer != null) ? componentPeer
-/*  3748 */       .checkImage(paramImage, paramInt1, paramInt2, paramImageObserver) : 
-/*  3749 */       getToolkit().checkImage(paramImage, paramInt1, paramInt2, paramImageObserver);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void createBufferStrategy(int paramInt) {
-/*  3775 */     if (paramInt > 1) {
-/*       */       
-/*  3777 */       BufferCapabilities bufferCapabilities1 = new BufferCapabilities(new ImageCapabilities(true), new ImageCapabilities(true), BufferCapabilities.FlipContents.UNDEFINED);
-/*       */ 
-/*       */       
-/*       */       try {
-/*  3781 */         createBufferStrategy(paramInt, bufferCapabilities1);
-/*       */         return;
-/*  3783 */       } catch (AWTException aWTException) {}
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */     
-/*  3788 */     BufferCapabilities bufferCapabilities = new BufferCapabilities(new ImageCapabilities(true), new ImageCapabilities(true), null);
-/*       */ 
-/*       */     
-/*       */     try {
-/*  3792 */       createBufferStrategy(paramInt, bufferCapabilities);
-/*       */       return;
-/*  3794 */     } catch (AWTException aWTException) {
-/*       */ 
-/*       */ 
-/*       */       
-/*  3798 */       bufferCapabilities = new BufferCapabilities(new ImageCapabilities(false), new ImageCapabilities(false), null);
-/*       */ 
-/*       */       
-/*       */       try {
-/*  3802 */         createBufferStrategy(paramInt, bufferCapabilities);
-/*       */         return;
-/*  3804 */       } catch (AWTException aWTException1) {
-/*       */ 
-/*       */         
-/*  3807 */         throw new InternalError("Could not create a buffer strategy", aWTException1);
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void createBufferStrategy(int paramInt, BufferCapabilities paramBufferCapabilities) throws AWTException {
-/*  3836 */     if (paramInt < 1) {
-/*  3837 */       throw new IllegalArgumentException("Number of buffers must be at least 1");
-/*       */     }
-/*       */     
-/*  3840 */     if (paramBufferCapabilities == null) {
-/*  3841 */       throw new IllegalArgumentException("No capabilities specified");
-/*       */     }
-/*       */     
-/*  3844 */     if (this.bufferStrategy != null) {
-/*  3845 */       this.bufferStrategy.dispose();
-/*       */     }
-/*  3847 */     if (paramInt == 1) {
-/*  3848 */       this.bufferStrategy = new SingleBufferStrategy(paramBufferCapabilities);
-/*       */     } else {
-/*       */       
-/*  3851 */       SunGraphicsEnvironment sunGraphicsEnvironment = (SunGraphicsEnvironment)GraphicsEnvironment.getLocalGraphicsEnvironment();
-/*  3852 */       if (!paramBufferCapabilities.isPageFlipping() && sunGraphicsEnvironment.isFlipStrategyPreferred(this.peer)) {
-/*  3853 */         paramBufferCapabilities = new ProxyCapabilities(paramBufferCapabilities);
-/*       */       }
-/*       */       
-/*  3856 */       if (paramBufferCapabilities.isPageFlipping()) {
-/*  3857 */         this.bufferStrategy = new FlipSubRegionBufferStrategy(paramInt, paramBufferCapabilities);
-/*       */       } else {
-/*  3859 */         this.bufferStrategy = new BltSubRegionBufferStrategy(paramInt, paramBufferCapabilities);
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private class ProxyCapabilities
-/*       */     extends ExtendedBufferCapabilities
-/*       */   {
-/*       */     private BufferCapabilities orig;
-/*       */ 
-/*       */     
-/*       */     private ProxyCapabilities(BufferCapabilities param1BufferCapabilities) {
-/*  3873 */       super(param1BufferCapabilities.getFrontBufferCapabilities(), param1BufferCapabilities
-/*  3874 */           .getBackBufferCapabilities(), 
-/*  3875 */           (param1BufferCapabilities.getFlipContents() == BufferCapabilities.FlipContents.BACKGROUND) ? BufferCapabilities.FlipContents.BACKGROUND : BufferCapabilities.FlipContents.COPIED);
-/*       */ 
-/*       */ 
-/*       */       
-/*  3879 */       this.orig = param1BufferCapabilities;
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   BufferStrategy getBufferStrategy() {
-/*  3890 */     return this.bufferStrategy;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Image getBackBuffer() {
-/*  3899 */     if (this.bufferStrategy != null) {
-/*  3900 */       if (this.bufferStrategy instanceof BltBufferStrategy) {
-/*  3901 */         BltBufferStrategy bltBufferStrategy = (BltBufferStrategy)this.bufferStrategy;
-/*  3902 */         return bltBufferStrategy.getBackBuffer();
-/*  3903 */       }  if (this.bufferStrategy instanceof FlipBufferStrategy) {
-/*  3904 */         FlipBufferStrategy flipBufferStrategy = (FlipBufferStrategy)this.bufferStrategy;
-/*  3905 */         return flipBufferStrategy.getBackBuffer();
-/*       */       } 
-/*       */     } 
-/*  3908 */     return null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   protected class FlipBufferStrategy
-/*       */     extends BufferStrategy
-/*       */   {
-/*       */     protected int numBuffers;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected BufferCapabilities caps;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected Image drawBuffer;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected VolatileImage drawVBuffer;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected boolean validatedContents;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     int width;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     int height;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected FlipBufferStrategy(int param1Int, BufferCapabilities param1BufferCapabilities) throws AWTException {
-/*  3972 */       if (!(Component.this instanceof Window) && !(Component.this instanceof Canvas))
-/*       */       {
-/*       */         
-/*  3975 */         throw new ClassCastException("Component must be a Canvas or Window");
-/*       */       }
-/*       */       
-/*  3978 */       this.numBuffers = param1Int;
-/*  3979 */       this.caps = param1BufferCapabilities;
-/*  3980 */       createBuffers(param1Int, param1BufferCapabilities);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected void createBuffers(int param1Int, BufferCapabilities param1BufferCapabilities) throws AWTException {
-/*  4002 */       if (param1Int < 2) {
-/*  4003 */         throw new IllegalArgumentException("Number of buffers cannot be less than two");
-/*       */       }
-/*  4005 */       if (Component.this.peer == null) {
-/*  4006 */         throw new IllegalStateException("Component must have a valid peer");
-/*       */       }
-/*  4008 */       if (param1BufferCapabilities == null || !param1BufferCapabilities.isPageFlipping()) {
-/*  4009 */         throw new IllegalArgumentException("Page flipping capabilities must be specified");
-/*       */       }
-/*       */ 
-/*       */ 
-/*       */       
-/*  4014 */       this.width = Component.this.getWidth();
-/*  4015 */       this.height = Component.this.getHeight();
-/*       */       
-/*  4017 */       if (this.drawBuffer != null) {
-/*       */         
-/*  4019 */         this.drawBuffer = null;
-/*  4020 */         this.drawVBuffer = null;
-/*  4021 */         destroyBuffers();
-/*       */       } 
-/*       */ 
-/*       */       
-/*  4025 */       if (param1BufferCapabilities instanceof ExtendedBufferCapabilities) {
-/*  4026 */         ExtendedBufferCapabilities extendedBufferCapabilities = (ExtendedBufferCapabilities)param1BufferCapabilities;
-/*       */         
-/*  4028 */         if (extendedBufferCapabilities.getVSync() == ExtendedBufferCapabilities.VSyncType.VSYNC_ON)
-/*       */         {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */           
-/*  4034 */           if (!VSyncedBSManager.vsyncAllowed(this)) {
-/*  4035 */             param1BufferCapabilities = extendedBufferCapabilities.derive(ExtendedBufferCapabilities.VSyncType.VSYNC_DEFAULT);
-/*       */           }
-/*       */         }
-/*       */       } 
-/*       */       
-/*  4040 */       Component.this.peer.createBuffers(param1Int, param1BufferCapabilities);
-/*  4041 */       updateInternalBuffers();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     private void updateInternalBuffers() {
-/*  4050 */       this.drawBuffer = getBackBuffer();
-/*  4051 */       if (this.drawBuffer instanceof VolatileImage) {
-/*  4052 */         this.drawVBuffer = (VolatileImage)this.drawBuffer;
-/*       */       } else {
-/*  4054 */         this.drawVBuffer = null;
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected Image getBackBuffer() {
-/*  4064 */       if (Component.this.peer != null) {
-/*  4065 */         return Component.this.peer.getBackBuffer();
-/*       */       }
-/*  4067 */       throw new IllegalStateException("Component must have a valid peer");
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected void flip(BufferCapabilities.FlipContents param1FlipContents) {
-/*  4084 */       if (Component.this.peer != null) {
-/*  4085 */         Image image = getBackBuffer();
-/*  4086 */         if (image != null) {
-/*  4087 */           Component.this.peer.flip(0, 0, image
-/*  4088 */               .getWidth(null), image
-/*  4089 */               .getHeight(null), param1FlipContents);
-/*       */         }
-/*       */       } else {
-/*  4092 */         throw new IllegalStateException("Component must have a valid peer");
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     void flipSubRegion(int param1Int1, int param1Int2, int param1Int3, int param1Int4, BufferCapabilities.FlipContents param1FlipContents) {
-/*  4100 */       if (Component.this.peer != null) {
-/*  4101 */         Component.this.peer.flip(param1Int1, param1Int2, param1Int3, param1Int4, param1FlipContents);
-/*       */       } else {
-/*  4103 */         throw new IllegalStateException("Component must have a valid peer");
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected void destroyBuffers() {
-/*  4112 */       VSyncedBSManager.releaseVsync(this);
-/*  4113 */       if (Component.this.peer != null) {
-/*  4114 */         Component.this.peer.destroyBuffers();
-/*       */       } else {
-/*  4116 */         throw new IllegalStateException("Component must have a valid peer");
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public BufferCapabilities getCapabilities() {
-/*  4125 */       if (this.caps instanceof Component.ProxyCapabilities) {
-/*  4126 */         return ((Component.ProxyCapabilities)this.caps).orig;
-/*       */       }
-/*  4128 */       return this.caps;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Graphics getDrawGraphics() {
-/*  4139 */       revalidate();
-/*  4140 */       return this.drawBuffer.getGraphics();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected void revalidate() {
-/*  4147 */       revalidate(true);
-/*       */     }
-/*       */     
-/*       */     void revalidate(boolean param1Boolean) {
-/*  4151 */       this.validatedContents = false;
-/*       */       
-/*  4153 */       if (param1Boolean && (Component.this.getWidth() != this.width || Component.this.getHeight() != this.height)) {
-/*       */         
-/*       */         try {
-/*  4156 */           createBuffers(this.numBuffers, this.caps);
-/*  4157 */         } catch (AWTException aWTException) {}
-/*       */ 
-/*       */         
-/*  4160 */         this.validatedContents = true;
-/*       */       } 
-/*       */ 
-/*       */ 
-/*       */       
-/*  4165 */       updateInternalBuffers();
-/*       */ 
-/*       */       
-/*  4168 */       if (this.drawVBuffer != null) {
-/*       */         
-/*  4170 */         GraphicsConfiguration graphicsConfiguration = Component.this.getGraphicsConfiguration_NoClientCode();
-/*  4171 */         int i = this.drawVBuffer.validate(graphicsConfiguration);
-/*  4172 */         if (i == 2) {
-/*       */           try {
-/*  4174 */             createBuffers(this.numBuffers, this.caps);
-/*  4175 */           } catch (AWTException aWTException) {}
-/*       */ 
-/*       */           
-/*  4178 */           if (this.drawVBuffer != null)
-/*       */           {
-/*  4180 */             this.drawVBuffer.validate(graphicsConfiguration);
-/*       */           }
-/*  4182 */           this.validatedContents = true;
-/*  4183 */         } else if (i == 1) {
-/*  4184 */           this.validatedContents = true;
-/*       */         } 
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean contentsLost() {
-/*  4194 */       if (this.drawVBuffer == null) {
-/*  4195 */         return false;
-/*       */       }
-/*  4197 */       return this.drawVBuffer.contentsLost();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean contentsRestored() {
-/*  4205 */       return this.validatedContents;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void show() {
-/*  4213 */       flip(this.caps.getFlipContents());
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     void showSubRegion(int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  4221 */       flipSubRegion(param1Int1, param1Int2, param1Int3, param1Int4, this.caps.getFlipContents());
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void dispose() {
-/*  4229 */       if (Component.this.bufferStrategy == this) {
-/*  4230 */         Component.this.bufferStrategy = null;
-/*  4231 */         if (Component.this.peer != null) {
-/*  4232 */           destroyBuffers();
-/*       */         }
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   protected class BltBufferStrategy
-/*       */     extends BufferStrategy
-/*       */   {
-/*       */     protected BufferCapabilities caps;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected VolatileImage[] backBuffers;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected boolean validatedContents;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected int width;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected int height;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     private Insets insets;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected BltBufferStrategy(int param1Int, BufferCapabilities param1BufferCapabilities) {
-/*  4279 */       this.caps = param1BufferCapabilities;
-/*  4280 */       createBackBuffers(param1Int - 1);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void dispose() {
-/*  4288 */       if (this.backBuffers != null) {
-/*  4289 */         for (int i = this.backBuffers.length - 1; i >= 0; 
-/*  4290 */           i--) {
-/*  4291 */           if (this.backBuffers[i] != null) {
-/*  4292 */             this.backBuffers[i].flush();
-/*  4293 */             this.backBuffers[i] = null;
-/*       */           } 
-/*       */         } 
-/*       */       }
-/*  4297 */       if (Component.this.bufferStrategy == this) {
-/*  4298 */         Component.this.bufferStrategy = null;
-/*       */       }
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected void createBackBuffers(int param1Int) {
-/*  4306 */       if (param1Int == 0) {
-/*  4307 */         this.backBuffers = null;
-/*       */       } else {
-/*       */         
-/*  4310 */         this.width = Component.this.getWidth();
-/*  4311 */         this.height = Component.this.getHeight();
-/*  4312 */         this.insets = Component.this.getInsets_NoClientCode();
-/*  4313 */         int i = this.width - this.insets.left - this.insets.right;
-/*  4314 */         int j = this.height - this.insets.top - this.insets.bottom;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  4319 */         i = Math.max(1, i);
-/*  4320 */         j = Math.max(1, j);
-/*  4321 */         if (this.backBuffers == null) {
-/*  4322 */           this.backBuffers = new VolatileImage[param1Int];
-/*       */         } else {
-/*       */           
-/*  4325 */           for (byte b1 = 0; b1 < param1Int; b1++) {
-/*  4326 */             if (this.backBuffers[b1] != null) {
-/*  4327 */               this.backBuffers[b1].flush();
-/*  4328 */               this.backBuffers[b1] = null;
-/*       */             } 
-/*       */           } 
-/*       */         } 
-/*       */ 
-/*       */         
-/*  4334 */         for (byte b = 0; b < param1Int; b++) {
-/*  4335 */           this.backBuffers[b] = Component.this.createVolatileImage(i, j);
-/*       */         }
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public BufferCapabilities getCapabilities() {
-/*  4344 */       return this.caps;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Graphics getDrawGraphics() {
-/*  4351 */       revalidate();
-/*  4352 */       Image image = getBackBuffer();
-/*  4353 */       if (image == null) {
-/*  4354 */         return Component.this.getGraphics();
-/*       */       }
-/*  4356 */       SunGraphics2D sunGraphics2D = (SunGraphics2D)image.getGraphics();
-/*  4357 */       sunGraphics2D.constrain(-this.insets.left, -this.insets.top, image
-/*  4358 */           .getWidth(null) + this.insets.left, image
-/*  4359 */           .getHeight(null) + this.insets.top);
-/*  4360 */       return sunGraphics2D;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     Image getBackBuffer() {
-/*  4368 */       if (this.backBuffers != null) {
-/*  4369 */         return this.backBuffers[this.backBuffers.length - 1];
-/*       */       }
-/*  4371 */       return null;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void show() {
-/*  4379 */       showSubRegion(this.insets.left, this.insets.top, this.width - this.insets.right, this.height - this.insets.bottom);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     void showSubRegion(int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  4394 */       if (this.backBuffers == null) {
-/*       */         return;
-/*       */       }
-/*       */       
-/*  4398 */       param1Int1 -= this.insets.left;
-/*  4399 */       param1Int3 -= this.insets.left;
-/*  4400 */       param1Int2 -= this.insets.top;
-/*  4401 */       param1Int4 -= this.insets.top;
-/*  4402 */       Graphics graphics = Component.this.getGraphics_NoClientCode();
-/*  4403 */       if (graphics == null) {
-/*       */         return;
-/*       */       }
-/*       */ 
-/*       */ 
-/*       */       
-/*       */       try {
-/*  4410 */         graphics.translate(this.insets.left, this.insets.top);
-/*  4411 */         for (byte b = 0; b < this.backBuffers.length; b++) {
-/*  4412 */           graphics.drawImage(this.backBuffers[b], param1Int1, param1Int2, param1Int3, param1Int4, param1Int1, param1Int2, param1Int3, param1Int4, null);
-/*       */ 
-/*       */ 
-/*       */           
-/*  4416 */           graphics.dispose();
-/*  4417 */           graphics = null;
-/*  4418 */           graphics = this.backBuffers[b].getGraphics();
-/*       */         } 
-/*       */       } finally {
-/*  4421 */         if (graphics != null) {
-/*  4422 */           graphics.dispose();
-/*       */         }
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected void revalidate() {
-/*  4431 */       revalidate(true);
-/*       */     }
-/*       */     
-/*       */     void revalidate(boolean param1Boolean) {
-/*  4435 */       this.validatedContents = false;
-/*       */       
-/*  4437 */       if (this.backBuffers == null) {
-/*       */         return;
-/*       */       }
-/*       */       
-/*  4441 */       if (param1Boolean) {
-/*  4442 */         Insets insets = Component.this.getInsets_NoClientCode();
-/*  4443 */         if (Component.this.getWidth() != this.width || Component.this.getHeight() != this.height || 
-/*  4444 */           !insets.equals(this.insets)) {
-/*       */           
-/*  4446 */           createBackBuffers(this.backBuffers.length);
-/*  4447 */           this.validatedContents = true;
-/*       */         } 
-/*       */       } 
-/*       */ 
-/*       */       
-/*  4452 */       GraphicsConfiguration graphicsConfiguration = Component.this.getGraphicsConfiguration_NoClientCode();
-/*       */       
-/*  4454 */       int i = this.backBuffers[this.backBuffers.length - 1].validate(graphicsConfiguration);
-/*  4455 */       if (i == 2) {
-/*  4456 */         if (param1Boolean) {
-/*  4457 */           createBackBuffers(this.backBuffers.length);
-/*       */           
-/*  4459 */           this.backBuffers[this.backBuffers.length - 1].validate(graphicsConfiguration);
-/*       */         } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  4465 */         this.validatedContents = true;
-/*  4466 */       } else if (i == 1) {
-/*  4467 */         this.validatedContents = true;
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean contentsLost() {
-/*  4476 */       if (this.backBuffers == null) {
-/*  4477 */         return false;
-/*       */       }
-/*  4479 */       return this.backBuffers[this.backBuffers.length - 1].contentsLost();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean contentsRestored() {
-/*  4488 */       return this.validatedContents;
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private class FlipSubRegionBufferStrategy
-/*       */     extends FlipBufferStrategy
-/*       */     implements SubRegionShowable
-/*       */   {
-/*       */     protected FlipSubRegionBufferStrategy(int param1Int, BufferCapabilities param1BufferCapabilities) throws AWTException {
-/*  4503 */       super(param1Int, param1BufferCapabilities);
-/*       */     }
-/*       */     
-/*       */     public void show(int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  4507 */       showSubRegion(param1Int1, param1Int2, param1Int3, param1Int4);
-/*       */     }
-/*       */ 
-/*       */     
-/*       */     public boolean showIfNotLost(int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  4512 */       if (!contentsLost()) {
-/*  4513 */         showSubRegion(param1Int1, param1Int2, param1Int3, param1Int4);
-/*  4514 */         return !contentsLost();
-/*       */       } 
-/*  4516 */       return false;
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private class BltSubRegionBufferStrategy
-/*       */     extends BltBufferStrategy
-/*       */     implements SubRegionShowable
-/*       */   {
-/*       */     protected BltSubRegionBufferStrategy(int param1Int, BufferCapabilities param1BufferCapabilities) {
-/*  4533 */       super(param1Int, param1BufferCapabilities);
-/*       */     }
-/*       */     
-/*       */     public void show(int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  4537 */       showSubRegion(param1Int1, param1Int2, param1Int3, param1Int4);
-/*       */     }
-/*       */ 
-/*       */     
-/*       */     public boolean showIfNotLost(int param1Int1, int param1Int2, int param1Int3, int param1Int4) {
-/*  4542 */       if (!contentsLost()) {
-/*  4543 */         showSubRegion(param1Int1, param1Int2, param1Int3, param1Int4);
-/*  4544 */         return !contentsLost();
-/*       */       } 
-/*  4546 */       return false;
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private class SingleBufferStrategy
-/*       */     extends BufferStrategy
-/*       */   {
-/*       */     private BufferCapabilities caps;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public SingleBufferStrategy(BufferCapabilities param1BufferCapabilities) {
-/*  4564 */       this.caps = param1BufferCapabilities;
-/*       */     }
-/*       */     public BufferCapabilities getCapabilities() {
-/*  4567 */       return this.caps;
-/*       */     }
-/*       */     public Graphics getDrawGraphics() {
-/*  4570 */       return Component.this.getGraphics();
-/*       */     }
-/*       */     public boolean contentsLost() {
-/*  4573 */       return false;
-/*       */     }
-/*       */     public boolean contentsRestored() {
-/*  4576 */       return false;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void show() {}
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void setIgnoreRepaint(boolean paramBoolean) {
-/*  4601 */     this.ignoreRepaint = paramBoolean;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean getIgnoreRepaint() {
-/*  4612 */     return this.ignoreRepaint;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean contains(int paramInt1, int paramInt2) {
-/*  4625 */     return inside(paramInt1, paramInt2);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public boolean inside(int paramInt1, int paramInt2) {
-/*  4634 */     return (paramInt1 >= 0 && paramInt1 < this.width && paramInt2 >= 0 && paramInt2 < this.height);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public boolean contains(Point paramPoint) {
-/*  4647 */     return contains(paramPoint.x, paramPoint.y);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Component getComponentAt(int paramInt1, int paramInt2) {
-/*  4672 */     return locate(paramInt1, paramInt2);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public Component locate(int paramInt1, int paramInt2) {
-/*  4681 */     return contains(paramInt1, paramInt2) ? this : null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public Component getComponentAt(Point paramPoint) {
-/*  4692 */     return getComponentAt(paramPoint.x, paramPoint.y);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public void deliverEvent(Event paramEvent) {
-/*  4701 */     postEvent(paramEvent);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public final void dispatchEvent(AWTEvent paramAWTEvent) {
-/*  4711 */     dispatchEventImpl(paramAWTEvent);
-/*       */   }
-/*       */   
-/*       */   void dispatchEventImpl(AWTEvent paramAWTEvent) {
-/*       */     Container container;
-/*  4716 */     int i = paramAWTEvent.getID();
-/*       */ 
-/*       */     
-/*  4719 */     AppContext appContext = this.appContext;
-/*  4720 */     if (appContext != null && !appContext.equals(AppContext.getAppContext()) && 
-/*  4721 */       eventLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  4722 */       eventLog.fine("Event " + paramAWTEvent + " is being dispatched on the wrong AppContext");
-/*       */     }
-/*       */ 
-/*       */     
-/*  4726 */     if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/*  4727 */       eventLog.finest("{0}", new Object[] { paramAWTEvent });
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4733 */     if (!(paramAWTEvent instanceof KeyEvent))
-/*       */     {
-/*  4735 */       EventQueue.setCurrentEventAndMostRecentTime(paramAWTEvent);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4743 */     if (paramAWTEvent instanceof SunDropTargetEvent) {
-/*  4744 */       ((SunDropTargetEvent)paramAWTEvent).dispatch();
-/*       */       
-/*       */       return;
-/*       */     } 
-/*  4748 */     if (!paramAWTEvent.focusManagerIsDispatching) {
-/*       */ 
-/*       */       
-/*  4751 */       if (paramAWTEvent.isPosted) {
-/*  4752 */         paramAWTEvent = KeyboardFocusManager.retargetFocusEvent(paramAWTEvent);
-/*  4753 */         paramAWTEvent.isPosted = true;
-/*       */       } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  4759 */       if (KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/*  4760 */         .dispatchEvent(paramAWTEvent)) {
-/*       */         return;
-/*       */       }
-/*       */     } 
-/*       */     
-/*  4765 */     if (paramAWTEvent instanceof FocusEvent && focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/*  4766 */       focusLog.finest("" + paramAWTEvent);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4773 */     if (i == 507 && 
-/*  4774 */       !eventTypeEnabled(i) && this.peer != null && 
-/*  4775 */       !this.peer.handlesWheelScrolling() && 
-/*  4776 */       dispatchMouseWheelToAncestor((MouseWheelEvent)paramAWTEvent)) {
-/*       */       return;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4784 */     Toolkit toolkit = Toolkit.getDefaultToolkit();
-/*  4785 */     toolkit.notifyAWTEventListeners(paramAWTEvent);
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4792 */     if (!paramAWTEvent.isConsumed() && 
-/*  4793 */       paramAWTEvent instanceof KeyEvent) {
-/*  4794 */       KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/*  4795 */         .processKeyEvent(this, (KeyEvent)paramAWTEvent);
-/*  4796 */       if (paramAWTEvent.isConsumed()) {
-/*       */         return;
-/*       */       }
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4805 */     if (areInputMethodsEnabled()) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  4810 */       if ((paramAWTEvent instanceof InputMethodEvent && !(this instanceof sun.awt.im.CompositionArea)) || paramAWTEvent instanceof java.awt.event.InputEvent || paramAWTEvent instanceof FocusEvent) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  4817 */         InputContext inputContext = getInputContext();
-/*       */ 
-/*       */         
-/*  4820 */         if (inputContext != null) {
-/*  4821 */           inputContext.dispatchEvent(paramAWTEvent);
-/*  4822 */           if (paramAWTEvent.isConsumed()) {
-/*  4823 */             if (paramAWTEvent instanceof FocusEvent && focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/*  4824 */               focusLog.finest("3579: Skipping " + paramAWTEvent);
-/*       */             }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */             
-/*       */             return;
-/*       */           } 
-/*       */         } 
-/*       */       } 
-/*  4834 */     } else if (i == 1004) {
-/*  4835 */       InputContext inputContext = getInputContext();
-/*  4836 */       if (inputContext != null && inputContext instanceof InputContext) {
-/*  4837 */         ((InputContext)inputContext).disableNativeIM();
-/*       */       }
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4846 */     switch (i) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*       */       case 401:
-/*       */       case 402:
-/*  4854 */         container = (this instanceof Container) ? (Container)this : this.parent;
-/*  4855 */         if (container != null) {
-/*  4856 */           container.preProcessKeyEvent((KeyEvent)paramAWTEvent);
-/*  4857 */           if (paramAWTEvent.isConsumed()) {
-/*  4858 */             if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/*  4859 */               focusLog.finest("Pre-process consumed event");
-/*       */             }
-/*       */             return;
-/*       */           } 
-/*       */         } 
-/*       */         break;
-/*       */       
-/*       */       case 201:
-/*  4867 */         if (toolkit instanceof WindowClosingListener) {
-/*  4868 */           this
-/*  4869 */             .windowClosingException = ((WindowClosingListener)toolkit).windowClosingNotify((WindowEvent)paramAWTEvent);
-/*  4870 */           if (checkWindowClosingException()) {
-/*       */             return;
-/*       */           }
-/*       */         } 
-/*       */         break;
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4883 */     if (this.newEventsOnly) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  4888 */       if (eventEnabled(paramAWTEvent)) {
-/*  4889 */         processEvent(paramAWTEvent);
-/*       */       }
-/*  4891 */     } else if (i == 507) {
-/*       */ 
-/*       */ 
-/*       */       
-/*  4895 */       autoProcessMouseWheel((MouseWheelEvent)paramAWTEvent);
-/*  4896 */     } else if (!(paramAWTEvent instanceof MouseEvent) || postsOldMouseEvents()) {
-/*       */ 
-/*       */ 
-/*       */       
-/*  4900 */       Event event = paramAWTEvent.convertToOld();
-/*  4901 */       if (event != null) {
-/*  4902 */         int j = event.key;
-/*  4903 */         int k = event.modifiers;
-/*       */         
-/*  4905 */         postEvent(event);
-/*  4906 */         if (event.isConsumed()) {
-/*  4907 */           paramAWTEvent.consume();
-/*       */         }
-/*       */ 
-/*       */ 
-/*       */         
-/*  4912 */         switch (event.id) {
-/*       */           case 401:
-/*       */           case 402:
-/*       */           case 403:
-/*       */           case 404:
-/*  4917 */             if (event.key != j) {
-/*  4918 */               ((KeyEvent)paramAWTEvent).setKeyChar(event.getKeyEventChar());
-/*       */             }
-/*  4920 */             if (event.modifiers != k) {
-/*  4921 */               ((KeyEvent)paramAWTEvent).setModifiers(event.modifiers);
-/*       */             }
-/*       */             break;
-/*       */         } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*       */       } 
-/*       */     } 
-/*  4934 */     if (i == 201 && !paramAWTEvent.isConsumed() && 
-/*  4935 */       toolkit instanceof WindowClosingListener) {
-/*  4936 */       this
-/*       */         
-/*  4938 */         .windowClosingException = ((WindowClosingListener)toolkit).windowClosingDelivered((WindowEvent)paramAWTEvent);
-/*  4939 */       if (checkWindowClosingException()) {
-/*       */         return;
-/*       */       }
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4951 */     if (!(paramAWTEvent instanceof KeyEvent)) {
-/*  4952 */       ComponentPeer componentPeer = this.peer;
-/*  4953 */       if (paramAWTEvent instanceof FocusEvent && (componentPeer == null || componentPeer instanceof java.awt.peer.LightweightPeer)) {
-/*       */ 
-/*       */         
-/*  4956 */         Component component = (Component)paramAWTEvent.getSource();
-/*  4957 */         if (component != null) {
-/*  4958 */           Container container1 = component.getNativeContainer();
-/*  4959 */           if (container1 != null) {
-/*  4960 */             componentPeer = container1.getPeer();
-/*       */           }
-/*       */         } 
-/*       */       } 
-/*  4964 */       if (componentPeer != null) {
-/*  4965 */         componentPeer.handleEvent(paramAWTEvent);
-/*       */       }
-/*       */     } 
-/*       */     
-/*  4969 */     if (SunToolkit.isTouchKeyboardAutoShowEnabled() && toolkit instanceof SunToolkit && (paramAWTEvent instanceof MouseEvent || paramAWTEvent instanceof FocusEvent))
-/*       */     {
-/*       */       
-/*  4972 */       ((SunToolkit)toolkit).showOrHideTouchKeyboard(this, paramAWTEvent);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void autoProcessMouseWheel(MouseWheelEvent paramMouseWheelEvent) {}
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean dispatchMouseWheelToAncestor(MouseWheelEvent paramMouseWheelEvent) {
-/*  4991 */     int i = paramMouseWheelEvent.getX() + getX();
-/*  4992 */     int j = paramMouseWheelEvent.getY() + getY();
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  4997 */     if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/*  4998 */       eventLog.finest("dispatchMouseWheelToAncestor");
-/*  4999 */       eventLog.finest("orig event src is of " + paramMouseWheelEvent.getSource().getClass());
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  5005 */     synchronized (getTreeLock()) {
-/*  5006 */       Container container = getParent();
-/*  5007 */       while (container != null && !container.eventEnabled(paramMouseWheelEvent)) {
-/*       */         
-/*  5009 */         i += container.getX();
-/*  5010 */         j += container.getY();
-/*       */         
-/*  5012 */         if (!(container instanceof Window)) {
-/*  5013 */           container = container.getParent();
-/*       */         }
-/*       */       } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  5020 */       if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/*  5021 */         eventLog.finest("new event src is " + container.getClass());
-/*       */       }
-/*       */       
-/*  5024 */       if (container != null && container.eventEnabled(paramMouseWheelEvent)) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  5041 */         MouseWheelEvent mouseWheelEvent = new MouseWheelEvent(container, paramMouseWheelEvent.getID(), paramMouseWheelEvent.getWhen(), paramMouseWheelEvent.getModifiers(), i, j, paramMouseWheelEvent.getXOnScreen(), paramMouseWheelEvent.getYOnScreen(), paramMouseWheelEvent.getClickCount(), paramMouseWheelEvent.isPopupTrigger(), paramMouseWheelEvent.getScrollType(), paramMouseWheelEvent.getScrollAmount(), paramMouseWheelEvent.getWheelRotation(), paramMouseWheelEvent.getPreciseWheelRotation());
-/*  5042 */         paramMouseWheelEvent.copyPrivateDataInto(mouseWheelEvent);
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  5048 */         container.dispatchEventToSelf(mouseWheelEvent);
-/*  5049 */         if (mouseWheelEvent.isConsumed()) {
-/*  5050 */           paramMouseWheelEvent.consume();
-/*       */         }
-/*  5052 */         return true;
-/*       */       } 
-/*       */     } 
-/*  5055 */     return false;
-/*       */   }
-/*       */   
-/*       */   boolean checkWindowClosingException() {
-/*  5059 */     if (this.windowClosingException != null) {
-/*  5060 */       if (this instanceof Dialog) {
-/*  5061 */         ((Dialog)this).interruptBlocking();
-/*       */       } else {
-/*  5063 */         this.windowClosingException.fillInStackTrace();
-/*  5064 */         this.windowClosingException.printStackTrace();
-/*  5065 */         this.windowClosingException = null;
-/*       */       } 
-/*  5067 */       return true;
-/*       */     } 
-/*  5069 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean areInputMethodsEnabled() {
-/*  5076 */     return ((this.eventMask & 0x1000L) != 0L && ((this.eventMask & 0x8L) != 0L || this.keyListener != null));
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   boolean eventEnabled(AWTEvent paramAWTEvent) {
-/*  5082 */     return eventTypeEnabled(paramAWTEvent.id);
-/*       */   }
-/*       */   
-/*       */   boolean eventTypeEnabled(int paramInt) {
-/*  5086 */     switch (paramInt) {
-/*       */       case 100:
-/*       */       case 101:
-/*       */       case 102:
-/*       */       case 103:
-/*  5091 */         if ((this.eventMask & 0x1L) != 0L || this.componentListener != null)
-/*       */         {
-/*  5093 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 1004:
-/*       */       case 1005:
-/*  5098 */         if ((this.eventMask & 0x4L) != 0L || this.focusListener != null)
-/*       */         {
-/*  5100 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 400:
-/*       */       case 401:
-/*       */       case 402:
-/*  5106 */         if ((this.eventMask & 0x8L) != 0L || this.keyListener != null)
-/*       */         {
-/*  5108 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 500:
-/*       */       case 501:
-/*       */       case 502:
-/*       */       case 504:
-/*       */       case 505:
-/*  5116 */         if ((this.eventMask & 0x10L) != 0L || this.mouseListener != null)
-/*       */         {
-/*  5118 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 503:
-/*       */       case 506:
-/*  5123 */         if ((this.eventMask & 0x20L) != 0L || this.mouseMotionListener != null)
-/*       */         {
-/*  5125 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 507:
-/*  5129 */         if ((this.eventMask & 0x20000L) != 0L || this.mouseWheelListener != null)
-/*       */         {
-/*  5131 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 1100:
-/*       */       case 1101:
-/*  5136 */         if ((this.eventMask & 0x800L) != 0L || this.inputMethodListener != null)
-/*       */         {
-/*  5138 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 1400:
-/*  5142 */         if ((this.eventMask & 0x8000L) != 0L || this.hierarchyListener != null)
-/*       */         {
-/*  5144 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 1401:
-/*       */       case 1402:
-/*  5149 */         if ((this.eventMask & 0x10000L) != 0L || this.hierarchyBoundsListener != null)
-/*       */         {
-/*  5151 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 1001:
-/*  5155 */         if ((this.eventMask & 0x80L) != 0L) {
-/*  5156 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 900:
-/*  5160 */         if ((this.eventMask & 0x400L) != 0L) {
-/*  5161 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 701:
-/*  5165 */         if ((this.eventMask & 0x200L) != 0L) {
-/*  5166 */           return true;
-/*       */         }
-/*       */         break;
-/*       */       case 601:
-/*  5170 */         if ((this.eventMask & 0x100L) != 0L) {
-/*  5171 */           return true;
-/*       */         }
-/*       */         break;
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  5180 */     if (paramInt > 1999) {
-/*  5181 */       return true;
-/*       */     }
-/*  5183 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   @Deprecated
-/*       */   public boolean postEvent(Event paramEvent) {
-/*  5192 */     ComponentPeer componentPeer = this.peer;
-/*       */     
-/*  5194 */     if (handleEvent(paramEvent)) {
-/*  5195 */       paramEvent.consume();
-/*  5196 */       return true;
-/*       */     } 
-/*       */     
-/*  5199 */     Container container = this.parent;
-/*  5200 */     int i = paramEvent.x;
-/*  5201 */     int j = paramEvent.y;
-/*  5202 */     if (container != null) {
-/*  5203 */       paramEvent.translate(this.x, this.y);
-/*  5204 */       if (container.postEvent(paramEvent)) {
-/*  5205 */         paramEvent.consume();
-/*  5206 */         return true;
-/*       */       } 
-/*       */       
-/*  5209 */       paramEvent.x = i;
-/*  5210 */       paramEvent.y = j;
-/*       */     } 
-/*  5212 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addComponentListener(ComponentListener paramComponentListener) {
-/*  5233 */     if (paramComponentListener == null) {
-/*       */       return;
-/*       */     }
-/*  5236 */     this.componentListener = AWTEventMulticaster.add(this.componentListener, paramComponentListener);
-/*  5237 */     this.newEventsOnly = true;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeComponentListener(ComponentListener paramComponentListener) {
-/*  5257 */     if (paramComponentListener == null) {
-/*       */       return;
-/*       */     }
-/*  5260 */     this.componentListener = AWTEventMulticaster.remove(this.componentListener, paramComponentListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized ComponentListener[] getComponentListeners() {
-/*  5276 */     return getListeners(ComponentListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addFocusListener(FocusListener paramFocusListener) {
-/*  5295 */     if (paramFocusListener == null) {
-/*       */       return;
-/*       */     }
-/*  5298 */     this.focusListener = AWTEventMulticaster.add(this.focusListener, paramFocusListener);
-/*  5299 */     this.newEventsOnly = true;
-/*       */ 
-/*       */ 
-/*       */     
-/*  5303 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  5304 */       this.parent.proxyEnableEvents(4L);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeFocusListener(FocusListener paramFocusListener) {
-/*  5326 */     if (paramFocusListener == null) {
-/*       */       return;
-/*       */     }
-/*  5329 */     this.focusListener = AWTEventMulticaster.remove(this.focusListener, paramFocusListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized FocusListener[] getFocusListeners() {
-/*  5345 */     return getListeners(FocusListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void addHierarchyListener(HierarchyListener paramHierarchyListener) {
-/*       */     boolean bool;
-/*  5365 */     if (paramHierarchyListener == null) {
-/*       */       return;
-/*       */     }
-/*       */     
-/*  5369 */     synchronized (this) {
-/*  5370 */       bool = (this.hierarchyListener == null && (this.eventMask & 0x8000L) == 0L) ? true : false;
-/*       */ 
-/*       */       
-/*  5373 */       this.hierarchyListener = AWTEventMulticaster.add(this.hierarchyListener, paramHierarchyListener);
-/*  5374 */       bool = (bool && this.hierarchyListener != null) ? true : false;
-/*  5375 */       this.newEventsOnly = true;
-/*       */     } 
-/*  5377 */     if (bool) {
-/*  5378 */       synchronized (getTreeLock()) {
-/*  5379 */         adjustListeningChildrenOnParent(32768L, 1);
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void removeHierarchyListener(HierarchyListener paramHierarchyListener) {
-/*       */     boolean bool;
-/*  5403 */     if (paramHierarchyListener == null) {
-/*       */       return;
-/*       */     }
-/*       */     
-/*  5407 */     synchronized (this) {
-/*  5408 */       bool = (this.hierarchyListener != null && (this.eventMask & 0x8000L) == 0L) ? true : false;
-/*       */ 
-/*       */       
-/*  5411 */       this
-/*  5412 */         .hierarchyListener = AWTEventMulticaster.remove(this.hierarchyListener, paramHierarchyListener);
-/*  5413 */       bool = (bool && this.hierarchyListener == null) ? true : false;
-/*       */     } 
-/*  5415 */     if (bool) {
-/*  5416 */       synchronized (getTreeLock()) {
-/*  5417 */         adjustListeningChildrenOnParent(32768L, -1);
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized HierarchyListener[] getHierarchyListeners() {
-/*  5436 */     return getListeners(HierarchyListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void addHierarchyBoundsListener(HierarchyBoundsListener paramHierarchyBoundsListener) {
-/*       */     boolean bool;
-/*  5456 */     if (paramHierarchyBoundsListener == null) {
-/*       */       return;
-/*       */     }
-/*       */     
-/*  5460 */     synchronized (this) {
-/*  5461 */       bool = (this.hierarchyBoundsListener == null && (this.eventMask & 0x10000L) == 0L) ? true : false;
-/*       */ 
-/*       */       
-/*  5464 */       this
-/*  5465 */         .hierarchyBoundsListener = AWTEventMulticaster.add(this.hierarchyBoundsListener, paramHierarchyBoundsListener);
-/*  5466 */       bool = (bool && this.hierarchyBoundsListener != null) ? true : false;
-/*       */       
-/*  5468 */       this.newEventsOnly = true;
-/*       */     } 
-/*  5470 */     if (bool) {
-/*  5471 */       synchronized (getTreeLock()) {
-/*  5472 */         adjustListeningChildrenOnParent(65536L, 1);
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public void removeHierarchyBoundsListener(HierarchyBoundsListener paramHierarchyBoundsListener) {
-/*       */     boolean bool;
-/*  5496 */     if (paramHierarchyBoundsListener == null) {
-/*       */       return;
-/*       */     }
-/*       */     
-/*  5500 */     synchronized (this) {
-/*  5501 */       bool = (this.hierarchyBoundsListener != null && (this.eventMask & 0x10000L) == 0L) ? true : false;
-/*       */ 
-/*       */       
-/*  5504 */       this
-/*  5505 */         .hierarchyBoundsListener = AWTEventMulticaster.remove(this.hierarchyBoundsListener, paramHierarchyBoundsListener);
-/*  5506 */       bool = (bool && this.hierarchyBoundsListener == null) ? true : false;
-/*       */     } 
-/*       */     
-/*  5509 */     if (bool) {
-/*  5510 */       synchronized (getTreeLock()) {
-/*  5511 */         adjustListeningChildrenOnParent(65536L, -1);
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int numListening(long paramLong) {
-/*  5520 */     if (eventLog.isLoggable(PlatformLogger.Level.FINE) && 
-/*  5521 */       paramLong != 32768L && paramLong != 65536L)
-/*       */     {
-/*       */       
-/*  5524 */       eventLog.fine("Assertion failed");
-/*       */     }
-/*       */     
-/*  5527 */     if ((paramLong == 32768L && (this.hierarchyListener != null || (this.eventMask & 0x8000L) != 0L)) || (paramLong == 65536L && (this.hierarchyBoundsListener != null || (this.eventMask & 0x10000L) != 0L)))
-/*       */     {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  5533 */       return 1;
-/*       */     }
-/*  5535 */     return 0;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int countHierarchyMembers() {
-/*  5541 */     return 1;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int createHierarchyEvents(int paramInt, Component paramComponent, Container paramContainer, long paramLong, boolean paramBoolean) {
-/*  5547 */     switch (paramInt)
-/*       */     { case 1400:
-/*  5549 */         if (this.hierarchyListener != null || (this.eventMask & 0x8000L) != 0L || paramBoolean) {
-/*       */ 
-/*       */           
-/*  5552 */           HierarchyEvent hierarchyEvent = new HierarchyEvent(this, paramInt, paramComponent, paramContainer, paramLong);
-/*       */ 
-/*       */           
-/*  5555 */           dispatchEvent(hierarchyEvent);
-/*  5556 */           return 1;
-/*       */         } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  5582 */         return 0;case 1401: case 1402: if (eventLog.isLoggable(PlatformLogger.Level.FINE) && paramLong != 0L) eventLog.fine("Assertion (changeFlags == 0) failed");  if (this.hierarchyBoundsListener != null || (this.eventMask & 0x10000L) != 0L || paramBoolean) { HierarchyEvent hierarchyEvent = new HierarchyEvent(this, paramInt, paramComponent, paramContainer); dispatchEvent(hierarchyEvent); return 1; }  return 0; }  if (eventLog.isLoggable(PlatformLogger.Level.FINE)) eventLog.fine("This code must never be reached");  return 0;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized HierarchyBoundsListener[] getHierarchyBoundsListeners() {
-/*  5598 */     return getListeners(HierarchyBoundsListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void adjustListeningChildrenOnParent(long paramLong, int paramInt) {
-/*  5607 */     if (this.parent != null) {
-/*  5608 */       this.parent.adjustListeningChildren(paramLong, paramInt);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addKeyListener(KeyListener paramKeyListener) {
-/*  5627 */     if (paramKeyListener == null) {
-/*       */       return;
-/*       */     }
-/*  5630 */     this.keyListener = AWTEventMulticaster.add(this.keyListener, paramKeyListener);
-/*  5631 */     this.newEventsOnly = true;
-/*       */ 
-/*       */ 
-/*       */     
-/*  5635 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  5636 */       this.parent.proxyEnableEvents(8L);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeKeyListener(KeyListener paramKeyListener) {
-/*  5658 */     if (paramKeyListener == null) {
-/*       */       return;
-/*       */     }
-/*  5661 */     this.keyListener = AWTEventMulticaster.remove(this.keyListener, paramKeyListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized KeyListener[] getKeyListeners() {
-/*  5677 */     return getListeners(KeyListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addMouseListener(MouseListener paramMouseListener) {
-/*  5696 */     if (paramMouseListener == null) {
-/*       */       return;
-/*       */     }
-/*  5699 */     this.mouseListener = AWTEventMulticaster.add(this.mouseListener, paramMouseListener);
-/*  5700 */     this.newEventsOnly = true;
-/*       */ 
-/*       */ 
-/*       */     
-/*  5704 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  5705 */       this.parent.proxyEnableEvents(16L);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeMouseListener(MouseListener paramMouseListener) {
-/*  5727 */     if (paramMouseListener == null) {
-/*       */       return;
-/*       */     }
-/*  5730 */     this.mouseListener = AWTEventMulticaster.remove(this.mouseListener, paramMouseListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized MouseListener[] getMouseListeners() {
-/*  5746 */     return getListeners(MouseListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addMouseMotionListener(MouseMotionListener paramMouseMotionListener) {
-/*  5765 */     if (paramMouseMotionListener == null) {
-/*       */       return;
-/*       */     }
-/*  5768 */     this.mouseMotionListener = AWTEventMulticaster.add(this.mouseMotionListener, paramMouseMotionListener);
-/*  5769 */     this.newEventsOnly = true;
-/*       */ 
-/*       */ 
-/*       */     
-/*  5773 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  5774 */       this.parent.proxyEnableEvents(32L);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeMouseMotionListener(MouseMotionListener paramMouseMotionListener) {
-/*  5796 */     if (paramMouseMotionListener == null) {
-/*       */       return;
-/*       */     }
-/*  5799 */     this.mouseMotionListener = AWTEventMulticaster.remove(this.mouseMotionListener, paramMouseMotionListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized MouseMotionListener[] getMouseMotionListeners() {
-/*  5815 */     return getListeners(MouseMotionListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addMouseWheelListener(MouseWheelListener paramMouseWheelListener) {
-/*  5839 */     if (paramMouseWheelListener == null) {
-/*       */       return;
-/*       */     }
-/*  5842 */     this.mouseWheelListener = AWTEventMulticaster.add(this.mouseWheelListener, paramMouseWheelListener);
-/*  5843 */     this.newEventsOnly = true;
-/*       */ 
-/*       */ 
-/*       */     
-/*  5847 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  5848 */       this.parent.proxyEnableEvents(131072L);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeMouseWheelListener(MouseWheelListener paramMouseWheelListener) {
-/*  5869 */     if (paramMouseWheelListener == null) {
-/*       */       return;
-/*       */     }
-/*  5872 */     this.mouseWheelListener = AWTEventMulticaster.remove(this.mouseWheelListener, paramMouseWheelListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized MouseWheelListener[] getMouseWheelListeners() {
-/*  5888 */     return getListeners(MouseWheelListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void addInputMethodListener(InputMethodListener paramInputMethodListener) {
-/*  5911 */     if (paramInputMethodListener == null) {
-/*       */       return;
-/*       */     }
-/*  5914 */     this.inputMethodListener = AWTEventMulticaster.add(this.inputMethodListener, paramInputMethodListener);
-/*  5915 */     this.newEventsOnly = true;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized void removeInputMethodListener(InputMethodListener paramInputMethodListener) {
-/*  5936 */     if (paramInputMethodListener == null) {
-/*       */       return;
-/*       */     }
-/*  5939 */     this.inputMethodListener = AWTEventMulticaster.remove(this.inputMethodListener, paramInputMethodListener);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public synchronized InputMethodListener[] getInputMethodListeners() {
-/*  5955 */     return getListeners(InputMethodListener.class);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public <T extends java.util.EventListener> T[] getListeners(Class<T> paramClass) {
-/*       */     InputMethodListener inputMethodListener;
-/*  6002 */     ComponentListener componentListener = null;
-/*  6003 */     if (paramClass == ComponentListener.class) {
-/*  6004 */       componentListener = this.componentListener;
-/*  6005 */     } else if (paramClass == FocusListener.class) {
-/*  6006 */       FocusListener focusListener = this.focusListener;
-/*  6007 */     } else if (paramClass == HierarchyListener.class) {
-/*  6008 */       HierarchyListener hierarchyListener = this.hierarchyListener;
-/*  6009 */     } else if (paramClass == HierarchyBoundsListener.class) {
-/*  6010 */       HierarchyBoundsListener hierarchyBoundsListener = this.hierarchyBoundsListener;
-/*  6011 */     } else if (paramClass == KeyListener.class) {
-/*  6012 */       KeyListener keyListener = this.keyListener;
-/*  6013 */     } else if (paramClass == MouseListener.class) {
-/*  6014 */       MouseListener mouseListener = this.mouseListener;
-/*  6015 */     } else if (paramClass == MouseMotionListener.class) {
-/*  6016 */       MouseMotionListener mouseMotionListener = this.mouseMotionListener;
-/*  6017 */     } else if (paramClass == MouseWheelListener.class) {
-/*  6018 */       MouseWheelListener mouseWheelListener = this.mouseWheelListener;
-/*  6019 */     } else if (paramClass == InputMethodListener.class) {
-/*  6020 */       inputMethodListener = this.inputMethodListener;
-/*  6021 */     } else if (paramClass == PropertyChangeListener.class) {
-/*  6022 */       return (T[])getPropertyChangeListeners();
-/*       */     } 
-/*  6024 */     return AWTEventMulticaster.getListeners(inputMethodListener, paramClass);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public InputMethodRequests getInputMethodRequests() {
-/*  6040 */     return null;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   public InputContext getInputContext() {
-/*  6055 */     Container container = this.parent;
-/*  6056 */     if (container == null) {
-/*  6057 */       return null;
-/*       */     }
-/*  6059 */     return container.getInputContext();
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   protected final void enableEvents(long paramLong) {
-/*  6081 */     long l = 0L;
-/*  6082 */     synchronized (this) {
-/*  6083 */       if ((paramLong & 0x8000L) != 0L && this.hierarchyListener == null && (this.eventMask & 0x8000L) == 0L)
-/*       */       {
-/*       */         
-/*  6086 */         l |= 0x8000L;
-/*       */       }
-/*  6088 */       if ((paramLong & 0x10000L) != 0L && this.hierarchyBoundsListener == null && (this.eventMask & 0x10000L) == 0L)
-/*       */       {
-/*       */         
-/*  6091 */         l |= 0x10000L;
-/*       */       }
-/*  6093 */       this.eventMask |= paramLong;
-/*  6094 */       this.newEventsOnly = true;
-/*       */     } 
-/*       */ 
-/*       */ 
-/*       */     
-/*  6099 */     if (this.peer instanceof java.awt.peer.LightweightPeer) {
-/*  6100 */       this.parent.proxyEnableEvents(this.eventMask);
-/*       */     }
-/*  6102 */     if (l != 0L) {
-/*  6103 */       synchronized (getTreeLock()) {
-/*  6104 */         adjustListeningChildrenOnParent(l, 1);
-/*       */       } 
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   protected final void disableEvents(long paramLong) {
-/*  6117 */     long l = 0L;
-/*  6118 */     synchronized (this) {
-/*  6119 */       if ((paramLong & 0x8000L) != 0L && this.hierarchyListener == null && (this.eventMask & 0x8000L) != 0L)
-/*       */       {
-/*       */         
-/*  6122 */         l |= 0x8000L;
-/*       */       }
-/*  6124 */       if ((paramLong & 0x10000L) != 0L && this.hierarchyBoundsListener == null && (this.eventMask & 0x10000L) != 0L)
-/*       */       {
-/*       */         
-/*  6127 */         l |= 0x10000L;
-/*       */       }
-/*  6129 */       this.eventMask &= paramLong ^ 0xFFFFFFFFFFFFFFFFL;
-/*       */     } 
-/*  6131 */     if (l != 0L)
-/*  6132 */       synchronized (getTreeLock())
-/*  6133 */       { adjustListeningChildrenOnParent(l, -1); }  
-/*       */   } private static final Map<Class<?>, Boolean> coalesceMap = new WeakHashMap<>(); private boolean checkCoalescing() { if (getClass().getClassLoader() == null) return false;  final Class<?> clazz = getClass(); synchronized (coalesceMap) { Boolean bool1 = coalesceMap.get(clazz); if (bool1 != null) return bool1.booleanValue();  Boolean bool2 = AccessController.<Boolean>doPrivileged(new PrivilegedAction<Boolean>() { public Boolean run() { return Boolean.valueOf(Component.isCoalesceEventsOverriden(clazz)); } }
-/*       */         ); coalesceMap.put(clazz, bool2); return bool2.booleanValue(); }  } private static final Class[] coalesceEventsParams = new Class[] { AWTEvent.class, AWTEvent.class }; private static boolean isCoalesceEventsOverriden(Class<?> paramClass) { assert Thread.holdsLock(coalesceMap); Class<?> clazz = paramClass.getSuperclass(); if (clazz == null) return false;  if (clazz.getClassLoader() != null) { Boolean bool = coalesceMap.get(clazz); if (bool == null) { if (isCoalesceEventsOverriden(clazz)) { coalesceMap.put(clazz, Boolean.valueOf(true)); return true; }  } else if (bool.booleanValue()) { return true; }  }  try { paramClass.getDeclaredMethod("coalesceEvents", coalesceEventsParams); return true; } catch (NoSuchMethodException noSuchMethodException) { return false; }  } final boolean isCoalescingEnabled() { return this.coalescingEnabled; } protected AWTEvent coalesceEvents(AWTEvent paramAWTEvent1, AWTEvent paramAWTEvent2) { return null; } protected void processEvent(AWTEvent paramAWTEvent) { if (paramAWTEvent instanceof FocusEvent) { processFocusEvent((FocusEvent)paramAWTEvent); } else if (paramAWTEvent instanceof MouseEvent) { switch (paramAWTEvent.getID()) { case 500: case 501: case 502: case 504: case 505: processMouseEvent((MouseEvent)paramAWTEvent); break;case 503: case 506: processMouseMotionEvent((MouseEvent)paramAWTEvent); break;case 507: processMouseWheelEvent((MouseWheelEvent)paramAWTEvent); break; }  } else if (paramAWTEvent instanceof KeyEvent) { processKeyEvent((KeyEvent)paramAWTEvent); } else if (paramAWTEvent instanceof ComponentEvent) { processComponentEvent((ComponentEvent)paramAWTEvent); } else if (paramAWTEvent instanceof InputMethodEvent) { processInputMethodEvent((InputMethodEvent)paramAWTEvent); } else if (paramAWTEvent instanceof HierarchyEvent) { switch (paramAWTEvent.getID()) { case 1400: processHierarchyEvent((HierarchyEvent)paramAWTEvent); break;case 1401: case 1402: processHierarchyBoundsEvent((HierarchyEvent)paramAWTEvent); break; }  }  } protected void processComponentEvent(ComponentEvent paramComponentEvent) { ComponentListener componentListener = this.componentListener; if (componentListener != null) { int i = paramComponentEvent.getID(); switch (i) { case 101: componentListener.componentResized(paramComponentEvent); break;case 100: componentListener.componentMoved(paramComponentEvent); break;case 102: componentListener.componentShown(paramComponentEvent); break;case 103: componentListener.componentHidden(paramComponentEvent); break; }  }  } protected void processFocusEvent(FocusEvent paramFocusEvent) { FocusListener focusListener = this.focusListener; if (focusListener != null) { int i = paramFocusEvent.getID(); switch (i) { case 1004: focusListener.focusGained(paramFocusEvent); break;case 1005: focusListener.focusLost(paramFocusEvent); break; }  }  } protected void processKeyEvent(KeyEvent paramKeyEvent) { KeyListener keyListener = this.keyListener; if (keyListener != null) { int i = paramKeyEvent.getID(); switch (i) { case 400: keyListener.keyTyped(paramKeyEvent); break;case 401: keyListener.keyPressed(paramKeyEvent); break;case 402: keyListener.keyReleased(paramKeyEvent); break; }  }  } protected void processMouseEvent(MouseEvent paramMouseEvent) { MouseListener mouseListener = this.mouseListener; if (mouseListener != null) { int i = paramMouseEvent.getID(); switch (i) { case 501: mouseListener.mousePressed(paramMouseEvent); break;case 502: mouseListener.mouseReleased(paramMouseEvent); break;case 500: mouseListener.mouseClicked(paramMouseEvent); break;case 505: mouseListener.mouseExited(paramMouseEvent); break;case 504: mouseListener.mouseEntered(paramMouseEvent); break; }  }  } protected void processMouseMotionEvent(MouseEvent paramMouseEvent) { MouseMotionListener mouseMotionListener = this.mouseMotionListener; if (mouseMotionListener != null) { int i = paramMouseEvent.getID(); switch (i) { case 503: mouseMotionListener.mouseMoved(paramMouseEvent); break;case 506: mouseMotionListener.mouseDragged(paramMouseEvent); break; }  }  } protected void processMouseWheelEvent(MouseWheelEvent paramMouseWheelEvent) { MouseWheelListener mouseWheelListener = this.mouseWheelListener; if (mouseWheelListener != null) { int i = paramMouseWheelEvent.getID(); switch (i) { case 507: mouseWheelListener.mouseWheelMoved(paramMouseWheelEvent); break; }  }  } boolean postsOldMouseEvents() { return false; } protected void processInputMethodEvent(InputMethodEvent paramInputMethodEvent) { InputMethodListener inputMethodListener = this.inputMethodListener; if (inputMethodListener != null) { int i = paramInputMethodEvent.getID(); switch (i) { case 1100: inputMethodListener.inputMethodTextChanged(paramInputMethodEvent); break;case 1101: inputMethodListener.caretPositionChanged(paramInputMethodEvent); break; }  }  } protected void processHierarchyEvent(HierarchyEvent paramHierarchyEvent) { HierarchyListener hierarchyListener = this.hierarchyListener; if (hierarchyListener != null) { int i = paramHierarchyEvent.getID(); switch (i) { case 1400: hierarchyListener.hierarchyChanged(paramHierarchyEvent); break; }  }  } protected void processHierarchyBoundsEvent(HierarchyEvent paramHierarchyEvent) { HierarchyBoundsListener hierarchyBoundsListener = this.hierarchyBoundsListener; if (hierarchyBoundsListener != null) { int i = paramHierarchyEvent.getID(); switch (i) { case 1401: hierarchyBoundsListener.ancestorMoved(paramHierarchyEvent); break;case 1402: hierarchyBoundsListener.ancestorResized(paramHierarchyEvent); break; }  }  } @Deprecated public boolean handleEvent(Event paramEvent) { switch (paramEvent.id) { case 504: return mouseEnter(paramEvent, paramEvent.x, paramEvent.y);case 505: return mouseExit(paramEvent, paramEvent.x, paramEvent.y);case 503: return mouseMove(paramEvent, paramEvent.x, paramEvent.y);case 501: return mouseDown(paramEvent, paramEvent.x, paramEvent.y);case 506: return mouseDrag(paramEvent, paramEvent.x, paramEvent.y);case 502: return mouseUp(paramEvent, paramEvent.x, paramEvent.y);case 401: case 403: return keyDown(paramEvent, paramEvent.key);case 402: case 404: return keyUp(paramEvent, paramEvent.key);case 1001: return action(paramEvent, paramEvent.arg);case 1004: return gotFocus(paramEvent, paramEvent.arg);case 1005: return lostFocus(paramEvent, paramEvent.arg); }  return false; } @Deprecated public boolean mouseDown(Event paramEvent, int paramInt1, int paramInt2) { return false; }
-/*       */   @Deprecated public boolean mouseDrag(Event paramEvent, int paramInt1, int paramInt2) { return false; }
-/*       */   @Deprecated public boolean mouseUp(Event paramEvent, int paramInt1, int paramInt2) { return false; }
-/*       */   @Deprecated public boolean mouseMove(Event paramEvent, int paramInt1, int paramInt2) { return false; }
-/*       */   @Deprecated public boolean mouseEnter(Event paramEvent, int paramInt1, int paramInt2) { return false; }
-/*       */   @Deprecated public boolean mouseExit(Event paramEvent, int paramInt1, int paramInt2) { return false; }
-/*       */   @Deprecated public boolean keyDown(Event paramEvent, int paramInt) { return false; }
-/*       */   @Deprecated public boolean keyUp(Event paramEvent, int paramInt) { return false; }
-/*       */   @Deprecated public boolean action(Event paramEvent, Object paramObject) { return false; }
-/*  6144 */   protected Component() { this.coalescingEnabled = checkCoalescing();
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  8059 */     this.autoFocusTransferOnDisposal = true;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  8594 */     this.componentSerializedDataVersion = 4;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*  9020 */     this.accessibleContext = null; this.appContext = AppContext.getAppContext(); } public void addNotify() { synchronized (getTreeLock()) { ComponentPeer componentPeer = this.peer; if (componentPeer == null || componentPeer instanceof java.awt.peer.LightweightPeer) { if (componentPeer == null) this.peer = componentPeer = getToolkit().createComponent(this);  if (this.parent != null) { long l = 0L; if (this.mouseListener != null || (this.eventMask & 0x10L) != 0L) l |= 0x10L;  if (this.mouseMotionListener != null || (this.eventMask & 0x20L) != 0L) l |= 0x20L;  if (this.mouseWheelListener != null || (this.eventMask & 0x20000L) != 0L) l |= 0x20000L;  if (this.focusListener != null || (this.eventMask & 0x4L) != 0L) l |= 0x4L;  if (this.keyListener != null || (this.eventMask & 0x8L) != 0L) l |= 0x8L;  if (l != 0L) this.parent.proxyEnableEvents(l);  }  } else { Container container = getContainer(); if (container != null && container.isLightweight()) { relocateComponent(); if (!container.isRecursivelyVisibleUpToHeavyweightContainer()) componentPeer.setVisible(false);  }  }  invalidate(); byte b1 = (this.popups != null) ? this.popups.size() : 0; for (byte b2 = 0; b2 < b1; b2++) { PopupMenu popupMenu = this.popups.elementAt(b2); popupMenu.addNotify(); }  if (this.dropTarget != null) this.dropTarget.addNotify(componentPeer);  this.peerFont = getFont(); if (getContainer() != null && !this.isAddNotifyComplete) getContainer().increaseComponentCount(this);  updateZOrder(); if (!this.isAddNotifyComplete) mixOnShowing();  this.isAddNotifyComplete = true; if (this.hierarchyListener != null || (this.eventMask & 0x8000L) != 0L || Toolkit.enabledOnToolkit(32768L)) { HierarchyEvent hierarchyEvent = new HierarchyEvent(this, 1400, this, this.parent, (0x2 | (isRecursivelyVisible() ? 4 : 0))); dispatchEvent(hierarchyEvent); }  }  } public void removeNotify() { KeyboardFocusManager.clearMostRecentFocusOwner(this); if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner() == this) KeyboardFocusManager.getCurrentKeyboardFocusManager().setGlobalPermanentFocusOwner(null);  synchronized (getTreeLock()) { if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabledFor(this)) transferFocus(true);  if (getContainer() != null && this.isAddNotifyComplete) getContainer().decreaseComponentCount(this);  byte b1 = (this.popups != null) ? this.popups.size() : 0; for (byte b2 = 0; b2 < b1; b2++) { PopupMenu popupMenu = this.popups.elementAt(b2); popupMenu.removeNotify(); }  if ((this.eventMask & 0x1000L) != 0L) { InputContext inputContext = getInputContext(); if (inputContext != null) inputContext.removeNotify(this);  }  ComponentPeer componentPeer = this.peer; if (componentPeer != null) { boolean bool = isLightweight(); if (this.bufferStrategy instanceof FlipBufferStrategy) ((FlipBufferStrategy)this.bufferStrategy).destroyBuffers();  if (this.dropTarget != null) this.dropTarget.removeNotify(this.peer);  if (this.visible) componentPeer.setVisible(false);  this.peer = null; this.peerFont = null; Toolkit.getEventQueue().removeSourceEvents(this, false); KeyboardFocusManager.getCurrentKeyboardFocusManager().discardKeyEvents(this); componentPeer.dispose(); mixOnHiding(bool); this.isAddNotifyComplete = false; this.compoundShape = null; }  if (this.hierarchyListener != null || (this.eventMask & 0x8000L) != 0L || Toolkit.enabledOnToolkit(32768L)) { HierarchyEvent hierarchyEvent = new HierarchyEvent(this, 1400, this, this.parent, (0x2 | (isRecursivelyVisible() ? 4 : 0))); dispatchEvent(hierarchyEvent); }  }  } @Deprecated public boolean gotFocus(Event paramEvent, Object paramObject) { return false; } @Deprecated public boolean lostFocus(Event paramEvent, Object paramObject) { return false; } @Deprecated public boolean isFocusTraversable() { if (this.isFocusTraversableOverridden == 0) this.isFocusTraversableOverridden = 1;  return this.focusable; } public boolean isFocusable() { return isFocusTraversable(); } public void setFocusable(boolean paramBoolean) { boolean bool; synchronized (this) { bool = this.focusable; this.focusable = paramBoolean; }  this.isFocusTraversableOverridden = 2; firePropertyChange("focusable", bool, paramBoolean); if (bool && !paramBoolean) { if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabled()) transferFocus(true);  KeyboardFocusManager.clearMostRecentFocusOwner(this); }  } final boolean isFocusTraversableOverridden() { return (this.isFocusTraversableOverridden != 1); } public void setFocusTraversalKeys(int paramInt, Set<? extends AWTKeyStroke> paramSet) { if (paramInt < 0 || paramInt >= 3) throw new IllegalArgumentException("invalid focus traversal key identifier");  setFocusTraversalKeys_NoIDCheck(paramInt, paramSet); } public Set<AWTKeyStroke> getFocusTraversalKeys(int paramInt) { if (paramInt < 0 || paramInt >= 3) throw new IllegalArgumentException("invalid focus traversal key identifier");  return getFocusTraversalKeys_NoIDCheck(paramInt); } final void setFocusTraversalKeys_NoIDCheck(int paramInt, Set<? extends AWTKeyStroke> paramSet) { Set<AWTKeyStroke> set; synchronized (this) { if (this.focusTraversalKeys == null) initializeFocusTraversalKeys();  if (paramSet != null) for (AWTKeyStroke aWTKeyStroke : paramSet) { if (aWTKeyStroke == null) throw new IllegalArgumentException("cannot set null focus traversal key");  if (aWTKeyStroke.getKeyChar() != Character.MAX_VALUE) throw new IllegalArgumentException("focus traversal keys cannot map to KEY_TYPED events");  for (byte b = 0; b < this.focusTraversalKeys.length; b++) { if (b != paramInt) if (getFocusTraversalKeys_NoIDCheck(b).contains(aWTKeyStroke)) throw new IllegalArgumentException("focus traversal keys must be unique for a Component");   }  }   set = this.focusTraversalKeys[paramInt]; this.focusTraversalKeys[paramInt] = (paramSet != null) ? Collections.<AWTKeyStroke>unmodifiableSet(new HashSet<>(paramSet)) : null; }  firePropertyChange(focusTraversalKeyPropertyNames[paramInt], set, paramSet); } final Set<AWTKeyStroke> getFocusTraversalKeys_NoIDCheck(int paramInt) { Set<AWTKeyStroke> set = (this.focusTraversalKeys != null) ? this.focusTraversalKeys[paramInt] : null; if (set != null) return set;  Container container = this.parent; if (container != null) return container.getFocusTraversalKeys(paramInt);  return KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(paramInt); }
-/*       */   public boolean areFocusTraversalKeysSet(int paramInt) { if (paramInt < 0 || paramInt >= 3) throw new IllegalArgumentException("invalid focus traversal key identifier");  return (this.focusTraversalKeys != null && this.focusTraversalKeys[paramInt] != null); }
-/*       */   public void setFocusTraversalKeysEnabled(boolean paramBoolean) { boolean bool; synchronized (this) { bool = this.focusTraversalKeysEnabled; this.focusTraversalKeysEnabled = paramBoolean; }  firePropertyChange("focusTraversalKeysEnabled", bool, paramBoolean); }
-/*       */   public boolean getFocusTraversalKeysEnabled() { return this.focusTraversalKeysEnabled; }
-/*       */   public void requestFocus() { requestFocusHelper(false, true); }
-/*       */   boolean requestFocus(CausedFocusEvent.Cause paramCause) { return requestFocusHelper(false, true, paramCause); }
-/*       */   protected boolean requestFocus(boolean paramBoolean) { return requestFocusHelper(paramBoolean, true); }
-/*       */   boolean requestFocus(boolean paramBoolean, CausedFocusEvent.Cause paramCause) { return requestFocusHelper(paramBoolean, true, paramCause); }
-/*       */   public boolean requestFocusInWindow() { return requestFocusHelper(false, false); }
-/*       */   boolean requestFocusInWindow(CausedFocusEvent.Cause paramCause) { return requestFocusHelper(false, false, paramCause); }
-/*       */   protected boolean requestFocusInWindow(boolean paramBoolean) { return requestFocusHelper(paramBoolean, false); }
-/*       */   boolean requestFocusInWindow(boolean paramBoolean, CausedFocusEvent.Cause paramCause) { return requestFocusHelper(paramBoolean, false, paramCause); }
-/*       */   final boolean requestFocusHelper(boolean paramBoolean1, boolean paramBoolean2) { return requestFocusHelper(paramBoolean1, paramBoolean2, CausedFocusEvent.Cause.UNKNOWN); }
-/*       */   final boolean requestFocusHelper(boolean paramBoolean1, boolean paramBoolean2, CausedFocusEvent.Cause paramCause) { AWTEvent aWTEvent = EventQueue.getCurrentEvent(); if (aWTEvent instanceof MouseEvent && SunToolkit.isSystemGenerated(aWTEvent)) { Component component = ((MouseEvent)aWTEvent).getComponent(); if (component == null || component.getContainingWindow() == getContainingWindow()) { focusLog.finest("requesting focus by mouse event \"in window\""); paramBoolean2 = false; }  }  if (!isRequestFocusAccepted(paramBoolean1, paramBoolean2, paramCause)) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("requestFocus is not accepted");  return false; }  KeyboardFocusManager.setMostRecentFocusOwner(this); Component component1 = this; while (component1 != null && !(component1 instanceof Window)) { if (!component1.isVisible()) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("component is recurively invisible");  return false; }  component1 = component1.parent; }  ComponentPeer componentPeer = this.peer; Component component2 = (componentPeer instanceof java.awt.peer.LightweightPeer) ? getNativeContainer() : this; if (component2 == null || !component2.isVisible()) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("Component is not a part of visible hierarchy");  return false; }  componentPeer = component2.peer; if (componentPeer == null) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("Peer is null");  return false; }  long l = 0L; if (EventQueue.isDispatchThread()) { l = Toolkit.getEventQueue().getMostRecentKeyEventTime(); } else { l = System.currentTimeMillis(); }  boolean bool = componentPeer.requestFocus(this, paramBoolean1, paramBoolean2, l, paramCause); if (!bool) { KeyboardFocusManager.getCurrentKeyboardFocusManager(this.appContext).dequeueKeyEvents(l, this); if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("Peer request failed");  } else if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) { focusLog.finest("Pass for " + this); }  return bool; }
-/*       */   private boolean isRequestFocusAccepted(boolean paramBoolean1, boolean paramBoolean2, CausedFocusEvent.Cause paramCause) { if (!isFocusable() || !isVisible()) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("Not focusable or not visible");  return false; }  ComponentPeer componentPeer = this.peer; if (componentPeer == null) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("peer is null");  return false; }  Window window = getContainingWindow(); if (window == null || !window.isFocusableWindow()) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("Component doesn't have toplevel");  return false; }  Component component = KeyboardFocusManager.getMostRecentFocusOwner(window); if (component == null) { component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(); if (component != null && component.getContainingWindow() != window) component = null;  }  if (component == this || component == null) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("focus owner is null or this");  return true; }  if (CausedFocusEvent.Cause.ACTIVATION == paramCause) { if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("cause is activation");  return true; }  boolean bool = requestFocusController.acceptRequestFocus(component, this, paramBoolean1, paramBoolean2, paramCause); if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) focusLog.finest("RequestFocusController returns {0}", new Object[] { Boolean.valueOf(bool) });  return bool; }
-/*       */   private static RequestFocusController requestFocusController = new DummyRequestFocusController();
-/*  9036 */   public AccessibleContext getAccessibleContext() { return this.accessibleContext; }
-/*       */   private boolean autoFocusTransferOnDisposal;
-/*       */   private int componentSerializedDataVersion;
-/*       */   protected AccessibleContext accessibleContext;
-/*       */   private static class DummyRequestFocusController implements RequestFocusController {
-/*       */     private DummyRequestFocusController() {}
-/*       */     public boolean acceptRequestFocus(Component param1Component1, Component param1Component2, boolean param1Boolean1, boolean param1Boolean2, CausedFocusEvent.Cause param1Cause) { return true; }
-/*       */   }
-/*       */   static synchronized void setRequestFocusController(RequestFocusController paramRequestFocusController) { if (paramRequestFocusController == null) { requestFocusController = new DummyRequestFocusController(); } else { requestFocusController = paramRequestFocusController; }  }
-/*       */   public Container getFocusCycleRootAncestor() { Container container = this.parent; while (container != null && !container.isFocusCycleRoot()) container = container.parent;  return container; }
-/*       */   public boolean isFocusCycleRoot(Container paramContainer) { Container container = getFocusCycleRootAncestor(); return (container == paramContainer); }
-/*       */   Container getTraversalRoot() { return getFocusCycleRootAncestor(); }
-/*       */   public void transferFocus() { nextFocus(); }
-/*       */   @Deprecated public void nextFocus() { transferFocus(false); }
-/*       */   boolean transferFocus(boolean paramBoolean) { if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("clearOnFailure = " + paramBoolean);  Component component = getNextFocusCandidate(); boolean bool = false; if (component != null && !component.isFocusOwner() && component != this) bool = component.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_FORWARD);  if (paramBoolean && !bool) { if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("clear global focus owner");  KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwnerPriv(); }  if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("returning result: " + bool);  return bool; }
-/*       */   final Component getNextFocusCandidate() { Container container = getTraversalRoot(); Component component1 = this; while (container != null && (!container.isShowing() || !container.canBeFocusOwner())) { component1 = container; container = component1.getFocusCycleRootAncestor(); }  if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("comp = " + component1 + ", root = " + container);  Component component2 = null; if (container != null) { FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy(); Component component = focusTraversalPolicy.getComponentAfter(container, component1); if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("component after is " + component);  if (component == null) { component = focusTraversalPolicy.getDefaultComponent(container); if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("default component is " + component);  }  if (component == null) { Applet applet = EmbeddedFrame.getAppletIfAncestorOf(this); if (applet != null) component = applet;  }  component2 = component; }  if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("Focus transfer candidate: " + component2);  return component2; }
-/*       */   public void transferFocusBackward() { transferFocusBackward(false); }
-/*       */   boolean transferFocusBackward(boolean paramBoolean) { Container container = getTraversalRoot(); Component component = this; while (container != null && (!container.isShowing() || !container.canBeFocusOwner())) { component = container; container = component.getFocusCycleRootAncestor(); }  boolean bool = false; if (container != null) { FocusTraversalPolicy focusTraversalPolicy = container.getFocusTraversalPolicy(); Component component1 = focusTraversalPolicy.getComponentBefore(container, component); if (component1 == null) component1 = focusTraversalPolicy.getDefaultComponent(container);  if (component1 != null) bool = component1.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_BACKWARD);  }  if (paramBoolean && !bool) { if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("clear global focus owner");  KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwnerPriv(); }  if (focusLog.isLoggable(PlatformLogger.Level.FINER)) focusLog.finer("returning result: " + bool);  return bool; }
-/*       */   public void transferFocusUpCycle() { Container container = getFocusCycleRootAncestor(); while (container != null && (!container.isShowing() || !container.isFocusable() || !container.isEnabled())) container = container.getFocusCycleRootAncestor();  if (container != null) { Container container1 = container.getFocusCycleRootAncestor(); Container container2 = (container1 != null) ? container1 : container; KeyboardFocusManager.getCurrentKeyboardFocusManager().setGlobalCurrentFocusCycleRootPriv(container2); container.requestFocus(CausedFocusEvent.Cause.TRAVERSAL_UP); } else { Window window = getContainingWindow(); if (window != null) { Component component = window.getFocusTraversalPolicy().getDefaultComponent(window); if (component != null) { KeyboardFocusManager.getCurrentKeyboardFocusManager().setGlobalCurrentFocusCycleRootPriv(window); component.requestFocus(CausedFocusEvent.Cause.TRAVERSAL_UP); }  }  }  }
-/*       */   public boolean hasFocus() { return (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == this); }
-/*       */   public boolean isFocusOwner() { return hasFocus(); }
-/*       */   void setAutoFocusTransferOnDisposal(boolean paramBoolean) { this.autoFocusTransferOnDisposal = paramBoolean; }
-/*       */   boolean isAutoFocusTransferOnDisposal() { return this.autoFocusTransferOnDisposal; }
-/*       */   public void add(PopupMenu paramPopupMenu) { synchronized (getTreeLock()) { if (paramPopupMenu.parent != null) paramPopupMenu.parent.remove(paramPopupMenu);  if (this.popups == null) this.popups = new Vector<>();  this.popups.addElement(paramPopupMenu); paramPopupMenu.parent = this; if (this.peer != null && paramPopupMenu.peer == null) paramPopupMenu.addNotify();  }  }
-/*       */   public void remove(MenuComponent paramMenuComponent) { synchronized (getTreeLock()) { if (this.popups == null) return;  int i = this.popups.indexOf(paramMenuComponent); if (i >= 0) { PopupMenu popupMenu = (PopupMenu)paramMenuComponent; if (popupMenu.peer != null) popupMenu.removeNotify();  popupMenu.parent = null; this.popups.removeElementAt(i); if (this.popups.size() == 0) this.popups = null;  }  }  } protected String paramString() { String str1 = Objects.toString(getName(), ""); String str2 = isValid() ? "" : ",invalid"; String str3 = this.visible ? "" : ",hidden"; String str4 = this.enabled ? "" : ",disabled"; return str1 + ',' + this.x + ',' + this.y + ',' + this.width + 'x' + this.height + str2 + str3 + str4; } public String toString() { return getClass().getName() + '[' + paramString() + ']'; } public void list() { list(System.out, 0); } public void list(PrintStream paramPrintStream) { list(paramPrintStream, 0); } public void list(PrintStream paramPrintStream, int paramInt) { for (byte b = 0; b < paramInt; b++) paramPrintStream.print(" ");  paramPrintStream.println(this); } public void list(PrintWriter paramPrintWriter) { list(paramPrintWriter, 0); } public void list(PrintWriter paramPrintWriter, int paramInt) { for (byte b = 0; b < paramInt; b++) paramPrintWriter.print(" ");  paramPrintWriter.println(this); } final Container getNativeContainer() { Container container = getContainer(); while (container != null && container.peer instanceof java.awt.peer.LightweightPeer) container = container.getContainer();  return container; } public void addPropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) { synchronized (getObjectLock()) { if (paramPropertyChangeListener == null) return;  if (this.changeSupport == null) this.changeSupport = new PropertyChangeSupport(this);  this.changeSupport.addPropertyChangeListener(paramPropertyChangeListener); }  } public void removePropertyChangeListener(PropertyChangeListener paramPropertyChangeListener) { synchronized (getObjectLock()) { if (paramPropertyChangeListener == null || this.changeSupport == null) return;  this.changeSupport.removePropertyChangeListener(paramPropertyChangeListener); }  } public PropertyChangeListener[] getPropertyChangeListeners() { synchronized (getObjectLock()) { if (this.changeSupport == null) return new PropertyChangeListener[0];  return this.changeSupport.getPropertyChangeListeners(); }  } public void addPropertyChangeListener(String paramString, PropertyChangeListener paramPropertyChangeListener) { synchronized (getObjectLock()) { if (paramPropertyChangeListener == null) return;  if (this.changeSupport == null) this.changeSupport = new PropertyChangeSupport(this);  this.changeSupport.addPropertyChangeListener(paramString, paramPropertyChangeListener); }  } public void removePropertyChangeListener(String paramString, PropertyChangeListener paramPropertyChangeListener) { synchronized (getObjectLock()) { if (paramPropertyChangeListener == null || this.changeSupport == null) return;  this.changeSupport.removePropertyChangeListener(paramString, paramPropertyChangeListener); }  } public PropertyChangeListener[] getPropertyChangeListeners(String paramString) { synchronized (getObjectLock()) { if (this.changeSupport == null) return new PropertyChangeListener[0];  return this.changeSupport.getPropertyChangeListeners(paramString); }  } protected void firePropertyChange(String paramString, Object paramObject1, Object paramObject2) { PropertyChangeSupport propertyChangeSupport; synchronized (getObjectLock()) { propertyChangeSupport = this.changeSupport; }  if (propertyChangeSupport == null || (paramObject1 != null && paramObject2 != null && paramObject1.equals(paramObject2))) return;  propertyChangeSupport.firePropertyChange(paramString, paramObject1, paramObject2); } protected void firePropertyChange(String paramString, boolean paramBoolean1, boolean paramBoolean2) { PropertyChangeSupport propertyChangeSupport = this.changeSupport; if (propertyChangeSupport == null || paramBoolean1 == paramBoolean2) return;  propertyChangeSupport.firePropertyChange(paramString, paramBoolean1, paramBoolean2); } protected void firePropertyChange(String paramString, int paramInt1, int paramInt2) { PropertyChangeSupport propertyChangeSupport = this.changeSupport; if (propertyChangeSupport == null || paramInt1 == paramInt2) return;  propertyChangeSupport.firePropertyChange(paramString, paramInt1, paramInt2); } public void firePropertyChange(String paramString, byte paramByte1, byte paramByte2) { if (this.changeSupport == null || paramByte1 == paramByte2) return;  firePropertyChange(paramString, Byte.valueOf(paramByte1), Byte.valueOf(paramByte2)); } public void firePropertyChange(String paramString, char paramChar1, char paramChar2) { if (this.changeSupport == null || paramChar1 == paramChar2) return;  firePropertyChange(paramString, new Character(paramChar1), new Character(paramChar2)); } public void firePropertyChange(String paramString, short paramShort1, short paramShort2) { if (this.changeSupport == null || paramShort1 == paramShort2) return;  firePropertyChange(paramString, Short.valueOf(paramShort1), Short.valueOf(paramShort2)); } public void firePropertyChange(String paramString, long paramLong1, long paramLong2) { if (this.changeSupport == null || paramLong1 == paramLong2) return;  firePropertyChange(paramString, Long.valueOf(paramLong1), Long.valueOf(paramLong2)); } public void firePropertyChange(String paramString, float paramFloat1, float paramFloat2) { if (this.changeSupport == null || paramFloat1 == paramFloat2) return;  firePropertyChange(paramString, Float.valueOf(paramFloat1), Float.valueOf(paramFloat2)); } public void firePropertyChange(String paramString, double paramDouble1, double paramDouble2) { if (this.changeSupport == null || paramDouble1 == paramDouble2) return;  firePropertyChange(paramString, Double.valueOf(paramDouble1), Double.valueOf(paramDouble2)); } private void doSwingSerialization() { Package package_ = Package.getPackage("javax.swing"); for (Class<?> clazz = getClass(); clazz != null; clazz = clazz.getSuperclass()) { if (clazz.getPackage() == package_ && clazz.getClassLoader() == null) { final Class<?> swingClass = clazz; Method[] arrayOfMethod = AccessController.<Method[]>doPrivileged((PrivilegedAction)new PrivilegedAction<Method[]>() {
-/*       */               public Method[] run() { return swingClass.getDeclaredMethods(); }
-/*       */             }); for (int i = arrayOfMethod.length - 1; i >= 0; i--) { final Method method = arrayOfMethod[i]; if (method.getName().equals("compWriteObjectNotify")) { AccessController.doPrivileged(new PrivilegedAction<Void>() {
-/*       */                   public Void run() { method.setAccessible(true); return null; }
-/*       */                 }); try { method.invoke(this, (Object[])null); } catch (IllegalAccessException illegalAccessException) {  } catch (InvocationTargetException invocationTargetException) {} return; }  }  }  }  } private void writeObject(ObjectOutputStream paramObjectOutputStream) throws IOException { doSwingSerialization(); paramObjectOutputStream.defaultWriteObject(); AWTEventMulticaster.save(paramObjectOutputStream, "componentL", this.componentListener); AWTEventMulticaster.save(paramObjectOutputStream, "focusL", this.focusListener); AWTEventMulticaster.save(paramObjectOutputStream, "keyL", this.keyListener); AWTEventMulticaster.save(paramObjectOutputStream, "mouseL", this.mouseListener); AWTEventMulticaster.save(paramObjectOutputStream, "mouseMotionL", this.mouseMotionListener); AWTEventMulticaster.save(paramObjectOutputStream, "inputMethodL", this.inputMethodListener); paramObjectOutputStream.writeObject(null); paramObjectOutputStream.writeObject(this.componentOrientation); AWTEventMulticaster.save(paramObjectOutputStream, "hierarchyL", this.hierarchyListener); AWTEventMulticaster.save(paramObjectOutputStream, "hierarchyBoundsL", this.hierarchyBoundsListener); paramObjectOutputStream.writeObject(null); AWTEventMulticaster.save(paramObjectOutputStream, "mouseWheelL", this.mouseWheelListener); paramObjectOutputStream.writeObject(null); } private void readObject(ObjectInputStream paramObjectInputStream) throws ClassNotFoundException, IOException { this.objectLock = new Object(); this.acc = AccessController.getContext(); paramObjectInputStream.defaultReadObject(); this.appContext = AppContext.getAppContext(); this.coalescingEnabled = checkCoalescing(); if (this.componentSerializedDataVersion < 4) { this.focusable = true; this.isFocusTraversableOverridden = 0; initializeFocusTraversalKeys(); this.focusTraversalKeysEnabled = true; }  Object object1; while (null != (object1 = paramObjectInputStream.readObject())) { String str = ((String)object1).intern(); if ("componentL" == str) { addComponentListener((ComponentListener)paramObjectInputStream.readObject()); continue; }  if ("focusL" == str) { addFocusListener((FocusListener)paramObjectInputStream.readObject()); continue; }  if ("keyL" == str) { addKeyListener((KeyListener)paramObjectInputStream.readObject()); continue; }  if ("mouseL" == str) { addMouseListener((MouseListener)paramObjectInputStream.readObject()); continue; }  if ("mouseMotionL" == str) { addMouseMotionListener((MouseMotionListener)paramObjectInputStream.readObject()); continue; }  if ("inputMethodL" == str) { addInputMethodListener((InputMethodListener)paramObjectInputStream.readObject()); continue; }  paramObjectInputStream.readObject(); }  Object object2 = null; try { object2 = paramObjectInputStream.readObject(); } catch (OptionalDataException optionalDataException) { if (!optionalDataException.eof) throw optionalDataException;  }  if (object2 != null) { this.componentOrientation = (ComponentOrientation)object2; } else { this.componentOrientation = ComponentOrientation.UNKNOWN; }  while (null != (object1 = paramObjectInputStream.readObject())) { String str = ((String)object1).intern(); if ("hierarchyL" == str) { addHierarchyListener((HierarchyListener)paramObjectInputStream.readObject()); continue; }  if ("hierarchyBoundsL" == str) { addHierarchyBoundsListener((HierarchyBoundsListener)paramObjectInputStream.readObject()); continue; }  paramObjectInputStream.readObject(); }  while (null != (object1 = paramObjectInputStream.readObject())) { String str = ((String)object1).intern(); if ("mouseWheelL" == str) { addMouseWheelListener((MouseWheelListener)paramObjectInputStream.readObject()); continue; }  paramObjectInputStream.readObject(); }  if (this.popups != null) { int i = this.popups.size(); for (byte b = 0; b < i; b++) { PopupMenu popupMenu = this.popups.elementAt(b); popupMenu.parent = this; }  }  } public void setComponentOrientation(ComponentOrientation paramComponentOrientation) { ComponentOrientation componentOrientation = this.componentOrientation; this.componentOrientation = paramComponentOrientation; firePropertyChange("componentOrientation", componentOrientation, paramComponentOrientation); invalidateIfValid(); } public ComponentOrientation getComponentOrientation() { return this.componentOrientation; } public void applyComponentOrientation(ComponentOrientation paramComponentOrientation) { if (paramComponentOrientation == null) throw new NullPointerException();  setComponentOrientation(paramComponentOrientation); } final boolean canBeFocusOwner() { if (isEnabled() && isDisplayable() && isVisible() && isFocusable()) return true;  return false; } final boolean canBeFocusOwnerRecursively() { if (!canBeFocusOwner()) return false;  synchronized (getTreeLock()) { if (this.parent != null) return this.parent.canContainFocusOwner(this);  }  return true; } final void relocateComponent() { synchronized (getTreeLock()) { if (this.peer == null) return;  int i = this.x; int j = this.y; Container container = getContainer(); for (; container != null && container.isLightweight(); container = container.getContainer()) { i += container.x; j += container.y; }  this.peer.setBounds(i, j, this.width, this.height, 1); }  } Window getContainingWindow() { return SunToolkit.getContainingWindow(this); } protected abstract class AccessibleAWTComponent extends AccessibleContext implements Serializable, AccessibleComponent {
-/*  9065 */     private volatile transient int propertyListenersCount = 0;
-/*       */     private static final long serialVersionUID = 642321655757800191L;
-/*  9067 */     protected ComponentListener accessibleAWTComponentHandler = null;
-/*  9068 */     protected FocusListener accessibleAWTFocusHandler = null;
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected class AccessibleAWTComponentHandler
-/*       */       implements ComponentListener
-/*       */     {
-/*       */       public void componentHidden(ComponentEvent param2ComponentEvent) {
-/*  9077 */         if (Component.this.accessibleContext != null) {
-/*  9078 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", AccessibleState.VISIBLE, null);
-/*       */         }
-/*       */       }
-/*       */ 
-/*       */ 
-/*       */       
-/*       */       public void componentShown(ComponentEvent param2ComponentEvent) {
-/*  9085 */         if (Component.this.accessibleContext != null) {
-/*  9086 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.VISIBLE);
-/*       */         }
-/*       */       }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*       */       public void componentMoved(ComponentEvent param2ComponentEvent) {}
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*       */       public void componentResized(ComponentEvent param2ComponentEvent) {}
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     protected class AccessibleAWTFocusHandler
-/*       */       implements FocusListener
-/*       */     {
-/*       */       public void focusGained(FocusEvent param2FocusEvent) {
-/*  9107 */         if (Component.this.accessibleContext != null) {
-/*  9108 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.FOCUSED);
-/*       */         }
-/*       */       }
-/*       */ 
-/*       */       
-/*       */       public void focusLost(FocusEvent param2FocusEvent) {
-/*  9114 */         if (Component.this.accessibleContext != null) {
-/*  9115 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", AccessibleState.FOCUSED, null);
-/*       */         }
-/*       */       }
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void addPropertyChangeListener(PropertyChangeListener param1PropertyChangeListener) {
-/*  9129 */       if (this.accessibleAWTComponentHandler == null) {
-/*  9130 */         this.accessibleAWTComponentHandler = new AccessibleAWTComponentHandler();
-/*       */       }
-/*  9132 */       if (this.accessibleAWTFocusHandler == null) {
-/*  9133 */         this.accessibleAWTFocusHandler = new AccessibleAWTFocusHandler();
-/*       */       }
-/*  9135 */       if (this.propertyListenersCount++ == 0) {
-/*  9136 */         Component.this.addComponentListener(this.accessibleAWTComponentHandler);
-/*  9137 */         Component.this.addFocusListener(this.accessibleAWTFocusHandler);
-/*       */       } 
-/*  9139 */       super.addPropertyChangeListener(param1PropertyChangeListener);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void removePropertyChangeListener(PropertyChangeListener param1PropertyChangeListener) {
-/*  9150 */       if (--this.propertyListenersCount == 0) {
-/*  9151 */         Component.this.removeComponentListener(this.accessibleAWTComponentHandler);
-/*  9152 */         Component.this.removeFocusListener(this.accessibleAWTFocusHandler);
-/*       */       } 
-/*  9154 */       super.removePropertyChangeListener(param1PropertyChangeListener);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public String getAccessibleName() {
-/*  9175 */       return this.accessibleName;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public String getAccessibleDescription() {
-/*  9194 */       return this.accessibleDescription;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public AccessibleRole getAccessibleRole() {
-/*  9205 */       return AccessibleRole.AWT_COMPONENT;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public AccessibleStateSet getAccessibleStateSet() {
-/*  9216 */       return Component.this.getAccessibleStateSet();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Accessible getAccessibleParent() {
-/*  9229 */       if (this.accessibleParent != null) {
-/*  9230 */         return this.accessibleParent;
-/*       */       }
-/*  9232 */       Container container = Component.this.getParent();
-/*  9233 */       if (container instanceof Accessible) {
-/*  9234 */         return (Accessible)container;
-/*       */       }
-/*       */       
-/*  9237 */       return null;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public int getAccessibleIndexInParent() {
-/*  9248 */       return Component.this.getAccessibleIndexInParent();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public int getAccessibleChildrenCount() {
-/*  9259 */       return 0;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Accessible getAccessibleChild(int param1Int) {
-/*  9269 */       return null;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Locale getLocale() {
-/*  9278 */       return Component.this.getLocale();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public AccessibleComponent getAccessibleComponent() {
-/*  9289 */       return this;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Color getBackground() {
-/*  9302 */       return Component.this.getBackground();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setBackground(Color param1Color) {
-/*  9313 */       Component.this.setBackground(param1Color);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Color getForeground() {
-/*  9323 */       return Component.this.getForeground();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setForeground(Color param1Color) {
-/*  9332 */       Component.this.setForeground(param1Color);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Cursor getCursor() {
-/*  9342 */       return Component.this.getCursor();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setCursor(Cursor param1Cursor) {
-/*  9354 */       Component.this.setCursor(param1Cursor);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Font getFont() {
-/*  9364 */       return Component.this.getFont();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setFont(Font param1Font) {
-/*  9373 */       Component.this.setFont(param1Font);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public FontMetrics getFontMetrics(Font param1Font) {
-/*  9385 */       if (param1Font == null) {
-/*  9386 */         return null;
-/*       */       }
-/*  9388 */       return Component.this.getFontMetrics(param1Font);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean isEnabled() {
-/*  9398 */       return Component.this.isEnabled();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setEnabled(boolean param1Boolean) {
-/*  9407 */       boolean bool = Component.this.isEnabled();
-/*  9408 */       Component.this.setEnabled(param1Boolean);
-/*  9409 */       if (param1Boolean != bool && 
-/*  9410 */         Component.this.accessibleContext != null) {
-/*  9411 */         if (param1Boolean) {
-/*  9412 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.ENABLED);
-/*       */         }
-/*       */         else {
-/*       */           
-/*  9416 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", AccessibleState.ENABLED, null);
-/*       */         } 
-/*       */       }
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean isVisible() {
-/*  9434 */       return Component.this.isVisible();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setVisible(boolean param1Boolean) {
-/*  9443 */       boolean bool = Component.this.isVisible();
-/*  9444 */       Component.this.setVisible(param1Boolean);
-/*  9445 */       if (param1Boolean != bool && 
-/*  9446 */         Component.this.accessibleContext != null) {
-/*  9447 */         if (param1Boolean) {
-/*  9448 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", null, AccessibleState.VISIBLE);
-/*       */         }
-/*       */         else {
-/*       */           
-/*  9452 */           Component.this.accessibleContext.firePropertyChange("AccessibleState", AccessibleState.VISIBLE, null);
-/*       */         } 
-/*       */       }
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean isShowing() {
-/*  9470 */       return Component.this.isShowing();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean contains(Point param1Point) {
-/*  9483 */       return Component.this.contains(param1Point);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Point getLocationOnScreen() {
-/*  9493 */       synchronized (Component.this.getTreeLock()) {
-/*  9494 */         if (Component.this.isShowing()) {
-/*  9495 */           return Component.this.getLocationOnScreen();
-/*       */         }
-/*  9497 */         return null;
-/*       */       } 
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Point getLocation() {
-/*  9512 */       return Component.this.getLocation();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setLocation(Point param1Point) {
-/*  9520 */       Component.this.setLocation(param1Point);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Rectangle getBounds() {
-/*  9532 */       return Component.this.getBounds();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setBounds(Rectangle param1Rectangle) {
-/*  9544 */       Component.this.setBounds(param1Rectangle);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Dimension getSize() {
-/*  9559 */       return Component.this.getSize();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void setSize(Dimension param1Dimension) {
-/*  9568 */       Component.this.setSize(param1Dimension);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public Accessible getAccessibleAt(Point param1Point) {
-/*  9584 */       return null;
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public boolean isFocusTraversable() {
-/*  9593 */       return Component.this.isFocusTraversable();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void requestFocus() {
-/*  9600 */       Component.this.requestFocus();
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void addFocusListener(FocusListener param1FocusListener) {
-/*  9610 */       Component.this.addFocusListener(param1FocusListener);
-/*       */     }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */     
-/*       */     public void removeFocusListener(FocusListener param1FocusListener) {
-/*  9620 */       Component.this.removeFocusListener(param1FocusListener);
-/*       */     }
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   int getAccessibleIndexInParent() {
-/*  9634 */     synchronized (getTreeLock()) {
-/*  9635 */       byte b = -1;
-/*  9636 */       Container container = getParent();
-/*  9637 */       if (container != null && container instanceof Accessible) {
-/*  9638 */         Component[] arrayOfComponent = container.getComponents();
-/*  9639 */         for (byte b1 = 0; b1 < arrayOfComponent.length; b1++) {
-/*  9640 */           if (arrayOfComponent[b1] instanceof Accessible) {
-/*  9641 */             b++;
-/*       */           }
-/*  9643 */           if (equals(arrayOfComponent[b1])) {
-/*  9644 */             return b;
-/*       */           }
-/*       */         } 
-/*       */       } 
-/*  9648 */       return -1;
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   AccessibleStateSet getAccessibleStateSet() {
-/*  9660 */     synchronized (getTreeLock()) {
-/*  9661 */       AccessibleStateSet accessibleStateSet = new AccessibleStateSet();
-/*  9662 */       if (isEnabled()) {
-/*  9663 */         accessibleStateSet.add(AccessibleState.ENABLED);
-/*       */       }
-/*  9665 */       if (isFocusTraversable()) {
-/*  9666 */         accessibleStateSet.add(AccessibleState.FOCUSABLE);
-/*       */       }
-/*  9668 */       if (isVisible()) {
-/*  9669 */         accessibleStateSet.add(AccessibleState.VISIBLE);
-/*       */       }
-/*  9671 */       if (isShowing()) {
-/*  9672 */         accessibleStateSet.add(AccessibleState.SHOWING);
-/*       */       }
-/*  9674 */       if (isFocusOwner()) {
-/*  9675 */         accessibleStateSet.add(AccessibleState.FOCUSED);
-/*       */       }
-/*  9677 */       if (this instanceof Accessible) {
-/*  9678 */         AccessibleContext accessibleContext = ((Accessible)this).getAccessibleContext();
-/*  9679 */         if (accessibleContext != null) {
-/*  9680 */           Accessible accessible = accessibleContext.getAccessibleParent();
-/*  9681 */           if (accessible != null) {
-/*  9682 */             AccessibleContext accessibleContext1 = accessible.getAccessibleContext();
-/*  9683 */             if (accessibleContext1 != null) {
-/*  9684 */               AccessibleSelection accessibleSelection = accessibleContext1.getAccessibleSelection();
-/*  9685 */               if (accessibleSelection != null) {
-/*  9686 */                 accessibleStateSet.add(AccessibleState.SELECTABLE);
-/*  9687 */                 int i = accessibleContext.getAccessibleIndexInParent();
-/*  9688 */                 if (i >= 0 && 
-/*  9689 */                   accessibleSelection.isAccessibleChildSelected(i)) {
-/*  9690 */                   accessibleStateSet.add(AccessibleState.SELECTED);
-/*       */                 }
-/*       */               } 
-/*       */             } 
-/*       */           } 
-/*       */         } 
-/*       */       } 
-/*       */       
-/*  9698 */       if (isInstanceOf(this, "javax.swing.JComponent") && (
-/*  9699 */         (JComponent)this).isOpaque()) {
-/*  9700 */         accessibleStateSet.add(AccessibleState.OPAQUE);
-/*       */       }
-/*       */       
-/*  9703 */       return accessibleStateSet;
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   static boolean isInstanceOf(Object paramObject, String paramString) {
-/*  9715 */     if (paramObject == null) return false; 
-/*  9716 */     if (paramString == null) return false;
-/*       */     
-/*  9718 */     Class<?> clazz = paramObject.getClass();
-/*  9719 */     while (clazz != null) {
-/*  9720 */       if (clazz.getName().equals(paramString)) {
-/*  9721 */         return true;
-/*       */       }
-/*  9723 */       clazz = clazz.getSuperclass();
-/*       */     } 
-/*  9725 */     return false;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final boolean areBoundsValid() {
-/*  9740 */     Container container = getContainer();
-/*  9741 */     return (container == null || container.isValid() || container.getLayout() == null);
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void applyCompoundShape(Region paramRegion) {
-/*  9749 */     checkTreeLock();
-/*       */     
-/*  9751 */     if (!areBoundsValid()) {
-/*  9752 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  9753 */         mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
-/*       */       }
-/*       */       
-/*       */       return;
-/*       */     } 
-/*  9758 */     if (!isLightweight()) {
-/*  9759 */       ComponentPeer componentPeer = getPeer();
-/*  9760 */       if (componentPeer != null) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  9766 */         if (paramRegion.isEmpty()) {
-/*  9767 */           paramRegion = Region.EMPTY_REGION;
-/*       */         }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */         
-/*  9776 */         if (paramRegion.equals(getNormalShape())) {
-/*  9777 */           if (this.compoundShape == null) {
-/*       */             return;
-/*       */           }
-/*  9780 */           this.compoundShape = null;
-/*  9781 */           componentPeer.applyShape(null);
-/*       */         } else {
-/*  9783 */           if (paramRegion.equals(getAppliedShape())) {
-/*       */             return;
-/*       */           }
-/*  9786 */           this.compoundShape = paramRegion;
-/*  9787 */           Point point = getLocationOnWindow();
-/*  9788 */           if (mixingLog.isLoggable(PlatformLogger.Level.FINER)) {
-/*  9789 */             mixingLog.fine("this = " + this + "; compAbsolute=" + point + "; shape=" + paramRegion);
-/*       */           }
-/*       */           
-/*  9792 */           componentPeer.applyShape(paramRegion.getTranslatedRegion(-point.x, -point.y));
-/*       */         } 
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   private Region getAppliedShape() {
-/*  9804 */     checkTreeLock();
-/*       */     
-/*  9806 */     return (this.compoundShape == null || isLightweight()) ? getNormalShape() : this.compoundShape;
-/*       */   }
-/*       */   
-/*       */   Point getLocationOnWindow() {
-/*  9810 */     checkTreeLock();
-/*  9811 */     Point point = getLocation();
-/*       */     
-/*  9813 */     Container container = getContainer();
-/*  9814 */     for (; container != null && !(container instanceof Window); 
-/*  9815 */       container = container.getContainer()) {
-/*       */       
-/*  9817 */       point.x += container.getX();
-/*  9818 */       point.y += container.getY();
-/*       */     } 
-/*       */     
-/*  9821 */     return point;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final Region getNormalShape() {
-/*  9828 */     checkTreeLock();
-/*       */     
-/*  9830 */     Point point = getLocationOnWindow();
-/*  9831 */     return 
-/*  9832 */       Region.getInstanceXYWH(point.x, point.y, 
-/*       */ 
-/*       */         
-/*  9835 */         getWidth(), 
-/*  9836 */         getHeight());
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   Region getOpaqueShape() {
-/*  9853 */     checkTreeLock();
-/*  9854 */     if (this.mixingCutoutRegion != null) {
-/*  9855 */       return this.mixingCutoutRegion;
-/*       */     }
-/*  9857 */     return getNormalShape();
-/*       */   }
-/*       */ 
-/*       */   
-/*       */   final int getSiblingIndexAbove() {
-/*  9862 */     checkTreeLock();
-/*  9863 */     Container container = getContainer();
-/*  9864 */     if (container == null) {
-/*  9865 */       return -1;
-/*       */     }
-/*       */     
-/*  9868 */     int i = container.getComponentZOrder(this) - 1;
-/*       */     
-/*  9870 */     return (i < 0) ? -1 : i;
-/*       */   }
-/*       */   
-/*       */   final ComponentPeer getHWPeerAboveMe() {
-/*  9874 */     checkTreeLock();
-/*       */     
-/*  9876 */     Container container = getContainer();
-/*  9877 */     int i = getSiblingIndexAbove();
-/*       */     
-/*  9879 */     while (container != null) {
-/*  9880 */       for (int j = i; j > -1; j--) {
-/*  9881 */         Component component = container.getComponent(j);
-/*  9882 */         if (component != null && component.isDisplayable() && !component.isLightweight()) {
-/*  9883 */           return component.getPeer();
-/*       */         }
-/*       */       } 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */       
-/*  9890 */       if (!container.isLightweight()) {
-/*       */         break;
-/*       */       }
-/*       */       
-/*  9894 */       i = container.getSiblingIndexAbove();
-/*  9895 */       container = container.getContainer();
-/*       */     } 
-/*       */     
-/*  9898 */     return null;
-/*       */   }
-/*       */   
-/*       */   final int getSiblingIndexBelow() {
-/*  9902 */     checkTreeLock();
-/*  9903 */     Container container = getContainer();
-/*  9904 */     if (container == null) {
-/*  9905 */       return -1;
-/*       */     }
-/*       */     
-/*  9908 */     int i = container.getComponentZOrder(this) + 1;
-/*       */     
-/*  9910 */     return (i >= container.getComponentCount()) ? -1 : i;
-/*       */   }
-/*       */   
-/*       */   final boolean isNonOpaqueForMixing() {
-/*  9914 */     return (this.mixingCutoutRegion != null && this.mixingCutoutRegion
-/*  9915 */       .isEmpty());
-/*       */   }
-/*       */   
-/*       */   private Region calculateCurrentShape() {
-/*  9919 */     checkTreeLock();
-/*  9920 */     Region region = getNormalShape();
-/*       */     
-/*  9922 */     if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  9923 */       mixingLog.fine("this = " + this + "; normalShape=" + region);
-/*       */     }
-/*       */     
-/*  9926 */     if (getContainer() != null) {
-/*  9927 */       Component component = this;
-/*  9928 */       Container container = component.getContainer();
-/*       */       
-/*  9930 */       while (container != null) {
-/*  9931 */         for (int i = component.getSiblingIndexAbove(); i != -1; i--) {
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */           
-/*  9939 */           Component component1 = container.getComponent(i);
-/*  9940 */           if (component1.isLightweight() && component1.isShowing()) {
-/*  9941 */             region = region.getDifference(component1.getOpaqueShape());
-/*       */           }
-/*       */         } 
-/*       */         
-/*  9945 */         if (container.isLightweight()) {
-/*  9946 */           region = region.getIntersection(container.getNormalShape());
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */           
-/*  9951 */           component = container;
-/*  9952 */           container = container.getContainer();
-/*       */         } 
-/*       */       } 
-/*       */     } 
-/*  9956 */     if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  9957 */       mixingLog.fine("currentShape=" + region);
-/*       */     }
-/*       */     
-/*  9960 */     return region;
-/*       */   }
-/*       */   
-/*       */   void applyCurrentShape() {
-/*  9964 */     checkTreeLock();
-/*  9965 */     if (!areBoundsValid()) {
-/*  9966 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  9967 */         mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
-/*       */       }
-/*       */       return;
-/*       */     } 
-/*  9971 */     if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  9972 */       mixingLog.fine("this = " + this);
-/*       */     }
-/*  9974 */     applyCompoundShape(calculateCurrentShape());
-/*       */   }
-/*       */   
-/*       */   final void subtractAndApplyShape(Region paramRegion) {
-/*  9978 */     checkTreeLock();
-/*       */     
-/*  9980 */     if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/*  9981 */       mixingLog.fine("this = " + this + "; s=" + paramRegion);
-/*       */     }
-/*       */     
-/*  9984 */     applyCompoundShape(getAppliedShape().getDifference(paramRegion));
-/*       */   }
-/*       */   
-/*       */   private final void applyCurrentShapeBelowMe() {
-/*  9988 */     checkTreeLock();
-/*  9989 */     Container container = getContainer();
-/*  9990 */     if (container != null && container.isShowing()) {
-/*       */       
-/*  9992 */       container.recursiveApplyCurrentShape(getSiblingIndexBelow());
-/*       */ 
-/*       */       
-/*  9995 */       Container container1 = container.getContainer();
-/*  9996 */       while (!container.isOpaque() && container1 != null) {
-/*  9997 */         container1.recursiveApplyCurrentShape(container.getSiblingIndexBelow());
-/*       */         
-/*  9999 */         container = container1;
-/* 10000 */         container1 = container.getContainer();
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */   
-/*       */   final void subtractAndApplyShapeBelowMe() {
-/* 10006 */     checkTreeLock();
-/* 10007 */     Container container = getContainer();
-/* 10008 */     if (container != null && isShowing()) {
-/* 10009 */       Region region = getOpaqueShape();
-/*       */ 
-/*       */       
-/* 10012 */       container.recursiveSubtractAndApplyShape(region, getSiblingIndexBelow());
-/*       */ 
-/*       */       
-/* 10015 */       Container container1 = container.getContainer();
-/* 10016 */       while (!container.isOpaque() && container1 != null) {
-/* 10017 */         container1.recursiveSubtractAndApplyShape(region, container.getSiblingIndexBelow());
-/*       */         
-/* 10019 */         container = container1;
-/* 10020 */         container1 = container.getContainer();
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */   
-/*       */   void mixOnShowing() {
-/* 10026 */     synchronized (getTreeLock()) {
-/* 10027 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10028 */         mixingLog.fine("this = " + this);
-/*       */       }
-/* 10030 */       if (!isMixingNeeded()) {
-/*       */         return;
-/*       */       }
-/* 10033 */       if (isLightweight()) {
-/* 10034 */         subtractAndApplyShapeBelowMe();
-/*       */       } else {
-/* 10036 */         applyCurrentShape();
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void mixOnHiding(boolean paramBoolean) {
-/* 10044 */     synchronized (getTreeLock()) {
-/* 10045 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10046 */         mixingLog.fine("this = " + this + "; isLightweight = " + paramBoolean);
-/*       */       }
-/* 10048 */       if (!isMixingNeeded()) {
-/*       */         return;
-/*       */       }
-/* 10051 */       if (paramBoolean) {
-/* 10052 */         applyCurrentShapeBelowMe();
-/*       */       }
-/*       */     } 
-/*       */   }
-/*       */   
-/*       */   void mixOnReshaping() {
-/* 10058 */     synchronized (getTreeLock()) {
-/* 10059 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10060 */         mixingLog.fine("this = " + this);
-/*       */       }
-/* 10062 */       if (!isMixingNeeded()) {
-/*       */         return;
-/*       */       }
-/* 10065 */       if (isLightweight()) {
-/* 10066 */         applyCurrentShapeBelowMe();
-/*       */       } else {
-/* 10068 */         applyCurrentShape();
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */   
-/*       */   void mixOnZOrderChanging(int paramInt1, int paramInt2) {
-/* 10074 */     synchronized (getTreeLock()) {
-/* 10075 */       boolean bool = (paramInt2 < paramInt1) ? true : false;
-/* 10076 */       Container container = getContainer();
-/*       */       
-/* 10078 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10079 */         mixingLog.fine("this = " + this + "; oldZorder=" + paramInt1 + "; newZorder=" + paramInt2 + "; parent=" + container);
-/*       */       }
-/*       */       
-/* 10082 */       if (!isMixingNeeded()) {
-/*       */         return;
-/*       */       }
-/* 10085 */       if (isLightweight()) {
-/* 10086 */         if (bool) {
-/* 10087 */           if (container != null && isShowing()) {
-/* 10088 */             container.recursiveSubtractAndApplyShape(getOpaqueShape(), getSiblingIndexBelow(), paramInt1);
-/*       */           }
-/*       */         }
-/* 10091 */         else if (container != null) {
-/* 10092 */           container.recursiveApplyCurrentShape(paramInt1, paramInt2);
-/*       */         }
-/*       */       
-/*       */       }
-/* 10096 */       else if (bool) {
-/* 10097 */         applyCurrentShape();
-/*       */       }
-/* 10099 */       else if (container != null) {
-/* 10100 */         Region region = getAppliedShape();
-/*       */         
-/* 10102 */         for (int i = paramInt1; i < paramInt2; i++) {
-/* 10103 */           Component component = container.getComponent(i);
-/* 10104 */           if (component.isLightweight() && component.isShowing()) {
-/* 10105 */             region = region.getDifference(component.getOpaqueShape());
-/*       */           }
-/*       */         } 
-/* 10108 */         applyCompoundShape(region);
-/*       */       } 
-/*       */     } 
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void mixOnValidating() {}
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   final boolean isMixingNeeded() {
-/* 10121 */     if (SunToolkit.getSunAwtDisableMixing()) {
-/* 10122 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINEST)) {
-/* 10123 */         mixingLog.finest("this = " + this + "; Mixing disabled via sun.awt.disableMixing");
-/*       */       }
-/* 10125 */       return false;
-/*       */     } 
-/* 10127 */     if (!areBoundsValid()) {
-/* 10128 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10129 */         mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
-/*       */       }
-/* 10131 */       return false;
-/*       */     } 
-/* 10133 */     Window window = getContainingWindow();
-/* 10134 */     if (window != null) {
-/* 10135 */       if (!window.hasHeavyweightDescendants() || !window.hasLightweightDescendants() || window.isDisposing()) {
-/* 10136 */         if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10137 */           mixingLog.fine("containing window = " + window + "; has h/w descendants = " + window
-/* 10138 */               .hasHeavyweightDescendants() + "; has l/w descendants = " + window
-/* 10139 */               .hasLightweightDescendants() + "; disposing = " + window
-/* 10140 */               .isDisposing());
-/*       */         }
-/* 10142 */         return false;
-/*       */       } 
-/*       */     } else {
-/* 10145 */       if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
-/* 10146 */         mixingLog.fine("this = " + this + "; containing window is null");
-/*       */       }
-/* 10148 */       return false;
-/*       */     } 
-/* 10150 */     return true;
-/*       */   }
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */ 
-/*       */   
-/*       */   void updateZOrder() {
-/* 10158 */     this.peer.setZOrder(getHWPeerAboveMe());
-/*       */   }
-/*       */   
-/*       */   private static native void initIDs();
-/*       */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\Component.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.awt;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.Objects;
+import java.util.Vector;
+import java.util.Locale;
+import java.util.EventListener;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.Collections;
+import java.awt.peer.ComponentPeer;
+import java.awt.peer.ContainerPeer;
+import java.awt.peer.LightweightPeer;
+import java.awt.image.BufferStrategy;
+import java.awt.image.ImageObserver;
+import java.awt.image.ImageProducer;
+import java.awt.image.ColorModel;
+import java.awt.image.VolatileImage;
+import java.awt.event.*;
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.beans.Transient;
+import java.awt.im.InputContext;
+import java.awt.im.InputMethodRequests;
+import java.awt.dnd.DropTarget;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.AccessControlContext;
+import javax.accessibility.*;
+import java.applet.Applet;
+
+import sun.security.action.GetPropertyAction;
+import sun.awt.AppContext;
+import sun.awt.AWTAccessor;
+import sun.awt.ConstrainableGraphics;
+import sun.awt.SubRegionShowable;
+import sun.awt.SunToolkit;
+import sun.awt.WindowClosingListener;
+import sun.awt.CausedFocusEvent;
+import sun.awt.EmbeddedFrame;
+import sun.awt.dnd.SunDropTargetEvent;
+import sun.awt.im.CompositionArea;
+import sun.font.FontManager;
+import sun.font.FontManagerFactory;
+import sun.font.SunFontManager;
+import sun.java2d.SunGraphics2D;
+import sun.java2d.pipe.Region;
+import sun.awt.image.VSyncedBSManager;
+import sun.java2d.pipe.hw.ExtendedBufferCapabilities;
+import static sun.java2d.pipe.hw.ExtendedBufferCapabilities.VSyncType.*;
+import sun.awt.RequestFocusController;
+import sun.java2d.SunGraphicsEnvironment;
+import sun.util.logging.PlatformLogger;
+
+/**
+ * A <em>component</em> is an object having a graphical representation
+ * that can be displayed on the screen and that can interact with the
+ * user. Examples of components are the buttons, checkboxes, and scrollbars
+ * of a typical graphical user interface. <p>
+ * The <code>Component</code> class is the abstract superclass of
+ * the nonmenu-related Abstract Window Toolkit components. Class
+ * <code>Component</code> can also be extended directly to create a
+ * lightweight component. A lightweight component is a component that is
+ * not associated with a native window. On the contrary, a heavyweight
+ * component is associated with a native window. The {@link #isLightweight()}
+ * method may be used to distinguish between the two kinds of the components.
+ * <p>
+ * Lightweight and heavyweight components may be mixed in a single component
+ * hierarchy. However, for correct operating of such a mixed hierarchy of
+ * components, the whole hierarchy must be valid. When the hierarchy gets
+ * invalidated, like after changing the bounds of components, or
+ * adding/removing components to/from containers, the whole hierarchy must be
+ * validated afterwards by means of the {@link Container#validate()} method
+ * invoked on the top-most invalid container of the hierarchy.
+ *
+ * <h3>Serialization</h3>
+ * It is important to note that only AWT listeners which conform
+ * to the <code>Serializable</code> protocol will be saved when
+ * the object is stored.  If an AWT object has listeners that
+ * aren't marked serializable, they will be dropped at
+ * <code>writeObject</code> time.  Developers will need, as always,
+ * to consider the implications of making an object serializable.
+ * One situation to watch out for is this:
+ * <pre>
+ *    import java.awt.*;
+ *    import java.awt.event.*;
+ *    import java.io.Serializable;
+ *
+ *    class MyApp implements ActionListener, Serializable
+ *    {
+ *        BigObjectThatShouldNotBeSerializedWithAButton bigOne;
+ *        Button aButton = new Button();
+ *
+ *        MyApp()
+ *        {
+ *            // Oops, now aButton has a listener with a reference
+ *            // to bigOne!
+ *            aButton.addActionListener(this);
+ *        }
+ *
+ *        public void actionPerformed(ActionEvent e)
+ *        {
+ *            System.out.println("Hello There");
+ *        }
+ *    }
+ * </pre>
+ * In this example, serializing <code>aButton</code> by itself
+ * will cause <code>MyApp</code> and everything it refers to
+ * to be serialized as well.  The problem is that the listener
+ * is serializable by coincidence, not by design.  To separate
+ * the decisions about <code>MyApp</code> and the
+ * <code>ActionListener</code> being serializable one can use a
+ * nested class, as in the following example:
+ * <pre>
+ *    import java.awt.*;
+ *    import java.awt.event.*;
+ *    import java.io.Serializable;
+ *
+ *    class MyApp implements java.io.Serializable
+ *    {
+ *         BigObjectThatShouldNotBeSerializedWithAButton bigOne;
+ *         Button aButton = new Button();
+ *
+ *         static class MyActionListener implements ActionListener
+ *         {
+ *             public void actionPerformed(ActionEvent e)
+ *             {
+ *                 System.out.println("Hello There");
+ *             }
+ *         }
+ *
+ *         MyApp()
+ *         {
+ *             aButton.addActionListener(new MyActionListener());
+ *         }
+ *    }
+ * </pre>
+ * <p>
+ * <b>Note</b>: For more information on the paint mechanisms utilitized
+ * by AWT and Swing, including information on how to write the most
+ * efficient painting code, see
+ * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+ * <p>
+ * For details on the focus subsystem, see
+ * <a href="https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html">
+ * How to Use the Focus Subsystem</a>,
+ * a section in <em>The Java Tutorial</em>, and the
+ * <a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
+ * for more information.
+ *
+ * @author      Arthur van Hoff
+ * @author      Sami Shaio
+ */
+public abstract class Component implements ImageObserver, MenuContainer,
+                                           Serializable
+{
+
+    private static final PlatformLogger log = PlatformLogger.getLogger("java.awt.Component");
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.Component");
+    private static final PlatformLogger focusLog = PlatformLogger.getLogger("java.awt.focus.Component");
+    private static final PlatformLogger mixingLog = PlatformLogger.getLogger("java.awt.mixing.Component");
+
+    /**
+     * The peer of the component. The peer implements the component's
+     * behavior. The peer is set when the <code>Component</code> is
+     * added to a container that also is a peer.
+     * @see #addNotify
+     * @see #removeNotify
+     */
+    transient ComponentPeer peer;
+
+    /**
+     * The parent of the object. It may be <code>null</code>
+     * for top-level components.
+     * @see #getParent
+     */
+    transient Container parent;
+
+    /**
+     * The <code>AppContext</code> of the component. Applets/Plugin may
+     * change the AppContext.
+     */
+    transient AppContext appContext;
+
+    /**
+     * The x position of the component in the parent's coordinate system.
+     *
+     * @serial
+     * @see #getLocation
+     */
+    int x;
+
+    /**
+     * The y position of the component in the parent's coordinate system.
+     *
+     * @serial
+     * @see #getLocation
+     */
+    int y;
+
+    /**
+     * The width of the component.
+     *
+     * @serial
+     * @see #getSize
+     */
+    int width;
+
+    /**
+     * The height of the component.
+     *
+     * @serial
+     * @see #getSize
+     */
+    int height;
+
+    /**
+     * The foreground color for this component.
+     * <code>foreground</code> can be <code>null</code>.
+     *
+     * @serial
+     * @see #getForeground
+     * @see #setForeground
+     */
+    Color       foreground;
+
+    /**
+     * The background color for this component.
+     * <code>background</code> can be <code>null</code>.
+     *
+     * @serial
+     * @see #getBackground
+     * @see #setBackground
+     */
+    Color       background;
+
+    /**
+     * The font used by this component.
+     * The <code>font</code> can be <code>null</code>.
+     *
+     * @serial
+     * @see #getFont
+     * @see #setFont
+     */
+    volatile Font font;
+
+    /**
+     * The font which the peer is currently using.
+     * (<code>null</code> if no peer exists.)
+     */
+    Font        peerFont;
+
+    /**
+     * The cursor displayed when pointer is over this component.
+     * This value can be <code>null</code>.
+     *
+     * @serial
+     * @see #getCursor
+     * @see #setCursor
+     */
+    Cursor      cursor;
+
+    /**
+     * The locale for the component.
+     *
+     * @serial
+     * @see #getLocale
+     * @see #setLocale
+     */
+    Locale      locale;
+
+    /**
+     * A reference to a <code>GraphicsConfiguration</code> object
+     * used to describe the characteristics of a graphics
+     * destination.
+     * This value can be <code>null</code>.
+     *
+     * @since 1.3
+     * @serial
+     * @see GraphicsConfiguration
+     * @see #getGraphicsConfiguration
+     */
+    private transient volatile GraphicsConfiguration graphicsConfig;
+
+    /**
+     * A reference to a <code>BufferStrategy</code> object
+     * used to manipulate the buffers on this component.
+     *
+     * @since 1.4
+     * @see java.awt.image.BufferStrategy
+     * @see #getBufferStrategy()
+     */
+    transient BufferStrategy bufferStrategy = null;
+
+    /**
+     * True when the object should ignore all repaint events.
+     *
+     * @since 1.4
+     * @serial
+     * @see #setIgnoreRepaint
+     * @see #getIgnoreRepaint
+     */
+    boolean ignoreRepaint = false;
+
+    /**
+     * True when the object is visible. An object that is not
+     * visible is not drawn on the screen.
+     *
+     * @serial
+     * @see #isVisible
+     * @see #setVisible
+     */
+    boolean visible = true;
+
+    /**
+     * True when the object is enabled. An object that is not
+     * enabled does not interact with the user.
+     *
+     * @serial
+     * @see #isEnabled
+     * @see #setEnabled
+     */
+    boolean enabled = true;
+
+    /**
+     * True when the object is valid. An invalid object needs to
+     * be layed out. This flag is set to false when the object
+     * size is changed.
+     *
+     * @serial
+     * @see #isValid
+     * @see #validate
+     * @see #invalidate
+     */
+    private volatile boolean valid = false;
+
+    /**
+     * The <code>DropTarget</code> associated with this component.
+     *
+     * @since 1.2
+     * @serial
+     * @see #setDropTarget
+     * @see #getDropTarget
+     */
+    DropTarget dropTarget;
+
+    /**
+     * @serial
+     * @see #add
+     */
+    Vector<PopupMenu> popups;
+
+    /**
+     * A component's name.
+     * This field can be <code>null</code>.
+     *
+     * @serial
+     * @see #getName
+     * @see #setName(String)
+     */
+    private String name;
+
+    /**
+     * A bool to determine whether the name has
+     * been set explicitly. <code>nameExplicitlySet</code> will
+     * be false if the name has not been set and
+     * true if it has.
+     *
+     * @serial
+     * @see #getName
+     * @see #setName(String)
+     */
+    private boolean nameExplicitlySet = false;
+
+    /**
+     * Indicates whether this Component can be focused.
+     *
+     * @serial
+     * @see #setFocusable
+     * @see #isFocusable
+     * @since 1.4
+     */
+    private boolean focusable = true;
+
+    private static final int FOCUS_TRAVERSABLE_UNKNOWN = 0;
+    private static final int FOCUS_TRAVERSABLE_DEFAULT = 1;
+    private static final int FOCUS_TRAVERSABLE_SET = 2;
+
+    /**
+     * Tracks whether this Component is relying on default focus travesability.
+     *
+     * @serial
+     * @since 1.4
+     */
+    private int isFocusTraversableOverridden = FOCUS_TRAVERSABLE_UNKNOWN;
+
+    /**
+     * The focus traversal keys. These keys will generate focus traversal
+     * behavior for Components for which focus traversal keys are enabled. If a
+     * value of null is specified for a traversal key, this Component inherits
+     * that traversal key from its parent. If all ancestors of this Component
+     * have null specified for that traversal key, then the current
+     * KeyboardFocusManager's default traversal key is used.
+     *
+     * @serial
+     * @see #setFocusTraversalKeys
+     * @see #getFocusTraversalKeys
+     * @since 1.4
+     */
+    Set<AWTKeyStroke>[] focusTraversalKeys;
+
+    private static final String[] focusTraversalKeyPropertyNames = {
+        "forwardFocusTraversalKeys",
+        "backwardFocusTraversalKeys",
+        "upCycleFocusTraversalKeys",
+        "downCycleFocusTraversalKeys"
+    };
+
+    /**
+     * Indicates whether focus traversal keys are enabled for this Component.
+     * Components for which focus traversal keys are disabled receive key
+     * events for focus traversal keys. Components for which focus traversal
+     * keys are enabled do not see these events; instead, the events are
+     * automatically converted to traversal operations.
+     *
+     * @serial
+     * @see #setFocusTraversalKeysEnabled
+     * @see #getFocusTraversalKeysEnabled
+     * @since 1.4
+     */
+    private boolean focusTraversalKeysEnabled = true;
+
+    /**
+     * The locking object for AWT component-tree and layout operations.
+     *
+     * @see #getTreeLock
+     */
+    static final Object LOCK = new AWTTreeLock();
+    static class AWTTreeLock {}
+
+    /*
+     * The component's AccessControlContext.
+     */
+    private transient volatile AccessControlContext acc =
+        AccessController.getContext();
+
+    /**
+     * Minimum size.
+     * (This field perhaps should have been transient).
+     *
+     * @serial
+     */
+    Dimension minSize;
+
+    /**
+     * Whether or not setMinimumSize has been invoked with a non-null value.
+     */
+    boolean minSizeSet;
+
+    /**
+     * Preferred size.
+     * (This field perhaps should have been transient).
+     *
+     * @serial
+     */
+    Dimension prefSize;
+
+    /**
+     * Whether or not setPreferredSize has been invoked with a non-null value.
+     */
+    boolean prefSizeSet;
+
+    /**
+     * Maximum size
+     *
+     * @serial
+     */
+    Dimension maxSize;
+
+    /**
+     * Whether or not setMaximumSize has been invoked with a non-null value.
+     */
+    boolean maxSizeSet;
+
+    /**
+     * The orientation for this component.
+     * @see #getComponentOrientation
+     * @see #setComponentOrientation
+     */
+    transient ComponentOrientation componentOrientation
+    = ComponentOrientation.UNKNOWN;
+
+    /**
+     * <code>newEventsOnly</code> will be true if the event is
+     * one of the event types enabled for the component.
+     * It will then allow for normal processing to
+     * continue.  If it is false the event is passed
+     * to the component's parent and up the ancestor
+     * tree until the event has been consumed.
+     *
+     * @serial
+     * @see #dispatchEvent
+     */
+    boolean newEventsOnly = false;
+    transient ComponentListener componentListener;
+    transient FocusListener focusListener;
+    transient HierarchyListener hierarchyListener;
+    transient HierarchyBoundsListener hierarchyBoundsListener;
+    transient KeyListener keyListener;
+    transient MouseListener mouseListener;
+    transient MouseMotionListener mouseMotionListener;
+    transient MouseWheelListener mouseWheelListener;
+    transient InputMethodListener inputMethodListener;
+
+    transient RuntimeException windowClosingException = null;
+
+    /** Internal, constants for serialization */
+    final static String actionListenerK = "actionL";
+    final static String adjustmentListenerK = "adjustmentL";
+    final static String componentListenerK = "componentL";
+    final static String containerListenerK = "containerL";
+    final static String focusListenerK = "focusL";
+    final static String itemListenerK = "itemL";
+    final static String keyListenerK = "keyL";
+    final static String mouseListenerK = "mouseL";
+    final static String mouseMotionListenerK = "mouseMotionL";
+    final static String mouseWheelListenerK = "mouseWheelL";
+    final static String textListenerK = "textL";
+    final static String ownedWindowK = "ownedL";
+    final static String windowListenerK = "windowL";
+    final static String inputMethodListenerK = "inputMethodL";
+    final static String hierarchyListenerK = "hierarchyL";
+    final static String hierarchyBoundsListenerK = "hierarchyBoundsL";
+    final static String windowStateListenerK = "windowStateL";
+    final static String windowFocusListenerK = "windowFocusL";
+
+    /**
+     * The <code>eventMask</code> is ONLY set by subclasses via
+     * <code>enableEvents</code>.
+     * The mask should NOT be set when listeners are registered
+     * so that we can distinguish the difference between when
+     * listeners request events and subclasses request them.
+     * One bit is used to indicate whether input methods are
+     * enabled; this bit is set by <code>enableInputMethods</code> and is
+     * on by default.
+     *
+     * @serial
+     * @see #enableInputMethods
+     * @see AWTEvent
+     */
+    long eventMask = AWTEvent.INPUT_METHODS_ENABLED_MASK;
+
+    /**
+     * Static properties for incremental drawing.
+     * @see #imageUpdate
+     */
+    static boolean isInc;
+    static int incRate;
+    static {
+        /* ensure that the necessary native libraries are loaded */
+        Toolkit.loadLibraries();
+        /* initialize JNI field and method ids */
+        if (!GraphicsEnvironment.isHeadless()) {
+            initIDs();
+        }
+
+        String s = java.security.AccessController.doPrivileged(
+                                                               new GetPropertyAction("awt.image.incrementaldraw"));
+        isInc = (s == null || s.equals("true"));
+
+        s = java.security.AccessController.doPrivileged(
+                                                        new GetPropertyAction("awt.image.redrawrate"));
+        incRate = (s != null) ? Integer.parseInt(s) : 100;
+    }
+
+    /**
+     * Ease-of-use constant for <code>getAlignmentY()</code>.
+     * Specifies an alignment to the top of the component.
+     * @see     #getAlignmentY
+     */
+    public static final float TOP_ALIGNMENT = 0.0f;
+
+    /**
+     * Ease-of-use constant for <code>getAlignmentY</code> and
+     * <code>getAlignmentX</code>. Specifies an alignment to
+     * the center of the component
+     * @see     #getAlignmentX
+     * @see     #getAlignmentY
+     */
+    public static final float CENTER_ALIGNMENT = 0.5f;
+
+    /**
+     * Ease-of-use constant for <code>getAlignmentY</code>.
+     * Specifies an alignment to the bottom of the component.
+     * @see     #getAlignmentY
+     */
+    public static final float BOTTOM_ALIGNMENT = 1.0f;
+
+    /**
+     * Ease-of-use constant for <code>getAlignmentX</code>.
+     * Specifies an alignment to the left side of the component.
+     * @see     #getAlignmentX
+     */
+    public static final float LEFT_ALIGNMENT = 0.0f;
+
+    /**
+     * Ease-of-use constant for <code>getAlignmentX</code>.
+     * Specifies an alignment to the right side of the component.
+     * @see     #getAlignmentX
+     */
+    public static final float RIGHT_ALIGNMENT = 1.0f;
+
+    /*
+     * JDK 1.1 serialVersionUID
+     */
+    private static final long serialVersionUID = -7644114512714619750L;
+
+    /**
+     * If any <code>PropertyChangeListeners</code> have been registered,
+     * the <code>changeSupport</code> field describes them.
+     *
+     * @serial
+     * @since 1.2
+     * @see #addPropertyChangeListener
+     * @see #removePropertyChangeListener
+     * @see #firePropertyChange
+     */
+    private PropertyChangeSupport changeSupport;
+
+    /*
+     * In some cases using "this" as an object to synchronize by
+     * can lead to a deadlock if client code also uses synchronization
+     * by a component object. For every such situation revealed we should
+     * consider possibility of replacing "this" with the package private
+     * objectLock object introduced below. So far there're 3 issues known:
+     * - CR 6708322 (the getName/setName methods);
+     * - CR 6608764 (the PropertyChangeListener machinery);
+     * - CR 7108598 (the Container.paint/KeyboardFocusManager.clearMostRecentFocusOwner methods).
+     *
+     * Note: this field is considered final, though readObject() prohibits
+     * initializing final fields.
+     */
+    private transient Object objectLock = new Object();
+    Object getObjectLock() {
+        return objectLock;
+    }
+
+    /*
+     * Returns the acc this component was constructed with.
+     */
+    final AccessControlContext getAccessControlContext() {
+        if (acc == null) {
+            throw new SecurityException("Component is missing AccessControlContext");
+        }
+        return acc;
+    }
+
+    boolean isPacked = false;
+
+    /**
+     * Pseudoparameter for direct Geometry API (setLocation, setBounds setSize
+     * to signal setBounds what's changing. Should be used under TreeLock.
+     * This is only needed due to the inability to change the cross-calling
+     * order of public and deprecated methods.
+     */
+    private int boundsOp = ComponentPeer.DEFAULT_OPERATION;
+
+    /**
+     * Enumeration of the common ways the baseline of a component can
+     * change as the size changes.  The baseline resize behavior is
+     * primarily for layout managers that need to know how the
+     * position of the baseline changes as the component size changes.
+     * In general the baseline resize behavior will be valid for sizes
+     * greater than or equal to the minimum size (the actual minimum
+     * size; not a developer specified minimum size).  For sizes
+     * smaller than the minimum size the baseline may change in a way
+     * other than the baseline resize behavior indicates.  Similarly,
+     * as the size approaches <code>Integer.MAX_VALUE</code> and/or
+     * <code>Short.MAX_VALUE</code> the baseline may change in a way
+     * other than the baseline resize behavior indicates.
+     *
+     * @see #getBaselineResizeBehavior
+     * @see #getBaseline(int,int)
+     * @since 1.6
+     */
+    public enum BaselineResizeBehavior {
+        /**
+         * Indicates the baseline remains fixed relative to the
+         * y-origin.  That is, <code>getBaseline</code> returns
+         * the same value regardless of the height or width.  For example, a
+         * <code>JLabel</code> containing non-empty text with a
+         * vertical alignment of <code>TOP</code> should have a
+         * baseline type of <code>CONSTANT_ASCENT</code>.
+         */
+        CONSTANT_ASCENT,
+
+        /**
+         * Indicates the baseline remains fixed relative to the height
+         * and does not change as the width is varied.  That is, for
+         * any height H the difference between H and
+         * <code>getBaseline(w, H)</code> is the same.  For example, a
+         * <code>JLabel</code> containing non-empty text with a
+         * vertical alignment of <code>BOTTOM</code> should have a
+         * baseline type of <code>CONSTANT_DESCENT</code>.
+         */
+        CONSTANT_DESCENT,
+
+        /**
+         * Indicates the baseline remains a fixed distance from
+         * the center of the component.  That is, for any height H the
+         * difference between <code>getBaseline(w, H)</code> and
+         * <code>H / 2</code> is the same (plus or minus one depending upon
+         * rounding error).
+         * <p>
+         * Because of possible rounding errors it is recommended
+         * you ask for the baseline with two consecutive heights and use
+         * the return value to determine if you need to pad calculations
+         * by 1.  The following shows how to calculate the baseline for
+         * any height:
+         * <pre>
+         *   Dimension preferredSize = component.getPreferredSize();
+         *   int baseline = getBaseline(preferredSize.width,
+         *                              preferredSize.height);
+         *   int nextBaseline = getBaseline(preferredSize.width,
+         *                                  preferredSize.height + 1);
+         *   // Amount to add to height when calculating where baseline
+         *   // lands for a particular height:
+         *   int padding = 0;
+         *   // Where the baseline is relative to the mid point
+         *   int baselineOffset = baseline - height / 2;
+         *   if (preferredSize.height % 2 == 0 &amp;&amp;
+         *       baseline != nextBaseline) {
+         *       padding = 1;
+         *   }
+         *   else if (preferredSize.height % 2 == 1 &amp;&amp;
+         *            baseline == nextBaseline) {
+         *       baselineOffset--;
+         *       padding = 1;
+         *   }
+         *   // The following calculates where the baseline lands for
+         *   // the height z:
+         *   int calculatedBaseline = (z + padding) / 2 + baselineOffset;
+         * </pre>
+         */
+        CENTER_OFFSET,
+
+        /**
+         * Indicates the baseline resize behavior can not be expressed using
+         * any of the other constants.  This may also indicate the baseline
+         * varies with the width of the component.  This is also returned
+         * by components that do not have a baseline.
+         */
+        OTHER
+    }
+
+    /*
+     * The shape set with the applyCompoundShape() method. It uncludes the result
+     * of the HW/LW mixing related shape computation. It may also include
+     * the user-specified shape of the component.
+     * The 'null' value means the component has normal shape (or has no shape at all)
+     * and applyCompoundShape() will skip the following shape identical to normal.
+     */
+    private transient Region compoundShape = null;
+
+    /*
+     * Represents the shape of this lightweight component to be cut out from
+     * heavyweight components should they intersect. Possible values:
+     *    1. null - consider the shape rectangular
+     *    2. EMPTY_REGION - nothing gets cut out (children still get cut out)
+     *    3. non-empty - this shape gets cut out.
+     */
+    private transient Region mixingCutoutRegion = null;
+
+    /*
+     * Indicates whether addNotify() is complete
+     * (i.e. the peer is created).
+     */
+    private transient boolean isAddNotifyComplete = false;
+
+    /**
+     * Should only be used in subclass getBounds to check that part of bounds
+     * is actualy changing
+     */
+    int getBoundsOp() {
+        assert Thread.holdsLock(getTreeLock());
+        return boundsOp;
+    }
+
+    void setBoundsOp(int op) {
+        assert Thread.holdsLock(getTreeLock());
+        if (op == ComponentPeer.RESET_OPERATION) {
+            boundsOp = ComponentPeer.DEFAULT_OPERATION;
+        } else
+            if (boundsOp == ComponentPeer.DEFAULT_OPERATION) {
+                boundsOp = op;
+            }
+    }
+
+    // Whether this Component has had the background erase flag
+    // specified via SunToolkit.disableBackgroundErase(). This is
+    // needed in order to make this function work on X11 platforms,
+    // where currently there is no chance to interpose on the creation
+    // of the peer and therefore the call to XSetBackground.
+    transient boolean backgroundEraseDisabled;
+
+    static {
+        AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
+            public void setBackgroundEraseDisabled(Component comp, boolean disabled) {
+                comp.backgroundEraseDisabled = disabled;
+            }
+            public boolean getBackgroundEraseDisabled(Component comp) {
+                return comp.backgroundEraseDisabled;
+            }
+            public Rectangle getBounds(Component comp) {
+                return new Rectangle(comp.x, comp.y, comp.width, comp.height);
+            }
+            public void setMixingCutoutShape(Component comp, Shape shape) {
+                Region region = shape == null ?  null :
+                    Region.getInstance(shape, null);
+
+                synchronized (comp.getTreeLock()) {
+                    boolean needShowing = false;
+                    boolean needHiding = false;
+
+                    if (!comp.isNonOpaqueForMixing()) {
+                        needHiding = true;
+                    }
+
+                    comp.mixingCutoutRegion = region;
+
+                    if (!comp.isNonOpaqueForMixing()) {
+                        needShowing = true;
+                    }
+
+                    if (comp.isMixingNeeded()) {
+                        if (needHiding) {
+                            comp.mixOnHiding(comp.isLightweight());
+                        }
+                        if (needShowing) {
+                            comp.mixOnShowing();
+                        }
+                    }
+                }
+            }
+
+            public void setGraphicsConfiguration(Component comp,
+                    GraphicsConfiguration gc)
+            {
+                comp.setGraphicsConfiguration(gc);
+            }
+            public boolean requestFocus(Component comp, CausedFocusEvent.Cause cause) {
+                return comp.requestFocus(cause);
+            }
+            public boolean canBeFocusOwner(Component comp) {
+                return comp.canBeFocusOwner();
+            }
+
+            public boolean isVisible(Component comp) {
+                return comp.isVisible_NoClientCode();
+            }
+            public void setRequestFocusController
+                (RequestFocusController requestController)
+            {
+                 Component.setRequestFocusController(requestController);
+            }
+            public AppContext getAppContext(Component comp) {
+                 return comp.appContext;
+            }
+            public void setAppContext(Component comp, AppContext appContext) {
+                 comp.appContext = appContext;
+            }
+            public Container getParent(Component comp) {
+                return comp.getParent_NoClientCode();
+            }
+            public void setParent(Component comp, Container parent) {
+                comp.parent = parent;
+            }
+            public void setSize(Component comp, int width, int height) {
+                comp.width = width;
+                comp.height = height;
+            }
+            public Point getLocation(Component comp) {
+                return comp.location_NoClientCode();
+            }
+            public void setLocation(Component comp, int x, int y) {
+                comp.x = x;
+                comp.y = y;
+            }
+            public boolean isEnabled(Component comp) {
+                return comp.isEnabledImpl();
+            }
+            public boolean isDisplayable(Component comp) {
+                return comp.peer != null;
+            }
+            public Cursor getCursor(Component comp) {
+                return comp.getCursor_NoClientCode();
+            }
+            public ComponentPeer getPeer(Component comp) {
+                return comp.peer;
+            }
+            public void setPeer(Component comp, ComponentPeer peer) {
+                comp.peer = peer;
+            }
+            public boolean isLightweight(Component comp) {
+                return (comp.peer instanceof LightweightPeer);
+            }
+            public boolean getIgnoreRepaint(Component comp) {
+                return comp.ignoreRepaint;
+            }
+            public int getWidth(Component comp) {
+                return comp.width;
+            }
+            public int getHeight(Component comp) {
+                return comp.height;
+            }
+            public int getX(Component comp) {
+                return comp.x;
+            }
+            public int getY(Component comp) {
+                return comp.y;
+            }
+            public Color getForeground(Component comp) {
+                return comp.foreground;
+            }
+            public Color getBackground(Component comp) {
+                return comp.background;
+            }
+            public void setBackground(Component comp, Color background) {
+                comp.background = background;
+            }
+            public Font getFont(Component comp) {
+                return comp.getFont_NoClientCode();
+            }
+            public void processEvent(Component comp, AWTEvent e) {
+                comp.processEvent(e);
+            }
+
+            public AccessControlContext getAccessControlContext(Component comp) {
+                return comp.getAccessControlContext();
+            }
+
+            public void revalidateSynchronously(Component comp) {
+                comp.revalidateSynchronously();
+            }
+        });
+    }
+
+    /**
+     * Constructs a new component. Class <code>Component</code> can be
+     * extended directly to create a lightweight component that does not
+     * utilize an opaque native window. A lightweight component must be
+     * hosted by a native container somewhere higher up in the component
+     * tree (for example, by a <code>Frame</code> object).
+     */
+    protected Component() {
+        appContext = AppContext.getAppContext();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void initializeFocusTraversalKeys() {
+        focusTraversalKeys = new Set[3];
+    }
+
+    /**
+     * Constructs a name for this component.  Called by <code>getName</code>
+     * when the name is <code>null</code>.
+     */
+    String constructComponentName() {
+        return null; // For strict compliance with prior platform versions, a Component
+                     // that doesn't set its name should return null from
+                     // getName()
+    }
+
+    /**
+     * Gets the name of the component.
+     * @return this component's name
+     * @see    #setName
+     * @since JDK1.1
+     */
+    public String getName() {
+        if (name == null && !nameExplicitlySet) {
+            synchronized(getObjectLock()) {
+                if (name == null && !nameExplicitlySet)
+                    name = constructComponentName();
+            }
+        }
+        return name;
+    }
+
+    /**
+     * Sets the name of the component to the specified string.
+     * @param name  the string that is to be this
+     *           component's name
+     * @see #getName
+     * @since JDK1.1
+     */
+    public void setName(String name) {
+        String oldName;
+        synchronized(getObjectLock()) {
+            oldName = this.name;
+            this.name = name;
+            nameExplicitlySet = true;
+        }
+        firePropertyChange("name", oldName, name);
+    }
+
+    /**
+     * Gets the parent of this component.
+     * @return the parent container of this component
+     * @since JDK1.0
+     */
+    public Container getParent() {
+        return getParent_NoClientCode();
+    }
+
+    // NOTE: This method may be called by privileged threads.
+    //       This functionality is implemented in a package-private method
+    //       to insure that it cannot be overridden by client subclasses.
+    //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
+    final Container getParent_NoClientCode() {
+        return parent;
+    }
+
+    // This method is overridden in the Window class to return null,
+    //    because the parent field of the Window object contains
+    //    the owner of the window, not its parent.
+    Container getContainer() {
+        return getParent_NoClientCode();
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * programs should not directly manipulate peers;
+     * replaced by <code>boolean isDisplayable()</code>.
+     */
+    @Deprecated
+    public ComponentPeer getPeer() {
+        return peer;
+    }
+
+    /**
+     * Associate a <code>DropTarget</code> with this component.
+     * The <code>Component</code> will receive drops only if it
+     * is enabled.
+     *
+     * @see #isEnabled
+     * @param dt The DropTarget
+     */
+
+    public synchronized void setDropTarget(DropTarget dt) {
+        if (dt == dropTarget || (dropTarget != null && dropTarget.equals(dt)))
+            return;
+
+        DropTarget old;
+
+        if ((old = dropTarget) != null) {
+            if (peer != null) dropTarget.removeNotify(peer);
+
+            DropTarget t = dropTarget;
+
+            dropTarget = null;
+
+            try {
+                t.setComponent(null);
+            } catch (IllegalArgumentException iae) {
+                // ignore it.
+            }
+        }
+
+        // if we have a new one, and we have a peer, add it!
+
+        if ((dropTarget = dt) != null) {
+            try {
+                dropTarget.setComponent(this);
+                if (peer != null) dropTarget.addNotify(peer);
+            } catch (IllegalArgumentException iae) {
+                if (old != null) {
+                    try {
+                        old.setComponent(this);
+                        if (peer != null) dropTarget.addNotify(peer);
+                    } catch (IllegalArgumentException iae1) {
+                        // ignore it!
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the <code>DropTarget</code> associated with this
+     * <code>Component</code>.
+     */
+
+    public synchronized DropTarget getDropTarget() { return dropTarget; }
+
+    /**
+     * Gets the <code>GraphicsConfiguration</code> associated with this
+     * <code>Component</code>.
+     * If the <code>Component</code> has not been assigned a specific
+     * <code>GraphicsConfiguration</code>,
+     * the <code>GraphicsConfiguration</code> of the
+     * <code>Component</code> object's top-level container is
+     * returned.
+     * If the <code>Component</code> has been created, but not yet added
+     * to a <code>Container</code>, this method returns <code>null</code>.
+     *
+     * @return the <code>GraphicsConfiguration</code> used by this
+     *          <code>Component</code> or <code>null</code>
+     * @since 1.3
+     */
+    public GraphicsConfiguration getGraphicsConfiguration() {
+        return getGraphicsConfiguration_NoClientCode();
+    }
+
+    final GraphicsConfiguration getGraphicsConfiguration_NoClientCode() {
+        return graphicsConfig;
+    }
+
+    void setGraphicsConfiguration(GraphicsConfiguration gc) {
+        synchronized(getTreeLock()) {
+            if (updateGraphicsData(gc)) {
+                removeNotify();
+                addNotify();
+            }
+        }
+    }
+
+    boolean updateGraphicsData(GraphicsConfiguration gc) {
+        checkTreeLock();
+
+        if (graphicsConfig == gc) {
+            return false;
+        }
+
+        graphicsConfig = gc;
+
+        ComponentPeer peer = getPeer();
+        if (peer != null) {
+            return peer.updateGraphicsData(gc);
+        }
+        return false;
+    }
+
+    /**
+     * Checks that this component's <code>GraphicsDevice</code>
+     * <code>idString</code> matches the string argument.
+     */
+    void checkGD(String stringID) {
+        if (graphicsConfig != null) {
+            if (!graphicsConfig.getDevice().getIDstring().equals(stringID)) {
+                throw new IllegalArgumentException(
+                                                   "adding a container to a container on a different GraphicsDevice");
+            }
+        }
+    }
+
+    /**
+     * Gets this component's locking object (the object that owns the thread
+     * synchronization monitor) for AWT component-tree and layout
+     * operations.
+     * @return this component's locking object
+     */
+    public final Object getTreeLock() {
+        return LOCK;
+    }
+
+    final void checkTreeLock() {
+        if (!Thread.holdsLock(getTreeLock())) {
+            throw new IllegalStateException("This function should be called while holding treeLock");
+        }
+    }
+
+    /**
+     * Gets the toolkit of this component. Note that
+     * the frame that contains a component controls which
+     * toolkit is used by that component. Therefore if the component
+     * is moved from one frame to another, the toolkit it uses may change.
+     * @return  the toolkit of this component
+     * @since JDK1.0
+     */
+    public Toolkit getToolkit() {
+        return getToolkitImpl();
+    }
+
+    /*
+     * This is called by the native code, so client code can't
+     * be called on the toolkit thread.
+     */
+    final Toolkit getToolkitImpl() {
+        Container parent = this.parent;
+        if (parent != null) {
+            return parent.getToolkitImpl();
+        }
+        return Toolkit.getDefaultToolkit();
+    }
+
+    /**
+     * Determines whether this component is valid. A component is valid
+     * when it is correctly sized and positioned within its parent
+     * container and all its children are also valid.
+     * In order to account for peers' size requirements, components are invalidated
+     * before they are first shown on the screen. By the time the parent container
+     * is fully realized, all its components will be valid.
+     * @return <code>true</code> if the component is valid, <code>false</code>
+     * otherwise
+     * @see #validate
+     * @see #invalidate
+     * @since JDK1.0
+     */
+    public boolean isValid() {
+        return (peer != null) && valid;
+    }
+
+    /**
+     * Determines whether this component is displayable. A component is
+     * displayable when it is connected to a native screen resource.
+     * <p>
+     * A component is made displayable either when it is added to
+     * a displayable containment hierarchy or when its containment
+     * hierarchy is made displayable.
+     * A containment hierarchy is made displayable when its ancestor
+     * window is either packed or made visible.
+     * <p>
+     * A component is made undisplayable either when it is removed from
+     * a displayable containment hierarchy or when its containment hierarchy
+     * is made undisplayable.  A containment hierarchy is made
+     * undisplayable when its ancestor window is disposed.
+     *
+     * @return <code>true</code> if the component is displayable,
+     * <code>false</code> otherwise
+     * @see Container#add(Component)
+     * @see Window#pack
+     * @see Window#show
+     * @see Container#remove(Component)
+     * @see Window#dispose
+     * @since 1.2
+     */
+    public boolean isDisplayable() {
+        return getPeer() != null;
+    }
+
+    /**
+     * Determines whether this component should be visible when its
+     * parent is visible. Components are
+     * initially visible, with the exception of top level components such
+     * as <code>Frame</code> objects.
+     * @return <code>true</code> if the component is visible,
+     * <code>false</code> otherwise
+     * @see #setVisible
+     * @since JDK1.0
+     */
+    @Transient
+    public boolean isVisible() {
+        return isVisible_NoClientCode();
+    }
+    final boolean isVisible_NoClientCode() {
+        return visible;
+    }
+
+    /**
+     * Determines whether this component will be displayed on the screen.
+     * @return <code>true</code> if the component and all of its ancestors
+     *          until a toplevel window or null parent are visible,
+     *          <code>false</code> otherwise
+     */
+    boolean isRecursivelyVisible() {
+        return visible && (parent == null || parent.isRecursivelyVisible());
+    }
+
+    /**
+     * Determines the bounds of a visible part of the component relative to its
+     * parent.
+     *
+     * @return the visible part of bounds
+     */
+    private Rectangle getRecursivelyVisibleBounds() {
+        final Component container = getContainer();
+        final Rectangle bounds = getBounds();
+        if (container == null) {
+            // we are top level window or haven't a container, return our bounds
+            return bounds;
+        }
+        // translate the container's bounds to our coordinate space
+        final Rectangle parentsBounds = container.getRecursivelyVisibleBounds();
+        parentsBounds.setLocation(0, 0);
+        return parentsBounds.intersection(bounds);
+    }
+
+    /**
+     * Translates absolute coordinates into coordinates in the coordinate
+     * space of this component.
+     */
+    Point pointRelativeToComponent(Point absolute) {
+        Point compCoords = getLocationOnScreen();
+        return new Point(absolute.x - compCoords.x,
+                         absolute.y - compCoords.y);
+    }
+
+    /**
+     * Assuming that mouse location is stored in PointerInfo passed
+     * to this method, it finds a Component that is in the same
+     * Window as this Component and is located under the mouse pointer.
+     * If no such Component exists, null is returned.
+     * NOTE: this method should be called under the protection of
+     * tree lock, as it is done in Component.getMousePosition() and
+     * Container.getMousePosition(boolean).
+     */
+    Component findUnderMouseInWindow(PointerInfo pi) {
+        if (!isShowing()) {
+            return null;
+        }
+        Window win = getContainingWindow();
+        if (!Toolkit.getDefaultToolkit().getMouseInfoPeer().isWindowUnderMouse(win)) {
+            return null;
+        }
+        final boolean INCLUDE_DISABLED = true;
+        Point relativeToWindow = win.pointRelativeToComponent(pi.getLocation());
+        Component inTheSameWindow = win.findComponentAt(relativeToWindow.x,
+                                                        relativeToWindow.y,
+                                                        INCLUDE_DISABLED);
+        return inTheSameWindow;
+    }
+
+    /**
+     * Returns the position of the mouse pointer in this <code>Component</code>'s
+     * coordinate space if the <code>Component</code> is directly under the mouse
+     * pointer, otherwise returns <code>null</code>.
+     * If the <code>Component</code> is not showing on the screen, this method
+     * returns <code>null</code> even if the mouse pointer is above the area
+     * where the <code>Component</code> would be displayed.
+     * If the <code>Component</code> is partially or fully obscured by other
+     * <code>Component</code>s or native windows, this method returns a non-null
+     * value only if the mouse pointer is located above the unobscured part of the
+     * <code>Component</code>.
+     * <p>
+     * For <code>Container</code>s it returns a non-null value if the mouse is
+     * above the <code>Container</code> itself or above any of its descendants.
+     * Use {@link Container#getMousePosition(boolean)} if you need to exclude children.
+     * <p>
+     * Sometimes the exact mouse coordinates are not important, and the only thing
+     * that matters is whether a specific <code>Component</code> is under the mouse
+     * pointer. If the return value of this method is <code>null</code>, mouse
+     * pointer is not directly above the <code>Component</code>.
+     *
+     * @exception HeadlessException if GraphicsEnvironment.isHeadless() returns true
+     * @see       #isShowing
+     * @see       Container#getMousePosition
+     * @return    mouse coordinates relative to this <code>Component</code>, or null
+     * @since     1.5
+     */
+    public Point getMousePosition() throws HeadlessException {
+        if (GraphicsEnvironment.isHeadless()) {
+            throw new HeadlessException();
+        }
+
+        PointerInfo pi = java.security.AccessController.doPrivileged(
+                                                                     new java.security.PrivilegedAction<PointerInfo>() {
+                                                                         public PointerInfo run() {
+                                                                             return MouseInfo.getPointerInfo();
+                                                                         }
+                                                                     }
+                                                                     );
+
+        synchronized (getTreeLock()) {
+            Component inTheSameWindow = findUnderMouseInWindow(pi);
+            if (!isSameOrAncestorOf(inTheSameWindow, true)) {
+                return null;
+            }
+            return pointRelativeToComponent(pi.getLocation());
+        }
+    }
+
+    /**
+     * Overridden in Container. Must be called under TreeLock.
+     */
+    boolean isSameOrAncestorOf(Component comp, boolean allowChildren) {
+        return comp == this;
+    }
+
+    /**
+     * Determines whether this component is showing on screen. This means
+     * that the component must be visible, and it must be in a container
+     * that is visible and showing.
+     * <p>
+     * <strong>Note:</strong> sometimes there is no way to detect whether the
+     * {@code Component} is actually visible to the user.  This can happen when:
+     * <ul>
+     * <li>the component has been added to a visible {@code ScrollPane} but
+     * the {@code Component} is not currently in the scroll pane's view port.
+     * <li>the {@code Component} is obscured by another {@code Component} or
+     * {@code Container}.
+     * </ul>
+     * @return <code>true</code> if the component is showing,
+     *          <code>false</code> otherwise
+     * @see #setVisible
+     * @since JDK1.0
+     */
+    public boolean isShowing() {
+        if (visible && (peer != null)) {
+            Container parent = this.parent;
+            return (parent == null) || parent.isShowing();
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether this component is enabled. An enabled component
+     * can respond to user input and generate events. Components are
+     * enabled initially by default. A component may be enabled or disabled by
+     * calling its <code>setEnabled</code> method.
+     * @return <code>true</code> if the component is enabled,
+     *          <code>false</code> otherwise
+     * @see #setEnabled
+     * @since JDK1.0
+     */
+    public boolean isEnabled() {
+        return isEnabledImpl();
+    }
+
+    /*
+     * This is called by the native code, so client code can't
+     * be called on the toolkit thread.
+     */
+    final boolean isEnabledImpl() {
+        return enabled;
+    }
+
+    /**
+     * Enables or disables this component, depending on the value of the
+     * parameter <code>b</code>. An enabled component can respond to user
+     * input and generate events. Components are enabled initially by default.
+     *
+     * <p>Note: Disabling a lightweight component does not prevent it from
+     * receiving MouseEvents.
+     * <p>Note: Disabling a heavyweight container prevents all components
+     * in this container from receiving any input events.  But disabling a
+     * lightweight container affects only this container.
+     *
+     * @param     b   If <code>true</code>, this component is
+     *            enabled; otherwise this component is disabled
+     * @see #isEnabled
+     * @see #isLightweight
+     * @since JDK1.1
+     */
+    public void setEnabled(boolean b) {
+        enable(b);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setEnabled(boolean)</code>.
+     */
+    @Deprecated
+    public void enable() {
+        if (!enabled) {
+            synchronized (getTreeLock()) {
+                enabled = true;
+                ComponentPeer peer = this.peer;
+                if (peer != null) {
+                    peer.setEnabled(true);
+                    if (visible && !getRecursivelyVisibleBounds().isEmpty()) {
+                        updateCursorImmediately();
+                    }
+                }
+            }
+            if (accessibleContext != null) {
+                accessibleContext.firePropertyChange(
+                                                     AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                     null, AccessibleState.ENABLED);
+            }
+        }
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setEnabled(boolean)</code>.
+     */
+    @Deprecated
+    public void enable(boolean b) {
+        if (b) {
+            enable();
+        } else {
+            disable();
+        }
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setEnabled(boolean)</code>.
+     */
+    @Deprecated
+    public void disable() {
+        if (enabled) {
+            KeyboardFocusManager.clearMostRecentFocusOwner(this);
+            synchronized (getTreeLock()) {
+                enabled = false;
+                // A disabled lw container is allowed to contain a focus owner.
+                if ((isFocusOwner() || (containsFocus() && !isLightweight())) &&
+                    KeyboardFocusManager.isAutoFocusTransferEnabled())
+                {
+                    // Don't clear the global focus owner. If transferFocus
+                    // fails, we want the focus to stay on the disabled
+                    // Component so that keyboard traversal, et. al. still
+                    // makes sense to the user.
+                    transferFocus(false);
+                }
+                ComponentPeer peer = this.peer;
+                if (peer != null) {
+                    peer.setEnabled(false);
+                    if (visible && !getRecursivelyVisibleBounds().isEmpty()) {
+                        updateCursorImmediately();
+                    }
+                }
+            }
+            if (accessibleContext != null) {
+                accessibleContext.firePropertyChange(
+                                                     AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                     null, AccessibleState.ENABLED);
+            }
+        }
+    }
+
+    /**
+     * Returns true if this component is painted to an offscreen image
+     * ("buffer") that's copied to the screen later.  Component
+     * subclasses that support double buffering should override this
+     * method to return true if double buffering is enabled.
+     *
+     * @return false by default
+     */
+    public boolean isDoubleBuffered() {
+        return false;
+    }
+
+    /**
+     * Enables or disables input method support for this component. If input
+     * method support is enabled and the component also processes key events,
+     * incoming events are offered to
+     * the current input method and will only be processed by the component or
+     * dispatched to its listeners if the input method does not consume them.
+     * By default, input method support is enabled.
+     *
+     * @param enable true to enable, false to disable
+     * @see #processKeyEvent
+     * @since 1.2
+     */
+    public void enableInputMethods(boolean enable) {
+        if (enable) {
+            if ((eventMask & AWTEvent.INPUT_METHODS_ENABLED_MASK) != 0)
+                return;
+
+            // If this component already has focus, then activate the
+            // input method by dispatching a synthesized focus gained
+            // event.
+            if (isFocusOwner()) {
+                InputContext inputContext = getInputContext();
+                if (inputContext != null) {
+                    FocusEvent focusGainedEvent =
+                        new FocusEvent(this, FocusEvent.FOCUS_GAINED);
+                    inputContext.dispatchEvent(focusGainedEvent);
+                }
+            }
+
+            eventMask |= AWTEvent.INPUT_METHODS_ENABLED_MASK;
+        } else {
+            if ((eventMask & AWTEvent.INPUT_METHODS_ENABLED_MASK) != 0) {
+                InputContext inputContext = getInputContext();
+                if (inputContext != null) {
+                    inputContext.endComposition();
+                    inputContext.removeNotify(this);
+                }
+            }
+            eventMask &= ~AWTEvent.INPUT_METHODS_ENABLED_MASK;
+        }
+    }
+
+    /**
+     * Shows or hides this component depending on the value of parameter
+     * <code>b</code>.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param b  if <code>true</code>, shows this component;
+     * otherwise, hides this component
+     * @see #isVisible
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setVisible(boolean b) {
+        show(b);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setVisible(boolean)</code>.
+     */
+    @Deprecated
+    public void show() {
+        if (!visible) {
+            synchronized (getTreeLock()) {
+                visible = true;
+                mixOnShowing();
+                ComponentPeer peer = this.peer;
+                if (peer != null) {
+                    peer.setVisible(true);
+                    createHierarchyEvents(HierarchyEvent.HIERARCHY_CHANGED,
+                                          this, parent,
+                                          HierarchyEvent.SHOWING_CHANGED,
+                                          Toolkit.enabledOnToolkit(AWTEvent.HIERARCHY_EVENT_MASK));
+                    if (peer instanceof LightweightPeer) {
+                        repaint();
+                    }
+                    updateCursorImmediately();
+                }
+
+                if (componentListener != null ||
+                    (eventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0 ||
+                    Toolkit.enabledOnToolkit(AWTEvent.COMPONENT_EVENT_MASK)) {
+                    ComponentEvent e = new ComponentEvent(this,
+                                                          ComponentEvent.COMPONENT_SHOWN);
+                    Toolkit.getEventQueue().postEvent(e);
+                }
+            }
+            Container parent = this.parent;
+            if (parent != null) {
+                parent.invalidate();
+            }
+        }
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setVisible(boolean)</code>.
+     */
+    @Deprecated
+    public void show(boolean b) {
+        if (b) {
+            show();
+        } else {
+            hide();
+        }
+    }
+
+    boolean containsFocus() {
+        return isFocusOwner();
+    }
+
+    void clearMostRecentFocusOwnerOnHide() {
+        KeyboardFocusManager.clearMostRecentFocusOwner(this);
+    }
+
+    void clearCurrentFocusCycleRootOnHide() {
+        /* do nothing */
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setVisible(boolean)</code>.
+     */
+    @Deprecated
+    public void hide() {
+        isPacked = false;
+
+        if (visible) {
+            clearCurrentFocusCycleRootOnHide();
+            clearMostRecentFocusOwnerOnHide();
+            synchronized (getTreeLock()) {
+                visible = false;
+                mixOnHiding(isLightweight());
+                if (containsFocus() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
+                    transferFocus(true);
+                }
+                ComponentPeer peer = this.peer;
+                if (peer != null) {
+                    peer.setVisible(false);
+                    createHierarchyEvents(HierarchyEvent.HIERARCHY_CHANGED,
+                                          this, parent,
+                                          HierarchyEvent.SHOWING_CHANGED,
+                                          Toolkit.enabledOnToolkit(AWTEvent.HIERARCHY_EVENT_MASK));
+                    if (peer instanceof LightweightPeer) {
+                        repaint();
+                    }
+                    updateCursorImmediately();
+                }
+                if (componentListener != null ||
+                    (eventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0 ||
+                    Toolkit.enabledOnToolkit(AWTEvent.COMPONENT_EVENT_MASK)) {
+                    ComponentEvent e = new ComponentEvent(this,
+                                                          ComponentEvent.COMPONENT_HIDDEN);
+                    Toolkit.getEventQueue().postEvent(e);
+                }
+            }
+            Container parent = this.parent;
+            if (parent != null) {
+                parent.invalidate();
+            }
+        }
+    }
+
+    /**
+     * Gets the foreground color of this component.
+     * @return this component's foreground color; if this component does
+     * not have a foreground color, the foreground color of its parent
+     * is returned
+     * @see #setForeground
+     * @since JDK1.0
+     * @beaninfo
+     *       bound: true
+     */
+    @Transient
+    public Color getForeground() {
+        Color foreground = this.foreground;
+        if (foreground != null) {
+            return foreground;
+        }
+        Container parent = this.parent;
+        return (parent != null) ? parent.getForeground() : null;
+    }
+
+    /**
+     * Sets the foreground color of this component.
+     * @param c the color to become this component's
+     *          foreground color; if this parameter is <code>null</code>
+     *          then this component will inherit
+     *          the foreground color of its parent
+     * @see #getForeground
+     * @since JDK1.0
+     */
+    public void setForeground(Color c) {
+        Color oldColor = foreground;
+        ComponentPeer peer = this.peer;
+        foreground = c;
+        if (peer != null) {
+            c = getForeground();
+            if (c != null) {
+                peer.setForeground(c);
+            }
+        }
+        // This is a bound property, so report the change to
+        // any registered listeners.  (Cheap if there are none.)
+        firePropertyChange("foreground", oldColor, c);
+    }
+
+    /**
+     * Returns whether the foreground color has been explicitly set for this
+     * Component. If this method returns <code>false</code>, this Component is
+     * inheriting its foreground color from an ancestor.
+     *
+     * @return <code>true</code> if the foreground color has been explicitly
+     *         set for this Component; <code>false</code> otherwise.
+     * @since 1.4
+     */
+    public boolean isForegroundSet() {
+        return (foreground != null);
+    }
+
+    /**
+     * Gets the background color of this component.
+     * @return this component's background color; if this component does
+     *          not have a background color,
+     *          the background color of its parent is returned
+     * @see #setBackground
+     * @since JDK1.0
+     */
+    @Transient
+    public Color getBackground() {
+        Color background = this.background;
+        if (background != null) {
+            return background;
+        }
+        Container parent = this.parent;
+        return (parent != null) ? parent.getBackground() : null;
+    }
+
+    /**
+     * Sets the background color of this component.
+     * <p>
+     * The background color affects each component differently and the
+     * parts of the component that are affected by the background color
+     * may differ between operating systems.
+     *
+     * @param c the color to become this component's color;
+     *          if this parameter is <code>null</code>, then this
+     *          component will inherit the background color of its parent
+     * @see #getBackground
+     * @since JDK1.0
+     * @beaninfo
+     *       bound: true
+     */
+    public void setBackground(Color c) {
+        Color oldColor = background;
+        ComponentPeer peer = this.peer;
+        background = c;
+        if (peer != null) {
+            c = getBackground();
+            if (c != null) {
+                peer.setBackground(c);
+            }
+        }
+        // This is a bound property, so report the change to
+        // any registered listeners.  (Cheap if there are none.)
+        firePropertyChange("background", oldColor, c);
+    }
+
+    /**
+     * Returns whether the background color has been explicitly set for this
+     * Component. If this method returns <code>false</code>, this Component is
+     * inheriting its background color from an ancestor.
+     *
+     * @return <code>true</code> if the background color has been explicitly
+     *         set for this Component; <code>false</code> otherwise.
+     * @since 1.4
+     */
+    public boolean isBackgroundSet() {
+        return (background != null);
+    }
+
+    /**
+     * Gets the font of this component.
+     * @return this component's font; if a font has not been set
+     * for this component, the font of its parent is returned
+     * @see #setFont
+     * @since JDK1.0
+     */
+    @Transient
+    public Font getFont() {
+        return getFont_NoClientCode();
+    }
+
+    // NOTE: This method may be called by privileged threads.
+    //       This functionality is implemented in a package-private method
+    //       to insure that it cannot be overridden by client subclasses.
+    //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
+    final Font getFont_NoClientCode() {
+        Font font = this.font;
+        if (font != null) {
+            return font;
+        }
+        Container parent = this.parent;
+        return (parent != null) ? parent.getFont_NoClientCode() : null;
+    }
+
+    /**
+     * Sets the font of this component.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param f the font to become this component's font;
+     *          if this parameter is <code>null</code> then this
+     *          component will inherit the font of its parent
+     * @see #getFont
+     * @see #invalidate
+     * @since JDK1.0
+     * @beaninfo
+     *       bound: true
+     */
+    public void setFont(Font f) {
+        Font oldFont, newFont;
+        synchronized(getTreeLock()) {
+            oldFont = font;
+            newFont = font = f;
+            ComponentPeer peer = this.peer;
+            if (peer != null) {
+                f = getFont();
+                if (f != null) {
+                    peer.setFont(f);
+                    peerFont = f;
+                }
+            }
+        }
+        // This is a bound property, so report the change to
+        // any registered listeners.  (Cheap if there are none.)
+        firePropertyChange("font", oldFont, newFont);
+
+        // This could change the preferred size of the Component.
+        // Fix for 6213660. Should compare old and new fonts and do not
+        // call invalidate() if they are equal.
+        if (f != oldFont && (oldFont == null ||
+                                      !oldFont.equals(f))) {
+            invalidateIfValid();
+        }
+    }
+
+    /**
+     * Returns whether the font has been explicitly set for this Component. If
+     * this method returns <code>false</code>, this Component is inheriting its
+     * font from an ancestor.
+     *
+     * @return <code>true</code> if the font has been explicitly set for this
+     *         Component; <code>false</code> otherwise.
+     * @since 1.4
+     */
+    public boolean isFontSet() {
+        return (font != null);
+    }
+
+    /**
+     * Gets the locale of this component.
+     * @return this component's locale; if this component does not
+     *          have a locale, the locale of its parent is returned
+     * @see #setLocale
+     * @exception IllegalComponentStateException if the <code>Component</code>
+     *          does not have its own locale and has not yet been added to
+     *          a containment hierarchy such that the locale can be determined
+     *          from the containing parent
+     * @since  JDK1.1
+     */
+    public Locale getLocale() {
+        Locale locale = this.locale;
+        if (locale != null) {
+            return locale;
+        }
+        Container parent = this.parent;
+
+        if (parent == null) {
+            throw new IllegalComponentStateException("This component must have a parent in order to determine its locale");
+        } else {
+            return parent.getLocale();
+        }
+    }
+
+    /**
+     * Sets the locale of this component.  This is a bound property.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param l the locale to become this component's locale
+     * @see #getLocale
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setLocale(Locale l) {
+        Locale oldValue = locale;
+        locale = l;
+
+        // This is a bound property, so report the change to
+        // any registered listeners.  (Cheap if there are none.)
+        firePropertyChange("locale", oldValue, l);
+
+        // This could change the preferred size of the Component.
+        invalidateIfValid();
+    }
+
+    /**
+     * Gets the instance of <code>ColorModel</code> used to display
+     * the component on the output device.
+     * @return the color model used by this component
+     * @see java.awt.image.ColorModel
+     * @see java.awt.peer.ComponentPeer#getColorModel()
+     * @see Toolkit#getColorModel()
+     * @since JDK1.0
+     */
+    public ColorModel getColorModel() {
+        ComponentPeer peer = this.peer;
+        if ((peer != null) && ! (peer instanceof LightweightPeer)) {
+            return peer.getColorModel();
+        } else if (GraphicsEnvironment.isHeadless()) {
+            return ColorModel.getRGBdefault();
+        } // else
+        return getToolkit().getColorModel();
+    }
+
+    /**
+     * Gets the location of this component in the form of a
+     * point specifying the component's top-left corner.
+     * The location will be relative to the parent's coordinate space.
+     * <p>
+     * Due to the asynchronous nature of native event handling, this
+     * method can return outdated values (for instance, after several calls
+     * of <code>setLocation()</code> in rapid succession).  For this
+     * reason, the recommended method of obtaining a component's position is
+     * within <code>java.awt.event.ComponentListener.componentMoved()</code>,
+     * which is called after the operating system has finished moving the
+     * component.
+     * </p>
+     * @return an instance of <code>Point</code> representing
+     *          the top-left corner of the component's bounds in
+     *          the coordinate space of the component's parent
+     * @see #setLocation
+     * @see #getLocationOnScreen
+     * @since JDK1.1
+     */
+    public Point getLocation() {
+        return location();
+    }
+
+    /**
+     * Gets the location of this component in the form of a point
+     * specifying the component's top-left corner in the screen's
+     * coordinate space.
+     * @return an instance of <code>Point</code> representing
+     *          the top-left corner of the component's bounds in the
+     *          coordinate space of the screen
+     * @throws IllegalComponentStateException if the
+     *          component is not showing on the screen
+     * @see #setLocation
+     * @see #getLocation
+     */
+    public Point getLocationOnScreen() {
+        synchronized (getTreeLock()) {
+            return getLocationOnScreen_NoTreeLock();
+        }
+    }
+
+    /*
+     * a package private version of getLocationOnScreen
+     * used by GlobalCursormanager to update cursor
+     */
+    final Point getLocationOnScreen_NoTreeLock() {
+
+        if (peer != null && isShowing()) {
+            if (peer instanceof LightweightPeer) {
+                // lightweight component location needs to be translated
+                // relative to a native component.
+                Container host = getNativeContainer();
+                Point pt = host.peer.getLocationOnScreen();
+                for(Component c = this; c != host; c = c.getParent()) {
+                    pt.x += c.x;
+                    pt.y += c.y;
+                }
+                return pt;
+            } else {
+                Point pt = peer.getLocationOnScreen();
+                return pt;
+            }
+        } else {
+            throw new IllegalComponentStateException("component must be showing on the screen to determine its location");
+        }
+    }
+
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>getLocation()</code>.
+     */
+    @Deprecated
+    public Point location() {
+        return location_NoClientCode();
+    }
+
+    private Point location_NoClientCode() {
+        return new Point(x, y);
+    }
+
+    /**
+     * Moves this component to a new location. The top-left corner of
+     * the new location is specified by the <code>x</code> and <code>y</code>
+     * parameters in the coordinate space of this component's parent.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param x the <i>x</i>-coordinate of the new location's
+     *          top-left corner in the parent's coordinate space
+     * @param y the <i>y</i>-coordinate of the new location's
+     *          top-left corner in the parent's coordinate space
+     * @see #getLocation
+     * @see #setBounds
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setLocation(int x, int y) {
+        move(x, y);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setLocation(int, int)</code>.
+     */
+    @Deprecated
+    public void move(int x, int y) {
+        synchronized(getTreeLock()) {
+            setBoundsOp(ComponentPeer.SET_LOCATION);
+            setBounds(x, y, width, height);
+        }
+    }
+
+    /**
+     * Moves this component to a new location. The top-left corner of
+     * the new location is specified by point <code>p</code>. Point
+     * <code>p</code> is given in the parent's coordinate space.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param p the point defining the top-left corner
+     *          of the new location, given in the coordinate space of this
+     *          component's parent
+     * @see #getLocation
+     * @see #setBounds
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setLocation(Point p) {
+        setLocation(p.x, p.y);
+    }
+
+    /**
+     * Returns the size of this component in the form of a
+     * <code>Dimension</code> object. The <code>height</code>
+     * field of the <code>Dimension</code> object contains
+     * this component's height, and the <code>width</code>
+     * field of the <code>Dimension</code> object contains
+     * this component's width.
+     * @return a <code>Dimension</code> object that indicates the
+     *          size of this component
+     * @see #setSize
+     * @since JDK1.1
+     */
+    public Dimension getSize() {
+        return size();
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>getSize()</code>.
+     */
+    @Deprecated
+    public Dimension size() {
+        return new Dimension(width, height);
+    }
+
+    /**
+     * Resizes this component so that it has width <code>width</code>
+     * and height <code>height</code>.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param width the new width of this component in pixels
+     * @param height the new height of this component in pixels
+     * @see #getSize
+     * @see #setBounds
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setSize(int width, int height) {
+        resize(width, height);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setSize(int, int)</code>.
+     */
+    @Deprecated
+    public void resize(int width, int height) {
+        synchronized(getTreeLock()) {
+            setBoundsOp(ComponentPeer.SET_SIZE);
+            setBounds(x, y, width, height);
+        }
+    }
+
+    /**
+     * Resizes this component so that it has width <code>d.width</code>
+     * and height <code>d.height</code>.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param d the dimension specifying the new size
+     *          of this component
+     * @throws NullPointerException if {@code d} is {@code null}
+     * @see #setSize
+     * @see #setBounds
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setSize(Dimension d) {
+        resize(d);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setSize(Dimension)</code>.
+     */
+    @Deprecated
+    public void resize(Dimension d) {
+        setSize(d.width, d.height);
+    }
+
+    /**
+     * Gets the bounds of this component in the form of a
+     * <code>Rectangle</code> object. The bounds specify this
+     * component's width, height, and location relative to
+     * its parent.
+     * @return a rectangle indicating this component's bounds
+     * @see #setBounds
+     * @see #getLocation
+     * @see #getSize
+     */
+    public Rectangle getBounds() {
+        return bounds();
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>getBounds()</code>.
+     */
+    @Deprecated
+    public Rectangle bounds() {
+        return new Rectangle(x, y, width, height);
+    }
+
+    /**
+     * Moves and resizes this component. The new location of the top-left
+     * corner is specified by <code>x</code> and <code>y</code>, and the
+     * new size is specified by <code>width</code> and <code>height</code>.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param x the new <i>x</i>-coordinate of this component
+     * @param y the new <i>y</i>-coordinate of this component
+     * @param width the new <code>width</code> of this component
+     * @param height the new <code>height</code> of this
+     *          component
+     * @see #getBounds
+     * @see #setLocation(int, int)
+     * @see #setLocation(Point)
+     * @see #setSize(int, int)
+     * @see #setSize(Dimension)
+     * @see #invalidate
+     * @since JDK1.1
+     */
+    public void setBounds(int x, int y, int width, int height) {
+        reshape(x, y, width, height);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>setBounds(int, int, int, int)</code>.
+     */
+    @Deprecated
+    public void reshape(int x, int y, int width, int height) {
+        synchronized (getTreeLock()) {
+            try {
+                setBoundsOp(ComponentPeer.SET_BOUNDS);
+                boolean resized = (this.width != width) || (this.height != height);
+                boolean moved = (this.x != x) || (this.y != y);
+                if (!resized && !moved) {
+                    return;
+                }
+                int oldX = this.x;
+                int oldY = this.y;
+                int oldWidth = this.width;
+                int oldHeight = this.height;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+
+                if (resized) {
+                    isPacked = false;
+                }
+
+                boolean needNotify = true;
+                mixOnReshaping();
+                if (peer != null) {
+                    // LightwightPeer is an empty stub so can skip peer.reshape
+                    if (!(peer instanceof LightweightPeer)) {
+                        reshapeNativePeer(x, y, width, height, getBoundsOp());
+                        // Check peer actualy changed coordinates
+                        resized = (oldWidth != this.width) || (oldHeight != this.height);
+                        moved = (oldX != this.x) || (oldY != this.y);
+                        // fix for 5025858: do not send ComponentEvents for toplevel
+                        // windows here as it is done from peer or native code when
+                        // the window is really resized or moved, otherwise some
+                        // events may be sent twice
+                        if (this instanceof Window) {
+                            needNotify = false;
+                        }
+                    }
+                    if (resized) {
+                        invalidate();
+                    }
+                    if (parent != null) {
+                        parent.invalidateIfValid();
+                    }
+                }
+                if (needNotify) {
+                    notifyNewBounds(resized, moved);
+                }
+                repaintParentIfNeeded(oldX, oldY, oldWidth, oldHeight);
+            } finally {
+                setBoundsOp(ComponentPeer.RESET_OPERATION);
+            }
+        }
+    }
+
+    private void repaintParentIfNeeded(int oldX, int oldY, int oldWidth,
+                                       int oldHeight)
+    {
+        if (parent != null && peer instanceof LightweightPeer && isShowing()) {
+            // Have the parent redraw the area this component occupied.
+            parent.repaint(oldX, oldY, oldWidth, oldHeight);
+            // Have the parent redraw the area this component *now* occupies.
+            repaint();
+        }
+    }
+
+    private void reshapeNativePeer(int x, int y, int width, int height, int op) {
+        // native peer might be offset by more than direct
+        // parent since parent might be lightweight.
+        int nativeX = x;
+        int nativeY = y;
+        for (Component c = parent;
+             (c != null) && (c.peer instanceof LightweightPeer);
+             c = c.parent)
+        {
+            nativeX += c.x;
+            nativeY += c.y;
+        }
+        peer.setBounds(nativeX, nativeY, width, height, op);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void notifyNewBounds(boolean resized, boolean moved) {
+        if (componentListener != null
+            || (eventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0
+            || Toolkit.enabledOnToolkit(AWTEvent.COMPONENT_EVENT_MASK))
+            {
+                if (resized) {
+                    ComponentEvent e = new ComponentEvent(this,
+                                                          ComponentEvent.COMPONENT_RESIZED);
+                    Toolkit.getEventQueue().postEvent(e);
+                }
+                if (moved) {
+                    ComponentEvent e = new ComponentEvent(this,
+                                                          ComponentEvent.COMPONENT_MOVED);
+                    Toolkit.getEventQueue().postEvent(e);
+                }
+            } else {
+                if (this instanceof Container && ((Container)this).countComponents() > 0) {
+                    boolean enabledOnToolkit =
+                        Toolkit.enabledOnToolkit(AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK);
+                    if (resized) {
+
+                        ((Container)this).createChildHierarchyEvents(
+                                                                     HierarchyEvent.ANCESTOR_RESIZED, 0, enabledOnToolkit);
+                    }
+                    if (moved) {
+                        ((Container)this).createChildHierarchyEvents(
+                                                                     HierarchyEvent.ANCESTOR_MOVED, 0, enabledOnToolkit);
+                    }
+                }
+                }
+    }
+
+    /**
+     * Moves and resizes this component to conform to the new
+     * bounding rectangle <code>r</code>. This component's new
+     * position is specified by <code>r.x</code> and <code>r.y</code>,
+     * and its new size is specified by <code>r.width</code> and
+     * <code>r.height</code>
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @param r the new bounding rectangle for this component
+     * @throws NullPointerException if {@code r} is {@code null}
+     * @see       #getBounds
+     * @see       #setLocation(int, int)
+     * @see       #setLocation(Point)
+     * @see       #setSize(int, int)
+     * @see       #setSize(Dimension)
+     * @see #invalidate
+     * @since     JDK1.1
+     */
+    public void setBounds(Rectangle r) {
+        setBounds(r.x, r.y, r.width, r.height);
+    }
+
+
+    /**
+     * Returns the current x coordinate of the components origin.
+     * This method is preferable to writing
+     * <code>component.getBounds().x</code>,
+     * or <code>component.getLocation().x</code> because it doesn't
+     * cause any heap allocations.
+     *
+     * @return the current x coordinate of the components origin
+     * @since 1.2
+     */
+    public int getX() {
+        return x;
+    }
+
+
+    /**
+     * Returns the current y coordinate of the components origin.
+     * This method is preferable to writing
+     * <code>component.getBounds().y</code>,
+     * or <code>component.getLocation().y</code> because it
+     * doesn't cause any heap allocations.
+     *
+     * @return the current y coordinate of the components origin
+     * @since 1.2
+     */
+    public int getY() {
+        return y;
+    }
+
+
+    /**
+     * Returns the current width of this component.
+     * This method is preferable to writing
+     * <code>component.getBounds().width</code>,
+     * or <code>component.getSize().width</code> because it
+     * doesn't cause any heap allocations.
+     *
+     * @return the current width of this component
+     * @since 1.2
+     */
+    public int getWidth() {
+        return width;
+    }
+
+
+    /**
+     * Returns the current height of this component.
+     * This method is preferable to writing
+     * <code>component.getBounds().height</code>,
+     * or <code>component.getSize().height</code> because it
+     * doesn't cause any heap allocations.
+     *
+     * @return the current height of this component
+     * @since 1.2
+     */
+    public int getHeight() {
+        return height;
+    }
+
+    /**
+     * Stores the bounds of this component into "return value" <b>rv</b> and
+     * return <b>rv</b>.  If rv is <code>null</code> a new
+     * <code>Rectangle</code> is allocated.
+     * This version of <code>getBounds</code> is useful if the caller
+     * wants to avoid allocating a new <code>Rectangle</code> object
+     * on the heap.
+     *
+     * @param rv the return value, modified to the components bounds
+     * @return rv
+     */
+    public Rectangle getBounds(Rectangle rv) {
+        if (rv == null) {
+            return new Rectangle(getX(), getY(), getWidth(), getHeight());
+        }
+        else {
+            rv.setBounds(getX(), getY(), getWidth(), getHeight());
+            return rv;
+        }
+    }
+
+    /**
+     * Stores the width/height of this component into "return value" <b>rv</b>
+     * and return <b>rv</b>.   If rv is <code>null</code> a new
+     * <code>Dimension</code> object is allocated.  This version of
+     * <code>getSize</code> is useful if the caller wants to avoid
+     * allocating a new <code>Dimension</code> object on the heap.
+     *
+     * @param rv the return value, modified to the components size
+     * @return rv
+     */
+    public Dimension getSize(Dimension rv) {
+        if (rv == null) {
+            return new Dimension(getWidth(), getHeight());
+        }
+        else {
+            rv.setSize(getWidth(), getHeight());
+            return rv;
+        }
+    }
+
+    /**
+     * Stores the x,y origin of this component into "return value" <b>rv</b>
+     * and return <b>rv</b>.   If rv is <code>null</code> a new
+     * <code>Point</code> is allocated.
+     * This version of <code>getLocation</code> is useful if the
+     * caller wants to avoid allocating a new <code>Point</code>
+     * object on the heap.
+     *
+     * @param rv the return value, modified to the components location
+     * @return rv
+     */
+    public Point getLocation(Point rv) {
+        if (rv == null) {
+            return new Point(getX(), getY());
+        }
+        else {
+            rv.setLocation(getX(), getY());
+            return rv;
+        }
+    }
+
+    /**
+     * Returns true if this component is completely opaque, returns
+     * false by default.
+     * <p>
+     * An opaque component paints every pixel within its
+     * rectangular region. A non-opaque component paints only some of
+     * its pixels, allowing the pixels underneath it to "show through".
+     * A component that does not fully paint its pixels therefore
+     * provides a degree of transparency.
+     * <p>
+     * Subclasses that guarantee to always completely paint their
+     * contents should override this method and return true.
+     *
+     * @return true if this component is completely opaque
+     * @see #isLightweight
+     * @since 1.2
+     */
+    public boolean isOpaque() {
+        if (getPeer() == null) {
+            return false;
+        }
+        else {
+            return !isLightweight();
+        }
+    }
+
+
+    /**
+     * A lightweight component doesn't have a native toolkit peer.
+     * Subclasses of <code>Component</code> and <code>Container</code>,
+     * other than the ones defined in this package like <code>Button</code>
+     * or <code>Scrollbar</code>, are lightweight.
+     * All of the Swing components are lightweights.
+     * <p>
+     * This method will always return <code>false</code> if this component
+     * is not displayable because it is impossible to determine the
+     * weight of an undisplayable component.
+     *
+     * @return true if this component has a lightweight peer; false if
+     *         it has a native peer or no peer
+     * @see #isDisplayable
+     * @since 1.2
+     */
+    public boolean isLightweight() {
+        return getPeer() instanceof LightweightPeer;
+    }
+
+
+    /**
+     * Sets the preferred size of this component to a constant
+     * value.  Subsequent calls to <code>getPreferredSize</code> will always
+     * return this value.  Setting the preferred size to <code>null</code>
+     * restores the default behavior.
+     *
+     * @param preferredSize The new preferred size, or null
+     * @see #getPreferredSize
+     * @see #isPreferredSizeSet
+     * @since 1.5
+     */
+    public void setPreferredSize(Dimension preferredSize) {
+        Dimension old;
+        // If the preferred size was set, use it as the old value, otherwise
+        // use null to indicate we didn't previously have a set preferred
+        // size.
+        if (prefSizeSet) {
+            old = this.prefSize;
+        }
+        else {
+            old = null;
+        }
+        this.prefSize = preferredSize;
+        prefSizeSet = (preferredSize != null);
+        firePropertyChange("preferredSize", old, preferredSize);
+    }
+
+
+    /**
+     * Returns true if the preferred size has been set to a
+     * non-<code>null</code> value otherwise returns false.
+     *
+     * @return true if <code>setPreferredSize</code> has been invoked
+     *         with a non-null value.
+     * @since 1.5
+     */
+    public boolean isPreferredSizeSet() {
+        return prefSizeSet;
+    }
+
+
+    /**
+     * Gets the preferred size of this component.
+     * @return a dimension object indicating this component's preferred size
+     * @see #getMinimumSize
+     * @see LayoutManager
+     */
+    public Dimension getPreferredSize() {
+        return preferredSize();
+    }
+
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>getPreferredSize()</code>.
+     */
+    @Deprecated
+    public Dimension preferredSize() {
+        /* Avoid grabbing the lock if a reasonable cached size value
+         * is available.
+         */
+        Dimension dim = prefSize;
+        if (dim == null || !(isPreferredSizeSet() || isValid())) {
+            synchronized (getTreeLock()) {
+                prefSize = (peer != null) ?
+                    peer.getPreferredSize() :
+                    getMinimumSize();
+                dim = prefSize;
+            }
+        }
+        return new Dimension(dim);
+    }
+
+    /**
+     * Sets the minimum size of this component to a constant
+     * value.  Subsequent calls to <code>getMinimumSize</code> will always
+     * return this value.  Setting the minimum size to <code>null</code>
+     * restores the default behavior.
+     *
+     * @param minimumSize the new minimum size of this component
+     * @see #getMinimumSize
+     * @see #isMinimumSizeSet
+     * @since 1.5
+     */
+    public void setMinimumSize(Dimension minimumSize) {
+        Dimension old;
+        // If the minimum size was set, use it as the old value, otherwise
+        // use null to indicate we didn't previously have a set minimum
+        // size.
+        if (minSizeSet) {
+            old = this.minSize;
+        }
+        else {
+            old = null;
+        }
+        this.minSize = minimumSize;
+        minSizeSet = (minimumSize != null);
+        firePropertyChange("minimumSize", old, minimumSize);
+    }
+
+    /**
+     * Returns whether or not <code>setMinimumSize</code> has been
+     * invoked with a non-null value.
+     *
+     * @return true if <code>setMinimumSize</code> has been invoked with a
+     *              non-null value.
+     * @since 1.5
+     */
+    public boolean isMinimumSizeSet() {
+        return minSizeSet;
+    }
+
+    /**
+     * Gets the minimum size of this component.
+     * @return a dimension object indicating this component's minimum size
+     * @see #getPreferredSize
+     * @see LayoutManager
+     */
+    public Dimension getMinimumSize() {
+        return minimumSize();
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>getMinimumSize()</code>.
+     */
+    @Deprecated
+    public Dimension minimumSize() {
+        /* Avoid grabbing the lock if a reasonable cached size value
+         * is available.
+         */
+        Dimension dim = minSize;
+        if (dim == null || !(isMinimumSizeSet() || isValid())) {
+            synchronized (getTreeLock()) {
+                minSize = (peer != null) ?
+                    peer.getMinimumSize() :
+                    size();
+                dim = minSize;
+            }
+        }
+        return new Dimension(dim);
+    }
+
+    /**
+     * Sets the maximum size of this component to a constant
+     * value.  Subsequent calls to <code>getMaximumSize</code> will always
+     * return this value.  Setting the maximum size to <code>null</code>
+     * restores the default behavior.
+     *
+     * @param maximumSize a <code>Dimension</code> containing the
+     *          desired maximum allowable size
+     * @see #getMaximumSize
+     * @see #isMaximumSizeSet
+     * @since 1.5
+     */
+    public void setMaximumSize(Dimension maximumSize) {
+        // If the maximum size was set, use it as the old value, otherwise
+        // use null to indicate we didn't previously have a set maximum
+        // size.
+        Dimension old;
+        if (maxSizeSet) {
+            old = this.maxSize;
+        }
+        else {
+            old = null;
+        }
+        this.maxSize = maximumSize;
+        maxSizeSet = (maximumSize != null);
+        firePropertyChange("maximumSize", old, maximumSize);
+    }
+
+    /**
+     * Returns true if the maximum size has been set to a non-<code>null</code>
+     * value otherwise returns false.
+     *
+     * @return true if <code>maximumSize</code> is non-<code>null</code>,
+     *          false otherwise
+     * @since 1.5
+     */
+    public boolean isMaximumSizeSet() {
+        return maxSizeSet;
+    }
+
+    /**
+     * Gets the maximum size of this component.
+     * @return a dimension object indicating this component's maximum size
+     * @see #getMinimumSize
+     * @see #getPreferredSize
+     * @see LayoutManager
+     */
+    public Dimension getMaximumSize() {
+        if (isMaximumSizeSet()) {
+            return new Dimension(maxSize);
+        }
+        return new Dimension(Short.MAX_VALUE, Short.MAX_VALUE);
+    }
+
+    /**
+     * Returns the alignment along the x axis.  This specifies how
+     * the component would like to be aligned relative to other
+     * components.  The value should be a number between 0 and 1
+     * where 0 represents alignment along the origin, 1 is aligned
+     * the furthest away from the origin, 0.5 is centered, etc.
+     */
+    public float getAlignmentX() {
+        return CENTER_ALIGNMENT;
+    }
+
+    /**
+     * Returns the alignment along the y axis.  This specifies how
+     * the component would like to be aligned relative to other
+     * components.  The value should be a number between 0 and 1
+     * where 0 represents alignment along the origin, 1 is aligned
+     * the furthest away from the origin, 0.5 is centered, etc.
+     */
+    public float getAlignmentY() {
+        return CENTER_ALIGNMENT;
+    }
+
+    /**
+     * Returns the baseline.  The baseline is measured from the top of
+     * the component.  This method is primarily meant for
+     * <code>LayoutManager</code>s to align components along their
+     * baseline.  A return value less than 0 indicates this component
+     * does not have a reasonable baseline and that
+     * <code>LayoutManager</code>s should not align this component on
+     * its baseline.
+     * <p>
+     * The default implementation returns -1.  Subclasses that support
+     * baseline should override appropriately.  If a value &gt;= 0 is
+     * returned, then the component has a valid baseline for any
+     * size &gt;= the minimum size and <code>getBaselineResizeBehavior</code>
+     * can be used to determine how the baseline changes with size.
+     *
+     * @param width the width to get the baseline for
+     * @param height the height to get the baseline for
+     * @return the baseline or &lt; 0 indicating there is no reasonable
+     *         baseline
+     * @throws IllegalArgumentException if width or height is &lt; 0
+     * @see #getBaselineResizeBehavior
+     * @see java.awt.FontMetrics
+     * @since 1.6
+     */
+    public int getBaseline(int width, int height) {
+        if (width < 0 || height < 0) {
+            throw new IllegalArgumentException(
+                    "Width and height must be >= 0");
+        }
+        return -1;
+    }
+
+    /**
+     * Returns an enum indicating how the baseline of the component
+     * changes as the size changes.  This method is primarily meant for
+     * layout managers and GUI builders.
+     * <p>
+     * The default implementation returns
+     * <code>BaselineResizeBehavior.OTHER</code>.  Subclasses that have a
+     * baseline should override appropriately.  Subclasses should
+     * never return <code>null</code>; if the baseline can not be
+     * calculated return <code>BaselineResizeBehavior.OTHER</code>.  Callers
+     * should first ask for the baseline using
+     * <code>getBaseline</code> and if a value &gt;= 0 is returned use
+     * this method.  It is acceptable for this method to return a
+     * value other than <code>BaselineResizeBehavior.OTHER</code> even if
+     * <code>getBaseline</code> returns a value less than 0.
+     *
+     * @return an enum indicating how the baseline changes as the component
+     *         size changes
+     * @see #getBaseline(int, int)
+     * @since 1.6
+     */
+    public BaselineResizeBehavior getBaselineResizeBehavior() {
+        return BaselineResizeBehavior.OTHER;
+    }
+
+    /**
+     * Prompts the layout manager to lay out this component. This is
+     * usually called when the component (more specifically, container)
+     * is validated.
+     * @see #validate
+     * @see LayoutManager
+     */
+    public void doLayout() {
+        layout();
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>doLayout()</code>.
+     */
+    @Deprecated
+    public void layout() {
+    }
+
+    /**
+     * Validates this component.
+     * <p>
+     * The meaning of the term <i>validating</i> is defined by the ancestors of
+     * this class. See {@link Container#validate} for more details.
+     *
+     * @see       #invalidate
+     * @see       #doLayout()
+     * @see       LayoutManager
+     * @see       Container#validate
+     * @since     JDK1.0
+     */
+    public void validate() {
+        synchronized (getTreeLock()) {
+            ComponentPeer peer = this.peer;
+            boolean wasValid = isValid();
+            if (!wasValid && peer != null) {
+                Font newfont = getFont();
+                Font oldfont = peerFont;
+                if (newfont != oldfont && (oldfont == null
+                                           || !oldfont.equals(newfont))) {
+                    peer.setFont(newfont);
+                    peerFont = newfont;
+                }
+                peer.layout();
+            }
+            valid = true;
+            if (!wasValid) {
+                mixOnValidating();
+            }
+        }
+    }
+
+    /**
+     * Invalidates this component and its ancestors.
+     * <p>
+     * By default, all the ancestors of the component up to the top-most
+     * container of the hierarchy are marked invalid. If the {@code
+     * java.awt.smartInvalidate} system property is set to {@code true},
+     * invalidation stops on the nearest validate root of this component.
+     * Marking a container <i>invalid</i> indicates that the container needs to
+     * be laid out.
+     * <p>
+     * This method is called automatically when any layout-related information
+     * changes (e.g. setting the bounds of the component, or adding the
+     * component to a container).
+     * <p>
+     * This method might be called often, so it should work fast.
+     *
+     * @see       #validate
+     * @see       #doLayout
+     * @see       LayoutManager
+     * @see       java.awt.Container#isValidateRoot
+     * @since     JDK1.0
+     */
+    public void invalidate() {
+        synchronized (getTreeLock()) {
+            /* Nullify cached layout and size information.
+             * For efficiency, propagate invalidate() upwards only if
+             * some other component hasn't already done so first.
+             */
+            valid = false;
+            if (!isPreferredSizeSet()) {
+                prefSize = null;
+            }
+            if (!isMinimumSizeSet()) {
+                minSize = null;
+            }
+            if (!isMaximumSizeSet()) {
+                maxSize = null;
+            }
+            invalidateParent();
+        }
+    }
+
+    /**
+     * Invalidates the parent of this component if any.
+     *
+     * This method MUST BE invoked under the TreeLock.
+     */
+    void invalidateParent() {
+        if (parent != null) {
+            parent.invalidateIfValid();
+        }
+    }
+
+    /** Invalidates the component unless it is already invalid.
+     */
+    final void invalidateIfValid() {
+        if (isValid()) {
+            invalidate();
+        }
+    }
+
+    /**
+     * Revalidates the component hierarchy up to the nearest validate root.
+     * <p>
+     * This method first invalidates the component hierarchy starting from this
+     * component up to the nearest validate root. Afterwards, the component
+     * hierarchy is validated starting from the nearest validate root.
+     * <p>
+     * This is a convenience method supposed to help application developers
+     * avoid looking for validate roots manually. Basically, it's equivalent to
+     * first calling the {@link #invalidate()} method on this component, and
+     * then calling the {@link #validate()} method on the nearest validate
+     * root.
+     *
+     * @see Container#isValidateRoot
+     * @since 1.7
+     */
+    public void revalidate() {
+        revalidateSynchronously();
+    }
+
+    /**
+     * Revalidates the component synchronously.
+     */
+    final void revalidateSynchronously() {
+        synchronized (getTreeLock()) {
+            invalidate();
+
+            Container root = getContainer();
+            if (root == null) {
+                // There's no parents. Just validate itself.
+                validate();
+            } else {
+                while (!root.isValidateRoot()) {
+                    if (root.getContainer() == null) {
+                        // If there's no validate roots, we'll validate the
+                        // topmost container
+                        break;
+                    }
+
+                    root = root.getContainer();
+                }
+
+                root.validate();
+            }
+        }
+    }
+
+    /**
+     * Creates a graphics context for this component. This method will
+     * return <code>null</code> if this component is currently not
+     * displayable.
+     * @return a graphics context for this component, or <code>null</code>
+     *             if it has none
+     * @see       #paint
+     * @since     JDK1.0
+     */
+    public Graphics getGraphics() {
+        if (peer instanceof LightweightPeer) {
+            // This is for a lightweight component, need to
+            // translate coordinate spaces and clip relative
+            // to the parent.
+            if (parent == null) return null;
+            Graphics g = parent.getGraphics();
+            if (g == null) return null;
+            if (g instanceof ConstrainableGraphics) {
+                ((ConstrainableGraphics) g).constrain(x, y, width, height);
+            } else {
+                g.translate(x,y);
+                g.setClip(0, 0, width, height);
+            }
+            g.setFont(getFont());
+            return g;
+        } else {
+            ComponentPeer peer = this.peer;
+            return (peer != null) ? peer.getGraphics() : null;
+        }
+    }
+
+    final Graphics getGraphics_NoClientCode() {
+        ComponentPeer peer = this.peer;
+        if (peer instanceof LightweightPeer) {
+            // This is for a lightweight component, need to
+            // translate coordinate spaces and clip relative
+            // to the parent.
+            Container parent = this.parent;
+            if (parent == null) return null;
+            Graphics g = parent.getGraphics_NoClientCode();
+            if (g == null) return null;
+            if (g instanceof ConstrainableGraphics) {
+                ((ConstrainableGraphics) g).constrain(x, y, width, height);
+            } else {
+                g.translate(x,y);
+                g.setClip(0, 0, width, height);
+            }
+            g.setFont(getFont_NoClientCode());
+            return g;
+        } else {
+            return (peer != null) ? peer.getGraphics() : null;
+        }
+    }
+
+    /**
+     * Gets the font metrics for the specified font.
+     * Warning: Since Font metrics are affected by the
+     * {@link java.awt.font.FontRenderContext FontRenderContext} and
+     * this method does not provide one, it can return only metrics for
+     * the default render context which may not match that used when
+     * rendering on the Component if {@link Graphics2D} functionality is being
+     * used. Instead metrics can be obtained at rendering time by calling
+     * {@link Graphics#getFontMetrics()} or text measurement APIs on the
+     * {@link Font Font} class.
+     * @param font the font for which font metrics is to be
+     *          obtained
+     * @return the font metrics for <code>font</code>
+     * @see       #getFont
+     * @see       #getPeer
+     * @see       java.awt.peer.ComponentPeer#getFontMetrics(Font)
+     * @see       Toolkit#getFontMetrics(Font)
+     * @since     JDK1.0
+     */
+    public FontMetrics getFontMetrics(Font font) {
+        // This is an unsupported hack, but left in for a customer.
+        // Do not remove.
+        FontManager fm = FontManagerFactory.getInstance();
+        if (fm instanceof SunFontManager
+            && ((SunFontManager) fm).usePlatformFontMetrics()) {
+
+            if (peer != null &&
+                !(peer instanceof LightweightPeer)) {
+                return peer.getFontMetrics(font);
+            }
+        }
+        return sun.font.FontDesignMetrics.getMetrics(font);
+    }
+
+    /**
+     * Sets the cursor image to the specified cursor.  This cursor
+     * image is displayed when the <code>contains</code> method for
+     * this component returns true for the current cursor location, and
+     * this Component is visible, displayable, and enabled. Setting the
+     * cursor of a <code>Container</code> causes that cursor to be displayed
+     * within all of the container's subcomponents, except for those
+     * that have a non-<code>null</code> cursor.
+     * <p>
+     * The method may have no visual effect if the Java platform
+     * implementation and/or the native system do not support
+     * changing the mouse cursor shape.
+     * @param cursor One of the constants defined
+     *          by the <code>Cursor</code> class;
+     *          if this parameter is <code>null</code>
+     *          then this component will inherit
+     *          the cursor of its parent
+     * @see       #isEnabled
+     * @see       #isShowing
+     * @see       #getCursor
+     * @see       #contains
+     * @see       Toolkit#createCustomCursor
+     * @see       Cursor
+     * @since     JDK1.1
+     */
+    public void setCursor(Cursor cursor) {
+        this.cursor = cursor;
+        updateCursorImmediately();
+    }
+
+    /**
+     * Updates the cursor.  May not be invoked from the native
+     * message pump.
+     */
+    final void updateCursorImmediately() {
+        if (peer instanceof LightweightPeer) {
+            Container nativeContainer = getNativeContainer();
+
+            if (nativeContainer == null) return;
+
+            ComponentPeer cPeer = nativeContainer.getPeer();
+
+            if (cPeer != null) {
+                cPeer.updateCursorImmediately();
+            }
+        } else if (peer != null) {
+            peer.updateCursorImmediately();
+        }
+    }
+
+    /**
+     * Gets the cursor set in the component. If the component does
+     * not have a cursor set, the cursor of its parent is returned.
+     * If no cursor is set in the entire hierarchy,
+     * <code>Cursor.DEFAULT_CURSOR</code> is returned.
+     * @see #setCursor
+     * @since      JDK1.1
+     */
+    public Cursor getCursor() {
+        return getCursor_NoClientCode();
+    }
+
+    final Cursor getCursor_NoClientCode() {
+        Cursor cursor = this.cursor;
+        if (cursor != null) {
+            return cursor;
+        }
+        Container parent = this.parent;
+        if (parent != null) {
+            return parent.getCursor_NoClientCode();
+        } else {
+            return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+        }
+    }
+
+    /**
+     * Returns whether the cursor has been explicitly set for this Component.
+     * If this method returns <code>false</code>, this Component is inheriting
+     * its cursor from an ancestor.
+     *
+     * @return <code>true</code> if the cursor has been explicitly set for this
+     *         Component; <code>false</code> otherwise.
+     * @since 1.4
+     */
+    public boolean isCursorSet() {
+        return (cursor != null);
+    }
+
+    /**
+     * Paints this component.
+     * <p>
+     * This method is called when the contents of the component should
+     * be painted; such as when the component is first being shown or
+     * is damaged and in need of repair.  The clip rectangle in the
+     * <code>Graphics</code> parameter is set to the area
+     * which needs to be painted.
+     * Subclasses of <code>Component</code> that override this
+     * method need not call <code>super.paint(g)</code>.
+     * <p>
+     * For performance reasons, <code>Component</code>s with zero width
+     * or height aren't considered to need painting when they are first shown,
+     * and also aren't considered to need repair.
+     * <p>
+     * <b>Note</b>: For more information on the paint mechanisms utilitized
+     * by AWT and Swing, including information on how to write the most
+     * efficient painting code, see
+     * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+     *
+     * @param g the graphics context to use for painting
+     * @see       #update
+     * @since     JDK1.0
+     */
+    public void paint(Graphics g) {
+    }
+
+    /**
+     * Updates this component.
+     * <p>
+     * If this component is not a lightweight component, the
+     * AWT calls the <code>update</code> method in response to
+     * a call to <code>repaint</code>.  You can assume that
+     * the background is not cleared.
+     * <p>
+     * The <code>update</code> method of <code>Component</code>
+     * calls this component's <code>paint</code> method to redraw
+     * this component.  This method is commonly overridden by subclasses
+     * which need to do additional work in response to a call to
+     * <code>repaint</code>.
+     * Subclasses of Component that override this method should either
+     * call <code>super.update(g)</code>, or call <code>paint(g)</code>
+     * directly from their <code>update</code> method.
+     * <p>
+     * The origin of the graphics context, its
+     * (<code>0</code>,&nbsp;<code>0</code>) coordinate point, is the
+     * top-left corner of this component. The clipping region of the
+     * graphics context is the bounding rectangle of this component.
+     *
+     * <p>
+     * <b>Note</b>: For more information on the paint mechanisms utilitized
+     * by AWT and Swing, including information on how to write the most
+     * efficient painting code, see
+     * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+     *
+     * @param g the specified context to use for updating
+     * @see       #paint
+     * @see       #repaint()
+     * @since     JDK1.0
+     */
+    public void update(Graphics g) {
+        paint(g);
+    }
+
+    /**
+     * Paints this component and all of its subcomponents.
+     * <p>
+     * The origin of the graphics context, its
+     * (<code>0</code>,&nbsp;<code>0</code>) coordinate point, is the
+     * top-left corner of this component. The clipping region of the
+     * graphics context is the bounding rectangle of this component.
+     *
+     * @param     g   the graphics context to use for painting
+     * @see       #paint
+     * @since     JDK1.0
+     */
+    public void paintAll(Graphics g) {
+        if (isShowing()) {
+            GraphicsCallback.PeerPaintCallback.getInstance().
+                runOneComponent(this, new Rectangle(0, 0, width, height),
+                                g, g.getClip(),
+                                GraphicsCallback.LIGHTWEIGHTS |
+                                GraphicsCallback.HEAVYWEIGHTS);
+        }
+    }
+
+    /**
+     * Simulates the peer callbacks into java.awt for painting of
+     * lightweight Components.
+     * @param     g   the graphics context to use for painting
+     * @see       #paintAll
+     */
+    void lightweightPaint(Graphics g) {
+        paint(g);
+    }
+
+    /**
+     * Paints all the heavyweight subcomponents.
+     */
+    void paintHeavyweightComponents(Graphics g) {
+    }
+
+    /**
+     * Repaints this component.
+     * <p>
+     * If this component is a lightweight component, this method
+     * causes a call to this component's <code>paint</code>
+     * method as soon as possible.  Otherwise, this method causes
+     * a call to this component's <code>update</code> method as soon
+     * as possible.
+     * <p>
+     * <b>Note</b>: For more information on the paint mechanisms utilitized
+     * by AWT and Swing, including information on how to write the most
+     * efficient painting code, see
+     * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+
+     *
+     * @see       #update(Graphics)
+     * @since     JDK1.0
+     */
+    public void repaint() {
+        repaint(0, 0, 0, width, height);
+    }
+
+    /**
+     * Repaints the component.  If this component is a lightweight
+     * component, this results in a call to <code>paint</code>
+     * within <code>tm</code> milliseconds.
+     * <p>
+     * <b>Note</b>: For more information on the paint mechanisms utilitized
+     * by AWT and Swing, including information on how to write the most
+     * efficient painting code, see
+     * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+     *
+     * @param tm maximum time in milliseconds before update
+     * @see #paint
+     * @see #update(Graphics)
+     * @since JDK1.0
+     */
+    public void repaint(long tm) {
+        repaint(tm, 0, 0, width, height);
+    }
+
+    /**
+     * Repaints the specified rectangle of this component.
+     * <p>
+     * If this component is a lightweight component, this method
+     * causes a call to this component's <code>paint</code> method
+     * as soon as possible.  Otherwise, this method causes a call to
+     * this component's <code>update</code> method as soon as possible.
+     * <p>
+     * <b>Note</b>: For more information on the paint mechanisms utilitized
+     * by AWT and Swing, including information on how to write the most
+     * efficient painting code, see
+     * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+     *
+     * @param     x   the <i>x</i> coordinate
+     * @param     y   the <i>y</i> coordinate
+     * @param     width   the width
+     * @param     height  the height
+     * @see       #update(Graphics)
+     * @since     JDK1.0
+     */
+    public void repaint(int x, int y, int width, int height) {
+        repaint(0, x, y, width, height);
+    }
+
+    /**
+     * Repaints the specified rectangle of this component within
+     * <code>tm</code> milliseconds.
+     * <p>
+     * If this component is a lightweight component, this method causes
+     * a call to this component's <code>paint</code> method.
+     * Otherwise, this method causes a call to this component's
+     * <code>update</code> method.
+     * <p>
+     * <b>Note</b>: For more information on the paint mechanisms utilitized
+     * by AWT and Swing, including information on how to write the most
+     * efficient painting code, see
+     * <a href="http://www.oracle.com/technetwork/java/painting-140037.html">Painting in AWT and Swing</a>.
+     *
+     * @param     tm   maximum time in milliseconds before update
+     * @param     x    the <i>x</i> coordinate
+     * @param     y    the <i>y</i> coordinate
+     * @param     width    the width
+     * @param     height   the height
+     * @see       #update(Graphics)
+     * @since     JDK1.0
+     */
+    public void repaint(long tm, int x, int y, int width, int height) {
+        if (this.peer instanceof LightweightPeer) {
+            // Needs to be translated to parent coordinates since
+            // a parent native container provides the actual repaint
+            // services.  Additionally, the request is restricted to
+            // the bounds of the component.
+            if (parent != null) {
+                if (x < 0) {
+                    width += x;
+                    x = 0;
+                }
+                if (y < 0) {
+                    height += y;
+                    y = 0;
+                }
+
+                int pwidth = (width > this.width) ? this.width : width;
+                int pheight = (height > this.height) ? this.height : height;
+
+                if (pwidth <= 0 || pheight <= 0) {
+                    return;
+                }
+
+                int px = this.x + x;
+                int py = this.y + y;
+                parent.repaint(tm, px, py, pwidth, pheight);
+            }
+        } else {
+            if (isVisible() && (this.peer != null) &&
+                (width > 0) && (height > 0)) {
+                PaintEvent e = new PaintEvent(this, PaintEvent.UPDATE,
+                                              new Rectangle(x, y, width, height));
+                SunToolkit.postEvent(SunToolkit.targetToAppContext(this), e);
+            }
+        }
+    }
+
+    /**
+     * Prints this component. Applications should override this method
+     * for components that must do special processing before being
+     * printed or should be printed differently than they are painted.
+     * <p>
+     * The default implementation of this method calls the
+     * <code>paint</code> method.
+     * <p>
+     * The origin of the graphics context, its
+     * (<code>0</code>,&nbsp;<code>0</code>) coordinate point, is the
+     * top-left corner of this component. The clipping region of the
+     * graphics context is the bounding rectangle of this component.
+     * @param     g   the graphics context to use for printing
+     * @see       #paint(Graphics)
+     * @since     JDK1.0
+     */
+    public void print(Graphics g) {
+        paint(g);
+    }
+
+    /**
+     * Prints this component and all of its subcomponents.
+     * <p>
+     * The origin of the graphics context, its
+     * (<code>0</code>,&nbsp;<code>0</code>) coordinate point, is the
+     * top-left corner of this component. The clipping region of the
+     * graphics context is the bounding rectangle of this component.
+     * @param     g   the graphics context to use for printing
+     * @see       #print(Graphics)
+     * @since     JDK1.0
+     */
+    public void printAll(Graphics g) {
+        if (isShowing()) {
+            GraphicsCallback.PeerPrintCallback.getInstance().
+                runOneComponent(this, new Rectangle(0, 0, width, height),
+                                g, g.getClip(),
+                                GraphicsCallback.LIGHTWEIGHTS |
+                                GraphicsCallback.HEAVYWEIGHTS);
+        }
+    }
+
+    /**
+     * Simulates the peer callbacks into java.awt for printing of
+     * lightweight Components.
+     * @param     g   the graphics context to use for printing
+     * @see       #printAll
+     */
+    void lightweightPrint(Graphics g) {
+        print(g);
+    }
+
+    /**
+     * Prints all the heavyweight subcomponents.
+     */
+    void printHeavyweightComponents(Graphics g) {
+    }
+
+    private Insets getInsets_NoClientCode() {
+        ComponentPeer peer = this.peer;
+        if (peer instanceof ContainerPeer) {
+            return (Insets)((ContainerPeer)peer).getInsets().clone();
+        }
+        return new Insets(0, 0, 0, 0);
+    }
+
+    /**
+     * Repaints the component when the image has changed.
+     * This <code>imageUpdate</code> method of an <code>ImageObserver</code>
+     * is called when more information about an
+     * image which had been previously requested using an asynchronous
+     * routine such as the <code>drawImage</code> method of
+     * <code>Graphics</code> becomes available.
+     * See the definition of <code>imageUpdate</code> for
+     * more information on this method and its arguments.
+     * <p>
+     * The <code>imageUpdate</code> method of <code>Component</code>
+     * incrementally draws an image on the component as more of the bits
+     * of the image are available.
+     * <p>
+     * If the system property <code>awt.image.incrementaldraw</code>
+     * is missing or has the value <code>true</code>, the image is
+     * incrementally drawn. If the system property has any other value,
+     * then the image is not drawn until it has been completely loaded.
+     * <p>
+     * Also, if incremental drawing is in effect, the value of the
+     * system property <code>awt.image.redrawrate</code> is interpreted
+     * as an integer to give the maximum redraw rate, in milliseconds. If
+     * the system property is missing or cannot be interpreted as an
+     * integer, the redraw rate is once every 100ms.
+     * <p>
+     * The interpretation of the <code>x</code>, <code>y</code>,
+     * <code>width</code>, and <code>height</code> arguments depends on
+     * the value of the <code>infoflags</code> argument.
+     *
+     * @param     img   the image being observed
+     * @param     infoflags   see <code>imageUpdate</code> for more information
+     * @param     x   the <i>x</i> coordinate
+     * @param     y   the <i>y</i> coordinate
+     * @param     w   the width
+     * @param     h   the height
+     * @return    <code>false</code> if the infoflags indicate that the
+     *            image is completely loaded; <code>true</code> otherwise.
+     *
+     * @see     java.awt.image.ImageObserver
+     * @see     Graphics#drawImage(Image, int, int, Color, java.awt.image.ImageObserver)
+     * @see     Graphics#drawImage(Image, int, int, java.awt.image.ImageObserver)
+     * @see     Graphics#drawImage(Image, int, int, int, int, Color, java.awt.image.ImageObserver)
+     * @see     Graphics#drawImage(Image, int, int, int, int, java.awt.image.ImageObserver)
+     * @see     java.awt.image.ImageObserver#imageUpdate(java.awt.Image, int, int, int, int, int)
+     * @since   JDK1.0
+     */
+    public boolean imageUpdate(Image img, int infoflags,
+                               int x, int y, int w, int h) {
+        int rate = -1;
+        if ((infoflags & (FRAMEBITS|ALLBITS)) != 0) {
+            rate = 0;
+        } else if ((infoflags & SOMEBITS) != 0) {
+            if (isInc) {
+                rate = incRate;
+                if (rate < 0) {
+                    rate = 0;
+                }
+            }
+        }
+        if (rate >= 0) {
+            repaint(rate, 0, 0, width, height);
+        }
+        return (infoflags & (ALLBITS|ABORT)) == 0;
+    }
+
+    /**
+     * Creates an image from the specified image producer.
+     * @param     producer  the image producer
+     * @return    the image produced
+     * @since     JDK1.0
+     */
+    public Image createImage(ImageProducer producer) {
+        ComponentPeer peer = this.peer;
+        if ((peer != null) && ! (peer instanceof LightweightPeer)) {
+            return peer.createImage(producer);
+        }
+        return getToolkit().createImage(producer);
+    }
+
+    /**
+     * Creates an off-screen drawable image
+     *     to be used for double buffering.
+     * @param     width the specified width
+     * @param     height the specified height
+     * @return    an off-screen drawable image, which can be used for double
+     *    buffering.  The return value may be <code>null</code> if the
+     *    component is not displayable.  This will always happen if
+     *    <code>GraphicsEnvironment.isHeadless()</code> returns
+     *    <code>true</code>.
+     * @see #isDisplayable
+     * @see GraphicsEnvironment#isHeadless
+     * @since     JDK1.0
+     */
+    public Image createImage(int width, int height) {
+        ComponentPeer peer = this.peer;
+        if (peer instanceof LightweightPeer) {
+            if (parent != null) { return parent.createImage(width, height); }
+            else { return null;}
+        } else {
+            return (peer != null) ? peer.createImage(width, height) : null;
+        }
+    }
+
+    /**
+     * Creates a volatile off-screen drawable image
+     *     to be used for double buffering.
+     * @param     width the specified width.
+     * @param     height the specified height.
+     * @return    an off-screen drawable image, which can be used for double
+     *    buffering.  The return value may be <code>null</code> if the
+     *    component is not displayable.  This will always happen if
+     *    <code>GraphicsEnvironment.isHeadless()</code> returns
+     *    <code>true</code>.
+     * @see java.awt.image.VolatileImage
+     * @see #isDisplayable
+     * @see GraphicsEnvironment#isHeadless
+     * @since     1.4
+     */
+    public VolatileImage createVolatileImage(int width, int height) {
+        ComponentPeer peer = this.peer;
+        if (peer instanceof LightweightPeer) {
+            if (parent != null) {
+                return parent.createVolatileImage(width, height);
+            }
+            else { return null;}
+        } else {
+            return (peer != null) ?
+                peer.createVolatileImage(width, height) : null;
+        }
+    }
+
+    /**
+     * Creates a volatile off-screen drawable image, with the given capabilities.
+     * The contents of this image may be lost at any time due
+     * to operating system issues, so the image must be managed
+     * via the <code>VolatileImage</code> interface.
+     * @param width the specified width.
+     * @param height the specified height.
+     * @param caps the image capabilities
+     * @exception AWTException if an image with the specified capabilities cannot
+     * be created
+     * @return a VolatileImage object, which can be used
+     * to manage surface contents loss and capabilities.
+     * @see java.awt.image.VolatileImage
+     * @since 1.4
+     */
+    public VolatileImage createVolatileImage(int width, int height,
+                                             ImageCapabilities caps) throws AWTException {
+        // REMIND : check caps
+        return createVolatileImage(width, height);
+    }
+
+    /**
+     * Prepares an image for rendering on this component.  The image
+     * data is downloaded asynchronously in another thread and the
+     * appropriate screen representation of the image is generated.
+     * @param     image   the <code>Image</code> for which to
+     *                    prepare a screen representation
+     * @param     observer   the <code>ImageObserver</code> object
+     *                       to be notified as the image is being prepared
+     * @return    <code>true</code> if the image has already been fully
+     *           prepared; <code>false</code> otherwise
+     * @since     JDK1.0
+     */
+    public boolean prepareImage(Image image, ImageObserver observer) {
+        return prepareImage(image, -1, -1, observer);
+    }
+
+    /**
+     * Prepares an image for rendering on this component at the
+     * specified width and height.
+     * <p>
+     * The image data is downloaded asynchronously in another thread,
+     * and an appropriately scaled screen representation of the image is
+     * generated.
+     * @param     image    the instance of <code>Image</code>
+     *            for which to prepare a screen representation
+     * @param     width    the width of the desired screen representation
+     * @param     height   the height of the desired screen representation
+     * @param     observer   the <code>ImageObserver</code> object
+     *            to be notified as the image is being prepared
+     * @return    <code>true</code> if the image has already been fully
+     *          prepared; <code>false</code> otherwise
+     * @see       java.awt.image.ImageObserver
+     * @since     JDK1.0
+     */
+    public boolean prepareImage(Image image, int width, int height,
+                                ImageObserver observer) {
+        ComponentPeer peer = this.peer;
+        if (peer instanceof LightweightPeer) {
+            return (parent != null)
+                ? parent.prepareImage(image, width, height, observer)
+                : getToolkit().prepareImage(image, width, height, observer);
+        } else {
+            return (peer != null)
+                ? peer.prepareImage(image, width, height, observer)
+                : getToolkit().prepareImage(image, width, height, observer);
+        }
+    }
+
+    /**
+     * Returns the status of the construction of a screen representation
+     * of the specified image.
+     * <p>
+     * This method does not cause the image to begin loading. An
+     * application must use the <code>prepareImage</code> method
+     * to force the loading of an image.
+     * <p>
+     * Information on the flags returned by this method can be found
+     * with the discussion of the <code>ImageObserver</code> interface.
+     * @param     image   the <code>Image</code> object whose status
+     *            is being checked
+     * @param     observer   the <code>ImageObserver</code>
+     *            object to be notified as the image is being prepared
+     * @return  the bitwise inclusive <b>OR</b> of
+     *            <code>ImageObserver</code> flags indicating what
+     *            information about the image is currently available
+     * @see      #prepareImage(Image, int, int, java.awt.image.ImageObserver)
+     * @see      Toolkit#checkImage(Image, int, int, java.awt.image.ImageObserver)
+     * @see      java.awt.image.ImageObserver
+     * @since    JDK1.0
+     */
+    public int checkImage(Image image, ImageObserver observer) {
+        return checkImage(image, -1, -1, observer);
+    }
+
+    /**
+     * Returns the status of the construction of a screen representation
+     * of the specified image.
+     * <p>
+     * This method does not cause the image to begin loading. An
+     * application must use the <code>prepareImage</code> method
+     * to force the loading of an image.
+     * <p>
+     * The <code>checkImage</code> method of <code>Component</code>
+     * calls its peer's <code>checkImage</code> method to calculate
+     * the flags. If this component does not yet have a peer, the
+     * component's toolkit's <code>checkImage</code> method is called
+     * instead.
+     * <p>
+     * Information on the flags returned by this method can be found
+     * with the discussion of the <code>ImageObserver</code> interface.
+     * @param     image   the <code>Image</code> object whose status
+     *                    is being checked
+     * @param     width   the width of the scaled version
+     *                    whose status is to be checked
+     * @param     height  the height of the scaled version
+     *                    whose status is to be checked
+     * @param     observer   the <code>ImageObserver</code> object
+     *                    to be notified as the image is being prepared
+     * @return    the bitwise inclusive <b>OR</b> of
+     *            <code>ImageObserver</code> flags indicating what
+     *            information about the image is currently available
+     * @see      #prepareImage(Image, int, int, java.awt.image.ImageObserver)
+     * @see      Toolkit#checkImage(Image, int, int, java.awt.image.ImageObserver)
+     * @see      java.awt.image.ImageObserver
+     * @since    JDK1.0
+     */
+    public int checkImage(Image image, int width, int height,
+                          ImageObserver observer) {
+        ComponentPeer peer = this.peer;
+        if (peer instanceof LightweightPeer) {
+            return (parent != null)
+                ? parent.checkImage(image, width, height, observer)
+                : getToolkit().checkImage(image, width, height, observer);
+        } else {
+            return (peer != null)
+                ? peer.checkImage(image, width, height, observer)
+                : getToolkit().checkImage(image, width, height, observer);
+        }
+    }
+
+    /**
+     * Creates a new strategy for multi-buffering on this component.
+     * Multi-buffering is useful for rendering performance.  This method
+     * attempts to create the best strategy available with the number of
+     * buffers supplied.  It will always create a <code>BufferStrategy</code>
+     * with that number of buffers.
+     * A page-flipping strategy is attempted first, then a blitting strategy
+     * using accelerated buffers.  Finally, an unaccelerated blitting
+     * strategy is used.
+     * <p>
+     * Each time this method is called,
+     * the existing buffer strategy for this component is discarded.
+     * @param numBuffers number of buffers to create, including the front buffer
+     * @exception IllegalArgumentException if numBuffers is less than 1.
+     * @exception IllegalStateException if the component is not displayable
+     * @see #isDisplayable
+     * @see Window#getBufferStrategy()
+     * @see Canvas#getBufferStrategy()
+     * @since 1.4
+     */
+    void createBufferStrategy(int numBuffers) {
+        BufferCapabilities bufferCaps;
+        if (numBuffers > 1) {
+            // Try to create a page-flipping strategy
+            bufferCaps = new BufferCapabilities(new ImageCapabilities(true),
+                                                new ImageCapabilities(true),
+                                                BufferCapabilities.FlipContents.UNDEFINED);
+            try {
+                createBufferStrategy(numBuffers, bufferCaps);
+                return; // Success
+            } catch (AWTException e) {
+                // Failed
+            }
+        }
+        // Try a blitting (but still accelerated) strategy
+        bufferCaps = new BufferCapabilities(new ImageCapabilities(true),
+                                            new ImageCapabilities(true),
+                                            null);
+        try {
+            createBufferStrategy(numBuffers, bufferCaps);
+            return; // Success
+        } catch (AWTException e) {
+            // Failed
+        }
+        // Try an unaccelerated blitting strategy
+        bufferCaps = new BufferCapabilities(new ImageCapabilities(false),
+                                            new ImageCapabilities(false),
+                                            null);
+        try {
+            createBufferStrategy(numBuffers, bufferCaps);
+            return; // Success
+        } catch (AWTException e) {
+            // Code should never reach here (an unaccelerated blitting
+            // strategy should always work)
+            throw new InternalError("Could not create a buffer strategy", e);
+        }
+    }
+
+    /**
+     * Creates a new strategy for multi-buffering on this component with the
+     * required buffer capabilities.  This is useful, for example, if only
+     * accelerated memory or page flipping is desired (as specified by the
+     * buffer capabilities).
+     * <p>
+     * Each time this method
+     * is called, <code>dispose</code> will be invoked on the existing
+     * <code>BufferStrategy</code>.
+     * @param numBuffers number of buffers to create
+     * @param caps the required capabilities for creating the buffer strategy;
+     * cannot be <code>null</code>
+     * @exception AWTException if the capabilities supplied could not be
+     * supported or met; this may happen, for example, if there is not enough
+     * accelerated memory currently available, or if page flipping is specified
+     * but not possible.
+     * @exception IllegalArgumentException if numBuffers is less than 1, or if
+     * caps is <code>null</code>
+     * @see Window#getBufferStrategy()
+     * @see Canvas#getBufferStrategy()
+     * @since 1.4
+     */
+    void createBufferStrategy(int numBuffers,
+                              BufferCapabilities caps) throws AWTException {
+        // Check arguments
+        if (numBuffers < 1) {
+            throw new IllegalArgumentException(
+                "Number of buffers must be at least 1");
+        }
+        if (caps == null) {
+            throw new IllegalArgumentException("No capabilities specified");
+        }
+        // Destroy old buffers
+        if (bufferStrategy != null) {
+            bufferStrategy.dispose();
+        }
+        if (numBuffers == 1) {
+            bufferStrategy = new SingleBufferStrategy(caps);
+        } else {
+            SunGraphicsEnvironment sge = (SunGraphicsEnvironment)
+                GraphicsEnvironment.getLocalGraphicsEnvironment();
+            if (!caps.isPageFlipping() && sge.isFlipStrategyPreferred(peer)) {
+                caps = new ProxyCapabilities(caps);
+            }
+            // assert numBuffers > 1;
+            if (caps.isPageFlipping()) {
+                bufferStrategy = new FlipSubRegionBufferStrategy(numBuffers, caps);
+            } else {
+                bufferStrategy = new BltSubRegionBufferStrategy(numBuffers, caps);
+            }
+        }
+    }
+
+    /**
+     * This is a proxy capabilities class used when a FlipBufferStrategy
+     * is created instead of the requested Blit strategy.
+     *
+     * @see sun.java2d.SunGraphicsEnvironment#isFlipStrategyPreferred(ComponentPeer)
+     */
+    private class ProxyCapabilities extends ExtendedBufferCapabilities {
+        private BufferCapabilities orig;
+        private ProxyCapabilities(BufferCapabilities orig) {
+            super(orig.getFrontBufferCapabilities(),
+                  orig.getBackBufferCapabilities(),
+                  orig.getFlipContents() ==
+                      BufferCapabilities.FlipContents.BACKGROUND ?
+                      BufferCapabilities.FlipContents.BACKGROUND :
+                      BufferCapabilities.FlipContents.COPIED);
+            this.orig = orig;
+        }
+    }
+
+    /**
+     * @return the buffer strategy used by this component
+     * @see Window#createBufferStrategy
+     * @see Canvas#createBufferStrategy
+     * @since 1.4
+     */
+    BufferStrategy getBufferStrategy() {
+        return bufferStrategy;
+    }
+
+    /**
+     * @return the back buffer currently used by this component's
+     * BufferStrategy.  If there is no BufferStrategy or no
+     * back buffer, this method returns null.
+     */
+    Image getBackBuffer() {
+        if (bufferStrategy != null) {
+            if (bufferStrategy instanceof BltBufferStrategy) {
+                BltBufferStrategy bltBS = (BltBufferStrategy)bufferStrategy;
+                return bltBS.getBackBuffer();
+            } else if (bufferStrategy instanceof FlipBufferStrategy) {
+                FlipBufferStrategy flipBS = (FlipBufferStrategy)bufferStrategy;
+                return flipBS.getBackBuffer();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Inner class for flipping buffers on a component.  That component must
+     * be a <code>Canvas</code> or <code>Window</code>.
+     * @see Canvas
+     * @see Window
+     * @see java.awt.image.BufferStrategy
+     * @author Michael Martak
+     * @since 1.4
+     */
+    protected class FlipBufferStrategy extends BufferStrategy {
+        /**
+         * The number of buffers
+         */
+        protected int numBuffers; // = 0
+        /**
+         * The buffering capabilities
+         */
+        protected BufferCapabilities caps; // = null
+        /**
+         * The drawing buffer
+         */
+        protected Image drawBuffer; // = null
+        /**
+         * The drawing buffer as a volatile image
+         */
+        protected VolatileImage drawVBuffer; // = null
+        /**
+         * Whether or not the drawing buffer has been recently restored from
+         * a lost state.
+         */
+        protected boolean validatedContents; // = false
+        /**
+         * Size of the back buffers.  (Note: these fields were added in 6.0
+         * but kept package-private to avoid exposing them in the spec.
+         * None of these fields/methods really should have been marked
+         * protected when they were introduced in 1.4, but now we just have
+         * to live with that decision.)
+         */
+        int width;
+        int height;
+
+        /**
+         * Creates a new flipping buffer strategy for this component.
+         * The component must be a <code>Canvas</code> or <code>Window</code>.
+         * @see Canvas
+         * @see Window
+         * @param numBuffers the number of buffers
+         * @param caps the capabilities of the buffers
+         * @exception AWTException if the capabilities supplied could not be
+         * supported or met
+         * @exception ClassCastException if the component is not a canvas or
+         * window.
+         * @exception IllegalStateException if the component has no peer
+         * @exception IllegalArgumentException if {@code numBuffers} is less than two,
+         * or if {@code BufferCapabilities.isPageFlipping} is not
+         * {@code true}.
+         * @see #createBuffers(int, BufferCapabilities)
+         */
+        protected FlipBufferStrategy(int numBuffers, BufferCapabilities caps)
+            throws AWTException
+        {
+            if (!(Component.this instanceof Window) &&
+                !(Component.this instanceof Canvas))
+            {
+                throw new ClassCastException(
+                    "Component must be a Canvas or Window");
+            }
+            this.numBuffers = numBuffers;
+            this.caps = caps;
+            createBuffers(numBuffers, caps);
+        }
+
+        /**
+         * Creates one or more complex, flipping buffers with the given
+         * capabilities.
+         * @param numBuffers number of buffers to create; must be greater than
+         * one
+         * @param caps the capabilities of the buffers.
+         * <code>BufferCapabilities.isPageFlipping</code> must be
+         * <code>true</code>.
+         * @exception AWTException if the capabilities supplied could not be
+         * supported or met
+         * @exception IllegalStateException if the component has no peer
+         * @exception IllegalArgumentException if numBuffers is less than two,
+         * or if <code>BufferCapabilities.isPageFlipping</code> is not
+         * <code>true</code>.
+         * @see java.awt.BufferCapabilities#isPageFlipping()
+         */
+        protected void createBuffers(int numBuffers, BufferCapabilities caps)
+            throws AWTException
+        {
+            if (numBuffers < 2) {
+                throw new IllegalArgumentException(
+                    "Number of buffers cannot be less than two");
+            } else if (peer == null) {
+                throw new IllegalStateException(
+                    "Component must have a valid peer");
+            } else if (caps == null || !caps.isPageFlipping()) {
+                throw new IllegalArgumentException(
+                    "Page flipping capabilities must be specified");
+            }
+
+            // save the current bounds
+            width = getWidth();
+            height = getHeight();
+
+            if (drawBuffer != null) {
+                // dispose the existing backbuffers
+                drawBuffer = null;
+                drawVBuffer = null;
+                destroyBuffers();
+                // ... then recreate the backbuffers
+            }
+
+            if (caps instanceof ExtendedBufferCapabilities) {
+                ExtendedBufferCapabilities ebc =
+                    (ExtendedBufferCapabilities)caps;
+                if (ebc.getVSync() == VSYNC_ON) {
+                    // if this buffer strategy is not allowed to be v-synced,
+                    // change the caps that we pass to the peer but keep on
+                    // trying to create v-synced buffers;
+                    // do not throw IAE here in case it is disallowed, see
+                    // ExtendedBufferCapabilities for more info
+                    if (!VSyncedBSManager.vsyncAllowed(this)) {
+                        caps = ebc.derive(VSYNC_DEFAULT);
+                    }
+                }
+            }
+
+            peer.createBuffers(numBuffers, caps);
+            updateInternalBuffers();
+        }
+
+        /**
+         * Updates internal buffers (both volatile and non-volatile)
+         * by requesting the back-buffer from the peer.
+         */
+        private void updateInternalBuffers() {
+            // get the images associated with the draw buffer
+            drawBuffer = getBackBuffer();
+            if (drawBuffer instanceof VolatileImage) {
+                drawVBuffer = (VolatileImage)drawBuffer;
+            } else {
+                drawVBuffer = null;
+            }
+        }
+
+        /**
+         * @return direct access to the back buffer, as an image.
+         * @exception IllegalStateException if the buffers have not yet
+         * been created
+         */
+        protected Image getBackBuffer() {
+            if (peer != null) {
+                return peer.getBackBuffer();
+            } else {
+                throw new IllegalStateException(
+                    "Component must have a valid peer");
+            }
+        }
+
+        /**
+         * Flipping moves the contents of the back buffer to the front buffer,
+         * either by copying or by moving the video pointer.
+         * @param flipAction an integer value describing the flipping action
+         * for the contents of the back buffer.  This should be one of the
+         * values of the <code>BufferCapabilities.FlipContents</code>
+         * property.
+         * @exception IllegalStateException if the buffers have not yet
+         * been created
+         * @see java.awt.BufferCapabilities#getFlipContents()
+         */
+        protected void flip(BufferCapabilities.FlipContents flipAction) {
+            if (peer != null) {
+                Image backBuffer = getBackBuffer();
+                if (backBuffer != null) {
+                    peer.flip(0, 0,
+                              backBuffer.getWidth(null),
+                              backBuffer.getHeight(null), flipAction);
+                }
+            } else {
+                throw new IllegalStateException(
+                    "Component must have a valid peer");
+            }
+        }
+
+        void flipSubRegion(int x1, int y1, int x2, int y2,
+                      BufferCapabilities.FlipContents flipAction)
+        {
+            if (peer != null) {
+                peer.flip(x1, y1, x2, y2, flipAction);
+            } else {
+                throw new IllegalStateException(
+                    "Component must have a valid peer");
+            }
+        }
+
+        /**
+         * Destroys the buffers created through this object
+         */
+        protected void destroyBuffers() {
+            VSyncedBSManager.releaseVsync(this);
+            if (peer != null) {
+                peer.destroyBuffers();
+            } else {
+                throw new IllegalStateException(
+                    "Component must have a valid peer");
+            }
+        }
+
+        /**
+         * @return the buffering capabilities of this strategy
+         */
+        public BufferCapabilities getCapabilities() {
+            if (caps instanceof ProxyCapabilities) {
+                return ((ProxyCapabilities)caps).orig;
+            } else {
+                return caps;
+            }
+        }
+
+        /**
+         * @return the graphics on the drawing buffer.  This method may not
+         * be synchronized for performance reasons; use of this method by multiple
+         * threads should be handled at the application level.  Disposal of the
+         * graphics object must be handled by the application.
+         */
+        public Graphics getDrawGraphics() {
+            revalidate();
+            return drawBuffer.getGraphics();
+        }
+
+        /**
+         * Restore the drawing buffer if it has been lost
+         */
+        protected void revalidate() {
+            revalidate(true);
+        }
+
+        void revalidate(boolean checkSize) {
+            validatedContents = false;
+
+            if (checkSize && (getWidth() != width || getHeight() != height)) {
+                // component has been resized; recreate the backbuffers
+                try {
+                    createBuffers(numBuffers, caps);
+                } catch (AWTException e) {
+                    // shouldn't be possible
+                }
+                validatedContents = true;
+            }
+
+            // get the buffers from the peer every time since they
+            // might have been replaced in response to a display change event
+            updateInternalBuffers();
+
+            // now validate the backbuffer
+            if (drawVBuffer != null) {
+                GraphicsConfiguration gc =
+                        getGraphicsConfiguration_NoClientCode();
+                int returnCode = drawVBuffer.validate(gc);
+                if (returnCode == VolatileImage.IMAGE_INCOMPATIBLE) {
+                    try {
+                        createBuffers(numBuffers, caps);
+                    } catch (AWTException e) {
+                        // shouldn't be possible
+                    }
+                    if (drawVBuffer != null) {
+                        // backbuffers were recreated, so validate again
+                        drawVBuffer.validate(gc);
+                    }
+                    validatedContents = true;
+                } else if (returnCode == VolatileImage.IMAGE_RESTORED) {
+                    validatedContents = true;
+                }
+            }
+        }
+
+        /**
+         * @return whether the drawing buffer was lost since the last call to
+         * <code>getDrawGraphics</code>
+         */
+        public boolean contentsLost() {
+            if (drawVBuffer == null) {
+                return false;
+            }
+            return drawVBuffer.contentsLost();
+        }
+
+        /**
+         * @return whether the drawing buffer was recently restored from a lost
+         * state and reinitialized to the default background color (white)
+         */
+        public boolean contentsRestored() {
+            return validatedContents;
+        }
+
+        /**
+         * Makes the next available buffer visible by either blitting or
+         * flipping.
+         */
+        public void show() {
+            flip(caps.getFlipContents());
+        }
+
+        /**
+         * Makes specified region of the the next available buffer visible
+         * by either blitting or flipping.
+         */
+        void showSubRegion(int x1, int y1, int x2, int y2) {
+            flipSubRegion(x1, y1, x2, y2, caps.getFlipContents());
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public void dispose() {
+            if (Component.this.bufferStrategy == this) {
+                Component.this.bufferStrategy = null;
+                if (peer != null) {
+                    destroyBuffers();
+                }
+            }
+        }
+
+    } // Inner class FlipBufferStrategy
+
+    /**
+     * Inner class for blitting offscreen surfaces to a component.
+     *
+     * @author Michael Martak
+     * @since 1.4
+     */
+    protected class BltBufferStrategy extends BufferStrategy {
+
+        /**
+         * The buffering capabilities
+         */
+        protected BufferCapabilities caps; // = null
+        /**
+         * The back buffers
+         */
+        protected VolatileImage[] backBuffers; // = null
+        /**
+         * Whether or not the drawing buffer has been recently restored from
+         * a lost state.
+         */
+        protected boolean validatedContents; // = false
+        /**
+         * Size of the back buffers
+         */
+        protected int width;
+        protected int height;
+
+        /**
+         * Insets for the hosting Component.  The size of the back buffer
+         * is constrained by these.
+         */
+        private Insets insets;
+
+        /**
+         * Creates a new blt buffer strategy around a component
+         * @param numBuffers number of buffers to create, including the
+         * front buffer
+         * @param caps the capabilities of the buffers
+         */
+        protected BltBufferStrategy(int numBuffers, BufferCapabilities caps) {
+            this.caps = caps;
+            createBackBuffers(numBuffers - 1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public void dispose() {
+            if (backBuffers != null) {
+                for (int counter = backBuffers.length - 1; counter >= 0;
+                     counter--) {
+                    if (backBuffers[counter] != null) {
+                        backBuffers[counter].flush();
+                        backBuffers[counter] = null;
+                    }
+                }
+            }
+            if (Component.this.bufferStrategy == this) {
+                Component.this.bufferStrategy = null;
+            }
+        }
+
+        /**
+         * Creates the back buffers
+         */
+        protected void createBackBuffers(int numBuffers) {
+            if (numBuffers == 0) {
+                backBuffers = null;
+            } else {
+                // save the current bounds
+                width = getWidth();
+                height = getHeight();
+                insets = getInsets_NoClientCode();
+                int iWidth = width - insets.left - insets.right;
+                int iHeight = height - insets.top - insets.bottom;
+
+                // It is possible for the component's width and/or height
+                // to be 0 here.  Force the size of the backbuffers to
+                // be > 0 so that creating the image won't fail.
+                iWidth = Math.max(1, iWidth);
+                iHeight = Math.max(1, iHeight);
+                if (backBuffers == null) {
+                    backBuffers = new VolatileImage[numBuffers];
+                } else {
+                    // flush any existing backbuffers
+                    for (int i = 0; i < numBuffers; i++) {
+                        if (backBuffers[i] != null) {
+                            backBuffers[i].flush();
+                            backBuffers[i] = null;
+                        }
+                    }
+                }
+
+                // create the backbuffers
+                for (int i = 0; i < numBuffers; i++) {
+                    backBuffers[i] = createVolatileImage(iWidth, iHeight);
+                }
+            }
+        }
+
+        /**
+         * @return the buffering capabilities of this strategy
+         */
+        public BufferCapabilities getCapabilities() {
+            return caps;
+        }
+
+        /**
+         * @return the draw graphics
+         */
+        public Graphics getDrawGraphics() {
+            revalidate();
+            Image backBuffer = getBackBuffer();
+            if (backBuffer == null) {
+                return getGraphics();
+            }
+            SunGraphics2D g = (SunGraphics2D)backBuffer.getGraphics();
+            g.constrain(-insets.left, -insets.top,
+                        backBuffer.getWidth(null) + insets.left,
+                        backBuffer.getHeight(null) + insets.top);
+            return g;
+        }
+
+        /**
+         * @return direct access to the back buffer, as an image.
+         * If there is no back buffer, returns null.
+         */
+        Image getBackBuffer() {
+            if (backBuffers != null) {
+                return backBuffers[backBuffers.length - 1];
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Makes the next available buffer visible.
+         */
+        public void show() {
+            showSubRegion(insets.left, insets.top,
+                          width - insets.right,
+                          height - insets.bottom);
+        }
+
+        /**
+         * Package-private method to present a specific rectangular area
+         * of this buffer.  This class currently shows only the entire
+         * buffer, by calling showSubRegion() with the full dimensions of
+         * the buffer.  Subclasses (e.g., BltSubRegionBufferStrategy
+         * and FlipSubRegionBufferStrategy) may have region-specific show
+         * methods that call this method with actual sub regions of the
+         * buffer.
+         */
+        void showSubRegion(int x1, int y1, int x2, int y2) {
+            if (backBuffers == null) {
+                return;
+            }
+            // Adjust location to be relative to client area.
+            x1 -= insets.left;
+            x2 -= insets.left;
+            y1 -= insets.top;
+            y2 -= insets.top;
+            Graphics g = getGraphics_NoClientCode();
+            if (g == null) {
+                // Not showing, bail
+                return;
+            }
+            try {
+                // First image copy is in terms of Frame's coordinates, need
+                // to translate to client area.
+                g.translate(insets.left, insets.top);
+                for (int i = 0; i < backBuffers.length; i++) {
+                    g.drawImage(backBuffers[i],
+                                x1, y1, x2, y2,
+                                x1, y1, x2, y2,
+                                null);
+                    g.dispose();
+                    g = null;
+                    g = backBuffers[i].getGraphics();
+                }
+            } finally {
+                if (g != null) {
+                    g.dispose();
+                }
+            }
+        }
+
+        /**
+         * Restore the drawing buffer if it has been lost
+         */
+        protected void revalidate() {
+            revalidate(true);
+        }
+
+        void revalidate(boolean checkSize) {
+            validatedContents = false;
+
+            if (backBuffers == null) {
+                return;
+            }
+
+            if (checkSize) {
+                Insets insets = getInsets_NoClientCode();
+                if (getWidth() != width || getHeight() != height ||
+                    !insets.equals(this.insets)) {
+                    // component has been resized; recreate the backbuffers
+                    createBackBuffers(backBuffers.length);
+                    validatedContents = true;
+                }
+            }
+
+            // now validate the backbuffer
+            GraphicsConfiguration gc = getGraphicsConfiguration_NoClientCode();
+            int returnCode =
+                backBuffers[backBuffers.length - 1].validate(gc);
+            if (returnCode == VolatileImage.IMAGE_INCOMPATIBLE) {
+                if (checkSize) {
+                    createBackBuffers(backBuffers.length);
+                    // backbuffers were recreated, so validate again
+                    backBuffers[backBuffers.length - 1].validate(gc);
+                }
+                // else case means we're called from Swing on the toolkit
+                // thread, don't recreate buffers as that'll deadlock
+                // (creating VolatileImages invokes getting GraphicsConfig
+                // which grabs treelock).
+                validatedContents = true;
+            } else if (returnCode == VolatileImage.IMAGE_RESTORED) {
+                validatedContents = true;
+            }
+        }
+
+        /**
+         * @return whether the drawing buffer was lost since the last call to
+         * <code>getDrawGraphics</code>
+         */
+        public boolean contentsLost() {
+            if (backBuffers == null) {
+                return false;
+            } else {
+                return backBuffers[backBuffers.length - 1].contentsLost();
+            }
+        }
+
+        /**
+         * @return whether the drawing buffer was recently restored from a lost
+         * state and reinitialized to the default background color (white)
+         */
+        public boolean contentsRestored() {
+            return validatedContents;
+        }
+    } // Inner class BltBufferStrategy
+
+    /**
+     * Private class to perform sub-region flipping.
+     */
+    private class FlipSubRegionBufferStrategy extends FlipBufferStrategy
+        implements SubRegionShowable
+    {
+
+        protected FlipSubRegionBufferStrategy(int numBuffers,
+                                              BufferCapabilities caps)
+            throws AWTException
+        {
+            super(numBuffers, caps);
+        }
+
+        public void show(int x1, int y1, int x2, int y2) {
+            showSubRegion(x1, y1, x2, y2);
+        }
+
+        // This is invoked by Swing on the toolkit thread.
+        public boolean showIfNotLost(int x1, int y1, int x2, int y2) {
+            if (!contentsLost()) {
+                showSubRegion(x1, y1, x2, y2);
+                return !contentsLost();
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Private class to perform sub-region blitting.  Swing will use
+     * this subclass via the SubRegionShowable interface in order to
+     * copy only the area changed during a repaint.
+     * See javax.swing.BufferStrategyPaintManager.
+     */
+    private class BltSubRegionBufferStrategy extends BltBufferStrategy
+        implements SubRegionShowable
+    {
+
+        protected BltSubRegionBufferStrategy(int numBuffers,
+                                             BufferCapabilities caps)
+        {
+            super(numBuffers, caps);
+        }
+
+        public void show(int x1, int y1, int x2, int y2) {
+            showSubRegion(x1, y1, x2, y2);
+        }
+
+        // This method is called by Swing on the toolkit thread.
+        public boolean showIfNotLost(int x1, int y1, int x2, int y2) {
+            if (!contentsLost()) {
+                showSubRegion(x1, y1, x2, y2);
+                return !contentsLost();
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Inner class for flipping buffers on a component.  That component must
+     * be a <code>Canvas</code> or <code>Window</code>.
+     * @see Canvas
+     * @see Window
+     * @see java.awt.image.BufferStrategy
+     * @author Michael Martak
+     * @since 1.4
+     */
+    private class SingleBufferStrategy extends BufferStrategy {
+
+        private BufferCapabilities caps;
+
+        public SingleBufferStrategy(BufferCapabilities caps) {
+            this.caps = caps;
+        }
+        public BufferCapabilities getCapabilities() {
+            return caps;
+        }
+        public Graphics getDrawGraphics() {
+            return getGraphics();
+        }
+        public boolean contentsLost() {
+            return false;
+        }
+        public boolean contentsRestored() {
+            return false;
+        }
+        public void show() {
+            // Do nothing
+        }
+    } // Inner class SingleBufferStrategy
+
+    /**
+     * Sets whether or not paint messages received from the operating system
+     * should be ignored.  This does not affect paint events generated in
+     * software by the AWT, unless they are an immediate response to an
+     * OS-level paint message.
+     * <p>
+     * This is useful, for example, if running under full-screen mode and
+     * better performance is desired, or if page-flipping is used as the
+     * buffer strategy.
+     *
+     * @since 1.4
+     * @see #getIgnoreRepaint
+     * @see Canvas#createBufferStrategy
+     * @see Window#createBufferStrategy
+     * @see java.awt.image.BufferStrategy
+     * @see GraphicsDevice#setFullScreenWindow
+     */
+    public void setIgnoreRepaint(boolean ignoreRepaint) {
+        this.ignoreRepaint = ignoreRepaint;
+    }
+
+    /**
+     * @return whether or not paint messages received from the operating system
+     * should be ignored.
+     *
+     * @since 1.4
+     * @see #setIgnoreRepaint
+     */
+    public boolean getIgnoreRepaint() {
+        return ignoreRepaint;
+    }
+
+    /**
+     * Checks whether this component "contains" the specified point,
+     * where <code>x</code> and <code>y</code> are defined to be
+     * relative to the coordinate system of this component.
+     * @param     x   the <i>x</i> coordinate of the point
+     * @param     y   the <i>y</i> coordinate of the point
+     * @see       #getComponentAt(int, int)
+     * @since     JDK1.1
+     */
+    public boolean contains(int x, int y) {
+        return inside(x, y);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by contains(int, int).
+     */
+    @Deprecated
+    public boolean inside(int x, int y) {
+        return (x >= 0) && (x < width) && (y >= 0) && (y < height);
+    }
+
+    /**
+     * Checks whether this component "contains" the specified point,
+     * where the point's <i>x</i> and <i>y</i> coordinates are defined
+     * to be relative to the coordinate system of this component.
+     * @param     p     the point
+     * @throws    NullPointerException if {@code p} is {@code null}
+     * @see       #getComponentAt(Point)
+     * @since     JDK1.1
+     */
+    public boolean contains(Point p) {
+        return contains(p.x, p.y);
+    }
+
+    /**
+     * Determines if this component or one of its immediate
+     * subcomponents contains the (<i>x</i>,&nbsp;<i>y</i>) location,
+     * and if so, returns the containing component. This method only
+     * looks one level deep. If the point (<i>x</i>,&nbsp;<i>y</i>) is
+     * inside a subcomponent that itself has subcomponents, it does not
+     * go looking down the subcomponent tree.
+     * <p>
+     * The <code>locate</code> method of <code>Component</code> simply
+     * returns the component itself if the (<i>x</i>,&nbsp;<i>y</i>)
+     * coordinate location is inside its bounding box, and <code>null</code>
+     * otherwise.
+     * @param     x   the <i>x</i> coordinate
+     * @param     y   the <i>y</i> coordinate
+     * @return    the component or subcomponent that contains the
+     *                (<i>x</i>,&nbsp;<i>y</i>) location;
+     *                <code>null</code> if the location
+     *                is outside this component
+     * @see       #contains(int, int)
+     * @since     JDK1.0
+     */
+    public Component getComponentAt(int x, int y) {
+        return locate(x, y);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by getComponentAt(int, int).
+     */
+    @Deprecated
+    public Component locate(int x, int y) {
+        return contains(x, y) ? this : null;
+    }
+
+    /**
+     * Returns the component or subcomponent that contains the
+     * specified point.
+     * @param     p   the point
+     * @see       java.awt.Component#contains
+     * @since     JDK1.1
+     */
+    public Component getComponentAt(Point p) {
+        return getComponentAt(p.x, p.y);
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by <code>dispatchEvent(AWTEvent e)</code>.
+     */
+    @Deprecated
+    public void deliverEvent(Event e) {
+        postEvent(e);
+    }
+
+    /**
+     * Dispatches an event to this component or one of its sub components.
+     * Calls <code>processEvent</code> before returning for 1.1-style
+     * events which have been enabled for the <code>Component</code>.
+     * @param e the event
+     */
+    public final void dispatchEvent(AWTEvent e) {
+        dispatchEventImpl(e);
+    }
+
+    @SuppressWarnings("deprecation")
+    void dispatchEventImpl(AWTEvent e) {
+        int id = e.getID();
+
+        // Check that this component belongs to this app-context
+        AppContext compContext = appContext;
+        if (compContext != null && !compContext.equals(AppContext.getAppContext())) {
+            if (eventLog.isLoggable(PlatformLogger.Level.FINE)) {
+                eventLog.fine("Event " + e + " is being dispatched on the wrong AppContext");
+            }
+        }
+
+        if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
+            eventLog.finest("{0}", e);
+        }
+
+        /*
+         * 0. Set timestamp and modifiers of current event.
+         */
+        if (!(e instanceof KeyEvent)) {
+            // Timestamp of a key event is set later in DKFM.preDispatchKeyEvent(KeyEvent).
+            EventQueue.setCurrentEventAndMostRecentTime(e);
+        }
+
+        /*
+         * 1. Pre-dispatchers. Do any necessary retargeting/reordering here
+         *    before we notify AWTEventListeners.
+         */
+
+        if (e instanceof SunDropTargetEvent) {
+            ((SunDropTargetEvent)e).dispatch();
+            return;
+        }
+
+        if (!e.focusManagerIsDispatching) {
+            // Invoke the private focus retargeting method which provides
+            // lightweight Component support
+            if (e.isPosted) {
+                e = KeyboardFocusManager.retargetFocusEvent(e);
+                e.isPosted = true;
+            }
+
+            // Now, with the event properly targeted to a lightweight
+            // descendant if necessary, invoke the public focus retargeting
+            // and dispatching function
+            if (KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                dispatchEvent(e))
+            {
+                return;
+            }
+        }
+        if ((e instanceof FocusEvent) && focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+            focusLog.finest("" + e);
+        }
+        // MouseWheel may need to be retargeted here so that
+        // AWTEventListener sees the event go to the correct
+        // Component.  If the MouseWheelEvent needs to go to an ancestor,
+        // the event is dispatched to the ancestor, and dispatching here
+        // stops.
+        if (id == MouseEvent.MOUSE_WHEEL &&
+            (!eventTypeEnabled(id)) &&
+            (peer != null && !peer.handlesWheelScrolling()) &&
+            (dispatchMouseWheelToAncestor((MouseWheelEvent)e)))
+        {
+            return;
+        }
+
+        /*
+         * 2. Allow the Toolkit to pass this to AWTEventListeners.
+         */
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        toolkit.notifyAWTEventListeners(e);
+
+
+        /*
+         * 3. If no one has consumed a key event, allow the
+         *    KeyboardFocusManager to process it.
+         */
+        if (!e.isConsumed()) {
+            if (e instanceof java.awt.event.KeyEvent) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                    processKeyEvent(this, (KeyEvent)e);
+                if (e.isConsumed()) {
+                    return;
+                }
+            }
+        }
+
+        /*
+         * 4. Allow input methods to process the event
+         */
+        if (areInputMethodsEnabled()) {
+            // We need to pass on InputMethodEvents since some host
+            // input method adapters send them through the Java
+            // event queue instead of directly to the component,
+            // and the input context also handles the Java composition window
+            if(((e instanceof InputMethodEvent) && !(this instanceof CompositionArea))
+               ||
+               // Otherwise, we only pass on input and focus events, because
+               // a) input methods shouldn't know about semantic or component-level events
+               // b) passing on the events takes time
+               // c) isConsumed() is always true for semantic events.
+               (e instanceof InputEvent) || (e instanceof FocusEvent)) {
+                InputContext inputContext = getInputContext();
+
+
+                if (inputContext != null) {
+                    inputContext.dispatchEvent(e);
+                    if (e.isConsumed()) {
+                        if ((e instanceof FocusEvent) && focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                            focusLog.finest("3579: Skipping " + e);
+                        }
+                        return;
+                    }
+                }
+            }
+        } else {
+            // When non-clients get focus, we need to explicitly disable the native
+            // input method. The native input method is actually not disabled when
+            // the active/passive/peered clients loose focus.
+            if (id == FocusEvent.FOCUS_GAINED) {
+                InputContext inputContext = getInputContext();
+                if (inputContext != null && inputContext instanceof sun.awt.im.InputContext) {
+                    ((sun.awt.im.InputContext)inputContext).disableNativeIM();
+                }
+            }
+        }
+
+
+        /*
+         * 5. Pre-process any special events before delivery
+         */
+        switch(id) {
+            // Handling of the PAINT and UPDATE events is now done in the
+            // peer's handleEvent() method so the background can be cleared
+            // selectively for non-native components on Windows only.
+            // - Fred.Ecks@Eng.sun.com, 5-8-98
+
+          case KeyEvent.KEY_PRESSED:
+          case KeyEvent.KEY_RELEASED:
+              Container p = (Container)((this instanceof Container) ? this : parent);
+              if (p != null) {
+                  p.preProcessKeyEvent((KeyEvent)e);
+                  if (e.isConsumed()) {
+                        if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                            focusLog.finest("Pre-process consumed event");
+                        }
+                      return;
+                  }
+              }
+              break;
+
+          case WindowEvent.WINDOW_CLOSING:
+              if (toolkit instanceof WindowClosingListener) {
+                  windowClosingException = ((WindowClosingListener)
+                                            toolkit).windowClosingNotify((WindowEvent)e);
+                  if (checkWindowClosingException()) {
+                      return;
+                  }
+              }
+              break;
+
+          default:
+              break;
+        }
+
+        /*
+         * 6. Deliver event for normal processing
+         */
+        if (newEventsOnly) {
+            // Filtering needs to really be moved to happen at a lower
+            // level in order to get maximum performance gain;  it is
+            // here temporarily to ensure the API spec is honored.
+            //
+            if (eventEnabled(e)) {
+                processEvent(e);
+            }
+        } else if (id == MouseEvent.MOUSE_WHEEL) {
+            // newEventsOnly will be false for a listenerless ScrollPane, but
+            // MouseWheelEvents still need to be dispatched to it so scrolling
+            // can be done.
+            autoProcessMouseWheel((MouseWheelEvent)e);
+        } else if (!(e instanceof MouseEvent && !postsOldMouseEvents())) {
+            //
+            // backward compatibility
+            //
+            Event olde = e.convertToOld();
+            if (olde != null) {
+                int key = olde.key;
+                int modifiers = olde.modifiers;
+
+                postEvent(olde);
+                if (olde.isConsumed()) {
+                    e.consume();
+                }
+                // if target changed key or modifier values, copy them
+                // back to original event
+                //
+                switch(olde.id) {
+                  case Event.KEY_PRESS:
+                  case Event.KEY_RELEASE:
+                  case Event.KEY_ACTION:
+                  case Event.KEY_ACTION_RELEASE:
+                      if (olde.key != key) {
+                          ((KeyEvent)e).setKeyChar(olde.getKeyEventChar());
+                      }
+                      if (olde.modifiers != modifiers) {
+                          ((KeyEvent)e).setModifiers(olde.modifiers);
+                      }
+                      break;
+                  default:
+                      break;
+                }
+            }
+        }
+
+        /*
+         * 8. Special handling for 4061116 : Hook for browser to close modal
+         *    dialogs.
+         */
+        if (id == WindowEvent.WINDOW_CLOSING && !e.isConsumed()) {
+            if (toolkit instanceof WindowClosingListener) {
+                windowClosingException =
+                    ((WindowClosingListener)toolkit).
+                    windowClosingDelivered((WindowEvent)e);
+                if (checkWindowClosingException()) {
+                    return;
+                }
+            }
+        }
+
+        /*
+         * 9. Allow the peer to process the event.
+         * Except KeyEvents, they will be processed by peer after
+         * all KeyEventPostProcessors
+         * (see DefaultKeyboardFocusManager.dispatchKeyEvent())
+         */
+        if (!(e instanceof KeyEvent)) {
+            ComponentPeer tpeer = peer;
+            if (e instanceof FocusEvent && (tpeer == null || tpeer instanceof LightweightPeer)) {
+                // if focus owner is lightweight then its native container
+                // processes event
+                Component source = (Component)e.getSource();
+                if (source != null) {
+                    Container target = source.getNativeContainer();
+                    if (target != null) {
+                        tpeer = target.getPeer();
+                    }
+                }
+            }
+            if (tpeer != null) {
+                tpeer.handleEvent(e);
+            }
+        }
+
+        if (SunToolkit.isTouchKeyboardAutoShowEnabled() &&
+            (toolkit instanceof SunToolkit) &&
+            ((e instanceof MouseEvent) || (e instanceof FocusEvent))) {
+            ((SunToolkit)toolkit).showOrHideTouchKeyboard(this, e);
+        }
+    } // dispatchEventImpl()
+
+    /*
+     * If newEventsOnly is false, method is called so that ScrollPane can
+     * override it and handle common-case mouse wheel scrolling.  NOP
+     * for Component.
+     */
+    void autoProcessMouseWheel(MouseWheelEvent e) {}
+
+    /*
+     * Dispatch given MouseWheelEvent to the first ancestor for which
+     * MouseWheelEvents are enabled.
+     *
+     * Returns whether or not event was dispatched to an ancestor
+     */
+    boolean dispatchMouseWheelToAncestor(MouseWheelEvent e) {
+        int newX, newY;
+        newX = e.getX() + getX(); // Coordinates take into account at least
+        newY = e.getY() + getY(); // the cursor's position relative to this
+                                  // Component (e.getX()), and this Component's
+                                  // position relative to its parent.
+        MouseWheelEvent newMWE;
+
+        if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
+            eventLog.finest("dispatchMouseWheelToAncestor");
+            eventLog.finest("orig event src is of " + e.getSource().getClass());
+        }
+
+        /* parent field for Window refers to the owning Window.
+         * MouseWheelEvents should NOT be propagated into owning Windows
+         */
+        synchronized (getTreeLock()) {
+            Container anc = getParent();
+            while (anc != null && !anc.eventEnabled(e)) {
+                // fix coordinates to be relative to new event source
+                newX += anc.getX();
+                newY += anc.getY();
+
+                if (!(anc instanceof Window)) {
+                    anc = anc.getParent();
+                }
+                else {
+                    break;
+                }
+            }
+
+            if (eventLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                eventLog.finest("new event src is " + anc.getClass());
+            }
+
+            if (anc != null && anc.eventEnabled(e)) {
+                // Change event to be from new source, with new x,y
+                // For now, just create a new event - yucky
+
+                newMWE = new MouseWheelEvent(anc, // new source
+                                             e.getID(),
+                                             e.getWhen(),
+                                             e.getModifiers(),
+                                             newX, // x relative to new source
+                                             newY, // y relative to new source
+                                             e.getXOnScreen(),
+                                             e.getYOnScreen(),
+                                             e.getClickCount(),
+                                             e.isPopupTrigger(),
+                                             e.getScrollType(),
+                                             e.getScrollAmount(),
+                                             e.getWheelRotation(),
+                                             e.getPreciseWheelRotation());
+                ((AWTEvent)e).copyPrivateDataInto(newMWE);
+                // When dispatching a wheel event to
+                // ancestor, there is no need trying to find descendant
+                // lightweights to dispatch event to.
+                // If we dispatch the event to toplevel ancestor,
+                // this could encolse the loop: 6480024.
+                anc.dispatchEventToSelf(newMWE);
+                if (newMWE.isConsumed()) {
+                    e.consume();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean checkWindowClosingException() {
+        if (windowClosingException != null) {
+            if (this instanceof Dialog) {
+                ((Dialog)this).interruptBlocking();
+            } else {
+                windowClosingException.fillInStackTrace();
+                windowClosingException.printStackTrace();
+                windowClosingException = null;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    boolean areInputMethodsEnabled() {
+        // in 1.2, we assume input method support is required for all
+        // components that handle key events, but components can turn off
+        // input methods by calling enableInputMethods(false).
+        return ((eventMask & AWTEvent.INPUT_METHODS_ENABLED_MASK) != 0) &&
+            ((eventMask & AWTEvent.KEY_EVENT_MASK) != 0 || keyListener != null);
+    }
+
+    // REMIND: remove when filtering is handled at lower level
+    boolean eventEnabled(AWTEvent e) {
+        return eventTypeEnabled(e.id);
+    }
+
+    boolean eventTypeEnabled(int type) {
+        switch(type) {
+          case ComponentEvent.COMPONENT_MOVED:
+          case ComponentEvent.COMPONENT_RESIZED:
+          case ComponentEvent.COMPONENT_SHOWN:
+          case ComponentEvent.COMPONENT_HIDDEN:
+              if ((eventMask & AWTEvent.COMPONENT_EVENT_MASK) != 0 ||
+                  componentListener != null) {
+                  return true;
+              }
+              break;
+          case FocusEvent.FOCUS_GAINED:
+          case FocusEvent.FOCUS_LOST:
+              if ((eventMask & AWTEvent.FOCUS_EVENT_MASK) != 0 ||
+                  focusListener != null) {
+                  return true;
+              }
+              break;
+          case KeyEvent.KEY_PRESSED:
+          case KeyEvent.KEY_RELEASED:
+          case KeyEvent.KEY_TYPED:
+              if ((eventMask & AWTEvent.KEY_EVENT_MASK) != 0 ||
+                  keyListener != null) {
+                  return true;
+              }
+              break;
+          case MouseEvent.MOUSE_PRESSED:
+          case MouseEvent.MOUSE_RELEASED:
+          case MouseEvent.MOUSE_ENTERED:
+          case MouseEvent.MOUSE_EXITED:
+          case MouseEvent.MOUSE_CLICKED:
+              if ((eventMask & AWTEvent.MOUSE_EVENT_MASK) != 0 ||
+                  mouseListener != null) {
+                  return true;
+              }
+              break;
+          case MouseEvent.MOUSE_MOVED:
+          case MouseEvent.MOUSE_DRAGGED:
+              if ((eventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0 ||
+                  mouseMotionListener != null) {
+                  return true;
+              }
+              break;
+          case MouseEvent.MOUSE_WHEEL:
+              if ((eventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0 ||
+                  mouseWheelListener != null) {
+                  return true;
+              }
+              break;
+          case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
+          case InputMethodEvent.CARET_POSITION_CHANGED:
+              if ((eventMask & AWTEvent.INPUT_METHOD_EVENT_MASK) != 0 ||
+                  inputMethodListener != null) {
+                  return true;
+              }
+              break;
+          case HierarchyEvent.HIERARCHY_CHANGED:
+              if ((eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0 ||
+                  hierarchyListener != null) {
+                  return true;
+              }
+              break;
+          case HierarchyEvent.ANCESTOR_MOVED:
+          case HierarchyEvent.ANCESTOR_RESIZED:
+              if ((eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) != 0 ||
+                  hierarchyBoundsListener != null) {
+                  return true;
+              }
+              break;
+          case ActionEvent.ACTION_PERFORMED:
+              if ((eventMask & AWTEvent.ACTION_EVENT_MASK) != 0) {
+                  return true;
+              }
+              break;
+          case TextEvent.TEXT_VALUE_CHANGED:
+              if ((eventMask & AWTEvent.TEXT_EVENT_MASK) != 0) {
+                  return true;
+              }
+              break;
+          case ItemEvent.ITEM_STATE_CHANGED:
+              if ((eventMask & AWTEvent.ITEM_EVENT_MASK) != 0) {
+                  return true;
+              }
+              break;
+          case AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED:
+              if ((eventMask & AWTEvent.ADJUSTMENT_EVENT_MASK) != 0) {
+                  return true;
+              }
+              break;
+          default:
+              break;
+        }
+        //
+        // Always pass on events defined by external programs.
+        //
+        if (type > AWTEvent.RESERVED_ID_MAX) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by dispatchEvent(AWTEvent).
+     */
+    @Deprecated
+    public boolean postEvent(Event e) {
+        ComponentPeer peer = this.peer;
+
+        if (handleEvent(e)) {
+            e.consume();
+            return true;
+        }
+
+        Component parent = this.parent;
+        int eventx = e.x;
+        int eventy = e.y;
+        if (parent != null) {
+            e.translate(x, y);
+            if (parent.postEvent(e)) {
+                e.consume();
+                return true;
+            }
+            // restore coords
+            e.x = eventx;
+            e.y = eventy;
+        }
+        return false;
+    }
+
+    // Event source interfaces
+
+    /**
+     * Adds the specified component listener to receive component events from
+     * this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the component listener
+     * @see      java.awt.event.ComponentEvent
+     * @see      java.awt.event.ComponentListener
+     * @see      #removeComponentListener
+     * @see      #getComponentListeners
+     * @since    JDK1.1
+     */
+    public synchronized void addComponentListener(ComponentListener l) {
+        if (l == null) {
+            return;
+        }
+        componentListener = AWTEventMulticaster.add(componentListener, l);
+        newEventsOnly = true;
+    }
+
+    /**
+     * Removes the specified component listener so that it no longer
+     * receives component events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     * @param    l   the component listener
+     * @see      java.awt.event.ComponentEvent
+     * @see      java.awt.event.ComponentListener
+     * @see      #addComponentListener
+     * @see      #getComponentListeners
+     * @since    JDK1.1
+     */
+    public synchronized void removeComponentListener(ComponentListener l) {
+        if (l == null) {
+            return;
+        }
+        componentListener = AWTEventMulticaster.remove(componentListener, l);
+    }
+
+    /**
+     * Returns an array of all the component listeners
+     * registered on this component.
+     *
+     * @return all <code>ComponentListener</code>s of this component
+     *         or an empty array if no component
+     *         listeners are currently registered
+     *
+     * @see #addComponentListener
+     * @see #removeComponentListener
+     * @since 1.4
+     */
+    public synchronized ComponentListener[] getComponentListeners() {
+        return getListeners(ComponentListener.class);
+    }
+
+    /**
+     * Adds the specified focus listener to receive focus events from
+     * this component when this component gains input focus.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the focus listener
+     * @see      java.awt.event.FocusEvent
+     * @see      java.awt.event.FocusListener
+     * @see      #removeFocusListener
+     * @see      #getFocusListeners
+     * @since    JDK1.1
+     */
+    public synchronized void addFocusListener(FocusListener l) {
+        if (l == null) {
+            return;
+        }
+        focusListener = AWTEventMulticaster.add(focusListener, l);
+        newEventsOnly = true;
+
+        // if this is a lightweight component, enable focus events
+        // in the native container.
+        if (peer instanceof LightweightPeer) {
+            parent.proxyEnableEvents(AWTEvent.FOCUS_EVENT_MASK);
+        }
+    }
+
+    /**
+     * Removes the specified focus listener so that it no longer
+     * receives focus events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the focus listener
+     * @see      java.awt.event.FocusEvent
+     * @see      java.awt.event.FocusListener
+     * @see      #addFocusListener
+     * @see      #getFocusListeners
+     * @since    JDK1.1
+     */
+    public synchronized void removeFocusListener(FocusListener l) {
+        if (l == null) {
+            return;
+        }
+        focusListener = AWTEventMulticaster.remove(focusListener, l);
+    }
+
+    /**
+     * Returns an array of all the focus listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>FocusListener</code>s
+     *         or an empty array if no component
+     *         listeners are currently registered
+     *
+     * @see #addFocusListener
+     * @see #removeFocusListener
+     * @since 1.4
+     */
+    public synchronized FocusListener[] getFocusListeners() {
+        return getListeners(FocusListener.class);
+    }
+
+    /**
+     * Adds the specified hierarchy listener to receive hierarchy changed
+     * events from this component when the hierarchy to which this container
+     * belongs changes.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the hierarchy listener
+     * @see      java.awt.event.HierarchyEvent
+     * @see      java.awt.event.HierarchyListener
+     * @see      #removeHierarchyListener
+     * @see      #getHierarchyListeners
+     * @since    1.3
+     */
+    public void addHierarchyListener(HierarchyListener l) {
+        if (l == null) {
+            return;
+        }
+        boolean notifyAncestors;
+        synchronized (this) {
+            notifyAncestors =
+                (hierarchyListener == null &&
+                 (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) == 0);
+            hierarchyListener = AWTEventMulticaster.add(hierarchyListener, l);
+            notifyAncestors = (notifyAncestors && hierarchyListener != null);
+            newEventsOnly = true;
+        }
+        if (notifyAncestors) {
+            synchronized (getTreeLock()) {
+                adjustListeningChildrenOnParent(AWTEvent.HIERARCHY_EVENT_MASK,
+                                                1);
+            }
+        }
+    }
+
+    /**
+     * Removes the specified hierarchy listener so that it no longer
+     * receives hierarchy changed events from this component. This method
+     * performs no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the hierarchy listener
+     * @see      java.awt.event.HierarchyEvent
+     * @see      java.awt.event.HierarchyListener
+     * @see      #addHierarchyListener
+     * @see      #getHierarchyListeners
+     * @since    1.3
+     */
+    public void removeHierarchyListener(HierarchyListener l) {
+        if (l == null) {
+            return;
+        }
+        boolean notifyAncestors;
+        synchronized (this) {
+            notifyAncestors =
+                (hierarchyListener != null &&
+                 (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) == 0);
+            hierarchyListener =
+                AWTEventMulticaster.remove(hierarchyListener, l);
+            notifyAncestors = (notifyAncestors && hierarchyListener == null);
+        }
+        if (notifyAncestors) {
+            synchronized (getTreeLock()) {
+                adjustListeningChildrenOnParent(AWTEvent.HIERARCHY_EVENT_MASK,
+                                                -1);
+            }
+        }
+    }
+
+    /**
+     * Returns an array of all the hierarchy listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>HierarchyListener</code>s
+     *         or an empty array if no hierarchy
+     *         listeners are currently registered
+     *
+     * @see      #addHierarchyListener
+     * @see      #removeHierarchyListener
+     * @since    1.4
+     */
+    public synchronized HierarchyListener[] getHierarchyListeners() {
+        return getListeners(HierarchyListener.class);
+    }
+
+    /**
+     * Adds the specified hierarchy bounds listener to receive hierarchy
+     * bounds events from this component when the hierarchy to which this
+     * container belongs changes.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the hierarchy bounds listener
+     * @see      java.awt.event.HierarchyEvent
+     * @see      java.awt.event.HierarchyBoundsListener
+     * @see      #removeHierarchyBoundsListener
+     * @see      #getHierarchyBoundsListeners
+     * @since    1.3
+     */
+    public void addHierarchyBoundsListener(HierarchyBoundsListener l) {
+        if (l == null) {
+            return;
+        }
+        boolean notifyAncestors;
+        synchronized (this) {
+            notifyAncestors =
+                (hierarchyBoundsListener == null &&
+                 (eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) == 0);
+            hierarchyBoundsListener =
+                AWTEventMulticaster.add(hierarchyBoundsListener, l);
+            notifyAncestors = (notifyAncestors &&
+                               hierarchyBoundsListener != null);
+            newEventsOnly = true;
+        }
+        if (notifyAncestors) {
+            synchronized (getTreeLock()) {
+                adjustListeningChildrenOnParent(
+                                                AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK, 1);
+            }
+        }
+    }
+
+    /**
+     * Removes the specified hierarchy bounds listener so that it no longer
+     * receives hierarchy bounds events from this component. This method
+     * performs no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the hierarchy bounds listener
+     * @see      java.awt.event.HierarchyEvent
+     * @see      java.awt.event.HierarchyBoundsListener
+     * @see      #addHierarchyBoundsListener
+     * @see      #getHierarchyBoundsListeners
+     * @since    1.3
+     */
+    public void removeHierarchyBoundsListener(HierarchyBoundsListener l) {
+        if (l == null) {
+            return;
+        }
+        boolean notifyAncestors;
+        synchronized (this) {
+            notifyAncestors =
+                (hierarchyBoundsListener != null &&
+                 (eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) == 0);
+            hierarchyBoundsListener =
+                AWTEventMulticaster.remove(hierarchyBoundsListener, l);
+            notifyAncestors = (notifyAncestors &&
+                               hierarchyBoundsListener == null);
+        }
+        if (notifyAncestors) {
+            synchronized (getTreeLock()) {
+                adjustListeningChildrenOnParent(
+                                                AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK, -1);
+            }
+        }
+    }
+
+    // Should only be called while holding the tree lock
+    int numListening(long mask) {
+        // One mask or the other, but not neither or both.
+        if (eventLog.isLoggable(PlatformLogger.Level.FINE)) {
+            if ((mask != AWTEvent.HIERARCHY_EVENT_MASK) &&
+                (mask != AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK))
+            {
+                eventLog.fine("Assertion failed");
+            }
+        }
+        if ((mask == AWTEvent.HIERARCHY_EVENT_MASK &&
+             (hierarchyListener != null ||
+              (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0)) ||
+            (mask == AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK &&
+             (hierarchyBoundsListener != null ||
+              (eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) != 0))) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    // Should only be called while holding tree lock
+    int countHierarchyMembers() {
+        return 1;
+    }
+    // Should only be called while holding the tree lock
+    int createHierarchyEvents(int id, Component changed,
+                              Container changedParent, long changeFlags,
+                              boolean enabledOnToolkit) {
+        switch (id) {
+          case HierarchyEvent.HIERARCHY_CHANGED:
+              if (hierarchyListener != null ||
+                  (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0 ||
+                  enabledOnToolkit) {
+                  HierarchyEvent e = new HierarchyEvent(this, id, changed,
+                                                        changedParent,
+                                                        changeFlags);
+                  dispatchEvent(e);
+                  return 1;
+              }
+              break;
+          case HierarchyEvent.ANCESTOR_MOVED:
+          case HierarchyEvent.ANCESTOR_RESIZED:
+              if (eventLog.isLoggable(PlatformLogger.Level.FINE)) {
+                  if (changeFlags != 0) {
+                      eventLog.fine("Assertion (changeFlags == 0) failed");
+                  }
+              }
+              if (hierarchyBoundsListener != null ||
+                  (eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) != 0 ||
+                  enabledOnToolkit) {
+                  HierarchyEvent e = new HierarchyEvent(this, id, changed,
+                                                        changedParent);
+                  dispatchEvent(e);
+                  return 1;
+              }
+              break;
+          default:
+              // assert false
+              if (eventLog.isLoggable(PlatformLogger.Level.FINE)) {
+                  eventLog.fine("This code must never be reached");
+              }
+              break;
+        }
+        return 0;
+    }
+
+    /**
+     * Returns an array of all the hierarchy bounds listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>HierarchyBoundsListener</code>s
+     *         or an empty array if no hierarchy bounds
+     *         listeners are currently registered
+     *
+     * @see      #addHierarchyBoundsListener
+     * @see      #removeHierarchyBoundsListener
+     * @since    1.4
+     */
+    public synchronized HierarchyBoundsListener[] getHierarchyBoundsListeners() {
+        return getListeners(HierarchyBoundsListener.class);
+    }
+
+    /*
+     * Should only be called while holding the tree lock.
+     * It's added only for overriding in java.awt.Window
+     * because parent in Window is owner.
+     */
+    void adjustListeningChildrenOnParent(long mask, int num) {
+        if (parent != null) {
+            parent.adjustListeningChildren(mask, num);
+        }
+    }
+
+    /**
+     * Adds the specified key listener to receive key events from
+     * this component.
+     * If l is null, no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the key listener.
+     * @see      java.awt.event.KeyEvent
+     * @see      java.awt.event.KeyListener
+     * @see      #removeKeyListener
+     * @see      #getKeyListeners
+     * @since    JDK1.1
+     */
+    public synchronized void addKeyListener(KeyListener l) {
+        if (l == null) {
+            return;
+        }
+        keyListener = AWTEventMulticaster.add(keyListener, l);
+        newEventsOnly = true;
+
+        // if this is a lightweight component, enable key events
+        // in the native container.
+        if (peer instanceof LightweightPeer) {
+            parent.proxyEnableEvents(AWTEvent.KEY_EVENT_MASK);
+        }
+    }
+
+    /**
+     * Removes the specified key listener so that it no longer
+     * receives key events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the key listener
+     * @see      java.awt.event.KeyEvent
+     * @see      java.awt.event.KeyListener
+     * @see      #addKeyListener
+     * @see      #getKeyListeners
+     * @since    JDK1.1
+     */
+    public synchronized void removeKeyListener(KeyListener l) {
+        if (l == null) {
+            return;
+        }
+        keyListener = AWTEventMulticaster.remove(keyListener, l);
+    }
+
+    /**
+     * Returns an array of all the key listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>KeyListener</code>s
+     *         or an empty array if no key
+     *         listeners are currently registered
+     *
+     * @see      #addKeyListener
+     * @see      #removeKeyListener
+     * @since    1.4
+     */
+    public synchronized KeyListener[] getKeyListeners() {
+        return getListeners(KeyListener.class);
+    }
+
+    /**
+     * Adds the specified mouse listener to receive mouse events from
+     * this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the mouse listener
+     * @see      java.awt.event.MouseEvent
+     * @see      java.awt.event.MouseListener
+     * @see      #removeMouseListener
+     * @see      #getMouseListeners
+     * @since    JDK1.1
+     */
+    public synchronized void addMouseListener(MouseListener l) {
+        if (l == null) {
+            return;
+        }
+        mouseListener = AWTEventMulticaster.add(mouseListener,l);
+        newEventsOnly = true;
+
+        // if this is a lightweight component, enable mouse events
+        // in the native container.
+        if (peer instanceof LightweightPeer) {
+            parent.proxyEnableEvents(AWTEvent.MOUSE_EVENT_MASK);
+        }
+    }
+
+    /**
+     * Removes the specified mouse listener so that it no longer
+     * receives mouse events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the mouse listener
+     * @see      java.awt.event.MouseEvent
+     * @see      java.awt.event.MouseListener
+     * @see      #addMouseListener
+     * @see      #getMouseListeners
+     * @since    JDK1.1
+     */
+    public synchronized void removeMouseListener(MouseListener l) {
+        if (l == null) {
+            return;
+        }
+        mouseListener = AWTEventMulticaster.remove(mouseListener, l);
+    }
+
+    /**
+     * Returns an array of all the mouse listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>MouseListener</code>s
+     *         or an empty array if no mouse
+     *         listeners are currently registered
+     *
+     * @see      #addMouseListener
+     * @see      #removeMouseListener
+     * @since    1.4
+     */
+    public synchronized MouseListener[] getMouseListeners() {
+        return getListeners(MouseListener.class);
+    }
+
+    /**
+     * Adds the specified mouse motion listener to receive mouse motion
+     * events from this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the mouse motion listener
+     * @see      java.awt.event.MouseEvent
+     * @see      java.awt.event.MouseMotionListener
+     * @see      #removeMouseMotionListener
+     * @see      #getMouseMotionListeners
+     * @since    JDK1.1
+     */
+    public synchronized void addMouseMotionListener(MouseMotionListener l) {
+        if (l == null) {
+            return;
+        }
+        mouseMotionListener = AWTEventMulticaster.add(mouseMotionListener,l);
+        newEventsOnly = true;
+
+        // if this is a lightweight component, enable mouse events
+        // in the native container.
+        if (peer instanceof LightweightPeer) {
+            parent.proxyEnableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
+        }
+    }
+
+    /**
+     * Removes the specified mouse motion listener so that it no longer
+     * receives mouse motion events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the mouse motion listener
+     * @see      java.awt.event.MouseEvent
+     * @see      java.awt.event.MouseMotionListener
+     * @see      #addMouseMotionListener
+     * @see      #getMouseMotionListeners
+     * @since    JDK1.1
+     */
+    public synchronized void removeMouseMotionListener(MouseMotionListener l) {
+        if (l == null) {
+            return;
+        }
+        mouseMotionListener = AWTEventMulticaster.remove(mouseMotionListener, l);
+    }
+
+    /**
+     * Returns an array of all the mouse motion listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>MouseMotionListener</code>s
+     *         or an empty array if no mouse motion
+     *         listeners are currently registered
+     *
+     * @see      #addMouseMotionListener
+     * @see      #removeMouseMotionListener
+     * @since    1.4
+     */
+    public synchronized MouseMotionListener[] getMouseMotionListeners() {
+        return getListeners(MouseMotionListener.class);
+    }
+
+    /**
+     * Adds the specified mouse wheel listener to receive mouse wheel events
+     * from this component.  Containers also receive mouse wheel events from
+     * sub-components.
+     * <p>
+     * For information on how mouse wheel events are dispatched, see
+     * the class description for {@link MouseWheelEvent}.
+     * <p>
+     * If l is <code>null</code>, no exception is thrown and no
+     * action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the mouse wheel listener
+     * @see      java.awt.event.MouseWheelEvent
+     * @see      java.awt.event.MouseWheelListener
+     * @see      #removeMouseWheelListener
+     * @see      #getMouseWheelListeners
+     * @since    1.4
+     */
+    public synchronized void addMouseWheelListener(MouseWheelListener l) {
+        if (l == null) {
+            return;
+        }
+        mouseWheelListener = AWTEventMulticaster.add(mouseWheelListener,l);
+        newEventsOnly = true;
+
+        // if this is a lightweight component, enable mouse events
+        // in the native container.
+        if (peer instanceof LightweightPeer) {
+            parent.proxyEnableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+        }
+    }
+
+    /**
+     * Removes the specified mouse wheel listener so that it no longer
+     * receives mouse wheel events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If l is null, no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the mouse wheel listener.
+     * @see      java.awt.event.MouseWheelEvent
+     * @see      java.awt.event.MouseWheelListener
+     * @see      #addMouseWheelListener
+     * @see      #getMouseWheelListeners
+     * @since    1.4
+     */
+    public synchronized void removeMouseWheelListener(MouseWheelListener l) {
+        if (l == null) {
+            return;
+        }
+        mouseWheelListener = AWTEventMulticaster.remove(mouseWheelListener, l);
+    }
+
+    /**
+     * Returns an array of all the mouse wheel listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>MouseWheelListener</code>s
+     *         or an empty array if no mouse wheel
+     *         listeners are currently registered
+     *
+     * @see      #addMouseWheelListener
+     * @see      #removeMouseWheelListener
+     * @since    1.4
+     */
+    public synchronized MouseWheelListener[] getMouseWheelListeners() {
+        return getListeners(MouseWheelListener.class);
+    }
+
+    /**
+     * Adds the specified input method listener to receive
+     * input method events from this component. A component will
+     * only receive input method events from input methods
+     * if it also overrides <code>getInputMethodRequests</code> to return an
+     * <code>InputMethodRequests</code> instance.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="{@docRoot}/java/awt/doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the input method listener
+     * @see      java.awt.event.InputMethodEvent
+     * @see      java.awt.event.InputMethodListener
+     * @see      #removeInputMethodListener
+     * @see      #getInputMethodListeners
+     * @see      #getInputMethodRequests
+     * @since    1.2
+     */
+    public synchronized void addInputMethodListener(InputMethodListener l) {
+        if (l == null) {
+            return;
+        }
+        inputMethodListener = AWTEventMulticaster.add(inputMethodListener, l);
+        newEventsOnly = true;
+    }
+
+    /**
+     * Removes the specified input method listener so that it no longer
+     * receives input method events from this component. This method performs
+     * no function, nor does it throw an exception, if the listener
+     * specified by the argument was not previously added to this component.
+     * If listener <code>l</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
+     * >AWT Threading Issues</a> for details on AWT's threading model.
+     *
+     * @param    l   the input method listener
+     * @see      java.awt.event.InputMethodEvent
+     * @see      java.awt.event.InputMethodListener
+     * @see      #addInputMethodListener
+     * @see      #getInputMethodListeners
+     * @since    1.2
+     */
+    public synchronized void removeInputMethodListener(InputMethodListener l) {
+        if (l == null) {
+            return;
+        }
+        inputMethodListener = AWTEventMulticaster.remove(inputMethodListener, l);
+    }
+
+    /**
+     * Returns an array of all the input method listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>InputMethodListener</code>s
+     *         or an empty array if no input method
+     *         listeners are currently registered
+     *
+     * @see      #addInputMethodListener
+     * @see      #removeInputMethodListener
+     * @since    1.4
+     */
+    public synchronized InputMethodListener[] getInputMethodListeners() {
+        return getListeners(InputMethodListener.class);
+    }
+
+    /**
+     * Returns an array of all the objects currently registered
+     * as <code><em>Foo</em>Listener</code>s
+     * upon this <code>Component</code>.
+     * <code><em>Foo</em>Listener</code>s are registered using the
+     * <code>add<em>Foo</em>Listener</code> method.
+     *
+     * <p>
+     * You can specify the <code>listenerType</code> argument
+     * with a class literal, such as
+     * <code><em>Foo</em>Listener.class</code>.
+     * For example, you can query a
+     * <code>Component</code> <code>c</code>
+     * for its mouse listeners with the following code:
+     *
+     * <pre>MouseListener[] mls = (MouseListener[])(c.getListeners(MouseListener.class));</pre>
+     *
+     * If no such listeners exist, this method returns an empty array.
+     *
+     * @param listenerType the type of listeners requested; this parameter
+     *          should specify an interface that descends from
+     *          <code>java.util.EventListener</code>
+     * @return an array of all objects registered as
+     *          <code><em>Foo</em>Listener</code>s on this component,
+     *          or an empty array if no such listeners have been added
+     * @exception ClassCastException if <code>listenerType</code>
+     *          doesn't specify a class or interface that implements
+     *          <code>java.util.EventListener</code>
+     * @throws NullPointerException if {@code listenerType} is {@code null}
+     * @see #getComponentListeners
+     * @see #getFocusListeners
+     * @see #getHierarchyListeners
+     * @see #getHierarchyBoundsListeners
+     * @see #getKeyListeners
+     * @see #getMouseListeners
+     * @see #getMouseMotionListeners
+     * @see #getMouseWheelListeners
+     * @see #getInputMethodListeners
+     * @see #getPropertyChangeListeners
+     *
+     * @since 1.3
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+        EventListener l = null;
+        if  (listenerType == ComponentListener.class) {
+            l = componentListener;
+        } else if (listenerType == FocusListener.class) {
+            l = focusListener;
+        } else if (listenerType == HierarchyListener.class) {
+            l = hierarchyListener;
+        } else if (listenerType == HierarchyBoundsListener.class) {
+            l = hierarchyBoundsListener;
+        } else if (listenerType == KeyListener.class) {
+            l = keyListener;
+        } else if (listenerType == MouseListener.class) {
+            l = mouseListener;
+        } else if (listenerType == MouseMotionListener.class) {
+            l = mouseMotionListener;
+        } else if (listenerType == MouseWheelListener.class) {
+            l = mouseWheelListener;
+        } else if (listenerType == InputMethodListener.class) {
+            l = inputMethodListener;
+        } else if (listenerType == PropertyChangeListener.class) {
+            return (T[])getPropertyChangeListeners();
+        }
+        return AWTEventMulticaster.getListeners(l, listenerType);
+    }
+
+    /**
+     * Gets the input method request handler which supports
+     * requests from input methods for this component. A component
+     * that supports on-the-spot text input must override this
+     * method to return an <code>InputMethodRequests</code> instance.
+     * At the same time, it also has to handle input method events.
+     *
+     * @return the input method request handler for this component,
+     *          <code>null</code> by default
+     * @see #addInputMethodListener
+     * @since 1.2
+     */
+    public InputMethodRequests getInputMethodRequests() {
+        return null;
+    }
+
+    /**
+     * Gets the input context used by this component for handling
+     * the communication with input methods when text is entered
+     * in this component. By default, the input context used for
+     * the parent component is returned. Components may
+     * override this to return a private input context.
+     *
+     * @return the input context used by this component;
+     *          <code>null</code> if no context can be determined
+     * @since 1.2
+     */
+    public InputContext getInputContext() {
+        Container parent = this.parent;
+        if (parent == null) {
+            return null;
+        } else {
+            return parent.getInputContext();
+        }
+    }
+
+    /**
+     * Enables the events defined by the specified event mask parameter
+     * to be delivered to this component.
+     * <p>
+     * Event types are automatically enabled when a listener for
+     * that event type is added to the component.
+     * <p>
+     * This method only needs to be invoked by subclasses of
+     * <code>Component</code> which desire to have the specified event
+     * types delivered to <code>processEvent</code> regardless of whether
+     * or not a listener is registered.
+     * @param      eventsToEnable   the event mask defining the event types
+     * @see        #processEvent
+     * @see        #disableEvents
+     * @see        AWTEvent
+     * @since      JDK1.1
+     */
+    protected final void enableEvents(long eventsToEnable) {
+        long notifyAncestors = 0;
+        synchronized (this) {
+            if ((eventsToEnable & AWTEvent.HIERARCHY_EVENT_MASK) != 0 &&
+                hierarchyListener == null &&
+                (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) == 0) {
+                notifyAncestors |= AWTEvent.HIERARCHY_EVENT_MASK;
+            }
+            if ((eventsToEnable & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) != 0 &&
+                hierarchyBoundsListener == null &&
+                (eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) == 0) {
+                notifyAncestors |= AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK;
+            }
+            eventMask |= eventsToEnable;
+            newEventsOnly = true;
+        }
+
+        // if this is a lightweight component, enable mouse events
+        // in the native container.
+        if (peer instanceof LightweightPeer) {
+            parent.proxyEnableEvents(eventMask);
+        }
+        if (notifyAncestors != 0) {
+            synchronized (getTreeLock()) {
+                adjustListeningChildrenOnParent(notifyAncestors, 1);
+            }
+        }
+    }
+
+    /**
+     * Disables the events defined by the specified event mask parameter
+     * from being delivered to this component.
+     * @param      eventsToDisable   the event mask defining the event types
+     * @see        #enableEvents
+     * @since      JDK1.1
+     */
+    protected final void disableEvents(long eventsToDisable) {
+        long notifyAncestors = 0;
+        synchronized (this) {
+            if ((eventsToDisable & AWTEvent.HIERARCHY_EVENT_MASK) != 0 &&
+                hierarchyListener == null &&
+                (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0) {
+                notifyAncestors |= AWTEvent.HIERARCHY_EVENT_MASK;
+            }
+            if ((eventsToDisable & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK)!=0 &&
+                hierarchyBoundsListener == null &&
+                (eventMask & AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK) != 0) {
+                notifyAncestors |= AWTEvent.HIERARCHY_BOUNDS_EVENT_MASK;
+            }
+            eventMask &= ~eventsToDisable;
+        }
+        if (notifyAncestors != 0) {
+            synchronized (getTreeLock()) {
+                adjustListeningChildrenOnParent(notifyAncestors, -1);
+            }
+        }
+    }
+
+    transient sun.awt.EventQueueItem[] eventCache;
+
+    /**
+     * @see #isCoalescingEnabled
+     * @see #checkCoalescing
+     */
+    transient private boolean coalescingEnabled = checkCoalescing();
+
+    /**
+     * Weak map of known coalesceEvent overriders.
+     * Value indicates whether overriden.
+     * Bootstrap classes are not included.
+     */
+    private static final Map<Class<?>, Boolean> coalesceMap =
+        new java.util.WeakHashMap<Class<?>, Boolean>();
+
+    /**
+     * Indicates whether this class overrides coalesceEvents.
+     * It is assumed that all classes that are loaded from the bootstrap
+     *   do not.
+     * The boostrap class loader is assumed to be represented by null.
+     * We do not check that the method really overrides
+     *   (it might be static, private or package private).
+     */
+     private boolean checkCoalescing() {
+         if (getClass().getClassLoader()==null) {
+             return false;
+         }
+         final Class<? extends Component> clazz = getClass();
+         synchronized (coalesceMap) {
+             // Check cache.
+             Boolean value = coalesceMap.get(clazz);
+             if (value != null) {
+                 return value;
+             }
+
+             // Need to check non-bootstraps.
+             Boolean enabled = java.security.AccessController.doPrivileged(
+                 new java.security.PrivilegedAction<Boolean>() {
+                     public Boolean run() {
+                         return isCoalesceEventsOverriden(clazz);
+                     }
+                 }
+                 );
+             coalesceMap.put(clazz, enabled);
+             return enabled;
+         }
+     }
+
+    /**
+     * Parameter types of coalesceEvents(AWTEvent,AWTEVent).
+     */
+    private static final Class[] coalesceEventsParams = {
+        AWTEvent.class, AWTEvent.class
+    };
+
+    /**
+     * Indicates whether a class or its superclasses override coalesceEvents.
+     * Must be called with lock on coalesceMap and privileged.
+     * @see checkCoalescing
+     */
+    private static boolean isCoalesceEventsOverriden(Class<?> clazz) {
+        assert Thread.holdsLock(coalesceMap);
+
+        // First check superclass - we may not need to bother ourselves.
+        Class<?> superclass = clazz.getSuperclass();
+        if (superclass == null) {
+            // Only occurs on implementations that
+            //   do not use null to represent the bootsrap class loader.
+            return false;
+        }
+        if (superclass.getClassLoader() != null) {
+            Boolean value = coalesceMap.get(superclass);
+            if (value == null) {
+                // Not done already - recurse.
+                if (isCoalesceEventsOverriden(superclass)) {
+                    coalesceMap.put(superclass, true);
+                    return true;
+                }
+            } else if (value) {
+                return true;
+            }
+        }
+
+        try {
+            // Throws if not overriden.
+            clazz.getDeclaredMethod(
+                "coalesceEvents", coalesceEventsParams
+                );
+            return true;
+        } catch (NoSuchMethodException e) {
+            // Not present in this class.
+            return false;
+        }
+    }
+
+    /**
+     * Indicates whether coalesceEvents may do something.
+     */
+    final boolean isCoalescingEnabled() {
+        return coalescingEnabled;
+     }
+
+
+    /**
+     * Potentially coalesce an event being posted with an existing
+     * event.  This method is called by <code>EventQueue.postEvent</code>
+     * if an event with the same ID as the event to be posted is found in
+     * the queue (both events must have this component as their source).
+     * This method either returns a coalesced event which replaces
+     * the existing event (and the new event is then discarded), or
+     * <code>null</code> to indicate that no combining should be done
+     * (add the second event to the end of the queue).  Either event
+     * parameter may be modified and returned, as the other one is discarded
+     * unless <code>null</code> is returned.
+     * <p>
+     * This implementation of <code>coalesceEvents</code> coalesces
+     * two event types: mouse move (and drag) events,
+     * and paint (and update) events.
+     * For mouse move events the last event is always returned, causing
+     * intermediate moves to be discarded.  For paint events, the new
+     * event is coalesced into a complex <code>RepaintArea</code> in the peer.
+     * The new <code>AWTEvent</code> is always returned.
+     *
+     * @param  existingEvent  the event already on the <code>EventQueue</code>
+     * @param  newEvent       the event being posted to the
+     *          <code>EventQueue</code>
+     * @return a coalesced event, or <code>null</code> indicating that no
+     *          coalescing was done
+     */
+    protected AWTEvent coalesceEvents(AWTEvent existingEvent,
+                                      AWTEvent newEvent) {
+        return null;
+    }
+
+    /**
+     * Processes events occurring on this component. By default this
+     * method calls the appropriate
+     * <code>process&lt;event&nbsp;type&gt;Event</code>
+     * method for the given class of event.
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param     e the event
+     * @see       #processComponentEvent
+     * @see       #processFocusEvent
+     * @see       #processKeyEvent
+     * @see       #processMouseEvent
+     * @see       #processMouseMotionEvent
+     * @see       #processInputMethodEvent
+     * @see       #processHierarchyEvent
+     * @see       #processMouseWheelEvent
+     * @since     JDK1.1
+     */
+    protected void processEvent(AWTEvent e) {
+        if (e instanceof FocusEvent) {
+            processFocusEvent((FocusEvent)e);
+
+        } else if (e instanceof MouseEvent) {
+            switch(e.getID()) {
+              case MouseEvent.MOUSE_PRESSED:
+              case MouseEvent.MOUSE_RELEASED:
+              case MouseEvent.MOUSE_CLICKED:
+              case MouseEvent.MOUSE_ENTERED:
+              case MouseEvent.MOUSE_EXITED:
+                  processMouseEvent((MouseEvent)e);
+                  break;
+              case MouseEvent.MOUSE_MOVED:
+              case MouseEvent.MOUSE_DRAGGED:
+                  processMouseMotionEvent((MouseEvent)e);
+                  break;
+              case MouseEvent.MOUSE_WHEEL:
+                  processMouseWheelEvent((MouseWheelEvent)e);
+                  break;
+            }
+
+        } else if (e instanceof KeyEvent) {
+            processKeyEvent((KeyEvent)e);
+
+        } else if (e instanceof ComponentEvent) {
+            processComponentEvent((ComponentEvent)e);
+        } else if (e instanceof InputMethodEvent) {
+            processInputMethodEvent((InputMethodEvent)e);
+        } else if (e instanceof HierarchyEvent) {
+            switch (e.getID()) {
+              case HierarchyEvent.HIERARCHY_CHANGED:
+                  processHierarchyEvent((HierarchyEvent)e);
+                  break;
+              case HierarchyEvent.ANCESTOR_MOVED:
+              case HierarchyEvent.ANCESTOR_RESIZED:
+                  processHierarchyBoundsEvent((HierarchyEvent)e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes component events occurring on this component by
+     * dispatching them to any registered
+     * <code>ComponentListener</code> objects.
+     * <p>
+     * This method is not called unless component events are
+     * enabled for this component. Component events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>A <code>ComponentListener</code> object is registered
+     * via <code>addComponentListener</code>.
+     * <li>Component events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the component event
+     * @see         java.awt.event.ComponentEvent
+     * @see         java.awt.event.ComponentListener
+     * @see         #addComponentListener
+     * @see         #enableEvents
+     * @since       JDK1.1
+     */
+    protected void processComponentEvent(ComponentEvent e) {
+        ComponentListener listener = componentListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch(id) {
+              case ComponentEvent.COMPONENT_RESIZED:
+                  listener.componentResized(e);
+                  break;
+              case ComponentEvent.COMPONENT_MOVED:
+                  listener.componentMoved(e);
+                  break;
+              case ComponentEvent.COMPONENT_SHOWN:
+                  listener.componentShown(e);
+                  break;
+              case ComponentEvent.COMPONENT_HIDDEN:
+                  listener.componentHidden(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes focus events occurring on this component by
+     * dispatching them to any registered
+     * <code>FocusListener</code> objects.
+     * <p>
+     * This method is not called unless focus events are
+     * enabled for this component. Focus events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>A <code>FocusListener</code> object is registered
+     * via <code>addFocusListener</code>.
+     * <li>Focus events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>
+     * If focus events are enabled for a <code>Component</code>,
+     * the current <code>KeyboardFocusManager</code> determines
+     * whether or not a focus event should be dispatched to
+     * registered <code>FocusListener</code> objects.  If the
+     * events are to be dispatched, the <code>KeyboardFocusManager</code>
+     * calls the <code>Component</code>'s <code>dispatchEvent</code>
+     * method, which results in a call to the <code>Component</code>'s
+     * <code>processFocusEvent</code> method.
+     * <p>
+     * If focus events are enabled for a <code>Component</code>, calling
+     * the <code>Component</code>'s <code>dispatchEvent</code> method
+     * with a <code>FocusEvent</code> as the argument will result in a
+     * call to the <code>Component</code>'s <code>processFocusEvent</code>
+     * method regardless of the current <code>KeyboardFocusManager</code>.
+     *
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the focus event
+     * @see         java.awt.event.FocusEvent
+     * @see         java.awt.event.FocusListener
+     * @see         java.awt.KeyboardFocusManager
+     * @see         #addFocusListener
+     * @see         #enableEvents
+     * @see         #dispatchEvent
+     * @since       JDK1.1
+     */
+    protected void processFocusEvent(FocusEvent e) {
+        FocusListener listener = focusListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch(id) {
+              case FocusEvent.FOCUS_GAINED:
+                  listener.focusGained(e);
+                  break;
+              case FocusEvent.FOCUS_LOST:
+                  listener.focusLost(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes key events occurring on this component by
+     * dispatching them to any registered
+     * <code>KeyListener</code> objects.
+     * <p>
+     * This method is not called unless key events are
+     * enabled for this component. Key events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>A <code>KeyListener</code> object is registered
+     * via <code>addKeyListener</code>.
+     * <li>Key events are enabled via <code>enableEvents</code>.
+     * </ul>
+     *
+     * <p>
+     * If key events are enabled for a <code>Component</code>,
+     * the current <code>KeyboardFocusManager</code> determines
+     * whether or not a key event should be dispatched to
+     * registered <code>KeyListener</code> objects.  The
+     * <code>DefaultKeyboardFocusManager</code> will not dispatch
+     * key events to a <code>Component</code> that is not the focus
+     * owner or is not showing.
+     * <p>
+     * As of J2SE 1.4, <code>KeyEvent</code>s are redirected to
+     * the focus owner. Please see the
+     * <a href="doc-files/FocusSpec.html">Focus Specification</a>
+     * for further information.
+     * <p>
+     * Calling a <code>Component</code>'s <code>dispatchEvent</code>
+     * method with a <code>KeyEvent</code> as the argument will
+     * result in a call to the <code>Component</code>'s
+     * <code>processKeyEvent</code> method regardless of the
+     * current <code>KeyboardFocusManager</code> as long as the
+     * component is showing, focused, and enabled, and key events
+     * are enabled on it.
+     * <p>If the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the key event
+     * @see         java.awt.event.KeyEvent
+     * @see         java.awt.event.KeyListener
+     * @see         java.awt.KeyboardFocusManager
+     * @see         java.awt.DefaultKeyboardFocusManager
+     * @see         #processEvent
+     * @see         #dispatchEvent
+     * @see         #addKeyListener
+     * @see         #enableEvents
+     * @see         #isShowing
+     * @since       JDK1.1
+     */
+    protected void processKeyEvent(KeyEvent e) {
+        KeyListener listener = keyListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch(id) {
+              case KeyEvent.KEY_TYPED:
+                  listener.keyTyped(e);
+                  break;
+              case KeyEvent.KEY_PRESSED:
+                  listener.keyPressed(e);
+                  break;
+              case KeyEvent.KEY_RELEASED:
+                  listener.keyReleased(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes mouse events occurring on this component by
+     * dispatching them to any registered
+     * <code>MouseListener</code> objects.
+     * <p>
+     * This method is not called unless mouse events are
+     * enabled for this component. Mouse events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>A <code>MouseListener</code> object is registered
+     * via <code>addMouseListener</code>.
+     * <li>Mouse events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the mouse event
+     * @see         java.awt.event.MouseEvent
+     * @see         java.awt.event.MouseListener
+     * @see         #addMouseListener
+     * @see         #enableEvents
+     * @since       JDK1.1
+     */
+    protected void processMouseEvent(MouseEvent e) {
+        MouseListener listener = mouseListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch(id) {
+              case MouseEvent.MOUSE_PRESSED:
+                  listener.mousePressed(e);
+                  break;
+              case MouseEvent.MOUSE_RELEASED:
+                  listener.mouseReleased(e);
+                  break;
+              case MouseEvent.MOUSE_CLICKED:
+                  listener.mouseClicked(e);
+                  break;
+              case MouseEvent.MOUSE_EXITED:
+                  listener.mouseExited(e);
+                  break;
+              case MouseEvent.MOUSE_ENTERED:
+                  listener.mouseEntered(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes mouse motion events occurring on this component by
+     * dispatching them to any registered
+     * <code>MouseMotionListener</code> objects.
+     * <p>
+     * This method is not called unless mouse motion events are
+     * enabled for this component. Mouse motion events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>A <code>MouseMotionListener</code> object is registered
+     * via <code>addMouseMotionListener</code>.
+     * <li>Mouse motion events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the mouse motion event
+     * @see         java.awt.event.MouseEvent
+     * @see         java.awt.event.MouseMotionListener
+     * @see         #addMouseMotionListener
+     * @see         #enableEvents
+     * @since       JDK1.1
+     */
+    protected void processMouseMotionEvent(MouseEvent e) {
+        MouseMotionListener listener = mouseMotionListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch(id) {
+              case MouseEvent.MOUSE_MOVED:
+                  listener.mouseMoved(e);
+                  break;
+              case MouseEvent.MOUSE_DRAGGED:
+                  listener.mouseDragged(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes mouse wheel events occurring on this component by
+     * dispatching them to any registered
+     * <code>MouseWheelListener</code> objects.
+     * <p>
+     * This method is not called unless mouse wheel events are
+     * enabled for this component. Mouse wheel events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>A <code>MouseWheelListener</code> object is registered
+     * via <code>addMouseWheelListener</code>.
+     * <li>Mouse wheel events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>
+     * For information on how mouse wheel events are dispatched, see
+     * the class description for {@link MouseWheelEvent}.
+     * <p>
+     * Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the mouse wheel event
+     * @see         java.awt.event.MouseWheelEvent
+     * @see         java.awt.event.MouseWheelListener
+     * @see         #addMouseWheelListener
+     * @see         #enableEvents
+     * @since       1.4
+     */
+    protected void processMouseWheelEvent(MouseWheelEvent e) {
+        MouseWheelListener listener = mouseWheelListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch(id) {
+              case MouseEvent.MOUSE_WHEEL:
+                  listener.mouseWheelMoved(e);
+                  break;
+            }
+        }
+    }
+
+    boolean postsOldMouseEvents() {
+        return false;
+    }
+
+    /**
+     * Processes input method events occurring on this component by
+     * dispatching them to any registered
+     * <code>InputMethodListener</code> objects.
+     * <p>
+     * This method is not called unless input method events
+     * are enabled for this component. Input method events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>An <code>InputMethodListener</code> object is registered
+     * via <code>addInputMethodListener</code>.
+     * <li>Input method events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the input method event
+     * @see         java.awt.event.InputMethodEvent
+     * @see         java.awt.event.InputMethodListener
+     * @see         #addInputMethodListener
+     * @see         #enableEvents
+     * @since       1.2
+     */
+    protected void processInputMethodEvent(InputMethodEvent e) {
+        InputMethodListener listener = inputMethodListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch (id) {
+              case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
+                  listener.inputMethodTextChanged(e);
+                  break;
+              case InputMethodEvent.CARET_POSITION_CHANGED:
+                  listener.caretPositionChanged(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes hierarchy events occurring on this component by
+     * dispatching them to any registered
+     * <code>HierarchyListener</code> objects.
+     * <p>
+     * This method is not called unless hierarchy events
+     * are enabled for this component. Hierarchy events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>An <code>HierarchyListener</code> object is registered
+     * via <code>addHierarchyListener</code>.
+     * <li>Hierarchy events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the hierarchy event
+     * @see         java.awt.event.HierarchyEvent
+     * @see         java.awt.event.HierarchyListener
+     * @see         #addHierarchyListener
+     * @see         #enableEvents
+     * @since       1.3
+     */
+    protected void processHierarchyEvent(HierarchyEvent e) {
+        HierarchyListener listener = hierarchyListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch (id) {
+              case HierarchyEvent.HIERARCHY_CHANGED:
+                  listener.hierarchyChanged(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * Processes hierarchy bounds events occurring on this component by
+     * dispatching them to any registered
+     * <code>HierarchyBoundsListener</code> objects.
+     * <p>
+     * This method is not called unless hierarchy bounds events
+     * are enabled for this component. Hierarchy bounds events are enabled
+     * when one of the following occurs:
+     * <ul>
+     * <li>An <code>HierarchyBoundsListener</code> object is registered
+     * via <code>addHierarchyBoundsListener</code>.
+     * <li>Hierarchy bounds events are enabled via <code>enableEvents</code>.
+     * </ul>
+     * <p>Note that if the event parameter is <code>null</code>
+     * the behavior is unspecified and may result in an
+     * exception.
+     *
+     * @param       e the hierarchy event
+     * @see         java.awt.event.HierarchyEvent
+     * @see         java.awt.event.HierarchyBoundsListener
+     * @see         #addHierarchyBoundsListener
+     * @see         #enableEvents
+     * @since       1.3
+     */
+    protected void processHierarchyBoundsEvent(HierarchyEvent e) {
+        HierarchyBoundsListener listener = hierarchyBoundsListener;
+        if (listener != null) {
+            int id = e.getID();
+            switch (id) {
+              case HierarchyEvent.ANCESTOR_MOVED:
+                  listener.ancestorMoved(e);
+                  break;
+              case HierarchyEvent.ANCESTOR_RESIZED:
+                  listener.ancestorResized(e);
+                  break;
+            }
+        }
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1
+     * replaced by processEvent(AWTEvent).
+     */
+    @Deprecated
+    public boolean handleEvent(Event evt) {
+        switch (evt.id) {
+          case Event.MOUSE_ENTER:
+              return mouseEnter(evt, evt.x, evt.y);
+
+          case Event.MOUSE_EXIT:
+              return mouseExit(evt, evt.x, evt.y);
+
+          case Event.MOUSE_MOVE:
+              return mouseMove(evt, evt.x, evt.y);
+
+          case Event.MOUSE_DOWN:
+              return mouseDown(evt, evt.x, evt.y);
+
+          case Event.MOUSE_DRAG:
+              return mouseDrag(evt, evt.x, evt.y);
+
+          case Event.MOUSE_UP:
+              return mouseUp(evt, evt.x, evt.y);
+
+          case Event.KEY_PRESS:
+          case Event.KEY_ACTION:
+              return keyDown(evt, evt.key);
+
+          case Event.KEY_RELEASE:
+          case Event.KEY_ACTION_RELEASE:
+              return keyUp(evt, evt.key);
+
+          case Event.ACTION_EVENT:
+              return action(evt, evt.arg);
+          case Event.GOT_FOCUS:
+              return gotFocus(evt, evt.arg);
+          case Event.LOST_FOCUS:
+              return lostFocus(evt, evt.arg);
+        }
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processMouseEvent(MouseEvent).
+     */
+    @Deprecated
+    public boolean mouseDown(Event evt, int x, int y) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processMouseMotionEvent(MouseEvent).
+     */
+    @Deprecated
+    public boolean mouseDrag(Event evt, int x, int y) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processMouseEvent(MouseEvent).
+     */
+    @Deprecated
+    public boolean mouseUp(Event evt, int x, int y) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processMouseMotionEvent(MouseEvent).
+     */
+    @Deprecated
+    public boolean mouseMove(Event evt, int x, int y) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processMouseEvent(MouseEvent).
+     */
+    @Deprecated
+    public boolean mouseEnter(Event evt, int x, int y) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processMouseEvent(MouseEvent).
+     */
+    @Deprecated
+    public boolean mouseExit(Event evt, int x, int y) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processKeyEvent(KeyEvent).
+     */
+    @Deprecated
+    public boolean keyDown(Event evt, int key) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processKeyEvent(KeyEvent).
+     */
+    @Deprecated
+    public boolean keyUp(Event evt, int key) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * should register this component as ActionListener on component
+     * which fires action events.
+     */
+    @Deprecated
+    public boolean action(Event evt, Object what) {
+        return false;
+    }
+
+    /**
+     * Makes this <code>Component</code> displayable by connecting it to a
+     * native screen resource.
+     * This method is called internally by the toolkit and should
+     * not be called directly by programs.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     * @see       #isDisplayable
+     * @see       #removeNotify
+     * @see #invalidate
+     * @since JDK1.0
+     */
+    public void addNotify() {
+        synchronized (getTreeLock()) {
+            ComponentPeer peer = this.peer;
+            if (peer == null || peer instanceof LightweightPeer){
+                if (peer == null) {
+                    // Update both the Component's peer variable and the local
+                    // variable we use for thread safety.
+                    this.peer = peer = getToolkit().createComponent(this);
+                }
+
+                // This is a lightweight component which means it won't be
+                // able to get window-related events by itself.  If any
+                // have been enabled, then the nearest native container must
+                // be enabled.
+                if (parent != null) {
+                    long mask = 0;
+                    if ((mouseListener != null) || ((eventMask & AWTEvent.MOUSE_EVENT_MASK) != 0)) {
+                        mask |= AWTEvent.MOUSE_EVENT_MASK;
+                    }
+                    if ((mouseMotionListener != null) ||
+                        ((eventMask & AWTEvent.MOUSE_MOTION_EVENT_MASK) != 0)) {
+                        mask |= AWTEvent.MOUSE_MOTION_EVENT_MASK;
+                    }
+                    if ((mouseWheelListener != null ) ||
+                        ((eventMask & AWTEvent.MOUSE_WHEEL_EVENT_MASK) != 0)) {
+                        mask |= AWTEvent.MOUSE_WHEEL_EVENT_MASK;
+                    }
+                    if (focusListener != null || (eventMask & AWTEvent.FOCUS_EVENT_MASK) != 0) {
+                        mask |= AWTEvent.FOCUS_EVENT_MASK;
+                    }
+                    if (keyListener != null || (eventMask & AWTEvent.KEY_EVENT_MASK) != 0) {
+                        mask |= AWTEvent.KEY_EVENT_MASK;
+                    }
+                    if (mask != 0) {
+                        parent.proxyEnableEvents(mask);
+                    }
+                }
+            } else {
+                // It's native. If the parent is lightweight it will need some
+                // help.
+                Container parent = getContainer();
+                if (parent != null && parent.isLightweight()) {
+                    relocateComponent();
+                    if (!parent.isRecursivelyVisibleUpToHeavyweightContainer())
+                    {
+                        peer.setVisible(false);
+                    }
+                }
+            }
+            invalidate();
+
+            int npopups = (popups != null? popups.size() : 0);
+            for (int i = 0 ; i < npopups ; i++) {
+                PopupMenu popup = popups.elementAt(i);
+                popup.addNotify();
+            }
+
+            if (dropTarget != null) dropTarget.addNotify(peer);
+
+            peerFont = getFont();
+
+            if (getContainer() != null && !isAddNotifyComplete) {
+                getContainer().increaseComponentCount(this);
+            }
+
+
+            // Update stacking order
+            updateZOrder();
+
+            if (!isAddNotifyComplete) {
+                mixOnShowing();
+            }
+
+            isAddNotifyComplete = true;
+
+            if (hierarchyListener != null ||
+                (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0 ||
+                Toolkit.enabledOnToolkit(AWTEvent.HIERARCHY_EVENT_MASK)) {
+                HierarchyEvent e =
+                    new HierarchyEvent(this, HierarchyEvent.HIERARCHY_CHANGED,
+                                       this, parent,
+                                       HierarchyEvent.DISPLAYABILITY_CHANGED |
+                                       ((isRecursivelyVisible())
+                                        ? HierarchyEvent.SHOWING_CHANGED
+                                        : 0));
+                dispatchEvent(e);
+            }
+        }
+    }
+
+    /**
+     * Makes this <code>Component</code> undisplayable by destroying it native
+     * screen resource.
+     * <p>
+     * This method is called by the toolkit internally and should
+     * not be called directly by programs. Code overriding
+     * this method should call <code>super.removeNotify</code> as
+     * the first line of the overriding method.
+     *
+     * @see       #isDisplayable
+     * @see       #addNotify
+     * @since JDK1.0
+     */
+    public void removeNotify() {
+        KeyboardFocusManager.clearMostRecentFocusOwner(this);
+        if (KeyboardFocusManager.getCurrentKeyboardFocusManager().
+            getPermanentFocusOwner() == this)
+        {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                setGlobalPermanentFocusOwner(null);
+        }
+
+        synchronized (getTreeLock()) {
+            if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabledFor(this)) {
+                transferFocus(true);
+            }
+
+            if (getContainer() != null && isAddNotifyComplete) {
+                getContainer().decreaseComponentCount(this);
+            }
+
+            int npopups = (popups != null? popups.size() : 0);
+            for (int i = 0 ; i < npopups ; i++) {
+                PopupMenu popup = popups.elementAt(i);
+                popup.removeNotify();
+            }
+            // If there is any input context for this component, notify
+            // that this component is being removed. (This has to be done
+            // before hiding peer.)
+            if ((eventMask & AWTEvent.INPUT_METHODS_ENABLED_MASK) != 0) {
+                InputContext inputContext = getInputContext();
+                if (inputContext != null) {
+                    inputContext.removeNotify(this);
+                }
+            }
+
+            ComponentPeer p = peer;
+            if (p != null) {
+                boolean isLightweight = isLightweight();
+
+                if (bufferStrategy instanceof FlipBufferStrategy) {
+                    ((FlipBufferStrategy)bufferStrategy).destroyBuffers();
+                }
+
+                if (dropTarget != null) dropTarget.removeNotify(peer);
+
+                // Hide peer first to stop system events such as cursor moves.
+                if (visible) {
+                    p.setVisible(false);
+                }
+
+                peer = null; // Stop peer updates.
+                peerFont = null;
+
+                Toolkit.getEventQueue().removeSourceEvents(this, false);
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                    discardKeyEvents(this);
+
+                p.dispose();
+
+                mixOnHiding(isLightweight);
+
+                isAddNotifyComplete = false;
+                // Nullifying compoundShape means that the component has normal shape
+                // (or has no shape at all).
+                this.compoundShape = null;
+            }
+
+            if (hierarchyListener != null ||
+                (eventMask & AWTEvent.HIERARCHY_EVENT_MASK) != 0 ||
+                Toolkit.enabledOnToolkit(AWTEvent.HIERARCHY_EVENT_MASK)) {
+                HierarchyEvent e =
+                    new HierarchyEvent(this, HierarchyEvent.HIERARCHY_CHANGED,
+                                       this, parent,
+                                       HierarchyEvent.DISPLAYABILITY_CHANGED |
+                                       ((isRecursivelyVisible())
+                                        ? HierarchyEvent.SHOWING_CHANGED
+                                        : 0));
+                dispatchEvent(e);
+            }
+        }
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processFocusEvent(FocusEvent).
+     */
+    @Deprecated
+    public boolean gotFocus(Event evt, Object what) {
+        return false;
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by processFocusEvent(FocusEvent).
+     */
+    @Deprecated
+    public boolean lostFocus(Event evt, Object what) {
+        return false;
+    }
+
+    /**
+     * Returns whether this <code>Component</code> can become the focus
+     * owner.
+     *
+     * @return <code>true</code> if this <code>Component</code> is
+     * focusable; <code>false</code> otherwise
+     * @see #setFocusable
+     * @since JDK1.1
+     * @deprecated As of 1.4, replaced by <code>isFocusable()</code>.
+     */
+    @Deprecated
+    public boolean isFocusTraversable() {
+        if (isFocusTraversableOverridden == FOCUS_TRAVERSABLE_UNKNOWN) {
+            isFocusTraversableOverridden = FOCUS_TRAVERSABLE_DEFAULT;
+        }
+        return focusable;
+    }
+
+    /**
+     * Returns whether this Component can be focused.
+     *
+     * @return <code>true</code> if this Component is focusable;
+     *         <code>false</code> otherwise.
+     * @see #setFocusable
+     * @since 1.4
+     */
+    public boolean isFocusable() {
+        return isFocusTraversable();
+    }
+
+    /**
+     * Sets the focusable state of this Component to the specified value. This
+     * value overrides the Component's default focusability.
+     *
+     * @param focusable indicates whether this Component is focusable
+     * @see #isFocusable
+     * @since 1.4
+     * @beaninfo
+     *       bound: true
+     */
+    public void setFocusable(boolean focusable) {
+        boolean oldFocusable;
+        synchronized (this) {
+            oldFocusable = this.focusable;
+            this.focusable = focusable;
+        }
+        isFocusTraversableOverridden = FOCUS_TRAVERSABLE_SET;
+
+        firePropertyChange("focusable", oldFocusable, focusable);
+        if (oldFocusable && !focusable) {
+            if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
+                transferFocus(true);
+            }
+            KeyboardFocusManager.clearMostRecentFocusOwner(this);
+        }
+    }
+
+    final boolean isFocusTraversableOverridden() {
+        return (isFocusTraversableOverridden != FOCUS_TRAVERSABLE_DEFAULT);
+    }
+
+    /**
+     * Sets the focus traversal keys for a given traversal operation for this
+     * Component.
+     * <p>
+     * The default values for a Component's focus traversal keys are
+     * implementation-dependent. Sun recommends that all implementations for a
+     * particular native platform use the same default values. The
+     * recommendations for Windows and Unix are listed below. These
+     * recommendations are used in the Sun AWT implementations.
+     *
+     * <table border=1 summary="Recommended default values for a Component's focus traversal keys">
+     * <tr>
+     *    <th>Identifier</th>
+     *    <th>Meaning</th>
+     *    <th>Default</th>
+     * </tr>
+     * <tr>
+     *    <td>KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS</td>
+     *    <td>Normal forward keyboard traversal</td>
+     *    <td>TAB on KEY_PRESSED, CTRL-TAB on KEY_PRESSED</td>
+     * </tr>
+     * <tr>
+     *    <td>KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS</td>
+     *    <td>Normal reverse keyboard traversal</td>
+     *    <td>SHIFT-TAB on KEY_PRESSED, CTRL-SHIFT-TAB on KEY_PRESSED</td>
+     * </tr>
+     * <tr>
+     *    <td>KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS</td>
+     *    <td>Go up one focus traversal cycle</td>
+     *    <td>none</td>
+     * </tr>
+     * </table>
+     *
+     * To disable a traversal key, use an empty Set; Collections.EMPTY_SET is
+     * recommended.
+     * <p>
+     * Using the AWTKeyStroke API, client code can specify on which of two
+     * specific KeyEvents, KEY_PRESSED or KEY_RELEASED, the focus traversal
+     * operation will occur. Regardless of which KeyEvent is specified,
+     * however, all KeyEvents related to the focus traversal key, including the
+     * associated KEY_TYPED event, will be consumed, and will not be dispatched
+     * to any Component. It is a runtime error to specify a KEY_TYPED event as
+     * mapping to a focus traversal operation, or to map the same event to
+     * multiple default focus traversal operations.
+     * <p>
+     * If a value of null is specified for the Set, this Component inherits the
+     * Set from its parent. If all ancestors of this Component have null
+     * specified for the Set, then the current KeyboardFocusManager's default
+     * Set is used.
+     * <p>
+     * This method may throw a {@code ClassCastException} if any {@code Object}
+     * in {@code keystrokes} is not an {@code AWTKeyStroke}.
+     *
+     * @param id one of KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+     *        KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, or
+     *        KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS
+     * @param keystrokes the Set of AWTKeyStroke for the specified operation
+     * @see #getFocusTraversalKeys
+     * @see KeyboardFocusManager#FORWARD_TRAVERSAL_KEYS
+     * @see KeyboardFocusManager#BACKWARD_TRAVERSAL_KEYS
+     * @see KeyboardFocusManager#UP_CYCLE_TRAVERSAL_KEYS
+     * @throws IllegalArgumentException if id is not one of
+     *         KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+     *         KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, or
+     *         KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS, or if keystrokes
+     *         contains null, or if any keystroke represents a KEY_TYPED event,
+     *         or if any keystroke already maps to another focus traversal
+     *         operation for this Component
+     * @since 1.4
+     * @beaninfo
+     *       bound: true
+     */
+    public void setFocusTraversalKeys(int id,
+                                      Set<? extends AWTKeyStroke> keystrokes)
+    {
+        if (id < 0 || id >= KeyboardFocusManager.TRAVERSAL_KEY_LENGTH - 1) {
+            throw new IllegalArgumentException("invalid focus traversal key identifier");
+        }
+
+        setFocusTraversalKeys_NoIDCheck(id, keystrokes);
+    }
+
+    /**
+     * Returns the Set of focus traversal keys for a given traversal operation
+     * for this Component. (See
+     * <code>setFocusTraversalKeys</code> for a full description of each key.)
+     * <p>
+     * If a Set of traversal keys has not been explicitly defined for this
+     * Component, then this Component's parent's Set is returned. If no Set
+     * has been explicitly defined for any of this Component's ancestors, then
+     * the current KeyboardFocusManager's default Set is returned.
+     *
+     * @param id one of KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+     *        KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, or
+     *        KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS
+     * @return the Set of AWTKeyStrokes for the specified operation. The Set
+     *         will be unmodifiable, and may be empty. null will never be
+     *         returned.
+     * @see #setFocusTraversalKeys
+     * @see KeyboardFocusManager#FORWARD_TRAVERSAL_KEYS
+     * @see KeyboardFocusManager#BACKWARD_TRAVERSAL_KEYS
+     * @see KeyboardFocusManager#UP_CYCLE_TRAVERSAL_KEYS
+     * @throws IllegalArgumentException if id is not one of
+     *         KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+     *         KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, or
+     *         KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS
+     * @since 1.4
+     */
+    public Set<AWTKeyStroke> getFocusTraversalKeys(int id) {
+        if (id < 0 || id >= KeyboardFocusManager.TRAVERSAL_KEY_LENGTH - 1) {
+            throw new IllegalArgumentException("invalid focus traversal key identifier");
+        }
+
+        return getFocusTraversalKeys_NoIDCheck(id);
+    }
+
+    // We define these methods so that Container does not need to repeat this
+    // code. Container cannot call super.<method> because Container allows
+    // DOWN_CYCLE_TRAVERSAL_KEY while Component does not. The Component method
+    // would erroneously generate an IllegalArgumentException for
+    // DOWN_CYCLE_TRAVERSAL_KEY.
+    final void setFocusTraversalKeys_NoIDCheck(int id, Set<? extends AWTKeyStroke> keystrokes) {
+        Set<AWTKeyStroke> oldKeys;
+
+        synchronized (this) {
+            if (focusTraversalKeys == null) {
+                initializeFocusTraversalKeys();
+            }
+
+            if (keystrokes != null) {
+                for (AWTKeyStroke keystroke : keystrokes ) {
+
+                    if (keystroke == null) {
+                        throw new IllegalArgumentException("cannot set null focus traversal key");
+                    }
+
+                    if (keystroke.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+                        throw new IllegalArgumentException("focus traversal keys cannot map to KEY_TYPED events");
+                    }
+
+                    for (int i = 0; i < focusTraversalKeys.length; i++) {
+                        if (i == id) {
+                            continue;
+                        }
+
+                        if (getFocusTraversalKeys_NoIDCheck(i).contains(keystroke))
+                        {
+                            throw new IllegalArgumentException("focus traversal keys must be unique for a Component");
+                        }
+                    }
+                }
+            }
+
+            oldKeys = focusTraversalKeys[id];
+            focusTraversalKeys[id] = (keystrokes != null)
+                ? Collections.unmodifiableSet(new HashSet<AWTKeyStroke>(keystrokes))
+                : null;
+        }
+
+        firePropertyChange(focusTraversalKeyPropertyNames[id], oldKeys,
+                           keystrokes);
+    }
+    final Set<AWTKeyStroke> getFocusTraversalKeys_NoIDCheck(int id) {
+        // Okay to return Set directly because it is an unmodifiable view
+        @SuppressWarnings("unchecked")
+        Set<AWTKeyStroke> keystrokes = (focusTraversalKeys != null)
+            ? focusTraversalKeys[id]
+            : null;
+
+        if (keystrokes != null) {
+            return keystrokes;
+        } else {
+            Container parent = this.parent;
+            if (parent != null) {
+                return parent.getFocusTraversalKeys(id);
+            } else {
+                return KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                    getDefaultFocusTraversalKeys(id);
+            }
+        }
+    }
+
+    /**
+     * Returns whether the Set of focus traversal keys for the given focus
+     * traversal operation has been explicitly defined for this Component. If
+     * this method returns <code>false</code>, this Component is inheriting the
+     * Set from an ancestor, or from the current KeyboardFocusManager.
+     *
+     * @param id one of KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+     *        KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, or
+     *        KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS
+     * @return <code>true</code> if the the Set of focus traversal keys for the
+     *         given focus traversal operation has been explicitly defined for
+     *         this Component; <code>false</code> otherwise.
+     * @throws IllegalArgumentException if id is not one of
+     *         KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+     *         KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, or
+     *         KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS
+     * @since 1.4
+     */
+    public boolean areFocusTraversalKeysSet(int id) {
+        if (id < 0 || id >= KeyboardFocusManager.TRAVERSAL_KEY_LENGTH - 1) {
+            throw new IllegalArgumentException("invalid focus traversal key identifier");
+        }
+
+        return (focusTraversalKeys != null && focusTraversalKeys[id] != null);
+    }
+
+    /**
+     * Sets whether focus traversal keys are enabled for this Component.
+     * Components for which focus traversal keys are disabled receive key
+     * events for focus traversal keys. Components for which focus traversal
+     * keys are enabled do not see these events; instead, the events are
+     * automatically converted to traversal operations.
+     *
+     * @param focusTraversalKeysEnabled whether focus traversal keys are
+     *        enabled for this Component
+     * @see #getFocusTraversalKeysEnabled
+     * @see #setFocusTraversalKeys
+     * @see #getFocusTraversalKeys
+     * @since 1.4
+     * @beaninfo
+     *       bound: true
+     */
+    public void setFocusTraversalKeysEnabled(boolean
+                                             focusTraversalKeysEnabled) {
+        boolean oldFocusTraversalKeysEnabled;
+        synchronized (this) {
+            oldFocusTraversalKeysEnabled = this.focusTraversalKeysEnabled;
+            this.focusTraversalKeysEnabled = focusTraversalKeysEnabled;
+        }
+        firePropertyChange("focusTraversalKeysEnabled",
+                           oldFocusTraversalKeysEnabled,
+                           focusTraversalKeysEnabled);
+    }
+
+    /**
+     * Returns whether focus traversal keys are enabled for this Component.
+     * Components for which focus traversal keys are disabled receive key
+     * events for focus traversal keys. Components for which focus traversal
+     * keys are enabled do not see these events; instead, the events are
+     * automatically converted to traversal operations.
+     *
+     * @return whether focus traversal keys are enabled for this Component
+     * @see #setFocusTraversalKeysEnabled
+     * @see #setFocusTraversalKeys
+     * @see #getFocusTraversalKeys
+     * @since 1.4
+     */
+    public boolean getFocusTraversalKeysEnabled() {
+        return focusTraversalKeysEnabled;
+    }
+
+    /**
+     * Requests that this Component get the input focus, and that this
+     * Component's top-level ancestor become the focused Window. This
+     * component must be displayable, focusable, visible and all of
+     * its ancestors (with the exception of the top-level Window) must
+     * be visible for the request to be granted. Every effort will be
+     * made to honor the request; however, in some cases it may be
+     * impossible to do so. Developers must never assume that this
+     * Component is the focus owner until this Component receives a
+     * FOCUS_GAINED event. If this request is denied because this
+     * Component's top-level Window cannot become the focused Window,
+     * the request will be remembered and will be granted when the
+     * Window is later focused by the user.
+     * <p>
+     * This method cannot be used to set the focus owner to no Component at
+     * all. Use <code>KeyboardFocusManager.clearGlobalFocusOwner()</code>
+     * instead.
+     * <p>
+     * Because the focus behavior of this method is platform-dependent,
+     * developers are strongly encouraged to use
+     * <code>requestFocusInWindow</code> when possible.
+     *
+     * <p>Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @see #requestFocusInWindow
+     * @see java.awt.event.FocusEvent
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since JDK1.0
+     */
+    public void requestFocus() {
+        requestFocusHelper(false, true);
+    }
+
+    boolean requestFocus(CausedFocusEvent.Cause cause) {
+        return requestFocusHelper(false, true, cause);
+    }
+
+    /**
+     * Requests that this <code>Component</code> get the input focus,
+     * and that this <code>Component</code>'s top-level ancestor
+     * become the focused <code>Window</code>. This component must be
+     * displayable, focusable, visible and all of its ancestors (with
+     * the exception of the top-level Window) must be visible for the
+     * request to be granted. Every effort will be made to honor the
+     * request; however, in some cases it may be impossible to do
+     * so. Developers must never assume that this component is the
+     * focus owner until this component receives a FOCUS_GAINED
+     * event. If this request is denied because this component's
+     * top-level window cannot become the focused window, the request
+     * will be remembered and will be granted when the window is later
+     * focused by the user.
+     * <p>
+     * This method returns a boolean value. If <code>false</code> is returned,
+     * the request is <b>guaranteed to fail</b>. If <code>true</code> is
+     * returned, the request will succeed <b>unless</b> it is vetoed, or an
+     * extraordinary event, such as disposal of the component's peer, occurs
+     * before the request can be granted by the native windowing system. Again,
+     * while a return value of <code>true</code> indicates that the request is
+     * likely to succeed, developers must never assume that this component is
+     * the focus owner until this component receives a FOCUS_GAINED event.
+     * <p>
+     * This method cannot be used to set the focus owner to no component at
+     * all. Use <code>KeyboardFocusManager.clearGlobalFocusOwner</code>
+     * instead.
+     * <p>
+     * Because the focus behavior of this method is platform-dependent,
+     * developers are strongly encouraged to use
+     * <code>requestFocusInWindow</code> when possible.
+     * <p>
+     * Every effort will be made to ensure that <code>FocusEvent</code>s
+     * generated as a
+     * result of this request will have the specified temporary value. However,
+     * because specifying an arbitrary temporary state may not be implementable
+     * on all native windowing systems, correct behavior for this method can be
+     * guaranteed only for lightweight <code>Component</code>s.
+     * This method is not intended
+     * for general use, but exists instead as a hook for lightweight component
+     * libraries, such as Swing.
+     *
+     * <p>Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @param temporary true if the focus change is temporary,
+     *        such as when the window loses the focus; for
+     *        more information on temporary focus changes see the
+     *<a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
+     * @return <code>false</code> if the focus change request is guaranteed to
+     *         fail; <code>true</code> if it is likely to succeed
+     * @see java.awt.event.FocusEvent
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since 1.4
+     */
+    protected boolean requestFocus(boolean temporary) {
+        return requestFocusHelper(temporary, true);
+    }
+
+    boolean requestFocus(boolean temporary, CausedFocusEvent.Cause cause) {
+        return requestFocusHelper(temporary, true, cause);
+    }
+    /**
+     * Requests that this Component get the input focus, if this
+     * Component's top-level ancestor is already the focused
+     * Window. This component must be displayable, focusable, visible
+     * and all of its ancestors (with the exception of the top-level
+     * Window) must be visible for the request to be granted. Every
+     * effort will be made to honor the request; however, in some
+     * cases it may be impossible to do so. Developers must never
+     * assume that this Component is the focus owner until this
+     * Component receives a FOCUS_GAINED event.
+     * <p>
+     * This method returns a boolean value. If <code>false</code> is returned,
+     * the request is <b>guaranteed to fail</b>. If <code>true</code> is
+     * returned, the request will succeed <b>unless</b> it is vetoed, or an
+     * extraordinary event, such as disposal of the Component's peer, occurs
+     * before the request can be granted by the native windowing system. Again,
+     * while a return value of <code>true</code> indicates that the request is
+     * likely to succeed, developers must never assume that this Component is
+     * the focus owner until this Component receives a FOCUS_GAINED event.
+     * <p>
+     * This method cannot be used to set the focus owner to no Component at
+     * all. Use <code>KeyboardFocusManager.clearGlobalFocusOwner()</code>
+     * instead.
+     * <p>
+     * The focus behavior of this method can be implemented uniformly across
+     * platforms, and thus developers are strongly encouraged to use this
+     * method over <code>requestFocus</code> when possible. Code which relies
+     * on <code>requestFocus</code> may exhibit different focus behavior on
+     * different platforms.
+     *
+     * <p>Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @return <code>false</code> if the focus change request is guaranteed to
+     *         fail; <code>true</code> if it is likely to succeed
+     * @see #requestFocus
+     * @see java.awt.event.FocusEvent
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since 1.4
+     */
+    public boolean requestFocusInWindow() {
+        return requestFocusHelper(false, false);
+    }
+
+    boolean requestFocusInWindow(CausedFocusEvent.Cause cause) {
+        return requestFocusHelper(false, false, cause);
+    }
+
+    /**
+     * Requests that this <code>Component</code> get the input focus,
+     * if this <code>Component</code>'s top-level ancestor is already
+     * the focused <code>Window</code>.  This component must be
+     * displayable, focusable, visible and all of its ancestors (with
+     * the exception of the top-level Window) must be visible for the
+     * request to be granted. Every effort will be made to honor the
+     * request; however, in some cases it may be impossible to do
+     * so. Developers must never assume that this component is the
+     * focus owner until this component receives a FOCUS_GAINED event.
+     * <p>
+     * This method returns a boolean value. If <code>false</code> is returned,
+     * the request is <b>guaranteed to fail</b>. If <code>true</code> is
+     * returned, the request will succeed <b>unless</b> it is vetoed, or an
+     * extraordinary event, such as disposal of the component's peer, occurs
+     * before the request can be granted by the native windowing system. Again,
+     * while a return value of <code>true</code> indicates that the request is
+     * likely to succeed, developers must never assume that this component is
+     * the focus owner until this component receives a FOCUS_GAINED event.
+     * <p>
+     * This method cannot be used to set the focus owner to no component at
+     * all. Use <code>KeyboardFocusManager.clearGlobalFocusOwner</code>
+     * instead.
+     * <p>
+     * The focus behavior of this method can be implemented uniformly across
+     * platforms, and thus developers are strongly encouraged to use this
+     * method over <code>requestFocus</code> when possible. Code which relies
+     * on <code>requestFocus</code> may exhibit different focus behavior on
+     * different platforms.
+     * <p>
+     * Every effort will be made to ensure that <code>FocusEvent</code>s
+     * generated as a
+     * result of this request will have the specified temporary value. However,
+     * because specifying an arbitrary temporary state may not be implementable
+     * on all native windowing systems, correct behavior for this method can be
+     * guaranteed only for lightweight components. This method is not intended
+     * for general use, but exists instead as a hook for lightweight component
+     * libraries, such as Swing.
+     *
+     * <p>Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @param temporary true if the focus change is temporary,
+     *        such as when the window loses the focus; for
+     *        more information on temporary focus changes see the
+     *<a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
+     * @return <code>false</code> if the focus change request is guaranteed to
+     *         fail; <code>true</code> if it is likely to succeed
+     * @see #requestFocus
+     * @see java.awt.event.FocusEvent
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since 1.4
+     */
+    protected boolean requestFocusInWindow(boolean temporary) {
+        return requestFocusHelper(temporary, false);
+    }
+
+    boolean requestFocusInWindow(boolean temporary, CausedFocusEvent.Cause cause) {
+        return requestFocusHelper(temporary, false, cause);
+    }
+
+    final boolean requestFocusHelper(boolean temporary,
+                                     boolean focusedWindowChangeAllowed) {
+        return requestFocusHelper(temporary, focusedWindowChangeAllowed, CausedFocusEvent.Cause.UNKNOWN);
+    }
+
+    final boolean requestFocusHelper(boolean temporary,
+                                     boolean focusedWindowChangeAllowed,
+                                     CausedFocusEvent.Cause cause)
+    {
+        // 1) Check if the event being dispatched is a system-generated mouse event.
+        AWTEvent currentEvent = EventQueue.getCurrentEvent();
+        if (currentEvent instanceof MouseEvent &&
+            SunToolkit.isSystemGenerated(currentEvent))
+        {
+            // 2) Sanity check: if the mouse event component source belongs to the same containing window.
+            Component source = ((MouseEvent)currentEvent).getComponent();
+            if (source == null || source.getContainingWindow() == getContainingWindow()) {
+                focusLog.finest("requesting focus by mouse event \"in window\"");
+
+                // If both the conditions are fulfilled the focus request should be strictly
+                // bounded by the toplevel window. It's assumed that the mouse event activates
+                // the window (if it wasn't active) and this makes it possible for a focus
+                // request with a strong in-window requirement to change focus in the bounds
+                // of the toplevel. If, by any means, due to asynchronous nature of the event
+                // dispatching mechanism, the window happens to be natively inactive by the time
+                // this focus request is eventually handled, it should not re-activate the
+                // toplevel. Otherwise the result may not meet user expectations. See 6981400.
+                focusedWindowChangeAllowed = false;
+            }
+        }
+        if (!isRequestFocusAccepted(temporary, focusedWindowChangeAllowed, cause)) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("requestFocus is not accepted");
+            }
+            return false;
+        }
+        // Update most-recent map
+        KeyboardFocusManager.setMostRecentFocusOwner(this);
+
+        Component window = this;
+        while ( (window != null) && !(window instanceof Window)) {
+            if (!window.isVisible()) {
+                if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                    focusLog.finest("component is recurively invisible");
+                }
+                return false;
+            }
+            window = window.parent;
+        }
+
+        ComponentPeer peer = this.peer;
+        Component heavyweight = (peer instanceof LightweightPeer)
+            ? getNativeContainer() : this;
+        if (heavyweight == null || !heavyweight.isVisible()) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("Component is not a part of visible hierarchy");
+            }
+            return false;
+        }
+        peer = heavyweight.peer;
+        if (peer == null) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("Peer is null");
+            }
+            return false;
+        }
+
+        // Focus this Component
+        long time = 0;
+        if (EventQueue.isDispatchThread()) {
+            time = Toolkit.getEventQueue().getMostRecentKeyEventTime();
+        } else {
+            // A focus request made from outside EDT should not be associated with any event
+            // and so its time stamp is simply set to the current time.
+            time = System.currentTimeMillis();
+        }
+
+        boolean success = peer.requestFocus
+            (this, temporary, focusedWindowChangeAllowed, time, cause);
+        if (!success) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager
+                (appContext).dequeueKeyEvents(time, this);
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("Peer request failed");
+            }
+        } else {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("Pass for " + this);
+            }
+        }
+        return success;
+    }
+
+    private boolean isRequestFocusAccepted(boolean temporary,
+                                           boolean focusedWindowChangeAllowed,
+                                           CausedFocusEvent.Cause cause)
+    {
+        if (!isFocusable() || !isVisible()) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("Not focusable or not visible");
+            }
+            return false;
+        }
+
+        ComponentPeer peer = this.peer;
+        if (peer == null) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("peer is null");
+            }
+            return false;
+        }
+
+        Window window = getContainingWindow();
+        if (window == null || !window.isFocusableWindow()) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("Component doesn't have toplevel");
+            }
+            return false;
+        }
+
+        // We have passed all regular checks for focus request,
+        // now let's call RequestFocusController and see what it says.
+        Component focusOwner = KeyboardFocusManager.getMostRecentFocusOwner(window);
+        if (focusOwner == null) {
+            // sometimes most recent focus owner may be null, but focus owner is not
+            // e.g. we reset most recent focus owner if user removes focus owner
+            focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            if (focusOwner != null && focusOwner.getContainingWindow() != window) {
+                focusOwner = null;
+            }
+        }
+
+        if (focusOwner == this || focusOwner == null) {
+            // Controller is supposed to verify focus transfers and for this it
+            // should know both from and to components.  And it shouldn't verify
+            // transfers from when these components are equal.
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("focus owner is null or this");
+            }
+            return true;
+        }
+
+        if (CausedFocusEvent.Cause.ACTIVATION == cause) {
+            // we shouldn't call RequestFocusController in case we are
+            // in activation.  We do request focus on component which
+            // has got temporary focus lost and then on component which is
+            // most recent focus owner.  But most recent focus owner can be
+            // changed by requestFocsuXXX() call only, so this transfer has
+            // been already approved.
+            if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                focusLog.finest("cause is activation");
+            }
+            return true;
+        }
+
+        boolean ret = Component.requestFocusController.acceptRequestFocus(focusOwner,
+                                                                          this,
+                                                                          temporary,
+                                                                          focusedWindowChangeAllowed,
+                                                                          cause);
+        if (focusLog.isLoggable(PlatformLogger.Level.FINEST)) {
+            focusLog.finest("RequestFocusController returns {0}", ret);
+        }
+
+        return ret;
+    }
+
+    private static RequestFocusController requestFocusController = new DummyRequestFocusController();
+
+    // Swing access this method through reflection to implement InputVerifier's functionality.
+    // Perhaps, we should make this method public (later ;)
+    private static class DummyRequestFocusController implements RequestFocusController {
+        public boolean acceptRequestFocus(Component from, Component to,
+                                          boolean temporary, boolean focusedWindowChangeAllowed,
+                                          CausedFocusEvent.Cause cause)
+        {
+            return true;
+        }
+    };
+
+    synchronized static void setRequestFocusController(RequestFocusController requestController)
+    {
+        if (requestController == null) {
+            requestFocusController = new DummyRequestFocusController();
+        } else {
+            requestFocusController = requestController;
+        }
+    }
+
+    /**
+     * Returns the Container which is the focus cycle root of this Component's
+     * focus traversal cycle. Each focus traversal cycle has only a single
+     * focus cycle root and each Component which is not a Container belongs to
+     * only a single focus traversal cycle. Containers which are focus cycle
+     * roots belong to two cycles: one rooted at the Container itself, and one
+     * rooted at the Container's nearest focus-cycle-root ancestor. For such
+     * Containers, this method will return the Container's nearest focus-cycle-
+     * root ancestor.
+     *
+     * @return this Component's nearest focus-cycle-root ancestor
+     * @see Container#isFocusCycleRoot()
+     * @since 1.4
+     */
+    public Container getFocusCycleRootAncestor() {
+        Container rootAncestor = this.parent;
+        while (rootAncestor != null && !rootAncestor.isFocusCycleRoot()) {
+            rootAncestor = rootAncestor.parent;
+        }
+        return rootAncestor;
+    }
+
+    /**
+     * Returns whether the specified Container is the focus cycle root of this
+     * Component's focus traversal cycle. Each focus traversal cycle has only
+     * a single focus cycle root and each Component which is not a Container
+     * belongs to only a single focus traversal cycle.
+     *
+     * @param container the Container to be tested
+     * @return <code>true</code> if the specified Container is a focus-cycle-
+     *         root of this Component; <code>false</code> otherwise
+     * @see Container#isFocusCycleRoot()
+     * @since 1.4
+     */
+    public boolean isFocusCycleRoot(Container container) {
+        Container rootAncestor = getFocusCycleRootAncestor();
+        return (rootAncestor == container);
+    }
+
+    Container getTraversalRoot() {
+        return getFocusCycleRootAncestor();
+    }
+
+    /**
+     * Transfers the focus to the next component, as though this Component were
+     * the focus owner.
+     * @see       #requestFocus()
+     * @since     JDK1.1
+     */
+    public void transferFocus() {
+        nextFocus();
+    }
+
+    /**
+     * @deprecated As of JDK version 1.1,
+     * replaced by transferFocus().
+     */
+    @Deprecated
+    public void nextFocus() {
+        transferFocus(false);
+    }
+
+    boolean transferFocus(boolean clearOnFailure) {
+        if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+            focusLog.finer("clearOnFailure = " + clearOnFailure);
+        }
+        Component toFocus = getNextFocusCandidate();
+        boolean res = false;
+        if (toFocus != null && !toFocus.isFocusOwner() && toFocus != this) {
+            res = toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_FORWARD);
+        }
+        if (clearOnFailure && !res) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+                focusLog.finer("clear global focus owner");
+            }
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwnerPriv();
+        }
+        if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+            focusLog.finer("returning result: " + res);
+        }
+        return res;
+    }
+
+    final Component getNextFocusCandidate() {
+        Container rootAncestor = getTraversalRoot();
+        Component comp = this;
+        while (rootAncestor != null &&
+               !(rootAncestor.isShowing() && rootAncestor.canBeFocusOwner()))
+        {
+            comp = rootAncestor;
+            rootAncestor = comp.getFocusCycleRootAncestor();
+        }
+        if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+            focusLog.finer("comp = " + comp + ", root = " + rootAncestor);
+        }
+        Component candidate = null;
+        if (rootAncestor != null) {
+            FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
+            Component toFocus = policy.getComponentAfter(rootAncestor, comp);
+            if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+                focusLog.finer("component after is " + toFocus);
+            }
+            if (toFocus == null) {
+                toFocus = policy.getDefaultComponent(rootAncestor);
+                if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+                    focusLog.finer("default component is " + toFocus);
+                }
+            }
+            if (toFocus == null) {
+                Applet applet = EmbeddedFrame.getAppletIfAncestorOf(this);
+                if (applet != null) {
+                    toFocus = applet;
+                }
+            }
+            candidate = toFocus;
+        }
+        if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+            focusLog.finer("Focus transfer candidate: " + candidate);
+        }
+        return candidate;
+    }
+
+    /**
+     * Transfers the focus to the previous component, as though this Component
+     * were the focus owner.
+     * @see       #requestFocus()
+     * @since     1.4
+     */
+    public void transferFocusBackward() {
+        transferFocusBackward(false);
+    }
+
+    boolean transferFocusBackward(boolean clearOnFailure) {
+        Container rootAncestor = getTraversalRoot();
+        Component comp = this;
+        while (rootAncestor != null &&
+               !(rootAncestor.isShowing() && rootAncestor.canBeFocusOwner()))
+        {
+            comp = rootAncestor;
+            rootAncestor = comp.getFocusCycleRootAncestor();
+        }
+        boolean res = false;
+        if (rootAncestor != null) {
+            FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
+            Component toFocus = policy.getComponentBefore(rootAncestor, comp);
+            if (toFocus == null) {
+                toFocus = policy.getDefaultComponent(rootAncestor);
+            }
+            if (toFocus != null) {
+                res = toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_BACKWARD);
+            }
+        }
+        if (clearOnFailure && !res) {
+            if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+                focusLog.finer("clear global focus owner");
+            }
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwnerPriv();
+        }
+        if (focusLog.isLoggable(PlatformLogger.Level.FINER)) {
+            focusLog.finer("returning result: " + res);
+        }
+        return res;
+    }
+
+    /**
+     * Transfers the focus up one focus traversal cycle. Typically, the focus
+     * owner is set to this Component's focus cycle root, and the current focus
+     * cycle root is set to the new focus owner's focus cycle root. If,
+     * however, this Component's focus cycle root is a Window, then the focus
+     * owner is set to the focus cycle root's default Component to focus, and
+     * the current focus cycle root is unchanged.
+     *
+     * @see       #requestFocus()
+     * @see       Container#isFocusCycleRoot()
+     * @see       Container#setFocusCycleRoot(boolean)
+     * @since     1.4
+     */
+    public void transferFocusUpCycle() {
+        Container rootAncestor;
+        for (rootAncestor = getFocusCycleRootAncestor();
+             rootAncestor != null && !(rootAncestor.isShowing() &&
+                                       rootAncestor.isFocusable() &&
+                                       rootAncestor.isEnabled());
+             rootAncestor = rootAncestor.getFocusCycleRootAncestor()) {
+        }
+
+        if (rootAncestor != null) {
+            Container rootAncestorRootAncestor =
+                rootAncestor.getFocusCycleRootAncestor();
+            Container fcr = (rootAncestorRootAncestor != null) ?
+                rootAncestorRootAncestor : rootAncestor;
+
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                setGlobalCurrentFocusCycleRootPriv(fcr);
+            rootAncestor.requestFocus(CausedFocusEvent.Cause.TRAVERSAL_UP);
+        } else {
+            Window window = getContainingWindow();
+
+            if (window != null) {
+                Component toFocus = window.getFocusTraversalPolicy().
+                    getDefaultComponent(window);
+                if (toFocus != null) {
+                    KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                        setGlobalCurrentFocusCycleRootPriv(window);
+                    toFocus.requestFocus(CausedFocusEvent.Cause.TRAVERSAL_UP);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if this <code>Component</code> is the
+     * focus owner.  This method is obsolete, and has been replaced by
+     * <code>isFocusOwner()</code>.
+     *
+     * @return <code>true</code> if this <code>Component</code> is the
+     *         focus owner; <code>false</code> otherwise
+     * @since 1.2
+     */
+    public boolean hasFocus() {
+        return (KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                getFocusOwner() == this);
+    }
+
+    /**
+     * Returns <code>true</code> if this <code>Component</code> is the
+     *    focus owner.
+     *
+     * @return <code>true</code> if this <code>Component</code> is the
+     *     focus owner; <code>false</code> otherwise
+     * @since 1.4
+     */
+    public boolean isFocusOwner() {
+        return hasFocus();
+    }
+
+    /*
+     * Used to disallow auto-focus-transfer on disposal of the focus owner
+     * in the process of disposing its parent container.
+     */
+    private boolean autoFocusTransferOnDisposal = true;
+
+    void setAutoFocusTransferOnDisposal(boolean value) {
+        autoFocusTransferOnDisposal = value;
+    }
+
+    boolean isAutoFocusTransferOnDisposal() {
+        return autoFocusTransferOnDisposal;
+    }
+
+    /**
+     * Adds the specified popup menu to the component.
+     * @param     popup the popup menu to be added to the component.
+     * @see       #remove(MenuComponent)
+     * @exception NullPointerException if {@code popup} is {@code null}
+     * @since     JDK1.1
+     */
+    public void add(PopupMenu popup) {
+        synchronized (getTreeLock()) {
+            if (popup.parent != null) {
+                popup.parent.remove(popup);
+            }
+            if (popups == null) {
+                popups = new Vector<PopupMenu>();
+            }
+            popups.addElement(popup);
+            popup.parent = this;
+
+            if (peer != null) {
+                if (popup.peer == null) {
+                    popup.addNotify();
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes the specified popup menu from the component.
+     * @param     popup the popup menu to be removed
+     * @see       #add(PopupMenu)
+     * @since     JDK1.1
+     */
+    @SuppressWarnings("unchecked")
+    public void remove(MenuComponent popup) {
+        synchronized (getTreeLock()) {
+            if (popups == null) {
+                return;
+            }
+            int index = popups.indexOf(popup);
+            if (index >= 0) {
+                PopupMenu pmenu = (PopupMenu)popup;
+                if (pmenu.peer != null) {
+                    pmenu.removeNotify();
+                }
+                pmenu.parent = null;
+                popups.removeElementAt(index);
+                if (popups.size() == 0) {
+                    popups = null;
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns a string representing the state of this component. This
+     * method is intended to be used only for debugging purposes, and the
+     * content and format of the returned string may vary between
+     * implementations. The returned string may be empty but may not be
+     * <code>null</code>.
+     *
+     * @return  a string representation of this component's state
+     * @since     JDK1.0
+     */
+    protected String paramString() {
+        final String thisName = Objects.toString(getName(), "");
+        final String invalid = isValid() ? "" : ",invalid";
+        final String hidden = visible ? "" : ",hidden";
+        final String disabled = enabled ? "" : ",disabled";
+        return thisName + ',' + x + ',' + y + ',' + width + 'x' + height
+                + invalid + hidden + disabled;
+    }
+
+    /**
+     * Returns a string representation of this component and its values.
+     * @return    a string representation of this component
+     * @since     JDK1.0
+     */
+    public String toString() {
+        return getClass().getName() + '[' + paramString() + ']';
+    }
+
+    /**
+     * Prints a listing of this component to the standard system output
+     * stream <code>System.out</code>.
+     * @see       java.lang.System#out
+     * @since     JDK1.0
+     */
+    public void list() {
+        list(System.out, 0);
+    }
+
+    /**
+     * Prints a listing of this component to the specified output
+     * stream.
+     * @param    out   a print stream
+     * @throws   NullPointerException if {@code out} is {@code null}
+     * @since    JDK1.0
+     */
+    public void list(PrintStream out) {
+        list(out, 0);
+    }
+
+    /**
+     * Prints out a list, starting at the specified indentation, to the
+     * specified print stream.
+     * @param     out      a print stream
+     * @param     indent   number of spaces to indent
+     * @see       java.io.PrintStream#println(java.lang.Object)
+     * @throws    NullPointerException if {@code out} is {@code null}
+     * @since     JDK1.0
+     */
+    public void list(PrintStream out, int indent) {
+        for (int i = 0 ; i < indent ; i++) {
+            out.print(" ");
+        }
+        out.println(this);
+    }
+
+    /**
+     * Prints a listing to the specified print writer.
+     * @param  out  the print writer to print to
+     * @throws NullPointerException if {@code out} is {@code null}
+     * @since JDK1.1
+     */
+    public void list(PrintWriter out) {
+        list(out, 0);
+    }
+
+    /**
+     * Prints out a list, starting at the specified indentation, to
+     * the specified print writer.
+     * @param out the print writer to print to
+     * @param indent the number of spaces to indent
+     * @throws NullPointerException if {@code out} is {@code null}
+     * @see       java.io.PrintStream#println(java.lang.Object)
+     * @since JDK1.1
+     */
+    public void list(PrintWriter out, int indent) {
+        for (int i = 0 ; i < indent ; i++) {
+            out.print(" ");
+        }
+        out.println(this);
+    }
+
+    /*
+     * Fetches the native container somewhere higher up in the component
+     * tree that contains this component.
+     */
+    final Container getNativeContainer() {
+        Container p = getContainer();
+        while (p != null && p.peer instanceof LightweightPeer) {
+            p = p.getContainer();
+        }
+        return p;
+    }
+
+    /**
+     * Adds a PropertyChangeListener to the listener list. The listener is
+     * registered for all bound properties of this class, including the
+     * following:
+     * <ul>
+     *    <li>this Component's font ("font")</li>
+     *    <li>this Component's background color ("background")</li>
+     *    <li>this Component's foreground color ("foreground")</li>
+     *    <li>this Component's focusability ("focusable")</li>
+     *    <li>this Component's focus traversal keys enabled state
+     *        ("focusTraversalKeysEnabled")</li>
+     *    <li>this Component's Set of FORWARD_TRAVERSAL_KEYS
+     *        ("forwardFocusTraversalKeys")</li>
+     *    <li>this Component's Set of BACKWARD_TRAVERSAL_KEYS
+     *        ("backwardFocusTraversalKeys")</li>
+     *    <li>this Component's Set of UP_CYCLE_TRAVERSAL_KEYS
+     *        ("upCycleFocusTraversalKeys")</li>
+     *    <li>this Component's preferred size ("preferredSize")</li>
+     *    <li>this Component's minimum size ("minimumSize")</li>
+     *    <li>this Component's maximum size ("maximumSize")</li>
+     *    <li>this Component's name ("name")</li>
+     * </ul>
+     * Note that if this <code>Component</code> is inheriting a bound property, then no
+     * event will be fired in response to a change in the inherited property.
+     * <p>
+     * If <code>listener</code> is <code>null</code>,
+     * no exception is thrown and no action is performed.
+     *
+     * @param    listener  the property change listener to be added
+     *
+     * @see #removePropertyChangeListener
+     * @see #getPropertyChangeListeners
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+     */
+    public void addPropertyChangeListener(
+                                                       PropertyChangeListener listener) {
+        synchronized (getObjectLock()) {
+            if (listener == null) {
+                return;
+            }
+            if (changeSupport == null) {
+                changeSupport = new PropertyChangeSupport(this);
+            }
+            changeSupport.addPropertyChangeListener(listener);
+        }
+    }
+
+    /**
+     * Removes a PropertyChangeListener from the listener list. This method
+     * should be used to remove PropertyChangeListeners that were registered
+     * for all bound properties of this class.
+     * <p>
+     * If listener is null, no exception is thrown and no action is performed.
+     *
+     * @param listener the PropertyChangeListener to be removed
+     *
+     * @see #addPropertyChangeListener
+     * @see #getPropertyChangeListeners
+     * @see #removePropertyChangeListener(java.lang.String,java.beans.PropertyChangeListener)
+     */
+    public void removePropertyChangeListener(
+                                                          PropertyChangeListener listener) {
+        synchronized (getObjectLock()) {
+            if (listener == null || changeSupport == null) {
+                return;
+            }
+            changeSupport.removePropertyChangeListener(listener);
+        }
+    }
+
+    /**
+     * Returns an array of all the property change listeners
+     * registered on this component.
+     *
+     * @return all of this component's <code>PropertyChangeListener</code>s
+     *         or an empty array if no property change
+     *         listeners are currently registered
+     *
+     * @see      #addPropertyChangeListener
+     * @see      #removePropertyChangeListener
+     * @see      #getPropertyChangeListeners(java.lang.String)
+     * @see      java.beans.PropertyChangeSupport#getPropertyChangeListeners
+     * @since    1.4
+     */
+    public PropertyChangeListener[] getPropertyChangeListeners() {
+        synchronized (getObjectLock()) {
+            if (changeSupport == null) {
+                return new PropertyChangeListener[0];
+            }
+            return changeSupport.getPropertyChangeListeners();
+        }
+    }
+
+    /**
+     * Adds a PropertyChangeListener to the listener list for a specific
+     * property. The specified property may be user-defined, or one of the
+     * following:
+     * <ul>
+     *    <li>this Component's font ("font")</li>
+     *    <li>this Component's background color ("background")</li>
+     *    <li>this Component's foreground color ("foreground")</li>
+     *    <li>this Component's focusability ("focusable")</li>
+     *    <li>this Component's focus traversal keys enabled state
+     *        ("focusTraversalKeysEnabled")</li>
+     *    <li>this Component's Set of FORWARD_TRAVERSAL_KEYS
+     *        ("forwardFocusTraversalKeys")</li>
+     *    <li>this Component's Set of BACKWARD_TRAVERSAL_KEYS
+     *        ("backwardFocusTraversalKeys")</li>
+     *    <li>this Component's Set of UP_CYCLE_TRAVERSAL_KEYS
+     *        ("upCycleFocusTraversalKeys")</li>
+     * </ul>
+     * Note that if this <code>Component</code> is inheriting a bound property, then no
+     * event will be fired in response to a change in the inherited property.
+     * <p>
+     * If <code>propertyName</code> or <code>listener</code> is <code>null</code>,
+     * no exception is thrown and no action is taken.
+     *
+     * @param propertyName one of the property names listed above
+     * @param listener the property change listener to be added
+     *
+     * @see #removePropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+     * @see #getPropertyChangeListeners(java.lang.String)
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+     */
+    public void addPropertyChangeListener(
+                                                       String propertyName,
+                                                       PropertyChangeListener listener) {
+        synchronized (getObjectLock()) {
+            if (listener == null) {
+                return;
+            }
+            if (changeSupport == null) {
+                changeSupport = new PropertyChangeSupport(this);
+            }
+            changeSupport.addPropertyChangeListener(propertyName, listener);
+        }
+    }
+
+    /**
+     * Removes a <code>PropertyChangeListener</code> from the listener
+     * list for a specific property. This method should be used to remove
+     * <code>PropertyChangeListener</code>s
+     * that were registered for a specific bound property.
+     * <p>
+     * If <code>propertyName</code> or <code>listener</code> is <code>null</code>,
+     * no exception is thrown and no action is taken.
+     *
+     * @param propertyName a valid property name
+     * @param listener the PropertyChangeListener to be removed
+     *
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+     * @see #getPropertyChangeListeners(java.lang.String)
+     * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
+     */
+    public void removePropertyChangeListener(
+                                                          String propertyName,
+                                                          PropertyChangeListener listener) {
+        synchronized (getObjectLock()) {
+            if (listener == null || changeSupport == null) {
+                return;
+            }
+            changeSupport.removePropertyChangeListener(propertyName, listener);
+        }
+    }
+
+    /**
+     * Returns an array of all the listeners which have been associated
+     * with the named property.
+     *
+     * @return all of the <code>PropertyChangeListener</code>s associated with
+     *         the named property; if no such listeners have been added or
+     *         if <code>propertyName</code> is <code>null</code>, an empty
+     *         array is returned
+     *
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+     * @see #removePropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
+     * @see #getPropertyChangeListeners
+     * @since 1.4
+     */
+    public PropertyChangeListener[] getPropertyChangeListeners(
+                                                                            String propertyName) {
+        synchronized (getObjectLock()) {
+            if (changeSupport == null) {
+                return new PropertyChangeListener[0];
+            }
+            return changeSupport.getPropertyChangeListeners(propertyName);
+        }
+    }
+
+    /**
+     * Support for reporting bound property changes for Object properties.
+     * This method can be called when a bound property has changed and it will
+     * send the appropriate PropertyChangeEvent to any registered
+     * PropertyChangeListeners.
+     *
+     * @param propertyName the property whose value has changed
+     * @param oldValue the property's previous value
+     * @param newValue the property's new value
+     */
+    protected void firePropertyChange(String propertyName,
+                                      Object oldValue, Object newValue) {
+        PropertyChangeSupport changeSupport;
+        synchronized (getObjectLock()) {
+            changeSupport = this.changeSupport;
+        }
+        if (changeSupport == null ||
+            (oldValue != null && newValue != null && oldValue.equals(newValue))) {
+            return;
+        }
+        changeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
+
+    /**
+     * Support for reporting bound property changes for boolean properties.
+     * This method can be called when a bound property has changed and it will
+     * send the appropriate PropertyChangeEvent to any registered
+     * PropertyChangeListeners.
+     *
+     * @param propertyName the property whose value has changed
+     * @param oldValue the property's previous value
+     * @param newValue the property's new value
+     * @since 1.4
+     */
+    protected void firePropertyChange(String propertyName,
+                                      boolean oldValue, boolean newValue) {
+        PropertyChangeSupport changeSupport = this.changeSupport;
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        changeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
+
+    /**
+     * Support for reporting bound property changes for integer properties.
+     * This method can be called when a bound property has changed and it will
+     * send the appropriate PropertyChangeEvent to any registered
+     * PropertyChangeListeners.
+     *
+     * @param propertyName the property whose value has changed
+     * @param oldValue the property's previous value
+     * @param newValue the property's new value
+     * @since 1.4
+     */
+    protected void firePropertyChange(String propertyName,
+                                      int oldValue, int newValue) {
+        PropertyChangeSupport changeSupport = this.changeSupport;
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        changeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
+
+    /**
+     * Reports a bound property change.
+     *
+     * @param propertyName the programmatic name of the property
+     *          that was changed
+     * @param oldValue the old value of the property (as a byte)
+     * @param newValue the new value of the property (as a byte)
+     * @see #firePropertyChange(java.lang.String, java.lang.Object,
+     *          java.lang.Object)
+     * @since 1.5
+     */
+    public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        firePropertyChange(propertyName, Byte.valueOf(oldValue), Byte.valueOf(newValue));
+    }
+
+    /**
+     * Reports a bound property change.
+     *
+     * @param propertyName the programmatic name of the property
+     *          that was changed
+     * @param oldValue the old value of the property (as a char)
+     * @param newValue the new value of the property (as a char)
+     * @see #firePropertyChange(java.lang.String, java.lang.Object,
+     *          java.lang.Object)
+     * @since 1.5
+     */
+    public void firePropertyChange(String propertyName, char oldValue, char newValue) {
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        firePropertyChange(propertyName, new Character(oldValue), new Character(newValue));
+    }
+
+    /**
+     * Reports a bound property change.
+     *
+     * @param propertyName the programmatic name of the property
+     *          that was changed
+     * @param oldValue the old value of the property (as a short)
+     * @param newValue the old value of the property (as a short)
+     * @see #firePropertyChange(java.lang.String, java.lang.Object,
+     *          java.lang.Object)
+     * @since 1.5
+     */
+    public void firePropertyChange(String propertyName, short oldValue, short newValue) {
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        firePropertyChange(propertyName, Short.valueOf(oldValue), Short.valueOf(newValue));
+    }
+
+
+    /**
+     * Reports a bound property change.
+     *
+     * @param propertyName the programmatic name of the property
+     *          that was changed
+     * @param oldValue the old value of the property (as a long)
+     * @param newValue the new value of the property (as a long)
+     * @see #firePropertyChange(java.lang.String, java.lang.Object,
+     *          java.lang.Object)
+     * @since 1.5
+     */
+    public void firePropertyChange(String propertyName, long oldValue, long newValue) {
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        firePropertyChange(propertyName, Long.valueOf(oldValue), Long.valueOf(newValue));
+    }
+
+    /**
+     * Reports a bound property change.
+     *
+     * @param propertyName the programmatic name of the property
+     *          that was changed
+     * @param oldValue the old value of the property (as a float)
+     * @param newValue the new value of the property (as a float)
+     * @see #firePropertyChange(java.lang.String, java.lang.Object,
+     *          java.lang.Object)
+     * @since 1.5
+     */
+    public void firePropertyChange(String propertyName, float oldValue, float newValue) {
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        firePropertyChange(propertyName, Float.valueOf(oldValue), Float.valueOf(newValue));
+    }
+
+    /**
+     * Reports a bound property change.
+     *
+     * @param propertyName the programmatic name of the property
+     *          that was changed
+     * @param oldValue the old value of the property (as a double)
+     * @param newValue the new value of the property (as a double)
+     * @see #firePropertyChange(java.lang.String, java.lang.Object,
+     *          java.lang.Object)
+     * @since 1.5
+     */
+    public void firePropertyChange(String propertyName, double oldValue, double newValue) {
+        if (changeSupport == null || oldValue == newValue) {
+            return;
+        }
+        firePropertyChange(propertyName, Double.valueOf(oldValue), Double.valueOf(newValue));
+    }
+
+
+    // Serialization support.
+
+    /**
+     * Component Serialized Data Version.
+     *
+     * @serial
+     */
+    private int componentSerializedDataVersion = 4;
+
+    /**
+     * This hack is for Swing serialization. It will invoke
+     * the Swing package private method <code>compWriteObjectNotify</code>.
+     */
+    private void doSwingSerialization() {
+        Package swingPackage = Package.getPackage("javax.swing");
+        // For Swing serialization to correctly work Swing needs to
+        // be notified before Component does it's serialization.  This
+        // hack accomodates this.
+        //
+        // Swing classes MUST be loaded by the bootstrap class loader,
+        // otherwise we don't consider them.
+        for (Class<?> klass = Component.this.getClass(); klass != null;
+                   klass = klass.getSuperclass()) {
+            if (klass.getPackage() == swingPackage &&
+                      klass.getClassLoader() == null) {
+                final Class<?> swingClass = klass;
+                // Find the first override of the compWriteObjectNotify method
+                Method[] methods = AccessController.doPrivileged(
+                                                                 new PrivilegedAction<Method[]>() {
+                                                                     public Method[] run() {
+                                                                         return swingClass.getDeclaredMethods();
+                                                                     }
+                                                                 });
+                for (int counter = methods.length - 1; counter >= 0;
+                     counter--) {
+                    final Method method = methods[counter];
+                    if (method.getName().equals("compWriteObjectNotify")){
+                        // We found it, use doPrivileged to make it accessible
+                        // to use.
+                        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                                public Void run() {
+                                    method.setAccessible(true);
+                                    return null;
+                                }
+                            });
+                        // Invoke the method
+                        try {
+                            method.invoke(this, (Object[]) null);
+                        } catch (IllegalAccessException iae) {
+                        } catch (InvocationTargetException ite) {
+                        }
+                        // We're done, bail.
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes default serializable fields to stream.  Writes
+     * a variety of serializable listeners as optional data.
+     * The non-serializable listeners are detected and
+     * no attempt is made to serialize them.
+     *
+     * @param s the <code>ObjectOutputStream</code> to write
+     * @serialData <code>null</code> terminated sequence of
+     *   0 or more pairs; the pair consists of a <code>String</code>
+     *   and an <code>Object</code>; the <code>String</code> indicates
+     *   the type of object and is one of the following (as of 1.4):
+     *   <code>componentListenerK</code> indicating an
+     *     <code>ComponentListener</code> object;
+     *   <code>focusListenerK</code> indicating an
+     *     <code>FocusListener</code> object;
+     *   <code>keyListenerK</code> indicating an
+     *     <code>KeyListener</code> object;
+     *   <code>mouseListenerK</code> indicating an
+     *     <code>MouseListener</code> object;
+     *   <code>mouseMotionListenerK</code> indicating an
+     *     <code>MouseMotionListener</code> object;
+     *   <code>inputMethodListenerK</code> indicating an
+     *     <code>InputMethodListener</code> object;
+     *   <code>hierarchyListenerK</code> indicating an
+     *     <code>HierarchyListener</code> object;
+     *   <code>hierarchyBoundsListenerK</code> indicating an
+     *     <code>HierarchyBoundsListener</code> object;
+     *   <code>mouseWheelListenerK</code> indicating an
+     *     <code>MouseWheelListener</code> object
+     * @serialData an optional <code>ComponentOrientation</code>
+     *    (after <code>inputMethodListener</code>, as of 1.2)
+     *
+     * @see AWTEventMulticaster#save(java.io.ObjectOutputStream, java.lang.String, java.util.EventListener)
+     * @see #componentListenerK
+     * @see #focusListenerK
+     * @see #keyListenerK
+     * @see #mouseListenerK
+     * @see #mouseMotionListenerK
+     * @see #inputMethodListenerK
+     * @see #hierarchyListenerK
+     * @see #hierarchyBoundsListenerK
+     * @see #mouseWheelListenerK
+     * @see #readObject(ObjectInputStream)
+     */
+    private void writeObject(ObjectOutputStream s)
+      throws IOException
+    {
+        doSwingSerialization();
+
+        s.defaultWriteObject();
+
+        AWTEventMulticaster.save(s, componentListenerK, componentListener);
+        AWTEventMulticaster.save(s, focusListenerK, focusListener);
+        AWTEventMulticaster.save(s, keyListenerK, keyListener);
+        AWTEventMulticaster.save(s, mouseListenerK, mouseListener);
+        AWTEventMulticaster.save(s, mouseMotionListenerK, mouseMotionListener);
+        AWTEventMulticaster.save(s, inputMethodListenerK, inputMethodListener);
+
+        s.writeObject(null);
+        s.writeObject(componentOrientation);
+
+        AWTEventMulticaster.save(s, hierarchyListenerK, hierarchyListener);
+        AWTEventMulticaster.save(s, hierarchyBoundsListenerK,
+                                 hierarchyBoundsListener);
+        s.writeObject(null);
+
+        AWTEventMulticaster.save(s, mouseWheelListenerK, mouseWheelListener);
+        s.writeObject(null);
+
+    }
+
+    /**
+     * Reads the <code>ObjectInputStream</code> and if it isn't
+     * <code>null</code> adds a listener to receive a variety
+     * of events fired by the component.
+     * Unrecognized keys or values will be ignored.
+     *
+     * @param s the <code>ObjectInputStream</code> to read
+     * @see #writeObject(ObjectOutputStream)
+     */
+    private void readObject(ObjectInputStream s)
+      throws ClassNotFoundException, IOException
+    {
+        objectLock = new Object();
+
+        acc = AccessController.getContext();
+
+        s.defaultReadObject();
+
+        appContext = AppContext.getAppContext();
+        coalescingEnabled = checkCoalescing();
+        if (componentSerializedDataVersion < 4) {
+            // These fields are non-transient and rely on default
+            // serialization. However, the default values are insufficient,
+            // so we need to set them explicitly for object data streams prior
+            // to 1.4.
+            focusable = true;
+            isFocusTraversableOverridden = FOCUS_TRAVERSABLE_UNKNOWN;
+            initializeFocusTraversalKeys();
+            focusTraversalKeysEnabled = true;
+        }
+
+        Object keyOrNull;
+        while(null != (keyOrNull = s.readObject())) {
+            String key = ((String)keyOrNull).intern();
+
+            if (componentListenerK == key)
+                addComponentListener((ComponentListener)(s.readObject()));
+
+            else if (focusListenerK == key)
+                addFocusListener((FocusListener)(s.readObject()));
+
+            else if (keyListenerK == key)
+                addKeyListener((KeyListener)(s.readObject()));
+
+            else if (mouseListenerK == key)
+                addMouseListener((MouseListener)(s.readObject()));
+
+            else if (mouseMotionListenerK == key)
+                addMouseMotionListener((MouseMotionListener)(s.readObject()));
+
+            else if (inputMethodListenerK == key)
+                addInputMethodListener((InputMethodListener)(s.readObject()));
+
+            else // skip value for unrecognized key
+                s.readObject();
+
+        }
+
+        // Read the component's orientation if it's present
+        Object orient = null;
+
+        try {
+            orient = s.readObject();
+        } catch (java.io.OptionalDataException e) {
+            // JDK 1.1 instances will not have this optional data.
+            // e.eof will be true to indicate that there is no more
+            // data available for this object.
+            // If e.eof is not true, throw the exception as it
+            // might have been caused by reasons unrelated to
+            // componentOrientation.
+
+            if (!e.eof)  {
+                throw (e);
+            }
+        }
+
+        if (orient != null) {
+            componentOrientation = (ComponentOrientation)orient;
+        } else {
+            componentOrientation = ComponentOrientation.UNKNOWN;
+        }
+
+        try {
+            while(null != (keyOrNull = s.readObject())) {
+                String key = ((String)keyOrNull).intern();
+
+                if (hierarchyListenerK == key) {
+                    addHierarchyListener((HierarchyListener)(s.readObject()));
+                }
+                else if (hierarchyBoundsListenerK == key) {
+                    addHierarchyBoundsListener((HierarchyBoundsListener)
+                                               (s.readObject()));
+                }
+                else {
+                    // skip value for unrecognized key
+                    s.readObject();
+                }
+            }
+        } catch (java.io.OptionalDataException e) {
+            // JDK 1.1/1.2 instances will not have this optional data.
+            // e.eof will be true to indicate that there is no more
+            // data available for this object.
+            // If e.eof is not true, throw the exception as it
+            // might have been caused by reasons unrelated to
+            // hierarchy and hierarchyBounds listeners.
+
+            if (!e.eof)  {
+                throw (e);
+            }
+        }
+
+        try {
+            while (null != (keyOrNull = s.readObject())) {
+                String key = ((String)keyOrNull).intern();
+
+                if (mouseWheelListenerK == key) {
+                    addMouseWheelListener((MouseWheelListener)(s.readObject()));
+                }
+                else {
+                    // skip value for unrecognized key
+                    s.readObject();
+                }
+            }
+        } catch (java.io.OptionalDataException e) {
+            // pre-1.3 instances will not have this optional data.
+            // e.eof will be true to indicate that there is no more
+            // data available for this object.
+            // If e.eof is not true, throw the exception as it
+            // might have been caused by reasons unrelated to
+            // mouse wheel listeners
+
+            if (!e.eof)  {
+                throw (e);
+            }
+        }
+
+        if (popups != null) {
+            int npopups = popups.size();
+            for (int i = 0 ; i < npopups ; i++) {
+                PopupMenu popup = popups.elementAt(i);
+                popup.parent = this;
+            }
+        }
+    }
+
+    /**
+     * Sets the language-sensitive orientation that is to be used to order
+     * the elements or text within this component.  Language-sensitive
+     * <code>LayoutManager</code> and <code>Component</code>
+     * subclasses will use this property to
+     * determine how to lay out and draw components.
+     * <p>
+     * At construction time, a component's orientation is set to
+     * <code>ComponentOrientation.UNKNOWN</code>,
+     * indicating that it has not been specified
+     * explicitly.  The UNKNOWN orientation behaves the same as
+     * <code>ComponentOrientation.LEFT_TO_RIGHT</code>.
+     * <p>
+     * To set the orientation of a single component, use this method.
+     * To set the orientation of an entire component
+     * hierarchy, use
+     * {@link #applyComponentOrientation applyComponentOrientation}.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     *
+     * @see ComponentOrientation
+     * @see #invalidate
+     *
+     * @author Laura Werner, IBM
+     * @beaninfo
+     *       bound: true
+     */
+    public void setComponentOrientation(ComponentOrientation o) {
+        ComponentOrientation oldValue = componentOrientation;
+        componentOrientation = o;
+
+        // This is a bound property, so report the change to
+        // any registered listeners.  (Cheap if there are none.)
+        firePropertyChange("componentOrientation", oldValue, o);
+
+        // This could change the preferred size of the Component.
+        invalidateIfValid();
+    }
+
+    /**
+     * Retrieves the language-sensitive orientation that is to be used to order
+     * the elements or text within this component.  <code>LayoutManager</code>
+     * and <code>Component</code>
+     * subclasses that wish to respect orientation should call this method to
+     * get the component's orientation before performing layout or drawing.
+     *
+     * @see ComponentOrientation
+     *
+     * @author Laura Werner, IBM
+     */
+    public ComponentOrientation getComponentOrientation() {
+        return componentOrientation;
+    }
+
+    /**
+     * Sets the <code>ComponentOrientation</code> property of this component
+     * and all components contained within it.
+     * <p>
+     * This method changes layout-related information, and therefore,
+     * invalidates the component hierarchy.
+     *
+     *
+     * @param orientation the new component orientation of this component and
+     *        the components contained within it.
+     * @exception NullPointerException if <code>orientation</code> is null.
+     * @see #setComponentOrientation
+     * @see #getComponentOrientation
+     * @see #invalidate
+     * @since 1.4
+     */
+    public void applyComponentOrientation(ComponentOrientation orientation) {
+        if (orientation == null) {
+            throw new NullPointerException();
+        }
+        setComponentOrientation(orientation);
+    }
+
+    final boolean canBeFocusOwner() {
+        // It is enabled, visible, focusable.
+        if (isEnabled() && isDisplayable() && isVisible() && isFocusable()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks that this component meets the prerequesites to be focus owner:
+     * - it is enabled, visible, focusable
+     * - it's parents are all enabled and showing
+     * - top-level window is focusable
+     * - if focus cycle root has DefaultFocusTraversalPolicy then it also checks that this policy accepts
+     * this component as focus owner
+     * @since 1.5
+     */
+    final boolean canBeFocusOwnerRecursively() {
+        // - it is enabled, visible, focusable
+        if (!canBeFocusOwner()) {
+            return false;
+        }
+
+        // - it's parents are all enabled and showing
+        synchronized(getTreeLock()) {
+            if (parent != null) {
+                return parent.canContainFocusOwner(this);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Fix the location of the HW component in a LW container hierarchy.
+     */
+    final void relocateComponent() {
+        synchronized (getTreeLock()) {
+            if (peer == null) {
+                return;
+            }
+            int nativeX = x;
+            int nativeY = y;
+            for (Component cont = getContainer();
+                    cont != null && cont.isLightweight();
+                    cont = cont.getContainer())
+            {
+                nativeX += cont.x;
+                nativeY += cont.y;
+            }
+            peer.setBounds(nativeX, nativeY, width, height,
+                    ComponentPeer.SET_LOCATION);
+        }
+    }
+
+    /**
+     * Returns the <code>Window</code> ancestor of the component.
+     * @return Window ancestor of the component or component by itself if it is Window;
+     *         null, if component is not a part of window hierarchy
+     */
+    Window getContainingWindow() {
+        return SunToolkit.getContainingWindow(this);
+    }
+
+    /**
+     * Initialize JNI field and method IDs
+     */
+    private static native void initIDs();
+
+    /*
+     * --- Accessibility Support ---
+     *
+     *  Component will contain all of the methods in interface Accessible,
+     *  though it won't actually implement the interface - that will be up
+     *  to the individual objects which extend Component.
+     */
+
+    /**
+     * The {@code AccessibleContext} associated with this {@code Component}.
+     */
+    protected AccessibleContext accessibleContext = null;
+
+    /**
+     * Gets the <code>AccessibleContext</code> associated
+     * with this <code>Component</code>.
+     * The method implemented by this base
+     * class returns null.  Classes that extend <code>Component</code>
+     * should implement this method to return the
+     * <code>AccessibleContext</code> associated with the subclass.
+     *
+     *
+     * @return the <code>AccessibleContext</code> of this
+     *    <code>Component</code>
+     * @since 1.3
+     */
+    public AccessibleContext getAccessibleContext() {
+        return accessibleContext;
+    }
+
+    /**
+     * Inner class of Component used to provide default support for
+     * accessibility.  This class is not meant to be used directly by
+     * application developers, but is instead meant only to be
+     * subclassed by component developers.
+     * <p>
+     * The class used to obtain the accessible role for this object.
+     * @since 1.3
+     */
+    protected abstract class AccessibleAWTComponent extends AccessibleContext
+        implements Serializable, AccessibleComponent {
+
+        private static final long serialVersionUID = 642321655757800191L;
+
+        /**
+         * Though the class is abstract, this should be called by
+         * all sub-classes.
+         */
+        protected AccessibleAWTComponent() {
+        }
+
+        /**
+         * Number of PropertyChangeListener objects registered. It's used
+         * to add/remove ComponentListener and FocusListener to track
+         * target Component's state.
+         */
+        private volatile transient int propertyListenersCount = 0;
+
+        protected ComponentListener accessibleAWTComponentHandler = null;
+        protected FocusListener accessibleAWTFocusHandler = null;
+
+        /**
+         * Fire PropertyChange listener, if one is registered,
+         * when shown/hidden..
+         * @since 1.3
+         */
+        protected class AccessibleAWTComponentHandler implements ComponentListener {
+            public void componentHidden(ComponentEvent e)  {
+                if (accessibleContext != null) {
+                    accessibleContext.firePropertyChange(
+                                                         AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                         AccessibleState.VISIBLE, null);
+                }
+            }
+
+            public void componentShown(ComponentEvent e)  {
+                if (accessibleContext != null) {
+                    accessibleContext.firePropertyChange(
+                                                         AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                         null, AccessibleState.VISIBLE);
+                }
+            }
+
+            public void componentMoved(ComponentEvent e)  {
+            }
+
+            public void componentResized(ComponentEvent e)  {
+            }
+        } // inner class AccessibleAWTComponentHandler
+
+
+        /**
+         * Fire PropertyChange listener, if one is registered,
+         * when focus events happen
+         * @since 1.3
+         */
+        protected class AccessibleAWTFocusHandler implements FocusListener {
+            public void focusGained(FocusEvent event) {
+                if (accessibleContext != null) {
+                    accessibleContext.firePropertyChange(
+                                                         AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                         null, AccessibleState.FOCUSED);
+                }
+            }
+            public void focusLost(FocusEvent event) {
+                if (accessibleContext != null) {
+                    accessibleContext.firePropertyChange(
+                                                         AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                         AccessibleState.FOCUSED, null);
+                }
+            }
+        }  // inner class AccessibleAWTFocusHandler
+
+
+        /**
+         * Adds a <code>PropertyChangeListener</code> to the listener list.
+         *
+         * @param listener  the property change listener to be added
+         */
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            if (accessibleAWTComponentHandler == null) {
+                accessibleAWTComponentHandler = new AccessibleAWTComponentHandler();
+            }
+            if (accessibleAWTFocusHandler == null) {
+                accessibleAWTFocusHandler = new AccessibleAWTFocusHandler();
+            }
+            if (propertyListenersCount++ == 0) {
+                Component.this.addComponentListener(accessibleAWTComponentHandler);
+                Component.this.addFocusListener(accessibleAWTFocusHandler);
+            }
+            super.addPropertyChangeListener(listener);
+        }
+
+        /**
+         * Remove a PropertyChangeListener from the listener list.
+         * This removes a PropertyChangeListener that was registered
+         * for all properties.
+         *
+         * @param listener  The PropertyChangeListener to be removed
+         */
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            if (--propertyListenersCount == 0) {
+                Component.this.removeComponentListener(accessibleAWTComponentHandler);
+                Component.this.removeFocusListener(accessibleAWTFocusHandler);
+            }
+            super.removePropertyChangeListener(listener);
+        }
+
+        // AccessibleContext methods
+        //
+        /**
+         * Gets the accessible name of this object.  This should almost never
+         * return <code>java.awt.Component.getName()</code>,
+         * as that generally isn't a localized name,
+         * and doesn't have meaning for the user.  If the
+         * object is fundamentally a text object (e.g. a menu item), the
+         * accessible name should be the text of the object (e.g. "save").
+         * If the object has a tooltip, the tooltip text may also be an
+         * appropriate String to return.
+         *
+         * @return the localized name of the object -- can be
+         *         <code>null</code> if this
+         *         object does not have a name
+         * @see javax.accessibility.AccessibleContext#setAccessibleName
+         */
+        public String getAccessibleName() {
+            return accessibleName;
+        }
+
+        /**
+         * Gets the accessible description of this object.  This should be
+         * a concise, localized description of what this object is - what
+         * is its meaning to the user.  If the object has a tooltip, the
+         * tooltip text may be an appropriate string to return, assuming
+         * it contains a concise description of the object (instead of just
+         * the name of the object - e.g. a "Save" icon on a toolbar that
+         * had "save" as the tooltip text shouldn't return the tooltip
+         * text as the description, but something like "Saves the current
+         * text document" instead).
+         *
+         * @return the localized description of the object -- can be
+         *        <code>null</code> if this object does not have a description
+         * @see javax.accessibility.AccessibleContext#setAccessibleDescription
+         */
+        public String getAccessibleDescription() {
+            return accessibleDescription;
+        }
+
+        /**
+         * Gets the role of this object.
+         *
+         * @return an instance of <code>AccessibleRole</code>
+         *      describing the role of the object
+         * @see javax.accessibility.AccessibleRole
+         */
+        public AccessibleRole getAccessibleRole() {
+            return AccessibleRole.AWT_COMPONENT;
+        }
+
+        /**
+         * Gets the state of this object.
+         *
+         * @return an instance of <code>AccessibleStateSet</code>
+         *       containing the current state set of the object
+         * @see javax.accessibility.AccessibleState
+         */
+        public AccessibleStateSet getAccessibleStateSet() {
+            return Component.this.getAccessibleStateSet();
+        }
+
+        /**
+         * Gets the <code>Accessible</code> parent of this object.
+         * If the parent of this object implements <code>Accessible</code>,
+         * this method should simply return <code>getParent</code>.
+         *
+         * @return the <code>Accessible</code> parent of this
+         *      object -- can be <code>null</code> if this
+         *      object does not have an <code>Accessible</code> parent
+         */
+        public Accessible getAccessibleParent() {
+            if (accessibleParent != null) {
+                return accessibleParent;
+            } else {
+                Container parent = getParent();
+                if (parent instanceof Accessible) {
+                    return (Accessible) parent;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Gets the index of this object in its accessible parent.
+         *
+         * @return the index of this object in its parent; or -1 if this
+         *    object does not have an accessible parent
+         * @see #getAccessibleParent
+         */
+        public int getAccessibleIndexInParent() {
+            return Component.this.getAccessibleIndexInParent();
+        }
+
+        /**
+         * Returns the number of accessible children in the object.  If all
+         * of the children of this object implement <code>Accessible</code>,
+         * then this method should return the number of children of this object.
+         *
+         * @return the number of accessible children in the object
+         */
+        public int getAccessibleChildrenCount() {
+            return 0; // Components don't have children
+        }
+
+        /**
+         * Returns the nth <code>Accessible</code> child of the object.
+         *
+         * @param i zero-based index of child
+         * @return the nth <code>Accessible</code> child of the object
+         */
+        public Accessible getAccessibleChild(int i) {
+            return null; // Components don't have children
+        }
+
+        /**
+         * Returns the locale of this object.
+         *
+         * @return the locale of this object
+         */
+        public Locale getLocale() {
+            return Component.this.getLocale();
+        }
+
+        /**
+         * Gets the <code>AccessibleComponent</code> associated
+         * with this object if one exists.
+         * Otherwise return <code>null</code>.
+         *
+         * @return the component
+         */
+        public AccessibleComponent getAccessibleComponent() {
+            return this;
+        }
+
+
+        // AccessibleComponent methods
+        //
+        /**
+         * Gets the background color of this object.
+         *
+         * @return the background color, if supported, of the object;
+         *      otherwise, <code>null</code>
+         */
+        public Color getBackground() {
+            return Component.this.getBackground();
+        }
+
+        /**
+         * Sets the background color of this object.
+         * (For transparency, see <code>isOpaque</code>.)
+         *
+         * @param c the new <code>Color</code> for the background
+         * @see Component#isOpaque
+         */
+        public void setBackground(Color c) {
+            Component.this.setBackground(c);
+        }
+
+        /**
+         * Gets the foreground color of this object.
+         *
+         * @return the foreground color, if supported, of the object;
+         *     otherwise, <code>null</code>
+         */
+        public Color getForeground() {
+            return Component.this.getForeground();
+        }
+
+        /**
+         * Sets the foreground color of this object.
+         *
+         * @param c the new <code>Color</code> for the foreground
+         */
+        public void setForeground(Color c) {
+            Component.this.setForeground(c);
+        }
+
+        /**
+         * Gets the <code>Cursor</code> of this object.
+         *
+         * @return the <code>Cursor</code>, if supported,
+         *     of the object; otherwise, <code>null</code>
+         */
+        public Cursor getCursor() {
+            return Component.this.getCursor();
+        }
+
+        /**
+         * Sets the <code>Cursor</code> of this object.
+         * <p>
+         * The method may have no visual effect if the Java platform
+         * implementation and/or the native system do not support
+         * changing the mouse cursor shape.
+         * @param cursor the new <code>Cursor</code> for the object
+         */
+        public void setCursor(Cursor cursor) {
+            Component.this.setCursor(cursor);
+        }
+
+        /**
+         * Gets the <code>Font</code> of this object.
+         *
+         * @return the <code>Font</code>, if supported,
+         *    for the object; otherwise, <code>null</code>
+         */
+        public Font getFont() {
+            return Component.this.getFont();
+        }
+
+        /**
+         * Sets the <code>Font</code> of this object.
+         *
+         * @param f the new <code>Font</code> for the object
+         */
+        public void setFont(Font f) {
+            Component.this.setFont(f);
+        }
+
+        /**
+         * Gets the <code>FontMetrics</code> of this object.
+         *
+         * @param f the <code>Font</code>
+         * @return the <code>FontMetrics</code>, if supported,
+         *     the object; otherwise, <code>null</code>
+         * @see #getFont
+         */
+        public FontMetrics getFontMetrics(Font f) {
+            if (f == null) {
+                return null;
+            } else {
+                return Component.this.getFontMetrics(f);
+            }
+        }
+
+        /**
+         * Determines if the object is enabled.
+         *
+         * @return true if object is enabled; otherwise, false
+         */
+        public boolean isEnabled() {
+            return Component.this.isEnabled();
+        }
+
+        /**
+         * Sets the enabled state of the object.
+         *
+         * @param b if true, enables this object; otherwise, disables it
+         */
+        public void setEnabled(boolean b) {
+            boolean old = Component.this.isEnabled();
+            Component.this.setEnabled(b);
+            if (b != old) {
+                if (accessibleContext != null) {
+                    if (b) {
+                        accessibleContext.firePropertyChange(
+                                                             AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                             null, AccessibleState.ENABLED);
+                    } else {
+                        accessibleContext.firePropertyChange(
+                                                             AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                             AccessibleState.ENABLED, null);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Determines if the object is visible.  Note: this means that the
+         * object intends to be visible; however, it may not in fact be
+         * showing on the screen because one of the objects that this object
+         * is contained by is not visible.  To determine if an object is
+         * showing on the screen, use <code>isShowing</code>.
+         *
+         * @return true if object is visible; otherwise, false
+         */
+        public boolean isVisible() {
+            return Component.this.isVisible();
+        }
+
+        /**
+         * Sets the visible state of the object.
+         *
+         * @param b if true, shows this object; otherwise, hides it
+         */
+        public void setVisible(boolean b) {
+            boolean old = Component.this.isVisible();
+            Component.this.setVisible(b);
+            if (b != old) {
+                if (accessibleContext != null) {
+                    if (b) {
+                        accessibleContext.firePropertyChange(
+                                                             AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                             null, AccessibleState.VISIBLE);
+                    } else {
+                        accessibleContext.firePropertyChange(
+                                                             AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                                                             AccessibleState.VISIBLE, null);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Determines if the object is showing.  This is determined by checking
+         * the visibility of the object and ancestors of the object.  Note:
+         * this will return true even if the object is obscured by another
+         * (for example, it happens to be underneath a menu that was pulled
+         * down).
+         *
+         * @return true if object is showing; otherwise, false
+         */
+        public boolean isShowing() {
+            return Component.this.isShowing();
+        }
+
+        /**
+         * Checks whether the specified point is within this object's bounds,
+         * where the point's x and y coordinates are defined to be relative to
+         * the coordinate system of the object.
+         *
+         * @param p the <code>Point</code> relative to the
+         *     coordinate system of the object
+         * @return true if object contains <code>Point</code>; otherwise false
+         */
+        public boolean contains(Point p) {
+            return Component.this.contains(p);
+        }
+
+        /**
+         * Returns the location of the object on the screen.
+         *
+         * @return location of object on screen -- can be
+         *    <code>null</code> if this object is not on the screen
+         */
+        public Point getLocationOnScreen() {
+            synchronized (Component.this.getTreeLock()) {
+                if (Component.this.isShowing()) {
+                    return Component.this.getLocationOnScreen();
+                } else {
+                    return null;
+                }
+            }
+        }
+
+        /**
+         * Gets the location of the object relative to the parent in the form
+         * of a point specifying the object's top-left corner in the screen's
+         * coordinate space.
+         *
+         * @return an instance of Point representing the top-left corner of
+         * the object's bounds in the coordinate space of the screen;
+         * <code>null</code> if this object or its parent are not on the screen
+         */
+        public Point getLocation() {
+            return Component.this.getLocation();
+        }
+
+        /**
+         * Sets the location of the object relative to the parent.
+         * @param p  the coordinates of the object
+         */
+        public void setLocation(Point p) {
+            Component.this.setLocation(p);
+        }
+
+        /**
+         * Gets the bounds of this object in the form of a Rectangle object.
+         * The bounds specify this object's width, height, and location
+         * relative to its parent.
+         *
+         * @return a rectangle indicating this component's bounds;
+         *   <code>null</code> if this object is not on the screen
+         */
+        public Rectangle getBounds() {
+            return Component.this.getBounds();
+        }
+
+        /**
+         * Sets the bounds of this object in the form of a
+         * <code>Rectangle</code> object.
+         * The bounds specify this object's width, height, and location
+         * relative to its parent.
+         *
+         * @param r a rectangle indicating this component's bounds
+         */
+        public void setBounds(Rectangle r) {
+            Component.this.setBounds(r);
+        }
+
+        /**
+         * Returns the size of this object in the form of a
+         * <code>Dimension</code> object. The height field of the
+         * <code>Dimension</code> object contains this objects's
+         * height, and the width field of the <code>Dimension</code>
+         * object contains this object's width.
+         *
+         * @return a <code>Dimension</code> object that indicates
+         *     the size of this component; <code>null</code> if
+         *     this object is not on the screen
+         */
+        public Dimension getSize() {
+            return Component.this.getSize();
+        }
+
+        /**
+         * Resizes this object so that it has width and height.
+         *
+         * @param d - the dimension specifying the new size of the object
+         */
+        public void setSize(Dimension d) {
+            Component.this.setSize(d);
+        }
+
+        /**
+         * Returns the <code>Accessible</code> child,
+         * if one exists, contained at the local
+         * coordinate <code>Point</code>.  Otherwise returns
+         * <code>null</code>.
+         *
+         * @param p the point defining the top-left corner of
+         *      the <code>Accessible</code>, given in the
+         *      coordinate space of the object's parent
+         * @return the <code>Accessible</code>, if it exists,
+         *      at the specified location; else <code>null</code>
+         */
+        public Accessible getAccessibleAt(Point p) {
+            return null; // Components don't have children
+        }
+
+        /**
+         * Returns whether this object can accept focus or not.
+         *
+         * @return true if object can accept focus; otherwise false
+         */
+        public boolean isFocusTraversable() {
+            return Component.this.isFocusTraversable();
+        }
+
+        /**
+         * Requests focus for this object.
+         */
+        public void requestFocus() {
+            Component.this.requestFocus();
+        }
+
+        /**
+         * Adds the specified focus listener to receive focus events from this
+         * component.
+         *
+         * @param l the focus listener
+         */
+        public void addFocusListener(FocusListener l) {
+            Component.this.addFocusListener(l);
+        }
+
+        /**
+         * Removes the specified focus listener so it no longer receives focus
+         * events from this component.
+         *
+         * @param l the focus listener
+         */
+        public void removeFocusListener(FocusListener l) {
+            Component.this.removeFocusListener(l);
+        }
+
+    } // inner class AccessibleAWTComponent
+
+
+    /**
+     * Gets the index of this object in its accessible parent.
+     * If this object does not have an accessible parent, returns
+     * -1.
+     *
+     * @return the index of this object in its accessible parent
+     */
+    int getAccessibleIndexInParent() {
+        synchronized (getTreeLock()) {
+            int index = -1;
+            Container parent = this.getParent();
+            if (parent != null && parent instanceof Accessible) {
+                Component ca[] = parent.getComponents();
+                for (int i = 0; i < ca.length; i++) {
+                    if (ca[i] instanceof Accessible) {
+                        index++;
+                    }
+                    if (this.equals(ca[i])) {
+                        return index;
+                    }
+                }
+            }
+            return -1;
+        }
+    }
+
+    /**
+     * Gets the current state set of this object.
+     *
+     * @return an instance of <code>AccessibleStateSet</code>
+     *    containing the current state set of the object
+     * @see AccessibleState
+     */
+    AccessibleStateSet getAccessibleStateSet() {
+        synchronized (getTreeLock()) {
+            AccessibleStateSet states = new AccessibleStateSet();
+            if (this.isEnabled()) {
+                states.add(AccessibleState.ENABLED);
+            }
+            if (this.isFocusTraversable()) {
+                states.add(AccessibleState.FOCUSABLE);
+            }
+            if (this.isVisible()) {
+                states.add(AccessibleState.VISIBLE);
+            }
+            if (this.isShowing()) {
+                states.add(AccessibleState.SHOWING);
+            }
+            if (this.isFocusOwner()) {
+                states.add(AccessibleState.FOCUSED);
+            }
+            if (this instanceof Accessible) {
+                AccessibleContext ac = ((Accessible) this).getAccessibleContext();
+                if (ac != null) {
+                    Accessible ap = ac.getAccessibleParent();
+                    if (ap != null) {
+                        AccessibleContext pac = ap.getAccessibleContext();
+                        if (pac != null) {
+                            AccessibleSelection as = pac.getAccessibleSelection();
+                            if (as != null) {
+                                states.add(AccessibleState.SELECTABLE);
+                                int i = ac.getAccessibleIndexInParent();
+                                if (i >= 0) {
+                                    if (as.isAccessibleChildSelected(i)) {
+                                        states.add(AccessibleState.SELECTED);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (Component.isInstanceOf(this, "javax.swing.JComponent")) {
+                if (((javax.swing.JComponent) this).isOpaque()) {
+                    states.add(AccessibleState.OPAQUE);
+                }
+            }
+            return states;
+        }
+    }
+
+    /**
+     * Checks that the given object is instance of the given class.
+     * @param obj Object to be checked
+     * @param className The name of the class. Must be fully-qualified class name.
+     * @return true, if this object is instanceof given class,
+     *         false, otherwise, or if obj or className is null
+     */
+    static boolean isInstanceOf(Object obj, String className) {
+        if (obj == null) return false;
+        if (className == null) return false;
+
+        Class<?> cls = obj.getClass();
+        while (cls != null) {
+            if (cls.getName().equals(className)) {
+                return true;
+            }
+            cls = cls.getSuperclass();
+        }
+        return false;
+    }
+
+
+    // ************************** MIXING CODE *******************************
+
+    /**
+     * Check whether we can trust the current bounds of the component.
+     * The return value of false indicates that the container of the
+     * component is invalid, and therefore needs to be layed out, which would
+     * probably mean changing the bounds of its children.
+     * Null-layout of the container or absence of the container mean
+     * the bounds of the component are final and can be trusted.
+     */
+    final boolean areBoundsValid() {
+        Container cont = getContainer();
+        return cont == null || cont.isValid() || cont.getLayout() == null;
+    }
+
+    /**
+     * Applies the shape to the component
+     * @param shape Shape to be applied to the component
+     */
+    void applyCompoundShape(Region shape) {
+        checkTreeLock();
+
+        if (!areBoundsValid()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
+            }
+            return;
+        }
+
+        if (!isLightweight()) {
+            ComponentPeer peer = getPeer();
+            if (peer != null) {
+                // The Region class has some optimizations. That's why
+                // we should manually check whether it's empty and
+                // substitute the object ourselves. Otherwise we end up
+                // with some incorrect Region object with loX being
+                // greater than the hiX for instance.
+                if (shape.isEmpty()) {
+                    shape = Region.EMPTY_REGION;
+                }
+
+
+                // Note: the shape is not really copied/cloned. We create
+                // the Region object ourselves, so there's no any possibility
+                // to modify the object outside of the mixing code.
+                // Nullifying compoundShape means that the component has normal shape
+                // (or has no shape at all).
+                if (shape.equals(getNormalShape())) {
+                    if (this.compoundShape == null) {
+                        return;
+                    }
+                    this.compoundShape = null;
+                    peer.applyShape(null);
+                } else {
+                    if (shape.equals(getAppliedShape())) {
+                        return;
+                    }
+                    this.compoundShape = shape;
+                    Point compAbsolute = getLocationOnWindow();
+                    if (mixingLog.isLoggable(PlatformLogger.Level.FINER)) {
+                        mixingLog.fine("this = " + this +
+                                "; compAbsolute=" + compAbsolute + "; shape=" + shape);
+                    }
+                    peer.applyShape(shape.getTranslatedRegion(-compAbsolute.x, -compAbsolute.y));
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the shape previously set with applyCompoundShape().
+     * If the component is LW or no shape was applied yet,
+     * the method returns the normal shape.
+     */
+    private Region getAppliedShape() {
+        checkTreeLock();
+        //XXX: if we allow LW components to have a shape, this must be changed
+        return (this.compoundShape == null || isLightweight()) ? getNormalShape() : this.compoundShape;
+    }
+
+    Point getLocationOnWindow() {
+        checkTreeLock();
+        Point curLocation = getLocation();
+
+        for (Container parent = getContainer();
+                parent != null && !(parent instanceof Window);
+                parent = parent.getContainer())
+        {
+            curLocation.x += parent.getX();
+            curLocation.y += parent.getY();
+        }
+
+        return curLocation;
+    }
+
+    /**
+     * Returns the full shape of the component located in window coordinates
+     */
+    final Region getNormalShape() {
+        checkTreeLock();
+        //XXX: we may take into account a user-specified shape for this component
+        Point compAbsolute = getLocationOnWindow();
+        return
+            Region.getInstanceXYWH(
+                    compAbsolute.x,
+                    compAbsolute.y,
+                    getWidth(),
+                    getHeight()
+            );
+    }
+
+    /**
+     * Returns the "opaque shape" of the component.
+     *
+     * The opaque shape of a lightweight components is the actual shape that
+     * needs to be cut off of the heavyweight components in order to mix this
+     * lightweight component correctly with them.
+     *
+     * The method is overriden in the java.awt.Container to handle non-opaque
+     * containers containing opaque children.
+     *
+     * See 6637655 for details.
+     */
+    Region getOpaqueShape() {
+        checkTreeLock();
+        if (mixingCutoutRegion != null) {
+            return mixingCutoutRegion;
+        } else {
+            return getNormalShape();
+        }
+    }
+
+    final int getSiblingIndexAbove() {
+        checkTreeLock();
+        Container parent = getContainer();
+        if (parent == null) {
+            return -1;
+        }
+
+        int nextAbove = parent.getComponentZOrder(this) - 1;
+
+        return nextAbove < 0 ? -1 : nextAbove;
+    }
+
+    final ComponentPeer getHWPeerAboveMe() {
+        checkTreeLock();
+
+        Container cont = getContainer();
+        int indexAbove = getSiblingIndexAbove();
+
+        while (cont != null) {
+            for (int i = indexAbove; i > -1; i--) {
+                Component comp = cont.getComponent(i);
+                if (comp != null && comp.isDisplayable() && !comp.isLightweight()) {
+                    return comp.getPeer();
+                }
+            }
+            // traversing the hierarchy up to the closest HW container;
+            // further traversing may return a component that is not actually
+            // a native sibling of this component and this kind of z-order
+            // request may not be allowed by the underlying system (6852051).
+            if (!cont.isLightweight()) {
+                break;
+            }
+
+            indexAbove = cont.getSiblingIndexAbove();
+            cont = cont.getContainer();
+        }
+
+        return null;
+    }
+
+    final int getSiblingIndexBelow() {
+        checkTreeLock();
+        Container parent = getContainer();
+        if (parent == null) {
+            return -1;
+        }
+
+        int nextBelow = parent.getComponentZOrder(this) + 1;
+
+        return nextBelow >= parent.getComponentCount() ? -1 : nextBelow;
+    }
+
+    final boolean isNonOpaqueForMixing() {
+        return mixingCutoutRegion != null &&
+            mixingCutoutRegion.isEmpty();
+    }
+
+    private Region calculateCurrentShape() {
+        checkTreeLock();
+        Region s = getNormalShape();
+
+        if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+            mixingLog.fine("this = " + this + "; normalShape=" + s);
+        }
+
+        if (getContainer() != null) {
+            Component comp = this;
+            Container cont = comp.getContainer();
+
+            while (cont != null) {
+                for (int index = comp.getSiblingIndexAbove(); index != -1; --index) {
+                    /* It is assumed that:
+                     *
+                     *    getComponent(getContainer().getComponentZOrder(comp)) == comp
+                     *
+                     * The assumption has been made according to the current
+                     * implementation of the Container class.
+                     */
+                    Component c = cont.getComponent(index);
+                    if (c.isLightweight() && c.isShowing()) {
+                        s = s.getDifference(c.getOpaqueShape());
+                    }
+                }
+
+                if (cont.isLightweight()) {
+                    s = s.getIntersection(cont.getNormalShape());
+                } else {
+                    break;
+                }
+
+                comp = cont;
+                cont = cont.getContainer();
+            }
+        }
+
+        if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+            mixingLog.fine("currentShape=" + s);
+        }
+
+        return s;
+    }
+
+    void applyCurrentShape() {
+        checkTreeLock();
+        if (!areBoundsValid()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
+            }
+            return; // Because applyCompoundShape() ignores such components anyway
+        }
+        if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+            mixingLog.fine("this = " + this);
+        }
+        applyCompoundShape(calculateCurrentShape());
+    }
+
+    final void subtractAndApplyShape(Region s) {
+        checkTreeLock();
+
+        if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+            mixingLog.fine("this = " + this + "; s=" + s);
+        }
+
+        applyCompoundShape(getAppliedShape().getDifference(s));
+    }
+
+    private final void applyCurrentShapeBelowMe() {
+        checkTreeLock();
+        Container parent = getContainer();
+        if (parent != null && parent.isShowing()) {
+            // First, reapply shapes of my siblings
+            parent.recursiveApplyCurrentShape(getSiblingIndexBelow());
+
+            // Second, if my container is non-opaque, reapply shapes of siblings of my container
+            Container parent2 = parent.getContainer();
+            while (!parent.isOpaque() && parent2 != null) {
+                parent2.recursiveApplyCurrentShape(parent.getSiblingIndexBelow());
+
+                parent = parent2;
+                parent2 = parent.getContainer();
+            }
+        }
+    }
+
+    final void subtractAndApplyShapeBelowMe() {
+        checkTreeLock();
+        Container parent = getContainer();
+        if (parent != null && isShowing()) {
+            Region opaqueShape = getOpaqueShape();
+
+            // First, cut my siblings
+            parent.recursiveSubtractAndApplyShape(opaqueShape, getSiblingIndexBelow());
+
+            // Second, if my container is non-opaque, cut siblings of my container
+            Container parent2 = parent.getContainer();
+            while (!parent.isOpaque() && parent2 != null) {
+                parent2.recursiveSubtractAndApplyShape(opaqueShape, parent.getSiblingIndexBelow());
+
+                parent = parent2;
+                parent2 = parent.getContainer();
+            }
+        }
+    }
+
+    void mixOnShowing() {
+        synchronized (getTreeLock()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this);
+            }
+            if (!isMixingNeeded()) {
+                return;
+            }
+            if (isLightweight()) {
+                subtractAndApplyShapeBelowMe();
+            } else {
+                applyCurrentShape();
+            }
+        }
+    }
+
+    void mixOnHiding(boolean isLightweight) {
+        // We cannot be sure that the peer exists at this point, so we need the argument
+        //    to find out whether the hiding component is (well, actually was) a LW or a HW.
+        synchronized (getTreeLock()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this + "; isLightweight = " + isLightweight);
+            }
+            if (!isMixingNeeded()) {
+                return;
+            }
+            if (isLightweight) {
+                applyCurrentShapeBelowMe();
+            }
+        }
+    }
+
+    void mixOnReshaping() {
+        synchronized (getTreeLock()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this);
+            }
+            if (!isMixingNeeded()) {
+                return;
+            }
+            if (isLightweight()) {
+                applyCurrentShapeBelowMe();
+            } else {
+                applyCurrentShape();
+            }
+        }
+    }
+
+    void mixOnZOrderChanging(int oldZorder, int newZorder) {
+        synchronized (getTreeLock()) {
+            boolean becameHigher = newZorder < oldZorder;
+            Container parent = getContainer();
+
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this +
+                    "; oldZorder=" + oldZorder + "; newZorder=" + newZorder + "; parent=" + parent);
+            }
+            if (!isMixingNeeded()) {
+                return;
+            }
+            if (isLightweight()) {
+                if (becameHigher) {
+                    if (parent != null && isShowing()) {
+                        parent.recursiveSubtractAndApplyShape(getOpaqueShape(), getSiblingIndexBelow(), oldZorder);
+                    }
+                } else {
+                    if (parent != null) {
+                        parent.recursiveApplyCurrentShape(oldZorder, newZorder);
+                    }
+                }
+            } else {
+                if (becameHigher) {
+                    applyCurrentShape();
+                } else {
+                    if (parent != null) {
+                        Region shape = getAppliedShape();
+
+                        for (int index = oldZorder; index < newZorder; index++) {
+                            Component c = parent.getComponent(index);
+                            if (c.isLightweight() && c.isShowing()) {
+                                shape = shape.getDifference(c.getOpaqueShape());
+                            }
+                        }
+                        applyCompoundShape(shape);
+                    }
+                }
+            }
+        }
+    }
+
+    void mixOnValidating() {
+        // This method gets overriden in the Container. Obviously, a plain
+        // non-container components don't need to handle validation.
+    }
+
+    final boolean isMixingNeeded() {
+        if (SunToolkit.getSunAwtDisableMixing()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINEST)) {
+                mixingLog.finest("this = " + this + "; Mixing disabled via sun.awt.disableMixing");
+            }
+            return false;
+        }
+        if (!areBoundsValid()) {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this + "; areBoundsValid = " + areBoundsValid());
+            }
+            return false;
+        }
+        Window window = getContainingWindow();
+        if (window != null) {
+            if (!window.hasHeavyweightDescendants() || !window.hasLightweightDescendants() || window.isDisposing()) {
+                if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                    mixingLog.fine("containing window = " + window +
+                            "; has h/w descendants = " + window.hasHeavyweightDescendants() +
+                            "; has l/w descendants = " + window.hasLightweightDescendants() +
+                            "; disposing = " + window.isDisposing());
+                }
+                return false;
+            }
+        } else {
+            if (mixingLog.isLoggable(PlatformLogger.Level.FINE)) {
+                mixingLog.fine("this = " + this + "; containing window is null");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    // ****************** END OF MIXING CODE ********************************
+
+    // Note that the method is overriden in the Window class,
+    // a window doesn't need to be updated in the Z-order.
+    void updateZOrder() {
+        peer.setZOrder(getHWPeerAboveMe());
+    }
+
+}

@@ -1,230 +1,225 @@
-/*     */ package java.awt;
-/*     */ 
-/*     */ import java.util.LinkedList;
-/*     */ import sun.awt.AWTAccessor;
-/*     */ import sun.awt.AppContext;
-/*     */ import sun.awt.SunToolkit;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class SequencedEvent
-/*     */   extends AWTEvent
-/*     */   implements ActiveEvent
-/*     */ {
-/*     */   private static final long serialVersionUID = 547742659238625067L;
-/*     */   private static final int ID = 1006;
-/*  52 */   private static final LinkedList<SequencedEvent> list = new LinkedList<>();
-/*     */   
-/*     */   private final AWTEvent nested;
-/*     */   private AppContext appContext;
-/*     */   private boolean disposed;
-/*     */   
-/*     */   static {
-/*  59 */     AWTAccessor.setSequencedEventAccessor(new AWTAccessor.SequencedEventAccessor() {
-/*     */           public AWTEvent getNested(AWTEvent param1AWTEvent) {
-/*  61 */             return ((SequencedEvent)param1AWTEvent).nested;
-/*     */           }
-/*     */           public boolean isSequencedEvent(AWTEvent param1AWTEvent) {
-/*  64 */             return param1AWTEvent instanceof SequencedEvent;
-/*     */           }
-/*     */         });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public SequencedEvent(AWTEvent paramAWTEvent) {
-/*  77 */     super(paramAWTEvent.getSource(), 1006);
-/*  78 */     this.nested = paramAWTEvent;
-/*     */ 
-/*     */     
-/*  81 */     SunToolkit.setSystemGenerated(paramAWTEvent);
-/*  82 */     synchronized (SequencedEvent.class) {
-/*  83 */       list.add(this);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void dispatch() {
-/*     */     try {
-/* 101 */       this.appContext = AppContext.getAppContext();
-/*     */       
-/* 103 */       if (getFirst() != this) {
-/* 104 */         if (EventQueue.isDispatchThread()) {
-/*     */           
-/* 106 */           EventDispatchThread eventDispatchThread = (EventDispatchThread)Thread.currentThread();
-/* 107 */           eventDispatchThread.pumpEvents(1007, new Conditional() {
-/*     */                 public boolean evaluate() {
-/* 109 */                   return !SequencedEvent.this.isFirstOrDisposed();
-/*     */                 }
-/*     */               });
-/*     */         } else {
-/* 113 */           while (!isFirstOrDisposed()) {
-/* 114 */             synchronized (SequencedEvent.class) {
-/*     */               try {
-/* 116 */                 SequencedEvent.class.wait(1000L);
-/* 117 */               } catch (InterruptedException interruptedException) {
-/*     */                 break;
-/*     */               } 
-/*     */             } 
-/*     */           } 
-/*     */         } 
-/*     */       }
-/*     */       
-/* 125 */       if (!this.disposed) {
-/* 126 */         KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/* 127 */           .setCurrentSequencedEvent(this);
-/* 128 */         Toolkit.getEventQueue().dispatchEvent(this.nested);
-/*     */       } 
-/*     */     } finally {
-/* 131 */       dispose();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final boolean isOwnerAppContextDisposed(SequencedEvent paramSequencedEvent) {
-/* 139 */     if (paramSequencedEvent != null) {
-/* 140 */       Object object = paramSequencedEvent.nested.getSource();
-/* 141 */       if (object instanceof Component) {
-/* 142 */         return ((Component)object).appContext.isDisposed();
-/*     */       }
-/*     */     } 
-/* 145 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final boolean isFirstOrDisposed() {
-/* 155 */     if (this.disposed) {
-/* 156 */       return true;
-/*     */     }
-/*     */     
-/* 159 */     return (this == getFirstWithContext() || this.disposed);
-/*     */   }
-/*     */   
-/*     */   private static final synchronized SequencedEvent getFirst() {
-/* 163 */     return list.getFirst();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final SequencedEvent getFirstWithContext() {
-/* 170 */     SequencedEvent sequencedEvent = getFirst();
-/* 171 */     while (isOwnerAppContextDisposed(sequencedEvent)) {
-/* 172 */       sequencedEvent.dispose();
-/* 173 */       sequencedEvent = getFirst();
-/*     */     } 
-/* 175 */     return sequencedEvent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final void dispose() {
-/* 189 */     synchronized (SequencedEvent.class) {
-/* 190 */       if (this.disposed) {
-/*     */         return;
-/*     */       }
-/* 193 */       if (KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/* 194 */         .getCurrentSequencedEvent() == this) {
-/* 195 */         KeyboardFocusManager.getCurrentKeyboardFocusManager()
-/* 196 */           .setCurrentSequencedEvent(null);
-/*     */       }
-/* 198 */       this.disposed = true;
-/*     */     } 
-/*     */     
-/* 201 */     if (this.appContext != null) {
-/* 202 */       SunToolkit.postEvent(this.appContext, new SentEvent());
-/*     */     }
-/*     */     
-/* 205 */     SequencedEvent sequencedEvent = null;
-/*     */     
-/* 207 */     synchronized (SequencedEvent.class) {
-/* 208 */       SequencedEvent.class.notifyAll();
-/*     */       
-/* 210 */       if (list.getFirst() == this) {
-/* 211 */         list.removeFirst();
-/*     */         
-/* 213 */         if (!list.isEmpty()) {
-/* 214 */           sequencedEvent = list.getFirst();
-/*     */         }
-/*     */       } else {
-/* 217 */         list.remove(this);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 221 */     if (sequencedEvent != null && sequencedEvent.appContext != null)
-/* 222 */       SunToolkit.postEvent(sequencedEvent.appContext, new SentEvent()); 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\SequencedEvent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt;
+
+import java.util.LinkedList;
+import sun.awt.AWTAccessor;
+import sun.awt.AppContext;
+import sun.awt.SunToolkit;
+
+/**
+ * A mechanism for ensuring that a series of AWTEvents are executed in a
+ * precise order, even across multiple AppContexts. The nested events will be
+ * dispatched in the order in which their wrapping SequencedEvents were
+ * constructed. The only exception to this rule is if the peer of the target of
+ * the nested event was destroyed (with a call to Component.removeNotify)
+ * before the wrapping SequencedEvent was able to be dispatched. In this case,
+ * the nested event is never dispatched.
+ *
+ * @author David Mendenhall
+ */
+class SequencedEvent extends AWTEvent implements ActiveEvent {
+    /*
+     * serialVersionUID
+     */
+    private static final long serialVersionUID = 547742659238625067L;
+
+    private static final int ID =
+        java.awt.event.FocusEvent.FOCUS_LAST + 1;
+    private static final LinkedList<SequencedEvent> list = new LinkedList<>();
+
+    private final AWTEvent nested;
+    private AppContext appContext;
+    private boolean disposed;
+
+    static {
+        AWTAccessor.setSequencedEventAccessor(new AWTAccessor.SequencedEventAccessor() {
+            public AWTEvent getNested(AWTEvent sequencedEvent) {
+                return ((SequencedEvent)sequencedEvent).nested;
+            }
+            public boolean isSequencedEvent(AWTEvent event) {
+                return event instanceof SequencedEvent;
+            }
+        });
+    }
+
+    /**
+     * Constructs a new SequencedEvent which will dispatch the specified
+     * nested event.
+     *
+     * @param nested the AWTEvent which this SequencedEvent's dispatch()
+     *        method will dispatch
+     */
+    public SequencedEvent(AWTEvent nested) {
+        super(nested.getSource(), ID);
+        this.nested = nested;
+        // All AWTEvents that are wrapped in SequencedEvents are (at
+        // least currently) implicitly generated by the system
+        SunToolkit.setSystemGenerated(nested);
+        synchronized (SequencedEvent.class) {
+            list.add(this);
+        }
+    }
+
+    /**
+     * Dispatches the nested event after all previous nested events have been
+     * dispatched or disposed. If this method is invoked before all previous nested events
+     * have been dispatched, then this method blocks until such a point is
+     * reached.
+     * While waiting disposes nested events to disposed AppContext
+     *
+     * NOTE: Locking protocol.  Since dispose() can get EventQueue lock,
+     * dispatch() shall never call dispose() while holding the lock on the list,
+     * as EventQueue lock is held during dispatching.  The locks should be acquired
+     * in the same order.
+     */
+    public final void dispatch() {
+        try {
+            appContext = AppContext.getAppContext();
+
+            if (getFirst() != this) {
+                if (EventQueue.isDispatchThread()) {
+                    EventDispatchThread edt = (EventDispatchThread)
+                        Thread.currentThread();
+                    edt.pumpEvents(SentEvent.ID, new Conditional() {
+                        public boolean evaluate() {
+                            return !SequencedEvent.this.isFirstOrDisposed();
+                        }
+                    });
+                } else {
+                    while(!isFirstOrDisposed()) {
+                        synchronized (SequencedEvent.class) {
+                            try {
+                                SequencedEvent.class.wait(1000);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!disposed) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                    setCurrentSequencedEvent(this);
+                Toolkit.getEventQueue().dispatchEvent(nested);
+            }
+        } finally {
+            dispose();
+        }
+    }
+
+    /**
+     * true only if event exists and nested source appContext is disposed.
+     */
+    private final static boolean isOwnerAppContextDisposed(SequencedEvent se) {
+        if (se != null) {
+            Object target = se.nested.getSource();
+            if (target instanceof Component) {
+                return ((Component)target).appContext.isDisposed();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Sequenced events are dispatched in order, so we cannot dispatch
+     * until we are the first sequenced event in the queue (i.e. it's our
+     * turn).  But while we wait for our turn to dispatch, the event
+     * could have been disposed for a number of reasons.
+     */
+    public final boolean isFirstOrDisposed() {
+        if (disposed) {
+            return true;
+        }
+        // getFirstWithContext can dispose this
+        return this == getFirstWithContext() || disposed;
+    }
+
+    private final synchronized static SequencedEvent getFirst() {
+        return (SequencedEvent)list.getFirst();
+    }
+
+    /* Disposes all events from disposed AppContext
+     * return first valid event
+     */
+    private final static SequencedEvent getFirstWithContext() {
+        SequencedEvent first = getFirst();
+        while(isOwnerAppContextDisposed(first)) {
+            first.dispose();
+            first = getFirst();
+        }
+        return first;
+    }
+
+    /**
+     * Disposes of this instance. This method is invoked once the nested event
+     * has been dispatched and handled, or when the peer of the target of the
+     * nested event has been disposed with a call to Component.removeNotify.
+     *
+     * NOTE: Locking protocol.  Since SunToolkit.postEvent can get EventQueue lock,
+     * it shall never be called while holding the lock on the list,
+     * as EventQueue lock is held during dispatching and dispatch() will get
+     * lock on the list. The locks should be acquired in the same order.
+     */
+    final void dispose() {
+      synchronized (SequencedEvent.class) {
+            if (disposed) {
+                return;
+            }
+            if (KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                    getCurrentSequencedEvent() == this) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                    setCurrentSequencedEvent(null);
+            }
+            disposed = true;
+        }
+        // Wake myself up
+        if (appContext != null) {
+            SunToolkit.postEvent(appContext, new SentEvent());
+        }
+
+        SequencedEvent next = null;
+
+        synchronized (SequencedEvent.class) {
+          SequencedEvent.class.notifyAll();
+
+          if (list.getFirst() == this) {
+              list.removeFirst();
+
+              if (!list.isEmpty()) {
+                    next = (SequencedEvent)list.getFirst();
+              }
+          } else {
+              list.remove(this);
+          }
+      }
+        // Wake up waiting threads
+        if (next != null && next.appContext != null) {
+            SunToolkit.postEvent(next.appContext, new SentEvent());
+        }
+    }
+}

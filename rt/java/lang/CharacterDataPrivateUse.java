@@ -1,104 +1,101 @@
-/*    */ package java.lang;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ class CharacterDataPrivateUse
-/*    */   extends CharacterData
-/*    */ {
-/*    */   int getProperties(int paramInt) {
-/* 34 */     return 0;
-/*    */   }
-/*    */   
-/*    */   int getType(int paramInt) {
-/* 38 */     return ((paramInt & 0xFFFE) == 65534) ? 0 : 18;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   boolean isJavaIdentifierStart(int paramInt) {
-/* 44 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isJavaIdentifierPart(int paramInt) {
-/* 48 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isUnicodeIdentifierStart(int paramInt) {
-/* 52 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isUnicodeIdentifierPart(int paramInt) {
-/* 56 */     return false;
-/*    */   }
-/*    */   
-/*    */   boolean isIdentifierIgnorable(int paramInt) {
-/* 60 */     return false;
-/*    */   }
-/*    */   
-/*    */   int toLowerCase(int paramInt) {
-/* 64 */     return paramInt;
-/*    */   }
-/*    */   
-/*    */   int toUpperCase(int paramInt) {
-/* 68 */     return paramInt;
-/*    */   }
-/*    */   
-/*    */   int toTitleCase(int paramInt) {
-/* 72 */     return paramInt;
-/*    */   }
-/*    */   
-/*    */   int digit(int paramInt1, int paramInt2) {
-/* 76 */     return -1;
-/*    */   }
-/*    */   
-/*    */   int getNumericValue(int paramInt) {
-/* 80 */     return -1;
-/*    */   }
-/*    */   
-/*    */   boolean isWhitespace(int paramInt) {
-/* 84 */     return false;
-/*    */   }
-/*    */   
-/*    */   byte getDirectionality(int paramInt) {
-/* 88 */     return ((paramInt & 0xFFFE) == 65534) ? -1 : 0;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   boolean isMirrored(int paramInt) {
-/* 94 */     return false;
-/*    */   }
-/*    */   
-/* 97 */   static final CharacterData instance = new CharacterDataPrivateUse();
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\CharacterDataPrivateUse.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+/** The CharacterData class encapsulates the large tables found in
+    Java.lang.Character. */
+
+class CharacterDataPrivateUse extends CharacterData {
+
+    int getProperties(int ch) {
+        return 0;
+    }
+
+    int getType(int ch) {
+	return (ch & 0xFFFE) == 0xFFFE
+	    ? Character.UNASSIGNED
+	    : Character.PRIVATE_USE;
+    }
+
+    boolean isJavaIdentifierStart(int ch) {
+		return false;
+    }
+
+    boolean isJavaIdentifierPart(int ch) {
+		return false;
+    }
+
+    boolean isUnicodeIdentifierStart(int ch) {
+		return false;
+    }
+
+    boolean isUnicodeIdentifierPart(int ch) {
+		return false;
+    }
+
+    boolean isIdentifierIgnorable(int ch) {
+		return false;
+    }
+
+    int toLowerCase(int ch) {
+		return ch;
+    }
+
+    int toUpperCase(int ch) {
+		return ch;
+    }
+
+    int toTitleCase(int ch) {
+		return ch;
+    }
+
+    int digit(int ch, int radix) {
+		return -1;
+    }
+
+    int getNumericValue(int ch) {
+		return -1;
+    }
+
+    boolean isWhitespace(int ch) {
+		return false;
+    }
+
+    byte getDirectionality(int ch) {
+	return (ch & 0xFFFE) == 0xFFFE
+	    ? Character.DIRECTIONALITY_UNDEFINED
+	    : Character.DIRECTIONALITY_LEFT_TO_RIGHT;
+    }
+
+    boolean isMirrored(int ch) {
+		return false;
+    }
+
+    static final CharacterData instance = new CharacterDataPrivateUse();
+    private CharacterDataPrivateUse() {};
+}
+
+	

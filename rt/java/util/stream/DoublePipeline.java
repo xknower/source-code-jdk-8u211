@@ -1,642 +1,639 @@
-/*     */ package java.util.stream;
-/*     */ 
-/*     */ import java.util.DoubleSummaryStatistics;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.Objects;
-/*     */ import java.util.OptionalDouble;
-/*     */ import java.util.PrimitiveIterator;
-/*     */ import java.util.Spliterator;
-/*     */ import java.util.Spliterators;
-/*     */ import java.util.function.BiConsumer;
-/*     */ import java.util.function.BinaryOperator;
-/*     */ import java.util.function.DoubleBinaryOperator;
-/*     */ import java.util.function.DoubleConsumer;
-/*     */ import java.util.function.DoubleFunction;
-/*     */ import java.util.function.DoublePredicate;
-/*     */ import java.util.function.DoubleToIntFunction;
-/*     */ import java.util.function.DoubleToLongFunction;
-/*     */ import java.util.function.DoubleUnaryOperator;
-/*     */ import java.util.function.IntFunction;
-/*     */ import java.util.function.ObjDoubleConsumer;
-/*     */ import java.util.function.Supplier;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ abstract class DoublePipeline<E_IN>
-/*     */   extends AbstractPipeline<E_IN, Double, DoubleStream>
-/*     */   implements DoubleStream
-/*     */ {
-/*     */   DoublePipeline(Supplier<? extends Spliterator<Double>> paramSupplier, int paramInt, boolean paramBoolean) {
-/*  67 */     super(paramSupplier, paramInt, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   DoublePipeline(Spliterator<Double> paramSpliterator, int paramInt, boolean paramBoolean) {
-/*  79 */     super(paramSpliterator, paramInt, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   DoublePipeline(AbstractPipeline<?, E_IN, ?> paramAbstractPipeline, int paramInt) {
-/*  90 */     super(paramAbstractPipeline, paramInt);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static DoubleConsumer adapt(Sink<Double> paramSink) {
-/*  98 */     if (paramSink instanceof DoubleConsumer) {
-/*  99 */       return (DoubleConsumer)paramSink;
-/*     */     }
-/* 101 */     if (Tripwire.ENABLED) {
-/* 102 */       Tripwire.trip(AbstractPipeline.class, "using DoubleStream.adapt(Sink<Double> s)");
-/*     */     }
-/* 104 */     return paramSink::accept;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Spliterator.OfDouble adapt(Spliterator<Double> paramSpliterator) {
-/* 116 */     if (paramSpliterator instanceof Spliterator.OfDouble) {
-/* 117 */       return (Spliterator.OfDouble)paramSpliterator;
-/*     */     }
-/* 119 */     if (Tripwire.ENABLED) {
-/* 120 */       Tripwire.trip(AbstractPipeline.class, "using DoubleStream.adapt(Spliterator<Double> s)");
-/*     */     }
-/* 122 */     throw new UnsupportedOperationException("DoubleStream.adapt(Spliterator<Double> s)");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final StreamShape getOutputShape() {
-/* 131 */     return StreamShape.DOUBLE_VALUE;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final <P_IN> Node<Double> evaluateToNode(PipelineHelper<Double> paramPipelineHelper, Spliterator<P_IN> paramSpliterator, boolean paramBoolean, IntFunction<Double[]> paramIntFunction) {
-/* 139 */     return Nodes.collectDouble(paramPipelineHelper, paramSpliterator, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final <P_IN> Spliterator<Double> wrap(PipelineHelper<Double> paramPipelineHelper, Supplier<Spliterator<P_IN>> paramSupplier, boolean paramBoolean) {
-/* 146 */     return new StreamSpliterators.DoubleWrappingSpliterator<>(paramPipelineHelper, paramSupplier, paramBoolean);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   final Spliterator.OfDouble lazySpliterator(Supplier<? extends Spliterator<Double>> paramSupplier) {
-/* 152 */     return new StreamSpliterators.DelegatingSpliterator.OfDouble((Supplier)paramSupplier);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final void forEachWithCancel(Spliterator<Double> paramSpliterator, Sink<Double> paramSink) {
-/* 157 */     Spliterator.OfDouble ofDouble = adapt(paramSpliterator);
-/* 158 */     DoubleConsumer doubleConsumer = adapt(paramSink); do {  }
-/* 159 */     while (!paramSink.cancellationRequested() && ofDouble.tryAdvance(doubleConsumer));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   final Node.Builder<Double> makeNodeBuilder(long paramLong, IntFunction<Double[]> paramIntFunction) {
-/* 164 */     return Nodes.doubleBuilder(paramLong);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final PrimitiveIterator.OfDouble iterator() {
-/* 172 */     return Spliterators.iterator(spliterator());
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final Spliterator.OfDouble spliterator() {
-/* 177 */     return adapt(super.spliterator());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final Stream<Double> boxed() {
-/* 184 */     return mapToObj(Double::valueOf);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream map(final DoubleUnaryOperator mapper) {
-/* 189 */     Objects.requireNonNull(mapper);
-/* 190 */     return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 194 */           return new Sink.ChainedDouble<Double>(param1Sink)
-/*     */             {
-/*     */               public void accept(double param2Double) {
-/* 197 */                 this.downstream.accept(mapper.applyAsDouble(param2Double));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final <U> Stream<U> mapToObj(final DoubleFunction<? extends U> mapper) {
-/* 206 */     Objects.requireNonNull(mapper);
-/* 207 */     return new ReferencePipeline.StatelessOp<Double, U>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<U> param1Sink)
-/*     */         {
-/* 211 */           return new Sink.ChainedDouble(param1Sink)
-/*     */             {
-/*     */               public void accept(double param2Double) {
-/* 214 */                 this.downstream.accept(mapper.apply(param2Double));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final IntStream mapToInt(final DoubleToIntFunction mapper) {
-/* 223 */     Objects.requireNonNull(mapper);
-/* 224 */     return new IntPipeline.StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Integer> param1Sink)
-/*     */         {
-/* 228 */           return new Sink.ChainedDouble<Integer>(param1Sink)
-/*     */             {
-/*     */               public void accept(double param2Double) {
-/* 231 */                 this.downstream.accept(mapper.applyAsInt(param2Double));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final LongStream mapToLong(final DoubleToLongFunction mapper) {
-/* 240 */     Objects.requireNonNull(mapper);
-/* 241 */     return new LongPipeline.StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Long> param1Sink)
-/*     */         {
-/* 245 */           return new Sink.ChainedDouble<Long>(param1Sink)
-/*     */             {
-/*     */               public void accept(double param2Double) {
-/* 248 */                 this.downstream.accept(mapper.applyAsLong(param2Double));
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream flatMap(final DoubleFunction<? extends DoubleStream> mapper) {
-/* 257 */     return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 261 */           return new Sink.ChainedDouble<Double>(param1Sink)
-/*     */             {
-/*     */               public void begin(long param2Long) {
-/* 264 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(double param2Double) {
-/* 269 */                 try (DoubleStream null = (DoubleStream)mapper.apply(param2Double)) {
-/*     */                   
-/* 271 */                   if (doubleStream != null) {
-/* 272 */                     doubleStream.sequential().forEach(param2Double -> this.downstream.accept(param2Double));
-/*     */                   }
-/*     */                 } 
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public DoubleStream unordered() {
-/* 282 */     if (!isOrdered())
-/* 283 */       return this; 
-/* 284 */     return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_ORDERED)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Double> param1Sink) {
-/* 287 */           return param1Sink;
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream filter(final DoublePredicate predicate) {
-/* 294 */     Objects.requireNonNull(predicate);
-/* 295 */     return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_SIZED)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 299 */           return new Sink.ChainedDouble<Double>(param1Sink)
-/*     */             {
-/*     */               public void begin(long param2Long) {
-/* 302 */                 this.downstream.begin(-1L);
-/*     */               }
-/*     */ 
-/*     */               
-/*     */               public void accept(double param2Double) {
-/* 307 */                 if (predicate.test(param2Double)) {
-/* 308 */                   this.downstream.accept(param2Double);
-/*     */                 }
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */   
-/*     */   public final DoubleStream peek(final DoubleConsumer action) {
-/* 317 */     Objects.requireNonNull(action);
-/* 318 */     return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, 0)
-/*     */       {
-/*     */         Sink<Double> opWrapSink(int param1Int, Sink<Double> param1Sink)
-/*     */         {
-/* 322 */           return new Sink.ChainedDouble<Double>(param1Sink)
-/*     */             {
-/*     */               public void accept(double param2Double) {
-/* 325 */                 action.accept(param2Double);
-/* 326 */                 this.downstream.accept(param2Double);
-/*     */               }
-/*     */             };
-/*     */         }
-/*     */       };
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream limit(long paramLong) {
-/* 337 */     if (paramLong < 0L)
-/* 338 */       throw new IllegalArgumentException(Long.toString(paramLong)); 
-/* 339 */     return SliceOps.makeDouble(this, 0L, paramLong);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream skip(long paramLong) {
-/* 344 */     if (paramLong < 0L)
-/* 345 */       throw new IllegalArgumentException(Long.toString(paramLong)); 
-/* 346 */     if (paramLong == 0L) {
-/* 347 */       return this;
-/*     */     }
-/* 349 */     long l = -1L;
-/* 350 */     return SliceOps.makeDouble(this, paramLong, l);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream sorted() {
-/* 356 */     return SortedOps.makeDouble(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final DoubleStream distinct() {
-/* 363 */     return boxed().distinct().mapToDouble(paramDouble -> paramDouble.doubleValue());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void forEach(DoubleConsumer paramDoubleConsumer) {
-/* 370 */     evaluate(ForEachOps.makeDouble(paramDoubleConsumer, false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void forEachOrdered(DoubleConsumer paramDoubleConsumer) {
-/* 375 */     evaluate(ForEachOps.makeDouble(paramDoubleConsumer, true));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final double sum() {
-/* 388 */     double[] arrayOfDouble = collect(() -> new double[3], (paramArrayOfdouble, paramDouble) -> {
-/*     */           Collectors.sumWithCompensation(paramArrayOfdouble, paramDouble);
-/*     */           
-/*     */           paramArrayOfdouble[2] = paramArrayOfdouble[2] + paramDouble;
-/*     */         }(paramArrayOfdouble1, paramArrayOfdouble2) -> {
-/*     */           Collectors.sumWithCompensation(paramArrayOfdouble1, paramArrayOfdouble2[0]);
-/*     */           
-/*     */           Collectors.sumWithCompensation(paramArrayOfdouble1, paramArrayOfdouble2[1]);
-/*     */           
-/*     */           paramArrayOfdouble1[2] = paramArrayOfdouble1[2] + paramArrayOfdouble2[2];
-/*     */         });
-/* 399 */     return Collectors.computeFinalSum(arrayOfDouble);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble min() {
-/* 404 */     return reduce(Math::min);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble max() {
-/* 409 */     return reduce(Math::max);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble average() {
-/* 430 */     double[] arrayOfDouble = collect(() -> new double[4], (paramArrayOfdouble, paramDouble) -> {
-/*     */           paramArrayOfdouble[2] = paramArrayOfdouble[2] + 1.0D;
-/*     */           
-/*     */           Collectors.sumWithCompensation(paramArrayOfdouble, paramDouble);
-/*     */           
-/*     */           paramArrayOfdouble[3] = paramArrayOfdouble[3] + paramDouble;
-/*     */         }(paramArrayOfdouble1, paramArrayOfdouble2) -> {
-/*     */           Collectors.sumWithCompensation(paramArrayOfdouble1, paramArrayOfdouble2[0]);
-/*     */           Collectors.sumWithCompensation(paramArrayOfdouble1, paramArrayOfdouble2[1]);
-/*     */           paramArrayOfdouble1[2] = paramArrayOfdouble1[2] + paramArrayOfdouble2[2];
-/*     */           paramArrayOfdouble1[3] = paramArrayOfdouble1[3] + paramArrayOfdouble2[3];
-/*     */         });
-/* 442 */     return (arrayOfDouble[2] > 0.0D) ? 
-/* 443 */       OptionalDouble.of(Collectors.computeFinalSum(arrayOfDouble) / arrayOfDouble[2]) : 
-/* 444 */       OptionalDouble.empty();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final long count() {
-/* 449 */     return mapToLong(paramDouble -> 1L).sum();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final DoubleSummaryStatistics summaryStatistics() {
-/* 454 */     return collect(DoubleSummaryStatistics::new, DoubleSummaryStatistics::accept, DoubleSummaryStatistics::combine);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final double reduce(double paramDouble, DoubleBinaryOperator paramDoubleBinaryOperator) {
-/* 460 */     return ((Double)evaluate(ReduceOps.makeDouble(paramDouble, paramDoubleBinaryOperator))).doubleValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble reduce(DoubleBinaryOperator paramDoubleBinaryOperator) {
-/* 465 */     return (OptionalDouble)evaluate(ReduceOps.makeDouble(paramDoubleBinaryOperator));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final <R> R collect(Supplier<R> paramSupplier, ObjDoubleConsumer<R> paramObjDoubleConsumer, BiConsumer<R, R> paramBiConsumer) {
-/* 472 */     BinaryOperator<R> binaryOperator = (paramObject1, paramObject2) -> {
-/*     */         paramBiConsumer.accept(paramObject1, paramObject2);
-/*     */         return paramObject1;
-/*     */       };
-/* 476 */     return (R)evaluate(ReduceOps.makeDouble(paramSupplier, paramObjDoubleConsumer, binaryOperator));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean anyMatch(DoublePredicate paramDoublePredicate) {
-/* 481 */     return ((Boolean)evaluate(MatchOps.makeDouble(paramDoublePredicate, MatchOps.MatchKind.ANY))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean allMatch(DoublePredicate paramDoublePredicate) {
-/* 486 */     return ((Boolean)evaluate(MatchOps.makeDouble(paramDoublePredicate, MatchOps.MatchKind.ALL))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final boolean noneMatch(DoublePredicate paramDoublePredicate) {
-/* 491 */     return ((Boolean)evaluate(MatchOps.makeDouble(paramDoublePredicate, MatchOps.MatchKind.NONE))).booleanValue();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble findFirst() {
-/* 496 */     return (OptionalDouble)evaluate(FindOps.makeDouble(true));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final OptionalDouble findAny() {
-/* 501 */     return (OptionalDouble)evaluate(FindOps.makeDouble(false));
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public final double[] toArray() {
-/* 506 */     return Nodes.flattenDouble((Node.OfDouble)evaluateToArrayNode(paramInt -> new Double[paramInt]))
-/* 507 */       .asPrimitiveArray();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static class Head<E_IN>
-/*     */     extends DoublePipeline<E_IN>
-/*     */   {
-/*     */     Head(Supplier<? extends Spliterator<Double>> param1Supplier, int param1Int, boolean param1Boolean) {
-/* 529 */       super(param1Supplier, param1Int, param1Boolean);
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     Head(Spliterator<Double> param1Spliterator, int param1Int, boolean param1Boolean) {
-/* 542 */       super(param1Spliterator, param1Int, param1Boolean);
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 547 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final Sink<E_IN> opWrapSink(int param1Int, Sink<Double> param1Sink) {
-/* 552 */       throw new UnsupportedOperationException();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void forEach(DoubleConsumer param1DoubleConsumer) {
-/* 559 */       if (!isParallel()) {
-/* 560 */         DoublePipeline.adapt(sourceStageSpliterator()).forEachRemaining(param1DoubleConsumer);
-/*     */       } else {
-/*     */         
-/* 563 */         super.forEach(param1DoubleConsumer);
-/*     */       } 
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void forEachOrdered(DoubleConsumer param1DoubleConsumer) {
-/* 569 */       if (!isParallel()) {
-/* 570 */         DoublePipeline.adapt(sourceStageSpliterator()).forEachRemaining(param1DoubleConsumer);
-/*     */       } else {
-/*     */         
-/* 573 */         super.forEachOrdered(param1DoubleConsumer);
-/*     */       } 
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StatelessOp<E_IN>
-/*     */     extends DoublePipeline<E_IN>
-/*     */   {
-/*     */     StatelessOp(AbstractPipeline<?, E_IN, ?> param1AbstractPipeline, StreamShape param1StreamShape, int param1Int) {
-/* 597 */       super(param1AbstractPipeline, param1Int);
-/* 598 */       assert param1AbstractPipeline.getOutputShape() == param1StreamShape;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 603 */       return false;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static abstract class StatefulOp<E_IN>
-/*     */     extends DoublePipeline<E_IN>
-/*     */   {
-/*     */     StatefulOp(AbstractPipeline<?, E_IN, ?> param1AbstractPipeline, StreamShape param1StreamShape, int param1Int) {
-/* 625 */       super(param1AbstractPipeline, param1Int);
-/* 626 */       assert param1AbstractPipeline.getOutputShape() == param1StreamShape;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     final boolean opIsStateful() {
-/* 631 */       return true;
-/*     */     }
-/*     */     
-/*     */     abstract <P_IN> Node<Double> opEvaluateParallel(PipelineHelper<Double> param1PipelineHelper, Spliterator<P_IN> param1Spliterator, IntFunction<Double[]> param1IntFunction);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\stream\DoublePipeline.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.util.stream;
+
+import java.util.DoubleSummaryStatistics;
+import java.util.Objects;
+import java.util.OptionalDouble;
+import java.util.PrimitiveIterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleConsumer;
+import java.util.function.DoubleFunction;
+import java.util.function.DoublePredicate;
+import java.util.function.DoubleToIntFunction;
+import java.util.function.DoubleToLongFunction;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.IntFunction;
+import java.util.function.ObjDoubleConsumer;
+import java.util.function.Supplier;
+
+/**
+ * Abstract base class for an intermediate pipeline stage or pipeline source
+ * stage implementing whose elements are of type {@code double}.
+ *
+ * @param <E_IN> type of elements in the upstream source
+ *
+ * @since 1.8
+ */
+abstract class DoublePipeline<E_IN>
+        extends AbstractPipeline<E_IN, Double, DoubleStream>
+        implements DoubleStream {
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Supplier<Spliterator>} describing the stream source
+     * @param sourceFlags the source flags for the stream source, described in
+     * {@link StreamOpFlag}
+     */
+    DoublePipeline(Supplier<? extends Spliterator<Double>> source,
+                   int sourceFlags, boolean parallel) {
+        super(source, sourceFlags, parallel);
+    }
+
+    /**
+     * Constructor for the head of a stream pipeline.
+     *
+     * @param source {@code Spliterator} describing the stream source
+     * @param sourceFlags the source flags for the stream source, described in
+     * {@link StreamOpFlag}
+     */
+    DoublePipeline(Spliterator<Double> source,
+                   int sourceFlags, boolean parallel) {
+        super(source, sourceFlags, parallel);
+    }
+
+    /**
+     * Constructor for appending an intermediate operation onto an existing
+     * pipeline.
+     *
+     * @param upstream the upstream element source.
+     * @param opFlags the operation flags
+     */
+    DoublePipeline(AbstractPipeline<?, E_IN, ?> upstream, int opFlags) {
+        super(upstream, opFlags);
+    }
+
+    /**
+     * Adapt a {@code Sink<Double> to a {@code DoubleConsumer}, ideally simply
+     * by casting.
+     */
+    private static DoubleConsumer adapt(Sink<Double> sink) {
+        if (sink instanceof DoubleConsumer) {
+            return (DoubleConsumer) sink;
+        } else {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(AbstractPipeline.class,
+                              "using DoubleStream.adapt(Sink<Double> s)");
+            return sink::accept;
+        }
+    }
+
+    /**
+     * Adapt a {@code Spliterator<Double>} to a {@code Spliterator.OfDouble}.
+     *
+     * @implNote
+     * The implementation attempts to cast to a Spliterator.OfDouble, and throws
+     * an exception if this cast is not possible.
+     */
+    private static Spliterator.OfDouble adapt(Spliterator<Double> s) {
+        if (s instanceof Spliterator.OfDouble) {
+            return (Spliterator.OfDouble) s;
+        } else {
+            if (Tripwire.ENABLED)
+                Tripwire.trip(AbstractPipeline.class,
+                              "using DoubleStream.adapt(Spliterator<Double> s)");
+            throw new UnsupportedOperationException("DoubleStream.adapt(Spliterator<Double> s)");
+        }
+    }
+
+
+    // Shape-specific methods
+
+    @Override
+    final StreamShape getOutputShape() {
+        return StreamShape.DOUBLE_VALUE;
+    }
+
+    @Override
+    final <P_IN> Node<Double> evaluateToNode(PipelineHelper<Double> helper,
+                                             Spliterator<P_IN> spliterator,
+                                             boolean flattenTree,
+                                             IntFunction<Double[]> generator) {
+        return Nodes.collectDouble(helper, spliterator, flattenTree);
+    }
+
+    @Override
+    final <P_IN> Spliterator<Double> wrap(PipelineHelper<Double> ph,
+                                          Supplier<Spliterator<P_IN>> supplier,
+                                          boolean isParallel) {
+        return new StreamSpliterators.DoubleWrappingSpliterator<>(ph, supplier, isParallel);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    final Spliterator.OfDouble lazySpliterator(Supplier<? extends Spliterator<Double>> supplier) {
+        return new StreamSpliterators.DelegatingSpliterator.OfDouble((Supplier<Spliterator.OfDouble>) supplier);
+    }
+
+    @Override
+    final void forEachWithCancel(Spliterator<Double> spliterator, Sink<Double> sink) {
+        Spliterator.OfDouble spl = adapt(spliterator);
+        DoubleConsumer adaptedSink = adapt(sink);
+        do { } while (!sink.cancellationRequested() && spl.tryAdvance(adaptedSink));
+    }
+
+    @Override
+    final  Node.Builder<Double> makeNodeBuilder(long exactSizeIfKnown, IntFunction<Double[]> generator) {
+        return Nodes.doubleBuilder(exactSizeIfKnown);
+    }
+
+
+    // DoubleStream
+
+    @Override
+    public final PrimitiveIterator.OfDouble iterator() {
+        return Spliterators.iterator(spliterator());
+    }
+
+    @Override
+    public final Spliterator.OfDouble spliterator() {
+        return adapt(super.spliterator());
+    }
+
+    // Stateless intermediate ops from DoubleStream
+
+    @Override
+    public final Stream<Double> boxed() {
+        return mapToObj(Double::valueOf);
+    }
+
+    @Override
+    public final DoubleStream map(DoubleUnaryOperator mapper) {
+        Objects.requireNonNull(mapper);
+        return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
+                                       StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
+                    @Override
+                    public void accept(double t) {
+                        downstream.accept(mapper.applyAsDouble(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final <U> Stream<U> mapToObj(DoubleFunction<? extends U> mapper) {
+        Objects.requireNonNull(mapper);
+        return new ReferencePipeline.StatelessOp<Double, U>(this, StreamShape.DOUBLE_VALUE,
+                                                            StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<U> sink) {
+                return new Sink.ChainedDouble<U>(sink) {
+                    @Override
+                    public void accept(double t) {
+                        downstream.accept(mapper.apply(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final IntStream mapToInt(DoubleToIntFunction mapper) {
+        Objects.requireNonNull(mapper);
+        return new IntPipeline.StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
+                                                   StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Integer> sink) {
+                return new Sink.ChainedDouble<Integer>(sink) {
+                    @Override
+                    public void accept(double t) {
+                        downstream.accept(mapper.applyAsInt(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final LongStream mapToLong(DoubleToLongFunction mapper) {
+        Objects.requireNonNull(mapper);
+        return new LongPipeline.StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
+                                                    StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Long> sink) {
+                return new Sink.ChainedDouble<Long>(sink) {
+                    @Override
+                    public void accept(double t) {
+                        downstream.accept(mapper.applyAsLong(t));
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream flatMap(DoubleFunction<? extends DoubleStream> mapper) {
+        return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
+                                        StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(double t) {
+                        try (DoubleStream result = mapper.apply(t)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(i -> downstream.accept(i));
+                        }
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public DoubleStream unordered() {
+        if (!isOrdered())
+            return this;
+        return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE, StreamOpFlag.NOT_ORDERED) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
+                return sink;
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream filter(DoublePredicate predicate) {
+        Objects.requireNonNull(predicate);
+        return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
+                                       StreamOpFlag.NOT_SIZED) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
+                    @Override
+                    public void begin(long size) {
+                        downstream.begin(-1);
+                    }
+
+                    @Override
+                    public void accept(double t) {
+                        if (predicate.test(t))
+                            downstream.accept(t);
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public final DoubleStream peek(DoubleConsumer action) {
+        Objects.requireNonNull(action);
+        return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
+                                       0) {
+            @Override
+            Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
+                    @Override
+                    public void accept(double t) {
+                        action.accept(t);
+                        downstream.accept(t);
+                    }
+                };
+            }
+        };
+    }
+
+    // Stateful intermediate ops from DoubleStream
+
+    @Override
+    public final DoubleStream limit(long maxSize) {
+        if (maxSize < 0)
+            throw new IllegalArgumentException(Long.toString(maxSize));
+        return SliceOps.makeDouble(this, (long) 0, maxSize);
+    }
+
+    @Override
+    public final DoubleStream skip(long n) {
+        if (n < 0)
+            throw new IllegalArgumentException(Long.toString(n));
+        if (n == 0)
+            return this;
+        else {
+            long limit = -1;
+            return SliceOps.makeDouble(this, n, limit);
+        }
+    }
+
+    @Override
+    public final DoubleStream sorted() {
+        return SortedOps.makeDouble(this);
+    }
+
+    @Override
+    public final DoubleStream distinct() {
+        // While functional and quick to implement, this approach is not very efficient.
+        // An efficient version requires a double-specific map/set implementation.
+        return boxed().distinct().mapToDouble(i -> (double) i);
+    }
+
+    // Terminal ops from DoubleStream
+
+    @Override
+    public void forEach(DoubleConsumer consumer) {
+        evaluate(ForEachOps.makeDouble(consumer, false));
+    }
+
+    @Override
+    public void forEachOrdered(DoubleConsumer consumer) {
+        evaluate(ForEachOps.makeDouble(consumer, true));
+    }
+
+    @Override
+    public final double sum() {
+        /*
+         * In the arrays allocated for the collect operation, index 0
+         * holds the high-order bits of the running sum, index 1 holds
+         * the low-order bits of the sum computed via compensated
+         * summation, and index 2 holds the simple sum used to compute
+         * the proper result if the stream contains infinite values of
+         * the same sign.
+         */
+        double[] summation = collect(() -> new double[3],
+                               (ll, d) -> {
+                                   Collectors.sumWithCompensation(ll, d);
+                                   ll[2] += d;
+                               },
+                               (ll, rr) -> {
+                                   Collectors.sumWithCompensation(ll, rr[0]);
+                                   Collectors.sumWithCompensation(ll, rr[1]);
+                                   ll[2] += rr[2];
+                               });
+
+        return Collectors.computeFinalSum(summation);
+    }
+
+    @Override
+    public final OptionalDouble min() {
+        return reduce(Math::min);
+    }
+
+    @Override
+    public final OptionalDouble max() {
+        return reduce(Math::max);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @implNote The {@code double} format can represent all
+     * consecutive integers in the range -2<sup>53</sup> to
+     * 2<sup>53</sup>. If the pipeline has more than 2<sup>53</sup>
+     * values, the divisor in the average computation will saturate at
+     * 2<sup>53</sup>, leading to additional numerical errors.
+     */
+    @Override
+    public final OptionalDouble average() {
+        /*
+         * In the arrays allocated for the collect operation, index 0
+         * holds the high-order bits of the running sum, index 1 holds
+         * the low-order bits of the sum computed via compensated
+         * summation, index 2 holds the number of values seen, index 3
+         * holds the simple sum.
+         */
+        double[] avg = collect(() -> new double[4],
+                               (ll, d) -> {
+                                   ll[2]++;
+                                   Collectors.sumWithCompensation(ll, d);
+                                   ll[3] += d;
+                               },
+                               (ll, rr) -> {
+                                   Collectors.sumWithCompensation(ll, rr[0]);
+                                   Collectors.sumWithCompensation(ll, rr[1]);
+                                   ll[2] += rr[2];
+                                   ll[3] += rr[3];
+                               });
+        return avg[2] > 0
+            ? OptionalDouble.of(Collectors.computeFinalSum(avg) / avg[2])
+            : OptionalDouble.empty();
+    }
+
+    @Override
+    public final long count() {
+        return mapToLong(e -> 1L).sum();
+    }
+
+    @Override
+    public final DoubleSummaryStatistics summaryStatistics() {
+        return collect(DoubleSummaryStatistics::new, DoubleSummaryStatistics::accept,
+                       DoubleSummaryStatistics::combine);
+    }
+
+    @Override
+    public final double reduce(double identity, DoubleBinaryOperator op) {
+        return evaluate(ReduceOps.makeDouble(identity, op));
+    }
+
+    @Override
+    public final OptionalDouble reduce(DoubleBinaryOperator op) {
+        return evaluate(ReduceOps.makeDouble(op));
+    }
+
+    @Override
+    public final <R> R collect(Supplier<R> supplier,
+                               ObjDoubleConsumer<R> accumulator,
+                               BiConsumer<R, R> combiner) {
+        BinaryOperator<R> operator = (left, right) -> {
+            combiner.accept(left, right);
+            return left;
+        };
+        return evaluate(ReduceOps.makeDouble(supplier, accumulator, operator));
+    }
+
+    @Override
+    public final boolean anyMatch(DoublePredicate predicate) {
+        return evaluate(MatchOps.makeDouble(predicate, MatchOps.MatchKind.ANY));
+    }
+
+    @Override
+    public final boolean allMatch(DoublePredicate predicate) {
+        return evaluate(MatchOps.makeDouble(predicate, MatchOps.MatchKind.ALL));
+    }
+
+    @Override
+    public final boolean noneMatch(DoublePredicate predicate) {
+        return evaluate(MatchOps.makeDouble(predicate, MatchOps.MatchKind.NONE));
+    }
+
+    @Override
+    public final OptionalDouble findFirst() {
+        return evaluate(FindOps.makeDouble(true));
+    }
+
+    @Override
+    public final OptionalDouble findAny() {
+        return evaluate(FindOps.makeDouble(false));
+    }
+
+    @Override
+    public final double[] toArray() {
+        return Nodes.flattenDouble((Node.OfDouble) evaluateToArrayNode(Double[]::new))
+                        .asPrimitiveArray();
+    }
+
+    //
+
+    /**
+     * Source stage of a DoubleStream
+     *
+     * @param <E_IN> type of elements in the upstream source
+     */
+    static class Head<E_IN> extends DoublePipeline<E_IN> {
+        /**
+         * Constructor for the source stage of a DoubleStream.
+         *
+         * @param source {@code Supplier<Spliterator>} describing the stream
+         *               source
+         * @param sourceFlags the source flags for the stream source, described
+         *                    in {@link StreamOpFlag}
+         * @param parallel {@code true} if the pipeline is parallel
+         */
+        Head(Supplier<? extends Spliterator<Double>> source,
+             int sourceFlags, boolean parallel) {
+            super(source, sourceFlags, parallel);
+        }
+
+        /**
+         * Constructor for the source stage of a DoubleStream.
+         *
+         * @param source {@code Spliterator} describing the stream source
+         * @param sourceFlags the source flags for the stream source, described
+         *                    in {@link StreamOpFlag}
+         * @param parallel {@code true} if the pipeline is parallel
+         */
+        Head(Spliterator<Double> source,
+             int sourceFlags, boolean parallel) {
+            super(source, sourceFlags, parallel);
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        final Sink<E_IN> opWrapSink(int flags, Sink<Double> sink) {
+            throw new UnsupportedOperationException();
+        }
+
+        // Optimized sequential terminal operations for the head of the pipeline
+
+        @Override
+        public void forEach(DoubleConsumer consumer) {
+            if (!isParallel()) {
+                adapt(sourceStageSpliterator()).forEachRemaining(consumer);
+            }
+            else {
+                super.forEach(consumer);
+            }
+        }
+
+        @Override
+        public void forEachOrdered(DoubleConsumer consumer) {
+            if (!isParallel()) {
+                adapt(sourceStageSpliterator()).forEachRemaining(consumer);
+            }
+            else {
+                super.forEachOrdered(consumer);
+            }
+        }
+
+    }
+
+    /**
+     * Base class for a stateless intermediate stage of a DoubleStream.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @since 1.8
+     */
+    abstract static class StatelessOp<E_IN> extends DoublePipeline<E_IN> {
+        /**
+         * Construct a new DoubleStream by appending a stateless intermediate
+         * operation to an existing stream.
+         *
+         * @param upstream the upstream pipeline stage
+         * @param inputShape the stream shape for the upstream pipeline stage
+         * @param opFlags operation flags for the new stage
+         */
+        StatelessOp(AbstractPipeline<?, E_IN, ?> upstream,
+                    StreamShape inputShape,
+                    int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return false;
+        }
+    }
+
+    /**
+     * Base class for a stateful intermediate stage of a DoubleStream.
+     *
+     * @param <E_IN> type of elements in the upstream source
+     * @since 1.8
+     */
+    abstract static class StatefulOp<E_IN> extends DoublePipeline<E_IN> {
+        /**
+         * Construct a new DoubleStream by appending a stateful intermediate
+         * operation to an existing stream.
+         *
+         * @param upstream the upstream pipeline stage
+         * @param inputShape the stream shape for the upstream pipeline stage
+         * @param opFlags operation flags for the new stage
+         */
+        StatefulOp(AbstractPipeline<?, E_IN, ?> upstream,
+                   StreamShape inputShape,
+                   int opFlags) {
+            super(upstream, opFlags);
+            assert upstream.getOutputShape() == inputShape;
+        }
+
+        @Override
+        final boolean opIsStateful() {
+            return true;
+        }
+
+        @Override
+        abstract <P_IN> Node<Double> opEvaluateParallel(PipelineHelper<Double> helper,
+                                                        Spliterator<P_IN> spliterator,
+                                                        IntFunction<Double[]> generator);
+    }
+}

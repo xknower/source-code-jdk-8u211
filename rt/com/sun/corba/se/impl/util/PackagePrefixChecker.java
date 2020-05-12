@@ -1,81 +1,76 @@
-/*    */ package com.sun.corba.se.impl.util;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class PackagePrefixChecker
-/*    */ {
-/*    */   private static final String PACKAGE_PREFIX = "org.omg.stub.";
-/*    */   
-/*    */   public static String packagePrefix() {
-/* 39 */     return "org.omg.stub.";
-/*    */   }
-/*    */   public static String correctPackageName(String paramString) {
-/* 42 */     if (paramString == null) return paramString; 
-/* 43 */     if (hasOffendingPrefix(paramString))
-/*    */     {
-/* 45 */       return "org.omg.stub." + paramString;
-/*    */     }
-/* 47 */     return paramString;
-/*    */   }
-/*    */   
-/*    */   public static boolean isOffendingPackage(String paramString) {
-/* 51 */     return (paramString != null && 
-/*    */ 
-/*    */       
-/* 54 */       hasOffendingPrefix(paramString));
-/*    */   }
-/*    */   
-/*    */   public static boolean hasOffendingPrefix(String paramString) {
-/* 58 */     return (paramString
-/* 59 */       .startsWith("java.") || paramString.equals("java") || paramString
-/*    */       
-/* 61 */       .startsWith("net.jini.") || paramString.equals("net.jini") || paramString
-/* 62 */       .startsWith("jini.") || paramString.equals("jini") || paramString
-/* 63 */       .startsWith("javax.") || paramString.equals("javax"));
-/*    */   }
-/*    */ 
-/*    */   
-/*    */   public static boolean hasBeenPrefixed(String paramString) {
-/* 68 */     return paramString.startsWith(packagePrefix());
-/*    */   }
-/*    */   
-/*    */   public static String withoutPackagePrefix(String paramString) {
-/* 72 */     if (hasBeenPrefixed(paramString)) return paramString.substring(packagePrefix().length()); 
-/* 73 */     return paramString;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\imp\\util\PackagePrefixChecker.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package com.sun.corba.se.impl.util;
+
+import java.io.File;
+
+/**
+ * PackagePrefixChecker provides static utility methods for getting package prefixes.
+ * @author M. Mortazavi
+ */
+
+public final class PackagePrefixChecker {
+
+
+    private static final String PACKAGE_PREFIX = "org.omg.stub.";
+
+    public static String packagePrefix(){ return PACKAGE_PREFIX;}
+
+    public static String correctPackageName (String p){
+        if (p==null) return p;
+        if ( hasOffendingPrefix(p))
+            {
+               return PACKAGE_PREFIX+p;
+            }
+        return p;
+    }
+
+    public static boolean isOffendingPackage(String p){
+        return
+            !(p==null)
+            &&
+            ( false || hasOffendingPrefix(p) );
+    }
+
+    public static boolean hasOffendingPrefix(String p){
+        return
+            (      p.startsWith("java.") || p.equals("java")
+                // || p.startsWith("com.sun.") || p.equals("com.sun")
+                || p.startsWith("net.jini.") || p.equals("net.jini")
+                || p.startsWith("jini.") || p.equals("jini")
+                || p.startsWith("javax.") || p.equals("javax")
+            );
+    }
+
+    public static boolean hasBeenPrefixed(String p){
+        return p.startsWith(packagePrefix());
+    }
+
+    public static String withoutPackagePrefix(String p){
+        if(hasBeenPrefixed(p)) return p.substring(packagePrefix().length());
+        else return p;
+    }
+
+}

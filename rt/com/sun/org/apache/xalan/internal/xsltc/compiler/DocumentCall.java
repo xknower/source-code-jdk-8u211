@@ -1,163 +1,158 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.compiler;
-/*     */ 
-/*     */ import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-/*     */ import com.sun.org.apache.bcel.internal.generic.GETFIELD;
-/*     */ import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
-/*     */ import com.sun.org.apache.bcel.internal.generic.InstructionList;
-/*     */ import com.sun.org.apache.bcel.internal.generic.PUSH;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
-/*     */ import java.util.Vector;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ final class DocumentCall
-/*     */   extends FunctionCall
-/*     */ {
-/*  46 */   private Expression _arg1 = null;
-/*  47 */   private Expression _arg2 = null;
-/*     */ 
-/*     */   
-/*     */   private Type _arg1Type;
-/*     */ 
-/*     */   
-/*     */   public DocumentCall(QName fname, Vector arguments) {
-/*  54 */     super(fname, arguments);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Type typeCheck(SymbolTable stable) throws TypeCheckError {
-/*  64 */     int ac = argumentCount();
-/*  65 */     if (ac < 1 || ac > 2) {
-/*  66 */       ErrorMsg msg = new ErrorMsg("ILLEGAL_ARG_ERR", this);
-/*  67 */       throw new TypeCheckError(msg);
-/*     */     } 
-/*  69 */     if (getStylesheet() == null) {
-/*  70 */       ErrorMsg msg = new ErrorMsg("ILLEGAL_ARG_ERR", this);
-/*  71 */       throw new TypeCheckError(msg);
-/*     */     } 
-/*     */ 
-/*     */     
-/*  75 */     this._arg1 = argument(0);
-/*     */     
-/*  77 */     if (this._arg1 == null) {
-/*  78 */       ErrorMsg msg = new ErrorMsg("DOCUMENT_ARG_ERR", this);
-/*  79 */       throw new TypeCheckError(msg);
-/*     */     } 
-/*     */     
-/*  82 */     this._arg1Type = this._arg1.typeCheck(stable);
-/*  83 */     if (this._arg1Type != Type.NodeSet && this._arg1Type != Type.String) {
-/*  84 */       this._arg1 = new CastExpr(this._arg1, Type.String);
-/*     */     }
-/*     */ 
-/*     */     
-/*  88 */     if (ac == 2) {
-/*  89 */       this._arg2 = argument(1);
-/*     */       
-/*  91 */       if (this._arg2 == null) {
-/*  92 */         ErrorMsg msg = new ErrorMsg("DOCUMENT_ARG_ERR", this);
-/*  93 */         throw new TypeCheckError(msg);
-/*     */       } 
-/*     */       
-/*  96 */       Type arg2Type = this._arg2.typeCheck(stable);
-/*     */       
-/*  98 */       if (arg2Type.identicalTo(Type.Node)) {
-/*  99 */         this._arg2 = new CastExpr(this._arg2, Type.NodeSet);
-/* 100 */       } else if (!arg2Type.identicalTo(Type.NodeSet)) {
-/*     */ 
-/*     */         
-/* 103 */         ErrorMsg msg = new ErrorMsg("DOCUMENT_ARG_ERR", this);
-/* 104 */         throw new TypeCheckError(msg);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 108 */     return this._type = Type.NodeSet;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
-/* 116 */     ConstantPoolGen cpg = classGen.getConstantPool();
-/* 117 */     InstructionList il = methodGen.getInstructionList();
-/* 118 */     int ac = argumentCount();
-/*     */     
-/* 120 */     int domField = cpg.addFieldref(classGen.getClassName(), "_dom", "Lcom/sun/org/apache/xalan/internal/xsltc/DOM;");
-/*     */ 
-/*     */ 
-/*     */     
-/* 124 */     String docParamList = null;
-/* 125 */     if (ac == 1) {
-/*     */       
-/* 127 */       docParamList = "(Ljava/lang/Object;Ljava/lang/String;Lcom/sun/org/apache/xalan/internal/xsltc/runtime/AbstractTranslet;Lcom/sun/org/apache/xalan/internal/xsltc/DOM;)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;";
-/*     */     }
-/*     */     else {
-/*     */       
-/* 131 */       docParamList = "(Ljava/lang/Object;Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;Ljava/lang/String;Lcom/sun/org/apache/xalan/internal/xsltc/runtime/AbstractTranslet;Lcom/sun/org/apache/xalan/internal/xsltc/DOM;)Lcom/sun/org/apache/xml/internal/dtm/DTMAxisIterator;";
-/*     */     } 
-/*     */     
-/* 134 */     int docIdx = cpg.addMethodref("com.sun.org.apache.xalan.internal.xsltc.dom.LoadDocument", "documentF", docParamList);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 139 */     this._arg1.translate(classGen, methodGen);
-/* 140 */     if (this._arg1Type == Type.NodeSet) {
-/* 141 */       this._arg1.startIterator(classGen, methodGen);
-/*     */     }
-/*     */     
-/* 144 */     if (ac == 2) {
-/*     */       
-/* 146 */       this._arg2.translate(classGen, methodGen);
-/* 147 */       this._arg2.startIterator(classGen, methodGen);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 151 */     il.append(new PUSH(cpg, getStylesheet().getSystemId()));
-/* 152 */     il.append(classGen.loadTranslet());
-/* 153 */     il.append(DUP);
-/* 154 */     il.append(new GETFIELD(domField));
-/* 155 */     il.append(new INVOKESTATIC(docIdx));
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\compiler\DocumentCall.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: DocumentCall.java,v 1.2.4.1 2005/09/01 14:10:13 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.compiler;
+
+import java.util.Vector;
+
+import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
+import com.sun.org.apache.bcel.internal.generic.INVOKEINTERFACE;
+import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
+import com.sun.org.apache.bcel.internal.generic.InstructionList;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ClassGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodGenerator;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+
+/**
+ * @author Jacek Ambroziak
+ * @author Morten Jorgensen
+ */
+final class DocumentCall extends FunctionCall {
+
+    private Expression _arg1 = null;
+    private Expression _arg2 = null;
+    private Type       _arg1Type;
+
+    /**
+     * Default function call constructor
+     */
+    public DocumentCall(QName fname, Vector arguments) {
+        super(fname, arguments);
+    }
+
+    /**
+     * Type checks the arguments passed to the document() function. The first
+     * argument can be any type (we must cast it to a string) and contains the
+     * URI of the document
+     */
+    public Type typeCheck(SymbolTable stable) throws TypeCheckError {
+        // At least one argument - two at most
+        final int ac = argumentCount();
+        if ((ac < 1) || (ac > 2)) {
+            ErrorMsg msg = new ErrorMsg(ErrorMsg.ILLEGAL_ARG_ERR, this);
+            throw new TypeCheckError(msg);
+        }
+        if (getStylesheet() == null) {
+            ErrorMsg msg = new ErrorMsg(ErrorMsg.ILLEGAL_ARG_ERR, this);
+            throw new TypeCheckError(msg);
+        }
+
+        // Parse the first argument
+        _arg1 = argument(0);
+
+        if (_arg1 == null) {// should not happened
+            ErrorMsg msg = new ErrorMsg(ErrorMsg.DOCUMENT_ARG_ERR, this);
+            throw new TypeCheckError(msg);
+        }
+
+        _arg1Type = _arg1.typeCheck(stable);
+        if ((_arg1Type != Type.NodeSet) && (_arg1Type != Type.String)) {
+            _arg1 = new CastExpr(_arg1, Type.String);
+        }
+
+        // Parse the second argument
+        if (ac == 2) {
+            _arg2 = argument(1);
+
+            if (_arg2 == null) {// should not happened
+                ErrorMsg msg = new ErrorMsg(ErrorMsg.DOCUMENT_ARG_ERR, this);
+                throw new TypeCheckError(msg);
+            }
+
+            final Type arg2Type = _arg2.typeCheck(stable);
+
+            if (arg2Type.identicalTo(Type.Node)) {
+                _arg2 = new CastExpr(_arg2, Type.NodeSet);
+            } else if (arg2Type.identicalTo(Type.NodeSet)) {
+                // falls through
+            } else {
+                ErrorMsg msg = new ErrorMsg(ErrorMsg.DOCUMENT_ARG_ERR, this);
+                throw new TypeCheckError(msg);
+            }
+        }
+
+        return _type = Type.NodeSet;
+    }
+
+    /**
+     * Translates the document() function call to a call to LoadDocument()'s
+     * static method document().
+     */
+    public void translate(ClassGenerator classGen, MethodGenerator methodGen) {
+        final ConstantPoolGen cpg = classGen.getConstantPool();
+        final InstructionList il = methodGen.getInstructionList();
+        final int ac = argumentCount();
+
+        final int domField = cpg.addFieldref(classGen.getClassName(),
+                                             DOM_FIELD,
+                                             DOM_INTF_SIG);
+
+        String docParamList = null;
+        if (ac == 1) {
+           // documentF(Object,String,AbstractTranslet,DOM)
+           docParamList = "("+OBJECT_SIG+STRING_SIG+TRANSLET_SIG+DOM_INTF_SIG
+                         +")"+NODE_ITERATOR_SIG;
+        } else { //ac == 2; ac < 1 or as >2  was tested in typeChec()
+           // documentF(Object,DTMAxisIterator,String,AbstractTranslet,DOM)
+           docParamList = "("+OBJECT_SIG+NODE_ITERATOR_SIG+STRING_SIG
+                         +TRANSLET_SIG+DOM_INTF_SIG+")"+NODE_ITERATOR_SIG;
+        }
+        final int docIdx = cpg.addMethodref(LOAD_DOCUMENT_CLASS, "documentF",
+                                            docParamList);
+
+
+        // The URI can be either a node-set or something else cast to a string
+        _arg1.translate(classGen, methodGen);
+        if (_arg1Type == Type.NodeSet) {
+            _arg1.startIterator(classGen, methodGen);
+        }
+
+        if (ac == 2) {
+            //_arg2 == null was tested in typeChec()
+            _arg2.translate(classGen, methodGen);
+            _arg2.startIterator(classGen, methodGen);
+        }
+
+        // Feck the rest of the parameters on the stack
+        il.append(new PUSH(cpg, getStylesheet().getSystemId()));
+        il.append(classGen.loadTranslet());
+        il.append(DUP);
+        il.append(new GETFIELD(domField));
+        il.append(new INVOKESTATIC(docIdx));
+    }
+
+}

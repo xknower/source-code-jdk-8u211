@@ -1,145 +1,140 @@
-/*     */ package com.sun.org.apache.xalan.internal.xsltc.dom;
-/*     */ 
-/*     */ import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
-/*     */ import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
-/*     */ import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class StepIterator
-/*     */   extends DTMAxisIteratorBase
-/*     */ {
-/*     */   protected DTMAxisIterator _source;
-/*     */   protected DTMAxisIterator _iterator;
-/*  59 */   private int _pos = -1;
-/*     */   
-/*     */   public StepIterator(DTMAxisIterator source, DTMAxisIterator iterator) {
-/*  62 */     this._source = source;
-/*  63 */     this._iterator = iterator;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setRestartable(boolean isRestartable) {
-/*  70 */     this._isRestartable = isRestartable;
-/*  71 */     this._source.setRestartable(isRestartable);
-/*  72 */     this._iterator.setRestartable(true);
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator cloneIterator() {
-/*  76 */     this._isRestartable = false;
-/*     */     try {
-/*  78 */       StepIterator clone = (StepIterator)clone();
-/*  79 */       clone._source = this._source.cloneIterator();
-/*  80 */       clone._iterator = this._iterator.cloneIterator();
-/*  81 */       clone._iterator.setRestartable(true);
-/*  82 */       clone._isRestartable = false;
-/*  83 */       return clone.reset();
-/*     */     }
-/*  85 */     catch (CloneNotSupportedException e) {
-/*  86 */       BasisLibrary.runTimeError("ITERATOR_CLONE_ERR", e
-/*  87 */           .toString());
-/*  88 */       return null;
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator setStartNode(int node) {
-/*  93 */     if (this._isRestartable) {
-/*     */       
-/*  95 */       this._source.setStartNode(this._startNode = node);
-/*     */ 
-/*     */ 
-/*     */       
-/*  99 */       this._iterator.setStartNode(this._includeSelf ? this._startNode : this._source.next());
-/* 100 */       return resetPosition();
-/*     */     } 
-/* 102 */     return this;
-/*     */   }
-/*     */   
-/*     */   public DTMAxisIterator reset() {
-/* 106 */     this._source.reset();
-/*     */     
-/* 108 */     this._iterator.setStartNode(this._includeSelf ? this._startNode : this._source.next());
-/* 109 */     return resetPosition();
-/*     */   }
-/*     */   
-/*     */   public int next() {
-/*     */     while (true) {
-/*     */       int node;
-/* 115 */       if ((node = this._iterator.next()) != -1) {
-/* 116 */         return returnNode(node);
-/*     */       }
-/*     */       
-/* 119 */       if ((node = this._source.next()) == -1) {
-/* 120 */         return -1;
-/*     */       }
-/*     */ 
-/*     */       
-/* 124 */       this._iterator.setStartNode(node);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setMark() {
-/* 130 */     this._source.setMark();
-/* 131 */     this._iterator.setMark();
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void gotoMark() {
-/* 136 */     this._source.gotoMark();
-/* 137 */     this._iterator.gotoMark();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xalan\internal\xsltc\dom\StepIterator.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: StepIterator.java,v 1.2.4.1 2005/09/06 10:26:47 pvedula Exp $
+ */
+
+package com.sun.org.apache.xalan.internal.xsltc.dom;
+
+import com.sun.org.apache.xalan.internal.xsltc.runtime.BasisLibrary;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.dtm.ref.DTMAxisIteratorBase;
+
+/**
+ * A step iterator is used to evaluate expressions like "BOOK/TITLE".
+ * A better name for this iterator would have been ParentIterator since
+ * both "BOOK" and "TITLE" are steps in XPath lingo. Step iterators are
+ * constructed from two other iterators which we are going to refer to
+ * as "outer" and "inner". Every node from the outer iterator (the one
+ * for BOOK in our example) is used to initialize the inner iterator.
+ * After this initialization, every node from the inner iterator is
+ * returned (in essence, implementing a "nested loop").
+ * @author Jacek Ambroziak
+ * @author Santiago Pericas-Geertsen
+ * @author Erwin Bolwidt <ejb@klomp.org>
+ * @author Morten Jorgensen
+ */
+public class StepIterator extends DTMAxisIteratorBase {
+
+    /**
+     * A reference to the "outer" iterator.
+     */
+    protected DTMAxisIterator _source;
+
+    /**
+     * A reference to the "inner" iterator.
+     */
+    protected DTMAxisIterator _iterator;
+
+    /**
+     * Temp variable to store a marked position.
+     */
+    private int _pos = -1;
+
+    public StepIterator(DTMAxisIterator source, DTMAxisIterator iterator) {
+        _source = source;
+        _iterator = iterator;
+// System.out.println("SI source = " + source + " this = " + this);
+// System.out.println("SI iterator = " + iterator + " this = " + this);
+    }
+
+
+    public void setRestartable(boolean isRestartable) {
+        _isRestartable = isRestartable;
+        _source.setRestartable(isRestartable);
+        _iterator.setRestartable(true);         // must be restartable
+    }
+
+    public DTMAxisIterator cloneIterator() {
+        _isRestartable = false;
+        try {
+            final StepIterator clone = (StepIterator) super.clone();
+            clone._source = _source.cloneIterator();
+            clone._iterator = _iterator.cloneIterator();
+            clone._iterator.setRestartable(true);       // must be restartable
+            clone._isRestartable = false;
+            return clone.reset();
+        }
+        catch (CloneNotSupportedException e) {
+            BasisLibrary.runTimeError(BasisLibrary.ITERATOR_CLONE_ERR,
+                                      e.toString());
+            return null;
+        }
+    }
+
+    public DTMAxisIterator setStartNode(int node) {
+        if (_isRestartable) {
+            // Set start node for left-hand iterator...
+            _source.setStartNode(_startNode = node);
+
+            // ... and get start node for right-hand iterator from left-hand,
+            // with special case for //* path - see ParentLocationPath
+            _iterator.setStartNode(_includeSelf ? _startNode : _source.next());
+            return resetPosition();
+        }
+        return this;
+    }
+
+    public DTMAxisIterator reset() {
+        _source.reset();
+        // Special case for //* path - see ParentLocationPath
+        _iterator.setStartNode(_includeSelf ? _startNode : _source.next());
+        return resetPosition();
+    }
+
+    public int next() {
+        for (int node;;) {
+            // Try to get another node from the right-hand iterator
+            if ((node = _iterator.next()) != END) {
+                return returnNode(node);
+            }
+            // If not, get the next starting point from left-hand iterator...
+            else if ((node = _source.next()) == END) {
+                return END;
+            }
+            // ...and pass it on to the right-hand iterator
+            else {
+                _iterator.setStartNode(node);
+            }
+        }
+    }
+
+    public void setMark() {
+        _source.setMark();
+        _iterator.setMark();
+        //_pos = _position;
+    }
+
+    public void gotoMark() {
+        _source.gotoMark();
+        _iterator.gotoMark();
+        //_position = _pos;
+    }
+}

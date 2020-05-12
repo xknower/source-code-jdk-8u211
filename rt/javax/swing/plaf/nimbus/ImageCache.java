@@ -1,223 +1,217 @@
-/*     */ package javax.swing.plaf.nimbus;
-/*     */ 
-/*     */ import java.awt.GraphicsConfiguration;
-/*     */ import java.awt.Image;
-/*     */ import java.lang.ref.ReferenceQueue;
-/*     */ import java.lang.ref.SoftReference;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Iterator;
-/*     */ import java.util.LinkedHashMap;
-/*     */ import java.util.Map;
-/*     */ import java.util.concurrent.locks.ReadWriteLock;
-/*     */ import java.util.concurrent.locks.ReentrantReadWriteLock;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class ImageCache
-/*     */ {
-/*  47 */   private final LinkedHashMap<Integer, PixelCountSoftReference> map = new LinkedHashMap<>(16, 0.75F, true);
-/*     */ 
-/*     */   
-/*     */   private final int maxPixelCount;
-/*     */   
-/*     */   private final int maxSingleImagePixelSize;
-/*     */   
-/*  54 */   private int currentPixelCount = 0;
-/*     */   
-/*  56 */   private ReadWriteLock lock = new ReentrantReadWriteLock();
-/*     */   
-/*  58 */   private ReferenceQueue<Image> referenceQueue = new ReferenceQueue<>();
-/*     */   
-/*  60 */   private static final ImageCache instance = new ImageCache();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static ImageCache getInstance() {
-/*  65 */     return instance;
-/*     */   }
-/*     */   
-/*     */   public ImageCache() {
-/*  69 */     this.maxPixelCount = 2097152;
-/*  70 */     this.maxSingleImagePixelSize = 90000;
-/*     */   }
-/*     */   
-/*     */   public ImageCache(int paramInt1, int paramInt2) {
-/*  74 */     this.maxPixelCount = paramInt1;
-/*  75 */     this.maxSingleImagePixelSize = paramInt2;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void flush() {
-/*  80 */     this.lock.readLock().lock();
-/*     */     try {
-/*  82 */       this.map.clear();
-/*     */     } finally {
-/*  84 */       this.lock.readLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isImageCachable(int paramInt1, int paramInt2) {
-/*  96 */     return (paramInt1 * paramInt2 < this.maxSingleImagePixelSize);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Image getImage(GraphicsConfiguration paramGraphicsConfiguration, int paramInt1, int paramInt2, Object... paramVarArgs) {
-/* 109 */     this.lock.readLock().lock();
-/*     */     try {
-/* 111 */       PixelCountSoftReference pixelCountSoftReference = this.map.get(Integer.valueOf(hash(paramGraphicsConfiguration, paramInt1, paramInt2, paramVarArgs)));
-/*     */       
-/* 113 */       if (pixelCountSoftReference != null && pixelCountSoftReference.equals(paramGraphicsConfiguration, paramInt1, paramInt2, paramVarArgs)) {
-/* 114 */         return pixelCountSoftReference.get();
-/*     */       }
-/* 116 */       return null;
-/*     */     } finally {
-/*     */       
-/* 119 */       this.lock.readLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean setImage(Image paramImage, GraphicsConfiguration paramGraphicsConfiguration, int paramInt1, int paramInt2, Object... paramVarArgs) {
-/* 134 */     if (!isImageCachable(paramInt1, paramInt2)) return false; 
-/* 135 */     int i = hash(paramGraphicsConfiguration, paramInt1, paramInt2, paramVarArgs);
-/* 136 */     this.lock.writeLock().lock();
-/*     */     try {
-/* 138 */       PixelCountSoftReference pixelCountSoftReference = this.map.get(Integer.valueOf(i));
-/*     */       
-/* 140 */       if (pixelCountSoftReference != null && pixelCountSoftReference.get() == paramImage) {
-/* 141 */         return true;
-/*     */       }
-/*     */       
-/* 144 */       if (pixelCountSoftReference != null) {
-/* 145 */         this.currentPixelCount -= pixelCountSoftReference.pixelCount;
-/* 146 */         this.map.remove(Integer.valueOf(i));
-/*     */       } 
-/*     */       
-/* 149 */       int j = paramImage.getWidth(null) * paramImage.getHeight(null);
-/* 150 */       this.currentPixelCount += j;
-/*     */       
-/* 152 */       if (this.currentPixelCount > this.maxPixelCount) {
-/* 153 */         while ((pixelCountSoftReference = (PixelCountSoftReference)this.referenceQueue.poll()) != null) {
-/*     */           
-/* 155 */           this.map.remove(Integer.valueOf(pixelCountSoftReference.hash));
-/* 156 */           this.currentPixelCount -= pixelCountSoftReference.pixelCount;
-/*     */         } 
-/*     */       }
-/*     */       
-/* 160 */       if (this.currentPixelCount > this.maxPixelCount) {
-/* 161 */         Iterator<Map.Entry> iterator = this.map.entrySet().iterator();
-/* 162 */         while (this.currentPixelCount > this.maxPixelCount && iterator.hasNext()) {
-/* 163 */           Map.Entry entry = iterator.next();
-/* 164 */           iterator.remove();
-/* 165 */           Image image = ((PixelCountSoftReference)entry.getValue()).get();
-/* 166 */           if (image != null) image.flush(); 
-/* 167 */           this.currentPixelCount -= ((PixelCountSoftReference)entry.getValue()).pixelCount;
-/*     */         } 
-/*     */       } 
-/*     */       
-/* 171 */       this.map.put(Integer.valueOf(i), new PixelCountSoftReference(paramImage, this.referenceQueue, j, i, paramGraphicsConfiguration, paramInt1, paramInt2, paramVarArgs));
-/* 172 */       return true;
-/*     */     } finally {
-/* 174 */       this.lock.writeLock().unlock();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int hash(GraphicsConfiguration paramGraphicsConfiguration, int paramInt1, int paramInt2, Object... paramVarArgs) {
-/* 181 */     int i = (paramGraphicsConfiguration != null) ? paramGraphicsConfiguration.hashCode() : 0;
-/* 182 */     i = 31 * i + paramInt1;
-/* 183 */     i = 31 * i + paramInt2;
-/* 184 */     i = 31 * i + Arrays.deepHashCode(paramVarArgs);
-/* 185 */     return i;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static class PixelCountSoftReference
-/*     */     extends SoftReference<Image>
-/*     */   {
-/*     */     private final int pixelCount;
-/*     */     
-/*     */     private final int hash;
-/*     */     private final GraphicsConfiguration config;
-/*     */     private final int w;
-/*     */     private final int h;
-/*     */     private final Object[] args;
-/*     */     
-/*     */     public PixelCountSoftReference(Image param1Image, ReferenceQueue<? super Image> param1ReferenceQueue, int param1Int1, int param1Int2, GraphicsConfiguration param1GraphicsConfiguration, int param1Int3, int param1Int4, Object[] param1ArrayOfObject) {
-/* 201 */       super(param1Image, param1ReferenceQueue);
-/* 202 */       this.pixelCount = param1Int1;
-/* 203 */       this.hash = param1Int2;
-/* 204 */       this.config = param1GraphicsConfiguration;
-/* 205 */       this.w = param1Int3;
-/* 206 */       this.h = param1Int4;
-/* 207 */       this.args = param1ArrayOfObject;
-/*     */     }
-/*     */     
-/*     */     public boolean equals(GraphicsConfiguration param1GraphicsConfiguration, int param1Int1, int param1Int2, Object[] param1ArrayOfObject) {
-/* 211 */       return (param1GraphicsConfiguration == this.config && param1Int1 == this.w && param1Int2 == this.h && 
-/*     */ 
-/*     */         
-/* 214 */         Arrays.equals(param1ArrayOfObject, this.args));
-/*     */     }
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\plaf\nimbus\ImageCache.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.plaf.nimbus;
+
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * ImageCache - A fixed pixel count sized cache of Images keyed by arbitrary set of arguments. All images are held with
+ * SoftReferences so they will be dropped by the GC if heap memory gets tight. When our size hits max pixel count least
+ * recently requested images are removed first.
+ *
+ * @author Created by Jasper Potts (Aug 7, 2007)
+ */
+class ImageCache {
+    // Ordered Map keyed by args hash, ordered by most recent accessed entry.
+    private final LinkedHashMap<Integer, PixelCountSoftReference> map =
+            new LinkedHashMap<Integer, PixelCountSoftReference>(16, 0.75f, true);
+    // Maximum number of pixels to cache, this is used if maxCount
+    private final int maxPixelCount;
+    // Maximum cached image size in pxiels
+    private final int maxSingleImagePixelSize;
+    // The current number of pixels stored in the cache
+    private int currentPixelCount = 0;
+    // Lock for concurrent access to map
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
+    // Reference queue for tracking lost softreferences to images in the cache
+    private ReferenceQueue<Image> referenceQueue = new ReferenceQueue<Image>();
+    // Singleton Instance
+    private static final ImageCache instance = new ImageCache();
+
+
+    /** Get static singleton instance */
+    static ImageCache getInstance() {
+        return instance;
+    }
+
+    public ImageCache() {
+        this.maxPixelCount = (8 * 1024 * 1024) / 4; // 8Mb of pixels
+        this.maxSingleImagePixelSize = 300 * 300;
+    }
+
+    public ImageCache(int maxPixelCount, int maxSingleImagePixelSize) {
+        this.maxPixelCount = maxPixelCount;
+        this.maxSingleImagePixelSize = maxSingleImagePixelSize;
+    }
+
+    /** Clear the cache */
+    public void flush() {
+        lock.readLock().lock();
+        try {
+            map.clear();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Check if the image size is to big to be stored in the cache
+     *
+     * @param w The image width
+     * @param h The image height
+     * @return True if the image size is less than max
+     */
+    public boolean isImageCachable(int w, int h) {
+        return (w * h) < maxSingleImagePixelSize;
+    }
+
+    /**
+     * Get the cached image for given keys
+     *
+     * @param config The graphics configuration, needed if cached image is a Volatile Image. Used as part of cache key
+     * @param w      The image width, used as part of cache key
+     * @param h      The image height, used as part of cache key
+     * @param args   Other arguments to use as part of the cache key
+     * @return Returns the cached Image, or null there is no cached image for key
+     */
+    public Image getImage(GraphicsConfiguration config, int w, int h, Object... args) {
+        lock.readLock().lock();
+        try {
+            PixelCountSoftReference ref = map.get(hash(config, w, h, args));
+            // check reference has not been lost and the key truly matches, in case of false positive hash match
+            if (ref != null && ref.equals(config,w, h, args)) {
+                return ref.get();
+            } else {
+                return null;
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Sets the cached image for the specified constraints.
+     *
+     * @param image  The image to store in cache
+     * @param config The graphics configuration, needed if cached image is a Volatile Image. Used as part of cache key
+     * @param w      The image width, used as part of cache key
+     * @param h      The image height, used as part of cache key
+     * @param args   Other arguments to use as part of the cache key
+     * @return true if the image could be cached or false if the image is too big
+     */
+    public boolean setImage(Image image, GraphicsConfiguration config, int w, int h, Object... args) {
+        if (!isImageCachable(w, h)) return false;
+        int hash = hash(config, w, h, args);
+        lock.writeLock().lock();
+        try {
+            PixelCountSoftReference ref = map.get(hash);
+            // check if currently in map
+            if (ref != null && ref.get() == image) {
+                return true;
+            }
+            // clear out old
+            if (ref != null) {
+                currentPixelCount -= ref.pixelCount;
+                map.remove(hash);
+            }
+            // add new image to pixel count
+            int newPixelCount = image.getWidth(null) * image.getHeight(null);
+            currentPixelCount += newPixelCount;
+            // clean out lost references if not enough space
+            if (currentPixelCount > maxPixelCount) {
+                while ((ref = (PixelCountSoftReference)referenceQueue.poll()) != null){
+                    //reference lost
+                    map.remove(ref.hash);
+                    currentPixelCount -= ref.pixelCount;
+                }
+            }
+            // remove old items till there is enough free space
+            if (currentPixelCount > maxPixelCount) {
+                Iterator<Map.Entry<Integer, PixelCountSoftReference>> mapIter = map.entrySet().iterator();
+                while ((currentPixelCount > maxPixelCount) && mapIter.hasNext()) {
+                    Map.Entry<Integer, PixelCountSoftReference> entry = mapIter.next();
+                    mapIter.remove();
+                    Image img = entry.getValue().get();
+                    if (img != null) img.flush();
+                    currentPixelCount -= entry.getValue().pixelCount;
+                }
+            }
+            // finaly put new in map
+            map.put(hash, new PixelCountSoftReference(image, referenceQueue, newPixelCount,hash, config, w, h, args));
+            return true;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /** Create a unique hash from all the input */
+    private int hash(GraphicsConfiguration config, int w, int h, Object ... args) {
+        int hash;
+        hash = (config != null ? config.hashCode() : 0);
+        hash = 31 * hash + w;
+        hash = 31 * hash + h;
+        hash = 31 * hash + Arrays.deepHashCode(args);
+        return hash;
+    }
+
+
+    /** Extended SoftReference that stores the pixel count even after the image is lost */
+    private static class PixelCountSoftReference extends SoftReference<Image> {
+        private final int pixelCount;
+        private final int hash;
+        // key parts
+        private final GraphicsConfiguration config;
+        private final int w;
+        private final int h;
+        private final Object[] args;
+
+        public PixelCountSoftReference(Image referent, ReferenceQueue<? super Image> q, int pixelCount, int hash,
+                                       GraphicsConfiguration config, int w, int h, Object[] args) {
+            super(referent, q);
+            this.pixelCount = pixelCount;
+            this.hash = hash;
+            this.config = config;
+            this.w = w;
+            this.h = h;
+            this.args = args;
+        }
+
+        public boolean equals (GraphicsConfiguration config, int w, int h, Object[] args){
+            return config == this.config &&
+                            w == this.w &&
+                            h == this.h &&
+                            Arrays.equals(args, this.args);
+        }
+    }
+}

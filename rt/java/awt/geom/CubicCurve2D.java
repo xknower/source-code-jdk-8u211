@@ -1,1581 +1,1575 @@
-/*      */ package java.awt.geom;
-/*      */ 
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.io.Serializable;
-/*      */ import java.util.Arrays;
-/*      */ import sun.awt.geom.Curve;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class CubicCurve2D
-/*      */   implements Shape, Cloneable
-/*      */ {
-/*      */   public abstract double getX1();
-/*      */   
-/*      */   public abstract double getY1();
-/*      */   
-/*      */   public abstract Point2D getP1();
-/*      */   
-/*      */   public abstract double getCtrlX1();
-/*      */   
-/*      */   public abstract double getCtrlY1();
-/*      */   
-/*      */   public abstract Point2D getCtrlP1();
-/*      */   
-/*      */   public abstract double getCtrlX2();
-/*      */   
-/*      */   public abstract double getCtrlY2();
-/*      */   
-/*      */   public abstract Point2D getCtrlP2();
-/*      */   
-/*      */   public abstract double getX2();
-/*      */   
-/*      */   public abstract double getY2();
-/*      */   
-/*      */   public abstract Point2D getP2();
-/*      */   
-/*      */   public abstract void setCurve(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4, double paramDouble5, double paramDouble6, double paramDouble7, double paramDouble8);
-/*      */   
-/*      */   public static class Float
-/*      */     extends CubicCurve2D
-/*      */     implements Serializable
-/*      */   {
-/*      */     public float x1;
-/*      */     public float y1;
-/*      */     public float ctrlx1;
-/*      */     public float ctrly1;
-/*      */     public float ctrlx2;
-/*      */     public float ctrly2;
-/*      */     public float x2;
-/*      */     public float y2;
-/*      */     private static final long serialVersionUID = -1272015596714244385L;
-/*      */     
-/*      */     public Float() {}
-/*      */     
-/*      */     public Float(float param1Float1, float param1Float2, float param1Float3, float param1Float4, float param1Float5, float param1Float6, float param1Float7, float param1Float8) {
-/*  157 */       setCurve(param1Float1, param1Float2, param1Float3, param1Float4, param1Float5, param1Float6, param1Float7, param1Float8);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getX1() {
-/*  165 */       return this.x1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getY1() {
-/*  173 */       return this.y1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getP1() {
-/*  181 */       return new Point2D.Float(this.x1, this.y1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlX1() {
-/*  189 */       return this.ctrlx1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlY1() {
-/*  197 */       return this.ctrly1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getCtrlP1() {
-/*  205 */       return new Point2D.Float(this.ctrlx1, this.ctrly1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlX2() {
-/*  213 */       return this.ctrlx2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlY2() {
-/*  221 */       return this.ctrly2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getCtrlP2() {
-/*  229 */       return new Point2D.Float(this.ctrlx2, this.ctrly2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getX2() {
-/*  237 */       return this.x2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getY2() {
-/*  245 */       return this.y2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getP2() {
-/*  253 */       return new Point2D.Float(this.x2, this.y2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setCurve(double param1Double1, double param1Double2, double param1Double3, double param1Double4, double param1Double5, double param1Double6, double param1Double7, double param1Double8) {
-/*  265 */       this.x1 = (float)param1Double1;
-/*  266 */       this.y1 = (float)param1Double2;
-/*  267 */       this.ctrlx1 = (float)param1Double3;
-/*  268 */       this.ctrly1 = (float)param1Double4;
-/*  269 */       this.ctrlx2 = (float)param1Double5;
-/*  270 */       this.ctrly2 = (float)param1Double6;
-/*  271 */       this.x2 = (float)param1Double7;
-/*  272 */       this.y2 = (float)param1Double8;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setCurve(float param1Float1, float param1Float2, float param1Float3, float param1Float4, float param1Float5, float param1Float6, float param1Float7, float param1Float8) {
-/*  302 */       this.x1 = param1Float1;
-/*  303 */       this.y1 = param1Float2;
-/*  304 */       this.ctrlx1 = param1Float3;
-/*  305 */       this.ctrly1 = param1Float4;
-/*  306 */       this.ctrlx2 = param1Float5;
-/*  307 */       this.ctrly2 = param1Float6;
-/*  308 */       this.x2 = param1Float7;
-/*  309 */       this.y2 = param1Float8;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Rectangle2D getBounds2D() {
-/*  317 */       float f1 = Math.min(Math.min(this.x1, this.x2), 
-/*  318 */           Math.min(this.ctrlx1, this.ctrlx2));
-/*  319 */       float f2 = Math.min(Math.min(this.y1, this.y2), 
-/*  320 */           Math.min(this.ctrly1, this.ctrly2));
-/*  321 */       float f3 = Math.max(Math.max(this.x1, this.x2), 
-/*  322 */           Math.max(this.ctrlx1, this.ctrlx2));
-/*  323 */       float f4 = Math.max(Math.max(this.y1, this.y2), 
-/*  324 */           Math.max(this.ctrly1, this.ctrly2));
-/*  325 */       return new Rectangle2D.Float(f1, f2, f3 - f1, f4 - f2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class Double
-/*      */     extends CubicCurve2D
-/*      */     implements Serializable
-/*      */   {
-/*      */     public double x1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double y1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double ctrlx1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double ctrly1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double ctrlx2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double ctrly2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double x2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double y2;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static final long serialVersionUID = -4202960122839707295L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double(double param1Double1, double param1Double2, double param1Double3, double param1Double4, double param1Double5, double param1Double6, double param1Double7, double param1Double8) {
-/*  440 */       setCurve(param1Double1, param1Double2, param1Double3, param1Double4, param1Double5, param1Double6, param1Double7, param1Double8);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getX1() {
-/*  448 */       return this.x1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getY1() {
-/*  456 */       return this.y1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getP1() {
-/*  464 */       return new Point2D.Double(this.x1, this.y1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlX1() {
-/*  472 */       return this.ctrlx1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlY1() {
-/*  480 */       return this.ctrly1;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getCtrlP1() {
-/*  488 */       return new Point2D.Double(this.ctrlx1, this.ctrly1);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlX2() {
-/*  496 */       return this.ctrlx2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getCtrlY2() {
-/*  504 */       return this.ctrly2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getCtrlP2() {
-/*  512 */       return new Point2D.Double(this.ctrlx2, this.ctrly2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getX2() {
-/*  520 */       return this.x2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public double getY2() {
-/*  528 */       return this.y2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Point2D getP2() {
-/*  536 */       return new Point2D.Double(this.x2, this.y2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public void setCurve(double param1Double1, double param1Double2, double param1Double3, double param1Double4, double param1Double5, double param1Double6, double param1Double7, double param1Double8) {
-/*  548 */       this.x1 = param1Double1;
-/*  549 */       this.y1 = param1Double2;
-/*  550 */       this.ctrlx1 = param1Double3;
-/*  551 */       this.ctrly1 = param1Double4;
-/*  552 */       this.ctrlx2 = param1Double5;
-/*  553 */       this.ctrly2 = param1Double6;
-/*  554 */       this.x2 = param1Double7;
-/*  555 */       this.y2 = param1Double8;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Rectangle2D getBounds2D() {
-/*  563 */       double d1 = Math.min(Math.min(this.x1, this.x2), 
-/*  564 */           Math.min(this.ctrlx1, this.ctrlx2));
-/*  565 */       double d2 = Math.min(Math.min(this.y1, this.y2), 
-/*  566 */           Math.min(this.ctrly1, this.ctrly2));
-/*  567 */       double d3 = Math.max(Math.max(this.x1, this.x2), 
-/*  568 */           Math.max(this.ctrlx1, this.ctrlx2));
-/*  569 */       double d4 = Math.max(Math.max(this.y1, this.y2), 
-/*  570 */           Math.max(this.ctrly1, this.ctrly2));
-/*  571 */       return new Rectangle2D.Double(d1, d2, d3 - d1, d4 - d2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCurve(double[] paramArrayOfdouble, int paramInt) {
-/*  731 */     setCurve(paramArrayOfdouble[paramInt + 0], paramArrayOfdouble[paramInt + 1], paramArrayOfdouble[paramInt + 2], paramArrayOfdouble[paramInt + 3], paramArrayOfdouble[paramInt + 4], paramArrayOfdouble[paramInt + 5], paramArrayOfdouble[paramInt + 6], paramArrayOfdouble[paramInt + 7]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCurve(Point2D paramPoint2D1, Point2D paramPoint2D2, Point2D paramPoint2D3, Point2D paramPoint2D4) {
-/*  751 */     setCurve(paramPoint2D1.getX(), paramPoint2D1.getY(), paramPoint2D2.getX(), paramPoint2D2.getY(), paramPoint2D3
-/*  752 */         .getX(), paramPoint2D3.getY(), paramPoint2D4.getX(), paramPoint2D4.getY());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCurve(Point2D[] paramArrayOfPoint2D, int paramInt) {
-/*  766 */     setCurve(paramArrayOfPoint2D[paramInt + 0].getX(), paramArrayOfPoint2D[paramInt + 0].getY(), paramArrayOfPoint2D[paramInt + 1]
-/*  767 */         .getX(), paramArrayOfPoint2D[paramInt + 1].getY(), paramArrayOfPoint2D[paramInt + 2]
-/*  768 */         .getX(), paramArrayOfPoint2D[paramInt + 2].getY(), paramArrayOfPoint2D[paramInt + 3]
-/*  769 */         .getX(), paramArrayOfPoint2D[paramInt + 3].getY());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setCurve(CubicCurve2D paramCubicCurve2D) {
-/*  779 */     setCurve(paramCubicCurve2D.getX1(), paramCubicCurve2D.getY1(), paramCubicCurve2D.getCtrlX1(), paramCubicCurve2D.getCtrlY1(), paramCubicCurve2D
-/*  780 */         .getCtrlX2(), paramCubicCurve2D.getCtrlY2(), paramCubicCurve2D.getX2(), paramCubicCurve2D.getY2());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static double getFlatnessSq(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4, double paramDouble5, double paramDouble6, double paramDouble7, double paramDouble8) {
-/*  812 */     return Math.max(Line2D.ptSegDistSq(paramDouble1, paramDouble2, paramDouble7, paramDouble8, paramDouble3, paramDouble4), 
-/*  813 */         Line2D.ptSegDistSq(paramDouble1, paramDouble2, paramDouble7, paramDouble8, paramDouble5, paramDouble6));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static double getFlatness(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4, double paramDouble5, double paramDouble6, double paramDouble7, double paramDouble8) {
-/*  846 */     return Math.sqrt(getFlatnessSq(paramDouble1, paramDouble2, paramDouble3, paramDouble4, paramDouble5, paramDouble6, paramDouble7, paramDouble8));
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static double getFlatnessSq(double[] paramArrayOfdouble, int paramInt) {
-/*  864 */     return getFlatnessSq(paramArrayOfdouble[paramInt + 0], paramArrayOfdouble[paramInt + 1], paramArrayOfdouble[paramInt + 2], paramArrayOfdouble[paramInt + 3], paramArrayOfdouble[paramInt + 4], paramArrayOfdouble[paramInt + 5], paramArrayOfdouble[paramInt + 6], paramArrayOfdouble[paramInt + 7]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static double getFlatness(double[] paramArrayOfdouble, int paramInt) {
-/*  884 */     return getFlatness(paramArrayOfdouble[paramInt + 0], paramArrayOfdouble[paramInt + 1], paramArrayOfdouble[paramInt + 2], paramArrayOfdouble[paramInt + 3], paramArrayOfdouble[paramInt + 4], paramArrayOfdouble[paramInt + 5], paramArrayOfdouble[paramInt + 6], paramArrayOfdouble[paramInt + 7]);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public double getFlatnessSq() {
-/*  898 */     return getFlatnessSq(getX1(), getY1(), getCtrlX1(), getCtrlY1(), 
-/*  899 */         getCtrlX2(), getCtrlY2(), getX2(), getY2());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public double getFlatness() {
-/*  910 */     return getFlatness(getX1(), getY1(), getCtrlX1(), getCtrlY1(), 
-/*  911 */         getCtrlX2(), getCtrlY2(), getX2(), getY2());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void subdivide(CubicCurve2D paramCubicCurve2D1, CubicCurve2D paramCubicCurve2D2) {
-/*  926 */     subdivide(this, paramCubicCurve2D1, paramCubicCurve2D2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void subdivide(CubicCurve2D paramCubicCurve2D1, CubicCurve2D paramCubicCurve2D2, CubicCurve2D paramCubicCurve2D3) {
-/*  945 */     double d1 = paramCubicCurve2D1.getX1();
-/*  946 */     double d2 = paramCubicCurve2D1.getY1();
-/*  947 */     double d3 = paramCubicCurve2D1.getCtrlX1();
-/*  948 */     double d4 = paramCubicCurve2D1.getCtrlY1();
-/*  949 */     double d5 = paramCubicCurve2D1.getCtrlX2();
-/*  950 */     double d6 = paramCubicCurve2D1.getCtrlY2();
-/*  951 */     double d7 = paramCubicCurve2D1.getX2();
-/*  952 */     double d8 = paramCubicCurve2D1.getY2();
-/*  953 */     double d9 = (d3 + d5) / 2.0D;
-/*  954 */     double d10 = (d4 + d6) / 2.0D;
-/*  955 */     d3 = (d1 + d3) / 2.0D;
-/*  956 */     d4 = (d2 + d4) / 2.0D;
-/*  957 */     d5 = (d7 + d5) / 2.0D;
-/*  958 */     d6 = (d8 + d6) / 2.0D;
-/*  959 */     double d11 = (d3 + d9) / 2.0D;
-/*  960 */     double d12 = (d4 + d10) / 2.0D;
-/*  961 */     double d13 = (d5 + d9) / 2.0D;
-/*  962 */     double d14 = (d6 + d10) / 2.0D;
-/*  963 */     d9 = (d11 + d13) / 2.0D;
-/*  964 */     d10 = (d12 + d14) / 2.0D;
-/*  965 */     if (paramCubicCurve2D2 != null) {
-/*  966 */       paramCubicCurve2D2.setCurve(d1, d2, d3, d4, d11, d12, d9, d10);
-/*      */     }
-/*      */     
-/*  969 */     if (paramCubicCurve2D3 != null) {
-/*  970 */       paramCubicCurve2D3.setCurve(d9, d10, d13, d14, d5, d6, d7, d8);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static void subdivide(double[] paramArrayOfdouble1, int paramInt1, double[] paramArrayOfdouble2, int paramInt2, double[] paramArrayOfdouble3, int paramInt3) {
-/* 1006 */     double d1 = paramArrayOfdouble1[paramInt1 + 0];
-/* 1007 */     double d2 = paramArrayOfdouble1[paramInt1 + 1];
-/* 1008 */     double d3 = paramArrayOfdouble1[paramInt1 + 2];
-/* 1009 */     double d4 = paramArrayOfdouble1[paramInt1 + 3];
-/* 1010 */     double d5 = paramArrayOfdouble1[paramInt1 + 4];
-/* 1011 */     double d6 = paramArrayOfdouble1[paramInt1 + 5];
-/* 1012 */     double d7 = paramArrayOfdouble1[paramInt1 + 6];
-/* 1013 */     double d8 = paramArrayOfdouble1[paramInt1 + 7];
-/* 1014 */     if (paramArrayOfdouble2 != null) {
-/* 1015 */       paramArrayOfdouble2[paramInt2 + 0] = d1;
-/* 1016 */       paramArrayOfdouble2[paramInt2 + 1] = d2;
-/*      */     } 
-/* 1018 */     if (paramArrayOfdouble3 != null) {
-/* 1019 */       paramArrayOfdouble3[paramInt3 + 6] = d7;
-/* 1020 */       paramArrayOfdouble3[paramInt3 + 7] = d8;
-/*      */     } 
-/* 1022 */     d1 = (d1 + d3) / 2.0D;
-/* 1023 */     d2 = (d2 + d4) / 2.0D;
-/* 1024 */     d7 = (d7 + d5) / 2.0D;
-/* 1025 */     d8 = (d8 + d6) / 2.0D;
-/* 1026 */     double d9 = (d3 + d5) / 2.0D;
-/* 1027 */     double d10 = (d4 + d6) / 2.0D;
-/* 1028 */     d3 = (d1 + d9) / 2.0D;
-/* 1029 */     d4 = (d2 + d10) / 2.0D;
-/* 1030 */     d5 = (d7 + d9) / 2.0D;
-/* 1031 */     d6 = (d8 + d10) / 2.0D;
-/* 1032 */     d9 = (d3 + d5) / 2.0D;
-/* 1033 */     d10 = (d4 + d6) / 2.0D;
-/* 1034 */     if (paramArrayOfdouble2 != null) {
-/* 1035 */       paramArrayOfdouble2[paramInt2 + 2] = d1;
-/* 1036 */       paramArrayOfdouble2[paramInt2 + 3] = d2;
-/* 1037 */       paramArrayOfdouble2[paramInt2 + 4] = d3;
-/* 1038 */       paramArrayOfdouble2[paramInt2 + 5] = d4;
-/* 1039 */       paramArrayOfdouble2[paramInt2 + 6] = d9;
-/* 1040 */       paramArrayOfdouble2[paramInt2 + 7] = d10;
-/*      */     } 
-/* 1042 */     if (paramArrayOfdouble3 != null) {
-/* 1043 */       paramArrayOfdouble3[paramInt3 + 0] = d9;
-/* 1044 */       paramArrayOfdouble3[paramInt3 + 1] = d10;
-/* 1045 */       paramArrayOfdouble3[paramInt3 + 2] = d5;
-/* 1046 */       paramArrayOfdouble3[paramInt3 + 3] = d6;
-/* 1047 */       paramArrayOfdouble3[paramInt3 + 4] = d7;
-/* 1048 */       paramArrayOfdouble3[paramInt3 + 5] = d8;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int solveCubic(double[] paramArrayOfdouble) {
-/* 1069 */     return solveCubic(paramArrayOfdouble, paramArrayOfdouble);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static int solveCubic(double[] paramArrayOfdouble1, double[] paramArrayOfdouble2) {
-/*      */     int i;
-/* 1092 */     double d1 = paramArrayOfdouble1[3];
-/* 1093 */     if (d1 == 0.0D) {
-/* 1094 */       return QuadCurve2D.solveQuadratic(paramArrayOfdouble1, paramArrayOfdouble2);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1098 */     double d2 = paramArrayOfdouble1[2] / d1;
-/* 1099 */     double d3 = paramArrayOfdouble1[1] / d1;
-/* 1100 */     double d4 = paramArrayOfdouble1[0] / d1;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1111 */     double d5 = d2 * d2;
-/* 1112 */     double d6 = 0.3333333333333333D * (-0.3333333333333333D * d5 + d3);
-/* 1113 */     double d7 = 0.5D * (0.07407407407407407D * d2 * d5 - 0.3333333333333333D * d2 * d3 + d4);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1117 */     double d8 = d6 * d6 * d6;
-/* 1118 */     double d9 = d7 * d7 + d8;
-/*      */     
-/* 1120 */     double d10 = 0.3333333333333333D * d2;
-/*      */ 
-/*      */     
-/* 1123 */     if (d9 < 0.0D) {
-/*      */       
-/* 1125 */       double d11 = 0.3333333333333333D * Math.acos(-d7 / Math.sqrt(-d8));
-/* 1126 */       double d12 = 2.0D * Math.sqrt(-d6);
-/*      */       
-/* 1128 */       if (paramArrayOfdouble2 == paramArrayOfdouble1) {
-/* 1129 */         paramArrayOfdouble1 = Arrays.copyOf(paramArrayOfdouble1, 4);
-/*      */       }
-/*      */       
-/* 1132 */       paramArrayOfdouble2[0] = d12 * Math.cos(d11);
-/* 1133 */       paramArrayOfdouble2[1] = -d12 * Math.cos(d11 + 1.0471975511965976D);
-/* 1134 */       paramArrayOfdouble2[2] = -d12 * Math.cos(d11 - 1.0471975511965976D);
-/* 1135 */       i = 3;
-/*      */       
-/* 1137 */       for (byte b = 0; b < i; b++) {
-/* 1138 */         paramArrayOfdouble2[b] = paramArrayOfdouble2[b] - d10;
-/*      */       
-/*      */       }
-/*      */     }
-/*      */     else {
-/*      */       
-/* 1144 */       double d11 = Math.sqrt(d9);
-/* 1145 */       double d12 = Math.cbrt(d11 - d7);
-/* 1146 */       double d13 = -Math.cbrt(d11 + d7);
-/* 1147 */       double d14 = d12 + d13;
-/*      */       
-/* 1149 */       i = 1;
-/*      */       
-/* 1151 */       double d15 = 1.2E9D * Math.ulp(Math.abs(d14) + Math.abs(d10));
-/* 1152 */       if (iszero(d9, d15) || within(d12, d13, d15)) {
-/* 1153 */         if (paramArrayOfdouble2 == paramArrayOfdouble1) {
-/* 1154 */           paramArrayOfdouble1 = Arrays.copyOf(paramArrayOfdouble1, 4);
-/*      */         }
-/* 1156 */         paramArrayOfdouble2[1] = -(d14 / 2.0D) - d10;
-/* 1157 */         i = 2;
-/*      */       } 
-/*      */       
-/* 1160 */       paramArrayOfdouble2[0] = d14 - d10;
-/*      */     } 
-/*      */     
-/* 1163 */     if (i > 1) {
-/* 1164 */       i = fixRoots(paramArrayOfdouble1, paramArrayOfdouble2, i);
-/*      */     }
-/* 1166 */     if (i > 2 && (paramArrayOfdouble2[2] == paramArrayOfdouble2[1] || paramArrayOfdouble2[2] == paramArrayOfdouble2[0])) {
-/* 1167 */       i--;
-/*      */     }
-/* 1169 */     if (i > 1 && paramArrayOfdouble2[1] == paramArrayOfdouble2[0]) {
-/* 1170 */       paramArrayOfdouble2[1] = paramArrayOfdouble2[--i];
-/*      */     }
-/* 1172 */     return i;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static int fixRoots(double[] paramArrayOfdouble1, double[] paramArrayOfdouble2, int paramInt) {
-/* 1183 */     double[] arrayOfDouble = { paramArrayOfdouble1[1], 2.0D * paramArrayOfdouble1[2], 3.0D * paramArrayOfdouble1[3] };
-/* 1184 */     int i = QuadCurve2D.solveQuadratic(arrayOfDouble, arrayOfDouble);
-/* 1185 */     if (i == 2 && arrayOfDouble[0] == arrayOfDouble[1]) {
-/* 1186 */       i--;
-/*      */     }
-/* 1188 */     if (i == 2 && arrayOfDouble[0] > arrayOfDouble[1]) {
-/* 1189 */       double d = arrayOfDouble[0];
-/* 1190 */       arrayOfDouble[0] = arrayOfDouble[1];
-/* 1191 */       arrayOfDouble[1] = d;
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1204 */     if (paramInt == 3) {
-/* 1205 */       double d1 = getRootUpperBound(paramArrayOfdouble1);
-/* 1206 */       double d2 = -d1;
-/*      */       
-/* 1208 */       Arrays.sort(paramArrayOfdouble2, 0, paramInt);
-/* 1209 */       if (i == 2) {
-/*      */ 
-/*      */         
-/* 1212 */         paramArrayOfdouble2[0] = refineRootWithHint(paramArrayOfdouble1, d2, arrayOfDouble[0], paramArrayOfdouble2[0]);
-/* 1213 */         paramArrayOfdouble2[1] = refineRootWithHint(paramArrayOfdouble1, arrayOfDouble[0], arrayOfDouble[1], paramArrayOfdouble2[1]);
-/* 1214 */         paramArrayOfdouble2[2] = refineRootWithHint(paramArrayOfdouble1, arrayOfDouble[1], d1, paramArrayOfdouble2[2]);
-/* 1215 */         return 3;
-/* 1216 */       }  if (i == 1) {
-/*      */ 
-/*      */ 
-/*      */         
-/* 1220 */         double d3 = paramArrayOfdouble1[3];
-/* 1221 */         double d4 = -d3;
-/*      */         
-/* 1223 */         double d5 = arrayOfDouble[0];
-/* 1224 */         double d6 = solveEqn(paramArrayOfdouble1, 3, d5);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1236 */         if (oppositeSigns(d4, d6)) {
-/* 1237 */           paramArrayOfdouble2[0] = bisectRootWithHint(paramArrayOfdouble1, d2, d5, paramArrayOfdouble2[0]);
-/* 1238 */         } else if (oppositeSigns(d6, d3)) {
-/* 1239 */           paramArrayOfdouble2[0] = bisectRootWithHint(paramArrayOfdouble1, d5, d1, paramArrayOfdouble2[2]);
-/*      */         } else {
-/* 1241 */           paramArrayOfdouble2[0] = d5;
-/*      */         }
-/*      */       
-/* 1244 */       } else if (i == 0) {
-/* 1245 */         paramArrayOfdouble2[0] = bisectRootWithHint(paramArrayOfdouble1, d2, d1, paramArrayOfdouble2[1]);
-/*      */       }
-/*      */     
-/* 1248 */     } else if (paramInt == 2 && i == 2) {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1257 */       double d1 = paramArrayOfdouble2[0];
-/* 1258 */       double d2 = paramArrayOfdouble2[1];
-/* 1259 */       double d3 = arrayOfDouble[0];
-/* 1260 */       double d4 = arrayOfDouble[1];
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1268 */       double d5 = (Math.abs(d3 - d1) > Math.abs(d4 - d1)) ? d3 : d4;
-/* 1269 */       double d6 = solveEqn(paramArrayOfdouble1, 3, d5);
-/*      */       
-/* 1271 */       if (iszero(d6, 1.0E7D * Math.ulp(d5))) {
-/* 1272 */         double d = solveEqn(paramArrayOfdouble1, 3, d2);
-/* 1273 */         paramArrayOfdouble2[1] = (Math.abs(d) < Math.abs(d6)) ? d2 : d5;
-/* 1274 */         return 2;
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 1278 */     return 1;
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static double refineRootWithHint(double[] paramArrayOfdouble, double paramDouble1, double paramDouble2, double paramDouble3) {
-/* 1283 */     if (!inInterval(paramDouble3, paramDouble1, paramDouble2)) {
-/* 1284 */       return paramDouble3;
-/*      */     }
-/* 1286 */     double[] arrayOfDouble = { paramArrayOfdouble[1], 2.0D * paramArrayOfdouble[2], 3.0D * paramArrayOfdouble[3] };
-/* 1287 */     double d = paramDouble3;
-/* 1288 */     for (byte b = 0; b < 3; b++) {
-/* 1289 */       double d1 = solveEqn(arrayOfDouble, 2, paramDouble3);
-/* 1290 */       double d2 = solveEqn(paramArrayOfdouble, 3, paramDouble3);
-/* 1291 */       double d3 = -(d2 / d1);
-/* 1292 */       double d4 = paramDouble3 + d3;
-/*      */       
-/* 1294 */       if (d1 == 0.0D || d2 == 0.0D || paramDouble3 == d4) {
-/*      */         break;
-/*      */       }
-/*      */       
-/* 1298 */       paramDouble3 = d4;
-/*      */     } 
-/* 1300 */     if (within(paramDouble3, d, 1000.0D * Math.ulp(d)) && inInterval(paramDouble3, paramDouble1, paramDouble2)) {
-/* 1301 */       return paramDouble3;
-/*      */     }
-/* 1303 */     return d;
-/*      */   }
-/*      */   
-/*      */   private static double bisectRootWithHint(double[] paramArrayOfdouble, double paramDouble1, double paramDouble2, double paramDouble3) {
-/* 1307 */     double d1 = Math.min(Math.abs(paramDouble3 - paramDouble1) / 64.0D, 0.0625D);
-/* 1308 */     double d2 = Math.min(Math.abs(paramDouble3 - paramDouble2) / 64.0D, 0.0625D);
-/* 1309 */     double d3 = paramDouble3 - d1;
-/* 1310 */     double d4 = paramDouble3 + d2;
-/* 1311 */     double d5 = solveEqn(paramArrayOfdouble, 3, d3);
-/* 1312 */     double d6 = solveEqn(paramArrayOfdouble, 3, d4);
-/* 1313 */     while (oppositeSigns(d5, d6)) {
-/* 1314 */       if (d3 >= d4) {
-/* 1315 */         return d3;
-/*      */       }
-/* 1317 */       paramDouble1 = d3;
-/* 1318 */       paramDouble2 = d4;
-/* 1319 */       d1 /= 64.0D;
-/* 1320 */       d2 /= 64.0D;
-/* 1321 */       d3 = paramDouble3 - d1;
-/* 1322 */       d4 = paramDouble3 + d2;
-/* 1323 */       d5 = solveEqn(paramArrayOfdouble, 3, d3);
-/* 1324 */       d6 = solveEqn(paramArrayOfdouble, 3, d4);
-/*      */     } 
-/* 1326 */     if (d5 == 0.0D) {
-/* 1327 */       return d3;
-/*      */     }
-/* 1329 */     if (d6 == 0.0D) {
-/* 1330 */       return d4;
-/*      */     }
-/*      */     
-/* 1333 */     return bisectRoot(paramArrayOfdouble, paramDouble1, paramDouble2);
-/*      */   }
-/*      */   
-/*      */   private static double bisectRoot(double[] paramArrayOfdouble, double paramDouble1, double paramDouble2) {
-/* 1337 */     double d1 = solveEqn(paramArrayOfdouble, 3, paramDouble1);
-/* 1338 */     double d2 = paramDouble1 + (paramDouble2 - paramDouble1) / 2.0D;
-/* 1339 */     while (d2 != paramDouble1 && d2 != paramDouble2) {
-/* 1340 */       double d = solveEqn(paramArrayOfdouble, 3, d2);
-/* 1341 */       if (d == 0.0D) {
-/* 1342 */         return d2;
-/*      */       }
-/* 1344 */       if (oppositeSigns(d1, d)) {
-/* 1345 */         paramDouble2 = d2;
-/*      */       } else {
-/* 1347 */         d1 = d;
-/* 1348 */         paramDouble1 = d2;
-/*      */       } 
-/* 1350 */       d2 = paramDouble1 + (paramDouble2 - paramDouble1) / 2.0D;
-/*      */     } 
-/* 1352 */     return d2;
-/*      */   }
-/*      */   
-/*      */   private static boolean inInterval(double paramDouble1, double paramDouble2, double paramDouble3) {
-/* 1356 */     return (paramDouble2 <= paramDouble1 && paramDouble1 <= paramDouble3);
-/*      */   }
-/*      */   
-/*      */   private static boolean within(double paramDouble1, double paramDouble2, double paramDouble3) {
-/* 1360 */     double d = paramDouble2 - paramDouble1;
-/* 1361 */     return (d <= paramDouble3 && d >= -paramDouble3);
-/*      */   }
-/*      */   
-/*      */   private static boolean iszero(double paramDouble1, double paramDouble2) {
-/* 1365 */     return within(paramDouble1, 0.0D, paramDouble2);
-/*      */   }
-/*      */   
-/*      */   private static boolean oppositeSigns(double paramDouble1, double paramDouble2) {
-/* 1369 */     return ((paramDouble1 < 0.0D && paramDouble2 > 0.0D) || (paramDouble1 > 0.0D && paramDouble2 < 0.0D));
-/*      */   }
-/*      */   
-/*      */   private static double solveEqn(double[] paramArrayOfdouble, int paramInt, double paramDouble) {
-/* 1373 */     double d = paramArrayOfdouble[paramInt];
-/* 1374 */     while (--paramInt >= 0) {
-/* 1375 */       d = d * paramDouble + paramArrayOfdouble[paramInt];
-/*      */     }
-/* 1377 */     return d;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static double getRootUpperBound(double[] paramArrayOfdouble) {
-/* 1389 */     double d1 = paramArrayOfdouble[3];
-/* 1390 */     double d2 = paramArrayOfdouble[2];
-/* 1391 */     double d3 = paramArrayOfdouble[1];
-/* 1392 */     double d4 = paramArrayOfdouble[0];
-/*      */     
-/* 1394 */     double d5 = 1.0D + Math.max(Math.max(Math.abs(d2), Math.abs(d3)), Math.abs(d4)) / Math.abs(d1);
-/* 1395 */     d5 += Math.ulp(d5) + 1.0D;
-/* 1396 */     return d5;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(double paramDouble1, double paramDouble2) {
-/* 1405 */     if (paramDouble1 * 0.0D + paramDouble2 * 0.0D != 0.0D)
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1411 */       return false;
-/*      */     }
-/*      */ 
-/*      */     
-/* 1415 */     double d1 = getX1();
-/* 1416 */     double d2 = getY1();
-/* 1417 */     double d3 = getX2();
-/* 1418 */     double d4 = getY2();
-/*      */ 
-/*      */     
-/* 1421 */     int i = Curve.pointCrossingsForLine(paramDouble1, paramDouble2, d1, d2, d3, d4) + Curve.pointCrossingsForCubic(paramDouble1, paramDouble2, d1, d2, 
-/*      */         
-/* 1423 */         getCtrlX1(), getCtrlY1(), 
-/* 1424 */         getCtrlX2(), getCtrlY2(), d3, d4, 0);
-/*      */     
-/* 1426 */     return ((i & 0x1) == 1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Point2D paramPoint2D) {
-/* 1434 */     return contains(paramPoint2D.getX(), paramPoint2D.getY());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean intersects(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 1443 */     if (paramDouble3 <= 0.0D || paramDouble4 <= 0.0D) {
-/* 1444 */       return false;
-/*      */     }
-/*      */     
-/* 1447 */     int i = rectCrossings(paramDouble1, paramDouble2, paramDouble3, paramDouble4);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1453 */     return (i != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean intersects(Rectangle2D paramRectangle2D) {
-/* 1461 */     return intersects(paramRectangle2D.getX(), paramRectangle2D.getY(), paramRectangle2D.getWidth(), paramRectangle2D.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 1469 */     if (paramDouble3 <= 0.0D || paramDouble4 <= 0.0D) {
-/* 1470 */       return false;
-/*      */     }
-/*      */     
-/* 1473 */     int i = rectCrossings(paramDouble1, paramDouble2, paramDouble3, paramDouble4);
-/* 1474 */     return (i != 0 && i != Integer.MIN_VALUE);
-/*      */   }
-/*      */   
-/*      */   private int rectCrossings(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 1478 */     int i = 0;
-/* 1479 */     if (getX1() != getX2() || getY1() != getY2()) {
-/* 1480 */       i = Curve.rectCrossingsForLine(i, paramDouble1, paramDouble2, paramDouble1 + paramDouble3, paramDouble2 + paramDouble4, 
-/*      */ 
-/*      */           
-/* 1483 */           getX1(), getY1(), 
-/* 1484 */           getX2(), getY2());
-/* 1485 */       if (i == Integer.MIN_VALUE) {
-/* 1486 */         return i;
-/*      */       }
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1491 */     return Curve.rectCrossingsForCubic(i, paramDouble1, paramDouble2, paramDouble1 + paramDouble3, paramDouble2 + paramDouble4, 
-/*      */ 
-/*      */         
-/* 1494 */         getX2(), getY2(), 
-/* 1495 */         getCtrlX2(), getCtrlY2(), 
-/* 1496 */         getCtrlX1(), getCtrlY1(), 
-/* 1497 */         getX1(), getY1(), 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean contains(Rectangle2D paramRectangle2D) {
-/* 1505 */     return contains(paramRectangle2D.getX(), paramRectangle2D.getY(), paramRectangle2D.getWidth(), paramRectangle2D.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Rectangle getBounds() {
-/* 1513 */     return getBounds2D().getBounds();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PathIterator getPathIterator(AffineTransform paramAffineTransform) {
-/* 1533 */     return new CubicIterator(this, paramAffineTransform);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public PathIterator getPathIterator(AffineTransform paramAffineTransform, double paramDouble) {
-/* 1556 */     return new FlatteningPathIterator(getPathIterator(paramAffineTransform), paramDouble);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object clone() {
-/*      */     try {
-/* 1569 */       return super.clone();
-/* 1570 */     } catch (CloneNotSupportedException cloneNotSupportedException) {
-/*      */       
-/* 1572 */       throw new InternalError(cloneNotSupportedException);
-/*      */     } 
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\CubicCurve2D.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+import java.awt.Shape;
+import java.awt.Rectangle;
+import java.util.Arrays;
+import java.io.Serializable;
+import sun.awt.geom.Curve;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.max;
+import static java.lang.Math.ulp;
+
+/**
+ * The <code>CubicCurve2D</code> class defines a cubic parametric curve
+ * segment in {@code (x,y)} coordinate space.
+ * <p>
+ * This class is only the abstract superclass for all objects which
+ * store a 2D cubic curve segment.
+ * The actual storage representation of the coordinates is left to
+ * the subclass.
+ *
+ * @author      Jim Graham
+ * @since 1.2
+ */
+public abstract class CubicCurve2D implements Shape, Cloneable {
+
+    /**
+     * A cubic parametric curve segment specified with
+     * {@code float} coordinates.
+     * @since 1.2
+     */
+    public static class Float extends CubicCurve2D implements Serializable {
+        /**
+         * The X coordinate of the start point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float x1;
+
+        /**
+         * The Y coordinate of the start point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float y1;
+
+        /**
+         * The X coordinate of the first control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float ctrlx1;
+
+        /**
+         * The Y coordinate of the first control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float ctrly1;
+
+        /**
+         * The X coordinate of the second control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float ctrlx2;
+
+        /**
+         * The Y coordinate of the second control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float ctrly2;
+
+        /**
+         * The X coordinate of the end point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float x2;
+
+        /**
+         * The Y coordinate of the end point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public float y2;
+
+        /**
+         * Constructs and initializes a CubicCurve with coordinates
+         * (0, 0, 0, 0, 0, 0, 0, 0).
+         * @since 1.2
+         */
+        public Float() {
+        }
+
+        /**
+         * Constructs and initializes a {@code CubicCurve2D} from
+         * the specified {@code float} coordinates.
+         *
+         * @param x1 the X coordinate for the start point
+         *           of the resulting {@code CubicCurve2D}
+         * @param y1 the Y coordinate for the start point
+         *           of the resulting {@code CubicCurve2D}
+         * @param ctrlx1 the X coordinate for the first control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param ctrly1 the Y coordinate for the first control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param ctrlx2 the X coordinate for the second control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param ctrly2 the Y coordinate for the second control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param x2 the X coordinate for the end point
+         *           of the resulting {@code CubicCurve2D}
+         * @param y2 the Y coordinate for the end point
+         *           of the resulting {@code CubicCurve2D}
+         * @since 1.2
+         */
+        public Float(float x1, float y1,
+                     float ctrlx1, float ctrly1,
+                     float ctrlx2, float ctrly2,
+                     float x2, float y2)
+        {
+            setCurve(x1, y1, ctrlx1, ctrly1, ctrlx2, ctrly2, x2, y2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getX1() {
+            return (double) x1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getY1() {
+            return (double) y1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getP1() {
+            return new Point2D.Float(x1, y1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlX1() {
+            return (double) ctrlx1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlY1() {
+            return (double) ctrly1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getCtrlP1() {
+            return new Point2D.Float(ctrlx1, ctrly1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlX2() {
+            return (double) ctrlx2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlY2() {
+            return (double) ctrly2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getCtrlP2() {
+            return new Point2D.Float(ctrlx2, ctrly2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getX2() {
+            return (double) x2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getY2() {
+            return (double) y2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getP2() {
+            return new Point2D.Float(x2, y2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public void setCurve(double x1, double y1,
+                             double ctrlx1, double ctrly1,
+                             double ctrlx2, double ctrly2,
+                             double x2, double y2)
+        {
+            this.x1     = (float) x1;
+            this.y1     = (float) y1;
+            this.ctrlx1 = (float) ctrlx1;
+            this.ctrly1 = (float) ctrly1;
+            this.ctrlx2 = (float) ctrlx2;
+            this.ctrly2 = (float) ctrly2;
+            this.x2     = (float) x2;
+            this.y2     = (float) y2;
+        }
+
+        /**
+         * Sets the location of the end points and control points
+         * of this curve to the specified {@code float} coordinates.
+         *
+         * @param x1 the X coordinate used to set the start point
+         *           of this {@code CubicCurve2D}
+         * @param y1 the Y coordinate used to set the start point
+         *           of this {@code CubicCurve2D}
+         * @param ctrlx1 the X coordinate used to set the first control point
+         *               of this {@code CubicCurve2D}
+         * @param ctrly1 the Y coordinate used to set the first control point
+         *               of this {@code CubicCurve2D}
+         * @param ctrlx2 the X coordinate used to set the second control point
+         *               of this {@code CubicCurve2D}
+         * @param ctrly2 the Y coordinate used to set the second control point
+         *               of this {@code CubicCurve2D}
+         * @param x2 the X coordinate used to set the end point
+         *           of this {@code CubicCurve2D}
+         * @param y2 the Y coordinate used to set the end point
+         *           of this {@code CubicCurve2D}
+         * @since 1.2
+         */
+        public void setCurve(float x1, float y1,
+                             float ctrlx1, float ctrly1,
+                             float ctrlx2, float ctrly2,
+                             float x2, float y2)
+        {
+            this.x1     = x1;
+            this.y1     = y1;
+            this.ctrlx1 = ctrlx1;
+            this.ctrly1 = ctrly1;
+            this.ctrlx2 = ctrlx2;
+            this.ctrly2 = ctrly2;
+            this.x2     = x2;
+            this.y2     = y2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Rectangle2D getBounds2D() {
+            float left   = Math.min(Math.min(x1, x2),
+                                    Math.min(ctrlx1, ctrlx2));
+            float top    = Math.min(Math.min(y1, y2),
+                                    Math.min(ctrly1, ctrly2));
+            float right  = Math.max(Math.max(x1, x2),
+                                    Math.max(ctrlx1, ctrlx2));
+            float bottom = Math.max(Math.max(y1, y2),
+                                    Math.max(ctrly1, ctrly2));
+            return new Rectangle2D.Float(left, top,
+                                         right - left, bottom - top);
+        }
+
+        /*
+         * JDK 1.6 serialVersionUID
+         */
+        private static final long serialVersionUID = -1272015596714244385L;
+    }
+
+    /**
+     * A cubic parametric curve segment specified with
+     * {@code double} coordinates.
+     * @since 1.2
+     */
+    public static class Double extends CubicCurve2D implements Serializable {
+        /**
+         * The X coordinate of the start point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double x1;
+
+        /**
+         * The Y coordinate of the start point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double y1;
+
+        /**
+         * The X coordinate of the first control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double ctrlx1;
+
+        /**
+         * The Y coordinate of the first control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double ctrly1;
+
+        /**
+         * The X coordinate of the second control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double ctrlx2;
+
+        /**
+         * The Y coordinate of the second control point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double ctrly2;
+
+        /**
+         * The X coordinate of the end point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double x2;
+
+        /**
+         * The Y coordinate of the end point
+         * of the cubic curve segment.
+         * @since 1.2
+         * @serial
+         */
+        public double y2;
+
+        /**
+         * Constructs and initializes a CubicCurve with coordinates
+         * (0, 0, 0, 0, 0, 0, 0, 0).
+         * @since 1.2
+         */
+        public Double() {
+        }
+
+        /**
+         * Constructs and initializes a {@code CubicCurve2D} from
+         * the specified {@code double} coordinates.
+         *
+         * @param x1 the X coordinate for the start point
+         *           of the resulting {@code CubicCurve2D}
+         * @param y1 the Y coordinate for the start point
+         *           of the resulting {@code CubicCurve2D}
+         * @param ctrlx1 the X coordinate for the first control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param ctrly1 the Y coordinate for the first control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param ctrlx2 the X coordinate for the second control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param ctrly2 the Y coordinate for the second control point
+         *               of the resulting {@code CubicCurve2D}
+         * @param x2 the X coordinate for the end point
+         *           of the resulting {@code CubicCurve2D}
+         * @param y2 the Y coordinate for the end point
+         *           of the resulting {@code CubicCurve2D}
+         * @since 1.2
+         */
+        public Double(double x1, double y1,
+                      double ctrlx1, double ctrly1,
+                      double ctrlx2, double ctrly2,
+                      double x2, double y2)
+        {
+            setCurve(x1, y1, ctrlx1, ctrly1, ctrlx2, ctrly2, x2, y2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getX1() {
+            return x1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getY1() {
+            return y1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getP1() {
+            return new Point2D.Double(x1, y1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlX1() {
+            return ctrlx1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlY1() {
+            return ctrly1;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getCtrlP1() {
+            return new Point2D.Double(ctrlx1, ctrly1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlX2() {
+            return ctrlx2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getCtrlY2() {
+            return ctrly2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getCtrlP2() {
+            return new Point2D.Double(ctrlx2, ctrly2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getX2() {
+            return x2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public double getY2() {
+            return y2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Point2D getP2() {
+            return new Point2D.Double(x2, y2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public void setCurve(double x1, double y1,
+                             double ctrlx1, double ctrly1,
+                             double ctrlx2, double ctrly2,
+                             double x2, double y2)
+        {
+            this.x1     = x1;
+            this.y1     = y1;
+            this.ctrlx1 = ctrlx1;
+            this.ctrly1 = ctrly1;
+            this.ctrlx2 = ctrlx2;
+            this.ctrly2 = ctrly2;
+            this.x2     = x2;
+            this.y2     = y2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.2
+         */
+        public Rectangle2D getBounds2D() {
+            double left   = Math.min(Math.min(x1, x2),
+                                     Math.min(ctrlx1, ctrlx2));
+            double top    = Math.min(Math.min(y1, y2),
+                                     Math.min(ctrly1, ctrly2));
+            double right  = Math.max(Math.max(x1, x2),
+                                     Math.max(ctrlx1, ctrlx2));
+            double bottom = Math.max(Math.max(y1, y2),
+                                     Math.max(ctrly1, ctrly2));
+            return new Rectangle2D.Double(left, top,
+                                          right - left, bottom - top);
+        }
+
+        /*
+         * JDK 1.6 serialVersionUID
+         */
+        private static final long serialVersionUID = -4202960122839707295L;
+    }
+
+    /**
+     * This is an abstract class that cannot be instantiated directly.
+     * Type-specific implementation subclasses are available for
+     * instantiation and provide a number of formats for storing
+     * the information necessary to satisfy the various accessor
+     * methods below.
+     *
+     * @see java.awt.geom.CubicCurve2D.Float
+     * @see java.awt.geom.CubicCurve2D.Double
+     * @since 1.2
+     */
+    protected CubicCurve2D() {
+    }
+
+    /**
+     * Returns the X coordinate of the start point in double precision.
+     * @return the X coordinate of the start point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getX1();
+
+    /**
+     * Returns the Y coordinate of the start point in double precision.
+     * @return the Y coordinate of the start point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getY1();
+
+    /**
+     * Returns the start point.
+     * @return a {@code Point2D} that is the start point of
+     *         the {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract Point2D getP1();
+
+    /**
+     * Returns the X coordinate of the first control point in double precision.
+     * @return the X coordinate of the first control point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getCtrlX1();
+
+    /**
+     * Returns the Y coordinate of the first control point in double precision.
+     * @return the Y coordinate of the first control point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getCtrlY1();
+
+    /**
+     * Returns the first control point.
+     * @return a {@code Point2D} that is the first control point of
+     *         the {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract Point2D getCtrlP1();
+
+    /**
+     * Returns the X coordinate of the second control point
+     * in double precision.
+     * @return the X coordinate of the second control point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getCtrlX2();
+
+    /**
+     * Returns the Y coordinate of the second control point
+     * in double precision.
+     * @return the Y coordinate of the second control point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getCtrlY2();
+
+    /**
+     * Returns the second control point.
+     * @return a {@code Point2D} that is the second control point of
+     *         the {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract Point2D getCtrlP2();
+
+    /**
+     * Returns the X coordinate of the end point in double precision.
+     * @return the X coordinate of the end point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getX2();
+
+    /**
+     * Returns the Y coordinate of the end point in double precision.
+     * @return the Y coordinate of the end point of the
+     *         {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract double getY2();
+
+    /**
+     * Returns the end point.
+     * @return a {@code Point2D} that is the end point of
+     *         the {@code CubicCurve2D}.
+     * @since 1.2
+     */
+    public abstract Point2D getP2();
+
+    /**
+     * Sets the location of the end points and control points of this curve
+     * to the specified double coordinates.
+     *
+     * @param x1 the X coordinate used to set the start point
+     *           of this {@code CubicCurve2D}
+     * @param y1 the Y coordinate used to set the start point
+     *           of this {@code CubicCurve2D}
+     * @param ctrlx1 the X coordinate used to set the first control point
+     *               of this {@code CubicCurve2D}
+     * @param ctrly1 the Y coordinate used to set the first control point
+     *               of this {@code CubicCurve2D}
+     * @param ctrlx2 the X coordinate used to set the second control point
+     *               of this {@code CubicCurve2D}
+     * @param ctrly2 the Y coordinate used to set the second control point
+     *               of this {@code CubicCurve2D}
+     * @param x2 the X coordinate used to set the end point
+     *           of this {@code CubicCurve2D}
+     * @param y2 the Y coordinate used to set the end point
+     *           of this {@code CubicCurve2D}
+     * @since 1.2
+     */
+    public abstract void setCurve(double x1, double y1,
+                                  double ctrlx1, double ctrly1,
+                                  double ctrlx2, double ctrly2,
+                                  double x2, double y2);
+
+    /**
+     * Sets the location of the end points and control points of this curve
+     * to the double coordinates at the specified offset in the specified
+     * array.
+     * @param coords a double array containing coordinates
+     * @param offset the index of <code>coords</code> from which to begin
+     *          setting the end points and control points of this curve
+     *          to the coordinates contained in <code>coords</code>
+     * @since 1.2
+     */
+    public void setCurve(double[] coords, int offset) {
+        setCurve(coords[offset + 0], coords[offset + 1],
+                 coords[offset + 2], coords[offset + 3],
+                 coords[offset + 4], coords[offset + 5],
+                 coords[offset + 6], coords[offset + 7]);
+    }
+
+    /**
+     * Sets the location of the end points and control points of this curve
+     * to the specified <code>Point2D</code> coordinates.
+     * @param p1 the first specified <code>Point2D</code> used to set the
+     *          start point of this curve
+     * @param cp1 the second specified <code>Point2D</code> used to set the
+     *          first control point of this curve
+     * @param cp2 the third specified <code>Point2D</code> used to set the
+     *          second control point of this curve
+     * @param p2 the fourth specified <code>Point2D</code> used to set the
+     *          end point of this curve
+     * @since 1.2
+     */
+    public void setCurve(Point2D p1, Point2D cp1, Point2D cp2, Point2D p2) {
+        setCurve(p1.getX(), p1.getY(), cp1.getX(), cp1.getY(),
+                 cp2.getX(), cp2.getY(), p2.getX(), p2.getY());
+    }
+
+    /**
+     * Sets the location of the end points and control points of this curve
+     * to the coordinates of the <code>Point2D</code> objects at the specified
+     * offset in the specified array.
+     * @param pts an array of <code>Point2D</code> objects
+     * @param offset  the index of <code>pts</code> from which to begin setting
+     *          the end points and control points of this curve to the
+     *          points contained in <code>pts</code>
+     * @since 1.2
+     */
+    public void setCurve(Point2D[] pts, int offset) {
+        setCurve(pts[offset + 0].getX(), pts[offset + 0].getY(),
+                 pts[offset + 1].getX(), pts[offset + 1].getY(),
+                 pts[offset + 2].getX(), pts[offset + 2].getY(),
+                 pts[offset + 3].getX(), pts[offset + 3].getY());
+    }
+
+    /**
+     * Sets the location of the end points and control points of this curve
+     * to the same as those in the specified <code>CubicCurve2D</code>.
+     * @param c the specified <code>CubicCurve2D</code>
+     * @since 1.2
+     */
+    public void setCurve(CubicCurve2D c) {
+        setCurve(c.getX1(), c.getY1(), c.getCtrlX1(), c.getCtrlY1(),
+                 c.getCtrlX2(), c.getCtrlY2(), c.getX2(), c.getY2());
+    }
+
+    /**
+     * Returns the square of the flatness of the cubic curve specified
+     * by the indicated control points. The flatness is the maximum distance
+     * of a control point from the line connecting the end points.
+     *
+     * @param x1 the X coordinate that specifies the start point
+     *           of a {@code CubicCurve2D}
+     * @param y1 the Y coordinate that specifies the start point
+     *           of a {@code CubicCurve2D}
+     * @param ctrlx1 the X coordinate that specifies the first control point
+     *               of a {@code CubicCurve2D}
+     * @param ctrly1 the Y coordinate that specifies the first control point
+     *               of a {@code CubicCurve2D}
+     * @param ctrlx2 the X coordinate that specifies the second control point
+     *               of a {@code CubicCurve2D}
+     * @param ctrly2 the Y coordinate that specifies the second control point
+     *               of a {@code CubicCurve2D}
+     * @param x2 the X coordinate that specifies the end point
+     *           of a {@code CubicCurve2D}
+     * @param y2 the Y coordinate that specifies the end point
+     *           of a {@code CubicCurve2D}
+     * @return the square of the flatness of the {@code CubicCurve2D}
+     *          represented by the specified coordinates.
+     * @since 1.2
+     */
+    public static double getFlatnessSq(double x1, double y1,
+                                       double ctrlx1, double ctrly1,
+                                       double ctrlx2, double ctrly2,
+                                       double x2, double y2) {
+        return Math.max(Line2D.ptSegDistSq(x1, y1, x2, y2, ctrlx1, ctrly1),
+                        Line2D.ptSegDistSq(x1, y1, x2, y2, ctrlx2, ctrly2));
+
+    }
+
+    /**
+     * Returns the flatness of the cubic curve specified
+     * by the indicated control points. The flatness is the maximum distance
+     * of a control point from the line connecting the end points.
+     *
+     * @param x1 the X coordinate that specifies the start point
+     *           of a {@code CubicCurve2D}
+     * @param y1 the Y coordinate that specifies the start point
+     *           of a {@code CubicCurve2D}
+     * @param ctrlx1 the X coordinate that specifies the first control point
+     *               of a {@code CubicCurve2D}
+     * @param ctrly1 the Y coordinate that specifies the first control point
+     *               of a {@code CubicCurve2D}
+     * @param ctrlx2 the X coordinate that specifies the second control point
+     *               of a {@code CubicCurve2D}
+     * @param ctrly2 the Y coordinate that specifies the second control point
+     *               of a {@code CubicCurve2D}
+     * @param x2 the X coordinate that specifies the end point
+     *           of a {@code CubicCurve2D}
+     * @param y2 the Y coordinate that specifies the end point
+     *           of a {@code CubicCurve2D}
+     * @return the flatness of the {@code CubicCurve2D}
+     *          represented by the specified coordinates.
+     * @since 1.2
+     */
+    public static double getFlatness(double x1, double y1,
+                                     double ctrlx1, double ctrly1,
+                                     double ctrlx2, double ctrly2,
+                                     double x2, double y2) {
+        return Math.sqrt(getFlatnessSq(x1, y1, ctrlx1, ctrly1,
+                                       ctrlx2, ctrly2, x2, y2));
+    }
+
+    /**
+     * Returns the square of the flatness of the cubic curve specified
+     * by the control points stored in the indicated array at the
+     * indicated index. The flatness is the maximum distance
+     * of a control point from the line connecting the end points.
+     * @param coords an array containing coordinates
+     * @param offset the index of <code>coords</code> from which to begin
+     *          getting the end points and control points of the curve
+     * @return the square of the flatness of the <code>CubicCurve2D</code>
+     *          specified by the coordinates in <code>coords</code> at
+     *          the specified offset.
+     * @since 1.2
+     */
+    public static double getFlatnessSq(double coords[], int offset) {
+        return getFlatnessSq(coords[offset + 0], coords[offset + 1],
+                             coords[offset + 2], coords[offset + 3],
+                             coords[offset + 4], coords[offset + 5],
+                             coords[offset + 6], coords[offset + 7]);
+    }
+
+    /**
+     * Returns the flatness of the cubic curve specified
+     * by the control points stored in the indicated array at the
+     * indicated index.  The flatness is the maximum distance
+     * of a control point from the line connecting the end points.
+     * @param coords an array containing coordinates
+     * @param offset the index of <code>coords</code> from which to begin
+     *          getting the end points and control points of the curve
+     * @return the flatness of the <code>CubicCurve2D</code>
+     *          specified by the coordinates in <code>coords</code> at
+     *          the specified offset.
+     * @since 1.2
+     */
+    public static double getFlatness(double coords[], int offset) {
+        return getFlatness(coords[offset + 0], coords[offset + 1],
+                           coords[offset + 2], coords[offset + 3],
+                           coords[offset + 4], coords[offset + 5],
+                           coords[offset + 6], coords[offset + 7]);
+    }
+
+    /**
+     * Returns the square of the flatness of this curve.  The flatness is the
+     * maximum distance of a control point from the line connecting the
+     * end points.
+     * @return the square of the flatness of this curve.
+     * @since 1.2
+     */
+    public double getFlatnessSq() {
+        return getFlatnessSq(getX1(), getY1(), getCtrlX1(), getCtrlY1(),
+                             getCtrlX2(), getCtrlY2(), getX2(), getY2());
+    }
+
+    /**
+     * Returns the flatness of this curve.  The flatness is the
+     * maximum distance of a control point from the line connecting the
+     * end points.
+     * @return the flatness of this curve.
+     * @since 1.2
+     */
+    public double getFlatness() {
+        return getFlatness(getX1(), getY1(), getCtrlX1(), getCtrlY1(),
+                           getCtrlX2(), getCtrlY2(), getX2(), getY2());
+    }
+
+    /**
+     * Subdivides this cubic curve and stores the resulting two
+     * subdivided curves into the left and right curve parameters.
+     * Either or both of the left and right objects may be the same
+     * as this object or null.
+     * @param left the cubic curve object for storing for the left or
+     * first half of the subdivided curve
+     * @param right the cubic curve object for storing for the right or
+     * second half of the subdivided curve
+     * @since 1.2
+     */
+    public void subdivide(CubicCurve2D left, CubicCurve2D right) {
+        subdivide(this, left, right);
+    }
+
+    /**
+     * Subdivides the cubic curve specified by the <code>src</code> parameter
+     * and stores the resulting two subdivided curves into the
+     * <code>left</code> and <code>right</code> curve parameters.
+     * Either or both of the <code>left</code> and <code>right</code> objects
+     * may be the same as the <code>src</code> object or <code>null</code>.
+     * @param src the cubic curve to be subdivided
+     * @param left the cubic curve object for storing the left or
+     * first half of the subdivided curve
+     * @param right the cubic curve object for storing the right or
+     * second half of the subdivided curve
+     * @since 1.2
+     */
+    public static void subdivide(CubicCurve2D src,
+                                 CubicCurve2D left,
+                                 CubicCurve2D right) {
+        double x1 = src.getX1();
+        double y1 = src.getY1();
+        double ctrlx1 = src.getCtrlX1();
+        double ctrly1 = src.getCtrlY1();
+        double ctrlx2 = src.getCtrlX2();
+        double ctrly2 = src.getCtrlY2();
+        double x2 = src.getX2();
+        double y2 = src.getY2();
+        double centerx = (ctrlx1 + ctrlx2) / 2.0;
+        double centery = (ctrly1 + ctrly2) / 2.0;
+        ctrlx1 = (x1 + ctrlx1) / 2.0;
+        ctrly1 = (y1 + ctrly1) / 2.0;
+        ctrlx2 = (x2 + ctrlx2) / 2.0;
+        ctrly2 = (y2 + ctrly2) / 2.0;
+        double ctrlx12 = (ctrlx1 + centerx) / 2.0;
+        double ctrly12 = (ctrly1 + centery) / 2.0;
+        double ctrlx21 = (ctrlx2 + centerx) / 2.0;
+        double ctrly21 = (ctrly2 + centery) / 2.0;
+        centerx = (ctrlx12 + ctrlx21) / 2.0;
+        centery = (ctrly12 + ctrly21) / 2.0;
+        if (left != null) {
+            left.setCurve(x1, y1, ctrlx1, ctrly1,
+                          ctrlx12, ctrly12, centerx, centery);
+        }
+        if (right != null) {
+            right.setCurve(centerx, centery, ctrlx21, ctrly21,
+                           ctrlx2, ctrly2, x2, y2);
+        }
+    }
+
+    /**
+     * Subdivides the cubic curve specified by the coordinates
+     * stored in the <code>src</code> array at indices <code>srcoff</code>
+     * through (<code>srcoff</code>&nbsp;+&nbsp;7) and stores the
+     * resulting two subdivided curves into the two result arrays at the
+     * corresponding indices.
+     * Either or both of the <code>left</code> and <code>right</code>
+     * arrays may be <code>null</code> or a reference to the same array
+     * as the <code>src</code> array.
+     * Note that the last point in the first subdivided curve is the
+     * same as the first point in the second subdivided curve. Thus,
+     * it is possible to pass the same array for <code>left</code>
+     * and <code>right</code> and to use offsets, such as <code>rightoff</code>
+     * equals (<code>leftoff</code> + 6), in order
+     * to avoid allocating extra storage for this common point.
+     * @param src the array holding the coordinates for the source curve
+     * @param srcoff the offset into the array of the beginning of the
+     * the 6 source coordinates
+     * @param left the array for storing the coordinates for the first
+     * half of the subdivided curve
+     * @param leftoff the offset into the array of the beginning of the
+     * the 6 left coordinates
+     * @param right the array for storing the coordinates for the second
+     * half of the subdivided curve
+     * @param rightoff the offset into the array of the beginning of the
+     * the 6 right coordinates
+     * @since 1.2
+     */
+    public static void subdivide(double src[], int srcoff,
+                                 double left[], int leftoff,
+                                 double right[], int rightoff) {
+        double x1 = src[srcoff + 0];
+        double y1 = src[srcoff + 1];
+        double ctrlx1 = src[srcoff + 2];
+        double ctrly1 = src[srcoff + 3];
+        double ctrlx2 = src[srcoff + 4];
+        double ctrly2 = src[srcoff + 5];
+        double x2 = src[srcoff + 6];
+        double y2 = src[srcoff + 7];
+        if (left != null) {
+            left[leftoff + 0] = x1;
+            left[leftoff + 1] = y1;
+        }
+        if (right != null) {
+            right[rightoff + 6] = x2;
+            right[rightoff + 7] = y2;
+        }
+        x1 = (x1 + ctrlx1) / 2.0;
+        y1 = (y1 + ctrly1) / 2.0;
+        x2 = (x2 + ctrlx2) / 2.0;
+        y2 = (y2 + ctrly2) / 2.0;
+        double centerx = (ctrlx1 + ctrlx2) / 2.0;
+        double centery = (ctrly1 + ctrly2) / 2.0;
+        ctrlx1 = (x1 + centerx) / 2.0;
+        ctrly1 = (y1 + centery) / 2.0;
+        ctrlx2 = (x2 + centerx) / 2.0;
+        ctrly2 = (y2 + centery) / 2.0;
+        centerx = (ctrlx1 + ctrlx2) / 2.0;
+        centery = (ctrly1 + ctrly2) / 2.0;
+        if (left != null) {
+            left[leftoff + 2] = x1;
+            left[leftoff + 3] = y1;
+            left[leftoff + 4] = ctrlx1;
+            left[leftoff + 5] = ctrly1;
+            left[leftoff + 6] = centerx;
+            left[leftoff + 7] = centery;
+        }
+        if (right != null) {
+            right[rightoff + 0] = centerx;
+            right[rightoff + 1] = centery;
+            right[rightoff + 2] = ctrlx2;
+            right[rightoff + 3] = ctrly2;
+            right[rightoff + 4] = x2;
+            right[rightoff + 5] = y2;
+        }
+    }
+
+    /**
+     * Solves the cubic whose coefficients are in the <code>eqn</code>
+     * array and places the non-complex roots back into the same array,
+     * returning the number of roots.  The solved cubic is represented
+     * by the equation:
+     * <pre>
+     *     eqn = {c, b, a, d}
+     *     dx^3 + ax^2 + bx + c = 0
+     * </pre>
+     * A return value of -1 is used to distinguish a constant equation
+     * that might be always 0 or never 0 from an equation that has no
+     * zeroes.
+     * @param eqn an array containing coefficients for a cubic
+     * @return the number of roots, or -1 if the equation is a constant.
+     * @since 1.2
+     */
+    public static int solveCubic(double eqn[]) {
+        return solveCubic(eqn, eqn);
+    }
+
+    /**
+     * Solve the cubic whose coefficients are in the <code>eqn</code>
+     * array and place the non-complex roots into the <code>res</code>
+     * array, returning the number of roots.
+     * The cubic solved is represented by the equation:
+     *     eqn = {c, b, a, d}
+     *     dx^3 + ax^2 + bx + c = 0
+     * A return value of -1 is used to distinguish a constant equation,
+     * which may be always 0 or never 0, from an equation which has no
+     * zeroes.
+     * @param eqn the specified array of coefficients to use to solve
+     *        the cubic equation
+     * @param res the array that contains the non-complex roots
+     *        resulting from the solution of the cubic equation
+     * @return the number of roots, or -1 if the equation is a constant
+     * @since 1.3
+     */
+    public static int solveCubic(double eqn[], double res[]) {
+        // From Graphics Gems:
+        // http://tog.acm.org/resources/GraphicsGems/gems/Roots3And4.c
+        final double d = eqn[3];
+        if (d == 0) {
+            return QuadCurve2D.solveQuadratic(eqn, res);
+        }
+
+        /* normal form: x^3 + Ax^2 + Bx + C = 0 */
+        final double A = eqn[2] / d;
+        final double B = eqn[1] / d;
+        final double C = eqn[0] / d;
+
+
+        //  substitute x = y - A/3 to eliminate quadratic term:
+        //     x^3 +Px + Q = 0
+        //
+        // Since we actually need P/3 and Q/2 for all of the
+        // calculations that follow, we will calculate
+        // p = P/3
+        // q = Q/2
+        // instead and use those values for simplicity of the code.
+        double sq_A = A * A;
+        double p = 1.0/3 * (-1.0/3 * sq_A + B);
+        double q = 1.0/2 * (2.0/27 * A * sq_A - 1.0/3 * A * B + C);
+
+        /* use Cardano's formula */
+
+        double cb_p = p * p * p;
+        double D = q * q + cb_p;
+
+        final double sub = 1.0/3 * A;
+
+        int num;
+        if (D < 0) { /* Casus irreducibilis: three real solutions */
+            // see: http://en.wikipedia.org/wiki/Cubic_function#Trigonometric_.28and_hyperbolic.29_method
+            double phi = 1.0/3 * Math.acos(-q / Math.sqrt(-cb_p));
+            double t = 2 * Math.sqrt(-p);
+
+            if (res == eqn) {
+                eqn = Arrays.copyOf(eqn, 4);
+            }
+
+            res[ 0 ] =  ( t * Math.cos(phi));
+            res[ 1 ] =  (-t * Math.cos(phi + Math.PI / 3));
+            res[ 2 ] =  (-t * Math.cos(phi - Math.PI / 3));
+            num = 3;
+
+            for (int i = 0; i < num; ++i) {
+                res[ i ] -= sub;
+            }
+
+        } else {
+            // Please see the comment in fixRoots marked 'XXX' before changing
+            // any of the code in this case.
+            double sqrt_D = Math.sqrt(D);
+            double u = Math.cbrt(sqrt_D - q);
+            double v = - Math.cbrt(sqrt_D + q);
+            double uv = u+v;
+
+            num = 1;
+
+            double err = 1200000000*ulp(abs(uv) + abs(sub));
+            if (iszero(D, err) || within(u, v, err)) {
+                if (res == eqn) {
+                    eqn = Arrays.copyOf(eqn, 4);
+                }
+                res[1] = -(uv / 2) - sub;
+                num = 2;
+            }
+            // this must be done after the potential Arrays.copyOf
+            res[ 0 ] =  uv - sub;
+        }
+
+        if (num > 1) { // num == 3 || num == 2
+            num = fixRoots(eqn, res, num);
+        }
+        if (num > 2 && (res[2] == res[1] || res[2] == res[0])) {
+            num--;
+        }
+        if (num > 1 && res[1] == res[0]) {
+            res[1] = res[--num]; // Copies res[2] to res[1] if needed
+        }
+        return num;
+    }
+
+    // preconditions: eqn != res && eqn[3] != 0 && num > 1
+    // This method tries to improve the accuracy of the roots of eqn (which
+    // should be in res). It also might eliminate roots in res if it decideds
+    // that they're not real roots. It will not check for roots that the
+    // computation of res might have missed, so this method should only be
+    // used when the roots in res have been computed using an algorithm
+    // that never underestimates the number of roots (such as solveCubic above)
+    private static int fixRoots(double[] eqn, double[] res, int num) {
+        double[] intervals = {eqn[1], 2*eqn[2], 3*eqn[3]};
+        int critCount = QuadCurve2D.solveQuadratic(intervals, intervals);
+        if (critCount == 2 && intervals[0] == intervals[1]) {
+            critCount--;
+        }
+        if (critCount == 2 && intervals[0] > intervals[1]) {
+            double tmp = intervals[0];
+            intervals[0] = intervals[1];
+            intervals[1] = tmp;
+        }
+
+        // below we use critCount to possibly filter out roots that shouldn't
+        // have been computed. We require that eqn[3] != 0, so eqn is a proper
+        // cubic, which means that its limits at -/+inf are -/+inf or +/-inf.
+        // Therefore, if critCount==2, the curve is shaped like a sideways S,
+        // and it could have 1-3 roots. If critCount==0 it is monotonic, and
+        // if critCount==1 it is monotonic with a single point where it is
+        // flat. In the last 2 cases there can only be 1 root. So in cases
+        // where num > 1 but critCount < 2, we eliminate all roots in res
+        // except one.
+
+        if (num == 3) {
+            double xe = getRootUpperBound(eqn);
+            double x0 = -xe;
+
+            Arrays.sort(res, 0, num);
+            if (critCount == 2) {
+                // this just tries to improve the accuracy of the computed
+                // roots using Newton's method.
+                res[0] = refineRootWithHint(eqn, x0, intervals[0], res[0]);
+                res[1] = refineRootWithHint(eqn, intervals[0], intervals[1], res[1]);
+                res[2] = refineRootWithHint(eqn, intervals[1], xe, res[2]);
+                return 3;
+            } else if (critCount == 1) {
+                // we only need fx0 and fxe for the sign of the polynomial
+                // at -inf and +inf respectively, so we don't need to do
+                // fx0 = solveEqn(eqn, 3, x0); fxe = solveEqn(eqn, 3, xe)
+                double fxe = eqn[3];
+                double fx0 = -fxe;
+
+                double x1 = intervals[0];
+                double fx1 = solveEqn(eqn, 3, x1);
+
+                // if critCount == 1 or critCount == 0, but num == 3 then
+                // something has gone wrong. This branch and the one below
+                // would ideally never execute, but if they do we can't know
+                // which of the computed roots is closest to the real root;
+                // therefore, we can't use refineRootWithHint. But even if
+                // we did know, being here most likely means that the
+                // curve is very flat close to two of the computed roots
+                // (or maybe even all three). This might make Newton's method
+                // fail altogether, which would be a pain to detect and fix.
+                // This is why we use a very stable bisection method.
+                if (oppositeSigns(fx0, fx1)) {
+                    res[0] = bisectRootWithHint(eqn, x0, x1, res[0]);
+                } else if (oppositeSigns(fx1, fxe)) {
+                    res[0] = bisectRootWithHint(eqn, x1, xe, res[2]);
+                } else /* fx1 must be 0 */ {
+                    res[0] = x1;
+                }
+                // return 1
+            } else if (critCount == 0) {
+                res[0] = bisectRootWithHint(eqn, x0, xe, res[1]);
+                // return 1
+            }
+        } else if (num == 2 && critCount == 2) {
+            // XXX: here we assume that res[0] has better accuracy than res[1].
+            // This is true because this method is only used from solveCubic
+            // which puts in res[0] the root that it would compute anyway even
+            // if num==1. If this method is ever used from any other method, or
+            // if the solveCubic implementation changes, this assumption should
+            // be reevaluated, and the choice of goodRoot might have to become
+            // goodRoot = (abs(eqn'(res[0])) > abs(eqn'(res[1]))) ? res[0] : res[1]
+            // where eqn' is the derivative of eqn.
+            double goodRoot = res[0];
+            double badRoot = res[1];
+            double x1 = intervals[0];
+            double x2 = intervals[1];
+            // If a cubic curve really has 2 roots, one of those roots must be
+            // at a critical point. That can't be goodRoot, so we compute x to
+            // be the farthest critical point from goodRoot. If there are two
+            // roots, x must be the second one, so we evaluate eqn at x, and if
+            // it is zero (or close enough) we put x in res[1] (or badRoot, if
+            // |solveEqn(eqn, 3, badRoot)| < |solveEqn(eqn, 3, x)| but this
+            // shouldn't happen often).
+            double x = abs(x1 - goodRoot) > abs(x2 - goodRoot) ? x1 : x2;
+            double fx = solveEqn(eqn, 3, x);
+
+            if (iszero(fx, 10000000*ulp(x))) {
+                double badRootVal = solveEqn(eqn, 3, badRoot);
+                res[1] = abs(badRootVal) < abs(fx) ? badRoot : x;
+                return 2;
+            }
+        } // else there can only be one root - goodRoot, and it is already in res[0]
+
+        return 1;
+    }
+
+    // use newton's method.
+    private static double refineRootWithHint(double[] eqn, double min, double max, double t) {
+        if (!inInterval(t, min, max)) {
+            return t;
+        }
+        double[] deriv = {eqn[1], 2*eqn[2], 3*eqn[3]};
+        double origt = t;
+        for (int i = 0; i < 3; i++) {
+            double slope = solveEqn(deriv, 2, t);
+            double y = solveEqn(eqn, 3, t);
+            double delta = - (y / slope);
+            double newt = t + delta;
+
+            if (slope == 0 || y == 0 || t == newt) {
+                break;
+            }
+
+            t = newt;
+        }
+        if (within(t, origt, 1000*ulp(origt)) && inInterval(t, min, max)) {
+            return t;
+        }
+        return origt;
+    }
+
+    private static double bisectRootWithHint(double[] eqn, double x0, double xe, double hint) {
+        double delta1 = Math.min(abs(hint - x0) / 64, 0.0625);
+        double delta2 = Math.min(abs(hint - xe) / 64, 0.0625);
+        double x02 = hint - delta1;
+        double xe2 = hint + delta2;
+        double fx02 = solveEqn(eqn, 3, x02);
+        double fxe2 = solveEqn(eqn, 3, xe2);
+        while (oppositeSigns(fx02, fxe2)) {
+            if (x02 >= xe2) {
+                return x02;
+            }
+            x0 = x02;
+            xe = xe2;
+            delta1 /= 64;
+            delta2 /= 64;
+            x02 = hint - delta1;
+            xe2 = hint + delta2;
+            fx02 = solveEqn(eqn, 3, x02);
+            fxe2 = solveEqn(eqn, 3, xe2);
+        }
+        if (fx02 == 0) {
+            return x02;
+        }
+        if (fxe2 == 0) {
+            return xe2;
+        }
+
+        return bisectRoot(eqn, x0, xe);
+    }
+
+    private static double bisectRoot(double[] eqn, double x0, double xe) {
+        double fx0 = solveEqn(eqn, 3, x0);
+        double m = x0 + (xe - x0) / 2;
+        while (m != x0 && m != xe) {
+            double fm = solveEqn(eqn, 3, m);
+            if (fm == 0) {
+                return m;
+            }
+            if (oppositeSigns(fx0, fm)) {
+                xe = m;
+            } else {
+                fx0 = fm;
+                x0 = m;
+            }
+            m = x0 + (xe-x0)/2;
+        }
+        return m;
+    }
+
+    private static boolean inInterval(double t, double min, double max) {
+        return min <= t && t <= max;
+    }
+
+    private static boolean within(double x, double y, double err) {
+        double d = y - x;
+        return (d <= err && d >= -err);
+    }
+
+    private static boolean iszero(double x, double err) {
+        return within(x, 0, err);
+    }
+
+    private static boolean oppositeSigns(double x1, double x2) {
+        return (x1 < 0 && x2 > 0) || (x1 > 0 && x2 < 0);
+    }
+
+    private static double solveEqn(double eqn[], int order, double t) {
+        double v = eqn[order];
+        while (--order >= 0) {
+            v = v * t + eqn[order];
+        }
+        return v;
+    }
+
+    /*
+     * Computes M+1 where M is an upper bound for all the roots in of eqn.
+     * See: http://en.wikipedia.org/wiki/Sturm%27s_theorem#Applications.
+     * The above link doesn't contain a proof, but I [dlila] proved it myself
+     * so the result is reliable. The proof isn't difficult, but it's a bit
+     * long to include here.
+     * Precondition: eqn must represent a cubic polynomial
+     */
+    private static double getRootUpperBound(double[] eqn) {
+        double d = eqn[3];
+        double a = eqn[2];
+        double b = eqn[1];
+        double c = eqn[0];
+
+        double M = 1 + max(max(abs(a), abs(b)), abs(c)) / abs(d);
+        M += ulp(M) + 1;
+        return M;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public boolean contains(double x, double y) {
+        if (!(x * 0.0 + y * 0.0 == 0.0)) {
+            /* Either x or y was infinite or NaN.
+             * A NaN always produces a negative response to any test
+             * and Infinity values cannot be "inside" any path so
+             * they should return false as well.
+             */
+            return false;
+        }
+        // We count the "Y" crossings to determine if the point is
+        // inside the curve bounded by its closing line.
+        double x1 = getX1();
+        double y1 = getY1();
+        double x2 = getX2();
+        double y2 = getY2();
+        int crossings =
+            (Curve.pointCrossingsForLine(x, y, x1, y1, x2, y2) +
+             Curve.pointCrossingsForCubic(x, y,
+                                          x1, y1,
+                                          getCtrlX1(), getCtrlY1(),
+                                          getCtrlX2(), getCtrlY2(),
+                                          x2, y2, 0));
+        return ((crossings & 1) == 1);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public boolean contains(Point2D p) {
+        return contains(p.getX(), p.getY());
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public boolean intersects(double x, double y, double w, double h) {
+        // Trivially reject non-existant rectangles
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+
+        int numCrossings = rectCrossings(x, y, w, h);
+        // the intended return value is
+        // numCrossings != 0 || numCrossings == Curve.RECT_INTERSECTS
+        // but if (numCrossings != 0) numCrossings == INTERSECTS won't matter
+        // and if !(numCrossings != 0) then numCrossings == 0, so
+        // numCrossings != RECT_INTERSECT
+        return numCrossings != 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public boolean intersects(Rectangle2D r) {
+        return intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public boolean contains(double x, double y, double w, double h) {
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+
+        int numCrossings = rectCrossings(x, y, w, h);
+        return !(numCrossings == 0 || numCrossings == Curve.RECT_INTERSECTS);
+    }
+
+    private int rectCrossings(double x, double y, double w, double h) {
+        int crossings = 0;
+        if (!(getX1() == getX2() && getY1() == getY2())) {
+            crossings = Curve.rectCrossingsForLine(crossings,
+                                                   x, y,
+                                                   x+w, y+h,
+                                                   getX1(), getY1(),
+                                                   getX2(), getY2());
+            if (crossings == Curve.RECT_INTERSECTS) {
+                return crossings;
+            }
+        }
+        // we call this with the curve's direction reversed, because we wanted
+        // to call rectCrossingsForLine first, because it's cheaper.
+        return Curve.rectCrossingsForCubic(crossings,
+                                           x, y,
+                                           x+w, y+h,
+                                           getX2(), getY2(),
+                                           getCtrlX2(), getCtrlY2(),
+                                           getCtrlX1(), getCtrlY1(),
+                                           getX1(), getY1(), 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public boolean contains(Rectangle2D r) {
+        return contains(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.2
+     */
+    public Rectangle getBounds() {
+        return getBounds2D().getBounds();
+    }
+
+    /**
+     * Returns an iteration object that defines the boundary of the
+     * shape.
+     * The iterator for this class is not multi-threaded safe,
+     * which means that this <code>CubicCurve2D</code> class does not
+     * guarantee that modifications to the geometry of this
+     * <code>CubicCurve2D</code> object do not affect any iterations of
+     * that geometry that are already in process.
+     * @param at an optional <code>AffineTransform</code> to be applied to the
+     * coordinates as they are returned in the iteration, or <code>null</code>
+     * if untransformed coordinates are desired
+     * @return    the <code>PathIterator</code> object that returns the
+     *          geometry of the outline of this <code>CubicCurve2D</code>, one
+     *          segment at a time.
+     * @since 1.2
+     */
+    public PathIterator getPathIterator(AffineTransform at) {
+        return new CubicIterator(this, at);
+    }
+
+    /**
+     * Return an iteration object that defines the boundary of the
+     * flattened shape.
+     * The iterator for this class is not multi-threaded safe,
+     * which means that this <code>CubicCurve2D</code> class does not
+     * guarantee that modifications to the geometry of this
+     * <code>CubicCurve2D</code> object do not affect any iterations of
+     * that geometry that are already in process.
+     * @param at an optional <code>AffineTransform</code> to be applied to the
+     * coordinates as they are returned in the iteration, or <code>null</code>
+     * if untransformed coordinates are desired
+     * @param flatness the maximum amount that the control points
+     * for a given curve can vary from colinear before a subdivided
+     * curve is replaced by a straight line connecting the end points
+     * @return    the <code>PathIterator</code> object that returns the
+     * geometry of the outline of this <code>CubicCurve2D</code>,
+     * one segment at a time.
+     * @since 1.2
+     */
+    public PathIterator getPathIterator(AffineTransform at, double flatness) {
+        return new FlatteningPathIterator(getPathIterator(at), flatness);
+    }
+
+    /**
+     * Creates a new object of the same class as this object.
+     *
+     * @return     a clone of this instance.
+     * @exception  OutOfMemoryError            if there is not enough memory.
+     * @see        java.lang.Cloneable
+     * @since      1.2
+     */
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError(e);
+        }
+    }
+}

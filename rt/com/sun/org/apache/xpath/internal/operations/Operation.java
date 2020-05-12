@@ -1,220 +1,214 @@
-/*     */ package com.sun.org.apache.xpath.internal.operations;
-/*     */ 
-/*     */ import com.sun.org.apache.xpath.internal.Expression;
-/*     */ import com.sun.org.apache.xpath.internal.ExpressionOwner;
-/*     */ import com.sun.org.apache.xpath.internal.XPathContext;
-/*     */ import com.sun.org.apache.xpath.internal.XPathVisitor;
-/*     */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*     */ import java.util.Vector;
-/*     */ import javax.xml.transform.TransformerException;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Operation
-/*     */   extends Expression
-/*     */   implements ExpressionOwner
-/*     */ {
-/*     */   static final long serialVersionUID = -3037139537171050430L;
-/*     */   protected Expression m_left;
-/*     */   protected Expression m_right;
-/*     */   
-/*     */   public void fixupVariables(Vector vars, int globalsSize) {
-/*  58 */     this.m_left.fixupVariables(vars, globalsSize);
-/*  59 */     this.m_right.fixupVariables(vars, globalsSize);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean canTraverseOutsideSubtree() {
-/*  72 */     if (null != this.m_left && this.m_left.canTraverseOutsideSubtree()) {
-/*  73 */       return true;
-/*     */     }
-/*  75 */     if (null != this.m_right && this.m_right.canTraverseOutsideSubtree()) {
-/*  76 */       return true;
-/*     */     }
-/*  78 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setLeftRight(Expression l, Expression r) {
-/*  90 */     this.m_left = l;
-/*  91 */     this.m_right = r;
-/*  92 */     l.exprSetParent(this);
-/*  93 */     r.exprSetParent(this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XObject execute(XPathContext xctxt) throws TransformerException {
-/* 111 */     XObject left = this.m_left.execute(xctxt, true);
-/* 112 */     XObject right = this.m_right.execute(xctxt, true);
-/*     */     
-/* 114 */     XObject result = operate(left, right);
-/* 115 */     left.detach();
-/* 116 */     right.detach();
-/* 117 */     return result;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public XObject operate(XObject left, XObject right) throws TransformerException {
-/* 134 */     return null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Expression getLeftOperand() {
-/* 140 */     return this.m_left;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Expression getRightOperand() {
-/* 146 */     return this.m_right;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   class LeftExprOwner
-/*     */     implements ExpressionOwner
-/*     */   {
-/*     */     public Expression getExpression() {
-/* 156 */       return Operation.this.m_left;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     public void setExpression(Expression exp) {
-/* 164 */       exp.exprSetParent(Operation.this);
-/* 165 */       Operation.this.m_left = exp;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void callVisitors(ExpressionOwner owner, XPathVisitor visitor) {
-/* 174 */     if (visitor.visitBinaryOperation(owner, this)) {
-/*     */       
-/* 176 */       this.m_left.callVisitors(new LeftExprOwner(), visitor);
-/* 177 */       this.m_right.callVisitors(this, visitor);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Expression getExpression() {
-/* 186 */     return this.m_right;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setExpression(Expression exp) {
-/* 194 */     exp.exprSetParent(this);
-/* 195 */     this.m_right = exp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean deepEquals(Expression expr) {
-/* 203 */     if (!isSameClass(expr)) {
-/* 204 */       return false;
-/*     */     }
-/* 206 */     if (!this.m_left.deepEquals(((Operation)expr).m_left)) {
-/* 207 */       return false;
-/*     */     }
-/* 209 */     if (!this.m_right.deepEquals(((Operation)expr).m_right)) {
-/* 210 */       return false;
-/*     */     }
-/* 212 */     return true;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\operations\Operation.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Operation.java,v 1.2.4.1 2005/09/14 21:31:42 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal.operations;
+
+import com.sun.org.apache.xpath.internal.Expression;
+import com.sun.org.apache.xpath.internal.ExpressionOwner;
+import com.sun.org.apache.xpath.internal.XPathContext;
+import com.sun.org.apache.xpath.internal.XPathVisitor;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+
+/**
+ * The baseclass for a binary operation.
+ */
+public class Operation extends Expression implements ExpressionOwner
+{
+    static final long serialVersionUID = -3037139537171050430L;
+
+  /** The left operand expression.
+   *  @serial */
+  protected Expression m_left;
+
+  /** The right operand expression.
+   *  @serial */
+  protected Expression m_right;
+
+  /**
+   * This function is used to fixup variables from QNames to stack frame
+   * indexes at stylesheet build time.
+   * @param vars List of QNames that correspond to variables.  This list
+   * should be searched backwards for the first qualified name that
+   * corresponds to the variable reference qname.  The position of the
+   * QName in the vector from the start of the vector will be its position
+   * in the stack frame (but variables above the globalsTop value will need
+   * to be offset to the current stack frame).
+   */
+  public void fixupVariables(java.util.Vector vars, int globalsSize)
+  {
+    m_left.fixupVariables(vars, globalsSize);
+    m_right.fixupVariables(vars, globalsSize);
+  }
+
+
+  /**
+   * Tell if this expression or it's subexpressions can traverse outside
+   * the current subtree.
+   *
+   * @return true if traversal outside the context node's subtree can occur.
+   */
+  public boolean canTraverseOutsideSubtree()
+  {
+
+    if (null != m_left && m_left.canTraverseOutsideSubtree())
+      return true;
+
+    if (null != m_right && m_right.canTraverseOutsideSubtree())
+      return true;
+
+    return false;
+  }
+
+  /**
+   * Set the left and right operand expressions for this operation.
+   *
+   *
+   * @param l The left expression operand.
+   * @param r The right expression operand.
+   */
+  public void setLeftRight(Expression l, Expression r)
+  {
+    m_left = l;
+    m_right = r;
+    l.exprSetParent(this);
+    r.exprSetParent(this);
+  }
+
+  /**
+   * Execute a binary operation by calling execute on each of the operands,
+   * and then calling the operate method on the derived class.
+   *
+   *
+   * @param xctxt The runtime execution context.
+   *
+   * @return The XObject result of the operation.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject execute(XPathContext xctxt)
+          throws javax.xml.transform.TransformerException
+  {
+
+    XObject left = m_left.execute(xctxt, true);
+    XObject right = m_right.execute(xctxt, true);
+
+    XObject result = operate(left, right);
+    left.detach();
+    right.detach();
+    return result;
+  }
+
+  /**
+   * Apply the operation to two operands, and return the result.
+   *
+   *
+   * @param left non-null reference to the evaluated left operand.
+   * @param right non-null reference to the evaluated right operand.
+   *
+   * @return non-null reference to the XObject that represents the result of the operation.
+   *
+   * @throws javax.xml.transform.TransformerException
+   */
+  public XObject operate(XObject left, XObject right)
+          throws javax.xml.transform.TransformerException
+  {
+    return null;  // no-op
+  }
+
+  /** @return the left operand of binary operation, as an Expression.
+   */
+  public Expression getLeftOperand(){
+    return m_left;
+  }
+
+  /** @return the right operand of binary operation, as an Expression.
+   */
+  public Expression getRightOperand(){
+    return m_right;
+  }
+
+  class LeftExprOwner implements ExpressionOwner
+  {
+    /**
+     * @see ExpressionOwner#getExpression()
+     */
+    public Expression getExpression()
+    {
+      return m_left;
+    }
+
+    /**
+     * @see ExpressionOwner#setExpression(Expression)
+     */
+    public void setExpression(Expression exp)
+    {
+        exp.exprSetParent(Operation.this);
+        m_left = exp;
+    }
+  }
+
+  /**
+   * @see com.sun.org.apache.xpath.internal.XPathVisitable#callVisitors(ExpressionOwner, XPathVisitor)
+   */
+  public void callVisitors(ExpressionOwner owner, XPathVisitor visitor)
+  {
+        if(visitor.visitBinaryOperation(owner, this))
+        {
+                m_left.callVisitors(new LeftExprOwner(), visitor);
+                m_right.callVisitors(this, visitor);
+        }
+  }
+
+  /**
+   * @see ExpressionOwner#getExpression()
+   */
+  public Expression getExpression()
+  {
+    return m_right;
+  }
+
+  /**
+   * @see ExpressionOwner#setExpression(Expression)
+   */
+  public void setExpression(Expression exp)
+  {
+        exp.exprSetParent(this);
+        m_right = exp;
+  }
+
+  /**
+   * @see Expression#deepEquals(Expression)
+   */
+  public boolean deepEquals(Expression expr)
+  {
+        if(!isSameClass(expr))
+                return false;
+
+        if(!m_left.deepEquals(((Operation)expr).m_left))
+                return false;
+
+        if(!m_right.deepEquals(((Operation)expr).m_right))
+                return false;
+
+        return true;
+  }
+}

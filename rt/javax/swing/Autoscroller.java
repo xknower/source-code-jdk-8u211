@@ -1,193 +1,188 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.awt.Point;
-/*     */ import java.awt.Rectangle;
-/*     */ import java.awt.event.ActionEvent;
-/*     */ import java.awt.event.ActionListener;
-/*     */ import java.awt.event.MouseEvent;
-/*     */ import sun.awt.AWTAccessor;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class Autoscroller
-/*     */   implements ActionListener
-/*     */ {
-/*  47 */   private static Autoscroller sharedInstance = new Autoscroller();
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static MouseEvent event;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static Timer timer;
-/*     */ 
-/*     */   
-/*     */   private static JComponent component;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void stop(JComponent paramJComponent) {
-/*  63 */     sharedInstance._stop(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isRunning(JComponent paramJComponent) {
-/*  70 */     return sharedInstance._isRunning(paramJComponent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void processMouseDragged(MouseEvent paramMouseEvent) {
-/*  78 */     sharedInstance._processMouseDragged(paramMouseEvent);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void start(JComponent paramJComponent, MouseEvent paramMouseEvent) {
-/*  89 */     Point point = paramJComponent.getLocationOnScreen();
-/*     */     
-/*  91 */     if (component != paramJComponent) {
-/*  92 */       _stop(component);
-/*     */     }
-/*  94 */     component = paramJComponent;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 100 */     event = new MouseEvent(component, paramMouseEvent.getID(), paramMouseEvent.getWhen(), paramMouseEvent.getModifiers(), paramMouseEvent.getX() + point.x, paramMouseEvent.getY() + point.y, paramMouseEvent.getXOnScreen(), paramMouseEvent.getYOnScreen(), paramMouseEvent.getClickCount(), paramMouseEvent.isPopupTrigger(), 0);
-/*     */     
-/* 102 */     AWTAccessor.MouseEventAccessor mouseEventAccessor = AWTAccessor.getMouseEventAccessor();
-/* 103 */     mouseEventAccessor.setCausedByTouchEvent(event, mouseEventAccessor
-/* 104 */         .isCausedByTouchEvent(paramMouseEvent));
-/*     */     
-/* 106 */     if (timer == null) {
-/* 107 */       timer = new Timer(100, this);
-/*     */     }
-/*     */     
-/* 110 */     if (!timer.isRunning()) {
-/* 111 */       timer.start();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void _stop(JComponent paramJComponent) {
-/* 123 */     if (component == paramJComponent) {
-/* 124 */       if (timer != null) {
-/* 125 */         timer.stop();
-/*     */       }
-/* 127 */       timer = null;
-/* 128 */       event = null;
-/* 129 */       component = null;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private boolean _isRunning(JComponent paramJComponent) {
-/* 138 */     return (paramJComponent == component && timer != null && timer.isRunning());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void _processMouseDragged(MouseEvent paramMouseEvent) {
-/* 145 */     JComponent jComponent = (JComponent)paramMouseEvent.getComponent();
-/* 146 */     boolean bool = true;
-/* 147 */     if (jComponent.isShowing()) {
-/* 148 */       Rectangle rectangle = jComponent.getVisibleRect();
-/* 149 */       bool = rectangle.contains(paramMouseEvent.getX(), paramMouseEvent.getY());
-/*     */     } 
-/* 151 */     if (bool) {
-/* 152 */       _stop(jComponent);
-/*     */     } else {
-/* 154 */       start(jComponent, paramMouseEvent);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void actionPerformed(ActionEvent paramActionEvent) {
-/* 166 */     JComponent jComponent = component;
-/*     */     
-/* 168 */     if (jComponent == null || !jComponent.isShowing() || event == null) {
-/* 169 */       _stop(jComponent);
-/*     */       return;
-/*     */     } 
-/* 172 */     Point point = jComponent.getLocationOnScreen();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 180 */     MouseEvent mouseEvent = new MouseEvent(jComponent, event.getID(), event.getWhen(), event.getModifiers(), event.getX() - point.x, event.getY() - point.y, event.getXOnScreen(), event.getYOnScreen(), event.getClickCount(), event.isPopupTrigger(), 0);
-/*     */     
-/* 182 */     AWTAccessor.MouseEventAccessor mouseEventAccessor = AWTAccessor.getMouseEventAccessor();
-/* 183 */     mouseEventAccessor.setCausedByTouchEvent(mouseEvent, mouseEventAccessor
-/* 184 */         .isCausedByTouchEvent(event));
-/* 185 */     jComponent.superProcessMouseMotionEvent(mouseEvent);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\Autoscroller.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import sun.awt.AWTAccessor;
+import sun.awt.AWTAccessor.MouseEventAccessor;
+
+/**
+ * Autoscroller is responsible for generating synthetic mouse dragged
+ * events. It is the responsibility of the Component (or its MouseListeners)
+ * that receive the events to do the actual scrolling in response to the
+ * mouse dragged events.
+ *
+ * @author Dave Moore
+ * @author Scott Violet
+ */
+class Autoscroller implements ActionListener {
+    /**
+     * Global Autoscroller.
+     */
+    private static Autoscroller sharedInstance = new Autoscroller();
+
+    // As there can only ever be one autoscroller active these fields are
+    // static. The Timer is recreated as necessary to target the appropriate
+    // Autoscroller instance.
+    private static MouseEvent event;
+    private static Timer timer;
+    private static JComponent component;
+
+    //
+    // The public API, all methods are cover methods for an instance method
+    //
+    /**
+     * Stops autoscroll events from happening on the specified component.
+     */
+    public static void stop(JComponent c) {
+        sharedInstance._stop(c);
+    }
+
+    /**
+     * Stops autoscroll events from happening on the specified component.
+     */
+    public static boolean isRunning(JComponent c) {
+        return sharedInstance._isRunning(c);
+    }
+
+    /**
+     * Invoked when a mouse dragged event occurs, will start the autoscroller
+     * if necessary.
+     */
+    public static void processMouseDragged(MouseEvent e) {
+        sharedInstance._processMouseDragged(e);
+    }
+
+
+    Autoscroller() {
+    }
+
+    /**
+     * Starts the timer targeting the passed in component.
+     */
+    private void start(JComponent c, MouseEvent e) {
+        Point screenLocation = c.getLocationOnScreen();
+
+        if (component != c) {
+            _stop(component);
+        }
+        component = c;
+        event = new MouseEvent(component, e.getID(), e.getWhen(),
+                               e.getModifiers(), e.getX() + screenLocation.x,
+                               e.getY() + screenLocation.y,
+                               e.getXOnScreen(),
+                               e.getYOnScreen(),
+                               e.getClickCount(), e.isPopupTrigger(),
+                               MouseEvent.NOBUTTON);
+        MouseEventAccessor meAccessor = AWTAccessor.getMouseEventAccessor();
+        meAccessor.setCausedByTouchEvent(event,
+            meAccessor.isCausedByTouchEvent(e));
+
+        if (timer == null) {
+            timer = new Timer(100, this);
+        }
+
+        if (!timer.isRunning()) {
+            timer.start();
+        }
+    }
+
+    //
+    // Methods mirror the public static API
+    //
+
+    /**
+     * Stops scrolling for the passed in widget.
+     */
+    private void _stop(JComponent c) {
+        if (component == c) {
+            if (timer != null) {
+                timer.stop();
+            }
+            timer = null;
+            event = null;
+            component = null;
+        }
+    }
+
+    /**
+     * Returns true if autoscrolling is currently running for the specified
+     * widget.
+     */
+    private boolean _isRunning(JComponent c) {
+        return (c == component && timer != null && timer.isRunning());
+    }
+
+    /**
+     * MouseListener method, invokes start/stop as necessary.
+     */
+    private void _processMouseDragged(MouseEvent e) {
+        JComponent component = (JComponent)e.getComponent();
+        boolean stop = true;
+        if (component.isShowing()) {
+            Rectangle visibleRect = component.getVisibleRect();
+            stop = visibleRect.contains(e.getX(), e.getY());
+        }
+        if (stop) {
+            _stop(component);
+        } else {
+            start(component, e);
+        }
+    }
+
+    //
+    // ActionListener
+    //
+    /**
+     * ActionListener method. Invoked when the Timer fires. This will scroll
+     * if necessary.
+     */
+    public void actionPerformed(ActionEvent x) {
+        JComponent component = Autoscroller.component;
+
+        if (component == null || !component.isShowing() || (event == null)) {
+            _stop(component);
+            return;
+        }
+        Point screenLocation = component.getLocationOnScreen();
+        MouseEvent e = new MouseEvent(component, event.getID(),
+                                      event.getWhen(), event.getModifiers(),
+                                      event.getX() - screenLocation.x,
+                                      event.getY() - screenLocation.y,
+                                      event.getXOnScreen(),
+                                      event.getYOnScreen(),
+                                      event.getClickCount(),
+                                      event.isPopupTrigger(),
+                                      MouseEvent.NOBUTTON);
+        MouseEventAccessor meAccessor = AWTAccessor.getMouseEventAccessor();
+        meAccessor.setCausedByTouchEvent(e,
+            meAccessor.isCausedByTouchEvent(event));
+        component.superProcessMouseMotionEvent(e);
+    }
+
+}

@@ -1,572 +1,556 @@
-/*     */ package com.sun.org.apache.xml.internal.serialize;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
-/*     */ import java.io.BufferedReader;
-/*     */ import java.io.InputStream;
-/*     */ import java.io.InputStreamReader;
-/*     */ import java.util.HashMap;
-/*     */ import java.util.Locale;
-/*     */ import java.util.Map;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class HTMLdtd
-/*     */ {
-/*     */   public static final String HTMLPublicId = "-//W3C//DTD HTML 4.01//EN";
-/*     */   public static final String HTMLSystemId = "http://www.w3.org/TR/html4/strict.dtd";
-/*     */   public static final String XHTMLPublicId = "-//W3C//DTD XHTML 1.0 Strict//EN";
-/*     */   public static final String XHTMLSystemId = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
-/*     */   private static Map<Integer, String> _byChar;
-/*     */   private static Map<String, Integer> _byName;
-/*     */   private static final Map<String, String[]> _boolAttrs;
-/*     */   
-/*     */   public static boolean isEmptyTag(String tagName) {
-/* 180 */     return isElement(tagName, 17);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isElementContent(String tagName) {
-/* 194 */     return isElement(tagName, 2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isPreserveSpace(String tagName) {
-/* 208 */     return isElement(tagName, 4);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isOptionalClosing(String tagName) {
-/* 222 */     return isElement(tagName, 8);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isOnlyOpening(String tagName) {
-/* 235 */     return isElement(tagName, 1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isClosing(String tagName, String openTag) {
-/* 252 */     if (openTag.equalsIgnoreCase("HEAD")) {
-/* 253 */       return !isElement(tagName, 32);
-/*     */     }
-/* 255 */     if (openTag.equalsIgnoreCase("P")) {
-/* 256 */       return isElement(tagName, 64);
-/*     */     }
-/* 258 */     if (openTag.equalsIgnoreCase("DT") || openTag.equalsIgnoreCase("DD")) {
-/* 259 */       return isElement(tagName, 128);
-/*     */     }
-/* 261 */     if (openTag.equalsIgnoreCase("LI") || openTag.equalsIgnoreCase("OPTION")) {
-/* 262 */       return isElement(tagName, 256);
-/*     */     }
-/* 264 */     if (openTag.equalsIgnoreCase("THEAD") || openTag.equalsIgnoreCase("TFOOT") || openTag
-/* 265 */       .equalsIgnoreCase("TBODY") || openTag.equalsIgnoreCase("TR") || openTag
-/* 266 */       .equalsIgnoreCase("COLGROUP")) {
-/* 267 */       return isElement(tagName, 512);
-/*     */     }
-/* 269 */     if (openTag.equalsIgnoreCase("TH") || openTag.equalsIgnoreCase("TD"))
-/* 270 */       return isElement(tagName, 16384); 
-/* 271 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isURI(String tagName, String attrName) {
-/* 286 */     return (attrName.equalsIgnoreCase("href") || attrName.equalsIgnoreCase("src"));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static boolean isBoolean(String tagName, String attrName) {
-/* 302 */     String[] attrNames = _boolAttrs.get(tagName.toUpperCase(Locale.ENGLISH));
-/* 303 */     if (attrNames == null)
-/* 304 */       return false; 
-/* 305 */     for (int i = 0; i < attrNames.length; i++) {
-/* 306 */       if (attrNames[i].equalsIgnoreCase(attrName))
-/* 307 */         return true; 
-/* 308 */     }  return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static int charFromName(String name) {
-/* 324 */     initialize();
-/* 325 */     Object value = _byName.get(name);
-/* 326 */     if (value != null && value instanceof Integer) {
-/* 327 */       return ((Integer)value).intValue();
-/*     */     }
-/* 329 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static String fromChar(int value) {
-/* 343 */     if (value > 65535) {
-/* 344 */       return null;
-/*     */     }
-/*     */ 
-/*     */     
-/* 348 */     initialize();
-/* 349 */     String name = _byChar.get(Integer.valueOf(value));
-/* 350 */     return name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void initialize() {
-/* 362 */     InputStream is = null;
-/* 363 */     BufferedReader reader = null;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 371 */     if (_byName != null)
-/*     */       return; 
-/*     */     try {
-/* 374 */       _byName = new HashMap<>();
-/* 375 */       _byChar = new HashMap<>();
-/* 376 */       is = HTMLdtd.class.getResourceAsStream("HTMLEntities.res");
-/* 377 */       if (is == null) {
-/* 378 */         throw new RuntimeException(
-/* 379 */             DOMMessageFormatter.formatMessage("http://apache.org/xml/serializer", "ResourceNotFound", new Object[] { "HTMLEntities.res" }));
-/*     */       }
-/*     */ 
-/*     */       
-/* 383 */       reader = new BufferedReader(new InputStreamReader(is, "ASCII"));
-/* 384 */       String line = reader.readLine();
-/* 385 */       while (line != null) {
-/* 386 */         if (line.length() == 0 || line.charAt(0) == '#') {
-/* 387 */           line = reader.readLine();
-/*     */           continue;
-/*     */         } 
-/* 390 */         int index = line.indexOf(' ');
-/* 391 */         if (index > 1) {
-/* 392 */           String name = line.substring(0, index);
-/* 393 */           index++;
-/* 394 */           if (index < line.length()) {
-/* 395 */             String value = line.substring(index);
-/* 396 */             index = value.indexOf(' ');
-/* 397 */             if (index > 0)
-/* 398 */               value = value.substring(0, index); 
-/* 399 */             int code = Integer.parseInt(value);
-/* 400 */             defineEntity(name, (char)code);
-/*     */           } 
-/*     */         } 
-/* 403 */         line = reader.readLine();
-/*     */       } 
-/* 405 */       is.close();
-/* 406 */     } catch (Exception except) {
-/* 407 */       throw new RuntimeException(
-/* 408 */           DOMMessageFormatter.formatMessage("http://apache.org/xml/serializer", "ResourceNotLoaded", new Object[] {
-/*     */               
-/* 410 */               "HTMLEntities.res", except.toString() }));
-/*     */     } finally {
-/* 412 */       if (is != null) {
-/*     */         try {
-/* 414 */           is.close();
-/* 415 */         } catch (Exception exception) {}
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void defineEntity(String name, char value) {
-/* 435 */     if (_byName.get(name) == null) {
-/* 436 */       _byName.put(name, new Integer(value));
-/* 437 */       _byChar.put(new Integer(value), name);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void defineElement(String name, int flags) {
-/* 444 */     _elemDefs.put(name, Integer.valueOf(flags));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void defineBoolean(String tagName, String attrName) {
-/* 450 */     defineBoolean(tagName, new String[] { attrName });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void defineBoolean(String tagName, String[] attrNames) {
-/* 456 */     _boolAttrs.put(tagName, attrNames);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean isElement(String name, int flag) {
-/* 464 */     Integer flags = _elemDefs.get(name.toUpperCase(Locale.ENGLISH));
-/* 465 */     if (flags == null) {
-/* 466 */       return false;
-/*     */     }
-/* 468 */     return ((flags.intValue() & flag) == flag);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/* 474 */   private static final Map<String, Integer> _elemDefs = new HashMap<>(); static {
-/* 475 */     defineElement("ADDRESS", 64);
-/* 476 */     defineElement("AREA", 17);
-/* 477 */     defineElement("BASE", 49);
-/* 478 */     defineElement("BASEFONT", 17);
-/* 479 */     defineElement("BLOCKQUOTE", 64);
-/* 480 */     defineElement("BODY", 8);
-/* 481 */     defineElement("BR", 17);
-/* 482 */     defineElement("COL", 17);
-/* 483 */     defineElement("COLGROUP", 522);
-/* 484 */     defineElement("DD", 137);
-/* 485 */     defineElement("DIV", 64);
-/* 486 */     defineElement("DL", 66);
-/* 487 */     defineElement("DT", 137);
-/* 488 */     defineElement("FIELDSET", 64);
-/* 489 */     defineElement("FORM", 64);
-/* 490 */     defineElement("FRAME", 25);
-/* 491 */     defineElement("H1", 64);
-/* 492 */     defineElement("H2", 64);
-/* 493 */     defineElement("H3", 64);
-/* 494 */     defineElement("H4", 64);
-/* 495 */     defineElement("H5", 64);
-/* 496 */     defineElement("H6", 64);
-/* 497 */     defineElement("HEAD", 10);
-/* 498 */     defineElement("HR", 81);
-/* 499 */     defineElement("HTML", 10);
-/* 500 */     defineElement("IMG", 17);
-/* 501 */     defineElement("INPUT", 17);
-/* 502 */     defineElement("ISINDEX", 49);
-/* 503 */     defineElement("LI", 265);
-/* 504 */     defineElement("LINK", 49);
-/* 505 */     defineElement("MAP", 32);
-/* 506 */     defineElement("META", 49);
-/* 507 */     defineElement("OL", 66);
-/* 508 */     defineElement("OPTGROUP", 2);
-/* 509 */     defineElement("OPTION", 265);
-/* 510 */     defineElement("P", 328);
-/* 511 */     defineElement("PARAM", 17);
-/* 512 */     defineElement("PRE", 68);
-/* 513 */     defineElement("SCRIPT", 36);
-/* 514 */     defineElement("NOSCRIPT", 36);
-/* 515 */     defineElement("SELECT", 2);
-/* 516 */     defineElement("STYLE", 36);
-/* 517 */     defineElement("TABLE", 66);
-/* 518 */     defineElement("TBODY", 522);
-/* 519 */     defineElement("TD", 16392);
-/* 520 */     defineElement("TEXTAREA", 4);
-/* 521 */     defineElement("TFOOT", 522);
-/* 522 */     defineElement("TH", 16392);
-/* 523 */     defineElement("THEAD", 522);
-/* 524 */     defineElement("TITLE", 32);
-/* 525 */     defineElement("TR", 522);
-/* 526 */     defineElement("UL", 66);
-/*     */     
-/* 528 */     _boolAttrs = (Map)new HashMap<>();
-/* 529 */     defineBoolean("AREA", "href");
-/* 530 */     defineBoolean("BUTTON", "disabled");
-/* 531 */     defineBoolean("DIR", "compact");
-/* 532 */     defineBoolean("DL", "compact");
-/* 533 */     defineBoolean("FRAME", "noresize");
-/* 534 */     defineBoolean("HR", "noshade");
-/* 535 */     defineBoolean("IMAGE", "ismap");
-/* 536 */     defineBoolean("INPUT", new String[] { "defaultchecked", "checked", "readonly", "disabled" });
-/* 537 */     defineBoolean("LINK", "link");
-/* 538 */     defineBoolean("MENU", "compact");
-/* 539 */     defineBoolean("OBJECT", "declare");
-/* 540 */     defineBoolean("OL", "compact");
-/* 541 */     defineBoolean("OPTGROUP", "disabled");
-/* 542 */     defineBoolean("OPTION", new String[] { "default-selected", "selected", "disabled" });
-/* 543 */     defineBoolean("SCRIPT", "defer");
-/* 544 */     defineBoolean("SELECT", new String[] { "multiple", "disabled" });
-/* 545 */     defineBoolean("STYLE", "disabled");
-/* 546 */     defineBoolean("TD", "nowrap");
-/* 547 */     defineBoolean("TH", "nowrap");
-/* 548 */     defineBoolean("TEXTAREA", new String[] { "disabled", "readonly" });
-/* 549 */     defineBoolean("UL", "compact");
-/*     */     
-/* 551 */     initialize();
-/*     */   }
-/*     */   
-/*     */   private static final String ENTITIES_RESOURCE = "HTMLEntities.res";
-/*     */   private static final int ONLY_OPENING = 1;
-/*     */   private static final int ELEM_CONTENT = 2;
-/*     */   private static final int PRESERVE = 4;
-/*     */   private static final int OPT_CLOSING = 8;
-/*     */   private static final int EMPTY = 17;
-/*     */   private static final int ALLOWED_HEAD = 32;
-/*     */   private static final int CLOSE_P = 64;
-/*     */   private static final int CLOSE_DD_DT = 128;
-/*     */   private static final int CLOSE_SELF = 256;
-/*     */   private static final int CLOSE_TABLE = 512;
-/*     */   private static final int CLOSE_TH_TD = 16384;
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xml\internal\serialize\HTMLdtd.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Aug 21, 2000:
+//   Fixed bug in isElement and made HTMLdtd public.
+//   Contributed by Eric SCHAEFFER" <eschaeffer@posterconseil.com>
+
+
+package com.sun.org.apache.xml.internal.serialize;
+
+import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+
+/**
+ * Utility class for accessing information specific to HTML documents.
+ * The HTML DTD is expressed as three utility function groups. Two methods
+ * allow for checking whether an element requires an open tag on printing
+ * ({@link #isEmptyTag}) or on parsing ({@link #isOptionalClosing}).
+ * <P>
+ * Two other methods translate character references from name to value and
+ * from value to name. A small entities resource is loaded into memory the
+ * first time any of these methods is called for fast and efficient access.
+ *
+ *
+ * @author <a href="mailto:arkin@intalio.com">Assaf Arkin</a>
+ */
+public final class HTMLdtd
+{
+
+    /**
+     * Public identifier for HTML 4.01 (Strict) document type.
+     */
+    public static final String HTMLPublicId = "-//W3C//DTD HTML 4.01//EN";
+
+    /**
+     * System identifier for HTML 4.01 (Strict) document type.
+     */
+    public static final String HTMLSystemId =
+        "http://www.w3.org/TR/html4/strict.dtd";
+
+    /**
+     * Public identifier for XHTML 1.0 (Strict) document type.
+     */
+    public static final String XHTMLPublicId =
+        "-//W3C//DTD XHTML 1.0 Strict//EN";
+
+    /**
+     * System identifier for XHTML 1.0 (Strict) document type.
+     */
+    public static final String XHTMLSystemId =
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
+
+    /**
+     * Table of reverse character reference mapping. Character codes are held
+     * as single-character strings, mapped to their reference name.
+     */
+    private static Map<Integer, String> _byChar;
+
+
+    /**
+     * Table of entity name to value mapping. Entities are held as strings,
+     * character references as <TT>Character</TT> objects.
+     */
+    private static Map<String, Integer> _byName;
+
+
+    private static final Map<String, String[]> _boolAttrs;
+
+
+    /**
+     * Holds element definitions.
+     */
+    private static final Map<String, Integer> _elemDefs;
+
+
+    /**
+     * Locates the HTML entities file that is loaded upon initialization.
+     * This file is a resource loaded with the default class loader.
+     */
+    private static final String     ENTITIES_RESOURCE = "HTMLEntities.res";
+
+
+    /**
+     * Only opening tag should be printed.
+     */
+    private static final int ONLY_OPENING = 0x0001;
+
+    /**
+     * Element contains element content only.
+     */
+    private static final int ELEM_CONTENT = 0x0002;
+
+
+    /**
+     * Element preserve spaces.
+     */
+    private static final int PRESERVE     = 0x0004;
+
+
+    /**
+     * Optional closing tag.
+     */
+    private static final int OPT_CLOSING  = 0x0008;
+
+
+    /**
+     * Element is empty (also means only opening tag)
+     */
+    private static final int EMPTY        = 0x0010 | ONLY_OPENING;
+
+
+    /**
+     * Allowed to appear in head.
+     */
+    private static final int ALLOWED_HEAD = 0x0020;
+
+
+    /**
+     * When opened, closes P.
+     */
+    private static final int CLOSE_P      = 0x0040;
+
+
+    /**
+     * When opened, closes DD or DT.
+     */
+    private static final int CLOSE_DD_DT  = 0x0080;
+
+
+    /**
+     * When opened, closes itself.
+     */
+    private static final int CLOSE_SELF   = 0x0100;
+
+
+    /**
+     * When opened, closes another table section.
+     */
+    private static final int CLOSE_TABLE  = 0x0200;
+
+
+    /**
+     * When opened, closes TH or TD.
+     */
+    private static final int CLOSE_TH_TD  = 0x04000;
+
+
+    /**
+     * Returns true if element is declared to be empty. HTML elements are
+     * defines as empty in the DTD, not by the document syntax.
+     *
+     * @param tagName The element tag name (upper case)
+     * @return True if element is empty
+     */
+    public static boolean isEmptyTag( String tagName )
+    {
+        return isElement( tagName, EMPTY );
+    }
+
+
+    /**
+     * Returns true if element is declared to have element content.
+     * Whitespaces appearing inside element content will be ignored,
+     * other text will simply report an error.
+     *
+     * @param tagName The element tag name (upper case)
+     * @return True if element content
+     */
+    public static boolean isElementContent( String tagName )
+    {
+        return isElement( tagName, ELEM_CONTENT );
+    }
+
+
+    /**
+     * Returns true if element's textual contents preserves spaces.
+     * This only applies to PRE and TEXTAREA, all other HTML elements
+     * do not preserve space.
+     *
+     * @param tagName The element tag name (upper case)
+     * @return True if element's text content preserves spaces
+     */
+    public static boolean isPreserveSpace( String tagName )
+    {
+        return isElement( tagName, PRESERVE );
+    }
+
+
+    /**
+     * Returns true if element's closing tag is optional and need not
+     * exist. An error will not be reported for such elements if they
+     * are not closed. For example, <tt>LI</tt> is most often not closed.
+     *
+     * @param tagName The element tag name (upper case)
+     * @return True if closing tag implied
+     */
+    public static boolean isOptionalClosing( String tagName )
+    {
+        return isElement( tagName, OPT_CLOSING );
+    }
+
+
+    /**
+     * Returns true if element's closing tag is generally not printed.
+     * For example, <tt>LI</tt> should not print the closing tag.
+     *
+     * @param tagName The element tag name (upper case)
+     * @return True if only opening tag should be printed
+     */
+    public static boolean isOnlyOpening( String tagName )
+    {
+        return isElement( tagName, ONLY_OPENING );
+    }
+
+
+    /**
+     * Returns true if the opening of one element (<tt>tagName</tt>) implies
+     * the closing of another open element (<tt>openTag</tt>). For example,
+     * every opening <tt>LI</tt> will close the previously open <tt>LI</tt>,
+     * and every opening <tt>BODY</tt> will close the previously open <tt>HEAD</tt>.
+     *
+     * @param tagName The newly opened element
+     * @param openTag The already opened element
+     * @return True if closing tag closes opening tag
+     */
+    public static boolean isClosing( String tagName, String openTag )
+    {
+        // Several elements are defined as closing the HEAD
+        if ( openTag.equalsIgnoreCase( "HEAD" ) )
+            return ! isElement( tagName, ALLOWED_HEAD );
+        // P closes iteself
+        if ( openTag.equalsIgnoreCase( "P" ) )
+            return isElement( tagName, CLOSE_P );
+        // DT closes DD, DD closes DT
+        if ( openTag.equalsIgnoreCase( "DT" ) || openTag.equalsIgnoreCase( "DD" ) )
+            return isElement( tagName, CLOSE_DD_DT );
+        // LI and OPTION close themselves
+        if ( openTag.equalsIgnoreCase( "LI" ) || openTag.equalsIgnoreCase( "OPTION" ) )
+            return isElement( tagName, CLOSE_SELF );
+        // Each of these table sections closes all the others
+        if ( openTag.equalsIgnoreCase( "THEAD" ) || openTag.equalsIgnoreCase( "TFOOT" ) ||
+             openTag.equalsIgnoreCase( "TBODY" ) || openTag.equalsIgnoreCase( "TR" ) ||
+             openTag.equalsIgnoreCase( "COLGROUP" ) )
+            return isElement( tagName, CLOSE_TABLE );
+        // TD closes TH and TH closes TD
+        if ( openTag.equalsIgnoreCase( "TH" ) || openTag.equalsIgnoreCase( "TD" ) )
+            return isElement( tagName, CLOSE_TH_TD );
+        return false;
+    }
+
+
+    /**
+     * Returns true if the specified attribute it a URI and should be
+     * escaped appropriately. In HTML URIs are escaped differently
+     * than normal attributes.
+     *
+     * @param tagName The element's tag name
+     * @param attrName The attribute's name
+     */
+    public static boolean isURI( String tagName, String attrName )
+    {
+        // Stupid checks.
+        return ( attrName.equalsIgnoreCase( "href" ) || attrName.equalsIgnoreCase( "src" ) );
+    }
+
+
+    /**
+     * Returns true if the specified attribute is a boolean and should be
+     * printed without the value. This applies to attributes that are true
+     * if they exist, such as selected (OPTION/INPUT).
+     *
+     * @param tagName The element's tag name
+     * @param attrName The attribute's name
+     */
+    public static boolean isBoolean( String tagName, String attrName )
+    {
+        String[] attrNames;
+
+        attrNames = _boolAttrs.get( tagName.toUpperCase(Locale.ENGLISH) );
+        if ( attrNames == null )
+            return false;
+        for ( int i = 0 ; i < attrNames.length ; ++i )
+            if ( attrNames[ i ].equalsIgnoreCase( attrName ) )
+                return true;
+        return false;
+    }
+
+
+    /**
+     * Returns the value of an HTML character reference by its name. If the
+     * reference is not found or was not defined as a character reference,
+     * returns EOF (-1).
+     *
+     * @param name Name of character reference
+     * @return Character code or EOF (-1)
+     */
+    public static int charFromName( String name )
+    {
+        Object    value;
+
+        initialize();
+        value = _byName.get( name );
+        if ( value != null && value instanceof Integer )
+            return ( (Integer) value ).intValue();
+        else
+            return -1;
+    }
+
+
+    /**
+     * Returns the name of an HTML character reference based on its character
+     * value. Only valid for entities defined from character references. If no
+     * such character value was defined, return null.
+     *
+     * @param value Character value of entity
+     * @return Entity's name or null
+     */
+    public static String fromChar(int value )
+    {
+       if (value > 0xffff)
+            return null;
+
+        String name;
+
+        initialize();
+        name = _byChar.get(value);
+        return name;
+    }
+
+
+    /**
+     * Initialize upon first access. Will load all the HTML character references
+     * into a list that is accessible by name or character value and is optimized
+     * for character substitution. This method may be called any number of times
+     * but will execute only once.
+     */
+    private static void initialize()
+    {
+        InputStream     is = null;
+        BufferedReader  reader = null;
+        int             index;
+        String          name;
+        String          value;
+        int             code;
+        String          line;
+
+        // Make sure not to initialize twice.
+        if ( _byName != null )
+            return;
+        try {
+            _byName = new HashMap<>();
+            _byChar = new HashMap<>();
+            is = HTMLdtd.class.getResourceAsStream( ENTITIES_RESOURCE );
+            if ( is == null ) {
+                throw new RuntimeException(
+                                    DOMMessageFormatter.formatMessage(
+                                    DOMMessageFormatter.SERIALIZER_DOMAIN,
+                    "ResourceNotFound", new Object[] {ENTITIES_RESOURCE}));
+            }
+            reader = new BufferedReader( new InputStreamReader( is, "ASCII" ) );
+            line = reader.readLine();
+            while ( line != null ) {
+                if ( line.length() == 0 || line.charAt( 0 ) == '#' ) {
+                    line = reader.readLine();
+                    continue;
+                }
+                index = line.indexOf( ' ' );
+                if ( index > 1 ) {
+                    name = line.substring( 0, index );
+                    ++index;
+                    if ( index < line.length() ) {
+                        value = line.substring( index );
+                        index = value.indexOf( ' ' );
+                        if ( index > 0 )
+                            value = value.substring( 0, index );
+                        code = Integer.parseInt( value );
+                                        defineEntity( name, (char) code );
+                    }
+                }
+                line = reader.readLine();
+            }
+            is.close();
+        }  catch ( Exception except ) {
+                        throw new RuntimeException(
+                                DOMMessageFormatter.formatMessage(
+                                DOMMessageFormatter.SERIALIZER_DOMAIN,
+                "ResourceNotLoaded", new Object[] {ENTITIES_RESOURCE, except.toString()}));
+        } finally {
+            if ( is != null ) {
+                try {
+                    is.close();
+                } catch ( Exception except ) { }
+            }
+        }
+    }
+
+
+    /**
+     * Defines a new character reference. The reference's name and value are
+     * supplied. Nothing happens if the character reference is already defined.
+     * <P>
+     * Unlike internal entities, character references are a string to single
+     * character mapping. They are used to map non-ASCII characters both on
+     * parsing and printing, primarily for HTML documents. '&lt;amp;' is an
+     * example of a character reference.
+     *
+     * @param name The entity's name
+     * @param value The entity's value
+     */
+    private static void defineEntity( String name, char value )
+    {
+        if ( _byName.get( name ) == null ) {
+            _byName.put( name, new Integer( value ) );
+            _byChar.put( new Integer( value ), name );
+        }
+    }
+
+
+    private static void defineElement( String name, int flags )
+    {
+        _elemDefs.put(name, flags);
+    }
+
+
+    private static void defineBoolean( String tagName, String attrName )
+    {
+        defineBoolean( tagName, new String[] { attrName } );
+    }
+
+
+    private static void defineBoolean( String tagName, String[] attrNames )
+    {
+        _boolAttrs.put( tagName, attrNames );
+    }
+
+
+    private static boolean isElement( String name, int flag )
+    {
+        Integer flags;
+
+        flags = _elemDefs.get( name.toUpperCase(Locale.ENGLISH) );
+        if ( flags == null )
+            return false;
+        else
+            return ( ( flags.intValue() & flag ) == flag );
+    }
+
+
+    static
+    {
+        _elemDefs = new HashMap<>();
+        defineElement( "ADDRESS", CLOSE_P );
+        defineElement( "AREA", EMPTY );
+        defineElement( "BASE",  EMPTY | ALLOWED_HEAD );
+        defineElement( "BASEFONT", EMPTY );
+        defineElement( "BLOCKQUOTE", CLOSE_P );
+        defineElement( "BODY", OPT_CLOSING );
+        defineElement( "BR", EMPTY );
+        defineElement( "COL", EMPTY );
+        defineElement( "COLGROUP", ELEM_CONTENT | OPT_CLOSING | CLOSE_TABLE );
+        defineElement( "DD", OPT_CLOSING | ONLY_OPENING | CLOSE_DD_DT );
+        defineElement( "DIV", CLOSE_P );
+        defineElement( "DL", ELEM_CONTENT | CLOSE_P );
+        defineElement( "DT", OPT_CLOSING | ONLY_OPENING | CLOSE_DD_DT );
+        defineElement( "FIELDSET", CLOSE_P );
+        defineElement( "FORM", CLOSE_P );
+        defineElement( "FRAME", EMPTY | OPT_CLOSING );
+        defineElement( "H1", CLOSE_P );
+        defineElement( "H2", CLOSE_P );
+        defineElement( "H3", CLOSE_P );
+        defineElement( "H4", CLOSE_P );
+        defineElement( "H5", CLOSE_P );
+        defineElement( "H6", CLOSE_P );
+        defineElement( "HEAD", ELEM_CONTENT | OPT_CLOSING );
+        defineElement( "HR", EMPTY | CLOSE_P );
+        defineElement( "HTML", ELEM_CONTENT | OPT_CLOSING );
+        defineElement( "IMG", EMPTY );
+        defineElement( "INPUT", EMPTY );
+        defineElement( "ISINDEX", EMPTY | ALLOWED_HEAD );
+        defineElement( "LI", OPT_CLOSING | ONLY_OPENING | CLOSE_SELF );
+        defineElement( "LINK", EMPTY | ALLOWED_HEAD );
+        defineElement( "MAP", ALLOWED_HEAD );
+        defineElement( "META", EMPTY | ALLOWED_HEAD );
+        defineElement( "OL", ELEM_CONTENT | CLOSE_P );
+        defineElement( "OPTGROUP", ELEM_CONTENT );
+        defineElement( "OPTION", OPT_CLOSING | ONLY_OPENING | CLOSE_SELF );
+        defineElement( "P", OPT_CLOSING | CLOSE_P | CLOSE_SELF );
+        defineElement( "PARAM", EMPTY );
+        defineElement( "PRE", PRESERVE | CLOSE_P );
+        defineElement( "SCRIPT", ALLOWED_HEAD | PRESERVE );
+        defineElement( "NOSCRIPT", ALLOWED_HEAD | PRESERVE );
+        defineElement( "SELECT", ELEM_CONTENT );
+        defineElement( "STYLE", ALLOWED_HEAD | PRESERVE );
+        defineElement( "TABLE", ELEM_CONTENT | CLOSE_P );
+        defineElement( "TBODY", ELEM_CONTENT | OPT_CLOSING | CLOSE_TABLE );
+        defineElement( "TD", OPT_CLOSING | CLOSE_TH_TD );
+        defineElement( "TEXTAREA", PRESERVE );
+        defineElement( "TFOOT", ELEM_CONTENT | OPT_CLOSING | CLOSE_TABLE );
+        defineElement( "TH", OPT_CLOSING | CLOSE_TH_TD );
+        defineElement( "THEAD", ELEM_CONTENT | OPT_CLOSING | CLOSE_TABLE );
+        defineElement( "TITLE", ALLOWED_HEAD );
+        defineElement( "TR", ELEM_CONTENT | OPT_CLOSING | CLOSE_TABLE );
+        defineElement( "UL", ELEM_CONTENT | CLOSE_P );
+
+        _boolAttrs = new HashMap<>();
+        defineBoolean( "AREA", "href" );
+        defineBoolean( "BUTTON", "disabled" );
+        defineBoolean( "DIR", "compact" );
+        defineBoolean( "DL", "compact" );
+        defineBoolean( "FRAME", "noresize" );
+        defineBoolean( "HR", "noshade" );
+        defineBoolean( "IMAGE", "ismap" );
+        defineBoolean( "INPUT", new String[] { "defaultchecked", "checked", "readonly", "disabled" } );
+        defineBoolean( "LINK", "link" );
+        defineBoolean( "MENU", "compact" );
+        defineBoolean( "OBJECT", "declare" );
+        defineBoolean( "OL", "compact" );
+        defineBoolean( "OPTGROUP", "disabled" );
+        defineBoolean( "OPTION", new String[] { "default-selected", "selected", "disabled" } );
+        defineBoolean( "SCRIPT", "defer" );
+        defineBoolean( "SELECT", new String[] { "multiple", "disabled" } );
+        defineBoolean( "STYLE", "disabled" );
+        defineBoolean( "TD", "nowrap" );
+        defineBoolean( "TH", "nowrap" );
+        defineBoolean( "TEXTAREA", new String[] { "disabled", "readonly" } );
+        defineBoolean( "UL", "compact" );
+
+        initialize();
+    }
+
+
+
+}

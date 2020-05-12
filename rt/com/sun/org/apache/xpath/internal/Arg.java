@@ -1,273 +1,267 @@
-/*     */ package com.sun.org.apache.xpath.internal;
-/*     */ 
-/*     */ import com.sun.org.apache.xml.internal.utils.QName;
-/*     */ import com.sun.org.apache.xpath.internal.objects.XObject;
-/*     */ import java.util.Objects;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class Arg
-/*     */ {
-/*     */   private QName m_qname;
-/*     */   private XObject m_val;
-/*     */   private String m_expression;
-/*     */   private boolean m_isFromWithParam;
-/*     */   private boolean m_isVisible;
-/*     */   
-/*     */   public final QName getQName() {
-/*  52 */     return this.m_qname;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setQName(QName name) {
-/*  62 */     this.m_qname = name;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final XObject getVal() {
-/*  79 */     return this.m_val;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public final void setVal(XObject val) {
-/*  90 */     this.m_val = val;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void detach() {
-/*  99 */     if (null != this.m_val) {
-/*     */       
-/* 101 */       this.m_val.allowDetachToRelease(true);
-/* 102 */       this.m_val.detach();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String getExpression() {
-/* 122 */     return this.m_expression;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setExpression(String expr) {
-/* 134 */     this.m_expression = expr;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isFromWithParam() {
-/* 149 */     return this.m_isFromWithParam;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isVisible() {
-/* 166 */     return this.m_isVisible;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void setIsVisible(boolean b) {
-/* 174 */     this.m_isVisible = b;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Arg() {
-/* 185 */     this.m_qname = new QName("");
-/*     */     
-/* 187 */     this.m_val = null;
-/* 188 */     this.m_expression = null;
-/* 189 */     this.m_isVisible = true;
-/* 190 */     this.m_isFromWithParam = false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Arg(QName qname, String expression, boolean isFromWithParam) {
-/* 203 */     this.m_qname = qname;
-/* 204 */     this.m_val = null;
-/* 205 */     this.m_expression = expression;
-/* 206 */     this.m_isFromWithParam = isFromWithParam;
-/* 207 */     this.m_isVisible = !isFromWithParam;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Arg(QName qname, XObject val) {
-/* 220 */     this.m_qname = qname;
-/* 221 */     this.m_val = val;
-/* 222 */     this.m_isVisible = true;
-/* 223 */     this.m_isFromWithParam = false;
-/* 224 */     this.m_expression = null;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 229 */     return Objects.hashCode(this.m_qname);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object obj) {
-/* 243 */     if (obj instanceof QName)
-/*     */     {
-/* 245 */       return this.m_qname.equals(obj);
-/*     */     }
-/*     */     
-/* 248 */     return super.equals(obj);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Arg(QName qname, XObject val, boolean isFromWithParam) {
-/* 261 */     this.m_qname = qname;
-/* 262 */     this.m_val = val;
-/* 263 */     this.m_isFromWithParam = isFromWithParam;
-/* 264 */     this.m_isVisible = !isFromWithParam;
-/* 265 */     this.m_expression = null;
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xpath\internal\Arg.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 1999-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * $Id: Arg.java,v 1.1.2.1 2005/08/01 01:30:11 jeffsuttor Exp $
+ */
+package com.sun.org.apache.xpath.internal;
+
+import com.sun.org.apache.xml.internal.utils.QName;
+import com.sun.org.apache.xpath.internal.objects.XObject;
+import java.util.Objects;
+
+/**
+ * This class holds an instance of an argument on
+ * the stack. The value of the argument can be either an
+ * XObject or a String containing an expression.
+ * @xsl.usage internal
+ */
+public class Arg
+{
+
+  /** Field m_qname: The name of this argument, expressed as a QName
+   * (Qualified Name) object.
+   * @see getQName
+   * @see setQName
+   *  */
+  private QName m_qname;
+
+  /**
+   * Get the qualified name for this argument.
+   *
+   * @return QName object containing the qualified name
+   */
+  public final QName getQName()
+  {
+    return m_qname;
+  }
+
+  /**
+   * Set the qualified name for this argument.
+   *
+   * @param name QName object representing the new Qualified Name.
+   */
+  public final void setQName(QName name)
+  {
+    m_qname = name;
+  }
+
+  /** Field m_val: Stored XObject value of this argument
+   * @see #getVal()
+   * @see #setVal()
+   */
+  private XObject m_val;
+
+  /**
+   * Get the value for this argument.
+   *
+   * @return the argument's stored XObject value.
+   * @see #setVal(XObject)
+   */
+  public final XObject getVal()
+  {
+    return m_val;
+  }
+
+  /**
+   * Set the value of this argument.
+   *
+   * @param val an XObject representing the arguments's value.
+   * @see #getVal()
+   */
+  public final void setVal(XObject val)
+  {
+    m_val = val;
+  }
+
+  /**
+   * Have the object release it's resources.
+   * Call only when the variable or argument is going out of scope.
+   */
+  public void detach()
+  {
+    if(null != m_val)
+    {
+      m_val.allowDetachToRelease(true);
+      m_val.detach();
+    }
+  }
+
+
+  /** Field m_expression: Stored expression value of this argument.
+   * @see #setExpression
+   * @see #getExpression
+   * */
+  private String m_expression;
+
+  /**
+   * Get the value expression for this argument.
+   *
+   * @return String containing the expression previously stored into this
+   * argument
+   * @see #setExpression
+   */
+  public String getExpression()
+  {
+    return m_expression;
+  }
+
+  /**
+   * Set the value expression for this argument.
+   *
+   * @param expr String containing the expression to be stored as this
+   * argument's value.
+   * @see #getExpression
+   */
+  public void setExpression(String expr)
+  {
+    m_expression = expr;
+  }
+
+  /**
+   * True if this variable was added with an xsl:with-param or
+   * is added via setParameter.
+   */
+  private boolean m_isFromWithParam;
+
+  /**
+   * Tell if this variable is a parameter passed with a with-param or as
+   * a top-level parameter.
+   */
+   public boolean isFromWithParam()
+   {
+    return m_isFromWithParam;
+   }
+
+  /**
+   * True if this variable is currently visible.  To be visible,
+   * a variable needs to come either from xsl:variable or be
+   * a "received" parameter, ie one for which an xsl:param has
+   * been encountered.
+   * Set at the time the object is constructed and updated as needed.
+   */
+  private boolean m_isVisible;
+
+  /**
+   * Tell if this variable is currently visible.
+   */
+   public boolean isVisible()
+   {
+    return m_isVisible;
+   }
+
+  /**
+   * Update visibility status of this variable.
+   */
+   public void setIsVisible(boolean b)
+   {
+    m_isVisible = b;
+   }
+
+  /**
+   * Construct a dummy parameter argument, with no QName and no
+   * value (either expression string or value XObject). isVisible
+   * defaults to true.
+   */
+  public Arg()
+  {
+
+    m_qname = new QName("");
+       // so that string compares can be done.
+    m_val = null;
+    m_expression = null;
+    m_isVisible = true;
+    m_isFromWithParam = false;
+  }
+
+  /**
+   * Construct a parameter argument that contains an expression.
+   *
+   * @param qname Name of the argument, expressed as a QName object.
+   * @param expression String to be stored as this argument's value expression.
+   * @param isFromWithParam True if this is a parameter variable.
+   */
+  public Arg(QName qname, String expression, boolean isFromWithParam)
+  {
+
+    m_qname = qname;
+    m_val = null;
+    m_expression = expression;
+    m_isFromWithParam = isFromWithParam;
+    m_isVisible = !isFromWithParam;
+  }
+
+  /**
+   * Construct a parameter argument which has an XObject value.
+   * isVisible defaults to true.
+   *
+   * @param qname Name of the argument, expressed as a QName object.
+   * @param val Value of the argument, expressed as an XObject
+   */
+  public Arg(QName qname, XObject val)
+  {
+
+    m_qname = qname;
+    m_val = val;
+    m_isVisible = true;
+    m_isFromWithParam = false;
+    m_expression = null;
+  }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.m_qname);
+    }
+
+  /**
+   * Equality function specialized for the variable name.  If the argument
+   * is not a qname, it will deligate to the super class.
+   *
+   * @param   obj   the reference object with which to compare.
+   * @return  <code>true</code> if this object is the same as the obj
+   *          argument; <code>false</code> otherwise.
+   */
+  @Override
+  public boolean equals(Object obj)
+  {
+    if(obj instanceof QName)
+    {
+      return m_qname.equals(obj);
+    }
+    else
+      return super.equals(obj);
+  }
+
+  /**
+   * Construct a parameter argument.
+   *
+   * @param qname Name of the argument, expressed as a QName object.
+   * @param val Value of the argument, expressed as an XObject
+   * @param isFromWithParam True if this is a parameter variable.
+   */
+  public Arg(QName qname, XObject val, boolean isFromWithParam)
+  {
+
+    m_qname = qname;
+    m_val = val;
+    m_isFromWithParam = isFromWithParam;
+    m_isVisible = !isFromWithParam;
+    m_expression = null;
+  }
+}

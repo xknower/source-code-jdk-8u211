@@ -1,206 +1,200 @@
-/*     */ package com.sun.corba.se.impl.protocol.giopmsgheaders;
-/*     */ 
-/*     */ import com.sun.corba.se.impl.encoding.CDRInputStream;
-/*     */ import com.sun.corba.se.impl.encoding.CDROutputStream;
-/*     */ import com.sun.corba.se.impl.logging.ORBUtilSystemException;
-/*     */ import com.sun.corba.se.spi.ior.ObjectKey;
-/*     */ import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
-/*     */ import com.sun.corba.se.spi.orb.ORB;
-/*     */ import com.sun.corba.se.spi.servicecontext.ServiceContexts;
-/*     */ import java.io.IOException;
-/*     */ import org.omg.CORBA.CompletionStatus;
-/*     */ import org.omg.CORBA.Principal;
-/*     */ import org.omg.CORBA.portable.InputStream;
-/*     */ import org.omg.CORBA.portable.OutputStream;
-/*     */ import org.omg.CORBA_2_3.portable.InputStream;
-/*     */ import org.omg.CORBA_2_3.portable.OutputStream;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class RequestMessage_1_2
-/*     */   extends Message_1_2
-/*     */   implements RequestMessage
-/*     */ {
-/*  53 */   private ORB orb = null;
-/*  54 */   private ORBUtilSystemException wrapper = null;
-/*  55 */   private byte response_flags = 0;
-/*  56 */   private byte[] reserved = null;
-/*  57 */   private TargetAddress target = null;
-/*  58 */   private String operation = null;
-/*  59 */   private ServiceContexts service_contexts = null;
-/*  60 */   private ObjectKey objectKey = null;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   RequestMessage_1_2(ORB paramORB) {
-/*  65 */     this.orb = paramORB;
-/*  66 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   RequestMessage_1_2(ORB paramORB, int paramInt, byte paramByte, byte[] paramArrayOfbyte, TargetAddress paramTargetAddress, String paramString, ServiceContexts paramServiceContexts) {
-/*  73 */     super(1195986768, GIOPVersion.V1_2, (byte)0, (byte)0, 0);
-/*     */     
-/*  75 */     this.orb = paramORB;
-/*  76 */     this.wrapper = ORBUtilSystemException.get(paramORB, "rpc.protocol");
-/*     */     
-/*  78 */     this.request_id = paramInt;
-/*  79 */     this.response_flags = paramByte;
-/*  80 */     this.reserved = paramArrayOfbyte;
-/*  81 */     this.target = paramTargetAddress;
-/*  82 */     this.operation = paramString;
-/*  83 */     this.service_contexts = paramServiceContexts;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getRequestId() {
-/*  89 */     return this.request_id;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isResponseExpected() {
-/* 105 */     if ((this.response_flags & 0x1) == 1) {
-/* 106 */       return true;
-/*     */     }
-/*     */     
-/* 109 */     return false;
-/*     */   }
-/*     */   
-/*     */   public byte[] getReserved() {
-/* 113 */     return this.reserved;
-/*     */   }
-/*     */   
-/*     */   public ObjectKey getObjectKey() {
-/* 117 */     if (this.objectKey == null)
-/*     */     {
-/* 119 */       this.objectKey = MessageBase.extractObjectKey(this.target, this.orb);
-/*     */     }
-/*     */     
-/* 122 */     return this.objectKey;
-/*     */   }
-/*     */   
-/*     */   public String getOperation() {
-/* 126 */     return this.operation;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public Principal getPrincipal() {
-/* 131 */     return null;
-/*     */   }
-/*     */   
-/*     */   public ServiceContexts getServiceContexts() {
-/* 135 */     return this.service_contexts;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void read(InputStream paramInputStream) {
-/* 141 */     super.read(paramInputStream);
-/* 142 */     this.request_id = paramInputStream.read_ulong();
-/* 143 */     this.response_flags = paramInputStream.read_octet();
-/* 144 */     this.reserved = new byte[3];
-/* 145 */     for (byte b = 0; b < 3; b++) {
-/* 146 */       this.reserved[b] = paramInputStream.read_octet();
-/*     */     }
-/* 148 */     this.target = TargetAddressHelper.read(paramInputStream);
-/* 149 */     getObjectKey();
-/* 150 */     this.operation = paramInputStream.read_string();
-/* 151 */     this.service_contexts = new ServiceContexts((InputStream)paramInputStream);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 159 */     ((CDRInputStream)paramInputStream).setHeaderPadding(true);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void write(OutputStream paramOutputStream) {
-/* 164 */     super.write(paramOutputStream);
-/* 165 */     paramOutputStream.write_ulong(this.request_id);
-/* 166 */     paramOutputStream.write_octet(this.response_flags);
-/* 167 */     nullCheck(this.reserved);
-/* 168 */     if (this.reserved.length != 3) {
-/* 169 */       throw this.wrapper.badReservedLength(CompletionStatus.COMPLETED_MAYBE);
-/*     */     }
-/*     */     
-/* 172 */     for (byte b = 0; b < 3; b++) {
-/* 173 */       paramOutputStream.write_octet(this.reserved[b]);
-/*     */     }
-/* 175 */     nullCheck(this.target);
-/* 176 */     TargetAddressHelper.write(paramOutputStream, this.target);
-/* 177 */     paramOutputStream.write_string(this.operation);
-/* 178 */     if (this.service_contexts != null) {
-/* 179 */       this.service_contexts.write((OutputStream)paramOutputStream, GIOPVersion.V1_2);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 183 */       ServiceContexts.writeNullServiceContext((OutputStream)paramOutputStream);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 192 */     ((CDROutputStream)paramOutputStream).setHeaderPadding(true);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void callback(MessageHandler paramMessageHandler) throws IOException {
-/* 198 */     paramMessageHandler.handleInput(this);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\corba\se\impl\protocol\giopmsgheaders\RequestMessage_1_2.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.corba.se.impl.protocol.giopmsgheaders;
+
+import org.omg.CORBA.Principal;
+import com.sun.corba.se.spi.servicecontext.ServiceContexts;
+import com.sun.corba.se.spi.ior.iiop.GIOPVersion;
+import com.sun.corba.se.spi.orb.ORB;
+import com.sun.corba.se.spi.ior.ObjectKey;
+import com.sun.corba.se.impl.encoding.CDRInputStream;
+import com.sun.corba.se.impl.encoding.CDROutputStream;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
+import com.sun.corba.se.impl.encoding.CDRInputStream_1_2;
+import com.sun.corba.se.impl.encoding.CDROutputStream_1_2;
+
+import com.sun.corba.se.spi.logging.CORBALogDomains ;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
+
+/**
+ * This implements the GIOP 1.2 Request header.
+ *
+ * @author Ram Jeyaraman 05/14/2000
+ */
+
+public final class RequestMessage_1_2 extends Message_1_2
+        implements RequestMessage {
+
+    // Instance variables
+
+    private ORB orb = null;
+    private ORBUtilSystemException wrapper = null ;
+    private byte response_flags = (byte) 0;
+    private byte reserved[] = null;
+    private TargetAddress target = null;
+    private String operation = null;
+    private ServiceContexts service_contexts = null;
+    private ObjectKey objectKey = null;
+
+    // Constructors
+
+    RequestMessage_1_2(ORB orb) {
+        this.orb = orb;
+        this.wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+    }
+
+    RequestMessage_1_2(ORB orb, int _request_id, byte _response_flags,
+            byte[] _reserved, TargetAddress _target,
+            String _operation, ServiceContexts _service_contexts) {
+        super(Message.GIOPBigMagic, GIOPVersion.V1_2, FLAG_NO_FRAG_BIG_ENDIAN,
+            Message.GIOPRequest, 0);
+        this.orb = orb;
+        this.wrapper = ORBUtilSystemException.get( orb,
+            CORBALogDomains.RPC_PROTOCOL ) ;
+        request_id = _request_id;
+        response_flags = _response_flags;
+        reserved = _reserved;
+        target = _target;
+        operation = _operation;
+        service_contexts = _service_contexts;
+    }
+
+    // Accessor methods (RequestMessage interface)
+
+    public int getRequestId() {
+        return this.request_id;
+    }
+
+    public boolean isResponseExpected() {
+        /*
+        case 1: LSBit[1] == 1
+            not a oneway call (DII flag INV_NO_RESPONSE is false)  // Ox03
+            LSBit[0] must be 1.
+        case 2: LSBit[1] == 0
+            if (LSB[0] == 0) // Ox00
+                oneway call
+            else if (LSB[0] == 1) // 0x01
+                oneway call; but server may provide
+                a location forward response or system exception response.
+        */
+
+        if ( (this.response_flags & RESPONSE_EXPECTED_BIT) == RESPONSE_EXPECTED_BIT ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public byte[] getReserved() {
+        return this.reserved;
+    }
+
+    public ObjectKey getObjectKey() {
+        if (this.objectKey == null) {
+            // this will raise a MARSHAL exception upon errors.
+            this.objectKey = MessageBase.extractObjectKey(target, orb);
+        }
+
+        return this.objectKey;
+    }
+
+    public String getOperation() {
+        return this.operation;
+    }
+
+    public Principal getPrincipal() {
+        // REVISIT Should we throw an exception or return null ?
+        return null;
+    }
+
+    public ServiceContexts getServiceContexts() {
+        return this.service_contexts;
+    }
+
+    // IO methods
+
+    public void read(org.omg.CORBA.portable.InputStream istream) {
+        super.read(istream);
+        this.request_id = istream.read_ulong();
+        this.response_flags = istream.read_octet();
+        this.reserved = new byte[3];
+        for (int _o0 = 0;_o0 < (3); ++_o0) {
+            this.reserved[_o0] = istream.read_octet();
+        }
+        this.target = TargetAddressHelper.read(istream);
+        getObjectKey(); // this does AddressingDisposition check
+        this.operation = istream.read_string();
+        this.service_contexts
+            = new ServiceContexts((org.omg.CORBA_2_3.portable.InputStream) istream);
+
+        // CORBA formal 00-11-0 15.4.2.2 GIOP 1.2 body must be
+        // aligned on an 8 octet boundary.
+        // Ensures that the first read operation called from the stub code,
+        // during body deconstruction, would skip the header padding, that was
+        // inserted to ensure that the body was aligned on an 8-octet boundary.
+        ((CDRInputStream)istream).setHeaderPadding(true);
+
+    }
+
+    public void write(org.omg.CORBA.portable.OutputStream ostream) {
+        super.write(ostream);
+        ostream.write_ulong(this.request_id);
+        ostream.write_octet(this.response_flags);
+        nullCheck(this.reserved);
+        if (this.reserved.length != (3)) {
+            throw wrapper.badReservedLength(
+                org.omg.CORBA.CompletionStatus.COMPLETED_MAYBE);
+        }
+        for (int _i0 = 0;_i0 < (3); ++_i0) {
+            ostream.write_octet(this.reserved[_i0]);
+        }
+        nullCheck(this.target);
+        TargetAddressHelper.write(ostream, this.target);
+        ostream.write_string(this.operation);
+        if (this.service_contexts != null) {
+                service_contexts.write(
+                (org.omg.CORBA_2_3.portable.OutputStream) ostream,
+                GIOPVersion.V1_2);
+            } else {
+                ServiceContexts.writeNullServiceContext(
+                (org.omg.CORBA_2_3.portable.OutputStream) ostream);
+        }
+
+        // CORBA formal 00-11-0 15.4.2.2 GIOP 1.2 body must be
+        // aligned on an 8 octet boundary.
+        // Ensures that the first write operation called from the stub code,
+        // during body construction, would insert a header padding, such that
+        // the body is aligned on an 8-octet boundary.
+        ((CDROutputStream)ostream).setHeaderPadding(true);
+    }
+
+    public void callback(MessageHandler handler)
+        throws java.io.IOException
+    {
+        handler.handleInput(this);
+    }
+} // class RequestMessage_1_2

@@ -1,635 +1,630 @@
-/*     */ package com.sun.org.apache.xerces.internal.dom;
-/*     */ 
-/*     */ import java.io.IOException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.ObjectOutputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.List;
-/*     */ import java.util.Vector;
-/*     */ import org.w3c.dom.DOMException;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class NamedNodeMapImpl
-/*     */   implements NamedNodeMap, Serializable
-/*     */ {
-/*     */   static final long serialVersionUID = -7039242451046758020L;
-/*     */   protected short flags;
-/*     */   protected static final short READONLY = 1;
-/*     */   protected static final short CHANGED = 2;
-/*     */   protected static final short HASDEFAULTS = 4;
-/*     */   protected List nodes;
-/*     */   protected NodeImpl ownerNode;
-/*     */   
-/*     */   protected NamedNodeMapImpl(NodeImpl ownerNode) {
-/*  92 */     this.ownerNode = ownerNode;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int getLength() {
-/* 106 */     return (this.nodes != null) ? this.nodes.size() : 0;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node item(int index) {
-/* 124 */     return (this.nodes != null && index < this.nodes.size()) ? this.nodes
-/* 125 */       .get(index) : null;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node getNamedItem(String name) {
-/* 137 */     int i = findNamePoint(name, 0);
-/* 138 */     return (i < 0) ? null : this.nodes.get(i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node getNamedItemNS(String namespaceURI, String localName) {
-/* 155 */     int i = findNamePoint(namespaceURI, localName);
-/* 156 */     return (i < 0) ? null : this.nodes.get(i);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node setNamedItem(Node arg) throws DOMException {
-/* 180 */     CoreDocumentImpl ownerDocument = this.ownerNode.ownerDocument();
-/* 181 */     if (ownerDocument.errorChecking) {
-/* 182 */       if (isReadOnly()) {
-/* 183 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 184 */         throw new DOMException((short)7, msg);
-/*     */       } 
-/* 186 */       if (arg.getOwnerDocument() != ownerDocument) {
-/* 187 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null);
-/* 188 */         throw new DOMException((short)4, msg);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 192 */     int i = findNamePoint(arg.getNodeName(), 0);
-/* 193 */     NodeImpl previous = null;
-/* 194 */     if (i >= 0) {
-/* 195 */       previous = this.nodes.get(i);
-/* 196 */       this.nodes.set(i, arg);
-/*     */     } else {
-/* 198 */       i = -1 - i;
-/* 199 */       if (null == this.nodes) {
-/* 200 */         this.nodes = new ArrayList(5);
-/*     */       }
-/* 202 */       this.nodes.add(i, arg);
-/*     */     } 
-/* 204 */     return previous;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node setNamedItemNS(Node arg) throws DOMException {
-/* 222 */     CoreDocumentImpl ownerDocument = this.ownerNode.ownerDocument();
-/* 223 */     if (ownerDocument.errorChecking) {
-/* 224 */       if (isReadOnly()) {
-/* 225 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 226 */         throw new DOMException((short)7, msg);
-/*     */       } 
-/*     */       
-/* 229 */       if (arg.getOwnerDocument() != ownerDocument) {
-/* 230 */         String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "WRONG_DOCUMENT_ERR", null);
-/* 231 */         throw new DOMException((short)4, msg);
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 235 */     int i = findNamePoint(arg.getNamespaceURI(), arg.getLocalName());
-/* 236 */     NodeImpl previous = null;
-/* 237 */     if (i >= 0) {
-/* 238 */       previous = this.nodes.get(i);
-/* 239 */       this.nodes.set(i, arg);
-/*     */     }
-/*     */     else {
-/*     */       
-/* 243 */       i = findNamePoint(arg.getNodeName(), 0);
-/* 244 */       if (i >= 0) {
-/* 245 */         previous = this.nodes.get(i);
-/* 246 */         this.nodes.add(i, arg);
-/*     */       } else {
-/* 248 */         i = -1 - i;
-/* 249 */         if (null == this.nodes) {
-/* 250 */           this.nodes = new ArrayList(5);
-/*     */         }
-/* 252 */         this.nodes.add(i, arg);
-/*     */       } 
-/*     */     } 
-/* 255 */     return previous;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node removeNamedItem(String name) throws DOMException {
-/* 268 */     if (isReadOnly()) {
-/* 269 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 270 */       throw new DOMException((short)7, msg);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 274 */     int i = findNamePoint(name, 0);
-/* 275 */     if (i < 0) {
-/* 276 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/* 277 */       throw new DOMException((short)8, msg);
-/*     */     } 
-/*     */     
-/* 280 */     NodeImpl n = this.nodes.get(i);
-/* 281 */     this.nodes.remove(i);
-/*     */     
-/* 283 */     return n;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Node removeNamedItemNS(String namespaceURI, String name) throws DOMException {
-/* 304 */     if (isReadOnly()) {
-/* 305 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NO_MODIFICATION_ALLOWED_ERR", null);
-/* 306 */       throw new DOMException((short)7, msg);
-/*     */     } 
-/*     */ 
-/*     */     
-/* 310 */     int i = findNamePoint(namespaceURI, name);
-/* 311 */     if (i < 0) {
-/* 312 */       String msg = DOMMessageFormatter.formatMessage("http://www.w3.org/dom/DOMTR", "NOT_FOUND_ERR", null);
-/* 313 */       throw new DOMException((short)8, msg);
-/*     */     } 
-/*     */     
-/* 316 */     NodeImpl n = this.nodes.get(i);
-/* 317 */     this.nodes.remove(i);
-/*     */     
-/* 319 */     return n;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public NamedNodeMapImpl cloneMap(NodeImpl ownerNode) {
-/* 333 */     NamedNodeMapImpl newmap = new NamedNodeMapImpl(ownerNode);
-/* 334 */     newmap.cloneContent(this);
-/* 335 */     return newmap;
-/*     */   }
-/*     */   
-/*     */   protected void cloneContent(NamedNodeMapImpl srcmap) {
-/* 339 */     List srcnodes = srcmap.nodes;
-/* 340 */     if (srcnodes != null) {
-/* 341 */       int size = srcnodes.size();
-/* 342 */       if (size != 0) {
-/* 343 */         if (this.nodes == null) {
-/* 344 */           this.nodes = new ArrayList(size);
-/*     */         } else {
-/*     */           
-/* 347 */           this.nodes.clear();
-/*     */         } 
-/* 349 */         for (int i = 0; i < size; i++) {
-/* 350 */           NodeImpl n = srcmap.nodes.get(i);
-/* 351 */           NodeImpl clone = (NodeImpl)n.cloneNode(true);
-/* 352 */           clone.isSpecified(n.isSpecified());
-/* 353 */           this.nodes.add(clone);
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void setReadOnly(boolean readOnly, boolean deep) {
-/* 375 */     isReadOnly(readOnly);
-/* 376 */     if (deep && this.nodes != null) {
-/* 377 */       for (int i = this.nodes.size() - 1; i >= 0; i--) {
-/* 378 */         ((NodeImpl)this.nodes.get(i)).setReadOnly(readOnly, deep);
-/*     */       }
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   boolean getReadOnly() {
-/* 388 */     return isReadOnly();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void setOwnerDocument(CoreDocumentImpl doc) {
-/* 401 */     if (this.nodes != null) {
-/* 402 */       int size = this.nodes.size();
-/* 403 */       for (int i = 0; i < size; i++) {
-/* 404 */         ((NodeImpl)item(i)).setOwnerDocument(doc);
-/*     */       }
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   final boolean isReadOnly() {
-/* 410 */     return ((this.flags & 0x1) != 0);
-/*     */   }
-/*     */   
-/*     */   final void isReadOnly(boolean value) {
-/* 414 */     this.flags = (short)(value ? (this.flags | 0x1) : (this.flags & 0xFFFFFFFE));
-/*     */   }
-/*     */   
-/*     */   final boolean changed() {
-/* 418 */     return ((this.flags & 0x2) != 0);
-/*     */   }
-/*     */   
-/*     */   final void changed(boolean value) {
-/* 422 */     this.flags = (short)(value ? (this.flags | 0x2) : (this.flags & 0xFFFFFFFD));
-/*     */   }
-/*     */   
-/*     */   final boolean hasDefaults() {
-/* 426 */     return ((this.flags & 0x4) != 0);
-/*     */   }
-/*     */   
-/*     */   final void hasDefaults(boolean value) {
-/* 430 */     this.flags = (short)(value ? (this.flags | 0x4) : (this.flags & 0xFFFFFFFB));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int findNamePoint(String name, int start) {
-/* 452 */     int i = 0;
-/* 453 */     if (this.nodes != null) {
-/* 454 */       int first = start;
-/* 455 */       int last = this.nodes.size() - 1;
-/*     */       
-/* 457 */       while (first <= last) {
-/* 458 */         i = (first + last) / 2;
-/* 459 */         int test = name.compareTo(((Node)this.nodes.get(i)).getNodeName());
-/* 460 */         if (test == 0) {
-/* 461 */           return i;
-/*     */         }
-/* 463 */         if (test < 0) {
-/* 464 */           last = i - 1;
-/*     */           continue;
-/*     */         } 
-/* 467 */         first = i + 1;
-/*     */       } 
-/*     */ 
-/*     */       
-/* 471 */       if (first > i) {
-/* 472 */         i = first;
-/*     */       }
-/*     */     } 
-/*     */     
-/* 476 */     return -1 - i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected int findNamePoint(String namespaceURI, String name) {
-/* 485 */     if (this.nodes == null) return -1; 
-/* 486 */     if (name == null) return -1;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 495 */     int size = this.nodes.size();
-/* 496 */     for (int i = 0; i < size; i++) {
-/* 497 */       NodeImpl a = this.nodes.get(i);
-/* 498 */       String aNamespaceURI = a.getNamespaceURI();
-/* 499 */       String aLocalName = a.getLocalName();
-/* 500 */       if (namespaceURI == null) {
-/* 501 */         if (aNamespaceURI == null && (name
-/*     */           
-/* 503 */           .equals(aLocalName) || (aLocalName == null && name
-/*     */           
-/* 505 */           .equals(a.getNodeName())))) {
-/* 506 */           return i;
-/*     */         }
-/* 508 */       } else if (namespaceURI.equals(aNamespaceURI) && name
-/*     */         
-/* 510 */         .equals(aLocalName)) {
-/* 511 */         return i;
-/*     */       } 
-/*     */     } 
-/* 514 */     return -1;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected boolean precedes(Node a, Node b) {
-/* 521 */     if (this.nodes != null) {
-/* 522 */       int size = this.nodes.size();
-/* 523 */       for (int i = 0; i < size; i++) {
-/* 524 */         Node n = this.nodes.get(i);
-/* 525 */         if (n == a) return true; 
-/* 526 */         if (n == b) return false; 
-/*     */       } 
-/*     */     } 
-/* 529 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void removeItem(int index) {
-/* 537 */     if (this.nodes != null && index < this.nodes.size()) {
-/* 538 */       this.nodes.remove(index);
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   protected Object getItem(int index) {
-/* 544 */     if (this.nodes != null) {
-/* 545 */       return this.nodes.get(index);
-/*     */     }
-/* 547 */     return null;
-/*     */   }
-/*     */   
-/*     */   protected int addItem(Node arg) {
-/* 551 */     int i = findNamePoint(arg.getNamespaceURI(), arg.getLocalName());
-/* 552 */     if (i >= 0) {
-/* 553 */       this.nodes.set(i, arg);
-/*     */     
-/*     */     }
-/*     */     else {
-/*     */       
-/* 558 */       i = findNamePoint(arg.getNodeName(), 0);
-/* 559 */       if (i >= 0) {
-/* 560 */         this.nodes.add(i, arg);
-/*     */       } else {
-/*     */         
-/* 563 */         i = -1 - i;
-/* 564 */         if (null == this.nodes) {
-/* 565 */           this.nodes = new ArrayList(5);
-/*     */         }
-/* 567 */         this.nodes.add(i, arg);
-/*     */       } 
-/*     */     } 
-/* 570 */     return i;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected ArrayList cloneMap(ArrayList list) {
-/* 580 */     if (list == null) {
-/* 581 */       list = new ArrayList(5);
-/*     */     }
-/* 583 */     list.clear();
-/* 584 */     if (this.nodes != null) {
-/* 585 */       int size = this.nodes.size();
-/* 586 */       for (int i = 0; i < size; i++) {
-/* 587 */         list.add(this.nodes.get(i));
-/*     */       }
-/*     */     } 
-/* 590 */     return list;
-/*     */   }
-/*     */   
-/*     */   protected int getNamedItemIndex(String namespaceURI, String localName) {
-/* 594 */     return findNamePoint(namespaceURI, localName);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeAll() {
-/* 601 */     if (this.nodes != null) {
-/* 602 */       this.nodes.clear();
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-/* 608 */     in.defaultReadObject();
-/* 609 */     if (this.nodes != null)
-/*     */     {
-/* 611 */       this.nodes = new ArrayList(this.nodes);
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void writeObject(ObjectOutputStream out) throws IOException {
-/* 616 */     List<?> oldNodes = this.nodes;
-/*     */     try {
-/* 618 */       if (oldNodes != null) {
-/* 619 */         this.nodes = new Vector(oldNodes);
-/*     */       }
-/* 621 */       out.defaultWriteObject();
-/*     */     
-/*     */     }
-/*     */     finally {
-/*     */       
-/* 626 */       this.nodes = oldNodes;
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\dom\NamedNodeMapImpl.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Copyright 1999-2002,2004,2005 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.dom;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+
+/**
+ * NamedNodeMaps represent collections of Nodes that can be accessed
+ * by name. Entity and Notation nodes are stored in NamedNodeMaps
+ * attached to the DocumentType. Attributes are placed in a NamedNodeMap
+ * attached to the elem they're related too. However, because attributes
+ * require more work, such as firing mutation events, they are stored in
+ * a subclass of NamedNodeMapImpl.
+ * <P>
+ * Only one Node may be stored per name; attempting to
+ * store another will replace the previous value.
+ * <P>
+ * NOTE: The "primary" storage key is taken from the NodeName attribute of the
+ * node. The "secondary" storage key is the namespaceURI and localName, when
+ * accessed by DOM level 2 nodes. All nodes, even DOM Level 2 nodes are stored
+ * in a single Vector sorted by the primary "nodename" key.
+ * <P>
+ * NOTE: item()'s integer index does _not_ imply that the named nodes
+ * must be stored in an array; that's only an access method. Note too
+ * that these indices are "live"; if someone changes the map's
+ * contents, the indices associated with nodes may change.
+ * <P>
+ *
+ * @xerces.internal
+ *
+ * @version $Id: NamedNodeMapImpl.java,v 1.8 2010-11-01 04:39:39 joehw Exp $
+ * @since  PR-DOM-Level-1-19980818.
+ */
+public class NamedNodeMapImpl
+    implements NamedNodeMap, Serializable {
+
+    //
+    // Constants
+    //
+
+    /** Serialization version. */
+    static final long serialVersionUID = -7039242451046758020L;
+
+    //
+    // Data
+    //
+
+    protected short flags;
+
+    protected final static short READONLY     = 0x1<<0;
+    protected final static short CHANGED      = 0x1<<1;
+    protected final static short HASDEFAULTS  = 0x1<<2;
+
+    /** Nodes. */
+    protected List nodes;
+
+    protected NodeImpl ownerNode; // the node this map belongs to
+
+    //
+    // Constructors
+    //
+
+    /** Constructs a named node map. */
+    protected NamedNodeMapImpl(NodeImpl ownerNode) {
+        this.ownerNode = ownerNode;
+    }
+
+    //
+    // NamedNodeMap methods
+    //
+
+    /**
+     * Report how many nodes are currently stored in this NamedNodeMap.
+     * Caveat: This is a count rather than an index, so the
+     * highest-numbered node at any time can be accessed via
+     * item(getLength()-1).
+     */
+    public int getLength() {
+        return (nodes != null) ? nodes.size() : 0;
+    }
+
+    /**
+     * Retrieve an item from the map by 0-based index.
+     *
+     * @param index Which item to retrieve. Note that indices are just an
+     * enumeration of the current contents; they aren't guaranteed to be
+     * stable, nor do they imply any promises about the order of the
+     * NamedNodeMap's contents. In other words, DO NOT assume either that
+     * index(i) will always refer to the same entry, or that there is any
+     * stable ordering of entries... and be prepared for double-reporting
+     * or skips as insertion and deletion occur.
+     *
+     * @return the node which currenly has the specified index, or null if index
+     * is greater than or equal to getLength().
+     */
+    public Node item(int index) {
+        return (nodes != null && index < nodes.size()) ?
+                    (Node)(nodes.get(index)) : null;
+    }
+
+    /**
+     * Retrieve a node by name.
+     *
+     * @param name Name of a node to look up.
+     * @return the Node (of unspecified sub-class) stored with that name, or
+     * null if no value has been assigned to that name.
+     */
+    public Node getNamedItem(String name) {
+
+        int i = findNamePoint(name,0);
+        return (i < 0) ? null : (Node)(nodes.get(i));
+
+    } // getNamedItem(String):Node
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     * Retrieves a node specified by local name and namespace URI.
+     *
+     * @param namespaceURI  The namespace URI of the node to retrieve.
+     *                      When it is null or an empty string, this
+     *                      method behaves like getNamedItem.
+     * @param localName     The local name of the node to retrieve.
+     * @return Node         A Node (of any type) with the specified name, or null if the specified
+     *                      name did not identify any node in the map.
+     */
+    public Node getNamedItemNS(String namespaceURI, String localName) {
+
+        int i = findNamePoint(namespaceURI, localName);
+        return (i < 0) ? null : (Node)(nodes.get(i));
+
+    } // getNamedItemNS(String,String):Node
+
+    /**
+     * Adds a node using its nodeName attribute.
+     * As the nodeName attribute is used to derive the name which the node must be
+     * stored under, multiple nodes of certain types (those that have a "special" string
+     * value) cannot be stored as the names would clash. This is seen as preferable to
+     * allowing nodes to be aliased.
+     * @see org.w3c.dom.NamedNodeMap#setNamedItem
+     * @return If the new Node replaces an existing node the replaced Node is returned,
+     *      otherwise null is returned.
+     * @param arg
+     *      A node to store in a named node map. The node will later be
+     *      accessible using the value of the namespaceURI and localName
+     *      attribute of the node. If a node with those namespace URI and
+     *      local name is already present in the map, it is replaced by the new
+     *      one.
+     * @exception org.w3c.dom.DOMException The exception description.
+     */
+    public Node setNamedItem(Node arg)
+    throws DOMException {
+
+        CoreDocumentImpl ownerDocument = ownerNode.ownerDocument();
+        if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+            }
+            if (arg.getOwnerDocument() != ownerDocument) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null);
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR, msg);
+            }
+        }
+
+        int i = findNamePoint(arg.getNodeName(),0);
+        NodeImpl previous = null;
+        if (i >= 0) {
+            previous = (NodeImpl) nodes.get(i);
+            nodes.set(i, arg);
+        } else {
+            i = -1 - i; // Insert point (may be end of list)
+            if (null == nodes) {
+                nodes = new ArrayList(5);
+            }
+            nodes.add(i, arg);
+        }
+        return previous;
+
+    } // setNamedItem(Node):Node
+
+    /**
+     * Adds a node using its namespaceURI and localName.
+     * @see org.w3c.dom.NamedNodeMap#setNamedItem
+     * @return If the new Node replaces an existing node the replaced Node is returned,
+     *      otherwise null is returned.
+     * @param arg A node to store in a named node map. The node will later be
+     *      accessible using the value of the namespaceURI and localName
+     *      attribute of the node. If a node with those namespace URI and
+     *      local name is already present in the map, it is replaced by the new
+     *      one.
+     */
+    public Node setNamedItemNS(Node arg)
+    throws DOMException {
+
+        CoreDocumentImpl ownerDocument = ownerNode.ownerDocument();
+        if (ownerDocument.errorChecking) {
+            if (isReadOnly()) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+                throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, msg);
+            }
+
+            if(arg.getOwnerDocument() != ownerDocument) {
+                String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "WRONG_DOCUMENT_ERR", null);
+                throw new DOMException(DOMException.WRONG_DOCUMENT_ERR, msg);
+            }
+        }
+
+        int i = findNamePoint(arg.getNamespaceURI(), arg.getLocalName());
+        NodeImpl previous = null;
+        if (i >= 0) {
+            previous = (NodeImpl) nodes.get(i);
+            nodes.set(i, arg);
+        } else {
+            // If we can't find by namespaceURI, localName, then we find by
+            // nodeName so we know where to insert.
+            i = findNamePoint(arg.getNodeName(),0);
+            if (i >= 0) {
+                previous = (NodeImpl) nodes.get(i);
+                nodes.add(i, arg);
+            } else {
+                i = -1 - i; // Insert point (may be end of list)
+                if (null == nodes) {
+                    nodes = new ArrayList(5);
+                }
+                nodes.add(i, arg);
+            }
+        }
+        return previous;
+
+    } // setNamedItemNS(Node):Node
+
+    /**
+     * Removes a node specified by name.
+     * @param name The name of a node to remove.
+     * @return The node removed from the map if a node with such a name exists.
+     */
+    /***/
+    public Node removeNamedItem(String name)
+        throws DOMException {
+
+        if (isReadOnly()) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+            throw
+                new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                msg);
+        }
+        int i = findNamePoint(name,0);
+        if (i < 0) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+            throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+        }
+
+        NodeImpl n = (NodeImpl)nodes.get(i);
+        nodes.remove(i);
+
+        return n;
+
+    } // removeNamedItem(String):Node
+
+    /**
+     * Introduced in DOM Level 2. <p>
+     * Removes a node specified by local name and namespace URI.
+     * @param namespaceURI
+     *                      The namespace URI of the node to remove.
+     *                      When it is null or an empty string, this
+     *                      method behaves like removeNamedItem.
+     * @param name          The local name of the node to remove.
+     * @return Node         The node removed from the map if a node with such
+     *                      a local name and namespace URI exists.
+     * @throws              NOT_FOUND_ERR: Raised if there is no node named
+     *                      name in the map.
+
+     */
+     public Node removeNamedItemNS(String namespaceURI, String name)
+        throws DOMException {
+
+        if (isReadOnly()) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NO_MODIFICATION_ALLOWED_ERR", null);
+            throw
+                new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR,
+                msg);
+        }
+        int i = findNamePoint(namespaceURI, name);
+        if (i < 0) {
+            String msg = DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+            throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+        }
+
+        NodeImpl n = (NodeImpl)nodes.get(i);
+        nodes.remove(i);
+
+        return n;
+
+    } // removeNamedItem(String):Node
+
+    //
+    // Public methods
+    //
+
+    /**
+     * Cloning a NamedNodeMap is a DEEP OPERATION; it always clones
+     * all the nodes contained in the map.
+     */
+
+    public NamedNodeMapImpl cloneMap(NodeImpl ownerNode) {
+        NamedNodeMapImpl newmap = new NamedNodeMapImpl(ownerNode);
+        newmap.cloneContent(this);
+        return newmap;
+    }
+
+    protected void cloneContent(NamedNodeMapImpl srcmap) {
+        List srcnodes = srcmap.nodes;
+        if (srcnodes != null) {
+            int size = srcnodes.size();
+            if (size != 0) {
+                if (nodes == null) {
+                    nodes = new ArrayList(size);
+                }
+                else {
+                    nodes.clear();
+                }
+                for (int i = 0; i < size; ++i) {
+                    NodeImpl n = (NodeImpl) srcmap.nodes.get(i);
+                    NodeImpl clone = (NodeImpl) n.cloneNode(true);
+                    clone.isSpecified(n.isSpecified());
+                    nodes.add(clone);
+                }
+            }
+        }
+    } // cloneMap():NamedNodeMapImpl
+
+    //
+    // Package methods
+    //
+
+    /**
+     * Internal subroutine to allow read-only Nodes to make their contained
+     * NamedNodeMaps readonly too. I expect that in fact the shallow
+     * version of this operation will never be
+     *
+     * @param readOnly boolean true to make read-only, false to permit editing.
+     * @param deep boolean true to pass this request along to the contained
+     * nodes, false to only toggle the NamedNodeMap itself. I expect that
+     * the shallow version of this operation will never be used, but I want
+     * to design it in now, while I'm thinking about it.
+     */
+    void setReadOnly(boolean readOnly, boolean deep) {
+        isReadOnly(readOnly);
+        if (deep && nodes != null) {
+            for (int i = nodes.size() - 1; i >= 0; i--) {
+                ((NodeImpl) nodes.get(i)).setReadOnly(readOnly,deep);
+            }
+        }
+    } // setReadOnly(boolean,boolean)
+
+    /**
+     * Internal subroutine returns this NodeNameMap's (shallow) readOnly value.
+     *
+     */
+    boolean getReadOnly() {
+        return isReadOnly();
+    } // getReadOnly()
+
+
+    //
+    // Protected methods
+    //
+
+    /**
+     * NON-DOM
+     * set the ownerDocument of this node, and the attributes it contains
+     */
+    protected void setOwnerDocument(CoreDocumentImpl doc) {
+        if (nodes != null) {
+            final int size = nodes.size();
+            for (int i = 0; i < size; ++i) {
+                ((NodeImpl)item(i)).setOwnerDocument(doc);
+            }
+        }
+    }
+
+    final boolean isReadOnly() {
+        return (flags & READONLY) != 0;
+    }
+
+    final void isReadOnly(boolean value) {
+        flags = (short) (value ? flags | READONLY : flags & ~READONLY);
+    }
+
+    final boolean changed() {
+        return (flags & CHANGED) != 0;
+    }
+
+    final void changed(boolean value) {
+        flags = (short) (value ? flags | CHANGED : flags & ~CHANGED);
+    }
+
+    final boolean hasDefaults() {
+        return (flags & HASDEFAULTS) != 0;
+    }
+
+    final void hasDefaults(boolean value) {
+        flags = (short) (value ? flags | HASDEFAULTS : flags & ~HASDEFAULTS);
+    }
+
+    //
+    // Private methods
+    //
+
+    /**
+     * Subroutine: Locate the named item, or the point at which said item
+     * should be added.
+     *
+     * @param name Name of a node to look up.
+     *
+     * @return If positive or zero, the index of the found item.
+     * If negative, index of the appropriate point at which to insert
+     * the item, encoded as -1-index and hence reconvertable by subtracting
+     * it from -1. (Encoding because I don't want to recompare the strings
+     * but don't want to burn bytes on a datatype to hold a flagged value.)
+     */
+    protected int findNamePoint(String name, int start) {
+
+        // Binary search
+        int i = 0;
+        if (nodes != null) {
+            int first = start;
+            int last  = nodes.size() - 1;
+
+            while (first <= last) {
+                i = (first + last) / 2;
+                int test = name.compareTo(((Node)(nodes.get(i))).getNodeName());
+                if (test == 0) {
+                    return i; // Name found
+                }
+                else if (test < 0) {
+                    last = i - 1;
+                }
+                else {
+                    first = i + 1;
+                }
+            }
+
+            if (first > i) {
+                i = first;
+            }
+        }
+
+        return -1 - i; // not-found has to be encoded.
+
+    } // findNamePoint(String):int
+
+
+    /** This findNamePoint is for DOM Level 2 Namespaces.
+     */
+    protected int findNamePoint(String namespaceURI, String name) {
+
+        if (nodes == null) return -1;
+        if (name == null) return -1;
+
+        // This is a linear search through the same nodes ArrayList.
+        // The ArrayList is sorted on the DOM Level 1 nodename.
+        // The DOM Level 2 NS keys are namespaceURI and Localname,
+        // so we must linear search thru it.
+        // In addition, to get this to work with nodes without any namespace
+        // (namespaceURI and localNames are both null) we then use the nodeName
+        // as a secondary key.
+        final int size = nodes.size();
+        for (int i = 0; i < size; ++i) {
+            NodeImpl a = (NodeImpl)nodes.get(i);
+            String aNamespaceURI = a.getNamespaceURI();
+            String aLocalName = a.getLocalName();
+            if (namespaceURI == null) {
+              if (aNamespaceURI == null
+                  &&
+                  (name.equals(aLocalName)
+                   ||
+                   (aLocalName == null && name.equals(a.getNodeName()))))
+                return i;
+            } else {
+              if (namespaceURI.equals(aNamespaceURI)
+                  &&
+                  name.equals(aLocalName))
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // compare 2 nodes in the map.  If a precedes b, return true, otherwise
+    // return false
+    protected boolean precedes(Node a, Node b) {
+
+        if (nodes != null) {
+            final int size = nodes.size();
+            for (int i = 0; i < size; ++i) {
+                Node n = (Node)nodes.get(i);
+                if (n==a) return true;
+                if (n==b) return false;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+      * NON-DOM: Remove attribute at specified index
+      */
+    protected void removeItem(int index) {
+       if (nodes != null && index < nodes.size()){
+           nodes.remove(index);
+       }
+    }
+
+
+    protected Object getItem (int index){
+        if (nodes != null) {
+            return nodes.get(index);
+        }
+        return null;
+    }
+
+    protected int addItem (Node arg) {
+        int i = findNamePoint(arg.getNamespaceURI(), arg.getLocalName());
+        if (i >= 0) {
+            nodes.set(i, arg);
+        }
+        else {
+            // If we can't find by namespaceURI, localName, then we find by
+            // nodeName so we know where to insert.
+            i = findNamePoint(arg.getNodeName(),0);
+            if (i >= 0) {
+                nodes.add(i, arg);
+            }
+            else {
+                i = -1 - i; // Insert point (may be end of list)
+                if (null == nodes) {
+                    nodes = new ArrayList(5);
+                }
+                nodes.add(i, arg);
+            }
+        }
+        return i;
+    }
+
+    /**
+     * NON-DOM: copy content of this map into the specified ArrayList
+     *
+     * @param list   ArrayList to copy information into.
+     * @return A copy of this node named map
+     */
+    protected ArrayList cloneMap(ArrayList list) {
+        if (list == null) {
+            list = new ArrayList(5);
+        }
+        list.clear();
+        if (nodes != null) {
+            final int size = nodes.size();
+            for (int i = 0; i < size; ++i) {
+                list.add(nodes.get(i));
+            }
+        }
+        return list;
+    }
+
+     protected int getNamedItemIndex(String namespaceURI, String localName) {
+        return findNamePoint(namespaceURI, localName);
+     }
+
+    /**
+      * NON-DOM remove all elements from this map
+      */
+    public void removeAll (){
+        if (nodes != null) {
+            nodes.clear();
+        }
+    }
+
+    private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        if (nodes != null) {
+            // cast to Vector is required
+            nodes = new ArrayList((Vector)nodes);
+        }
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        List oldNodes = this.nodes;
+        try {
+            if (oldNodes != null) {
+                this.nodes = new Vector(oldNodes);
+            }
+            out.defaultWriteObject();
+        }
+        // If the write fails for some reason ensure
+        // that we restore the original object.
+        finally {
+            this.nodes = oldNodes;
+        }
+    }
+
+} // class NamedNodeMapImpl

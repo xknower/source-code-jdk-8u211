@@ -1,72 +1,66 @@
-/*    */ package java.nio.charset;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class StandardCharsets
-/*    */ {
-/*    */   private StandardCharsets() {
-/* 38 */     throw new AssertionError("No java.nio.charset.StandardCharsets instances for you!");
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 44 */   public static final Charset US_ASCII = Charset.forName("US-ASCII");
-/*    */ 
-/*    */ 
-/*    */   
-/* 48 */   public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
-/*    */ 
-/*    */ 
-/*    */   
-/* 52 */   public static final Charset UTF_8 = Charset.forName("UTF-8");
-/*    */ 
-/*    */ 
-/*    */   
-/* 56 */   public static final Charset UTF_16BE = Charset.forName("UTF-16BE");
-/*    */ 
-/*    */ 
-/*    */   
-/* 60 */   public static final Charset UTF_16LE = Charset.forName("UTF-16LE");
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 65 */   public static final Charset UTF_16 = Charset.forName("UTF-16");
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\nio\charset\StandardCharsets.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package java.nio.charset;
+
+/**
+ * Constant definitions for the standard {@link Charset Charsets}. These
+ * charsets are guaranteed to be available on every implementation of the Java
+ * platform.
+ *
+ * @see <a href="Charset#standard">Standard Charsets</a>
+ * @since 1.7
+ */
+public final class StandardCharsets {
+
+    private StandardCharsets() {
+        throw new AssertionError("No java.nio.charset.StandardCharsets instances for you!");
+    }
+    /**
+     * Seven-bit ASCII, a.k.a. ISO646-US, a.k.a. the Basic Latin block of the
+     * Unicode character set
+     */
+    public static final Charset US_ASCII = Charset.forName("US-ASCII");
+    /**
+     * ISO Latin Alphabet No. 1, a.k.a. ISO-LATIN-1
+     */
+    public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+    /**
+     * Eight-bit UCS Transformation Format
+     */
+    public static final Charset UTF_8 = Charset.forName("UTF-8");
+    /**
+     * Sixteen-bit UCS Transformation Format, big-endian byte order
+     */
+    public static final Charset UTF_16BE = Charset.forName("UTF-16BE");
+    /**
+     * Sixteen-bit UCS Transformation Format, little-endian byte order
+     */
+    public static final Charset UTF_16LE = Charset.forName("UTF-16LE");
+    /**
+     * Sixteen-bit UCS Transformation Format, byte order identified by an
+     * optional byte-order mark
+     */
+    public static final Charset UTF_16 = Charset.forName("UTF-16");
+}

@@ -1,243 +1,238 @@
-/*     */ package java.lang;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ class Shutdown
-/*     */ {
-/*     */   private static final int RUNNING = 0;
-/*     */   private static final int HOOKS = 1;
-/*     */   private static final int FINALIZERS = 2;
-/*  43 */   private static int state = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static boolean runFinalizersOnExit = false;
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static final int MAX_SYSTEM_HOOKS = 10;
-/*     */ 
-/*     */   
-/*  54 */   private static final Runnable[] hooks = new Runnable[10];
-/*     */ 
-/*     */   
-/*  57 */   private static int currentRunningHook = 0;
-/*     */ 
-/*     */ 
-/*     */   
-/*  61 */   private static Object lock = new Lock();
-/*     */   private static class Lock {
-/*     */     private Lock() {} }
-/*  64 */   private static Object haltLock = new Lock();
-/*     */ 
-/*     */   
-/*     */   static void setRunFinalizersOnExit(boolean paramBoolean) {
-/*  68 */     synchronized (lock) {
-/*  69 */       runFinalizersOnExit = paramBoolean;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void add(int paramInt, boolean paramBoolean, Runnable paramRunnable) {
-/*  95 */     synchronized (lock) {
-/*  96 */       if (hooks[paramInt] != null) {
-/*  97 */         throw new InternalError("Shutdown hook at slot " + paramInt + " already registered");
-/*     */       }
-/*  99 */       if (!paramBoolean) {
-/* 100 */         if (state > 0) {
-/* 101 */           throw new IllegalStateException("Shutdown in progress");
-/*     */         }
-/* 103 */       } else if (state > 1 || (state == 1 && paramInt <= currentRunningHook)) {
-/* 104 */         throw new IllegalStateException("Shutdown in progress");
-/*     */       } 
-/*     */       
-/* 107 */       hooks[paramInt] = paramRunnable;
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void runHooks() {
-/* 114 */     for (byte b = 0; b < 10; b++) {
-/*     */       try {
-/*     */         Runnable runnable;
-/* 117 */         synchronized (lock) {
-/*     */ 
-/*     */           
-/* 120 */           currentRunningHook = b;
-/* 121 */           runnable = hooks[b];
-/*     */         } 
-/* 123 */         if (runnable != null) runnable.run(); 
-/* 124 */       } catch (Throwable throwable) {
-/* 125 */         if (throwable instanceof ThreadDeath) {
-/* 126 */           ThreadDeath threadDeath = (ThreadDeath)throwable;
-/* 127 */           throw threadDeath;
-/*     */         } 
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void halt(int paramInt) {
-/* 138 */     synchronized (haltLock) {
-/* 139 */       halt0(paramInt);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static native void halt0(int paramInt);
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static native void runAllFinalizers();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private static void sequence() {
-/*     */     boolean bool;
-/* 161 */     synchronized (lock) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 165 */       if (state != 1)
-/*     */         return; 
-/* 167 */     }  runHooks();
-/*     */     
-/* 169 */     synchronized (lock) {
-/* 170 */       state = 2;
-/* 171 */       bool = runFinalizersOnExit;
-/*     */     } 
-/* 173 */     if (bool) runAllFinalizers();
-/*     */   
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void exit(int paramInt) {
-/* 182 */     boolean bool = false;
-/* 183 */     synchronized (lock) {
-/* 184 */       if (paramInt != 0) runFinalizersOnExit = false; 
-/* 185 */       switch (state) {
-/*     */         case 0:
-/* 187 */           state = 1;
-/*     */           break;
-/*     */ 
-/*     */         
-/*     */         case 2:
-/* 192 */           if (paramInt != 0) {
-/*     */             
-/* 194 */             halt(paramInt);
-/*     */             
-/*     */             break;
-/*     */           } 
-/*     */           
-/* 199 */           bool = runFinalizersOnExit;
-/*     */           break;
-/*     */       } 
-/*     */     
-/*     */     } 
-/* 204 */     if (bool) {
-/* 205 */       runAllFinalizers();
-/* 206 */       halt(paramInt);
-/*     */     } 
-/* 208 */     synchronized (Shutdown.class) {
-/*     */ 
-/*     */ 
-/*     */       
-/* 212 */       sequence();
-/* 213 */       halt(paramInt);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static void shutdown() {
-/* 223 */     synchronized (lock) {
-/* 224 */       switch (state) {
-/*     */         case 0:
-/* 226 */           state = 1;
-/*     */           break;
-/*     */       } 
-/*     */ 
-/*     */ 
-/*     */     
-/*     */     } 
-/* 233 */     synchronized (Shutdown.class) {
-/* 234 */       sequence();
-/*     */     } 
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\Shutdown.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1999, 2005, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang;
+
+
+/**
+ * Package-private utility class containing data structures and logic
+ * governing the virtual-machine shutdown sequence.
+ *
+ * @author   Mark Reinhold
+ * @since    1.3
+ */
+
+class Shutdown {
+
+    /* Shutdown state */
+    private static final int RUNNING = 0;
+    private static final int HOOKS = 1;
+    private static final int FINALIZERS = 2;
+    private static int state = RUNNING;
+
+    /* Should we run all finalizers upon exit? */
+    private static boolean runFinalizersOnExit = false;
+
+    // The system shutdown hooks are registered with a predefined slot.
+    // The list of shutdown hooks is as follows:
+    // (0) Console restore hook
+    // (1) Application hooks
+    // (2) DeleteOnExit hook
+    private static final int MAX_SYSTEM_HOOKS = 10;
+    private static final Runnable[] hooks = new Runnable[MAX_SYSTEM_HOOKS];
+
+    // the index of the currently running shutdown hook to the hooks array
+    private static int currentRunningHook = 0;
+
+    /* The preceding static fields are protected by this lock */
+    private static class Lock { };
+    private static Object lock = new Lock();
+
+    /* Lock object for the native halt method */
+    private static Object haltLock = new Lock();
+
+    /* Invoked by Runtime.runFinalizersOnExit */
+    static void setRunFinalizersOnExit(boolean run) {
+        synchronized (lock) {
+            runFinalizersOnExit = run;
+        }
+    }
+
+
+    /**
+     * Add a new shutdown hook.  Checks the shutdown state and the hook itself,
+     * but does not do any security checks.
+     *
+     * The registerShutdownInProgress parameter should be false except
+     * registering the DeleteOnExitHook since the first file may
+     * be added to the delete on exit list by the application shutdown
+     * hooks.
+     *
+     * @params slot  the slot in the shutdown hook array, whose element
+     *               will be invoked in order during shutdown
+     * @params registerShutdownInProgress true to allow the hook
+     *               to be registered even if the shutdown is in progress.
+     * @params hook  the hook to be registered
+     *
+     * @throw IllegalStateException
+     *        if registerShutdownInProgress is false and shutdown is in progress; or
+     *        if registerShutdownInProgress is true and the shutdown process
+     *           already passes the given slot
+     */
+    static void add(int slot, boolean registerShutdownInProgress, Runnable hook) {
+        synchronized (lock) {
+            if (hooks[slot] != null)
+                throw new InternalError("Shutdown hook at slot " + slot + " already registered");
+
+            if (!registerShutdownInProgress) {
+                if (state > RUNNING)
+                    throw new IllegalStateException("Shutdown in progress");
+            } else {
+                if (state > HOOKS || (state == HOOKS && slot <= currentRunningHook))
+                    throw new IllegalStateException("Shutdown in progress");
+            }
+
+            hooks[slot] = hook;
+        }
+    }
+
+    /* Run all registered shutdown hooks
+     */
+    private static void runHooks() {
+        for (int i=0; i < MAX_SYSTEM_HOOKS; i++) {
+            try {
+                Runnable hook;
+                synchronized (lock) {
+                    // acquire the lock to make sure the hook registered during
+                    // shutdown is visible here.
+                    currentRunningHook = i;
+                    hook = hooks[i];
+                }
+                if (hook != null) hook.run();
+            } catch(Throwable t) {
+                if (t instanceof ThreadDeath) {
+                    ThreadDeath td = (ThreadDeath)t;
+                    throw td;
+                }
+            }
+        }
+    }
+
+    /* The halt method is synchronized on the halt lock
+     * to avoid corruption of the delete-on-shutdown file list.
+     * It invokes the true native halt method.
+     */
+    static void halt(int status) {
+        synchronized (haltLock) {
+            halt0(status);
+        }
+    }
+
+    static native void halt0(int status);
+
+    /* Wormhole for invoking java.lang.ref.Finalizer.runAllFinalizers */
+    private static native void runAllFinalizers();
+
+
+    /* The actual shutdown sequence is defined here.
+     *
+     * If it weren't for runFinalizersOnExit, this would be simple -- we'd just
+     * run the hooks and then halt.  Instead we need to keep track of whether
+     * we're running hooks or finalizers.  In the latter case a finalizer could
+     * invoke exit(1) to cause immediate termination, while in the former case
+     * any further invocations of exit(n), for any n, simply stall.  Note that
+     * if on-exit finalizers are enabled they're run iff the shutdown is
+     * initiated by an exit(0); they're never run on exit(n) for n != 0 or in
+     * response to SIGINT, SIGTERM, etc.
+     */
+    private static void sequence() {
+        synchronized (lock) {
+            /* Guard against the possibility of a daemon thread invoking exit
+             * after DestroyJavaVM initiates the shutdown sequence
+             */
+            if (state != HOOKS) return;
+        }
+        runHooks();
+        boolean rfoe;
+        synchronized (lock) {
+            state = FINALIZERS;
+            rfoe = runFinalizersOnExit;
+        }
+        if (rfoe) runAllFinalizers();
+    }
+
+
+    /* Invoked by Runtime.exit, which does all the security checks.
+     * Also invoked by handlers for system-provided termination events,
+     * which should pass a nonzero status code.
+     */
+    static void exit(int status) {
+        boolean runMoreFinalizers = false;
+        synchronized (lock) {
+            if (status != 0) runFinalizersOnExit = false;
+            switch (state) {
+            case RUNNING:       /* Initiate shutdown */
+                state = HOOKS;
+                break;
+            case HOOKS:         /* Stall and halt */
+                break;
+            case FINALIZERS:
+                if (status != 0) {
+                    /* Halt immediately on nonzero status */
+                    halt(status);
+                } else {
+                    /* Compatibility with old behavior:
+                     * Run more finalizers and then halt
+                     */
+                    runMoreFinalizers = runFinalizersOnExit;
+                }
+                break;
+            }
+        }
+        if (runMoreFinalizers) {
+            runAllFinalizers();
+            halt(status);
+        }
+        synchronized (Shutdown.class) {
+            /* Synchronize on the class object, causing any other thread
+             * that attempts to initiate shutdown to stall indefinitely
+             */
+            sequence();
+            halt(status);
+        }
+    }
+
+
+    /* Invoked by the JNI DestroyJavaVM procedure when the last non-daemon
+     * thread has finished.  Unlike the exit method, this method does not
+     * actually halt the VM.
+     */
+    static void shutdown() {
+        synchronized (lock) {
+            switch (state) {
+            case RUNNING:       /* Initiate shutdown */
+                state = HOOKS;
+                break;
+            case HOOKS:         /* Stall and then return */
+            case FINALIZERS:
+                break;
+            }
+        }
+        synchronized (Shutdown.class) {
+            sequence();
+        }
+    }
+
+}

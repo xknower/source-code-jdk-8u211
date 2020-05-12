@@ -1,95 +1,92 @@
-/*    */ package javax.swing.text.html;
-/*    */ 
-/*    */ import java.net.URL;
-/*    */ import javax.swing.event.HyperlinkEvent;
-/*    */ import javax.swing.text.Element;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public class FormSubmitEvent
-/*    */   extends HTMLFrameHyperlinkEvent
-/*    */ {
-/*    */   private MethodType method;
-/*    */   private String data;
-/*    */   
-/*    */   public enum MethodType
-/*    */   {
-/* 48 */     GET, POST;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   FormSubmitEvent(Object paramObject, HyperlinkEvent.EventType paramEventType, URL paramURL, Element paramElement, String paramString1, MethodType paramMethodType, String paramString2) {
-/* 65 */     super(paramObject, paramEventType, paramURL, paramElement, paramString1);
-/* 66 */     this.method = paramMethodType;
-/* 67 */     this.data = paramString2;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public MethodType getMethod() {
-/* 78 */     return this.method;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public String getData() {
-/* 87 */     return this.data;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\text\html\FormSubmitEvent.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+package javax.swing.text.html;
+
+import javax.swing.text.*;
+import java.net.URL;
+
+/**
+ * FormSubmitEvent is used to notify interested
+ * parties that a form was submitted.
+ *
+ * @since 1.5
+ * @author    Denis Sharypov
+ */
+
+public class FormSubmitEvent extends HTMLFrameHyperlinkEvent {
+
+    /**
+     * Represents an HTML form method type.
+     * <UL>
+     * <LI><code>GET</code> corresponds to the GET form method</LI>
+     * <LI><code>POST</code> corresponds to the POST from method</LI>
+     * </UL>
+     * @since 1.5
+     */
+    public enum MethodType { GET, POST };
+
+    /**
+     * Creates a new object representing an html form submit event.
+     *
+     * @param source the object responsible for the event
+     * @param type the event type
+     * @param actionURL the form action URL
+     * @param sourceElement the element that corresponds to the source
+     *                      of the event
+     * @param targetFrame the Frame to display the document in
+     * @param method the form method type
+     * @param data the form submission data
+     */
+    FormSubmitEvent(Object source, EventType type, URL targetURL,
+                   Element sourceElement, String targetFrame,
+                    MethodType method, String data) {
+        super(source, type, targetURL, sourceElement, targetFrame);
+        this.method = method;
+        this.data = data;
+    }
+
+
+    /**
+     * Gets the form method type.
+     *
+     * @return the form method type, either
+     * <code>Method.GET</code> or <code>Method.POST</code>.
+     */
+    public MethodType getMethod() {
+        return method;
+    }
+
+    /**
+     * Gets the form submission data.
+     *
+     * @return the string representing the form submission data.
+     */
+    public String getData() {
+        return data;
+    }
+
+    private MethodType method;
+    private String data;
+}

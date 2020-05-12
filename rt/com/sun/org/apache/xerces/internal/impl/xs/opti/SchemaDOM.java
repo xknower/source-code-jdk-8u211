@@ -1,467 +1,461 @@
-/*     */ package com.sun.org.apache.xerces.internal.impl.xs.opti;
-/*     */ 
-/*     */ import com.sun.org.apache.xerces.internal.util.XMLSymbols;
-/*     */ import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
-/*     */ import com.sun.org.apache.xerces.internal.xni.QName;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
-/*     */ import com.sun.org.apache.xerces.internal.xni.XMLString;
-/*     */ import java.util.ArrayList;
-/*     */ import java.util.Enumeration;
-/*     */ import org.w3c.dom.Attr;
-/*     */ import org.w3c.dom.DOMImplementation;
-/*     */ import org.w3c.dom.Element;
-/*     */ import org.w3c.dom.NamedNodeMap;
-/*     */ import org.w3c.dom.Node;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class SchemaDOM
-/*     */   extends DefaultDocument
-/*     */ {
-/*     */   static final int relationsRowResizeFactor = 15;
-/*     */   static final int relationsColResizeFactor = 10;
-/*     */   NodeImpl[][] relations;
-/*     */   ElementImpl parent;
-/*     */   int currLoc;
-/*     */   int nextFreeLoc;
-/*     */   boolean hidden;
-/*     */   boolean inCDATA;
-/*  59 */   private StringBuffer fAnnotationBuffer = null;
-/*     */   
-/*     */   public SchemaDOM() {
-/*  62 */     reset();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ElementImpl startElement(QName element, XMLAttributes attributes, int line, int column, int offset) {
-/*  68 */     ElementImpl node = new ElementImpl(line, column, offset);
-/*  69 */     processElement(element, attributes, node);
-/*     */     
-/*  71 */     this.parent = node;
-/*  72 */     return node;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ElementImpl emptyElement(QName element, XMLAttributes attributes, int line, int column, int offset) {
-/*  77 */     ElementImpl node = new ElementImpl(line, column, offset);
-/*  78 */     processElement(element, attributes, node);
-/*  79 */     return node;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ElementImpl startElement(QName element, XMLAttributes attributes, int line, int column) {
-/*  84 */     return startElement(element, attributes, line, column, -1);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public ElementImpl emptyElement(QName element, XMLAttributes attributes, int line, int column) {
-/*  89 */     return emptyElement(element, attributes, line, column, -1);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void processElement(QName element, XMLAttributes attributes, ElementImpl node) {
-/*  95 */     node.prefix = element.prefix;
-/*  96 */     node.localpart = element.localpart;
-/*  97 */     node.rawname = element.rawname;
-/*  98 */     node.uri = element.uri;
-/*  99 */     node.schemaDOM = this;
-/*     */ 
-/*     */     
-/* 102 */     Attr[] attrs = new Attr[attributes.getLength()];
-/* 103 */     for (int i = 0; i < attributes.getLength(); i++) {
-/* 104 */       attrs[i] = new AttrImpl(node, attributes
-/* 105 */           .getPrefix(i), attributes
-/* 106 */           .getLocalName(i), attributes
-/* 107 */           .getQName(i), attributes
-/* 108 */           .getURI(i), attributes
-/* 109 */           .getValue(i));
-/*     */     }
-/* 111 */     node.attrs = attrs;
-/*     */ 
-/*     */     
-/* 114 */     if (this.nextFreeLoc == this.relations.length) {
-/* 115 */       resizeRelations();
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 120 */     if (this.relations[this.currLoc][0] != this.parent) {
-/* 121 */       this.relations[this.nextFreeLoc][0] = this.parent;
-/* 122 */       this.currLoc = this.nextFreeLoc++;
-/*     */     } 
-/*     */ 
-/*     */     
-/* 126 */     boolean foundPlace = false;
-/* 127 */     int j = 1;
-/* 128 */     for (j = 1; j < (this.relations[this.currLoc]).length; j++) {
-/* 129 */       if (this.relations[this.currLoc][j] == null) {
-/* 130 */         foundPlace = true;
-/*     */         
-/*     */         break;
-/*     */       } 
-/*     */     } 
-/* 135 */     if (!foundPlace) {
-/* 136 */       resizeRelations(this.currLoc);
-/*     */     }
-/* 138 */     this.relations[this.currLoc][j] = node;
-/*     */     
-/* 140 */     this.parent.parentRow = this.currLoc;
-/* 141 */     node.row = this.currLoc;
-/* 142 */     node.col = j;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void endElement() {
-/* 149 */     this.currLoc = this.parent.row;
-/* 150 */     this.parent = (ElementImpl)this.relations[this.currLoc][0];
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void comment(XMLString text) {
-/* 155 */     this.fAnnotationBuffer.append("<!--");
-/* 156 */     if (text.length > 0) {
-/* 157 */       this.fAnnotationBuffer.append(text.ch, text.offset, text.length);
-/*     */     }
-/* 159 */     this.fAnnotationBuffer.append("-->");
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void processingInstruction(String target, XMLString data) {
-/* 164 */     this.fAnnotationBuffer.append("<?").append(target);
-/* 165 */     if (data.length > 0) {
-/* 166 */       this.fAnnotationBuffer.append(' ').append(data.ch, data.offset, data.length);
-/*     */     }
-/* 168 */     this.fAnnotationBuffer.append("?>");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void characters(XMLString text) {
-/* 175 */     if (!this.inCDATA) {
-/* 176 */       StringBuffer annotationBuffer = this.fAnnotationBuffer;
-/* 177 */       for (int i = text.offset; i < text.offset + text.length; i++) {
-/* 178 */         char ch = text.ch[i];
-/* 179 */         if (ch == '&') {
-/* 180 */           annotationBuffer.append("&amp;");
-/*     */         }
-/* 182 */         else if (ch == '<') {
-/* 183 */           annotationBuffer.append("&lt;");
-/*     */ 
-/*     */         
-/*     */         }
-/* 187 */         else if (ch == '>') {
-/* 188 */           annotationBuffer.append("&gt;");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         }
-/* 194 */         else if (ch == '\r') {
-/* 195 */           annotationBuffer.append("&#xD;");
-/*     */         } else {
-/*     */           
-/* 198 */           annotationBuffer.append(ch);
-/*     */         } 
-/*     */       } 
-/*     */     } else {
-/*     */       
-/* 203 */       this.fAnnotationBuffer.append(text.ch, text.offset, text.length);
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   void charactersRaw(String text) {
-/* 209 */     this.fAnnotationBuffer.append(text);
-/*     */   }
-/*     */   
-/*     */   void endAnnotation(QName elemName, ElementImpl annotation) {
-/* 213 */     this.fAnnotationBuffer.append("\n</").append(elemName.rawname).append(">");
-/* 214 */     annotation.fAnnotation = this.fAnnotationBuffer.toString();
-/*     */     
-/* 216 */     this.fAnnotationBuffer = null;
-/*     */   }
-/*     */   
-/*     */   void endAnnotationElement(QName elemName) {
-/* 220 */     endAnnotationElement(elemName.rawname);
-/*     */   }
-/*     */   
-/*     */   void endAnnotationElement(String elemRawName) {
-/* 224 */     this.fAnnotationBuffer.append("</").append(elemRawName).append(">");
-/*     */   }
-/*     */   
-/*     */   void endSyntheticAnnotationElement(QName elemName, boolean complete) {
-/* 228 */     endSyntheticAnnotationElement(elemName.rawname, complete);
-/*     */   }
-/*     */   
-/*     */   void endSyntheticAnnotationElement(String elemRawName, boolean complete) {
-/* 232 */     if (complete) {
-/* 233 */       this.fAnnotationBuffer.append("\n</").append(elemRawName).append(">");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 238 */       this.parent.fSyntheticAnnotation = this.fAnnotationBuffer.toString();
-/*     */ 
-/*     */ 
-/*     */       
-/* 242 */       this.fAnnotationBuffer = null;
-/*     */     } else {
-/* 244 */       this.fAnnotationBuffer.append("</").append(elemRawName).append(">");
-/*     */     } 
-/*     */   }
-/*     */   void startAnnotationCDATA() {
-/* 248 */     this.inCDATA = true;
-/* 249 */     this.fAnnotationBuffer.append("<![CDATA[");
-/*     */   }
-/*     */   
-/*     */   void endAnnotationCDATA() {
-/* 253 */     this.fAnnotationBuffer.append("]]>");
-/* 254 */     this.inCDATA = false;
-/*     */   }
-/*     */   
-/*     */   private void resizeRelations() {
-/* 258 */     NodeImpl[][] temp = new NodeImpl[this.relations.length + 15][];
-/* 259 */     System.arraycopy(this.relations, 0, temp, 0, this.relations.length);
-/* 260 */     for (int i = this.relations.length; i < temp.length; i++) {
-/* 261 */       temp[i] = new NodeImpl[10];
-/*     */     }
-/* 263 */     this.relations = temp;
-/*     */   }
-/*     */   
-/*     */   private void resizeRelations(int i) {
-/* 267 */     NodeImpl[] temp = new NodeImpl[(this.relations[i]).length + 10];
-/* 268 */     System.arraycopy(this.relations[i], 0, temp, 0, (this.relations[i]).length);
-/* 269 */     this.relations[i] = temp;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void reset() {
-/* 276 */     if (this.relations != null)
-/* 277 */       for (int j = 0; j < this.relations.length; j++) {
-/* 278 */         for (int k = 0; k < (this.relations[j]).length; k++)
-/* 279 */           this.relations[j][k] = null; 
-/* 280 */       }   this.relations = new NodeImpl[15][];
-/* 281 */     this.parent = new ElementImpl(0, 0, 0);
-/* 282 */     this.parent.rawname = "DOCUMENT_NODE";
-/* 283 */     this.currLoc = 0;
-/* 284 */     this.nextFreeLoc = 1;
-/* 285 */     this.inCDATA = false;
-/* 286 */     for (int i = 0; i < 15; i++) {
-/* 287 */       this.relations[i] = new NodeImpl[10];
-/*     */     }
-/* 289 */     this.relations[this.currLoc][0] = this.parent;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void printDOM() {}
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public static void traverse(Node node, int depth) {
-/* 313 */     indent(depth);
-/* 314 */     System.out.print("<" + node.getNodeName());
-/*     */     
-/* 316 */     if (node.hasAttributes()) {
-/* 317 */       NamedNodeMap attrs = node.getAttributes();
-/* 318 */       for (int i = 0; i < attrs.getLength(); i++) {
-/* 319 */         System.out.print("  " + ((Attr)attrs.item(i)).getName() + "=\"" + ((Attr)attrs.item(i)).getValue() + "\"");
-/*     */       }
-/*     */     } 
-/*     */     
-/* 323 */     if (node.hasChildNodes()) {
-/* 324 */       System.out.println(">");
-/* 325 */       depth += 4;
-/* 326 */       for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
-/* 327 */         traverse(child, depth);
-/*     */       }
-/* 329 */       depth -= 4;
-/* 330 */       indent(depth);
-/* 331 */       System.out.println("</" + node.getNodeName() + ">");
-/*     */     } else {
-/*     */       
-/* 334 */       System.out.println("/>");
-/*     */     } 
-/*     */   }
-/*     */   
-/*     */   public static void indent(int amount) {
-/* 339 */     for (int i = 0; i < amount; i++) {
-/* 340 */       System.out.print(' ');
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Element getDocumentElement() {
-/* 347 */     return (ElementImpl)this.relations[0][1];
-/*     */   }
-/*     */   
-/*     */   public DOMImplementation getImplementation() {
-/* 351 */     return SchemaDOMImplementation.getDOMImplementation();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void startAnnotation(QName elemName, XMLAttributes attributes, NamespaceContext namespaceContext) {
-/* 357 */     startAnnotation(elemName.rawname, attributes, namespaceContext);
-/*     */   }
-/*     */   
-/*     */   void startAnnotation(String elemRawName, XMLAttributes attributes, NamespaceContext namespaceContext) {
-/* 361 */     if (this.fAnnotationBuffer == null) this.fAnnotationBuffer = new StringBuffer(256); 
-/* 362 */     this.fAnnotationBuffer.append("<").append(elemRawName).append(" ");
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 369 */     ArrayList<String> namespaces = new ArrayList();
-/* 370 */     for (int i = 0; i < attributes.getLength(); i++) {
-/* 371 */       String aValue = attributes.getValue(i);
-/* 372 */       String aPrefix = attributes.getPrefix(i);
-/* 373 */       String aQName = attributes.getQName(i);
-/*     */       
-/* 375 */       if (aPrefix == XMLSymbols.PREFIX_XMLNS || aQName == XMLSymbols.PREFIX_XMLNS) {
-/* 376 */         namespaces.add((aPrefix == XMLSymbols.PREFIX_XMLNS) ? attributes
-/* 377 */             .getLocalName(i) : XMLSymbols.EMPTY_STRING);
-/*     */       }
-/* 379 */       this.fAnnotationBuffer.append(aQName).append("=\"").append(processAttValue(aValue)).append("\" ");
-/*     */     } 
-/*     */ 
-/*     */     
-/* 383 */     Enumeration<String> currPrefixes = namespaceContext.getAllPrefixes();
-/* 384 */     while (currPrefixes.hasMoreElements()) {
-/* 385 */       String prefix = currPrefixes.nextElement();
-/* 386 */       String uri = namespaceContext.getURI(prefix);
-/* 387 */       if (uri == null) {
-/* 388 */         uri = XMLSymbols.EMPTY_STRING;
-/*     */       }
-/* 390 */       if (!namespaces.contains(prefix)) {
-/*     */         
-/* 392 */         if (prefix == XMLSymbols.EMPTY_STRING) {
-/* 393 */           this.fAnnotationBuffer.append("xmlns").append("=\"").append(processAttValue(uri)).append("\" ");
-/*     */           continue;
-/*     */         } 
-/* 396 */         this.fAnnotationBuffer.append("xmlns:").append(prefix).append("=\"").append(processAttValue(uri)).append("\" ");
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 400 */     this.fAnnotationBuffer.append(">\n");
-/*     */   }
-/*     */   void startAnnotationElement(QName elemName, XMLAttributes attributes) {
-/* 403 */     startAnnotationElement(elemName.rawname, attributes);
-/*     */   }
-/*     */   void startAnnotationElement(String elemRawName, XMLAttributes attributes) {
-/* 406 */     this.fAnnotationBuffer.append("<").append(elemRawName);
-/* 407 */     for (int i = 0; i < attributes.getLength(); i++) {
-/* 408 */       String aValue = attributes.getValue(i);
-/* 409 */       this.fAnnotationBuffer.append(" ").append(attributes.getQName(i)).append("=\"").append(processAttValue(aValue)).append("\"");
-/*     */     } 
-/* 411 */     this.fAnnotationBuffer.append(">");
-/*     */   }
-/*     */   
-/*     */   private static String processAttValue(String original) {
-/* 415 */     int length = original.length();
-/*     */     
-/* 417 */     for (int i = 0; i < length; i++) {
-/* 418 */       char currChar = original.charAt(i);
-/* 419 */       if (currChar == '"' || currChar == '<' || currChar == '&' || currChar == '\t' || currChar == '\n' || currChar == '\r')
-/*     */       {
-/* 421 */         return escapeAttValue(original, i);
-/*     */       }
-/*     */     } 
-/* 424 */     return original;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private static String escapeAttValue(String original, int from) {
-/* 429 */     int length = original.length();
-/* 430 */     StringBuffer newVal = new StringBuffer(length);
-/* 431 */     newVal.append(original.substring(0, from));
-/* 432 */     for (int i = from; i < length; i++) {
-/* 433 */       char currChar = original.charAt(i);
-/* 434 */       if (currChar == '"') {
-/* 435 */         newVal.append("&quot;");
-/*     */       }
-/* 437 */       else if (currChar == '<') {
-/* 438 */         newVal.append("&lt;");
-/*     */       }
-/* 440 */       else if (currChar == '&') {
-/* 441 */         newVal.append("&amp;");
-/*     */ 
-/*     */ 
-/*     */       
-/*     */       }
-/* 446 */       else if (currChar == '\t') {
-/* 447 */         newVal.append("&#x9;");
-/*     */       }
-/* 449 */       else if (currChar == '\n') {
-/* 450 */         newVal.append("&#xA;");
-/*     */       }
-/* 452 */       else if (currChar == '\r') {
-/* 453 */         newVal.append("&#xD;");
-/*     */       } else {
-/*     */         
-/* 456 */         newVal.append(currChar);
-/*     */       } 
-/*     */     } 
-/* 459 */     return newVal.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\org\apache\xerces\internal\impl\xs\opti\SchemaDOM.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.sun.org.apache.xerces.internal.impl.xs.opti;
+
+import java.util.ArrayList;
+import java.util.Enumeration;
+
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
+import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
+import com.sun.org.apache.xerces.internal.xni.QName;
+import com.sun.org.apache.xerces.internal.xni.XMLAttributes;
+import com.sun.org.apache.xerces.internal.xni.XMLString;
+import org.w3c.dom.Attr;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+
+/**
+ * @xerces.internal
+ *
+ * @author Rahul Srivastava, Sun Microsystems Inc.
+ * @author Sandy Gao, IBM
+ *
+ * @version $Id: SchemaDOM.java,v 1.7 2010-11-01 04:40:01 joehw Exp $
+ */
+public class SchemaDOM extends DefaultDocument {
+
+    static final int relationsRowResizeFactor = 15;
+    static final int relationsColResizeFactor = 10;
+
+    NodeImpl[][] relations;
+    // parent must be an element in this scheme
+    ElementImpl parent;
+    int currLoc;
+    int nextFreeLoc;
+    boolean hidden;
+    boolean inCDATA;
+
+    // for annotation support:
+    private StringBuffer fAnnotationBuffer = null;
+
+    public SchemaDOM() {
+        reset();
+    }
+
+
+    public ElementImpl startElement(QName element, XMLAttributes attributes,
+            int line, int column, int offset) {
+        ElementImpl node = new ElementImpl(line, column, offset);
+        processElement(element, attributes, node);
+        // now the current node added, becomes the parent
+        parent = node;
+        return node;
+    }
+
+    public ElementImpl emptyElement(QName element, XMLAttributes attributes,
+            int line, int column, int offset) {
+        ElementImpl node = new ElementImpl(line, column, offset);
+        processElement(element, attributes, node);
+        return node;
+    }
+
+    public ElementImpl startElement(QName element, XMLAttributes attributes,
+            int line, int column) {
+        return startElement(element, attributes, line, column, -1);
+    }
+
+    public ElementImpl emptyElement(QName element, XMLAttributes attributes,
+            int line, int column) {
+        return emptyElement(element, attributes, line, column, -1);
+    }
+
+    private void processElement(QName element, XMLAttributes attributes, ElementImpl node) {
+
+        // populate node
+        node.prefix = element.prefix;
+        node.localpart = element.localpart;
+        node.rawname = element.rawname;
+        node.uri = element.uri;
+        node.schemaDOM = this;
+
+        // set the attributes
+        Attr[] attrs = new Attr[attributes.getLength()];
+        for (int i=0; i<attributes.getLength(); i++) {
+            attrs[i] = new AttrImpl(node,
+                    attributes.getPrefix(i),
+                    attributes.getLocalName(i),
+                    attributes.getQName(i),
+                    attributes.getURI(i),
+                    attributes.getValue(i));
+        }
+        node.attrs = attrs;
+
+        // check if array needs to be resized
+        if (nextFreeLoc == relations.length) {
+            resizeRelations();
+        }
+
+        // store the current parent
+        //if (relations[currLoc][0] == null || relations[currLoc][0] != parent) {
+        if (relations[currLoc][0] != parent) {
+            relations[nextFreeLoc][0] = parent;
+            currLoc = nextFreeLoc++;
+        }
+
+        // add the current node as child of parent
+        boolean foundPlace = false;
+        int i = 1;
+        for (i = 1; i<relations[currLoc].length; i++) {
+            if (relations[currLoc][i] == null) {
+                foundPlace = true;
+                break;
+            }
+        }
+
+        if (!foundPlace) {
+            resizeRelations(currLoc);
+        }
+        relations[currLoc][i] = node;
+
+        parent.parentRow = currLoc;
+        node.row = currLoc;
+        node.col = i;
+    }
+
+
+    public void endElement()  {
+        // the parent of current parent node becomes the parent
+        // for the next node.
+        currLoc = parent.row;
+        parent = (ElementImpl)relations[currLoc][0];
+    }
+
+    // note that this will only be called within appinfo/documentation
+    void comment(XMLString text) {
+        fAnnotationBuffer.append("<!--");
+        if (text.length > 0) {
+            fAnnotationBuffer.append(text.ch, text.offset, text.length);
+        }
+        fAnnotationBuffer.append("-->");
+    }
+
+    // note that this will only be called within appinfo/documentation
+    void processingInstruction(String target, XMLString data) {
+        fAnnotationBuffer.append("<?").append(target);
+        if (data.length > 0) {
+            fAnnotationBuffer.append(' ').append(data.ch, data.offset, data.length);
+        }
+        fAnnotationBuffer.append("?>");
+    }
+
+    // note that this will only be called within appinfo/documentation
+    void characters(XMLString text) {
+
+        // escape characters if necessary
+        if (!inCDATA) {
+            final StringBuffer annotationBuffer = fAnnotationBuffer;
+            for (int i = text.offset; i < text.offset+text.length; ++i) {
+                char ch = text.ch[i];
+                if (ch == '&') {
+                    annotationBuffer.append("&amp;");
+                }
+                else if (ch == '<') {
+                    annotationBuffer.append("&lt;");
+                }
+                // character sequence "]]>" cannot appear in content,
+                // therefore we should escape '>'.
+                else if (ch == '>') {
+                    annotationBuffer.append("&gt;");
+                }
+                // If CR is part of the document's content, it
+                // must not be printed as a literal otherwise
+                // it would be normalized to LF when the document
+                // is reparsed.
+                else if (ch == '\r') {
+                    annotationBuffer.append("&#xD;");
+                }
+                else {
+                    annotationBuffer.append(ch);
+                }
+            }
+        }
+        else {
+            fAnnotationBuffer.append(text.ch, text.offset, text.length);
+        }
+    }
+
+    // note that this will only be called within appinfo/documentation
+    void charactersRaw(String text) {
+        fAnnotationBuffer.append(text);
+    }
+
+    void endAnnotation(QName elemName, ElementImpl annotation) {
+        fAnnotationBuffer.append("\n</").append(elemName.rawname).append(">");
+        annotation.fAnnotation = fAnnotationBuffer.toString();
+        // apparently, there is no sensible way of resetting these things
+        fAnnotationBuffer = null;
+    }
+
+    void endAnnotationElement(QName elemName) {
+        endAnnotationElement(elemName.rawname);
+    }
+
+    void endAnnotationElement(String elemRawName) {
+        fAnnotationBuffer.append("</").append(elemRawName).append(">");
+    }
+
+    void endSyntheticAnnotationElement(QName elemName, boolean complete) {
+        endSyntheticAnnotationElement(elemName.rawname, complete);
+    }
+
+    void endSyntheticAnnotationElement(String elemRawName, boolean complete) {
+        if(complete) {
+            fAnnotationBuffer.append("\n</").append(elemRawName).append(">");
+            // note that this is always called after endElement on <annotation>'s
+            // child and before endElement on annotation.
+            // hence, we must make this the child of the current
+            // parent's only child.
+            parent.fSyntheticAnnotation = fAnnotationBuffer.toString();
+
+            // apparently, there is no sensible way of resetting
+            // these things
+            fAnnotationBuffer = null;
+        } else      //capturing character calls
+            fAnnotationBuffer.append("</").append(elemRawName).append(">");
+    }
+
+    void startAnnotationCDATA() {
+        inCDATA = true;
+        fAnnotationBuffer.append("<![CDATA[");
+    }
+
+    void endAnnotationCDATA() {
+        fAnnotationBuffer.append("]]>");
+        inCDATA = false;
+    }
+
+    private void resizeRelations() {
+        NodeImpl[][] temp = new NodeImpl[relations.length+relationsRowResizeFactor][];
+        System.arraycopy(relations, 0, temp, 0, relations.length);
+        for (int i = relations.length ; i < temp.length ; i++) {
+            temp[i] = new NodeImpl[relationsColResizeFactor];
+        }
+        relations = temp;
+    }
+
+    private void resizeRelations(int i) {
+        NodeImpl[] temp = new NodeImpl[relations[i].length+relationsColResizeFactor];
+        System.arraycopy(relations[i], 0, temp, 0, relations[i].length);
+        relations[i] = temp;
+    }
+
+
+    public void reset() {
+
+        // help out the garbage collector
+        if(relations != null)
+            for(int i=0; i<relations.length; i++)
+                for(int j=0; j<relations[i].length; j++)
+                    relations[i][j] = null;
+        relations = new NodeImpl[relationsRowResizeFactor][];
+        parent = new ElementImpl(0, 0, 0);
+        parent.rawname = "DOCUMENT_NODE";
+        currLoc = 0;
+        nextFreeLoc = 1;
+        inCDATA = false;
+        for (int i=0; i<relationsRowResizeFactor; i++) {
+            relations[i] = new NodeImpl[relationsColResizeFactor];
+        }
+        relations[currLoc][0] = parent;
+    }
+
+
+    public void printDOM() {
+        /*
+         for (int i=0; i<relations.length; i++) {
+         if (relations[i][0] != null) {
+         for (int j=0; j<relations[i].length; j++) {
+         if (relations[i][j] != null) {
+         System.out.print(relations[i][j].nodeType+"-"+relations[i][j].parentRow+"  ");
+         }
+         }
+         System.out.println("");
+         }
+         }
+         */
+        //traverse(getDocumentElement(), 0);
+    }
+
+
+    // debug methods
+
+    public static void traverse(Node node, int depth) {
+        indent(depth);
+        System.out.print("<"+node.getNodeName());
+
+        if (node.hasAttributes()) {
+            NamedNodeMap attrs = node.getAttributes();
+            for (int i=0; i<attrs.getLength(); i++) {
+                System.out.print("  "+((Attr)attrs.item(i)).getName()+"=\""+((Attr)attrs.item(i)).getValue()+"\"");
+            }
+        }
+
+        if (node.hasChildNodes()) {
+            System.out.println(">");
+            depth+=4;
+            for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+                traverse(child, depth);
+            }
+            depth-=4;
+            indent(depth);
+            System.out.println("</"+node.getNodeName()+">");
+        }
+        else {
+            System.out.println("/>");
+        }
+    }
+
+    public static void indent(int amount) {
+        for (int i = 0; i < amount; i++) {
+            System.out.print(' ');
+        }
+    }
+
+    // org.w3c.dom methods
+    public Element getDocumentElement() {
+        // this returns a parent node, known to be an ElementImpl
+        return (ElementImpl)relations[0][1];
+    }
+
+    public DOMImplementation getImplementation() {
+        return SchemaDOMImplementation.getDOMImplementation();
+    }
+
+    // commence the serialization of an annotation
+    void startAnnotation(QName elemName, XMLAttributes attributes,
+            NamespaceContext namespaceContext) {
+        startAnnotation(elemName.rawname, attributes, namespaceContext);
+    }
+    void startAnnotation(String elemRawName, XMLAttributes attributes,
+            NamespaceContext namespaceContext) {
+        if(fAnnotationBuffer == null) fAnnotationBuffer = new StringBuffer(256);
+        fAnnotationBuffer.append("<").append(elemRawName).append(" ");
+
+        // attributes are a bit of a pain.  To get this right, we have to keep track
+        // of the namespaces we've seen declared, then examine the namespace context
+        // for other namespaces so that we can also include them.
+        // optimized for simplicity and the case that not many
+        // namespaces are declared on this annotation...
+        ArrayList namespaces = new ArrayList();
+        for (int i = 0; i < attributes.getLength(); ++i) {
+            String aValue = attributes.getValue(i);
+            String aPrefix = attributes.getPrefix(i);
+            String aQName = attributes.getQName(i);
+            // if it's xmlns:* or xmlns, must be a namespace decl
+            if (aPrefix == XMLSymbols.PREFIX_XMLNS || aQName == XMLSymbols.PREFIX_XMLNS) {
+                namespaces.add(aPrefix == XMLSymbols.PREFIX_XMLNS ?
+                        attributes.getLocalName(i) : XMLSymbols.EMPTY_STRING);
+            }
+            fAnnotationBuffer.append(aQName).append("=\"").append(processAttValue(aValue)).append("\" ");
+        }
+        // now we have to look through currently in-scope namespaces to see what
+        // wasn't declared here
+        Enumeration currPrefixes = namespaceContext.getAllPrefixes();
+        while(currPrefixes.hasMoreElements()) {
+            String prefix = (String)currPrefixes.nextElement();
+            String uri = namespaceContext.getURI(prefix);
+            if (uri == null) {
+                uri = XMLSymbols.EMPTY_STRING;
+            }
+            if (!namespaces.contains(prefix)) {
+                // have to declare this one
+                if(prefix == XMLSymbols.EMPTY_STRING) {
+                    fAnnotationBuffer.append("xmlns").append("=\"").append(processAttValue(uri)).append("\" ");
+                }
+                else {
+                    fAnnotationBuffer.append("xmlns:").append(prefix).append("=\"").append(processAttValue(uri)).append("\" ");
+                }
+            }
+        }
+        fAnnotationBuffer.append(">\n");
+    }
+    void startAnnotationElement(QName elemName, XMLAttributes attributes) {
+        startAnnotationElement(elemName.rawname, attributes);
+    }
+    void startAnnotationElement(String elemRawName, XMLAttributes attributes) {
+        fAnnotationBuffer.append("<").append(elemRawName);
+        for(int i=0; i<attributes.getLength(); i++) {
+            String aValue = attributes.getValue(i);
+            fAnnotationBuffer.append(" ").append(attributes.getQName(i)).append("=\"").append(processAttValue(aValue)).append("\"");
+        }
+        fAnnotationBuffer.append(">");
+    }
+
+    private static String processAttValue(String original) {
+        final int length = original.length();
+        // normally, nothing will happen
+        for (int i = 0; i < length; ++i) {
+            char currChar = original.charAt(i);
+            if (currChar == '"' || currChar == '<' || currChar == '&' ||
+                    currChar == 0x09 || currChar == 0x0A || currChar == 0x0D) {
+                return escapeAttValue(original, i);
+            }
+        }
+        return original;
+    }
+
+    private static String escapeAttValue(String original, int from) {
+        int i;
+        final int length = original.length();
+        StringBuffer newVal = new StringBuffer(length);
+        newVal.append(original.substring(0, from));
+        for (i = from; i < length; ++i) {
+            char currChar = original.charAt(i);
+            if (currChar == '"') {
+                newVal.append("&quot;");
+            }
+            else if (currChar == '<') {
+                newVal.append("&lt;");
+            }
+            else if (currChar == '&') {
+                newVal.append("&amp;");
+            }
+            // Must escape 0x09, 0x0A and 0x0D if they appear in attribute
+            // value so that they may be round-tripped. They would otherwise
+            // be transformed to a 0x20 during attribute value normalization.
+            else if (currChar == 0x09) {
+                newVal.append("&#x9;");
+            }
+            else if (currChar == 0x0A) {
+                newVal.append("&#xA;");
+            }
+            else if (currChar == 0x0D) {
+                newVal.append("&#xD;");
+            }
+            else {
+                newVal.append(currChar);
+            }
+        }
+        return newVal.toString();
+    }
+}

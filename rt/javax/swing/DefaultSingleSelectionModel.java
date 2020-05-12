@@ -1,181 +1,175 @@
-/*     */ package javax.swing;
-/*     */ 
-/*     */ import java.io.Serializable;
-/*     */ import javax.swing.event.ChangeEvent;
-/*     */ import javax.swing.event.ChangeListener;
-/*     */ import javax.swing.event.EventListenerList;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class DefaultSingleSelectionModel
-/*     */   implements SingleSelectionModel, Serializable
-/*     */ {
-/*  52 */   protected transient ChangeEvent changeEvent = null;
-/*     */   
-/*  54 */   protected EventListenerList listenerList = new EventListenerList();
-/*     */   
-/*  56 */   private int index = -1;
-/*     */ 
-/*     */   
-/*     */   public int getSelectedIndex() {
-/*  60 */     return this.index;
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void setSelectedIndex(int paramInt) {
-/*  65 */     if (this.index != paramInt) {
-/*  66 */       this.index = paramInt;
-/*  67 */       fireStateChanged();
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public void clearSelection() {
-/*  73 */     setSelectedIndex(-1);
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   public boolean isSelected() {
-/*  78 */     boolean bool = false;
-/*  79 */     if (getSelectedIndex() != -1) {
-/*  80 */       bool = true;
-/*     */     }
-/*  82 */     return bool;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void addChangeListener(ChangeListener paramChangeListener) {
-/*  89 */     this.listenerList.add(ChangeListener.class, paramChangeListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public void removeChangeListener(ChangeListener paramChangeListener) {
-/*  96 */     this.listenerList.remove(ChangeListener.class, paramChangeListener);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ChangeListener[] getChangeListeners() {
-/* 113 */     return this.listenerList.<ChangeListener>getListeners(ChangeListener.class);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   protected void fireStateChanged() {
-/* 124 */     Object[] arrayOfObject = this.listenerList.getListenerList();
-/*     */ 
-/*     */     
-/* 127 */     for (int i = arrayOfObject.length - 2; i >= 0; i -= 2) {
-/* 128 */       if (arrayOfObject[i] == ChangeListener.class) {
-/*     */         
-/* 130 */         if (this.changeEvent == null)
-/* 131 */           this.changeEvent = new ChangeEvent(this); 
-/* 132 */         ((ChangeListener)arrayOfObject[i + 1]).stateChanged(this.changeEvent);
-/*     */       } 
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public <T extends java.util.EventListener> T[] getListeners(Class<T> paramClass) {
-/* 173 */     return this.listenerList.getListeners(paramClass);
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\javax\swing\DefaultSingleSelectionModel.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package javax.swing;
+
+import javax.swing.event.*;
+import java.io.Serializable;
+import java.util.EventListener;
+
+/**
+ * A generic implementation of SingleSelectionModel.
+ * <p>
+ * <strong>Warning:</strong>
+ * Serialized objects of this class will not be compatible with
+ * future Swing releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running
+ * the same version of Swing.  As of 1.4, support for long term storage
+ * of all JavaBeans&trade;
+ * has been added to the <code>java.beans</code> package.
+ * Please see {@link java.beans.XMLEncoder}.
+ *
+ * @author Dave Moore
+ */
+public class DefaultSingleSelectionModel implements SingleSelectionModel,
+Serializable {
+    /* Only one ModelChangeEvent is needed per model instance since the
+     * event's only (read-only) state is the source property.  The source
+     * of events generated here is always "this".
+     */
+    protected transient ChangeEvent changeEvent = null;
+    /** The collection of registered listeners */
+    protected EventListenerList listenerList = new EventListenerList();
+
+    private int index = -1;
+
+    // implements javax.swing.SingleSelectionModel
+    public int getSelectedIndex() {
+        return index;
+    }
+
+    // implements javax.swing.SingleSelectionModel
+    public void setSelectedIndex(int index) {
+        if (this.index != index) {
+            this.index = index;
+            fireStateChanged();
+        }
+    }
+
+    // implements javax.swing.SingleSelectionModel
+    public void clearSelection() {
+        setSelectedIndex(-1);
+    }
+
+    // implements javax.swing.SingleSelectionModel
+    public boolean isSelected() {
+        boolean ret = false;
+        if (getSelectedIndex() != -1) {
+            ret = true;
+        }
+        return ret;
+    }
+
+    /**
+     * Adds a <code>ChangeListener</code> to the button.
+     */
+    public void addChangeListener(ChangeListener l) {
+        listenerList.add(ChangeListener.class, l);
+    }
+
+    /**
+     * Removes a <code>ChangeListener</code> from the button.
+     */
+    public void removeChangeListener(ChangeListener l) {
+        listenerList.remove(ChangeListener.class, l);
+    }
+
+    /**
+     * Returns an array of all the change listeners
+     * registered on this <code>DefaultSingleSelectionModel</code>.
+     *
+     * @return all of this model's <code>ChangeListener</code>s
+     *         or an empty
+     *         array if no change listeners are currently registered
+     *
+     * @see #addChangeListener
+     * @see #removeChangeListener
+     *
+     * @since 1.4
+     */
+    public ChangeListener[] getChangeListeners() {
+        return listenerList.getListeners(ChangeListener.class);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is created lazily.
+     * @see EventListenerList
+     */
+    protected void fireStateChanged() {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ChangeListener.class) {
+                // Lazily create the event:
+                if (changeEvent == null)
+                    changeEvent = new ChangeEvent(this);
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }
+        }
+    }
+
+    /**
+     * Returns an array of all the objects currently registered as
+     * <code><em>Foo</em>Listener</code>s
+     * upon this model.
+     * <code><em>Foo</em>Listener</code>s
+     * are registered using the <code>add<em>Foo</em>Listener</code> method.
+     * <p>
+     * You can specify the <code>listenerType</code> argument
+     * with a class literal, such as <code><em>Foo</em>Listener.class</code>.
+     * For example, you can query a <code>DefaultSingleSelectionModel</code>
+     * instance <code>m</code>
+     * for its change listeners
+     * with the following code:
+     *
+     * <pre>ChangeListener[] cls = (ChangeListener[])(m.getListeners(ChangeListener.class));</pre>
+     *
+     * If no such listeners exist,
+     * this method returns an empty array.
+     *
+     * @param listenerType  the type of listeners requested;
+     *          this parameter should specify an interface
+     *          that descends from <code>java.util.EventListener</code>
+     * @return an array of all objects registered as
+     *          <code><em>Foo</em>Listener</code>s
+     *          on this model,
+     *          or an empty array if no such
+     *          listeners have been added
+     * @exception ClassCastException if <code>listenerType</code> doesn't
+     *          specify a class or interface that implements
+     *          <code>java.util.EventListener</code>
+     *
+     * @see #getChangeListeners
+     *
+     * @since 1.3
+     */
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
+        return listenerList.getListeners(listenerType);
+    }
+}

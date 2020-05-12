@@ -1,2075 +1,2069 @@
-/*      */ package com.sun.jmx.interceptor;
-/*      */ 
-/*      */ import com.sun.jmx.defaults.JmxProperties;
-/*      */ import com.sun.jmx.mbeanserver.DynamicMBean2;
-/*      */ import com.sun.jmx.mbeanserver.Introspector;
-/*      */ import com.sun.jmx.mbeanserver.MBeanInstantiator;
-/*      */ import com.sun.jmx.mbeanserver.ModifiableClassLoaderRepository;
-/*      */ import com.sun.jmx.mbeanserver.NamedObject;
-/*      */ import com.sun.jmx.mbeanserver.Repository;
-/*      */ import com.sun.jmx.mbeanserver.Util;
-/*      */ import com.sun.jmx.remote.util.EnvHelp;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.lang.ref.WeakReference;
-/*      */ import java.security.AccessControlContext;
-/*      */ import java.security.AccessController;
-/*      */ import java.security.PrivilegedAction;
-/*      */ import java.security.ProtectionDomain;
-/*      */ import java.util.ArrayList;
-/*      */ import java.util.HashSet;
-/*      */ import java.util.Set;
-/*      */ import java.util.WeakHashMap;
-/*      */ import java.util.logging.Level;
-/*      */ import javax.management.Attribute;
-/*      */ import javax.management.AttributeList;
-/*      */ import javax.management.AttributeNotFoundException;
-/*      */ import javax.management.DynamicMBean;
-/*      */ import javax.management.InstanceAlreadyExistsException;
-/*      */ import javax.management.InstanceNotFoundException;
-/*      */ import javax.management.IntrospectionException;
-/*      */ import javax.management.InvalidAttributeValueException;
-/*      */ import javax.management.JMRuntimeException;
-/*      */ import javax.management.ListenerNotFoundException;
-/*      */ import javax.management.MBeanException;
-/*      */ import javax.management.MBeanInfo;
-/*      */ import javax.management.MBeanPermission;
-/*      */ import javax.management.MBeanRegistration;
-/*      */ import javax.management.MBeanRegistrationException;
-/*      */ import javax.management.MBeanServer;
-/*      */ import javax.management.MBeanServerDelegate;
-/*      */ import javax.management.MBeanServerNotification;
-/*      */ import javax.management.MBeanTrustPermission;
-/*      */ import javax.management.NotCompliantMBeanException;
-/*      */ import javax.management.Notification;
-/*      */ import javax.management.NotificationBroadcaster;
-/*      */ import javax.management.NotificationEmitter;
-/*      */ import javax.management.NotificationFilter;
-/*      */ import javax.management.NotificationListener;
-/*      */ import javax.management.ObjectInstance;
-/*      */ import javax.management.ObjectName;
-/*      */ import javax.management.OperationsException;
-/*      */ import javax.management.QueryEval;
-/*      */ import javax.management.QueryExp;
-/*      */ import javax.management.ReflectionException;
-/*      */ import javax.management.RuntimeErrorException;
-/*      */ import javax.management.RuntimeMBeanException;
-/*      */ import javax.management.RuntimeOperationsException;
-/*      */ import javax.management.loading.ClassLoaderRepository;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public class DefaultMBeanServerInterceptor
-/*      */   implements MBeanServerInterceptor
-/*      */ {
-/*      */   private final transient MBeanInstantiator instantiator;
-/*  121 */   private transient MBeanServer server = null;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final transient MBeanServerDelegate delegate;
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final transient Repository repository;
-/*      */ 
-/*      */   
-/*  132 */   private final transient WeakHashMap<ListenerWrapper, WeakReference<ListenerWrapper>> listenerWrappers = new WeakHashMap<>();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final String domain;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private final Set<ObjectName> beingUnregistered;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException {
-/*  185 */     return createMBean(paramString, paramObjectName, (Object[])null, (String[])null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName1, ObjectName paramObjectName2) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException, InstanceNotFoundException {
-/*  195 */     return createMBean(paramString, paramObjectName1, paramObjectName2, (Object[])null, (String[])null);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException {
-/*      */     try {
-/*  206 */       return createMBean(paramString, paramObjectName, null, true, paramArrayOfObject, paramArrayOfString);
-/*      */     }
-/*  208 */     catch (InstanceNotFoundException instanceNotFoundException) {
-/*      */ 
-/*      */       
-/*  211 */       throw (IllegalArgumentException)EnvHelp.initCause(new IllegalArgumentException("Unexpected exception: " + instanceNotFoundException), instanceNotFoundException);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInstance createMBean(String paramString, ObjectName paramObjectName1, ObjectName paramObjectName2, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException, InstanceNotFoundException {
-/*  223 */     return createMBean(paramString, paramObjectName1, paramObjectName2, false, paramArrayOfObject, paramArrayOfString);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ObjectInstance createMBean(String paramString, ObjectName paramObjectName1, ObjectName paramObjectName2, boolean paramBoolean, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, InstanceAlreadyExistsException, MBeanRegistrationException, MBeanException, NotCompliantMBeanException, InstanceNotFoundException {
-/*      */     Class<?> clazz;
-/*  237 */     if (paramString == null) {
-/*  238 */       IllegalArgumentException illegalArgumentException = new IllegalArgumentException("The class name cannot be null");
-/*      */       
-/*  240 */       throw new RuntimeOperationsException(illegalArgumentException, "Exception occurred during MBean creation");
-/*      */     } 
-/*      */ 
-/*      */     
-/*  244 */     if (paramObjectName1 != null) {
-/*  245 */       if (paramObjectName1.isPattern()) {
-/*      */ 
-/*      */         
-/*  248 */         IllegalArgumentException illegalArgumentException = new IllegalArgumentException("Invalid name->" + paramObjectName1.toString());
-/*      */         
-/*  250 */         throw new RuntimeOperationsException(illegalArgumentException, "Exception occurred during MBean creation");
-/*      */       } 
-/*      */       
-/*  253 */       paramObjectName1 = nonDefaultDomain(paramObjectName1);
-/*      */     } 
-/*      */     
-/*  256 */     checkMBeanPermission(paramString, (String)null, (ObjectName)null, "instantiate");
-/*  257 */     checkMBeanPermission(paramString, (String)null, paramObjectName1, "registerMBean");
-/*      */ 
-/*      */     
-/*  260 */     if (paramBoolean) {
-/*  261 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  262 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  263 */             .getName(), "createMBean", "ClassName = " + paramString + ", ObjectName = " + paramObjectName1);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  268 */       clazz = this.instantiator.findClassWithDefaultLoaderRepository(paramString);
-/*  269 */     } else if (paramObjectName2 == null) {
-/*  270 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  271 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  272 */             .getName(), "createMBean", "ClassName = " + paramString + ", ObjectName = " + paramObjectName1 + ", Loader name = null");
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */       
-/*  277 */       clazz = this.instantiator.findClass(paramString, this.server
-/*  278 */           .getClass().getClassLoader());
-/*      */     } else {
-/*  280 */       paramObjectName2 = nonDefaultDomain(paramObjectName2);
-/*      */       
-/*  282 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  283 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  284 */             .getName(), "createMBean", "ClassName = " + paramString + ", ObjectName = " + paramObjectName1 + ", Loader name = " + paramObjectName2);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  290 */       clazz = this.instantiator.findClass(paramString, paramObjectName2);
-/*      */     } 
-/*      */     
-/*  293 */     checkMBeanTrustPermission(clazz);
-/*      */ 
-/*      */     
-/*  296 */     Introspector.testCreation(clazz);
-/*      */ 
-/*      */     
-/*  299 */     Introspector.checkCompliance(clazz);
-/*      */     
-/*  301 */     Object object = this.instantiator.instantiate(clazz, paramArrayOfObject, paramArrayOfString, this.server
-/*  302 */         .getClass().getClassLoader());
-/*      */     
-/*  304 */     String str = getNewMBeanClassName(object);
-/*      */     
-/*  306 */     return registerObject(str, object, paramObjectName1);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInstance registerMBean(Object paramObject, ObjectName paramObjectName) throws InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
-/*  315 */     Class<?> clazz = paramObject.getClass();
-/*      */     
-/*  317 */     Introspector.checkCompliance(clazz);
-/*      */     
-/*  319 */     String str = getNewMBeanClassName(paramObject);
-/*      */     
-/*  321 */     checkMBeanPermission(str, (String)null, paramObjectName, "registerMBean");
-/*  322 */     checkMBeanTrustPermission(clazz);
-/*      */     
-/*  324 */     return registerObject(str, paramObject, paramObjectName);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static String getNewMBeanClassName(Object paramObject) throws NotCompliantMBeanException {
-/*  329 */     if (paramObject instanceof DynamicMBean) {
-/*  330 */       String str; DynamicMBean dynamicMBean = (DynamicMBean)paramObject;
-/*      */       
-/*      */       try {
-/*  333 */         str = dynamicMBean.getMBeanInfo().getClassName();
-/*  334 */       } catch (Exception exception) {
-/*      */         
-/*  336 */         NotCompliantMBeanException notCompliantMBeanException = new NotCompliantMBeanException("Bad getMBeanInfo()");
-/*      */         
-/*  338 */         notCompliantMBeanException.initCause(exception);
-/*  339 */         throw notCompliantMBeanException;
-/*      */       } 
-/*  341 */       if (str == null)
-/*      */       {
-/*  343 */         throw new NotCompliantMBeanException("MBeanInfo has null class name");
-/*      */       }
-/*  345 */       return str;
-/*      */     } 
-/*  347 */     return paramObject.getClass().getName();
-/*      */   }
-/*      */   
-/*  350 */   public DefaultMBeanServerInterceptor(MBeanServer paramMBeanServer, MBeanServerDelegate paramMBeanServerDelegate, MBeanInstantiator paramMBeanInstantiator, Repository paramRepository) { this.beingUnregistered = new HashSet<>(); if (paramMBeanServer == null)
-/*      */       throw new IllegalArgumentException("outer MBeanServer cannot be null");  if (paramMBeanServerDelegate == null)
-/*      */       throw new IllegalArgumentException("MBeanServerDelegate cannot be null");  if (paramMBeanInstantiator == null)
-/*      */       throw new IllegalArgumentException("MBeanInstantiator cannot be null");  if (paramRepository == null)
-/*      */       throw new IllegalArgumentException("Repository cannot be null");  this.server = paramMBeanServer; this.delegate = paramMBeanServerDelegate; this.instantiator = paramMBeanInstantiator;
-/*      */     this.repository = paramRepository;
-/*  356 */     this.domain = paramRepository.getDefaultDomain(); } public void unregisterMBean(ObjectName paramObjectName) throws InstanceNotFoundException, MBeanRegistrationException { if (paramObjectName == null) {
-/*  357 */       IllegalArgumentException illegalArgumentException = new IllegalArgumentException("Object name cannot be null");
-/*      */       
-/*  359 */       throw new RuntimeOperationsException(illegalArgumentException, "Exception occurred trying to unregister the MBean");
-/*      */     } 
-/*      */ 
-/*      */     
-/*  363 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  401 */     synchronized (this.beingUnregistered) {
-/*  402 */       while (this.beingUnregistered.contains(paramObjectName)) {
-/*      */         try {
-/*  404 */           this.beingUnregistered.wait();
-/*  405 */         } catch (InterruptedException interruptedException) {
-/*  406 */           throw new MBeanRegistrationException(interruptedException, interruptedException.toString());
-/*      */         } 
-/*      */       } 
-/*      */ 
-/*      */       
-/*  411 */       this.beingUnregistered.add(paramObjectName);
-/*      */     } 
-/*      */     
-/*      */     try {
-/*  415 */       exclusiveUnregisterMBean(paramObjectName);
-/*      */     } finally {
-/*  417 */       synchronized (this.beingUnregistered) {
-/*  418 */         this.beingUnregistered.remove(paramObjectName);
-/*  419 */         this.beingUnregistered.notifyAll();
-/*      */       } 
-/*      */     }  }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void exclusiveUnregisterMBean(ObjectName paramObjectName) throws InstanceNotFoundException, MBeanRegistrationException {
-/*  427 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*      */ 
-/*      */     
-/*  430 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "unregisterMBean");
-/*      */     
-/*  432 */     if (dynamicMBean instanceof MBeanRegistration) {
-/*  433 */       preDeregisterInvoke((MBeanRegistration)dynamicMBean);
-/*      */     }
-/*  435 */     Object object = getResource(dynamicMBean);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  448 */     ResourceContext resourceContext = unregisterFromRepository(object, dynamicMBean, paramObjectName);
-/*      */     
-/*      */     try {
-/*  451 */       if (dynamicMBean instanceof MBeanRegistration)
-/*  452 */         postDeregisterInvoke(paramObjectName, (MBeanRegistration)dynamicMBean); 
-/*      */     } finally {
-/*  454 */       resourceContext.done();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInstance getObjectInstance(ObjectName paramObjectName) throws InstanceNotFoundException {
-/*  461 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*  462 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*      */     
-/*  464 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "getObjectInstance");
-/*      */     
-/*  466 */     String str = getClassName(dynamicMBean);
-/*      */     
-/*  468 */     return new ObjectInstance(paramObjectName, str);
-/*      */   }
-/*      */   
-/*      */   public Set<ObjectInstance> queryMBeans(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/*  472 */     SecurityManager securityManager = System.getSecurityManager();
-/*  473 */     if (securityManager != null) {
-/*      */ 
-/*      */       
-/*  476 */       checkMBeanPermission((String)null, (String)null, (ObjectName)null, "queryMBeans");
-/*      */ 
-/*      */ 
-/*      */       
-/*  480 */       Set<ObjectInstance> set = queryMBeansImpl(paramObjectName, null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  486 */       HashSet<ObjectInstance> hashSet = new HashSet(set.size());
-/*  487 */       for (ObjectInstance objectInstance : set) {
-/*      */         try {
-/*  489 */           checkMBeanPermission(objectInstance.getClassName(), (String)null, objectInstance
-/*  490 */               .getObjectName(), "queryMBeans");
-/*  491 */           hashSet.add(objectInstance);
-/*  492 */         } catch (SecurityException securityException) {}
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  499 */       return filterListOfObjectInstances(hashSet, paramQueryExp);
-/*      */     } 
-/*      */ 
-/*      */     
-/*  503 */     return queryMBeansImpl(paramObjectName, paramQueryExp);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<ObjectInstance> queryMBeansImpl(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/*  511 */     Set<NamedObject> set = this.repository.query(paramObjectName, paramQueryExp);
-/*      */     
-/*  513 */     return objectInstancesFromFilteredNamedObjects(set, paramQueryExp);
-/*      */   }
-/*      */   
-/*      */   public Set<ObjectName> queryNames(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/*      */     Set<ObjectName> set;
-/*  518 */     SecurityManager securityManager = System.getSecurityManager();
-/*  519 */     if (securityManager != null) {
-/*      */ 
-/*      */       
-/*  522 */       checkMBeanPermission((String)null, (String)null, (ObjectName)null, "queryNames");
-/*      */ 
-/*      */ 
-/*      */       
-/*  526 */       Set<ObjectInstance> set1 = queryMBeansImpl(paramObjectName, null);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  532 */       HashSet<ObjectInstance> hashSet = new HashSet(set1.size());
-/*  533 */       for (ObjectInstance objectInstance : set1) {
-/*      */         try {
-/*  535 */           checkMBeanPermission(objectInstance.getClassName(), (String)null, objectInstance
-/*  536 */               .getObjectName(), "queryNames");
-/*  537 */           hashSet.add(objectInstance);
-/*  538 */         } catch (SecurityException securityException) {}
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  546 */       Set<ObjectInstance> set2 = filterListOfObjectInstances(hashSet, paramQueryExp);
-/*  547 */       set = new HashSet(set2.size());
-/*  548 */       for (ObjectInstance objectInstance : set2) {
-/*  549 */         set.add(objectInstance.getObjectName());
-/*      */       }
-/*      */     }
-/*      */     else {
-/*      */       
-/*  554 */       set = queryNamesImpl(paramObjectName, paramQueryExp);
-/*      */     } 
-/*  556 */     return set;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<ObjectName> queryNamesImpl(ObjectName paramObjectName, QueryExp paramQueryExp) {
-/*  562 */     Set<NamedObject> set = this.repository.query(paramObjectName, paramQueryExp);
-/*      */     
-/*  564 */     return objectNamesFromFilteredNamedObjects(set, paramQueryExp);
-/*      */   }
-/*      */   
-/*      */   public boolean isRegistered(ObjectName paramObjectName) {
-/*  568 */     if (paramObjectName == null) {
-/*  569 */       throw new RuntimeOperationsException(new IllegalArgumentException("Object name cannot be null"), "Object name cannot be null");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  574 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*  579 */     return this.repository.contains(paramObjectName);
-/*      */   }
-/*      */   
-/*      */   public String[] getDomains() {
-/*  583 */     SecurityManager securityManager = System.getSecurityManager();
-/*  584 */     if (securityManager != null) {
-/*      */ 
-/*      */       
-/*  587 */       checkMBeanPermission((String)null, (String)null, (ObjectName)null, "getDomains");
-/*      */ 
-/*      */ 
-/*      */       
-/*  591 */       String[] arrayOfString = this.repository.getDomains();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  596 */       ArrayList<String> arrayList = new ArrayList(arrayOfString.length);
-/*  597 */       for (byte b = 0; b < arrayOfString.length; b++) {
-/*      */         try {
-/*  599 */           ObjectName objectName = Util.newObjectName(arrayOfString[b] + ":x=x");
-/*  600 */           checkMBeanPermission((String)null, (String)null, objectName, "getDomains");
-/*  601 */           arrayList.add(arrayOfString[b]);
-/*  602 */         } catch (SecurityException securityException) {}
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  609 */       return arrayList.<String>toArray(new String[arrayList.size()]);
-/*      */     } 
-/*  611 */     return this.repository.getDomains();
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Integer getMBeanCount() {
-/*  616 */     return this.repository.getCount();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object getAttribute(ObjectName paramObjectName, String paramString) throws MBeanException, AttributeNotFoundException, InstanceNotFoundException, ReflectionException {
-/*  623 */     if (paramObjectName == null) {
-/*  624 */       throw new RuntimeOperationsException(new IllegalArgumentException("Object name cannot be null"), "Exception occurred trying to invoke the getter on the MBean");
-/*      */     }
-/*      */ 
-/*      */     
-/*  628 */     if (paramString == null) {
-/*  629 */       throw new RuntimeOperationsException(new IllegalArgumentException("Attribute cannot be null"), "Exception occurred trying to invoke the getter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  634 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */     
-/*  636 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  637 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  638 */           .getName(), "getAttribute", "Attribute = " + paramString + ", ObjectName = " + paramObjectName);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  643 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*  644 */     checkMBeanPermission(dynamicMBean, paramString, paramObjectName, "getAttribute");
-/*      */     
-/*      */     try {
-/*  647 */       return dynamicMBean.getAttribute(paramString);
-/*  648 */     } catch (AttributeNotFoundException attributeNotFoundException) {
-/*  649 */       throw attributeNotFoundException;
-/*  650 */     } catch (Throwable throwable) {
-/*  651 */       rethrowMaybeMBeanException(throwable);
-/*  652 */       throw new AssertionError();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public AttributeList getAttributes(ObjectName paramObjectName, String[] paramArrayOfString) throws InstanceNotFoundException, ReflectionException {
-/*      */     String[] arrayOfString;
-/*  659 */     if (paramObjectName == null) {
-/*  660 */       throw new RuntimeOperationsException(new IllegalArgumentException("ObjectName name cannot be null"), "Exception occurred trying to invoke the getter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  665 */     if (paramArrayOfString == null) {
-/*  666 */       throw new RuntimeOperationsException(new IllegalArgumentException("Attributes cannot be null"), "Exception occurred trying to invoke the getter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  671 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */     
-/*  673 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  674 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  675 */           .getName(), "getAttributes", "ObjectName = " + paramObjectName);
-/*      */     }
-/*      */ 
-/*      */     
-/*  679 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*      */     
-/*  681 */     SecurityManager securityManager = System.getSecurityManager();
-/*  682 */     if (securityManager == null) {
-/*  683 */       arrayOfString = paramArrayOfString;
-/*      */     } else {
-/*  685 */       String str = getClassName(dynamicMBean);
-/*      */ 
-/*      */ 
-/*      */       
-/*  689 */       checkMBeanPermission(str, (String)null, paramObjectName, "getAttribute");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  694 */       ArrayList<String> arrayList = new ArrayList(paramArrayOfString.length);
-/*      */       
-/*  696 */       for (String str1 : paramArrayOfString) {
-/*      */         try {
-/*  698 */           checkMBeanPermission(str, str1, paramObjectName, "getAttribute");
-/*  699 */           arrayList.add(str1);
-/*  700 */         } catch (SecurityException securityException) {}
-/*      */       } 
-/*      */ 
-/*      */ 
-/*      */       
-/*  705 */       arrayOfString = arrayList.<String>toArray(new String[arrayList.size()]);
-/*      */     } 
-/*      */     
-/*      */     try {
-/*  709 */       return dynamicMBean.getAttributes(arrayOfString);
-/*  710 */     } catch (Throwable throwable) {
-/*  711 */       rethrow(throwable);
-/*  712 */       throw new AssertionError();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void setAttribute(ObjectName paramObjectName, Attribute paramAttribute) throws InstanceNotFoundException, AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
-/*  721 */     if (paramObjectName == null) {
-/*  722 */       throw new RuntimeOperationsException(new IllegalArgumentException("ObjectName name cannot be null"), "Exception occurred trying to invoke the setter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  727 */     if (paramAttribute == null) {
-/*  728 */       throw new RuntimeOperationsException(new IllegalArgumentException("Attribute cannot be null"), "Exception occurred trying to invoke the setter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  733 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */     
-/*  735 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  736 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  737 */           .getName(), "setAttribute", "ObjectName = " + paramObjectName + ", Attribute = " + paramAttribute
-/*      */           
-/*  739 */           .getName());
-/*      */     }
-/*      */     
-/*  742 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*  743 */     checkMBeanPermission(dynamicMBean, paramAttribute.getName(), paramObjectName, "setAttribute");
-/*      */     
-/*      */     try {
-/*  746 */       dynamicMBean.setAttribute(paramAttribute);
-/*  747 */     } catch (AttributeNotFoundException attributeNotFoundException) {
-/*  748 */       throw attributeNotFoundException;
-/*  749 */     } catch (InvalidAttributeValueException invalidAttributeValueException) {
-/*  750 */       throw invalidAttributeValueException;
-/*  751 */     } catch (Throwable throwable) {
-/*  752 */       rethrowMaybeMBeanException(throwable);
-/*  753 */       throw new AssertionError();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public AttributeList setAttributes(ObjectName paramObjectName, AttributeList paramAttributeList) throws InstanceNotFoundException, ReflectionException {
-/*      */     AttributeList attributeList;
-/*  761 */     if (paramObjectName == null) {
-/*  762 */       throw new RuntimeOperationsException(new IllegalArgumentException("ObjectName name cannot be null"), "Exception occurred trying to invoke the setter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  767 */     if (paramAttributeList == null) {
-/*  768 */       throw new RuntimeOperationsException(new IllegalArgumentException("AttributeList  cannot be null"), "Exception occurred trying to invoke the setter on the MBean");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*  773 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */     
-/*  775 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*      */     
-/*  777 */     SecurityManager securityManager = System.getSecurityManager();
-/*  778 */     if (securityManager == null) {
-/*  779 */       attributeList = paramAttributeList;
-/*      */     } else {
-/*  781 */       String str = getClassName(dynamicMBean);
-/*      */ 
-/*      */ 
-/*      */       
-/*  785 */       checkMBeanPermission(str, (String)null, paramObjectName, "setAttribute");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  790 */       attributeList = new AttributeList(paramAttributeList.size());
-/*  791 */       for (Attribute attribute : paramAttributeList.asList()) {
-/*      */         try {
-/*  793 */           checkMBeanPermission(str, attribute.getName(), paramObjectName, "setAttribute");
-/*      */           
-/*  795 */           attributeList.add(attribute);
-/*  796 */         } catch (SecurityException securityException) {}
-/*      */       } 
-/*      */     } 
-/*      */ 
-/*      */     
-/*      */     try {
-/*  802 */       return dynamicMBean.setAttributes(attributeList);
-/*  803 */     } catch (Throwable throwable) {
-/*  804 */       rethrow(throwable);
-/*  805 */       throw new AssertionError();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object invoke(ObjectName paramObjectName, String paramString, Object[] paramArrayOfObject, String[] paramArrayOfString) throws InstanceNotFoundException, MBeanException, ReflectionException {
-/*  814 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */     
-/*  816 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*  817 */     checkMBeanPermission(dynamicMBean, paramString, paramObjectName, "invoke");
-/*      */     try {
-/*  819 */       return dynamicMBean.invoke(paramString, paramArrayOfObject, paramArrayOfString);
-/*  820 */     } catch (Throwable throwable) {
-/*  821 */       rethrowMaybeMBeanException(throwable);
-/*  822 */       throw new AssertionError();
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void rethrow(Throwable paramThrowable) throws ReflectionException {
-/*      */     try {
-/*  831 */       throw paramThrowable;
-/*  832 */     } catch (ReflectionException reflectionException) {
-/*  833 */       throw reflectionException;
-/*  834 */     } catch (RuntimeOperationsException runtimeOperationsException) {
-/*  835 */       throw runtimeOperationsException;
-/*  836 */     } catch (RuntimeErrorException runtimeErrorException) {
-/*  837 */       throw runtimeErrorException;
-/*  838 */     } catch (RuntimeException runtimeException) {
-/*  839 */       throw new RuntimeMBeanException(runtimeException, runtimeException.toString());
-/*  840 */     } catch (Error error) {
-/*  841 */       throw new RuntimeErrorException(error, error.toString());
-/*  842 */     } catch (Throwable throwable) {
-/*      */       
-/*  844 */       throw new RuntimeException("Unexpected exception", throwable);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static void rethrowMaybeMBeanException(Throwable paramThrowable) throws ReflectionException, MBeanException {
-/*  850 */     if (paramThrowable instanceof MBeanException)
-/*  851 */       throw (MBeanException)paramThrowable; 
-/*  852 */     rethrow(paramThrowable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ObjectInstance registerObject(String paramString, Object paramObject, ObjectName paramObjectName) throws InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
-/*  891 */     if (paramObject == null) {
-/*  892 */       IllegalArgumentException illegalArgumentException = new IllegalArgumentException("Cannot add null object");
-/*      */       
-/*  894 */       throw new RuntimeOperationsException(illegalArgumentException, "Exception occurred trying to register the MBean");
-/*      */     } 
-/*      */ 
-/*      */     
-/*  898 */     DynamicMBean dynamicMBean = Introspector.makeDynamicMBean(paramObject);
-/*      */     
-/*  900 */     return registerDynamicMBean(paramString, dynamicMBean, paramObjectName);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ObjectInstance registerDynamicMBean(String paramString, DynamicMBean paramDynamicMBean, ObjectName paramObjectName) throws InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
-/*  911 */     paramObjectName = nonDefaultDomain(paramObjectName);
-/*      */     
-/*  913 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/*  914 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/*  915 */           .getName(), "registerMBean", "ObjectName = " + paramObjectName);
-/*      */     }
-/*      */ 
-/*      */     
-/*  919 */     ObjectName objectName = preRegister(paramDynamicMBean, this.server, paramObjectName);
-/*      */ 
-/*      */ 
-/*      */     
-/*  923 */     boolean bool1 = false;
-/*  924 */     boolean bool2 = false;
-/*  925 */     ResourceContext resourceContext = null;
-/*      */     
-/*      */     try {
-/*  928 */       if (paramDynamicMBean instanceof DynamicMBean2) {
-/*      */         try {
-/*  930 */           ((DynamicMBean2)paramDynamicMBean).preRegister2(this.server, objectName);
-/*  931 */           bool2 = true;
-/*  932 */         } catch (Exception exception) {
-/*  933 */           if (exception instanceof RuntimeException)
-/*  934 */             throw (RuntimeException)exception; 
-/*  935 */           if (exception instanceof InstanceAlreadyExistsException)
-/*  936 */             throw (InstanceAlreadyExistsException)exception; 
-/*  937 */           throw new RuntimeException(exception);
-/*      */         } 
-/*      */       }
-/*      */       
-/*  941 */       if (objectName != paramObjectName && objectName != null)
-/*      */       {
-/*  943 */         objectName = ObjectName.getInstance(nonDefaultDomain(objectName));
-/*      */       }
-/*      */       
-/*  946 */       checkMBeanPermission(paramString, (String)null, objectName, "registerMBean");
-/*      */       
-/*  948 */       if (objectName == null) {
-/*  949 */         IllegalArgumentException illegalArgumentException = new IllegalArgumentException("No object name specified");
-/*      */         
-/*  951 */         throw new RuntimeOperationsException(illegalArgumentException, "Exception occurred trying to register the MBean");
-/*      */       } 
-/*      */ 
-/*      */       
-/*  955 */       Object object = getResource(paramDynamicMBean);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  966 */       resourceContext = registerWithRepository(object, paramDynamicMBean, objectName);
-/*      */ 
-/*      */       
-/*  969 */       bool2 = false;
-/*  970 */       bool1 = true;
-/*      */     } finally {
-/*      */       
-/*      */       try {
-/*  974 */         postRegister(objectName, paramDynamicMBean, bool1, bool2);
-/*      */       } finally {
-/*  976 */         if (bool1 && resourceContext != null) resourceContext.done(); 
-/*      */       } 
-/*      */     } 
-/*  979 */     return new ObjectInstance(objectName, paramString);
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static void throwMBeanRegistrationException(Throwable paramThrowable, String paramString) throws MBeanRegistrationException {
-/*  984 */     if (paramThrowable instanceof RuntimeException) {
-/*  985 */       throw new RuntimeMBeanException((RuntimeException)paramThrowable, "RuntimeException thrown " + paramString);
-/*      */     }
-/*  987 */     if (paramThrowable instanceof Error) {
-/*  988 */       throw new RuntimeErrorException((Error)paramThrowable, "Error thrown " + paramString);
-/*      */     }
-/*  990 */     if (paramThrowable instanceof MBeanRegistrationException)
-/*  991 */       throw (MBeanRegistrationException)paramThrowable; 
-/*  992 */     if (paramThrowable instanceof Exception) {
-/*  993 */       throw new MBeanRegistrationException((Exception)paramThrowable, "Exception thrown " + paramString);
-/*      */     }
-/*      */     
-/*  996 */     throw new RuntimeException(paramThrowable);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static ObjectName preRegister(DynamicMBean paramDynamicMBean, MBeanServer paramMBeanServer, ObjectName paramObjectName) throws InstanceAlreadyExistsException, MBeanRegistrationException {
-/* 1003 */     ObjectName objectName = null;
-/*      */     
-/*      */     try {
-/* 1006 */       if (paramDynamicMBean instanceof MBeanRegistration)
-/* 1007 */         objectName = ((MBeanRegistration)paramDynamicMBean).preRegister(paramMBeanServer, paramObjectName); 
-/* 1008 */     } catch (Throwable throwable) {
-/* 1009 */       throwMBeanRegistrationException(throwable, "in preRegister method");
-/*      */     } 
-/*      */     
-/* 1012 */     if (objectName != null) return objectName; 
-/* 1013 */     return paramObjectName;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void postRegister(ObjectName paramObjectName, DynamicMBean paramDynamicMBean, boolean paramBoolean1, boolean paramBoolean2) {
-/* 1020 */     if (paramBoolean2 && paramDynamicMBean instanceof DynamicMBean2)
-/* 1021 */       ((DynamicMBean2)paramDynamicMBean).registerFailed(); 
-/*      */     try {
-/* 1023 */       if (paramDynamicMBean instanceof MBeanRegistration)
-/* 1024 */         ((MBeanRegistration)paramDynamicMBean).postRegister(Boolean.valueOf(paramBoolean1)); 
-/* 1025 */     } catch (RuntimeException runtimeException) {
-/* 1026 */       JmxProperties.MBEANSERVER_LOGGER.fine("While registering MBean [" + paramObjectName + "]: Exception thrown by postRegister: rethrowing <" + runtimeException + ">, but keeping the MBean registered");
-/*      */ 
-/*      */       
-/* 1029 */       throw new RuntimeMBeanException(runtimeException, "RuntimeException thrown in postRegister method: rethrowing <" + runtimeException + ">, but keeping the MBean registered");
-/*      */     
-/*      */     }
-/* 1032 */     catch (Error error) {
-/* 1033 */       JmxProperties.MBEANSERVER_LOGGER.fine("While registering MBean [" + paramObjectName + "]: Error thrown by postRegister: rethrowing <" + error + ">, but keeping the MBean registered");
-/*      */ 
-/*      */       
-/* 1036 */       throw new RuntimeErrorException(error, "Error thrown in postRegister method: rethrowing <" + error + ">, but keeping the MBean registered");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void preDeregisterInvoke(MBeanRegistration paramMBeanRegistration) throws MBeanRegistrationException {
-/*      */     try {
-/* 1045 */       paramMBeanRegistration.preDeregister();
-/* 1046 */     } catch (Throwable throwable) {
-/* 1047 */       throwMBeanRegistrationException(throwable, "in preDeregister method");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static void postDeregisterInvoke(ObjectName paramObjectName, MBeanRegistration paramMBeanRegistration) {
-/*      */     try {
-/* 1054 */       paramMBeanRegistration.postDeregister();
-/* 1055 */     } catch (RuntimeException runtimeException) {
-/* 1056 */       JmxProperties.MBEANSERVER_LOGGER.fine("While unregistering MBean [" + paramObjectName + "]: Exception thrown by postDeregister: rethrowing <" + runtimeException + ">, although the MBean is succesfully unregistered");
-/*      */ 
-/*      */ 
-/*      */       
-/* 1060 */       throw new RuntimeMBeanException(runtimeException, "RuntimeException thrown in postDeregister method: rethrowing <" + runtimeException + ">, although the MBean is sucessfully unregistered");
-/*      */ 
-/*      */     
-/*      */     }
-/* 1064 */     catch (Error error) {
-/* 1065 */       JmxProperties.MBEANSERVER_LOGGER.fine("While unregistering MBean [" + paramObjectName + "]: Error thrown by postDeregister: rethrowing <" + error + ">, although the MBean is succesfully unregistered");
-/*      */ 
-/*      */ 
-/*      */       
-/* 1069 */       throw new RuntimeErrorException(error, "Error thrown in postDeregister method: rethrowing <" + error + ">, although the MBean is sucessfully unregistered");
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private DynamicMBean getMBean(ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 1083 */     if (paramObjectName == null) {
-/* 1084 */       throw new RuntimeOperationsException(new IllegalArgumentException("Object name cannot be null"), "Exception occurred trying to get an MBean");
-/*      */     }
-/*      */ 
-/*      */     
-/* 1088 */     DynamicMBean dynamicMBean = this.repository.retrieve(paramObjectName);
-/* 1089 */     if (dynamicMBean == null) {
-/* 1090 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1091 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1092 */             .getName(), "getMBean", paramObjectName + " : Found no object");
-/*      */       }
-/*      */       
-/* 1095 */       throw new InstanceNotFoundException(paramObjectName.toString());
-/*      */     } 
-/* 1097 */     return dynamicMBean;
-/*      */   }
-/*      */   
-/*      */   private static Object getResource(DynamicMBean paramDynamicMBean) {
-/* 1101 */     if (paramDynamicMBean instanceof DynamicMBean2) {
-/* 1102 */       return ((DynamicMBean2)paramDynamicMBean).getResource();
-/*      */     }
-/* 1104 */     return paramDynamicMBean;
-/*      */   }
-/*      */   
-/*      */   private ObjectName nonDefaultDomain(ObjectName paramObjectName) {
-/* 1108 */     if (paramObjectName == null || paramObjectName.getDomain().length() > 0) {
-/* 1109 */       return paramObjectName;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1118 */     String str = this.domain + paramObjectName;
-/*      */     
-/* 1120 */     return Util.newObjectName(str);
-/*      */   }
-/*      */   
-/*      */   public String getDefaultDomain() {
-/* 1124 */     return this.domain;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException {
-/* 1179 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1180 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1181 */           .getName(), "addNotificationListener", "ObjectName = " + paramObjectName);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1185 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/* 1186 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "addNotificationListener");
-/*      */ 
-/*      */     
-/* 1189 */     NotificationBroadcaster notificationBroadcaster = (NotificationBroadcaster)getNotificationBroadcaster(paramObjectName, dynamicMBean, (Class)NotificationBroadcaster.class);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1195 */     if (paramNotificationListener == null) {
-/* 1196 */       throw new RuntimeOperationsException(new IllegalArgumentException("Null listener"), "Null listener");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/* 1201 */     NotificationListener notificationListener = getListenerWrapper(paramNotificationListener, paramObjectName, dynamicMBean, true);
-/* 1202 */     notificationBroadcaster.addNotificationListener(notificationListener, paramNotificationFilter, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void addNotificationListener(ObjectName paramObjectName1, ObjectName paramObjectName2, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException {
-/* 1217 */     DynamicMBean dynamicMBean = getMBean(paramObjectName2);
-/* 1218 */     Object object = getResource(dynamicMBean);
-/* 1219 */     if (!(object instanceof NotificationListener)) {
-/* 1220 */       throw new RuntimeOperationsException(new IllegalArgumentException(paramObjectName2
-/* 1221 */             .getCanonicalName()), "The MBean " + paramObjectName2
-/* 1222 */           .getCanonicalName() + "does not implement the NotificationListener interface");
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1229 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1230 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1231 */           .getName(), "addNotificationListener", "ObjectName = " + paramObjectName1 + ", Listener = " + paramObjectName2);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1235 */     this.server.addNotificationListener(paramObjectName1, (NotificationListener)object, paramNotificationFilter, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 1242 */     removeNotificationListener(paramObjectName, paramNotificationListener, null, null, true);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 1250 */     removeNotificationListener(paramObjectName, paramNotificationListener, paramNotificationFilter, paramObject, false);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNotificationListener(ObjectName paramObjectName1, ObjectName paramObjectName2) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 1256 */     NotificationListener notificationListener = getListener(paramObjectName2);
-/*      */     
-/* 1258 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1259 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1260 */           .getName(), "removeNotificationListener", "ObjectName = " + paramObjectName1 + ", Listener = " + paramObjectName2);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1264 */     this.server.removeNotificationListener(paramObjectName1, notificationListener);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public void removeNotificationListener(ObjectName paramObjectName1, ObjectName paramObjectName2, NotificationFilter paramNotificationFilter, Object paramObject) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 1273 */     NotificationListener notificationListener = getListener(paramObjectName2);
-/*      */     
-/* 1275 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1276 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1277 */           .getName(), "removeNotificationListener", "ObjectName = " + paramObjectName1 + ", Listener = " + paramObjectName2);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1281 */     this.server.removeNotificationListener(paramObjectName1, notificationListener, paramNotificationFilter, paramObject);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private NotificationListener getListener(ObjectName paramObjectName) throws ListenerNotFoundException {
-/*      */     DynamicMBean dynamicMBean;
-/*      */     try {
-/* 1291 */       dynamicMBean = getMBean(paramObjectName);
-/* 1292 */     } catch (InstanceNotFoundException instanceNotFoundException) {
-/* 1293 */       throw (ListenerNotFoundException)EnvHelp.initCause(new ListenerNotFoundException(instanceNotFoundException
-/* 1294 */             .getMessage()), instanceNotFoundException);
-/*      */     } 
-/*      */     
-/* 1297 */     Object object = getResource(dynamicMBean);
-/* 1298 */     if (!(object instanceof NotificationListener)) {
-/*      */       
-/* 1300 */       IllegalArgumentException illegalArgumentException = new IllegalArgumentException(paramObjectName.getCanonicalName());
-/*      */ 
-/*      */       
-/* 1303 */       String str = "MBean " + paramObjectName.getCanonicalName() + " does not implement " + NotificationListener.class.getName();
-/* 1304 */       throw new RuntimeOperationsException(illegalArgumentException, str);
-/*      */     } 
-/* 1306 */     return (NotificationListener)object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void removeNotificationListener(ObjectName paramObjectName, NotificationListener paramNotificationListener, NotificationFilter paramNotificationFilter, Object paramObject, boolean paramBoolean) throws InstanceNotFoundException, ListenerNotFoundException {
-/* 1316 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1317 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1318 */           .getName(), "removeNotificationListener", "ObjectName = " + paramObjectName);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1322 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/* 1323 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "removeNotificationListener");
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1330 */     Class clazz = (Class)(paramBoolean ? NotificationBroadcaster.class : NotificationEmitter.class);
-/*      */ 
-/*      */     
-/* 1333 */     NotificationBroadcaster notificationBroadcaster = (NotificationBroadcaster)getNotificationBroadcaster(paramObjectName, dynamicMBean, clazz);
-/*      */ 
-/*      */     
-/* 1336 */     NotificationListener notificationListener = getListenerWrapper(paramNotificationListener, paramObjectName, dynamicMBean, false);
-/*      */     
-/* 1338 */     if (notificationListener == null) {
-/* 1339 */       throw new ListenerNotFoundException("Unknown listener");
-/*      */     }
-/* 1341 */     if (paramBoolean) {
-/* 1342 */       notificationBroadcaster.removeNotificationListener(notificationListener);
-/*      */     } else {
-/* 1344 */       NotificationEmitter notificationEmitter = (NotificationEmitter)notificationBroadcaster;
-/* 1345 */       notificationEmitter.removeNotificationListener(notificationListener, paramNotificationFilter, paramObject);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static <T extends NotificationBroadcaster> T getNotificationBroadcaster(ObjectName paramObjectName, Object paramObject, Class<T> paramClass) {
-/* 1354 */     if (paramClass.isInstance(paramObject))
-/* 1355 */       return paramClass.cast(paramObject); 
-/* 1356 */     if (paramObject instanceof DynamicMBean2)
-/* 1357 */       paramObject = ((DynamicMBean2)paramObject).getResource(); 
-/* 1358 */     if (paramClass.isInstance(paramObject)) {
-/* 1359 */       return paramClass.cast(paramObject);
-/*      */     }
-/* 1361 */     IllegalArgumentException illegalArgumentException = new IllegalArgumentException(paramObjectName.getCanonicalName());
-/*      */ 
-/*      */     
-/* 1364 */     String str = "MBean " + paramObjectName.getCanonicalName() + " does not implement " + paramClass.getName();
-/* 1365 */     throw new RuntimeOperationsException(illegalArgumentException, str);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public MBeanInfo getMBeanInfo(ObjectName paramObjectName) throws InstanceNotFoundException, IntrospectionException, ReflectionException {
-/*      */     MBeanInfo mBeanInfo;
-/* 1375 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/*      */     
-/*      */     try {
-/* 1378 */       mBeanInfo = dynamicMBean.getMBeanInfo();
-/* 1379 */     } catch (RuntimeMBeanException runtimeMBeanException) {
-/* 1380 */       throw runtimeMBeanException;
-/* 1381 */     } catch (RuntimeErrorException runtimeErrorException) {
-/* 1382 */       throw runtimeErrorException;
-/* 1383 */     } catch (RuntimeException runtimeException) {
-/* 1384 */       throw new RuntimeMBeanException(runtimeException, "getMBeanInfo threw RuntimeException");
-/*      */     }
-/* 1386 */     catch (Error error) {
-/* 1387 */       throw new RuntimeErrorException(error, "getMBeanInfo threw Error");
-/*      */     } 
-/* 1389 */     if (mBeanInfo == null) {
-/* 1390 */       throw new JMRuntimeException("MBean " + paramObjectName + "has no MBeanInfo");
-/*      */     }
-/*      */     
-/* 1393 */     checkMBeanPermission(mBeanInfo.getClassName(), (String)null, paramObjectName, "getMBeanInfo");
-/*      */     
-/* 1395 */     return mBeanInfo;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public boolean isInstanceOf(ObjectName paramObjectName, String paramString) throws InstanceNotFoundException {
-/* 1401 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/* 1402 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "isInstanceOf");
-/*      */     
-/*      */     try {
-/* 1405 */       Object object = getResource(dynamicMBean);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1410 */       String str = (object instanceof DynamicMBean) ? getClassName((DynamicMBean)object) : object.getClass().getName();
-/*      */       
-/* 1412 */       if (str.equals(paramString))
-/* 1413 */         return true; 
-/* 1414 */       ClassLoader classLoader = object.getClass().getClassLoader();
-/*      */       
-/* 1416 */       Class<?> clazz1 = Class.forName(paramString, false, classLoader);
-/* 1417 */       if (clazz1.isInstance(object)) {
-/* 1418 */         return true;
-/*      */       }
-/* 1420 */       Class<?> clazz2 = Class.forName(str, false, classLoader);
-/* 1421 */       return clazz1.isAssignableFrom(clazz2);
-/* 1422 */     } catch (Exception exception) {
-/*      */       
-/* 1424 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
-/* 1425 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINEST, DefaultMBeanServerInterceptor.class
-/* 1426 */             .getName(), "isInstanceOf", "Exception calling isInstanceOf", exception);
-/*      */       }
-/*      */       
-/* 1429 */       return false;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ClassLoader getClassLoaderFor(ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 1444 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/* 1445 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "getClassLoaderFor");
-/* 1446 */     return getResource(dynamicMBean).getClass().getClassLoader();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ClassLoader getClassLoader(ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 1459 */     if (paramObjectName == null) {
-/* 1460 */       checkMBeanPermission((String)null, (String)null, (ObjectName)null, "getClassLoader");
-/* 1461 */       return this.server.getClass().getClassLoader();
-/*      */     } 
-/*      */     
-/* 1464 */     DynamicMBean dynamicMBean = getMBean(paramObjectName);
-/* 1465 */     checkMBeanPermission(dynamicMBean, (String)null, paramObjectName, "getClassLoader");
-/*      */     
-/* 1467 */     Object object = getResource(dynamicMBean);
-/*      */ 
-/*      */     
-/* 1470 */     if (!(object instanceof ClassLoader)) {
-/* 1471 */       throw new InstanceNotFoundException(paramObjectName.toString() + " is not a classloader");
-/*      */     }
-/*      */     
-/* 1474 */     return (ClassLoader)object;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void sendNotification(String paramString, ObjectName paramObjectName) {
-/* 1489 */     MBeanServerNotification mBeanServerNotification = new MBeanServerNotification(paramString, MBeanServerDelegate.DELEGATE_NAME, 0L, paramObjectName);
-/*      */ 
-/*      */     
-/* 1492 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1493 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1494 */           .getName(), "sendNotification", paramString + " " + paramObjectName);
-/*      */     }
-/*      */ 
-/*      */     
-/* 1498 */     this.delegate.sendNotification(mBeanServerNotification);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<ObjectName> objectNamesFromFilteredNamedObjects(Set<NamedObject> paramSet, QueryExp paramQueryExp) {
-/* 1507 */     HashSet<ObjectName> hashSet = new HashSet();
-/*      */     
-/* 1509 */     if (paramQueryExp == null) {
-/* 1510 */       for (NamedObject namedObject : paramSet) {
-/* 1511 */         hashSet.add(namedObject.getName());
-/*      */       }
-/*      */     } else {
-/*      */       
-/* 1515 */       MBeanServer mBeanServer = QueryEval.getMBeanServer();
-/* 1516 */       paramQueryExp.setMBeanServer(this.server);
-/*      */       try {
-/* 1518 */         for (NamedObject namedObject : paramSet) {
-/*      */           boolean bool;
-/*      */           try {
-/* 1521 */             bool = paramQueryExp.apply(namedObject.getName());
-/* 1522 */           } catch (Exception exception) {
-/* 1523 */             bool = false;
-/*      */           } 
-/* 1525 */           if (bool) {
-/* 1526 */             hashSet.add(namedObject.getName());
-/*      */ 
-/*      */           
-/*      */           }
-/*      */ 
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       finally {
-/*      */ 
-/*      */         
-/* 1539 */         paramQueryExp.setMBeanServer(mBeanServer);
-/*      */       } 
-/*      */     } 
-/* 1542 */     return hashSet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<ObjectInstance> objectInstancesFromFilteredNamedObjects(Set<NamedObject> paramSet, QueryExp paramQueryExp) {
-/* 1551 */     HashSet<ObjectInstance> hashSet = new HashSet();
-/*      */     
-/* 1553 */     if (paramQueryExp == null) {
-/* 1554 */       for (NamedObject namedObject : paramSet) {
-/* 1555 */         DynamicMBean dynamicMBean = namedObject.getObject();
-/* 1556 */         String str = safeGetClassName(dynamicMBean);
-/* 1557 */         hashSet.add(new ObjectInstance(namedObject.getName(), str));
-/*      */       } 
-/*      */     } else {
-/*      */       
-/* 1561 */       MBeanServer mBeanServer = QueryEval.getMBeanServer();
-/* 1562 */       paramQueryExp.setMBeanServer(this.server);
-/*      */       try {
-/* 1564 */         for (NamedObject namedObject : paramSet) {
-/* 1565 */           boolean bool; DynamicMBean dynamicMBean = namedObject.getObject();
-/*      */           
-/*      */           try {
-/* 1568 */             bool = paramQueryExp.apply(namedObject.getName());
-/* 1569 */           } catch (Exception exception) {
-/* 1570 */             bool = false;
-/*      */           } 
-/* 1572 */           if (bool) {
-/* 1573 */             String str = safeGetClassName(dynamicMBean);
-/* 1574 */             hashSet.add(new ObjectInstance(namedObject.getName(), str));
-/*      */ 
-/*      */           
-/*      */           }
-/*      */ 
-/*      */         
-/*      */         }
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       finally {
-/*      */ 
-/*      */         
-/* 1587 */         paramQueryExp.setMBeanServer(mBeanServer);
-/*      */       } 
-/*      */     } 
-/* 1590 */     return hashSet;
-/*      */   }
-/*      */   
-/*      */   private static String safeGetClassName(DynamicMBean paramDynamicMBean) {
-/*      */     try {
-/* 1595 */       return getClassName(paramDynamicMBean);
-/* 1596 */     } catch (Exception exception) {
-/* 1597 */       if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
-/* 1598 */         JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINEST, DefaultMBeanServerInterceptor.class
-/* 1599 */             .getName(), "safeGetClassName", "Exception getting MBean class name", exception);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1603 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private Set<ObjectInstance> filterListOfObjectInstances(Set<ObjectInstance> paramSet, QueryExp paramQueryExp) {
-/* 1615 */     if (paramQueryExp == null) {
-/* 1616 */       return paramSet;
-/*      */     }
-/* 1618 */     HashSet<ObjectInstance> hashSet = new HashSet();
-/*      */ 
-/*      */     
-/* 1621 */     for (ObjectInstance objectInstance : paramSet) {
-/* 1622 */       boolean bool = false;
-/* 1623 */       MBeanServer mBeanServer = QueryEval.getMBeanServer();
-/* 1624 */       paramQueryExp.setMBeanServer(this.server);
-/*      */       try {
-/* 1626 */         bool = paramQueryExp.apply(objectInstance.getObjectName());
-/* 1627 */       } catch (Exception exception) {
-/* 1628 */         bool = false;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*      */       }
-/*      */       finally {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/* 1639 */         paramQueryExp.setMBeanServer(mBeanServer);
-/*      */       } 
-/* 1641 */       if (bool) {
-/* 1642 */         hashSet.add(objectInstance);
-/*      */       }
-/*      */     } 
-/* 1645 */     return hashSet;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private NotificationListener getListenerWrapper(NotificationListener paramNotificationListener, ObjectName paramObjectName, DynamicMBean paramDynamicMBean, boolean paramBoolean) {
-/* 1669 */     Object object = getResource(paramDynamicMBean);
-/* 1670 */     ListenerWrapper listenerWrapper = new ListenerWrapper(paramNotificationListener, paramObjectName, object);
-/* 1671 */     synchronized (this.listenerWrappers) {
-/* 1672 */       WeakReference<NotificationListener> weakReference = (WeakReference)this.listenerWrappers.get(listenerWrapper);
-/* 1673 */       if (weakReference != null) {
-/* 1674 */         NotificationListener notificationListener = weakReference.get();
-/* 1675 */         if (notificationListener != null)
-/* 1676 */           return notificationListener; 
-/*      */       } 
-/* 1678 */       if (paramBoolean) {
-/* 1679 */         weakReference = new WeakReference<>(listenerWrapper);
-/* 1680 */         this.listenerWrappers.put(listenerWrapper, weakReference);
-/* 1681 */         return listenerWrapper;
-/*      */       } 
-/* 1683 */       return null;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Object instantiate(String paramString) throws ReflectionException, MBeanException {
-/* 1689 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object instantiate(String paramString, ObjectName paramObjectName) throws ReflectionException, MBeanException, InstanceNotFoundException {
-/* 1695 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public Object instantiate(String paramString, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, MBeanException {
-/* 1700 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public Object instantiate(String paramString, ObjectName paramObjectName, Object[] paramArrayOfObject, String[] paramArrayOfString) throws ReflectionException, MBeanException, InstanceNotFoundException {
-/* 1707 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public ObjectInputStream deserialize(ObjectName paramObjectName, byte[] paramArrayOfbyte) throws InstanceNotFoundException, OperationsException {
-/* 1712 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   public ObjectInputStream deserialize(String paramString, byte[] paramArrayOfbyte) throws OperationsException, ReflectionException {
-/* 1717 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public ObjectInputStream deserialize(String paramString, ObjectName paramObjectName, byte[] paramArrayOfbyte) throws InstanceNotFoundException, OperationsException, ReflectionException {
-/* 1723 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */   
-/*      */   public ClassLoaderRepository getClassLoaderRepository() {
-/* 1727 */     throw new UnsupportedOperationException("Not supported yet.");
-/*      */   }
-/*      */   private static class ListenerWrapper implements NotificationListener { private NotificationListener listener; private ObjectName name;
-/*      */     private Object mbean;
-/*      */     
-/*      */     ListenerWrapper(NotificationListener param1NotificationListener, ObjectName param1ObjectName, Object param1Object) {
-/* 1733 */       this.listener = param1NotificationListener;
-/* 1734 */       this.name = param1ObjectName;
-/* 1735 */       this.mbean = param1Object;
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public void handleNotification(Notification param1Notification, Object param1Object) {
-/* 1740 */       if (param1Notification != null && 
-/* 1741 */         param1Notification.getSource() == this.mbean) {
-/* 1742 */         param1Notification.setSource(this.name);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1754 */       this.listener.handleNotification(param1Notification, param1Object);
-/*      */     }
-/*      */ 
-/*      */     
-/*      */     public boolean equals(Object param1Object) {
-/* 1759 */       if (!(param1Object instanceof ListenerWrapper))
-/* 1760 */         return false; 
-/* 1761 */       ListenerWrapper listenerWrapper = (ListenerWrapper)param1Object;
-/* 1762 */       return (listenerWrapper.listener == this.listener && listenerWrapper.mbean == this.mbean && listenerWrapper.name
-/* 1763 */         .equals(this.name));
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public int hashCode() {
-/* 1776 */       return System.identityHashCode(this.listener) ^ 
-/* 1777 */         System.identityHashCode(this.mbean);
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static String getClassName(DynamicMBean paramDynamicMBean) {
-/* 1801 */     if (paramDynamicMBean instanceof DynamicMBean2) {
-/* 1802 */       return ((DynamicMBean2)paramDynamicMBean).getClassName();
-/*      */     }
-/* 1804 */     return paramDynamicMBean.getMBeanInfo().getClassName();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void checkMBeanPermission(DynamicMBean paramDynamicMBean, String paramString1, ObjectName paramObjectName, String paramString2) {
-/* 1811 */     SecurityManager securityManager = System.getSecurityManager();
-/* 1812 */     if (securityManager != null) {
-/* 1813 */       checkMBeanPermission(safeGetClassName(paramDynamicMBean), paramString1, paramObjectName, paramString2);
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static void checkMBeanPermission(String paramString1, String paramString2, ObjectName paramObjectName, String paramString3) {
-/* 1824 */     SecurityManager securityManager = System.getSecurityManager();
-/* 1825 */     if (securityManager != null) {
-/* 1826 */       MBeanPermission mBeanPermission = new MBeanPermission(paramString1, paramString2, paramObjectName, paramString3);
-/*      */ 
-/*      */ 
-/*      */       
-/* 1830 */       securityManager.checkPermission(mBeanPermission);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   private static void checkMBeanTrustPermission(final Class<?> theClass) throws SecurityException {
-/* 1836 */     SecurityManager securityManager = System.getSecurityManager();
-/* 1837 */     if (securityManager != null) {
-/* 1838 */       MBeanTrustPermission mBeanTrustPermission = new MBeanTrustPermission("register");
-/* 1839 */       PrivilegedAction<ProtectionDomain> privilegedAction = new PrivilegedAction<ProtectionDomain>()
-/*      */         {
-/*      */           public ProtectionDomain run() {
-/* 1842 */             return theClass.getProtectionDomain();
-/*      */           }
-/*      */         };
-/* 1845 */       ProtectionDomain protectionDomain = AccessController.<ProtectionDomain>doPrivileged(privilegedAction);
-/* 1846 */       AccessControlContext accessControlContext = new AccessControlContext(new ProtectionDomain[] { protectionDomain });
-/*      */       
-/* 1848 */       securityManager.checkPermission(mBeanTrustPermission, accessControlContext);
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private static interface ResourceContext
-/*      */     extends Repository.RegistrationContext
-/*      */   {
-/* 1869 */     public static final ResourceContext NONE = new ResourceContext()
-/*      */       {
-/*      */         public void done() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         public void registering() {}
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         public void unregistered() {}
-/*      */       };
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void done();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ResourceContext registerWithRepository(Object paramObject, DynamicMBean paramDynamicMBean, ObjectName paramObjectName) throws InstanceAlreadyExistsException, MBeanRegistrationException {
-/* 1895 */     ResourceContext resourceContext = makeResourceContextFor(paramObject, paramObjectName);
-/*      */ 
-/*      */     
-/* 1898 */     this.repository.addMBean(paramDynamicMBean, paramObjectName, resourceContext);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1904 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1905 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1906 */           .getName(), "addObject", "Send create notification of object " + paramObjectName
-/*      */           
-/* 1908 */           .getCanonicalName());
-/*      */     }
-/*      */     
-/* 1911 */     sendNotification("JMX.mbean.registered", paramObjectName);
-/*      */ 
-/*      */ 
-/*      */     
-/* 1915 */     return resourceContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ResourceContext unregisterFromRepository(Object paramObject, DynamicMBean paramDynamicMBean, ObjectName paramObjectName) throws InstanceNotFoundException {
-/* 1937 */     ResourceContext resourceContext = makeResourceContextFor(paramObject, paramObjectName);
-/*      */ 
-/*      */     
-/* 1940 */     this.repository.remove(paramObjectName, resourceContext);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 1945 */     if (JmxProperties.MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
-/* 1946 */       JmxProperties.MBEANSERVER_LOGGER.logp(Level.FINER, DefaultMBeanServerInterceptor.class
-/* 1947 */           .getName(), "unregisterMBean", "Send delete notification of object " + paramObjectName
-/*      */           
-/* 1949 */           .getCanonicalName());
-/*      */     }
-/*      */     
-/* 1952 */     sendNotification("JMX.mbean.unregistered", paramObjectName);
-/*      */     
-/* 1954 */     return resourceContext;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void addClassLoader(ClassLoader paramClassLoader, ObjectName paramObjectName) {
-/* 1976 */     ModifiableClassLoaderRepository modifiableClassLoaderRepository = getInstantiatorCLR();
-/* 1977 */     if (modifiableClassLoaderRepository == null) {
-/* 1978 */       IllegalArgumentException illegalArgumentException = new IllegalArgumentException("Dynamic addition of class loaders is not supported");
-/*      */ 
-/*      */ 
-/*      */       
-/* 1982 */       throw new RuntimeOperationsException(illegalArgumentException, "Exception occurred trying to register the MBean as a class loader");
-/*      */     } 
-/*      */ 
-/*      */     
-/* 1986 */     modifiableClassLoaderRepository.addClassLoader(paramObjectName, paramClassLoader);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private void removeClassLoader(ClassLoader paramClassLoader, ObjectName paramObjectName) {
-/* 2001 */     if (paramClassLoader != this.server.getClass().getClassLoader()) {
-/* 2002 */       ModifiableClassLoaderRepository modifiableClassLoaderRepository = getInstantiatorCLR();
-/* 2003 */       if (modifiableClassLoaderRepository != null) {
-/* 2004 */         modifiableClassLoaderRepository.removeClassLoader(paramObjectName);
-/*      */       }
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ResourceContext createClassLoaderContext(final ClassLoader loader, final ObjectName logicalName) {
-/* 2027 */     return new ResourceContext()
-/*      */       {
-/*      */         public void registering() {
-/* 2030 */           DefaultMBeanServerInterceptor.this.addClassLoader(loader, logicalName);
-/*      */         }
-/*      */         
-/*      */         public void unregistered() {
-/* 2034 */           DefaultMBeanServerInterceptor.this.removeClassLoader(loader, logicalName);
-/*      */         }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */         
-/*      */         public void done() {}
-/*      */       };
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   private ResourceContext makeResourceContextFor(Object paramObject, ObjectName paramObjectName) {
-/* 2054 */     if (paramObject instanceof ClassLoader) {
-/* 2055 */       return createClassLoaderContext((ClassLoader)paramObject, paramObjectName);
-/*      */     }
-/*      */     
-/* 2058 */     return ResourceContext.NONE;
-/*      */   }
-/*      */   
-/*      */   private ModifiableClassLoaderRepository getInstantiatorCLR() {
-/* 2062 */     return AccessController.<ModifiableClassLoaderRepository>doPrivileged(new PrivilegedAction<ModifiableClassLoaderRepository>()
-/*      */         {
-/*      */           public ModifiableClassLoaderRepository run() {
-/* 2065 */             return (DefaultMBeanServerInterceptor.this.instantiator != null) ? DefaultMBeanServerInterceptor.this.instantiator.getClassLoaderRepository() : null;
-/*      */           }
-/*      */         });
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\jmx\interceptor\DefaultMBeanServerInterceptor.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.jmx.interceptor;
+
+
+// JMX RI
+import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
+import com.sun.jmx.mbeanserver.DynamicMBean2;
+import com.sun.jmx.mbeanserver.Introspector;
+import com.sun.jmx.mbeanserver.MBeanInstantiator;
+import com.sun.jmx.mbeanserver.ModifiableClassLoaderRepository;
+import com.sun.jmx.mbeanserver.NamedObject;
+import com.sun.jmx.mbeanserver.Repository;
+import com.sun.jmx.mbeanserver.Repository.RegistrationContext;
+import com.sun.jmx.mbeanserver.Util;
+import com.sun.jmx.remote.util.EnvHelp;
+
+import java.io.ObjectInputStream;
+import java.lang.ref.WeakReference;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.logging.Level;
+
+// JMX import
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.JMRuntimeException;
+import javax.management.ListenerNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanPermission;
+import javax.management.MBeanRegistration;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerDelegate;
+import javax.management.MBeanServerNotification;
+import javax.management.MBeanTrustPermission;
+import javax.management.NotCompliantMBeanException;
+import javax.management.Notification;
+import javax.management.NotificationBroadcaster;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.OperationsException;
+import javax.management.QueryEval;
+import javax.management.QueryExp;
+import javax.management.ReflectionException;
+import javax.management.RuntimeErrorException;
+import javax.management.RuntimeMBeanException;
+import javax.management.RuntimeOperationsException;
+import javax.management.loading.ClassLoaderRepository;
+
+/**
+ * This is the default class for MBean manipulation on the agent side. It
+ * contains the methods necessary for the creation, registration, and
+ * deletion of MBeans as well as the access methods for registered MBeans.
+ * This is the core component of the JMX infrastructure.
+ * <P>
+ * Every MBean which is added to the MBean server becomes manageable: its attributes and operations
+ * become remotely accessible through the connectors/adaptors connected to that MBean server.
+ * A Java object cannot be registered in the MBean server unless it is a JMX compliant MBean.
+ * <P>
+ * When an MBean is registered or unregistered in the MBean server an
+ * {@link javax.management.MBeanServerNotification MBeanServerNotification}
+ * Notification is emitted. To register an object as listener to MBeanServerNotifications
+ * you should call the MBean server method {@link #addNotificationListener addNotificationListener} with <CODE>ObjectName</CODE>
+ * the <CODE>ObjectName</CODE> of the {@link javax.management.MBeanServerDelegate MBeanServerDelegate}.
+ * This <CODE>ObjectName</CODE> is:
+ * <BR>
+ * <CODE>JMImplementation:type=MBeanServerDelegate</CODE>.
+ *
+ * @since 1.5
+ */
+public class DefaultMBeanServerInterceptor implements MBeanServerInterceptor {
+
+    /** The MBeanInstantiator object used by the
+     *  DefaultMBeanServerInterceptor */
+    private final transient MBeanInstantiator instantiator;
+
+    /** The MBean server object that is associated to the
+     *  DefaultMBeanServerInterceptor */
+    private transient MBeanServer server = null;
+
+    /** The MBean server delegate object that is associated to the
+     *  DefaultMBeanServerInterceptor */
+    private final transient MBeanServerDelegate delegate;
+
+    /** The Repository object used by the DefaultMBeanServerInterceptor */
+    private final transient Repository repository;
+
+    /** Wrappers for client listeners.  */
+    /* See the comment before addNotificationListener below.  */
+    private final transient
+        WeakHashMap<ListenerWrapper, WeakReference<ListenerWrapper>>
+            listenerWrappers =
+                new WeakHashMap<ListenerWrapper,
+                                WeakReference<ListenerWrapper>>();
+
+    /** The default domain of the object names */
+    private final String domain;
+
+    /** The sequence number identifying the notifications sent */
+    // Now sequence number is handled by MBeanServerDelegate.
+    // private int sequenceNumber=0;
+
+    /**
+     * Creates a DefaultMBeanServerInterceptor with the specified
+     * repository instance.
+     * <p>Do not forget to call <code>initialize(outer,delegate)</code>
+     * before using this object.
+     * @param outer A pointer to the MBeanServer object that must be
+     *        passed to the MBeans when invoking their
+     *        {@link javax.management.MBeanRegistration} interface.
+     * @param delegate A pointer to the MBeanServerDelegate associated
+     *        with the new MBeanServer. The new MBeanServer must register
+     *        this MBean in its MBean repository.
+     * @param instantiator The MBeanInstantiator that will be used to
+     *        instantiate MBeans and take care of class loading issues.
+     * @param repository The repository to use for this MBeanServer.
+     */
+    public DefaultMBeanServerInterceptor(MBeanServer         outer,
+                                         MBeanServerDelegate delegate,
+                                         MBeanInstantiator   instantiator,
+                                         Repository          repository) {
+        if (outer == null) throw new
+            IllegalArgumentException("outer MBeanServer cannot be null");
+        if (delegate == null) throw new
+            IllegalArgumentException("MBeanServerDelegate cannot be null");
+        if (instantiator == null) throw new
+            IllegalArgumentException("MBeanInstantiator cannot be null");
+        if (repository == null) throw new
+            IllegalArgumentException("Repository cannot be null");
+
+        this.server   = outer;
+        this.delegate = delegate;
+        this.instantiator = instantiator;
+        this.repository   = repository;
+        this.domain       = repository.getDefaultDomain();
+    }
+
+    public ObjectInstance createMBean(String className, ObjectName name)
+        throws ReflectionException, InstanceAlreadyExistsException,
+               MBeanRegistrationException, MBeanException,
+               NotCompliantMBeanException {
+
+        return createMBean(className, name, (Object[]) null, (String[]) null);
+
+    }
+
+    public ObjectInstance createMBean(String className, ObjectName name,
+                                      ObjectName loaderName)
+        throws ReflectionException, InstanceAlreadyExistsException,
+               MBeanRegistrationException, MBeanException,
+               NotCompliantMBeanException, InstanceNotFoundException {
+
+        return createMBean(className, name, loaderName, (Object[]) null,
+                           (String[]) null);
+    }
+
+    public ObjectInstance createMBean(String className, ObjectName name,
+                                      Object[] params, String[] signature)
+        throws ReflectionException, InstanceAlreadyExistsException,
+               MBeanRegistrationException, MBeanException,
+               NotCompliantMBeanException  {
+
+        try {
+            return createMBean(className, name, null, true,
+                               params, signature);
+        } catch (InstanceNotFoundException e) {
+            /* Can only happen if loaderName doesn't exist, but we just
+               passed null, so we shouldn't get this exception.  */
+            throw EnvHelp.initCause(
+                new IllegalArgumentException("Unexpected exception: " + e), e);
+        }
+    }
+
+    public ObjectInstance createMBean(String className, ObjectName name,
+                                      ObjectName loaderName,
+                                      Object[] params, String[] signature)
+        throws ReflectionException, InstanceAlreadyExistsException,
+               MBeanRegistrationException, MBeanException,
+               NotCompliantMBeanException, InstanceNotFoundException  {
+
+        return createMBean(className, name, loaderName, false,
+                           params, signature);
+    }
+
+    private ObjectInstance createMBean(String className, ObjectName name,
+                                       ObjectName loaderName,
+                                       boolean withDefaultLoaderRepository,
+                                       Object[] params, String[] signature)
+        throws ReflectionException, InstanceAlreadyExistsException,
+               MBeanRegistrationException, MBeanException,
+               NotCompliantMBeanException, InstanceNotFoundException {
+
+        Class<?> theClass;
+
+        if (className == null) {
+            final RuntimeException wrapped =
+                new IllegalArgumentException("The class name cannot be null");
+            throw new RuntimeOperationsException(wrapped,
+                      "Exception occurred during MBean creation");
+        }
+
+        if (name != null) {
+            if (name.isPattern()) {
+                final RuntimeException wrapped =
+                    new IllegalArgumentException("Invalid name->" +
+                                                 name.toString());
+                final String msg = "Exception occurred during MBean creation";
+                throw new RuntimeOperationsException(wrapped, msg);
+            }
+
+            name = nonDefaultDomain(name);
+        }
+
+        checkMBeanPermission(className, null, null, "instantiate");
+        checkMBeanPermission(className, null, name, "registerMBean");
+
+        /* Load the appropriate class. */
+        if (withDefaultLoaderRepository) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                MBEANSERVER_LOGGER.logp(Level.FINER,
+                        DefaultMBeanServerInterceptor.class.getName(),
+                        "createMBean",
+                        "ClassName = " + className + ", ObjectName = " + name);
+            }
+            theClass =
+                instantiator.findClassWithDefaultLoaderRepository(className);
+        } else if (loaderName == null) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                MBEANSERVER_LOGGER.logp(Level.FINER,
+                        DefaultMBeanServerInterceptor.class.getName(),
+                        "createMBean", "ClassName = " + className +
+                        ", ObjectName = " + name + ", Loader name = null");
+            }
+
+            theClass = instantiator.findClass(className,
+                                  server.getClass().getClassLoader());
+        } else {
+            loaderName = nonDefaultDomain(loaderName);
+
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                MBEANSERVER_LOGGER.logp(Level.FINER,
+                        DefaultMBeanServerInterceptor.class.getName(),
+                        "createMBean", "ClassName = " + className +
+                        ", ObjectName = " + name +
+                        ", Loader name = " + loaderName);
+            }
+
+            theClass = instantiator.findClass(className, loaderName);
+        }
+
+        checkMBeanTrustPermission(theClass);
+
+        // Check that the MBean can be instantiated by the MBeanServer.
+        Introspector.testCreation(theClass);
+
+        // Check the JMX MBean compliance of the class
+        Introspector.checkCompliance(theClass);
+
+        Object moi= instantiator.instantiate(theClass, params,  signature,
+                                             server.getClass().getClassLoader());
+
+        final String infoClassName = getNewMBeanClassName(moi);
+
+        return registerObject(infoClassName, moi, name);
+    }
+
+    public ObjectInstance registerMBean(Object object, ObjectName name)
+        throws InstanceAlreadyExistsException, MBeanRegistrationException,
+        NotCompliantMBeanException  {
+
+        // ------------------------------
+        // ------------------------------
+        Class<?> theClass = object.getClass();
+
+        Introspector.checkCompliance(theClass);
+
+        final String infoClassName = getNewMBeanClassName(object);
+
+        checkMBeanPermission(infoClassName, null, name, "registerMBean");
+        checkMBeanTrustPermission(theClass);
+
+        return registerObject(infoClassName, object, name);
+    }
+
+    private static String getNewMBeanClassName(Object mbeanToRegister)
+            throws NotCompliantMBeanException {
+        if (mbeanToRegister instanceof DynamicMBean) {
+            DynamicMBean mbean = (DynamicMBean) mbeanToRegister;
+            final String name;
+            try {
+                name = mbean.getMBeanInfo().getClassName();
+            } catch (Exception e) {
+                // Includes case where getMBeanInfo() returns null
+                NotCompliantMBeanException ncmbe =
+                    new NotCompliantMBeanException("Bad getMBeanInfo()");
+                ncmbe.initCause(e);
+                throw ncmbe;
+            }
+            if (name == null) {
+                final String msg = "MBeanInfo has null class name";
+                throw new NotCompliantMBeanException(msg);
+            }
+            return name;
+        } else
+            return mbeanToRegister.getClass().getName();
+    }
+
+    private final Set<ObjectName> beingUnregistered =
+        new HashSet<ObjectName>();
+
+    public void unregisterMBean(ObjectName name)
+            throws InstanceNotFoundException, MBeanRegistrationException  {
+
+        if (name == null) {
+            final RuntimeException wrapped =
+                new IllegalArgumentException("Object name cannot be null");
+            throw new RuntimeOperationsException(wrapped,
+                      "Exception occurred trying to unregister the MBean");
+        }
+
+        name = nonDefaultDomain(name);
+
+        /* The semantics of preDeregister are tricky.  If it throws an
+           exception, then the unregisterMBean fails.  This allows an
+           MBean to refuse to be unregistered.  If it returns
+           successfully, then the unregisterMBean can proceed.  In
+           this case the preDeregister may have cleaned up some state,
+           and will not expect to be called a second time.  So if two
+           threads try to unregister the same MBean at the same time
+           then one of them must wait for the other one to either (a)
+           call preDeregister and get an exception or (b) call
+           preDeregister successfully and unregister the MBean.
+           Suppose thread T1 is unregistering an MBean and thread T2
+           is trying to unregister the same MBean, so waiting for T1.
+           Then a deadlock is possible if the preDeregister for T1
+           ends up needing a lock held by T2.  Given the semantics
+           just described, there does not seem to be any way to avoid
+           this.  This will not happen to code where it is clear for
+           any given MBean what thread may unregister that MBean.
+
+           On the other hand we clearly do not want a thread that is
+           unregistering MBean A to have to wait for another thread
+           that is unregistering another MBean B (see bug 6318664).  A
+           deadlock in this situation could reasonably be considered
+           gratuitous.  So holding a global lock across the
+           preDeregister call would be bad.
+
+           So we have a set of ObjectNames that some thread is
+           currently unregistering.  When a thread wants to unregister
+           a name, it must first check if the name is in the set, and
+           if so it must wait.  When a thread successfully unregisters
+           a name it removes the name from the set and notifies any
+           waiting threads that the set has changed.
+
+           This implies that we must be very careful to ensure that
+           the name is removed from the set and waiters notified, no
+           matter what code path is taken.  */
+
+        synchronized (beingUnregistered) {
+            while (beingUnregistered.contains(name)) {
+                try {
+                    beingUnregistered.wait();
+                } catch (InterruptedException e) {
+                    throw new MBeanRegistrationException(e, e.toString());
+                    // pretend the exception came from preDeregister;
+                    // in another execution sequence it could have
+                }
+            }
+            beingUnregistered.add(name);
+        }
+
+        try {
+            exclusiveUnregisterMBean(name);
+        } finally {
+            synchronized (beingUnregistered) {
+                beingUnregistered.remove(name);
+                beingUnregistered.notifyAll();
+            }
+        }
+    }
+
+    private void exclusiveUnregisterMBean(ObjectName name)
+            throws InstanceNotFoundException, MBeanRegistrationException {
+
+        DynamicMBean instance = getMBean(name);
+        // may throw InstanceNotFoundException
+
+        checkMBeanPermission(instance, null, name, "unregisterMBean");
+
+        if (instance instanceof MBeanRegistration)
+            preDeregisterInvoke((MBeanRegistration) instance);
+
+        final Object resource = getResource(instance);
+
+        // Unregisters the MBean from the repository.
+        // Returns the resource context that was used.
+        // The returned context does nothing for regular MBeans.
+        // For ClassLoader MBeans and JMXNamespace (and JMXDomain)
+        // MBeans - the context makes it possible to unregister these
+        // objects from the appropriate framework artifacts, such as
+        // the CLR or the dispatcher, from within the repository lock.
+        // In case of success, we also need to call context.done() at the
+        // end of this method.
+        //
+        final ResourceContext context =
+                unregisterFromRepository(resource, instance, name);
+
+        try {
+            if (instance instanceof MBeanRegistration)
+                postDeregisterInvoke(name,(MBeanRegistration) instance);
+        } finally {
+            context.done();
+        }
+    }
+
+    public ObjectInstance getObjectInstance(ObjectName name)
+            throws InstanceNotFoundException {
+
+        name = nonDefaultDomain(name);
+        DynamicMBean instance = getMBean(name);
+
+        checkMBeanPermission(instance, null, name, "getObjectInstance");
+
+        final String className = getClassName(instance);
+
+        return new ObjectInstance(name, className);
+    }
+
+    public Set<ObjectInstance> queryMBeans(ObjectName name, QueryExp query) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // Check if the caller has the right to invoke 'queryMBeans'
+            //
+            checkMBeanPermission((String) null, null, null, "queryMBeans");
+
+            // Perform query without "query".
+            //
+            Set<ObjectInstance> list = queryMBeansImpl(name, null);
+
+            // Check if the caller has the right to invoke 'queryMBeans'
+            // on each specific classname/objectname in the list.
+            //
+            Set<ObjectInstance> allowedList =
+                new HashSet<ObjectInstance>(list.size());
+            for (ObjectInstance oi : list) {
+                try {
+                    checkMBeanPermission(oi.getClassName(), null,
+                                         oi.getObjectName(), "queryMBeans");
+                    allowedList.add(oi);
+                } catch (SecurityException e) {
+                    // OK: Do not add this ObjectInstance to the list
+                }
+            }
+
+            // Apply query to allowed MBeans only.
+            //
+            return filterListOfObjectInstances(allowedList, query);
+        } else {
+            // Perform query.
+            //
+            return queryMBeansImpl(name, query);
+        }
+    }
+
+    private Set<ObjectInstance> queryMBeansImpl(ObjectName name,
+                                                QueryExp query) {
+        // Query the MBeans on the repository
+        //
+        Set<NamedObject> list = repository.query(name, query);
+
+        return (objectInstancesFromFilteredNamedObjects(list, query));
+    }
+
+    public Set<ObjectName> queryNames(ObjectName name, QueryExp query) {
+        Set<ObjectName> queryList;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // Check if the caller has the right to invoke 'queryNames'
+            //
+            checkMBeanPermission((String) null, null, null, "queryNames");
+
+            // Perform query without "query".
+            //
+            Set<ObjectInstance> list = queryMBeansImpl(name, null);
+
+            // Check if the caller has the right to invoke 'queryNames'
+            // on each specific classname/objectname in the list.
+            //
+            Set<ObjectInstance> allowedList =
+                new HashSet<ObjectInstance>(list.size());
+            for (ObjectInstance oi : list) {
+                try {
+                    checkMBeanPermission(oi.getClassName(), null,
+                                         oi.getObjectName(), "queryNames");
+                    allowedList.add(oi);
+                } catch (SecurityException e) {
+                    // OK: Do not add this ObjectInstance to the list
+                }
+            }
+
+            // Apply query to allowed MBeans only.
+            //
+            Set<ObjectInstance> queryObjectInstanceList =
+                filterListOfObjectInstances(allowedList, query);
+            queryList = new HashSet<ObjectName>(queryObjectInstanceList.size());
+            for (ObjectInstance oi : queryObjectInstanceList) {
+                queryList.add(oi.getObjectName());
+            }
+        } else {
+            // Perform query.
+            //
+            queryList = queryNamesImpl(name, query);
+        }
+        return queryList;
+    }
+
+    private Set<ObjectName> queryNamesImpl(ObjectName name, QueryExp query) {
+        // Query the MBeans on the repository
+        //
+        Set<NamedObject> list = repository.query(name, query);
+
+        return (objectNamesFromFilteredNamedObjects(list, query));
+    }
+
+    public boolean isRegistered(ObjectName name) {
+        if (name == null) {
+            throw new RuntimeOperationsException(
+                     new IllegalArgumentException("Object name cannot be null"),
+                     "Object name cannot be null");
+        }
+
+        name = nonDefaultDomain(name);
+
+        /* No Permission check */
+        // isRegistered is always unchecked as per JMX spec.
+
+        return (repository.contains(name));
+    }
+
+    public String[] getDomains()  {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // Check if the caller has the right to invoke 'getDomains'
+            //
+            checkMBeanPermission((String) null, null, null, "getDomains");
+
+            // Return domains
+            //
+            String[] domains = repository.getDomains();
+
+            // Check if the caller has the right to invoke 'getDomains'
+            // on each specific domain in the list.
+            //
+            List<String> result = new ArrayList<String>(domains.length);
+            for (int i = 0; i < domains.length; i++) {
+                try {
+                    ObjectName dom = Util.newObjectName(domains[i] + ":x=x");
+                    checkMBeanPermission((String) null, null, dom, "getDomains");
+                    result.add(domains[i]);
+                } catch (SecurityException e) {
+                    // OK: Do not add this domain to the list
+                }
+            }
+
+            // Make an array from result.
+            //
+            return result.toArray(new String[result.size()]);
+        } else {
+            return repository.getDomains();
+        }
+    }
+
+    public Integer getMBeanCount() {
+        return (repository.getCount());
+    }
+
+    public Object getAttribute(ObjectName name, String attribute)
+        throws MBeanException, AttributeNotFoundException,
+               InstanceNotFoundException, ReflectionException {
+
+        if (name == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("Object name cannot be null"),
+                "Exception occurred trying to invoke the getter on the MBean");
+        }
+        if (attribute == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("Attribute cannot be null"),
+                "Exception occurred trying to invoke the getter on the MBean");
+        }
+
+        name = nonDefaultDomain(name);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "getAttribute",
+                    "Attribute = " + attribute + ", ObjectName = " + name);
+        }
+
+        final DynamicMBean instance = getMBean(name);
+        checkMBeanPermission(instance, attribute, name, "getAttribute");
+
+        try {
+            return instance.getAttribute(attribute);
+        } catch (AttributeNotFoundException e) {
+            throw e;
+        } catch (Throwable t) {
+            rethrowMaybeMBeanException(t);
+            throw new AssertionError(); // not reached
+        }
+    }
+
+    public AttributeList getAttributes(ObjectName name, String[] attributes)
+        throws InstanceNotFoundException, ReflectionException  {
+
+        if (name == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("ObjectName name cannot be null"),
+                "Exception occurred trying to invoke the getter on the MBean");
+        }
+
+        if (attributes == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("Attributes cannot be null"),
+                "Exception occurred trying to invoke the getter on the MBean");
+        }
+
+        name = nonDefaultDomain(name);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "getAttributes", "ObjectName = " + name);
+        }
+
+        final DynamicMBean instance = getMBean(name);
+        final String[] allowedAttributes;
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm == null)
+            allowedAttributes = attributes;
+        else {
+            final String classname = getClassName(instance);
+
+            // Check if the caller has the right to invoke 'getAttribute'
+            //
+            checkMBeanPermission(classname, null, name, "getAttribute");
+
+            // Check if the caller has the right to invoke 'getAttribute'
+            // on each specific attribute
+            //
+            List<String> allowedList =
+                new ArrayList<String>(attributes.length);
+            for (String attr : attributes) {
+                try {
+                    checkMBeanPermission(classname, attr, name, "getAttribute");
+                    allowedList.add(attr);
+                } catch (SecurityException e) {
+                    // OK: Do not add this attribute to the list
+                }
+            }
+            allowedAttributes =
+                    allowedList.toArray(new String[allowedList.size()]);
+        }
+
+        try {
+            return instance.getAttributes(allowedAttributes);
+        } catch (Throwable t) {
+            rethrow(t);
+            throw new AssertionError();
+        }
+    }
+
+    public void setAttribute(ObjectName name, Attribute attribute)
+        throws InstanceNotFoundException, AttributeNotFoundException,
+               InvalidAttributeValueException, MBeanException,
+               ReflectionException  {
+
+        if (name == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("ObjectName name cannot be null"),
+                "Exception occurred trying to invoke the setter on the MBean");
+        }
+
+        if (attribute == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("Attribute cannot be null"),
+                "Exception occurred trying to invoke the setter on the MBean");
+        }
+
+        name = nonDefaultDomain(name);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "setAttribute", "ObjectName = " + name +
+                    ", Attribute = " + attribute.getName());
+        }
+
+        DynamicMBean instance = getMBean(name);
+        checkMBeanPermission(instance, attribute.getName(), name, "setAttribute");
+
+        try {
+            instance.setAttribute(attribute);
+        } catch (AttributeNotFoundException e) {
+            throw e;
+        } catch (InvalidAttributeValueException e) {
+            throw e;
+        } catch (Throwable t) {
+            rethrowMaybeMBeanException(t);
+            throw new AssertionError();
+        }
+    }
+
+    public AttributeList setAttributes(ObjectName name,
+                                       AttributeList attributes)
+            throws InstanceNotFoundException, ReflectionException  {
+
+        if (name == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("ObjectName name cannot be null"),
+                "Exception occurred trying to invoke the setter on the MBean");
+        }
+
+        if (attributes == null) {
+            throw new RuntimeOperationsException(new
+            IllegalArgumentException("AttributeList  cannot be null"),
+            "Exception occurred trying to invoke the setter on the MBean");
+        }
+
+        name = nonDefaultDomain(name);
+
+        final DynamicMBean instance = getMBean(name);
+        final AttributeList allowedAttributes;
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm == null)
+            allowedAttributes = attributes;
+        else {
+            String classname = getClassName(instance);
+
+            // Check if the caller has the right to invoke 'setAttribute'
+            //
+            checkMBeanPermission(classname, null, name, "setAttribute");
+
+            // Check if the caller has the right to invoke 'setAttribute'
+            // on each specific attribute
+            //
+            allowedAttributes = new AttributeList(attributes.size());
+            for (Attribute attribute : attributes.asList()) {
+                try {
+                    checkMBeanPermission(classname, attribute.getName(),
+                                         name, "setAttribute");
+                    allowedAttributes.add(attribute);
+                } catch (SecurityException e) {
+                    // OK: Do not add this attribute to the list
+                }
+            }
+        }
+        try {
+            return instance.setAttributes(allowedAttributes);
+        } catch (Throwable t) {
+            rethrow(t);
+            throw new AssertionError();
+        }
+    }
+
+    public Object invoke(ObjectName name, String operationName,
+                         Object params[], String signature[])
+            throws InstanceNotFoundException, MBeanException,
+                   ReflectionException {
+
+        name = nonDefaultDomain(name);
+
+        DynamicMBean instance = getMBean(name);
+        checkMBeanPermission(instance, operationName, name, "invoke");
+        try {
+            return instance.invoke(operationName, params, signature);
+        } catch (Throwable t) {
+            rethrowMaybeMBeanException(t);
+            throw new AssertionError();
+        }
+    }
+
+    /* Centralize some of the tedious exception wrapping demanded by the JMX
+       spec. */
+    private static void rethrow(Throwable t)
+            throws ReflectionException {
+        try {
+            throw t;
+        } catch (ReflectionException e) {
+            throw e;
+        } catch (RuntimeOperationsException e) {
+            throw e;
+        } catch (RuntimeErrorException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new RuntimeMBeanException(e, e.toString());
+        } catch (Error e) {
+            throw new RuntimeErrorException(e, e.toString());
+        } catch (Throwable t2) {
+            // should not happen
+            throw new RuntimeException("Unexpected exception", t2);
+        }
+    }
+
+    private static void rethrowMaybeMBeanException(Throwable t)
+            throws ReflectionException, MBeanException {
+        if (t instanceof MBeanException)
+            throw (MBeanException) t;
+        rethrow(t);
+    }
+
+    /**
+     * Register <code>object</code> in the repository, with the
+     * given <code>name</code>.
+     * This method is called by the various createMBean() flavours
+     * and by registerMBean() after all MBean compliance tests
+     * have been performed.
+     * <p>
+     * This method does not performed any kind of test compliance,
+     * and the caller should make sure that the given <code>object</code>
+     * is MBean compliant.
+     * <p>
+     * This methods performed all the basic steps needed for object
+     * registration:
+     * <ul>
+     * <li>If the <code>object</code> implements the MBeanRegistration
+     *     interface, it invokes preRegister() on the object.</li>
+     * <li>Then the object is added to the repository with the given
+     *     <code>name</code>.</li>
+     * <li>Finally, if the <code>object</code> implements the
+     *     MBeanRegistration interface, it invokes postRegister()
+     *     on the object.</li>
+     * </ul>
+     * @param object A reference to a MBean compliant object.
+     * @param name   The ObjectName of the <code>object</code> MBean.
+     * @return the actual ObjectName with which the object was registered.
+     * @exception InstanceAlreadyExistsException if an object is already
+     *            registered with that name.
+     * @exception MBeanRegistrationException if an exception occurs during
+     *            registration.
+     **/
+    private ObjectInstance registerObject(String classname,
+                                          Object object, ObjectName name)
+        throws InstanceAlreadyExistsException,
+               MBeanRegistrationException,
+               NotCompliantMBeanException {
+
+        if (object == null) {
+            final RuntimeException wrapped =
+                new IllegalArgumentException("Cannot add null object");
+            throw new RuntimeOperationsException(wrapped,
+                        "Exception occurred trying to register the MBean");
+        }
+
+        DynamicMBean mbean = Introspector.makeDynamicMBean(object);
+
+        return registerDynamicMBean(classname, mbean, name);
+    }
+
+    private ObjectInstance registerDynamicMBean(String classname,
+                                                DynamicMBean mbean,
+                                                ObjectName name)
+        throws InstanceAlreadyExistsException,
+               MBeanRegistrationException,
+               NotCompliantMBeanException {
+
+
+        name = nonDefaultDomain(name);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "registerMBean", "ObjectName = " + name);
+        }
+
+        ObjectName logicalName = preRegister(mbean, server, name);
+
+        // preRegister returned successfully, so from this point on we
+        // must call postRegister(false) if there is any problem.
+        boolean registered = false;
+        boolean registerFailed = false;
+        ResourceContext context = null;
+
+        try {
+            if (mbean instanceof DynamicMBean2) {
+                try {
+                    ((DynamicMBean2) mbean).preRegister2(server, logicalName);
+                    registerFailed = true;  // until we succeed
+                } catch (Exception e) {
+                    if (e instanceof RuntimeException)
+                        throw (RuntimeException) e;
+                    if (e instanceof InstanceAlreadyExistsException)
+                        throw (InstanceAlreadyExistsException) e;
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (logicalName != name && logicalName != null) {
+                logicalName =
+                        ObjectName.getInstance(nonDefaultDomain(logicalName));
+            }
+
+            checkMBeanPermission(classname, null, logicalName, "registerMBean");
+
+            if (logicalName == null) {
+                final RuntimeException wrapped =
+                    new IllegalArgumentException("No object name specified");
+                throw new RuntimeOperationsException(wrapped,
+                            "Exception occurred trying to register the MBean");
+            }
+
+            final Object resource = getResource(mbean);
+
+            // Register the MBean with the repository.
+            // Returns the resource context that was used.
+            // The returned context does nothing for regular MBeans.
+            // For ClassLoader MBeans the context makes it possible to register these
+            // objects with the appropriate framework artifacts, such as
+            // the CLR, from within the repository lock.
+            // In case of success, we also need to call context.done() at the
+            // end of this method.
+            //
+            context = registerWithRepository(resource, mbean, logicalName);
+
+
+            registerFailed = false;
+            registered = true;
+
+        } finally {
+            try {
+                postRegister(logicalName, mbean, registered, registerFailed);
+            } finally {
+                if (registered && context!=null) context.done();
+            }
+        }
+        return new ObjectInstance(logicalName, classname);
+    }
+
+    private static void throwMBeanRegistrationException(Throwable t, String where)
+    throws MBeanRegistrationException {
+        if (t instanceof RuntimeException) {
+            throw new RuntimeMBeanException((RuntimeException)t,
+                    "RuntimeException thrown " + where);
+        } else if (t instanceof Error) {
+            throw new RuntimeErrorException((Error)t,
+                    "Error thrown " + where);
+        } else if (t instanceof MBeanRegistrationException) {
+            throw (MBeanRegistrationException)t;
+        } else if (t instanceof Exception) {
+            throw new MBeanRegistrationException((Exception)t,
+                    "Exception thrown " + where);
+        } else // neither Error nor Exception??
+            throw new RuntimeException(t);
+    }
+
+    private static ObjectName preRegister(
+            DynamicMBean mbean, MBeanServer mbs, ObjectName name)
+            throws InstanceAlreadyExistsException, MBeanRegistrationException {
+
+        ObjectName newName = null;
+
+        try {
+            if (mbean instanceof MBeanRegistration)
+                newName = ((MBeanRegistration) mbean).preRegister(mbs, name);
+        } catch (Throwable t) {
+            throwMBeanRegistrationException(t, "in preRegister method");
+        }
+
+        if (newName != null) return newName;
+        else return name;
+    }
+
+    private static void postRegister(
+            ObjectName logicalName, DynamicMBean mbean,
+            boolean registrationDone, boolean registerFailed) {
+
+        if (registerFailed && mbean instanceof DynamicMBean2)
+            ((DynamicMBean2) mbean).registerFailed();
+        try {
+            if (mbean instanceof MBeanRegistration)
+                ((MBeanRegistration) mbean).postRegister(registrationDone);
+        } catch (RuntimeException e) {
+            MBEANSERVER_LOGGER.fine("While registering MBean ["+logicalName+
+                    "]: " + "Exception thrown by postRegister: " +
+                    "rethrowing <"+e+">, but keeping the MBean registered");
+            throw new RuntimeMBeanException(e,
+                      "RuntimeException thrown in postRegister method: "+
+                      "rethrowing <"+e+">, but keeping the MBean registered");
+        } catch (Error er) {
+            MBEANSERVER_LOGGER.fine("While registering MBean ["+logicalName+
+                    "]: " + "Error thrown by postRegister: " +
+                    "rethrowing <"+er+">, but keeping the MBean registered");
+            throw new RuntimeErrorException(er,
+                      "Error thrown in postRegister method: "+
+                      "rethrowing <"+er+">, but keeping the MBean registered");
+        }
+    }
+
+    private static void preDeregisterInvoke(MBeanRegistration moi)
+            throws MBeanRegistrationException {
+        try {
+            moi.preDeregister();
+        } catch (Throwable t) {
+            throwMBeanRegistrationException(t, "in preDeregister method");
+        }
+    }
+
+    private static void postDeregisterInvoke(ObjectName mbean,
+            MBeanRegistration moi) {
+        try {
+            moi.postDeregister();
+        } catch (RuntimeException e) {
+            MBEANSERVER_LOGGER.fine("While unregistering MBean ["+mbean+
+                    "]: " + "Exception thrown by postDeregister: " +
+                    "rethrowing <"+e+">, although the MBean is succesfully " +
+                    "unregistered");
+            throw new RuntimeMBeanException(e,
+                      "RuntimeException thrown in postDeregister method: "+
+                      "rethrowing <"+e+
+                      ">, although the MBean is sucessfully unregistered");
+        } catch (Error er) {
+            MBEANSERVER_LOGGER.fine("While unregistering MBean ["+mbean+
+                    "]: " + "Error thrown by postDeregister: " +
+                    "rethrowing <"+er+">, although the MBean is succesfully " +
+                    "unregistered");
+            throw new RuntimeErrorException(er,
+                      "Error thrown in postDeregister method: "+
+                      "rethrowing <"+er+
+                      ">, although the MBean is sucessfully unregistered");
+        }
+    }
+
+    /**
+     * Gets a specific MBean controlled by the DefaultMBeanServerInterceptor.
+     * The name must have a non-default domain.
+     */
+    private DynamicMBean getMBean(ObjectName name)
+        throws InstanceNotFoundException {
+
+        if (name == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("Object name cannot be null"),
+                               "Exception occurred trying to get an MBean");
+        }
+        DynamicMBean obj = repository.retrieve(name);
+        if (obj == null) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+                MBEANSERVER_LOGGER.logp(Level.FINER,
+                        DefaultMBeanServerInterceptor.class.getName(),
+                        "getMBean", name + " : Found no object");
+            }
+            throw new InstanceNotFoundException(name.toString());
+        }
+        return obj;
+    }
+
+    private static Object getResource(DynamicMBean mbean) {
+        if (mbean instanceof DynamicMBean2)
+            return ((DynamicMBean2) mbean).getResource();
+        else
+            return mbean;
+    }
+
+    private ObjectName nonDefaultDomain(ObjectName name) {
+        if (name == null || name.getDomain().length() > 0)
+            return name;
+
+        /* The ObjectName looks like ":a=b", and that's what its
+           toString() will return in this implementation.  So
+           we can just stick the default domain in front of it
+           to get a non-default-domain name.  We depend on the
+           fact that toString() works like that and that it
+           leaves wildcards in place (so we can detect an error
+           if one is supplied where it shouldn't be).  */
+        final String completeName = domain + name;
+
+        return Util.newObjectName(completeName);
+    }
+
+    public String getDefaultDomain()  {
+        return domain;
+    }
+
+    /*
+     * Notification handling.
+     *
+     * This is not trivial, because the MBeanServer translates the
+     * source of a received notification from a reference to an MBean
+     * into the ObjectName of that MBean.  While that does make
+     * notification sending easier for MBean writers, it comes at a
+     * considerable cost.  We need to replace the source of a
+     * notification, which is basically wrong if there are also
+     * listeners registered directly with the MBean (without going
+     * through the MBean server).  We also need to wrap the listener
+     * supplied by the client of the MBeanServer with a listener that
+     * performs the substitution before forwarding.  This is why we
+     * strongly discourage people from putting MBean references in the
+     * source of their notifications.  Instead they should arrange to
+     * put the ObjectName there themselves.
+     *
+     * However, existing code relies on the substitution, so we are
+     * stuck with it.
+     *
+     * Here's how we handle it.  When you add a listener, we make a
+     * ListenerWrapper around it.  We look that up in the
+     * listenerWrappers map, and if there was already a wrapper for
+     * that listener with the given ObjectName, we reuse it.  This map
+     * is a WeakHashMap, so a listener that is no longer registered
+     * with any MBean can be garbage collected.
+     *
+     * We cannot use simpler solutions such as always creating a new
+     * wrapper or always registering the same listener with the MBean
+     * and using the handback to find the client's original listener.
+     * The reason is that we need to support the removeListener
+     * variant that removes all (listener,filter,handback) triples on
+     * a broadcaster that have a given listener.  And we do not have
+     * any way to inspect a broadcaster's internal list of triples.
+     * So the same client listener must always map to the same
+     * listener registered with the broadcaster.
+     *
+     * Another possible solution would be to map from ObjectName to
+     * list of listener wrappers (or IdentityHashMap of listener
+     * wrappers), making this list the first time a listener is added
+     * on a given MBean, and removing it when the MBean is removed.
+     * This is probably more costly in memory, but could be useful if
+     * some day we don't want to rely on weak references.
+     */
+    public void addNotificationListener(ObjectName name,
+                                        NotificationListener listener,
+                                        NotificationFilter filter,
+                                        Object handback)
+            throws InstanceNotFoundException {
+
+        // ------------------------------
+        // ------------------------------
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "addNotificationListener", "ObjectName = " + name);
+        }
+
+        DynamicMBean instance = getMBean(name);
+        checkMBeanPermission(instance, null, name, "addNotificationListener");
+
+        NotificationBroadcaster broadcaster =
+                getNotificationBroadcaster(name, instance,
+                                           NotificationBroadcaster.class);
+
+        // ------------------
+        // Check listener
+        // ------------------
+        if (listener == null) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException("Null listener"),"Null listener");
+        }
+
+        NotificationListener listenerWrapper =
+            getListenerWrapper(listener, name, instance, true);
+        broadcaster.addNotificationListener(listenerWrapper, filter, handback);
+    }
+
+    public void addNotificationListener(ObjectName name,
+                                        ObjectName listener,
+                                        NotificationFilter filter,
+                                        Object handback)
+            throws InstanceNotFoundException {
+
+        // ------------------------------
+        // ------------------------------
+
+        // ----------------
+        // Get listener object
+        // ----------------
+        DynamicMBean instance = getMBean(listener);
+        Object resource = getResource(instance);
+        if (!(resource instanceof NotificationListener)) {
+            throw new RuntimeOperationsException(new
+                IllegalArgumentException(listener.getCanonicalName()),
+                "The MBean " + listener.getCanonicalName() +
+                "does not implement the NotificationListener interface") ;
+        }
+
+        // ----------------
+        // Add a listener on an MBean
+        // ----------------
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "addNotificationListener",
+                    "ObjectName = " + name + ", Listener = " + listener);
+        }
+        server.addNotificationListener(name,(NotificationListener) resource,
+                                       filter, handback) ;
+    }
+
+    public void removeNotificationListener(ObjectName name,
+                                           NotificationListener listener)
+            throws InstanceNotFoundException, ListenerNotFoundException {
+        removeNotificationListener(name, listener, null, null, true);
+    }
+
+    public void removeNotificationListener(ObjectName name,
+                                           NotificationListener listener,
+                                           NotificationFilter filter,
+                                           Object handback)
+            throws InstanceNotFoundException, ListenerNotFoundException {
+        removeNotificationListener(name, listener, filter, handback, false);
+    }
+
+    public void removeNotificationListener(ObjectName name,
+                                           ObjectName listener)
+            throws InstanceNotFoundException, ListenerNotFoundException {
+        NotificationListener instance = getListener(listener);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "removeNotificationListener",
+                    "ObjectName = " + name + ", Listener = " + listener);
+        }
+        server.removeNotificationListener(name, instance);
+    }
+
+    public void removeNotificationListener(ObjectName name,
+                                           ObjectName listener,
+                                           NotificationFilter filter,
+                                           Object handback)
+            throws InstanceNotFoundException, ListenerNotFoundException {
+
+        NotificationListener instance = getListener(listener);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "removeNotificationListener",
+                    "ObjectName = " + name + ", Listener = " + listener);
+        }
+        server.removeNotificationListener(name, instance, filter, handback);
+    }
+
+    private NotificationListener getListener(ObjectName listener)
+        throws ListenerNotFoundException {
+        // ----------------
+        // Get listener object
+        // ----------------
+        DynamicMBean instance;
+        try {
+            instance = getMBean(listener);
+        } catch (InstanceNotFoundException e) {
+            throw EnvHelp.initCause(
+                          new ListenerNotFoundException(e.getMessage()), e);
+        }
+
+        Object resource = getResource(instance);
+        if (!(resource instanceof NotificationListener)) {
+            final RuntimeException exc =
+                new IllegalArgumentException(listener.getCanonicalName());
+            final String msg =
+                "MBean " + listener.getCanonicalName() + " does not " +
+                "implement " + NotificationListener.class.getName();
+            throw new RuntimeOperationsException(exc, msg);
+        }
+        return (NotificationListener) resource;
+    }
+
+    private void removeNotificationListener(ObjectName name,
+                                            NotificationListener listener,
+                                            NotificationFilter filter,
+                                            Object handback,
+                                            boolean removeAll)
+            throws InstanceNotFoundException, ListenerNotFoundException {
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "removeNotificationListener", "ObjectName = " + name);
+        }
+
+        DynamicMBean instance = getMBean(name);
+        checkMBeanPermission(instance, null, name, "removeNotificationListener");
+
+        /* We could simplify the code by assigning broadcaster after
+           assigning listenerWrapper, but that would change the error
+           behavior when both the broadcaster and the listener are
+           erroneous.  */
+
+        Class<? extends NotificationBroadcaster> reqClass =
+            removeAll ? NotificationBroadcaster.class : NotificationEmitter.class;
+        NotificationBroadcaster broadcaster =
+            getNotificationBroadcaster(name, instance, reqClass);
+
+        NotificationListener listenerWrapper =
+            getListenerWrapper(listener, name, instance, false);
+
+        if (listenerWrapper == null)
+            throw new ListenerNotFoundException("Unknown listener");
+
+        if (removeAll)
+            broadcaster.removeNotificationListener(listenerWrapper);
+        else {
+            NotificationEmitter emitter = (NotificationEmitter) broadcaster;
+            emitter.removeNotificationListener(listenerWrapper,
+                                               filter,
+                                               handback);
+        }
+    }
+
+    private static <T extends NotificationBroadcaster>
+            T getNotificationBroadcaster(ObjectName name, Object instance,
+                                         Class<T> reqClass) {
+        if (reqClass.isInstance(instance))
+            return reqClass.cast(instance);
+        if (instance instanceof DynamicMBean2)
+            instance = ((DynamicMBean2) instance).getResource();
+        if (reqClass.isInstance(instance))
+            return reqClass.cast(instance);
+        final RuntimeException exc =
+            new IllegalArgumentException(name.getCanonicalName());
+        final String msg =
+            "MBean " + name.getCanonicalName() + " does not " +
+            "implement " + reqClass.getName();
+        throw new RuntimeOperationsException(exc, msg);
+    }
+
+    public MBeanInfo getMBeanInfo(ObjectName name)
+        throws InstanceNotFoundException, IntrospectionException,
+               ReflectionException {
+
+        // ------------------------------
+        // ------------------------------
+
+        DynamicMBean moi = getMBean(name);
+        final MBeanInfo mbi;
+        try {
+            mbi = moi.getMBeanInfo();
+        } catch (RuntimeMBeanException e) {
+            throw e;
+        } catch (RuntimeErrorException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new RuntimeMBeanException(e,
+                    "getMBeanInfo threw RuntimeException");
+        } catch (Error e) {
+            throw new RuntimeErrorException(e, "getMBeanInfo threw Error");
+        }
+        if (mbi == null)
+            throw new JMRuntimeException("MBean " + name +
+                                         "has no MBeanInfo");
+
+        checkMBeanPermission(mbi.getClassName(), null, name, "getMBeanInfo");
+
+        return mbi;
+    }
+
+    public boolean isInstanceOf(ObjectName name, String className)
+        throws InstanceNotFoundException {
+
+        final DynamicMBean instance = getMBean(name);
+        checkMBeanPermission(instance, null, name, "isInstanceOf");
+
+        try {
+            Object resource = getResource(instance);
+
+            final String resourceClassName =
+                    (resource instanceof DynamicMBean) ?
+                        getClassName((DynamicMBean) resource) :
+                        resource.getClass().getName();
+
+            if (resourceClassName.equals(className))
+                return true;
+            final ClassLoader cl = resource.getClass().getClassLoader();
+
+            final Class<?> classNameClass = Class.forName(className, false, cl);
+            if (classNameClass.isInstance(resource))
+                return true;
+
+            final Class<?> resourceClass = Class.forName(resourceClassName, false, cl);
+            return classNameClass.isAssignableFrom(resourceClass);
+        } catch (Exception x) {
+            /* Could be SecurityException or ClassNotFoundException */
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
+                MBEANSERVER_LOGGER.logp(Level.FINEST,
+                        DefaultMBeanServerInterceptor.class.getName(),
+                        "isInstanceOf", "Exception calling isInstanceOf", x);
+            }
+            return false;
+        }
+
+    }
+
+    /**
+     * <p>Return the {@link java.lang.ClassLoader} that was used for
+     * loading the class of the named MBean.
+     * @param mbeanName The ObjectName of the MBean.
+     * @return The ClassLoader used for that MBean.
+     * @exception InstanceNotFoundException if the named MBean is not found.
+     */
+    public ClassLoader getClassLoaderFor(ObjectName mbeanName)
+        throws InstanceNotFoundException {
+
+        DynamicMBean instance = getMBean(mbeanName);
+        checkMBeanPermission(instance, null, mbeanName, "getClassLoaderFor");
+        return getResource(instance).getClass().getClassLoader();
+    }
+
+    /**
+     * <p>Return the named {@link java.lang.ClassLoader}.
+     * @param loaderName The ObjectName of the ClassLoader.
+     * @return The named ClassLoader.
+     * @exception InstanceNotFoundException if the named ClassLoader
+     * is not found.
+     */
+    public ClassLoader getClassLoader(ObjectName loaderName)
+            throws InstanceNotFoundException {
+
+        if (loaderName == null) {
+            checkMBeanPermission((String) null, null, null, "getClassLoader");
+            return server.getClass().getClassLoader();
+        }
+
+        DynamicMBean instance = getMBean(loaderName);
+        checkMBeanPermission(instance, null, loaderName, "getClassLoader");
+
+        Object resource = getResource(instance);
+
+        /* Check if the given MBean is a ClassLoader */
+        if (!(resource instanceof ClassLoader))
+            throw new InstanceNotFoundException(loaderName.toString() +
+                                                " is not a classloader");
+
+        return (ClassLoader) resource;
+    }
+
+    /**
+     * Sends an MBeanServerNotifications with the specified type for the
+     * MBean with the specified ObjectName
+     */
+    private void sendNotification(String NotifType, ObjectName name) {
+
+        // ------------------------------
+        // ------------------------------
+
+        // ---------------------
+        // Create notification
+        // ---------------------
+        MBeanServerNotification notif = new MBeanServerNotification(
+            NotifType,MBeanServerDelegate.DELEGATE_NAME,0,name);
+
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "sendNotification", NotifType + " " + name);
+        }
+
+        delegate.sendNotification(notif);
+    }
+
+    /**
+     * Applies the specified queries to the set of NamedObjects.
+     */
+    private Set<ObjectName>
+        objectNamesFromFilteredNamedObjects(Set<NamedObject> list,
+                                            QueryExp query) {
+        Set<ObjectName> result = new HashSet<ObjectName>();
+        // No query ...
+        if (query == null) {
+            for (NamedObject no : list) {
+                result.add(no.getName());
+            }
+        } else {
+            // Access the filter
+            final MBeanServer oldServer = QueryEval.getMBeanServer();
+            query.setMBeanServer(server);
+            try {
+                for (NamedObject no : list) {
+                    boolean res;
+                    try {
+                        res = query.apply(no.getName());
+                    } catch (Exception e) {
+                        res = false;
+                    }
+                    if (res) {
+                        result.add(no.getName());
+                    }
+                }
+            } finally {
+                /*
+                 * query.setMBeanServer is probably
+                 * QueryEval.setMBeanServer so put back the old
+                 * value.  Since that method uses a ThreadLocal
+                 * variable, this code is only needed for the
+                 * unusual case where the user creates a custom
+                 * QueryExp that calls a nested query on another
+                 * MBeanServer.
+                 */
+                query.setMBeanServer(oldServer);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Applies the specified queries to the set of NamedObjects.
+     */
+    private Set<ObjectInstance>
+        objectInstancesFromFilteredNamedObjects(Set<NamedObject> list,
+                                                QueryExp query) {
+        Set<ObjectInstance> result = new HashSet<ObjectInstance>();
+        // No query ...
+        if (query == null) {
+            for (NamedObject no : list) {
+                final DynamicMBean obj = no.getObject();
+                final String className = safeGetClassName(obj);
+                result.add(new ObjectInstance(no.getName(), className));
+            }
+        } else {
+            // Access the filter
+            MBeanServer oldServer = QueryEval.getMBeanServer();
+            query.setMBeanServer(server);
+            try {
+                for (NamedObject no : list) {
+                    final DynamicMBean obj = no.getObject();
+                    boolean res;
+                    try {
+                        res = query.apply(no.getName());
+                    } catch (Exception e) {
+                        res = false;
+                    }
+                    if (res) {
+                        String className = safeGetClassName(obj);
+                        result.add(new ObjectInstance(no.getName(), className));
+                    }
+                }
+            } finally {
+                /*
+                 * query.setMBeanServer is probably
+                 * QueryEval.setMBeanServer so put back the old
+                 * value.  Since that method uses a ThreadLocal
+                 * variable, this code is only needed for the
+                 * unusual case where the user creates a custom
+                 * QueryExp that calls a nested query on another
+                 * MBeanServer.
+                 */
+                query.setMBeanServer(oldServer);
+            }
+        }
+        return result;
+    }
+
+    private static String safeGetClassName(DynamicMBean mbean) {
+        try {
+            return getClassName(mbean);
+        } catch (Exception e) {
+            if (MBEANSERVER_LOGGER.isLoggable(Level.FINEST)) {
+                MBEANSERVER_LOGGER.logp(Level.FINEST,
+                        DefaultMBeanServerInterceptor.class.getName(),
+                        "safeGetClassName",
+                        "Exception getting MBean class name", e);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Applies the specified queries to the set of ObjectInstances.
+     */
+    private Set<ObjectInstance>
+            filterListOfObjectInstances(Set<ObjectInstance> list,
+                                        QueryExp query) {
+        // Null query.
+        //
+        if (query == null) {
+            return list;
+        } else {
+            Set<ObjectInstance> result = new HashSet<ObjectInstance>();
+            // Access the filter.
+            //
+            for (ObjectInstance oi : list) {
+                boolean res = false;
+                MBeanServer oldServer = QueryEval.getMBeanServer();
+                query.setMBeanServer(server);
+                try {
+                    res = query.apply(oi.getObjectName());
+                } catch (Exception e) {
+                    res = false;
+                } finally {
+                    /*
+                     * query.setMBeanServer is probably
+                     * QueryEval.setMBeanServer so put back the old
+                     * value.  Since that method uses a ThreadLocal
+                     * variable, this code is only needed for the
+                     * unusual case where the user creates a custom
+                     * QueryExp that calls a nested query on another
+                     * MBeanServer.
+                     */
+                    query.setMBeanServer(oldServer);
+                }
+                if (res) {
+                    result.add(oi);
+                }
+            }
+            return result;
+        }
+    }
+
+    /*
+     * Get the existing wrapper for this listener, name, and mbean, if
+     * there is one.  Otherwise, if "create" is true, create and
+     * return one.  Otherwise, return null.
+     *
+     * We use a WeakHashMap so that if the only reference to a user
+     * listener is in listenerWrappers, it can be garbage collected.
+     * This requires a certain amount of care, because only the key in
+     * a WeakHashMap is weak; the value is strong.  We need to recover
+     * the existing wrapper object (not just an object that is equal
+     * to it), so we would like listenerWrappers to map any
+     * ListenerWrapper to the canonical ListenerWrapper for that
+     * (listener,name,mbean) set.  But we do not want this canonical
+     * wrapper to be referenced strongly.  Therefore we put it inside
+     * a WeakReference and that is the value in the WeakHashMap.
+     */
+    private NotificationListener getListenerWrapper(NotificationListener l,
+                                                    ObjectName name,
+                                                    DynamicMBean mbean,
+                                                    boolean create) {
+        Object resource = getResource(mbean);
+        ListenerWrapper wrapper = new ListenerWrapper(l, name, resource);
+        synchronized (listenerWrappers) {
+            WeakReference<ListenerWrapper> ref = listenerWrappers.get(wrapper);
+            if (ref != null) {
+                NotificationListener existing = ref.get();
+                if (existing != null)
+                    return existing;
+            }
+            if (create) {
+                ref = new WeakReference<ListenerWrapper>(wrapper);
+                listenerWrappers.put(wrapper, ref);
+                return wrapper;
+            } else
+                return null;
+        }
+    }
+
+    public Object instantiate(String className) throws ReflectionException,
+                                                       MBeanException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Object instantiate(String className, ObjectName loaderName) throws ReflectionException,
+                                                                              MBeanException,
+                                                                              InstanceNotFoundException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Object instantiate(String className, Object[] params,
+            String[] signature) throws ReflectionException, MBeanException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Object instantiate(String className, ObjectName loaderName,
+            Object[] params, String[] signature) throws ReflectionException,
+                                                        MBeanException,
+                                                        InstanceNotFoundException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ObjectInputStream deserialize(ObjectName name, byte[] data) throws InstanceNotFoundException,
+                                                                              OperationsException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ObjectInputStream deserialize(String className, byte[] data) throws OperationsException,
+                                                                               ReflectionException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ObjectInputStream deserialize(String className, ObjectName loaderName,
+            byte[] data) throws InstanceNotFoundException, OperationsException,
+                                ReflectionException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ClassLoaderRepository getClassLoaderRepository() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    private static class ListenerWrapper implements NotificationListener {
+        ListenerWrapper(NotificationListener l, ObjectName name,
+                        Object mbean) {
+            this.listener = l;
+            this.name = name;
+            this.mbean = mbean;
+        }
+
+        public void handleNotification(Notification notification,
+                                       Object handback) {
+            if (notification != null) {
+                if (notification.getSource() == mbean)
+                    notification.setSource(name);
+            }
+
+            /*
+             * Listeners are not supposed to throw exceptions.  If
+             * this one does, we could remove it from the MBean.  It
+             * might indicate that a connector has stopped working,
+             * for instance, and there is no point in sending future
+             * notifications over that connection.  However, this
+             * seems rather drastic, so instead we propagate the
+             * exception and let the broadcaster handle it.
+             */
+            listener.handleNotification(notification, handback);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof ListenerWrapper))
+                return false;
+            ListenerWrapper w = (ListenerWrapper) o;
+            return (w.listener == listener && w.mbean == mbean
+                    && w.name.equals(name));
+            /*
+             * We compare all three, in case the same MBean object
+             * gets unregistered and then reregistered under a
+             * different name, or the same name gets assigned to two
+             * different MBean objects at different times.  We do the
+             * comparisons in this order to avoid the slow
+             * ObjectName.equals when possible.
+             */
+        }
+
+        @Override
+        public int hashCode() {
+            return (System.identityHashCode(listener) ^
+                    System.identityHashCode(mbean));
+            /*
+             * We do not include name.hashCode() in the hash because
+             * computing it is slow and usually we will not have two
+             * instances of ListenerWrapper with the same mbean but
+             * different ObjectNames.  That can happen if the MBean is
+             * unregistered from one name and reregistered with
+             * another, and there is no garbage collection between; or
+             * if the same object is registered under two names (which
+             * is not recommended because MBeanRegistration will
+             * break).  But even in these unusual cases the hash code
+             * does not have to be unique.
+             */
+        }
+
+        private NotificationListener listener;
+        private ObjectName name;
+        private Object mbean;
+    }
+
+    // SECURITY CHECKS
+    //----------------
+
+    private static String getClassName(DynamicMBean mbean) {
+        if (mbean instanceof DynamicMBean2)
+            return ((DynamicMBean2) mbean).getClassName();
+        else
+            return mbean.getMBeanInfo().getClassName();
+    }
+
+    private static void checkMBeanPermission(DynamicMBean mbean,
+                                             String member,
+                                             ObjectName objectName,
+                                             String actions) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            checkMBeanPermission(safeGetClassName(mbean),
+                                 member,
+                                 objectName,
+                                 actions);
+        }
+    }
+
+    private static void checkMBeanPermission(String classname,
+                                             String member,
+                                             ObjectName objectName,
+                                             String actions) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            Permission perm = new MBeanPermission(classname,
+                                                  member,
+                                                  objectName,
+                                                  actions);
+            sm.checkPermission(perm);
+        }
+    }
+
+    private static void checkMBeanTrustPermission(final Class<?> theClass)
+        throws SecurityException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            Permission perm = new MBeanTrustPermission("register");
+            PrivilegedAction<ProtectionDomain> act =
+                new PrivilegedAction<ProtectionDomain>() {
+                    public ProtectionDomain run() {
+                        return theClass.getProtectionDomain();
+                    }
+                };
+            ProtectionDomain pd = AccessController.doPrivileged(act);
+            AccessControlContext acc =
+                new AccessControlContext(new ProtectionDomain[] { pd });
+            sm.checkPermission(perm, acc);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //
+    // Dealing with registration of special MBeans in the repository.
+    //
+    // ------------------------------------------------------------------
+
+    /**
+     * A RegistrationContext that makes it possible to perform additional
+     * post registration actions (or post unregistration actions) outside
+     * of the repository lock, once postRegister (or postDeregister) has
+     * been called.
+     * The method {@code done()} will be called in registerMBean or
+     * unregisterMBean, at the end.
+     */
+    private static interface ResourceContext extends RegistrationContext {
+        public void done();
+        /** An empty ResourceContext which does nothing **/
+        public static final ResourceContext NONE = new ResourceContext() {
+            public void done() {}
+            public void registering() {}
+            public void unregistered() {}
+        };
+    }
+
+    /**
+     * Adds a MBean in the repository,
+     * sends MBeanServerNotification.REGISTRATION_NOTIFICATION,
+     * returns ResourceContext for special resources such as ClassLoaders
+     * or JMXNamespaces. For regular MBean this method returns
+     * ResourceContext.NONE.
+     * @return a ResourceContext for special resources such as ClassLoaders
+     *         or JMXNamespaces.
+     */
+    private ResourceContext registerWithRepository(
+            final Object resource,
+            final DynamicMBean object,
+            final ObjectName logicalName)
+            throws InstanceAlreadyExistsException,
+            MBeanRegistrationException {
+
+        // Creates a registration context, if needed.
+        //
+        final ResourceContext context =
+                makeResourceContextFor(resource, logicalName);
+
+
+        repository.addMBean(object, logicalName, context);
+        // May throw InstanceAlreadyExistsException
+
+        // ---------------------
+        // Send create event
+        // ---------------------
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "addObject", "Send create notification of object " +
+                    logicalName.getCanonicalName());
+        }
+
+        sendNotification(
+                MBeanServerNotification.REGISTRATION_NOTIFICATION,
+                logicalName);
+
+        return context;
+    }
+
+    /**
+     * Removes a MBean in the repository,
+     * sends MBeanServerNotification.UNREGISTRATION_NOTIFICATION,
+     * returns ResourceContext for special resources such as ClassLoaders
+     * or JMXNamespaces, or null. For regular MBean this method returns
+     * ResourceContext.NONE.
+     *
+     * @return a ResourceContext for special resources such as ClassLoaders
+     *         or JMXNamespaces.
+     */
+    private ResourceContext unregisterFromRepository(
+            final Object resource,
+            final DynamicMBean object,
+            final ObjectName logicalName)
+            throws InstanceNotFoundException {
+
+        // Creates a registration context, if needed.
+        //
+        final ResourceContext context =
+                makeResourceContextFor(resource, logicalName);
+
+
+        repository.remove(logicalName, context);
+
+        // ---------------------
+        // Send deletion event
+        // ---------------------
+        if (MBEANSERVER_LOGGER.isLoggable(Level.FINER)) {
+            MBEANSERVER_LOGGER.logp(Level.FINER,
+                    DefaultMBeanServerInterceptor.class.getName(),
+                    "unregisterMBean", "Send delete notification of object " +
+                    logicalName.getCanonicalName());
+        }
+
+        sendNotification(MBeanServerNotification.UNREGISTRATION_NOTIFICATION,
+                logicalName);
+        return context;
+    }
+
+
+    /**
+     * Registers a ClassLoader with the CLR.
+     * This method is called by the ResourceContext from within the
+     * repository lock.
+     * @param loader       The ClassLoader.
+     * @param logicalName  The ClassLoader MBean ObjectName.
+     */
+    private void addClassLoader(ClassLoader loader,
+            final ObjectName logicalName) {
+        /**
+         * Called when the newly registered MBean is a ClassLoader
+         * If so, tell the ClassLoaderRepository (CLR) about it.  We do
+         * this even if the loader is a PrivateClassLoader.  In that
+         * case, the CLR remembers the loader for use when it is
+         * explicitly named (e.g. as the loader in createMBean) but
+         * does not add it to the list that is consulted by
+         * ClassLoaderRepository.loadClass.
+         */
+        final ModifiableClassLoaderRepository clr = getInstantiatorCLR();
+        if (clr == null) {
+            final RuntimeException wrapped =
+                    new IllegalArgumentException(
+                    "Dynamic addition of class loaders" +
+                    " is not supported");
+            throw new RuntimeOperationsException(wrapped,
+                    "Exception occurred trying to register" +
+                    " the MBean as a class loader");
+        }
+        clr.addClassLoader(logicalName, loader);
+    }
+
+    /**
+     * Unregisters a ClassLoader from the CLR.
+     * This method is called by the ResourceContext from within the
+     * repository lock.
+     * @param loader       The ClassLoader.
+     * @param logicalName  The ClassLoader MBean ObjectName.
+     */
+    private void removeClassLoader(ClassLoader loader,
+            final ObjectName logicalName) {
+        /**
+         * Removes the  MBean from the default loader repository.
+         */
+        if (loader != server.getClass().getClassLoader()) {
+            final ModifiableClassLoaderRepository clr = getInstantiatorCLR();
+            if (clr != null) {
+                clr.removeClassLoader(logicalName);
+            }
+        }
+    }
+
+
+    /**
+     * Creates a ResourceContext for a ClassLoader MBean.
+     * The resource context makes it possible to add the ClassLoader to
+     * (ResourceContext.registering) or resp. remove the ClassLoader from
+     * (ResourceContext.unregistered) the CLR
+     * when the associated MBean is added to or resp. removed from the
+     * repository.
+     *
+     * @param loader       The ClassLoader MBean being registered or
+     *                     unregistered.
+     * @param logicalName  The name of the ClassLoader MBean.
+     * @return a ResourceContext that takes in charge the addition or removal
+     *         of the loader to or from the CLR.
+     */
+    private ResourceContext createClassLoaderContext(
+            final ClassLoader loader,
+            final ObjectName logicalName) {
+        return new ResourceContext() {
+
+            public void registering() {
+                addClassLoader(loader, logicalName);
+            }
+
+            public void unregistered() {
+                removeClassLoader(loader, logicalName);
+            }
+
+            public void done() {
+            }
+        };
+    }
+
+    /**
+     * Creates a ResourceContext for the given resource.
+     * If the resource does not need a ResourceContext, returns
+     * ResourceContext.NONE.
+     * At this time, only ClassLoaders need a ResourceContext.
+     *
+     * @param resource     The resource being registered or unregistered.
+     * @param logicalName  The name of the associated MBean.
+     * @return
+     */
+    private ResourceContext makeResourceContextFor(Object resource,
+            ObjectName logicalName) {
+        if (resource instanceof ClassLoader) {
+            return createClassLoaderContext((ClassLoader) resource,
+                    logicalName);
+        }
+        return ResourceContext.NONE;
+    }
+
+    private ModifiableClassLoaderRepository getInstantiatorCLR() {
+        return AccessController.doPrivileged(new PrivilegedAction<ModifiableClassLoaderRepository>() {
+            @Override
+            public ModifiableClassLoaderRepository run() {
+                return instantiator != null ? instantiator.getClassLoaderRepository() : null;
+            }
+        });
+    }
+}

@@ -1,61 +1,55 @@
-/*    */ package com.sun.security.jgss;
-/*    */ 
-/*    */ import jdk.Exported;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ @Exported
-/*    */ public enum InquireType
-/*    */ {
-/* 38 */   KRB5_GET_SESSION_KEY,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 43 */   KRB5_GET_TKT_FLAGS,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 49 */   KRB5_GET_AUTHZ_DATA,
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/* 54 */   KRB5_GET_AUTHTIME;
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\com\sun\security\jgss\InquireType.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package com.sun.security.jgss;
+
+/**
+ * Attribute types that can be specified as an argument of
+ * {@link com.sun.security.jgss.ExtendedGSSContext#inquireSecContext}
+ */
+@jdk.Exported
+public enum InquireType {
+    /**
+     * Attribute type for retrieving the session key of an
+     * established Kerberos 5 security context.
+     */
+    KRB5_GET_SESSION_KEY,
+    /**
+     * Attribute type for retrieving the service ticket flags of an
+     * established Kerberos 5 security context.
+     */
+    KRB5_GET_TKT_FLAGS,
+    /**
+     * Attribute type for retrieving the authorization data in the
+     * service ticket of an established Kerberos 5 security context.
+     * Only supported on the acceptor side.
+     */
+    KRB5_GET_AUTHZ_DATA,
+    /**
+     * Attribute type for retrieving the authtime in the service ticket
+     * of an established Kerberos 5 security context.
+     */
+    KRB5_GET_AUTHTIME
+}

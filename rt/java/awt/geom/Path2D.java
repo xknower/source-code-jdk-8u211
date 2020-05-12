@@ -1,2712 +1,2706 @@
-/*      */ package java.awt.geom;
-/*      */ 
-/*      */ import java.awt.Rectangle;
-/*      */ import java.awt.Shape;
-/*      */ import java.io.IOException;
-/*      */ import java.io.InvalidObjectException;
-/*      */ import java.io.ObjectInputStream;
-/*      */ import java.io.ObjectOutputStream;
-/*      */ import java.io.Serializable;
-/*      */ import java.io.StreamCorruptedException;
-/*      */ import java.util.Arrays;
-/*      */ import sun.awt.geom.Curve;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ public abstract class Path2D
-/*      */   implements Shape, Cloneable
-/*      */ {
-/*      */   public static final int WIND_EVEN_ODD = 0;
-/*      */   public static final int WIND_NON_ZERO = 1;
-/*      */   private static final byte SEG_MOVETO = 0;
-/*      */   private static final byte SEG_LINETO = 1;
-/*      */   private static final byte SEG_QUADTO = 2;
-/*      */   private static final byte SEG_CUBICTO = 3;
-/*      */   private static final byte SEG_CLOSE = 4;
-/*      */   transient byte[] pointTypes;
-/*      */   transient int numTypes;
-/*      */   transient int numCoords;
-/*      */   transient int windingRule;
-/*      */   static final int INIT_SIZE = 20;
-/*      */   static final int EXPAND_MAX = 500;
-/*      */   static final int EXPAND_MAX_COORDS = 1000;
-/*      */   static final int EXPAND_MIN = 10;
-/*      */   private static final byte SERIAL_STORAGE_FLT_ARRAY = 48;
-/*      */   private static final byte SERIAL_STORAGE_DBL_ARRAY = 49;
-/*      */   private static final byte SERIAL_SEG_FLT_MOVETO = 64;
-/*      */   private static final byte SERIAL_SEG_FLT_LINETO = 65;
-/*      */   private static final byte SERIAL_SEG_FLT_QUADTO = 66;
-/*      */   private static final byte SERIAL_SEG_FLT_CUBICTO = 67;
-/*      */   private static final byte SERIAL_SEG_DBL_MOVETO = 80;
-/*      */   private static final byte SERIAL_SEG_DBL_LINETO = 81;
-/*      */   private static final byte SERIAL_SEG_DBL_QUADTO = 82;
-/*      */   private static final byte SERIAL_SEG_DBL_CUBICTO = 83;
-/*      */   private static final byte SERIAL_SEG_CLOSE = 96;
-/*      */   private static final byte SERIAL_PATH_END = 97;
-/*      */   
-/*      */   Path2D() {}
-/*      */   
-/*      */   Path2D(int paramInt1, int paramInt2) {
-/*  133 */     setWindingRule(paramInt1);
-/*  134 */     this.pointTypes = new byte[paramInt2];
-/*      */   }
-/*      */ 
-/*      */   
-/*      */   abstract float[] cloneCoordsFloat(AffineTransform paramAffineTransform);
-/*      */ 
-/*      */   
-/*      */   abstract double[] cloneCoordsDouble(AffineTransform paramAffineTransform);
-/*      */   
-/*      */   abstract void append(float paramFloat1, float paramFloat2);
-/*      */   
-/*      */   abstract void append(double paramDouble1, double paramDouble2);
-/*      */   
-/*      */   static byte[] expandPointTypes(byte[] paramArrayOfbyte, int paramInt) {
-/*  148 */     int i = paramArrayOfbyte.length;
-/*  149 */     int j = i + paramInt;
-/*  150 */     if (j < i)
-/*      */     {
-/*      */       
-/*  153 */       throw new ArrayIndexOutOfBoundsException("pointTypes exceeds maximum capacity !");
-/*      */     }
-/*      */ 
-/*      */     
-/*  157 */     int k = i;
-/*  158 */     if (k > 500) {
-/*  159 */       k = Math.max(500, i >> 3);
-/*  160 */     } else if (k < 10) {
-/*  161 */       k = 10;
-/*      */     } 
-/*  163 */     assert k > 0;
-/*      */     
-/*  165 */     int m = i + k;
-/*  166 */     if (m < j)
-/*      */     {
-/*  168 */       m = Integer.MAX_VALUE;
-/*      */     }
-/*      */     
-/*      */     while (true) {
-/*      */       try {
-/*  173 */         return Arrays.copyOf(paramArrayOfbyte, m);
-/*  174 */       } catch (OutOfMemoryError outOfMemoryError) {
-/*  175 */         if (m == j) {
-/*  176 */           throw outOfMemoryError;
-/*      */         }
-/*      */         
-/*  179 */         m = j + (m - j) / 2;
-/*      */       } 
-/*      */     } 
-/*      */   }
-/*      */   abstract Point2D getPoint(int paramInt);
-/*      */   abstract void needRoom(boolean paramBoolean, int paramInt);
-/*      */   abstract int pointCrossings(double paramDouble1, double paramDouble2);
-/*      */   abstract int rectCrossings(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4);
-/*      */   public abstract void moveTo(double paramDouble1, double paramDouble2);
-/*      */   
-/*      */   public abstract void lineTo(double paramDouble1, double paramDouble2);
-/*      */   
-/*      */   public abstract void quadTo(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4);
-/*      */   
-/*      */   public abstract void curveTo(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4, double paramDouble5, double paramDouble6);
-/*      */   
-/*      */   public static class Float extends Path2D implements Serializable { transient float[] floatCoords;
-/*      */     private static final long serialVersionUID = 6990832515060788886L;
-/*      */     
-/*      */     public Float() {
-/*  199 */       this(1, 20);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Float(int param1Int) {
-/*  213 */       this(param1Int, 20);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Float(int param1Int1, int param1Int2) {
-/*  232 */       super(param1Int1, param1Int2);
-/*  233 */       this.floatCoords = new float[param1Int2 * 2];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Float(Shape param1Shape) {
-/*  246 */       this(param1Shape, (AffineTransform)null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Float(Shape param1Shape, AffineTransform param1AffineTransform) {
-/*  262 */       if (param1Shape instanceof Path2D) {
-/*  263 */         Path2D path2D = (Path2D)param1Shape;
-/*  264 */         setWindingRule(path2D.windingRule);
-/*  265 */         this.numTypes = path2D.numTypes;
-/*      */         
-/*  267 */         this.pointTypes = Arrays.copyOf(path2D.pointTypes, path2D.numTypes);
-/*  268 */         this.numCoords = path2D.numCoords;
-/*  269 */         this.floatCoords = path2D.cloneCoordsFloat(param1AffineTransform);
-/*      */       } else {
-/*  271 */         PathIterator pathIterator = param1Shape.getPathIterator(param1AffineTransform);
-/*  272 */         setWindingRule(pathIterator.getWindingRule());
-/*  273 */         this.pointTypes = new byte[20];
-/*  274 */         this.floatCoords = new float[40];
-/*  275 */         append(pathIterator, false);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     float[] cloneCoordsFloat(AffineTransform param1AffineTransform) {
-/*      */       float[] arrayOfFloat;
-/*  283 */       if (param1AffineTransform == null) {
-/*  284 */         arrayOfFloat = Arrays.copyOf(this.floatCoords, this.numCoords);
-/*      */       } else {
-/*  286 */         arrayOfFloat = new float[this.numCoords];
-/*  287 */         param1AffineTransform.transform(this.floatCoords, 0, arrayOfFloat, 0, this.numCoords / 2);
-/*      */       } 
-/*  289 */       return arrayOfFloat;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     double[] cloneCoordsDouble(AffineTransform param1AffineTransform) {
-/*  295 */       double[] arrayOfDouble = new double[this.numCoords];
-/*  296 */       if (param1AffineTransform == null) {
-/*  297 */         for (byte b = 0; b < this.numCoords; b++) {
-/*  298 */           arrayOfDouble[b] = this.floatCoords[b];
-/*      */         }
-/*      */       } else {
-/*  301 */         param1AffineTransform.transform(this.floatCoords, 0, arrayOfDouble, 0, this.numCoords / 2);
-/*      */       } 
-/*  303 */       return arrayOfDouble;
-/*      */     }
-/*      */     
-/*      */     void append(float param1Float1, float param1Float2) {
-/*  307 */       this.floatCoords[this.numCoords++] = param1Float1;
-/*  308 */       this.floatCoords[this.numCoords++] = param1Float2;
-/*      */     }
-/*      */     
-/*      */     void append(double param1Double1, double param1Double2) {
-/*  312 */       this.floatCoords[this.numCoords++] = (float)param1Double1;
-/*  313 */       this.floatCoords[this.numCoords++] = (float)param1Double2;
-/*      */     }
-/*      */     
-/*      */     Point2D getPoint(int param1Int) {
-/*  317 */       return new Point2D.Float(this.floatCoords[param1Int], this.floatCoords[param1Int + 1]);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void needRoom(boolean param1Boolean, int param1Int) {
-/*  323 */       if (this.numTypes == 0 && param1Boolean) {
-/*  324 */         throw new IllegalPathStateException("missing initial moveto in path definition");
-/*      */       }
-/*      */       
-/*  327 */       if (this.numTypes >= this.pointTypes.length) {
-/*  328 */         this.pointTypes = expandPointTypes(this.pointTypes, 1);
-/*      */       }
-/*  330 */       if (this.numCoords > this.floatCoords.length - param1Int) {
-/*  331 */         this.floatCoords = expandCoords(this.floatCoords, param1Int);
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     static float[] expandCoords(float[] param1ArrayOffloat, int param1Int) {
-/*  336 */       int i = param1ArrayOffloat.length;
-/*  337 */       int j = i + param1Int;
-/*  338 */       if (j < i)
-/*      */       {
-/*      */         
-/*  341 */         throw new ArrayIndexOutOfBoundsException("coords exceeds maximum capacity !");
-/*      */       }
-/*      */ 
-/*      */       
-/*  345 */       int k = i;
-/*  346 */       if (k > 1000) {
-/*  347 */         k = Math.max(1000, i >> 3);
-/*  348 */       } else if (k < 10) {
-/*  349 */         k = 10;
-/*      */       } 
-/*  351 */       assert k > param1Int;
-/*      */       
-/*  353 */       int m = i + k;
-/*  354 */       if (m < j)
-/*      */       {
-/*  356 */         m = Integer.MAX_VALUE;
-/*      */       }
-/*      */       
-/*      */       while (true) {
-/*      */         try {
-/*  361 */           return Arrays.copyOf(param1ArrayOffloat, m);
-/*  362 */         } catch (OutOfMemoryError outOfMemoryError) {
-/*  363 */           if (m == j) {
-/*  364 */             throw outOfMemoryError;
-/*      */           }
-/*      */           
-/*  367 */           m = j + (m - j) / 2;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void moveTo(double param1Double1, double param1Double2) {
-/*  376 */       if (this.numTypes > 0 && this.pointTypes[this.numTypes - 1] == 0) {
-/*  377 */         this.floatCoords[this.numCoords - 2] = (float)param1Double1;
-/*  378 */         this.floatCoords[this.numCoords - 1] = (float)param1Double2;
-/*      */       } else {
-/*  380 */         needRoom(false, 2);
-/*  381 */         this.pointTypes[this.numTypes++] = 0;
-/*  382 */         this.floatCoords[this.numCoords++] = (float)param1Double1;
-/*  383 */         this.floatCoords[this.numCoords++] = (float)param1Double2;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void moveTo(float param1Float1, float param1Float2) {
-/*  401 */       if (this.numTypes > 0 && this.pointTypes[this.numTypes - 1] == 0) {
-/*  402 */         this.floatCoords[this.numCoords - 2] = param1Float1;
-/*  403 */         this.floatCoords[this.numCoords - 1] = param1Float2;
-/*      */       } else {
-/*  405 */         needRoom(false, 2);
-/*  406 */         this.pointTypes[this.numTypes++] = 0;
-/*  407 */         this.floatCoords[this.numCoords++] = param1Float1;
-/*  408 */         this.floatCoords[this.numCoords++] = param1Float2;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void lineTo(double param1Double1, double param1Double2) {
-/*  417 */       needRoom(true, 2);
-/*  418 */       this.pointTypes[this.numTypes++] = 1;
-/*  419 */       this.floatCoords[this.numCoords++] = (float)param1Double1;
-/*  420 */       this.floatCoords[this.numCoords++] = (float)param1Double2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void lineTo(float param1Float1, float param1Float2) {
-/*  438 */       needRoom(true, 2);
-/*  439 */       this.pointTypes[this.numTypes++] = 1;
-/*  440 */       this.floatCoords[this.numCoords++] = param1Float1;
-/*  441 */       this.floatCoords[this.numCoords++] = param1Float2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void quadTo(double param1Double1, double param1Double2, double param1Double3, double param1Double4) {
-/*  451 */       needRoom(true, 4);
-/*  452 */       this.pointTypes[this.numTypes++] = 2;
-/*  453 */       this.floatCoords[this.numCoords++] = (float)param1Double1;
-/*  454 */       this.floatCoords[this.numCoords++] = (float)param1Double2;
-/*  455 */       this.floatCoords[this.numCoords++] = (float)param1Double3;
-/*  456 */       this.floatCoords[this.numCoords++] = (float)param1Double4;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void quadTo(float param1Float1, float param1Float2, float param1Float3, float param1Float4) {
-/*  481 */       needRoom(true, 4);
-/*  482 */       this.pointTypes[this.numTypes++] = 2;
-/*  483 */       this.floatCoords[this.numCoords++] = param1Float1;
-/*  484 */       this.floatCoords[this.numCoords++] = param1Float2;
-/*  485 */       this.floatCoords[this.numCoords++] = param1Float3;
-/*  486 */       this.floatCoords[this.numCoords++] = param1Float4;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void curveTo(double param1Double1, double param1Double2, double param1Double3, double param1Double4, double param1Double5, double param1Double6) {
-/*  497 */       needRoom(true, 6);
-/*  498 */       this.pointTypes[this.numTypes++] = 3;
-/*  499 */       this.floatCoords[this.numCoords++] = (float)param1Double1;
-/*  500 */       this.floatCoords[this.numCoords++] = (float)param1Double2;
-/*  501 */       this.floatCoords[this.numCoords++] = (float)param1Double3;
-/*  502 */       this.floatCoords[this.numCoords++] = (float)param1Double4;
-/*  503 */       this.floatCoords[this.numCoords++] = (float)param1Double5;
-/*  504 */       this.floatCoords[this.numCoords++] = (float)param1Double6;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void curveTo(float param1Float1, float param1Float2, float param1Float3, float param1Float4, float param1Float5, float param1Float6) {
-/*  532 */       needRoom(true, 6);
-/*  533 */       this.pointTypes[this.numTypes++] = 3;
-/*  534 */       this.floatCoords[this.numCoords++] = param1Float1;
-/*  535 */       this.floatCoords[this.numCoords++] = param1Float2;
-/*  536 */       this.floatCoords[this.numCoords++] = param1Float3;
-/*  537 */       this.floatCoords[this.numCoords++] = param1Float4;
-/*  538 */       this.floatCoords[this.numCoords++] = param1Float5;
-/*  539 */       this.floatCoords[this.numCoords++] = param1Float6;
-/*      */     }
-/*      */     
-/*      */     int pointCrossings(double param1Double1, double param1Double2) {
-/*  543 */       if (this.numTypes == 0) {
-/*  544 */         return 0;
-/*      */       }
-/*      */       
-/*  547 */       float[] arrayOfFloat = this.floatCoords;
-/*  548 */       double d1 = arrayOfFloat[0], d3 = d1;
-/*  549 */       double d2 = arrayOfFloat[1], d4 = d2;
-/*  550 */       int i = 0;
-/*  551 */       byte b1 = 2;
-/*  552 */       for (byte b2 = 1; b2 < this.numTypes; b2++) {
-/*  553 */         double d5; double d6; switch (this.pointTypes[b2]) {
-/*      */           case 0:
-/*  555 */             if (d4 != d2) {
-/*  556 */               i += 
-/*  557 */                 Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d1, d2);
-/*      */             }
-/*      */ 
-/*      */             
-/*  561 */             d1 = d3 = arrayOfFloat[b1++];
-/*  562 */             d2 = d4 = arrayOfFloat[b1++];
-/*      */           
-/*      */           case 1:
-/*  565 */             i += 
-/*  566 */               Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d5 = arrayOfFloat[b1++], d6 = arrayOfFloat[b1++]);
-/*      */ 
-/*      */ 
-/*      */             
-/*  570 */             d3 = d5;
-/*  571 */             d4 = d6;
-/*      */           
-/*      */           case 2:
-/*  574 */             i += 
-/*  575 */               Curve.pointCrossingsForQuad(param1Double1, param1Double2, d3, d4, arrayOfFloat[b1++], arrayOfFloat[b1++], d5 = arrayOfFloat[b1++], d6 = arrayOfFloat[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  582 */             d3 = d5;
-/*  583 */             d4 = d6;
-/*      */           
-/*      */           case 3:
-/*  586 */             i += 
-/*  587 */               Curve.pointCrossingsForCubic(param1Double1, param1Double2, d3, d4, arrayOfFloat[b1++], arrayOfFloat[b1++], arrayOfFloat[b1++], arrayOfFloat[b1++], d5 = arrayOfFloat[b1++], d6 = arrayOfFloat[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  596 */             d3 = d5;
-/*  597 */             d4 = d6;
-/*      */           
-/*      */           case 4:
-/*  600 */             if (d4 != d2) {
-/*  601 */               i += 
-/*  602 */                 Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d1, d2);
-/*      */             }
-/*      */ 
-/*      */             
-/*  606 */             d3 = d1;
-/*  607 */             d4 = d2;
-/*      */             break;
-/*      */         } 
-/*      */       } 
-/*  611 */       if (d4 != d2) {
-/*  612 */         i += 
-/*  613 */           Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d1, d2);
-/*      */       }
-/*      */ 
-/*      */       
-/*  617 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int rectCrossings(double param1Double1, double param1Double2, double param1Double3, double param1Double4) {
-/*  623 */       if (this.numTypes == 0) {
-/*  624 */         return 0;
-/*      */       }
-/*  626 */       float[] arrayOfFloat = this.floatCoords;
-/*      */       
-/*  628 */       double d3 = arrayOfFloat[0], d1 = d3;
-/*  629 */       double d4 = arrayOfFloat[1], d2 = d4;
-/*  630 */       int i = 0;
-/*  631 */       byte b1 = 2;
-/*  632 */       byte b2 = 1;
-/*  633 */       for (; i != Integer.MIN_VALUE && b2 < this.numTypes; 
-/*  634 */         b2++) {
-/*      */         double d5; double d6;
-/*  636 */         switch (this.pointTypes[b2]) {
-/*      */           case 0:
-/*  638 */             if (d1 != d3 || d2 != d4)
-/*      */             {
-/*  640 */               i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d3, d4);
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  648 */             d3 = d1 = arrayOfFloat[b1++];
-/*  649 */             d4 = d2 = arrayOfFloat[b1++];
-/*      */ 
-/*      */           
-/*      */           case 1:
-/*  653 */             i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d5 = arrayOfFloat[b1++], d6 = arrayOfFloat[b1++]);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  659 */             d1 = d5;
-/*  660 */             d2 = d6;
-/*      */ 
-/*      */           
-/*      */           case 2:
-/*  664 */             i = Curve.rectCrossingsForQuad(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, arrayOfFloat[b1++], arrayOfFloat[b1++], d5 = arrayOfFloat[b1++], d6 = arrayOfFloat[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  673 */             d1 = d5;
-/*  674 */             d2 = d6;
-/*      */ 
-/*      */           
-/*      */           case 3:
-/*  678 */             i = Curve.rectCrossingsForCubic(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, arrayOfFloat[b1++], arrayOfFloat[b1++], arrayOfFloat[b1++], arrayOfFloat[b1++], d5 = arrayOfFloat[b1++], d6 = arrayOfFloat[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  689 */             d1 = d5;
-/*  690 */             d2 = d6;
-/*      */           
-/*      */           case 4:
-/*  693 */             if (d1 != d3 || d2 != d4)
-/*      */             {
-/*  695 */               i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d3, d4);
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  701 */             d1 = d3;
-/*  702 */             d2 = d4;
-/*      */             break;
-/*      */         } 
-/*      */ 
-/*      */       
-/*      */       } 
-/*  708 */       if (i != Integer.MIN_VALUE && (d1 != d3 || d2 != d4))
-/*      */       {
-/*      */ 
-/*      */         
-/*  712 */         i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d3, d4);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/*  720 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void append(PathIterator param1PathIterator, boolean param1Boolean) {
-/*  728 */       float[] arrayOfFloat = new float[6];
-/*  729 */       while (!param1PathIterator.isDone()) {
-/*  730 */         switch (param1PathIterator.currentSegment(arrayOfFloat)) {
-/*      */           case 0:
-/*  732 */             if (!param1Boolean || this.numTypes < 1 || this.numCoords < 1) {
-/*  733 */               moveTo(arrayOfFloat[0], arrayOfFloat[1]);
-/*      */               break;
-/*      */             } 
-/*  736 */             if (this.pointTypes[this.numTypes - 1] != 4 && this.floatCoords[this.numCoords - 2] == arrayOfFloat[0] && this.floatCoords[this.numCoords - 1] == arrayOfFloat[1]) {
-/*      */               break;
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/*  743 */             lineTo(arrayOfFloat[0], arrayOfFloat[1]);
-/*      */             break;
-/*      */           case 1:
-/*  746 */             lineTo(arrayOfFloat[0], arrayOfFloat[1]);
-/*      */             break;
-/*      */           case 2:
-/*  749 */             quadTo(arrayOfFloat[0], arrayOfFloat[1], arrayOfFloat[2], arrayOfFloat[3]);
-/*      */             break;
-/*      */           
-/*      */           case 3:
-/*  753 */             curveTo(arrayOfFloat[0], arrayOfFloat[1], arrayOfFloat[2], arrayOfFloat[3], arrayOfFloat[4], arrayOfFloat[5]);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 4:
-/*  758 */             closePath();
-/*      */             break;
-/*      */         } 
-/*  761 */         param1PathIterator.next();
-/*  762 */         param1Boolean = false;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void transform(AffineTransform param1AffineTransform) {
-/*  771 */       param1AffineTransform.transform(this.floatCoords, 0, this.floatCoords, 0, this.numCoords / 2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized Rectangle2D getBounds2D() {
-/*      */       float f1, f2, f3, f4;
-/*  780 */       int i = this.numCoords;
-/*  781 */       if (i > 0) {
-/*  782 */         f2 = f4 = this.floatCoords[--i];
-/*  783 */         f1 = f3 = this.floatCoords[--i];
-/*  784 */         while (i > 0) {
-/*  785 */           float f5 = this.floatCoords[--i];
-/*  786 */           float f6 = this.floatCoords[--i];
-/*  787 */           if (f6 < f1) f1 = f6; 
-/*  788 */           if (f5 < f2) f2 = f5; 
-/*  789 */           if (f6 > f3) f3 = f6; 
-/*  790 */           if (f5 > f4) f4 = f5; 
-/*      */         } 
-/*      */       } else {
-/*  793 */         f1 = f2 = f3 = f4 = 0.0F;
-/*      */       } 
-/*  795 */       return new Rectangle2D.Float(f1, f2, f3 - f1, f4 - f2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final PathIterator getPathIterator(AffineTransform param1AffineTransform) {
-/*  810 */       if (param1AffineTransform == null) {
-/*  811 */         return new CopyIterator(this);
-/*      */       }
-/*  813 */       return new TxIterator(this, param1AffineTransform);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final Object clone() {
-/*  831 */       if (this instanceof GeneralPath) {
-/*  832 */         return new GeneralPath(this);
-/*      */       }
-/*  834 */       return new Float(this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void writeObject(ObjectOutputStream param1ObjectOutputStream) throws IOException {
-/*  967 */       writeObject(param1ObjectOutputStream, false);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void readObject(ObjectInputStream param1ObjectInputStream) throws ClassNotFoundException, IOException {
-/*  986 */       readObject(param1ObjectInputStream, false);
-/*      */     }
-/*      */     
-/*      */     static class CopyIterator extends Path2D.Iterator {
-/*      */       float[] floatCoords;
-/*      */       
-/*      */       CopyIterator(Path2D.Float param2Float) {
-/*  993 */         super(param2Float);
-/*  994 */         this.floatCoords = param2Float.floatCoords;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(float[] param2ArrayOffloat) {
-/*  998 */         byte b = this.path.pointTypes[this.typeIdx];
-/*  999 */         int i = curvecoords[b];
-/* 1000 */         if (i > 0) {
-/* 1001 */           System.arraycopy(this.floatCoords, this.pointIdx, param2ArrayOffloat, 0, i);
-/*      */         }
-/*      */         
-/* 1004 */         return b;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(double[] param2ArrayOfdouble) {
-/* 1008 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1009 */         int i = curvecoords[b];
-/* 1010 */         if (i > 0) {
-/* 1011 */           for (byte b1 = 0; b1 < i; b1++) {
-/* 1012 */             param2ArrayOfdouble[b1] = this.floatCoords[this.pointIdx + b1];
-/*      */           }
-/*      */         }
-/* 1015 */         return b;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     static class TxIterator extends Path2D.Iterator {
-/*      */       float[] floatCoords;
-/*      */       AffineTransform affine;
-/*      */       
-/*      */       TxIterator(Path2D.Float param2Float, AffineTransform param2AffineTransform) {
-/* 1024 */         super(param2Float);
-/* 1025 */         this.floatCoords = param2Float.floatCoords;
-/* 1026 */         this.affine = param2AffineTransform;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(float[] param2ArrayOffloat) {
-/* 1030 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1031 */         int i = curvecoords[b];
-/* 1032 */         if (i > 0) {
-/* 1033 */           this.affine.transform(this.floatCoords, this.pointIdx, param2ArrayOffloat, 0, i / 2);
-/*      */         }
-/*      */         
-/* 1036 */         return b;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(double[] param2ArrayOfdouble) {
-/* 1040 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1041 */         int i = curvecoords[b];
-/* 1042 */         if (i > 0) {
-/* 1043 */           this.affine.transform(this.floatCoords, this.pointIdx, param2ArrayOfdouble, 0, i / 2);
-/*      */         }
-/*      */         
-/* 1046 */         return b;
-/*      */       }
-/*      */     } }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static class Double
-/*      */     extends Path2D
-/*      */     implements Serializable
-/*      */   {
-/*      */     transient double[] doubleCoords;
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private static final long serialVersionUID = 1826762518450014216L;
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double() {
-/* 1068 */       this(1, 20);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double(int param1Int) {
-/* 1082 */       this(param1Int, 20);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double(int param1Int1, int param1Int2) {
-/* 1101 */       super(param1Int1, param1Int2);
-/* 1102 */       this.doubleCoords = new double[param1Int2 * 2];
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double(Shape param1Shape) {
-/* 1115 */       this(param1Shape, (AffineTransform)null);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public Double(Shape param1Shape, AffineTransform param1AffineTransform) {
-/* 1131 */       if (param1Shape instanceof Path2D) {
-/* 1132 */         Path2D path2D = (Path2D)param1Shape;
-/* 1133 */         setWindingRule(path2D.windingRule);
-/* 1134 */         this.numTypes = path2D.numTypes;
-/*      */         
-/* 1136 */         this.pointTypes = Arrays.copyOf(path2D.pointTypes, path2D.numTypes);
-/* 1137 */         this.numCoords = path2D.numCoords;
-/* 1138 */         this.doubleCoords = path2D.cloneCoordsDouble(param1AffineTransform);
-/*      */       } else {
-/* 1140 */         PathIterator pathIterator = param1Shape.getPathIterator(param1AffineTransform);
-/* 1141 */         setWindingRule(pathIterator.getWindingRule());
-/* 1142 */         this.pointTypes = new byte[20];
-/* 1143 */         this.doubleCoords = new double[40];
-/* 1144 */         append(pathIterator, false);
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     float[] cloneCoordsFloat(AffineTransform param1AffineTransform) {
-/* 1151 */       float[] arrayOfFloat = new float[this.numCoords];
-/* 1152 */       if (param1AffineTransform == null) {
-/* 1153 */         for (byte b = 0; b < this.numCoords; b++) {
-/* 1154 */           arrayOfFloat[b] = (float)this.doubleCoords[b];
-/*      */         }
-/*      */       } else {
-/* 1157 */         param1AffineTransform.transform(this.doubleCoords, 0, arrayOfFloat, 0, this.numCoords / 2);
-/*      */       } 
-/* 1159 */       return arrayOfFloat;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     double[] cloneCoordsDouble(AffineTransform param1AffineTransform) {
-/*      */       double[] arrayOfDouble;
-/* 1166 */       if (param1AffineTransform == null) {
-/* 1167 */         arrayOfDouble = Arrays.copyOf(this.doubleCoords, this.numCoords);
-/*      */       } else {
-/* 1169 */         arrayOfDouble = new double[this.numCoords];
-/* 1170 */         param1AffineTransform.transform(this.doubleCoords, 0, arrayOfDouble, 0, this.numCoords / 2);
-/*      */       } 
-/* 1172 */       return arrayOfDouble;
-/*      */     }
-/*      */     
-/*      */     void append(float param1Float1, float param1Float2) {
-/* 1176 */       this.doubleCoords[this.numCoords++] = param1Float1;
-/* 1177 */       this.doubleCoords[this.numCoords++] = param1Float2;
-/*      */     }
-/*      */     
-/*      */     void append(double param1Double1, double param1Double2) {
-/* 1181 */       this.doubleCoords[this.numCoords++] = param1Double1;
-/* 1182 */       this.doubleCoords[this.numCoords++] = param1Double2;
-/*      */     }
-/*      */     
-/*      */     Point2D getPoint(int param1Int) {
-/* 1186 */       return new Point2D.Double(this.doubleCoords[param1Int], this.doubleCoords[param1Int + 1]);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     void needRoom(boolean param1Boolean, int param1Int) {
-/* 1192 */       if (this.numTypes == 0 && param1Boolean) {
-/* 1193 */         throw new IllegalPathStateException("missing initial moveto in path definition");
-/*      */       }
-/*      */       
-/* 1196 */       if (this.numTypes >= this.pointTypes.length) {
-/* 1197 */         this.pointTypes = expandPointTypes(this.pointTypes, 1);
-/*      */       }
-/* 1199 */       if (this.numCoords > this.doubleCoords.length - param1Int) {
-/* 1200 */         this.doubleCoords = expandCoords(this.doubleCoords, param1Int);
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     static double[] expandCoords(double[] param1ArrayOfdouble, int param1Int) {
-/* 1205 */       int i = param1ArrayOfdouble.length;
-/* 1206 */       int j = i + param1Int;
-/* 1207 */       if (j < i)
-/*      */       {
-/*      */         
-/* 1210 */         throw new ArrayIndexOutOfBoundsException("coords exceeds maximum capacity !");
-/*      */       }
-/*      */ 
-/*      */       
-/* 1214 */       int k = i;
-/* 1215 */       if (k > 1000) {
-/* 1216 */         k = Math.max(1000, i >> 3);
-/* 1217 */       } else if (k < 10) {
-/* 1218 */         k = 10;
-/*      */       } 
-/* 1220 */       assert k > param1Int;
-/*      */       
-/* 1222 */       int m = i + k;
-/* 1223 */       if (m < j)
-/*      */       {
-/* 1225 */         m = Integer.MAX_VALUE;
-/*      */       }
-/*      */       
-/*      */       while (true) {
-/*      */         try {
-/* 1230 */           return Arrays.copyOf(param1ArrayOfdouble, m);
-/* 1231 */         } catch (OutOfMemoryError outOfMemoryError) {
-/* 1232 */           if (m == j) {
-/* 1233 */             throw outOfMemoryError;
-/*      */           }
-/*      */           
-/* 1236 */           m = j + (m - j) / 2;
-/*      */         } 
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void moveTo(double param1Double1, double param1Double2) {
-/* 1245 */       if (this.numTypes > 0 && this.pointTypes[this.numTypes - 1] == 0) {
-/* 1246 */         this.doubleCoords[this.numCoords - 2] = param1Double1;
-/* 1247 */         this.doubleCoords[this.numCoords - 1] = param1Double2;
-/*      */       } else {
-/* 1249 */         needRoom(false, 2);
-/* 1250 */         this.pointTypes[this.numTypes++] = 0;
-/* 1251 */         this.doubleCoords[this.numCoords++] = param1Double1;
-/* 1252 */         this.doubleCoords[this.numCoords++] = param1Double2;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void lineTo(double param1Double1, double param1Double2) {
-/* 1261 */       needRoom(true, 2);
-/* 1262 */       this.pointTypes[this.numTypes++] = 1;
-/* 1263 */       this.doubleCoords[this.numCoords++] = param1Double1;
-/* 1264 */       this.doubleCoords[this.numCoords++] = param1Double2;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void quadTo(double param1Double1, double param1Double2, double param1Double3, double param1Double4) {
-/* 1274 */       needRoom(true, 4);
-/* 1275 */       this.pointTypes[this.numTypes++] = 2;
-/* 1276 */       this.doubleCoords[this.numCoords++] = param1Double1;
-/* 1277 */       this.doubleCoords[this.numCoords++] = param1Double2;
-/* 1278 */       this.doubleCoords[this.numCoords++] = param1Double3;
-/* 1279 */       this.doubleCoords[this.numCoords++] = param1Double4;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized void curveTo(double param1Double1, double param1Double2, double param1Double3, double param1Double4, double param1Double5, double param1Double6) {
-/* 1290 */       needRoom(true, 6);
-/* 1291 */       this.pointTypes[this.numTypes++] = 3;
-/* 1292 */       this.doubleCoords[this.numCoords++] = param1Double1;
-/* 1293 */       this.doubleCoords[this.numCoords++] = param1Double2;
-/* 1294 */       this.doubleCoords[this.numCoords++] = param1Double3;
-/* 1295 */       this.doubleCoords[this.numCoords++] = param1Double4;
-/* 1296 */       this.doubleCoords[this.numCoords++] = param1Double5;
-/* 1297 */       this.doubleCoords[this.numCoords++] = param1Double6;
-/*      */     }
-/*      */     
-/*      */     int pointCrossings(double param1Double1, double param1Double2) {
-/* 1301 */       if (this.numTypes == 0) {
-/* 1302 */         return 0;
-/*      */       }
-/*      */       
-/* 1305 */       double[] arrayOfDouble = this.doubleCoords;
-/* 1306 */       double d1 = arrayOfDouble[0], d3 = d1;
-/* 1307 */       double d2 = arrayOfDouble[1], d4 = d2;
-/* 1308 */       int i = 0;
-/* 1309 */       byte b1 = 2;
-/* 1310 */       for (byte b2 = 1; b2 < this.numTypes; b2++) {
-/* 1311 */         double d5; double d6; switch (this.pointTypes[b2]) {
-/*      */           case 0:
-/* 1313 */             if (d4 != d2) {
-/* 1314 */               i += 
-/* 1315 */                 Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d1, d2);
-/*      */             }
-/*      */ 
-/*      */             
-/* 1319 */             d1 = d3 = arrayOfDouble[b1++];
-/* 1320 */             d2 = d4 = arrayOfDouble[b1++];
-/*      */           
-/*      */           case 1:
-/* 1323 */             i += 
-/* 1324 */               Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d5 = arrayOfDouble[b1++], d6 = arrayOfDouble[b1++]);
-/*      */ 
-/*      */ 
-/*      */             
-/* 1328 */             d3 = d5;
-/* 1329 */             d4 = d6;
-/*      */           
-/*      */           case 2:
-/* 1332 */             i += 
-/* 1333 */               Curve.pointCrossingsForQuad(param1Double1, param1Double2, d3, d4, arrayOfDouble[b1++], arrayOfDouble[b1++], d5 = arrayOfDouble[b1++], d6 = arrayOfDouble[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1340 */             d3 = d5;
-/* 1341 */             d4 = d6;
-/*      */           
-/*      */           case 3:
-/* 1344 */             i += 
-/* 1345 */               Curve.pointCrossingsForCubic(param1Double1, param1Double2, d3, d4, arrayOfDouble[b1++], arrayOfDouble[b1++], arrayOfDouble[b1++], arrayOfDouble[b1++], d5 = arrayOfDouble[b1++], d6 = arrayOfDouble[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1354 */             d3 = d5;
-/* 1355 */             d4 = d6;
-/*      */           
-/*      */           case 4:
-/* 1358 */             if (d4 != d2) {
-/* 1359 */               i += 
-/* 1360 */                 Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d1, d2);
-/*      */             }
-/*      */ 
-/*      */             
-/* 1364 */             d3 = d1;
-/* 1365 */             d4 = d2;
-/*      */             break;
-/*      */         } 
-/*      */       } 
-/* 1369 */       if (d4 != d2) {
-/* 1370 */         i += 
-/* 1371 */           Curve.pointCrossingsForLine(param1Double1, param1Double2, d3, d4, d1, d2);
-/*      */       }
-/*      */ 
-/*      */       
-/* 1375 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     int rectCrossings(double param1Double1, double param1Double2, double param1Double3, double param1Double4) {
-/* 1381 */       if (this.numTypes == 0) {
-/* 1382 */         return 0;
-/*      */       }
-/* 1384 */       double[] arrayOfDouble = this.doubleCoords;
-/*      */       
-/* 1386 */       double d3 = arrayOfDouble[0], d1 = d3;
-/* 1387 */       double d4 = arrayOfDouble[1], d2 = d4;
-/* 1388 */       int i = 0;
-/* 1389 */       byte b1 = 2;
-/* 1390 */       byte b2 = 1;
-/* 1391 */       for (; i != Integer.MIN_VALUE && b2 < this.numTypes; 
-/* 1392 */         b2++) {
-/*      */         double d5; double d6;
-/* 1394 */         switch (this.pointTypes[b2]) {
-/*      */           case 0:
-/* 1396 */             if (d1 != d3 || d2 != d4)
-/*      */             {
-/* 1398 */               i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d3, d4);
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1406 */             d3 = d1 = arrayOfDouble[b1++];
-/* 1407 */             d4 = d2 = arrayOfDouble[b1++];
-/*      */           
-/*      */           case 1:
-/* 1410 */             d5 = arrayOfDouble[b1++];
-/* 1411 */             d6 = arrayOfDouble[b1++];
-/*      */             
-/* 1413 */             i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d5, d6);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1418 */             d1 = d5;
-/* 1419 */             d2 = d6;
-/*      */             break;
-/*      */           
-/*      */           case 2:
-/* 1423 */             i = Curve.rectCrossingsForQuad(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, arrayOfDouble[b1++], arrayOfDouble[b1++], d5 = arrayOfDouble[b1++], d6 = arrayOfDouble[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1432 */             d1 = d5;
-/* 1433 */             d2 = d6;
-/*      */ 
-/*      */           
-/*      */           case 3:
-/* 1437 */             i = Curve.rectCrossingsForCubic(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, arrayOfDouble[b1++], arrayOfDouble[b1++], arrayOfDouble[b1++], arrayOfDouble[b1++], d5 = arrayOfDouble[b1++], d6 = arrayOfDouble[b1++], 0);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1448 */             d1 = d5;
-/* 1449 */             d2 = d6;
-/*      */           
-/*      */           case 4:
-/* 1452 */             if (d1 != d3 || d2 != d4)
-/*      */             {
-/* 1454 */               i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d3, d4);
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1460 */             d1 = d3;
-/* 1461 */             d2 = d4;
-/*      */             break;
-/*      */         } 
-/*      */ 
-/*      */       
-/*      */       } 
-/* 1467 */       if (i != Integer.MIN_VALUE && (d1 != d3 || d2 != d4))
-/*      */       {
-/*      */ 
-/*      */         
-/* 1471 */         i = Curve.rectCrossingsForLine(i, param1Double1, param1Double2, param1Double3, param1Double4, d1, d2, d3, d4);
-/*      */       }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 1479 */       return i;
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void append(PathIterator param1PathIterator, boolean param1Boolean) {
-/* 1487 */       double[] arrayOfDouble = new double[6];
-/* 1488 */       while (!param1PathIterator.isDone()) {
-/* 1489 */         switch (param1PathIterator.currentSegment(arrayOfDouble)) {
-/*      */           case 0:
-/* 1491 */             if (!param1Boolean || this.numTypes < 1 || this.numCoords < 1) {
-/* 1492 */               moveTo(arrayOfDouble[0], arrayOfDouble[1]);
-/*      */               break;
-/*      */             } 
-/* 1495 */             if (this.pointTypes[this.numTypes - 1] != 4 && this.doubleCoords[this.numCoords - 2] == arrayOfDouble[0] && this.doubleCoords[this.numCoords - 1] == arrayOfDouble[1]) {
-/*      */               break;
-/*      */             }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */             
-/* 1502 */             lineTo(arrayOfDouble[0], arrayOfDouble[1]);
-/*      */             break;
-/*      */           case 1:
-/* 1505 */             lineTo(arrayOfDouble[0], arrayOfDouble[1]);
-/*      */             break;
-/*      */           case 2:
-/* 1508 */             quadTo(arrayOfDouble[0], arrayOfDouble[1], arrayOfDouble[2], arrayOfDouble[3]);
-/*      */             break;
-/*      */           
-/*      */           case 3:
-/* 1512 */             curveTo(arrayOfDouble[0], arrayOfDouble[1], arrayOfDouble[2], arrayOfDouble[3], arrayOfDouble[4], arrayOfDouble[5]);
-/*      */             break;
-/*      */ 
-/*      */           
-/*      */           case 4:
-/* 1517 */             closePath();
-/*      */             break;
-/*      */         } 
-/* 1520 */         param1PathIterator.next();
-/* 1521 */         param1Boolean = false;
-/*      */       } 
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final void transform(AffineTransform param1AffineTransform) {
-/* 1530 */       param1AffineTransform.transform(this.doubleCoords, 0, this.doubleCoords, 0, this.numCoords / 2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final synchronized Rectangle2D getBounds2D() {
-/*      */       double d1, d2, d3, d4;
-/* 1539 */       int i = this.numCoords;
-/* 1540 */       if (i > 0) {
-/* 1541 */         d2 = d4 = this.doubleCoords[--i];
-/* 1542 */         d1 = d3 = this.doubleCoords[--i];
-/* 1543 */         while (i > 0) {
-/* 1544 */           double d5 = this.doubleCoords[--i];
-/* 1545 */           double d6 = this.doubleCoords[--i];
-/* 1546 */           if (d6 < d1) d1 = d6; 
-/* 1547 */           if (d5 < d2) d2 = d5; 
-/* 1548 */           if (d6 > d3) d3 = d6; 
-/* 1549 */           if (d5 > d4) d4 = d5; 
-/*      */         } 
-/*      */       } else {
-/* 1552 */         d1 = d2 = d3 = d4 = 0.0D;
-/*      */       } 
-/* 1554 */       return new Rectangle2D.Double(d1, d2, d3 - d1, d4 - d2);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final PathIterator getPathIterator(AffineTransform param1AffineTransform) {
-/* 1573 */       if (param1AffineTransform == null) {
-/* 1574 */         return new CopyIterator(this);
-/*      */       }
-/* 1576 */       return new TxIterator(this, param1AffineTransform);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     public final Object clone() {
-/* 1594 */       return new Double(this);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void writeObject(ObjectOutputStream param1ObjectOutputStream) throws IOException {
-/* 1726 */       writeObject(param1ObjectOutputStream, true);
-/*      */     }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/*      */     private void readObject(ObjectInputStream param1ObjectInputStream) throws ClassNotFoundException, IOException {
-/* 1745 */       readObject(param1ObjectInputStream, true);
-/*      */     }
-/*      */     
-/*      */     static class CopyIterator extends Path2D.Iterator {
-/*      */       double[] doubleCoords;
-/*      */       
-/*      */       CopyIterator(Path2D.Double param2Double) {
-/* 1752 */         super(param2Double);
-/* 1753 */         this.doubleCoords = param2Double.doubleCoords;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(float[] param2ArrayOffloat) {
-/* 1757 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1758 */         int i = curvecoords[b];
-/* 1759 */         if (i > 0) {
-/* 1760 */           for (byte b1 = 0; b1 < i; b1++) {
-/* 1761 */             param2ArrayOffloat[b1] = (float)this.doubleCoords[this.pointIdx + b1];
-/*      */           }
-/*      */         }
-/* 1764 */         return b;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(double[] param2ArrayOfdouble) {
-/* 1768 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1769 */         int i = curvecoords[b];
-/* 1770 */         if (i > 0) {
-/* 1771 */           System.arraycopy(this.doubleCoords, this.pointIdx, param2ArrayOfdouble, 0, i);
-/*      */         }
-/*      */         
-/* 1774 */         return b;
-/*      */       }
-/*      */     }
-/*      */     
-/*      */     static class TxIterator extends Path2D.Iterator {
-/*      */       double[] doubleCoords;
-/*      */       AffineTransform affine;
-/*      */       
-/*      */       TxIterator(Path2D.Double param2Double, AffineTransform param2AffineTransform) {
-/* 1783 */         super(param2Double);
-/* 1784 */         this.doubleCoords = param2Double.doubleCoords;
-/* 1785 */         this.affine = param2AffineTransform;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(float[] param2ArrayOffloat) {
-/* 1789 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1790 */         int i = curvecoords[b];
-/* 1791 */         if (i > 0) {
-/* 1792 */           this.affine.transform(this.doubleCoords, this.pointIdx, param2ArrayOffloat, 0, i / 2);
-/*      */         }
-/*      */         
-/* 1795 */         return b;
-/*      */       }
-/*      */       
-/*      */       public int currentSegment(double[] param2ArrayOfdouble) {
-/* 1799 */         byte b = this.path.pointTypes[this.typeIdx];
-/* 1800 */         int i = curvecoords[b];
-/* 1801 */         if (i > 0) {
-/* 1802 */           this.affine.transform(this.doubleCoords, this.pointIdx, param2ArrayOfdouble, 0, i / 2);
-/*      */         }
-/*      */         
-/* 1805 */         return b;
-/*      */       }
-/*      */     }
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized void closePath() {
-/* 1876 */     if (this.numTypes == 0 || this.pointTypes[this.numTypes - 1] != 4) {
-/* 1877 */       needRoom(true, 0);
-/* 1878 */       this.pointTypes[this.numTypes++] = 4;
-/*      */     } 
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void append(Shape paramShape, boolean paramBoolean) {
-/* 1905 */     append(paramShape.getPathIterator(null), paramBoolean);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract void append(PathIterator paramPathIterator, boolean paramBoolean);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized int getWindingRule() {
-/* 1943 */     return this.windingRule;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final void setWindingRule(int paramInt) {
-/* 1959 */     if (paramInt != 0 && paramInt != 1) {
-/* 1960 */       throw new IllegalArgumentException("winding rule must be WIND_EVEN_ODD or WIND_NON_ZERO");
-/*      */     }
-/*      */ 
-/*      */     
-/* 1964 */     this.windingRule = paramInt;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized Point2D getCurrentPoint() {
-/* 1976 */     int i = this.numCoords;
-/* 1977 */     if (this.numTypes < 1 || i < 1) {
-/* 1978 */       return null;
-/*      */     }
-/* 1980 */     if (this.pointTypes[this.numTypes - 1] == 4)
-/*      */     {
-/* 1982 */       for (int j = this.numTypes - 2; j > 0; j--) {
-/* 1983 */         switch (this.pointTypes[j]) {
-/*      */           case 0:
-/*      */             break;
-/*      */           case 1:
-/* 1987 */             i -= 2;
-/*      */             break;
-/*      */           case 2:
-/* 1990 */             i -= 4;
-/*      */             break;
-/*      */           case 3:
-/* 1993 */             i -= 6;
-/*      */             break;
-/*      */         } 
-/*      */ 
-/*      */       
-/*      */       } 
-/*      */     }
-/* 2000 */     return getPoint(i - 2);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized void reset() {
-/* 2011 */     this.numTypes = this.numCoords = 0;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract void transform(AffineTransform paramAffineTransform);
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final synchronized Shape createTransformedShape(AffineTransform paramAffineTransform) {
-/* 2047 */     Path2D path2D = (Path2D)clone();
-/* 2048 */     if (paramAffineTransform != null) {
-/* 2049 */       path2D.transform(paramAffineTransform);
-/*      */     }
-/* 2051 */     return path2D;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final Rectangle getBounds() {
-/* 2059 */     return getBounds2D().getBounds();
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean contains(PathIterator paramPathIterator, double paramDouble1, double paramDouble2) {
-/* 2078 */     if (paramDouble1 * 0.0D + paramDouble2 * 0.0D == 0.0D) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 2082 */       byte b = (paramPathIterator.getWindingRule() == 1) ? -1 : 1;
-/* 2083 */       int i = Curve.pointCrossingsForPath(paramPathIterator, paramDouble1, paramDouble2);
-/* 2084 */       return ((i & b) != 0);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2091 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean contains(PathIterator paramPathIterator, Point2D paramPoint2D) {
-/* 2110 */     return contains(paramPathIterator, paramPoint2D.getX(), paramPoint2D.getY());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean contains(double paramDouble1, double paramDouble2) {
-/* 2118 */     if (paramDouble1 * 0.0D + paramDouble2 * 0.0D == 0.0D) {
-/*      */ 
-/*      */ 
-/*      */       
-/* 2122 */       if (this.numTypes < 2) {
-/* 2123 */         return false;
-/*      */       }
-/* 2125 */       boolean bool = (this.windingRule == 1) ? true : true;
-/* 2126 */       return ((pointCrossings(paramDouble1, paramDouble2) & bool) != 0);
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2133 */     return false;
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean contains(Point2D paramPoint2D) {
-/* 2142 */     return contains(paramPoint2D.getX(), paramPoint2D.getY());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean contains(PathIterator paramPathIterator, double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 2179 */     if (Double.isNaN(paramDouble1 + paramDouble3) || Double.isNaN(paramDouble2 + paramDouble4))
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2188 */       return false;
-/*      */     }
-/* 2190 */     if (paramDouble3 <= 0.0D || paramDouble4 <= 0.0D) {
-/* 2191 */       return false;
-/*      */     }
-/* 2193 */     byte b = (paramPathIterator.getWindingRule() == 1) ? -1 : 2;
-/* 2194 */     int i = Curve.rectCrossingsForPath(paramPathIterator, paramDouble1, paramDouble2, paramDouble1 + paramDouble3, paramDouble2 + paramDouble4);
-/* 2195 */     return (i != Integer.MIN_VALUE && (i & b) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean contains(PathIterator paramPathIterator, Rectangle2D paramRectangle2D) {
-/* 2228 */     return contains(paramPathIterator, paramRectangle2D.getX(), paramRectangle2D.getY(), paramRectangle2D.getWidth(), paramRectangle2D.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean contains(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 2251 */     if (Double.isNaN(paramDouble1 + paramDouble3) || Double.isNaN(paramDouble2 + paramDouble4))
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2260 */       return false;
-/*      */     }
-/* 2262 */     if (paramDouble3 <= 0.0D || paramDouble4 <= 0.0D) {
-/* 2263 */       return false;
-/*      */     }
-/* 2265 */     byte b = (this.windingRule == 1) ? -1 : 2;
-/* 2266 */     int i = rectCrossings(paramDouble1, paramDouble2, paramDouble1 + paramDouble3, paramDouble2 + paramDouble4);
-/* 2267 */     return (i != Integer.MIN_VALUE && (i & b) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean contains(Rectangle2D paramRectangle2D) {
-/* 2291 */     return contains(paramRectangle2D.getX(), paramRectangle2D.getY(), paramRectangle2D.getWidth(), paramRectangle2D.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean intersects(PathIterator paramPathIterator, double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 2329 */     if (Double.isNaN(paramDouble1 + paramDouble3) || Double.isNaN(paramDouble2 + paramDouble4))
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2338 */       return false;
-/*      */     }
-/* 2340 */     if (paramDouble3 <= 0.0D || paramDouble4 <= 0.0D) {
-/* 2341 */       return false;
-/*      */     }
-/* 2343 */     byte b = (paramPathIterator.getWindingRule() == 1) ? -1 : 2;
-/* 2344 */     int i = Curve.rectCrossingsForPath(paramPathIterator, paramDouble1, paramDouble2, paramDouble1 + paramDouble3, paramDouble2 + paramDouble4);
-/* 2345 */     return (i == Integer.MIN_VALUE || (i & b) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public static boolean intersects(PathIterator paramPathIterator, Rectangle2D paramRectangle2D) {
-/* 2378 */     return intersects(paramPathIterator, paramRectangle2D.getX(), paramRectangle2D.getY(), paramRectangle2D.getWidth(), paramRectangle2D.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean intersects(double paramDouble1, double paramDouble2, double paramDouble3, double paramDouble4) {
-/* 2400 */     if (Double.isNaN(paramDouble1 + paramDouble3) || Double.isNaN(paramDouble2 + paramDouble4))
-/*      */     {
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */       
-/* 2409 */       return false;
-/*      */     }
-/* 2411 */     if (paramDouble3 <= 0.0D || paramDouble4 <= 0.0D) {
-/* 2412 */       return false;
-/*      */     }
-/* 2414 */     byte b = (this.windingRule == 1) ? -1 : 2;
-/* 2415 */     int i = rectCrossings(paramDouble1, paramDouble2, paramDouble1 + paramDouble3, paramDouble2 + paramDouble4);
-/* 2416 */     return (i == Integer.MIN_VALUE || (i & b) != 0);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final boolean intersects(Rectangle2D paramRectangle2D) {
-/* 2439 */     return intersects(paramRectangle2D.getX(), paramRectangle2D.getY(), paramRectangle2D.getWidth(), paramRectangle2D.getHeight());
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public final PathIterator getPathIterator(AffineTransform paramAffineTransform, double paramDouble) {
-/* 2456 */     return new FlatteningPathIterator(getPathIterator(paramAffineTransform), paramDouble);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   public abstract Object clone();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final void writeObject(ObjectOutputStream paramObjectOutputStream, boolean paramBoolean) throws IOException {
-/*      */     float[] arrayOfFloat;
-/*      */     Object object;
-/* 2496 */     paramObjectOutputStream.defaultWriteObject();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2501 */     if (paramBoolean) {
-/* 2502 */       object = ((Double)this).doubleCoords;
-/* 2503 */       arrayOfFloat = null;
-/*      */     } else {
-/* 2505 */       arrayOfFloat = ((Float)this).floatCoords;
-/* 2506 */       object = null;
-/*      */     } 
-/*      */     
-/* 2509 */     int i = this.numTypes;
-/*      */     
-/* 2511 */     paramObjectOutputStream.writeByte(paramBoolean ? 49 : 48);
-/*      */ 
-/*      */     
-/* 2514 */     paramObjectOutputStream.writeInt(i);
-/* 2515 */     paramObjectOutputStream.writeInt(this.numCoords);
-/* 2516 */     paramObjectOutputStream.writeByte((byte)this.windingRule);
-/*      */     
-/* 2518 */     byte b1 = 0;
-/* 2519 */     for (byte b2 = 0; b2 < i; b2++) {
-/*      */       byte b3, b4;
-/*      */       
-/* 2522 */       switch (this.pointTypes[b2]) {
-/*      */         case 0:
-/* 2524 */           b3 = 1;
-/* 2525 */           b4 = paramBoolean ? 80 : 64;
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 1:
-/* 2530 */           b3 = 1;
-/* 2531 */           b4 = paramBoolean ? 81 : 65;
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 2:
-/* 2536 */           b3 = 2;
-/* 2537 */           b4 = paramBoolean ? 82 : 66;
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 3:
-/* 2542 */           b3 = 3;
-/* 2543 */           b4 = paramBoolean ? 83 : 67;
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         case 4:
-/* 2548 */           b3 = 0;
-/* 2549 */           b4 = 96;
-/*      */           break;
-/*      */ 
-/*      */         
-/*      */         default:
-/* 2554 */           throw new InternalError("unrecognized path type");
-/*      */       } 
-/* 2556 */       paramObjectOutputStream.writeByte(b4);
-/* 2557 */       while (--b3 >= 0) {
-/* 2558 */         if (paramBoolean) {
-/* 2559 */           paramObjectOutputStream.writeDouble(object[b1++]);
-/* 2560 */           paramObjectOutputStream.writeDouble(object[b1++]); continue;
-/*      */         } 
-/* 2562 */         paramObjectOutputStream.writeFloat(arrayOfFloat[b1++]);
-/* 2563 */         paramObjectOutputStream.writeFloat(arrayOfFloat[b1++]);
-/*      */       } 
-/*      */     } 
-/*      */     
-/* 2567 */     paramObjectOutputStream.writeByte(97);
-/*      */   }
-/*      */ 
-/*      */ 
-/*      */   
-/*      */   final void readObject(ObjectInputStream paramObjectInputStream, boolean paramBoolean) throws ClassNotFoundException, IOException {
-/* 2573 */     paramObjectInputStream.defaultReadObject();
-/*      */ 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2578 */     paramObjectInputStream.readByte();
-/* 2579 */     int i = paramObjectInputStream.readInt();
-/* 2580 */     int j = paramObjectInputStream.readInt();
-/*      */     try {
-/* 2582 */       setWindingRule(paramObjectInputStream.readByte());
-/* 2583 */     } catch (IllegalArgumentException illegalArgumentException) {
-/* 2584 */       throw new InvalidObjectException(illegalArgumentException.getMessage());
-/*      */     } 
-/*      */ 
-/*      */ 
-/*      */     
-/* 2589 */     this.pointTypes = new byte[(i < 0 || i > 20) ? 20 : i];
-/*      */     
-/* 2591 */     if (j < 0 || j > 40) {
-/* 2592 */       j = 40;
-/*      */     }
-/* 2594 */     if (paramBoolean) {
-/* 2595 */       ((Double)this).doubleCoords = new double[j];
-/*      */     } else {
-/* 2597 */       ((Float)this).floatCoords = new float[j];
-/*      */     } 
-/*      */ 
-/*      */     
-/* 2601 */     for (byte b = 0; i < 0 || b < i; b++) {
-/*      */       boolean bool;
-/*      */       
-/*      */       byte b1, b2;
-/*      */       
-/* 2606 */       byte b3 = paramObjectInputStream.readByte();
-/* 2607 */       switch (b3) {
-/*      */         case 64:
-/* 2609 */           bool = false;
-/* 2610 */           b1 = 1;
-/* 2611 */           b2 = 0;
-/*      */           break;
-/*      */         case 65:
-/* 2614 */           bool = false;
-/* 2615 */           b1 = 1;
-/* 2616 */           b2 = 1;
-/*      */           break;
-/*      */         case 66:
-/* 2619 */           bool = false;
-/* 2620 */           b1 = 2;
-/* 2621 */           b2 = 2;
-/*      */           break;
-/*      */         case 67:
-/* 2624 */           bool = false;
-/* 2625 */           b1 = 3;
-/* 2626 */           b2 = 3;
-/*      */           break;
-/*      */         
-/*      */         case 80:
-/* 2630 */           bool = true;
-/* 2631 */           b1 = 1;
-/* 2632 */           b2 = 0;
-/*      */           break;
-/*      */         case 81:
-/* 2635 */           bool = true;
-/* 2636 */           b1 = 1;
-/* 2637 */           b2 = 1;
-/*      */           break;
-/*      */         case 82:
-/* 2640 */           bool = true;
-/* 2641 */           b1 = 2;
-/* 2642 */           b2 = 2;
-/*      */           break;
-/*      */         case 83:
-/* 2645 */           bool = true;
-/* 2646 */           b1 = 3;
-/* 2647 */           b2 = 3;
-/*      */           break;
-/*      */         
-/*      */         case 96:
-/* 2651 */           bool = false;
-/* 2652 */           b1 = 0;
-/* 2653 */           b2 = 4;
-/*      */           break;
-/*      */         
-/*      */         case 97:
-/* 2657 */           if (i < 0) {
-/*      */             break;
-/*      */           }
-/* 2660 */           throw new StreamCorruptedException("unexpected PATH_END");
-/*      */         
-/*      */         default:
-/* 2663 */           throw new StreamCorruptedException("unrecognized path type");
-/*      */       } 
-/* 2665 */       needRoom((b2 != 0), b1 * 2);
-/* 2666 */       if (bool) {
-/* 2667 */         while (--b1 >= 0) {
-/* 2668 */           append(paramObjectInputStream.readDouble(), paramObjectInputStream.readDouble());
-/*      */         }
-/*      */       } else {
-/* 2671 */         while (--b1 >= 0) {
-/* 2672 */           append(paramObjectInputStream.readFloat(), paramObjectInputStream.readFloat());
-/*      */         }
-/*      */       } 
-/* 2675 */       this.pointTypes[this.numTypes++] = b2;
-/*      */     } 
-/* 2677 */     if (i >= 0 && paramObjectInputStream.readByte() != 97)
-/* 2678 */       throw new StreamCorruptedException("missing PATH_END"); 
-/*      */   }
-/*      */   
-/*      */   static abstract class Iterator
-/*      */     implements PathIterator
-/*      */   {
-/*      */     int typeIdx;
-/*      */     int pointIdx;
-/*      */     Path2D path;
-/* 2687 */     static final int[] curvecoords = new int[] { 2, 2, 4, 6, 0 };
-/*      */     
-/*      */     Iterator(Path2D param1Path2D) {
-/* 2690 */       this.path = param1Path2D;
-/*      */     }
-/*      */     
-/*      */     public int getWindingRule() {
-/* 2694 */       return this.path.getWindingRule();
-/*      */     }
-/*      */     
-/*      */     public boolean isDone() {
-/* 2698 */       return (this.typeIdx >= this.path.numTypes);
-/*      */     }
-/*      */     
-/*      */     public void next() {
-/* 2702 */       byte b = this.path.pointTypes[this.typeIdx++];
-/* 2703 */       this.pointIdx += curvecoords[b];
-/*      */     }
-/*      */   }
-/*      */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\awt\geom\Path2D.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.awt.geom;
+
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.io.Serializable;
+import java.io.StreamCorruptedException;
+import java.util.Arrays;
+
+import sun.awt.geom.Curve;
+
+/**
+ * The {@code Path2D} class provides a simple, yet flexible
+ * shape which represents an arbitrary geometric path.
+ * It can fully represent any path which can be iterated by the
+ * {@link PathIterator} interface including all of its segment
+ * types and winding rules and it implements all of the
+ * basic hit testing methods of the {@link Shape} interface.
+ * <p>
+ * Use {@link Path2D.Float} when dealing with data that can be represented
+ * and used with floating point precision.  Use {@link Path2D.Double}
+ * for data that requires the accuracy or range of double precision.
+ * <p>
+ * {@code Path2D} provides exactly those facilities required for
+ * basic construction and management of a geometric path and
+ * implementation of the above interfaces with little added
+ * interpretation.
+ * If it is useful to manipulate the interiors of closed
+ * geometric shapes beyond simple hit testing then the
+ * {@link Area} class provides additional capabilities
+ * specifically targeted at closed figures.
+ * While both classes nominally implement the {@code Shape}
+ * interface, they differ in purpose and together they provide
+ * two useful views of a geometric shape where {@code Path2D}
+ * deals primarily with a trajectory formed by path segments
+ * and {@code Area} deals more with interpretation and manipulation
+ * of enclosed regions of 2D geometric space.
+ * <p>
+ * The {@link PathIterator} interface has more detailed descriptions
+ * of the types of segments that make up a path and the winding rules
+ * that control how to determine which regions are inside or outside
+ * the path.
+ *
+ * @author Jim Graham
+ * @since 1.6
+ */
+public abstract class Path2D implements Shape, Cloneable {
+    /**
+     * An even-odd winding rule for determining the interior of
+     * a path.
+     *
+     * @see PathIterator#WIND_EVEN_ODD
+     * @since 1.6
+     */
+    public static final int WIND_EVEN_ODD = PathIterator.WIND_EVEN_ODD;
+
+    /**
+     * A non-zero winding rule for determining the interior of a
+     * path.
+     *
+     * @see PathIterator#WIND_NON_ZERO
+     * @since 1.6
+     */
+    public static final int WIND_NON_ZERO = PathIterator.WIND_NON_ZERO;
+
+    // For code simplicity, copy these constants to our namespace
+    // and cast them to byte constants for easy storage.
+    private static final byte SEG_MOVETO  = (byte) PathIterator.SEG_MOVETO;
+    private static final byte SEG_LINETO  = (byte) PathIterator.SEG_LINETO;
+    private static final byte SEG_QUADTO  = (byte) PathIterator.SEG_QUADTO;
+    private static final byte SEG_CUBICTO = (byte) PathIterator.SEG_CUBICTO;
+    private static final byte SEG_CLOSE   = (byte) PathIterator.SEG_CLOSE;
+
+    transient byte[] pointTypes;
+    transient int numTypes;
+    transient int numCoords;
+    transient int windingRule;
+
+    static final int INIT_SIZE = 20;
+    static final int EXPAND_MAX = 500;
+    static final int EXPAND_MAX_COORDS = EXPAND_MAX * 2;
+    static final int EXPAND_MIN = 10; // ensure > 6 (cubics)
+
+    /**
+     * Constructs a new empty {@code Path2D} object.
+     * It is assumed that the package sibling subclass that is
+     * defaulting to this constructor will fill in all values.
+     *
+     * @since 1.6
+     */
+    /* private protected */
+    Path2D() {
+    }
+
+    /**
+     * Constructs a new {@code Path2D} object from the given
+     * specified initial values.
+     * This method is only intended for internal use and should
+     * not be made public if the other constructors for this class
+     * are ever exposed.
+     *
+     * @param rule the winding rule
+     * @param initialTypes the size to make the initial array to
+     *                     store the path segment types
+     * @since 1.6
+     */
+    /* private protected */
+    Path2D(int rule, int initialTypes) {
+        setWindingRule(rule);
+        this.pointTypes = new byte[initialTypes];
+    }
+
+    abstract float[] cloneCoordsFloat(AffineTransform at);
+    abstract double[] cloneCoordsDouble(AffineTransform at);
+    abstract void append(float x, float y);
+    abstract void append(double x, double y);
+    abstract Point2D getPoint(int coordindex);
+    abstract void needRoom(boolean needMove, int newCoords);
+    abstract int pointCrossings(double px, double py);
+    abstract int rectCrossings(double rxmin, double rymin,
+                               double rxmax, double rymax);
+
+    static byte[] expandPointTypes(byte[] oldPointTypes, int needed) {
+        final int oldSize = oldPointTypes.length;
+        final int newSizeMin = oldSize + needed;
+        if (newSizeMin < oldSize) {
+            // hard overflow failure - we can't even accommodate
+            // new items without overflowing
+            throw new ArrayIndexOutOfBoundsException(
+                          "pointTypes exceeds maximum capacity !");
+        }
+        // growth algorithm computation
+        int grow = oldSize;
+        if (grow > EXPAND_MAX) {
+            grow = Math.max(EXPAND_MAX, oldSize >> 3); // 1/8th min
+        } else if (grow < EXPAND_MIN) {
+            grow = EXPAND_MIN;
+        }
+        assert grow > 0;
+
+        int newSize = oldSize + grow;
+        if (newSize < newSizeMin) {
+            // overflow in growth algorithm computation
+            newSize = Integer.MAX_VALUE;
+        }
+        while (true) {
+            try {
+                // try allocating the larger array
+                return Arrays.copyOf(oldPointTypes, newSize);
+            } catch (OutOfMemoryError oome) {
+                if (newSize == newSizeMin) {
+                    throw oome;
+                }
+            }
+            newSize = newSizeMin + (newSize - newSizeMin) / 2;
+        }
+    }
+
+    /**
+     * The {@code Float} class defines a geometric path with
+     * coordinates stored in single precision floating point.
+     *
+     * @since 1.6
+     */
+    public static class Float extends Path2D implements Serializable {
+        transient float floatCoords[];
+
+        /**
+         * Constructs a new empty single precision {@code Path2D} object
+         * with a default winding rule of {@link #WIND_NON_ZERO}.
+         *
+         * @since 1.6
+         */
+        public Float() {
+            this(WIND_NON_ZERO, INIT_SIZE);
+        }
+
+        /**
+         * Constructs a new empty single precision {@code Path2D} object
+         * with the specified winding rule to control operations that
+         * require the interior of the path to be defined.
+         *
+         * @param rule the winding rule
+         * @see #WIND_EVEN_ODD
+         * @see #WIND_NON_ZERO
+         * @since 1.6
+         */
+        public Float(int rule) {
+            this(rule, INIT_SIZE);
+        }
+
+        /**
+         * Constructs a new empty single precision {@code Path2D} object
+         * with the specified winding rule and the specified initial
+         * capacity to store path segments.
+         * This number is an initial guess as to how many path segments
+         * will be added to the path, but the storage is expanded as
+         * needed to store whatever path segments are added.
+         *
+         * @param rule the winding rule
+         * @param initialCapacity the estimate for the number of path segments
+         *                        in the path
+         * @see #WIND_EVEN_ODD
+         * @see #WIND_NON_ZERO
+         * @since 1.6
+         */
+        public Float(int rule, int initialCapacity) {
+            super(rule, initialCapacity);
+            floatCoords = new float[initialCapacity * 2];
+        }
+
+        /**
+         * Constructs a new single precision {@code Path2D} object
+         * from an arbitrary {@link Shape} object.
+         * All of the initial geometry and the winding rule for this path are
+         * taken from the specified {@code Shape} object.
+         *
+         * @param s the specified {@code Shape} object
+         * @since 1.6
+         */
+        public Float(Shape s) {
+            this(s, null);
+        }
+
+        /**
+         * Constructs a new single precision {@code Path2D} object
+         * from an arbitrary {@link Shape} object, transformed by an
+         * {@link AffineTransform} object.
+         * All of the initial geometry and the winding rule for this path are
+         * taken from the specified {@code Shape} object and transformed
+         * by the specified {@code AffineTransform} object.
+         *
+         * @param s the specified {@code Shape} object
+         * @param at the specified {@code AffineTransform} object
+         * @since 1.6
+         */
+        public Float(Shape s, AffineTransform at) {
+            if (s instanceof Path2D) {
+                Path2D p2d = (Path2D) s;
+                setWindingRule(p2d.windingRule);
+                this.numTypes = p2d.numTypes;
+                // trim arrays:
+                this.pointTypes = Arrays.copyOf(p2d.pointTypes, p2d.numTypes);
+                this.numCoords = p2d.numCoords;
+                this.floatCoords = p2d.cloneCoordsFloat(at);
+            } else {
+                PathIterator pi = s.getPathIterator(at);
+                setWindingRule(pi.getWindingRule());
+                this.pointTypes = new byte[INIT_SIZE];
+                this.floatCoords = new float[INIT_SIZE * 2];
+                append(pi, false);
+            }
+        }
+
+        @Override
+        float[] cloneCoordsFloat(AffineTransform at) {
+            // trim arrays:
+            float ret[];
+            if (at == null) {
+                ret = Arrays.copyOf(floatCoords, numCoords);
+            } else {
+                ret = new float[numCoords];
+                at.transform(floatCoords, 0, ret, 0, numCoords / 2);
+            }
+            return ret;
+        }
+
+        @Override
+        double[] cloneCoordsDouble(AffineTransform at) {
+            // trim arrays:
+            double ret[] = new double[numCoords];
+            if (at == null) {
+                for (int i = 0; i < numCoords; i++) {
+                    ret[i] = floatCoords[i];
+                }
+            } else {
+                at.transform(floatCoords, 0, ret, 0, numCoords / 2);
+            }
+            return ret;
+        }
+
+        void append(float x, float y) {
+            floatCoords[numCoords++] = x;
+            floatCoords[numCoords++] = y;
+        }
+
+        void append(double x, double y) {
+            floatCoords[numCoords++] = (float) x;
+            floatCoords[numCoords++] = (float) y;
+        }
+
+        Point2D getPoint(int coordindex) {
+            return new Point2D.Float(floatCoords[coordindex],
+                                     floatCoords[coordindex+1]);
+        }
+
+        @Override
+        void needRoom(boolean needMove, int newCoords) {
+            if ((numTypes == 0) && needMove) {
+                throw new IllegalPathStateException("missing initial moveto "+
+                                                    "in path definition");
+            }
+            if (numTypes >= pointTypes.length) {
+                pointTypes = expandPointTypes(pointTypes, 1);
+            }
+            if (numCoords > (floatCoords.length - newCoords)) {
+                floatCoords = expandCoords(floatCoords, newCoords);
+            }
+        }
+
+        static float[] expandCoords(float[] oldCoords, int needed) {
+            final int oldSize = oldCoords.length;
+            final int newSizeMin = oldSize + needed;
+            if (newSizeMin < oldSize) {
+                // hard overflow failure - we can't even accommodate
+                // new items without overflowing
+                throw new ArrayIndexOutOfBoundsException(
+                              "coords exceeds maximum capacity !");
+            }
+            // growth algorithm computation
+            int grow = oldSize;
+            if (grow > EXPAND_MAX_COORDS) {
+                grow = Math.max(EXPAND_MAX_COORDS, oldSize >> 3); // 1/8th min
+            } else if (grow < EXPAND_MIN) {
+                grow = EXPAND_MIN;
+            }
+            assert grow > needed;
+
+            int newSize = oldSize + grow;
+            if (newSize < newSizeMin) {
+                // overflow in growth algorithm computation
+                newSize = Integer.MAX_VALUE;
+            }
+            while (true) {
+                try {
+                    // try allocating the larger array
+                    return Arrays.copyOf(oldCoords, newSize);
+                } catch (OutOfMemoryError oome) {
+                    if (newSize == newSizeMin) {
+                        throw oome;
+                    }
+                }
+                newSize = newSizeMin + (newSize - newSizeMin) / 2;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void moveTo(double x, double y) {
+            if (numTypes > 0 && pointTypes[numTypes - 1] == SEG_MOVETO) {
+                floatCoords[numCoords-2] = (float) x;
+                floatCoords[numCoords-1] = (float) y;
+            } else {
+                needRoom(false, 2);
+                pointTypes[numTypes++] = SEG_MOVETO;
+                floatCoords[numCoords++] = (float) x;
+                floatCoords[numCoords++] = (float) y;
+            }
+        }
+
+        /**
+         * Adds a point to the path by moving to the specified
+         * coordinates specified in float precision.
+         * <p>
+         * This method provides a single precision variant of
+         * the double precision {@code moveTo()} method on the
+         * base {@code Path2D} class.
+         *
+         * @param x the specified X coordinate
+         * @param y the specified Y coordinate
+         * @see Path2D#moveTo
+         * @since 1.6
+         */
+        public final synchronized void moveTo(float x, float y) {
+            if (numTypes > 0 && pointTypes[numTypes - 1] == SEG_MOVETO) {
+                floatCoords[numCoords-2] = x;
+                floatCoords[numCoords-1] = y;
+            } else {
+                needRoom(false, 2);
+                pointTypes[numTypes++] = SEG_MOVETO;
+                floatCoords[numCoords++] = x;
+                floatCoords[numCoords++] = y;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void lineTo(double x, double y) {
+            needRoom(true, 2);
+            pointTypes[numTypes++] = SEG_LINETO;
+            floatCoords[numCoords++] = (float) x;
+            floatCoords[numCoords++] = (float) y;
+        }
+
+        /**
+         * Adds a point to the path by drawing a straight line from the
+         * current coordinates to the new specified coordinates
+         * specified in float precision.
+         * <p>
+         * This method provides a single precision variant of
+         * the double precision {@code lineTo()} method on the
+         * base {@code Path2D} class.
+         *
+         * @param x the specified X coordinate
+         * @param y the specified Y coordinate
+         * @see Path2D#lineTo
+         * @since 1.6
+         */
+        public final synchronized void lineTo(float x, float y) {
+            needRoom(true, 2);
+            pointTypes[numTypes++] = SEG_LINETO;
+            floatCoords[numCoords++] = x;
+            floatCoords[numCoords++] = y;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void quadTo(double x1, double y1,
+                                              double x2, double y2)
+        {
+            needRoom(true, 4);
+            pointTypes[numTypes++] = SEG_QUADTO;
+            floatCoords[numCoords++] = (float) x1;
+            floatCoords[numCoords++] = (float) y1;
+            floatCoords[numCoords++] = (float) x2;
+            floatCoords[numCoords++] = (float) y2;
+        }
+
+        /**
+         * Adds a curved segment, defined by two new points, to the path by
+         * drawing a Quadratic curve that intersects both the current
+         * coordinates and the specified coordinates {@code (x2,y2)},
+         * using the specified point {@code (x1,y1)} as a quadratic
+         * parametric control point.
+         * All coordinates are specified in float precision.
+         * <p>
+         * This method provides a single precision variant of
+         * the double precision {@code quadTo()} method on the
+         * base {@code Path2D} class.
+         *
+         * @param x1 the X coordinate of the quadratic control point
+         * @param y1 the Y coordinate of the quadratic control point
+         * @param x2 the X coordinate of the final end point
+         * @param y2 the Y coordinate of the final end point
+         * @see Path2D#quadTo
+         * @since 1.6
+         */
+        public final synchronized void quadTo(float x1, float y1,
+                                              float x2, float y2)
+        {
+            needRoom(true, 4);
+            pointTypes[numTypes++] = SEG_QUADTO;
+            floatCoords[numCoords++] = x1;
+            floatCoords[numCoords++] = y1;
+            floatCoords[numCoords++] = x2;
+            floatCoords[numCoords++] = y2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void curveTo(double x1, double y1,
+                                               double x2, double y2,
+                                               double x3, double y3)
+        {
+            needRoom(true, 6);
+            pointTypes[numTypes++] = SEG_CUBICTO;
+            floatCoords[numCoords++] = (float) x1;
+            floatCoords[numCoords++] = (float) y1;
+            floatCoords[numCoords++] = (float) x2;
+            floatCoords[numCoords++] = (float) y2;
+            floatCoords[numCoords++] = (float) x3;
+            floatCoords[numCoords++] = (float) y3;
+        }
+
+        /**
+         * Adds a curved segment, defined by three new points, to the path by
+         * drawing a B&eacute;zier curve that intersects both the current
+         * coordinates and the specified coordinates {@code (x3,y3)},
+         * using the specified points {@code (x1,y1)} and {@code (x2,y2)} as
+         * B&eacute;zier control points.
+         * All coordinates are specified in float precision.
+         * <p>
+         * This method provides a single precision variant of
+         * the double precision {@code curveTo()} method on the
+         * base {@code Path2D} class.
+         *
+         * @param x1 the X coordinate of the first B&eacute;zier control point
+         * @param y1 the Y coordinate of the first B&eacute;zier control point
+         * @param x2 the X coordinate of the second B&eacute;zier control point
+         * @param y2 the Y coordinate of the second B&eacute;zier control point
+         * @param x3 the X coordinate of the final end point
+         * @param y3 the Y coordinate of the final end point
+         * @see Path2D#curveTo
+         * @since 1.6
+         */
+        public final synchronized void curveTo(float x1, float y1,
+                                               float x2, float y2,
+                                               float x3, float y3)
+        {
+            needRoom(true, 6);
+            pointTypes[numTypes++] = SEG_CUBICTO;
+            floatCoords[numCoords++] = x1;
+            floatCoords[numCoords++] = y1;
+            floatCoords[numCoords++] = x2;
+            floatCoords[numCoords++] = y2;
+            floatCoords[numCoords++] = x3;
+            floatCoords[numCoords++] = y3;
+        }
+
+        int pointCrossings(double px, double py) {
+            if (numTypes == 0) {
+                return 0;
+            }
+            double movx, movy, curx, cury, endx, endy;
+            float coords[] = floatCoords;
+            curx = movx = coords[0];
+            cury = movy = coords[1];
+            int crossings = 0;
+            int ci = 2;
+            for (int i = 1; i < numTypes; i++) {
+                switch (pointTypes[i]) {
+                case PathIterator.SEG_MOVETO:
+                    if (cury != movy) {
+                        crossings +=
+                            Curve.pointCrossingsForLine(px, py,
+                                                        curx, cury,
+                                                        movx, movy);
+                    }
+                    movx = curx = coords[ci++];
+                    movy = cury = coords[ci++];
+                    break;
+                case PathIterator.SEG_LINETO:
+                    crossings +=
+                        Curve.pointCrossingsForLine(px, py,
+                                                    curx, cury,
+                                                    endx = coords[ci++],
+                                                    endy = coords[ci++]);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_QUADTO:
+                    crossings +=
+                        Curve.pointCrossingsForQuad(px, py,
+                                                    curx, cury,
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    endx = coords[ci++],
+                                                    endy = coords[ci++],
+                                                    0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+            case PathIterator.SEG_CUBICTO:
+                    crossings +=
+                        Curve.pointCrossingsForCubic(px, py,
+                                                     curx, cury,
+                                                     coords[ci++],
+                                                     coords[ci++],
+                                                     coords[ci++],
+                                                     coords[ci++],
+                                                     endx = coords[ci++],
+                                                     endy = coords[ci++],
+                                                     0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_CLOSE:
+                    if (cury != movy) {
+                        crossings +=
+                            Curve.pointCrossingsForLine(px, py,
+                                                        curx, cury,
+                                                        movx, movy);
+                    }
+                    curx = movx;
+                    cury = movy;
+                    break;
+                }
+            }
+            if (cury != movy) {
+                crossings +=
+                    Curve.pointCrossingsForLine(px, py,
+                                                curx, cury,
+                                                movx, movy);
+            }
+            return crossings;
+        }
+
+        int rectCrossings(double rxmin, double rymin,
+                          double rxmax, double rymax)
+        {
+            if (numTypes == 0) {
+                return 0;
+            }
+            float coords[] = floatCoords;
+            double curx, cury, movx, movy, endx, endy;
+            curx = movx = coords[0];
+            cury = movy = coords[1];
+            int crossings = 0;
+            int ci = 2;
+            for (int i = 1;
+                 crossings != Curve.RECT_INTERSECTS && i < numTypes;
+                 i++)
+            {
+                switch (pointTypes[i]) {
+                case PathIterator.SEG_MOVETO:
+                    if (curx != movx || cury != movy) {
+                        crossings =
+                            Curve.rectCrossingsForLine(crossings,
+                                                       rxmin, rymin,
+                                                       rxmax, rymax,
+                                                       curx, cury,
+                                                       movx, movy);
+                    }
+                    // Count should always be a multiple of 2 here.
+                    // assert((crossings & 1) != 0);
+                    movx = curx = coords[ci++];
+                    movy = cury = coords[ci++];
+                    break;
+                case PathIterator.SEG_LINETO:
+                    crossings =
+                        Curve.rectCrossingsForLine(crossings,
+                                                   rxmin, rymin,
+                                                   rxmax, rymax,
+                                                   curx, cury,
+                                                   endx = coords[ci++],
+                                                   endy = coords[ci++]);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_QUADTO:
+                    crossings =
+                        Curve.rectCrossingsForQuad(crossings,
+                                                   rxmin, rymin,
+                                                   rxmax, rymax,
+                                                   curx, cury,
+                                                   coords[ci++],
+                                                   coords[ci++],
+                                                   endx = coords[ci++],
+                                                   endy = coords[ci++],
+                                                   0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_CUBICTO:
+                    crossings =
+                        Curve.rectCrossingsForCubic(crossings,
+                                                    rxmin, rymin,
+                                                    rxmax, rymax,
+                                                    curx, cury,
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    endx = coords[ci++],
+                                                    endy = coords[ci++],
+                                                    0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_CLOSE:
+                    if (curx != movx || cury != movy) {
+                        crossings =
+                            Curve.rectCrossingsForLine(crossings,
+                                                       rxmin, rymin,
+                                                       rxmax, rymax,
+                                                       curx, cury,
+                                                       movx, movy);
+                    }
+                    curx = movx;
+                    cury = movy;
+                    // Count should always be a multiple of 2 here.
+                    // assert((crossings & 1) != 0);
+                    break;
+                }
+            }
+            if (crossings != Curve.RECT_INTERSECTS &&
+                (curx != movx || cury != movy))
+            {
+                crossings =
+                    Curve.rectCrossingsForLine(crossings,
+                                               rxmin, rymin,
+                                               rxmax, rymax,
+                                               curx, cury,
+                                               movx, movy);
+            }
+            // Count should always be a multiple of 2 here.
+            // assert((crossings & 1) != 0);
+            return crossings;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final void append(PathIterator pi, boolean connect) {
+            float coords[] = new float[6];
+            while (!pi.isDone()) {
+                switch (pi.currentSegment(coords)) {
+                case SEG_MOVETO:
+                    if (!connect || numTypes < 1 || numCoords < 1) {
+                        moveTo(coords[0], coords[1]);
+                        break;
+                    }
+                    if (pointTypes[numTypes - 1] != SEG_CLOSE &&
+                        floatCoords[numCoords-2] == coords[0] &&
+                        floatCoords[numCoords-1] == coords[1])
+                    {
+                        // Collapse out initial moveto/lineto
+                        break;
+                    }
+                    lineTo(coords[0], coords[1]);
+                    break;
+                case SEG_LINETO:
+                    lineTo(coords[0], coords[1]);
+                    break;
+                case SEG_QUADTO:
+                    quadTo(coords[0], coords[1],
+                           coords[2], coords[3]);
+                    break;
+                case SEG_CUBICTO:
+                    curveTo(coords[0], coords[1],
+                            coords[2], coords[3],
+                            coords[4], coords[5]);
+                    break;
+                case SEG_CLOSE:
+                    closePath();
+                    break;
+                }
+                pi.next();
+                connect = false;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final void transform(AffineTransform at) {
+            at.transform(floatCoords, 0, floatCoords, 0, numCoords / 2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized Rectangle2D getBounds2D() {
+            float x1, y1, x2, y2;
+            int i = numCoords;
+            if (i > 0) {
+                y1 = y2 = floatCoords[--i];
+                x1 = x2 = floatCoords[--i];
+                while (i > 0) {
+                    float y = floatCoords[--i];
+                    float x = floatCoords[--i];
+                    if (x < x1) x1 = x;
+                    if (y < y1) y1 = y;
+                    if (x > x2) x2 = x;
+                    if (y > y2) y2 = y;
+                }
+            } else {
+                x1 = y1 = x2 = y2 = 0.0f;
+            }
+            return new Rectangle2D.Float(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * The iterator for this class is not multi-threaded safe,
+         * which means that the {@code Path2D} class does not
+         * guarantee that modifications to the geometry of this
+         * {@code Path2D} object do not affect any iterations of
+         * that geometry that are already in process.
+         *
+         * @since 1.6
+         */
+        public final PathIterator getPathIterator(AffineTransform at) {
+            if (at == null) {
+                return new CopyIterator(this);
+            } else {
+                return new TxIterator(this, at);
+            }
+        }
+
+        /**
+         * Creates a new object of the same class as this object.
+         *
+         * @return     a clone of this instance.
+         * @exception  OutOfMemoryError    if there is not enough memory.
+         * @see        java.lang.Cloneable
+         * @since      1.6
+         */
+        public final Object clone() {
+            // Note: It would be nice to have this return Path2D
+            // but one of our subclasses (GeneralPath) needs to
+            // offer "public Object clone()" for backwards
+            // compatibility so we cannot restrict it further.
+            // REMIND: Can we do both somehow?
+            if (this instanceof GeneralPath) {
+                return new GeneralPath(this);
+            } else {
+                return new Path2D.Float(this);
+            }
+        }
+
+        /*
+         * JDK 1.6 serialVersionUID
+         */
+        private static final long serialVersionUID = 6990832515060788886L;
+
+        /**
+         * Writes the default serializable fields to the
+         * {@code ObjectOutputStream} followed by an explicit
+         * serialization of the path segments stored in this
+         * path.
+         *
+         * @serialData
+         * <a name="Path2DSerialData"><!-- --></a>
+         * <ol>
+         * <li>The default serializable fields.
+         * There are no default serializable fields as of 1.6.
+         * <li>followed by
+         * a byte indicating the storage type of the original object
+         * as a hint (SERIAL_STORAGE_FLT_ARRAY)
+         * <li>followed by
+         * an integer indicating the number of path segments to follow (NP)
+         * or -1 to indicate an unknown number of path segments follows
+         * <li>followed by
+         * an integer indicating the total number of coordinates to follow (NC)
+         * or -1 to indicate an unknown number of coordinates follows
+         * (NC should always be even since coordinates always appear in pairs
+         *  representing an x,y pair)
+         * <li>followed by
+         * a byte indicating the winding rule
+         * ({@link #WIND_EVEN_ODD WIND_EVEN_ODD} or
+         *  {@link #WIND_NON_ZERO WIND_NON_ZERO})
+         * <li>followed by
+         * {@code NP} (or unlimited if {@code NP < 0}) sets of values consisting of
+         * a single byte indicating a path segment type
+         * followed by one or more pairs of float or double
+         * values representing the coordinates of the path segment
+         * <li>followed by
+         * a byte indicating the end of the path (SERIAL_PATH_END).
+         * </ol>
+         * <p>
+         * The following byte value constants are used in the serialized form
+         * of {@code Path2D} objects:
+         * <table>
+         * <tr>
+         * <th>Constant Name</th>
+         * <th>Byte Value</th>
+         * <th>Followed by</th>
+         * <th>Description</th>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_STORAGE_FLT_ARRAY}</td>
+         * <td>0x30</td>
+         * <td></td>
+         * <td>A hint that the original {@code Path2D} object stored
+         * the coordinates in a Java array of floats.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_STORAGE_DBL_ARRAY}</td>
+         * <td>0x31</td>
+         * <td></td>
+         * <td>A hint that the original {@code Path2D} object stored
+         * the coordinates in a Java array of doubles.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_MOVETO}</td>
+         * <td>0x40</td>
+         * <td>2 floats</td>
+         * <td>A {@link #moveTo moveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_LINETO}</td>
+         * <td>0x41</td>
+         * <td>2 floats</td>
+         * <td>A {@link #lineTo lineTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_QUADTO}</td>
+         * <td>0x42</td>
+         * <td>4 floats</td>
+         * <td>A {@link #quadTo quadTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_CUBICTO}</td>
+         * <td>0x43</td>
+         * <td>6 floats</td>
+         * <td>A {@link #curveTo curveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_MOVETO}</td>
+         * <td>0x50</td>
+         * <td>2 doubles</td>
+         * <td>A {@link #moveTo moveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_LINETO}</td>
+         * <td>0x51</td>
+         * <td>2 doubles</td>
+         * <td>A {@link #lineTo lineTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_QUADTO}</td>
+         * <td>0x52</td>
+         * <td>4 doubles</td>
+         * <td>A {@link #curveTo curveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_CUBICTO}</td>
+         * <td>0x53</td>
+         * <td>6 doubles</td>
+         * <td>A {@link #curveTo curveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_CLOSE}</td>
+         * <td>0x60</td>
+         * <td></td>
+         * <td>A {@link #closePath closePath} path segment.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_PATH_END}</td>
+         * <td>0x61</td>
+         * <td></td>
+         * <td>There are no more path segments following.</td>
+         * </table>
+         *
+         * @since 1.6
+         */
+        private void writeObject(java.io.ObjectOutputStream s)
+            throws java.io.IOException
+        {
+            super.writeObject(s, false);
+        }
+
+        /**
+         * Reads the default serializable fields from the
+         * {@code ObjectInputStream} followed by an explicit
+         * serialization of the path segments stored in this
+         * path.
+         * <p>
+         * There are no default serializable fields as of 1.6.
+         * <p>
+         * The serial data for this object is described in the
+         * writeObject method.
+         *
+         * @since 1.6
+         */
+        private void readObject(java.io.ObjectInputStream s)
+            throws java.lang.ClassNotFoundException, java.io.IOException
+        {
+            super.readObject(s, false);
+        }
+
+        static class CopyIterator extends Path2D.Iterator {
+            float floatCoords[];
+
+            CopyIterator(Path2D.Float p2df) {
+                super(p2df);
+                this.floatCoords = p2df.floatCoords;
+            }
+
+            public int currentSegment(float[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    System.arraycopy(floatCoords, pointIdx,
+                                     coords, 0, numCoords);
+                }
+                return type;
+            }
+
+            public int currentSegment(double[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    for (int i = 0; i < numCoords; i++) {
+                        coords[i] = floatCoords[pointIdx + i];
+                    }
+                }
+                return type;
+            }
+        }
+
+        static class TxIterator extends Path2D.Iterator {
+            float floatCoords[];
+            AffineTransform affine;
+
+            TxIterator(Path2D.Float p2df, AffineTransform at) {
+                super(p2df);
+                this.floatCoords = p2df.floatCoords;
+                this.affine = at;
+            }
+
+            public int currentSegment(float[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    affine.transform(floatCoords, pointIdx,
+                                     coords, 0, numCoords / 2);
+                }
+                return type;
+            }
+
+            public int currentSegment(double[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    affine.transform(floatCoords, pointIdx,
+                                     coords, 0, numCoords / 2);
+                }
+                return type;
+            }
+        }
+
+    }
+
+    /**
+     * The {@code Double} class defines a geometric path with
+     * coordinates stored in double precision floating point.
+     *
+     * @since 1.6
+     */
+    public static class Double extends Path2D implements Serializable {
+        transient double doubleCoords[];
+
+        /**
+         * Constructs a new empty double precision {@code Path2D} object
+         * with a default winding rule of {@link #WIND_NON_ZERO}.
+         *
+         * @since 1.6
+         */
+        public Double() {
+            this(WIND_NON_ZERO, INIT_SIZE);
+        }
+
+        /**
+         * Constructs a new empty double precision {@code Path2D} object
+         * with the specified winding rule to control operations that
+         * require the interior of the path to be defined.
+         *
+         * @param rule the winding rule
+         * @see #WIND_EVEN_ODD
+         * @see #WIND_NON_ZERO
+         * @since 1.6
+         */
+        public Double(int rule) {
+            this(rule, INIT_SIZE);
+        }
+
+        /**
+         * Constructs a new empty double precision {@code Path2D} object
+         * with the specified winding rule and the specified initial
+         * capacity to store path segments.
+         * This number is an initial guess as to how many path segments
+         * are in the path, but the storage is expanded as needed to store
+         * whatever path segments are added to this path.
+         *
+         * @param rule the winding rule
+         * @param initialCapacity the estimate for the number of path segments
+         *                        in the path
+         * @see #WIND_EVEN_ODD
+         * @see #WIND_NON_ZERO
+         * @since 1.6
+         */
+        public Double(int rule, int initialCapacity) {
+            super(rule, initialCapacity);
+            doubleCoords = new double[initialCapacity * 2];
+        }
+
+        /**
+         * Constructs a new double precision {@code Path2D} object
+         * from an arbitrary {@link Shape} object.
+         * All of the initial geometry and the winding rule for this path are
+         * taken from the specified {@code Shape} object.
+         *
+         * @param s the specified {@code Shape} object
+         * @since 1.6
+         */
+        public Double(Shape s) {
+            this(s, null);
+        }
+
+        /**
+         * Constructs a new double precision {@code Path2D} object
+         * from an arbitrary {@link Shape} object, transformed by an
+         * {@link AffineTransform} object.
+         * All of the initial geometry and the winding rule for this path are
+         * taken from the specified {@code Shape} object and transformed
+         * by the specified {@code AffineTransform} object.
+         *
+         * @param s the specified {@code Shape} object
+         * @param at the specified {@code AffineTransform} object
+         * @since 1.6
+         */
+        public Double(Shape s, AffineTransform at) {
+            if (s instanceof Path2D) {
+                Path2D p2d = (Path2D) s;
+                setWindingRule(p2d.windingRule);
+                this.numTypes = p2d.numTypes;
+                // trim arrays:
+                this.pointTypes = Arrays.copyOf(p2d.pointTypes, p2d.numTypes);
+                this.numCoords = p2d.numCoords;
+                this.doubleCoords = p2d.cloneCoordsDouble(at);
+            } else {
+                PathIterator pi = s.getPathIterator(at);
+                setWindingRule(pi.getWindingRule());
+                this.pointTypes = new byte[INIT_SIZE];
+                this.doubleCoords = new double[INIT_SIZE * 2];
+                append(pi, false);
+            }
+        }
+
+        @Override
+        float[] cloneCoordsFloat(AffineTransform at) {
+            // trim arrays:
+            float ret[] = new float[numCoords];
+            if (at == null) {
+                for (int i = 0; i < numCoords; i++) {
+                    ret[i] = (float) doubleCoords[i];
+                }
+            } else {
+                at.transform(doubleCoords, 0, ret, 0, numCoords / 2);
+            }
+            return ret;
+        }
+
+        @Override
+        double[] cloneCoordsDouble(AffineTransform at) {
+            // trim arrays:
+            double ret[];
+            if (at == null) {
+                ret = Arrays.copyOf(doubleCoords, numCoords);
+            } else {
+                ret = new double[numCoords];
+                at.transform(doubleCoords, 0, ret, 0, numCoords / 2);
+            }
+            return ret;
+        }
+
+        void append(float x, float y) {
+            doubleCoords[numCoords++] = x;
+            doubleCoords[numCoords++] = y;
+        }
+
+        void append(double x, double y) {
+            doubleCoords[numCoords++] = x;
+            doubleCoords[numCoords++] = y;
+        }
+
+        Point2D getPoint(int coordindex) {
+            return new Point2D.Double(doubleCoords[coordindex],
+                                      doubleCoords[coordindex+1]);
+        }
+
+        @Override
+        void needRoom(boolean needMove, int newCoords) {
+            if ((numTypes == 0) && needMove) {
+                throw new IllegalPathStateException("missing initial moveto "+
+                                                    "in path definition");
+            }
+            if (numTypes >= pointTypes.length) {
+                pointTypes = expandPointTypes(pointTypes, 1);
+            }
+            if (numCoords > (doubleCoords.length - newCoords)) {
+                doubleCoords = expandCoords(doubleCoords, newCoords);
+            }
+        }
+
+        static double[] expandCoords(double[] oldCoords, int needed) {
+            final int oldSize = oldCoords.length;
+            final int newSizeMin = oldSize + needed;
+            if (newSizeMin < oldSize) {
+                // hard overflow failure - we can't even accommodate
+                // new items without overflowing
+                throw new ArrayIndexOutOfBoundsException(
+                              "coords exceeds maximum capacity !");
+            }
+            // growth algorithm computation
+            int grow = oldSize;
+            if (grow > EXPAND_MAX_COORDS) {
+                grow = Math.max(EXPAND_MAX_COORDS, oldSize >> 3); // 1/8th min
+            } else if (grow < EXPAND_MIN) {
+                grow = EXPAND_MIN;
+            }
+            assert grow > needed;
+
+            int newSize = oldSize + grow;
+            if (newSize < newSizeMin) {
+                // overflow in growth algorithm computation
+                newSize = Integer.MAX_VALUE;
+            }
+            while (true) {
+                try {
+                    // try allocating the larger array
+                    return Arrays.copyOf(oldCoords, newSize);
+                } catch (OutOfMemoryError oome) {
+                    if (newSize == newSizeMin) {
+                        throw oome;
+                    }
+                }
+                newSize = newSizeMin + (newSize - newSizeMin) / 2;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void moveTo(double x, double y) {
+            if (numTypes > 0 && pointTypes[numTypes - 1] == SEG_MOVETO) {
+                doubleCoords[numCoords-2] = x;
+                doubleCoords[numCoords-1] = y;
+            } else {
+                needRoom(false, 2);
+                pointTypes[numTypes++] = SEG_MOVETO;
+                doubleCoords[numCoords++] = x;
+                doubleCoords[numCoords++] = y;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void lineTo(double x, double y) {
+            needRoom(true, 2);
+            pointTypes[numTypes++] = SEG_LINETO;
+            doubleCoords[numCoords++] = x;
+            doubleCoords[numCoords++] = y;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void quadTo(double x1, double y1,
+                                              double x2, double y2)
+        {
+            needRoom(true, 4);
+            pointTypes[numTypes++] = SEG_QUADTO;
+            doubleCoords[numCoords++] = x1;
+            doubleCoords[numCoords++] = y1;
+            doubleCoords[numCoords++] = x2;
+            doubleCoords[numCoords++] = y2;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized void curveTo(double x1, double y1,
+                                               double x2, double y2,
+                                               double x3, double y3)
+        {
+            needRoom(true, 6);
+            pointTypes[numTypes++] = SEG_CUBICTO;
+            doubleCoords[numCoords++] = x1;
+            doubleCoords[numCoords++] = y1;
+            doubleCoords[numCoords++] = x2;
+            doubleCoords[numCoords++] = y2;
+            doubleCoords[numCoords++] = x3;
+            doubleCoords[numCoords++] = y3;
+        }
+
+        int pointCrossings(double px, double py) {
+            if (numTypes == 0) {
+                return 0;
+            }
+            double movx, movy, curx, cury, endx, endy;
+            double coords[] = doubleCoords;
+            curx = movx = coords[0];
+            cury = movy = coords[1];
+            int crossings = 0;
+            int ci = 2;
+            for (int i = 1; i < numTypes; i++) {
+                switch (pointTypes[i]) {
+                case PathIterator.SEG_MOVETO:
+                    if (cury != movy) {
+                        crossings +=
+                            Curve.pointCrossingsForLine(px, py,
+                                                        curx, cury,
+                                                        movx, movy);
+                    }
+                    movx = curx = coords[ci++];
+                    movy = cury = coords[ci++];
+                    break;
+                case PathIterator.SEG_LINETO:
+                    crossings +=
+                        Curve.pointCrossingsForLine(px, py,
+                                                    curx, cury,
+                                                    endx = coords[ci++],
+                                                    endy = coords[ci++]);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_QUADTO:
+                    crossings +=
+                        Curve.pointCrossingsForQuad(px, py,
+                                                    curx, cury,
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    endx = coords[ci++],
+                                                    endy = coords[ci++],
+                                                    0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+            case PathIterator.SEG_CUBICTO:
+                    crossings +=
+                        Curve.pointCrossingsForCubic(px, py,
+                                                     curx, cury,
+                                                     coords[ci++],
+                                                     coords[ci++],
+                                                     coords[ci++],
+                                                     coords[ci++],
+                                                     endx = coords[ci++],
+                                                     endy = coords[ci++],
+                                                     0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_CLOSE:
+                    if (cury != movy) {
+                        crossings +=
+                            Curve.pointCrossingsForLine(px, py,
+                                                        curx, cury,
+                                                        movx, movy);
+                    }
+                    curx = movx;
+                    cury = movy;
+                    break;
+                }
+            }
+            if (cury != movy) {
+                crossings +=
+                    Curve.pointCrossingsForLine(px, py,
+                                                curx, cury,
+                                                movx, movy);
+            }
+            return crossings;
+        }
+
+        int rectCrossings(double rxmin, double rymin,
+                          double rxmax, double rymax)
+        {
+            if (numTypes == 0) {
+                return 0;
+            }
+            double coords[] = doubleCoords;
+            double curx, cury, movx, movy, endx, endy;
+            curx = movx = coords[0];
+            cury = movy = coords[1];
+            int crossings = 0;
+            int ci = 2;
+            for (int i = 1;
+                 crossings != Curve.RECT_INTERSECTS && i < numTypes;
+                 i++)
+            {
+                switch (pointTypes[i]) {
+                case PathIterator.SEG_MOVETO:
+                    if (curx != movx || cury != movy) {
+                        crossings =
+                            Curve.rectCrossingsForLine(crossings,
+                                                       rxmin, rymin,
+                                                       rxmax, rymax,
+                                                       curx, cury,
+                                                       movx, movy);
+                    }
+                    // Count should always be a multiple of 2 here.
+                    // assert((crossings & 1) != 0);
+                    movx = curx = coords[ci++];
+                    movy = cury = coords[ci++];
+                    break;
+                case PathIterator.SEG_LINETO:
+                    endx = coords[ci++];
+                    endy = coords[ci++];
+                    crossings =
+                        Curve.rectCrossingsForLine(crossings,
+                                                   rxmin, rymin,
+                                                   rxmax, rymax,
+                                                   curx, cury,
+                                                   endx, endy);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_QUADTO:
+                    crossings =
+                        Curve.rectCrossingsForQuad(crossings,
+                                                   rxmin, rymin,
+                                                   rxmax, rymax,
+                                                   curx, cury,
+                                                   coords[ci++],
+                                                   coords[ci++],
+                                                   endx = coords[ci++],
+                                                   endy = coords[ci++],
+                                                   0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_CUBICTO:
+                    crossings =
+                        Curve.rectCrossingsForCubic(crossings,
+                                                    rxmin, rymin,
+                                                    rxmax, rymax,
+                                                    curx, cury,
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    coords[ci++],
+                                                    endx = coords[ci++],
+                                                    endy = coords[ci++],
+                                                    0);
+                    curx = endx;
+                    cury = endy;
+                    break;
+                case PathIterator.SEG_CLOSE:
+                    if (curx != movx || cury != movy) {
+                        crossings =
+                            Curve.rectCrossingsForLine(crossings,
+                                                       rxmin, rymin,
+                                                       rxmax, rymax,
+                                                       curx, cury,
+                                                       movx, movy);
+                    }
+                    curx = movx;
+                    cury = movy;
+                    // Count should always be a multiple of 2 here.
+                    // assert((crossings & 1) != 0);
+                    break;
+                }
+            }
+            if (crossings != Curve.RECT_INTERSECTS &&
+                (curx != movx || cury != movy))
+            {
+                crossings =
+                    Curve.rectCrossingsForLine(crossings,
+                                               rxmin, rymin,
+                                               rxmax, rymax,
+                                               curx, cury,
+                                               movx, movy);
+            }
+            // Count should always be a multiple of 2 here.
+            // assert((crossings & 1) != 0);
+            return crossings;
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final void append(PathIterator pi, boolean connect) {
+            double coords[] = new double[6];
+            while (!pi.isDone()) {
+                switch (pi.currentSegment(coords)) {
+                case SEG_MOVETO:
+                    if (!connect || numTypes < 1 || numCoords < 1) {
+                        moveTo(coords[0], coords[1]);
+                        break;
+                    }
+                    if (pointTypes[numTypes - 1] != SEG_CLOSE &&
+                        doubleCoords[numCoords-2] == coords[0] &&
+                        doubleCoords[numCoords-1] == coords[1])
+                    {
+                        // Collapse out initial moveto/lineto
+                        break;
+                    }
+                    lineTo(coords[0], coords[1]);
+                    break;
+                case SEG_LINETO:
+                    lineTo(coords[0], coords[1]);
+                    break;
+                case SEG_QUADTO:
+                    quadTo(coords[0], coords[1],
+                           coords[2], coords[3]);
+                    break;
+                case SEG_CUBICTO:
+                    curveTo(coords[0], coords[1],
+                            coords[2], coords[3],
+                            coords[4], coords[5]);
+                    break;
+                case SEG_CLOSE:
+                    closePath();
+                    break;
+                }
+                pi.next();
+                connect = false;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final void transform(AffineTransform at) {
+            at.transform(doubleCoords, 0, doubleCoords, 0, numCoords / 2);
+        }
+
+        /**
+         * {@inheritDoc}
+         * @since 1.6
+         */
+        public final synchronized Rectangle2D getBounds2D() {
+            double x1, y1, x2, y2;
+            int i = numCoords;
+            if (i > 0) {
+                y1 = y2 = doubleCoords[--i];
+                x1 = x2 = doubleCoords[--i];
+                while (i > 0) {
+                    double y = doubleCoords[--i];
+                    double x = doubleCoords[--i];
+                    if (x < x1) x1 = x;
+                    if (y < y1) y1 = y;
+                    if (x > x2) x2 = x;
+                    if (y > y2) y2 = y;
+                }
+            } else {
+                x1 = y1 = x2 = y2 = 0.0;
+            }
+            return new Rectangle2D.Double(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * The iterator for this class is not multi-threaded safe,
+         * which means that the {@code Path2D} class does not
+         * guarantee that modifications to the geometry of this
+         * {@code Path2D} object do not affect any iterations of
+         * that geometry that are already in process.
+         *
+         * @param at an {@code AffineTransform}
+         * @return a new {@code PathIterator} that iterates along the boundary
+         *         of this {@code Shape} and provides access to the geometry
+         *         of this {@code Shape}'s outline
+         * @since 1.6
+         */
+        public final PathIterator getPathIterator(AffineTransform at) {
+            if (at == null) {
+                return new CopyIterator(this);
+            } else {
+                return new TxIterator(this, at);
+            }
+        }
+
+        /**
+         * Creates a new object of the same class as this object.
+         *
+         * @return     a clone of this instance.
+         * @exception  OutOfMemoryError    if there is not enough memory.
+         * @see        java.lang.Cloneable
+         * @since      1.6
+         */
+        public final Object clone() {
+            // Note: It would be nice to have this return Path2D
+            // but one of our subclasses (GeneralPath) needs to
+            // offer "public Object clone()" for backwards
+            // compatibility so we cannot restrict it further.
+            // REMIND: Can we do both somehow?
+            return new Path2D.Double(this);
+        }
+
+        /*
+         * JDK 1.6 serialVersionUID
+         */
+        private static final long serialVersionUID = 1826762518450014216L;
+
+        /**
+         * Writes the default serializable fields to the
+         * {@code ObjectOutputStream} followed by an explicit
+         * serialization of the path segments stored in this
+         * path.
+         *
+         * @serialData
+         * <a name="Path2DSerialData"><!-- --></a>
+         * <ol>
+         * <li>The default serializable fields.
+         * There are no default serializable fields as of 1.6.
+         * <li>followed by
+         * a byte indicating the storage type of the original object
+         * as a hint (SERIAL_STORAGE_DBL_ARRAY)
+         * <li>followed by
+         * an integer indicating the number of path segments to follow (NP)
+         * or -1 to indicate an unknown number of path segments follows
+         * <li>followed by
+         * an integer indicating the total number of coordinates to follow (NC)
+         * or -1 to indicate an unknown number of coordinates follows
+         * (NC should always be even since coordinates always appear in pairs
+         *  representing an x,y pair)
+         * <li>followed by
+         * a byte indicating the winding rule
+         * ({@link #WIND_EVEN_ODD WIND_EVEN_ODD} or
+         *  {@link #WIND_NON_ZERO WIND_NON_ZERO})
+         * <li>followed by
+         * {@code NP} (or unlimited if {@code NP < 0}) sets of values consisting of
+         * a single byte indicating a path segment type
+         * followed by one or more pairs of float or double
+         * values representing the coordinates of the path segment
+         * <li>followed by
+         * a byte indicating the end of the path (SERIAL_PATH_END).
+         * </ol>
+         * <p>
+         * The following byte value constants are used in the serialized form
+         * of {@code Path2D} objects:
+         * <table>
+         * <tr>
+         * <th>Constant Name</th>
+         * <th>Byte Value</th>
+         * <th>Followed by</th>
+         * <th>Description</th>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_STORAGE_FLT_ARRAY}</td>
+         * <td>0x30</td>
+         * <td></td>
+         * <td>A hint that the original {@code Path2D} object stored
+         * the coordinates in a Java array of floats.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_STORAGE_DBL_ARRAY}</td>
+         * <td>0x31</td>
+         * <td></td>
+         * <td>A hint that the original {@code Path2D} object stored
+         * the coordinates in a Java array of doubles.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_MOVETO}</td>
+         * <td>0x40</td>
+         * <td>2 floats</td>
+         * <td>A {@link #moveTo moveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_LINETO}</td>
+         * <td>0x41</td>
+         * <td>2 floats</td>
+         * <td>A {@link #lineTo lineTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_QUADTO}</td>
+         * <td>0x42</td>
+         * <td>4 floats</td>
+         * <td>A {@link #quadTo quadTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_FLT_CUBICTO}</td>
+         * <td>0x43</td>
+         * <td>6 floats</td>
+         * <td>A {@link #curveTo curveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_MOVETO}</td>
+         * <td>0x50</td>
+         * <td>2 doubles</td>
+         * <td>A {@link #moveTo moveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_LINETO}</td>
+         * <td>0x51</td>
+         * <td>2 doubles</td>
+         * <td>A {@link #lineTo lineTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_QUADTO}</td>
+         * <td>0x52</td>
+         * <td>4 doubles</td>
+         * <td>A {@link #curveTo curveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_DBL_CUBICTO}</td>
+         * <td>0x53</td>
+         * <td>6 doubles</td>
+         * <td>A {@link #curveTo curveTo} path segment follows.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_SEG_CLOSE}</td>
+         * <td>0x60</td>
+         * <td></td>
+         * <td>A {@link #closePath closePath} path segment.</td>
+         * </tr>
+         * <tr>
+         * <td>{@code SERIAL_PATH_END}</td>
+         * <td>0x61</td>
+         * <td></td>
+         * <td>There are no more path segments following.</td>
+         * </table>
+         *
+         * @since 1.6
+         */
+        private void writeObject(java.io.ObjectOutputStream s)
+            throws java.io.IOException
+        {
+            super.writeObject(s, true);
+        }
+
+        /**
+         * Reads the default serializable fields from the
+         * {@code ObjectInputStream} followed by an explicit
+         * serialization of the path segments stored in this
+         * path.
+         * <p>
+         * There are no default serializable fields as of 1.6.
+         * <p>
+         * The serial data for this object is described in the
+         * writeObject method.
+         *
+         * @since 1.6
+         */
+        private void readObject(java.io.ObjectInputStream s)
+            throws java.lang.ClassNotFoundException, java.io.IOException
+        {
+            super.readObject(s, true);
+        }
+
+        static class CopyIterator extends Path2D.Iterator {
+            double doubleCoords[];
+
+            CopyIterator(Path2D.Double p2dd) {
+                super(p2dd);
+                this.doubleCoords = p2dd.doubleCoords;
+            }
+
+            public int currentSegment(float[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    for (int i = 0; i < numCoords; i++) {
+                        coords[i] = (float) doubleCoords[pointIdx + i];
+                    }
+                }
+                return type;
+            }
+
+            public int currentSegment(double[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    System.arraycopy(doubleCoords, pointIdx,
+                                     coords, 0, numCoords);
+                }
+                return type;
+            }
+        }
+
+        static class TxIterator extends Path2D.Iterator {
+            double doubleCoords[];
+            AffineTransform affine;
+
+            TxIterator(Path2D.Double p2dd, AffineTransform at) {
+                super(p2dd);
+                this.doubleCoords = p2dd.doubleCoords;
+                this.affine = at;
+            }
+
+            public int currentSegment(float[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    affine.transform(doubleCoords, pointIdx,
+                                     coords, 0, numCoords / 2);
+                }
+                return type;
+            }
+
+            public int currentSegment(double[] coords) {
+                int type = path.pointTypes[typeIdx];
+                int numCoords = curvecoords[type];
+                if (numCoords > 0) {
+                    affine.transform(doubleCoords, pointIdx,
+                                     coords, 0, numCoords / 2);
+                }
+                return type;
+            }
+        }
+    }
+
+    /**
+     * Adds a point to the path by moving to the specified
+     * coordinates specified in double precision.
+     *
+     * @param x the specified X coordinate
+     * @param y the specified Y coordinate
+     * @since 1.6
+     */
+    public abstract void moveTo(double x, double y);
+
+    /**
+     * Adds a point to the path by drawing a straight line from the
+     * current coordinates to the new specified coordinates
+     * specified in double precision.
+     *
+     * @param x the specified X coordinate
+     * @param y the specified Y coordinate
+     * @since 1.6
+     */
+    public abstract void lineTo(double x, double y);
+
+    /**
+     * Adds a curved segment, defined by two new points, to the path by
+     * drawing a Quadratic curve that intersects both the current
+     * coordinates and the specified coordinates {@code (x2,y2)},
+     * using the specified point {@code (x1,y1)} as a quadratic
+     * parametric control point.
+     * All coordinates are specified in double precision.
+     *
+     * @param x1 the X coordinate of the quadratic control point
+     * @param y1 the Y coordinate of the quadratic control point
+     * @param x2 the X coordinate of the final end point
+     * @param y2 the Y coordinate of the final end point
+     * @since 1.6
+     */
+    public abstract void quadTo(double x1, double y1,
+                                double x2, double y2);
+
+    /**
+     * Adds a curved segment, defined by three new points, to the path by
+     * drawing a B&eacute;zier curve that intersects both the current
+     * coordinates and the specified coordinates {@code (x3,y3)},
+     * using the specified points {@code (x1,y1)} and {@code (x2,y2)} as
+     * B&eacute;zier control points.
+     * All coordinates are specified in double precision.
+     *
+     * @param x1 the X coordinate of the first B&eacute;zier control point
+     * @param y1 the Y coordinate of the first B&eacute;zier control point
+     * @param x2 the X coordinate of the second B&eacute;zier control point
+     * @param y2 the Y coordinate of the second B&eacute;zier control point
+     * @param x3 the X coordinate of the final end point
+     * @param y3 the Y coordinate of the final end point
+     * @since 1.6
+     */
+    public abstract void curveTo(double x1, double y1,
+                                 double x2, double y2,
+                                 double x3, double y3);
+
+    /**
+     * Closes the current subpath by drawing a straight line back to
+     * the coordinates of the last {@code moveTo}.  If the path is already
+     * closed then this method has no effect.
+     *
+     * @since 1.6
+     */
+    public final synchronized void closePath() {
+        if (numTypes == 0 || pointTypes[numTypes - 1] != SEG_CLOSE) {
+            needRoom(true, 0);
+            pointTypes[numTypes++] = SEG_CLOSE;
+        }
+    }
+
+    /**
+     * Appends the geometry of the specified {@code Shape} object to the
+     * path, possibly connecting the new geometry to the existing path
+     * segments with a line segment.
+     * If the {@code connect} parameter is {@code true} and the
+     * path is not empty then any initial {@code moveTo} in the
+     * geometry of the appended {@code Shape}
+     * is turned into a {@code lineTo} segment.
+     * If the destination coordinates of such a connecting {@code lineTo}
+     * segment match the ending coordinates of a currently open
+     * subpath then the segment is omitted as superfluous.
+     * The winding rule of the specified {@code Shape} is ignored
+     * and the appended geometry is governed by the winding
+     * rule specified for this path.
+     *
+     * @param s the {@code Shape} whose geometry is appended
+     *          to this path
+     * @param connect a boolean to control whether or not to turn an initial
+     *                {@code moveTo} segment into a {@code lineTo} segment
+     *                to connect the new geometry to the existing path
+     * @since 1.6
+     */
+    public final void append(Shape s, boolean connect) {
+        append(s.getPathIterator(null), connect);
+    }
+
+    /**
+     * Appends the geometry of the specified
+     * {@link PathIterator} object
+     * to the path, possibly connecting the new geometry to the existing
+     * path segments with a line segment.
+     * If the {@code connect} parameter is {@code true} and the
+     * path is not empty then any initial {@code moveTo} in the
+     * geometry of the appended {@code Shape} is turned into a
+     * {@code lineTo} segment.
+     * If the destination coordinates of such a connecting {@code lineTo}
+     * segment match the ending coordinates of a currently open
+     * subpath then the segment is omitted as superfluous.
+     * The winding rule of the specified {@code Shape} is ignored
+     * and the appended geometry is governed by the winding
+     * rule specified for this path.
+     *
+     * @param pi the {@code PathIterator} whose geometry is appended to
+     *           this path
+     * @param connect a boolean to control whether or not to turn an initial
+     *                {@code moveTo} segment into a {@code lineTo} segment
+     *                to connect the new geometry to the existing path
+     * @since 1.6
+     */
+    public abstract void append(PathIterator pi, boolean connect);
+
+    /**
+     * Returns the fill style winding rule.
+     *
+     * @return an integer representing the current winding rule.
+     * @see #WIND_EVEN_ODD
+     * @see #WIND_NON_ZERO
+     * @see #setWindingRule
+     * @since 1.6
+     */
+    public final synchronized int getWindingRule() {
+        return windingRule;
+    }
+
+    /**
+     * Sets the winding rule for this path to the specified value.
+     *
+     * @param rule an integer representing the specified
+     *             winding rule
+     * @exception IllegalArgumentException if
+     *          {@code rule} is not either
+     *          {@link #WIND_EVEN_ODD} or
+     *          {@link #WIND_NON_ZERO}
+     * @see #getWindingRule
+     * @since 1.6
+     */
+    public final void setWindingRule(int rule) {
+        if (rule != WIND_EVEN_ODD && rule != WIND_NON_ZERO) {
+            throw new IllegalArgumentException("winding rule must be "+
+                                               "WIND_EVEN_ODD or "+
+                                               "WIND_NON_ZERO");
+        }
+        windingRule = rule;
+    }
+
+    /**
+     * Returns the coordinates most recently added to the end of the path
+     * as a {@link Point2D} object.
+     *
+     * @return a {@code Point2D} object containing the ending coordinates of
+     *         the path or {@code null} if there are no points in the path.
+     * @since 1.6
+     */
+    public final synchronized Point2D getCurrentPoint() {
+        int index = numCoords;
+        if (numTypes < 1 || index < 1) {
+            return null;
+        }
+        if (pointTypes[numTypes - 1] == SEG_CLOSE) {
+        loop:
+            for (int i = numTypes - 2; i > 0; i--) {
+                switch (pointTypes[i]) {
+                case SEG_MOVETO:
+                    break loop;
+                case SEG_LINETO:
+                    index -= 2;
+                    break;
+                case SEG_QUADTO:
+                    index -= 4;
+                    break;
+                case SEG_CUBICTO:
+                    index -= 6;
+                    break;
+                case SEG_CLOSE:
+                    break;
+                }
+            }
+        }
+        return getPoint(index - 2);
+    }
+
+    /**
+     * Resets the path to empty.  The append position is set back to the
+     * beginning of the path and all coordinates and point types are
+     * forgotten.
+     *
+     * @since 1.6
+     */
+    public final synchronized void reset() {
+        numTypes = numCoords = 0;
+    }
+
+    /**
+     * Transforms the geometry of this path using the specified
+     * {@link AffineTransform}.
+     * The geometry is transformed in place, which permanently changes the
+     * boundary defined by this object.
+     *
+     * @param at the {@code AffineTransform} used to transform the area
+     * @since 1.6
+     */
+    public abstract void transform(AffineTransform at);
+
+    /**
+     * Returns a new {@code Shape} representing a transformed version
+     * of this {@code Path2D}.
+     * Note that the exact type and coordinate precision of the return
+     * value is not specified for this method.
+     * The method will return a Shape that contains no less precision
+     * for the transformed geometry than this {@code Path2D} currently
+     * maintains, but it may contain no more precision either.
+     * If the tradeoff of precision vs. storage size in the result is
+     * important then the convenience constructors in the
+     * {@link Path2D.Float#Path2D.Float(Shape, AffineTransform) Path2D.Float}
+     * and
+     * {@link Path2D.Double#Path2D.Double(Shape, AffineTransform) Path2D.Double}
+     * subclasses should be used to make the choice explicit.
+     *
+     * @param at the {@code AffineTransform} used to transform a
+     *           new {@code Shape}.
+     * @return a new {@code Shape}, transformed with the specified
+     *         {@code AffineTransform}.
+     * @since 1.6
+     */
+    public final synchronized Shape createTransformedShape(AffineTransform at) {
+        Path2D p2d = (Path2D) clone();
+        if (at != null) {
+            p2d.transform(at);
+        }
+        return p2d;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public final Rectangle getBounds() {
+        return getBounds2D().getBounds();
+    }
+
+    /**
+     * Tests if the specified coordinates are inside the closed
+     * boundary of the specified {@link PathIterator}.
+     * <p>
+     * This method provides a basic facility for implementors of
+     * the {@link Shape} interface to implement support for the
+     * {@link Shape#contains(double, double)} method.
+     *
+     * @param pi the specified {@code PathIterator}
+     * @param x the specified X coordinate
+     * @param y the specified Y coordinate
+     * @return {@code true} if the specified coordinates are inside the
+     *         specified {@code PathIterator}; {@code false} otherwise
+     * @since 1.6
+     */
+    public static boolean contains(PathIterator pi, double x, double y) {
+        if (x * 0.0 + y * 0.0 == 0.0) {
+            /* N * 0.0 is 0.0 only if N is finite.
+             * Here we know that both x and y are finite.
+             */
+            int mask = (pi.getWindingRule() == WIND_NON_ZERO ? -1 : 1);
+            int cross = Curve.pointCrossingsForPath(pi, x, y);
+            return ((cross & mask) != 0);
+        } else {
+            /* Either x or y was infinite or NaN.
+             * A NaN always produces a negative response to any test
+             * and Infinity values cannot be "inside" any path so
+             * they should return false as well.
+             */
+            return false;
+        }
+    }
+
+    /**
+     * Tests if the specified {@link Point2D} is inside the closed
+     * boundary of the specified {@link PathIterator}.
+     * <p>
+     * This method provides a basic facility for implementors of
+     * the {@link Shape} interface to implement support for the
+     * {@link Shape#contains(Point2D)} method.
+     *
+     * @param pi the specified {@code PathIterator}
+     * @param p the specified {@code Point2D}
+     * @return {@code true} if the specified coordinates are inside the
+     *         specified {@code PathIterator}; {@code false} otherwise
+     * @since 1.6
+     */
+    public static boolean contains(PathIterator pi, Point2D p) {
+        return contains(pi, p.getX(), p.getY());
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public final boolean contains(double x, double y) {
+        if (x * 0.0 + y * 0.0 == 0.0) {
+            /* N * 0.0 is 0.0 only if N is finite.
+             * Here we know that both x and y are finite.
+             */
+            if (numTypes < 2) {
+                return false;
+            }
+            int mask = (windingRule == WIND_NON_ZERO ? -1 : 1);
+            return ((pointCrossings(x, y) & mask) != 0);
+        } else {
+            /* Either x or y was infinite or NaN.
+             * A NaN always produces a negative response to any test
+             * and Infinity values cannot be "inside" any path so
+             * they should return false as well.
+             */
+            return false;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 1.6
+     */
+    public final boolean contains(Point2D p) {
+        return contains(p.getX(), p.getY());
+    }
+
+    /**
+     * Tests if the specified rectangular area is entirely inside the
+     * closed boundary of the specified {@link PathIterator}.
+     * <p>
+     * This method provides a basic facility for implementors of
+     * the {@link Shape} interface to implement support for the
+     * {@link Shape#contains(double, double, double, double)} method.
+     * <p>
+     * This method object may conservatively return false in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such segments could lie entirely within the interior of the
+     * path if they are part of a path with a {@link #WIND_NON_ZERO}
+     * winding rule or if the segments are retraced in the reverse
+     * direction such that the two sets of segments cancel each
+     * other out without any exterior area falling between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @param pi the specified {@code PathIterator}
+     * @param x the specified X coordinate
+     * @param y the specified Y coordinate
+     * @param w the width of the specified rectangular area
+     * @param h the height of the specified rectangular area
+     * @return {@code true} if the specified {@code PathIterator} contains
+     *         the specified rectangular area; {@code false} otherwise.
+     * @since 1.6
+     */
+    public static boolean contains(PathIterator pi,
+                                   double x, double y, double w, double h)
+    {
+        if (java.lang.Double.isNaN(x+w) || java.lang.Double.isNaN(y+h)) {
+            /* [xy]+[wh] is NaN if any of those values are NaN,
+             * or if adding the two together would produce NaN
+             * by virtue of adding opposing Infinte values.
+             * Since we need to add them below, their sum must
+             * not be NaN.
+             * We return false because NaN always produces a
+             * negative response to tests
+             */
+            return false;
+        }
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+        int mask = (pi.getWindingRule() == WIND_NON_ZERO ? -1 : 2);
+        int crossings = Curve.rectCrossingsForPath(pi, x, y, x+w, y+h);
+        return (crossings != Curve.RECT_INTERSECTS &&
+                (crossings & mask) != 0);
+    }
+
+    /**
+     * Tests if the specified {@link Rectangle2D} is entirely inside the
+     * closed boundary of the specified {@link PathIterator}.
+     * <p>
+     * This method provides a basic facility for implementors of
+     * the {@link Shape} interface to implement support for the
+     * {@link Shape#contains(Rectangle2D)} method.
+     * <p>
+     * This method object may conservatively return false in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such segments could lie entirely within the interior of the
+     * path if they are part of a path with a {@link #WIND_NON_ZERO}
+     * winding rule or if the segments are retraced in the reverse
+     * direction such that the two sets of segments cancel each
+     * other out without any exterior area falling between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @param pi the specified {@code PathIterator}
+     * @param r a specified {@code Rectangle2D}
+     * @return {@code true} if the specified {@code PathIterator} contains
+     *         the specified {@code Rectangle2D}; {@code false} otherwise.
+     * @since 1.6
+     */
+    public static boolean contains(PathIterator pi, Rectangle2D r) {
+        return contains(pi, r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This method object may conservatively return false in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such segments could lie entirely within the interior of the
+     * path if they are part of a path with a {@link #WIND_NON_ZERO}
+     * winding rule or if the segments are retraced in the reverse
+     * direction such that the two sets of segments cancel each
+     * other out without any exterior area falling between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @since 1.6
+     */
+    public final boolean contains(double x, double y, double w, double h) {
+        if (java.lang.Double.isNaN(x+w) || java.lang.Double.isNaN(y+h)) {
+            /* [xy]+[wh] is NaN if any of those values are NaN,
+             * or if adding the two together would produce NaN
+             * by virtue of adding opposing Infinte values.
+             * Since we need to add them below, their sum must
+             * not be NaN.
+             * We return false because NaN always produces a
+             * negative response to tests
+             */
+            return false;
+        }
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+        int mask = (windingRule == WIND_NON_ZERO ? -1 : 2);
+        int crossings = rectCrossings(x, y, x+w, y+h);
+        return (crossings != Curve.RECT_INTERSECTS &&
+                (crossings & mask) != 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This method object may conservatively return false in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such segments could lie entirely within the interior of the
+     * path if they are part of a path with a {@link #WIND_NON_ZERO}
+     * winding rule or if the segments are retraced in the reverse
+     * direction such that the two sets of segments cancel each
+     * other out without any exterior area falling between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @since 1.6
+     */
+    public final boolean contains(Rectangle2D r) {
+        return contains(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
+    /**
+     * Tests if the interior of the specified {@link PathIterator}
+     * intersects the interior of a specified set of rectangular
+     * coordinates.
+     * <p>
+     * This method provides a basic facility for implementors of
+     * the {@link Shape} interface to implement support for the
+     * {@link Shape#intersects(double, double, double, double)} method.
+     * <p>
+     * This method object may conservatively return true in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such a case may occur if some set of segments of the
+     * path are retraced in the reverse direction such that the
+     * two sets of segments cancel each other out without any
+     * interior area between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @param pi the specified {@code PathIterator}
+     * @param x the specified X coordinate
+     * @param y the specified Y coordinate
+     * @param w the width of the specified rectangular coordinates
+     * @param h the height of the specified rectangular coordinates
+     * @return {@code true} if the specified {@code PathIterator} and
+     *         the interior of the specified set of rectangular
+     *         coordinates intersect each other; {@code false} otherwise.
+     * @since 1.6
+     */
+    public static boolean intersects(PathIterator pi,
+                                     double x, double y, double w, double h)
+    {
+        if (java.lang.Double.isNaN(x+w) || java.lang.Double.isNaN(y+h)) {
+            /* [xy]+[wh] is NaN if any of those values are NaN,
+             * or if adding the two together would produce NaN
+             * by virtue of adding opposing Infinte values.
+             * Since we need to add them below, their sum must
+             * not be NaN.
+             * We return false because NaN always produces a
+             * negative response to tests
+             */
+            return false;
+        }
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+        int mask = (pi.getWindingRule() == WIND_NON_ZERO ? -1 : 2);
+        int crossings = Curve.rectCrossingsForPath(pi, x, y, x+w, y+h);
+        return (crossings == Curve.RECT_INTERSECTS ||
+                (crossings & mask) != 0);
+    }
+
+    /**
+     * Tests if the interior of the specified {@link PathIterator}
+     * intersects the interior of a specified {@link Rectangle2D}.
+     * <p>
+     * This method provides a basic facility for implementors of
+     * the {@link Shape} interface to implement support for the
+     * {@link Shape#intersects(Rectangle2D)} method.
+     * <p>
+     * This method object may conservatively return true in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such a case may occur if some set of segments of the
+     * path are retraced in the reverse direction such that the
+     * two sets of segments cancel each other out without any
+     * interior area between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @param pi the specified {@code PathIterator}
+     * @param r the specified {@code Rectangle2D}
+     * @return {@code true} if the specified {@code PathIterator} and
+     *         the interior of the specified {@code Rectangle2D}
+     *         intersect each other; {@code false} otherwise.
+     * @since 1.6
+     */
+    public static boolean intersects(PathIterator pi, Rectangle2D r) {
+        return intersects(pi, r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This method object may conservatively return true in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such a case may occur if some set of segments of the
+     * path are retraced in the reverse direction such that the
+     * two sets of segments cancel each other out without any
+     * interior area between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @since 1.6
+     */
+    public final boolean intersects(double x, double y, double w, double h) {
+        if (java.lang.Double.isNaN(x+w) || java.lang.Double.isNaN(y+h)) {
+            /* [xy]+[wh] is NaN if any of those values are NaN,
+             * or if adding the two together would produce NaN
+             * by virtue of adding opposing Infinte values.
+             * Since we need to add them below, their sum must
+             * not be NaN.
+             * We return false because NaN always produces a
+             * negative response to tests
+             */
+            return false;
+        }
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+        int mask = (windingRule == WIND_NON_ZERO ? -1 : 2);
+        int crossings = rectCrossings(x, y, x+w, y+h);
+        return (crossings == Curve.RECT_INTERSECTS ||
+                (crossings & mask) != 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This method object may conservatively return true in
+     * cases where the specified rectangular area intersects a
+     * segment of the path, but that segment does not represent a
+     * boundary between the interior and exterior of the path.
+     * Such a case may occur if some set of segments of the
+     * path are retraced in the reverse direction such that the
+     * two sets of segments cancel each other out without any
+     * interior area between them.
+     * To determine whether segments represent true boundaries of
+     * the interior of the path would require extensive calculations
+     * involving all of the segments of the path and the winding
+     * rule and are thus beyond the scope of this implementation.
+     *
+     * @since 1.6
+     */
+    public final boolean intersects(Rectangle2D r) {
+        return intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The iterator for this class is not multi-threaded safe,
+     * which means that this {@code Path2D} class does not
+     * guarantee that modifications to the geometry of this
+     * {@code Path2D} object do not affect any iterations of
+     * that geometry that are already in process.
+     *
+     * @since 1.6
+     */
+    public final PathIterator getPathIterator(AffineTransform at,
+                                              double flatness)
+    {
+        return new FlatteningPathIterator(getPathIterator(at), flatness);
+    }
+
+    /**
+     * Creates a new object of the same class as this object.
+     *
+     * @return     a clone of this instance.
+     * @exception  OutOfMemoryError            if there is not enough memory.
+     * @see        java.lang.Cloneable
+     * @since      1.6
+     */
+    public abstract Object clone();
+        // Note: It would be nice to have this return Path2D
+        // but one of our subclasses (GeneralPath) needs to
+        // offer "public Object clone()" for backwards
+        // compatibility so we cannot restrict it further.
+        // REMIND: Can we do both somehow?
+
+    /*
+     * Support fields and methods for serializing the subclasses.
+     */
+    private static final byte SERIAL_STORAGE_FLT_ARRAY = 0x30;
+    private static final byte SERIAL_STORAGE_DBL_ARRAY = 0x31;
+
+    private static final byte SERIAL_SEG_FLT_MOVETO    = 0x40;
+    private static final byte SERIAL_SEG_FLT_LINETO    = 0x41;
+    private static final byte SERIAL_SEG_FLT_QUADTO    = 0x42;
+    private static final byte SERIAL_SEG_FLT_CUBICTO   = 0x43;
+
+    private static final byte SERIAL_SEG_DBL_MOVETO    = 0x50;
+    private static final byte SERIAL_SEG_DBL_LINETO    = 0x51;
+    private static final byte SERIAL_SEG_DBL_QUADTO    = 0x52;
+    private static final byte SERIAL_SEG_DBL_CUBICTO   = 0x53;
+
+    private static final byte SERIAL_SEG_CLOSE         = 0x60;
+    private static final byte SERIAL_PATH_END          = 0x61;
+
+    final void writeObject(java.io.ObjectOutputStream s, boolean isdbl)
+        throws java.io.IOException
+    {
+        s.defaultWriteObject();
+
+        float fCoords[];
+        double dCoords[];
+
+        if (isdbl) {
+            dCoords = ((Path2D.Double) this).doubleCoords;
+            fCoords = null;
+        } else {
+            fCoords = ((Path2D.Float) this).floatCoords;
+            dCoords = null;
+        }
+
+        int numTypes = this.numTypes;
+
+        s.writeByte(isdbl
+                    ? SERIAL_STORAGE_DBL_ARRAY
+                    : SERIAL_STORAGE_FLT_ARRAY);
+        s.writeInt(numTypes);
+        s.writeInt(numCoords);
+        s.writeByte((byte) windingRule);
+
+        int cindex = 0;
+        for (int i = 0; i < numTypes; i++) {
+            int npoints;
+            byte serialtype;
+            switch (pointTypes[i]) {
+            case SEG_MOVETO:
+                npoints = 1;
+                serialtype = (isdbl
+                              ? SERIAL_SEG_DBL_MOVETO
+                              : SERIAL_SEG_FLT_MOVETO);
+                break;
+            case SEG_LINETO:
+                npoints = 1;
+                serialtype = (isdbl
+                              ? SERIAL_SEG_DBL_LINETO
+                              : SERIAL_SEG_FLT_LINETO);
+                break;
+            case SEG_QUADTO:
+                npoints = 2;
+                serialtype = (isdbl
+                              ? SERIAL_SEG_DBL_QUADTO
+                              : SERIAL_SEG_FLT_QUADTO);
+                break;
+            case SEG_CUBICTO:
+                npoints = 3;
+                serialtype = (isdbl
+                              ? SERIAL_SEG_DBL_CUBICTO
+                              : SERIAL_SEG_FLT_CUBICTO);
+                break;
+            case SEG_CLOSE:
+                npoints = 0;
+                serialtype = SERIAL_SEG_CLOSE;
+                break;
+
+            default:
+                // Should never happen
+                throw new InternalError("unrecognized path type");
+            }
+            s.writeByte(serialtype);
+            while (--npoints >= 0) {
+                if (isdbl) {
+                    s.writeDouble(dCoords[cindex++]);
+                    s.writeDouble(dCoords[cindex++]);
+                } else {
+                    s.writeFloat(fCoords[cindex++]);
+                    s.writeFloat(fCoords[cindex++]);
+                }
+            }
+        }
+        s.writeByte(SERIAL_PATH_END);
+    }
+
+    final void readObject(java.io.ObjectInputStream s, boolean storedbl)
+        throws java.lang.ClassNotFoundException, java.io.IOException
+    {
+        s.defaultReadObject();
+
+        // The subclass calls this method with the storage type that
+        // they want us to use (storedbl) so we ignore the storage
+        // method hint from the stream.
+        s.readByte();
+        int nT = s.readInt();
+        int nC = s.readInt();
+        try {
+            setWindingRule(s.readByte());
+        } catch (IllegalArgumentException iae) {
+            throw new java.io.InvalidObjectException(iae.getMessage());
+        }
+
+        // Accept the size from the stream only if it is less than INIT_SIZE
+        // otherwise the size will be based on the real data in the stream
+        pointTypes = new byte[(nT < 0 || nT > INIT_SIZE) ? INIT_SIZE : nT];
+        final int initX2 = INIT_SIZE * 2;
+        if (nC < 0 || nC > initX2) {
+            nC = initX2;
+        }
+        if (storedbl) {
+            ((Path2D.Double) this).doubleCoords = new double[nC];
+        } else {
+            ((Path2D.Float) this).floatCoords = new float[nC];
+        }
+
+    PATHDONE:
+        for (int i = 0; nT < 0 || i < nT; i++) {
+            boolean isdbl;
+            int npoints;
+            byte segtype;
+
+            byte serialtype = s.readByte();
+            switch (serialtype) {
+            case SERIAL_SEG_FLT_MOVETO:
+                isdbl = false;
+                npoints = 1;
+                segtype = SEG_MOVETO;
+                break;
+            case SERIAL_SEG_FLT_LINETO:
+                isdbl = false;
+                npoints = 1;
+                segtype = SEG_LINETO;
+                break;
+            case SERIAL_SEG_FLT_QUADTO:
+                isdbl = false;
+                npoints = 2;
+                segtype = SEG_QUADTO;
+                break;
+            case SERIAL_SEG_FLT_CUBICTO:
+                isdbl = false;
+                npoints = 3;
+                segtype = SEG_CUBICTO;
+                break;
+
+            case SERIAL_SEG_DBL_MOVETO:
+                isdbl = true;
+                npoints = 1;
+                segtype = SEG_MOVETO;
+                break;
+            case SERIAL_SEG_DBL_LINETO:
+                isdbl = true;
+                npoints = 1;
+                segtype = SEG_LINETO;
+                break;
+            case SERIAL_SEG_DBL_QUADTO:
+                isdbl = true;
+                npoints = 2;
+                segtype = SEG_QUADTO;
+                break;
+            case SERIAL_SEG_DBL_CUBICTO:
+                isdbl = true;
+                npoints = 3;
+                segtype = SEG_CUBICTO;
+                break;
+
+            case SERIAL_SEG_CLOSE:
+                isdbl = false;
+                npoints = 0;
+                segtype = SEG_CLOSE;
+                break;
+
+            case SERIAL_PATH_END:
+                if (nT < 0) {
+                    break PATHDONE;
+                }
+                throw new StreamCorruptedException("unexpected PATH_END");
+
+            default:
+                throw new StreamCorruptedException("unrecognized path type");
+            }
+            needRoom(segtype != SEG_MOVETO, npoints * 2);
+            if (isdbl) {
+                while (--npoints >= 0) {
+                    append(s.readDouble(), s.readDouble());
+                }
+            } else {
+                while (--npoints >= 0) {
+                    append(s.readFloat(), s.readFloat());
+                }
+            }
+            pointTypes[numTypes++] = segtype;
+        }
+        if (nT >= 0 && s.readByte() != SERIAL_PATH_END) {
+            throw new StreamCorruptedException("missing PATH_END");
+        }
+    }
+
+    static abstract class Iterator implements PathIterator {
+        int typeIdx;
+        int pointIdx;
+        Path2D path;
+
+        static final int curvecoords[] = {2, 2, 4, 6, 0};
+
+        Iterator(Path2D path) {
+            this.path = path;
+        }
+
+        public int getWindingRule() {
+            return path.getWindingRule();
+        }
+
+        public boolean isDone() {
+            return (typeIdx >= path.numTypes);
+        }
+
+        public void next() {
+            int type = path.pointTypes[typeIdx++];
+            pointIdx += curvecoords[type];
+        }
+    }
+}

@@ -1,94 +1,88 @@
-/*    */ package java.lang.instrument;
-/*    */ 
-/*    */ import java.lang.instrument.ClassDefinition;
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ public final class ClassDefinition
-/*    */ {
-/*    */   private final Class<?> mClass;
-/*    */   private final byte[] mClassFile;
-/*    */   
-/*    */   public ClassDefinition(Class<?> paramClass, byte[] paramArrayOfbyte) {
-/* 62 */     if (paramClass == null || paramArrayOfbyte == null) {
-/* 63 */       throw new NullPointerException();
-/*    */     }
-/* 65 */     this.mClass = paramClass;
-/* 66 */     this.mClassFile = paramArrayOfbyte;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public Class<?> getDefinitionClass() {
-/* 76 */     return this.mClass;
-/*    */   }
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */ 
-/*    */   
-/*    */   public byte[] getDefinitionClassFile() {
-/* 86 */     return this.mClassFile;
-/*    */   }
-/*    */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\lang\instrument\ClassDefinition.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.lang.instrument;
+
+/*
+ * Copyright 2003 Wily Technology, Inc.
+ */
+
+/**
+ * This class serves as a parameter block to the <code>Instrumentation.redefineClasses</code> method.
+ * Serves to bind the <code>Class</code> that needs redefining together with the new class file bytes.
+ *
+ * @see     java.lang.instrument.Instrumentation#redefineClasses
+ * @since   1.5
+ */
+public final class ClassDefinition {
+    /**
+     *  The class to redefine
+     */
+    private final Class<?> mClass;
+
+    /**
+     *  The replacement class file bytes
+     */
+    private final byte[]   mClassFile;
+
+    /**
+     *  Creates a new <code>ClassDefinition</code> binding using the supplied
+     *  class and class file bytes. Does not copy the supplied buffer, just captures a reference to it.
+     *
+     * @param theClass the <code>Class</code> that needs redefining
+     * @param theClassFile the new class file bytes
+     *
+     * @throws java.lang.NullPointerException if the supplied class or array is <code>null</code>.
+     */
+    public
+    ClassDefinition(    Class<?> theClass,
+                        byte[]  theClassFile) {
+        if (theClass == null || theClassFile == null) {
+            throw new NullPointerException();
+        }
+        mClass      = theClass;
+        mClassFile  = theClassFile;
+    }
+
+    /**
+     * Returns the class.
+     *
+     * @return    the <code>Class</code> object referred to.
+     */
+    public Class<?>
+    getDefinitionClass() {
+        return mClass;
+    }
+
+    /**
+     * Returns the array of bytes that contains the new class file.
+     *
+     * @return    the class file bytes.
+     */
+    public byte[]
+    getDefinitionClassFile() {
+        return mClassFile;
+    }
+}

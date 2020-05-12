@@ -1,460 +1,455 @@
-/*     */ package java.time.zone;
-/*     */ 
-/*     */ import java.io.DataInput;
-/*     */ import java.io.DataOutput;
-/*     */ import java.io.IOException;
-/*     */ import java.io.InvalidObjectException;
-/*     */ import java.io.ObjectInputStream;
-/*     */ import java.io.Serializable;
-/*     */ import java.time.Duration;
-/*     */ import java.time.Instant;
-/*     */ import java.time.LocalDateTime;
-/*     */ import java.time.ZoneOffset;
-/*     */ import java.util.Arrays;
-/*     */ import java.util.Collections;
-/*     */ import java.util.List;
-/*     */ import java.util.Objects;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public final class ZoneOffsetTransition
-/*     */   implements Comparable<ZoneOffsetTransition>, Serializable
-/*     */ {
-/*     */   private static final long serialVersionUID = -6946044323557704546L;
-/*     */   private final LocalDateTime transition;
-/*     */   private final ZoneOffset offsetBefore;
-/*     */   private final ZoneOffset offsetAfter;
-/*     */   
-/*     */   public static ZoneOffsetTransition of(LocalDateTime paramLocalDateTime, ZoneOffset paramZoneOffset1, ZoneOffset paramZoneOffset2) {
-/* 135 */     Objects.requireNonNull(paramLocalDateTime, "transition");
-/* 136 */     Objects.requireNonNull(paramZoneOffset1, "offsetBefore");
-/* 137 */     Objects.requireNonNull(paramZoneOffset2, "offsetAfter");
-/* 138 */     if (paramZoneOffset1.equals(paramZoneOffset2)) {
-/* 139 */       throw new IllegalArgumentException("Offsets must not be equal");
-/*     */     }
-/* 141 */     if (paramLocalDateTime.getNano() != 0) {
-/* 142 */       throw new IllegalArgumentException("Nano-of-second must be zero");
-/*     */     }
-/* 144 */     return new ZoneOffsetTransition(paramLocalDateTime, paramZoneOffset1, paramZoneOffset2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ZoneOffsetTransition(LocalDateTime paramLocalDateTime, ZoneOffset paramZoneOffset1, ZoneOffset paramZoneOffset2) {
-/* 155 */     this.transition = paramLocalDateTime;
-/* 156 */     this.offsetBefore = paramZoneOffset1;
-/* 157 */     this.offsetAfter = paramZoneOffset2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   ZoneOffsetTransition(long paramLong, ZoneOffset paramZoneOffset1, ZoneOffset paramZoneOffset2) {
-/* 168 */     this.transition = LocalDateTime.ofEpochSecond(paramLong, 0, paramZoneOffset1);
-/* 169 */     this.offsetBefore = paramZoneOffset1;
-/* 170 */     this.offsetAfter = paramZoneOffset2;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void readObject(ObjectInputStream paramObjectInputStream) throws InvalidObjectException {
-/* 181 */     throw new InvalidObjectException("Deserialization via serialization delegate");
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private Object writeReplace() {
-/* 202 */     return new Ser((byte)2, this);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   void writeExternal(DataOutput paramDataOutput) throws IOException {
-/* 212 */     Ser.writeEpochSec(toEpochSecond(), paramDataOutput);
-/* 213 */     Ser.writeOffset(this.offsetBefore, paramDataOutput);
-/* 214 */     Ser.writeOffset(this.offsetAfter, paramDataOutput);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static ZoneOffsetTransition readExternal(DataInput paramDataInput) throws IOException {
-/* 225 */     long l = Ser.readEpochSec(paramDataInput);
-/* 226 */     ZoneOffset zoneOffset1 = Ser.readOffset(paramDataInput);
-/* 227 */     ZoneOffset zoneOffset2 = Ser.readOffset(paramDataInput);
-/* 228 */     if (zoneOffset1.equals(zoneOffset2)) {
-/* 229 */       throw new IllegalArgumentException("Offsets must not be equal");
-/*     */     }
-/* 231 */     return new ZoneOffsetTransition(l, zoneOffset1, zoneOffset2);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Instant getInstant() {
-/* 247 */     return this.transition.toInstant(this.offsetBefore);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public long toEpochSecond() {
-/* 256 */     return this.transition.toEpochSecond(this.offsetBefore);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LocalDateTime getDateTimeBefore() {
-/* 273 */     return this.transition;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public LocalDateTime getDateTimeAfter() {
-/* 287 */     return this.transition.plusSeconds(getDurationSeconds());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ZoneOffset getOffsetBefore() {
-/* 298 */     return this.offsetBefore;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public ZoneOffset getOffsetAfter() {
-/* 309 */     return this.offsetAfter;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public Duration getDuration() {
-/* 322 */     return Duration.ofSeconds(getDurationSeconds());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private int getDurationSeconds() {
-/* 331 */     return getOffsetAfter().getTotalSeconds() - getOffsetBefore().getTotalSeconds();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isGap() {
-/* 344 */     return (getOffsetAfter().getTotalSeconds() > getOffsetBefore().getTotalSeconds());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isOverlap() {
-/* 357 */     return (getOffsetAfter().getTotalSeconds() < getOffsetBefore().getTotalSeconds());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean isValidOffset(ZoneOffset paramZoneOffset) {
-/* 371 */     return isGap() ? false : ((getOffsetBefore().equals(paramZoneOffset) || getOffsetAfter().equals(paramZoneOffset)));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   List<ZoneOffset> getValidOffsets() {
-/* 382 */     if (isGap()) {
-/* 383 */       return Collections.emptyList();
-/*     */     }
-/* 385 */     return Arrays.asList(new ZoneOffset[] { getOffsetBefore(), getOffsetAfter() });
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int compareTo(ZoneOffsetTransition paramZoneOffsetTransition) {
-/* 400 */     return getInstant().compareTo(paramZoneOffsetTransition.getInstant());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public boolean equals(Object paramObject) {
-/* 414 */     if (paramObject == this) {
-/* 415 */       return true;
-/*     */     }
-/* 417 */     if (paramObject instanceof ZoneOffsetTransition) {
-/* 418 */       ZoneOffsetTransition zoneOffsetTransition = (ZoneOffsetTransition)paramObject;
-/* 419 */       return (this.transition.equals(zoneOffsetTransition.transition) && this.offsetBefore
-/* 420 */         .equals(zoneOffsetTransition.offsetBefore) && this.offsetAfter.equals(zoneOffsetTransition.offsetAfter));
-/*     */     } 
-/* 422 */     return false;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public int hashCode() {
-/* 432 */     return this.transition.hashCode() ^ this.offsetBefore.hashCode() ^ Integer.rotateLeft(this.offsetAfter.hashCode(), 16);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public String toString() {
-/* 443 */     StringBuilder stringBuilder = new StringBuilder();
-/* 444 */     stringBuilder.append("Transition[")
-/* 445 */       .append(isGap() ? "Gap" : "Overlap")
-/* 446 */       .append(" at ")
-/* 447 */       .append(this.transition)
-/* 448 */       .append(this.offsetBefore)
-/* 449 */       .append(" to ")
-/* 450 */       .append(this.offsetAfter)
-/* 451 */       .append(']');
-/* 452 */     return stringBuilder.toString();
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\java\time\zone\ZoneOffsetTransition.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+/*
+ *
+ *
+ *
+ *
+ *
+ * Copyright (c) 2009-2012, Stephen Colebourne & Michael Nascimento Santos
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of JSR-310 nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package java.time.zone;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * A transition between two offsets caused by a discontinuity in the local time-line.
+ * <p>
+ * A transition between two offsets is normally the result of a daylight savings cutover.
+ * The discontinuity is normally a gap in spring and an overlap in autumn.
+ * {@code ZoneOffsetTransition} models the transition between the two offsets.
+ * <p>
+ * Gaps occur where there are local date-times that simply do not exist.
+ * An example would be when the offset changes from {@code +03:00} to {@code +04:00}.
+ * This might be described as 'the clocks will move forward one hour tonight at 1am'.
+ * <p>
+ * Overlaps occur where there are local date-times that exist twice.
+ * An example would be when the offset changes from {@code +04:00} to {@code +03:00}.
+ * This might be described as 'the clocks will move back one hour tonight at 2am'.
+ *
+ * @implSpec
+ * This class is immutable and thread-safe.
+ *
+ * @since 1.8
+ */
+public final class ZoneOffsetTransition
+        implements Comparable<ZoneOffsetTransition>, Serializable {
+
+    /**
+     * Serialization version.
+     */
+    private static final long serialVersionUID = -6946044323557704546L;
+    /**
+     * The local transition date-time at the transition.
+     */
+    private final LocalDateTime transition;
+    /**
+     * The offset before transition.
+     */
+    private final ZoneOffset offsetBefore;
+    /**
+     * The offset after transition.
+     */
+    private final ZoneOffset offsetAfter;
+
+    //-----------------------------------------------------------------------
+    /**
+     * Obtains an instance defining a transition between two offsets.
+     * <p>
+     * Applications should normally obtain an instance from {@link ZoneRules}.
+     * This factory is only intended for use when creating {@link ZoneRules}.
+     *
+     * @param transition  the transition date-time at the transition, which never
+     *  actually occurs, expressed local to the before offset, not null
+     * @param offsetBefore  the offset before the transition, not null
+     * @param offsetAfter  the offset at and after the transition, not null
+     * @return the transition, not null
+     * @throws IllegalArgumentException if {@code offsetBefore} and {@code offsetAfter}
+     *         are equal, or {@code transition.getNano()} returns non-zero value
+     */
+    public static ZoneOffsetTransition of(LocalDateTime transition, ZoneOffset offsetBefore, ZoneOffset offsetAfter) {
+        Objects.requireNonNull(transition, "transition");
+        Objects.requireNonNull(offsetBefore, "offsetBefore");
+        Objects.requireNonNull(offsetAfter, "offsetAfter");
+        if (offsetBefore.equals(offsetAfter)) {
+            throw new IllegalArgumentException("Offsets must not be equal");
+        }
+        if (transition.getNano() != 0) {
+            throw new IllegalArgumentException("Nano-of-second must be zero");
+        }
+        return new ZoneOffsetTransition(transition, offsetBefore, offsetAfter);
+    }
+
+    /**
+     * Creates an instance defining a transition between two offsets.
+     *
+     * @param transition  the transition date-time with the offset before the transition, not null
+     * @param offsetBefore  the offset before the transition, not null
+     * @param offsetAfter  the offset at and after the transition, not null
+     */
+    ZoneOffsetTransition(LocalDateTime transition, ZoneOffset offsetBefore, ZoneOffset offsetAfter) {
+        this.transition = transition;
+        this.offsetBefore = offsetBefore;
+        this.offsetAfter = offsetAfter;
+    }
+
+    /**
+     * Creates an instance from epoch-second and offsets.
+     *
+     * @param epochSecond  the transition epoch-second
+     * @param offsetBefore  the offset before the transition, not null
+     * @param offsetAfter  the offset at and after the transition, not null
+     */
+    ZoneOffsetTransition(long epochSecond, ZoneOffset offsetBefore, ZoneOffset offsetAfter) {
+        this.transition = LocalDateTime.ofEpochSecond(epochSecond, 0, offsetBefore);
+        this.offsetBefore = offsetBefore;
+        this.offsetAfter = offsetAfter;
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Defend against malicious streams.
+     *
+     * @param s the stream to read
+     * @throws InvalidObjectException always
+     */
+    private void readObject(ObjectInputStream s) throws InvalidObjectException {
+        throw new InvalidObjectException("Deserialization via serialization delegate");
+    }
+
+    /**
+     * Writes the object using a
+     * <a href="../../../serialized-form.html#java.time.zone.Ser">dedicated serialized form</a>.
+     * @serialData
+     * Refer to the serialized form of
+     * <a href="../../../serialized-form.html#java.time.zone.ZoneRules">ZoneRules.writeReplace</a>
+     * for the encoding of epoch seconds and offsets.
+     * <pre style="font-size:1.0em">{@code
+     *
+     *   out.writeByte(2);                // identifies a ZoneOffsetTransition
+     *   out.writeEpochSec(toEpochSecond);
+     *   out.writeOffset(offsetBefore);
+     *   out.writeOffset(offsetAfter);
+     * }
+     * </pre>
+     * @return the replacing object, not null
+     */
+    private Object writeReplace() {
+        return new Ser(Ser.ZOT, this);
+    }
+
+    /**
+     * Writes the state to the stream.
+     *
+     * @param out  the output stream, not null
+     * @throws IOException if an error occurs
+     */
+    void writeExternal(DataOutput out) throws IOException {
+        Ser.writeEpochSec(toEpochSecond(), out);
+        Ser.writeOffset(offsetBefore, out);
+        Ser.writeOffset(offsetAfter, out);
+    }
+
+    /**
+     * Reads the state from the stream.
+     *
+     * @param in  the input stream, not null
+     * @return the created object, not null
+     * @throws IOException if an error occurs
+     */
+    static ZoneOffsetTransition readExternal(DataInput in) throws IOException {
+        long epochSecond = Ser.readEpochSec(in);
+        ZoneOffset before = Ser.readOffset(in);
+        ZoneOffset after = Ser.readOffset(in);
+        if (before.equals(after)) {
+            throw new IllegalArgumentException("Offsets must not be equal");
+        }
+        return new ZoneOffsetTransition(epochSecond, before, after);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Gets the transition instant.
+     * <p>
+     * This is the instant of the discontinuity, which is defined as the first
+     * instant that the 'after' offset applies.
+     * <p>
+     * The methods {@link #getInstant()}, {@link #getDateTimeBefore()} and {@link #getDateTimeAfter()}
+     * all represent the same instant.
+     *
+     * @return the transition instant, not null
+     */
+    public Instant getInstant() {
+        return transition.toInstant(offsetBefore);
+    }
+
+    /**
+     * Gets the transition instant as an epoch second.
+     *
+     * @return the transition epoch second
+     */
+    public long toEpochSecond() {
+        return transition.toEpochSecond(offsetBefore);
+    }
+
+    //-------------------------------------------------------------------------
+    /**
+     * Gets the local transition date-time, as would be expressed with the 'before' offset.
+     * <p>
+     * This is the date-time where the discontinuity begins expressed with the 'before' offset.
+     * At this instant, the 'after' offset is actually used, therefore the combination of this
+     * date-time and the 'before' offset will never occur.
+     * <p>
+     * The combination of the 'before' date-time and offset represents the same instant
+     * as the 'after' date-time and offset.
+     *
+     * @return the transition date-time expressed with the before offset, not null
+     */
+    public LocalDateTime getDateTimeBefore() {
+        return transition;
+    }
+
+    /**
+     * Gets the local transition date-time, as would be expressed with the 'after' offset.
+     * <p>
+     * This is the first date-time after the discontinuity, when the new offset applies.
+     * <p>
+     * The combination of the 'before' date-time and offset represents the same instant
+     * as the 'after' date-time and offset.
+     *
+     * @return the transition date-time expressed with the after offset, not null
+     */
+    public LocalDateTime getDateTimeAfter() {
+        return transition.plusSeconds(getDurationSeconds());
+    }
+
+    /**
+     * Gets the offset before the transition.
+     * <p>
+     * This is the offset in use before the instant of the transition.
+     *
+     * @return the offset before the transition, not null
+     */
+    public ZoneOffset getOffsetBefore() {
+        return offsetBefore;
+    }
+
+    /**
+     * Gets the offset after the transition.
+     * <p>
+     * This is the offset in use on and after the instant of the transition.
+     *
+     * @return the offset after the transition, not null
+     */
+    public ZoneOffset getOffsetAfter() {
+        return offsetAfter;
+    }
+
+    /**
+     * Gets the duration of the transition.
+     * <p>
+     * In most cases, the transition duration is one hour, however this is not always the case.
+     * The duration will be positive for a gap and negative for an overlap.
+     * Time-zones are second-based, so the nanosecond part of the duration will be zero.
+     *
+     * @return the duration of the transition, positive for gaps, negative for overlaps
+     */
+    public Duration getDuration() {
+        return Duration.ofSeconds(getDurationSeconds());
+    }
+
+    /**
+     * Gets the duration of the transition in seconds.
+     *
+     * @return the duration in seconds
+     */
+    private int getDurationSeconds() {
+        return getOffsetAfter().getTotalSeconds() - getOffsetBefore().getTotalSeconds();
+    }
+
+    /**
+     * Does this transition represent a gap in the local time-line.
+     * <p>
+     * Gaps occur where there are local date-times that simply do not exist.
+     * An example would be when the offset changes from {@code +01:00} to {@code +02:00}.
+     * This might be described as 'the clocks will move forward one hour tonight at 1am'.
+     *
+     * @return true if this transition is a gap, false if it is an overlap
+     */
+    public boolean isGap() {
+        return getOffsetAfter().getTotalSeconds() > getOffsetBefore().getTotalSeconds();
+    }
+
+    /**
+     * Does this transition represent an overlap in the local time-line.
+     * <p>
+     * Overlaps occur where there are local date-times that exist twice.
+     * An example would be when the offset changes from {@code +02:00} to {@code +01:00}.
+     * This might be described as 'the clocks will move back one hour tonight at 2am'.
+     *
+     * @return true if this transition is an overlap, false if it is a gap
+     */
+    public boolean isOverlap() {
+        return getOffsetAfter().getTotalSeconds() < getOffsetBefore().getTotalSeconds();
+    }
+
+    /**
+     * Checks if the specified offset is valid during this transition.
+     * <p>
+     * This checks to see if the given offset will be valid at some point in the transition.
+     * A gap will always return false.
+     * An overlap will return true if the offset is either the before or after offset.
+     *
+     * @param offset  the offset to check, null returns false
+     * @return true if the offset is valid during the transition
+     */
+    public boolean isValidOffset(ZoneOffset offset) {
+        return isGap() ? false : (getOffsetBefore().equals(offset) || getOffsetAfter().equals(offset));
+    }
+
+    /**
+     * Gets the valid offsets during this transition.
+     * <p>
+     * A gap will return an empty list, while an overlap will return both offsets.
+     *
+     * @return the list of valid offsets
+     */
+    List<ZoneOffset> getValidOffsets() {
+        if (isGap()) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(getOffsetBefore(), getOffsetAfter());
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Compares this transition to another based on the transition instant.
+     * <p>
+     * This compares the instants of each transition.
+     * The offsets are ignored, making this order inconsistent with equals.
+     *
+     * @param transition  the transition to compare to, not null
+     * @return the comparator value, negative if less, positive if greater
+     */
+    @Override
+    public int compareTo(ZoneOffsetTransition transition) {
+        return this.getInstant().compareTo(transition.getInstant());
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Checks if this object equals another.
+     * <p>
+     * The entire state of the object is compared.
+     *
+     * @param other  the other object to compare to, null returns false
+     * @return true if equal
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+        if (other instanceof ZoneOffsetTransition) {
+            ZoneOffsetTransition d = (ZoneOffsetTransition) other;
+            return transition.equals(d.transition) &&
+                offsetBefore.equals(d.offsetBefore) && offsetAfter.equals(d.offsetAfter);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a suitable hash code.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        return transition.hashCode() ^ offsetBefore.hashCode() ^ Integer.rotateLeft(offsetAfter.hashCode(), 16);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Returns a string describing this object.
+     *
+     * @return a string for debugging, not null
+     */
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("Transition[")
+            .append(isGap() ? "Gap" : "Overlap")
+            .append(" at ")
+            .append(transition)
+            .append(offsetBefore)
+            .append(" to ")
+            .append(offsetAfter)
+            .append(']');
+        return buf.toString();
+    }
+
+}

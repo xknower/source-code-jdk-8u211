@@ -1,763 +1,758 @@
-/*     */ package java.util.logging;
-/*     */ 
-/*     */ import java.io.BufferedOutputStream;
-/*     */ import java.io.File;
-/*     */ import java.io.FileOutputStream;
-/*     */ import java.io.IOException;
-/*     */ import java.io.OutputStream;
-/*     */ import java.nio.channels.FileChannel;
-/*     */ import java.nio.channels.OverlappingFileLockException;
-/*     */ import java.nio.file.FileAlreadyExistsException;
-/*     */ import java.nio.file.Files;
-/*     */ import java.nio.file.LinkOption;
-/*     */ import java.nio.file.NoSuchFileException;
-/*     */ import java.nio.file.OpenOption;
-/*     */ import java.nio.file.Path;
-/*     */ import java.nio.file.Paths;
-/*     */ import java.nio.file.StandardOpenOption;
-/*     */ import java.security.AccessController;
-/*     */ import java.security.PrivilegedAction;
-/*     */ import java.util.HashSet;
-/*     */ import java.util.Set;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ public class FileHandler
-/*     */   extends StreamHandler
-/*     */ {
-/*     */   private MeteredStream meter;
-/*     */   private boolean append;
-/*     */   private int limit;
-/*     */   private int count;
-/*     */   private String pattern;
-/*     */   private String lockFileName;
-/*     */   private FileChannel lockFileChannel;
-/*     */   private File[] files;
-/*     */   private static final int DEFAULT_MAX_LOCKS = 100;
-/*     */   private static int maxLocks;
-/* 161 */   private static final Set<String> locks = new HashSet<>();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   static {
-/* 168 */     maxLocks = ((Integer)AccessController.<Integer>doPrivileged(() -> Integer.getInteger("jdk.internal.FileHandlerLogging.maxLocks", 100))).intValue();
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */     
-/* 175 */     if (maxLocks <= 0) {
-/* 176 */       maxLocks = 100;
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */   
-/*     */   private class MeteredStream
-/*     */     extends OutputStream
-/*     */   {
-/*     */     final OutputStream out;
-/*     */     
-/*     */     int written;
-/*     */ 
-/*     */     
-/*     */     MeteredStream(OutputStream param1OutputStream, int param1Int) {
-/* 190 */       this.out = param1OutputStream;
-/* 191 */       this.written = param1Int;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void write(int param1Int) throws IOException {
-/* 196 */       this.out.write(param1Int);
-/* 197 */       this.written++;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void write(byte[] param1ArrayOfbyte) throws IOException {
-/* 202 */       this.out.write(param1ArrayOfbyte);
-/* 203 */       this.written += param1ArrayOfbyte.length;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void write(byte[] param1ArrayOfbyte, int param1Int1, int param1Int2) throws IOException {
-/* 208 */       this.out.write(param1ArrayOfbyte, param1Int1, param1Int2);
-/* 209 */       this.written += param1Int2;
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void flush() throws IOException {
-/* 214 */       this.out.flush();
-/*     */     }
-/*     */ 
-/*     */     
-/*     */     public void close() throws IOException {
-/* 219 */       this.out.close();
-/*     */     }
-/*     */   }
-/*     */   
-/*     */   private void open(File paramFile, boolean paramBoolean) throws IOException {
-/* 224 */     int i = 0;
-/* 225 */     if (paramBoolean) {
-/* 226 */       i = (int)paramFile.length();
-/*     */     }
-/* 228 */     FileOutputStream fileOutputStream = new FileOutputStream(paramFile.toString(), paramBoolean);
-/* 229 */     BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-/* 230 */     this.meter = new MeteredStream(bufferedOutputStream, i);
-/* 231 */     setOutputStream(this.meter);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void configure() {
-/* 239 */     LogManager logManager = LogManager.getLogManager();
-/*     */     
-/* 241 */     String str = getClass().getName();
-/*     */     
-/* 243 */     this.pattern = logManager.getStringProperty(str + ".pattern", "%h/java%u.log");
-/* 244 */     this.limit = logManager.getIntProperty(str + ".limit", 0);
-/* 245 */     if (this.limit < 0) {
-/* 246 */       this.limit = 0;
-/*     */     }
-/* 248 */     this.count = logManager.getIntProperty(str + ".count", 1);
-/* 249 */     if (this.count <= 0) {
-/* 250 */       this.count = 1;
-/*     */     }
-/* 252 */     this.append = logManager.getBooleanProperty(str + ".append", false);
-/* 253 */     setLevel(logManager.getLevelProperty(str + ".level", Level.ALL));
-/* 254 */     setFilter(logManager.getFilterProperty(str + ".filter", null));
-/* 255 */     setFormatter(logManager.getFormatterProperty(str + ".formatter", new XMLFormatter()));
-/*     */     try {
-/* 257 */       setEncoding(logManager.getStringProperty(str + ".encoding", null));
-/* 258 */     } catch (Exception exception) {
-/*     */       try {
-/* 260 */         setEncoding((String)null);
-/* 261 */       } catch (Exception exception1) {}
-/*     */     } 
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileHandler() throws IOException, SecurityException {
-/* 279 */     checkPermission();
-/* 280 */     configure();
-/* 281 */     openFiles();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileHandler(String paramString) throws IOException, SecurityException {
-/* 302 */     if (paramString.length() < 1) {
-/* 303 */       throw new IllegalArgumentException();
-/*     */     }
-/* 305 */     checkPermission();
-/* 306 */     configure();
-/* 307 */     this.pattern = paramString;
-/* 308 */     this.limit = 0;
-/* 309 */     this.count = 1;
-/* 310 */     openFiles();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileHandler(String paramString, boolean paramBoolean) throws IOException, SecurityException {
-/* 335 */     if (paramString.length() < 1) {
-/* 336 */       throw new IllegalArgumentException();
-/*     */     }
-/* 338 */     checkPermission();
-/* 339 */     configure();
-/* 340 */     this.pattern = paramString;
-/* 341 */     this.limit = 0;
-/* 342 */     this.count = 1;
-/* 343 */     this.append = paramBoolean;
-/* 344 */     openFiles();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileHandler(String paramString, int paramInt1, int paramInt2) throws IOException, SecurityException {
-/* 372 */     if (paramInt1 < 0 || paramInt2 < 1 || paramString.length() < 1) {
-/* 373 */       throw new IllegalArgumentException();
-/*     */     }
-/* 375 */     checkPermission();
-/* 376 */     configure();
-/* 377 */     this.pattern = paramString;
-/* 378 */     this.limit = paramInt1;
-/* 379 */     this.count = paramInt2;
-/* 380 */     openFiles();
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public FileHandler(String paramString, int paramInt1, int paramInt2, boolean paramBoolean) throws IOException, SecurityException {
-/* 411 */     if (paramInt1 < 0 || paramInt2 < 1 || paramString.length() < 1) {
-/* 412 */       throw new IllegalArgumentException();
-/*     */     }
-/* 414 */     checkPermission();
-/* 415 */     configure();
-/* 416 */     this.pattern = paramString;
-/* 417 */     this.limit = paramInt1;
-/* 418 */     this.count = paramInt2;
-/* 419 */     this.append = paramBoolean;
-/* 420 */     openFiles();
-/*     */   }
-/*     */   
-/*     */   private boolean isParentWritable(Path paramPath) {
-/* 424 */     Path path = paramPath.getParent();
-/* 425 */     if (path == null) {
-/* 426 */       path = paramPath.toAbsolutePath().getParent();
-/*     */     }
-/* 428 */     return (path != null && Files.isWritable(path));
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private void openFiles() throws IOException {
-/* 436 */     LogManager logManager = LogManager.getLogManager();
-/* 437 */     logManager.checkPermission();
-/* 438 */     if (this.count < 1) {
-/* 439 */       throw new IllegalArgumentException("file count = " + this.count);
-/*     */     }
-/* 441 */     if (this.limit < 0) {
-/* 442 */       this.limit = 0;
-/*     */     }
-/*     */ 
-/*     */ 
-/*     */     
-/* 447 */     InitializationErrorManager initializationErrorManager = new InitializationErrorManager();
-/* 448 */     setErrorManager(initializationErrorManager);
-/*     */ 
-/*     */ 
-/*     */     
-/* 452 */     byte b = -1;
-/*     */     while (true) {
-/* 454 */       b++;
-/* 455 */       if (b > maxLocks) {
-/* 456 */         throw new IOException("Couldn't get lock for " + this.pattern + ", maxLocks: " + maxLocks);
-/*     */       }
-/*     */ 
-/*     */       
-/* 460 */       this.lockFileName = generate(this.pattern, 0, b).toString() + ".lck";
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 465 */       synchronized (locks) {
-/* 466 */         boolean bool2; if (locks.contains(this.lockFileName)) {
-/*     */           continue;
-/*     */         }
-/*     */ 
-/*     */ 
-/*     */         
-/* 472 */         Path path = Paths.get(this.lockFileName, new String[0]);
-/* 473 */         FileChannel fileChannel = null;
-/* 474 */         byte b2 = -1;
-/* 475 */         boolean bool1 = false;
-/* 476 */         while (fileChannel == null && b2++ < 1) {
-/*     */           try {
-/* 478 */             fileChannel = FileChannel.open(path, new OpenOption[] { StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE });
-/*     */             
-/* 480 */             bool1 = true;
-/*     */ 
-/*     */           
-/*     */           }
-/*     */           catch (FileAlreadyExistsException fileAlreadyExistsException) {
-/*     */ 
-/*     */             
-/* 487 */             if (Files.isRegularFile(path, new LinkOption[] { LinkOption.NOFOLLOW_LINKS
-/* 488 */                 }) && isParentWritable(path)) {
-/*     */               try {
-/* 490 */                 fileChannel = FileChannel.open(path, new OpenOption[] { StandardOpenOption.WRITE, StandardOpenOption.APPEND });
-/*     */                 continue;
-/* 492 */               } catch (NoSuchFileException noSuchFileException) {
-/*     */ 
-/*     */                 
-/*     */                 continue;
-/*     */               }
-/* 497 */               catch (IOException iOException) {
-/*     */                 break;
-/*     */               } 
-/*     */             }
-/*     */ 
-/*     */ 
-/*     */             
-/*     */             break;
-/*     */           } 
-/*     */         } 
-/*     */ 
-/*     */ 
-/*     */         
-/* 510 */         if (fileChannel == null)
-/* 511 */           continue;  this.lockFileChannel = fileChannel;
-/*     */ 
-/*     */         
-/*     */         try {
-/* 515 */           bool2 = (this.lockFileChannel.tryLock() != null) ? true : false;
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */         
-/*     */         }
-/* 523 */         catch (IOException iOException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 529 */           bool2 = bool1;
-/* 530 */         } catch (OverlappingFileLockException overlappingFileLockException) {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */           
-/* 535 */           bool2 = false;
-/*     */         } 
-/* 537 */         if (bool2) {
-/*     */           
-/* 539 */           locks.add(this.lockFileName);
-/*     */           
-/*     */           break;
-/*     */         } 
-/*     */         
-/* 544 */         this.lockFileChannel.close();
-/*     */       } 
-/*     */     } 
-/*     */     
-/* 548 */     this.files = new File[this.count];
-/* 549 */     for (byte b1 = 0; b1 < this.count; b1++) {
-/* 550 */       this.files[b1] = generate(this.pattern, b1, b);
-/*     */     }
-/*     */ 
-/*     */     
-/* 554 */     if (this.append) {
-/* 555 */       open(this.files[0], true);
-/*     */     } else {
-/* 557 */       rotate();
-/*     */     } 
-/*     */ 
-/*     */     
-/* 561 */     Exception exception = initializationErrorManager.lastException;
-/* 562 */     if (exception != null) {
-/* 563 */       if (exception instanceof IOException)
-/* 564 */         throw (IOException)exception; 
-/* 565 */       if (exception instanceof SecurityException) {
-/* 566 */         throw (SecurityException)exception;
-/*     */       }
-/* 568 */       throw new IOException("Exception: " + exception);
-/*     */     } 
-/*     */ 
-/*     */ 
-/*     */     
-/* 573 */     setErrorManager(new ErrorManager());
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private File generate(String paramString, int paramInt1, int paramInt2) throws IOException {
-/* 587 */     File file = null;
-/* 588 */     String str = "";
-/* 589 */     byte b = 0;
-/* 590 */     boolean bool1 = false;
-/* 591 */     boolean bool2 = false;
-/* 592 */     while (b < paramString.length()) {
-/* 593 */       char c = paramString.charAt(b);
-/* 594 */       b++;
-/* 595 */       char c1 = Character.MIN_VALUE;
-/* 596 */       if (b < paramString.length()) {
-/* 597 */         c1 = Character.toLowerCase(paramString.charAt(b));
-/*     */       }
-/* 599 */       if (c == '/') {
-/* 600 */         if (file == null) {
-/* 601 */           file = new File(str);
-/*     */         } else {
-/* 603 */           file = new File(file, str);
-/*     */         } 
-/* 605 */         str = ""; continue;
-/*     */       } 
-/* 607 */       if (c == '%') {
-/* 608 */         if (c1 == 't') {
-/* 609 */           String str1 = System.getProperty("java.io.tmpdir");
-/* 610 */           if (str1 == null) {
-/* 611 */             str1 = System.getProperty("user.home");
-/*     */           }
-/* 613 */           file = new File(str1);
-/* 614 */           b++;
-/* 615 */           str = ""; continue;
-/*     */         } 
-/* 617 */         if (c1 == 'h') {
-/* 618 */           file = new File(System.getProperty("user.home"));
-/* 619 */           if (isSetUID())
-/*     */           {
-/*     */             
-/* 622 */             throw new IOException("can't use %h in set UID program");
-/*     */           }
-/* 624 */           b++;
-/* 625 */           str = ""; continue;
-/*     */         } 
-/* 627 */         if (c1 == 'g') {
-/* 628 */           str = str + paramInt1;
-/* 629 */           bool1 = true;
-/* 630 */           b++; continue;
-/*     */         } 
-/* 632 */         if (c1 == 'u') {
-/* 633 */           str = str + paramInt2;
-/* 634 */           bool2 = true;
-/* 635 */           b++; continue;
-/*     */         } 
-/* 637 */         if (c1 == '%') {
-/* 638 */           str = str + "%";
-/* 639 */           b++;
-/*     */           continue;
-/*     */         } 
-/*     */       } 
-/* 643 */       str = str + c;
-/*     */     } 
-/* 645 */     if (this.count > 1 && !bool1) {
-/* 646 */       str = str + "." + paramInt1;
-/*     */     }
-/* 648 */     if (paramInt2 > 0 && !bool2) {
-/* 649 */       str = str + "." + paramInt2;
-/*     */     }
-/* 651 */     if (str.length() > 0) {
-/* 652 */       if (file == null) {
-/* 653 */         file = new File(str);
-/*     */       } else {
-/* 655 */         file = new File(file, str);
-/*     */       } 
-/*     */     }
-/* 658 */     return file;
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   private synchronized void rotate() {
-/* 665 */     Level level = getLevel();
-/* 666 */     setLevel(Level.OFF);
-/*     */     
-/* 668 */     super.close();
-/* 669 */     for (int i = this.count - 2; i >= 0; i--) {
-/* 670 */       File file1 = this.files[i];
-/* 671 */       File file2 = this.files[i + 1];
-/* 672 */       if (file1.exists()) {
-/* 673 */         if (file2.exists()) {
-/* 674 */           file2.delete();
-/*     */         }
-/* 676 */         file1.renameTo(file2);
-/*     */       } 
-/*     */     } 
-/*     */     try {
-/* 680 */       open(this.files[0], false);
-/* 681 */     } catch (IOException iOException) {
-/*     */ 
-/*     */       
-/* 684 */       reportError(null, iOException, 4);
-/*     */     } 
-/*     */     
-/* 687 */     setLevel(level);
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void publish(LogRecord paramLogRecord) {
-/* 698 */     if (!isLoggable(paramLogRecord)) {
-/*     */       return;
-/*     */     }
-/* 701 */     super.publish(paramLogRecord);
-/* 702 */     flush();
-/* 703 */     if (this.limit > 0 && this.meter.written >= this.limit)
-/*     */     {
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */       
-/* 709 */       AccessController.doPrivileged(new PrivilegedAction()
-/*     */           {
-/*     */             public Object run() {
-/* 712 */               FileHandler.this.rotate();
-/* 713 */               return null;
-/*     */             }
-/*     */           });
-/*     */     }
-/*     */   }
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */ 
-/*     */   
-/*     */   public synchronized void close() throws SecurityException {
-/* 727 */     super.close();
-/*     */     
-/* 729 */     if (this.lockFileName == null) {
-/*     */       return;
-/*     */     }
-/*     */     
-/*     */     try {
-/* 734 */       this.lockFileChannel.close();
-/* 735 */     } catch (Exception exception) {}
-/*     */ 
-/*     */     
-/* 738 */     synchronized (locks) {
-/* 739 */       locks.remove(this.lockFileName);
-/*     */     } 
-/* 741 */     (new File(this.lockFileName)).delete();
-/* 742 */     this.lockFileName = null;
-/* 743 */     this.lockFileChannel = null;
-/*     */   }
-/*     */   
-/*     */   private static native boolean isSetUID();
-/*     */   
-/*     */   private static class InitializationErrorManager extends ErrorManager {
-/*     */     public void error(String param1String, Exception param1Exception, int param1Int) {
-/* 750 */       this.lastException = param1Exception;
-/*     */     }
-/*     */     
-/*     */     Exception lastException;
-/*     */     
-/*     */     private InitializationErrorManager() {}
-/*     */   }
-/*     */ }
-
-
-/* Location:              D:\tools\env\Java\jdk1.8.0_211\rt.jar!\jav\\util\logging\FileHandler.class
- * Java compiler version: 8 (52.0)
- * JD-Core Version:       1.1.3
+/*
+ * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+package java.util.logging;
+
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Simple file logging <tt>Handler</tt>.
+ * <p>
+ * The <tt>FileHandler</tt> can either write to a specified file,
+ * or it can write to a rotating set of files.
+ * <p>
+ * For a rotating set of files, as each file reaches a given size
+ * limit, it is closed, rotated out, and a new file opened.
+ * Successively older files are named by adding "0", "1", "2",
+ * etc. into the base filename.
+ * <p>
+ * By default buffering is enabled in the IO libraries but each log
+ * record is flushed out when it is complete.
+ * <p>
+ * By default the <tt>XMLFormatter</tt> class is used for formatting.
+ * <p>
+ * <b>Configuration:</b>
+ * By default each <tt>FileHandler</tt> is initialized using the following
+ * <tt>LogManager</tt> configuration properties where <tt>&lt;handler-name&gt;</tt>
+ * refers to the fully-qualified class name of the handler.
+ * If properties are not defined
+ * (or have invalid values) then the specified default values are used.
+ * <ul>
+ * <li>   &lt;handler-name&gt;.level
+ *        specifies the default level for the <tt>Handler</tt>
+ *        (defaults to <tt>Level.ALL</tt>). </li>
+ * <li>   &lt;handler-name&gt;.filter
+ *        specifies the name of a <tt>Filter</tt> class to use
+ *        (defaults to no <tt>Filter</tt>). </li>
+ * <li>   &lt;handler-name&gt;.formatter
+ *        specifies the name of a <tt>Formatter</tt> class to use
+ *        (defaults to <tt>java.util.logging.XMLFormatter</tt>) </li>
+ * <li>   &lt;handler-name&gt;.encoding
+ *        the name of the character set encoding to use (defaults to
+ *        the default platform encoding). </li>
+ * <li>   &lt;handler-name&gt;.limit
+ *        specifies an approximate maximum amount to write (in bytes)
+ *        to any one file.  If this is zero, then there is no limit.
+ *        (Defaults to no limit). </li>
+ * <li>   &lt;handler-name&gt;.count
+ *        specifies how many output files to cycle through (defaults to 1). </li>
+ * <li>   &lt;handler-name&gt;.pattern
+ *        specifies a pattern for generating the output file name.  See
+ *        below for details. (Defaults to "%h/java%u.log"). </li>
+ * <li>   &lt;handler-name&gt;.append
+ *        specifies whether the FileHandler should append onto
+ *        any existing files (defaults to false). </li>
+ * </ul>
+ * <p>
+ * For example, the properties for {@code FileHandler} would be:
+ * <ul>
+ * <li>   java.util.logging.FileHandler.level=INFO </li>
+ * <li>   java.util.logging.FileHandler.formatter=java.util.logging.SimpleFormatter </li>
+ * </ul>
+ * <p>
+ * For a custom handler, e.g. com.foo.MyHandler, the properties would be:
+ * <ul>
+ * <li>   com.foo.MyHandler.level=INFO </li>
+ * <li>   com.foo.MyHandler.formatter=java.util.logging.SimpleFormatter </li>
+ * </ul>
+ * <p>
+ * A pattern consists of a string that includes the following special
+ * components that will be replaced at runtime:
+ * <ul>
+ * <li>    "/"    the local pathname separator </li>
+ * <li>     "%t"   the system temporary directory </li>
+ * <li>     "%h"   the value of the "user.home" system property </li>
+ * <li>     "%g"   the generation number to distinguish rotated logs </li>
+ * <li>     "%u"   a unique number to resolve conflicts </li>
+ * <li>     "%%"   translates to a single percent sign "%" </li>
+ * </ul>
+ * If no "%g" field has been specified and the file count is greater
+ * than one, then the generation number will be added to the end of
+ * the generated filename, after a dot.
+ * <p>
+ * Thus for example a pattern of "%t/java%g.log" with a count of 2
+ * would typically cause log files to be written on Solaris to
+ * /var/tmp/java0.log and /var/tmp/java1.log whereas on Windows 95 they
+ * would be typically written to C:\TEMP\java0.log and C:\TEMP\java1.log
+ * <p>
+ * Generation numbers follow the sequence 0, 1, 2, etc.
+ * <p>
+ * Normally the "%u" unique field is set to 0.  However, if the <tt>FileHandler</tt>
+ * tries to open the filename and finds the file is currently in use by
+ * another process it will increment the unique number field and try
+ * again.  This will be repeated until <tt>FileHandler</tt> finds a file name that
+ * is  not currently in use. If there is a conflict and no "%u" field has
+ * been specified, it will be added at the end of the filename after a dot.
+ * (This will be after any automatically added generation number.)
+ * <p>
+ * Thus if three processes were all trying to log to fred%u.%g.txt then
+ * they  might end up using fred0.0.txt, fred1.0.txt, fred2.0.txt as
+ * the first file in their rotating sequences.
+ * <p>
+ * Note that the use of unique ids to avoid conflicts is only guaranteed
+ * to work reliably when using a local disk file system.
+ *
+ * @since 1.4
+ */
+
+public class FileHandler extends StreamHandler {
+    private MeteredStream meter;
+    private boolean append;
+    private int limit;       // zero => no limit.
+    private int count;
+    private String pattern;
+    private String lockFileName;
+    private FileChannel lockFileChannel;
+    private File files[];
+    private static final int DEFAULT_MAX_LOCKS = 100;
+    private static int maxLocks;
+    private static final Set<String> locks = new HashSet<>();
+
+    /*
+     * Initialize maxLocks from the System property if set.
+     * If invalid/no property is provided 100 will be used as a default value.
+     */
+    static {
+        maxLocks = java.security.AccessController.doPrivileged(
+                (PrivilegedAction<Integer>) () ->
+                        Integer.getInteger(
+                                "jdk.internal.FileHandlerLogging.maxLocks",
+                                DEFAULT_MAX_LOCKS)
+        );
+
+        if (maxLocks <= 0) {
+            maxLocks = DEFAULT_MAX_LOCKS;
+        }
+    }
+
+    /**
+     * A metered stream is a subclass of OutputStream that
+     * (a) forwards all its output to a target stream
+     * (b) keeps track of how many bytes have been written
+     */
+    private class MeteredStream extends OutputStream {
+        final OutputStream out;
+        int written;
+
+        MeteredStream(OutputStream out, int written) {
+            this.out = out;
+            this.written = written;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            out.write(b);
+            written++;
+        }
+
+        @Override
+        public void write(byte buff[]) throws IOException {
+            out.write(buff);
+            written += buff.length;
+        }
+
+        @Override
+        public void write(byte buff[], int off, int len) throws IOException {
+            out.write(buff,off,len);
+            written += len;
+        }
+
+        @Override
+        public void flush() throws IOException {
+            out.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            out.close();
+        }
+    }
+
+    private void open(File fname, boolean append) throws IOException {
+        int len = 0;
+        if (append) {
+            len = (int)fname.length();
+        }
+        FileOutputStream fout = new FileOutputStream(fname.toString(), append);
+        BufferedOutputStream bout = new BufferedOutputStream(fout);
+        meter = new MeteredStream(bout, len);
+        setOutputStream(meter);
+    }
+
+    /**
+     * Configure a FileHandler from LogManager properties and/or default values
+     * as specified in the class javadoc.
+     */
+    private void configure() {
+        LogManager manager = LogManager.getLogManager();
+
+        String cname = getClass().getName();
+
+        pattern = manager.getStringProperty(cname + ".pattern", "%h/java%u.log");
+        limit = manager.getIntProperty(cname + ".limit", 0);
+        if (limit < 0) {
+            limit = 0;
+        }
+        count = manager.getIntProperty(cname + ".count", 1);
+        if (count <= 0) {
+            count = 1;
+        }
+        append = manager.getBooleanProperty(cname + ".append", false);
+        setLevel(manager.getLevelProperty(cname + ".level", Level.ALL));
+        setFilter(manager.getFilterProperty(cname + ".filter", null));
+        setFormatter(manager.getFormatterProperty(cname + ".formatter", new XMLFormatter()));
+        try {
+            setEncoding(manager.getStringProperty(cname +".encoding", null));
+        } catch (Exception ex) {
+            try {
+                setEncoding(null);
+            } catch (Exception ex2) {
+                // doing a setEncoding with null should always work.
+                // assert false;
+            }
+        }
+    }
+
+
+    /**
+     * Construct a default <tt>FileHandler</tt>.  This will be configured
+     * entirely from <tt>LogManager</tt> properties (or their default values).
+     * <p>
+     * @exception  IOException if there are IO problems opening the files.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control"))</tt>.
+     * @exception  NullPointerException if pattern property is an empty String.
+     */
+    public FileHandler() throws IOException, SecurityException {
+        checkPermission();
+        configure();
+        openFiles();
+    }
+
+    /**
+     * Initialize a <tt>FileHandler</tt> to write to the given filename.
+     * <p>
+     * The <tt>FileHandler</tt> is configured based on <tt>LogManager</tt>
+     * properties (or their default values) except that the given pattern
+     * argument is used as the filename pattern, the file limit is
+     * set to no limit, and the file count is set to one.
+     * <p>
+     * There is no limit on the amount of data that may be written,
+     * so use this with care.
+     *
+     * @param pattern  the name of the output file
+     * @exception  IOException if there are IO problems opening the files.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     * @exception  IllegalArgumentException if pattern is an empty string
+     */
+    public FileHandler(String pattern) throws IOException, SecurityException {
+        if (pattern.length() < 1 ) {
+            throw new IllegalArgumentException();
+        }
+        checkPermission();
+        configure();
+        this.pattern = pattern;
+        this.limit = 0;
+        this.count = 1;
+        openFiles();
+    }
+
+    /**
+     * Initialize a <tt>FileHandler</tt> to write to the given filename,
+     * with optional append.
+     * <p>
+     * The <tt>FileHandler</tt> is configured based on <tt>LogManager</tt>
+     * properties (or their default values) except that the given pattern
+     * argument is used as the filename pattern, the file limit is
+     * set to no limit, the file count is set to one, and the append
+     * mode is set to the given <tt>append</tt> argument.
+     * <p>
+     * There is no limit on the amount of data that may be written,
+     * so use this with care.
+     *
+     * @param pattern  the name of the output file
+     * @param append  specifies append mode
+     * @exception  IOException if there are IO problems opening the files.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     * @exception  IllegalArgumentException if pattern is an empty string
+     */
+    public FileHandler(String pattern, boolean append) throws IOException,
+            SecurityException {
+        if (pattern.length() < 1 ) {
+            throw new IllegalArgumentException();
+        }
+        checkPermission();
+        configure();
+        this.pattern = pattern;
+        this.limit = 0;
+        this.count = 1;
+        this.append = append;
+        openFiles();
+    }
+
+    /**
+     * Initialize a <tt>FileHandler</tt> to write to a set of files.  When
+     * (approximately) the given limit has been written to one file,
+     * another file will be opened.  The output will cycle through a set
+     * of count files.
+     * <p>
+     * The <tt>FileHandler</tt> is configured based on <tt>LogManager</tt>
+     * properties (or their default values) except that the given pattern
+     * argument is used as the filename pattern, the file limit is
+     * set to the limit argument, and the file count is set to the
+     * given count argument.
+     * <p>
+     * The count must be at least 1.
+     *
+     * @param pattern  the pattern for naming the output file
+     * @param limit  the maximum number of bytes to write to any one file
+     * @param count  the number of files to use
+     * @exception  IOException if there are IO problems opening the files.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     * @exception  IllegalArgumentException if {@code limit < 0}, or {@code count < 1}.
+     * @exception  IllegalArgumentException if pattern is an empty string
+     */
+    public FileHandler(String pattern, int limit, int count)
+                                        throws IOException, SecurityException {
+        if (limit < 0 || count < 1 || pattern.length() < 1) {
+            throw new IllegalArgumentException();
+        }
+        checkPermission();
+        configure();
+        this.pattern = pattern;
+        this.limit = limit;
+        this.count = count;
+        openFiles();
+    }
+
+    /**
+     * Initialize a <tt>FileHandler</tt> to write to a set of files
+     * with optional append.  When (approximately) the given limit has
+     * been written to one file, another file will be opened.  The
+     * output will cycle through a set of count files.
+     * <p>
+     * The <tt>FileHandler</tt> is configured based on <tt>LogManager</tt>
+     * properties (or their default values) except that the given pattern
+     * argument is used as the filename pattern, the file limit is
+     * set to the limit argument, and the file count is set to the
+     * given count argument, and the append mode is set to the given
+     * <tt>append</tt> argument.
+     * <p>
+     * The count must be at least 1.
+     *
+     * @param pattern  the pattern for naming the output file
+     * @param limit  the maximum number of bytes to write to any one file
+     * @param count  the number of files to use
+     * @param append  specifies append mode
+     * @exception  IOException if there are IO problems opening the files.
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     * @exception  IllegalArgumentException if {@code limit < 0}, or {@code count < 1}.
+     * @exception  IllegalArgumentException if pattern is an empty string
+     *
+     */
+    public FileHandler(String pattern, int limit, int count, boolean append)
+                                        throws IOException, SecurityException {
+        if (limit < 0 || count < 1 || pattern.length() < 1) {
+            throw new IllegalArgumentException();
+        }
+        checkPermission();
+        configure();
+        this.pattern = pattern;
+        this.limit = limit;
+        this.count = count;
+        this.append = append;
+        openFiles();
+    }
+
+    private  boolean isParentWritable(Path path) {
+        Path parent = path.getParent();
+        if (parent == null) {
+            parent = path.toAbsolutePath().getParent();
+        }
+        return parent != null && Files.isWritable(parent);
+    }
+
+    /**
+     * Open the set of output files, based on the configured
+     * instance variables.
+     */
+    private void openFiles() throws IOException {
+        LogManager manager = LogManager.getLogManager();
+        manager.checkPermission();
+        if (count < 1) {
+           throw new IllegalArgumentException("file count = " + count);
+        }
+        if (limit < 0) {
+            limit = 0;
+        }
+
+        // We register our own ErrorManager during initialization
+        // so we can record exceptions.
+        InitializationErrorManager em = new InitializationErrorManager();
+        setErrorManager(em);
+
+        // Create a lock file.  This grants us exclusive access
+        // to our set of output files, as long as we are alive.
+        int unique = -1;
+        for (;;) {
+            unique++;
+            if (unique > maxLocks) {
+                throw new IOException("Couldn't get lock for " + pattern
+                        + ", maxLocks: " + maxLocks);
+            }
+            // Generate a lock file name from the "unique" int.
+            lockFileName = generate(pattern, 0, unique).toString() + ".lck";
+            // Now try to lock that filename.
+            // Because some systems (e.g., Solaris) can only do file locks
+            // between processes (and not within a process), we first check
+            // if we ourself already have the file locked.
+            synchronized(locks) {
+                if (locks.contains(lockFileName)) {
+                    // We already own this lock, for a different FileHandler
+                    // object.  Try again.
+                    continue;
+                }
+
+                final Path lockFilePath = Paths.get(lockFileName);
+                FileChannel channel = null;
+                int retries = -1;
+                boolean fileCreated = false;
+                while (channel == null && retries++ < 1) {
+                    try {
+                        channel = FileChannel.open(lockFilePath,
+                                CREATE_NEW, WRITE);
+                        fileCreated = true;
+                    } catch (FileAlreadyExistsException ix) {
+                        // This may be a zombie file left over by a previous
+                        // execution. Reuse it - but only if we can actually
+                        // write to its directory.
+                        // Note that this is a situation that may happen,
+                        // but not too frequently.
+                        if (Files.isRegularFile(lockFilePath, LinkOption.NOFOLLOW_LINKS)
+                            && isParentWritable(lockFilePath)) {
+                            try {
+                                channel = FileChannel.open(lockFilePath,
+                                    WRITE, APPEND);
+                            } catch (NoSuchFileException x) {
+                                // Race condition - retry once, and if that
+                                // fails again just try the next name in
+                                // the sequence.
+                                continue;
+                            } catch(IOException x) {
+                                // the file may not be writable for us.
+                                // try the next name in the sequence
+                                break;
+                            }
+                        } else {
+                            // at this point channel should still be null.
+                            // break and try the next name in the sequence.
+                            break;
+                        }
+                    }
+                }
+
+                if (channel == null) continue; // try the next name;
+                lockFileChannel = channel;
+
+                boolean available;
+                try {
+                    available = lockFileChannel.tryLock() != null;
+                    // We got the lock OK.
+                    // At this point we could call File.deleteOnExit().
+                    // However, this could have undesirable side effects
+                    // as indicated by JDK-4872014. So we will instead
+                    // rely on the fact that close() will remove the lock
+                    // file and that whoever is creating FileHandlers should
+                    // be responsible for closing them.
+                } catch (IOException ix) {
+                    // We got an IOException while trying to get the lock.
+                    // This normally indicates that locking is not supported
+                    // on the target directory.  We have to proceed without
+                    // getting a lock.   Drop through, but only if we did
+                    // create the file...
+                    available = fileCreated;
+                } catch (OverlappingFileLockException x) {
+                    // someone already locked this file in this VM, through
+                    // some other channel - that is - using something else
+                    // than new FileHandler(...);
+                    // continue searching for an available lock.
+                    available = false;
+                }
+                if (available) {
+                    // We got the lock.  Remember it.
+                    locks.add(lockFileName);
+                    break;
+                }
+
+                // We failed to get the lock.  Try next file.
+                lockFileChannel.close();
+            }
+        }
+
+        files = new File[count];
+        for (int i = 0; i < count; i++) {
+            files[i] = generate(pattern, i, unique);
+        }
+
+        // Create the initial log file.
+        if (append) {
+            open(files[0], true);
+        } else {
+            rotate();
+        }
+
+        // Did we detect any exceptions during initialization?
+        Exception ex = em.lastException;
+        if (ex != null) {
+            if (ex instanceof IOException) {
+                throw (IOException) ex;
+            } else if (ex instanceof SecurityException) {
+                throw (SecurityException) ex;
+            } else {
+                throw new IOException("Exception: " + ex);
+            }
+        }
+
+        // Install the normal default ErrorManager.
+        setErrorManager(new ErrorManager());
+    }
+
+    /**
+     * Generate a file based on a user-supplied pattern, generation number,
+     * and an integer uniqueness suffix
+     * @param pattern the pattern for naming the output file
+     * @param generation the generation number to distinguish rotated logs
+     * @param unique a unique number to resolve conflicts
+     * @return the generated File
+     * @throws IOException
+     */
+    private File generate(String pattern, int generation, int unique)
+            throws IOException {
+        File file = null;
+        String word = "";
+        int ix = 0;
+        boolean sawg = false;
+        boolean sawu = false;
+        while (ix < pattern.length()) {
+            char ch = pattern.charAt(ix);
+            ix++;
+            char ch2 = 0;
+            if (ix < pattern.length()) {
+                ch2 = Character.toLowerCase(pattern.charAt(ix));
+            }
+            if (ch == '/') {
+                if (file == null) {
+                    file = new File(word);
+                } else {
+                    file = new File(file, word);
+                }
+                word = "";
+                continue;
+            } else  if (ch == '%') {
+                if (ch2 == 't') {
+                    String tmpDir = System.getProperty("java.io.tmpdir");
+                    if (tmpDir == null) {
+                        tmpDir = System.getProperty("user.home");
+                    }
+                    file = new File(tmpDir);
+                    ix++;
+                    word = "";
+                    continue;
+                } else if (ch2 == 'h') {
+                    file = new File(System.getProperty("user.home"));
+                    if (isSetUID()) {
+                        // Ok, we are in a set UID program.  For safety's sake
+                        // we disallow attempts to open files relative to %h.
+                        throw new IOException("can't use %h in set UID program");
+                    }
+                    ix++;
+                    word = "";
+                    continue;
+                } else if (ch2 == 'g') {
+                    word = word + generation;
+                    sawg = true;
+                    ix++;
+                    continue;
+                } else if (ch2 == 'u') {
+                    word = word + unique;
+                    sawu = true;
+                    ix++;
+                    continue;
+                } else if (ch2 == '%') {
+                    word = word + "%";
+                    ix++;
+                    continue;
+                }
+            }
+            word = word + ch;
+        }
+        if (count > 1 && !sawg) {
+            word = word + "." + generation;
+        }
+        if (unique > 0 && !sawu) {
+            word = word + "." + unique;
+        }
+        if (word.length() > 0) {
+            if (file == null) {
+                file = new File(word);
+            } else {
+                file = new File(file, word);
+            }
+        }
+        return file;
+    }
+
+    /**
+     * Rotate the set of output files
+     */
+    private synchronized void rotate() {
+        Level oldLevel = getLevel();
+        setLevel(Level.OFF);
+
+        super.close();
+        for (int i = count-2; i >= 0; i--) {
+            File f1 = files[i];
+            File f2 = files[i+1];
+            if (f1.exists()) {
+                if (f2.exists()) {
+                    f2.delete();
+                }
+                f1.renameTo(f2);
+            }
+        }
+        try {
+            open(files[0], false);
+        } catch (IOException ix) {
+            // We don't want to throw an exception here, but we
+            // report the exception to any registered ErrorManager.
+            reportError(null, ix, ErrorManager.OPEN_FAILURE);
+
+        }
+        setLevel(oldLevel);
+    }
+
+    /**
+     * Format and publish a <tt>LogRecord</tt>.
+     *
+     * @param  record  description of the log event. A null record is
+     *                 silently ignored and is not published
+     */
+    @Override
+    public synchronized void publish(LogRecord record) {
+        if (!isLoggable(record)) {
+            return;
+        }
+        super.publish(record);
+        flush();
+        if (limit > 0 && meter.written >= limit) {
+            // We performed access checks in the "init" method to make sure
+            // we are only initialized from trusted code.  So we assume
+            // it is OK to write the target files, even if we are
+            // currently being called from untrusted code.
+            // So it is safe to raise privilege here.
+            AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                @Override
+                public Object run() {
+                    rotate();
+                    return null;
+                }
+            });
+        }
+    }
+
+    /**
+     * Close all the files.
+     *
+     * @exception  SecurityException  if a security manager exists and if
+     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     */
+    @Override
+    public synchronized void close() throws SecurityException {
+        super.close();
+        // Unlock any lock file.
+        if (lockFileName == null) {
+            return;
+        }
+        try {
+            // Close the lock file channel (which also will free any locks)
+            lockFileChannel.close();
+        } catch (Exception ex) {
+            // Problems closing the stream.  Punt.
+        }
+        synchronized(locks) {
+            locks.remove(lockFileName);
+        }
+        new File(lockFileName).delete();
+        lockFileName = null;
+        lockFileChannel = null;
+    }
+
+    private static class InitializationErrorManager extends ErrorManager {
+        Exception lastException;
+        @Override
+        public void error(String msg, Exception ex, int code) {
+            lastException = ex;
+        }
+    }
+
+    /**
+     * check if we are in a set UID program.
+     */
+    private static native boolean isSetUID();
+}
